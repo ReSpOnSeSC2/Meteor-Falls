@@ -219,3 +219,11 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** maps.test.ts asserts the two-street + connector
   structure so a future edit can't flatten the city back into a strip;
   chapter-map prompts (28–34) inherit this convention for their towns.
+- **Enforcement (added same day, user: "ensure all cities going forward
+  follow the brickton rules"):** `MapDef.settlement: 'city' | 'town' |
+  'village'` tags every settlement; maps.test.ts sweeps **every** map tagged
+  `'city'` (streets ≥2 + separation, connecting avenue, buildings on 2+
+  block faces). Chandrapore, Zanzibel, Lotus Harbor, etc. must carry the tag
+  and pass, or tests fail naming the offender. Towns/villages inherit the
+  looseness but not the grid minimums. GAME_BIBLE §B4 amended with this rule
+  per Appendix rule 6 — it is now a phase-level non-negotiable.

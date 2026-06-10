@@ -3,7 +3,7 @@
  * (Prompt S5 turns these checks into the full zod content validator.)
  */
 import { describe, expect, it } from 'vitest';
-import { CHAR_LEGEND, MAPS } from './maps';
+import { CHAR_LEGEND, MAPS, type MapDef } from './maps';
 import { DIALOGUE } from './dialogue';
 import { ENEMIES } from './enemies';
 import { TILESET, tileIndexByName } from '../spritegen/tiles';
@@ -80,29 +80,77 @@ describe('S1 canon (GAME_BIBLE §A6/§A7/§A4.5, prompt S1)', () => {
     expect(roster.has('pigeon_gang')).toBe(true);
   });
 
-  it('Brickton is a downtown, not a strip: two streets + a connecting avenue (ADR-012)', () => {
-    const grid = MAPS.brickton.grid;
-    const street = (ch: string): boolean => 'RDX'.includes(ch);
-    // two horizontal street bands separated by a built-up block
+  it('the dungeon entrance survived the jitter', () => {
+    expect(MAPS.brickton.props.some((p) => p.door?.to === 'dos_f1')).toBe(true);
+  });
+});
+
+describe('ADR-012 — every city follows the Brickton rules (GAME_BIBLE §B4)', () => {
+  const cities = maps.filter((m) => m.settlement === 'city');
+  const street = (ch: string): boolean => 'RDX'.includes(ch);
+
+  /** broken rules for a city map; empty = compliant */
+  const cityViolations = (m: MapDef): string[] => {
+    const out: string[] = [];
+    const grid = m.grid;
+    const w = grid[0].length;
+    // ≥2 horizontal street bands separated by a built-up block
     const roadRows = grid
       .map((row, y) => ({ y, n: [...row].filter(street).length }))
-      .filter((r) => r.n > 20)
+      .filter((r) => r.n > Math.floor(w * 0.4))
       .map((r) => r.y);
-    expect(roadRows.length).toBeGreaterThanOrEqual(6);
-    expect(roadRows[roadRows.length - 1] - roadRows[0]).toBeGreaterThan(8);
-    expect(roadRows.some((y, i) => i > 0 && y - roadRows[i - 1] > 1)).toBe(true);
-    // a vertical avenue stitches them
+    if (roadRows.length < 6) out.push(`${m.id}: needs at least two streets`);
+    if (!roadRows.some((y, i) => i > 0 && y - roadRows[i - 1] > 1)) {
+      out.push(`${m.id}: streets must be separated by a built-up block`);
+    }
+    // a vertical avenue stitches the streets together
     let connector = false;
-    for (let x = 0; x < grid[0].length; x++) {
+    for (let x = 0; x < w; x++) {
       let n = 0;
       for (let y = 0; y < grid.length; y++) if (street(grid[y][x])) n++;
       if (n >= 12) connector = true;
     }
-    expect(connector).toBe(true);
-    // the dungeon entrance survived the jitter
-    expect(MAPS.brickton.props.some((p) => p.door?.to === 'dos_f1')).toBe(true);
+    if (!connector) out.push(`${m.id}: needs a connecting avenue`);
+    // buildings must front more than one street (the anti-strip rule);
+    // band by each facade's ground line, derived from its solid rect
+    const faces = new Set(
+      m.props
+        .filter((p) => p.sprite.startsWith('bldg_') && p.solid)
+        .map((p) => Math.round((p.y * 16 + (p.solid?.oy ?? 0) + (p.solid?.h ?? 0) + 12) / 64)),
+    );
+    if (faces.size < 2) out.push(`${m.id}: buildings must occupy 2+ block faces`);
+    return out;
+  };
+
+  it('city maps are tagged (Brickton today; Ch.2+ cities join this sweep)', () => {
+    expect(cities.length).toBeGreaterThanOrEqual(1);
+    expect(cities.some((m) => m.id === 'brickton')).toBe(true);
   });
 
+  it('every tagged city passes: grid, connector, multiple faces — never a strip', () => {
+    for (const m of cities) expect(cityViolations(m)).toEqual([]);
+  });
+
+  it('negative control: the sweep rejects a one-street strip-city', () => {
+    const strip: MapDef = {
+      id: 'strip_city',
+      name: 'STRIPVILLE',
+      music: null,
+      settlement: 'city',
+      grid: ['='.repeat(30), 'R'.repeat(30), 'R'.repeat(30), '='.repeat(30)],
+      props: [{ sprite: 'bldg_fake', x: 1, y: 0, solid: { ox: 0, oy: 26, w: 66, h: 22 } }],
+      npcs: [],
+      signs: [],
+      phones: [],
+      doors: [],
+      spawners: [],
+      triggers: [],
+    };
+    expect(cityViolations(strip).length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('S1 canon — the Department & the 6:15', () => {
   it('the Department is 3 floors ending at the locked holding room', () => {
     expect(MAPS.dos_f1.doors.some((d) => d.to === 'dos_f2')).toBe(true);
     expect(MAPS.dos_f2.doors.some((d) => d.to === 'dos_f3')).toBe(true);

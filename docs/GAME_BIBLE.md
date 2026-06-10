@@ -264,6 +264,12 @@ meteor-falls/
 - Every battle calculation unit-tested; save/load round-trip tested per schema version
 - Touch and Bluetooth controller verified for every new UI screen
 - Game completable start-to-finish at every phase boundary from Phase 6 onward
+- Settlement maps follow the Brickton rules (ADR-012): seeded organic irregularity
+  everywhere; CITIES (tagged `settlement: 'city'`) are multi-street grids — ≥2 streets
+  joined by an avenue, buildings on 2+ block faces, alleys, negative space — never a
+  single shop strip. Enforced by the city-structure test sweep; cross-map coordinates
+  that touch jittered placement are computed, never hardcoded. *(Amended 2026-06-10 per
+  Appendix rule 6, alongside ADR-012.)*
 
 ---
 

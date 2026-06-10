@@ -117,6 +117,10 @@ export interface MapDef {
   music: string | null;
   night?: boolean;
   interior?: boolean;
+  /** settlements get ADR-012 organic looseness; 'city' additionally must pass
+   *  the Brickton rules (multi-street grid + connector + multiple block
+   *  faces) — maps.test.ts sweeps every map tagged 'city' */
+  settlement?: 'city' | 'town' | 'village';
   grid: string[];
   props: PropDef[];
   npcs: NpcDef[];
@@ -218,6 +222,7 @@ function buildOtterbrook(): MapDef {
     id: 'otterbrook',
     name: 'OTTERBROOK, OHIO',
     music: 'otterbrook',
+    settlement: 'town',
     grid: g.out(),
     props: [
       ...treeLine.map(([x, y]) => ({
@@ -574,6 +579,7 @@ function buildBrickton(): MapDef {
     id: 'brickton',
     name: 'BRICKTON CITY',
     music: 'brickton',
+    settlement: 'city',
     grid: g.out(),
     props: [
       ...trees.map(([x, y]) => ({ sprite: 'tree', x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
