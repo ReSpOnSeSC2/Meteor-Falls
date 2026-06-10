@@ -1,0 +1,1024 @@
+﻿/**
+ * Overworld: EB-style 8-direction movement with follower conga line, visible
+ * roaming enemies (no random encounters — §A4.2), swirl-coded contact
+ * advantage, doors, signs, phones (save = call Dad), and the Chapter 1
+ * cutscenes per GAME_BIBLE §A6 / ADR-007.
+ */
+import Phaser from 'phaser';
+import { MAPS, type MapDef, type NpcDef } from '../data/maps';
+import { ENEMIES } from '../data/enemies';
+import { ITEMS } from '../data/items';
+import { DIALOGUE } from '../data/dialogue';
+import { GS } from '../engine/state';
+import { INPUT } from '../engine/input';
+import { AUDIO } from '../engine/audio';
+import { Dialogue, makeWindow, toast, DEPTH_UI } from '../ui/windows';
+import { tileIndexByName, PATH_BASE, PATH_VARIANTS } from '../spritegen/tiles';
+import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
+import { instantWin, expShare } from '../battle/formulas';
+import { expForLevel } from '../engine/state';
+import { colorOf, RAMP, px } from '../palette';
+
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface Roamer {
+  spr: Phaser.GameObjects.Image;
+  enemyId: string;
+  vx: number;
+  vy: number;
+  think: number;
+  home: Rect;
+  dead: boolean;
+}
+
+interface NpcObj {
+  spr: Phaser.GameObjects.Sprite;
+  def: NpcDef;
+  baseX: number;
+  baseY: number;
+  vx: number;
+  vy: number;
+  think: number;
+}
+
+const WALK = 70;
+const RUN = 115;
+const PURSUE = 85;
+
+const CHAR_LEGEND: Record<string, string> = {
+  '.': 'grass_a',
+  ',': 'grass_b',
+  '~': 'grass_tuft',
+  f: 'flowers_red',
+  F: 'flowers_gold',
+  b: 'bush',
+  '-': 'fence_h',
+  '|': 'fence_v',
+  s: 'scorch',
+  S: 'scorch_ember',
+  w: 'floor_wood',
+  W: 'wall_int',
+  r: 'rug',
+};
+
+export class OverworldScene extends Phaser.Scene {
+  private mapDef!: MapDef;
+  private solidTiles: boolean[][] = [];
+  private solids: Rect[] = [];
+  private player!: Phaser.GameObjects.Sprite;
+  private facing: Facing = 'down';
+  private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string }> = [];
+  private trail: Array<{ x: number; y: number; f: Facing }> = [];
+  private npcs: NpcObj[] = [];
+  private roamers: Roamer[] = [];
+  private dlg!: Dialogue;
+  private cut = false; // cutscene lock
+  private transitioning = false;
+  private battleCooldown = 0;
+  private stepTimer = 0;
+  private fireflies: Phaser.GameObjects.Image[] = [];
+
+  constructor() {
+    super('overworld');
+  }
+
+  init(data: { mapId?: string; x?: number; y?: number; facing?: Facing }): void {
+    const id = data.mapId ?? GS.data.map;
+    this.mapDef = MAPS[id] ?? MAPS.otterbrook;
+    GS.data.map = this.mapDef.id;
+    if (data.x !== undefined) GS.data.x = data.x;
+    if (data.y !== undefined) GS.data.y = data.y;
+    if (data.facing) GS.data.facing = data.facing;
+  }
+
+  create(): void {
+    this.cut = false;
+    this.transitioning = false;
+    this.followers = [];
+    this.trail = [];
+    this.npcs = [];
+    this.roamers = [];
+    this.solids = [];
+    this.fireflies = [];
+    this.dlg = new Dialogue(this);
+
+    this.buildTiles();
+    this.buildProps();
+    this.buildNpcs();
+    this.buildPlayer();
+    this.buildRoamers();
+    // It is 2 AM until Glint's porch scene ends — dawn breaks after (§A6 Ch.1)
+    const storyNight = this.mapDef.id === 'otterbrook' && !GS.flag('zapper_done');
+    if (this.mapDef.night || storyNight) this.buildNight();
+    this.showBanner();
+
+    AUDIO.playMusic(this.mapDef.music);
+    this.cameras.main.fadeIn(250, 0, 0, 0);
+
+    void this.onEnterCutscenes();
+  }
+
+  /* ---------------- build ---------------- */
+
+  private buildTiles(): void {
+    const rows = this.mapDef.grid;
+    const h = rows.length;
+    const w = rows[0].length;
+    const isPath = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === ':';
+    const data: number[][] = [];
+    this.solidTiles = [];
+    for (let y = 0; y < h; y++) {
+      const row: number[] = [];
+      const srow: boolean[] = [];
+      for (let x = 0; x < w; x++) {
+        const ch = rows[y][x];
+        let idx: number;
+        if (ch === ':') {
+          let mask = 0;
+          if (!isPath(x, y - 1)) mask |= 1;
+          if (!isPath(x + 1, y)) mask |= 2;
+          if (!isPath(x, y + 1)) mask |= 4;
+          if (!isPath(x - 1, y)) mask |= 8;
+          idx = PATH_BASE + ((x + y) % PATH_VARIANTS) * 16 + mask;
+        } else {
+          idx = tileIndexByName(CHAR_LEGEND[ch] ?? 'grass_a');
+        }
+        row.push(idx);
+        srow.push(TILE_SOLID[idx]);
+      }
+      data.push(row);
+      this.solidTiles.push(srow);
+    }
+    const map = this.make.tilemap({ data, tileWidth: 16, tileHeight: 16 });
+    const tiles = map.addTilesetImage('tiles');
+    if (tiles) map.createLayer(0, tiles, 0, 0)?.setDepth(0);
+    // center maps smaller than the viewport (interiors float in the void)
+    const vw = this.scale.width;
+    const vh = this.scale.height;
+    const mw = w * 16;
+    const mh = h * 16;
+    const bx = Math.min(0, (mw - vw) / 2);
+    const by = Math.min(0, (mh - vh) / 2);
+    this.cameras.main.setBounds(bx, by, Math.max(mw, vw), Math.max(mh, vh));
+  }
+
+  private buildProps(): void {
+    for (const p of this.mapDef.props) {
+      const img = this.add.image(p.x * 16, p.y * 16, p.sprite).setOrigin(0, 0);
+      img.setDepth(p.y * 16 + img.height);
+      if (p.solid) {
+        this.solids.push({
+          x: p.x * 16 + p.solid.ox,
+          y: p.y * 16 + p.solid.oy,
+          w: p.solid.w,
+          h: p.solid.h,
+        });
+      }
+    }
+  }
+
+  private buildNpcs(): void {
+    for (const def of this.mapDef.npcs) {
+      const x = def.x * 16 + 8;
+      const y = def.y * 16 + 22;
+      const spr = this.add.sprite(x, y, def.sprite, def.dog ? 0 : standFrame(def.facing));
+      spr.setOrigin(0.5, 1);
+      spr.setDepth(y);
+      this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000 });
+      this.solids.push({ x: x - 6, y: y - 10, w: 12, h: 10 });
+    }
+  }
+
+  private buildPlayer(): void {
+    this.facing = GS.data.facing;
+    this.player = this.add.sprite(GS.data.x, GS.data.y, 'rex', standFrame(this.facing));
+    this.player.setOrigin(0.5, 1);
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    // guest follower: Chad on the hill trip
+    if (GS.data.guest === 'chad') this.addFollower('chad');
+  }
+
+  private addFollower(id: string): void {
+    const spr = this.add.sprite(this.player.x, this.player.y + 2, id, standFrame('down'));
+    spr.setOrigin(0.5, 1);
+    this.followers.push({ spr, id });
+  }
+
+  private removeFollower(id: string): void {
+    const i = this.followers.findIndex((f) => f.id === id);
+    if (i >= 0) {
+      this.followers[i].spr.destroy();
+      this.followers.splice(i, 1);
+    }
+  }
+
+  private buildRoamers(): void {
+    for (const sp of this.mapDef.spawners) {
+      if (sp.ifFlag && !GS.flag(sp.ifFlag)) continue;
+      for (let i = 0; i < sp.count; i++) {
+        const enemyId = sp.enemies[Math.floor(Math.random() * sp.enemies.length)];
+        const def = ENEMIES[enemyId];
+        const x = (sp.rect.x + Math.random() * sp.rect.w) * 16;
+        const y = (sp.rect.y + Math.random() * sp.rect.h) * 16;
+        const spr = this.add.image(x, y, def.mini).setOrigin(0.5, 1);
+        spr.setDepth(y);
+        this.roamers.push({
+          spr,
+          enemyId,
+          vx: 0,
+          vy: 0,
+          think: 0,
+          home: { x: sp.rect.x * 16, y: sp.rect.y * 16, w: sp.rect.w * 16, h: sp.rect.h * 16 },
+          dead: false,
+        });
+      }
+    }
+  }
+
+  private buildNight(): void {
+    const o = this.add
+      .rectangle(0, 0, this.scale.width, this.scale.height, colorOf(px(RAMP.NIGHT, 1)))
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(800)
+      .setAlpha(0.62);
+    o.setBlendMode(Phaser.BlendModes.MULTIPLY);
+    for (let i = 0; i < 9; i++) {
+      const f = this.add
+        .image(Math.random() * this.scale.width, Math.random() * this.scale.height, 'pixel')
+        .setScrollFactor(0)
+        .setDepth(810)
+        .setTint(colorOf(px(RAMP.GOLD, 3)))
+        .setAlpha(0);
+      this.tweens.add({
+        targets: f,
+        alpha: { from: 0, to: 0.9 },
+        duration: 900 + Math.random() * 900,
+        yoyo: true,
+        repeat: -1,
+        delay: Math.random() * 2000,
+      });
+      this.fireflies.push(f);
+    }
+  }
+
+  private showBanner(): void {
+    const name = this.mapDef.name;
+    const w = name.length * 6 + 24;
+    const win = makeWindow(this, 8, 8, w, 24);
+    const tx = this.add
+      .bitmapText(20, 16, 'retro', name, 6)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1);
+    this.tweens.add({
+      targets: [win, tx],
+      alpha: 0,
+      delay: 1500,
+      duration: 400,
+      onComplete: () => {
+        win.destroy();
+        tx.destroy();
+      },
+    });
+  }
+
+  /* ---------------- update loop ---------------- */
+
+  override update(_t: number, dtMs: number): void {
+    const dt = Math.min(dtMs, 50) / 1000;
+    if (!this.cut && !this.dlg.busy && !this.transitioning) {
+      this.updatePlayer(dt);
+      this.updateRoamers(dt);
+      // a contact battle may have started this frame — don't double-fire
+      if (!this.cut && !this.transitioning) {
+        this.checkDoors();
+        this.checkTriggers();
+        if (INPUT.justPressed('A')) void this.interact();
+        if (INPUT.justPressed('START')) void this.pauseMenu();
+      }
+    } else {
+      this.player.anims.stop();
+    }
+    this.updateNpcs(dt);
+    this.updateFireflies(dt);
+  }
+
+  private updatePlayer(dt: number): void {
+    const d = INPUT.dir();
+    const running = INPUT.held('B');
+    const sp = running ? RUN : WALK;
+    let moved = false;
+    if (d.x !== 0 || d.y !== 0) {
+      const len = Math.hypot(d.x, d.y);
+      const dx = (d.x / len) * sp * dt;
+      const dy = (d.y / len) * sp * dt;
+      const nx = this.tryMove(this.player.x, this.player.y, dx, 0);
+      const ny = this.tryMove(nx, this.player.y, 0, dy, true);
+      moved = nx !== this.player.x || ny !== this.player.y;
+      this.player.x = nx;
+      this.player.y = ny;
+      if (d.x !== 0) this.facing = d.x > 0 ? 'right' : 'left';
+      else this.facing = d.y > 0 ? 'down' : 'up';
+      GS.data.x = this.player.x;
+      GS.data.y = this.player.y;
+      GS.data.facing = this.facing;
+    }
+    if (moved) {
+      const anim = `rex-walk-${this.facing}`;
+      if (this.player.anims.currentAnim?.key !== anim || !this.player.anims.isPlaying) {
+        this.player.anims.play(anim, true);
+      }
+      this.player.anims.timeScale = running ? 1.6 : 1;
+      this.stepTimer -= dt;
+      if (this.stepTimer <= 0) {
+        AUDIO.sfx('step');
+        this.stepTimer = running ? 0.18 : 0.28;
+      }
+      // breadcrumb trail for the conga line
+      const last = this.trail[0];
+      if (!last || Math.hypot(this.player.x - last.x, this.player.y - last.y) >= 3) {
+        this.trail.unshift({ x: this.player.x, y: this.player.y, f: this.facing });
+        if (this.trail.length > 80) this.trail.pop();
+      }
+    } else {
+      this.player.anims.stop();
+      this.player.setFrame(standFrame(this.facing));
+    }
+    this.player.setDepth(this.player.y);
+    this.followers.forEach((f, i) => {
+      const crumb = this.trail[(i + 1) * 7];
+      if (crumb) {
+        const movedF = Math.hypot(f.spr.x - crumb.x, f.spr.y - crumb.y) > 0.5;
+        f.spr.x = crumb.x;
+        f.spr.y = crumb.y;
+        f.spr.setDepth(crumb.y);
+        const anim = `${f.id}-walk-${crumb.f}`;
+        if (movedF && moved) {
+          if (f.spr.anims.currentAnim?.key !== anim || !f.spr.anims.isPlaying) f.spr.anims.play(anim, true);
+        } else {
+          f.spr.anims.stop();
+          f.spr.setFrame(standFrame(crumb.f));
+        }
+      }
+    });
+  }
+
+  /** axis-separated movement with solid tiles + prop rects (slide on collide) */
+  private tryMove(x: number, y: number, dx: number, dy: number, second = false): number {
+    const nx = x + dx;
+    const ny = y + dy;
+    const box = { x: nx - 5, y: ny - 9, w: 10, h: 9 };
+    if (this.collides(box)) return second ? y : x;
+    return second ? ny : nx;
+  }
+
+  private collides(box: Rect): boolean {
+    const x0 = Math.floor(box.x / 16);
+    const y0 = Math.floor(box.y / 16);
+    const x1 = Math.floor((box.x + box.w) / 16);
+    const y1 = Math.floor((box.y + box.h) / 16);
+    for (let ty = y0; ty <= y1; ty++) {
+      for (let tx = x0; tx <= x1; tx++) {
+        if (
+          ty < 0 ||
+          tx < 0 ||
+          ty >= this.solidTiles.length ||
+          tx >= this.solidTiles[0].length ||
+          this.solidTiles[ty][tx]
+        ) {
+          return true;
+        }
+      }
+    }
+    return this.solids.some(
+      (s) => box.x < s.x + s.w && box.x + box.w > s.x && box.y < s.y + s.h && box.y + box.h > s.y,
+    );
+  }
+
+  private updateNpcs(dt: number): void {
+    for (const n of this.npcs) {
+      if (!n.def.wander || this.cut || this.dlg.busy) continue;
+      n.think -= dt * 1000;
+      if (n.think <= 0) {
+        n.think = 1200 + Math.random() * 2200;
+        if (Math.random() < 0.55) {
+          const dirs = [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ];
+          const [vx, vy] = dirs[Math.floor(Math.random() * 4)];
+          n.vx = vx * 22;
+          n.vy = vy * 22;
+        } else {
+          n.vx = 0;
+          n.vy = 0;
+        }
+      }
+      if (n.vx !== 0 || n.vy !== 0) {
+        const nx = n.spr.x + n.vx * dt;
+        const ny = n.spr.y + n.vy * dt;
+        if (Math.abs(nx - n.baseX) > 28 || Math.abs(ny - n.baseY) > 24 || this.collides({ x: nx - 5, y: ny - 9, w: 10, h: 9 })) {
+          n.vx = 0;
+          n.vy = 0;
+        } else {
+          n.spr.x = nx;
+          n.spr.y = ny;
+          n.spr.setDepth(ny);
+          const f: Facing = n.vx !== 0 ? (n.vx > 0 ? 'right' : 'left') : n.vy > 0 ? 'down' : 'up';
+          if (!n.def.dog) {
+            const anim = `${n.def.sprite}-walk-${f}`;
+            if (n.spr.anims.currentAnim?.key !== anim || !n.spr.anims.isPlaying) n.spr.anims.play(anim, true);
+          }
+        }
+      } else if (!n.def.dog) {
+        n.spr.anims.stop();
+      }
+    }
+  }
+
+  private updateRoamers(dt: number): void {
+    const now = this.time.now;
+    for (const r of this.roamers) {
+      if (r.dead) continue;
+      const def = ENEMIES[r.enemyId];
+      const distP = Math.hypot(this.player.x - r.spr.x, this.player.y - r.spr.y);
+      const avgLvl = this.avgPartyLevel();
+      const outclassed = avgLvl >= def.level + 6;
+      if (outclassed && distP < 70) {
+        // EB detail: weak enemies flee a strong party
+        r.vx = Math.sign(r.spr.x - this.player.x) * 60;
+        r.vy = Math.sign(r.spr.y - this.player.y) * 60;
+      } else if (distP < 64) {
+        r.vx = ((this.player.x - r.spr.x) / distP) * PURSUE;
+        r.vy = ((this.player.y - r.spr.y) / distP) * PURSUE;
+      } else {
+        r.think -= dt * 1000;
+        if (r.think <= 0) {
+          r.think = 800 + Math.random() * 1600;
+          const ang = Math.random() * Math.PI * 2;
+          const speed = Math.random() < 0.3 ? 0 : 26;
+          r.vx = Math.cos(ang) * speed;
+          r.vy = Math.sin(ang) * speed;
+        }
+      }
+      let nx = r.spr.x + r.vx * dt;
+      let ny = r.spr.y + r.vy * dt;
+      // keep wanderers near home unless chasing
+      if (distP >= 64) {
+        nx = Phaser.Math.Clamp(nx, r.home.x, r.home.x + r.home.w);
+        ny = Phaser.Math.Clamp(ny, r.home.y, r.home.y + r.home.h);
+      }
+      if (!this.collides({ x: nx - 5, y: ny - 8, w: 10, h: 8 })) {
+        r.spr.x = nx;
+        r.spr.y = ny;
+        r.spr.setDepth(ny);
+      } else {
+        r.vx = -r.vx;
+        r.vy = -r.vy;
+      }
+      if (distP < 13 && now > this.battleCooldown) {
+        void this.contactBattle(r);
+        return;
+      }
+    }
+  }
+
+  private updateFireflies(dt: number): void {
+    for (const f of this.fireflies) {
+      f.x += Math.sin(this.time.now / 700 + f.y) * 8 * dt;
+      f.y += Math.cos(this.time.now / 900 + f.x) * 6 * dt;
+    }
+  }
+
+  private avgPartyLevel(): number {
+    const p = GS.data.party;
+    return p.reduce((a, h) => a + h.level, 0) / Math.max(1, p.length);
+  }
+
+  /* ---------------- encounters ---------------- */
+
+  private async contactBattle(r: Roamer): Promise<void> {
+    this.battleCooldown = this.time.now + 1500;
+    const def = ENEMIES[r.enemyId];
+    // §A4.2 instant win when vastly overleveled
+    if (instantWin(this.avgPartyLevel(), def.level, !!def.boss)) {
+      r.dead = true;
+      AUDIO.sfx('smash');
+      this.cameras.main.flash(220, 248, 248, 240);
+      this.tweens.add({ targets: r.spr, alpha: 0, scale: 0.3, duration: 250, onComplete: () => r.spr.destroy() });
+      const share = expShare(def.exp, GS.aliveParty().length);
+      GS.aliveParty().forEach((h) => (h.exp += share));
+      GS.data.pendingDeposit += def.cash;
+      toast(this, `YOU WON without even fighting! +${share} EXP`);
+      return;
+    }
+    // contact angle → swirl color (§A4.2 / Prompt 16)
+    const toEnemy = new Phaser.Math.Vector2(r.spr.x - this.player.x, r.spr.y - this.player.y).normalize();
+    const facingVec = this.facingVector();
+    const dotF = facingVec.dot(toEnemy);
+    const enemyDir = new Phaser.Math.Vector2(r.vx, r.vy).normalize();
+    const enemyFleeing = enemyDir.length() > 0 && enemyDir.dot(toEnemy) > 0.4;
+    let advantage: 'player' | 'enemy' | 'none' = 'none';
+    if (dotF < -0.35) advantage = 'enemy'; // it got our back
+    else if (enemyFleeing && dotF > 0.35) advantage = 'player'; // we got its back
+    await this.startBattle([r.enemyId], advantage, r);
+  }
+
+  private facingVector(): Phaser.Math.Vector2 {
+    switch (this.facing) {
+      case 'up':
+        return new Phaser.Math.Vector2(0, -1);
+      case 'down':
+        return new Phaser.Math.Vector2(0, 1);
+      case 'left':
+        return new Phaser.Math.Vector2(-1, 0);
+      default:
+        return new Phaser.Math.Vector2(1, 0);
+    }
+  }
+
+  private startBattle(
+    enemyIds: string[],
+    advantage: 'player' | 'enemy' | 'none',
+    roamer: Roamer | null,
+    boss = false,
+  ): Promise<'victory' | 'defeat' | 'ran'> {
+    return new Promise((resolve) => {
+      this.cut = true;
+      AUDIO.sfx('swirl');
+      AUDIO.stopMusic();
+      const tintMap = { player: px(RAMP.RED, 2), enemy: px(RAMP.GRASS, 2), none: px(RAMP.PAPER, 1) } as const;
+      const sw = this.add
+        .image(this.scale.width / 2, this.scale.height / 2, 'swirl')
+        .setScrollFactor(0)
+        .setDepth(4000)
+        .setTint(colorOf(tintMap[advantage]))
+        .setScale(0.2)
+        .setAlpha(0.9);
+      const cover = this.add
+        .rectangle(0, 0, this.scale.width, this.scale.height, 0x16101e)
+        .setOrigin(0)
+        .setScrollFactor(0)
+        .setDepth(3999)
+        .setAlpha(0);
+      this.tweens.add({ targets: sw, angle: 720, scale: 3.4, duration: 750, ease: 'cubic.in' });
+      this.tweens.add({
+        targets: cover,
+        alpha: 1,
+        duration: 750,
+        onComplete: () => {
+          sw.destroy();
+          this.game.events.once(
+            'mf-battle-end',
+            (outcome: 'victory' | 'defeat' | 'ran') => {
+              cover.destroy();
+              this.cut = false;
+              this.battleCooldown = this.time.now + 1200;
+              if (outcome === 'victory' && roamer) {
+                roamer.dead = true;
+                roamer.spr.destroy();
+              }
+              if (outcome === 'ran' && roamer) {
+                roamer.vx = Math.sign(roamer.spr.x - this.player.x) * 70;
+                roamer.vy = Math.sign(roamer.spr.y - this.player.y) * 70;
+              }
+              if (outcome === 'defeat') {
+                this.handleDefeat();
+                resolve(outcome);
+                return;
+              }
+              AUDIO.playMusic(this.mapDef.music);
+              this.scene.resume();
+              resolve(outcome);
+            },
+          );
+          this.scene.pause();
+          this.scene.launch('battle', {
+            enemyIds,
+            advantage,
+            guestChad: GS.data.guest === 'chad',
+            glintAssist: boss,
+            boss,
+          });
+        },
+      });
+    });
+  }
+
+  private handleDefeat(): void {
+    GS.data.cashOnHand = Math.floor(GS.data.cashOnHand / 2);
+    GS.data.party.forEach((h) => {
+      h.down = false;
+      h.hp = h.maxHp;
+    });
+    this.registry.set('defeated', true);
+    this.scene.restart({ mapId: 'rex_home', x: 104, y: 124, facing: 'down' });
+  }
+
+  /* ---------------- interactions ---------------- */
+
+  private async interact(): Promise<void> {
+    const v = this.facingVector();
+    const probeX = this.player.x + v.x * 16;
+    const probeY = this.player.y - 6 + v.y * 14;
+
+    for (const n of this.npcs) {
+      if (Math.hypot(n.spr.x - probeX, Math.abs(n.spr.y - 6 - probeY)) < 16) {
+        await this.talkTo(n);
+        return;
+      }
+    }
+    for (const s of this.mapDef.signs) {
+      if (Math.hypot(s.x * 16 + 8 - probeX, s.y * 16 + 8 - probeY) < 16) {
+        AUDIO.sfx('cursor');
+        await this.dlg.say(...DIALOGUE[s.dialogue]);
+        return;
+      }
+    }
+    for (const ph of this.mapDef.phones) {
+      if (Math.hypot(ph.x * 16 + 8 - probeX, ph.y * 16 + 8 - probeY) < 18) {
+        await this.phoneFlow();
+        return;
+      }
+    }
+    // picnic tables: a small rest (full system arrives with Baskets)
+    for (const p of this.mapDef.props) {
+      if (p.sprite !== 'picnic') continue;
+      if (Math.hypot(p.x * 16 + 18 - probeX, p.y * 16 + 12 - probeY) < 24) {
+        await this.dlg.say(...DIALOGUE.picnic_rest);
+        GS.data.party.forEach((h) => {
+          if (!h.down) h.hp = Math.min(h.maxHp, h.hp + Math.floor(h.maxHp / 2));
+        });
+        AUDIO.sfx('heal');
+        return;
+      }
+    }
+  }
+
+  private async talkTo(n: NpcObj): Promise<void> {
+    // face each other
+    if (!n.def.dog) {
+      const f: Facing =
+        Math.abs(n.spr.x - this.player.x) > Math.abs(n.spr.y - this.player.y)
+          ? n.spr.x > this.player.x
+            ? 'left'
+            : 'right'
+          : n.spr.y > this.player.y
+            ? 'up'
+            : 'down';
+      n.spr.anims.stop();
+      n.spr.setFrame(standFrame(f));
+    }
+    AUDIO.sfx('cursor');
+    if (n.def.id === 'mom') {
+      if (!GS.flag('mom_gear')) {
+        await this.dlg.say(...DIALOGUE.npc_mom_pre);
+        GS.addItem('salt_shaker');
+        GS.addItem('pbj');
+        GS.setFlag('mom_gear');
+        toast(this, 'Got SALT SHAKER and PB&J!');
+        AUDIO.sfx('confirm');
+      } else if (GS.flag('zapper_done')) {
+        await this.dlg.say(...DIALOGUE.npc_mom_post);
+      } else {
+        await this.dlg.say(...DIALOGUE.npc_mom);
+      }
+      return;
+    }
+    await this.dlg.say(...DIALOGUE[n.def.dialogue]);
+  }
+
+  private async phoneFlow(): Promise<void> {
+    AUDIO.sfx('phone');
+    await this.dlg.say(...DIALOGUE.phone_save_q);
+    const pick = await this.dlg.ask(['Call Dad', 'Hang up'], { cancelIndex: 1 });
+    if (pick !== 0) return;
+    const gift = GS.flag('dad_first_deposit') ? 0 : 50;
+    GS.setFlag('dad_first_deposit');
+    const deposit = gift + GS.data.pendingDeposit;
+    const pages = [...DIALOGUE.phone_dad];
+    pages[2] =
+      deposit > 0
+        ? `@I put $${deposit} into your account. Don't spend it all on corn dogs. Spend MOST of it on corn dogs.`
+        : `@Account's holding steady, champ. Like my love for you. Which is also money, somehow.`;
+    GS.data.banked += deposit;
+    GS.data.pendingDeposit = 0;
+    await this.dlg.say(...pages);
+    GS.data.map = this.mapDef.id;
+    GS.save();
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE.save_done);
+  }
+
+  private async pauseMenu(): Promise<void> {
+    AUDIO.sfx('cursor');
+    const rex = GS.hero('rex');
+    if (!rex) return;
+    const pick = await this.dlg.ask(['Status', 'Goods', 'Locket', 'Close'], { cancelIndex: 3 });
+    if (pick === 0) {
+      await this.dlg.say(
+        `${rex.name}  L${rex.level}  HP ${rex.hp}/${rex.maxHp}  PP ${rex.pp}/${rex.maxPp}\nEXP ${rex.exp} (next: ${expForLevel(rex.level + 1)})\nOff ${rex.stats.offense} Def ${rex.stats.defense} Spd ${rex.stats.speed} Guts ${rex.stats.guts} Vibe ${rex.stats.vibe}\nCash $${GS.data.cashOnHand} / Bank $${GS.data.banked}`,
+      );
+    } else if (pick === 1) {
+      if (GS.data.inventory.length === 0) {
+        await this.dlg.say('Your bag contains air and ambition.');
+        return;
+      }
+      const names = GS.data.inventory.map((id) => ITEMS[id]?.name ?? id);
+      const sel = await this.dlg.ask([...names, 'Close'], { cancelIndex: names.length });
+      if (sel < names.length) {
+        const itemId = GS.data.inventory[sel];
+        const item = ITEMS[itemId];
+        if (item.kind === 'food' && item.heal) {
+          rex.hp = Math.min(rex.maxHp, rex.hp + item.heal);
+          GS.removeItem(itemId);
+          AUDIO.sfx('heal');
+          await this.dlg.say(`${rex.name} ate the ${item.name}. Recovered ${item.heal} HP!`);
+        } else {
+          await this.dlg.say(item.text);
+        }
+      }
+    } else if (pick === 2) {
+      const n = GS.data.embers;
+      if (!GS.data.keyItems.includes('star_locket')) {
+        await this.dlg.say('You have a pocket. In it: lint, mostly.');
+      } else {
+        if (n > 0) AUDIO.playMusic('heartlight');
+        await this.dlg.say(
+          `THE STAR LOCKET — Heartlights: ${n}/8`,
+          n > 0
+            ? '(One instrument plays, all alone, and refuses to be sad about it.)'
+            : '(It is quiet. It is waiting for the first Heartlight.)',
+        );
+        AUDIO.playMusic(this.mapDef.music);
+      }
+    }
+  }
+
+  /* ---------------- doors & triggers ---------------- */
+
+  private checkDoors(): void {
+    for (const d of this.mapDef.doors) {
+      const r = { x: d.x * 16, y: d.y * 16, w: d.w * 16, h: d.h * 16 };
+      if (
+        this.player.x > r.x &&
+        this.player.x < r.x + r.w &&
+        this.player.y - 4 > r.y &&
+        this.player.y - 4 < r.y + r.h
+      ) {
+        this.goThroughDoor(d.to, d.tx, d.ty, d.facing);
+        return;
+      }
+    }
+    for (const p of this.mapDef.props) {
+      if (!p.door) continue;
+      const r = {
+        x: p.x * 16 + p.door.ox,
+        y: p.y * 16 + p.door.oy,
+        w: p.door.w,
+        h: p.door.h,
+      };
+      if (
+        this.player.x > r.x &&
+        this.player.x < r.x + r.w &&
+        this.player.y > r.y &&
+        this.player.y < r.y + r.h
+      ) {
+        this.goThroughDoor(p.door.to, p.door.tx, p.door.ty, 'up');
+        return;
+      }
+    }
+  }
+
+  private goThroughDoor(to: string, tx: number, ty: number, facing: Facing): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    AUDIO.sfx('cursor');
+    this.cameras.main.fadeOut(220, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.restart({ mapId: to, x: tx, y: ty, facing });
+    });
+  }
+
+  private insideTriggers = new Set<string>();
+
+  private checkTriggers(): void {
+    const txi = Math.floor(this.player.x / 16);
+    const tyi = Math.floor((this.player.y - 4) / 16);
+    for (const t of this.mapDef.triggers) {
+      const inside =
+        txi >= t.rect.x && txi < t.rect.x + t.rect.w && tyi >= t.rect.y && tyi < t.rect.y + t.rect.h;
+      if (!inside) {
+        this.insideTriggers.delete(t.id);
+        continue;
+      }
+      // edge-trigger: fire on entry, not every frame while standing in it
+      if (this.insideTriggers.has(t.id)) continue;
+      this.insideTriggers.add(t.id);
+      void this.runTrigger(t.id);
+    }
+  }
+
+  /* ---------------- cutscenes (Ch.1 per §A6 / ADR-007) ---------------- */
+
+  private async onEnterCutscenes(): Promise<void> {
+    if (this.registry.get('defeated') === true) {
+      this.registry.set('defeated', false);
+      this.cut = true;
+      await this.dlg.say(
+        `${GS.hero('rex')?.name ?? 'Rex'}... pick yourself up.`,
+        'The hill is still out there. So is breakfast. Handle both.',
+      );
+      this.cut = false;
+    }
+    if (this.mapDef.id === 'otterbrook' && GS.flag('intro_done') && !GS.flag('chad_joined')) {
+      await this.chadJoinScene();
+    }
+  }
+
+  private async runTrigger(id: string): Promise<void> {
+    switch (id) {
+      case 'wake_up':
+        if (!GS.flag('intro_done')) await this.introScene();
+        break;
+      case 'crater':
+        if (!GS.flag('tick_defeated')) await this.craterScene();
+        break;
+      case 'porch':
+        if (GS.flag('ember1') && !GS.flag('zapper_done')) await this.porchScene();
+        break;
+      case 'bus_stop':
+        if (GS.flag('zapper_done')) await this.endingScene();
+        break;
+      default:
+        break;
+    }
+  }
+
+  private async introScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('intro_done');
+    const cover = this.add
+      .rectangle(0, 0, this.scale.width, this.scale.height, 0x0a0a18)
+      .setOrigin(0)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI - 1); // below the dialogue windows
+    await this.dlg.say(...DIALOGUE.intro_card);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(900, 0.012);
+    this.cameras.main.flash(500, 248, 232, 160);
+    await this.wait(1000);
+    this.tweens.add({ targets: cover, alpha: 0, duration: 800, onComplete: () => cover.destroy() });
+    await this.wait(900);
+    await this.dlg.say(...DIALOGUE.intro_wake);
+    GS.setFlag('meteor_fell');
+    this.cut = false;
+  }
+
+  private async chadJoinScene(): Promise<void> {
+    this.cut = true;
+    const chad = this.add.sprite(this.player.x + 60, this.player.y, 'chad', standFrame('left'));
+    chad.setOrigin(0.5, 1).setDepth(chad.y);
+    await this.tweenTo(chad, this.player.x + 18, this.player.y, 900, 'chad');
+    await this.dlg.say(...DIALOGUE.chad_join);
+    chad.destroy();
+    GS.data.guest = 'chad';
+    GS.setFlag('chad_joined');
+    this.addFollower('chad');
+    this.cut = false;
+  }
+
+  private async craterScene(): Promise<void> {
+    this.cut = true;
+    if (!GS.flag('met_glint')) {
+      GS.setFlag('met_glint');
+      await this.dlg.say(...DIALOGUE.crater_approach);
+      const glint = this.add.sprite(15.5 * 16, 6.5 * 16, 'glint');
+      glint.play('glint-flit').setDepth(9999);
+      const glow = this.add.circle(glint.x, glint.y, 10, colorOf(px(RAMP.GOLD, 3)), 0.25).setDepth(9998);
+      this.tweens.add({ targets: [glint, glow], y: '-=6', duration: 900, yoyo: true, repeat: -1 });
+      AUDIO.sfx('ember');
+      await this.dlg.say(...DIALOGUE.glint_prophecy);
+      GS.data.keyItems.push('star_locket');
+      await this.dlg.say(...DIALOGUE.tick_warning);
+      this.cameras.main.shake(700, 0.015);
+      AUDIO.sfx('thud');
+      await this.wait(750);
+      glint.destroy();
+      glow.destroy();
+    } else {
+      await this.dlg.say('The crater rim bulges again. It did NOT learn its lesson.');
+    }
+    const outcome = await this.startBattle(['titanic_tick'], 'none', null, true);
+    if (outcome !== 'victory') return;
+    // betrayal #1 resolved mid-battle (guest flag already cleared there);
+    // the trail sprite still needs to go
+    GS.data.guest = null;
+    this.removeFollower('chad');
+    GS.setFlag('tick_defeated');
+    GS.setFlag('ember1');
+    GS.data.embers = 1;
+    this.cut = true;
+    const ember = this.add.image(15.5 * 16, 7 * 16, 'ember').setDepth(9999).setScale(1);
+    AUDIO.sfx('ember');
+    this.tweens.add({ targets: ember, y: this.player.y - 30, x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember_get);
+    await this.dlg.say(...DIALOGUE.glint_after);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  private async porchScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('zapper_done');
+    const glint = this.add.sprite(this.player.x + 40, this.player.y - 40, 'glint');
+    glint.play('glint-flit').setDepth(9999);
+    await this.tweenTo(glint, this.player.x + 12, this.player.y - 18, 800);
+    await this.dlg.say(DIALOGUE.porch_zapper[0], DIALOGUE.porch_zapper[1]);
+    // the zapper claims another hero
+    const zapX = 17 * 16;
+    const zapY = 5.5 * 16;
+    this.tweens.add({ targets: glint, x: zapX, y: zapY, duration: 700, ease: 'sine.in' });
+    await this.wait(700);
+    AUDIO.sfx('zapper');
+    this.cameras.main.flash(280, 160, 236, 236);
+    glint.destroy();
+    await this.dlg.say(DIALOGUE.porch_zapper[2], DIALOGUE.porch_zapper[3], DIALOGUE.porch_zapper[4]);
+    const spark = this.add.image(zapX, zapY + 10, 'pixel').setTint(colorOf(px(RAMP.GOLD, 3))).setScale(3).setDepth(9999);
+    this.tweens.add({ targets: spark, x: this.player.x, y: this.player.y - 12, duration: 900, ease: 'sine.inout' });
+    await this.wait(950);
+    spark.destroy();
+    GS.addItem('glints_spark');
+    AUDIO.sfx('ember');
+    await this.dlg.say(DIALOGUE.porch_zapper[5], DIALOGUE.porch_zapper[6]);
+    this.cut = false;
+  }
+
+  private async endingScene(): Promise<void> {
+    this.cut = true;
+    const pick = await this.dlg.ask(['Board the 6:15 to Brickton', 'Keep exploring'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      this.cut = false;
+      return;
+    }
+    AUDIO.stopMusic();
+    const cover = this.add
+      .rectangle(0, 0, this.scale.width, this.scale.height, 0x0a0a18)
+      .setOrigin(0)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI - 1)
+      .setAlpha(0);
+    this.tweens.add({ targets: cover, alpha: 1, duration: 1500 });
+    await this.wait(1600);
+    AUDIO.playMusic('heartlight');
+    await this.dlg.say(...DIALOGUE.to_be_continued);
+    AUDIO.stopMusic();
+    this.scene.start('title');
+  }
+
+  /* ---------------- helpers ---------------- */
+
+  private wait(ms: number): Promise<void> {
+    return new Promise((r) => this.time.delayedCall(ms, r));
+  }
+
+  private tweenTo(
+    target: Phaser.GameObjects.Sprite,
+    x: number,
+    y: number,
+    ms: number,
+    walkAnimId?: string,
+  ): Promise<void> {
+    return new Promise((r) => {
+      if (walkAnimId) {
+        const f: Facing = x < target.x ? 'left' : 'right';
+        target.anims.play(`${walkAnimId}-walk-${f}`, true);
+      }
+      this.tweens.add({
+        targets: target,
+        x,
+        y,
+        duration: ms,
+        onComplete: () => {
+          if (walkAnimId) {
+            target.anims.stop();
+            target.setFrame(standFrame('down'));
+          }
+          r();
+        },
+      });
+    });
+  }
+}
