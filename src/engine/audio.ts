@@ -248,6 +248,12 @@ class AudioSys {
     this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    // audio focus: go silent when the game is backgrounded (tab/app switch)
+    document.addEventListener('visibilitychange', () => {
+      if (!this.ctx) return;
+      if (document.hidden) void this.ctx.suspend();
+      else if (!this.muted) void this.ctx.resume();
+    });
   }
 
   setMuted(m: boolean): void {
@@ -378,6 +384,14 @@ class AudioSys {
       while (this.nextTime < this.ctx.currentTime + 0.12) {
         const stepIdx = this.step % track.channels[0].notes.length;
         if (!track.loop && this.step >= track.channels[0].notes.length) {
+          // one-shot finished: release every held (tied) note at the pattern's
+          // end and kill the scheduler — otherwise the last note drones on
+          const end = this.nextTime;
+          Object.keys(this.held).forEach((k) => this.releaseHeld(Number(k), end));
+          if (this.timer !== null) {
+            window.clearInterval(this.timer);
+            this.timer = null;
+          }
           this.current = null;
           return;
         }
@@ -426,8 +440,9 @@ class AudioSys {
     g.gain.exponentialRampToValueAtTime(ch.vol, t + 0.015);
     osc.connect(g).connect(this.musicGain);
     osc.start(t);
-    // long safety stop; ties keep it sounding until release
-    osc.stop(t + stepDur * 32);
+    // safety stop: longest tie run in any track is 4 steps; releaseHeld
+    // normally ends notes well before this
+    osc.stop(t + stepDur * 8);
     this.held[ci] = { osc, gain: g };
   }
 
