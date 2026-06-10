@@ -181,6 +181,28 @@ export class OverworldScene extends Phaser.Scene {
         });
       }
     }
+    this.buildDoorMarkers();
+  }
+
+  /** every walkable door gets a visible marker (mat / stairs) */
+  private buildDoorMarkers(): void {
+    for (const d of this.mapDef.doors) {
+      const kind = d.indicator ?? (this.mapDef.interior ? 'mat' : 'none');
+      if (kind === 'none') continue;
+      const cx = (d.x + d.w / 2) * 16;
+      const by = (d.y + d.h) * 16;
+      this.add
+        .image(cx, kind === 'stairs' ? by + 2 : by - 1, kind === 'stairs' ? 'stairs' : 'doormat')
+        .setOrigin(0.5, 1)
+        .setDepth(2); // floor decal, characters walk over it
+    }
+    // building entrances: a mat on the doorstep
+    for (const p of this.mapDef.props) {
+      if (!p.door) continue;
+      const cx = p.x * 16 + p.door.ox + p.door.w / 2;
+      const by = p.y * 16 + p.door.oy + p.door.h;
+      this.add.image(cx, by + 4, 'doormat').setOrigin(0.5, 1).setDepth(2);
+    }
   }
 
   private buildNpcs(): void {
@@ -658,6 +680,30 @@ export class OverworldScene extends Phaser.Scene {
           if (!h.down) h.hp = Math.min(h.maxHp, h.hp + Math.floor(h.maxHp / 2));
         });
         AUDIO.sfx('heal');
+        return;
+      }
+    }
+    // buildings without interiors yet: a visible door always answers
+    const lockedLines: Record<string, string> = {
+      drugstore: 'locked_drugstore',
+      arcade: 'locked_arcade',
+      chapel: 'locked_chapel',
+      house_chad: 'locked_chad',
+      house_a: 'locked_house',
+      house_b: 'locked_house',
+    };
+    for (const p of this.mapDef.props) {
+      const lineId = lockedLines[p.sprite];
+      if (!lineId || !p.solid) continue;
+      const r = {
+        x: p.x * 16 + p.solid.ox - 4,
+        y: p.y * 16 + p.solid.oy - 4,
+        w: p.solid.w + 8,
+        h: p.solid.h + 8,
+      };
+      if (probeX > r.x && probeX < r.x + r.w && probeY > r.y && probeY < r.y + r.h) {
+        AUDIO.sfx('cursor');
+        await this.dlg.say(...DIALOGUE[lineId]);
         return;
       }
     }

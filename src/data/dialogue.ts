@@ -57,6 +57,25 @@ export const DIALOGUE: Record<string, string[]> = {
     'TRAIL COURTESY: pack out what you pack in. The slugs have unionized.',
   ],
 
+  /* ---------------- doors that aren't doors yet ---------------- */
+  locked_drugstore: [
+    'The drugstore is dark. A note on the door:',
+    '"BACK WHEN THE SKY CALMS DOWN. — Mgmt."',
+  ],
+  locked_arcade: [
+    'The STARPORT is locked. From somewhere inside comes the lonely chirp of an unbeaten high score.',
+  ],
+  locked_chapel: [
+    'The chapel doors are closed this late. A small card reads:',
+    '"Knock softly. He hears fine."',
+  ],
+  locked_chad: [
+    "The Pickles' door is locked. Through it you can hear Chad rehearsing a victory speech about tonight.",
+  ],
+  locked_house: [
+    'Locked. Inside, a TV is calmly explaining the meteor. The word "PANIC" is used twice, responsibly.',
+  ],
+
   /* ---------------- cutscenes ---------------- */
   intro_card: [
     'Otterbrook, Ohio. Summer, 1995.',

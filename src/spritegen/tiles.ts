@@ -240,6 +240,40 @@ export function drawSign(): Pixmap {
   return pm;
 }
 
+/** doormat — the universal "this is a door" decal */
+export function drawDoormat(): Pixmap {
+  const pm = new Pixmap(18, 10);
+  pm.rect(1, 1, 16, 8, px(RAMP.EARTH, 2));
+  pm.frame(1, 1, 16, 8, px(RAMP.GOLD, 2));
+  pm.hline(4, 3, 10, px(RAMP.EARTH, 1));
+  pm.hline(4, 5, 10, px(RAMP.EARTH, 1));
+  pm.hline(4, 7, 10, px(RAMP.EARTH, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** staircase decal for floor-to-floor exits */
+export function drawStairs(): Pixmap {
+  const pm = new Pixmap(18, 24);
+  // dark opening at the top
+  pm.rect(2, 1, 14, 5, C.inkSoft);
+  pm.rect(3, 1, 12, 3, C.outline);
+  // steps, lightening toward the player
+  pm.rect(2, 6, 14, 4, px(RAMP.EARTH, 1));
+  pm.hline(2, 6, 14, px(RAMP.EARTH, 0));
+  pm.rect(2, 10, 14, 4, px(RAMP.EARTH, 2));
+  pm.hline(2, 10, 14, px(RAMP.EARTH, 1));
+  pm.rect(2, 14, 14, 4, px(RAMP.EARTH, 3));
+  pm.hline(2, 14, 14, px(RAMP.EARTH, 1));
+  pm.rect(2, 18, 14, 5, px(RAMP.EARTH, 3));
+  pm.hline(2, 18, 14, px(RAMP.EARTH, 2));
+  // side rails
+  pm.vline(1, 1, 22, px(RAMP.EARTH, 0));
+  pm.vline(16, 1, 22, px(RAMP.EARTH, 0));
+  pm.outline(C.outline);
+  return pm;
+}
+
 export function drawPicnicTable(): Pixmap {
   const pm = new Pixmap(36, 26);
   const wood = px(RAMP.EARTH, 2);

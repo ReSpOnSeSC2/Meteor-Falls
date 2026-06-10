@@ -44,6 +44,8 @@ export interface DoorZone {
   tx: number;
   ty: number;
   facing: 'down' | 'left' | 'right' | 'up';
+  /** visible marker: mat (default in interiors), stairs, or none (map edges) */
+  indicator?: 'mat' | 'stairs' | 'none';
 }
 
 export interface SpawnerDef {
@@ -65,6 +67,7 @@ export interface MapDef {
   name: string;
   music: string | null;
   night?: boolean;
+  interior?: boolean;
   grid: string[];
   props: PropDef[];
   npcs: NpcDef[];
@@ -318,6 +321,7 @@ function buildRexHome(): MapDef {
     id: 'rex_home',
     name: "REX'S HOUSE",
     music: 'home',
+    interior: true,
     grid: g.out(),
     props: [
       { sprite: 'sofa', x: 2, y: 4, solid: { ox: 0, oy: 4, w: 34, h: 14 } },
@@ -328,8 +332,8 @@ function buildRexHome(): MapDef {
     signs: [],
     phones: [{ x: 1, y: 2 }],
     doors: [
-      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: 120, ty: 102, facing: 'down' },
-      { x: 12, y: 9, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up' },
+      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: 120, ty: 102, facing: 'down', indicator: 'mat' },
+      { x: 12, y: 9, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up', indicator: 'stairs' },
     ],
     spawners: [],
     triggers: [],
@@ -344,6 +348,7 @@ function buildBedroom(): MapDef {
     id: 'rex_bedroom',
     name: "REX'S ROOM",
     music: null,
+    interior: true,
     grid: g.out(),
     props: [
       { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
@@ -352,7 +357,7 @@ function buildBedroom(): MapDef {
     npcs: [],
     signs: [],
     phones: [],
-    doors: [{ x: 3, y: 7, w: 2, h: 1, to: 'rex_home', tx: 200, ty: 132, facing: 'down' }],
+    doors: [{ x: 3, y: 7, w: 2, h: 1, to: 'rex_home', tx: 200, ty: 132, facing: 'down', indicator: 'stairs' }],
     spawners: [],
     triggers: [{ id: 'wake_up', rect: { x: 0, y: 0, w: 10, h: 8 }, once: true }],
   };

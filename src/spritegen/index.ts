@@ -42,6 +42,8 @@ import {
   drawEmber,
   drawLemonadeStand,
   drawBusSign,
+  drawDoormat,
+  drawStairs,
   drawHouse,
 } from './tiles';
 import {
@@ -175,6 +177,8 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'ember', drawEmber());
   addPixmap(scene, 'lemonade', drawLemonadeStand());
   addPixmap(scene, 'bus_sign', drawBusSign());
+  addPixmap(scene, 'doormat', drawDoormat());
+  addPixmap(scene, 'stairs', drawStairs());
 
   // buildings
   addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true }));
