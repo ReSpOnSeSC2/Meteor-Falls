@@ -171,6 +171,133 @@ function rug(): Pixmap {
   return pm;
 }
 
+/* ---- Brickton City ground (S1) ---- */
+
+function sidewalkTile(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.PAPER, 1));
+  const rng = mulberry32(41);
+  pm.scatter(rng, 0, 0, TILE, TILE, px(RAMP.PAPER, 2), 5);
+  pm.scatter(rng, 0, 0, TILE, TILE, px(RAMP.PAPER, 0), 3);
+  // expansion seams: one slab per tile
+  pm.hline(0, TILE - 1, TILE, px(RAMP.PAPER, 0));
+  pm.vline(TILE - 1, 0, TILE, px(RAMP.PAPER, 0));
+  return pm;
+}
+
+function roadBase(seed: number): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.INK, 2));
+  const rng = mulberry32(seed);
+  pm.scatter(rng, 0, 0, TILE, TILE, px(RAMP.INK, 1), 6);
+  pm.scatter(rng, 0, 0, TILE, TILE, px(RAMP.INK, 3), 3);
+  return pm;
+}
+
+function roadDash(): Pixmap {
+  const pm = roadBase(43);
+  pm.rect(3, 7, 10, 2, px(RAMP.GOLD, 2));
+  return pm;
+}
+
+function crosswalk(): Pixmap {
+  const pm = roadBase(44);
+  for (const y of [1, 5, 9, 13]) pm.rect(0, y, TILE, 2, px(RAMP.PAPER, 2));
+  return pm;
+}
+
+function brickWall(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.RED, 1));
+  const mortar = px(RAMP.PAPER, 0);
+  for (let y = 3; y < TILE; y += 4) pm.hline(0, y, TILE, mortar);
+  // staggered head joints
+  for (let row = 0; row < 4; row++) {
+    const off = row % 2 === 0 ? 3 : 9;
+    pm.vline(off, row * 4, 3, mortar);
+    pm.vline((off + 8) % TILE, row * 4, 3, mortar);
+  }
+  const rng = mulberry32(45);
+  pm.scatter(rng, 0, 0, TILE, TILE, px(RAMP.RED, 0), 4);
+  return pm;
+}
+
+/* ---- Department of Smiles interiors ---- */
+
+function officeFloor(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.PAPER, 1));
+  pm.checker(0, 0, TILE, TILE, px(RAMP.PAPER, 1), px(RAMP.PAPER, 2), 8);
+  const rng = mulberry32(46);
+  pm.scatter(rng, 0, 0, TILE, TILE, px(RAMP.CYAN, 0), 2);
+  return pm;
+}
+
+function officeWall(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.EARTH, 3));
+  for (let x = 0; x < TILE; x += 8) pm.vline(x, 0, 12, px(RAMP.EARTH, 2));
+  pm.hline(0, 11, TILE, px(RAMP.EARTH, 2));
+  pm.rect(0, 12, TILE, 3, px(RAMP.EARTH, 1)); // baseboard
+  pm.hline(0, TILE - 1, TILE, C.inkSoft);
+  return pm;
+}
+
+function cubicleWall(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.NIGHT, 3)); // that exact cubicle-fabric blue
+  pm.hline(0, 0, TILE, px(RAMP.PAPER, 2)); // top rail catches the light
+  pm.hline(0, 1, TILE, px(RAMP.PAPER, 1));
+  const rng = mulberry32(47);
+  pm.scatter(rng, 0, 2, TILE, TILE - 2, px(RAMP.NIGHT, 2), 8);
+  pm.vline(0, 0, TILE, px(RAMP.NIGHT, 2));
+  pm.vline(TILE - 1, 0, TILE, px(RAMP.NIGHT, 2));
+  return pm;
+}
+
+function cubicleDesk(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.EARTH, 2));
+  pm.hline(0, 0, TILE, px(RAMP.EARTH, 3));
+  // beige monitor, glowing spreadsheet
+  pm.rect(3, 2, 8, 7, px(RAMP.PAPER, 1));
+  pm.rect(4, 3, 6, 4, px(RAMP.CYAN, 2));
+  pm.set(5, 4, px(RAMP.CYAN, 3));
+  // a very neat stack of paper
+  pm.rect(12, 4, 3, 5, px(RAMP.PAPER, 3));
+  pm.hline(12, 6, 3, px(RAMP.PAPER, 1));
+  pm.rect(0, 12, TILE, 4, px(RAMP.EARTH, 1)); // desk front
+  pm.hline(0, 12, TILE, px(RAMP.EARTH, 0));
+  return pm;
+}
+
+/* ---- bus interior ---- */
+
+function skyDay(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.BLUE, 3));
+  pm.rect(2, 4, 5, 2, px(RAMP.PAPER, 3));
+  pm.rect(10, 10, 4, 2, px(RAMP.PAPER, 3));
+  pm.set(9, 11, px(RAMP.PAPER, 3));
+  return pm;
+}
+
+function busFloor(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.INK, 1));
+  for (let y = 1; y < TILE; y += 4) pm.hline(0, y, TILE, px(RAMP.INK, 2));
+  return pm;
+}
+
+function busWall(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.PAPER, 2));
+  pm.rect(0, 5, TILE, 2, px(RAMP.RED, 2)); // the transit-authority stripe
+  pm.hline(0, TILE - 2, TILE, px(RAMP.PAPER, 1));
+  pm.hline(0, TILE - 1, TILE, C.inkSoft);
+  return pm;
+}
+
 /* ---------------------------------------------------------------- */
 /* Tile registry — order defines tilemap indices                      */
 
@@ -194,6 +321,21 @@ export const TILESET: TileEntry[] = [
   { name: 'floor_wood', solid: false, make: floorWood },
   { name: 'wall_int', solid: true, make: wallInterior },
   { name: 'rug', solid: false, make: rug },
+  // Brickton City (S1)
+  { name: 'sidewalk', solid: false, make: sidewalkTile },
+  { name: 'road', solid: false, make: () => roadBase(42) },
+  { name: 'road_dash', solid: false, make: roadDash },
+  { name: 'crosswalk', solid: false, make: crosswalk },
+  { name: 'brick', solid: true, make: brickWall },
+  // Department of Smiles
+  { name: 'office_floor', solid: false, make: officeFloor },
+  { name: 'office_wall', solid: true, make: officeWall },
+  { name: 'cubicle', solid: true, make: cubicleWall },
+  { name: 'cubicle_desk', solid: true, make: cubicleDesk },
+  // bus interior
+  { name: 'sky_day', solid: false, make: skyDay },
+  { name: 'bus_floor', solid: false, make: busFloor },
+  { name: 'bus_wall', solid: true, make: busWall },
   // 16 path variants appended programmatically (indices PATH_BASE..+15)
 ];
 
@@ -520,5 +662,335 @@ export function drawHouse(o: HouseOpts): Pixmap {
   }
 
   pm.outline(C.outline);
+  return pm;
+}
+
+/* ---------------------------------------------------------------- */
+/* Brickton City props & buildings (S1)                               */
+
+/** downtown building: flat parapet roof, window floors, sign band,
+ *  storefront level with display windows + door. Height: 44 + 16·upperRows. */
+export interface CityBuildingOpts {
+  wallTiles: number;
+  upperRows: 1 | 2;
+  wall: number; // ramp
+  signText: string;
+  /** striped awning over the storefront, in this ramp */
+  awning?: number;
+  /** hospital cross on the sign band */
+  cross?: boolean;
+  /** an enormous, unblinking smiley on the upper wall */
+  smiley?: boolean;
+  doorAt?: number; // tile column of the door
+  doubleDoor?: boolean;
+}
+
+export const cityBuildingHeight = (upperRows: 1 | 2): number => 44 + upperRows * 16;
+
+export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
+  const w = o.wallTiles * TILE;
+  const H = cityBuildingHeight(o.upperRows);
+  const pm = new Pixmap(w + 2, H);
+  const wall = px(o.wall, 2);
+  const wallD = px(o.wall, 1);
+  const wallDD = px(o.wall, 0);
+
+  // parapet
+  pm.rect(0, 0, w + 2, 2, C.inkSoft);
+  pm.rect(1, 2, w, 6, wallD);
+  pm.hline(1, 7, w, wallDD);
+
+  // upper wall + window grid
+  const upTop = 8;
+  const upH = o.upperRows * 16;
+  pm.rect(1, upTop, w, upH, wall);
+  if (o.wall === RAMP.RED) {
+    for (let y = upTop + 3; y < upTop + upH; y += 4) pm.hline(1, y, w, wallD);
+  }
+  for (let r = 0; r < o.upperRows; r++) {
+    for (let t = 0; t < o.wallTiles; t++) {
+      if (o.smiley && t >= Math.floor(o.wallTiles / 2) - 1 && t <= Math.floor(o.wallTiles / 2)) continue;
+      const wx = 1 + t * TILE + 4;
+      const wy = upTop + r * 16 + 3;
+      const lit = (t + r) % 3 === 0;
+      pm.rect(wx, wy, 8, 10, lit ? px(RAMP.GOLD, 2) : px(RAMP.CYAN, 1));
+      pm.set(wx + 1, wy + 1, lit ? px(RAMP.GOLD, 3) : px(RAMP.CYAN, 3));
+      pm.frame(wx - 1, wy - 1, 10, 12, wallD);
+      pm.hline(wx, wy + 5, 8, wallD);
+    }
+  }
+  if (o.smiley) {
+    const cx = 1 + Math.floor(w / 2);
+    const cy = upTop + Math.floor(upH / 2);
+    pm.ellipse(cx, cy, 9, 9, px(RAMP.GOLD, 2));
+    pm.ellipse(cx - 3, cy - 3, 2, 3, px(RAMP.GOLD, 3));
+    pm.rect(cx - 4, cy - 3, 2, 3, C.inkSoft); // eyes
+    pm.rect(cx + 2, cy - 3, 2, 3, C.inkSoft);
+    pm.hline(cx - 5, cy + 4, 11, C.inkSoft); // the grin. wider than necessary.
+    pm.set(cx - 5, cy + 3, C.inkSoft);
+    pm.set(cx + 5, cy + 3, C.inkSoft);
+  }
+
+  // sign band
+  const sy = upTop + upH;
+  pm.rect(1, sy, w, 12, C.white);
+  pm.frame(1, sy, w, 12, wallDD);
+  const tw = o.signText.length * 6 - 1;
+  drawTextInto(pm, o.signText, Math.floor((w - tw) / 2) + 1, sy + 3, C.inkSoft);
+  if (o.cross) {
+    const cx = w - 9;
+    pm.rect(cx - 1, sy + 2, 4, 8, px(RAMP.RED, 2));
+    pm.rect(cx - 3, sy + 4, 8, 4, px(RAMP.RED, 2));
+  }
+
+  // storefront level
+  const fy = sy + 12;
+  pm.rect(1, fy, w, 24, wall);
+  pm.hline(1, fy + 23, w, wallDD);
+  if (o.awning !== undefined) {
+    for (let x = 1; x < w + 1; x += 6) {
+      pm.rect(x, fy, 3, 5, px(o.awning, 2));
+      pm.rect(x + 3, fy, 3, 5, C.white);
+    }
+    for (let x = 2; x < w; x += 6) pm.set(x + 1, fy + 5, px(o.awning, 2)); // scallops
+  }
+
+  // door (then display windows around it)
+  const doorTile = o.doorAt ?? Math.floor(o.wallTiles / 2);
+  const dw = o.doubleDoor ? 22 : 12;
+  const dx = 1 + doorTile * TILE + Math.floor((TILE - dw) / 2);
+  for (let t = 0; t < o.wallTiles; t++) {
+    if (t === doorTile || (o.doubleDoor && t === doorTile + 1)) continue;
+    const wx = 1 + t * TILE + 2;
+    pm.rect(wx, fy + 7, 12, 13, px(RAMP.CYAN, 2));
+    pm.line(wx + 2, fy + 16, wx + 8, fy + 10, px(RAMP.CYAN, 3));
+    pm.frame(wx - 1, fy + 6, 14, 15, C.white);
+  }
+  pm.rect(dx, fy + 24 - 17, dw, 17, px(RAMP.EARTH, 1));
+  pm.frame(dx, fy + 24 - 17, dw, 17, px(RAMP.EARTH, 0));
+  if (o.doubleDoor) {
+    pm.vline(dx + Math.floor(dw / 2), fy + 24 - 17, 17, px(RAMP.EARTH, 0));
+    pm.rect(dx + 2, fy + 24 - 14, 7, 8, px(RAMP.CYAN, 1));
+    pm.rect(dx + 13, fy + 24 - 14, 7, 8, px(RAMP.CYAN, 1));
+  } else {
+    pm.set(dx + dw - 3, fy + 24 - 9, px(RAMP.GOLD, 3));
+  }
+
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** payphone — Brickton's finest dial tone */
+export function drawPayphone(): Pixmap {
+  const pm = new Pixmap(16, 28);
+  pm.rect(1, 1, 14, 4, px(RAMP.BLUE, 2)); // canopy
+  pm.hline(2, 1, 12, px(RAMP.BLUE, 3));
+  pm.vline(2, 5, 19, px(RAMP.BLUE, 1)); // posts
+  pm.vline(13, 5, 19, px(RAMP.BLUE, 1));
+  pm.rect(3, 5, 10, 14, px(RAMP.CYAN, 1)); // glass
+  pm.line(4, 16, 11, 7, px(RAMP.CYAN, 3));
+  pm.rect(5, 8, 6, 8, px(RAMP.RED, 2)); // the phone unit
+  pm.rect(6, 7, 4, 2, px(RAMP.RED, 3)); // handset
+  pm.set(6, 11, C.inkSoft); // keypad
+  pm.set(8, 11, C.inkSoft);
+  pm.rect(1, 24, 14, 3, px(RAMP.BLUE, 1)); // base
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawBench(): Pixmap {
+  const pm = new Pixmap(22, 13);
+  const wood = px(RAMP.EARTH, 2);
+  pm.rect(1, 1, 20, 3, wood); // backrest
+  pm.hline(1, 2, 20, px(RAMP.EARTH, 3));
+  pm.rect(1, 6, 20, 3, wood); // seat
+  pm.hline(1, 7, 20, px(RAMP.EARTH, 1));
+  pm.rect(2, 9, 2, 3, C.inkSoft);
+  pm.rect(18, 9, 2, 3, C.inkSoft);
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawHydrant(): Pixmap {
+  const pm = new Pixmap(10, 14);
+  pm.rect(3, 2, 4, 2, px(RAMP.RED, 3)); // cap
+  pm.rect(2, 4, 6, 7, px(RAMP.RED, 2));
+  pm.set(1, 6, px(RAMP.RED, 1)); // side nozzles
+  pm.set(8, 6, px(RAMP.RED, 1));
+  pm.vline(3, 4, 7, px(RAMP.RED, 3));
+  pm.rect(1, 11, 8, 2, px(RAMP.RED, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawPlanter(): Pixmap {
+  const pm = new Pixmap(22, 16);
+  pm.rect(1, 8, 20, 7, px(RAMP.RED, 1)); // brick box
+  pm.hline(1, 8, 20, px(RAMP.RED, 2));
+  pm.hline(1, 11, 20, px(RAMP.PAPER, 0));
+  pm.rect(2, 3, 18, 6, px(RAMP.FOREST, 1)); // greenery
+  pm.checker(2, 3, 18, 6, px(RAMP.FOREST, 1), px(RAMP.FOREST, 2), 2);
+  pm.set(5, 2, px(RAMP.RED, 3)); // brave little flowers
+  pm.set(11, 2, px(RAMP.GOLD, 3));
+  pm.set(16, 2, px(RAMP.MAGENTA, 3));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/* ---- Department of Smiles props ---- */
+
+/** elevator doors — drawn on the wall above an 'elevator' door zone */
+export function drawElevator(): Pixmap {
+  const pm = new Pixmap(26, 32);
+  pm.rect(1, 1, 24, 30, C.inkSoft); // frame
+  pm.rect(2, 7, 22, 23, px(RAMP.PAPER, 1)); // doors
+  pm.vline(12, 7, 23, C.inkSoft); // seam
+  pm.vline(13, 7, 23, C.inkSoft);
+  pm.vline(3, 8, 21, px(RAMP.PAPER, 2)); // brushed-steel shine
+  pm.vline(15, 8, 21, px(RAMP.PAPER, 2));
+  pm.rect(3, 2, 20, 4, px(RAMP.INK, 1)); // indicator panel
+  pm.set(11, 3, px(RAMP.GOLD, 3)); // up light (always up. concerning.)
+  pm.set(14, 3, px(RAMP.INK, 2)); // down light, dark
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawWaterCooler(): Pixmap {
+  const pm = new Pixmap(12, 22);
+  pm.rect(2, 1, 8, 8, px(RAMP.CYAN, 2)); // bottle
+  pm.vline(3, 2, 6, px(RAMP.CYAN, 3));
+  pm.hline(3, 1, 6, px(RAMP.CYAN, 3));
+  pm.rect(1, 9, 10, 10, px(RAMP.PAPER, 2)); // body
+  pm.vline(2, 10, 8, px(RAMP.PAPER, 3));
+  pm.set(3, 12, px(RAMP.CYAN, 1)); // tap
+  pm.set(8, 12, px(RAMP.RED, 2)); // hot tap nobody trusts
+  pm.rect(1, 19, 10, 2, px(RAMP.PAPER, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawCopier(): Pixmap {
+  const pm = new Pixmap(24, 18);
+  pm.rect(1, 5, 20, 10, px(RAMP.PAPER, 1)); // body
+  pm.rect(1, 3, 20, 3, px(RAMP.PAPER, 0)); // lid
+  pm.hline(1, 3, 20, px(RAMP.PAPER, 2));
+  pm.rect(15, 7, 8, 3, px(RAMP.PAPER, 2)); // output tray
+  pm.hline(16, 8, 6, C.white); // fresh copies
+  pm.set(3, 7, px(RAMP.GRASS, 2)); // ready light
+  pm.set(5, 7, px(RAMP.RED, 2)); // jam light (also ready)
+  pm.rect(2, 15, 3, 2, C.inkSoft);
+  pm.rect(17, 15, 3, 2, C.inkSoft);
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawPlantPot(): Pixmap {
+  const pm = new Pixmap(14, 22);
+  pm.ellipse(7, 6, 5, 5, px(RAMP.FOREST, 2)); // office ficus
+  pm.ellipse(4, 4, 2, 2, px(RAMP.FOREST, 3));
+  pm.ellipse(10, 8, 3, 3, px(RAMP.FOREST, 1));
+  pm.rect(4, 13, 7, 2, px(RAMP.EARTH, 2)); // rim
+  pm.rect(5, 15, 5, 6, px(RAMP.EARTH, 1)); // pot
+  pm.vline(5, 15, 6, px(RAMP.EARTH, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the floor-3 holding room door: sealed, riveted, smiling */
+export function drawHoldingDoor(): Pixmap {
+  const pm = new Pixmap(20, 28);
+  pm.rect(1, 1, 18, 26, px(RAMP.INK, 1)); // steel slab
+  pm.frame(1, 1, 18, 26, px(RAMP.INK, 2));
+  for (const [rx, ry] of [
+    [3, 3],
+    [16, 3],
+    [3, 24],
+    [16, 24],
+  ]) {
+    pm.set(rx, ry, px(RAMP.INK, 3)); // rivets
+  }
+  pm.hline(2, 14, 16, px(RAMP.INK, 0)); // plate seam
+  pm.set(4, 5, px(RAMP.RED, 2)); // lock light. it is on.
+  // the badge: a small brass smiley
+  pm.rect(6, 7, 8, 6, px(RAMP.GOLD, 2));
+  pm.set(8, 9, C.inkSoft);
+  pm.set(11, 9, C.inkSoft);
+  pm.hline(8, 11, 4, C.inkSoft);
+  // PRODUCTIVITY LOCK housing
+  pm.rect(5, 17, 10, 7, px(RAMP.PAPER, 0));
+  pm.frame(5, 17, 10, 7, px(RAMP.INK, 2));
+  pm.rect(7, 19, 6, 3, px(RAMP.GOLD, 1)); // three dark quota pips
+  pm.set(8, 20, px(RAMP.INK, 1));
+  pm.set(10, 20, px(RAMP.INK, 1));
+  pm.set(12, 20, px(RAMP.INK, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** wooden office door with a nameplate (the Manager's) */
+export function drawOfficeDoor(): Pixmap {
+  const pm = new Pixmap(16, 26);
+  pm.rect(1, 1, 14, 24, px(RAMP.EARTH, 2));
+  pm.frame(1, 1, 14, 24, px(RAMP.EARTH, 0));
+  pm.frame(3, 10, 10, 13, px(RAMP.EARTH, 1)); // lower panel
+  pm.rect(4, 3, 8, 5, px(RAMP.PAPER, 2)); // nameplate
+  pm.frame(4, 3, 8, 5, px(RAMP.GOLD, 1));
+  pm.hline(6, 5, 4, C.inkSoft);
+  pm.set(13, 14, px(RAMP.GOLD, 3)); // knob
+  pm.outline(C.outline);
+  return pm;
+}
+
+/* ---- bus interior props ---- */
+
+export function drawBusSeat(): Pixmap {
+  const pm = new Pixmap(16, 24);
+  const vinyl = px(RAMP.FOREST, 2);
+  pm.rect(2, 1, 12, 14, px(RAMP.FOREST, 1)); // high back
+  pm.rect(3, 2, 10, 12, vinyl);
+  pm.vline(4, 3, 10, px(RAMP.FOREST, 3));
+  pm.hline(3, 8, 10, px(RAMP.FOREST, 1)); // seam
+  pm.rect(1, 15, 14, 6, vinyl); // cushion
+  pm.hline(1, 15, 14, px(RAMP.FOREST, 3));
+  pm.rect(2, 21, 3, 2, C.inkSoft);
+  pm.rect(11, 21, 3, 2, C.inkSoft);
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the window band overlay: posts + sill; panes are transparent so the
+ *  scenery sprites scroll behind it */
+export function drawBusWindows(widthPx: number): Pixmap {
+  const pm = new Pixmap(widthPx, 62);
+  pm.rect(0, 0, widthPx, 8, px(RAMP.PAPER, 1)); // ceiling strip
+  pm.hline(0, 7, widthPx, px(RAMP.PAPER, 0));
+  pm.hline(0, 0, widthPx, px(RAMP.PAPER, 2));
+  for (let x = 0; x < widthPx; x += 56) {
+    pm.rect(x, 8, 6, 38, px(RAMP.PAPER, 1)); // window posts
+    pm.vline(x + 5, 8, 38, px(RAMP.PAPER, 0));
+  }
+  pm.rect(0, 46, widthPx, 5, px(RAMP.PAPER, 2)); // sill
+  pm.hline(0, 46, widthPx, px(RAMP.PAPER, 3));
+  pm.rect(0, 51, widthPx, 11, px(RAMP.PAPER, 1)); // wall under the sill
+  pm.rect(0, 54, widthPx, 2, px(RAMP.RED, 2)); // the stripe again
+  return pm;
+}
+
+/** distant city silhouette for the bus ride's last act */
+export function drawSkyline(): Pixmap {
+  const pm = new Pixmap(150, 46);
+  const rng = mulberry32(88);
+  let x = 0;
+  while (x < 146) {
+    const w = 12 + Math.floor(rng() * 14);
+    const h = 16 + Math.floor(rng() * 26);
+    pm.rect(x, 46 - h, Math.min(w, 150 - x), h, px(RAMP.NIGHT, 1));
+    for (let wy = 46 - h + 3; wy < 43; wy += 4) {
+      for (let wx = x + 2; wx < x + w - 2 && wx < 147; wx += 4) {
+        if (rng() < 0.4) pm.set(wx, wy, px(RAMP.GOLD, 2));
+      }
+    }
+    x += w + 2;
+  }
   return pm;
 }

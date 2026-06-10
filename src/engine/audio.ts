@@ -195,6 +195,76 @@ const TRACKS: Record<string, Track> = {
       },
     ],
   },
+  // Brickton City: confident downtown strut, walking bass (à la Fourside's kid sibling)
+  brickton: {
+    bpm: 112,
+    swing: 0.14,
+    loop: true,
+    channels: [
+      {
+        wave: 'triangle',
+        vol: 0.2,
+        notes: ['C2', null, 'E2', 'G2', 'A2', null, 'B2', null, 'C3', null, 'A2', 'G2', 'F2', 'G2', 'G2', null],
+      },
+      {
+        wave: 'square',
+        vol: 0.07,
+        notes: ['E4', 'G4', null, 'C5', null, 'B4', 'A4', null, 'G4', null, 'E4', null, 'D4', 'E4', null, null],
+      },
+      {
+        wave: 'noise',
+        vol: 0.03,
+        notes: ['C5', null, 'C5', 'C5', 'C5', null, 'C5', null, 'C5', null, 'C5', 'C5', 'C5', null, 'C5', null],
+      },
+    ],
+  },
+  // Department of Smiles: rigid corporate music-box, major key with a worm in it.
+  // No swing. The Smiles do not swing.
+  department: {
+    bpm: 96,
+    loop: true,
+    channels: [
+      {
+        wave: 'triangle',
+        vol: 0.16,
+        notes: ['C3', null, 'C3', null, 'G2', null, 'G2', null, 'C3', null, 'C3', null, 'Ab2', null, 'G2', null],
+      },
+      {
+        wave: 'square',
+        vol: 0.06,
+        notes: ['C5', null, 'E5', null, 'G5', null, 'E5', null, 'C5', null, 'F5', 'E5', null, 'Bb4', 'B4', null],
+      },
+      {
+        wave: 'sine',
+        vol: 0.035,
+        detune: 4,
+        notes: ['E6', null, null, null, null, null, null, null, 'E6', null, null, null, null, null, 'Eb6', null],
+      },
+    ],
+  },
+  // the 6:15: a friendly diesel roll, somewhere between home and everything else
+  bus: {
+    bpm: 100,
+    swing: 0.2,
+    loop: true,
+    channels: [
+      {
+        wave: 'triangle',
+        vol: 0.18,
+        notes: ['F2', null, 'C3', null, 'F2', null, 'C3', 'C3', 'Bb2', null, 'F2', null, 'C3', null, 'D3', null],
+      },
+      {
+        wave: 'sine',
+        vol: 0.09,
+        notes: ['A4', '-', 'C5', '-', 'F4', '-', null, 'A4', 'G4', '-', 'F4', '-', 'G4', '-', null, null],
+      },
+      {
+        wave: 'noise',
+        vol: 0.02,
+        notes: ['C5', null, null, null, 'C5', null, null, null, 'C5', null, null, null, 'C5', null, null, null],
+      },
+    ],
+  },
   // Heartlight: the Homesong's first stem — played when an Ember is recorded
   heartlight: {
     bpm: 72,
@@ -378,6 +448,11 @@ class AudioSys {
       case 'pray':
         this.tone('sine', 660, 660, 0.3, 0.05);
         this.tone('sine', 990, 990, 0.4, 0.04, 0.1);
+        break;
+      case 'alert':
+        // a patrol Smiler notices you, productively
+        this.tone('square', 620, 980, 0.09, 0.07);
+        this.tone('square', 980, 980, 0.07, 0.06, 0.09);
         break;
       default:
         break;

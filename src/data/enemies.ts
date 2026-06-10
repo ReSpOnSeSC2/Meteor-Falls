@@ -32,6 +32,8 @@ export interface EnemyDef {
   deathLine: string;
   sprite: string;
   mini: string;
+  /** humanoid enemies roam as full character sheets (4-dir walk) instead of a mini */
+  walker?: string;
   /** psychedelic battle-bg palette ramps [a, b] */
   bg: [number, number];
   boss?: boolean;
@@ -127,6 +129,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Blazer Smiler finally took a personal day.',
       sprite: 'battle_blazer_smiler',
       mini: 'mini_pigeon_gang',
+      walker: 'smiler',
       bg: [RAMP.CYAN, RAMP.MAGENTA],
     }),
     E({
