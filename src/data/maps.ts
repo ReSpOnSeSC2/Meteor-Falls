@@ -382,7 +382,7 @@ function buildRexHome(): MapDef {
   g.rect(4, 4, 3, 2, 'r');
   return {
     id: 'rex_home',
-    name: "REX'S HOUSE",
+    name: "{rex}'S HOUSE",
     music: 'home',
     interior: true,
     grid: g.out(),
@@ -410,7 +410,7 @@ function buildBedroom(): MapDef {
   g.rect(4, 4, 2, 2, 'r');
   return {
     id: 'rex_bedroom',
-    name: "REX'S ROOM",
+    name: "{rex}'S ROOM",
     music: null,
     interior: true,
     grid: g.out(),

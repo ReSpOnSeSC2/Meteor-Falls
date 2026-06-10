@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { TitleScene } from './scenes/TitleScene';
+import { NameEntryScene } from './scenes/NameEntryScene';
 import { OverworldScene } from './scenes/OverworldScene';
 import { BattleScene } from './scenes/BattleScene';
 import { SpriteLabScene } from './scenes/SpriteLabScene';
@@ -24,7 +25,7 @@ const game = new Phaser.Game({
   input: {
     activePointers: 4,
   },
-  scene: [BootScene, TitleScene, OverworldScene, BattleScene, SpriteLabScene, UIScene],
+  scene: [BootScene, TitleScene, NameEntryScene, OverworldScene, BattleScene, SpriteLabScene, UIScene],
 });
 
 // One semantic input snapshot per frame, before any scene updates.

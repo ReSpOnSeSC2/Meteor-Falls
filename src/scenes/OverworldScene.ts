@@ -12,7 +12,7 @@ import { DIALOGUE } from '../data/dialogue';
 import { GS } from '../engine/state';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { Dialogue, makeWindow, toast, DEPTH_UI } from '../ui/windows';
+import { Dialogue, makeWindow, toast, vars, DEPTH_UI } from '../ui/windows';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS } from '../spritegen/tiles';
 import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
 import { instantWin, expShare } from '../battle/formulas';
@@ -329,7 +329,8 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private showBanner(): void {
-    const name = this.mapDef.name;
+    // banner names are all-caps; resolved {rex} et al. get uppercased to match
+    const name = vars(this.mapDef.name).toUpperCase();
     const w = name.length * 6 + 24;
     const win = makeWindow(this, 8, 8, w, 24);
     const tx = this.add

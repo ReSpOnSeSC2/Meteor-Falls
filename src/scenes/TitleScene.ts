@@ -66,10 +66,10 @@ export class TitleScene extends Phaser.Scene {
     const choice = options[pick];
     if (choice === 'New Game') {
       GS.reset();
-      this.startGame();
+      this.startGame('nameentry'); // Prompt 21: name entry, then the 2AM intro
     } else if (choice === 'Continue') {
       GS.load();
-      this.startGame();
+      this.startGame('overworld');
     } else {
       this.started = true;
       AUDIO.stopMusic();
@@ -77,12 +77,14 @@ export class TitleScene extends Phaser.Scene {
     }
   }
 
-  private startGame(): void {
+  private startGame(target: 'nameentry' | 'overworld'): void {
     this.started = true;
-    AUDIO.stopMusic();
+    // the title theme keeps playing under name entry; NameEntryScene stops it
+    if (target === 'overworld') AUDIO.stopMusic();
     this.cameras.main.fadeOut(400, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      this.scene.start('overworld', { mapId: GS.data.map });
+      if (target === 'overworld') this.scene.start('overworld', { mapId: GS.data.map });
+      else this.scene.start('nameentry');
     });
   }
 }

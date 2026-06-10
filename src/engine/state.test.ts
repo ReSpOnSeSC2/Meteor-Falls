@@ -33,6 +33,59 @@ describe('GameState serialization (Prompt 2: round-trip)', () => {
   });
 });
 
+describe('New Game choices (Prompt 21)', () => {
+  beforeEach(() => GS.reset());
+
+  const CHOICES = {
+    heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+    playerName: 'Jay',
+    favoriteFood: 'fuzzy pickles',
+    coolestThing: 'the 6:15',
+  };
+
+  it('applyNewGameChoices renames joined heroes and stores the rest', () => {
+    GS.applyNewGameChoices(CHOICES);
+    expect(GS.hero('rex')?.name).toBe('Casey');
+    expect(GS.heroName('faye')).toBe('Wren'); // not joined yet — read from heroNames
+    expect(GS.data.playerName).toBe('Jay');
+    expect(GS.data.favoriteFood).toBe('fuzzy pickles');
+    expect(GS.data.coolestThing).toBe('the 6:15');
+  });
+
+  it('a joined hero wins over the heroNames record', () => {
+    GS.applyNewGameChoices(CHOICES);
+    GS.data.party.push(makeHeroState('faye', 6, GS.data.heroNames.faye));
+    expect(GS.heroName('faye')).toBe('Wren');
+    expect(GS.hero('faye')?.name).toBe('Wren');
+  });
+
+  it('the finale hook survives a save round-trip ({playername} et al.)', () => {
+    GS.applyNewGameChoices(CHOICES);
+    const json = GS.serialize();
+    GS.reset();
+    GS.deserialize(json);
+    expect(GS.data.playerName).toBe('Jay');
+    expect(GS.data.coolestThing).toBe('the 6:15');
+    expect(GS.data.heroNames.dorin).toBe('Petru');
+    expect(GS.hero('rex')?.name).toBe('Casey');
+  });
+
+  it('pre-Prompt-21 saves load with canon defaults backfilled', () => {
+    const legacy = JSON.parse(newGameDataJson()) as Record<string, unknown>;
+    delete legacy.coolestThing;
+    delete legacy.heroNames;
+    delete legacy.playerName;
+    GS.deserialize(JSON.stringify(legacy));
+    expect(GS.data.coolestThing).toBe('meteors');
+    expect(GS.data.playerName).toBe('Player');
+    expect(GS.data.heroNames.faye).toBe('Faye');
+  });
+
+  function newGameDataJson(): string {
+    return JSON.stringify(newGameData());
+  }
+});
+
 describe('hero state', () => {
   it('a fresh hero has level-correct stats and full meters', () => {
     const rex = makeHeroState('rex', 5);

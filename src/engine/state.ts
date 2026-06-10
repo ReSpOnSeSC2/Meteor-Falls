@@ -44,13 +44,24 @@ export interface GameStateData {
   embers: number;
   favoriteFood: string;
   playerName: string;
+  coolestThing: string;
+  /** Prompt 21 names for all four heroes — joined or not (heroes joining later read theirs from here) */
+  heroNames: Record<HeroId, string>;
 }
 
-export function makeHeroState(id: HeroId, level: number): HeroState {
+/** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
+export interface NewGameChoices {
+  heroNames: Record<HeroId, string>;
+  playerName: string;
+  favoriteFood: string;
+  coolestThing: string;
+}
+
+export function makeHeroState(id: HeroId, level: number, name?: string): HeroState {
   const def = HEROES[id];
   return {
     id,
-    name: def.name,
+    name: name ?? def.name,
     level,
     exp: expForLevel(level),
     hp: maxHpAtLevel(id, level),
@@ -86,6 +97,13 @@ export function newGameData(): GameStateData {
     embers: 0,
     favoriteFood: 'corn dogs',
     playerName: 'Player',
+    coolestThing: 'meteors',
+    heroNames: {
+      rex: HEROES.rex.name,
+      faye: HEROES.faye.name,
+      milo: HEROES.milo.name,
+      dorin: HEROES.dorin.name,
+    },
   };
 }
 
@@ -108,6 +126,20 @@ class GameStateStore {
 
   hero(id: HeroId): HeroState | undefined {
     return this.data.party.find((h) => h.id === id);
+  }
+
+  /** display name for any hero, joined or not (Prompt 21 names) */
+  heroName(id: HeroId): string {
+    return this.hero(id)?.name ?? this.data.heroNames[id];
+  }
+
+  /** Prompt 21: commit the New Game choices to state (party members rename too) */
+  applyNewGameChoices(c: NewGameChoices): void {
+    this.data.heroNames = { ...c.heroNames };
+    this.data.playerName = c.playerName;
+    this.data.favoriteFood = c.favoriteFood;
+    this.data.coolestThing = c.coolestThing;
+    for (const h of this.data.party) h.name = this.data.heroNames[h.id];
   }
 
   aliveParty(): HeroState[] {
@@ -136,9 +168,17 @@ class GameStateStore {
   }
 
   deserialize(json: string): void {
-    const parsed = JSON.parse(json) as GameStateData;
+    const parsed = JSON.parse(json) as Partial<GameStateData>;
     if (parsed.version !== 1) throw new Error(`unknown save version ${String(parsed.version)}`);
-    this.data = parsed;
+    // pre-Prompt-21 saves lack the New Game fields — backfill canon defaults.
+    // version stays 1; the real migration registry arrives with save slots.
+    const fresh = newGameData();
+    this.data = {
+      ...fresh,
+      ...parsed,
+      version: 1,
+      heroNames: { ...fresh.heroNames, ...(parsed.heroNames ?? {}) },
+    };
   }
 
   save(): void {

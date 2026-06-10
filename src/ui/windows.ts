@@ -7,20 +7,13 @@
 import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { GS } from '../engine/state';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
+import { vars } from './text';
+
+export { vars } from './text';
 
 export const DEPTH_UI = 1000;
-
-export function vars(text: string): string {
-  const filled = text
-    .replaceAll('{playername}', GS.data.playerName)
-    .replaceAll('{favoritefood}', GS.data.favoriteFood)
-    .replaceAll('{rex}', GS.hero('rex')?.name ?? 'Rex');
-  // the Bible's @-speech convention renders as a speech bullet, not a literal @
-  return filled.startsWith('@') ? `•${filled.slice(1)}` : filled;
-}
 
 export function makeWindow(
   scene: Phaser.Scene,

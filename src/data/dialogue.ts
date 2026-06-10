@@ -7,7 +7,7 @@
 export const DIALOGUE: Record<string, string[]> = {
   /* ---------------- NPCs ---------------- */
   npc_pemmel: [
-    '@Oh! Rex! Did you feel the sky last night? My whole spice rack jumped.',
+    '@Oh! {rex}! Did you feel the sky last night? My whole spice rack jumped.',
     "@Biscuit heard it too. He's been pointing at the hill all morning like a furry compass.",
     '@If you ever see him wander off, send him home, would you? He smells like pond.',
   ],
@@ -31,7 +31,7 @@ export const DIALOGUE: Record<string, string[]> = {
     '@Moms think of EVERYTHING.',
   ],
   npc_mom_pre: [
-    '@Rex, honey. The sky fell on Hickory Hill and you have your shoes on already. Of course you do.',
+    '@{rex}, honey. The sky fell on Hickory Hill and you have your shoes on already. Of course you do.',
     "@Take your bat. And this Salt Shaker — for the slugs. A mother knows.",
     '@Be home before your father calls. And take Chad with you, his mother worries. Sort of.',
   ],
@@ -39,7 +39,7 @@ export const DIALOGUE: Record<string, string[]> = {
     '@You smell like smoke and starlight. Wash your hands, hero.',
     "@I'm proud of you. I don't need to know the details to know that.",
   ],
-  npc_mom: ['@Dinner is corn dogs. Dinner is always corn dogs. I know my audience.'],
+  npc_mom: ['@Dinner is {favoritefood}. Dinner is always {favoritefood}. I know my audience.'],
 
   /* ---------------- signs (they editorialize) ---------------- */
   sign_welcome: [
@@ -84,10 +84,10 @@ export const DIALOGUE: Record<string, string[]> = {
   intro_wake: [
     'The roar came up through the floor, through the bed, through the back teeth.',
     'Something enormous just landed on Hickory Hill.',
-    '(Rex is already putting on his cap. Somehow you knew he would be.)',
+    '({rex} is already putting on his cap. Somehow you knew he would be.)',
   ],
   chad_join: [
-    "@REX! Did you SEE that?! The sky EXPLODED! I saw it first, by the way. That's canon now.",
+    "@{rex}! Did you SEE that?! The sky EXPLODED! I saw it first, by the way. That's canon now.",
     "@I'm coming too. Obviously. I'm basically the leader.",
     '@...You go first though. If anything scary happens, scream in a manly way.',
     '* Chad Pickle tagged along! (He immediately stood behind you.)',
@@ -104,7 +104,7 @@ export const DIALOGUE: Record<string, string[]> = {
     '@Four kids carrying the old light can silence it. You are one. You will find the others. One of them— ',
     '@Here. The STAR LOCKET. When you stand where an Ember sings, it will record a HEARTLIGHT. Eight Heartlights make the HOMESONG.',
     "@The Homesong is the one frequency the Hush can't eat. Don't ask me how I know. It's literally the only thing my species does.",
-    '* Rex got the Star Locket!',
+    '* {rex} got the Star Locket!',
   ],
   tick_warning: [
     '@...wait. The ground is. Hm. Kid? The ground is drinking.',
@@ -132,7 +132,7 @@ export const DIALOGUE: Record<string, string[]> = {
     "(The Pickles' bug zapper claims another hero.)",
     '@...tell her... the song already knows her name...',
     '* Glint left behind a single warm spark.',
-    '* Rex got GLINT\'S SPARK. (He will not be using it for a while. It is a friend.)',
+    '* {rex} got GLINT\'S SPARK. (He will not be using it for a while. It is a friend.)',
   ],
   phone_dad: [
     '@RING... RING...',

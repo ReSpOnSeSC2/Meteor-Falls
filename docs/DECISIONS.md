@@ -227,3 +227,46 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   and pass, or tests fail naming the offender. Towns/villages inherit the
   looseness but not the grid minimums. GAME_BIBLE §B4 amended with this rule
   per Appendix rule 6 — it is now a phase-level non-negotiable.
+
+## ADR-013 — New Game sequence: one-grid name entry, variable flow, tolerant v1 saves
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt 21 / S12)
+- **Context:** Prompt 21 requires EB-style New Game setup; the finale's
+  confirm box (§A6 Ch.8) reads the player's name off the save; the ADR-008
+  QA driver must be able to script straight through it.
+- **Decision:**
+  - **`NameEntryScene`** sits between Title's New Game and the 2AM intro;
+    Continue is untouched (S6 owns the slot scene later). Seven screens —
+    rex/faye/milo/dorin (prefilled, portraits), player (deliberately empty),
+    favorite food, coolest thing — share ONE 5×13 letter grid plus a
+    SPACE/BACK/DON'T CARE/OK bar. A picks, B erases (B on an empty field
+    steps back a screen), **START jumps straight to OK**, touch taps cells
+    directly, rows wrap vertically. OK refuses an empty value. An EB recap
+    window asks Yep!/Hold on— before committing; the title theme runs under
+    the whole scene.
+  - **Data-driven** in `src/data/newgame.ts`: prompts, prefills, caps
+    (names 8, food/thing 14), canon-flavored don't-care lists; tests assert
+    every list value is typeable on the grid and fits its cap.
+  - **State:** `GameStateData` gains `heroNames` (all four, joined or not)
+    and `coolestThing`. `makeHeroState` takes a name override — **S2's Faye
+    join must pass `GS.data.heroNames.faye`**. `GS.heroName(id)` is the
+    display lookup. `vars()` moved to Phaser-free `src/ui/text.ts`
+    (re-exported from windows.ts) and now resolves
+    {faye} {milo} {dorin} {coolthing} alongside the Prompt 6 trio.
+  - **Saves stay `version: 1`:** `deserialize` spread-merges missing fields
+    from `newGameData()` defaults, so pre-S12 saves load with canon names.
+    The real migration registry still arrives with save slots (Prompt 22/S3).
+  - **Dialogue pass:** literal hero-name mentions became {rex} (Pemmel, Mom,
+    intro_wake, Chad's join shout — was "REX!", now renders as typed — and
+    both item-get lines); `npc_mom`'s dinner line consumes {favoritefood};
+    map banners render `vars(name).toUpperCase()` so `{rex}'S HOUSE/ROOM`
+    follow the rename (S6 slot summaries must do the same).
+  - **QA recipe** (documented in the scene header): from a fresh profile —
+    KeyZ, KeyZ (title menu → New Game), Enter ×4 (hero prefills), KeyZ +
+    Enter (player name), Enter ×2 (food, thing), KeyZ (Yep!) → 2AM intro.
+    Bots avoid DON'T CARE (it randomizes). Verified end-to-end with
+    key()/pump() only.
+- **Consequences:** every future bot script threads name entry (8 presses);
+  {playername} is on the save for the finale; renaming Rex flows through
+  battle strips, banners, and all dialogue with zero per-site code.
