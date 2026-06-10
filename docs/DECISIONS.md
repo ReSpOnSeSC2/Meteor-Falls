@@ -124,3 +124,29 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   steps).
 - **Consequences:** Whole-game scripted playthroughs run in seconds; the
   Prompt 42 speedrun bot builds on this.
+
+## ADR-009 — Character sprites v2: 24×32 frames, detailed EB shading
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (supersedes the 16×24 spec in ADR-002/003 after user
+  review: "much more detailed character sprites")
+- **Context:** 16×24 left too few pixels for faces and garments.
+- **Decision:** Characters are 24×32 (1.5×2 tiles — slightly larger on screen
+  than EB's, deliberately). Art rules baked into the generator: light source
+  top-left everywhere; rounded 2-step skull chamfer; close-set 2×3 eyes with a
+  catchlight; ears, jaw shadow, fringe rows; 3-tone garments (lit rim, base,
+  core shadow + hem); counter-swinging arms; lifted-leg + scissor walk poses;
+  outfit details (lapels+tie+buttons, gi collar+sash knot, apron straps,
+  dress pleats+flare, cap brim underside). Tile size stays 16 px.
+- **Consequences:** All cast members and the Remix lab inherit the detail
+  free; follower trail spacing widened (9 crumbs); Prompt 38's ART_SPEC must
+  document 24×32 as the character sheet size.
+
+## ADR-010 — Text feel: B advances, skippable battle lines, @ renders as •
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (user playtest feedback)
+- **Decision:** A *or* B advances dialogue pages and fast-forwards; battle
+  text linger is skippable by holding either; the Bible's @-speech convention
+  stays in the data files but renders as a • speech bullet (the literal @ read
+  as a username next to names like "@REX!").

@@ -374,7 +374,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.player.setDepth(this.player.y);
     this.followers.forEach((f, i) => {
-      const crumb = this.trail[(i + 1) * 7];
+      const crumb = this.trail[(i + 1) * 9];
       if (crumb) {
         const movedF = Math.hypot(f.spr.x - crumb.x, f.spr.y - crumb.y) > 0.5;
         f.spr.x = crumb.x;

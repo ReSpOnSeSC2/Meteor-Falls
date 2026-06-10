@@ -14,10 +14,12 @@ import { RAMP, px } from '../palette';
 export const DEPTH_UI = 1000;
 
 export function vars(text: string): string {
-  return text
+  const filled = text
     .replaceAll('{playername}', GS.data.playerName)
     .replaceAll('{favoritefood}', GS.data.favoriteFood)
     .replaceAll('{rex}', GS.hero('rex')?.name ?? 'Rex');
+  // the Bible's @-speech convention renders as a speech bullet, not a literal @
+  return filled.startsWith('@') ? `•${filled.slice(1)}` : filled;
 }
 
 export function makeWindow(
@@ -140,7 +142,8 @@ export class Dialogue {
         delay: 16,
         loop: true,
         callback: () => {
-          if (INPUT.justPressed('A')) {
+          // A or B advances, like EB
+          if (INPUT.justPressed('A') || INPUT.justPressed('B')) {
             AUDIO.sfx('cursor');
             blink.remove();
             poll.remove();

@@ -85,11 +85,11 @@ export class SpriteLabScene extends Phaser.Scene {
       const col = i % 7;
       const row = Math.floor(i / 7);
       const x = 50 + col * 50;
-      const y = 80 + row * 70;
-      const spr = this.add.sprite(x, y, id, 0).setScale(2.4);
+      const y = 96 + row * 88;
+      const spr = this.add.sprite(x, y, id, 0).setOrigin(0.5, 1).setScale(2.2);
       spr.play(`${id}-walk-down`);
       const label = this.add
-        .bitmapText(x, y + 10, 'retro', id.toUpperCase().slice(0, 7), 6)
+        .bitmapText(x, y + 3, 'retro', id.toUpperCase().slice(0, 7), 6)
         .setOrigin(0.5, 0)
         .setTint(colorOf(px(RAMP.PAPER, 2)));
       this.content.push(spr, label);

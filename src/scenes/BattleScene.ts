@@ -273,11 +273,13 @@ export class BattleScene extends Phaser.Scene {
       this.textObj.setText('');
       let i = 0;
       let acc = 0;
+      let linger = 26; // frames the finished line stays up; A/B skips
       const ev = this.time.addEvent({
         delay: 16,
         loop: true,
         callback: () => {
-          acc += INPUT.held('A') ? 3.5 : 1.6;
+          const fast = INPUT.held('A') || INPUT.held('B');
+          acc += fast ? 4 : 1.8;
           while (acc >= 1 && i < text.length) {
             acc -= 1;
             i++;
@@ -285,8 +287,11 @@ export class BattleScene extends Phaser.Scene {
           this.textObj.setText(text.slice(0, i));
           if (i % 4 === 0 && i < text.length) AUDIO.sfx('text');
           if (i >= text.length) {
-            ev.remove();
-            this.time.delayedCall(420, resolve);
+            linger -= fast ? 4 : 1;
+            if (linger <= 0) {
+              ev.remove();
+              resolve();
+            }
           }
         },
       });
