@@ -33,4 +33,31 @@ describe('dialogue text variables (Prompt 6 + 21)', () => {
     expect(line).toContain('Dinner is fuzzy pickles.');
     expect(line).not.toContain('{favoritefood}');
   });
+
+  it('every {token} in dialogue.ts is one vars() resolves (S2; S5 folds this into the validator)', () => {
+    const known = new Set(['rex', 'faye', 'milo', 'dorin', 'playername', 'favoritefood', 'coolthing']);
+    for (const [id, pages] of Object.entries(DIALOGUE)) {
+      for (const page of pages) {
+        for (const m of page.matchAll(/\{(\w+)\}/g)) {
+          expect(known.has(m[1]), `${id}: unknown token {${m[1]}}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("S2: Mom's payphone call consumes {favoritefood} and {rex} (ADR-013 — no literals)", () => {
+    GS.applyNewGameChoices({
+      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+      playerName: 'Jay',
+      favoriteFood: 'pancakes',
+      coolestThing: 'dial tones',
+    });
+    const all = DIALOGUE.mom_payphone.map(vars).join('\n');
+    expect(all).toContain('pancakes');
+    expect(all).toContain('Casey');
+    expect(all).not.toMatch(/\{\w+\}/);
+    // the join + manager scenes carry her chosen name everywhere
+    expect(DIALOGUE.faye_join.map(vars).join('\n')).toContain('Wren');
+    expect(DIALOGUE.manager_intro.map(vars).join('\n')).toContain('Wren');
+  });
 });

@@ -270,3 +270,53 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** every future bot script threads name entry (8 presses);
   {playername} is on the save for the finale; renaming Rex flows through
   battle strips, banners, and all dialogue with zero per-site code.
+
+## ADR-014 — S2: the PRODUCTIVITY LOCK, real party followers, and Chapter 1's button
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt S2)
+- **Context:** §A6 ends Chapter 1 with Faye rescued from the Department's
+  holding room. S1 left the room a sealed 'O' block behind the `holding_door`
+  prop with three stable floor-3 patrol ids (ADR-011); S12 fixed the rule that
+  her join must carry the Prompt-21 name (ADR-013).
+- **Decision:**
+  - **Quota flags:** `PatrolDef.countFlag` — a patrolBattle victory sets it
+    (`dos_quota_f3a/b/c`), and a counted patrol never respawns (its quota was
+    met; the floor empties as you clear it). The third flag sets
+    `holding_open`. Prompt 29's prefects can reuse `countFlag` as-is.
+  - **The door is a scene-interpreted prop:** map data always lists
+    `holding_door`; OverworldScene renders it by state — pip-lit variants
+    (`holding_door_1/2/3`) from the flag count, and once open, the door is
+    gone and only the `quota_panel` stays beside the carved gap.
+    `carveHoldingRoom()` (maps.ts) un-walls the grid at scene build; the
+    shared MapDef is never mutated (ADR-012 determinism holds).
+  - **Flag-gated map data:** `NpcDef.ifFlag/unlessFlag` and `PropDef.ifFlag`
+    (Faye + her cot exist only while the room is open and she hasn't joined).
+    Story beats that change the floor (door opening, joins) commit flags and
+    fade-restart the scene so everything rebuilds from data — no live
+    mutation of shared MapDefs.
+  - **Party conga & angels:** followers now come from `party[1..]` + guest
+    (the slice handled only Chad). Down heroes ride the breadcrumb trail as
+    floating `angel` sprites (§A4.7/Prompt 5) and rebuild after every battle.
+  - **Faye joins via `makeHeroState('faye', 6, GS.data.heroNames.faye)`**
+    (ADR-013) inside the holding room; level 6, canon kit from data.
+  - **Pray is a top-level battle command** for any hero who has it (Prompt
+    12's per-hero command row), removed from the Vibe submenu. The Manager
+    fight passes `prayTutorial` for the one-time §A11.4 hint. Pray's table
+    reaches only standing heroes — revival stays with hospitals and rare
+    items.
+  - **The Manager fight is 2× blazer_smiler:** §A7's Ch.1 roster is canon-
+    complete, so the Manager is a CAST member who *summons* Smilers, not a
+    new enemy. `startBattle` opts decouple boss music/no-run from Glint's
+    assist (Glint is gone by Brickton).
+  - **Interim revival until S6/S11:** a full wipe still revives everyone at
+    rex_home (hospitals don't exist yet — S6 retargets the respawn, S11 owns
+    §A4.7 economics); Glint's Spark consumes to revive a downed hero in or
+    out of battle (§A8 "revive, rare").
+  - **`ch1_complete` is set by Mom's call to the Brickton payphone** (first
+    phone tutorialized by Mom calling YOU, {favoritefood} consumed). The
+    Bible's Prompt 27 EXIT line is amended per Appendix rule 6: the docks bus
+    that opens Chapter 2 *requires* the flag rather than setting it.
+- **Consequences:** S3's menu reads a real multi-hero party; quota door state
+  survives re-entry and reload through plain flags; the same join pattern
+  (flag + makeHeroState + fade-restart) serves Milo (Ch.3) and Dorin (Ch.7).

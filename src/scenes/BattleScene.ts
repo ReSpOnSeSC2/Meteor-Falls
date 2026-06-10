@@ -36,6 +36,8 @@ interface BattleConfig {
   guestChad: boolean;
   glintAssist: boolean;
   boss: boolean;
+  /** S2: the Manager fight teaches Faye's first Pray with a one-time hint */
+  prayTutorial?: boolean;
 }
 
 interface EnemyUnit {
@@ -138,6 +140,7 @@ export class BattleScene extends Phaser.Scene {
   private chadOdo: OdoDisplay | null = null;
   private ended = false;
   private tickAcc = 0;
+  private prayHintShown = false;
 
   constructor() {
     super('battle');
@@ -151,6 +154,7 @@ export class BattleScene extends Phaser.Scene {
     this.chad = null;
     this.chadOdo = null;
     this.ended = false;
+    this.prayHintShown = false;
   }
 
   create(): void {
@@ -343,10 +347,22 @@ export class BattleScene extends Phaser.Scene {
 
   private async heroCommand(h: HeroUnit): Promise<boolean> {
     const name = h.hero.name;
+    // Prompt 12: the command row is per-hero — Pray surfaces for whoever has it
+    const hasPray = unlockedAbilities(h.hero.id, h.hero.level).includes('pray');
+    if (hasPray && this.cfg.prayTutorial && !this.prayHintShown) {
+      this.prayHintShown = true;
+      await this.print(this.fill(BATTLE_TEXT.pray_hint, name));
+    }
     for (;;) {
-      const options = ['Bash', 'Vibe', 'Goods', 'Defend'];
+      const options = ['Bash', 'Vibe'];
+      if (hasPray) options.push('Pray');
+      options.push('Goods', 'Defend');
       if (!this.cfg.boss) options.push('Run');
       const pick = await this.dlg.ask(options);
+      if (options[pick] === 'Pray') {
+        await this.prayAction(h);
+        return true;
+      }
       if (options[pick] === 'Bash') {
         const target = await this.pickEnemy();
         if (!target) continue;
@@ -466,7 +482,8 @@ export class BattleScene extends Phaser.Scene {
   private async heroVibe(h: HeroUnit): Promise<boolean> {
     const ids = unlockedAbilities(h.hero.id, h.hero.level).filter((id) => {
       const a = ABILITIES[id];
-      return a && a.kind !== 'gadget' && a.power >= 0 && a.id !== 'teleport_a';
+      // pray lives on the command row, not in the Vibe list (Prompt 12)
+      return a && a.kind !== 'gadget' && a.kind !== 'pray' && a.power >= 0 && a.id !== 'teleport_a';
     });
     if (ids.length === 0) {
       await this.print(`${h.hero.name} searched for the old light... not yet.`);
@@ -488,10 +505,6 @@ export class BattleScene extends Phaser.Scene {
       h.odoHp.heal(amount);
       AUDIO.sfx('heal');
       await this.print(`${name} recovered about ${amount} HP!`);
-      return true;
-    }
-    if (ab.kind === 'pray') {
-      await this.prayAction(h);
       return true;
     }
     // damage vibes
@@ -529,23 +542,25 @@ export class BattleScene extends Phaser.Scene {
     const tier = rollPray(h.hero.level, h.hero.stats.guts, Math.random);
     await this.print(this.fill(PRAY_TEXT[tier], h.hero.name));
     const aliveE = this.enemies.filter((e) => e.alive);
+    // grace reaches the standing; revival stays with hospitals & rare items (§A4.7)
+    const standing = this.aliveHeroes();
     switch (tier) {
       case 'miraculous':
-        this.heroes.forEach((x) => {
+        standing.forEach((x) => {
           x.odoHp.heal(x.hero.maxHp);
           x.odoPp.heal(x.hero.maxPp);
         });
         for (const e of aliveE) await this.damageEnemy(e, 120 + Math.floor(Math.random() * 40));
         break;
       case 'wonderful': {
-        const hurt = this.heroes.some((x) => x.odoHp.value < x.hero.maxHp * 0.5);
-        if (hurt) this.heroes.forEach((x) => x.odoHp.heal(Math.floor(x.hero.maxHp * 0.6)));
+        const hurt = standing.some((x) => x.odoHp.value < x.hero.maxHp * 0.5);
+        if (hurt) standing.forEach((x) => x.odoHp.heal(Math.floor(x.hero.maxHp * 0.6)));
         else for (const e of aliveE) await this.damageEnemy(e, 60 + Math.floor(Math.random() * 30));
         AUDIO.sfx('heal');
         break;
       }
       case 'good':
-        this.heroes.forEach((x) => x.odoHp.heal(30));
+        standing.forEach((x) => x.odoHp.heal(30));
         AUDIO.sfx('heal');
         break;
       case 'nothing':
@@ -554,14 +569,14 @@ export class BattleScene extends Phaser.Scene {
         const coin = Math.random() < 0.5 && aliveE.length > 0;
         if (coin) await this.damageEnemy(aliveE[0], 25);
         else {
-          const v = this.heroes[Math.floor(Math.random() * this.heroes.length)];
+          const v = standing[Math.floor(Math.random() * standing.length)];
           v.sunburn = 3;
           await this.print(`${v.hero.name} feels weirdly sun-kissed. At night. Strange.`);
         }
         break;
       }
       case 'backfire':
-        this.heroes.forEach((x) => x.odoHp.damage(6));
+        standing.forEach((x) => x.odoHp.damage(6));
         await this.print('Everyone saw spots for a second!');
         break;
     }
@@ -588,9 +603,18 @@ export class BattleScene extends Phaser.Scene {
     }
     if (item.id === 'glints_spark') {
       GS.removeItem(itemId);
-      h.odoHp.heal(h.hero.maxHp);
       AUDIO.sfx('ember');
-      await this.print('The spark flares — warm as a porch light in late summer. Full recovery!');
+      // §A8: revive, rare — it goes to whoever needs it most
+      const downed = this.heroes.find((x) => x.hero.down || x.odoHp.dead);
+      if (downed) {
+        downed.hero.down = false;
+        downed.odoHp.set(downed.hero.maxHp);
+        downed.box.clearTint();
+        await this.print(this.fill(BATTLE_TEXT.spark_revive, name, undefined, downed.hero.name));
+      } else {
+        h.odoHp.heal(h.hero.maxHp);
+        await this.print('The spark flares — warm as a porch light in late summer. Full recovery!');
+      }
       return true;
     }
     if (item.kind === 'battle' && item.power) {

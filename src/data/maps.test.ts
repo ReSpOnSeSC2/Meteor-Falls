@@ -3,7 +3,14 @@
  * (Prompt S5 turns these checks into the full zod content validator.)
  */
 import { describe, expect, it } from 'vitest';
-import { CHAR_LEGEND, MAPS, type MapDef } from './maps';
+import {
+  CHAR_LEGEND,
+  MAPS,
+  HOLDING_ROOM,
+  HOLDING_DOOR_GAP,
+  carveHoldingRoom,
+  type MapDef,
+} from './maps';
 import { DIALOGUE } from './dialogue';
 import { ENEMIES } from './enemies';
 import { TILESET, tileIndexByName } from '../spritegen/tiles';
@@ -170,5 +177,60 @@ describe('S1 canon — the Department & the 6:15', () => {
     expect(MAPS.bus_interior).toBeDefined();
     expect(MAPS.otterbrook.triggers.some((t) => t.id === 'bus_stop')).toBe(true);
     expect(MAPS.brickton.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(true);
+  });
+});
+
+describe('S2 canon — the PRODUCTIVITY LOCK, Faye, and the chapter button (§A6, ADR-014)', () => {
+  const f3 = MAPS.dos_f3;
+
+  it('the three floor-3 patrols carry distinct quota countFlags (stable ids, ADR-011)', () => {
+    const patrols = f3.patrols ?? [];
+    expect(patrols.map((p) => p.id).sort()).toEqual(['f3a', 'f3b', 'f3c']);
+    const flags = patrols.map((p) => p.countFlag);
+    expect(flags.every((f) => typeof f === 'string' && f.length > 0)).toBe(true);
+    expect(new Set(flags).size).toBe(3);
+  });
+
+  it('the sealed holding room is solid wall; the carve opens floor + a doorway', () => {
+    const { x, y, w, h } = HOLDING_ROOM;
+    // sealed: every cell of the block is office wall
+    for (let j = y; j < y + h; j++) {
+      for (let i = x; i < x + w; i++) {
+        expect(f3.grid[j][i], `sealed (${i},${j})`).toBe('O');
+      }
+    }
+    const carved = carveHoldingRoom(f3.grid);
+    // interior is floor, rim stays wall, the gap under the door is walkable
+    for (let j = y + 1; j < y + h - 1; j++) {
+      for (let i = x + 1; i < x + w - 1; i++) {
+        expect(carved[j][i], `carved interior (${i},${j})`).toBe('o');
+      }
+    }
+    expect(carved[y][x]).toBe('O');
+    expect(carved[y + h - 1][x]).toBe('O');
+    for (let i = HOLDING_DOOR_GAP.x; i < HOLDING_DOOR_GAP.x + HOLDING_DOOR_GAP.w; i++) {
+      expect(carved[y + h - 1][i], `doorway gap (${i})`).toBe('o');
+    }
+    // the original MapDef grid was not mutated (ADR-012 determinism)
+    expect(f3.grid[y + 1][x + 1]).toBe('O');
+  });
+
+  it('Faye waits inside, gated on the open room and gone once joined', () => {
+    const faye = f3.npcs.find((n) => n.id === 'faye');
+    expect(faye).toBeDefined();
+    expect(faye?.ifFlag).toBe('holding_open');
+    expect(faye?.unlessFlag).toBe('faye_joined');
+    const { x, y, w, h } = HOLDING_ROOM;
+    expect(faye && faye.x > x && faye.x < x + w - 1 && faye.y > y && faye.y < y + h - 1).toBe(true);
+    // her cot only exists once the room does
+    expect(f3.props.find((p) => p.sprite === 'cot')?.ifFlag).toBe('holding_open');
+  });
+
+  it('the join, the exit interview, and the ringing payphone are all wired', () => {
+    expect(f3.triggers.some((t) => t.id === 'faye_meet')).toBe(true);
+    expect(f3.triggers.some((t) => t.id === 'manager_block')).toBe(true);
+    expect(MAPS.brickton.triggers.some((t) => t.id === 'payphone_ring')).toBe(true);
+    // Mom calls the canon payphone at brickton tile (14,26)
+    expect(MAPS.brickton.phones).toContainEqual({ x: 14, y: 26 });
   });
 });

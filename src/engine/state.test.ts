@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GS, newGameData, makeHeroState, expForLevel } from './state';
 import { ENEMIES } from '../data/enemies';
-import { HEROES, statsAtLevel, maxHpAtLevel } from '../data/heroes';
+import { HEROES, statsAtLevel, maxHpAtLevel, unlockedAbilities } from '../data/heroes';
 import { ITEMS } from '../data/items';
 import { ABILITIES } from '../data/abilities';
 
@@ -93,6 +93,41 @@ describe('hero state', () => {
     expect(rex.hp).toBe(rex.maxHp);
     expect(rex.stats).toEqual(statsAtLevel('rex', 5));
     expect(rex.exp).toBe(expForLevel(5));
+  });
+});
+
+describe('S2 — Faye joins (§A3/§A6, ADR-013/ADR-014)', () => {
+  beforeEach(() => GS.reset());
+
+  it("Faye's canon kit at L6: Vibe Fire α and PRAY from L1, Freeze α at 4 — Magnet not yet", () => {
+    const kit = unlockedAbilities('faye', 6);
+    expect(kit).toContain('vibe_fire_a');
+    expect(kit).toContain('pray');
+    expect(kit).toContain('vibe_freeze_a');
+    expect(kit).not.toContain('magnet_a'); // L8
+  });
+
+  it('a two-hero party with a down angel survives a save round-trip', () => {
+    GS.applyNewGameChoices({
+      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+      playerName: 'Jay',
+      favoriteFood: 'pancakes',
+      coolestThing: 'dial tones',
+    });
+    GS.data.party.push(makeHeroState('faye', 6, GS.data.heroNames.faye));
+    GS.data.party[1].down = true;
+    GS.setFlag('dos_quota_f3a');
+    GS.setFlag('holding_open');
+    const json = GS.serialize();
+    GS.reset();
+    GS.deserialize(json);
+    expect(GS.data.party.map((h) => h.id)).toEqual(['rex', 'faye']);
+    expect(GS.data.party[1].name).toBe('Wren'); // ADR-013: the chosen name rides the save
+    expect(GS.data.party[1].down).toBe(true);
+    expect(GS.aliveParty().map((h) => h.id)).toEqual(['rex']);
+    // the PRODUCTIVITY LOCK's flags survive map re-entry AND a reload
+    expect(GS.flag('dos_quota_f3a')).toBe(true);
+    expect(GS.flag('holding_open')).toBe(true);
   });
 });
 

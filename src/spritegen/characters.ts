@@ -875,6 +875,18 @@ export const CAST: Record<string, CharacterSpec> = {
     shoes: RAMP.PAPER,
     build: 'adult',
   },
+  // THE MANAGER (S2) — the blazer the other blazers report to. Gold, gray,
+  // grinning. He is not the Hush; he just forwarded it everyone's calendar.
+  manager: {
+    skin: RAMP.SKIN,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray',
+    top: { ramp: RAMP.GOLD, style: 'blazer', accent: RAMP.RED },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.INK,
+    grin: true,
+    build: 'adult',
+  },
   quarterMan: {
     skin: RAMP.SKIN,
     hair: RAMP.EARTH,

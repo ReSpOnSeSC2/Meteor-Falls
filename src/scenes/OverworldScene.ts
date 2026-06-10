@@ -2,14 +2,33 @@
  * Overworld: EB-style 8-direction movement with follower conga line, visible
  * roaming enemies (no random encounters — §A4.2), swirl-coded contact
  * advantage, doors, signs, phones (save = call Dad), and the Chapter 1
- * cutscenes per GAME_BIBLE §A6 / ADR-007.
+ * cutscenes per GAME_BIBLE §A6 / ADR-007 + S2 (Faye, the Manager, Mom's call).
+ *
+ * QA recipe, S2 leg (ADR-008; name entry recipe lives in NameEntryScene):
+ * mashing key('KeyZ') advances dialogue AND confirms the top menu row, which
+ * is always the safe pick (Board the 6:15 / Call Dad / Bash). On dos_f3,
+ * walk into each patrol's route to fight it — victories set dos_quota_f3a/b/c
+ * and the third fade-restarts the floor with the room carved open. Walk in
+ * through the gap (tiles 20-21, row 6) for the join; the exit column (24,
+ * rows 3-4) runs the Manager fight — pick Faye's PRAY with Down,Down,KeyZ on
+ * her command row. Mom's call: payphone at brickton (14,26), A to answer.
+ * Bots beware: holdKey is eaten while dlg.busy — drain pages with key() first.
  */
 import Phaser from 'phaser';
-import { MAPS, CHAR_LEGEND, BRICKTON_BUS_SPAWN, type MapDef, type NpcDef, type PatrolDef } from '../data/maps';
+import {
+  MAPS,
+  CHAR_LEGEND,
+  BRICKTON_BUS_SPAWN,
+  carveHoldingRoom,
+  type MapDef,
+  type NpcDef,
+  type PatrolDef,
+  type PropDef,
+} from '../data/maps';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS } from '../data/items';
 import { DIALOGUE } from '../data/dialogue';
-import { GS } from '../engine/state';
+import { GS, makeHeroState } from '../engine/state';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, toast, vars, DEPTH_UI } from '../ui/windows';
@@ -77,8 +96,9 @@ export class OverworldScene extends Phaser.Scene {
   private solids: Rect[] = [];
   private player!: Phaser.GameObjects.Sprite;
   private facing: Facing = 'down';
-  private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string }> = [];
+  private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean }> = [];
   private trail: Array<{ x: number; y: number; f: Facing }> = [];
+  private holdingDoorImg: Phaser.GameObjects.Image | null = null;
   private npcs: NpcObj[] = [];
   private roamers: Roamer[] = [];
   private patrols: PatrolObj[] = [];
@@ -112,6 +132,7 @@ export class OverworldScene extends Phaser.Scene {
     this.patrols = [];
     this.solids = [];
     this.fireflies = [];
+    this.holdingDoorImg = null;
     this.insideTriggers.clear();
     this.dlg = new Dialogue(this);
 
@@ -135,7 +156,12 @@ export class OverworldScene extends Phaser.Scene {
   /* ---------------- build ---------------- */
 
   private buildTiles(): void {
-    const rows = this.mapDef.grid;
+    // S2: the holding room un-walls itself once the quota is met (ADR-014);
+    // the shared MapDef grid is never mutated — the carve is per-build
+    const rows =
+      this.mapDef.id === 'dos_f3' && GS.flag('holding_open')
+        ? carveHoldingRoom(this.mapDef.grid)
+        : this.mapDef.grid;
     const h = rows.length;
     const w = rows[0].length;
     const isPath = (x: number, y: number): boolean =>
@@ -179,6 +205,11 @@ export class OverworldScene extends Phaser.Scene {
 
   private buildProps(): void {
     for (const p of this.mapDef.props) {
+      if (p.ifFlag && !GS.flag(p.ifFlag)) continue;
+      if (p.sprite === 'holding_door') {
+        this.buildHoldingDoor(p);
+        continue;
+      }
       const img = this.add.image(p.x * 16, p.y * 16, p.sprite).setOrigin(0, 0);
       img.setDepth(p.y * 16 + img.height);
       if (p.solid) {
@@ -191,6 +222,48 @@ export class OverworldScene extends Phaser.Scene {
       }
     }
     this.buildDoorMarkers();
+  }
+
+  /* ---------------- the PRODUCTIVITY LOCK (S2, ADR-014) ---------------- */
+
+  /** the three floor-3 countFlags, in pip order */
+  private quotaFlags(): string[] {
+    return (MAPS.dos_f3.patrols ?? [])
+      .map((p) => p.countFlag)
+      .filter((f): f is string => f !== undefined);
+  }
+
+  private quotaCount(): number {
+    return this.quotaFlags().filter((f) => GS.flag(f)).length;
+  }
+
+  /**
+   * The holding door is a scene-interpreted prop: sealed it shows one lit pip
+   * per counted patrol; open, the door is gone (the wall is carved) and only
+   * the quota panel stays behind, mounted beside the gap.
+   */
+  private buildHoldingDoor(p: PropDef): void {
+    if (GS.flag('holding_open')) {
+      this.add
+        .image(p.x * 16 - 26, p.y * 16 + 14, 'quota_panel')
+        .setOrigin(0, 0)
+        .setDepth(p.y * 16 + 20);
+      return;
+    }
+    const lit = this.quotaCount();
+    const img = this.add
+      .image(p.x * 16, p.y * 16, lit > 0 ? `holding_door_${lit}` : 'holding_door')
+      .setOrigin(0, 0);
+    img.setDepth(p.y * 16 + img.height);
+    this.holdingDoorImg = img;
+    if (p.solid) {
+      this.solids.push({
+        x: p.x * 16 + p.solid.ox,
+        y: p.y * 16 + p.solid.oy,
+        w: p.solid.w,
+        h: p.solid.h,
+      });
+    }
   }
 
   /** every walkable door gets a visible marker (mat / stairs / elevator) */
@@ -221,6 +294,8 @@ export class OverworldScene extends Phaser.Scene {
 
   private buildNpcs(): void {
     for (const def of this.mapDef.npcs) {
+      if (def.ifFlag && !GS.flag(def.ifFlag)) continue;
+      if (def.unlessFlag && GS.flag(def.unlessFlag)) continue;
       const x = def.x * 16 + 8;
       const y = def.y * 16 + 22;
       const spr = this.add.sprite(x, y, def.sprite, def.dog ? 0 : standFrame(def.facing));
@@ -236,14 +311,28 @@ export class OverworldScene extends Phaser.Scene {
     this.player = this.add.sprite(GS.data.x, GS.data.y, 'rex', standFrame(this.facing));
     this.player.setOrigin(0.5, 1);
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
-    // guest follower: Chad on the hill trip
+    this.buildFollowers();
+  }
+
+  /** the conga line: every party member behind the leader (Prompt 5), down
+   *  heroes as floating haloed angels (§A4.7), then any guest at the back */
+  private buildFollowers(): void {
+    for (const h of GS.data.party.slice(1)) this.addFollower(h.id, h.down);
     if (GS.data.guest === 'chad') this.addFollower('chad');
   }
 
-  private addFollower(id: string): void {
-    const spr = this.add.sprite(this.player.x, this.player.y + 2, id, standFrame('down'));
+  private rebuildFollowers(): void {
+    this.followers.forEach((f) => f.spr.destroy());
+    this.followers = [];
+    this.buildFollowers();
+  }
+
+  private addFollower(id: string, angel = false): void {
+    const spr = this.add.sprite(this.player.x, this.player.y + 2, angel ? 'angel' : id, 0);
     spr.setOrigin(0.5, 1);
-    this.followers.push({ spr, id });
+    if (angel) spr.play('angel-float');
+    else spr.setFrame(standFrame('down'));
+    this.followers.push({ spr, id, angel });
   }
 
   private removeFollower(id: string): void {
@@ -281,6 +370,8 @@ export class OverworldScene extends Phaser.Scene {
 
   private buildPatrols(): void {
     for (const def of this.mapDef.patrols ?? []) {
+      // a counted patrol stays down for good — its quota was met (S2)
+      if (def.countFlag && GS.flag(def.countFlag)) continue;
       const walker = ENEMIES[def.enemy].walker ?? 'smiler';
       const [tx, ty] = def.route[0];
       const spr = this.add.sprite(tx * 16 + 8, ty * 16 + 22, walker, standFrame('down'));
@@ -415,18 +506,24 @@ export class OverworldScene extends Phaser.Scene {
     this.player.setDepth(this.player.y);
     this.followers.forEach((f, i) => {
       const crumb = this.trail[(i + 1) * 9];
-      if (crumb) {
-        const movedF = Math.hypot(f.spr.x - crumb.x, f.spr.y - crumb.y) > 0.5;
+      if (!crumb) return;
+      if (f.angel) {
+        // angels float instead of walk (Prompt 5 / §A4.7)
         f.spr.x = crumb.x;
-        f.spr.y = crumb.y;
+        f.spr.y = crumb.y - 4 + Math.sin(this.time.now / 280 + i * 2) * 1.5;
         f.spr.setDepth(crumb.y);
-        const anim = `${f.id}-walk-${crumb.f}`;
-        if (movedF && moved) {
-          if (f.spr.anims.currentAnim?.key !== anim || !f.spr.anims.isPlaying) f.spr.anims.play(anim, true);
-        } else {
-          f.spr.anims.stop();
-          f.spr.setFrame(standFrame(crumb.f));
-        }
+        return;
+      }
+      const movedF = Math.hypot(f.spr.x - crumb.x, f.spr.y - crumb.y) > 0.5;
+      f.spr.x = crumb.x;
+      f.spr.y = crumb.y;
+      f.spr.setDepth(crumb.y);
+      const anim = `${f.id}-walk-${crumb.f}`;
+      if (movedF && moved) {
+        if (f.spr.anims.currentAnim?.key !== anim || !f.spr.anims.isPlaying) f.spr.anims.play(anim, true);
+      } else {
+        f.spr.anims.stop();
+        f.spr.setFrame(standFrame(crumb.f));
       }
     });
   }
@@ -745,9 +842,44 @@ export class OverworldScene extends Phaser.Scene {
     if (outcome === 'victory') {
       p.dead = true;
       p.spr.destroy();
+      // S2: floor-3 victories count toward the PRODUCTIVITY LOCK's quota
+      if (p.def.countFlag && !GS.flag(p.def.countFlag)) {
+        GS.setFlag(p.def.countFlag);
+        await this.quotaBeat();
+      }
     } else if (outcome === 'ran') {
       this.patrolGiveUp(p);
     }
+  }
+
+  /** a pip lights; the third one opens the holding room (fade-rebuild) */
+  private async quotaBeat(): Promise<void> {
+    const n = this.quotaCount();
+    this.cut = true;
+    if (n < 3) {
+      AUDIO.sfx('confirm');
+      this.holdingDoorImg?.setTexture(`holding_door_${n}`);
+      await this.dlg.say(...DIALOGUE[`quota_pip_${n}`]);
+      this.cut = false;
+      return;
+    }
+    GS.setFlag('holding_open');
+    this.holdingDoorImg?.setTexture('holding_door_3');
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE.quota_pip_3);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(250, 0.008);
+    this.fadeRestart(); // rebuilt open: carved wall, quota panel, Faye inside
+  }
+
+  /** fade out and rebuild this map in place (position persists via GS.data) */
+  private fadeRestart(): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    this.cameras.main.fadeOut(260, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.restart({});
+    });
   }
 
   private updateFireflies(dt: number): void {
@@ -808,7 +940,7 @@ export class OverworldScene extends Phaser.Scene {
     enemyIds: string[],
     advantage: 'player' | 'enemy' | 'none',
     roamer: Roamer | null,
-    boss = false,
+    opts: { boss?: boolean; glint?: boolean; prayTutorial?: boolean } = {},
   ): Promise<'victory' | 'defeat' | 'ran'> {
     return new Promise((resolve) => {
       this.cut = true;
@@ -854,6 +986,8 @@ export class OverworldScene extends Phaser.Scene {
                 resolve(outcome);
                 return;
               }
+              // a hero may have gone down (or gotten back up) in there
+              this.rebuildFollowers();
               AUDIO.playMusic(this.mapDef.music);
               this.scene.resume();
               resolve(outcome);
@@ -864,8 +998,9 @@ export class OverworldScene extends Phaser.Scene {
             enemyIds,
             advantage,
             guestChad: GS.data.guest === 'chad',
-            glintAssist: boss,
-            boss,
+            glintAssist: opts.glint ?? false,
+            boss: opts.boss ?? false,
+            prayTutorial: opts.prayTutorial ?? false,
           });
         },
       });
@@ -904,6 +1039,11 @@ export class OverworldScene extends Phaser.Scene {
     }
     for (const ph of this.mapDef.phones) {
       if (Math.hypot(ph.x * 16 + 8 - probeX, ph.y * 16 + 8 - probeY) < 18) {
+        // S2: Mom is calling THIS payphone — answering outranks dialing out
+        if (this.mapDef.id === 'brickton' && this.momCallPending()) {
+          await this.momPayphoneScene();
+          return;
+        }
         await this.phoneFlow();
         return;
       }
@@ -950,6 +1090,21 @@ export class OverworldScene extends Phaser.Scene {
       };
       if (probeX > r.x && probeX < r.x + r.w && probeY > r.y && probeY < r.y + r.h) {
         AUDIO.sfx('cursor');
+        // S2 doors report their state
+        if (p.sprite === 'holding_door') {
+          if (GS.flag('holding_open')) {
+            await this.dlg.say(...DIALOGUE.holding_open_panel);
+            return;
+          }
+          const n = this.quotaCount();
+          const pips = n > 0 ? DIALOGUE[`holding_door_${n}`] : [];
+          await this.dlg.say(...DIALOGUE.holding_door_line, ...pips);
+          return;
+        }
+        if (p.sprite === 'office_door' && GS.flag('manager_defeated')) {
+          await this.dlg.say(...DIALOGUE.manager_door_after);
+          return;
+        }
         await this.dlg.say(...DIALOGUE[lineId]);
         return;
       }
@@ -1043,6 +1198,17 @@ export class OverworldScene extends Phaser.Scene {
           GS.removeItem(itemId);
           AUDIO.sfx('heal');
           await this.dlg.say(`${rex.name} ate the ${item.name}. Recovered ${item.heal} HP!`);
+        } else if (item.id === 'glints_spark' && GS.data.party.some((h) => h.down)) {
+          // §A8 "revive, rare" — the interim path back until hospitals (S11)
+          const downed = GS.data.party.find((h) => h.down);
+          if (downed) {
+            GS.removeItem(itemId);
+            downed.down = false;
+            downed.hp = downed.maxHp;
+            AUDIO.sfx('ember');
+            await this.dlg.say(`The spark flares. ${downed.name} got back up, blinking, like it's Saturday.`);
+            this.rebuildFollowers();
+          }
         } else {
           await this.dlg.say(item.text);
         }
@@ -1147,6 +1313,13 @@ export class OverworldScene extends Phaser.Scene {
     if (this.mapDef.id === 'otterbrook' && GS.flag('intro_done') && !GS.flag('chad_joined')) {
       await this.chadJoinScene();
     }
+    // S2: stepping onto the street after the Department falls — Mom's already dialing
+    if (this.mapDef.id === 'brickton' && this.momCallPending()) {
+      this.cut = true;
+      AUDIO.sfx('phone');
+      await this.dlg.say(...DIALOGUE.payphone_far);
+      this.cut = false;
+    }
   }
 
   private async runTrigger(id: string): Promise<void> {
@@ -1165,6 +1338,20 @@ export class OverworldScene extends Phaser.Scene {
         break;
       case 'bus_stop_brickton':
         await this.busAsk('otterbrook');
+        break;
+      case 'faye_meet':
+        if (GS.flag('holding_open') && !GS.flag('faye_joined')) await this.fayeJoinScene();
+        break;
+      case 'manager_block':
+        if (GS.flag('faye_joined') && !GS.flag('manager_defeated')) await this.managerScene();
+        break;
+      case 'payphone_ring':
+        if (this.momCallPending()) {
+          this.cut = true;
+          AUDIO.sfx('phone');
+          await this.dlg.say(...DIALOGUE.payphone_ringing);
+          this.cut = false;
+        }
         break;
       default:
         break;
@@ -1225,7 +1412,7 @@ export class OverworldScene extends Phaser.Scene {
     } else {
       await this.dlg.say('The crater rim bulges again. It did NOT learn its lesson.');
     }
-    const outcome = await this.startBattle(['titanic_tick'], 'none', null, true);
+    const outcome = await this.startBattle(['titanic_tick'], 'none', null, { boss: true, glint: true });
     if (outcome !== 'victory') return;
     // betrayal #1 resolved mid-battle (guest flag already cleared there);
     // the trail sprite still needs to go
@@ -1271,6 +1458,71 @@ export class OverworldScene extends Phaser.Scene {
     GS.addItem('glints_spark');
     AUDIO.sfx('ember');
     await this.dlg.say(DIALOGUE.porch_zapper[5], DIALOGUE.porch_zapper[6]);
+    this.cut = false;
+  }
+
+  /* ---------------- S2: Faye, the Manager, and Mom's call (§A6 Ch.1 end) ---------------- */
+
+  /** §A6: meeting Faye in the holding room — she joins at L6 with her canon kit */
+  private async fayeJoinScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.faye_meet);
+    AUDIO.sfx('ember');
+    AUDIO.playMusic('heartlight');
+    await this.dlg.say(...DIALOGUE.faye_locket);
+    await this.dlg.say(...DIALOGUE.faye_join);
+    // ADR-013: the Prompt-21 name flows into her battle strip and dialogue
+    GS.data.party.push(makeHeroState('faye', 6, GS.data.heroNames.faye));
+    GS.setFlag('faye_joined');
+    AUDIO.jingle('levelup', 1400, null);
+    // rebuild from data: her NPC gates out, the conga picks her up
+    this.fadeRestart();
+  }
+
+  /** the Manager blocks the floor-3 exit: a scripted 2-Smiler fight */
+  private async managerScene(): Promise<void> {
+    this.cut = true;
+    const office = this.mapDef.props.find((p) => p.sprite === 'office_door');
+    const doorX = (office?.x ?? 10.5) * 16 + 8;
+    const doorY = (office?.y ?? 0.375) * 16 + 26;
+    AUDIO.sfx('cursor');
+    await this.dlg.say(DIALOGUE.manager_intro[0]);
+    const mgr = this.add.sprite(doorX, doorY + 8, 'manager', standFrame('down'));
+    mgr.setOrigin(0.5, 1).setDepth(mgr.y);
+    await this.tweenTo(mgr, this.player.x - 24, this.player.y, 2000, 'manager');
+    mgr.setDepth(mgr.y);
+    await this.dlg.say(...DIALOGUE.manager_intro.slice(1));
+    await this.dlg.say(...DIALOGUE.manager_faye_q);
+    const outcome = await this.startBattle(['blazer_smiler', 'blazer_smiler'], 'none', null, {
+      boss: true,
+      prayTutorial: true,
+    });
+    if (outcome !== 'victory') {
+      mgr.destroy(); // defeat path is already restarting the scene
+      return;
+    }
+    this.cut = true;
+    GS.setFlag('manager_defeated');
+    await this.tweenTo(mgr, doorX, doorY + 8, 1600, 'manager');
+    mgr.destroy();
+    await this.dlg.say(...DIALOGUE.manager_win);
+    this.cut = false;
+  }
+
+  /** Mom is calling the payphone once the Department falls (until answered) */
+  private momCallPending(): boolean {
+    return !!GS.flag('manager_defeated') && !GS.flag('ch1_complete');
+  }
+
+  /** first phone tutorialized by Mom calling YOU — and Chapter 1's button */
+  private async momPayphoneScene(): Promise<void> {
+    this.cut = true;
+    AUDIO.sfx('phone');
+    await this.dlg.say(...DIALOGUE.mom_payphone);
+    GS.setFlag('ch1_complete');
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.faye_after_call);
+    await this.dlg.say(...DIALOGUE.ch1_card);
     this.cut = false;
   }
 

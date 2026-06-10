@@ -56,6 +56,8 @@ import {
   drawCopier,
   drawPlantPot,
   drawHoldingDoor,
+  drawQuotaPanel,
+  drawCot,
   drawOfficeDoor,
   drawBusSeat,
   drawBusWindows,
@@ -140,6 +142,14 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addSheet(scene, 'dog', generateDogFrames(), 4);
   addSheet(scene, 'glint', generateGlintFrames(), 2);
   addSheet(scene, 'angel', generateAngelFrames(), 2);
+  if (!scene.anims.exists('angel-float')) {
+    scene.anims.create({
+      key: 'angel-float',
+      frames: [0, 1].map((f) => ({ key: 'angel', frame: f })),
+      frameRate: 4,
+      repeat: -1,
+    });
+  }
   if (!scene.anims.exists('glint-flit')) {
     scene.anims.create({
       key: 'glint-flit',
@@ -205,7 +215,13 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'water_cooler', drawWaterCooler());
   addPixmap(scene, 'copier', drawCopier());
   addPixmap(scene, 'plant_pot', drawPlantPot());
-  addPixmap(scene, 'holding_door', drawHoldingDoor());
+  // S2: the PRODUCTIVITY LOCK lights a pip per defeated floor-3 patrol
+  addPixmap(scene, 'holding_door', drawHoldingDoor(0));
+  addPixmap(scene, 'holding_door_1', drawHoldingDoor(1));
+  addPixmap(scene, 'holding_door_2', drawHoldingDoor(2));
+  addPixmap(scene, 'holding_door_3', drawHoldingDoor(3));
+  addPixmap(scene, 'quota_panel', drawQuotaPanel());
+  addPixmap(scene, 'cot', drawCot());
   addPixmap(scene, 'office_door', drawOfficeDoor());
   addPixmap(scene, 'bus_seat', drawBusSeat());
   addPixmap(scene, 'bus_windows', drawBusWindows(352));

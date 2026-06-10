@@ -923,8 +923,12 @@ export function drawPlantPot(): Pixmap {
   return pm;
 }
 
-/** the floor-3 holding room door: sealed, riveted, smiling */
-export function drawHoldingDoor(): Pixmap {
+/**
+ * The floor-3 holding room door: sealed, riveted, smiling. S2's PRODUCTIVITY
+ * LOCK lights one quota pip per defeated floor-3 patrol (0–3); at 3 the lock
+ * light goes green too, a frame before the door slides away for good.
+ */
+export function drawHoldingDoor(lit = 0): Pixmap {
   const pm = new Pixmap(20, 28);
   pm.rect(1, 1, 18, 26, px(RAMP.INK, 1)); // steel slab
   pm.frame(1, 1, 18, 26, px(RAMP.INK, 2));
@@ -937,7 +941,7 @@ export function drawHoldingDoor(): Pixmap {
     pm.set(rx, ry, px(RAMP.INK, 3)); // rivets
   }
   pm.hline(2, 14, 16, px(RAMP.INK, 0)); // plate seam
-  pm.set(4, 5, px(RAMP.RED, 2)); // lock light. it is on.
+  pm.set(4, 5, lit >= 3 ? px(RAMP.GRASS, 3) : px(RAMP.RED, 2)); // lock light
   // the badge: a small brass smiley
   pm.rect(6, 7, 8, 6, px(RAMP.GOLD, 2));
   pm.set(8, 9, C.inkSoft);
@@ -946,10 +950,41 @@ export function drawHoldingDoor(): Pixmap {
   // PRODUCTIVITY LOCK housing
   pm.rect(5, 17, 10, 7, px(RAMP.PAPER, 0));
   pm.frame(5, 17, 10, 7, px(RAMP.INK, 2));
-  pm.rect(7, 19, 6, 3, px(RAMP.GOLD, 1)); // three dark quota pips
-  pm.set(8, 20, px(RAMP.INK, 1));
-  pm.set(10, 20, px(RAMP.INK, 1));
-  pm.set(12, 20, px(RAMP.INK, 1));
+  pm.rect(7, 19, 6, 3, px(RAMP.GOLD, 1)); // quota pips: dark until earned
+  pm.set(8, 20, lit >= 1 ? px(RAMP.GRASS, 3) : px(RAMP.INK, 1));
+  pm.set(10, 20, lit >= 2 ? px(RAMP.GRASS, 3) : px(RAMP.INK, 1));
+  pm.set(12, 20, lit >= 3 ? px(RAMP.GRASS, 3) : px(RAMP.INK, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** QUOTA: MET — the lock housing stays on the wall after the door slides away */
+export function drawQuotaPanel(): Pixmap {
+  const pm = new Pixmap(14, 12);
+  pm.rect(1, 1, 12, 10, px(RAMP.PAPER, 0));
+  pm.frame(1, 1, 12, 10, px(RAMP.INK, 2));
+  pm.rect(3, 3, 8, 4, px(RAMP.GOLD, 1));
+  pm.set(4, 4, px(RAMP.GRASS, 3)); // three green pips, very pleased
+  pm.set(7, 4, px(RAMP.GRASS, 3));
+  pm.set(10, 4, px(RAMP.GRASS, 3));
+  pm.hline(4, 8, 6, px(RAMP.GRASS, 2)); // and a smile of its own
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the holding room cot — too neat, like it apologized for being slept in */
+export function drawCot(): Pixmap {
+  const pm = new Pixmap(20, 24);
+  pm.rect(2, 2, 16, 18, px(RAMP.INK, 2)); // steel frame
+  pm.frame(2, 2, 16, 18, px(RAMP.INK, 3));
+  pm.rect(3, 3, 14, 5, C.white); // pillow
+  pm.hline(4, 5, 12, px(RAMP.PAPER, 1));
+  pm.rect(3, 8, 14, 11, px(RAMP.CYAN, 1)); // blanket, hospital corners
+  pm.hline(3, 8, 14, px(RAMP.CYAN, 3));
+  pm.hline(3, 12, 14, px(RAMP.CYAN, 0)); // fold line, ruler-straight
+  pm.hline(3, 16, 14, px(RAMP.CYAN, 0));
+  pm.rect(2, 20, 3, 3, px(RAMP.INK, 1)); // legs
+  pm.rect(15, 20, 3, 3, px(RAMP.INK, 1));
   pm.outline(C.outline);
   return pm;
 }

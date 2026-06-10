@@ -50,6 +50,8 @@ export interface PropDef {
   solid?: { ox: number; oy: number; w: number; h: number };
   /** door rectangle in px (relative to prop) that transitions maps */
   door?: { ox: number; oy: number; w: number; h: number; to: string; tx: number; ty: number };
+  /** only built when this flag is truthy (e.g. the holding-room cot) */
+  ifFlag?: string;
 }
 
 export interface NpcDef {
@@ -62,6 +64,9 @@ export interface NpcDef {
   wander?: boolean;
   /** special rendering: dog uses its own anim set */
   dog?: boolean;
+  /** flag gates: only present when ifFlag is truthy / unlessFlag is falsy */
+  ifFlag?: string;
+  unlessFlag?: string;
 }
 
 export interface SignDef {
@@ -109,6 +114,12 @@ export interface PatrolDef {
   route: Array<[number, number]>;
   /** sight-line length in tiles (default 5) */
   sight?: number;
+  /**
+   * S2 PRODUCTIVITY LOCK: a patrolBattle victory sets this flag, and the
+   * patrol stays down across map re-entry once it's set (its quota counted).
+   * Floor 3's three Smilers each carry one; all three open the holding room.
+   */
+  countFlag?: string;
 }
 
 export interface MapDef {
@@ -616,7 +627,11 @@ function buildBrickton(): MapDef {
       { enemies: ['pigeon_gang'], count: 1, rect: { x: 2, y: 13, w: 8, h: 5 } },
       { enemies: ['pigeon_gang'], count: 1, rect: { x: 41, y: 13, w: 12, h: 6 } },
     ],
-    triggers: [{ id: 'bus_stop_brickton', rect: { x: 4, y: 26, w: 4, h: 3 }, once: false }],
+    triggers: [
+      { id: 'bus_stop_brickton', rect: { x: 4, y: 26, w: 4, h: 3 }, once: false },
+      // S2: Mom calls the payphone (14,26) once the Department falls
+      { id: 'payphone_ring', rect: { x: 12, y: 25, w: 6, h: 4 }, once: false },
+    ],
   };
 }
 
@@ -726,14 +741,36 @@ function buildDosF2(): MapDef {
   };
 }
 
+/** the sealed HOLDING ROOM block on floor 3 (S2: x18-23, y2-6) */
+export const HOLDING_ROOM = { x: 18, y: 2, w: 6, h: 5 } as const;
+/** doorway cells in the room's bottom rim, under the holding_door prop */
+export const HOLDING_DOOR_GAP = { x: 20, w: 2 } as const;
+
+/**
+ * S2: once the PRODUCTIVITY LOCK's quota is met (flag `holding_open`), the
+ * scene un-walls the room at build time — interior floor plus the doorway
+ * gap — without ever mutating the shared MapDef grid (ADR-012 determinism).
+ */
+export function carveHoldingRoom(grid: string[]): string[] {
+  const rows = grid.map((r) => r.split(''));
+  const { x, y, w, h } = HOLDING_ROOM;
+  for (let j = y + 1; j < y + h - 1; j++) {
+    for (let i = x + 1; i < x + w - 1; i++) rows[j][i] = 'o';
+  }
+  for (let i = HOLDING_DOOR_GAP.x; i < HOLDING_DOOR_GAP.x + HOLDING_DOOR_GAP.w; i++) {
+    rows[y + h - 1][i] = 'o';
+  }
+  return rows.map((r) => r.join(''));
+}
+
 function buildDosF3(): MapDef {
   const g = new Grid(26, 14, 'o');
   g.rect(0, 0, 26, 2, 'O');
   g.rect(0, 0, 1, 14, 'O');
   g.rect(25, 0, 1, 14, 'O');
   g.rect(0, 13, 26, 1, 'O');
-  // the sealed HOLDING ROOM (its door opens in S2 — three Smilers' worth of quota)
-  g.rect(18, 2, 6, 5, 'O');
+  // the sealed HOLDING ROOM (S2 opens it: three Smilers' worth of quota)
+  g.rect(HOLDING_ROOM.x, HOLDING_ROOM.y, HOLDING_ROOM.w, HOLDING_ROOM.h, 'O');
   // management cubicles (fewer, somehow worse)
   g.rect(3, 3, 6, 1, 'c');
   g.rect(3, 4, 6, 1, 'k');
@@ -751,26 +788,48 @@ function buildDosF3(): MapDef {
     interior: true,
     grid: g.out(),
     props: [
+      // scene-interpreted (ADR-014): pips light per quota flag; opens into the panel
       { sprite: 'holding_door', x: 20.375, y: 5.25, solid: { ox: 0, oy: 14, w: 20, h: 14 } },
       { sprite: 'office_door', x: 10.5, y: 0.375, solid: { ox: 0, oy: 12, w: 16, h: 14 } },
       { sprite: 'plant_pot', x: 2, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
       { sprite: 'plant_pot', x: 23, y: 7, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      // inside the holding room, visible once it opens
+      { sprite: 'cot', x: 19, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 }, ifFlag: 'holding_open' },
     ],
-    npcs: [],
+    npcs: [
+      // §A6: FAYE waits in the holding room until she joins (S2)
+      {
+        id: 'faye',
+        sprite: 'faye',
+        x: 21,
+        y: 3,
+        facing: 'down',
+        dialogue: 'npc_faye_wait',
+        ifFlag: 'holding_open',
+        unlessFlag: 'faye_joined',
+      },
+    ],
     signs: [
       { x: 7, y: 1, dialogue: 'dos_quiet' },
       { x: 14, y: 1, dialogue: 'dos_memo3' },
+      // the intake clipboard hangs off the cot
+      { x: 19, y: 3, dialogue: 'holding_log' },
     ],
     phones: [],
     doors: [
       { x: 24, y: 2, w: 1, h: 1, to: 'dos_f2', tx: 440, ty: 60, facing: 'down', indicator: 'stairs' },
     ],
     spawners: [],
-    triggers: [],
+    triggers: [
+      // inside the opened room — Faye's join scene
+      { id: 'faye_meet', rect: { x: 19, y: 3, w: 4, h: 3 }, once: false },
+      // the column below the stairs: the Manager's exit interview
+      { id: 'manager_block', rect: { x: 24, y: 3, w: 1, h: 2 }, once: false },
+    ],
     patrols: [
-      { id: 'f3a', enemy: 'blazer_smiler', route: [[3, 6], [16, 6]] },
-      { id: 'f3b', enemy: 'blazer_smiler', route: [[23, 8], [2, 8]] },
-      { id: 'f3c', enemy: 'blazer_smiler', route: [[2, 11.5], [23, 11.5]], sight: 6 },
+      { id: 'f3a', enemy: 'blazer_smiler', route: [[3, 6], [16, 6]], countFlag: 'dos_quota_f3a' },
+      { id: 'f3b', enemy: 'blazer_smiler', route: [[23, 8], [2, 8]], countFlag: 'dos_quota_f3b' },
+      { id: 'f3c', enemy: 'blazer_smiler', route: [[2, 11.5], [23, 11.5]], sight: 6, countFlag: 'dos_quota_f3c' },
     ],
   };
 }

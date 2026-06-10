@@ -720,7 +720,9 @@ stem 1), Faye joins.
 SYSTEMS USED: everything from Phases 1–5 — first phone tutorialized by Mom
 calling YOU. Populate §A7 Ch.1 enemies via encounter tables, Ch.1 shops,
 quests #1–4 fully playable, 3 picnic tables placed per §A4.5.
-EXIT: bus to the docks sets flag ch1_complete.
+EXIT: ch1_complete is set by Mom's call to the Brickton payphone after the
+Department falls (amended 2026-06-10 per Appendix rule 6, ADR-014); the
+docks bus that opens Chapter 2 requires the flag rather than setting it.
 ```
 
 **Done when:** Chapter 1 plays start-to-finish in ~35–45 min at the §A9 level target with zero dev text.

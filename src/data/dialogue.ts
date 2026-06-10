@@ -272,6 +272,106 @@ export const DIALOGUE: Record<string, string[]> = {
     'THE MANAGER — a nameplate so polished you can see your frown in it.',
     'A sticky note: "OUT SPREADING PRODUCTIVITY. DO NOT BE SAD UNTIL I RETURN."',
   ],
+
+  /* ---------------- S2 — the PRODUCTIVITY LOCK ---------------- */
+  quota_pip_1: [
+    '* Across the floor: ting. A little light on the holding-room door turned green.',
+    '(Somewhere, a spreadsheet felt a feeling.)',
+  ],
+  quota_pip_2: [
+    '* Ting. A second little light. The lock is starting to sweat.',
+  ],
+  quota_pip_3: [
+    '* TING. The third light. For one second the whole floor holds its breath—',
+    'KA-CHUNK. KA-CHUNK. KA-CHUNK.',
+    'The HOLDING ROOM door slid into the wall, where it plans to think about what it did.',
+    '(QUOTA: MET, says the little panel, to anyone who will listen.)',
+  ],
+  holding_door_1: [
+    '(One of the three little lights is green now. The door pretends not to notice.)',
+  ],
+  holding_door_2: [
+    '(Two green lights. Listen close: the rivets are nervous.)',
+  ],
+  holding_open_panel: [
+    'QUOTA: MET. Three green lights, very pleased with themselves.',
+    '(The steel door is in the wall now. It does not want to talk about it.)',
+  ],
+
+  /* ---------------- S2 — Faye, the girl who prays (§A3, §A6) ---------------- */
+  npc_faye_wait: ['@...You took the stairs. I heard you take the stairs. Stairs are honest that way.'],
+  holding_log: [
+    'INTAKE LOG — ROOM 1. ITEMS CONFISCATED: one (1) frying pan, ASSERTIVE.',
+    'REASON FOR HOLDING: "asked the Manager a question." The question is not logged.',
+    '(Underneath, in pencil, in a different hand: "she asked it NICELY.")',
+  ],
+  faye_meet: [
+    '(The room is small and gray and has been counted. Forty ceiling tiles. She tells you this before hello.)',
+    '@Forty tiles. I counted twice, in case the first forty were lying. Hi. You\'re {rex}.',
+    '@Don\'t look behind you, there\'s nobody else here. The Embers told me. They sing, you know. All eight of them, all over the world, like a choir that got scattered on purpose.',
+    '@The one from your hill hums in B flat. It has NOT stopped bragging about you.',
+  ],
+  faye_locket: [
+    '* {rex} held up the Star Locket. Inside it, one instrument was playing, all alone.',
+    '@...That\'s it. That\'s the song I keep hearing through the walls.',
+    '(She listens the way some people pray. It turns out to be the same thing.)',
+    '@They put me in here because I asked the Manager what he\'s so afraid of. He smiled so wide it stopped being a smile. The door did the answering.',
+    '@So. New plan. We go ask him together.',
+  ],
+  faye_join: [
+    '@One second. (She takes her frying pan back off the intake shelf. The shelf seems relieved.)',
+    '@I\'m {faye}. I hit things with a frying pan, and when it matters, I pray.',
+    '@If it gets loud out there, that\'s the praying. It always does SOMETHING. That\'s the whole deal with it.',
+    '* {faye} joined the party!!',
+  ],
+
+  /* ---------------- S2 — the Manager's exit interview ---------------- */
+  manager_intro: [
+    "(The office door opens on its own. Doors do that for him. It's a seniority thing.)",
+    '@Leaving? Before your EXIT INTERVIEW? Oh, we NEVER skip the exit interview.',
+    '@Miss {faye} is our most promising long-term asset. Assets stay ON THE BOOKS.',
+    "@And YOU. (He consults a clipboard with nothing on it.) Terrible numbers. You make my employees feel like it's SATURDAY.",
+  ],
+  manager_faye_q: [
+    '@Sir. Same question as before. What are you so afraid of?',
+    '(The smile holds. The eyes do not.)',
+    '@...SECURITY. Two smiles to the front, please. Have a PRODUCTIVE day!',
+  ],
+  manager_win: [
+    '(The Manager is still smiling. He backs into his office without using his feet, somehow.)',
+    "@This is fine. This is FINE. I'm promoting myself somewhere QUIETER.",
+    '* Click. The nameplate now reads: IN A MEETING. It hopes to stay in it forever.',
+    '* Somewhere below, the elevator dinged and went DOWN. Nobody has ever seen it go down.',
+  ],
+  manager_door_after: [
+    'THE MANAGER — IN A MEETING.',
+    '(Through the door you can hear paper clips being alphabetized, slowly. It sounds like an apology.)',
+  ],
+
+  /* ---------------- S2 — Mom calls the payphone (ch1_complete) ---------------- */
+  payphone_far: ['(Somewhere on the block, a payphone is ringing its heart out.)'],
+  payphone_ringing: [
+    'The payphone is RINGING.',
+    '(It has been ringing since you stepped outside. Payphones know things. This one sounds like dinner.)',
+  ],
+  mom_payphone: [
+    '@RING... RING... ...click.',
+    "@—{rex}! It's Mom. Payphones aren't in the phone book, sweetheart, so I dialed the one that felt warmest.",
+    '@A CITY! My baby took the 6:15! Mrs. Pemmel says hi. Biscuit said nothing, but he wagged it.',
+    "@Is the girl with you? The one the hill keeps singing about? Good. Tell her I'm setting three plates.",
+    "@Dinner is {favoritefood}. It is ALWAYS {favoritefood} — but tonight it's the coming-home kind.",
+    '@That\'s what phones are, honey. Home, with buttons. Your father handles the SAVING. I handle everything else.',
+    "* (So that's phones: stand close, press A, and family happens. Dad saves the game. Mom saves the rest.)",
+  ],
+  faye_after_call: [
+    "@...Three plates. (She says it like a word she's checking for cracks. It holds.)",
+    '@Okay. Your mom wins. Let\'s go catch the 6:15.',
+  ],
+  ch1_card: [
+    'CHAPTER ONE — THE NIGHT IT FELL',
+    'complete.',
+    "(East of here, past the parking lot, the docks are already dreaming about a banana boat. That's a Chapter 2 problem.)",
+  ],
 };
 
 /** battle text fragments (§A11.5 — classic second person) */
@@ -288,4 +388,7 @@ export const BATTLE_TEXT = {
   chad_hide: 'Chad is supervising from a safe distance!',
   chad_poke: 'Chad poked it with a stick! It barely noticed!',
   win: 'YOU WON!',
+  // S2: Faye's first Pray, tutorialized in the Manager fight (§A11.4 — warm)
+  pray_hint: "({user}'s hands are already together. PRAY is on her menu — it costs nothing, and it always does SOMETHING.)",
+  spark_revive: 'The spark flares — warm as a porch light in late summer. {t} got back up!',
 };
