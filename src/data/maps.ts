@@ -8,6 +8,7 @@
  *   o office floor   O office wall   c cubicle partition   k cubicle desk
  *   y day sky   u bus floor   U bus wall
  */
+import { cityBuildingHeight } from '../spritegen/tiles';
 
 /** grid char -> tile name (the scene renders from this; tests validate it) */
 export const CHAR_LEGEND: Record<string, string> = {
@@ -29,6 +30,7 @@ export const CHAR_LEGEND: Record<string, string> = {
   R: 'road',
   D: 'road_dash',
   X: 'crosswalk',
+  P: 'parking',
   B: 'brick',
   o: 'office_floor',
   O: 'office_wall',
@@ -128,6 +130,20 @@ export interface MapDef {
 
 /* ------------------------------------------------------------------ */
 
+/** deterministic rng — map layouts must be identical on every boot
+ *  (door positions, saves, and tests depend on it), so "randomness" here
+ *  means seeded organic irregularity, never per-run variation */
+function seededRng(seed: number): () => number {
+  let a = seed >>> 0;
+  return (): number => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 class Grid {
   rows: string[][];
   w: number;
@@ -145,14 +161,7 @@ class Grid {
     return this;
   }
   sprinkle(seed: number, chars: string, density: number): this {
-    let a = seed >>> 0;
-    const rng = (): number => {
-      a |= 0;
-      a = (a + 0x6d2b79f5) | 0;
-      let t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
+    const rng = seededRng(seed);
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         if (this.rows[y][x] === '.' && rng() < density) {
@@ -413,49 +422,153 @@ function buildBedroom(): MapDef {
   };
 }
 
-/* ------------------- BRICKTON CITY (S1) ------------------- */
+/* ------------------- BRICKTON CITY (S1, organic layout per ADR-012) ------------------- */
 
+/** where the bus drops you — OverworldScene's bus flow reads this */
+export const BRICKTON_BUS_SPAWN = { x: 88, y: 476 } as const;
+
+/**
+ * A real downtown, not a strip: two E-W streets stitched by a cross avenue,
+ * buildings in three clusters with jittered placement and varied heights,
+ * a parking lot, an irregular park, alleys you can cut through. All
+ * irregularity comes from one fixed seed (1995 — the summer it fell) so the
+ * city is sporadic to the eye but identical on every boot.
+ */
 function buildBrickton(): MapDef {
-  const g = new Grid(54, 26, '=');
-  // city backdrop + bounds
-  g.rect(0, 0, 54, 1, 'B');
-  g.rect(0, 0, 1, 26, 'B');
-  g.rect(53, 0, 1, 26, 'B');
-  g.rect(0, 24, 54, 2, 'B');
-  // the building row sits on solid brick (facades drawn over it)
-  g.rect(1, 1, 52, 5, 'B');
-  // the street
-  g.rect(1, 8, 52, 3, 'R');
-  for (let x = 1; x < 53; x++) if (x % 4 < 2) g.set(x, 9, 'D');
-  g.rect(17, 8, 2, 3, 'X');
-  g.rect(30, 8, 2, 3, 'X');
-  // pocket park
-  g.rect(18, 13, 13, 9, '.');
-  g.set(20, 15, '~');
-  g.set(27, 16, 'f');
-  g.set(22, 19, 'F');
-  g.set(25, 14, '~');
-  g.set(29, 20, 'f');
-  // hedge before the south wall
-  g.rect(1, 23, 52, 1, 'b');
-  // the vacant lot ("FUTURE SITE OF MORE BRICKTON")
-  g.rect(47, 14, 6, 1, '-');
-  g.rect(47, 20, 6, 1, '-');
-  g.rect(47, 15, 1, 5, '|');
-  g.rect(52, 15, 1, 5, '|');
-  g.rect(48, 15, 4, 5, '.');
-  g.set(49, 17, '~');
-  g.set(50, 18, ',');
+  const rng = seededRng(1995);
+  const jit = (n: number): number => Math.floor(rng() * n);
 
-  const trees: Array<[number, number]> = [
-    [19, 13],
-    [28, 14],
-    [21, 20],
-    [26, 19],
-    [33, 21],
-    [10, 21],
-    [14, 20],
+  const g = new Grid(56, 32, '=');
+  // bounds + the brick spine the north row backs onto
+  g.rect(0, 0, 56, 1, 'B');
+  g.rect(0, 0, 1, 32, 'B');
+  g.rect(55, 0, 1, 32, 'B');
+  g.rect(0, 31, 56, 1, 'B');
+  g.rect(1, 1, 54, 5, 'B');
+  // two streets + the avenue that stitches them
+  g.rect(1, 8, 54, 3, 'R');
+  g.rect(1, 21, 54, 3, 'R');
+  g.rect(25, 8, 3, 16, 'R');
+  // dashed centerlines, phase-shifted per street, broken at the avenue + crossings
+  const skipA = new Set([17, 18, 23, 24, 25, 26, 27]);
+  const skipB = new Set([25, 26, 27, 28, 29]);
+  for (let x = 1; x < 55; x++) {
+    if (x % 4 < 2 && !skipA.has(x)) g.set(x, 9, 'D');
+    if ((x + 2) % 4 < 2 && !skipB.has(x)) g.set(x, 22, 'D');
+  }
+  // crosswalks: by the hospital, and flanking the avenue at each street
+  g.rect(17, 8, 2, 3, 'X');
+  g.rect(23, 8, 2, 3, 'X');
+  g.rect(28, 21, 2, 3, 'X');
+  // west mid-block: the parking lot (always emptier than it should be)
+  g.rect(2, 13, 8, 5, 'P');
+  // east mid-block: the park — corners nibbled so it isn't a rectangle
+  g.rect(41, 13, 13, 6, '.');
+  g.rect(41, 13, 1 + jit(3), 1, '=');
+  g.rect(53 - jit(3), 13, 3, 1, '=');
+  g.rect(41, 18, 2 + jit(3), 1, '=');
+  g.rect(52 - jit(2), 18, 3, 1, '=');
+  // SE vacant lot behind its fence
+  g.rect(47, 26, 7, 1, '-');
+  g.rect(47, 27, 1, 3, '|');
+  g.rect(53, 27, 1, 3, '|');
+  g.rect(48, 27, 5, 3, '.');
+  // hedge fragments along the south edge — broken, like real municipal hedges
+  let hx = 18;
+  while (hx < 45) {
+    const len = 2 + jit(3);
+    if (rng() < 0.75) g.rect(hx, 29, len, 1, 'b');
+    hx += len + 1 + jit(3);
+  }
+  g.sprinkle(95, ',~ff F', 0.16); // grass fuzz in the park + the lot
+
+  /* ---- buildings: three clusters, jittered, height-varied ---- */
+  interface Bldg {
+    sprite: string;
+    w: number;
+    u: 1 | 2 | 3;
+    x: number;
+  }
+  const north: Bldg[] = [
+    { sprite: 'bldg_starmart', w: 5, u: 1, x: 2 + jit(2) },
+    { sprite: 'bldg_brickmore', w: 5, u: 3, x: 9 + jit(2) },
+    { sprite: 'bldg_hospital', w: 7, u: 2, x: 16 + jit(2) },
+    { sprite: 'bldg_dept', w: 8, u: 2, x: 29 + jit(2) },
+    { sprite: 'bldg_bank', w: 6, u: 2, x: 41 + jit(2) },
   ];
+  for (let i = 1; i < north.length; i++) {
+    const min = north[i - 1].x + north[i - 1].w + 1; // never overlap, alleys allowed
+    if (north[i].x < min) north[i].x = min;
+  }
+  const midWest: Bldg[] = [
+    { sprite: 'bldg_bagels', w: 4, u: 1, x: 11 + jit(2) },
+    { sprite: 'bldg_arcade2', w: 5, u: 1, x: 16 + jit(3) },
+  ];
+  if (midWest[1].x < midWest[0].x + midWest[0].w) midWest[1].x = midWest[0].x + midWest[0].w; // touching = rowhouse
+  if (midWest[1].x + midWest[1].w > 24) midWest[1].x = 24 - midWest[1].w; // stay west of the avenue
+  const midEast: Bldg[] = [
+    { sprite: 'bldg_diner', w: 4, u: 1, x: 29 + jit(2) },
+    { sprite: 'bldg_video', w: 4, u: 1, x: 35 + jit(2) },
+  ];
+  if (midEast[1].x < midEast[0].x + midEast[0].w) midEast[1].x = midEast[0].x + midEast[0].w;
+
+  const bldgProps: PropDef[] = [];
+  const place = (b: Bldg, bottomPx: number): PropDef => {
+    const H = cityBuildingHeight(b.u);
+    const prop: PropDef = {
+      sprite: b.sprite,
+      x: b.x,
+      y: (bottomPx - H) / 16,
+      solid: { ox: 0, oy: 26, w: b.w * 16 + 2, h: H - 38 },
+    };
+    if (b.sprite === 'bldg_dept') {
+      prop.door = { ox: 44, oy: H - 14, w: 26, h: 18, to: 'dos_f1', tx: 208, ty: 234 };
+    }
+    bldgProps.push(prop);
+    return prop;
+  };
+  north.forEach((b) => place(b, 112)); // doors open onto street A's sidewalk
+  [...midWest, ...midEast].forEach((b) => place(b, 304)); // doors face street B
+
+  /* ---- scattered street life ---- */
+  const trees: Array<[number, number]> = [[33, 13]]; // lone back-alley tree
+  for (const [tx, ty] of [[42, 13], [49, 14], [43, 17], [51, 16], [46, 13]] as const) {
+    if (rng() < 0.75) trees.push([tx, ty]);
+  }
+  for (const [tx, ty] of [[19, 27], [31, 28], [39, 27], [44, 28], [12, 28]] as const) {
+    if (rng() < 0.6) trees.push([tx, ty]);
+  }
+
+  const FURN_SOLID: Record<string, { ox: number; oy: number; w: number; h: number }> = {
+    bench: { ox: 1, oy: 6, w: 20, h: 6 },
+    hydrant: { ox: 2, oy: 8, w: 6, h: 5 },
+    planter: { ox: 1, oy: 6, w: 20, h: 9 },
+  };
+  const furniture: PropDef[] = [];
+  for (let fx = 18; fx <= 44; fx += 4 + jit(3)) {
+    if (rng() < 0.45) continue;
+    const sprite = (['bench', 'hydrant', 'planter'] as const)[jit(3)];
+    furniture.push({ sprite, x: fx, y: 26, solid: FURN_SOLID[sprite] });
+  }
+  // a little clutter on sidewalk B too — but never in front of a door
+  const doorCols = new Set(
+    [...midWest, ...midEast].flatMap((b) => {
+      const d = b.x + (b.sprite === 'bldg_arcade2' || b.sprite === 'bldg_video' ? 2 : 1);
+      return [d - 1, d, d + 1];
+    }),
+  );
+  for (const fx of [13, 22, 31, 40]) {
+    if (rng() < 0.55 || doorCols.has(fx)) continue;
+    const sprite = (['hydrant', 'planter'] as const)[jit(2)];
+    furniture.push({ sprite, x: fx, y: 19, solid: FURN_SOLID[sprite] });
+  }
+
+  // alley dumpsters: one in the starmart-brickmore gap, one by the parking lot
+  const alleyX = north[0].x + north[0].w + 0.1;
+  const picnicX = 44 + jit(2);
+
+  const hospital = north[2];
+  const dept = north[3];
 
   return {
     id: 'brickton',
@@ -464,58 +577,46 @@ function buildBrickton(): MapDef {
     grid: g.out(),
     props: [
       ...trees.map(([x, y]) => ({ sprite: 'tree', x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
-      // north face of the street — door bottoms aligned to y=112
-      { sprite: 'bldg_bagels', x: 1, y: 3.25, solid: { ox: 0, oy: 26, w: 66, h: 22 } },
-      { sprite: 'bldg_starmart', x: 6, y: 3.25, solid: { ox: 0, oy: 26, w: 82, h: 22 } },
-      { sprite: 'bldg_hospital', x: 13, y: 2.25, solid: { ox: 0, oy: 26, w: 114, h: 38 } },
-      { sprite: 'bldg_brickmore', x: 21, y: 2.25, solid: { ox: 0, oy: 26, w: 82, h: 38 } },
-      {
-        sprite: 'bldg_dept',
-        x: 27,
-        y: 2.25,
-        solid: { ox: 0, oy: 26, w: 130, h: 38 },
-        door: { ox: 44, oy: 62, w: 26, h: 18, to: 'dos_f1', tx: 208, ty: 234 },
-      },
-      { sprite: 'bldg_video', x: 36, y: 3.25, solid: { ox: 0, oy: 26, w: 66, h: 22 } },
-      { sprite: 'bldg_bank', x: 41, y: 2.25, solid: { ox: 0, oy: 26, w: 98, h: 38 } },
-      // south side: bus stop, payphone, park furniture
-      { sprite: 'bus_sign', x: 7, y: 12, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
-      { sprite: 'bench', x: 4, y: 13, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'sign', x: 9, y: 13, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      { sprite: 'payphone', x: 11, y: 13, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
-      { sprite: 'picnic', x: 23, y: 16, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-      { sprite: 'bench', x: 33, y: 13, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'hydrant', x: 37, y: 13, solid: { ox: 2, oy: 8, w: 6, h: 5 } },
-      { sprite: 'planter', x: 40, y: 13, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-      { sprite: 'bench', x: 44, y: 13, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'sign', x: 49, y: 16, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      ...bldgProps,
+      { sprite: 'dumpster', x: alleyX, y: 5.4, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
+      { sprite: 'dumpster', x: 2, y: 11.9, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
+      // bus stop corner
+      { sprite: 'bus_sign', x: 7, y: 26, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
+      { sprite: 'bench', x: 4, y: 27, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'sign', x: 10, y: 27, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      { sprite: 'payphone', x: 14, y: 26, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      // park
+      { sprite: 'picnic', x: picnicX, y: 15, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+      // the lot's realtor sign, on the sidewalk where you can actually read it
+      { sprite: 'sign', x: 49, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      ...furniture,
     ],
     npcs: [
-      { id: 'nurse', sprite: 'nurse', x: 16, y: 6, facing: 'down', dialogue: 'npc_nurse' },
-      { id: 'gray_commuter', sprite: 'grayCommuter', x: 33, y: 6, facing: 'up', dialogue: 'npc_commuter' },
-      { id: 'quarter_man', sprite: 'quarterMan', x: 12, y: 14, facing: 'left', dialogue: 'npc_quarter' },
-      { id: 'pigeon_kid', sprite: 'pigeonKid', x: 23, y: 14, facing: 'down', dialogue: 'npc_pigeonkid' },
-      { id: 'sidewalk_critic', sprite: 'sidewalkCritic', x: 36, y: 11, facing: 'down', dialogue: 'npc_critic', wander: true },
+      { id: 'nurse', sprite: 'nurse', x: hospital.x + 3, y: 6, facing: 'down', dialogue: 'npc_nurse' },
+      { id: 'gray_commuter', sprite: 'grayCommuter', x: dept.x + 5, y: 6, facing: 'up', dialogue: 'npc_commuter' },
+      { id: 'quarter_man', sprite: 'quarterMan', x: 15, y: 27, facing: 'left', dialogue: 'npc_quarter' },
+      { id: 'pigeon_kid', sprite: 'pigeonKid', x: 44, y: 15, facing: 'down', dialogue: 'npc_pigeonkid' },
+      { id: 'sidewalk_critic', sprite: 'sidewalkCritic', x: 20, y: 19, facing: 'down', dialogue: 'npc_critic', wander: true },
     ],
     signs: [
-      { x: 9, y: 13, dialogue: 'sign_brickton' },
-      { x: 49, y: 16, dialogue: 'sign_lot' },
+      { x: 10, y: 27, dialogue: 'sign_brickton' },
+      { x: 49, y: 25, dialogue: 'sign_lot' },
     ],
-    phones: [{ x: 11, y: 13 }],
+    phones: [{ x: 14, y: 26 }],
     doors: [],
     spawners: [
-      { enemies: ['blazer_smiler'], count: 1, rect: { x: 26, y: 6, w: 14, h: 2 } },
-      { enemies: ['blazer_smiler'], count: 1, rect: { x: 33, y: 11, w: 16, h: 2 } },
-      { enemies: ['pigeon_gang'], count: 1, rect: { x: 19, y: 14, w: 11, h: 7 } },
-      { enemies: ['pigeon_gang'], count: 1, rect: { x: 8, y: 8, w: 14, h: 3 } },
+      { enemies: ['blazer_smiler'], count: 1, rect: { x: 28, y: 6, w: 12, h: 2 } },
+      { enemies: ['blazer_smiler'], count: 1, rect: { x: 11, y: 19, w: 13, h: 2 } },
+      { enemies: ['pigeon_gang'], count: 1, rect: { x: 2, y: 13, w: 8, h: 5 } },
+      { enemies: ['pigeon_gang'], count: 1, rect: { x: 41, y: 13, w: 12, h: 6 } },
     ],
-    triggers: [{ id: 'bus_stop_brickton', rect: { x: 4, y: 12, w: 4, h: 3 }, once: false }],
+    triggers: [{ id: 'bus_stop_brickton', rect: { x: 4, y: 26, w: 4, h: 3 }, once: false }],
   };
 }
 
 /* ------------------- THE DEPARTMENT OF SMILES ------------------- */
 
-function buildDosF1(): MapDef {
+function buildDosF1(streetExit: { tx: number; ty: number }): MapDef {
   const g = new Grid(26, 16, 'o');
   g.rect(0, 0, 26, 2, 'O');
   g.rect(0, 0, 1, 16, 'O');
@@ -551,7 +652,7 @@ function buildDosF1(): MapDef {
     ],
     phones: [],
     doors: [
-      { x: 12, y: 15, w: 2, h: 1, to: 'brickton', tx: 489, ty: 121, facing: 'down', indicator: 'mat' },
+      { x: 12, y: 15, w: 2, h: 1, to: 'brickton', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
       { x: 22, y: 2, w: 2, h: 1, to: 'dos_f2', tx: 368, ty: 60, facing: 'down', indicator: 'elevator' },
     ],
     spawners: [],
@@ -705,13 +806,23 @@ function buildBusInterior(): MapDef {
   };
 }
 
+// the Department's facade is jitter-placed, so the floor-1 exit derives its
+// doorstep from wherever the door actually landed
+const bricktonMap = buildBrickton();
+const deptProp = bricktonMap.props.find((p) => p.door?.to === 'dos_f1');
+const deptDoor = deptProp?.door;
+const deptDoorstep =
+  deptProp && deptDoor
+    ? { tx: deptProp.x * 16 + deptDoor.ox + deptDoor.w / 2, ty: deptProp.y * 16 + deptDoor.oy + deptDoor.h + 5 }
+    : { tx: 489, ty: 121 };
+
 export const MAPS: Record<string, MapDef> = {
   otterbrook: buildOtterbrook(),
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),
   rex_bedroom: buildBedroom(),
-  brickton: buildBrickton(),
-  dos_f1: buildDosF1(),
+  brickton: bricktonMap,
+  dos_f1: buildDosF1(deptDoorstep),
   dos_f2: buildDosF2(),
   dos_f3: buildDosF3(),
   bus_interior: buildBusInterior(),

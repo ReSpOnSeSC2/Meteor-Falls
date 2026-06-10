@@ -206,6 +206,14 @@ function crosswalk(): Pixmap {
   return pm;
 }
 
+function parkingLot(): Pixmap {
+  const pm = roadBase(48);
+  // stall striping — one corner per tile, so it tiles into a lot
+  pm.vline(0, 0, 10, px(RAMP.PAPER, 1));
+  pm.hline(0, 0, 7, px(RAMP.PAPER, 1));
+  return pm;
+}
+
 function brickWall(): Pixmap {
   const pm = new Pixmap(TILE, TILE);
   pm.fill(px(RAMP.RED, 1));
@@ -326,6 +334,7 @@ export const TILESET: TileEntry[] = [
   { name: 'road', solid: false, make: () => roadBase(42) },
   { name: 'road_dash', solid: false, make: roadDash },
   { name: 'crosswalk', solid: false, make: crosswalk },
+  { name: 'parking', solid: false, make: parkingLot },
   { name: 'brick', solid: true, make: brickWall },
   // Department of Smiles
   { name: 'office_floor', solid: false, make: officeFloor },
@@ -672,7 +681,7 @@ export function drawHouse(o: HouseOpts): Pixmap {
  *  storefront level with display windows + door. Height: 44 + 16·upperRows. */
 export interface CityBuildingOpts {
   wallTiles: number;
-  upperRows: 1 | 2;
+  upperRows: 1 | 2 | 3;
   wall: number; // ramp
   signText: string;
   /** striped awning over the storefront, in this ramp */
@@ -683,9 +692,11 @@ export interface CityBuildingOpts {
   smiley?: boolean;
   doorAt?: number; // tile column of the door
   doubleDoor?: boolean;
+  /** seeds which windows are lit — every building's evening is different */
+  litSeed?: number;
 }
 
-export const cityBuildingHeight = (upperRows: 1 | 2): number => 44 + upperRows * 16;
+export const cityBuildingHeight = (upperRows: 1 | 2 | 3): number => 44 + upperRows * 16;
 
 export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
   const w = o.wallTiles * TILE;
@@ -707,12 +718,13 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
   if (o.wall === RAMP.RED) {
     for (let y = upTop + 3; y < upTop + upH; y += 4) pm.hline(1, y, w, wallD);
   }
+  const litRng = mulberry32(o.litSeed ?? 7);
   for (let r = 0; r < o.upperRows; r++) {
     for (let t = 0; t < o.wallTiles; t++) {
       if (o.smiley && t >= Math.floor(o.wallTiles / 2) - 1 && t <= Math.floor(o.wallTiles / 2)) continue;
       const wx = 1 + t * TILE + 4;
       const wy = upTop + r * 16 + 3;
-      const lit = (t + r) % 3 === 0;
+      const lit = litRng() < 0.32;
       pm.rect(wx, wy, 8, 10, lit ? px(RAMP.GOLD, 2) : px(RAMP.CYAN, 1));
       pm.set(wx + 1, wy + 1, lit ? px(RAMP.GOLD, 3) : px(RAMP.CYAN, 3));
       pm.frame(wx - 1, wy - 1, 10, 12, wallD);
@@ -794,6 +806,21 @@ export function drawPayphone(): Pixmap {
   pm.set(6, 11, C.inkSoft); // keypad
   pm.set(8, 11, C.inkSoft);
   pm.rect(1, 24, 14, 3, px(RAMP.BLUE, 1)); // base
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** alley dumpster — every real city has one, and it has a tenant */
+export function drawDumpster(): Pixmap {
+  const pm = new Pixmap(22, 18);
+  pm.rect(1, 6, 20, 9, px(RAMP.FOREST, 1));
+  pm.rect(1, 4, 20, 3, px(RAMP.FOREST, 2)); // lid, slightly ajar
+  pm.hline(1, 4, 20, px(RAMP.FOREST, 3));
+  for (const x of [4, 9, 14, 18]) pm.vline(x, 7, 7, px(RAMP.FOREST, 2));
+  pm.set(6, 2, px(RAMP.PAPER, 2)); // something poking out. don't ask.
+  pm.set(7, 3, px(RAMP.PAPER, 1));
+  pm.rect(3, 15, 3, 2, C.inkSoft);
+  pm.rect(16, 15, 3, 2, C.inkSoft);
   pm.outline(C.outline);
   return pm;
 }

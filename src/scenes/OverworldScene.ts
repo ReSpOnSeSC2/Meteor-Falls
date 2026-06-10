@@ -5,7 +5,7 @@
  * cutscenes per GAME_BIBLE §A6 / ADR-007.
  */
 import Phaser from 'phaser';
-import { MAPS, CHAR_LEGEND, type MapDef, type NpcDef, type PatrolDef } from '../data/maps';
+import { MAPS, CHAR_LEGEND, BRICKTON_BUS_SPAWN, type MapDef, type NpcDef, type PatrolDef } from '../data/maps';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS } from '../data/items';
 import { DIALOGUE } from '../data/dialogue';
@@ -933,6 +933,8 @@ export class OverworldScene extends Phaser.Scene {
       bldg_brickmore: 'locked_brickmore',
       bldg_video: 'locked_video',
       bldg_bank: 'locked_bank',
+      bldg_arcade2: 'locked_arcade2',
+      bldg_diner: 'locked_diner',
       holding_door: 'holding_door_line',
       office_door: 'manager_door',
     };
@@ -1289,7 +1291,7 @@ export class OverworldScene extends Phaser.Scene {
       this.goThroughDoor('bus_interior', 296, 108, 'left');
       return;
     }
-    if (dest === 'brickton') this.goThroughDoor('brickton', 88, 250, 'up');
+    if (dest === 'brickton') this.goThroughDoor('brickton', BRICKTON_BUS_SPAWN.x, BRICKTON_BUS_SPAWN.y, 'up');
     else this.goThroughDoor('otterbrook', 376, 442, 'up');
   }
 
@@ -1344,7 +1346,7 @@ export class OverworldScene extends Phaser.Scene {
     spawner.remove();
     GS.setFlag('bus_ride_done');
     AUDIO.stopMusic();
-    this.goThroughDoor('brickton', 88, 250, 'up');
+    this.goThroughDoor('brickton', BRICKTON_BUS_SPAWN.x, BRICKTON_BUS_SPAWN.y, 'up');
   }
 
   /* ---------------- helpers ---------------- */

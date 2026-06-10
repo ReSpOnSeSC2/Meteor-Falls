@@ -80,6 +80,29 @@ describe('S1 canon (GAME_BIBLE §A6/§A7/§A4.5, prompt S1)', () => {
     expect(roster.has('pigeon_gang')).toBe(true);
   });
 
+  it('Brickton is a downtown, not a strip: two streets + a connecting avenue (ADR-012)', () => {
+    const grid = MAPS.brickton.grid;
+    const street = (ch: string): boolean => 'RDX'.includes(ch);
+    // two horizontal street bands separated by a built-up block
+    const roadRows = grid
+      .map((row, y) => ({ y, n: [...row].filter(street).length }))
+      .filter((r) => r.n > 20)
+      .map((r) => r.y);
+    expect(roadRows.length).toBeGreaterThanOrEqual(6);
+    expect(roadRows[roadRows.length - 1] - roadRows[0]).toBeGreaterThan(8);
+    expect(roadRows.some((y, i) => i > 0 && y - roadRows[i - 1] > 1)).toBe(true);
+    // a vertical avenue stitches them
+    let connector = false;
+    for (let x = 0; x < grid[0].length; x++) {
+      let n = 0;
+      for (let y = 0; y < grid.length; y++) if (street(grid[y][x])) n++;
+      if (n >= 12) connector = true;
+    }
+    expect(connector).toBe(true);
+    // the dungeon entrance survived the jitter
+    expect(MAPS.brickton.props.some((p) => p.door?.to === 'dos_f1')).toBe(true);
+  });
+
   it('the Department is 3 floors ending at the locked holding room', () => {
     expect(MAPS.dos_f1.doors.some((d) => d.to === 'dos_f2')).toBe(true);
     expect(MAPS.dos_f2.doors.some((d) => d.to === 'dos_f3')).toBe(true);

@@ -187,3 +187,35 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   manager fight, and the PRODUCTIVITY LOCK counting floor-3 patrol defeats
   (patrol ids are stable for flag wiring). The Smiler's §A7 "productive"
   debuff is now real in battle (offense ×0.75 for 3 rounds).
+
+## ADR-012 — City layout convention: seeded organic downtowns
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (user feedback on S1's first Brickton)
+- **Context:** The first Brickton put every storefront on one straight
+  street — it read as a stage set. The user wants cities "more sporadic and
+  a bit more true to life... a good bit of randomness."
+- **Decision:** Every city map (Brickton now; Chandrapore, Zanzibel, Lotus
+  Harbor, etc. later) is laid out by its builder with a **fixed-seed RNG**
+  (`seededRng` in maps.ts — Brickton's seed is 1995):
+  - **street grid, not a strip**: ≥2 parallel streets joined by cross
+    avenues, crosswalks at junctions, centerline dashes phase-shifted per
+    street and broken at junctions;
+  - **building clusters on multiple block faces** (our facades face south,
+    so each street's north side carries them), with jittered positions,
+    touching-rowhouse runs, alleys (dumpsters), and walkable gaps that cut
+    between streets;
+  - **varied skyline**: 1–3 story facades (`upperRows`), per-building
+    `litSeed` so window lighting never repeats;
+  - **negative space**: parking lots, irregular parks (nibbled corners),
+    vacant lots, broken hedge runs, furniture scattered from candidate
+    slots by rng — never evenly spaced;
+  - **determinism is non-negotiable**: the seed is fixed so layouts are
+    identical every boot (saves store positions; tests assert structure).
+    Cross-map coordinates that depend on jittered placement are **computed,
+    not hardcoded** — e.g. `dos_f1`'s street exit derives its doorstep from
+    wherever the Department's door actually landed, and the bus spawn is the
+    exported `BRICKTON_BUS_SPAWN`.
+- **Consequences:** maps.test.ts asserts the two-street + connector
+  structure so a future edit can't flatten the city back into a strip;
+  chapter-map prompts (28–34) inherit this convention for their towns.

@@ -221,6 +221,14 @@ export const DIALOGUE: Record<string, string[]> = {
     'OTTERBROOK SAVINGS & LOAN, Brickton branch. Closed.',
     '(Inside, the vault is sleeping. Banks sleep standing up, like horses.)',
   ],
+  locked_arcade2: [
+    'STARPORT II — "The Sequel to the Arcade." Locked.',
+    'Through the glass, one cabinet idles its attract mode at nobody, flashing a high score with three letters: "MGR".',
+  ],
+  locked_diner: [
+    'The DINER is closed between breakfast and breakfast.',
+    'A menu in the window lists "EGGS (various)" and, lower down, "ASK US ABOUT TUESDAY."',
+  ],
 
   /* ---------------- the Department of Smiles ---------------- */
   npc_receptionist: [

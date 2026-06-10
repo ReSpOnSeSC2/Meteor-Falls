@@ -47,6 +47,7 @@ import {
   drawHouse,
   drawCityBuilding,
   drawPayphone,
+  drawDumpster,
   drawBench,
   drawHydrant,
   drawPlanter,
@@ -196,6 +197,7 @@ export function generateAllTextures(scene: Phaser.Scene): void {
 
   // Brickton City props (S1)
   addPixmap(scene, 'payphone', drawPayphone());
+  addPixmap(scene, 'dumpster', drawDumpster());
   addPixmap(scene, 'bench', drawBench());
   addPixmap(scene, 'hydrant', drawHydrant());
   addPixmap(scene, 'planter', drawPlanter());
@@ -209,14 +211,16 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'bus_windows', drawBusWindows(352));
   addPixmap(scene, 'skyline', drawSkyline());
 
-  // Brickton downtown block — north face of the street
-  addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1 }));
-  addPixmap(scene, 'bldg_starmart', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.CYAN, signText: 'STARMART', awning: RAMP.BLUE, doorAt: 2 }));
-  addPixmap(scene, 'bldg_hospital', drawCityBuilding({ wallTiles: 7, upperRows: 2, wall: RAMP.PAPER, signText: 'BRICKTON GENERAL', cross: true, doorAt: 3, doubleDoor: true }));
-  addPixmap(scene, 'bldg_brickmore', drawCityBuilding({ wallTiles: 5, upperRows: 2, wall: RAMP.RED, signText: 'THE BRICKMORE', doorAt: 2 }));
-  addPixmap(scene, 'bldg_dept', drawCityBuilding({ wallTiles: 8, upperRows: 2, wall: RAMP.BLUE, signText: 'DEPARTMENT OF SMILES', smiley: true, doorAt: 3, doubleDoor: true }));
-  addPixmap(scene, 'bldg_video', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.PURPLE, signText: 'VIDEO', awning: RAMP.PURPLE, doorAt: 2 }));
-  addPixmap(scene, 'bldg_bank', drawCityBuilding({ wallTiles: 6, upperRows: 2, wall: RAMP.PAPER, signText: 'SAVINGS & LOAN', doorAt: 2 }));
+  // Brickton downtown — varied heights and lighting so no two facades match
+  addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1, litSeed: 11 }));
+  addPixmap(scene, 'bldg_starmart', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.CYAN, signText: 'STARMART', awning: RAMP.BLUE, doorAt: 2, litSeed: 12 }));
+  addPixmap(scene, 'bldg_hospital', drawCityBuilding({ wallTiles: 7, upperRows: 2, wall: RAMP.PAPER, signText: 'BRICKTON GENERAL', cross: true, doorAt: 3, doubleDoor: true, litSeed: 13 }));
+  addPixmap(scene, 'bldg_brickmore', drawCityBuilding({ wallTiles: 5, upperRows: 3, wall: RAMP.RED, signText: 'THE BRICKMORE', doorAt: 2, litSeed: 14 }));
+  addPixmap(scene, 'bldg_dept', drawCityBuilding({ wallTiles: 8, upperRows: 2, wall: RAMP.BLUE, signText: 'DEPARTMENT OF SMILES', smiley: true, doorAt: 3, doubleDoor: true, litSeed: 15 }));
+  addPixmap(scene, 'bldg_video', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.PURPLE, signText: 'VIDEO', awning: RAMP.PURPLE, doorAt: 2, litSeed: 16 }));
+  addPixmap(scene, 'bldg_bank', drawCityBuilding({ wallTiles: 6, upperRows: 2, wall: RAMP.PAPER, signText: 'SAVINGS & LOAN', doorAt: 2, litSeed: 17 }));
+  addPixmap(scene, 'bldg_arcade2', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.PURPLE, signText: 'STARPORT II', awning: RAMP.GOLD, doorAt: 2, litSeed: 18 }));
+  addPixmap(scene, 'bldg_diner', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.RED, signText: 'DINER', awning: RAMP.PAPER, doorAt: 1, litSeed: 19 }));
 
   // buildings
   addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true }));
