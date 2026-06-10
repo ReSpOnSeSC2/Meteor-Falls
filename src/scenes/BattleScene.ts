@@ -53,6 +53,8 @@ interface HeroUnit {
   box: Phaser.GameObjects.NineSlice;
   defending: boolean;
   sunburn: number;
+  /** rounds of the Smilers' "productive" debuff (offense down — §A7) */
+  productive: number;
   latched: boolean;
 }
 
@@ -234,7 +236,7 @@ export class BattleScene extends Phaser.Scene {
       dHp.setValue(hero.hp);
       dPp.setValue(hero.pp);
       this.odoDisplays.push({ d: dHp, o: odoHp }, { d: dPp, o: odoPp });
-      this.heroes.push({ hero, odoHp, odoPp, box, defending: false, sunburn: 0, latched: false });
+      this.heroes.push({ hero, odoHp, odoPp, box, defending: false, sunburn: 0, productive: 0, latched: false });
       bx += boxW + 6;
     }
     if (this.cfg.guestChad) {
@@ -456,7 +458,9 @@ export class BattleScene extends Phaser.Scene {
   private heroOffense(h: HeroUnit): number {
     const weapon = GS.data.inventory.find((i) => ITEMS[i]?.kind === 'weapon');
     const bonus = weapon ? (ITEMS[weapon].offense ?? 0) : 0;
-    return h.hero.stats.offense + bonus;
+    const base = h.hero.stats.offense + bonus;
+    // feeling PRODUCTIVE: your heart isn't in the swing (§A7 Smiler debuff)
+    return h.productive > 0 ? Math.max(1, Math.floor(base * 0.75)) : base;
   }
 
   private async heroVibe(h: HeroUnit): Promise<boolean> {
@@ -712,6 +716,10 @@ export class BattleScene extends Phaser.Scene {
         }
         case 'status': {
           if (move.status === 'sunburn') target.sunburn = 4;
+          if (move.status === 'productive') {
+            target.productive = 3;
+            await this.print(`${target.hero.name} feels horribly PRODUCTIVE! Offense fell!`);
+          }
           AUDIO.sfx('cancel');
           break;
         }
@@ -762,6 +770,10 @@ export class BattleScene extends Phaser.Scene {
         h.sunburn--;
         h.odoHp.damage(3);
         await this.print(`${h.hero.name} sizzles a little. (Sunburn)`);
+      }
+      if (h.productive > 0 && !h.odoHp.dead) {
+        h.productive--;
+        if (h.productive === 0) await this.print(`${h.hero.name} remembered it's summer. Offense is back!`);
       }
     }
     await this.settleDeaths();

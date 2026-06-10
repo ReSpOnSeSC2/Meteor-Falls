@@ -141,17 +141,129 @@ export const DIALOGUE: Record<string, string[]> = {
     '@Have you been eating well? Get some sleep, slugger. Big world out there. I\'ll be on the phone when you need me.',
   ],
   save_done: ['* Dad saved your progress. (He sounded proud about it.)'],
-  to_be_continued: [
-    'The 6:15 bus to BRICKTON CITY leaves at... well. 6:15.',
-    'Somewhere in that city is a girl who already knows your locket\'s song.',
-    'CHAPTER 1 CONTINUES IN THE NEXT BUILD — "BRICKTON CITY"',
-    'Thanks for playing the Meteor Falls vertical slice!',
-  ],
   picnic_rest: [
-    'You sit at the table a while. The night bugs sing the polite kind of song.',
+    'You sit at the table a while. Somewhere nearby, a bird applauds.',
     '* The party rested a little. (Full picnics arrive with Picnic Baskets.)',
   ],
   phone_save_q: ['Call Dad and save your progress?'],
+
+  /* ---------------- the 6:15 bus ---------------- */
+  bus_ask_brickton: [
+    'The 6:15 to BRICKTON CITY is somehow always about to leave.',
+    '(Mom prepaid your fare. She also packed a snack. You already ate the snack.)',
+  ],
+  bus_ask_home: ['The 6:15 also goes back to OTTERBROOK. Buses are like that.'],
+  npc_busdriver: [
+    "@Exact change or exact attitude. You've got one of 'em, kid. Sit anywhere.",
+  ],
+  npc_fernlady: [
+    '@Shh. Gerald is looking out the window.',
+  ],
+  bus_fern: [
+    '@This is Gerald. (She tilts a potted fern toward the window.) He has never seen the city.',
+    '@Gerald. Gerald. Look. LOOK.',
+    '(Gerald is looking. Gerald is a fern.)',
+  ],
+  bus_narration: [
+    'The hill shrinks. The town shrinks.',
+    'It turns out the world was hiding a whole CITY behind the corn.',
+  ],
+
+  /* ---------------- Brickton City ---------------- */
+  sign_brickton: [
+    'WELCOME TO BRICKTON CITY — pop. lots.',
+    '(Someone has written "OTTERBROOK FITS IN OUR PARKING LOT" underneath. Rude. Accurate.)',
+  ],
+  sign_lot: [
+    'FUTURE SITE OF MORE BRICKTON.',
+    '(The lot has been the future since before you were born. The weeds seem confident.)',
+  ],
+  npc_nurse: [
+    '@Brickton General, walk-ins welcome. The clipboard knows if you are sick. I just hold the clipboard.',
+    '@...It says you are fine. It says you are EXTREMELY twelve.',
+  ],
+  npc_commuter: [
+    '@My husband works in there. The Department of Smiles.',
+    '@He smiles all the time now. He used to only smile when he meant it.',
+    '@...If you see him in there, tell him dinner is at six. He knows which six.',
+  ],
+  npc_quarter: [
+    '@Shh— put your ear here. You hear that dial tone? Area code 216. The warmest dial tone in America.',
+    '@Most folks never listen past the first note. Most folks are in a HURRY.',
+  ],
+  npc_pigeonkid: [
+    '@Forty-one. There are forty-one pigeons on this block. I count them every day.',
+    '@...Nine of them are the same pigeon. He thinks I haven\'t noticed. I HAVE.',
+  ],
+  npc_critic: [
+    '@Now THIS is a sidewalk. Even slabs. Honest seams. A little give in the ankles.',
+    '@Three and a half stars. The half is for the hydrant. Great hydrant.',
+  ],
+  locked_bagels: [
+    'BRICKTON BAGELS is closed. A note on the door: "BACK IN 5."',
+    '(The note has been there since 1991. The 5 was never defined.)',
+  ],
+  locked_starmart: [
+    'STARMART — OPEN 24 HOURS. It is locked.',
+    '(A smaller sign clarifies: "not 24 hours in a ROW.")',
+  ],
+  locked_hospital: [
+    'BRICKTON GENERAL. The waiting room is standing-room-only, and most of those standing are pigeons.',
+    'A nurse mouths through the glass: "Come back when something is BROKEN, sweetie."',
+  ],
+  locked_brickmore: [
+    'THE BRICKMORE — apartments. The buzzer panel has 40 buttons and one label: "NOT THE BUZZER."',
+  ],
+  locked_video: [
+    'VIDEO VAULT is closed for "inventory," which through the window appears to be one man rewinding tapes and sighing.',
+  ],
+  locked_bank: [
+    'OTTERBROOK SAVINGS & LOAN, Brickton branch. Closed.',
+    '(Inside, the vault is sleeping. Banks sleep standing up, like horses.)',
+  ],
+
+  /* ---------------- the Department of Smiles ---------------- */
+  npc_receptionist: [
+    '@Welcome to the Department of Smiles! Have you smiled today? Don\'t worry. We can fix that.',
+    '@Visitors are encouraged to enjoy the lobby, the other floors, and compliance.',
+    '@Have a PRODUCTIVE day!',
+  ],
+  dos_lobby: [
+    'DEPARTMENT OF SMILES — "Putting the PRODUCT in PRODUCTIVITY since whenever."',
+    '(The exclamation point on the wall logo looks tired.)',
+  ],
+  dos_cert: [
+    'ELEVATOR INSPECTION CERTIFICATE: "It\'s a great elevator." — an inspector, probably.',
+    '(The UP light is always on. There is no proof anyone has ever gone down.)',
+  ],
+  dos_breakroom: [
+    'BREAK ROOM — Breaks are limited to feelings of gratitude.',
+    '(Someone has scratched "I MISS SATURDAY" into the paint, then apologized underneath.)',
+  ],
+  dos_memo1: [
+    'MEMO: Effective today, frowning is a meeting.',
+    'MEMO: All meetings are mandatory.',
+  ],
+  dos_memo2: [
+    'EMPLOYEE OF THE MONTH: EVERYONE!',
+    '(Forty identical photos of forty identical smiles. None of them look happy about it.)',
+  ],
+  dos_quiet: [
+    'FLOOR 3 — QUIET FLOOR. SMILE SOFTLY.',
+  ],
+  dos_memo3: [
+    'QUOTA BOARD — SMILES PRODUCED: ALL OF THEM.',
+    'SMILES FELT: (this column is empty)',
+  ],
+  holding_door_line: [
+    'A steel door, riveted shut. A brass plate reads: HOLDING ROOM — PRODUCTIVITY LOCK ENGAGED.',
+    '"This door opens when this floor MEETS ITS QUOTA." Three dark little lights wait above the handle.',
+    '(You can hear the lock smiling.)',
+  ],
+  manager_door: [
+    'THE MANAGER — a nameplate so polished you can see your frown in it.',
+    'A sticky note: "OUT SPREADING PRODUCTIVITY. DO NOT BE SAD UNTIL I RETURN."',
+  ],
 };
 
 /** battle text fragments (§A11.5 — classic second person) */

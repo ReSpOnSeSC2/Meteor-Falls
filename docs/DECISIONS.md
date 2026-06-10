@@ -150,3 +150,40 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   text linger is skippable by holding either; the Bible's @-speech convention
   stays in the data files but renders as a • speech bullet (the literal @ read
   as a username next to names like "@REX!").
+
+## ADR-011 — Brickton systems: sight-line patrols, walker enemies, bus map, elevator doors
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt S1)
+- **Context:** The second half of Ch.1's geography (§A6) needs a city block,
+  a 3-floor office dungeon with stealth-lite guards, and the bus transition.
+  The slice engine only had wandering mini-sprite roamers and mat/stairs door
+  indicators.
+- **Decision:**
+  - **`PatrolDef`** (maps data): waypoint loops (2 points ping-pong), a
+    facing-cone sight check (default 5 tiles, ±14 px lateral) occluded by
+    solid tiles — cubicle walls hide you. Spotted → "!" alert beat → chase at
+    92 px/s (between walk 70 and run 115). **Caught = battle, not fail**:
+    chase contact gives the enemy the green-swirl advantage; touching an
+    unalerted patrol's back gives the player the red swirl. Defeated patrols
+    stay down until map re-entry. Prompt 29's prefect drones reuse this.
+  - **`EnemyDef.walker`**: humanoid enemies roam as full 24×32 character
+    sheets with 4-dir walk anims (Blazer Smiler) instead of 16 px minis.
+  - Door indicator union gains **`elevator`** (doors drawn on the wall above
+    the zone); the Department's floors connect by elevator and stairs.
+  - **The bus is a map, not a scene**: `bus_interior` runs its cutscene on
+    map entry keyed by a registry `busDest`; scenery sprites scroll behind a
+    transparent-pane window overlay, clipped to the window band by a geometry
+    mask (interiors float in void, ADR-004 — no naked sprites outside the
+    bus). First ride to Brickton plays the full scene; later rides quick-fade.
+  - **`CHAR_LEGEND` moved into maps.ts** beside the grid format it describes;
+    `maps.test.ts` cross-checks legend/tileset, door targets, dialogue ids,
+    and enemy ids — the seed of Prompt S5's content validator.
+  - **Prop-door zones extend below their building's collision floor** so
+    doorsteps are reachable (this also fixed rex_home re-entry, which the
+    slice shipped broken — the zone ended above the walkable band).
+- **Consequences:** Otterbrook → bus → Brickton → Department floors 1–3 →
+  locked holding room is walkable end-to-end. S2 adds only story: Faye, the
+  manager fight, and the PRODUCTIVITY LOCK counting floor-3 patrol defeats
+  (patrol ids are stable for flag wiring). The Smiler's §A7 "productive"
+  debuff is now real in battle (offense ×0.75 for 3 rounds).

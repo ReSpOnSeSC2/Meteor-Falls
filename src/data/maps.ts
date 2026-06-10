@@ -4,7 +4,40 @@
  *   . , ~ grass variants   f F flowers   : path (auto-edged)   b bush
  *   - | fences   s S scorch / ember-flecked scorch
  *   w floor   W wall   r rug
+ *   = sidewalk   R D road / dashed centerline   X crosswalk   B brick wall
+ *   o office floor   O office wall   c cubicle partition   k cubicle desk
+ *   y day sky   u bus floor   U bus wall
  */
+
+/** grid char -> tile name (the scene renders from this; tests validate it) */
+export const CHAR_LEGEND: Record<string, string> = {
+  '.': 'grass_a',
+  ' ': 'grass_a', // sprinkle charsets use a space as "plain grass"
+  ',': 'grass_b',
+  '~': 'grass_tuft',
+  f: 'flowers_red',
+  F: 'flowers_gold',
+  b: 'bush',
+  '-': 'fence_h',
+  '|': 'fence_v',
+  s: 'scorch',
+  S: 'scorch_ember',
+  w: 'floor_wood',
+  W: 'wall_int',
+  r: 'rug',
+  '=': 'sidewalk',
+  R: 'road',
+  D: 'road_dash',
+  X: 'crosswalk',
+  B: 'brick',
+  o: 'office_floor',
+  O: 'office_wall',
+  c: 'cubicle',
+  k: 'cubicle_desk',
+  y: 'sky_day',
+  u: 'bus_floor',
+  U: 'bus_wall',
+};
 
 export interface PropDef {
   sprite: string;
@@ -44,8 +77,8 @@ export interface DoorZone {
   tx: number;
   ty: number;
   facing: 'down' | 'left' | 'right' | 'up';
-  /** visible marker: mat (default in interiors), stairs, or none (map edges) */
-  indicator?: 'mat' | 'stairs' | 'none';
+  /** visible marker: mat (default in interiors), stairs, elevator doors, or none (map edges) */
+  indicator?: 'mat' | 'stairs' | 'elevator' | 'none';
 }
 
 export interface SpawnerDef {
@@ -62,6 +95,20 @@ export interface TriggerDef {
   once: boolean;
 }
 
+/**
+ * Sight-line patrol (Department of Smiles; Prompt 29's prefects reuse this):
+ * walks the route in a loop (2 waypoints = ping-pong), facing its direction
+ * of travel. Spotting the player = alert + chase; contact = battle, not fail.
+ */
+export interface PatrolDef {
+  id: string;
+  enemy: string;
+  /** tile waypoints (fractional allowed for fine corridor placement) */
+  route: Array<[number, number]>;
+  /** sight-line length in tiles (default 5) */
+  sight?: number;
+}
+
 export interface MapDef {
   id: string;
   name: string;
@@ -76,6 +123,7 @@ export interface MapDef {
   doors: DoorZone[];
   spawners: SpawnerDef[];
   triggers: TriggerDef[];
+  patrols?: PatrolDef[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -174,7 +222,8 @@ function buildOtterbrook(): MapDef {
         x: 5,
         y: 2,
         solid: { ox: 0, oy: 20, w: 66, h: 46 },
-        door: { ox: 32, oy: 52, w: 14, h: 14, to: 'rex_home', tx: 104, ty: 124 },
+        // zone reaches below the collision floor so the doorstep is walkable
+        door: { ox: 32, oy: 52, w: 14, h: 28, to: 'rex_home', tx: 104, ty: 124 },
       },
       { sprite: 'house_chad', x: 11, y: 2, solid: { ox: 0, oy: 20, w: 66, h: 46 } },
       { sprite: 'house_a', x: 25, y: 2, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
@@ -332,7 +381,8 @@ function buildRexHome(): MapDef {
     signs: [],
     phones: [{ x: 1, y: 2 }],
     doors: [
-      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: 120, ty: 102, facing: 'down', indicator: 'mat' },
+      // ty lands just south of the (now taller) doorstep zone — no re-entry loop
+      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: 120, ty: 117, facing: 'down', indicator: 'mat' },
       { x: 12, y: 9, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up', indicator: 'stairs' },
     ],
     spawners: [],
@@ -363,9 +413,306 @@ function buildBedroom(): MapDef {
   };
 }
 
+/* ------------------- BRICKTON CITY (S1) ------------------- */
+
+function buildBrickton(): MapDef {
+  const g = new Grid(54, 26, '=');
+  // city backdrop + bounds
+  g.rect(0, 0, 54, 1, 'B');
+  g.rect(0, 0, 1, 26, 'B');
+  g.rect(53, 0, 1, 26, 'B');
+  g.rect(0, 24, 54, 2, 'B');
+  // the building row sits on solid brick (facades drawn over it)
+  g.rect(1, 1, 52, 5, 'B');
+  // the street
+  g.rect(1, 8, 52, 3, 'R');
+  for (let x = 1; x < 53; x++) if (x % 4 < 2) g.set(x, 9, 'D');
+  g.rect(17, 8, 2, 3, 'X');
+  g.rect(30, 8, 2, 3, 'X');
+  // pocket park
+  g.rect(18, 13, 13, 9, '.');
+  g.set(20, 15, '~');
+  g.set(27, 16, 'f');
+  g.set(22, 19, 'F');
+  g.set(25, 14, '~');
+  g.set(29, 20, 'f');
+  // hedge before the south wall
+  g.rect(1, 23, 52, 1, 'b');
+  // the vacant lot ("FUTURE SITE OF MORE BRICKTON")
+  g.rect(47, 14, 6, 1, '-');
+  g.rect(47, 20, 6, 1, '-');
+  g.rect(47, 15, 1, 5, '|');
+  g.rect(52, 15, 1, 5, '|');
+  g.rect(48, 15, 4, 5, '.');
+  g.set(49, 17, '~');
+  g.set(50, 18, ',');
+
+  const trees: Array<[number, number]> = [
+    [19, 13],
+    [28, 14],
+    [21, 20],
+    [26, 19],
+    [33, 21],
+    [10, 21],
+    [14, 20],
+  ];
+
+  return {
+    id: 'brickton',
+    name: 'BRICKTON CITY',
+    music: 'brickton',
+    grid: g.out(),
+    props: [
+      ...trees.map(([x, y]) => ({ sprite: 'tree', x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
+      // north face of the street — door bottoms aligned to y=112
+      { sprite: 'bldg_bagels', x: 1, y: 3.25, solid: { ox: 0, oy: 26, w: 66, h: 22 } },
+      { sprite: 'bldg_starmart', x: 6, y: 3.25, solid: { ox: 0, oy: 26, w: 82, h: 22 } },
+      { sprite: 'bldg_hospital', x: 13, y: 2.25, solid: { ox: 0, oy: 26, w: 114, h: 38 } },
+      { sprite: 'bldg_brickmore', x: 21, y: 2.25, solid: { ox: 0, oy: 26, w: 82, h: 38 } },
+      {
+        sprite: 'bldg_dept',
+        x: 27,
+        y: 2.25,
+        solid: { ox: 0, oy: 26, w: 130, h: 38 },
+        door: { ox: 44, oy: 62, w: 26, h: 18, to: 'dos_f1', tx: 208, ty: 234 },
+      },
+      { sprite: 'bldg_video', x: 36, y: 3.25, solid: { ox: 0, oy: 26, w: 66, h: 22 } },
+      { sprite: 'bldg_bank', x: 41, y: 2.25, solid: { ox: 0, oy: 26, w: 98, h: 38 } },
+      // south side: bus stop, payphone, park furniture
+      { sprite: 'bus_sign', x: 7, y: 12, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
+      { sprite: 'bench', x: 4, y: 13, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'sign', x: 9, y: 13, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      { sprite: 'payphone', x: 11, y: 13, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'picnic', x: 23, y: 16, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+      { sprite: 'bench', x: 33, y: 13, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'hydrant', x: 37, y: 13, solid: { ox: 2, oy: 8, w: 6, h: 5 } },
+      { sprite: 'planter', x: 40, y: 13, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+      { sprite: 'bench', x: 44, y: 13, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'sign', x: 49, y: 16, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+    ],
+    npcs: [
+      { id: 'nurse', sprite: 'nurse', x: 16, y: 6, facing: 'down', dialogue: 'npc_nurse' },
+      { id: 'gray_commuter', sprite: 'grayCommuter', x: 33, y: 6, facing: 'up', dialogue: 'npc_commuter' },
+      { id: 'quarter_man', sprite: 'quarterMan', x: 12, y: 14, facing: 'left', dialogue: 'npc_quarter' },
+      { id: 'pigeon_kid', sprite: 'pigeonKid', x: 23, y: 14, facing: 'down', dialogue: 'npc_pigeonkid' },
+      { id: 'sidewalk_critic', sprite: 'sidewalkCritic', x: 36, y: 11, facing: 'down', dialogue: 'npc_critic', wander: true },
+    ],
+    signs: [
+      { x: 9, y: 13, dialogue: 'sign_brickton' },
+      { x: 49, y: 16, dialogue: 'sign_lot' },
+    ],
+    phones: [{ x: 11, y: 13 }],
+    doors: [],
+    spawners: [
+      { enemies: ['blazer_smiler'], count: 1, rect: { x: 26, y: 6, w: 14, h: 2 } },
+      { enemies: ['blazer_smiler'], count: 1, rect: { x: 33, y: 11, w: 16, h: 2 } },
+      { enemies: ['pigeon_gang'], count: 1, rect: { x: 19, y: 14, w: 11, h: 7 } },
+      { enemies: ['pigeon_gang'], count: 1, rect: { x: 8, y: 8, w: 14, h: 3 } },
+    ],
+    triggers: [{ id: 'bus_stop_brickton', rect: { x: 4, y: 12, w: 4, h: 3 }, once: false }],
+  };
+}
+
+/* ------------------- THE DEPARTMENT OF SMILES ------------------- */
+
+function buildDosF1(): MapDef {
+  const g = new Grid(26, 16, 'o');
+  g.rect(0, 0, 26, 2, 'O');
+  g.rect(0, 0, 1, 16, 'O');
+  g.rect(25, 0, 1, 16, 'O');
+  g.rect(0, 15, 26, 1, 'O');
+  g.set(12, 15, 'o'); // street door gap
+  g.set(13, 15, 'o');
+  // two welcome pods of cubicles
+  g.rect(3, 5, 6, 1, 'c');
+  g.rect(3, 6, 6, 1, 'k');
+  g.rect(3, 9, 6, 1, 'c');
+  g.rect(3, 10, 6, 1, 'k');
+  g.rect(17, 8, 5, 1, 'c');
+  g.rect(17, 9, 5, 1, 'k');
+
+  return {
+    id: 'dos_f1',
+    name: 'DEPT. OF SMILES — LOBBY',
+    music: 'department',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 10, y: 4, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'plant_pot', x: 2, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 19, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [
+      { id: 'receptionist', sprite: 'smilerB', x: 14, y: 5, facing: 'down', dialogue: 'npc_receptionist' },
+    ],
+    signs: [
+      { x: 8, y: 1, dialogue: 'dos_lobby' },
+      { x: 20, y: 1, dialogue: 'dos_cert' },
+    ],
+    phones: [],
+    doors: [
+      { x: 12, y: 15, w: 2, h: 1, to: 'brickton', tx: 489, ty: 121, facing: 'down', indicator: 'mat' },
+      { x: 22, y: 2, w: 2, h: 1, to: 'dos_f2', tx: 368, ty: 60, facing: 'down', indicator: 'elevator' },
+    ],
+    spawners: [],
+    triggers: [],
+    // route stays clear of the entrance — nobody gets jumped on the doormat
+    patrols: [{ id: 'f1a', enemy: 'blazer_smiler', route: [[4, 10.5], [21, 10.5]] }],
+  };
+}
+
+function buildDosF2(): MapDef {
+  const g = new Grid(30, 22, 'o');
+  g.rect(0, 0, 30, 2, 'O');
+  g.rect(0, 0, 1, 22, 'O');
+  g.rect(29, 0, 1, 22, 'O');
+  g.rect(0, 21, 30, 1, 'O');
+  // break room (picnic table inside, per §A4.5 — the table before the climb)
+  g.rect(1, 5, 8, 1, 'O');
+  g.set(4, 5, 'o');
+  g.set(5, 5, 'o');
+  g.rect(8, 2, 1, 4, 'O');
+  // the cubicle maze: three offset bank rows
+  g.rect(3, 8, 11, 1, 'c');
+  g.rect(3, 9, 11, 1, 'k');
+  g.rect(16, 8, 11, 1, 'c');
+  g.rect(16, 9, 11, 1, 'k');
+  g.rect(3, 12, 7, 1, 'c');
+  g.rect(3, 13, 7, 1, 'k');
+  g.rect(12, 12, 15, 1, 'c');
+  g.rect(12, 13, 15, 1, 'k');
+  g.rect(3, 16, 17, 1, 'c');
+  g.rect(3, 17, 17, 1, 'k');
+  g.rect(22, 16, 5, 1, 'c');
+  g.rect(22, 17, 5, 1, 'k');
+
+  return {
+    id: 'dos_f2',
+    name: 'DEPT. OF SMILES — FLOOR 2',
+    music: 'department',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'picnic', x: 2, y: 2, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+      { sprite: 'copier', x: 10, y: 2, solid: { ox: 1, oy: 6, w: 22, h: 11 } },
+      { sprite: 'plant_pot', x: 25, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'water_cooler', x: 27, y: 17, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
+      { sprite: 'plant_pot', x: 1, y: 18, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [],
+    signs: [
+      { x: 3, y: 1, dialogue: 'dos_breakroom' },
+      { x: 12, y: 1, dialogue: 'dos_memo1' },
+      { x: 18, y: 1, dialogue: 'dos_memo2' },
+    ],
+    phones: [],
+    doors: [
+      { x: 22, y: 2, w: 2, h: 1, to: 'dos_f1', tx: 368, ty: 60, facing: 'down', indicator: 'elevator' },
+      { x: 27, y: 2, w: 1, h: 1, to: 'dos_f3', tx: 392, ty: 60, facing: 'down', indicator: 'stairs' },
+    ],
+    spawners: [{ enemies: ['blazer_smiler'], count: 1, rect: { x: 3, y: 18, w: 24, h: 3 } }],
+    triggers: [],
+    patrols: [
+      { id: 'f2a', enemy: 'blazer_smiler', route: [[4, 10], [25, 10]] },
+      { id: 'f2b', enemy: 'blazer_smiler', route: [[25, 14], [4, 14]] },
+    ],
+  };
+}
+
+function buildDosF3(): MapDef {
+  const g = new Grid(26, 14, 'o');
+  g.rect(0, 0, 26, 2, 'O');
+  g.rect(0, 0, 1, 14, 'O');
+  g.rect(25, 0, 1, 14, 'O');
+  g.rect(0, 13, 26, 1, 'O');
+  // the sealed HOLDING ROOM (its door opens in S2 — three Smilers' worth of quota)
+  g.rect(18, 2, 6, 5, 'O');
+  // management cubicles (fewer, somehow worse)
+  g.rect(3, 3, 6, 1, 'c');
+  g.rect(3, 4, 6, 1, 'k');
+  g.rect(11, 3, 5, 1, 'c');
+  g.rect(11, 4, 5, 1, 'k');
+  // executive runner
+  g.rect(2, 8, 21, 1, 'r');
+  g.rect(6, 10, 14, 1, 'c');
+  g.rect(6, 11, 14, 1, 'k');
+
+  return {
+    id: 'dos_f3',
+    name: 'DEPT. OF SMILES — FLOOR 3',
+    music: 'department',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'holding_door', x: 20.375, y: 5.25, solid: { ox: 0, oy: 14, w: 20, h: 14 } },
+      { sprite: 'office_door', x: 10.5, y: 0.375, solid: { ox: 0, oy: 12, w: 16, h: 14 } },
+      { sprite: 'plant_pot', x: 2, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 23, y: 7, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [],
+    signs: [
+      { x: 7, y: 1, dialogue: 'dos_quiet' },
+      { x: 14, y: 1, dialogue: 'dos_memo3' },
+    ],
+    phones: [],
+    doors: [
+      { x: 24, y: 2, w: 1, h: 1, to: 'dos_f2', tx: 440, ty: 60, facing: 'down', indicator: 'stairs' },
+    ],
+    spawners: [],
+    triggers: [],
+    patrols: [
+      { id: 'f3a', enemy: 'blazer_smiler', route: [[3, 6], [16, 6]] },
+      { id: 'f3b', enemy: 'blazer_smiler', route: [[23, 8], [2, 8]] },
+      { id: 'f3c', enemy: 'blazer_smiler', route: [[2, 11.5], [23, 11.5]], sight: 6 },
+    ],
+  };
+}
+
+/* ------------------- THE 6:15 (bus interior cutscene) ------------------- */
+
+function buildBusInterior(): MapDef {
+  const g = new Grid(22, 9, 'u');
+  g.rect(0, 0, 22, 3, 'y');
+  g.rect(0, 3, 22, 1, 'U');
+  g.rect(0, 8, 22, 1, 'U');
+  g.rect(0, 4, 1, 4, 'U');
+  g.rect(21, 4, 1, 4, 'U');
+
+  return {
+    id: 'bus_interior',
+    name: 'THE 6:15',
+    music: 'bus',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'bus_windows', x: 0, y: 0 },
+      ...[3, 6, 9, 12, 15, 18].map((x) => ({
+        sprite: 'bus_seat',
+        x,
+        y: 4,
+        solid: { ox: 1, oy: 10, w: 14, h: 12 },
+      })),
+    ],
+    npcs: [
+      { id: 'bus_driver', sprite: 'busDriver', x: 20, y: 5, facing: 'right', dialogue: 'npc_busdriver' },
+      { id: 'fern_lady', sprite: 'fernLady', x: 9, y: 5, facing: 'up', dialogue: 'npc_fernlady' },
+    ],
+    signs: [],
+    phones: [],
+    doors: [],
+    spawners: [],
+    triggers: [],
+  };
+}
+
 export const MAPS: Record<string, MapDef> = {
   otterbrook: buildOtterbrook(),
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),
   rex_bedroom: buildBedroom(),
+  brickton: buildBrickton(),
+  dos_f1: buildDosF1(),
+  dos_f2: buildDosF2(),
+  dos_f3: buildDosF3(),
+  bus_interior: buildBusInterior(),
 };

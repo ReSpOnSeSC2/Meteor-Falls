@@ -5,7 +5,7 @@
  * cutscenes per GAME_BIBLE §A6 / ADR-007.
  */
 import Phaser from 'phaser';
-import { MAPS, type MapDef, type NpcDef } from '../data/maps';
+import { MAPS, CHAR_LEGEND, type MapDef, type NpcDef, type PatrolDef } from '../data/maps';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS } from '../data/items';
 import { DIALOGUE } from '../data/dialogue';
@@ -27,13 +27,32 @@ interface Rect {
 }
 
 interface Roamer {
-  spr: Phaser.GameObjects.Image;
+  spr: Phaser.GameObjects.Sprite;
   enemyId: string;
+  /** character sheet id when this enemy walks as a person (EnemyDef.walker) */
+  walker?: string;
   vx: number;
   vy: number;
   think: number;
   home: Rect;
   dead: boolean;
+}
+
+type PatrolState = 'patrol' | 'alert' | 'chase' | 'return';
+
+interface PatrolObj {
+  spr: Phaser.GameObjects.Sprite;
+  def: PatrolDef;
+  walker: string;
+  wp: number;
+  state: PatrolState;
+  /** ms left in the alert pause */
+  alertT: number;
+  /** seconds the player has been out of reach while chasing */
+  lose: number;
+  facing: Facing;
+  dead: boolean;
+  bang: Phaser.GameObjects.BitmapText | null;
 }
 
 interface NpcObj {
@@ -49,22 +68,8 @@ interface NpcObj {
 const WALK = 70;
 const RUN = 115;
 const PURSUE = 85;
-
-const CHAR_LEGEND: Record<string, string> = {
-  '.': 'grass_a',
-  ',': 'grass_b',
-  '~': 'grass_tuft',
-  f: 'flowers_red',
-  F: 'flowers_gold',
-  b: 'bush',
-  '-': 'fence_h',
-  '|': 'fence_v',
-  s: 'scorch',
-  S: 'scorch_ember',
-  w: 'floor_wood',
-  W: 'wall_int',
-  r: 'rug',
-};
+const PATROL_WALK = 38;
+const PATROL_CHASE = 92;
 
 export class OverworldScene extends Phaser.Scene {
   private mapDef!: MapDef;
@@ -76,6 +81,7 @@ export class OverworldScene extends Phaser.Scene {
   private trail: Array<{ x: number; y: number; f: Facing }> = [];
   private npcs: NpcObj[] = [];
   private roamers: Roamer[] = [];
+  private patrols: PatrolObj[] = [];
   private dlg!: Dialogue;
   private cut = false; // cutscene lock
   private transitioning = false;
@@ -103,8 +109,10 @@ export class OverworldScene extends Phaser.Scene {
     this.trail = [];
     this.npcs = [];
     this.roamers = [];
+    this.patrols = [];
     this.solids = [];
     this.fireflies = [];
+    this.insideTriggers.clear();
     this.dlg = new Dialogue(this);
 
     this.buildTiles();
@@ -112,6 +120,7 @@ export class OverworldScene extends Phaser.Scene {
     this.buildNpcs();
     this.buildPlayer();
     this.buildRoamers();
+    this.buildPatrols();
     // It is 2 AM until Glint's porch scene ends — dawn breaks after (§A6 Ch.1)
     const storyNight = this.mapDef.id === 'otterbrook' && !GS.flag('zapper_done');
     if (this.mapDef.night || storyNight) this.buildNight();
@@ -184,13 +193,18 @@ export class OverworldScene extends Phaser.Scene {
     this.buildDoorMarkers();
   }
 
-  /** every walkable door gets a visible marker (mat / stairs) */
+  /** every walkable door gets a visible marker (mat / stairs / elevator) */
   private buildDoorMarkers(): void {
     for (const d of this.mapDef.doors) {
       const kind = d.indicator ?? (this.mapDef.interior ? 'mat' : 'none');
       if (kind === 'none') continue;
       const cx = (d.x + d.w / 2) * 16;
       const by = (d.y + d.h) * 16;
+      if (kind === 'elevator') {
+        // doors drawn on the wall above the zone; walk into them to ride
+        this.add.image(cx, d.y * 16 + 2, 'elevator').setOrigin(0.5, 1).setDepth(3);
+        continue;
+      }
       this.add
         .image(cx, kind === 'stairs' ? by + 2 : by - 1, kind === 'stairs' ? 'stairs' : 'doormat')
         .setOrigin(0.5, 1)
@@ -248,11 +262,13 @@ export class OverworldScene extends Phaser.Scene {
         const def = ENEMIES[enemyId];
         const x = (sp.rect.x + Math.random() * sp.rect.w) * 16;
         const y = (sp.rect.y + Math.random() * sp.rect.h) * 16;
-        const spr = this.add.image(x, y, def.mini).setOrigin(0.5, 1);
+        const spr = this.add.sprite(x, y, def.walker ?? def.mini, def.walker ? standFrame('down') : 0);
+        spr.setOrigin(0.5, 1);
         spr.setDepth(y);
         this.roamers.push({
           spr,
           enemyId,
+          walker: def.walker,
           vx: 0,
           vy: 0,
           think: 0,
@@ -260,6 +276,28 @@ export class OverworldScene extends Phaser.Scene {
           dead: false,
         });
       }
+    }
+  }
+
+  private buildPatrols(): void {
+    for (const def of this.mapDef.patrols ?? []) {
+      const walker = ENEMIES[def.enemy].walker ?? 'smiler';
+      const [tx, ty] = def.route[0];
+      const spr = this.add.sprite(tx * 16 + 8, ty * 16 + 22, walker, standFrame('down'));
+      spr.setOrigin(0.5, 1);
+      spr.setDepth(spr.y);
+      this.patrols.push({
+        spr,
+        def,
+        walker,
+        wp: def.route.length > 1 ? 1 : 0,
+        state: 'patrol',
+        alertT: 0,
+        lose: 0,
+        facing: 'down',
+        dead: false,
+        bang: null,
+      });
     }
   }
 
@@ -317,6 +355,7 @@ export class OverworldScene extends Phaser.Scene {
     if (!this.cut && !this.dlg.busy && !this.transitioning) {
       this.updatePlayer(dt);
       this.updateRoamers(dt);
+      if (!this.cut && !this.transitioning) this.updatePatrols(dt);
       // a contact battle may have started this frame — don't double-fire
       if (!this.cut && !this.transitioning) {
         this.checkDoors();
@@ -498,7 +537,9 @@ export class OverworldScene extends Phaser.Scene {
         nx = Phaser.Math.Clamp(nx, r.home.x, r.home.x + r.home.w);
         ny = Phaser.Math.Clamp(ny, r.home.y, r.home.y + r.home.h);
       }
+      let moved = false;
       if (!this.collides({ x: nx - 5, y: ny - 8, w: 10, h: 8 })) {
+        moved = Math.abs(nx - r.spr.x) + Math.abs(ny - r.spr.y) > 0.1;
         r.spr.x = nx;
         r.spr.y = ny;
         r.spr.setDepth(ny);
@@ -506,10 +547,205 @@ export class OverworldScene extends Phaser.Scene {
         r.vx = -r.vx;
         r.vy = -r.vy;
       }
+      // humanoid enemies (walker sheets) animate like people
+      if (r.walker) {
+        if (moved) {
+          const f: Facing =
+            Math.abs(r.vx) > Math.abs(r.vy) ? (r.vx > 0 ? 'right' : 'left') : r.vy > 0 ? 'down' : 'up';
+          const anim = `${r.walker}-walk-${f}`;
+          if (r.spr.anims.currentAnim?.key !== anim || !r.spr.anims.isPlaying) r.spr.anims.play(anim, true);
+          r.spr.anims.timeScale = distP < 64 ? 1.5 : 1;
+        } else if (r.spr.anims.isPlaying) {
+          r.spr.anims.stop();
+          r.spr.setFrame(standFrame('down'));
+        }
+      }
       if (distP < 13 && now > this.battleCooldown) {
         void this.contactBattle(r);
         return;
       }
+    }
+  }
+
+  /* ---------------- sight-line patrols (Department of Smiles) ---------------- */
+
+  private updatePatrols(dt: number): void {
+    const now = this.time.now;
+    for (const p of this.patrols) {
+      if (p.dead) continue;
+      if (p.state === 'patrol' || p.state === 'return') {
+        const [wx, wy] = p.def.route[p.wp];
+        const tx = wx * 16 + 8;
+        const ty = wy * 16 + 22;
+        const d = Math.hypot(tx - p.spr.x, ty - p.spr.y);
+        if (d < 2) {
+          p.wp = (p.wp + 1) % p.def.route.length;
+          p.state = 'patrol';
+        } else {
+          const vx = ((tx - p.spr.x) / d) * PATROL_WALK;
+          const vy = ((ty - p.spr.y) / d) * PATROL_WALK;
+          p.spr.x += vx * dt;
+          p.spr.y += vy * dt;
+          p.facing = Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? 'right' : 'left') : vy > 0 ? 'down' : 'up';
+          this.patrolAnim(p, true, 1);
+        }
+        if (this.patrolSees(p)) {
+          p.state = 'alert';
+          p.alertT = 380;
+          this.patrolAnim(p, false, 1);
+          // face the player for the realization
+          p.facing = this.dirToward(p.spr.x, p.spr.y, this.player.x, this.player.y);
+          p.spr.setFrame(standFrame(p.facing));
+          AUDIO.sfx('alert');
+          p.bang = this.add
+            .bitmapText(p.spr.x, p.spr.y - p.spr.height - 2, 'retro', '!', 8)
+            .setOrigin(0.5, 1)
+            .setTint(colorOf(px(RAMP.RED, 2)))
+            .setDepth(5000);
+          this.tweens.add({ targets: p.bang, y: p.bang.y - 3, duration: 120, yoyo: true });
+        }
+      } else if (p.state === 'alert') {
+        p.alertT -= dt * 1000;
+        if (p.alertT <= 0) {
+          p.state = 'chase';
+          p.lose = 0;
+        }
+      } else {
+        // chase — faster than your walk, slower than your run (§A4 feel)
+        const dx = this.player.x - p.spr.x;
+        const dy = this.player.y - p.spr.y;
+        const d = Math.hypot(dx, dy);
+        const step = PATROL_CHASE * dt;
+        const nx = this.patrolMove(p.spr.x, p.spr.y, (dx / d) * step, 0, false);
+        const ny = this.patrolMove(nx, p.spr.y, 0, (dy / d) * step, true);
+        p.spr.x = nx;
+        p.spr.y = ny;
+        p.facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+        this.patrolAnim(p, true, 1.5);
+        if (p.bang) {
+          p.bang.x = p.spr.x;
+          p.bang.y = p.spr.y - p.spr.height - 2;
+        }
+        if (d > 120) {
+          p.lose += dt;
+          if (p.lose > 1.5) this.patrolGiveUp(p);
+        } else {
+          p.lose = 0;
+        }
+        if (d < 13 && now > this.battleCooldown) {
+          void this.patrolBattle(p);
+          return;
+        }
+      }
+      p.spr.setDepth(p.spr.y);
+    }
+  }
+
+  private patrolAnim(p: PatrolObj, moving: boolean, speed: number): void {
+    if (moving) {
+      const anim = `${p.walker}-walk-${p.facing}`;
+      if (p.spr.anims.currentAnim?.key !== anim || !p.spr.anims.isPlaying) p.spr.anims.play(anim, true);
+      p.spr.anims.timeScale = speed;
+    } else if (p.spr.anims.isPlaying) {
+      p.spr.anims.stop();
+      p.spr.setFrame(standFrame(p.facing));
+    }
+  }
+
+  /** axis-separated chase movement so Smilers slide along cubicle walls */
+  private patrolMove(x: number, y: number, dx: number, dy: number, second: boolean): number {
+    const nx = x + dx;
+    const ny = y + dy;
+    const box = { x: nx - 5, y: ny - 9, w: 10, h: 9 };
+    if (this.collides(box)) return second ? y : x;
+    return second ? ny : nx;
+  }
+
+  private dirToward(x0: number, y0: number, x1: number, y1: number): Facing {
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+  }
+
+  /** facing-cone sight check with solid-tile occlusion */
+  private patrolSees(p: PatrolObj): boolean {
+    const range = (p.def.sight ?? 5) * 16;
+    const f = this.facingVectorOf(p.facing);
+    const ex = p.spr.x;
+    const ey = p.spr.y - 8;
+    const rx = this.player.x - ex;
+    const ry = this.player.y - 8 - ey;
+    const along = rx * f.x + ry * f.y;
+    if (along < 6 || along > range) return false;
+    const perp = Math.abs(rx * f.y - ry * f.x);
+    if (perp > 14) return false;
+    // line of sight: cubicle walls hide you (stealth-lite, caught = battle not fail)
+    const steps = Math.ceil(along / 8);
+    for (let i = 1; i < steps; i++) {
+      const sx = ex + (rx * i) / steps;
+      const sy = ey + (ry * i) / steps;
+      const txi = Math.floor(sx / 16);
+      const tyi = Math.floor(sy / 16);
+      if (
+        tyi < 0 ||
+        txi < 0 ||
+        tyi >= this.solidTiles.length ||
+        txi >= this.solidTiles[0].length ||
+        this.solidTiles[tyi][txi]
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private facingVectorOf(f: Facing): { x: number; y: number } {
+    switch (f) {
+      case 'up':
+        return { x: 0, y: -1 };
+      case 'down':
+        return { x: 0, y: 1 };
+      case 'left':
+        return { x: -1, y: 0 };
+      default:
+        return { x: 1, y: 0 };
+    }
+  }
+
+  private patrolGiveUp(p: PatrolObj): void {
+    p.state = 'return';
+    p.lose = 0;
+    p.bang?.destroy();
+    p.bang = null;
+    // head for the nearest waypoint
+    let best = 0;
+    let bestD = Infinity;
+    p.def.route.forEach(([wx, wy], i) => {
+      const d = Math.hypot(wx * 16 + 8 - p.spr.x, wy * 16 + 22 - p.spr.y);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    });
+    p.wp = best;
+  }
+
+  private async patrolBattle(p: PatrolObj): Promise<void> {
+    this.battleCooldown = this.time.now + 1500;
+    // caught = they get the drop on you; sneak up on THEM for the red swirl
+    const f = this.facingVectorOf(p.facing);
+    const toPlayer = new Phaser.Math.Vector2(this.player.x - p.spr.x, this.player.y - p.spr.y).normalize();
+    let advantage: 'player' | 'enemy' | 'none' = 'none';
+    if (p.state === 'chase') advantage = 'enemy';
+    else if (f.x * toPlayer.x + f.y * toPlayer.y < -0.35) advantage = 'player';
+    p.bang?.destroy();
+    p.bang = null;
+    const outcome = await this.startBattle([p.def.enemy], advantage, null);
+    if (outcome === 'victory') {
+      p.dead = true;
+      p.spr.destroy();
+    } else if (outcome === 'ran') {
+      this.patrolGiveUp(p);
     }
   }
 
@@ -691,6 +927,14 @@ export class OverworldScene extends Phaser.Scene {
       house_chad: 'locked_chad',
       house_a: 'locked_house',
       house_b: 'locked_house',
+      bldg_bagels: 'locked_bagels',
+      bldg_starmart: 'locked_starmart',
+      bldg_hospital: 'locked_hospital',
+      bldg_brickmore: 'locked_brickmore',
+      bldg_video: 'locked_video',
+      bldg_bank: 'locked_bank',
+      holding_door: 'holding_door_line',
+      office_door: 'manager_door',
     };
     for (const p of this.mapDef.props) {
       const lineId = lockedLines[p.sprite];
@@ -884,6 +1128,10 @@ export class OverworldScene extends Phaser.Scene {
   /* ---------------- cutscenes (Ch.1 per §A6 / ADR-007) ---------------- */
 
   private async onEnterCutscenes(): Promise<void> {
+    if (this.mapDef.id === 'bus_interior') {
+      await this.busCutscene();
+      return;
+    }
     if (this.registry.get('defeated') === true) {
       this.registry.set('defeated', false);
       this.cut = true;
@@ -910,7 +1158,10 @@ export class OverworldScene extends Phaser.Scene {
         if (GS.flag('ember1') && !GS.flag('zapper_done')) await this.porchScene();
         break;
       case 'bus_stop':
-        if (GS.flag('zapper_done')) await this.endingScene();
+        if (GS.flag('zapper_done')) await this.busAsk('brickton');
+        break;
+      case 'bus_stop_brickton':
+        await this.busAsk('otterbrook');
         break;
       default:
         break;
@@ -1020,26 +1271,80 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
-  private async endingScene(): Promise<void> {
+  /* ---------------- the 6:15 (bus transition, §A5 Ch.1) ---------------- */
+
+  private async busAsk(dest: 'brickton' | 'otterbrook'): Promise<void> {
     this.cut = true;
-    const pick = await this.dlg.ask(['Board the 6:15 to Brickton', 'Keep exploring'], { cancelIndex: 1 });
+    await this.dlg.say(...(dest === 'brickton' ? DIALOGUE.bus_ask_brickton : DIALOGUE.bus_ask_home));
+    const label = dest === 'brickton' ? 'Board the 6:15 to Brickton' : 'Ride back to Otterbrook';
+    const pick = await this.dlg.ask([label, 'Stay'], { cancelIndex: 1 });
     if (pick !== 0) {
       this.cut = false;
       return;
     }
     AUDIO.stopMusic();
-    const cover = this.add
-      .rectangle(0, 0, this.scale.width, this.scale.height, 0x0a0a18)
-      .setOrigin(0)
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI - 1)
-      .setAlpha(0);
-    this.tweens.add({ targets: cover, alpha: 1, duration: 1500 });
-    await this.wait(1600);
-    AUDIO.playMusic('heartlight');
-    await this.dlg.say(...DIALOGUE.to_be_continued);
+    // first ride to the city is the full interior scene; after that, quick hops
+    if (dest === 'brickton' && !GS.flag('bus_ride_done')) {
+      this.registry.set('busDest', dest);
+      this.goThroughDoor('bus_interior', 296, 108, 'left');
+      return;
+    }
+    if (dest === 'brickton') this.goThroughDoor('brickton', 88, 250, 'up');
+    else this.goThroughDoor('otterbrook', 376, 442, 'up');
+  }
+
+  private async busCutscene(): Promise<void> {
+    this.cut = true;
+    const mapW = this.mapDef.grid[0].length * 16;
+    // the window scrolls by: town first, then the approach, then the city
+    const reel: Array<{ key: string; scale: number }> = [
+      { key: 'tree', scale: 1 },
+      { key: 'tree', scale: 0.8 },
+      { key: 'house_a', scale: 0.6 },
+      { key: 'tree', scale: 1 },
+      { key: 'house_b', scale: 0.6 },
+      { key: 'tree', scale: 0.9 },
+      { key: 'skyline', scale: 1 },
+      { key: 'skyline', scale: 1 },
+    ];
+    // scenery only exists inside the window band — the void outside the bus
+    // (interiors float, ADR-004) must not show passing trees
+    const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
+    maskShape.fillRect(0, 8, mapW, 38);
+    const paneMask = maskShape.createGeometryMask();
+    let frame = 0;
+    const spawner = this.time.addEvent({
+      delay: 520,
+      loop: true,
+      callback: () => {
+        const item = reel[Math.min(frame, reel.length - 1)];
+        frame++;
+        const img = this.add
+          .image(mapW + 40, 45, item.key)
+          .setOrigin(0.5, 1)
+          .setScale(item.scale)
+          .setDepth(1) // behind the bus_windows overlay, over the sky
+          .setMask(paneMask);
+        this.tweens.add({
+          targets: img,
+          x: -60,
+          duration: 2400,
+          ease: 'linear',
+          onComplete: () => img.destroy(),
+        });
+      },
+    });
+    await this.wait(500);
+    await this.dlg.say(...DIALOGUE.npc_busdriver);
+    await this.wait(700);
+    await this.dlg.say(...DIALOGUE.bus_fern);
+    await this.wait(700);
+    await this.dlg.say(...DIALOGUE.bus_narration);
+    await this.wait(900);
+    spawner.remove();
+    GS.setFlag('bus_ride_done');
     AUDIO.stopMusic();
-    this.scene.start('title');
+    this.goThroughDoor('brickton', 88, 250, 'up');
   }
 
   /* ---------------- helpers ---------------- */
