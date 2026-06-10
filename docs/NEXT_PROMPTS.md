@@ -1,10 +1,14 @@
 # NEXT_PROMPTS — continuing the build from here
 
-State as of these prompts: Phase 0–1 engine + a playable Chapter 1 opening
-slice are done (see DECISIONS.md ADR-001..010). Characters are 24×32 v2
-sprites. Maps are code-grids (ADR-004), audio is the synth (ADR-006), data is
-typed TS (ADR-005). Work through these in order, one prompt per session, per
-the Bible's Appendix rules (review the diff, run the checks, commit).
+State as of these prompts: Phase 0–1 engine + ALL of Chapter 1 are done
+through S2 (commit `c99d676`; see DECISIONS.md ADR-001..014). A fresh save
+plays name entry → 2AM → the Tick → the 6:15 → the Department → the
+PRODUCTIVITY LOCK → Faye's join → the Manager → Mom's payphone call →
+ch1_complete, with a real two-hero party (conga + angels), Pray as a
+top-level battle command, and 62 green tests. Maps are code-grids (ADR-004),
+audio is the synth (ADR-006), data is typed TS (ADR-005 — Zod lands in S5).
+Work through these in order, one prompt per session, per the Bible's
+Appendix rules (review the diff, run the checks, commit).
 
 Every prompt starts with the Standard Header:
 
@@ -17,76 +21,60 @@ architectural decision you make to it. TypeScript strict, no `any`.
 
 ---
 
-## Prompt S1 — Brickton City & the Department of Smiles (maps + enemies)
-
-```
-[Standard Header]
-Build the second half of Chapter 1's geography per §A6 Ch.1, extending
-src/data/maps.ts (ADR-004 grid format) and the sprite engine where new tiles
-are needed (sidewalk, brick wall, office floor, cubicles, elevator):
-(1) the bus-ride transition: boarding at the Otterbrook bus stop plays a
-short interior cutscene scene (window scrolling by, one weird passenger),
-then arrives in (2) BRICKTON CITY — a 2-screen downtown block: sidewalks,
-storefronts, payphone, hospital front, 4+ NPCs with one weird obsession each
-(§A11), Blazer Smilers roaming the streets (they're in §A7 Ch.1); and
-(3) THE DEPARTMENT OF SMILES — a 3-floor office dungeon: cubicle maze floors,
-sight-line Smiler patrols (caught = battle, not fail), locked "holding room"
-on floor 3. Wire encounter spawners (§A7: Blazer Smiler, Pigeon Gang) and 2
-picnic tables per §A4.5. Don't write the Faye story beats yet — rooms,
-enemies, doors (with indicators, ADR door-marker convention) and ambient NPC
-dialogue only.
-Done when: you can bus from Otterbrook to Brickton, fight Smilers, and walk
-every floor of the Department to the locked holding room. Tests + build green.
-```
-
-## Prompt S2 — Faye joins (story pass)
-
-```
-[Standard Header]
-Write Chapter 1's ending per §A6/§A2 in §A11 voice, on top of S1's maps:
-Rex reaches the floor-3 holding room; FAYE is inside (she has been hearing
-the Embers sing — and heard Rex coming, §A3 "kind, steel-spined"); free her
-(small puzzle: the door's "PRODUCTIVITY LOCK" opens when three patrol Smilers
-on the floor are defeated); Faye joins the party at level 6 with her canon
-kit (Vibe Fire α, PRAY at L1 — they're already in src/data). Add Faye to the
-party system end-to-end: follower conga, battle command menu (Pray!), status
-box with her own odometers, defeat/respawn. The Smiles' manager blocks the
-exit — a scripted 2-Smiler fight with Faye's first Pray tutorialized. Mom
-calls the Brickton payphone afterward (the Bible's "first phone tutorialized
-by Mom calling YOU"). Set ch1_complete.
-Done when: a fresh save plays from 2 AM to ch1_complete with both heroes;
-Pray's table fires in real battle; all dialogue in-voice.
-```
-
 ## Prompt S3 — Full pause menu & equipment (Bible Prompt 7 + 19)
 
 ```
 [Standard Header]
-Replace the interim pause menu (OverworldScene.pauseMenu) with the EB command
-menu per Prompt 7: Items (per-hero 14-slot bags + shared key items — migrate
-GS.data.inventory to per-hero, with a save-version migration), Status (full
-§A3 stat sheet per hero), Vibe (ability list, PP costs, greyed when
-unusable), Equip (weapon/body/arms/other slots with "Offense up by N!"
-preview per Prompt 19), Setup (volume, text speed), and the STAR LOCKET
-screen (embers + Homesong stems per §A4.9). Touch AND controller navigable
-(§B4). Unit-test the save migration v1→v2.
-Done when: equip a T-Ball Bat from the menu and see battle damage change;
-old saves still load.
+Replace the interim pause menu (OverworldScene.pauseMenu — its Status page
+hardcodes Rex and Goods feeds only him, but the party is genuinely two
+heroes now, ADR-014) with the EB command menu per Bible Prompt 7:
+Items (per-hero 14-slot bags + shared key items — migrate the shared
+GS.data.inventory to per-hero with a REAL v1→v2 migration registry, folding
+ADR-013's deserialize spread-merge backfill into it; the registry grants
+Faye her Hand-Me-Down Pan when faye_joined — she canonically took it back
+off the intake shelf — and the join scene grants it on future saves),
+Status (full §A3 stat sheet per hero incl. Guts/Vibe/Luck and DOWN state —
+it reads HeroState.name, so custom names appear free),
+Vibe (ability list w/ PP costs, greyed when unusable; Pray stays a battle
+command per ADR-014, not a menu vibe),
+Equip (weapon/body/arms/other slots with the "Offense up by N!" preview per
+Prompt 19; weapons carry a wielder tag — bats are Rex's, pans are Faye's per
+§A8 — and BattleScene.heroOffense currently applies the FIRST weapon in the
+shared bag to BOTH heroes: make it read the acting hero's equipped weapon),
+Setup (keep the M-key + persisted Sound preference from S1), and the
+STAR LOCKET screen (embers + Homesong stems behind the real §A4.9 interface;
+the interim menu already plays the heartlight cue — keep it).
+Glint's Spark's out-of-battle revive (ADR-014) must survive the rewrite.
+Touch AND controller navigable (§B4). Unit-test the migration registry: a
+v1 save (including a pre-S12 one missing heroNames) loads as v2 with Rex's
+bag = the old shared inventory.
+Done when: equipping the T-Ball Bat from the menu changes Rex's battle
+damage and nobody else's; a renamed Faye's status page shows her chosen
+name; old v1 saves still load; every page drives by touch and by pad.
 ```
 
 ## Prompt S4 — Shops, ATM & the cash loop (Bible Prompt 20)
 
 ```
 [Standard Header]
-Open the Otterbrook drugstore and a Brickton corner store as real interiors
-(grid maps + shopkeeper NPCs): buy/sell UI per Prompt 20 (sell at half,
-equip-after-buy prompt), stock from §A8 Ch.1-appropriate items (T-Ball Bat,
-Hand-Me-Down Pan, Corn Dogs, PB&J, Salt Shakers, Star Cola). Add an ATM in
-Brickton: withdraw/deposit against GS.data.banked. Keep Dad's deposit flow
-(ADR: only pendingDeposit + first-time gift). Replace the locked_drugstore
-line with the real door.
+Open the Otterbrook drugstore and Brickton's STARMART (bldg_starmart) as
+real interiors (ADR-004 grid maps + shopkeeper NPCs with one weird obsession
+each, §A11): buy/sell UI per Bible Prompt 20 — sell at half,
+equip-after-buy prompt (S3's equip), purchases routed into a chosen hero's
+bag. Stock §A8 Ch.1 items: T-Ball Bat, Hand-Me-Down Pan (Faye-wield), Corn
+Dogs, PB&J, Salt Shakers, Star Cola. Street doors derive their coords from
+the jittered facades per ADR-012 (the dos_f1 doorstep pattern) — replace
+locked_drugstore/locked_starmart with real doors; the SAVINGS & LOAN stays
+locked but gains the ATM at its facade: withdraw/deposit against
+GS.data.banked. Keep Dad's deposit flow (pendingDeposit + first-time gift).
+Phones gain Prompt 20's contact list — Dad saves; Mom cures Homesick and
+asks about {favoritefood} (the resolver and the player's choice are live,
+and her payphone call already consumes it per ADR-014). Implement Homesick
+per §A4.4 so the cure means something: Rex randomly skips a turn "thinking
+about {favoritefood}".
 Done when: earn cash on the hill → call Dad → withdraw at the ATM → buy a
-T-Ball Bat → "Offense up by 4!".
+T-Ball Bat → "Offense up by 4!" — and a pan bought for Faye lands in HER
+bag, equippable only by her.
 ```
 
 ## Prompt S5 — Zod data layer & content validator (Bible Prompt 8, adapted)
@@ -94,17 +82,24 @@ T-Ball Bat → "Offense up by 4!".
 ```
 [Standard Header]
 Begin Phase 2 per §B1: add zod; define schemas in src/schemas mirroring the
-existing typed interfaces (Hero, Ability incl. the PRAY table, Enemy w/
-moves+deathLine, Item, MapDef incl. door indicators, DialogueScript, Quest);
-convert src/data modules to satisfy schema inference (z.infer) so compile
-types and runtime schemas can't drift. Implement tools/content-validate.ts
-(run via "npm run validate", wire into the test script): validates all data,
-cross-checks canon counts for everything BUILT SO FAR (4 heroes, Ch.1 enemy
-roster from §A7, Pray weights sum 100, every dialogue id referenced by
-maps/cutscenes exists, no TODO/placeholder/lorem strings — §B4). Update
-ADR-005 status to superseded.
-Done when: deleting any enemy from data fails `npm run validate` loudly,
-naming exactly what's missing.
+typed interfaces 1:1 (Hero, Ability incl. the PRAY table, Enemy w/ moves +
+deathLine, Item incl. wielder tags, MapDef incl. door indicators and the S2
+fields — PatrolDef.countFlag, NpcDef.ifFlag/unlessFlag, PropDef.ifFlag —
+DialogueScript, and Quest ahead of S9); convert src/data modules to z.infer
+so compile types and runtime schemas can't drift. Implement
+tools/content-validate.ts (npm run validate, wired into the test script):
+validate all data; cross-check canon counts built so far (4 heroes, the §A7
+Ch.1 roster + Boss 1, Pray weights sum 100, three distinct dos_f3 quota
+countFlags); and FOLD IN, don't duplicate: maps.test.ts's cross-refs
+(legend chars, tile names, door targets, dialogue ids, enemy ids),
+newgame.test.ts's typeable-on-grid rule, and text.test.ts's S2 token sweep —
+every {...} in dialogue.ts must be a variable src/ui/text.ts actually
+resolves, so a typo like {favortefood} fails the build (battle text's
+{user}/{e}/{t} is a separate allowed set). Behavioral tests stay vitest
+(odometer, pray distribution, carveHoldingRoom, the ADR-012 city sweep).
+Update ADR-005 to superseded.
+Done when: deleting any enemy, misspelling a dialogue token, or unlinking a
+door fails `npm run validate` loudly, naming exactly what broke.
 ```
 
 ## Prompt S6 — Save slots & Continue (Bible Prompt 22, adapted)
@@ -112,50 +107,137 @@ naming exactly what's missing.
 ```
 [Standard Header]
 Extend saves to 3 slots + 1 rolling auto-backup per §A4.3/Prompt 22 (keep
-localStorage for now — IndexedDB swap is a later hardening prompt; design the
-storage behind a small interface so the swap is a driver change). Calling Dad
-asks which slot on first save, then reuses it; Title gains a SaveSlots scene:
-slot summaries (name, level, location, playtime, embers — playtime clock
-needs wiring into GameState.update). Corruption detection: bad JSON falls
-back to the backup with an in-voice apology from Dad.
-Done when: three parallel playthroughs coexist; yanking a slot's JSON mid-
-string still continues from backup.
+localStorage; put storage behind a small interface so the IndexedDB swap
+later is a driver change). Calling Dad asks which slot on first save, then
+reuses it. Title's Continue currently calls GS.load() directly — replace it
+with a SaveSlots scene: summaries show name, level, location, playtime,
+embers; render names/locations through vars() (banner pattern:
+vars(name).toUpperCase(), ADR-013), and wire the playtime clock so it
+actually ticks. Corruption detection: bad JSON falls back to the backup
+with an in-voice apology from Dad. Defeat respawn: handleDefeat hardcodes
+rex_home — make it the last Dad-save's map/position per §A4.7 (cash-on-hand
+still halves; keep ADR-014's interim revive-all until S11's hospitals own
+revival), routed through one function S11 will reuse.
+Done when: three parallel playthroughs coexist; yanking a slot's JSON
+mid-string still continues from backup; wiping inside the Department
+respawns at the Brickton payphone when that's where Dad last saved.
 ```
 
 ## Prompt S7 — World art pass 2 (tiles & juice)
 
 ```
 [Standard Header]
-Sprite-engine quality pass on the WORLD to match the v2 characters (ADR-009;
-characters are done, don't touch them): interior wood floor that reads as
-planks not bricks; grass auto-edges where grass meets path corners; 2-3 tree
-sizes + a pine; window glow at night; drugstore/arcade interiors get their
-own props (shelves, counter, cabinet arcade machines with tiny marquees).
-Add juice per Prompt 39's list: hit-flash already exists — add screen shake
-scale on SMAAASH (done), Ember pickup sparkle particles, footstep dust puffs
-when running, door-transition whoosh. Verify every new texture in Sprite Lab
-page 3.
-Done when: a side-by-side before/after of Otterbrook looks one full
-generation better and the palette check (structural, ADR-002) still holds.
+Sprite-engine quality pass on the WORLD to match the v2 characters (ADR-009
+— characters are done, don't touch them): interior wood floor that reads as
+planks not bricks; grass auto-edges where grass meets path corners; 2-3
+tree sizes + a pine; window glow at night; drugstore/STARMART interiors get
+shelf/counter props; extend the pass to the Brickton city set and the
+Department floors (cubicles, the S2 holding-room set). Give Otterbrook
+ADR-012 looseness — broken hedges, jittered furniture from a FIXED seed —
+without moving canon buildings or any coordinate a cutscene depends on
+(porch trigger, bus stop, lemonade corner, rex_home door). Add juice per
+Prompt 39's list: Ember pickup sparkle particles, footstep dust when
+running, door-transition whoosh (hit-flash and SMAAASH shake exist).
+Verify every new texture in Sprite Lab.
+Done when: a before/after of Otterbrook and Brickton looks one generation
+better; palette conformance holds by construction (ADR-002); maps.test's
+city sweep and the S2 canon block stay green.
 ```
 
 ## Prompt S8 — Capacitor & Android APK (Bible Prompt 41)
 
 ```
 [Standard Header]
-Add Capacitor 6 and generate the android/ project per Prompt 41:
+Add Capacitor 6 and generate android/ per Bible Prompt 41:
 landscape-locked, immersive fullscreen, safe-area insets for the touch UI,
-app icon + splash from the title meteor art (export from the sprite engine
-at build time), keep-awake during play, back-button = B, localStorage
-persistence flagged durable. Document the debug-APK build steps in
-docs/RELEASE.md (keystore generation documented, key NOT committed). Verify
-the Gamepad API works in the WebView with a Bluetooth controller on a real
-device — log results in docs/QA.md.
-Done when: meteor-falls-debug.apk installs and plays the full slice on an
-Android phone with touch and a paired controller.
+app icon + splash from the title meteor art (exported from the sprite
+engine at build time), keep-awake during play, back-button = B,
+localStorage persistence flagged durable. Document debug-APK build steps in
+docs/RELEASE.md (keystore generation documented, key NOT committed). On a
+real device, log results in docs/QA.md: the Gamepad API over Bluetooth in
+the WebView, and a TOUCH-ONLY smoke of the fresh-player path — name entry
+first (it's the first thing a fresh Android player touches; cells/buttons
+are tap-wired, verify no keyboard assumptions slipped in), then the S2
+beats: a patrol fight, Faye's join, picking PRAY from her command row by
+tap, answering Mom's payphone.
+Done when: meteor-falls-debug.apk installs and Chapter 1 plays to
+ch1_complete on the phone with touch alone, and again with a paired
+controller.
+```
+
+## Prompt S9 — Quest engine & the first callers (Bible Prompt 26 + §A10 #1–3)
+
+```
+[Standard Header]
+Implement the quest system: multi-step objective state machines, a JOURNAL
+page in the S3 menu (in-voice summaries, map markers OFF — EB didn't hold
+hands), reward granting, and the CALLER ledger appended to the save (this
+is the finale's fuel; register the new fields with S3's migration registry
+per the ADR-013 pattern). ADR-014's flag-gated NpcDef/PropDef
+(ifFlag/unlessFlag) are available for quest-state NPCs, and S5's Quest
+schema validates the data. Author and wire quests #1–3 end-to-end: Biscuit,
+Come Home (sniff-clue trail across 3 screens); Mail Must Move (5 doors, one
+guarded by the Runaway Lawnmower); Lemonade Empire (Ana & Vivi supply run,
+infinite-lemonade reward). Each completion records its §A10 caller (Mrs.
+Pemmel, Mr. Plummer, Ana & Vivi) with a one-line phone quote in §A11 tone.
+Quest dialogue may land the first natural consumer of {coolthing} — don't
+force it, but it's live.
+Done when: all three are completable on a fresh save AND after ch1_complete
+(zero missables — canon; the flag is set by Mom's payphone call, ADR-014);
+the journal shows phone icons for earned callers; the ledger survives a
+save/load round-trip; the ADR-008 bot can finish one quest end-to-end.
+```
+
+## Prompt S10 — Arcade Legend (§A10 #4 + the STARPORT interiors)
+
+```
+[Standard Header]
+Open both arcades as real interiors: STARPORT (Otterbrook) and STARPORT II
+(Brickton, bldg_arcade2). Build the Arcade Legend mini shoot-'em-up as a
+playable cabinet: its own Scene on the existing input layer, ~60-second
+runs, EB-goofy enemies, high-score table seeded with "MGR" (the
+locked_arcade2 attract-mode gag is canon now — and after S2, so is the
+Manager it belongs to). Beating the score asks for 3-letter initials —
+reuse the S12 letter-grid pattern (extract it from NameEntryScene if that's
+cleaner, keeping the QA recipe in that scene's header true) and prefill
+from the first letters of {playername}. Quest #4: beat the score → Champion
+Jacket + the arcade-owner caller; replayable score-attack from any save
+afterward (Prompt 36's hook lands early). Score persists on the save via
+S3's migration registry (ADR-013 pattern).
+Done when: the shmup is genuinely fun for 60 seconds, the score + initials
+persist on the save, and quest #4 completes with its caller registered.
+```
+
+## Prompt S11 — Otterbrook fills out + death/revival/picnic systems (Prompts 23, 25, 27-scope)
+
+```
+[Standard Header]
+Expand Otterbrook toward Prompt 27's "12+ enterable" with ADR-012
+looseness, without moving canon buildings: home interiors (incl. Chad's —
+he is conspicuously not home), chapel interior (free 50-HP prayer; the
+priest is warm about {faye}'s gift, §A11.4 — played straight, and yes he
+uses her chosen name), and a small Otterbrook clinic implementing the full
+§A4.7 flow: fallen heroes trail as angels (S2 reality: the angel conga
+already renders, ADR-014 — what's left is the economics), pay-to-revive
+scaled by level, cure-all, one weird doctor line (he may address {rex} by
+name — vars() is everywhere now). End ADR-014's interim revive-all: a wipe
+now leaves non-leaders down as angels, routed through the single respawn
+function S6 established (last Dad-save); Glint's Spark stays the rare item
+path. Replace the picnic half-heal with real Picnic Baskets per §A4.5:
+Basic Basket stocked in S4's shops, table-only use ("There's no good spot
+here."), blanket scene, SUNNY SIDE +10%/5-battle buff with its little sun
+icon. Ch.1's tables already exist (Otterbrook park, hill trail, dos_f2
+break room, Brickton park) — keep them, and make the pre-Department one
+read as deliberate strategy.
+Done when: wipe → angels → hospital revival works in both towns; a
+pre-Department picnic is a real strategic ritual; 12+ Otterbrook doors
+open.
 ```
 
 ---
 
-After S8, return to the Bible's Part C order: Chapter 2 (Prompt 28) onward,
-with the balance sim (Prompt 37) once two chapters exist to measure.
+After S11, Chapter 1 is genuinely complete — name entry through ch1_complete
+with quests, arcade, revival, and picnics all live. Then return to the
+Bible's Part C order at Prompt 28 (Chapter 2) — Puerto Sol and Valle Dorado
+inherit ADR-012 and the §B4 city tests automatically — and run the balance
+sim (Prompt 37) once two chapters exist to measure, as planned.
