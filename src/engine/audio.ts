@@ -238,7 +238,13 @@ class AudioSys {
     if (!Ctor) return;
     this.ctx = new Ctor();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.9;
+    // honor the persisted sound preference from the first note onward
+    try {
+      this.muted = localStorage.getItem('meteor-falls-sound') === 'off';
+    } catch {
+      /* storage unavailable */
+    }
+    this.master.gain.value = this.muted ? 0 : 0.9;
     this.master.connect(this.ctx.destination);
     this.musicGain = this.ctx.createGain();
     this.musicGain.gain.value = 1;
@@ -259,6 +265,17 @@ class AudioSys {
   setMuted(m: boolean): void {
     this.muted = m;
     if (this.master) this.master.gain.value = m ? 0 : 0.9;
+    try {
+      localStorage.setItem('meteor-falls-sound', m ? 'off' : 'on');
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  /** flips mute; returns the new muted state */
+  toggleMuted(): boolean {
+    this.setMuted(!this.muted);
+    return this.muted;
   }
 
   /* ---------------- SFX ---------------- */

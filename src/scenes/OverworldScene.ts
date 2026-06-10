@@ -768,7 +768,15 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.sfx('cursor');
     const rex = GS.hero('rex');
     if (!rex) return;
-    const pick = await this.dlg.ask(['Status', 'Goods', 'Locket', 'Close'], { cancelIndex: 3 });
+    const soundLabel = AUDIO.muted ? 'Sound: OFF' : 'Sound: ON';
+    const pick = await this.dlg.ask(['Status', 'Goods', 'Locket', soundLabel, 'Close'], {
+      cancelIndex: 4,
+    });
+    if (pick === 3) {
+      const muted = AUDIO.toggleMuted();
+      toast(this, muted ? 'Sound OFF' : 'Sound ON');
+      return;
+    }
     if (pick === 0) {
       await this.dlg.say(
         `${rex.name}  L${rex.level}  HP ${rex.hp}/${rex.maxHp}  PP ${rex.pp}/${rex.maxPp}\nEXP ${rex.exp} (next: ${expForLevel(rex.level + 1)})\nOff ${rex.stats.offense} Def ${rex.stats.defense} Spd ${rex.stats.speed} Guts ${rex.stats.guts} Vibe ${rex.stats.vibe}\nCash $${GS.data.cashOnHand} / Bank $${GS.data.banked}`,

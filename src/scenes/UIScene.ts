@@ -35,6 +35,11 @@ export class UIScene extends Phaser.Scene {
     };
     this.input.on('pointerdown', unlock);
     this.input.keyboard?.on('keydown', () => AUDIO.unlock());
+    // M toggles all sound, anywhere
+    this.input.keyboard?.on('keydown-M', () => {
+      const muted = AUDIO.toggleMuted();
+      toast(this, muted ? 'Sound OFF' : 'Sound ON');
+    });
 
     if (isTouch) {
       const dpad = this.add.image(46, H - 46, 'dpad').setAlpha(0.55);
