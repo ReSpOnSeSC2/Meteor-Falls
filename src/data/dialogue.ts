@@ -324,6 +324,9 @@ export const DIALOGUE: Record<string, string[]> = {
     '@If it gets loud out there, that\'s the praying. It always does SOMETHING. That\'s the whole deal with it.',
     '* {faye} joined the party!!',
   ],
+  faye_pan_get: [
+    '* {faye} got the HAND-ME-DOWN PAN back! She gives it one practice swing. The room apologizes.',
+  ],
 
   /* ---------------- S2 — the Manager's exit interview ---------------- */
   manager_intro: [

@@ -1,6 +1,15 @@
 /**
  * Item catalog — the Chapter 1 slice of GAME_BIBLE §A8.
+ * Weapons carry a wielder tag (§A8: bats are Rex's line, pans are Faye's).
  */
+import type { HeroId } from './heroes';
+
+/** equipment slots per Prompt 19 (weapon/body/arms/other) */
+export type EquipSlot = 'weapon' | 'body' | 'arms' | 'other';
+export const EQUIP_SLOTS: EquipSlot[] = ['weapon', 'body', 'arms', 'other'];
+
+/** EB hands-full rule: every hero's bag holds 14 items (Prompt 19) */
+export const BAG_MAX = 14;
 
 export interface ItemDef {
   id: string;
@@ -8,6 +17,8 @@ export interface ItemDef {
   kind: 'weapon' | 'food' | 'cure' | 'battle' | 'key';
   heal?: number;
   offense?: number;
+  /** §A8 weapon lines are personal — only this hero can equip it */
+  wielder?: HeroId;
   /** battle item damage */
   power?: number;
   /** breaks the Tick's latch (§A6 Boss 1 gimmick) */
@@ -16,6 +27,11 @@ export interface ItemDef {
   usableInBattle: boolean;
   price: number;
   text: string;
+}
+
+/** which equip slot an item occupies, if any (armor kinds land in Phase 2+) */
+export function slotOf(item: ItemDef): EquipSlot | null {
+  return item.kind === 'weapon' ? 'weapon' : null;
 }
 
 const I = (i: ItemDef): ItemDef => i;
@@ -27,6 +43,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       name: 'Cracked Bat',
       kind: 'weapon',
       offense: 4,
+      wielder: 'rex',
       usableInBattle: false,
       price: 18,
       text: 'It has one good SMAAASH left in it. Maybe two.',
@@ -36,9 +53,20 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       name: 'T-Ball Bat',
       kind: 'weapon',
       offense: 8,
+      wielder: 'rex',
       usableInBattle: false,
       price: 48,
       text: 'Regulation tee-ball. The Otterbrook Otters went 0-12 with it.',
+    }),
+    I({
+      id: 'hand_me_down_pan',
+      name: 'Hand-Me-Down Pan',
+      kind: 'weapon',
+      offense: 6,
+      wielder: 'faye',
+      usableInBattle: false,
+      price: 36,
+      text: 'It made twenty years of breakfast. It is NOT done serving.',
     }),
     I({
       id: 'corn_dog',

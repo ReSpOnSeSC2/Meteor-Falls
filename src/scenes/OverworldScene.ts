@@ -13,6 +13,8 @@
  * rows 3-4) runs the Manager fight — pick Faye's PRAY with Down,Down,KeyZ on
  * her command row. Mom's call: payphone at brickton (14,26), A to answer.
  * Bots beware: holdKey is eaten while dlg.busy — drain pages with key() first.
+ * S3: Enter (START) opens the EB command menu — it's a separate scene over a
+ * paused world; the drive-it recipe lives in MenuScene's header.
  */
 import Phaser from 'phaser';
 import {
@@ -26,7 +28,6 @@ import {
   type PropDef,
 } from '../data/maps';
 import { ENEMIES } from '../data/enemies';
-import { ITEMS } from '../data/items';
 import { DIALOGUE } from '../data/dialogue';
 import { GS, makeHeroState } from '../engine/state';
 import { INPUT } from '../engine/input';
@@ -35,7 +36,6 @@ import { Dialogue, makeWindow, toast, vars, DEPTH_UI } from '../ui/windows';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS } from '../spritegen/tiles';
 import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
 import { instantWin, expShare } from '../battle/formulas';
-import { expForLevel } from '../engine/state';
 import { colorOf, RAMP, px } from '../palette';
 
 interface Rect {
@@ -453,7 +453,7 @@ export class OverworldScene extends Phaser.Scene {
         this.checkDoors();
         this.checkTriggers();
         if (INPUT.justPressed('A')) void this.interact();
-        if (INPUT.justPressed('START')) void this.pauseMenu();
+        if (INPUT.justPressed('START')) this.pauseMenu();
       }
     } else {
       this.player.anims.stop();
@@ -1166,68 +1166,17 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.save_done);
   }
 
-  private async pauseMenu(): Promise<void> {
+  /** START opens the real EB command menu (S3) — MenuScene runs over a
+   *  paused world, exactly like battle, and tells us when it's done */
+  private pauseMenu(): void {
     AUDIO.sfx('cursor');
-    const rex = GS.hero('rex');
-    if (!rex) return;
-    const soundLabel = AUDIO.muted ? 'Sound: OFF' : 'Sound: ON';
-    const pick = await this.dlg.ask(['Status', 'Goods', 'Locket', soundLabel, 'Close'], {
-      cancelIndex: 4,
+    this.game.events.once('mf-menu-closed', () => {
+      // a Spark may have revived someone, gear may have moved (S3)
+      this.rebuildFollowers();
+      this.scene.resume();
     });
-    if (pick === 3) {
-      const muted = AUDIO.toggleMuted();
-      toast(this, muted ? 'Sound OFF' : 'Sound ON');
-      return;
-    }
-    if (pick === 0) {
-      await this.dlg.say(
-        `${rex.name}  L${rex.level}  HP ${rex.hp}/${rex.maxHp}  PP ${rex.pp}/${rex.maxPp}\nEXP ${rex.exp} (next: ${expForLevel(rex.level + 1)})\nOff ${rex.stats.offense} Def ${rex.stats.defense} Spd ${rex.stats.speed} Guts ${rex.stats.guts} Vibe ${rex.stats.vibe}\nCash $${GS.data.cashOnHand} / Bank $${GS.data.banked}`,
-      );
-    } else if (pick === 1) {
-      if (GS.data.inventory.length === 0) {
-        await this.dlg.say('Your bag contains air and ambition.');
-        return;
-      }
-      const names = GS.data.inventory.map((id) => ITEMS[id]?.name ?? id);
-      const sel = await this.dlg.ask([...names, 'Close'], { cancelIndex: names.length });
-      if (sel < names.length) {
-        const itemId = GS.data.inventory[sel];
-        const item = ITEMS[itemId];
-        if (item.kind === 'food' && item.heal) {
-          rex.hp = Math.min(rex.maxHp, rex.hp + item.heal);
-          GS.removeItem(itemId);
-          AUDIO.sfx('heal');
-          await this.dlg.say(`${rex.name} ate the ${item.name}. Recovered ${item.heal} HP!`);
-        } else if (item.id === 'glints_spark' && GS.data.party.some((h) => h.down)) {
-          // §A8 "revive, rare" — the interim path back until hospitals (S11)
-          const downed = GS.data.party.find((h) => h.down);
-          if (downed) {
-            GS.removeItem(itemId);
-            downed.down = false;
-            downed.hp = downed.maxHp;
-            AUDIO.sfx('ember');
-            await this.dlg.say(`The spark flares. ${downed.name} got back up, blinking, like it's Saturday.`);
-            this.rebuildFollowers();
-          }
-        } else {
-          await this.dlg.say(item.text);
-        }
-      }
-    } else if (pick === 2) {
-      const n = GS.data.embers;
-      if (!GS.data.keyItems.includes('star_locket')) {
-        await this.dlg.say('You have a pocket. In it: lint, mostly.');
-      } else {
-        if (n > 0) AUDIO.playMusic('heartlight');
-        await this.dlg.say(
-          `THE STAR LOCKET — Heartlights: ${n}/8`,
-          n > 0
-            ? '(One instrument plays, all alone, and refuses to be sad about it.)'
-            : '(It is quiet. It is waiting for the first Heartlight.)',
-        );
-        AUDIO.playMusic(this.mapDef.music);
-      }
-    }
+    this.scene.pause();
+    this.scene.launch('menu', { music: this.mapDef.music });
   }
 
   /* ---------------- doors & triggers ---------------- */
@@ -1474,6 +1423,12 @@ export class OverworldScene extends Phaser.Scene {
     // ADR-013: the Prompt-21 name flows into her battle strip and dialogue
     GS.data.party.push(makeHeroState('faye', 6, GS.data.heroNames.faye));
     GS.setFlag('faye_joined');
+    // S3: the pan she took back off the intake shelf is real gear now — hers,
+    // equipped (the migration registry grants it to older faye_joined saves)
+    GS.addItem('hand_me_down_pan', 'faye');
+    GS.equipItem('faye', 'hand_me_down_pan');
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE.faye_pan_get);
     AUDIO.jingle('levelup', 1400, null);
     // rebuild from data: her NPC gates out, the conga picks her up
     this.fadeRestart();

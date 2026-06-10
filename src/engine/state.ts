@@ -1,8 +1,11 @@
 /**
  * GameState — the serializable heart of every save (GAME_BIBLE §B1).
  * Plain data + helpers; no Phaser imports so it unit-tests headlessly.
+ * Save shape is VERSIONED — see engine/migrations.ts for the registry (S3).
  */
 import { HEROES, type HeroId, statsAtLevel, maxHpAtLevel, maxPpAtLevel } from '../data/heroes';
+import { ITEMS, slotOf, BAG_MAX, EQUIP_SLOTS, type EquipSlot } from '../data/items';
+import { migrateSave } from './migrations';
 
 export interface Stats {
   offense: number;
@@ -24,13 +27,16 @@ export interface HeroState {
   maxPp: number;
   stats: Stats;
   down: boolean;
+  /** S3 (Prompt 19): each hero carries their own 14-slot bag */
+  bag: string[];
+  /** equipped item ids by slot; an equipped item stays in this hero's bag, EB-style */
+  equip: Partial<Record<EquipSlot, string>>;
 }
 
 export interface GameStateData {
-  version: 1;
+  version: 2;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
-  inventory: string[];
   keyItems: string[];
   cashOnHand: number;
   banked: number;
@@ -70,6 +76,8 @@ export function makeHeroState(id: HeroId, level: number, name?: string): HeroSta
     maxPp: maxPpAtLevel(id, level),
     stats: statsAtLevel(id, level),
     down: false,
+    bag: [],
+    equip: {},
   };
 }
 
@@ -79,11 +87,13 @@ export function expForLevel(level: number): number {
 }
 
 export function newGameData(): GameStateData {
+  const rex = makeHeroState('rex', 1);
+  rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
+  rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 1,
-    party: [makeHeroState('rex', 1)],
+    version: 2,
+    party: [rex],
     guest: null,
-    inventory: ['cracked_bat', 'corn_dog', 'corn_dog'],
     keyItems: [],
     cashOnHand: 12,
     banked: 0,
@@ -108,6 +118,8 @@ export function newGameData(): GameStateData {
 }
 
 const SLOT_KEY = 'meteor-falls-slot-1';
+
+export type EquipResult = 'ok' | 'not-yours' | 'hands-full' | 'missing';
 
 class GameStateStore {
   data: GameStateData = newGameData();
@@ -146,39 +158,90 @@ class GameStateStore {
     return this.data.party.filter((h) => !h.down);
   }
 
-  addItem(id: string): boolean {
-    if (this.data.inventory.length >= 14) return false;
-    this.data.inventory.push(id);
+  /* ---------------- per-hero bags (S3 / Prompt 19) ---------------- */
+
+  bagOf(id: HeroId): string[] {
+    return this.hero(id)?.bag ?? [];
+  }
+
+  /** put an item into a hero's 14-slot bag (defaults to the party leader) */
+  addItem(itemId: string, heroId?: HeroId): boolean {
+    const h = heroId ? this.hero(heroId) : this.data.party[0];
+    if (!h || h.bag.length >= BAG_MAX) return false;
+    h.bag.push(itemId);
     return true;
   }
 
-  removeItem(id: string): boolean {
-    const i = this.data.inventory.indexOf(id);
-    if (i < 0) return false;
-    this.data.inventory.splice(i, 1);
-    return true;
+  /**
+   * Remove one copy from a hero's bag (or the first bag carrying it).
+   * A dangling equip reference is cleared when the last copy leaves.
+   */
+  removeItem(itemId: string, heroId?: HeroId): boolean {
+    const owners = heroId ? [this.hero(heroId)] : this.data.party;
+    for (const h of owners) {
+      if (!h) continue;
+      const i = h.bag.indexOf(itemId);
+      if (i < 0) continue;
+      h.bag.splice(i, 1);
+      this.clearDanglingEquip(h, itemId);
+      return true;
+    }
+    return false;
   }
 
-  hasItem(id: string): boolean {
-    return this.data.inventory.includes(id);
+  hasItem(itemId: string): boolean {
+    return this.data.party.some((h) => h.bag.includes(itemId));
   }
+
+  /** who carries this item, in party order */
+  itemOwner(itemId: string): HeroState | undefined {
+    return this.data.party.find((h) => h.bag.includes(itemId));
+  }
+
+  /**
+   * Prompt 19: equip from anyone's bag — the item moves into the equipper's
+   * bag first (EB-style: equipped gear occupies a bag slot). Wielder tags
+   * are enforced (§A8: bats are Rex's, pans are Faye's).
+   */
+  equipItem(heroId: HeroId, itemId: string): EquipResult {
+    const hero = this.hero(heroId);
+    const def = ITEMS[itemId];
+    const slot = def ? slotOf(def) : null;
+    if (!hero || !def || !slot) return 'missing';
+    if (def.wielder && def.wielder !== heroId) return 'not-yours';
+    const owner = hero.bag.includes(itemId) ? hero : this.itemOwner(itemId);
+    if (!owner) return 'missing';
+    if (owner !== hero) {
+      if (hero.bag.length >= BAG_MAX) return 'hands-full';
+      owner.bag.splice(owner.bag.indexOf(itemId), 1);
+      this.clearDanglingEquip(owner, itemId);
+      hero.bag.push(itemId);
+    }
+    hero.equip[slot] = itemId;
+    return 'ok';
+  }
+
+  unequip(heroId: HeroId, slot: EquipSlot): void {
+    const hero = this.hero(heroId);
+    if (hero) delete hero.equip[slot];
+  }
+
+  private clearDanglingEquip(h: HeroState, itemId: string): void {
+    if (h.bag.includes(itemId)) return; // another copy still carries the slot
+    for (const slot of EQUIP_SLOTS) {
+      if (h.equip[slot] === itemId) delete h.equip[slot];
+    }
+  }
+
+  /* ---------------- persistence ---------------- */
 
   serialize(): string {
     return JSON.stringify(this.data);
   }
 
+  /** parse + walk the migration registry up to the current version (S3) */
   deserialize(json: string): void {
-    const parsed = JSON.parse(json) as Partial<GameStateData>;
-    if (parsed.version !== 1) throw new Error(`unknown save version ${String(parsed.version)}`);
-    // pre-Prompt-21 saves lack the New Game fields — backfill canon defaults.
-    // version stays 1; the real migration registry arrives with save slots.
-    const fresh = newGameData();
-    this.data = {
-      ...fresh,
-      ...parsed,
-      version: 1,
-      heroNames: { ...fresh.heroNames, ...(parsed.heroNames ?? {}) },
-    };
+    this.data = migrateSave(JSON.parse(json), newGameData());
   }
 
   save(): void {

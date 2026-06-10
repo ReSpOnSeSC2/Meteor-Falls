@@ -7,10 +7,13 @@ import {
   instantWin,
   expShare,
   applyWeakness,
+  heroOffense,
+  equipDelta,
 } from './formulas';
 import { rollPray, prayWeights, PRAY_BASE, type PrayTier } from '../data/abilities';
 import { mulberry32 } from '../spritegen/pixmap';
-import { expForLevel } from '../engine/state';
+import { expForLevel, makeHeroState } from '../engine/state';
+import { ITEMS } from '../data/items';
 
 describe('battle formulas', () => {
   it('physical: offense*2 - defense with ±15% variance, min 1', () => {
@@ -52,6 +55,34 @@ describe('battle formulas', () => {
   it('exp splits among the conscious, minimum 1', () => {
     expect(expShare(320, 2)).toBe(160);
     expect(expShare(1, 4)).toBe(1);
+  });
+});
+
+describe('equipped offense (S3 — the acting hero, not the shared bag)', () => {
+  it("equipping the T-Ball Bat raises Rex's offense and nobody else's", () => {
+    const rex = makeHeroState('rex', 5);
+    const faye = makeHeroState('faye', 6);
+    const before = heroOffense(rex);
+    rex.bag.push('tball_bat');
+    rex.equip.weapon = 'tball_bat';
+    expect(heroOffense(rex)).toBe(before + (ITEMS.tball_bat.offense ?? 0));
+    expect(heroOffense(faye)).toBe(faye.stats.offense); // untouched
+  });
+
+  it('bare hands swing at base offense', () => {
+    const rex = makeHeroState('rex', 5);
+    expect(heroOffense(rex)).toBe(rex.stats.offense);
+  });
+
+  it('equipDelta previews Prompt 19\'s "Offense up by N!" exactly', () => {
+    const rex = makeHeroState('rex', 5);
+    rex.bag = ['cracked_bat', 'tball_bat'];
+    rex.equip.weapon = 'cracked_bat';
+    expect(equipDelta(rex, 'tball_bat')).toBe(4); // 8 - 4
+    expect(equipDelta(rex, 'cracked_bat')).toBe(0); // already wearing it
+    rex.equip.weapon = 'tball_bat';
+    expect(equipDelta(rex, 'cracked_bat')).toBe(-4); // downgrades preview too
+    expect(equipDelta(rex, 'corn_dog')).toBe(0); // not equipment
   });
 });
 

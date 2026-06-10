@@ -25,6 +25,7 @@ import {
   gutsSurvive,
   runChance,
   expShare,
+  heroOffense,
 } from '../battle/formulas';
 import { Dialogue, makeWindow, makeBox, DEPTH_UI } from '../ui/windows';
 import { colorOf, rgbOf, RAMP, px } from '../palette';
@@ -471,10 +472,10 @@ export class BattleScene extends Phaser.Scene {
     await this.damageEnemy(target, dmg);
   }
 
+  /** S3: each hero swings THEIR equipped weapon (was: first weapon in the
+   *  shared bag, applied to everyone) */
   private heroOffense(h: HeroUnit): number {
-    const weapon = GS.data.inventory.find((i) => ITEMS[i]?.kind === 'weapon');
-    const bonus = weapon ? (ITEMS[weapon].offense ?? 0) : 0;
-    const base = h.hero.stats.offense + bonus;
+    const base = heroOffense(h.hero);
     // feeling PRODUCTIVE: your heart isn't in the swing (§A7 Smiler debuff)
     return h.productive > 0 ? Math.max(1, Math.floor(base * 0.75)) : base;
   }
@@ -583,9 +584,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private async heroGoods(h: HeroUnit): Promise<boolean> {
-    const usable = GS.data.inventory.filter((id) => ITEMS[id]?.usableInBattle);
+    // S3: Goods is the acting hero's OWN 14-slot bag (Prompt 19)
+    const usable = h.hero.bag.filter((id) => ITEMS[id]?.usableInBattle);
     if (usable.length === 0) {
-      await this.print('The bag offers nothing but moral support.');
+      await this.print(`${h.hero.name}'s bag offers nothing but moral support.`);
       return false;
     }
     const names = usable.map((id) => ITEMS[id].name);
@@ -595,14 +597,14 @@ export class BattleScene extends Phaser.Scene {
     const item = ITEMS[itemId];
     const name = h.hero.name;
     if (item.kind === 'food' && item.heal) {
-      GS.removeItem(itemId);
+      GS.removeItem(itemId, h.hero.id);
       h.odoHp.heal(item.heal);
       AUDIO.sfx('heal');
       await this.print(`${name} wolfed down the ${item.name}! About ${item.heal} HP came back.`);
       return true;
     }
     if (item.id === 'glints_spark') {
-      GS.removeItem(itemId);
+      GS.removeItem(itemId, h.hero.id);
       AUDIO.sfx('ember');
       // §A8: revive, rare — it goes to whoever needs it most
       const downed = this.heroes.find((x) => x.hero.down || x.odoHp.dead);
@@ -620,7 +622,7 @@ export class BattleScene extends Phaser.Scene {
     if (item.kind === 'battle' && item.power) {
       const target = await this.pickEnemy();
       if (!target) return false;
-      GS.removeItem(itemId);
+      GS.removeItem(itemId, h.hero.id);
       await this.print(`${name} threw the ${item.name}!`);
       const weak = target.def.weakness.includes('salt');
       if (item.breaksLatch && target.def.boss) {
@@ -748,8 +750,9 @@ export class BattleScene extends Phaser.Scene {
           break;
         }
         case 'steal': {
-          const foodIdx = GS.data.inventory.findIndex((i) => ITEMS[i]?.kind === 'food');
-          if (foodIdx >= 0) GS.data.inventory.splice(foodIdx, 1);
+          // S3: it rifles the TARGET's bag (bags are per-hero now)
+          const foodIdx = target.hero.bag.findIndex((i) => ITEMS[i]?.kind === 'food');
+          if (foodIdx >= 0) target.hero.bag.splice(foodIdx, 1);
           break;
         }
         case 'taunt':

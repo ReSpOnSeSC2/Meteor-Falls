@@ -320,3 +320,56 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** S3's menu reads a real multi-hero party; quota door state
   survives re-entry and reload through plain flags; the same join pattern
   (flag + makeHeroState + fade-restart) serves Milo (Ch.3) and Dorin (Ch.7).
+
+## ADR-015 — S3: per-hero bags + equip, save v2 migration registry, the EB command menu
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt S3 — Bible Prompt 7 + 19)
+- **Context:** The interim pause menu hardcoded Rex while the party is two
+  heroes (ADR-014); `BattleScene.heroOffense` applied the FIRST weapon in the
+  shared `GS.data.inventory` to BOTH heroes; ADR-013 left save tolerance as a
+  deserialize spread-merge with "the real migration registry" deferred.
+- **Decision:**
+  - **Per-hero bags (Prompt 19):** `HeroState.bag` (14 slots, `BAG_MAX` in
+    items.ts) + `HeroState.equip` (weapon/body/arms/other, `EQUIP_SLOTS`).
+    The shared `inventory` field is GONE; `keyItems` stays shared. Equipped
+    items occupy a bag slot EB-style; removing the last copy clears the slot.
+    Equip-from-anyone's-bag moves the item into the equipper's bag first.
+    Weapons carry a **`wielder` tag** (§A8: bats `rex`, pans `faye`) enforced
+    by `GS.equipItem`; `slotOf(item)` maps kinds to slots (armor in Phase 2+).
+    `heroOffense(hero)`/`equipDelta(hero, item)` are pure functions in
+    battle/formulas.ts — battle damage now reads the ACTING hero's weapon.
+  - **Save v2 + migration registry:** `engine/migrations.ts` holds ordered
+    steps `{to, migrate}`; `deserialize` walks `parsed.version → CURRENT (2)`
+    and throws loudly on unknown/future versions. The v1→v2 step FOLDS IN
+    ADR-013's spread-merge backfill (pre-S12 saves missing heroNames et al.
+    still load), moves the shared inventory into the leader's bag, equips his
+    first wieldable weapon (so old saves keep their exact battle damage), and
+    grants+equips Faye's **Hand-Me-Down Pan** when `faye_joined` — she
+    canonically took it back off the intake shelf, and the join scene now
+    grants it for new saves (`faye_pan_get` line). S6 (slots), S9 (caller
+    ledger), and S10 (arcade score) REGISTER steps here, never ad-hoc merge.
+  - **MenuScene:** the EB command menu is its own scene launched over a
+    paused OverworldScene (the battle pattern), emitting `mf-menu-closed`;
+    the overworld rebuilds followers on close (Spark revives un-angel there).
+    Pages: ITEMS / STATUS (full §A3 sheet incl. Guts/Vibe/Luck + DOWN, reads
+    `HeroState.name` so renames are free) / VIBE (PP costs, greyed when
+    unusable; Pray stays a battle command per ADR-014) / EQUIP (Prompt 19
+    "Offense up by N!" preview before confirm) / LOCKET / SETUP (the S1
+    persisted Sound preference; UIScene's global M key untouched). One list
+    widget (`pick`) drives every page with pad/keys AND per-row tap zones;
+    static pages tap-dismiss (§B4). Glint's Spark's out-of-battle revive
+    moved here intact.
+  - **Homesong stems (§A4.9):** `TRACKS.homesong` has 8 stackable channels;
+    `AUDIO.playMusic(name, stems)` caps scheduled channels. The Locket screen
+    passes the Ember count — one Heartlight = one instrument, alone (channel
+    0 is the heartlight lead, so the cue carries over). The `heartlight`
+    one-shot still plays at Ember pickups. Phase 8 swaps voices, not the API.
+  - Setup ships audio-only for now (Prompt 7 lists controls/window flavor —
+    those arrive with their systems); chests/gift boxes remain Prompt 19
+    scope for S4+.
+- **Consequences:** S4's shops route purchases into a chosen hero's bag and
+  reuse `confirmEquip` for the equip-after-buy prompt; battle Goods/steals
+  operate on the acting/target hero's own bag; Prompt 29+ towns inherit the
+  menu for free. Tests: 81 (migration registry, wielder rules, cross-bag
+  equip, offense isolation).

@@ -3,8 +3,25 @@
  * physical, power coefficient × Vibe for abilities, Guts drives SMAAASH and
  * mortal-blow survival. Every function takes its RNG so tests are exact.
  */
+import { ITEMS, slotOf } from '../data/items';
+import type { HeroState } from '../engine/state';
 
 export type Rng = () => number;
+
+/** a hero's swing: base offense + THEIR equipped weapon (S3 — was the
+ *  first weapon in the shared bag, applied to everyone) */
+export function heroOffense(hero: HeroState): number {
+  const weapon = hero.equip.weapon ? ITEMS[hero.equip.weapon] : undefined;
+  return hero.stats.offense + (weapon?.offense ?? 0);
+}
+
+/** Prompt 19's preview: how much Offense changes if hero equips itemId */
+export function equipDelta(hero: HeroState, itemId: string): number {
+  const item = ITEMS[itemId];
+  if (!item || slotOf(item) !== 'weapon') return 0;
+  const current = hero.equip.weapon ? (ITEMS[hero.equip.weapon]?.offense ?? 0) : 0;
+  return (item.offense ?? 0) - current;
+}
 
 export function physicalDamage(offense: number, defense: number, rng: Rng): number {
   const base = Math.max(1, offense * 2 - defense);

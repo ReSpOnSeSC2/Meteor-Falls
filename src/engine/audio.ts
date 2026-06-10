@@ -282,6 +282,57 @@ const TRACKS: Record<string, Track> = {
       },
     ],
   },
+  // THE HOMESONG (§A4.9): eight stems, one per Ember. The Locket screen plays
+  // channels [0..embers) — with one Heartlight, one instrument plays all
+  // alone. Channel 0 is the heartlight lead, so the cue carries over.
+  // (Phase 8 swaps these synth voices for rendered stems behind the same API.)
+  homesong: {
+    bpm: 76,
+    loop: true,
+    channels: [
+      {
+        wave: 'sine',
+        vol: 0.14,
+        notes: ['C5', '-', 'G4', '-', 'A4', '-', 'E5', '-', 'D5', '-', 'C5', '-', 'G4', '-', 'A4', '-'],
+      },
+      {
+        wave: 'triangle',
+        vol: 0.12,
+        notes: ['C3', null, null, null, 'F2', null, null, null, 'G2', null, null, null, 'C3', null, 'G2', null],
+      },
+      {
+        wave: 'square',
+        vol: 0.04,
+        notes: ['E4', '-', null, null, 'A4', '-', null, null, 'B4', '-', null, null, 'E4', '-', null, null],
+      },
+      {
+        wave: 'sine',
+        vol: 0.05,
+        notes: [null, 'E5', null, 'G5', null, 'C6', null, null, null, 'B5', null, 'G5', null, null, 'E5', null],
+      },
+      {
+        wave: 'noise',
+        vol: 0.015,
+        notes: [null, null, 'C5', null, null, null, 'C5', null, null, null, 'C5', null, null, null, 'C5', null],
+      },
+      {
+        wave: 'sine',
+        vol: 0.035,
+        detune: 6,
+        notes: ['G4', '-', '-', '-', 'A4', '-', '-', '-', 'G4', '-', '-', '-', 'B4', '-', '-', '-'],
+      },
+      {
+        wave: 'square',
+        vol: 0.025,
+        notes: ['C6', null, null, null, null, null, null, 'G5', null, null, null, null, 'E6', null, null, null],
+      },
+      {
+        wave: 'triangle',
+        vol: 0.1,
+        notes: ['C2', '-', '-', '-', 'F2', '-', '-', '-', 'G2', '-', '-', '-', 'C2', '-', '-', '-'],
+      },
+    ],
+  },
 };
 
 /* ------------------------------------------------------------------ */
@@ -296,6 +347,8 @@ class AudioSys {
   private step = 0;
   private nextTime = 0;
   private held: Record<number, { osc: OscillatorNode; gain: GainNode } | undefined> = {};
+  /** channel cap for the current track (Homesong stems, §A4.9) */
+  private stems = Infinity;
   muted = false;
 
   unlock(): void {
@@ -461,9 +514,16 @@ class AudioSys {
 
   /* ---------------- music sequencer ---------------- */
 
-  playMusic(name: string | null): void {
-    if (this.current === name) return;
+  /**
+   * Start a looping track. `stems` caps how many channels play — the Star
+   * Locket screen passes the Ember count so the Homesong grows one
+   * instrument layer per Heartlight (§A4.9).
+   */
+  playMusic(name: string | null, stems?: number): void {
+    const wantStems = stems ?? Infinity;
+    if (this.current === name && this.stems === wantStems) return;
     this.stopMusic();
+    this.stems = wantStems;
     if (!name) return;
     this.current = name;
     if (!this.ctx) return;
@@ -490,6 +550,7 @@ class AudioSys {
         const swing = track.swing ? (stepIdx % 2 === 1 ? stepDur * track.swing : 0) : 0;
         const t = this.nextTime + swing;
         track.channels.forEach((ch, ci) => {
+          if (ci >= this.stems) return; // stem not earned yet (§A4.9)
           const n = ch.notes[stepIdx];
           if (n === null) {
             this.releaseHeld(ci, t);

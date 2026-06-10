@@ -1,14 +1,18 @@
 # NEXT_PROMPTS — continuing the build from here
 
 State as of these prompts: Phase 0–1 engine + ALL of Chapter 1 are done
-through S2 (commit `c99d676`; see DECISIONS.md ADR-001..014). A fresh save
-plays name entry → 2AM → the Tick → the 6:15 → the Department → the
-PRODUCTIVITY LOCK → Faye's join → the Manager → Mom's payphone call →
-ch1_complete, with a real two-hero party (conga + angels), Pray as a
-top-level battle command, and 62 green tests. Maps are code-grids (ADR-004),
-audio is the synth (ADR-006), data is typed TS (ADR-005 — Zod lands in S5).
-Work through these in order, one prompt per session, per the Bible's
-Appendix rules (review the diff, run the checks, commit).
+through S3 (see DECISIONS.md ADR-001..015). A fresh save plays name entry →
+2AM → the Tick → the 6:15 → the Department → the PRODUCTIVITY LOCK → Faye's
+join (she takes her pan back, for real now) → the Manager → Mom's payphone
+call → ch1_complete. The party is two heroes with per-hero 14-slot bags and
+equip slots (wielder-tagged weapons, §A8), START opens the full EB command
+menu (Items/Status/Vibe/Equip/Locket/Setup, touch + pad), saves are v2
+behind a real migration registry (engine/migrations.ts — REGISTER new save
+fields there), the Locket layers Homesong stems per Ember, and 81 tests are
+green. Maps are code-grids (ADR-004), audio is the synth (ADR-006), data is
+typed TS (ADR-005 — Zod lands in S5). Work through these in order, one
+prompt per session, per the Bible's Appendix rules (review the diff, run
+the checks, commit).
 
 Every prompt starts with the Standard Header:
 
@@ -20,38 +24,6 @@ architectural decision you make to it. TypeScript strict, no `any`.
 ```
 
 ---
-
-## Prompt S3 — Full pause menu & equipment (Bible Prompt 7 + 19)
-
-```
-[Standard Header]
-Replace the interim pause menu (OverworldScene.pauseMenu — its Status page
-hardcodes Rex and Goods feeds only him, but the party is genuinely two
-heroes now, ADR-014) with the EB command menu per Bible Prompt 7:
-Items (per-hero 14-slot bags + shared key items — migrate the shared
-GS.data.inventory to per-hero with a REAL v1→v2 migration registry, folding
-ADR-013's deserialize spread-merge backfill into it; the registry grants
-Faye her Hand-Me-Down Pan when faye_joined — she canonically took it back
-off the intake shelf — and the join scene grants it on future saves),
-Status (full §A3 stat sheet per hero incl. Guts/Vibe/Luck and DOWN state —
-it reads HeroState.name, so custom names appear free),
-Vibe (ability list w/ PP costs, greyed when unusable; Pray stays a battle
-command per ADR-014, not a menu vibe),
-Equip (weapon/body/arms/other slots with the "Offense up by N!" preview per
-Prompt 19; weapons carry a wielder tag — bats are Rex's, pans are Faye's per
-§A8 — and BattleScene.heroOffense currently applies the FIRST weapon in the
-shared bag to BOTH heroes: make it read the acting hero's equipped weapon),
-Setup (keep the M-key + persisted Sound preference from S1), and the
-STAR LOCKET screen (embers + Homesong stems behind the real §A4.9 interface;
-the interim menu already plays the heartlight cue — keep it).
-Glint's Spark's out-of-battle revive (ADR-014) must survive the rewrite.
-Touch AND controller navigable (§B4). Unit-test the migration registry: a
-v1 save (including a pre-S12 one missing heroNames) loads as v2 with Rex's
-bag = the old shared inventory.
-Done when: equipping the T-Ball Bat from the menu changes Rex's battle
-damage and nobody else's; a renamed Faye's status page shows her chosen
-name; old v1 saves still load; every page drives by touch and by pad.
-```
 
 ## Prompt S4 — Shops, ATM & the cash loop (Bible Prompt 20)
 

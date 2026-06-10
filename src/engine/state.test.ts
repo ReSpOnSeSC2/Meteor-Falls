@@ -27,9 +27,70 @@ describe('GameState serialization (Prompt 2: round-trip)', () => {
     expect(() => GS.deserialize(bad)).toThrow();
   });
 
-  it('inventory is capped at 14 (EB hands-full rule)', () => {
+  it('each bag is capped at 14 (EB hands-full rule)', () => {
     for (let i = 0; i < 20; i++) GS.addItem('pbj');
-    expect(GS.data.inventory.length).toBeLessThanOrEqual(14);
+    expect(GS.bagOf('rex').length).toBeLessThanOrEqual(14);
+  });
+});
+
+describe('per-hero bags & equipment (S3 / Prompt 19)', () => {
+  beforeEach(() => {
+    GS.reset();
+    GS.data.party.push(makeHeroState('faye', 6, 'Wren'));
+  });
+
+  it('items land in the chosen hero\'s bag — and only hers', () => {
+    GS.addItem('hand_me_down_pan', 'faye');
+    expect(GS.bagOf('faye')).toContain('hand_me_down_pan');
+    expect(GS.bagOf('rex')).not.toContain('hand_me_down_pan');
+    expect(GS.hasItem('hand_me_down_pan')).toBe(true);
+  });
+
+  it('wielder tags are law: Rex cannot equip the pan, Faye cannot swing the bat (§A8)', () => {
+    GS.addItem('hand_me_down_pan', 'faye');
+    expect(GS.equipItem('rex', 'hand_me_down_pan')).toBe('not-yours');
+    expect(GS.equipItem('faye', 'cracked_bat')).toBe('not-yours');
+    expect(GS.equipItem('faye', 'hand_me_down_pan')).toBe('ok');
+    expect(GS.hero('faye')?.equip.weapon).toBe('hand_me_down_pan');
+  });
+
+  it("equip-from-anyone's-bag moves the item into the equipper's bag", () => {
+    GS.addItem('tball_bat', 'faye'); // Faye is carrying Rex's new bat
+    expect(GS.equipItem('rex', 'tball_bat')).toBe('ok');
+    expect(GS.bagOf('rex')).toContain('tball_bat');
+    expect(GS.bagOf('faye')).not.toContain('tball_bat');
+    expect(GS.hero('rex')?.equip.weapon).toBe('tball_bat');
+  });
+
+  it('a full bag refuses the cross-bag equip', () => {
+    GS.addItem('tball_bat', 'faye');
+    const rex = GS.hero('rex');
+    while (rex && rex.bag.length < 14) rex.bag.push('pbj');
+    expect(GS.equipItem('rex', 'tball_bat')).toBe('hands-full');
+    expect(GS.bagOf('faye')).toContain('tball_bat');
+  });
+
+  it('removing the last copy of an equipped item clears the slot', () => {
+    expect(GS.hero('rex')?.equip.weapon).toBe('cracked_bat'); // new game default
+    GS.removeItem('cracked_bat', 'rex');
+    expect(GS.hero('rex')?.equip.weapon).toBeUndefined();
+  });
+
+  it('a second copy keeps the slot occupied when one is dropped', () => {
+    GS.addItem('cracked_bat', 'rex');
+    GS.removeItem('cracked_bat', 'rex');
+    expect(GS.hero('rex')?.equip.weapon).toBe('cracked_bat');
+  });
+
+  it('bags and equipment survive a save round-trip', () => {
+    GS.addItem('hand_me_down_pan', 'faye');
+    GS.equipItem('faye', 'hand_me_down_pan');
+    const json = GS.serialize();
+    GS.reset();
+    GS.deserialize(json);
+    expect(GS.bagOf('faye')).toContain('hand_me_down_pan');
+    expect(GS.hero('faye')?.equip.weapon).toBe('hand_me_down_pan');
+    expect(GS.hero('rex')?.equip.weapon).toBe('cracked_bat');
   });
 });
 
@@ -70,8 +131,16 @@ describe('New Game choices (Prompt 21)', () => {
     expect(GS.hero('rex')?.name).toBe('Casey');
   });
 
-  it('pre-Prompt-21 saves load with canon defaults backfilled', () => {
+  it('pre-Prompt-21 saves load with canon defaults backfilled (S3: via the migration registry)', () => {
     const legacy = JSON.parse(newGameDataJson()) as Record<string, unknown>;
+    legacy.version = 1; // pre-Prompt-21 saves were v1: shared inventory, bagless heroes
+    legacy.inventory = ['cracked_bat'];
+    legacy.party = (legacy.party as Array<Record<string, unknown>>).map((h) => {
+      const c = { ...h };
+      delete c.bag;
+      delete c.equip;
+      return c;
+    });
     delete legacy.coolestThing;
     delete legacy.heroNames;
     delete legacy.playerName;
