@@ -20,12 +20,18 @@ export class UIScene extends Phaser.Scene {
   private dpad: Phaser.GameObjects.Image | null = null;
   private btnA: Phaser.GameObjects.Image | null = null;
   private btnB: Phaser.GameObjects.Image | null = null;
+  private btnX: Phaser.GameObjects.Image | null = null;
+  private btnY: Phaser.GameObjects.Image | null = null;
   private btnStart: Phaser.GameObjects.Image | null = null;
   private dpadCenter = { x: 0, y: 0 };
   private aCenter = { x: 0, y: 0 };
   private bCenter = { x: 0, y: 0 };
+  private xCenter = { x: 0, y: 0 };
+  private yCenter = { x: 0, y: 0 };
   private startCenter = { x: 0, y: 0 };
   private pointerRoles = new Map<number, 'dpad' | Btn>();
+  /** S12c: X/Y exist on the thumb arc DURING HOOPS ONLY (sprint + sauce) */
+  private hoopsLive = false;
 
   constructor() {
     super('ui');
@@ -54,12 +60,27 @@ export class UIScene extends Phaser.Scene {
       toast(this, muted ? 'Sound OFF' : 'Sound ON');
     });
 
+    // X/Y ride the overlay only while the cage plays (S12c) — both input
+    // sources stay live everywhere; only the TOUCH chrome is hoops-scoped
+    this.game.events.on('mf-hoops-open', () => {
+      this.hoopsLive = true;
+      this.btnX?.setVisible(true);
+      this.btnY?.setVisible(true);
+    });
+    this.game.events.on('mf-hoops-closed', () => {
+      this.hoopsLive = false;
+      this.btnX?.setVisible(false);
+      this.btnY?.setVisible(false);
+    });
+
     if (isTouch) {
       this.dpad = this.add.image(0, 0, 'dpad').setAlpha(0.55);
       this.btnA = this.add.image(0, 0, 'btn_a').setAlpha(0.6);
       this.btnB = this.add.image(0, 0, 'btn_b').setAlpha(0.6);
+      this.btnX = this.add.image(0, 0, 'btn_x').setAlpha(0.6).setVisible(false);
+      this.btnY = this.add.image(0, 0, 'btn_y').setAlpha(0.6).setVisible(false);
       this.btnStart = this.add.image(0, 0, 'btn_start').setAlpha(0.55);
-      this.controls = this.add.container(0, 0, [this.dpad, this.btnA, this.btnB, this.btnStart]);
+      this.controls = this.add.container(0, 0, [this.dpad, this.btnA, this.btnB, this.btnX, this.btnY, this.btnStart]);
       this.controls.setDepth(5000);
       this.controls.setVisible(!INPUT.gamepadConnected);
       this.layoutControls();
@@ -96,10 +117,16 @@ export class UIScene extends Phaser.Scene {
     this.dpadCenter = { x: 46 + ins.left, y: H - 46 - ins.bottom };
     this.aCenter = { x: W - 26 - ins.right, y: H - 56 - ins.bottom };
     this.bCenter = { x: W - 56 - ins.right, y: H - 26 - ins.bottom };
+    // the thumb arc continues outward: X above A, Y beyond B (S12c — the
+    // four sit on one sweep so sprint and sauce are roll-of-the-thumb away)
+    this.xCenter = { x: W - 30 - ins.right, y: H - 92 - ins.bottom };
+    this.yCenter = { x: W - 92 - ins.right, y: H - 30 - ins.bottom };
     this.startCenter = { x: W - 30 - ins.right, y: 12 + ins.top };
     this.dpad?.setPosition(this.dpadCenter.x, this.dpadCenter.y);
     this.btnA?.setPosition(this.aCenter.x, this.aCenter.y);
     this.btnB?.setPosition(this.bCenter.x, this.bCenter.y);
+    this.btnX?.setPosition(this.xCenter.x, this.xCenter.y);
+    this.btnY?.setPosition(this.yCenter.x, this.yCenter.y);
     this.btnStart?.setPosition(this.startCenter.x, this.startCenter.y);
   }
 
@@ -136,6 +163,12 @@ export class UIScene extends Phaser.Scene {
     } else if (hit(this.bCenter, 22)) {
       this.pointerRoles.set(p.id, 'B');
       INPUT.pressBtn('B');
+    } else if (this.hoopsLive && hit(this.xCenter, 20)) {
+      this.pointerRoles.set(p.id, 'X');
+      INPUT.pressBtn('X');
+    } else if (this.hoopsLive && hit(this.yCenter, 20)) {
+      this.pointerRoles.set(p.id, 'Y');
+      INPUT.pressBtn('Y');
     } else if (x > this.startCenter.x - 30 && y < this.startCenter.y + 14) {
       this.pointerRoles.set(p.id, 'START');
       INPUT.pressBtn('START');

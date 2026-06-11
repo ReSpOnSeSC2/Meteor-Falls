@@ -52,6 +52,10 @@ import {
 } from '../src/data/hoops';
 import { AWAKENINGS } from '../src/data/awakenings';
 import { CAST } from '../src/spritegen/characters';
+// S12c: the cage's math + frame contracts are Phaser-free and pinnable
+import { SPORT_FRAME, SPORT_FRAME_COUNT } from '../src/spritegen/athletes';
+import { RANGE, METER, BLOCK_TIMING, STEAL_TIMING, MOVES, effectiveRange, greenWindow, makeChance } from '../src/hoops/sim';
+import { COURT } from '../src/hoops/court';
 import { AwakeningDefSchema, TeamDefSchema, WalkOnDefSchema } from '../src/schemas';
 import { CHAR_LEGEND, MAPS } from '../src/data/maps';
 import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue';
@@ -670,6 +674,60 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
   }
   // PERMIT is a CAST member (his sheet generates at boot like everyone's)
   if (!CAST.permit) fail('hoops', `'permit' missing from CAST`);
+}
+
+// S12c — CAGE 2.0 manifests: the SPORT_FRAME contract (count + names, the
+// S12 set frozen at 0–24, the package appended), the range/meter/timing
+// math pinned to spec, and the goaltend call verbatim
+{
+  if (SPORT_FRAME_COUNT !== 39) fail('cage2', `SPORT_FRAME_COUNT is the S12c contract: 39, got ${SPORT_FRAME_COUNT}`);
+  const FRAMES: Array<[string, number]> = [
+    ['idleA', 0], ['fall', 22], ['cheerB', 24], // the frozen S12 floor
+    ['spinA', 25], ['spinB', 26], ['btbA', 27], ['btbB', 28], ['btlA', 29], ['btlB', 30],
+    ['stunA', 31], ['stunB', 32], ['trip', 33],
+    ['passChest', 34], ['passBounce', 35], ['passBtb', 36],
+    ['follow', 37], ['land', 38],
+  ];
+  for (const [name, idx] of FRAMES) {
+    if ((SPORT_FRAME as Record<string, number>)[name] !== idx) {
+      fail('cage2', `SPORT_FRAME.${name} must be ${idx} (the contract never renumbers)`);
+    }
+  }
+  // the range law: derived from sht, clamped [0.85, 1.35]×ARC_R; the green
+  // closes AT range; non-green is zero at 1.5× and beyond
+  if (Math.abs(RANGE.MIN - COURT.ARC_R * 0.85) > 0.001 || Math.abs(RANGE.MAX - COURT.ARC_R * 1.35) > 0.001) {
+    fail('cage2', `effectiveRange clamps to [ARC_R·0.85, ARC_R·1.35] per spec`);
+  }
+  if (RANGE.PER_SHT !== 1.2) fail('cage2', `range derives at 1.2px per sht point (spec)`);
+  if (greenWindow(50, effectiveRange(50), 0) !== 0) fail('cage2', `the green window must CLOSE at range`);
+  if (makeChance('slight', 50, effectiveRange(50) * 1.5, 0) !== 0) fail('cage2', `non-green make% must be ZERO at 1.5× range`);
+  if (makeChance('brick', 50, 10, 0) !== 0) fail('cage2', `way off = ZERO (no brick floor)`);
+  // the meter: green ENDS at the top; the falloff is 60/20/0
+  if (METER.TOP !== 1 || METER.SLIGHT_P !== 0.6 || METER.FAR_P !== 0.2) {
+    fail('cage2', `METER is the spec: green at the top, ~60% slightly off, ~20% far, zero way off`);
+  }
+  // timed defense tables, pinned to the spec's corners
+  if (BLOCK_TIMING.PEAK_WINDOW_MS !== 120 || BLOCK_TIMING.BASE !== 0.1 || BLOCK_TIMING.TIMED !== 0.65 || BLOCK_TIMING.LO !== 0.05 || BLOCK_TIMING.HI !== 0.85) {
+    fail('cage2', `BLOCK_TIMING is the spec table (±120ms, 0.10→0.65, clamp [0.05, 0.85])`);
+  }
+  if (BLOCK_TIMING.RATING !== 0.004) fail('cage2', `block rating scale is (dfn−sht)·0.004`);
+  if (STEAL_TIMING.NEUTRAL !== 0.08 || STEAL_TIMING.TIMED !== 0.5 || STEAL_TIMING.RATING !== 0.0035 || STEAL_TIMING.HAWK !== 0.08 || STEAL_TIMING.LO !== 0.04 || STEAL_TIMING.HI !== 0.7) {
+    fail('cage2', `STEAL_TIMING is the spec table (0.08→0.50, (dfn−sht)·0.0035, hawk +0.08, clamp [0.04, 0.70])`);
+  }
+  if (STEAL_TIMING.WINDOW_MS !== 150 || MOVES.STARTUP_MS !== STEAL_TIMING.WINDOW_MS) {
+    fail('cage2', `the move startup IS the 150ms steal window (the risk is the price of the sauce)`);
+  }
+  // goaltending: the call is canon, verbatim
+  if (!HOOPS_TEXT.permitGoaltend.some((l) => l.includes('THAT WAS COMING DOWN. WE ALL SAW IT.'))) {
+    fail('cage2', `PERMIT's goaltend line is canon: "THAT WAS COMING DOWN. WE ALL SAW IT."`);
+  }
+  // the tutorial syllabus exists and ends on the goaltend warning
+  for (const key of ['tutTitle', 'tutMove', 'tutMeter', 'tutDunk', 'tutPackage', 'tutPass', 'tutBlock', 'tutSteal', 'tutGoaltend', 'tutDone', 'tutSkip'] as const) {
+    if (!(key in HOOPS_TEXT) || HOOPS_TEXT[key].length === 0) fail('cage2', `PERMIT'S SCHOOL needs HOOPS_TEXT.${key}`);
+  }
+  for (const key of ['permit_tutorial_ask', 'permit_tutorial_skip'] as const) {
+    if (!DIALOGUE[key]?.length) fail('cage2', `PERMIT's school needs DIALOGUE.${key}`);
+  }
 }
 
 /* ================= 3a. map cross-references ================= */

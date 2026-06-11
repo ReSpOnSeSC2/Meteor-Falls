@@ -1,14 +1,41 @@
 /**
- * THE CAGE — the deterministic streetball sim (S12). Phaser-free on purpose:
- * vitest proves "same seed + same inputs = same final score" headlessly, and
- * HoopsScene is a renderer over this state, never the other way around.
+ * THE CAGE — the deterministic streetball sim (S12, overhauled S12c).
+ * Phaser-free on purpose: vitest proves "same seed + same inputs = same final
+ * score" headlessly, and HoopsScene is a renderer over this state, never the
+ * other way around.
  *
  * THE CABINET LAW (ADR-029, extended by ADR-034): the sim advances on FIXED
  * 8.333ms ticks fed by accumulated dt, every roll goes through the per-match
  * SEEDED rng (the Homesick injectable pattern — zero Math.random anywhere),
- * and shot outcomes resolve AT RELEASE from (grade, distance, contest,
+ * and shot outcomes resolve AT RELEASE from (release frac, distance, contest,
  * rating, roll) — timing-deterministic. NO RUBBER-BANDING: nothing in here
  * reads the score to pick a behavior; archetypes play themselves.
+ *
+ * S12c — THE RANGE LAW (the full-court-heave fix): every athlete owns an
+ * EFFECTIVE RANGE derived from sht (effectiveRange below). The GREEN window
+ * shrinks with distance INSIDE range — the distance term steepens, the
+ * farther back the smaller — and CLOSES TO ZERO beyond it: no green exists
+ * out there. Non-green make% decays hard past range (zero at 1.5×); AI shot
+ * selection only attempts inside its range, with ONE exception — the
+ * shot-clock ≤1s desperation heave, which is honestly terrible and reads as
+ * one. There is no make-chance floor at distance anymore, anywhere.
+ *
+ * S12c — THE METER, REBUILT: hold A to fill toward the TOP, where the GREEN
+ * window sits AT THE END ([1 − 2·half, 1]); release inside = green (100%),
+ * below = make% falls off with distance from the window (METER table:
+ * slightly off ≈60%, far ≈20%, way off = ZERO), past the top = overfill =
+ * auto-miss. AI shooters run the SAME meter: they enter the gather, plan a
+ * release frac off their sht skill, and release when the fill reaches it —
+ * which is what makes TIMED BLOCKS readable against them.
+ *
+ * S12c — TIMED DEFENSE: blocks key on the leap's start time vs the release
+ * (BLOCK_TIMING: the leap's peak ±120ms brackets the release → high rate);
+ * steals key on the handler's VULNERABILITY WINDOWS (STEAL_TIMING:
+ * dribble-move startup, the gather's first beat, pass release). Jumping
+ * early just means the shooter can hold the meter and wait you out — the
+ * hold-release meter makes pump-faking emergent. GOALTENDING: touching the
+ * ball on its way DOWN near the rim counts the basket (blocks stay legal
+ * pre-apex).
  *
  * Street rules (S12 canon): 1s and 2s (2 behind the arc), check-up after
  * scores (3v3 checks at the top; the 5v5 equivalent is the take under the
@@ -46,14 +73,21 @@ export interface AthleteDef {
 
 export type AthleteState =
   | 'play' // ground game: idle/run/slide read from motion
-  | 'gather' // A held — the shot meter fills
-  | 'rise' // jumper airborne, pre/post release
+  | 'gather' // A held (or AI plan) — the over-head shot meter fills
+  | 'rise' // jumper airborne, post release
   | 'layup' // driving finish
-  | 'dunk' // the cinematic — travels to the rim
+  | 'dunk' // the cinematic — travels to the rim under its OWN meter
   | 'block' // timed leap
   | 'steal' // the swipe
-  | 'fall' // ankles broken
+  | 'spin' // the dribble package (S12c) — startup is a steal window
+  | 'btb' // behind-the-back
+  | 'btl' // between-the-legs
+  | 'stun' // ankle tier 1: wobble, brief slow
+  | 'trip' // ankle tier 2: stumbles a step
+  | 'fall' // ankle tier 3: flat (the ankle tax)
   | 'celebrate';
+
+export type MoveKind = 'spin' | 'btb' | 'btl';
 
 export interface Athlete {
   def: AthleteDef;
@@ -73,22 +107,38 @@ export interface Athlete {
   beatenT: number;
   /** steal-swipe cooldown */
   swipeCd: number;
+  /** block-leap landing recovery — can't re-jump instantly (S12c) */
+  leapCd: number;
+  /** ms to the leap's apex, stamped at takeoff (BLOCK_TIMING reads it) */
+  leapPeakMs: number;
+  /** the shot meter: ms gathered (user and AI both fill it) */
+  gatherMs: number;
+  /** AI's planned release frac (−1 = none; the user releases by hand) */
+  planFrac: number;
+  /** dunk meter: the captured release frac (−2 unset, −1 = held through) */
+  dunkFrac: number;
+  /** AI's planned dunk frac (−1 = user dunks by hand) */
+  dunkPlan: number;
   /** spacing-spot assignment (offense) */
   spot: number;
   /** AI decision cooldown */
   thinkCd: number;
   /** dunk cinematic index 0..2 (rolled at launch) */
   dunkStyle: number;
-  /** crossover burst time remaining */
+  /** crossover/dribble-move burst time remaining */
   burstT: number;
   /** "calls for it" cooldown */
   callCd: number;
 }
 
+export type PassStyle = 'chest' | 'bounce' | 'btb';
+
 interface ShotFlight {
   kind: 'shot';
   by: number;
   pts: 1 | 2;
+  /** release distance to the rim (the range-law tape reads it off scores) */
+  d0: number;
   x0: number;
   y0: number;
   z0: number;
@@ -97,6 +147,7 @@ interface ShotFlight {
   t1: number;
   apex: number;
   outcome: 'in' | 'rim_in' | 'rim_out' | 'air';
+  green: boolean;
   x: number;
   y: number;
   z: number;
@@ -106,14 +157,19 @@ interface PassFlight {
   kind: 'pass';
   from: number;
   to: number;
+  style: PassStyle;
   x0: number;
   y0: number;
   x1: number;
   y1: number;
   t: number;
   t1: number;
-  /** defender idx who picks it at the midpoint, or null (rolled at launch) */
+  /** defender idx who picks it, or null (rolled at launch) */
   picked: number | null;
+  /** flight fraction where the pick lands (release picks land early) */
+  pickK: number;
+  /** the bounce pass touched the floor already (sfx once) */
+  bounced: boolean;
   x: number;
   y: number;
   z: number;
@@ -136,34 +192,46 @@ interface HeldBall {
 
 export type Ball = HeldBall | ShotFlight | PassFlight | FreeBall;
 
+export type AnkleTier = 'stun' | 'trip' | 'fall';
+
 export type SimEvent =
-  | { kind: 'score'; team: 0 | 1; pts: 1 | 2; x: number; y: number; green: boolean }
+  | { kind: 'score'; team: 0 | 1; pts: 1 | 2; by: number; dist: number; x: number; y: number; green: boolean }
   | { kind: 'sfx'; name: string }
   | { kind: 'banner'; text: string; ms: number }
   | { kind: 'permit'; text: string }
   | { kind: 'count'; n: number }
   | { kind: 'check'; team: 0 | 1 }
-  | { kind: 'ankles'; victim: number }
+  | { kind: 'ankles'; victim: number; tier: AnkleTier }
+  | { kind: 'move'; who: number; move: MoveKind }
   | { kind: 'stuffed'; by: number }
   | { kind: 'block'; by: number }
   | { kind: 'steal'; by: number }
   | { kind: 'pick'; by: number }
+  | { kind: 'timed'; by: number; action: 'steal' | 'block' }
+  | { kind: 'goaltend'; by: number }
+  | { kind: 'flub'; by: number }
+  | { kind: 'heave'; by: number }
   | { kind: 'violation' }
   | { kind: 'callsForIt'; who: number }
   | { kind: 'quarterEnd'; quarter: number }
   | { kind: 'gameEnd'; us: number; them: number };
 
-export type ShotGrade = 'green' | 'early' | 'late' | 'brick';
+export type ShotGrade = 'green' | 'slight' | 'far' | 'brick';
 
 export interface TickInput {
   dx: -1 | 0 | 1;
   dy: -1 | 0 | 1;
+  /** A — SHOOT: hold gathers, release fires (the meter) */
   aHeld: boolean;
   aPressed: boolean;
   aReleased: boolean;
-  bHeld: boolean;
+  /** B — PASS (offense tap) / STEAL SWIPE (defense tap). Tap-responsive. */
   bPressed: boolean;
-  bReleased: boolean;
+  /** X — SPRINT (offense turbo / defense slide-burst), dedicated (S12c) */
+  xHeld: boolean;
+  /** Y — DRIBBLE-MOVE modifier: alone=spin, +lateral=behind-the-back,
+   *  +toward-defender=between-the-legs */
+  yPressed: boolean;
 }
 
 export const IDLE_INPUT: TickInput = {
@@ -172,9 +240,9 @@ export const IDLE_INPUT: TickInput = {
   aHeld: false,
   aPressed: false,
   aReleased: false,
-  bHeld: false,
   bPressed: false,
-  bReleased: false,
+  xHeld: false,
+  yPressed: false,
 };
 
 export interface SimConfig {
@@ -188,6 +256,9 @@ export interface SimConfig {
   quarter?: number;
   /** ms per 5v5 period (canon 5min; OT periods pass 2min) */
   clockMs?: number;
+  /** S12c tutorial drill: clocks freeze; the visitors stand down until the
+   *  scene arms a drill script (PERMIT teaches, the sim obeys) */
+  drill?: boolean;
 }
 
 /* ---------------- tuning (data-shaped, tests pin the feel) ---------------- */
@@ -203,43 +274,96 @@ export const TUNE = {
   SPD_GAIN: 0.52,
   TURBO_MUL: 1.36,
   SLIDE_MUL: 0.86,
-  /** shot meter: 0→1 over this many ms of gather */
+  /** shot meter: 0→1 over this many ms of gather (fill rate; release times shots) */
   METER_MS: 760,
-  /** the GREEN window: center + half-width bounds (scaled by sht/dist/contest) */
-  GREEN_CENTER: 0.76,
+  /** the meter can overfill to here before it auto-releases (an auto-miss) */
+  METER_CAP: 1.12,
+  /** baseline GREEN half-width at the shooter's feet (range scales it shut) */
   GREEN_BASE: 0.085,
-  /** B held this short = a tap = the pass (longer = turbo) */
-  TAP_MS: 220,
-  /** double-tap window for the crossover */
+  /** double-tap window for the quick crossover */
   XOVER_TAP_MS: 240,
   GRAVITY: 700,
   JUMP_V: 250,
 } as const;
 
-/* ---------------- the shot mathematics (pure, test-pinned) -------------- */
+/* ============== THE RANGE LAW (S12c — pure, test-pinned) ============== */
 
-/** GREEN half-width: a shooter's stat opens it, range and a hand close it */
-export function greenWindow(sht: number, distPx: number, contest: number): number {
-  const w = TUNE.GREEN_BASE + (sht - 50) * 0.0011 - distPx * 0.00016 - contest * 0.05;
-  return Math.max(0.022, Math.min(0.16, w));
+export const RANGE = {
+  /** px of range per sht point above/below 50, anchored at the arc */
+  PER_SHT: 1.2,
+  MIN: COURT.ARC_R * 0.85,
+  MAX: COURT.ARC_R * 1.35,
+  /** non-green make% is ZERO at this multiple of range (decays hard to it) */
+  DECAY_END: 1.5,
+  /** the hard-decay band's make ceiling right at the range line */
+  DECAY_CAP: 0.12,
+} as const;
+
+/** every athlete's EFFECTIVE RANGE in px, derived from sht */
+export function effectiveRange(sht: number): number {
+  return Math.max(RANGE.MIN, Math.min(RANGE.MAX, COURT.ARC_R + (sht - 50) * RANGE.PER_SHT));
 }
 
+/**
+ * GREEN half-width: the shooter's stat opens it, a hand closes it, and RANGE
+ * shuts it — quadratically (the distance term STEEPENS: the farther back,
+ * the smaller, accelerating), reaching exactly zero AT range. Beyond range
+ * there is NO green window. No floor (the 0.022 floor was the heave bug).
+ */
+export function greenWindow(sht: number, distPx: number, contest: number): number {
+  const range = effectiveRange(sht);
+  if (distPx >= range) return 0;
+  const t = distPx / range;
+  const open = TUNE.GREEN_BASE + (sht - 50) * 0.0011 - contest * 0.05;
+  const w = open * (1 - t * t);
+  return Math.max(0, Math.min(0.16, w));
+}
+
+/* ============== THE METER (S12c — green sits AT THE TOP) ============== */
+
+export const METER = {
+  /** the fill's top — the GREEN window ENDS here: [1 − 2·half, 1] */
+  TOP: 1,
+  /** make% falloff below the window, in frac units off its lower edge */
+  OFF_SLIGHT: 0.05,
+  OFF_FAR: 0.16,
+  OFF_DEAD: 0.3,
+  GREEN_P: 1.0,
+  SLIGHT_P: 0.6,
+  FAR_P: 0.2,
+} as const;
+
+/** grade a release frac against the live window (overfill = auto-miss) */
 export function gradeShot(frac: number, sht: number, distPx: number, contest: number): ShotGrade {
   const half = greenWindow(sht, distPx, contest);
-  const lo = TUNE.GREEN_CENTER - half;
-  const hi = TUNE.GREEN_CENTER + half;
-  if (frac >= lo && frac <= hi) return 'green';
-  if (frac < lo - 0.22) return 'brick';
-  if (frac < lo) return 'early';
-  return 'late';
+  if (frac > METER.TOP) return 'brick'; // overfilled past the top
+  if (half > 0 && frac >= METER.TOP - half * 2) return 'green';
+  const off = METER.TOP - half * 2 - frac;
+  if (off <= METER.OFF_SLIGHT) return 'slight';
+  if (off <= METER.OFF_FAR) return 'far';
+  return 'brick';
 }
 
-/** make chance by grade — GREEN IS MONEY (release timing decides, S12) */
+/**
+ * Make chance: GREEN IS MONEY (100% — release timing decides) but only where
+ * a green can exist; off-window falls off by METER's curve; and the RANGE
+ * LAW decays everything hard past range — zero at 1.5×, zero for "way off"
+ * anywhere. No floors.
+ */
 export function makeChance(grade: ShotGrade, sht: number, distPx: number, contest: number): number {
-  if (grade === 'green') return 0.99;
-  if (grade === 'brick') return 0.06;
-  const p = 0.58 + (sht - 50) * 0.004 - distPx * 0.0011 - contest * 0.3;
-  return Math.max(0.05, Math.min(0.82, p));
+  const range = effectiveRange(sht);
+  if (grade === 'green') return distPx >= range ? 0 : METER.GREEN_P;
+  if (distPx >= range * RANGE.DECAY_END) return 0;
+  let p: number;
+  if (grade === 'slight') p = METER.SLIGHT_P;
+  else if (grade === 'far') p = METER.FAR_P;
+  else return 0; // brick / overfill: way off = ZERO
+  p += (sht - 50) * 0.002 - contest * 0.18;
+  if (distPx > range) {
+    const k = (distPx - range) / (range * (RANGE.DECAY_END - 1));
+    p = Math.min(p, (1 - k) * RANGE.DECAY_CAP);
+  }
+  return Math.max(0, Math.min(1, p));
 }
 
 /** contest pressure 0..1 from the nearest defender's reach on the shooter */
@@ -250,24 +374,124 @@ export function contestOf(dx: number, dy: number, defZ: number): number {
   return Math.min(1, base * (defZ > 12 ? 1.35 : 0.8));
 }
 
+/* ============== TIMED DEFENSE (S12c — the weighting tables) ============== */
+
+/**
+ * BLOCKS key on TIMING: the leap's start time vs the shooter's release. A
+ * jump whose PEAK window (±PEAK_WINDOW_MS) brackets the release blocks at a
+ * high rate; jumping early just means the shooter holds the meter and waits
+ * you out (pump-faking is emergent — no new button). Exported beside TUNE,
+ * curve pinned in vitest.
+ */
+export const BLOCK_TIMING = {
+  /** |leap-elapsed − leap-peak| at the release instant must sit inside this */
+  PEAK_WINDOW_MS: 120,
+  BASE: 0.1,
+  TIMED: 0.65,
+  /** (dfn − sht) · this */
+  RATING: 0.004,
+  /** reach: a release further than this can't be eaten at the hand */
+  REACH_PX: 26,
+  /** proximity scale floor — at max reach you keep this fraction */
+  PROX_FLOOR: 0.65,
+  LO: 0.05,
+  HI: 0.85,
+  /** landing recovery: no instant re-jump */
+  LAND_CD_MS: 240,
+} as const;
+
+/** the BLOCK_TIMING curve (pure): offsetMs = leapElapsed − leapPeak at release */
+export function blockChance(offsetMs: number, dfn: number, sht: number, distPx: number): number {
+  const o = Math.abs(offsetMs);
+  const timed = o <= BLOCK_TIMING.PEAK_WINDOW_MS ? 1 - o / BLOCK_TIMING.PEAK_WINDOW_MS : 0;
+  let p = BLOCK_TIMING.BASE + (BLOCK_TIMING.TIMED - BLOCK_TIMING.BASE) * timed;
+  p += (dfn - sht) * BLOCK_TIMING.RATING;
+  p *= BLOCK_TIMING.PROX_FLOOR + (1 - BLOCK_TIMING.PROX_FLOOR) * Math.max(0, 1 - distPx / BLOCK_TIMING.REACH_PX);
+  return Math.max(BLOCK_TIMING.LO, Math.min(BLOCK_TIMING.HI, p));
+}
+
+/**
+ * STEALS key on the handler's VULNERABILITY WINDOWS: dribble-move startup,
+ * the gather's first beat, and pass release (the lane pick). A swipe inside
+ * a window steals at a high rate; outside it stays low-percentage and a
+ * whiff still means BEATEN.
+ */
+export const STEAL_TIMING = {
+  /** the startup/first-beat window length */
+  WINDOW_MS: 150,
+  NEUTRAL: 0.08,
+  TIMED: 0.5,
+  /** (dfn − handlerSht) · this */
+  RATING: 0.0035,
+  HAWK: 0.08,
+  LO: 0.04,
+  HI: 0.7,
+  REACH_PX: 24,
+  /** a failed in-reach swipe leaves you beaten this long */
+  WHIFF_BEATEN_MS: 720,
+} as const;
+
+/** the STEAL_TIMING curve (pure) */
+export function stealChance(dfn: number, hawk: boolean, handlerSht: number, inWindow: boolean): number {
+  let p = (inWindow ? STEAL_TIMING.TIMED : STEAL_TIMING.NEUTRAL) + (dfn - handlerSht) * STEAL_TIMING.RATING + (hawk ? STEAL_TIMING.HAWK : 0);
+  return Math.max(STEAL_TIMING.LO, Math.min(STEAL_TIMING.HI, p));
+}
+
 export function stuffChance(atkDnk: number, defDfn: number, defAirborne: boolean): number {
   const p = 0.18 + (defDfn - atkDnk) * 0.005 + (defAirborne ? 0.34 : 0);
   return Math.max(0.04, Math.min(0.85, p));
 }
 
-export function stealChance(defDfn: number, hawk: boolean, handlerSht: number): number {
-  const p = 0.15 + (hawk ? 0.09 : 0) + (defDfn - handlerSht) * 0.0035;
-  return Math.max(0.05, Math.min(0.45, p));
-}
+/* ============== THE DRIBBLE PACKAGE (S12c) ============== */
+
+export const MOVES = {
+  /** the move's startup — a steal-vulnerability window (the price of sauce) */
+  STARTUP_MS: 150,
+  TOTAL_MS: 430,
+  /** burst carried out of a completed move (btb/btl add a little) */
+  BURST_MS: 240,
+  /** a set defender further than this can't be broken */
+  BREAK_RANGE_PX: 36,
+} as const;
+
+/** tiered ankle outcomes: fractions of ankleChance — roll under LARGE·p =
+ *  the FALL, under SMALL·p = the trip, under p = the stun, else held */
+export const ANKLE_TIERS = { LARGE: 0.3, SMALL: 0.62 } as const;
 
 export function ankleChance(atkSpd: number, defSpd: number, defCommitted: boolean): number {
   const p = 0.17 + (atkSpd - defSpd) * 0.005 + (defCommitted ? 0.24 : 0);
   return Math.max(0.04, Math.min(0.62, p));
 }
 
+/* ============== THE DUNK METER (S12c — same mechanic, own window) ========= */
+
+export const DUNK_METER = {
+  /** the dunk flight = the meter's travel (release inside the window) */
+  MS: 520,
+  BASE: 0.07,
+  PER_DNK: 0.0011,
+  CONTEST: 0.04,
+  LO: 0.022,
+  HI: 0.14,
+} as const;
+
+export function dunkWindow(dnk: number, contest: number): number {
+  const w = DUNK_METER.BASE + (dnk - 50) * DUNK_METER.PER_DNK - contest * DUNK_METER.CONTEST;
+  return Math.max(DUNK_METER.LO, Math.min(DUNK_METER.HI, w));
+}
+
 /** 3v3 street game-over: FIRST TO 21, WIN BY 2 (pure — tests pin it) */
 export function pickupGameOver(us: number, them: number): boolean {
   return Math.max(us, them) >= TUNE.TARGET_3V3 && Math.abs(us - them) >= 2;
+}
+
+/** what the over-head meter HUD draws for one athlete */
+export interface MeterRead {
+  frac: number;
+  /** the window's lower edge (it ENDS at METER.TOP) — live, shrinks as
+   *  defenders close and range taxes it */
+  lo: number;
+  kind: 'shot' | 'dunk';
 }
 
 /* ======================================================================== */
@@ -283,7 +507,7 @@ export class HoopsSim {
   scoreThem = 0;
   quarter = 1;
   clockMs: number;
-  shotMs = TUNE.SHOT_CLOCK_MS;
+  shotMs: number = TUNE.SHOT_CLOCK_MS;
   phase: 'check' | 'live' | 'dead' = 'check';
   checkT = 0;
   over = false;
@@ -292,21 +516,20 @@ export class HoopsSim {
   events: SimEvent[] = [];
   /** simulated ms this period (drives anims + deterministic patterns) */
   t = 0;
+  /** S12c drill mode (the tutorial): clocks freeze, visitors obey the script */
+  readonly drill: boolean;
+  /** what the drill dummies do: stand · shoot on a loop · sauce on a loop */
+  drillScript: 'stand' | 'shoot' | 'moves' = 'stand';
 
   private rng: Rng;
   private readonly seed: number;
   private acc = 0;
-  /** B-tap bookkeeping (pass vs turbo) */
-  private bHeldMs = -1;
   /** crossover double-tap bookkeeping: last tap dir + sim time */
   private lastTapDir = 0;
   private lastTapT = -9999;
   private prevDx: -1 | 0 | 1 = 0;
   /** shot-clock seconds already counted out loud */
   private counted = new Set<number>();
-  /** the meter, exposed for the HUD */
-  meterFrac = -1;
-  meterWindow: { lo: number; hi: number } | null = null;
   /** pending end-of-period once the live ball dies */
   private hornPending = false;
 
@@ -314,6 +537,7 @@ export class HoopsSim {
     this.format = cfg.format;
     this.perSide = cfg.format === '5v5' ? 5 : 3;
     this.seed = cfg.seed;
+    this.drill = cfg.drill === true;
     this.scoreUs = cfg.scoreUs ?? 0;
     this.scoreThem = cfg.scoreThem ?? 0;
     this.quarter = cfg.quarter ?? 1;
@@ -347,6 +571,12 @@ export class HoopsSim {
       stateT: 0,
       beatenT: 0,
       swipeCd: 0,
+      leapCd: 0,
+      leapPeakMs: 0,
+      gatherMs: 0,
+      planFrac: -1,
+      dunkFrac: -2,
+      dunkPlan: -1,
       spot: slot,
       thinkCd: 0,
       dunkStyle: 0,
@@ -380,6 +610,24 @@ export class HoopsSim {
     return { x: this.ball.x, y: this.ball.y, z: this.ball.z };
   }
 
+  /** the over-head meter for athlete i (HUD reads it; null = no meter).
+   *  The window edge is LIVE — a defender closing space shrinks it mid-hold
+   *  (release-time numbers are what the shot rolls on, the law). */
+  meterOf(i: number): MeterRead | null {
+    const a = this.athletes[i];
+    if (a.state === 'gather') {
+      const rim = this.rimOf(a.team);
+      const half = greenWindow(a.def.rating.sht, dist(a.x, a.y, rim.x, rim.y), this.nearestContest(a));
+      return { frac: Math.min(TUNE.METER_CAP, a.gatherMs / TUNE.METER_MS), lo: METER.TOP - half * 2, kind: 'shot' };
+    }
+    if (a.state === 'dunk') {
+      const half = dunkWindow(a.def.rating.dnk, this.nearestContest(a));
+      const frac = a.dunkFrac >= -1 && a.dunkFrac !== -2 ? a.dunkFrac : Math.min(TUNE.METER_CAP, a.stateT / DUNK_METER.MS);
+      return { frac, lo: METER.TOP - half * 2, kind: 'dunk' };
+    }
+    return null;
+  }
+
   private emit(e: SimEvent): void {
     this.events.push(e);
   }
@@ -393,8 +641,6 @@ export class HoopsSim {
     this.posTeam = team;
     this.shotMs = TUNE.SHOT_CLOCK_MS;
     this.counted.clear();
-    this.meterFrac = -1;
-    this.meterWindow = null;
     const three = this.format === '3v3';
     const attackRim = this.rimOf(team);
     const spotBase: Vec = three
@@ -408,6 +654,10 @@ export class HoopsSim {
       a.vz = 0;
       a.beatenT = 0;
       a.burstT = 0;
+      a.gatherMs = 0;
+      a.planFrac = -1;
+      a.dunkFrac = -2;
+      a.dunkPlan = -1;
       const lane = (a.slot - (this.perSide - 1) / 2) * (three ? 84 : 64);
       if (a.team === team) {
         if (a.slot === 0) {
@@ -446,6 +696,11 @@ export class HoopsSim {
     this.startCheck(q % 2 === 0 ? 1 : 0);
   }
 
+  /** drill helper (the tutorial's defense leg): hand the visitors the ball */
+  drillGiveBall(team: 0 | 1): void {
+    this.startCheck(team);
+  }
+
   /* ==================== the tick ==================== */
 
   /** feed real dt; the sim quantizes to SIM_DT ticks (cabinet law) */
@@ -455,7 +710,7 @@ export class HoopsSim {
     while (this.acc >= SIM_DT) {
       this.acc -= SIM_DT;
       // edges land on the first quantum of the frame; held states on all
-      this.tick(first ? input : { ...input, aPressed: false, aReleased: false, bPressed: false, bReleased: false });
+      this.tick(first ? input : { ...input, aPressed: false, aReleased: false, bPressed: false, yPressed: false });
       first = false;
     }
   }
@@ -470,8 +725,8 @@ export class HoopsSim {
       return;
     }
 
-    // ---- clocks (5v5; the 3v3 game self-polices to 21) ----
-    if (this.format === '5v5' && !this.hornPending) {
+    // ---- clocks (5v5; the 3v3 game self-polices to 21; drills freeze) ----
+    if (this.format === '5v5' && !this.hornPending && !this.drill) {
       this.clockMs = Math.max(0, this.clockMs - SIM_DT);
       if (this.ball.kind === 'held') {
         this.shotMs -= SIM_DT;
@@ -576,15 +831,23 @@ export class HoopsSim {
 
   private userOffense(a: Athlete, input: TickInput): void {
     if (a.state === 'gather') {
-      this.meterFrac = Math.min(1.12, this.meterFrac + SIM_DT / TUNE.METER_MS);
-      if (input.aReleased || this.meterFrac >= 1.12) {
-        this.releaseJumper(a, Math.min(1, Math.max(0, this.meterFrac)));
+      a.gatherMs += SIM_DT;
+      const frac = a.gatherMs / TUNE.METER_MS;
+      if (input.aReleased || frac >= TUNE.METER_CAP) {
+        this.releaseJumper(a, Math.min(TUNE.METER_CAP, frac));
+      }
+      return;
+    }
+    if (a.state === 'dunk') {
+      // the dunk meter: release A inside the window; held through = overfill
+      if (input.aReleased && a.dunkFrac === -2) {
+        a.dunkFrac = Math.min(TUNE.METER_CAP, a.stateT / DUNK_METER.MS);
       }
       return;
     }
     if (a.state !== 'play') return;
 
-    // crossover: double-tap a horizontal direction
+    // quick crossover: double-tap a horizontal direction (S12 canon)
     if (input.dx !== 0 && input.dx !== this.prevDx) {
       if (input.dx === this.lastTapDir && this.t - this.lastTapT < TUNE.XOVER_TAP_MS) {
         this.crossover(a, input.dx);
@@ -596,33 +859,37 @@ export class HoopsSim {
     }
     this.prevDx = input.dx;
 
-    // B: tap = directional pass, hold = turbo
-    if (input.bPressed) this.bHeldMs = 0;
-    if (input.bHeld && this.bHeldMs >= 0) this.bHeldMs += SIM_DT;
-    a.turbo = input.bHeld && this.bHeldMs >= TUNE.TAP_MS;
-    if (input.bReleased) {
-      if (this.bHeldMs >= 0 && this.bHeldMs < TUNE.TAP_MS) this.pass(a, input.dx, input.dy);
-      this.bHeldMs = -1;
-      a.turbo = false;
+    // Y — THE DRIBBLE PACKAGE: alone = spin; +lateral = behind-the-back;
+    // +toward-defender = between-the-legs (the startup is a steal window)
+    if (input.yPressed) {
+      this.dribbleMove(a, this.pickMoveKind(a, input.dx, input.dy));
+      return;
     }
 
-    // A: gather — jumper meter, or the contextual rim finish at speed
+    // B — PASS, on the tap (responsive; X owns sprint now)
+    if (input.bPressed) {
+      this.pass(a, input.dx, input.dy);
+      return;
+    }
+
+    // X — SPRINT (dedicated)
+    a.turbo = input.xHeld;
+
+    // A — gather into the over-head meter, or the contextual rim finish
     if (input.aPressed) {
       const rim = this.rimOf(a.team);
       const d = dist(a.x, a.y, rim.x, rim.y);
       const fast = a.moving && (a.turbo || a.burstT > 0);
       if (d < 150 && fast) {
-        if (a.def.rating.dnk >= 40) this.startDunk(a);
+        if (a.def.rating.dnk >= 40) this.startDunk(a, true);
         else this.startLayup(a);
         return;
       }
       a.state = 'gather';
       a.stateT = 0;
       a.moving = false;
-      this.meterFrac = 0;
-      const contest = this.nearestContest(a);
-      const half = greenWindow(a.def.rating.sht, d, contest);
-      this.meterWindow = { lo: TUNE.GREEN_CENTER - half, hi: TUNE.GREEN_CENTER + half };
+      a.gatherMs = 0;
+      a.planFrac = -1;
       this.emit({ kind: 'sfx', name: 'gather' });
       return;
     }
@@ -630,25 +897,51 @@ export class HoopsSim {
     this.steer(a, input.dx, input.dy);
   }
 
+  /** spin alone · btb on lateral input · btl when the held direction points
+   *  at the nearest set defender (the sauce goes THROUGH him) */
+  private pickMoveKind(a: Athlete, dx: number, dy: number): MoveKind {
+    if (dx === 0 && dy === 0) return 'spin';
+    const def = this.nearestDefender(a);
+    if (def) {
+      const toDef = Math.atan2(def.y - a.y, def.x - a.x);
+      const aim = Math.atan2(dy, dx);
+      let da = Math.abs(toDef - aim);
+      if (da > Math.PI) da = 2 * Math.PI - da;
+      if (da < 0.9 && dist(a.x, a.y, def.x, def.y) < 52) return 'btl';
+    }
+    return 'btb';
+  }
+
+  private nearestDefender(a: Athlete): Athlete | null {
+    let best: Athlete | null = null;
+    let bd = Infinity;
+    for (const b of this.athletes) {
+      if (b.team === a.team || b.state === 'fall') continue;
+      const d = dist(a.x, a.y, b.x, b.y);
+      if (d < bd) {
+        bd = d;
+        best = b;
+      }
+    }
+    return best;
+  }
+
   /* ---------------- user input: defense / off-ball ---------------- */
 
   private userDefenseOrOffBall(a: Athlete, input: TickInput): void {
     if (a.state !== 'play') return;
-    a.turbo = input.bHeld && this.bHeldMs >= TUNE.TAP_MS;
-    if (input.bPressed) this.bHeldMs = 0;
-    if (input.bHeld && this.bHeldMs >= 0) this.bHeldMs += SIM_DT;
-    if (input.bReleased) {
-      if (this.bHeldMs >= 0 && this.bHeldMs < TUNE.TAP_MS) this.swipe(a);
-      this.bHeldMs = -1;
-      a.turbo = false;
-    }
-    if (input.aPressed && a.z === 0) {
-      a.state = 'block';
-      a.stateT = 0;
-      a.vz = TUNE.JUMP_V + a.def.rating.dnk * 0.6;
-      this.emit({ kind: 'sfx', name: 'jump' });
-    }
+    a.turbo = input.xHeld;
+    if (input.bPressed) this.swipe(a);
+    if (input.aPressed && a.z === 0 && a.leapCd <= 0) this.blockLeap(a);
     this.steer(a, input.dx, input.dy);
+  }
+
+  private blockLeap(a: Athlete): void {
+    a.state = 'block';
+    a.stateT = 0;
+    a.vz = TUNE.JUMP_V + a.def.rating.dnk * 0.6;
+    a.leapPeakMs = (a.vz / TUNE.GRAVITY) * 1000;
+    this.emit({ kind: 'sfx', name: 'jump' });
   }
 
   private steer(a: Athlete, dx: number, dy: number): void {
@@ -680,35 +973,65 @@ export class HoopsSim {
     return sp;
   }
 
-  /* ---------------- actions ---------------- */
+  /* ---------------- the dribble package ---------------- */
 
+  /** the quick crossover (double-tap) — the package's instant entry */
   private crossover(a: Athlete, dir: -1 | 1): void {
     a.burstT = 260;
     a.face = dir;
     this.emit({ kind: 'sfx', name: 'bounce' });
-    // the nearest set defender eats the move or doesn't (seeded)
-    let def: Athlete | null = null;
-    let dd = Infinity;
-    for (const b of this.athletes) {
-      if (b.team === a.team || b.state !== 'play') continue;
-      const d = dist(a.x, a.y, b.x, b.y);
-      if (d < dd) {
-        dd = d;
-        def = b;
-      }
-    }
-    if (!def || dd > 34) return;
+    const def = this.nearestDefender(a);
+    if (!def || def.state !== 'play' || dist(a.x, a.y, def.x, def.y) > 34) return;
     const committed = def.moving && Math.sign(def.x - a.x) !== Math.sign(dir);
-    if (this.rng() < ankleChance(a.def.rating.spd, def.def.rating.spd, committed)) {
+    this.resolveBreak(a, def, committed, 0.8);
+  }
+
+  /** Y-move: spin / behind-the-back / between-the-legs — startup is a steal
+   *  window; completion rolls the TIERED ankle ladder vs the nearest set
+   *  defender's commitment, then carries a burst out the far side */
+  private dribbleMove(a: Athlete, kind: MoveKind): void {
+    if (a.state !== 'play') return;
+    a.state = kind;
+    a.stateT = 0;
+    a.moving = false;
+    this.emit({ kind: 'move', who: this.athletes.indexOf(a), move: kind });
+    this.emit({ kind: 'sfx', name: kind === 'spin' ? 'spin' : 'bounce' });
+  }
+
+  /** the ankle ladder: one seeded roll, three rungs (ANKLE_TIERS splits) */
+  private resolveBreak(a: Athlete, def: Athlete, committed: boolean, mult: number): void {
+    const p = ankleChance(a.def.rating.spd, def.def.rating.spd, committed) * mult;
+    const r = this.rng();
+    const vi = this.athletes.indexOf(def);
+    if (r < p * ANKLE_TIERS.LARGE) {
       def.state = 'fall';
       def.stateT = 0;
       def.beatenT = 950;
-      this.emit({ kind: 'ankles', victim: this.athletes.indexOf(def) });
+      this.emit({ kind: 'ankles', victim: vi, tier: 'fall' });
       this.emit({ kind: 'sfx', name: 'thud' });
+    } else if (r < p * ANKLE_TIERS.SMALL) {
+      def.state = 'trip';
+      def.stateT = 0;
+      def.beatenT = 620;
+      // the stumble carries him a step the wrong way
+      def.x += -a.face * 6;
+      this.clampWalker(def);
+      this.emit({ kind: 'ankles', victim: vi, tier: 'trip' });
+      this.emit({ kind: 'sfx', name: 'thud' });
+    } else if (r < p) {
+      def.state = 'stun';
+      def.stateT = 0;
+      def.beatenT = 380;
+      this.emit({ kind: 'ankles', victim: vi, tier: 'stun' });
     }
   }
 
-  /** B-tap pass: nearest teammate inside the held d-pad cone (aim it) */
+  /* ---------------- passes (three styles, picked by context) ------------ */
+
+  /** B-tap pass: nearest teammate inside the held d-pad cone (aim it).
+   *  Style is contextual: BEHIND-THE-BACK when the target sits behind the
+   *  passer's facing; BOUNCE when a hand waits in the lane (goes UNDER it —
+   *  lower pick chance, slower); CHEST otherwise. */
   private pass(a: Athlete, dx: number, dy: number): void {
     if (this.ball.kind !== 'held') return;
     const from = this.athletes.indexOf(a);
@@ -739,24 +1062,61 @@ export class HoopsSim {
     const lead = to.moving ? 30 : 0;
     const x1 = to.x + lead * (to.face > 0 ? 1 : -1) * 0.7;
     const y1 = to.y;
-    const flight = Math.max(180, dist(a.x, a.y, x1, y1) * 1.45);
-    // pass-lane pick, rolled at launch (deterministic): nearest defender
-    // standing close to the line gets a seeded hand in it
-    let picked: number | null = null;
+    const lineLen = Math.max(1, dist(a.x, a.y, x1, y1));
+
+    // the lane read: nearest defender standing close to the line
+    let laneDef: number | null = null;
+    let laneT = 0;
     this.athletes.forEach((d, i) => {
       if (d.team === a.team || d.beatenT > 0) return;
-      const t = Math.max(0, Math.min(1, ((d.x - a.x) * (x1 - a.x) + (d.y - a.y) * (y1 - a.y)) / Math.max(1, dist(a.x, a.y, x1, y1) ** 2)));
+      const t = Math.max(0, Math.min(1, ((d.x - a.x) * (x1 - a.x) + (d.y - a.y) * (y1 - a.y)) / lineLen ** 2));
       const lx = a.x + (x1 - a.x) * t;
       const ly = a.y + (y1 - a.y) * t;
       if (dist(d.x, d.y, lx, ly) > 13 || t < 0.15 || t > 0.85) return;
-      if (picked === null && this.rng() < stealChance(d.def.rating.dfn, d.def.archetype === 'hawk', a.def.rating.sht) + 0.05) {
-        picked = i;
+      if (laneDef === null) {
+        laneDef = i;
+        laneT = t;
       }
     });
+
+    // style by context
+    const toAng = Math.atan2(y1 - a.y, x1 - a.x);
+    const faceAng = a.face > 0 ? 0 : Math.PI;
+    let dFace = Math.abs(toAng - faceAng);
+    if (dFace > Math.PI) dFace = 2 * Math.PI - dFace;
+    const style: PassStyle = dFace > 1.75 ? 'btb' : laneDef !== null ? 'bounce' : 'chest';
+
+    let flight = Math.max(180, lineLen * 1.45);
+    if (style === 'bounce') flight *= 1.35; // slower — the price of safe
+    if (style === 'btb') flight *= 1.1;
+
+    // pass-release window (STEAL_TIMING): a defender MID-SWIPE at the
+    // passer's hip picks the release itself — the lane pick, timed
+    let picked: number | null = null;
+    let pickK = 0.12;
+    this.athletes.forEach((d, i) => {
+      if (picked !== null || d.team === a.team) return;
+      if (d.state !== 'steal' || d.stateT > STEAL_TIMING.WINDOW_MS) return;
+      if (dist(d.x, d.y, a.x, a.y) > STEAL_TIMING.REACH_PX + 4) return;
+      this.emit({ kind: 'timed', by: i, action: 'steal' });
+      if (this.rng() < stealChance(d.def.rating.dfn, d.def.archetype === 'hawk', a.def.rating.sht, true)) picked = i;
+    });
+    // the standing lane hand (un-timed, low-percentage; bounce goes UNDER it)
+    if (picked === null && laneDef !== null) {
+      const d = this.athletes[laneDef];
+      const base = stealChance(d.def.rating.dfn, d.def.archetype === 'hawk', a.def.rating.sht, false) + 0.05;
+      const p = style === 'bounce' ? base * 0.45 : base;
+      if (this.rng() < p) {
+        picked = laneDef;
+        pickK = Math.max(0.3, Math.min(0.7, laneT));
+      }
+    }
+
     this.ball = {
       kind: 'pass',
       from,
       to: best,
+      style,
       x0: a.x + a.face * 9,
       y0: a.y,
       x1,
@@ -764,11 +1124,22 @@ export class HoopsSim {
       t: 0,
       t1: flight,
       picked,
+      pickK,
+      bounced: false,
       x: a.x,
       y: a.y,
       z: 22,
     };
-    this.emit({ kind: 'sfx', name: 'pass' });
+    this.emit({ kind: 'sfx', name: style === 'bounce' ? 'bounce' : 'pass' });
+  }
+
+  /* ---------------- steals (the windows) ---------------- */
+
+  /** is the handler inside a vulnerability window right now? */
+  vulnerableNow(h: Athlete): boolean {
+    if ((h.state === 'spin' || h.state === 'btb' || h.state === 'btl') && h.stateT < STEAL_TIMING.WINDOW_MS) return true;
+    if (h.state === 'gather' && h.gatherMs < STEAL_TIMING.WINDOW_MS) return true;
+    return false;
   }
 
   private swipe(a: Athlete): void {
@@ -779,8 +1150,17 @@ export class HoopsSim {
     this.emit({ kind: 'sfx', name: 'swipe' });
     const h = this.holder();
     if (!h || h.team === a.team) return;
-    if (dist(a.x, a.y, h.x, h.y) > 24) return;
-    if (this.rng() < stealChance(a.def.rating.dfn, a.def.archetype === 'hawk', h.def.rating.sht)) {
+    if (dist(a.x, a.y, h.x, h.y) > STEAL_TIMING.REACH_PX) return;
+    const inWindow = this.vulnerableNow(h);
+    if (inWindow) this.emit({ kind: 'timed', by: this.athletes.indexOf(a), action: 'steal' });
+    if (this.rng() < stealChance(a.def.rating.dfn, a.def.archetype === 'hawk', h.def.rating.sht, inWindow)) {
+      // stripped mid-move/mid-gather: the handler's action dies with the ball
+      if (h.state === 'gather' || h.state === 'spin' || h.state === 'btb' || h.state === 'btl') {
+        h.state = 'play';
+        h.stateT = 0;
+        h.gatherMs = 0;
+        h.planFrac = -1;
+      }
       this.ball = { kind: 'held', by: this.athletes.indexOf(a) };
       this.posTeam = a.team;
       this.shotMs = TUNE.SHOT_CLOCK_MS;
@@ -788,14 +1168,25 @@ export class HoopsSim {
       this.emit({ kind: 'steal', by: this.athletes.indexOf(a) });
       this.emit({ kind: 'sfx', name: 'steal' });
     } else {
-      a.beatenT = 720; // whiffed — beaten
+      a.beatenT = STEAL_TIMING.WHIFF_BEATEN_MS; // whiffed — BEATEN
     }
   }
 
-  private startDunk(a: Athlete): void {
+  /* ---------------- finishes ---------------- */
+
+  private startDunk(a: Athlete, byUser: boolean): void {
     a.state = 'dunk';
     a.stateT = 0;
     a.dunkStyle = Math.floor(this.rng() * 3);
+    a.dunkFrac = -2;
+    if (byUser) {
+      a.dunkPlan = -1;
+    } else {
+      // AI plans its dunk release off dnk skill — same window, same meter
+      const skill = Math.min(0.92, 0.35 + a.def.rating.dnk * 0.008);
+      const half = dunkWindow(a.def.rating.dnk, 0);
+      a.dunkPlan = this.rng() < skill ? METER.TOP - this.rng() * half * 1.8 : Math.max(0.5, METER.TOP - half * 2 - 0.03 - this.rng() * 0.2);
+    }
     this.emit({ kind: 'sfx', name: 'jump' });
   }
 
@@ -814,9 +1205,9 @@ export class HoopsSim {
     a.state = 'rise';
     a.stateT = 0;
     a.vz = TUNE.JUMP_V * 0.9;
-    this.meterFrac = -1;
-    this.meterWindow = null;
-    // a timed block beats the release outright
+    a.gatherMs = 0;
+    a.planFrac = -1;
+    // a TIMED block eats the release outright (BLOCK_TIMING is the law)
     const blocker = this.findBlocker(a);
     if (blocker) {
       this.looseBall(a.x + a.face * 8, a.y, 30, blocker.face * 90, (this.rng() - 0.5) * 60, 120);
@@ -839,6 +1230,7 @@ export class HoopsSim {
       kind: 'shot',
       by: this.athletes.indexOf(a),
       pts,
+      d0: d,
       x0: a.x + a.face * 6,
       y0: a.y,
       z0: 46 + a.z,
@@ -847,6 +1239,7 @@ export class HoopsSim {
       t1: 480 + d * 0.5,
       apex: COURT.RIM_Z + 34 + d * 0.07,
       outcome,
+      green: grade === 'green',
       x: a.x,
       y: a.y,
       z: 46 + a.z,
@@ -854,13 +1247,17 @@ export class HoopsSim {
     if (grade === 'green') this.emit({ kind: 'sfx', name: 'green' });
   }
 
-  /** a defender mid-block close enough to eat the release */
+  /** a defender mid-leap whose PEAK brackets this release (BLOCK_TIMING) */
   private findBlocker(shooter: Athlete): Athlete | null {
     for (const b of this.athletes) {
       if (b.team === shooter.team || b.state !== 'block') continue;
-      if (dist(b.x, b.y, shooter.x, shooter.y) < 24 && b.z > 14) {
-        if (this.rng() < 0.32 + b.def.rating.dfn * 0.004) return b;
+      const d = dist(b.x, b.y, shooter.x, shooter.y);
+      if (d > BLOCK_TIMING.REACH_PX) continue;
+      const offset = b.stateT - b.leapPeakMs;
+      if (Math.abs(offset) <= BLOCK_TIMING.PEAK_WINDOW_MS) {
+        this.emit({ kind: 'timed', by: this.athletes.indexOf(b), action: 'block' });
       }
+      if (this.rng() < blockChance(offset, b.def.rating.dfn, shooter.def.rating.sht, d)) return b;
     }
     return null;
   }
@@ -881,9 +1278,14 @@ export class HoopsSim {
   /* ---------------- AI ---------------- */
 
   private ai(a: Athlete): void {
-    if (a.state === 'fall' || a.state === 'celebrate') return;
+    if (a.state === 'fall' || a.state === 'stun' || a.state === 'trip' || a.state === 'celebrate') return;
     a.thinkCd -= SIM_DT;
     const holder = this.holder();
+    // drill dummies obey the script (the tutorial's controlled reps)
+    if (this.drill && a.team === 1) {
+      this.aiDrill(a, holder);
+      return;
+    }
     // THE SCRAMBLE: a loose ball gets chased — each side's nearest free body
     // goes and GETS it (the user's athlete is excluded from team 0's pick so
     // an AI teammate always covers the floor even while a tape dawdles)
@@ -915,12 +1317,57 @@ export class HoopsSim {
     else this.aiDefense(a);
   }
 
+  /** tutorial dummies: stand at marks · shoot on a loop · sauce on a loop */
+  private aiDrill(a: Athlete, holder: Athlete | null): void {
+    if (holder !== a) {
+      if (this.ball.kind === 'free') {
+        // somebody fetches so the drill never stalls
+        this.seek(a, this.ball.x, this.ball.y, false);
+      }
+      return;
+    }
+    if (a.state === 'gather') {
+      a.gatherMs += SIM_DT;
+      if (a.planFrac >= 0 && a.gatherMs / TUNE.METER_MS >= a.planFrac) this.releaseJumper(a, a.planFrac);
+      return;
+    }
+    if (a.state !== 'play') return;
+    a.thinkCd -= 0; // drills run on stateT cadence below
+    if (this.drillScript === 'shoot') {
+      if (a.stateT > 1100) {
+        const rim = this.rimOf(a.team);
+        const d = dist(a.x, a.y, rim.x, rim.y);
+        this.aiShoot(a, d, this.nearestContest(a));
+      }
+      return;
+    }
+    if (this.drillScript === 'moves') {
+      if (a.stateT > 950) {
+        const kinds: MoveKind[] = ['spin', 'btb', 'btl'];
+        this.dribbleMove(a, kinds[Math.floor(this.rng() * 3)]);
+      }
+      return;
+    }
+    // 'stand': hold the rock and wait to be taught on
+  }
+
   private aiHandler(a: Athlete): void {
+    // mid-gather: the AI fills the SAME meter and releases at its plan —
+    // which is exactly what a timed block leap reads against
+    if (a.state === 'gather') {
+      a.gatherMs += SIM_DT;
+      if (a.planFrac >= 0 && a.gatherMs / TUNE.METER_MS >= a.planFrac) {
+        this.releaseJumper(a, a.planFrac);
+      }
+      return;
+    }
     if (a.state !== 'play') return;
     const rim = this.rimOf(a.team);
     const d = dist(a.x, a.y, rim.x, rim.y);
     const contest = this.nearestContest(a);
-    const forced = this.format === '5v5' && this.shotMs < 4200;
+    const range = effectiveRange(a.def.rating.sht);
+    const inRange = d <= range * 0.96; // the RANGE GATE — AI shoots its game
+    const forced = this.format === '5v5' && this.shotMs < 4200 && !this.drill;
     if (a.thinkCd > 0 && !forced) {
       this.seek(a, a.x + a.face * 30, a.y, false);
       return;
@@ -930,15 +1377,31 @@ export class HoopsSim {
     const r = this.rng();
     // finishing range — everybody takes the rim when it's there
     if (d < 64 && contest < 0.55) {
-      if (a.def.rating.dnk >= 52 && r < 0.6) this.startDunk(a);
+      if (a.def.rating.dnk >= 52 && r < 0.6) this.startDunk(a, false);
       else this.startLayup(a);
       return;
     }
     if (forced) {
-      this.aiShoot(a, rim, d, contest);
+      if (inRange) {
+        this.aiShoot(a, d, contest);
+      } else if (this.shotMs <= 1000) {
+        // the lone exception to the range gate: the desperation heave —
+        // honestly terrible (brick grade, zero past 1.5×range) and it
+        // READS as one (PERMIT files it under "prayers, unanswered")
+        this.heave(a, rim, d, contest);
+      } else {
+        this.driveTo(a, rim); // get inside your range first
+      }
       return;
     }
     const driveLane = this.laneOpen(a, rim);
+    // the sauce: ball-dominant archetypes break out the package (their
+    // startup is a real steal window — the risk is the price)
+    if ((arch === 'rusher' || arch === 'balanced') && driveLane && contest > 0.25 && r < 0.16) {
+      const kinds: MoveKind[] = ['spin', 'btb', 'btl'];
+      this.dribbleMove(a, kinds[Math.floor(this.rng() * 3)]);
+      return;
+    }
     switch (arch) {
       case 'rusher':
         if (driveLane || r < 0.25) this.driveTo(a, rim);
@@ -947,8 +1410,8 @@ export class HoopsSim {
         return;
       case 'sniper': {
         const behind = d > COURT.ARC_R;
-        if (behind && contest < 0.3 && r < 0.62) {
-          this.aiShoot(a, rim, d, contest);
+        if (behind && inRange && contest < 0.3 && r < 0.62) {
+          this.aiShoot(a, d, contest);
           return;
         }
         if (r < 0.3) this.aiPass(a);
@@ -956,8 +1419,8 @@ export class HoopsSim {
         return;
       }
       case 'post':
-        if (d < 96 && r < 0.55) {
-          this.aiShoot(a, rim, d, contest);
+        if (d < 96 && inRange && r < 0.55) {
+          this.aiShoot(a, d, contest);
           return;
         }
         if (r < 0.25) this.aiPass(a);
@@ -966,33 +1429,38 @@ export class HoopsSim {
       default:
         if (driveLane && r < 0.4) this.driveTo(a, rim);
         else if (r < 0.42) this.aiPass(a);
-        else if (d < 120 && contest < 0.32 && r < 0.7) this.aiShoot(a, rim, d, contest);
+        else if (d < 120 && inRange && contest < 0.32 && r < 0.7) this.aiShoot(a, d, contest);
         else this.seek(a, rim.x - Math.sign(rim.x - a.x) * 120, rim.y + (r - 0.5) * 150, false);
     }
   }
 
-  /** AI release grades honestly off its sht rating — better teams hit GREEN
-   *  more (deterministic roll → frac inside/outside the window; no score
-   *  reads, no bands — the rating IS the player) */
-  private aiShoot(a: Athlete, rim: Vec, d: number, contest: number): void {
-    const half = greenWindow(a.def.rating.sht, d, contest);
-    const skill = Math.min(0.92, 0.3 + a.def.rating.sht * 0.0085);
-    const frac =
-      this.rng() < skill
-        ? TUNE.GREEN_CENTER + (this.rng() * 2 - 1) * half * 0.9
-        : TUNE.GREEN_CENTER + (this.rng() * 2 - 1) * (half + 0.16);
-    const grade = gradeShot(frac, a.def.rating.sht, d, contest);
+  /** AI enters the gather and PLANS a release frac off its sht skill — the
+   *  same window the player faces, graded at release by the same law. No
+   *  score reads, no bands — the rating IS the player. */
+  private aiShoot(a: Athlete, d: number, contest: number): void {
+    a.state = 'gather';
+    a.stateT = 0;
+    a.gatherMs = 0;
+    a.moving = false;
+    const sht = a.def.rating.sht;
+    const half = greenWindow(sht, d, contest);
+    const skill = Math.min(0.92, 0.3 + sht * 0.0085);
+    if (half > 0 && this.rng() < skill) {
+      a.planFrac = METER.TOP - this.rng() * half * 1.8; // inside the window
+    } else {
+      const lo = METER.TOP - half * 2;
+      a.planFrac = Math.max(0.45, lo - 0.02 - this.rng() * 0.16); // under it
+    }
+    this.emit({ kind: 'sfx', name: 'gather' });
+  }
+
+  /** the ≤1s desperation heave: no gather, brick grade, reads as a prayer */
+  private heave(a: Athlete, rim: Vec, d: number, contest: number): void {
     a.state = 'rise';
     a.stateT = 0;
     a.vz = TUNE.JUMP_V * 0.9;
-    const blocker = this.findBlocker(a);
-    if (blocker) {
-      this.looseBall(a.x + a.face * 8, a.y, 30, blocker.face * 90, (this.rng() - 0.5) * 60, 120);
-      this.emit({ kind: 'block', by: this.athletes.indexOf(blocker) });
-      this.emit({ kind: 'sfx', name: 'block' });
-      return;
-    }
-    this.launchShot(a, rim, d, grade, contest);
+    this.emit({ kind: 'heave', by: this.athletes.indexOf(a) });
+    this.launchShot(a, rim, d, 'brick', contest);
   }
 
   private aiPass(a: Athlete): void {
@@ -1065,19 +1533,31 @@ export class HoopsSim {
     const mark = this.athletes.find((m) => m.team !== a.team && m.slot === a.slot);
     const holder = this.holder();
     const onBall = holder !== null && mark === holder;
-    // hawk gamble: jump the lane when pressing the ball (honest tendency)
-    if (onBall && holder && a.def.archetype === 'hawk' && a.swipeCd <= 0 && dist(a.x, a.y, holder.x, holder.y) < 26) {
-      if (this.rng() < 0.012) {
+    // hawk gamble: jump the lane when pressing the ball (honest tendency) —
+    // and every defender SWIPES THE WINDOW when the handler shows startup
+    if (onBall && holder && a.swipeCd <= 0 && dist(a.x, a.y, holder.x, holder.y) < STEAL_TIMING.REACH_PX) {
+      const window = this.vulnerableNow(holder);
+      const gamble = a.def.archetype === 'hawk' ? 0.012 : 0.004;
+      if (window ? this.rng() < 0.04 + a.def.rating.dfn * 0.0008 : this.rng() < gamble) {
         this.swipe(a);
         return;
       }
     }
-    // AI block: my mark is rising to shoot beside me
-    if (mark && (mark.state === 'gather' || mark.state === 'rise') && dist(a.x, a.y, mark.x, mark.y) < 38 && a.z === 0) {
-      if (this.rng() < 0.06 + a.def.rating.dfn * 0.0009) {
-        a.state = 'block';
-        a.stateT = 0;
-        a.vz = TUNE.JUMP_V + a.def.rating.dnk * 0.6;
+    // AI block: TIME the leap so its peak meets the shooter's release — read
+    // off the mark's meter fill, exactly the read the player makes
+    if (mark && mark.state === 'gather' && dist(a.x, a.y, mark.x, mark.y) < 38 && a.z === 0 && a.leapCd <= 0) {
+      const frac = mark.gatherMs / TUNE.METER_MS;
+      const peakMs = ((TUNE.JUMP_V + a.def.rating.dnk * 0.6) / TUNE.GRAVITY) * 1000;
+      const jumpAt = 1 - peakMs / TUNE.METER_MS;
+      if (frac >= jumpAt - 0.05 && this.rng() < 0.09 + a.def.rating.dfn * 0.0012) {
+        this.blockLeap(a);
+        return;
+      }
+    }
+    // a late hop at a rising shooter still happens (it just times poorly)
+    if (mark && mark.state === 'rise' && dist(a.x, a.y, mark.x, mark.y) < 30 && a.z === 0 && a.leapCd <= 0) {
+      if (this.rng() < 0.05 + a.def.rating.dfn * 0.0007) {
+        this.blockLeap(a);
         return;
       }
     }
@@ -1113,9 +1593,11 @@ export class HoopsSim {
   /* ---------------- integration ---------------- */
 
   private integrate(a: Athlete): void {
+    const prevT = a.stateT;
     a.stateT += SIM_DT;
     a.beatenT = Math.max(0, a.beatenT - SIM_DT);
     a.swipeCd = Math.max(0, a.swipeCd - SIM_DT);
+    a.leapCd = Math.max(0, a.leapCd - SIM_DT);
     a.burstT = Math.max(0, a.burstT - SIM_DT);
     if (a.burstT > 0 && a.state === 'play') {
       a.x += a.face * 1.55 * (SIM_DT / 1000) * 60;
@@ -1131,6 +1613,10 @@ export class HoopsSim {
         if (a.state === 'block' || a.state === 'rise') {
           a.state = 'play';
           a.stateT = 0;
+          // landing recovery both ways: no instant re-leap, and the scene
+          // reads this window for the knees-soft land frame (S12c)
+          a.leapCd = BLOCK_TIMING.LAND_CD_MS;
+          a.leapPeakMs = 0;
         }
       }
     }
@@ -1138,14 +1624,40 @@ export class HoopsSim {
       a.state = 'play';
       a.stateT = 0;
     }
+    if (a.state === 'stun' && a.stateT > 380) {
+      a.state = 'play';
+      a.stateT = 0;
+    }
+    if (a.state === 'trip' && a.stateT > 620) {
+      a.state = 'play';
+      a.stateT = 0;
+    }
     if (a.state === 'fall' && a.stateT > 900) {
       a.state = 'play';
       a.stateT = 0;
     }
+    // the dribble package: startup ends → the break rolls; move completes →
+    // burst out the far side (the move carried you somewhere)
+    if (a.state === 'spin' || a.state === 'btb' || a.state === 'btl') {
+      if (prevT < MOVES.STARTUP_MS && a.stateT >= MOVES.STARTUP_MS && this.holderIdx() === this.athletes.indexOf(a)) {
+        const def = this.nearestDefender(a);
+        if (def && def.state === 'play' && dist(a.x, a.y, def.x, def.y) <= MOVES.BREAK_RANGE_PX) {
+          const committed = def.moving;
+          const mult = a.state === 'spin' ? 1.0 : a.state === 'btb' ? 1.05 : 1.15;
+          this.resolveBreak(a, def, committed, mult);
+        }
+      }
+      if (a.stateT >= MOVES.TOTAL_MS) {
+        const kind = a.state;
+        a.state = 'play';
+        a.stateT = 0;
+        a.burstT = MOVES.BURST_MS + (kind === 'btl' ? 60 : kind === 'btb' ? 30 : 0);
+      }
+    }
     // the rim runs: layup/dunk travel to the hoop and finish
     if (a.state === 'layup' || a.state === 'dunk') {
       const rim = this.rimOf(a.team);
-      const T = a.state === 'dunk' ? 520 : 430;
+      const T = a.state === 'dunk' ? DUNK_METER.MS : 430;
       const k = Math.min(1, a.stateT / T);
       a.x += (rim.x - a.x) * k * 0.28;
       a.y += (rim.y - a.y) * k * 0.28;
@@ -1158,45 +1670,57 @@ export class HoopsSim {
     const rim = this.rimOf(a.team);
     const i = this.athletes.indexOf(a);
     const dunk = a.state === 'dunk';
+    const dunkFrac = a.dunkPlan >= 0 ? a.dunkPlan : a.dunkFrac === -2 ? TUNE.METER_CAP : a.dunkFrac;
     a.state = 'play';
     a.stateT = 0;
     a.z = 0;
     a.vz = 0;
+    a.dunkFrac = -2;
+    a.dunkPlan = -1;
     if (this.ball.kind !== 'held' || this.ball.by !== i) return;
-    // contested at the summit?
-    let stuffer: Athlete | null = null;
-    for (const b of this.athletes) {
-      if (b.team === a.team) continue;
-      if (dist(b.x, b.y, rim.x, rim.y) < 30 && (b.state === 'block' || b.z > 18)) {
-        if (this.rng() < stuffChance(a.def.rating.dnk, b.def.rating.dfn, b.state === 'block')) stuffer = b;
-        break;
-      }
-    }
-    if (dunk && stuffer) {
-      this.looseBall(rim.x, rim.y, COURT.RIM_Z - 8, -a.face * 110, (this.rng() - 0.5) * 90, 60);
-      this.emit({ kind: 'stuffed', by: this.athletes.indexOf(stuffer) });
-      this.emit({ kind: 'sfx', name: 'block' });
-      return;
-    }
-    if (dunk) {
-      this.scoreBasket(a.team, 1, rim, false, true);
-      return;
-    }
-    // the layup rolls (close-range, honest)
     const contest = this.nearestContest(a);
+    if (dunk) {
+      // THE DUNK METER (S12c): green = the slam; a missed meter is a
+      // rim-hang flub — STUFFED instead when somebody contested the summit
+      const half = dunkWindow(a.def.rating.dnk, contest);
+      const green = half > 0 && dunkFrac <= METER.TOP && dunkFrac >= METER.TOP - half * 2;
+      if (green) {
+        this.scoreBasket(a.team, 1, rim, false, true, i, 0);
+        return;
+      }
+      let stuffer: Athlete | null = null;
+      for (const b of this.athletes) {
+        if (b.team === a.team) continue;
+        if (dist(b.x, b.y, rim.x, rim.y) < 30 && (b.state === 'block' || b.z > 18)) {
+          if (this.rng() < stuffChance(a.def.rating.dnk, b.def.rating.dfn, b.state === 'block')) stuffer = b;
+          break;
+        }
+      }
+      if (stuffer) {
+        this.looseBall(rim.x, rim.y, COURT.RIM_Z - 8, -a.face * 110, (this.rng() - 0.5) * 90, 60);
+        this.emit({ kind: 'stuffed', by: this.athletes.indexOf(stuffer) });
+        this.emit({ kind: 'sfx', name: 'block' });
+        return;
+      }
+      this.looseBall(rim.x, rim.y, COURT.RIM_Z, -a.face * 60, (this.rng() - 0.5) * 80, 100);
+      this.emit({ kind: 'flub', by: i });
+      this.emit({ kind: 'sfx', name: 'rim' });
+      return;
+    }
+    // the layup rolls (close-range, honest — the safe finish keeps no meter)
     const p = Math.max(0.2, Math.min(0.93, 0.74 + a.def.rating.sht * 0.0015 - contest * 0.32));
     if (this.rng() < p) {
-      this.scoreBasket(a.team, 1, rim, false, false);
+      this.scoreBasket(a.team, 1, rim, false, false, i, 0);
     } else {
       this.looseBall(rim.x, rim.y, COURT.RIM_Z, (this.rng() - 0.5) * 120, (this.rng() - 0.5) * 100, 90);
       this.emit({ kind: 'sfx', name: 'rim' });
     }
   }
 
-  private scoreBasket(team: 0 | 1, pts: 1 | 2, at: Vec, green: boolean, dunk: boolean): void {
+  private scoreBasket(team: 0 | 1, pts: 1 | 2, at: Vec, green: boolean, dunk: boolean, by: number, distPx: number): void {
     if (team === 0) this.scoreUs += pts;
     else this.scoreThem += pts;
-    this.emit({ kind: 'score', team, pts, x: at.x, y: at.y, green });
+    this.emit({ kind: 'score', team, pts, by, dist: distPx, x: at.x, y: at.y, green });
     this.emit({ kind: 'sfx', name: dunk ? 'dunk' : 'swish' });
     if (this.format === '3v3' && pickupGameOver(this.scoreUs, this.scoreThem)) {
       this.finishGame();
@@ -1223,8 +1747,20 @@ export class HoopsSim {
       const k = Math.min(1, b.t / b.t1);
       b.x = b.x0 + (b.x1 - b.x0) * k;
       b.y = b.y0 + (b.y1 - b.y0) * k;
-      b.z = 22 + Math.sin(k * Math.PI) * 16;
-      if (b.picked !== null && k >= 0.5) {
+      // flight profile by style: the bounce pass dives UNDER hands in the
+      // lane and kisses the floor at the midpoint; btb rides low and flat
+      if (b.style === 'bounce') {
+        b.z = k < 0.5 ? 18 * (1 - k * 2) : 14 * ((k - 0.5) * 2);
+        if (!b.bounced && k >= 0.5) {
+          b.bounced = true;
+          this.emit({ kind: 'sfx', name: 'bounce' });
+        }
+      } else if (b.style === 'btb') {
+        b.z = 16 + Math.sin(k * Math.PI) * 8;
+      } else {
+        b.z = 22 + Math.sin(k * Math.PI) * 16;
+      }
+      if (b.picked !== null && k >= b.pickK) {
         const d = this.athletes[b.picked];
         this.ball = { kind: 'held', by: b.picked };
         this.posTeam = d.team;
@@ -1255,13 +1791,34 @@ export class HoopsSim {
       b.y = b.y0 + (b.rim.y - b.y0) * k * reach;
       const z1 = b.outcome === 'air' ? COURT.RIM_Z - 18 : COURT.RIM_Z;
       b.z = b.z0 + (z1 - b.z0) * k + Math.sin(k * Math.PI) * (b.apex - Math.max(b.z0, z1));
+      // GOALTENDING (S12c): near the rim, an airborne defender's hand on the
+      // ball — pre-apex contact is a LIVE block (legal); on the way DOWN it
+      // is a violation and the basket COUNTS. PERMIT saw it. We all saw it.
+      if (k < 1 && dist(b.x, b.y, b.rim.x, b.rim.y) < 44) {
+        const shooter = this.athletes[b.by];
+        for (let i = 0; i < this.athletes.length; i++) {
+          const d = this.athletes[i];
+          if (d.team === shooter.team || d.z <= 12) continue;
+          if (dist(d.x, d.y, b.x, b.y) > 11) continue;
+          if (Math.abs(b.z - (d.z + 36)) > 10) continue;
+          if (k < 0.5) {
+            this.looseBall(b.x, b.y, b.z, d.face * 80, (this.rng() - 0.5) * 60, 60);
+            this.emit({ kind: 'block', by: i });
+            this.emit({ kind: 'sfx', name: 'block' });
+          } else {
+            this.emit({ kind: 'goaltend', by: i });
+            this.scoreBasket(shooter.team, b.pts, b.rim, b.green, false, b.by, b.d0);
+          }
+          return;
+        }
+      }
       if (k < 1) return;
       const shooter = this.athletes[b.by];
       switch (b.outcome) {
         case 'in':
         case 'rim_in':
           if (b.outcome === 'rim_in') this.emit({ kind: 'sfx', name: 'rim' });
-          this.scoreBasket(shooter.team, b.pts, b.rim, b.outcome === 'in', false);
+          this.scoreBasket(shooter.team, b.pts, b.rim, b.green, false, b.by, b.d0);
           return;
         case 'rim_out': {
           this.emit({ kind: 'sfx', name: 'rim' });

@@ -1393,6 +1393,19 @@ export class OverworldScene extends Phaser.Scene {
       GS.setFlag('cage_met');
       await this.dlg.say(...DIALOGUE.npc_permit);
     }
+    // PERMIT'S SCHOOL (S12c): the cage teaches on the first visit —
+    // skippable; either answer sets cage_tutored (declining IS skipping)
+    if (!GS.flag('cage_tutored')) {
+      await this.dlg.say(...DIALOGUE.permit_tutorial_ask);
+      const lesson = await this.dlg.ask(['Take the lessons', 'I know ball'], { cancelIndex: 1 });
+      if (lesson === 0) {
+        // a fixed drill seed: the school is the same school for everybody
+        this.launchHoops({ format: '3v3', seed: 1987, opponent: 'wet_socks', tutorial: true });
+        return;
+      }
+      GS.setFlag('cage_tutored');
+      await this.dlg.say(...DIALOGUE.permit_tutorial_skip);
+    }
     // the champion's debts come first
     if (h.titles >= 1 && h.handed.length < STARTING_FOUR_IDS.length) {
       await this.dlg.say(...DIALOGUE.permit_title_first);

@@ -415,7 +415,14 @@ export const HOOPS_TEXT = {
   violation: '24 ON THE CLOCK. PERMIT SAW EVERY SECOND.',
   stuffed: 'STUFFED!',
   ankles: 'ANKLES.',
+  shook: 'SHOOK.',
+  stumbled: 'TRIPPED HIM UP.',
   rejected: 'NOT TODAY.',
+  /* S12c: the timed reads, the goaltend call, the prayer, the flub */
+  timed: 'TIMED!',
+  goaltend: 'GOALTEND. IT COUNTS.',
+  heavePopup: 'THE HEAVE.',
+  flubPopup: 'RIM-HUNG IT.',
   pickup_win: 'GAME. STREET KEEPS THE SCORE.',
   pickup_loss: 'GAME. THE CAGE REMEMBERS.',
   callsForIt: '{name} CALLS FOR IT!',
@@ -443,6 +450,27 @@ export const HOOPS_TEXT = {
     'PERMIT: I HAVE RANKED EVERY CROSSOVER SINCE 1987. TOP 50. EASILY.',
     'PERMIT: SOMEBODY HELP THAT DEFENDER. NOT ME. I AM BUSY RANKING.',
   ],
+  /* S12c: the ankle ladder's lower rungs get their own ranks */
+  permitStun: [
+    'PERMIT: HE FELT THAT IN THE KNEES. RANKED: HONORABLE MENTION.',
+    'PERMIT: A WOBBLE. I AM LOGGING THE WOBBLE.',
+  ],
+  permitTrip: [
+    'PERMIT: HE TRIPPED OVER A MOVE THAT RANKS 112TH. IMAGINE THE TOP TEN.',
+    'PERMIT: THE SIDEWALK DID NOT MOVE. THE CROSSOVER DID.',
+  ],
+  /* S12c: goaltending — the canon call, verbatim */
+  permitGoaltend: [
+    'PERMIT: THAT WAS COMING DOWN. WE ALL SAW IT.',
+  ],
+  permitHeave: [
+    'PERMIT: A PRAYER FROM ANOTHER AREA CODE. FILED UNDER HOPE.',
+    'PERMIT: THE CLOCK MADE HIM DO IT. THE RIM DECLINED.',
+  ],
+  permitFlub: [
+    'PERMIT: HE HUNG ON THE RIM AND THE DUNK LEFT WITHOUT HIM.',
+    'PERMIT: THE WINDUP RANKED TOP 40. THE FINISH RANKED LAST.',
+  ],
   permitBlock: [
     'PERMIT: SENT BACK. RETURN TO SENDER.',
     'PERMIT: DENIED AT THE WINDOW.',
@@ -465,6 +493,20 @@ export const HOOPS_TEXT = {
   tallyDrop: 'The bench passes you: {item}.',
   tallyTitle: 'BRICKTON CLASSIC CHAMPIONS: {playername} AND THE FIVE.',
   tallyRepeat: 'CHAMPIONS AGAIN. THE POT: ${cash}, STREET TERMS.',
+  /* S12c: PERMIT'S SCHOOL — the cage tutorial (skippable; flag cage_tutored).
+   * One flat key per lesson; the scene advances each on the deed, not the
+   * word. The goaltend warning is the syllabus's only commandment. */
+  tutTitle: "PERMIT'S SCHOOL OF CAGE LAW",
+  tutMove: 'LESSON 1: MOVE WITH THE D-PAD. HOLD X TO SPRINT. SHOW ME A SPRINT.',
+  tutMeter: 'LESSON 2: STEP INSIDE THE ARC — RANGE CLOSES THE GREEN. THEN HOLD A AND RELEASE INSIDE THE GREEN AT THE TOP OF THE METER.',
+  tutDunk: 'LESSON 3: SPRINT AT THE RIM AND PRESS A TO FINISH. DUNKERS GET A SECOND METER — RELEASE A IN ITS GREEN TO THROW IT DOWN.',
+  tutPackage: 'LESSON 4: Y ALONE SPINS. Y PLUS A SIDE GOES BEHIND THE BACK. Y AT YOUR MAN GOES BETWEEN THE LEGS. SHOW ME ALL THREE.',
+  tutPass: 'LESSON 5: TAP B TO PASS INTO YOUR HELD DIRECTION. THE BALL PICKS ITS OWN STYLE. TWO CLEAN ONES.',
+  tutBlock: 'LESSON 6: HE SHOOTS NOW. PRESS A SO YOUR JUMP PEAKS AT HIS RELEASE. SEND ONE BACK.',
+  tutSteal: 'LESSON 7: WATCH HIS HANDLE. TAP B THE INSTANT A MOVE STARTS — THAT IS THE WINDOW. TAKE ONE.',
+  tutGoaltend: 'THE ONE LAW: NEVER TOUCH IT COMING DOWN. IF IT IS DROPPING, IT COUNTS. WE WILL ALL SEE IT.',
+  tutDone: "SCHOOL'S OUT. THE CAGE KNOWS YOUR NAME NOW.",
+  tutSkip: 'B: SKIP THE LESSONS',
   /* the chalk board */
   boardTitle: 'THE BRICKTON CLASSIC — 32 FIVES, ONE CHALK LINE',
   boardRound: ['ROUND OF 32', 'ROUND OF 16', 'QUARTERFINALS', 'SEMIFINALS', 'THE FINAL'] as const,

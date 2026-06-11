@@ -357,6 +357,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   permit_pickup_ask: [
     '@Pickup runs to 21 — win by 2, ones and twos, check it up top. The Classic is FULL COURT, four quarters, and I chalk every bracket myself.',
   ],
+  // S12c: PERMIT'S SCHOOL — the first-visit tutorial (skippable; either
+  // answer sets cage_tutored, declining IS skipping)
+  permit_tutorial_ask: [
+    '@First time inside my fence. I run a short school — the meter, the sauce, the TIMING, and the one law about goaltending.',
+    '@Eight lessons. I have ranked every graduate since 1987. You could place.',
+  ],
+  permit_tutorial_skip: [
+    '@Skipping school. Bold. I will rank that under "confidence, pending."',
+  ],
   permit_register: [
     '@Thirty-two fives. Single elimination. No entry fee — the cage takes its payment in ankles.',
     '@I seeded the bracket with TOTAL impartiality. My nephews drew the five seed. Again. Unrelated.',

@@ -11,11 +11,15 @@
  * its own sprite (the sim owns its position); hands pose to meet it.
  *
  * SPORT_FRAME is the contract — HoopsScene speaks these names, tests pin
- * the count and the per-frame distinctness:
+ * the count and the per-frame distinctness. Indices 0–24 are the S12 set
+ * and NEVER renumber; S12c APPENDS (the bust-sheet precedent, ADR-032):
  *   dribble idle ×2 · dribble run ×2 · off-ball run ×2 · defensive slide ×2
  *   · gather · jumper rise + readable RELEASE · layup ×2 · THREE dunk
  *   cinematics ×2 each · block leap ×2 · steal swipe · fall (the ankle tax)
- *   · celebration ×2 — 25 frames.
+ *   · celebration ×2 — then the S12c package: SPIN ×2 · BEHIND-THE-BACK ×2
+ *   · BETWEEN-THE-LEGS ×2 · STUN wobble ×2 · TRIP stumble · pass anims
+ *   (chest · bounce · behind-the-back) · release FOLLOW-THROUGH · landing
+ *   RECOVERY — 39 frames.
  *
  * Opponents inherit faces too: deriveOpponentSpec() hashes a team id into
  * skin/hair/eyes/mouth variety (ADR-022's "no two faces alike" applied to
@@ -55,9 +59,24 @@ export const SPORT_FRAME = {
   fall: 22,
   cheerA: 23,
   cheerB: 24,
+  // ---- S12c appends (0–24 never renumber) ----
+  spinA: 25,
+  spinB: 26,
+  btbA: 27,
+  btbB: 28,
+  btlA: 29,
+  btlB: 30,
+  stunA: 31,
+  stunB: 32,
+  trip: 33,
+  passChest: 34,
+  passBounce: 35,
+  passBtb: 36,
+  follow: 37,
+  land: 38,
 } as const;
 export type SportFrameName = keyof typeof SPORT_FRAME;
-export const SPORT_FRAME_COUNT = 25;
+export const SPORT_FRAME_COUNT = 39;
 
 /** team kit — when present it re-dresses the torso (heroes/walk-ons play in
  *  their own clothes; the 31 fives play in their TEAMS jersey ramp) */
@@ -91,7 +110,7 @@ const SIDE_SKULL: Array<readonly [number, number]> = [
 const HEAD_W = 14;
 const HEAD_ROWS = SIDE_SKULL.length;
 
-type LegPose = 'stand' | 'strideA' | 'strideB' | 'wide' | 'tuck' | 'split' | 'sprawl';
+type LegPose = 'stand' | 'strideA' | 'strideB' | 'wide' | 'tuck' | 'split' | 'sprawl' | 'cross' | 'crouch' | 'stumble' | 'absorb';
 type ArmPose =
   | 'dribble'
   | 'dribbleB'
@@ -109,7 +128,18 @@ type ArmPose =
   | 'blockup'
   | 'swipe'
   | 'cheer'
-  | 'limp';
+  | 'limp'
+  | 'tuckSpin' // ball pinned to the chest mid-spin
+  | 'wrapBack' // behind-the-back: the near arm crosses behind the torso
+  | 'flickOut' // …and the ball flicks out the far side, arm wide and low
+  | 'lowThrough' // between-the-legs: arm reaching down through the stance
+  | 'lowRecover' // …recovering up on the far side
+  | 'wobble' // stunned: arms limp, shoulders rolling
+  | 'flail' // tripping: both arms thrown for balance
+  | 'chestOut' // chest pass: both arms extended at chest height
+  | 'lowOut' // bounce pass: both arms extended low, wrists down
+  | 'followThrough' // post-release: arm high, wrist dropped (the gooseneck)
+  | 'absorbArms'; // landing recovery: arms out, soft
 
 interface FrameOpts {
   legs: LegPose;
@@ -121,9 +151,22 @@ interface FrameOpts {
   mouthOpen: boolean;
   /** lying down (the fall frame rotates the read sideways) */
   prone: boolean;
+  /** mid-spin: the head shows its BACK (hair mass over the face columns) */
+  backTurned: boolean;
+  /** stun wobble: dizzy stars stamped as pure light after outline */
+  dizzy: boolean;
 }
 
-const F_BASE: FrameOpts = { legs: 'stand', arms: 'dribble', lift: 0, lean: 0, mouthOpen: false, prone: false };
+const F_BASE: FrameOpts = {
+  legs: 'stand',
+  arms: 'dribble',
+  lift: 0,
+  lean: 0,
+  mouthOpen: false,
+  prone: false,
+  backTurned: false,
+  dizzy: false,
+};
 
 function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: FrameOpts): Pixmap {
   const pm = new Pixmap(ATHLETE_W, ATHLETE_H);
@@ -209,6 +252,26 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
     case 'split':
       leg(8, 5, true);
       leg(16, 1, false);
+      break;
+    case 'cross':
+      // mid-spin: legs scissored tight, weight turning over the pivot foot
+      leg(12, 2, true);
+      leg(13, 1, false);
+      break;
+    case 'crouch':
+      // between-the-legs stance: wide and LOW (the ball needs the tunnel)
+      leg(8, 5, true);
+      leg(17, 5, false);
+      break;
+    case 'stumble':
+      // tripping: the trail leg never caught up
+      leg(6, 1, true);
+      leg(16, 4, false);
+      break;
+    case 'absorb':
+      // landing recovery: both knees soft
+      leg(10, 4, true);
+      leg(15, 4, false);
       break;
     default:
       leg(11, 0, true);
@@ -373,6 +436,75 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
       pm.rect(shL.x - 3, hy - 6, 3, 2, skinD);
       pm.rect(shR.x + 2, hy - 7, 3, 2, skin);
       break;
+    case 'tuckSpin':
+      // both forearms pinned across the chest, the rock protected
+      arm(shL.x, shL.y, tx + 5, torsoTop + 3, true);
+      arm(shR.x, shR.y, tx + 4, torsoTop + 4, false);
+      break;
+    case 'wrapBack':
+      // the near arm disappears BEHIND the torso (drawn dark, crossing low)
+      arm(shL.x, shL.y, shL.x - 3, shL.y + 5, true);
+      pm.line(shR.x, shR.y, tx + 2, torsoBot - 1, skinD);
+      pm.rect(tx, torsoBot - 1, 3, 2, skinD); // the hand at the far hip
+      break;
+    case 'flickOut':
+      // …and the ball flicks out the far side, arm wide and low
+      arm(shL.x, shL.y, shL.x - 5, torsoBot + 1, true);
+      arm(shR.x, shR.y, shR.x + 3, shR.y + 5, false);
+      break;
+    case 'lowThrough':
+      // reaching down through the crouch — the ball threads the tunnel
+      arm(shL.x, shL.y, shL.x - 2, shL.y + 4, true);
+      pm.line(shR.x, shR.y, tx + 5, torsoBot + 5, skin);
+      pm.line(shR.x + 1, shR.y, tx + 6, torsoBot + 5, skin);
+      pm.rect(tx + 4, torsoBot + 5, 3, 2, skin);
+      break;
+    case 'lowRecover':
+      // collecting it on the far side, still low
+      pm.line(shL.x, shL.y, shL.x - 4, torsoBot + 3, skinD);
+      pm.rect(shL.x - 5, torsoBot + 3, 3, 2, skinD);
+      arm(shR.x, shR.y, shR.x + 2, shR.y + 6, false);
+      break;
+    case 'wobble':
+      // stunned: arms hang and swing slightly out of phase
+      arm(shL.x, shL.y, shL.x - 3, shL.y + 7, true);
+      arm(shR.x, shR.y, shR.x + 1, shR.y + 8, false);
+      break;
+    case 'flail':
+      // tripping: both arms thrown for a balance that is not coming
+      pm.line(shL.x, shL.y, shL.x - 4, hy - 1, skinD);
+      pm.rect(shL.x - 5, hy - 3, 3, 2, skinD);
+      pm.line(shR.x, shR.y, shR.x + 6, shR.y - 2, skin);
+      pm.rect(shR.x + 5, shR.y - 4, 3, 2, skin);
+      break;
+    case 'chestOut':
+      // the chest pass: both arms extended forward, thumbs down at the end
+      pm.line(shL.x, shL.y + 1, shL.x + 9, shL.y + 2, skinD);
+      pm.line(shR.x, shR.y + 1, shR.x + 7, shR.y + 2, skin);
+      pm.rect(shR.x + 6, shR.y + 1, 3, 2, skin);
+      pm.rect(shL.x + 8, shL.y + 2, 3, 2, skinD);
+      break;
+    case 'lowOut':
+      // the bounce pass: extended low, wrists snapped down at the floor
+      pm.line(shL.x, shL.y + 1, shL.x + 8, torsoBot + 1, skinD);
+      pm.line(shR.x, shR.y + 1, shR.x + 6, torsoBot, skin);
+      pm.rect(shR.x + 5, torsoBot, 3, 2, skin);
+      pm.rect(shL.x + 7, torsoBot + 1, 3, 2, skinD);
+      break;
+    case 'followThrough': {
+      // post-release: the arm stays UP, wrist dropped — the gooseneck
+      arm(shL.x, shL.y, shL.x - 2, shL.y + 5, true);
+      pm.line(shR.x, shR.y, shR.x + 3, hy - 4, skin);
+      pm.line(shR.x + 1, shR.y, shR.x + 4, hy - 4, skin);
+      pm.rect(shR.x + 4, hy - 3, 3, 2, skin); // the hand hangs FORWARD
+      pm.set(shR.x + 6, hy - 2, skinL);
+      break;
+    }
+    case 'absorbArms':
+      // landing: arms out and soft, riding the knees down
+      arm(shL.x, shL.y, shL.x - 5, shL.y + 4, true);
+      arm(shR.x, shR.y, shR.x + 5, shR.y + 3, false);
+      break;
     default:
       arm(shL.x, shL.y, shL.x - 1, shL.y + 6, true);
       arm(shR.x, shR.y, shR.x + 2, shR.y + 6, false);
@@ -386,6 +518,43 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
   pm.rect(hx + 6, hy + last + 1, 3, torsoTop - (hy + last + 1), skin);
   const bald = spec.hairStyle === 'gray' || spec.hairStyle === 'none';
   const hatted = spec.hat?.kind === 'cap';
+
+  if (o.backTurned) {
+    // mid-spin: the back of the head — hair mass (or scalp) owns the whole
+    // dome, no face. ADR-025 three-tone still applies.
+    if (bald) {
+      SIDE_SKULL.forEach(([ins], r) => {
+        if (r >= 4 && r <= 8) pm.rect(hx + ins, hy + r, 3, 1, hair); // horseshoe
+      });
+      pm.set(hx + 4, hy + 1, skinL);
+    } else {
+      for (let r = 0; r <= last - 2; r++) {
+        const [ins, wd] = SIDE_SKULL[r];
+        pm.rect(hx + ins, hy + r, wd, 1, hair);
+      }
+      pm.hline(hx + SIDE_SKULL[0][0] + 1, hy, 3, hairL);
+      pm.hline(hx + SIDE_SKULL[last - 2][0] + 1, hy + last - 2, 5, hairB); // nape
+      if (spec.hairStyle === 'topknot') {
+        pm.hline(hx + 5, hy - 2, 3, hair);
+        pm.hline(hx + 4, hy - 1, 5, hair);
+        pm.set(hx + 5, hy - 2, hairL);
+      }
+    }
+    if (hatted && spec.hat) {
+      const cap = px(spec.hat.ramp, 2);
+      for (let r = 0; r <= 3; r++) {
+        const [ins, wd] = SIDE_SKULL[r];
+        pm.rect(hx + ins, hy + r, wd, 1, cap);
+      }
+      pm.hline(hx + SIDE_SKULL[3][0], hy + 3, SIDE_SKULL[3][1], px(spec.hat.ramp, 1));
+    }
+    pm.outline(C.outline);
+    if (o.dizzy) {
+      pm.set(hx + 2, hy - 3, px(RAMP.GOLD, 3));
+      pm.set(hx + 11, hy - 4, px(RAMP.GOLD, 2));
+    }
+    return pm;
+  }
   /** hair mass: crown + occiput; the face owns x ≥ hx+9 (ADR-025 three-tone) */
   const hairMass = (style: HairStyle): void => {
     if (bald) {
@@ -481,6 +650,12 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
   pm.hline(hx + SIDE_SKULL[last][0], hy + last, SIDE_SKULL[last][1] - 3, skinD); // jaw shadow
 
   pm.outline(C.outline);
+  // dizzy stars — pure light AFTER outline (the ADR-021 idiom; the stun
+  // wobble shares the fall frame's vocabulary, one rung gentler)
+  if (o.dizzy) {
+    pm.set(hx + 2, hy - 3, px(RAMP.GOLD, 3));
+    pm.set(hx + 12, hy - 5, px(RAMP.GOLD, 2));
+  }
   return pm;
 }
 
@@ -513,6 +688,21 @@ export function generateAthleteFrames(spec: CharacterSpec, jersey: JerseyOpts | 
     F({ prone: true }), // fall
     F({ legs: 'stand', arms: 'cheer' }), // cheerA
     F({ legs: 'stand', arms: 'cheer', lift: 1, mouthOpen: true }), // cheerB
+    // ---- S12c: the dribble package, pass styles, follow-through, landing ----
+    F({ legs: 'cross', arms: 'tuckSpin', backTurned: true }), // spinA (back shown)
+    F({ legs: 'strideA', arms: 'tuckSpin', lean: 2 }), // spinB (re-emerging)
+    F({ legs: 'strideB', arms: 'wrapBack', lean: 1 }), // btbA (ball behind)
+    F({ legs: 'strideA', arms: 'flickOut', lean: 2 }), // btbB (flicked out)
+    F({ legs: 'crouch', arms: 'lowThrough', lean: 1 }), // btlA (through the tunnel)
+    F({ legs: 'crouch', arms: 'lowRecover', lean: 2 }), // btlB (collected low)
+    F({ legs: 'stand', arms: 'wobble', dizzy: true }), // stunA
+    F({ legs: 'wide', arms: 'wobble', lean: -1, dizzy: true }), // stunB
+    F({ legs: 'stumble', arms: 'flail', lean: 3, mouthOpen: true }), // trip
+    F({ legs: 'stand', arms: 'chestOut', lean: 1 }), // passChest
+    F({ legs: 'wide', arms: 'lowOut', lean: 2 }), // passBounce
+    F({ legs: 'strideA', arms: 'wrapBack', lean: 1, mouthOpen: true }), // passBtb
+    F({ legs: 'tuck', arms: 'followThrough', lift: 3 }), // follow (the gooseneck)
+    F({ legs: 'absorb', arms: 'absorbArms' }), // land (knees soft)
   ];
 }
 
@@ -614,6 +804,115 @@ export function drawHoopSide(net: 0 | 1 | 2): Pixmap {
     pm.hline(22, 26, 3, chainD);
   }
   pm.outline(C.outline);
+  return pm;
+}
+
+/* ---------------- the BEHIND camera (S12c pseudo-3D) ---------------- */
+
+/**
+ * The pause-menu camera toggle's second view: facing the backboard from the
+ * player's perspective. Pre-rendered pseudo-3D per the ADR: a perspective
+ * court texture + depth-scaled side sprites (true-3D models conflict with
+ * ADR-002/020 and stay a future decision point). behindMap is shared by the
+ * texture painter AND the runtime so the painted floor IS the projection.
+ */
+export const BEHIND = {
+  W: 400,
+  H: 225,
+  HORIZON: 52,
+  FLOOR_Y: 218,
+  CX: 200,
+  /** court depth (px from the rim plane) mapped onto the floor band */
+  VIEW_LEN: 360,
+  /** lateral compression near → far */
+  LAT_NEAR: 0.62,
+  LAT_FAR: 0.2,
+  /** sprite scale near → far */
+  SCALE_NEAR: 1.18,
+  SCALE_FAR: 0.46,
+  /** screen rows ease toward the horizon */
+  ROW_EASE: 1.18,
+} as const;
+
+/** project (depth from the rim plane, lateral offset from court center) */
+export function behindMap(depthPx: number, latPx: number): { x: number; y: number; scale: number } {
+  const dn = Math.max(0, Math.min(1.15, depthPx / BEHIND.VIEW_LEN));
+  const y = BEHIND.HORIZON + Math.pow(dn, BEHIND.ROW_EASE) * (BEHIND.FLOOR_Y - BEHIND.HORIZON);
+  const lat = BEHIND.LAT_FAR + (BEHIND.LAT_NEAR - BEHIND.LAT_FAR) * dn;
+  const scale = BEHIND.SCALE_FAR + (BEHIND.SCALE_NEAR - BEHIND.SCALE_FAR) * dn;
+  return { x: BEHIND.CX + latPx * lat, y, scale };
+}
+
+/**
+ * The perspective floor, painted with behindMap so lines and physics agree:
+ * converging sidelines, the key, the 2-point arc, the far chain-link + a
+ * bleacher band at the horizon. Authored for the LEFT-rim view; the scene
+ * flips it for the right end. ADR-020 throughout: flat asphalt, deliberate
+ * marks, worn line breaks (rule 4), nothing scattered.
+ */
+export function drawCageBehind(): Pixmap {
+  const pm = new Pixmap(BEHIND.W, BEHIND.H);
+  const asphalt = px(RAMP.INK, 2);
+  const asphaltD = px(RAMP.INK, 1);
+  const paint = px(RAMP.PAPER, 2);
+  const paintD = px(RAMP.PAPER, 1);
+  pm.fill(px(RAMP.INK, 0)); // beyond the cage: night
+  // bleacher band riding the horizon (planks + the crowd's heads as a band)
+  pm.rect(0, BEHIND.HORIZON - 16, BEHIND.W, 16, px(RAMP.EARTH, 1));
+  pm.hline(0, BEHIND.HORIZON - 16, BEHIND.W, px(RAMP.EARTH, 2));
+  pm.hline(0, BEHIND.HORIZON - 9, BEHIND.W, px(RAMP.EARTH, 2));
+  for (let x = 6; x < BEHIND.W; x += 14) {
+    pm.rect(x, BEHIND.HORIZON - 14, 3, 3, x % 28 === 6 ? px(RAMP.SKIN, 2) : px(RAMP.SKIN_DEEP, 2)); // heads
+    pm.rect(x - 1, BEHIND.HORIZON - 11, 5, 2, px((x * 7) % 3 === 0 ? RAMP.BLUE : (x * 7) % 3 === 1 ? RAMP.RED : RAMP.GOLD, 2));
+  }
+  // the chain-link far fence: posts + mesh hints above the horizon
+  for (let x = 0; x < BEHIND.W; x += 4) pm.set(x, BEHIND.HORIZON - 18, paintD);
+  // floor: rows from horizon to the near edge, width from the projection
+  const halfCourtLat = COURT.H / 2 + COURT.FENCE;
+  for (let y = BEHIND.HORIZON; y < BEHIND.H; y++) {
+    const tRow = (y - BEHIND.HORIZON) / (BEHIND.FLOOR_Y - BEHIND.HORIZON);
+    const dn = Math.pow(Math.max(0.0001, tRow), 1 / BEHIND.ROW_EASE);
+    const lat = BEHIND.LAT_FAR + (BEHIND.LAT_NEAR - BEHIND.LAT_FAR) * dn;
+    const half = Math.round(halfCourtLat * lat);
+    pm.hline(BEHIND.CX - half, y, half * 2, asphalt);
+    // sidelines (the painted edge, worn through in runs — rule 4)
+    const sx0 = BEHIND.CX - Math.round((COURT.H / 2) * lat);
+    const sx1 = BEHIND.CX + Math.round((COURT.H / 2) * lat);
+    if ((y * 13 + sx0 * 29) % 17 !== 3) pm.set(sx0, y, paint);
+    if ((y * 13 + sx1 * 29) % 17 !== 7) pm.set(sx1, y, paint);
+  }
+  // two deliberate tar patches + one crack cluster (rule 1: clustered, flat)
+  const p1 = behindMap(120, -70);
+  pm.rect(Math.round(p1.x), Math.round(p1.y), 10, 4, px(RAMP.INK, 0));
+  const p2 = behindMap(250, 95);
+  pm.rect(Math.round(p2.x), Math.round(p2.y), 14, 6, px(RAMP.INK, 0));
+  const c1 = behindMap(200, -120);
+  pm.line(Math.round(c1.x), Math.round(c1.y), Math.round(c1.x) + 6, Math.round(c1.y) + 2, asphaltD);
+  pm.line(Math.round(c1.x) + 6, Math.round(c1.y) + 2, Math.round(c1.x) + 8, Math.round(c1.y) + 5, asphaltD);
+  /** plot a worn painted dot via the projection */
+  const dot = (depth: number, latPx: number, strong: boolean): void => {
+    const m = behindMap(depth, latPx);
+    const X = Math.round(m.x);
+    const Y = Math.round(m.y);
+    if ((X * 13 + Y * 29) % 13 === 5) return; // the wear
+    pm.set(X, Y, strong ? paint : paintD);
+    pm.set(X + 1, Y, strong ? paint : paintD);
+  };
+  // the key: rails from the board to the line, then across
+  const keyDepth = COURT.KEY_D - COURT.RIM_L_X + 20;
+  for (let d = 0; d <= keyDepth; d += 3) {
+    dot(d, -COURT.KEY_W / 2, true);
+    dot(d, COURT.KEY_W / 2, true);
+  }
+  for (let l = -COURT.KEY_W / 2; l <= COURT.KEY_W / 2; l += 3) dot(keyDepth, l, true);
+  // the 2-point arc: depth = ARC_R·cosθ, lateral = ARC_R·sinθ
+  for (let a = 0; a <= 60; a++) {
+    const th = -Math.PI / 2 + (a / 60) * Math.PI;
+    dot(COURT.ARC_R * Math.cos(th), COURT.ARC_R * Math.sin(th), true);
+  }
+  // halfcourt line across the near floor
+  const halfDepth = COURT.W / 2 - COURT.RIM_L_X;
+  for (let l = -COURT.H / 2; l <= COURT.H / 2; l += 3) dot(halfDepth, l, false);
   return pm;
 }
 

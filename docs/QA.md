@@ -262,3 +262,31 @@ from `scene.time.now` and every nav cooldown locks out.
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 14 | **S12b awakenings, on device** — fresh save: pre-crater Vibe row says not yet; the crater beat plays (flash, pages, jingle, toast); the Tick latches and the Surge visibly severs the tether from CASTING DISTANCE (the caster stands at range — never reads as a bash) | ⬜ | ⬜ | |
+
+## S12c browser pre-flight — 2026-06-11, CAGE 2.0 (ADR-036)
+
+All legs via the ADR-008 driver, loop slept end to end, pump(n, 8.33)
+throughout; shots `.shots/s12c_*`. Fresh profile (localStorage cleared),
+full ADR-013 name entry, constructed stand at PERMIT (the S9 precedent).
+
+| Check | Result |
+|---|---|
+| **THE RANGE LAW (the heave fix)** — greenWindow CLOSES at effectiveRange (quadratic, steepening); non-green make% zero at 1.5× range; brick floor GONE; AI range-gated with the ≤1s heave exception | ✅ vitest pins window edges + the zero beyond + an 80k-tick tape on two seeds: **no AI make beyond 1.2× shooter range**; the heave fires from the far-end take, reads as one (PERMIT files it), and never drops |
+| **PERMIT'S SCHOOL, end-to-end by the bot** — first cage visit asks; row 0 launches the drill; all 8 lessons advanced ON THE DEED: 600ms X-sprint → green release (window read live off `meterOf`, released 0.976 inside [0.944, 1] → bucket) → rim finish → spin+btb+btl all read → 2 completed passes → a TIMED block erased the dummy's release → a window swipe stripped a move startup → the goaltend warning held → `cage_tutored` set, scene closed | ✅ (`s12c_tutorial_board`, `s12c_goaltend_warning`) |
+| **One 3v3 with every new move performed** — PERMIT (no school ask once tutored) → pickup: autopilot played to the horn (2-21 — the Wet Socks earned it) with Y-spin/Y-btb/Y-btl, B-tap passes, X sprint, meter shots, timed leaps all performed in match conditions; tally paid lossExp 55 (Jay exp 2→57), `played` ticked, clean close | ✅ |
+| **THE METER, OVER THE HEAD** — world-space drum follows the shooter, fills toward the GREEN AT THE TOP, window shrinks live (range + contest), zero-window = NO green band drawn (range closed it — honest HUD); dunks run their own gold-banded meter | ✅ live + vitest (top-anchored grades, 60/20/0 falloff, overfill auto-miss) |
+| **TIMED DEFENSE** — BLOCK_TIMING (±120ms peak window, 0.10→0.65, (dfn−sht)·0.004, reach-scaled, clamp [0.05,0.85]) and STEAL_TIMING (0.08→0.50 in the 150ms windows: move startup, gather first beat, pass release; hawk +0.08; clamp [0.04,0.70]; whiff = beaten 720ms) exported beside TUNE; "TIMED!" pops on window-hit attempts either outcome | ✅ vitest pins both curves + drill-mode end-to-end: timed leaps block ≥1.6× more than early hops across 24 seeds; window swipes strip at the timed rate |
+| **GOALTENDING** — descent contact near the iron counts the basket (pre-apex stays a legal block); PERMIT: "THAT WAS COMING DOWN. WE ALL SAW IT." (canon, validator-pinned) | ✅ vitest (drill scenario: leap on the way down → goaltend event + the score lands) |
+| **THE DRIBBLE PACKAGE** — Y=spin · Y+lateral=behind-the-back · Y+at-defender=between-the-legs; 150ms startup IS the steal window (validator-pinned equality); tiered ankle ladder (ANKLE_TIERS 0.30/0.62 splits): STUN wobble / TRIP stumble / the FALL — each with frames + PERMIT pools; double-tap crossover unchanged | ✅ live (all three read in lesson 4 + the 3v3) |
+| **PASS STYLES** — chest / BOUNCE (low, floor-kiss at midpoint, picks ×0.45, flight ×1.35) / BEHIND-THE-BACK (target behind facing); style by context, distinct flights + frames | ✅ sim + frames live; flight profiles in updateBall |
+| **X/Y + REBINDABLE CONTROLS** — InputBus grows X (KeyC, pad 2) Y (KeyV, pad 3), pad B narrowed to button 1; UIScene thumb-arc X/Y visible during hoops only ('mf-hoops-open/closed'); SETUP → CONTROLS: press-to-capture rebound A→KeyJ live (KeyJ then DROVE A), persisted device-local 'meteor-falls-controls', Reset restored [KeyZ, Space] | ✅ (`s12c_controls_page`) |
+| **CAMERA TOGGLE** — pause row 2: SIDE ⇄ BEHIND (perspective floor via behindMap — texture and runtime share the projection; depth-scaled sprites; fixed seat); persisted 'meteor-falls-cage-cam' | ✅ (`s12c_camera_behind` — the pseudo-3D read holds) |
+| **SPORT_FRAME 25 → 39** — S12 indices frozen, the package appended (spin/btb/btl ×2, stun ×2, trip, 3 pass anims, follow-through, landing recovery); validator pins count + names | ✅ |
+| Console | ✅ zero errors/warnings across the whole gauntlet |
+| `npm test` | ✅ validator (cage2 manifests: frames contract, range/meter/timing math, the goaltend line, the syllabus — alongside every standing gate) + 213 vitest |
+
+### S12c device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 15 | **S12c CAGE 2.0, on device** — X/Y buttons appear on the thumb arc only in the cage; PERMIT'S SCHOOL completes by touch; the over-head meter reads at arm's length (green at the top, shrinks under a closing hand); one timed block + one window steal landed by feel; the BEHIND camera holds 60fps; SETUP → CONTROLS captures a pad button and the rebind survives an app restart | ⬜ | ⬜ | pad B is button 1 now (2 = X, 3 = Y) — re-verify B-cancel feel in menus |

@@ -4,22 +4,70 @@
  * polled raw so it works in Android WebView), and the touch overlay (UIScene
  * writes into touchDir/touchBtns). Touch controls auto-hide on gamepad
  * connect; both directions hot-swap.
+ *
+ * S12c: the layer grows X and Y (the cage's SPRINT and DRIBBLE-MOVE buttons;
+ * the RPG ignores them until something claims them) and a REBINDABLE binding
+ * table — SETUP → CONTROLS captures a physical key or pad button per semantic
+ * action, persisted DEVICE-LOCAL like the Sound preference (never save data).
+ * Every read in the game already goes through held()/justPressed()/dir(), so
+ * the RPG and the cage both read through the table by construction. Pad
+ * defaults: A=0 B=1 X=2 Y=3 START=9 — pad B NARROWED from buttons 1|2 to 1
+ * (button 2 is X now; ADR records it).
  */
 
-export type Btn = 'A' | 'B' | 'START';
+export type Btn = 'A' | 'B' | 'X' | 'Y' | 'START';
+export const BTNS: readonly Btn[] = ['A', 'B', 'X', 'Y', 'START'] as const;
+
+export interface Bindings {
+  keys: Record<Btn, string[]>;
+  pad: Record<Btn, number[]>;
+}
+
+export const DEFAULT_BINDINGS: Bindings = {
+  keys: {
+    A: ['KeyZ', 'Space'],
+    B: ['KeyX', 'ShiftLeft', 'ShiftRight'],
+    X: ['KeyC'],
+    Y: ['KeyV'],
+    START: ['Enter'],
+  },
+  pad: { A: [0], B: [1], X: [2], Y: [3], START: [9] },
+};
+
+/** device-local persistence key (the meteor-falls-sound pattern) */
+const BIND_KEY = 'meteor-falls-controls';
+
+function cloneBindings(b: Bindings): Bindings {
+  return {
+    keys: Object.fromEntries(BTNS.map((k) => [k, [...b.keys[k]]])) as Record<Btn, string[]>,
+    pad: Object.fromEntries(BTNS.map((k) => [k, [...b.pad[k]]])) as Record<Btn, number[]>,
+  };
+}
+
+function loadBindings(): Bindings {
+  try {
+    const raw = localStorage.getItem(BIND_KEY);
+    if (!raw) return cloneBindings(DEFAULT_BINDINGS);
+    const parsed: unknown = JSON.parse(raw);
+    const out = cloneBindings(DEFAULT_BINDINGS);
+    if (parsed && typeof parsed === 'object') {
+      const p = parsed as Partial<Bindings>;
+      for (const b of BTNS) {
+        const ks = p.keys?.[b];
+        if (Array.isArray(ks) && ks.every((k) => typeof k === 'string') && ks.length > 0) out.keys[b] = [...ks];
+        const ps = p.pad?.[b];
+        if (Array.isArray(ps) && ps.every((k) => typeof k === 'number') && ps.length > 0) out.pad[b] = [...ps];
+      }
+    }
+    return out;
+  } catch {
+    return cloneBindings(DEFAULT_BINDINGS);
+  }
+}
 
 type Listener = (connected: boolean, padId: string) => void;
-
-const KEY_MAP_A = ['KeyZ', 'Space'];
-const KEY_MAP_B = ['KeyX', 'ShiftLeft', 'ShiftRight'];
-const KEY_MAP_START = ['Enter'];
-
-function btnForKey(code: string): Btn | null {
-  if (KEY_MAP_A.includes(code)) return 'A';
-  if (KEY_MAP_B.includes(code)) return 'B';
-  if (KEY_MAP_START.includes(code)) return 'START';
-  return null;
-}
+/** press-to-capture: the controls page hands us a one-shot sink */
+type CaptureSink = (source: 'key' | 'pad', code: string | number) => void;
 
 class InputBus {
   private keysDown = new Set<string>();
@@ -40,12 +88,25 @@ class InputBus {
   private listeners: Listener[] = [];
   gamepadConnected = false;
 
+  /** the live binding table (SETUP → CONTROLS edits it; device-local) */
+  bindings: Bindings = loadBindings();
+  private capture: CaptureSink | null = null;
+  /** pad buttons already down when capture starts must not auto-capture */
+  private padPrevPressed = new Set<number>();
+
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', (e) => {
+        if (!e.repeat && this.capture) {
+          const sink = this.capture;
+          this.capture = null;
+          sink('key', e.code);
+          e.preventDefault();
+          return;
+        }
         this.keysDown.add(e.code);
         if (!e.repeat) {
-          const b = btnForKey(e.code);
+          const b = this.btnForKey(e.code);
           if (b) this.queued.add(b);
         }
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
@@ -69,9 +130,68 @@ class InputBus {
     }
   }
 
+  private btnForKey(code: string): Btn | null {
+    for (const b of BTNS) if (this.bindings.keys[b].includes(code)) return b;
+    return null;
+  }
+
   onGamepad(l: Listener): void {
     this.listeners.push(l);
   }
+
+  /* ---------------- rebinding (S12c — SETUP → CONTROLS) ---------------- */
+
+  /**
+   * One-shot press-to-capture: the next physical keydown OR newly-pressed pad
+   * button lands in the sink (and is swallowed — it must not also act).
+   * Returns a cancel function. Pad capture is polled in update().
+   */
+  captureNext(sink: CaptureSink): () => void {
+    this.capture = sink;
+    this.padPrevPressed = new Set(this.padPressedNow());
+    return () => {
+      if (this.capture === sink) this.capture = null;
+    };
+  }
+
+  get capturing(): boolean {
+    return this.capture !== null;
+  }
+
+  /** rebind a semantic action to one physical key (replaces its key list) */
+  rebindKey(btn: Btn, code: string): void {
+    for (const b of BTNS) {
+      this.bindings.keys[b] = this.bindings.keys[b].filter((k) => k !== code);
+      if (this.bindings.keys[b].length === 0) this.bindings.keys[b] = [...DEFAULT_BINDINGS.keys[b]].filter((k) => k !== code);
+    }
+    this.bindings.keys[btn] = [code];
+    this.persistBindings();
+  }
+
+  /** rebind a semantic action to one pad button index */
+  rebindPad(btn: Btn, idx: number): void {
+    for (const b of BTNS) {
+      this.bindings.pad[b] = this.bindings.pad[b].filter((i) => i !== idx);
+      if (this.bindings.pad[b].length === 0) this.bindings.pad[b] = [...DEFAULT_BINDINGS.pad[b]].filter((i) => i !== idx);
+    }
+    this.bindings.pad[btn] = [idx];
+    this.persistBindings();
+  }
+
+  resetBindings(): void {
+    this.bindings = cloneBindings(DEFAULT_BINDINGS);
+    this.persistBindings();
+  }
+
+  private persistBindings(): void {
+    try {
+      localStorage.setItem(BIND_KEY, JSON.stringify(this.bindings));
+    } catch {
+      /* storage denied — bindings live for the session */
+    }
+  }
+
+  /* ---------------- sources ---------------- */
 
   /** touch overlay taps latch through here so sub-frame taps still land */
   pressBtn(b: Btn): void {
@@ -99,19 +219,40 @@ class InputBus {
     return null;
   }
 
+  private padPressedNow(): number[] {
+    const pad = this.pad();
+    if (!pad) return [];
+    const out: number[] = [];
+    pad.buttons.forEach((bt, i) => {
+      if (bt?.pressed) out.push(i);
+    });
+    return out;
+  }
+
   /** call once per frame — main.ts PRE_STEP owns this, before any scene runs */
   update(): void {
+    // pad press-to-capture: the first NEWLY pressed button wins
+    if (this.capture) {
+      const now = this.padPressedNow();
+      const fresh = now.find((i) => !this.padPrevPressed.has(i));
+      this.padPrevPressed = new Set(now);
+      if (fresh !== undefined) {
+        const sink = this.capture;
+        this.capture = null;
+        sink('pad', fresh);
+      }
+    }
     this.prev = this.cur;
     this.cur = new Set<Btn>();
-    if (KEY_MAP_A.some((k) => this.keysDown.has(k))) this.cur.add('A');
-    if (KEY_MAP_B.some((k) => this.keysDown.has(k))) this.cur.add('B');
-    if (KEY_MAP_START.some((k) => this.keysDown.has(k))) this.cur.add('START');
+    for (const b of BTNS) {
+      if (this.bindings.keys[b].some((k) => this.keysDown.has(k))) this.cur.add(b);
+    }
     this.touchBtns.forEach((b) => this.cur.add(b));
     const pad = this.pad();
-    if (pad) {
-      if (pad.buttons[0]?.pressed) this.cur.add('A');
-      if (pad.buttons[1]?.pressed || pad.buttons[2]?.pressed) this.cur.add('B');
-      if (pad.buttons[9]?.pressed) this.cur.add('START');
+    if (pad && !this.capture) {
+      for (const b of BTNS) {
+        if (this.bindings.pad[b].some((i) => pad.buttons[i]?.pressed)) this.cur.add(b);
+      }
     }
     // fold in latched taps, then clear — each press is visible ≥1 full frame
     this.queued.forEach((b) => this.cur.add(b));

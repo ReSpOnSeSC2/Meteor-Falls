@@ -100,6 +100,7 @@ import {
   drawAthleteShadow,
   drawHoopSide,
   drawCageCourt,
+  drawCageBehind,
 } from './athletes';
 import { TEAMS, hashOf } from '../data/hoops';
 import {
@@ -417,6 +418,8 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'athlete_shadow', drawAthleteShadow());
   addSheet(scene, 'hoop_side', [drawHoopSide(0), drawHoopSide(1), drawHoopSide(2)], 3);
   addPixmap(scene, 'cage_court', drawCageCourt());
+  // S12c: the BEHIND camera's perspective floor (pause-menu toggle)
+  addPixmap(scene, 'cage_court_behind', drawCageBehind());
 
   // Brickton downtown — varied heights and lighting so no two facades match
   addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1, litSeed: 11 }));
@@ -445,6 +448,9 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'dpad', drawDpad());
   addPixmap(scene, 'btn_a', drawRoundButton('A', RAMP.RED));
   addPixmap(scene, 'btn_b', drawRoundButton('B', RAMP.BLUE));
+  // S12c: the cage's thumb-arc pair — UIScene shows them during hoops only
+  addPixmap(scene, 'btn_x', drawRoundButton('X', RAMP.GRASS));
+  addPixmap(scene, 'btn_y', drawRoundButton('Y', RAMP.GOLD));
   addPixmap(scene, 'btn_start', drawStartPill());
   addPixmap(scene, 'hand', drawHandCursor());
   addPixmap(scene, 'phone_icon', drawPhoneIcon());

@@ -1880,3 +1880,127 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   three severs (Surge/Fire/Salt) and the crater teaches the first; the
   stage's standoff param is the staging law (casters at range — a
   reviewer can reject point-blank casts by this entry).
+
+## ADR-036 — S12c: CAGE 2.0 — the range law, timed defense, the over-head meter, the package & the rebindable pad
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S12c — the control/feel/presentation overhaul
+  of THE CAGE; ADR-029/033/034 law stands: deterministic Phaser-free sim,
+  vitest first, manifests same-commit; ADR-024 input law throughout)
+- **Context:** A live bug had the AI banking shots from the opposite end —
+  root-caused to three compounding holes: greenWindow() clamped to a 0.022
+  FLOOR at any distance, makeChance('green') paid 0.99 distance-blind, and
+  aiShoot had no range gate, so shot-clock desperation could roll green from
+  anywhere. Blocks/steals keyed on proximity alone; the meter lived at the
+  HUD's bottom with the green mid-bar; B did triple duty (pass/turbo/steal);
+  the cage had no tutorial and one camera.
+- **Decision — THE RANGE LAW (the fix):** every athlete owns an EFFECTIVE
+  RANGE off sht — `effectiveRange = ARC_R + (sht−50)·1.2`, clamped
+  [ARC_R·0.85, ARC_R·1.35] (RANGE beside TUNE). The GREEN window SHRINKS
+  WITH DISTANCE inside range with a STEEPENED (quadratic) distance term and
+  CLOSES TO ZERO at range — no green exists beyond it, no floor anywhere.
+  Non-green make% decays hard past range (≤RANGE.DECAY_CAP at the line,
+  ZERO at 1.5×); 'brick' pays zero everywhere (way off = ZERO). AI shot
+  selection is RANGE-GATED (d ≤ 0.96·range); the lone exception is the
+  shot-clock ≤1s desperation heave — released without a gather at brick
+  grade, announced ('heave' event, PERMIT files it), and mathematically
+  unable to drop from deep. Pinned: window at range edges, the zero beyond,
+  steepening differences, and an 80k-tick tape on two seeds asserting NO
+  make beyond 1.2× the shooter's range ('score' events now carry by + dist).
+- **Decision — THE METER, REBUILT:** the meter renders OVER THE SHOOTER'S
+  HEAD (world-space, follows the athlete) and fills toward the TOP where
+  the GREEN sits AT THE END — window [1−2·half, 1]; hold A, release inside
+  = green (100%); below the window the make% falls off by the METER table
+  (slightly off ≈60%, far ≈20%, way off ZERO — grades renamed
+  green/slight/far/brick); overfilling past the top auto-misses. The window
+  is LIVE while holding (defenders closing and range both shrink it; the
+  zero-window state draws NO green band — an honest HUD). DUNKS get their
+  own meter (DUNK_METER, window off dnk): green = the slam; a missed meter
+  is a rim-hang FLUB — or STUFFED when somebody contested the summit.
+  Layups stay the meterless safe finish. AI shooters run the SAME meter:
+  aiShoot enters the gather and PLANS a release frac off sht skill
+  (planFrac), releasing when the fill reaches it — which is exactly what
+  makes timed blocks readable against them, and what makes pump-faking
+  emergent (jump early and the shooter just keeps holding).
+- **Decision — TIMED DEFENSE (exported tables, vitest-pinned):**
+  - **BLOCK_TIMING:** a block keys on the leap's START vs the RELEASE — the
+    leap's peak (stamped at takeoff: vz/g) must bracket the release within
+    ±120ms: base 0.10 poorly timed → 0.65 perfectly timed, +(dfn−sht)·0.004,
+    scaled by reach/proximity, clamped [0.05, 0.85]; landings carry a 240ms
+    recovery (no bunny-hopping). Goaltending rules the descent: near the
+    iron, pre-apex contact is a LIVE legal block; contact on the way DOWN
+    is a violation and THE BASKET COUNTS — PERMIT's call is canon and
+    validator-pinned verbatim: "THAT WAS COMING DOWN. WE ALL SAW IT."
+  - **STEAL_TIMING:** the handler has VULNERABILITY WINDOWS — dribble-move
+    startup (the first 150ms; MOVES.STARTUP_MS === STEAL_TIMING.WINDOW_MS
+    is a validator-pinned equality: the risk IS the price of the sauce),
+    the gather's first beat, and pass release (a defender mid-swipe at the
+    passer's hip picks the release itself). In-window swipes steal at 0.50
+    base vs 0.08 neutral, +(dfn−handlerSht)·0.0035, hawk +0.08, clamp
+    [0.04, 0.70]; a whiff still means BEATEN (720ms). Both reads surface in
+    the HUD: "TIMED!" pops on any window-hit attempt, either outcome
+    ('timed' event). Drill-mode integration tests prove both end-to-end
+    (timed leaps out-block early hops ≥1.6× across 24 seeds; window swipes
+    strip at the timed rate).
+- **Decision — THE DRIBBLE PACKAGE:** Y alone = SPIN, Y+lateral =
+  BEHIND-THE-BACK, Y+toward-defender = BETWEEN-THE-LEGS (double-tap stays
+  the quick crossover). Each move's startup-end rolls ONE seeded ladder vs
+  the nearest set defender's commitment (ANKLE_TIERS splits of ankleChance):
+  STUN (wobble, 380ms slow) → TRIP (stumbles a step, 620ms) → the FALL
+  (flat, 950ms — the S12 frame is the ladder's floor), each with frames,
+  popups, and PERMIT pools; completed moves burst out the far side. PASS
+  STYLES pick by context with distinct flights: chest; BOUNCE (dives under
+  lane hands — pick chance ×0.45, flight ×1.35, floor-kiss sfx at the
+  midpoint); BEHIND-THE-BACK (target behind the passer's facing).
+- **Decision — FOUR BUTTONS + THE BINDING TABLE:** InputBus grows X and Y
+  (keyboard KeyC/KeyV; pad buttons 2/3 — pad B NARROWED from 1|2 to 1,
+  button 2 is X now). Hoops mapping: A=SHOOT, B=PASS (tap, instant — the
+  old B-hold-turbo dance is gone), X=SPRINT (dedicated), Y=DRIBBLE MOVE;
+  defense A=timed leap, B=swipe, X=sprint slide; START pauses (back=B still
+  costs a swipe mid-match, ADR-034's nuance stands). UIScene's touch
+  overlay grows X/Y on the thumb arc VISIBLE DURING HOOPS ONLY
+  ('mf-hoops-open'/'mf-hoops-closed'). SETUP → CONTROLS rebinds the
+  SEMANTIC actions press-to-capture (the pressed source picks the device:
+  key or pad button), persisted DEVICE-LOCAL ('meteor-falls-controls', the
+  Sound-preference pattern — never save data), reset-to-defaults row; the
+  RPG and the cage both read through the table by construction (every read
+  already goes through held/justPressed/dir). TickInput reshaped to the new
+  surface (aHeld/aPressed/aReleased · bPressed · xHeld · yPressed).
+- **Decision — PRESENTATION + THE SCHOOL:** SPORT_FRAME grows 25 → 39 by
+  APPENDING (indices 0–24 frozen, the bust-sheet precedent): spin ×2 (one
+  back-turned — hair mass over the face columns), behind-back ×2,
+  between-legs ×2, stun ×2 (dizzy stars as pure light after outline), trip,
+  pass anims ×3, release FOLLOW-THROUGH (the gooseneck), landing RECOVERY
+  (knees soft, read off the leap cooldown) — validator pins count + names.
+  CAMERA TOGGLE in the pause menu: SIDE or BEHIND — the pseudo-3D read
+  (perspective floor painted THROUGH behindMap so the lines ARE the
+  projection; depth-scaled side sprites; fixed seat on the attacked rim),
+  persisted device-local ('meteor-falls-cage-cam'). The user asked for TRUE
+  3D models in this mode — that conflicts with ADR-002 (palette-by-
+  construction, zero binary assets) and ADR-020; S12c ships the best
+  pre-rendered pseudo-3D and THIS ENTRY records the decision point: a
+  true-3D cage (a Three.js layer) is its own future prompt if the author
+  calls for it after seeing this one. TUTORIAL: PERMIT'S SCHOOL on first
+  cage visit (skippable — declining sets the flag too; cage_tutored), a
+  drill-mode sim (visitors stand down / run 'shoot'/'moves' scripts) whose
+  8 lessons each advance ON THE DEED: move/sprint → the meter + green
+  release (the prompt teaches the range law: step inside the arc) → the
+  rim finish/dunk meter → all three package moves → two passes → a TIMED
+  block → a window steal → THE GOALTEND WARNING.
+- **Verification:** validator (cage2 section: SPORT_FRAME contract, range/
+  meter/timing pins, the goaltend line, the syllabus) + 213 vitest (range
+  law suite incl. the 80k tape ×2 seeds + the heave construction, meter
+  grades, both timing curves, drill-mode block/steal/goaltend end-to-end,
+  determinism replays on the new input surface); the full ADR-008 gauntlet
+  in docs/QA.md ran live at pump(n, 8.33): the school end-to-end by the
+  bot, one 3v3 to the horn with every new move performed, the camera
+  toggle (shot s12c_camera_behind), the rebind capture (A→KeyJ drove A,
+  persisted, reset restored). Zero console errors. Browser loop untouched;
+  android:apk untouched (no native-shell changes).
+- **Consequences:** any future shot-like mechanic derives its window
+  THROUGH effectiveRange (no floors, ever); new dribble moves append
+  SPORT_FRAME rows + claim a steal window or fail review; new semantic
+  buttons enter through the binding table (never raw key reads); S13's
+  LINKS inherits X/Y availability, the rebind table, and the over-head
+  meter idiom; the BEHIND projection (behindMap) is the house pseudo-3D
+  seam if other minigames want depth.

@@ -30,7 +30,7 @@ import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, type EquipSlot } from '../data/ite
 import { ABILITIES } from '../data/abilities';
 import { journalQuests, currentObjective, objectiveDone, callerEarned } from '../engine/quests';
 import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, vibeHeal } from '../battle/formulas';
-import { INPUT } from '../engine/input';
+import { INPUT, type Btn } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, vars, DEPTH_UI } from '../ui/windows';
 // S4: the list widget + "Offense up by N!" confirm are shared with the shops
@@ -572,7 +572,7 @@ export class MenuScene extends Phaser.Scene {
 
   private async setupPage(): Promise<void> {
     const hint = this.add
-      .bitmapText(96, 66, 'retro', '(M on a keyboard flips it anywhere)', 6)
+      .bitmapText(96, 80, 'retro', '(M on a keyboard flips it anywhere)', 6)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(DIM);
@@ -581,14 +581,95 @@ export class MenuScene extends Phaser.Scene {
       const sel = await this.pick({
         x: 96,
         y: 8,
-        options: [`Sound: ${AUDIO.muted ? 'OFF' : 'ON'}`, 'Back'],
+        options: [`Sound: ${AUDIO.muted ? 'OFF' : 'ON'}`, 'Controls', 'Back'],
         title: 'SETUP',
       });
-      if (sel !== 0) break;
-      AUDIO.toggleMuted();
-      AUDIO.sfx('confirm');
+      if (sel === 0) {
+        AUDIO.toggleMuted();
+        AUDIO.sfx('confirm');
+        continue;
+      }
+      if (sel === 1) {
+        hint.setVisible(false);
+        await this.controlsPage();
+        hint.setVisible(true);
+        continue;
+      }
+      break;
     }
     this.clearPage();
+  }
+
+  /* ================= SETUP → CONTROLS (S12c) =================
+   * Press-to-capture rebinding of the SEMANTIC actions (the InputBus binding
+   * table): pick an action row, then press the physical key OR pad button
+   * that should drive it — the source you press is the device you rebind.
+   * Persisted device-local like the Sound preference (never save data);
+   * the RPG and the cage both read through the table by construction. */
+
+  private async controlsPage(): Promise<void> {
+    const ROLES: Array<{ b: Btn; role: string }> = [
+      { b: 'A', role: 'SHOOT / CONFIRM' },
+      { b: 'B', role: 'PASS / CANCEL' },
+      { b: 'X', role: 'SPRINT' },
+      { b: 'Y', role: 'DRIBBLE MOVE' },
+      { b: 'START', role: 'MENU / PAUSE' },
+    ];
+    const keyName = (code: string): string =>
+      code.replace(/^Key/, '').replace(/^Arrow/, '').replace('ShiftLeft', 'SHIFT').replace('ShiftRight', 'RSHIFT').toUpperCase();
+    for (;;) {
+      const rows = ROLES.map(({ b, role }) => {
+        const keys = INPUT.bindings.keys[b].map(keyName).join('+');
+        const pads = INPUT.bindings.pad[b].map((i) => `P${i}`).join('+');
+        return `${b} ${role}: ${keys} ${pads}`;
+      });
+      const sel = await this.pick({
+        x: 24,
+        y: 8,
+        options: [...rows, 'Reset to defaults', 'Back'],
+        title: 'CONTROLS',
+      });
+      if (sel < 0 || sel === rows.length + 1) break;
+      if (sel === rows.length) {
+        INPUT.resetBindings();
+        AUDIO.sfx('confirm');
+        continue;
+      }
+      await this.captureBinding(ROLES[sel].b, ROLES[sel].role);
+    }
+  }
+
+  /** one capture: the next keydown or fresh pad press rebinds; B-key escape
+   *  is impossible mid-capture (the press is swallowed), so we also accept a
+   *  pointer tap as cancel */
+  private captureBinding(btn: Btn, role: string): Promise<void> {
+    const w = makeWindow(this, 70, 88, 260, 44);
+    const t = this.add
+      .bitmapText(200, 100, 'retro', `Press a key or pad button for\n${btn} — ${role} (tap to cancel)`, 6)
+      .setOrigin(0.5, 0)
+      .setCenterAlign()
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 3);
+    return new Promise((resolve) => {
+      const done = (): void => {
+        this.input.off('pointerdown', cancel);
+        w.destroy();
+        t.destroy();
+        resolve();
+      };
+      const cancel = (): void => {
+        cancelCapture();
+        AUDIO.sfx('cancel');
+        done();
+      };
+      const cancelCapture = INPUT.captureNext((source, code) => {
+        if (source === 'key') INPUT.rebindKey(btn, code as string);
+        else INPUT.rebindPad(btn, code as number);
+        AUDIO.sfx('confirm');
+        done();
+      });
+      this.input.on('pointerdown', cancel);
+    });
   }
 
   /* ================= shared plumbing ================= */
