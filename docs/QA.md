@@ -319,3 +319,24 @@ the resort is complete and standalone ahead of Prompt 28).
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 16 | **S13 LINKS, on device** — one stroke round by touch (aim by d-pad, B cycles the bag, the 3-tap meter readable at arm's length, after-touch mid-flight); the Invitational's first match registered, played, and resumed across an app kill; THE SUNDAY SET handoff with previews | ⬜ | ⬜ | the swing pane + ball-cam must hold 60fps on the par-5s |
+
+## S12d/S13b browser pre-flight — 2026-06-11, THE RESPONSIVENESS LAW (ADR-038)
+
+All legs via the ADR-008 driver, loop slept end to end; shots `.shots/s12d_*`.
+
+| Check | Result |
+|---|---|
+| **The reported bug, root-caused** — both sims' advance() DISCARDED any frame shorter than one 8.333ms quantum, edges included; at 120Hz that is roughly every other frame: half of all shot presses and meter releases silently died. Fixed by the EDGE CARRY (pending edges fold into the next frame's first tick) | ✅ pinned headlessly (press/release/tap inside 4ms frames all land) |
+| **Worst-case live regime** — pump(n, 4.1): EVERY frame sub-quantum. Ten one-frame A presses → ten gathers opened; ten one-frame releases mid-hold → ten jumpers fired | ✅ 10/10 + 10/10 |
+| **The release latch** — INPUT.justReleased() (keyup/touch-lift latched, the ADR-024 mirror); UIScene lifts latch through releaseBtn; HoopsScene reads the bus (prevA bookkeeping deleted); a press+release inside ONE tick releases instantly (the honest quick flick) | ✅ |
+| **THE FINISH METER** — walking (no sprint) inside 165px + A starts the finish; Jay (dnk 37) lays it up under the CYAN band, holds, releases green → **"IN! +1" + scoreboard flash**; a mistimed release → **"NO GOOD."** at the iron; held-through = overfill miss (pinned); AI layups plan through the same window | ✅ live both ways (`s12d_finish_meter`, `s12d_in_read`, `s12d_nogood_read`) |
+| **The make/miss reads** — every bucket pops IN!/+2 FROM DEEP at the rim + board flash; rim-outs/airballs/layup misses pop NO GOOD./AIR. ('miss' events). The "is it counting 3s?" confusion answered in canon: 3v3 street is 1s and 2s — and the deep make now says FROM DEEP! | ✅ |
+| **Golf parity** — GolfSim edge carry (a 4ms-frame tap still starts the meter, pinned); the third tap's verdict reads like the cage's green: **PURE!** inside the window (green sfx), DRAW./FADE. outside; a pure drive on hole 1 left 13y and auto-armed the chip | ✅ live (`s12d_pure_read`) |
+| Console | ✅ zero errors/warnings |
+| `npm test` | ✅ validator (LAYUP_METER + finish-range + read-key pins) + 237 vitest |
+
+### S12d device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 17 | **ADR-038 feel, on device** — on the phone's real refresh rate: twenty quick shot attempts, every press opens the meter and every thumb-lift releases on the spot; five walk-up layups under the cyan band; makes/misses read at the iron without squinting; one golf tee shot taps PURE | ⬜ | ⬜ | this is the fix for the reported feel bug — verify on the SAME device that showed it |

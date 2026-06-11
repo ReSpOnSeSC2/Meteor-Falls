@@ -95,7 +95,9 @@ export class UIScene extends Phaser.Scene {
           INPUT.touchDir.x = 0;
           INPUT.touchDir.y = 0;
         } else if (role) {
-          INPUT.touchBtns.delete(role);
+          // releaseBtn latches the lift (ADR-038) — the meter release lands
+          // on the exact frame the thumb leaves, even sub-frame
+          INPUT.releaseBtn(role);
         }
         this.pointerRoles.delete(p.id);
       };

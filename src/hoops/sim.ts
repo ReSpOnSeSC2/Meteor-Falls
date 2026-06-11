@@ -211,6 +211,8 @@ export type SimEvent =
   | { kind: 'goaltend'; by: number }
   | { kind: 'flub'; by: number }
   | { kind: 'heave'; by: number }
+  /** a shot/finish died — the HUD prints NO GOOD/AIR at the iron (ADR-038) */
+  | { kind: 'miss'; x: number; y: number; air: boolean }
   | { kind: 'violation' }
   | { kind: 'callsForIt'; who: number }
   | { kind: 'quarterEnd'; quarter: number }
@@ -480,6 +482,37 @@ export function dunkWindow(dnk: number, contest: number): number {
   return Math.max(DUNK_METER.LO, Math.min(DUNK_METER.HI, w));
 }
 
+/* ============== THE LAYUP METER (ADR-038 — the forgiving finish) ========= */
+
+/**
+ * Layups run the SAME finish meter as dunks with a GENEROUS window — the
+ * finish is easy to GENERATE (drive at the rim and press A; no sprint gate)
+ * and the TIMING decides it. Green is money; off the window the make
+ * falls away fast and a hand makes everything worse.
+ */
+export const LAYUP_METER = {
+  /** the layup run = the meter's travel */
+  MS: 430,
+  BASE: 0.11,
+  PER_SHT: 0.0008,
+  CONTEST: 0.035,
+  LO: 0.05,
+  HI: 0.17,
+  /** off-window make: p = OFF_P0 − off·OFF_DECAY − contest·OFF_CONTEST */
+  OFF_P0: 0.8,
+  OFF_DECAY: 2.4,
+  OFF_CONTEST: 0.25,
+} as const;
+
+export function layupWindow(sht: number, contest: number): number {
+  const w = LAYUP_METER.BASE + (sht - 50) * LAYUP_METER.PER_SHT - contest * LAYUP_METER.CONTEST;
+  return Math.max(LAYUP_METER.LO, Math.min(LAYUP_METER.HI, w));
+}
+
+/** the rim-finish trigger: this close, MOVING toward a press = the finish
+ *  (no turbo gate — ADR-038 made the finish easy to reach, timed to make) */
+export const FINISH_RANGE_PX = 165;
+
 /** 3v3 street game-over: FIRST TO 21, WIN BY 2 (pure — tests pin it) */
 export function pickupGameOver(us: number, them: number): boolean {
   return Math.max(us, them) >= TUNE.TARGET_3V3 && Math.abs(us - them) >= 2;
@@ -491,7 +524,7 @@ export interface MeterRead {
   /** the window's lower edge (it ENDS at METER.TOP) — live, shrinks as
    *  defenders close and range taxes it */
   lo: number;
-  kind: 'shot' | 'dunk';
+  kind: 'shot' | 'dunk' | 'layup';
 }
 
 /* ======================================================================== */
@@ -625,6 +658,11 @@ export class HoopsSim {
       const frac = a.dunkFrac >= -1 && a.dunkFrac !== -2 ? a.dunkFrac : Math.min(TUNE.METER_CAP, a.stateT / DUNK_METER.MS);
       return { frac, lo: METER.TOP - half * 2, kind: 'dunk' };
     }
+    if (a.state === 'layup') {
+      const half = layupWindow(a.def.rating.sht, this.nearestContest(a));
+      const frac = a.dunkFrac >= -1 && a.dunkFrac !== -2 ? a.dunkFrac : Math.min(TUNE.METER_CAP, a.stateT / LAYUP_METER.MS);
+      return { frac, lo: METER.TOP - half * 2, kind: 'layup' };
+    }
     return null;
   }
 
@@ -703,15 +741,37 @@ export class HoopsSim {
 
   /* ==================== the tick ==================== */
 
-  /** feed real dt; the sim quantizes to SIM_DT ticks (cabinet law) */
+  /** edges seen by advance() that no tick has consumed yet (ADR-038) */
+  private pendA = false;
+  private pendAr = false;
+  private pendB = false;
+  private pendY = false;
+
+  /**
+   * Feed real dt; the sim quantizes to SIM_DT ticks (cabinet law). EDGES ARE
+   * LOSSLESS (ADR-038): a frame shorter than one quantum runs zero ticks —
+   * its press/release edges CARRY to the next frame's first tick instead of
+   * vanishing. At 120Hz (dt ≈ 8.3ms vs the 8.333ms quantum) roughly every
+   * other frame is sub-quantum; before this carry, half of all shot presses
+   * and meter releases were silently dropped. That was the reported bug.
+   */
   advance(dtMs: number, input: TickInput): void {
     this.acc += Math.min(dtMs, 100);
+    this.pendA = this.pendA || input.aPressed;
+    this.pendAr = this.pendAr || input.aReleased;
+    this.pendB = this.pendB || input.bPressed;
+    this.pendY = this.pendY || input.yPressed;
     let first = true;
     while (this.acc >= SIM_DT) {
       this.acc -= SIM_DT;
-      // edges land on the first quantum of the frame; held states on all
-      this.tick(first ? input : { ...input, aPressed: false, aReleased: false, bPressed: false, yPressed: false });
-      first = false;
+      if (first) {
+        // edges land on the first quantum that actually runs; held on all
+        this.tick({ ...input, aPressed: this.pendA, aReleased: this.pendAr, bPressed: this.pendB, yPressed: this.pendY });
+        this.pendA = this.pendAr = this.pendB = this.pendY = false;
+        first = false;
+      } else {
+        this.tick({ ...input, aPressed: false, aReleased: false, bPressed: false, yPressed: false });
+      }
     }
   }
 
@@ -838,10 +898,12 @@ export class HoopsSim {
       }
       return;
     }
-    if (a.state === 'dunk') {
-      // the dunk meter: release A inside the window; held through = overfill
+    if (a.state === 'dunk' || a.state === 'layup') {
+      // the FINISH meter (dunk or layup): release A inside the window;
+      // held all the way through = overfill = the miss you earned
       if (input.aReleased && a.dunkFrac === -2) {
-        a.dunkFrac = Math.min(TUNE.METER_CAP, a.stateT / DUNK_METER.MS);
+        const T = a.state === 'dunk' ? DUNK_METER.MS : LAYUP_METER.MS;
+        a.dunkFrac = Math.min(TUNE.METER_CAP, a.stateT / T);
       }
       return;
     }
@@ -875,14 +937,15 @@ export class HoopsSim {
     // X — SPRINT (dedicated)
     a.turbo = input.xHeld;
 
-    // A — gather into the over-head meter, or the contextual rim finish
+    // A — gather into the over-head meter, or the contextual rim finish.
+    // ADR-038: the finish triggers on plain MOVEMENT near the rim (no
+    // sprint gate) — easy to generate, the meter decides it.
     if (input.aPressed) {
       const rim = this.rimOf(a.team);
       const d = dist(a.x, a.y, rim.x, rim.y);
-      const fast = a.moving && (a.turbo || a.burstT > 0);
-      if (d < 150 && fast) {
+      if (d < FINISH_RANGE_PX && a.moving) {
         if (a.def.rating.dnk >= 40) this.startDunk(a, true);
-        else this.startLayup(a);
+        else this.startLayup(a, true);
         return;
       }
       a.state = 'gather';
@@ -891,6 +954,9 @@ export class HoopsSim {
       a.gatherMs = 0;
       a.planFrac = -1;
       this.emit({ kind: 'sfx', name: 'gather' });
+      // a tap that pressed AND released inside this same tick is a quick
+      // flick — it releases NOW (lossless and honest: near-zero fill)
+      if (input.aReleased) this.releaseJumper(a, SIM_DT / TUNE.METER_MS);
       return;
     }
 
@@ -1190,9 +1256,18 @@ export class HoopsSim {
     this.emit({ kind: 'sfx', name: 'jump' });
   }
 
-  private startLayup(a: Athlete): void {
+  private startLayup(a: Athlete, byUser: boolean): void {
     a.state = 'layup';
     a.stateT = 0;
+    a.dunkFrac = -2;
+    if (byUser) {
+      a.dunkPlan = -1;
+    } else {
+      // AI plans its layup release off sht — same meter, same law (ADR-038)
+      const skill = Math.min(0.93, 0.42 + a.def.rating.sht * 0.0075);
+      const half = layupWindow(a.def.rating.sht, 0);
+      a.dunkPlan = this.rng() < skill ? METER.TOP - this.rng() * half * 1.8 : Math.max(0.5, METER.TOP - half * 2 - 0.03 - this.rng() * 0.18);
+    }
     this.emit({ kind: 'sfx', name: 'jump' });
   }
 
@@ -1378,7 +1453,7 @@ export class HoopsSim {
     // finishing range — everybody takes the rim when it's there
     if (d < 64 && contest < 0.55) {
       if (a.def.rating.dnk >= 52 && r < 0.6) this.startDunk(a, false);
-      else this.startLayup(a);
+      else this.startLayup(a, false);
       return;
     }
     if (forced) {
@@ -1707,12 +1782,21 @@ export class HoopsSim {
       this.emit({ kind: 'sfx', name: 'rim' });
       return;
     }
-    // the layup rolls (close-range, honest — the safe finish keeps no meter)
-    const p = Math.max(0.2, Math.min(0.93, 0.74 + a.def.rating.sht * 0.0015 - contest * 0.32));
+    // THE LAYUP METER (ADR-038): green is money; off the window the make
+    // falls away fast and the contest taxes what's left. Timing decides.
+    const half = layupWindow(a.def.rating.sht, contest);
+    const green = half > 0 && dunkFrac <= METER.TOP && dunkFrac >= METER.TOP - half * 2;
+    if (green) {
+      this.scoreBasket(a.team, 1, rim, true, false, i, 0);
+      return;
+    }
+    const off = dunkFrac > METER.TOP ? TUNE.METER_CAP - METER.TOP : METER.TOP - half * 2 - dunkFrac;
+    const p = Math.max(0, LAYUP_METER.OFF_P0 - off * LAYUP_METER.OFF_DECAY - contest * LAYUP_METER.OFF_CONTEST);
     if (this.rng() < p) {
       this.scoreBasket(a.team, 1, rim, false, false, i, 0);
     } else {
       this.looseBall(rim.x, rim.y, COURT.RIM_Z, (this.rng() - 0.5) * 120, (this.rng() - 0.5) * 100, 90);
+      this.emit({ kind: 'miss', x: rim.x, y: rim.y, air: false });
       this.emit({ kind: 'sfx', name: 'rim' });
     }
   }
@@ -1821,6 +1905,7 @@ export class HoopsSim {
           this.scoreBasket(shooter.team, b.pts, b.rim, b.green, false, b.by, b.d0);
           return;
         case 'rim_out': {
+          this.emit({ kind: 'miss', x: b.rim.x, y: b.rim.y, air: false });
           this.emit({ kind: 'sfx', name: 'rim' });
           if (this.format === '5v5') {
             this.shotMs = TUNE.SHOT_CLOCK_MS; // iron resets the count (street)
@@ -1832,6 +1917,7 @@ export class HoopsSim {
           return;
         }
         case 'air': {
+          this.emit({ kind: 'miss', x: b.x, y: b.y, air: true });
           this.emit({ kind: 'permit', text: 'AIR. THE PIGEONS FELT THAT.' });
           this.looseBall(b.x, b.y, b.z, (b.rim.x - b.x0) * 0.12, (b.rim.y - b.y0) * 0.12, 0);
           return;

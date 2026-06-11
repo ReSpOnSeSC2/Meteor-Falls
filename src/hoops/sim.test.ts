@@ -19,6 +19,8 @@ import {
   ANKLE_TIERS,
   MOVES,
   DUNK_METER,
+  LAYUP_METER,
+  FINISH_RANGE_PX,
   makeRng,
   effectiveRange,
   greenWindow,
@@ -27,6 +29,7 @@ import {
   blockChance,
   stealChance,
   dunkWindow,
+  layupWindow,
   pickupGameOver,
   stuffChance,
   ankleChance,
@@ -131,6 +134,126 @@ describe('the cabinet law: same seed + same inputs = same final score', () => {
     expect(b.t).toBeCloseTo(a.t, 3);
     expect(b.scoreUs).toBe(a.scoreUs);
     expect(b.scoreThem).toBe(a.scoreThem);
+  });
+});
+
+describe('THE RESPONSIVENESS LAW (ADR-038): edges are lossless', () => {
+  function liveSim(): HoopsSim {
+    const sim = new HoopsSim({ format: '3v3', seed: 4, us: five('us').slice(0, 3), them: five('vs').slice(0, 3) });
+    for (let i = 0; i < 130; i++) sim.tick(IDLE_INPUT); // the check settles
+    return sim;
+  }
+
+  it('a press inside a ZERO-TICK frame still starts the gather', () => {
+    const sim = liveSim();
+    // 4ms < one 8.33ms quantum: zero ticks run — the 120Hz half-frame case
+    sim.advance(4, { ...IDLE_INPUT, aHeld: true, aPressed: true });
+    expect(sim.holder()?.state).toBe('play'); // nothing ran yet…
+    sim.advance(5, { ...IDLE_INPUT, aHeld: true });
+    expect(sim.holder()?.state).toBe('gather'); // …the press CARRIED
+  });
+
+  it('a release inside a zero-tick frame still fires the shot', () => {
+    const sim = liveSim();
+    sim.advance(SIM_DT + 0.01, { ...IDLE_INPUT, aHeld: true, aPressed: true });
+    const shooter = sim.holder();
+    expect(shooter?.state).toBe('gather');
+    for (let i = 0; i < 40; i++) sim.tick({ ...IDLE_INPUT, aHeld: true });
+    // the release lands in a sub-quantum frame — it must not vanish
+    sim.advance(4, { ...IDLE_INPUT, aReleased: true });
+    sim.advance(5, IDLE_INPUT);
+    expect(shooter?.state).toBe('rise'); // the jumper left the hand
+  });
+
+  it('a same-tick tap (press+release in one frame) releases instantly', () => {
+    const sim = liveSim();
+    const shooter = sim.holder();
+    sim.advance(SIM_DT + 0.01, { ...IDLE_INPUT, aPressed: true, aReleased: true });
+    expect(shooter?.state).toBe('rise'); // a quick flick, honest near-zero fill
+  });
+});
+
+describe('THE FINISH METER (ADR-038): easy to reach, timed to make', () => {
+  it('plain movement near the rim triggers the finish — no sprint gate', () => {
+    const sim = new HoopsSim({ format: '3v3', seed: 4, us: five('us').slice(0, 3), them: five('vs').slice(0, 3) });
+    for (let i = 0; i < 130; i++) sim.tick(IDLE_INPUT);
+    const h = sim.holder();
+    expect(h).not.toBeNull();
+    if (!h) return;
+    // walk (NOT sprint) toward the shared rim until inside the trigger zone
+    let guard = 0;
+    while (Math.hypot(h.x - 46, h.y - 184) >= FINISH_RANGE_PX - 6 && guard++ < 2000) {
+      sim.tick({ ...IDLE_INPUT, dx: -1 });
+    }
+    sim.tick({ ...IDLE_INPUT, dx: -1, aHeld: true, aPressed: true });
+    // five() test ratings carry dnk 50 ≥ 40 — the finish is a dunk
+    expect(h.state).toBe('dunk');
+  });
+
+  it('the layup window is the forgiving one, clamped, sht-scaled', () => {
+    expect(layupWindow(50, 0)).toBeGreaterThan(dunkWindow(50, 0));
+    expect(layupWindow(90, 0)).toBeGreaterThan(layupWindow(30, 0));
+    expect(layupWindow(99, 0)).toBeLessThanOrEqual(LAYUP_METER.HI);
+    expect(layupWindow(8, 1)).toBeGreaterThanOrEqual(LAYUP_METER.LO);
+  });
+
+  it('a layup released in the green is MONEY, end to end', () => {
+    // a low-dnk five so the finish resolves as a layup (dnk 30 < 40)
+    const low = (tag: string): AthleteDef[] =>
+      Array.from({ length: 3 }, (_, i) => ({
+        key: `athlete_low_${tag}_${i}`,
+        name: `${tag} ${i}`,
+        rating: { spd: 50, sht: 50, dnk: 30, dfn: 50 },
+        archetype: 'balanced',
+      }));
+    let makes = 0;
+    for (let seed = 1; seed <= 6; seed++) {
+      const sim = new HoopsSim({ format: '3v3', seed, drill: true, us: low('us'), them: low('vs') });
+      for (let i = 0; i < 130; i++) sim.tick(IDLE_INPUT);
+      const h = sim.holder();
+      if (!h || h.team !== 0) continue;
+      let guard = 0;
+      while (Math.hypot(h.x - 46, h.y - 184) >= 120 && guard++ < 3000) sim.tick({ ...IDLE_INPUT, dx: -1 });
+      sim.tick({ ...IDLE_INPUT, dx: -1, aHeld: true, aPressed: true });
+      expect(h.state).toBe('layup');
+      // hold through the run; release inside the live window
+      for (let i = 0; i < 200 && h.state === 'layup'; i++) {
+        const m = sim.meterOf(sim.athletes.indexOf(h));
+        if (m && m.frac >= m.lo + (1 - m.lo) * 0.45) {
+          sim.tick({ ...IDLE_INPUT, aReleased: true });
+          break;
+        }
+        sim.tick({ ...IDLE_INPUT, aHeld: true });
+      }
+      for (let i = 0; i < 400 && !sim.events.some((e) => e.kind === 'score' || e.kind === 'miss'); i++) sim.tick(IDLE_INPUT);
+      if (sim.events.some((e) => e.kind === 'score')) makes++;
+      sim.events.length = 0;
+    }
+    expect(makes).toBeGreaterThanOrEqual(5); // green = money (timing decides)
+  });
+
+  it('holding the finish all the way through is the overfill miss', () => {
+    const low: AthleteDef[] = Array.from({ length: 3 }, (_, i) => ({
+      key: `athlete_hold_${i}`,
+      name: `H ${i}`,
+      rating: { spd: 50, sht: 50, dnk: 30, dfn: 50 },
+      archetype: 'balanced',
+    }));
+    const sim = new HoopsSim({ format: '3v3', seed: 2, drill: true, us: low, them: low });
+    for (let i = 0; i < 130; i++) sim.tick(IDLE_INPUT);
+    const h = sim.holder();
+    if (!h) return;
+    let guard = 0;
+    while (Math.hypot(h.x - 46, h.y - 184) >= 120 && guard++ < 3000) sim.tick({ ...IDLE_INPUT, dx: -1 });
+    sim.tick({ ...IDLE_INPUT, dx: -1, aHeld: true, aPressed: true });
+    const log: SimEvent[] = [];
+    for (let i = 0; i < 600; i++) {
+      sim.tick({ ...IDLE_INPUT, aHeld: true }); // never lets go
+      log.push(...sim.events);
+      sim.events.length = 0;
+    }
+    expect(log.some((e) => e.kind === 'miss')).toBe(true);
+    expect(log.some((e) => e.kind === 'score')).toBe(false);
   });
 });
 

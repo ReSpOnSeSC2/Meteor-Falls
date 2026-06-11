@@ -234,6 +234,10 @@ export const LINKS_TEXT = {
   sand: 'DUNE RESTORATION IN PROGRESS.',
   cliff: 'THE ROCK HAS OPINIONS.',
   holedBanner: 'IN.',
+  /* ADR-038: the strike-quality reads — the cage's green, on grass */
+  pure: 'PURE!',
+  pull: 'DRAW.',
+  push: 'FADE.',
   scoreNames: ['ALBATROSS', 'EAGLE', 'BIRDIE', 'PAR', 'BOGEY', 'DOUBLE', 'MORE.'] as const,
   matchWinHole: 'HOLE TO YOU.',
   matchLoseHole: 'HOLE TO {name}.',

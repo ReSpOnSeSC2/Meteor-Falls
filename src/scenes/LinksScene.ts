@@ -286,9 +286,16 @@ export class LinksScene extends Phaser.Scene {
       case 'sfx':
         AUDIO.sfx(e.name);
         break;
-      case 'stroke':
+      case 'stroke': {
         this.showBanner(LINKS_TEXT.strokeLine.replace('{n}', String(e.n)), 700);
+        // the strike read (ADR-038): PURE!/DRAW./FADE. pops at the ball —
+        // the same one-frame verdict the cage gives a green release
+        if (e.mode === 'full') {
+          const tag = e.quality === 'pure' ? LINKS_TEXT.pure : e.quality === 'pull' ? LINKS_TEXT.pull : LINKS_TEXT.push;
+          this.strikePopup(tag, e.quality === 'pure' ? RAMP.GRASS : RAMP.CYAN);
+        }
         break;
+      }
       case 'splash':
         this.burstAt('links_splash');
         this.say(LINKS_TEXT.splash, 2600);
@@ -313,6 +320,16 @@ export class LinksScene extends Phaser.Scene {
     this.burst.setTexture(key, 0).setPosition(this.sim.ball.x, this.sim.ball.y - 4).setVisible(true);
     this.time.delayedCall(110, () => this.burst.setFrame(1));
     this.time.delayedCall(320, () => this.burst.setVisible(false));
+  }
+
+  /** a one-shot verdict popup over the ball (world-space, drifts up) */
+  private strikePopup(text: string, ramp: number): void {
+    const t = this.add
+      .bitmapText(this.sim.ball.x, this.sim.ball.y - 18, 'retro', text, 8)
+      .setOrigin(0.5, 1)
+      .setDepth(60)
+      .setTint(colorOf(px(ramp, 3)));
+    this.tweens.add({ targets: t, y: t.y - 14, alpha: 0, duration: 750, onComplete: () => t.destroy() });
   }
 
   /* ================= hole done / match arithmetic ================= */

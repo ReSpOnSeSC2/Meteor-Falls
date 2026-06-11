@@ -54,7 +54,7 @@ import { AWAKENINGS } from '../src/data/awakenings';
 import { CAST } from '../src/spritegen/characters';
 // S12c: the cage's math + frame contracts are Phaser-free and pinnable
 import { SPORT_FRAME, SPORT_FRAME_COUNT } from '../src/spritegen/athletes';
-import { RANGE, METER, BLOCK_TIMING, STEAL_TIMING, MOVES, effectiveRange, greenWindow, makeChance } from '../src/hoops/sim';
+import { RANGE, METER, BLOCK_TIMING, STEAL_TIMING, MOVES, LAYUP_METER, FINISH_RANGE_PX, effectiveRange, greenWindow, makeChance, dunkWindow, layupWindow } from '../src/hoops/sim';
 import { COURT } from '../src/hoops/court';
 // S13: the links — holes, golfers, rewards, the SUNDAY SET, the golfer sheet
 import { HOLES, CLUBS, COURSE_PAR, expandGrid, terrainAt } from '../src/links/course';
@@ -727,6 +727,14 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
   if (!HOOPS_TEXT.permitGoaltend.some((l) => l.includes('THAT WAS COMING DOWN. WE ALL SAW IT.'))) {
     fail('cage2', `PERMIT's goaltend line is canon: "THAT WAS COMING DOWN. WE ALL SAW IT."`);
   }
+  // ADR-038: the finish meter — layups forgive (wider than dunks at par),
+  // the trigger is plain movement inside the finish range, reads exist
+  if (layupWindow(50, 0) <= dunkWindow(50, 0)) fail('cage2', `the layup window must be the forgiving one (ADR-038)`);
+  if (LAYUP_METER.LO < 0.04 || LAYUP_METER.HI > 0.2) fail('cage2', `LAYUP_METER clamps drifted from spec [0.05, 0.17]-ish bounds`);
+  if (FINISH_RANGE_PX !== 165) fail('cage2', `the finish trigger range is 165px (ADR-038 — easy to generate)`);
+  for (const key of ['inMake', 'deepMake', 'noGood', 'airPopup'] as const) {
+    if (!(key in HOOPS_TEXT) || HOOPS_TEXT[key].length === 0) fail('cage2', `the make/miss reads need HOOPS_TEXT.${key} (ADR-038)`);
+  }
   // the tutorial syllabus exists and ends on the goaltend warning
   for (const key of ['tutTitle', 'tutMove', 'tutMeter', 'tutDunk', 'tutPackage', 'tutPass', 'tutBlock', 'tutSteal', 'tutGoaltend', 'tutDone', 'tutSkip'] as const) {
     if (!(key in HOOPS_TEXT) || HOOPS_TEXT[key].length === 0) fail('cage2', `PERMIT'S SCHOOL needs HOOPS_TEXT.${key}`);
@@ -829,6 +837,10 @@ parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id
   // the §A11.2 line exists and is played straight (the 9th tee at sunset)
   if (!LINKS_TEXT.caddySunset.includes('do not measure')) {
     fail('links', `the caddy's sunset line is the §A11.2 beat — keep it straight`);
+  }
+  // ADR-038: the strike-quality reads (the cage's green, on grass)
+  for (const key of ['pure', 'pull', 'push'] as const) {
+    if (!(key in LINKS_TEXT) || LINKS_TEXT[key].length === 0) fail('links', `the strike reads need LINKS_TEXT.${key} (ADR-038)`);
   }
 }
 

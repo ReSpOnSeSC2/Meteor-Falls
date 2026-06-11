@@ -31,18 +31,21 @@
  * timed block → the window steal → THE GOALTEND WARNING. Each lesson
  * advances on the DEED (sim events), not the word.
  *
- * QA recipe (ADR-008 — S12c): pad muted AND game.loop.sleep() END TO END
- * (S12 lore). Bot legs are logged in docs/QA.md. Key facts for tapes:
- * keyboard defaults A=KeyZ B=KeyX X=KeyC Y=KeyV (rebindable; bots run
- * defaults); the meter releases on KEYUP of A — hold ~52 pumps at 8.33 for
- * a point-blank green (window bottom ≈ 0.78 → 712ms ≈ 86 ticks; watch
- * sim.meterOf for the live window). Tutorial tape: board KeyZ → lesson
- * deeds in order (hold ArrowRight+KeyC 80 · hold KeyZ 90/release · sprint
- * rimward + KeyZ, release KeyZ in the green · KeyV / ArrowDown+KeyV /
- * ArrowRight-at-defender+KeyV · KeyX taps ×2 · timed KeyZ leap on the
- * dummy's release · KeyX tap inside his move startup) — 'mf-hoops-closed'
- * fires with cage_tutored set. 3v3/5v5 legs unchanged from S12 except B no
- * longer turbos (X does) and the meter is over the head.
+ * QA recipe (ADR-008 — S12c, edges per ADR-038): pad muted AND
+ * game.loop.sleep() END TO END (S12 lore). Bot legs are logged in
+ * docs/QA.md. Key facts for tapes: keyboard defaults A=KeyZ B=KeyX X=KeyC
+ * Y=KeyV (rebindable; bots run defaults); the meter releases on KEYUP of A
+ * (latch-backed INPUT.justReleased — one-frame and SUB-QUANTUM taps both
+ * land; verified 10/10 at pump(n, 4.1)); hold and watch sim.meterOf for
+ * the live window. THE FINISH (ADR-038): moving inside 165px of the rim +
+ * A starts a layup (dnk<40) or dunk — KEEP HOLDING and release A inside
+ * the finish meter's band (cyan = layup, gold = dunk); makes read IN!/
+ * FROM DEEP! and misses NO GOOD./AIR. at the iron. Tutorial tape: board
+ * KeyZ → lesson deeds in order (hold ArrowRight+KeyC 80 · hold KeyZ,
+ * release in the green · walk rimward + hold KeyZ, release in the finish
+ * band · KeyV / ArrowDown+KeyV / ArrowRight-at-defender+KeyV · KeyX taps
+ * ×2 · timed KeyZ leap on the dummy's release · KeyX tap inside his move
+ * startup) — 'mf-hoops-closed' fires with cage_tutored set.
  */
 import Phaser from 'phaser';
 import { GS, expForLevel } from '../engine/state';
@@ -144,11 +147,11 @@ export class HoopsScene extends Phaser.Scene {
   private panelObjs: Phaser.GameObjects.GameObject[] = [];
   private popups: Phaser.GameObjects.BitmapText[] = [];
 
-  // input bookkeeping (A-release edge is scene-derived)
-  private prevA = false;
   // announcer picks ride their OWN seeded stream (cabinet law: same seed,
   // same calls — and the sim's rng never moves for a line of commentary)
   private voice: Rng = makeRng(1);
+  // the make read: the scoreboard flashes gold for a beat after a bucket
+  private scoreFlashUntil = 0;
   private elapsed = 0;
 
   // the tutorial driver
@@ -390,18 +393,18 @@ export class HoopsScene extends Phaser.Scene {
       return;
     }
     const d = INPUT.dir();
-    const a = INPUT.held('A');
     const input: TickInput = {
       dx: Math.sign(d.x) as -1 | 0 | 1,
       dy: Math.sign(d.y) as -1 | 0 | 1,
-      aHeld: a,
+      aHeld: INPUT.held('A'),
       aPressed: INPUT.justPressed('A'),
-      aReleased: this.prevA && !a,
+      // the latch-backed release edge (ADR-038) — a thumb-lift lands on the
+      // exact frame it happens, even lifted-and-re-pressed inside one frame
+      aReleased: INPUT.justReleased('A'),
       bPressed: INPUT.justPressed('B'),
       xHeld: INPUT.held('X'),
       yPressed: INPUT.justPressed('Y'),
     };
-    this.prevA = a;
     this.sim.advance(dt, input);
     this.drainEvents();
     if (this.cfg.tutorial) this.tutorialCheck(dt, input);
@@ -488,7 +491,9 @@ export class HoopsScene extends Phaser.Scene {
         if (e.kind === 'sfx' && e.name === 'green') this.tutAdvance();
         break;
       case 2:
-        if (this.tutDunkSeen && ((e.kind === 'score' && e.team === 0) || e.kind === 'flub' || e.kind === 'stuffed')) this.tutAdvance();
+        // any finished METER attempt teaches the lesson — make, flub,
+        // stuffed, or a timed-but-rimmed-out miss (ADR-038)
+        if (this.tutDunkSeen && ((e.kind === 'score' && e.team === 0) || e.kind === 'flub' || e.kind === 'stuffed' || e.kind === 'miss')) this.tutAdvance();
         break;
       case 3:
         if (e.kind === 'move' && team0(e.who)) this.tutMoves.add(e.move);
@@ -557,9 +562,17 @@ export class HoopsScene extends Phaser.Scene {
         if (e.name === 'rim') this.netT = 120;
         break;
       case 'score': {
-        this.popup(e.x, e.y, `+${e.pts}`, e.team === 0 ? RAMP.GOLD : RAMP.MAGENTA);
+        // the make READS (ADR-038): IN! at the iron, deep ones say so, and
+        // the scoreboard flashes — no more squinting at the chain
+        const tag = e.pts === 2 ? `${HOOPS_TEXT.deepMake} +2` : `${HOOPS_TEXT.inMake} +1`;
+        this.popup(e.x, e.y, tag, e.team === 0 ? RAMP.GOLD : RAMP.MAGENTA);
+        this.scoreFlashUntil = this.elapsed + 700;
         const pool = e.green ? HOOPS_TEXT.permitGreen : HOOPS_TEXT.permitScore;
         if (!this.cfg.tutorial) this.say(this.pickVoice(pool));
+        break;
+      }
+      case 'miss': {
+        this.popup(e.x, e.y, e.air ? HOOPS_TEXT.airPopup : HOOPS_TEXT.noGood, RAMP.CYAN);
         break;
       }
       case 'check':
@@ -993,7 +1006,7 @@ export class HoopsScene extends Phaser.Scene {
     this.meterGreen.setVisible(winH >= 1);
     this.meterGreen.setPosition(p.x, p.y - H / 2).setScrollFactor(sf);
     this.meterGreen.height = Math.max(1, winH);
-    this.meterGreen.setFillStyle(colorOf(px(read.kind === 'dunk' ? RAMP.GOLD : RAMP.GRASS, 2)));
+    this.meterGreen.setFillStyle(colorOf(px(read.kind === 'dunk' ? RAMP.GOLD : read.kind === 'layup' ? RAMP.CYAN : RAMP.GRASS, 2)));
     // the fill rises from the bottom; past the top it reads as overfill (red)
     const frac = Math.min(1.12, read.frac);
     const fillH = Math.max(1, Math.min(1, frac) * (H - 2));
@@ -1005,6 +1018,8 @@ export class HoopsScene extends Phaser.Scene {
 
   private renderHud(): void {
     this.hudScore.setText(this.cfg.tutorial ? HOOPS_TEXT.tutTitle : `US ${this.sim.scoreUs} - ${this.sim.scoreThem} THEM`);
+    // the bucket flash: the board pulses paper-bright for a beat on a make
+    this.hudScore.setTint(colorOf(px(this.elapsed < this.scoreFlashUntil ? RAMP.PAPER : RAMP.GOLD, 3)));
     if (this.cfg.tutorial) {
       this.hudClock.setText(this.tutStep >= 0 && this.tutStep < TUT_STEPS.length ? `LESSON ${this.tutStep + 1}/${TUT_STEPS.length}` : '');
       this.hudShot.setText('');

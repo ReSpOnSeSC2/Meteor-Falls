@@ -84,6 +84,16 @@ class InputBus {
    * hitch — can no longer vanish between two update() calls.
    */
   private queued = new Set<Btn>();
+  /**
+   * Release latch (ADR-038 — the press latch's mirror): keyup and touch-lift
+   * transitions land here the moment they happen, so a release followed by a
+   * re-press inside ONE frame still reads as a release (the pump-fake/quick-
+   * pump case the held-set diff can never see). Caveat, documented: holding
+   * TWO keys bound to the same button and lifting one fires a release edge —
+   * the event IS a release of a bound key; nobody plays chords on one action.
+   */
+  private releaseQueued = new Set<Btn>();
+  private released = new Set<Btn>();
   private padIndex: number | null = null;
   private listeners: Listener[] = [];
   gamepadConnected = false;
@@ -113,7 +123,11 @@ class InputBus {
           e.preventDefault();
         }
       });
-      window.addEventListener('keyup', (e) => this.keysDown.delete(e.code));
+      window.addEventListener('keyup', (e) => {
+        this.keysDown.delete(e.code);
+        const b = this.btnForKey(e.code);
+        if (b) this.releaseQueued.add(b); // ADR-038: releases latch like presses
+      });
       window.addEventListener('blur', () => this.keysDown.clear());
       window.addEventListener('gamepadconnected', (e: GamepadEvent) => {
         this.padIndex = e.gamepad.index;
@@ -199,6 +213,13 @@ class InputBus {
     this.queued.add(b);
   }
 
+  /** touch overlay lifts latch through here (ADR-038) — a thumb that taps
+   *  and lifts inside one frame still reads press-then-release */
+  releaseBtn(b: Btn): void {
+    this.touchBtns.delete(b);
+    this.releaseQueued.add(b);
+  }
+
   /**
    * One-frame press from a source with no release event (the Android back
    * button, S8): rides the ADR-024 latch, never enters the held set — so
@@ -257,6 +278,14 @@ class InputBus {
     // fold in latched taps, then clear — each press is visible ≥1 full frame
     this.queued.forEach((b) => this.cur.add(b));
     this.queued.clear();
+    // releases: held-set diffs (covers pads at poll granularity) UNIONED with
+    // the latch — a sub-frame lift, or a lift-and-re-press, never vanishes
+    this.released = new Set<Btn>();
+    this.prev.forEach((b) => {
+      if (!this.cur.has(b)) this.released.add(b);
+    });
+    this.releaseQueued.forEach((b) => this.released.add(b));
+    this.releaseQueued.clear();
   }
 
   /** 8-direction intent: each axis −1, 0, or 1 */
@@ -289,6 +318,13 @@ class InputBus {
 
   justPressed(b: Btn): boolean {
     return this.cur.has(b) && !this.prev.has(b);
+  }
+
+  /** the release edge, latch-backed (ADR-038) — symmetric to justPressed.
+   *  True for exactly one frame per physical release, even when the button
+   *  was re-pressed before the frame closed. */
+  justReleased(b: Btn): boolean {
+    return this.released.has(b);
   }
 }
 

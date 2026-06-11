@@ -2114,3 +2114,86 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   + the tier curve; the golfer sheet is the template for any future
   sport-sheet cut (the head is shared by export, not by copy); Mauna Lani
   stays one ADR away if the author moves the venue.
+
+## ADR-038 — S12d/S13b: THE RESPONSIVENESS LAW — lossless edges, the latch-backed release, the finish meter & the make/miss reads
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user playtest report: "the shoot button doesn't
+  always trigger properly... when I release it doesn't seem to release
+  properly in a responsive manner every time"; "hard to tell when the ball
+  goes in"; "dunks and layups should be easier to generate and then you
+  just have to time them correctly"; golf "must be clean responsive
+  controls with similar skill elements")
+- **Context — the bug was REAL and it was the accumulator:** both minigame
+  sims quantize accumulated dt into fixed 8.333ms ticks (ADR-029). A frame
+  shorter than one quantum ran ZERO ticks — and the old advance() simply
+  DISCARDED that frame's input object, edges and all. At 120Hz a frame is
+  ≈8.3ms, a hair UNDER the quantum, so roughly every other frame ran zero
+  ticks: half of all shot presses and meter releases silently vanished.
+  This is ADR-024's dropped-press class reborn one layer down — the input
+  bus latched edges per FRAME correctly, and the sim then dropped them per
+  QUANTUM. A second hole: the scene derived the release edge from held-set
+  diffs (prevA && !a), which a release-and-re-press inside one frame (the
+  quick pump) can never see.
+- **Decision — edges are LOSSLESS, end to end (the law):**
+  1. **Sim accumulators CARRY edges.** HoopsSim.advance and GolfSim.advance
+     stash any un-consumed press/release edges and fold them into the next
+     frame's FIRST tick. A zero-tick frame can no longer eat an input.
+     Pinned headlessly: a press inside a 4ms frame still opens the gather;
+     a release inside a 4ms frame still fires the shot; a golf tap inside a
+     4ms frame still starts the meter. Verified live at pump(n, 4.1) — the
+     all-sub-quantum regime — 10/10 one-frame presses opened, 10/10
+     one-frame releases fired.
+  2. **InputBus gains the RELEASE latch** (the ADR-024 press latch's
+     mirror): keyup and touch-lift transitions latch into releaseQueued;
+     update() unions them with held-set diffs into `justReleased(b)` — one
+     frame per physical release, even when the button was re-pressed before
+     the frame closed (pump-fakes read true). UIScene's touch release path
+     latches through INPUT.releaseBtn. Documented caveat: chording two keys
+     onto one action and lifting one reads as a release — the event IS a
+     bound-key release; nobody plays chords on one action.
+  3. **Scenes read edges from the bus, never derive them**: HoopsScene uses
+     INPUT.justReleased('A') (prevA bookkeeping deleted). A press+release
+     inside ONE tick (the fastest possible flick) releases the jumper that
+     same tick at near-zero fill — honest and instant, never swallowed.
+  Review smell, stated for every future sim: an accumulator loop that
+  takes an input object must either run ≥1 tick or CARRY the edges.
+- **Decision — THE FINISH METER (dunks AND layups: easy to generate, timed
+  to make):** the rim-finish trigger drops its sprint gate — MOVING inside
+  FINISH_RANGE_PX (165) + A starts the finish (dunks keep the dnk≥40 gate;
+  everyone else lays it up). Layups now run the SAME hold-release finish
+  meter as dunks with the FORGIVING window (LAYUP_METER: base 0.11, sht-
+  scaled, clamp [0.05, 0.17] — validator pins layup > dunk at par): green
+  is MONEY (counts as a green make), off the window the make falls away
+  fast (OFF_P0 0.8 − off·2.4 − contest·0.25), held-all-the-way-through is
+  the overfill miss you earned. AI layups plan their release frac off sht
+  through the same window (the no-rubber-banding law). The meter band
+  colors by kind: GRASS jumper · GOLD dunk · CYAN layup.
+- **Decision — THE MAKE/MISS READS:** every bucket pops "IN! +1" /
+  "FROM DEEP! +2" at the iron and flashes the scoreboard for a beat; every
+  dead shot pops "NO GOOD." (or "AIR.") where it died — sim emits a 'miss'
+  event from rim-outs, airballs, and layup misses. (The user's 3-point
+  question answered itself in canon: 3v3 street scores 1s and 2s — the
+  deep make now SAYS it's the deep make.)
+- **Decision — golf parity (the skill elements ask):** the same lossless-
+  edge carry lands in GolfSim.advance (the 3-tap meter cannot eat taps),
+  and the third tap gains the cage-green verdict: 'stroke' events carry a
+  StrikeQuality — PURE inside the shrinking window (green sfx + "PURE!"
+  popup at the ball), early reads "DRAW.", late reads "FADE." — the same
+  one-frame timing read a green release gives in the cage.
+- **Verification:** 237 vitest + validator (LAYUP_METER pins, finish-range
+  pin, the read keys both games) — new suites: the responsiveness law
+  (zero-tick press/release/tap carry, same-tick flick), the finish meter
+  (no-sprint trigger, window clamps, green-is-money end to end across 6
+  seeds, hold-through = miss), golf edge-carry + PURE/pull verdicts. Live
+  via the ADR-008 driver: 10/10 sub-quantum presses + releases at
+  pump(n, 4.1); a walk-up layup triggered, its cyan meter held and
+  released green → "IN! +1" + board flash, a mistimed one → "NO GOOD."
+  (shots .shots/s12d_*); a pure tee shot on hole 1 read "PURE!" and left
+  13y for the chip. Zero console errors.
+- **Consequences:** every future minigame sim inherits the carry rule (an
+  accumulator that can run zero ticks must stash edges — reviewers reject
+  by this entry); justReleased is the ONLY way scenes read release edges;
+  finish attempts are now a timing read everywhere the rim is, which the
+  tutorial's lesson 3 already teaches (its prompt updated); the QA recipes
+  in HoopsScene's header carry the new finish line.

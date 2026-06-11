@@ -111,6 +111,38 @@ describe('the cabinet law on grass: same seed + same tape = same card', () => {
   });
 });
 
+describe('THE RESPONSIVENESS LAW (ADR-038) on grass', () => {
+  it('a tap inside a ZERO-TICK frame still starts the meter', () => {
+    const sim = new GolfSim(HOLES[0], makeRng(3), { x: 0, y: 0, mph: 0 });
+    sim.advance(4, { ...GOLF_IDLE, aPressed: true }); // sub-quantum: zero ticks
+    expect(sim.phase).toBe('aim'); // nothing ran…
+    sim.advance(5, GOLF_IDLE);
+    expect(sim.phase).toBe('power'); // …the tap CARRIED
+  });
+
+  it('the strike verdict reads PURE inside the window, pull/push outside', () => {
+    const swing = (accTapAt: (t: number, w: number) => boolean): ReturnType<GolfSim['events']['filter']> => {
+      const sim = new GolfSim(HOLES[0], makeRng(3), { x: 0, y: 0, mph: 0 });
+      sim.tick({ ...GOLF_IDLE, aPressed: true });
+      for (let i = 0; i < 400 && sim.meterT < 1; i++) sim.tick(GOLF_IDLE);
+      sim.tick({ ...GOLF_IDLE, aPressed: true }); // power
+      const log: GolfEvent[] = [];
+      for (let i = 0; i < 2000 && sim.phase === 'acc'; i++) {
+        sim.tick(accTapAt(sim.meterT, sim.accWindow()) ? { ...GOLF_IDLE, aPressed: true } : GOLF_IDLE);
+        log.push(...sim.events);
+        sim.events.length = 0;
+      }
+      log.push(...sim.events);
+      sim.events.length = 0;
+      return log.filter((e) => e.kind === 'stroke');
+    };
+    const pure = swing((t, w) => t <= w * 0.4);
+    expect(pure[0]?.kind === 'stroke' && pure[0].quality).toBe('pure');
+    const pull = swing((t, w) => t <= w * 3 && t > w * 1.5); // tapped early, above the window
+    expect(pull[0]?.kind === 'stroke' && pull[0].quality).toBe('pull');
+  });
+});
+
 describe('the 3-tap meter + the swing law', () => {
   it('power bounces (rise → fall → CANCEL); acc falls to the floor', () => {
     const rng = makeRng(3);

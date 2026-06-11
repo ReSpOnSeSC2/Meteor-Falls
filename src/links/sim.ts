@@ -70,8 +70,12 @@ export interface GolfInput {
 
 export const GOLF_IDLE: GolfInput = { dx: 0, dy: 0, aPressed: false, bPressed: false };
 
+/** the third tap's verdict (full swings): the cage-green equivalent —
+ *  PURE inside the window; early pulls, late pushes (ADR-038) */
+export type StrikeQuality = 'pure' | 'pull' | 'push';
+
 export type GolfEvent =
-  | { kind: 'stroke'; n: number; mode: SwingMode }
+  | { kind: 'stroke'; n: number; mode: SwingMode; quality: StrikeQuality }
   | { kind: 'land'; terrain: Terrain }
   | { kind: 'splash' }
   | { kind: 'cliff' }
@@ -169,13 +173,30 @@ export class GolfSim {
     this.events.push(e);
   }
 
+  /** edges seen by advance() that no tick has consumed yet (ADR-038) */
+  private pendA = false;
+  private pendB = false;
+
+  /**
+   * Feed real dt; the sim quantizes to SIM_DT ticks. EDGES ARE LOSSLESS
+   * (ADR-038, the cage's law applied to grass): a sub-quantum frame runs
+   * zero ticks — its taps CARRY to the next frame's first tick. The 3-tap
+   * meter is a timing game; it cannot eat taps.
+   */
   advance(dtMs: number, input: GolfInput): void {
     this.acc_ += Math.min(dtMs, 100);
+    this.pendA = this.pendA || input.aPressed;
+    this.pendB = this.pendB || input.bPressed;
     let first = true;
     while (this.acc_ >= SIM_DT) {
       this.acc_ -= SIM_DT;
-      this.tick(first ? input : { ...input, aPressed: false, bPressed: false });
-      first = false;
+      if (first) {
+        this.tick({ ...input, aPressed: this.pendA, bPressed: this.pendB });
+        this.pendA = this.pendB = false;
+        first = false;
+      } else {
+        this.tick({ ...input, aPressed: false, bPressed: false });
+      }
     }
   }
 
@@ -307,7 +328,11 @@ export class GolfSim {
   private launch(): void {
     this.strokes += 1;
     this.meterT = -1;
-    this.emit({ kind: 'stroke', n: this.strokes, mode: this.mode });
+    // the strike-quality read (the cage-green equivalent): PURE inside the
+    // window — putts and chips are power-only, so a clean tap reads pure
+    const quality: StrikeQuality = this.mode !== 'full' || Math.abs(this.acc) <= this.accWindow() ? 'pure' : this.acc > 0 ? 'pull' : 'push';
+    this.emit({ kind: 'stroke', n: this.strokes, mode: this.mode, quality });
+    if (quality === 'pure' && this.mode === 'full') this.emit({ kind: 'sfx', name: 'green' });
     const lie = LIES[this.lie()];
     if (this.mode === 'putt') {
       const v = GOLF.PUTT_V * this.power;
