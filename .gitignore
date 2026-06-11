@@ -4,3 +4,18 @@ dist/
 .DS_Store
 coverage/
 .shots/
+
+# S8: build artifacts — the debug APK comes from `npm run android:apk` and is
+# never committed; keystores stay out of the repo entirely (docs/RELEASE.md)
+meteor-falls-debug.apk
+*.keystore
+*.jks
+
+# S8: engine-rendered Android art (ADR-002: zero binary assets in the repo) —
+# `npm run art:appart` regenerates these; android:sync runs it automatically
+android/app/src/main/res/mipmap-mdpi/
+android/app/src/main/res/mipmap-hdpi/
+android/app/src/main/res/mipmap-xhdpi/
+android/app/src/main/res/mipmap-xxhdpi/
+android/app/src/main/res/mipmap-xxxhdpi/
+android/app/src/main/res/drawable-nodpi/splash_art.png

@@ -10,13 +10,21 @@
     "preview": "vite preview --host",
     "validate": "vite-node tools/content-validate.ts",
     "test": "npm run validate && vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "art:appart": "vite-node tools/render-appart.ts",
+    "art:castsheet": "vite-node tools/cast-sheet.ts",
+    "android:sync": "npm run build && npm run art:appart && cap sync android",
+    "android:apk": "npm run android:sync && cd android && .\\gradlew assembleDebug && cd .. && node tools/collect-apk.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/core": "^6.2.1",
     "phaser": "^3.87.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.2.1",
     "@types/node": "^25.9.3",
     "typescript": "^5.6.0",
     "vite": "^6.0.0",

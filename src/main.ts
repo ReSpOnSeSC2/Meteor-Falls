@@ -11,6 +11,7 @@ import { SpriteLabScene } from './scenes/SpriteLabScene';
 import { UIScene } from './scenes/UIScene';
 import { INPUT } from './engine/input';
 import { GS, makeHeroState } from './engine/state';
+import { initNativeShell } from './engine/native';
 import { GAME_W, GAME_H } from './spritegen';
 
 const game = new Phaser.Game({
@@ -30,6 +31,10 @@ const game = new Phaser.Game({
   },
   scene: [BootScene, TitleScene, NameEntryScene, SaveSlotsScene, OverworldScene, BattleScene, MenuScene, ShopScene, SpriteLabScene, UIScene],
 });
+
+// S8: Capacitor shell hooks (back=B, audio focus, durable storage). Inert in
+// the plain browser — the dev loop and QA driver never see a difference.
+initNativeShell();
 
 // One semantic input snapshot per frame, before any scene updates — and the
 // §A4.3 playtime clock (S6): it ticks whenever the overworld is alive (active,

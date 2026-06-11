@@ -385,6 +385,20 @@ class AudioSys {
     });
   }
 
+  /**
+   * Audio focus (S8): the Capacitor shell parks the synth when the app loses
+   * the foreground — incoming calls, app switches — and revives it on return.
+   * Same suspend/resume the visibilitychange handler uses; appStateChange
+   * fires in cases where the WebView never flips document.hidden.
+   */
+  focusLost(): void {
+    if (this.ctx) void this.ctx.suspend();
+  }
+
+  focusGained(): void {
+    if (this.ctx && !this.muted && !document.hidden) void this.ctx.resume();
+  }
+
   setMuted(m: boolean): void {
     this.muted = m;
     if (this.master) this.master.gain.value = m ? 0 : 0.9;

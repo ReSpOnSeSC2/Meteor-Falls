@@ -79,6 +79,15 @@ class InputBus {
     this.queued.add(b);
   }
 
+  /**
+   * One-frame press from a source with no release event (the Android back
+   * button, S8): rides the ADR-024 latch, never enters the held set — so
+   * back-as-B can cancel a menu but can never read as B-held running.
+   */
+  tapBtn(b: Btn): void {
+    this.queued.add(b);
+  }
+
   private pad(): Gamepad | null {
     if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
     const pads = navigator.getGamepads();

@@ -69,6 +69,20 @@ export interface CharacterSpec {
 /** kids get the EB treatment by default: blush, shorts, white socks */
 export const isKid = (spec: CharacterSpec): boolean => (spec.build ?? 'kid') !== 'adult';
 
+/**
+ * Hair tone trio (S8): shades 1/2/3 of the hair ramp — except EARTH, which
+ * steps one shade darker (0/1/2). EARTH's mids are the same warm-tan family
+ * as both SKIN ramps, so brown-haired characters rendered bald at game zoom
+ * (user catch — worst on side frames, where no part line or fringe shadow
+ * breaks the blend). EB browns are chocolate, not tan. Any future hair ramp
+ * that shares a skin ramp's hue family must join this rule.
+ */
+export function hairTones(spec: CharacterSpec): { hairB: number; hair: number; hairL: number } {
+  return spec.hair === RAMP.EARTH
+    ? { hairB: px(spec.hair, 0), hair: px(spec.hair, 1), hairL: px(spec.hair, 2) }
+    : { hairB: px(spec.hair, 1), hair: px(spec.hair, 2), hairL: px(spec.hair, 3) };
+}
+
 export const FRAME_W = 24;
 export const FRAME_H = 32;
 
@@ -128,9 +142,7 @@ function headFront(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number, bac
   const skin = px(spec.skin, 2);
   const skinL = px(spec.skin, 3);
   const skinD = px(spec.skin, 1);
-  const hairB = px(spec.hair, 1);
-  const hair = px(spec.hair, 2);
-  const hairL = px(spec.hair, 3);
+  const { hairB, hair, hairL } = hairTones(spec);
   const y0 = m.headTop + bob;
   const x0 = m.headX;
   const w = m.headW;
@@ -342,7 +354,7 @@ function headFront(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number, bac
           break;
         case 'glare': // narrowed, heavy brow
           pm.rect(ex, eyeY + 1, 2, 2, C.outline);
-          pm.hline(ex - 1, eyeY - 1, 4, px(spec.hair, 1));
+          pm.hline(ex - 1, eyeY - 1, 4, hairB);
           break;
       }
     };
@@ -647,9 +659,7 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
   const skin = px(spec.skin, 2);
   const skinL = px(spec.skin, 3);
   const skinD = px(spec.skin, 1);
-  const hairB = px(spec.hair, 1);
-  const hair = px(spec.hair, 2);
-  const hairL = px(spec.hair, 3);
+  const { hairB, hair, hairL } = hairTones(spec);
   const y0 = m.headTop + bob;
   const x0 = m.headX;
   const w = m.headW;
@@ -679,6 +689,28 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
   pm.frame(x0 + 6, y0 + 7, 3, 4, skinD);
   pm.set(x0 + 7, y0 + 8, skinD);
 
+  /**
+   * v6 side hair (S8, user catch: "no hair showing left or right"). Two ramps
+   * used to vanish entirely in profile: INK hair sat flush against the INK-0
+   * outline (Rex, Dorin — read as a thick border), and EARTH hair is one hue
+   * off SKIN (Milo, Mom, Ana, Vivi — read as bald). The fix is structural,
+   * three tones on every style: a LIT arc on the back-of-head curve (light is
+   * top-left and a right-facing head turns its back to it), shade-2 mass, and
+   * a shade-1 HAIRLINE wherever hair meets skin. Plus EB coverage truths:
+   * short hair bands across the temple, hair tucks over the ear's front
+   * corner, and a bob curtain hides the ear.
+   */
+  /** back-of-head mass: lit back edge on the upper arc, hairline at the face */
+  const napeMass = (r0: number, r1: number, wd: number): void => {
+    for (let r = r0; r <= r1; r++) {
+      const bx = x0 + spans[r][0];
+      pm.rect(bx, y0 + r, wd, 1, hair);
+      pm.set(bx, y0 + r, r <= r0 + 2 ? hairL : hair); // lit silhouette edge
+      pm.set(bx + wd - 1, y0 + r, hairB); // hairline seam vs the skin
+    }
+    // nape tuft pokes out where the skull steps in — hair over the collar
+    pm.hline(x0 + spans[r1 + 1][0], y0 + r1 + 1, 2, hairB);
+  };
   const hatted = spec.hat?.kind === 'cap';
   if (hatted && spec.hat) {
     const cap = px(spec.hat.ramp, 2);
@@ -691,14 +723,16 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
     // brim forward over the brow
     pm.hline(x0 + w - 3, y0 + 5, 7, capL);
     pm.hline(x0 + w - 3, y0 + 6, 7, capD);
-    // the back of the head under the cap is HAIR, not scalp (user catch:
-    // "he looks bald from the side") — same mass the bare styles get
+    // the head under the cap is HAIR, not scalp — and it must READ as hair:
+    // nape mass with lit edge + a temple band running under the cap to the ear
     if (spec.hairStyle === 'short' || spec.hairStyle === 'sidepart' || spec.hairStyle === 'bob') {
-      for (let r = 5; r <= last - 2; r++) pm.rect(x0 + spans[r][0], y0 + r, 4, 1, hair);
-      pm.vline(x0 + spans[6][0], y0 + 6, last - 7, hairB); // depth seam
-      pm.set(x0 + spans[last - 1][0] + 1, yBot - 1, hairB); // nape point
+      napeMass(5, last - 2, 4);
+      pm.hline(x0 + spans[5][0] + 4, y0 + 5, 4, hair); // under the band
+      pm.hline(x0 + 5, y0 + 6, 3, hairB); // tapering to the ear top
+      pm.set(x0 + 8, y0 + 7, hairB); // tucked over the ear's front corner
     } else if (spec.hairStyle === 'gray') {
       for (let r = 5; r <= 8; r++) pm.rect(x0 + spans[r][0], y0 + r, 3, 1, hair);
+      pm.set(x0 + spans[5][0], y0 + 5, hairL); // lit edge — INK gray vs outline
       pm.set(x0 + spans[8][0] + 1, y0 + 8, hairB);
     }
   } else {
@@ -707,25 +741,38 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
       case 'sidepart': {
         crown(5, hair);
         pm.hline(x0 + spans[0][0] + 1, y0, 3, hairL);
-        // back-of-head mass tapering to the nape
-        for (let r = 5; r <= last - 2; r++) pm.rect(x0 + spans[r][0], y0 + r, 4, 1, hair);
-        pm.vline(x0 + spans[6][0], y0 + 6, last - 7, hairB); // depth seam
-        pm.set(x0 + spans[last - 1][0] + 1, yBot - 1, hairB); // nape point
-        // fringe over the brow
+        pm.hline(x0 + spans[1][0] + 1, y0 + 1, 2, hairL);
+        napeMass(5, last - 2, 4);
+        // the temple row: crown connects to the fringe — no bald gap
+        pm.hline(x0 + spans[5][0], y0 + 5, w - spans[5][0] - 3, hair);
+        pm.hline(x0 + 4, y0 + 6, 2, hair); // temple wedge toward the ear
+        pm.set(x0 + 8, y0 + 7, hairB); // tucked over the ear's front corner
+        // fringe over the brow, hairline shading underneath
         pm.hline(x0 + w - 7, y0 + 5, 5, hair);
         if (spec.hairStyle === 'sidepart') {
           pm.hline(x0 + w - 8, y0 + 6, 4, hairB); // swoop underside
           pm.set(x0 + w - 2, y0 + 4, hair); // flick
+        } else {
+          pm.hline(x0 + w - 6, y0 + 6, 2, hairB); // fringe underside
         }
         break;
       }
       case 'bob': {
         crown(6, hair);
         pm.hline(x0 + spans[0][0] + 1, y0, 3, hairL);
+        pm.hline(x0 + spans[1][0] + 1, y0 + 1, 2, hairL);
         // back curtain falling past the nape, curling forward
-        for (let r = 3; r <= Math.min(11, last); r++) pm.rect(x0 + spans[r][0] - 1, y0 + r, 5, 1, hair);
-        pm.hline(x0 + spans[Math.min(11, last)][0], y0 + Math.min(11, last), 4, hairB); // shaded tip
+        for (let r = 3; r <= Math.min(11, last); r++) {
+          const bx = x0 + spans[r][0] - 1;
+          pm.rect(bx, y0 + r, 6, 1, hair);
+          pm.set(bx, y0 + r, r <= 6 ? hairL : hair); // lit back arc
+        }
+        // the curtain drapes over the ear (EB bobs hide it; lobe peeks below)
+        pm.rect(x0 + 5, y0 + 7, 3, 3, hair);
+        pm.vline(x0 + 8, y0 + 7, 3, hairB); // hairline down the cheek
+        pm.hline(x0 + spans[Math.min(11, last)][0] - 1, y0 + Math.min(11, last), 5, hairB); // shaded tip
         pm.hline(x0 + w - 7, y0 + 5, 5, hair); // fringe
+        pm.hline(x0 + w - 6, y0 + 6, 2, hairB); // fringe underside
         pm.set(x0 + w - 6, y0 + 6, hair); // front lock at the cheek
         pm.set(x0 + w - 6, y0 + 7, hairB);
         break;
@@ -733,18 +780,26 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
       case 'gray': {
         // receded in profile: shine on the crown, the horseshoe at the back
         pm.set(x0 + spans[0][0] + 2, y0 + 1, skinL);
-        for (let r = 3; r <= last - 3; r++) pm.rect(x0 + spans[r][0], y0 + r, 3, 1, hair);
+        for (let r = 3; r <= last - 3; r++) {
+          pm.rect(x0 + spans[r][0], y0 + r, 3, 1, hair);
+          pm.set(x0 + spans[r][0] + 2, y0 + r, r > 4 ? hairB : hair); // hairline
+        }
         pm.set(x0 + spans[4][0] + 1, y0 + 4, hairL);
         pm.set(x0 + spans[last - 2][0] + 1, yBot - 2, hairB); // nape
         break;
       }
       case 'topknot': {
-        crown(4, hairB);
+        // pulled-back hair in the mid tone — shade-1 alone melts into the
+        // outline on INK-haired Dorin
+        crown(4, hair);
+        pm.hline(x0 + spans[0][0] + 1, y0, 3, hairL); // lit top arc
+        pm.hline(x0 + spans[3][0] + 6, y0 + 3, spans[3][1] - 6, hairB); // hairline at the brow
         pm.hline(x0 + 3, y0 - 3, 3, hair); // bun rides toward the back
         pm.hline(x0 + 2, y0 - 2, 5, hair);
         pm.hline(x0 + 3, y0 - 1, 3, hairB); // tie
         pm.set(x0 + 3, y0 - 3, hairL);
         pm.rect(x0 + spans[4][0], y0 + 4, 3, 4, hairB); // shaved nape shadow
+        pm.set(x0 + spans[4][0], y0 + 4, hair); // lit step off the crown
         break;
       }
       case 'none':
@@ -782,7 +837,7 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
       break;
     case 'glare':
       pm.rect(ex, eyeY + 1, 2, 2, C.outline);
-      pm.hline(ex - 1, eyeY - 1, 4, px(spec.hair, 1));
+      pm.hline(ex - 1, eyeY - 1, 4, hairB);
       break;
   }
   if (spec.glasses) {
@@ -1194,10 +1249,12 @@ export function generateAngelFrames(spec?: CharacterSpec): Pixmap[] {
     pm.set(3, 6 + y, skinD);
     pm.set(8, 6 + y, skinD);
 
-    // hair + signature, derived from the hero's own spec (S7c)
+    // hair + signature, derived from the hero's own spec (S7c) — the S8
+    // hairTones shift carries over so brown-haired angels read too
     if (spec) {
-      const hair = px(spec.hair, 1);
-      const hairMid = px(spec.hair, 2);
+      const t = hairTones(spec);
+      const hair = t.hairB;
+      const hairMid = t.hair;
       if (spec.hat?.kind === 'cap') {
         // the cap stays on. of course it does.
         const cap = px(spec.hat.ramp, 2);
@@ -1208,7 +1265,7 @@ export function generateAngelFrames(spec?: CharacterSpec): Pixmap[] {
       } else {
         pm.hline(4, 3 + y, 4, hairMid);
         pm.hline(3, 4 + y, 6, hairMid);
-        pm.set(4, 3 + y, px(spec.hair, 2));
+        pm.set(4, 3 + y, t.hairL);
         if (spec.hairStyle === 'bob') {
           pm.vline(3, 5 + y, 2, hair); // little curtains
           pm.vline(8, 5 + y, 2, hair);

@@ -956,3 +956,122 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   input with `everyFrame`, never with Clock timers. S8's on-device QA must
   re-verify feel on a real >60Hz phone and a Bluetooth pad — this failure
   mode is invisible on 60Hz dev monitors by construction.
+
+## ADR-025 — S8 side-profile hair: hairTones shade rule + v6 side coverage
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user catch: "when characters turn to the side they
+  don't have any hair showing left or right")
+- **Context:** Two whole hair-ramp families vanished in profile. INK hair
+  (Rex, Dorin, the Smilers) rendered shade-1/2 flush against the universal
+  INK-0 outline - the back-of-head mass ADR-023 added read as a thick border,
+  so capped Rex still looked bald from the side. EARTH hair (Milo, Mom, Ana,
+  Vivi, quarterMan, smilerB) is the same warm-tan family as both SKIN ramps
+  (EARTH-2 #c08c58 vs SKIN-2 #f0b080) - bald from EVERY facing, worst on the
+  side where no part line or fringe shadow breaks the blend. Colorimetric
+  auto-detection was tried and rejected: BLOND sits numerically CLOSER to
+  SKIN than EARTH does yet reads fine (yellow chroma carries it), so a
+  luminance threshold cannot separate the bad pair from the good ones.
+- **Decision:**
+  - **`hairTones(spec)` (characters.ts)** is now the only source of hair
+    shades: trio 1/2/3 of the hair ramp - except **EARTH, which steps one
+    shade darker (0/1/2)** by explicit rule. EB browns are chocolate, not
+    tan. Any future hair ramp sharing a skin ramp's hue family must join the
+    rule. All sites converted (headFront, headSide, glare brows, angels);
+    `px(spec.hair, n)` literals outside hairTones are a review smell now.
+  - **v6 side construction**, three tones on every style: a LIT arc on the
+    back-of-head curve (light is top-left; a right-facing head turns its
+    back to it - this is what separates INK hair from the INK-0 outline), a
+    shade-2 mass, and a **shade-1 HAIRLINE wherever hair meets skin**. Plus
+    the EB coverage truths the old pass skipped: short/sidepart band across
+    the temple row (the bald gap between crown and fringe is gone), hair
+    tucks over the ear's front corner, capped heads grow a temple band under
+    the cap band plus a nape tuft, and the bob curtain widened to drape the
+    ear (lobe peeks below). Topknot crowns draw in shade-2 with a lit arc
+    (shade-1 alone melted into Dorin's outline).
+  - **`InputBus` untouched**; frame sizes, sheet order, metrics, detail
+    hooks all per ADR-009/021/022 - this is a paint-only pass inside the
+    fixed canvas.
+  - **Review surface:** `npm run art:castsheet` (tools/cast-sheet.ts) renders
+    .shots/cast_side.png (all 24, grass + void), cast_leads.png (walk
+    frames), cast_front_side.png via a new zero-dependency PNG writer
+    (tools/png.ts) - the out-of-game half of the .shots workflow, also used
+    by the S8 icon exporter.
+- **Verification:** 12x contact sheets show all 24 cast members with legible
+  hair (or intentional recession) from the side on grass AND void; in-game
+  shots both facings (.shots/s8_ingame_side_*.png); validator + 107 vitest
+  green; saves untouched.
+- **Consequences:** chapter casts inherit readable profiles for free;
+  recoloring a character means picking a ramp, never hand-balancing shades;
+  if a sprite ramp ever needs a custom trio, extend hairTones - do not
+  scatter px() calls.
+
+## ADR-026 — S8: Capacitor 6 shell - wrap, never fork (Bible Prompt 41 adapted)
+
+- **Date:** 2026-06-11
+- **Status:** Accepted
+- **Context:** §B1 mandates Capacitor 6 -> Android APK with landscape lock,
+  immersive fullscreen, safe-area-aware touch UI, keep-awake, audio focus,
+  back-button=B, durable saves, engine-generated icon/splash (ADR-002: zero
+  hand-drawn binaries). ADR-024 made input the release gate: 90/120Hz
+  WebViews are the regime where timer polls dropped presses. The browser dev
+  loop + ADR-008 QA driver must stay untouched.
+- **Decision:**
+  - **One bundle, runtime guards.** capacitor.config.ts (appId
+    `com.meteorfalls.game`, webDir dist) wraps the SAME vite build the
+    browser runs; `npm run android:apk` = build -> validate -> sync ->
+    assembleDebug -> meteor-falls-debug.apk at the repo root
+    (tools/collect-apk.mjs). No build forks, no env-specific bundles.
+  - **Native shell is plugin-light:** manifest `sensorLandscape`;
+    MainActivity owns FLAG_KEEP_SCREEN_ON (keep-awake = whole session),
+    WindowInsetsControllerCompat immersive (re-applied on focus regain), and
+    LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES so env(safe-area-inset-*)
+    carries real values. The only plugin is @capacitor/app.
+  - **`src/engine/native.ts` is the single JS seam:** back button ->
+    **`INPUT.tapBtn('B')`** - a new InputBus method that latches an
+    edge-only one-frame press (rides the ADR-024 queue, never enters the
+    held set, so back can cancel but can never read as B-held running);
+    appStateChange -> `AUDIO.focusLost()/focusGained()` (new AudioSys
+    methods sharing the ADR-006 suspend path - covers calls where the
+    WebView never flips document.hidden); `navigator.storage.persist()`
+    flags the ADR-018 localStorage slot family durable. In a plain browser
+    every hook degrades to a no-op.
+  - **Insets in game pixels:** native.ts measures env() via a probe element
+    and `gameInsets()` maps only the overlap that reaches INTO the
+    FIT-letterboxed canvas; UIScene.layoutControls() anchors the d-pad/A/B/
+    START cluster inside them and re-lays-out on scale RESIZE. Zero insets
+    => byte-identical pre-S8 layout (verified: hit zones reduce to the old
+    literals).
+  - **Saves stay v2, durability stance explicit:** WebView localStorage
+    survives app UPDATES by Android policy (uninstall wipes - documented in
+    RELEASE.md); persist() guards eviction. The §B1 IndexedDB driver remains
+    the follow-up and lands behind ADR-018's SaveStorage as a driver swap,
+    not a rewrite.
+  - **Icon + splash FROM the engine:** tools/render-appart.ts (`npm run
+    art:appart`) renders `drawAppIcon` (a square composition - the raw title
+    formula does not survive 24px; legacy icons are ONE 24px scene integer-
+    upscaled x2..x8, adaptive foreground re-aims the meteor into the safe
+    zone) and the real title composition (scene + logo, x2) as a
+    drawable-nodpi layer-list splash - `gravity=center`, so bitmap-stretch
+    distortion is impossible. All 13 Capacitor template assets deleted;
+    adaptive/splash backdrop = palette NIGHT-0. drawTitleArt star/twinkle
+    counts now scale with area (90/6 at the canonical 400x225 - title screen
+    pixel-identical). The rendered PNGs are GIT-IGNORED (ADR-002: zero binary
+    assets in the repo) - `android:sync` regenerates them on every build, so
+    the generator is the committed artifact, exactly like every sprite.
+  - **Toolchain pinned & documented** (docs/RELEASE.md): Capacitor 6.2.x,
+    Gradle/AGP 8.2.1, SDK 34 (min 22), build-tools 34.0.0, JDK 17. The S8
+    machine was bootstrapped from nothing into %LOCALAPPDATA% with the exact
+    commands recorded; keystores are documented, git-ignored, never
+    committed. No Play-Store work (Prompt 44).
+  - **QA gate formalized in docs/QA.md:** S8 browser pre-flight ran the
+    ADR-024 regime (pump @8.33ms, one-frame taps) over boot, full ADR-013
+    name entry, 70-press dialogue mash, START menu, and the tapBtn back
+    path - all green. The 8-row on-device table (touch + BT pad columns) is
+    the release sign-off; Chapter-1-twice (touch-only, pad-only) is the S8
+    done-when and stays open until run on the phone.
+- **Consequences:** phone iteration is `npm run android:apk` + adb install;
+  web iteration never notices Capacitor exists. S9+ UIs inherit insets and
+  back=B for free. Prompt 42 profiles inside this shell; Prompt 44 adds
+  signing/AAB on top of RELEASE.md. The audit chain stays honest: any future
+  native concern enters through native.ts or MainActivity, nowhere else.

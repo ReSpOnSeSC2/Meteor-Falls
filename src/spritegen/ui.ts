@@ -147,21 +147,30 @@ export function drawPhoneIcon(): Pixmap {
 /* ---------------------------------------------------------------- */
 /* Title screen painting: the meteor streaking over Otterbrook        */
 
-export function drawTitleArt(w: number, h: number): Pixmap {
+export function drawTitleArt(
+  w: number,
+  h: number,
+  // S8: callers may re-aim the meteor (the icon exporter did until it got its
+  // own square composition, drawAppIcon); the title screen never passes opts
+  // and is pixel-identical
+  opts: { meteorX?: number; meteorY?: number } = {},
+): Pixmap {
   const pm = new Pixmap(w, h);
   const rng = mulberry32(1995);
   // night sky bands
   pm.rect(0, 0, w, h, px(RAMP.NIGHT, 0));
   pm.rect(0, Math.floor(h * 0.45), w, h, px(RAMP.NIGHT, 1));
   pm.rect(0, Math.floor(h * 0.7), w, h, px(RAMP.NIGHT, 2));
-  // stars
-  for (let i = 0; i < 90; i++) {
+  // stars — density scales with area (90 at the canonical 400×225)
+  const stars = Math.round((w * h) / 1000);
+  for (let i = 0; i < stars; i++) {
     const sx = Math.floor(rng() * w);
     const sy = Math.floor(rng() * h * 0.6);
     pm.set(sx, sy, rng() > 0.8 ? C.white : px(RAMP.NIGHT, 3));
   }
-  // a few twinkles
-  for (let i = 0; i < 6; i++) {
+  // a few twinkles (6 at the canonical size)
+  const twinkles = Math.max(1, Math.round((w * h) / 15000));
+  for (let i = 0; i < twinkles; i++) {
     const sx = 10 + Math.floor(rng() * (w - 20));
     const sy = 6 + Math.floor(rng() * h * 0.4);
     pm.set(sx, sy, C.white);
@@ -171,8 +180,8 @@ export function drawTitleArt(w: number, h: number): Pixmap {
     pm.set(sx, sy + 1, px(RAMP.CYAN, 3));
   }
   // THE METEOR — streaking down-right toward the hill
-  const mx = Math.floor(w * 0.68);
-  const my = Math.floor(h * 0.3);
+  const mx = Math.floor(w * (opts.meteorX ?? 0.68));
+  const my = Math.floor(h * (opts.meteorY ?? 0.3));
   for (let t = 0; t < 70; t++) {
     const tx = mx - t * 2;
     const ty = my - t;
@@ -208,6 +217,56 @@ export function drawTitleArt(w: number, h: number): Pixmap {
   // crash glow on the hill
   pm.ellipse(Math.floor(w * 0.78), Math.floor(h * 0.74), 10, 4, px(RAMP.ORANGE, 1));
   pm.ellipse(Math.floor(w * 0.78), Math.floor(h * 0.74), 5, 2, px(RAMP.GOLD, 2));
+  return pm;
+}
+
+/**
+ * S8 app icon: the meteor over Otterbrook, composed for a tiny square — the
+ * raw title formula doesn't survive 24px (its trail exits the canvas and the
+ * crash glow swallows the frame). Same engine vocabulary, palette-pure.
+ * `centered` aims the meteor at the adaptive-icon safe zone (launcher masks
+ * crop up to ~20% per side); the legacy icon keeps the down-right streak.
+ */
+export function drawAppIcon(s: number, centered = false): Pixmap {
+  const pm = new Pixmap(s, s);
+  const rng = mulberry32(1995);
+  const u = (f: number): number => Math.round(s * f);
+  // night sky bands
+  pm.rect(0, 0, s, s, px(RAMP.NIGHT, 0));
+  pm.rect(0, u(0.58), s, s, px(RAMP.NIGHT, 1));
+  pm.rect(0, u(0.82), s, s, px(RAMP.NIGHT, 2));
+  // a handful of stars, clear of the streak's lane
+  for (let i = 0; i < 7; i++) {
+    const sx = Math.floor(rng() * s);
+    const sy = Math.floor(rng() * s * 0.5);
+    pm.set(sx, sy, i % 3 === 0 ? C.white : px(RAMP.NIGHT, 3));
+  }
+  // hill silhouette rising to the right
+  for (let x = u(0.3); x < s; x++) {
+    const ht = Math.floor(s * 0.8 - Math.sin(((x - s * 0.3) / (s * 0.7)) * Math.PI * 0.9) * s * 0.13);
+    for (let y = ht; y < s; y++) pm.set(x, y, px(RAMP.NIGHT, 1));
+  }
+  // one sleeping rooftop, one lit window (someone heard the roar)
+  pm.rect(1, u(0.78), u(0.2), s - u(0.78), px(RAMP.NIGHT, 0));
+  pm.hline(1, u(0.78), u(0.2), px(RAMP.NIGHT, 2));
+  pm.set(2 + u(0.06), u(0.78) + 2, px(RAMP.GOLD, 2));
+  // THE METEOR — head low enough to read, 45° trail to the corner
+  const hx = centered ? u(0.5) : u(0.62);
+  const hy = centered ? u(0.42) : u(0.38);
+  for (let t = 1; t < s; t++) {
+    const tx = hx - t;
+    const ty = hy - t;
+    if (tx < -1 || ty < -1) break;
+    const c = t < u(0.12) ? px(RAMP.GOLD, 3) : t < u(0.3) ? px(RAMP.ORANGE, 2) : px(RAMP.ORANGE, 1);
+    pm.set(tx, ty, c);
+    pm.set(tx + 1, ty, c);
+  }
+  const r = Math.max(2, u(0.09));
+  pm.ellipse(hx, hy, r, r, px(RAMP.GOLD, 3));
+  pm.ellipse(hx + 1, hy, Math.max(1, r - 1), Math.max(1, r - 1), C.white);
+  // crash glow tucked on the hillside
+  pm.ellipse(u(0.72), u(0.86), u(0.14), u(0.05), px(RAMP.ORANGE, 1));
+  pm.ellipse(u(0.72), u(0.86), u(0.07), Math.max(1, u(0.02)), px(RAMP.GOLD, 2));
   return pm;
 }
 
