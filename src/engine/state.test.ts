@@ -46,7 +46,7 @@ describe('per-hero bags & equipment (S3 / Prompt 19)', () => {
     expect(GS.hasItem('hand_me_down_pan')).toBe(true);
   });
 
-  it('wielder tags are law: Rex cannot equip the pan, Mia cannot swing the bat (§A8)', () => {
+  it('wielder tags are law: Jay cannot equip the pan, Mia cannot swing the bat (§A8)', () => {
     GS.addItem('hand_me_down_pan', 'faye');
     expect(GS.equipItem('rex', 'hand_me_down_pan')).toBe('not-yours');
     expect(GS.equipItem('faye', 'cracked_bat')).toBe('not-yours');
@@ -55,7 +55,7 @@ describe('per-hero bags & equipment (S3 / Prompt 19)', () => {
   });
 
   it("equip-from-anyone's-bag moves the item into the equipper's bag", () => {
-    GS.addItem('tball_bat', 'faye'); // Mia is carrying Rex's new bat
+    GS.addItem('tball_bat', 'faye'); // Mia is carrying Jay's new bat
     expect(GS.equipItem('rex', 'tball_bat')).toBe('ok');
     expect(GS.bagOf('rex')).toContain('tball_bat');
     expect(GS.bagOf('faye')).not.toContain('tball_bat');

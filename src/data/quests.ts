@@ -1,5 +1,5 @@
 /**
- * Side quests — GAME_BIBLE §A10 #1–3 (S9, Bible Prompt 26 + Prompt 11 shape).
+ * Side quests — GAME_BIBLE §A10 #1–4 (S9–S10, Bible Prompt 26 + Prompt 11 shape).
  * Every quest is a flag-driven state machine: startFlag arms it, each
  * objective's flag marks a completed step (in journal order), doneFlag ends
  * it. The CALLER record is the finale's fuel (§A6 Ch.8) — completing the
@@ -80,6 +80,30 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         name: 'Ana & Vivi',
         quote: "BOTH of us on one phone! The secret ingredient was you all along— okay, it's still lemons. TAKE THE LEMONS!",
         effect: { kind: 'heal', power: 400 },
+      },
+    }),
+
+    /* ---- §A10 #4 — beat the Brickton arcade high score (replayable) ----
+     * The score to beat is the Manager's "MGR" row (canon since the
+     * locked_arcade2 attract gag; S2 gave MGR a face). The quest completes
+     * ONCE; the ARCADE LEGEND cabinet stays endlessly replayable from any
+     * save — the score table is the v4 save field, not quest state. */
+    Q({
+      id: 'arcade_legend',
+      name: 'Arcade Legend',
+      chapter: 1,
+      giver: 'arcade_owner',
+      startFlag: 'q_arcade',
+      objectives: [
+        { id: 'beat_mgr', text: 'Knock "MGR" off the top of the ARCADE LEGEND machine at STARPORT II.', flag: 'q_arcade_beat' },
+        { id: 'claim', text: 'Tell Sal the big board has a new name on it.', flag: 'q_arcade_claimed' },
+      ],
+      rewardItem: 'champion_jacket',
+      doneFlag: 'q_arcade_done',
+      caller: {
+        name: 'Sal',
+        quote: 'Kid! Board update: SAVING THE WORLD — first place, all-time. I keep score, I would know. Send it EVERYTHING!',
+        effect: { kind: 'damage', power: 425 },
       },
     }),
   ].map((q) => [q.id, q]),

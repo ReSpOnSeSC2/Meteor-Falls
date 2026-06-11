@@ -12,14 +12,16 @@ import {
   generateGlintFrames,
   generateAngelFrames,
 } from './characters';
+import { generateBustFrames, drawThoughtFood, drawHexPip } from './busts';
 import {
-  drawCrankyMailbox,
-  drawRunawayLawnmower,
-  drawCoilyCicada,
-  drawBlazerSmiler,
-  drawPigeonGang,
-  drawHillSlugDeluxe,
-  drawTitanicTick,
+  generateBattlerFrames,
+  battlerSheetKey,
+  bustSheetKey,
+  type BattlerLook,
+  type WearTier,
+} from './battlers';
+import {
+  ENEMY_BATTLE_ART,
   drawCicadaMini,
   drawSlugMini,
   drawMailboxMini,
@@ -45,6 +47,7 @@ import {
   drawBusSign,
   drawDoormat,
   drawStairs,
+  drawInteriorDoor,
   drawHouse,
   drawCityBuilding,
   drawPayphone,
@@ -83,7 +86,18 @@ import {
   drawPawPrints,
   drawGiftBox,
   drawGiftBoxOpen,
+  drawArcadeCabinet,
+  drawLegendCabinet,
 } from './tiles';
+import {
+  drawArcadeShip,
+  drawArcadeMoth,
+  drawArcadeRock,
+  drawArcadeSaucer,
+  drawArcadeCorndog,
+  drawArcadeBolt,
+  drawScanline,
+} from './arcade';
 import {
   drawWindowSlice,
   drawBoxSlice,
@@ -155,6 +169,21 @@ export function standFrame(facing: Facing): number {
   return DIRS.indexOf(facing) * 4;
 }
 
+/**
+ * S11b battle-art factory: the bust (18 frames) and rear-3/4 stage battler
+ * (14 frames) for one hero's LOOK — equipped weapon composed into the swing,
+ * body gear on both torsos — at all three wear tiers. addSheet caches by
+ * texture key, so calling this every battle create costs nothing after the
+ * first; boot pre-warms the bare look. Zero per-frame draws (Prompt 42).
+ */
+export function ensureBattleArt(scene: Phaser.Scene, heroId: string, look: BattlerLook): void {
+  const spec = CAST[heroId];
+  for (const wear of [0, 1, 2] as WearTier[]) {
+    addSheet(scene, bustSheetKey(heroId, look.body, wear), generateBustFrames(spec, look.body, wear), 4);
+    addSheet(scene, battlerSheetKey(heroId, look, wear), generateBattlerFrames(spec, look, wear), 4);
+  }
+}
+
 function makeSpiral(): Pixmap {
   const pm = new Pixmap(192, 192);
   const cx = 96;
@@ -180,9 +209,21 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addSheet(scene, 'angel', generateAngelFrames(), 2);
   // S7c: each hero mourns as THEMSELF (§A4.7) — skin/hair/signature from the
   // CAST spec. Visual only: OverworldScene falls back to plain 'angel'.
+  // S11: and each hero FIGHTS as themself — the party-card battle bust sheet
+  // (32×32 × 18 states) derives from the same spec, the ADR-021 pattern.
+  // S11b: plus the bare-look battle art (bust wear tiers + the rear-3/4
+  // stage battler); equipped looks materialize through ensureBattleArt at
+  // battle create — same factory, cached textures, zero per-frame draws.
   for (const heroId of ['rex', 'faye', 'milo', 'dorin']) {
     addSheet(scene, `angel_${heroId}`, generateAngelFrames(CAST[heroId]), 2);
+    addSheet(scene, `bust_${heroId}`, generateBustFrames(CAST[heroId]), 4);
+    ensureBattleArt(scene, heroId, { weapon: null, body: null });
   }
+  // the Homesick thought-bubble that haunts Jay's card (§A4.8, S11)
+  addPixmap(scene, 'thought_food', drawThoughtFood());
+  // the hex PIP — the first GOOD-status indicator (S11b: shield/mirror
+  // turns remaining ride the card opposite the ailment row; tinted at use)
+  addPixmap(scene, 'hex_pip', drawHexPip());
   for (const angelKey of ['angel', 'angel_rex', 'angel_faye', 'angel_milo', 'angel_dorin']) {
     if (!scene.anims.exists(`${angelKey}-float`)) {
       scene.anims.create({
@@ -219,14 +260,13 @@ export function generateAllTextures(scene: Phaser.Scene): void {
     });
   }
 
-  // enemy battle sprites
-  addPixmap(scene, 'battle_cranky_mailbox', drawCrankyMailbox());
-  addPixmap(scene, 'battle_runaway_lawnmower', drawRunawayLawnmower());
-  addPixmap(scene, 'battle_coily_cicada', drawCoilyCicada());
-  addPixmap(scene, 'battle_blazer_smiler', drawBlazerSmiler());
-  addPixmap(scene, 'battle_pigeon_gang', drawPigeonGang());
-  addPixmap(scene, 'battle_hill_slug', drawHillSlugDeluxe());
-  addPixmap(scene, 'battle_titanic_tick', drawTitanicTick());
+  // enemy battle sprites — all three S11b wear tiers at boot (ADR-002);
+  // BattleScene swaps `${sprite}_w1/_w2` as the hp thresholds fall
+  for (const row of Object.values(ENEMY_BATTLE_ART)) {
+    addPixmap(scene, row.sprite, row.draw(0));
+    addPixmap(scene, `${row.sprite}_w1`, row.draw(1));
+    addPixmap(scene, `${row.sprite}_w2`, row.draw(2));
+  }
 
   // overworld minis
   addPixmap(scene, 'mini_coily_cicada', drawCicadaMini());
@@ -259,6 +299,10 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'bus_sign', drawBusSign());
   addPixmap(scene, 'doormat', drawDoormat());
   addPixmap(scene, 'stairs', drawStairs());
+  // S11b: a doorway through a wall is a DOOR, not a mat (user law) —
+  // closed + open variants; OverworldScene swings them on entry
+  addPixmap(scene, 'door_int', drawInteriorDoor(false));
+  addPixmap(scene, 'door_int_open', drawInteriorDoor(true));
 
   // Brickton City props (S1)
   addPixmap(scene, 'payphone', drawPayphone());
@@ -308,6 +352,19 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // S9b: the twins' presents (Prompt 19 gift boxes — closed/opened pair)
   addPixmap(scene, 'gift_box', drawGiftBox());
   addPixmap(scene, 'gift_box_open', drawGiftBoxOpen());
+  // S10: the STARPORT floors — three attract-screen variants + THE machine
+  addPixmap(scene, 'cab_a', drawArcadeCabinet({ marquee: RAMP.RED, screen: 0 }));
+  addPixmap(scene, 'cab_b', drawArcadeCabinet({ marquee: RAMP.CYAN, screen: 1 }));
+  addPixmap(scene, 'cab_c', drawArcadeCabinet({ marquee: RAMP.GRASS, screen: 2 }));
+  addPixmap(scene, 'cab_legend', drawLegendCabinet());
+  // …and what THE machine shows you once you're inside it (ArcadeScene)
+  addPixmap(scene, 'arc_ship', drawArcadeShip());
+  addPixmap(scene, 'arc_moth', drawArcadeMoth());
+  addPixmap(scene, 'arc_rock', drawArcadeRock());
+  addPixmap(scene, 'arc_saucer', drawArcadeSaucer());
+  addPixmap(scene, 'arc_corndog', drawArcadeCorndog());
+  addPixmap(scene, 'arc_bolt', drawArcadeBolt());
+  addPixmap(scene, 'arc_scanline', drawScanline());
 
   // Brickton downtown — varied heights and lighting so no two facades match
   addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1, litSeed: 11 }));

@@ -120,12 +120,55 @@ gates MUST fade-restart (ADR-014 — Pemmel's and Plummer's do). Items gained
 kinds `charm` ('other' slot — Lucky Collar, `luck` field, `heroLuck`/
 `equipLuckDelta` in formulas, charm branch in confirmEquip's preview) and
 `valuable` (Fresh Stamps $240 — §A10 "sell high", the drugstore pays $120;
-the lemonade supplies). The validator pins the §A10 #1–3 manifest (names,
+the lemonade supplies). The validator pins the §A10 #1–4 manifest (names,
 flags, callers, effects, rewards — extend it in the same commit as any new
 quest) and sweeps quest strings through TEXT_VARS ({coolthing} found its
 first consumer in the twins' ask). Bot recipe: engine/quests.ts header.
+S10 (ADR-029): BOTH STARPORTS ARE OPEN (locked_arcade/locked_arcade2
+retired the S4 way; the Otterbrook park hedge shortened to clear the new
+doorstep) and the ARCADE LEGEND shmup is live — **ArcadeScene** ('arcade',
+the ShopScene launch pattern, 'mf-arcade-closed'), ~60s score-attack with
+SCRIPTED waves from **src/data/arcade.ts** (deterministic by design: the
+ADR-008 bot reproduces scores exactly; cabinet strings = ARCADE_TEXT,
+validator-swept, {playername}/{coolthing} live). The score table is
+**save v4** (`GS.data.arcadeScores`, registered v3→v4 step backfills MGR's
+lonely 3000 — the Manager's row, canon). The ADR-013 letter grid lives in
+**src/ui/lettergrid.ts** now (NameEntryScene delegates; recipe unchanged) —
+initials entry reuses it, prefilled from {playername}. Quest #4 runs on the
+S9 engine (giver Sal, the new `arcadeOwner` cast member — he keeps score of
+everything); the CHAMPION JACKET is the first 'body' armor (`ItemDef.
+defense`, `heroDefense`/`equipDefenseDelta` in formulas, battle + STATUS
+read through it, confirmEquip previews "Defense up by N!" — the slot-aware
+pattern future §A8 armor inherits). The cabinet stays endlessly replayable
+from any save; the quest completes once.
+S11 (ADR-030/031): THE LIVING BATTLE — party cards carry per-hero 32×32
+BATTLE BUSTS (src/spritegen/busts.ts, the ADR-021 variant pattern;
+BUST_FRAME is the 16-state contract) rising MOTHER-style from BEHIND each
+box (depth DEPTH_UI−1, name centered, drums beside labels — drums NEVER
+move or hide, and every fx layer renders BELOW DEPTH_UI). `AbilityDef.fx`
+is REQUIRED and resolves into **src/battle/fxRegistry.ts** (Phaser-free;
+validator + fxRegistry.test.ts enforce BOTH directions; battle items
+resolve via `itemFxKey`; kind-'system' keys incl. `summon_flash`/
+`phase_swap` await Prompt 15's phase-machine). **battle/fxTimeline.ts**
+(events+spans on dt, `Pool`, stagger) + **battle/fx.ts** (pooled
+particles/rings/bolts/floods/popups/tether) advance at the text's exact ×4
+under held A/B — tweens only for pure cosmetics, no dice in fx. The full
+§A4.8 status set is LIVE both sides (crying/asleep/paralyzed/hushed/
+sunburn + shield/mirror; rolls in battle/formulas.ts) and renders ON the
+cards via **battle/bust.ts** BustView (edge-tint, droplets, Zzz, sparks,
+muzzle shimmer, the Homesick thought-bubble). Status abilities work
+(Hypno/Flash/Brainjam/Shield/Mirror/Healing α cure/γ revive/Magnet sip/
+Spy stamp/rockets flat-pierce); Milo's command row is GADGETS; ally
+targeting = hand over the cards. THE FIRST HERO IS CANONICALLY **JAY**
+(ADR-031, user decree — ids stay `rex`, {rex} resolves live, 'Rex' is his
+first don't-care). North-wall interior door mats anchor flush to the wall
+(facing-'up' branch in buildDoorMarkers). New-ability rule: fx key +
+registry row in the SAME commit or validate fails naming it. The S11
+gauntlet recipe lives in BattleScene's header (incl. the pad-mute trick —
+a physical gamepad trumps any bot script).
 QA driver: `window.pump/key/holdKey/shot` + `mfGS` + `mfMakeHero` (canon
-heroes for mid-game party setup); bot recipes live in the scene headers.
+heroes for mid-game party setup) + `mfBattle.qa()` in-battle; bot recipes
+live in the scene headers.
 Work through these in order, one prompt per session, per the Bible's
 Appendix rules (review the diff, run the checks, commit).
 
@@ -140,31 +183,358 @@ architectural decision you make to it. TypeScript strict, no `any`.
 
 ---
 
-## Prompt S10 — Arcade Legend (§A10 #4 + the STARPORT interiors)
+## Prompt S11 — THE LIVING BATTLE — ✅ DONE 2026-06-11 (ADR-030/031)
+
+Shipped: per-hero 32×32 battle busts rising MOTHER-style from behind the
+party cards (BustView, src/battle/bust.ts — derived state only), the FX
+registry (`AbilityDef.fx` schema-required; validator fails both
+directions), pooled timeline engine (battle/fxTimeline.ts + fx.ts, ×4
+under held A/B), the §A4.8 status set live on both sides and rendered ON
+the cards, the Tick's visible tether + salt sever, pray as six events,
+Milo's GADGETS row, ally targeting, ~30 synth presets, and — by user
+decree mid-session — the first hero is canonically JAY (ADR-031; ids stay
+`rex`) and north-wall interior door mats sit flush against the wall.
+Gauntlet log + shots: docs/QA.md S11 section, `.shots/s11_*`. The original
+prompt is kept below for the record.
 
 ```
 [Standard Header]
-Open both arcades as real interiors (the S4 interior pattern: ADR-004 grid
-floating in void, facade doors derived via doorstepOf(), door zones below
-the collision floor per ADR-011): STARPORT (Otterbrook) and STARPORT II
-(Brickton, bldg_arcade2). Build the Arcade Legend mini shoot-'em-up as a
-playable cabinet: its own Scene on the existing input layer, ~60-second
-runs, EB-goofy enemies, high-score table seeded with "MGR" (the
-locked_arcade2 attract-mode gag is canon now — and after S2, so is the
-Manager it belongs to). Beating the score asks for 3-letter initials —
-extract the S12 letter grid from NameEntryScene for sharing the way S4
-extracted pick/confirmEquip into ui/pick.ts (keep that scene's header QA
-recipe true) and prefill from the first letters of {playername}. Quest #4:
-beat the score → Champion Jacket + the arcade-owner caller; replayable
-score-attack from any save afterward (Prompt 36's hook lands early). Score
-persists on the save via the migration registry (ADR-015 pattern — v3
-SHIPPED with S9's ledger, so the score REGISTERS the v3→v4 step; old
-saves backfill an empty score table).
-Done when: the shmup is genuinely fun for 60 seconds, the score + initials
-persist on the save, and quest #4 completes with its caller registered.
+S11 — The Living Battle pass (Prompt 12/14 presentation, user direction:
+"each character in an active UI like a real character" — ADR-001..029).
+THE PARTY STRIP BECOMES PARTY CARDS. Each hero's battle box grows a
+portrait pane holding a NEW per-hero BATTLE BUST sheet (≈32×32, generated
+from CharacterSpec the way angels are — ADR-021's variant pattern, ADR-022
+construction, ADR-025 hairTones; overworld 24×32 sheets stay untouchable
+law). Bust states, all driven by HeroState + battle events, nothing stored:
+idle breathing ×2 · act lunge (Bash) · cast ×2 (arms raised, Vibe glow
+between the hands) · pray (Mia: hands together, eyes closed — §A11.4,
+played straight) · gadget fiddle (Milo) · item use (rummage + munch/drink)
+· guard brace · hurt flinch (card shakes, bust recoils 1 frame) · LOW HP
+nervous loop while the odometer is mid-roll to 0 (ties into Prompt 13's
+urgency pitch — the card sweats while the meter races) · DOWN slumps then
+fades to the hero's angel_<id> sprite floating beside the card (§A4.7) ·
+revive/heal glow · victory cheer. Status conditions render ON the card:
+Sunburn red edge-tint, Crying droplets, Asleep Zzz drift, Paralyzed
+sparks, HUSHED muzzle shimmer, Homesick thought-bubble of {favoritefood},
+Mushroomized later. HARD LAW: cards may never cover or delay the rolling
+odometer (Prompt 13 is the soul) and all choreography fast-forwards under
+held A/B exactly like text (ADR-010) — wire FX timelines to the same
+skip state.
+EVERY ABILITY GETS A FACE. New `battle/fx.ts`: composable, OBJECT-POOLED
+primitives (particle bursts, expanding rings, beams, screen flashes,
+camera shakes, sprite tint/flash, palette-cycle pulses on the psychedelic
+bg) composed into named effect TIMELINES that advance on dt via
+everyFrame (ADR-024; pump-friendly so the ADR-008 bot replays them —
+tween use only for pure cosmetics). AbilityDef gains a required `fx` key
+(schema + z.infer per ADR-017) resolving into an FX REGISTRY; `npm run
+validate` fails naming any ability whose fx key is unregistered, both
+directions. Author distinct effects in the EB register: Vibe Surge α→Ω
+(starburst rings that escalate per tier), Fire (rolling flame wave),
+Freeze (crystal lattice + shatter), Volt (zigzag bolts), Lifeup (green
+sparkle rain), Shield/Mirror (hex barrier snap), Hypno (spiral), Flash,
+Bottle Rockets (arcing projectile + payload burst, Multi = volley), Spy
+(scanline sweep + revealed-stats stamp), Salt Shaker (thrown arc — the
+anti-Tick salt visibly breaks the latch, §A6), food/cola (sparkle/fizz),
+Glint's Spark (porch-light warmth), and PRAY AS SIX DISTINCT EVENTS —
+Miraculous floods the screen warm with choir tones, Wonderful/Good scale
+down, Nothing is a single mote that tries anyway (§A11.4: hopeful even on
+Nothing), Strange misfires onto a random combatant, Backfire's soft flare
+dozes an ally. Enemy-side: per-element impact bursts, hit-flash + flinch
+on the target sprite, multi-target sweeps stagger per enemy, SMAAASH!!
+keeps its comic burst + shake, floating damage/heal popups (the S10
+popFoe idiom), death dissolves per ADR-020 (battle sprites float — no
+shadows, light never outlined), and the Titanic Tick's latch/drain gets
+a visible tether the salt severs. Enemy moves reuse the element/impact
+vocabulary; the Manager's summons and boss phase swaps (Prompt 15 data)
+get timeline hooks for the phase-machine to call.
+AUDIO: extend ADR-006 synth presets per element + pray tiers; ducking
+under jingles unchanged.
+QA: vitest for timeline math + registry completeness mirrors; scripted
+test battles (Prompt 14's harness) exercising every ability class, every
+status tick, a full wipe (cards → angels), and a mortal-roll save-by-
+victory with the nervous loop visible — run via the ADR-008 driver at
+pump(n, 8.33) one-frame taps; document the recipe in the scene header;
+log the pre-flight in docs/QA.md and add ONE device row (leave existing
+boxes open). 60fps: pool everything (Prompt 42 will profile this scene
+hardest). Append the ADR.
+Done when: a Ch.1 battle reads like a cartoon — every command visibly
+performed by the caster's card and answered on the enemy, every spell
+distinguishable with eyes only, statuses legible at a glance, the
+odometer never upstaged, the whole show skippable, npm test green with
+the fx registry enforced, and the bot finishes its scripted gauntlet.
 ```
 
-## Prompt S11 — Otterbrook fills out + death/revival/picnic systems (Prompts 23, 25, 27-scope)
+## Prompt S11b — THE BATTLE STAGE (battlers act, weapons render, wear states, real doors)
+
+```
+[Standard Header]
+S11b — The Battle Stage pass (continues ADR-030's Living Battle; user
+direction: "the character moves and does like a back swing looking at
+the bird — animations for each ability", "animations for every
+equippable item and every psi ability", "enemies show damage as they
+near death — same for our characters: tattered, breathing hard",
+"any entry way needs a door, not just a mat", "shield needs clearer
+target UI and a better animation", "a huge green SMAAASH with Mother-3
+spam-A multi-hits" — ADR-001..031). Full production quality, no mock
+data, every new registry gated both directions like ADR-030's fx gate.
+
+THE CASTER TAKES THE STAGE. New per-hero BATTLER sheets in
+src/spritegen/battlers.ts — the ADR-021 variant pattern off the SAME
+CharacterSpec (ADR-022 span-table construction, ADR-025 hairTones; the
+24×32 overworld and 32×32 bust sheets stay untouchable law): a full-body
+REAR-3/4 view (~28×36, seen from behind-left with enough face turned to
+read — the MOTHER framing, looking UP at the bird). When a hero acts,
+their battler steps up from their card onto the STAGE (the field band
+between cards and the enemy row, fx depth — below DEPTH_UI, never over a
+drum), faces the target, performs the ability's choreography, and steps
+back; BustView holds an 'away' state meanwhile so card and stage never
+pose-fight. Stage anims advance on the ADR-030 timeline clock — the one
+×4 skip state (ADR-010), pump-replayable (ADR-008), tweens for nothing.
+
+WEAPONS ARE REAL OBJECTS. src/spritegen/weapons.ts: a WEAPON_ART
+registry — EVERY §A8 equippable maps to drawn art (bats: taped shaft;
+pans: disc + handle; rifles: stock + barrel; bead loops) sized for the
+battler's grip, item-specific by ramp + detail pass (Cracked vs T-Ball
+bat read differently, silhouettes never drift). Bash composes the
+EQUIPPED weapon into the swing at sheet-generation time: Jay back-swings
+HIS bat, Mia winds up HER pan, Milo shoulders the air rifle (aim →
+crack → recoil; Bottle Rockets keep the throw-arc), Dorin strikes with
+bead-wrapped fists. Body/arms gear RENDERS on battler AND bust torsos
+(the Champion Jacket is visible the moment it's equipped — equipment is
+never invisible again). The validator gates WEAPON_ART both directions
+(an equippable without art / an art row no item claims both fail naming
+the gap), and vitest mirrors it. EVERY ability gets stage choreography:
+map FX_REGISTRY families → stage anims beside the registry (cast
+families raise arms under the Vibe glow, spiral/scan families aim a
+gadget, throw_arc lobs, pray kneels hands-together — §A11.4 straight,
+food/cola consume on-card); the validator proves every family resolves
+a stage anim. No AbilityDef changes — presentation keys off fx.
+
+WEAR STATES, BOTH SIDES. Battle sprites read the drums: enemies redraw
+at three authored tiers (full / scuffed <66% / battered <33%) — each
+spritegen/enemies.ts draw gains a wear param with DELIBERATE damage per
+ADR-020 rule 1 (mailbox dents + flag knocked askew, mower bends a blade
+and coughs smoke, cicada's wing glass cracks, the slug's crown chips,
+the Smiler's tie loosens as the smile strains, pigeons shed feathers,
+the Tick bruises and visibly DEFLATES) — clustered marks, never noise.
+Heroes wear down the same way: bust + battler sheets generate the same
+three tiers (mussed hair, a cheek bruise, torn sleeve with a hanging
+thread, sweat sheen) and below 33% the idle becomes WINDED — faster
+breath, heaving shoulders (ADR-030's nervous loop still owns the mortal
+roll). Tier swaps key on the DISPLAYED odometer value, never the target
+— a mortal roll degrades AS the drum falls. Texture cost: all tiers
+generate at boot like everything else (ADR-002); zero per-frame draws
+(Prompt 42 looms).
+
+REAL DOORS. A doorway through a wall is a DOOR, not a mat — user law;
+mats alone stay legal only for bottom-edge exits. DoorIndicatorSchema
+gains 'door': drawInteriorDoor() closed + open variants (tiles.ts —
+frame, panel door, brass knob, lit top rail, ADR-019/020 discipline)
+mounted IN the wall band above the zone (the S11 mat stays at its
+foot); walking in swings it open (closed→open swap + the S7 whoosh +
+a short hold) before the transition, closed again on re-entry. Audit
+EVERY interior facing-'up' zone (rex_hall ×3 first) and tag it 'door';
+the validator enforces the law structurally — an interior facing-'up'
+door zone still tagged 'mat' fails naming map and zone. Facades keep
+their ADR-019 drawn doors; no canon drift expected (presentation only —
+amend the Bible per Appendix rule 6 only if §A4/§B wording shifts).
+
+SHIELD READS LIKE A SPELL. The ally picker becomes unmistakable: the
+candidate card LIFTS 2px and glows (gold frame pulse, bust brightens),
+the others dim, a "> {name}" tag rides the hand, B backs out — ADR-024
+everyFrame polling, tap zones intact. The barrier upgrades: six hex
+panels FLY IN from the field corners, lock with a flash + closing ring,
+and leave a persistent hex PIP on the card while shield/mirror turns
+remain — the first GOOD-status indicator; seat it opposite the §A4.8
+ailment row so buffs and ailments never collide on the card.
+
+SMAAAASH, IN GREEN, IN COMBO. The crit banner becomes the show: huge
+GREEN comic letters (GRASS ramp, INK outline — the palette law holds)
+slam in at 3× with a radial burst and camera shake. And the Mother-3
+mash: a SMAAASH opens a COMBO WINDOW (~1.1s; edge-triggered A PRESSES
+only — held A still means fast-forward, ADR-010 untouched): every press
+in the window lands a follow-up hit (battler re-swings, 25% of the
+smash per hit, rising-pitch hit SFX, popup counter "2 HITS! 3 HITS!"),
+capped at 3 + Guts/40 (max 8). A ring timer renders under the target at
+fx depth. Deterministic inside the window — presses in, hits out, no
+dice (ADR-029) — and the total prints as one EB line: "Jay tried the
+Casey swing! SMAAAASH!! x4 — 213 damage!"
+
+AUDIO: per-weapon swing whoosh, rifle crack, the combo pitch ladder,
+door creak-whoosh, shield panel locks, winded breath tick — ADR-006
+presets; ducking under jingles unchanged.
+
+QA: vitest — WEAPON_ART / stage-anim / wear-tier completeness mirrors
+(both directions each) + combo math (window, cap, ladder) headless;
+the ADR-008 gauntlet extends BattleScene's header recipe at
+pump(n, 8.33) one-frame taps, pad muted (the S11 lore): one ability of
+every family performed ON STAGE; Bash with bat AND pan AND rifle AND
+beads (re-equip via qa()); a combo maxed by scripted taps; wear tiers
+forced via qa() drums on BOTH sides, shot at each tier; the shield
+picker end-to-end; every rex_hall door opened (shots: closed, mid-open,
+arrived). Log the pre-flight in docs/QA.md + ONE device row (existing
+boxes stay open). Append the ADR.
+
+Done when: Jay steps up and back-swings his equipped bat at the bird —
+Mia her pan, Milo his rifle, Dorin his beads — every PSI, gadget, and
+battle item has stage choreography; both sides visibly wear down as
+the drums fall; every interior doorway has a door that opens before it
+admits you; Shield's target is unmistakable and its barrier locks like
+armor; a green SMAAAASH mashes into Mother-3 multi-hits; npm test green
+with all three new completeness gates enforced; the bot finishes the
+extended gauntlet.
+```
+
+## Prompt S12 — THE CAGE (§A10-adjacent: Brickton streetball, the 32-team Classic)
+
+```
+[Standard Header]
+S12 — THE CAGE: 5v5 FULL-COURT streetball in Brickton, with a 3v3
+halfcourt pickup mode (user spec: an NBA-2K-grade minigame that stands
+alone, 5v5 first-class; ADR-028 maps the "New York" ask onto Brickton,
+canon's US city). The S10 cabinet rules govern ALL
+minigames from now on (ADR-029): own Scene on the existing input layer,
+everyFrame polls (ADR-024), hardware back = B (ADR-026), DETERMINISTIC
+under the bot (here: per-match SEEDED injectable rng — the Homesick
+pattern — plus timing-deterministic shots; same seed + same inputs =
+same final score), endlessly replayable, one-time special rewards,
+validator manifests in the same commit (ADR-017), scene-header bot
+recipe, QA.md pre-flight + one open device row.
+VENUE: the SE vacant lot's fence gains a gate → 'the_cage' map (ADR-004
+void grid; a FULL COURT in a chain-link cage — two bent-rim backboards,
+painted keys and arcs, bleacher planks, a hand-chalked bracket board —
+with the camera following the ball 2K-style; 3v3 pickup plays the near
+half). The lot's grid coords are fixed —
+any new Brickton street props ride a fresh seeded stream so the 1995
+layout stays byte-identical (ADR-016); amend sign_lot: the FUTURE SITE
+finally arrived, and it's a basketball cage. Cast: PERMIT (the announcer
+— §A11 obsession: he has historically ranked every crossover he has ever
+seen) + bench-crowd minis. New ADR for the SPORT SHEET contract: bespoke
+≈32×40 multi-frame athlete sheets (dribble idle/run, gather, jumper with
+readable RELEASE frames, layup, THREE dunk cinematics, block leap, steal
+swipe, celebration) generated from CharacterSpec so the four heroes —
+and every §A11 opponent — inherit ADR-022 faces and ADR-025 hair; ball
+gets real arc/rim/backboard physics + net ripple frames; ADR-020 rules
+bind (deliberate pixels, no scatter, shadows never outlined).
+TWO FORMATS at the gate, one engine: 5v5 FULL COURT (the Classic's
+format — ten athletes live at 60fps, pool hard; transition offense,
+fast breaks, spacing; FOUR 5-MINUTE QUARTERS on a running clock, a
+24-second shot clock PERMIT counts out loud, quarter breaks + a
+halftime chalkboard beat, 2-minute overtimes until somebody wins) and
+3v3 HALFCOURT pickup (FIRST TO 21, win by 2 — the anytime XP run).
+Street rules both ways: 1s and 2s (2 behind the arc), check-up after
+scores, a sign says CALL YOUR OWN FOULS and nobody ever has. Two buttons, honest (§B1's overlay untouched). OFFENSE: B tap =
+DIRECTIONAL pass (nearest teammate in the held d-pad cone — aim your
+passes, lead the cutter), B hold = turbo, A hold = gather + SHOT METER
+(release grading: too-early / early / GREEN / late — window scales with
+shooter stat, distance, contest), A at speed near the rim = contextual
+dunk gather (contested dunks can get STUFFED), double-tap a direction =
+crossover (ankle-break chance vs defender timing, seeded). DEFENSE: you
+hold the defender nearest the ball (auto-switch on drives and passes),
+A = timed block jump, B tap = steal swipe (whiff = beaten), B hold =
+turbo slide. TEAMMATE AI earns its minutes: runs the lanes, spaces the
+arc, cuts when you drive, calls for it when open — per-archetype
+tendencies. NO rubber-banding — opponent AI plays archetypes honestly
+(rusher, sniper, post bully, ball-hawk) from a TEAMS data table.
+THE BRICKTON CLASSIC: 32-team single-elimination, PLAYED 5v5 in full
+four-quarter games (≈20–25 min each → the title run is a LONG HAUL of
+roughly two hours across 5 rounds, BY DESIGN — note the §A9 time-budget
+drift in the Bible amendment: the Classic is optional long-form content
+beyond the +3hr side-quest line, built to be left and returned to); the
+other 31 teams are EB-goofy data entries (the Pigeon Counters, the
+Quota Crushers, Permit's nephews…) whose names/taunts live in
+HOOPS_TEXT (validator-swept, {playername}/{coolthing} live where used).
+Bracket between rounds simulates seeded results and draws on the chalk
+board; TOURNAMENT STATE IS SAVE DATA — register the v4→v5 step
+(ADR-015): the bracket survives save → kill app → continue from any
+round, and a live match CHECKPOINTS AT QUARTER BREAKS (score, clock,
+quarter ride the v5 field) so process death costs at most the quarter
+in progress — a 20-minute game on a phone demands nothing less. Your five =
+the current party plus named WALK-ONS from a data table (Chad guests
+pre-Milo; the walk-on bench is §A11 local color with its own tiny stat
+lines — the four heroes are the stars once Dorin joins; no invented
+heroes ever join the PARTY itself).
+REWARDS (data-tuned, §A9-conscious, validator-pinned): every match pays
+EXP through the Prompt 18 flow (level-ups announce post-game) scaled by
+FORMAT and bracket depth — a four-quarter Classic war pays like the war
+it is, a 3v3 run to 21 pays its weight — plus seeded goods drops
+(foods/colas); pickup runs at the cage pay forever, come back anytime. FIRST Classic title pays
+THE STARTING FOUR: four hero-tagged items, the first 'arms'-slot gear
+(§A8 manifest extension + Bible drift note per Appendix rule 6) — wire
+them the S10 way: new stat read-throughs in battle/formulas.ts
+(heroSpeed/heroGuts beside heroDefense/heroLuck, battle + STATUS reading
+through them) and generalize confirmEquip's preview to the item's
+carried stat ("Speed up by N!"). Hands-full BLOCKS the handoff, zero
+missables; repeat titles pay cash + goods only. NOT a §A10 quest — the
+canon sixteen stay sixteen; no caller, no journal row.
+Done when: one 5v5 game plays a true four-quarter 20-minute arc —
+shots live and die on release timing, dunks feel earned, crossovers
+break ankles, passes go where you aim, the shot clock forces offense,
+ten athletes hold 60fps — and the full Classic crowns a champion
+across ~2 hours of bracket the player can leave and resume freely;
+first-to-21 3v3 pickup pays XP anytime; drivable by keys, pad, AND the
+touch overlay at pump(n, 8.33); bracket AND quarter checkpoints
+survive process death through v5; THE STARTING FOUR equips with stat
+previews; the bot completes one seeded 5v5 QUARTER and one 3v3 game to
+21 end-to-end reproducibly; npm test green (teams/walk-ons/rewards
+manifests enforced); browser loop and android:apk untouched.
+```
+
+## Prompt S13 — COSTA ESTRELLA LINKS (resort golf, the 32-player Invitational)
+
+```
+[Standard Header]
+S13 — COSTA ESTRELLA LINKS, the golf twin of S12 under the same S10
+minigame law (own scene, everyFrame input, back = B, seeded injectable
+determinism, replayable forever, once-only specials, manifests + bot
+recipe + QA row in the same commit). VENUE: a clifftop resort north of
+PUERTO SOL — canon's Ch.2 Spanish-colonial port covers the "Spain"
+ask; build the module COMPLETE AND STANDALONE now (the Sprite Lab
+precedent: dev-reachable scene + full bot run) with its world door
+authored for Puerto Sol so Prompt 28 wires it in one line; tease it
+meanwhile with a travel poster in Brickton (new props on a fresh rng
+stream — 1995 byte-identical). Mauna Lani (Ch.8 Hawaii) remains the
+alternate venue if the author prefers; note the choice in the ADR.
+THE COURSE: 9 authored holes in a HOLES data table (par 3/4/5 mix, tee/
+pin/hazard geometry, §A11 hole NAMES and plaque lines — validator counts
+9 and sweeps the strings): cliff carries over surf, a bunker the staff
+treat as a beach, terraced fairways, one par-3 onto a sea stack. ¾
+overhead course view with terrain tiles (fairway/rough/sand/water/green
++ slope-grid arrows) + a SWING PANE close-up using large animated golfer
+sheets cut from the S12 sport-sheet contract (address, backswing with
+power tick, strike, follow-through, fist-pump, the universal sad putter
+slump); ball-cam follows flight with draw/fade curvature, bounce/roll by
+lie, splash/sand bursts per ADR-020 discipline.
+SWING FEEL, two buttons, classic and exact: aim with the d-pad, B cycles
+the CLUB BAG (data table: carry ranges, loft, roll), A starts the
+3-TAP METER — second tap sets power, third tap sets accuracy in a
+shrinking perfect window (push/pull miss curves the flight); after-touch
+spin on the d-pad mid-flight; dedicated chip meter inside 30y and a
+putt meter reading the green grid (slope arrows are honest). WIND is
+seeded per round and announced by the caddy. CADDY: one new cast member
+(§A11 obsession: he measures the entire world in putts — "that cloud?
+two putts away, señor") who reads greens, hands clubs, and plays the
+§A11.2 sincerity straight on the 9th tee at sunset.
+THE COSTA ESTRELLA INVITATIONAL: 32-player MATCH-PLAY bracket — five
+3-hole matches (≈5 min each → 20–30 min the title run) against 31
+data-table golfers with honest accuracy/aggression curves and §A11
+names; bracket state persists (register the next save step per ADR-015
+only if number-flags can't carry it — prefer flags). STROKE-PLAY rounds
+pay EXP + seeded goods forever (come back anytime, §A9-tuned, pinned);
+the FIRST Invitational pays THE SUNDAY SET — four hero-tagged charms
+(§A8 'other' expansion, Bible drift note) through the S10/S12 stat
+read-through seams with stat-aware previews, hands-full BLOCKS, zero
+missables; repeat titles pay cash. NOT a §A10 quest.
+Done when: 9 holes play true — wind, lies, slopes, and the 3-tap window
+decide everything — by keys, pad, AND touch at pump(n, 8.33); a full
+Invitational runs 20–30 min and survives process death; THE SUNDAY SET
+equips with previews; the bot plays one seeded hole tee-to-cup
+reproducibly (document the line in the scene header); npm test green
+with the HOLES/golfers/rewards manifests enforced; browser loop and
+android:apk untouched; the ADR records the venue call.
+```
+
+## Prompt S14 — Otterbrook fills out + death/revival/picnic systems (Prompts 23, 25, 27-scope)
 
 ```
 [Standard Header]
@@ -195,7 +565,7 @@ open; a basket bought at STARMART restores the party at the Brickton park
 table.
 ```
 
-## Prompt S12 — EVERY DOOR OPENS (the interior program + city vocabulary)
+## Prompt S15 — EVERY DOOR OPENS (the interior program + city vocabulary)
 
 ```
 [Standard Header]
@@ -214,8 +584,9 @@ sessions pull from here instead of inventing):
  B. Economy — shops, delis (basket crafting), trade-in collector (buys
     'valuable' kind at FULL price: the stamps gag pays out properly once
     per region), busker tips, vending machines.
- C. Recovery — hospitals (LARGEST building in every city — Brickton
-    General grows to 3 stories in this pass), chapels, tea rooms, HOTELS
+ C. Recovery — hospitals (a landmark-LARGE building in every town: wide
+    footprint, instantly findable — but never required to be the tallest;
+    big-city skylines out-build it), chapels, tea rooms, HOTELS
     (two-story template: lobby + upstairs hall of rooms; a paid bed =
     full restore + Sunny Side breakfast, the picnic system's indoor twin).
  D. Quest nodes — givers, delivery doors, clue rooms (the S9 gated-sign
@@ -223,7 +594,8 @@ sessions pull from here instead of inventing):
  E. Collection — gift boxes (S9b sprites), libraries with readable §A11
     books, photo spots.
  F. Systems tutors — the gym teaches Guts (battle tutor fight), the
-    STARPORT teaches the shmup (S10).
+    STARPORT teaches the shmup (S10), THE CAGE and the LINKS run their
+    tournaments (S12–S13).
  G. World-building — museum wings, the mayor's office, a radio station
     broadcasting the chapter's rumor (foreshadow channel).
  H. Secrets — basements, rooftop access (city buildings gain a roof map
@@ -234,23 +606,25 @@ sessions pull from here instead of inventing):
  J. Residences — every home has a family with one §A11 dynamic, a fridge
     (1 free food/day-equivalent: gated on a per-region flag), mail you
     delivered visible on their table after quest #2.
- K. Civic clutter — bus stations (see S13), post office (Plummer's HQ),
+ K. Civic clutter — bus stations (see S16), post office (Plummer's HQ),
     the SAVINGS & LOAN finally opens (teller line beats the ATM rate by
     $0 — §A11).
  L. Chapter set-pieces — one per chapter, big interiors (the Department
     was Ch.1's; Ch.5's palace + cinema are canon's).
 CITY VOCABULARY (spritegen): hotel facade (2-story, awning + ROOMS sign),
-hospital tower (3-story, the block anchor), apartment walk-up (the
-Brickmore OPENS: stair core + two flats), rooftop tile family. Brickton
-grows VERTICALLY here (more upperRows variety on the existing grid — the
-1995 stream stays byte-identical; new content on rng3).
+hospital block (WIDE footprint, 2–3 stories — the prominent landmark, not
+the skyline cap: office/apartment towers run taller in the big cities,
+4–5 stories in Chandrapore), apartment walk-up (the Brickmore OPENS:
+stair core + two flats), rooftop tile family. Brickton grows VERTICALLY
+here (more upperRows variety on the existing grid — the 1995 stream stays
+byte-identical; new content on rng3).
 Done when: validator enforces the no-decorative-doors law; Brickton +
 Otterbrook hit 100% open facades; the taxonomy doc lives at
 docs/INTERIORS.md with every category seeded; hotel/hospital/walk-up
 templates render in Sprite Lab; one ledger-callback interior is live.
 ```
 
-## Prompt S13 — STATIONS & WHEELS (bus, bike, car — and the travel UI)
+## Prompt S16 — STATIONS & WHEELS (bus, bike, car — and the travel UI)
 
 ```
 [Standard Header]
@@ -285,12 +659,20 @@ remains strictly better post-Ch.4 (vehicles are flavor + early-game).
 
 ---
 
-After S11, Chapter 1 is genuinely complete — name entry through ch1_complete
-with quests, arcade, revival, and picnics all live. S12–S13 then make the
-world dense and navigable. The "big city like New York" ask maps onto canon:
+Run order: ~~S11 (the battle show — DONE, ADR-030/031)~~ → ~~S11b (the
+battle STAGE — DONE, ADR-032: battlers act per ability, equipped weapons
+render, wear states both sides, real interior doors, the shield picker,
+the green Mother-3 SMAAASH combo)~~ → **S12 (THE CAGE)** → S13 (the LINKS) → S14
+(revival/picnics — after which Chapter 1 is genuinely complete, name
+entry through ch1_complete with quests, arcade, hoops, revival, and
+picnics all live) → S15–S16 make the world dense and navigable. S12 and
+S13 are each big enough to split on their natural seam if a session runs
+long (Appendix rule 2): core game first, tournament + rewards second.
+The "big city like New York" ask maps onto canon:
 **Chandrapore (Ch.5, Prompt 31) is the game's biggest city** — three
 ADR-012 districts, 4–5-story facades, the palace/cinema/bazaar sprawl —
-and Brickton's vertical growth in S12 gives the US chapter its skyline.
+and Brickton's vertical growth in S15 gives the US chapter its skyline
+(THE CAGE gives it its soundtrack of chain-link and trash talk).
 Then return to the Bible's Part C order at Prompt 28 (Chapter 2) — Puerto
 Sol and Valle Dorado inherit ADR-012, the §B4 city tests, the S4 shop
 pattern, AND the S12 interior taxonomy automatically — and run the balance

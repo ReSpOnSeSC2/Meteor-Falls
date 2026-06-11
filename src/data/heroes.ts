@@ -10,8 +10,11 @@ export type { HeroDef, HeroId } from '../schemas';
 
 export const HEROES: Record<HeroId, HeroDef> = {
   rex: {
+    // canonically JAY since S11 (ADR-031, the ADR-023 playbook): display
+    // name only — the id 'rex', flags, dialogue keys, and texture keys are
+    // frozen identifiers. 'Rex' survives as his first don't-care alternate.
     id: 'rex',
-    name: 'Rex',
+    name: 'Jay',
     epithet: 'a quiet kid from Otterbrook',
     weapon: 'bats',
     base: { offense: 6, defense: 4, speed: 5, guts: 8, vibe: 6, luck: 5 },

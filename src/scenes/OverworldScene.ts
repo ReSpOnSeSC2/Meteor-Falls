@@ -37,6 +37,7 @@ import {
   CHAR_LEGEND,
   BRICKTON_BUS_SPAWN,
   carveHoldingRoom,
+  type DoorZone,
   type MapDef,
   type NpcDef,
   type PatrolDef,
@@ -129,6 +130,8 @@ export class OverworldScene extends Phaser.Scene {
   private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean }> = [];
   private trail: Array<{ x: number; y: number; f: Facing }> = [];
   private holdingDoorImg: Phaser.GameObjects.Image | null = null;
+  /** S11b interior doors, keyed by their zone — swung open on entry */
+  private doorImgs = new Map<DoorZone, Phaser.GameObjects.Image>();
   private npcs: NpcObj[] = [];
   private roamers: Roamer[] = [];
   private patrols: PatrolObj[] = [];
@@ -326,8 +329,10 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  /** every walkable door gets a visible marker (mat / stairs / elevator) */
+  /** every walkable door gets a visible marker (mat / stairs / elevator /
+   *  a real swinging DOOR — S11b) */
   private buildDoorMarkers(): void {
+    this.doorImgs.clear();
     for (const d of this.mapDef.doors) {
       const kind = d.indicator ?? (this.mapDef.interior ? 'mat' : 'none');
       if (kind === 'none') continue;
@@ -336,6 +341,22 @@ export class OverworldScene extends Phaser.Scene {
       if (kind === 'elevator') {
         // doors drawn on the wall above the zone; walk into them to ride
         this.add.image(cx, d.y * 16 + 2, 'elevator').setOrigin(0.5, 1).setDepth(3);
+        continue;
+      }
+      if (kind === 'door') {
+        // S11b: a doorway through a wall is a DOOR, not a mat (user law) —
+        // mounted IN the wall band above the zone, swinging open on entry;
+        // the S11 mat stays at its foot
+        const img = this.add.image(cx, d.y * 16, 'door_int').setOrigin(0.5, 1).setDepth(3);
+        this.doorImgs.set(d, img);
+        this.add.image(cx, d.y * 16, 'doormat').setOrigin(0.5, 0).setDepth(2);
+        continue;
+      }
+      if (kind === 'mat' && d.facing === 'up') {
+        // a door THROUGH the north wall: the mat lies at the doorway's foot,
+        // flush against the wall base — never floating mid-floor (S11 catch:
+        // the rex_hall mats hovered two tiles into the room)
+        this.add.image(cx, d.y * 16, 'doormat').setOrigin(0.5, 0).setDepth(2);
         continue;
       }
       this.add
@@ -615,7 +636,7 @@ export class OverworldScene extends Phaser.Scene {
       // S9b fix: followers snap to their crumb, so a per-frame "did I move"
       // check was false between trail updates — the anim restarted every few
       // frames and froze on its first frame. The LEADER's motion drives the
-      // conga: while Rex moves, everyone behind him walks (or runs).
+      // conga: while Jay moves, everyone behind him walks (or runs).
       const anim = `${f.id}-${running ? 'run' : 'walk'}-${crumb.f}`;
       if (moved) {
         if (f.spr.anims.currentAnim?.key !== anim || !f.spr.anims.isPlaying) f.spr.anims.play(anim, true);
@@ -1173,10 +1194,28 @@ export class OverworldScene extends Phaser.Scene {
         return;
       }
     }
+    // S9 §A10 #2: with the route in hand, the five stops take letters first —
+    // facades deliver whether or not their door is real (S10 hoisted this out
+    // of lockedLines: the STARPORT opened, but its mail slot still works)
+    for (const p of this.mapDef.props) {
+      if (!MAIL_DOORS[p.sprite] || !p.solid) continue;
+      const r = {
+        x: p.x * 16 + p.solid.ox - 4,
+        y: p.y * 16 + p.solid.oy - 4,
+        w: p.solid.w + 8,
+        h: p.solid.h + 8,
+      };
+      if (probeX > r.x && probeX < r.x + r.w && probeY > r.y && probeY < r.y + r.h) {
+        if (await this.mailDelivery(p.sprite)) {
+          AUDIO.sfx('cursor');
+          return;
+        }
+        break; // not (or no longer) a live stop — fall through to lockedLines
+      }
+    }
     // buildings without interiors yet: a visible door always answers
-    // (the drugstore and STARMART left this list in S4 — they're real doors)
+    // (the drugstore + STARMART left this list in S4, both STARPORTs in S10)
     const lockedLines: Record<string, string> = {
-      arcade: 'locked_arcade',
       chapel: 'locked_chapel',
       house_chad: 'locked_chad',
       house_a: 'locked_house',
@@ -1186,7 +1225,6 @@ export class OverworldScene extends Phaser.Scene {
       bldg_brickmore: 'locked_brickmore',
       bldg_video: 'locked_video',
       bldg_bank: 'locked_bank',
-      bldg_arcade2: 'locked_arcade2',
       bldg_diner: 'locked_diner',
       holding_door: 'holding_door_line',
       office_door: 'manager_door',
@@ -1202,8 +1240,6 @@ export class OverworldScene extends Phaser.Scene {
       };
       if (probeX > r.x && probeX < r.x + r.w && probeY > r.y && probeY < r.y + r.h) {
         AUDIO.sfx('cursor');
-        // S9 §A10 #2: with the route in hand, these doors take letters first
-        if (await this.mailDelivery(p.sprite)) return;
         // S2 doors report their state
         if (p.sprite === 'holding_door') {
           if (GS.flag('holding_open')) {
@@ -1288,6 +1324,9 @@ export class OverworldScene extends Phaser.Scene {
         return true;
       case 'biscuit_drug':
         await this.biscuitFoundBeat(n);
+        return true;
+      case 'arcade_owner':
+        await this.salBeat();
         return true;
       default:
         return false;
@@ -1436,8 +1475,64 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
+  /** §A10 #4 — Arcade Legend: Sal's side of the board. The cabinet sets
+   *  q_arcade/q_arcade_beat (ArcadeScene); Sal arms, cheers, then pays out
+   *  through the S9 bag flow — hands-full BLOCKS, zero missables. */
+  private async salBeat(): Promise<void> {
+    if (!GS.flag('q_arcade')) {
+      await this.dlg.say(...DIALOGUE.q_arcade_ask);
+      GS.setFlag('q_arcade');
+      AUDIO.sfx('confirm');
+      return; // nothing on this map gates on q_arcade — no rebuild needed
+    }
+    if (!GS.flag('q_arcade_beat')) {
+      await this.dlg.say(...DIALOGUE.q_arcade_active);
+      return;
+    }
+    if (!GS.flag('q_arcade_done')) {
+      const result = completeQuest('arcade_legend');
+      if (result === 'hands-full') {
+        await this.dlg.say(...DIALOGUE.q_arcade_full);
+        return;
+      }
+      GS.setFlag('q_arcade_claimed');
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.q_arcade_claim_beat);
+      AUDIO.jingle('victory', 1600, this.mapDef.music);
+      return;
+    }
+    if (GS.flag('manager_defeated')) {
+      await this.dlg.say(...DIALOGUE.q_arcade_after, ...DIALOGUE.sal_after_meeting);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_arcade_after);
+  }
+
+  /** §A10 #4 — THE machine: pages, the play/walk-away ask, then ArcadeScene
+   *  over a paused world (the ShopScene pattern; 'mf-arcade-closed'). The
+   *  cabinet is endlessly replayable from any save — no flag ever gates it. */
+  private async legendCabinetBeat(): Promise<void> {
+    const pages = GS.flag('q_arcade_beat') ? DIALOGUE.cab_legend_yours : DIALOGUE.cab_legend;
+    await this.dlg.say(...pages);
+    const pick = await this.dlg.ask(['Step up to the machine', 'Walk away'], { cancelIndex: 1 });
+    if (pick !== 0) return;
+    this.game.events.once('mf-arcade-closed', () => {
+      // the run may have set q_arcade/q_arcade_beat — nothing on this map
+      // gates on them, so no rebuild; just put the room's music back on
+      AUDIO.playMusic(this.mapDef.music);
+      this.scene.resume();
+    });
+    this.scene.pause();
+    this.scene.launch('arcade', {});
+  }
+
   /** S9: quest sign beats — sniff clues + the spring; true = handled */
   private async signBeat(dialogueId: string): Promise<boolean> {
+    // S10 §A10 #4: the ARCADE LEGEND cabinet at STARPORT II
+    if (dialogueId === 'cab_legend') {
+      await this.legendCabinetBeat();
+      return true;
+    }
     if (dialogueId === 'q_biscuit_clue1') {
       await this.dlg.say(...DIALOGUE.q_biscuit_clue1);
       GS.setFlag('q_biscuit_c1');
@@ -1607,7 +1702,12 @@ export class OverworldScene extends Phaser.Scene {
         this.player.y - 4 > r.y &&
         this.player.y - 4 < r.y + r.h
       ) {
-        this.goThroughDoor(d.to, d.tx, d.ty, d.facing);
+        // S11b: a real door swings OPEN before it admits you
+        if ((d.indicator ?? (this.mapDef.interior ? 'mat' : 'none')) === 'door') {
+          this.goThroughInteriorDoor(d);
+        } else {
+          this.goThroughDoor(d.to, d.tx, d.ty, d.facing);
+        }
         return;
       }
     }
@@ -1641,6 +1741,22 @@ export class OverworldScene extends Phaser.Scene {
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.cameras.main.setZoom(1);
       this.scene.restart({ mapId: to, x: tx, y: ty, facing });
+    });
+  }
+
+  /**
+   * S11b: an interior DOOR opens before it admits you — closed→open swap +
+   * the creak, a short hold so the swing reads, then the S7 whoosh path.
+   * Re-entry rebuilds the scene from data, so the door stands closed again.
+   */
+  private goThroughInteriorDoor(d: DoorZone): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    AUDIO.sfx('door_creak');
+    this.doorImgs.get(d)?.setTexture('door_int_open');
+    this.time.delayedCall(260, () => {
+      this.transitioning = false; // hand off to the standard whoosh path
+      this.goThroughDoor(d.to, d.tx, d.ty, d.facing);
     });
   }
 
@@ -1709,7 +1825,7 @@ export class OverworldScene extends Phaser.Scene {
       this.registry.set('defeated', false);
       this.cut = true;
       await this.dlg.say(
-        `${GS.hero('rex')?.name ?? 'Rex'}... pick yourself up.`,
+        `${GS.hero('rex')?.name ?? 'Jay'}... pick yourself up.`,
         'The hill is still out there. So is breakfast. Handle both.',
       );
       this.cut = false;

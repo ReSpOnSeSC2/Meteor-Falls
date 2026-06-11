@@ -578,6 +578,55 @@ function busWall(): Pixmap {
   return pm;
 }
 
+/* ---- STARPORT arcades (S10) ---- */
+
+/**
+ * Arcade carpet: deep 2 AM blues in quiet 8px tiles — the dark a CRT needs.
+ * Flat per ADR-020 rule 1; the sparkle lives in arcadeFloorStar, placed
+ * deliberately by the builder, never sprinkled.
+ */
+function arcadeFloor(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.NIGHT, 1));
+  pm.hline(0, 7, TILE, px(RAMP.NIGHT, 0));
+  pm.vline(7, 0, TILE, px(RAMP.NIGHT, 0));
+  pm.set(3, 12, px(RAMP.NIGHT, 0)); // one flattened gum ghost
+  return pm;
+}
+
+/** the carpet's famous four-point sparkle — 90s arcades, by law */
+function arcadeFloorStar(): Pixmap {
+  const pm = arcadeFloor();
+  pm.set(7, 7, px(RAMP.CYAN, 2));
+  pm.set(7, 5, px(RAMP.PURPLE, 2));
+  pm.set(7, 9, px(RAMP.PURPLE, 2));
+  pm.set(5, 7, px(RAMP.PURPLE, 2));
+  pm.set(9, 7, px(RAMP.PURPLE, 2));
+  pm.set(12, 2, px(RAMP.MAGENTA, 1)); // a lesser, aspiring sparkle
+  return pm;
+}
+
+/**
+ * Arcade wall: the wallInterior construction in showroom dark — 3px wall cap
+ * (ADR-020 thickness), a lit neon rail across the face, padded base.
+ */
+function arcadeWall(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.NIGHT, 2));
+  // wall cap seen from above
+  pm.rect(0, 0, TILE, 3, px(RAMP.NIGHT, 3));
+  pm.hline(0, 3, TILE, px(RAMP.NIGHT, 0)); // cap drop edge
+  // the neon rail — lit core over its glow row (light is never outlined)
+  pm.hline(0, 6, TILE, px(RAMP.MAGENTA, 1));
+  pm.hline(0, 7, TILE, px(RAMP.MAGENTA, 3));
+  pm.hline(0, 8, TILE, px(RAMP.PURPLE, 1));
+  // padded baseboard
+  pm.rect(0, 11, TILE, 3, px(RAMP.INK, 1));
+  pm.hline(0, 11, TILE, px(RAMP.INK, 2));
+  pm.hline(0, TILE - 1, TILE, C.inkSoft); // floor shadow
+  return pm;
+}
+
 /* ---------------------------------------------------------------- */
 /* Tile registry — order defines tilemap indices                      */
 
@@ -625,6 +674,10 @@ export const TILESET: TileEntry[] = [
   { name: 'road_patch', solid: false, make: roadPatch },
   { name: 'storm_drain', solid: false, make: stormDrain },
   { name: 'office_wall_light', solid: true, make: officeWallLight },
+  // STARPORT arcades (S10)
+  { name: 'arcade_floor', solid: false, make: arcadeFloor },
+  { name: 'arcade_floor_star', solid: false, make: arcadeFloorStar },
+  { name: 'arcade_wall', solid: true, make: arcadeWall },
   // 16 path variants appended programmatically (indices PATH_BASE..+15)
 ];
 
@@ -1814,6 +1867,47 @@ export function drawCot(): Pixmap {
   return pm;
 }
 
+/**
+ * The interior door (S11b — "any entry way needs a door, not just a mat").
+ * Mounted IN the wall band above a facing-'up' door zone: frame with a lit
+ * top rail, a two-panel door, a brass knob. Walking in swings it open —
+ * the open variant shows the dark hall beyond with the door edge-on at the
+ * jamb. ADR-019 fixed-canvas + ADR-020 discipline (deliberate panels, no
+ * noise; the knob's glint is the only light).
+ */
+export function drawInteriorDoor(open: boolean): Pixmap {
+  const pm = new Pixmap(20, 28);
+  const jamb = px(RAMP.EARTH, 1);
+  // the frame: jambs + the lit top rail
+  pm.rect(1, 1, 18, 26, jamb);
+  pm.hline(2, 1, 16, px(RAMP.EARTH, 3)); // lit top rail
+  pm.hline(2, 2, 16, px(RAMP.EARTH, 2));
+  pm.vline(1, 1, 26, px(RAMP.EARTH, 2));
+  pm.vline(18, 2, 25, px(RAMP.EARTH, 0));
+  if (!open) {
+    // the panel door, closed: two inset panels + the brass knob
+    pm.rect(3, 3, 14, 24, px(RAMP.EARTH, 2));
+    pm.vline(3, 3, 24, px(RAMP.EARTH, 3)); // lit stile
+    pm.frame(5, 5, 10, 9, px(RAMP.EARTH, 1)); // upper panel
+    pm.frame(5, 16, 10, 9, px(RAMP.EARTH, 1)); // lower panel
+    pm.set(6, 6, px(RAMP.EARTH, 3)); // panel light catches
+    pm.set(6, 17, px(RAMP.EARTH, 3));
+    pm.set(15, 14, px(RAMP.GOLD, 3)); // the brass knob
+    pm.set(15, 15, px(RAMP.GOLD, 1));
+  } else {
+    // swung inward: the dark room beyond, the door edge-on at the jamb
+    pm.rect(3, 3, 14, 24, px(RAMP.NIGHT, 1));
+    pm.rect(3, 3, 14, 2, px(RAMP.NIGHT, 0)); // header shadow
+    pm.hline(4, 25, 12, px(RAMP.NIGHT, 2)); // a sliver of floor light
+    pm.rect(3, 3, 3, 24, px(RAMP.EARTH, 2)); // the door, edge-on
+    pm.vline(3, 3, 24, px(RAMP.EARTH, 3));
+    pm.vline(5, 3, 24, px(RAMP.EARTH, 0));
+    pm.set(6, 14, px(RAMP.GOLD, 2)); // the knob, catching what light is left
+  }
+  pm.outline(C.outline);
+  return pm;
+}
+
 /** wooden office door with a nameplate (the Manager's) */
 export function drawOfficeDoor(): Pixmap {
   const pm = new Pixmap(16, 26);
@@ -1976,6 +2070,101 @@ export function drawShopShelf(seed = 4): Pixmap {
     pm.rect(tagX, boardY + 7, 3, 3, px(RAMP.PAPER, 3));
     pm.set(tagX + 1, boardY + 8, px(RAMP.RED, 1));
   }
+  pm.outline(C.outline);
+  return pm;
+}
+
+/**
+ * An arcade cabinet (S10) — 18×28, face-on: marquee, CRT, control deck,
+ * coin door. `screen` picks one of three hand-set attract scenes (variety is
+ * a parameter, never noise — ADR-020); `marquee` is the brand ramp.
+ */
+export function drawArcadeCabinet(o: { marquee: number; screen: 0 | 1 | 2 }): Pixmap {
+  const pm = new Pixmap(18, 28);
+  // body — purple showroom sides, lit left
+  pm.rect(1, 1, 16, 26, px(RAMP.PURPLE, 1));
+  pm.vline(1, 1, 26, px(RAMP.PURPLE, 2));
+  pm.vline(16, 2, 25, px(RAMP.PURPLE, 0));
+  // marquee: lit band with its glow row under (light is never outlined)
+  pm.rect(2, 1, 14, 4, px(o.marquee, 2));
+  pm.hline(2, 1, 14, px(o.marquee, 3));
+  pm.hline(2, 5, 14, px(o.marquee, 1));
+  // CRT in its bezel
+  pm.rect(3, 7, 12, 9, px(RAMP.INK, 0));
+  if (o.screen === 0) {
+    // a tiny rocket holding the high score nobody beats
+    pm.set(6, 11, px(RAMP.PAPER, 3));
+    pm.set(7, 11, px(RAMP.RED, 2));
+    pm.hline(10, 9, 3, px(RAMP.GOLD, 2)); // the score line
+    pm.set(5, 13, px(RAMP.CYAN, 2));
+    pm.set(12, 12, px(RAMP.NIGHT, 3));
+  } else if (o.screen === 1) {
+    // maze game: dots, one brave dot
+    for (let x = 5; x <= 12; x += 3) pm.set(x, 10, px(RAMP.GOLD, 3));
+    pm.hline(5, 12, 8, px(RAMP.BLUE, 2));
+    pm.set(6, 14, px(RAMP.GOLD, 3));
+  } else {
+    // blocks descending. they always descend.
+    pm.rect(5, 9, 2, 2, px(RAMP.CYAN, 2));
+    pm.rect(9, 11, 2, 2, px(RAMP.MAGENTA, 2));
+    pm.rect(12, 9, 2, 2, px(RAMP.GOLD, 2));
+    pm.hline(4, 14, 10, px(RAMP.GRASS, 2));
+  }
+  // control deck — sloped lip, stick + two buttons
+  pm.rect(2, 16, 14, 3, px(RAMP.PURPLE, 2));
+  pm.hline(2, 16, 14, px(RAMP.PURPLE, 3));
+  pm.set(5, 17, px(RAMP.INK, 0)); // stick
+  pm.set(5, 16, px(RAMP.RED, 3)); // ball top
+  pm.set(10, 17, px(RAMP.RED, 2));
+  pm.set(13, 17, px(RAMP.GOLD, 2));
+  // lower body + coin door
+  pm.rect(2, 19, 14, 8, px(RAMP.PURPLE, 1));
+  pm.rect(7, 21, 4, 4, px(RAMP.INK, 1));
+  pm.set(8, 22, px(RAMP.GOLD, 2)); // coin slot, hopeful
+  pm.hline(2, 26, 14, px(RAMP.INK, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/**
+ * THE machine — the ARCADE LEGEND cabinet (§A10 #4): a head taller, gold
+ * star marquee, and the attract screen forever flashing MGR's three letters.
+ */
+export function drawLegendCabinet(): Pixmap {
+  const pm = new Pixmap(22, 32);
+  pm.rect(1, 1, 20, 30, px(RAMP.PURPLE, 1));
+  pm.vline(1, 1, 30, px(RAMP.PURPLE, 2));
+  pm.vline(20, 2, 29, px(RAMP.PURPLE, 0));
+  // tall gold marquee with the star
+  pm.rect(2, 1, 18, 5, px(RAMP.GOLD, 2));
+  pm.hline(2, 1, 18, px(RAMP.GOLD, 3));
+  pm.hline(2, 6, 18, px(RAMP.GOLD, 1));
+  pm.set(10, 2, px(RAMP.PAPER, 3)); // the star: a plus of light
+  pm.set(9, 3, px(RAMP.PAPER, 3));
+  pm.set(11, 3, px(RAMP.PAPER, 3));
+  pm.set(10, 4, px(RAMP.PAPER, 3));
+  pm.set(10, 3, C.white);
+  // the CRT — attract mode: a rocket, a foe, and the three famous letters
+  pm.rect(3, 8, 16, 11, px(RAMP.INK, 0));
+  pm.hline(8, 10, 5, px(RAMP.GOLD, 3)); // M G R, abstracted to its glow
+  pm.set(7, 13, px(RAMP.PAPER, 3)); // the little ship
+  pm.set(8, 13, px(RAMP.RED, 2));
+  pm.set(9, 13, px(RAMP.GOLD, 2)); // its flame
+  pm.set(14, 12, px(RAMP.CYAN, 2)); // a moth, unbothered
+  pm.set(13, 16, px(RAMP.NIGHT, 3)); // starfield
+  pm.set(5, 16, px(RAMP.NIGHT, 3));
+  // deck + buttons
+  pm.rect(2, 19, 18, 3, px(RAMP.PURPLE, 2));
+  pm.hline(2, 19, 18, px(RAMP.PURPLE, 3));
+  pm.set(6, 20, px(RAMP.INK, 0));
+  pm.set(6, 19, px(RAMP.RED, 3));
+  pm.set(12, 20, px(RAMP.RED, 2));
+  pm.set(16, 20, px(RAMP.GOLD, 2));
+  // body + coin door
+  pm.rect(2, 22, 18, 9, px(RAMP.PURPLE, 1));
+  pm.rect(9, 24, 4, 4, px(RAMP.INK, 1));
+  pm.set(10, 25, px(RAMP.GOLD, 2));
+  pm.hline(2, 30, 18, px(RAMP.INK, 1));
   pm.outline(C.outline);
   return pm;
 }

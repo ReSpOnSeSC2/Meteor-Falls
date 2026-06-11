@@ -1202,10 +1202,13 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   - **The interior program is QUEUED, designed** (NEXT_PROMPTS S12–S13):
     the no-decorative-doors law with validator enforcement, the 12-category
     interior payload taxonomy (~120 seeded instances — §A11 bits, economy,
-    recovery incl. two-story HOTELS and hospitals as the largest building
-    in every city, quest nodes, collections, tutors, world-building,
+    recovery incl. two-story HOTELS and landmark-large hospitals
+    *(amended same day, user: a hospital is "a rather large building" —
+    wide, findable, never required to be a city's tallest; big-city office
+    and apartment towers out-build it, 4–5 stories in Chandrapore)*,
+    quest nodes, collections, tutors, world-building,
     secrets, LEDGER CALLBACKS reading GS.data.callers, residences, civic,
-    set-pieces), city vocabulary (hotel/hospital-tower/walk-up/rooftop),
+    set-pieces), city vocabulary (hotel/hospital-block/walk-up/rooftop),
     and the transport pass (bus stations + fares, bike ×1.35, the car's
     region-road UI, chapter-gated airports) — all reconciled with §A5's
     scripted vehicles and Teleport's canon role. "New York scale" is
@@ -1222,3 +1225,382 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   shapes; new interiors pull payloads from the S12 taxonomy instead of
   inventing; gift boxes are the standard one-time-pickup pattern; the
   S9 bot recipe's step 2 now crosses the hall (header updated).
+
+## ADR-029 — S10: ARCADE LEGEND — the deterministic cabinet, save v4 & the first body armor
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S10 — GAME_BIBLE §A10 #4 + Prompt 36's shmup
+  hook landed early, adapted to ADR-001..028 reality)
+- **Context:** §A10 #4 ("Arcade Legend", replayable, Champion Jacket, the
+  arcade-owner caller) needs a venue and a playable shoot-'em-up; both
+  arcades were locked facades whose dialogue carried two standing gags (the
+  Otterbrook chirp, STARPORT II's attract-mode "MGR" — which NEXT_PROMPTS
+  canonized as the S2 Manager's score). ADR-015 demands registered
+  migration steps; ADR-017 demands manifest extensions in the same commit;
+  ADR-024/026 set the input law every new UI inherits.
+- **Decision:**
+  - **Both STARPORTs open via the S4 interior pattern.** Otterbrook's
+    `arcade` prop and Brickton's `bldg_arcade2` gain `door` zones below
+    their collision floors (ADR-011); assigning a door consumes NO rng, so
+    the 1995 stream is byte-identical (ADR-016's rule — verified by the
+    untouched jitter tests). Street exits derive through `doorstepOf()`.
+    `locked_arcade`/`locked_arcade2` retired the locked_drugstore way. TWO
+    knock-on fixes: the Otterbrook park hedge shortened (tiles 3–6) because
+    its old run crossed the new doorstep, and the §A10 #2 mail check
+    HOISTED out of the lockedLines loop — facades take letters whether or
+    not their door is real (the open STARPORT still has a mail slot).
+    New tiles `arcade_floor/_star/_wall` (chars `a * A`), cabinet props
+    `cab_a/b/c` (parameterized attract screens) + `cab_legend`, all under
+    ADR-019/020 discipline. Interiors: the Otterbrook original keeps a
+    cabinet-shaped patch of clean carpet (the big game moved to the
+    sequel — that's why the quest venue is Brickton, §A10 canon); STARPORT
+    II holds THE machine, island banks, and SAL.
+  - **THE CABINET IS DETERMINISTIC — that is the design.** `ArcadeScene`
+    ('arcade', launched over a paused world like ShopScene, emits
+    'mf-arcade-closed'): ~60s score-attack, ship + held-A autofire + 3
+    lives, on the EXISTING input layer (the UIScene touch overlay drives it
+    with zero new controls, §B4). Waves come from a SCRIPTED spawn table in
+    `src/data/arcade.ts`; the sim advances on accumulated dt (everyFrame /
+    scene update — never Clock timers, ADR-024); zero Math.random() during
+    play. Same inputs = same score, forever: 1995 cabinets played fair,
+    pattern-learning is the fun, and the ADR-008 bot reproduces runs
+    exactly (calibrated: a never-move camper banks 2337 — losing to MGR by
+    design; the scene-header sweep recipe banks 3817). EB-goofy foes (MOON
+    MOTH, GRUMBLE ROCK, SAUCER SALESMAN), one corn dog (eating it is +300;
+    SHOOTING it is +5 and the cabinet's disappointment — a real ceasefire
+    decision), and the finale: **THE {coolthing} attacks as itself**, the
+    player's coolest thing flying in letter by letter (+COOL BONUS for the
+    full word). All cabinet strings live in `ARCADE_TEXT`, swept by the
+    validator (§B4 + TEXT_VARS; {playername}/{coolthing} are live).
+    Hardware back = B (ADR-026): eject ask mid-run (discards the score),
+    walk-away from attract/table.
+  - **Save v4 — the score table.** `GS.data.arcadeScores` (5 rows,
+    best-first; ties rank BELOW the sitting row — a legend must EXCEED).
+    The registered v3→v4 step backfills **MGR's lonely row (3000 — a quota
+    of a number; he smiled the whole time)**; newGameData seeds the same
+    row, so every save meets the attract gag the dialogue used to carry.
+    Slot peeks still derive from the blob (ADR-018, no new summary field).
+    `arcadeTopScore/arcadeRankOf/submitArcadeScore` are the GS seam.
+  - **The ADR-013 letter grid extracted to `src/ui/lettergrid.ts`** (the
+    S4 pick()-extraction precedent): cells, button bar, wrap math, SFX
+    verbatim; buttons are now a configurable subset packed center-on-200
+    with 6px gaps — the full SPACE/BACK/DON'T CARE/OK set reproduces
+    NameEntryScene's original literals exactly, so the ADR-013 QA recipe
+    stays true (re-verified at 8.33ms one-frame taps). Initials entry =
+    the same grid, cap 3, BACK/OK only, prefilled from {playername}'s
+    grid-typeable letters.
+  - **Quest #4 on the S9 engine**, zero order-dependency: the cabinet arms
+    `q_arcade` at first play and sets `q_arcade_beat` the moment a run's
+    score exceeds the table's top row; SAL's ask also arms. His claim beat
+    routes the **CHAMPION JACKET** through completeQuest (hands-full
+    BLOCKS, zero missables) and freezes his caller record (damage 425).
+    The quest completes ONCE; the cabinet is endlessly replayable from any
+    save (§A10: "replayable" — the table is save data, not quest state).
+  - **The Champion Jacket is §A8's first 'body' armor**, wired the way S9
+    wired charms into 'other': `ItemDef.defense` (+ the kind⇔field schema
+    refinement), `slotOf` armor→'body', `heroDefense()`/
+    `equipDefenseDelta()` in battle/formulas.ts with enemy damage AND the
+    STATUS sheet reading through them (the sheet gained a Body line), and
+    `confirmEquip` now fully slot-aware ("Defense up by 8!"). Future §A8
+    armor is an item + manifest row, no new code.
+  - **SAL, the new cast member** (ADR-020/022/025 compliant: spec-field
+    face, hairTones gray, a 3px gold staff-star detail hook): owner of
+    both STARPORTs, exactly one §A11 obsession — **he keeps a high-score
+    table for EVERYTHING** (the weather, customers, Tuesdays, eventually
+    the saving of the world). His grudge against the round-number "MGR"
+    row is the quest's §A11 engine; `sal_after_meeting` pays off the S2
+    Manager post-`manager_defeated`.
+  - **Validator extended in the same commit** (ADR-017): the §A10 manifest
+    now pins #1–4 (flags, reward, caller name/effect), champion_jacket's
+    armor pins (sole Ch.1 'armor'), MGR_ROW pinned at MGR/3000, the venue
+    pins (cab_legend sign + prop in arcade2_int, both facade doors), and
+    the ARCADE_TEXT sweeps. Verified failing loudly on three axes.
+- **Verification:** validator + 126 vitest green (jacket formulas, v3→v4 +
+  full v1→v4 chain, cabinet-law rank tests); the whole S10 pre-flight table
+  in docs/QA.md ran live via the ADR-008 driver — both arcades entered
+  (fresh-save and post-ch1), camper-vs-sweeper runs at their calibrated
+  scores, initials → table → dethrone → Sal → jacket equipped ("Defense up
+  by 8!", STATUS 24), save → kill → Continue with the v4 blob intact, a
+  TRUE v3 blob migrated live, the 8.33ms one-frame-tap regime over
+  attract/fire/eject/grid, and `npm run android:apk` produced a fresh APK.
+  One device-gate row added to the S8 table (the USER's phone sign-off;
+  existing boxes untouched).
+- **Consequences:** future cabinets (Prompt 36's NG+ hooks, S12's "the
+  STARPORT teaches the shmup" tutor) extend `data/arcade.ts` patterns —
+  scripted waves stay the law (a cabinet that rolls dice breaks the bot
+  and the 1995 fiction at once); body/arms armor lands as data through the
+  S10 read-through seams; any future text-entry UI reuses ui/lettergrid
+  instead of forking the grid; the v4 registry note in ADR-015's chain
+  stands (S11+ register v5, never ad-hoc). Driver lore for future bots
+  joined QA.md: release all keys before each chunk, never restart a scene
+  mid-typewriter, settle fades before pressing.
+
+## ADR-030 — S11: THE LIVING BATTLE — party-card busts, the FX registry & the §A4.8 status set
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S11 — GAME_BIBLE Prompt 12/14 presentation
+  pass; user direction: "each character in an active UI like a real
+  character", art-directed mid-session against MOTHER Encore: the bust
+  rises from BEHIND the status box, centered above the HP rows)
+- **Context:** The party strip was four text boxes; abilities resolved as
+  one shared tint-flash; §A4.8 statuses beyond sunburn/productive didn't
+  exist in battle. ADR-010 set the one skip state (held A/B = ×4), ADR-020
+  the art law (battle sprites float, light/shadow never outlined), ADR-021
+  the variant pattern (per-hero angels from CAST specs), ADR-024 the input
+  law (everyFrame, never Clock timers; tweens only for pure cosmetics),
+  ADR-029 the determinism creed. Prompt 13's odometer is the soul and may
+  never be covered or delayed; Prompt 42 will profile this scene hardest.
+- **Decision:**
+  - **BATTLE BUSTS (src/spritegen/busts.ts):** every hero's card carries a
+    NEW 32×32 ×16-state sheet (`bust_<id>`) generated from the SAME
+    CharacterSpec as their overworld sheet — the ADR-021 pattern; ADR-022
+    span-table dome, ADR-025 hairTones, ADR-020 rules (Vibe glow and cheer
+    stars stamped AFTER outline; busts float). States: idle breathing ×2 ·
+    lunge · cast ×2 (glow between raised hands) · pray (hands together,
+    eyes closed — §A11.4 played straight) · gadget fiddle · rummage ·
+    munch · guard brace · hurt flinch · nervous ×2 · down slump · cheer ×2
+    (BUST_FRAME is the contract). The 24×32 overworld sheets are untouched
+    law. Cards are MOTHER-composed: bust centered at depth DEPTH_UI−1 so
+    the box overlaps its chest, name centered beneath, HP/PP drums beside
+    their labels.
+  - **BustView (src/battle/bust.ts)** drives everything DERIVED — HeroState
+    + battle events in, frames out, nothing stored: poses ride the skip-
+    scaled clock; defending holds the guard frame; a mortal drum runs the
+    nervous loop (the card sweats while the meter races); DOWN slumps,
+    fades, and the hero's own `angel_<id>` floats over the card (§A4.7);
+    revive returns the bust under a heal glow; victory runs the cheer.
+    §A4.8 renders ON the card: Sunburn red edge-tint, Crying droplets,
+    Asleep Zzz drift, Paralyzed sparks, HUSHED muzzle shimmer, Homesick
+    {favoritefood} thought-bubble (`thought_food`; Mushroomized lands with
+    Ch.6). Card shakes move box/labels/bust — the drums NEVER move.
+  - **THE FX REGISTRY (src/battle/fxRegistry.ts, Phaser-free):**
+    `AbilityDef.fx` is schema-REQUIRED (ADR-017 z.infer); every key
+    resolves here with kind 'ability' | 'item' | 'system', a visual
+    family, tier, and palette ramp. `npm run validate` fails BOTH
+    directions (unregistered ability fx / orphaned ability key), battle
+    items resolve through `itemFxKey` with the same two-way check, and
+    vitest mirrors it (fxRegistry.test.ts). System keys — per-element
+    impacts, smash burst, enemy dissolve, the Tick's latch_tether +
+    tether_sever, guard/heal glows, the six pray events, and the
+    summon_flash/phase_swap hooks Prompt 15's phase-machine will call —
+    are engine-invoked and exempt from the reverse check.
+  - **BattleFx (src/battle/fx.ts):** composable OBJECT-POOLED primitives
+    (particles, expanding rings, zigzag bolts, screen floods, palette-cycle
+    pulses, camera shakes, tint/flinch, floating popups — the S10 popFoe
+    idiom — and the Tick's throbbing tether) composed into named TIMELINES
+    (src/battle/fxTimeline.ts: events + spans on dt, Pool, stagger).
+    Authored families: Surge rings escalate per tier α→Ω, Fire rolls a
+    flame wave, Freeze grows + shatters a lattice, Volt drops sky bolts,
+    Lifeup rains green sparkles, Shield/Mirror snap a hex barrier, Hypno
+    spirals, Flash floods, Bottle Rockets arc with payload bursts (Multi
+    volleys), Spy sweeps a scanline + stamps the reveal, the Salt Shaker's
+    thrown arc VISIBLY severs the latch (§A6 — Vibe Fire severs it too),
+    food/cola sparkle/fizz at the bust, Glint's Spark pools porch-light
+    warmth, Comet streaks the sky, and PRAY IS SIX DISTINCT EVENTS —
+    Miraculous floods the field warm under a choir preset, Wonderful/Good
+    scale down, Nothing is one mote that tries anyway, Strange wobble-darts
+    onto a random combatant, Backfire's soft flare dozes an ally. Deaths
+    DISSOLVE (sprites break up and drift — never the old squash; ADR-020
+    floats). Fx use no dice — deterministic cadences, the ADR-029 creed.
+  - **TWO HARD LAWS:** every fx layer renders BELOW DEPTH_UI (full-field
+    floods slide UNDER the cards; nothing covers a drum, and the drums tick
+    in update() regardless of choreography) — and ALL choreography advances
+    on dt × the SAME ×4 the text typewriter uses under held A/B (ADR-010):
+    one skip state, applied where dt is read. The ADR-008 bot replays every
+    timeline through pump(); awaited tweens are extinct in this scene (the
+    two survivors — enemy idle bob, Canvas-fallback bg pulse — are pure
+    cosmetics per ADR-024).
+  - **§A4.8 IS LIVE:** crying (aim misses both sides), asleep (skips, wake
+    rolls, any hit wakes), paralyzed (skip rolls), hushed (no Vibe; enemies
+    lose their special vocabulary), sunburn (dot), Homesick (unchanged
+    flag), shield/mirror (halve physical; mirror throws a quarter back,
+    never landing a kill) — constants + rolls in battle/formulas.ts with
+    injected rng. Status abilities are functional: Hypno/Flash/Brainjam
+    land enemy-side conditions, Shield/Mirror wrap allies, Healing α cures,
+    Healing γ revives at half HP (§A4.7's named exception), Magnet sips a
+    flat PP trickle until Phase-2 data gives enemies PP pools, Spy stamps
+    HP + weaknesses, Bottle Rockets pierce defense at flat power. Per-hero
+    command rows: Mia's Pray (ADR-014), Milo's GADGETS replacing the Vibe
+    he never had; ally-targeting (hand cursor over the cards) serves heals,
+    shields, and revives.
+  - **Audio:** ~30 ADR-006 presets — one voice per element/family + the six
+    pray tiers (Miraculous gets the choir bloom). Ducking under jingles
+    unchanged.
+  - **Drive-by (user catch):** interior door mats for north-wall doors now
+    anchor flush against the wall base (rex_hall's three hovered mid-floor)
+    — `buildDoorMarkers` keys on `facing: 'up'`.
+- **Verification:** validator + 140 vitest green (timeline math, ×4 skip
+  compression, pool reuse, registry mirrors); the registry gate verified
+  failing loudly on all four axes; the full S11 gauntlet ran live via the
+  ADR-008 driver at pump(n, 8.33) — every ability class, every status tick
+  both sides, latch→tether→salt-sever, four pray tiers pinned via
+  qa().forcePray, mortal-roll save-by-victory (drum frozen at 41, hero
+  standing), full wipe (four cards → four angels → defeat), held-A
+  compression — recipe in BattleScene's header, log + shots in docs/QA.md
+  (`.shots/s11_*`), ONE device row appended to the S8 gate.
+- **Consequences:** new abilities MUST ship an fx key + registry row in the
+  same commit (the gate names any gap); Prompt 15's phase-machine calls
+  fx.play('summon_flash'/'phase_swap') instead of inventing visuals;
+  chapter casts inherit busts for free via CharacterSpec (a guest hero =
+  one CAST entry + sheet registration); Prompt 13's urgency pitch hooks
+  into the same mortal state the nervous loop reads; Prompt 42 profiles a
+  scene that already pools every transient. Future battle UIs poll with
+  everyFrame and respect both hard laws — a reviewer can reject any diff
+  that draws over a drum or awaits a tween by citing this entry.
+
+## ADR-031 — The first hero is canonically JAY (née Rex)
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user decree mid-S11 playtest, the ADR-023 playbook)
+- **Context:** The author renamed the first hero while reviewing the S11
+  party cards against MOTHER Encore (where the lead carries the player's
+  own name). ADR-023 set the policy: rename a character = change
+  `HEROES.<id>.name` + sweep the Bible, never touch ids.
+- **Decision:** Display-name only. `HEROES.rex.name = 'Jay'`; every
+  display-prose 'Rex/REX' in the Bible swept to 'Jay/JAY' with the §A3
+  amendment note (Appendix rule 6); src comments and the two test
+  assertions on the default name updated; the corn dog's item text now
+  consumes the {rex} token (dlg.say applies vars() to item text — tokens
+  are legal there, and the S5 sweep already guards them). **Internal ids
+  are FROZEN:** `rex` (HEROES/CAST keys), map ids (`rex_home`, `rex_hall`),
+  flags (`rex_homesick`), texture keys (`angel_rex`, `bust_rex`), dialogue
+  keys, and the `{rex}` token, which resolves to the live display name.
+  'Rex' was already the first don't-care alternate on his name screen —
+  he was almost named that. Old saves keep whatever the player typed
+  (names are per-save, ADR-013); only the default changed. No migration;
+  saves stay v4.
+- **Verification:** name entry prefills Jay; the card, STATUS sheet, and
+  "JAY'S ROOM" banner all read Jay on a fresh save; validator + 140 vitest
+  green (the §A3 checks key on ids, not display names).
+- **Consequences:** the id-vs-display split holds for a SECOND rename —
+  the policy is proven reusable; any future hero rename is one data field,
+  one Bible sweep, one ADR.
+
+## ADR-032 — S11b: THE BATTLE STAGE — battlers act, weapons render, wear states, real doors, the green combo
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S11b — continues ADR-030's Living Battle; user
+  direction: "the character moves and does like a back swing looking at the
+  bird", "animations for every equippable item and every psi ability",
+  "enemies show damage as they near death — same for our characters",
+  "any entry way needs a door, not just a mat", "shield needs clearer target
+  UI", "a huge green SMAAASH with Mother-3 spam-A multi-hits")
+- **Context:** ADR-030 gave every ability a named fx timeline but the caster
+  never left their card; equipment was invisible outside the stat sheet;
+  battle sprites never registered damage; interior doorways were mats; the
+  ally picker was a bare hand cursor; SMAAASH was a gold one-hit banner.
+  Standing law: ADR-002 boot-time textures, ADR-010's one ×4 skip state,
+  ADR-020/021/022/025 art rules, ADR-024 input law, ADR-029 determinism,
+  ADR-030's two hard laws (nothing covers a drum; all choreography on dt).
+- **Decision:**
+  - **BATTLERS (src/spritegen/battlers.ts):** per-hero full-body REAR-3/4
+    sheets, 28×36 ×14 frames (idle ×2 · step ×2 · backswing · swing · aim ·
+    recoil · cast ×2 · pray-kneel · throw ×2 · winded) — the ADR-021 variant
+    pattern off the SAME CharacterSpec: hand-authored REAR_SKULL span table
+    (ADR-022), hairTones (ADR-025), the face turned right with one eye, brow
+    + nose on the silhouette edge, looking UP at the bird (the MOTHER
+    framing). The 24×32 overworld and 32×32 bust sheets stay untouchable law
+    (the bust sheet APPENDS windedA/B at 16/17 — indices 0–15 never move).
+  - **WEAPON_ART (src/spritegen/weapons.ts):** every §A8 equippable maps to
+    drawn art — 'held' (one silhouette per class: bat/pan/rifle/beads;
+    item-specific by ramp + detail pass — the Cracked bat's crack vs the
+    T-Ball's ring stripe — composed into the battler's grip per pose at
+    sheet-generation time), 'torso' (the Champion Jacket re-dresses battler
+    AND bust: trim sleeves, CHAMPION letter band across the back), 'trinket'
+    ('other'-slot charms are drawn icons). weaponClassOf/swingSfxOf drive
+    Bash choreography + audio. New §A8 line openers authored so every hero's
+    swing is real: pellet_popper (milo) and cedar_beads (dorin) — granted
+    in-world by their join chapters; the validator pins the weapon manifest.
+  - **THE STAGE (src/battle/stage.ts + STAGE_ANIM in fxRegistry.ts):** when
+    a hero acts, StageView walks their battler (look + wear-keyed sheet) from
+    the card to the field band — fx depth, below DEPTH_UI, never over a
+    drum — faces the target, performs, walks back; BustView holds an 'away'
+    state so card and stage never pose-fight. STAGE_ANIM maps EVERY FxFamily
+    to a pose (cast families raise arms under the glow; spiral/scan aim;
+    throw_arc/rocket lob; pray/revive kneel — §A11.4 straight; munch/fizz/
+    porchlight/guard stay on-card; system families 'none') — gated BOTH
+    directions by validator + vitest. No AbilityDef changes: presentation
+    keys off fx. Everything advances on FxTimelines ticked with the scene's
+    skip-scaled dt — pump-replayable, tweens for nothing; fx originate from
+    the actor (stage.point()), so rockets launch off the stage.
+  - **WEAR, BOTH SIDES:** every spritegen/enemies.ts battle draw takes a
+    wear param (0 full · 1 scuffed <66% · 2 battered <33%) with DELIBERATE
+    clustered damage per ADR-020 rule 1 — mailbox dents + flag knocked off
+    its hinge, mower's bent blade + smoke cough + missing grille tooth,
+    cicada's cracked-then-shattered wing glass, slug's chipped crown + lost
+    ruby, the Smiler's loosened-then-swinging tie + strained grin, pigeons
+    shedding into patchy coats, and the Tick bruising then visibly DEFLATING
+    (authored DOME_DEFLATED contour: crown drops six rows to the same base;
+    shine retired, graspers drooped, veins dimmed). ENEMY_BATTLE_ART maps
+    id → {sprite, draw}, gated both directions + sprite-key agreement. Hero
+    busts + battlers generate the same three tiers (mussed hair, cheek
+    bruise, torn sleeve + hanging thread, sweat sheen); below 33% the idle
+    becomes WINDED (heaving shoulders, breath-tick sfx) — the mortal roll
+    still owns the nervous loop. Tier swaps key on the DISPLAYED odometer
+    value (heroes) / plain hp (enemies, no drums) — texture swaps on change,
+    zero redraws. Texture policy: enemy tiers + bare-look hero sheets at
+    boot; equipped looks materialize through ensureBattleArt at battle
+    create — the same factory, cached by key, zero per-frame draws (the
+    ADR-002 stance extended to look-keyed sheets; a full combinatorial boot
+    sweep would have cost seconds for sheets most saves never wear).
+  - **REAL DOORS:** DoorIndicatorSchema gains 'door'; drawInteriorDoor()
+    closed + open (frame, two-panel door, brass knob, lit top rail; open
+    shows the dark room with the door edge-on at the jamb) mounted IN the
+    wall band above the zone, the S11 mat at its foot. Walking in swings it
+    open (door_creak + 260ms hold) before the S7 whoosh; scene rebuild
+    closes it on re-entry. rex_hall ×3 tagged 'door'; the validator enforces
+    the LAW structurally: an interior facing-'up' zone tagged (or defaulting
+    to) 'mat' fails naming map and zone — mats alone stay legal only for
+    bottom-edge exits. Facades keep their ADR-019 drawn doors; presentation
+    only, no Bible drift.
+  - **SHIELD READS LIKE A SPELL:** pickAlly's candidate card LIFTS 2px
+    (BustView.lift — box/labels/bust rise; drums NEVER move) under a gold
+    frame pulse with the bust brightened; every other card dims; a
+    "> {name}" tag rides the hand; B backs out; everyFrame polling + tap
+    zones intact (ADR-024). The barrier family rebuilt: six hex panels FLY
+    IN from the field corners (per-panel 'shield_panel' lock ticks), flash +
+    closing ring on the lock — and a persistent hex PIP (drawHexPip, tinted
+    cyan/paper) seats on the card's LEFT shoulder while shield/mirror turns
+    remain: the first GOOD-status indicator, opposite the §A4.8 ailment row.
+  - **SMAAAASH, IN GREEN, IN COMBO:** the banner is GRASS-ramp comic
+    letters over four INK offset layers (the palette law holds), slamming
+    5×→3× with a green radial burst + shake (BattleFx.smashBanner — texts
+    allocated once). A smash opens a ~1.1s COMBO WINDOW (COMBO_WINDOW_MS):
+    edge-triggered A presses ONLY — held A still means fast-forward, and the
+    window itself drains on the skip-scaled clock (ADR-010 untouched). Every
+    press re-swings the battler for 25% of the smash (comboHitDamage), rings
+    the rising pitch ladder (combo_2…combo_8 presets), pops "N HITS!", capped
+    at comboCap = min(8, 3 + Guts/40) TOTAL hits; a ring timer drains under
+    the target at fx depth. Deterministic — presses in, hits out, no dice
+    (ADR-029; verified to the digit) — and the total prints as ONE EB line:
+    "Jay swung true! SMAAAASH!! x8 — 189 damage!" via damageEnemy's line
+    override.
+  - **AUDIO (ADR-006 presets):** swing_bat/swing_pan (cast-iron ring)/
+    rifle_crack/swing_beads (rattle)/swing_fist, the combo_N pitch ladder,
+    door_creak, shield_panel, breath. Ducking unchanged.
+  - **FOUND & FIXED (latent since S11):** BattleFx.update's
+    "timelines = timelines.filter(...)" discarded inner timelines that
+    events pushed mid-tick (rings/panels froze at full alpha forever —
+    surfaced by back-to-back guard rings). The drain now snapshots, ticks,
+    and folds newborn timelines back in. Review smell: never reassign a
+    list that running callbacks append to.
+- **Verification:** validator + 164 vitest green — the three new gates
+  (WEAPON_ART, STAGE_ANIM, wear/ENEMY_BATTLE_ART) + the door law all
+  verified failing loudly (four axes); combo math (window/cap/ladder) and
+  wear thresholds headless; tier-distinctness pixel-proven per enemy AND per
+  hero bust/battler; Tick deflation asserted as vacated crown pixels. The
+  full ADR-008 gauntlet ran live (pad muted, pump-driven): all four weapon
+  swings on stage, every pose family, the maxed x8 combo by scripted taps,
+  wear forced on both sides, the shield picker end-to-end, all three
+  rex_hall doors, victory mid-stage, held-A compressing a whole bash into
+  36 frames, zero console errors. 37 shots in `.shots/s11b_*`; log in
+  docs/QA.md + ONE device row appended (existing boxes stay open).
+- **Consequences:** new heroes inherit a battler by CAST spec alone; new
+  §A8 equipment is an item + WEAPON_ART row + manifest pin in the same
+  commit (the gate names any gap); new fx families must claim a STAGE_ANIM
+  pose or the build fails; chapter enemies ship three authored wear tiers
+  through ENEMY_BATTLE_ART or fail the sweep; every future interior north
+  doorway is born a 'door' (the validator will say so); Prompt 15's phase
+  machine can stage bosses through the same StageView seam if it ever wants
+  a hero pulled forward; Prompt 42 profiles a stage that still pools every
+  transient and draws nothing per-frame.

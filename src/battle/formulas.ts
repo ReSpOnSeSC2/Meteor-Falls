@@ -23,6 +23,22 @@ export function equipDelta(hero: HeroState, itemId: string): number {
   return (item.offense ?? 0) - current;
 }
 
+/** a hero's defense: base stat + their 'body'-slot armor (S10 — the Champion
+ *  Jacket is §A8's first). Enemy physical damage and STATUS both read this
+ *  the way Offense reads heroOffense. */
+export function heroDefense(hero: HeroState): number {
+  const armor = hero.equip.body ? ITEMS[hero.equip.body] : undefined;
+  return hero.stats.defense + (armor?.defense ?? 0);
+}
+
+/** the S10 armor preview — equipDelta's shape, aimed at the 'body' slot */
+export function equipDefenseDelta(hero: HeroState, itemId: string): number {
+  const item = ITEMS[itemId];
+  if (!item || slotOf(item) !== 'body') return 0;
+  const current = hero.equip.body ? (ITEMS[hero.equip.body]?.defense ?? 0) : 0;
+  return (item.defense ?? 0) - current;
+}
+
 /** a hero's luck: base stat + their 'other'-slot charm (S9 — Lucky Collar).
  *  STATUS reads this the way Offense reads heroOffense. */
 export function heroLuck(hero: HeroState): number {
@@ -51,6 +67,42 @@ export function smashChance(guts: number): number {
 export function smashDamage(offense: number, defense: number, rng: Rng): number {
   const base = Math.max(2, offense * 3 - Math.floor(defense / 2));
   return Math.round(base * (0.9 + rng() * 0.2));
+}
+
+/* ---- the SMAAAASH combo (S11b — Mother-3 spam-A multi-hits) ---- */
+
+/** the combo window: edge-triggered A presses land follow-up hits for this
+ *  long after the smash connects (skip-scaled like everything else) */
+export const COMBO_WINDOW_MS = 1100;
+
+/** max TOTAL hits in one combo (the opening smash counts as hit 1):
+ *  3 + Guts/40, capped at 8 (§A3 — Guts drives the crit game) */
+export function comboCap(guts: number): number {
+  return Math.min(8, 3 + Math.floor(guts / 40));
+}
+
+/** each follow-up press lands 25% of the smash — deterministic, no dice
+ *  inside the window (ADR-029: presses in, hits out) */
+export function comboHitDamage(smashDmg: number): number {
+  return Math.max(1, Math.floor(smashDmg * 0.25));
+}
+
+/** total damage of a combo: the smash + (hits − 1) follow-ups */
+export function comboTotal(smashDmg: number, hits: number): number {
+  return smashDmg + comboHitDamage(smashDmg) * Math.max(0, hits - 1);
+}
+
+/* ---- wear tiers (S11b): battle sprites read the drums ---- */
+
+/** 0 full · 1 scuffed (<66%) · 2 battered (<33%) — heroes key this on the
+ *  DISPLAYED odometer value, never the target: a mortal roll degrades AS
+ *  the drum falls. Enemies key it on their plain hp. */
+export function wearTier(hp: number, max: number): 0 | 1 | 2 {
+  if (max <= 0) return 2;
+  const r = hp / max;
+  if (r < 1 / 3) return 2;
+  if (r < 2 / 3) return 1;
+  return 0;
 }
 
 export function vibeDamage(power: number, vibe: number, rng: Rng): number {
@@ -87,7 +139,33 @@ export function expShare(total: number, aliveCount: number): number {
   return Math.max(1, Math.ceil(total / Math.max(1, aliveCount)));
 }
 
-/* ---- Homesick (§A4.4/§A4.8, S4): Rex-only, cured by Mom's call ---- */
+/* ---- §A4.8 status rolls (S11) — injected rng, tested exactly ---- */
+
+export const CRYING_MISS_CHANCE = 0.5;
+export const PARALYZED_SKIP_CHANCE = 0.5;
+export const ASLEEP_WAKE_CHANCE = 0.34;
+
+/** Crying: can't aim — gnats, onion ghosts, and Flash α agree */
+export function cryingMisses(rng: Rng): boolean {
+  return rng() < CRYING_MISS_CHANCE;
+}
+
+export function paralyzedSkips(rng: Rng): boolean {
+  return rng() < PARALYZED_SKIP_CHANCE;
+}
+
+/** rolled when a sleeper's turn comes up (a hit always wakes them) */
+export function asleepWakes(rng: Rng): boolean {
+  return rng() < ASLEEP_WAKE_CHANCE;
+}
+
+/** Magnet α: the PP trickle — enemy PP pools arrive with the Phase-2 data;
+ *  until then the siphon draws a small fixed sip out of the air */
+export function magnetSiphon(rng: Rng): number {
+  return 2 + Math.floor(rng() * 5);
+}
+
+/* ---- Homesick (§A4.4/§A4.8, S4): Jay-only, cured by Mom's call ---- */
 
 export const HOMESICK_CHANCE = 0.08;
 export const HOMESICK_SKIP_CHANCE = 0.5;
@@ -97,7 +175,7 @@ export function contractHomesick(rng: Rng): boolean {
   return rng() < HOMESICK_CHANCE;
 }
 
-/** rolled whenever a Homesick Rex is about to act */
+/** rolled whenever a Homesick Jay is about to act */
 export function homesickSkips(rng: Rng): boolean {
   return rng() < HOMESICK_SKIP_CHANCE;
 }

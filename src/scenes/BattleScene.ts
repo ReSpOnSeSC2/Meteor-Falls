@@ -1,13 +1,82 @@
-﻿/**
+/**
  * BattleScene — first-person EB layout (GAME_BIBLE Prompt 12/13/14):
- * enemy sprites on an animated psychedelic background, party status strip
- * with ROLLING ODOMETER HP/PP drums, speed-ordered rounds, data-driven enemy
- * AI, the Titanic Tick's latch/drain/salt gimmick, Chad the useless guest,
- * Glint's assist, victory EXP/level-ups, defeat, and run-away.
+ * enemy sprites on an animated psychedelic background, PARTY CARDS along the
+ * bottom — each hero's box carries a living 32×32 BATTLE BUST (S11) that
+ * breathes, lunges, casts with a Vibe glow, prays, fiddles, munches, guards,
+ * flinches, sweats through mortal rolls, slumps into its §A4.7 angel, and
+ * cheers — plus the ROLLING ODOMETER HP/PP drums (Prompt 13, the soul),
+ * speed-ordered rounds, data-driven enemy AI, the Titanic Tick's visible
+ * latch tether severed by salt or Vibe Fire, the full §A4.8 status set
+ * rendered ON the cards, every ability resolving a named FX timeline from
+ * battle/fxRegistry.ts, victory EXP/level-ups, defeat, and run-away.
+ *
+ * HARD LAWS (S11): the cards never cover or delay the odometer — every fx
+ * layer sits below DEPTH_UI and the drums tick in update() regardless of
+ * choreography; and ALL choreography fast-forwards under held A/B at the
+ * text typewriter's exact ×4 (ADR-010) — one skip state, applied to dt.
+ *
+ * ── QA RECIPE — the S11 gauntlet (ADR-008 driver, pump(n, 8.33) one-frame
+ * taps; release all keys between chunks, settle fades before pressing).
+ * Ran 2026-06-11, logged in docs/QA.md. Driver lore this scene earned:
+ * a physical pad feeding INPUT trumps any script — mute it for scripted runs
+ * (save navigator.getGamepads, swap in () => [], restore after); launch
+ * battles directly over a paused overworld (the startBattle shape):
+ *   ow.scene.pause(); ow.scene.launch('battle', { enemyIds: ['titanic_tick'],
+ *     advantage: 'none', guestChad: false, glintAssist: false, boss: true });
+ *   game.events.once('mf-battle-end', o => ow.scene.resume());
+ * and when a leg needs ONE hero's menu deterministically, field a solo party
+ * — menu ambiguity is the flakiest part of any battle script.
+ * 1. Fresh save → overworld. Bench via console:
+ *      mfGS.data.party = [mfMakeHero('rex', 9, mfGS.data.heroNames.rex)];
+ *      mfGS.data.party[0].bag = ['cracked_bat','corn_dog','star_cola','salt_shaker','glints_spark'];
+ *      mfGS.data.party[0].equip = { weapon: 'cracked_bat' };
+ *      ['faye','milo','dorin'].forEach(id => mfGS.data.party.push(mfMakeHero(id, 9, mfGS.data.heroNames[id])));
+ *    (L9 keeps Ch.1 enemies standing; an L20 bench one-shots the whole roster.)
+ * 2. `mfBattle.qa()` exposes { heroes, enemies, fx, forcePray } — set statuses
+ *    directly to exercise every tick (heroes[i].status.crying = 3, .asleep,
+ *    .paralyzed, .hushed, .sunburn; enemies[i].asleep = 2 …), keep a boss
+ *    standing with enemies[0].hp = 4000, and sample any registry timeline
+ *    visually via qa().fx.play(key, { targets: [{x, y}] }).
+ * 3. Every ability class: Bash (+ SMAAASH via guts), Vibe damage/heal/status,
+ *    Gadgets (solo-Milo: Down→Gadgets→Spy / →Bottle Rocket), Pray
+ *    (qa().forcePray(tier) pins the roll), Goods (food/cola/salt/spark),
+ *    Defend, Run.
+ * 4. Latch leg: bench three (hero.down = true, odoHp.set(0)) so the Tick
+ *    latches the leader — tether visible — then Goods → Salt Shaker severs it.
+ * 5. Mortal-roll save-by-victory: odoHp.damage(999) on an ally at the menu,
+ *    nervous loop runs while the drum races, win before it lands — the drum
+ *    freezes mid-roll (§A4.1; verified frozen at 41 HP, down = false).
+ * 6. Full wipe: qa().heroes.forEach(h=>h.odoHp.damage(999)) → every card
+ *    slumps → fades → per-hero angel floats over it → defeat flow.
+ * 7. Held KeyZ through victory text + any timeline: everything compresses ×4
+ *    with zero dropped beats (events fire in order — fx.test.ts proves it).
+ *
+ * ── S11b extension (THE BATTLE STAGE — ran 2026-06-11, shots .shots/s11b_*):
+ * 8. Bench with the full §A8 stage kit equipped (Jay cracked_bat, Mia
+ *    hand_me_down_pan, Milo pellet_popper, Dorin cedar_beads) — Bash with
+ *    each: the battler steps up (card empties — BustView away), back-swings
+ *    looking up at the bird, swings, returns. Rifles aim → crack → recoil.
+ *    Re-equip mid-battle via hero.equip + qa().refreshLook(i).
+ * 9. One ability of every family ON STAGE: cast (Comet/Surge — arms raised
+ *    under the glow), aim (Spy/Hypno/Magnet), throw (rockets, Goods→salt),
+ *    pray (the kneel holds through the answered event); food/cola stay
+ *    on-card. STAGE_ANIM beside FX_REGISTRY is the map.
+ * 10. The combo: pin Math.random low for the smash, guts 320 for cap 8,
+ *    then KeyZ + pump(64) and 7 one-frame KeyZ taps at pump(1) gaps —
+ *    "x8 — N damage!" in ONE line, ring timer drains under the target.
+ *    Slow taps must expire the window honestly (x4 observed at pump(6)).
+ * 11. Wear: qa() drums to 49%/20% — busts swap scuffed/battered sheets
+ *    (DISPLAYED value keys the tier), <33% idles become the WINDED heave;
+ *    enemies swap on hp (qa().enemies[i].hp) — the Tick DEFLATES at w2.
+ * 12. Shield → the picker: candidate lifts under the gold pulse, others
+ *    dim, "> name" tag rides the hand, B backs out; confirm → six panels
+ *    fly in from the corners + lock; the cyan hex PIP holds on the card.
+ * 13. After any defends/shields: qa().fx.rings/bolts must drain to 0 —
+ *    the timeline drain folds in event-born inners (the S11b fix).
  */
 import Phaser from 'phaser';
 import { ENEMIES, introLine, type EnemyDef, type EnemyMove } from '../data/enemies';
-import { ABILITIES, rollPray, PRAY_TEXT } from '../data/abilities';
+import { ABILITIES, rollPray, PRAY_TEXT, type AbilityDef, type PrayTier } from '../data/abilities';
 import { ITEMS } from '../data/items';
 import { BATTLE_TEXT, DIALOGUE } from '../data/dialogue';
 import { GS, expForLevel, type HeroState } from '../engine/state';
@@ -15,6 +84,14 @@ import { statsAtLevel, maxHpAtLevel, maxPpAtLevel, unlockedAbilities, HEROES } f
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Odometer } from '../battle/odometer';
+import { BattleFx, type FxTarget } from '../battle/fx';
+import { BustView } from '../battle/bust';
+import { StageView } from '../battle/stage';
+import { itemFxKey, stagePoseOf } from '../battle/fxRegistry';
+import { battlerSheetKey, bustSheetKey, type BattlerLook, type WearTier } from '../spritegen/battlers';
+import { ensureBattleArt } from '../spritegen';
+import { wearSpriteKey } from '../spritegen/enemies';
+import { weaponClassOf, swingSfxOf } from '../spritegen/weapons';
 import {
   physicalDamage,
   smashChance,
@@ -26,8 +103,17 @@ import {
   runChance,
   expShare,
   heroOffense,
+  heroDefense,
   contractHomesick,
   homesickSkips,
+  cryingMisses,
+  paralyzedSkips,
+  asleepWakes,
+  magnetSiphon,
+  wearTier,
+  comboCap,
+  comboTotal,
+  COMBO_WINDOW_MS,
 } from '../battle/formulas';
 import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars } from '../ui/windows';
 import { colorOf, rgbOf, RAMP, px } from '../palette';
@@ -49,18 +135,51 @@ interface EnemyUnit {
   hp: number;
   spr: Phaser.GameObjects.Image;
   alive: boolean;
+  /** §A4.8 on the enemy side (S11): hypno / flash / brainjam land here */
+  asleep: number;
+  crying: number;
+  hushed: number;
+  /** S11b wear tier currently displayed — swap-on-change, never redraw */
+  wear: WearTier;
 }
+
+/** §A4.8 hero-side conditions — turns remaining (0 = clear) */
+interface HeroStatus {
+  sunburn: number;
+  /** the Smilers' §A7 "productive" debuff (offense down) */
+  productive: number;
+  crying: number;
+  asleep: number;
+  paralyzed: number;
+  hushed: number;
+  shield: number;
+  mirror: number;
+}
+
+const NO_HERO_STATUS = (): HeroStatus => ({
+  sunburn: 0,
+  productive: 0,
+  crying: 0,
+  asleep: 0,
+  paralyzed: 0,
+  hushed: 0,
+  shield: 0,
+  mirror: 0,
+});
 
 interface HeroUnit {
   hero: HeroState;
   odoHp: Odometer;
   odoPp: Odometer;
   box: Phaser.GameObjects.NineSlice;
+  bust: BustView;
   defending: boolean;
-  sunburn: number;
-  /** rounds of the Smilers' "productive" debuff (offense down — §A7) */
-  productive: number;
+  status: HeroStatus;
   latched: boolean;
+  /** S11b: what this hero is wearing — battler + bust sheets key off it */
+  look: BattlerLook;
+  /** wear tier currently on the card (keyed on the DISPLAYED drum value) */
+  wear: WearTier;
 }
 
 class OdoDisplay {
@@ -127,6 +246,17 @@ void main(){
   gl_FragColor = vec4(col, 1.0);
 }`;
 
+/** display labels for the §A4.8 hero conditions Strange pray can roll */
+const HERO_STATUS_POOL = ['sunburn', 'crying', 'asleep', 'paralyzed', 'hushed'] as const;
+type HeroStatusName = (typeof HERO_STATUS_POOL)[number];
+const STATUS_LANDED: Record<HeroStatusName, string> = {
+  sunburn: 'feels weirdly sun-kissed. At night. (SUNBURN)',
+  crying: 'welled up out of nowhere! (CRYING)',
+  asleep: 'dozed right off! (ASLEEP)',
+  paralyzed: 'went stiff as a flagpole! (PARALYZED)',
+  hushed: 'opened their mouth and nothing came out. (HUSHED)',
+};
+
 export class BattleScene extends Phaser.Scene {
   private cfg!: BattleConfig;
   private enemies: EnemyUnit[] = [];
@@ -138,12 +268,17 @@ export class BattleScene extends Phaser.Scene {
     fled: boolean;
   } | null = null;
   private dlg!: Dialogue;
+  private fx!: BattleFx;
+  private stage!: StageView;
   private textObj!: Phaser.GameObjects.BitmapText;
   private odoDisplays: Array<{ d: OdoDisplay; o: Odometer }> = [];
   private chadOdo: OdoDisplay | null = null;
   private ended = false;
+  private won = false;
   private tickAcc = 0;
   private prayHintShown = false;
+  /** dev harness: pins the next Pray roll (qa().forcePray) */
+  private prayPin: PrayTier | null = null;
 
   constructor() {
     super('battle');
@@ -157,18 +292,74 @@ export class BattleScene extends Phaser.Scene {
     this.chad = null;
     this.chadOdo = null;
     this.ended = false;
+    this.won = false;
     this.prayHintShown = false;
+    this.prayPin = null;
   }
 
   create(): void {
     this.dlg = new Dialogue(this);
+    this.fx = new BattleFx(this);
+    this.stage = new StageView(this);
     this.buildBackground();
     this.buildEnemies();
     this.buildParty();
     this.buildTextWindow();
     AUDIO.playMusic(this.cfg.boss ? 'boss' : 'battle');
     this.cameras.main.fadeIn(250, 0, 0, 0);
+    // ADR-008 harness handle — the S11 gauntlet pokes statuses through this
+    if (import.meta.env.DEV) {
+      (window as unknown as { mfBattle?: BattleScene }).mfBattle = this;
+    }
     void this.run();
+  }
+
+  /** dev-only QA seam (the scene-header recipe drives the gauntlet with it) */
+  qa(): {
+    heroes: HeroUnit[];
+    enemies: EnemyUnit[];
+    fx: BattleFx;
+    stage: StageView;
+    forcePray: (tier: PrayTier) => void;
+    refreshLook: (i: number) => void;
+  } {
+    return {
+      heroes: this.heroes,
+      enemies: this.enemies,
+      fx: this.fx,
+      stage: this.stage,
+      forcePray: (tier) => (this.prayPin = tier),
+      // S11b gauntlet: re-equip via hero.equip, then refresh the sheets
+      refreshLook: (i) => {
+        const h = this.heroes[i];
+        h.look = { weapon: h.hero.equip.weapon ?? null, body: h.hero.equip.body ?? null };
+        ensureBattleArt(this, h.hero.id, h.look);
+        h.bust.setSheet(bustSheetKey(h.hero.id, h.look.body, h.wear));
+      },
+    };
+  }
+
+  /** the acting hero's battler sheet for their current look + wear tier */
+  private battlerSheet(h: HeroUnit): string {
+    return battlerSheetKey(h.hero.id, h.look, h.wear);
+  }
+
+  /** S11b: below 33% displayed HP the idle heaves (wear tier 2) */
+  private isWinded(h: HeroUnit): boolean {
+    return h.wear === 2;
+  }
+
+  /** send a hero up onto the stage (bust goes 'away' while they're out) */
+  private async stageEnter(h: HeroUnit, aimX: number): Promise<void> {
+    h.bust.setAway(true);
+    const card = h.bust.point();
+    await this.stage.enter(this.battlerSheet(h), { x: card.x, y: card.y + 14 }, aimX, this.isWinded(h));
+  }
+
+  /** walk back to the card and hand the pose back to the bust */
+  private async stageReturn(h: HeroUnit): Promise<void> {
+    await this.stage.exit();
+    h.bust.setAway(false);
   }
 
   private buildBackground(): void {
@@ -186,6 +377,7 @@ export class BattleScene extends Phaser.Scene {
       const r = this.add
         .rectangle(0, 0, this.scale.width, this.scale.height, colorOf(px(ra, 1)))
         .setOrigin(0);
+      // pure cosmetic pulse — the one place a tween is still allowed (ADR-024)
       this.tweens.add({ targets: r, alpha: { from: 1, to: 0.7 }, duration: 1400, yoyo: true, repeat: -1 });
     }
   }
@@ -202,6 +394,7 @@ export class BattleScene extends Phaser.Scene {
       // Tick's lit dome top is the read — don't hide it behind the intro)
       const y = def.boss ? 97 : 92;
       const spr = this.add.image(x, y, def.sprite).setOrigin(0.5, 0.5);
+      // idle float — cosmetic only; battle sprites float, never stand (ADR-020)
       this.tweens.add({
         targets: spr,
         y: y - 3,
@@ -211,41 +404,72 @@ export class BattleScene extends Phaser.Scene {
         ease: 'sine.inout',
       });
       const letter = (dupes.get(id) ?? 0) > 1 ? letters[i] : '';
-      this.enemies.push({ def, letter, hp: def.hp, spr, alive: true });
+      this.enemies.push({ def, letter, hp: def.hp, spr, alive: true, asleep: 0, crying: 0, hushed: 0, wear: 0 });
     });
   }
 
   private buildParty(): void {
     const party = GS.aliveParty();
     const slots = party.length + (this.cfg.guestChad ? 1 : 0);
-    const boxW = 96;
+    // four cards must clear a 400px screen; busts keep their pane either way
+    const boxW = slots >= 4 ? 92 : 96;
     const totalW = slots * (boxW + 6) - 6;
     let bx = (this.scale.width - totalW) / 2;
+    const ink0 = colorOf(px(RAMP.INK, 0));
+    const ink1 = colorOf(px(RAMP.INK, 1));
     for (const hero of party) {
       const box = makeBox(this, bx, 168, boxW, 50);
-      this.add
-        .bitmapText(bx + 8, 173, 'retro', hero.name, 6)
+      // the MOTHER read: name centered under the bust, HP/PP rows below
+      const name = this.add
+        .bitmapText(bx + boxW / 2, 173, 'retro', hero.name, 6)
+        .setOrigin(0.5, 0)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(colorOf(px(RAMP.INK, 0)));
-      this.add
-        .bitmapText(bx + 8, 186, 'retro', 'HP', 6)
+        .setTint(ink0);
+      const hpLabel = this.add
+        .bitmapText(bx + 10, 185, 'retro', 'HP', 6)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(colorOf(px(RAMP.INK, 1)));
-      this.add
-        .bitmapText(bx + 8, 201, 'retro', 'PP', 6)
+        .setTint(ink1);
+      const ppLabel = this.add
+        .bitmapText(bx + 10, 200, 'retro', 'PP', 6)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(colorOf(px(RAMP.INK, 1)));
+        .setTint(ink1);
       const odoHp = new Odometer(hero.hp, hero.maxHp);
       const odoPp = new Odometer(hero.pp, hero.maxPp);
-      const dHp = new OdoDisplay(this, bx + 28, 185, 3);
-      const dPp = new OdoDisplay(this, bx + 37, 200, 2);
+      // drums sit beside their labels — and NEVER move or hide (the law)
+      const dHp = new OdoDisplay(this, bx + 46, 184, 3);
+      const dPp = new OdoDisplay(this, bx + 46, 199, 2);
       dHp.setValue(hero.hp);
       dPp.setValue(hero.pp);
       this.odoDisplays.push({ d: dHp, o: odoHp }, { d: dPp, o: odoPp });
-      this.heroes.push({ hero, odoHp, odoPp, box, defending: false, sunburn: 0, productive: 0, latched: false });
+      // S11b: the hero's LOOK — equipped weapon + body gear — drives which
+      // battler/bust sheets this battle uses; the factory caches by key
+      const look: BattlerLook = { weapon: hero.equip.weapon ?? null, body: hero.equip.body ?? null };
+      ensureBattleArt(this, hero.id, look);
+      const wear = wearTier(hero.hp, hero.maxHp);
+      const bust = new BustView(
+        this,
+        hero.id,
+        bx,
+        168,
+        boxW,
+        [box, name, hpLabel, ppLabel],
+        bustSheetKey(hero.id, look.body, wear),
+      );
+      this.heroes.push({
+        hero,
+        odoHp,
+        odoPp,
+        box,
+        bust,
+        defending: false,
+        status: NO_HERO_STATUS(),
+        latched: false,
+        look,
+        wear,
+      });
       bx += boxW + 6;
     }
     if (this.cfg.guestChad) {
@@ -254,12 +478,12 @@ export class BattleScene extends Phaser.Scene {
         .bitmapText(bx + 8, 173, 'retro', 'Chad', 6)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(colorOf(px(RAMP.INK, 0)));
+        .setTint(ink0);
       const t2 = this.add
         .bitmapText(bx + 8, 186, 'retro', 'HP', 6)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(colorOf(px(RAMP.INK, 1)));
+        .setTint(ink1);
       const hp = new Odometer(35, 35);
       this.chadOdo = new OdoDisplay(this, bx + 28, 185, 3);
       this.chadOdo.setValue(35);
@@ -276,7 +500,7 @@ export class BattleScene extends Phaser.Scene {
       .setMaxWidth(248);
   }
 
-  /* ---------------- text helpers ---------------- */
+  /* ---------------- text + fx helpers ---------------- */
 
   private print(raw: string): Promise<void> {
     const text = raw;
@@ -313,6 +537,20 @@ export class BattleScene extends Phaser.Scene {
       .replaceAll('{t}', t ?? '');
   }
 
+  private foeTarget(e: EnemyUnit): FxTarget {
+    return { x: e.spr.x, y: e.spr.y, spr: e.spr };
+  }
+
+  private cardTarget(h: HeroUnit): FxTarget {
+    return h.bust.point();
+  }
+
+  /** every heal glows on the card and resolves from the displayed value */
+  private healHero(h: HeroUnit, amount: number): void {
+    h.odoHp.heal(amount);
+    void this.fx.play('heal_glow', { targets: [this.cardTarget(h)] });
+  }
+
   /* ---------------- main flow ---------------- */
 
   private async run(): Promise<void> {
@@ -328,13 +566,7 @@ export class BattleScene extends Phaser.Scene {
         if (this.ended) break;
         if (h.odoHp.dead || h.hero.down) continue;
         h.defending = false;
-        // §A4.4 (S4): a Homesick Rex may spend the turn daydreaming
-        if (h.hero.id === 'rex' && GS.flag('rex_homesick') === true && homesickSkips(Math.random)) {
-          AUDIO.sfx('cancel');
-          await this.print(vars(this.fill(BATTLE_TEXT.homesick_skip, h.hero.name)));
-          continue;
-        }
-        const acted = await this.heroCommand(h);
+        const acted = await this.heroTurn(h);
         if (!acted) break; // ran away
       }
       if (this.ended) return;
@@ -353,16 +585,50 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
+  /** pre-command condition gate, then the command menu */
+  private async heroTurn(h: HeroUnit): Promise<boolean> {
+    const name = h.hero.name;
+    // §A4.4 (S4): a Homesick Jay may spend the turn daydreaming
+    if (h.hero.id === 'rex' && GS.flag('rex_homesick') === true && homesickSkips(Math.random)) {
+      AUDIO.sfx('cancel');
+      await this.print(vars(this.fill(BATTLE_TEXT.homesick_skip, name)));
+      return true;
+    }
+    // §A4.8 (S11): sleep holds the turn unless they stir; a hit always wakes
+    if (h.status.asleep > 0) {
+      if (asleepWakes(Math.random)) {
+        h.status.asleep = 0;
+        await this.print(this.fill(BATTLE_TEXT.wake_up, name));
+      } else {
+        h.status.asleep--;
+        await this.print(this.fill(BATTLE_TEXT.asleep_skip, name));
+        return true;
+      }
+    }
+    if (h.status.paralyzed > 0 && paralyzedSkips(Math.random)) {
+      AUDIO.sfx('cancel');
+      await this.print(this.fill(BATTLE_TEXT.paralyzed_skip, name));
+      return true;
+    }
+    return this.heroCommand(h);
+  }
+
   private async heroCommand(h: HeroUnit): Promise<boolean> {
     const name = h.hero.name;
-    // Prompt 12: the command row is per-hero — Pray surfaces for whoever has it
-    const hasPray = unlockedAbilities(h.hero.id, h.hero.level).includes('pray');
+    const all = unlockedAbilities(h.hero.id, h.hero.level);
+    // Prompt 12: the command row is per-hero — Pray surfaces for whoever has
+    // it, Milo's gadget kit replaces the Vibe he never had (§A3)
+    const hasPray = all.includes('pray');
+    const hasVibe = HEROES[h.hero.id].unlocks.some((u) => ABILITIES[u.ability]?.kind === 'vibe');
+    const hasGadgets = all.some((id) => ABILITIES[id]?.kind === 'gadget' && id !== 'repair');
     if (hasPray && this.cfg.prayTutorial && !this.prayHintShown) {
       this.prayHintShown = true;
       await this.print(this.fill(BATTLE_TEXT.pray_hint, name));
     }
     for (;;) {
-      const options = ['Bash', 'Vibe'];
+      const options = ['Bash'];
+      if (hasVibe) options.push('Vibe');
+      if (hasGadgets) options.push('Gadgets');
       if (hasPray) options.push('Pray');
       options.push('Goods', 'Defend');
       if (!this.cfg.boss) options.push('Run');
@@ -382,6 +648,11 @@ export class BattleScene extends Phaser.Scene {
         if (ok) return true;
         continue;
       }
+      if (options[pick] === 'Gadgets') {
+        const ok = await this.heroGadgets(h);
+        if (ok) return true;
+        continue;
+      }
       if (options[pick] === 'Goods') {
         const ok = await this.heroGoods(h);
         if (ok) return true;
@@ -389,6 +660,7 @@ export class BattleScene extends Phaser.Scene {
       }
       if (options[pick] === 'Defend') {
         h.defending = true;
+        await this.fx.play('guard_brace', { targets: [this.cardTarget(h)] });
         await this.print(this.fill(BATTLE_TEXT.guard, name));
         return true;
       }
@@ -443,6 +715,85 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Ally targeting over the party cards — S11b: the picker is unmistakable.
+   * The candidate card LIFTS 2px under a gold frame pulse with its bust
+   * brightened, every other card dims, and a "> {name}" tag rides the hand.
+   * B backs out; everyFrame polling + tap zones intact (ADR-024).
+   */
+  private pickAlly(pool: HeroUnit[]): Promise<HeroUnit | null> {
+    if (pool.length === 0) return Promise.resolve(null);
+    if (pool.length === 1) return Promise.resolve(pool[0]);
+    return new Promise((resolve) => {
+      let sel = 0;
+      let pulseT = 0;
+      const gold3 = colorOf(px(RAMP.GOLD, 3));
+      const gold2 = colorOf(px(RAMP.GOLD, 2));
+      const dimTint = colorOf(px(RAMP.NIGHT, 3));
+      const at = (i: number): { x: number; y: number } => {
+        const p = pool[i].bust.point();
+        return { x: p.x + 12, y: p.y - 28 };
+      };
+      const hand = this.add.image(at(0).x, at(0).y, 'hand').setDepth(DEPTH_UI + 3).setAngle(90).setScrollFactor(0);
+      const tag = this.add
+        .bitmapText(0, 0, 'retro', '', 6)
+        .setOrigin(0, 0.5)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 3)
+        .setTint(gold3);
+      const zones = pool.map((h, i) => {
+        const p = h.bust.point();
+        const z = this.add
+          .zone(p.x - 18, p.y - 24, 96, 50)
+          .setOrigin(0, 0)
+          .setScrollFactor(0)
+          .setDepth(DEPTH_UI + 3)
+          .setInteractive();
+        z.on('pointerdown', () => {
+          sel = i;
+          done(pool[i]);
+        });
+        return z;
+      });
+      const off = everyFrame(this, (dt) => {
+        pulseT += dt;
+        const d = INPUT.dir();
+        if (d.x !== 0 && this.navOk()) {
+          sel = (sel + (d.x > 0 ? 1 : pool.length - 1)) % pool.length;
+          AUDIO.sfx('cursor');
+        }
+        // the spotlight: candidate lifts + glows, everyone else steps back
+        for (const x of this.heroes) {
+          const isSel = x === pool[sel];
+          x.bust.lift(isSel);
+          x.bust.dim(!isSel);
+          if (isSel) x.box.setTint(pulseT % 460 < 230 ? gold3 : gold2);
+          else if (x.hero.down) x.box.setTint(0x888890);
+          else x.box.setTint(dimTint);
+        }
+        hand.setPosition(at(sel).x, at(sel).y);
+        tag.setText(`> ${pool[sel].hero.name}`).setPosition(at(sel).x + 8, at(sel).y);
+        if (INPUT.justPressed('A')) done(pool[sel]);
+        if (INPUT.justPressed('B')) done(null);
+      });
+      const done = (h: HeroUnit | null): void => {
+        AUDIO.sfx(h ? 'confirm' : 'cancel');
+        off();
+        hand.destroy();
+        tag.destroy();
+        zones.forEach((z) => z.destroy());
+        // cards settle back down; the fallen keep their gray
+        for (const x of this.heroes) {
+          x.bust.lift(false);
+          x.bust.dim(false);
+          if (x.hero.down) x.box.setTint(0x888890);
+          else x.box.clearTint();
+        }
+        resolve(h);
+      };
+    });
+  }
+
   private navAt = 0;
   private navOk(): boolean {
     if (this.time.now > this.navAt) {
@@ -452,27 +803,88 @@ export class BattleScene extends Phaser.Scene {
     return false;
   }
 
+  /* ---------------- Bash — the caster takes the stage (S11b) ---------------- */
+
   private async heroBash(h: HeroUnit, target: EnemyUnit): Promise<void> {
     const name = h.hero.name;
-    await this.print(this.fill(BATTLE_TEXT.bash, name));
-    const guts = h.hero.stats.guts;
-    let dmg: number;
-    if (Math.random() < smashChance(guts)) {
-      dmg = smashDamage(this.heroOffense(h), target.def.defense, Math.random);
-      AUDIO.sfx('smash');
-      this.cameras.main.shake(180, 0.012);
-      const sm = this.add
-        .bitmapText(this.scale.width / 2, 70, 'retro', BATTLE_TEXT.smaaash, 6)
-        .setOrigin(0.5)
-        .setScale(2)
-        .setDepth(DEPTH_UI + 4)
-        .setTint(colorOf(px(RAMP.GOLD, 3)));
-      this.time.delayedCall(700, () => sm.destroy());
-    } else {
-      dmg = physicalDamage(this.heroOffense(h), target.def.defense, Math.random);
-      AUDIO.sfx('hit');
+    // Crying: can't aim (§A4.8) — the swing never makes it off the card
+    if (h.status.crying > 0 && cryingMisses(Math.random)) {
+      h.bust.poseFor('lunge', 520);
+      await this.print(this.fill(BATTLE_TEXT.bash, name));
+      await this.print(this.fill(BATTLE_TEXT.crying_miss, name));
+      return;
     }
-    await this.damageEnemy(target, dmg);
+    const cls = weaponClassOf(h.hero.equip.weapon ?? null);
+    const smashed = Math.random() < smashChance(h.hero.stats.guts);
+    // announce while walking (the combo assembles its own one-liner instead)
+    const announce = smashed ? null : this.print(this.fill(BATTLE_TEXT.bash, name));
+    await this.stageEnter(h, target.spr.x);
+    // the wind-up: rifles shoulder and sight; everyone else swings back,
+    // looking UP at the bird (the MOTHER framing)
+    await this.stage.strike(cls === 'rifle' ? 'aim' : 'backswing', cls === 'rifle' ? 500 : 440);
+    const strikeDone = this.stage.strike(cls === 'rifle' ? 'recoil' : 'swing', 280, swingSfxOf(cls));
+    if (!smashed) {
+      const dmg = physicalDamage(this.heroOffense(h), target.def.defense, Math.random);
+      await Promise.all([strikeDone, this.fx.play('impact_physical', { targets: [this.foeTarget(target)] })]);
+      await announce;
+      await this.damageEnemy(target, dmg);
+      await this.stageReturn(h);
+      return;
+    }
+    // SMAAAASH — the huge green banner slams in, and the Mother-3 combo
+    // window opens: edge-triggered A presses land follow-up swings
+    const smash = smashDamage(this.heroOffense(h), target.def.defense, Math.random);
+    void this.fx.play('smash_burst', { targets: [this.foeTarget(target)] });
+    void this.fx.smashBanner(BATTLE_TEXT.smaaash);
+    await strikeDone;
+    const hits = await this.comboWindow(h, target, cls);
+    const total = comboTotal(smash, hits);
+    const line =
+      hits > 1
+        ? `${this.fill(BATTLE_TEXT.bash, name)} ${BATTLE_TEXT.smaaash} x${hits} — ${total} damage!`
+        : `${this.fill(BATTLE_TEXT.bash, name)} ${BATTLE_TEXT.smaaash} ${total} damage!`;
+    await this.damageEnemy(target, total, false, line);
+    await this.stageReturn(h);
+  }
+
+  /**
+   * The Mother-3 mash (S11b): ~1.1s after the smash lands, every EDGE-
+   * triggered A press re-swings the battler for 25% of the smash — held A
+   * still means fast-forward (ADR-010 untouched; the window itself
+   * compresses with the same skip state). Deterministic: presses in, hits
+   * out, no dice (ADR-029). Capped at 3 + Guts/40 total hits, max 8.
+   * Resolves with the TOTAL hit count (the opening smash is hit 1).
+   */
+  private comboWindow(h: HeroUnit, target: EnemyUnit, cls: ReturnType<typeof weaponClassOf>): Promise<number> {
+    const cap = comboCap(h.hero.stats.guts);
+    if (cap <= 1) return Promise.resolve(1);
+    return new Promise((resolve) => {
+      let hits = 1;
+      let left = COMBO_WINDOW_MS;
+      // the ring timer drains under the target, at fx depth
+      const ring = this.fx.comboRing(
+        target.spr.x,
+        target.spr.y + target.spr.height / 2 + 5,
+        () => left / COMBO_WINDOW_MS,
+      );
+      const off = everyFrame(this, (dt) => {
+        const fast = INPUT.held('A') || INPUT.held('B');
+        left -= Math.min(dt, 50) * (fast ? 4 : 1);
+        ring.tick();
+        if (INPUT.justPressed('A') && hits < cap) {
+          hits++;
+          AUDIO.sfx(`combo_${hits}`); // the rising pitch ladder
+          void this.stage.strike(cls === 'rifle' ? 'recoil' : 'swing', 150);
+          this.fx.burst(target.spr.x, target.spr.y, RAMP.GRASS, 7, 55, 320);
+          this.fx.popup(target.spr.x, target.spr.y - target.spr.height / 2 - 10, `${hits} HITS!`, RAMP.GRASS);
+        }
+        if (left <= 0 || hits >= cap) {
+          ring.done();
+          off();
+          resolve(hits);
+        }
+      });
+    });
   }
 
   /** S3: each hero swings THEIR equipped weapon (was: first weapon in the
@@ -480,17 +892,27 @@ export class BattleScene extends Phaser.Scene {
   private heroOffense(h: HeroUnit): number {
     const base = heroOffense(h.hero);
     // feeling PRODUCTIVE: your heart isn't in the swing (§A7 Smiler debuff)
-    return h.productive > 0 ? Math.max(1, Math.floor(base * 0.75)) : base;
+    return h.status.productive > 0 ? Math.max(1, Math.floor(base * 0.75)) : base;
   }
 
+  /* ---------------- Vibe ---------------- */
+
   private async heroVibe(h: HeroUnit): Promise<boolean> {
+    const name = h.hero.name;
+    // HUSHED: silenced — no Vibe (§A4.8)
+    if (h.status.hushed > 0) {
+      AUDIO.sfx('cancel');
+      await this.print(this.fill(BATTLE_TEXT.hushed_no_vibe, name));
+      return false;
+    }
     const ids = unlockedAbilities(h.hero.id, h.hero.level).filter((id) => {
       const a = ABILITIES[id];
-      // pray lives on the command row, not in the Vibe list (Prompt 12)
-      return a && a.kind !== 'gadget' && a.kind !== 'pray' && a.power >= 0 && a.id !== 'teleport_a';
+      // pray lives on the command row, not in the Vibe list (Prompt 12);
+      // teleport is an overworld run-up, not a battle cast
+      return a && a.kind === 'vibe' && a.id !== 'teleport_a';
     });
     if (ids.length === 0) {
-      await this.print(`${h.hero.name} searched for the old light... not yet.`);
+      await this.print(`${name} searched for the old light... not yet.`);
       return false;
     }
     const labels = ids.map((id) => `${ABILITIES[id].name}  ${ABILITIES[id].pp}pp`);
@@ -501,90 +923,295 @@ export class BattleScene extends Phaser.Scene {
       await this.print('Not enough PP!');
       return false;
     }
-    h.odoPp.damage(ab.pp);
+    const done = await this.castAbility(h, ab);
+    return done;
+  }
+
+  /** Milo's command (§A3: Spy, Bottle Rockets — Repair works overnight) */
+  private async heroGadgets(h: HeroUnit): Promise<boolean> {
+    const ids = unlockedAbilities(h.hero.id, h.hero.level).filter(
+      (id) => ABILITIES[id]?.kind === 'gadget' && id !== 'repair',
+    );
+    if (ids.length === 0) return false;
+    const labels = ids.map((id) => ABILITIES[id].name);
+    const pick = await this.dlg.ask([...labels, 'Back'], { cancelIndex: labels.length });
+    if (pick >= labels.length) return false;
+    return this.castAbility(h, ABILITIES[ids[pick]]);
+  }
+
+  /**
+   * One choreography path for every ability: resolve targets (cancel = no
+   * cost), pay PP, strike the caster pose, play the registry timeline (skip-
+   * aware), then resolve mechanics with prints. Every command is visibly
+   * performed by the caster's card and answered on its targets.
+   */
+  private async castAbility(h: HeroUnit, ab: AbilityDef): Promise<boolean> {
     const name = h.hero.name;
-    if (ab.heal) {
-      await this.print(this.fill(ab.text, name));
-      const amount = vibeHeal(ab.power, h.hero.stats.vibe, Math.random);
-      h.odoHp.heal(amount);
-      AUDIO.sfx('heal');
-      await this.print(`${name} recovered about ${amount} HP!`);
-      return true;
-    }
-    // damage vibes
-    let targets: EnemyUnit[];
-    if (ab.target === 'enemies') {
-      targets = this.enemies.filter((e) => e.alive);
-      await this.print(this.fill(ab.text, name));
-    } else {
-      const t = await this.pickEnemy();
-      if (!t) {
-        h.odoPp.heal(ab.pp); // refund
+    const standing = this.aliveHeroes();
+
+    // ---- resolve targets first (B backs out costless)
+    let foeTargets: EnemyUnit[] = [];
+    let allyTargets: HeroUnit[] = [];
+    if (ab.status === 'revive') {
+      const fallen = this.heroes.filter((x) => x.hero.down || x.odoHp.dead);
+      if (fallen.length === 0) {
+        await this.print(BATTLE_TEXT.no_fallen);
         return false;
       }
-      targets = [t];
-      await this.print(this.fill(ab.text, name));
+      const t = await this.pickAlly(fallen);
+      if (!t) return false;
+      allyTargets = [t];
+    } else if (ab.target === 'enemy') {
+      const t = await this.pickEnemy();
+      if (!t) return false;
+      foeTargets = [t];
+    } else if (ab.target === 'enemies') {
+      foeTargets = this.enemies.filter((e) => e.alive);
+    } else if (ab.target === 'ally') {
+      const t = await this.pickAlly(standing);
+      if (!t) return false;
+      allyTargets = [t];
+    } else if (ab.target === 'allies') {
+      allyTargets = standing;
+    } else {
+      allyTargets = [h];
     }
-    for (const t of targets) {
+
+    // ---- pay, take the stage, announce (S11b: presentation keys off fx —
+    // STAGE_ANIM maps the ability's family to its choreography)
+    if (ab.pp > 0) h.odoPp.damage(ab.pp);
+    const pose = stagePoseOf(ab.fx);
+    const onStage = pose === 'cast' || pose === 'aim' || pose === 'throw' || pose === 'pray';
+    if (onStage) {
+      const aimX = foeTargets.length > 0 ? foeTargets[0].spr.x : this.scale.width / 2;
+      await this.stageEnter(h, aimX);
+      if (pose === 'throw') await this.stage.strike('throwA', 300);
+      else this.stage.hold(pose);
+    } else {
+      h.bust.poseFor(ab.kind === 'gadget' ? 'gadget' : 'castA', 700);
+    }
+    await this.print(this.fill(ab.text, name));
+    if (onStage && pose === 'throw') void this.stage.strike('throwB', 380);
+    if (!onStage && ab.kind !== 'gadget') h.bust.poseFor('castB', 900);
+
+    const ctx = {
+      // fx originate from wherever the caster actually stands (the rockets
+      // launch off the stage actor's hands, not the card)
+      caster: onStage ? this.stage.point() : this.cardTarget(h),
+      targets: foeTargets.length > 0 ? foeTargets.map((e) => this.foeTarget(e)) : allyTargets.map((a) => this.cardTarget(a)),
+    };
+    try {
+
+    // ---- heals
+    if (ab.heal) {
+      await this.fx.play(ab.fx, ctx);
+      for (const t of allyTargets) {
+        const amount = vibeHeal(ab.power, h.hero.stats.vibe, Math.random);
+        this.healHero(t, amount);
+        AUDIO.sfx('heal');
+        await this.print(`${t.hero.name} recovered about ${amount} HP!`);
+      }
+      return true;
+    }
+
+    // ---- status families
+    switch (ab.status) {
+      case 'shield':
+      case 'mirror': {
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          if (ab.status === 'shield') t.status.shield = 4;
+          else t.status.mirror = 3;
+          await this.print(`${t.hero.name} got wrapped in shimmer!`);
+        }
+        return true;
+      }
+      case 'cure': {
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          const had =
+            t.status.sunburn + t.status.crying + t.status.asleep + t.status.paralyzed + t.status.hushed > 0;
+          t.status.sunburn = 0;
+          t.status.crying = 0;
+          t.status.asleep = 0;
+          t.status.paralyzed = 0;
+          t.status.hushed = 0;
+          await this.print(this.fill(had ? BATTLE_TEXT.cure_clean : BATTLE_TEXT.cure_nothing, name, undefined, t.hero.name));
+        }
+        return true;
+      }
+      case 'revive': {
+        await this.fx.play(ab.fx, ctx);
+        const t = allyTargets[0];
+        t.hero.down = false;
+        t.odoHp.set(Math.max(1, Math.floor(t.hero.maxHp / 2)));
+        t.box.clearTint();
+        t.bust.revive();
+        AUDIO.sfx('heal');
+        await this.print(this.fill(BATTLE_TEXT.revive_word, name, undefined, t.hero.name));
+        return true;
+      }
+      case 'asleep': {
+        await this.fx.play(ab.fx, ctx);
+        for (const e of foeTargets) {
+          e.asleep = 2 + (Math.random() < 0.5 ? 1 : 0);
+          await this.print(this.fill('{e} drifted off mid-thought!', name, e));
+        }
+        return true;
+      }
+      case 'crying': {
+        await this.fx.play(ab.fx, ctx);
+        for (const e of foeTargets) {
+          if (Math.random() < 0.7) {
+            e.crying = 3;
+            await this.print(this.fill('{e} burst into tears!', name, e));
+          } else {
+            await this.print(this.fill('{e} blinked it away!', name, e));
+          }
+        }
+        return true;
+      }
+      case 'hushed': {
+        await this.fx.play(ab.fx, ctx);
+        for (const e of foeTargets) {
+          e.hushed = 3;
+          await this.print(this.fill('{e} forgot every word it knew!', name, e));
+        }
+        return true;
+      }
+      case 'pp_drain': {
+        await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
+        const sip = magnetSiphon(Math.random);
+        h.odoPp.heal(sip);
+        await this.print(this.fill(BATTLE_TEXT.magnet_sip, name, foeTargets[0], String(sip)));
+        return true;
+      }
+    }
+
+    // ---- Spy: the revealed-stats stamp (§A3 — HP + weakness)
+    if (ab.id === 'spy') {
+      const e = foeTargets[0];
+      await this.fx.play(ab.fx, ctx);
+      await this.print(this.fill(BATTLE_TEXT.spy_report, name, e, String(e.hp)));
+      if (e.def.weakness.length > 0) {
+        await this.print(this.fill(BATTLE_TEXT.spy_weak, name, e, e.def.weakness.join(', ')));
+      } else {
+        await this.print(this.fill(BATTLE_TEXT.spy_no_weak, name, e));
+      }
+      return true;
+    }
+
+    // ---- damage (vibe lines + bottle rockets)
+    await this.fx.play(ab.fx, ctx);
+    for (const t of foeTargets) {
       if (!t.alive) continue;
       const weak =
         (ab.element === 'fire' && t.def.weakness.includes('fire')) ||
         (ab.element === 'freeze' && t.def.weakness.includes('freeze')) ||
         (ab.element === 'volt' && t.def.weakness.includes('volt'));
-      const dmg = applyWeakness(vibeDamage(ab.power, h.hero.stats.vibe, Math.random), weak);
-      AUDIO.sfx('hit');
-      // Vibe Fire breaks the Tick's latch (§A6 Boss 1)
+      // gadgets are machines: flat power, no Vibe scaling, defense pierced
+      const raw =
+        ab.kind === 'gadget'
+          ? Math.max(1, Math.round(ab.power * (0.9 + Math.random() * 0.2)))
+          : vibeDamage(ab.power, h.hero.stats.vibe, Math.random);
+      const dmg = applyWeakness(raw, weak);
+      // Vibe Fire burns the Tick's latch away (§A6 Boss 1)
       if (ab.element === 'fire' && t.def.boss) this.breakLatch();
       await this.damageEnemy(t, dmg, weak);
     }
     return true;
+    } finally {
+      // however the cast resolved, the caster walks back to their card
+      if (onStage) await this.stageReturn(h);
+    }
   }
 
+  /* ---------------- Pray (§A3 — six distinct events) ---------------- */
+
   private async prayAction(h: HeroUnit): Promise<void> {
-    AUDIO.sfx('pray');
+    // S11b: she kneels ON the stage, hands together — §A11.4, played straight
+    await this.stageEnter(h, this.scale.width / 2);
+    this.stage.hold('pray');
+    const at = (): FxTarget => this.stage.point();
+    await this.fx.play('pray', { caster: at() });
     await this.print(this.fill(ABILITIES.pray.text, h.hero.name));
-    const tier = rollPray(h.hero.level, h.hero.stats.guts, Math.random);
+    const tier = this.prayPin ?? rollPray(h.hero.level, h.hero.stats.guts, Math.random);
+    this.prayPin = null;
     await this.print(this.fill(PRAY_TEXT[tier], h.hero.name));
     const aliveE = this.enemies.filter((e) => e.alive);
     // grace reaches the standing; revival stays with hospitals & rare items (§A4.7)
     const standing = this.aliveHeroes();
     switch (tier) {
-      case 'miraculous':
+      case 'miraculous': {
+        await this.fx.play('pray_miraculous', { caster: at(), targets: aliveE.map((e) => this.foeTarget(e)) });
         standing.forEach((x) => {
           x.odoHp.heal(x.hero.maxHp);
           x.odoPp.heal(x.hero.maxPp);
+          void this.fx.play('heal_glow', { targets: [this.cardTarget(x)] });
         });
         for (const e of aliveE) await this.damageEnemy(e, 120 + Math.floor(Math.random() * 40));
         break;
+      }
       case 'wonderful': {
         const hurt = standing.some((x) => x.odoHp.value < x.hero.maxHp * 0.5);
-        if (hurt) standing.forEach((x) => x.odoHp.heal(Math.floor(x.hero.maxHp * 0.6)));
-        else for (const e of aliveE) await this.damageEnemy(e, 60 + Math.floor(Math.random() * 30));
-        AUDIO.sfx('heal');
-        break;
-      }
-      case 'good':
-        standing.forEach((x) => x.odoHp.heal(30));
-        AUDIO.sfx('heal');
-        break;
-      case 'nothing':
-        break;
-      case 'strange': {
-        const coin = Math.random() < 0.5 && aliveE.length > 0;
-        if (coin) await this.damageEnemy(aliveE[0], 25);
-        else {
-          const v = standing[Math.floor(Math.random() * standing.length)];
-          v.sunburn = 3;
-          await this.print(`${v.hero.name} feels weirdly sun-kissed. At night. Strange.`);
+        if (hurt) {
+          await this.fx.play('pray_wonderful', { caster: at(), targets: standing.map((x) => this.cardTarget(x)) });
+          standing.forEach((x) => this.healHero(x, Math.floor(x.hero.maxHp * 0.6)));
+          AUDIO.sfx('heal');
+        } else {
+          await this.fx.play('pray_wonderful', { caster: at(), targets: aliveE.map((e) => this.foeTarget(e)) });
+          for (const e of aliveE) await this.damageEnemy(e, 60 + Math.floor(Math.random() * 30));
         }
         break;
       }
-      case 'backfire':
-        standing.forEach((x) => x.odoHp.damage(6));
-        await this.print('Everyone saw spots for a second!');
+      case 'good': {
+        await this.fx.play('pray_good', { caster: at(), targets: standing.map((x) => this.cardTarget(x)) });
+        standing.forEach((x) => this.healHero(x, 30));
+        AUDIO.sfx('heal');
         break;
+      }
+      case 'nothing':
+        // §A11.4: hopeful even on Nothing — one mote still tries
+        await this.fx.play('pray_nothing', { caster: at() });
+        break;
+      case 'strange': {
+        // a random status effect on a random combatant — INCLUDING allies
+        const side = Math.random() < 0.5 && aliveE.length > 0 ? 'enemy' : 'hero';
+        if (side === 'enemy') {
+          const e = aliveE[Math.floor(Math.random() * aliveE.length)];
+          await this.fx.play('pray_strange', { caster: at(), targets: [this.foeTarget(e)] });
+          const roll = ['asleep', 'crying', 'hushed'][Math.floor(Math.random() * 3)] as 'asleep' | 'crying' | 'hushed';
+          e[roll] = 3;
+          await this.print(this.fill(`{e} caught something STRANGE out of the light!`, h.hero.name, e));
+        } else {
+          const v = standing[Math.floor(Math.random() * standing.length)];
+          await this.fx.play('pray_strange', { caster: at(), targets: [this.cardTarget(v)] });
+          const roll = HERO_STATUS_POOL[Math.floor(Math.random() * HERO_STATUS_POOL.length)];
+          v.status[roll] = roll === 'sunburn' ? 4 : 3;
+          await this.print(`${v.hero.name} ${STATUS_LANDED[roll]}`);
+        }
+        break;
+      }
+      case 'backfire': {
+        // §A3: party takes small damage OR one ally dozes off — the soft
+        // flare picks its own victim
+        await this.fx.play('pray_backfire', { caster: at(), targets: standing.map((x) => this.cardTarget(x)) });
+        if (Math.random() < 0.5) {
+          standing.forEach((x) => x.odoHp.damage(6));
+          await this.print('Everyone saw spots for a second!');
+        } else {
+          const v = standing[Math.floor(Math.random() * standing.length)];
+          v.status.asleep = 2;
+          await this.print(`${v.hero.name} ${STATUS_LANDED.asleep}`);
+        }
+        break;
+      }
     }
+    // she rises and walks back to her card, whatever answered
+    await this.stageReturn(h);
   }
+
+  /* ---------------- Goods ---------------- */
 
   private async heroGoods(h: HeroUnit): Promise<boolean> {
     // S3: Goods is the acting hero's OWN 14-slot bag (Prompt 19)
@@ -599,33 +1226,45 @@ export class BattleScene extends Phaser.Scene {
     const itemId = usable[pick];
     const item = ITEMS[itemId];
     const name = h.hero.name;
+    const fxKey = itemFxKey(item.id, item.kind);
     if (item.kind === 'food' && item.heal) {
       GS.removeItem(itemId, h.hero.id);
-      h.odoHp.heal(item.heal);
+      h.bust.poseFor('rummage', 360);
+      await this.print(`${name} wolfed down the ${item.name}!`);
+      h.bust.poseFor('munch', 700);
+      if (fxKey) await this.fx.play(fxKey, { caster: this.cardTarget(h) });
+      this.healHero(h, item.heal);
       AUDIO.sfx('heal');
-      await this.print(`${name} wolfed down the ${item.name}! About ${item.heal} HP came back.`);
+      await this.print(`About ${item.heal} HP came back.`);
       return true;
     }
     // S4: the Star Cola line — PP rolls back up on the drum (§A8 "PP" items)
     if (item.ppHeal) {
       GS.removeItem(itemId, h.hero.id);
+      h.bust.poseFor('rummage', 360);
+      await this.print(`${name} chugged the ${item.name}!`);
+      h.bust.poseFor('munch', 700);
+      if (fxKey) await this.fx.play(fxKey, { caster: this.cardTarget(h) });
       h.odoPp.heal(item.ppHeal);
       AUDIO.sfx('heal');
-      await this.print(`${name} chugged the ${item.name}! About ${item.ppHeal} PP fizzed back.`);
+      await this.print(`About ${item.ppHeal} PP fizzed back.`);
       return true;
     }
     if (item.id === 'glints_spark') {
       GS.removeItem(itemId, h.hero.id);
-      AUDIO.sfx('ember');
+      h.bust.poseFor('castA', 700);
       // §A8: revive, rare — it goes to whoever needs it most
       const downed = this.heroes.find((x) => x.hero.down || x.odoHp.dead);
+      const at = downed ? this.cardTarget(downed) : this.cardTarget(h);
+      if (fxKey) await this.fx.play(fxKey, { caster: this.cardTarget(h), targets: [at] });
       if (downed) {
         downed.hero.down = false;
         downed.odoHp.set(downed.hero.maxHp);
         downed.box.clearTint();
+        downed.bust.revive();
         await this.print(this.fill(BATTLE_TEXT.spark_revive, name, undefined, downed.hero.name));
       } else {
-        h.odoHp.heal(h.hero.maxHp);
+        this.healHero(h, h.hero.maxHp);
         await this.print('The spark flares — warm as a porch light in late summer. Full recovery!');
       }
       return true;
@@ -634,14 +1273,30 @@ export class BattleScene extends Phaser.Scene {
       const target = await this.pickEnemy();
       if (!target) return false;
       GS.removeItem(itemId, h.hero.id);
+      // S11b: battle items with a throw_arc family LOB from the stage
+      const onStage = fxKey !== null && stagePoseOf(fxKey) === 'throw';
+      if (onStage) {
+        await this.stageEnter(h, target.spr.x);
+        await this.stage.strike('throwA', 300);
+      } else {
+        h.bust.poseFor('lunge', 600);
+      }
       await this.print(`${name} threw the ${item.name}!`);
+      if (onStage) void this.stage.strike('throwB', 380);
       const weak = target.def.weakness.includes('salt');
+      // the thrown arc lands — and visibly snaps the Tick's latch (§A6)
+      if (fxKey) {
+        await this.fx.play(fxKey, {
+          caster: onStage ? this.stage.point() : this.cardTarget(h),
+          targets: [this.foeTarget(target)],
+        });
+      }
       if (item.breaksLatch && target.def.boss) {
         this.breakLatch();
         await this.print(BATTLE_TEXT.salt_break);
       }
-      AUDIO.sfx('hit');
       await this.damageEnemy(target, applyWeakness(item.power, weak), weak);
+      if (onStage) await this.stageReturn(h);
       return true;
     }
     await this.print(item.text);
@@ -650,18 +1305,26 @@ export class BattleScene extends Phaser.Scene {
 
   private breakLatch(): void {
     this.heroes.forEach((h) => (h.latched = false));
+    if (this.fx.tethered) this.fx.severTether();
   }
 
-  private async damageEnemy(e: EnemyUnit, dmg: number, weak = false): Promise<void> {
+  /* ---------------- damage resolution ---------------- */
+
+  private async damageEnemy(e: EnemyUnit, dmg: number, weak = false, line?: string): Promise<void> {
     e.hp = Math.max(0, e.hp - dmg);
-    e.spr.setTintFill(0xf8f8f0);
-    this.tweens.add({ targets: e.spr, x: e.spr.x + 4, duration: 45, yoyo: true, repeat: 2 });
-    this.time.delayedCall(120, () => e.spr.clearTint());
-    await this.print(`${dmg} damage${weak ? ' — a sore spot!!' : '!'}`);
+    // floating damage popup (the S10 popFoe idiom) + the printed line —
+    // a SMAAAASH combo hands in its one assembled EB line instead (S11b)
+    this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `${dmg}`, weak ? RAMP.GOLD : RAMP.PAPER);
+    await this.print(line ?? `${dmg} damage${weak ? ' — a sore spot!!' : '!'}`);
+    if (e.asleep > 0 && e.hp > 0) {
+      e.asleep = 0;
+      await this.print(this.fill(BATTLE_TEXT.enemy_woke, '', e));
+    }
     if (e.hp <= 0) {
       e.alive = false;
-      AUDIO.sfx('thud');
-      this.tweens.add({ targets: e.spr, alpha: 0, scaleY: 0.1, y: e.spr.y + 20, duration: 420 });
+      // the Tick dies still latched? the tether goes with it
+      if (e.def.boss && this.fx.tethered) this.breakLatch();
+      await this.fx.play('enemy_dissolve', { targets: [this.foeTarget(e)] });
       await this.print(e.def.deathLine);
       if (this.enemies.every((x) => !x.alive)) await this.victory();
     } else if (e.def.boss && e.hp < 120 && this.chad && !this.chad.fled) {
@@ -687,6 +1350,7 @@ export class BattleScene extends Phaser.Scene {
     if (!target) return;
     if (Math.random() < 0.55) {
       await this.print(BATTLE_TEXT.chad_poke);
+      await this.fx.play('impact_physical', { targets: [this.foeTarget(target)] });
       await this.damageEnemy(target, 2 + Math.floor(Math.random() * 4));
     } else {
       await this.print(BATTLE_TEXT.chad_hide);
@@ -696,13 +1360,9 @@ export class BattleScene extends Phaser.Scene {
   private async glintPhase(): Promise<void> {
     const target = this.enemies.find((e) => e.alive);
     if (!target) return;
-    AUDIO.sfx('ember');
-    const flare = this.add
-      .image(target.spr.x, target.spr.y - 30, 'glint')
-      .setDepth(DEPTH_UI + 3)
-      .setScale(1.6);
-    this.tweens.add({ targets: flare, alpha: 0, y: flare.y - 12, duration: 600, onComplete: () => flare.destroy() });
+    // Glint's assist is his Spark's warmth aimed like a flashlight (§A8)
     await this.print(BATTLE_TEXT.glint_assist);
+    await this.fx.play('item_spark', { targets: [this.foeTarget(target)] });
     await this.damageEnemy(target, 15 + Math.floor(Math.random() * 8));
   }
 
@@ -710,32 +1370,69 @@ export class BattleScene extends Phaser.Scene {
     return this.heroes.filter((h) => !h.odoHp.dead && !h.hero.down);
   }
 
+  /* ---------------- enemy phase ---------------- */
+
   private async enemyPhase(): Promise<void> {
     for (const e of this.enemies) {
       if (!e.alive || this.ended) continue;
+      // §A4.8 on the enemy side: sleepers snooze through the round
+      if (e.asleep > 0) {
+        if (asleepWakes(Math.random)) {
+          e.asleep = 0;
+          await this.print(this.fill(BATTLE_TEXT.enemy_woke, '', e));
+        } else {
+          e.asleep--;
+          await this.print(this.fill(BATTLE_TEXT.enemy_asleep, '', e));
+          continue;
+        }
+      }
       const move = this.pickMove(e);
       const targets = this.aliveHeroes();
       if (targets.length === 0) return;
       const latchedHero = this.heroes.find((h) => h.latched && !h.odoHp.dead);
       const target =
         move.kind === 'drain' && latchedHero ? latchedHero : targets[Math.floor(Math.random() * targets.length)];
-      // enemy lunge
+      // enemy lunge — cosmetic
       this.tweens.add({ targets: e.spr, y: e.spr.y + 5, duration: 90, yoyo: true });
       await this.print(this.fill(move.text, '', e, target.hero.name));
       switch (move.kind) {
         case 'attack':
         case 'strong': {
-          AUDIO.sfx('hit');
+          // Crying enemies can't aim either (§A4.8 — Flash α earns its PP)
+          if (e.crying > 0 && cryingMisses(Math.random)) {
+            await this.print(this.fill(BATTLE_TEXT.enemy_crying_miss, '', e));
+            break;
+          }
+          // the move answers ON the card: impact burst + shake + flinch
+          void this.fx.play('impact_physical', { targets: [this.cardTarget(target)] });
           this.cameras.main.shake(120, 0.006);
-          let dmg = physicalDamage(e.def.offense * (move.mult ?? 1), target.hero.stats.defense, Math.random);
+          // S10: defense reads through the 'body' slot (the Champion Jacket)
+          let dmg = physicalDamage(e.def.offense * (move.mult ?? 1), heroDefense(target.hero), Math.random);
           if (target.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+          // Shield halves; Mirror halves AND throws some of it back (§A3)
+          if (target.status.mirror > 0) {
+            const back = Math.max(1, Math.floor(dmg / 4));
+            dmg = Math.max(1, Math.floor(dmg / 2));
+            this.applyHeroDamage(target, dmg);
+            await this.print(`${target.hero.name} took ${dmg}!`);
+            this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `${back}`, RAMP.CYAN);
+            e.hp = Math.max(1, e.hp - back); // a reflection never lands the last hit
+            await this.print(this.fill('{e} caught its own reflection! It lost {t} HP!', '', e, String(back)));
+            break;
+          }
+          if (target.status.shield > 0) dmg = Math.max(1, Math.floor(dmg / 2));
           this.applyHeroDamage(target, dmg);
           await this.print(`${target.hero.name} took ${dmg}!`);
           break;
         }
         case 'latch': {
           target.latched = true;
-          AUDIO.sfx('hit');
+          // the drain made visible: a throbbing tether, enemy → card (§A6)
+          this.fx.attachTether(
+            () => ({ x: e.spr.x, y: e.spr.y + 12 }),
+            () => target.bust.point(),
+          );
+          await this.fx.play('latch_tether', { targets: [this.cardTarget(target)] });
           break;
         }
         case 'drain': {
@@ -743,18 +1440,22 @@ export class BattleScene extends Phaser.Scene {
             await this.print('...but found nothing to hold onto!');
             break;
           }
-          AUDIO.sfx('hit');
           const dmg = 10 + Math.floor(Math.random() * 6);
           this.applyHeroDamage(latchedHero, dmg);
-          e.hp = Math.min(e.def.hp, e.hp + Math.floor(dmg / 2));
+          const sup = Math.floor(dmg / 2);
+          e.hp = Math.min(e.def.hp, e.hp + sup);
+          this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `+${sup}`, RAMP.GRASS);
+          AUDIO.sfx('fx_latch');
           await this.print(BATTLE_TEXT.latch_drain);
           await this.print(`${latchedHero.hero.name} lost ${dmg} HP!`);
           break;
         }
         case 'status': {
-          if (move.status === 'sunburn') target.sunburn = 4;
+          if (move.status === 'sunburn') target.status.sunburn = 4;
+          if (move.status === 'crying') target.status.crying = 3;
+          if (move.status === 'asleep') target.status.asleep = 2;
           if (move.status === 'productive') {
-            target.productive = 3;
+            target.status.productive = 3;
             await this.print(`${target.hero.name} feels horribly PRODUCTIVE! Offense fell!`);
           }
           AUDIO.sfx('cancel');
@@ -781,7 +1482,12 @@ export class BattleScene extends Phaser.Scene {
 
   private pickMove(e: EnemyUnit): EnemyMove {
     const latchedAlready = this.heroes.some((h) => h.latched);
-    const moves = e.def.moves.filter((m) => !(m.kind === 'latch' && latchedAlready));
+    let moves = e.def.moves.filter((m) => !(m.kind === 'latch' && latchedAlready));
+    // HUSHED enemies lose their special vocabulary — plain swings only
+    if (e.hushed > 0) {
+      const plain = moves.filter((m) => m.kind === 'attack' || m.kind === 'taunt');
+      if (plain.length > 0) moves = plain;
+    }
     const total = moves.reduce((a, m) => a + m.weight, 0);
     let r = Math.random() * total;
     for (const m of moves) {
@@ -792,6 +1498,14 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private applyHeroDamage(h: HeroUnit, dmg: number): void {
+    // the hurt read: card shakes, bust recoils one frame
+    h.bust.hit();
+    AUDIO.sfx('hit');
+    // a hit always wakes a sleeper (§A4.8)
+    if (h.status.asleep > 0) {
+      h.status.asleep = 0;
+      void this.print(this.fill(BATTLE_TEXT.wake_up, h.hero.name));
+    }
     const wouldDie = h.odoHp.target - dmg <= 0;
     if (wouldDie && gutsSurvive(h.hero.stats.guts, Math.random)) {
       h.odoHp.target = 1;
@@ -802,17 +1516,30 @@ export class BattleScene extends Phaser.Scene {
     h.odoHp.damage(dmg);
   }
 
+  /* ---------------- end-of-round ticks ---------------- */
+
   private async statusPhase(): Promise<void> {
     for (const h of this.heroes) {
-      if (h.sunburn > 0 && !h.odoHp.dead) {
-        h.sunburn--;
+      if (h.odoHp.dead || h.hero.down) continue;
+      const s = h.status;
+      if (s.sunburn > 0) {
+        s.sunburn--;
         h.odoHp.damage(3);
         await this.print(`${h.hero.name} sizzles a little. (Sunburn)`);
       }
-      if (h.productive > 0 && !h.odoHp.dead) {
-        h.productive--;
-        if (h.productive === 0) await this.print(`${h.hero.name} remembered it's summer. Offense is back!`);
+      if (s.crying > 0 && --s.crying === 0) await this.print(this.fill(BATTLE_TEXT.crying_dry, h.hero.name));
+      if (s.paralyzed > 0 && --s.paralyzed === 0) await this.print(this.fill(BATTLE_TEXT.paralyzed_off, h.hero.name));
+      if (s.hushed > 0 && --s.hushed === 0) await this.print(this.fill(BATTLE_TEXT.hushed_off, h.hero.name));
+      if (s.shield > 0 && --s.shield === 0) await this.print(this.fill(BATTLE_TEXT.shield_off, h.hero.name));
+      if (s.mirror > 0 && --s.mirror === 0) await this.print(this.fill(BATTLE_TEXT.shield_off, h.hero.name));
+      if (s.productive > 0 && --s.productive === 0) {
+        await this.print(`${h.hero.name} remembered it's summer. Offense is back!`);
       }
+    }
+    for (const e of this.enemies) {
+      if (!e.alive) continue;
+      if (e.crying > 0) e.crying--;
+      if (e.hushed > 0) e.hushed--;
     }
     await this.settleDeaths();
   }
@@ -829,6 +1556,8 @@ export class BattleScene extends Phaser.Scene {
           if (h.odoHp.dead && !h.hero.down) {
             h.hero.down = true;
             h.box.setTint(0x888890);
+            // the card slumps, fades, and the hero's own angel floats up
+            // beside it (§A4.7) — BustView walks the states from the flag
             void this.print(`${h.hero.name} is down!!`).then(() => {
               if (this.aliveHeroes().length === 0) {
                 void this.defeat();
@@ -847,12 +1576,15 @@ export class BattleScene extends Phaser.Scene {
   private async victory(): Promise<void> {
     if (this.ended) return;
     this.ended = true;
+    this.won = true; // every standing bust breaks into the cheer loop
     // §A4.1: victory freezes every drum where it stands
     this.heroes.forEach((h) => {
       h.odoHp.freeze();
       h.odoPp.freeze();
       h.latched = false;
     });
+    if (this.fx.tethered) this.fx.severTether();
+    AUDIO.sfx('fx_cheer');
     AUDIO.jingle('victory', 2200, null);
     await this.print(BATTLE_TEXT.win);
     const totalExp = this.enemies.reduce((a, e) => a + e.def.exp, 0);
@@ -902,6 +1634,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.ended) return;
     this.ended = true;
     AUDIO.stopMusic();
+    if (this.fx.tethered) this.fx.severTether();
     await this.print(`${GS.data.party[0].name}... it all goes quiet for a second...`);
     this.syncHeroMeters();
     this.finish('defeat');
@@ -930,6 +1663,48 @@ export class BattleScene extends Phaser.Scene {
 
   override update(_t: number, dtMs: number): void {
     const dt = Math.min(dtMs, 50) / 1000;
+    const fast = INPUT.held('A') || INPUT.held('B');
+    // the one skip state (ADR-010): text, fx timelines, stage walks, and
+    // bust choreography all compress ×4 together — the drums tick on REAL
+    // time, always
+    this.fx.update(Math.min(dtMs, 50), fast);
+    const dtFx = Math.min(dtMs, 50) * (fast ? 4 : 1);
+    this.stage.update(dtFx);
+    for (const h of this.heroes) {
+      // S11b wear: keyed on the DISPLAYED drum value, never the target —
+      // a mortal roll degrades AS the meter falls
+      const tier = wearTier(Math.max(0, h.odoHp.displayed), h.hero.maxHp);
+      if (tier !== h.wear) {
+        h.wear = tier;
+        h.bust.setSheet(bustSheetKey(h.hero.id, h.look.body, tier));
+      }
+      h.bust.update(dtFx, {
+        mortal: h.odoHp.mortal,
+        down: h.hero.down || h.odoHp.dead,
+        defending: h.defending,
+        victory: this.won,
+        winded: tier === 2,
+        shield: h.status.shield > 0,
+        mirror: h.status.mirror > 0,
+        statuses: {
+          sunburn: h.status.sunburn > 0,
+          crying: h.status.crying > 0,
+          asleep: h.status.asleep > 0,
+          paralyzed: h.status.paralyzed > 0,
+          hushed: h.status.hushed > 0,
+          homesick: h.hero.id === 'rex' && GS.flag('rex_homesick') === true,
+        },
+      });
+    }
+    // enemy wear reads plain hp (no drums on their side) — swap on change
+    for (const e of this.enemies) {
+      if (!e.alive) continue;
+      const tier = wearTier(e.hp, e.def.hp);
+      if (tier !== e.wear) {
+        e.wear = tier;
+        e.spr.setTexture(wearSpriteKey(e.def.sprite, tier));
+      }
+    }
     let anyRoll = false;
     let anyMortal = false;
     for (const { d, o } of this.odoDisplays) {

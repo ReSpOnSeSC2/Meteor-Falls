@@ -83,6 +83,9 @@ export const AbilityDefSchema = z.strictObject({
   element: ElementSchema,
   status: z.string().min(1).optional(),
   text: z.string().min(1),
+  /** S11: REQUIRED battle-effect key into battle/fxRegistry.ts — every
+   *  ability gets a face. The validator checks the registry both directions. */
+  fx: z.string().min(1),
 });
 export type AbilityDef = z.infer<typeof AbilityDefSchema>;
 
@@ -161,8 +164,9 @@ export const EquipSlotSchema = z.enum(['weapon', 'body', 'arms', 'other']);
 export type EquipSlot = z.infer<typeof EquipSlotSchema>;
 
 /** S9 adds: 'charm' (the 'other' equip slot — Lucky Collar) and 'valuable'
- *  (sell-fodder and quest goods — Fresh Stamps, the lemonade supplies) */
-export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable']);
+ *  (sell-fodder and quest goods — Fresh Stamps, the lemonade supplies).
+ *  S10 adds: 'armor' (the 'body' slot — the Champion Jacket is §A8's first). */
+export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable', 'armor']);
 export type ItemKind = z.infer<typeof ItemKindSchema>;
 
 export const ItemDefSchema = z
@@ -174,6 +178,8 @@ export const ItemDefSchema = z
     /** PP restored on use (§A8 "PP" items — the Star Cola line, S4) */
     ppHeal: z.number().positive().optional(),
     offense: z.number().positive().optional(),
+    /** armor ('body' slot) defense bonus — §A10 Champion Jacket, S10 */
+    defense: z.number().positive().optional(),
     /** charm ('other' slot) luck bonus — §A10 Lucky Collar, S9 */
     luck: z.number().positive().optional(),
     /** §A8 weapon lines are personal — only this hero can equip it */
@@ -209,6 +215,13 @@ export const ItemDefSchema = z
     }
     if (item.kind !== 'charm' && item.luck !== undefined) {
       ctx.addIssue({ code: 'custom', message: `'${item.id}' has luck but kind '${item.kind}' — luck rides charms` });
+    }
+    // S10 pairing: kind 'armor' ⇔ defense — body gear must actually defend
+    if (item.kind === 'armor' && item.defense === undefined) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' is kind 'armor' but has no defense bonus` });
+    }
+    if (item.kind !== 'armor' && item.defense !== undefined) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' has defense but kind '${item.kind}' — defense rides armor` });
     }
   });
 export type ItemDef = z.infer<typeof ItemDefSchema>;
@@ -297,8 +310,11 @@ export const SignDefSchema = z.strictObject({
 });
 export type SignDef = z.infer<typeof SignDefSchema>;
 
-/** visible marker: mat (default in interiors), stairs, elevator doors (ADR-011), or none (map edges) */
-export const DoorIndicatorSchema = z.enum(['mat', 'stairs', 'elevator', 'none']);
+/** visible marker: mat (default in interiors — legal alone only for
+ *  bottom-edge exits since S11b), stairs, elevator doors (ADR-011), a real
+ *  swinging DOOR mounted in the wall band (S11b — REQUIRED for interior
+ *  facing-'up' zones; the validator enforces the law), or none (map edges) */
+export const DoorIndicatorSchema = z.enum(['mat', 'stairs', 'elevator', 'door', 'none']);
 
 export const DoorZoneSchema = z.strictObject({
   x: z.number(),
@@ -454,3 +470,17 @@ export const CallerRecordSchema = z.strictObject({
   ...CallerSchema.shape,
 });
 export type CallerRecord = z.infer<typeof CallerRecordSchema>;
+
+/**
+ * One row of the ARCADE LEGEND high-score table — the save v4 field (S10,
+ * §A10 #4). The table is seeded with the Manager's lonely "MGR" row (the
+ * locked_arcade2 attract-mode gag, canon since S2 gave MGR a face); beating
+ * the top row once completes quest #4, and the cabinet stays endlessly
+ * replayable from any save (§A10: "replayable").
+ */
+export const ArcadeScoreSchema = z.strictObject({
+  /** three letters, classic cabinet rules (the grid can type what it types) */
+  initials: z.string().min(1).max(3),
+  score: z.number().int().min(0),
+});
+export type ArcadeScore = z.infer<typeof ArcadeScoreSchema>;

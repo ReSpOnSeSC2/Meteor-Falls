@@ -33,7 +33,7 @@
  *   5. Mr. Sodd's (425,110): the guard mower charges inside ~64px — green
  *      swirl, then Goods → Salt Shaker (battle items are FLAT power: 40 ≥
  *      its 38 HP — a deterministic one-shot). Then deliver the letter.
- *   6. Back to Plummer: KeyZ → stamps land in Rex's bag, ledger gains
+ *   6. Back to Plummer: KeyZ → stamps land in Jay's bag, ledger gains
  *      Mr. Plummer (mfGS.data.callers), q_mail_done set.
  *   7. START → Down ×4 → KeyZ opens JOURNAL: the quest row carries the
  *      phone icon; KeyZ opens its detail page, KeyZ dismisses, KeyX KeyX out.

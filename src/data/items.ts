@@ -1,6 +1,6 @@
 /**
  * Item catalog — the Chapter 1 slice of GAME_BIBLE §A8.
- * Weapons carry a wielder tag (§A8: bats are Rex's line, pans are Mia's).
+ * Weapons carry a wielder tag (§A8: bats are Jay's line, pans are Mia's).
  * Types are z.infer'd from src/schemas (S5) — compile shape ≡ runtime schema;
  * the kind 'pp' ⇔ ppHeal pairing (ADR-016) is a schema refinement.
  */
@@ -15,10 +15,12 @@ export const EQUIP_SLOTS: EquipSlot[] = ['weapon', 'body', 'arms', 'other'];
 /** EB hands-full rule: every hero's bag holds 14 items (Prompt 19) */
 export const BAG_MAX = 14;
 
-/** which equip slot an item occupies, if any (body/arms armor lands Phase 2+;
- *  charms ride the 'other' slot since S9 — §A8 pendants/charms territory) */
+/** which equip slot an item occupies, if any (arms armor lands Phase 2+;
+ *  charms ride 'other' since S9, armor rides 'body' since S10 — the
+ *  Champion Jacket is §A8's first body gear) */
 export function slotOf(item: ItemDef): EquipSlot | null {
   if (item.kind === 'weapon') return 'weapon';
+  if (item.kind === 'armor') return 'body';
   if (item.kind === 'charm') return 'other';
   return null;
 }
@@ -62,6 +64,29 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       price: 36,
       text: 'It made twenty years of breakfast. It is NOT done serving.',
     }),
+    /* ---- S11b: the §A8 line openers for the back half of the party —
+       Milo's first gun and Dorin's first beads, so every hero's stage
+       swing is real the day they join (their chapters stock/grant them) ---- */
+    I({
+      id: 'pellet_popper',
+      name: 'Pellet Popper',
+      kind: 'weapon',
+      offense: 14,
+      wielder: 'milo',
+      usableInBattle: false,
+      price: 98,
+      text: 'Wintermoor-legal air rifle. The safety tip is orange. The attitude is not.',
+    }),
+    I({
+      id: 'cedar_beads',
+      name: 'Cedar Beads',
+      kind: 'weapon',
+      offense: 26,
+      wielder: 'dorin',
+      usableInBattle: false,
+      price: 210,
+      text: 'Monastery cedar, wrist-wrapped. Every strike smells faintly of prayer.',
+    }),
     I({
       id: 'corn_dog',
       name: 'Corn Dog',
@@ -69,7 +94,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       heal: 30,
       usableInBattle: true,
       price: 6,
-      text: "Rex's one true love. Recovers about 30 HP.",
+      text: "{rex}'s one true love. Recovers about 30 HP.",
     }),
     I({
       id: 'pbj',
@@ -167,6 +192,16 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: false,
       price: 0,
       text: 'The official jug of the Lemonade Empire. The tiny hand-drawn flag makes it official.',
+    }),
+    /* ---- S10: §A10 #4 quest reward — the first 'body' gear ---- */
+    I({
+      id: 'champion_jacket',
+      name: 'Champion Jacket',
+      kind: 'armor',
+      defense: 8,
+      usableInBattle: false,
+      price: 0,
+      text: 'CHAMPION across the back in iron-on letters. Sal pressed every one himself. Defense +8.',
     }),
   ].map((i) => [i.id, i]),
 );

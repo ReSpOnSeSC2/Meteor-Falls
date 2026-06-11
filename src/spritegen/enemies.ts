@@ -4,9 +4,19 @@
  * full 1px outlines, 4-tone ramp shading with checker dither, weird charm.
  * Battle sprites are static (hit-flash and idle-bob happen at runtime).
  * Each enemy also gets a 16×16 overworld mini with the same silhouette.
+ *
+ * S11b WEAR TIERS: every battle draw takes a wear param — 0 full ·
+ * 1 scuffed (<66% HP) · 2 battered (<33%) — with DELIBERATE authored damage
+ * per ADR-020 rule 1 (clustered marks, never noise): the mailbox dents and
+ * its flag knocks askew, the mower bends a blade and coughs smoke, the
+ * cicada's wing glass cracks, the slug's crown chips, the Smiler's tie
+ * loosens as the smile strains, the pigeons shed feathers, and the Tick
+ * bruises and visibly DEFLATES. All three tiers generate at boot (ADR-002)
+ * through ENEMY_BATTLE_ART; the scene swaps textures, never redraws.
  */
 import { Pixmap } from './pixmap';
-import { RAMP, px, C } from '../palette';
+import { RAMP, T, px, C } from '../palette';
+import type { WearTier } from './battlers';
 
 /* ---------------------------------------------------------------- */
 /* Battle sprites.                                                    */
@@ -15,7 +25,7 @@ import { RAMP, px, C } from '../palette';
 /* runs, not ellipse() output; texture is deliberate plates/freckles, */
 /* never scattered noise.                                             */
 
-export function drawCrankyMailbox(): Pixmap {
+export function drawCrankyMailbox(wear: WearTier = 0): Pixmap {
   const pm = new Pixmap(64, 76);
   const blue = px(RAMP.BLUE, 2);
   const blueL = px(RAMP.BLUE, 3);
@@ -66,15 +76,38 @@ export function drawCrankyMailbox(): Pixmap {
   pm.rect(2, 24, 8, 5, px(RAMP.PAPER, 3));
   pm.hline(3, 26, 5, px(RAMP.PAPER, 1));
   pm.rect(56, 30, 7, 5, px(RAMP.PAPER, 2));
-  // flag arm raised in fury
-  pm.rect(55, 4, 4, 18, px(RAMP.RED, 1));
-  pm.rect(53, 2, 10, 7, px(RAMP.RED, 2));
-  pm.hline(53, 2, 10, px(RAMP.RED, 3));
+  // flag arm raised in fury — until the fight knocks it askew (S11b w2)
+  if (wear < 2) {
+    pm.rect(55, 4, 4, 18, px(RAMP.RED, 1));
+    pm.rect(53, 2, 10, 7, px(RAMP.RED, 2));
+    pm.hline(53, 2, 10, px(RAMP.RED, 3));
+  } else {
+    // the flag hangs off its hinge, dignity going with it
+    pm.line(56, 14, 61, 21, px(RAMP.RED, 1));
+    pm.rect(59, 21, 7, 5, px(RAMP.RED, 2));
+    pm.hline(59, 21, 7, px(RAMP.RED, 1));
+    pm.set(60, 22, px(RAMP.RED, 3));
+  }
+  if (wear >= 1) {
+    // fresh dents, clustered where the bats landed
+    pm.hline(44, 9, 4, blueD);
+    pm.set(45, 10, blueDD);
+    pm.hline(10, 24, 3, blueD);
+    pm.set(11, 25, blueDD);
+  }
+  if (wear >= 2) {
+    // the slot bends mid-yell; a crease folds the dome
+    pm.hline(18, 30, 6, blueDD);
+    pm.set(17, 29, blueDD);
+    pm.hline(28, 7, 5, blueD);
+    pm.set(30, 8, blueDD);
+    pm.set(31, 8, blueDD);
+  }
   pm.outline(C.outline);
   return pm;
 }
 
-export function drawRunawayLawnmower(): Pixmap {
+export function drawRunawayLawnmower(wear: WearTier = 0): Pixmap {
   const pm = new Pixmap(84, 64);
   const red = px(RAMP.RED, 2);
   const redL = px(RAMP.RED, 3);
@@ -136,11 +169,30 @@ export function drawRunawayLawnmower(): Pixmap {
   pm.set(7, 17, g3);
   pm.set(1, 45, g2);
   pm.set(8, 12, px(RAMP.GRASS, 1));
+  if (wear >= 1) {
+    // deck dings + the handle takes a kink
+    pm.hline(20, 35, 3, redDD);
+    pm.set(21, 36, redD);
+    pm.set(70, 12, px(RAMP.PAPER, 0));
+    pm.set(71, 11, px(RAMP.PAPER, 0));
+    pm.hline(44, 40, 2, redDD);
+  }
+  if (wear >= 2) {
+    // a grille tooth knocked out, the bent blade showing, coughing smoke
+    pm.rect(21, 37, 3, 6, px(RAMP.INK, 1)); // the gap in the grin
+    pm.line(4, 49, 9, 47, C.inkSoft); // the blade, bent past the deck line
+    pm.set(10, 47, C.inkSoft);
+    const smoke = px(RAMP.PAPER, 1);
+    pm.rect(30, 4, 3, 2, smoke); // engine cough — clustered puffs
+    pm.rect(35, 1, 2, 2, smoke);
+    pm.set(33, 6, smoke);
+    pm.set(27, 8, px(RAMP.PAPER, 0));
+  }
   pm.outline(C.outline);
   return pm;
 }
 
-export function drawCoilyCicada(): Pixmap {
+export function drawCoilyCicada(wear: WearTier = 0): Pixmap {
   const pm = new Pixmap(76, 66);
   const shell = px(RAMP.FOREST, 2);
   const shellL = px(RAMP.FOREST, 3);
@@ -196,11 +248,27 @@ export function drawCoilyCicada(): Pixmap {
   pm.set(34, 59, C.outline);
   pm.set(44, 60, C.outline);
   pm.set(58, 57, C.outline);
+  if (wear >= 1) {
+    // the wing glass cracks — two clean fractures across the panes
+    const crack = px(RAMP.CYAN, 1);
+    pm.line(24, 8, 30, 14, crack);
+    pm.set(31, 15, crack);
+    pm.line(14, 22, 19, 26, crack);
+  }
+  if (wear >= 2) {
+    // a wing corner shatters clean off; the coil takes a dent
+    pm.rect(38, 6, 6, 5, T);
+    pm.set(37, 8, px(RAMP.CYAN, 2)); // the broken edge still glints
+    pm.set(37, 10, px(RAMP.CYAN, 2));
+    pm.hline(16, 38, 4, shellDD);
+    pm.set(17, 39, shellDD);
+    pm.set(18, 39, shellDD);
+  }
   pm.outline(C.outline);
   return pm;
 }
 
-export function drawBlazerSmiler(): Pixmap {
+export function drawBlazerSmiler(wear: WearTier = 0): Pixmap {
   const pm = new Pixmap(64, 88);
   const suit = px(RAMP.BLUE, 1);
   const suitL = px(RAMP.BLUE, 2);
@@ -293,11 +361,29 @@ export function drawBlazerSmiler(): Pixmap {
   pm.rect(33, 80, 16, 4, C.inkSoft);
   pm.hline(16, 80, 6, px(RAMP.INK, 2)); // shine
   pm.hline(34, 80, 6, px(RAMP.INK, 2));
+  if (wear >= 1) {
+    // the tie loosens: knot yanked sideways, one hair breaks formation
+    pm.set(33, 32, px(RAMP.RED, 1)); // the slid knot
+    pm.set(30, 32, px(RAMP.PAPER, 3)); // collar gap it left behind
+    pm.set(24, 2, px(RAMP.INK, 1));
+    pm.set(25, 1, px(RAMP.INK, 1));
+  }
+  if (wear >= 2) {
+    // the smile STRAINS: tie swings free, a tooth cracks, flop sweat
+    pm.rect(31, 33, 3, 11, px(RAMP.PAPER, 3)); // shirt where the tie was
+    pm.line(33, 33, 36, 43, px(RAMP.RED, 2)); // the tie, hanging on sideways
+    pm.set(36, 44, px(RAMP.RED, 1));
+    pm.set(37, 45, px(RAMP.RED, 1));
+    pm.vline(31, 23, 6, px(RAMP.PAPER, 0)); // the cracked tooth
+    pm.set(30, 25, px(RAMP.PAPER, 0));
+    pm.set(48, 13, px(RAMP.CYAN, 3)); // sweat past the cheek dither
+    pm.set(48, 14, px(RAMP.CYAN, 2));
+  }
   pm.outline(C.outline);
   return pm;
 }
 
-export function drawPigeonGang(): Pixmap {
+export function drawPigeonGang(wear: WearTier = 0): Pixmap {
   const pm = new Pixmap(88, 64);
   const grey = px(RAMP.PAPER, 2);
   const greyL = px(RAMP.PAPER, 3);
@@ -350,11 +436,29 @@ export function drawPigeonGang(): Pixmap {
   // the crumb they're guarding. it's a good crumb.
   pm.ellipse(43, 56, 3, 2, px(RAMP.GOLD, 2));
   pm.set(42, 55, px(RAMP.GOLD, 3));
+  if (wear >= 1) {
+    // shed feathers — three drift loose around the gang
+    pm.hline(28, 52, 2, grey);
+    pm.hline(58, 48, 2, grey);
+    pm.set(12, 55, greyD);
+    pm.set(59, 49, greyL);
+  }
+  if (wear >= 2) {
+    // patchy coats, more down on the pavement, the do-rag knocked askew
+    pm.rect(40, 28, 3, 2, greyDD); // bare patch on the boss
+    pm.rect(14, 37, 2, 2, greyDD);
+    pm.rect(69, 38, 2, 2, greyDD);
+    pm.set(54, 13, px(RAMP.RED, 2)); // the rag slid over one eye
+    pm.set(55, 14, px(RAMP.RED, 1));
+    pm.hline(20, 58, 2, grey);
+    pm.hline(70, 56, 2, greyD);
+    pm.set(35, 59, greyL);
+  }
   pm.outline(C.outline);
   return pm;
 }
 
-export function drawHillSlugDeluxe(): Pixmap {
+export function drawHillSlugDeluxe(wear: WearTier = 0): Pixmap {
   const pm = new Pixmap(88, 60);
   const body = px(RAMP.GRASS, 1);
   const bodyL = px(RAMP.GRASS, 2);
@@ -408,6 +512,24 @@ export function drawHillSlugDeluxe(): Pixmap {
   pm.ellipse(24, 32, 3, 2, px(RAMP.FOREST, 2));
   pm.ellipse(36, 27, 2, 2, px(RAMP.FOREST, 2));
   pm.ellipse(30, 40, 2, 1, px(RAMP.FOREST, 2));
+  if (wear >= 1) {
+    // the crown chips — royalty is a high-contact sport
+    pm.set(59, 8, T); // one point, snapped clean off
+    pm.set(60, 9, px(RAMP.GOLD, 1));
+    pm.hline(26, 30, 2, px(RAMP.FOREST, 1)); // a welt on the back
+    pm.set(27, 31, px(RAMP.FOREST, 1));
+  }
+  if (wear >= 2) {
+    // badly chipped, the ruby GONE, welts clustering
+    pm.set(62, 7, T);
+    pm.set(65, 8, T);
+    pm.set(63, 10, px(RAMP.GOLD, 0)); // the empty setting
+    pm.hline(40, 33, 3, px(RAMP.FOREST, 1));
+    pm.set(41, 34, px(RAMP.FOREST, 1));
+    pm.hline(31, 44, 2, px(RAMP.FOREST, 1));
+    pm.set(54, 24, bodyD); // the gloss arc dulls where it took the hit
+    pm.set(55, 24, bodyD);
+  }
   pm.outline(C.outline);
   return pm;
 }
@@ -416,7 +538,7 @@ export function drawHillSlugDeluxe(): Pixmap {
  *  a looming engorged dome that fills the frame, vibe-glow veins, hooked
  *  graspers raised at the camera. The dome contour and every plate are
  *  hand-authored runs (ADR-020) — no ellipse stacking, no scatter noise. */
-export function drawTitanicTick(): Pixmap {
+export function drawTitanicTick(wear: WearTier = 0): Pixmap {
   const pm = new Pixmap(96, 84);
   const shell = px(RAMP.EARTH, 1);
   const shellL = px(RAMP.EARTH, 2);
@@ -438,21 +560,33 @@ export function drawTitanicTick(): Pixmap {
 
   // THE DOME — one hand-set contour, top at y=8. Run steps ease 6-5-3-2-1
   // like a drawn curve, hold the wide belly, then tuck in above the head.
-  const DOME: number[] = [
+  const DOME_FULL: number[] = [
     9, 15, 20, 24, 27, 30, 32, 34, 35, 36, 37, 38, 38, 39, 39, 39,
     39, 39, 39, 39, 39, 38, 38, 38, 37, 37, 36, 36, 35, 35, 34, 33,
     33, 32, 31, 30, 29, 28, 26, 25, 23, 21, 19, 17, 14, 11, 8, 5,
   ];
-  pm.contour(47, 8, DOME, shell);
+  // S11b battered tier: it visibly DEFLATES — the crown drops six rows and
+  // sags wide early (everything it drank, leaking back out). Same base row,
+  // so the head, plates, and festoons all keep their seats.
+  const DOME_DEFLATED: number[] = [
+    12, 19, 24, 28, 31, 33, 35, 36, 37, 38, 38, 39, 39, 39, 39, 39,
+    39, 39, 38, 38, 37, 37, 36, 35, 35, 34, 33, 32, 31, 30, 28, 27,
+    26, 25, 23, 21, 19, 17, 14, 11, 8, 5,
+  ];
+  const DOME = wear >= 2 ? DOME_DEFLATED : DOME_FULL;
+  const domeTop = wear >= 2 ? 14 : 8;
+  pm.contour(47, domeTop, DOME, shell);
   // tone zones: lit crown third (offset up-left), shaded eaves of the shell
   const LIT: number[] = [7, 13, 17, 20, 23, 25, 27, 28, 29, 30, 30, 30, 29, 28, 26, 24, 21, 17, 12, 6];
-  pm.contour(42, 10, LIT, shellL);
-  const SHINE: number[] = [5, 9, 12, 14, 15, 15, 14, 12, 9, 5];
-  pm.contour(35, 13, SHINE, shellLL); // taut highlight — it is FULL
+  pm.contour(42, domeTop + 2, LIT, shellL);
+  if (wear < 2) {
+    const SHINE: number[] = [5, 9, 12, 14, 15, 15, 14, 12, 9, 5];
+    pm.contour(35, 13, SHINE, shellLL); // taut highlight — it is FULL
+  }
   // belly shade: the underside curve, hand-run
   for (let i = 0; i < 10; i++) {
-    const hw = DOME[38 + i] - 1;
-    if (hw > 0) pm.hline(47 - hw, 8 + 38 + i, hw * 2 + 2, i % 3 === 2 ? shell : shellD);
+    const hw = DOME[DOME.length - 10 + i] - 1;
+    if (hw > 0) pm.hline(47 - hw, domeTop + DOME.length - 10 + i, hw * 2 + 2, i % 3 === 2 ? shell : shellD);
   }
   // dorsal plates: five deliberate arcs, two broken — drawn, not generated
   pm.hline(34, 22, 9, shellD);
@@ -483,9 +617,10 @@ export function drawTitanicTick(): Pixmap {
     pm.vline(fx, fy, 3, shellD);
     pm.vline(fx + 1, fy + 1, 2, shellD);
   }
-  // VIBE-GLOW VEINS — it has been drinking the hill (the magenta is the tell)
-  const vein = px(RAMP.MAGENTA, 2);
-  const veinL = px(RAMP.MAGENTA, 3);
+  // VIBE-GLOW VEINS — it has been drinking the hill (the magenta is the
+  // tell); battered, the glow runs a shade dimmer — the drink is leaving
+  const vein = px(RAMP.MAGENTA, wear >= 2 ? 1 : 2);
+  const veinL = px(RAMP.MAGENTA, wear >= 2 ? 2 : 3);
   pm.line(36, 34, 44, 42, vein);
   pm.line(44, 42, 52, 40, vein);
   pm.line(50, 30, 56, 38, vein);
@@ -520,19 +655,80 @@ export function drawTitanicTick(): Pixmap {
   pm.set(37, 76, C.outline);
   pm.set(59, 76, C.outline);
   pm.hline(45, 64, 7, shellD); // mouth seam
-  // front graspers raised AT YOU
-  pm.line(26, 48, 10, 34, shellD);
-  pm.line(27, 49, 12, 36, shell);
-  pm.line(10, 34, 6, 26, shellD);
-  pm.set(5, 24, C.outline);
-  pm.set(6, 25, C.outline);
-  pm.line(70, 48, 86, 34, shellD);
-  pm.line(69, 49, 84, 36, shell);
-  pm.line(86, 34, 90, 26, shellD);
-  pm.set(91, 24, C.outline);
-  pm.set(90, 25, C.outline);
+  // front graspers — raised AT YOU while it has the strength; battered,
+  // they droop toward the dirt (the deflation's other read)
+  if (wear < 2) {
+    pm.line(26, 48, 10, 34, shellD);
+    pm.line(27, 49, 12, 36, shell);
+    pm.line(10, 34, 6, 26, shellD);
+    pm.set(5, 24, C.outline);
+    pm.set(6, 25, C.outline);
+    pm.line(70, 48, 86, 34, shellD);
+    pm.line(69, 49, 84, 36, shell);
+    pm.line(86, 34, 90, 26, shellD);
+    pm.set(91, 24, C.outline);
+    pm.set(90, 25, C.outline);
+  } else {
+    pm.line(26, 50, 10, 46, shellD);
+    pm.line(27, 51, 12, 48, shell);
+    pm.line(10, 46, 7, 52, shellD);
+    pm.set(6, 54, C.outline);
+    pm.line(70, 50, 86, 46, shellD);
+    pm.line(69, 51, 84, 48, shell);
+    pm.line(86, 46, 89, 52, shellD);
+    pm.set(90, 54, C.outline);
+  }
+  if (wear >= 1) {
+    // bruise patches where the bats landed — clustered, never noise
+    const bruise = px(RAMP.PURPLE, 1);
+    const bruiseD = px(RAMP.PURPLE, 0);
+    pm.hline(38, 27, 3, bruise);
+    pm.set(39, 28, bruiseD);
+    pm.hline(57, 36, 2, bruise);
+    pm.set(57, 37, bruiseD);
+    // the sag crease across the crown — it is leaking what it drank
+    pm.hline(33, domeTop + 11, 4, shellD);
+    pm.set(37, domeTop + 12, shellD);
+  }
+  if (wear >= 2) {
+    const bruise = px(RAMP.PURPLE, 1);
+    pm.hline(45, 22, 3, bruise);
+    pm.set(46, 23, px(RAMP.PURPLE, 0));
+    pm.hline(29, 41, 2, bruise);
+    pm.hline(63, 30, 2, bruise);
+  }
   pm.outline(C.outline);
   return pm;
+}
+
+/* ---------------------------------------------------------------- */
+/* THE WEAR REGISTRY (S11b) — every §A7 roster enemy maps to a wear-  */
+/* capable battle draw, and the validator + wear.test.ts gate it BOTH */
+/* directions: a roster enemy without a wear draw and a wear row no   */
+/* enemy claims both fail naming the gap. Boot registers all three    */
+/* tiers per enemy (ADR-002); BattleScene swaps textures on the hp    */
+/* thresholds, never redraws.                                         */
+
+export interface EnemyBattleArt {
+  /** the base texture key (EnemyDef.sprite must agree — validator-pinned) */
+  sprite: string;
+  draw: (wear: WearTier) => Pixmap;
+}
+
+export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
+  cranky_mailbox: { sprite: 'battle_cranky_mailbox', draw: drawCrankyMailbox },
+  runaway_lawnmower: { sprite: 'battle_runaway_lawnmower', draw: drawRunawayLawnmower },
+  coily_cicada: { sprite: 'battle_coily_cicada', draw: drawCoilyCicada },
+
+  blazer_smiler: { sprite: 'battle_blazer_smiler', draw: drawBlazerSmiler },
+  pigeon_gang: { sprite: 'battle_pigeon_gang', draw: drawPigeonGang },
+  hill_slug_deluxe: { sprite: 'battle_hill_slug', draw: drawHillSlugDeluxe },
+  titanic_tick: { sprite: 'battle_titanic_tick', draw: drawTitanicTick },
+};
+
+/** the wear-tier texture key battle swaps to (tier 0 = the base sprite) */
+export function wearSpriteKey(sprite: string, wear: WearTier): string {
+  return wear === 0 ? sprite : `${sprite}_w${wear}`;
 }
 
 /* ---------------------------------------------------------------- */

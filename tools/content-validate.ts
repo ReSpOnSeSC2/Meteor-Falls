@@ -32,10 +32,14 @@ import {
 } from '../src/schemas';
 import { HEROES } from '../src/data/heroes';
 import { ABILITIES, PRAY_BASE, PRAY_TEXT } from '../src/data/abilities';
+import { FX_REGISTRY, STAGE_ANIM, itemFxKey } from '../src/battle/fxRegistry';
 import { ENEMIES } from '../src/data/enemies';
-import { ITEMS } from '../src/data/items';
+import { ITEMS, slotOf } from '../src/data/items';
+import { WEAPON_ART } from '../src/spritegen/weapons';
+import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
+import { ARCADE_TEXT, MGR_ROW } from '../src/data/arcade';
 import { CHAR_LEGEND, MAPS } from '../src/data/maps';
 import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue';
 import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
@@ -102,6 +106,159 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   const miloVibe = HEROES.milo.unlocks.filter((u) => ABILITIES[u.ability]?.kind === 'vibe');
   if (miloVibe.length > 0 || HEROES.milo.base.vibe !== 0 || HEROES.milo.pp.base !== 0) {
     fail('canon', `§A3: Milo has no Vibe (found vibe abilities/stats/PP on him)`);
+  }
+}
+
+// S11 — EVERY ABILITY GETS A FACE: the fx registry, checked BOTH directions.
+// An ability whose fx key is unregistered fails naming the ability; a
+// kind-'ability' registry key no ability references is a dead manifest row
+// and fails naming the key. Battle items resolve through itemFxKey the same
+// way. kind-'system' keys (impacts, dissolves, the tether, the six pray
+// events, the Prompt-15 summon/phase hooks) are engine-invoked and exempt
+// from the reverse check.
+{
+  const used = new Set<string>();
+  for (const a of Object.values(ABILITIES)) {
+    used.add(a.fx);
+    const spec = FX_REGISTRY[a.fx];
+    if (!spec) fail('fx', `ability '${a.id}' fx key '${a.fx}' is not in the FX REGISTRY`);
+    else if (spec.kind !== 'ability') fail('fx', `ability '${a.id}' fx key '${a.fx}' is kind '${spec.kind}', must be 'ability'`);
+  }
+  for (const [key, spec] of Object.entries(FX_REGISTRY)) {
+    if (spec.kind === 'ability' && !used.has(key)) {
+      fail('fx', `registry key '${key}' (kind ability) is referenced by no ability — extend or retire the manifest row`);
+    }
+  }
+  const itemReach = new Set<string>();
+  for (const item of Object.values(ITEMS)) {
+    if (!item.usableInBattle) continue;
+    const key = itemFxKey(item.id, item.kind);
+    if (key === null) {
+      fail('fx', `battle item '${item.id}' (kind '${item.kind}') resolves no fx key — extend ITEM_FX/ITEM_KIND_FX`);
+      continue;
+    }
+    itemReach.add(key);
+    const spec = FX_REGISTRY[key];
+    if (!spec) fail('fx', `battle item '${item.id}' fx key '${key}' is not in the FX REGISTRY`);
+    else if (spec.kind !== 'item') fail('fx', `battle item '${item.id}' fx key '${key}' is kind '${spec.kind}', must be 'item'`);
+  }
+  for (const [key, spec] of Object.entries(FX_REGISTRY)) {
+    if (spec.kind === 'item' && !itemReach.has(key)) {
+      fail('fx', `registry key '${key}' (kind item) is reachable from no battle-usable item`);
+    }
+  }
+  // the six pray events stay authored (§A11.4 — six DISTINCT events)
+  for (const tier of ['miraculous', 'wonderful', 'good', 'nothing', 'strange', 'backfire']) {
+    if (!FX_REGISTRY[`pray_${tier}`]) fail('fx', `pray event 'pray_${tier}' missing from the registry`);
+  }
+}
+
+// S11b — EVERY FAMILY GETS A STAGE ANIM: the STAGE_ANIM map beside the
+// registry, checked both directions. A registry family with no stage row
+// fails naming the family; a stage row no registry entry uses is a dead
+// manifest row and fails naming it. (Bash is choreographed directly by
+// BattleScene off the weapon class — it is not a family.)
+{
+  const used = new Set<string>();
+  for (const [key, spec] of Object.entries(FX_REGISTRY)) {
+    used.add(spec.family);
+    if (!(spec.family in STAGE_ANIM)) {
+      fail('stage', `fx '${key}' family '${spec.family}' resolves no STAGE_ANIM row — every family gets choreography`);
+    }
+  }
+  for (const family of Object.keys(STAGE_ANIM)) {
+    if (!used.has(family)) {
+      fail('stage', `STAGE_ANIM row '${family}' is used by no FX_REGISTRY entry — extend or retire the manifest row`);
+    }
+  }
+}
+
+// S11b — WEAPONS ARE REAL OBJECTS: every §A8 equippable maps to drawn art
+// (WEAPON_ART), checked both directions, with the art kind agreeing with
+// the equip slot: weapons carry 'held' art (composed into the battler's
+// swing), body gear 'torso' art (rendered on battler + bust), 'other'-slot
+// charms 'trinket' icons. Equipment is never invisible again.
+{
+  const SLOT_KIND: Record<string, 'held' | 'torso' | 'trinket'> = {
+    weapon: 'held',
+    body: 'torso',
+    arms: 'torso',
+    other: 'trinket',
+  };
+  for (const item of Object.values(ITEMS)) {
+    const slot = slotOf(item);
+    if (slot === null) continue;
+    const art = WEAPON_ART[item.id];
+    if (!art) {
+      fail('weapon-art', `equippable '${item.id}' (slot ${slot}) has no WEAPON_ART row — drawn art is part of shipping gear`);
+      continue;
+    }
+    if (art.kind !== SLOT_KIND[slot]) {
+      fail('weapon-art', `'${item.id}' rides slot '${slot}' but its art is kind '${art.kind}' — expected '${SLOT_KIND[slot]}'`);
+    }
+  }
+  for (const id of Object.keys(WEAPON_ART)) {
+    const item = ITEMS[id];
+    if (!item) fail('weapon-art', `WEAPON_ART row '${id}' claims no §A8 item — extend or retire the manifest row`);
+    else if (slotOf(item) === null) fail('weapon-art', `WEAPON_ART row '${id}' points at '${id}', which is not equippable`);
+  }
+}
+
+// S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
+// capable battle draw in ENEMY_BATTLE_ART (with its sprite key agreeing
+// with the data), and every wear row maps to a roster enemy.
+{
+  for (const e of Object.values(ENEMIES)) {
+    const row = ENEMY_BATTLE_ART[e.id];
+    if (!row) {
+      fail('wear', `enemy '${e.id}' has no ENEMY_BATTLE_ART row — every battle sprite reads the drums (S11b)`);
+      continue;
+    }
+    if (row.sprite !== e.sprite) {
+      fail('wear', `'${e.id}' wear art keys sprite '${row.sprite}' but the data says '${e.sprite}' — the swap would miss`);
+    }
+  }
+  for (const id of Object.keys(ENEMY_BATTLE_ART)) {
+    if (!ENEMIES[id]) fail('wear', `ENEMY_BATTLE_ART row '${id}' matches no §A7 roster enemy — extend or retire the row`);
+  }
+}
+
+// S11b — THE DOOR LAW (user: "any entry way needs a door, not just a mat"):
+// inside interiors, a facing-'up' door zone goes THROUGH a wall and must be
+// tagged 'door' (mats alone stay legal only for bottom-edge exits; stairs
+// and elevators remain their own things). The default indicator in an
+// interior is 'mat', so an untagged north door fails too.
+{
+  for (const m of Object.values(MAPS)) {
+    if (!m.interior) continue;
+    m.doors.forEach((d, i) => {
+      const kind = d.indicator ?? 'mat';
+      if (d.facing === 'up' && kind === 'mat') {
+        fail('doors', `${m.id} door[${i}] → ${d.to} faces 'up' through a wall but is tagged '${d.indicator ?? 'mat (default)'}' — tag it 'door'`);
+      }
+    });
+  }
+}
+
+// §A8 weapon-line manifest (S11b, pinned both directions like the roster):
+// the Ch.1 shelf bats + Mia's pan, and the S11b stage-kit line openers.
+{
+  const canon: Record<string, string> = {
+    cracked_bat: 'rex',
+    tball_bat: 'rex',
+    hand_me_down_pan: 'faye',
+    pellet_popper: 'milo',
+    cedar_beads: 'dorin',
+  };
+  for (const [id, wielder] of Object.entries(canon)) {
+    const item = ITEMS[id];
+    if (!item) fail('canon', `§A8 weapon '${id}' missing from ITEMS`);
+    else if (item.wielder !== wielder) fail('canon', `§A8 weapon '${id}' belongs to '${wielder}', got '${item.wielder ?? 'nobody'}'`);
+  }
+  for (const item of Object.values(ITEMS)) {
+    if (item.kind === 'weapon' && !(item.id in canon)) {
+      fail('canon', `weapon '${item.id}' is not in the §A8 weapon manifest — extend the manifest, never ad-hoc`);
+    }
   }
 }
 
@@ -194,10 +351,10 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// §A10 #1–3 (S9) — the first three side quests, pinned in BOTH directions:
-// every canon quest with its exact name/caller/effect/reward/flag set, and
-// no quest outside the manifest. A missing objective flag, reward item, or
-// caller record fails here naming the gap.
+// §A10 #1–4 (S9 + S10) — the Chapter 1 side quests, pinned in BOTH
+// directions: every canon quest with its exact name/caller/effect/reward/
+// flag set, and no quest outside the manifest. A missing objective flag,
+// reward item, or caller record fails here naming the gap.
 {
   interface QuestPin {
     name: string;
@@ -239,6 +396,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       doneFlag: 'q_lemonade_done',
       caller: { name: 'Ana & Vivi', kind: 'heal', power: 400 },
     },
+    arcade_legend: {
+      name: 'Arcade Legend',
+      chapter: 1,
+      giver: 'arcade_owner',
+      startFlag: 'q_arcade',
+      objectiveFlags: ['q_arcade_beat', 'q_arcade_claimed'],
+      rewardItem: 'champion_jacket',
+      doneFlag: 'q_arcade_done',
+      caller: { name: 'Sal', kind: 'damage', power: 425 },
+    },
   };
   for (const [id, pin] of Object.entries(canon)) {
     const q = QUESTS[id];
@@ -270,7 +437,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (!placed) fail('canon', `'${id}' giver npc '${pin.giver}' stands on no map`);
   }
   for (const id of Object.keys(QUESTS)) {
-    if (!(id in canon)) fail('canon', `'${id}' is not in the §A10 #1–3 manifest — extend the manifest with its §A10 row, never ad-hoc`);
+    if (!(id in canon)) fail('canon', `'${id}' is not in the §A10 #1–4 manifest — extend the manifest with its §A10 row, never ad-hoc`);
   }
   // quest flags never collide across quests — the machines stay independent
   const all = Object.values(QUESTS).flatMap((q) => [q.startFlag, q.doneFlag, ...q.objectives.map((o) => o.flag)]);
@@ -290,6 +457,39 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   if (!(ITEMS.lemonade_jug && ITEMS.lemonade_jug.kind === 'key')) {
     fail('canon', `§A10 #3 needs 'lemonade_jug' as a key item`);
+  }
+  // §A10 #4 reward pin (S10): the Champion Jacket is the first 'body' armor
+  if (ITEMS.champion_jacket && !(ITEMS.champion_jacket.kind === 'armor' && (ITEMS.champion_jacket.defense ?? 0) > 0 && ITEMS.champion_jacket.price === 0)) {
+    fail('canon', `champion_jacket must be unsellable 'armor' with a defense bonus (§A10 #4)`);
+  }
+  if (Object.values(ITEMS).some((i) => i.kind === 'armor' && i.id !== 'champion_jacket')) {
+    fail('canon', `the Ch.1 'armor' line is champion_jacket alone — extend the §A8 manifest, never ad-hoc`);
+  }
+}
+
+// §A10 #4 (S10) — the ARCADE LEGEND cabinet itself: MGR's canon attract row
+// (the score every fresh save and every migrated save starts against), the
+// quest venue standing in Brickton, and the playable cabinet's sign.
+{
+  if (!(MGR_ROW.initials === 'MGR' && MGR_ROW.score === 3000)) {
+    fail('canon', `the attract-mode row is canon MGR / 3000, got ${MGR_ROW.initials} / ${MGR_ROW.score}`);
+  }
+  const venue = MAPS.arcade2_int;
+  if (!venue) {
+    fail('canon', `§A10 #4's venue 'arcade2_int' (STARPORT II, Brickton) is missing`);
+  } else {
+    if (!venue.signs.some((s) => s.dialogue === 'cab_legend')) {
+      fail('canon', `STARPORT II needs the 'cab_legend' sign — the playable cabinet's launch beat`);
+    }
+    if (!venue.props.some((p) => p.sprite === 'cab_legend')) {
+      fail('canon', `STARPORT II needs the cab_legend cabinet prop`);
+    }
+  }
+  if (!MAPS.brickton?.props.some((p) => p.door?.to === 'arcade2_int')) {
+    fail('canon', `Brickton's bldg_arcade2 facade must open into arcade2_int (§A10 #4)`);
+  }
+  if (!MAPS.otterbrook?.props.some((p) => p.door?.to === 'arcade_int')) {
+    fail('canon', `Otterbrook's STARPORT facade must open into arcade_int (S10)`);
   }
 }
 
@@ -408,6 +608,11 @@ for (const q of Object.values(QUESTS)) {
   q.objectives.forEach((o) => sweepTokens('text', `quest '${q.id}' objective '${o.id}'`, o.text, DIALOGUE_TOKENS));
   sweepTokens('text', `quest '${q.id}' caller quote`, q.caller.quote, DIALOGUE_TOKENS);
 }
+// the ARCADE LEGEND cabinet prints through vars() too (S10) — {playername}
+// and {coolthing} are live on the marquee and the boss banner
+for (const [key, line] of Object.entries(ARCADE_TEXT)) {
+  sweepTokens('text', `ARCADE_TEXT.${key}`, line, DIALOGUE_TOKENS);
+}
 // battle-rendered strings additionally pass BattleScene.fill(): {user}/{e}/{t}
 for (const a of Object.values(ABILITIES)) sweepTokens('text', `ability '${a.id}' text`, a.text, BATTLE_TOKENS);
 for (const [tier, line] of Object.entries(PRAY_TEXT)) sweepTokens('text', `PRAY_TEXT.${tier}`, line, BATTLE_TOKENS);
@@ -445,7 +650,7 @@ function sweepPlaceholders(section: string, node: unknown, path: string): void {
     }
   }
 }
-sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, QUESTS, MAPS, DIALOGUE, BATTLE_TEXT, NEW_GAME_ENTRIES }, 'data');
+sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, QUESTS, MAPS, DIALOGUE, BATTLE_TEXT, ARCADE_TEXT, NEW_GAME_ENTRIES }, 'data');
 
 /* ================= verdict ================= */
 
@@ -455,7 +660,7 @@ const counts = [
   `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1 + Boss 1)`,
   `${Object.keys(ITEMS).length} items`,
   `${Object.keys(SHOPS).length} shops`,
-  `${Object.keys(QUESTS).length} quests (§A10 #1–3)`,
+  `${Object.keys(QUESTS).length} quests (§A10 #1–4)`,
   `${Object.keys(MAPS).length} maps`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
 ].join(' · ');

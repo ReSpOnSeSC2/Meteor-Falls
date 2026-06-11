@@ -47,6 +47,7 @@ zero double-presses).
 | 7 | **Shell behavior** — landscape locked both rotations, immersive (no status/nav bar; swipe shows them transiently), screen never sleeps during play, back button cancels menus (= B) and does NOT exit the app, overlay clear of the camera notch in both landscape orientations | ⬜ | — | |
 | 8 | **Audio focus** — receive a call mid-play: synth silences; on return it resumes (no fresh tap needed) | ⬜ | — | |
 | 9 | **S9 JOURNAL, tap-only** — accept Mail Must Move from Mr. Plummer by tap, deliver one letter, open START → JOURNAL: rows tap-select, the detail page tap-dismisses, hardware back closes the journal (= B, ADR-026); after completion the row shows its phone icon | ⬜ | ⬜ | |
+| 10 | **S10 ARCADE LEGEND, full cabinet** — one 60s run driven entirely by the touch overlay (left thumb d-pad flies, right thumb A autofires while held), then again pad-only; hardware back mid-run opens EJECT (and does NOT exit the app); place a score, type 3-letter initials by TAPPING grid cells, table shows the row; walk away and the room music returns | ⬜ | ⬜ | the waves are scripted — a learned pattern should score the same twice |
 
 Chapter-1-twice run (the S8 "done when"): name-entry → ch1_complete
 touch-only ⬜ · pad-only ⬜ — each including one shop purchase, one ATM
@@ -90,3 +91,103 @@ key stuck — release all keys before each chunk.
 | **Night** — pre-dawn hill banner shows "HICKORY HILL" + dim "2 A.M.", haze overlay on; after `zapper_done` the tag AND haze are gone (dawn reaches the hill now) | ✅ |
 | **The upstairs wing** — bedroom → hall → Ana's room (present → STAR COLA, box swaps open) → Vivi's room (present → CORN DOG) → stairs → kitchen → Mom → street, fresh save | ✅ shots `s9b_rex_hall.png`, `s9b_ana_room.png` |
 | `npm test` + `npm run build` | ✅ 121 vitest + validator (3 new maps swept) |
+
+## S10 browser pre-flight — 2026-06-11, ARCADE LEGEND & the STARPORT interiors
+
+All via the ADR-008 driver; the regime legs at `pump(n, 8.33)` one-frame
+keydown→keyup taps. The cabinet's waves are SCRIPTED (data/arcade.ts), so
+every score below reproduces exactly.
+
+| Check | Result |
+|---|---|
+| **Both arcades enterable** — fresh save: name entry → intro → street → STARPORT doorstep (found+fixed: the park hedge ran across the new doorstep — shortened to tiles 3-6); post-ch1 save: STARPORT II entered, exit lands on the jitter-derived Brickton doorstep (computed (329,313), landed (329,315)) | ✅ shots `s10_arcade2_int`, `s10_arcade_int` |
+| **Sal's beat chain** — ask arms `q_arcade`; active line; claim pays the CHAMPION JACKET through the bag flow; after-line; "in a meeting" branch after `manager_defeated` | ✅ ledger gains `Sal / damage 425` (frozen record) |
+| **Cabinet end-to-end** — sign pages → "Step up" → attract (MGR's lonely 003000 row, {playername}/{coolthing} live in the tag) → CAMPER run (hold fire, never move) **2337 — loses to MGR by design** → SWEEPER run (lane sweeps per the scene-header recipe) **3817 — DETHRONED**, `q_arcade_beat` set at TIME UP | ✅ deterministic both runs |
+| **Initials → table** — shared letter grid (ui/lettergrid.ts), cap 3, prefilled from {playername}; rank order AAA 3817 / MGR 3000 / AAA 2337; dethrone banner + "(TELL SAL.)" | ✅ shot `s10_dethroned` |
+| **The corn dog ruling** — held fire SHOOTS it (+5, the cabinet is disappointed); eating (+300) demands a ceasefire | ✅ both branches |
+| **Champion Jacket** — EQUIP → Body → "Rex: Defense up by 8!"; STATUS Defense 24 (16 base + 8) through `heroDefense`; Body line on the sheet | ✅ shot `s10_defense_preview` |
+| **JOURNAL** — Arcade Legend row + phone icon; detail "Done. Handled. Legendary. / Sal owes you a phone call." | ✅ |
+| **Save → kill → Continue** — payphone save (Notebook 1), page reload: v4 blob, table + jacket + ledger intact | ✅ |
+| **v3→v4 migration, live** — crafted TRUE v3 blob (no `arcadeScores`) in slot 2 → Continue → v4 with MGR's lonely row backfilled, rest untouched | ✅ (+ vitest covers v1→v4 chain) |
+| **ADR-024 regime @ 8.33ms one-frame taps** — attract→READY on one tap; one fire tap = exactly one bolt; B→eject ask→"Keep flying" resumes; letter grid types/navigates/erases/OKs | ✅ zero drops (presses during a scene fade-in are pre-create, correctly inert) |
+| **Eject (ADR-026 back = B)** — mid-run B → EJECT discards the score, returns to attract; B again walks away, overworld resumes with map music | ✅ |
+| **Replayable post-quest** — third run starts from attract with the quest done; table is save data, quest completes once | ✅ |
+| **Negative validator (ADR-017)** — reward typo / wrong caller power / wrong MGR score each fail naming the gap | ✅ 3 axes |
+| `npm test` + `npm run android:apk` | ✅ validator (§A10 #1–4, 16 maps) + 126 vitest; fresh `meteor-falls-debug.apk` |
+
+Driver notes added the hard way: a killed eval leaves held keys stuck —
+release ALL keys before each chunk (S9's note, now twice-earned); never
+`scene.restart` while a typewriter is mid-page (the everyFrame text handle
+dies with the scene); presses dispatched during a fade-in land before
+`create()` and are lost — settle scenes with `pump` first.
+
+## S11 browser pre-flight — 2026-06-11, THE LIVING BATTLE (ADR-008 driver)
+
+All legs at `pump(n, 8.33)` one-frame taps on the dev build; shots in
+`.shots/s11_*`. The bench: L9 four-hero party built via `mfMakeHero` (L9
+keeps Ch.1 enemies standing — an L20 bench one-shots the roster, learned
+live); battles launched over the paused overworld exactly as
+`startBattle` does. The full recipe lives in BattleScene's header.
+
+| Check | Result |
+|---|---|
+| **Party cards** — four MOTHER-style cards: bust rises from BEHIND the box, name centered (the player's rename shows: JAY), HP/PP drums beside labels; per-hero command rows (Jay: Bash/Vibe/Goods/Defend · Mia: +Pray · Milo: Bash/GADGETS/Goods/Defend) ; Run absent in boss fights | ✅ shots `s11_latch_tether`, `s11_spy_report2` |
+| **Bust states** — idle breathing, cast w/ Vibe glow, pray, gadget fiddle, rummage+munch, guard (held while defending), hurt flinch + card shake (drums never move), victory cheer loop (all four, fists up), DOWN slump → fade → per-hero angel floating over the card | ✅ cheer + dissolve in `s11_pray_nothing`; angels in `s11_angels_beside_cards`, `s11_wipe_slumping` |
+| **§A4.8 statuses ON the cards** — Sunburn red edge-tint pulsing, Crying droplets, Asleep Zzz drift, Paralyzed sparks, HUSHED muzzle shimmer, Homesick {favoritefood} thought-bubble (and the §A4.4 daydream skip fired naturally in-battle: "Jay is a thousand miles away, thinking about corn dogs...") | ✅ shot `s11_status_cards_a/b` |
+| **Status ticks both sides** — hero asleep skip/wake-on-hit, paralyzed skip, crying miss, hushed Vibe-block, sunburn dot + expiry lines; enemy asleep skip + wake-on-damage, crying miss, hushed move restriction | ✅ exercised over the Tick rounds via `qa()` pins |
+| **The Tick's latch made visible** — latch line → throbbing magenta TETHER from mandibles to Jay's card; drain pulses + self-heal popup; **Goods → Salt Shaker**: thrown white arc over the field, burst, tether severed (`latched: false`), salt consumed from the bag, §A6 salt_break line | ✅ shots `s11_latch_tether`, `s11_salt_arc`, `s11_salt_sever` (1 try) |
+| **Pray as distinct events** (qa().forcePray) — nothing (the lone hopeful mote), miraculous (warm flood + canon line), strange (wobble-dart misfires onto a random combatant), backfire (soft flare, doze branch); good/wonderful share the verified pipeline | ✅ shots `s11_pray_*` |
+| **Gadgets** — solo-Milo: Gadgets row replaces Vibe (§A3 no-Vibe), Spy scanline + revealed stats, Bottle Rocket arc + payload burst (flat power, defense-pierced) | ✅ shots `s11_spy_*`, `s11_rocket_*` |
+| **Mortal-roll save-by-victory (§A4.1, the soul)** — ally drum rolls mortal, NERVOUS loop + sweat while the meter races, win lands mid-roll → drum FROZEN at 41 HP, hero standing (`down: false`) | ✅ shot `s11_mortal_nervous` |
+| **Full wipe** — four drums race to 000, four cards slump → fade → four per-hero angels float, defeat line, outcome `defeat`, respawn flow intact | ✅ shot `s11_wipe_slumping` |
+| **Skip law (ADR-010)** — held A through victory text + timelines: ×4 compression, zero dropped beats (fx.test.ts proves event ordering under big ticks) | ✅ |
+| **Enemy-side vocabulary** — impact bursts + hit-flash + flinch on every hit, floating damage/heal popups (popFoe idiom, pooled), SMAAASH comic burst + shake (collided with a rocket payload in one glorious frame), death dissolves (sprites break up and float — never squash, ADR-020) | ✅ shot `s11_rocket_arc` |
+| **Fx registry gate** — ability fx unregistered / orphaned ability key / item unresolvable / orphaned item key: all four axes fail `npm run validate` naming the gap | ✅ verified live |
+| **rex_hall door mats** (user catch) — north-wall door mats sit flush against the wall base, never floating mid-floor | ✅ |
+| **Rename JAY** (user decree, ADR-031) — name entry prefills Jay, card reads Jay, "JAY'S ROOM" banner, {rex} token resolves everywhere; ids frozen | ✅ |
+| `npm test` | ✅ validator (fx registry both directions live) + 140 vitest |
+
+Driver lore added this session: a PHYSICAL GAMEPAD feeding INPUT trumps any
+script — the user's DualSense kept winning the gauntlet's battles mid-leg;
+mute the pad for scripted runs (`navigator.getGamepads = () => []`, restore
+after) and field a SOLO party when a leg needs one hero's menu
+deterministically. `ow.scene.restart({ mapId, x, y, facing })` is the
+sanctioned way to relocate the harness between maps.
+
+### S11 device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 11 | **S11 living battle, on device** — one Tick fight: busts animate at 60fps with all four cards, latch tether visible, salt severs it, a pray fires, held-A fast-forward stays smooth, victory cheer plays; then one wipe → four angels → defeat | ⬜ | ⬜ | pool check: no GC hitches during multi-target fx |
+
+## S11b browser pre-flight — 2026-06-11, THE BATTLE STAGE (ADR-008 driver)
+
+All legs on the dev build, pad muted (`navigator.getGamepads = () => []`,
+the S11 lore), battles launched over the paused overworld per the
+BattleScene header recipe; shots in `.shots/s11b_*`. Bench: L9 four-hero
+party with the full §A8 stage kit equipped (Jay cracked_bat · Mia
+hand_me_down_pan · Milo pellet_popper · Dorin cedar_beads).
+
+| Check | Result |
+|---|---|
+| **The caster takes the stage** — Bash: Jay's rear-3/4 battler steps up from his card (which stands EMPTY — BustView away state), faces the bird, back-swings HIS bat looking up at it, swings, walks back; bust returns | ✅ shots `s11b_jay_walkon/backswing/swing` |
+| **Every §A8 swing class** — Mia winds up HER pan, Milo shoulders the rifle (aim → crack → recoil), Dorin strikes with bead-wrapped fists; each battler distinct (bob+dress, blazer+satchel, gi+topknot from behind), each card away while its hero is out | ✅ shots `s11b_mia_pan_*`, `s11b_milo_rifle_*`, `s11b_dorin_beads_*` |
+| **Stage choreography per family** — cast (Dorin's Comet: arms raised under the glow), aim (Milo's Spy, Hypno's point), pray (Mia KNEELS mid-stage, §A11.4 straight, stays kneeling through the answered event), throw (salt lob + rockets), oncard (food/cola consume at the card; guard braces there) | ✅ shots `s11b_dorin_cast_glow`, `s11b_milo_spy_aim`, `s11b_mia_pray_kneel/event`, `s11b_salt_throw/arc` |
+| **Green SMAAAASH** — GRASS-ramp comic letters over INK offsets slam in at 3× (5×→3× crash) with a green radial burst + camera shake | ✅ shot `s11b_jay_backswing` (banner mid-slam) |
+| **The Mother-3 combo** — smash opens the ~1.1s window, ring timer drains under the target at fx depth, edge-A presses re-swing the battler with the rising pitch ladder + "N HITS!" popups; slow taps expire honestly (x4), tight taps MAX it; one EB line totals it | ✅ `"Jay swung true! SMAAAASH!! x8 — 189 damage!"` — deterministic to the digit (450−189=261 confirmed); shots `s11b_combo_*` |
+| **Wear, enemy side** — the Tick scuffed at <66% (bruise clusters, sag crease) and BATTERED at <33%: dome visibly DEFLATES (crown drops 6 rows, taut shine gone), graspers droop, veins dim; texture swap live on the hp thresholds, swap-back on drain-heal | ✅ shots `s11b_tick_scuffed/battered` |
+| **Wear, hero side** — drums forced via qa(): Mia scuffed at 49%, Jay/Milo battered at 20% (mussed hair, bruise, torn sleeve + thread, sweat sheen on bust AND battler sheets — keyed on the DISPLAYED odometer); below 33% the idle becomes the WINDED heave (windedA/B loop + breath tick), battler heaves on stage too | ✅ shots `s11b_hero_wear_cards_a/b`, `s11b_salt_stage_winded` |
+| **The shield picker** — candidate card LIFTS 2px under a gold frame pulse, bust brightened, every other card DIMMED, "> Mia" tag rides the hand; arrows move the spotlight, B backs out, tap zones intact | ✅ shots `s11b_shield_picker_jay/mia/milo` |
+| **The barrier locks like armor** — six hex panels FLY IN from the field corners (per-panel lock ticks), flash + closing ring on the lock, persistent cyan hex PIP seats on the card's LEFT shoulder (opposite the ailment row) while shield turns remain | ✅ shots `s11b_barrier_flyin/lock`, `s11b_hex_pip`; `status.shield` 4→3 ticked |
+| **REAL DOORS** — rex_hall's three north doorways carry framed panel doors with brass knobs IN the wall band (mats at their feet); walking in swings the door OPEN (creak + 260ms hold, the dark room reads through the jamb) before the whoosh; closed again on re-entry; all three opened (bedroom / Ana / Vivi) | ✅ shots `s11b_doors_closed`, `s11b_door_mid_open/whoosh/arrived` |
+| **Victory** — the kill mid-stage: Tick dissolves, busts break into the cheer, drums frozen (§A4.1), the actor walks home through the EXP text | ✅ shot `s11b_victory_cheer` |
+| **Skip law (ADR-010)** — held A through an ENTIRE bash: walk-on + backswing + swing + prints + walk-back compressed into 36 frames, stage actor home, damage exact | ✅ |
+| **Found & fixed live** — BattleFx.update's `filter()` reassignment stranded inner timelines pushed by events mid-tick (latent since S11; surfaced as stuck guard rings at full alpha): drain now snapshots, ticks, then folds in newborn timelines. Re-ran shield + 3 defends: **0 rings / 0 bolts** residual | ✅ shot `s11b_rings_clean` |
+| **Console** — zero errors/warnings across the whole gauntlet | ✅ |
+| `npm test` | ✅ validator (WEAPON_ART + STAGE_ANIM + wear + door-law gates live, all four verified failing loudly) + 164 vitest |
+
+### S11b device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 12 | **S11b battle stage, on device** — one Tick fight at 60fps: Jay steps up and back-swings his bat (re-equip the pan/rifle/beads via the menu across heroes), a SMAAAASH combo mashed by real taps (ring timer readable, pitch ladder audible), both sides visibly wear down, shield picker by tap (lift/dim/tag), barrier panels fly in; then upstairs: all three rex_hall doors creak open before admitting | ⬜ | ⬜ | tap-mash the combo with the A overlay — edge detection must catch every tap |

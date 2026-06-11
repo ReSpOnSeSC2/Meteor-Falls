@@ -692,7 +692,7 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
   /**
    * v6 side hair (S8, user catch: "no hair showing left or right"). Two ramps
    * used to vanish entirely in profile: INK hair sat flush against the INK-0
-   * outline (Rex, Dorin — read as a thick border), and EARTH hair is one hue
+   * outline (Jay, Dorin — read as a thick border), and EARTH hair is one hue
    * off SKIN (Milo, Mom, Ana, Vivi — read as bald). The fix is structural,
    * three tones on every style: a LIT arc on the back-of-head curve (light is
    * top-left and a right-facing head turns its back to it), shade-2 mass, and
@@ -1335,7 +1335,7 @@ export function generateAngelFrames(spec?: CharacterSpec): Pixmap[] {
 /* The cast — canon designs (GAME_BIBLE §A3 + Ch.1 NPCs)               */
 
 export const CAST: Record<string, CharacterSpec> = {
-  // Rex — Ness archetype: red cap, striped tee, jeans
+  // Jay — Ness archetype: red cap, striped tee, jeans
   rex: {
     skin: RAMP.SKIN,
     hair: RAMP.INK,
@@ -1663,6 +1663,28 @@ export const CAST: Record<string, CharacterSpec> = {
     shoes: RAMP.INK,
     build: 'adult',
     mouth: 'smile', // all carts accounted for
+  },
+  // ---- S10: SAL, owner of both STARPORTs (§A11: he keeps a high-score
+  // table for EVERYTHING — the weather, the customers, Tuesdays) ----
+  arcadeOwner: {
+    skin: RAMP.SKIN,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray', // the marquee lights claimed the crown years ago
+    top: { ramp: RAMP.PURPLE, style: 'shirt', accent: RAMP.GOLD },
+    bottom: { ramp: RAMP.EARTH },
+    shoes: RAMP.PAPER, // white sneakers; he stands all shift, every shift
+    build: 'adult',
+    eyes: 'happy', // reading a leaderboard only he can see
+    mouth: 'open', // mid-announcement, always
+    // the gold staff star pinned over the polo's heart (front + right side)
+    detail: ({ pm, dir, bob, m }) => {
+      if (dir === 'up') return;
+      const y0 = m.bodyTop + bob;
+      const sx = dir === 'down' ? m.bodyX + 3 : m.bodyX + m.bodyW - 5;
+      pm.set(sx, y0 + 3, px(RAMP.GOLD, 3));
+      pm.set(sx, y0 + 2, px(RAMP.GOLD, 2));
+      pm.set(sx + 1, y0 + 3, px(RAMP.GOLD, 2));
+    },
   },
   // ---- the 6:15 bus ----
   busDriver: {

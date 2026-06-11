@@ -9,12 +9,19 @@ import {
   applyWeakness,
   heroOffense,
   equipDelta,
+  heroDefense,
+  equipDefenseDelta,
   heroLuck,
   equipLuckDelta,
   contractHomesick,
   homesickSkips,
   HOMESICK_CHANCE,
   HOMESICK_SKIP_CHANCE,
+  comboCap,
+  comboHitDamage,
+  comboTotal,
+  COMBO_WINDOW_MS,
+  wearTier,
 } from './formulas';
 import { rollPray, prayWeights, PRAY_BASE, type PrayTier } from '../data/abilities';
 import { mulberry32 } from '../spritegen/pixmap';
@@ -65,7 +72,7 @@ describe('battle formulas', () => {
 });
 
 describe('equipped offense (S3 — the acting hero, not the shared bag)', () => {
-  it("equipping the T-Ball Bat raises Rex's offense and nobody else's", () => {
+  it("equipping the T-Ball Bat raises Jay's offense and nobody else's", () => {
     const rex = makeHeroState('rex', 5);
     const faye = makeHeroState('faye', 6);
     const before = heroOffense(rex);
@@ -102,6 +109,25 @@ describe('equipped offense (S3 — the acting hero, not the shared bag)', () => 
     expect(equipLuckDelta(rex, 'corn_dog')).toBe(0); // not a charm
     expect(heroOffense(rex)).toBe(rex.stats.offense); // luck never leaks into offense
   });
+
+  it("the Champion Jacket rides the 'body' slot: heroDefense and its preview (S10)", () => {
+    const rex = makeHeroState('rex', 5);
+    const faye = makeHeroState('faye', 6);
+    expect(heroDefense(rex)).toBe(rex.stats.defense);
+    expect(equipDefenseDelta(rex, 'champion_jacket')).toBe(ITEMS.champion_jacket.defense ?? 0);
+    rex.bag.push('champion_jacket');
+    rex.equip.body = 'champion_jacket';
+    expect(heroDefense(rex)).toBe(rex.stats.defense + (ITEMS.champion_jacket.defense ?? 0));
+    expect(heroDefense(faye)).toBe(faye.stats.defense); // one back, one jacket
+    expect(equipDefenseDelta(rex, 'champion_jacket')).toBe(0); // already wearing it
+    expect(equipDefenseDelta(rex, 'corn_dog')).toBe(0); // not armor
+    expect(heroOffense(rex)).toBe(rex.stats.offense); // defense never leaks into offense
+    expect(heroLuck(rex)).toBe(rex.stats.luck); // nor into luck
+    // the jacket actually shrinks an enemy hit (BattleScene reads heroDefense)
+    const bare = physicalDamage(20, rex.stats.defense, () => 0.5);
+    const jacketed = physicalDamage(20, heroDefense(rex), () => 0.5);
+    expect(jacketed).toBeLessThan(bare);
+  });
 });
 
 describe('Homesick (§A4.4/§A4.8, S4) — deterministic rng', () => {
@@ -111,7 +137,7 @@ describe('Homesick (§A4.4/§A4.8, S4) — deterministic rng', () => {
     expect(contractHomesick(() => 0.99)).toBe(false);
   });
 
-  it('a Homesick Rex skips on the low half of the die', () => {
+  it('a Homesick Jay skips on the low half of the die', () => {
     expect(homesickSkips(() => HOMESICK_SKIP_CHANCE - 0.0001)).toBe(true);
     expect(homesickSkips(() => HOMESICK_SKIP_CHANCE)).toBe(false);
   });
@@ -176,5 +202,56 @@ describe('PRAY — §A3 canon variance table', () => {
     expect(wg.nothing).toBe(22);
     const sum = Object.values(wg).reduce((a, b) => a + b, 0);
     expect(sum).toBe(100);
+  });
+});
+
+/* ---- S11b: the SMAAAASH combo (window, cap, ladder) + wear tiers ---- */
+
+describe('combo math (S11b — deterministic: presses in, hits out)', () => {
+  it('the cap is 3 + Guts/40 TOTAL hits, ceiling 8', () => {
+    expect(comboCap(0)).toBe(3);
+    expect(comboCap(39)).toBe(3);
+    expect(comboCap(40)).toBe(4);
+    expect(comboCap(120)).toBe(6);
+    expect(comboCap(200)).toBe(8);
+    expect(comboCap(999)).toBe(8); // max 8, however gutsy
+  });
+
+  it('each follow-up lands 25% of the smash, floor 1', () => {
+    expect(comboHitDamage(100)).toBe(25);
+    expect(comboHitDamage(213)).toBe(53);
+    expect(comboHitDamage(2)).toBe(1); // never zero — a press always lands
+  });
+
+  it('the damage ladder climbs monotonically with hits', () => {
+    const smash = 160;
+    let prev = 0;
+    for (let hits = 1; hits <= 8; hits++) {
+      const total = comboTotal(smash, hits);
+      expect(total).toBeGreaterThan(prev);
+      prev = total;
+    }
+    // the canon shape: x4 = smash + 3 follow-ups, exactly
+    expect(comboTotal(160, 4)).toBe(160 + 40 * 3);
+    expect(comboTotal(160, 1)).toBe(160); // no presses = the smash alone
+  });
+
+  it('the window is ~1.1s of skip-scaled time', () => {
+    expect(COMBO_WINDOW_MS).toBe(1100);
+  });
+});
+
+describe('wear tiers (S11b — battle sprites read the drums)', () => {
+  it('full ≥66%, scuffed <66%, battered <33% — keyed on displayed values', () => {
+    expect(wearTier(100, 100)).toBe(0);
+    expect(wearTier(67, 100)).toBe(0);
+    expect(wearTier(66, 100)).toBe(1);
+    expect(wearTier(34, 100)).toBe(1);
+    expect(wearTier(33, 100)).toBe(2);
+    expect(wearTier(1, 100)).toBe(2);
+    expect(wearTier(0, 100)).toBe(2);
+    // a mortal roll degrades AS the drum falls — fractional displays count
+    expect(wearTier(65.9, 100)).toBe(1);
+    expect(wearTier(0, 0)).toBe(2);
   });
 });

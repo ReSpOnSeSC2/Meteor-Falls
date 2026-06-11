@@ -7,9 +7,10 @@
  */
 import { HEROES, type HeroId, statsAtLevel, maxHpAtLevel, maxPpAtLevel } from '../data/heroes';
 import { ITEMS, slotOf, BAG_MAX, EQUIP_SLOTS, type EquipSlot } from '../data/items';
+import { MGR_ROW, SCORE_ROWS } from '../data/arcade';
 import { migrateSave } from './migrations';
 import { SaveBank, SLOT_IDS, localStorageDriver, type OpenResult, type SlotId, type SlotPeek } from './saves';
-import type { CallerRecord, Stats } from '../schemas';
+import type { ArcadeScore, CallerRecord, Stats } from '../schemas';
 
 // S5: Stats is z.infer'd from src/schemas — one shape for compile and runtime
 export type { Stats } from '../schemas';
@@ -32,7 +33,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 3;
+  version: 4;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -54,6 +55,9 @@ export interface GameStateData {
   /** S9 (v3): the CALLER ledger — one §A10 record per completed side quest,
    *  frozen at completion in earned order. §A6 Ch.8's finale iterates THIS. */
   callers: CallerRecord[];
+  /** S10 (v4): the ARCADE LEGEND high-score table (§A10 #4), best first,
+   *  SCORE_ROWS deep. Born holding the Manager's lonely MGR row. */
+  arcadeScores: ArcadeScore[];
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -107,7 +111,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 3,
+    version: 4,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -131,6 +135,9 @@ export function newGameData(): GameStateData {
       dorin: HEROES.dorin.name,
     },
     callers: [],
+    // the cabinet's attract mode flashes this row before you ever walk in —
+    // MGR's score is canon (§A10 #4); fresh saves start with him to beat
+    arcadeScores: [{ ...MGR_ROW }],
   };
 }
 
@@ -229,7 +236,7 @@ class GameStateStore {
   /**
    * Prompt 19: equip from anyone's bag — the item moves into the equipper's
    * bag first (EB-style: equipped gear occupies a bag slot). Wielder tags
-   * are enforced (§A8: bats are Rex's, pans are Mia's).
+   * are enforced (§A8: bats are Jay's, pans are Mia's).
    */
   equipItem(heroId: HeroId, itemId: string): EquipResult {
     const hero = this.hero(heroId);
@@ -259,6 +266,31 @@ class GameStateStore {
     for (const slot of EQUIP_SLOTS) {
       if (h.equip[slot] === itemId) delete h.equip[slot];
     }
+  }
+
+  /* ---------------- the ARCADE LEGEND table (S10 / §A10 #4) ---------------- */
+
+  /** the score to beat — the table's top row (MGR until somebody isn't) */
+  arcadeTopScore(): number {
+    return this.data.arcadeScores[0]?.score ?? 0;
+  }
+
+  /** 0-based rank this score would take, or null if it doesn't place.
+   *  Ties rank BELOW the sitting row — a legend must EXCEED (cabinet law). */
+  arcadeRankOf(score: number): number | null {
+    const t = this.data.arcadeScores;
+    const at = t.findIndex((r) => score > r.score);
+    if (at >= 0) return at;
+    return t.length < SCORE_ROWS ? t.length : null;
+  }
+
+  /** carve the initials into the table; returns the row taken (or null) */
+  submitArcadeScore(initials: string, score: number): number | null {
+    const rank = this.arcadeRankOf(score);
+    if (rank === null) return null;
+    this.data.arcadeScores.splice(rank, 0, { initials, score });
+    this.data.arcadeScores.length = Math.min(this.data.arcadeScores.length, SCORE_ROWS);
+    return rank;
   }
 
   /* ---------------- the ATM (S4 / Prompt 20) ---------------- */
@@ -319,7 +351,7 @@ class GameStateStore {
   /**
    * §A4.7: defeat (and S11's hospitals later) return the party to the last
    * Dad-save's map/position — read back from the saved blob, never tracked
-   * in a second field. No save yet → Rex's house, ADR-014's interim respawn.
+   * in a second field. No save yet → Jay's house, ADR-014's interim respawn.
    */
   respawnPoint(): RespawnPoint {
     if (this.activeSlot !== null) {

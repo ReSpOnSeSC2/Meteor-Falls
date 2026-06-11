@@ -62,6 +62,6 @@ describe('dialogue text variables (Prompt 6 + 21)', () => {
     expect(vars("{rex}'S HOUSE", other)).toBe("Otto'S HOUSE");
     expect(vars('{faye} loves {favoritefood}', other)).toBe('Wilma loves waffles');
     // the one-arg form still reads the live game
-    expect(vars("{rex}'S HOUSE")).toBe("Rex'S HOUSE");
+    expect(vars("{rex}'S HOUSE")).toBe("Jay'S HOUSE");
   });
 });

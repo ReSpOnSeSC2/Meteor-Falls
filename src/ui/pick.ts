@@ -13,7 +13,7 @@
 import Phaser from 'phaser';
 import { GS, type HeroState } from '../engine/state';
 import { ITEMS, slotOf } from '../data/items';
-import { equipDelta, equipLuckDelta } from '../battle/formulas';
+import { equipDelta, equipDefenseDelta, equipLuckDelta } from '../battle/formulas';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, DEPTH_UI } from './windows';
@@ -166,7 +166,8 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
 }
 
 /** Prompt 19: the stat delta previews BEFORE the confirm — menu AND shops.
- *  Weapons preview Offense; 'other'-slot charms preview Luck (S9). */
+ *  Weapons preview Offense; 'body' armor previews Defense (S10); 'other'-slot
+ *  charms preview Luck (S9). One flow, stat-aware per slot. */
 export async function confirmEquip(
   scene: Phaser.Scene,
   dlg: Dialogue,
@@ -174,9 +175,14 @@ export async function confirmEquip(
   itemId: string,
 ): Promise<void> {
   const item = ITEMS[itemId];
-  const charm = slotOf(item) === 'other';
-  const d = charm ? equipLuckDelta(hero, itemId) : equipDelta(hero, itemId);
-  const stat = charm ? 'Luck' : 'Offense';
+  const slot = slotOf(item);
+  const d =
+    slot === 'other'
+      ? equipLuckDelta(hero, itemId)
+      : slot === 'body'
+        ? equipDefenseDelta(hero, itemId)
+        : equipDelta(hero, itemId);
+  const stat = slot === 'other' ? 'Luck' : slot === 'body' ? 'Defense' : 'Offense';
   const preview =
     d > 0 ? `${stat} up by ${d}!` : d < 0 ? `${stat} down by ${-d}.` : `No change in ${stat}.`;
   const sel = await pick(scene, {

@@ -242,6 +242,35 @@ const TRACKS: Record<string, Track> = {
       },
     ],
   },
+  // STARPORT arcades (S10): hammering chip loop — the cabinet wants quarters
+  // it will never charge. A minor, square-on-square, hi-hat sixteenths.
+  arcade: {
+    bpm: 150,
+    loop: true,
+    channels: [
+      {
+        wave: 'square',
+        vol: 0.13,
+        notes: ['A2', 'A2', 'E3', 'A2', 'G2', 'G2', 'D3', 'G2', 'F2', 'F2', 'C3', 'F2', 'E2', 'E2', 'B2', 'E2'],
+      },
+      {
+        wave: 'square',
+        vol: 0.06,
+        notes: ['A4', 'C5', 'E5', 'C5', 'B4', 'D5', 'G4', 'B4', 'A4', 'C5', 'F4', 'A4', 'E4', 'G4', 'B4', 'E5'],
+      },
+      {
+        wave: 'sine',
+        vol: 0.05,
+        detune: 5,
+        notes: ['A5', null, null, 'E5', null, null, 'A5', null, 'G5', null, null, 'D5', null, 'E5', null, null],
+      },
+      {
+        wave: 'noise',
+        vol: 0.02,
+        notes: ['C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5'],
+      },
+    ],
+  },
   // the 6:15: a friendly diesel roll, somewhere between home and everything else
   bus: {
     bpm: 100,
@@ -455,6 +484,16 @@ class AudioSys {
   }
 
   sfx(name: string): void {
+    // S11b combo pitch ladder: 'combo_2'…'combo_8' — every follow-up hit in
+    // the SMAAAASH window rings one step higher than the last
+    if (name.startsWith('combo_')) {
+      const step = Math.max(1, Math.min(9, Number(name.slice(6)) || 1));
+      const f = 392 * Math.pow(2, step / 12);
+      this.tone('square', f, f, 0.06, 0.07);
+      this.tone('square', f * 1.5, f * 1.5, 0.05, 0.04, 0.03);
+      this.noise(0.05, 0.05, 2400);
+      return;
+    }
     switch (name) {
       case 'text':
         this.tone('square', 950, 700, 0.025, 0.04);
@@ -525,6 +564,198 @@ class AudioSys {
         // a patrol Smiler notices you, productively
         this.tone('square', 620, 980, 0.09, 0.07);
         this.tone('square', 980, 980, 0.07, 0.06, 0.09);
+        break;
+      /* ---- S11 battle-fx presets: one voice per element/family ---- */
+      case 'fx_surge':
+        // the old light: rising fifths blooming into noise shimmer
+        this.tone('square', 220, 880, 0.3, 0.08);
+        this.tone('square', 330, 1320, 0.3, 0.06, 0.06);
+        this.noise(0.35, 0.05, 5200, 0.12);
+        break;
+      case 'fx_fire':
+        this.noise(0.4, 0.12, 1500);
+        this.tone('sawtooth', 220, 90, 0.4, 0.07);
+        this.noise(0.25, 0.07, 2600, 0.12);
+        break;
+      case 'fx_freeze':
+        // crystalline: glassy descending partials
+        this.tone('sine', 1760, 1760, 0.12, 0.06);
+        this.tone('sine', 1320, 1320, 0.12, 0.06, 0.07);
+        this.tone('sine', 988, 988, 0.18, 0.06, 0.14);
+        this.noise(0.12, 0.03, 7800, 0.3);
+        break;
+      case 'fx_volt':
+        this.tone('sawtooth', 1800, 120, 0.16, 0.1);
+        this.noise(0.1, 0.09, 6000);
+        this.tone('square', 90, 60, 0.18, 0.08, 0.05);
+        break;
+      case 'fx_lifeup':
+        this.tone('sine', 392, 392, 0.09, 0.06);
+        this.tone('sine', 523, 523, 0.09, 0.06, 0.08);
+        this.tone('sine', 659, 659, 0.14, 0.06, 0.16);
+        break;
+      case 'fx_shield':
+        // the hex snaps shut
+        this.tone('triangle', 247, 494, 0.1, 0.08);
+        this.tone('square', 988, 988, 0.05, 0.04, 0.1);
+        break;
+      case 'fx_hypno':
+        this.tone('sine', 520, 260, 0.5, 0.06);
+        this.tone('sine', 524, 262, 0.5, 0.05, 0.04);
+        break;
+      case 'fx_flash':
+        this.noise(0.3, 0.1, 8000);
+        this.tone('sine', 1568, 784, 0.3, 0.05);
+        break;
+      case 'fx_comet':
+        this.tone('sine', 1400, 300, 0.45, 0.07);
+        this.noise(0.4, 0.05, 3000, 0.1);
+        this.tone('triangle', 80, 50, 0.2, 0.1, 0.3);
+        break;
+      case 'fx_magnet':
+        this.tone('sine', 880, 220, 0.35, 0.06);
+        this.tone('sine', 1100, 275, 0.35, 0.04, 0.05);
+        break;
+      case 'fx_brainjam':
+        this.tone('square', 392, 415, 0.12, 0.07);
+        this.tone('square', 415, 392, 0.12, 0.07, 0.12);
+        this.noise(0.08, 0.05, 4400, 0.24);
+        break;
+      case 'fx_cure':
+        this.tone('sine', 587, 587, 0.1, 0.06);
+        this.tone('sine', 880, 880, 0.16, 0.06, 0.1);
+        break;
+      case 'fx_revive':
+        this.tone('sine', 392, 392, 0.16, 0.07);
+        this.tone('sine', 523, 523, 0.16, 0.07, 0.14);
+        this.tone('sine', 784, 784, 0.3, 0.07, 0.28);
+        break;
+      case 'fx_rocket':
+        this.noise(0.35, 0.1, 1800);
+        this.tone('sawtooth', 140, 700, 0.32, 0.05);
+        break;
+      case 'fx_spy':
+        this.tone('square', 1200, 1200, 0.03, 0.05);
+        this.tone('square', 1500, 1500, 0.03, 0.05, 0.05);
+        this.tone('square', 1800, 1800, 0.05, 0.05, 0.1);
+        break;
+      case 'fx_salt':
+        // shake-shake, then the crack
+        this.noise(0.05, 0.06, 5000);
+        this.noise(0.05, 0.06, 5000, 0.09);
+        this.noise(0.12, 0.1, 2400, 0.3);
+        break;
+      case 'fx_munch':
+        this.noise(0.06, 0.08, 900);
+        this.noise(0.06, 0.07, 800, 0.12);
+        this.noise(0.08, 0.06, 700, 0.24);
+        break;
+      case 'fx_fizz':
+        this.noise(0.5, 0.05, 9000);
+        this.tone('sine', 1047, 1568, 0.18, 0.04, 0.1);
+        break;
+      case 'fx_dissolve':
+        this.noise(0.4, 0.07, 2000);
+        this.tone('triangle', 300, 60, 0.42, 0.07);
+        break;
+      case 'fx_latch':
+        this.tone('sawtooth', 200, 90, 0.2, 0.1);
+        this.noise(0.14, 0.07, 1400, 0.06);
+        break;
+      case 'fx_sever':
+        this.tone('square', 700, 1400, 0.08, 0.08);
+        this.noise(0.1, 0.08, 3600, 0.06);
+        break;
+      case 'fx_guard':
+        this.tone('triangle', 196, 196, 0.07, 0.09);
+        this.tone('triangle', 262, 262, 0.06, 0.07, 0.07);
+        break;
+      case 'fx_summon':
+        this.tone('sine', 262, 1047, 0.4, 0.06);
+        this.noise(0.3, 0.04, 5000, 0.1);
+        break;
+      case 'fx_phase':
+        this.tone('sawtooth', 110, 440, 0.4, 0.08);
+        this.tone('sawtooth', 116, 466, 0.4, 0.06, 0.04);
+        this.noise(0.3, 0.06, 2200, 0.2);
+        break;
+      case 'fx_cheer':
+        this.tone('square', 523, 784, 0.1, 0.06);
+        this.tone('square', 784, 1047, 0.12, 0.06, 0.1);
+        break;
+      /* ---- S11b stage presets: per-weapon swings, doors, the barrier ---- */
+      case 'swing_bat':
+        // a deep bat whoosh — air parting before the SMAAASH decides
+        this.noise(0.16, 0.08, 1100);
+        this.tone('sine', 300, 130, 0.16, 0.05);
+        break;
+      case 'swing_pan':
+        // whoosh + the cast-iron ring of twenty years of breakfast
+        this.noise(0.14, 0.07, 1300);
+        this.tone('triangle', 880, 870, 0.18, 0.06, 0.06);
+        this.tone('triangle', 1318, 1305, 0.14, 0.04, 0.07);
+        break;
+      case 'rifle_crack':
+        // the Pellet Popper speaks: sharp crack, tight tail
+        this.noise(0.06, 0.16, 7000);
+        this.tone('square', 220, 70, 0.09, 0.1);
+        this.noise(0.18, 0.05, 1600, 0.05);
+        break;
+      case 'swing_beads':
+        // bead rattle into the strike — clicks riding a short whoosh
+        this.noise(0.03, 0.07, 5200);
+        this.noise(0.03, 0.06, 4800, 0.05);
+        this.noise(0.1, 0.06, 1400, 0.08);
+        break;
+      case 'swing_fist':
+        this.noise(0.1, 0.06, 1200);
+        this.tone('sine', 240, 120, 0.1, 0.04);
+        break;
+      case 'door_creak':
+        // an interior door admits you: hinge creak, then the S7 whoosh family
+        this.tone('sawtooth', 180, 320, 0.22, 0.035);
+        this.tone('sawtooth', 187, 340, 0.2, 0.025, 0.04);
+        this.noise(0.18, 0.05, 1500, 0.16);
+        break;
+      case 'shield_panel':
+        // one hex panel seats and locks
+        this.tone('triangle', 740, 740, 0.04, 0.05);
+        this.tone('square', 1480, 1480, 0.03, 0.025, 0.03);
+        break;
+      case 'breath':
+        // the winded tick — a worked breath, barely voiced
+        this.noise(0.12, 0.025, 900);
+        this.noise(0.08, 0.015, 700, 0.16);
+        break;
+      /* ---- the six pray tiers (§A11.4: hopeful even on Nothing) ---- */
+      case 'pray_mir':
+        // the choir answers: a slow major bloom with a shimmer crown
+        for (const [f, dt] of [[262, 0], [330, 0.14], [392, 0.28], [523, 0.42], [659, 0.56], [784, 0.7]] as const) {
+          this.tone('sine', f, f, 0.6, 0.06, dt);
+          this.tone('sine', f * 2, f * 2, 0.5, 0.02, dt + 0.05);
+        }
+        this.noise(0.8, 0.02, 9000, 0.5);
+        break;
+      case 'pray_won':
+        this.tone('sine', 392, 392, 0.3, 0.07);
+        this.tone('sine', 494, 494, 0.3, 0.06, 0.12);
+        this.tone('sine', 587, 587, 0.4, 0.06, 0.24);
+        break;
+      case 'pray_good':
+        this.tone('sine', 523, 523, 0.2, 0.06);
+        this.tone('sine', 659, 659, 0.3, 0.05, 0.14);
+        break;
+      case 'pray_none':
+        // one small note. it tries.
+        this.tone('sine', 659, 659, 0.22, 0.045);
+        break;
+      case 'pray_str':
+        this.tone('sine', 660, 612, 0.4, 0.06);
+        this.tone('sine', 668, 720, 0.4, 0.05, 0.06);
+        break;
+      case 'pray_back':
+        this.tone('sine', 523, 523, 0.18, 0.06);
+        this.tone('sine', 494, 392, 0.4, 0.05, 0.16);
         break;
       default:
         break;

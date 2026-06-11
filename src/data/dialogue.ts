@@ -61,9 +61,6 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
 
   /* ---------------- doors that aren't doors yet ---------------- */
-  locked_arcade: [
-    'The STARPORT is locked. From somewhere inside comes the lonely chirp of an unbeaten high score.',
-  ],
   locked_chapel: [
     'The chapel doors are closed this late. A small card reads:',
     '"Knock softly. He hears fine."',
@@ -210,6 +207,97 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(A smaller sign, lower down: "not in a row. we have families.")',
   ],
 
+  /* ---------------- S10 — the STARPORT arcades (§A10 #4) ---------------- */
+  // Otterbrook: the original. Open 24 hours; the machines refuse to sleep.
+  cab_slug_hunter: [
+    'SLUG HUNTER. HIGH SCORE: 999,999 — "STK".',
+    '(The buttons have been sticky since 1991. Nobody can play it, so nobody can beat it. It chirps about this, alone, at night.)',
+  ],
+  cab_lawn_lord: [
+    'LAWN LORD — mow the lawn before the lawn mows YOU.',
+    '(This cabinet predates the Runaway Lawnmower. This cabinet is not sorry.)',
+  ],
+  cab_tax_kid: [
+    'TAX KID. You are a kid. You do taxes. Faster and faster.',
+    '(Nobody has ever reached the bonus round, "AUDIT". The flyer claims it has a second joystick.)',
+  ],
+  arcade_gap: [
+    '(A cabinet-shaped patch of extremely clean carpet.)',
+    'A note, taped to the wall: "THE BIG GAME MOVED TO THE SEQUEL. Like everybody. — MGMT"',
+  ],
+  cab_retired: [
+    'CHAMP CHIMP — RETIRED. UNDEFEATED.',
+    "(Unplugged years ago. Sal couldn't bear to move it. The marquee still says CHAMP.)",
+  ],
+  arcade_counter_note: [
+    'MGMT IS AT THE SEQUEL. Take a token, leave a token.',
+    '(The cup holds one token and a strong honor system.)',
+  ],
+  // Brickton: STARPORT II, "The Sequel to the Arcade" — quest #4's venue
+  cab_grandma: [
+    'GRANDMA RAMPAGE — she has had ENOUGH.',
+    '(The high score is held by an actual grandma. Sal rated her: first place, all-time, category GRANDMAS.)',
+  ],
+  cab_fish_boss: [
+    'FISH BOSS — you are the boss. Of fish.',
+    '(The fish do not respect the org chart. That is the whole game.)',
+  ],
+  cab_smile_sim: [
+    "SMILE SIMULATOR '95.",
+    '(Donated by an office downtown. Unplugged by Sal personally. The screen still feels warm.)',
+  ],
+  cab_island_a: [
+    'PAPER PILOT — fold it, fly it, FEAR it.',
+    '(Somewhere far east of here, monks would have opinions.)',
+  ],
+  cab_island_b: [
+    'BUG ZAPPER: CHAMPIONSHIP EDITION.',
+    '("Too soon. — MGMT")',
+  ],
+  arcade2_fridge_note: [
+    'STAR COLA — OFFICIAL FUEL OF LEGENDS.',
+    '(The fridge hums in B flat. Somebody you know would notice that.)',
+  ],
+  // THE machine. OverworldScene's signBeat owns the play/walk-away ask and
+  // launches ArcadeScene; these pages set the table first.
+  cab_legend: [
+    'ARCADE LEGEND. The marquee is the warmest light in the room.',
+    '(The attract mode flashes a high score and three letters. The machine seems tired of them.)',
+  ],
+  cab_legend_yours: [
+    'ARCADE LEGEND. The marquee is the warmest light in the room.',
+    '(The attract mode flashes YOUR initials now. The machine seems prouder than it lets on.)',
+  ],
+  // SAL — owner of both STARPORTs; he keeps a high-score table for everything
+  npc_arcade_owner: [
+    "@Sal. STARPORT — both of them. I keep score. You're doing fine.",
+  ],
+  q_arcade_ask: [
+    "@Welcome to STARPORT II, the sequel. I'm Sal. I own both. The first one's the prequel now — the industry did that, not me.",
+    "@I keep scores. The weather: today's a 7,200. You: trending up. That machine over there— (he does not look at it) —that machine is my problem.",
+    '@Guy in a blue blazer. Smiled the WHOLE time. Played ONE game, scored three thousand EXACTLY, signed it "MGR", and left. Who stops on a round number? A QUOTA stops on a round number.',
+    "@Knock him off my board, kid. I'd do it myself, but the staff can't watch me lose. They're cabinets. They talk.",
+    '* Sal wants the "MGR" score gone. (Across the room, the machine chirped. It agrees.)',
+  ],
+  q_arcade_active: [
+    '@Three thousand and his three letters, still up there. The weather hit 7,400 today. Even TUESDAY is outscoring you, kid.',
+  ],
+  q_arcade_claim_beat: [
+    "@...KID. The board. THE BOARD. He's GONE. You're UP. I have checked it forty times and rated the feeling: first place, all-time.",
+    '@This is yours. Hung it behind the counter the day we opened, waiting for a name that wasn\'t his.',
+    '* {rex} got the CHAMPION JACKET!',
+    "@Wear it everywhere. ESPECIALLY anywhere a blue blazer might see it. And if my phone ever finds you at the end of the world — ANSWER. I'll have numbers for you.",
+  ],
+  q_arcade_full: [
+    '@Hands full?! Kid. This jacket waited YEARS. It can wait one more pocket. Go make room and get back here.',
+  ],
+  q_arcade_after: [
+    "@Every morning I check the board, and every morning it's still you. Ten out of ten. Both arcades' worth.",
+  ],
+  sal_after_meeting: [
+    '@Heard the blazer guy is "in a meeting" these days. A long one. I rated it: first place, all-time, category MEETINGS.',
+  ],
+
   /* ---------------- the 6:15 bus ---------------- */
   bus_ask_brickton: [
     'The 6:15 to BRICKTON CITY is somehow always about to leave.',
@@ -279,10 +367,6 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   locked_bank: [
     'OTTERBROOK SAVINGS & LOAN, Brickton branch. Closed.',
     '(Inside, the vault is sleeping. Banks sleep standing up, like horses.)',
-  ],
-  locked_arcade2: [
-    'STARPORT II — "The Sequel to the Arcade." Locked.',
-    'Through the glass, one cabinet idles its attract mode at nobody, flashing a high score with three letters: "MGR".',
   ],
   locked_diner: [
     'The DINER is closed between breakfast and breakfast.',
@@ -544,7 +628,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   spring_full: ['(The jug sloshes importantly. The twins are waiting.)'],
 
-  /* ---------------- S9b — the upstairs wing (the twins are Rex's sisters,
+  /* ---------------- S9b — the upstairs wing (the twins are Jay's sisters,
    * §A10 amendment; their HQ is up here, the stand is the branch office) --- */
   hall_photos: [
     'Five frames: Mom, Dad, {rex}, and the twins holding a pitcher like a trophy.',
@@ -607,4 +691,25 @@ export const BATTLE_TEXT = {
   // S4: Homesick (§A4.4) — he skips the turn dreaming of Mom's cooking
   homesick_skip: '{user} is a thousand miles away, thinking about {favoritefood}...',
   homesick_got: '* ...{user} went quiet. (HOMESICK! He misses {favoritefood}. Mom would know what to say.)',
+  // S11: the §A4.8 status set, live in battle and legible on the cards
+  asleep_skip: '{user} is fast asleep. The battle waits for nobody.',
+  wake_up: '{user} woke up!',
+  paralyzed_skip: "{user}'s legs filed a formal complaint! Can't move!",
+  crying_miss: '{user} swung through the tears... and missed!',
+  hushed_no_vibe: '{user} reached for the old light... but the words came out flat. (HUSHED)',
+  enemy_asleep: '{e} is fast asleep. Sweet dreams, weirdo.',
+  enemy_woke: '{e} woke up!',
+  enemy_crying_miss: '{e} is crying too hard to aim!',
+  crying_dry: '{user} dried their eyes.',
+  paralyzed_off: '{user} can move again!',
+  hushed_off: "{user}'s voice came back!",
+  shield_off: "{user}'s shimmer faded away.",
+  spy_report: '{e} — about {t} HP left.',
+  spy_weak: 'Weak point, circled twice: {t}.',
+  spy_no_weak: 'Notes: sturdy, rude, no obvious weak point.',
+  magnet_sip: '{user} sipped {t} PP right out of the air!',
+  revive_word: 'The old word landed. {t} got back up!',
+  no_fallen: 'Everyone is still standing. The old word keeps.',
+  cure_clean: '{t} feels scrubbed clean!',
+  cure_nothing: '{t} was already fine. Now they are VERY fine.',
 };

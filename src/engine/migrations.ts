@@ -11,11 +11,16 @@
  *
  * v2 → v3 (S9): the CALLER ledger (§A6 Ch.8's fuel). Quests did not exist
  * before v3, so an empty ledger is a v2 save's TRUE history, not a guess.
+ *
+ * v3 → v4 (S10): the ARCADE LEGEND high-score table (§A10 #4). Old saves
+ * backfill MGR's lonely row — the cabinet's attract mode was flashing it
+ * long before any save could walk through the door (locked_arcade2, canon).
  */
 import { ITEMS, BAG_MAX } from '../data/items';
+import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 
-export const CURRENT_SAVE_VERSION = 3;
+export const CURRENT_SAVE_VERSION = 4;
 
 type Raw = Record<string, unknown>;
 
@@ -51,7 +56,7 @@ export const MIGRATIONS: MigrationStep[] = [
       if (party.length === 0) party.push(...((freshRaw.party as Raw[]) ?? []));
       out.party = party;
 
-      // the shared bag becomes the leader's — Rex carried the party's stuff
+      // the shared bag becomes the leader's — Jay carried the party's stuff
       const lead = party.find((h) => h.id === 'rex') ?? party[0];
       const inv = strings(out.inventory);
       if (lead) {
@@ -97,6 +102,17 @@ export const MIGRATIONS: MigrationStep[] = [
       // records, in completion order (engine/quests.ts appends them).
       if (!Array.isArray(raw.callers)) raw.callers = [];
       raw.version = 3;
+      return raw;
+    },
+  },
+  {
+    to: 4,
+    migrate(raw) {
+      // S10: the ARCADE LEGEND table. A pre-v4 save never played the
+      // cabinet, but MGR's attract-mode row predates everyone (§A10 #4) —
+      // the lonely row IS an old save's true history.
+      if (!Array.isArray(raw.arcadeScores)) raw.arcadeScores = [{ ...MGR_ROW }];
+      raw.version = 4;
       return raw;
     },
   },

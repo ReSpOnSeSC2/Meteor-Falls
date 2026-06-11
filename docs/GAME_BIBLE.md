@@ -18,15 +18,15 @@
 
 ## A2. Story Synopsis
 
-**The Night It Fell.** Summer, 1995. **REX**, a quiet 12-year-old in **Otterbrook, Ohio**, is woken at 2 AM by a roar — a meteor has slammed into **Hickory Hill** behind his house. At the crash site he meets **GLINT**, a firefly-like star-creature who escaped the meteor's true passenger: **THE HUSH**, an entity that devours *Vibe* — the warmth between living things. Where the Hush spreads, people stop calling their moms, dogs stop greeting their owners, and music goes flat. Glint prophesies that **four kids carrying the old light** can silence it, hands Rex the **Star Locket**, and is promptly fried by the neighbor's bug zapper mid-prophecy ("...tell the girl who prays— *BZZT*").
+**The Night It Fell.** Summer, 1995. **JAY**, a quiet 12-year-old in **Otterbrook, Ohio**, is woken at 2 AM by a roar — a meteor has slammed into **Hickory Hill** behind his house. At the crash site he meets **GLINT**, a firefly-like star-creature who escaped the meteor's true passenger: **THE HUSH**, an entity that devours *Vibe* — the warmth between living things. Where the Hush spreads, people stop calling their moms, dogs stop greeting their owners, and music goes flat. Glint prophesies that **four kids carrying the old light** can silence it, hands Jay the **Star Locket**, and is promptly fried by the neighbor's bug zapper mid-prophecy ("...tell the girl who prays— *BZZT*").
 
-**The Quest.** The meteor shattered into **Eight Embers** that scattered along the Hush's path around the globe. Each Ember rests at a **Resonance Site** guarded by something the Hush has corrupted. When Rex holds the Locket at a Site, it records a **Heartlight** — one-eighth of the **Homesong**, the only frequency the Hush cannot devour. Collect all eight, ride a homemade rocket to Mars, and play the Homesong into the dark.
+**The Quest.** The meteor shattered into **Eight Embers** that scattered along the Hush's path around the globe. Each Ember rests at a **Resonance Site** guarded by something the Hush has corrupted. When Jay holds the Locket at a Site, it records a **Heartlight** — one-eighth of the **Homesong**, the only frequency the Hush cannot devour. Collect all eight, ride a homemade rocket to Mars, and play the Homesong into the dark.
 
 **The Ending.** The Hush cannot be beaten by bats and bottle rockets alone. In the final battle, **MIA PRAYS** — and every NPC the party helped across the world (every completed side quest) answers a ringing phone, one by one, and sends their Vibe to Mars. Friendship, family, and faith literally win the fight. Replay value = more side quests done = more callers = an easier final battle and extended credits.
 
 ## A3. The Four Heroes
 
-| | **REX** | **MIA** | **MILO** | **DORIN** |
+| | **JAY** | **MIA** | **MILO** | **DORIN** |
 |---|---|---|---|---|
 | Archetype | Ness — silent psychic hero | Paula — psychic + **Pray** | Jeff — gadget genius, no Vibe | Poo — monastery martial artist |
 | Age / Home | 12, Otterbrook, USA | 11, Brickton, USA | 12, Wintermoor Academy, England | 13, Stone Brow Monastery, Romania |
@@ -40,6 +40,12 @@
 > *(Amended 2026-06-11 per Appendix rule 6, ADR-023: the second hero, formerly
 > Faye, is canonically named **MIA**. Internal engine ids stay `faye` — saves,
 > flags like `faye_joined`, and dialogue keys are frozen identifiers.)*
+
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-031: the first hero, formerly
+> Rex, is canonically named **JAY**. Internal engine ids stay `rex` — map ids
+> like `rex_home`, flags like `rex_homesick`, texture keys, and the `{rex}`
+> text token are frozen identifiers; the token resolves to the live display
+> name. 'Rex' survives as the first don't-care alternate on his name screen.)*
 
 ### Mia's PRAY — the high-variance faith mechanic (canon, do not change)
 
@@ -58,7 +64,7 @@ In the final battle, Pray becomes **scripted** (see A8, Chapter 8).
 
 ### Vibe ability unlock tables (abridged — full PP costs in data files, Prompt 9)
 
-- **Rex:** Vibe Surge α (L1) /β (L16) /γ (L31) /Ω (L47); Lifeup α/β/γ (L3/L20/L38); Shield α/Σ (L9/L33); Flash α (L24); Hypno α (L6); **Teleport α (L26, story-gated Ch.4) / Teleport β (Ch.6)**
+- **Jay:** Vibe Surge α (L1) /β (L16) /γ (L31) /Ω (L47); Lifeup α/β/γ (L3/L20/L38); Shield α/Σ (L9/L33); Flash α (L24); Hypno α (L6); **Teleport α (L26, story-gated Ch.4) / Teleport β (Ch.6)**
 - **Mia:** Vibe Fire α–Ω (L1/15/29/44); Vibe Freeze α–Ω (L4/18/32/46); Vibe Volt α–γ (L10/26/40); Magnet α (L8); **Pray (L1)**
 - **Dorin:** Vibe Comet α (joins) / Ω (L52); Vibe Freeze line shared; Mirror (joins); Brainjam α/Ω (L40/50); Healing α–γ
 - **Milo:** No Vibe. **Spy** (reveals enemy HP/weakness), **Repair** (turns Broken Gizmos found in the world into working battle items overnight when sleeping), Bottle Rocket tiers (single → Big → Multi)
@@ -68,11 +74,11 @@ In the final battle, Pray becomes **scripted** (see A8, Chapter 8).
 1. **Rolling Odometer HP.** HP/PP tick down like a mechanical odometer (~2 digits/sec). A mortal hit can be outraced by healing or by *winning the battle* before the meter hits zero. This is the single most important feel-mechanic — Prompt 13 is dedicated to it.
 2. **Visible overworld enemies, no random encounters.** Touch an enemy to battle. Back-attacks give them a green-swirl first strike; you get red-swirl priority by touching them from behind. If your party vastly outlevels the enemy: **instant auto-win** screen, no battle.
 3. **Save = Call Your Dad.** Phones (home phones, payphones, banana-shaped novelty phones, a yak with a satellite dish in China) let you call **Dad**, who saves the game ("Have you been eating well, champ?"), tracks playtime, and occasionally insists you take a break. **3 save slots.**
-4. **Money = Dad's deposits.** Battle winnings are deposited by Dad into the **Otterbrook Savings & Loan** card, withdrawn at ATMs worldwide. Mom's home cooking (your favorite food, chosen at game start) cures **Homesickness** — a status Rex randomly contracts that makes him skip turns daydreaming about Mom's cooking. Call Mom to cure it.
+4. **Money = Dad's deposits.** Battle winnings are deposited by Dad into the **Otterbrook Savings & Loan** card, withdrawn at ATMs worldwide. Mom's home cooking (your favorite food, chosen at game start) cures **Homesickness** — a status Jay randomly contracts that makes him skip turns daydreaming about Mom's cooking. Call Mom to cure it.
 5. **Picnic.** At picnic tables scattered through every region (≈3 per chapter), use a **Picnic Basket** item: full party HP/PP restore + the **Sunny Side** buff (+10% all stats for the next 5 battles). Baskets are bought (Basic), assembled at delis from 3 regional foods (Family), or earned from Buni's quest (Feast — adds auto-revive once). Tables are placed *before* dungeons — finding one is strategy.
-6. **Teleport.** Rex learns Teleport α (run-up required — on touch, hold the D-pad to sprint a circle; with a controller, hold the stick) to revisit any visited town. Teleport β (Ch.6) needs only a short dash. Crashing into walls = comic soot-faced failure.
-7. **Death & Angels.** Hitting 0 HP makes a hero **unconscious**; if the whole party drops, Rex wakes at the last Dad-save with **half his cash on hand** (banked money is safe). Fallen party members trail behind Rex as **little haloed angels** — visible on the overworld, unusable in battle — until revived at a **hospital** (or **Healing γ / Hallelujah-tier prayer items**).
-8. **Status effects:** Sunburn (poison-over-time), Crying (can't aim — gnats, onion ghosts), Asleep, Paralyzed, Homesick (Rex only), **Hushed** (silenced — no Vibe), Mushroomized (Ch.6 spore forest — controls scramble until cured at a doctor).
+6. **Teleport.** Jay learns Teleport α (run-up required — on touch, hold the D-pad to sprint a circle; with a controller, hold the stick) to revisit any visited town. Teleport β (Ch.6) needs only a short dash. Crashing into walls = comic soot-faced failure.
+7. **Death & Angels.** Hitting 0 HP makes a hero **unconscious**; if the whole party drops, Jay wakes at the last Dad-save with **half his cash on hand** (banked money is safe). Fallen party members trail behind Jay as **little haloed angels** — visible on the overworld, unusable in battle — until revived at a **hospital** (or **Healing γ / Hallelujah-tier prayer items**).
+8. **Status effects:** Sunburn (poison-over-time), Crying (can't aim — gnats, onion ghosts), Asleep, Paralyzed, Homesick (Jay only), **Hushed** (silenced — no Vibe), Mushroomized (Ch.6 spore forest — controls scramble until cured at a doctor).
 9. **The Star Locket.** Key item UI: shows Embers collected (0–8) and plays the growing Homesong on the pause screen — one more instrument layer per Ember.
 
 ## A5. The World Route & Travel
@@ -96,7 +102,7 @@ The world FEELS open: every region has off-path screens, optional caves, side qu
 
 ### Chapter 1 — "The Night It Fell" (USA) — target end level: 8
 
-Tutorial-by-doing. Meteor crash, Glint's prophecy and death-by-bug-zapper, the neighbor kid **Chad Pickle** (Pokey analog) tags along then betrays you twice before lunch. Rex crosses Hickory Hill, takes the bus to **Brickton City**, and rescues **Mia** from the **Department of Smiles** — a cult of unsettlingly cheerful adults in blue blazers ("Have a PRODUCTIVE day!") who've been Hushed.
+Tutorial-by-doing. Meteor crash, Glint's prophecy and death-by-bug-zapper, the neighbor kid **Chad Pickle** (Pokey analog) tags along then betrays you twice before lunch. Jay crosses Hickory Hill, takes the bus to **Brickton City**, and rescues **Mia** from the **Department of Smiles** — a cult of unsettlingly cheerful adults in blue blazers ("Have a PRODUCTIVE day!") who've been Hushed.
 
 **Resonance Site:** Hickory Hill crater. **BOSS 1 — THE TITANIC TICK** (450 HP / latches onto a hero and drains HP each turn until hit with Vibe Fire or a thrown Salt Shaker).
 
@@ -132,7 +138,7 @@ Riverboat to **Lotus Harbor**, through the **Spore Forest** (Mushroomized status
 
 ### Chapter 7 — "The Count of Valea Stelelor" (Romania) — target level: 45
 
-The emotional heart. **Valea Stelelor** ("Valley of the Stars") — painted gates, haystacks, a grandmother named **Buni** who feeds the party until their HP overflows and gives the **Feast Basket** recipe quest. A "vampire," **Count Hoaxula**, terrorizes the valley from his castle — he's actually a Hushed theme-park actor from Cleveland whose haunted-castle attraction went bankrupt, now armed with very real stolen Vibe. Meanwhile Rex's group is summoned up the mountain: **Dorin** completes the **Trial of the Mute Mountain** at Stone Brow Monastery (playable solo sequence: Dorin meditates while the mountain "deletes" his senses one by one — screen goes dark, then silent, then UI vanishes — until he releases his fear) and **joins the party**.
+The emotional heart. **Valea Stelelor** ("Valley of the Stars") — painted gates, haystacks, a grandmother named **Buni** who feeds the party until their HP overflows and gives the **Feast Basket** recipe quest. A "vampire," **Count Hoaxula**, terrorizes the valley from his castle — he's actually a Hushed theme-park actor from Cleveland whose haunted-castle attraction went bankrupt, now armed with very real stolen Vibe. Meanwhile Jay's group is summoned up the mountain: **Dorin** completes the **Trial of the Mute Mountain** at Stone Brow Monastery (playable solo sequence: Dorin meditates while the mountain "deletes" his senses one by one — screen goes dark, then silent, then UI vanishes — until he releases his fear) and **joins the party**.
 
 **Resonance Site:** monastery bell tower. **BOSS 7 — COUNT HOAXULA** (5,300 HP / two phases: Theatrical phase — fake spells, real damage, steals one equipped item (returned on win); Unmasked phase at 50% — sobbing Cleveland accent, attacks become wild AoE; Mia's Pray "Good" tier or better instantly ends his second phase in mercy — the game's quietest victory).
 
@@ -165,7 +171,7 @@ Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one
 
 ## A8. Items (canon catalog — ~90 items; full prices/stats in data files, Prompt 10)
 
-**Weapons** — Rex's bats: Cracked → T-Ball → Sandlot Slugger → Aluminum → Hall-of-Famer → *Casey's Last Swing* (Ch.8 drop). Mia's pans: Hand-Me-Down → Copper → Cast-Iron → Chef's → *The Holy Pan*. Milo's guns: Pellet Popper → Spud Gun → Double-Barrel Sparker → *Gauss Lobber*; Bottle Rocket / Big / Multi (consumables). Dorin: Cedar Beads → River Beads → *Comet Bead* (1/128 drop, Null Walker — the chase chase).
+**Weapons** — Jay's bats: Cracked → T-Ball → Sandlot Slugger → Aluminum → Hall-of-Famer → *Casey's Last Swing* (Ch.8 drop). Mia's pans: Hand-Me-Down → Copper → Cast-Iron → Chef's → *The Holy Pan*. Milo's guns: Pellet Popper → Spud Gun → Double-Barrel Sparker → *Gauss Lobber*; Bottle Rocket / Big / Multi (consumables). Dorin: Cedar Beads → River Beads → *Comet Bead* (1/128 drop, Null Walker — the chase chase).
 
 **Armor:** regional hats (Otterbrook Cap → Cricket Cap → Turban of Calm → Paper Crown → Cushma → Fur-Lined Hood), bracelets, pendants (elemental resists), *Star Pendant* (Ch.7).
 
@@ -202,14 +208,14 @@ Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one
 | 13 | **Brushes of Mt. Shu** (6): retrieve the calligrapher's 3 brushes from the Spore Forest | Scroll of Calm (cures Mushroomize, reusable); Caller: calligrapher |
 | 14 | **Buni's Table** (7): gather 5 ingredients across the valley for the true Feast Basket | **Feast Basket recipe** (craft at any deli) + she calls you "puiul meu"; Caller: **Buni** (her call in the finale heals the full party) |
 | 15 | **Lights of Aurora Station** (8): restore 3 generators while Frost Wraiths hunt | Insulated Suit; Caller: station chief |
-| 16 | **The Last Wave** (8): find the surf legend's lost board inside the volcano approach | Board of Legends (Rex's funniest weapon, sidegrade); Caller: surf legend |
+| 16 | **The Last Wave** (8): find the surf legend's lost board inside the volcano approach | Board of Legends (Jay's funniest weapon, sidegrade); Caller: surf legend |
 
 Plus **Mr. Click**, a photographer who ambushes the party for a photo 12 times worldwide ("Say fuzzy pickles— I mean, cheese!") → photo album rolls during the credits.
 
 > *(Amended 2026-06-11 per Appendix rule 6, ADR-028: the twin sisters **Ana &
-> Vivi** of quest #3 are canonically **Rex's little sisters**. The lemonade
+> Vivi** of quest #3 are canonically **Jay's little sisters**. The lemonade
 > stand is the branch office; headquarters is their two bedrooms upstairs at
-> Rex's house. Their npc ids, dialogue keys, quest data, and §A10 caller
+> Jay's house. Their npc ids, dialogue keys, quest data, and §A10 caller
 > record are unchanged.)*
 
 ## A11. Tone & Writing Rules (every prompt that writes dialogue must obey)
@@ -218,7 +224,7 @@ Plus **Mr. Click**, a photographer who ambushes the party for a photo 12 times w
 2. Sincerity is never the joke. Buni, Mom's phone calls, Dorin's trial, and the finale are played straight.
 3. The Hush is never funny. Its dialogue is sparse, lowercase, and wrong-feeling: "you came so far. it was quiet here. why."
 4. Faith is treated warmly and lightly — Pray's flavor text is hopeful even on "Nothing."
-5. Battle text in classic second person: "Rex tried the Casey swing! SMAAAASH!! 412 damage!"
+5. Battle text in classic second person: "Jay tried the Casey swing! SMAAAASH!! 412 damage!"
 
 ---
 
@@ -436,7 +442,7 @@ costs and power coefficients (extend the abridged Bible tables sensibly —
 follow EarthBound's α/β/γ/Ω power ratios ~1:2.2:3.6:5.5). Encode PRAY exactly
 per the §A3 variance table including the level/Guts weight shifts. Encode
 Milo's Spy/Repair and Bottle Rocket tiers. Unit-test: pray distribution over
-100k rolls matches weights ±0.5%; level-50 Rex stats land within §A9 targets.
+100k rolls matches weights ±0.5%; level-50 Jay stats land within §A9 targets.
 ```
 
 **Done when:** validator passes hero/ability sections; distribution tests green.
@@ -519,7 +525,7 @@ elemental weakness tags (fire/freeze/volt/holy/physical), Shield/Mirror
 reflection, Milo's Spy info panel and Bottle Rocket multi-hit, PRAY rolling
 its full §A3 table with distinct text+SFX per tier (including Strange hitting
 allies). Implement every status from §A4.8 with per-turn ticks, cure items,
-and battle text. Homesick: Rex randomly skips a turn "thinking about
+and battle text. Homesick: Jay randomly skips a turn "thinking about
 {favoritefood}".
 ```
 
@@ -547,9 +553,9 @@ headlessly via the engine API.
 Implement encounter transitions: overworld contact triggers the EB swirl
 (green = enemy back-attacked you ⇒ enemy free round; red = you touched their
 back ⇒ your free round; neutral otherwise), battle intro text, VICTORY flow
-("YOU WON! Rex gained 86 EXP." level-up fanfare + stat gains + new-ability
+("YOU WON! Jay gained 86 EXP." level-up fanfare + stat gains + new-ability
 text + drops w/ inventory-full handling), DEFEAT flow per §A4.7 (fade,
-"Rex... pick yourself up..." respawn at last save, cash-on-hand halved, party
+"Jay... pick yourself up..." respawn at last save, cash-on-hand halved, party
 as angels), and INSTANT WIN: if party strength >> enemy per EB's formula,
 flash the win screen without entering battle.
 ```
@@ -594,7 +600,7 @@ Implement per-hero 14-slot inventories + shared key-item bag: get/give/drop/
 use from menu and battle, equipment slots (weapon/body/arms/other) with
 equip-from-anyone's-bag, stat deltas previewed before confirming (EB
 "Offense up by 14!"), cursed-free design (no traps), full-inventory handling
-on pickups/drops ("Rex's hands are full!"). Chests, gift boxes on maps.
+on pickups/drops ("Jay's hands are full!"). Chests, gift boxes on maps.
 ```
 
 **Done when:** full loop: open chest → bag → equip → see stats change → sell later.
@@ -619,7 +625,7 @@ and Pizza-to-Go gated by story flags later).
 ```
 [Standard Header]
 Implement the New Game sequence: EB-style name-entry screens for the four
-heroes (pre-filled Rex/Mia/Milo/Dorin, editable, on-screen keyboard +
+heroes (pre-filled Jay/Mia/Milo/Dorin, editable, on-screen keyboard +
 controller grid), the player's own name (used by the finale per §A6 Ch.8),
 favorite food, and coolest thing. Don't-care button randomizes from canon-
 flavored lists. All values flow into dialogue variables from Prompt 6.
@@ -717,7 +723,7 @@ fuel. Show callers earned as tiny phone icons on the journal page.
 [Standard Header]
 Build Chapter 1 per GAME_BIBLE §A6 completely:
 MAPS (Tiled, real art per the Phase-8-ready palette, dev-art acceptable until
-Prompt 39 but layouts FINAL): Rex's house (interior, the starting bedroom),
+Prompt 39 but layouts FINAL): Jay's house (interior, the starting bedroom),
 Otterbrook town (≈30s walk edge-to-edge, 12+ enterable: homes, drugstore/shop,
 hospital, chapel, arcade-bus-stop, Ana & Vivi's stand), Hickory Hill trail +
 crater Resonance Site, the bus interior cutscene map, Brickton City block,

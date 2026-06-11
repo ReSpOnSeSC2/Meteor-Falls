@@ -56,6 +56,10 @@ export const CHAR_LEGEND: Record<string, string> = {
   '1': 'sidewalk_crack',
   '2': 'road_patch',
   '3': 'storm_drain',
+  // S10 STARPORT arcades
+  a: 'arcade_floor',
+  '*': 'arcade_floor_star',
+  A: 'arcade_wall',
 };
 
 /**
@@ -135,8 +139,9 @@ function buildOtterbrook(): MapDef {
   g.rect(8, 18, 1, 4, ':');
   g.rect(33, 18, 1, 4, ':');
   g.rect(26, 13, 2, 3, ':');
-  // park hedges
-  g.rect(3, 22, 6, 1, 'b');
+  // park hedges (S10: the north run stops short of the STARPORT's doorstep —
+  // tiles 7-8 are the arcade door's landing now that the facade is real)
+  g.rect(3, 22, 4, 1, 'b');
   g.rect(3, 28, 6, 1, 'b');
   g.rect(13, 23, 1, 3, 'b');
   // fences by the lemonade corner
@@ -202,7 +207,15 @@ function buildOtterbrook(): MapDef {
         // S4: a real door now (zone reaches below the collision floor, ADR-011)
         door: { ox: 33, oy: 64, w: 16, h: 28, to: 'drugstore_int', tx: 112, ty: 118 },
       },
-      { sprite: 'arcade', x: 6, y: 17, solid: { ox: 0, oy: 20, w: 66, h: 56 } },
+      {
+        sprite: 'arcade',
+        x: 6,
+        y: 17,
+        solid: { ox: 0, oy: 20, w: 66, h: 56 },
+        // S10: the STARPORT opens (zone reaches below the collision floor,
+        // ADR-011; the interior's street exit derives from this via doorstepOf)
+        door: { ox: 17, oy: 64, w: 16, h: 28, to: 'arcade_int', tx: 80, ty: 102 },
+      },
       { sprite: 'chapel', x: 31, y: 16, solid: { ox: 0, oy: 30, w: 50, h: 60 } },
       { sprite: 'lemonade', x: 14, y: 13, solid: { ox: 0, oy: 10, w: 36, h: 18 } },
       { sprite: 'picnic', x: 6, y: 25, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
@@ -424,7 +437,7 @@ function buildBedroom(): MapDef {
 }
 
 /* ---------- S9b: the upstairs wing — hall + the twins' HQ (§A10 #3 amend:
- * Ana & Vivi are Rex's little sisters; the stand is the branch office) ---- */
+ * Ana & Vivi are Jay's little sisters; the stand is the branch office) ---- */
 
 function buildRexHall(): MapDef {
   const g = new Grid(16, 7, 'w');
@@ -448,9 +461,11 @@ function buildRexHall(): MapDef {
     ],
     phones: [],
     doors: [
-      { x: 2, y: 2, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up', indicator: 'mat' },
-      { x: 7, y: 2, w: 2, h: 1, to: 'ana_room', tx: 72, ty: 100, facing: 'up', indicator: 'mat' },
-      { x: 12, y: 2, w: 2, h: 1, to: 'vivi_room', tx: 72, ty: 100, facing: 'up', indicator: 'mat' },
+      // S11b: doorways through the wall are DOORS (user law) — they swing
+      // open before they admit you; mats stay legal only at bottom edges
+      { x: 2, y: 2, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up', indicator: 'door' },
+      { x: 7, y: 2, w: 2, h: 1, to: 'ana_room', tx: 72, ty: 100, facing: 'up', indicator: 'door' },
+      { x: 12, y: 2, w: 2, h: 1, to: 'vivi_room', tx: 72, ty: 100, facing: 'up', indicator: 'door' },
       { x: 15, y: 4, w: 1, h: 2, to: 'rex_home', tx: 200, ty: 132, facing: 'down', indicator: 'stairs' },
     ],
     spawners: [],
@@ -472,7 +487,7 @@ function buildAnaRoom(): MapDef {
       { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
       { sprite: 'desk', x: 5, y: 2, solid: { ox: 1, oy: 4, w: 24, h: 13 } },
       { sprite: 'dresser', x: 7.2, y: 0.3 },
-      // her present for Rex — opened, the box stays (EB keeps its trash)
+      // her present for Jay — opened, the box stays (EB keeps its trash)
       { sprite: 'gift_box', x: 6, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'ana_gift_open' },
       { sprite: 'gift_box_open', x: 6, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'ana_gift_open' },
     ],
@@ -627,6 +642,12 @@ function buildBrickton(): MapDef {
     // floor, ADR-011; the return doorstep is derived from this jittered prop)
     if (b.sprite === 'bldg_starmart') {
       prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'starmart_int', tx: 144, ty: 150 };
+    }
+    // S10: STARPORT II opens (§A10 #4's venue) — same doorAt-2 facade rect as
+    // STARMART; assigning a door consumes NO rng, so the 1995 stream and the
+    // whole jittered layout stay byte-identical (ADR-016's rule)
+    if (b.sprite === 'bldg_arcade2') {
+      prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'arcade2_int', tx: 128, ty: 134 };
     }
     bldgProps.push(prop);
     return prop;
@@ -1151,6 +1172,124 @@ function buildStarmartInt(streetExit: { tx: number; ty: number }): MapDef {
   };
 }
 
+/* ------------------- STARPORT ARCADES (S10, §A10 #4) ------------------- */
+
+/**
+ * STARPORT — the Otterbrook original. Small, dark, open 24 hours because the
+ * machines refuse to sleep. The ARCADE LEGEND machine's old spot is a
+ * cabinet-shaped patch of clean carpet: the big game moved to the sequel in
+ * Brickton (which is where §A10 #4 lives). ADR-004 grid floating in void;
+ * the street exit derives its doorstep from the facade via doorstepOf().
+ */
+function buildArcadeInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(11, 8, 'a');
+  g.rect(0, 0, 11, 2, 'A');
+  // carpet sparkles — deliberate, asymmetric, never sprinkled (ADR-020)
+  g.set(2, 3, '*');
+  g.set(7, 4, '*');
+  g.set(5, 6, '*');
+  g.set(9, 2, '*');
+  return {
+    id: 'arcade_int',
+    name: 'STARPORT',
+    music: 'arcade',
+    interior: true,
+    grid: g.out(),
+    props: [
+      // the wall bank: three survivors and one famous gap
+      { sprite: 'cab_a', x: 1, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cab_b', x: 2.6, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cab_c', x: 4.2, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      // (x 6.2 is the LEGEND machine's old spot — clean carpet, sign below)
+      { sprite: 'cab_a', x: 8, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cola_fridge', x: 9.4, y: 0.25 },
+      { sprite: 'counter', x: 1, y: 5, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+    ],
+    npcs: [],
+    signs: [
+      { x: 1, y: 1, dialogue: 'cab_slug_hunter' },
+      { x: 2, y: 1, dialogue: 'cab_lawn_lord' },
+      { x: 4, y: 1, dialogue: 'cab_tax_kid' },
+      { x: 6, y: 1, dialogue: 'arcade_gap' },
+      { x: 8, y: 1, dialogue: 'cab_retired' },
+      { x: 2, y: 5, dialogue: 'arcade_counter_note' },
+    ],
+    phones: [],
+    doors: [
+      { x: 4, y: 7, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/**
+ * STARPORT II — "The Sequel to the Arcade." Brickton, §A10 #4's venue: the
+ * ARCADE LEGEND cabinet (its sign launches the playable shmup, ArcadeScene),
+ * MGR's attract-mode reign, and SAL at the counter keeping score of
+ * everything. Same ADR-004/ADR-011/doorstepOf discipline as every interior.
+ */
+function buildArcade2Int(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(15, 10, 'a');
+  g.rect(0, 0, 15, 2, 'A');
+  g.set(3, 4, '*');
+  g.set(11, 3, '*');
+  g.set(6, 7, '*');
+  g.set(12, 6, '*');
+  g.set(1, 8, '*');
+  return {
+    id: 'arcade2_int',
+    name: 'STARPORT II',
+    music: 'arcade',
+    interior: true,
+    grid: g.out(),
+    props: [
+      // the wall banks flank THE machine
+      { sprite: 'cab_b', x: 1, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cab_a', x: 2.6, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cab_c', x: 4.2, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      // ARCADE LEGEND, a head taller than its court
+      { sprite: 'cab_legend', x: 6.6, y: 0.45, solid: { ox: 0, oy: 22, w: 22, h: 10 } },
+      { sprite: 'cab_a', x: 9, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cab_c', x: 10.6, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cola_fridge', x: 13, y: 0.25 },
+      // the mid-floor island bank (faces you; real arcades double back)
+      { sprite: 'cab_c', x: 4, y: 3.4, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cab_b', x: 5.6, y: 3.4, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cab_a', x: 9.2, y: 3.4, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      // Sal's counter, where the scores are kept
+      { sprite: 'counter', x: 1, y: 6, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 3, y: 6, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+    ],
+    npcs: [
+      {
+        id: 'arcade_owner',
+        sprite: 'arcadeOwner',
+        x: 2,
+        y: 5,
+        facing: 'down',
+        dialogue: 'npc_arcade_owner',
+      },
+    ],
+    signs: [
+      // THE machine — OverworldScene's signBeat launches the cabinet here
+      { x: 7, y: 1, dialogue: 'cab_legend' },
+      { x: 1, y: 1, dialogue: 'cab_grandma' },
+      { x: 4, y: 1, dialogue: 'cab_fish_boss' },
+      { x: 10, y: 1, dialogue: 'cab_smile_sim' },
+      { x: 4, y: 5, dialogue: 'cab_island_a' },
+      { x: 9, y: 5, dialogue: 'cab_island_b' },
+      { x: 13, y: 1, dialogue: 'arcade2_fridge_note' },
+    ],
+    phones: [],
+    doors: [
+      { x: 7, y: 9, w: 2, h: 1, to: 'brickton', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
 /* ------------------- THE 6:15 (bus interior cutscene) ------------------- */
 
 function buildBusInterior(): MapDef {
@@ -1206,6 +1345,8 @@ const bricktonMap = buildBrickton();
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
 const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty: 225 };
+const arcadeDoorstep = doorstepOf(otterbrookMap, 'arcade_int') ?? { tx: 121, ty: 369 };
+const arcade2Doorstep = doorstepOf(bricktonMap, 'arcade2_int') ?? { tx: 345, ty: 313 };
 
 export const MAPS: Record<string, MapDef> = {
   otterbrook: otterbrookMap,
@@ -1221,5 +1362,7 @@ export const MAPS: Record<string, MapDef> = {
   dos_f3: buildDosF3(),
   drugstore_int: buildDrugstoreInt(drugDoorstep),
   starmart_int: buildStarmartInt(martDoorstep),
+  arcade_int: buildArcadeInt(arcadeDoorstep),
+  arcade2_int: buildArcade2Int(arcade2Doorstep),
   bus_interior: buildBusInterior(),
 };

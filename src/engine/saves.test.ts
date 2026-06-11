@@ -71,7 +71,7 @@ describe('the slot family (3 slots + rolling backup)', () => {
     expect(GS.continueFrom(2)).toBe('ok');
     expect(GS.data.map).toBe('brickton');
     expect(GS.data.cashOnHand).toBe(22);
-    expect(GS.heroName('rex')).toBe('Rex'); // slot 2 never renamed anyone
+    expect(GS.heroName('rex')).toBe('Jay'); // slot 2 never renamed anyone
     expect(GS.activeSlot).toBe(2);
 
     expect(GS.continueFrom(3)).toBe('ok');
@@ -226,7 +226,7 @@ describe('slot summaries — derived from the blob, never stored twice', () => {
 });
 
 describe('defeat respawn targeting (§A4.7 — one function S11 reuses)', () => {
-  it('no Dad-save yet → Rex\'s house (ADR-014 interim respawn)', () => {
+  it('no Dad-save yet → Jay\'s house (ADR-014 interim respawn)', () => {
     expect(GS.respawnPoint()).toEqual({ mapId: 'rex_home', x: 104, y: 124, facing: 'down' });
   });
 
