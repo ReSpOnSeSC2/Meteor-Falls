@@ -67,7 +67,7 @@ export const MIGRATIONS: MigrationStep[] = [
       }
       delete out.inventory;
 
-      // S2 canon: Faye took her Hand-Me-Down Pan back off the intake shelf.
+      // S2 canon: Mia took her Hand-Me-Down Pan back off the intake shelf.
       // Saves made after her join scene predate the grant — give it here.
       const flags = isObj(out.flags) ? out.flags : {};
       const faye = party.find((h) => h.id === 'faye');

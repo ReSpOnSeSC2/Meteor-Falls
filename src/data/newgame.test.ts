@@ -1,8 +1,12 @@
+/**
+ * New Game BEHAVIOR — screen order, prefill identity, grid nav math,
+ * don't-care randomness. The typeable-on-grid sweep and the §B4 placeholder
+ * sweep moved to tools/content-validate.ts (S5).
+ */
 import { describe, it, expect } from 'vitest';
 import {
   NEW_GAME_ENTRIES,
   GRID_ROWS,
-  gridCharset,
   randomDontCare,
   NAME_CAP,
   PHRASE_CAP,
@@ -35,22 +39,12 @@ describe('New Game entry data (Prompt 21)', () => {
     expect(NEW_GAME_ENTRIES.find((e) => e.key === 'thing')?.prefill).toBe(fresh.coolestThing);
   });
 
-  it('the grid is 5 even rows of 13 (nav math depends on it)', () => {
+  it('the grid is 5 even rows of 13; caps are the canon constants (nav math depends on it)', () => {
     expect(GRID_ROWS).toHaveLength(5);
     for (const row of GRID_ROWS) expect(row).toHaveLength(13);
-  });
-
-  it("every prefill and don't-care value is typeable on the grid and fits its box", () => {
-    const charset = gridCharset();
     for (const e of NEW_GAME_ENTRIES) {
       expect(e.cap).toBe(e.kind === 'hero' || e.kind === 'player' ? NAME_CAP : PHRASE_CAP);
       expect(e.dontCare.length).toBeGreaterThanOrEqual(4);
-      for (const v of [e.prefill, ...e.dontCare]) {
-        expect(v.length).toBeLessThanOrEqual(e.cap);
-        for (const ch of v) {
-          expect(charset.has(ch), `'${ch}' of '${v}' missing from grid`).toBe(true);
-        }
-      }
     }
   });
 
@@ -59,9 +53,5 @@ describe('New Game entry data (Prompt 21)', () => {
     for (let i = 0; i < 50; i++) {
       expect(e.dontCare).toContain(randomDontCare(e));
     }
-  });
-
-  it('no placeholder strings (§B4)', () => {
-    expect(/todo|placeholder|lorem/i.test(JSON.stringify(NEW_GAME_ENTRIES))).toBe(false);
   });
 });

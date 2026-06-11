@@ -46,7 +46,7 @@ describe('per-hero bags & equipment (S3 / Prompt 19)', () => {
     expect(GS.hasItem('hand_me_down_pan')).toBe(true);
   });
 
-  it('wielder tags are law: Rex cannot equip the pan, Faye cannot swing the bat (§A8)', () => {
+  it('wielder tags are law: Rex cannot equip the pan, Mia cannot swing the bat (§A8)', () => {
     GS.addItem('hand_me_down_pan', 'faye');
     expect(GS.equipItem('rex', 'hand_me_down_pan')).toBe('not-yours');
     expect(GS.equipItem('faye', 'cracked_bat')).toBe('not-yours');
@@ -55,7 +55,7 @@ describe('per-hero bags & equipment (S3 / Prompt 19)', () => {
   });
 
   it("equip-from-anyone's-bag moves the item into the equipper's bag", () => {
-    GS.addItem('tball_bat', 'faye'); // Faye is carrying Rex's new bat
+    GS.addItem('tball_bat', 'faye'); // Mia is carrying Rex's new bat
     expect(GS.equipItem('rex', 'tball_bat')).toBe('ok');
     expect(GS.bagOf('rex')).toContain('tball_bat');
     expect(GS.bagOf('faye')).not.toContain('tball_bat');
@@ -147,7 +147,7 @@ describe('New Game choices (Prompt 21)', () => {
     GS.deserialize(JSON.stringify(legacy));
     expect(GS.data.coolestThing).toBe('meteors');
     expect(GS.data.playerName).toBe('Player');
-    expect(GS.data.heroNames.faye).toBe('Faye');
+    expect(GS.data.heroNames.faye).toBe('Mia');
   });
 
   function newGameDataJson(): string {
@@ -165,10 +165,10 @@ describe('hero state', () => {
   });
 });
 
-describe('S2 — Faye joins (§A3/§A6, ADR-013/ADR-014)', () => {
+describe('S2 — Mia joins (§A3/§A6, ADR-013/ADR-014)', () => {
   beforeEach(() => GS.reset());
 
-  it("Faye's canon kit at L6: Vibe Fire α and PRAY from L1, Freeze α at 4 — Magnet not yet", () => {
+  it("Mia's canon kit at L6: Vibe Fire α and PRAY from L1, Freeze α at 4 — Magnet not yet", () => {
     const kit = unlockedAbilities('faye', 6);
     expect(kit).toContain('vibe_fire_a');
     expect(kit).toContain('pray');
@@ -197,6 +197,69 @@ describe('S2 — Faye joins (§A3/§A6, ADR-013/ADR-014)', () => {
     // the PRODUCTIVITY LOCK's flags survive map re-entry AND a reload
     expect(GS.flag('dos_quota_f3a')).toBe(true);
     expect(GS.flag('holding_open')).toBe(true);
+  });
+});
+
+describe('the ATM (S4 / Prompt 20): banked <-> cash on hand', () => {
+  beforeEach(() => {
+    GS.reset();
+    GS.data.banked = 100;
+    GS.data.cashOnHand = 20;
+  });
+
+  it('withdraw moves card -> pocket', () => {
+    expect(GS.withdraw(60)).toBe(60);
+    expect(GS.data.banked).toBe(40);
+    expect(GS.data.cashOnHand).toBe(80);
+  });
+
+  it('deposit moves pocket -> card', () => {
+    expect(GS.deposit(15)).toBe(15);
+    expect(GS.data.banked).toBe(115);
+    expect(GS.data.cashOnHand).toBe(5);
+  });
+
+  it('clamps to what is actually there', () => {
+    expect(GS.withdraw(999)).toBe(100); // the whole balance, no overdraft
+    expect(GS.data.banked).toBe(0);
+    expect(GS.deposit(999)).toBe(120); // everything on hand, no counterfeits
+    expect(GS.data.cashOnHand).toBe(0);
+    expect(GS.data.banked).toBe(120);
+  });
+
+  it('floors fractions and refuses negatives', () => {
+    expect(GS.withdraw(10.9)).toBe(10);
+    expect(GS.withdraw(-50)).toBe(0);
+    expect(GS.deposit(-50)).toBe(0);
+    expect(GS.data.banked).toBe(90);
+    expect(GS.data.cashOnHand).toBe(30);
+  });
+
+  it('round-trips conserve every dollar', () => {
+    const total = GS.data.banked + GS.data.cashOnHand;
+    GS.withdraw(100);
+    GS.deposit(37);
+    GS.withdraw(12);
+    GS.deposit(GS.data.cashOnHand);
+    GS.withdraw(GS.data.banked);
+    expect(GS.data.banked + GS.data.cashOnHand).toBe(total);
+    expect(GS.data.banked).toBe(0);
+    expect(GS.data.cashOnHand).toBe(total);
+  });
+});
+
+describe('Homesick persists on the save until Mom cures it (§A4.4, S4)', () => {
+  it('the flag rides serialize/deserialize, then clears clean', () => {
+    GS.reset();
+    GS.setFlag('rex_homesick');
+    const json = GS.serialize();
+    GS.reset();
+    expect(GS.flag('rex_homesick')).toBe(false);
+    GS.deserialize(json);
+    expect(GS.flag('rex_homesick')).toBe(true);
+    // Mom's call (callMom / momPayphoneScene) sets it false
+    GS.setFlag('rex_homesick', false);
+    expect(GS.flag('rex_homesick')).toBe(false);
   });
 });
 

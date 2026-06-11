@@ -68,7 +68,8 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 ## ADR-005 — Typed TS data modules now; Zod schema validation at Prompt 8
 
 - **Date:** 2026-06-10
-- **Status:** Accepted (interim)
+- **Status:** Superseded by ADR-017 (S5 — schemas are now the single type
+  source and `npm run validate` is the content gate)
 - **Context:** §B1 mandates Zod-validated JSON content. The slice ships canon
   Chapter 1 content only.
 - **Decision:** Content lives in `src/data/*.ts` under strict interfaces —
@@ -373,3 +374,585 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   operate on the acting/target hero's own bag; Prompt 29+ towns inherit the
   menu for free. Tests: 81 (migration registry, wielder rules, cross-bag
   equip, offense isolation).
+
+## ADR-016 — S4: shops, the ATM, phone contacts & Homesick (Bible Prompt 20)
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt S4)
+- **Context:** Prompt 20 wants the cash loop closed: buy/sell UI, ATM
+  withdraw/deposit against Dad's deposits, Mom curing Homesick over the
+  phone. ADR-015 left per-hero bags + `confirmEquip` ready; ADR-012 requires
+  jitter-derived cross-map coords; Otterbrook's drugstore and Brickton's
+  STARMART were locked facades.
+- **Decision:**
+  - **Shared list widget:** MenuScene's `pick()` and `confirmEquip()` moved
+    verbatim to `src/ui/pick.ts` (MenuScene keeps thin delegating wrappers).
+    The shop's equip-after-buy prompt IS the menu's "Offense up by N!"
+    preview/confirm — one code path, the flows cannot drift apart.
+  - **`ShopScene`** (`SHOPS` data in `src/data/shops.ts`): launched over a
+    paused world like MenuScene, emits `mf-shop-closed`. BUY greys
+    unaffordable rows, routes the purchase into a **chosen** hero's bag via
+    `GS.addItem(itemId, heroId)` with "hands are full" handling, then offers
+    the shared confirmEquip aimed at the wielder-tagged hero. SELL lists a
+    chosen hero's bag at `sellPrice()` = `floor(price/2)`; price-0 items
+    (Glint's Spark) are greyed — not merchandise. `GS.removeItem` already
+    clears a dangling equip ref when the last copy goes.
+  - **Keepers ARE their shops:** `NpcDef.shop` opens ShopScene on talk; the
+    §A11 obsession lives in the greet/farewell dialogue (expiration dates at
+    OTTERBROOK DRUG; STARMART's keeper counts the carts back in at dusk).
+    Interiors are ADR-004 grid maps; facade door zones extend below the
+    collision floor (ADR-011) and BOTH interiors' street exits derive their
+    doorsteps from the (jittered) facade props via `doorstepOf()` — the
+    dos_f1 pattern, now shared and asserted by tests. No new `rng()` calls
+    were added to `buildBrickton` before existing ones, so the 1995 layout
+    is byte-identical.
+  - **`ItemDef.ppHeal` + Star Cola** (`kind: 'pp'`, 12 PP, $9): the first
+    PP-restore item, usable from the menu Items page ("Who drinks?") and
+    battle Goods (PP rolls back up the drum). §A8's "Star Cola line" extends
+    by adding items, not fields.
+  - **The ATM** is a kiosk prop + `MapDef.atms` interaction point placed off
+    the jittered bank facade (`bank.x + 4`, never hardcoded). Flow:
+    balance page → Withdraw/Deposit/Done → $10/$50/$100/All presets.
+    `GS.withdraw/deposit` clamp, floor, and conserve — unit-tested
+    round-trips. The SAVINGS & LOAN itself stays locked (`locked_bank`).
+  - **Phones list contacts** (Prompt 20): Call Dad (save + pendingDeposit +
+    first-time $50 gift, flow unchanged) / Call Mom / Hang up. Pemberton and
+    Pizza-to-Go gate behind later flags. Calling Mom from rex_home gets you
+    sent to the kitchen in person.
+  - **Homesick is a FLAG (`rex_homesick`)** — §A4.4 persistence on the save
+    for free, no v3 migration (the registry rule stands for real fields).
+    Contraction rolls once per battle **victory** (`contractHomesick`, 8%);
+    a Homesick Rex skips turns at 50% (`homesickSkips`) "thinking about
+    {favoritefood}". Both take injected rng — tested deterministically.
+    Mom's call cures it on EITHER direction of the call (dial-out
+    `phone_mom_cure`, or her S2 payphone call via `mom_cure_beat`), and the
+    STATUS sheet shows a HOMESICK tag.
+- **Consequences:** the §A9 cash loop is real (earn → Dad deposits →
+  ATM → shelf → "Offense up by 4!"); Prompt 28+ towns add a `ShopDef` + a
+  keeper NPC and inherit the whole flow; Mom's Voice Tape (§A8) can cure by
+  clearing the same flag; the v2 save shape is untouched. Tests: 106.
+
+## ADR-017 — S5: Zod schemas as the single type source + the content-validator gate
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt S5 — Bible Prompt 8, adapted; supersedes ADR-005)
+- **Context:** ADR-005 shipped typed TS data with runtime validation
+  deferred; §B1 mandates Zod-validated content and §B4 bans placeholder
+  strings; the cross-reference checks had meanwhile accreted into
+  maps/shops/newgame/text vitest files (the seed ADR-011 planted).
+- **Decision:**
+  - **`src/schemas/index.ts`** holds Zod schemas mirroring every content
+    interface (Hero, Ability + the PRAY table, Enemy w/ moves + deathLine,
+    Item, Shop, the whole MapDef family incl. door indicators, atms,
+    `PatrolDef.countFlag`, `NpcDef.ifFlag/unlessFlag/shop`, `PropDef.ifFlag`,
+    DialogueScript, and Quest — landed ahead of S9: objectives, doneFlag,
+    the §A10 caller record). The data modules now `z.infer` their types via
+    `import type`, so compile shape ≡ runtime schema and **zod never enters
+    the game bundle** (verified absent from dist). `engine/state.ts`'s
+    `Stats` re-exports from schemas too. Strict objects reject unknown keys;
+    refinements encode invariants: the S4 `kind 'pp' ⇔ ppHeal` pairing
+    (ADR-016), §A8 weapons must carry `wielder` + `offense`, §A7's 2–4 moves
+    and one deathLine per enemy. The data stays **TS modules, not JSON**
+    (ADR-004 carries; §B1's "JSON" row amended per Appendix rule 6) — the
+    future Tiled loader parses its .tmj through `MapDefSchema` unchanged.
+  - **`tools/content-validate.ts`** (`npm run validate` — first leg of
+    `npm test` and of `build`, via vite-node): per-entry schema parse with
+    key↔id agreement, then canon cross-checks built so far — the §A3 four
+    (+ Faye's L1 pray, Milo's no-Vibe), the PRAY table pinned at
+    10/20/30/25/10/5 summing 100, the §A7 Ch.1 roster + Boss 1 with **HP
+    pins in both directions** (a missing canon enemy AND an un-manifested
+    extra both fail), three distinct dos_f3 quota countFlags on the stable
+    f3a/b/c ids, the two §A8 Ch.1 shops with exact stock manifests,
+    star_cola the lone 'pp' item — then the folded cross-refs: grid chars →
+    legend → `tileIndexByName`, doors (zones + prop doors) → existing maps
+    **and inside their pixel bounds**, npc/sign dialogue ids, `npc.shop` →
+    SHOPS, spawner/patrol enemies, stock ids priced > 0, greet/farewell,
+    keeper placed exactly once opening its own shop.
+  - **The {token} sweep is registry-driven:** `vars()` now iterates an
+    exported **`TEXT_VARS`** table (src/ui/text.ts) instead of hardcoded
+    replaceAlls, and the validator sweeps every dialogue page, map name,
+    and item string against exactly those keys — a typo like {favortefood}
+    fails the build by construction, and adding a variable to the table is
+    automatically accepted everywhere. Battle-rendered strings (BATTLE_TEXT,
+    ability/move text, PRAY_TEXT, death lines) additionally allow
+    **`BATTLE_FILL_TOKENS`** {user}/{e}/{t}, exported beside BATTLE_TEXT as
+    BattleScene.fill()'s documented contract. New Game prefill/don't-care
+    values must be typeable on the letter grid and fit their caps; a §B4
+    placeholder sweep (`\b(todo|placeholder|lorem)\b`) covers every content
+    string except tile grids.
+  - **Canon manifests live IN the validator.** Adding content means
+    extending the §A7/§A8 manifest in the same commit — the Appendix-6
+    drift-log rule applied to data. Error output names every break:
+    `[canon] §A7/§A6 enemy 'hill_slug_deluxe' missing from the roster`.
+  - **Vitest keeps behavior only** (92 tests): odometer, pray distribution,
+    carveHoldingRoom, ATM round-trips, Homesick rng, the ADR-012 city sweep,
+    the S4 doorstep-derivation block, GS buy/sell routing, vars() rendering,
+    save migrations.
+- **Consequences:** deleting any enemy, misspelling a dialogue token,
+  unlinking a door, or stocking a phantom item fails `npm run validate`
+  naming exactly what broke (all four verified). S6/S9/S10 keep registering
+  save fields per ADR-015 and must EXTEND the validator's manifests when
+  they add content; S9 wires its QUESTS data into the validator's parse
+  list (the schema is already waiting). Chapter-2+ sessions inherit the
+  whole gate: author data, extend manifests, `npm test` proves the world
+  still holds together.
+
+## ADR-018 — S6: the slot family — 3 notebooks + Dad's rolling carbon copy
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt S6 — Bible Prompt 22, adapted; localStorage
+  stays interim per the ADR-004/006 pattern — §B1's IndexedDB row remains
+  the target and lands later as a driver, not a rewrite)
+- **Context:** §A4.3 mandates 3 save slots; Prompt 22 adds the rolling
+  auto-backup, corruption recovery, and a SaveSlots scene on Title. The
+  single `SLOT_KEY` in engine/state.ts, Title's direct `GS.load()`, the
+  never-ticking `playtimeSec`, and handleDefeat's hardcoded rex_home all
+  predate slots (ADR-014 explicitly deferred the respawn retarget to S6).
+- **Decision:**
+  - **`engine/saves.ts`:** a three-call **`SaveStorage`** interface
+    (get/set/remove) with the guarded localStorage driver as today's
+    implementation — the IndexedDB swap implements the interface, nothing
+    else moves. **`SaveBank`** owns the family: keys
+    `meteor-falls-slot-1/2/3` (slot 1 === the old SLOT_KEY, so every
+    existing playthrough simply *becomes* Notebook 1 — no key migration)
+    plus ONE `meteor-falls-backup`. `write()` rolls the slot's previous
+    payload into the backup **before every overwrite** (§B1; a first write
+    to an empty slot touches nothing); the backup is an envelope
+    `{slot, json}` so recovery can never resurrect one playthrough into
+    another's notebook. `open()` parses + walks the ADR-015 registry; bad
+    JSON and migrateSave's loud unknown-version throw BOTH fall back to a
+    same-slot backup, and a successful recovery heals the slot in place
+    (the backup stays). `peek()` derives the slot-list row **from the blob**
+    — name, level, location (the MapDef display name, {tokens} intact),
+    playtime, embers are never stored twice, and NO new save field was
+    needed: the registry stays at v2 with zero S6 steps.
+  - **GS:** `activeSlot` is runtime-only state (the slot a save lives in IS
+    its storage key). `saveTo/continueFrom/slotPeeks/anySave/respawnPoint`
+    replace `save/load/hasSave`; `bank` is a public seam tests swap for a
+    Map-backed driver. `reset()` clears `activeSlot`, so a New Game gets
+    Dad's ask again.
+  - **Dad's flow (contact list untouched, ADR-016):** callDad asks
+    "Which notebook?" via `dad_slot_ask` ONLY while `activeSlot` is null —
+    a 3-row, no-cancel menu whose rows summarize each slot (`Notebook 2:
+    Casey L7` / `new page` / `smudged`); every later save reuses the slot
+    silently. New lines (`dad_slot_ask`, `dad_backup_apology`,
+    `dad_backup_lost` — coffee on the notebook, carbon copy underneath,
+    §A11.2 sincerity for the truly-lost case) are DIALOGUE entries the S5
+    validator sweeps.
+  - **`SaveSlotsScene`** replaces Title's direct `GS.load()`: three
+    panels derived via `slotPeeks()`, locations rendered
+    `vars(location, slotBlob).toUpperCase()` — **`vars()` gained an
+    optional data param** (TEXT_VARS getters now take the blob; default is
+    the live GS.data) so `{rex}'S HOUSE` follows each slot's OWN rename
+    (ADR-013). Picking a smudged slot runs recovery + Dad's apology, then
+    continues; `lost` keeps you on the list. Bot recipe in the scene header
+    (KeyZ KeyZ from title → arrows → KeyZ; KeyX backs out).
+  - **Playtime ticks** in main.ts's PRE_STEP (real delta, fractional
+    seconds) whenever the overworld is active OR paused-under
+    battle/menu/shop — title-side screens don't count. Rendered H:MM by
+    `fmtPlaytime`, derived at display time.
+  - **`Dialogue.justReleased()` (input-race fix the ask exposed):**
+    `dlg.ask()`'s poll runs in the scene's PRE-update phase and sets
+    `busy = false` synchronously, so the A that confirms a menu row was
+    still `justPressed` in the SAME frame's overworld update — interact()
+    re-fired and a second phone flow interleaved with callDad's (latent
+    since the S4 contact list/ATM menus; reproduced live with the bot
+    driver, page-by-page). Dialogue now stamps `releasedAt` on every
+    say/ask teardown and the overworld skips interact/START on that frame.
+  - **Defeat targeting:** handleDefeat keeps §A4.7 cash-halving (banked
+    safe) and ADR-014's interim revive-all, but respawns via
+    **`GS.respawnPoint()`** — the last Dad-save's map/x/y/facing read back
+    from the active slot's blob (rex_home only as the never-saved
+    fallback). S11's hospitals reuse the same function.
+- **Consequences:** three parallel playthroughs coexist (tested);
+  mid-string slot corruption continues from the backup with the apology
+  (tested, both corruption shapes); a Department wipe respawns at the
+  Brickton payphone when Dad last saved there (tested). Anything S9/S10
+  add to slot summaries must keep deriving from the blob — or register a
+  version step per ADR-015. Bots: every Call Dad mash now crosses the
+  3-row ask once per playthrough (top row = Notebook 1).
+
+## ADR-019 — S7: sprite engine v3 — the EarthBound look (palette, world, cast, battle)
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt S7 — supersedes ADR-009's "characters are
+  done" freeze; ADR-009's 24×32 frame, proportions, and art rules REMAIN
+  the base the v3 pass builds on)
+- **Context:** The render read as programmer art. The bar is Mother 2
+  itself: visible roof planes, 90s-Americana streets, warm-shadow pastel
+  daylight. ADR-002's palette-by-construction and ADR-012's fixed seeds are
+  non-negotiable; S6 forbids growing solids over walkable ground.
+- **Decision:**
+  - **Palette revision (same 16 ramps × 4 shades = 64, §B3 holds):** every
+    hex re-tuned for EB daylight — bright pastel mids, WARM shadows (each
+    shade-0 leans plum/brown, never gray), cream whites (PAPER is warm
+    parchment now), sun-yellowed GRASS, sandier EARTH. INK 0 (`#1a1024`,
+    deep plum) is the universal 1px outline. No structural change, so
+    `px(ramp, shade)` call sites and palette-by-construction are untouched.
+  - **The fixed-canvas rule:** every prop pixmap that map data aims solids
+    or door zones at keeps its EXACT dimensions and internal door/wall
+    band positions (`drawHouse` roof=20px / sign=12px / wall rows,
+    `drawCityBuilding` H = 44+16·upperRows, door rects to the pixel). The
+    v3 detail all happens INSIDE those bands — that is what keeps ADR-012
+    doorstep derivations, the maps.test S4 block, and old saves intact.
+  - **Buildings read 3/4:** houses get hip (trapezoid plane, ridge cap,
+    checker-dither gradient to the eaves) or front-gable (cream pediment +
+    attic vent) roofs, sunlit eaves fascia + cast shadow on the siding,
+    corner trim, in-roof chimneys, transom doors, window AC option, porch
+    light by every door, striped scalloped awning option (drugstore,
+    arcade). City buildings get coping + dentil parapets with rooftop
+    AC/vent silhouettes, brick coursing on RED/ORANGE walls, lit windows
+    with figures / AC units seeded per `litSeed`, goods + glass shine in
+    display windows, kickplates, and a bracket-hung blade sign by the door.
+  - **Ground + streets:** worn rounded corners on the auto-edged path
+    (stepped grass bites), flower CLUSTERS, lit-crown checker trees in
+    three variants + a pine — all on the same 26×34 canvas/trunk line so
+    the one canon solid rect serves every variant (`treeSprite(x,y)` hashes
+    position; data positions unchanged). New tiles: sidewalk cracks, curb
+    highlights (scene picks curb variants where road adjoins sidewalk),
+    road patches, storm drains. New props: telephone poles whose sagging
+    spans CHAIN at 8-tile spacing, galvanized trash cans, parking meters,
+    newspaper boxes.
+  - **Solids discipline (S6):** poles are VISUAL-ONLY (no solid — a pole
+    base can never trap a reloaded save); meters/boxes/cans carry small
+    solids only at positions ≥2 tiles from every phone/door/doorstep/
+    trigger/picnic table, enforced in code (door-column + occupancy checks
+    in buildBrickton). All Brickton additions consume a SEPARATE
+    `seededRng(2077)` stream opened after the 1995 stream's last call —
+    the original jittered layout is byte-identical (ADR-016's rule).
+  - **Interiors:** plank floor rebuilt as LONG boards (soft seams, rare
+    end joints — the v2 stagger read as brick courses; caught on
+    screenshot review), wallpaper + picture rail + baseboard walls,
+    quilted rug and bed (lattice + gold knots), and a real furniture set —
+    dresser, console TV, stove, bookshelf, floor lamp with a baked light
+    pool — mounted into wall bands so no walkable tile gains collision
+    (one exception: the lamp's 6×3px solid, placed clear of the
+    phone-save spot). Department: carpet-tile floor (kept quiet — the
+    first dither pass read as wallpaper), dropped-ceiling band with
+    fluorescent `office_wall_light` variants (scene swaps every 4th wall
+    column), pinned-memo cubicles, monitor+mug desks, §A11 posters
+    (smiley sunrise, the chart that only goes up) and the lobby's
+    `A PRODUCTIVE DAY!` banner. Shops: richer seeded shelf goods
+    (cans/boxes/bottles + price tags) and the Star Cola fridge case in
+    both interiors.
+  - **Cast v3 (24×32 stays):** anti-aliased skull chamfers, 5th-tone core
+    shadows (shade-0 at chin/hem), socketed catchlight eyes, and DISTINCT
+    silhouettes — `CharacterSpec` gains `held: 'pan'` (Faye carries her
+    §A3 pan), `satchel` (Milo), `beads` (Dorin). Minis redrawn bolder with
+    full outlines (crowned slug, do-rag pigeon, grinning mower).
+  - **Battle sprites rebuilt at EB scale (64–96px):** front-facing
+    portraits with ground shadows — yelling dome-top mailbox w/ flying
+    letters, grille-grinning mower, spring-coil cicada with veined glass
+    wings, the Smiler with foreshortened handshake + quota mug, do-rag
+    pigeon trio guarding one crumb, crowned glossy slug — and THE TITANIC
+    TICK as a true boss: 96px engorged dithered dome, magenta vibe-glow
+    veins, four red eyes, open mandibles, hooked graspers raised at the
+    camera.
+  - **Scene polish + juice (Prompt 39 trio):** porch-light glow pools at
+    every doorstep under the 2AM night overlay; Ember pickups burst gold
+    sparkles (`spark` sheet); running kicks heel dust (`dust` sheet);
+    doors whoosh (new SFX preset) with a camera lean-in. Sprite Lab pages
+    rehung: 8×3 cast grid, near-1:1 battle sprites, the full new world set.
+- **Consequences:** zero data-shape changes (saves stay v2, no migration);
+  validator + 107 vitest stay green untouched, including the ADR-012 city
+  sweep and S4 doorstep block. Chapter-2+ towns inherit roofed buildings,
+  street furniture, and the interior set as vocabulary — extending
+  `HouseOpts`/`CityBuildingOpts` beats new one-off draw functions. The
+  four S7 side-by-sides (Otterbrook day, Brickton street, rex_home,
+  Smiler battle) live in `.shots/` for the art editor's judgement; ADR-008
+  note: hidden-tab preview screenshots stall on rAF — use `window.shot`
+  through tools/shot-server.mjs, which is exactly what it was built for.
+
+## ADR-020 — S7b: the human pass — true 2.5D depth + the anti-generation rules
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (S7 follow-up; user art direction: "2.5/3D sprites
+  like EarthBound has" and "no AI smell — actively remove common AI tells")
+- **Context:** ADR-019 hit the EB vocabulary but two gaps remained: the
+  projection wasn't volumetric enough (thin roof bands, flat walls,
+  stamped patterns), and several procedural habits read as generated art —
+  uniform speckle on every surface, ellipse-stacked curves with orphan
+  pixels, outlined shadow puddles, per-cell motifs tiling into grids.
+- **Decision — 2.5D volume (canvas/door bands still FIXED per ADR-019):**
+  - **Roof-dominant houses:** on sign-less buildings the roof plane now
+    runs ~6px down INTO the wall band (Mother 2's proportion — the roof IS
+    the building); windows ride lower to follow; door rect untouched. Hip
+    seam diagonals, ridge cap, off-center gablet dormers (`roofStyle:
+    'gable'`), in-plane chimneys with their own cast shadow, porch hoods
+    over doors, seeded per-window curtains/blinds/flowerboxes
+    (`HouseOpts.litSeed`).
+  - **City blocks turn away:** right-edge side-return shading column, a
+    dark roof-deck sliver behind the parapet coping, venetian blinds at
+    owner-given-up heights in the window grid.
+  - **Interiors:** wall tiles carry a 3px WALL-CAP band (the wall's top
+    edge seen from above); furniture gets real top planes (TV, bookshelf);
+    EB floats interiors in void — that stays.
+  - **Bosses sit lower in battle** (y 97) so a 96px crown clears the
+    persistent text window — the Tick's lit dome is its read.
+- **Decision — the anti-generation rules (binding for ALL future art):**
+  1. **Surfaces are FLAT.** Ground tiles carry no uniform noise; detail is
+     deliberate, clustered (2px+ marks), and lives in dedicated sparse
+     tiles (tufts, flowers, cracks, patches, drains). `scatter()` is
+     banned from ground tiles and sprite bodies (legit uses: lit-window
+     grids, ash).
+  2. **Shadows are never outlined.** Ground shadows stamp AFTER
+     `outline()` via the new `Pixmap.shadowUnder` (transparent-only,
+     context-colored: FOREST on grass, PAPER-dark on pavement).
+  3. **Big curves are hand-authored.** `Pixmap.contour(cx, top,
+     halfWidths[])` takes a human-written run list (eased 6-4-3-2-1
+     steps); raw `ellipse()` stacking is for small round things only.
+     The Tick dome, head, and slug body are contour-built; the Tick's
+     mottle is five deliberate plate arcs + paired freckles, not scatter.
+  4. **Repetition must break.** Region patterns are edge-aware: rugs get a
+     16-variant mask family (`rug_0..15`, scene-masked exactly like the
+     path tiles) so any footprint reads as ONE bordered rug — per-cell
+     motifs that tile into grids are forbidden. Seams break mid-run;
+     focal details (chimneys, gablets, vents) sit off-center.
+  5. **Battle sprites float.** No baked ground shadows on the psychedelic
+     field — EB never does.
+  6. **One dither seam per tone transition,** in 2px clusters. Full-surface
+     checker gradients are out; the canonical EB checker stays ONLY where
+     EB itself uses it (tree canopies, shrubs, hedges).
+- **Consequences:** the rules are stated once here and inherited by every
+  chapter's art sessions; reviewers can reject a diff by rule number.
+  Tiles/props this touched: grass, sidewalk (+curbs/crack), road family,
+  brick, path corners (per-variant bites), plank floor, wall cap, rug
+  mask family, houses, city blocks, TV/bookshelf, tree/pine/sign/picnic/
+  cans/meters/poles shadows, Tick/slug rebuilds. Saves untouched; tests
+  green (107 + validator). Repo note: never roundtrip sources through
+  PS5.1 `Get-Content`/`Set-Content` — it double-encodes UTF-8 (the
+  tools/fix-encoding.mjs incident repeated on enemies.ts and was
+  repaired); use the editor tools or node for file surgery.
+
+## ADR-021 — S7c: companion sprites v3, the bespoke `detail` hook & per-hero mourning angels
+
+- **Date:** 2026-06-10
+- **Status:** Accepted (Prompt S7c — closes the ADR-019/020 art arc)
+- **Context:** Biscuit, Glint, and the §A4.7 angel were still first-slice
+  rectangles after the S7/S7b world+cast rebuild, and no cast member had
+  one-off pixels beyond what the parametric system expresses. ADR-019's
+  fixed-canvas rule and ADR-020's six anti-generation rules are binding;
+  bot recipes depend on ADR-009 metrics, sheet order, and `standFrame()`.
+- **Decision:**
+  - **Companion rebuilds (frame sizes + sheet order BYTE-COMPATIBLE):**
+    Biscuit is a tricolor beagle (16×16, hand-set row runs, white blaze,
+    tapered saddle, collar + gold tag, flag tail that wags per frame, far
+    legs one shade back) with `shadowUnder` stamped AFTER `outline()` per
+    ADR-020 rule 2. Glint is a four-point star via one `Pixmap.contour`
+    with a pinched waist (rule 3) and a FIREFLY HEART low in the belly:
+    dark unlit ember (ORANGE 1) at rest, white-hot bloom + compass glow
+    ticks on the pulse — the ticks are stamped after `outline()` because
+    **light is never outlined either** (rule 2's mirror, now precedent:
+    the angel halo works the same). The angel got closed lashes, clasped
+    praying hands, a scalloped ghost hem, and wings that beat OPPOSITE
+    the body bob; angels and Glint never get ground shadows — they float.
+  - **`CharacterSpec.detail` hook:** an optional per-id one-off pass
+    `(ctx: DetailCtx) => void` run in `drawFrame` AFTER the parametric
+    layers and BEFORE `outline()`. Contract: 2–6 px, EB restraint, may
+    never extend the silhouette's bounds (ADR-009 metrics are untouchable),
+    and it never sees `'left'` — side frames are mirrored from `'right'`.
+    Shipped details: Rex's cap-seam stitch (all facings), Faye's pan glint
+    + dress pocket, Milo's blazer-pocket pen, Dorin's gi shoulder fold
+    (mirrored on the back frame), Chad's untucked shirt tail (front/side/
+    back — it reads best from behind), Mom's oven mitt (rides the arm
+    swing), the Manager's gold tie pin (front only).
+  - **Per-hero mourning angels (§A4.7, visual only):** `generateAngelFrames`
+    takes an optional CAST spec and derives skin, hair, and ONE signature
+    from it — Rex keeps the red cap on, Faye keeps the blond bob + bow,
+    Milo keeps his glasses (cyan lens glints), Dorin keeps SKIN_DEEP, the
+    knot, and its sash-gold tie. Boot registers `angel_rex/faye/milo/dorin`
+    sheets + `-float` anims; `OverworldScene.addFollower` picks
+    `angel_<id>` when the texture exists and falls back to plain `angel`
+    (guests). NO data, flag, or save change — the registry stays at v2.
+  - **Dog sheet contract formalized:** frames `[E, E-step, W, W-step]`;
+    `dog-walk-left` anim registered; `buildNpcs` honors `facing: 'left'`
+    for `dog` NPCs via frame 2 (Biscuit faces Mrs. Pemmel as authored).
+  - **Sprite Lab:** new COMPANIONS page (dog both headings, Glint, all
+    five angels — each at 3x AND 1x, the EB-made-at-both-scales check);
+    the cast page now cycles down/left/right/up every 1.4s across all 24
+    sprites — that loop is the standing walk-cycle audit surface.
+- **Verification (the S7c sweep):** 4x sheet dumps of all seven detailed
+  leads + four-direction Lab shots of all 24 found ZERO orphan pixels or
+  outline gaps from the S7 props (pan/satchel/beads all stay attached in
+  side+back frames). In-game via the ADR-008 driver: Biscuit in the
+  Otterbrook park, Glint's prophecy at the crater, and a forced-wipe
+  four-hero conga showing distinct per-hero angels. Shots in `.shots/`
+  (`s7c_*`). Validator + 107 vitest green, zero data-shape changes.
+- **Consequences:** chapter sessions add cast one-offs through `detail`
+  hooks instead of forking draw functions; any future hero/guest gets a
+  mourning variant by registering `angel_<id>` (the fallback keeps old
+  content safe); "light after outline" joins "shadow after outline" as
+  the rule-2 idiom reviewers can cite.
+
+## ADR-022 — S7d: cast construction v4 — domed skulls, hair mass, weighted cloth, varied faces
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user art review of the Lab cast page: "the sprites
+  look exactly the same" — and they were right)
+- **Context:** S7 deliberately preserved the ADR-009 v2 head/torso
+  CONSTRUCTION and added only 2–6px details (props, AA pixels, a 5th
+  tone), so the cast still read as one squarish chamfered doll recolored
+  24 times while the world transformed around it. S7c (ADR-021) was scoped
+  to companions + one-off details and could not fix this either. The
+  visible-impact layers themselves had to be rebuilt — under the standing
+  contracts: 24×32 frames, ADR-009 metrics, sheet order, `standFrame()`,
+  the S7c `detail` hooks, and ADR-020's rules.
+- **Decision:**
+  - **Hand-authored skull domes (rule-3 applied to people):** the
+    chamfered-rectangle skull (`roundedBlock`/`aaCorners`) is gone from
+    biped heads. `SKULL_FRONT` and `SKULL_SIDE` are per-build span tables
+    (`[inset, width]` per row, eased 8→12→14 crown steps, 12→10 jaw
+    taper); `SKULL_SIDE` is asymmetric — flat occiput, chin pulled
+    forward — plus a brow ledge, nose bump, and upper-lip turn for a real
+    profile. Face shading follows the dome rows (brow light, cheek
+    catches, jaw-turn pixels, chin core shadow).
+  - **Hair is drawn MASS, not a band:** every style rebuilt on the dome —
+    `short` gets a shaped 3-on-2-off fringe with solid temples, sideburns,
+    and a back whorl; `sidepart` gets a real swoop with underside shade, a
+    part line, and a temple flick; `bob` curtains hug the dome contour and
+    curl in at the jaw with shaded tips, full straight fringe + center
+    notch; `gray` recedes to a shined crown with tidy temple patches
+    (horseshoe from behind); `topknot` gets a 3-row bun with a tie wrap,
+    riding back in profile. Caps crown the dome (band follows the curve,
+    dome rises into the crown, hair peeks under the brim).
+  - **Weighted garments:** shirts/dresses go from 1px edge columns to a
+    lit edge + chest catch, a 2-column shaded side, dark hem with
+    shade-0 core corners — front, back, and side. Reads at gameplay zoom.
+  - **`eyes` + `mouth` styles (`EyeStyle`/`MouthStyle` on CharacterSpec):**
+    `tall` (hero 2×3 + catchlight) / `dot` / `happy` (closed ∪) / `wide`
+    (the Department-issue stare: tall whites, pin pupils, socket rim) /
+    `glare` (heavy brow); mouths `hint`/`smile`/`open`/`frown`/`none`
+    (`grin` still overrides). Assigned across all 24 CAST entries — the
+    Smilers and Manager share the `wide` stare, the grayCommuter has
+    `mouth: 'none'` because the Hush already came for it, the
+    sidewalkCritic glares and frowns at the seams. Twenty-four characters,
+    no two faces alike — the anti-uniformity rule applied to people.
+- **Verification:** Lab remix preview at 5× in all four facings (dome,
+  profile, cap-on-dome, nape all read), the 24-cast grid, and in-game
+  Otterbrook (Ana/Vivi/Plummer/pajamaKid distinct at gameplay scale);
+  shots in `.shots/` (`v6_*`). All S7c detail hooks land correctly on the
+  new construction. Validator + 107 vitest green; zero data-shape changes;
+  frame contracts untouched.
+- **Consequences:** new cast members pick a face (`eyes`/`mouth`) the way
+  they pick a hat — variety is now a spec field, not a code fork. The
+  span tables are the precedent for any future build (`teen`? `tall`?):
+  author rows by hand, never chamfer a rect. ADR-009's construction notes
+  are superseded by this entry where they conflict; its metrics, frame
+  size, and sheet order remain law.
+
+## ADR-023 — S7e: MIA (née Faye), the kid-detail pass & street trees
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user art review against real EB screenshots + a
+  reference mockup: "rosey cheeks... more detailed shirt", "the second
+  character should be named Mia", "more trees in the cities")
+- **Context:** ADR-022's construction rebuild landed, but EB's character
+  charm lives in costume-grade details the renderer didn't model — blush,
+  collars, belts, the shorts-and-white-socks kid uniform. Separately the
+  author renamed the second hero, and Brickton's blocks read bare next to
+  Twoson's tree-lined streets.
+- **Decision:**
+  - **The second hero is canonically MIA.** Display-name only: 55
+    occurrences of Faye/MIA-case swept across the Bible (§A3 amendment
+    note added per Appendix rule 6), NEXT_PROMPTS, src comments, test
+    assertions, the validator's §A3 messages, and `HEROES.faye.name`
+    (the single source the name-entry prefill derives from). **Internal
+    ids are FROZEN identifiers and stay `faye`:** the HEROES/CAST key,
+    `heroNames.faye` on the save (v2 blobs untouched, no migration),
+    flags (`faye_joined`), dialogue keys (`npc_faye_wait`), texture keys
+    (`angel_faye`), and the `{faye}` text token — that token resolves to
+    the live display name, so every line reads Mia. 'Faye' survives as
+    the first don't-care alternate on her name screen (she was almost
+    named that). Old saves keep whatever name the player typed — names
+    are per-save choices (ADR-013); only the default changed. The Sprite
+    Lab now labels heroes by display name (ids were leaking to the UI).
+  - **v5 kid-detail pass (CharacterSpec: `blush`, `socks`, `longPants`):**
+    rosy 2px cheeks (RED 3) — kids default on, adults opt in (Mom: yes;
+    Dorin: the mountain deleted his first); a nose dot; ringer-tee collar
+    band + matching white cuffs on `stripe`; a real V-collar with white
+    wings + two buttons on `shirt`; an INK belt with a gold buckle where
+    shirts tuck in (`shirt`/`stripe`/`pajama`); and the EB kid uniform —
+    SHORTS with bare knees, white socks, light sneaker soles — for kid
+    builds (Milo keeps Wintermoor slacks, Dorin his gi trousers, the
+    pajama kid his pajama bottoms + slippers; `chub` counts as a kid, so
+    Chad's knees are now public). Profile legs row-map the same way.
+  - **Street trees:** Brickton gains tree lines on the mid-block strip
+    and the south sidewalk plus park infill — all from the rng2 stream
+    (1995 layout byte-identical) with clearance from the avenue mouth,
+    poles, the payphone/bus corner, the realtor sign, the picnic table,
+    and columns the jittered S1 furniture already claimed (computed, not
+    assumed). Otterbrook gains four hand-verified inner greens. Standard
+    tree solid everywhere; S6 save-safety rules hold.
+- **Verification:** 5× Lab close-ups (front/profile) show blush, collar,
+  belt, shorts+socks; the 24-cast grid shows MIA labeled and every kid in
+  the uniform; in-game Brickton shows tree-lined blocks (shots `v7_*`,
+  `v8_*`). Validator + 107 vitest green — the §A3 checks and all renamed
+  default-name assertions pass; saves stay v2. Two author catches fixed
+  on review (`v9_*`): capped profiles were BALD behind the band (the cap
+  branch skipped the back-of-head mass — now style-aware: full mass for
+  short/sidepart/bob, receded patch for gray), and noses/mouths drew in
+  the mid skin shade that vanishes at game zoom — both now use the
+  DEEPEST skin tone (`px(skin, 0)`), which is the standing rule for
+  facial marks.
+- **Consequences:** chapter casts get EB-kid dressing from three spec
+  flags; the id-vs-display-name split is now explicit policy (rename a
+  character = change `HEROES.<id>.name` + Bible, never touch ids); city
+  prompts (28+) inherit "tree-line the blocks" as part of the ADR-012
+  look. The Otterbrook/Brickton arcades stay branded STARPORT — §A10
+  quest #4's venue (S10 opens them with the Arcade Legend shmup).
+
+## ADR-024 — Input responsiveness: per-frame UI polls + press latching
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user playtest report: controller/keyboard presses to
+  advance dialogue or pick Bash "don't always get caught — I have to click
+  multiple times")
+- **Context:** `INPUT.update()` runs once per FRAME (main.ts PRE_STEP), so
+  `justPressed` edges are true for exactly one frame. But every promise-based
+  UI poll — Dialogue say/ask (windows.ts), the pick() widget, BattleScene's
+  print linger + target select, MenuScene's waitDismiss — sampled it from
+  `time.addEvent({ delay: 16 })` Clock timers. At 60fps a 16ms timer happens
+  to fire every frame, which is why dev and the ADR-008 bot (16.7ms steps)
+  never saw a drop. On a 120/144Hz display the timer fires every second or
+  third frame and ~half of all presses land on frames the poll never reads —
+  the exact reported symptom, worst in dialogue and battle menus. Three
+  smaller holes: a tap shorter than one frame (or swallowed by a GC-hitch
+  frame) vanished entirely; Bluetooth pads that momentarily report null at
+  the stored index read as unpressed; and Chrome withholds `gamepadconnected`
+  after a reload until the pad's first input, leaving `padIndex` null.
+- **Decision:**
+  - **One rule: input edges are per-frame, so UI polls run per-frame.**
+    `everyFrame(scene, cb)` (ui/windows.ts) subscribes to the scene UPDATE
+    event and returns an unsubscribe; it pauses with the scene exactly like
+    the timers did. ALL six poll sites converted; 16ms Clock-timer input
+    polls are a forbidden pattern now — grep `delay: 16` should stay empty.
+  - **Typewriters are dt-scaled** (`acc += rate * dt/16`, linger in ms), so
+    text speed and battle-line linger are identical at any refresh rate.
+  - **Press latching in InputBus (the `queued` set):** keydown transitions
+    (non-repeat) and touch taps (`INPUT.pressBtn`, used by UIScene) latch
+    immediately; `update()` folds the latch into that frame's snapshot then
+    clears it. A press can no longer fall between two frames, however short
+    the tap or however hitched the frame it landed in.
+  - **Gamepad hardening:** `pad()` falls back to the first live pad when the
+    stored index is null/blipped — presses are never read against a dead
+    handle, and pads work pre-connect-event after reloads. Mapping and the
+    connect/disconnect toast flow are unchanged.
+  - **QA driver:** `pump(frames, dtMs = 16.7)` gained the dt param —
+    responsiveness is verified by stepping at 8.33ms (120Hz) with worst-case
+    one-frame and zero-frame taps.
+  - Explicitly NOT changed: navTick/navOk held-direction repeat cooldowns
+    (~180ms — cursor-repeat UX, never applied to A/B edges) and ADR-018's
+    `justReleased` same-frame guard (still prevents the ask→interact
+    re-fire; do not reintroduce raw justPressed interaction triggers).
+- **Verification:** at 8.33ms stepping — a zero-frame KeyZ tap opens the
+  title menu (latch); five consecutive menu→Sprite-Lab→title round trips
+  where every confirm/cancel is a one-frame tap: 5/5 registered across
+  shifted frame phases (ask(), scene-update, and pick paths); an Otterbrook
+  sign conversation opened, page-advanced, and closed on one-frame taps
+  (waitAdvance path). Validator + 107 vitest green; bot recipes unchanged
+  (pump defaults to 16.7).
+- **Consequences:** every future promise-based UI (S9 journal, S10 shmup
+  cabinet and initials entry, S11 hospital menus) inherits the rule: poll
+  input with `everyFrame`, never with Clock timers. S8's on-device QA must
+  re-verify feel on a real >60Hz phone and a Bluetooth pad — this failure
+  mode is invisible on 60Hz dev monitors by construction.

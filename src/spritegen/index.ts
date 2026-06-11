@@ -30,6 +30,7 @@ import {
   TILESET,
   TILE,
   drawTree,
+  drawPine,
   drawSign,
   drawPicnicTable,
   drawPhoneTable,
@@ -62,6 +63,23 @@ import {
   drawBusSeat,
   drawBusWindows,
   drawSkyline,
+  drawShopShelf,
+  drawAtm,
+  drawTelephonePole,
+  drawTrashCan,
+  drawParkingMeter,
+  drawNewspaperBox,
+  drawColaFridge,
+  drawDresser,
+  drawTv,
+  drawStove,
+  drawBookshelf,
+  drawFloorLamp,
+  drawPosterSmile,
+  drawPosterChart,
+  drawProductivityBanner,
+  drawDustFrames,
+  drawSparkFrames,
 } from './tiles';
 import {
   drawWindowSlice,
@@ -142,13 +160,20 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addSheet(scene, 'dog', generateDogFrames(), 4);
   addSheet(scene, 'glint', generateGlintFrames(), 2);
   addSheet(scene, 'angel', generateAngelFrames(), 2);
-  if (!scene.anims.exists('angel-float')) {
-    scene.anims.create({
-      key: 'angel-float',
-      frames: [0, 1].map((f) => ({ key: 'angel', frame: f })),
-      frameRate: 4,
-      repeat: -1,
-    });
+  // S7c: each hero mourns as THEMSELF (§A4.7) — skin/hair/signature from the
+  // CAST spec. Visual only: OverworldScene falls back to plain 'angel'.
+  for (const heroId of ['rex', 'faye', 'milo', 'dorin']) {
+    addSheet(scene, `angel_${heroId}`, generateAngelFrames(CAST[heroId]), 2);
+  }
+  for (const angelKey of ['angel', 'angel_rex', 'angel_faye', 'angel_milo', 'angel_dorin']) {
+    if (!scene.anims.exists(`${angelKey}-float`)) {
+      scene.anims.create({
+        key: `${angelKey}-float`,
+        frames: [0, 1].map((f) => ({ key: angelKey, frame: f })),
+        frameRate: 4,
+        repeat: -1,
+      });
+    }
   }
   if (!scene.anims.exists('glint-flit')) {
     scene.anims.create({
@@ -162,6 +187,15 @@ export function generateAllTextures(scene: Phaser.Scene): void {
     scene.anims.create({
       key: 'dog-walk',
       frames: [0, 1].map((f) => ({ key: 'dog', frame: f })),
+      frameRate: 6,
+      repeat: -1,
+    });
+  }
+  // the dog sheet's back half is the westbound trot (frames 2,3 = flips)
+  if (!scene.anims.exists('dog-walk-left')) {
+    scene.anims.create({
+      key: 'dog-walk-left',
+      frames: [2, 3].map((f) => ({ key: 'dog', frame: f })),
       frameRate: 6,
       repeat: -1,
     });
@@ -189,7 +223,10 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   }
 
   // props
-  addPixmap(scene, 'tree', drawTree());
+  addPixmap(scene, 'tree', drawTree('round'));
+  addPixmap(scene, 'tree_b', drawTree('tall'));
+  addPixmap(scene, 'tree_c', drawTree('small'));
+  addPixmap(scene, 'pine', drawPine());
   addPixmap(scene, 'sign', drawSign());
   addPixmap(scene, 'picnic', drawPicnicTable());
   addPixmap(scene, 'phone_table', drawPhoneTable());
@@ -227,6 +264,28 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'bus_windows', drawBusWindows(352));
   addPixmap(scene, 'skyline', drawSkyline());
 
+  // S4: shop interiors + the Savings & Loan ATM
+  addPixmap(scene, 'shelf', drawShopShelf(4));
+  addPixmap(scene, 'shelf_b', drawShopShelf(9));
+  addPixmap(scene, 'atm', drawAtm());
+
+  // S7: 90s street furniture, home furnishings, office decor, juice sheets
+  addPixmap(scene, 'phone_pole', drawTelephonePole());
+  addPixmap(scene, 'trash_can', drawTrashCan());
+  addPixmap(scene, 'parking_meter', drawParkingMeter());
+  addPixmap(scene, 'news_box', drawNewspaperBox());
+  addPixmap(scene, 'cola_fridge', drawColaFridge());
+  addPixmap(scene, 'dresser', drawDresser());
+  addPixmap(scene, 'tv', drawTv());
+  addPixmap(scene, 'stove', drawStove());
+  addPixmap(scene, 'bookshelf', drawBookshelf());
+  addPixmap(scene, 'floor_lamp', drawFloorLamp());
+  addPixmap(scene, 'poster_smile', drawPosterSmile());
+  addPixmap(scene, 'poster_chart', drawPosterChart());
+  addPixmap(scene, 'banner_productive', drawProductivityBanner());
+  addSheet(scene, 'dust', drawDustFrames(), 2);
+  addSheet(scene, 'spark', drawSparkFrames(), 2);
+
   // Brickton downtown — varied heights and lighting so no two facades match
   addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1, litSeed: 11 }));
   addPixmap(scene, 'bldg_starmart', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.CYAN, signText: 'STARMART', awning: RAMP.BLUE, doorAt: 2, litSeed: 12 }));
@@ -238,14 +297,14 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'bldg_arcade2', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.PURPLE, signText: 'STARPORT II', awning: RAMP.GOLD, doorAt: 2, litSeed: 18 }));
   addPixmap(scene, 'bldg_diner', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.RED, signText: 'DINER', awning: RAMP.PAPER, doorAt: 1, litSeed: 19 }));
 
-  // buildings
-  addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true }));
-  addPixmap(scene, 'house_chad', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.BLUE }));
-  addPixmap(scene, 'house_a', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.FOREST }));
-  addPixmap(scene, 'house_b', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.ORANGE }));
-  addPixmap(scene, 'drugstore', drawHouse({ wallTiles: 5, wallRows: 2, roof: RAMP.CYAN, signText: 'DRUGS', doorAt: 2 }));
-  addPixmap(scene, 'arcade', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.PURPLE, signText: 'STARPORT', doorAt: 1 }));
-  addPixmap(scene, 'chapel', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.BLUE, steeple: true, doorAt: 1, windows: [0, 2] }));
+  // buildings — deep oblique roofs, gablets, AC, awnings (ADR-019/020)
+  addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true, ac: true, litSeed: 5 }));
+  addPixmap(scene, 'house_chad', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.BLUE, roofStyle: 'gable', litSeed: 8 }));
+  addPixmap(scene, 'house_a', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.FOREST, roofStyle: 'gable', ac: true, litSeed: 13 }));
+  addPixmap(scene, 'house_b', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.ORANGE, chimney: true, litSeed: 21 }));
+  addPixmap(scene, 'drugstore', drawHouse({ wallTiles: 5, wallRows: 2, roof: RAMP.CYAN, signText: 'DRUGS', doorAt: 2, awning: RAMP.RED, litSeed: 34 }));
+  addPixmap(scene, 'arcade', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.PURPLE, signText: 'STARPORT', doorAt: 1, awning: RAMP.PURPLE, litSeed: 55 }));
+  addPixmap(scene, 'chapel', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.BLUE, steeple: true, doorAt: 1, windows: [0, 2], litSeed: 89 }));
 
   // UI
   addPixmap(scene, 'win9', drawWindowSlice());

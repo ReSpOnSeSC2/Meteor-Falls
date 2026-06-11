@@ -15,6 +15,19 @@ export { vars } from './text';
 
 export const DEPTH_UI = 1000;
 
+/**
+ * Run cb once per rendered frame while the scene runs (ADR-024). UI polls
+ * MUST use this instead of 16ms Clock timers: INPUT edges (justPressed) are
+ * true for exactly ONE frame, and a Clock timer fires less often than once
+ * per frame on >60Hz displays — that mismatch silently ate button presses.
+ * Pauses with the scene exactly like a timer would. Returns an unsubscribe.
+ */
+export function everyFrame(scene: Phaser.Scene, cb: (dtMs: number) => void): () => void {
+  const handler = (_t: number, delta: number): void => cb(delta);
+  scene.events.on(Phaser.Scenes.Events.UPDATE, handler);
+  return () => scene.events.off(Phaser.Scenes.Events.UPDATE, handler);
+}
+
 export function makeWindow(
   scene: Phaser.Scene,
   x: number,
@@ -48,9 +61,23 @@ export class Dialogue {
   private cursor: Phaser.GameObjects.BitmapText | null = null;
   /** true while a say()/ask() is running — owner scene pauses the world */
   busy = false;
+  /** scene-time stamp of the last say()/ask() teardown (see justReleased) */
+  private releasedAt = -1;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+  }
+
+  /**
+   * True on the very frame a dialogue tore down. ask()'s poll runs in the
+   * scene's PRE-update phase, so the A that confirms a menu row would still
+   * read as justPressed in the SAME frame's update() — without this check
+   * the overworld re-fires interact() and a second conversation interleaves
+   * with the first (S6's notebook ask exposed it; the S4 contact list and
+   * ATM menus had the same latent race).
+   */
+  justReleased(now: number): boolean {
+    return now <= this.releasedAt;
   }
 
   private layout(): { x: number; y: number; w: number; h: number } {
@@ -82,6 +109,7 @@ export class Dialogue {
       await this.waitAdvance();
     }
     this.hide();
+    this.releasedAt = this.scene.time.now;
     this.busy = false;
   }
 
@@ -102,23 +130,20 @@ export class Dialogue {
       this.cursor?.setVisible(false);
       let i = 0;
       let acc = 0;
-      const ev = this.scene.time.addEvent({
-        delay: 16,
-        loop: true,
-        callback: () => {
-          const fast = INPUT.held('A') || INPUT.held('B');
-          acc += fast ? 3.2 : 1;
-          while (acc >= 1 && i < page.length) {
-            acc -= 1;
-            i++;
-          }
-          tx.setText(page.slice(0, i));
-          if (i % 3 === 0 && i < page.length) AUDIO.sfx('text');
-          if (i >= page.length) {
-            ev.remove();
-            resolve();
-          }
-        },
+      // per-frame, dt-scaled: same chars-per-second on every display (ADR-024)
+      const off = everyFrame(this.scene, (dt) => {
+        const fast = INPUT.held('A') || INPUT.held('B');
+        acc += (fast ? 3.2 : 1) * (dt / 16);
+        while (acc >= 1 && i < page.length) {
+          acc -= 1;
+          i++;
+        }
+        tx.setText(page.slice(0, i));
+        if (i % 3 === 0 && i < page.length) AUDIO.sfx('text');
+        if (i >= page.length) {
+          off();
+          resolve();
+        }
       });
     });
   }
@@ -131,19 +156,15 @@ export class Dialogue {
         loop: true,
         callback: () => this.cursor?.setVisible(!this.cursor.visible),
       });
-      const poll = this.scene.time.addEvent({
-        delay: 16,
-        loop: true,
-        callback: () => {
-          // A or B advances, like EB
-          if (INPUT.justPressed('A') || INPUT.justPressed('B')) {
-            AUDIO.sfx('cursor');
-            blink.remove();
-            poll.remove();
-            this.cursor?.setVisible(false);
-            resolve();
-          }
-        },
+      const off = everyFrame(this.scene, () => {
+        // A or B advances, like EB — polled every frame so no press drops
+        if (INPUT.justPressed('A') || INPUT.justPressed('B')) {
+          AUDIO.sfx('cursor');
+          blink.remove();
+          off();
+          this.cursor?.setVisible(false);
+          resolve();
+        }
       });
     });
   }
@@ -184,33 +205,30 @@ export class Dialogue {
         });
         return z;
       });
-      const poll = scene.time.addEvent({
-        delay: 16,
-        loop: true,
-        callback: () => {
-          const d = INPUT.dir();
-          if (INPUT.justPressed('A')) {
-            finish(sel);
-            return;
-          }
-          if (opts.cancelIndex !== undefined && INPUT.justPressed('B')) {
-            finish(opts.cancelIndex);
-            return;
-          }
-          if (this.navTick(d.y)) {
-            sel = (sel + (d.y > 0 ? 1 : options.length - 1)) % options.length;
-            AUDIO.sfx('cursor');
-          }
-          hand.y = y + 13 + sel * rowH;
-        },
+      const off = everyFrame(scene, () => {
+        const d = INPUT.dir();
+        if (INPUT.justPressed('A')) {
+          finish(sel);
+          return;
+        }
+        if (opts.cancelIndex !== undefined && INPUT.justPressed('B')) {
+          finish(opts.cancelIndex);
+          return;
+        }
+        if (this.navTick(d.y)) {
+          sel = (sel + (d.y > 0 ? 1 : options.length - 1)) % options.length;
+          AUDIO.sfx('cursor');
+        }
+        hand.y = y + 13 + sel * rowH;
       });
       const finish = (i: number): void => {
         AUDIO.sfx(opts.cancelIndex === i ? 'cancel' : 'confirm');
-        poll.remove();
+        off();
         win.destroy();
         texts.forEach((t) => t.destroy());
         zones.forEach((z) => z.destroy());
         hand.destroy();
+        this.releasedAt = this.scene.time.now;
         this.busy = false;
         resolve(i);
       };

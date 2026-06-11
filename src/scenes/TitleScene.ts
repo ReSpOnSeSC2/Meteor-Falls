@@ -59,7 +59,7 @@ export class TitleScene extends Phaser.Scene {
     AUDIO.unlock();
     AUDIO.sfx('confirm');
     const dlg = new Dialogue(this);
-    const options = GS.hasSave()
+    const options = GS.anySave()
       ? ['Continue', 'New Game', 'Sprite Lab']
       : ['New Game', 'Sprite Lab'];
     const pick = await dlg.ask(options);
@@ -68,8 +68,9 @@ export class TitleScene extends Phaser.Scene {
       GS.reset();
       this.startGame('nameentry'); // Prompt 21: name entry, then the 2AM intro
     } else if (choice === 'Continue') {
-      GS.load();
-      this.startGame('overworld');
+      // S6: the slot scene owns loading now (title theme keeps playing under it)
+      this.started = true;
+      this.scene.start('saveslots');
     } else {
       this.started = true;
       AUDIO.stopMusic();
@@ -77,14 +78,12 @@ export class TitleScene extends Phaser.Scene {
     }
   }
 
-  private startGame(target: 'nameentry' | 'overworld'): void {
+  private startGame(target: 'nameentry'): void {
     this.started = true;
     // the title theme keeps playing under name entry; NameEntryScene stops it
-    if (target === 'overworld') AUDIO.stopMusic();
     this.cameras.main.fadeOut(400, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      if (target === 'overworld') this.scene.start('overworld', { mapId: GS.data.map });
-      else this.scene.start('nameentry');
+      this.scene.start(target);
     });
   }
 }

@@ -1,23 +1,12 @@
 /**
  * The Four Heroes — GAME_BIBLE §A3. All four are fully defined (visible in
- * Sprite Lab); Faye, Milo and Dorin join in their canon chapters.
+ * Sprite Lab); Mia, Milo and Dorin join in their canon chapters.
+ * Types are z.infer'd from src/schemas (S5) so the compile-time shape and the
+ * runtime validation cannot drift; `import type` keeps zod out of the bundle.
  */
-import type { Stats } from '../engine/state';
+import type { HeroDef, HeroId, Stats } from '../schemas';
 
-export type HeroId = 'rex' | 'faye' | 'milo' | 'dorin';
-
-export interface HeroDef {
-  id: HeroId;
-  name: string;
-  epithet: string;
-  weapon: string;
-  base: Stats;
-  /** linear growth per level for each stat */
-  growth: Stats;
-  hp: { base: number; lin: number; quad: number };
-  pp: { base: number; lin: number; quad: number };
-  unlocks: Array<{ level: number; ability: string }>;
-}
+export type { HeroDef, HeroId } from '../schemas';
 
 export const HEROES: Record<HeroId, HeroDef> = {
   rex: {
@@ -46,7 +35,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   },
   faye: {
     id: 'faye',
-    name: 'Faye',
+    name: 'Mia',
     epithet: 'the girl who prays',
     weapon: 'frying pans',
     base: { offense: 4, defense: 4, speed: 6, guts: 6, vibe: 8, luck: 7 },

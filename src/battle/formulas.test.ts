@@ -9,6 +9,10 @@ import {
   applyWeakness,
   heroOffense,
   equipDelta,
+  contractHomesick,
+  homesickSkips,
+  HOMESICK_CHANCE,
+  HOMESICK_SKIP_CHANCE,
 } from './formulas';
 import { rollPray, prayWeights, PRAY_BASE, type PrayTier } from '../data/abilities';
 import { mulberry32 } from '../spritegen/pixmap';
@@ -83,6 +87,27 @@ describe('equipped offense (S3 — the acting hero, not the shared bag)', () => 
     rex.equip.weapon = 'tball_bat';
     expect(equipDelta(rex, 'cracked_bat')).toBe(-4); // downgrades preview too
     expect(equipDelta(rex, 'corn_dog')).toBe(0); // not equipment
+  });
+});
+
+describe('Homesick (§A4.4/§A4.8, S4) — deterministic rng', () => {
+  it('contraction fires strictly under HOMESICK_CHANCE', () => {
+    expect(contractHomesick(() => HOMESICK_CHANCE - 0.0001)).toBe(true);
+    expect(contractHomesick(() => HOMESICK_CHANCE)).toBe(false);
+    expect(contractHomesick(() => 0.99)).toBe(false);
+  });
+
+  it('a Homesick Rex skips on the low half of the die', () => {
+    expect(homesickSkips(() => HOMESICK_SKIP_CHANCE - 0.0001)).toBe(true);
+    expect(homesickSkips(() => HOMESICK_SKIP_CHANCE)).toBe(false);
+  });
+
+  it('skip frequency over a seeded 10k-run matches the rate ±2%', () => {
+    const rng = mulberry32(1995);
+    let skips = 0;
+    const N = 10_000;
+    for (let i = 0; i < N; i++) if (homesickSkips(rng)) skips++;
+    expect(Math.abs(skips / N - HOMESICK_SKIP_CHANCE)).toBeLessThan(0.02);
   });
 });
 

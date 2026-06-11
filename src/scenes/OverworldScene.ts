@@ -2,7 +2,7 @@
  * Overworld: EB-style 8-direction movement with follower conga line, visible
  * roaming enemies (no random encounters — §A4.2), swirl-coded contact
  * advantage, doors, signs, phones (save = call Dad), and the Chapter 1
- * cutscenes per GAME_BIBLE §A6 / ADR-007 + S2 (Faye, the Manager, Mom's call).
+ * cutscenes per GAME_BIBLE §A6 / ADR-007 + S2 (Mia, the Manager, Mom's call).
  *
  * QA recipe, S2 leg (ADR-008; name entry recipe lives in NameEntryScene):
  * mashing key('KeyZ') advances dialogue AND confirms the top menu row, which
@@ -10,11 +10,21 @@
  * walk into each patrol's route to fight it — victories set dos_quota_f3a/b/c
  * and the third fade-restarts the floor with the room carved open. Walk in
  * through the gap (tiles 20-21, row 6) for the join; the exit column (24,
- * rows 3-4) runs the Manager fight — pick Faye's PRAY with Down,Down,KeyZ on
+ * rows 3-4) runs the Manager fight — pick Mia's PRAY with Down,Down,KeyZ on
  * her command row. Mom's call: payphone at brickton (14,26), A to answer.
  * Bots beware: holdKey is eaten while dlg.busy — drain pages with key() first.
  * S3: Enter (START) opens the EB command menu — it's a separate scene over a
  * paused world; the drive-it recipe lives in MenuScene's header.
+ * S4: phones are a contact list now (top row stays Call Dad = the safe pick);
+ * the brickton ATM sits at the jittered bank facade — face it, KeyZ, then
+ * Withdraw/Deposit/Done rows with $-preset rows under each. Shopkeepers open
+ * ShopScene on talk (recipe in ITS header); KeyZ through a keeper greeting
+ * lands on BUY.
+ * S6: Dad's FIRST save per playthrough asks "Which notebook?" — a 3-row menu
+ * (top row = Notebook 1), so a KeyZ-mash through Call Dad picks Notebook 1
+ * and every later save reuses it silently. Continue lives in SaveSlotsScene
+ * (recipe in ITS header). A party wipe respawns at the last Dad-save's
+ * map/position (GS.respawnPoint) instead of hardcoded rex_home.
  */
 import Phaser from 'phaser';
 import {
@@ -30,10 +40,11 @@ import {
 import { ENEMIES } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { GS, makeHeroState } from '../engine/state';
+import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, toast, vars, DEPTH_UI } from '../ui/windows';
-import { tileIndexByName, PATH_BASE, PATH_VARIANTS } from '../spritegen/tiles';
+import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
 import { instantWin, expShare } from '../battle/formulas';
 import { colorOf, RAMP, px } from '../palette';
@@ -166,6 +177,13 @@ export class OverworldScene extends Phaser.Scene {
     const w = rows[0].length;
     const isPath = (x: number, y: number): boolean =>
       x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === ':';
+    const isRug = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === 'r';
+    // S7 (ADR-019): roads carve curbs into adjacent sidewalk, office walls
+    // sprout fluorescent panels — render-time variants, deterministic, and
+    // identical in solidity to their base tiles.
+    const isRoad = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < w && y < h && 'RDX23P'.includes(rows[y][x]);
     const data: number[][] = [];
     this.solidTiles = [];
     for (let y = 0; y < h; y++) {
@@ -181,8 +199,24 @@ export class OverworldScene extends Phaser.Scene {
           if (!isPath(x, y + 1)) mask |= 4;
           if (!isPath(x - 1, y)) mask |= 8;
           idx = PATH_BASE + ((x + y) % PATH_VARIANTS) * 16 + mask;
+        } else if (ch === 'r') {
+          // rugs border their actual perimeter — one rug, not stamped cells
+          let mask = 0;
+          if (!isRug(x, y - 1)) mask |= 1;
+          if (!isRug(x + 1, y)) mask |= 2;
+          if (!isRug(x, y + 1)) mask |= 4;
+          if (!isRug(x - 1, y)) mask |= 8;
+          idx = RUG_BASE + mask;
         } else {
-          idx = tileIndexByName(CHAR_LEGEND[ch] ?? 'grass_a');
+          let name = CHAR_LEGEND[ch] ?? 'grass_a';
+          if (name === 'sidewalk') {
+            if (isRoad(x, y + 1)) name = 'sidewalk_curb';
+            else if (isRoad(x + 1, y)) name = 'sidewalk_curb_e';
+            else if (isRoad(x - 1, y)) name = 'sidewalk_curb_w';
+          } else if (name === 'office_wall' && x % 4 === 1) {
+            name = 'office_wall_light';
+          }
+          idx = tileIndexByName(name);
         }
         row.push(idx);
         srow.push(TILE_SOLID[idx]);
@@ -298,7 +332,8 @@ export class OverworldScene extends Phaser.Scene {
       if (def.unlessFlag && GS.flag(def.unlessFlag)) continue;
       const x = def.x * 16 + 8;
       const y = def.y * 16 + 22;
-      const spr = this.add.sprite(x, y, def.sprite, def.dog ? 0 : standFrame(def.facing));
+      // dogs: frames [0,1]=eastbound, [2,3]=westbound (S7c sheet contract)
+      const spr = this.add.sprite(x, y, def.sprite, def.dog ? (def.facing === 'left' ? 2 : 0) : standFrame(def.facing));
       spr.setOrigin(0.5, 1);
       spr.setDepth(y);
       this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000 });
@@ -328,9 +363,12 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private addFollower(id: string, angel = false): void {
-    const spr = this.add.sprite(this.player.x, this.player.y + 2, angel ? 'angel' : id, 0);
+    // S7c: a fallen hero mourns as THEMSELF — angel_<id> when the variant
+    // exists, the plain guest angel otherwise (visual only, §A4.7)
+    const angelKey = this.textures.exists(`angel_${id}`) ? `angel_${id}` : 'angel';
+    const spr = this.add.sprite(this.player.x, this.player.y + 2, angel ? angelKey : id, 0);
     spr.setOrigin(0.5, 1);
-    if (angel) spr.play('angel-float');
+    if (angel) spr.play(`${angelKey}-float`);
     else spr.setFrame(standFrame('down'));
     this.followers.push({ spr, id, angel });
   }
@@ -400,6 +438,23 @@ export class OverworldScene extends Phaser.Scene {
       .setDepth(800)
       .setAlpha(0.62);
     o.setBlendMode(Phaser.BlendModes.MULTIPLY);
+    // S7: porch lights pool warm light at every doorstep on the 2AM street
+    for (const p of this.mapDef.props) {
+      if (!p.door) continue;
+      const cx = p.x * 16 + p.door.ox + p.door.w / 2;
+      const cy = p.y * 16 + p.door.oy - 6;
+      const glow = this.add
+        .circle(cx, cy, 15, colorOf(px(RAMP.GOLD, 2)), 0.22)
+        .setDepth(805)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({
+        targets: glow,
+        alpha: { from: 0.85, to: 1 },
+        duration: 1400 + (p.x % 5) * 180,
+        yoyo: true,
+        repeat: -1,
+      });
+    }
     for (let i = 0; i < 9; i++) {
       const f = this.add
         .image(Math.random() * this.scale.width, Math.random() * this.scale.height, 'pixel')
@@ -452,8 +507,11 @@ export class OverworldScene extends Phaser.Scene {
       if (!this.cut && !this.transitioning) {
         this.checkDoors();
         this.checkTriggers();
-        if (INPUT.justPressed('A')) void this.interact();
-        if (INPUT.justPressed('START')) this.pauseMenu();
+        // the A that confirmed a menu row this same frame must not also
+        // probe the world (Dialogue.justReleased — the S6 notebook-ask fix)
+        const released = this.dlg.justReleased(this.time.now);
+        if (INPUT.justPressed('A') && !released) void this.interact();
+        if (INPUT.justPressed('START') && !released) this.pauseMenu();
       }
     } else {
       this.player.anims.stop();
@@ -492,6 +550,8 @@ export class OverworldScene extends Phaser.Scene {
       if (this.stepTimer <= 0) {
         AUDIO.sfx('step');
         this.stepTimer = running ? 0.18 : 0.28;
+        // running kicks up dust at the heels (S7 juice, Prompt 39)
+        if (running) this.dustPuff(this.player.x - d.x * 4, this.player.y - 2);
       }
       // breadcrumb trail for the conga line
       const last = this.trail[0];
@@ -869,7 +929,7 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.quota_pip_3);
     AUDIO.sfx('thud');
     this.cameras.main.shake(250, 0.008);
-    this.fadeRestart(); // rebuilt open: carved wall, quota panel, Faye inside
+    this.fadeRestart(); // rebuilt open: carved wall, quota panel, Mia inside
   }
 
   /** fade out and rebuild this map in place (position persists via GS.data) */
@@ -1008,13 +1068,17 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private handleDefeat(): void {
+    // §A4.7: half the cash ON HAND — banked money is safe (the S4 ATM's point)
     GS.data.cashOnHand = Math.floor(GS.data.cashOnHand / 2);
+    // ADR-014 interim: revive-all until S11's hospitals own §A4.7 economics
     GS.data.party.forEach((h) => {
       h.down = false;
       h.hp = h.maxHp;
     });
     this.registry.set('defeated', true);
-    this.scene.restart({ mapId: 'rex_home', x: 104, y: 124, facing: 'down' });
+    // S6: wake at the last Dad-save's spot (S11's hospitals reuse respawnPoint)
+    const p = GS.respawnPoint();
+    this.scene.restart({ mapId: p.mapId, x: p.x, y: p.y, facing: p.facing });
   }
 
   /* ---------------- interactions ---------------- */
@@ -1048,6 +1112,13 @@ export class OverworldScene extends Phaser.Scene {
         return;
       }
     }
+    // S4: the ATM at the Savings & Loan facade (Prompt 20)
+    for (const a of this.mapDef.atms ?? []) {
+      if (Math.hypot(a.x * 16 + 8 - probeX, a.y * 16 + 8 - probeY) < 18) {
+        await this.atmFlow();
+        return;
+      }
+    }
     // picnic tables: a small rest (full system arrives with Baskets)
     for (const p of this.mapDef.props) {
       if (p.sprite !== 'picnic') continue;
@@ -1061,15 +1132,14 @@ export class OverworldScene extends Phaser.Scene {
       }
     }
     // buildings without interiors yet: a visible door always answers
+    // (the drugstore and STARMART left this list in S4 — they're real doors)
     const lockedLines: Record<string, string> = {
-      drugstore: 'locked_drugstore',
       arcade: 'locked_arcade',
       chapel: 'locked_chapel',
       house_chad: 'locked_chad',
       house_a: 'locked_house',
       house_b: 'locked_house',
       bldg_bagels: 'locked_bagels',
-      bldg_starmart: 'locked_starmart',
       bldg_hospital: 'locked_hospital',
       bldg_brickmore: 'locked_brickmore',
       bldg_video: 'locked_video',
@@ -1126,6 +1196,11 @@ export class OverworldScene extends Phaser.Scene {
       n.spr.setFrame(standFrame(f));
     }
     AUDIO.sfx('cursor');
+    // S4: keepers ARE their shops — talking opens the buy/sell flow
+    if (n.def.shop) {
+      this.openShop(n.def.shop);
+      return;
+    }
     if (n.def.id === 'mom') {
       if (!GS.flag('mom_gear')) {
         await this.dlg.say(...DIALOGUE.npc_mom_pre);
@@ -1144,11 +1219,20 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE[n.def.dialogue]);
   }
 
+  /** S4 (Prompt 20): phones list contacts — Dad saves, Mom cures Homesick.
+   *  Pemberton and Pizza-to-Go join the list behind later story flags. */
   private async phoneFlow(): Promise<void> {
     AUDIO.sfx('phone');
-    await this.dlg.say(...DIALOGUE.phone_save_q);
-    const pick = await this.dlg.ask(['Call Dad', 'Hang up'], { cancelIndex: 1 });
-    if (pick !== 0) return;
+    await this.dlg.say(...DIALOGUE.phone_pickup);
+    const pick = await this.dlg.ask(['Call Dad', 'Call Mom', 'Hang up'], { cancelIndex: 2 });
+    if (pick === 0) await this.callDad();
+    else if (pick === 1) await this.callMom();
+  }
+
+  /** Dad's save + deposit flow (Prompt 22/S2). S6: the save lands in one of
+   *  three slots — Dad asks "Which notebook?" on his FIRST save, then reuses
+   *  it for the whole playthrough. The contact flow around this is untouched. */
+  private async callDad(): Promise<void> {
     const gift = GS.flag('dad_first_deposit') ? 0 : 50;
     GS.setFlag('dad_first_deposit');
     const deposit = gift + GS.data.pendingDeposit;
@@ -1161,9 +1245,79 @@ export class OverworldScene extends Phaser.Scene {
     GS.data.pendingDeposit = 0;
     await this.dlg.say(...pages);
     GS.data.map = this.mapDef.id;
-    GS.save();
+    if (GS.activeSlot === null) {
+      await this.dlg.say(...DIALOGUE.dad_slot_ask);
+      const rows = GS.slotPeeks().map((p, i) =>
+        p === 'empty'
+          ? `Notebook ${SLOT_IDS[i]}: new page`
+          : p === 'corrupt'
+            ? `Notebook ${SLOT_IDS[i]}: smudged`
+            : `Notebook ${p.slot}: ${p.name} L${p.level}`,
+      );
+      const idx = await this.dlg.ask(rows); // no cancel — Dad needs a notebook
+      GS.saveTo(SLOT_IDS[idx]);
+    } else {
+      GS.saveTo(GS.activeSlot);
+    }
     AUDIO.sfx('confirm');
     await this.dlg.say(...DIALOGUE.save_done);
+  }
+
+  /** Mom asks about {favoritefood}; her voice is the Homesick cure (§A4.4) */
+  private async callMom(): Promise<void> {
+    if (this.mapDef.id === 'rex_home') {
+      await this.dlg.say(...DIALOGUE.phone_mom_home);
+      return;
+    }
+    if (GS.flag('rex_homesick')) {
+      await this.dlg.say(...DIALOGUE.phone_mom_cure);
+      GS.setFlag('rex_homesick', false);
+      AUDIO.sfx('heal');
+      await this.dlg.say(...DIALOGUE.mom_cure_beat);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.phone_mom);
+  }
+
+  /** S4: the SAVINGS & LOAN's ATM — withdraw/deposit between the card
+   *  (GS.data.banked, where Dad deposits) and cash on hand (Prompt 20) */
+  private async atmFlow(): Promise<void> {
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE.atm_greet);
+    for (;;) {
+      await this.dlg.say(`CARD $${GS.data.banked}   CASH $${GS.data.cashOnHand}`);
+      const op = await this.dlg.ask(['Withdraw', 'Deposit', 'Done'], { cancelIndex: 2 });
+      if (op === 2) break;
+      const pool = op === 0 ? GS.data.banked : GS.data.cashOnHand;
+      if (pool <= 0) {
+        await this.dlg.say(...(op === 0 ? DIALOGUE.atm_empty_card : DIALOGUE.atm_empty_pocket));
+        continue;
+      }
+      const presets = [10, 50, 100].filter((a) => a <= pool);
+      const labels = [...presets.map((a) => `$${a}`), `All ($${pool})`, 'Back'];
+      const sel = await this.dlg.ask(labels, { cancelIndex: labels.length - 1 });
+      if (sel >= labels.length - 1) continue;
+      const amount = sel < presets.length ? presets[sel] : pool;
+      const moved = op === 0 ? GS.withdraw(amount) : GS.deposit(amount);
+      AUDIO.sfx('confirm');
+      await this.dlg.say(
+        op === 0
+          ? `* Withdrew $${moved}. The bills are warm, somehow.`
+          : `* Deposited $${moved}. The machine swallowed politely.`,
+      );
+    }
+    await this.dlg.say(...DIALOGUE.atm_bye);
+  }
+
+  /** S4: ShopScene runs over a paused world, the MenuScene pattern */
+  private openShop(shopId: string): void {
+    this.game.events.once('mf-shop-closed', () => {
+      // gear may have moved between bags in there
+      this.rebuildFollowers();
+      this.scene.resume();
+    });
+    this.scene.pause();
+    this.scene.launch('shop', { shopId });
   }
 
   /** START opens the real EB command menu (S3) — MenuScene runs over a
@@ -1217,11 +1371,49 @@ export class OverworldScene extends Phaser.Scene {
   private goThroughDoor(to: string, tx: number, ty: number, facing: Facing): void {
     if (this.transitioning) return;
     this.transitioning = true;
-    AUDIO.sfx('cursor');
+    // S7 juice: doors whoosh and the camera leans in with you
+    AUDIO.sfx('whoosh');
+    this.cameras.main.zoomTo(1.08, 220, 'Sine.easeIn');
     this.cameras.main.fadeOut(220, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.cameras.main.setZoom(1);
       this.scene.restart({ mapId: to, x: tx, y: ty, facing });
     });
+  }
+
+  /** small heel-dust puff while running (S7 juice) */
+  private dustPuff(x: number, y: number): void {
+    const puff = this.add.sprite(x, y, 'dust', 0).setDepth(y - 1).setAlpha(0.85);
+    this.time.delayedCall(90, () => puff.setFrame(1));
+    this.tweens.add({
+      targets: puff,
+      y: y - 4,
+      alpha: 0,
+      duration: 240,
+      onComplete: () => puff.destroy(),
+    });
+  }
+
+  /** radial gold sparkle burst for Ember moments (S7 juice, Prompt 39) */
+  private sparkleBurst(x: number, y: number, count = 10): void {
+    for (let i = 0; i < count; i++) {
+      const ang = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+      const dist = 14 + Math.random() * 16;
+      const s = this.add
+        .sprite(x, y, 'spark', i % 2)
+        .setDepth(9999)
+        .setScale(0.8 + Math.random() * 0.6);
+      this.tweens.add({
+        targets: s,
+        x: x + Math.cos(ang) * dist,
+        y: y + Math.sin(ang) * dist - 6,
+        alpha: 0,
+        scale: 0.3,
+        duration: 520 + Math.random() * 260,
+        ease: 'cubic.out',
+        onComplete: () => s.destroy(),
+      });
+    }
   }
 
   private insideTriggers = new Set<string>();
@@ -1373,9 +1565,11 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     const ember = this.add.image(15.5 * 16, 7 * 16, 'ember').setDepth(9999).setScale(1);
     AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
     this.tweens.add({ targets: ember, y: this.player.y - 30, x: this.player.x, duration: 1300, ease: 'sine.inout' });
     AUDIO.playMusic('heartlight');
     await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - 30, 14);
     ember.destroy();
     this.cameras.main.flash(300, 248, 232, 160);
     await this.dlg.say(...DIALOGUE.ember_get);
@@ -1403,6 +1597,7 @@ export class OverworldScene extends Phaser.Scene {
     const spark = this.add.image(zapX, zapY + 10, 'pixel').setTint(colorOf(px(RAMP.GOLD, 3))).setScale(3).setDepth(9999);
     this.tweens.add({ targets: spark, x: this.player.x, y: this.player.y - 12, duration: 900, ease: 'sine.inout' });
     await this.wait(950);
+    this.sparkleBurst(this.player.x, this.player.y - 12, 10);
     spark.destroy();
     GS.addItem('glints_spark');
     AUDIO.sfx('ember');
@@ -1410,9 +1605,9 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
-  /* ---------------- S2: Faye, the Manager, and Mom's call (§A6 Ch.1 end) ---------------- */
+  /* ---------------- S2: Mia, the Manager, and Mom's call (§A6 Ch.1 end) ---------------- */
 
-  /** §A6: meeting Faye in the holding room — she joins at L6 with her canon kit */
+  /** §A6: meeting Mia in the holding room — she joins at L6 with her canon kit */
   private async fayeJoinScene(): Promise<void> {
     this.cut = true;
     await this.dlg.say(...DIALOGUE.faye_meet);
@@ -1474,6 +1669,12 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     AUDIO.sfx('phone');
     await this.dlg.say(...DIALOGUE.mom_payphone);
+    // §A4.4: Mom's voice is the cure, whichever direction the call went
+    if (GS.flag('rex_homesick')) {
+      GS.setFlag('rex_homesick', false);
+      AUDIO.sfx('heal');
+      await this.dlg.say(...DIALOGUE.mom_cure_beat);
+    }
     GS.setFlag('ch1_complete');
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.faye_after_call);

@@ -26,8 +26,10 @@ import {
   runChance,
   expShare,
   heroOffense,
+  contractHomesick,
+  homesickSkips,
 } from '../battle/formulas';
-import { Dialogue, makeWindow, makeBox, DEPTH_UI } from '../ui/windows';
+import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars } from '../ui/windows';
 import { colorOf, rgbOf, RAMP, px } from '../palette';
 import { ODO_CELL_W, ODO_CELL_H } from '../spritegen/ui';
 
@@ -37,7 +39,7 @@ interface BattleConfig {
   guestChad: boolean;
   glintAssist: boolean;
   boss: boolean;
-  /** S2: the Manager fight teaches Faye's first Pray with a one-time hint */
+  /** S2: the Manager fight teaches Mia's first Pray with a one-time hint */
   prayTutorial?: boolean;
 }
 
@@ -196,7 +198,9 @@ export class BattleScene extends Phaser.Scene {
     ids.forEach((id, i) => {
       const def = ENEMIES[id];
       const x = (this.scale.width / (ids.length + 1)) * (i + 1);
-      const y = def.boss ? 86 : 92;
+      // bosses sit lower so their crown clears the text window (S7: the
+      // Tick's lit dome top is the read — don't hide it behind the intro)
+      const y = def.boss ? 97 : 92;
       const spr = this.add.image(x, y, def.sprite).setOrigin(0.5, 0.5);
       this.tweens.add({
         targets: spr,
@@ -280,27 +284,24 @@ export class BattleScene extends Phaser.Scene {
       this.textObj.setText('');
       let i = 0;
       let acc = 0;
-      let linger = 26; // frames the finished line stays up; A/B skips
-      const ev = this.time.addEvent({
-        delay: 16,
-        loop: true,
-        callback: () => {
-          const fast = INPUT.held('A') || INPUT.held('B');
-          acc += fast ? 4 : 1.8;
-          while (acc >= 1 && i < text.length) {
-            acc -= 1;
-            i++;
+      let lingerMs = 420; // the finished line stays up; holding A/B burns it 4x
+      // per-frame + dt-scaled (ADR-024): same pace on every display
+      const off = everyFrame(this, (dt) => {
+        const fast = INPUT.held('A') || INPUT.held('B');
+        acc += (fast ? 4 : 1.8) * (dt / 16);
+        while (acc >= 1 && i < text.length) {
+          acc -= 1;
+          i++;
+        }
+        this.textObj.setText(text.slice(0, i));
+        if (i % 4 === 0 && i < text.length) AUDIO.sfx('text');
+        if (i >= text.length) {
+          lingerMs -= dt * (fast ? 4 : 1);
+          if (lingerMs <= 0) {
+            off();
+            resolve();
           }
-          this.textObj.setText(text.slice(0, i));
-          if (i % 4 === 0 && i < text.length) AUDIO.sfx('text');
-          if (i >= text.length) {
-            linger -= fast ? 4 : 1;
-            if (linger <= 0) {
-              ev.remove();
-              resolve();
-            }
-          }
-        },
+        }
       });
     });
   }
@@ -327,6 +328,12 @@ export class BattleScene extends Phaser.Scene {
         if (this.ended) break;
         if (h.odoHp.dead || h.hero.down) continue;
         h.defending = false;
+        // §A4.4 (S4): a Homesick Rex may spend the turn daydreaming
+        if (h.hero.id === 'rex' && GS.flag('rex_homesick') === true && homesickSkips(Math.random)) {
+          AUDIO.sfx('cancel');
+          await this.print(vars(this.fill(BATTLE_TEXT.homesick_skip, h.hero.name)));
+          continue;
+        }
         const acted = await this.heroCommand(h);
         if (!acted) break; // ran away
       }
@@ -416,23 +423,19 @@ export class BattleScene extends Phaser.Scene {
         e.spr.on('pointerdown', onTap);
         return { e, onTap };
       });
-      const poll = this.time.addEvent({
-        delay: 16,
-        loop: true,
-        callback: () => {
-          const d = INPUT.dir();
-          if (d.x !== 0 && this.navOk()) {
-            sel = (sel + (d.x > 0 ? 1 : alive.length - 1)) % alive.length;
-            AUDIO.sfx('cursor');
-          }
-          hand.setPosition(alive[sel].spr.x, alive[sel].spr.y - alive[sel].spr.height / 2 - 8);
-          if (INPUT.justPressed('A')) done(alive[sel]);
-          if (INPUT.justPressed('B')) done(null);
-        },
+      const off = everyFrame(this, () => {
+        const d = INPUT.dir();
+        if (d.x !== 0 && this.navOk()) {
+          sel = (sel + (d.x > 0 ? 1 : alive.length - 1)) % alive.length;
+          AUDIO.sfx('cursor');
+        }
+        hand.setPosition(alive[sel].spr.x, alive[sel].spr.y - alive[sel].spr.height / 2 - 8);
+        if (INPUT.justPressed('A')) done(alive[sel]);
+        if (INPUT.justPressed('B')) done(null);
       });
       const done = (e: EnemyUnit | null): void => {
         AUDIO.sfx(e ? 'confirm' : 'cancel');
-        poll.remove();
+        off();
         hand.destroy();
         zones.forEach((z) => z.e.spr.off('pointerdown', z.onTap));
         resolve(e);
@@ -601,6 +604,14 @@ export class BattleScene extends Phaser.Scene {
       h.odoHp.heal(item.heal);
       AUDIO.sfx('heal');
       await this.print(`${name} wolfed down the ${item.name}! About ${item.heal} HP came back.`);
+      return true;
+    }
+    // S4: the Star Cola line — PP rolls back up on the drum (§A8 "PP" items)
+    if (item.ppHeal) {
+      GS.removeItem(itemId, h.hero.id);
+      h.odoPp.heal(item.ppHeal);
+      AUDIO.sfx('heal');
+      await this.print(`${name} chugged the ${item.name}! About ${item.ppHeal} PP fizzed back.`);
       return true;
     }
     if (item.id === 'glints_spark') {
@@ -875,6 +886,13 @@ export class BattleScene extends Phaser.Scene {
     if (totalCash > 0) {
       GS.data.pendingDeposit += totalCash;
       await this.print(`(Dad will deposit $${totalCash}. Call him sometime.)`);
+    }
+    // §A4.4 (S4): the quiet after a win is when Homesick strikes — it rides
+    // the save (a flag) until Mom's call cures it
+    const rex = this.heroes.find((x) => x.hero.id === 'rex');
+    if (rex && !rex.odoHp.dead && !rex.hero.down && GS.flag('rex_homesick') !== true && contractHomesick(Math.random)) {
+      GS.setFlag('rex_homesick');
+      await this.print(vars(this.fill(BATTLE_TEXT.homesick_got, rex.hero.name)));
     }
     this.syncHeroMeters();
     this.finish('victory');

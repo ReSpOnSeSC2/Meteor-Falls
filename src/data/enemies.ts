@@ -1,43 +1,12 @@
 /**
  * Chapter 1 enemy roster — GAME_BIBLE §A7 canon HP/quirks + Boss 1 (§A6).
  * Every enemy: 2–4 moves, weakness tag, EXP/cash, flavor death line.
+ * Types are z.infer'd from src/schemas (S5) — compile shape ≡ runtime schema.
  */
 import { RAMP } from '../palette';
+import type { EnemyDef } from '../schemas';
 
-export type MoveKind = 'attack' | 'strong' | 'status' | 'latch' | 'drain' | 'steal' | 'taunt';
-
-export interface EnemyMove {
-  name: string;
-  kind: MoveKind;
-  /** multiplier on enemy offense for damage moves */
-  mult?: number;
-  status?: 'sunburn' | 'crying' | 'asleep' | 'productive';
-  text: string;
-  weight: number;
-}
-
-export interface EnemyDef {
-  id: string;
-  name: string;
-  article: string; // "The" for the intro line
-  hp: number;
-  offense: number;
-  defense: number;
-  speed: number;
-  level: number; // for instant-win checks
-  exp: number;
-  cash: number;
-  weakness: Array<'fire' | 'freeze' | 'volt' | 'insect' | 'salt'>;
-  moves: EnemyMove[];
-  deathLine: string;
-  sprite: string;
-  mini: string;
-  /** humanoid enemies roam as full character sheets (4-dir walk) instead of a mini */
-  walker?: string;
-  /** psychedelic battle-bg palette ramps [a, b] */
-  bg: [number, number];
-  boss?: boolean;
-}
+export type { EnemyDef, EnemyMove, MoveKind } from '../schemas';
 
 const E = (e: EnemyDef): EnemyDef => e;
 

@@ -2,9 +2,12 @@
  * Chapter 1 dialogue — GAME_BIBLE §A11 voice rules:
  * absurdism everywhere, sincerity is never the joke, signs editorialize,
  * every NPC has exactly one weird obsession.
+ * Every {token} below must be one src/ui/text.ts resolves — `npm run
+ * validate` sweeps for typos (S5). Types z.infer'd from src/schemas.
  */
+import type { DialogueScript } from '../schemas';
 
-export const DIALOGUE: Record<string, string[]> = {
+export const DIALOGUE: Record<string, DialogueScript> = {
   /* ---------------- NPCs ---------------- */
   npc_pemmel: [
     '@Oh! {rex}! Did you feel the sky last night? My whole spice rack jumped.',
@@ -58,10 +61,6 @@ export const DIALOGUE: Record<string, string[]> = {
   ],
 
   /* ---------------- doors that aren't doors yet ---------------- */
-  locked_drugstore: [
-    'The drugstore is dark. A note on the door:',
-    '"BACK WHEN THE SKY CALMS DOWN. — Mgmt."',
-  ],
   locked_arcade: [
     'The STARPORT is locked. From somewhere inside comes the lonely chirp of an unbeaten high score.',
   ],
@@ -145,7 +144,71 @@ export const DIALOGUE: Record<string, string[]> = {
     'You sit at the table a while. Somewhere nearby, a bird applauds.',
     '* The party rested a little. (Full picnics arrive with Picnic Baskets.)',
   ],
-  phone_save_q: ['Call Dad and save your progress?'],
+  /* ---------------- S4 — the phone is a contact list now (Prompt 20) ---------------- */
+  phone_pickup: ['You picked up the receiver. The dial tone hums, warm as area code 216.'],
+  phone_mom_home: [
+    "@(From the kitchen:) Honey. I am RIGHT HERE. Hang up the phone and come hug your mother.",
+  ],
+  phone_mom: [
+    '@RING... RING... ...click.',
+    "@{rex}! You dialed all by yourself! I'm telling the refrigerator.",
+    "@Are you eating real meals out there? {favoritefood} counts. Tonight it's {favoritefood} here too, in your honor, eaten by me.",
+    '@Your father handles the SAVING. I handle everything else. Call when the everything-else acts up, okay? Love you. Wash something.',
+  ],
+  phone_mom_cure: [
+    '@RING... RING... ...click.',
+    '@...{rex}. Baby. You sound a hundred miles away. And not the bus kind of miles.',
+    "@Listen to me. The kitchen light is on. The pan is already out. The very minute you walk in that door, it's {favoritefood}. That is a PROMISE.",
+    "@Now go be twelve at the sky some more. You're doing so well it scares the neighbors.",
+  ],
+  mom_cure_beat: [
+    "* The knot in {rex}'s chest untied itself. He isn't HOMESICK anymore — home is just up ahead, is all.",
+  ],
+
+  /* ---------------- S6 — Dad's three notebooks (Prompt 22: save slots) ---------------- */
+  dad_slot_ask: [
+    "@Oh— hold on, champ. New filing system. I bought THREE notebooks. The store had a deal. You'd have done the same.",
+    '@Which notebook is yours?',
+  ],
+  dad_backup_apology: [
+    "@RING RING— (It's Dad. He sounds like a man who has been rehearsing.)",
+    '@Champ. Before you open the notebook. There was... coffee. A lot of coffee. Your page is abstract art now.',
+    "@BUT. Your old man presses down HARD when he writes. The page underneath caught every word. Carbon copy. Press hard, love harder — that's the whole trick.",
+    '* Dad recovered your save from the page underneath. (The coffee has been spoken to.)',
+  ],
+  dad_backup_lost: [
+    "@RING RING— (It's Dad. He sounds smaller than usual.)",
+    "@Champ... the coffee got your page AND the page under it. I'm so sorry. I know how far you walked.",
+    "* The save couldn't be recovered. (Dad is keeping the notebook anyway. In case the words come back.)",
+  ],
+
+  /* ---------------- S4 — the ATM at the SAVINGS & LOAN facade ---------------- */
+  atm_greet: [
+    'OTTERBROOK SAVINGS & LOAN — ATM.',
+    '(The bank behind it is closed. The ATM never closes. It dreams standing up, in fives and tens.)',
+  ],
+  atm_bye: ['* HAVE A NICE DAY, says the screen, in a font that means it.'],
+  atm_empty_card: ['The account is empty. The screen shows a single sympathetic pixel.'],
+  atm_empty_pocket: ['Your pockets contain no money. The ATM respects the honesty.'],
+
+  /* ---------------- S4 — shops (Prompt 20; §A11: one obsession each) ---------------- */
+  shop_drug_greet: [
+    '@Welcome to OTTERBROOK DRUG. Everything on these shelves expires, son, and I know every date by heart.',
+    '@The salt: never. The bats: the day you stop believing. The corn dogs: Thursday.',
+  ],
+  shop_drug_bye: ['@Come back before Thursday.'],
+  shop_mart_greet: [
+    '@Welcome to STARMART, home of the 24 nonconsecutive hours!',
+    '@Mind the carts. We open with forty every morning. The parking lot decides how many come home at night.',
+  ],
+  shop_mart_bye: ['@Thank you for choosing STARMART! The carts and I will speak of you.'],
+  sign_drug_wall: [
+    'OTTERBROOK DRUG — EST. BEFORE YOU. "If we don\'t stock it, the hill probably dropped some."',
+  ],
+  sign_mart_wall: [
+    'STARMART HOURS: 24.',
+    '(A smaller sign, lower down: "not in a row. we have families.")',
+  ],
 
   /* ---------------- the 6:15 bus ---------------- */
   bus_ask_brickton: [
@@ -202,10 +265,6 @@ export const DIALOGUE: Record<string, string[]> = {
   locked_bagels: [
     'BRICKTON BAGELS is closed. A note on the door: "BACK IN 5."',
     '(The note has been there since 1991. The 5 was never defined.)',
-  ],
-  locked_starmart: [
-    'STARMART — OPEN 24 HOURS. It is locked.',
-    '(A smaller sign clarifies: "not 24 hours in a ROW.")',
   ],
   locked_hospital: [
     'BRICKTON GENERAL. The waiting room is standing-room-only, and most of those standing are pigeons.',
@@ -298,7 +357,7 @@ export const DIALOGUE: Record<string, string[]> = {
     '(The steel door is in the wall now. It does not want to talk about it.)',
   ],
 
-  /* ---------------- S2 — Faye, the girl who prays (§A3, §A6) ---------------- */
+  /* ---------------- S2 — Mia, the girl who prays (§A3, §A6) ---------------- */
   npc_faye_wait: ['@...You took the stairs. I heard you take the stairs. Stairs are honest that way.'],
   holding_log: [
     'INTAKE LOG — ROOM 1. ITEMS CONFISCATED: one (1) frying pan, ASSERTIVE.',
@@ -377,6 +436,15 @@ export const DIALOGUE: Record<string, string[]> = {
   ],
 };
 
+/**
+ * The tokens BattleScene.fill() resolves IN ADDITION to the dialogue vars
+ * (battle lines run through fill() and then vars()): {user} = acting hero,
+ * {e} = enemy w/ article+letter, {t} = target name. The S5 validator sweeps
+ * every battle-rendered string (BATTLE_TEXT, ability/move text, PRAY_TEXT,
+ * death lines) against this set ∪ the TEXT_VARS table.
+ */
+export const BATTLE_FILL_TOKENS = ['user', 'e', 't'] as const;
+
 /** battle text fragments (§A11.5 — classic second person) */
 export const BATTLE_TEXT = {
   bash: '{user} swung true!',
@@ -391,7 +459,10 @@ export const BATTLE_TEXT = {
   chad_hide: 'Chad is supervising from a safe distance!',
   chad_poke: 'Chad poked it with a stick! It barely noticed!',
   win: 'YOU WON!',
-  // S2: Faye's first Pray, tutorialized in the Manager fight (§A11.4 — warm)
+  // S2: Mia's first Pray, tutorialized in the Manager fight (§A11.4 — warm)
   pray_hint: "({user}'s hands are already together. PRAY is on her menu — it costs nothing, and it always does SOMETHING.)",
   spark_revive: 'The spark flares — warm as a porch light in late summer. {t} got back up!',
+  // S4: Homesick (§A4.4) — he skips the turn dreaming of Mom's cooking
+  homesick_skip: '{user} is a thousand miles away, thinking about {favoritefood}...',
+  homesick_got: '* ...{user} went quiet. (HOMESICK! He misses {favoritefood}. Mom would know what to say.)',
 };

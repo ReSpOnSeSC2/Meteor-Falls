@@ -14,6 +14,13 @@ const KEY_MAP_A = ['KeyZ', 'Space'];
 const KEY_MAP_B = ['KeyX', 'ShiftLeft', 'ShiftRight'];
 const KEY_MAP_START = ['Enter'];
 
+function btnForKey(code: string): Btn | null {
+  if (KEY_MAP_A.includes(code)) return 'A';
+  if (KEY_MAP_B.includes(code)) return 'B';
+  if (KEY_MAP_START.includes(code)) return 'START';
+  return null;
+}
+
 class InputBus {
   private keysDown = new Set<string>();
   /** written by the touch overlay scene */
@@ -22,6 +29,13 @@ class InputBus {
 
   private cur = new Set<Btn>();
   private prev = new Set<Btn>();
+  /**
+   * Press latch (ADR-024): every source TRANSITION (keydown, touch tap) lands
+   * here the moment it happens, and update() folds it into the next frame's
+   * snapshot. A tap shorter than one frame — or one that lands inside a GC
+   * hitch — can no longer vanish between two update() calls.
+   */
+  private queued = new Set<Btn>();
   private padIndex: number | null = null;
   private listeners: Listener[] = [];
   gamepadConnected = false;
@@ -30,6 +44,10 @@ class InputBus {
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', (e) => {
         this.keysDown.add(e.code);
+        if (!e.repeat) {
+          const b = btnForKey(e.code);
+          if (b) this.queued.add(b);
+        }
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
           e.preventDefault();
         }
@@ -55,13 +73,24 @@ class InputBus {
     this.listeners.push(l);
   }
 
-  private pad(): Gamepad | null {
-    if (this.padIndex === null || typeof navigator === 'undefined') return null;
-    const pads = navigator.getGamepads();
-    return pads[this.padIndex] ?? null;
+  /** touch overlay taps latch through here so sub-frame taps still land */
+  pressBtn(b: Btn): void {
+    this.touchBtns.add(b);
+    this.queued.add(b);
   }
 
-  /** call once per frame (UIScene owns this) */
+  private pad(): Gamepad | null {
+    if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
+    const pads = navigator.getGamepads();
+    if (this.padIndex !== null && pads[this.padIndex]) return pads[this.padIndex];
+    // Bluetooth pads blip null mid-session (and Chrome withholds the connect
+    // event after a reload until the first input) — fall back to any live pad
+    // so a press is never read against a dead handle (ADR-024).
+    for (const p of pads) if (p) return p;
+    return null;
+  }
+
+  /** call once per frame — main.ts PRE_STEP owns this, before any scene runs */
   update(): void {
     this.prev = this.cur;
     this.cur = new Set<Btn>();
@@ -75,6 +104,9 @@ class InputBus {
       if (pad.buttons[1]?.pressed || pad.buttons[2]?.pressed) this.cur.add('B');
       if (pad.buttons[9]?.pressed) this.cur.add('START');
     }
+    // fold in latched taps, then clear — each press is visible ≥1 full frame
+    this.queued.forEach((b) => this.cur.add(b));
+    this.queued.clear();
   }
 
   /** 8-direction intent: each axis −1, 0, or 1 */

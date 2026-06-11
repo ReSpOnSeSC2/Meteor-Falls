@@ -101,15 +101,16 @@ export class UIScene extends Phaser.Scene {
     if (!isDown) return;
 
     const hit = (cx: number, cy: number, r: number): boolean => Math.hypot(x - cx, y - cy) < r;
+    // pressBtn latches the tap (ADR-024) — a sub-frame tap still registers
     if (hit(W - 26, H - 56, 22)) {
       this.pointerRoles.set(p.id, 'A');
-      INPUT.touchBtns.add('A');
+      INPUT.pressBtn('A');
     } else if (hit(W - 56, H - 26, 22)) {
       this.pointerRoles.set(p.id, 'B');
-      INPUT.touchBtns.add('B');
+      INPUT.pressBtn('B');
     } else if (x > W - 60 && y < 26) {
       this.pointerRoles.set(p.id, 'START');
-      INPUT.touchBtns.add('START');
+      INPUT.pressBtn('START');
     }
   }
 }

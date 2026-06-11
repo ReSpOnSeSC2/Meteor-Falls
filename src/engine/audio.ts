@@ -495,6 +495,11 @@ class AudioSys {
       case 'step':
         this.noise(0.04, 0.015, 700);
         break;
+      case 'whoosh':
+        // door transitions (S7 juice): a quick airy sweep
+        this.noise(0.22, 0.06, 1600);
+        this.tone('sine', 520, 180, 0.2, 0.04);
+        break;
       case 'thud':
         this.tone('triangle', 90, 50, 0.1, 0.1);
         break;

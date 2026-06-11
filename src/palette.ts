@@ -27,24 +27,31 @@ export const RAMP = {
 
 export type RampName = keyof typeof RAMP;
 
-/** ramp -> 4 hex shades, darkest first */
+/**
+ * ramp -> 4 hex shades, darkest first.
+ *
+ * S7 revision (ADR-019): the same 16 ramps re-tuned for EarthBound's daylight —
+ * bright pastel mids, WARM shadows (every shade-0 leans plum/brown, never gray),
+ * cream whites instead of studio white, sun-yellowed grass. The outline color
+ * of every sprite in the game is INK 0, the deep plum.
+ */
 const RAMPS: Record<RampName, [string, string, string, string]> = {
-  INK: ['#16101e', '#2c2438', '#4c4260', '#746a8c'],
-  PAPER: ['#8c8c94', '#bcbcc0', '#e0e0dc', '#f8f8f0'],
-  SKIN: ['#8c4a2c', '#c87c50', '#eaa878', '#f8d4a8'],
-  SKIN_DEEP: ['#50281c', '#7c4a2c', '#aa6c44', '#d49464'],
-  BLOND: ['#8c6418', '#c49c2c', '#e8cc54', '#f8ec9c'],
-  RED: ['#6c1424', '#a82434', '#e04444', '#f88880'],
-  ORANGE: ['#8c3c0c', '#c46c1c', '#ec9c34', '#f8cc74'],
-  GOLD: ['#7c5408', '#b8881c', '#e8c030', '#f8e87c'],
-  GRASS: ['#3c7c2c', '#64aa3c', '#94d454', '#c4ec84'],
-  FOREST: ['#143c24', '#245c34', '#3c8850', '#64b46c'],
-  CYAN: ['#145c6c', '#2492a4', '#48c4cc', '#a0ecec'],
-  BLUE: ['#1c2c64', '#2c4ca4', '#4c80e4', '#94b8f8'],
-  PURPLE: ['#381054', '#642094', '#9c44d4', '#cc8cf4'],
-  MAGENTA: ['#7c0c64', '#bc1c94', '#ec4cc4', '#f89cec'],
-  EARTH: ['#4c3018', '#7c5430', '#b08050', '#dcb484'],
-  NIGHT: ['#0a0a18', '#181c3c', '#2c3464', '#485c9c'],
+  INK: ['#1a1024', '#36284a', '#564a70', '#7e7298'],
+  PAPER: ['#94886c', '#c4b89c', '#e8e0c4', '#fcf8e8'],
+  SKIN: ['#9c5430', '#cc8454', '#f0b080', '#fcdcb0'],
+  SKIN_DEEP: ['#5c3020', '#8c5430', '#b87c4c', '#dca470'],
+  BLOND: ['#946c1c', '#c8a030', '#ecd058', '#fcf0a0'],
+  RED: ['#7c1c2c', '#b43038', '#ec5448', '#fc9484'],
+  ORANGE: ['#94440c', '#cc7420', '#f4a438', '#fcd478'],
+  GOLD: ['#8c5c08', '#c4901c', '#f0c834', '#fcf080'],
+  GRASS: ['#4c8834', '#74b648', '#a4dc64', '#d4f49c'],
+  FOREST: ['#1c4424', '#2c6438', '#449454', '#70c074'],
+  CYAN: ['#1c647c', '#2c9cb0', '#54ccd4', '#acf4f0'],
+  BLUE: ['#243070', '#3454ac', '#5888ec', '#9cc0fc'],
+  PURPLE: ['#3c1458', '#6c289c', '#a44cdc', '#d094f8'],
+  MAGENTA: ['#841068', '#c42498', '#f054c8', '#fca4f0'],
+  EARTH: ['#54341c', '#8c5c34', '#c08c58', '#ecc890'],
+  NIGHT: ['#0c0c1c', '#1c2044', '#34386c', '#5064a4'],
 };
 
 /** Flat 64-entry hex palette. Index = ramp * 4 + shade. */

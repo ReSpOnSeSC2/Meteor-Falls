@@ -9,6 +9,19 @@
  *   y day sky   u bus floor   U bus wall
  */
 import { cityBuildingHeight } from '../spritegen/tiles';
+import type { MapDef, PropDef } from '../schemas';
+
+// S5: shapes are z.infer'd from src/schemas — compile shape ≡ runtime schema
+export type {
+  DoorZone,
+  MapDef,
+  NpcDef,
+  PatrolDef,
+  PropDef,
+  SignDef,
+  SpawnerDef,
+  TriggerDef,
+} from '../schemas';
 
 /** grid char -> tile name (the scene renders from this; tests validate it) */
 export const CHAR_LEGEND: Record<string, string> = {
@@ -39,108 +52,23 @@ export const CHAR_LEGEND: Record<string, string> = {
   y: 'sky_day',
   u: 'bus_floor',
   U: 'bus_wall',
+  // S7 street wear (ADR-019) — builder-scattered, all walkable
+  '1': 'sidewalk_crack',
+  '2': 'road_patch',
+  '3': 'storm_drain',
 };
 
-export interface PropDef {
-  sprite: string;
-  /** tile coords of the prop's top-left */
-  x: number;
-  y: number;
-  /** collision box in px relative to prop image; omit = walk-through */
-  solid?: { ox: number; oy: number; w: number; h: number };
-  /** door rectangle in px (relative to prop) that transitions maps */
-  door?: { ox: number; oy: number; w: number; h: number; to: string; tx: number; ty: number };
-  /** only built when this flag is truthy (e.g. the holding-room cot) */
-  ifFlag?: string;
-}
-
-export interface NpcDef {
-  id: string;
-  sprite: string;
-  x: number;
-  y: number;
-  facing: 'down' | 'left' | 'right' | 'up';
-  dialogue: string;
-  wander?: boolean;
-  /** special rendering: dog uses its own anim set */
-  dog?: boolean;
-  /** flag gates: only present when ifFlag is truthy / unlessFlag is falsy */
-  ifFlag?: string;
-  unlessFlag?: string;
-}
-
-export interface SignDef {
-  x: number;
-  y: number;
-  dialogue: string;
-}
-
-export interface DoorZone {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  to: string;
-  tx: number;
-  ty: number;
-  facing: 'down' | 'left' | 'right' | 'up';
-  /** visible marker: mat (default in interiors), stairs, elevator doors, or none (map edges) */
-  indicator?: 'mat' | 'stairs' | 'elevator' | 'none';
-}
-
-export interface SpawnerDef {
-  enemies: string[]; // group rolled per spawn
-  count: number;
-  rect: { x: number; y: number; w: number; h: number }; // tiles
-  /** spawn only when this flag is truthy */
-  ifFlag?: string;
-}
-
-export interface TriggerDef {
-  id: string;
-  rect: { x: number; y: number; w: number; h: number }; // tiles
-  once: boolean;
-}
-
 /**
- * Sight-line patrol (Department of Smiles; Prompt 29's prefects reuse this):
- * walks the route in a loop (2 waypoints = ping-pong), facing its direction
- * of travel. Spotting the player = alert + chase; contact = battle, not fail.
+ * Deterministic tree variety (ADR-019): same canvas + solid rect for every
+ * variant, so the canon positions and collision stay byte-identical while
+ * no two neighbors look alike. Pines only where `pines` is allowed.
  */
-export interface PatrolDef {
-  id: string;
-  enemy: string;
-  /** tile waypoints (fractional allowed for fine corridor placement) */
-  route: Array<[number, number]>;
-  /** sight-line length in tiles (default 5) */
-  sight?: number;
-  /**
-   * S2 PRODUCTIVITY LOCK: a patrolBattle victory sets this flag, and the
-   * patrol stays down across map re-entry once it's set (its quota counted).
-   * Floor 3's three Smilers each carry one; all three open the holding room.
-   */
-  countFlag?: string;
-}
-
-export interface MapDef {
-  id: string;
-  name: string;
-  music: string | null;
-  night?: boolean;
-  interior?: boolean;
-  /** settlements get ADR-012 organic looseness; 'city' additionally must pass
-   *  the Brickton rules (multi-street grid + connector + multiple block
-   *  faces) — maps.test.ts sweeps every map tagged 'city' */
-  settlement?: 'city' | 'town' | 'village';
-  grid: string[];
-  props: PropDef[];
-  npcs: NpcDef[];
-  signs: SignDef[];
-  phones: Array<{ x: number; y: number }>;
-  doors: DoorZone[];
-  spawners: SpawnerDef[];
-  triggers: TriggerDef[];
-  patrols?: PatrolDef[];
+function treeSprite(x: number, y: number, pines = false): string {
+  const h = (x * 73 + y * 151) % 12;
+  if (pines && h >= 9) return 'pine';
+  if (h % 3 === 1) return 'tree_b';
+  if (h % 3 === 2) return 'tree_c';
+  return 'tree';
 }
 
 /* ------------------------------------------------------------------ */
@@ -228,6 +156,9 @@ function buildOtterbrook(): MapDef {
   }
   // park cluster
   treeLine.push([5, 24], [10, 26], [4, 26], [11, 23]);
+  // inner greens (S7e: "more trees") — verified clear of the porch trigger,
+  // bus corner, lemonade stand, phone, doorsteps, and spawner save-spots
+  treeLine.push([3, 12], [37, 18], [18, 11], [24, 19]);
 
   return {
     id: 'otterbrook',
@@ -237,11 +168,21 @@ function buildOtterbrook(): MapDef {
     grid: g.out(),
     props: [
       ...treeLine.map(([x, y]) => ({
-        sprite: 'tree',
+        sprite: treeSprite(x, y),
         x,
         y,
         solid: { ox: 7, oy: 22, w: 12, h: 10 },
       })),
+      // telephone poles along the cross lane (S7) — wires span pole to pole.
+      // Visual only, no solid: never traps an old save (S6 rule).
+      ...[9.875, 17.875, 25.875, 33.875].map((x) => ({
+        sprite: 'phone_pole',
+        x,
+        y: 16.375,
+      })),
+      // trash cans on the verges, ≥2 tiles from every door/phone/trigger
+      { sprite: 'trash_can', x: 4, y: 8, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'trash_can', x: 37, y: 9, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
       {
         sprite: 'house_rex',
         x: 5,
@@ -253,7 +194,14 @@ function buildOtterbrook(): MapDef {
       { sprite: 'house_chad', x: 11, y: 2, solid: { ox: 0, oy: 20, w: 66, h: 46 } },
       { sprite: 'house_a', x: 25, y: 2, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
       { sprite: 'house_b', x: 31, y: 2, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
-      { sprite: 'drugstore', x: 24, y: 8, solid: { ox: 0, oy: 20, w: 82, h: 56 } },
+      {
+        sprite: 'drugstore',
+        x: 24,
+        y: 8,
+        solid: { ox: 0, oy: 20, w: 82, h: 56 },
+        // S4: a real door now (zone reaches below the collision floor, ADR-011)
+        door: { ox: 33, oy: 64, w: 16, h: 28, to: 'drugstore_int', tx: 112, ty: 118 },
+      },
       { sprite: 'arcade', x: 6, y: 17, solid: { ox: 0, oy: 20, w: 66, h: 56 } },
       { sprite: 'chapel', x: 31, y: 16, solid: { ox: 0, oy: 30, w: 50, h: 60 } },
       { sprite: 'lemonade', x: 14, y: 13, solid: { ox: 0, oy: 10, w: 36, h: 18 } },
@@ -367,7 +315,7 @@ function buildHill(): MapDef {
     night: true,
     grid: g.out(),
     props: [
-      ...trees.map(([x, y]) => ({ sprite: 'tree', x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
+      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
       { sprite: 'meteor_rock', x: 14, y: 5, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
       { sprite: 'picnic', x: 11, y: 23, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'sign', x: 12, y: 39, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
@@ -401,6 +349,13 @@ function buildRexHome(): MapDef {
       { sprite: 'sofa', x: 2, y: 4, solid: { ox: 0, oy: 4, w: 34, h: 14 } },
       { sprite: 'counter', x: 9, y: 2, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
       { sprite: 'phone_table', x: 1, y: 2, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
+      // S7 furnishings, mounted into the wall band so no walkable ground is
+      // lost (the wall tiles already collide; the lamp's small solid sits
+      // clear of the phone-save spot — S6 rule)
+      { sprite: 'tv', x: 2.8, y: 0.6 },
+      { sprite: 'floor_lamp', x: 5.5, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'bookshelf', x: 7.5, y: 0 },
+      { sprite: 'stove', x: 11, y: 0.5 },
     ],
     npcs: [{ id: 'mom', sprite: 'mom', x: 9, y: 5, facing: 'down', dialogue: 'npc_mom' }],
     signs: [],
@@ -428,6 +383,7 @@ function buildBedroom(): MapDef {
     props: [
       { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
       { sprite: 'desk', x: 6, y: 2, solid: { ox: 1, oy: 4, w: 24, h: 13 } },
+      { sprite: 'dresser', x: 7.8, y: 0.3 }, // against the wall band (S7)
     ],
     npcs: [],
     signs: [],
@@ -540,6 +496,11 @@ function buildBrickton(): MapDef {
     if (b.sprite === 'bldg_dept') {
       prop.door = { ox: 44, oy: H - 14, w: 26, h: 18, to: 'dos_f1', tx: 208, ty: 234 };
     }
+    // S4: STARMART opens for business (the zone reaches below the collision
+    // floor, ADR-011; the return doorstep is derived from this jittered prop)
+    if (b.sprite === 'bldg_starmart') {
+      prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'starmart_int', tx: 144, ty: 150 };
+    }
     bldgProps.push(prop);
     return prop;
   };
@@ -583,8 +544,114 @@ function buildBrickton(): MapDef {
   const alleyX = north[0].x + north[0].w + 0.1;
   const picnicX = 44 + jit(2);
 
+  /* ---- S7 street wear + 90s furniture (ADR-019) ----
+   * A SEPARATE seeded stream: the 1995 rng above is fully consumed before
+   * this point, so the original jittered layout stays byte-identical
+   * (ADR-016's rule). Everything here is either walkable tile wear or a
+   * prop placed with clearance checks against doors/phones/triggers. */
+  const rng2 = seededRng(2077);
+  const jit2 = (n: number): number => Math.floor(rng2() * n);
+  // sidewalk cracks — pure tile swaps, nothing moves
+  for (let y = 6; y < 31; y++) {
+    for (let x = 1; x < 55; x++) {
+      if (g.rows[y][x] === '=' && rng2() < 0.045) g.set(x, y, '1');
+    }
+  }
+  // tar patches on plain road cells
+  for (const [py, x0] of [
+    [9, 4],
+    [10, 30],
+    [22, 12],
+    [23, 44],
+  ] as const) {
+    const x = x0 + jit2(8);
+    if (g.rows[py][x] === 'R') g.set(x, py, '2');
+  }
+  // storm drains against each curb, clear of crosswalks
+  for (const x of [5 + jit2(3), 20, 33 + jit2(3), 47]) {
+    if (g.rows[8][x] === 'R') g.set(x, 8, '3');
+  }
+  for (const x of [9 + jit2(3), 36 + jit2(3), 51]) {
+    if (g.rows[21][x] === 'R') g.set(x, 21, '3');
+  }
+
+  // telephone poles: bases on the mid-block strip and the south sidewalk so
+  // the sagging spans cross each street. Visual only — no solid (S6 rule).
+  const poles: PropDef[] = [];
+  for (const cx of [6, 14, 22, 30, 38, 46]) {
+    if (cx === 22 || cx === 30) continue; // keep the avenue mouth clear
+    poles.push({ sprite: 'phone_pole', x: cx - 4.125, y: 9.125 });
+  }
+  for (const cx of [10, 18, 34, 42, 50]) {
+    poles.push({ sprite: 'phone_pole', x: cx - 4.125, y: 22.125 });
+  }
+
+  // parking meters + newspaper boxes on sidewalk B, never at a door column
+  // and never on a column the S1 furniture already took
+  const occupied = new Set(furniture.map((f) => `${f.x},${f.y}`));
+  const meters: PropDef[] = [];
+  for (const mx of [12, 21, 30, 39, 48]) {
+    if (doorCols.has(mx) || occupied.has(`${mx},19`)) continue;
+    if (rng2() < 0.3) continue;
+    meters.push({ sprite: 'parking_meter', x: mx + 0.3, y: 18.6, solid: { ox: 3, oy: 14, w: 4, h: 6 } });
+  }
+  meters.push({ sprite: 'news_box', x: 2.5, y: 25.4, solid: { ox: 2, oy: 12, w: 12, h: 7 } });
+  const nbx = midEast[1].x + 5;
+  if (!doorCols.has(nbx)) {
+    meters.push({ sprite: 'news_box', x: nbx, y: 18.7, solid: { ox: 2, oy: 12, w: 12, h: 7 } });
+  }
+  // trash cans in the north alley gaps (between building solids, row 6)
+  for (let i = 1; i < north.length; i++) {
+    const gapStart = north[i - 1].x + north[i - 1].w + 0.2;
+    const gapEnd = north[i].x;
+    if (gapEnd - gapStart < 1.2) continue;
+    if (rng2() < 0.4) continue;
+    meters.push({ sprite: 'trash_can', x: gapStart, y: 5.9, solid: { ox: 2, oy: 10, w: 10, h: 7 } });
+  }
+
+  /* ---- street trees (S7e, user direction: "more trees in the cities") ----
+   * EB's Twoson lines its blocks with trees. Same discipline as everything
+   * above: rng2 stream (1995 layout untouched), standard tree solid, and
+   * clearance from the avenue mouth, poles, doors, the payphone/bus corner,
+   * and whatever the jittered furniture already claimed. */
+  const streetTrees: Array<[number, number]> = [];
+  const usedCols = new Set<number>();
+  for (const f of [...furniture, ...meters]) {
+    const fx = Math.round(f.x);
+    usedCols.add(fx - 1).add(fx).add(fx + 1);
+  }
+  // mid-block strip between the parking lot and street B (bases on row ~12)
+  for (const tx of [10, 18, 22, 30, 34, 42, 50]) {
+    if (tx >= 24 && tx <= 28) continue; // avenue mouth
+    if (rng2() < 0.2) continue;
+    streetTrees.push([tx, 11]);
+  }
+  // south sidewalk, east of the bus/payphone corner (bases on row ~26)
+  for (const tx of [20, 23, 29, 33, 37, 41, 45, 52]) {
+    if (tx >= 24 && tx <= 28) continue; // avenue
+    if (usedCols.has(tx)) continue; // S1 furniture got there first
+    if (Math.abs(tx - 49) <= 1) continue; // the realtor's sign
+    if (rng2() < 0.3) continue;
+    streetTrees.push([tx, 24.4]);
+  }
+  // a couple more for the park, clear of the picnic table
+  for (const [tx, ty] of [
+    [47, 15],
+    [41, 16],
+    [52, 13],
+  ] as const) {
+    if (ty >= 14 && ty <= 16 && Math.abs(tx - picnicX) < 3) continue;
+    if (rng2() < 0.4) continue;
+    streetTrees.push([tx, ty]);
+  }
+
   const hospital = north[2];
   const dept = north[3];
+  // S4: the SAVINGS & LOAN stays locked, but its facade gains the ATM —
+  // placed off the jittered bank, never hardcoded (ADR-012). Two tiles right
+  // of its (locked) door, base on the sidewalk, screen against the wall.
+  const bank = north[4];
+  const atmX = bank.x + 4;
 
   return {
     id: 'brickton',
@@ -593,10 +660,13 @@ function buildBrickton(): MapDef {
     settlement: 'city',
     grid: g.out(),
     props: [
-      ...trees.map(([x, y]) => ({ sprite: 'tree', x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
+      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
+      ...streetTrees.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
+      ...poles,
       ...bldgProps,
       { sprite: 'dumpster', x: alleyX, y: 5.4, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
       { sprite: 'dumpster', x: 2, y: 11.9, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
+      { sprite: 'atm', x: atmX, y: 5.5, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
       // bus stop corner
       { sprite: 'bus_sign', x: 7, y: 26, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
       { sprite: 'bench', x: 4, y: 27, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
@@ -607,6 +677,7 @@ function buildBrickton(): MapDef {
       // the lot's realtor sign, on the sidewalk where you can actually read it
       { sprite: 'sign', x: 49, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       ...furniture,
+      ...meters,
     ],
     npcs: [
       { id: 'nurse', sprite: 'nurse', x: hospital.x + 3, y: 6, facing: 'down', dialogue: 'npc_nurse' },
@@ -620,6 +691,7 @@ function buildBrickton(): MapDef {
       { x: 49, y: 25, dialogue: 'sign_lot' },
     ],
     phones: [{ x: 14, y: 26 }],
+    atms: [{ x: atmX, y: 5.5 }],
     doors: [],
     spawners: [
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 28, y: 6, w: 12, h: 2 } },
@@ -663,6 +735,9 @@ function buildDosF1(streetExit: { tx: number; ty: number }): MapDef {
       { sprite: 'counter', x: 10, y: 4, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
       { sprite: 'plant_pot', x: 2, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
       { sprite: 'plant_pot', x: 19, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      // S7: the lobby sets the tone (§A11) — wall-mounted, no new solids
+      { sprite: 'banner_productive', x: 7, y: 0.55 },
+      { sprite: 'poster_smile', x: 17, y: 0.55 },
     ],
     npcs: [
       { id: 'receptionist', sprite: 'smilerB', x: 14, y: 5, facing: 'down', dialogue: 'npc_receptionist' },
@@ -720,6 +795,9 @@ function buildDosF2(): MapDef {
       { sprite: 'plant_pot', x: 25, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
       { sprite: 'water_cooler', x: 27, y: 17, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
       { sprite: 'plant_pot', x: 1, y: 18, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      // S7 wall decor over the memo spots (§A11 voice lives in the signs)
+      { sprite: 'poster_smile', x: 12, y: 0.55 },
+      { sprite: 'poster_chart', x: 18, y: 0.55 },
     ],
     npcs: [],
     signs: [
@@ -793,11 +871,14 @@ function buildDosF3(): MapDef {
       { sprite: 'office_door', x: 10.5, y: 0.375, solid: { ox: 0, oy: 12, w: 16, h: 14 } },
       { sprite: 'plant_pot', x: 2, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
       { sprite: 'plant_pot', x: 23, y: 7, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      // S7 wall decor — management believes in you
+      { sprite: 'poster_chart', x: 14, y: 0.55 },
+      { sprite: 'poster_smile', x: 7, y: 0.55 },
       // inside the holding room, visible once it opens
       { sprite: 'cot', x: 19, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 }, ifFlag: 'holding_open' },
     ],
     npcs: [
-      // §A6: FAYE waits in the holding room until she joins (S2)
+      // §A6: MIA waits in the holding room until she joins (S2)
       {
         id: 'faye',
         sprite: 'faye',
@@ -821,7 +902,7 @@ function buildDosF3(): MapDef {
     ],
     spawners: [],
     triggers: [
-      // inside the opened room — Faye's join scene
+      // inside the opened room — Mia's join scene
       { id: 'faye_meet', rect: { x: 19, y: 3, w: 4, h: 3 }, once: false },
       // the column below the stairs: the Manager's exit interview
       { id: 'manager_block', rect: { x: 24, y: 3, w: 1, h: 2 }, once: false },
@@ -831,6 +912,102 @@ function buildDosF3(): MapDef {
       { id: 'f3b', enemy: 'blazer_smiler', route: [[23, 8], [2, 8]], countFlag: 'dos_quota_f3b' },
       { id: 'f3c', enemy: 'blazer_smiler', route: [[2, 11.5], [23, 11.5]], sight: 6, countFlag: 'dos_quota_f3c' },
     ],
+  };
+}
+
+/* ------------------- SHOP INTERIORS (S4, Bible Prompt 20) ------------------- */
+
+/**
+ * OTTERBROOK DRUG — the town drugstore, open now that the sky calmed down.
+ * ADR-004 grid interior floating in void; the keeper knows every expiration
+ * date by heart (§A11). Talking to him opens the buy/sell flow (NpcDef.shop).
+ */
+function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(13, 9, 'w');
+  g.rect(0, 0, 13, 2, 'W');
+  return {
+    id: 'drugstore_int',
+    name: 'OTTERBROOK DRUG',
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'shelf', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 10, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'counter', x: 4, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 6, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'shelf', x: 1, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 10, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      // S7: the Star Cola case hums against the back wall
+      { sprite: 'cola_fridge', x: 7.4, y: 0.25 },
+    ],
+    npcs: [
+      {
+        id: 'drug_clerk',
+        sprite: 'drugClerk',
+        x: 5,
+        y: 2,
+        facing: 'down',
+        dialogue: 'shop_drug_greet',
+        shop: 'drugstore',
+      },
+    ],
+    signs: [{ x: 9, y: 1, dialogue: 'sign_drug_wall' }],
+    phones: [],
+    doors: [
+      { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/**
+ * STARMART — Brickton's 24-nonconsecutive-hour mart. Staggered aisles, a
+ * keeper who counts the carts, and the §A8 Ch.1 stock incl. Star Cola.
+ */
+function buildStarmartInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(17, 11, 'o');
+  g.rect(0, 0, 17, 2, 'O');
+  return {
+    id: 'starmart_int',
+    name: 'STARMART',
+    music: 'brickton',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 3, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      // two staggered aisles, like a real mart — you weave, you browse
+      { sprite: 'shelf', x: 4, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 6, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf', x: 8, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 9, y: 7, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf', x: 11, y: 7, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 13, y: 7, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf', x: 14, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'plant_pot', x: 1, y: 8, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      // S7: the Star Cola case — STARMART's pride
+      { sprite: 'cola_fridge', x: 12.2, y: 0.3 },
+    ],
+    npcs: [
+      {
+        id: 'mart_clerk',
+        sprite: 'martClerk',
+        x: 4,
+        y: 2,
+        facing: 'down',
+        dialogue: 'shop_mart_greet',
+        shop: 'starmart',
+      },
+    ],
+    signs: [{ x: 12, y: 1, dialogue: 'sign_mart_wall' }],
+    phones: [],
+    doors: [
+      { x: 8, y: 10, w: 2, h: 1, to: 'brickton', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
   };
 }
 
@@ -871,18 +1048,27 @@ function buildBusInterior(): MapDef {
   };
 }
 
-// the Department's facade is jitter-placed, so the floor-1 exit derives its
-// doorstep from wherever the door actually landed
+/**
+ * A building's doorstep on the street, derived from its (possibly jittered)
+ * facade prop — cross-map coordinates that touch jittered placement are
+ * computed, never hardcoded (ADR-012; the dos_f1 pattern, now shared by the
+ * S4 shop interiors).
+ */
+function doorstepOf(map: MapDef, to: string): { tx: number; ty: number } | null {
+  const prop = map.props.find((p) => p.door?.to === to);
+  const d = prop?.door;
+  if (!prop || !d) return null;
+  return { tx: prop.x * 16 + d.ox + d.w / 2, ty: prop.y * 16 + d.oy + d.h + 5 };
+}
+
+const otterbrookMap = buildOtterbrook();
 const bricktonMap = buildBrickton();
-const deptProp = bricktonMap.props.find((p) => p.door?.to === 'dos_f1');
-const deptDoor = deptProp?.door;
-const deptDoorstep =
-  deptProp && deptDoor
-    ? { tx: deptProp.x * 16 + deptDoor.ox + deptDoor.w / 2, ty: deptProp.y * 16 + deptDoor.oy + deptDoor.h + 5 }
-    : { tx: 489, ty: 121 };
+const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
+const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
+const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty: 225 };
 
 export const MAPS: Record<string, MapDef> = {
-  otterbrook: buildOtterbrook(),
+  otterbrook: otterbrookMap,
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),
   rex_bedroom: buildBedroom(),
@@ -890,5 +1076,7 @@ export const MAPS: Record<string, MapDef> = {
   dos_f1: buildDosF1(deptDoorstep),
   dos_f2: buildDosF2(),
   dos_f3: buildDosF3(),
+  drugstore_int: buildDrugstoreInt(drugDoorstep),
+  starmart_int: buildStarmartInt(martDoorstep),
   bus_interior: buildBusInterior(),
 };

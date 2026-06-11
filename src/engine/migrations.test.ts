@@ -12,7 +12,7 @@ function v1Hero(id: HeroId, level: number, name?: string): Record<string, unknow
   return h;
 }
 
-/** an S2-era version-1 save: shared inventory, two heroes, Faye joined */
+/** an S2-era version-1 save: shared inventory, two heroes, Mia joined */
 function v1SaveS2(): Record<string, unknown> {
   return {
     version: 1,
@@ -64,7 +64,7 @@ describe('save migration registry (S3) — v1 → v2', () => {
     expect(GS.hero('rex')?.equip.weapon).toBe('tball_bat');
   });
 
-  it('grants Faye her Hand-Me-Down Pan when faye_joined (the intake shelf, canonically)', () => {
+  it('grants Mia her Hand-Me-Down Pan when faye_joined (the intake shelf, canonically)', () => {
     GS.deserialize(JSON.stringify(v1SaveS2()));
     const faye = GS.hero('faye');
     expect(faye?.bag).toContain('hand_me_down_pan');
@@ -90,7 +90,7 @@ describe('save migration registry (S3) — v1 → v2', () => {
     save.inventory = ['cracked_bat', 'corn_dog', 'corn_dog'];
     GS.deserialize(JSON.stringify(save));
     expect(GS.data.version).toBe(2);
-    expect(GS.data.heroNames.faye).toBe('Faye'); // ADR-013 backfill, folded in
+    expect(GS.data.heroNames.faye).toBe('Mia'); // ADR-013 backfill, folded in
     expect(GS.data.playerName).toBe('Player');
     expect(GS.data.coolestThing).toBe('meteors');
     expect(GS.hero('rex')?.bag).toEqual(['cracked_bat', 'corn_dog', 'corn_dog']);

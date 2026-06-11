@@ -1,297 +1,556 @@
 /**
- * Enemy sprite generators — GAME_BIBLE §A7 Chapter 1 roster + Boss 1.
- * Battle sprites are bespoke (EB enemies are static portraits; hit-flash and
- * idle-bob happen at runtime). Each enemy also gets a 16×16 overworld mini.
+ * Enemy sprite generators v3 (ADR-019) — GAME_BIBLE §A7 Chapter 1 roster +
+ * Boss 1, rebuilt at EB battle scale (64–96px): front-facing portraits,
+ * full 1px outlines, 4-tone ramp shading with checker dither, weird charm.
+ * Battle sprites are static (hit-flash and idle-bob happen at runtime).
+ * Each enemy also gets a 16×16 overworld mini with the same silhouette.
  */
-import { Pixmap, mulberry32 } from './pixmap';
-import { RAMP, T, px, C } from '../palette';
+import { Pixmap } from './pixmap';
+import { RAMP, px, C } from '../palette';
 
 /* ---------------------------------------------------------------- */
-/* Battle sprites                                                     */
+/* Battle sprites.                                                    */
+/* NOTE (ADR-020): EB battle enemies FLOAT on the psychedelic field — */
+/* no ground shadows here, ever. Big curves are hand-authored contour */
+/* runs, not ellipse() output; texture is deliberate plates/freckles, */
+/* never scattered noise.                                             */
 
 export function drawCrankyMailbox(): Pixmap {
-  const pm = new Pixmap(44, 52);
+  const pm = new Pixmap(64, 76);
   const blue = px(RAMP.BLUE, 2);
+  const blueL = px(RAMP.BLUE, 3);
   const blueD = px(RAMP.BLUE, 1);
   const blueDD = px(RAMP.BLUE, 0);
-  // rounded mailbox body
-  pm.rect(8, 10, 28, 20, blue);
-  pm.rect(8, 6, 28, 6, blue);
-  for (let i = 0; i < 4; i++) {
-    pm.hline(8 + i, 6 - 0, 1, T);
-  }
-  pm.set(8, 6, T);
-  pm.set(35, 6, T);
-  pm.hline(9, 5, 26, blue);
-  pm.hline(10, 4, 24, px(RAMP.BLUE, 3));
-  pm.rect(8, 28, 28, 2, blueD);
-  // angry uni-brow eyes
-  pm.rect(13, 12, 4, 4, C.white);
-  pm.rect(26, 12, 4, 4, C.white);
-  pm.rect(14, 14, 2, 2, C.outline);
-  pm.rect(27, 14, 2, 2, C.outline);
-  pm.line(11, 10, 17, 12, C.outline);
-  pm.line(31, 10, 25, 12, C.outline);
-  // open slot mouth, mid-yell, with a letter sticking out
-  pm.rect(13, 21, 18, 5, blueDD);
-  pm.rect(14, 22, 16, 3, C.outline);
-  pm.rect(17, 22, 8, 2, C.white); // the letter
-  pm.set(18, 23, px(RAMP.RED, 2)); // stamp
+  // wooden post with grain
+  pm.rect(27, 44, 10, 26, px(RAMP.EARTH, 1));
+  pm.vline(27, 44, 26, px(RAMP.EARTH, 2));
+  pm.vline(35, 44, 26, px(RAMP.EARTH, 0));
+  pm.vline(31, 48, 12, px(RAMP.EARTH, 0)); // grain crack
+  pm.rect(22, 68, 20, 4, px(RAMP.EARTH, 1)); // base plate
+  pm.hline(22, 68, 20, px(RAMP.EARTH, 2));
+  // rounded mailbox body (dome top, US curbside profile)
+  pm.rect(8, 14, 48, 32, blue);
+  pm.rect(10, 8, 44, 7, blue);
+  pm.rect(13, 5, 38, 4, blue);
+  pm.hline(15, 4, 34, blue);
+  // dome light + body shading
+  pm.hline(16, 5, 24, blueL);
+  pm.hline(13, 6, 14, blueL);
+  pm.vline(8, 16, 28, blueL);
+  pm.vline(9, 14, 31, blue);
+  pm.rect(50, 12, 6, 34, blueD);
+  pm.checker(46, 14, 10, 32, blue, blueD, 1);
+  pm.rect(8, 42, 48, 4, blueD);
+  pm.hline(8, 45, 48, blueDD);
+  // a proud dent (it has seen some baseball bats)
+  pm.hline(14, 11, 5, blueD);
+  pm.set(15, 12, blueDD);
+  // furious uni-brow eyes
+  pm.rect(16, 17, 8, 8, px(RAMP.PAPER, 3));
+  pm.rect(38, 17, 8, 8, px(RAMP.PAPER, 3));
+  pm.rect(19, 20, 4, 5, C.outline); // pupils, glaring down-in
+  pm.rect(39, 20, 4, 5, C.outline);
+  pm.set(20, 21, px(RAMP.PAPER, 3)); // catchlight
+  pm.set(40, 21, px(RAMP.PAPER, 3));
+  pm.line(13, 14, 25, 18, C.outline); // the brow
+  pm.line(50, 14, 38, 18, C.outline);
+  pm.line(13, 15, 25, 19, blueDD); // brow shadow
+  pm.line(50, 15, 38, 19, blueDD);
+  // open slot mouth, mid-yell, letters flying
+  pm.rect(17, 30, 30, 10, blueDD);
+  pm.rect(19, 32, 26, 6, C.outline);
+  pm.rect(24, 33, 14, 4, px(RAMP.PAPER, 3)); // the letter, outgoing
+  pm.set(26, 34, px(RAMP.RED, 2)); // stamp
+  pm.hline(28, 35, 7, px(RAMP.PAPER, 1)); // address line
+  // two escaped letters
+  pm.rect(2, 24, 8, 5, px(RAMP.PAPER, 3));
+  pm.hline(3, 26, 5, px(RAMP.PAPER, 1));
+  pm.rect(56, 30, 7, 5, px(RAMP.PAPER, 2));
   // flag arm raised in fury
-  pm.vline(36, 8, 10, px(RAMP.RED, 1));
-  pm.rect(36, 6, 6, 4, px(RAMP.RED, 2));
-  // post
-  pm.rect(19, 30, 6, 16, px(RAMP.EARTH, 1));
-  pm.vline(19, 30, 16, px(RAMP.EARTH, 0));
-  pm.rect(15, 46, 14, 3, px(RAMP.EARTH, 1));
+  pm.rect(55, 4, 4, 18, px(RAMP.RED, 1));
+  pm.rect(53, 2, 10, 7, px(RAMP.RED, 2));
+  pm.hline(53, 2, 10, px(RAMP.RED, 3));
   pm.outline(C.outline);
   return pm;
 }
 
 export function drawRunawayLawnmower(): Pixmap {
-  const pm = new Pixmap(52, 44);
+  const pm = new Pixmap(84, 64);
   const red = px(RAMP.RED, 2);
+  const redL = px(RAMP.RED, 3);
   const redD = px(RAMP.RED, 1);
-  // deck
-  pm.rect(8, 22, 30, 10, red);
-  pm.rect(8, 20, 30, 3, px(RAMP.RED, 3));
-  pm.rect(8, 30, 30, 2, redD);
+  const redDD = px(RAMP.RED, 0);
+  // handle flailing up-back like raised arms
+  pm.line(60, 34, 76, 8, px(RAMP.PAPER, 0));
+  pm.line(61, 35, 77, 9, px(RAMP.PAPER, 1));
+  pm.line(62, 36, 78, 10, px(RAMP.PAPER, 0));
+  pm.rect(72, 4, 9, 4, px(RAMP.PAPER, 1)); // grip
+  pm.hline(72, 4, 9, px(RAMP.PAPER, 2));
+  // deck — wide and low, grinning grille up front
+  pm.rect(10, 32, 52, 16, red);
+  pm.hline(10, 32, 52, redL);
+  pm.hline(10, 33, 40, redL);
+  pm.rect(10, 44, 52, 4, redD);
+  pm.hline(10, 47, 52, redDD);
+  pm.checker(50, 34, 12, 14, red, redD, 1); // shade dither on the far side
   // engine block
-  pm.rect(14, 12, 14, 10, px(RAMP.PAPER, 1));
-  pm.rect(14, 12, 14, 3, px(RAMP.PAPER, 2));
-  pm.rect(18, 8, 6, 5, px(RAMP.PAPER, 0));
-  // crazed eye on the engine
-  pm.rect(20, 14, 6, 6, C.white);
-  pm.rect(22, 16, 2, 3, C.outline);
-  // handle flailing back
-  pm.line(38, 22, 48, 8, px(RAMP.PAPER, 0));
-  pm.line(39, 23, 49, 9, px(RAMP.PAPER, 0));
-  pm.rect(46, 6, 5, 3, px(RAMP.PAPER, 0));
-  // wheels
+  pm.rect(22, 16, 26, 17, px(RAMP.PAPER, 2));
+  pm.hline(22, 16, 26, px(RAMP.PAPER, 3));
+  pm.vline(22, 16, 17, px(RAMP.PAPER, 3));
+  pm.rect(44, 18, 4, 15, px(RAMP.PAPER, 1));
+  pm.rect(28, 10, 10, 7, px(RAMP.PAPER, 1)); // air filter hump
+  pm.hline(28, 10, 10, px(RAMP.PAPER, 2));
+  pm.rect(40, 12, 5, 5, px(RAMP.EARTH, 1)); // fuel cap
+  pm.set(41, 13, px(RAMP.EARTH, 3));
+  // pull cord whipping loose
+  pm.line(48, 20, 58, 14, px(RAMP.PAPER, 0));
+  pm.set(59, 13, px(RAMP.EARTH, 2)); // the handle at the end
+  pm.set(60, 12, px(RAMP.EARTH, 2));
+  // one crazed eye on the engine + a smaller twitchy one
+  pm.rect(25, 19, 9, 10, px(RAMP.PAPER, 3));
+  pm.rect(28, 22, 4, 5, C.outline);
+  pm.set(29, 23, px(RAMP.PAPER, 3));
+  pm.rect(36, 21, 6, 7, px(RAMP.PAPER, 3));
+  pm.rect(38, 24, 2, 3, C.outline);
+  // grille = teeth
+  pm.rect(14, 36, 28, 8, px(RAMP.PAPER, 3));
+  pm.frame(14, 36, 28, 8, C.outline);
+  for (let x = 17; x < 41; x += 4) pm.vline(x, 37, 6, px(RAMP.PAPER, 1));
+  pm.hline(14, 40, 28, px(RAMP.PAPER, 1)); // tooth midline
+  // wheels with hubcaps
   const wheel = (cx: number, cy: number): void => {
-    pm.ellipse(cx, cy, 5, 5, C.inkSoft);
-    pm.ellipse(cx, cy, 2, 2, px(RAMP.PAPER, 1));
+    pm.ellipse(cx, cy, 7, 7, C.inkSoft);
+    pm.ellipse(cx, cy, 5, 5, px(RAMP.INK, 1));
+    pm.ellipse(cx, cy, 2, 2, px(RAMP.PAPER, 2));
+    pm.set(cx - 1, cy - 1, px(RAMP.PAPER, 3));
   };
-  wheel(13, 35);
-  wheel(33, 35);
-  // grass spray
-  const g = px(RAMP.GRASS, 2);
-  pm.set(4, 18, g);
-  pm.set(2, 22, g);
-  pm.set(5, 25, px(RAMP.GRASS, 1));
-  pm.set(3, 14, px(RAMP.GRASS, 3));
-  pm.set(6, 11, g);
+  wheel(18, 52);
+  wheel(52, 52);
+  // grass spray off the blade side
+  const g2 = px(RAMP.GRASS, 2);
+  const g3 = px(RAMP.GRASS, 3);
+  pm.set(4, 28, g2);
+  pm.set(2, 34, g3);
+  pm.set(6, 40, px(RAMP.GRASS, 1));
+  pm.set(3, 22, g2);
+  pm.set(7, 17, g3);
+  pm.set(1, 45, g2);
+  pm.set(8, 12, px(RAMP.GRASS, 1));
   pm.outline(C.outline);
   return pm;
 }
 
 export function drawCoilyCicada(): Pixmap {
-  const pm = new Pixmap(48, 44);
+  const pm = new Pixmap(76, 66);
   const shell = px(RAMP.FOREST, 2);
+  const shellL = px(RAMP.FOREST, 3);
   const shellD = px(RAMP.FOREST, 1);
+  const shellDD = px(RAMP.FOREST, 0);
   const wing = px(RAMP.CYAN, 3);
-  // coiled abdomen — the "Coily" part: segmented spring
-  pm.ellipse(15, 28, 10, 8, shell);
-  pm.ellipse(15, 28, 6, 5, shellD);
-  pm.ellipse(15, 28, 3, 2, shell);
-  // thorax + head
-  pm.ellipse(31, 22, 8, 7, shell);
-  pm.ellipse(38, 18, 5, 5, px(RAMP.FOREST, 3));
-  // huge red eyes
-  pm.ellipse(40, 15, 3, 3, px(RAMP.RED, 2));
-  pm.set(41, 14, px(RAMP.RED, 3));
-  pm.set(40, 16, C.outline);
-  // wings swept back
-  pm.line(28, 16, 10, 6, wing);
-  pm.line(29, 17, 12, 8, wing);
-  pm.line(30, 18, 14, 10, px(RAMP.CYAN, 2));
-  pm.ellipse(20, 12, 9, 4, wing);
-  pm.ellipse(20, 12, 9, 4, wing);
-  for (let x = 12; x <= 28; x += 4) pm.set(x, 12, px(RAMP.CYAN, 2));
-  // legs
-  pm.line(28, 28, 24, 36, shellD);
-  pm.line(33, 28, 33, 37, shellD);
-  pm.line(37, 26, 41, 34, shellD);
-  // antenna coil
-  pm.line(42, 12, 45, 8, shellD);
-  pm.set(46, 7, shellD);
+  const wingD = px(RAMP.CYAN, 2);
+  // glassy wings swept up-back, veined
+  const wingShape = (cx: number, cy: number, dir: 1 | -1): void => {
+    pm.ellipse(cx, cy, 16, 7, wing);
+    pm.ellipse(cx - 4 * dir, cy - 2, 12, 4, wing);
+    // veins
+    pm.line(cx + 12 * dir, cy - 4, cx - 14 * dir, cy + 2, wingD);
+    pm.line(cx + 10 * dir, cy + 3, cx - 12 * dir, cy - 1, wingD);
+    pm.line(cx + 4 * dir, cy - 6, cx - 6 * dir, cy + 5, wingD);
+  };
+  wingShape(28, 12, 1);
+  wingShape(20, 24, 1);
+  // the COIL — a fat segmented spring abdomen
+  for (let i = 0; i < 4; i++) {
+    const r = 16 - i * 3;
+    pm.ellipse(22, 42, r, Math.max(3, r - 5), i % 2 === 0 ? shell : shellD);
+  }
+  pm.ellipse(22, 40, 5, 3, shellL); // coil crown light
+  pm.checker(8, 34, 28, 18, shell, shellD, 1);
+  pm.ellipse(22, 42, 2, 1, shellDD); // coil center hole
+  // thorax
+  pm.ellipse(46, 36, 12, 10, shell);
+  pm.ellipse(43, 33, 7, 5, shellL);
+  pm.checker(40, 38, 18, 9, shell, shellD, 1);
+  // head, tilted up at you
+  pm.ellipse(60, 26, 9, 8, shell);
+  pm.ellipse(58, 23, 5, 4, shellL);
+  // HUGE red compound eyes
+  pm.ellipse(64, 20, 5, 5, px(RAMP.RED, 2));
+  pm.ellipse(63, 19, 2, 2, px(RAMP.RED, 3));
+  pm.set(65, 21, px(RAMP.RED, 1));
+  pm.ellipse(55, 17, 3, 3, px(RAMP.RED, 2));
+  pm.set(54, 16, px(RAMP.RED, 3));
+  // mouth parts, mildly apologetic
+  pm.hline(62, 31, 5, shellDD);
+  pm.set(66, 32, shellDD);
+  // antenna coiled like a phone cord
+  pm.line(64, 12, 67, 8, shellD);
+  pm.set(68, 7, shellD);
+  pm.set(69, 8, shellD);
+  pm.set(70, 7, shellD);
+  // six legs, braced
+  pm.line(40, 44, 34, 58, shellD);
+  pm.line(46, 46, 44, 59, shellD);
+  pm.line(52, 44, 58, 56, shellD);
+  pm.line(41, 44, 35, 58, shellDD);
+  pm.set(34, 59, C.outline);
+  pm.set(44, 60, C.outline);
+  pm.set(58, 57, C.outline);
   pm.outline(C.outline);
   return pm;
 }
 
 export function drawBlazerSmiler(): Pixmap {
-  const pm = new Pixmap(40, 56);
+  const pm = new Pixmap(64, 88);
   const suit = px(RAMP.BLUE, 1);
   const suitL = px(RAMP.BLUE, 2);
+  const suitD = px(RAMP.BLUE, 0);
   const skin = px(RAMP.SKIN, 2);
+  const skinL = px(RAMP.SKIN, 3);
+  const skinD = px(RAMP.SKIN, 1);
   // head — too round, too happy
-  pm.ellipse(20, 13, 9, 9, skin);
-  pm.rect(12, 5, 17, 3, px(RAMP.INK, 1)); // flat corporate hair
-  pm.hline(13, 4, 15, px(RAMP.INK, 1));
-  // dead-cheerful eyes: tall whites, pinprick pupils
-  pm.rect(14, 10, 4, 5, C.white);
-  pm.rect(23, 10, 4, 5, C.white);
-  pm.set(15, 12, C.outline);
-  pm.set(24, 12, C.outline);
+  pm.ellipse(32, 17, 13, 13, skin);
+  pm.ellipse(27, 11, 6, 4, skinL); // forehead shine
+  pm.checker(38, 16, 8, 12, skin, skinD, 1); // cheek shade dither
+  // flat corporate hair, parted with a ruler
+  pm.rect(20, 4, 25, 5, px(RAMP.INK, 1));
+  pm.hline(21, 3, 22, px(RAMP.INK, 1));
+  pm.hline(22, 5, 8, px(RAMP.INK, 2)); // the part
+  pm.set(19, 7, px(RAMP.INK, 1)); // sideburns
+  pm.set(45, 7, px(RAMP.INK, 1));
+  // dead-cheerful eyes: tall outlined whites, pupils that track YOUR quota
+  pm.rect(23, 12, 6, 8, px(RAMP.PAPER, 3));
+  pm.rect(36, 12, 6, 8, px(RAMP.PAPER, 3));
+  pm.frame(22, 11, 8, 10, skinD); // socket rims
+  pm.frame(35, 11, 8, 10, skinD);
+  pm.rect(25, 14, 3, 5, C.outline);
+  pm.rect(38, 14, 3, 5, C.outline);
+  pm.set(25, 14, px(RAMP.PAPER, 3)); // catchlights
+  pm.set(38, 14, px(RAMP.PAPER, 3));
   // THE GRIN — wall to wall teeth
-  pm.rect(12, 17, 17, 5, C.white);
-  pm.frame(12, 17, 17, 5, C.outline);
-  for (let x = 14; x < 28; x += 3) pm.vline(x, 18, 3, px(RAMP.PAPER, 1));
-  // blazer torso
-  pm.rect(10, 24, 21, 22, suit);
-  pm.rect(10, 24, 3, 22, suitL);
-  pm.rect(28, 24, 3, 22, suitL);
+  pm.rect(20, 22, 26, 8, px(RAMP.PAPER, 3));
+  pm.frame(20, 22, 26, 8, C.outline);
+  for (let x = 23; x < 45; x += 4) pm.vline(x, 23, 6, px(RAMP.PAPER, 1));
+  pm.hline(21, 26, 24, px(RAMP.PAPER, 1));
+  pm.hline(21, 29, 24, px(RAMP.PAPER, 1)); // lower-lip tooth shade
+  pm.set(19, 25, skinD); // grin corner creases
+  pm.set(46, 25, skinD);
+  pm.set(19, 24, px(RAMP.SKIN, 0));
+  pm.set(46, 24, px(RAMP.SKIN, 0));
+  // blazer torso, shoulders first
+  pm.rect(14, 32, 36, 30, suit);
+  pm.rect(12, 33, 4, 16, suit); // shoulder caps
+  pm.rect(48, 33, 4, 16, suit);
+  pm.vline(14, 32, 30, suitL);
+  pm.checker(44, 34, 6, 28, suit, suitD, 1);
+  // lapels
+  pm.line(26, 32, 30, 42, suitL);
+  pm.line(38, 32, 34, 42, suitL);
+  pm.line(27, 32, 31, 42, suitD);
+  pm.line(37, 32, 33, 42, suitD);
   // shirt + tie
-  pm.rect(17, 24, 7, 10, C.white);
-  pm.rect(19, 25, 3, 9, px(RAMP.RED, 2));
-  pm.set(20, 34, px(RAMP.RED, 1));
-  // name badge: a tiny smile
-  pm.rect(13, 28, 4, 4, C.white);
-  pm.set(14, 30, C.outline);
-  pm.set(15, 30, C.outline);
-  // arms — one extended for an unwanted handshake
-  pm.rect(31, 26, 7, 4, suit);
-  pm.rect(36, 27, 3, 3, skin);
-  pm.rect(7, 26, 3, 12, suit);
-  pm.rect(7, 38, 3, 3, skin);
-  // slacks
-  pm.rect(13, 46, 6, 8, px(RAMP.INK, 1));
-  pm.rect(22, 46, 6, 8, px(RAMP.INK, 1));
-  pm.rect(12, 53, 8, 2, C.outline);
-  pm.rect(21, 53, 8, 2, C.outline);
+  pm.rect(28, 32, 9, 14, px(RAMP.PAPER, 3));
+  pm.rect(31, 33, 3, 11, px(RAMP.RED, 2));
+  pm.vline(31, 33, 11, px(RAMP.RED, 3));
+  pm.rect(31, 44, 3, 3, px(RAMP.RED, 1)); // tie point
+  pm.set(32, 32, px(RAMP.RED, 1)); // the knot
+  // name badge: HELLO MY NAME IS [a smile]
+  pm.rect(17, 36, 8, 6, px(RAMP.PAPER, 3));
+  pm.hline(17, 36, 8, px(RAMP.RED, 2));
+  pm.set(19, 39, C.outline);
+  pm.set(22, 39, C.outline);
+  pm.hline(19, 40, 4, C.outline);
+  // RIGHT ARM — extended at the camera for the unwanted handshake,
+  // foreshortened: small sleeve, ENORMOUS hand
+  pm.rect(50, 36, 8, 6, suit);
+  pm.rect(56, 34, 7, 9, skin);
+  pm.ellipse(60, 44, 7, 8, skin); // the hand, looming
+  pm.ellipse(58, 41, 3, 3, skinL);
+  pm.vline(57, 48, 3, skinD); // finger seams
+  pm.vline(60, 49, 3, skinD);
+  pm.vline(63, 48, 3, skinD);
+  pm.hline(56, 38, 4, skinD); // thumb crease
+  // left arm holds the World's Best Quota mug
+  pm.rect(10, 36, 5, 16, suit);
+  pm.vline(10, 36, 16, suitL);
+  pm.rect(8, 52, 7, 6, skin);
+  pm.rect(6, 50, 9, 8, px(RAMP.PAPER, 3)); // mug
+  pm.hline(6, 50, 9, px(RAMP.PAPER, 1));
+  pm.set(5, 53, px(RAMP.PAPER, 2)); // handle
+  pm.set(9, 49, px(RAMP.PAPER, 2)); // steam
+  pm.set(8, 47, px(RAMP.PAPER, 1));
+  pm.set(11, 52, px(RAMP.GOLD, 2)); // motivational decal
+  // slacks, pressed to a deadly crease
+  pm.rect(18, 62, 12, 18, px(RAMP.INK, 1));
+  pm.rect(34, 62, 12, 18, px(RAMP.INK, 1));
+  pm.vline(18, 62, 18, px(RAMP.INK, 2));
+  pm.vline(34, 62, 18, px(RAMP.INK, 2));
+  pm.vline(23, 63, 16, px(RAMP.INK, 0)); // crease shadow
+  pm.vline(39, 63, 16, px(RAMP.INK, 0));
+  pm.rect(14, 60, 36, 4, suitD); // jacket hem
+  // loafers, gleaming
+  pm.rect(15, 80, 16, 4, C.inkSoft);
+  pm.rect(33, 80, 16, 4, C.inkSoft);
+  pm.hline(16, 80, 6, px(RAMP.INK, 2)); // shine
+  pm.hline(34, 80, 6, px(RAMP.INK, 2));
   pm.outline(C.outline);
   return pm;
 }
 
 export function drawPigeonGang(): Pixmap {
-  const pm = new Pixmap(52, 40);
-  const grey = px(RAMP.PAPER, 1);
-  const greyD = px(RAMP.PAPER, 0);
-  const sheen = px(RAMP.CYAN, 2);
-  const pigeon = (cx: number, cy: number, boss: boolean): void => {
-    pm.ellipse(cx, cy, 7, 6, grey);
-    pm.ellipse(cx + 5, cy - 6, 4, 4, grey);
-    pm.rect(cx + 2, cy - 4, 4, 3, sheen); // neck sheen
-    pm.set(cx + 8, cy - 7, px(RAMP.GOLD, 2)); // beak
-    pm.set(cx + 9, cy - 7, px(RAMP.GOLD, 2));
-    pm.set(cx + 6, cy - 8, boss ? px(RAMP.RED, 2) : C.outline); // eye
-    pm.ellipse(cx - 2, cy, 4, 3, greyD); // folded wing
-    pm.line(cx - 7, cy + 1, cx - 11, cy + 3, greyD); // tail
-    pm.line(cx - 7, cy + 2, cx - 11, cy + 4, greyD);
-    pm.vline(cx - 1, cy + 6, 3, px(RAMP.ORANGE, 2)); // legs
-    pm.vline(cx + 2, cy + 6, 3, px(RAMP.ORANGE, 2));
+  const pm = new Pixmap(88, 64);
+  const grey = px(RAMP.PAPER, 2);
+  const greyL = px(RAMP.PAPER, 3);
+  const greyD = px(RAMP.PAPER, 1);
+  const greyDD = px(RAMP.PAPER, 0);
+  const pigeon = (cx: number, cy: number, scale: number, boss: boolean): void => {
+    const rx = Math.round(10 * scale);
+    const ry = Math.round(8 * scale);
+    // body
+    pm.ellipse(cx, cy, rx, ry, grey);
+    pm.ellipse(cx - 3, cy - 3, Math.round(rx * 0.5), Math.round(ry * 0.5), greyL);
+    pm.checker(cx, cy, rx, ry, grey, greyD, 1);
+    // head up top
+    const hy = cy - ry - Math.round(4 * scale);
+    pm.ellipse(cx + Math.round(5 * scale), hy, Math.round(5 * scale), Math.round(5 * scale), grey);
+    // iridescent neck dither — the EB pigeon tell
+    pm.checker(cx + 1, hy + 2, Math.round(6 * scale), Math.round(5 * scale), px(RAMP.CYAN, 2), px(RAMP.FOREST, 2), 1);
+    // beak + cere
+    pm.rect(cx + Math.round(9 * scale), hy - 1, 4, 2, px(RAMP.GOLD, 2));
+    pm.set(cx + Math.round(9 * scale), hy - 2, px(RAMP.PAPER, 3));
+    // eye — orange ring, black pin
+    pm.set(cx + Math.round(6 * scale), hy - 1, px(RAMP.ORANGE, 2));
+    pm.set(cx + Math.round(6 * scale) + 1, hy - 1, C.outline);
+    // folded wing with feather steps
+    pm.ellipse(cx - Math.round(3 * scale), cy, Math.round(6 * scale), Math.round(4 * scale), greyD);
+    pm.hline(cx - rx + 2, cy + 2, Math.round(7 * scale), greyDD);
+    pm.hline(cx - rx + 1, cy + 4, Math.round(6 * scale), greyDD);
+    // tail
+    pm.line(cx - rx, cy + 1, cx - rx - 6, cy + 4, greyDD);
+    pm.line(cx - rx, cy + 2, cx - rx - 6, cy + 5, greyD);
+    pm.line(cx - rx, cy + 3, cx - rx - 5, cy + 6, greyDD);
+    // legs
+    pm.vline(cx - 2, cy + ry, 4, px(RAMP.ORANGE, 2));
+    pm.vline(cx + 3, cy + ry, 4, px(RAMP.ORANGE, 2));
+    pm.set(cx - 3, cy + ry + 3, px(RAMP.ORANGE, 2));
+    pm.set(cx + 2, cy + ry + 3, px(RAMP.ORANGE, 2));
     if (boss) {
-      // do-rag on the ringleader
-      pm.rect(cx + 2, cy - 10, 7, 3, px(RAMP.RED, 1));
-      pm.set(cx + 1, cy - 8, px(RAMP.RED, 1));
+      // the do-rag
+      pm.rect(cx + 1, hy - Math.round(5 * scale), Math.round(10 * scale), 3, px(RAMP.RED, 2));
+      pm.hline(cx + 1, hy - Math.round(5 * scale), Math.round(10 * scale), px(RAMP.RED, 3));
+      pm.set(cx, hy - Math.round(3 * scale), px(RAMP.RED, 1)); // the knot
+      pm.set(cx - 1, hy - Math.round(2 * scale), px(RAMP.RED, 1)); // tails
+      // toothpick. for intimidation.
+      pm.hline(cx + Math.round(11 * scale), hy + 1, 4, px(RAMP.EARTH, 3));
     }
   };
-  pigeon(13, 28, false);
-  pigeon(38, 28, false);
-  pigeon(25, 16, true);
-  // one dropped crumb they're guarding
-  pm.ellipse(25, 35, 2, 1, px(RAMP.GOLD, 2));
+  pigeon(16, 38, 0.85, false);
+  pigeon(70, 38, 0.85, false);
+  pigeon(43, 32, 1.15, true); // the ringleader, front and center
+  // the crumb they're guarding. it's a good crumb.
+  pm.ellipse(43, 56, 3, 2, px(RAMP.GOLD, 2));
+  pm.set(42, 55, px(RAMP.GOLD, 3));
   pm.outline(C.outline);
   return pm;
 }
 
 export function drawHillSlugDeluxe(): Pixmap {
-  const pm = new Pixmap(52, 40);
+  const pm = new Pixmap(88, 60);
   const body = px(RAMP.GRASS, 1);
   const bodyL = px(RAMP.GRASS, 2);
-  const belly = px(RAMP.GOLD, 3);
-  // fat slug body
-  pm.ellipse(24, 26, 18, 10, body);
-  pm.ellipse(20, 28, 14, 7, bodyL);
-  pm.rect(8, 33, 34, 3, belly);
+  const bodyLL = px(RAMP.GRASS, 3);
+  const bodyD = px(RAMP.GRASS, 0);
+  // glistening slime trail — a drawn streak, not an ellipse puddle
+  pm.hline(8, 54, 22, px(RAMP.CYAN, 1));
+  pm.hline(12, 55, 13, px(RAMP.CYAN, 1));
+  pm.set(8, 53, px(RAMP.CYAN, 3));
+  pm.set(28, 53, px(RAMP.CYAN, 3));
+  // fat slug body — hand-set contour, swells fast and settles
+  const BODY: number[] = [
+    9, 15, 19, 22, 24, 26, 27, 28, 29, 29, 30, 30, 30, 30, 30, 30,
+    30, 30, 29, 29, 28, 28, 27, 27, 26, 26, 25, 25, 24, 24,
+  ];
+  pm.contour(38, 22, BODY, body);
+  const BELLYLIGHT: number[] = [10, 15, 18, 20, 21, 22, 22, 22, 21, 21, 20, 20, 19, 19];
+  pm.contour(32, 38, BELLYLIGHT, bodyL);
+  pm.checker(16, 32, 44, 16, body, bodyD, 2); // mottled back (kept inside the mass)
+  pm.rect(10, 50, 56, 4, bodyLL); // belly foot
+  pm.hline(10, 49, 56, bodyL);
+  // glossy highlight arc, two hand strokes
+  pm.hline(22, 25, 12, bodyLL);
+  pm.hline(18, 27, 7, bodyLL);
   // head rise
-  pm.ellipse(38, 18, 8, 9, body);
-  pm.ellipse(37, 18, 5, 6, bodyL);
-  // eye stalks
-  pm.line(40, 10, 42, 4, body);
-  pm.line(35, 10, 33, 5, body);
-  pm.ellipse(42, 3, 2, 2, C.white);
-  pm.ellipse(33, 4, 2, 2, C.white);
-  pm.set(43, 3, C.outline);
-  pm.set(34, 4, C.outline);
-  // the DELUXE part: a tiny gold crown between the stalks
-  pm.rect(36, 7, 6, 2, px(RAMP.GOLD, 2));
-  pm.set(36, 6, px(RAMP.GOLD, 2));
-  pm.set(38, 6, px(RAMP.GOLD, 3));
-  pm.set(41, 6, px(RAMP.GOLD, 2));
-  // slime sparkle
-  pm.set(6, 35, px(RAMP.CYAN, 3));
-  pm.set(45, 34, px(RAMP.CYAN, 3));
-  // back spots
-  pm.set(18, 22, px(RAMP.FOREST, 2));
-  pm.set(26, 20, px(RAMP.FOREST, 2));
-  pm.set(22, 25, px(RAMP.FOREST, 2));
+  pm.ellipse(64, 28, 13, 14, body);
+  pm.ellipse(61, 28, 8, 9, bodyL);
+  pm.set(58, 24, bodyLL);
+  // eye stalks with big hopeful eyes
+  pm.line(67, 14, 70, 6, body);
+  pm.line(68, 14, 71, 7, bodyD);
+  pm.line(58, 14, 55, 7, body);
+  pm.line(59, 14, 56, 8, bodyD);
+  pm.ellipse(71, 4, 4, 4, px(RAMP.PAPER, 3));
+  pm.ellipse(55, 5, 4, 4, px(RAMP.PAPER, 3));
+  pm.rect(71, 4, 2, 3, C.outline);
+  pm.rect(55, 5, 2, 3, C.outline);
+  pm.set(70, 3, px(RAMP.PAPER, 3));
+  pm.set(54, 4, px(RAMP.PAPER, 3));
+  // the DELUXE part: a proper little crown between the stalks
+  pm.rect(59, 9, 10, 4, px(RAMP.GOLD, 2));
+  pm.hline(59, 12, 10, px(RAMP.GOLD, 1));
+  pm.set(59, 8, px(RAMP.GOLD, 2));
+  pm.set(62, 7, px(RAMP.GOLD, 3));
+  pm.set(65, 8, px(RAMP.GOLD, 2));
+  pm.set(68, 7, px(RAMP.GOLD, 3));
+  pm.set(63, 10, px(RAMP.RED, 2)); // one inset ruby
+  // breathing pore (it's working hard)
+  pm.ellipse(48, 34, 2, 1, bodyD);
+  // back racing spots
+  pm.ellipse(24, 32, 3, 2, px(RAMP.FOREST, 2));
+  pm.ellipse(36, 27, 2, 2, px(RAMP.FOREST, 2));
+  pm.ellipse(30, 40, 2, 1, px(RAMP.FOREST, 2));
   pm.outline(C.outline);
   return pm;
 }
 
-/** BOSS 1 — THE TITANIC TICK (GAME_BIBLE §A6 Ch.1) */
+/** BOSS 1 — THE TITANIC TICK (GAME_BIBLE §A6 Ch.1). It must read as a BOSS:
+ *  a looming engorged dome that fills the frame, vibe-glow veins, hooked
+ *  graspers raised at the camera. The dome contour and every plate are
+ *  hand-authored runs (ADR-020) — no ellipse stacking, no scatter noise. */
 export function drawTitanicTick(): Pixmap {
-  const pm = new Pixmap(88, 64);
+  const pm = new Pixmap(96, 84);
   const shell = px(RAMP.EARTH, 1);
   const shellL = px(RAMP.EARTH, 2);
+  const shellLL = px(RAMP.EARTH, 3);
   const shellD = px(RAMP.EARTH, 0);
-  const rng = mulberry32(0x71c4);
-  // colossal abdomen
-  pm.ellipse(36, 32, 26, 20, shell);
-  pm.ellipse(32, 28, 18, 12, shellL);
-  // mottled back pattern
-  pm.scatter(rng, 16, 16, 40, 26, shellD, 90);
-  pm.ellipse(36, 18, 10, 4, shellD);
-  // head plate
-  pm.ellipse(66, 30, 12, 10, shellD);
-  pm.ellipse(66, 28, 9, 7, shell);
-  // mean little eyes
-  pm.rect(62, 24, 3, 3, px(RAMP.RED, 2));
-  pm.rect(70, 24, 3, 3, px(RAMP.RED, 2));
-  pm.set(63, 25, px(RAMP.RED, 3));
-  pm.set(71, 25, px(RAMP.RED, 3));
-  // mandibles
-  pm.line(74, 34, 82, 38, shellD);
-  pm.line(75, 33, 83, 35, shellD);
-  pm.line(74, 36, 81, 42, shellD);
-  pm.set(83, 36, C.outline);
-  pm.set(82, 42, C.outline);
-  // 8 legs, hooked
-  const legPairs: Array<[number, number, number, number]> = [
-    [20, 48, 12, 58],
-    [30, 50, 26, 60],
-    [42, 50, 42, 61],
-    [54, 48, 60, 58],
-  ];
-  for (const [x0, y0, x1, y1] of legPairs) {
+  // 8 legs first (so the dome overlaps them), hooked and braced
+  const leg = (x0: number, y0: number, x1: number, y1: number, hook: 1 | -1): void => {
     pm.line(x0, y0, x1, y1, shellD);
-    pm.line(x0 + 1, y0, x1 + 1, y1, shellD);
-    pm.set(x1, y1 + 1, C.outline);
+    pm.line(x0 + 1, y0, x1 + 1, y1, shell);
+    pm.line(x1, y1, x1 + 3 * hook, y1 + 4, shellD);
+    pm.set(x1 + 4 * hook, y1 + 5, C.outline); // the hook tip
+  };
+  leg(20, 52, 6, 64, -1);
+  leg(24, 58, 12, 70, -1);
+  leg(34, 62, 28, 74, -1);
+  leg(72, 52, 88, 64, 1);
+  leg(70, 58, 82, 70, 1);
+  leg(60, 62, 66, 74, 1);
+
+  // THE DOME — one hand-set contour, top at y=8. Run steps ease 6-5-3-2-1
+  // like a drawn curve, hold the wide belly, then tuck in above the head.
+  const DOME: number[] = [
+    9, 15, 20, 24, 27, 30, 32, 34, 35, 36, 37, 38, 38, 39, 39, 39,
+    39, 39, 39, 39, 39, 38, 38, 38, 37, 37, 36, 36, 35, 35, 34, 33,
+    33, 32, 31, 30, 29, 28, 26, 25, 23, 21, 19, 17, 14, 11, 8, 5,
+  ];
+  pm.contour(47, 8, DOME, shell);
+  // tone zones: lit crown third (offset up-left), shaded eaves of the shell
+  const LIT: number[] = [7, 13, 17, 20, 23, 25, 27, 28, 29, 30, 30, 30, 29, 28, 26, 24, 21, 17, 12, 6];
+  pm.contour(42, 10, LIT, shellL);
+  const SHINE: number[] = [5, 9, 12, 14, 15, 15, 14, 12, 9, 5];
+  pm.contour(35, 13, SHINE, shellLL); // taut highlight — it is FULL
+  // belly shade: the underside curve, hand-run
+  for (let i = 0; i < 10; i++) {
+    const hw = DOME[38 + i] - 1;
+    if (hw > 0) pm.hline(47 - hw, 8 + 38 + i, hw * 2 + 2, i % 3 === 2 ? shell : shellD);
   }
-  pm.line(24, 20, 14, 10, shellD); // front graspers
-  pm.line(25, 21, 16, 12, shellD);
-  // engorged glow — it has been drinking the hill's vibe
-  pm.set(30, 30, px(RAMP.MAGENTA, 2));
-  pm.set(38, 34, px(RAMP.MAGENTA, 2));
-  pm.set(34, 38, px(RAMP.MAGENTA, 1));
+  // dorsal plates: five deliberate arcs, two broken — drawn, not generated
+  pm.hline(34, 22, 9, shellD);
+  pm.hline(46, 23, 7, shellD);
+  pm.hline(58, 22, 6, shellD);
+  pm.hline(28, 32, 12, shellD);
+  pm.hline(44, 33, 14, shellD);
+  pm.hline(62, 31, 9, shellD);
+  pm.hline(35, 43, 10, shellD);
+  pm.hline(50, 44, 12, shellD);
+  // a few freckle clusters along the plates (pairs, never lone pixels)
+  pm.hline(38, 26, 2, shellD);
+  pm.hline(55, 27, 2, shellD);
+  pm.hline(31, 37, 2, shellD);
+  pm.hline(60, 38, 2, shellD);
+  pm.hline(46, 49, 2, shellD);
+  pm.hline(52, 18, 2, shellL); // and two catching the light
+  pm.hline(43, 15, 2, shellLL);
+  // festoons: the ridged rim segments every tick has, following the contour
+  for (const [fx, fy] of [
+    [12, 46],
+    [18, 52],
+    [26, 57],
+    [68, 57],
+    [76, 52],
+    [82, 46],
+  ] as const) {
+    pm.vline(fx, fy, 3, shellD);
+    pm.vline(fx + 1, fy + 1, 2, shellD);
+  }
+  // VIBE-GLOW VEINS — it has been drinking the hill (the magenta is the tell)
+  const vein = px(RAMP.MAGENTA, 2);
+  const veinL = px(RAMP.MAGENTA, 3);
+  pm.line(36, 34, 44, 42, vein);
+  pm.line(44, 42, 52, 40, vein);
+  pm.line(50, 30, 56, 38, vein);
+  pm.line(30, 40, 38, 46, vein);
+  pm.set(44, 42, veinL);
+  pm.set(52, 40, veinL);
+  pm.set(36, 34, veinL);
+  pm.hline(45, 40, 4, vein); // the feeding blush
+  pm.hline(44, 41, 5, vein);
+  pm.set(46, 40, veinL);
+  // head plate, small and mean, low center — hand-contoured
+  const HEAD: number[] = [8, 11, 13, 14, 15, 15, 15, 14, 13, 11, 8];
+  pm.contour(48, 55, HEAD, shellD);
+  const HEADTOP: number[] = [7, 10, 11, 12, 12, 11, 9, 6];
+  pm.contour(48, 56, HEADTOP, shell);
+  pm.hline(42, 57, 5, shellL); // brow ridge catches the light
+  pm.hline(50, 57, 5, shellL);
+  // compound eyes — red, four of them, why not. The face anchors the boss.
+  pm.rect(39, 58, 5, 5, px(RAMP.RED, 2));
+  pm.rect(53, 58, 5, 5, px(RAMP.RED, 2));
+  pm.set(40, 59, px(RAMP.RED, 3)); // catchlights
+  pm.set(54, 59, px(RAMP.RED, 3));
+  pm.hline(40, 62, 3, px(RAMP.RED, 1));
+  pm.hline(54, 62, 3, px(RAMP.RED, 1));
+  pm.rect(45, 55, 2, 2, px(RAMP.RED, 1)); // the small dorsal pair
+  pm.rect(50, 55, 2, 2, px(RAMP.RED, 1));
+  // mandibles, open, hanging off the head plate
+  pm.line(43, 65, 37, 75, shellD);
+  pm.line(44, 66, 39, 75, shell);
+  pm.line(53, 65, 59, 75, shellD);
+  pm.line(52, 66, 57, 75, shell);
+  pm.set(37, 76, C.outline);
+  pm.set(59, 76, C.outline);
+  pm.hline(45, 64, 7, shellD); // mouth seam
+  // front graspers raised AT YOU
+  pm.line(26, 48, 10, 34, shellD);
+  pm.line(27, 49, 12, 36, shell);
+  pm.line(10, 34, 6, 26, shellD);
+  pm.set(5, 24, C.outline);
+  pm.set(6, 25, C.outline);
+  pm.line(70, 48, 86, 34, shellD);
+  pm.line(69, 49, 84, 36, shell);
+  pm.line(86, 34, 90, 26, shellD);
+  pm.set(91, 24, C.outline);
+  pm.set(90, 25, C.outline);
   pm.outline(C.outline);
   return pm;
 }
 
 /* ---------------------------------------------------------------- */
-/* Overworld minis (16×16 roamers)                                    */
+/* Overworld minis (16×16 roamers) — outlined, one-glance silhouettes */
 
 export function drawCicadaMini(): Pixmap {
   const pm = new Pixmap(16, 16);
   const shell = px(RAMP.FOREST, 2);
-  pm.ellipse(6, 9, 4, 3, shell);
+  pm.ellipse(6, 10, 5, 4, shell);
+  pm.ellipse(6, 10, 3, 2, px(RAMP.FOREST, 1)); // the coil
+  pm.set(6, 10, shell);
   pm.ellipse(11, 7, 3, 3, px(RAMP.FOREST, 3));
-  pm.set(13, 5, px(RAMP.RED, 2));
-  pm.line(8, 5, 3, 2, px(RAMP.CYAN, 3));
-  pm.line(9, 6, 5, 4, px(RAMP.CYAN, 2));
-  pm.line(6, 12, 4, 14, px(RAMP.FOREST, 1));
-  pm.line(9, 12, 9, 14, px(RAMP.FOREST, 1));
+  pm.set(13, 5, px(RAMP.RED, 2)); // red eye
+  pm.set(14, 6, px(RAMP.RED, 3));
+  pm.line(8, 4, 3, 1, px(RAMP.CYAN, 3)); // wings
+  pm.line(9, 5, 4, 3, px(RAMP.CYAN, 2));
+  pm.line(6, 13, 4, 15, px(RAMP.FOREST, 1));
+  pm.line(9, 13, 9, 15, px(RAMP.FOREST, 1));
   pm.outline(C.outline);
   return pm;
 }
@@ -299,13 +558,17 @@ export function drawCicadaMini(): Pixmap {
 export function drawSlugMini(): Pixmap {
   const pm = new Pixmap(16, 16);
   const body = px(RAMP.GRASS, 1);
-  pm.ellipse(7, 11, 6, 3, body);
+  pm.ellipse(7, 11, 6, 4, body);
+  pm.ellipse(6, 12, 4, 2, px(RAMP.GRASS, 2));
+  pm.hline(3, 14, 9, px(RAMP.GRASS, 3)); // belly foot
   pm.ellipse(12, 8, 3, 3, px(RAMP.GRASS, 2));
-  pm.set(13, 4, C.white);
-  pm.set(11, 4, C.white);
+  pm.set(13, 4, px(RAMP.PAPER, 3)); // eyes
+  pm.set(11, 4, px(RAMP.PAPER, 3));
   pm.vline(13, 5, 2, body);
   pm.vline(11, 5, 2, body);
-  pm.set(12, 3, px(RAMP.GOLD, 2)); // crumb of a crown
+  pm.hline(11, 3, 3, px(RAMP.GOLD, 2)); // crumb of a crown
+  pm.set(12, 2, px(RAMP.GOLD, 3));
+  pm.set(2, 14, px(RAMP.CYAN, 3)); // slime glint
   pm.outline(C.outline);
   return pm;
 }
@@ -315,14 +578,17 @@ export function drawMailboxMini(): Pixmap {
   const blue = px(RAMP.BLUE, 2);
   pm.rect(3, 3, 10, 7, blue);
   pm.hline(4, 2, 8, px(RAMP.BLUE, 3));
-  pm.rect(5, 5, 2, 2, C.white);
-  pm.rect(9, 5, 2, 2, C.white);
-  pm.set(5, 6, C.outline);
-  pm.set(9, 6, C.outline);
-  pm.rect(5, 8, 6, 1, C.outline);
-  pm.set(13, 2, px(RAMP.RED, 2));
+  pm.vline(3, 3, 7, px(RAMP.BLUE, 3));
+  pm.vline(12, 3, 7, px(RAMP.BLUE, 1));
+  pm.rect(5, 4, 2, 3, px(RAMP.PAPER, 3)); // glaring whites
+  pm.rect(9, 4, 2, 3, px(RAMP.PAPER, 3));
+  pm.set(5, 5, C.outline);
+  pm.set(9, 5, C.outline);
+  pm.rect(5, 8, 6, 1, C.outline); // slot scowl
+  pm.set(13, 2, px(RAMP.RED, 2)); // flag
   pm.vline(13, 2, 4, px(RAMP.RED, 1));
   pm.rect(6, 10, 3, 7, px(RAMP.EARTH, 1));
+  pm.vline(6, 10, 7, px(RAMP.EARTH, 2));
   pm.outline(C.outline);
   return pm;
 }
@@ -331,11 +597,16 @@ export function drawMowerMini(): Pixmap {
   const pm = new Pixmap(16, 16);
   const red = px(RAMP.RED, 2);
   pm.rect(2, 7, 9, 4, red);
-  pm.rect(4, 4, 5, 3, px(RAMP.PAPER, 1));
-  pm.set(6, 5, C.outline);
+  pm.hline(2, 7, 9, px(RAMP.RED, 3));
+  pm.rect(4, 4, 5, 3, px(RAMP.PAPER, 2));
+  pm.set(6, 5, C.outline); // the eye
+  pm.set(7, 5, px(RAMP.PAPER, 3));
+  pm.hline(3, 9, 5, px(RAMP.PAPER, 3)); // grille teeth
   pm.line(11, 7, 14, 3, px(RAMP.PAPER, 0));
+  pm.set(14, 2, px(RAMP.PAPER, 1));
   pm.ellipse(4, 12, 2, 2, C.inkSoft);
   pm.ellipse(9, 12, 2, 2, C.inkSoft);
+  pm.set(4, 12, px(RAMP.PAPER, 2));
   pm.set(0, 6, px(RAMP.GRASS, 2));
   pm.set(1, 9, px(RAMP.GRASS, 3));
   pm.outline(C.outline);
@@ -344,15 +615,19 @@ export function drawMowerMini(): Pixmap {
 
 export function drawPigeonMini(): Pixmap {
   const pm = new Pixmap(16, 16);
-  const grey = px(RAMP.PAPER, 1);
-  pm.ellipse(7, 9, 4, 3, grey);
-  pm.ellipse(10, 5, 2, 2, grey);
-  pm.set(9, 6, px(RAMP.CYAN, 2));
-  pm.set(12, 5, px(RAMP.GOLD, 2));
-  pm.set(10, 4, C.outline);
-  pm.line(3, 9, 1, 10, px(RAMP.PAPER, 0));
-  pm.vline(6, 12, 2, px(RAMP.ORANGE, 2));
-  pm.vline(8, 12, 2, px(RAMP.ORANGE, 2));
+  const grey = px(RAMP.PAPER, 2);
+  pm.ellipse(7, 9, 5, 4, grey);
+  pm.ellipse(5, 8, 3, 2, px(RAMP.PAPER, 3));
+  pm.ellipse(10, 4, 2, 2, grey);
+  pm.set(9, 5, px(RAMP.CYAN, 2)); // neck sheen
+  pm.set(10, 6, px(RAMP.FOREST, 2));
+  pm.set(12, 4, px(RAMP.GOLD, 2)); // beak
+  pm.set(10, 3, C.outline); // eye
+  pm.rect(9, 1, 4, 2, px(RAMP.RED, 2)); // the boss's do-rag
+  pm.line(3, 9, 1, 11, px(RAMP.PAPER, 0)); // tail
+  pm.line(3, 10, 1, 12, px(RAMP.PAPER, 1));
+  pm.vline(6, 13, 2, px(RAMP.ORANGE, 2));
+  pm.vline(8, 13, 2, px(RAMP.ORANGE, 2));
   pm.outline(C.outline);
   return pm;
 }

@@ -22,11 +22,11 @@
 
 **The Quest.** The meteor shattered into **Eight Embers** that scattered along the Hush's path around the globe. Each Ember rests at a **Resonance Site** guarded by something the Hush has corrupted. When Rex holds the Locket at a Site, it records a **Heartlight** — one-eighth of the **Homesong**, the only frequency the Hush cannot devour. Collect all eight, ride a homemade rocket to Mars, and play the Homesong into the dark.
 
-**The Ending.** The Hush cannot be beaten by bats and bottle rockets alone. In the final battle, **FAYE PRAYS** — and every NPC the party helped across the world (every completed side quest) answers a ringing phone, one by one, and sends their Vibe to Mars. Friendship, family, and faith literally win the fight. Replay value = more side quests done = more callers = an easier final battle and extended credits.
+**The Ending.** The Hush cannot be beaten by bats and bottle rockets alone. In the final battle, **MIA PRAYS** — and every NPC the party helped across the world (every completed side quest) answers a ringing phone, one by one, and sends their Vibe to Mars. Friendship, family, and faith literally win the fight. Replay value = more side quests done = more callers = an easier final battle and extended credits.
 
 ## A3. The Four Heroes
 
-| | **REX** | **FAYE** | **MILO** | **DORIN** |
+| | **REX** | **MIA** | **MILO** | **DORIN** |
 |---|---|---|---|---|
 | Archetype | Ness — silent psychic hero | Paula — psychic + **Pray** | Jeff — gadget genius, no Vibe | Poo — monastery martial artist |
 | Age / Home | 12, Otterbrook, USA | 11, Brickton, USA | 12, Wintermoor Academy, England | 13, Stone Brow Monastery, Romania |
@@ -37,16 +37,20 @@
 
 **Stats:** Offense, Defense, Speed, Guts (crit % + chance to survive mortal blow at 1 HP), Vibe (power of Vibe abilities), Luck. HP/PP grow per level via per-character growth curves (defined in A9 balancing tables).
 
-### Faye's PRAY — the high-variance faith mechanic (canon, do not change)
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-023: the second hero, formerly
+> Faye, is canonically named **MIA**. Internal engine ids stay `faye` — saves,
+> flags like `faye_joined`, and dialogue keys are frozen identifiers.)*
 
-Costs 0 PP. Rolls once per use on this table (weights shift +5% toward better tiers every 15 levels of Faye, and Guts adds ±1% per 10 Guts):
+### Mia's PRAY — the high-variance faith mechanic (canon, do not change)
+
+Costs 0 PP. Rolls once per use on this table (weights shift +5% toward better tiers every 15 levels of Mia, and Guts adds ±1% per 10 Guts):
 
 | Roll | Tier | Effect |
 |---|---|---|
 | 10% | **Miraculous** | Full party HP+PP restore AND heavy holy damage to all enemies |
 | 20% | **Wonderful** | Big damage to all enemies OR big party heal (whichever is more needed) |
 | 30% | **Good** | Moderate heal to party or moderate damage to all enemies |
-| 25% | **Nothing** | "Faye prayed with all her heart... but nothing happened." |
+| 25% | **Nothing** | "Mia prayed with all her heart... but nothing happened." |
 | 10% | **Strange** | Random status effect on a random combatant — *including allies* |
 | 5% | **Backfire** | Soft light flares; party takes small damage or one ally dozes off |
 
@@ -55,7 +59,7 @@ In the final battle, Pray becomes **scripted** (see A8, Chapter 8).
 ### Vibe ability unlock tables (abridged — full PP costs in data files, Prompt 9)
 
 - **Rex:** Vibe Surge α (L1) /β (L16) /γ (L31) /Ω (L47); Lifeup α/β/γ (L3/L20/L38); Shield α/Σ (L9/L33); Flash α (L24); Hypno α (L6); **Teleport α (L26, story-gated Ch.4) / Teleport β (Ch.6)**
-- **Faye:** Vibe Fire α–Ω (L1/15/29/44); Vibe Freeze α–Ω (L4/18/32/46); Vibe Volt α–γ (L10/26/40); Magnet α (L8); **Pray (L1)**
+- **Mia:** Vibe Fire α–Ω (L1/15/29/44); Vibe Freeze α–Ω (L4/18/32/46); Vibe Volt α–γ (L10/26/40); Magnet α (L8); **Pray (L1)**
 - **Dorin:** Vibe Comet α (joins) / Ω (L52); Vibe Freeze line shared; Mirror (joins); Brainjam α/Ω (L40/50); Healing α–γ
 - **Milo:** No Vibe. **Spy** (reveals enemy HP/weakness), **Repair** (turns Broken Gizmos found in the world into working battle items overnight when sleeping), Bottle Rocket tiers (single → Big → Multi)
 
@@ -92,7 +96,7 @@ The world FEELS open: every region has off-path screens, optional caves, side qu
 
 ### Chapter 1 — "The Night It Fell" (USA) — target end level: 8
 
-Tutorial-by-doing. Meteor crash, Glint's prophecy and death-by-bug-zapper, the neighbor kid **Chad Pickle** (Pokey analog) tags along then betrays you twice before lunch. Rex crosses Hickory Hill, takes the bus to **Brickton City**, and rescues **Faye** from the **Department of Smiles** — a cult of unsettlingly cheerful adults in blue blazers ("Have a PRODUCTIVE day!") who've been Hushed.
+Tutorial-by-doing. Meteor crash, Glint's prophecy and death-by-bug-zapper, the neighbor kid **Chad Pickle** (Pokey analog) tags along then betrays you twice before lunch. Rex crosses Hickory Hill, takes the bus to **Brickton City**, and rescues **Mia** from the **Department of Smiles** — a cult of unsettlingly cheerful adults in blue blazers ("Have a PRODUCTIVE day!") who've been Hushed.
 
 **Resonance Site:** Hickory Hill crater. **BOSS 1 — THE TITANIC TICK** (450 HP / latches onto a hero and drains HP each turn until hit with Vibe Fire or a thrown Salt Shaker).
 
@@ -118,7 +122,7 @@ Port city **Zanzibel** (best market music in the game), caravan escort across th
 
 **Chandrapore**: the game's biggest city — bazaars, river ghats, a cinema playing a movie *about your party* (nobody believes you're them). The Maharaja's palace has been usurped by his royal vivarium. Night-train heist sequence to recover the stolen Locket (story beat: brief item loss, 30 minutes max).
 
-**Resonance Site:** palace throne. **BOSS 5 — COBRA RAJA** (3,200 HP / Paralyzing gaze every 3rd turn — block with Shield Σ or Faye's Magnet; sheds skin once at 40% HP, restoring 800 — burn it down fast through the threshold).
+**Resonance Site:** palace throne. **BOSS 5 — COBRA RAJA** (3,200 HP / Paralyzing gaze every 3rd turn — block with Shield Σ or Mia's Magnet; sheds skin once at 40% HP, restoring 800 — burn it down fast through the threshold).
 
 ### Chapter 6 — "The Paper Dragon" (China) — target level: 37
 
@@ -130,7 +134,7 @@ Riverboat to **Lotus Harbor**, through the **Spore Forest** (Mushroomized status
 
 The emotional heart. **Valea Stelelor** ("Valley of the Stars") — painted gates, haystacks, a grandmother named **Buni** who feeds the party until their HP overflows and gives the **Feast Basket** recipe quest. A "vampire," **Count Hoaxula**, terrorizes the valley from his castle — he's actually a Hushed theme-park actor from Cleveland whose haunted-castle attraction went bankrupt, now armed with very real stolen Vibe. Meanwhile Rex's group is summoned up the mountain: **Dorin** completes the **Trial of the Mute Mountain** at Stone Brow Monastery (playable solo sequence: Dorin meditates while the mountain "deletes" his senses one by one — screen goes dark, then silent, then UI vanishes — until he releases his fear) and **joins the party**.
 
-**Resonance Site:** monastery bell tower. **BOSS 7 — COUNT HOAXULA** (5,300 HP / two phases: Theatrical phase — fake spells, real damage, steals one equipped item (returned on win); Unmasked phase at 50% — sobbing Cleveland accent, attacks become wild AoE; Faye's Pray "Good" tier or better instantly ends his second phase in mercy — the game's quietest victory).
+**Resonance Site:** monastery bell tower. **BOSS 7 — COUNT HOAXULA** (5,300 HP / two phases: Theatrical phase — fake spells, real damage, steals one equipped item (returned on win); Unmasked phase at 50% — sobbing Cleveland accent, attacks become wild AoE; Mia's Pray "Good" tier or better instantly ends his second phase in mercy — the game's quietest victory).
 
 ### Chapter 8 — "The Long Shot" (Alaska → Hawaii → MARS) — target level: 52–55+
 
@@ -142,7 +146,7 @@ The Locket holds 7 Embers; the 8th never landed on Earth. **Aurora Station, Alas
 
 1. **The Static:** a normal-looking fight against its shell (6,000 HP) — beatable conventionally.
 2. **The Quiet:** attacks "cannot be grasped." Damage does almost nothing. The UI itself glitches. Survival turns.
-3. **THE CALLING:** **PRAY appears as Faye's only command.** Each scripted Pray makes a phone ring somewhere on Earth — and *every side-quest NPC you helped* answers, sends their Vibe, and deals massive scripted damage (base allies: Mom, Dad, Buni, Pemberton, Chad Pickle — yes, even Chad). More side quests completed = more callers = fewer survival rounds. Final Pray: the player is asked to **say the player-name they entered at the start** (text confirm), the Homesong plays in full, and the Hush — for the first time — hears something it cannot eat.
+3. **THE CALLING:** **PRAY appears as Mia's only command.** Each scripted Pray makes a phone ring somewhere on Earth — and *every side-quest NPC you helped* answers, sends their Vibe, and deals massive scripted damage (base allies: Mom, Dad, Buni, Pemberton, Chad Pickle — yes, even Chad). More side quests completed = more callers = fewer survival rounds. Final Pray: the player is asked to **say the player-name they entered at the start** (text confirm), the Homesong plays in full, and the Hush — for the first time — hears something it cannot eat.
 
 ## A7. Enemy Roster (48 standard enemies — canon names/stats; full movesets in data files, Prompt 10)
 
@@ -161,7 +165,7 @@ Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one
 
 ## A8. Items (canon catalog — ~90 items; full prices/stats in data files, Prompt 10)
 
-**Weapons** — Rex's bats: Cracked → T-Ball → Sandlot Slugger → Aluminum → Hall-of-Famer → *Casey's Last Swing* (Ch.8 drop). Faye's pans: Hand-Me-Down → Copper → Cast-Iron → Chef's → *The Holy Pan*. Milo's guns: Pellet Popper → Spud Gun → Double-Barrel Sparker → *Gauss Lobber*; Bottle Rocket / Big / Multi (consumables). Dorin: Cedar Beads → River Beads → *Comet Bead* (1/128 drop, Null Walker — the chase chase).
+**Weapons** — Rex's bats: Cracked → T-Ball → Sandlot Slugger → Aluminum → Hall-of-Famer → *Casey's Last Swing* (Ch.8 drop). Mia's pans: Hand-Me-Down → Copper → Cast-Iron → Chef's → *The Holy Pan*. Milo's guns: Pellet Popper → Spud Gun → Double-Barrel Sparker → *Gauss Lobber*; Bottle Rocket / Big / Multi (consumables). Dorin: Cedar Beads → River Beads → *Comet Bead* (1/128 drop, Null Walker — the chase chase).
 
 **Armor:** regional hats (Otterbrook Cap → Cricket Cap → Turban of Calm → Paper Crown → Cushma → Fur-Lined Hood), bracelets, pendants (elemental resists), *Star Pendant* (Ch.7).
 
@@ -223,7 +227,7 @@ Plus **Mr. Click**, a photographer who ambushes the party for a photo 12 times w
 | Maps | **Tiled** (.tmj JSON), 16×16 tiles @ 3× zoom, landscape 16:9 | EarthBound-scale readability on a phone |
 | State | Plain TS game-state singleton + event bus (no React) | Phaser scenes own rendering; state stays serializable for saves |
 | Saves | **IndexedDB** via `idb`, 3 slots + 1 rolling auto-backup, versioned schema with migrations | Survives app updates; localStorage fallback |
-| Content | **100% data-driven JSON** in `/src/data` (enemies, items, abilities, shops, dialogue, quests, encounter tables) validated by **Zod** schemas at build time | "No mock data" enforced by CI: a script fails the build if any entity in the Bible is missing |
+| Content | **100% data-driven** in `/src/data` (enemies, items, abilities, shops, dialogue, quests, encounter tables) validated by **Zod** schemas at build time — authored as typed TS modules whose types are `z.infer`'d from `src/schemas`, not JSON files; the Tiled loader will parse its JSON through the same schemas *(amended 2026-06-10 per Appendix rule 6, ADR-004/ADR-017)* | "No mock data" enforced by CI: `tools/content-validate.ts` fails the build if any entity in the Bible is missing |
 | Audio | OGG music + SFX, generated in-repo (see B3), played via Phaser sound, ducking system for jingles | |
 | Art | CC0 16-bit asset packs + AI-generated sprites unified by a **64-color master palette** and an `npm run art:check` palette-conformance script (see B3) | Easiest path to production quality |
 | Input | Virtual D-pad + A/B/Start overlay **and** Gamepad API (auto-hides touch UI when a controller connects) | Your requirement #3 |
@@ -475,7 +479,7 @@ an animated psychedelic background (build 4 shader patterns now: scrolling
 sine plasma, kaleidoscope, slow vortex, Hush static; assignable per enemy),
 party status strip along the bottom (name, HP, PP boxes). Turn engine:
 speed-ordered round system, command menu per hero (Bash/Vibe/Goods/Defend/
-Pray for Faye/Spy for Milo/Run), target selection, enemy AI executing data-
+Pray for Mia/Spy for Milo/Run), target selection, enemy AI executing data-
 driven movesets, multi-enemy groups w/ EB naming ("Coily Cicada A and its
 cousin B drew near!"). Run chance = EB formula on speed differential.
 ```
@@ -609,7 +613,7 @@ and Pizza-to-Go gated by story flags later).
 ```
 [Standard Header]
 Implement the New Game sequence: EB-style name-entry screens for the four
-heroes (pre-filled Rex/Faye/Milo/Dorin, editable, on-screen keyboard +
+heroes (pre-filled Rex/Mia/Milo/Dorin, editable, on-screen keyboard +
 controller grid), the player's own name (used by the finale per §A6 Ch.8),
 favorite food, and coolest thing. Don't-care button randomizes from canon-
 flavored lists. All values flow into dialogue variables from Prompt 6.
@@ -676,7 +680,7 @@ Implement hospitals in every town: pay-to-revive angels (price scales by
 level), cure all statuses, the doctor's one weird line each. Add small
 chapels in Otterbrook, Valle Dorado, and Valea Stelelor where a free prayer
 restores 50 HP party-wide and (flavor, not mechanics) the priest comments on
-Faye's gift warmly per §A11.4. Mushroomize curable only at doctors per §A4.8.
+Mia's gift warmly per §A11.4. Mushroomize curable only at doctors per §A4.8.
 ```
 
 **Done when:** angels → humans at the front desk; wallet appropriately lighter.
@@ -714,9 +718,9 @@ crater Resonance Site, the bus interior cutscene map, Brickton City block,
 Department of Smiles office dungeon (3 floors).
 STORY: full dialogue (write it NOW, §A11 voice) for: 2AM wake-up, crater
 scene, Glint's prophecy + bug-zapper death, Chad Pickle's two betrayals,
-meeting Faye in the Smiles holding room, BOSS: THE TITANIC TICK at the
+meeting Mia in the Smiles holding room, BOSS: THE TITANIC TICK at the
 crater with its §A6 gimmick, first Ember + Heartlight scene (locket plays
-stem 1), Faye joins.
+stem 1), Mia joins.
 SYSTEMS USED: everything from Phases 1–5 — first phone tutorialized by Mom
 calling YOU. Populate §A7 Ch.1 enemies via encounter tables, Ch.1 shops,
 quests #1–4 fully playable, 3 picnic tables placed per §A4.5.

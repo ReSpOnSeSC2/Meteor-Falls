@@ -1,37 +1,28 @@
 /**
  * Item catalog — the Chapter 1 slice of GAME_BIBLE §A8.
- * Weapons carry a wielder tag (§A8: bats are Rex's line, pans are Faye's).
+ * Weapons carry a wielder tag (§A8: bats are Rex's line, pans are Mia's).
+ * Types are z.infer'd from src/schemas (S5) — compile shape ≡ runtime schema;
+ * the kind 'pp' ⇔ ppHeal pairing (ADR-016) is a schema refinement.
  */
-import type { HeroId } from './heroes';
+import type { EquipSlot, ItemDef } from '../schemas';
 
-/** equipment slots per Prompt 19 (weapon/body/arms/other) */
-export type EquipSlot = 'weapon' | 'body' | 'arms' | 'other';
+export type { EquipSlot, ItemDef } from '../schemas';
+
+/** equipment slots per Prompt 19 — typed by the schema enum, so a slot added
+ *  there must be added here too (and vice versa fails to compile) */
 export const EQUIP_SLOTS: EquipSlot[] = ['weapon', 'body', 'arms', 'other'];
 
 /** EB hands-full rule: every hero's bag holds 14 items (Prompt 19) */
 export const BAG_MAX = 14;
 
-export interface ItemDef {
-  id: string;
-  name: string;
-  kind: 'weapon' | 'food' | 'cure' | 'battle' | 'key';
-  heal?: number;
-  offense?: number;
-  /** §A8 weapon lines are personal — only this hero can equip it */
-  wielder?: HeroId;
-  /** battle item damage */
-  power?: number;
-  /** breaks the Tick's latch (§A6 Boss 1 gimmick) */
-  breaksLatch?: boolean;
-  cures?: string[];
-  usableInBattle: boolean;
-  price: number;
-  text: string;
-}
-
 /** which equip slot an item occupies, if any (armor kinds land in Phase 2+) */
 export function slotOf(item: ItemDef): EquipSlot | null {
   return item.kind === 'weapon' ? 'weapon' : null;
+}
+
+/** Prompt 20: shops buy at half. Price-0 items (sparks, key items) don't sell. */
+export function sellPrice(item: ItemDef): number {
+  return Math.floor(item.price / 2);
 }
 
 const I = (i: ItemDef): ItemDef => i;
@@ -104,6 +95,15 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: true,
       price: 10,
       text: 'Devastating against slugs, ticks, and unseasoned fries.',
+    }),
+    I({
+      id: 'star_cola',
+      name: 'Star Cola',
+      kind: 'pp',
+      ppHeal: 12,
+      usableInBattle: true,
+      price: 9,
+      text: 'Cold cosmic fizz. Restores about 12 PP. The burp comes out as a chord.',
     }),
     I({
       id: 'glints_spark',

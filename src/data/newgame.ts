@@ -50,6 +50,7 @@ export const NEW_GAME_ENTRIES: NewGameEntry[] = [
     prompt: 'The girl who prays. Her name?',
     prefill: HEROES.faye.name,
     cap: NAME_CAP,
+    // 'Faye' stays as a pickable alternate — she was almost named that
     dontCare: ['Faye', 'Wren', 'June', 'Pearl', 'Ember', 'Vesper', 'Hope', 'Lark'],
   },
   {

@@ -1,81 +1,20 @@
 /**
- * Map data integrity — every reference a MapDef makes must resolve.
- * (Prompt S5 turns these checks into the full zod content validator.)
+ * Map BEHAVIOR and structure — the ADR-012 city sweep, carveHoldingRoom, the
+ * S4 doorstep derivation, and canon scene wiring. Pure existence and
+ * cross-reference checks (legend chars, tile names, door targets, dialogue
+ * ids, enemy ids) moved to tools/content-validate.ts (S5) — `npm run
+ * validate` owns them now.
  */
 import { describe, expect, it } from 'vitest';
 import {
-  CHAR_LEGEND,
   MAPS,
   HOLDING_ROOM,
   HOLDING_DOOR_GAP,
   carveHoldingRoom,
   type MapDef,
 } from './maps';
-import { DIALOGUE } from './dialogue';
-import { ENEMIES } from './enemies';
-import { TILESET, tileIndexByName } from '../spritegen/tiles';
 
 const maps = Object.values(MAPS);
-
-describe('map grids', () => {
-  it('rows are uniform width and every char is in the legend', () => {
-    for (const m of maps) {
-      const w = m.grid[0].length;
-      for (const row of m.grid) {
-        expect(row.length, `${m.id} row width`).toBe(w);
-        for (const ch of row) {
-          if (ch === ':') continue; // path tiles are auto-edged variants
-          expect(CHAR_LEGEND[ch], `${m.id} unknown grid char "${ch}"`).toBeDefined();
-        }
-      }
-    }
-  });
-
-  it('every legend entry resolves to a real tile', () => {
-    for (const name of Object.values(CHAR_LEGEND)) {
-      expect(() => tileIndexByName(name)).not.toThrow();
-    }
-    expect(TILESET.length).toBeGreaterThan(0);
-  });
-});
-
-describe('map references', () => {
-  it('door zones and prop doors lead to maps that exist', () => {
-    for (const m of maps) {
-      for (const d of m.doors) {
-        expect(MAPS[d.to], `${m.id} door -> ${d.to}`).toBeDefined();
-      }
-      for (const p of m.props) {
-        if (p.door) expect(MAPS[p.door.to], `${m.id} prop door -> ${p.door.to}`).toBeDefined();
-      }
-    }
-  });
-
-  it('npc and sign dialogue ids exist', () => {
-    for (const m of maps) {
-      for (const n of m.npcs) {
-        expect(DIALOGUE[n.dialogue], `${m.id} npc ${n.id} -> ${n.dialogue}`).toBeDefined();
-      }
-      for (const s of m.signs) {
-        expect(DIALOGUE[s.dialogue], `${m.id} sign -> ${s.dialogue}`).toBeDefined();
-      }
-    }
-  });
-
-  it('spawner and patrol enemies exist; patrols can walk', () => {
-    for (const m of maps) {
-      for (const sp of m.spawners) {
-        for (const id of sp.enemies) expect(ENEMIES[id], `${m.id} spawner -> ${id}`).toBeDefined();
-      }
-      for (const p of m.patrols ?? []) {
-        const def = ENEMIES[p.enemy];
-        expect(def, `${m.id} patrol -> ${p.enemy}`).toBeDefined();
-        expect(p.route.length, `${m.id} patrol ${p.id} route`).toBeGreaterThan(0);
-        expect(def.walker ?? def.mini, `${m.id} patrol ${p.id} sprite`).toBeDefined();
-      }
-    }
-  });
-});
 
 describe('S1 canon (GAME_BIBLE §A6/§A7/§A4.5, prompt S1)', () => {
   it('Brickton has 4+ NPCs, payphone, and Smilers + Pigeon Gang on the streets', () => {
@@ -180,16 +119,61 @@ describe('S1 canon — the Department & the 6:15', () => {
   });
 });
 
-describe('S2 canon — the PRODUCTIVITY LOCK, Faye, and the chapter button (§A6, ADR-014)', () => {
-  const f3 = MAPS.dos_f3;
-
-  it('the three floor-3 patrols carry distinct quota countFlags (stable ids, ADR-011)', () => {
-    const patrols = f3.patrols ?? [];
-    expect(patrols.map((p) => p.id).sort()).toEqual(['f3a', 'f3b', 'f3c']);
-    const flags = patrols.map((p) => p.countFlag);
-    expect(flags.every((f) => typeof f === 'string' && f.length > 0)).toBe(true);
-    expect(new Set(flags).size).toBe(3);
+describe('S4 canon — shops open, the bank grows an ATM (Prompt 20, ADR-016)', () => {
+  it('the drugstore and STARMART are real doors now', () => {
+    expect(MAPS.otterbrook.props.some((p) => p.sprite === 'drugstore' && p.door?.to === 'drugstore_int')).toBe(true);
+    expect(MAPS.brickton.props.some((p) => p.sprite === 'bldg_starmart' && p.door?.to === 'starmart_int')).toBe(true);
   });
+
+  it('shop exits derive their doorsteps from the (jittered) facades — computed, never hardcoded', () => {
+    const cases: Array<{ street: string; interior: string }> = [
+      { street: 'otterbrook', interior: 'drugstore_int' },
+      { street: 'brickton', interior: 'starmart_int' },
+    ];
+    for (const c of cases) {
+      const prop = MAPS[c.street].props.find((p) => p.door?.to === c.interior);
+      const d = prop?.door;
+      expect(prop && d, `${c.street} facade -> ${c.interior}`).toBeTruthy();
+      if (!prop || !d) continue;
+      const exit = MAPS[c.interior].doors.find((z) => z.to === c.street);
+      expect(exit, `${c.interior} exit`).toBeDefined();
+      expect(exit?.tx).toBe(prop.x * 16 + d.ox + d.w / 2);
+      expect(exit?.ty).toBe(prop.y * 16 + d.oy + d.h + 5);
+      // ADR-011: the facade's door zone reaches below its collision floor
+      const floor = prop.y * 16 + (prop.solid?.oy ?? 0) + (prop.solid?.h ?? 0);
+      expect(prop.y * 16 + d.oy + d.h, `${c.street} door zone under the floor`).toBeGreaterThan(floor);
+    }
+  });
+
+  it('each interior has a keeper who opens a shop, behind a counter', () => {
+    for (const id of ['drugstore_int', 'starmart_int']) {
+      const m = MAPS[id];
+      const keeper = m.npcs.find((n) => n.shop !== undefined);
+      expect(keeper, `${id} keeper`).toBeDefined();
+      expect(m.props.filter((p) => p.sprite === 'counter').length).toBeGreaterThanOrEqual(2);
+      expect(m.props.some((p) => p.sprite.startsWith('shelf'))).toBe(true);
+      expect(m.interior).toBe(true);
+    }
+  });
+
+  it('the ATM stands at the jittered SAVINGS & LOAN facade (and the bank stays locked)', () => {
+    const bank = MAPS.brickton.props.find((p) => p.sprite === 'bldg_bank');
+    expect(bank).toBeDefined();
+    const atms = MAPS.brickton.atms ?? [];
+    expect(atms.length).toBe(1);
+    // parked on the bank's storefront, not floating somewhere hardcoded
+    expect(atms[0].x).toBeGreaterThanOrEqual(bank?.x ?? 99);
+    expect(atms[0].x).toBeLessThanOrEqual((bank?.x ?? 0) + 6);
+    // the interaction point has a matching visible prop
+    expect(MAPS.brickton.props.some((p) => p.sprite === 'atm' && p.x === atms[0].x)).toBe(true);
+    // no door on the bank — it sleeps standing up
+    expect(bank?.door).toBeUndefined();
+  });
+});
+
+describe('S2 canon — the PRODUCTIVITY LOCK, Mia, and the chapter button (§A6, ADR-014)', () => {
+  const f3 = MAPS.dos_f3;
+  // (the three-distinct-countFlags rule is validator canon now, S5)
 
   it('the sealed holding room is solid wall; the carve opens floor + a doorway', () => {
     const { x, y, w, h } = HOLDING_ROOM;
@@ -215,7 +199,7 @@ describe('S2 canon — the PRODUCTIVITY LOCK, Faye, and the chapter button (§A6
     expect(f3.grid[y + 1][x + 1]).toBe('O');
   });
 
-  it('Faye waits inside, gated on the open room and gone once joined', () => {
+  it('Mia waits inside, gated on the open room and gone once joined', () => {
     const faye = f3.npcs.find((n) => n.id === 'faye');
     expect(faye).toBeDefined();
     expect(faye?.ifFlag).toBe('holding_open');

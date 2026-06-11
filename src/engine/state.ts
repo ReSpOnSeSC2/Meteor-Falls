@@ -2,19 +2,17 @@
  * GameState — the serializable heart of every save (GAME_BIBLE §B1).
  * Plain data + helpers; no Phaser imports so it unit-tests headlessly.
  * Save shape is VERSIONED — see engine/migrations.ts for the registry (S3).
+ * Persistence is the S6 slot family (engine/saves.ts): 3 slots + a rolling
+ * auto-backup behind a swappable SaveStorage driver (ADR-018).
  */
 import { HEROES, type HeroId, statsAtLevel, maxHpAtLevel, maxPpAtLevel } from '../data/heroes';
 import { ITEMS, slotOf, BAG_MAX, EQUIP_SLOTS, type EquipSlot } from '../data/items';
 import { migrateSave } from './migrations';
+import { SaveBank, SLOT_IDS, localStorageDriver, type OpenResult, type SlotId, type SlotPeek } from './saves';
+import type { Stats } from '../schemas';
 
-export interface Stats {
-  offense: number;
-  defense: number;
-  speed: number;
-  guts: number;
-  vibe: number;
-  luck: number;
-}
+// S5: Stats is z.infer'd from src/schemas — one shape for compile and runtime
+export type { Stats } from '../schemas';
 
 export interface HeroState {
   id: HeroId;
@@ -86,6 +84,21 @@ export function expForLevel(level: number): number {
   return Math.ceil((4 * level * level * level) / 3);
 }
 
+/** display name for any hero IN a given blob, joined or not (Prompt 21 names).
+ *  vars() resolves {rex} et al. through this so S6 slot summaries can render
+ *  against a slot's OWN blob instead of the loaded game's. */
+export function heroNameIn(data: GameStateData, id: HeroId): string {
+  return data.party.find((h) => h.id === id)?.name ?? data.heroNames[id];
+}
+
+/** §A4.7: where a party wipe wakes up — the last Dad-save's spot (S6) */
+export interface RespawnPoint {
+  mapId: string;
+  x: number;
+  y: number;
+  facing: GameStateData['facing'];
+}
+
 export function newGameData(): GameStateData {
   const rex = makeHeroState('rex', 1);
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
@@ -117,15 +130,26 @@ export function newGameData(): GameStateData {
   };
 }
 
-const SLOT_KEY = 'meteor-falls-slot-1';
-
 export type EquipResult = 'ok' | 'not-yours' | 'hands-full' | 'missing';
 
 class GameStateStore {
   data: GameStateData = newGameData();
+  /** S6: which slot Dad writes to — asked on his first save, then reused.
+   *  Runtime-only; the slot a save lives in is its storage key, never a field. */
+  activeSlot: SlotId | null = null;
+  /** swappable seam: tests inject a memory driver; §B1's IndexedDB arrives
+   *  as another SaveStorage implementation (ADR-018) */
+  bank = new SaveBank(localStorageDriver);
 
   reset(): void {
     this.data = newGameData();
+    this.activeSlot = null; // a fresh game gets Dad's "which notebook?" ask again
+  }
+
+  /** the §A4.3 playtime clock — pumped with real delta from the game loop
+   *  whenever the overworld is alive (S6); serialized fractional, shown H:MM */
+  tickPlaytime(sec: number): void {
+    this.data.playtimeSec += sec;
   }
 
   flag(name: string): number | boolean {
@@ -142,7 +166,7 @@ class GameStateStore {
 
   /** display name for any hero, joined or not (Prompt 21 names) */
   heroName(id: HeroId): string {
-    return this.hero(id)?.name ?? this.data.heroNames[id];
+    return heroNameIn(this.data, id);
   }
 
   /** Prompt 21: commit the New Game choices to state (party members rename too) */
@@ -201,7 +225,7 @@ class GameStateStore {
   /**
    * Prompt 19: equip from anyone's bag — the item moves into the equipper's
    * bag first (EB-style: equipped gear occupies a bag slot). Wielder tags
-   * are enforced (§A8: bats are Rex's, pans are Faye's).
+   * are enforced (§A8: bats are Rex's, pans are Mia's).
    */
   equipItem(heroId: HeroId, itemId: string): EquipResult {
     const hero = this.hero(heroId);
@@ -233,6 +257,24 @@ class GameStateStore {
     }
   }
 
+  /* ---------------- the ATM (S4 / Prompt 20) ---------------- */
+
+  /** move cash card → pocket; clamps to the balance, returns what moved */
+  withdraw(amount: number): number {
+    const a = Math.min(Math.max(0, Math.floor(amount)), this.data.banked);
+    this.data.banked -= a;
+    this.data.cashOnHand += a;
+    return a;
+  }
+
+  /** move cash pocket → card; clamps to what's on hand, returns what moved */
+  deposit(amount: number): number {
+    const a = Math.min(Math.max(0, Math.floor(amount)), this.data.cashOnHand);
+    this.data.cashOnHand -= a;
+    this.data.banked += a;
+    return a;
+  }
+
   /* ---------------- persistence ---------------- */
 
   serialize(): string {
@@ -244,31 +286,46 @@ class GameStateStore {
     this.data = migrateSave(JSON.parse(json), newGameData());
   }
 
-  save(): void {
-    try {
-      localStorage.setItem(SLOT_KEY, this.serialize());
-    } catch {
-      /* storage unavailable (private mode) — play on */
-    }
+  /** Dad writes the notebook; whatever it held rolls into the auto-backup (S6) */
+  saveTo(slot: SlotId): void {
+    this.activeSlot = slot;
+    this.bank.write(slot, this.serialize());
   }
 
-  hasSave(): boolean {
-    try {
-      return localStorage.getItem(SLOT_KEY) !== null;
-    } catch {
-      return false;
+  /** Continue: load a slot, falling back to the rolling backup on corruption.
+   *  'recovered' means the backup held — the caller plays Dad's apology. */
+  continueFrom(slot: SlotId): OpenResult['kind'] {
+    const out = this.bank.open(slot, newGameData());
+    if (out.kind === 'ok' || out.kind === 'recovered') {
+      this.data = out.data;
+      this.activeSlot = slot;
     }
+    return out.kind;
   }
 
-  load(): boolean {
-    try {
-      const json = localStorage.getItem(SLOT_KEY);
-      if (!json) return false;
-      this.deserialize(json);
-      return true;
-    } catch {
-      return false;
+  /** slot-list rows derived from the blobs — nothing here is stored twice */
+  slotPeeks(): SlotPeek[] {
+    return SLOT_IDS.map((s) => this.bank.peek(s, newGameData()));
+  }
+
+  anySave(): boolean {
+    return this.bank.any();
+  }
+
+  /**
+   * §A4.7: defeat (and S11's hospitals later) return the party to the last
+   * Dad-save's map/position — read back from the saved blob, never tracked
+   * in a second field. No save yet → Rex's house, ADR-014's interim respawn.
+   */
+  respawnPoint(): RespawnPoint {
+    if (this.activeSlot !== null) {
+      const peek = this.bank.peek(this.activeSlot, newGameData());
+      if (typeof peek !== 'string') {
+        const { map, x, y, facing } = peek.data;
+        return { mapId: map, x, y, facing };
+      }
     }
+    return { mapId: 'rex_home', x: 104, y: 124, facing: 'down' };
   }
 }
 

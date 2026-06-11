@@ -1,0 +1,421 @@
+/**
+ * Zod schemas — runtime mirrors of every content interface (GAME_BIBLE §B1,
+ * Prompt 8 / S5). The src/data modules infer their compile-time types FROM
+ * these schemas (z.infer), so static types and runtime validation cannot
+ * drift: adding a field here changes the data modules' types, and a data
+ * entry the schema rejects fails `npm run validate` (the first leg of
+ * `npm test`). The game itself never parses — data modules import these
+ * types with `import type`, so zod stays out of the shipped bundle.
+ *
+ * Cross-references BETWEEN collections (door targets, dialogue ids, enemy
+ * ids, stock ids…) live in tools/content-validate.ts, not here — a schema
+ * sees one entity at a time.
+ */
+import { z } from 'zod';
+
+/* ---------------- shared ---------------- */
+
+export const HeroIdSchema = z.enum(['rex', 'faye', 'milo', 'dorin']);
+export type HeroId = z.infer<typeof HeroIdSchema>;
+
+/** the six EB-DNA stats (§A3) */
+export const StatsSchema = z.strictObject({
+  offense: z.number().min(0),
+  defense: z.number().min(0),
+  speed: z.number().min(0),
+  guts: z.number().min(0),
+  vibe: z.number().min(0),
+  luck: z.number().min(0),
+});
+export type Stats = z.infer<typeof StatsSchema>;
+
+export const FacingSchema = z.enum(['down', 'left', 'right', 'up']);
+export type Facing = z.infer<typeof FacingSchema>;
+
+/* ---------------- heroes (§A3) ---------------- */
+
+/** HP/PP growth: base + lin·(L−1) + quad·(L−1)² */
+export const GrowthCurveSchema = z.strictObject({
+  base: z.number().min(0),
+  lin: z.number().min(0),
+  quad: z.number().min(0),
+});
+
+export const HeroDefSchema = z.strictObject({
+  id: HeroIdSchema,
+  name: z.string().min(1),
+  epithet: z.string().min(1),
+  weapon: z.string().min(1),
+  base: StatsSchema,
+  /** linear growth per level for each stat */
+  growth: StatsSchema,
+  hp: GrowthCurveSchema,
+  pp: GrowthCurveSchema,
+  unlocks: z.array(
+    z.strictObject({ level: z.number().int().min(1), ability: z.string().min(1) }),
+  ),
+});
+export type HeroDef = z.infer<typeof HeroDefSchema>;
+
+/** exhaustive by construction: a missing hero key fails the parse */
+export const HeroesSchema = z.record(HeroIdSchema, HeroDefSchema);
+
+/* ---------------- abilities + PRAY (§A3) ---------------- */
+
+export const AbilityKindSchema = z.enum(['vibe', 'gadget', 'pray', 'physical']);
+export type AbilityKind = z.infer<typeof AbilityKindSchema>;
+
+export const TargetModeSchema = z.enum(['enemy', 'enemies', 'ally', 'allies', 'self']);
+export type TargetMode = z.infer<typeof TargetModeSchema>;
+
+export const ElementSchema = z.enum(['fire', 'freeze', 'volt', 'holy', 'physical', 'none']);
+export type Element = z.infer<typeof ElementSchema>;
+
+export const AbilityDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  kind: AbilityKindSchema,
+  pp: z.number().min(0),
+  /** damage or heal base power (scaled by Vibe stat in formulas) */
+  power: z.number().min(0),
+  heal: z.boolean().optional(),
+  target: TargetModeSchema,
+  element: ElementSchema,
+  status: z.string().min(1).optional(),
+  text: z.string().min(1),
+});
+export type AbilityDef = z.infer<typeof AbilityDefSchema>;
+
+export const AbilitiesSchema = z.record(z.string().min(1), AbilityDefSchema);
+
+/** §A3's canon variance table — six tiers, weighted (validator pins the
+ *  exact 10/20/30/25/10/5 and the sum of 100) */
+export const PrayTierSchema = z.enum([
+  'miraculous',
+  'wonderful',
+  'good',
+  'nothing',
+  'strange',
+  'backfire',
+]);
+export type PrayTier = z.infer<typeof PrayTierSchema>;
+
+export const PrayWeightsSchema = z.strictObject({
+  miraculous: z.number().int().min(0),
+  wonderful: z.number().int().min(0),
+  good: z.number().int().min(0),
+  nothing: z.number().int().min(0),
+  strange: z.number().int().min(0),
+  backfire: z.number().int().min(0),
+});
+export type PrayWeights = z.infer<typeof PrayWeightsSchema>;
+
+/* ---------------- enemies (§A7 + §A6 bosses) ---------------- */
+
+export const MoveKindSchema = z.enum(['attack', 'strong', 'status', 'latch', 'drain', 'steal', 'taunt']);
+export type MoveKind = z.infer<typeof MoveKindSchema>;
+
+export const EnemyMoveSchema = z.strictObject({
+  name: z.string().min(1),
+  kind: MoveKindSchema,
+  /** multiplier on enemy offense for damage moves */
+  mult: z.number().positive().optional(),
+  status: z.enum(['sunburn', 'crying', 'asleep', 'productive']).optional(),
+  text: z.string().min(1),
+  weight: z.number().positive(),
+});
+export type EnemyMove = z.infer<typeof EnemyMoveSchema>;
+
+export const EnemyDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  article: z.string(), // "The" for the intro line
+  hp: z.number().int().positive(),
+  offense: z.number().min(0),
+  defense: z.number().min(0),
+  speed: z.number().min(0),
+  level: z.number().int().min(1), // for instant-win checks
+  exp: z.number().int().min(0),
+  cash: z.number().int().min(0),
+  weakness: z.array(z.enum(['fire', 'freeze', 'volt', 'insect', 'salt'])),
+  /** §A7: every enemy has 2–4 moves… */
+  moves: z.array(EnemyMoveSchema).min(2).max(4),
+  /** …and one flavor death line */
+  deathLine: z.string().min(1),
+  sprite: z.string().min(1),
+  mini: z.string().min(1),
+  /** humanoid enemies roam as full character sheets (4-dir walk) instead of a mini */
+  walker: z.string().min(1).optional(),
+  /** psychedelic battle-bg palette ramps [a, b] */
+  bg: z.tuple([z.number(), z.number()]),
+  boss: z.boolean().optional(),
+});
+export type EnemyDef = z.infer<typeof EnemyDefSchema>;
+
+export const EnemiesSchema = z.record(z.string().min(1), EnemyDefSchema);
+
+/* ---------------- items (§A8, ADR-015/016) ---------------- */
+
+/** equipment slots per Prompt 19 (weapon/body/arms/other) */
+export const EquipSlotSchema = z.enum(['weapon', 'body', 'arms', 'other']);
+export type EquipSlot = z.infer<typeof EquipSlotSchema>;
+
+export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key']);
+export type ItemKind = z.infer<typeof ItemKindSchema>;
+
+export const ItemDefSchema = z
+  .strictObject({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    kind: ItemKindSchema,
+    heal: z.number().positive().optional(),
+    /** PP restored on use (§A8 "PP" items — the Star Cola line, S4) */
+    ppHeal: z.number().positive().optional(),
+    offense: z.number().positive().optional(),
+    /** §A8 weapon lines are personal — only this hero can equip it */
+    wielder: HeroIdSchema.optional(),
+    /** battle item damage */
+    power: z.number().positive().optional(),
+    /** breaks the Tick's latch (§A6 Boss 1 gimmick) */
+    breaksLatch: z.boolean().optional(),
+    cures: z.array(z.string().min(1)).optional(),
+    usableInBattle: z.boolean(),
+    price: z.number().int().min(0),
+    text: z.string().min(1),
+  })
+  .superRefine((item, ctx) => {
+    // S4 pairing (ADR-016): kind 'pp' ⇔ ppHeal — the Star Cola line extends
+    // by adding items, never by half-tagging one side of the pair
+    if (item.kind === 'pp' && item.ppHeal === undefined) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' is kind 'pp' but has no ppHeal` });
+    }
+    if (item.kind !== 'pp' && item.ppHeal !== undefined) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' has ppHeal but kind '${item.kind}' — PP items are kind 'pp'` });
+    }
+    // §A8: every weapon line is personal, and equipping reads its offense
+    if (item.kind === 'weapon' && item.wielder === undefined) {
+      ctx.addIssue({ code: 'custom', message: `weapon '${item.id}' needs a wielder tag (§A8 lines are personal)` });
+    }
+    if (item.kind === 'weapon' && item.offense === undefined) {
+      ctx.addIssue({ code: 'custom', message: `weapon '${item.id}' needs an offense value` });
+    }
+  });
+export type ItemDef = z.infer<typeof ItemDefSchema>;
+
+export const ItemsSchema = z.record(z.string().min(1), ItemDefSchema);
+
+/* ---------------- shops (Prompt 20, ADR-016) ---------------- */
+
+export const ShopDefSchema = z.strictObject({
+  id: z.string().min(1),
+  /** window title for the buy/sell lists */
+  name: z.string().min(1),
+  /** npc id of the keeper standing at the counter */
+  keeperNpc: z.string().min(1),
+  /** §A8 catalog ids on the shelf */
+  stock: z.array(z.string().min(1)).min(1),
+  /** dialogue id: the keeper's hello (their obsession lives here) */
+  greet: z.string().min(1),
+  /** dialogue id: the keeper's goodbye */
+  farewell: z.string().min(1),
+});
+export type ShopDef = z.infer<typeof ShopDefSchema>;
+
+export const ShopsSchema = z.record(z.string().min(1), ShopDefSchema);
+
+/* ---------------- maps (ADR-004 grids; S1/S2/S4 fields) ---------------- */
+
+/** collision box in px relative to a prop image */
+export const SolidRectSchema = z.strictObject({
+  ox: z.number(),
+  oy: z.number(),
+  w: z.number().positive(),
+  h: z.number().positive(),
+});
+
+export const PropDefSchema = z.strictObject({
+  sprite: z.string().min(1),
+  /** tile coords of the prop's top-left (fractional allowed — jitter, ADR-012) */
+  x: z.number(),
+  y: z.number(),
+  solid: SolidRectSchema.optional(),
+  /** door rectangle in px (relative to prop) that transitions maps */
+  door: z
+    .strictObject({
+      ox: z.number(),
+      oy: z.number(),
+      w: z.number().positive(),
+      h: z.number().positive(),
+      to: z.string().min(1),
+      tx: z.number(),
+      ty: z.number(),
+    })
+    .optional(),
+  /** only built when this flag is truthy (e.g. the holding-room cot) */
+  ifFlag: z.string().min(1).optional(),
+});
+export type PropDef = z.infer<typeof PropDefSchema>;
+
+export const NpcDefSchema = z.strictObject({
+  id: z.string().min(1),
+  sprite: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  facing: FacingSchema,
+  dialogue: z.string().min(1),
+  wander: z.boolean().optional(),
+  /** special rendering: dog uses its own anim set */
+  dog: z.boolean().optional(),
+  /** flag gates: only present when ifFlag is truthy / unlessFlag is falsy */
+  ifFlag: z.string().min(1).optional(),
+  unlessFlag: z.string().min(1).optional(),
+  /** S4: talking to this NPC opens the shop with this SHOPS id */
+  shop: z.string().min(1).optional(),
+});
+export type NpcDef = z.infer<typeof NpcDefSchema>;
+
+export const SignDefSchema = z.strictObject({
+  x: z.number(),
+  y: z.number(),
+  dialogue: z.string().min(1),
+});
+export type SignDef = z.infer<typeof SignDefSchema>;
+
+/** visible marker: mat (default in interiors), stairs, elevator doors (ADR-011), or none (map edges) */
+export const DoorIndicatorSchema = z.enum(['mat', 'stairs', 'elevator', 'none']);
+
+export const DoorZoneSchema = z.strictObject({
+  x: z.number(),
+  y: z.number(),
+  w: z.number().positive(),
+  h: z.number().positive(),
+  to: z.string().min(1),
+  tx: z.number(),
+  ty: z.number(),
+  facing: FacingSchema,
+  indicator: DoorIndicatorSchema.optional(),
+});
+export type DoorZone = z.infer<typeof DoorZoneSchema>;
+
+export const TileRectSchema = z.strictObject({
+  x: z.number(),
+  y: z.number(),
+  w: z.number().positive(),
+  h: z.number().positive(),
+});
+
+export const SpawnerDefSchema = z.strictObject({
+  enemies: z.array(z.string().min(1)).min(1), // group rolled per spawn
+  count: z.number().int().positive(),
+  rect: TileRectSchema, // tiles
+  /** spawn only when this flag is truthy */
+  ifFlag: z.string().min(1).optional(),
+});
+export type SpawnerDef = z.infer<typeof SpawnerDefSchema>;
+
+export const TriggerDefSchema = z.strictObject({
+  id: z.string().min(1),
+  rect: TileRectSchema, // tiles
+  once: z.boolean(),
+});
+export type TriggerDef = z.infer<typeof TriggerDefSchema>;
+
+/**
+ * Sight-line patrol (Department of Smiles; Prompt 29's prefects reuse this):
+ * walks the route in a loop (2 waypoints = ping-pong), facing its direction
+ * of travel. Spotting the player = alert + chase; contact = battle, not fail.
+ */
+export const PatrolDefSchema = z.strictObject({
+  id: z.string().min(1),
+  enemy: z.string().min(1),
+  /** tile waypoints (fractional allowed for fine corridor placement) */
+  route: z.array(z.tuple([z.number(), z.number()])).min(1),
+  /** sight-line length in tiles (default 5) */
+  sight: z.number().positive().optional(),
+  /**
+   * S2 PRODUCTIVITY LOCK: a patrolBattle victory sets this flag, and the
+   * patrol stays down across map re-entry once it's set (its quota counted).
+   * Floor 3's three Smilers each carry one; all three open the holding room.
+   */
+  countFlag: z.string().min(1).optional(),
+});
+export type PatrolDef = z.infer<typeof PatrolDefSchema>;
+
+export const SettlementSchema = z.enum(['city', 'town', 'village']);
+
+export const PointSchema = z.strictObject({ x: z.number(), y: z.number() });
+
+export const MapDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  music: z.string().min(1).nullable(),
+  night: z.boolean().optional(),
+  interior: z.boolean().optional(),
+  /** settlements get ADR-012 organic looseness; 'city' additionally must pass
+   *  the Brickton rules (multi-street grid + connector + multiple block
+   *  faces) — maps.test.ts sweeps every map tagged 'city' */
+  settlement: SettlementSchema.optional(),
+  grid: z.array(z.string().min(1)).min(1),
+  props: z.array(PropDefSchema),
+  npcs: z.array(NpcDefSchema),
+  signs: z.array(SignDefSchema),
+  phones: z.array(PointSchema),
+  /** S4: ATM interaction points (withdraw/deposit, Prompt 20) */
+  atms: z.array(PointSchema).optional(),
+  doors: z.array(DoorZoneSchema),
+  spawners: z.array(SpawnerDefSchema),
+  triggers: z.array(TriggerDefSchema),
+  patrols: z.array(PatrolDefSchema).optional(),
+});
+export type MapDef = z.infer<typeof MapDefSchema>;
+
+export const MapsSchema = z.record(z.string().min(1), MapDefSchema);
+
+/* ---------------- dialogue (Prompt 6) ---------------- */
+
+/** one script: ordered pages; @-prefix marks speech (renders as •, ADR-010) */
+export const DialogueScriptSchema = z.array(z.string().min(1)).min(1);
+export type DialogueScript = z.infer<typeof DialogueScriptSchema>;
+
+export const DialogueSetSchema = z.record(z.string().min(1), DialogueScriptSchema);
+
+/* ---------------- quests (§A10 — schema lands ahead of S9's data) -------- */
+
+export const QuestObjectiveSchema = z.strictObject({
+  id: z.string().min(1),
+  /** journal line, in voice (§A11 — "Find Biscuit. He smells like pond.") */
+  text: z.string().min(1),
+  /** flag set when this step completes */
+  flag: z.string().min(1),
+});
+export type QuestObjective = z.infer<typeof QuestObjectiveSchema>;
+
+/** §A10: every completed quest adds a CALLER to the finale (§A6 Ch.8) */
+export const CallerSchema = z.strictObject({
+  name: z.string().min(1),
+  /** one-line phone quote, §A11 tone */
+  quote: z.string().min(1),
+  /** scripted finale effect of this caller's Vibe */
+  effect: z.strictObject({
+    kind: z.enum(['damage', 'heal']),
+    power: z.number().positive(),
+  }),
+});
+export type Caller = z.infer<typeof CallerSchema>;
+
+export const QuestDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  chapter: z.number().int().min(1).max(8),
+  /** npc id of the quest giver */
+  giver: z.string().min(1).optional(),
+  objectives: z.array(QuestObjectiveSchema).min(1),
+  /** item id granted on completion */
+  rewardItem: z.string().min(1).optional(),
+  /** flag set when the whole quest completes (the CALLER ledger keys off it) */
+  doneFlag: z.string().min(1),
+  caller: CallerSchema,
+});
+export type QuestDef = z.infer<typeof QuestDefSchema>;
+
+export const QuestsSchema = z.record(z.string().min(1), QuestDefSchema);

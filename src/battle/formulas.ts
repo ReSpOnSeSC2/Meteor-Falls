@@ -71,3 +71,18 @@ export function instantWin(avgPartyLevel: number, enemyLevel: number, isBoss: bo
 export function expShare(total: number, aliveCount: number): number {
   return Math.max(1, Math.ceil(total / Math.max(1, aliveCount)));
 }
+
+/* ---- Homesick (§A4.4/§A4.8, S4): Rex-only, cured by Mom's call ---- */
+
+export const HOMESICK_CHANCE = 0.08;
+export const HOMESICK_SKIP_CHANCE = 0.5;
+
+/** rolled once per battle victory — the quiet hits him after the noise */
+export function contractHomesick(rng: Rng): boolean {
+  return rng() < HOMESICK_CHANCE;
+}
+
+/** rolled whenever a Homesick Rex is about to act */
+export function homesickSkips(rng: Rng): boolean {
+  return rng() < HOMESICK_SKIP_CHANCE;
+}

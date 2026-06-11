@@ -8,12 +8,13 @@ import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { CAST, generateCharacterFrames, type CharacterSpec, type HairStyle, type TopStyle, type Build } from '../spritegen/characters';
+import { HEROES, type HeroId } from '../data/heroes';
 import { framesToCanvas } from '../spritegen/pixmap';
 import { standFrame, type Facing } from '../spritegen';
 import { makeWindow, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
 
-const PAGES = ['THE CAST', 'THE OPPOSITION', 'THE WORLD', 'REMIX A KID'] as const;
+const PAGES = ['THE CAST', 'COMPANIONS', 'THE OPPOSITION', 'THE WORLD', 'REMIX A KID'] as const;
 
 const HAIR_STYLES: HairStyle[] = ['short', 'bob', 'sidepart', 'topknot', 'gray', 'none'];
 const TOP_STYLES: TopStyle[] = ['shirt', 'stripe', 'dress', 'gi', 'blazer', 'apron', 'pajama'];
@@ -42,6 +43,10 @@ export class SpriteLabScene extends Phaser.Scene {
   private remixDirTimer = 0;
   private remixDir = 0;
   private navAt = 0;
+  // S7c walk-cycle audit: the cast page cycles all four facings together
+  private castSprites: Phaser.GameObjects.Sprite[] = [];
+  private castDirTimer = 0;
+  private castDir = 0;
 
   constructor() {
     super('spritelab');
@@ -68,53 +73,99 @@ export class SpriteLabScene extends Phaser.Scene {
     this.content = [];
     this.remixSprite = null;
     this.remixTexts = [];
+    this.castSprites = [];
+    this.castDir = 0;
+    this.castDirTimer = 0;
   }
 
   private showPage(): void {
     this.clear();
     this.title.setText(`SPRITE LAB — ${PAGES[this.page]}`);
     if (this.page === 0) this.pageCast();
-    else if (this.page === 1) this.pageEnemies();
-    else if (this.page === 2) this.pageWorld();
+    else if (this.page === 1) this.pageCompanions();
+    else if (this.page === 2) this.pageEnemies();
+    else if (this.page === 3) this.pageWorld();
     else this.pageRemix();
   }
 
   private pageCast(): void {
     const ids = Object.keys(CAST);
     ids.forEach((id, i) => {
-      const col = i % 7;
-      const row = Math.floor(i / 7);
-      const x = 50 + col * 50;
-      const y = 96 + row * 88;
-      const spr = this.add.sprite(x, y, id, 0).setOrigin(0.5, 1).setScale(2.2);
+      const col = i % 8;
+      const row = Math.floor(i / 8);
+      const x = 28 + col * 48;
+      const y = 92 + row * 62;
+      const spr = this.add.sprite(x, y, id, 0).setOrigin(0.5, 1).setScale(1.8);
       spr.play(`${id}-walk-down`);
+      // heroes label with their canon DISPLAY name (ADR-023: id 'faye' is
+      // a frozen engine identifier; the girl is named Mia)
+      const display = id in HEROES ? HEROES[id as HeroId].name : id;
       const label = this.add
-        .bitmapText(x, y + 3, 'retro', id.toUpperCase().slice(0, 7), 6)
+        .bitmapText(x, y + 2, 'retro', display.toUpperCase().slice(0, 7), 6)
         .setOrigin(0.5, 0)
         .setTint(colorOf(px(RAMP.PAPER, 2)));
+      this.castSprites.push(spr);
       this.content.push(spr, label);
+    });
+  }
+
+  /** S7c: dog/glint/angels at 1x AND 3x — the EB-made-at-both-scales check */
+  private pageCompanions(): void {
+    const label = (x: number, y: number, text: string): void => {
+      this.content.push(
+        this.add
+          .bitmapText(x, y, 'retro', text, 6)
+          .setOrigin(0.5, 0)
+          .setTint(colorOf(px(RAMP.PAPER, 2))),
+      );
+    };
+    const anim = (x: number, y: number, key: string, animKey: string, scale: number): void => {
+      const spr = this.add.sprite(x, y, key, 0).setOrigin(0.5, 1).setScale(scale);
+      spr.play(animKey);
+      this.content.push(spr);
+    };
+    // Biscuit — eastbound + westbound trots, both scales
+    anim(36, 86, 'dog', 'dog-walk', 3);
+    anim(78, 86, 'dog', 'dog-walk-left', 3);
+    anim(57, 104, 'dog', 'dog-walk', 1);
+    label(57, 108, 'BISCUIT');
+    // Glint — the heart should visibly beat at 1x
+    anim(150, 86, 'glint', 'glint-flit', 3);
+    anim(150, 102, 'glint', 'glint-flit', 1);
+    label(150, 108, 'GLINT');
+    // the guest angel, both scales
+    anim(222, 86, 'angel', 'angel-float', 3);
+    anim(222, 100, 'angel', 'angel-float', 1);
+    label(222, 108, 'ANGEL');
+    // §A4.7: the four heroes mourn as themselves
+    (['rex', 'faye', 'milo', 'dorin'] as const).forEach((id, i) => {
+      const x = 60 + i * 76;
+      anim(x, 188, `angel_${id}`, `angel_${id}-float`, 3);
+      anim(x + 30, 188, `angel_${id}`, `angel_${id}-float`, 1);
+      label(x + 8, 192, `ANGEL ${(id in HEROES ? HEROES[id as HeroId].name : id).toUpperCase()}`);
     });
   }
 
   private pageEnemies(): void {
     const list = [
-      ['battle_cranky_mailbox', 'CRANKY MAILBOX'],
-      ['battle_runaway_lawnmower', 'RUNAWAY LAWNMOWER'],
-      ['battle_coily_cicada', 'COILY CICADA'],
-      ['battle_pigeon_gang', 'PIGEON GANG'],
-      ['battle_hill_slug', 'HILL SLUG DELUXE'],
-      ['battle_blazer_smiler', 'BLAZER SMILER'],
-      ['battle_titanic_tick', 'TITANIC TICK (BOSS)'],
+      ['battle_cranky_mailbox', 'MAILBOX'],
+      ['battle_runaway_lawnmower', 'LAWNMOWER'],
+      ['battle_coily_cicada', 'CICADA'],
+      ['battle_pigeon_gang', 'PIGEONS'],
+      ['battle_hill_slug', 'HILL SLUG'],
+      ['battle_blazer_smiler', 'SMILER'],
+      ['battle_titanic_tick', 'TITANIC TICK'],
     ] as const;
     list.forEach(([key, name], i) => {
       const col = i % 4;
       const row = Math.floor(i / 4);
       const x = 60 + col * 95;
-      const y = 80 + row * 75;
-      const spr = this.add.image(x, y, key).setScale(key.includes('tick') ? 1.1 : 1.3);
+      const y = 78 + row * 78;
+      // v3 battle sprites are EB-scale already (64-96px) — show them near 1:1
+      const spr = this.add.image(x, y, key).setScale(key.includes('tick') ? 0.85 : 0.9);
       this.tweens.add({ targets: spr, y: y - 3, duration: 1000 + i * 100, yoyo: true, repeat: -1 });
       const label = this.add
-        .bitmapText(x, y + 32, 'retro', name, 6)
+        .bitmapText(x, y + 34, 'retro', name, 6)
         .setOrigin(0.5, 0)
         .setTint(colorOf(px(RAMP.PAPER, 2)));
       this.content.push(spr, label);
@@ -123,20 +174,35 @@ export class SpriteLabScene extends Phaser.Scene {
 
   private pageWorld(): void {
     const items = [
-      ['house_rex', 70, 95, 1],
-      ['drugstore', 185, 95, 1],
-      ['chapel', 295, 95, 1],
-      ['tree', 40, 165, 1.4],
-      ['lemonade', 105, 165, 1.2],
-      ['picnic', 185, 165, 1.2],
-      ['meteor_rock', 260, 165, 1.3],
-      ['bug_zapper', 320, 165, 1.4],
-      ['ember', 360, 165, 2],
+      ['house_rex', 64, 92, 1],
+      ['drugstore', 178, 92, 1],
+      ['chapel', 286, 92, 1],
+      ['house_chad', 360, 92, 0.9],
+      ['tree', 30, 158, 1.2],
+      ['pine', 58, 158, 1.2],
+      ['tree_b', 86, 158, 1.2],
+      ['lemonade', 130, 158, 1.1],
+      ['picnic', 188, 158, 1.1],
+      ['meteor_rock', 244, 158, 1.2],
+      ['cola_fridge', 288, 158, 1.2],
+      ['phone_pole', 352, 152, 0.6],
+      ['trash_can', 22, 192, 1.2],
+      ['parking_meter', 44, 192, 1.2],
+      ['news_box', 68, 192, 1.2],
+      ['hydrant', 92, 192, 1.2],
+      ['dresser', 118, 192, 1.1],
+      ['tv', 144, 192, 1.1],
+      ['stove', 170, 192, 1.1],
+      ['bookshelf', 198, 192, 1.1],
+      ['floor_lamp', 222, 192, 1.1],
+      ['bed', 246, 192, 1],
+      ['poster_smile', 270, 192, 1.1],
+      ['ember', 292, 192, 1.6],
     ] as const;
     for (const [key, x, y, s] of items) {
       this.content.push(this.add.image(x, y, key).setScale(s));
     }
-    const strip = this.add.image(200, 198, 'tiles').setScale(1);
+    const strip = this.add.image(330, 200, 'tiles').setScale(0.55).setOrigin(0.5);
     this.content.push(strip);
   }
 
@@ -283,7 +349,17 @@ export class SpriteLabScene extends Phaser.Scene {
       this.showPage();
       return;
     }
-    if (this.page === 3) {
+    if (this.page === 0 && this.castSprites.length > 0) {
+      // the audit loop: every cast sprite walks down/left/right/up in step
+      this.castDirTimer += dtMs;
+      if (this.castDirTimer > 1400) {
+        this.castDirTimer = 0;
+        this.castDir = (this.castDir + 1) % 4;
+        const dir = (['down', 'left', 'right', 'up'] as const)[this.castDir];
+        this.castSprites.forEach((spr) => spr.play(`${spr.texture.key}-walk-${dir}`));
+      }
+    }
+    if (this.page === 4) {
       if (d.y !== 0 && this.navOk()) {
         this.remixSel = (this.remixSel + (d.y > 0 ? 1 : 8)) % 9;
         AUDIO.sfx('cursor');

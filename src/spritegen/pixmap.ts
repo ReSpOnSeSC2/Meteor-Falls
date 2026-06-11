@@ -137,6 +137,34 @@ export class Pixmap {
   }
 
   /**
+   * Stamp a soft ground shadow into TRANSPARENT pixels only — call this
+   * AFTER outline(), so shadows never grow outlines of their own (outlined
+   * shadow puddles are a dead generated-art tell; EB never outlines shadows).
+   */
+  shadowUnder(cx: number, y: number, rx: number, c: number): this {
+    for (let j = -1; j <= 1; j++) {
+      const w = j === 0 ? rx : rx - 2 - Math.abs(j);
+      for (let i = -w; i <= w; i++) {
+        const x = cx + i;
+        if (this.get(x, y + j) === T) this.set(x, y + j, c);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Hand-authored contour: stack hlines whose half-widths YOU specify, row
+   * by row. This is how curves stay pixel-perfect (deliberate 1-2-3 run
+   * steps) instead of the lumpy stair-stepping ellipse() produces.
+   */
+  contour(cx: number, topY: number, halfWidths: number[], c: number): this {
+    halfWidths.forEach((hw, i) => {
+      if (hw >= 0) this.hline(cx - hw, topY + i, hw * 2 + 1, c);
+    });
+    return this;
+  }
+
+  /**
    * Outline pass: every transparent pixel 4-adjacent to a solid pixel becomes
    * the outline color. Sprites should keep a 1px transparent margin.
    */

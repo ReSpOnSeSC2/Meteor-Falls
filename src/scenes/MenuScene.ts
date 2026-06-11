@@ -4,12 +4,14 @@
  *
  * Pages: ITEMS (per-hero 14-slot bags + shared key items, Use/Give/Drop and
  * Glint's Spark's out-of-battle revive), STATUS (full §A3 sheet incl.
- * Guts/Vibe/Luck and DOWN), VIBE (PP costs, greyed when unusable — Pray is a
- * battle command, ADR-014), EQUIP (weapon/body/arms/other, "Offense up by N!"
- * preview, wielder tags per §A8), LOCKET (§A4.9 — Homesong stems, one per
- * Ember), SETUP (the persisted Sound preference; M still works anywhere).
- * Everything drives by touch (rows are tap zones, pages tap-dismiss) AND
- * pad/keys (§B4).
+ * Guts/Vibe/Luck, DOWN and HOMESICK), VIBE (PP costs, greyed when unusable —
+ * Pray is a battle command, ADR-014), EQUIP (weapon/body/arms/other,
+ * "Offense up by N!" preview, wielder tags per §A8), LOCKET (§A4.9 —
+ * Homesong stems, one per Ember), SETUP (the persisted Sound preference;
+ * M still works anywhere). Everything drives by touch (rows are tap zones,
+ * pages tap-dismiss) AND pad/keys (§B4). The list widget and the equip
+ * preview/confirm live in ui/pick.ts since S4 — ShopScene runs the SAME
+ * confirmEquip for its equip-after-buy prompt (Prompt 20).
  *
  * QA recipe (ADR-008 bots): Enter (START) on the overworld opens the menu.
  * ArrowDown/ArrowUp walk rows, KeyZ confirms, KeyX backs out one level;
@@ -23,26 +25,13 @@ import { GS, expForLevel, type HeroState } from '../engine/state';
 import { HEROES, unlockedAbilities } from '../data/heroes';
 import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, type EquipSlot } from '../data/items';
 import { ABILITIES } from '../data/abilities';
-import { heroOffense, equipDelta, vibeHeal } from '../battle/formulas';
+import { heroOffense, vibeHeal } from '../battle/formulas';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { Dialogue, makeWindow, DEPTH_UI } from '../ui/windows';
+import { Dialogue, makeWindow, everyFrame, DEPTH_UI } from '../ui/windows';
+// S4: the list widget + "Offense up by N!" confirm are shared with the shops
+import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
 import { colorOf, RAMP, px } from '../palette';
-
-interface PickOpts {
-  x: number;
-  y: number;
-  options: string[];
-  /** rows rendered dim; confirming them just bonks */
-  disabled?: Set<number>;
-  /** column-major columns (EB item lists run in two) */
-  cols?: number;
-  title?: string;
-  /** START also cancels (the command list closes the whole menu) */
-  startCancels?: boolean;
-}
-
-const DIM = 0x8890a0;
 
 export class MenuScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -193,6 +182,21 @@ export class MenuScene extends Phaser.Scene {
       await this.dlg.say(`${eater.name} ate the ${item.name}. Recovered about ${item.heal} HP!`);
       return;
     }
+    // S4: the Star Cola line — PP comes back fizzing (§A8 "PP" items)
+    if (item.ppHeal) {
+      const alive = GS.aliveParty();
+      const t =
+        alive.length === 1
+          ? 0
+          : await this.pick({ x: 200, y: 30, options: alive.map((h) => h.name), title: 'Who drinks?' });
+      if (t < 0) return;
+      const drinker = alive[t];
+      drinker.pp = Math.min(drinker.maxPp, drinker.pp + item.ppHeal);
+      GS.removeItem(itemId, hero.id);
+      AUDIO.sfx('heal');
+      await this.dlg.say(`${drinker.name} drank the ${item.name}. About ${item.ppHeal} PP fizzed back!`);
+      return;
+    }
     if (item.id === 'glints_spark') {
       // §A8 "revive, rare" — the interim path back until hospitals (S11)
       const downed = GS.data.party.filter((h) => h.down);
@@ -268,6 +272,14 @@ export class MenuScene extends Phaser.Scene {
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.RED, 2)));
+      this.pageObjs.push(d);
+    } else if (h.id === 'rex' && GS.flag('rex_homesick') === true) {
+      // §A4.8: HOMESICK rides the save until Mom's call (S4)
+      const d = this.add
+        .bitmapText(x + w - 64, y + 10, 'retro', 'HOMESICK', 6)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1)
+        .setTint(colorOf(px(RAMP.CYAN, 2)));
       this.pageObjs.push(d);
     }
     line(22, HEROES[h.id].epithet, DIM);
@@ -394,29 +406,10 @@ export class MenuScene extends Phaser.Scene {
     await this.confirmEquip(hero, cands[sel].itemId);
   }
 
-  /** Prompt 19: the stat delta previews BEFORE the confirm */
-  private async confirmEquip(hero: HeroState, itemId: string): Promise<void> {
-    const item = ITEMS[itemId];
-    const d = equipDelta(hero, itemId);
-    const preview =
-      d > 0 ? `Offense up by ${d}!` : d < 0 ? `Offense down by ${-d}.` : 'No change in Offense.';
-    const sel = await this.pick({
-      x: 130,
-      y: 64,
-      options: ['Equip it', 'Never mind'],
-      title: `${hero.name}: ${preview}`,
-    });
-    if (sel !== 0) return;
-    const result = GS.equipItem(hero.id, itemId);
-    if (result === 'ok') {
-      AUDIO.sfx('confirm');
-      await this.dlg.say(`* ${hero.name} equipped the ${item.name}. ${preview}`);
-    } else if (result === 'hands-full') {
-      await this.dlg.say(`${hero.name}'s hands are full!`);
-    } else if (result === 'not-yours') {
-      const owner = item.wielder ? GS.heroName(item.wielder) : 'somebody else';
-      await this.dlg.say(`It squirms loose. It clearly belongs to ${owner}.`);
-    }
+  /** Prompt 19's preview/confirm — the SHARED flow (ui/pick.ts) the shops
+   *  reuse for their equip-after-buy prompt (Prompt 20, S4) */
+  private confirmEquip(hero: HeroState, itemId: string): Promise<void> {
+    return confirmEquip(this, this.dlg, hero, itemId);
   }
 
   /* ================= LOCKET (§A4.9) ================= */
@@ -525,132 +518,9 @@ export class MenuScene extends Phaser.Scene {
     return party[sel];
   }
 
-  /**
-   * The one list widget: windowed rows, hand cursor, pad/key navigation with
-   * wrap, optional second column, dim-disabled rows, and a tap zone per row
-   * (§B4: touch AND controller). Resolves the picked index, or -1 on B.
-   */
+  /** the one list widget — shared with the shops since S4 (ui/pick.ts) */
   private pick(opts: PickOpts): Promise<number> {
-    const { options } = opts;
-    const cols = opts.cols ?? 1;
-    const rows = Math.ceil(options.length / cols);
-    const rowH = 14;
-    const colW = Math.max(...options.map((o) => o.length)) * 6 + 28;
-    const w = colW * cols + 8;
-    const h = rows * rowH + 16;
-    const x = Math.max(4, Math.min(opts.x, this.scale.width - w - 4));
-    let y = opts.y;
-    const titleH = opts.title ? 22 : 0;
-    y = Math.max(4, Math.min(y, this.scale.height - h - titleH - 4));
-    const made: Phaser.GameObjects.GameObject[] = [];
-    if (opts.title) {
-      const tw = opts.title.length * 6 + 20;
-      made.push(makeWindow(this, x, y, Math.max(tw, 60), 20));
-      made.push(
-        this.add
-          .bitmapText(x + 10, y + 6, 'retro', opts.title, 6)
-          .setScrollFactor(0)
-          .setDepth(DEPTH_UI + 1)
-          .setTint(colorOf(px(RAMP.GOLD, 3))),
-      );
-    }
-    const ly = y + titleH;
-    made.push(makeWindow(this, x, ly, w, h));
-    const cellPos = (i: number): { cx: number; cy: number } => {
-      const c = Math.floor(i / rows);
-      const r = i % rows;
-      return { cx: x + 4 + c * colW, cy: ly + 9 + r * rowH };
-    };
-    options.forEach((o, i) => {
-      const { cx, cy } = cellPos(i);
-      const t = this.add
-        .bitmapText(cx + 18, cy, 'retro', o, 6)
-        .setScrollFactor(0)
-        .setDepth(DEPTH_UI + 1);
-      if (opts.disabled?.has(i)) t.setTint(DIM);
-      made.push(t);
-    });
-    const hand = this.add
-      .image(0, 0, 'hand')
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI + 2);
-    made.push(hand);
-    let sel = 0;
-    const place = (): void => {
-      const { cx, cy } = cellPos(sel);
-      hand.setPosition(cx + 8, cy + 4);
-    };
-    place();
-    return new Promise((resolve) => {
-      const finish = (i: number): void => {
-        if (i >= 0 && opts.disabled?.has(i)) {
-          AUDIO.sfx('cancel');
-          return;
-        }
-        AUDIO.sfx(i < 0 ? 'cancel' : 'confirm');
-        poll.remove();
-        made.forEach((m) => m.destroy());
-        zones.forEach((z) => z.destroy());
-        resolve(i);
-      };
-      const zones = options.map((_, i) => {
-        const { cx, cy } = cellPos(i);
-        const z = this.add
-          .zone(cx, cy - 3, colW, rowH)
-          .setOrigin(0, 0)
-          .setScrollFactor(0)
-          .setDepth(DEPTH_UI + 3)
-          .setInteractive({ useHandCursor: true });
-        z.on('pointerdown', () => {
-          sel = i;
-          finish(i);
-        });
-        return z;
-      });
-      const poll = this.time.addEvent({
-        delay: 16,
-        loop: true,
-        callback: () => {
-          if (INPUT.justPressed('A')) {
-            finish(sel);
-            return;
-          }
-          if (INPUT.justPressed('B') || (opts.startCancels && INPUT.justPressed('START'))) {
-            finish(-1);
-            return;
-          }
-          const d = INPUT.dir();
-          if (!this.navTick(d.x !== 0 || d.y !== 0)) return;
-          const c = Math.floor(sel / rows);
-          const r = sel % rows;
-          const colCount = (cc: number): number => Math.min(rows, options.length - cc * rows);
-          if (d.y !== 0) {
-            const cc = colCount(c);
-            sel = c * rows + (((r + d.y) % cc) + cc) % cc;
-            AUDIO.sfx('cursor');
-          } else if (d.x !== 0 && cols > 1) {
-            const c2 = (((c + d.x) % cols) + cols) % cols;
-            sel = c2 * rows + Math.min(r, colCount(c2) - 1);
-            AUDIO.sfx('cursor');
-          }
-          place();
-        },
-      });
-    });
-  }
-
-  private navAt = 0;
-  private navTick(moving: boolean): boolean {
-    if (!moving) {
-      this.navAt = 0;
-      return false;
-    }
-    const now = this.time.now;
-    if (now > this.navAt) {
-      this.navAt = now + 180;
-      return true;
-    }
-    return false;
+    return pick(this, opts);
   }
 
   /** static pages dismiss on A/B, START, or a tap anywhere */
@@ -661,16 +531,12 @@ export class MenuScene extends Phaser.Scene {
         if (done) return;
         done = true;
         this.input.off('pointerdown', finish);
-        poll.remove();
+        off();
         AUDIO.sfx('cursor');
         resolve();
       };
-      const poll = this.time.addEvent({
-        delay: 16,
-        loop: true,
-        callback: () => {
-          if (INPUT.justPressed('A') || INPUT.justPressed('B') || INPUT.justPressed('START')) finish();
-        },
+      const off = everyFrame(this, () => {
+        if (INPUT.justPressed('A') || INPUT.justPressed('B') || INPUT.justPressed('START')) finish();
       });
       this.input.on('pointerdown', finish);
     });

@@ -1,25 +1,11 @@
 /**
  * Vibe abilities, gadgets, and PRAY — GAME_BIBLE §A3.
  * Power ratios follow EB's α/β/γ/Ω ≈ 1 : 2.2 : 3.6 : 5.5 (Prompt 9).
+ * Types are z.infer'd from src/schemas (S5) — compile shape ≡ runtime schema.
  */
+import type { AbilityDef, PrayTier, PrayWeights } from '../schemas';
 
-export type AbilityKind = 'vibe' | 'gadget' | 'pray' | 'physical';
-export type TargetMode = 'enemy' | 'enemies' | 'ally' | 'allies' | 'self';
-export type Element = 'fire' | 'freeze' | 'volt' | 'holy' | 'physical' | 'none';
-
-export interface AbilityDef {
-  id: string;
-  name: string;
-  kind: AbilityKind;
-  pp: number;
-  /** damage or heal base power (scaled by Vibe stat in formulas) */
-  power: number;
-  heal?: boolean;
-  target: TargetMode;
-  element: Element;
-  status?: string;
-  text: string;
-}
+export type { AbilityDef, AbilityKind, Element, PrayTier, PrayWeights, TargetMode } from '../schemas';
 
 const A = (a: AbilityDef): AbilityDef => a;
 
@@ -39,7 +25,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'flash_a', name: 'Flash a', kind: 'vibe', pp: 8, power: 0, target: 'enemies', element: 'none', status: 'crying', text: '{user} went off like a camera!' }),
     A({ id: 'teleport_a', name: 'Teleport a', kind: 'vibe', pp: 2, power: 0, target: 'self', element: 'none', text: '{user} started running!' }),
 
-    // ---- Faye: elemental lines + PRAY
+    // ---- Mia: elemental lines + PRAY
     A({ id: 'vibe_fire_a', name: 'Vibe Fire a', kind: 'vibe', pp: 6, power: 48, target: 'enemy', element: 'fire', text: '{user} snapped her fingers — FWOOSH!' }),
     A({ id: 'vibe_fire_b', name: 'Vibe Fire B', kind: 'vibe', pp: 14, power: 106, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH!' }),
     A({ id: 'vibe_fire_g', name: 'Vibe Fire y', kind: 'vibe', pp: 28, power: 173, target: 'enemies', element: 'fire', text: 'The air itself caught!' }),
@@ -74,17 +60,6 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
 
 /* ---------------- PRAY — §A3 canon table ---------------- */
 
-export type PrayTier = 'miraculous' | 'wonderful' | 'good' | 'nothing' | 'strange' | 'backfire';
-
-export interface PrayWeights {
-  miraculous: number;
-  wonderful: number;
-  good: number;
-  nothing: number;
-  strange: number;
-  backfire: number;
-}
-
 export const PRAY_BASE: PrayWeights = {
   miraculous: 10,
   wonderful: 20,
@@ -95,7 +70,7 @@ export const PRAY_BASE: PrayWeights = {
 };
 
 /**
- * Weights shift +5% toward better tiers every 15 levels of Faye;
+ * Weights shift +5% toward better tiers every 15 levels of Mia;
  * Guts adds ±1% per 10 Guts (canon §A3).
  */
 export function prayWeights(level: number, guts: number): PrayWeights {
