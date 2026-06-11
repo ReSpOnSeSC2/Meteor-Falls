@@ -811,6 +811,14 @@ function buildBrickton(): MapDef {
   const bank = north[4];
   const atmX = bank.x + 4;
 
+  // S13: the COSTA ESTRELLA travel poster — the tease (ADR-037). A FRESH rng
+  // stream opened after every standing one (the ADR-016 rule, third
+  // application: 1995 + 2077 stay byte-identical), jittering the poster
+  // board into the bus-stop corner where travel ads live. Visual-only —
+  // no solid near the payphone (the S7 discipline).
+  const rng3 = seededRng(2095);
+  const posterX = 11 + Math.floor(rng3() * 2);
+
   return {
     id: 'brickton',
     name: 'BRICKTON CITY',
@@ -837,6 +845,8 @@ function buildBrickton(): MapDef {
       // S12: the gate in the lot's fence — THE CAGE is open (no solid; the
       // door zone under it carries you through, chain hanging unlatched)
       { sprite: 'cage_gate', x: 50, y: 25.1 },
+      // S13: the Costa Estrella travel poster (the tease — visual-only)
+      { sprite: 'poster_links', x: posterX, y: 25.4 },
       ...furniture,
       ...meters,
     ],
@@ -850,6 +860,8 @@ function buildBrickton(): MapDef {
     signs: [
       { x: 10, y: 27, dialogue: 'sign_brickton' },
       { x: 49, y: 25, dialogue: 'sign_lot' },
+      // S13: the travel poster reads (coords follow the jittered board)
+      { x: posterX, y: 26, dialogue: 'sign_links_poster' },
     ],
     phones: [{ x: 14, y: 26 }],
     atms: [{ x: atmX, y: 5.5 }],
@@ -1442,6 +1454,70 @@ const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty
 const arcadeDoorstep = doorstepOf(otterbrookMap, 'arcade_int') ?? { tx: 121, ty: 369 };
 const arcade2Doorstep = doorstepOf(bricktonMap, 'arcade2_int') ?? { tx: 345, ty: 313 };
 
+/* ------------- COSTA ESTRELLA (S13 — the clifftop resort) ------------- */
+
+/**
+ * THE WORLD DOOR, AUTHORED FOR PUERTO SOL (ADR-037): when Prompt 28 builds
+ * §A5 Ch.2's port, wiring the resort in is ONE LINE — push this onto
+ * costa_estrella's doors (and aim a Puerto Sol door back at the resort's
+ * south path, tile ~13,15). It is NOT placed today: door targets must
+ * exist (the validator's law), and Puerto Sol doesn't yet.
+ */
+export const COSTA_DOOR_FOR_PUERTO_SOL = { x: 12, y: 15, w: 3, h: 1, to: 'puerto_sol', tx: 0, ty: 0, facing: 'down' } as const;
+
+/** the resort grounds: clubhouse, the caddy at the first tee, the plaque.
+ *  Dev-reachable standalone (the Sprite Lab precedent) until Prompt 28. */
+function buildCostaEstrella(): MapDef {
+  const g = new Grid(27, 16, '.');
+  // the cliff edge runs the north rim (fences — the surf is past them)
+  g.rect(0, 0, 27, 1, '-');
+  g.rect(0, 1, 1, 14, '|');
+  g.rect(26, 1, 1, 14, '|');
+  // the resort path: gate (south) up to the clubhouse, then west to the tee
+  g.rect(12, 8, 3, 8, ':');
+  g.rect(5, 8, 10, 2, ':');
+  // hedges square the clubhouse lawn; flowers where the staff insist
+  g.rect(17, 6, 6, 1, 'b');
+  g.rect(17, 12, 6, 1, 'b');
+  g.set(4, 4, 'f');
+  g.set(6, 12, 'F');
+  g.set(21, 4, 'f');
+  g.set(9, 5, 'F');
+  g.sprinkle(20, ',~', 0.12);
+
+  return {
+    id: 'costa_estrella',
+    name: 'COSTA ESTRELLA LINKS',
+    music: 'cage',
+    settlement: 'village',
+    grid: g.out(),
+    props: [
+      // the clubhouse (LINKS over the door, gold awning — Spanish-colonial
+      // by way of a resort brochure)
+      { sprite: 'clubhouse', x: 16, y: 1.6, solid: { ox: 0, oy: 20, w: 80, h: 28 } },
+      // the first tee's plaque
+      { sprite: 'sign', x: 5, y: 7, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // palms read as the coast's trees (the standard canvas, ADR-019)
+      { sprite: 'tree_b', x: 2, y: 2 },
+      { sprite: 'tree_b', x: 23, y: 13 },
+      { sprite: 'tree', x: 8, y: 13 },
+    ],
+    npcs: [
+      // FITO measures the world in putts and runs both formats (S13)
+      { id: 'caddy', sprite: 'caddy', x: 6, y: 9, facing: 'down', dialogue: 'npc_caddy' },
+    ],
+    signs: [{ x: 5, y: 8, dialogue: 'sign_costa' }],
+    phones: [],
+    atms: [],
+    doors: [
+      // Prompt 28 pushes COSTA_DOOR_FOR_PUERTO_SOL here (one line) — until
+      // then the resort is dev-reachable from the title (the Lab precedent)
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
 export const MAPS: Record<string, MapDef> = {
   otterbrook: otterbrookMap,
   hickory_hill: buildHill(),
@@ -1459,5 +1535,6 @@ export const MAPS: Record<string, MapDef> = {
   arcade_int: buildArcadeInt(arcadeDoorstep),
   arcade2_int: buildArcade2Int(arcade2Doorstep),
   the_cage: buildTheCage(),
+  costa_estrella: buildCostaEstrella(),
   bus_interior: buildBusInterior(),
 };

@@ -173,7 +173,7 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
   const skin = px(spec.skin, 2);
   const skinL = px(spec.skin, 3);
   const skinD = px(spec.skin, 1);
-  const { hairB, hair, hairL } = hairTones(spec);
+  const { hair } = hairTones(spec);
   const chub = (spec.build ?? 'kid') === 'chub';
   const kid = isKid(spec);
 
@@ -511,17 +511,47 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
       break;
   }
 
-  /* ---------------- the head (side profile, facing right) -------------- */
+  /* ---------------- the head (shared with the golfer sheets, S13) ------ */
+  drawProfileHead(pm, spec, hx, hy, torsoTop, o.mouthOpen, o.backTurned);
+
+  pm.outline(C.outline);
+  // dizzy stars — pure light AFTER outline (the ADR-021 idiom; the stun
+  // wobble shares the fall frame's vocabulary, one rung gentler)
+  if (o.dizzy) {
+    pm.set(hx + 2, hy - 3, px(RAMP.GOLD, 3));
+    pm.set(hx + 12, hy - 5, px(RAMP.GOLD, 2));
+  }
+  return pm;
+}
+
+/**
+ * The right-facing profile head — skull, neck, ADR-025 hair, hat, face —
+ * extracted (S13) so the GOLFER sheets cut from the same contract draw the
+ * same heads. backTurned draws the occiput (no face). Does NOT outline:
+ * the caller outlines once over the finished figure.
+ */
+export function drawProfileHead(
+  pm: Pixmap,
+  spec: CharacterSpec,
+  hx: number,
+  hy: number,
+  neckBottomY: number,
+  mouthOpen: boolean,
+  backTurned: boolean,
+): void {
+  const skin = px(spec.skin, 2);
+  const skinL = px(spec.skin, 3);
+  const skinD = px(spec.skin, 1);
+  const { hairB, hair, hairL } = hairTones(spec);
   const last = HEAD_ROWS - 1;
   SIDE_SKULL.forEach(([ins, wd], r) => pm.hline(hx + ins, hy + r, wd, skin));
   // neck
-  pm.rect(hx + 6, hy + last + 1, 3, torsoTop - (hy + last + 1), skin);
+  pm.rect(hx + 6, hy + last + 1, 3, neckBottomY - (hy + last + 1), skin);
   const bald = spec.hairStyle === 'gray' || spec.hairStyle === 'none';
   const hatted = spec.hat?.kind === 'cap';
 
-  if (o.backTurned) {
-    // mid-spin: the back of the head — hair mass (or scalp) owns the whole
-    // dome, no face. ADR-025 three-tone still applies.
+  if (backTurned) {
+    // the back of the head — hair mass (or scalp) owns the whole dome
     if (bald) {
       SIDE_SKULL.forEach(([ins], r) => {
         if (r >= 4 && r <= 8) pm.rect(hx + ins, hy + r, 3, 1, hair); // horseshoe
@@ -548,12 +578,7 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
       }
       pm.hline(hx + SIDE_SKULL[3][0], hy + 3, SIDE_SKULL[3][1], px(spec.hat.ramp, 1));
     }
-    pm.outline(C.outline);
-    if (o.dizzy) {
-      pm.set(hx + 2, hy - 3, px(RAMP.GOLD, 3));
-      pm.set(hx + 11, hy - 4, px(RAMP.GOLD, 2));
-    }
-    return pm;
+    return;
   }
   /** hair mass: crown + occiput; the face owns x ≥ hx+9 (ADR-025 three-tone) */
   const hairMass = (style: HairStyle): void => {
@@ -641,22 +666,13 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
   if (spec.blush ?? isKid(spec)) pm.hline(hx + 10, hy + 8, 2, px(RAMP.RED, 3));
   const my = hy + 10;
   const mouth: MouthStyle = spec.mouth ?? 'hint';
-  if (o.mouthOpen) {
+  if (mouthOpen) {
     pm.rect(hx + 10, my - 1, 2, 2, C.outline);
     pm.set(hx + 10, my, px(RAMP.RED, 1));
   } else if (mouth !== 'none') {
     pm.hline(hx + 10, my, 2, px(spec.skin, 0));
   }
   pm.hline(hx + SIDE_SKULL[last][0], hy + last, SIDE_SKULL[last][1] - 3, skinD); // jaw shadow
-
-  pm.outline(C.outline);
-  // dizzy stars — pure light AFTER outline (the ADR-021 idiom; the stun
-  // wobble shares the fall frame's vocabulary, one rung gentler)
-  if (o.dizzy) {
-    pm.set(hx + 2, hy - 3, px(RAMP.GOLD, 3));
-    pm.set(hx + 12, hy - 5, px(RAMP.GOLD, 2));
-  }
-  return pm;
 }
 
 /** the 25-frame SPORT SHEET for one spec (+ optional team jersey) */

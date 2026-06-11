@@ -276,6 +276,63 @@ function drawWristguardIcon(): Pixmap {
   return pm;
 }
 
+/* ---- THE SUNDAY SET (S13): four clubhouse charms, drawn small ---- */
+
+/** the Sunday Visor — a brim that has read every green on the coast */
+function drawVisorIcon(): Pixmap {
+  const pm = new Pixmap(14, 10);
+  const band = px(RAMP.GRASS, 2);
+  pm.hline(3, 2, 8, band); // the band
+  pm.set(2, 3, band);
+  pm.set(11, 3, band);
+  pm.hline(3, 3, 8, px(RAMP.GRASS, 3));
+  pm.hline(2, 5, 10, px(RAMP.PAPER, 3)); // the brim, forward
+  pm.hline(3, 6, 9, px(RAMP.PAPER, 2));
+  pm.set(4, 6, px(RAMP.PAPER, 1)); // the read line worn into it
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Sunday Glove — soft from a thousand honest grips */
+function drawGloveIcon(): Pixmap {
+  const pm = new Pixmap(12, 13);
+  const leather = px(RAMP.PAPER, 3);
+  pm.rect(3, 4, 6, 6, leather); // the palm
+  pm.rect(3, 1, 1, 3, leather); // fingers
+  pm.rect(5, 1, 1, 3, leather);
+  pm.rect(7, 1, 1, 3, leather);
+  pm.rect(9, 4, 2, 3, leather); // the thumb out wide
+  pm.hline(3, 9, 6, px(RAMP.PAPER, 1)); // the cuff
+  pm.set(4, 6, px(RAMP.PAPER, 2)); // the worn heart of the grip
+  pm.set(5, 6, px(RAMP.PAPER, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Lucky Tee — survived a driver swing untouched (impossible) */
+function drawTeeIcon(): Pixmap {
+  const pm = new Pixmap(10, 13);
+  const wood = px(RAMP.GOLD, 2);
+  pm.hline(2, 2, 6, wood); // the cup
+  pm.hline(3, 3, 4, px(RAMP.GOLD, 3));
+  pm.vline(4, 4, 6, wood); // the shaft
+  pm.vline(5, 4, 6, px(RAMP.GOLD, 1));
+  pm.set(4, 10, px(RAMP.GOLD, 1)); // the point
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Caddy's Marker — a coin that knows exactly where it is */
+function drawMarkerIcon(): Pixmap {
+  const pm = new Pixmap(12, 12);
+  pm.ellipse(5, 5, 4, 4, px(RAMP.GOLD, 2));
+  pm.ellipse(5, 5, 3, 3, px(RAMP.GOLD, 3));
+  pm.set(5, 5, px(RAMP.CYAN, 1)); // the line it marks, forever
+  pm.set(4, 3, px(RAMP.PAPER, 3)); // the shine
+  pm.outline(C.outline);
+  return pm;
+}
+
 /** the Lucky Collar — Biscuit's pond-scented gift, as a drawn charm */
 function drawCollarIcon(): Pixmap {
   const pm = new Pixmap(14, 12);
@@ -411,6 +468,24 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
   lucky_collar: {
     kind: 'trinket',
     icon: drawCollarIcon,
+  },
+
+  /* ---- THE SUNDAY SET (S13 — the first Invitational's prize) ---- */
+  sunday_visor: {
+    kind: 'trinket',
+    icon: drawVisorIcon,
+  },
+  sunday_glove: {
+    kind: 'trinket',
+    icon: drawGloveIcon,
+  },
+  lucky_tee: {
+    kind: 'trinket',
+    icon: drawTeeIcon,
+  },
+  caddys_marker: {
+    kind: 'trinket',
+    icon: drawMarkerIcon,
   },
 };
 

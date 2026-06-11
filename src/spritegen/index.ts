@@ -104,6 +104,15 @@ import {
 } from './athletes';
 import { TEAMS, hashOf } from '../data/hoops';
 import {
+  generateGolferFrames,
+  allHoleTextures,
+  drawPinFlag,
+  drawGolfBall,
+  drawSplashFrames,
+  drawSandFrames,
+  drawLinksPoster,
+} from './golfers';
+import {
   drawArcadeShip,
   drawArcadeMoth,
   drawArcadeRock,
@@ -205,6 +214,25 @@ export function ensureBattleArt(scene: Phaser.Scene, heroId: string, look: Battl
  * Heroes and walk-ons play as their CAST selves; opponents derive hashed
  * faces (ADR-022 variety) dressed in their TEAMS jersey. Cached by key.
  */
+/**
+ * S13 links factory (the ensureAthleteArt stance — use-time, cached): the
+ * nine hole grounds, the ball/flag/bursts, and the player hero's GOLF sheet
+ * (cut from the S12 sport-sheet contract). Returns the golfer texture key.
+ */
+export function ensureLinksArt(scene: Phaser.Scene, heroId: string): string {
+  if (!scene.textures.exists('links_ball')) {
+    addPixmap(scene, 'links_ball', drawGolfBall());
+    addPixmap(scene, 'links_flag', drawPinFlag());
+    addSheet(scene, 'links_splash', drawSplashFrames(), 2);
+    addSheet(scene, 'links_sand', drawSandFrames(), 2);
+    for (const { id, pm } of allHoleTextures()) addPixmap(scene, id, pm);
+  }
+  const key = `golfer_${heroId}`;
+  const spec = CAST[heroId];
+  if (spec) addSheet(scene, key, generateGolferFrames(spec), 4);
+  return key;
+}
+
 export function ensureAthleteArt(scene: Phaser.Scene, keys: string[]): void {
   for (const key of keys) {
     if (scene.textures.exists(key)) continue;
@@ -420,6 +448,11 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'cage_court', drawCageCourt());
   // S12c: the BEHIND camera's perspective floor (pause-menu toggle)
   addPixmap(scene, 'cage_court_behind', drawCageBehind());
+
+  // S13: COSTA ESTRELLA — the Brickton travel-poster tease + the resort's
+  // clubhouse (the course itself paints at use-time via ensureLinksArt)
+  addPixmap(scene, 'poster_links', drawLinksPoster());
+  addPixmap(scene, 'clubhouse', drawHouse({ wallTiles: 5, wallRows: 2, roof: RAMP.ORANGE, signText: 'LINKS', doorAt: 2, awning: RAMP.GOLD, litSeed: 44 }));
 
   // Brickton downtown — varied heights and lighting so no two facades match
   addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1, litSeed: 11 }));

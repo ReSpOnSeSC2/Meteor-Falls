@@ -62,6 +62,9 @@ export class TitleScene extends Phaser.Scene {
     const options = GS.anySave()
       ? ['Continue', 'New Game', 'Sprite Lab']
       : ['New Game', 'Sprite Lab'];
+    // S13: the resort is COMPLETE AND STANDALONE ahead of Prompt 28 (the
+    // Sprite Lab precedent) — dev builds reach it from the title
+    if (import.meta.env.DEV) options.push('Costa Estrella (dev)');
     const pick = await dlg.ask(options);
     const choice = options[pick];
     if (choice === 'New Game') {
@@ -71,6 +74,12 @@ export class TitleScene extends Phaser.Scene {
       // S6: the slot scene owns loading now (title theme keeps playing under it)
       this.started = true;
       this.scene.start('saveslots');
+    } else if (choice === 'Costa Estrella (dev)') {
+      // a fresh dev party at the resort gate (never a saved game's state)
+      GS.reset();
+      this.started = true;
+      AUDIO.stopMusic();
+      this.scene.start('overworld', { mapId: 'costa_estrella', x: 13 * 16 + 8, y: 14 * 16, facing: 'up' });
     } else {
       this.started = true;
       AUDIO.stopMusic();

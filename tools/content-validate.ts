@@ -56,6 +56,12 @@ import { CAST } from '../src/spritegen/characters';
 import { SPORT_FRAME, SPORT_FRAME_COUNT } from '../src/spritegen/athletes';
 import { RANGE, METER, BLOCK_TIMING, STEAL_TIMING, MOVES, effectiveRange, greenWindow, makeChance } from '../src/hoops/sim';
 import { COURT } from '../src/hoops/court';
+// S13: the links — holes, golfers, rewards, the SUNDAY SET, the golfer sheet
+import { HOLES, CLUBS, COURSE_PAR, expandGrid, terrainAt } from '../src/links/course';
+import { GOLFERS, GOLFER_ORDER, LINKS_TEXT, LINKS_FILL_TOKENS, LINKS_REWARDS, SUNDAY_SET } from '../src/data/links';
+import { GOLF_FRAME, GOLF_FRAME_COUNT } from '../src/spritegen/golfers';
+import { COSTA_DOOR_FOR_PUERTO_SOL } from '../src/data/maps';
+import { GolferDefSchema, LinksHoleSchema, ClubDefSchema } from '../src/schemas';
 import { AwakeningDefSchema, TeamDefSchema, WalkOnDefSchema } from '../src/schemas';
 import { CHAR_LEGEND, MAPS } from '../src/data/maps';
 import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue';
@@ -730,6 +736,102 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
   }
 }
 
+/* ============== S13 — COSTA ESTRELLA LINKS manifests (ADR-037) ============== */
+
+parseAll('links-holes', LinksHoleSchema, Object.fromEntries(HOLES.map((h) => [h.id, h])));
+parseAll('links-golfers', GolferDefSchema, GOLFERS);
+parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id, c])));
+
+{
+  // THE COURSE: §A11 demands NINE named holes with plaque lines (counted +
+  // swept); geometry must hold — uniform grids, tee on T, pin on G
+  if (HOLES.length !== 9) fail('links', `the course is NINE authored holes, found ${HOLES.length}`);
+  if (COURSE_PAR !== 36) fail('links', `the card plays to par 36, got ${COURSE_PAR}`);
+  const pars = HOLES.map((h) => h.par);
+  if (!pars.includes(3) || !pars.includes(4) || !pars.includes(5)) fail('links', `the par mix needs 3s, 4s, and a 5 (spec)`);
+  for (const h of HOLES) {
+    const grid = expandGrid(h.rle);
+    const w = grid[0]?.length ?? 0;
+    grid.forEach((row, y) => {
+      if (row.length !== w) fail('links', `${h.id} grid row ${y} is ${row.length} wide, row 0 is ${w}`);
+    });
+    if (terrainAt(grid, h.tee.x, h.tee.y) !== 'T') fail('links', `${h.id} tee must stand on a T tile`);
+    if (terrainAt(grid, h.pin.x, h.pin.y) !== 'G') fail('links', `${h.id} pin must cut into a G tile`);
+  }
+  // hole 2's cliff carry and hole 6's sea stack are the spec's signatures
+  if (!expandGrid(HOLES[1].rle).some((r) => /^W+$/.test(r))) fail('links', `hole 2 must carry pure surf rows (the cliff carry)`);
+  if (!expandGrid(HOLES[5].rle).some((r) => /^W+$/.test(r))) fail('links', `hole 6 is the par-3 onto a sea stack — surf must ring it`);
+
+  // THE 31: tier curve 8/8/7/5/3 (the Classic's shape, on grass)
+  if (GOLFER_ORDER.length !== 31) fail('links', `the Invitational fields 31 golfers + the party, found ${GOLFER_ORDER.length}`);
+  const tiers = [1, 2, 3, 4, 5].map((t) => GOLFER_ORDER.filter((id) => GOLFERS[id].tier === t).length);
+  if (tiers.join('/') !== '8/8/7/5/3') fail('links', `the golfer tier curve is canon 8/8/7/5/3, got ${tiers.join('/')}`);
+
+  // REWARDS (§A9-tuned, pinned)
+  const R = LINKS_REWARDS;
+  if (R.stroke.evenPar !== 150 || R.stroke.perUnder !== 25 || R.stroke.perOver !== -12 || R.stroke.floor !== 40) {
+    fail('links', `stroke pay is canon 150 even / +25 under / −12 over / floor 40`);
+  }
+  if (R.invitational.roundWinExp.join('/') !== '180/240/320/420/560') {
+    fail('links', `Invitational round EXP is canon 180/240/320/420/560, got ${R.invitational.roundWinExp.join('/')}`);
+  }
+  if (R.invitational.lossFrac !== 0.4) fail('links', `Invitational lossFrac is canon 0.4`);
+  if (R.invitational.repeatTitleCash !== 400) fail('links', `repeat titles pay canon $400 in hand`);
+  for (const id of R.drops.table) {
+    const item = ITEMS[id];
+    if (!item) fail('links', `drop table item '${id}' missing from ITEMS`);
+    else if (item.kind !== 'food' && item.kind !== 'pp') fail('links', `drop '${id}' is kind '${item.kind}' — the clubhouse pays foods and colas`);
+  }
+
+  // THE SUNDAY SET (§A8 'other' expansion, both directions)
+  for (const [heroId, itemId] of Object.entries(SUNDAY_SET)) {
+    const item = ITEMS[itemId];
+    if (!item) {
+      fail('links', `SUNDAY SET piece '${itemId}' missing from ITEMS`);
+      continue;
+    }
+    if (item.kind !== 'charm') fail('links', `'${itemId}' must be kind 'charm' ('other' slot), got '${item.kind}'`);
+    if (item.wielder !== heroId) fail('links', `'${itemId}' belongs to '${heroId}', got '${item.wielder ?? 'nobody'}'`);
+    if (item.price !== 0) fail('links', `'${itemId}' is a title, not merchandise — price must be 0`);
+    if (!item.luck || item.luck <= 0) fail('links', `'${itemId}' must carry luck (heroLuck reads the 'other' slot)`);
+  }
+  for (const item of Object.values(ITEMS)) {
+    if (item.kind === 'charm' && item.wielder !== undefined && !Object.values(SUNDAY_SET).includes(item.id)) {
+      fail('links', `'${item.id}' is a wielder-tagged charm outside the SUNDAY SET manifest — extend the manifest, never ad-hoc`);
+    }
+  }
+
+  // THE VENUE: the resort map, FITO, the plaque, the clubhouse, the tease
+  const costa = MAPS.costa_estrella;
+  if (!costa) {
+    fail('links', `'costa_estrella' map is missing (S13's venue)`);
+  } else {
+    if (!costa.npcs.some((n) => n.id === 'caddy')) fail('links', `the caddy must stand at costa_estrella`);
+    if (!costa.signs.some((s) => s.dialogue === 'sign_costa')) fail('links', `costa_estrella needs its 'sign_costa' plaque`);
+    if (!costa.props.some((p) => p.sprite === 'clubhouse')) fail('links', `costa_estrella needs the clubhouse`);
+    if (costa.doors.some((d) => d.to === 'puerto_sol')) {
+      fail('links', `the Puerto Sol door must stay UNPLACED until Prompt 28 (targets must exist)`);
+    }
+  }
+  if (COSTA_DOOR_FOR_PUERTO_SOL.to !== 'puerto_sol') fail('links', `the authored world door must aim puerto_sol (one-line wire for Prompt 28)`);
+  if (!MAPS.brickton?.props.some((p) => p.sprite === 'poster_links')) fail('links', `Brickton needs the travel-poster tease`);
+  if (!MAPS.brickton?.signs.some((s) => s.dialogue === 'sign_links_poster')) fail('links', `the poster needs its sign read`);
+  if (!CAST.caddy) fail('links', `'caddy' missing from CAST`);
+  for (const key of ['npc_caddy', 'caddy_ask', 'caddy_register', 'caddy_title_first', 'caddy_hands_full', 'sign_links_poster', 'sign_costa'] as const) {
+    if (!DIALOGUE[key]?.length) fail('links', `the links need DIALOGUE.${key}`);
+  }
+
+  // the GOLF sheet contract (cut from the S12 sport-sheet contract)
+  if (GOLF_FRAME_COUNT !== 11) fail('links', `GOLF_FRAME_COUNT is the S13 contract: 11, got ${GOLF_FRAME_COUNT}`);
+  for (const [name, idx] of [['address', 0], ['backB', 2], ['strike', 3], ['fistpump', 6], ['slumpA', 7], ['puttStrike', 10]] as Array<[string, number]>) {
+    if ((GOLF_FRAME as Record<string, number>)[name] !== idx) fail('links', `GOLF_FRAME.${name} must be ${idx}`);
+  }
+  // the §A11.2 line exists and is played straight (the 9th tee at sunset)
+  if (!LINKS_TEXT.caddySunset.includes('do not measure')) {
+    fail('links', `the caddy's sunset line is the §A11.2 beat — keep it straight`);
+  }
+}
+
 /* ================= 3a. map cross-references ================= */
 
 for (const m of Object.values(MAPS)) {
@@ -862,6 +964,21 @@ for (const [key, line] of Object.entries(ARCADE_TEXT)) {
   for (const t of Object.values(TEAMS)) sweepTokens('text', `team '${t.id}' taunt`, t.taunt, DIALOGUE_TOKENS);
   for (const w of Object.values(WALK_ONS)) sweepTokens('text', `walk-on '${w.id}' line`, w.line, DIALOGUE_TOKENS);
 }
+// THE LINKS print through scene .replace() fills too (S13) — and every hole
+// name/plaque + golfer clubhouse line is §A11 prose the sweep owns
+{
+  const LINKS_TOKENS = new Set([...DIALOGUE_TOKENS, ...LINKS_FILL_TOKENS]);
+  for (const [key, line] of Object.entries(LINKS_TEXT)) {
+    for (const s of Array.isArray(line) ? line : [line]) {
+      sweepTokens('text', `LINKS_TEXT.${key}`, s, LINKS_TOKENS);
+    }
+  }
+  for (const h of HOLES) {
+    sweepTokens('text', `hole '${h.id}' name`, h.name, DIALOGUE_TOKENS);
+    sweepTokens('text', `hole '${h.id}' plaque`, h.plaque, DIALOGUE_TOKENS);
+  }
+  for (const g of Object.values(GOLFERS)) sweepTokens('text', `golfer '${g.id}' line`, g.line, DIALOGUE_TOKENS);
+}
 // awakening toasts render through vars() (S12b) — TEXT_VARS only
 for (const a of Object.values(AWAKENINGS)) {
   sweepTokens('text', `awakening '${a.id}' toast`, a.toast, DIALOGUE_TOKENS);
@@ -903,7 +1020,7 @@ function sweepPlaceholders(section: string, node: unknown, path: string): void {
     }
   }
 }
-sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, QUESTS, MAPS, DIALOGUE, BATTLE_TEXT, ARCADE_TEXT, TEAMS, WALK_ONS, HOOPS_TEXT, AWAKENINGS, NEW_GAME_ENTRIES }, 'data');
+sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, QUESTS, MAPS, DIALOGUE, BATTLE_TEXT, ARCADE_TEXT, TEAMS, WALK_ONS, HOOPS_TEXT, AWAKENINGS, NEW_GAME_ENTRIES, HOLES, GOLFERS, LINKS_TEXT }, 'data');
 
 /* ================= verdict ================= */
 

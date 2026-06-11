@@ -290,3 +290,32 @@ full ADR-013 name entry, constructed stand at PERMIT (the S9 precedent).
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 15 | **S12c CAGE 2.0, on device** — X/Y buttons appear on the thumb arc only in the cage; PERMIT'S SCHOOL completes by touch; the over-head meter reads at arm's length (green at the top, shrinks under a closing hand); one timed block + one window steal landed by feel; the BEHIND camera holds 60fps; SETUP → CONTROLS captures a pad button and the rebind survives an app restart | ⬜ | ⬜ | pad B is button 1 now (2 = X, 3 = Y) — re-verify B-cancel feel in menus |
+
+## S13 browser pre-flight — 2026-06-11, COSTA ESTRELLA LINKS (ADR-037)
+
+All legs via the ADR-008 driver, loop slept end to end, pump(n, 8.33);
+shots `.shots/s13_*`. Entry: the dev title row (the Sprite Lab precedent —
+the resort is complete and standalone ahead of Prompt 28).
+
+| Check | Result |
+|---|---|
+| **The venue** — costa_estrella renders: the LINKS clubhouse (gold awning), FITO in resort greens + the white flat cap at the first tee, the plaque, hedge lawns, the banner | ✅ (`s13_resort`) |
+| **The caddy gate** — npc_caddy intro (the world in putts), the ask (stroke / Invitational / never mind), launches LinksScene over the paused world ('mf-links-closed' resumes with map music) | ✅ |
+| **STROKE PLAY, hole 1 tee-to-cup at scene level** — the documented bot line (A starts, A at want on the rise, A inside the acc window) closed hole 1 **in 2 strokes** (drive + holed approach); the same line plays it HEADLESSLY twice byte-identical, and every one of the nine closes out under it (vitest) | ✅ |
+| **The table view** — per-hole ground texture (surf swells, cliff bands, WIDE mow stripes, rough, the bunkers, green + fringe + honest slope arrows + the cup), ball-cam riding the flight, splash/sand bursts | ✅ (`s13_aim_clean`, `s13_flight_followthrough`) |
+| **THE SWING PANE** — the player hero's GOLF sheet (cut from the S12 contract, drawProfileHead shared) at 1.6× addressing/coiling/striking/following beside the meter drum; fist-pump under par, the universal sad putter slump over | ✅ (`s13_meter_power`) |
+| **The 3-tap meter** — power BOUNCES (rise → fall → die = swing cancelled, no stroke), accuracy falls into the shrinking club×lie window (gold zero line + green band drawn live), push/pull curves the flight; putt/chip run the power tap | ✅ live + vitest (bounce-cancel, floor auto-push, window math) |
+| **WIND** — seeded per round, announced in the caddy's units ("1 PUTTS OUT OF THE SOUTH" — he rounds, he does not apologize) on HUD row 2 | ✅ |
+| **THE INVITATIONAL** — register at FITO: flags lit (links_seed 2026, links_round 0, links_bracket_live), the match card reads vs UMBRELLA STAND UGO (tier-1 — the soft gate), holes tally line; bracket DERIVES from (seed, round) forever (vitest: entrants replay identically; tiers ramp 8/8/7/5/3) | ✅ (`s13_match_card`) |
+| **Walk-offs** — the eject rule both formats: stroke pays nothing; a match forfeit clears the bracket flags (the stub kept via links_was_in) | ✅ |
+| **Process death** — the Invitational lives on NUMBER FLAGS inside the save (no v7): each finished match saves the active notebook; (seed, round) reconstruct the field, the opponents, and the board from zero state (vitest pins the derivation) | ✅ |
+| **THE SUNDAY SET** — four wielder-tagged 'other' charms (visor/glove/tee/marker, drawn trinket icons through the S11b WEAPON_ART gate), luck previews through the S9 seam, the caddy hands off PERMIT's way (hands-full BLOCKS, links_handed_<hero> rainchecks, zero missables); repeats pay $400 in hand | ✅ validator-pinned both directions |
+| **The tease** — Brickton's bus-stop corner grew the travel poster (fresh rng stream 2095 — 1995 + 2077 byte-identical, jitter tests green) with its sign read | ✅ |
+| Console | ✅ zero errors/warnings across both legs |
+| `npm test` | ✅ validator (links manifests: 9 holes + geometry + signatures, 31 golfers + tier curve, rewards pins, SUNDAY SET both directions, venue + tease pins, GOLF_FRAME contract, LINKS_TEXT/holes/golfer-line sweeps) + 228 vitest |
+
+### S13 device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 16 | **S13 LINKS, on device** — one stroke round by touch (aim by d-pad, B cycles the bag, the 3-tap meter readable at arm's length, after-touch mid-flight); the Invitational's first match registered, played, and resumed across an app kill; THE SUNDAY SET handoff with previews | ⬜ | ⬜ | the swing pane + ball-cam must hold 60fps on the par-5s |

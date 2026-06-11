@@ -392,6 +392,43 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'CALL YOUR OWN FOULS.',
     '(Nobody ever has. The sign knows. The sign has made peace.)',
   ],
+  /* ---------------- COSTA ESTRELLA LINKS (S13) ---------------- */
+  sign_links_poster: [
+    'COSTA ESTRELLA LINKS — nine holes on the cliffs north of Puerto Sol!',
+    '"Where the surf keeps the score." Travel by banana boat. Sunsets included.',
+    '(Someone has drawn a tiny golfer on the sea stack. He looks happy out there.)',
+  ],
+  sign_costa: [
+    'COSTA ESTRELLA LINKS — est. whenever the tide says.',
+    'HOLE 1 — THE HANDSHAKE waits past this plaque. The caddy waits closer.',
+  ],
+  npc_caddy: [
+    '@FITO. Caddy. Welcome to Costa Estrella, the only golf on this coast and therefore the best.',
+    '@I measure everything in putts, senor. The clubhouse? Six putts away. That cloud? Two putts. You? One good round from famous.',
+  ],
+  caddy_ask: [
+    '@Stroke play runs all nine — the wind is drawn fresh each round and I will read it true. The INVITATIONAL is thirty-two bags, match play, three holes a match.',
+  ],
+  caddy_register: [
+    '@Thirty-two names on the board, senor. Five matches between you and the sunset.',
+    '@I caddy for you the whole way. My reads are free. My faith costs one good swing.',
+  ],
+  caddy_resume: [
+    '@Your bracket holds, senor. The board remembers — round by round, putt by putt.',
+  ],
+  caddy_eliminated: [
+    '@The bracket let you go, senor. The course did not — it keeps every round you ever walked. Register again whenever.',
+  ],
+  caddy_title_first: [
+    '@CHAMPION. Senor, I have measured this moment: zero putts away. It is here.',
+    '@The resort pays its respects — THE SUNDAY SET. Four pieces for four pockets. Sunday is the day you cannot miss.',
+  ],
+  caddy_hands_full: [
+    '@Your hands are full, senor. A champion may take his time — I will hold the Set behind the bar. Come back with room.',
+  ],
+  caddy_repeat_title: [
+    '@Champion AGAIN. I am running out of superlatives. I am not running out of putts: you are two ahead of everyone, forever.',
+  ],
   cage_board: [
     'THE BRICKTON CLASSIC — 32 fives, one chalk line.',
     '(The handwriting is immaculate. The seeding is "impartial." The nephews are fifth.)',

@@ -247,5 +247,48 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       price: 0,
       text: 'The mountain deleted his fear. The cage gave him this instead. Guts +7.',
     }),
+    /* ---- S13: THE SUNDAY SET — the first Costa Estrella Invitational's
+       prize: four hero-tagged 'other'-slot charms (§A8 amended — the
+       'other' expansion; luck reads through heroLuck, the S9 seam) ---- */
+    I({
+      id: 'sunday_visor',
+      name: 'Sunday Visor',
+      kind: 'charm',
+      luck: 7,
+      wielder: 'rex',
+      usableInBattle: false,
+      price: 0,
+      text: 'The brim has read every green on the coast. It will read anything for you now. Luck +7.',
+    }),
+    I({
+      id: 'sunday_glove',
+      name: 'Sunday Glove',
+      kind: 'charm',
+      luck: 6,
+      wielder: 'faye',
+      usableInBattle: false,
+      price: 0,
+      text: 'Worn soft by a thousand honest grips. It only fits a steady hand. Luck +6.',
+    }),
+    I({
+      id: 'lucky_tee',
+      name: 'Lucky Tee',
+      kind: 'charm',
+      luck: 6,
+      wielder: 'milo',
+      usableInBattle: false,
+      price: 0,
+      text: 'Survived a driver swing untouched. Statistically impossible. Milo keeps checking the math. Luck +6.',
+    }),
+    I({
+      id: 'caddys_marker',
+      name: "Caddy's Marker",
+      kind: 'charm',
+      luck: 7,
+      wielder: 'dorin',
+      usableInBattle: false,
+      price: 0,
+      text: 'A coin that has marked ten thousand putts. It knows exactly where it is. Luck +7.',
+    }),
   ].map((i) => [i.id, i]),
 );

@@ -1711,6 +1711,28 @@ export const CAST: Record<string, CharacterSpec> = {
       pm.set(m.bodyX + 7, y0 + 4, px(RAMP.GOLD, 1));
     },
   },
+  // ---- COSTA ESTRELLA LINKS (S13) ----
+  caddy: {
+    // FITO, the caddy — §A11 obsession: he measures the entire world in
+    // putts ("that cloud? two putts away, señor")
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'short',
+    hat: { kind: 'cap', ramp: RAMP.PAPER }, // the resort's white flat cap
+    top: { ramp: RAMP.GRASS, style: 'shirt', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.PAPER },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'happy', // already measured you. two putts, generous read
+    mouth: 'smile',
+    // the towel over the shoulder — every caddy's flag of office (front/side)
+    detail: ({ pm, dir, bob, m }) => {
+      if (dir === 'up') return;
+      const y0 = m.bodyTop + bob;
+      pm.rect(m.bodyX + 1, y0, 2, 5, px(RAMP.PAPER, 3));
+      pm.set(m.bodyX + 1, y0 + 5, px(RAMP.PAPER, 1)); // the hem swings
+    },
+  },
   // ---- the 6:15 bus ----
   busDriver: {
     skin: RAMP.SKIN_DEEP,

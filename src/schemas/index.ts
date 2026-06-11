@@ -618,3 +618,58 @@ export const HoopsStateSchema = z.strictObject({
   played: z.number().int().min(0),
 });
 export type HoopsState = z.infer<typeof HoopsStateSchema>;
+
+/* ================= COSTA ESTRELLA LINKS (S13) ================= */
+
+/** a px point inside a hole's grid space */
+export const LinksVecSchema = z.strictObject({ x: z.number(), y: z.number() });
+export type LinksVec = z.infer<typeof LinksVecSchema>;
+
+/**
+ * One authored hole (S13): RLE terrain rows (T tee · F fairway · R rough ·
+ * S sand · W water/surf · G green · C cliff), §A11 name + plaque (the
+ * validator counts nine and sweeps the strings), and the green's HONEST
+ * break — the slope arrows draw exactly what the putt physics apply.
+ */
+export const LinksHoleSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  par: z.union([z.literal(3), z.literal(4), z.literal(5)]),
+  plaque: z.string().min(1),
+  rle: z.array(z.string().regex(/^(\d+\*)?[TFRSWGC\d]+$/)).min(6),
+  tee: LinksVecSchema,
+  pin: LinksVecSchema,
+  slope: LinksVecSchema,
+});
+export type HoleDef = z.infer<typeof LinksHoleSchema>;
+
+/** a club in the bag (B cycles it): carry/roll in yards, loft eats wind */
+export const ClubDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  carry: z.number().positive(),
+  roll: z.number().min(0),
+  loft: z.number().min(0).max(1),
+  /** the third tap's perfect half-window (smaller = harder) */
+  accWindow: z.number().positive(),
+});
+export type ClubDef = z.infer<typeof ClubDefSchema>;
+
+/**
+ * One of the 31 Invitational golfers (§A11 names; honest curves — match
+ * results roll off acc/agg and NEVER read the player's score, the no-
+ * rubber-banding law extended to the links).
+ */
+export const GolferDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  /** one line of clubhouse §A11 (the bracket board shows it) */
+  line: z.string().min(1),
+  /** 0..1: how often the hole goes their way */
+  acc: z.number().min(0).max(1),
+  /** 0..1: variance — aggressive golfers make eagles AND doubles */
+  agg: z.number().min(0).max(1),
+  /** 1 = round-one fodder … 5 = final material */
+  tier: z.number().int().min(1).max(5),
+});
+export type GolferDef = z.infer<typeof GolferDefSchema>;

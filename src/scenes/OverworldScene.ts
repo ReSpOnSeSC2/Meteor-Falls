@@ -60,7 +60,9 @@ import {
   pickupSeed,
 } from '../data/hoops';
 import { AWAKENINGS } from '../data/awakenings';
+import { LINKS_FLAGS, LINKS_TEXT, SUNDAY_SET, linksSeed } from '../data/links';
 import type { HoopsLaunch } from './HoopsScene';
+import type { LinksLaunch } from './LinksScene';
 import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
@@ -1345,9 +1347,88 @@ export class OverworldScene extends Phaser.Scene {
         // S12: THE CAGE's commissioner — formats, the Classic, the handoff
         await this.permitBeat();
         return true;
+      case 'caddy':
+        // S13: COSTA ESTRELLA — stroke play, the Invitational, the Set
+        await this.caddyBeat();
+        return true;
       default:
         return false;
     }
+  }
+
+  /* ---------------- S13: COSTA ESTRELLA LINKS (ADR-037) ----------------
+   * FITO is the gate to both formats; LinksScene runs the round over a
+   * paused world ('mf-links-closed'). The Invitational lives on NUMBER
+   * FLAGS (links_seed/links_round/links_titles/links_played — ADR-015's
+   * prefer-flags clause); THE SUNDAY SET hands off PERMIT's way (hands-full
+   * BLOCKS, per-hero raincheck flags, zero missables).
+   */
+
+  private launchLinks(cfg: LinksLaunch): void {
+    this.game.events.once('mf-links-closed', () => {
+      AUDIO.playMusic(this.mapDef.music);
+      this.scene.resume();
+    });
+    this.scene.pause();
+    this.scene.launch('links', cfg);
+  }
+
+  /** the first Invitational pays THE SUNDAY SET — four 'other'-slot charms,
+   *  hero-tagged, hands-full BLOCKING with links_handed_<hero> rainchecks */
+  private async sundaySetHandoff(): Promise<boolean> {
+    for (const [heroId, itemId] of Object.entries(SUNDAY_SET)) {
+      if (GS.flag(`${LINKS_FLAGS.handedPrefix}${heroId}`) === true) continue;
+      const wielder = GS.data.party.find((p) => p.id === heroId && p.bag.length < 14);
+      const carrier = wielder ?? GS.data.party.find((p) => p.bag.length < 14);
+      if (!carrier || !GS.addItem(itemId, carrier.id)) {
+        await this.dlg.say(...DIALOGUE.caddy_hands_full);
+        return true;
+      }
+      GS.setFlag(`${LINKS_FLAGS.handedPrefix}${heroId}`);
+      toast(this, `Got ${ITEMS[itemId].name}!`);
+      AUDIO.sfx('confirm');
+    }
+    return false;
+  }
+
+  private async caddyBeat(): Promise<void> {
+    const titles = Number(GS.flag(LINKS_FLAGS.titles)) || 0;
+    if (!GS.flag('links_met')) {
+      GS.setFlag('links_met');
+      await this.dlg.say(...DIALOGUE.npc_caddy);
+    }
+    // the champion's debts come first (the PERMIT pattern)
+    if (titles >= 1 && Object.keys(SUNDAY_SET).some((heroId) => GS.flag(`${LINKS_FLAGS.handedPrefix}${heroId}`) !== true)) {
+      await this.dlg.say(...DIALOGUE.caddy_title_first);
+      await this.sundaySetHandoff();
+      return;
+    }
+    if (titles > 1 && !GS.flag('links_repeat_heard')) {
+      GS.setFlag('links_repeat_heard');
+      await this.dlg.say(...DIALOGUE.caddy_repeat_title);
+    }
+    await this.dlg.say(...DIALOGUE.caddy_ask);
+    const live = GS.flag('links_bracket_live') === true;
+    const round = Number(GS.flag(LINKS_FLAGS.round)) || 0;
+    const invRow = live ? `Play the Invitational: ${LINKS_TEXT.boardRound[round]}` : 'Enter the Costa Estrella Invitational';
+    const pick = await this.dlg.ask(['Play a stroke round (9 holes)', invRow, 'Never mind'], { cancelIndex: 2 });
+    if (pick === 0) {
+      this.launchLinks({ kind: 'stroke' });
+      return;
+    }
+    if (pick !== 1) return;
+    if (!live) {
+      const played = Number(GS.flag(LINKS_FLAGS.played)) || 0;
+      GS.setFlag(LINKS_FLAGS.seed, linksSeed(titles, played));
+      GS.setFlag(LINKS_FLAGS.round, 0);
+      GS.setFlag('links_bracket_live');
+      GS.setFlag('links_was_in');
+      if (GS.activeSlot !== null) GS.saveTo(GS.activeSlot);
+      await this.dlg.say(...DIALOGUE.caddy_register);
+    } else {
+      await this.dlg.say(...DIALOGUE.caddy_resume);
+    }
+    this.launchLinks({ kind: 'match', round: Number(GS.flag(LINKS_FLAGS.round)) || 0 });
   }
 
   /* ---------------- S12: THE CAGE (ADR-034) ----------------

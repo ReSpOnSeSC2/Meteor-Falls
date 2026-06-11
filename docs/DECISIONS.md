@@ -2004,3 +2004,113 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   LINKS inherits X/Y availability, the rebind table, and the over-head
   meter idiom; the BEHIND projection (behindMap) is the house pseudo-3D
   seam if other minigames want depth.
+
+## ADR-037 — S13: COSTA ESTRELLA LINKS — nine holes, the 3-tap meter, the flags-borne Invitational & THE SUNDAY SET
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S13 — the golf twin of S12 under the S10
+  minigame law: own scene, everyFrame input, back = B, seeded injectable
+  determinism, replayable forever, once-only specials, manifests + bot
+  recipe + QA row in the same commit)
+- **Context:** The S10/S12/S12c law stack governs every minigame; ADR-015
+  prefers flags over save steps; ADR-017 demands manifests beside content;
+  ADR-033's sport-sheet contract was built to be cut from ("S13's golfer
+  sheets cut from this contract — the queue already says so").
+- **Decision — THE VENUE (the canon call):** a clifftop resort NORTH OF
+  PUERTO SOL — §A5 Ch.2's Spanish-colonial port covers the "Spain" ask;
+  Mauna Lani (Ch.8) was the alternate and remains available if the author
+  prefers after playing it (this entry is the decision point). The module
+  is COMPLETE AND STANDALONE now (the Sprite Lab precedent): a dev title
+  row reaches `costa_estrella`, and the world door is AUTHORED FOR PUERTO
+  SOL as the exported `COSTA_DOOR_FOR_PUERTO_SOL` — Prompt 28 wires it in
+  ONE LINE (it is not placed: door targets must exist, the validator's
+  law). The tease: Brickton's bus-stop corner grew a travel poster on a
+  FRESH rng stream (2095 — the ADR-016 rule's third application; 1995 and
+  2077 stay byte-identical) with a sign read.
+- **Decision — THE COURSE:** nine authored holes in the HOLES table
+  (src/links/course.ts; schema'd, validator counts NINE and sweeps every
+  name + plaque): par 36, the §A11 names one obsession apiece (THE
+  HANDSHAKE, TWO PUTTS OF SURF, THE BEACH THE STAFF DENY, THE TERRACES,
+  THE GOAT'S COMMUTE, THE SEA STACK, THE LONG SIESTA, VENDOR'S ALLEY,
+  SUNSET). Grids are RLE-authored rows (hand-written, reviewable, expanded
+  by ONE shared function) at 16px tiles, 2px per yard; the spec's
+  signatures are validator-pinned (hole 2 carries pure surf rows; hole 6's
+  green rings in water). Terrain: T/F/R/S/W/G/C with LIES taxes (carry,
+  roll, accuracy window). The hole texture painter (spritegen/golfers.ts)
+  draws THROUGH the same grid — surf foam at every coast, WIDE mow bands
+  (rule 4), warm plugged sand, the fringe, and SLOPE ARROWS stamped from
+  hole.slope EXACTLY: the arrows are honest because they and the putt
+  physics read one vector.
+- **Decision — THE SIM (src/links/sim.ts, Phaser-free, cabinet law):**
+  fixed 8.333ms quanta; ONE seeded rng per round whose only customers are
+  WIND (drawn once, announced by the caddy in putts — windPutts) and
+  cliff kicks; everything else is pure (inputs → strokes). THE 3-TAP
+  METER: A starts; the power needle BOUNCES (rise to the cap, fall — die
+  at zero and the swing cancels without a stroke); the second tap sets
+  power; the needle falls and the third tap sets accuracy against a
+  SHRINKING perfect window (club.accWindow × lie; floor −0.3 auto-swings
+  the big push). Accuracy error deflects the line (PUSH_RAD) and CURVES
+  the flight (draw/fade); after-touch rides the held d-pad mid-flight,
+  capped; loft buys apex and wind exposure. Landing: water = splash, one
+  penalty, drop at the LAST DRY point under the flight; sand plugs; cliff
+  kicks (seeded); grass converts momentum to roll, greens add the slope
+  vector, and the cup swallows anything within 5px under 70px/s. Inside
+  30y the CHIP meter takes over (power tap, lofted hop, tiny roll); on
+  the green the PUTT meter is the power tap alone. The bag is a data
+  table (8 clubs, carries descending, windows tightening at the long end)
+  with auto-suggest by distance; B cycles freely.
+- **Decision — THE INVITATIONAL (flags carry it; no save v7):** 32-player
+  match play — five 3-hole matches (sudden death past three all square)
+  vs 31 GOLFERS (§A11 names; tier curve 8/8/7/5/3, validator-pinned)
+  whose hole scores roll HONESTLY from (acc, agg, par, rng) —
+  golferHoleScore never reads the player (the no-rubber-banding law on
+  grass). ADR-015's prefer-flags clause is exercised: links_seed +
+  links_round + links_titles + links_played (+ links_bracket_live and the
+  links_handed_<hero> rainchecks) ARE the tournament — linksField/
+  linksEntrants/linksNextOpponent recompute the field and every other
+  pairing from (seed, round) deterministically, vitest-pinned. The scene
+  saves the active notebook after every match, so a full Invitational
+  (~20–30 min) survives process death at match granularity. Walk-offs
+  forfeit (the S10 eject rule): the bracket flags clear, nothing pays.
+- **Decision — REWARDS (validator-pinned):** stroke rounds pay EXP
+  FOREVER through the Prompt-18 flow — strokeExp: 150 even, +25/under,
+  −12/over, floor 40 — plus one seeded clubhouse drop; Invitational
+  rounds pay 180/240/320/420/560 (loss 0.4×). The FIRST title pays THE
+  SUNDAY SET — §A8's 'other'-slot expansion (Bible amended per Appendix
+  rule 6): Sunday Visor (Jay, Luck+7), Sunday Glove (Mia, Luck+6), Lucky
+  Tee (Milo, Luck+6), Caddy's Marker (Dorin, Luck+7) — wielder-tagged
+  charms reading through the S9 heroLuck seam with stat-aware previews,
+  drawn trinket icons through the S11b WEAPON_ART gate, handed at the
+  caddy PERMIT's way: hands-full BLOCKS, per-hero raincheck flags, zero
+  missables. Repeat titles pay $400 IN HAND (resort prizes never route
+  through Dad's ledger). NOT a §A10 quest — the sixteen stay sixteen.
+- **Decision — THE SHEETS + THE CAST:** GOLF_FRAME (11 frames, 32×40,
+  facing right) is CUT FROM the ADR-033 sport-sheet contract — athletes.ts
+  exports drawProfileHead (extracted, byte-equivalent) so golfers wear THE
+  SAME heads; poses: address · backswing ×2 (the power tick) · strike ·
+  follow-through ×2 · fist-pump · the universal sad putter slump ×2 ·
+  putt address/strike. Heroes golf as their CAST selves (use-time
+  generation, ensureLinksArt — the ensureAthleteArt stance). FITO, the
+  caddy, joins CAST with exactly one §A11 obsession — he measures the
+  entire world in putts ("that cloud? two putts away, señor") — a towel
+  detail hook, green reads, club hands, and the §A11.2 sincerity played
+  STRAIGHT on the 9th tee at sunset (caddySunset, validator-pinned to
+  stay unfunny).
+- **Verification:** validator (links section, three axes verified by
+  construction during bring-up: a 19-wide RLE row, off-tile pins, and the
+  WEAPON_ART gate all failed loudly before fixing) + 228 vitest (RLE
+  expansion, geometry, bag/lies monotonicity, wind determinism, the meter
+  bounce-cancel + floor push, the splash penalty + dry drop, golfer-curve
+  honesty, bracket derivation, strokeExp pins, and THE BOT HOLE: the
+  documented driver line plays hole 1 tee-to-cup twice byte-identical and
+  closes all nine). Browser legs in docs/QA.md (resort, caddy gate,
+  stroke hole 1 in 2 strokes at scene level, the match card vs the
+  tier-1 gate, flags lit/cleared, zero console errors). Browser loop and
+  android:apk untouched.
+- **Consequences:** Prompt 28 wires the resort with one pushed door (+ a
+  return door at Puerto Sol); future minigames keep inheriting the
+  HoopsSim split (pure sim, renderer scene, vitest first — twice proven
+  now); new holes are an RLE block + manifest bump; new golfers are a row
+  + the tier curve; the golfer sheet is the template for any future
+  sport-sheet cut (the head is shared by export, not by copy); Mauna Lani
+  stays one ADR away if the author moves the venue.

@@ -211,6 +211,14 @@ Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one
 > slot the way Defense reads the Champion Jacket. The §A8 manifest extends
 > in the validator in the same commit, per ADR-017.)*
 
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-037: the 'other' slot
+> expands with **THE SUNDAY SET** — the Costa Estrella Invitational's
+> first-title prize, four hero-tagged charms: Sunday Visor (Jay, Luck+7),
+> Sunday Glove (Mia, Luck+6), Lucky Tee (Milo, Luck+6), Caddy's Marker
+> (Dorin, Luck+7). Luck reads through the S9 charm seam; repeat titles pay
+> cash in hand. The §A8 manifest extends in the validator in the same
+> commit.)*
+
 **Food (HP):** Corn Dog, PB&J, Alfajor, Scone & Clotted Cream, Jollof Bowl, Samosa, Baozi, **Sarmale**, **Mămăligă cu Brânză** (best HP/$ in the game — Buni's), Akutaq, Poke Bowl, Freeze-Dried Ice Cream (Mars vending machines).
 
 **PP:** Star Cola line, Monastery Tea, Temple Incense. **Cures:** Salt Shaker (anti-Tick!), Aloe Leaf (Sunburn), Hanky (Crying), Doctor's Note (Mushroomize), Mom's Voice Tape (Homesick, 3 uses).
