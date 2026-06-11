@@ -271,6 +271,36 @@ const TRACKS: Record<string, Track> = {
       },
     ],
   },
+  // THE CAGE (S12): boom-bap streetball strut — swung E-minor bass, a horn
+  // stab answering on the off-beats, chain-link hat. 1995 had a soundtrack.
+  cage: {
+    bpm: 96,
+    swing: 0.3,
+    loop: true,
+    channels: [
+      {
+        wave: 'triangle',
+        vol: 0.18,
+        notes: ['E2', null, 'E2', 'G2', null, 'E2', null, 'A2', 'A2', null, 'G2', null, 'B2', null, 'D3', 'B2'],
+      },
+      {
+        wave: 'square',
+        vol: 0.07,
+        notes: [null, null, 'E4', null, null, 'G4', null, null, null, 'A4', null, 'G4', null, null, 'B4', null],
+      },
+      {
+        wave: 'sine',
+        vol: 0.06,
+        detune: 4,
+        notes: ['E5', null, null, null, null, null, 'D5', null, null, null, 'E5', null, null, 'G5', null, null],
+      },
+      {
+        wave: 'noise',
+        vol: 0.022,
+        notes: ['C5', null, 'C5', 'C5', null, 'C5', 'C5', null, 'C5', null, 'C5', 'C5', null, 'C5', 'C5', 'C5'],
+      },
+    ],
+  },
   // the 6:15: a friendly diesel roll, somewhere between home and everything else
   bus: {
     bpm: 100,
@@ -564,6 +594,61 @@ class AudioSys {
         // a patrol Smiler notices you, productively
         this.tone('square', 620, 980, 0.09, 0.07);
         this.tone('square', 980, 980, 0.07, 0.06, 0.09);
+        break;
+      /* ---- S12 THE CAGE presets: the court's whole vocabulary ---- */
+      case 'bounce':
+        this.tone('triangle', 130, 70, 0.07, 0.1);
+        this.noise(0.03, 0.03, 500);
+        break;
+      case 'swish':
+        // chain net — the cage's one pure sound
+        this.noise(0.16, 0.08, 5200);
+        this.tone('sine', 1980, 1480, 0.14, 0.04, 0.01);
+        break;
+      case 'rim':
+        this.tone('square', 420, 380, 0.09, 0.09);
+        this.tone('square', 630, 590, 0.07, 0.05, 0.02);
+        break;
+      case 'fence':
+        // the ball plays off the chain-link (no out of bounds here)
+        this.noise(0.12, 0.06, 3200);
+        this.tone('triangle', 240, 180, 0.1, 0.05);
+        break;
+      case 'pass':
+        this.noise(0.06, 0.04, 1900);
+        break;
+      case 'catch':
+        this.tone('triangle', 300, 240, 0.04, 0.06);
+        break;
+      case 'gather':
+        this.tone('sine', 360, 520, 0.12, 0.05);
+        break;
+      case 'green':
+        // the GREEN release — one clean tick of certainty
+        this.tone('sine', 1245, 1245, 0.09, 0.06);
+        break;
+      case 'jump':
+        this.noise(0.05, 0.04, 900);
+        this.tone('sine', 240, 420, 0.08, 0.04);
+        break;
+      case 'swipe':
+        this.noise(0.07, 0.05, 2600);
+        break;
+      case 'steal':
+        this.tone('square', 700, 1050, 0.08, 0.06);
+        break;
+      case 'block':
+        this.noise(0.12, 0.1, 1100);
+        this.tone('triangle', 140, 70, 0.12, 0.1);
+        break;
+      case 'dunk':
+        // the hammer + the chain aftermath
+        this.tone('triangle', 110, 50, 0.16, 0.13);
+        this.noise(0.2, 0.09, 4800, 0.03);
+        break;
+      case 'buzzer':
+        this.tone('sawtooth', 220, 220, 0.55, 0.09);
+        this.tone('sawtooth', 222, 222, 0.55, 0.07);
         break;
       /* ---- S11 battle-fx presets: one voice per element/family ---- */
       case 'fx_surge':

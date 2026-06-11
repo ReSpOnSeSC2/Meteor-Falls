@@ -80,7 +80,7 @@ import { ABILITIES, rollPray, PRAY_TEXT, type AbilityDef, type PrayTier } from '
 import { ITEMS } from '../data/items';
 import { BATTLE_TEXT, DIALOGUE } from '../data/dialogue';
 import { GS, expForLevel, type HeroState } from '../engine/state';
-import { statsAtLevel, maxHpAtLevel, maxPpAtLevel, unlockedAbilities, HEROES } from '../data/heroes';
+import { statsAtLevel, maxHpAtLevel, maxPpAtLevel, unlockedAbilities, availableAbilities, HEROES } from '../data/heroes';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Odometer } from '../battle/odometer';
@@ -104,6 +104,8 @@ import {
   expShare,
   heroOffense,
   heroDefense,
+  heroSpeed,
+  heroGuts,
   contractHomesick,
   homesickSkips,
   cryingMisses,
@@ -349,11 +351,14 @@ export class BattleScene extends Phaser.Scene {
     return h.wear === 2;
   }
 
-  /** send a hero up onto the stage (bust goes 'away' while they're out) */
-  private async stageEnter(h: HeroUnit, aimX: number): Promise<void> {
+  /** send a hero up onto the stage (bust goes 'away' while they're out).
+   *  `standoff` keeps casters at casting distance — only the Bash and the
+   *  thrown-item lob walk to arm's reach (S12b: a point-blank cast read as
+   *  a melee hit; the magic travels, the caster doesn't). */
+  private async stageEnter(h: HeroUnit, aimX: number, standoff = 12): Promise<void> {
     h.bust.setAway(true);
     const card = h.bust.point();
-    await this.stage.enter(this.battlerSheet(h), { x: card.x, y: card.y + 14 }, aimX, this.isWinded(h));
+    await this.stage.enter(this.battlerSheet(h), { x: card.x, y: card.y + 14 }, aimX, this.isWinded(h), standoff);
   }
 
   /** walk back to the card and hand the pose back to the bust */
@@ -666,7 +671,7 @@ export class BattleScene extends Phaser.Scene {
       }
       if (options[pick] === 'Run') {
         const maxSpd = Math.max(...this.enemies.filter((e) => e.alive).map((e) => e.def.speed));
-        if (Math.random() < runChance(h.hero.stats.speed, maxSpd)) {
+        if (Math.random() < runChance(heroSpeed(h.hero), maxSpd)) {
           await this.print(BATTLE_TEXT.run_ok);
           this.finish('ran');
           return false;
@@ -815,7 +820,7 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     const cls = weaponClassOf(h.hero.equip.weapon ?? null);
-    const smashed = Math.random() < smashChance(h.hero.stats.guts);
+    const smashed = Math.random() < smashChance(heroGuts(h.hero));
     // announce while walking (the combo assembles its own one-liner instead)
     const announce = smashed ? null : this.print(this.fill(BATTLE_TEXT.bash, name));
     await this.stageEnter(h, target.spr.x);
@@ -856,7 +861,7 @@ export class BattleScene extends Phaser.Scene {
    * Resolves with the TOTAL hit count (the opening smash is hit 1).
    */
   private comboWindow(h: HeroUnit, target: EnemyUnit, cls: ReturnType<typeof weaponClassOf>): Promise<number> {
-    const cap = comboCap(h.hero.stats.guts);
+    const cap = comboCap(heroGuts(h.hero));
     if (cap <= 1) return Promise.resolve(1);
     return new Promise((resolve) => {
       let hits = 1;
@@ -905,7 +910,9 @@ export class BattleScene extends Phaser.Scene {
       await this.print(this.fill(BATTLE_TEXT.hushed_no_vibe, name));
       return false;
     }
-    const ids = unlockedAbilities(h.hero.id, h.hero.level).filter((id) => {
+    // S12b (ADR-035): availability = level unlocks ∪ story AWAKENINGS —
+    // before the crater, Jay searches and the old light isn't his yet
+    const ids = availableAbilities(h.hero.id, h.hero.level, (f) => GS.flag(f) === true).filter((id) => {
       const a = ABILITIES[id];
       // pray lives on the command row, not in the Vibe list (Prompt 12);
       // teleport is an overworld run-up, not a battle cast
@@ -929,7 +936,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** Milo's command (§A3: Spy, Bottle Rockets — Repair works overnight) */
   private async heroGadgets(h: HeroUnit): Promise<boolean> {
-    const ids = unlockedAbilities(h.hero.id, h.hero.level).filter(
+    const ids = availableAbilities(h.hero.id, h.hero.level, (f) => GS.flag(f) === true).filter(
       (id) => ABILITIES[id]?.kind === 'gadget' && id !== 'repair',
     );
     if (ids.length === 0) return false;
@@ -984,7 +991,9 @@ export class BattleScene extends Phaser.Scene {
     const onStage = pose === 'cast' || pose === 'aim' || pose === 'throw' || pose === 'pray';
     if (onStage) {
       const aimX = foeTargets.length > 0 ? foeTargets[0].spr.x : this.scale.width / 2;
-      await this.stageEnter(h, aimX);
+      // casts/aims/prayers keep CASTING DISTANCE (a point-blank psychic
+      // reads as a bash — the S12b user catch); throws lob from range too
+      await this.stageEnter(h, aimX, 72);
       if (pose === 'throw') await this.stage.strike('throwA', 300);
       else this.stage.hold(pose);
     } else {
@@ -1115,8 +1124,10 @@ export class BattleScene extends Phaser.Scene {
           ? Math.max(1, Math.round(ab.power * (0.9 + Math.random() * 0.2)))
           : vibeDamage(ab.power, h.hero.stats.vibe, Math.random);
       const dmg = applyWeakness(raw, weak);
-      // Vibe Fire burns the Tick's latch away (§A6 Boss 1)
-      if (ab.element === 'fire' && t.def.boss) this.breakLatch();
+      // Vibe Fire burns the Tick's latch away (§A6 Boss 1) — and so does
+      // the OLD LIGHT (S12b/ADR-035, §A6 amended): the crater awakening is
+      // the diegetic tutorial for the fight that follows it
+      if ((ab.element === 'fire' || ab.id.startsWith('vibe_surge')) && t.def.boss) this.breakLatch();
       await this.damageEnemy(t, dmg, weak);
     }
     return true;
@@ -1135,7 +1146,7 @@ export class BattleScene extends Phaser.Scene {
     const at = (): FxTarget => this.stage.point();
     await this.fx.play('pray', { caster: at() });
     await this.print(this.fill(ABILITIES.pray.text, h.hero.name));
-    const tier = this.prayPin ?? rollPray(h.hero.level, h.hero.stats.guts, Math.random);
+    const tier = this.prayPin ?? rollPray(h.hero.level, heroGuts(h.hero), Math.random);
     this.prayPin = null;
     await this.print(this.fill(PRAY_TEXT[tier], h.hero.name));
     const aliveE = this.enemies.filter((e) => e.alive);
@@ -1273,10 +1284,11 @@ export class BattleScene extends Phaser.Scene {
       const target = await this.pickEnemy();
       if (!target) return false;
       GS.removeItem(itemId, h.hero.id);
-      // S11b: battle items with a throw_arc family LOB from the stage
+      // S11b: battle items with a throw_arc family LOB from the stage —
+      // from throwing range (S12b), the arc is the show
       const onStage = fxKey !== null && stagePoseOf(fxKey) === 'throw';
       if (onStage) {
-        await this.stageEnter(h, target.spr.x);
+        await this.stageEnter(h, target.spr.x, 72);
         await this.stage.strike('throwA', 300);
       } else {
         h.bust.poseFor('lunge', 600);
@@ -1507,7 +1519,7 @@ export class BattleScene extends Phaser.Scene {
       void this.print(this.fill(BATTLE_TEXT.wake_up, h.hero.name));
     }
     const wouldDie = h.odoHp.target - dmg <= 0;
-    if (wouldDie && gutsSurvive(h.hero.stats.guts, Math.random)) {
+    if (wouldDie && gutsSurvive(heroGuts(h.hero), Math.random)) {
       h.odoHp.target = 1;
       h.odoHp.displayed = Math.max(1, h.odoHp.displayed - dmg * 0.5);
       void this.print(`${h.hero.name} hung on with sheer GUTS!`);

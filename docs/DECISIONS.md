@@ -1604,3 +1604,279 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   machine can stage bosses through the same StageView seam if it ever wants
   a hero pulled forward; Prompt 42 profiles a stage that still pools every
   transient and draws nothing per-frame.
+
+## ADR-033 — S12: the SPORT SHEET contract — bespoke athlete sheets off CharacterSpec
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S12 — the contract the spec demanded its own
+  ADR for; the ADR-021 variant pattern at minigame scale)
+- **Context:** THE CAGE needs ten athletes live at 60fps performing a sport
+  vocabulary no existing sheet carries (dribbles, releases, dunk
+  cinematics, swipes). ADR-021/022/025 made every face derivable from
+  CharacterSpec; ADR-020's six rules bind all new art; ADR-002 wants
+  boot-time generation but S11b's ensureBattleArt precedent put look-keyed
+  sheets at use-time, cached.
+- **Decision:**
+  - **`src/spritegen/athletes.ts` — 32×40 × 25 frames** (`SPORT_FRAME` is
+    the named contract; tests pin count and names): dribble idle ×2 ·
+    dribble run ×2 · off-ball run ×2 · defensive slide ×2 · gather ·
+    jumper rise + a READABLE RELEASE (arm at full extension, wrist
+    snapped, fingertips in the light) · layup ×2 · THREE dunk cinematics
+    ×2 each (tomahawk, windmill, two-hand hammer) · block leap ×2 · steal
+    swipe · FALL (the ankle tax — dizzy stars stamped as pure light after
+    outline, the ADR-021 idiom) · celebration ×2.
+  - **Sheets author FACING RIGHT; the runtime mirrors with flipX.** There
+    is no 'left' on a sport sheet — the battler precedent stated as law.
+  - **One construction, every face:** a hand-authored SIDE_SKULL span
+    table (ADR-022 — drawn dome, flat occiput, brow/nose pulled onto the
+    right edge), ADR-025 hairTones with per-style side treatments (bob
+    curtain, topknot bun, gray horseshoe, cap bill forward), ADR-023 face
+    fields and builds (chub widens the torso). HEROES and WALK-ONS play
+    as their CAST selves — canon clothes, Mia in the dress; OPPONENTS
+    derive hashed specs (`deriveOpponentSpec`: skin/hair/eyes/mouth
+    variety off the team-id hash — ADR-022's no-two-alike applied to 31
+    fives) dressed in their TEAMS jersey ramp (tank with armhole scoops +
+    trim bands).
+  - **Generation is use-time, cached (`ensureAthleteArt`):** match start
+    generates sheets for the ten (or six) actually playing — the
+    ensureBattleArt stance; a 31-team boot sweep would cost seconds for
+    fives most saves never meet. Athletes carry NO baked shadows (rule
+    2): the scene floats one un-outlined shadow pip under every body and
+    the ball.
+  - **The ball + the chain net + the floor:** `drawBall` (7×7, two seams,
+    one deliberate highlight), `drawHoopSide` (pole, weathered board,
+    BENT rim — street canon — chain net with three ripple frames the
+    scene swaps on swish/rim events), `drawCageCourt` (one big deliberate
+    painting: flat asphalt per rule 1 with five hand-placed crack
+    clusters + two tar patches, worn hand-painted lines that break
+    mid-run per rule 4, faded key fills, the 2-point arcs at COURT.ARC_R
+    exactly — geometry and paint share src/hoops/court.ts so the painted
+    line IS the rule).
+- **Consequences:** any future athlete (a guest five, a Ch.5 cameo) is a
+  CharacterSpec away; vocabulary extensions append NAMED frames to
+  SPORT_FRAME and the tests catch silent renumbering; S13's golfer sheets
+  cut from this contract (the queue already says so).
+
+## ADR-034 — S12: THE CAGE — deterministic streetball, the Classic, save v5 & THE STARTING FOUR
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S12 — the S10 cabinet law governs all
+  minigames, ADR-029; user spec: an NBA-2K-grade minigame that stands
+  alone, 5v5 first-class, mapped onto Brickton per ADR-028)
+- **Context:** The SE vacant lot has been "FUTURE SITE OF MORE BRICKTON"
+  since S1; ADR-016 froze the 1995 rng stream; ADR-015 demands registered
+  save steps; ADR-017 manifests in the same commit; ADR-024/026 set the
+  input law; ADR-029 the determinism creed; §A9's budget reads 4.5–6hr
+  main + 3hr sides.
+- **Decision:**
+  - **The VENUE: the fence gains a GATE.** One fence tile swaps walkable
+    via a plain `g.set` (consumes NO rng — the 1995 layout stays byte-
+    identical), the `cage_gate` prop hangs over it, and a door zone
+    carries Brickton (50,26) ⇄ the_cage. `the_cage` is an ADR-004 grid
+    floating in the lot's weeds: chain-mesh ring tiles, painted court
+    tiles, two backboards, bleachers with bench crowds BAKED per seed
+    (the litSeed idiom), the chalked bracket board, the CALL YOUR OWN
+    FOULS sign ("nobody ever has" — there is no foul system, by canon),
+    and PERMIT, the announcer-commissioner CAST member (§A11 obsession:
+    he has ranked every crossover since 1987; his detail hook is the
+    whistle he has never blown). sign_lot amended: the future arrived,
+    and it is a basketball court.
+  - **THE SIM IS PHASER-FREE (`src/hoops/sim.ts`)** and HoopsScene is a
+    renderer over it — vitest proves "same seed + same inputs = same
+    final score" headlessly (tape-replay suites, byte-equal event logs)
+    and the ADR-008 bot proved it again at scene level (two 3v3 runs off
+    one snapshot: 2-7 / 8-15 / 12-21, trail-identical). Fixed 8.333ms
+    quanta off accumulated dt; one seeded injectable rng per match (the
+    Homesick pattern); shot outcomes roll AT RELEASE from (grade,
+    distance, contest, rating). **NO RUBBER-BANDING:** no code path reads
+    the score to bend a behavior — archetypes (rusher/sniper/post/hawk/
+    balanced) play themselves off the TEAMS table, and AI shooters grade
+    their releases off their sht rating through the SAME greenWindow the
+    player faces.
+  - **Street rules, both formats, one engine:** 1s and 2s (2 behind the
+    arc — pointsFor() lives beside the painted line in court.ts),
+    check-up after scores (3v3 checks at the top; the 5v5 equivalent is
+    the take under your own rim — the full-court reading that keeps
+    transition offense and fast breaks alive), and the fence is LIVE (no
+    out of bounds in a cage; the ball plays off the chain-link). 5v5:
+    four 5-minute quarters on a running clock, a 24-second shot clock
+    PERMIT counts out loud from 5, iron resets it (street), quarter
+    breaks + a halftime chalkboard beat, 2-minute OTs until somebody
+    wins; a release that beats the horn counts. 3v3: FIRST TO 21, WIN BY
+    2, no game clock — the score self-polices.
+  - **Two buttons, honest (§B1's overlay untouched):** OFFENSE — B tap =
+    DIRECTIONAL pass into the held d-pad cone (±55°, leads the cutter;
+    pass-lane picks roll at launch), B hold = turbo, A hold = gather +
+    the SHOT METER (GREEN half-width = f(sht, distance, contest), clamped
+    0.022–0.16 around 0.76; GREEN IS MONEY at 0.99), A at speed near the
+    rim = the contextual finish (dunk for dnk ≥ 40 — three cinematics
+    rolled seeded — else layup; contested dunks get STUFFED), double-tap
+    a direction = crossover (seeded ankle-break vs the defender's
+    commitment; the victim eats the FALL frame and PERMIT ranks it).
+    DEFENSE — you hold the defender nearest the ball (hysteresis;
+    auto-switch on drives and passes), A = timed block leap (beats a
+    release outright), B tap = steal swipe (whiff = beaten 720ms), B
+    hold = turbo slide. TEAMMATE AI holds spacing spots, cuts baseline
+    when the handler drives, and CALLS FOR IT when open. A loose ball
+    triggers THE SCRAMBLE: each side's nearest free body chases (found
+    live by the bot — a dead ball once had no chaser; team 0's pick
+    excludes the user's athlete so an AI teammate always covers).
+  - **THE BRICKTON CLASSIC (save v5 — tournament state IS save data):**
+    32-slot single elimination, the party + the 31 TEAMS (§A11 local
+    color; tier curve 8/8/7/5/3 pinned; Permit's Nephews seed fifth,
+    straight year, unrelated). newBracket seeds weakest-first into the
+    near half, title-grade into the far bottom; between rounds every
+    other pairing sims SEEDED off the bracket seed (tier-honest, no
+    charity); the chalk board redraws from `results` alone. A live match
+    CHECKPOINTS AT QUARTER BREAKS — `hoops.match {opponent, round, seed,
+    quarter, scores, clockMs}` — and **the cage auto-writes the active
+    notebook** (GS.saveTo(activeSlot)) at every break and tally: process
+    death costs at most the quarter in progress (verified: reload →
+    Continue → "Pick up the Classic game (Q2)" at 30-23). Quarter rng
+    re-seeds per period (seed ^ quarter·7919) so a resumed Q3 IS the
+    live Q3 — vitest pins the equivalence. The v4→v5 step is REGISTERED
+    (ADR-015); old saves backfill the clean slate (the v3 empty-ledger
+    stance). A loss tears the bracket up — single elimination means
+    exactly that (register again; PERMIT kept the stub). Walk-offs
+    forfeit: bracket dies, nothing pays — the S10 eject rule. YOUR FIVE =
+    the party first (the heroes are the stars), then named WALK-ONS off
+    the bench table in order — established §A11 locals (Slippers, Crumbs,
+    Exact Change, The Critic) with tiny authored stat lines; Chad guests
+    pre-Milo (unlessFlag milo_joined, validator-pinned); walk-ons never
+    touch the PARTY.
+  - **REWARDS (validator-pinned tables):** every match pays EXP through
+    the Prompt-18 flow — applied in the tally, level-ups announced
+    post-game with stat tables + ability-unlock lines — scaled by format
+    and depth: pickup 130/55 win/loss (forever — the anytime XP run),
+    Classic rounds 240/330/440/580/760 with 0.4 on a loss, plus seeded
+    goods drops (foods/colas off the match rng). FIRST title pays **THE
+    STARTING FOUR** — §A8's first 'arms' gear, one wielder-tagged piece
+    per hero (Champ's Sweatband Guts+6 · Victory Scrunchie Speed+6 ·
+    Shooter's Sleeve Speed+7 · Iron Wristguard Guts+7) — handed at
+    PERMIT with hands-full BLOCKING and the `hoops.handed` raincheck
+    ledger (zero missables, §B4; verified blocked at 14/14, completed on
+    retry). Repeat titles pay $350 + goods, cash IN HAND (a street pot
+    never routes through Dad's ledger). NOT a §A10 quest: the canon
+    sixteen stay sixteen — no caller, no journal row.
+  - **The 'arms' seams, wired the S10 way:** `ItemDef.speed/guts` with
+    the kind-'arms'-⇔-exactly-one-stat schema refinement; `heroSpeed`/
+    `heroGuts` read-throughs in battle/formulas.ts beside heroDefense/
+    heroLuck — battle (run chance, SMAAASH, the combo cap, pray weights,
+    guts survival), STATUS (Speed/Guts lines + an Arms row), and THE
+    CAGE's own court ratings all read through them (the gear makes you
+    better at the game that awarded it); `equipArmsDelta` names the stat
+    THE PIECE carries and `confirmEquip` previews it ("Speed up by N!" /
+    "Guts up by N!"). **Amendment to ADR-032:** its arms→torso art
+    mapping was provisional with zero arms items shipped; arms gear lands
+    as 'trinket' DRAWN ICONS (a 2px wristband cannot read on a 28px
+    battler arm) — validator + the vitest mirror updated; equipment
+    visibility for arms = icon + STATUS + preview.
+  - **§A9 time-budget drift (Bible amended per Appendix rule 6):** a full
+    Classic title run is ~5 four-quarter games ≈ two hours BY DESIGN —
+    optional long-form content beyond the +3hr side-quest line, built to
+    be left and returned to (that is what the v5 checkpoints are for).
+  - **Input-law nuance (ADR-026 note):** hardware back still taps B, and
+    in live play B is a GAME button (pass/steal) — the pause path is
+    START (resume / walk off). A phone back press mid-match costs a
+    swipe, never an exit.
+  - **Driver law (ADR-008 addendum, learned live):** scripted sessions
+    hold `game.loop.sleep()` END TO END — a visible tab's real rAF frames
+    interleave with pump's virtual clock, and once real time runs ahead,
+    navTick-style cursor cooldowns lock out against a future
+    scene.time.now. The S10 safe-pick rule gains a corollary: KeyZ-mash
+    only when row 0 is the row you want — PERMIT's ask aims with
+    ArrowDown, verified by reading the hand cursor's y.
+- **Verification:** validator (31 fives + tier curve, walk-on gates, the
+  STARTING FOUR pins, reward tables, venue pins, the sign_lot amendment,
+  HOOPS_TEXT sweeps via HOOPS_FILL_TOKENS — three axes verified failing
+  loudly) + 196 vitest (sim tape-replay determinism, dt quantization,
+  grading windows, GREEN=money, win-by-2, the 24 with PERMIT's count,
+  quarter re-seed resume equivalence, OT-on-tie, the bracket title run,
+  Chad's gate, hero ratings reading through arms, v4→v5 + v1→v5 chains,
+  checkpoint round-trip); the full ADR-008 gauntlet in docs/QA.md (gate
+  walk, 3v3 to 21 twice byte-identical, Q1 to the horn 30-23, checkpoint
+  + process death + resume, one-frame taps at 8.33, handoff block/retry,
+  walk-off, the scramble fix); fresh debug APK.
+- **Consequences:** S13's LINKS inherits the whole shape (own scene,
+  seeded Phaser-free sim module, sport sheets, a v-step only if flags
+  can't carry it); any new minigame copies the HoopsSim split — pure sim,
+  renderer scene, vitest determinism FIRST; new Classic entrants are a
+  TEAMS row + a tier-curve manifest bump in the same commit; future arms
+  gear is an item + trinket icon + manifest row; Prompt 42 profiles a
+  scene that pools its popups and generates ten sheets once per match.
+
+## ADR-035 — S12b: AWAKENINGS — the old light arrives as story moments (+ the casting-distance fix)
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user direction mid-S12 review: "at the start we
+  shouldn't have any psi abilities... each one needs to be meaningful and
+  very powerful and feel like a large jump forward... learn them at a
+  certain trigger point in the game that allows you to continue, same with
+  items" — plus the catch "Vibe Surge is just a normal bash attack")
+- **Context:** §A3 granted Vibe at L1 (Surge, Fire, Lifeup by L3), so the
+  game's most magical idea arrived as a menu row nobody earned. Separately,
+  S11b's stage walked EVERY actor to arm's reach of the target (the bash
+  approach), so a point-blank cast with a brief arm-raise read exactly like
+  a melee hit — the reported bug was real and it was STAGING, not dispatch
+  (registry, STAGE_ANIM, and the timeline were all correct).
+- **Decision — the casting-distance fix (the bug):**
+  - `StageView.enter` gains a `standoff` param: Bash keeps arm's reach
+    (12px); casts/aims/prayers/throws stand at CASTING DISTANCE (72px) —
+    the magic travels, the caster doesn't. The surge timeline rebuilt to
+    carry the read at range: a CHARGE at the caster's raised hands (motes
+    converge, three swelling pulses), the old light TRAVELS the field as a
+    burst train, then starburst rings escalate per tier (α two → Ω the
+    sky) with a tier-scaled shake. Verified live: actor at x128 vs the
+    Tick at x200, charge → travel → rings → "67 damage!".
+- **Decision — AWAKENINGS (the system):**
+  - **Heroes start with ZERO Vibe.** Abilities arrive at STORY MOMENTS —
+    scene-staged, §A11.2-sincere, each one an event. `src/data/awakenings.ts`
+    holds the table (schema'd per ADR-017: id, hero, ability, flag,
+    dialogue, toast); the grant is a FLAG on the save; availability =
+    level unlocks ∪ awakened flags (`availableAbilities` in data/heroes.ts
+    — battle Vibe/Gadgets lists and the menu VIBE page read THIS; level-up
+    announcements still read the unlock table alone). The pre-awakening
+    Vibe row prints "searched for the old light... not yet."
+  - **Ch.1 ships three** (validator-pinned both directions): `old_light` —
+    Glint's crater prophecy hands Jay VIBE SURGE α one beat before the
+    Tick, and the Surge SEVERS THE LATCH (§A6 amended: Fire and Salt stay;
+    the awakening is the fight's diegetic tutorial — "allows you to
+    continue" made literal, with the salt as the no-softlock floor).
+    `last_spark` — the porch: Glint's spark settles into Jay as LIFEUP α
+    beside the GLINT'S SPARK item the beat already granted (the
+    items-at-trigger-points pattern, now policy: progression gear is
+    handed at story beats, never floor-found). `first_listen` — Mia
+    touches the Locket in the holding room and hears Heartlight #1: VIBE
+    FIRE α ("hears the Embers sing," made literal). PRAY stays innate at
+    L1 — her faith is who she is, validator-pinned.
+  - **Levels spaced, tiers steepened:** Jay opens Hypno α L10 → Shield α
+    L14 → Surge β L18; Mia Freeze α L12 → Magnet L15 → Fire β L17. The
+    signature lines leap ~2.6× α→β (Surge 55/143/231/341, Fire
+    48/125/202/298) so every tier is a jump forward. The §A3 amendment
+    sketches the chapter arc (one awakening per chapter's emotional
+    center; Teleport α/β were always the precedent; Dorin's Trial IS his).
+  - **Save v6, registered (ADR-015):** the v5→v6 step backfills awakening
+    flags from the story flags those scenes set (met_glint → Surge,
+    zapper_done → Lifeup, faye_joined → Fire) — an old save keeps exactly
+    the abilities its story already earned, never its levels.
+  - **The beat helper:** `OverworldScene.awakeningBeat(id)` — flash,
+    sparkle, the §A11 pages, the flag, the levelup jingle, the vars()
+    toast. Three call sites (crater, porch, join); chapter sessions add
+    theirs and extend the validator manifest in the same commit.
+- **Verification:** validator (awakening manifest both directions, no
+  double-path, flag uniqueness vs quests, §A3-amended pins — the
+  double-path axis verified failing loudly) + 199 vitest (availability
+  math: pre-crater Jay = [], flag grants Surge; Mia L6 = pray alone until
+  the Locket; v5→v6 backfill from story flags; the v1→v6 chain). Live via
+  the ADR-008 driver: fresh save → the hill → the crater trigger →
+  prophecy → AWAKENING (flag flipped at press 18, toast + jingle) → the
+  Tick latched Jay (tether visible) → Vibe list now carries Surge → cast
+  → **tethered true→false** (the sever rule live), PP 10→0. Driver lore:
+  HMR splits module instances — `window.mfGS` can go stale against the
+  scenes' GS; full-reload before any flag-reading leg.
+- **Consequences:** every future ability lands as an awakening or a
+  SPACED level unlock, never a freebie; chapter prompts (28–34) pull from
+  the §A3 amendment's arc and pin their manifests; the Tick fight now has
+  three severs (Surge/Fire/Salt) and the crater teaches the first; the
+  stage's standoff param is the staging law (casters at range — a
+  reviewer can reject point-blank casts by this entry).

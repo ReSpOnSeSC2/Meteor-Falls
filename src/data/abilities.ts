@@ -13,9 +13,9 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
   [
     // ---- Jay: Vibe Surge line (signature nuke), support
     A({ id: 'vibe_surge_a', name: 'Vibe Surge a', kind: 'vibe', pp: 10, power: 55, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_a' }),
-    A({ id: 'vibe_surge_b', name: 'Vibe Surge B', kind: 'vibe', pp: 22, power: 121, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_b' }),
-    A({ id: 'vibe_surge_g', name: 'Vibe Surge y', kind: 'vibe', pp: 38, power: 198, target: 'enemies', element: 'none', text: '{user} let the old light ROAR!', fx: 'surge_g' }),
-    A({ id: 'vibe_surge_o', name: 'Vibe Surge O', kind: 'vibe', pp: 64, power: 302, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
+    A({ id: 'vibe_surge_b', name: 'Vibe Surge B', kind: 'vibe', pp: 22, power: 143, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_b' }),
+    A({ id: 'vibe_surge_g', name: 'Vibe Surge y', kind: 'vibe', pp: 38, power: 231, target: 'enemies', element: 'none', text: '{user} let the old light ROAR!', fx: 'surge_g' }),
+    A({ id: 'vibe_surge_o', name: 'Vibe Surge O', kind: 'vibe', pp: 64, power: 341, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
     A({ id: 'lifeup_a', name: 'Lifeup a', kind: 'vibe', pp: 5, power: 45, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
     A({ id: 'lifeup_b', name: 'Lifeup B', kind: 'vibe', pp: 11, power: 110, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
     A({ id: 'lifeup_g', name: 'Lifeup y', kind: 'vibe', pp: 24, power: 180, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole chorus!', fx: 'lifeup' }),
@@ -27,9 +27,9 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
 
     // ---- Mia: elemental lines + PRAY
     A({ id: 'vibe_fire_a', name: 'Vibe Fire a', kind: 'vibe', pp: 6, power: 48, target: 'enemy', element: 'fire', text: '{user} snapped her fingers — FWOOSH!', fx: 'fire_a' }),
-    A({ id: 'vibe_fire_b', name: 'Vibe Fire B', kind: 'vibe', pp: 14, power: 106, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH!', fx: 'fire_b' }),
-    A({ id: 'vibe_fire_g', name: 'Vibe Fire y', kind: 'vibe', pp: 28, power: 173, target: 'enemies', element: 'fire', text: 'The air itself caught!', fx: 'fire_g' }),
-    A({ id: 'vibe_fire_o', name: 'Vibe Fire O', kind: 'vibe', pp: 49, power: 264, target: 'enemies', element: 'fire', text: 'The air itself caught!', fx: 'fire_o' }),
+    A({ id: 'vibe_fire_b', name: 'Vibe Fire B', kind: 'vibe', pp: 14, power: 125, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH!', fx: 'fire_b' }),
+    A({ id: 'vibe_fire_g', name: 'Vibe Fire y', kind: 'vibe', pp: 28, power: 202, target: 'enemies', element: 'fire', text: 'The air itself caught!', fx: 'fire_g' }),
+    A({ id: 'vibe_fire_o', name: 'Vibe Fire O', kind: 'vibe', pp: 49, power: 298, target: 'enemies', element: 'fire', text: 'The air itself caught!', fx: 'fire_o' }),
     A({ id: 'vibe_freeze_a', name: 'Vibe Freeze a', kind: 'vibe', pp: 7, power: 52, target: 'enemy', element: 'freeze', text: '{user} exhaled winter!', fx: 'freeze_a' }),
     A({ id: 'vibe_freeze_b', name: 'Vibe Freeze B', kind: 'vibe', pp: 15, power: 114, target: 'enemy', element: 'freeze', text: '{user} exhaled winter!', fx: 'freeze_b' }),
     A({ id: 'vibe_freeze_g', name: 'Vibe Freeze y', kind: 'vibe', pp: 30, power: 187, target: 'enemy', element: 'freeze', text: 'Absolute zero, with feeling!', fx: 'freeze_g' }),

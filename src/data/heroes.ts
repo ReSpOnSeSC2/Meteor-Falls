@@ -4,6 +4,7 @@
  * Types are z.infer'd from src/schemas (S5) so the compile-time shape and the
  * runtime validation cannot drift; `import type` keeps zod out of the bundle.
  */
+import { awakenedAbilities } from './awakenings';
 import type { HeroDef, HeroId, Stats } from '../schemas';
 
 export type { HeroDef, HeroId } from '../schemas';
@@ -21,13 +22,15 @@ export const HEROES: Record<HeroId, HeroDef> = {
     growth: { offense: 2.1, defense: 1.7, speed: 1.4, guts: 1.2, vibe: 1.8, luck: 0.8 },
     hp: { base: 30, lin: 6.5, quad: 0.08 },
     pp: { base: 10, lin: 2.4, quad: 0.03 },
+    // S12b (ADR-035): Vibe Surge α and Lifeup α are AWAKENINGS now — the
+    // crater prophecy and the porch (src/data/awakenings.ts), not level
+    // rows. The level cadence below is SPACED so each unlock lands as an
+    // event (§A3 amended per Appendix rule 6).
     unlocks: [
-      { level: 1, ability: 'vibe_surge_a' },
-      { level: 3, ability: 'lifeup_a' },
-      { level: 6, ability: 'hypno_a' },
-      { level: 9, ability: 'shield_a' },
-      { level: 16, ability: 'vibe_surge_b' },
-      { level: 20, ability: 'lifeup_b' },
+      { level: 10, ability: 'hypno_a' },
+      { level: 14, ability: 'shield_a' },
+      { level: 18, ability: 'vibe_surge_b' },
+      { level: 22, ability: 'lifeup_b' },
       { level: 24, ability: 'flash_a' },
       { level: 26, ability: 'teleport_a' },
       { level: 31, ability: 'vibe_surge_g' },
@@ -45,14 +48,17 @@ export const HEROES: Record<HeroId, HeroDef> = {
     growth: { offense: 1.6, defense: 1.5, speed: 1.7, guts: 1.0, vibe: 2.2, luck: 1.1 },
     hp: { base: 26, lin: 5.6, quad: 0.07 },
     pp: { base: 14, lin: 3.2, quad: 0.04 },
+    // S12b (ADR-035): PRAY stays innate at L1 — her faith is who she is
+    // (§A3 canon centerpiece, validator-pinned). Vibe Fire α is the
+    // first-listen AWAKENING (the holding-room Locket beat); the elemental
+    // cadence below is spaced so each line opens as an event.
     unlocks: [
-      { level: 1, ability: 'vibe_fire_a' },
       { level: 1, ability: 'pray' },
-      { level: 4, ability: 'vibe_freeze_a' },
-      { level: 8, ability: 'magnet_a' },
-      { level: 10, ability: 'vibe_volt_a' },
-      { level: 15, ability: 'vibe_fire_b' },
-      { level: 18, ability: 'vibe_freeze_b' },
+      { level: 12, ability: 'vibe_freeze_a' },
+      { level: 15, ability: 'magnet_a' },
+      { level: 17, ability: 'vibe_fire_b' },
+      { level: 20, ability: 'vibe_volt_a' },
+      { level: 24, ability: 'vibe_freeze_b' },
       { level: 26, ability: 'vibe_volt_b' },
       { level: 29, ability: 'vibe_fire_g' },
       { level: 32, ability: 'vibe_freeze_g' },
@@ -128,4 +134,14 @@ export function maxPpAtLevel(id: HeroId, level: number): number {
 /** abilities available at a given level */
 export function unlockedAbilities(id: HeroId, level: number): string[] {
   return HEROES[id].unlocks.filter((u) => u.level <= level).map((u) => u.ability);
+}
+
+/**
+ * S12b (ADR-035): what a hero can actually USE — level unlocks ∪ story
+ * AWAKENINGS (flag-granted; src/data/awakenings.ts). Battle and the menu
+ * read THIS; level-up announcements still read unlocks alone.
+ */
+export function availableAbilities(id: HeroId, level: number, flagOf: (flag: string) => boolean): string[] {
+  const awakened = awakenedAbilities(id, flagOf);
+  return [...awakened, ...unlockedAbilities(id, level).filter((a) => !awakened.includes(a))];
 }

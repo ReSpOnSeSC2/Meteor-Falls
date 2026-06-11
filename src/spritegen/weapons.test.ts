@@ -15,7 +15,9 @@ import { T } from '../palette';
 import { generateBattlerFrames, BATTLER_FRAME } from './battlers';
 import { CAST } from './characters';
 
-const SLOT_KIND: Record<string, string> = { weapon: 'held', body: 'torso', arms: 'torso', other: 'trinket' };
+// S12/ADR-034 amended ADR-032's provisional arms→torso mapping: arms gear
+// ships as drawn icons (a 2px wristband cannot read on a 28px battler arm)
+const SLOT_KIND: Record<string, string> = { weapon: 'held', body: 'torso', arms: 'trinket', other: 'trinket' };
 
 describe('WEAPON_ART ⇄ §A8 equippables (both directions)', () => {
   it('every equippable item has an art row of the right kind', () => {

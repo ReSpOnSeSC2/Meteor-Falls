@@ -88,7 +88,20 @@ import {
   drawGiftBoxOpen,
   drawArcadeCabinet,
   drawLegendCabinet,
+  drawCageGate,
+  drawBackboardProp,
+  drawBleachers,
+  drawChalkBoard,
 } from './tiles';
+import {
+  generateAthleteFrames,
+  deriveOpponentSpec,
+  drawBall,
+  drawAthleteShadow,
+  drawHoopSide,
+  drawCageCourt,
+} from './athletes';
+import { TEAMS, hashOf } from '../data/hoops';
 import {
   drawArcadeShip,
   drawArcadeMoth,
@@ -181,6 +194,32 @@ export function ensureBattleArt(scene: Phaser.Scene, heroId: string, look: Battl
   for (const wear of [0, 1, 2] as WearTier[]) {
     addSheet(scene, bustSheetKey(heroId, look.body, wear), generateBustFrames(spec, look.body, wear), 4);
     addSheet(scene, battlerSheetKey(heroId, look, wear), generateBattlerFrames(spec, look, wear), 4);
+  }
+}
+
+/**
+ * S12 sport-sheet factory (ADR-033): athletes generate ON MATCH START for
+ * the ten (or six) actually playing — the ensureBattleArt stance; a full
+ * 31-team boot sweep would cost seconds for fives most saves never meet.
+ * Heroes and walk-ons play as their CAST selves; opponents derive hashed
+ * faces (ADR-022 variety) dressed in their TEAMS jersey. Cached by key.
+ */
+export function ensureAthleteArt(scene: Phaser.Scene, keys: string[]): void {
+  for (const key of keys) {
+    if (scene.textures.exists(key)) continue;
+    if (key.startsWith('athlete_opp_')) {
+      const m = /^athlete_opp_(.+)_(\d)$/.exec(key);
+      if (!m) continue;
+      const team = TEAMS[m[1]];
+      if (!team) continue;
+      const spec = deriveOpponentSpec(hashOf(team.id), Number(m[2]), team.jersey);
+      addSheet(scene, key, generateAthleteFrames(spec, { ramp: team.jersey, trim: RAMP.PAPER }), 5);
+    } else {
+      const castId = key.replace(/^athlete_/, '');
+      const spec = CAST[castId];
+      if (!spec) continue;
+      addSheet(scene, key, generateAthleteFrames(spec, null), 5);
+    }
   }
 }
 
@@ -365,6 +404,19 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'arc_corndog', drawArcadeCorndog());
   addPixmap(scene, 'arc_bolt', drawArcadeBolt());
   addPixmap(scene, 'arc_scanline', drawScanline());
+
+  // S12: THE CAGE — the venue (the_cage map) + the match scene's fixtures.
+  // Athlete sheets are NOT swept here: ensureAthleteArt generates the ten
+  // who actually play at match start (the ensureBattleArt stance).
+  addPixmap(scene, 'cage_gate', drawCageGate());
+  addPixmap(scene, 'backboard', drawBackboardProp());
+  addPixmap(scene, 'bleachers_a', drawBleachers(11));
+  addPixmap(scene, 'bleachers_b', drawBleachers(40));
+  addPixmap(scene, 'chalk_board', drawChalkBoard());
+  addPixmap(scene, 'hoop_ball', drawBall());
+  addPixmap(scene, 'athlete_shadow', drawAthleteShadow());
+  addSheet(scene, 'hoop_side', [drawHoopSide(0), drawHoopSide(1), drawHoopSide(2)], 3);
+  addPixmap(scene, 'cage_court', drawCageCourt());
 
   // Brickton downtown — varied heights and lighting so no two facades match
   addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1, litSeed: 11 }));

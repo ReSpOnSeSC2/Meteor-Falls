@@ -678,6 +678,12 @@ export const TILESET: TileEntry[] = [
   { name: 'arcade_floor', solid: false, make: arcadeFloor },
   { name: 'arcade_floor_star', solid: false, make: arcadeFloorStar },
   { name: 'arcade_wall', solid: true, make: arcadeWall },
+  // THE CAGE (S12) — the_cage venue map
+  { name: 'asphalt', solid: false, make: asphaltTile },
+  { name: 'asphalt_crack', solid: false, make: asphaltCrack },
+  { name: 'asphalt_line_h', solid: false, make: asphaltLineH },
+  { name: 'asphalt_line_v', solid: false, make: asphaltLineV },
+  { name: 'cage_mesh', solid: true, make: cageMeshTile },
   // 16 path variants appended programmatically (indices PATH_BASE..+15)
 ];
 
@@ -2501,5 +2507,179 @@ export function drawGiftBoxOpen(): Pixmap {
   pm.vline(13, 8, 5, px(RAMP.GOLD, 2));
   pm.outline(C.outline);
   pm.shadowUnder(7, 12, 5, px(RAMP.INK, 1));
+  return pm;
+}
+
+/* ================== THE CAGE (S12) — venue tiles + props ================== */
+
+/** sun-worn asphalt — FLAT per ADR-020 rule 1; the wear lives in the
+ *  dedicated crack/patch variants, never on the base tile */
+export function asphaltTile(): Pixmap {
+  const pm = new Pixmap(16, 16);
+  pm.fill(px(RAMP.INK, 2));
+  return pm;
+}
+
+/** one hand-placed crack cluster (the sparse-variant rule) */
+export function asphaltCrack(): Pixmap {
+  const pm = asphaltTile();
+  const d = px(RAMP.INK, 1);
+  pm.line(3, 4, 8, 7, d);
+  pm.line(8, 7, 9, 12, d);
+  pm.set(4, 5, px(RAMP.INK, 0));
+  return pm;
+}
+
+/** worn painted line across the asphalt — breaks mid-run (rule 4) */
+export function asphaltLineH(): Pixmap {
+  const pm = asphaltTile();
+  const paint = px(RAMP.PAPER, 2);
+  for (let x = 0; x < 16; x++) {
+    if (x === 5 || x === 11) continue; // the wear
+    pm.set(x, 7, paint);
+    pm.set(x, 8, x % 3 === 0 ? px(RAMP.PAPER, 1) : paint);
+  }
+  return pm;
+}
+
+export function asphaltLineV(): Pixmap {
+  const pm = asphaltTile();
+  const paint = px(RAMP.PAPER, 2);
+  for (let y = 0; y < 16; y++) {
+    if (y === 4 || y === 12) continue;
+    pm.set(7, y, paint);
+    pm.set(8, y, y % 3 === 0 ? px(RAMP.PAPER, 1) : paint);
+  }
+  return pm;
+}
+
+/** chain-link fence run (solid) — diamond mesh between galvanized rails */
+export function cageMeshTile(): Pixmap {
+  const pm = new Pixmap(16, 16);
+  pm.fill(px(RAMP.INK, 2)); // asphalt reads through the links
+  const wire = px(RAMP.PAPER, 1);
+  const wireD = px(RAMP.PAPER, 0);
+  pm.hline(0, 1, 16, wire); // top rail
+  pm.hline(0, 2, 16, wireD);
+  for (let y = 3; y < 15; y++) {
+    for (let x = 0; x < 16; x++) {
+      // the diamond weave: two phase-shifted zigzags, one wire apart
+      if ((x + y) % 4 === 0) pm.set(x, y, wire);
+      if ((x - y + 16) % 4 === 0) pm.set(x, y, wireD);
+    }
+  }
+  pm.hline(0, 15, 16, wireD); // ground rail
+  return pm;
+}
+
+/**
+ * The vacant lot's GATE (Brickton prop): a chain-link door in the fence run,
+ * latch chain hanging, the FUTURE SITE finally open for business. Canvas
+ * spans one fence tile so the map swaps it in without moving anything.
+ */
+export function drawCageGate(): Pixmap {
+  const pm = new Pixmap(16, 22);
+  const wire = px(RAMP.PAPER, 1);
+  const wireD = px(RAMP.PAPER, 0);
+  const post = px(RAMP.PAPER, 2);
+  pm.rect(0, 2, 2, 18, post); // hinge post
+  pm.rect(14, 2, 2, 18, post); // latch post
+  pm.frame(2, 3, 12, 16, wire); // the gate frame
+  for (let y = 5; y < 17; y++) {
+    for (let x = 3; x < 13; x++) {
+      if ((x + y) % 4 === 0) pm.set(x, y, wire);
+      if ((x - y + 16) % 4 === 0) pm.set(x, y, wireD);
+    }
+  }
+  // the latch chain, hanging open — somebody is ALWAYS here
+  pm.vline(13, 8, 5, px(RAMP.GOLD, 1));
+  pm.set(12, 13, px(RAMP.GOLD, 2));
+  pm.outline(C.outline);
+  pm.shadowUnder(8, 20, 6, px(RAMP.INK, 1));
+  return pm;
+}
+
+/** map-scale backboard on its pole — bent rim, chain net (street canon) */
+export function drawBackboardProp(): Pixmap {
+  const pm = new Pixmap(26, 44);
+  const steel = px(RAMP.PAPER, 1);
+  pm.rect(12, 10, 3, 33, steel); // pole
+  pm.vline(12, 10, 33, px(RAMP.PAPER, 2));
+  pm.rect(5, 2, 17, 11, px(RAMP.PAPER, 2)); // board
+  pm.hline(5, 2, 17, px(RAMP.PAPER, 3));
+  pm.vline(21, 3, 10, px(RAMP.PAPER, 0));
+  pm.frame(10, 5, 7, 6, px(RAMP.RED, 1)); // the painted square, fading
+  // rim seen face-on below the board — bent left where summers landed
+  pm.hline(8, 13, 11, px(RAMP.ORANGE, 2));
+  pm.set(7, 14, px(RAMP.ORANGE, 1)); // the droop
+  // chain net
+  for (let i = 0; i < 5; i++) {
+    pm.vline(9 + i * 2, 14, 5 - (i % 2), i % 2 === 0 ? px(RAMP.PAPER, 2) : px(RAMP.PAPER, 1));
+  }
+  pm.outline(C.outline);
+  pm.shadowUnder(13, 42, 7, px(RAMP.INK, 1));
+  return pm;
+}
+
+/** bleacher planks with a seeded-but-deliberate bench crowd (litSeed style) */
+export function drawBleachers(crowdSeed: number): Pixmap {
+  const pm = new Pixmap(64, 26);
+  const plank = px(RAMP.EARTH, 2);
+  const plankL = px(RAMP.EARTH, 3);
+  const plankD = px(RAMP.EARTH, 1);
+  // three rising rows of planks
+  for (let r = 0; r < 3; r++) {
+    const y = 6 + r * 6;
+    pm.rect(2, y, 60, 4, plank);
+    pm.hline(2, y, 60, plankL);
+    pm.hline(2, y + 3, 60, plankD);
+    pm.set(20 + r * 9, y + 1, plankD); // one knot per plank, off-center
+  }
+  pm.rect(4, 22, 3, 3, plankD); // legs
+  pm.rect(57, 22, 3, 3, plankD);
+  pm.rect(30, 22, 3, 3, plankD);
+  // the bench crowd: little heads + shoulders along the top plank, hashed
+  // placement (no two cages cheer alike), deliberate 3px figures
+  const ramps = [RAMP.RED, RAMP.CYAN, RAMP.GOLD, RAMP.PURPLE, RAMP.GRASS] as const;
+  for (let i = 0; i < 9; i++) {
+    const h = (crowdSeed * 31 + i * 67) % 97;
+    if (h % 5 === 4) continue; // an empty seat — somebody went for colas
+    const x = 5 + i * 6 + (h % 3);
+    const skin = h % 4 === 1 ? px(RAMP.SKIN_DEEP, 2) : px(RAMP.SKIN, 2);
+    pm.rect(x, 1, 3, 3, skin); // head
+    pm.rect(x - 1, 4, 5, 2, px(ramps[h % ramps.length], 2)); // shoulders
+  }
+  pm.outline(C.outline);
+  pm.shadowUnder(32, 24, 26, px(RAMP.INK, 1));
+  return pm;
+}
+
+/**
+ * The hand-chalked bracket board: a plywood sheet on two posts, THE CLASSIC
+ * across the top, chalk rows the scene narrates (the live bracket draws in
+ * HoopsScene; this prop is the venue fixture).
+ */
+export function drawChalkBoard(): Pixmap {
+  const pm = new Pixmap(34, 30);
+  const ply = px(RAMP.EARTH, 1);
+  pm.rect(4, 24, 3, 5, ply); // posts
+  pm.rect(27, 24, 3, 5, ply);
+  pm.rect(1, 1, 32, 24, px(RAMP.INK, 1)); // the board, chalkboard-dark
+  pm.frame(1, 1, 32, 24, ply);
+  const chalk = px(RAMP.PAPER, 2);
+  const chalkD = px(RAMP.PAPER, 1);
+  pm.hline(5, 4, 24, chalk); // THE CLASSIC banner line
+  pm.hline(8, 5, 18, chalkD);
+  // bracket arms: two columns of seeds feeding a center line
+  for (let r = 0; r < 4; r++) {
+    pm.hline(4, 9 + r * 4, 6, r % 2 === 0 ? chalk : chalkD);
+    pm.hline(24, 9 + r * 4, 6, r % 2 === 1 ? chalk : chalkD);
+    pm.set(10, 10 + r * 4, chalkD);
+    pm.set(23, 10 + r * 4, chalkD);
+  }
+  pm.vline(16, 10, 9, chalk); // the line everything feeds
+  pm.set(16, 20, px(RAMP.GOLD, 3)); // the champion's chalk star
+  pm.outline(C.outline);
+  pm.shadowUnder(17, 28, 9, px(RAMP.INK, 1));
   return pm;
 }

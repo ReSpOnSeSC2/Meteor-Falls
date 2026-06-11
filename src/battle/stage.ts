@@ -57,14 +57,18 @@ export class StageView {
    * Step up from the card onto the stage: walk cycle on the way, face the
    * target, settle into idle. `sheet` is the look+wear battler texture;
    * `winded` swaps the waiting idle for the heaving loop (<33% HP).
+   * `standoff` is how far short of the target the actor stops: a BASH walks
+   * to arm's reach (12), but a CAST keeps casting distance — point-blank
+   * psychics read as melee (the S12b user catch: "Vibe Surge is just a
+   * normal bash attack"). The magic travels; the caster doesn't.
    */
-  enter(sheet: string, from: { x: number; y: number }, targetX: number, winded: boolean): Promise<void> {
+  enter(sheet: string, from: { x: number; y: number }, targetX: number, winded: boolean, standoff = 12): Promise<void> {
     this.home = { x: from.x, y: from.y };
     this.winded = winded;
     const W = this.scene.scale.width;
-    // stand just off the target's center, on the side the hero came from
+    // stand short of the target's center, on the side the hero came from
     const side = from.x <= targetX ? -1 : 1;
-    const toX = Math.max(26, Math.min(W - 26, targetX + side * 12));
+    const toX = Math.max(26, Math.min(W - 26, targetX + side * standoff));
     this.spr
       .setTexture(sheet)
       .setFrame(BATTLER_FRAME.stepA)

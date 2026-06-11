@@ -1686,6 +1686,31 @@ export const CAST: Record<string, CharacterSpec> = {
       pm.set(sx + 1, y0 + 3, px(RAMP.GOLD, 2));
     },
   },
+  // ---- THE CAGE (S12) ----
+  // PERMIT — the cage's announcer-commissioner. §A11 obsession: he has
+  // historically ranked every crossover he has ever seen (since 1987).
+  // Nobody knows if Permit is his name or his function. Both fit.
+  permit: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'short',
+    top: { ramp: RAMP.ORANGE, style: 'shirt', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.PAPER, // referee whites, for a game with no referees
+    build: 'adult',
+    eyes: 'glare', // appraising your handle. ranking it. filing it.
+    mouth: 'open', // the count never stops
+    // the whistle he has NEVER blown (CALL YOUR OWN FOULS) on its cord —
+    // front only: a 2px gold pip + the cord line off the collar
+    detail: ({ pm, dir, bob, m }) => {
+      if (dir !== 'down') return;
+      const y0 = m.bodyTop + bob;
+      pm.set(m.bodyX + 4, y0 + 2, px(RAMP.INK, 1)); // the cord
+      pm.set(m.bodyX + 5, y0 + 3, px(RAMP.INK, 1));
+      pm.set(m.bodyX + 6, y0 + 4, px(RAMP.GOLD, 3)); // the unblown whistle
+      pm.set(m.bodyX + 7, y0 + 4, px(RAMP.GOLD, 1));
+    },
+  },
   // ---- the 6:15 bus ----
   busDriver: {
     skin: RAMP.SKIN_DEEP,

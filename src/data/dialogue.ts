@@ -121,6 +121,24 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@HA! Eight legs against four kids-worth of light and it STILL lost. Wait. There\'s one of you. You counted as four. Don\'t tell the others.',
     '@Come on. Walk home. I\'ll finish the prophecy on the way. It has a REALLY good ending.',
   ],
+  /* ---- AWAKENINGS (S12b, ADR-035) — the old light arrives as moments,
+     never as menu rows. §A11.2: sincerity is never the joke. ---- */
+  awake_old_light: [
+    '@Hold still. This part is yours.',
+    '(Glint dips low and presses something warm against {rex}\'s chest — old as porch lights, brave as July.)',
+    "(It crowds in behind the ribs like it has always lived there and only now remembered the address.)",
+    '@That\'s the OLD LIGHT, kid. When something grabs hold of you and won\'t let go — and something WILL — you let it all the way out.',
+  ],
+  awake_last_spark: [
+    '(The spark does not fade. It settles in next to the old light, smaller, softer — a night-light, not a torch.)',
+    "({rex} understands it the way you understand your own name: some warmth is for keeping other people going.)",
+  ],
+  awake_first_listen: [
+    '@...It\'s singing. The little one inside. Did you know it sings?',
+    '(She holds the Locket to her ear the way you hold a seashell, and her eyes go somewhere bright.)',
+    '@It sounds like a match catching. Like the stove at home, first thing, before anyone else is up.',
+    '(Something in the room gets warmer. It is her.)',
+  ],
   porch_zapper: [
     '@...so the Embers sing, the locket listens, and when you have all eight, you go UP. Way up. Mars-up. There\'s a rocket involved, you\'ll love it.',
     '@One more thing. The most important thing. Find the girl in Brickton. The one who hears the Embers. Tell the girl who prays—',
@@ -325,9 +343,49 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'WELCOME TO BRICKTON CITY — pop. lots.',
     '(Someone has written "OTTERBROOK FITS IN OUR PARKING LOT" underneath. Rude. Accurate.)',
   ],
+  // S12: the FUTURE SITE finally arrived, and it's a basketball cage
   sign_lot: [
-    'FUTURE SITE OF MORE BRICKTON.',
-    '(The lot has been the future since before you were born. The weeds seem confident.)',
+    'FUTURE SITE OF MORE BRICKTON. — and underneath, in fresh paint:',
+    'THE FUTURE GOT HERE. IT IS A BASKETBALL COURT. — MGMT (of the future)',
+    '(The weeds were right to be confident. They got bleachers.)',
+  ],
+  /* ---------------- THE CAGE (S12) ---------------- */
+  npc_permit: [
+    '@PERMIT. I run the cage. I announce the cage. Some say I AM the cage. I let them say it.',
+    '@I have personally witnessed and ranked every crossover thrown on this asphalt since 1987. All eleven thousand of them. Number one would make you cry.',
+  ],
+  permit_pickup_ask: [
+    '@Pickup runs to 21 — win by 2, ones and twos, check it up top. The Classic is FULL COURT, four quarters, and I chalk every bracket myself.',
+  ],
+  permit_register: [
+    '@Thirty-two fives. Single elimination. No entry fee — the cage takes its payment in ankles.',
+    '@I seeded the bracket with TOTAL impartiality. My nephews drew the five seed. Again. Unrelated.',
+    '@Your five is on the chalk. Do not make my handwriting look foolish.',
+  ],
+  permit_resume: [
+    '@Your game is still ON the chalk — I hold quarters open the way banks hold grudges. Step in when you are ready.',
+  ],
+  permit_eliminated: [
+    '@The bracket forgot you the moment you lost. I did not. I rank losses too. Yours was top forty.',
+    '@Register again whenever. The chalk forgives.',
+  ],
+  permit_title_first: [
+    '@CHAMPIONS. I have ranked every Classic since the first one, and this one goes in at... high. VERY high.',
+    '@The cage pays its debts. THE STARTING FOUR — four pieces of the game itself. They go where the arms go. That is the slot they are for.',
+  ],
+  permit_hands_full: [
+    '@Your hands are full. A champion with full hands is still a champion — I will keep the rest warm. Come back with room.',
+  ],
+  permit_repeat_title: [
+    '@AGAIN. The dynasty rankings are getting crowded at the top and it is YOUR fault.',
+  ],
+  cage_rules: [
+    'CALL YOUR OWN FOULS.',
+    '(Nobody ever has. The sign knows. The sign has made peace.)',
+  ],
+  cage_board: [
+    'THE BRICKTON CLASSIC — 32 fives, one chalk line.',
+    '(The handwriting is immaculate. The seeding is "impartial." The nephews are fifth.)',
   ],
   npc_nurse: [
     '@Brickton General, walk-ins welcome. The clipboard knows if you are sick. I just hold the clipboard.',

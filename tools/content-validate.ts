@@ -40,6 +40,19 @@ import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
 import { ARCADE_TEXT, MGR_ROW } from '../src/data/arcade';
+import {
+  TEAMS,
+  TEAM_ORDER,
+  WALK_ONS,
+  WALK_ON_ORDER,
+  HOOPS_TEXT,
+  HOOPS_FILL_TOKENS,
+  HOOPS_REWARDS,
+  STARTING_FOUR,
+} from '../src/data/hoops';
+import { AWAKENINGS } from '../src/data/awakenings';
+import { CAST } from '../src/spritegen/characters';
+import { AwakeningDefSchema, TeamDefSchema, WalkOnDefSchema } from '../src/schemas';
 import { CHAR_LEGEND, MAPS } from '../src/data/maps';
 import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue';
 import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
@@ -179,10 +192,13 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 // swing), body gear 'torso' art (rendered on battler + bust), 'other'-slot
 // charms 'trinket' icons. Equipment is never invisible again.
 {
+  // S12 amends ADR-032's provisional arms→torso mapping (no arms item
+  // existed then): arms gear ships as DRAWN ICONS — a 2px wristband cannot
+  // read on a 28px battler arm. ADR-034 records it.
   const SLOT_KIND: Record<string, 'held' | 'torso' | 'trinket'> = {
     weapon: 'held',
     body: 'torso',
-    arms: 'torso',
+    arms: 'trinket',
     other: 'trinket',
   };
   for (const item of Object.values(ITEMS)) {
@@ -493,6 +509,169 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
+/* ================= S12b — AWAKENINGS (ADR-035) ================= */
+
+parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
+
+// the Ch.1 awakening manifest, pinned both directions: heroes start with
+// ZERO Vibe and the old light arrives at exactly these story moments
+{
+  const canon: Record<string, { hero: string; ability: string; flag: string; dialogue: string }> = {
+    old_light: { hero: 'rex', ability: 'vibe_surge_a', flag: 'awake_surge_a', dialogue: 'awake_old_light' },
+    last_spark: { hero: 'rex', ability: 'lifeup_a', flag: 'awake_lifeup_a', dialogue: 'awake_last_spark' },
+    first_listen: { hero: 'faye', ability: 'vibe_fire_a', flag: 'awake_fire_a', dialogue: 'awake_first_listen' },
+  };
+  for (const [id, pin] of Object.entries(canon)) {
+    const a = AWAKENINGS[id];
+    if (!a) {
+      fail('awaken', `Ch.1 awakening '${id}' missing (ADR-035 manifest)`);
+      continue;
+    }
+    if (a.hero !== pin.hero || a.ability !== pin.ability || a.flag !== pin.flag || a.dialogue !== pin.dialogue) {
+      fail('awaken', `'${id}' is ${a.hero}/${a.ability}/${a.flag}/${a.dialogue}, canon ${pin.hero}/${pin.ability}/${pin.flag}/${pin.dialogue}`);
+    }
+  }
+  for (const id of Object.keys(AWAKENINGS)) {
+    if (!(id in canon)) fail('awaken', `'${id}' is not in the Ch.1 awakening manifest — extend it with its chapter, never ad-hoc`);
+  }
+  for (const a of Object.values(AWAKENINGS)) {
+    const ab = ABILITIES[a.ability];
+    if (!ab) fail('awaken', `'${a.id}' grants unknown ability '${a.ability}'`);
+    else if (ab.kind !== 'vibe') fail('awaken', `'${a.id}' grants kind '${ab.kind}' — awakenings carry Vibe (gadgets are Milo's identity, not the old light)`);
+    if (!DIALOGUE[a.dialogue]) fail('awaken', `'${a.id}' → unknown dialogue '${a.dialogue}'`);
+    // no double path: an awakened ability must NOT also sit in the unlock table
+    if (HEROES[a.hero].unlocks.some((u) => u.ability === a.ability)) {
+      fail('awaken', `'${a.ability}' is BOTH awakened ('${a.id}') and level-unlocked on ${a.hero} — one path only`);
+    }
+  }
+  // flags stay unique across awakenings AND quests (the machines stay independent)
+  const aFlags = Object.values(AWAKENINGS).map((a) => a.flag);
+  const qFlags = Object.values(QUESTS).flatMap((q) => [q.startFlag, q.doneFlag, ...q.objectives.map((o) => o.flag)]);
+  for (const f of aFlags) {
+    if (aFlags.filter((x) => x === f).length > 1) fail('awaken', `awakening flag '${f}' used twice`);
+    if (qFlags.includes(f)) fail('awaken', `awakening flag '${f}' collides with a quest flag`);
+  }
+  // §A3 as amended: the openers left the level tables (Pray stays L1 — innate)
+  if (HEROES.rex.unlocks.some((u) => u.level <= 3)) {
+    fail('awaken', `§A3 amended: Jay starts with NO Vibe — his first level unlock must come later (found one at L≤3)`);
+  }
+  if (!HEROES.faye.unlocks.some((u) => u.ability === 'pray' && u.level === 1)) {
+    fail('awaken', `Mia's Pray stays innate at L1 (§A3 canon centerpiece)`);
+  }
+}
+
+/* ================= S12 — THE CAGE (ADR-033/034) ================= */
+
+parseAll('hoops-teams', TeamDefSchema, TEAMS);
+parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
+
+// the 31 Classic entrants, pinned: the field count, the tier curve the
+// bracket seeds from, and the three canon-suggested fives by name
+{
+  if (TEAM_ORDER.length !== 31) fail('hoops', `the Classic fields 31 entrant fives + the party, found ${TEAM_ORDER.length}`);
+  const tiers = [0, 0, 0, 0, 0];
+  for (const t of Object.values(TEAMS)) tiers[t.tier - 1] += 1;
+  if (tiers.join(',') !== '8,8,7,5,3') {
+    fail('hoops', `the tier curve is canon 8/8/7/5/3 (fodder → title game), got ${tiers.join('/')}`);
+  }
+  for (const id of ['pigeon_counters', 'quota_crushers', 'permits_nephews']) {
+    if (!TEAMS[id]) fail('hoops', `canon-suggested entrant '${id}' missing from TEAMS (S12 spec names it)`);
+  }
+  if (TEAMS.permits_nephews && TEAMS.permits_nephews.tier !== 5) {
+    fail('hoops', `Permit's Nephews seed fifth straight year — tier must be 5 (the §A11 gag is the data)`);
+  }
+}
+
+// the walk-on bench: five named locals, Chad guesting pre-Milo, every
+// sprite a real CAST member (walk-ons are §A11 color, never invented heroes)
+{
+  if (WALK_ON_ORDER.length !== 5) fail('hoops', `the walk-on bench seats 5, found ${WALK_ON_ORDER.length}`);
+  const chad = WALK_ONS.chad;
+  if (!chad) fail('hoops', `walk-on 'chad' missing — Chad guests pre-Milo (S12 spec)`);
+  else if (chad.unlessFlag !== 'milo_joined') {
+    fail('hoops', `Chad's bench row must carry unlessFlag 'milo_joined', got '${chad.unlessFlag ?? 'nothing'}'`);
+  }
+  for (const w of Object.values(WALK_ONS)) {
+    if (!CAST[w.sprite]) fail('hoops', `walk-on '${w.id}' sprite '${w.sprite}' is not a CAST member`);
+  }
+}
+
+// THE STARTING FOUR: the first 'arms' line — one piece per hero, wielder-
+// tagged, unsellable, carrying exactly one of speed/guts; and the Ch.1
+// arms manifest is exactly these four (extend the manifest, never ad-hoc)
+{
+  for (const [heroId, itemId] of Object.entries(STARTING_FOUR)) {
+    const item = ITEMS[itemId];
+    if (!item) {
+      fail('hoops', `STARTING FOUR piece '${itemId}' missing from ITEMS`);
+      continue;
+    }
+    if (item.kind !== 'arms') fail('hoops', `'${itemId}' must be kind 'arms', got '${item.kind}'`);
+    if (item.wielder !== heroId) fail('hoops', `'${itemId}' belongs to '${heroId}', got '${item.wielder ?? 'nobody'}'`);
+    if (item.price !== 0) fail('hoops', `'${itemId}' is a title, not merchandise — price must be 0`);
+  }
+  for (const item of Object.values(ITEMS)) {
+    if (item.kind === 'arms' && !Object.values(STARTING_FOUR).includes(item.id)) {
+      fail('hoops', `'${item.id}' is not in the STARTING FOUR arms manifest — extend the manifest, never ad-hoc`);
+    }
+  }
+}
+
+// the reward tables, pinned (§A9-conscious tuning is deliberate, ADR-034):
+// pickup pays forever, Classic depth scales, drops stay food/cola
+{
+  const R = HOOPS_REWARDS;
+  if (R.pickup.winExp !== 130 || R.pickup.lossExp !== 55) {
+    fail('hoops', `pickup EXP is canon 130/55 (win/loss), got ${R.pickup.winExp}/${R.pickup.lossExp}`);
+  }
+  if (R.classic.roundWinExp.join(',') !== '240,330,440,580,760') {
+    fail('hoops', `Classic round EXP is canon 240/330/440/580/760, got ${R.classic.roundWinExp.join('/')}`);
+  }
+  if (R.classic.lossFrac !== 0.4) fail('hoops', `Classic lossFrac is canon 0.4, got ${R.classic.lossFrac}`);
+  if (R.classic.repeatTitleCash !== 350) fail('hoops', `repeat titles pay canon $350, got ${R.classic.repeatTitleCash}`);
+  for (const id of R.drops.table) {
+    const item = ITEMS[id];
+    if (!item) fail('hoops', `drop table item '${id}' missing from ITEMS`);
+    else if (item.kind !== 'food' && item.kind !== 'pp') {
+      fail('hoops', `drop '${id}' is kind '${item.kind}' — the cage pays foods and colas`);
+    }
+  }
+}
+
+// the venue: the gate in the vacant lot's fence (both directions), PERMIT
+// standing at the cage, the board + rules signs, and the fixtures
+{
+  const cage = MAPS.the_cage;
+  if (!cage) {
+    fail('hoops', `'the_cage' map is missing (S12's venue)`);
+  } else {
+    if (!cage.npcs.some((n) => n.id === 'permit')) fail('hoops', `PERMIT must stand at the_cage`);
+    for (const want of ['cage_board', 'cage_rules']) {
+      if (!cage.signs.some((s) => s.dialogue === want)) fail('hoops', `the_cage needs its '${want}' sign`);
+    }
+    for (const sprite of ['chalk_board', 'backboard', 'bleachers_a']) {
+      if (!cage.props.some((p) => p.sprite === sprite)) fail('hoops', `the_cage needs its '${sprite}' fixture`);
+    }
+    if (cage.props.filter((p) => p.sprite === 'backboard').length !== 2) {
+      fail('hoops', `a FULL COURT carries two backboards (S12 spec)`);
+    }
+    if (!cage.doors.some((d) => d.to === 'brickton')) fail('hoops', `the_cage gate must open back onto Brickton`);
+  }
+  if (!MAPS.brickton?.doors.some((d) => d.to === 'the_cage')) {
+    fail('hoops', `Brickton's vacant-lot fence must carry the gate door → the_cage (S12)`);
+  }
+  if (!MAPS.brickton?.props.some((p) => p.sprite === 'cage_gate')) {
+    fail('hoops', `Brickton needs the cage_gate prop over the carved fence tile`);
+  }
+  // sign_lot is amended canon now — the FUTURE SITE arrived as a court
+  const lot = DIALOGUE.sign_lot ?? [];
+  if (!lot.some((l) => /BASKETBALL/i.test(l))) {
+    fail('hoops', `sign_lot must carry the S12 amendment (the FUTURE SITE is a basketball court)`);
+  }
+  // PERMIT is a CAST member (his sheet generates at boot like everyone's)
+  if (!CAST.permit) fail('hoops', `'permit' missing from CAST`);
+}
+
 /* ================= 3a. map cross-references ================= */
 
 for (const m of Object.values(MAPS)) {
@@ -613,6 +792,22 @@ for (const q of Object.values(QUESTS)) {
 for (const [key, line] of Object.entries(ARCADE_TEXT)) {
   sweepTokens('text', `ARCADE_TEXT.${key}`, line, DIALOGUE_TOKENS);
 }
+// THE CAGE prints through vars() + scene .replace() fills (S12) — the
+// HOOPS_FILL_TOKENS set is the fill contract, the BATTLE_FILL precedent
+{
+  const HOOPS_TOKENS = new Set([...DIALOGUE_TOKENS, ...HOOPS_FILL_TOKENS]);
+  for (const [key, line] of Object.entries(HOOPS_TEXT)) {
+    for (const s of Array.isArray(line) ? line : [line]) {
+      sweepTokens('text', `HOOPS_TEXT.${key}`, s, HOOPS_TOKENS);
+    }
+  }
+  for (const t of Object.values(TEAMS)) sweepTokens('text', `team '${t.id}' taunt`, t.taunt, DIALOGUE_TOKENS);
+  for (const w of Object.values(WALK_ONS)) sweepTokens('text', `walk-on '${w.id}' line`, w.line, DIALOGUE_TOKENS);
+}
+// awakening toasts render through vars() (S12b) — TEXT_VARS only
+for (const a of Object.values(AWAKENINGS)) {
+  sweepTokens('text', `awakening '${a.id}' toast`, a.toast, DIALOGUE_TOKENS);
+}
 // battle-rendered strings additionally pass BattleScene.fill(): {user}/{e}/{t}
 for (const a of Object.values(ABILITIES)) sweepTokens('text', `ability '${a.id}' text`, a.text, BATTLE_TOKENS);
 for (const [tier, line] of Object.entries(PRAY_TEXT)) sweepTokens('text', `PRAY_TEXT.${tier}`, line, BATTLE_TOKENS);
@@ -650,7 +845,7 @@ function sweepPlaceholders(section: string, node: unknown, path: string): void {
     }
   }
 }
-sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, QUESTS, MAPS, DIALOGUE, BATTLE_TEXT, ARCADE_TEXT, NEW_GAME_ENTRIES }, 'data');
+sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, QUESTS, MAPS, DIALOGUE, BATTLE_TEXT, ARCADE_TEXT, TEAMS, WALK_ONS, HOOPS_TEXT, AWAKENINGS, NEW_GAME_ENTRIES }, 'data');
 
 /* ================= verdict ================= */
 
@@ -663,6 +858,7 @@ const counts = [
   `${Object.keys(QUESTS).length} quests (§A10 #1–4)`,
   `${Object.keys(MAPS).length} maps`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
+  `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
 ].join(' · ');
 
 if (errors.length > 0) {

@@ -15,12 +15,29 @@
  * v3 → v4 (S10): the ARCADE LEGEND high-score table (§A10 #4). Old saves
  * backfill MGR's lonely row — the cabinet's attract mode was flashing it
  * long before any save could walk through the door (locked_arcade2, canon).
+ *
+ * v4 → v5 (S12): THE CAGE — tournament state is save data. Old saves
+ * backfill a clean hoops slate (no bracket, no checkpoint, zero titles):
+ * the gate in the vacant lot's fence is v5-new, so an empty record is a
+ * pre-v5 save's TRUE history, exactly like the v3 ledger.
+ *
+ * v5 → v6 (S12b/ADR-035): AWAKENINGS — Vibe arrives at story moments now.
+ * Flags backfill from the story flags those scenes set (met_glint →
+ * Surge, zapper_done → Lifeup, faye_joined → Fire): an old save keeps
+ * exactly what its story already earned, never what its levels implied.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
+import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 4;
+export const CURRENT_SAVE_VERSION = 6;
+
+/** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
+ *  it (lives here, not state.ts, so the import graph stays acyclic) */
+export function freshHoops(): HoopsState {
+  return { bracket: null, match: null, titles: 0, handed: [], played: 0 };
+}
 
 type Raw = Record<string, unknown>;
 
@@ -113,6 +130,31 @@ export const MIGRATIONS: MigrationStep[] = [
       // the lonely row IS an old save's true history.
       if (!Array.isArray(raw.arcadeScores)) raw.arcadeScores = [{ ...MGR_ROW }];
       raw.version = 4;
+      return raw;
+    },
+  },
+  {
+    to: 5,
+    migrate(raw) {
+      // S12: THE CAGE. The vacant lot's gate didn't exist before v5 — a
+      // clean slate (no bracket, no checkpoint, no titles) is a pre-v5
+      // save's true history, the v3 empty-ledger stance applied to hoops.
+      if (!isObj(raw.hoops)) raw.hoops = freshHoops() as unknown as Raw;
+      raw.version = 5;
+      return raw;
+    },
+  },
+  {
+    to: 6,
+    migrate(raw) {
+      // S12b (ADR-035): Vibe arrives by AWAKENING now. A pre-v6 save that
+      // already lived a story moment keeps the ability it had — the flags
+      // backfill from the story flags that scene set, never from levels.
+      const flags = isObj(raw.flags) ? raw.flags : (raw.flags = {});
+      if (flags.met_glint === true) flags.awake_surge_a = true;
+      if (flags.zapper_done === true) flags.awake_lifeup_a = true;
+      if (flags.faye_joined === true) flags.awake_fire_a = true;
+      raw.version = 6;
       return raw;
     },
   },

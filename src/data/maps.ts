@@ -60,6 +60,12 @@ export const CHAR_LEGEND: Record<string, string> = {
   a: 'arcade_floor',
   '*': 'arcade_floor_star',
   A: 'arcade_wall',
+  // S12 THE CAGE
+  q: 'asphalt',
+  z: 'asphalt_crack',
+  h: 'asphalt_line_h',
+  v: 'asphalt_line_v',
+  C: 'cage_mesh',
 };
 
 /**
@@ -582,8 +588,12 @@ function buildBrickton(): MapDef {
   g.rect(53 - jit(3), 13, 3, 1, '=');
   g.rect(41, 18, 2 + jit(3), 1, '=');
   g.rect(52 - jit(2), 18, 3, 1, '=');
-  // SE vacant lot behind its fence
+  // SE vacant lot behind its fence — S12: the fence gains a GATE (one tile
+  // swapped walkable; a plain g.set consumes NO rng, so the 1995 stream and
+  // the whole jittered layout stay byte-identical, ADR-016's rule). The
+  // FUTURE SITE finally arrived, and it's a basketball cage.
   g.rect(47, 26, 7, 1, '-');
+  g.set(50, 26, '=');
   g.rect(47, 27, 1, 3, '|');
   g.rect(53, 27, 1, 3, '|');
   g.rect(48, 27, 5, 3, '.');
@@ -824,6 +834,9 @@ function buildBrickton(): MapDef {
       { sprite: 'picnic', x: picnicX, y: 15, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       // the lot's realtor sign, on the sidewalk where you can actually read it
       { sprite: 'sign', x: 49, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // S12: the gate in the lot's fence — THE CAGE is open (no solid; the
+      // door zone under it carries you through, chain hanging unlatched)
+      { sprite: 'cage_gate', x: 50, y: 25.1 },
       ...furniture,
       ...meters,
     ],
@@ -840,7 +853,11 @@ function buildBrickton(): MapDef {
     ],
     phones: [{ x: 14, y: 26 }],
     atms: [{ x: atmX, y: 5.5 }],
-    doors: [],
+    doors: [
+      // S12: through the gate into THE CAGE (the lot's grid coords are
+      // fixed — the gate tile was carved without touching the rng streams)
+      { x: 50, y: 26, w: 1, h: 1, to: 'the_cage', tx: 320, ty: 60, facing: 'down' },
+    ],
     spawners: [
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 28, y: 6, w: 12, h: 2 } },
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 11, y: 19, w: 13, h: 2 } },
@@ -1290,6 +1307,83 @@ function buildArcade2Int(streetExit: { tx: number; ty: number }): MapDef {
   };
 }
 
+/* ------------------- THE CAGE (S12 — the SE lot, up close) ------------------- */
+
+/**
+ * The vacant lot's FUTURE finally arrived: a full court in a chain-link
+ * cage (ADR-004 grid floating in the lot's weeds — the lot's own wooden
+ * fence rings the map edge). Fixtures: two bent-rim backboards, bleacher
+ * planks with their bench crowd, the hand-chalked bracket board, PERMIT.
+ * The MATCH plays in HoopsScene (the S10 cabinet law: its own scene on the
+ * existing input layer) — this map is the venue you walk.
+ */
+function buildTheCage(): MapDef {
+  const g = new Grid(40, 30, '.');
+  // the lot's wooden fence at the map edge
+  g.rect(0, 0, 40, 1, '-');
+  g.rect(0, 29, 40, 1, '-');
+  g.rect(0, 1, 1, 28, '|');
+  g.rect(39, 1, 1, 28, '|');
+  // the weeds stay confident
+  g.sprinkle(2012, ',~ f', 0.07);
+  // the chain-link ring, gate gap at the top (x19–20 — the Brickton door)
+  g.rect(3, 2, 34, 1, 'C');
+  g.rect(3, 27, 34, 1, 'C');
+  g.rect(3, 3, 1, 24, 'C');
+  g.rect(36, 3, 1, 24, 'C');
+  g.rect(19, 2, 2, 1, 'q'); // the gap the gate swings over
+  // the floor
+  g.rect(4, 3, 32, 24, 'q');
+  // hand-painted court: sidelines, baselines, the center line
+  g.rect(7, 6, 26, 1, 'h');
+  g.rect(7, 23, 26, 1, 'h');
+  g.rect(7, 7, 1, 16, 'v');
+  g.rect(32, 7, 1, 16, 'v');
+  g.rect(19, 7, 1, 16, 'v');
+  // keys: short rails off each baseline
+  g.rect(8, 11, 3, 1, 'h');
+  g.rect(8, 18, 3, 1, 'h');
+  g.rect(29, 11, 3, 1, 'h');
+  g.rect(29, 18, 3, 1, 'h');
+  // two crack clusters where the summers landed (deliberate, ADR-020)
+  g.set(13, 20, 'z');
+  g.set(27, 9, 'z');
+
+  return {
+    id: 'the_cage',
+    name: 'THE CAGE',
+    music: 'cage',
+    grid: g.out(),
+    props: [
+      // bleachers flank the gate, inside the fence — the bench crowd is
+      // baked per-seed (no two planks cheer alike)
+      { sprite: 'bleachers_a', x: 6, y: 2.4, solid: { ox: 2, oy: 10, w: 60, h: 14 } },
+      { sprite: 'bleachers_b', x: 26.5, y: 2.4, solid: { ox: 2, oy: 10, w: 60, h: 14 } },
+      // the bracket board by the gate (PERMIT chalks it himself)
+      { sprite: 'chalk_board', x: 21.6, y: 3.1, solid: { ox: 1, oy: 22, w: 31, h: 7 } },
+      // the rules, such as they are
+      { sprite: 'sign', x: 16, y: 3.4, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // two backboards, rims bent the honest way
+      { sprite: 'backboard', x: 5, y: 11.2, solid: { ox: 10, oy: 36, w: 7, h: 6 } },
+      { sprite: 'backboard', x: 33.4, y: 11.2, solid: { ox: 10, oy: 36, w: 7, h: 6 } },
+    ],
+    npcs: [
+      { id: 'permit', sprite: 'permit', x: 23, y: 6, facing: 'down', dialogue: 'npc_permit' },
+    ],
+    signs: [
+      { x: 16, y: 4, dialogue: 'cage_rules' },
+      { x: 22, y: 5, dialogue: 'cage_board' },
+    ],
+    phones: [],
+    doors: [
+      // back through the gate onto the Brickton sidewalk
+      { x: 19, y: 1, w: 2, h: 1, to: 'brickton', tx: 808, ty: 402, facing: 'up' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
 /* ------------------- THE 6:15 (bus interior cutscene) ------------------- */
 
 function buildBusInterior(): MapDef {
@@ -1364,5 +1458,6 @@ export const MAPS: Record<string, MapDef> = {
   starmart_int: buildStarmartInt(martDoorstep),
   arcade_int: buildArcadeInt(arcadeDoorstep),
   arcade2_int: buildArcade2Int(arcade2Doorstep),
+  the_cage: buildTheCage(),
   bus_interior: buildBusInterior(),
 };

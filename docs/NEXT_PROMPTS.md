@@ -385,7 +385,30 @@ with all three new completeness gates enforced; the bot finishes the
 extended gauntlet.
 ```
 
-## Prompt S12 — THE CAGE (§A10-adjacent: Brickton streetball, the 32-team Classic)
+## Prompt S12 — THE CAGE — ✅ DONE 2026-06-11 (ADR-033/034)
+
+Shipped: the vacant lot's gate → 'the_cage' venue (PERMIT, the chalked
+bracket board, bleacher crowds, two bent rims; sign_lot finally paid off),
+the Phaser-free deterministic streetball sim (src/hoops/sim.ts — fixed
+8.333ms quanta, per-match seeded rng, outcomes rolled at release, NO
+rubber-banding; vitest replays input tapes to byte-equal event logs) under
+HoopsScene ('hoops', the cabinet law), both formats off one engine (5v5
+four-quarter Classic games with the 24 PERMIT counts out loud + halftime
+chalkboard + OTs; 3v3 first-to-21-win-by-2 pickup that pays XP forever),
+the SPORT SHEET contract (athletes.ts, 32×40 ×25 frames off CharacterSpec
+— ADR-033; opponents get hashed faces in TEAMS jerseys, use-time cached),
+the 32-team Classic on **save v5** (bracket + quarter checkpoints +
+auto-written notebooks: process death costs at most the quarter in
+progress — verified by reload), 31 §A11 entrant fives + the walk-on bench
+(Chad guests pre-Milo), rewards through the Prompt-18 flow scaled by
+format/depth + seeded drops, and THE STARTING FOUR ('arms' opens:
+heroSpeed/heroGuts read-throughs, "Speed up by N!" previews, hands-full
+raincheck ledger at PERMIT, zero missables; arms art ships as trinket
+icons — ADR-034 amends ADR-032's provisional mapping). Validator: teams/
+walk-ons/rewards/venue manifests, three axes verified failing loudly.
+196 vitest + the full bot gauntlet in docs/QA.md (3v3 to 21 twice,
+byte-identical; Q1 to the horn; death/resume; 8.33ms one-frame taps).
+The original prompt is kept below for the record.
 
 ```
 [Standard Header]
@@ -478,6 +501,112 @@ survive process death through v5; THE STARTING FOUR equips with stat
 previews; the bot completes one seeded 5v5 QUARTER and one 3v3 game to
 21 end-to-end reproducibly; npm test green (teams/walk-ons/rewards
 manifests enforced); browser loop and android:apk untouched.
+```
+
+## Prompt S12c — CAGE 2.0 (user spec, captured verbatim-faithful 2026-06-11: the control room)
+
+```
+[Standard Header]
+S12c — CAGE 2.0: the control, feel, and presentation overhaul of THE CAGE
+(user spec, in full; ADR-029/033/034 law stands — deterministic sim,
+Phaser-free, vitest first; ADR-024 input law; manifests same-commit).
+Code map: the sim + all shot/steal/block math live in src/hoops/sim.ts
+(greenWindow, makeChance, stealChance, findBlocker, aiHandler/aiShoot);
+the renderer is src/scenes/HoopsScene.ts; semantic input is
+src/engine/input.ts + the UIScene touch overlay; athlete frames are
+src/spritegen/athletes.ts (SPORT_FRAME is the pinned contract).
+FIX FIRST — THE FULL-COURT HEAVES (live bug, root cause named): the AI
+banks shots from the opposite end because (a) greenWindow() clamps to a
+0.022 FLOOR at any distance, (b) makeChance('green') pays 0.99
+distance-blind, and (c) aiShoot has no range gate, so shot-clock
+desperation heaves can roll green and drop. Give every athlete an
+EFFECTIVE RANGE derived from sht (≈ ARC_R + (sht−50)·1.2 px, clamp
+[ARC_R·0.85, ARC_R·1.35]): the green window SHRINKS WITH DISTANCE inside
+range (steepen the distance term — the farther back, the smaller, per
+the user spec) and CLOSES TO ZERO beyond it (no green exists out there);
+non-green make% decays hard past range (≤2% at 1.5× range, 0% beyond);
+AI shot selection only attempts inside its range — the lone exception is
+a shot-clock ≤1s desperation heave that is honestly terrible and reads
+as one. Pin all of it in vitest (window at range edges, the zero beyond,
+an 80k-tick tape asserting no AI make from beyond 1.2× range).
+TIMED DEFENSE (user spec — smart weighting, challenging, competitive):
+blocks and steals key on TIMING, not proximity alone.
+ - BLOCKS: the leap's START TIME vs the shooter's RELEASE is the input —
+   a jump whose peak window (~±120ms) brackets the release blocks at a
+   HIGH rate (base ~0.10 poorly timed → ~0.65 perfectly timed, scaled by
+   (dfn − sht)·0.004 and reach/proximity, clamp [0.05, 0.85]); jumping
+   early = the shooter holds the meter and waits you out (the hold-
+   release meter makes pump-faking emergent — no new button needed);
+   goaltending still rules the descent. Export the weighting table
+   (BLOCK_TIMING) beside TUNE and pin the curve in vitest.
+ - STEALS: the handler has VULNERABILITY WINDOWS — dribble-move startup
+   (~first 150ms of spin/BTB/between-legs), the gather's first beat, and
+   pass release (the lane pick). A swipe landing inside a window steals
+   at a HIGH rate (neutral ~0.08 → timed ~0.50, scaled by (dfn −
+   handlerSht)·0.0035, hawk +0.08, clamp [0.04, 0.70]); outside the
+   windows it stays low-percentage and a whiff still means BEATEN.
+   Export STEAL_TIMING, pin it, and surface both reads in the HUD
+   ("TIMED!" popup on a window-hit attempt, either outcome).
+NEW SEMANTIC BUTTONS: InputBus gains X and Y (keyboard KeyC/KeyV; pad
+buttons 2/3 — pad B narrows to button 1, note it in the ADR; UIScene's
+touch overlay grows X/Y buttons VISIBLE DURING HOOPS ONLY, thumb-arc
+placed). Hoops mapping — clean, extremely responsive, fast, full control:
+A = SHOOT, B = PASS, X = SPRINT (the dedicated run-faster button), Y =
+DRIBBLE-MOVE modifier. Defense: A = timed block leap, B = steal swipe,
+X = sprint slide. CUSTOMIZABLE CONTROLS: a SETUP → CONTROLS page rebinds
+which physical key/pad button drives each semantic action (press-to-
+capture, per-device, persisted device-local like the Sound preference —
+never save data; reset-to-defaults row; the RPG and the cage both read
+through the binding table).
+THE METER, REBUILT: it renders OVER THE SHOOTER'S HEAD (world-space,
+follows the athlete), fills toward the TOP where the GREEN window sits AT
+THE END — you HOLD the button until the fill lands in the green and
+RELEASE: inside = green make (100%); outside, the make% falls off with
+distance from the window (slightly off ≈ 60%, far ≈ 20%, way off = ZERO);
+overfilling past the top auto-misses. A defender closing space SHRINKS
+the green window — and RANGE shrinks it too (the law above). DUNKS get
+their own meter (same mechanic; miss = rim-hang flub; contested miss =
+STUFFED).
+THE DRIBBLE PACKAGE: Y alone = SPIN MOVE; Y + lateral = BEHIND-THE-BACK;
+Y + toward-defender = BETWEEN-THE-LEGS; double-tap stays the quick
+crossover. Each move rolls seeded vs the defender's commitment into
+TIERED ankle outcomes with their own animations: STUN (defender wobbles,
+brief slow), SMALL BREAK (defender trips/stumbles a step), LARGE BREAK
+(defender falls over flat — the existing FALL frame is the floor of this
+ladder). Every move's STARTUP is a steal-vulnerability window (the risk
+IS the price of the sauce). SPORT_FRAME grows: spin ×2, behind-back ×2,
+between-legs ×2, stun ×2, trip — and PASS ANIMATIONS: chest (straight),
+BOUNCE (low flight with a floor bounce that goes UNDER hands in the
+lane — lower pick chance, slower), BEHIND-THE-BACK (when the target sits
+behind the passer's facing); style picked by context, distinct ball
+flights.
+GOALTENDING: a block that touches the ball on its way DOWN to the rim =
+violation, basket COUNTS, PERMIT has a line ("THAT WAS COMING DOWN. WE
+ALL SAW IT."). Blocks stay legal pre-apex.
+PRESENTATION: upgrade the athlete animations a lot (livelier frames,
+follow-throughs, landing recoveries); CAMERA TOGGLE in the pause menu —
+SIDE (current) or BEHIND (facing the backboard from the player's
+perspective): ship the pseudo-3D read (perspective court, depth-scaled
+sprites, 8-facing sheets as needed). The user asked for TRUE 3D PLAYER
+MODELS in this mode — that conflicts with ADR-002 (zero binary assets,
+palette-by-construction) and ADR-020; S12c ships the best pre-rendered
+pseudo-3D and the ADR records the decision point: a true-3D cage
+(Three.js layer) is its own future prompt if the author calls for it
+after seeing pseudo-3D.
+TUTORIAL: PERMIT teaches the cage on first visit (skippable, flag
+cage_tutored): move/sprint → the over-head meter and the green release →
+the dunk meter → the dribble package and ankle tiers → pass styles →
+defense (the TIMED steal and block windows, THE GOALTEND WARNING).
+Done when: every mechanic above is live and drivable by keys, pad, AND
+the grown touch overlay at pump(n, 8.33); bindings rebind and persist;
+the sim stays seed-deterministic (vitest tape-replays green, new rolls
+through the match rng only); the AI never banks from beyond its range;
+a perfectly timed block visibly erases a release and a window-timed
+swipe strips a dribble-move startup; the bot completes the tutorial +
+one 3v3 with every new move performed; manifests pinned (frames
+contract count, goaltend rule, meter/range/timing math); QA.md
+pre-flight + one device row; ADR appended; browser loop and android:apk
+untouched.
 ```
 
 ## Prompt S13 — COSTA ESTRELLA LINKS (resort golf, the 32-player Invitational)
@@ -662,7 +791,9 @@ remains strictly better post-Ch.4 (vehicles are flavor + early-game).
 Run order: ~~S11 (the battle show — DONE, ADR-030/031)~~ → ~~S11b (the
 battle STAGE — DONE, ADR-032: battlers act per ability, equipped weapons
 render, wear states both sides, real interior doors, the shield picker,
-the green Mother-3 SMAAASH combo)~~ → **S12 (THE CAGE)** → S13 (the LINKS) → S14
+the green Mother-3 SMAAASH combo)~~ → ~~S12 (THE CAGE — DONE,
+ADR-033/034: the gate, the deterministic 5v5/3v3 engine, the 32-team
+Classic on save v5, THE STARTING FOUR)~~ → **S13 (the LINKS)** → S14
 (revival/picnics — after which Chapter 1 is genuinely complete, name
 entry through ch1_complete with quests, arcade, hoops, revival, and
 picnics all live) → S15–S16 make the world dense and navigable. S12 and

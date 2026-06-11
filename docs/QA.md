@@ -191,3 +191,74 @@ hand_me_down_pan · Milo pellet_popper · Dorin cedar_beads).
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 12 | **S11b battle stage, on device** — one Tick fight at 60fps: Jay steps up and back-swings his bat (re-equip the pan/rifle/beads via the menu across heroes), a SMAAAASH combo mashed by real taps (ring timer readable, pitch ladder audible), both sides visibly wear down, shield picker by tap (lift/dim/tag), barrier panels fly in; then upstairs: all three rex_hall doors creak open before admitting | ⬜ | ⬜ | tap-mash the combo with the A overlay — edge detection must catch every tap |
+
+## S12 browser pre-flight — 2026-06-11, THE CAGE (ADR-008 driver)
+
+All legs on the dev build, pad muted AND **`game.loop.sleep()` held for the
+whole scripted session** (new driver law, learned live: a visible preview tab
+fires real rAF frames between pumps; worse, once real time runs ahead of
+pump's virtual clock, every navTick-style cursor cooldown compares against a
+future `scene.time.now` and the arrows go dead while edges still land —
+sleep first, wake last). Talk pacing: `pump(380)` lets a page type out, ONE
+KeyZ advances; never mash into an ask (KeyX cancels it, a stray KeyZ picks
+row 0 — both bit this session before the recipe settled). Full recipe in
+HoopsScene's header; shots in `.shots/s12_*`.
+
+| Check | Result |
+|---|---|
+| **The gate** — fresh v5 save (name entry → 2AM intro), Brickton sidewalk (808,396) walking south through the carved fence tile (50,26) | ✅ lands in the_cage at (320,60); the 1995 stream untouched (jitter tests green); exit door returns to the sidewalk |
+| **The venue** — court lines, keys, the two backboards, bleachers with their baked bench crowd, the chalk board, the CALL YOUR OWN FOULS sign, PERMIT standing the floor | ✅ shot `s12_status_arms_line` (venue under the command list) |
+| **3v3 pickup END-TO-END, twice, byte-identical** — snapshot → PERMIT ask row 0 (seed `pickupSeed(0)=7`, the Casserole Dads) → scripted tape to the horn: trail **2-7 / 8-15 / 12-21 FINAL** both runs, event-for-event | ✅ the cabinet law holds at scene level (vitest pins the math headlessly; 26 sim tests) |
+| **Tally pays the Prompt-18 flow** — the 21-11 loss paid 55 EXP to each suited hero, Jay L1→L3 announced post-game with stat tables + `played` 0→1 | ✅ |
+| **Walk-off = the eject rule** — START → pause ask → WALK OFF mid-pickup: no rewards, no `played` tick, overworld resumes with map music | ✅ |
+| **5v5 Classic registered** — ask row 1 (ArrowDown aimed by the hand probe, y 110→124): `classicSeed(0,0)=1995`, bracket chalked, round 0 vs the wet_socks (tier-1 soft open per the seeding law) | ✅ |
+| **One seeded 5v5 QUARTER end-to-end** — the drive tape runs Q1 to the horn: **30-23 us** (street 1s/2s arithmetic at a four-quarter pace) | ✅ shot `s12_5v5_q1_live` (game clock 0:20, shot clock :19, the painted key) |
+| **THE v5 CHECKPOINT** — the break panel wrote `hoops.match {Q2, 30-23, seed 1995, clock 300000}` AND auto-saved Notebook 1 (blob verified carrying it) | ✅ |
+| **Process death** — `location.reload()` at the break → Continue → Notebook 1: bracket round 0 + the Q2 checkpoint intact; PERMIT row 1 reads "Pick up the Classic game (Q2)"; resume enters Q2 at **30-23** with a fresh quarter clock | ✅ process death cost exactly nothing |
+| **The 24** — idle possession: PERMIT counts 5…1 out loud, violation flips the ball with a fresh 24 (also pinned in vitest) | ✅ |
+| **ADR-024 regime @ pump(n, 8.33), one-frame taps** — a 1-frame A tap opens the GATHER on the tap frame (meter 0, release next frame — honestly a brick); 1-frame START opens the pause ask; 1-frame A resumes; 1-frame B swipes | ✅ zero drops |
+| **THE STARTING FOUR** — constructed titles=1 (the S11 bench precedent): hands-full (14/14 bag) BLOCKS the handoff with `handed` still empty (PERMIT keeps them warm); cleared bag retry hands all four, `handed` ledger complete; `GS.equipItem('rex','cage_sweatband')` = ok; Mia's scrunchie on Jay = **not-yours** (wielder law); heroGuts/heroSpeed read-throughs + "Guts up by N!" preview pinned in vitest (formulas + confirmEquip arms branch) | ✅ |
+| **Found & fixed live** — a dead ball had no chaser: both AIs spaced/defended around a `free` ball forever (surfaced the moment a real tape played). The sim gained THE SCRAMBLE: each side's nearest free body chases a loose ball (the user's athlete excluded from team 0's pick so an AI teammate always covers) | ✅ re-run green |
+| `npm test` | ✅ validator (31 fives + 5 walk-ons + STARTING FOUR + venue + rewards manifests, verified failing loudly on three axes) + 196 vitest |
+| `npm run android:apk` | ✅ fresh meteor-falls-debug.apk (web build + validate + sync + gradle 32s) |
+
+Driver lore added this session (the hard way): **sleep the loop for the whole
+scripted session** — `game.loop.wake()` mid-session lets real frames interleave
+and desyncs pump's virtual clock from `scene.time.now` (cursor cooldowns lock
+out); a visible tab is NOT the hidden-tab regime ADR-008 assumed. And the S10
+safe-pick rule has a corollary: KeyZ-mash is only safe when every reachable
+ask's row 0 is the row you want — PERMIT's ask puts the Classic at row 1, so
+the cage recipe aims with ArrowDown and verifies by reading the hand cursor's
+y before confirming.
+
+### S12 device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 13 | **S12 THE CAGE, on device** — walk the lot gate; one 3v3 pickup to 21 driven entirely by the touch overlay (d-pad drives, B-tap passes where aimed, B-hold turbos, A-hold gather + GREEN release readable on the meter, a dunk at speed near the rim); register the Classic and play Q1 at 60fps with all ten athletes; quarter break → kill the app → Continue resumes Q2 with the score; STARTING FOUR handoff after a title run, "Speed/Guts up by N!" previews by tap | ⬜ | ⬜ | ten athletes + ball + HUD must hold 60fps; hardware back mid-match = a B swipe (pause is START — by design, a game button stays a game button) |
+
+## S12b browser pre-flight — 2026-06-11, AWAKENINGS + the casting-distance fix (ADR-035)
+
+All legs via the ADR-008 driver, loop slept end to end, shots `.shots/s12b_*`.
+
+| Check | Result |
+|---|---|
+| **The reported bug** — "Vibe Surge is just a normal bash attack": REAL, and it was STAGING — S11b walked every actor to arm's reach (the bash approach), so a point-blank cast read as melee. Casts/aims/prayers/throws now stand at CASTING DISTANCE (standoff 72 vs bash 12) and the surge timeline rebuilt: charge at the hands → the light TRAVELS the field → escalating rings | ✅ verified live: actor x128 vs Tick x200, charge/travel/rings, "67 damage!" (`s12b_surge_charge/rings`) |
+| **Heroes start with ZERO Vibe** — availability = unlocks ∪ awakened flags; pre-crater Jay's Vibe row prints "searched for the old light... not yet."; Mia L6 = Pray alone until the Locket | ✅ pinned in vitest (state.test ADR-035 block) |
+| **The crater awakening, end-to-end** — fresh save → hill → the trigger → prophecy pages → THE OLD LIGHT beat (flash, pages, flag at press 18, jingle + toast) → locket in keyItems | ✅ live |
+| **The Surge severs the latch (§A6 amended)** — the Tick latched Jay (tether visible, drain line mid-type) → Vibe list now carries Surge → cast: **tethered true→false**, PP 10→0, damage landed | ✅ live (`s12b_surge_severs_latch`) |
+| **Save v6 (registered)** — v5→v6 backfills awakening flags from story flags (met_glint/zapper_done/faye_joined); a pre-crater save awakens nothing; the v1→v6 chain carries bags+ledger+MGR+hoops+awakenings | ✅ vitest (migrations S12b block) |
+| **Validator** — awakening manifest both directions, no double-path (an ability cannot be awakened AND level-unlocked), flag uniqueness vs quests, §A3-amended pins (Jay no L≤3 unlock; Pray innate L1) — double-path axis verified failing loudly | ✅ |
+| `npm test` | ✅ validator + 199 vitest |
+
+Driver lore: **HMR splits module instances** — `window.mfGS` goes stale
+against the scenes' live GS after hot reloads (flags read empty while the
+game sets them); full-reload before any flag-reading leg. And the loop-sleep
+rule is ABSOLUTE: a single `wake()` mid-session desyncs pump's virtual clock
+from `scene.time.now` and every nav cooldown locks out.
+
+### S12b device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 14 | **S12b awakenings, on device** — fresh save: pre-crater Vibe row says not yet; the crater beat plays (flash, pages, jingle, toast); the Tick latches and the Surge visibly severs the tether from CASTING DISTANCE (the caster stands at range — never reads as a bash) | ⬜ | ⬜ | |

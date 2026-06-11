@@ -165,8 +165,10 @@ export type EquipSlot = z.infer<typeof EquipSlotSchema>;
 
 /** S9 adds: 'charm' (the 'other' equip slot — Lucky Collar) and 'valuable'
  *  (sell-fodder and quest goods — Fresh Stamps, the lemonade supplies).
- *  S10 adds: 'armor' (the 'body' slot — the Champion Jacket is §A8's first). */
-export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable', 'armor']);
+ *  S10 adds: 'armor' (the 'body' slot — the Champion Jacket is §A8's first).
+ *  S12 adds: 'arms' (the 'arms' slot — THE STARTING FOUR, the Classic's
+ *  first-title prize, carry speed/guts the way armor carries defense). */
+export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable', 'armor', 'arms']);
 export type ItemKind = z.infer<typeof ItemKindSchema>;
 
 export const ItemDefSchema = z
@@ -182,6 +184,10 @@ export const ItemDefSchema = z
     defense: z.number().positive().optional(),
     /** charm ('other' slot) luck bonus — §A10 Lucky Collar, S9 */
     luck: z.number().positive().optional(),
+    /** arms-slot stat bonuses — THE STARTING FOUR (S12): each piece carries
+     *  exactly one of these; battle + STATUS read through heroSpeed/heroGuts */
+    speed: z.number().positive().optional(),
+    guts: z.number().positive().optional(),
     /** §A8 weapon lines are personal — only this hero can equip it */
     wielder: HeroIdSchema.optional(),
     /** battle item damage */
@@ -222,6 +228,15 @@ export const ItemDefSchema = z
     }
     if (item.kind !== 'armor' && item.defense !== undefined) {
       ctx.addIssue({ code: 'custom', message: `'${item.id}' has defense but kind '${item.kind}' — defense rides armor` });
+    }
+    // S12 pairing: kind 'arms' ⇔ exactly one of speed/guts — the same rule
+    // shape as 'pp' ⇔ ppHeal, applied to THE STARTING FOUR's slot
+    const armsStats = [item.speed, item.guts].filter((v) => v !== undefined).length;
+    if (item.kind === 'arms' && armsStats !== 1) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' is kind 'arms' but carries ${armsStats} of speed/guts — exactly one` });
+    }
+    if (item.kind !== 'arms' && armsStats > 0) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' has speed/guts but kind '${item.kind}' — those ride 'arms' gear` });
     }
   });
 export type ItemDef = z.infer<typeof ItemDefSchema>;
@@ -484,3 +499,122 @@ export const ArcadeScoreSchema = z.strictObject({
   score: z.number().int().min(0),
 });
 export type ArcadeScore = z.infer<typeof ArcadeScoreSchema>;
+
+/* ---------------- THE CAGE (S12 — Brickton streetball) ---------------- */
+
+/** the on-court read of one athlete, 0–99 per axis (data-tuned):
+ *  spd = wheels · sht = release/range · dnk = rim power · dfn = swipes+walls */
+export const AthleteRatingSchema = z.strictObject({
+  spd: z.number().min(0).max(99),
+  sht: z.number().min(0).max(99),
+  dnk: z.number().min(0).max(99),
+  dfn: z.number().min(0).max(99),
+});
+export type AthleteRating = z.infer<typeof AthleteRatingSchema>;
+
+/** honest archetypes — opponent AI plays these straight, never the score
+ *  (NO rubber-banding, S12 law) */
+export const HoopsArchetypeSchema = z.enum(['rusher', 'sniper', 'post', 'hawk', 'balanced']);
+export type HoopsArchetype = z.infer<typeof HoopsArchetypeSchema>;
+
+/**
+ * One of the 31 Classic entrants (§A11 local color — the Pigeon Counters,
+ * the Quota Crushers, Permit's nephews…). `tier` 1–5 seeds the bracket and
+ * derives the five athletes' ratings via teamRatings(); `jersey` is the
+ * palette ramp their sport sheets dress in.
+ */
+export const TeamDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  /** one line of chalk-talk, §A11 voice — shown at the board before tip */
+  taunt: z.string().min(1),
+  archetype: HoopsArchetypeSchema,
+  /** 1 = round-one fodder … 5 = title-game material */
+  tier: z.number().int().min(1).max(5),
+  /** jersey palette ramp index */
+  jersey: z.number().int().min(0).max(15),
+});
+export type TeamDef = z.infer<typeof TeamDefSchema>;
+
+/**
+ * A named WALK-ON who fills the party's five (Chad guests pre-Milo). The
+ * sprite id must be a CAST member — walk-ons are established §A11 locals,
+ * never invented heroes (they fill the FIVE, never the PARTY).
+ */
+export const WalkOnDefSchema = z.strictObject({
+  id: z.string().min(1),
+  /** display name on the card + PERMIT's call */
+  name: z.string().min(1),
+  /** CAST sprite id their sport sheet derives from (validator-checked) */
+  sprite: z.string().min(1),
+  /** the tiny §A11 stat line (scouting report, one sentence) */
+  line: z.string().min(1),
+  rating: AthleteRatingSchema,
+  archetype: HoopsArchetypeSchema,
+  /** bench availability gates (Chad: unlessFlag 'milo_joined') */
+  ifFlag: z.string().min(1).optional(),
+  unlessFlag: z.string().min(1).optional(),
+});
+export type WalkOnDef = z.infer<typeof WalkOnDefSchema>;
+
+/**
+ * THE BRICKTON CLASSIC bracket — save v5 data (S12). 32 slots: 'party' plus
+ * 31 TEAMS ids, in bracket order (slot 2k plays slot 2k+1). `round` is the
+ * next round the player plays (0..4); `results` holds each completed round's
+ * winners in slot order, so the chalk board redraws from history alone.
+ */
+export const HoopsBracketSchema = z.strictObject({
+  seed: z.number().int(),
+  round: z.number().int().min(0).max(4),
+  field: z.array(z.string().min(1)).length(32),
+  results: z.array(z.array(z.string().min(1))),
+});
+export type HoopsBracket = z.infer<typeof HoopsBracketSchema>;
+
+/**
+ * A live Classic match, checkpointed AT QUARTER BREAKS (S12): score, clock,
+ * quarter ride the save so process death costs at most the quarter in
+ * progress. `quarter` is the next one to play (1-based; ≥5 = overtime).
+ */
+export const HoopsCheckpointSchema = z.strictObject({
+  opponent: z.string().min(1),
+  round: z.number().int().min(0).max(4),
+  seed: z.number().int(),
+  quarter: z.number().int().min(1),
+  scoreUs: z.number().int().min(0),
+  scoreThem: z.number().int().min(0),
+  /** ms on the game clock when the checkpointed quarter starts */
+  clockMs: z.number().int().min(0),
+});
+export type HoopsCheckpoint = z.infer<typeof HoopsCheckpointSchema>;
+
+/**
+ * A story-triggered Vibe grant (S12b/ADR-035): heroes no longer start with
+ * Vibe — abilities AWAKEN at scene-staged moments and ride the save as
+ * flags. Availability = level unlocks ∪ awakened flags.
+ */
+export const AwakeningDefSchema = z.strictObject({
+  id: z.string().min(1),
+  hero: HeroIdSchema,
+  ability: z.string().min(1),
+  flag: z.string().min(1),
+  /** DIALOGUE id of the awakening pages (§A11, validator-swept) */
+  dialogue: z.string().min(1),
+  /** toast line under the jingle — {tokens} resolve through vars() */
+  toast: z.string().min(1),
+});
+export type AwakeningDef = z.infer<typeof AwakeningDefSchema>;
+
+/** the whole v5 field — tournament state IS save data (S12) */
+export const HoopsStateSchema = z.strictObject({
+  bracket: HoopsBracketSchema.nullable(),
+  match: HoopsCheckpointSchema.nullable(),
+  /** Classic titles won (first pays THE STARTING FOUR; repeats pay cash) */
+  titles: z.number().int().min(0),
+  /** STARTING FOUR ids already handed over — the hands-full raincheck
+   *  ledger (PERMIT keeps the rest warm; zero missables) */
+  handed: z.array(z.string().min(1)),
+  /** total matches finished — seeds each pickup run's rng deterministically */
+  played: z.number().int().min(0),
+});
+export type HoopsState = z.infer<typeof HoopsStateSchema>;

@@ -15,12 +15,13 @@ export const EQUIP_SLOTS: EquipSlot[] = ['weapon', 'body', 'arms', 'other'];
 /** EB hands-full rule: every hero's bag holds 14 items (Prompt 19) */
 export const BAG_MAX = 14;
 
-/** which equip slot an item occupies, if any (arms armor lands Phase 2+;
- *  charms ride 'other' since S9, armor rides 'body' since S10 — the
- *  Champion Jacket is §A8's first body gear) */
+/** which equip slot an item occupies, if any (charms ride 'other' since S9,
+ *  armor rides 'body' since S10, and 'arms' opened with S12 — THE STARTING
+ *  FOUR, the Classic's first-title prize, is §A8's first arms gear) */
 export function slotOf(item: ItemDef): EquipSlot | null {
   if (item.kind === 'weapon') return 'weapon';
   if (item.kind === 'armor') return 'body';
+  if (item.kind === 'arms') return 'arms';
   if (item.kind === 'charm') return 'other';
   return null;
 }
@@ -202,6 +203,49 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: false,
       price: 0,
       text: 'CHAMPION across the back in iron-on letters. Sal pressed every one himself. Defense +8.',
+    }),
+    /* ---- S12: THE STARTING FOUR — the Brickton Classic's first-title
+       prize, §A8's first 'arms' gear (one piece per hero, wielder-tagged;
+       battle + STATUS read them through heroSpeed/heroGuts) ---- */
+    I({
+      id: 'cage_sweatband',
+      name: "Champ's Sweatband",
+      kind: 'arms',
+      guts: 6,
+      wielder: 'rex',
+      usableInBattle: false,
+      price: 0,
+      text: 'Soaked in four quarters of not quitting. Guts +6.',
+    }),
+    I({
+      id: 'victory_scrunchie',
+      name: 'Victory Scrunchie',
+      kind: 'arms',
+      speed: 6,
+      wielder: 'faye',
+      usableInBattle: false,
+      price: 0,
+      text: 'Holds a championship together at the wrist. Speed +6.',
+    }),
+    I({
+      id: 'shooters_sleeve',
+      name: "Shooter's Sleeve",
+      kind: 'arms',
+      speed: 7,
+      wielder: 'milo',
+      usableInBattle: false,
+      price: 0,
+      text: 'Aerodynamically smug. Wintermoor would not approve. Speed +7.',
+    }),
+    I({
+      id: 'iron_wristguard',
+      name: 'Iron Wristguard',
+      kind: 'arms',
+      guts: 7,
+      wielder: 'dorin',
+      usableInBattle: false,
+      price: 0,
+      text: 'The mountain deleted his fear. The cage gave him this instead. Guts +7.',
     }),
   ].map((i) => [i.id, i]),
 );

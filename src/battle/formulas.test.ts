@@ -8,6 +8,9 @@ import {
   expShare,
   applyWeakness,
   heroOffense,
+  heroSpeed,
+  heroGuts,
+  equipArmsDelta,
   equipDelta,
   heroDefense,
   equipDefenseDelta,
@@ -253,5 +256,42 @@ describe('wear tiers (S11b — battle sprites read the drums)', () => {
     // a mortal roll degrades AS the drum falls — fractional displays count
     expect(wearTier(65.9, 100)).toBe(1);
     expect(wearTier(0, 0)).toBe(2);
+  });
+});
+
+describe('the arms slot (S12 — THE STARTING FOUR read-throughs)', () => {
+  it('heroSpeed/heroGuts read through the arms slot the heroOffense way', () => {
+    const rex = makeHeroState('rex', 8);
+    const baseSpd = rex.stats.speed;
+    const baseGuts = rex.stats.guts;
+    expect(heroSpeed(rex)).toBe(baseSpd);
+    expect(heroGuts(rex)).toBe(baseGuts);
+    rex.bag.push('cage_sweatband');
+    rex.equip.arms = 'cage_sweatband'; // Guts +6
+    expect(heroGuts(rex)).toBe(baseGuts + 6);
+    expect(heroSpeed(rex)).toBe(baseSpd); // a guts piece moves only guts
+  });
+
+  it('equipArmsDelta names the stat THE PIECE carries — the preview contract', () => {
+    const faye = makeHeroState('faye', 8);
+    expect(equipArmsDelta(faye, 'victory_scrunchie')).toEqual({ stat: 'Speed', d: 6 });
+    const dorin = makeHeroState('dorin', 40);
+    expect(equipArmsDelta(dorin, 'iron_wristguard')).toEqual({ stat: 'Guts', d: 7 });
+    // re-equipping over a piece previews the DIFFERENCE
+    const milo = makeHeroState('milo', 10);
+    milo.bag.push('shooters_sleeve');
+    milo.equip.arms = 'shooters_sleeve'; // Speed +7
+    expect(equipArmsDelta(milo, 'shooters_sleeve')).toEqual({ stat: 'Speed', d: 0 });
+    // a non-arms item previews nothing through this path
+    expect(equipArmsDelta(milo, 'corn_dog')).toEqual({ stat: 'Speed', d: 0 });
+  });
+
+  it('every STARTING FOUR piece is wielder-locked arms gear with one stat', () => {
+    for (const id of ['cage_sweatband', 'victory_scrunchie', 'shooters_sleeve', 'iron_wristguard']) {
+      const item = ITEMS[id];
+      expect(item.kind).toBe('arms');
+      expect(item.wielder).toBeDefined();
+      expect([item.speed, item.guts].filter((v) => v !== undefined)).toHaveLength(1);
+    }
   });
 });

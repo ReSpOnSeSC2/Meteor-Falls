@@ -69,6 +69,29 @@ In the final battle, Pray becomes **scripted** (see A8, Chapter 8).
 - **Dorin:** Vibe Comet α (joins) / Ω (L52); Vibe Freeze line shared; Mirror (joins); Brainjam α/Ω (L40/50); Healing α–γ
 - **Milo:** No Vibe. **Spy** (reveals enemy HP/weakness), **Repair** (turns Broken Gizmos found in the world into working battle items overnight when sleeping), Bottle Rocket tiers (single → Big → Multi)
 
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-035 — **AWAKENINGS**: heroes
+> no longer start with Vibe. The old light arrives at STORY MOMENTS, scene-
+> staged and played straight (§A11.2), so every ability is an event; level
+> unlocks are spaced out and the signature lines leap harder per tier
+> (Surge/Fire α→β ≈ 2.6×). Teleport α/β (story-gated, Ch.4/Ch.6) was always
+> the precedent — it is the rule now. **Ch.1 ships three:** Jay awakens
+> VIBE SURGE α at Glint's crater prophecy — one beat before the Tick, whose
+> latch the Surge can sever (§A6 amended below) — and LIFEUP α at the porch
+> when Glint's last spark settles into him (beside the GLINT'S SPARK item
+> the beat already grants: progression gear is handed at story beats, never
+> floor-found). Mia keeps **Pray innate at L1** (her faith is who she is)
+> and awakens VIBE FIRE α touching the Locket in the holding room — "hears
+> the Embers sing," made literal. Jay's level table now opens at Hypno α
+> (L10) → Shield α (L14) → Surge β (L18); Mia's at Freeze α (L12) →
+> Magnet (L15) → Fire β (L17). **The arc forward (chapter sessions
+> implement, one awakening per chapter's emotional center):** Ch.2 the
+> Gilded Grin's HOLLOW reveal; Ch.3 Milo's gadget tiers stay level/quest
+> work (gadgets are built, not awakened — his identity); Ch.4 Teleport α
+> (canon); Ch.5 the Locket recovered on the night train re-awakens loud;
+> Ch.6 Teleport β (canon); Ch.7 Dorin's Trial IS his awakening (canon
+> already staged it); Ch.8 the finale's scripted PRAY is the last one. The
+> validator pins each chapter's manifest as it lands.)*
+
 ## A4. Core Systems (the EarthBound DNA)
 
 1. **Rolling Odometer HP.** HP/PP tick down like a mechanical odometer (~2 digits/sec). A mortal hit can be outraced by healing or by *winning the battle* before the meter hits zero. This is the single most important feel-mechanic — Prompt 13 is dedicated to it.
@@ -105,6 +128,11 @@ The world FEELS open: every region has off-path screens, optional caves, side qu
 Tutorial-by-doing. Meteor crash, Glint's prophecy and death-by-bug-zapper, the neighbor kid **Chad Pickle** (Pokey analog) tags along then betrays you twice before lunch. Jay crosses Hickory Hill, takes the bus to **Brickton City**, and rescues **Mia** from the **Department of Smiles** — a cult of unsettlingly cheerful adults in blue blazers ("Have a PRODUCTIVE day!") who've been Hushed.
 
 **Resonance Site:** Hickory Hill crater. **BOSS 1 — THE TITANIC TICK** (450 HP / latches onto a hero and drains HP each turn until hit with Vibe Fire or a thrown Salt Shaker).
+
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-035: the OLD LIGHT severs
+> the latch too — Jay awakens VIBE SURGE α at Glint's prophecy one beat
+> before this fight, and the awakening is its diegetic tutorial. Vibe Fire
+> and the Salt Shaker remain canon severs.)*
 
 ### Chapter 2 — "The Gilded Grin" (South America) — target level: 13
 
@@ -175,6 +203,14 @@ Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one
 
 **Armor:** regional hats (Otterbrook Cap → Cricket Cap → Turban of Calm → Paper Crown → Cushma → Fur-Lined Hood), bracelets, pendants (elemental resists), *Star Pendant* (Ch.7).
 
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-034: the 'arms' slot opens
+> with **THE STARTING FOUR** — the Brickton Classic's first-title prize,
+> one wielder-tagged piece per hero: Champ's Sweatband (Jay, Guts+6),
+> Victory Scrunchie (Mia, Speed+6), Shooter's Sleeve (Milo, Speed+7), Iron
+> Wristguard (Dorin, Guts+7). Battle and STATUS read Speed/Guts through the
+> slot the way Defense reads the Champion Jacket. The §A8 manifest extends
+> in the validator in the same commit, per ADR-017.)*
+
 **Food (HP):** Corn Dog, PB&J, Alfajor, Scone & Clotted Cream, Jollof Bowl, Samosa, Baozi, **Sarmale**, **Mămăligă cu Brânză** (best HP/$ in the game — Buni's), Akutaq, Poke Bowl, Freeze-Dried Ice Cream (Mars vending machines).
 
 **PP:** Star Cola line, Monastery Tea, Temple Incense. **Cures:** Salt Shaker (anti-Tick!), Aloe Leaf (Sunburn), Hanky (Crying), Doctor's Note (Mushroomize), Mom's Voice Tape (Homesick, 3 uses).
@@ -188,6 +224,14 @@ Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one
 - EXP curve: `EXP(L) = 4·L³ ÷ 3` (faithfully grindy). Expected per-chapter levels listed in A6; if testers arrive >4 under target, enemies en route get +15% EXP.
 - Main story: 4.5–6 hr (8 chapters × 30–45 min). Side quests: +3 hr. Boss attempts budgeted at 1.5 avg (grindy difficulty = some party wipes are expected and fine — that's EarthBound).
 - Cash economy tuned so a full equipment refresh per region costs ≈ 2 chapters of battle income → choices hurt a little, like 1995.
+
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-034: THE BRICKTON CLASSIC —
+> S12's 32-team 5v5 streetball tournament at the cage — is **optional
+> long-form content beyond the +3hr side-quest budget**: five four-quarter
+> games ≈ two hours for a title run, BY DESIGN, built to be left and
+> returned to (the bracket and a live match's quarter checkpoints are save
+> data, v5). 3v3 pickup at the cage pays EXP forever and fits any session.
+> The mainline and side-quest budgets above are unchanged.)*
 
 ## A10. Side Quests (16 — each one adds a CALLER to the final battle)
 

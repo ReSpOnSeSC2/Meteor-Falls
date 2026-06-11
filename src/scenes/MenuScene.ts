@@ -25,11 +25,11 @@
  */
 import Phaser from 'phaser';
 import { GS, expForLevel, type HeroState } from '../engine/state';
-import { HEROES, unlockedAbilities } from '../data/heroes';
+import { HEROES, availableAbilities } from '../data/heroes';
 import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, type EquipSlot } from '../data/items';
 import { ABILITIES } from '../data/abilities';
 import { journalQuests, currentObjective, objectiveDone, callerEarned } from '../engine/quests';
-import { heroOffense, heroDefense, heroLuck, vibeHeal } from '../battle/formulas';
+import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, vibeHeal } from '../battle/formulas';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, vars, DEPTH_UI } from '../ui/windows';
@@ -292,13 +292,16 @@ export class MenuScene extends Phaser.Scene {
     const s = h.stats;
     // Defense reads through the 'body'-slot armor (S10 — the Champion Jacket)
     line(58, `Offense ${heroOffense(h)}   Defense ${heroDefense(h)}`);
-    line(70, `Speed   ${s.speed}   Guts    ${s.guts}`);
+    // Speed/Guts read through the 'arms' slot (S12 — THE STARTING FOUR)
+    line(70, `Speed   ${heroSpeed(h)}   Guts    ${heroGuts(h)}`);
     // Luck reads through the 'other'-slot charm (S9 — the Lucky Collar)
     line(82, `Vibe    ${s.vibe}   Luck    ${heroLuck(h)}`);
     const weapon = h.equip.weapon ? ITEMS[h.equip.weapon]?.name : undefined;
-    line(100, `Weapon  ${weapon ?? 'Nothing'}`, weapon ? undefined : DIM);
+    line(96, `Weapon  ${weapon ?? 'Nothing'}`, weapon ? undefined : DIM);
     const body = h.equip.body ? ITEMS[h.equip.body]?.name : undefined;
-    line(112, `Body    ${body ?? 'Nothing'}`, body ? undefined : DIM);
+    line(106, `Body    ${body ?? 'Nothing'}`, body ? undefined : DIM);
+    const arms = h.equip.arms ? ITEMS[h.equip.arms]?.name : undefined;
+    line(116, `Arms    ${arms ?? 'Nothing'}`, arms ? undefined : DIM);
     line(126, `EXP ${h.exp}`);
     line(138, `Next level in ${Math.max(0, expForLevel(h.level + 1) - h.exp)}`, DIM);
   }
@@ -316,7 +319,7 @@ export class MenuScene extends Phaser.Scene {
 
   private async vibeList(hero: HeroState): Promise<void> {
     // Pray is a battle command, not a menu vibe (ADR-014)
-    const ids = unlockedAbilities(hero.id, hero.level).filter(
+    const ids = availableAbilities(hero.id, hero.level, (f) => GS.flag(f) === true).filter(
       (id) => ABILITIES[id] !== undefined && ABILITIES[id].kind !== 'pray',
     );
     if (ids.length === 0) {

@@ -48,6 +48,19 @@ import { DIALOGUE } from '../data/dialogue';
 import { ITEMS } from '../data/items';
 import { GS, makeHeroState } from '../engine/state';
 import { completeQuest } from '../engine/quests';
+import {
+  HOOPS_TEXT,
+  TEAMS,
+  TEAM_ORDER,
+  STARTING_FOUR,
+  STARTING_FOUR_IDS,
+  newBracket,
+  nextOpponent,
+  classicSeed,
+  pickupSeed,
+} from '../data/hoops';
+import { AWAKENINGS } from '../data/awakenings';
+import type { HoopsLaunch } from './HoopsScene';
 import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
@@ -1328,9 +1341,136 @@ export class OverworldScene extends Phaser.Scene {
       case 'arcade_owner':
         await this.salBeat();
         return true;
+      case 'permit':
+        // S12: THE CAGE's commissioner — formats, the Classic, the handoff
+        await this.permitBeat();
+        return true;
       default:
         return false;
     }
+  }
+
+  /* ---------------- S12: THE CAGE (ADR-034) ----------------
+   * PERMIT is the gate to both formats; HoopsScene runs the match over a
+   * paused world (the S10 cabinet pattern, 'mf-hoops-closed'). Tournament
+   * state lives on GS.data.hoops (save v5) — the bracket, the quarter
+   * checkpoint, titles, and the STARTING FOUR raincheck ledger.
+   */
+
+  private launchHoops(cfg: HoopsLaunch): void {
+    this.game.events.once('mf-hoops-closed', () => {
+      AUDIO.playMusic(this.mapDef.music);
+      this.scene.resume();
+    });
+    this.scene.pause();
+    this.scene.launch('hoops', cfg);
+  }
+
+  /** the first Classic title pays THE STARTING FOUR — hands-full BLOCKS the
+   *  handoff and PERMIT keeps the rest warm (hoops.handed is the raincheck
+   *  ledger; zero missables, §B4). Returns true if anything got blocked. */
+  private async startingFourHandoff(): Promise<boolean> {
+    const h = GS.data.hoops;
+    for (const [heroId, itemId] of Object.entries(STARTING_FOUR)) {
+      if (h.handed.includes(itemId)) continue;
+      // the piece aims for its hero's bag; anyone with room can carry it home
+      const wielder = GS.data.party.find((p) => p.id === heroId && p.bag.length < 14);
+      const carrier = wielder ?? GS.data.party.find((p) => p.bag.length < 14);
+      if (!carrier || !GS.addItem(itemId, carrier.id)) {
+        await this.dlg.say(...DIALOGUE.permit_hands_full);
+        return true;
+      }
+      h.handed.push(itemId);
+      toast(this, `Got ${ITEMS[itemId].name}!`);
+      AUDIO.sfx('confirm');
+    }
+    return false;
+  }
+
+  private async permitBeat(): Promise<void> {
+    const h = GS.data.hoops;
+    if (!GS.flag('cage_met')) {
+      GS.setFlag('cage_met');
+      await this.dlg.say(...DIALOGUE.npc_permit);
+    }
+    // the champion's debts come first
+    if (h.titles >= 1 && h.handed.length < STARTING_FOUR_IDS.length) {
+      await this.dlg.say(...DIALOGUE.permit_title_first);
+      await this.startingFourHandoff();
+      return;
+    }
+    if (h.titles >= 1 && !GS.flag('cage_repeat_heard')) {
+      // one nod per dynasty; the line retires itself
+      if (h.titles > 1) {
+        GS.setFlag('cage_repeat_heard');
+        await this.dlg.say(...DIALOGUE.permit_repeat_title);
+      }
+    }
+    await this.dlg.say(...DIALOGUE.permit_pickup_ask);
+    const classicRow = h.match
+      ? `Pick up the Classic game (Q${h.match.quarter})`
+      : h.bracket
+        ? `Play the Classic: ${HOOPS_TEXT.boardRound[h.bracket.round]}`
+        : 'Register for the Brickton Classic';
+    const pick = await this.dlg.ask(['Run 3v3 pickup (first to 21)', classicRow, 'Never mind'], { cancelIndex: 2 });
+    if (pick === 0) {
+      const seed = pickupSeed(h.played);
+      const opponent = TEAM_ORDER[seed % TEAM_ORDER.length];
+      this.launchHoops({ format: '3v3', seed, opponent });
+      return;
+    }
+    if (pick !== 1) return;
+    if (h.match) {
+      // the checkpointed quarter waits on the chalk (save v5)
+      await this.dlg.say(...DIALOGUE.permit_resume);
+      this.launchHoops({
+        format: '5v5',
+        seed: h.match.seed,
+        opponent: h.match.opponent,
+        round: h.match.round,
+        resume: { ...h.match },
+      });
+      return;
+    }
+    if (!h.bracket) {
+      h.bracket = newBracket(classicSeed(h.titles, h.played));
+      GS.setFlag('cage_was_in');
+      if (GS.activeSlot !== null) GS.saveTo(GS.activeSlot);
+      await this.dlg.say(...DIALOGUE.permit_register);
+    }
+    const b = h.bracket;
+    const opponent = nextOpponent(b);
+    this.launchHoops({
+      format: '5v5',
+      seed: (b.seed + b.round * 977) >>> 0,
+      opponent,
+      round: b.round,
+    });
+  }
+
+  /** the chalk board: bracket state, drawn in PERMIT's immaculate hand */
+  private async cageBoardBeat(): Promise<void> {
+    await this.dlg.say(...DIALOGUE.cage_board);
+    const h = GS.data.hoops;
+    if (h.match) {
+      await this.dlg.say(
+        `${HOOPS_TEXT.boardRound[h.match.round]} — your game holds at Q${h.match.quarter}, ${h.match.scoreUs}-${h.match.scoreThem}.`,
+      );
+      return;
+    }
+    if (h.bracket) {
+      const opp = TEAMS[nextOpponent(h.bracket)];
+      await this.dlg.say(
+        `${HOOPS_TEXT.boardRound[h.bracket.round]}. ${HOOPS_TEXT.boardNext.replace('{team}', opp.name.toUpperCase())}`,
+        HOOPS_TEXT.boardTaunt.replace('{taunt}', opp.taunt),
+      );
+      return;
+    }
+    if (h.titles > 0) {
+      await this.dlg.say(HOOPS_TEXT.boardChamps);
+      return;
+    }
+    await this.dlg.say(GS.flag('cage_was_in') ? HOOPS_TEXT.boardDead : HOOPS_TEXT.boardOpen);
   }
 
   /** §A10 #1 — Biscuit, Come Home: Mrs. Pemmel's side of the trail */
@@ -1531,6 +1671,11 @@ export class OverworldScene extends Phaser.Scene {
     // S10 §A10 #4: the ARCADE LEGEND cabinet at STARPORT II
     if (dialogueId === 'cab_legend') {
       await this.legendCabinetBeat();
+      return true;
+    }
+    // S12: the cage's chalked bracket board
+    if (dialogueId === 'cage_board') {
+      await this.cageBoardBeat();
       return true;
     }
     if (dialogueId === 'q_biscuit_clue1') {
@@ -1911,6 +2056,23 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  /**
+   * S12b (ADR-035): an ability arrives as a STORY MOMENT — flash, the §A11
+   * pages, the flag, the jingle, the toast. Battle/menu availability reads
+   * the flag forever after (data/awakenings.ts). Played straight, §A11.2.
+   */
+  private async awakeningBeat(id: string): Promise<void> {
+    const a = AWAKENINGS[id];
+    if (!a || GS.flag(a.flag) === true) return;
+    this.cameras.main.flash(420, 248, 232, 160);
+    AUDIO.sfx('pray');
+    this.sparkleBurst(this.player.x, this.player.y - 14, 16);
+    await this.dlg.say(...DIALOGUE[a.dialogue]);
+    GS.setFlag(a.flag);
+    AUDIO.jingle('levelup', 1400, this.mapDef.music);
+    toast(this, vars(a.toast));
+  }
+
   private async craterScene(): Promise<void> {
     this.cut = true;
     if (!GS.flag('met_glint')) {
@@ -1923,6 +2085,9 @@ export class OverworldScene extends Phaser.Scene {
       AUDIO.sfx('ember');
       await this.dlg.say(...DIALOGUE.glint_prophecy);
       GS.data.keyItems.push('star_locket');
+      // THE OLD LIGHT (ADR-035): Glint's gift lands one beat before the
+      // fight it answers — the Surge severs the Tick's latch (§A6 amended)
+      await this.awakeningBeat('old_light');
       await this.dlg.say(...DIALOGUE.tick_warning);
       this.cameras.main.shake(700, 0.015);
       AUDIO.sfx('thud');
@@ -1981,6 +2146,9 @@ export class OverworldScene extends Phaser.Scene {
     GS.addItem('glints_spark');
     AUDIO.sfx('ember');
     await this.dlg.say(DIALOGUE.porch_zapper[5], DIALOGUE.porch_zapper[6]);
+    // THE LAST SPARK (ADR-035): what settles into Jay stays — healing born
+    // of grief, played absolutely straight (§A11.2)
+    await this.awakeningBeat('last_spark');
     this.cut = false;
   }
 
@@ -1993,6 +2161,9 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.sfx('ember');
     AUDIO.playMusic('heartlight');
     await this.dlg.say(...DIALOGUE.faye_locket);
+    // THE FIRST LISTEN (ADR-035): she touches the Locket and hears
+    // Heartlight #1 — "hears the Embers sing" (§A3), made literal
+    await this.awakeningBeat('first_listen');
     await this.dlg.say(...DIALOGUE.faye_join);
     // ADR-013: the Prompt-21 name flows into her battle strip and dialogue
     GS.data.party.push(makeHeroState('faye', 6, GS.data.heroNames.faye));

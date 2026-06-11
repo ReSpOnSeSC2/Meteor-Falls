@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GS, newGameData, makeHeroState, expForLevel } from './state';
 import { ENEMIES } from '../data/enemies';
-import { HEROES, statsAtLevel, maxHpAtLevel, unlockedAbilities } from '../data/heroes';
+import { HEROES, statsAtLevel, maxHpAtLevel, unlockedAbilities, availableAbilities } from '../data/heroes';
 import { ITEMS } from '../data/items';
 import { ABILITIES } from '../data/abilities';
 
@@ -168,12 +168,21 @@ describe('hero state', () => {
 describe('S2 — Mia joins (§A3/§A6, ADR-013/ADR-014)', () => {
   beforeEach(() => GS.reset());
 
-  it("Mia's canon kit at L6: Vibe Fire α and PRAY from L1, Freeze α at 4 — Magnet not yet", () => {
+  it("Mia's L6 kit (§A3 as amended, ADR-035): PRAY innate; Fire α AWAKENS at the Locket", () => {
+    // level table alone: faith only — the elements arrive as story moments
     const kit = unlockedAbilities('faye', 6);
-    expect(kit).toContain('vibe_fire_a');
-    expect(kit).toContain('pray');
-    expect(kit).toContain('vibe_freeze_a');
-    expect(kit).not.toContain('magnet_a'); // L8
+    expect(kit).toEqual(['pray']);
+    expect(kit).not.toContain('vibe_fire_a'); // first-listen awakening
+    expect(kit).not.toContain('vibe_freeze_a'); // L12 now
+    // the join beat sets the flag — availability carries Fire from then on
+    const before = availableAbilities('faye', 6, () => false);
+    expect(before).toEqual(['pray']);
+    const after = availableAbilities('faye', 6, (f) => f === 'awake_fire_a');
+    expect(after).toContain('vibe_fire_a');
+    expect(after).toContain('pray');
+    // Jay pre-crater has NOTHING; the prophecy hands him the Surge
+    expect(availableAbilities('rex', 5, () => false)).toEqual([]);
+    expect(availableAbilities('rex', 5, (f) => f === 'awake_surge_a')).toEqual(['vibe_surge_a']);
   });
 
   it('a two-hero party with a down angel survives a save round-trip', () => {

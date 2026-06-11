@@ -570,22 +570,39 @@ export class BattleFx {
 
     switch (spec.family) {
       case 'surge': {
-        // starburst rings that escalate per tier (α one ring → Ω the sky)
+        // THE SIGNATURE NUKE (S12b rebuild — it must never read as a bash):
+        // a CHARGE at the caster's raised hands (motes converge, three
+        // swelling pulses), the old light TRAVELS the field as a burst
+        // train, then starburst rings escalate per tier (α two → Ω the sky)
         this.sfx(tl, 0, spec.sfx);
-        if (caster) tl.event(0, () => this.motes(caster.x, caster.y, 20, ramp, 4, 350));
+        if (caster) {
+          tl.event(0, () => this.motes(caster.x, caster.y, 26, ramp, 4, 420));
+          for (let c = 0; c < 3; c++) {
+            this.ring(tl, 60 + c * 120, caster.x, caster.y - 6, 14 - c * 4, 4 + c * 2, c === 2 ? RAMP.GOLD : ramp, 160);
+          }
+        }
         targets.forEach((t, i) => {
-          const base = 160 + i * 110;
-          for (let r = 0; r < tier; r++) {
+          const base = 480 + i * 110;
+          if (caster) {
+            // the travel: four bursts cross from the hands to the target
+            for (let s = 0; s < 4; s++) {
+              const p = (s + 1) / 5;
+              const bx = caster.x + (t.x - caster.x) * p;
+              const by = caster.y - 6 + (t.y - (caster.y - 6)) * p;
+              tl.event(380 + s * 40 + i * 110, () => this.burst(bx, by, ramp, 3, 16));
+            }
+          }
+          for (let r = 0; r < tier + 1; r++) {
             this.ring(tl, base + r * 90, t.x, t.y, 4, 18 + tier * 7 + r * 6, r % 2 === 0 ? ramp : RAMP.GOLD, 300 + r * 40);
           }
-          tl.event(base + 60, () => this.burst(t.x, t.y, ramp, 6 + tier * 3, 50 + tier * 14));
+          tl.event(base + 60, () => this.burst(t.x, t.y, ramp, 8 + tier * 3, 54 + tier * 14));
           this.hitFlash(tl, base + 80, t);
           hit(i, base + 90);
         });
-        if (tier >= 3) this.shake(tl, 260, 200, 0.01);
-        if (tier >= 4) this.flood(tl, 200, colorOf(px(ramp, 3)), 0.4, 420);
-        this.palettePulse(tl, 120, ramp);
-        tl.hold(420 + tier * 120 + targets.length * 110);
+        this.shake(tl, 540, 160 + tier * 60, 0.004 + tier * 0.002);
+        if (tier >= 4) this.flood(tl, 520, colorOf(px(ramp, 3)), 0.4, 420);
+        this.palettePulse(tl, 440, ramp);
+        tl.hold(820 + tier * 120 + targets.length * 110);
         break;
       }
       case 'flame_wave': {

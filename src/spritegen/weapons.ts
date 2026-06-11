@@ -11,10 +11,12 @@
  *    class so the swing reads identically down a §A8 line, item-specific by
  *    ramp + a detail pass (a Cracked bat and a T-Ball bat read differently,
  *    the silhouette never drifts).
- *  - 'torso'   (body/arms slots): rendered ON battler and bust torsos — the
+ *  - 'torso'   ('body' slot): rendered ON battler and bust torsos — the
  *    Champion Jacket is visible the moment it's equipped; equipment is never
  *    invisible again.
- *  - 'trinket' ('other' slot): a drawn icon (charms ride pockets, not fists).
+ *  - 'trinket' ('other' + 'arms' slots): a drawn icon (charms ride pockets;
+ *    S12's STARTING FOUR wristwear reads as icons — ADR-034 amends ADR-032's
+ *    provisional arms-to-torso mapping, set before any arms item shipped).
  *
  * Phaser-free on purpose: the validator imports this file. ADR-020 rules
  * hold — weapons are drawn BEFORE outline() so they live inside the sprite's
@@ -205,6 +207,75 @@ export function drawHeldWeapon(ctx: GripCtx, art: HeldArt): void {
 /* ================================================================== */
 /* Trinket icons                                                       */
 
+/* ---- THE STARTING FOUR (S12) — arms-slot icons. ADR-032 mapped the
+ * arms slot to torso art while zero arms items existed; the first real
+ * arms line ships as DRAWN ICONS (a 2px wristband cannot read on a 28px
+ * battler arm — ADR-034 records the amendment). Equipment visibility for
+ * arms gear = the icon + the STATUS Arms line + the stat preview. */
+
+/** Champ's Sweatband — terrycloth, four quarters deep */
+function drawSweatbandIcon(): Pixmap {
+  const pm = new Pixmap(14, 12);
+  const red = px(RAMP.RED, 2);
+  pm.rect(3, 4, 8, 5, red);
+  pm.hline(3, 4, 8, px(RAMP.RED, 3)); // lit roll
+  pm.hline(3, 8, 8, px(RAMP.RED, 1));
+  pm.vline(5, 5, 3, px(RAMP.RED, 1)); // terry rib
+  pm.vline(8, 5, 3, px(RAMP.RED, 1));
+  pm.set(7, 6, px(RAMP.PAPER, 3)); // the one star stitch
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** Victory Scrunchie — holds a championship together at the wrist */
+function drawScrunchieIcon(): Pixmap {
+  const pm = new Pixmap(14, 12);
+  const m = px(RAMP.MAGENTA, 2);
+  pm.hline(4, 2, 6, m);
+  pm.set(3, 3, m);
+  pm.set(10, 3, m);
+  pm.vline(2, 4, 3, m);
+  pm.vline(11, 4, 3, m);
+  pm.set(3, 7, m);
+  pm.set(10, 7, m);
+  pm.hline(4, 8, 6, px(RAMP.MAGENTA, 1));
+  // the scrunch: gathered pinches around the loop
+  pm.set(6, 1, px(RAMP.MAGENTA, 3));
+  pm.set(1, 5, px(RAMP.MAGENTA, 3));
+  pm.set(12, 5, px(RAMP.MAGENTA, 1));
+  pm.set(7, 9, px(RAMP.MAGENTA, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** Shooter's Sleeve — aerodynamically smug */
+function drawSleeveIcon(): Pixmap {
+  const pm = new Pixmap(14, 12);
+  const c = px(RAMP.CYAN, 2);
+  // a tapered tube, elbow bend implied
+  pm.rect(4, 1, 6, 10, c);
+  pm.vline(4, 1, 10, px(RAMP.CYAN, 3));
+  pm.vline(9, 2, 9, px(RAMP.CYAN, 1));
+  pm.hline(4, 1, 6, px(RAMP.CYAN, 3));
+  pm.hline(4, 10, 6, px(RAMP.CYAN, 1));
+  pm.hline(5, 5, 4, px(RAMP.CYAN, 1)); // the elbow seam
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** Iron Wristguard — the mountain's replacement for fear */
+function drawWristguardIcon(): Pixmap {
+  const pm = new Pixmap(14, 12);
+  const iron = px(RAMP.PAPER, 1);
+  pm.rect(3, 3, 8, 6, iron);
+  pm.hline(3, 3, 8, px(RAMP.PAPER, 2)); // lit rim
+  pm.hline(3, 8, 8, px(RAMP.PAPER, 0));
+  pm.vline(6, 4, 4, px(RAMP.PAPER, 0)); // strap channel
+  pm.set(9, 5, px(RAMP.GOLD, 2)); // the single rivet
+  pm.outline(C.outline);
+  return pm;
+}
+
 /** the Lucky Collar — Biscuit's pond-scented gift, as a drawn charm */
 function drawCollarIcon(): Pixmap {
   const pm = new Pixmap(14, 12);
@@ -316,6 +387,24 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
     kind: 'torso',
     ramp: RAMP.RED, // varsity body — Sal pressed every letter himself
     trim: RAMP.PAPER, // white sleeves + snap trim
+  },
+
+  /* ---- 'arms'-slot gear (S12 — drawn icons, see the note above) ---- */
+  cage_sweatband: {
+    kind: 'trinket',
+    icon: drawSweatbandIcon,
+  },
+  victory_scrunchie: {
+    kind: 'trinket',
+    icon: drawScrunchieIcon,
+  },
+  shooters_sleeve: {
+    kind: 'trinket',
+    icon: drawSleeveIcon,
+  },
+  iron_wristguard: {
+    kind: 'trinket',
+    icon: drawWristguardIcon,
   },
 
   /* ---- 'other'-slot charms (drawn icons; pockets, not fists) ---- */

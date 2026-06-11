@@ -215,3 +215,94 @@ describe('save migration registry (S10) — v3 → v4: the ARCADE LEGEND table',
     expect(GS.data.arcadeScores[4].initials).toBe('MGR'); // he clings to row 5
   });
 });
+
+describe('save migration registry (S12) — v4 → v5: THE CAGE', () => {
+  beforeEach(() => GS.reset());
+
+  /** a v4 save exactly as S10–S11b wrote them: a score table, no hoops */
+  function v4Save(): Record<string, unknown> {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 4;
+    delete d.hoops;
+    return d;
+  }
+
+  it('a v4 save backfills the clean slate — the gate is v5-new, no history to guess', () => {
+    GS.deserialize(JSON.stringify(v4Save()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.hoops).toEqual({ bracket: null, match: null, titles: 0, handed: [], played: 0 });
+  });
+
+  it('a v1 save walks the FULL chain: bags, ledger, MGR, and the slate', () => {
+    GS.deserialize(JSON.stringify(v1SaveS2()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.hero('rex')?.bag).toContain('cracked_bat'); // v2 step ran
+    expect(GS.data.callers).toEqual([]); // v3 step ran
+    expect(GS.data.arcadeScores[0]?.initials).toBe('MGR'); // v4 step ran
+    expect(GS.data.hoops.bracket).toBeNull(); // v5 step ran
+  });
+
+  it('tournament state IS save data: bracket + checkpoint round-trip exactly', () => {
+    GS.data.hoops.bracket = {
+      seed: 1995,
+      round: 2,
+      field: ['party', ...Array.from({ length: 31 }, (_, i) => `t${i}`)],
+      results: [Array.from({ length: 16 }, (_, i) => (i === 0 ? 'party' : `t${i}`)), Array.from({ length: 8 }, (_, i) => (i === 0 ? 'party' : `t${i}`))],
+    };
+    GS.data.hoops.match = {
+      opponent: 'quota_crushers',
+      round: 2,
+      seed: 4242,
+      quarter: 3,
+      scoreUs: 18,
+      scoreThem: 15,
+      clockMs: 300_000,
+    };
+    GS.data.hoops.titles = 1;
+    GS.data.hoops.handed = ['cage_sweatband'];
+    GS.data.hoops.played = 7;
+    const json = GS.serialize();
+    GS.reset();
+    expect(GS.data.hoops.match).toBeNull(); // reset really clears it
+    GS.deserialize(json);
+    expect(GS.data.hoops.match?.quarter).toBe(3); // the quarter survives death
+    expect(GS.data.hoops.match?.scoreUs).toBe(18);
+    expect(GS.data.hoops.bracket?.round).toBe(2);
+    expect(GS.data.hoops.handed).toEqual(['cage_sweatband']); // the raincheck
+    expect(GS.data.hoops.titles).toBe(1);
+    expect(GS.data.hoops.played).toBe(7);
+  });
+});
+describe('save migration registry (S12b) — v5 → v6: AWAKENINGS', () => {
+  beforeEach(() => GS.reset());
+
+  /** a v5 save exactly as S12 wrote them: hoops, no awakening flags */
+  function v5Save(progress: Record<string, boolean>): Record<string, unknown> {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 5;
+    d.flags = { ...progress };
+    return d;
+  }
+
+  it('a story moment already lived keeps the ability it granted', () => {
+    GS.deserialize(JSON.stringify(v5Save({ met_glint: true, zapper_done: true, faye_joined: true })));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.flag('awake_surge_a')).toBe(true);
+    expect(GS.flag('awake_lifeup_a')).toBe(true);
+    expect(GS.flag('awake_fire_a')).toBe(true);
+  });
+
+  it('a save from BEFORE the crater awakens nothing — the moment is still ahead', () => {
+    GS.deserialize(JSON.stringify(v5Save({ meteor_fell: true })));
+    expect(GS.flag('awake_surge_a')).toBe(false);
+    expect(GS.flag('awake_lifeup_a')).toBe(false);
+  });
+
+  it('the v1 chain runs all the way: bags, ledger, MGR, hoops, awakenings', () => {
+    GS.deserialize(JSON.stringify(v1SaveS2())); // faye_joined rides this save
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.flag('awake_fire_a')).toBe(true); // her join carried the listen
+    expect(GS.flag('awake_surge_a')).toBe(false); // met_glint never set on it
+    expect(GS.data.hoops.bracket).toBeNull();
+  });
+});

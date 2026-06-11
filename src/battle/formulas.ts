@@ -46,6 +46,33 @@ export function heroLuck(hero: HeroState): number {
   return hero.stats.luck + (charm?.luck ?? 0);
 }
 
+/** a hero's speed: base stat + their 'arms'-slot gear (S12 — THE STARTING
+ *  FOUR is §A8's first). Run chance, turn order, and THE CAGE's court
+ *  ratings all read through this, the heroOffense way. */
+export function heroSpeed(hero: HeroState): number {
+  const arms = hero.equip.arms ? ITEMS[hero.equip.arms] : undefined;
+  return hero.stats.speed + (arms?.speed ?? 0);
+}
+
+/** a hero's guts: base stat + their 'arms'-slot gear (S12). SMAAASH chance,
+ *  mortal-blow survival, the combo cap, and the cage's rim game read here. */
+export function heroGuts(hero: HeroState): number {
+  const arms = hero.equip.arms ? ITEMS[hero.equip.arms] : undefined;
+  return hero.stats.guts + (arms?.guts ?? 0);
+}
+
+/** the S12 arms preview — slot-generalized: an arms piece carries exactly
+ *  one stat (schema law), and the preview names THAT stat ("Speed up by N!") */
+export function equipArmsDelta(hero: HeroState, itemId: string): { stat: 'Speed' | 'Guts'; d: number } {
+  const item = ITEMS[itemId];
+  if (!item || slotOf(item) !== 'arms') return { stat: 'Speed', d: 0 };
+  const cur = hero.equip.arms ? ITEMS[hero.equip.arms] : undefined;
+  if (item.guts !== undefined) {
+    return { stat: 'Guts', d: item.guts - (cur?.guts ?? 0) };
+  }
+  return { stat: 'Speed', d: (item.speed ?? 0) - (cur?.speed ?? 0) };
+}
+
 /** the S9 charm preview — equipDelta's shape, aimed at the 'other' slot */
 export function equipLuckDelta(hero: HeroState, itemId: string): number {
   const item = ITEMS[itemId];

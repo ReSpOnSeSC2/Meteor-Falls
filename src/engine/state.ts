@@ -8,9 +8,9 @@
 import { HEROES, type HeroId, statsAtLevel, maxHpAtLevel, maxPpAtLevel } from '../data/heroes';
 import { ITEMS, slotOf, BAG_MAX, EQUIP_SLOTS, type EquipSlot } from '../data/items';
 import { MGR_ROW, SCORE_ROWS } from '../data/arcade';
-import { migrateSave } from './migrations';
+import { migrateSave, freshHoops } from './migrations';
 import { SaveBank, SLOT_IDS, localStorageDriver, type OpenResult, type SlotId, type SlotPeek } from './saves';
-import type { ArcadeScore, CallerRecord, Stats } from '../schemas';
+import type { ArcadeScore, CallerRecord, HoopsState, Stats } from '../schemas';
 
 // S5: Stats is z.infer'd from src/schemas — one shape for compile and runtime
 export type { Stats } from '../schemas';
@@ -33,7 +33,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 4;
+  version: 6;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -58,6 +58,11 @@ export interface GameStateData {
   /** S10 (v4): the ARCADE LEGEND high-score table (§A10 #4), best first,
    *  SCORE_ROWS deep. Born holding the Manager's lonely MGR row. */
   arcadeScores: ArcadeScore[];
+  /** S12 (v5): THE CAGE — tournament state IS save data. The Classic
+   *  bracket survives save → kill → continue from any round; a live match
+   *  checkpoints at quarter breaks; titles + the STARTING FOUR raincheck
+   *  ledger + the pickup-seed counter all ride here. */
+  hoops: HoopsState;
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -111,7 +116,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 4,
+    version: 6,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -138,6 +143,7 @@ export function newGameData(): GameStateData {
     // the cabinet's attract mode flashes this row before you ever walk in —
     // MGR's score is canon (§A10 #4); fresh saves start with him to beat
     arcadeScores: [{ ...MGR_ROW }],
+    hoops: freshHoops(),
   };
 }
 
