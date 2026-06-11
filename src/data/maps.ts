@@ -209,6 +209,9 @@ function buildOtterbrook(): MapDef {
       { sprite: 'bus_sign', x: 23, y: 25, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
       { sprite: 'phone_table', x: 28, y: 14, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
       { sprite: 'bug_zapper', x: 16, y: 4, solid: { ox: 4, oy: 18, w: 6, h: 8 } },
+      // S9 §A10 #1: the sniff trail's first clue — paw prints at the
+      // trailhead, visible only mid-trail (walkable marking, no solid)
+      { sprite: 'paw_prints', x: 19, y: 2.4, ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
     ],
     npcs: [
       {
@@ -219,7 +222,10 @@ function buildOtterbrook(): MapDef {
         facing: 'down',
         dialogue: 'npc_pemmel',
       },
-      { id: 'biscuit', sprite: 'dog', x: 10, y: 24, facing: 'left', dialogue: 'npc_biscuit', dog: true },
+      // S9: Biscuit holds the park until dawn (the §A10 #1 quest takes him),
+      // and comes home — collar and all — once the trail is walked
+      { id: 'biscuit', sprite: 'dog', x: 10, y: 24, facing: 'left', dialogue: 'npc_biscuit', dog: true, unlessFlag: 'zapper_done' },
+      { id: 'biscuit_home', sprite: 'dog', x: 10, y: 24, facing: 'left', dialogue: 'npc_biscuit_collar', dog: true, ifFlag: 'q_biscuit_done' },
       {
         id: 'mr_plummer',
         sprite: 'mrPlummer',
@@ -238,6 +244,8 @@ function buildOtterbrook(): MapDef {
       { x: 18, y: 27, dialogue: 'sign_welcome' },
       { x: 23, y: 14, dialogue: 'sign_hill' },
       { x: 30, y: 21, dialogue: 'sign_chapel' },
+      // S9 §A10 #1: sniff clue 1 (under the paw prints, same gates)
+      { x: 19, y: 2, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
     ],
     phones: [{ x: 28, y: 14 }],
     doors: [
@@ -261,6 +269,15 @@ function buildOtterbrook(): MapDef {
         count: 1,
         rect: { x: 25, y: 22, w: 10, h: 5 },
         ifFlag: 'meteor_fell',
+      },
+      // S9 §A10 #2: Mr. Sodd's Runaway Lawnmower patrols his front yard
+      // while his letter waits — one of the five doors, guarded (canon)
+      {
+        enemies: ['runaway_lawnmower'],
+        count: 1,
+        rect: { x: 25, y: 7, w: 3, h: 1 },
+        ifFlag: 'q_mail',
+        unlessFlag: 'q_mail_sodd',
       },
     ],
     triggers: [
@@ -312,16 +329,26 @@ function buildHill(): MapDef {
     id: 'hickory_hill',
     name: 'HICKORY HILL',
     music: 'hill',
-    night: true,
+    // night follows the §A6 story clock (2 AM until zapper_done), not a
+    // permanent flag — dawn reaches the hill too (S9b)
     grid: g.out(),
     props: [
       ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
       { sprite: 'meteor_rock', x: 14, y: 5, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
       { sprite: 'picnic', x: 11, y: 23, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'sign', x: 12, y: 39, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // S9 §A10 #1: sniff clue 2 — prints by the picnic table, mid-trail only
+      { sprite: 'paw_prints', x: 14, y: 23.4, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
     ],
     npcs: [],
-    signs: [{ x: 12, y: 39, dialogue: 'sign_trail' }],
+    signs: [
+      { x: 12, y: 39, dialogue: 'sign_trail' },
+      // S9 §A10 #1: sniff clue 2 (under the prints, same gates)
+      { x: 14, y: 23, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+      // S9 §A10 #3: the spring the Lemonade Empire claimed long ago —
+      // always here; the jug-fill beat branches in the scene (ADR-014)
+      { x: 9, y: 21, dialogue: 'hill_spring' },
+    ],
     phones: [],
     doors: [{ x: 13, y: 45, w: 4, h: 1, to: 'otterbrook', tx: 336, ty: 24, facing: 'down' }],
     spawners: [
@@ -363,7 +390,8 @@ function buildRexHome(): MapDef {
     doors: [
       // ty lands just south of the (now taller) doorstep zone — no re-entry loop
       { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: 120, ty: 117, facing: 'down', indicator: 'mat' },
-      { x: 12, y: 9, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up', indicator: 'stairs' },
+      // S9b: the stairs land on the upstairs hall (three bedrooms up there now)
+      { x: 12, y: 9, w: 2, h: 1, to: 'rex_hall', tx: 228, ty: 80, facing: 'left', indicator: 'stairs' },
     ],
     spawners: [],
     triggers: [],
@@ -388,9 +416,108 @@ function buildBedroom(): MapDef {
     npcs: [],
     signs: [],
     phones: [],
-    doors: [{ x: 3, y: 7, w: 2, h: 1, to: 'rex_home', tx: 200, ty: 132, facing: 'down', indicator: 'stairs' }],
+    // S9b: the bedroom opens onto the upstairs hall — the house grew a wing
+    doors: [{ x: 3, y: 7, w: 2, h: 1, to: 'rex_hall', tx: 44, ty: 60, facing: 'down', indicator: 'mat' }],
     spawners: [],
     triggers: [{ id: 'wake_up', rect: { x: 0, y: 0, w: 10, h: 8 }, once: true }],
+  };
+}
+
+/* ---------- S9b: the upstairs wing — hall + the twins' HQ (§A10 #3 amend:
+ * Ana & Vivi are Rex's little sisters; the stand is the branch office) ---- */
+
+function buildRexHall(): MapDef {
+  const g = new Grid(16, 7, 'w');
+  g.rect(0, 0, 16, 2, 'W');
+  g.rect(2, 3, 12, 2, 'r'); // the runner rug, worn down the middle
+  return {
+    id: 'rex_hall',
+    name: 'UPSTAIRS',
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'bookshelf', x: 4.6, y: 0 },
+      { sprite: 'floor_lamp', x: 10.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'plant_pot', x: 0.4, y: 4.6, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [],
+    signs: [
+      { x: 6, y: 1, dialogue: 'hall_photos' },
+      { x: 9, y: 1, dialogue: 'hall_window' },
+    ],
+    phones: [],
+    doors: [
+      { x: 2, y: 2, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up', indicator: 'mat' },
+      { x: 7, y: 2, w: 2, h: 1, to: 'ana_room', tx: 72, ty: 100, facing: 'up', indicator: 'mat' },
+      { x: 12, y: 2, w: 2, h: 1, to: 'vivi_room', tx: 72, ty: 100, facing: 'up', indicator: 'mat' },
+      { x: 15, y: 4, w: 1, h: 2, to: 'rex_home', tx: 200, ty: 132, facing: 'down', indicator: 'stairs' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildAnaRoom(): MapDef {
+  const g = new Grid(9, 8, 'w');
+  g.rect(0, 0, 9, 2, 'W');
+  g.rect(3, 4, 2, 2, 'r');
+  return {
+    id: 'ana_room',
+    name: "ANA'S ROOM",
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'desk', x: 5, y: 2, solid: { ox: 1, oy: 4, w: 24, h: 13 } },
+      { sprite: 'dresser', x: 7.2, y: 0.3 },
+      // her present for Rex — opened, the box stays (EB keeps its trash)
+      { sprite: 'gift_box', x: 6, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'ana_gift_open' },
+      { sprite: 'gift_box_open', x: 6, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'ana_gift_open' },
+    ],
+    npcs: [],
+    signs: [
+      { x: 6, y: 1, dialogue: 'ana_chart' },
+      { x: 1, y: 2, dialogue: 'ana_bed' },
+      { x: 6, y: 5, dialogue: 'gift_ana', unlessFlag: 'ana_gift_open' },
+      { x: 6, y: 5, dialogue: 'gift_ana_done', ifFlag: 'ana_gift_open' },
+    ],
+    phones: [],
+    doors: [{ x: 4, y: 7, w: 2, h: 1, to: 'rex_hall', tx: 124, ty: 60, facing: 'down', indicator: 'mat' }],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildViviRoom(): MapDef {
+  const g = new Grid(9, 8, 'w');
+  g.rect(0, 0, 9, 2, 'W');
+  g.rect(4, 4, 2, 2, 'r');
+  return {
+    id: 'vivi_room',
+    name: "VIVI'S ROOM",
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'bed', x: 6, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'bookshelf', x: 1.2, y: 0 }, // the ledgers. all of them.
+      { sprite: 'tv', x: 6.6, y: 0.6 },
+      { sprite: 'gift_box', x: 2, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'vivi_gift_open' },
+      { sprite: 'gift_box_open', x: 2, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'vivi_gift_open' },
+    ],
+    npcs: [],
+    signs: [
+      { x: 2, y: 1, dialogue: 'vivi_jar' },
+      { x: 6, y: 2, dialogue: 'vivi_bed' },
+      { x: 2, y: 5, dialogue: 'gift_vivi', unlessFlag: 'vivi_gift_open' },
+      { x: 2, y: 5, dialogue: 'gift_vivi_done', ifFlag: 'vivi_gift_open' },
+    ],
+    phones: [],
+    doors: [{ x: 4, y: 7, w: 2, h: 1, to: 'rex_hall', tx: 204, ty: 60, facing: 'down', indicator: 'mat' }],
+    spawners: [],
+    triggers: [],
   };
 }
 
@@ -951,6 +1078,19 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
         dialogue: 'shop_drug_greet',
         shop: 'drugstore',
       },
+      // S9 §A10 #1: the trail's end — Biscuit, parked at the corn dog shelf
+      // (3rd screen of the sniff trail; talking to him sends him zooming home)
+      {
+        id: 'biscuit_drug',
+        sprite: 'dog',
+        x: 8,
+        y: 5,
+        facing: 'right',
+        dialogue: 'npc_biscuit_drug',
+        dog: true,
+        ifFlag: 'q_biscuit_c2',
+        unlessFlag: 'q_biscuit_c3',
+      },
     ],
     signs: [{ x: 9, y: 1, dialogue: 'sign_drug_wall' }],
     phones: [],
@@ -1072,6 +1212,9 @@ export const MAPS: Record<string, MapDef> = {
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),
   rex_bedroom: buildBedroom(),
+  rex_hall: buildRexHall(),
+  ana_room: buildAnaRoom(),
+  vivi_room: buildViviRoom(),
   brickton: bricktonMap,
   dos_f1: buildDosF1(deptDoorstep),
   dos_f2: buildDosF2(),

@@ -16,19 +16,23 @@
  * QA recipe (ADR-008 bots): Enter (START) on the overworld opens the menu.
  * ArrowDown/ArrowUp walk rows, KeyZ confirms, KeyX backs out one level;
  * KeyX (or Enter) on the command list closes the menu. Item lists >7 run in
- * two columns — ArrowRight/Left hop columns. Static pages (STATUS, LOCKET)
- * dismiss with KeyZ. The command list order is ITEMS STATUS VIBE EQUIP
- * LOCKET SETUP, so e.g. Equip = Down,Down,Down,KeyZ from open.
+ * two columns — ArrowRight/Left hop columns. Static pages (STATUS, LOCKET,
+ * a JOURNAL detail) dismiss with KeyZ. The command list order is ITEMS
+ * STATUS VIBE EQUIP JOURNAL LOCKET SETUP (S9 inserted JOURNAL after EQUIP),
+ * so e.g. Equip = Down,Down,Down,KeyZ and Journal = Down ×4, KeyZ from open.
+ * JOURNAL rows are started/finished §A10 quests (phone icon = caller
+ * earned); confirming a row opens its detail page, B/back/tap closes.
  */
 import Phaser from 'phaser';
 import { GS, expForLevel, type HeroState } from '../engine/state';
 import { HEROES, unlockedAbilities } from '../data/heroes';
 import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, type EquipSlot } from '../data/items';
 import { ABILITIES } from '../data/abilities';
-import { heroOffense, vibeHeal } from '../battle/formulas';
+import { journalQuests, currentObjective, objectiveDone, callerEarned } from '../engine/quests';
+import { heroOffense, heroLuck, vibeHeal } from '../battle/formulas';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { Dialogue, makeWindow, everyFrame, DEPTH_UI } from '../ui/windows';
+import { Dialogue, makeWindow, everyFrame, vars, DEPTH_UI } from '../ui/windows';
 // S4: the list widget + "Offense up by N!" confirm are shared with the shops
 import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
 import { colorOf, RAMP, px } from '../palette';
@@ -67,7 +71,7 @@ export class MenuScene extends Phaser.Scene {
       const pick = await this.pick({
         x: 8,
         y: 8,
-        options: ['ITEMS', 'STATUS', 'VIBE', 'EQUIP', 'LOCKET', 'SETUP'],
+        options: ['ITEMS', 'STATUS', 'VIBE', 'EQUIP', 'JOURNAL', 'LOCKET', 'SETUP'],
         startCancels: true,
       });
       if (pick < 0) break;
@@ -75,7 +79,8 @@ export class MenuScene extends Phaser.Scene {
       else if (pick === 1) await this.statusPage();
       else if (pick === 2) await this.vibePage();
       else if (pick === 3) await this.equipPage();
-      else if (pick === 4) await this.locketPage();
+      else if (pick === 4) await this.journalPage();
+      else if (pick === 5) await this.locketPage();
       else await this.setupPage();
     }
     AUDIO.sfx('cancel');
@@ -287,7 +292,8 @@ export class MenuScene extends Phaser.Scene {
     const s = h.stats;
     line(58, `Offense ${heroOffense(h)}   Defense ${s.defense}`);
     line(70, `Speed   ${s.speed}   Guts    ${s.guts}`);
-    line(82, `Vibe    ${s.vibe}   Luck    ${s.luck}`);
+    // Luck reads through the 'other'-slot charm (S9 — the Lucky Collar)
+    line(82, `Vibe    ${s.vibe}   Luck    ${heroLuck(h)}`);
     const weapon = h.equip.weapon ? ITEMS[h.equip.weapon]?.name : undefined;
     line(100, `Weapon  ${weapon ?? 'Nothing'}`, weapon ? undefined : DIM);
     line(118, `EXP ${h.exp}`);
@@ -410,6 +416,82 @@ export class MenuScene extends Phaser.Scene {
    *  reuse for their equip-after-buy prompt (Prompt 20, S4) */
   private confirmEquip(hero: HeroState, itemId: string): Promise<void> {
     return confirmEquip(this, this.dlg, hero, itemId);
+  }
+
+  /* ================= JOURNAL (S9 / Bible Prompt 26) ================= */
+
+  /**
+   * The §A10 quest journal: one row per started quest, in-voice summaries,
+   * map markers OFF (EB didn't hold hands). A tiny phone icon marks every
+   * earned caller — the ledger the finale will dial (§A6 Ch.8). Rows are
+   * the shared pick() widget: keys, pad, AND per-row taps; B (and the
+   * hardware back button, ADR-026) closes. Details are static pages that
+   * dismiss like STATUS.
+   */
+  private async journalPage(): Promise<void> {
+    for (;;) {
+      const quests = journalQuests();
+      if (quests.length === 0) {
+        await this.dlg.say("The journal is empty. Nobody needs a hand yet. Otterbrook is suspiciously fine.");
+        return;
+      }
+      const sel = await this.pick({
+        x: 96,
+        y: 8,
+        options: quests.map((q) => q.def.name),
+        icons: quests.map((q) => (callerEarned(q.def.id) ? 'phone_icon' : undefined)),
+        title: 'JOURNAL',
+      });
+      if (sel < 0) return;
+      this.renderQuestDetail(quests[sel].def.id);
+      await this.waitDismiss();
+      this.clearPage();
+    }
+  }
+
+  /** one quest's page: every objective line, done steps dimmed, the earned
+   *  caller noted in-voice under the rule that sincerity is never the joke */
+  private renderQuestDetail(questId: string): void {
+    const q = journalQuests().find((j) => j.def.id === questId);
+    if (!q) return;
+    const x = 96;
+    const y = 8;
+    const w = 230;
+    const lines: Array<{ s: string; tint?: number }> = [];
+    if (q.status === 'done') {
+      lines.push({ s: 'Done. Handled. Legendary.', tint: colorOf(px(RAMP.GOLD, 2)) });
+      lines.push({ s: `${q.def.caller.name} owes you a phone call.`, tint: DIM });
+    } else {
+      const now = currentObjective(q.def);
+      for (const o of q.def.objectives) {
+        if (objectiveDone(o)) lines.push({ s: `- ${vars(o.text)}`, tint: DIM });
+        else if (o === now) lines.push({ s: `> ${vars(o.text)}` });
+      }
+    }
+    const h = 46 + lines.length * 16;
+    this.pageObjs.push(makeWindow(this, x, y, w, h));
+    const title = this.add
+      .bitmapText(x + 12, y + 10, 'retro', q.def.name.toUpperCase(), 6)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1)
+      .setTint(colorOf(px(RAMP.GOLD, 3)));
+    this.pageObjs.push(title);
+    if (callerEarned(questId)) {
+      const icon = this.add
+        .image(x + w - 18, y + 13, 'phone_icon')
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1);
+      this.pageObjs.push(icon);
+    }
+    lines.forEach((l, i) => {
+      const t = this.add
+        .bitmapText(x + 12, y + 30 + i * 16, 'retro', l.s, 6)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1)
+        .setMaxWidth(w - 24);
+      if (l.tint !== undefined) t.setTint(l.tint);
+      this.pageObjs.push(t);
+    });
   }
 
   /* ================= LOCKET (§A4.9) ================= */

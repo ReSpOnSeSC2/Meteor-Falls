@@ -206,6 +206,12 @@ Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one
 
 Plus **Mr. Click**, a photographer who ambushes the party for a photo 12 times worldwide ("Say fuzzy pickles— I mean, cheese!") → photo album rolls during the credits.
 
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-028: the twin sisters **Ana &
+> Vivi** of quest #3 are canonically **Rex's little sisters**. The lemonade
+> stand is the branch office; headquarters is their two bedrooms upstairs at
+> Rex's house. Their npc ids, dialogue keys, quest data, and §A10 caller
+> record are unchanged.)*
+
 ## A11. Tone & Writing Rules (every prompt that writes dialogue must obey)
 
 1. Full EarthBound absurdism: enemies apologize, signs editorialize, NPCs have exactly one weird obsession each.

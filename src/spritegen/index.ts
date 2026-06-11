@@ -80,6 +80,9 @@ import {
   drawProductivityBanner,
   drawDustFrames,
   drawSparkFrames,
+  drawPawPrints,
+  drawGiftBox,
+  drawGiftBoxOpen,
 } from './tiles';
 import {
   drawWindowSlice,
@@ -121,14 +124,29 @@ function addCharacter(scene: Phaser.Scene, id: string): void {
   const spec = CAST[id];
   addSheet(scene, id, generateCharacterFrames(spec), 4);
   DIRS.forEach((dir, d) => {
-    const animKey = `${id}-walk-${dir}`;
-    if (scene.anims.exists(animKey)) return;
-    scene.anims.create({
-      key: animKey,
-      frames: [0, 1, 2, 3].map((f) => ({ key: id, frame: d * 4 + f })),
-      frameRate: 8,
-      repeat: -1,
-    });
+    const walkKey = `${id}-walk-${dir}`;
+    if (!scene.anims.exists(walkKey)) {
+      scene.anims.create({
+        key: walkKey,
+        frames: [0, 1, 2, 3].map((f) => ({ key: id, frame: d * 4 + f })),
+        frameRate: 8,
+        repeat: -1,
+      });
+    }
+    // S9b: the RUN cycle resequences the SAME sheet — both step poses with
+    // no neutral frame between them. Poses 1/3 carry the +1px body bob, so
+    // a runner stays risen on the balls of the feet: a sprint, not a fast
+    // walk. Sheet order, frame size, and standFrame() remain ADR-009/022
+    // law — adding drawn frames is its own future pass.
+    const runKey = `${id}-run-${dir}`;
+    if (!scene.anims.exists(runKey)) {
+      scene.anims.create({
+        key: runKey,
+        frames: [1, 3].map((f) => ({ key: id, frame: d * 4 + f })),
+        frameRate: 11,
+        repeat: -1,
+      });
+    }
   });
 }
 
@@ -285,6 +303,11 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'banner_productive', drawProductivityBanner());
   addSheet(scene, 'dust', drawDustFrames(), 2);
   addSheet(scene, 'spark', drawSparkFrames(), 2);
+  // S9: Biscuit's sniff-clue trail marks (§A10 #1)
+  addPixmap(scene, 'paw_prints', drawPawPrints());
+  // S9b: the twins' presents (Prompt 19 gift boxes — closed/opened pair)
+  addPixmap(scene, 'gift_box', drawGiftBox());
+  addPixmap(scene, 'gift_box_open', drawGiftBoxOpen());
 
   // Brickton downtown — varied heights and lighting so no two facades match
   addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1, litSeed: 11 }));

@@ -420,7 +420,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@RING... RING... ...click.',
     "@—{rex}! It's Mom. Payphones aren't in the phone book, sweetheart, so I dialed the one that felt warmest.",
     '@A CITY! My baby took the 6:15! Mrs. Pemmel says hi. Biscuit said nothing, but he wagged it.',
-    "@Is the girl with you? The one the hill keeps singing about? Good. Tell her I'm setting three plates.",
+    "@Is the girl with you? The one the hill keeps singing about? Good. Tell her I'm setting another plate.",
     "@Dinner is {favoritefood}. It is ALWAYS {favoritefood} — but tonight it's the coming-home kind.",
     '@That\'s what phones are, honey. Home, with buttons. Your father handles the SAVING. I handle everything else.',
     "* (So that's phones: stand close, press A, and family happens. Dad saves the game. Mom saves the rest.)",
@@ -434,6 +434,148 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'complete.',
     "(East of here, past the parking lot, the docks are already dreaming about a banana boat. That's a Chapter 2 problem.)",
   ],
+
+  /* ---------------- S9 — §A10 #1: Biscuit, Come Home ---------------- */
+  q_biscuit_ask: [
+    "@{rex}! Thank goodness. Biscuit's GONE. The sun came up, he pointed at the hill one more time, and then he was a brown blur with opinions.",
+    '@He has never once come when called. He comes when SMELLED-AT. You have to think like a nose.',
+    "@Find him for me, would you? He bolted for the trailhead. He'll have left evidence. He always leaves evidence.",
+  ],
+  q_biscuit_active: ["@Any sign of him? Sniff LOW, dear. He's short."],
+  q_biscuit_clue1: [
+    '(The dirt by the trailhead is freshly scuffed. Something dug here, reconsidered, and left at speed.)',
+    '(It smells like pond. The trail points up Hickory Hill.)',
+  ],
+  q_biscuit_clue2: [
+    '(Paw prints under the picnic table. The crumbs are gone. The wrapper has been rolled in, lovingly.)',
+    "(Pond smell, fainter... wait. It turns around here. He went back DOWN. Toward town. Toward... the drugstore?)",
+  ],
+  npc_biscuit_drug: [
+    '@Woof! (Biscuit is sitting in front of the corn dogs with the patience of a saint and none of the budget.)',
+    '(He looks at you. He looks at the corn dogs. He has now explained the situation twice.)',
+    '* Biscuit suddenly remembered he has a home! He ZOOMED.',
+  ],
+  q_biscuit_done_beat: [
+    "@—and there he is! THERE'S my furry compass! He beat you here by a full minute and is acting like he found YOU.",
+    "@Here, dear — his old collar. He chewed the lucky right into it. He'd want a hero to have it.",
+    '* {rex} got the LUCKY COLLAR!',
+    "@If you ever need anything — ANYTHING — I'm in the book. Under P. For Pemmel. Biscuit knows the number.",
+  ],
+  q_biscuit_full: ['@Your hands are full, dear! Go make a pocket for luck and come right back.'],
+  q_biscuit_after: ['@He smells like pond again already. I have given up. The pond has won.'],
+  npc_biscuit_collar: ['@WOOF! (He is home. He is proud. He is already planning the sequel.)'],
+
+  /* ---------------- S9 — §A10 #2: Mail Must Move ---------------- */
+  q_mail_ask: [
+    '@Kid. KID. Thirty-one years, never missed a door. Today the route has a METEOR in it and my knee says no.',
+    '@Five letters, five doors: the Pickles, Mr. Sodd, the Birch place, the chapel, and the STARPORT. Yes, arcades get mail. Mostly threats.',
+    '@The mail must move, kid. It must MOVE.',
+    '* Mr. Plummer handed over five letters and one enormous responsibility.',
+  ],
+  q_mail_active: ['@Doors still waiting, kid. The mail is patient. I am LESS so.'],
+  mail_pickles: [
+    "You slide the letter through the Pickles' slot.",
+    '(Inside, Chad pauses his victory speech to announce: "MAIL FOR ME." It is not for him.)',
+  ],
+  mail_sodd: [
+    "Mr. Sodd's mail slot fights back a little, like the lawn taught it.",
+    '(From inside: "IS THAT THE MOWER? TELL IT ALL IS FORGIVEN.")',
+  ],
+  mail_birch: [
+    'The Birch mail slot is varnished. Of course it is.',
+    '(The letter goes through with a sound like a satisfied librarian.)',
+  ],
+  mail_chapel: [
+    'The chapel box takes the letter gently.',
+    '(It is mostly postcards in there, addressed to "GOD, c/o OTTERBROOK." He gets his mail like everyone else.)',
+  ],
+  mail_arcade: [
+    'You slide the bill under the STARPORT door.',
+    '(Inside, the unbeaten high score chirps once — the sound of a machine pretending not to be home.)',
+  ],
+  q_mail_done_beat: [
+    '@Five for five?! Kid. KID. Route 1 is SAVED. The republic of Tuesday endures.',
+    '@Take these — fresh stamps, mint, 1995 commemoratives. Collectors WEEP for these.',
+    '* {rex} got the FRESH STAMPS!',
+    "@Don't lick 'em, that's the retirement fund. And if your phone ever rings and it's me? ANSWER. I deliver.",
+  ],
+  q_mail_full: ["@Hands full?! These are MINT, kid. Go make room. The route's gratitude will keep."],
+  q_mail_after: ['@The route moved. The knee is recovering. The mailbox on Maple is STILL a critic.'],
+
+  /* ---------------- S9 — §A10 #3: Lemonade Empire ---------------- */
+  q_lemonade_ask: [
+    '@Customer! Vivi, a customer with LEGS!',
+    "@We're expanding. Lemonade is about to be bigger than {coolthing}. No offense to {coolthing}.",
+    '@But the empire is OUT of everything. We need sugar from the drugstore, CITY lemons from that STARMART in Brickton — the fancy ones — and spring water from Hickory Hill.',
+    '@Take the official jug. It has a flag on it. That makes it official.',
+    "@And don't tell Mom we're charging you. Family discount is full price. That's business, {rex}.",
+    '* Got THE JUG! (There is a tiny hand-drawn flag on it.)',
+  ],
+  q_lemonade_active: [
+    '@Sugar: drugstore. City lemons: STARMART. Spring water: the hill. The jug knows what to do.',
+  ],
+  lem_take_sugar: [
+    '@SUGAR! Vivi, log it! (Vivi licks a pencil and writes a number with too many zeroes in it.)',
+  ],
+  lem_take_lemons: [
+    '@CITY lemons. Look at them. They have AMBITION.',
+    "@Don't tell Ana, but the secret ingredient was never the lemons. It's the markup.",
+  ],
+  lem_take_water: ['@Official spring water from the official jug! The flag WORKED.'],
+  lem_pour_beat: [
+    '@That is everything. Vivi. VIVI. Commence GLASS ONE.',
+    '(They pour it together, four hands on one pitcher, tongues out, completely silent. It is the most serious thing either of them has ever done.)',
+    '@To {rex}: supplier, hero, FRIEND OF THE EMPIRE. Your money is no good here. Forever. That is a BINDING CONTRACT.',
+    '(Free lemonade at the stand. For life. The twins each shook one of your hands at the same time.)',
+  ],
+  lem_free_drink: ['@One for the Friend of the Empire! On the house. The house insists.', '* Got a LEMONADE!'],
+  lem_free_full: [
+    "@Hands FULL?! A serious problem for a serious supplier. Drink it here. We'll watch.",
+    '* {rex} drank it on the spot. About 12 HP of pure summer!',
+  ],
+  hill_spring: [
+    'A cold spring chuckles out of the hillside into a mossy pipe.',
+    '(A tiny hand-drawn flag is planted beside it: "PROPERTY OF THE LEMONADE EMPIRE. ASK FIRST.")',
+  ],
+  spring_fill: [
+    'You hold the official jug under the official spring.',
+    '(glug. glug. glug. The spring seems pleased to be part of something.)',
+    '* The jug is full of Hickory Hill spring water!',
+  ],
+  spring_full: ['(The jug sloshes importantly. The twins are waiting.)'],
+
+  /* ---------------- S9b — the upstairs wing (the twins are Rex's sisters,
+   * §A10 amendment; their HQ is up here, the stand is the branch office) --- */
+  hall_photos: [
+    'Five frames: Mom, Dad, {rex}, and the twins holding a pitcher like a trophy.',
+    "(In every photo somebody is mid-blink. Dad swears it's the camera.)",
+  ],
+  hall_window: [
+    'The window faces Hickory Hill.',
+    '(The curtains are pinned back. Somebody in this house likes to watch the sky.)',
+  ],
+  ana_chart: [
+    'Crayon on poster board: "LEMONADE EMPIRE — ORG CHART."',
+    '"ANA: CEO. VIVI: ALSO CEO. {rex}: STAFF (UNPAID, BELOVED)."',
+  ],
+  ana_bed: ['(The bed is made. Empires rise early. Some nights they skip the sleeping part entirely.)'],
+  gift_ana: [
+    'A present with your name on it. The tag reads: "TO {rex}. FROM THE EMPIRE. DO NOT SHAKE."',
+    '(You shook it, gently. It fizzed back.)',
+  ],
+  gift_ana_got: ['* Got a STAR COLA!'],
+  gift_ana_done: ['(The box is open. The tissue paper has been respectfully re-fluffed.)'],
+  gift_vivi: [
+    'A present wrapped in graph paper. The tag reads: "TO {rex}. BUDGETED SINCE MARCH. — V"',
+  ],
+  gift_vivi_got: ['* Got a CORN DOG! (Your favorite. She keeps records.)'],
+  gift_vivi_done: ['(Inside the open box: a receipt. One (1) corn dog. One (1) brother. Paid in full.)'],
+  gift_hands_full: ["(Your hands are full. The Empire does not do rainchecks— okay. ONE raincheck.)"],
+  vivi_jar: [
+    'A jar of quarters labeled: "DO NOT COUNT. I ALREADY KNOW."',
+    '(You do not count them. She would know.)',
+  ],
+  vivi_bed: ['(Under the pillow: a ledger. Under the ledger: a backup ledger.)'],
 };
 
 /**

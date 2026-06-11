@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GS, makeHeroState, newGameData } from './state';
+import { CURRENT_SAVE_VERSION } from './migrations';
 import { BACKUP_KEY, SaveBank, fmtPlaytime, slotKey, type SaveStorage } from './saves';
 import type { HeroId } from '../data/heroes';
 
@@ -100,10 +101,26 @@ describe('the slot family (3 slots + rolling backup)', () => {
     };
     store.set(slotKey(1), JSON.stringify(v1));
     expect(GS.continueFrom(1)).toBe('ok');
-    expect(GS.data.version).toBe(2);
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
     expect(GS.hero('rex')?.bag).toEqual(['cracked_bat', 'corn_dog']);
     expect(GS.hero('rex')?.equip.weapon).toBe('cracked_bat');
     expect(GS.data.heroNames.faye).toBe('Mia'); // ADR-013 backfill via the registry
+    expect(GS.data.callers).toEqual([]); // S9: the v3 ledger arrives empty
+  });
+
+  it('the S9 ledger survives save → (kill) → continue through the registry', () => {
+    GS.data.callers.push({
+      quest: 'mail_must_move',
+      name: 'Mr. Plummer',
+      quote: 'Thirty-one years, kid, and THIS is the special delivery. First class. No postage on courage.',
+      effect: { kind: 'damage', power: 450 },
+    });
+    GS.saveTo(2);
+    GS.reset(); // the app dies
+    expect(GS.data.callers).toEqual([]);
+    expect(GS.continueFrom(2)).toBe('ok');
+    expect(GS.data.callers).toHaveLength(1);
+    expect(GS.data.callers[0].name).toBe('Mr. Plummer');
   });
 
   it('the first write to an empty notebook touches no backup; an overwrite rolls one', () => {

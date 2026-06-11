@@ -1075,3 +1075,150 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   back=B for free. Prompt 42 profiles inside this shell; Prompt 44 adds
   signing/AAB on top of RELEASE.md. The audit chain stays honest: any future
   native concern enters through native.ts or MainActivity, nowhere else.
+
+## ADR-027 — S9: the quest engine, the CALLER ledger (save v3) & the JOURNAL
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S9 — Bible Prompt 26 + §A10 #1–3)
+- **Context:** §A6 Ch.8's finale is fueled by completed side quests — every
+  caller answers a phone in Movement 3. S5 left the Quest schema waiting in
+  src/schemas with the validator's parse list as its planned consumer;
+  ADR-014's flag gates and fade-restart rule are the world-mutation law;
+  ADR-015 demands registered migration steps for new save fields; ADR-016
+  made ui/pick.ts the one list widget; ADR-024/026 set the input rules every
+  new UI inherits (everyFrame polls, back = tapBtn('B')).
+- **Decision:**
+  - **Quests are flag-derived state machines** (`src/engine/quests.ts` over
+    `src/data/quests.ts`): `startFlag` arms, each objective's flag marks a
+    completed step (the journal shows the FIRST unset one), `doneFlag`
+    closes. The schema gained `startFlag` (S9, its first consumer). The
+    engine stores NOTHING beyond flags except the ledger entry below —
+    status/objectives derive on read (the ADR-018 derive-don't-duplicate
+    stance applied to quests).
+  - **The CALLER ledger is save v3** — the first real new field since v2:
+    `GS.data.callers: CallerRecord[]` ({quest, name, quote, effect}), FROZEN
+    copies of the §A10 records in completion order; §A6 Ch.8 iterates the
+    LEDGER, not quest data, so a patched quote never rewrites a player's
+    history. The v2→v3 step is REGISTERED in engine/migrations.ts: old saves
+    load with an empty ledger, which is their true history (quests are
+    v3-new), not a guess. Slot peeks derive as before — no summary field.
+  - **`completeQuest()` routes rewards through the S3/S4 bag flow**:
+    GS.addItem with hands-full BLOCKING completion before anything commits —
+    the giver keeps the reward warm, the player retries after making room
+    (zero missables, §B4). Lemonade Empire has NO rewardItem: the stand's
+    infinite-free-lemonade gate (q_lemonade_done) IS the reward; a full bag
+    at the stand pours the drink on the spot instead (12 HP).
+  - **World wiring is data gates + scene beats** (ADR-014 held): SignDef and
+    PropDef gained `unlessFlag` (signs also `ifFlag`), SpawnerDef gained
+    `unlessFlag` — sniff clues are gated signs paired with `paw_prints`
+    ground markings, and the §A10 #2 Lawnmower guards Mr. Sodd's slot via an
+    ifFlag/unlessFlag spawner. **Ask-beats that arm gates on the CURRENT map
+    fade-restart it** (Pemmel's clue 1, Plummer's mower) — the quota-beat
+    precedent, now stated as the rule: a flag that changes the map you are
+    standing on is not real until the rebuild. Quest talk branches live in
+    OverworldScene.questTalk()/signBeat()/mailDelivery(), keyed on stable
+    npc/sign/prop ids exactly like the S2 beats.
+  - **The JOURNAL is a MenuScene page on the shared pick()** — command order
+    is now ITEMS STATUS VIBE EQUIP JOURNAL LOCKET SETUP (header recipes
+    updated; bots re-derive from headers). pick() gained optional per-row
+    `icons` (the earned-caller phone icon — drawPhoneIcon was waiting for
+    this since S7); rows are tap zones as ever, B/hardware-back closes, the
+    detail page is a STATUS-style static (in-voice lines only — active
+    quests show done steps dimmed + the current line; done quests show
+    "<caller> owes you a phone call."). Map markers stay OFF (canon).
+  - **Items: two new kinds.** `charm` rides the 'other' equip slot (Lucky
+    Collar, +7 Luck) — `ItemDef.luck`, `heroLuck()`/`equipLuckDelta()` in
+    formulas (STATUS reads through them), and confirmEquip previews "Luck up
+    by 7!" for 'other'-slot gear (one shared flow, now stat-aware).
+    `valuable` is sell-fodder/quest goods: Fresh Stamps at price 240 encode
+    §A10 #2's "sell high" — sellPrice() pays $120 and the item text IS the
+    gag; sugar_bag/lemon_crate extend the §A8 shop manifests (validator
+    pinned, same commit). The lemonade jug is a key item, returned at the
+    pour.
+  - **The validator now parses QUESTS** (the S5 plan landed) and pins the
+    §A10 #1–3 manifest in both directions: ids, names, chapters, givers
+    (must stand on a map), startFlag/doneFlag/objective-flag lists, flag
+    uniqueness across quests, reward items existing in ITEMS, caller
+    names/effects (damage 400 / damage 450 / heal 400 — canon-setting values
+    for Prompt 34), the collar/charm and stamps/price pins, and the
+    {token} sweep over quest names/objectives/quotes ({coolthing} found its
+    first natural consumer in the twins' ask). Verified failing loudly on
+    three axes (wrong reward, missing item, wrong objective flag).
+- **Verification:** validator + 121 vitest green (quests engine suite,
+  v2→v3 + v1→v3 chain, ledger round-trip, charm formulas). ADR-008 bot runs
+  logged in docs/QA.md: Mail Must Move end-to-end on a FRESH save (the salt
+  one-shot is deterministic — battle items are flat power), Biscuit and
+  Lemonade end-to-end on a constructed POST-ch1_complete save (both bus
+  directions, shop purchases of quest goods, spring fill), the JOURNAL at
+  pump(n, 8.33) one-frame taps, and the ledger surviving tab-kill AND
+  dev-server-kill through Continue. Recipe in engine/quests.ts's header.
+- **Consequences:** quests #4–16 are data + beats + a manifest extension —
+  the engine, journal, ledger, and validator shape are fixed; S10's arcade
+  score REGISTERS v3→v4 (v3 shipped here); Prompt 34's finale consumes
+  `GS.data.callers` in order with base allies prepended; future same-map
+  gate-arming beats must fade-restart (review smell: setFlag on a gated
+  def of the current map without one).
+
+## ADR-028 — S9b: conga motion fix, run cycles, story-night rule, the upstairs wing & the interior program
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user playtest feedback: frozen followers, run feel,
+  "why is it sometimes dark", a roomier early game, and the every-building-
+  matters program)
+- **Context:** Followers snapped to breadcrumbs each frame, so a per-frame
+  "did I move" check thrashed play/stop and froze them on frame 0. Running
+  was the walk anim at 1.6× timeScale. hickory_hill carried a permanent
+  `night: true`, so dawn never reached it and the overlay read as an
+  unexplained haze. The §A11 author renamed the twins' relationship: Ana &
+  Vivi are Rex's little sisters. The larger asks (hotels, open-everything
+  interiors, big city, vehicles) are multi-session and went into the queue
+  as designed prompts, not rushed code.
+- **Decision:**
+  - **The LEADER's motion drives the conga.** Followers play/stop on Rex's
+    moving state, not their own crumb deltas. While he runs, they run.
+  - **Run is a CYCLE, not a tempo** — `<id>-run-<dir>` resequences the same
+    sheet: both step poses (1,3), no neutral frame, frameRate 11. Poses 1/3
+    carry the +1px bob, so runners stay risen — a sprint gait with zero new
+    pixels. ADR-009/022 frame contracts untouched (a true frame-count
+    expansion is queued for the S13 vehicle pass, which must supersede the
+    frame-count law in its own ADR if it adds rows). Consumers: leader,
+    followers, pursuing walker roamers, patrol chases (the timeScale
+    speed-ups are gone — grep `anims.timeScale` in the overworld should
+    stay empty).
+  - **Night is the story clock.** `storyNight` covers otterbrook AND
+    hickory_hill until `zapper_done`; `MapDef.night` remains for genuinely
+    always-dark places (none currently). Night maps' banner carries a dim
+    CYAN "2 A.M." second line — the haze is labeled.
+  - **The upstairs wing:** rex_bedroom and rex_home's stairs now meet at
+    `rex_hall`, which opens onto `ana_room` and `vivi_room` (§A10 amended
+    per Appendix rule 6: the twins are Rex's sisters; ids/dialogue/quest
+    data unchanged — the EB-Tracy move). Their rooms hold the first GIFT
+    BOXES (Prompt 19's deferred chests): closed/opened prop pair gated by
+    one flag, a sign beat grants the item through GS.addItem with the
+    hands-full raincheck, fadeRestart swaps the box — the S9 sign-beat
+    pattern, zero new systems. New sprites `gift_box`/`gift_box_open`
+    follow ADR-020. Mom's payphone line counts "another plate" (Mia), not
+    a family-size mistake.
+  - **The interior program is QUEUED, designed** (NEXT_PROMPTS S12–S13):
+    the no-decorative-doors law with validator enforcement, the 12-category
+    interior payload taxonomy (~120 seeded instances — §A11 bits, economy,
+    recovery incl. two-story HOTELS and hospitals as the largest building
+    in every city, quest nodes, collections, tutors, world-building,
+    secrets, LEDGER CALLBACKS reading GS.data.callers, residences, civic,
+    set-pieces), city vocabulary (hotel/hospital-tower/walk-up/rooftop),
+    and the transport pass (bus stations + fares, bike ×1.35, the car's
+    region-road UI, chapter-gated airports) — all reconciled with §A5's
+    scripted vehicles and Teleport's canon role. "New York scale" is
+    canonically Chandrapore (Prompt 31) plus Brickton's S12 vertical
+    growth. STARPORT keeps its name pending the author's call (ADR-023
+    branding; §A10 #4 + the locked_arcade2 "MGR" gag depend on it).
+- **Verification:** validator + 121 vitest green (3 new maps swept: doors,
+  bounds, tokens); browser run logged in QA.md — conga walks AND sprints in
+  step, chasers sprint, the 2 A.M. tag shows pre-dawn on both outdoor maps
+  and vanishes after zapper_done, bedroom → hall → sibling rooms → kitchen
+  walkable with both presents claimable (hands-full raincheck included),
+  and the fresh-save bot path still reaches Mom through the new hall.
+- **Consequences:** any sheet-format change must keep `-walk-`/`-run-` key
+  shapes; new interiors pull payloads from the S12 taxonomy instead of
+  inventing; gift boxes are the standard one-time-pickup pattern; the
+  S9 bot recipe's step 2 now crosses the hall (header updated).

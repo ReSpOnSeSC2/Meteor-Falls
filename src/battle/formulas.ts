@@ -23,6 +23,21 @@ export function equipDelta(hero: HeroState, itemId: string): number {
   return (item.offense ?? 0) - current;
 }
 
+/** a hero's luck: base stat + their 'other'-slot charm (S9 — Lucky Collar).
+ *  STATUS reads this the way Offense reads heroOffense. */
+export function heroLuck(hero: HeroState): number {
+  const charm = hero.equip.other ? ITEMS[hero.equip.other] : undefined;
+  return hero.stats.luck + (charm?.luck ?? 0);
+}
+
+/** the S9 charm preview — equipDelta's shape, aimed at the 'other' slot */
+export function equipLuckDelta(hero: HeroState, itemId: string): number {
+  const item = ITEMS[itemId];
+  if (!item || slotOf(item) !== 'other') return 0;
+  const current = hero.equip.other ? (ITEMS[hero.equip.other]?.luck ?? 0) : 0;
+  return (item.luck ?? 0) - current;
+}
+
 export function physicalDamage(offense: number, defense: number, rng: Rng): number {
   const base = Math.max(1, offense * 2 - defense);
   return Math.max(1, Math.round(base * (0.85 + rng() * 0.3)));

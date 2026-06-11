@@ -2245,3 +2245,72 @@ export function drawSparkFrames(): Pixmap[] {
   }
   return out;
 }
+
+/**
+ * S9: Biscuit's paw prints — a quest sniff-clue ground marking. Markings
+ * follow ADR-020 rule 2's idiom (shadows/light are never outlined; neither
+ * are prints pressed INTO the ground) and rule 1 (deliberate 2px clusters,
+ * never scatter): two trotting impressions, each four toe dots over a pad,
+ * in deep EARTH so they read on grass and dirt alike. The second print
+ * lands ahead and offset — a dog going somewhere, not a stamp.
+ */
+export function drawPawPrints(): Pixmap {
+  const pm = new Pixmap(18, 12);
+  const deep = px(RAMP.EARTH, 0);
+  const soft = px(RAMP.EARTH, 1);
+  const paw = (x: number, y: number): void => {
+    pm.rect(x + 1, y + 3, 3, 2, deep); // pad
+    pm.set(x, y + 1, soft); // toes
+    pm.set(x + 1, y, deep);
+    pm.set(x + 3, y, deep);
+    pm.set(x + 4, y + 1, soft);
+  };
+  paw(2, 5); // back print
+  paw(11, 1); // front print, mid-stride
+  return pm;
+}
+
+/**
+ * S9b: wrapped present (the twins' rooms — Prompt 19's gift boxes arrive).
+ * Deliberate flat planes per ADR-020: lit top face, shaded side, one ribbon
+ * cross + a bow read at 2px scale, outlined like any object, shadowUnder
+ * after outline (rule 2).
+ */
+export function drawGiftBox(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const lit = px(RAMP.RED, 2);
+  const base = px(RAMP.RED, 1);
+  const dark = px(RAMP.RED, 0);
+  pm.rect(1, 4, 12, 8, base); // body
+  pm.rect(1, 4, 12, 2, lit); // lid face catches the light
+  pm.hline(1, 11, 12, dark); // base shadow row
+  pm.vline(12, 5, 7, dark); // turned side
+  // ribbon cross + bow
+  pm.rect(6, 2, 2, 10, px(RAMP.GOLD, 2));
+  pm.hline(1, 7, 12, px(RAMP.GOLD, 1));
+  pm.set(5, 2, px(RAMP.GOLD, 3));
+  pm.set(8, 2, px(RAMP.GOLD, 3));
+  pm.rect(6, 1, 2, 2, px(RAMP.GOLD, 2));
+  pm.outline(C.outline);
+  pm.shadowUnder(7, 12, 5, px(RAMP.INK, 1));
+  return pm;
+}
+
+/** the same present, opened — lid ajar against the box, tissue rising */
+export function drawGiftBoxOpen(): Pixmap {
+  const pm = new Pixmap(16, 14);
+  const base = px(RAMP.RED, 1);
+  const dark = px(RAMP.RED, 0);
+  pm.rect(1, 6, 11, 6, base); // body, lid gone
+  pm.hline(1, 11, 11, dark);
+  pm.vline(11, 7, 4, dark);
+  pm.rect(2, 4, 9, 2, px(RAMP.PAPER, 2)); // tissue puffing out
+  pm.set(4, 3, px(RAMP.PAPER, 3));
+  pm.set(8, 3, px(RAMP.PAPER, 3));
+  // the lid leans on the right side, ribbon still on it
+  pm.rect(12, 8, 3, 5, px(RAMP.RED, 2));
+  pm.vline(13, 8, 5, px(RAMP.GOLD, 2));
+  pm.outline(C.outline);
+  pm.shadowUnder(7, 12, 5, px(RAMP.INK, 1));
+  return pm;
+}

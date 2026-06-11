@@ -15,9 +15,12 @@ export const EQUIP_SLOTS: EquipSlot[] = ['weapon', 'body', 'arms', 'other'];
 /** EB hands-full rule: every hero's bag holds 14 items (Prompt 19) */
 export const BAG_MAX = 14;
 
-/** which equip slot an item occupies, if any (armor kinds land in Phase 2+) */
+/** which equip slot an item occupies, if any (body/arms armor lands Phase 2+;
+ *  charms ride the 'other' slot since S9 — §A8 pendants/charms territory) */
 export function slotOf(item: ItemDef): EquipSlot | null {
-  return item.kind === 'weapon' ? 'weapon' : null;
+  if (item.kind === 'weapon') return 'weapon';
+  if (item.kind === 'charm') return 'other';
+  return null;
 }
 
 /** Prompt 20: shops buy at half. Price-0 items (sparks, key items) don't sell. */
@@ -122,6 +125,48 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: false,
       price: 0,
       text: 'It hums when the Embers sing. 1/8th of a Homesong lives inside.',
+    }),
+    /* ---- S9: §A10 #1–3 quest rewards + supplies ---- */
+    I({
+      id: 'lucky_collar',
+      name: 'Lucky Collar',
+      kind: 'charm',
+      luck: 7,
+      usableInBattle: false,
+      price: 0,
+      text: 'Biscuit chewed the lucky right into it. Smells faintly of pond. Luck +7.',
+    }),
+    I({
+      id: 'fresh_stamps',
+      name: 'Fresh Stamps',
+      kind: 'valuable',
+      usableInBattle: false,
+      price: 240,
+      text: 'Mint 1995 commemoratives. A collector would pay anything. The drugstore pays exactly half of anything.',
+    }),
+    I({
+      id: 'sugar_bag',
+      name: 'Sugar Bag',
+      kind: 'valuable',
+      usableInBattle: false,
+      price: 4,
+      text: 'Four pounds. The recipe on the back is one word long.',
+    }),
+    I({
+      id: 'lemon_crate',
+      name: 'Lemon Crate',
+      kind: 'valuable',
+      usableInBattle: false,
+      price: 8,
+      text: 'City lemons, imported from a city. You can tell by the attitude.',
+    }),
+    I({
+      id: 'lemonade_jug',
+      name: 'The Jug',
+      kind: 'key',
+      usableInBattle: false,
+      price: 0,
+      text: 'The official jug of the Lemonade Empire. The tiny hand-drawn flag makes it official.',
     }),
   ].map((i) => [i.id, i]),
 );

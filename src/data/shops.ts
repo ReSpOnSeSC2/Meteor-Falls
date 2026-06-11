@@ -14,7 +14,8 @@ export const SHOPS: Record<string, ShopDef> = {
     id: 'drugstore',
     name: 'OTTERBROOK DRUG',
     keeperNpc: 'drug_clerk',
-    stock: ['tball_bat', 'corn_dog', 'pbj', 'salt_shaker'],
+    // sugar_bag: §A10 #3's first supply (S9) — expires never, per the keeper
+    stock: ['tball_bat', 'corn_dog', 'pbj', 'salt_shaker', 'sugar_bag'],
     greet: 'shop_drug_greet',
     farewell: 'shop_drug_bye',
   },
@@ -23,8 +24,9 @@ export const SHOPS: Record<string, ShopDef> = {
     name: 'STARMART',
     keeperNpc: 'mart_clerk',
     // the pan is a spare — Mia already owns hers (ADR-015); Star Cola is the
-    // game's first PP-restore item (§A8 "PP: Star Cola line")
-    stock: ['tball_bat', 'hand_me_down_pan', 'star_cola', 'corn_dog', 'pbj', 'salt_shaker'],
+    // game's first PP-restore item (§A8 "PP: Star Cola line");
+    // lemon_crate: §A10 #3's city lemons (S9) — the twins insist on STARMART's
+    stock: ['tball_bat', 'hand_me_down_pan', 'star_cola', 'corn_dog', 'pbj', 'salt_shaker', 'lemon_crate'],
     greet: 'shop_mart_greet',
     farewell: 'shop_mart_bye',
   },

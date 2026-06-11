@@ -9,7 +9,7 @@ import { HEROES, type HeroId, statsAtLevel, maxHpAtLevel, maxPpAtLevel } from '.
 import { ITEMS, slotOf, BAG_MAX, EQUIP_SLOTS, type EquipSlot } from '../data/items';
 import { migrateSave } from './migrations';
 import { SaveBank, SLOT_IDS, localStorageDriver, type OpenResult, type SlotId, type SlotPeek } from './saves';
-import type { Stats } from '../schemas';
+import type { CallerRecord, Stats } from '../schemas';
 
 // S5: Stats is z.infer'd from src/schemas — one shape for compile and runtime
 export type { Stats } from '../schemas';
@@ -32,7 +32,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 2;
+  version: 3;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -51,6 +51,9 @@ export interface GameStateData {
   coolestThing: string;
   /** Prompt 21 names for all four heroes — joined or not (heroes joining later read theirs from here) */
   heroNames: Record<HeroId, string>;
+  /** S9 (v3): the CALLER ledger — one §A10 record per completed side quest,
+   *  frozen at completion in earned order. §A6 Ch.8's finale iterates THIS. */
+  callers: CallerRecord[];
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -104,7 +107,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 2,
+    version: 3,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -127,6 +130,7 @@ export function newGameData(): GameStateData {
       milo: HEROES.milo.name,
       dorin: HEROES.dorin.name,
     },
+    callers: [],
   };
 }
 

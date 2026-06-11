@@ -160,7 +160,9 @@ export const EnemiesSchema = z.record(z.string().min(1), EnemyDefSchema);
 export const EquipSlotSchema = z.enum(['weapon', 'body', 'arms', 'other']);
 export type EquipSlot = z.infer<typeof EquipSlotSchema>;
 
-export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key']);
+/** S9 adds: 'charm' (the 'other' equip slot — Lucky Collar) and 'valuable'
+ *  (sell-fodder and quest goods — Fresh Stamps, the lemonade supplies) */
+export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable']);
 export type ItemKind = z.infer<typeof ItemKindSchema>;
 
 export const ItemDefSchema = z
@@ -172,6 +174,8 @@ export const ItemDefSchema = z
     /** PP restored on use (§A8 "PP" items — the Star Cola line, S4) */
     ppHeal: z.number().positive().optional(),
     offense: z.number().positive().optional(),
+    /** charm ('other' slot) luck bonus — §A10 Lucky Collar, S9 */
+    luck: z.number().positive().optional(),
     /** §A8 weapon lines are personal — only this hero can equip it */
     wielder: HeroIdSchema.optional(),
     /** battle item damage */
@@ -198,6 +202,13 @@ export const ItemDefSchema = z
     }
     if (item.kind === 'weapon' && item.offense === undefined) {
       ctx.addIssue({ code: 'custom', message: `weapon '${item.id}' needs an offense value` });
+    }
+    // S9 pairing: kind 'charm' ⇔ luck — same rule shape as 'pp' ⇔ ppHeal
+    if (item.kind === 'charm' && item.luck === undefined) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' is kind 'charm' but has no luck bonus` });
+    }
+    if (item.kind !== 'charm' && item.luck !== undefined) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' has luck but kind '${item.kind}' — luck rides charms` });
     }
   });
 export type ItemDef = z.infer<typeof ItemDefSchema>;
@@ -253,6 +264,8 @@ export const PropDefSchema = z.strictObject({
     .optional(),
   /** only built when this flag is truthy (e.g. the holding-room cot) */
   ifFlag: z.string().min(1).optional(),
+  /** hidden once this flag is truthy (S9: a sniffed paw-print clue retires) */
+  unlessFlag: z.string().min(1).optional(),
 });
 export type PropDef = z.infer<typeof PropDefSchema>;
 
@@ -278,6 +291,9 @@ export const SignDefSchema = z.strictObject({
   x: z.number(),
   y: z.number(),
   dialogue: z.string().min(1),
+  /** S9: flag gates, the NpcDef pattern — quest clues exist only mid-trail */
+  ifFlag: z.string().min(1).optional(),
+  unlessFlag: z.string().min(1).optional(),
 });
 export type SignDef = z.infer<typeof SignDefSchema>;
 
@@ -310,6 +326,9 @@ export const SpawnerDefSchema = z.strictObject({
   rect: TileRectSchema, // tiles
   /** spawn only when this flag is truthy */
   ifFlag: z.string().min(1).optional(),
+  /** stop spawning once this flag is truthy (S9: the mail-route Lawnmower
+   *  guards Mr. Sodd's slot only until that letter lands) */
+  unlessFlag: z.string().min(1).optional(),
 });
 export type SpawnerDef = z.infer<typeof SpawnerDefSchema>;
 
@@ -409,6 +428,8 @@ export const QuestDefSchema = z.strictObject({
   chapter: z.number().int().min(1).max(8),
   /** npc id of the quest giver */
   giver: z.string().min(1).optional(),
+  /** flag set when the giver's ask lands — 'active' derives from it (S9) */
+  startFlag: z.string().min(1),
   objectives: z.array(QuestObjectiveSchema).min(1),
   /** item id granted on completion */
   rewardItem: z.string().min(1).optional(),
@@ -419,3 +440,17 @@ export const QuestDefSchema = z.strictObject({
 export type QuestDef = z.infer<typeof QuestDefSchema>;
 
 export const QuestsSchema = z.record(z.string().min(1), QuestDefSchema);
+
+/**
+ * One earned caller on the save — the LEDGER entry (S9, the first real new
+ * save field since v2; §A6 Ch.8 iterates these for the finale's phone-ring
+ * vignettes). The §A10 record is FROZEN at completion time: the finale
+ * replays what the player actually earned, in the order they earned it,
+ * even if quest data shifts in a later patch.
+ */
+export const CallerRecordSchema = z.strictObject({
+  /** the completed quest's id */
+  quest: z.string().min(1),
+  ...CallerSchema.shape,
+});
+export type CallerRecord = z.infer<typeof CallerRecordSchema>;

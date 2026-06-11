@@ -98,6 +98,32 @@ canon manifests in the same commit, or validate fails naming the gap; the
 Quest schema already waits in src/schemas for S9, which must wire QUESTS
 into the validator's parse list (S6's slot/backup/respawn suite lives in
 engine/saves.test.ts).
+S8 (ADR-026): the Capacitor 6 shell wraps the SAME vite build — `npm run
+android:apk` → meteor-falls-debug.apk; back button = `INPUT.tapBtn('B')`
+(edge-only latch), insets reach UIScene via `gameInsets()`, icon/splash
+render FROM the engine on every sync (`art:appart`, git-ignored). The
+docs/QA.md device table is the USER's phone sign-off — leave its boxes
+open. S9: quests #1–3 (§A10) are LIVE end-to-end — engine/quests.ts derives
+quest state from flags (`startFlag`/objective flags/`doneFlag`, schema field
+`startFlag` added in S9), completion routes rewards through GS.addItem with
+hands-full BLOCKING (zero missables), and freezes the §A10 CALLER record
+onto **`GS.data.callers` — save v3** (registered v2→v3 step; old saves load
+with an empty ledger, their true history). §A6 Ch.8's finale iterates that
+ledger in earned order. The JOURNAL is a MenuScene page (command order is
+now ITEMS STATUS VIBE EQUIP JOURNAL LOCKET SETUP) on the shared pick()
+widget — which gained optional per-row `icons` (phone icon = caller earned).
+Quest world-wiring is ALL data gates: SignDef + PropDef gained
+ifFlag/unlessFlag, SpawnerDef gained unlessFlag (the §A10 #2 lawnmower
+guard), sniff clues are gated signs + `paw_prints` ground markings (ADR-020
+rule-2 idiom: markings never outlined), and ask-beats that arm same-map
+gates MUST fade-restart (ADR-014 — Pemmel's and Plummer's do). Items gained
+kinds `charm` ('other' slot — Lucky Collar, `luck` field, `heroLuck`/
+`equipLuckDelta` in formulas, charm branch in confirmEquip's preview) and
+`valuable` (Fresh Stamps $240 — §A10 "sell high", the drugstore pays $120;
+the lemonade supplies). The validator pins the §A10 #1–3 manifest (names,
+flags, callers, effects, rewards — extend it in the same commit as any new
+quest) and sweeps quest strings through TEXT_VARS ({coolthing} found its
+first consumer in the twins' ask). Bot recipe: engine/quests.ts header.
 QA driver: `window.pump/key/holdKey/shot` + `mfGS` + `mfMakeHero` (canon
 heroes for mid-game party setup); bot recipes live in the scene headers.
 Work through these in order, one prompt per session, per the Bible's
@@ -113,55 +139,6 @@ architectural decision you make to it. TypeScript strict, no `any`.
 ```
 
 ---
-
-## Prompt S8 — Capacitor & Android APK (Bible Prompt 41)
-
-```
-[Standard Header]
-Add Capacitor 6 and generate android/ per Bible Prompt 41:
-landscape-locked, immersive fullscreen, safe-area insets for the touch UI,
-app icon + splash from the title meteor art (exported from the sprite
-engine at build time), keep-awake during play, back-button = B,
-localStorage persistence flagged durable. Document debug-APK build steps in
-docs/RELEASE.md (keystore generation documented, key NOT committed). On a
-real device, log results in docs/QA.md: the Gamepad API over Bluetooth in
-the WebView, and a TOUCH-ONLY smoke of the fresh-player path — name entry
-first (it's the first thing a fresh Android player touches; cells/buttons
-are tap-wired, verify no keyboard assumptions slipped in), then the S2
-beats (a patrol fight, Mia's join, PRAY from her command row by tap,
-answering Mom's payphone), then the S4 loop by tap alone: buy at STARMART
-(pick() rows are tap zones), withdraw at the ATM (dialogue ask rows), call
-Mom from the contact list.
-Done when: meteor-falls-debug.apk installs and Chapter 1 plays to
-ch1_complete on the phone with touch alone — including one shop purchase
-and one ATM withdrawal — and again with a paired controller.
-```
-
-## Prompt S9 — Quest engine & the first callers (Bible Prompt 26 + §A10 #1–3)
-
-```
-[Standard Header]
-Implement the quest system: multi-step objective state machines, a JOURNAL
-page in the S3 menu (in-voice summaries, map markers OFF — EB didn't hold
-hands), reward granting, and the CALLER ledger appended to the save (this
-is the finale's fuel; it's the first REAL new save field since v2 —
-REGISTER the v2→v3 step in engine/migrations.ts per ADR-015/016, never
-spread-merge). ADR-014's flag-gated NpcDef/PropDef (ifFlag/unlessFlag) are
-available for quest-state NPCs, and S5's Quest schema validates the data.
-Author and wire quests #1–3 end-to-end: Biscuit, Come Home (sniff-clue
-trail across 3 screens); Mail Must Move (5 doors, one guarded by the
-Runaway Lawnmower); Lemonade Empire (Ana & Vivi supply run — the lemonade
-item and stand exist; the infinite-free-lemonade reward gates on the
-quest flag). Each completion records its §A10 caller (Mrs. Pemmel, Mr.
-Plummer, Ana & Vivi) with a one-line phone quote in §A11 tone. Quest
-dialogue may land the first natural consumer of {coolthing} — don't force
-it, but it's live.
-Done when: all three are completable on a fresh save AND after
-ch1_complete (zero missables — canon; the flag is set by Mom's payphone
-call, ADR-014); the journal shows phone icons for earned callers; the
-ledger survives a save/load round-trip through the migration registry; the
-ADR-008 bot can finish one quest end-to-end.
-```
 
 ## Prompt S10 — Arcade Legend (§A10 #4 + the STARPORT interiors)
 
@@ -180,8 +157,9 @@ extracted pick/confirmEquip into ui/pick.ts (keep that scene's header QA
 recipe true) and prefill from the first letters of {playername}. Quest #4:
 beat the score → Champion Jacket + the arcade-owner caller; replayable
 score-attack from any save afterward (Prompt 36's hook lands early). Score
-persists on the save via the migration registry (ADR-015 pattern — ride
-the same v3 step family as S9's ledger or add the next).
+persists on the save via the migration registry (ADR-015 pattern — v3
+SHIPPED with S9's ledger, so the score REGISTERS the v3→v4 step; old
+saves backfill an empty score table).
 Done when: the shmup is genuinely fun for 60 seconds, the score + initials
 persist on the save, and quest #4 completes with its caller registered.
 ```
@@ -217,11 +195,103 @@ open; a basket bought at STARMART restores the party at the Brickton park
 table.
 ```
 
+## Prompt S12 — EVERY DOOR OPENS (the interior program + city vocabulary)
+
+```
+[Standard Header]
+Design law, then content. LAW: no decorative buildings — every facade the
+player can walk to either opens or is a labeled ruin with a reason (the
+§A11 locked_* lines retire one by one as interiors land). ENFORCE it in
+tools/content-validate.ts: every prop with a door must lead to a map with
+≥1 interactable (npc/sign/phone/atm/shop/gift); every map tagged
+settlement must have ≥60% of its door-bearing facades OPEN by Prompt 43.
+A new INTERIOR PAYLOAD TAXONOMY drives authoring — every interior gets
+≥1 payload from category A plus ≥1 from B–L, never two "important" in one
+block (pacing). Categories (seeds → ~120 concrete instances; chapter
+sessions pull from here instead of inventing):
+ A. §A11 bit — one-obsession NPC, editorializing sign, running gag
+    (Mr. Click ambush spots; the sidewalk critic reviews interiors now).
+ B. Economy — shops, delis (basket crafting), trade-in collector (buys
+    'valuable' kind at FULL price: the stamps gag pays out properly once
+    per region), busker tips, vending machines.
+ C. Recovery — hospitals (LARGEST building in every city — Brickton
+    General grows to 3 stories in this pass), chapels, tea rooms, HOTELS
+    (two-story template: lobby + upstairs hall of rooms; a paid bed =
+    full restore + Sunny Side breakfast, the picnic system's indoor twin).
+ D. Quest nodes — givers, delivery doors, clue rooms (the S9 gated-sign
+    pattern IS the API).
+ E. Collection — gift boxes (S9b sprites), libraries with readable §A11
+    books, photo spots.
+ F. Systems tutors — the gym teaches Guts (battle tutor fight), the
+    STARPORT teaches the shmup (S10).
+ G. World-building — museum wings, the mayor's office, a radio station
+    broadcasting the chapter's rumor (foreshadow channel).
+ H. Secrets — basements, rooftop access (city buildings gain a roof map
+    pattern), one vault per region with a silly combination.
+ I. Ledger callbacks — visit a completed quest's caller at home: they are
+    ON THE PHONE telling someone about you (reads GS.data.callers — S9's
+    ledger powers ambient warmth before the finale cashes it in).
+ J. Residences — every home has a family with one §A11 dynamic, a fridge
+    (1 free food/day-equivalent: gated on a per-region flag), mail you
+    delivered visible on their table after quest #2.
+ K. Civic clutter — bus stations (see S13), post office (Plummer's HQ),
+    the SAVINGS & LOAN finally opens (teller line beats the ATM rate by
+    $0 — §A11).
+ L. Chapter set-pieces — one per chapter, big interiors (the Department
+    was Ch.1's; Ch.5's palace + cinema are canon's).
+CITY VOCABULARY (spritegen): hotel facade (2-story, awning + ROOMS sign),
+hospital tower (3-story, the block anchor), apartment walk-up (the
+Brickmore OPENS: stair core + two flats), rooftop tile family. Brickton
+grows VERTICALLY here (more upperRows variety on the existing grid — the
+1995 stream stays byte-identical; new content on rng3).
+Done when: validator enforces the no-decorative-doors law; Brickton +
+Otterbrook hit 100% open facades; the taxonomy doc lives at
+docs/INTERIORS.md with every category seeded; hotel/hospital/walk-up
+templates render in Sprite Lab; one ledger-callback interior is live.
+```
+
+## Prompt S13 — STATIONS & WHEELS (bus, bike, car — and the travel UI)
+
+```
+[Standard Header]
+Formalize getting around WITHOUT touching canon's spine: §A5's chapter
+vehicles stay scripted story beats, and Teleport α/β (Ch.4/Ch.6) stays THE
+global fast-travel. This prompt adds local pace + money sinks + ritual:
+ 1. BUS STATIONS: the 6:15's stops become small interiors (bench, schedule
+    board in §A11 voice, the driver's obsession canonized) — boarding
+    moves indoors; the bus_interior scene stays for first rides; a fare
+    ($2) starts mattering. The bus network = same-chapter towns only.
+ 2. BIKE (~$180 at OTTERBROOK DRUG, of course it sells bikes): overworld
+    speed ×1.35 outdoors-only, with its own 2-frame ride pose per facing
+    drawn INSIDE the 24×32 contract (the S9b run-cycle precedent: new
+    anims, same sheet metrics — this pass MAY add sheet rows and if it
+    does, it supersedes ADR-009's frame-count law in its own ADR with
+    standFrame() preserved). B-run on foot stays the dungeon answer —
+    no bikes indoors ("NO BIKES. — the floor").
+ 3. CAR (Ch.2+, "PRE-LOVED AUTOS" lot in Brickton, ~$1400): unlocks a
+    REGION ROAD MAP UI — pick a same-chapter town, play a 3-second
+    driving vignette (the bus-window pattern reversed), arrive. It is
+    Teleport for people who fear Teleport, priced like a boss reward.
+ 4. AIRPORT (Ch.3+, one per region once Lucille exists): the §A5 legs get
+    a ticket-counter UI skin — destination board, boarding pass gag,
+    Lucille's flight vignette. Strictly chapter-gated: flying never skips
+    the Ember trail; post-Ch.4 it coexists with Teleport as the themed
+    long-haul (some players ride for the vignettes).
+Done when: fare/bike/car costs satisfy §A9's economy (a car is a real
+choice against gear); all three UIs drive by touch+pad+keys at the
+ADR-024 regime; the validator knows stations/vehicle gates; Teleport
+remains strictly better post-Ch.4 (vehicles are flavor + early-game).
+```
+
 ---
 
 After S11, Chapter 1 is genuinely complete — name entry through ch1_complete
-with quests, arcade, revival, and picnics all live. Then return to the
-Bible's Part C order at Prompt 28 (Chapter 2) — Puerto Sol and Valle Dorado
-inherit ADR-012, the §B4 city tests, AND the S4 shop pattern (a ShopDef +
-a keeper NPC per town buys the whole flow) automatically — and run the
-balance sim (Prompt 37) once two chapters exist to measure, as planned.
+with quests, arcade, revival, and picnics all live. S12–S13 then make the
+world dense and navigable. The "big city like New York" ask maps onto canon:
+**Chandrapore (Ch.5, Prompt 31) is the game's biggest city** — three
+ADR-012 districts, 4–5-story facades, the palace/cinema/bazaar sprawl —
+and Brickton's vertical growth in S12 gives the US chapter its skyline.
+Then return to the Bible's Part C order at Prompt 28 (Chapter 2) — Puerto
+Sol and Valle Dorado inherit ADR-012, the §B4 city tests, the S4 shop
+pattern, AND the S12 interior taxonomy automatically — and run the balance
+sim (Prompt 37) once two chapters exist to measure, as planned.

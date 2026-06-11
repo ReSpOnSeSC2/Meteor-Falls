@@ -12,8 +12,8 @@
  */
 import Phaser from 'phaser';
 import { GS, type HeroState } from '../engine/state';
-import { ITEMS } from '../data/items';
-import { equipDelta } from '../battle/formulas';
+import { ITEMS, slotOf } from '../data/items';
+import { equipDelta, equipLuckDelta } from '../battle/formulas';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, DEPTH_UI } from './windows';
@@ -30,6 +30,9 @@ export interface PickOpts {
   title?: string;
   /** START also cancels (the command list closes the whole menu) */
   startCancels?: boolean;
+  /** S9: optional per-row texture key drawn left of the label (the JOURNAL's
+   *  earned-caller phone icons) — rows shift right to make room */
+  icons?: Array<string | undefined>;
 }
 
 export const DIM = 0x8890a0;
@@ -39,7 +42,8 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
   const cols = opts.cols ?? 1;
   const rows = Math.ceil(options.length / cols);
   const rowH = 14;
-  const colW = Math.max(...options.map((o) => o.length)) * 6 + 28;
+  const iconPad = opts.icons?.some((i) => i !== undefined) ? 13 : 0;
+  const colW = Math.max(...options.map((o) => o.length)) * 6 + 28 + iconPad;
   const w = colW * cols + 8;
   const h = rows * rowH + 16;
   const x = Math.max(4, Math.min(opts.x, scene.scale.width - w - 4));
@@ -67,8 +71,17 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
   };
   options.forEach((o, i) => {
     const { cx, cy } = cellPos(i);
+    const icon = opts.icons?.[i];
+    if (icon !== undefined) {
+      made.push(
+        scene.add
+          .image(cx + 22, cy + 3, icon)
+          .setScrollFactor(0)
+          .setDepth(DEPTH_UI + 1),
+      );
+    }
     const t = scene.add
-      .bitmapText(cx + 18, cy, 'retro', o, 6)
+      .bitmapText(cx + 18 + iconPad, cy, 'retro', o, 6)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
     if (opts.disabled?.has(i)) t.setTint(DIM);
@@ -152,7 +165,8 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
   });
 }
 
-/** Prompt 19: the stat delta previews BEFORE the confirm — menu AND shops */
+/** Prompt 19: the stat delta previews BEFORE the confirm — menu AND shops.
+ *  Weapons preview Offense; 'other'-slot charms preview Luck (S9). */
 export async function confirmEquip(
   scene: Phaser.Scene,
   dlg: Dialogue,
@@ -160,9 +174,11 @@ export async function confirmEquip(
   itemId: string,
 ): Promise<void> {
   const item = ITEMS[itemId];
-  const d = equipDelta(hero, itemId);
+  const charm = slotOf(item) === 'other';
+  const d = charm ? equipLuckDelta(hero, itemId) : equipDelta(hero, itemId);
+  const stat = charm ? 'Luck' : 'Offense';
   const preview =
-    d > 0 ? `Offense up by ${d}!` : d < 0 ? `Offense down by ${-d}.` : 'No change in Offense.';
+    d > 0 ? `${stat} up by ${d}!` : d < 0 ? `${stat} down by ${-d}.` : `No change in ${stat}.`;
   const sel = await pick(scene, {
     x: 130,
     y: 64,

@@ -25,6 +25,11 @@
  * and every later save reuses it silently. Continue lives in SaveSlotsScene
  * (recipe in ITS header). A party wipe respawns at the last Dad-save's
  * map/position (GS.respawnPoint) instead of hardcoded rex_home.
+ * S9: quests (§A10 #1–3). Pemmel/Plummer/Ana/Vivi talk through questTalk()
+ * state branches; sniff clues + the spring are flag-gated SIGNS whose beats
+ * run in signBeat(); mail delivers by interacting with the five door props
+ * while q_mail is live. The full bot recipe (Mail Must Move end-to-end)
+ * lives in engine/quests.ts's header; the JOURNAL drives from MenuScene.
  */
 import Phaser from 'phaser';
 import {
@@ -39,7 +44,9 @@ import {
 } from '../data/maps';
 import { ENEMIES } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
+import { ITEMS } from '../data/items';
 import { GS, makeHeroState } from '../engine/state';
+import { completeQuest } from '../engine/quests';
 import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
@@ -101,6 +108,18 @@ const PURSUE = 85;
 const PATROL_WALK = 38;
 const PATROL_CHASE = 92;
 
+/** S9 §A10 #2: Mr. Plummer's five doors — facade prop → letter flag + line.
+ *  The quest data's objective flags and THIS table must agree; the validator
+ *  cross-checks both against the §A10 manifest. */
+const MAIL_DOORS: Record<string, { flag: string; dialogue: string }> = {
+  house_chad: { flag: 'q_mail_pickles', dialogue: 'mail_pickles' },
+  house_a: { flag: 'q_mail_sodd', dialogue: 'mail_sodd' },
+  house_b: { flag: 'q_mail_birch', dialogue: 'mail_birch' },
+  chapel: { flag: 'q_mail_chapel', dialogue: 'mail_chapel' },
+  arcade: { flag: 'q_mail_arcade', dialogue: 'mail_arcade' },
+};
+const MAIL_FLAGS = Object.values(MAIL_DOORS).map((d) => d.flag);
+
 export class OverworldScene extends Phaser.Scene {
   private mapDef!: MapDef;
   private solidTiles: boolean[][] = [];
@@ -153,10 +172,16 @@ export class OverworldScene extends Phaser.Scene {
     this.buildPlayer();
     this.buildRoamers();
     this.buildPatrols();
-    // It is 2 AM until Glint's porch scene ends — dawn breaks after (§A6 Ch.1)
-    const storyNight = this.mapDef.id === 'otterbrook' && !GS.flag('zapper_done');
-    if (this.mapDef.night || storyNight) this.buildNight();
-    this.showBanner();
+    // It is 2 AM until Glint's porch scene ends — dawn breaks after (§A6
+    // Ch.1), and it breaks over the WHOLE Ch.1 outdoors: the hill shares the
+    // story clock instead of carrying a permanent night flag (S9b — the
+    // "why is it sometimes dark" fix). MapDef.night remains for places that
+    // are genuinely always dark.
+    const storyNight =
+      !GS.flag('zapper_done') && (this.mapDef.id === 'otterbrook' || this.mapDef.id === 'hickory_hill');
+    const night = this.mapDef.night === true || storyNight;
+    if (night) this.buildNight();
+    this.showBanner(night);
 
     AUDIO.playMusic(this.mapDef.music);
     this.cameras.main.fadeIn(250, 0, 0, 0);
@@ -240,6 +265,7 @@ export class OverworldScene extends Phaser.Scene {
   private buildProps(): void {
     for (const p of this.mapDef.props) {
       if (p.ifFlag && !GS.flag(p.ifFlag)) continue;
+      if (p.unlessFlag && GS.flag(p.unlessFlag)) continue; // S9: clues retire
       if (p.sprite === 'holding_door') {
         this.buildHoldingDoor(p);
         continue;
@@ -384,6 +410,7 @@ export class OverworldScene extends Phaser.Scene {
   private buildRoamers(): void {
     for (const sp of this.mapDef.spawners) {
       if (sp.ifFlag && !GS.flag(sp.ifFlag)) continue;
+      if (sp.unlessFlag && GS.flag(sp.unlessFlag)) continue; // S9: guards stand down
       for (let i = 0; i < sp.count; i++) {
         const enemyId = sp.enemies[Math.floor(Math.random() * sp.enemies.length)];
         const def = ENEMIES[enemyId];
@@ -474,24 +501,31 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  private showBanner(): void {
+  private showBanner(night = false): void {
     // banner names are all-caps; resolved {rex} et al. get uppercased to match
     const name = vars(this.mapDef.name).toUpperCase();
-    const w = name.length * 6 + 24;
-    const win = makeWindow(this, 8, 8, w, 24);
+    const w = Math.max(name.length * 6 + 24, night ? 76 : 0);
+    const win = makeWindow(this, 8, 8, w, night ? 36 : 24);
     const tx = this.add
       .bitmapText(20, 16, 'retro', name, 6)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
+    const fading: Phaser.GameObjects.GameObject[] = [win, tx];
+    if (night) {
+      // S9b: the dark overlay gets a label — no guessing what the haze means
+      const tag = this.add
+        .bitmapText(20, 27, 'retro', '2 A.M.', 6)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1)
+        .setTint(colorOf(px(RAMP.CYAN, 2)));
+      fading.push(tag);
+    }
     this.tweens.add({
-      targets: [win, tx],
+      targets: fading,
       alpha: 0,
       delay: 1500,
       duration: 400,
-      onComplete: () => {
-        win.destroy();
-        tx.destroy();
-      },
+      onComplete: () => fading.forEach((o) => o.destroy()),
     });
   }
 
@@ -541,11 +575,12 @@ export class OverworldScene extends Phaser.Scene {
       GS.data.facing = this.facing;
     }
     if (moved) {
-      const anim = `rex-walk-${this.facing}`;
+      // S9b: running is its own cycle (both step poses, no neutral frame) —
+      // the gait changes, not just the tempo
+      const anim = `rex-${running ? 'run' : 'walk'}-${this.facing}`;
       if (this.player.anims.currentAnim?.key !== anim || !this.player.anims.isPlaying) {
         this.player.anims.play(anim, true);
       }
-      this.player.anims.timeScale = running ? 1.6 : 1;
       this.stepTimer -= dt;
       if (this.stepTimer <= 0) {
         AUDIO.sfx('step');
@@ -574,12 +609,15 @@ export class OverworldScene extends Phaser.Scene {
         f.spr.setDepth(crumb.y);
         return;
       }
-      const movedF = Math.hypot(f.spr.x - crumb.x, f.spr.y - crumb.y) > 0.5;
       f.spr.x = crumb.x;
       f.spr.y = crumb.y;
       f.spr.setDepth(crumb.y);
-      const anim = `${f.id}-walk-${crumb.f}`;
-      if (movedF && moved) {
+      // S9b fix: followers snap to their crumb, so a per-frame "did I move"
+      // check was false between trail updates — the anim restarted every few
+      // frames and froze on its first frame. The LEADER's motion drives the
+      // conga: while Rex moves, everyone behind him walks (or runs).
+      const anim = `${f.id}-${running ? 'run' : 'walk'}-${crumb.f}`;
+      if (moved) {
         if (f.spr.anims.currentAnim?.key !== anim || !f.spr.anims.isPlaying) f.spr.anims.play(anim, true);
       } else {
         f.spr.anims.stop();
@@ -705,14 +743,14 @@ export class OverworldScene extends Phaser.Scene {
         r.vx = -r.vx;
         r.vy = -r.vy;
       }
-      // humanoid enemies (walker sheets) animate like people
+      // humanoid enemies (walker sheets) animate like people — and SPRINT
+      // like people when they've spotted lunch (S9b run cycles)
       if (r.walker) {
         if (moved) {
           const f: Facing =
             Math.abs(r.vx) > Math.abs(r.vy) ? (r.vx > 0 ? 'right' : 'left') : r.vy > 0 ? 'down' : 'up';
-          const anim = `${r.walker}-walk-${f}`;
+          const anim = `${r.walker}-${distP < 64 ? 'run' : 'walk'}-${f}`;
           if (r.spr.anims.currentAnim?.key !== anim || !r.spr.anims.isPlaying) r.spr.anims.play(anim, true);
-          r.spr.anims.timeScale = distP < 64 ? 1.5 : 1;
         } else if (r.spr.anims.isPlaying) {
           r.spr.anims.stop();
           r.spr.setFrame(standFrame('down'));
@@ -745,12 +783,12 @@ export class OverworldScene extends Phaser.Scene {
           p.spr.x += vx * dt;
           p.spr.y += vy * dt;
           p.facing = Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? 'right' : 'left') : vy > 0 ? 'down' : 'up';
-          this.patrolAnim(p, true, 1);
+          this.patrolAnim(p, true, 'walk');
         }
         if (this.patrolSees(p)) {
           p.state = 'alert';
           p.alertT = 380;
-          this.patrolAnim(p, false, 1);
+          this.patrolAnim(p, false, 'walk');
           // face the player for the realization
           p.facing = this.dirToward(p.spr.x, p.spr.y, this.player.x, this.player.y);
           p.spr.setFrame(standFrame(p.facing));
@@ -779,7 +817,7 @@ export class OverworldScene extends Phaser.Scene {
         p.spr.x = nx;
         p.spr.y = ny;
         p.facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
-        this.patrolAnim(p, true, 1.5);
+        this.patrolAnim(p, true, 'run');
         if (p.bang) {
           p.bang.x = p.spr.x;
           p.bang.y = p.spr.y - p.spr.height - 2;
@@ -799,11 +837,11 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  private patrolAnim(p: PatrolObj, moving: boolean, speed: number): void {
+  /** patrols stroll their route and SPRINT a chase (S9b run cycles) */
+  private patrolAnim(p: PatrolObj, moving: boolean, gait: 'walk' | 'run'): void {
     if (moving) {
-      const anim = `${p.walker}-walk-${p.facing}`;
+      const anim = `${p.walker}-${gait}-${p.facing}`;
       if (p.spr.anims.currentAnim?.key !== anim || !p.spr.anims.isPlaying) p.spr.anims.play(anim, true);
-      p.spr.anims.timeScale = speed;
     } else if (p.spr.anims.isPlaying) {
       p.spr.anims.stop();
       p.spr.setFrame(standFrame(p.facing));
@@ -1095,8 +1133,12 @@ export class OverworldScene extends Phaser.Scene {
       }
     }
     for (const s of this.mapDef.signs) {
+      // S9: signs gate like NPCs — quest clues exist only mid-trail
+      if (s.ifFlag && !GS.flag(s.ifFlag)) continue;
+      if (s.unlessFlag && GS.flag(s.unlessFlag)) continue;
       if (Math.hypot(s.x * 16 + 8 - probeX, s.y * 16 + 8 - probeY) < 16) {
         AUDIO.sfx('cursor');
+        if (await this.signBeat(s.dialogue)) return;
         await this.dlg.say(...DIALOGUE[s.dialogue]);
         return;
       }
@@ -1160,6 +1202,8 @@ export class OverworldScene extends Phaser.Scene {
       };
       if (probeX > r.x && probeX < r.x + r.w && probeY > r.y && probeY < r.y + r.h) {
         AUDIO.sfx('cursor');
+        // S9 §A10 #2: with the route in hand, these doors take letters first
+        if (await this.mailDelivery(p.sprite)) return;
         // S2 doors report their state
         if (p.sprite === 'holding_door') {
           if (GS.flag('holding_open')) {
@@ -1216,7 +1260,226 @@ export class OverworldScene extends Phaser.Scene {
       }
       return;
     }
+    // S9: quest givers and quest-state NPCs branch through their machines
+    if (await this.questTalk(n)) return;
     await this.dlg.say(...DIALOGUE[n.def.dialogue]);
+  }
+
+  /* ---------------- S9: the §A10 #1–3 quest beats (Prompt 26) ----------------
+   * State machines live in data (src/data/quests.ts) + flags; these beats are
+   * the world's side of each transition, per ADR-014: commit flags, then
+   * fade-restart whenever the map must rebuild (gated NPCs/props/spawners).
+   */
+
+  /** quest-giver conversations; true = handled, false = fall through */
+  private async questTalk(n: NpcObj): Promise<boolean> {
+    switch (n.def.id) {
+      case 'mrs_pemmel':
+        // her §A10 ask opens at dawn — Biscuit holds the park until then
+        if (!GS.flag('zapper_done')) return false;
+        await this.pemmelBeat();
+        return true;
+      case 'mr_plummer':
+        await this.plummerBeat();
+        return true;
+      case 'ana':
+      case 'vivi':
+        await this.twinsBeat();
+        return true;
+      case 'biscuit_drug':
+        await this.biscuitFoundBeat(n);
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /** §A10 #1 — Biscuit, Come Home: Mrs. Pemmel's side of the trail */
+  private async pemmelBeat(): Promise<void> {
+    if (!GS.flag('q_biscuit')) {
+      await this.dlg.say(...DIALOGUE.q_biscuit_ask);
+      GS.setFlag('q_biscuit');
+      AUDIO.sfx('confirm');
+      // the trailhead clue gates onto THIS map — rebuild from data (ADR-014)
+      this.fadeRestart();
+      return;
+    }
+    if (!GS.flag('q_biscuit_c3')) {
+      await this.dlg.say(...DIALOGUE.q_biscuit_active);
+      return;
+    }
+    if (!GS.flag('q_biscuit_done')) {
+      // he zoomed straight home — the reward beat closes the quest
+      const result = completeQuest('biscuit_come_home');
+      if (result === 'hands-full') {
+        await this.dlg.say(...DIALOGUE.q_biscuit_full);
+        return;
+      }
+      GS.setFlag('q_biscuit_walked');
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.q_biscuit_done_beat);
+      AUDIO.jingle('victory', 1600, this.mapDef.music);
+      this.fadeRestart(); // rebuild from data: Biscuit reappears at her side
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_biscuit_after);
+  }
+
+  /** §A10 #1 — the trail's end: Biscuit at the corn dog shelf */
+  private async biscuitFoundBeat(n: NpcObj): Promise<void> {
+    await this.dlg.say(...DIALOGUE.npc_biscuit_drug);
+    GS.setFlag('q_biscuit_c3');
+    this.cut = true;
+    AUDIO.sfx('whoosh');
+    // the ZOOM: he exits stage south, the way every good dog exits
+    this.tweens.add({ targets: n.spr, x: n.spr.x - 20, y: this.scale.height + 40, duration: 480, ease: 'cubic.in' });
+    await this.wait(520);
+    this.fadeRestart(); // gated out by q_biscuit_c3 on rebuild
+  }
+
+  /** §A10 #2 — Mail Must Move: Mr. Plummer's side of the route */
+  private async plummerBeat(): Promise<void> {
+    if (!GS.flag('q_mail')) {
+      await this.dlg.say(...DIALOGUE.q_mail_ask);
+      GS.setFlag('q_mail');
+      AUDIO.sfx('confirm');
+      // Mr. Sodd's lawnmower takes its post — rebuild from data (ADR-014)
+      this.fadeRestart();
+      return;
+    }
+    const delivered = MAIL_FLAGS.filter((f) => GS.flag(f)).length;
+    if (delivered < MAIL_FLAGS.length) {
+      await this.dlg.say(...DIALOGUE.q_mail_active, `(${delivered} of ${MAIL_FLAGS.length} doors so far. The route remembers.)`);
+      return;
+    }
+    if (!GS.flag('q_mail_done')) {
+      const result = completeQuest('mail_must_move');
+      if (result === 'hands-full') {
+        await this.dlg.say(...DIALOGUE.q_mail_full);
+        return;
+      }
+      GS.setFlag('q_mail_reported');
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.q_mail_done_beat);
+      AUDIO.jingle('victory', 1600, this.mapDef.music);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_mail_after);
+  }
+
+  /** §A10 #2 — a letter lands; the door props are the five stops */
+  private async mailDelivery(propSprite: string): Promise<boolean> {
+    if (!GS.flag('q_mail') || GS.flag('q_mail_done')) return false;
+    const stop = MAIL_DOORS[propSprite];
+    if (!stop || GS.flag(stop.flag)) return false;
+    await this.dlg.say(...DIALOGUE[stop.dialogue]);
+    GS.setFlag(stop.flag);
+    AUDIO.sfx('confirm');
+    const delivered = MAIL_FLAGS.filter((f) => GS.flag(f)).length;
+    toast(this, delivered < MAIL_FLAGS.length ? `The mail moves. (${delivered}/${MAIL_FLAGS.length})` : 'The route is COMPLETE. Tell Mr. Plummer.');
+    return true;
+  }
+
+  /** §A10 #3 — Lemonade Empire: both twins run the same machine */
+  private async twinsBeat(): Promise<void> {
+    if (!GS.flag('q_lemonade')) {
+      await this.dlg.say(...DIALOGUE.q_lemonade_ask);
+      GS.setFlag('q_lemonade');
+      GS.data.keyItems.push('lemonade_jug');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (!GS.flag('q_lemonade_done')) {
+      // hand over whatever's ready, in any order — each is its own step
+      let took = false;
+      if (!GS.flag('q_lem_sugar') && GS.hasItem('sugar_bag')) {
+        GS.removeItem('sugar_bag');
+        GS.setFlag('q_lem_sugar');
+        AUDIO.sfx('confirm');
+        await this.dlg.say(...DIALOGUE.lem_take_sugar);
+        took = true;
+      }
+      if (!GS.flag('q_lem_lemons') && GS.hasItem('lemon_crate')) {
+        GS.removeItem('lemon_crate');
+        GS.setFlag('q_lem_lemons');
+        AUDIO.sfx('confirm');
+        await this.dlg.say(...DIALOGUE.lem_take_lemons);
+        took = true;
+      }
+      if (!GS.flag('q_lem_water') && GS.flag('q_lem_jugfull')) {
+        GS.setFlag('q_lem_water');
+        AUDIO.sfx('confirm');
+        await this.dlg.say(...DIALOGUE.lem_take_water);
+        took = true;
+      }
+      if (GS.flag('q_lem_sugar') && GS.flag('q_lem_lemons') && GS.flag('q_lem_water')) {
+        GS.setFlag('q_lem_poured');
+        completeQuest('lemonade_empire'); // no reward item — the stand IS the reward
+        const jug = GS.data.keyItems.indexOf('lemonade_jug');
+        if (jug >= 0) GS.data.keyItems.splice(jug, 1); // it was always theirs
+        await this.dlg.say(...DIALOGUE.lem_pour_beat);
+        AUDIO.jingle('victory', 1600, this.mapDef.music);
+        return;
+      }
+      if (!took) await this.dlg.say(...DIALOGUE.q_lemonade_active);
+      return;
+    }
+    // §A10 #3's reward: infinite free lemonade, gated on the quest flag
+    if (GS.addItem('lemonade')) {
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.lem_free_drink);
+    } else {
+      const rex = GS.data.party[0];
+      rex.hp = Math.min(rex.maxHp, rex.hp + (ITEMS.lemonade.heal ?? 12));
+      AUDIO.sfx('heal');
+      await this.dlg.say(...DIALOGUE.lem_free_full);
+    }
+  }
+
+  /** S9: quest sign beats — sniff clues + the spring; true = handled */
+  private async signBeat(dialogueId: string): Promise<boolean> {
+    if (dialogueId === 'q_biscuit_clue1') {
+      await this.dlg.say(...DIALOGUE.q_biscuit_clue1);
+      GS.setFlag('q_biscuit_c1');
+      AUDIO.sfx('confirm');
+      this.fadeRestart(); // the sniffed prints retire (prop unlessFlag)
+      return true;
+    }
+    if (dialogueId === 'q_biscuit_clue2') {
+      await this.dlg.say(...DIALOGUE.q_biscuit_clue2);
+      GS.setFlag('q_biscuit_c2');
+      AUDIO.sfx('confirm');
+      this.fadeRestart();
+      return true;
+    }
+    if (dialogueId === 'hill_spring') {
+      if (GS.flag('q_lemonade') && !GS.flag('q_lemonade_done') && !GS.flag('q_lem_jugfull')) {
+        await this.dlg.say(...DIALOGUE.spring_fill);
+        GS.setFlag('q_lem_jugfull');
+        AUDIO.sfx('heal');
+        return true;
+      }
+      if (GS.flag('q_lem_jugfull') && !GS.flag('q_lem_water')) {
+        await this.dlg.say(...DIALOGUE.spring_full);
+        return true;
+      }
+      return false; // plain spring flavor
+    }
+    // S9b: the twins' presents — open once, the empty box stays (gated props)
+    if (dialogueId === 'gift_ana' || dialogueId === 'gift_vivi') {
+      const ana = dialogueId === 'gift_ana';
+      await this.dlg.say(...DIALOGUE[dialogueId]);
+      if (!GS.addItem(ana ? 'star_cola' : 'corn_dog')) {
+        await this.dlg.say(...DIALOGUE.gift_hands_full);
+        return true; // nothing committed — come back with room
+      }
+      GS.setFlag(ana ? 'ana_gift_open' : 'vivi_gift_open');
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE[ana ? 'gift_ana_got' : 'gift_vivi_got']);
+      this.fadeRestart(); // the closed box swaps for the opened one
+      return true;
+    }
+    return false;
   }
 
   /** S4 (Prompt 20): phones list contacts — Dad saves, Mom cures Homesick.

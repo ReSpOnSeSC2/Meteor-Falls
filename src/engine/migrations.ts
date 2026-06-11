@@ -2,17 +2,20 @@
  * Save migration registry (S3, per GAME_BIBLE Prompt 22's "versioned schema
  * with a migration registry" — landed early because the v1→v2 bag split needs
  * it). Each step lifts a parsed save one version; deserialize walks the chain.
- * Future sessions REGISTER new steps here (S6 slots, S9 caller ledger, S10
- * arcade score) instead of spread-merging ad hoc.
+ * Future sessions REGISTER new steps here (S10 arcade score next) instead of
+ * spread-merging ad hoc.
  *
  * v1 → v2 (S3): the shared `inventory` becomes per-hero 14-slot bags + equip
  * slots. Folds in ADR-013's tolerant backfill (pre-S12 v1 saves miss
  * heroNames/playerName/coolestThing — canon defaults fill them).
+ *
+ * v2 → v3 (S9): the CALLER ledger (§A6 Ch.8's fuel). Quests did not exist
+ * before v3, so an empty ledger is a v2 save's TRUE history, not a guess.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import type { GameStateData } from './state';
 
-export const CURRENT_SAVE_VERSION = 2;
+export const CURRENT_SAVE_VERSION = 3;
 
 type Raw = Record<string, unknown>;
 
@@ -85,6 +88,16 @@ export const MIGRATIONS: MigrationStep[] = [
 
       out.version = 2;
       return out;
+    },
+  },
+  {
+    to: 3,
+    migrate(raw) {
+      // S9: the first real new save field since v2 — earned §A10 caller
+      // records, in completion order (engine/quests.ts appends them).
+      if (!Array.isArray(raw.callers)) raw.callers = [];
+      raw.version = 3;
+      return raw;
     },
   },
 ];

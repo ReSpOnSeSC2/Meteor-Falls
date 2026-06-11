@@ -27,6 +27,7 @@ import {
   ItemDefSchema,
   MapDefSchema,
   PrayWeightsSchema,
+  QuestDefSchema,
   ShopDefSchema,
 } from '../src/schemas';
 import { HEROES } from '../src/data/heroes';
@@ -34,6 +35,7 @@ import { ABILITIES, PRAY_BASE, PRAY_TEXT } from '../src/data/abilities';
 import { ENEMIES } from '../src/data/enemies';
 import { ITEMS } from '../src/data/items';
 import { SHOPS } from '../src/data/shops';
+import { QUESTS } from '../src/data/quests';
 import { CHAR_LEGEND, MAPS } from '../src/data/maps';
 import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue';
 import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
@@ -69,6 +71,7 @@ parseAll('abilities', AbilityDefSchema, ABILITIES);
 parseAll('enemies', EnemyDefSchema, ENEMIES);
 parseAll('items', ItemDefSchema, ITEMS);
 parseAll('shops', ShopDefSchema, SHOPS);
+parseAll('quests', QuestDefSchema, QUESTS); // S9 — the schema waited since S5
 parseAll('maps', MapDefSchema, MAPS);
 for (const [id, script] of Object.entries(DIALOGUE)) {
   const r = DialogueScriptSchema.safeParse(script);
@@ -156,10 +159,11 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 }
 
 // §A8/ADR-016 — exactly the two Ch.1 shops, with their canon shelves
+// (S9 extended both per §A10 #3: the twins' sugar + city-lemon supplies)
 {
   const canon: Record<string, string[]> = {
-    drugstore: ['tball_bat', 'corn_dog', 'pbj', 'salt_shaker'],
-    starmart: ['tball_bat', 'hand_me_down_pan', 'star_cola', 'corn_dog', 'pbj', 'salt_shaker'],
+    drugstore: ['tball_bat', 'corn_dog', 'pbj', 'salt_shaker', 'sugar_bag'],
+    starmart: ['tball_bat', 'hand_me_down_pan', 'star_cola', 'corn_dog', 'pbj', 'salt_shaker', 'lemon_crate'],
   };
   const have = Object.keys(SHOPS);
   if (have.length !== 2) fail('canon', `Ch.1 ships 2 shops (drugstore, starmart), found ${have.length}`);
@@ -187,6 +191,105 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   if (!ITEMS.star_cola) fail('canon', `star_cola missing from ITEMS`);
   else if (!(ITEMS.star_cola.kind === 'pp' && (ITEMS.star_cola.ppHeal ?? 0) > 0)) {
     fail('canon', `star_cola must be kind 'pp' with ppHeal > 0`);
+  }
+}
+
+// §A10 #1–3 (S9) — the first three side quests, pinned in BOTH directions:
+// every canon quest with its exact name/caller/effect/reward/flag set, and
+// no quest outside the manifest. A missing objective flag, reward item, or
+// caller record fails here naming the gap.
+{
+  interface QuestPin {
+    name: string;
+    chapter: number;
+    giver: string;
+    startFlag: string;
+    objectiveFlags: string[];
+    rewardItem?: string;
+    doneFlag: string;
+    caller: { name: string; kind: 'damage' | 'heal'; power: number };
+  }
+  const canon: Record<string, QuestPin> = {
+    biscuit_come_home: {
+      name: 'Biscuit, Come Home',
+      chapter: 1,
+      giver: 'mrs_pemmel',
+      startFlag: 'q_biscuit',
+      objectiveFlags: ['q_biscuit_c1', 'q_biscuit_c2', 'q_biscuit_c3', 'q_biscuit_walked'],
+      rewardItem: 'lucky_collar',
+      doneFlag: 'q_biscuit_done',
+      caller: { name: 'Mrs. Pemmel', kind: 'damage', power: 400 },
+    },
+    mail_must_move: {
+      name: 'Mail Must Move',
+      chapter: 1,
+      giver: 'mr_plummer',
+      startFlag: 'q_mail',
+      objectiveFlags: ['q_mail_pickles', 'q_mail_sodd', 'q_mail_birch', 'q_mail_chapel', 'q_mail_arcade', 'q_mail_reported'],
+      rewardItem: 'fresh_stamps',
+      doneFlag: 'q_mail_done',
+      caller: { name: 'Mr. Plummer', kind: 'damage', power: 450 },
+    },
+    lemonade_empire: {
+      name: 'Lemonade Empire',
+      chapter: 1,
+      giver: 'ana',
+      startFlag: 'q_lemonade',
+      objectiveFlags: ['q_lem_sugar', 'q_lem_lemons', 'q_lem_water', 'q_lem_poured'],
+      doneFlag: 'q_lemonade_done',
+      caller: { name: 'Ana & Vivi', kind: 'heal', power: 400 },
+    },
+  };
+  for (const [id, pin] of Object.entries(canon)) {
+    const q = QUESTS[id];
+    if (!q) {
+      fail('canon', `§A10 quest '${id}' missing from QUESTS`);
+      continue;
+    }
+    if (q.name !== pin.name) fail('canon', `§A10 quest '${id}' is named '${q.name}', canon '${pin.name}'`);
+    if (q.chapter !== pin.chapter) fail('canon', `'${id}' is chapter ${q.chapter}, canon ${pin.chapter}`);
+    if (q.giver !== pin.giver) fail('canon', `'${id}' giver is '${q.giver ?? 'nobody'}', canon '${pin.giver}'`);
+    if (q.startFlag !== pin.startFlag) fail('canon', `'${id}' startFlag is '${q.startFlag}', canon '${pin.startFlag}'`);
+    if (q.doneFlag !== pin.doneFlag) fail('canon', `'${id}' doneFlag is '${q.doneFlag}', canon '${pin.doneFlag}'`);
+    const flags = q.objectives.map((o) => o.flag);
+    if (flags.join(',') !== pin.objectiveFlags.join(',')) {
+      fail('canon', `'${id}' objective flags are [${flags.join(', ')}], canon [${pin.objectiveFlags.join(', ')}]`);
+    }
+    if (q.rewardItem !== pin.rewardItem) {
+      fail('canon', `'${id}' rewardItem is '${q.rewardItem ?? 'none'}', canon '${pin.rewardItem ?? 'none (the stand itself pays)'}'`);
+    }
+    if (q.rewardItem !== undefined && !ITEMS[q.rewardItem]) {
+      fail('canon', `'${id}' reward '${q.rewardItem}' missing from ITEMS`);
+    }
+    if (q.caller.name !== pin.caller.name) fail('canon', `'${id}' caller is '${q.caller.name}', canon '${pin.caller.name}'`);
+    if (q.caller.effect.kind !== pin.caller.kind || q.caller.effect.power !== pin.caller.power) {
+      fail('canon', `'${id}' caller effect is ${q.caller.effect.kind} ${q.caller.effect.power}, canon ${pin.caller.kind} ${pin.caller.power}`);
+    }
+    // the giver must stand on some map under that npc id (talkTo keys on it)
+    const placed = Object.values(MAPS).some((m) => m.npcs.some((n) => n.id === pin.giver));
+    if (!placed) fail('canon', `'${id}' giver npc '${pin.giver}' stands on no map`);
+  }
+  for (const id of Object.keys(QUESTS)) {
+    if (!(id in canon)) fail('canon', `'${id}' is not in the §A10 #1–3 manifest — extend the manifest with its §A10 row, never ad-hoc`);
+  }
+  // quest flags never collide across quests — the machines stay independent
+  const all = Object.values(QUESTS).flatMap((q) => [q.startFlag, q.doneFlag, ...q.objectives.map((o) => o.flag)]);
+  for (const f of all) {
+    if (all.filter((x) => x === f).length > 1) fail('canon', `quest flag '${f}' is used by more than one quest/step`);
+  }
+  // §A10 #1/#2 reward pins: the collar is a real charm; the stamps sell high
+  if (ITEMS.lucky_collar && !(ITEMS.lucky_collar.kind === 'charm' && (ITEMS.lucky_collar.luck ?? 0) > 0 && ITEMS.lucky_collar.price === 0)) {
+    fail('canon', `lucky_collar must be an unsellable charm with a luck bonus (§A10 #1)`);
+  }
+  if (ITEMS.fresh_stamps && !(ITEMS.fresh_stamps.kind === 'valuable' && ITEMS.fresh_stamps.price === 240)) {
+    fail('canon', `fresh_stamps must be 'valuable' priced 240 — §A10 #2 "sell high" (sells for half: the gag)`);
+  }
+  // §A10 #3 needs the small-HP lemonade and the official jug
+  if (!(ITEMS.lemonade && ITEMS.lemonade.kind === 'food' && (ITEMS.lemonade.heal ?? 0) > 0)) {
+    fail('canon', `§A10 #3 needs 'lemonade' as a small HP food item`);
+  }
+  if (!(ITEMS.lemonade_jug && ITEMS.lemonade_jug.kind === 'key')) {
+    fail('canon', `§A10 #3 needs 'lemonade_jug' as a key item`);
   }
 }
 
@@ -298,6 +401,13 @@ for (const item of Object.values(ITEMS)) {
   sweepTokens('text', `item '${item.id}' text`, item.text, DIALOGUE_TOKENS);
   sweepTokens('text', `item '${item.id}' name`, item.name, DIALOGUE_TOKENS);
 }
+// quest strings render in the JOURNAL through vars() (S9) — and the caller
+// quote replays in the finale's vignettes (§A6 Ch.8), same pipeline
+for (const q of Object.values(QUESTS)) {
+  sweepTokens('text', `quest '${q.id}' name`, q.name, DIALOGUE_TOKENS);
+  q.objectives.forEach((o) => sweepTokens('text', `quest '${q.id}' objective '${o.id}'`, o.text, DIALOGUE_TOKENS));
+  sweepTokens('text', `quest '${q.id}' caller quote`, q.caller.quote, DIALOGUE_TOKENS);
+}
 // battle-rendered strings additionally pass BattleScene.fill(): {user}/{e}/{t}
 for (const a of Object.values(ABILITIES)) sweepTokens('text', `ability '${a.id}' text`, a.text, BATTLE_TOKENS);
 for (const [tier, line] of Object.entries(PRAY_TEXT)) sweepTokens('text', `PRAY_TEXT.${tier}`, line, BATTLE_TOKENS);
@@ -335,7 +445,7 @@ function sweepPlaceholders(section: string, node: unknown, path: string): void {
     }
   }
 }
-sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, MAPS, DIALOGUE, BATTLE_TEXT, NEW_GAME_ENTRIES }, 'data');
+sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, QUESTS, MAPS, DIALOGUE, BATTLE_TEXT, NEW_GAME_ENTRIES }, 'data');
 
 /* ================= verdict ================= */
 
@@ -345,6 +455,7 @@ const counts = [
   `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1 + Boss 1)`,
   `${Object.keys(ITEMS).length} items`,
   `${Object.keys(SHOPS).length} shops`,
+  `${Object.keys(QUESTS).length} quests (§A10 #1–3)`,
   `${Object.keys(MAPS).length} maps`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
 ].join(' · ');
@@ -355,4 +466,4 @@ if (errors.length > 0) {
   console.error('');
   process.exit(1);
 }
-console.log(`✓ content valid — ${counts} · pray table sums 100 · quest schema ready (S9)`);
+console.log(`✓ content valid — ${counts} · pray table sums 100`);

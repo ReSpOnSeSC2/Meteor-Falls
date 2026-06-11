@@ -9,6 +9,8 @@ import {
   applyWeakness,
   heroOffense,
   equipDelta,
+  heroLuck,
+  equipLuckDelta,
   contractHomesick,
   homesickSkips,
   HOMESICK_CHANCE,
@@ -87,6 +89,18 @@ describe('equipped offense (S3 — the acting hero, not the shared bag)', () => 
     rex.equip.weapon = 'tball_bat';
     expect(equipDelta(rex, 'cracked_bat')).toBe(-4); // downgrades preview too
     expect(equipDelta(rex, 'corn_dog')).toBe(0); // not equipment
+  });
+
+  it("the Lucky Collar rides the 'other' slot: heroLuck and its preview (S9)", () => {
+    const rex = makeHeroState('rex', 5);
+    expect(heroLuck(rex)).toBe(rex.stats.luck);
+    expect(equipLuckDelta(rex, 'lucky_collar')).toBe(ITEMS.lucky_collar.luck ?? 0);
+    rex.bag.push('lucky_collar');
+    rex.equip.other = 'lucky_collar';
+    expect(heroLuck(rex)).toBe(rex.stats.luck + (ITEMS.lucky_collar.luck ?? 0));
+    expect(equipLuckDelta(rex, 'lucky_collar')).toBe(0); // already wearing it
+    expect(equipLuckDelta(rex, 'corn_dog')).toBe(0); // not a charm
+    expect(heroOffense(rex)).toBe(rex.stats.offense); // luck never leaks into offense
   });
 });
 
