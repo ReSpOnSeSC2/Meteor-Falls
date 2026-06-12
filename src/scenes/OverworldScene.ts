@@ -2914,10 +2914,13 @@ export class OverworldScene extends Phaser.Scene {
     /* ---- PHASE 3: the descent (no words — the sky is talking) ---- */
     star.destroy();
     halo.destroy();
-    const impact = { x: 158, y: 106 }; // just past the front ridge's peak
+    // the saddle BETWEEN the back hill and the front ridge — the rock buries
+    // into the slope and the ridge hides its base (landing on the summit
+    // reads as "balanced on the mountain", user-rejected)
+    const impact = { x: 192, y: 110 };
     const dropMs = 2800;
-    const trailGlow = addTo(fx, this.add.rectangle(312 + 41, 26 - 21, 150, 7, 0xf8e8a0).setAngle(152).setAlpha(0.5));
-    const trailHot = addTo(fx, this.add.rectangle(312 + 23, 26 - 12, 84, 3, 0xf86f4f).setAngle(152).setAlpha(0.9));
+    const trailGlow = addTo(fx, this.add.rectangle(312 + 38, 26 - 26, 150, 7, 0xf8e8a0).setAngle(145).setAlpha(0.5));
+    const trailHot = addTo(fx, this.add.rectangle(312 + 21, 26 - 15, 84, 3, 0xf86f4f).setAngle(145).setAlpha(0.9));
     const rock = addTo(fx, this.add.image(312, 26, 'meteor_rock').setScale(0.34).setAngle(28).setTint(0xf8d868));
     AUDIO.sfx('meteor_fall');
     this.tweens.add({ targets: rock, scale: 0.62, angle: '+=210', duration: dropMs, ease: 'quad.in' });
@@ -2977,11 +2980,11 @@ export class OverworldScene extends Phaser.Scene {
       onComplete: () => { hillTreeA.setAngle(0); hillTreeB.setAngle(0); },
     });
     // the crater takes over behind the ridge: glow + embedded rock + dust column
-    const craterGlow = addTo(craterLayer, this.add.circle(164, 96, 16, 0xf8d868, 0.8));
-    addTo(craterLayer, this.add.image(166, 104, 'meteor_rock').setOrigin(0.5, 1).setScale(0.55).setTint(0xf87848));
+    const craterGlow = addTo(craterLayer, this.add.circle(196, 112, 16, 0xf8d868, 0.8));
+    addTo(craterLayer, this.add.image(198, 120, 'meteor_rock').setOrigin(0.5, 1).setScale(0.55).setTint(0xf87848));
     this.tweens.add({ targets: craterGlow, scale: 1.5, fillAlpha: 0.25, duration: 820, yoyo: true, repeat: -1 });
     for (let i = 0; i < 5; i++) {
-      const puff = addTo(craterLayer, this.add.circle(160 + Phaser.Math.Between(-8, 8), 100, 7 + i * 2, 0x8a7a6a, 0.5));
+      const puff = addTo(craterLayer, this.add.circle(194 + Phaser.Math.Between(-8, 8), 112, 7 + i * 2, 0x8a7a6a, 0.5));
       this.tweens.add({ targets: puff, y: 52 - i * 8, scale: 2.4, fillAlpha: 0, duration: 2600 + i * 500, ease: 'sine.out', delay: 120 * i, onComplete: () => puff.destroy() });
     }
     // ground-hugging shockwaves race outward along the strip
@@ -2993,7 +2996,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     // debris on real gravity arcs, over the ridge and back down
     for (let i = 0; i < 14; i++) {
-      const frag = addTo(world, this.add.rectangle(158, 104, i % 3 === 0 ? 3 : 2, 2, [0xf8e8a0, 0xf87848, 0x6a5a4a][i % 3]));
+      const frag = addTo(world, this.add.rectangle(194, 114, i % 3 === 0 ? 3 : 2, 2, [0xf8e8a0, 0xf87848, 0x6a5a4a][i % 3]));
       const vx = Phaser.Math.FloatBetween(-1, 1) * 90;
       const vy = -Phaser.Math.FloatBetween(40, 130);
       this.tweens.addCounter({
@@ -3003,7 +3006,7 @@ export class OverworldScene extends Phaser.Scene {
         onUpdate: (tw) => {
           const v = tw.getValue() ?? 1;
           const t = v * 1.3;
-          frag.setPosition(158 + vx * t, 104 + vy * t + 100 * t * t);
+          frag.setPosition(194 + vx * t, 114 + vy * t + 100 * t * t);
           frag.setAlpha(1 - v);
         },
         onComplete: () => frag.destroy(),
@@ -3019,7 +3022,7 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.sfx('ember');
     this.time.delayedCall(600, () => AUDIO.sfx('ember'));
     for (let i = 0; i < 8; i++) {
-      const m = addTo(world, this.add.rectangle(162, 94, 2, 2, 0xf8f0d0).setAlpha(0));
+      const m = addTo(world, this.add.rectangle(197, 108, 2, 2, 0xf8f0d0).setAlpha(0));
       const riseX = 110 + i * 15;
       const riseY = 60 - (i % 3) * 7;
       this.tweens.add({
@@ -3033,7 +3036,7 @@ export class OverworldScene extends Phaser.Scene {
         onComplete: () => {
           if (i === 3) {
             // the crater keeps its Ember — the first Resonance Site is right there
-            this.tweens.add({ targets: m, x: 164, y: 96, alpha: 0, duration: 900, delay: 250, ease: 'sine.in', onComplete: () => m.destroy() });
+            this.tweens.add({ targets: m, x: 197, y: 110, alpha: 0, duration: 900, delay: 250, ease: 'sine.in', onComplete: () => m.destroy() });
           } else {
             const ang = Phaser.Math.DegToRad(195 + i * 22);
             this.tweens.add({ targets: m, x: riseX + Math.cos(ang) * 460, y: riseY + Math.sin(ang) * 260, alpha: 0.1, duration: 850, delay: 150 + i * 40, ease: 'quad.in', onComplete: () => m.destroy() });
