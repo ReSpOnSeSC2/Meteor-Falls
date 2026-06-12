@@ -701,6 +701,468 @@ export function drawTitanicTick(wear: WearTier = 0): Pixmap {
   return pm;
 }
 
+/* ================================================================= */
+/* §A7 CHAPTER 2 (S14) — the South America six + BOSS 2. Same laws:   */
+/* hand-authored contours, deliberate clustered wear, floats, no      */
+/* scatter on bodies. The Idol draws BOTH §A6 forms — SOLID GOLD and  */
+/* HOLLOW — through one base so the swap reads as the same body with  */
+/* the warmth gone.                                                   */
+
+export function drawPickpocketParrot(wear: WearTier = 0): Pixmap {
+  const pm = new Pixmap(68, 76);
+  const g = px(RAMP.GRASS, 2);
+  const gL = px(RAMP.GRASS, 3);
+  const gD = px(RAMP.GRASS, 1);
+  const gDD = px(RAMP.GRASS, 0);
+  // body — a plump hover, hand-run contour (rule 3)
+  pm.contour(30, 18, [4, 7, 9, 11, 12, 13, 13, 13, 13, 12, 12, 11, 10, 9, 7, 5, 3], g);
+  pm.contour(26, 22, [3, 5, 6, 7, 7, 7, 6, 5, 3], gL); // chest light
+  pm.rect(38, 26, 5, 14, gD); // wing-side shade
+  // head + red crest
+  pm.contour(30, 6, [3, 5, 6, 7, 7, 6], g);
+  pm.hline(27, 7, 5, gL);
+  pm.rect(27, 2, 8, 4, px(RAMP.RED, 2));
+  pm.hline(28, 1, 5, px(RAMP.RED, 3));
+  if (wear >= 2) {
+    // the crest knocked sideways — pride goes first
+    pm.rect(27, 2, 8, 4, T);
+    pm.line(33, 2, 38, 5, px(RAMP.RED, 2));
+    pm.set(38, 4, px(RAMP.RED, 3));
+  }
+  // greedy eye + gold beak holding a coin
+  pm.rect(31, 9, 4, 4, px(RAMP.PAPER, 3));
+  pm.rect(33, 10, 2, 2, C.outline);
+  pm.set(33, 10, px(RAMP.PAPER, 3));
+  pm.contour(40, 10, [2, 3, 2, 1], px(RAMP.GOLD, 2));
+  pm.hline(39, 10, 3, px(RAMP.GOLD, 3));
+  pm.ellipse(44, 12, 2, 2, px(RAMP.GOLD, 3)); // the coin, mid-getaway
+  pm.set(44, 12, px(RAMP.GOLD, 1));
+  // wings out — feather runs, hand-stepped
+  pm.line(18, 22, 6, 14, gD);
+  pm.line(18, 26, 5, 20, g);
+  pm.line(19, 30, 6, 27, gD);
+  pm.rect(8, 18, 12, 12, g);
+  pm.contour(13, 16, [2, 4, 6, 7, 7, 6, 5, 3], gL);
+  pm.line(43, 22, 56, 14, gD);
+  pm.line(43, 26, 57, 20, g);
+  pm.line(42, 30, 56, 27, gD);
+  pm.rect(44, 18, 12, 12, g);
+  pm.contour(50, 16, [2, 4, 6, 7, 7, 6, 5, 3], gD);
+  if (wear >= 1) {
+    // shed feathers: two clean gaps in the near wing + one drifting down
+    pm.rect(10, 24, 3, 4, T);
+    pm.rect(48, 22, 3, 3, T);
+    pm.line(14, 52, 16, 56, gL);
+  }
+  // tail fan
+  pm.line(30, 50, 24, 64, gD);
+  pm.line(32, 50, 32, 66, g);
+  pm.line(34, 50, 40, 64, gD);
+  // feet: one clutching the PURSE (the whole §A7 quirk, held up like a prize)
+  pm.vline(26, 50, 5, px(RAMP.GOLD, 1));
+  pm.vline(36, 50, 4, px(RAMP.GOLD, 1));
+  pm.contour(26, 56, [3, 4, 5, 5, 4], px(RAMP.EARTH, 2));
+  pm.hline(24, 57, 4, px(RAMP.EARTH, 3));
+  pm.set(26, 55, px(RAMP.GOLD, 2)); // the clasp
+  if (wear >= 2) {
+    // the purse leaks — three coins escaping (your refund, mid-air)
+    pm.set(22, 64, px(RAMP.GOLD, 3));
+    pm.set(28, 68, px(RAMP.GOLD, 2));
+    pm.set(33, 65, px(RAMP.GOLD, 3));
+  }
+  pm.checker(26, 36, 10, 8, g, gDD, 1);
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawGildedBeetle(wear: WearTier = 0): Pixmap {
+  const pm = new Pixmap(76, 60);
+  const au = px(RAMP.GOLD, 2);
+  const auL = px(RAMP.GOLD, 3);
+  const auD = px(RAMP.GOLD, 1);
+  const auDD = px(RAMP.GOLD, 0);
+  // the carapace dome — one proud hand-run contour
+  pm.contour(40, 8, [6, 10, 13, 15, 17, 18, 19, 20, 20, 20, 20, 19, 18, 17, 15, 12], au);
+  // seam down the middle (wing cases)
+  pm.vline(40, 10, 14, auD);
+  // dome light: a deliberate gleam arc, top-left
+  pm.contour(32, 10, [2, 4, 5, 5, 4, 2], auL);
+  pm.set(28, 12, px(RAMP.PAPER, 3)); // the one white spark (pure light)
+  // lower-right core shadow + ONE dither seam (rule 6)
+  pm.rect(48, 26, 11, 10, auD);
+  pm.checker(44, 24, 14, 12, au, auD, 1);
+  pm.hline(24, 36, 33, auDD);
+  // head + horn (it has opinions)
+  pm.contour(14, 22, [3, 5, 6, 7, 7, 6], px(RAMP.EARTH, 1));
+  pm.rect(10, 26, 4, 4, px(RAMP.EARTH, 2));
+  pm.line(12, 22, 4, 10, auD); // the horn, gilded at the tip
+  pm.line(13, 22, 5, 11, au);
+  pm.set(4, 9, auL);
+  pm.rect(15, 25, 3, 3, px(RAMP.RED, 2)); // one cross eye
+  pm.set(16, 26, px(RAMP.RED, 3));
+  // legs — six, planted like furniture
+  for (const [x0, y0, x1, y1] of [
+    [24, 38, 18, 50],
+    [34, 40, 30, 52],
+    [44, 40, 46, 52],
+    [54, 38, 60, 50],
+    [28, 39, 24, 51],
+    [50, 39, 54, 51],
+  ] as const) {
+    pm.line(x0, y0, x1, y1, px(RAMP.EARTH, 0));
+    pm.set(x1, y1 + 1, px(RAMP.EARTH, 1));
+  }
+  if (wear >= 1) {
+    // the gilding chips at the rim — two clustered scuffs, brown shows through
+    pm.rect(52, 14, 4, 3, px(RAMP.EARTH, 1));
+    pm.set(53, 15, px(RAMP.EARTH, 2));
+    pm.rect(30, 30, 3, 2, px(RAMP.EARTH, 1));
+  }
+  if (wear >= 2) {
+    // the big crack: mostly beetle after all
+    pm.line(36, 9, 44, 22, auDD);
+    pm.line(44, 22, 40, 32, auDD);
+    pm.rect(41, 18, 5, 4, px(RAMP.EARTH, 1)); // plain beetle, exposed
+    pm.set(42, 19, px(RAMP.EARTH, 2));
+    pm.set(28, 12, T); // the spark of polish is gone
+  }
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawCursedSouvenir(wear: WearTier = 0): Pixmap {
+  const pm = new Pixmap(60, 80);
+  const stone = px(RAMP.EARTH, 2);
+  const stoneL = px(RAMP.EARTH, 3);
+  const stoneD = px(RAMP.EARTH, 1);
+  const stoneDD = px(RAMP.EARTH, 0);
+  // wooden gift-shop base + the price tag that seals the curse
+  pm.rect(14, 64, 32, 8, px(RAMP.EARTH, 1));
+  pm.hline(14, 64, 32, px(RAMP.EARTH, 2));
+  pm.hline(15, 71, 30, stoneDD);
+  pm.rect(42, 58, 10, 7, px(RAMP.PAPER, 3)); // the tag
+  pm.line(42, 58, 38, 54, px(RAMP.PAPER, 1)); // its string
+  pm.hline(44, 60, 6, px(RAMP.RED, 2)); // a price nobody should pay
+  pm.hline(44, 62, 4, px(RAMP.PAPER, 1));
+  if (wear >= 2) {
+    // the tag tears — the curse loosens its paperwork
+    pm.rect(48, 58, 4, 7, T);
+    pm.line(47, 58, 49, 64, px(RAMP.PAPER, 2));
+  }
+  // the little idol body — squat, hand-stepped
+  pm.contour(30, 14, [5, 7, 9, 10, 11, 11, 11, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14, 14, 14, 14, 14, 14, 13, 13, 13, 12], stone);
+  // top-left light, lower-right core (3-tone, rule-abiding)
+  pm.contour(25, 16, [2, 3, 4, 4, 4, 3], stoneL);
+  pm.rect(36, 38, 6, 18, stoneD);
+  pm.hline(22, 56, 18, stoneDD);
+  // carved zigzag band — deliberate, off-center (rule 4)
+  for (let i = 0; i < 4; i++) {
+    pm.line(20 + i * 6, 44, 23 + i * 6, 41, stoneDD);
+    pm.line(23 + i * 6, 41, 26 + i * 6, 44, stoneDD);
+  }
+  // ENORMOUS weepy eyes — the whole quirk, front and center
+  pm.rect(21, 22, 8, 9, px(RAMP.PAPER, 3));
+  pm.rect(33, 22, 8, 9, px(RAMP.PAPER, 3));
+  pm.rect(24, 26, 4, 5, px(RAMP.BLUE, 1)); // pupils, swimming
+  pm.rect(35, 26, 4, 5, px(RAMP.BLUE, 1));
+  pm.set(25, 27, px(RAMP.PAPER, 3));
+  pm.set(36, 27, px(RAMP.PAPER, 3));
+  pm.line(19, 21, 30, 19, C.outline); // the heavy carved brow
+  pm.line(43, 21, 32, 19, C.outline);
+  // tear streams — pure light, stamped AFTER outline (rule-2 mirror) below
+  // tiny useless arms
+  pm.rect(14, 40, 4, 10, stone);
+  pm.rect(42, 40, 4, 10, stone);
+  pm.set(15, 50, stoneL);
+  pm.set(43, 50, stoneL);
+  // downturned carved mouth
+  pm.contour(31, 34, [4, 5], stoneDD);
+  pm.hline(28, 33, 7, C.outline);
+  if (wear >= 1) {
+    // chips where it has been dropped before — clustered, top corner
+    pm.rect(37, 15, 3, 2, stoneL);
+    pm.set(38, 17, stoneL);
+    pm.set(20, 36, stoneDD);
+    pm.set(21, 37, stoneDD);
+  }
+  if (wear >= 2) {
+    // the base splits — it is coming apart from the grief
+    pm.line(26, 64, 30, 71, stoneDD);
+    pm.line(30, 64, 28, 71, C.outline);
+    pm.rect(24, 50, 3, 3, stoneDD); // a body fissure
+  }
+  pm.outline(C.outline);
+  // the tears, after outline: light is never outlined (ADR-021 idiom)
+  pm.vline(23, 31, wear >= 1 ? 14 : 9, px(RAMP.CYAN, 3));
+  pm.vline(38, 31, wear >= 1 ? 16 : 11, px(RAMP.CYAN, 3));
+  pm.set(23, 31 + (wear >= 1 ? 14 : 9), px(RAMP.CYAN, 2));
+  pm.set(38, 31 + (wear >= 1 ? 16 : 11), px(RAMP.CYAN, 2));
+  return pm;
+}
+
+export function drawStepMask(wear: WearTier = 0): Pixmap {
+  const pm = new Pixmap(80, 68);
+  const stone = px(RAMP.EARTH, 2);
+  const stoneL = px(RAMP.EARTH, 3);
+  const stoneD = px(RAMP.EARTH, 1);
+  const stoneDD = px(RAMP.EARTH, 0);
+  // the mask slab — wide, stepped like its pyramid (hand-run sides)
+  pm.contour(40, 6, [14, 17, 20, 23, 26, 28, 29, 30, 30, 30, 30, 30, 30, 29, 29, 28, 28, 27, 26, 25, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4], stone);
+  // stepped headdress notches — geometry, not noise
+  pm.rect(18, 6, 8, 3, stoneD);
+  pm.rect(54, 6, 8, 3, stoneD);
+  pm.rect(26, 3, 28, 4, stone);
+  pm.hline(28, 2, 24, stoneL);
+  // top-left light plane + lower-right core shadow, ONE dither seam
+  pm.contour(28, 9, [6, 8, 9, 9, 8, 6], stoneL);
+  pm.rect(56, 36, 10, 16, stoneD);
+  pm.checker(50, 34, 12, 14, stone, stoneD, 1);
+  pm.hline(22, 56, 30, stoneDD);
+  // the heavy brow + deep-set carved eyes
+  pm.rect(16, 20, 48, 4, stoneDD);
+  pm.rect(22, 26, 12, 8, C.outline);
+  pm.rect(46, 26, 12, 8, C.outline);
+  pm.rect(24, 28, 4, 4, px(RAMP.MAGENTA, 2)); // something keeps watch inside
+  pm.rect(48, 28, 4, 4, px(RAMP.MAGENTA, 2));
+  pm.set(25, 29, px(RAMP.MAGENTA, 3));
+  pm.set(49, 29, px(RAMP.MAGENTA, 3));
+  // the nose slab
+  pm.rect(36, 28, 8, 12, stoneD);
+  pm.vline(36, 28, 12, stoneL);
+  // teeth — a calm, terrible row
+  pm.rect(24, 44, 32, 8, stoneDD);
+  for (let i = 0; i < 7; i++) pm.rect(25 + Math.round(i * 4.5), 45, 3, 6, px(RAMP.PAPER, 2));
+  pm.hline(25, 45, 30, px(RAMP.PAPER, 3));
+  // moss tufts — two deliberate clusters where the centuries landed
+  pm.rect(14, 38, 4, 2, px(RAMP.FOREST, 1));
+  pm.set(15, 37, px(RAMP.FOREST, 2));
+  pm.rect(60, 16, 3, 2, px(RAMP.FOREST, 1));
+  pm.set(61, 15, px(RAMP.FOREST, 2));
+  // carved cheek spirals (off-center, rule 4)
+  pm.line(18, 44, 22, 40, stoneDD);
+  pm.set(22, 41, stoneDD);
+  if (wear >= 1) {
+    // a corner chip + one long hairline crack
+    pm.rect(64, 10, 4, 3, T);
+    pm.set(63, 12, stoneL);
+    pm.line(58, 12, 52, 24, stoneDD);
+  }
+  if (wear >= 2) {
+    // split through the right eye — the watcher inside flickers out
+    pm.line(50, 6, 52, 26, C.outline);
+    pm.line(52, 26, 48, 40, stoneDD);
+    pm.rect(48, 28, 4, 4, C.outline);
+    pm.rect(30, 45, 4, 7, T); // a tooth gone
+  }
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawBananaBunch(wear: WearTier = 0): Pixmap {
+  const pm = new Pixmap(60, 68);
+  const y2 = px(RAMP.GOLD, 2);
+  const y3 = px(RAMP.GOLD, 3);
+  const y1 = px(RAMP.GOLD, 1);
+  // five members standing together, fanned like a raised fist
+  const stems: Array<[number, number, number]> = [
+    [12, 24, -2], // x of base, top y, lean
+    [22, 16, -1],
+    [31, 12, 0],
+    [40, 16, 1],
+    [49, 24, 2],
+  ];
+  stems.forEach(([bx, ty, lean], i) => {
+    const droop = wear >= 2 && (i === 0 || i === 4) ? 8 : 0; // two members peel off the cause
+    for (let j = 0; j < 36 - (ty - 12) - droop; j++) {
+      const x = bx + Math.round((lean * j) / 12);
+      pm.rect(x, ty + droop + j, 5, 1, j < 4 ? y1 : y2);
+    }
+    pm.vline(bx + Math.round((lean * 2) / 12), ty + droop + 1, 4, px(RAMP.FOREST, 1)); // the stem tip
+    // each member's lit edge
+    for (let j = 4; j < 20; j++) pm.set(bx + Math.round((lean * j) / 12), ty + droop + j, y3);
+    if (wear >= 1) {
+      // bruises — clustered, honest, organic (deliberate spots, never noise)
+      pm.rect(bx + 1, ty + droop + 14 + i * 2, 2, 2, px(RAMP.EARTH, 1));
+    }
+  });
+  // the bunch joins at the crown
+  pm.rect(18, 50, 26, 8, y1);
+  pm.hline(20, 50, 22, y2);
+  pm.hline(18, 57, 26, px(RAMP.EARTH, 1));
+  // the front member's face — the union rep
+  pm.rect(28, 24, 4, 4, px(RAMP.PAPER, 3));
+  pm.rect(34, 24, 4, 4, px(RAMP.PAPER, 3));
+  pm.rect(29, 25, 2, 2, C.outline);
+  pm.rect(35, 25, 2, 2, C.outline);
+  pm.line(27, 22, 31, 23, C.outline); // organized brows
+  pm.line(39, 22, 35, 23, C.outline);
+  pm.hline(30, 31, 6, C.outline); // a firm line of a mouth
+  // the tiny picket sign (it says everything it needs to)
+  pm.vline(8, 30, 22, px(RAMP.EARTH, 1));
+  pm.rect(3, 24, 11, 8, px(RAMP.PAPER, 3));
+  pm.vline(8, 26, 4, px(RAMP.RED, 2));
+  pm.set(8, 31, px(RAMP.RED, 2)); // "!"
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawJungleJitterbug(wear: WearTier = 0): Pixmap {
+  const pm = new Pixmap(76, 78);
+  const sh = px(RAMP.FOREST, 2);
+  const shL = px(RAMP.FOREST, 3);
+  const shD = px(RAMP.FOREST, 1);
+  const shDD = px(RAMP.FOREST, 0);
+  // thorax mid-spin — tilted body contour, one hip thrown out
+  pm.contour(38, 16, [3, 6, 8, 10, 11, 12, 12, 12, 12, 11, 11, 10, 9, 8, 6, 4], sh);
+  pm.contour(34, 19, [2, 4, 5, 5, 4, 2], shL);
+  pm.rect(44, 28, 6, 10, shD);
+  pm.hline(30, 38, 14, shDD);
+  // iridescent sheen — two deliberate magenta plates (never scatter)
+  pm.rect(33, 24, 4, 3, px(RAMP.MAGENTA, 2));
+  pm.set(34, 25, px(RAMP.MAGENTA, 3));
+  pm.rect(41, 33, 3, 2, px(RAMP.MAGENTA, 1));
+  // head thrown back, doing the thing with the eyes
+  pm.contour(48, 6, [2, 4, 5, 6, 6, 5], sh);
+  pm.hline(46, 7, 4, shL);
+  pm.rect(50, 9, 4, 4, px(RAMP.GOLD, 3)); // compound eye, stage-lit
+  pm.set(51, 10, C.outline);
+  // antennae — one ahead of the beat
+  pm.line(48, 5, 42, 0, shD);
+  pm.line(52, 5, 58, 1, shD);
+  if (wear >= 2) {
+    // the showy antenna bends — the rhythm section is struggling
+    pm.line(52, 5, 58, 1, T);
+    pm.line(52, 5, 57, 6, shD);
+    pm.set(58, 7, shD);
+  }
+  // six legs, mid-choreography: two planted, two kicked, two jazz
+  pm.line(32, 40, 22, 54, shD);
+  pm.line(22, 54, 20, 64, shDD);
+  pm.line(40, 42, 44, 58, shD);
+  pm.line(44, 58, 42, 68, shDD);
+  pm.line(46, 36, 60, 30, shD); // the kick
+  pm.line(60, 30, 70, 26, shDD);
+  pm.line(30, 32, 16, 28, shD);
+  pm.line(16, 28, 8, 30, shDD);
+  pm.line(44, 40, 56, 48, shD);
+  pm.line(56, 48, 64, 46, shDD);
+  pm.line(28, 36, 18, 42, shD);
+  if (wear >= 1) {
+    // a clean crack across the thorax plate
+    pm.line(34, 26, 42, 30, shDD);
+    pm.set(38, 28, C.outline);
+  }
+  if (wear >= 2) {
+    // one leg drags the floor — the dance is mostly memory now
+    pm.line(44, 40, 56, 48, T);
+    pm.line(44, 40, 52, 56, shD);
+    pm.line(52, 56, 54, 66, shDD);
+  }
+  pm.outline(C.outline);
+  // motion ticks — pure light after outline (it never stops moving)
+  pm.set(24, 14, shL);
+  pm.set(22, 16, shL);
+  pm.set(58, 44, shL);
+  pm.set(60, 42, shL);
+  return pm;
+}
+
+/**
+ * BOSS 2 — IDOL OF THE GILDED GRIN, both §A6 forms off one base so the swap
+ * reads as the same body with the warmth gone. SOLID GOLD gleams; HOLLOW is
+ * the same silhouette gone dark — a thin shell rim around an absence, the
+ * grin now an opening with nothing behind it. The §A11.3 rule shapes the
+ * art: nothing about it is funny.
+ */
+export function drawGildedGrin(wear: WearTier = 0, hollow = false): Pixmap {
+  const pm = new Pixmap(100, 96);
+  const au = hollow ? px(RAMP.NIGHT, 2) : px(RAMP.GOLD, 2);
+  const auL = hollow ? px(RAMP.NIGHT, 3) : px(RAMP.GOLD, 3);
+  const auD = hollow ? px(RAMP.NIGHT, 1) : px(RAMP.GOLD, 1);
+  const auDD = hollow ? px(RAMP.NIGHT, 0) : px(RAMP.GOLD, 0);
+  // the stepped headdress — the pyramid, restated (three tiers, off-center vent)
+  pm.rect(34, 2, 32, 7, au);
+  pm.rect(26, 9, 48, 8, au);
+  pm.rect(18, 17, 64, 9, au);
+  pm.hline(35, 2, 18, auL);
+  pm.hline(27, 9, 22, auL);
+  pm.hline(19, 17, 28, auL);
+  pm.rect(60, 4, 4, 3, auD); // the off-center inlay
+  if (wear >= 2) {
+    // a tier corner gone — the mountain is coming for its gold back
+    pm.rect(66, 9, 8, 8, T);
+    pm.set(65, 12, auD);
+    pm.set(64, 15, auD);
+  }
+  // the face slab — a squat, wide presence (hand-run jaw taper)
+  pm.contour(50, 26, [32, 33, 34, 34, 35, 35, 35, 35, 35, 35, 34, 34, 34, 33, 33, 32, 32, 31, 30, 29, 28, 27, 26, 25, 24, 22, 21, 19, 17, 15], au);
+  // plinth feet
+  pm.rect(28, 84, 16, 8, auD);
+  pm.rect(56, 84, 16, 8, auD);
+  pm.hline(29, 84, 14, au);
+  pm.hline(57, 84, 14, au);
+  // light plane top-left + core shadow lower-right, ONE dither seam each
+  pm.contour(34, 28, [8, 10, 11, 11, 10, 8, 6], auL);
+  pm.rect(70, 52, 12, 22, auD);
+  pm.checker(64, 50, 14, 20, au, auD, 1);
+  pm.hline(30, 80, 36, auDD);
+  // the eyes: inlaid sockets. SOLID keeps two gold pinpoints deep inside;
+  // HOLLOW keeps nothing at all.
+  pm.rect(30, 36, 14, 10, C.outline);
+  pm.rect(56, 36, 14, 10, C.outline);
+  if (!hollow) {
+    pm.set(36, 40, px(RAMP.GOLD, 3));
+    pm.set(62, 40, px(RAMP.GOLD, 3));
+  }
+  // the heavy brow
+  pm.rect(26, 33, 48, 3, auDD);
+  // THE GRIN — wider than the face has any right to hold (it keeps going)
+  pm.contour(50, 56, [26, 28, 29, 29, 28, 26, 23, 19, 14], auDD);
+  pm.rect(26, 58, 48, 8, C.outline);
+  if (!hollow) {
+    // square golden teeth, every one polished by somebody's wish
+    for (let i = 0; i < 8; i++) pm.rect(28 + i * 6, 59, 4, 6, px(RAMP.GOLD, 1));
+    pm.hline(28, 59, 44, px(RAMP.GOLD, 2));
+  } else {
+    // the grin opens on the inside of the shell — a rim, then nothing
+    pm.hline(27, 58, 46, px(RAMP.PURPLE, 1));
+    pm.rect(30, 60, 40, 5, C.outline);
+  }
+  if (wear >= 1) {
+    // fissures at the grin's corners — it is held open by habit now
+    pm.line(24, 56, 20, 50, auDD);
+    pm.line(76, 56, 80, 50, auDD);
+    pm.set(21, 51, C.outline);
+    pm.set(79, 51, C.outline);
+  }
+  if (wear >= 2) {
+    // the grin itself cracks mid-tooth; the gleam goes out
+    pm.line(50, 58, 48, 70, C.outline);
+    pm.line(48, 70, 52, 78, auDD);
+    if (!hollow) {
+      pm.rect(46, 59, 4, 6, auD); // one tooth dulled
+    }
+  }
+  // crossed arms — low, immovable
+  pm.rect(24, 70, 52, 7, auD);
+  pm.hline(25, 70, 50, au);
+  pm.contour(32, 72, [3, 4, 4, 3], auL);
+  pm.contour(68, 72, [3, 4, 4, 3], auD);
+  pm.outline(C.outline);
+  if (!hollow && wear < 2) {
+    // the gleam — pure light, stamped after outline (never outlined)
+    pm.set(24, 30, px(RAMP.PAPER, 3));
+    pm.set(40, 4, px(RAMP.PAPER, 3));
+  }
+  if (hollow) {
+    // a cold seep at the seams — the absence leaks (light-after-outline rule)
+    pm.set(26, 46, px(RAMP.PURPLE, 2));
+    pm.set(74, 44, px(RAMP.PURPLE, 2));
+    pm.set(50, 24, px(RAMP.PURPLE, 1));
+  }
+  return pm;
+}
+
 /* ---------------------------------------------------------------- */
 /* THE WEAR REGISTRY (S11b) — every §A7 roster enemy maps to a wear-  */
 /* capable battle draw, and the validator + wear.test.ts gate it BOTH */
@@ -724,6 +1186,27 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   pigeon_gang: { sprite: 'battle_pigeon_gang', draw: drawPigeonGang },
   hill_slug_deluxe: { sprite: 'battle_hill_slug', draw: drawHillSlugDeluxe },
   titanic_tick: { sprite: 'battle_titanic_tick', draw: drawTitanicTick },
+
+  // §A7 Ch.2 (S14) — every quirk drawn, all three wear tiers authored
+  pickpocket_parrot: { sprite: 'battle_pickpocket_parrot', draw: drawPickpocketParrot },
+  gilded_beetle: { sprite: 'battle_gilded_beetle', draw: drawGildedBeetle },
+  cursed_souvenir: { sprite: 'battle_cursed_souvenir', draw: drawCursedSouvenir },
+  step_mask: { sprite: 'battle_step_mask', draw: drawStepMask },
+  banana_bunch: { sprite: 'battle_banana_bunch', draw: drawBananaBunch },
+  jungle_jitterbug: { sprite: 'battle_jungle_jitterbug', draw: drawJungleJitterbug },
+  gilded_grin: { sprite: 'battle_gilded_grin', draw: (w) => drawGildedGrin(w, false) },
+};
+
+/**
+ * S14 — BOSS FORM ART: phase-machine form swaps land as TEXTURE swaps (the
+ * ENEMY_BATTLE_ART law extended to §A6 forms). Each row registers a full
+ * wear-tier family at boot; PhaseRunner.spriteFor() builds the live key as
+ * EnemyDef.sprite + the form's spriteSuffix, and wearSpriteKey wraps it.
+ * The validator walks every BossScriptDef form with a non-empty suffix
+ * into this registry, both directions.
+ */
+export const FORM_ART: Record<string, EnemyBattleArt> = {
+  gilded_grin_hollow: { sprite: 'battle_gilded_grin_hollow', draw: (w) => drawGildedGrin(w, true) },
 };
 
 /** the wear-tier texture key battle swaps to (tier 0 = the base sprite) */
@@ -824,6 +1307,110 @@ export function drawPigeonMini(): Pixmap {
   pm.line(3, 10, 1, 12, px(RAMP.PAPER, 1));
   pm.vline(6, 13, 2, px(RAMP.ORANGE, 2));
   pm.vline(8, 13, 2, px(RAMP.ORANGE, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/* ---- §A7 Ch.2 minis (S14) — same one-glance silhouette discipline ---- */
+
+export function drawParrotMini(): Pixmap {
+  const pm = new Pixmap(16, 16);
+  const g = px(RAMP.GRASS, 2);
+  pm.ellipse(7, 9, 4, 4, g);
+  pm.ellipse(6, 8, 2, 2, px(RAMP.GRASS, 3));
+  pm.ellipse(10, 5, 2, 2, g);
+  pm.rect(9, 2, 3, 2, px(RAMP.RED, 2)); // the crest
+  pm.set(11, 4, C.outline); // eye
+  pm.set(13, 6, px(RAMP.GOLD, 2)); // beak
+  pm.set(14, 7, px(RAMP.GOLD, 3)); // the coin it is absolutely keeping
+  pm.line(4, 6, 1, 3, px(RAMP.GRASS, 1)); // wing
+  pm.line(5, 12, 3, 15, px(RAMP.GRASS, 1)); // tail
+  pm.vline(9, 13, 2, px(RAMP.GOLD, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawBeetleMini(): Pixmap {
+  const pm = new Pixmap(16, 16);
+  const au = px(RAMP.GOLD, 2);
+  pm.ellipse(8, 9, 5, 4, au);
+  pm.ellipse(7, 8, 3, 2, px(RAMP.GOLD, 3));
+  pm.vline(8, 6, 6, px(RAMP.GOLD, 1)); // wing-case seam
+  pm.ellipse(3, 10, 2, 2, px(RAMP.EARTH, 1)); // head
+  pm.line(2, 8, 0, 5, px(RAMP.GOLD, 1)); // the horn
+  pm.set(2, 9, px(RAMP.RED, 2)); // eye
+  pm.line(5, 13, 4, 15, px(RAMP.EARTH, 0));
+  pm.line(9, 13, 9, 15, px(RAMP.EARTH, 0));
+  pm.line(12, 12, 14, 15, px(RAMP.EARTH, 0));
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawSouvenirMini(): Pixmap {
+  const pm = new Pixmap(16, 16);
+  const stone = px(RAMP.EARTH, 2);
+  pm.rect(5, 3, 7, 9, stone);
+  pm.hline(5, 3, 7, px(RAMP.EARTH, 3));
+  pm.rect(6, 5, 2, 2, px(RAMP.PAPER, 3)); // weepy eyes
+  pm.rect(9, 5, 2, 2, px(RAMP.PAPER, 3));
+  pm.set(6, 8, px(RAMP.CYAN, 3)); // a tear
+  pm.hline(7, 10, 3, C.outline); // the little frown
+  pm.rect(4, 12, 9, 3, px(RAMP.EARTH, 1)); // the base
+  pm.set(13, 11, px(RAMP.PAPER, 3)); // price tag corner
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawMaskMini(): Pixmap {
+  const pm = new Pixmap(16, 16);
+  const stone = px(RAMP.EARTH, 2);
+  pm.rect(3, 4, 11, 9, stone);
+  pm.hline(4, 3, 9, stone);
+  pm.hline(4, 3, 5, px(RAMP.EARTH, 3));
+  pm.rect(5, 6, 3, 2, C.outline); // carved eyes
+  pm.rect(10, 6, 3, 2, C.outline);
+  pm.set(6, 6, px(RAMP.MAGENTA, 2));
+  pm.set(11, 6, px(RAMP.MAGENTA, 2));
+  pm.rect(5, 10, 8, 2, px(RAMP.EARTH, 0)); // the calm mouth
+  pm.hline(6, 10, 6, px(RAMP.PAPER, 2));
+  pm.set(3, 13, px(RAMP.FOREST, 1)); // moss
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawBananaMini(): Pixmap {
+  const pm = new Pixmap(16, 16);
+  const y2 = px(RAMP.GOLD, 2);
+  // three members visible at street scale, leaning together
+  pm.line(4, 4, 3, 12, y2);
+  pm.line(5, 4, 4, 12, px(RAMP.GOLD, 3));
+  pm.line(8, 2, 8, 12, y2);
+  pm.line(9, 2, 9, 12, px(RAMP.GOLD, 3));
+  pm.line(12, 4, 13, 12, y2);
+  pm.set(8, 1, px(RAMP.FOREST, 1)); // stems
+  pm.set(4, 3, px(RAMP.FOREST, 1));
+  pm.set(12, 3, px(RAMP.FOREST, 1));
+  pm.rect(3, 12, 11, 3, px(RAMP.GOLD, 1)); // the crown that unites them
+  pm.set(7, 6, C.outline); // the rep's eyes
+  pm.set(10, 6, C.outline);
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawJitterbugMini(): Pixmap {
+  const pm = new Pixmap(16, 16);
+  const sh = px(RAMP.FOREST, 2);
+  pm.ellipse(8, 8, 4, 3, sh);
+  pm.ellipse(7, 7, 2, 1, px(RAMP.FOREST, 3));
+  pm.set(10, 8, px(RAMP.MAGENTA, 2)); // the sheen plate
+  pm.ellipse(12, 4, 2, 2, sh); // head thrown back
+  pm.set(13, 4, px(RAMP.GOLD, 3)); // stage-lit eye
+  pm.line(11, 2, 9, 0, px(RAMP.FOREST, 1)); // antennae
+  pm.line(13, 2, 15, 1, px(RAMP.FOREST, 1));
+  pm.line(5, 10, 2, 14, px(RAMP.FOREST, 1)); // legs mid-step
+  pm.line(8, 11, 8, 15, px(RAMP.FOREST, 1));
+  pm.line(11, 10, 14, 13, px(RAMP.FOREST, 1));
+  pm.line(5, 7, 1, 5, px(RAMP.FOREST, 1)); // the kick
   pm.outline(C.outline);
   return pm;
 }

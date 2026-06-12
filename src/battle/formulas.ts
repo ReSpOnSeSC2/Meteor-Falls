@@ -192,6 +192,35 @@ export function magnetSiphon(rng: Rng): number {
   return 2 + Math.floor(rng() * 5);
 }
 
+/* ---- §A4.5 SUNNY SIDE (S14 / Bible Prompt 23) ---- */
+
+/** the picnic buff covers the NEXT five battles (§A4.5, canon) */
+export const SUNNY_BATTLES = 5;
+export const SUNNY_MUL = 1.1;
+
+/**
+ * +10% ALL stats while the picnic counter holds (the seam beside
+ * heroOffense — battle stat reads multiply through this). The counter is a
+ * plain number flag ('sunny_side'), so the remainder persists on the save
+ * with no migration step; BattleScene burns one per battle resolved.
+ */
+export function sunnyMul(flagOf: (flag: string) => number | boolean): number {
+  return (Number(flagOf('sunny_side')) || 0) > 0 ? SUNNY_MUL : 1;
+}
+
+/* ---- §A4.7 hospitals (S14 / Bible Prompt 25) ---- */
+
+/** pay-to-revive an angel: scales with the FALLEN hero's level (canon) */
+export function reviveCost(level: number): number {
+  return 10 + level * 4;
+}
+
+/** the cure-all-statuses desk — flat, a little steep, very effective */
+export const CURE_ALL_COST = 18;
+
+/** chapels restore 50 HP party-wide, free (§A4.7 / Prompt 25) */
+export const CHAPEL_HEAL = 50;
+
 /* ---- Homesick (§A4.4/§A4.8, S4): Jay-only, cured by Mom's call ---- */
 
 export const HOMESICK_CHANCE = 0.08;

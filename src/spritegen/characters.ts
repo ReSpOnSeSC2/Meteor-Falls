@@ -1046,12 +1046,65 @@ function drawFrame(spec: CharacterSpec, dir: Dir, pose: Pose): Pixmap {
 }
 
 /** 16 frames: down×4, left×4, right×4, up×4 */
+/**
+ * S14b (ADR-040) — the RUN frames: a sprinter LEANS. Head and torso shift
+ * one pixel INTO the motion (side frames), the head rides one pixel lower
+ * (chin tucked), and the face sets into the determined 'glare' brow for
+ * the duration of the sprint. Drawn through the same parametric layers as
+ * the walk via a metrics override — zero forked draw code.
+ */
+function drawRunFrame(spec: CharacterSpec, dir: Dir, pose: Pose): Pixmap {
+  const pm = new Pixmap(FRAME_W, FRAME_H);
+  const m = metrics(spec);
+  const bob = 1; // run poses are always the risen step poses
+  // lean into the travel: side frames push head+torso 1px toward facing;
+  // the head drops 1px in every direction (the tucked chin)
+  const fwd = dir === 'right' ? 1 : 0;
+  const lean: Metrics = {
+    ...m,
+    headX: m.headX + fwd,
+    bodyX: m.bodyX + fwd,
+    headTop: m.headTop + 1,
+  };
+  // the determined face: the glare brow for everyone, mouth set firm
+  const set: CharacterSpec = {
+    ...spec,
+    eyes: 'glare',
+    mouth: spec.mouth === 'none' ? 'none' : 'hint',
+  };
+  if (dir === 'down' || dir === 'up') {
+    legsFront(pm, set, m, pose);
+    torsoFront(pm, set, lean, bob, pose, dir === 'up');
+    headFront(pm, set, lean, bob, dir === 'up');
+  } else {
+    legsSide(pm, set, m, pose);
+    torsoSide(pm, set, lean, bob, pose);
+    headSide(pm, set, lean, bob);
+  }
+  spec.detail?.({ pm, dir, pose, bob, m: lean, spec: set });
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** 24 frames: the ADR-009 walk block (down×4, left×4, right×4, up×4 —
+ *  indices 0–15, UNTOUCHED law) + the S14b run block appended at 16–23
+ *  (downRun×2, leftRun×2, rightRun×2, upRun×2; ADR-040). standFrame()
+ *  and every existing index are preserved — append-only. */
 export function generateCharacterFrames(spec: CharacterSpec): Pixmap[] {
   const down = ([0, 1, 2, 3] as Pose[]).map((p) => drawFrame(spec, 'down', p));
   const right = ([0, 1, 2, 3] as Pose[]).map((p) => drawFrame(spec, 'right', p));
   const left = right.map((f) => f.flipX());
   const up = ([0, 1, 2, 3] as Pose[]).map((p) => drawFrame(spec, 'up', p));
-  return [...down, ...left, ...right, ...up];
+  const runDown = ([1, 3] as Pose[]).map((p) => drawRunFrame(spec, 'down', p));
+  const runRight = ([1, 3] as Pose[]).map((p) => drawRunFrame(spec, 'right', p));
+  const runLeft = runRight.map((f) => f.flipX());
+  const runUp = ([1, 3] as Pose[]).map((p) => drawRunFrame(spec, 'up', p));
+  return [...down, ...left, ...right, ...up, ...runDown, ...runLeft, ...runRight, ...runUp];
+}
+
+/** the run block's first frame for a direction (sheet contract, ADR-040) */
+export function runFrameBase(dirIndex: number): number {
+  return 16 + dirIndex * 2;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1755,5 +1808,255 @@ export const CAST: Record<string, CharacterSpec> = {
     build: 'adult',
     eyes: 'happy',
     mouth: 'smile', // the fern is doing wonderfully, thanks for asking
+  },
+
+  /* ================= S14 — Chapter 2 cast (§A11: one obsession each) ================= */
+  // the banana boat's captain — has crossed 4,000 times; counts in crossings
+  captain: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray',
+    hat: { kind: 'cap', ramp: RAMP.BLUE },
+    top: { ramp: RAMP.BLUE, style: 'blazer', accent: RAMP.GOLD },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.INK,
+    build: 'adult',
+    eyes: 'happy',
+    mouth: 'smile',
+    // gold anchor pin on the lapel (front only)
+    detail: ({ pm, dir, bob, m }) => {
+      if (dir !== 'down') return;
+      pm.set(m.bodyX + 2, m.bodyTop + 2 + bob, px(RAMP.GOLD, 2));
+    },
+  },
+  // a Puerto Sol dockworker — ranks every knot he has ever tied
+  dockworker: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'short',
+    top: { ramp: RAMP.ORANGE, style: 'stripe', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.BLUE },
+    shoes: RAMP.EARTH,
+    build: 'chub',
+    eyes: 'dot',
+    mouth: 'open',
+  },
+  // the MERCADO keeper — weighs everything by hand first, scale second
+  mercadoKeeper: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'bob',
+    top: { ramp: RAMP.RED, style: 'apron', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.EARTH },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'tall',
+    mouth: 'smile',
+    blush: true,
+  },
+  // the DELI SOL keeper — believes every sandwich has one correct ORDER of layers
+  deliKeeper: {
+    skin: RAMP.SKIN,
+    hair: RAMP.EARTH,
+    hairStyle: 'sidepart',
+    top: { ramp: RAMP.PAPER, style: 'apron', accent: RAMP.RED },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.INK,
+    build: 'chub',
+    eyes: 'happy',
+    mouth: 'open',
+  },
+  // the skeptical curator (§A10 #6) — has never once been fooled. once.
+  curator: {
+    skin: RAMP.SKIN,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray',
+    glasses: true,
+    top: { ramp: RAMP.PURPLE, style: 'blazer', accent: RAMP.GOLD },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.INK,
+    build: 'adult',
+    eyes: 'glare',
+    mouth: 'frown',
+  },
+  // TOMAS the herder (§A10 #5) — knows each llama's gait at 400 yards
+  tomas: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'short',
+    hat: { kind: 'cap', ramp: RAMP.EARTH },
+    top: { ramp: RAMP.RED, style: 'stripe', accent: RAMP.GOLD }, // the poncho stripe
+    bottom: { ramp: RAMP.EARTH },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'tall',
+    mouth: 'smile',
+    blush: true,
+  },
+  /* the doctors (Prompt 25): one weird line each — the coats agree */
+  docBrickton: {
+    skin: RAMP.SKIN,
+    hair: RAMP.INK,
+    hairStyle: 'sidepart',
+    glasses: true,
+    top: { ramp: RAMP.PAPER, style: 'apron', accent: RAMP.CYAN },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.INK,
+    build: 'adult',
+    eyes: 'wide', // has seen everything; blinks on a schedule
+    mouth: 'hint',
+  },
+  docPuerto: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray',
+    top: { ramp: RAMP.PAPER, style: 'apron', accent: RAMP.GRASS },
+    bottom: { ramp: RAMP.EARTH },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'happy',
+    mouth: 'smile',
+  },
+  docValle: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'topknot',
+    top: { ramp: RAMP.PAPER, style: 'apron', accent: RAMP.MAGENTA },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'dot',
+    mouth: 'hint',
+  },
+  /* the priests (Prompt 25 / §A11.4 — warm, never the joke) */
+  priestOtter: {
+    skin: RAMP.SKIN,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray',
+    top: { ramp: RAMP.INK, style: 'dress', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.INK,
+    build: 'adult',
+    eyes: 'happy',
+    mouth: 'smile',
+    // the white collar square (front only)
+    detail: ({ pm, dir, bob, m }) => {
+      if (dir !== 'down') return;
+      pm.rect(m.bodyX + Math.floor(m.bodyW / 2) - 1, m.bodyTop + bob, 2, 2, px(RAMP.PAPER, 3));
+    },
+  },
+  priestValle: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'gray',
+    top: { ramp: RAMP.EARTH, style: 'dress', accent: RAMP.GOLD },
+    bottom: { ramp: RAMP.EARTH },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'happy',
+    mouth: 'smile',
+    detail: ({ pm, dir, bob, m }) => {
+      if (dir !== 'down') return;
+      pm.rect(m.bodyX + Math.floor(m.bodyW / 2) - 1, m.bodyTop + bob, 2, 2, px(RAMP.PAPER, 3));
+    },
+  },
+  /* the WISHERS (§A6) — the idol ate their Vibe; gray until the Grin falls.
+   * Each has a recovered twin (color back on, same face) — the flag-gated
+   * variant pair the recovery scenes swap (woke_*). */
+  wisherA: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'bob',
+    top: { ramp: RAMP.PAPER, style: 'dress', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.NIGHT },
+    shoes: RAMP.INK,
+    build: 'adult',
+    eyes: 'dot',
+    mouth: 'none', // the idol kept the rest
+  },
+  wokeA: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'bob',
+    top: { ramp: RAMP.MAGENTA, style: 'dress', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.RED },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'happy',
+    mouth: 'open',
+    blush: true,
+  },
+  wisherB: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'short',
+    top: { ramp: RAMP.PAPER, style: 'shirt', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.NIGHT },
+    shoes: RAMP.INK,
+    build: 'kid',
+    eyes: 'dot',
+    mouth: 'none',
+    blush: false, // the gray took the cheeks first
+  },
+  wokeB: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'short',
+    top: { ramp: RAMP.CYAN, style: 'stripe', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.BLUE },
+    shoes: RAMP.RED,
+    build: 'kid',
+    eyes: 'tall',
+    mouth: 'open',
+  },
+  wisherC: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray',
+    top: { ramp: RAMP.PAPER, style: 'shirt', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.NIGHT },
+    shoes: RAMP.INK,
+    build: 'adult',
+    eyes: 'dot',
+    mouth: 'none',
+  },
+  wokeC: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray',
+    top: { ramp: RAMP.GRASS, style: 'shirt', accent: RAMP.GOLD },
+    bottom: { ramp: RAMP.EARTH },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'happy',
+    mouth: 'smile',
+    blush: true,
+  },
+  // a Valle Dorado senora who narrates the village's worry
+  senora: {
+    skin: RAMP.SKIN_DEEP,
+    hair: RAMP.INK,
+    hairStyle: 'bob',
+    top: { ramp: RAMP.MAGENTA, style: 'dress', accent: RAMP.GOLD },
+    bottom: { ramp: RAMP.MAGENTA },
+    shoes: RAMP.EARTH,
+    build: 'adult',
+    eyes: 'tall',
+    mouth: 'hint',
+    blush: true,
+  },
+  // UNCLE BERT (the Ch.3 tease, flag-gated at the docks) — Lucille's pilot;
+  // everything reminds him of weather over the Atlantic
+  uncleBert: {
+    skin: RAMP.SKIN,
+    hair: RAMP.PAPER,
+    hairStyle: 'gray',
+    glasses: true, // flight goggles, off-duty
+    top: { ramp: RAMP.EARTH, style: 'blazer', accent: RAMP.GOLD },
+    bottom: { ramp: RAMP.EARTH },
+    shoes: RAMP.INK,
+    build: 'adult',
+    eyes: 'happy',
+    mouth: 'open',
   },
 };

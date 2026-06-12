@@ -155,10 +155,22 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Have you been eating well? Get some sleep, slugger. Big world out there. I\'ll be on the phone when you need me.',
   ],
   save_done: ['* Dad saved your progress. (He sounded proud about it.)'],
-  picnic_rest: [
-    'You sit at the table a while. Somewhere nearby, a bird applauds.',
-    '* The party rested a little. (Full picnics arrive with Picnic Baskets.)',
+  /* ---------------- the PICNIC set (S14 - Bible Prompt 23) ---------------- */
+  picnic_no_basket: [
+    'A fine table. Level, shaded, judgment-free.',
+    '* If only somebody had packed a basket. (Shops sell PICNIC BASKETS. Delis build better ones.)',
   ],
+  picnic_spot: ['This is the spot. The table agrees. The birds are already negotiating.'],
+  picnic_scene: [
+    'The blanket unrolls itself, basically.',
+    'Sandwiches. The good thermos. Two birds land and pretend not to stare.',
+    '* Everyone ate until the world felt friendly again. HP and PP came all the way back!',
+  ],
+  picnic_feast: [
+    "* The Feast settles in everyone's bones, warm and stubborn.",
+    '* (FEAST: if the whole party ever goes down, it will answer. Once.)',
+  ],
+  picnic_no_spot: ["There's no good spot here."],
   /* ---------------- S4 — the phone is a contact list now (Prompt 20) ---------------- */
   phone_pickup: ['You picked up the receiver. The dial tone hums, warm as area code 216.'],
   phone_mom_home: [
@@ -764,6 +776,377 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(You do not count them. She would know.)',
   ],
   vivi_bed: ['(Under the pillow: a ledger. Under the ledger: a backup ledger.)'],
+
+  /* ================================================================ */
+  /* S14 — CHAPTER 2: THE GILDED GRIN (§A6/§A11, written in full)      */
+  /* Voice rules: absurdism everywhere, sincerity is never the joke,   */
+  /* the Hush — and the thing it left in the idol — is never funny.    */
+  /* ================================================================ */
+
+  /* ---------------- the Brickton docks + the crossing ---------------- */
+  sign_to_docks: ['EAST: THE DOCKS.', '(Someone has added "SMELL THAT? COMMERCE." The arrow agrees.)'],
+  sign_departures: [
+    'SALIDAS / DEPARTURES: PUERTO SOL — when the bananas are ready.',
+    '(The bananas have never once been late.)',
+  ],
+  npc_captain: [
+    '@Four thousand and twelve crossings, kid. I measure my whole life in them.',
+    '@My first kiss? Crossing nine hundred six. My best soup? Three thousand even.',
+    '@You want crossing four thousand thirteen? Step to the plank when you are ready.',
+  ],
+  captain_not_yet: [
+    '@Whoa there. The boat takes finished business and bananas, in that order.',
+    "@You've still got business in this city, champ. The plank can tell.",
+  ],
+  boat_ask_out: ['@PUERTO SOL run! Bananas southbound, heroes too, no extra charge for destiny.'],
+  boat_ask_home: ['@Northbound run to Brickton! The bananas ride better homesick. So do people.'],
+  npc_dock_kid: [
+    '@I counted nine hundred bananas going onto that boat.',
+    '@Nobody ASKED me to. That is the part my mom worries about.',
+  ],
+  npc_uncle_bert: [
+    "@Name's Bert. I fly a biplane called Lucille. She's parked across the Atlantic, sulking.",
+    '@Weather over the ocean this week reminds me of weather over the ocean. It always does.',
+    "@Heading to England someday, kid? Find me. Lucille likes passengers who've saved a valley or two.",
+  ],
+  npc_captain_deck: [
+    '@Crossing four thousand thirteen, underway. Feels like a good one.',
+    '@I rank them, you know. This one is top fifty already. No reason. Captain knows.',
+  ],
+  npc_boat_senora: [
+    '@Going home to Valle Dorado, niños. My sister stopped writing two months ago.',
+    '@Her last letter said the idol granted her wish. It was a very short letter.',
+    '@She used to write four pages. Both sides. Recipes in the margins.',
+  ],
+  boat_crossing_1: [
+    'The coast lets go of the boat, gently, the way a mom lets go of a bike seat.',
+    'Gulls audition for the job of escort. Two are hired.',
+  ],
+  boat_crossing_senora: [
+    '@...You will pass through the valley? Then look in on my sister, please.',
+    '@Ana Lucia. Gray house by the pen. You will know her by— ',
+    '@...You used to know her by her laugh. Look in on her. Please.',
+  ],
+  boat_crossing_2: [
+    'The sea practices its one trick, beautifully, for a very long time.',
+    'And then — a smell like warm stone and limes. A bell somewhere. A new country.',
+    'PUERTO SOL leans out of the haze like it was waiting up for you.',
+  ],
+
+  /* ---------------- PUERTO SOL (§A5 Ch.2 — the port city) ---------------- */
+  puerto_arrival: [
+    'The pier takes your weight like it has taken everything else: cheerfully.',
+    'Somewhere uphill, a fountain is showing off. The whole city smells like fruit and salt.',
+    '(PUERTO SOL. Pop: enough. Bananas: beyond counting.)',
+  ],
+  sign_departures_home: [
+    'SALIDAS / DEPARTURES: BRICKTON — whenever you are done being away.',
+    '(The boat runs both ways forever. Somebody underlined "forever." Twice.)',
+  ],
+  sign_plaza: [
+    'PLAZA DEL SOL — fountain hours: always. Pigeon hours: also always.',
+    '(The fountain and the pigeons have an arrangement.)',
+  ],
+  sign_costa_road: [
+    'NORTH: COSTA ESTRELLA LINKS — golf above the surf.',
+    '(The cliff road is steep. The views apologize for it the whole way up.)',
+  ],
+  sign_jungle_gate: [
+    'EAST: THE JUNGLE → VALLE DORADO.',
+    '(Below that, smaller: "the jungle does not validate parking.")',
+  ],
+  npc_ps_fisher: [
+    '@I have tied nine hundred knots and ranked every one.',
+    '@The bowline is number three. Do NOT ask about number one. You would tie nothing else.',
+  ],
+  npc_ps_nina: [
+    '@The boats bring bananas IN and take bananas OUT. I think they just like driving.',
+  ],
+  npc_ps_stall: [
+    '@My cousin Tomas herds llamas up in Valle Dorado. Or he did.',
+    '@His last letter says they keep escaping toward the pyramid. Llamas HATE the pyramid.',
+    '@Llamas are never wrong about architecture, niño. Remember that.',
+  ],
+  npc_ps_porter: [
+    '@Crates, crates, crates. You know what is in the heavy ones? Heavier bananas.',
+  ],
+  shop_mercado_greet: [
+    '@Welcome, welcome! Everything weighed by hand FIRST, scale second.',
+    '@The scale and I agree ninety-nine times of a hundred. The hundredth time I am right.',
+  ],
+  shop_mercado_bye: ['@Go with weight you can carry, friend!'],
+  sign_mercado_wall: ['HOUSE RULE: the hand weighs first. THE HAND WEIGHS FIRST.'],
+  npc_doc_puerto: [
+    '@Clinica del Sol! I prescribe shade, water, and not fighting jungle insects.',
+    '@Nobody has ever taken the third prescription. Sit. Let me see the damage.',
+  ],
+  clinic_ps_wall: [
+    'CLINICA DEL SOL — walk-ins welcome. Carried-ins prioritized.',
+  ],
+  npc_deli: [
+    '@DELI SOL. Listen carefully: bread, THEN meat, THEN cheese, THEN regret nothing.',
+    '@A sandwich layered wrong is just a stack of apologies. A basket packed right? That is LOVE.',
+  ],
+  deli_wall: ['TODAY\'S SPECIAL: the correct order of layers. (It is always the special.)'],
+  deli_no_recipe: [
+    "@A FEAST basket? Oh, niño. There is exactly one recipe, and one grandmother who holds it.",
+    '@Romania, I hear. If she ever teaches you, my counter is yours.',
+  ],
+  deli_short: ['@Three regional foods, friend. THREE. I count two hands and not enough lunch.'],
+  deli_family_made: [
+    '@Bread, meat, cheese, blanket. A FAMILY BASKET — packed in the only correct order.',
+  ],
+  deli_feast_made: [
+    "@...So that's the recipe. The old señora knew what she was doing.",
+    '@Take the FEAST. Whoever eats this picnic is not allowed to stay down. Her rule, not mine.',
+  ],
+  npc_curator: [
+    '@Do you know how many REAL golden idols have passed through this museum?',
+    '@Zero. I have authenticated zero real things. I am the best at it in the hemisphere.',
+  ],
+  museum_wall: ['MUSEO DEL CASI-ORO — "ALMOST," PROUDLY, SINCE 1961.'],
+  museum_idol_1: [
+    'EXHIBIT A: "Sun God (Probably)." Donated by a tourist who needed the shelf space.',
+    '(It is grinning. Even the fakes learned to grin. The curator finds this professionally upsetting.)',
+  ],
+  museum_idol_2: [
+    'EXHIBIT B: "Ceremonial Figure, Tall." It is a candlestick. Everyone knows it is a candlestick.',
+    '(The plaque is legally required to say "figure.")',
+  ],
+  museum_idol_3: [
+    'EXHIBIT C: "Llama, Votive, Almost-Gold." Suspiciously good craftsmanship.',
+    '(The curator checks it weekly to make sure it is still fake. It is. He is relieved and disappointed.)',
+  ],
+  museum_idol_4: [
+    'EXHIBIT D: "Composition IV." The plaque insists this is an idol.',
+    '(The plaque has been replaced four times. It keeps insisting.)',
+  ],
+
+  /* ---------------- §A10 #6 — Museum of Almost-Gold ---------------- */
+  q_museum_ask: [
+    '@You. You have the eyes of someone who walks into pyramids.',
+    '@Photograph my four fakes — A through D, marked plaques. For the catalog of shame.',
+    '@Real gold turned up in this valley once, you know. It grinned. I declined to authenticate.',
+    '@Take the loaner camera. The strap is non-negotiable.',
+  ],
+  q_museum_active: ['@The fakes hold still, friend. That is the one thing they are good at.'],
+  q_museum_full: ['@Your hands are full and my flash is heavy. Make room. The shame catalog waits.'],
+  q_museum_done_beat: [
+    '@Four frames, four fakes, zero authenticity. PERFECT.',
+    '@Here — the camera flash, detached. Real gold flinches at honest light. Remember that, up there.',
+    "@...And if you ever photograph something REAL, I don't want to know. I have a streak going.",
+  ],
+  q_museum_after: ['@The catalog of shame is complete and beautiful. My streak holds at zero.'],
+
+  /* ---------------- the jungle path + the grotto ---------------- */
+  sign_jungle1: [
+    'TRAIL COURTESY: yield to llamas, ants, and anything currently dancing.',
+    '(The jungle posted this itself. Do not test it.)',
+  ],
+  sign_jungle2: [
+    'VALLE DORADO: AHEAD. THE PYRAMID: ALSO AHEAD, UNFORTUNATELY.',
+    '(Someone has scratched out "unfortunately" and written it again, bigger.)',
+  ],
+  sign_grotto: ['(A cool draft from the rocks. The dark inside smells like old stone and good luck.)'],
+  grotto_chest_1: ['A basket somebody cached and never came back for. The jungle kept it dry.'],
+  grotto_chest_2: ['Somebody\'s emergency alfajor. Sealed. Sacred. Yours now.'],
+  grotto_chest_3: [
+    'At the bottom of the box: a warm mote of light, patient as a porch lamp.',
+    '(It wants to help one more time.)',
+  ],
+  grotto_glyph: ['A carved slab: a small sun, held in two hands. Whoever carved it pressed HARD.'],
+
+  /* ---------------- VALLE DORADO (§A6 — the village that wished) ---------------- */
+  valle_arrival: [
+    'The valley opens like a held breath.',
+    'Llama pens. Painted doors. A shrine with too much shine on it.',
+    'It would be the friendliest place you have ever seen — if anyone were talking.',
+  ],
+  sign_valle: ['VALLE DORADO — pop. 61 warm souls.', '(The 61 has been crossed out. The new number is written small: "58 warm. 3 waiting.")'],
+  sign_pen: ['THE PEN: six llamas. (Current llamas: see Tomas. Bring patience.)'],
+  sign_shrine: [
+    'THE SHRINE OF THE GIVING SMILE — leave a wish, take a blessing.',
+    '(The offerings are small things. A mitten. A marble. The shine on the idol is new, and wrong.)',
+  ],
+  sign_shrine_after: [
+    'THE SHRINE — closed for renovation of its entire premise.',
+    '(The offerings are gone. Their owners took them back, laughing.)',
+  ],
+  npc_tomas: [
+    '@Six llamas, friend. I know each one by gait at four hundred yards.',
+    '@Paloma drifts. Nube wanders. Rey marches. Pepita flops. Filosofo STARES.',
+    '@And Dorada... lately Dorada walks like she weighs three hundred pounds. Llamas worry me.',
+  ],
+  npc_senora: [
+    '@My neighbor wished for her harvest to double. Now she sits by the shrine all day.',
+    '@The corn came up double, niño. She never went to look at it.',
+  ],
+  npc_valle_kid: [
+    '@I was gonna wish for a bike but the grown-ups who wish go all QUIET.',
+    '@A bike is not worth going quiet. Almost nothing is.',
+  ],
+  npc_doc_valle_out: [
+    '@Out making house calls — except nobody needs me! Everyone WOKE UP!',
+    '@Strangest epidemic of my career: recovery.',
+  ],
+  npc_wisher_a: ['@...', '(She is looking at the shrine. Her hands remember kneading bread. The rest of her is somewhere else.)'],
+  npc_wisher_b: ['@...', '(A kid. His wish is still in his hand — a folded paper gone soft at the creases.)'],
+  npc_wisher_c: ['@...', '(He nods at you, slowly, like a man underwater being polite about it.)'],
+  npc_woke_a: [
+    '@—and the BREAD! I left dough proofing TWO MONTHS ago, somebody fed it, it is ENORMOUS now—',
+    '@I am going to bake everything. Today. Twice. Come by hungry.',
+  ],
+  npc_woke_b: [
+    '@I remember everything I wished for and I do NOT want it anymore!',
+    '@I want lunch and to run somewhere! BOTH AT ONCE!',
+  ],
+  npc_woke_c: [
+    '@The strangest thing. I dreamed something golden was holding my breath FOR me.',
+    '@Then somebody up the mountain told it no. ...That was you, was it. Thank you. Sincerely.',
+  ],
+  npc_llama_penned: ['@Mmmh. (The llama is home and aggressively neutral about the whole episode.)'],
+  npc_llama_1: ['@Hmmph. (Paloma regards you from one inch above all earthly concerns. She will allow herding. Today.)'],
+  npc_llama_2: ['@...mmm. (Nube is following a specific cloud. It is a good cloud. He concedes the point and turns home.)'],
+  npc_llama_3: ['@MMPH. (Rey has annexed this meadow. You may negotiate. The treaty is: he goes home, but slowly, with dignity.)'],
+  npc_llama_4: ['@...mm? (Dorada stands very still. Very, very still. Llamas blink, generally. This is generally known.)'],
+  npc_llama_5: ['@zzz... mph. (Pepita was asleep in the soft grass. She wakes grumpy and walks home out of pure spite. It works.)'],
+  npc_llama_6: ['@............ (Filosofo is staring at the pyramid. You wait. He finishes the thought. He files it. He goes home.)'],
+  llama_impostor_reveal: [
+    'The wool slides off like a tablecloth in a magic trick nobody clapped for.',
+    'Underneath: gold. Grinning. Six legs planted like furniture.',
+    'THE "LLAMA" WAS A GILDED BEETLE THE WHOLE TIME!',
+  ],
+  llama_impostor_after: [
+    'The gilding cracks and the beetle skitters into the brush, embarrassed for everyone involved.',
+    'Behind the shed: a soft, judgmental "mmph." The REAL Dorada walks herself home.',
+  ],
+
+  /* ---------------- §A10 #5 — The Llama Drama ---------------- */
+  q_llama_ask: [
+    '@Friend! The herd is OUT. All six, scattered like opinions.',
+    '@They bolted the day the shrine got shiny. Llamas are never wrong about architecture.',
+    '@Bring them home? Walk up close and be patient — they each need exactly one understanding.',
+  ],
+  q_llama_active: ['@The pen stands ready. The hay is fluffed. The herd remains theoretical.'],
+  q_llama_full: ['@The poncho is yours but your hands say otherwise. Come back with room for warmth.'],
+  q_llama_done_beat: [
+    '@Six! SIX. The math of my whole life works again.',
+    '@Here — the WOOL PONCHO. Every llama contributed. Dorada contributed double, out of guilt.',
+    '@It turns away claws, teeth, and cold opinions. Wear it up the mountain.',
+  ],
+  q_llama_after: ['@The herd naps in formation. Even Filosofo. ESPECIALLY Filosofo.'],
+
+  /* ---------------- the shops + clinics of the valley ---------------- */
+  shop_valle_greet: ['@Lana & Mas! The wool is local. The "mas" is whatever the mountain felt like this week.'],
+  shop_valle_bye: ['@Go warm, niño.'],
+  sign_valle_wall: ['ALL WOOL GUARANTEED LLAMA-APPROVED. (The llamas have seen the receipts.)'],
+  npc_doc_valle: [
+    '@Clinica Valle. I treat altitude, attitude, and beetle-related surprises.',
+    '@The gray quiet ones... those I cannot treat. Whatever is wrong with them is not IN them. It was taken FROM them.',
+  ],
+  clinic_valle_wall: ['REMEDIES: rest, soup, sunlight. ESCALATIONS: see the pyramid. PLEASE DO NOT SEE THE PYRAMID.'],
+  npc_priest_valle: [
+    '@Welcome, child. The chapel is the one building in the valley that never wanted anything from you.',
+    '@We pray for the quiet ones every day. Lately the prayers come back... lighter. Something is listening again.',
+  ],
+  chapel_valle_wall: ['CAPILLA DEL VALLE — candles free. Matches: ask. Hope: included.'],
+
+  /* ---------------- the hospitals + the Otterbrook chapel (Prompt 25) ---------------- */
+  npc_doc_brickton: [
+    '@Brickton General, finally open. I blink every four seconds. I have SEEN things, kid.',
+    '@Revivals, cures, the works. The angels float to the desk themselves; it is very convenient.',
+  ],
+  hospital_wall: ['BRICKTON GENERAL — IF YOU CAN READ THIS, YOUR EYES ARE FINE. NEXT WINDOW PLEASE.'],
+  hospital_mushroom_note: [
+    'MEMO: MUSHROOMIZATION is treated by DOCTORS ONLY (§ policy).',
+    '(Below, handwritten: "no, the church cannot do it. yes, we asked.")',
+  ],
+  hospital_broke: ['@The till says no, friend. Medicine runs on money and miracles, and I only stock one.'],
+  hospital_cured: ['@Scrubbed, cured, and certified upright. Try to stay that way for a week. For me.'],
+  hospital_cured_homesick: [
+    '@...And for THAT one, the prescription is technically "call your mother."',
+    '@I billed you anyway. Tell her the doctor says hi.',
+  ],
+  npc_priest_otter: [
+    '@Welcome, welcome. The chapel kept the porch light on all through that awful 2 A.M.',
+    '@Stay as long as you like. The benches are old but the welcome is new every day.',
+  ],
+  chapel_wall: ['OTTERBROOK CHAPEL — services Sunday. Doors: always. Yes, even you, Gary.'],
+  chapel_prayer: [
+    'You sit a moment, all of you, in the kind of quiet that gives instead of takes.',
+    '* Everyone feels a little mended.',
+  ],
+  priest_mia: [
+    '@...Your friend there. The one whose hands fold without her noticing.',
+    '@Whatever she carries, it is the real thing. Tell her this house is always glad when she passes it.',
+  ],
+
+  /* ---------------- the step-pyramid (§A6 — masks, floors, the apex) ---------------- */
+  pyramid_approach: [
+    'The pyramid does not loom. Looming would be effort.',
+    'It just sits there, stepped and certain, the way a closed fist sits on a table.',
+    '(A picnic table stands by the path. Somebody understood what this place asks of visitors.)',
+  ],
+  sign_pyramid: [
+    'THE STEP-PYRAMID. (The plaque is older than the village and says one thing:)',
+    '"IT SMILED FIRST."',
+  ],
+  pyr_mask_1: ['A stone mask on a pedestal. Its mouth is set like a switch. Its eyes are set on you.'],
+  pyr_mask_2: ['A second mask. This one looks mid-sentence. The sentence has lasted five hundred years.'],
+  pyr_mask_3: ['A third mask. Someone carved it kindly — then the kindness wore off the edges.'],
+  pyr_mask_4: ['The last mask. It is the smallest. It is the loudest, somehow.'],
+  pyr_mask_turn: [
+    'You press the mask\'s mouth. Deep under the floor, something the size of a house TURNS.',
+    '(The grooves in the floor grind a quarter-circle and settle, satisfied.)',
+  ],
+  apex_dais: ['The dais is swept clean. The whole mountain of dust went SOMEWHERE, and nothing did the sweeping.'],
+  apex_dais_after: ['The dais is just stone now. Good, honest, boring stone. The valley\'s favorite kind.'],
+  apex_approach: [
+    'The top room holds its breath.',
+    'On the dais: the idol. Small as a housecat. Heavy as a held grudge.',
+    'Every offering from the shrine below is HERE, stacked in tidy, terrible rows.',
+  ],
+  apex_grin_wakes: [
+    'the grin turns to you first. the rest of it follows, like an afterthought.',
+    '"you brought warm things. wishes keep best in warm things."',
+    'THE IDOL OF THE GILDED GRIN would like your everything!',
+  ],
+  idol_grin_wider: ['the grin gets wider. there was no room for that. it found room.'],
+  idol_form_solid: ['The Idol seals over — SOLID GOLD, seamless and smug! (Swings will bounce. The old light won\'t.)'],
+  idol_form_hollow: [
+    'The gold goes dark — and the inside is NOTHING. HOLLOW!',
+    '(The Vibe finds no purchase in an absence. Bats, however. Bats are very real.)',
+  ],
+  awake_cold_reads: [
+    'The hollow opens and the room goes colder than altitude can explain.',
+    '{faye} doesn\'t step back.',
+    '@...It\'s empty. All that shine, and it\'s EMPTY in there. That\'s the whole trick.',
+    'She holds out one hand, palm down, the way you check a window for a draft.',
+    '@Cold reads what gold hides.',
+    'Frost gathers along her fingers like it has been waiting its whole life to be asked.',
+  ],
+  ember2_get: [
+    'In the idol\'s hollow, behind where the grin was: a warmth it could not digest.',
+    'JAY held up the Star Locket!',
+    '* The second EMBER settled in beside the first. The Heartlight gained a voice — TWO now, in harmony.',
+  ],
+  apex_after: [
+    'The offerings on the dais stir, like a room of sleepers at a window being opened.',
+    'Somewhere below, in the valley — somebody laughs. Out loud. Out of practice.',
+    'You should go see that.',
+  ],
+  valle_recovery: [
+    'The plaza is LOUD.',
+    'The baker is yelling about dough. The kid is running in circles on principle.',
+    'The man by the shrine shakes everyone\'s hand twice, beginning and ending with yours.',
+    'Color does not come back to a place all at once. It comes back like this: one laugh at a time.',
+  ],
+  ch2_card: [
+    'The valley keeps its gold: the corn, the late light, the wool, the laughing.',
+    'The Locket hums its two-part harmony. Six Embers still sleep somewhere east of everything.',
+    '* CHAPTER 2 — THE GILDED GRIN — complete. (The boat home runs whenever you\'re ready. Bert\'s at the Brickton docks with a sky to sell you.)',
+  ],
+
 };
 
 /**
@@ -808,6 +1191,19 @@ export const BATTLE_TEXT = {
   paralyzed_off: '{user} can move again!',
   hushed_off: "{user}'s voice came back!",
   shield_off: "{user}'s shimmer faded away.",
+  // S14: the phase machine's table reads (Prompt 15) + the §A7 Ch.2 mechanics
+  boss_stunned: '{e} is reeling! It loses the turn!',
+  gold_clang: 'The swing CLANGED off solid gold! Not even a dent!',
+  hollow_slide: 'The Vibe poured into the hollow... and found NOTHING to catch it!',
+  gold_crack: 'The frost found the seams! The gold went BRITTLE!',
+  beetle_clang: 'It bounced right off the gilding! So shiny. So rude.',
+  beetle_dull: "{e}'s gilding wore thin. Underneath: beetle.",
+  parrot_lint: '{e} came up with pocket lint and one expired coupon!',
+  parrot_take: '{t} GONE! (Beat it before it flies the coop!)',
+  parrot_drop: 'It dropped the goods! {t} recovered!',
+  mercy_end: 'The light settled, soft as a porch lamp. The fight just... ended.',
+  party_status_crying: 'Everyone welled up at once! (CRYING)',
+  feast_revive: "The Feast Basket's warmth answers! Nobody stays down at THIS table!",
   spy_report: '{e} — about {t} HP left.',
   spy_weak: 'Weak point, circled twice: {t}.',
   spy_no_weak: 'Notes: sturdy, rude, no obvious weak point.',

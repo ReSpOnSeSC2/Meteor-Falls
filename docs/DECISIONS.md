@@ -2197,3 +2197,246 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   finish attempts are now a timing read everywhere the rim is, which the
   tutorial's lesson 3 already teaches (its prompt updated); the QA recipes
   in HoopsScene's header carry the new finish line.
+
+## ADR-039 — S14: THE GILDED GRIN — the phase machine, picnics, hospitals & Chapter 2 complete
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (Prompt S14 — Bible Prompt 28 bundled with Prompts 15,
+  23, 25; the §A6 Ch.2 chapter shipped whole with the three systems it
+  cannot stand without)
+- **Context:** Chapter 2 needs the boss phase machine (the Grin IS a form
+  swap), the picnic system (§A4.5 places tables BEFORE dungeons), and real
+  hospitals (a pyramid wipe with revive-all-at-home is no economy at all).
+  Standing law throughout: ADR-012 seeded cities, ADR-014 flag-gates +
+  fade-restart, ADR-015 registered save steps, ADR-017 manifests
+  same-commit, ADR-024/038 input law, ADR-029 determinism, ADR-035
+  awakenings.
+- **Decision — THE PHASE MACHINE (Prompt 15, `src/battle/phases.ts`):**
+  - A Phaser-free interpreter over `BossScriptDef` data (z.infer, ADR-017):
+    triggers `hpBelow(frac)` (once, through the threshold) ·
+    `turnCount(n, every?)` (cadences) · `bothSummonsDead` (repeatable
+    refill) · `riddleAnswered(ok)` · `prayTierAtLeast(tier)`; actions
+    `setForm(id|'cycle')` · `summon(enemy, n)` · `healSelf` · `scriptLine`
+    · `stealEquipped`/`returnStolen` · `setSpeedMul` (≥2 = an extra action
+    per round) · `endBattleMercy` — plus the two the §A6 riddle
+    consequences require: `stunSelf(turns)` ("skip its first 3 turns") and
+    `partyStatus(status, turns)` ("party starts Crying"). The runner rolls
+    NO dice (ADR-029): triggers in, actions out, proven headlessly in
+    phases.test.ts for EVERY canon trigger type (the Grin's swap on its
+    real script; summons-refill, skin-shed heal, riddle branch, mercy-end
+    on synthetic defs shaped like their chapters) — Prompts 29–34 land
+    their bosses as DATA.
+  - **Forms are texture swaps** (the ENEMY_BATTLE_ART law extended):
+    `BossFormDef.spriteSuffix` resolves through the new `FORM_ART`
+    registry (validator-gated both directions, wear tiers registered at
+    boot); immunities zero a damage CLASS — every hit now declares
+    'physical' | 'vibe' | 'pray' at damageEnemy, and PRAY always lands
+    (faith is the game's thesis; no idol gets to eat it).
+  - **`crackedBy`:** an element that suspends a form's physical immunity
+    for CRACK_TURNS — Vibe Freeze makes SOLID GOLD brittle (§A6 Ch.2's
+    edge case, pinned in vitest and taught by the fight itself).
+  - **The riddle UI** rides the existing ask widget, pool-driven
+    (`pickRiddle` pinned; the Sphinx consumes it in Prompt 30). The Tick
+    stays bespoke — its latch is shipped law (S11) and the validator now
+    REJECTS a titanic_tick script.
+  - **`awakeningOnForm`:** a form's first appearance can BE a chapter's
+    ADR-035 moment — BattleScene stages it mid-battle (flash, the §A11
+    pages, the flag, the jingle). MIA AWAKENS VIBE FREEZE α the moment the
+    Grin goes hollow ("cold reads what gold hides", §A11.2 — played
+    straight); Freeze α left her L12 unlock row in the same commit (§A3
+    amended; the validator's no-double-path axis enforces it) and **save
+    v7's registered step backfills `awake_freeze_a` for any v6 Mia already
+    at L12+** — a save never loses an ability it could cast (ADR-015/035).
+- **Decision — PICNIC (Prompt 23, §A4.5):** picnic tables are
+  interactables; baskets are kind-'basket' items (Basic bought · Family
+  deli-crafted from any 3 foods · Feast recipe-gated to Ch.7, arms the
+  one-shot party auto-revive `feast_armed` that answers a wipe INSIDE
+  battle exactly once). The ritual: blanket unrolls, the party sits, two
+  songbirds land (ADR-020 discipline), full HP/PP for the standing —
+  angels wait for hospitals — and SUNNY SIDE arms: `sunny_side = 5`, a
+  plain number flag (remainder persists with NO save step), burned one per
+  battle at finish() however it ends, read through the **`sunnyMul()` seam
+  beside heroOffense** (offense/defense/speed/guts/vibe all multiply
+  through it; the sun icon + count sit by the party strip). Menu Use at a
+  table defers to the table flow; anywhere else canon answers: "There's no
+  good spot here." Ch.1's four tables are §A4.5 canon placements now;
+  Ch.2 places three more before its dungeon + the antechamber's
+  (validator-pinned by map).
+- **Decision — HOSPITALS & CHURCHES (Prompt 25, §A4.7):** Brickton General
+  opens behind its real double door (hospital_int — the ADR-028
+  landmark-large), with clinics at Puerto Sol and Valle Dorado; the desk
+  revives angels at `reviveCost(level) = 10 + 4·level` and cures
+  everything for a flat $18 (clearing Homesick for a fee Mom would not
+  approve of); each doctor gets exactly one weird line (§A11), and the
+  Mushroomize note already hangs on the wall (doctors-only, Ch.6).
+  **ADR-014's interim revive-all RETIRES:** a wipe now wakes the LEADER
+  alone at GS.respawnPoint() with cash §A4.7-halved; everyone else rides
+  the trail as angels until a hospital, Healing γ, or a rare item.
+  Chapels (Otterbrook + Valle Dorado): a free 50 HP party prayer, and the
+  priest is warm about Mia's gift (§A11.4 — flavor, played straight).
+  locked_chapel/locked_hospital retired the S4 way.
+- **Decision — CHAPTER 2, COMPLETE (Prompt 28):**
+  - **The crossing:** Brickton's east wall gains the docks gap (plain
+    g.set — every seeded stream byte-identical); the captain's ask holds
+    the rope until `ch1_complete` (ADR-014: the gate REQUIRES the flag);
+    the first ride plays the §A11 deck scene on the bus-map precedent
+    (masked scrolling reel), later rides quick-fade BOTH directions (zero
+    missables); UNCLE BERT appears at the docks ifFlag ch2_complete — the
+    Ch.3 tease, no map for Lucille yet.
+  - **PUERTO SOL is a CITY on seed 1898** (frozen forever, the 1995 rule's
+    fourth application; byte-identity pinned in vitest): two streets + the
+    avenue, colonial vocabulary INSIDE the fixed canvases via the new
+    `CityBuildingOpts.arch` crown pass (ADR-019 holds — same dims, same
+    door rects), the plaza fountain + market stalls, the pier district,
+    ONE shop (mercado, manifest-pinned), clinic, deli (basket crafting),
+    and the MUSEO DEL CASI-ORO. **THE ONE-LINE WIRE landed:**
+    COSTA_DOOR_FOR_PUERTO_SOL (tx/ty now aimed at the authored north gate)
+    pushed onto costa_estrella.doors + the cliff road back — the
+    validator's unplaced-door pin FLIPPED to assert the round trip. The
+    map-building kit (Grid/seededRng/treeSprite/doorstepOf) extracted to
+    `src/data/mapkit.ts` so chapter map modules share it without an import
+    cycle (byte-identical code, the streams untouched — jitter tests
+    green).
+  - **THE STEP-PYRAMID:** four chambers whose 7×7 ROTORS (a T-channel)
+    turn 90° clockwise per mask press — `rotateRect` applies
+    (initial + presses) % 4 at BUILD time (the carveHoldingRoom pattern;
+    ADR-014 fade-restart per press; flags `pyr_rot_N` carry it, no save
+    step). The solve reads on the floor (the T is visible; glyphs point)
+    and is PROVEN in vitest by BFS: every room blocked as found, open
+    after the documented presses (**1 → 1 → 2 → 2**), and the mask
+    reachable at every rotation — no soft-lock by construction.
+  - **§A7 Ch.2, all six + BOSS 2** (HP pins both directions): every quirk
+    is a real mechanic — the Parrot's **pending-cash theft** (cash leaves
+    NOW, rides the bird, drops on its defeat; run away and it keeps every
+    cent), the Beetle's gold form ('gild': physical-immune turns, tinted),
+    the Souvenir's Crying, the Step-Mask's cast Shield (enemy-side
+    halving), the Bunch's 5×22 union (the battle letter row grew to E),
+    the Jitterbug's Paralyze (move-status enum extended). Battle sprites
+    with three authored wear tiers each + overworld minis; the Idol draws
+    BOTH §A6 forms off one base (hollow = the same body with the warmth
+    gone).
+  - **Quests #5–6 (§A10, manifest-pinned):** THE LLAMA DRAMA — six llamas
+    on the dog-sheet contract (S7c — zero new engine code), each with one
+    §A11 personality line, herded by the Biscuit-zoom pattern; ONE is a
+    disguised Gilded Beetle that fights when cornered; reward Wool Poncho
+    (§A8 'body', WEAPON_ART torso row) + caller Tomás (damage 420).
+    MUSEUM OF ALMOST-GOLD — the loaner camera (key item), A-to-shoot at
+    four marked exhibits (flash + flag per sign beat), reward CAMERA
+    FLASH (a REUSABLE status battle item — `ItemDef.reusable`, the Flash
+    fx family blinding the room into Crying) + caller the curator
+    (damage 435).
+  - **Items/economy (§A8/§A9):** Alfajor, Aloe Leaf + Hanky (the cures the
+    Ch.2 roster makes matter — battle-usable via the ally picker),
+    Sandlot Slugger $185 / Copper Pan $164 / Tin Sun Pendant $110 — a full
+    regional refresh ≈ two chapters of income (Prompt 37 tunes the
+    decimals); shops manifest-pinned in both directions.
+  - **Story (§A11, in full):** the crossing, the señora's short letter,
+    the arrival, the valley's quiet, three gray WISHERS at the shrine with
+    woke twins standing in the same spots (flag-gated variant pairs —
+    color comes back one laugh at a time), the pyramid approach, the
+    §A11.3 apex (the idol is never funny), EMBER #2 + the two-stem
+    Heartlight, and **ch2_complete set by the valley RECOVERY beat** —
+    the §A6 exit is the wishers waking, not the boss dying.
+- **Save v7, registered (ADR-015):** the lone step backfills
+  awake_freeze_a from Mia's level under the OLD table (≥12). Everything
+  else rides flags (sunny remainder, feast, rotations, herd, photos,
+  grin_defeated, ch2_complete) — the prefer-flags clause exercised hard.
+- **Verification:** validator (every manifest above + the phase-script
+  pins + FORM_ART + picnic placements + hospital staffing + the boat
+  chain + the costa flip; FOUR axes verified failing loudly: crackedBy,
+  a missing table, an orphan FORM_ART row, the unwired costa door) + 270
+  vitest (phases suite for every canon trigger; the rotation BFS proof;
+  sunny/reviveCost pins; the v6→v7 backfill three ways; Puerto Sol
+  byte-identity ×2 builds). Live via the ADR-008 driver over the dev
+  server (docs/QA.md S14): the crossing end-to-end, Puerto Sol rendered,
+  a mask press rotating a live room and the channel walked through, an
+  organic Step-Mask fight, and THE WHOLE GRIN — clang on gold, telegraph,
+  hollow swap + texture, **Mia's mid-battle awakening**, hollow bash
+  landing, wear-composed form texture, victory. Zero console noise.
+- **Consequences:** bosses 3–8 are BossScriptDef rows + dialogue + art
+  (the engine is done); every future basket/table/clinic/chapel is data
+  through the S14 beats; chapter map modules import mapkit, never
+  maps.ts; new battle items can be reusable or status-bearing by schema
+  field; the §A9 timing run (~13 target, 35–45 min) belongs to the device
+  row with the §A11 tone read-through.
+
+## ADR-040 — S14b: the settings suite, the golf meter's real bug, the leaning run & the scrolling Lab
+
+- **Date:** 2026-06-11
+- **Status:** Accepted (user feedback pass on S14: "make all buttons
+  configurable in a clear easy to use manner with clean production quality
+  UI", "the fill bar is like going the wrong way", "a reset button or close
+  button to get back to the main screen", "changing the color of the grid
+  edges of all the text boxes like they have in earthbound", run animation
+  lean + determined face, "why am I unable to scroll down in this list")
+- **Decision — THE SETTINGS SUITE (SETUP, production pass):**
+  - **WINDOW FLAVORS (Prompt 6 canon, shipped):** `drawWindowSlice(flavor)`
+    — CLASSIC night-blue + MINT + STRAWBERRY + BANANA (the EB homage), all
+    keeping the white double-border; four `win9*` textures at boot. The
+    pick rides the save as the plain number flag `win_flavor` (per SAVE
+    FILE exactly as Prompt 6 demands — flags ride notebooks, no migration),
+    read live by `winTexture()` in makeWindow + Dialogue.say's cached
+    window (`setTexture` per say), so a change repaints the very next
+    window. Cycling the row previews instantly.
+  - **TEXT SPEED:** PATIENT / NORMAL / BRISK on the `text_speed` flag
+    (unset = NORMAL), read through `textSpeedMul()` by BOTH typewriters
+    (dialogue + battle print); held A/B fast-forward is unchanged law.
+  - **RETURN TO TITLE:** the close/reset path home, in SETUP — a confirmed
+    two-step ask ("Dad keeps everything he wrote down. Anything since his
+    last call goes back to lint."), then overworld + menu stop and the
+    title boots. Never accidental: Stay is the cancel row.
+  - **CONTROLS, rebuilt:** the S12c rebind page becomes a production sheet
+    — the binding list (action · keyboard · pad columns, long chords
+    elided) beside a WHAT-THEY-DO legend covering every context the action
+    serves (overworld/battle/cage/links), a PULSING capture card on
+    press-to-capture, reset-to-defaults, and the standing conflict rule
+    stated on-page: a stolen key falls back to its old action's default.
+    Bindings stay device-local ('meteor-falls-controls') — never save data.
+- **Decision — THE GOLF METER'S REAL BUG:** the reported "fill going the
+  wrong way" had a render-layer root cause: assigning a Phaser **Shape's
+  `.height` does not rebuild its rendered geometry** — the S13 fill never
+  visually grew (the stub at the bar's base in the user's screenshot), and
+  during the accuracy phase what little read there was DRAINED downward.
+  Fix: full-height quads sized by **`setScale(1, frac)` against a bottom
+  origin** (proven by renderer pixel sampling), and the presentation
+  re-reads as classic golf: the power fill RISES and HOLDS at the captured
+  power (gold mark), only the cyan NEEDLE falls through the accuracy
+  phase, and the PURE band hugs the base where tap three lands. The sim is
+  byte-untouched (every S13/ADR-038 test pins hold). REVIEW SMELL, stated:
+  never assign `.width/.height` on a Phaser Shape and expect pixels —
+  scale it or rebuild it.
+- **Decision — THE RUN BLOCK (supersedes ADR-009's 16-frame note, the
+  expansion ADR-028 anticipated):** character sheets are **24 frames** —
+  the walk block 0–15 BYTE-UNTOUCHED (every index, sheet order, and
+  standFrame() preserved) plus appended run poses 16–23 (2 per direction,
+  `runFrameBase(dir)`): head + torso shifted one pixel INTO the motion,
+  the head one pixel lower (tucked chin), and the face set to the
+  determined glare brow for the duration — drawn through the SAME
+  parametric layers via a metrics override, zero forked draw code. The
+  `-run-` anims play the new frames; followers, chasing walkers, and
+  patrols inherit the lean by anim key. Pinned in characters.test.ts:
+  24 frames for every CAST member, every run frame differs from its walk
+  step, and the right-run head's center of mass sits measurably forward.
+- **Decision — THE LAB SCROLLS:** the cast page (41 strong since S14)
+  paginates by row — Up/Down scroll, clamped, with a corner position read
+  (`4–6/6`). The walk-cycle audit loop is unchanged.
+- **Verification:** validator + 274 vitest green (the 4 new
+  characters.test.ts pins; every standing suite untouched). Live over the
+  dev server (docs/QA.md S14b): the SETUP suite driven end-to-end — sound
+  toggle, speed cycle, MINT and STRAWBERRY windows on screen, the controls
+  sheet rendered, **sprint captured onto KeyL and persisted, then reset**;
+  the Return-to-Title transition proven (title active, overworld + menu
+  stopped); the golf meter pixel-sampled mid-swing (held fill, gold mark
+  at 0.78 power, needle descending, PURE band + zero line at the base);
+  the run lean staged at 3× beside the walk frames for Jay AND Mia; the
+  cast page scrolled to rows 4–6. Driver lore earned: a user's live
+  browser focus wipes held keys by design (the blur listener) — bot
+  movement legs need the tab focused or the loop slept; and renderer
+  pixel-sampling via snapshotArea needs the loop AWAKE for one pass.
+- **Consequences:** new settings land as SETUP rows over flags (per-save)
+  or device-local storage (per-device) — the split is now precedent;
+  future meters size shapes by scale, never by `.height`; a future
+  five-flavor EB set is one WINDOW_FLAVORS row; chapter casts can grow
+  without Lab blindness. The §A6 bosses 3–8 remain chapter deliverables
+  (Prompts 29–34) on the S14 phase machine — each ships WITH its chapter's
+  art, wear tiers, telegraphs, and §A11 lines, exactly as the Grin did.

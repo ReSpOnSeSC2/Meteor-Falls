@@ -105,6 +105,10 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
   item_cola: S({ kind: 'item', family: 'fizz', ramp: RAMP.CYAN, sfx: 'fx_fizz' }),
   item_salt: S({ kind: 'item', family: 'throw_arc', ramp: RAMP.PAPER, sfx: 'fx_salt' }),
   item_spark: S({ kind: 'item', family: 'porchlight', ramp: RAMP.GOLD, sfx: 'ember' }),
+  // S14: the §A8 status cures (Hanky, Aloe Leaf) + the CAMERA FLASH —
+  // the Flash family already knew how to blind a room (§A10 #6)
+  item_cure: S({ kind: 'item', family: 'sparkle_rain', ramp: RAMP.GRASS, sfx: 'fx_cure' }),
+  item_flash: S({ kind: 'item', family: 'screen_flash', ramp: RAMP.GOLD, sfx: 'fx_flash' }),
 
   /* ---- system vocabulary (engine-invoked; exempt from the reverse check) ---- */
   pray_miraculous: S({ kind: 'system', family: 'pray_event', tier: 6, ramp: RAMP.GOLD, sfx: 'pray_mir' }),
@@ -136,11 +140,13 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
 export const ITEM_FX: Record<string, string> = {
   salt_shaker: 'item_salt',
   glints_spark: 'item_spark',
+  camera_flash: 'item_flash',
 };
 
 export const ITEM_KIND_FX: Record<string, string | undefined> = {
   food: 'item_food',
   pp: 'item_cola',
+  cure: 'item_cure',
 };
 
 export function itemFxKey(id: string, kind: string): string | null {

@@ -106,5 +106,53 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'damage', power: 425 },
       },
     }),
+
+    /* ---- §A10 #5 — herd six llamas; one of them is lying ---- */
+    Q({
+      id: 'llama_drama',
+      name: 'The Llama Drama',
+      chapter: 2,
+      giver: 'tomas',
+      startFlag: 'q_llama',
+      objectives: [
+        { id: 'l1', text: 'Bring back Paloma. She is above such things as pens.', flag: 'q_llama_1' },
+        { id: 'l2', text: 'Bring back Nube. He follows clouds. On foot.', flag: 'q_llama_2' },
+        { id: 'l3', text: 'Bring back Rey. He has annexed the south meadow.', flag: 'q_llama_3' },
+        { id: 'l4', text: 'Bring back Dorada. Tomas says she is "shinier than usual."', flag: 'q_llama_4' },
+        { id: 'l5', text: 'Bring back Pepita. She is somewhere soft, asleep.', flag: 'q_llama_5' },
+        { id: 'l6', text: 'Bring back Filosofo. He is staring at the pyramid again.', flag: 'q_llama_6' },
+        { id: 'report', text: 'Tell Tomas the herd adds up to six again.', flag: 'q_llama_reported' },
+      ],
+      rewardItem: 'wool_poncho',
+      doneFlag: 'q_llama_done',
+      caller: {
+        name: 'Tomas',
+        quote: 'Six llamas are watching me dial! They KNOW it is for you! Take everything we have — the wool agrees!',
+        effect: { kind: 'damage', power: 420 },
+      },
+    }),
+
+    /* ---- §A10 #6 — four fake idols, one skeptical curator ---- */
+    Q({
+      id: 'museum_gold',
+      name: 'Museum of Almost-Gold',
+      chapter: 2,
+      giver: 'curator',
+      startFlag: 'q_museum',
+      objectives: [
+        { id: 'p1', text: 'Photograph the squat one. The curator says a tourist made it.', flag: 'q_photo_1' },
+        { id: 'p2', text: 'Photograph the tall one. It is clearly a candlestick.', flag: 'q_photo_2' },
+        { id: 'p3', text: 'Photograph the llama-shaped one. Suspiciously good.', flag: 'q_photo_3' },
+        { id: 'p4', text: 'Photograph the abstract one. The plaque insists.', flag: 'q_photo_4' },
+        { id: 'report', text: 'Return the camera before the curator reports it stolen. He will.', flag: 'q_museum_reported' },
+      ],
+      rewardItem: 'camera_flash',
+      doneFlag: 'q_museum_done',
+      caller: {
+        name: 'The Curator',
+        quote: 'I have authenticated EXACTLY one real thing in my career. It is calling you right now. Take the light!',
+        effect: { kind: 'damage', power: 435 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

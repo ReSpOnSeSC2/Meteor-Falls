@@ -324,6 +324,57 @@ const TRACKS: Record<string, Track> = {
       },
     ],
   },
+  // S14 Ch.2 — the crossing rolls, the port grins, the jungle counts itself
+  // in, the valley worries in 3/4, the pyramid holds its breath (ADR-006
+  // interim synth; Phase 8 swaps voices behind the same API)
+  boat: {
+    bpm: 92,
+    swing: 0.22,
+    loop: true,
+    channels: [
+      { wave: 'triangle', vol: 0.17, notes: ['C3', null, 'G3', null, 'C3', null, 'G3', 'A3', 'F2', null, 'C3', null, 'G2', null, 'C3', null] },
+      { wave: 'sine', vol: 0.1, notes: ['E5', '-', 'G5', '-', null, 'C5', '-', null, 'D5', '-', 'F5', '-', 'E5', '-', null, null] },
+      { wave: 'noise', vol: 0.018, notes: ['C5', null, null, 'C5', null, null, 'C5', null, 'C5', null, null, 'C5', null, null, 'C5', null] },
+    ],
+  },
+  puerto: {
+    bpm: 116,
+    swing: 0.18,
+    loop: true,
+    channels: [
+      { wave: 'triangle', vol: 0.16, notes: ['D3', null, 'A3', 'D3', null, 'A3', 'D3', null, 'G2', null, 'D3', 'G3', 'A2', null, 'A3', null] },
+      { wave: 'square', vol: 0.05, notes: ['F5', 'A5', null, 'F5', 'E5', null, 'D5', null, 'B4', 'D5', null, 'G5', 'A5', '-', null, null] },
+      { wave: 'sine', vol: 0.08, notes: ['D4', null, 'F4', null, 'E4', null, 'D4', null, 'B3', null, 'D4', null, 'C4', '-', null, null] },
+      { wave: 'noise', vol: 0.022, notes: ['C5', null, 'C5', 'C5', null, 'C5', null, 'C5', 'C5', null, 'C5', 'C5', null, 'C5', null, 'C5'] },
+    ],
+  },
+  jungle: {
+    bpm: 104,
+    loop: true,
+    channels: [
+      { wave: 'triangle', vol: 0.16, notes: ['E2', null, null, 'E2', 'G2', null, 'E2', null, 'A2', null, null, 'A2', 'G2', null, 'B2', null] },
+      { wave: 'sine', vol: 0.07, notes: [null, 'E4', null, null, 'G4', '-', null, 'A4', null, null, 'G4', null, 'E4', '-', null, null] },
+      { wave: 'noise', vol: 0.03, notes: ['C5', 'C5', null, 'C5', null, 'C5', 'C5', null, 'C5', null, 'C5', 'C5', null, 'C5', 'C5', null] },
+    ],
+  },
+  valle: {
+    bpm: 84,
+    loop: true,
+    channels: [
+      { wave: 'triangle', vol: 0.15, notes: ['A2', null, null, 'E3', null, null, 'F2', null, null, 'C3', null, null, 'G2', null, 'E3', null] },
+      { wave: 'sine', vol: 0.11, notes: ['A4', '-', 'C5', 'B4', '-', null, 'A4', '-', 'F4', '-', 'G4', 'A4', '-', '-', null, null] },
+      { wave: 'sine', vol: 0.05, notes: [null, 'E4', null, null, 'C4', null, null, 'A3', null, null, 'C4', null, null, 'B3', null, null] },
+    ],
+  },
+  pyramid: {
+    bpm: 66,
+    loop: true,
+    channels: [
+      { wave: 'triangle', vol: 0.14, notes: ['D2', '-', '-', '-', null, null, 'Eb2', '-', '-', null, 'D2', '-', null, null, null, null] },
+      { wave: 'sine', vol: 0.06, notes: [null, null, 'D5', null, null, null, null, null, 'F5', null, null, 'Eb5', null, null, null, null] },
+      { wave: 'noise', vol: 0.012, notes: [null, null, null, 'C5', null, null, null, null, null, null, 'C5', null, null, null, null, null] },
+    ],
+  },
   // Heartlight: the Homesong's first stem — played when an Ember is recorded
   heartlight: {
     bpm: 72,

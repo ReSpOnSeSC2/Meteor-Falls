@@ -11,6 +11,7 @@ import {
   generateDogFrames,
   generateGlintFrames,
   generateAngelFrames,
+  runFrameBase,
 } from './characters';
 import { generateBustFrames, drawThoughtFood, drawHexPip } from './busts';
 import {
@@ -22,11 +23,18 @@ import {
 } from './battlers';
 import {
   ENEMY_BATTLE_ART,
+  FORM_ART,
   drawCicadaMini,
   drawSlugMini,
   drawMailboxMini,
   drawMowerMini,
   drawPigeonMini,
+  drawParrotMini,
+  drawBeetleMini,
+  drawSouvenirMini,
+  drawMaskMini,
+  drawBananaMini,
+  drawJitterbugMini,
 } from './enemies';
 import {
   TILESET,
@@ -35,6 +43,8 @@ import {
   drawPine,
   drawSign,
   drawPicnicTable,
+  drawPicnicBlanket,
+  drawSongbird,
   drawPhoneTable,
   drawBed,
   drawDesk,
@@ -130,9 +140,23 @@ import {
   drawStartPill,
   drawHandCursor,
   drawPhoneIcon,
+  drawSunIcon,
   drawTitleArt,
   drawLogo,
 } from './ui';
+import {
+  drawFountain,
+  drawMarketStall,
+  drawBananaBoat,
+  drawDepartureBoard,
+  drawIdolShrine,
+  drawPyramidGate,
+  drawMaskSwitch,
+  drawPedestal,
+  drawCrate,
+  drawGangplank,
+  generateLlamaFrames,
+} from './ch2';
 import { makeFontSheet, FONT_CHARS, FONT_CELL_W, FONT_CELL_H, FONT_CHARS_PER_ROW } from './font';
 import { RAMP, C, px } from '../palette';
 
@@ -170,16 +194,16 @@ function addCharacter(scene: Phaser.Scene, id: string): void {
         repeat: -1,
       });
     }
-    // S9b: the RUN cycle resequences the SAME sheet — both step poses with
-    // no neutral frame between them. Poses 1/3 carry the +1px body bob, so
-    // a runner stays risen on the balls of the feet: a sprint, not a fast
-    // walk. Sheet order, frame size, and standFrame() remain ADR-009/022
-    // law — adding drawn frames is its own future pass.
+    // S14b (ADR-040): the RUN cycle plays the DRAWN run frames — appended
+    // at 16–23 (2 per direction), leaning into the motion with the head
+    // tucked and the determined brow. The walk block 0–15, frame size, and
+    // standFrame() remain ADR-009/022 law; this pass is append-only (the
+    // expansion ADR-028 anticipated).
     const runKey = `${id}-run-${dir}`;
     if (!scene.anims.exists(runKey)) {
       scene.anims.create({
         key: runKey,
-        frames: [1, 3].map((f) => ({ key: id, frame: d * 4 + f })),
+        frames: [0, 1].map((f) => ({ key: id, frame: runFrameBase(d) + f })),
         frameRate: 11,
         repeat: -1,
       });
@@ -329,8 +353,10 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   }
 
   // enemy battle sprites — all three S11b wear tiers at boot (ADR-002);
-  // BattleScene swaps `${sprite}_w1/_w2` as the hp thresholds fall
-  for (const row of Object.values(ENEMY_BATTLE_ART)) {
+  // BattleScene swaps `${sprite}_w1/_w2` as the hp thresholds fall.
+  // S14: boss FORM textures register the same way (FORM_ART) — the phase
+  // machine's setForm is a texture swap, never a redraw.
+  for (const row of [...Object.values(ENEMY_BATTLE_ART), ...Object.values(FORM_ART)]) {
     addPixmap(scene, row.sprite, row.draw(0));
     addPixmap(scene, `${row.sprite}_w1`, row.draw(1));
     addPixmap(scene, `${row.sprite}_w2`, row.draw(2));
@@ -342,6 +368,13 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'mini_cranky_mailbox', drawMailboxMini());
   addPixmap(scene, 'mini_runaway_lawnmower', drawMowerMini());
   addPixmap(scene, 'mini_pigeon_gang', drawPigeonMini());
+  // §A7 Ch.2 minis (S14)
+  addPixmap(scene, 'mini_parrot', drawParrotMini());
+  addPixmap(scene, 'mini_beetle', drawBeetleMini());
+  addPixmap(scene, 'mini_souvenir', drawSouvenirMini());
+  addPixmap(scene, 'mini_mask', drawMaskMini());
+  addPixmap(scene, 'mini_banana', drawBananaMini());
+  addPixmap(scene, 'mini_jitterbug', drawJitterbugMini());
 
   // tileset strip
   if (!scene.textures.exists('tiles')) {
@@ -355,6 +388,9 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'pine', drawPine());
   addPixmap(scene, 'sign', drawSign());
   addPixmap(scene, 'picnic', drawPicnicTable());
+  // §A4.5 picnic scene set (S14): the blanket + the birds that land
+  addPixmap(scene, 'picnic_blanket', drawPicnicBlanket());
+  addSheet(scene, 'songbird', [drawSongbird(0), drawSongbird(1)], 2);
   addPixmap(scene, 'phone_table', drawPhoneTable());
   addPixmap(scene, 'bed', drawBed());
   addPixmap(scene, 'desk', drawDesk());
@@ -449,6 +485,44 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // S12c: the BEHIND camera's perspective floor (pause-menu toggle)
   addPixmap(scene, 'cage_court_behind', drawCageBehind());
 
+  // S14 — Chapter 2: the docks, the crossing, the port, the valley, the
+  // pyramid (props in spritegen/ch2.ts; ADR-019/020 discipline throughout)
+  addPixmap(scene, 'fountain', drawFountain());
+  addPixmap(scene, 'market_stall_a', drawMarketStall(RAMP.RED));
+  addPixmap(scene, 'market_stall_b', drawMarketStall(RAMP.GOLD));
+  addPixmap(scene, 'market_stall_c', drawMarketStall(RAMP.CYAN));
+  addPixmap(scene, 'banana_boat', drawBananaBoat());
+  addPixmap(scene, 'departure_board', drawDepartureBoard());
+  addPixmap(scene, 'idol_shrine', drawIdolShrine());
+  addPixmap(scene, 'pyramid_gate', drawPyramidGate());
+  addPixmap(scene, 'mask_switch', drawMaskSwitch(false));
+  addPixmap(scene, 'mask_switch_lit', drawMaskSwitch(true));
+  addPixmap(scene, 'pedestal_0', drawPedestal(0));
+  addPixmap(scene, 'pedestal_1', drawPedestal(1));
+  addPixmap(scene, 'pedestal_2', drawPedestal(2));
+  addPixmap(scene, 'pedestal_3', drawPedestal(3));
+  addPixmap(scene, 'crate', drawCrate(false));
+  addPixmap(scene, 'crate_bananas', drawCrate(true));
+  addPixmap(scene, 'gangplank', drawGangplank());
+  addSheet(scene, 'llama', generateLlamaFrames(), 4);
+  // PUERTO SOL's colonial faces (the S14 arch option, inside fixed canvases)
+  addPixmap(scene, 'bldg_ps_mercado', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.ORANGE, signText: 'MERCADO', doorAt: 2, arch: true, litSeed: 21 }));
+  addPixmap(scene, 'bldg_ps_clinic', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.PAPER, signText: 'CLINICA', cross: true, doorAt: 2, arch: true, litSeed: 22 }));
+  addPixmap(scene, 'bldg_ps_pension', drawCityBuilding({ wallTiles: 5, upperRows: 2, wall: RAMP.GOLD, signText: 'PENSION SOL', doorAt: 2, arch: true, litSeed: 23 }));
+  addPixmap(scene, 'bldg_ps_museum', drawCityBuilding({ wallTiles: 6, upperRows: 2, wall: RAMP.PAPER, signText: 'MUSEO', doorAt: 3, doubleDoor: true, arch: true, litSeed: 24 }));
+  addPixmap(scene, 'bldg_ps_casa', drawCityBuilding({ wallTiles: 4, upperRows: 2, wall: RAMP.RED, signText: 'CASA FLOR', doorAt: 1, arch: true, litSeed: 25 }));
+  addPixmap(scene, 'bldg_ps_casa_b', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.CYAN, signText: 'CASA MAR', doorAt: 1, arch: true, litSeed: 26 }));
+  addPixmap(scene, 'bldg_ps_deli', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.GRASS, signText: 'DELI SOL', doorAt: 1, arch: true, litSeed: 27 }));
+  addPixmap(scene, 'bldg_ps_cantina', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.PURPLE, signText: 'CANTINA', doorAt: 2, arch: true, litSeed: 28 }));
+  addPixmap(scene, 'bldg_ps_casa_c', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.GOLD, signText: 'CASA LUZ', doorAt: 1, arch: true, litSeed: 29 }));
+  addPixmap(scene, 'bldg_ps_pension_b', drawCityBuilding({ wallTiles: 5, upperRows: 2, wall: RAMP.BLUE, signText: 'EL FARO', doorAt: 2, arch: true, litSeed: 30 }));
+  // VALLE DORADO's houses (drawHouse vocabulary, village looseness)
+  addPixmap(scene, 'valle_shop', drawHouse({ wallTiles: 5, wallRows: 2, roof: RAMP.RED, signText: 'LANA', doorAt: 2, awning: RAMP.GOLD, litSeed: 61 }));
+  addPixmap(scene, 'valle_clinic', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.CYAN, signText: 'CLINICA', doorAt: 1, awning: RAMP.RED, litSeed: 62 }));
+  addPixmap(scene, 'valle_chapel', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.GOLD, steeple: true, doorAt: 1, windows: [0, 2], litSeed: 63 }));
+  addPixmap(scene, 'valle_house', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.ORANGE, chimney: true, litSeed: 64 }));
+  addPixmap(scene, 'valle_house_b', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.MAGENTA, roofStyle: 'gable', litSeed: 65 }));
+
   // S13: COSTA ESTRELLA — the Brickton travel-poster tease + the resort's
   // clubhouse (the course itself paints at use-time via ensureLinksArt)
   addPixmap(scene, 'poster_links', drawLinksPoster());
@@ -475,7 +549,12 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'chapel', drawHouse({ wallTiles: 3, wallRows: 2, roof: RAMP.BLUE, steeple: true, doorAt: 1, windows: [0, 2], litSeed: 89 }));
 
   // UI
-  addPixmap(scene, 'win9', drawWindowSlice());
+  // S14b: the EB window flavors — classic + three (Prompt 6 canon); the
+  // live pick rides the save as a plain number flag (WIN_FLAVOR_FLAG)
+  addPixmap(scene, 'win9', drawWindowSlice(0));
+  addPixmap(scene, 'win9_1', drawWindowSlice(1));
+  addPixmap(scene, 'win9_2', drawWindowSlice(2));
+  addPixmap(scene, 'win9_3', drawWindowSlice(3));
   addPixmap(scene, 'box9', drawBoxSlice());
   addPixmap(scene, 'odo', drawOdometerStrip());
   addPixmap(scene, 'dpad', drawDpad());
@@ -487,6 +566,7 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'btn_start', drawStartPill());
   addPixmap(scene, 'hand', drawHandCursor());
   addPixmap(scene, 'phone_icon', drawPhoneIcon());
+  addPixmap(scene, 'sun_icon', drawSunIcon()); // §A4.5 SUNNY SIDE (S14)
   addPixmap(scene, 'swirl', makeSpiral());
   addPixmap(scene, 'title_art', drawTitleArt(GAME_W, GAME_H));
   addPixmap(scene, 'logo', drawLogo());

@@ -52,9 +52,11 @@ export const HEROES: Record<HeroId, HeroDef> = {
     // (§A3 canon centerpiece, validator-pinned). Vibe Fire α is the
     // first-listen AWAKENING (the holding-room Locket beat); the elemental
     // cadence below is spaced so each line opens as an event.
+    // S14: VIBE FREEZE α left the L12 row — it AWAKENS at the Gilded
+    // Grin's HOLLOW reveal (cold_reads, Ch.2's emotional center; §A3
+    // amended). Magnet L15 → Fire β L17 restate unchanged.
     unlocks: [
       { level: 1, ability: 'pray' },
-      { level: 12, ability: 'vibe_freeze_a' },
       { level: 15, ability: 'magnet_a' },
       { level: 17, ability: 'vibe_fire_b' },
       { level: 20, ability: 'vibe_volt_a' },

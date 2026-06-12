@@ -7,6 +7,7 @@
 import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
+import { GS } from '../engine/state';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
 import { vars } from './text';
@@ -28,6 +29,21 @@ export function everyFrame(scene: Phaser.Scene, cb: (dtMs: number) => void): () 
   return () => scene.events.off(Phaser.Scenes.Events.UPDATE, handler);
 }
 
+/** S14b: the live window-flavor texture key (Prompt 6 — per SAVE FILE: the
+ *  pick is a plain number flag, so it rides the notebook with no save step) */
+export function winTexture(): string {
+  const n = Number(GS.flag('win_flavor')) || 0;
+  return n > 0 && n <= 3 ? `win9_${n}` : 'win9';
+}
+
+/** S14b: the per-save text speed — 0 patient · 1 normal · 2 brisk; every
+ *  typewriter (dialogue + battle) multiplies its chars/frame through this */
+export function textSpeedMul(): number {
+  const raw = GS.flag('text_speed');
+  const n = raw === false ? 1 : Number(raw); // unset = NORMAL
+  return n === 0 ? 0.55 : n === 2 ? 1.7 : 1;
+}
+
 export function makeWindow(
   scene: Phaser.Scene,
   x: number,
@@ -35,7 +51,7 @@ export function makeWindow(
   w: number,
   h: number,
 ): Phaser.GameObjects.NineSlice {
-  const win = scene.add.nineslice(x, y, 'win9', 0, w, h, 8, 8, 8, 8);
+  const win = scene.add.nineslice(x, y, winTexture(), 0, w, h, 8, 8, 8, 8);
   win.setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI);
   return win;
 }
@@ -91,6 +107,7 @@ export class Dialogue {
     this.busy = true;
     const { x, y, w, h } = this.layout();
     this.win ??= makeWindow(this.scene, x, y, w, h);
+    this.win.setTexture(winTexture()); // a flavor change applies live (S14b)
     this.win.setVisible(true);
     this.text ??= this.scene.add
       .bitmapText(x + 10, y + 8, 'retro', '', 6)
@@ -133,7 +150,7 @@ export class Dialogue {
       // per-frame, dt-scaled: same chars-per-second on every display (ADR-024)
       const off = everyFrame(this.scene, (dt) => {
         const fast = INPUT.held('A') || INPUT.held('B');
-        acc += (fast ? 3.2 : 1) * (dt / 16);
+        acc += (fast ? 3.2 : textSpeedMul()) * (dt / 16);
         while (acc >= 1 && i < page.length) {
           acc -= 1;
           i++;

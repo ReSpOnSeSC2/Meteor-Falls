@@ -663,7 +663,34 @@ with the HOLES/golfers/rewards manifests enforced; browser loop and
 android:apk untouched; the ADR records the venue call.
 ```
 
-## Prompt S14 — Otterbrook fills out + death/revival/picnic systems (Prompts 23, 25, 27-scope)
+## Prompt S14 — ✅ DONE 2026-06-11 as THE GILDED GRIN (ADR-039) — Chapter 2 complete + Prompts 15/23/25
+
+Shipped far beyond this queued draft: the BOSS PHASE MACHINE
+(src/battle/phases.ts — declarative BossScriptDef data; every §A6 trigger
+type proven headlessly; forms = FORM_ART texture swaps; the riddle UI on
+the ask widget; the Tick stays bespoke), PICNIC per §A4.5 (baskets
+Basic/Family/Feast, the blanket scene, SUNNY SIDE ×5 battles through the
+sunnyMul() seam, deli crafting at Puerto Sol, the Feast's one-shot
+auto-revive), HOSPITALS & CHAPELS per §A4.7 (Brickton General + two
+clinics, reviveCost(level), the cure-all desk, ADR-014's revive-all
+RETIRED — wipes leave angels; chapels pray 50 HP free, the priest warm on
+Mia's gift), and ALL OF CHAPTER 2: the docks + banana boat (ch1_complete
+gate, first-ride deck scene, quick fades forever), PUERTO SOL (a true
+ADR-012 city on frozen seed 1898, colonial arch pass inside fixed
+canvases, the costa wire landed + validator flipped to assert the round
+trip), the jungle (2 screens + grotto chest run), VALLE DORADO (pen,
+shrine, gray wishers + woke twins), THE STEP-PYRAMID (7×7 rotor channels,
+mask presses, BFS-proven solve 1/1/2/2), the §A7 Ch.2 six + their
+mechanics (pending-cash theft, gold form, cast Shield, Paralyze, 5×22),
+BOSS 2 on the machine (clang/telegraph/swap verified live), MIA'S FREEZE
+AWAKENING at the HOLLOW reveal (§A3 amended; save v7 backfill), quests
+#5–6, the Ch.2 §A8 shelf, the full §A11 script, EMBER #2 + the recovery
+exit beat + Uncle Bert's Ch.3 tease. Validator + 270 vitest green; QA.md
+S14 pre-flight + device row 18. NOTE for S15: this queued draft's
+remaining scraps — Otterbrook home interiors (incl. Chad's empty house)
+— roll into S15's interior program below.
+
+The original queued draft is kept for the record:
 
 ```
 [Standard Header]
@@ -788,15 +815,14 @@ remains strictly better post-Ch.4 (vehicles are flavor + early-game).
 
 ---
 
-Run order: ~~S11 (the battle show — DONE, ADR-030/031)~~ → ~~S11b (the
-battle STAGE — DONE, ADR-032: battlers act per ability, equipped weapons
-render, wear states both sides, real interior doors, the shield picker,
-the green Mother-3 SMAAASH combo)~~ → ~~S12 (THE CAGE — DONE,
-ADR-033/034: the gate, the deterministic 5v5/3v3 engine, the 32-team
-Classic on save v5, THE STARTING FOUR)~~ → **S13 (the LINKS)** → S14
-(revival/picnics — after which Chapter 1 is genuinely complete, name
-entry through ch1_complete with quests, arcade, hoops, revival, and
-picnics all live) → S15–S16 make the world dense and navigable. S12 and
+Run order: ~~S11~~ → ~~S11b~~ → ~~S12~~ → ~~S13 (the LINKS — DONE,
+ADR-037/038)~~ → ~~S14 (THE GILDED GRIN — DONE, ADR-039: Chapter 2
+complete on the phase machine, with picnics, hospitals, and the §A6
+recovery exit; saves v7)~~ → **S15–S16** make the world dense and
+navigable, then Prompt 29 (Chapter 3: Foggybottom + Wintermoor + the
+MAINFRAME on the phase machine — its summons-refill trigger is already
+proven headlessly) and the balance sim (Prompt 37) now that TWO chapters
+exist to measure. S12 and
 S13 are each big enough to split on their natural seam if a session runs
 long (Appendix rule 2): core game first, tournament + rewards second.
 The "big city like New York" ask maps onto canon:

@@ -103,6 +103,10 @@ export class LinksScene extends Phaser.Scene {
   private meterFill!: Phaser.GameObjects.Rectangle;
   private meterWin!: Phaser.GameObjects.Rectangle;
   private meterZero!: Phaser.GameObjects.Rectangle;
+  /** S14b: the captured-power mark + the falling accuracy needle — the
+   *  fill RISES and HOLDS; only the needle comes back down */
+  private meterMark!: Phaser.GameObjects.Rectangle;
+  private meterNeedle!: Phaser.GameObjects.Rectangle;
   private panelObjs: Phaser.GameObjects.GameObject[] = [];
   private elapsed = 0;
   private golferKey = '';
@@ -181,9 +185,14 @@ export class LinksScene extends Phaser.Scene {
     const pane = this.add.sprite(36, 216, this.golferKey, 0).setOrigin(0.5, 1).setScale(1.6).setScrollFactor(0).setDepth(DEPTH_UI + 2);
     this.golferPane = pane;
     this.add.rectangle(70, 214, 7, 68, colorOf(px(RAMP.INK, 0))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 2);
-    this.meterWin = this.add.rectangle(70, 214 - 68, 7, 6, colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
-    this.meterZero = this.add.rectangle(70, 214 - 68, 9, 1, colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
-    this.meterFill = this.add.rectangle(70, 214, 3, 2, colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
+    // S14b: fill + window size by SCALE off a full-height quad — assigning
+    // a Phaser Shape's .height does not rebuild its rendered geometry (the
+    // root cause of the reported "fill going the wrong way": it never grew)
+    this.meterWin = this.add.rectangle(70, 214, 7, 68, colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
+    this.meterZero = this.add.rectangle(70, 214, 9, 1, colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
+    this.meterFill = this.add.rectangle(70, 214, 5, 68, colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
+    this.meterMark = this.add.rectangle(70, 214, 9, 1, colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
+    this.meterNeedle = this.add.rectangle(70, 214, 9, 2, colorOf(px(RAMP.CYAN, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
 
     AUDIO.playMusic('cage');
     this.game.events.emit('mf-links-open');
@@ -614,23 +623,34 @@ export class LinksScene extends Phaser.Scene {
     this.hudClub.setText(s.swingMode() === 'putt' ? 'PUTTER' : s.swingMode() === 'chip' ? 'CHIP' : CLUBS[s.clubIdx].name);
     if (this.ticker.text !== '' && this.elapsed > this.tickerUntil) this.ticker.setText('');
     if (this.banner.text !== '' && this.elapsed > this.bannerUntil) this.banner.setText('');
-    // the meters (pane): power fills up; acc falls — the gold line is zero,
-    // the green band is the live perfect window (club × lie, honest)
+    // THE 3-TAP METER, the honest read (S14b — "the fill was going the
+    // wrong way"): the power fill RISES bottom→top and HOLDS at the captured
+    // power (gold mark); during the accuracy phase only the cyan NEEDLE
+    // comes back down toward the PURE band at the base. Nothing drains.
     const inMeter = s.phase === 'power' || s.phase === 'acc';
     this.meterFill.setVisible(inMeter);
-    this.meterWin.setVisible(s.phase === 'acc' || (inMeter && s.mode === 'full'));
-    this.meterZero.setVisible(inMeter && s.mode === 'full');
+    this.meterWin.setVisible(inMeter);
+    this.meterZero.setVisible(inMeter);
+    this.meterMark.setVisible(s.phase === 'acc');
+    this.meterNeedle.setVisible(s.phase === 'acc');
     if (inMeter) {
       const H = 68;
-      const frac = Math.max(0, s.meterT) / GOLF.POWER_CAP;
-      this.meterFill.height = Math.max(1, frac * H);
-      this.meterFill.setFillStyle(colorOf(px(s.phase === 'acc' ? RAMP.CYAN : RAMP.PAPER, 3)));
-      // zero line + window sit near the bar's base (acc target is 0)
-      const zeroY = 214 - (0 / GOLF.POWER_CAP) * H;
-      this.meterZero.setPosition(70, zeroY - 1);
-      const win = s.accWindow() / GOLF.POWER_CAP;
-      this.meterWin.setPosition(70, zeroY - win * H);
-      this.meterWin.height = Math.max(2, win * 2 * H);
+      const base = 214;
+      // the fill: live needle height while charging; HOLDS at the captured
+      // power through the accuracy phase (dimmed) — nothing ever drains
+      const fillFrac = (s.phase === 'power' ? Math.max(0, s.meterT) : s.power) / GOLF.POWER_CAP;
+      this.meterFill.setScale(1, Math.max(0.02, fillFrac));
+      this.meterFill.setFillStyle(colorOf(px(RAMP.PAPER, s.phase === 'power' ? 3 : 1)));
+      // the PURE band hugs the base: [0 .. accWindow], where the needle
+      // must land (tap 3); it shrinks with club × lie, honestly
+      const win = Math.min(1, s.accWindow() / GOLF.POWER_CAP);
+      this.meterWin.setPosition(70, base);
+      this.meterWin.setScale(1, Math.max(0.03, win));
+      this.meterZero.setPosition(70, base);
+      if (s.phase === 'acc') {
+        this.meterMark.setPosition(70, base - (s.power / GOLF.POWER_CAP) * H);
+        this.meterNeedle.setPosition(70, base - (Math.max(0, s.meterT) / GOLF.POWER_CAP) * H);
+      }
     }
   }
 

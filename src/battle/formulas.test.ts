@@ -26,6 +26,7 @@ import {
   COMBO_WINDOW_MS,
   wearTier,
 } from './formulas';
+import * as F from './formulas';
 import { rollPray, prayWeights, PRAY_BASE, type PrayTier } from '../data/abilities';
 import { mulberry32 } from '../spritegen/pixmap';
 import { expForLevel, makeHeroState } from '../engine/state';
@@ -293,5 +294,25 @@ describe('the arms slot (S12 — THE STARTING FOUR read-throughs)', () => {
       expect(item.wielder).toBeDefined();
       expect([item.speed, item.guts].filter((v) => v !== undefined)).toHaveLength(1);
     }
+  });
+});
+
+describe('§A4.5 SUNNY SIDE + the §A4.7 hospital economy (S14)', () => {
+  it('sunnyMul reads the flag counter: 1.1 while battles remain, 1 after', () => {
+    expect(F.sunnyMul(() => 5)).toBe(1.1);
+    expect(F.sunnyMul(() => 1)).toBe(1.1);
+    expect(F.sunnyMul(() => 0)).toBe(1);
+    expect(F.sunnyMul(() => false)).toBe(1);
+  });
+
+  it('the picnic covers exactly five battles (§A4.5 canon)', () => {
+    expect(F.SUNNY_BATTLES).toBe(5);
+  });
+
+  it('reviveCost scales by the fallen level (§A4.7 — hospitals are the economy)', () => {
+    expect(F.reviveCost(1)).toBe(14);
+    expect(F.reviveCost(6)).toBe(34);
+    expect(F.reviveCost(13)).toBe(62);
+    expect(F.reviveCost(13)).toBeGreaterThan(F.reviveCost(6));
   });
 });

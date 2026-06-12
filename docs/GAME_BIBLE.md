@@ -92,6 +92,16 @@ In the final battle, Pray becomes **scripted** (see A8, Chapter 8).
 > already staged it); Ch.8 the finale's scripted PRAY is the last one. The
 > validator pins each chapter's manifest as it lands.)*
 
+
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-039 — Ch.2's awakening
+> SHIPPED: Mia awakens **VIBE FREEZE α** the moment the Gilded Grin goes
+> hollow ("cold reads what gold hides" — staged sincere, §A11.2, and it
+> cracks the SOLID form's physical immunity for a beat). Freeze α leaves
+> her L12 unlock row accordingly; her ladder restates as Magnet (L15) →
+> Fire β (L17) → Volt α (L20) onward, unchanged. Saves from before the
+> move keep any Freeze a v6 Mia at L12+ could already cast — the v7
+> migration backfills the flag.)*
+
 ## A4. Core Systems (the EarthBound DNA)
 
 1. **Rolling Odometer HP.** HP/PP tick down like a mechanical odometer (~2 digits/sec). A mortal hit can be outraced by healing or by *winning the battle* before the meter hits zero. This is the single most important feel-mechanic — Prompt 13 is dedicated to it.
@@ -805,6 +815,14 @@ gray "wishers" who recover after the boss. Boss: IDOL OF THE GILDED GRIN
 form-swap fight. Quests #5–6. Ch.2 enemies/shops/tables. Banana-boat arrival
 and Lucille-departure cutscenes.
 ```
+
+> *(Amended 2026-06-11 per Appendix rule 6, ADR-039 — SHIPPED as S14,
+> bundled with Prompts 15/23/25. EXIT: `ch2_complete` is set by the Valle
+> Dorado RECOVERY beat — the wishers waking is the chapter's close, not
+> the boss's death; the "Lucille departure" tease is Uncle Bert standing
+> at the Brickton docks behind that flag (no map for her until Ch.3).
+> The §A6 rotation shipped as 7×7 rotor channels turned 90° per mask
+> press; the documented solve is 1/1/2/2 presses.)*
 
 ### Prompt 29 — Chapter 3: "A Very Foggy Term" (England)
 

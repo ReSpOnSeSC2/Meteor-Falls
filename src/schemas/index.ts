@@ -115,7 +115,10 @@ export type PrayWeights = z.infer<typeof PrayWeightsSchema>;
 
 /* ---------------- enemies (§A7 + §A6 bosses) ---------------- */
 
-export const MoveKindSchema = z.enum(['attack', 'strong', 'status', 'latch', 'drain', 'steal', 'taunt']);
+/** S14 adds the §A7 Ch.2 vocabulary: 'stealcash' (Pickpocket Parrot — the
+ *  pending-cash theft, recovered on victory), 'gild' (Gilded Beetle's gold
+ *  form: physical-immune turns), and 'shield' (Step-Mask casts Shield). */
+export const MoveKindSchema = z.enum(['attack', 'strong', 'status', 'latch', 'drain', 'steal', 'taunt', 'stealcash', 'gild', 'shield']);
 export type MoveKind = z.infer<typeof MoveKindSchema>;
 
 export const EnemyMoveSchema = z.strictObject({
@@ -123,7 +126,7 @@ export const EnemyMoveSchema = z.strictObject({
   kind: MoveKindSchema,
   /** multiplier on enemy offense for damage moves */
   mult: z.number().positive().optional(),
-  status: z.enum(['sunburn', 'crying', 'asleep', 'productive']).optional(),
+  status: z.enum(['sunburn', 'crying', 'asleep', 'productive', 'paralyzed']).optional(),
   text: z.string().min(1),
   weight: z.number().positive(),
 });
@@ -167,8 +170,9 @@ export type EquipSlot = z.infer<typeof EquipSlotSchema>;
  *  (sell-fodder and quest goods — Fresh Stamps, the lemonade supplies).
  *  S10 adds: 'armor' (the 'body' slot — the Champion Jacket is §A8's first).
  *  S12 adds: 'arms' (the 'arms' slot — THE STARTING FOUR, the Classic's
- *  first-title prize, carry speed/guts the way armor carries defense). */
-export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable', 'armor', 'arms']);
+ *  first-title prize, carry speed/guts the way armor carries defense).
+ *  S14 adds: 'basket' (§A4.5 — Picnic Baskets, table-only use). */
+export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable', 'armor', 'arms', 'basket']);
 export type ItemKind = z.infer<typeof ItemKindSchema>;
 
 export const ItemDefSchema = z
@@ -194,6 +198,11 @@ export const ItemDefSchema = z
     power: z.number().positive().optional(),
     /** breaks the Tick's latch (§A6 Boss 1 gimmick) */
     breaksLatch: z.boolean().optional(),
+    /** S14: a battle item that lands a status on every enemy instead of
+     *  damage — the CAMERA FLASH (§A10 #6) blinds the room into Crying */
+    status: z.enum(['crying', 'asleep', 'paralyzed']).optional(),
+    /** S14: survives use (the CAMERA FLASH is a flash, not film) */
+    reusable: z.boolean().optional(),
     cures: z.array(z.string().min(1)).optional(),
     usableInBattle: z.boolean(),
     price: z.number().int().min(0),
@@ -673,3 +682,137 @@ export const GolferDefSchema = z.strictObject({
   tier: z.number().int().min(1).max(5),
 });
 export type GolferDef = z.infer<typeof GolferDefSchema>;
+
+/* ============ THE BOSS PHASE MACHINE (S14 — Bible Prompt 15) ============ */
+
+/**
+ * Declarative boss-gimmick triggers (§A6). The interpreter in
+ * src/battle/phases.ts is Phaser-free and proven headlessly, so Prompts
+ * 29–34 land their bosses as DATA — never new engine code.
+ *  - hpBelow fires once when the boss's hp fraction first drops below frac
+ *    (Cobra Raja's skin-shed at 40%).
+ *  - turnCount fires at the boss's nth turn; `every` repeats it on a cycle
+ *    (the Gilded Grin telegraphs at 2, 6, 10… and swaps at 3, 7, 11…).
+ *  - bothSummonsDead fires whenever every summoned unit is down and at
+ *    least one summon has been made (the Mainframe's refill).
+ *  - riddleAnswered fires when the opening riddle resolves that way
+ *    (the Sphinx, §A6 Ch.4).
+ *  - prayTierAtLeast fires when a Pray resolves at this tier or better
+ *    (Hoaxula's mercy end — the game's quietest victory).
+ */
+export const PhaseTriggerSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('hpBelow'), frac: z.number().gt(0).lt(1) }),
+  z.strictObject({
+    kind: z.literal('turnCount'),
+    n: z.number().int().min(1),
+    every: z.number().int().min(1).optional(),
+  }),
+  z.strictObject({ kind: z.literal('bothSummonsDead') }),
+  z.strictObject({ kind: z.literal('riddleAnswered'), ok: z.boolean() }),
+  z.strictObject({ kind: z.literal('prayTierAtLeast'), tier: PrayTierSchema }),
+]);
+export type PhaseTrigger = z.infer<typeof PhaseTriggerSchema>;
+
+/**
+ * Phase actions — the Prompt-15 vocabulary plus the two the §A6 riddle
+ * consequences demand (stunSelf: "skip its first 3 turns"; partyStatus:
+ * "wrong = party starts Crying"). setForm 'cycle' advances to the next
+ * form in the boss's forms list, wrapping — alternation as one phase def.
+ */
+export const PhaseActionSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('setForm'), form: z.string().min(1) }),
+  z.strictObject({ kind: z.literal('summon'), enemy: z.string().min(1), n: z.number().int().min(1).max(4) }),
+  z.strictObject({ kind: z.literal('healSelf'), amount: z.number().int().positive() }),
+  z.strictObject({ kind: z.literal('scriptLine'), line: z.string().min(1) }),
+  z.strictObject({ kind: z.literal('stealEquipped') }),
+  z.strictObject({ kind: z.literal('returnStolen') }),
+  z.strictObject({ kind: z.literal('setSpeedMul'), mul: z.number().positive() }),
+  z.strictObject({ kind: z.literal('endBattleMercy') }),
+  z.strictObject({ kind: z.literal('stunSelf'), turns: z.number().int().min(1) }),
+  z.strictObject({
+    kind: z.literal('partyStatus'),
+    status: z.enum(['crying', 'asleep', 'paralyzed', 'sunburn', 'hushed']),
+    turns: z.number().int().min(1),
+  }),
+]);
+export type PhaseAction = z.infer<typeof PhaseActionSchema>;
+
+/** one boss form (the Gilded Grin's SOLID GOLD / HOLLOW, the Paper Dragon's
+ *  airborne/grounded). Immunities zero the matching damage class; crackedBy
+ *  names the element that suspends them for a beat (Vibe Freeze makes the
+ *  gold BRITTLE — the §A6 Ch.2 edge case the fight teaches). */
+export const BossFormDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  physicalImmune: z.boolean().optional(),
+  vibeImmune: z.boolean().optional(),
+  crackedBy: ElementSchema.optional(),
+  /** texture suffix on EnemyDef.sprite for this form ('' = the base art) */
+  spriteSuffix: z.string(),
+  /** DIALOGUE id printed when the boss takes this form */
+  line: z.string().min(1).optional(),
+});
+export type BossFormDef = z.infer<typeof BossFormDefSchema>;
+
+export const BossPhaseDefSchema = z.strictObject({
+  id: z.string().min(1),
+  trigger: PhaseTriggerSchema,
+  actions: z.array(PhaseActionSchema).min(1),
+  /** default true — a phase fires once. turnCount with `every` repeats. */
+  once: z.boolean().optional(),
+});
+export type BossPhaseDef = z.infer<typeof BossPhaseDefSchema>;
+
+/** one riddle of the §A6 Ch.4 pool (built now, the Sphinx consumes later) */
+export const RiddleDefSchema = z.strictObject({
+  q: z.string().min(1),
+  options: z.array(z.string().min(1)).min(2).max(4),
+  correct: z.number().int().min(0),
+});
+export type RiddleDef = z.infer<typeof RiddleDefSchema>;
+
+export const BossScriptDefSchema = z
+  .strictObject({
+    /** the §A7/§A6 enemy this machine drives */
+    boss: z.string().min(1),
+    initialForm: z.string().min(1).optional(),
+    forms: z.array(BossFormDefSchema).optional(),
+    /** the battle opens on this riddle (N-way ask; §A6 Ch.4) */
+    riddle: z
+      .strictObject({
+        /** DIALOGUE id of the asking pages */
+        intro: z.string().min(1),
+        pool: z.array(RiddleDefSchema).min(1),
+      })
+      .optional(),
+    /** S14/ADR-035: a mid-battle AWAKENING staged the first time the boss
+     *  takes this form (Mia's Freeze at the HOLLOW reveal — Ch.2's center) */
+    awakeningOnForm: z
+      .strictObject({ form: z.string().min(1), awakening: z.string().min(1) })
+      .optional(),
+    phases: z.array(BossPhaseDefSchema),
+  })
+  .superRefine((s, ctx) => {
+    if (s.initialForm && !s.forms?.some((f) => f.id === s.initialForm)) {
+      ctx.addIssue({ code: 'custom', message: `initialForm '${s.initialForm}' is not in forms` });
+    }
+    if (s.awakeningOnForm && !s.forms?.some((f) => f.id === s.awakeningOnForm?.form)) {
+      ctx.addIssue({ code: 'custom', message: `awakeningOnForm aims at unknown form '${s.awakeningOnForm.form}'` });
+    }
+    for (const r of s.riddle?.pool ?? []) {
+      if (r.correct >= r.options.length) {
+        ctx.addIssue({ code: 'custom', message: `riddle "${r.q.slice(0, 24)}…" marks correct=${r.correct} with ${r.options.length} options` });
+      }
+    }
+    for (const p of s.phases) {
+      for (const a of p.actions) {
+        if (a.kind === 'setForm' && a.form !== 'cycle' && !s.forms?.some((f) => f.id === a.form)) {
+          ctx.addIssue({ code: 'custom', message: `phase '${p.id}' setForm aims at unknown form '${a.form}'` });
+        }
+      }
+      if (p.trigger.kind === 'turnCount' && p.trigger.every !== undefined && p.once === true) {
+        ctx.addIssue({ code: 'custom', message: `phase '${p.id}' repeats (every) but is marked once` });
+      }
+    }
+  });
+export type BossScriptDef = z.infer<typeof BossScriptDefSchema>;

@@ -30,6 +30,35 @@
  * run in signBeat(); mail delivers by interacting with the five door props
  * while q_mail is live. The full bot recipe (Mail Must Move end-to-end)
  * lives in engine/quests.ts's header; the JOURNAL drives from MenuScene.
+ *
+ * ── S14 QA recipe (THE GILDED GRIN — ran 2026-06-11, log in docs/QA.md):
+ * Driver lore earned here: settle scene RESTARTS before pressing (a
+ * restart eats latched presses), and trigger rects are EDGE-fired — a bot
+ * canceled inside one must LEAVE and re-enter. KeyX on an ask still picks
+ * the cancel row (S9 lore); KeyZ-mash only when row 0 is the want.
+ * 1. Bench post-ch1: party Jay+Mia L10 via mfMakeHero, the Ch.1 story
+ *    flags + awake_* trio, cash. Spawn brickton_docks INSIDE the gangplank
+ *    trigger (364,138) → the captain's ask fires on first update → KeyZ ×4
+ *    boards → the deck scene (KeyZ ×~36 through the §A11 pages) → lands at
+ *    PUERTO_SOL_PIER_SPAWN with boat_ride_done set.
+ * 2. The pyramid: spawn beside a mask sign (room 1: 56,202 facing left),
+ *    KeyZ → the mask line + the grind + fade-restart; pyr_rot_1 += 1 per
+ *    press. The canonical solve is 1/1/2/2 presses (BFS-pinned in
+ *    maps_ch2.test.ts). Thread rotor channels at tile-center x (col*16+8).
+ * 3. The Grin: launch over the paused world —
+ *      ow.scene.launch('battle', { enemyIds: ['gilded_grin'],
+ *        advantage: 'none', guestChad: false, glintAssist: false,
+ *        boss: true });
+ *    Round 1 bash CLANGS (980 holds); boss turn 2 telegraphs, turn 3 swaps
+ *    to battle_gilded_grin_hollow and MIA'S AWAKENING pages ride the same
+ *    KeyZ mash (awake_freeze_a flips); hollow bashes LAND; the solid
+ *    return composes with wear (battle_gilded_grin_w1). Field a solo hero
+ *    for any menu-precise leg (the S11 lore).
+ * 4. Picnic: GS.addItem('basket_feast'), stand left of a table (puerto
+ *    plaza: 660,252 facing right), KeyZ → KeyZ (Spread, row 0) → the
+ *    blanket/birds/restore; sunny_side=5, feast_armed set, basket gone.
+ * 5. Hospital: spawn hospital_int (88,68 facing up), wait dlg.busy, KeyZ
+ *    through the greet → row 0 revives the angel for reviveCost(level).
  */
 import Phaser from 'phaser';
 import {
@@ -43,6 +72,7 @@ import {
   type PatrolDef,
   type PropDef,
 } from '../data/maps';
+import { PYR_ROTOR, PYR_INITIAL_ROT, PUERTO_SOL_PIER_SPAWN, rotateRect } from '../data/maps_ch2';
 import { ENEMIES } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS } from '../data/items';
@@ -69,7 +99,7 @@ import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, toast, vars, DEPTH_UI } from '../ui/windows';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
-import { instantWin, expShare } from '../battle/formulas';
+import { instantWin, expShare, SUNNY_BATTLES, reviveCost, CURE_ALL_COST, CHAPEL_HEAL } from '../battle/formulas';
 import { colorOf, RAMP, px } from '../palette';
 
 interface Rect {
@@ -211,11 +241,18 @@ export class OverworldScene extends Phaser.Scene {
 
   private buildTiles(): void {
     // S2: the holding room un-walls itself once the quota is met (ADR-014);
-    // the shared MapDef grid is never mutated — the carve is per-build
-    const rows =
+    // the shared MapDef grid is never mutated — the carve is per-build.
+    // S14: the pyramid chambers apply their LIVE rotation the same way —
+    // (initial + mask presses) % 4 turns of the 7×7 rotor, per build.
+    let rows =
       this.mapDef.id === 'dos_f3' && GS.flag('holding_open')
         ? carveHoldingRoom(this.mapDef.grid)
         : this.mapDef.grid;
+    if (PYR_INITIAL_ROT[this.mapDef.id] !== undefined) {
+      const presses = Number(GS.flag(`pyr_rot_${this.mapDef.id.slice(-1)}`)) || 0;
+      const turns = (PYR_INITIAL_ROT[this.mapDef.id] + presses) % 4;
+      rows = rotateRect(rows, PYR_ROTOR.x, PYR_ROTOR.y, PYR_ROTOR.size, turns);
+    }
     const h = rows.length;
     const w = rows[0].length;
     const isPath = (x: number, y: number): boolean =>
@@ -288,7 +325,12 @@ export class OverworldScene extends Phaser.Scene {
         this.buildHoldingDoor(p);
         continue;
       }
-      const img = this.add.image(p.x * 16, p.y * 16, p.sprite).setOrigin(0, 0);
+      // S14: a pressed room's mask hums (texture pick is scene-interpreted)
+      const sprite =
+        p.sprite === 'mask_switch' && (Number(GS.flag(`pyr_rot_${this.mapDef.id.slice(-1)}`)) || 0) > 0
+          ? 'mask_switch_lit'
+          : p.sprite;
+      const img = this.add.image(p.x * 16, p.y * 16, sprite).setOrigin(0, 0);
       img.setDepth(p.y * 16 + img.height);
       if (p.solid) {
         this.solids.push({
@@ -1144,13 +1186,15 @@ export class OverworldScene extends Phaser.Scene {
   private handleDefeat(): void {
     // §A4.7: half the cash ON HAND — banked money is safe (the S4 ATM's point)
     GS.data.cashOnHand = Math.floor(GS.data.cashOnHand / 2);
-    // ADR-014 interim: revive-all until S11's hospitals own §A4.7 economics
-    GS.data.party.forEach((h) => {
-      h.down = false;
-      h.hp = h.maxHp;
-    });
+    // S14 (Bible Prompt 25): ADR-014's interim revive-all RETIRES. The
+    // leader picks himself up at the last Dad-save; everyone else rides the
+    // trail as haloed angels until a hospital (price scales by level), a
+    // Healing γ, or a rare item brings them back — hospitals ARE the economy.
+    const lead = GS.data.party[0];
+    lead.down = false;
+    lead.hp = lead.maxHp;
     this.registry.set('defeated', true);
-    // S6: wake at the last Dad-save's spot (S11's hospitals reuse respawnPoint)
+    // S6: wake at the last Dad-save's spot (hospitals reuse respawnPoint)
     const p = GS.respawnPoint();
     this.scene.restart({ mapId: p.mapId, x: p.x, y: p.y, facing: p.facing });
   }
@@ -1197,15 +1241,13 @@ export class OverworldScene extends Phaser.Scene {
         return;
       }
     }
-    // picnic tables: a small rest (full system arrives with Baskets)
+    // §A4.5 picnic tables (S14 — Bible Prompt 23): the basket ritual.
+    // The interim half-heal retired with the real system; without a basket
+    // a table is just a fine spot and an opinion.
     for (const p of this.mapDef.props) {
       if (p.sprite !== 'picnic') continue;
       if (Math.hypot(p.x * 16 + 18 - probeX, p.y * 16 + 12 - probeY) < 24) {
-        await this.dlg.say(...DIALOGUE.picnic_rest);
-        GS.data.party.forEach((h) => {
-          if (!h.down) h.hp = Math.min(h.maxHp, h.hp + Math.floor(h.maxHp / 2));
-        });
-        AUDIO.sfx('heal');
+        await this.picnicFlow(p);
         return;
       }
     }
@@ -1231,12 +1273,11 @@ export class OverworldScene extends Phaser.Scene {
     // buildings without interiors yet: a visible door always answers
     // (the drugstore + STARMART left this list in S4, both STARPORTs in S10)
     const lockedLines: Record<string, string> = {
-      chapel: 'locked_chapel',
+      // S14: locked_chapel + locked_hospital RETIRED — both doors are real
       house_chad: 'locked_chad',
       house_a: 'locked_house',
       house_b: 'locked_house',
       bldg_bagels: 'locked_bagels',
-      bldg_hospital: 'locked_hospital',
       bldg_brickmore: 'locked_brickmore',
       bldg_video: 'locked_video',
       bldg_bank: 'locked_bank',
@@ -1351,8 +1392,248 @@ export class OverworldScene extends Phaser.Scene {
         // S13: COSTA ESTRELLA — stroke play, the Invitational, the Set
         await this.caddyBeat();
         return true;
+      case 'doc_brickton':
+      case 'doc_puerto':
+      case 'doc_valle':
+        // S14 (Prompt 25): pay-to-revive angels + the cure-all desk
+        await this.hospitalBeat(n);
+        return true;
+      case 'priest_otter':
+      case 'priest_valle':
+        // S14 (Prompt 25): the free 50 HP party prayer, §A11.4 warm
+        await this.chapelBeat(n);
+        return true;
+      case 'deli_keeper':
+        // S14 (Prompt 23): the deli crafts Family (and one day Feast) Baskets
+        await this.deliBeat(n);
+        return true;
+      case 'tomas':
+        // §A10 #5 — THE LLAMA DRAMA
+        await this.tomasBeat();
+        return true;
+      case 'curator':
+        // §A10 #6 — MUSEUM OF ALMOST-GOLD
+        await this.curatorBeat();
+        return true;
+      case 'llama_1':
+      case 'llama_2':
+      case 'llama_3':
+      case 'llama_5':
+      case 'llama_6':
+        await this.llamaBeat(n, false);
+        return true;
+      case 'llama_4':
+        // §A10 #5: ONE of the six is a Gilded Beetle in a wool coat —
+        // cornering it drops the act (it fights when cornered)
+        await this.llamaBeat(n, true);
+        return true;
       default:
         return false;
+    }
+  }
+
+  /* ---------------- S14: quests #5–6 (§A10, the S9 machines) ---------------- */
+
+  /** §A10 #5 — Tomás's side of the herd */
+  private async tomasBeat(): Promise<void> {
+    if (!GS.flag('q_llama')) {
+      await this.dlg.say(...DIALOGUE.q_llama_ask);
+      GS.setFlag('q_llama');
+      AUDIO.sfx('confirm');
+      // the six gate onto THIS map — rebuild from data (ADR-014)
+      this.fadeRestart();
+      return;
+    }
+    const herded = [1, 2, 3, 4, 5, 6].filter((i) => GS.flag(`q_llama_${i}`)).length;
+    if (herded < 6) {
+      await this.dlg.say(...DIALOGUE.q_llama_active, `(${herded} of 6 are back. The pen does not count itself.)`);
+      return;
+    }
+    if (!GS.flag('q_llama_done')) {
+      const result = completeQuest('llama_drama');
+      if (result === 'hands-full') {
+        await this.dlg.say(...DIALOGUE.q_llama_full);
+        return;
+      }
+      GS.setFlag('q_llama_reported');
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.q_llama_done_beat);
+      AUDIO.jingle('victory', 1600, this.mapDef.music);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_llama_after);
+  }
+
+  /** §A10 #5 — one llama, one personality, one walk home (the Biscuit zoom) */
+  private async llamaBeat(n: NpcObj, impostor: boolean): Promise<void> {
+    const num = Number(n.def.id.slice(-1));
+    await this.dlg.say(...DIALOGUE[n.def.dialogue]);
+    if (impostor) {
+      // the wool comes off — §A7's Gilded Beetle, cornered at last
+      this.cut = true;
+      AUDIO.sfx('alert');
+      this.cameras.main.shake(220, 0.006);
+      await this.dlg.say(...DIALOGUE.llama_impostor_reveal);
+      const outcome = await this.startBattle(['gilded_beetle'], 'none', null, {});
+      if (outcome !== 'victory') return;
+      this.cut = true;
+      GS.setFlag(`q_llama_${num}`);
+      await this.dlg.say(...DIALOGUE.llama_impostor_after);
+      this.fadeRestart(); // the REAL Dorada was behind the shed all along
+      return;
+    }
+    this.cut = true;
+    AUDIO.sfx('whoosh');
+    // the trot home: exit toward the pen, the way every good llama exits
+    await new Promise<void>((r) => {
+      this.tweens.add({ targets: n.spr, x: 7 * 16, y: 7 * 16, duration: 620, ease: 'cubic.in', onComplete: () => r() });
+    });
+    GS.setFlag(`q_llama_${num}`);
+    AUDIO.sfx('confirm');
+    const herded = [1, 2, 3, 4, 5, 6].filter((i) => GS.flag(`q_llama_${i}`)).length;
+    toast(this, herded < 6 ? `The herd counts ${herded} of 6.` : 'SIX! Tell Tomas the math works again.');
+    this.fadeRestart(); // gated out here, gated IN at the pen (data, ADR-014)
+  }
+
+  /** §A10 #6 — the curator's side of the wing */
+  private async curatorBeat(): Promise<void> {
+    if (!GS.flag('q_museum')) {
+      await this.dlg.say(...DIALOGUE.q_museum_ask);
+      GS.setFlag('q_museum');
+      GS.data.keyItems.push('camera');
+      AUDIO.sfx('confirm');
+      toast(this, 'Got the CAMERA!');
+      return;
+    }
+    const shot = [1, 2, 3, 4].filter((i) => GS.flag(`q_photo_${i}`)).length;
+    if (shot < 4) {
+      await this.dlg.say(...DIALOGUE.q_museum_active, `(${shot} of 4 exhibits on film. The fakes are patient.)`);
+      return;
+    }
+    if (!GS.flag('q_museum_done')) {
+      const result = completeQuest('museum_gold');
+      if (result === 'hands-full') {
+        await this.dlg.say(...DIALOGUE.q_museum_full);
+        return;
+      }
+      GS.setFlag('q_museum_reported');
+      const cam = GS.data.keyItems.indexOf('camera');
+      if (cam >= 0) GS.data.keyItems.splice(cam, 1); // returned before he reports it
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.q_museum_done_beat);
+      AUDIO.jingle('victory', 1600, this.mapDef.music);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_museum_after);
+  }
+
+  /* ---------------- S14: hospitals, chapels & the deli (Prompts 23/25) ---------------- */
+
+  /**
+   * §A4.7 — the hospital desk: revive angels for cash (price scales by the
+   * FALLEN hero's level), cure-all for a flat fee (it clears Homesick too —
+   * for a price Mom would absolutely not approve of). Mushroomize stays
+   * doctors-only when Ch.6 ships it; the sign on the wall already says so.
+   */
+  private async hospitalBeat(n: NpcObj): Promise<void> {
+    await this.dlg.say(...DIALOGUE[n.def.dialogue]);
+    for (;;) {
+      const angels = GS.data.party.filter((h) => h.down);
+      const rows = [
+        ...angels.map((h) => `Revive ${h.name} ($${reviveCost(h.level)})`),
+        `Cure everything ($${CURE_ALL_COST})`,
+        'Never mind',
+      ];
+      const pick = await this.dlg.ask(rows, { cancelIndex: rows.length - 1 });
+      if (pick === rows.length - 1) return;
+      if (pick < angels.length) {
+        const h = angels[pick];
+        const cost = reviveCost(h.level);
+        if (GS.data.cashOnHand < cost) {
+          await this.dlg.say(...DIALOGUE.hospital_broke);
+          continue;
+        }
+        GS.data.cashOnHand -= cost;
+        h.down = false;
+        h.hp = h.maxHp;
+        AUDIO.sfx('heal');
+        this.sparkleBurst(this.player.x, this.player.y - 14, 10);
+        await this.dlg.say(`${h.name} sat up like a Saturday morning. Good as new!`);
+        this.rebuildFollowers(); // the angel walks out a person
+        continue;
+      }
+      // the cure-all desk
+      if (GS.data.cashOnHand < CURE_ALL_COST) {
+        await this.dlg.say(...DIALOGUE.hospital_broke);
+        continue;
+      }
+      GS.data.cashOnHand -= CURE_ALL_COST;
+      const wasHomesick = GS.flag('rex_homesick') === true;
+      GS.setFlag('rex_homesick', false);
+      AUDIO.sfx('heal');
+      await this.dlg.say(...(wasHomesick ? DIALOGUE.hospital_cured_homesick : DIALOGUE.hospital_cured));
+    }
+  }
+
+  /** Prompt 25 — chapels: a free 50 HP prayer for everyone still standing;
+   *  the priest is warm about Mia's gift (§A11.4 — flavor, played straight) */
+  private async chapelBeat(n: NpcObj): Promise<void> {
+    await this.dlg.say(...DIALOGUE[n.def.dialogue]);
+    const pick = await this.dlg.ask(['Pray together', 'Just visiting'], { cancelIndex: 1 });
+    if (pick !== 0) return;
+    GS.data.party.forEach((h) => {
+      if (!h.down) h.hp = Math.min(h.maxHp, h.hp + CHAPEL_HEAL);
+    });
+    AUDIO.sfx('pray');
+    this.sparkleBurst(this.player.x, this.player.y - 16, 8);
+    await this.dlg.say(...DIALOGUE.chapel_prayer);
+    if (GS.hero('faye')) await this.dlg.say(...DIALOGUE.priest_mia);
+  }
+
+  /**
+   * Prompt 23 — the deli builds baskets: three foods become a FAMILY BASKET;
+   * the FEAST needs Buni's recipe (§A10 #14, Ch.7 — the row waits politely).
+   */
+  private async deliBeat(n: NpcObj): Promise<void> {
+    await this.dlg.say(...DIALOGUE[n.def.dialogue]);
+    for (;;) {
+      const foods = GS.data.party.flatMap((h) => h.bag.filter((id) => ITEMS[id]?.kind === 'food'));
+      const canFamily = foods.length >= 3;
+      const hasRecipe = GS.flag('feast_recipe') === true;
+      const rows = [
+        `Family Basket (3 foods)${canFamily ? '' : ' — short'}`,
+        hasRecipe ? 'Feast Basket (3 foods + the recipe)' : 'Feast Basket — ???',
+        'Never mind',
+      ];
+      const pick = await this.dlg.ask(rows, { cancelIndex: 2 });
+      if (pick === 2) return;
+      if (pick === 1 && !hasRecipe) {
+        await this.dlg.say(...DIALOGUE.deli_no_recipe);
+        continue;
+      }
+      if (!canFamily) {
+        await this.dlg.say(...DIALOGUE.deli_short);
+        continue;
+      }
+      // three foods leave (any three — the deli has RANGE), one basket lands
+      let taken = 0;
+      for (const h of GS.data.party) {
+        while (taken < 3) {
+          const i = h.bag.findIndex((id) => ITEMS[id]?.kind === 'food');
+          if (i < 0) break;
+          h.bag.splice(i, 1);
+          taken++;
+        }
+        if (taken >= 3) break;
+      }
+      const made = pick === 1 ? 'basket_feast' : 'basket_family';
+      // three foods just left somebody's bag, so a slot is GUARANTEED —
+      // the basket lands with the first hero who has room (zero missables)
+      const carrier = GS.data.party.find((h) => h.bag.length < 14) ?? GS.data.party[0];
+      GS.addItem(made, carrier.id);
+      AUDIO.sfx('confirm');
+      toast(this, `Got ${ITEMS[made].name}!`);
+      await this.dlg.say(...(pick === 1 ? DIALOGUE.deli_feast_made : DIALOGUE.deli_family_made));
     }
   }
 
@@ -1799,6 +2080,57 @@ export class OverworldScene extends Phaser.Scene {
       }
       return false; // plain spring flavor
     }
+    // S14 §A10 #6: A-to-shoot at the marked exhibits (camera in hand)
+    if (dialogueId.startsWith('museum_idol_')) {
+      const num = Number(dialogueId.slice(-1));
+      if (
+        GS.flag('q_museum') &&
+        !GS.flag('q_museum_done') &&
+        GS.data.keyItems.includes('camera') &&
+        !GS.flag(`q_photo_${num}`)
+      ) {
+        this.cameras.main.flash(260, 248, 244, 220);
+        AUDIO.sfx('fx_flash');
+        GS.setFlag(`q_photo_${num}`);
+        await this.dlg.say(...DIALOGUE[dialogueId]);
+        const shot = [1, 2, 3, 4].filter((i) => GS.flag(`q_photo_${i}`)).length;
+        toast(this, shot < 4 ? `CLICK. (${shot}/4 fakes on film.)` : 'CLICK. The whole sad collection. Tell the curator.');
+        return true;
+      }
+      return false; // no quest/no camera/already shot: the plaque reads plain
+    }
+    // S14: the pyramid's mask switches — each press turns that room's floor
+    // 90° clockwise; commit the flag, then rebuild from data (ADR-014)
+    if (dialogueId.startsWith('pyr_mask_')) {
+      const room = dialogueId.slice(-1);
+      await this.dlg.say(...DIALOGUE[dialogueId]); // the mask gets its line
+      const presses = (Number(GS.flag(`pyr_rot_${room}`)) || 0) + 1;
+      GS.setFlag(`pyr_rot_${room}`, presses);
+      AUDIO.sfx('thud');
+      this.cameras.main.shake(420, 0.012);
+      await this.dlg.say(...DIALOGUE.pyr_mask_turn);
+      this.fadeRestart();
+      return true;
+    }
+    // S14: the grotto's chest run (the S9b gift-box pattern, three deep)
+    if (dialogueId.startsWith('grotto_chest_')) {
+      const loot: Record<string, string> = {
+        grotto_chest_1: 'basket_basic',
+        grotto_chest_2: 'alfajor',
+        grotto_chest_3: 'glints_spark',
+      };
+      await this.dlg.say(...DIALOGUE[dialogueId]);
+      const itemId = loot[dialogueId];
+      if (!GS.addItem(itemId)) {
+        await this.dlg.say(...DIALOGUE.gift_hands_full);
+        return true; // nothing committed — come back with room
+      }
+      GS.setFlag(dialogueId);
+      AUDIO.sfx('confirm');
+      toast(this, `Got ${ITEMS[itemId].name}!`);
+      this.fadeRestart();
+      return true;
+    }
     // S9b: the twins' presents — open once, the empty box stays (gated props)
     if (dialogueId === 'gift_ana' || dialogueId === 'gift_vivi') {
       const ana = dialogueId === 'gift_ana';
@@ -1925,9 +2257,121 @@ export class OverworldScene extends Phaser.Scene {
       // a Spark may have revived someone, gear may have moved (S3)
       this.rebuildFollowers();
       this.scene.resume();
+      // §A4.5 (S14): a basket Used at a table closes the menu ONTO the picnic
+      const basket = this.registry.get('picnicBasket') as string | undefined;
+      if (basket) {
+        this.registry.remove('picnicBasket');
+        const table = this.nearestTable();
+        if (table) void this.picnicScene(table, basket);
+      }
     });
     this.scene.pause();
     this.scene.launch('menu', { music: this.mapDef.music });
+  }
+
+  /* ---------------- §A4.5 PICNIC (S14 — Bible Prompt 23) ---------------- */
+
+  /** the picnic table within arm's reach of the player, if any */
+  private nearestTable(): PropDef | null {
+    for (const p of this.mapDef.props) {
+      if (p.sprite !== 'picnic') continue;
+      if (Math.hypot(p.x * 16 + 18 - this.player.x, p.y * 16 + 12 - this.player.y) < 44) return p;
+    }
+    return null;
+  }
+
+  /** best basket in anyone's bag — the Feast outranks the Family outranks Basic */
+  private bestBasket(): string | null {
+    for (const id of ['basket_feast', 'basket_family', 'basket_basic']) {
+      if (GS.hasItem(id)) return id;
+    }
+    return null;
+  }
+
+  private async picnicFlow(table: PropDef): Promise<void> {
+    AUDIO.sfx('cursor');
+    const basket = this.bestBasket();
+    if (!basket) {
+      await this.dlg.say(...DIALOGUE.picnic_no_basket);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.picnic_spot);
+    const pick = await this.dlg.ask([`Spread the ${ITEMS[basket].name}`, 'Not now'], { cancelIndex: 1 });
+    if (pick !== 0) return;
+    await this.picnicScene(table, basket);
+  }
+
+  /**
+   * The §A4.5 ritual: the blanket unrolls, the party sits, birds land
+   * (ADR-020 discipline — deliberate, small), full HP/PP comes back, and
+   * SUNNY SIDE arms for the next five battles (flag-persisted remainder —
+   * no save step; battle reads it through the sunnyMul() seam). A Feast
+   * additionally arms the one-shot party auto-revive.
+   */
+  private async picnicScene(table: PropDef, basket: string): Promise<void> {
+    this.cut = true;
+    GS.removeItem(basket);
+    AUDIO.sfx('confirm');
+    const bx = table.x * 16 + 18;
+    const by = table.y * 16 + 34;
+    // the blanket unrolls
+    const blanket = this.add.image(bx, by, 'picnic_blanket').setOrigin(0.5, 0.5).setDepth(by - 24).setScale(0.15, 1);
+    await new Promise<void>((r) => {
+      this.tweens.add({ targets: blanket, scaleX: 1, duration: 320, ease: 'sine.out', onComplete: () => r() });
+    });
+    // the party sits around it (followers settle onto the blanket's corners)
+    const seats: Array<[number, number]> = [
+      [bx - 14, by + 6],
+      [bx + 14, by + 6],
+      [bx - 14, by - 4],
+      [bx + 14, by - 4],
+    ];
+    this.followers.forEach((f, i) => {
+      const [sx, sy] = seats[(i + 1) % seats.length];
+      if (!f.angel) {
+        f.spr.setPosition(sx, sy);
+        f.spr.anims.stop();
+        f.spr.setFrame(standFrame(sx < bx ? 'right' : 'left'));
+        f.spr.setDepth(sy);
+      }
+    });
+    this.player.setPosition(seats[0][0], seats[0][1]);
+    this.player.setFrame(standFrame('right'));
+    this.player.setDepth(seats[0][1]);
+    // birds land — two, from offscreen, with a hop
+    const birds = [0, 1].map((i) => {
+      const b = this.add.sprite(bx + (i === 0 ? -30 : 34), by - 60, 'songbird', 0).setDepth(by + 20);
+      this.tweens.add({ targets: b, y: by + 14 + i * 4, x: bx + (i === 0 ? -24 : 26), duration: 700 + i * 180, ease: 'sine.in' });
+      return b;
+    });
+    await this.wait(900);
+    birds.forEach((b, i) => {
+      b.setFrame(1); // the landing hop
+      this.time.delayedCall(300 + i * 150, () => b.setFrame(0));
+    });
+    await this.dlg.say(...DIALOGUE.picnic_scene);
+    // full restore for everyone still standing (angels wait for hospitals)
+    GS.data.party.forEach((h) => {
+      if (!h.down) {
+        h.hp = h.maxHp;
+        h.pp = h.maxPp;
+      }
+    });
+    AUDIO.sfx('heal');
+    this.sparkleBurst(bx, by - 8, 12);
+    GS.setFlag('sunny_side', SUNNY_BATTLES);
+    if (basket === 'basket_feast') {
+      GS.setFlag('feast_armed');
+      await this.dlg.say(...DIALOGUE.picnic_feast);
+    }
+    AUDIO.jingle('levelup', 1400, this.mapDef.music);
+    toast(this, `SUNNY SIDE! +10% everything, next ${SUNNY_BATTLES} battles!`);
+    await this.wait(600);
+    birds.forEach((b) => {
+      this.tweens.add({ targets: b, y: b.y - 70, x: b.x + 30, alpha: 0, duration: 600, onComplete: () => b.destroy() });
+    });
+    this.tweens.add({ targets: blanket, alpha: 0, duration: 500, delay: 300, onComplete: () => blanket.destroy() });
+    this.cut = false;
   }
 
   /* ---------------- doors & triggers ---------------- */
@@ -2060,6 +2504,10 @@ export class OverworldScene extends Phaser.Scene {
       await this.busCutscene();
       return;
     }
+    if (this.mapDef.id === 'boat_interior') {
+      await this.boatCutscene();
+      return;
+    }
     if (this.registry.get('defeated') === true) {
       this.registry.set('defeated', false);
       this.cut = true;
@@ -2112,9 +2560,162 @@ export class OverworldScene extends Phaser.Scene {
           this.cut = false;
         }
         break;
+      /* ---------------- S14 — Chapter 2 (§A6) ---------------- */
+      case 'board_boat':
+        await this.boatAsk('docks');
+        break;
+      case 'board_boat_return':
+        await this.boatAsk('puerto');
+        break;
+      case 'puerto_arrival':
+        this.cut = true;
+        await this.dlg.say(...DIALOGUE.puerto_arrival);
+        this.cut = false;
+        break;
+      case 'valle_arrival':
+        if (!GS.flag('grin_defeated')) {
+          this.cut = true;
+          await this.dlg.say(...DIALOGUE.valle_arrival);
+          this.cut = false;
+        } else if (!GS.flag('ch2_complete')) {
+          await this.valleRecoveryScene();
+        }
+        break;
+      case 'pyramid_approach':
+        this.cut = true;
+        await this.dlg.say(...DIALOGUE.pyramid_approach);
+        this.cut = false;
+        break;
+      case 'apex_grin':
+        if (!GS.flag('grin_defeated')) await this.grinScene();
+        break;
       default:
         break;
     }
+  }
+
+  /* ---------------- S14: the banana boat (§A5 Ch.2 — the bus-map precedent) ---------------- */
+
+  private async boatAsk(from: 'docks' | 'puerto'): Promise<void> {
+    this.cut = true;
+    if (from === 'docks' && !GS.flag('ch1_complete')) {
+      // ADR-014: the Ch.2 gate REQUIRES the flag — the captain holds the rope
+      await this.dlg.say(...DIALOGUE.captain_not_yet);
+      this.cut = false;
+      return;
+    }
+    await this.dlg.say(...(from === 'docks' ? DIALOGUE.boat_ask_out : DIALOGUE.boat_ask_home));
+    const label = from === 'docks' ? 'Board for PUERTO SOL' : 'Ride home to Brickton';
+    const pick = await this.dlg.ask([label, 'Stay ashore'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      this.cut = false;
+      return;
+    }
+    AUDIO.stopMusic();
+    // the first crossing is the full §A11 deck scene; every later ride is a
+    // quick fade BOTH WAYS (zero missables — the boat never stops running)
+    if (from === 'docks' && !GS.flag('boat_ride_done')) {
+      this.goThroughDoor('boat_interior', 184, 116, 'up');
+      return;
+    }
+    if (from === 'docks') {
+      this.goThroughDoor('puerto_sol', PUERTO_SOL_PIER_SPAWN.x, PUERTO_SOL_PIER_SPAWN.y, 'up');
+    } else {
+      this.goThroughDoor('brickton_docks', 392, 168, 'up');
+    }
+  }
+
+  /** the crossing (first ride only): the §A11 deck scene over a scrolling sea */
+  private async boatCutscene(): Promise<void> {
+    this.cut = true;
+    const mapW = this.mapDef.grid[0].length * 16;
+    // gulls + the far coast slide by inside the sky band only (ADR-004:
+    // interiors float in void — the masked reel is the bus precedent)
+    const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
+    maskShape.fillRect(0, 6, mapW, 56);
+    const paneMask = maskShape.createGeometryMask();
+    const reel: Array<{ key: string; y: number; scale: number }> = [
+      { key: 'songbird', y: 26, scale: 1 },
+      { key: 'songbird', y: 18, scale: 0.8 },
+      { key: 'skyline', y: 56, scale: 0.7 },
+      { key: 'songbird', y: 30, scale: 1 },
+      { key: 'tree_b', y: 58, scale: 0.8 },
+      { key: 'songbird', y: 22, scale: 1.1 },
+    ];
+    let frame = 0;
+    const spawner = this.time.addEvent({
+      delay: 620,
+      loop: true,
+      callback: () => {
+        const item = reel[Math.min(frame, reel.length - 1)];
+        frame++;
+        const img = this.add
+          .image(mapW + 40, item.y, item.key)
+          .setOrigin(0.5, 1)
+          .setScale(item.scale)
+          .setDepth(1)
+          .setMask(paneMask);
+        this.tweens.add({ targets: img, x: -60, duration: 2600, ease: 'linear', onComplete: () => img.destroy() });
+      },
+    });
+    await this.wait(500);
+    await this.dlg.say(...DIALOGUE.boat_crossing_1);
+    await this.wait(700);
+    await this.dlg.say(...DIALOGUE.boat_crossing_senora);
+    await this.wait(700);
+    await this.dlg.say(...DIALOGUE.boat_crossing_2);
+    await this.wait(900);
+    spawner.remove();
+    GS.setFlag('boat_ride_done');
+    AUDIO.stopMusic();
+    this.goThroughDoor('puerto_sol', PUERTO_SOL_PIER_SPAWN.x, PUERTO_SOL_PIER_SPAWN.y, 'up');
+  }
+
+  /* ---------------- S14: BOSS 2 + the Ember + the recovery (§A6) ---------------- */
+
+  /** the apex: the Idol notices you noticing it (Prompt 15 carries the fight) */
+  private async grinScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.apex_approach);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(500, 0.01);
+    await this.wait(550);
+    await this.dlg.say(...DIALOGUE.apex_grin_wakes);
+    const outcome = await this.startBattle(['gilded_grin'], 'none', null, { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('grin_defeated');
+    // EMBER #2 — the Heartlight takes its second stem (§A4.9)
+    GS.setFlag('ember2');
+    GS.data.embers = 2;
+    const ember = this.add.image(9.5 * 16, 4 * 16, 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
+    this.tweens.add({ targets: ember, y: this.player.y - 30, x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - 30, 14);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember2_get);
+    await this.dlg.say(...DIALOGUE.apex_after);
+    AUDIO.playMusic(this.mapDef.music);
+    // rebuild from data: the idol prop retires, the dais sign swaps (ADR-014)
+    this.fadeRestart();
+  }
+
+  /** §A6: the wishers wake — color comes back, and Chapter 2 closes on it */
+  private async valleRecoveryScene(): Promise<void> {
+    this.cut = true;
+    this.cameras.main.flash(420, 248, 232, 160);
+    AUDIO.playMusic('heartlight');
+    await this.dlg.say(...DIALOGUE.valle_recovery);
+    this.sparkleBurst(this.player.x, this.player.y - 14, 16);
+    GS.setFlag('ch2_complete');
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.ch2_card);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
   }
 
   private async introScene(): Promise<void> {

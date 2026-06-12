@@ -54,6 +54,20 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       dialogue: 'awake_first_listen',
       toast: '{faye} awakened VIBE FIRE a!',
     }),
+    /* ---- Ch.2 (S14, the §A3 amendment's arc): the HOLLOW reveal ----
+     * cold_reads — the Gilded Grin swaps and the gold turns out to be
+     * EMPTY. Mia, who hears the Embers sing, hears the nothing inside it
+     * first: VIBE FREEZE α arrives mid-battle ("cold reads what gold
+     * hides"), staged sincere (§A11.2). Freeze α leaves her L12 unlock
+     * row in the same commit — one path only, validator-pinned. */
+    W({
+      id: 'cold_reads',
+      hero: 'faye',
+      ability: 'vibe_freeze_a',
+      flag: 'awake_freeze_a',
+      dialogue: 'awake_cold_reads',
+      toast: '{faye} awakened VIBE FREEZE a!',
+    }),
   ].map((a) => [a.id, a]),
 );
 

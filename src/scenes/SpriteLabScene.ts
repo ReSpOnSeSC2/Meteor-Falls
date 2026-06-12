@@ -88,11 +88,19 @@ export class SpriteLabScene extends Phaser.Scene {
     else this.pageRemix();
   }
 
+  /** S14b: the cast outgrew one screen (41 and counting) — the page
+   *  SCROLLS by row (Up/Down), clamped, with a position read in the corner */
+  private castScroll = 0;
+
   private pageCast(): void {
     const ids = Object.keys(CAST);
+    const totalRows = Math.ceil(ids.length / 8);
+    const maxScroll = Math.max(0, totalRows - 2);
+    this.castScroll = Math.max(0, Math.min(this.castScroll, maxScroll));
     ids.forEach((id, i) => {
       const col = i % 8;
-      const row = Math.floor(i / 8);
+      const row = Math.floor(i / 8) - this.castScroll;
+      if (row < 0 || row > 2) return; // off the sheet this scroll
       const x = 28 + col * 48;
       const y = 92 + row * 62;
       const spr = this.add.sprite(x, y, id, 0).setOrigin(0.5, 1).setScale(1.8);
@@ -107,6 +115,11 @@ export class SpriteLabScene extends Phaser.Scene {
       this.castSprites.push(spr);
       this.content.push(spr, label);
     });
+    const pos = this.add
+      .bitmapText(388, 36, 'retro', `${this.castScroll + 1}-${Math.min(this.castScroll + 3, totalRows)}/${totalRows}  ^v`, 6)
+      .setOrigin(1, 0)
+      .setTint(colorOf(px(RAMP.GOLD, 2)));
+    this.content.push(pos);
   }
 
   /** S7c: dog/glint/angels at 1x AND 3x — the EB-made-at-both-scales check */
@@ -345,6 +358,13 @@ export class SpriteLabScene extends Phaser.Scene {
     }
     if (d.x !== 0 && this.navOk()) {
       this.page = (this.page + (d.x > 0 ? 1 : PAGES.length - 1)) % PAGES.length;
+      AUDIO.sfx('cursor');
+      this.showPage();
+      return;
+    }
+    if (this.page === 0 && d.y !== 0 && this.navOk()) {
+      // S14b: scroll the cast sheet by row
+      this.castScroll += d.y > 0 ? 1 : -1;
       AUDIO.sfx('cursor');
       this.showPage();
       return;

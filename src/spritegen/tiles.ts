@@ -627,6 +627,141 @@ function arcadeWall(): Pixmap {
   return pm;
 }
 
+
+/* ---------------- S14 Chapter 2 terrain (ADR-020 discipline) ---------------- */
+
+/** open sea — flat deep water, two deliberate glints (never scatter) */
+function seaTile(seed: number): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.BLUE, 1));
+  // one slow swell line per tile, phase-shifted by seed
+  const y = 4 + (seed % 3) * 4;
+  pm.hline(2, y, 6, px(RAMP.BLUE, 2));
+  pm.set(9 + (seed % 4), y + 5, px(RAMP.CYAN, 2));
+  return pm;
+}
+
+/** the surf line where sea meets land — foam crest on the top edge */
+function seaFoamTile(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.BLUE, 1));
+  pm.rect(0, 0, TILE, 4, px(RAMP.CYAN, 2));
+  pm.hline(0, 0, TILE, px(RAMP.PAPER, 3)); // the crest
+  pm.hline(2, 1, 5, px(RAMP.PAPER, 3));
+  pm.hline(10, 1, 4, px(RAMP.PAPER, 3));
+  pm.set(6, 5, px(RAMP.CYAN, 3));
+  pm.set(13, 6, px(RAMP.CYAN, 3));
+  return pm;
+}
+
+/** pier planks — long warm boards running with the walkway */
+function dockTile(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.EARTH, 2));
+  pm.hline(0, 4, TILE, px(RAMP.EARTH, 1));
+  pm.hline(0, 9, TILE, px(RAMP.EARTH, 1));
+  pm.hline(0, 14, TILE, px(RAMP.EARTH, 1));
+  pm.hline(0, 5, TILE, px(RAMP.EARTH, 3)); // each board's lit edge
+  pm.hline(0, 10, TILE, px(RAMP.EARTH, 3));
+  pm.set(3, 7, px(RAMP.EARTH, 0)); // one nail pair, one board end
+  pm.set(12, 12, px(RAMP.EARTH, 0));
+  return pm;
+}
+
+/** plaza pavers — warm colonial stone in a broken grid (rule 4) */
+function plazaTile(seed: number): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.PAPER, 2));
+  pm.hline(0, 7, TILE, px(RAMP.PAPER, 1));
+  // vertical joints stagger per row half — never one long seam
+  pm.vline(5 + (seed % 3), 0, 7, px(RAMP.PAPER, 1));
+  pm.vline(10 - (seed % 2), 8, 8, px(RAMP.PAPER, 1));
+  pm.set(2, 3, px(RAMP.PAPER, 3)); // one sun-bleached corner
+  return pm;
+}
+
+/** dry sand — flat, two pebbles where the tide left them */
+function sandTile(seed: number): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.GOLD, 1));
+  pm.hline(2 + (seed % 4), 5, 3, px(RAMP.GOLD, 2)); // a ripple ridge
+  pm.set(11, 11, px(RAMP.EARTH, 2)); // the pebbles, together
+  pm.set(12, 12, px(RAMP.EARTH, 1));
+  return pm;
+}
+
+/** jungle floor — deep shaded green, one leaf-litter cluster */
+function jungleFloor(seed: number): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.FOREST, 1));
+  const x = 3 + (seed % 6);
+  const y = 4 + ((seed * 3) % 7);
+  pm.set(x, y, px(RAMP.FOREST, 2)); // the litter, clustered
+  pm.set(x + 1, y, px(RAMP.GRASS, 1));
+  pm.set(x, y + 1, px(RAMP.FOREST, 0));
+  return pm;
+}
+
+/** jungle wall — undergrowth too dense to argue with (solid) */
+function jungleWall(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.FOREST, 1));
+  pm.checkerFill(0, 0, TILE, 7, px(RAMP.FOREST, 2), px(RAMP.FOREST, 1), 2); // canopy checker (EB's own)
+  pm.hline(0, 7, TILE, px(RAMP.FOREST, 0));
+  pm.vline(4, 8, 8, px(RAMP.FOREST, 0)); // trunks in the dark
+  pm.vline(11, 9, 7, px(RAMP.FOREST, 0));
+  pm.set(7, 11, px(RAMP.GRASS, 2)); // one bright frond
+  pm.set(8, 11, px(RAMP.GRASS, 1));
+  return pm;
+}
+
+/** pyramid stone floor — cut slabs, cool in the dark */
+function pyramidFloor(seed: number): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.EARTH, 1));
+  pm.hline(0, 8, TILE, px(RAMP.EARTH, 0));
+  pm.vline(seed % 2 === 0 ? 6 : 11, 0, 8, px(RAMP.EARTH, 0));
+  pm.vline(seed % 2 === 0 ? 12 : 4, 9, 7, px(RAMP.EARTH, 0));
+  pm.set(2, 2, px(RAMP.EARTH, 2)); // a worn-smooth corner
+  return pm;
+}
+
+/** pyramid wall — megalith courses with one carved notch (solid) */
+function pyramidWall(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.EARTH, 2));
+  pm.hline(0, 5, TILE, px(RAMP.EARTH, 0));
+  pm.hline(0, 11, TILE, px(RAMP.EARTH, 0));
+  pm.vline(9, 0, 5, px(RAMP.EARTH, 0));
+  pm.vline(4, 6, 5, px(RAMP.EARTH, 0));
+  pm.vline(12, 12, 4, px(RAMP.EARTH, 0));
+  pm.hline(0, 0, TILE, px(RAMP.EARTH, 3)); // course tops in the torchlight
+  pm.hline(0, 6, TILE, px(RAMP.EARTH, 3));
+  pm.rect(6, 8, 2, 2, px(RAMP.EARTH, 1)); // the carved notch, off-center
+  return pm;
+}
+
+/** glyph slab — a floor stone the masons signed (walkable decor) */
+function pyramidGlyph(): Pixmap {
+  const pm = pyramidFloor(1);
+  pm.frame(4, 4, 8, 8, px(RAMP.GOLD, 1));
+  pm.set(7, 6, px(RAMP.GOLD, 1)); // the grin, abbreviated
+  pm.set(9, 6, px(RAMP.GOLD, 1));
+  pm.hline(6, 9, 4, px(RAMP.GOLD, 1));
+  return pm;
+}
+
+/** rotor floor — circular grooves: THIS floor is the part that moves */
+function pyramidRotor(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.EARTH, 1));
+  pm.frame(1, 1, 14, 14, px(RAMP.EARTH, 0)); // the groove ring
+  pm.frame(5, 5, 6, 6, px(RAMP.EARTH, 0)); // the inner ring
+  pm.set(2, 2, px(RAMP.EARTH, 2)); // wear where it grinds
+  pm.set(13, 13, px(RAMP.EARTH, 2));
+  return pm;
+}
+
 /* ---------------------------------------------------------------- */
 /* Tile registry — order defines tilemap indices                      */
 
@@ -684,6 +819,18 @@ export const TILESET: TileEntry[] = [
   { name: 'asphalt_line_h', solid: false, make: asphaltLineH },
   { name: 'asphalt_line_v', solid: false, make: asphaltLineV },
   { name: 'cage_mesh', solid: true, make: cageMeshTile },
+  // S14 Chapter 2 — the crossing, the port, the jungle, the pyramid
+  { name: 'sea_a', solid: true, make: () => seaTile(1) },
+  { name: 'sea_foam', solid: true, make: seaFoamTile },
+  { name: 'dock', solid: false, make: dockTile },
+  { name: 'plaza', solid: false, make: () => plazaTile(2) },
+  { name: 'sand_a', solid: false, make: () => sandTile(3) },
+  { name: 'jungle_floor', solid: false, make: () => jungleFloor(4) },
+  { name: 'jungle_wall', solid: true, make: jungleWall },
+  { name: 'pyramid_floor', solid: false, make: () => pyramidFloor(0) },
+  { name: 'pyramid_wall', solid: true, make: pyramidWall },
+  { name: 'pyramid_glyph', solid: false, make: pyramidGlyph },
+  { name: 'pyramid_rotor', solid: false, make: pyramidRotor },
   // 16 path variants appended programmatically (indices PATH_BASE..+15)
 ];
 
@@ -846,6 +993,43 @@ export function drawStairs(): Pixmap {
   pm.hline(2, 18, 14, px(RAMP.EARTH, 2));
   pm.vline(1, 1, 22, px(RAMP.EARTH, 0));
   pm.vline(16, 1, 22, px(RAMP.EARTH, 0));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** §A4.5 (S14): the unrolled blanket the picnic scene spreads on the grass */
+export function drawPicnicBlanket(): Pixmap {
+  const pm = new Pixmap(40, 24);
+  pm.checkerFill(1, 1, 38, 22, px(RAMP.RED, 2), px(RAMP.PAPER, 3), 3);
+  pm.frame(1, 1, 38, 22, px(RAMP.RED, 1));
+  // a thermos and two paper plates, set out with intent (never scatter)
+  pm.rect(8, 8, 4, 7, px(RAMP.CYAN, 2));
+  pm.hline(8, 8, 4, px(RAMP.CYAN, 3));
+  pm.ellipse(22, 12, 4, 2, px(RAMP.PAPER, 3));
+  pm.ellipse(30, 8, 3, 2, px(RAMP.PAPER, 3));
+  pm.set(22, 12, px(RAMP.GOLD, 2)); // something good on the plate
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** §A4.5 (S14): the songbird that lands on the picnic — two hop frames */
+export function drawSongbird(frame: 0 | 1): Pixmap {
+  const pm = new Pixmap(12, 12);
+  const body = px(RAMP.CYAN, 2);
+  const hop = frame === 1 ? -1 : 0;
+  pm.ellipse(5, 8 + hop, 3, 2, body);
+  pm.ellipse(4, 7 + hop, 2, 1, px(RAMP.CYAN, 3));
+  pm.ellipse(8, 5 + hop, 2, 2, body); // head
+  pm.set(10, 5 + hop, px(RAMP.GOLD, 2)); // beak
+  pm.set(8, 4 + hop, C.outline); // eye
+  pm.line(2, 8 + hop, 0, 6 + hop, px(RAMP.CYAN, 1)); // tail
+  if (frame === 0) {
+    pm.vline(5, 10, 2, px(RAMP.ORANGE, 2)); // legs planted
+    pm.vline(7, 10, 2, px(RAMP.ORANGE, 2));
+  } else {
+    pm.set(5, 10, px(RAMP.ORANGE, 2)); // mid-hop tuck
+    pm.set(7, 10, px(RAMP.ORANGE, 2));
+  }
   pm.outline(C.outline);
   return pm;
 }
@@ -1352,6 +1536,9 @@ export interface CityBuildingOpts {
   doubleDoor?: boolean;
   /** seeds which windows are lit — every building's evening is different */
   litSeed?: number;
+  /** S14: Spanish-colonial vocabulary INSIDE the fixed canvas (ADR-019) —
+   *  arched window crowns + an arched doorway. Skip the awning with this. */
+  arch?: boolean;
 }
 
 export const cityBuildingHeight = (upperRows: 1 | 2 | 3): number => 44 + upperRows * 16;
@@ -1421,6 +1608,15 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
         pm.hline(wx, wy + drop - 1, 8, px(RAMP.PAPER, 0));
       }
       pm.frame(wx - 1, wy - 1, 10, 12, wallD);
+      if (o.arch) {
+        // the colonial crown: a rounded cap over the frame (S14 — drawn
+        // INSIDE the window's own 16px band, the ADR-019 fixed-canvas law)
+        pm.hline(wx, wy - 2, 8, wallD);
+        pm.set(wx - 1, wy - 1, wallD);
+        pm.set(wx + 8, wy - 1, wallD);
+        pm.hline(wx + 1, wy - 3, 6, wallL);
+        pm.set(wx + 3, wy - 2, wallL); // keystone catch
+      }
       pm.hline(wx, wy + 5, 8, wallD);
       pm.hline(wx - 1, wy + 10, 10, wallL); // sill catch
       if (hasAc) {
@@ -1495,11 +1691,24 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
     pm.line(wx + 2, fy + 16, wx + 8, fy + 10, px(RAMP.CYAN, 3)); // glass shine
     pm.line(wx + 3, fy + 17, wx + 9, fy + 11, px(RAMP.CYAN, 2));
     pm.frame(wx - 1, fy + 6, 14, 15, px(RAMP.PAPER, 3));
+    if (o.arch) {
+      // arched display tops (S14 colonial pass — same rects, crowned)
+      pm.hline(wx, fy + 5, 12, px(RAMP.PAPER, 3));
+      pm.hline(wx + 2, fy + 4, 8, px(RAMP.PAPER, 2));
+    }
     pm.hline(wx - 1, fy + 21, 14, wallD); // ledge shadow
   }
   const doorTop = fy + 24 - 17;
   pm.rect(dx, doorTop, dw, 17, px(RAMP.EARTH, 1));
   pm.frame(dx, doorTop, dw, 17, px(RAMP.EARTH, 0));
+  if (o.arch) {
+    // the arched doorway: a crown of wall-light over the same door rect
+    pm.hline(dx, doorTop - 1, dw, wallD);
+    pm.hline(dx + 1, doorTop - 2, dw - 2, wallL);
+    pm.set(dx + Math.floor(dw / 2), doorTop - 2, wallDD); // the keystone
+    pm.set(dx - 1, doorTop, wallD);
+    pm.set(dx + dw, doorTop, wallD);
+  }
   if (o.doubleDoor) {
     pm.vline(dx + Math.floor(dw / 2), doorTop, 17, px(RAMP.EARTH, 0));
     pm.rect(dx + 2, doorTop + 3, 7, 8, px(RAMP.CYAN, 1));

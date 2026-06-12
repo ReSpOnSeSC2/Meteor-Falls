@@ -19,15 +19,40 @@ export function scalePixmap(src: Pixmap, n: number): Pixmap {
 }
 
 /** classic EB dialogue window — 9-slice source, 8px corners */
-export function drawWindowSlice(): Pixmap {
+/**
+ * S14b — WINDOW FLAVORS (Bible Prompt 6: "configurable palette per save
+ * file (classic blue default + 3 flavors)" — the EB flavor menu, finally).
+ * Each flavor recolors the window FACE and the inner accent ring; the
+ * white double-border stays white in every flavor, exactly like EB.
+ * Index 0 must remain the classic night-blue (every shipped screenshot).
+ */
+export interface WindowFlavor {
+  name: string;
+  /** face fill + the inner accent ring [face, accent] palette indices */
+  face: number;
+  accent: number;
+}
+
+export const WINDOW_FLAVORS: WindowFlavor[] = [
+  { name: 'CLASSIC', face: px(RAMP.NIGHT, 1), accent: px(RAMP.NIGHT, 0) },
+  { name: 'MINT', face: px(RAMP.FOREST, 0), accent: px(RAMP.GRASS, 1) },
+  { name: 'STRAWBERRY', face: px(RAMP.RED, 0), accent: px(RAMP.MAGENTA, 1) },
+  { name: 'BANANA', face: px(RAMP.EARTH, 0), accent: px(RAMP.GOLD, 1) },
+];
+
+/** the persisted-on-the-save flavor flag (plain number — no save step) */
+export const WIN_FLAVOR_FLAG = 'win_flavor';
+
+export function drawWindowSlice(flavor = 0): Pixmap {
   const s = 24;
   const pm = new Pixmap(s, s);
-  const fill = px(RAMP.NIGHT, 1);
+  const fv = WINDOW_FLAVORS[flavor] ?? WINDOW_FLAVORS[0];
+  const fill = fv.face;
   pm.rect(0, 0, s, s, fill);
   // rounded white double-border
   pm.frame(1, 1, s - 2, s - 2, C.white);
   pm.frame(2, 2, s - 4, s - 4, C.white);
-  pm.frame(3, 3, s - 6, s - 6, px(RAMP.NIGHT, 0));
+  pm.frame(3, 3, s - 6, s - 6, fv.accent);
   // round the corners
   for (const [cx, cy, sx, sy] of [
     [0, 0, 1, 1],
@@ -140,6 +165,25 @@ export function drawPhoneIcon(): Pixmap {
   pm.set(2, 4, px(RAMP.RED, 1));
   pm.set(9, 4, px(RAMP.RED, 1));
   pm.rect(4, 5, 4, 5, px(RAMP.RED, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** §A4.5 SUNNY SIDE (S14): the little sun by the party strip */
+export function drawSunIcon(): Pixmap {
+  const pm = new Pixmap(12, 12);
+  const sun = px(RAMP.GOLD, 2);
+  pm.ellipse(5, 5, 3, 3, sun);
+  pm.set(4, 4, px(RAMP.GOLD, 3)); // the shine
+  // eight rays, hand-placed
+  pm.set(5, 0, sun);
+  pm.set(5, 10, sun);
+  pm.set(0, 5, sun);
+  pm.set(10, 5, sun);
+  pm.set(1, 1, sun);
+  pm.set(9, 1, sun);
+  pm.set(1, 9, sun);
+  pm.set(9, 9, sun);
   pm.outline(C.outline);
   return pm;
 }

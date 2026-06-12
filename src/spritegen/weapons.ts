@@ -355,6 +355,28 @@ function drawCollarIcon(): Pixmap {
   return pm;
 }
 
+/** the Tin Sun Pendant (S14 — §A8 Ch.2's shelf charm): hammered tin, honest grin */
+function drawSunPendantIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const tin = px(RAMP.PAPER, 2);
+  pm.ellipse(6, 7, 4, 4, tin);
+  pm.ellipse(5, 6, 2, 2, px(RAMP.PAPER, 3)); // hammered shine
+  // eight rays, hand-placed
+  pm.set(6, 1, tin);
+  pm.set(6, 13, tin);
+  pm.set(0, 7, tin);
+  pm.set(12, 7, tin);
+  pm.set(2, 3, tin);
+  pm.set(10, 3, tin);
+  pm.set(2, 11, tin);
+  pm.set(10, 11, tin);
+  pm.set(5, 7, C.outline); // the grin's eyes
+  pm.set(8, 7, C.outline);
+  pm.hline(5, 9, 3, C.outline); // honestly grinning
+  pm.outline(C.outline);
+  return pm;
+}
+
 /* ================================================================== */
 /* THE REGISTRY — every §A8 equippable, both directions enforced.      */
 
@@ -439,11 +461,54 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
     },
   }),
 
+  /* ---- S14 Ch.2 weapon shelf (§A8 refresh curve) ---- */
+  sandlot_slugger: held({
+    class: 'bat',
+    ramp: RAMP.ORANGE,
+    // forty summers of initials carved near the tip
+    detail: ({ pm, gx, gy, pose }) => {
+      const carve = px(RAMP.ORANGE, 0);
+      if (pose === 'back') {
+        pm.set(gx - 8, gy - 9, carve);
+        pm.set(gx - 10, gy - 11, carve);
+      } else if (pose === 'strike') {
+        pm.set(gx + 6, gy - 3, carve);
+        pm.set(gx + 8, gy - 4, carve);
+      } else {
+        pm.set(gx + 4, gy - 6, carve);
+        pm.set(gx + 5, gy - 8, carve);
+      }
+    },
+  }),
+  copper_pan: held({
+    class: 'pan',
+    ramp: RAMP.ORANGE,
+    // the copper bloom — heat has been here (and one polished gleam)
+    detail: ({ pm, gx, gy, pose }) => {
+      if (pose === 'back') {
+        pm.set(gx - 7, gy - 7, px(RAMP.ORANGE, 3));
+        pm.set(gx - 6, gy - 9, C.white);
+      } else if (pose === 'strike') {
+        pm.set(gx + 6, gy - 4, px(RAMP.ORANGE, 3));
+        pm.set(gx + 7, gy - 6, C.white);
+      } else {
+        pm.set(gx, gy + 4, px(RAMP.ORANGE, 3));
+        pm.set(gx + 2, gy + 5, C.white);
+      }
+    },
+  }),
+
   /* ---- body gear (renders ON battler + bust torsos) ---- */
   champion_jacket: {
     kind: 'torso',
     ramp: RAMP.RED, // varsity body — Sal pressed every letter himself
     trim: RAMP.PAPER, // white sleeves + snap trim
+  },
+  // S14 — the Wool Poncho (§A10 #5's prize): six llamas' worth of warmth
+  wool_poncho: {
+    kind: 'torso',
+    ramp: RAMP.EARTH, // undyed wool body
+    trim: RAMP.RED, // the woven border band
   },
 
   /* ---- 'arms'-slot gear (S12 — drawn icons, see the note above) ---- */
@@ -468,6 +533,10 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
   lucky_collar: {
     kind: 'trinket',
     icon: drawCollarIcon,
+  },
+  tin_sun_pendant: {
+    kind: 'trinket',
+    icon: drawSunPendantIcon,
   },
 
   /* ---- THE SUNDAY SET (S13 — the first Invitational's prize) ---- */

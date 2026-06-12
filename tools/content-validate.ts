@@ -51,6 +51,9 @@ import {
   STARTING_FOUR,
 } from '../src/data/hoops';
 import { AWAKENINGS } from '../src/data/awakenings';
+import { BOSS_SCRIPTS } from '../src/data/bosses';
+import { BossScriptDefSchema } from '../src/schemas';
+import { FORM_ART } from '../src/spritegen/enemies';
 import { CAST } from '../src/spritegen/characters';
 // S12c: the cage's math + frame contracts are Phaser-free and pinnable
 import { SPORT_FRAME, SPORT_FRAME_COUNT } from '../src/spritegen/athletes';
@@ -272,7 +275,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   const canon: Record<string, string> = {
     cracked_bat: 'rex',
     tball_bat: 'rex',
+    sandlot_slugger: 'rex', // S14 — §A8 Ch.2: the bat line's third rung
     hand_me_down_pan: 'faye',
+    copper_pan: 'faye', // S14 — §A8 Ch.2: the pan line's second rung
     pellet_popper: 'milo',
     cedar_beads: 'dorin',
   };
@@ -302,9 +307,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// §A7 Ch.1 roster + §A6 Boss 1, with canon HP pins — both directions
+// §A7 roster + §A6 bosses, with canon HP pins — both directions.
+// S14 extends the manifest with the Ch.2 six + BOSS 2 (the drift-log rule
+// applied to data: adding content = extending THIS table, same commit).
 {
   const canon: Record<string, number> = {
+    // Chapter 1
     cranky_mailbox: 24,
     runaway_lawnmower: 38,
     coily_cicada: 30,
@@ -312,6 +320,15 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     pigeon_gang: 45,
     hill_slug_deluxe: 60,
     titanic_tick: 450,
+    // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
+    // (the union attacks 5×22, §A7's group notation)
+    pickpocket_parrot: 70,
+    gilded_beetle: 85,
+    cursed_souvenir: 95,
+    step_mask: 110,
+    banana_bunch: 22,
+    jungle_jitterbug: 120,
+    gilded_grin: 980,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -322,10 +339,24 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (e.hp !== hp) fail('canon', `'${id}' HP is canon ${hp}, got ${e.hp}`);
   }
   for (const id of Object.keys(ENEMIES)) {
-    if (!(id in canon)) fail('canon', `'${id}' is not in the §A7 Ch.1 + Boss 1 manifest — extend the manifest with its chapter, never ad-hoc`);
+    if (!(id in canon)) fail('canon', `'${id}' is not in the §A7 Ch.1–2 + Boss manifest — extend the manifest with its chapter, never ad-hoc`);
   }
-  if (ENEMIES.titanic_tick && ENEMIES.titanic_tick.boss !== true) {
-    fail('canon', `§A6: titanic_tick must carry boss: true`);
+  for (const bossId of ['titanic_tick', 'gilded_grin']) {
+    if (ENEMIES[bossId] && ENEMIES[bossId].boss !== true) {
+      fail('canon', `§A6: ${bossId} must carry boss: true`);
+    }
+  }
+  // §A7 Ch.2 quirks are real mechanics, pinned: the parrot steals CASH, the
+  // beetle gilds, the mask shields, the jitterbug paralyzes, the souvenir cries
+  const moveKind = (id: string, kind: string): boolean => ENEMIES[id]?.moves.some((m) => m.kind === kind) ?? false;
+  if (!moveKind('pickpocket_parrot', 'stealcash')) fail('canon', `pickpocket_parrot needs its 'stealcash' move (§A7: steals cash)`);
+  if (!moveKind('gilded_beetle', 'gild')) fail('canon', `gilded_beetle needs its 'gild' move (§A7: gold form)`);
+  if (!moveKind('step_mask', 'shield')) fail('canon', `step_mask needs its 'shield' move (§A7: casts Shield)`);
+  if (!ENEMIES.jungle_jitterbug?.moves.some((m) => m.status === 'paralyzed')) {
+    fail('canon', `jungle_jitterbug needs a Paralyze move (§A7)`);
+  }
+  if (!ENEMIES.cursed_souvenir?.moves.some((m) => m.status === 'crying')) {
+    fail('canon', `cursed_souvenir needs a Crying move (§A7)`);
   }
 }
 
@@ -346,10 +377,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 {
   const canon: Record<string, string[]> = {
     drugstore: ['tball_bat', 'corn_dog', 'pbj', 'salt_shaker', 'sugar_bag'],
-    starmart: ['tball_bat', 'hand_me_down_pan', 'star_cola', 'corn_dog', 'pbj', 'salt_shaker', 'lemon_crate'],
+    starmart: ['tball_bat', 'hand_me_down_pan', 'star_cola', 'corn_dog', 'pbj', 'salt_shaker', 'lemon_crate', 'basket_basic'],
+    mercado: ['sandlot_slugger', 'alfajor', 'star_cola', 'salt_shaker', 'hanky', 'aloe_leaf', 'basket_basic', 'tin_sun_pendant'],
+    valle_shop: ['copper_pan', 'alfajor', 'corn_dog', 'star_cola', 'aloe_leaf', 'hanky', 'basket_basic'],
   };
   const have = Object.keys(SHOPS);
-  if (have.length !== 2) fail('canon', `Ch.1 ships 2 shops (drugstore, starmart), found ${have.length}`);
+  if (have.length !== 4) fail('canon', `Ch.1–2 ship 4 shops (drugstore, starmart, mercado, valle_shop), found ${have.length}`);
   for (const [id, stock] of Object.entries(canon)) {
     const shop = SHOPS[id];
     if (!shop) {
@@ -432,6 +465,26 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       doneFlag: 'q_arcade_done',
       caller: { name: 'Sal', kind: 'damage', power: 425 },
     },
+    llama_drama: {
+      name: 'The Llama Drama',
+      chapter: 2,
+      giver: 'tomas',
+      startFlag: 'q_llama',
+      objectiveFlags: ['q_llama_1', 'q_llama_2', 'q_llama_3', 'q_llama_4', 'q_llama_5', 'q_llama_6', 'q_llama_reported'],
+      rewardItem: 'wool_poncho',
+      doneFlag: 'q_llama_done',
+      caller: { name: 'Tomas', kind: 'damage', power: 420 },
+    },
+    museum_gold: {
+      name: 'Museum of Almost-Gold',
+      chapter: 2,
+      giver: 'curator',
+      startFlag: 'q_museum',
+      objectiveFlags: ['q_photo_1', 'q_photo_2', 'q_photo_3', 'q_photo_4', 'q_museum_reported'],
+      rewardItem: 'camera_flash',
+      doneFlag: 'q_museum_done',
+      caller: { name: 'The Curator', kind: 'damage', power: 435 },
+    },
   };
   for (const [id, pin] of Object.entries(canon)) {
     const q = QUESTS[id];
@@ -463,7 +516,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (!placed) fail('canon', `'${id}' giver npc '${pin.giver}' stands on no map`);
   }
   for (const id of Object.keys(QUESTS)) {
-    if (!(id in canon)) fail('canon', `'${id}' is not in the §A10 #1–4 manifest — extend the manifest with its §A10 row, never ad-hoc`);
+    if (!(id in canon)) fail('canon', `'${id}' is not in the §A10 #1–6 manifest — extend the manifest with its §A10 row, never ad-hoc`);
   }
   // quest flags never collide across quests — the machines stay independent
   const all = Object.values(QUESTS).flatMap((q) => [q.startFlag, q.doneFlag, ...q.objectives.map((o) => o.flag)]);
@@ -488,8 +541,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   if (ITEMS.champion_jacket && !(ITEMS.champion_jacket.kind === 'armor' && (ITEMS.champion_jacket.defense ?? 0) > 0 && ITEMS.champion_jacket.price === 0)) {
     fail('canon', `champion_jacket must be unsellable 'armor' with a defense bonus (§A10 #4)`);
   }
-  if (Object.values(ITEMS).some((i) => i.kind === 'armor' && i.id !== 'champion_jacket')) {
-    fail('canon', `the Ch.1 'armor' line is champion_jacket alone — extend the §A8 manifest, never ad-hoc`);
+  const ARMOR_LINE = ['champion_jacket', 'wool_poncho']; // S14: the poncho joins
+  if (Object.values(ITEMS).some((i) => i.kind === 'armor' && !ARMOR_LINE.includes(i.id))) {
+    fail('canon', `the §A8 'armor' line is [${ARMOR_LINE.join(', ')}] — extend the manifest, never ad-hoc`);
+  }
+  if (ITEMS.wool_poncho && !(ITEMS.wool_poncho.kind === 'armor' && (ITEMS.wool_poncho.defense ?? 0) > 0 && ITEMS.wool_poncho.price === 0)) {
+    fail('canon', `wool_poncho must be unsellable 'armor' with a defense bonus (§A10 #5)`);
   }
 }
 
@@ -530,6 +587,9 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     old_light: { hero: 'rex', ability: 'vibe_surge_a', flag: 'awake_surge_a', dialogue: 'awake_old_light' },
     last_spark: { hero: 'rex', ability: 'lifeup_a', flag: 'awake_lifeup_a', dialogue: 'awake_last_spark' },
     first_listen: { hero: 'faye', ability: 'vibe_fire_a', flag: 'awake_fire_a', dialogue: 'awake_first_listen' },
+    // S14 — Ch.2's emotional center: the HOLLOW reveal (§A3 ladder amended:
+    // Freeze α left Mia's L12 row in the same commit)
+    cold_reads: { hero: 'faye', ability: 'vibe_freeze_a', flag: 'awake_freeze_a', dialogue: 'awake_cold_reads' },
   };
   for (const [id, pin] of Object.entries(canon)) {
     const a = AWAKENINGS[id];
@@ -542,7 +602,7 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     }
   }
   for (const id of Object.keys(AWAKENINGS)) {
-    if (!(id in canon)) fail('awaken', `'${id}' is not in the Ch.1 awakening manifest — extend it with its chapter, never ad-hoc`);
+    if (!(id in canon)) fail('awaken', `'${id}' is not in the Ch.1–2 awakening manifest — extend it with its chapter, never ad-hoc`);
   }
   for (const a of Object.values(AWAKENINGS)) {
     const ab = ABILITIES[a.ability];
@@ -817,8 +877,12 @@ parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id
     if (!costa.npcs.some((n) => n.id === 'caddy')) fail('links', `the caddy must stand at costa_estrella`);
     if (!costa.signs.some((s) => s.dialogue === 'sign_costa')) fail('links', `costa_estrella needs its 'sign_costa' plaque`);
     if (!costa.props.some((p) => p.sprite === 'clubhouse')) fail('links', `costa_estrella needs the clubhouse`);
-    if (costa.doors.some((d) => d.to === 'puerto_sol')) {
-      fail('links', `the Puerto Sol door must stay UNPLACED until Prompt 28 (targets must exist)`);
+    // S14 (Prompt 28): the wire LANDED — the pin flips to assert the LINK
+    if (!costa.doors.some((d) => d.to === 'puerto_sol')) {
+      fail('links', `Prompt 28 shipped: costa_estrella must carry COSTA_DOOR_FOR_PUERTO_SOL (the one-line wire)`);
+    }
+    if (!MAPS.puerto_sol?.doors.some((d) => d.to === 'costa_estrella')) {
+      fail('links', `Puerto Sol must aim its cliff road back at costa_estrella (the round trip)`);
     }
   }
   if (COSTA_DOOR_FOR_PUERTO_SOL.to !== 'puerto_sol') fail('links', `the authored world door must aim puerto_sol (one-line wire for Prompt 28)`);
@@ -841,6 +905,196 @@ parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id
   // ADR-038: the strike-quality reads (the cage's green, on grass)
   for (const key of ['pure', 'pull', 'push'] as const) {
     if (!(key in LINKS_TEXT) || LINKS_TEXT[key].length === 0) fail('links', `the strike reads need LINKS_TEXT.${key} (ADR-038)`);
+  }
+}
+
+/* ================= S14 — CHAPTER 2 manifests (ADR-039/040) ================= */
+
+parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS);
+
+// THE PHASE MACHINE (Prompt 15): scripts are data — pin the Grin's canon
+{
+  const grin = BOSS_SCRIPTS.gilded_grin;
+  if (!grin) {
+    fail('phase', `BOSS_SCRIPTS.gilded_grin missing — §A6 Boss 2 runs on the phase machine`);
+  } else {
+    if (!ENEMIES[grin.boss] || ENEMIES[grin.boss].boss !== true) {
+      fail('phase', `the Grin script must drive a boss-flagged §A7 enemy`);
+    }
+    const solid = grin.forms?.find((f) => f.id === 'solid');
+    const hollow = grin.forms?.find((f) => f.id === 'hollow');
+    if (!solid?.physicalImmune || solid.crackedBy !== 'freeze') {
+      fail('phase', `SOLID GOLD must be physical-immune and crackedBy 'freeze' (§A6 Ch.2 — the lesson Freeze teaches)`);
+    }
+    if (!hollow?.vibeImmune) fail('phase', `HOLLOW must be Vibe-immune (§A6 Ch.2)`);
+    if (grin.initialForm !== 'solid') fail('phase', `the Idol opens SOLID GOLD`);
+    if (grin.awakeningOnForm?.form !== 'hollow' || grin.awakeningOnForm.awakening !== 'cold_reads') {
+      fail('phase', `Mia's Freeze awakens at the HOLLOW reveal (awakeningOnForm: hollow/cold_reads — ADR-035)`);
+    }
+    const tele = grin.phases.find((p) => p.id === 'telegraph');
+    const swap = grin.phases.find((p) => p.id === 'swap');
+    if (!(tele?.trigger.kind === 'turnCount' && tele.trigger.n === 2 && tele.trigger.every === 4 && tele.once === false)) {
+      fail('phase', `the Grin telegraphs on boss turns 2, 6, 10… (turnCount n2 every4, repeating)`);
+    }
+    if (!(swap?.trigger.kind === 'turnCount' && swap.trigger.n === 3 && swap.trigger.every === 4 && swap.once === false)) {
+      fail('phase', `the Grin swaps on boss turns 3, 7, 11… — one turn after every telegraph (§A6)`);
+    }
+  }
+  // the Tick stays bespoke — its latch is shipped engine law (S11), not data
+  if (BOSS_SCRIPTS.titanic_tick) {
+    fail('phase', `the Tick stays bespoke (shipped law) — no phase script for titanic_tick`);
+  }
+  // every reference inside every script resolves
+  for (const sc of Object.values(BOSS_SCRIPTS)) {
+    if (sc.riddle && !DIALOGUE[sc.riddle.intro]) fail('phase', `'${sc.boss}' riddle intro → unknown dialogue '${sc.riddle.intro}'`);
+    for (const f of sc.forms ?? []) {
+      if (f.line && !DIALOGUE[f.line]) fail('phase', `'${sc.boss}' form '${f.id}' → unknown dialogue '${f.line}'`);
+    }
+    for (const ph of sc.phases) {
+      for (const a of ph.actions) {
+        if (a.kind === 'scriptLine' && !DIALOGUE[a.line]) fail('phase', `'${sc.boss}' phase '${ph.id}' → unknown dialogue '${a.line}'`);
+        if (a.kind === 'summon' && !ENEMIES[a.enemy]) fail('phase', `'${sc.boss}' phase '${ph.id}' summons unknown enemy '${a.enemy}'`);
+      }
+    }
+    if (sc.awakeningOnForm && !AWAKENINGS[sc.awakeningOnForm.awakening]) {
+      fail('phase', `'${sc.boss}' awakeningOnForm → unknown awakening '${sc.awakeningOnForm.awakening}'`);
+    }
+  }
+  // FORM ART, both directions: every suffixed form has its texture family,
+  // and every FORM_ART row is claimed by some script form
+  const claimed = new Set<string>();
+  for (const sc of Object.values(BOSS_SCRIPTS)) {
+    for (const f of sc.forms ?? []) {
+      if (f.spriteSuffix === '') continue; // the base ENEMY_BATTLE_ART row carries it
+      const key = `${sc.boss}${f.spriteSuffix}`;
+      claimed.add(key);
+      const row = FORM_ART[key];
+      if (!row) {
+        fail('phase', `form '${sc.boss}/${f.id}' (suffix '${f.spriteSuffix}') has no FORM_ART row '${key}' — form swaps are texture swaps`);
+        continue;
+      }
+      const want = `${ENEMIES[sc.boss]?.sprite ?? ''}${f.spriteSuffix}`;
+      if (row.sprite !== want) fail('phase', `FORM_ART['${key}'] keys sprite '${row.sprite}', the swap needs '${want}'`);
+    }
+  }
+  for (const key of Object.keys(FORM_ART)) {
+    if (!claimed.has(key)) fail('phase', `FORM_ART row '${key}' is claimed by no boss form — extend or retire the row`);
+  }
+}
+
+// PICNIC (Prompt 23 / §A4.5): baskets pinned; the tables stand where canon says
+{
+  if (!(ITEMS.basket_basic?.kind === 'basket' && ITEMS.basket_basic.price > 0)) {
+    fail('picnic', `basket_basic must be a bought 'basket' (§A4.5: Basic is shop stock)`);
+  }
+  for (const id of ['basket_family', 'basket_feast']) {
+    if (!(ITEMS[id]?.kind === 'basket' && ITEMS[id].price === 0)) {
+      fail('picnic', `${id} must be an unsellable 'basket' (deli-crafted, §A4.5)`);
+    }
+  }
+  // ≈3 tables per chapter, placed BEFORE dungeons (§A4.5): the Ch.1 four
+  // are canon placements now; Ch.2 sets three more + the antechamber's
+  const TABLES: Record<string, number> = {
+    otterbrook: 1,
+    hickory_hill: 1,
+    brickton: 1,
+    dos_f2: 1,
+    puerto_sol: 1,
+    jungle_2: 1,
+    valle_dorado: 1,
+    pyramid_ante: 1,
+    deli_int: 1,
+  };
+  for (const [mapId, count] of Object.entries(TABLES)) {
+    const have = MAPS[mapId]?.props.filter((pp) => pp.sprite === 'picnic').length ?? 0;
+    if (have !== count) fail('picnic', `${mapId} needs ${count} picnic table(s) (§A4.5 placements), found ${have}`);
+  }
+  // the deli crafts at Puerto Sol (Prompt 23)
+  if (!MAPS.deli_int?.npcs.some((n) => n.id === 'deli_keeper')) {
+    fail('picnic', `the deli keeper must stand in deli_int (Family/Feast crafting)`);
+  }
+}
+
+// HOSPITALS & CHURCHES (Prompt 25): the doors are real, the staff is in
+{
+  if (!MAPS.brickton?.props.some((pp) => pp.door?.to === 'hospital_int')) {
+    fail('hospital', `Brickton General's facade must open into hospital_int (locked_hospital retired)`);
+  }
+  if (!MAPS.otterbrook?.props.some((pp) => pp.door?.to === 'chapel_int')) {
+    fail('hospital', `the Otterbrook chapel must open into chapel_int (locked_chapel retired)`);
+  }
+  const placedOnce = (npcId: string): number =>
+    Object.values(MAPS).reduce((a, m) => a + m.npcs.filter((n) => n.id === npcId).length, 0);
+  for (const doc of ['doc_brickton', 'doc_puerto', 'doc_valle']) {
+    if (placedOnce(doc) !== 1) fail('hospital', `doctor '${doc}' must stand on exactly one map (one weird line each, §A11)`);
+  }
+  for (const pr of ['priest_otter', 'priest_valle']) {
+    if (placedOnce(pr) !== 1) fail('hospital', `priest '${pr}' must stand on exactly one map (Prompt 25 chapels)`);
+  }
+}
+
+// THE BOAT + THE CITY + THE PYRAMID CHAIN (§A5/§A6 Ch.2)
+{
+  if (!MAPS.brickton?.doors.some((d) => d.to === 'brickton_docks')) {
+    fail('ch2', `Brickton's east gap must open onto brickton_docks (§A5 Ch.2)`);
+  }
+  if (!MAPS.brickton_docks?.triggers.some((t) => t.id === 'board_boat')) {
+    fail('ch2', `the docks need the board_boat trigger (the ch1_complete gate rides the captain's ask, ADR-014)`);
+  }
+  if (!MAPS.puerto_sol?.triggers.some((t) => t.id === 'board_boat_return')) {
+    fail('ch2', `Puerto Sol's pier needs board_boat_return (the boat runs forever — zero missables)`);
+  }
+  for (const mapId of ['brickton_docks', 'puerto_sol']) {
+    if (!MAPS[mapId]?.props.some((pp) => pp.sprite === 'departure_board')) {
+      fail('ch2', `${mapId} needs its departure board (it lists PUERTO SOL, proudly)`);
+    }
+    if (!MAPS[mapId]?.props.some((pp) => pp.sprite === 'banana_boat')) {
+      fail('ch2', `${mapId} needs the banana boat moored at its pier`);
+    }
+  }
+  if (MAPS.puerto_sol?.settlement !== 'city') {
+    fail('ch2', `PUERTO SOL is a CITY (§A5) — tag it so the ADR-012 sweep owns it`);
+  }
+  // the Ch.3 tease: Bert waits at the docks only after the chapter closes
+  const bert = MAPS.brickton_docks?.npcs.find((n) => n.id === 'uncle_bert');
+  if (!bert || bert.ifFlag !== 'ch2_complete') {
+    fail('ch2', `Uncle Bert (the Ch.3 tease) must stand at the docks gated ifFlag ch2_complete — no map for Lucille yet`);
+  }
+  // the dungeon chain holds end to end
+  const chain: Array<[string, string]> = [
+    ['valle_dorado', 'pyramid_ante'],
+    ['pyramid_1', 'pyramid_2'],
+    ['pyramid_2', 'pyramid_3'],
+    ['pyramid_3', 'pyramid_4'],
+    ['pyramid_4', 'pyramid_apex'],
+  ];
+  for (const [from, to] of chain) {
+    const viaDoor = MAPS[from]?.doors.some((d) => d.to === to);
+    const viaProp = MAPS[from]?.props.some((pp) => pp.door?.to === to);
+    if (!viaDoor && !viaProp) fail('ch2', `the pyramid chain breaks: ${from} → ${to}`);
+  }
+  if (!MAPS.pyramid_ante?.props.some((pp) => pp.door?.to === 'pyramid_1')) {
+    fail('ch2', `the pyramid gate's mouth must open into pyramid_1`);
+  }
+  // every chamber carries its mask switch + the sign that turns the floor
+  for (const n of [1, 2, 3, 4]) {
+    if (!MAPS[`pyramid_${n}`]?.props.some((pp) => pp.sprite === 'mask_switch')) {
+      fail('ch2', `pyramid_${n} needs its mask_switch (the §A6 rotation key)`);
+    }
+    if (!MAPS[`pyramid_${n}`]?.signs.some((sg) => sg.dialogue === `pyr_mask_${n}`)) {
+      fail('ch2', `pyramid_${n} needs its pyr_mask_${n} sign beat`);
+    }
+  }
+  if (!MAPS.pyramid_apex?.triggers.some((t) => t.id === 'apex_grin')) {
+    fail('ch2', `the apex needs the apex_grin trigger (BOSS 2's door, §A6)`);
+  }
+  // the wishers stand gray until the Grin falls; their woke twins after
+  const valle = MAPS.valle_dorado;
+  for (const w of ['a', 'b', 'c']) {
+    const gray = valle?.npcs.find((n) => n.id === `wisher_${w}`);
+    const woke = valle?.npcs.find((n) => n.id === `woke_${w}`);
+    if (!gray || gray.unlessFlag !== 'grin_defeated') fail('ch2', `wisher_${w} must stand unlessFlag grin_defeated (§A6)`);
+    if (!woke || woke.ifFlag !== 'grin_defeated') fail('ch2', `woke_${w} must stand ifFlag grin_defeated (the recovery variant)`);
   }
 }
 
@@ -1039,10 +1293,10 @@ sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS,
 const counts = [
   `${Object.keys(HEROES).length} heroes`,
   `${Object.keys(ABILITIES).length} abilities`,
-  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1 + Boss 1)`,
+  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–2 + Bosses 1–2)`,
   `${Object.keys(ITEMS).length} items`,
   `${Object.keys(SHOPS).length} shops`,
-  `${Object.keys(QUESTS).length} quests (§A10 #1–4)`,
+  `${Object.keys(QUESTS).length} quests (§A10 #1–6)`,
   `${Object.keys(MAPS).length} maps`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,

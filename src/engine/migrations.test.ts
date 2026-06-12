@@ -306,3 +306,35 @@ describe('save migration registry (S12b) — v5 → v6: AWAKENINGS', () => {
     expect(GS.data.hoops.bracket).toBeNull();
   });
 });
+
+describe('save migration registry (S14) — v6 → v7: Freeze α moves to the awakening', () => {
+  beforeEach(() => GS.reset());
+
+  /** a v6 save exactly as S12b wrote them: awakening flags, Mia at a level */
+  function v6Save(fayeLevel: number | null): Record<string, unknown> {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 6;
+    d.flags = { faye_joined: fayeLevel !== null };
+    if (fayeLevel !== null) {
+      const party = d.party as Array<Record<string, unknown>>;
+      party.push(makeHeroState('faye', fayeLevel) as unknown as Record<string, unknown>);
+    }
+    return d;
+  }
+
+  it('a v6 Mia at L12+ KEEPS the Freeze the old table granted (ADR-039)', () => {
+    GS.deserialize(JSON.stringify(v6Save(12)));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.flag('awake_freeze_a')).toBe(true);
+  });
+
+  it('a v6 Mia below L12 waits for the HOLLOW reveal — nothing backfills', () => {
+    GS.deserialize(JSON.stringify(v6Save(11)));
+    expect(GS.flag('awake_freeze_a')).toBe(false);
+  });
+
+  it('no Mia on the save, no flag — the moment keeps', () => {
+    GS.deserialize(JSON.stringify(v6Save(null)));
+    expect(GS.flag('awake_freeze_a')).toBe(false);
+  });
+});

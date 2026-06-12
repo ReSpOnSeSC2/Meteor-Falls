@@ -25,13 +25,19 @@
  * Flags backfill from the story flags those scenes set (met_glint →
  * Surge, zapper_done → Lifeup, faye_joined → Fire): an old save keeps
  * exactly what its story already earned, never what its levels implied.
+ *
+ * v6 → v7 (S14/ADR-039): VIBE FREEZE α moves from Mia's L12 unlock row to
+ * the Gilded Grin's HOLLOW-reveal awakening (cold_reads). A v6 save whose
+ * Mia already crossed L12 HAD Freeze under the old table — the backfill
+ * keeps exactly what the save could already cast, the ADR-035 stance
+ * applied to a moved row (losing a known ability on update is never ok).
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 6;
+export const CURRENT_SAVE_VERSION = 7;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -155,6 +161,22 @@ export const MIGRATIONS: MigrationStep[] = [
       if (flags.zapper_done === true) flags.awake_lifeup_a = true;
       if (flags.faye_joined === true) flags.awake_fire_a = true;
       raw.version = 6;
+      return raw;
+    },
+  },
+  {
+    to: 7,
+    migrate(raw) {
+      // S14 (ADR-039): Freeze α left Mia's L12 row for the Gilded Grin's
+      // HOLLOW-reveal awakening. A v6 Mia at L12+ could already cast it —
+      // she keeps it (the backfill mirrors what the old table granted).
+      const flags = isObj(raw.flags) ? raw.flags : (raw.flags = {});
+      const party = (Array.isArray(raw.party) ? raw.party : []).filter(isObj);
+      const faye = party.find((h) => h.id === 'faye');
+      if (faye && typeof faye.level === 'number' && faye.level >= 12) {
+        flags.awake_freeze_a = true;
+      }
+      raw.version = 7;
       return raw;
     },
   },

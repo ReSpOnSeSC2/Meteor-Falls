@@ -9,6 +9,10 @@
  *   y day sky   u bus floor   U bus wall
  */
 import { cityBuildingHeight } from '../spritegen/tiles';
+import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
+import { buildChapter2Maps } from './maps_ch2';
+
+export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import type { MapDef, PropDef } from '../schemas';
 
 // S5: shapes are z.infer'd from src/schemas — compile shape ≡ runtime schema
@@ -66,68 +70,23 @@ export const CHAR_LEGEND: Record<string, string> = {
   h: 'asphalt_line_h',
   v: 'asphalt_line_v',
   C: 'cage_mesh',
+  // S14 Chapter 2 — the crossing, the port, the jungle, the pyramid
+  e: 'sea_a',
+  E: 'sea_foam',
+  d: 'dock',
+  p: 'plaza',
+  n: 'sand_a',
+  j: 'jungle_floor',
+  J: 'jungle_wall',
+  Y: 'pyramid_floor',
+  Z: 'pyramid_wall',
+  G: 'pyramid_glyph',
+  g: 'pyramid_rotor',
 };
 
-/**
- * Deterministic tree variety (ADR-019): same canvas + solid rect for every
- * variant, so the canon positions and collision stay byte-identical while
- * no two neighbors look alike. Pines only where `pines` is allowed.
- */
-function treeSprite(x: number, y: number, pines = false): string {
-  const h = (x * 73 + y * 151) % 12;
-  if (pines && h >= 9) return 'pine';
-  if (h % 3 === 1) return 'tree_b';
-  if (h % 3 === 2) return 'tree_c';
-  return 'tree';
-}
+// treeSprite lives in mapkit.ts (S14 extraction — byte-identical)
 
 /* ------------------------------------------------------------------ */
-
-/** deterministic rng — map layouts must be identical on every boot
- *  (door positions, saves, and tests depend on it), so "randomness" here
- *  means seeded organic irregularity, never per-run variation */
-function seededRng(seed: number): () => number {
-  let a = seed >>> 0;
-  return (): number => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-class Grid {
-  rows: string[][];
-  w: number;
-  h: number;
-  constructor(w: number, h: number, fill = '.') {
-    this.w = w;
-    this.h = h;
-    this.rows = Array.from({ length: h }, () => Array.from({ length: w }, () => fill));
-  }
-  set(x: number, y: number, ch: string): void {
-    if (x >= 0 && y >= 0 && x < this.w && y < this.h) this.rows[y][x] = ch;
-  }
-  rect(x: number, y: number, w: number, h: number, ch: string): this {
-    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) this.set(i, j, ch);
-    return this;
-  }
-  sprinkle(seed: number, chars: string, density: number): this {
-    const rng = seededRng(seed);
-    for (let y = 0; y < this.h; y++) {
-      for (let x = 0; x < this.w; x++) {
-        if (this.rows[y][x] === '.' && rng() < density) {
-          this.set(x, y, chars[Math.floor(rng() * chars.length)]);
-        }
-      }
-    }
-    return this;
-  }
-  out(): string[] {
-    return this.rows.map((r) => r.join(''));
-  }
-}
 
 /* ------------------- OTTERBROOK ------------------- */
 
@@ -222,7 +181,14 @@ function buildOtterbrook(): MapDef {
         // ADR-011; the interior's street exit derives from this via doorstepOf)
         door: { ox: 17, oy: 64, w: 16, h: 28, to: 'arcade_int', tx: 80, ty: 102 },
       },
-      { sprite: 'chapel', x: 31, y: 16, solid: { ox: 0, oy: 30, w: 50, h: 60 } },
+      {
+        sprite: 'chapel',
+        x: 31,
+        y: 16,
+        solid: { ox: 0, oy: 30, w: 50, h: 60 },
+        // S14 (Prompt 25): the chapel opens — zone reaches below the floor
+        door: { ox: 17, oy: 78, w: 16, h: 30, to: 'chapel_int', tx: 88, ty: 150 },
+      },
       { sprite: 'lemonade', x: 14, y: 13, solid: { ox: 0, oy: 10, w: 36, h: 18 } },
       { sprite: 'picnic', x: 6, y: 25, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'bus_sign', x: 23, y: 25, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
@@ -588,6 +554,9 @@ function buildBrickton(): MapDef {
   g.rect(53 - jit(3), 13, 3, 1, '=');
   g.rect(41, 18, 2 + jit(3), 1, '=');
   g.rect(52 - jit(2), 18, 3, 1, '=');
+  // S14: the EAST GAP — street B runs out the wall to the DOCKS (a plain
+  // g.set pair consumes NO rng; every seeded stream stays byte-identical)
+  g.rect(55, 21, 1, 3, 'R');
   // SE vacant lot behind its fence — S12: the fence gains a GATE (one tile
   // swapped walkable; a plain g.set consumes NO rng, so the 1995 stream and
   // the whole jittered layout stay byte-identical, ADR-016's rule). The
@@ -658,6 +627,10 @@ function buildBrickton(): MapDef {
     // whole jittered layout stay byte-identical (ADR-016's rule)
     if (b.sprite === 'bldg_arcade2') {
       prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'arcade2_int', tx: 128, ty: 134 };
+    }
+    // S14 (Prompt 25): BRICKTON GENERAL opens — the dept's doubleDoor rect
+    if (b.sprite === 'bldg_hospital') {
+      prop.door = { ox: 44, oy: H - 14, w: 26, h: 18, to: 'hospital_int', tx: 152, ty: 166 };
     }
     bldgProps.push(prop);
     return prop;
@@ -842,6 +815,8 @@ function buildBrickton(): MapDef {
       { sprite: 'picnic', x: picnicX, y: 15, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       // the lot's realtor sign, on the sidewalk where you can actually read it
       { sprite: 'sign', x: 49, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // S14: the docks sign by the east gap (static placement, no rng)
+      { sprite: 'sign', x: 53, y: 24, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       // S12: the gate in the lot's fence — THE CAGE is open (no solid; the
       // door zone under it carries you through, chain hanging unlatched)
       { sprite: 'cage_gate', x: 50, y: 25.1 },
@@ -860,6 +835,8 @@ function buildBrickton(): MapDef {
     signs: [
       { x: 10, y: 27, dialogue: 'sign_brickton' },
       { x: 49, y: 25, dialogue: 'sign_lot' },
+      // S14: the docks pointer at the east gap
+      { x: 53, y: 24, dialogue: 'sign_to_docks' },
       // S13: the travel poster reads (coords follow the jittered board)
       { x: posterX, y: 26, dialogue: 'sign_links_poster' },
     ],
@@ -869,6 +846,8 @@ function buildBrickton(): MapDef {
       // S12: through the gate into THE CAGE (the lot's grid coords are
       // fixed — the gate tile was carved without touching the rng streams)
       { x: 50, y: 26, w: 1, h: 1, to: 'the_cage', tx: 320, ty: 60, facing: 'down' },
+      // S14: east along street B to the BRICKTON DOCKS (§A5 Ch.2's gate)
+      { x: 55, y: 21, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
     ],
     spawners: [
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 28, y: 6, w: 12, h: 2 } },
@@ -1433,18 +1412,7 @@ function buildBusInterior(): MapDef {
   };
 }
 
-/**
- * A building's doorstep on the street, derived from its (possibly jittered)
- * facade prop — cross-map coordinates that touch jittered placement are
- * computed, never hardcoded (ADR-012; the dos_f1 pattern, now shared by the
- * S4 shop interiors).
- */
-function doorstepOf(map: MapDef, to: string): { tx: number; ty: number } | null {
-  const prop = map.props.find((p) => p.door?.to === to);
-  const d = prop?.door;
-  if (!prop || !d) return null;
-  return { tx: prop.x * 16 + d.ox + d.w / 2, ty: prop.y * 16 + d.oy + d.h + 5 };
-}
+// doorstepOf lives in mapkit.ts (S14 extraction — byte-identical)
 
 const otterbrookMap = buildOtterbrook();
 const bricktonMap = buildBrickton();
@@ -1463,7 +1431,7 @@ const arcade2Doorstep = doorstepOf(bricktonMap, 'arcade2_int') ?? { tx: 345, ty:
  * south path, tile ~13,15). It is NOT placed today: door targets must
  * exist (the validator's law), and Puerto Sol doesn't yet.
  */
-export const COSTA_DOOR_FOR_PUERTO_SOL = { x: 12, y: 15, w: 3, h: 1, to: 'puerto_sol', tx: 0, ty: 0, facing: 'down' } as const;
+export const COSTA_DOOR_FOR_PUERTO_SOL = { x: 12, y: 15, w: 3, h: 1, to: 'puerto_sol', tx: 104, ty: 30, facing: 'down' } as const;
 
 /** the resort grounds: clubhouse, the caddy at the first tee, the plaque.
  *  Dev-reachable standalone (the Sprite Lab precedent) until Prompt 28. */
@@ -1510,15 +1478,19 @@ function buildCostaEstrella(): MapDef {
     phones: [],
     atms: [],
     doors: [
-      // Prompt 28 pushes COSTA_DOOR_FOR_PUERTO_SOL here (one line) — until
-      // then the resort is dev-reachable from the title (the Lab precedent)
+      // S14 (Prompt 28): THE ONE-LINE WIRE — the resort joins the world
+      COSTA_DOOR_FOR_PUERTO_SOL,
     ],
     spawners: [],
     triggers: [],
   };
 }
 
+const chapelDoorstep = doorstepOf(otterbrookMap, 'chapel_int') ?? { tx: 521, ty: 372 };
+const hospitalDoorstep = doorstepOf(bricktonMap, 'hospital_int') ?? { tx: 320, ty: 121 };
+
 export const MAPS: Record<string, MapDef> = {
+  ...buildChapter2Maps({ chapelStep: chapelDoorstep, hospitalStep: hospitalDoorstep }),
   otterbrook: otterbrookMap,
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),

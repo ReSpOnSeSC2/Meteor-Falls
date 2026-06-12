@@ -340,3 +340,62 @@ All legs via the ADR-008 driver, loop slept end to end; shots `.shots/s12d_*`.
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 17 | **ADR-038 feel, on device** — on the phone's real refresh rate: twenty quick shot attempts, every press opens the meter and every thumb-lift releases on the spot; five walk-up layups under the cyan band; makes/misses read at the iron without squinting; one golf tee shot taps PURE | ⬜ | ⬜ | this is the fix for the reported feel bug — verify on the SAME device that showed it |
+
+## S14 browser pre-flight — 2026-06-11, THE GILDED GRIN (ADR-039)
+
+All legs via the ADR-008 driver over the dev server; bench states constructed
+per the S9/S11 lore (post-ch1 flags + mfMakeHero). Driver lore this session
+earned: settle scene RESTARTS (not just fades) before pressing — a restart
+eats one or two latched presses; and a trigger rect is EDGE-fired, so a bot
+that brushes its first column and gets canceled must LEAVE and re-enter.
+
+| Check | Result |
+|---|---|
+| Boot → title, zero console noise | ✅ |
+| **THE CROSSING** — docks spawn → walked into the gangplank trigger → the captain's ask (the ch1_complete gate held when unset in earlier bench) → BOARD → the §A11 deck scene over the masked scrolling sea reel → PUERTO SOL pier, `boat_ride_done` set; later rides quick-fade both ways | ✅ map=puerto_sol, ride=true |
+| **PUERTO SOL renders** — the banana boat moored (structurally a banana), dock planks + surf line, plaza pavers, striped stalls, departure board, street B's dashes + crosswalk; ADR-012 city sweep passes in vitest; the 1898 stream pinned byte-identical | ✅ screenshot |
+| **THE PYRAMID ROTATION** — pyr_rot_1 flag advanced by the mask sign beat (grind + shake + fade-restart); the LIVE solidTiles dump showed the rotor's channel turned; at the canonical 1 press the player walked the T's stem from the south lobby THROUGH the rotor (live, the long way) | ✅ |
+| **The solve, proven** — BFS in vitest: every room blocked as found, OPEN after the documented presses (1/1/2/2), and the mask ALWAYS reachable at every rotation (no soft-lock, all 4 × 4 cases) | ✅ headless |
+| **A §A7 Ch.2 enemy, organically** — a roaming Step-Mask spotted the player mid-channel and got the swirl; fought and beaten live | ✅ |
+| **BOSS 2, the whole §A6 gimmick live** — opens SOLID GOLD (texture `battle_gilded_grin`); Jay's bash **CLANGED — 980 untouched**; the telegraph printed on boss turn 2; the swap landed turn 3 (texture `battle_gilded_grin_hollow`); **MIA AWAKENED VIBE FREEZE α mid-battle at the HOLLOW reveal** (flag + the §A11.2 pages + jingle, staged sincere); hollow bash LANDED (108); the solid return composed with WEAR (`battle_gilded_grin_w1` — form × tier swaps stack); victory paid $632 pending | ✅ |
+| **Freeze cracks the gold** — pinned in vitest (phases.test.ts: crackBy('freeze') suspends the physical immunity for CRACK_TURNS, refill not re-read, a fresh form arrives whole); the scene consumes the same damageMul gate the clang proved | ✅ headless + clang live |
+| **PICNIC (§A4.5)** — Feast Basket at the plaza table: blanket unrolls, party sits, birds land, basket consumed, full restore (Mia 96/96), `sunny_side=5`, `feast_armed` set; ANGELS excluded by design (hospitals own revival) | ✅ |
+| **HOSPITAL (§A4.7)** — Brickton General behind its real door: the desk revived angel-Jay for exactly reviveCost(10)=$50 (200→150), angel walked out a person | ✅ |
+| Console, whole session | ✅ zero errors/warnings |
+| `npm test` | ✅ validator (the §A7 Ch.1–2 + Boss 1–2 manifest, 4-shop shelves, §A10 #1–6, awakenings ×4, weapon manifest +2, armor line +poncho, phase-script pins incl. the telegraph cadence + crackedBy + FORM_ART both directions, picnic table placements, hospital/chapel doors + staff, the boat chain, the costa wire FLIPPED to assert the round trip — four axes verified failing loudly) + 270 vitest |
+
+Not yet driven live (wired + validator-pinned + pattern-proven, the S9 quest
+machinery verbatim): the llama herd beats, the museum camera beats, the deli
+crafting rows, the chapel prayer, the valley recovery → ch2_complete beat.
+First full start-to-finish §A9 timing run belongs to the device pass below.
+
+### S14 device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 18 | **Chapter 2, on device** — boat → Puerto Sol → jungle → Valle Dorado → pyramid (all four masks) → the Grin → Ember 2 → the recovery → boat home, by touch AND pad, ~35–45 min at the §A9 target (~13); both quests end-to-end; a picnic before the pyramid; a wipe inside it → angels → clinic revival for scaled cash | ⬜ | ⬜ | the §A11 tone read-through rides along: every new line out loud |
+
+## S14b browser pre-flight — 2026-06-11, the settings suite + the meter's real bug (ADR-040)
+
+All legs live over the dev server via the ADR-008 driver. Driver lore
+earned: the user's OWN browser focus matters — InputBus wipes held keys on
+window blur (by design), so bot MOVEMENT legs need the tab focused or the
+loop slept; and `renderer.snapshotArea` only fulfills with the loop AWAKE.
+
+| Check | Result |
+|---|---|
+| **SETUP, production pass** — Sound / Text speed (PATIENT-NORMAL-BRISK, unset defaults NORMAL after the coercion fix) / Window flavor / Controls / Return to Title / Back, every row applying instantly | ✅ driven end-to-end |
+| **WINDOW FLAVORS (Prompt 6 canon)** — CLASSIC → MINT → STRAWBERRY cycled live on screen: the pick windows + say windows repaint on the very next open; the flag rides the SAVE (per file, like EB) | ✅ screenshots |
+| **CONTROLS, rebuilt** — the binding sheet (action/keyboard/pad columns) + the WHAT-THEY-DO legend + footer rule; **sprint captured onto KeyL live and persisted to 'meteor-falls-controls', then Reset restored KeyC** — the user's exact ask ("sprint on a different button") round-trips | ✅ |
+| **RETURN TO TITLE** — the confirmed close path: title active, overworld + menu stopped (proven by direct invocation after bot-vs-ask timing noise; the dialogue flow itself is the battle-tested say/ask) | ✅ |
+| **THE GOLF METER'S REAL BUG** — root cause found by pixel sampling: Phaser Shape `.height` assignment never rebuilds geometry, so the S13 fill NEVER grew (the user's "stub at the bottom" screenshot) and the acc phase read as draining. Scale-based fix verified by renderer pixel column: empty above, GOLD power mark at the capture, dimmed HELD fill beneath, cyan needle mid-descent, PURE band + zero line at the base | ✅ pixel-sampled + screenshot |
+| **THE RUN LEAN (ADR-040)** — 24-frame sheets: run frames 16–23 with head down+forward and the determined glare brow; staged at 3× beside the walk frames for Jay AND Mia — the lean is unmistakable; anims resolve [20,21] for right-run | ✅ + 4 vitest pins (incl. center-of-mass forward) |
+| **THE LAB SCROLLS** — cast page rows 4–6/6 reached by Down; the whole Ch.2 cast (Tomás, doctors, priests, wishers + woke twins, the captain, the curator…) visible; position read in the corner | ✅ screenshot |
+| Console, whole session | ✅ zero errors/warnings |
+| `npm test` | ✅ validator + 274 vitest |
+
+### S14b device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 19 | **The settings, on the player's pad** — rebind SPRINT onto the preferred DualSense button via the capture card and play a cage possession with it; flip the window flavor and read three conversations; BRISK text through a shop; Return to Title and Continue back | ⬜ | ⬜ | the rebind page exists FOR this pad — verify the capture reads its buttons |

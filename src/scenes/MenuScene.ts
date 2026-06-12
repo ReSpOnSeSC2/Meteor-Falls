@@ -28,11 +28,14 @@ import { GS, expForLevel, type HeroState } from '../engine/state';
 import { HEROES, availableAbilities } from '../data/heroes';
 import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, type EquipSlot } from '../data/items';
 import { ABILITIES } from '../data/abilities';
+import { MAPS } from '../data/maps';
+import { DIALOGUE } from '../data/dialogue';
 import { journalQuests, currentObjective, objectiveDone, callerEarned } from '../engine/quests';
 import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, vibeHeal } from '../battle/formulas';
 import { INPUT, type Btn } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, vars, DEPTH_UI } from '../ui/windows';
+import { WINDOW_FLAVORS } from '../spritegen/ui';
 // S4: the list widget + "Offense up by N!" confirm are shared with the shops
 import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
 import { colorOf, RAMP, px } from '../palette';
@@ -171,8 +174,30 @@ export class MenuScene extends Phaser.Scene {
     await this.dlg.say(`* Left the ${item.name} behind. Somebody's lucky day.`);
   }
 
+  /** §A4.5 (S14): is the player standing at a picnic table right now? */
+  private nearPicnicTable(): boolean {
+    const map = MAPS[GS.data.map];
+    if (!map) return false;
+    return map.props.some(
+      (p) => p.sprite === 'picnic' && Math.hypot(p.x * 16 + 18 - GS.data.x, p.y * 16 + 12 - GS.data.y) < 44,
+    );
+  }
+
   private async useItem(hero: HeroState, itemId: string): Promise<void> {
     const item = ITEMS[itemId];
+    // §A4.5 (S14): baskets are TABLE-ONLY — at one, the menu closes onto the
+    // picnic (OverworldScene picks the handoff up); anywhere else, canon says
+    if (item.kind === 'basket') {
+      if (!this.nearPicnicTable()) {
+        await this.dlg.say(...DIALOGUE.picnic_no_spot);
+        return;
+      }
+      this.registry.set('picnicBasket', itemId);
+      AUDIO.sfx('confirm');
+      this.game.events.emit('mf-menu-closed');
+      this.scene.stop();
+      return;
+    }
     if (item.kind === 'food' && item.heal) {
       const alive = GS.aliveParty();
       const t =
@@ -570,18 +595,37 @@ export class MenuScene extends Phaser.Scene {
 
   /* ================= SETUP ================= */
 
+  /* ================= SETUP (S14b — the player-facing settings suite) =================
+   * Sound · Text speed (3 paces) · Window flavor (the EB four — per SAVE
+   * FILE via the win_flavor flag, Prompt 6 canon) · Controls (full rebind
+   * page below) · Return to Title (confirmed; Dad keeps what he wrote).
+   * Every row applies INSTANTLY — the pick widget rebuilds per loop, so a
+   * flavor change repaints the very next window you see. */
+
   private async setupPage(): Promise<void> {
     const hint = this.add
-      .bitmapText(96, 80, 'retro', '(M on a keyboard flips it anywhere)', 6)
+      .bitmapText(96, 124, 'retro', '(M on a keyboard flips sound anywhere)', 6)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(DIM);
     this.pageObjs.push(hint);
+    const SPEEDS = ['PATIENT', 'NORMAL', 'BRISK'];
     for (;;) {
+      const flavor = Number(GS.flag('win_flavor')) || 0;
+      const rawSpeed = GS.flag('text_speed');
+      const speed = rawSpeed === false ? 1 : Number(rawSpeed); // unset = NORMAL
+      const speedIdx = speed === 0 || speed === 1 || speed === 2 ? speed : 1;
       const sel = await this.pick({
         x: 96,
         y: 8,
-        options: [`Sound: ${AUDIO.muted ? 'OFF' : 'ON'}`, 'Controls', 'Back'],
+        options: [
+          `Sound: ${AUDIO.muted ? 'OFF' : 'ON'}`,
+          `Text speed: ${SPEEDS[speedIdx]}`,
+          `Window flavor: ${WINDOW_FLAVORS[flavor]?.name ?? 'CLASSIC'}`,
+          'Controls',
+          'Return to Title',
+          'Back',
+        ],
         title: 'SETUP',
       });
       if (sel === 0) {
@@ -590,9 +634,24 @@ export class MenuScene extends Phaser.Scene {
         continue;
       }
       if (sel === 1) {
+        GS.setFlag('text_speed', (speedIdx + 1) % 3);
+        AUDIO.sfx('confirm');
+        continue;
+      }
+      if (sel === 2) {
+        // cycle the flavor; the next window drawn wears it (live preview)
+        GS.setFlag('win_flavor', (flavor + 1) % WINDOW_FLAVORS.length);
+        AUDIO.sfx('confirm');
+        continue;
+      }
+      if (sel === 3) {
         hint.setVisible(false);
         await this.controlsPage();
         hint.setVisible(true);
+        continue;
+      }
+      if (sel === 4) {
+        if (await this.returnToTitle()) return;
         continue;
       }
       break;
@@ -600,31 +659,77 @@ export class MenuScene extends Phaser.Scene {
     this.clearPage();
   }
 
-  /* ================= SETUP → CONTROLS (S12c) =================
-   * Press-to-capture rebinding of the SEMANTIC actions (the InputBus binding
-   * table): pick an action row, then press the physical key OR pad button
-   * that should drive it — the source you press is the device you rebind.
-   * Persisted device-local like the Sound preference (never save data);
-   * the RPG and the cage both read through the table by construction. */
+  /** S14b: the close/reset path home — confirmed, never accidental. Saved
+   *  progress is safe in Dad's notebook; the unsaved tail is named honestly. */
+  private async returnToTitle(): Promise<boolean> {
+    await this.dlg.say('Head back to the title screen?', '* Dad keeps everything he wrote down. Anything since his last call goes back to lint.');
+    const pick = await this.dlg.ask(['Stay here', 'Return to Title'], { cancelIndex: 0 });
+    if (pick !== 1) return false;
+    AUDIO.sfx('confirm');
+    AUDIO.stopMusic();
+    this.clearPage();
+    this.scene.stop('overworld');
+    this.scene.start('title');
+    return true;
+  }
+
+  /* ================= SETUP → CONTROLS (S12c, rebuilt S14b) =================
+   * THE BINDING TABLE, production pass: the rebind list on the left, a
+   * WHAT-THEY-DO legend riding beside it (one line per action across the
+   * whole game — overworld / battle / cage / links), press-to-capture with
+   * a pulsing capture card, and the conflict rule the InputBus enforces:
+   * a captured key is STOLEN from whichever action held it (that action
+   * falls back to its default). Persisted device-local — never save data. */
 
   private async controlsPage(): Promise<void> {
-    const ROLES: Array<{ b: Btn; role: string }> = [
-      { b: 'A', role: 'SHOOT / CONFIRM' },
-      { b: 'B', role: 'PASS / CANCEL' },
-      { b: 'X', role: 'SPRINT' },
-      { b: 'Y', role: 'DRIBBLE MOVE' },
-      { b: 'START', role: 'MENU / PAUSE' },
+    const ROLES: Array<{ b: Btn; does: string }> = [
+      { b: 'A', does: 'confirm-bash-swing' },
+      { b: 'B', does: 'cancel-run-pass' },
+      { b: 'X', does: 'sprint (cage+links)' },
+      { b: 'Y', does: 'dribble moves (cage)' },
+      { b: 'START', does: 'menu-pause' },
     ];
     const keyName = (code: string): string =>
-      code.replace(/^Key/, '').replace(/^Arrow/, '').replace('ShiftLeft', 'SHIFT').replace('ShiftRight', 'RSHIFT').toUpperCase();
+      code
+        .replace(/^Key/, '')
+        .replace(/^Digit/, '')
+        .replace(/^Arrow/, '')
+        .replace('ShiftLeft', 'SHIFT')
+        .replace('ShiftRight', 'R-SHIFT')
+        .replace('ControlLeft', 'CTRL')
+        .replace('Space', 'SPACE')
+        .replace('Enter', 'ENTER')
+        .toUpperCase();
+    // the legend panel (static): what each action means everywhere
+    const legend = makeWindow(this, 212, 30, 184, 110);
+    const legendTitle = this.add
+      .bitmapText(222, 38, 'retro', 'WHAT THEY DO', 6)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1)
+      .setTint(colorOf(px(RAMP.GOLD, 3)));
+    const legendRows = ROLES.map(({ b, does }, i) =>
+      this.add
+        .bitmapText(222, 52 + i * 13, 'retro', `${b.padEnd(6)}${does}`, 6)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1)
+        .setTint(i % 2 === 0 ? colorOf(px(RAMP.PAPER, 3)) : colorOf(px(RAMP.PAPER, 2))),
+    );
+    const footer = this.add
+      .bitmapText(212, 146, 'retro', 'Pick a row, press the new key\nor pad button. A stolen key\nfalls back to its old default.', 6)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1)
+      .setTint(DIM);
+    this.pageObjs.push(legend, legendTitle, footer, ...legendRows);
     for (;;) {
-      const rows = ROLES.map(({ b, role }) => {
-        const keys = INPUT.bindings.keys[b].map(keyName).join('+');
-        const pads = INPUT.bindings.pad[b].map((i) => `P${i}`).join('+');
-        return `${b} ${role}: ${keys} ${pads}`;
+      const rows = ROLES.map(({ b }) => {
+        // long key chords get elided so the pad column never collides
+        const names = INPUT.bindings.keys[b].map(keyName);
+        const keys = names.length > 2 ? `${names[0]}+..` : names.join('+');
+        const pads = INPUT.bindings.pad[b].map((i) => `BTN ${i}`).join('+');
+        return `${b.padEnd(6)}${keys.padEnd(10)}${pads}`;
       });
       const sel = await this.pick({
-        x: 24,
+        x: 8,
         y: 8,
         options: [...rows, 'Reset to defaults', 'Back'],
         title: 'CONTROLS',
@@ -635,23 +740,33 @@ export class MenuScene extends Phaser.Scene {
         AUDIO.sfx('confirm');
         continue;
       }
-      await this.captureBinding(ROLES[sel].b, ROLES[sel].role);
+      await this.captureBinding(ROLES[sel].b, ROLES[sel].does);
     }
+    legend.destroy();
+    legendTitle.destroy();
+    footer.destroy();
+    legendRows.forEach((t) => t.destroy());
   }
 
-  /** one capture: the next keydown or fresh pad press rebinds; B-key escape
-   *  is impossible mid-capture (the press is swallowed), so we also accept a
-   *  pointer tap as cancel */
+  /** one capture: the next keydown or fresh pad press rebinds; the card
+   *  pulses while listening; tap/click cancels (B-key escape is impossible
+   *  mid-capture — the press would be swallowed as the new binding) */
   private captureBinding(btn: Btn, role: string): Promise<void> {
-    const w = makeWindow(this, 70, 88, 260, 44);
+    const w = makeWindow(this, 60, 80, 280, 56);
     const t = this.add
-      .bitmapText(200, 100, 'retro', `Press a key or pad button for\n${btn} — ${role} (tap to cancel)`, 6)
+      .bitmapText(200, 92, 'retro', `${btn} — ${role}\nPRESS THE NEW KEY OR PAD BUTTON\n(tap or click to cancel)`, 6)
       .setOrigin(0.5, 0)
       .setCenterAlign()
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 3);
+    let pulse = 0;
+    const offPulse = everyFrame(this, (dt) => {
+      pulse += dt;
+      t.setTint(colorOf(px(RAMP.GOLD, pulse % 700 < 350 ? 3 : 2)));
+    });
     return new Promise((resolve) => {
       const done = (): void => {
+        offPulse();
         this.input.off('pointerdown', cancel);
         w.destroy();
         t.destroy();
