@@ -721,6 +721,819 @@ open; a basket bought at STARMART restores the party at the Brickton park
 table.
 ```
 
+## Prompt S14c — THE PLAYTEST FOUR & THE WORLDS OF SCALE (eight chapters become ten)
+
+```
+[Standard Header]
+S14c — two movements, one session (split on the seam between them per
+Appendix rule 2 if the session runs long: fixes first, canon second).
+MOVEMENT ONE answers the user's playtest (four reports, root causes
+already traced — fix them production-grade, bot-proven). MOVEMENT TWO
+is the largest canon amendment since ADR-031: METEOR FALLS grows from
+eight chapters to TEN — two scale-warped worlds, one where the party
+walks tiny among 10×–100× giants, one where the party are the giants
+over a 1/10–1/100 realm — written INTO the Bible per Appendix rule 6
+with every engine seam landed NOW so the chapter sessions later land
+both worlds as data (the Prompt-15 precedent). No chapter maps or
+dialogue this session beyond Sprite Lab proof rows.
+
+=== MOVEMENT ONE — THE PLAYTEST FOUR ===
+
+1. NOT ENOUGH PP NEVER, EVER BASHES. Report: picking an unaffordable
+ability prints "Not enough PP!" and the hero bashes anyway instead of
+returning you to the menu to choose again. Root cause (traced):
+heroVibe() (BattleScene.ts ~1095–1125) lists EVERY ability affordable
+or not, checks PP only after the pick, prints a HARDCODED 'Not enough
+PP!' and returns false — heroCommand()'s loop does re-ask, but the
+latched confirm press that dismissed the message feeds the re-opened
+command ask() the same frame and confirms its default row: BASH. This
+is the same ask→re-fire class S4 killed on the overworld with
+Dialogue.justReleased (ADR-024). Fix all three layers:
+ (a) the shared list widget (ui/pick.ts) gains DISABLED ROWS —
+     rendered dim (shadow tone, PP cost still shown), the cursor
+     lands on them fine, A on one = soft buzz + the in-window "Not
+     enough PP!" line and THE LIST STAYS OPEN. heroVibe/heroGadgets
+     mark every row where pp < cost. An affordable pick or Back are
+     the only exits.
+ (b) battle ask()/print() inherit the same-frame justReleased guard
+     so no dismissed message can ever confirm the next menu's default
+     row — sweep EVERY return-false path in the command loop (Vibe,
+     Gadgets, Goods, target cancel, hushed_no_vibe) for the re-fire
+     class.
+ (c) the string moves to BATTLE_TEXT (validator-swept, §A11 voice —
+     keep it terse; insufficiency is not a joke beat).
+Enemy AI is untouched (pickMove() is a separate, PP-less path —
+verified). Vitest pins the canAfford/disabled-row derivation headless;
+the BattleScene header gains a bot recipe driving a 1-PP hero into a
+5-PP Surge at pump(n, 8.33), proving the command menu survives with no
+bash queued and the turn unconsumed.
+
+2. GLINT RETURNS EVERY TIME UNTIL THE TICK DIES. Report: lose the
+crater fight once and the star scene never replays — no Glint, no
+assist, a much harder retry. Root cause (traced): craterScene()
+(OverworldScene.ts ~2771) gates the cutscene AND the glint:true assist
+on met_glint, which is set on FIRST VIEW; tick_defeated is only set on
+victory (~2801), so a defeat strands the save in the dead zone between
+the flags. Fix: the scene content re-gates on !tick_defeated (the map
+trigger at ~2538 already does); met_glint keeps being SET (the
+awakening backfill in migrations keys off it — migrations.test.ts pins
+this, do not break it) but it gates NOTHING anymore. First approach
+plays the full prophecy (the awakening beat stays once-only behind
+awake_surge_a — never re-toast a lived moment); retries play a NEW
+short rally variant in §A11 voice (Glint flits back to the rim, two or
+three lines — he has opinions about the Tick's posture and about your
+last attempt), and EVERY attempt launches startBattle(['titanic_tick'],
+…, { boss: true, glint: true }) until tick_defeated. Victory wiring
+unchanged (tick_defeated + ember1). Vitest pins the gating predicate +
+assist derivation headless (lose → flag state → re-entry yields scene
+and assist); the bot loses on purpose, re-enters, sees Glint, wins.
+Then sweep for the same one-shot-flag-gates-a-retryable-boss pattern
+elsewhere (the Grin's approach, the pyramid apex) and fix any sibling
+the same way.
+
+3. THE PARTY RAIL — HP/PP AT A GLANCE, MENU AND MID-WALK. Two asks:
+START should show the party's HP/PP boxes, and a button should pop
+them while walking, then let you walk on. Build ONE widget, use it
+twice: src/ui/partyrail.ts — a per-hero mini-card on the windows.ts
+9-slice (window flavor + EB font law): name, HP n/max and PP n/max
+boxes in the battle-card arrangement (static text, no drums), §A4.8
+status tags (HOMESICK in red, the angel mark for down heroes). MENU:
+the rail renders on MenuScene's ROOT — all four at a glance the moment
+START opens (the EB hotel-clerk read; the STATUS page keeps the full
+§A3 sheet). OVERWORLD PEEK: new semantic button SELECT in the InputBus
+(ADR-024/036 lineage — keyboard KeyE, pad button 8, the literal
+Select; the CONTROLS page grows row 6 "Party check" under the existing
+capture/steal/reset law; the touch overlay grows a small safe-area
+chip, overworld only). SELECT toggles the rail as an overlay over the
+LIVE overworld — no pause, walk with it up — depth above the touch
+layer, scrollFactor 0, values live, auto-hides on battle/menu/shop/
+cutscene/map transition, never overlapping the dialogue band. Persisted
+nowhere (a peek, not a setting). Vitest pins the party→card-model
+derivation headless; bot recipe in the scene header.
+
+4. MOM'S TABLE IS THE ORIGINAL HOTEL. Report: Mom's house should feed
+you, sleep you, and wake you maxed — free, every time. Today Mom only
+hands the one-time gear (mom_gear) and repeats flavor lines. Build the
+ritual at rex_home (the mom branch, OverworldScene ~1340): every visit
+after the gift offers "Sit down. I'll fix {favoritefood}." → kitchen
+table scene (party sits — stage it on the picnic-blanket pattern
+~2311; no blanket, the kitchen IS the good spot) → fade upstairs to
+Jay's bed (the S6 fade law) → wake next morning: full HP/PP for every
+STANDING hero, Homesick and every §A4.8 status cured (Mom's cooking
+cures Homesick — §A4.4 made flesh), and the SUNNY SIDE breakfast
+(+10% ×5 battles — Mom is the original hotel; S15's paid hotels
+inherit HER template, note it in taxonomy row C when that session
+runs). FREE, infinite, no flag-gating. Angels are NOT revived — Mom
+stops at the doorway and worries ("Go see a doctor, sweetheart.
+Please." — played straight, §A11.2; the hospital keeps its §A9 job).
+New dialogue ids validator-swept, {favoritefood} lives. Phone-Mom
+flows untouched. Bot: arrive Homesick at 1 HP, sleep, leave full +
+sunny; vitest pins the restore-and-cure seam headless.
+
+=== MOVEMENT TWO — THE WORLDS OF SCALE (the ten-world amendment) ===
+
+THE CANON (write ALL of this into the Bible per Appendix rule 6 —
+these are the user's worlds, named and numbered; contradict nothing
+below, and extend freely in its voice wherever the Bible needs
+connective tissue):
+
+THE TWIN SHARDS. Over the North Sea the meteor CALVED: two Embers fell
+twinned — one humming LOW, one humming HIGH — and where they landed,
+the hum changed the SIZE of living things. §A2 amends: the meteor
+shattered into TEN Embers; the Locket records ten Heartlights; the
+Homesong is ten stems. The Hush's path gains two stops between England
+and Africa, and every chapter after them renumbers.
+
+CHAPTER 4 — "THE FJORD THAT SLEEPS" (Norway) — target end level 22.
+Lucille's North Sea hop (she barely makes it). Land at KVISTHAVN, a
+normal-scale fishing hamlet under the cliffs; past the tree line the
+LOW Ember's hum has swelled every living thing for generations:
+BOOTSTEP MOOR (10× wildlife, half of it friendly) and LILLEBY, the
+giants' town, pop. 41, where the party walks UNDER doors and giants
+KNEEL to talk ("WELCOME TO LILLEBY. Everything here is normal-sized.
+— the Booster Club"). Some giants are friends — SIGRID the
+grandmother, HALVOR the letter-writer, the tweezer-counter shopkeep —
+and some are Hushed and fight. The mountain behind town IS a giant:
+GRANDFATHER STORHEIM, 100×, asleep forty years. The dungeon, THE
+SLEEPER'S SPINE, crosses his body hand→shoulder→ear — his terrain is
+the map (the 100× read is architecture, never a sprite; see THE SCALE
+LAW). The Hush nested THE WHISPERWIG in his ear and whispered him to
+sleep; his silence hushed the fjord's deep songs.
+Resonance Site: the Sleeper's Ear. BOSS 4 — THE WHISPERWIG (1,900 HP /
+burrows into the ear canal — untargetable — until NOISE forces it out:
+Vibe Volt or a Firecracker String; every 3rd turn it whispers,
+party-wide HUSHED pressure — the first boss that silences Vibe. MIA
+AWAKENS VIBE VOLT α MID-FIGHT, the thunder-snore in her teeth — the
+ADR-035 pattern, the awakening as its own diegetic tutorial; her
+ladder amends: Magnet L15 → Fire β L17 → Freeze β L21, Volt α leaves
+L20 for this beat). Ember 4 sits in the ear like a hearing aid;
+Heartlight 4 = THE DEEP HUM, the Homesong's bass stem. Storheim
+half-wakes — "...morning." — and goes back down humming it; Lilleby
+hears the deep songs again; Sigrid cries one plate-sized tear.
+Quests: #17 SIGRID'S SPECTACLES (find both pond-sized lenses across
+the moor; reward SIGRID'S MONOCLE — reusable battle FOCUS, see THE
+SCALE LAW; caller: Sigrid) and #18 THE UNSENT LETTER (carry Halvor's
+love letter to the post ONE PAGE AT A TIME, three trips, wind hazard;
+reward a GIANT'S BANKNOTE (valuable, sells $250,000 — pocket change
+to Halvor, who apologizes for only having small bills; the §A9
+WEALTH ARC's first rung, see S14e); caller: Halvor — his phone is a
+church bell).
+§A7 row (six, full contract — sprite+mini, 2–4 moves, weakness,
+EXP/cash/drop, death line): Colossal Gnat (150/Crying — dog-sized;
+"finally, a fair fight"), Runaway Knitting Needles (175/Paralyze),
+Thunder Snail (230/slow, hits like weather), Dog-Sized Berry
+(160/heals itself, poses as a pickup), Hushed Gull, Enormous
+(200/steals one food), Junior Jötun (260/grabs a hero — a toddler who
+thinks you're toys; the latch family). §A8 shelf at LILLEBY TRADING
+POST (the tweezer counter): Jumbo Crumb (food), Half-a-Pea (cheap
+food), Thimble Stew (food, small party-wide), Giant's Sugar Lump (PP,
+the Star Cola tier-up), Mitten Cap (hat line, after Cricket Cap),
+Bootlace Belt (body), Button Buckler (arms), Giant's Coin (valuable,
+sells high — "legal tender, somewhere bigger"). Music briefs for the
+Prompt-40 list: Lilleby = hardingfele drone over a taiko heartbeat at
+sleeping-giant tempo; the Spine = the snore is the bar line.
+
+CHAPTER 5 — "THE GRAND DUCHY OF MINIMUS" (the smallest country on
+Earth) — target end level 26. Lucille again (she lands in the duchy.
+All of it.) The HIGH Ember fell on coronation night and shrank the
+realm to 1/100; the duchy calls it a blessing ("rent has never been
+cheaper"). The party are THE VISITING COLOSSI: the capital MINIMUS
+MAJOR is a tabletop kingdom — knee-high cathedral, ribbon streets —
+walked ONLY on the PROCESSION WAY (their boulevards fit your boots;
+step off and the Whistle Guards nudge you back — comedy, never
+damage). Citizens are 1/2–1/3 minis with enormous civic pride; crowds
+parade. The treasury pays in MICRO-DUCAT chests — one hundred
+thousand coins, $12; the counting outlasts the spending (the §A9
+WEALTH ARC's inverse gag, see S14e). You owe them a crushed orchard
+(the landing), so: #20 CIVIC
+REPAIRS (re-roof the cathedral with one coin, raise the drawbridge
+with one playing card, refill the reservoir with one watering can;
+reward Banquet of the Realm ×2 + the duchy discount; caller: GRAND
+DUCHESS MILLIMETTA I — tiny duchess, enormous voice) and #19 THE ROYAL
+CENSUS (count all 100 citizens; they will not stand still; reward the
+Stamp Quilt; caller: the Census-Taker, who counts the rings before
+answering). MILO'S CH.5 BUILD (gadgets are built, not awakened —
+ADR-035): the duchy's hundred engineers help him grind Sigrid's spare
+lens into the BIG-LITTLE LENS — Spy gains FOCUS, party-wide for the
+battle (see THE SCALE LAW). The terror: WHISKERZILLA — a perfectly
+ordinary lost housecat, their kaiju — its bell rolled through Hush
+static and rings FLAT, so the Silent Paw is never heard coming (a
+LOST CAT poster goes up in Foggybottom when Ch.3 lands —
+zero-missable flavor payoff). Dungeon: THE HEDGEROW, their Mirkwood —
+escort the Tin Battalion through it at your scale.
+Resonance Site: the Ducal Crown. BOSS 5 — WHISKERZILLA (2,150 HP /
+"it is only playing": every 3rd turn the tail-wiggle telegraphs a
+POUNCE — Defend or be knocked flat, Paralyzed; THE FLAT BELL is a
+second 150-HP target granting evasion while it rings — break the bell
+and the purr gives every move away; victory does not defeat it, it
+gets BORED — the duchess knights it SIR WHISKERZILLA, WARDEN OF THE
+REALM; mercy played straight, §A11.2). Ember 5 under the crown;
+Heartlight 5 = THE BELL CHOIR — all one hundred citizens sing into
+the Locket, the Homesong's highest stem; humans passing the meadow
+hear wind chimes. The Homesong now owns its floor (Ch.4) and its
+ceiling (Ch.5). §A7 row: Tin Parade (12×8/attacks in formation),
+Duelist Pip (210/minuscule — the miss-floor's first lesson), Crumb
+Cannoneer (240/fires your own rations back), Powder-Wig Wasp
+(260/Asleep — the cavalry mount gone feral), Wind-Up Wyrmlet
+(280/winds up: one telegraphed huge turn), Dust Bunny of Unusual Size
+(300/splits — unusual to THEM). §A8 shelf at THE DUCAL PROVISIONER
+("Colossus rates apply" — the prices are normal, the sign is proud):
+Dewdrop Flask (PP), Banquet of the Realm (food, full single-hero —
+their entire harvest festival, eaten in one bite; they cheered),
+Stamp Quilt ('other' charm, Guts — sewn by one hundred hands),
+Wind-Up Mouse (battle item: one enemy wastes a turn — yes it works on
+the cat), Parade Drum (battle item: party Speed up), Powdered Wig
+(hat, gag stats), Snow Globe of Minimus (valuable — "the whole duchy,
+to scale. Which scale? Exactly."), Royal Thimble (key item, the
+duchess's gift). Music briefs: Minimus Major = celesta gavotte at
+double tempo; the Hedgerow = pizzicato terror, very small strings.
+
+THE RENUMBER SWEEP (the Bible must read TEN end-to-end with zero
+orphan references — grep every "Ch.4"–"Ch.8" and every §-table row
+you move): §A1 (eleven countries and one planet; 10 chapters, 10
+bosses; length 5.5–7 hr main + ~3.75 hr sides), §A2 (Ten Embers /
+one-tenth / collect all ten), §A3 (Dorin joins Ch.9, Trial at L44;
+Teleport α story-gate Ch.6, β Ch.8; Mia's ladder per Ch.4 above),
+§A4.5 (~3 tables per chapter holds — ~30), §A4.6 (gates Ch.6/Ch.8),
+§A4.8 (Mushroomized — "Ch.8 spore forest"), §A4.9 (0–10 Embers, ten
+stems), §A5 (insert rows 4–5, renumber the rest 6–10; Lucille's
+three-leg running gag: "she barely makes it" → "she lands in the
+duchy. all of it." → "she has no business making it"), §A6 (insert
+the two chapters above verbatim-faithful; renumber old 4–8 → 6–10;
+restate the end-level ladder 8/13/18/22/26/30/35/40/46/52–55; boss HP
+lines stay canon — Prompt 37's sim may tune data ±10%, never code),
+§A7 (60 standard enemies; the two new rows), §A8 (the two shelves +
+SIGRID'S MONOCLE), §A9 (playtime amended; the Classic note
+untouched), §A10 (20 quests — #17–20 as above, four new CALLERS in
+the finale ledger; Mr. Click 12 → 14 ambushes, one per new world: in
+Lilleby he shoots from VERY far away, in Minimus through a macro
+lens), Part C (insert Prompt 30 — Chapter 4 and Prompt 31 — Chapter 5
+in the Prompt-27 chapter template; renumber old 30–34 → 32–36 and
+Phase 7–9's 35–44 → 37–46, each annotated "(formerly Prompt N)").
+Stamp every amendment with the standard Appendix-rule-6 dateline.
+Then update THIS file (NEXT_PROMPTS.md): run order becomes S15 → S16
+→ Prompt 29 (Ch.3) → Prompt 30 (THE FJORD THAT SLEEPS) → Prompt 31
+(MINIMUS) → 32+ (renumbered) — and append the two chapter prompts
+FULLY WRITTEN into the queue (the Prompt-28 [Same template] style,
+folding in every canon block above) so those sessions start cold and
+land hot.
+
+THE SCALE LAW (the engine seam, THIS session — its own ADR; chapter
+sessions must be able to land both worlds as DATA):
+ 1. Living sprites keep the 24×32 law at 1×. GIANTS author at 3–4×
+    (≈72×96–96×128) via a giants pass in spritegen off the SAME
+    CharacterSpec (ADR-022 construction AT SCALE — drawn span tables,
+    never naive-scaled pixels; ADR-020 rules bind; the new ADR
+    supersedes ADR-009's frame law the way S16's bike note
+    anticipates, standFrame() preserved). Giant sheets include KNEEL
+    frames — dialogue is eye-level; that is the warmth.
+ 2. 10× AND BEYOND IS ARCHITECTURE, NEVER A SPRITE: terrain-giants
+    (Storheim's hand/shoulder/ear are MAPS — tiles + fixed canvases,
+    the colonial-arch precedent), boot/hand multi-tile props beside
+    1× heroes, and in battle the PARTIAL VIEW — an ankle, a palm, an
+    ear canal FILLS the 64–128px battle frame. The camera that cannot
+    fit the enemy IS the size read; the Whisperwig stages inside the
+    ear.
+ 3. TINY is the mini pipeline grown up: citizens at 1/2 and 1/3
+    (authored minis, 2–3 tone reads — the enemies' mini_* precedent);
+    crowds as authored prop rows; the player NEVER rescales (the
+    user's spec verbatim: you look normal — the world is the effect).
+    Architecture small: knee-high building props, ribbon streets, and
+    PROCESSION WAY walk lanes as map data.
+ 4. BATTLE TRAITS land in formulas NOW, vitest-pinned headless:
+    `towering` (its big party-wide move must telegraph the turn
+    before — the Defend answer; bash text reads "you hit what you can
+    reach") and `minuscule` (physical hit chance HALVES; Vibe and
+    Pray never miss for size — warmth doesn't aim; FOCUS effects
+    clear it for the battle: SIGRID'S MONOCLE as the item path now,
+    Milo's BIG-LITTLE LENS when Ch.5 lands). EnemyDef gains the
+    optional trait tag in the schema; the §A7 rows above declare
+    them.
+ 5. THE LOCKET COUNTS TEN: the Locket screen grid reads 0–10 and the
+    stem map grows to ten (stems 4 and 5 reserved for THE DEEP HUM
+    and THE BELL CHOIR — synth voices stubbed behind the §A4.9
+    playMusic stem-cap API exactly like the existing eight; Phase 8
+    renders them all). ember1..ember10 stay flags (ADR-015 — no save
+    bump this session).
+ 6. SPRITE LAB proves the pipeline before any chapter spends on it:
+    one 4× giant (kneel + walk beside a 1× hero), one boot prop, one
+    1/3 mini crowd row, one partial-view battler mock (an ankle at
+    128px). Shots in .shots/.
+ 7. The validator amends per-chapter manifests ONLY as chapters land
+    — do NOT pre-assert Ch.4/5 content; the Bible carries the totals
+    until the Prompt 30/31 sessions exist. Today's validate stays
+    green.
+
+QA: pre-flight in docs/QA.md + device row 20: fail a 5-PP cast at 1
+PP and keep the menu; lose to the Tick on purpose and watch Glint
+return; SELECT-peek the rail mid-walk and see it in the START root;
+Mom's ritual from Homesick-at-1-HP to full + SUNNY; the Sprite Lab
+scale rows on device. Append the ADRs (041: the playtest four + the
+party rail + Mom's table; 042: THE SCALE LAW + the ten-world
+amendment). 274 vitest is the floor — every new seam adds pins.
+
+Done when: all four playtest reports are dead and bot-proven; START
+shows the party rail and SELECT peeks it mid-walk on keys, pad, AND
+touch; Mom feeds, sleeps, and wakes the party maxed for free forever
+while angels still point at the hospital; the Bible reads TEN
+chapters with zero dangling renumber orphans (grep proves it); the
+Homesong API counts ten; towering/minuscule + FOCUS are formula law
+under green vitest; the giants/minis/partial-view pipeline renders
+its proof rows in the Lab; the two chapter prompts sit fully written
+in this queue; validator + vitest green; browser loop and android:apk
+untouched.
+```
+
+## Prompt S14d — THE SECOND PLAYTEST: SWIRLS, PACKS, DROPS & THE FIRST NATIONAL BANK (runs AFTER S14c)
+
+```
+[Standard Header]
+S14d — the second playtest answer + the money infrastructure, one
+session (split per Appendix rule 2 if it runs long: the feel pass
+first, THE FIRST NATIONAL second). Chapter numbers below use the
+post-S14c TEN-chapter numbering. The user withdrew the
+outleveled-flee report (already canon §A4.2, instantWin() live in
+formulas.ts) — it is NOT in scope.
+
+=== MOVEMENT ONE — THE FEEL PASS ===
+
+1. THE SWIRL IS A TRAFFIC LIGHT (user decree — Bible §A4.2 amends).
+Today the contact swirl tints player-advantage RED, enemy-advantage
+GREEN, neutral paper-white (OverworldScene.ts ~1125, tintMap), with
+ONE shared 'swirl' sfx. Flip it to the intuitive read and make the
+sound tell the same story: YOU got the drop = GREEN swirl; neutral =
+GREY (pick the neutral mid-tone from the 64 — never paper-warm);
+THEY got your back = RED. Three NEW ADR-006 synth presets:
+swirl_jump (bright, ascending — good news), swirl_even (the classic
+whoosh, recentered), swirl_ambush (descending sting with a low
+thump — bad news). A second channel for color-blind reads: the green
+swirl spins OUTWARD fast (cubic.out), the red swirl drills INWARD
+heavier (cubic.in), grey keeps today's lazy spiral. Advantage
+DETECTION (~1090–1099, the dot-product math) is untouched — this is
+presentation. Amend §A4.2's color sentence (supersedes the original
+green/red line; record the decree in the ADR) and re-shoot the three
+swirls for .shots/.
+
+2. HOMESICK GROWS WITH DISTANCE, NOT WITH SPAM (user report: "Jay
+gets homesick a bit too quickly"). Today: flat HOMESICK_CHANCE = 0.08
+per victory, no geography, no cooldown (formulas.ts ~226). Retune as
+a pure-data law in formulas.ts, vitest-pinned:
+ - BASE 0.025, and ZERO on Chapter-1 home turf (Otterbrook/Brickton
+   region maps — you can practically see Mom's street);
+ - +0.005 per chapter of distance (Ch.2 ≈ 3%, rising to ≈6.5% by
+   Ch.9 — homesickness is a function of how far from home you are;
+   that is the THEME doing the balancing);
+ - HARD COOLDOWN: never within 12 victories of the last contraction
+   OR cure (a number flag counts down per victory — ADR-015, no
+   save bump);
+ - never while SUNNY SIDE is active (you just had a picnic; you feel
+   great).
+HOMESICK_SKIP_CHANCE stays 0.5 — the status stays scary; only the
+frequency tunes. Vitest: distribution per chapter band, the cooldown
+window, the sunny immunity, home-turf zero.
+
+3. MOM CURES IT IN PERSON (user report). Talking to Mom at rex_home
+while rex_homesick cures it on the spot — the hug, no meal required
+(S14c's table ritual stays the deluxe path; phone calls unchanged).
+One new line, played straight (§A11.2): she doesn't ask, she just
+knows. Wire BOTH touchpoints: the mom NPC branch (~1340) and
+callMom()'s at-home hug branch (~2195). Validator-swept dialogue id.
+
+4. CALL FOR HELP — PACKS STACK (user spec: some enemy types call
+reinforcements; be selective — sociality is the criterion). The
+engine: EnemyDef.moves gains kind 'call' (schema + z.infer per
+ADR-017): the call CONSUMES the turn, spawns its summon id mid-battle
+through the Prompt-15 summon seam (the Mainframe's summons-refill
+trigger is already proven headless — reuse its entry flow +
+'summon_flash' fx), with a per-enemy §A11 call line. LAWS: the row
+caps at 8 standard combatants (canon multi-part groups are exempt —
+they ARE one enemy); each caller lands at most 2 successful calls; a
+cap-blocked call whiffs honestly ("...nobody came. It pretended that
+was the plan."); arrivals are full citizens (EXP/cash/drops all
+count); Spy tags CALLER. AI: the data carries the weight, the engine
+doubles it when the caller is alone or under half HP. THE NINE
+CALLERS (Bible §A7 gains a caller annotation on each row; the three
+whose data exists land LIVE this session, the rest land with their
+chapters):
+ - Pigeon Gang (Ch.1, LIVE): "flashed a wing sign! The block
+   answered." → another Pigeon Gang.
+ - Blazer Smiler (Ch.1, LIVE): "scheduled a quick sync! A colleague
+   synergized in." — the Department's whole satire in one move.
+ - Banana Bunch United (Ch.2, LIVE): "called an emergency meeting!
+   The union grew."
+ - Fog Hound (Ch.3): a howl with nothing at the end of it.
+ - Cricket Eleven (Ch.3): "appealed! A twelfth man padded up." —
+   refills its multi-part count toward eleven (the refill trigger).
+ - Cackling Hyena (Ch.6): the cackle IS the call.
+ - Paper Crane Swarm (Ch.8): "folded itself a friend."
+ - Castle Bat Choir (Ch.9): "hit the high note! A soprano descended."
+ - Wolf of the Old Road (Ch.9): canon already says "calls pack" —
+   this mechanic IS that quirk, formalized.
+ (+ Tin Parade joins the roster when Ch.5 lands: "the drumline caught
+ up!" — annotate its S14c §A7 row.) Vitest: cap math, the two-call
+ limit, the whiff path, refill-toward-eleven — all headless.
+
+5. STYLE DROPS — §A7's DROP-TABLE CONTRACT, FINALLY IMPLEMENTED (user
+spec: enemies drop items that fit their style; today NO standard
+enemy drops anything — the Bible has promised drop tables since §A7).
+EnemyDef gains optional drop { id, rate } (schema); the victory flow
+rolls per defeated enemy after EXP/cash and routes through the S4
+chooser (hands-full = offer, skippable — a passed-up drop is lost,
+EB-honest; quest rewards keep their zero-missable law, drops are not
+quests). Battle text: "The {e} left {item} behind!" with per-enemy
+flavor where style demands. THREE DROP LAWS into §A7's preamble:
+ (1) THE APOLOGY: status-inflictors may carry their own cure;
+ (2) THE RESTITUTION: thieves return what they stole on victory (the
+     Parrot's pending-cash seam EXTENDS to the Pigeon Gang's stolen
+     food — always returned, plus interest sometimes);
+ (3) THE SIGNATURE: a drop is a punchline about who they were.
+LIVE NOW (Ch.1–2 data exists): Cranky Mailbox → Fresh Stamps 8%
+("returned to sender. Profitably."), Runaway Lawnmower → Broken Gizmo
+15% (Milo's Repair fuel — until Ch.3 it sells), Coily Cicada → Aloe
+Leaf 12%, Blazer Smiler → Star Cola 10% (break-room perks), Pigeon
+Gang → stolen food back ALWAYS + Corn Dog 8%, Hill Slug Deluxe → Salt
+Shaker 6% ("it kept its enemy close"), Gilded Beetle → GOLD FLAKE 10%
+(ONE newly minted 'valuable', sells $60 — §A8 amendment in the same
+commit, validator-pinned), Cursed Souvenir → Hanky 12%, Banana Bunch
+United → Alfajor 10%. ANNOTATED INTO THE BIBLE for the chapter
+sessions to inherit: Tea Poltergeist → Monastery Tea; Prefect Drone →
+Broken Gizmo; Mirage Vendor → one REAL item for once (8%, a random
+good from the region's shop — the gag inverts); Scarab Sergeant →
+Firecracker String; Rail Bandit → Bottle Rocket; Mush Uncle →
+Doctor's Note; Incense Wisp → Temple Incense; Mămăligă Blob →
+Mămăligă cu Brânză ("waste not"); Frost Wraith → Akutaq; Ember Mimic
+→ Freeze-Dried Ice Cream; Null Walker → Comet Bead 1/128 (canon,
+restated as a drop row); and from S14c's worlds: Junior Jötun →
+Half-a-Pea, Dog-Sized Berry → Jumbo Crumb, Tin Parade → Parade Drum
+5%. Validator: every drop id exists, both directions. Vitest: roll
+math + the chooser's hands-full path headless.
+
+6. THE 6:15 SEATS YOU (user report + screenshot: "the chair is on my
+head, instead of sitting down"). Today boarding drops the player at
+(296,108) — ON the x=18 seat column of bus_interior (maps.ts ~1396:
+seats at x 3..18, y 4) — so the hero STANDS in the seat row with the
+seat sprite overlapping their head for the whole ride. Fix it the way
+the user expects: the party SITS. On ride start (the bus_interior
+beat, OverworldScene ~2503 / boarding ~2943), snap the party into
+seats — player to one seat tile, followers (Chad or Mia as the
+chapter has them) to neighboring seats — facing the windows, on the
+picnic-scene sit idiom (~2311; same staging law, this.cut input
+lock), the hero drawn IN the seat (depth/y so the seat back reads
+behind the shoulders, never over the face). The fern lady keeps her
+fern. The narration beats play over the seated party; on arrival
+everyone stands and the post-ride spawn moves OFF the seat column
+into the aisle. Re-check the banana-boat deck scene for the same
+standing-in-furniture read and apply the idiom if it needs it. Shot
+in .shots/.
+
+7. STOREFRONTS READ SOLID — THE WALK-BEHIND BAND SCALES (user report
++ screenshot: "I can walk right through the buildings" at the
+DINER/VIDEO row). Traced: collision is FINE — what reads as walking
+through is the 2.5D walk-behind. Every city building's solid starts
+oy=26 (maps.ts ~615), and on a ONE-story storefront
+(cityBuildingHeight(1) = 60px) that 26px hidden-ground band is nearly
+half the facade: a hero strolling the plaza behind the mid-row shops
+tucks BODY-DEEP into the sign and window rows with their hair poking
+over the parapet — "inside the building", exactly as reported.
+(North-row u=2 buildings at 76px carry the same band fine —
+proportion is the whole problem.) THE LAW: the walk-behind band
+scales with the building — solid oy = 26 for u≥2, 12 for u=1 — with
+the solid BOTTOM unchanged (oy+h stays H−12: h grows by the 14 that
+oy gives up; the doorstep band and the maps.test floor-alignment pins
+stay byte-identical, zero rng consumed — ADR-016 holds, prove the
+1995 layout unchanged). Sweep EVERY u=1 city storefront in Brickton
+AND Puerto Sol (maps_ch2.ts rides the same cityBuildingHeight seam)
+and re-walk the bot behind the row: behind a 1-story shop you now
+tuck to the parapet coping, never into the windows. And answer the
+report's other half in place: DINER and VIDEO are §A11 locked facades
+BY DESIGN until S15's EVERY DOOR OPENS lands their interiors — their
+locked lines stay canon ("closed between breakfast and breakfast").
+
+=== MOVEMENT TWO — THE FIRST NATIONAL ===
+
+8. THE ATM-AND-PHONE LAW (user spec, answering "is there supposed to
+be an ATM?" — §A4.4 says ATMs worldwide; make it LAW): every
+ENTERABLE shop interior and every hotel lobby contains a working
+PHONE and an ATM — the EB drugstore-phone tradition, now enforced.
+Outdoor stands exempt (Ana & Vivi accept exact change only; the sign
+says so). Retrofit NOW: the Otterbrook drugstore, Brickton STARMART,
+and Puerto Sol's shops/deli get both props — placed on FRESH seeded
+rng streams (ADR-012/016 law: the 1995/1898 layouts stay
+byte-identical, prove it the usual way). Validator law (the S15
+no-decorative-doors enforcement pattern): any map whose NPCs open a
+shop must contain ≥1 phone + ≥1 atm interactable, exemptions tagged.
+EDIT THE QUEUE in the same commit: S15's taxonomy row C bakes "every
+hotel lobby: phone + ATM (the S14d law)" so hotels inherit it the day
+they exist.
+
+9. THE AMOUNT STEPPER (user report + screenshot: the ATM's fixed
+$10/$50/$100/All list — "there needs to be an option to slide the
+amount up or down"). Replace the fixed picks with a STEPPER row on
+the ask widget: ◄ ► adjusts the amount by the STEP; the step itself
+cycles $10 → $50 → $100 (and grows with wealth — magnitude-aware:
+the offered steps scale with the balance so the late game isn't
+tapped out in tens, see S14e's big-number law); HOLD a direction to
+RAMP (ADR-024 held-state law — acceleration roughly ×10 per second
+held); All and Back stay. ONE widget, used by ATM withdraw AND
+deposit AND the S&L teller (item 10) — built on pick()/ask() so
+touch, pad, and keys inherit it (ADR-024/038 edge law). Clamp to the
+balance; preview the result live ("take $250 → pocket $801, bank
+$301"). Vitest: clamp/ramp/step-cycle math headless; the bot
+withdraws an exact odd amount by stepper alone.
+
+10. THE SAVINGS & LOAN OPENS — LOANS, AND 27 MAPLE (user spec: banks
+with loans for the car, a mortgage for a HOUSE with creative
+features). The Otterbrook SAVINGS & LOAN gets its interior NOW (S15's
+row K updates to "landed early in S14d"): the teller line that beats
+the ATM rate by $0 (canon gag), the velvet queue ropes with nobody in
+them, the pen on a chain ("the pen is warm. Someone was just here."),
+and THE LOAN DESK — the officer does not blink at a twelve-year-old
+("Sign here. And here. Initial the crayon box."):
+ - THE CAR NOTE (gated ch2_complete; $1,500 cap): borrowed cash in
+   hand NOW, repaid as a 25% GARNISH of every future Dad deposit
+   until principal ×1.1 clears ("The tenth part is for the pen.").
+   One note at a time. It exists to meet S16's PRE-LOVED AUTOS lot —
+   EDIT S16's car bullet in the queue: financing exists at the S&L.
+ - THE MORTGAGE (gated ch3_complete + a clear note): 27 MAPLE,
+   Otterbrook — plant the FOR SALE sign NOW ("FOR SALE: cozy. One
+   previous owner. She took the doorknobs."). $1,500 down + $4,500
+   garnished at the same 25%, ×1.1. THE DEED is a key item; the door
+   opens the day you sign.
+ - ADR-015 prefer-flags carries the WHOLE ledger as number flags
+   (note principal/paid, mortgage principal/paid, deed) — the ONLY
+   new save field is the house chest (an item array can't be a
+   flag): GS.data.homeChest, SAVE v8, registered migration,
+   round-trip tested.
+27 MAPLE'S PAYLOADS (every one a real system, in-voice):
+ a. YOUR BED — free full restore for standing heroes (Mom's rules;
+    angels still point at the hospital).
+ b. THE FOOTLOCKER — 32-slot home storage on the pick widget,
+    deposit/withdraw from any hero's bag; hands-full finally has a
+    home answer.
+ c. YOUR OWN LINE — a phone (Dad saves here); and SOMETIMES when you
+    walk in, it is already ringing: Mom heard you bought a HOUSE ("A
+    twelve-year-old with a MORTGAGE. Wait till your father— he says
+    congratulations.").
+ d. THE MANTEL — trophies render as earned: the Classic trophy, the
+    Invitational cup, the arcade initials plaque; Mr. Click's photos
+    hang on the wall as collected, count visible — the credits
+    album, previewed at home.
+ e. THE RECORD PLAYER — plays the Homesong stems earned so far, the
+    Locket screen's cozy twin (same §A4.9 stem-cap API).
+ f. THE FRIDGE — one free regional food per region-flag (the S15
+    row-J law, instantiated here first).
+ g. THE GARAGE — empty until S16's car; then it parks here, home
+    becomes a road-map node, and Lucille's spare propeller hangs on
+    the wall ("in case." — Bert).
+ h. THE MAILBOX — Dad mails a postcard per completed chapter (a
+    collectible set, validator-swept; he underlines things), and Ana
+    & Vivi tape a drawing to the fridge after quest #3 — the S15
+    row-I ledger warmth, here first.
+=== MOVEMENT THREE — THE DRUM & THE HITCH (fold into the feel pass) ===
+
+11. THE DRUM CARRY IS WRONG AT REST (user report + screenshot: "the
+HP number seems to be glitching" — Jay's hundreds drum parked BETWEEN
+digits at 94 HP while Mia's 056 reads clean). Root cause (traced, the
+real math): OdoDisplay.setValue (BattleScene.ts ~229) computes the
+carry for place p as max(0, lower/(p/10) − 9). For the tens drum
+(p=10) that correctly reads "roll while the ones pass 9→0" — but for
+the hundreds (p=100) it evaluates to (lower−90)/10: it starts rolling
+at x90 and smears the carry across the whole nineties, so ANY resting
+value with a 9 in its tens digit (94, 92, 190…) parks the hundreds
+strip a fraction between cells. The screenshot is exactly 94: carry
+0.4, the strip caught between the bottom of 0 and the top of 1. FIX —
+the carry spans only the final unit before rollover:
+pos = floor(v/p)%10 + max(0, (v % p) − (p − 1)). One line, correct at
+every place. Vitest pins: resting values 56/94/99/100/199/949 land
+EVERY strip on exact integer cells; the carry animates only across
+…99→…00 (both roll directions); the ones drum still rolls
+fractionally. Then eyeball it live at 94 HP and shoot it for .shots/
+— the S14b golf-meter lesson: pixel-sample the strip, don't trust the
+math alone.
+
+12. THE HITCH HUNT (user report: "a bit of an unresponsive game from
+time to time… walking through some areas it may have been lagging").
+Hunt it, don't guess it: pull Prompt 42's hidden FPS overlay FORWARD
+(tap the title version string 5× — frame ms + a worst-frame counter),
+add window.mfPerf to the ADR-008 driver (captures frame-time spikes
+with timestamps during bot walks), then bot-walk Otterbrook, Hickory
+Hill, and Brickton end-to-end and log the spike table in docs/QA.md.
+PRIME SUSPECTS to sweep regardless (steady-state allocation hygiene):
+per-frame object literals in the movement hot path (tryMove's box +
+collides() run per axis per entity per frame — reuse scratch rects),
+follower crumb-trail array churn, roamer pursuit vector allocations,
+per-frame setDepth/sort churn on the big maps, spawner
+despawn/respawn thrash at map edges, and footstep/SFX scheduling. Fix
+what the table convicts; ZERO per-frame allocations in steady-state
+walking is the bar. (Prompt 42 keeps the full atlas/profile pass —
+this is the playable-now slice.) Verify on the user's lane: browser
+AND android:apk, pad connected and disconnected. Record before/after
+worst-frame numbers in the same QA.md table.
+
+13. DOORS DON'T PING-PONG — THE EXIT LATCH (user report +
+screenshots: holding UP through the Department's elevator doors
+bounces you between floors as fast as the fades can run). Root cause
+(traced): door transitions fire on pure ZONE OVERLAP (OverworldScene
+~2380 map doors, ~2397 prop doors — no press, no entry-direction
+check), and arrival spawns sit inside or one held step from the
+RETURN door's zone, so held input re-fires the opposite door on
+every arrival; `transitioning` only guards the fade, not re-entry.
+FIX — spatial debounce, not just a timer: on every map arrival,
+DISARM each door zone that overlaps (or sits within one player-box
+step of) the spawn point; a disarmed door re-arms only once the
+player's collision box has FULLY exited its zone plus a 2px margin.
+Held input then parks you harmlessly on the threshold — you step off
+before the door will take you back, which is also how deliberate
+backtracking naturally moves. Apply to BOTH loops (map doors AND
+prop doors; goThroughInteriorDoor inherits via the shared path), and
+add a ~300ms post-arrival global door cooldown for layouts where two
+zones tile flush. Every door in the game inherits — elevators, mats,
+interior doors, facades; the bus/boat boarding beats are flag-gated
+scenes and unaffected. Vitest: the arm/disarm predicate headless
+(spawn-on-zone → disarmed; box exits → re-arms; the elevator pair
+never double-fires under a held-direction frame pump); the bot holds
+UP at the Department elevator for five seconds and changes floors
+exactly once.
+
+Bible amendments (Appendix rule 6, datelined): §A4.2 (the traffic
+light), §A4.4 (Homesick geography + cooldown; the ATM-and-phone law;
+banking grows loans + the mortgage), §A7 (the three drop laws + the
+caller annotation + per-row drop/caller notes), §A8 (GOLD FLAKE; THE
+DEED + Dad's postcards), §A9 (the note + mortgage as the long-arc
+money sinks beyond gear refresh; numbers above are canon, Prompt 37's
+sim tunes data ±10% only). Append the ADRs: 043 (the feel pass —
+swirls, homesick geography, callers, the drop contract), 044 (THE
+FIRST NATIONAL — the law, the loan ledger on flags, 27 Maple, save
+v8). QA pre-flight + device row 21: see all three swirl colors and
+HEAR all three sounds in one stroll; go homesick abroad and get hug-
+cured at home; watch a Smiler sync a colleague in and the cap whiff
+line land; ride the 6:15 SEATED both ways; stroll the plaza behind
+the DINER row and stay out of its windows; rest a drum at exactly 94
+HP and read it clean; walk all three towns with the FPS overlay up
+and no spikes; hold UP at the Department elevator and ride it ONCE;
+step an exact $237 out of the ATM; bank a loan, buy
+the car later, sign the mortgage, sleep at 27 Maple, stash a bat in
+the footlocker, hear the phone ring.
+
+Done when: the swirl reads green/grey/red with three distinct sounds
+matching who got the drop; Jay homesicks rarely at home, more abroad,
+never twice in 12 victories, and Mom's hug cures it in person; the
+6:15 seats the whole party for the ride and stands them up on
+arrival; one-story storefronts hold you at the parapet (frozen seeds
+proven byte-identical); every drum rests on exact digit cells and
+carries only through the nines; the three towns walk spike-free with
+the overlay up to prove it; the ATM and teller move exact amounts by
+stepper; no door in the game re-fires under held input until the
+player has stepped off its threshold; the three live callers stack
+the row mid-fight under the caps; Ch.1–2
+style drops fall and route through the chooser with the Bible
+annotated for every later chapter; every enterable shop holds a
+working phone + ATM under a green validator law with frozen seeds
+proven byte-identical; the S&L opens with the teller gag and a
+working loan desk; the car note garnishes Dad's deposits; 27 Maple
+sells, opens, and all EIGHT payloads work; save v8 migrates clean;
+the queue's S15/S16 prompts carry their inherited edits; validator +
+vitest green; browser loop and android:apk untouched.
+```
+
+## Prompt S14e — THE FORTUNE ARC (user decree: billions by the finale — the Manor, the Comet GT, the Starhopper)
+
+```
+[Standard Header]
+S14e — the wealth decree, canon-first. Runs AFTER S14d (the S&L, the
+deed flags, the garnish, and the amount stepper exist). USER DECREE,
+verbatim-faithful: "we should be able to get A TON of money like in
+the billions by the end of it. and own a mansion and a super fast
+car and a jet." Design law for every session after this one: the
+1995 economy of Chapters 1–3 is UNTOUCHED — choices hurt a little,
+exactly as §A9 wrote it — and then the back half ESCALATES BY DESIGN
+into an honest power fantasy. Money is the side-quest of the back
+half; the Embers never care about it, and the epilogue's quiet walk
+home is unchanged (§A11.2) — the §A9 amendment's last line says it
+straight: the net worth is a number; the callers are the score.
+
+=== MOVEMENT ONE — THE CANON (Bible amendments, Appendix rule 6) ===
+
+THE WEALTH ARC lands in §A9 as a NET-WORTH TARGET TABLE with named
+sources per chapter (post-S14c numbering; balance-sim — Prompt 39,
+formerly 37 — adopts these targets; tune data, never code):
+ Ch.1 ~$1K · Ch.2 ~$5K · Ch.3 ~$25K — canon income, untouched;
+ Ch.4 ~$1M — THE WINDFALL: giants tip in GIANT'S BANKNOTES (S14c's
+   #18 pays the first: $250,000 and an apology for the small
+   bills); Bootstep Moor drops + Lilleby trade make five figures
+   routine;
+ Ch.5 ~$1.2M — the inverse gag holds wealth flat: the duchy pays in
+   MICRO-DUCAT chests (100,000 coins, $12 — the counting outlasts
+   the spending);
+ Ch.6 ~$8M — THE INVESTMENT DESK opens at the S&L (below);
+ Ch.7 ~$60M — the collectors' market: late 'valuable' kinds price
+   in seven figures (the Maharaja's gratitude is rubies, not
+   rupees);
+ Ch.8 ~$400M — bond maturities + the temple's relic exchange;
+ Ch.9 ~$1.5B — HOAXULA'S SETTLEMENT: the bankrupt park's liability
+   pays out post-mercy, sobbing, in a Cleveland accent;
+ Ch.10 $3B+ — the finale's stats page shows NET WORTH.
+THE INVESTMENT DESK (the S&L's third window, gated ch6_complete):
+BONDS — fixed-term, mature at chapter boundaries, ×1.5 per chapter
+held ("40% APY is normal for 1995," says the officer, wrongly) — and
+THE TICKER: five EB-goofy listings (Smile Industries, Banana
+Futures, Fog Holdings, Tin Parade Records, Comet Beads LLC) whose
+prices move ONLY at chapter boundaries (nobody day-trades a JRPG) on
+a seeded DETERMINISTIC walk per save (ADR-015 number flags; the
+ADR-008 bot replays a portfolio byte-equal). NPCs you've helped drop
+in-voice tips that are right exactly as often as they should be.
+§A8 gains THE PROPERTY & VEHICLE CATALOG — each a deed/title on the
+S14d registry, the garnish law intact (one at a time; the loan
+officer remembers you):
+ - HILLCREST MANOR (Ch.7+, $150M, the bluff above Brickton) — the
+   user's mansion, PAYLOADS each a real system: the GRAND
+   FOOTLOCKER (96 slots — the 27-Maple chest's big brother); the
+   TROPHY HALL (every cup, plaque, initials row, and Mr. Click
+   photo at architectural scale); THE POOL (a swim = SUNNY SIDE —
+   the picnic law's luxe twin); the HOME THEATER (replays Mr.
+   Click's reel, and the movie-about-you once Ch.7's cinema
+   exists); JEEVESBY the butler (§A11 obsession: he announces
+   everything, including himself; hands one regional food per
+   region-flag; answers the phone "the residence of a
+   twelve-year-old, YES"); the CONSERVATORY (the Homesong stems as
+   a live arrangement — walk the room and each stem solos near its
+   instrument); GUEST ROOMS (post-quest CALLERS visit on rotation —
+   the S9 ledger's warmth at scale; Buni leaves sarmale in the
+   fridge); the HELIPAD (the Starhopper parks here; before the jet
+   it is a koi pond labeled FUTURE HELIPAD — the koi know); the
+   GARAGE ROW (every owned vehicle on display). 27 Maple stays
+   canon — the starter home the manor never invalidates: the
+   mailbox postcards and the sisters' fridge drawing live THERE,
+   and Jeevesby refuses to poach the fridge gag.
+ - THE COMET GT (Ch.6+, $2.5M, the back room of S16's PRE-LOVED
+   lot — "a show car for a movie that never came out"): overworld
+   drive ×2.0 outdoors (supersedes the bike's ×1.35 when both are
+   owned), the S16 region road-map UI inherited at twice the
+   vignette speed, a horn that plays the first two notes of the
+   Homesong, valet at every town edge ("NO COMETS. — the floor"
+   stands indoors).
+ - THE STARHOPPER (Ch.8+, $1.2B, sold at any S16 airport): a
+   private jet — any VISITED region instantly, airport-to-airport.
+   The Ember trail still gates new chapters (§A5 law: flying never
+   skips story; Teleport stays the no-luggage option). CABIN
+   INTERIOR map: a phone, a fridge, and a PICNIC TABLE AT 30,000
+   FEET (same buff, better view). Bert REFUSES to fly it ("Lucille
+   would hear about it") and recommends his niece ROXANNE, who
+   flies anything with a door.
+BIG-PICTURE CONSISTENCY: §A6/§A7/§A10 rows gain their wealth-source
+annotations (banknote drops, the settlement, the relic exchange);
+§A4.4 notes the desk beside the teller; the stats page (Prompt 38,
+formerly 36) gains NET WORTH.
+
+=== MOVEMENT TWO — THE INFRASTRUCTURE (THIS session) ===
+
+ 1. THE BIG-NUMBER LAW: one fmtCash() in ui/text.ts comma-formats
+    every money render in the game ($1,234,567,890) — ATM, teller,
+    shops, battle winnings, Dad's deposits, the stats page, the
+    stepper preview. Sweep EVERY raw '$'+number concatenation onto
+    it, and teach the validator to grep for stragglers (the
+    placeholder-sweep pattern). JS numbers hold to 2^53 — vitest
+    pins headroom at the edges and format goldens; the S14d stepper
+    goes magnitude-aware off the same law (steps offer $10/$50/$100
+    at three figures, $10K/$50K/$100K at six, onward — a
+    billionaire never taps tens).
+ 2. THE TITLE REGISTRY: generalize S14d's deed/garnish flags into a
+    property + vehicle registry on number flags (owned / garnish
+    principal / paid per title; one active garnish; the loan
+    officer's lines read the registry).
+ 3. THE INVESTMENT DESK lands COMPLETE behind its ch6_complete
+    gate: UI on the ask/pick widgets, bonds + the five tickers as
+    data, the seeded walk advancing on chapter flags, the portfolio
+    on number flags — chapter sessions flip content, never build
+    the system. The bot buys a bond and a ticker spread, kills the
+    app, reloads, and the portfolio replays byte-equal.
+ 4. QUEUE EDITS in the same commit: S16's car section gains the
+    COMET GT back room + valet; S16's airport section gains the
+    Starhopper hangar; S15's row C notes the manor outclasses
+    hotels on purpose (status, not function). The S14c chapter
+    canon already carries the banknote/ducat beats.
+ 5. ICONS ONLY for the catalog rows (the ADR-032/034 provisional
+    trinket-icon precedent) — the Manor, the GT, and the jet are
+    CHAPTER content: no maps, no sheets this session.
+
+QA: pre-flight + device row 22: format a nine-figure balance at the
+ATM and step it by $10K; mature a bond across a chapter flip; read
+five ticker prices twice off one seed; the §A9 table reads
+end-to-end with every source named. Append the ADR (045: THE
+FORTUNE ARC — the decree, the arc table, the desk, the registry,
+the big-number law).
+
+Done when: §A9 carries the WEALTH ARC table (Ch.1–3 untouched) with
+sources named per chapter; fmtCash formats every money string under
+a validator sweep with 2^53 headroom pinned; the stepper scales its
+steps with the balance; the investment desk runs deterministic and
+complete behind its gate; the title registry carries deeds, titles,
+and one garnish at a time; catalog rows + icons exist for the
+Manor, the Comet GT, and the Starhopper with their chapters
+annotated; the queue edits landed; validator + vitest green;
+browser loop and android:apk untouched.
+```
+
 ## Prompt S15 — EVERY DOOR OPENS (the interior program + city vocabulary)
 
 ```
@@ -818,19 +1631,34 @@ remains strictly better post-Ch.4 (vehicles are flavor + early-game).
 Run order: ~~S11~~ → ~~S11b~~ → ~~S12~~ → ~~S13 (the LINKS — DONE,
 ADR-037/038)~~ → ~~S14 (THE GILDED GRIN — DONE, ADR-039: Chapter 2
 complete on the phase machine, with picnics, hospitals, and the §A6
-recovery exit; saves v7)~~ → **S15–S16** make the world dense and
+recovery exit; saves v7)~~ → **S14c** (the playtest four + THE WORLDS
+OF SCALE: the Bible grows to TEN chapters — Jötunfjord's giants and
+the Grand Duchy of Minimus land as canon, the scale seams land as
+engine law, and S14c itself appends the two fully-written chapter
+prompts to this queue) → **S14d** (the second playtest: the swirl
+traffic-light, homesick-by-distance, Mom's in-person cure, the nine
+callers, the §A7 drop contract, the 6:15 seats you, the storefront
+walk-behind law, the drum-carry fix, the hitch hunt, the door
+exit-latch, the ATM stepper,
+the ATM-and-phone law, and THE FIRST NATIONAL — the S&L loan desk,
+the car note, and 27 Maple on save v8)
+→ **S14e** (THE FORTUNE ARC: the §A9 wealth decree — billions by the
+finale on the giants' banknotes, the S&L investment desk, and the
+collectors' market; the big-number law; HILLCREST MANOR, THE COMET
+GT, and THE STARHOPPER as deeds on the title registry)
+→ **S15–S16** make the world dense and
 navigable, then Prompt 29 (Chapter 3: Foggybottom + Wintermoor + the
 MAINFRAME on the phase machine — its summons-refill trigger is already
-proven headlessly) and the balance sim (Prompt 37) now that TWO chapters
-exist to measure. S12 and
+proven headlessly; it also plants the LOST CAT poster S14c canonized),
+then **Prompt 30 (Ch.4 — THE FJORD THAT SLEEPS)** and **Prompt 31
+(Ch.5 — THE GRAND DUCHY OF MINIMUS)** off the amended Bible, then the
+renumbered 32+ (Africa onward) and the balance sim (Prompt 39,
+formerly 37) once enough chapters exist to measure. S12 and
 S13 are each big enough to split on their natural seam if a session runs
 long (Appendix rule 2): core game first, tournament + rewards second.
 The "big city like New York" ask maps onto canon:
-**Chandrapore (Ch.5, Prompt 31) is the game's biggest city** — three
-ADR-012 districts, 4–5-story facades, the palace/cinema/bazaar sprawl —
-and Brickton's vertical growth in S15 gives the US chapter its skyline
-(THE CAGE gives it its soundtrack of chain-link and trash talk).
-Then return to the Bible's Part C order at Prompt 28 (Chapter 2) — Puerto
-Sol and Valle Dorado inherit ADR-012, the §B4 city tests, the S4 shop
-pattern, AND the S12 interior taxonomy automatically — and run the balance
-sim (Prompt 37) once two chapters exist to measure, as planned.
+**Chandrapore (now Ch.7, Prompt 33 after the renumber) is the game's
+biggest city** — three ADR-012 districts, 4–5-story facades, the
+palace/cinema/bazaar sprawl — and Brickton's vertical growth in S15
+gives the US chapter its skyline (THE CAGE gives it its soundtrack of
+chain-link and trash talk).
