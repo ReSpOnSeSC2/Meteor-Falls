@@ -202,18 +202,20 @@ src/engine/migrations.ts; the content validator gates npm test AND build; the
 vitest floor is 277 green). The design bible is docs/GAME_BIBLE.md (Part A
 canon with §A-references, Part B architecture, Part C the prompt sequence, the
 Appendix session rules). QA log + the user's device sign-off table live in
-docs/QA.md (rows 1–19 + 24 used; 20–23 reserved by S14c–f, 25–27 by S15d–f).
+docs/QA.md (rows 1–19 + 24 used; 20–23 reserved by S14c–f, 25–27 by S15d–f,
+28 by S15g).
 The QA driver: window.pump/key/holdKey/shot +
 mfGS + mfMakeHero + mfBattle.qa(); bot recipes live in scene headers.
 
 YOUR TASK THIS SESSION:
 1. Open docs/NEXT_PROMPTS.md. Find the FIRST "## Prompt" section NOT marked
    "✅ DONE". (As of 2026-06-12 that is S14c — THE PLAYTEST FOUR & THE WORLDS
-   OF SCALE; after it ships this same kickoff finds S14d, then the world
-   block S15d → S15e → S15f, then S14e, S14f, S17, S18, then the Bible's
-   Part C chapter prompts per the run-order footer. Headings carry DRIFT
-   NOTES where off-queue sessions already shipped a slice — re-trace those
-   before building.)
+   OF SCALE; after it ships this same kickoff finds S14d, then S15g — THE
+   WORLD FORGE (the levelkit + grammars + forges + chapter scaffold), then
+   the world block S15d → S15e → S15f built ON the forge, then S14e, S14f,
+   S17, S18, then the Bible's Part C chapter prompts per the run-order
+   footer. Headings carry DRIFT NOTES where off-queue sessions already
+   shipped a slice — re-trace those before building.)
 2. Execute THAT ONE PROMPT in full, exactly as written. The queued prompts
    are self-contained: playtest reports arrive with root causes already
    traced to file:line, canon blocks are written out verbatim-faithful, and
@@ -1506,7 +1508,329 @@ the queue's S17/S18 prompts carry their inherited edits; validator +
 vitest green; browser loop and android:apk untouched.
 ```
 
+## Prompt S15g — THE WORLD FORGE (the levelkit, the dungeon grammars, the content forges & the chapter scaffold)
+
+> (Queued 2026-06-12 from the user's automation decree, captured verbatim:
+> "build these additional Procedural Automation features that we can use
+> going forward to Build the game at a quicker pace while still being
+> production quality no mock data." Runs AFTER S14d — its headroom gate and
+> XL benchmark are the kit's perf law, and S14c's ten-chapter Bible is its
+> canon surface — and BEFORE the world block: S15d–S15f are the forge's
+> first production consumers. File order is the queue; if the hand-built
+> world block should come first after all, move this section below S15f.)
+
+```
+[Standard Header]
+S15g — THE WORLD FORGE: the production system that makes every session
+after it faster WITHOUT lowering the floor. Four movements, one session
+(split per Appendix rule 2 on the movement seams if it runs long — ship
+each movement COMPLETE: kit+gate, grammars+pressure, forges, scaffold).
+
+THE PRIME LAWS (every movement obeys all six):
+ 1. DRAFTS ARE NOT CONTENT. Everything a generator emits lands in
+    src/data/drafts/** or the LEVELKIT LAB, which are dev-only and
+    EXCLUDED from canon manifests and the §B4 placeholder sweep exactly
+    the way maps/dev/playground has been excluded since Prompt 4 — but
+    every draft still SCHEMA-PARSES (drafts are valid shapes, never
+    junk). PROMOTION is a human act: hand-polish, move into src/data,
+    extend the validator manifests in the same commit (ADR-017,
+    unchanged). The user stays the tone editor (Appendix rule 4): names,
+    jokes, death lines, and ALL dialogue are rewritten by hand at
+    promotion — the forge does the balancing skeleton, never the soul.
+ 2. DETERMINISM IS LAW. Every generator is (recipe + seed) → identical
+    bytes, mulberry32, one named stream per map id (ADR-016). The moment
+    a generated map SHIPS, its stream freezes forever like Otterbrook
+    1995 / Brickton 2077 / Puerto Sol 1898; regeneration with the same
+    recipe must reproduce it byte-identically and vitest hash-pins one
+    output per generator to prove it. Date.now()/Math.random() never
+    appear in src/levelkit/**.
+ 3. ADR-012 AND ADR-020 BY CONSTRUCTION. Generated cities must pass the
+    existing city-structure sweep without exemptions (≥2 streets joined
+    by an avenue, alleys, negative space, buildings on 2+ block faces);
+    generated towns/villages keep the organic-irregularity read and
+    never assert city grammar. Sprite assembly COMPOSES hand-drawn
+    parts — every part is a bespoke pixmap draw function with drawn span
+    tables under ADR-020, assembled the way WEAPON_ART composes into the
+    swing — never scaled, never synthesized pixels.
+ 4. THE VALIDATOR GROWS TEETH FIRST. Movement One lands the playability
+    rules and runs them against EVERY CANON MAP before any generator
+    output exists — violations in shipped maps get fixed or get a
+    per-map WAIVER row in a visible table inside content-validate.ts
+    (reason stated, §-reference cited). Silent grandfathering is drift.
+ 5. Input/poll code follows ADR-024/038; anything that draws follows
+    ADR-020; the LAB follows the Sprite Lab precedent (dev title row,
+    excluded from player flows).
+ 6. PERF: any generated map intended for promotion must hold S14d's
+    pumped p99 ≤ 8.3ms benchmark — the XL harness gains a levelkit hook
+    (`npm run bench:map -- <draftId>`) so a draft proves itself before a
+    session spends polish on it.
+
+=== MOVEMENT ONE — THE LEVELKIT (settlements, interiors, routes,
+travel scenes) + THE MAP QUALITY VALIDATOR ===
+
+src/levelkit/ — recipe schemas live in src/schemas (z.infer'd, ADR-017;
+zod stays out of the game bundle via import type). Generators output
+plain MapDef (or DraftMapDef, below) — the scene runtime NEVER knows a
+map was generated. The user's recipe shape, captured verbatim-faithful
+and extended:
+
+   buildCity({
+     id: 'zanzibel', seed: 4104, style: 'bazaar-port',
+     size: [58, 36],
+     districts: ['harbor', 'market', 'clinic', 'chapel', 'docks'],
+     landmarks: ['grand_market', 'teleport_dojo'],
+     requiredDoors: ['shop', 'hospital', 'story_gate'],
+     npcSlots: 14, picnicCount: 3, encounterBand: 'ch6',
+   })
+
+GENERATORS (each: a recipe → streets/lots/props/objects, all jitter on
+the recipe's named streams):
+ a. buildTown / buildCity / buildVillage — street network by settlement
+    grammar (town: bending lanes + negative space; city: the ADR-012
+    grid law; village: one organic cluster + commons), lot placement
+    with jitter, alleys, prop dressing from per-style PROP PALETTES
+    (bazaar-port ≠ fog-stone ≠ painted-gates — style packs are data),
+    door + indicator wiring (the S11b indicator law), phones + ATMs
+    placed per S14d's every-shop law, picnic tables per §A4.5 (BEFORE
+    the dangerous edge, finding them is strategy), hospital/chapel/
+    shop/deli lots by role, NPC SLOTS (position + role tag), and
+    LANDMARK RESERVATIONS — named lots the session hand-builds, because
+    story-important parts are hand-polished (the user's own law).
+ b. buildInterior — template families: home, shop, hospital, chapel,
+    deli, civic, hotel (two-story lobby+hall), each emitting the rug/
+    counter/door-zone furniture the existing interiors use. This is the
+    STRUCTURAL half of S17's interior program — S17's payload taxonomy
+    (A–L) fills what this frames; note the handshake in S17 when it
+    runs.
+ c. buildRoute — the connector-screen shape (Meadow Mile's class):
+    fences/treelines as walls, a path that argues with the land, §B4
+    density law (routes outrank towns), one picnic table, sign slots.
+    buildWild variant for forests/moors (S14c's BOOTSTEP MOOR class).
+ d. buildTravelScene — the masked-reel pattern extracted from
+    bus_interior/boat_interior (window band + geometry mask + reel
+    spawner + seats): one recipe per §A5 leg so Lucille/the night
+    train/the riverboat/the snow-cat each cost a recipe, not a rebuild.
+DraftMapDef = MapDef except npc slots may carry a role tag instead of a
+dialogue key; the canon MapDef schema is UNTOUCHED and the validator
+refuses any role-tagged NPC outside drafts/ — promotion forces real
+dialogue, written by a human.
+
+THE LEVELKIT LAB (dev scene, Sprite Lab precedent): pick a recipe, walk
+the draft live with the real player/collision/banner systems, reroll
+the seed in place, read an ADR-012 metrics overlay (street count,
+avenue joins, open-faces %, negative-space %), and dump .shots. Bot
+recipe in the LAB scene header.
+
+THE MAP QUALITY VALIDATOR (extends tools/content-validate.ts — these
+run on ALL canon maps from day one, per Prime Law 4):
+ - every door destination exists AND its landing tile is walkable and
+   BFS-reachable from that map's own doors (today we only bounds-check);
+ - every trigger/story-gate rect, NPC, sign, phone, ATM, and picnic
+   table is BFS-reachable from a door (no orphaned content, ever);
+ - settlement-tagged maps carry their grammar (city sweep as today;
+   towns assert organic minimums — never a single strip, ADR-012);
+ - every map with spawners has ≥1 rest point (phone or picnic) and the
+   §A4.5 placed-before-pressure relation holds (rest point closer to
+   the entrance than the densest spawner rect);
+ - chapter picnic counts match the §A4.5 ≈3/chapter canon as chapters
+   land (manifest-driven, Movement Four);
+ - every spawner's enemies belong to the §A7 chapter band of the map's
+   manifest chapter;
+ - every boss in data declares battle background, FORM_ART where its
+   script swaps forms, and a phase script (template or bespoke).
+
+=== MOVEMENT TWO — THE DUNGEON GRAMMARS + ENCOUNTER PRESSURE ===
+
+src/levelkit/dungeons/ — one grammar PER SITE, never one generic maze
+(the user's law). Post-S14c chapter numbers; grammars are keyed by site
+name so the renumber can never strand them. The SHIPPED dungeons
+(Department of Smiles, the step-pyramid) stay bespoke and frozen — no
+retrofits.
+ - wintermoor_academy (Ch.3): classroom wings off a spine hall, dorm
+   wing with sight-cone patrol routes (the dos pattern), library
+   stacks as soft maze, boiler-room basement; fog density as dressing.
+ - sleepers_spine (Ch.4): hand → shoulder → ear across GRANDFATHER
+   STORHEIM under THE SCALE LAW — terrain-giant architecture, tiles +
+   fixed canvases, partial-view staging hooks for the Whisperwig.
+ - the_hedgerow (Ch.5): escort lanes at your scale — wide enough for
+   the Tin Battalion, branch-false exits that rejoin (comedy, never
+   punishment), the duchy's ribbon-street read shrunk around you.
+ - laughing_ruins (Ch.6): echo zones (ambience tags the audio system
+   reads), riddle chambers (ask-widget rooms), FALSE LOOPS — corridors
+   that look like you've been here (prop-twin rooms) but BFS-provably
+   are not loops; the laughter is the map lying politely.
+ - night_train (Ch.7): car-by-car linear generator — locked doors,
+   service passages over/under, chase pacing (pressure rises carward),
+   the ≤30-minute Locket-loss pacing law from §A6 as a generation
+   parameter (car count bounds the sequence length).
+ - spore_forest (Ch.8): organic winding paths, Mushroomize zones
+   (status hazard rects), CURE-SAFE RETURN PATHS — from any zone a
+   scramble-free route home exists, generator-proven, because the
+   status scrambles controls and trapping a scrambled kid is cruelty
+   not challenge.
+ - castle_hoaxula (Ch.9): theme-park fakery — queue-rope maze, gift
+   shop, fake-scare rooms on a loop, then the BACKSTAGE REVEAL cut
+   (clean rooms behind one wall — the map itself does the unmasking).
+ - sea_of_silence (Ch.10): SUBTRACTIVE — three zones generated at
+   falling density (props, then walls, then almost nothing), wired to
+   the §A6 stem-loss audio; the generator's emptiness curve is data.
+POST-CONDITIONS (generator-asserted at build AND validator-enforced):
+entrance reaches exit; the boss route is valid; a rest point (phone or
+picnic) sits before every pressure spike (spike = spawner-density
+percentile per zone); every required NPC/door/trigger reachable; no
+stateful piece (rotors, locks) can soft-lock at ANY state (the pyramid
+BFS-at-every-rotation precedent generalized).
+
+ENCOUNTER PRESSURE AUTOMATION — tools/encounter-report.ts (library in
+src/levelkit/pressure.ts so vitest pins the math): scores EVERY map —
+ - enemy density per screen-equivalent (400×225 logical windows);
+ - distance from each entrance to first possible contact (grace);
+ - distance from each rest/heal point to the nearest danger zone;
+ - unavoidable touches (corridor width vs sight-radius pursuit — BFS
+   with threat dilation: can a walking player pass without contact?);
+ - optional side-path encounters (rewarded detours, counted);
+ - spawner proximity to doors, phones, ATMs, and story triggers.
+Output: docs/ENCOUNTERS.md — one table per map, chapter target bands
+derived from §A9 (routes hot, towns cool, dungeons rising). The HARD
+subset joins the validator: spawner ≥ a minimum px from any door/
+phone/trigger, entrance grace ≥ a minimum, dungeons monotone-ish
+pressure toward the boss. Soft metrics stay report-only — the report
+catches maps that "look fine but feel annoying or empty" (the user's
+words) without letting taste block the build. Run the report on all
+canon maps THIS session; fix or waive per Prime Law 4.
+
+=== MOVEMENT THREE — THE FORGES (enemy drafts, sprite assembly, boss
+templates) ===
+
+THE ENEMY FORGE — src/levelkit/forge.ts + thin CLI tools/forge.ts:
+   makeEnemy({ chapter: 6, family: 'savanna', role: 'fast-status',
+               quirk: 'laugh track', weakness: 'freeze' })
+SEEDED BY CANON: for every §A7 row the forge takes the Bible's pinned
+name/HP/quirk and drafts the REST of the contract — offense/defense/
+speed from CHAPTER_CURVES (new data module: the §A6 end-level ladder
+8/13/18/22/26/30/35/40/46/52–55 → stat bands, vitest-pinned), EXP/cash
+from the §A9 economy (refresh ≈ 2 chapters of income — encode the
+curve, pin it), 2–4 moves from ROLE TEMPLATES (fast-status, tank,
+swarm-unit, thief, healer, caller — the S14d call seam — each move
+text in §A11 shape), weakness tag, drop table per the §A7 drop
+contract, battle background pattern + palette from family, a sprite
+partsSpec (below), and a GENERATED death line in §A11 shape (a full
+sentence, never the word placeholder — the §B4 sweep stays clean
+because drafts are excluded AND because the forge never writes filler;
+it writes a first draft a human rewrites at promotion, because the
+humor is the soul — the user's own law). Drafts land in
+src/data/drafts/enemies/ch<N>.ts; promotion moves a finished enemy
+into src/data/enemies.ts and extends the manifest, same commit.
+
+THE SPRITE ASSEMBLY — src/spritegen/parts.ts: body silhouettes (blob,
+insect, machine, bird, mask, object, critter), materials as palette
+ramp maps (gold, paper, flesh, chrome, wood, slime), accessories
+(eyes, teeth, hats, signs, ribbons, cracks), region accent rows, and
+wear tiers 0/1/2 composed under the ENEMY_BATTLE_ART {sprite,
+draw(wear)} contract. Every part is HAND-DRAWN (ADR-020 span tables);
+the assembler only composes. CONTACT SHEETS: the forge emits 5–10
+seeded candidates per enemy → a Sprite Lab contact page + .shots dump;
+the human picks or tweaks; the pick is recorded as partsSpec in the
+enemy's data so the sprite regenerates stable forever. Bosses and the
+four heroes stay fully bespoke — the assembler is for the standard
+roster's first drafts.
+
+THE BOSS TEMPLATES — src/battle/phaseTemplates.ts, each a pure
+(params) → BossScriptDef on the PROVEN phase machine (S14, headless),
+each shipping a default telegraph-line slot, phase rules, and a
+HEADLESS INTEGRATION TEST BY DEFAULT:
+ - formSwapBoss (the Gilded Grin shape: forms, immunities, telegraph)
+ - summonerBoss (Mainframe: refill trigger, summon caps)
+ - thresholdHealBoss (Cobra Raja: shed-at-%, one-shot heal)
+ - riddleBoss (Sphinx: ask-widget pool, right/wrong consequences)
+ - mercyEndingBoss (Hoaxula + Sir Whiskerzilla: the quiet victory)
+ - airborneGroundedBoss (Paper Dragon: states, knockdown windows)
+ - scriptedSurvivalBoss (the Hush's movements: survival turns, UI
+   pressure hooks)
+ - untargetableUntilNoise (the Whisperwig: burrow state, noise keys)
+Document the canon mapping table (which §A6 boss instantiates which
+template with which params) and PROVE the table: instantiate every
+unshipped canon boss from its template with canon params and run its
+gimmick headless green. Shipped bosses (the bespoke Tick, the live
+Grin) are NOT retrofitted — frozen. Prompts 29+ then land each boss as
+params + a few unique lines, with telegraphs, validation, and test
+coverage by default.
+
+=== MOVEMENT FOUR — THE CHAPTER SCAFFOLD (manifests + the one-command
+chapter) ===
+
+src/data/manifests/ — ChapterManifest (schema'd): region, target
+levels, maps (id + levelkit recipe pointer or 'bespoke'), §A7 enemy
+rows, boss + miniboss, shop shelves, quests, picnic count, hospital/
+chapel roles, travel in/out (§A5), story gates, ember + stem index.
+Write RETRO manifests for Chapters 1–2 asserting exactly what ships
+today (the validator consumes them and its current per-chapter checks
+re-route through the manifest — one source of truth); chapters 3+
+carry manifests marked unlanded, asserted only as they land (S14c's
+rule 7 preserved: never pre-assert unbuilt content; today's validate
+stays green).
+
+tools/chapter-scaffold.ts — `npm run scaffold -- ch6` reads the
+manifest and emits the WHOLE draft tree + checklist:
+   src/data/drafts/ch6/
+     maps: zanzibel (buildCity recipe), savanna_crossing (buildRoute),
+           laughing_ruins (grammar), sphinx_forecourt (buildWild)
+     enemies: the §A7 Ch.6 six, forged with contact sheets
+     boss: laughing_sphinx via riddleBoss(params) + its headless test
+     shop: zanzibel shelf priced by the §A9 curve
+     encounter report: the pressure table for every draft map
+   docs/chapters/CH6_CHECKLIST.md — every item → its file → its
+     promotion state → who polishes what (dialogue: HUMAN, always)
+A chapter session then opens with the boring 60% done and spends
+itself on maps' landmarks, story, dialogue, boss lines, and tone —
+the soul. The checklist is docs, not data: the validator asserts data
+only.
+
+EDIT THE QUEUE in the same commit: S15d/S15e/S15f gain one-line notes
+to build their growth/routes/districts ON the kit's recipes + streams
+(their frozen-core and gate laws stand untouched); S17's taxonomy
+notes the interior templates already exist (the program fills them);
+Prompt 29+ pointer: "scaffold first, then polish." Update the
+run-order footer.
+
+QA: pre-flight in docs/QA.md + device row 28: walk one generated town
+and one generated city draft in the LAB on the phone (street feel +
+ADR-012 read at thumb scale), reroll seeds live, walk one
+laughing_ruins draft end-to-end, read a contact sheet on the device
+screen for part legibility; .shots/ of a town draft, a city draft, a
+dungeon draft, and one contact sheet. Bot recipes in the LAB header.
+Commit docs/ENCOUNTERS.md for all canon maps. Append the ADRs
+(next-free numbers — never pre-reserved, the ADR-043 law): the prime
+laws + the levelkit; the grammars + pressure; the forges; the
+manifests + scaffold.
+
+Done when: every levelkit generator regenerates byte-identical under
+vitest hash pins and generated cities pass the ADR-012 sweep BY
+CONSTRUCTION on ≥5 fresh seeds; the LAB walks drafts live with reroll
+and metrics; all eight site grammars emit BFS-proven dungeons honoring
+rest-before-pressure and their site laws (cure-safe returns, false
+loops that aren't, car pacing, emptiness curves); the playability
+rules + hard pressure rules run green on every canon map (or carry a
+visible reasoned waiver); docs/ENCOUNTERS.md exists for every canon
+map; the enemy forge drafts a full validator-shaped contract from any
+§A7 row with stats/EXP/cash pinned to the §A9 curves; contact sheets
+render 5–10 stable candidates per draft and partsSpec round-trips;
+all eight boss templates drive the phase machine headless green
+including every unshipped canon boss instantiated from its template;
+retro manifests for Ch.1–2 are the validator's per-chapter source of
+truth and `npm run scaffold -- ch6` emits the complete draft tree +
+checklist without touching canon counts; drafts NEVER count toward
+canon and the §B4 sweep stays clean; validator + full vitest green
+(the floor only rises); frozen streams byte-identical; browser loop
+and android:apk untouched.
+```
+
 ## Prompt S15d — OTTERBROOK GROWS UP (the triple, the civic spine & THE SETTLEMENT LADDER)
+
+> (Inherited edit, S15g: once THE WORLD FORGE has shipped, author the new
+> districts as levelkit recipes on their named streams — the frozen-core,
+> ladder, and perf laws below stand either way; landmarks like city hall
+> stay hand-built.)
 
 ```
 [Standard Header]
@@ -1595,6 +1919,10 @@ frozen streams proven byte-identical.
 
 ## Prompt S15e — THE ROAD TO BRICKTON (two walking screens & THE ORIENTATION GATE)
 
+> (Inherited edit, S15g: Meadow Mile and the Overpass are buildRoute
+> recipes once THE WORLD FORGE has shipped; the Orientation Center trailer
+> and its gate are hand-built landmarks.)
+
 ```
 [Standard Header]
 S15e — the user's connector + gate decree, captured 2026-06-12: "we
@@ -1675,6 +2003,11 @@ byte-identical.
 ```
 
 ## Prompt S15f — BRICKTON SPRAWLS (the 4×, the building vocabulary, THE CAGE BLOCK & the two real stories)
+
+> (Inherited edit, S15g: the new districts ride buildCityDistricts-style
+> levelkit recipes on the 2077-family streams once THE WORLD FORGE has
+> shipped — the city-structure sweep then passes by construction; THE CAGE
+> BLOCK and both story interiors stay hand-built landmarks.)
 
 ```
 [Standard Header]
@@ -2288,13 +2621,25 @@ THE HEADROOM PROGRAM (the perf gate that licenses the expansions),
 the door exit-latch, the ATM stepper, the ATM-and-phone law, and
 THE FIRST NATIONAL — the S&L loan desk, the car note, and 27 Maple
 on save v8)
+→ **S15g** (THE WORLD FORGE — the user's 2026-06-12 automation decree,
+"quicker pace, still production quality, no mock data": the levelkit
+recipe generators for towns/cities/villages/interiors/routes/travel
+scenes outputting plain MapDef under the frozen-stream law; the
+per-site dungeon grammars from the Academy to the Sea of Silence with
+BFS-proven post-conditions; encounter-pressure scoring with hard rules
+in the validator; the enemy forge + composable sprite parts under
+ADR-020 with contact sheets; the eight boss templates on the proven
+phase machine; chapter manifests + the one-command chapter scaffold —
+drafts are never content, promotion is human, the user stays the tone
+editor)
 → **THE WORLD BLOCK — the user's 2026-06-12 scale decree, in his
 words: "expand the OH map... triple the size... much larger buildings
 like a city hall"; "in between walking map sections... a section that
 unlocks this level [like] the 7 cops in the earthbound game";
 "brickton... 4x bigger... sprawling... 2x the size of the newly size
-OH town." It runs right after S14d because the HEADROOM PROGRAM is
-its license:** **S15d** (OTTERBROOK GROWS UP — the triple on the
+OH town." It runs right after S14d's headroom license and S15g's
+forge — the expansions are the forge's first production consumers:**
+**S15d** (OTTERBROOK GROWS UP — the triple on the
 frozen-core growth law, the Civic Green + city hall + pond park +
 east lanes, and THE SETTLEMENT LADDER into §A5) → **S15e** (THE ROAD
 TO BRICKTON — Meadow Mile + the Overpass on foot, and THE ORIENTATION
