@@ -375,6 +375,38 @@ const TRACKS: Record<string, Track> = {
       { wave: 'noise', vol: 0.012, notes: [null, null, null, 'C5', null, null, null, null, null, null, 'C5', null, null, null, null, null] },
     ],
   },
+  // The opening cinema (ADR-041): the sky before it falls. Otherworldly on
+  // purpose — a half-step drone that never resolves, detuned star-bells on
+  // tritones, no downbeat a town band could find. It stops DEAD at impact;
+  // the silence afterward is part of the track.
+  starfall: {
+    bpm: 52,
+    loop: true,
+    channels: [
+      {
+        wave: 'sine',
+        vol: 0.09,
+        notes: ['C2', '-', '-', '-', '-', '-', '-', '-', 'Db2', '-', '-', '-', 'C2', '-', '-', '-'],
+      },
+      {
+        wave: 'sine',
+        vol: 0.045,
+        detune: 11,
+        notes: ['Gb5', null, null, null, 'F5', null, null, 'C6', null, null, 'Eb5', null, null, null, 'Gb5', null],
+      },
+      {
+        wave: 'triangle',
+        vol: 0.05,
+        notes: [null, null, null, 'Gb3', null, null, null, null, null, 'F3', null, null, null, null, 'Ab3', null],
+      },
+      {
+        wave: 'sine',
+        vol: 0.02,
+        detune: -8,
+        notes: [null, 'C7', null, null, null, null, 'Gb6', null, null, null, null, 'C7', null, null, null, null],
+      },
+    ],
+  },
   // Heartlight: the Homesong's first stem — played when an Ember is recorded
   heartlight: {
     bpm: 72,
@@ -636,6 +668,49 @@ class AudioSys {
         break;
       case 'thud':
         this.tone('triangle', 90, 50, 0.1, 0.1);
+        break;
+      /* ---- the opening cinema (ADR-041): the full fall, scored ---- */
+      case 'meteor_far':
+        // the wrong star: a detuned shimmer, far too high up to be weather
+        this.tone('sine', 1976, 1976, 1.4, 0.025);
+        this.tone('sine', 1985, 1985, 1.4, 0.02, 0.05);
+        this.tone('sine', 2960, 2960, 0.9, 0.012, 0.4);
+        break;
+      case 'meteor_fall':
+        // entry scream + a rumble that builds the whole way down (~2.8s,
+        // sized to the descent tween)
+        this.tone('sawtooth', 1350, 70, 2.7, 0.045);
+        this.tone('sine', 2100, 110, 2.7, 0.035, 0.08);
+        this.noise(0.7, 0.025, 700);
+        this.noise(0.8, 0.05, 900, 0.6);
+        this.noise(0.9, 0.085, 1100, 1.3);
+        this.noise(1.1, 0.13, 1500, 1.9);
+        break;
+      case 'sonic_boom':
+        // the sky cracks once on the way down
+        this.noise(0.09, 0.16, 5200);
+        this.tone('square', 200, 55, 0.22, 0.11);
+        this.noise(0.5, 0.06, 800, 0.08);
+        break;
+      case 'meteor_crash':
+        // the ground gets the news: sub thump, long brown roar, two echoes
+        this.tone('triangle', 64, 22, 1.5, 0.24);
+        this.tone('sine', 46, 18, 2.0, 0.2, 0.04);
+        this.noise(1.7, 0.22, 380);
+        this.noise(1.1, 0.12, 160, 0.18);
+        this.tone('triangle', 50, 24, 0.9, 0.1, 1.15);
+        this.noise(0.9, 0.07, 300, 1.2);
+        this.tone('triangle', 44, 22, 0.8, 0.06, 2.1);
+        this.noise(0.8, 0.04, 260, 2.15);
+        break;
+      case 'rumble':
+        // aftershock: the floor remembers
+        this.tone('sine', 38, 30, 1.3, 0.07);
+        this.noise(1.2, 0.05, 240);
+        break;
+      case 'light_on':
+        // one porch light joins the conversation
+        this.tone('sine', 740, 988, 0.05, 0.02);
         break;
       case 'pray':
         this.tone('sine', 660, 660, 0.3, 0.05);

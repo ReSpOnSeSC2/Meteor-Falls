@@ -2764,29 +2764,39 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag('intro_done');
     await this.openingMeteorCinema();
+    // the bedroom fades in mid-aftershock: same night, one wall away
     const cover = this.add
       .rectangle(0, 0, this.scale.width, this.scale.height, 0x0a0a18)
       .setOrigin(0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI - 1); // below the dialogue windows
-    await this.dlg.say(...DIALOGUE.intro_card);
-    AUDIO.sfx('thud');
-    this.cameras.main.shake(900, 0.012);
-    this.cameras.main.flash(500, 248, 232, 160);
-    await this.wait(1000);
-    this.tweens.add({ targets: cover, alpha: 0, duration: 800, onComplete: () => cover.destroy() });
-    await this.wait(900);
+    AUDIO.sfx('rumble');
+    this.cameras.main.shake(900, 0.005);
+    this.tweens.add({ targets: cover, alpha: 0, duration: 1200, onComplete: () => cover.destroy() });
+    await this.wait(1300);
     await this.dlg.say(...DIALOGUE.intro_wake);
     GS.setFlag('meteor_fell');
     this.cut = false;
   }
 
+  /**
+   * ADR-041 — the opening, start to finish: the wrong star → it grows → the
+   * descent (sonic boom at mid-sky) → impact behind Hickory Hill (whiteout,
+   * shockwaves, debris, dust, aftershocks) → eight motes scatter, one stays
+   * (§A6, wordless) → the town's porch lights wake → pan + push-in on
+   * {rex}'s house → fade into the bedroom. Captions are timed — no button
+   * presses; the QA driver fast-forwards via pumped frames per ADR-008.
+   * Paint order is law here: sky < world < fx < caption (the old cinema
+   * added `world` first and the sky rects painted over the whole town).
+   */
   private async openingMeteorCinema(): Promise<void> {
     const W = this.scale.width;
     const H = this.scale.height;
     const cinema = this.add.container(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 20);
+    const sky = this.add.container(0, 0);
     const world = this.add.container(0, 0);
-    cinema.add(world);
+    const fx = this.add.container(0, 0);
+    cinema.add([sky, world, fx]);
     const addTo = <T extends Phaser.GameObjects.GameObject>(target: Phaser.GameObjects.Container, obj: T): T => {
       target.add(obj);
       return obj;
@@ -2795,95 +2805,275 @@ export class OverworldScene extends Phaser.Scene {
       new Promise((resolve) => {
         this.tweens.add({ ...cfg, onComplete: () => resolve() });
       });
-
-    // Full-screen pixel diorama: sky fixed, town layer pans from the hill to home.
-    addTo(cinema, this.add.rectangle(0, 0, W, H, 0x080816).setOrigin(0));
-    addTo(cinema, this.add.rectangle(0, 86, W, 62, 0x151832).setOrigin(0).setAlpha(0.72));
-    addTo(cinema, this.add.rectangle(0, 145, W, H - 145, 0x10151e).setOrigin(0));
-    const stars = [
-      [34, 20, 1],
-      [78, 52, 0.7],
-      [118, 29, 1],
-      [176, 18, 0.6],
-      [238, 44, 0.9],
-      [306, 23, 0.8],
-      [362, 56, 1],
-    ] as const;
-    for (const [x, y, a] of stars) {
-      addTo(cinema, this.add.rectangle(x, y, 2, 2, 0xf8f0d0).setAlpha(a));
-    }
-
-    addTo(world, this.add.rectangle(0, 150, 840, 75, 0x172414).setOrigin(0));
-    addTo(world, this.add.triangle(120, 150, -40, 0, 164, -88, 360, 0, 0x20301b).setOrigin(0.5, 1));
-    addTo(world, this.add.triangle(156, 154, -28, 0, 112, -54, 252, 0, 0x121d16).setOrigin(0.5, 1));
-    addTo(world, this.add.image(118, 150, 'tree_b').setOrigin(0.5, 1).setScale(1.1).setTint(0x384828));
-    addTo(world, this.add.image(182, 154, 'tree_b').setOrigin(0.5, 1).setScale(0.85).setTint(0x2d3d24));
-    addTo(world, this.add.image(476, 150, 'skyline').setOrigin(0.5, 1).setScale(1.1).setTint(0x273042).setAlpha(0.78));
-    addTo(world, this.add.image(548, 154, 'tree_b').setOrigin(0.5, 1).setScale(0.9).setTint(0x344527));
-    addTo(world, this.add.image(610, 151, 'house_rex').setOrigin(0.5, 1).setScale(0.9));
-    addTo(world, this.add.rectangle(600, 118, 16, 10, 0xf8e8a0).setAlpha(0.65));
-    addTo(world, this.add.rectangle(585, 152, 180, 4, 0x23231f).setOrigin(0.5, 0));
-
+    // timed captions: fade in, hold long enough to read twice, fade out
     const caption = addTo(
       cinema,
       this.add
-        .bitmapText(W / 2, H - 30, 'retro', 'The sky over Hickory Hill holds its breath.', 6)
+        .bitmapText(W / 2, H - 28, 'retro', '', 6)
         .setOrigin(0.5, 0)
-        .setTint(0xf8f0d0),
+        .setTint(0xf8f0d0)
+        .setCenterAlign()
+        .setMaxWidth(W - 40)
+        .setAlpha(0),
     );
-    await this.wait(700);
+    const say = async (text: string): Promise<void> => {
+      caption.setText(vars(text)).setAlpha(0);
+      this.tweens.add({ targets: caption, alpha: 1, duration: 260 });
+      // unhurried: kids read this (user pacing note, ADR-041)
+      await this.wait(Math.max(2600, 1000 + text.length * 55));
+      await waitTween({ targets: caption, alpha: 0, duration: 240 });
+    };
 
-    const trail = addTo(cinema, this.add.rectangle(-92, 36, 132, 6, 0xf8e8a0).setAngle(25).setAlpha(0.78));
-    const trailHot = addTo(cinema, this.add.rectangle(-70, 42, 70, 3, 0xf86f4f).setAngle(25).setAlpha(0.92));
-    const meteor = addTo(cinema, this.add.image(-46, 30, 'meteor_rock').setScale(0.6).setAngle(28).setTint(0xf8d868));
-    AUDIO.sfx('ember');
-    this.tweens.add({ targets: trail, alpha: 0.35, duration: 160, yoyo: true, repeat: 5 });
-    this.tweens.add({ targets: trailHot, alpha: 0.25, duration: 120, yoyo: true, repeat: 7 });
+    /* ---- the sky: bands, a crescent moon, stars that actually twinkle ---- */
+    addTo(sky, this.add.rectangle(0, 0, W, H, 0x080816).setOrigin(0));
+    addTo(sky, this.add.rectangle(0, 86, W, 62, 0x151832).setOrigin(0).setAlpha(0.72));
+    addTo(sky, this.add.rectangle(0, 145, W, H - 145, 0x10151e).setOrigin(0));
+    addTo(sky, this.add.circle(56, 24, 10, 0xe8e8d8, 0.9));
+    addTo(sky, this.add.circle(62, 20, 9, 0x080816)); // the night bites the moon
+    const starSpots = [
+      [34, 20, 1], [78, 52, 0.7], [118, 29, 1], [176, 18, 0.6], [238, 44, 0.9],
+      [288, 16, 0.8], [362, 56, 1], [22, 64, 0.5], [142, 58, 0.6], [200, 36, 0.8],
+      [262, 12, 0.7], [332, 40, 0.6], [388, 18, 0.9], [98, 12, 0.7],
+    ] as const;
+    for (const [x, y, a] of starSpots) {
+      const st = addTo(sky, this.add.rectangle(x, y, 2, 2, 0xf8f0d0).setAlpha(a));
+      // deterministic twinkle (coords as seed — no rng() before maps, ADR-012)
+      this.tweens.add({ targets: st, alpha: a * 0.35, duration: 900 + ((x * 7) % 900), yoyo: true, repeat: -1, delay: (y * 13) % 700 });
+    }
+
+    /* ---- the town strip: 840 wide, Hickory Hill west, {rex}'s house east ---- */
+    addTo(world, this.add.rectangle(0, 150, 840, 90, 0x172414).setOrigin(0));
+    addTo(world, this.add.rectangle(0, 152, 840, 4, 0x23231f).setOrigin(0)); // sidewalk
+    addTo(world, this.add.rectangle(0, 192, 840, 11, 0x121318).setOrigin(0)); // the 6:15's route
+    for (let dx = 8; dx < 840; dx += 46) {
+      addTo(world, this.add.rectangle(dx, 197, 14, 2, 0x2c2c26).setOrigin(0).setAlpha(0.55));
+    }
+    // hill triangles: vertex coords are POSITIVE-DOWN with the peak first-row
+    // (the old negative-y vertices rendered the hill upside down — invisible
+    // for as long as the sky painted over the world, screenshot-caught now)
+    addTo(world, this.add.triangle(120, 150, 0, 88, 204, 0, 400, 88, 0x20301b).setOrigin(0.5, 1));
+    // the crater lives BETWEEN the hill and its front ridge — impact reads "behind"
+    const craterLayer = addTo(world, this.add.container(0, 0));
+    addTo(world, this.add.triangle(156, 154, 0, 54, 140, 0, 280, 54, 0x121d16).setOrigin(0.5, 1));
+    const hillTreeA = addTo(world, this.add.image(118, 150, 'tree_b').setOrigin(0.5, 1).setScale(1.1).setTint(0x384828));
+    const hillTreeB = addTo(world, this.add.image(182, 154, 'tree_b').setOrigin(0.5, 1).setScale(0.85).setTint(0x2d3d24));
+    addTo(world, this.add.image(476, 148, 'skyline').setOrigin(0.5, 1).setScale(1.1).setTint(0x273042).setAlpha(0.6));
+    // Otterbrook asleep: dark houses between the hill and home
+    const lots = [
+      { key: 'house_a', x: 350, s: 0.8, tint: 0x3a4566 },
+      { key: 'house_b', x: 415, s: 0.85, tint: 0x344060 },
+      { key: 'drugstore', x: 497, s: 0.8, tint: 0x2f3a55 },
+      { key: 'house_chad', x: 688, s: 0.85, tint: 0x3a4566 },
+      { key: 'arcade', x: 766, s: 0.8, tint: 0x3d3a60 },
+    ] as const;
+    for (const b of lots) {
+      addTo(world, this.add.image(b.x, 151, b.key).setOrigin(0.5, 1).setScale(b.s).setTint(b.tint));
+    }
+    addTo(world, this.add.image(318, 152, 'tree_c').setOrigin(0.5, 1).setScale(0.9).setTint(0x2d3d24));
+    addTo(world, this.add.image(548, 154, 'tree_b').setOrigin(0.5, 1).setScale(0.9).setTint(0x344527));
+    addTo(world, this.add.image(645, 153, 'tree').setOrigin(0.5, 1).setScale(0.8).setTint(0x2d3d24));
+    addTo(world, this.add.image(806, 152, 'tree_b').setOrigin(0.5, 1).setScale(0.85).setTint(0x2d3d24));
+    for (const px of [332, 452, 583, 716]) {
+      addTo(world, this.add.image(px, 151, 'phone_pole').setOrigin(0.5, 1).setScale(0.8).setTint(0x39435f).setAlpha(0.9));
+    }
+    // {rex}'s house — the destination (slightly warmer: one porch light is on)
+    addTo(world, this.add.image(610, 151, 'house_rex').setOrigin(0.5, 1).setScale(0.9).setTint(0x6a72a0));
+    const porch = addTo(world, this.add.rectangle(602, 143, 3, 3, 0xf8e8a0).setAlpha(0.85));
+    addTo(world, this.add.circle(602, 143, 7, 0xf8e8a0, 0.1));
+    this.tweens.add({ targets: porch, alpha: 0.55, duration: 1300, yoyo: true, repeat: -1 });
+    const rexWindow = addTo(world, this.add.rectangle(600, 118, 16, 10, 0xf8e8a0).setAlpha(0.06));
+    const rexGlow = addTo(world, this.add.circle(600, 118, 13, 0xf8e8a0, 0));
+    // dark windows that wake after the impact, hill-side first
+    const sleepers = [
+      [346, 133], [421, 130], [491, 134], [694, 132], [766, 133],
+    ].map(([wx, wy]) => addTo(world, this.add.rectangle(wx, wy, 7, 6, 0xf8e8a0).setAlpha(0)));
+
+    /* ---- PHASE 1: the quiet (fade in over the sleeping town) ---- */
+    AUDIO.playMusic('starfall');
+    const blackIn = addTo(fx, this.add.rectangle(0, 0, W, H, 0x06060e).setOrigin(0));
+    await waitTween({ targets: blackIn, alpha: 0, duration: 1100, ease: 'sine.out' });
+    blackIn.destroy();
+    await say('Otterbrook, Ohio. Summer, 1995.');
+    await say('2:11 AM. Everyone is asleep except the crickets, one porch light, and a dog with opinions about the sky.');
+
+    /* ---- PHASE 2: the wrong star ---- */
+    const skyGlow = addTo(fx, this.add.rectangle(0, 0, W, H, 0xf8a868).setOrigin(0).setAlpha(0));
+    const halo = addTo(fx, this.add.circle(312, 26, 5, 0xf8e8a0, 0));
+    const star = addTo(fx, this.add.circle(312, 26, 1.5, 0xf8f0d0).setAlpha(0));
+    AUDIO.sfx('meteor_far');
+    this.tweens.add({ targets: star, alpha: 1, duration: 900 });
+    this.tweens.add({ targets: halo, fillAlpha: 0.14, scale: 2.2, duration: 1400, ease: 'sine.inout' });
+    await say('High above town, something small and bright begins to move.');
+    AUDIO.sfx('meteor_far');
+    this.tweens.add({ targets: star, scale: 3.4, duration: 2600, ease: 'quad.in' });
+    this.tweens.add({ targets: halo, scale: 4.6, fillAlpha: 0.22, duration: 2600, ease: 'quad.in' });
+    this.time.delayedCall(900, () => star.setFillStyle(0xf8e8a0));
+    this.time.delayedCall(1900, () => star.setFillStyle(0xf8d868));
+    await say('One of the stars is getting bigger. Stars are not supposed to do that.');
+
+    /* ---- PHASE 3: the descent (no words — the sky is talking) ---- */
+    star.destroy();
+    halo.destroy();
+    const impact = { x: 158, y: 106 }; // just past the front ridge's peak
+    const dropMs = 2800;
+    const trailGlow = addTo(fx, this.add.rectangle(312 + 41, 26 - 21, 150, 7, 0xf8e8a0).setAngle(152).setAlpha(0.5));
+    const trailHot = addTo(fx, this.add.rectangle(312 + 23, 26 - 12, 84, 3, 0xf86f4f).setAngle(152).setAlpha(0.9));
+    const rock = addTo(fx, this.add.image(312, 26, 'meteor_rock').setScale(0.34).setAngle(28).setTint(0xf8d868));
+    AUDIO.sfx('meteor_fall');
+    this.tweens.add({ targets: rock, scale: 0.62, angle: '+=210', duration: dropMs, ease: 'quad.in' });
+    this.tweens.add({ targets: skyGlow, alpha: 0.16, duration: dropMs - 200, ease: 'quad.in' });
+    this.tweens.add({ targets: trailGlow, alpha: 0.28, duration: 150, yoyo: true, repeat: 9 });
+    this.tweens.add({ targets: trailHot, alpha: 0.4, duration: 110, yoyo: true, repeat: 12 });
+    // shed sparks the whole way down
+    const shedTimer = this.time.addEvent({
+      delay: 70,
+      repeat: Math.floor(dropMs / 70) - 2,
+      callback: () => {
+        const p = addTo(
+          fx,
+          this.add.rectangle(rock.x + Phaser.Math.Between(-3, 3), rock.y + Phaser.Math.Between(-3, 3), 2, 2, Math.random() < 0.5 ? 0xf8e8a0 : 0xf87848),
+        );
+        this.tweens.add({ targets: p, x: p.x + 14 + Math.random() * 10, y: p.y - 6 - Math.random() * 8, alpha: 0, duration: 380, onComplete: () => p.destroy() });
+      },
+    });
+    // halfway down it breaks the sound barrier — the sky cracks once
+    this.time.delayedCall(Math.floor(dropMs * 0.54), () => {
+      AUDIO.sfx('sonic_boom');
+      this.cameras.main.flash(140, 248, 232, 208);
+      this.cameras.main.shake(200, 0.004);
+      const ring = addTo(fx, this.add.circle(rock.x, rock.y, 6, 0xffffff, 0).setStrokeStyle(2, 0xf8f0d0, 0.8));
+      this.tweens.add({ targets: ring, scale: 7, alpha: 0, duration: 480, ease: 'quad.out', onComplete: () => ring.destroy() });
+    });
     await waitTween({
-      targets: [meteor, trail, trailHot],
-      x: '+=192',
-      y: '+=92',
-      angle: '+=260',
-      duration: 1350,
+      targets: [rock, trailGlow, trailHot],
+      x: `+=${impact.x - 312}`,
+      y: `+=${impact.y - 26}`,
+      duration: dropMs,
       ease: 'Quad.easeIn',
     });
+    shedTimer.remove();
 
-    caption.setText('It lands behind town with a sound too big for the clock.');
-    AUDIO.sfx('thud');
-    this.cameras.main.shake(820, 0.018);
-    this.cameras.main.flash(420, 248, 232, 160);
-    meteor.destroy();
-    trail.destroy();
-    trailHot.destroy();
-    const craterGlow = addTo(world, this.add.circle(146, 133, 9, 0xf8d868, 0.75));
-    const crater = addTo(world, this.add.image(146, 143, 'meteor_rock').setOrigin(0.5, 1).setScale(0.42).setTint(0xf87848));
-    for (let i = 0; i < 10; i++) {
-      const a = (Math.PI * 2 * i) / 10;
-      const spark = addTo(world, this.add.rectangle(146, 133, 3, 3, i % 2 ? 0xf8e8a0 : 0xf87848));
-      this.tweens.add({
-        targets: spark,
-        x: 146 + Math.cos(a) * (22 + (i % 3) * 7),
-        y: 133 + Math.sin(a) * (10 + (i % 4) * 5),
-        alpha: 0,
-        duration: 650,
-        ease: 'sine.out',
-        onComplete: () => spark.destroy(),
+    /* ---- PHASE 4: IMPACT (whiteout covers the swap to the crater) ---- */
+    AUDIO.stopMusic(); // the drone dies with the night — silence is the score now
+    AUDIO.sfx('meteor_crash');
+    rock.destroy();
+    this.tweens.add({ targets: [trailGlow, trailHot], alpha: 0, duration: 600, onComplete: () => { trailGlow.destroy(); trailHot.destroy(); } });
+    this.tweens.add({ targets: skyGlow, alpha: 0, duration: 400 });
+    const white = addTo(fx, this.add.rectangle(0, 0, W, H, 0xf8f0e0).setOrigin(0).setAlpha(0));
+    this.tweens.add({
+      targets: white,
+      alpha: 1,
+      duration: 70,
+      onComplete: () => this.tweens.add({ targets: white, alpha: 0, duration: 750, ease: 'quad.out', onComplete: () => white.destroy() }),
+    });
+    this.cameras.main.shake(1500, 0.02);
+    this.tweens.add({ targets: world, y: 3, duration: 70, yoyo: true, repeat: 3 });
+    this.tweens.add({
+      targets: [hillTreeA, hillTreeB],
+      angle: { from: -5, to: 5 },
+      duration: 90,
+      yoyo: true,
+      repeat: 7,
+      onComplete: () => { hillTreeA.setAngle(0); hillTreeB.setAngle(0); },
+    });
+    // the crater takes over behind the ridge: glow + embedded rock + dust column
+    const craterGlow = addTo(craterLayer, this.add.circle(164, 96, 16, 0xf8d868, 0.8));
+    addTo(craterLayer, this.add.image(166, 104, 'meteor_rock').setOrigin(0.5, 1).setScale(0.55).setTint(0xf87848));
+    this.tweens.add({ targets: craterGlow, scale: 1.5, fillAlpha: 0.25, duration: 820, yoyo: true, repeat: -1 });
+    for (let i = 0; i < 5; i++) {
+      const puff = addTo(craterLayer, this.add.circle(160 + Phaser.Math.Between(-8, 8), 100, 7 + i * 2, 0x8a7a6a, 0.5));
+      this.tweens.add({ targets: puff, y: 52 - i * 8, scale: 2.4, fillAlpha: 0, duration: 2600 + i * 500, ease: 'sine.out', delay: 120 * i, onComplete: () => puff.destroy() });
+    }
+    // ground-hugging shockwaves race outward along the strip
+    for (const [delay, dur, sc] of [[0, 900, 10], [180, 1100, 15]] as const) {
+      this.time.delayedCall(delay, () => {
+        const ring = addTo(world, this.add.ellipse(impact.x, 132, 30, 12, 0xf8e8a0, 0).setStrokeStyle(2, 0xf8e8a0, 0.7));
+        this.tweens.add({ targets: ring, scaleX: sc, scaleY: sc * 0.5, alpha: 0, duration: dur, ease: 'quad.out', onComplete: () => ring.destroy() });
       });
     }
-    this.tweens.add({ targets: craterGlow, scale: 2.2, alpha: 0.28, duration: 760, yoyo: true, repeat: 2 });
-    this.tweens.add({ targets: crater, y: 146, duration: 180, yoyo: true, repeat: 1 });
-    await this.wait(950);
+    // debris on real gravity arcs, over the ridge and back down
+    for (let i = 0; i < 14; i++) {
+      const frag = addTo(world, this.add.rectangle(158, 104, i % 3 === 0 ? 3 : 2, 2, [0xf8e8a0, 0xf87848, 0x6a5a4a][i % 3]));
+      const vx = Phaser.Math.FloatBetween(-1, 1) * 90;
+      const vy = -Phaser.Math.FloatBetween(40, 130);
+      this.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: 1300,
+        onUpdate: (tw) => {
+          const v = tw.getValue() ?? 1;
+          const t = v * 1.3;
+          frag.setPosition(158 + vx * t, 104 + vy * t + 100 * t * t);
+          frag.setAlpha(1 - v);
+        },
+        onComplete: () => frag.destroy(),
+      });
+    }
+    // aftershocks roll in while the caption lands
+    this.time.delayedCall(1700, () => { AUDIO.sfx('rumble'); this.cameras.main.shake(700, 0.007); });
+    this.time.delayedCall(3300, () => { AUDIO.sfx('rumble'); this.cameras.main.shake(500, 0.004); });
+    await this.wait(1300);
+    await say('It comes down behind Hickory Hill, and the whole town feels it land.');
 
-    caption.setText('Six blocks away, one porch light wakes up.');
-    const homeGlow = addTo(world, this.add.circle(600, 121, 12, 0xf8e8a0, 0.12));
-    this.tweens.add({ targets: homeGlow, scale: 1.7, alpha: 0.32, duration: 900, yoyo: true, repeat: -1 });
-    await waitTween({ targets: world, x: -392, duration: 2300, ease: 'Sine.easeInOut' });
-    await this.wait(450);
+    /* ---- PHASE 5: eight motes, wordless §A6 — seven leave, one stays ---- */
+    AUDIO.sfx('ember');
+    this.time.delayedCall(600, () => AUDIO.sfx('ember'));
+    for (let i = 0; i < 8; i++) {
+      const m = addTo(world, this.add.rectangle(162, 94, 2, 2, 0xf8f0d0).setAlpha(0));
+      const riseX = 110 + i * 15;
+      const riseY = 60 - (i % 3) * 7;
+      this.tweens.add({
+        targets: m,
+        x: riseX,
+        y: riseY,
+        alpha: 1,
+        duration: 750,
+        delay: i * 70,
+        ease: 'sine.out',
+        onComplete: () => {
+          if (i === 3) {
+            // the crater keeps its Ember — the first Resonance Site is right there
+            this.tweens.add({ targets: m, x: 164, y: 96, alpha: 0, duration: 900, delay: 250, ease: 'sine.in', onComplete: () => m.destroy() });
+          } else {
+            const ang = Phaser.Math.DegToRad(195 + i * 22);
+            this.tweens.add({ targets: m, x: riseX + Math.cos(ang) * 460, y: riseY + Math.sin(ang) * 260, alpha: 0.1, duration: 850, delay: 150 + i * 40, ease: 'quad.in', onComplete: () => m.destroy() });
+          }
+        },
+      });
+    }
+    await say('For one bright second, the night has extra stars. Then they scatter — all but one.');
 
-    caption.setText(vars("Upstairs, {rex}'s room remembers it has a window."));
-    await this.wait(900);
-    const fade = addTo(cinema, this.add.rectangle(0, 0, W, H, 0x0a0a18).setOrigin(0).setAlpha(0));
-    await waitTween({ targets: fade, alpha: 1, duration: 520, ease: 'sine.in' });
+    /* ---- PHASE 6: the town wakes, hill-side first ---- */
+    AUDIO.sfx('rumble');
+    this.cameras.main.shake(450, 0.003);
+    [...sleepers]
+      .sort((a, b) => a.x - b.x)
+      .forEach((wrect, idx) =>
+        this.time.delayedCall(300 + idx * 340, () => {
+          AUDIO.sfx('light_on');
+          wrect.setAlpha(0.92);
+          addTo(world, this.add.circle(wrect.x, wrect.y, 9, 0xf8e8a0, 0.1));
+        }),
+      );
+    await say('One by one, the porch lights of Otterbrook come on. The dog was right.');
+
+    /* ---- PHASE 7: pan east to the one window that matters ---- */
+    const pan = waitTween({ targets: world, x: -392, duration: 3800, ease: 'Sine.easeInOut' });
+    await say('Six blocks east, one upstairs window is about to join them.');
+    await pan;
+    AUDIO.sfx('light_on');
+    rexWindow.setAlpha(0.95);
+    rexGlow.setFillStyle(0xf8e8a0, 0.16);
+    this.tweens.add({ targets: rexGlow, scale: 1.6, fillAlpha: 0.3, duration: 900, yoyo: true, repeat: -1 });
+    // push in: hold the house at center while the night leans closer
+    this.tweens.add({ targets: world, scale: 1.18, x: 200 - 610 * 1.18, y: 132 - 151 * 1.18, duration: 2600, ease: 'sine.inout' });
+    await say("In {rex}'s room, a baseball bat leans by the desk, pretending this is a normal night.");
+
+    /* ---- PHASE 8: fade — the bedroom takes it from here ---- */
+    AUDIO.sfx('rumble');
+    const fade = this.add.rectangle(0, 0, W, H, 0x0a0a18).setOrigin(0).setAlpha(0);
+    cinema.add(fade);
+    await waitTween({ targets: fade, alpha: 1, duration: 1000, ease: 'sine.in' });
     cinema.destroy();
   }
 

@@ -73,20 +73,14 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
 
   /* ---------------- cutscenes ---------------- */
-  intro_card: [
-    'CHAPTER 1: THE NIGHT IT FELL.',
-    'Otterbrook, Ohio. Summer, 1995.',
-    'A small town with one hill, one arcade, and one dog who knows too much.',
-    '2:11 AM.',
-    'The whole town is asleep except the crickets, one porch light, and a dog who has opinions about the sky.',
-    'In {rex}\'s room, the baseball bat leans by the desk, pretending this is a normal night.',
-    'Somewhere very high up, something answers a question nobody on Earth asked.',
-  ],
+  // (ADR-041: intro_card retired — the opening cinema's timed captions in
+  // OverworldScene.openingMeteorCinema own the scene-setting text now, and
+  // chapter banners are gone from player-facing text everywhere.)
   intro_wake: [
-    'The roar came up through the floor, through the bed, through the back teeth.',
-    'For one bright second your room looks like morning. Then the light folds itself back into night.',
-    'Downstairs, Mom says your name once. Not scared. Just making sure the world still has it.',
-    'Something enormous just landed on Hickory Hill.',
+    'The roar shakes the floor, the bed, the windows — the whole house at once.',
+    "For one bright second, your room looks like morning. Then it's night again.",
+    "Downstairs, Mom calls your name — not scared, just checking you're still where she left you.",
+    'Out the window, the top of Hickory Hill glows like a stove burner someone left on.',
     'Your room is yours again: bed, desk, bat, and one very bad idea.',
     '({rex} is already putting on his cap. Somehow you knew he would be.)',
     '* GOAL: Go downstairs and check on Mom.',
@@ -736,9 +730,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Okay. Your mom wins. Let\'s go catch the 6:15.',
   ],
   ch1_card: [
-    'CHAPTER ONE — THE NIGHT IT FELL',
-    'complete.',
-    "(East of here, past the parking lot, the docks are already dreaming about a banana boat. That's a Chapter 2 problem.)",
+    'The night it fell is officially over. Whatever this is now, it has a morning in it.',
+    "(East of here, past the parking lot, the docks are already dreaming about a banana boat. That's a problem for another day.)",
   ],
 
   /* ---------------- S9 — §A10 #1: Biscuit, Come Home ---------------- */
@@ -1250,7 +1243,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ch2_card: [
     'The valley keeps its gold: the corn, the late light, the wool, the laughing.',
     'The Locket hums its two-part harmony. Six Embers still sleep somewhere east of everything.',
-    '* CHAPTER 2 — THE GILDED GRIN — complete. (The boat home runs whenever you\'re ready. Bert\'s at the Brickton docks with a sky to sell you.)',
+    "* (The boat home runs whenever you're ready. Bert's at the Brickton docks with a sky to sell you.)",
   ],
 
 };

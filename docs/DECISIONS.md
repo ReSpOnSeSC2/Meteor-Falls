@@ -2440,3 +2440,73 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   without Lab blindness. The §A6 bosses 3–8 remain chapter deliverables
   (Prompts 29–34) on the S14 phase machine — each ships WITH its chapter's
   art, wear tiers, telegraphs, and §A11 lines, exactly as the Grin did.
+
+## ADR-041 — S15: the opening cinema rebuilt full-length; chapter banners retired from player-facing text
+
+- **Date:** 2026-06-12
+- **Status:** Accepted (user feedback pass: "the cutscene isn't clear it's too
+  short it needs way more polish... show the full process then the world
+  rumbles... pan to the characters house showing the player the overworld...
+  sound effects for the drop and the crash and also some background music...
+  some otherworldly sounding"; and "remove the chapter 1 message I don't want
+  notify players of the chapter for the game")
+- **Context:** The old `openingMeteorCinema` had a layering BUG that gutted it:
+  `world` was added to the cinema container BEFORE the opaque sky rects, so the
+  entire town diorama — crater, houses, porch light, and the closing pan —
+  rendered BEHIND the sky and was never visible. All the player saw was a 1.35s
+  streak over a flat starfield, then a text card announcing "CHAPTER 1".
+- **Decision — THE OPENING CINEMA (full process, ~35s, timed captions):**
+  - Strict paint order is now law in the cinema: `sky < world < fx < caption`
+    as four explicit containers (the bug class is named in the method header).
+  - Phases: fade-in over sleeping Otterbrook (twinkling stars, crescent moon,
+    five dark lots + phone poles + the 6:15's road on an 840px strip) → THE
+    WRONG STAR (a star pulses, grows, shifts white→gold→orange) → THE DESCENT
+    (2.8s diagonal fall with layered trail, shed sparks, sky-glow ramp, and a
+    SONIC BOOM crack + ring at mid-sky) → IMPACT behind Hickory Hill's front
+    ridge (whiteout, `shake(1500, 0.02)`, world-container jolt, tree sway,
+    pulsing crater glow + embedded rock in a `craterLayer` BETWEEN the hill
+    triangles so the ridge occludes it, rising dust column, two ground-hugging
+    shockwave ellipses, 14 debris frags on real gravity arcs via addCounter,
+    two delayed aftershock shakes) → EIGHT MOTES rise and seven streak over the
+    horizon while ONE sinks back into the crater (§A6 foreshadow, wordless) →
+    the town's windows wake hill-side-first with per-light blips → a 3.8s pan
+    east to {rex}'s house → his window lights last + an 18% push-in keeping the
+    house centered → fade; `introScene` then reveals the bedroom mid-aftershock
+    (rumble + gentle shake) instead of re-staging a second impact.
+  - Captions are TIMED (fade in/out, ≥2.6s + 55ms/char — slowed and the
+    riddle-phrases plain-spoken after the user's live read: "back teeth" /
+    "world still has it" confused; kids read this) —
+    `intro_card` is RETIRED from DIALOGUE; the §A11 scene-setting voice moved
+    into the captions. `intro_wake`'s redundant "Something enormous just
+    landed" page became a window-view line (the captions already said it).
+- **Decision — THE SCORE (ADR-006 synth, new presets):** music track
+  `starfall` (52 BPM half-step drone that never resolves + detuned tritone
+  star-bells — otherworldly per the brief; it stops DEAD at impact and the
+  silence after is part of the track) and sfx `meteor_far` (the wrong star's
+  shimmer), `meteor_fall` (2.7s entry scream + building rumble, sized to the
+  descent tween), `sonic_boom`, `meteor_crash` (sub thump + long brown roar +
+  two echoes), `rumble` (reusable aftershock), `light_on` (porch-light blip).
+- **Decision — CHAPTER BANNERS RETIRED (user law, Bible drift):** players are
+  never told chapter numbers. "CHAPTER 1: THE NIGHT IT FELL." (intro_card),
+  "CHAPTER ONE — THE NIGHT IT FELL / complete." (ch1_card) and "* CHAPTER 2 —
+  THE GILDED GRIN — complete." (ch2_card) are gone; the cards keep their
+  closure beats and travel teases in-voice ("The night it fell is officially
+  over..."), and ch1_card's "That's a Chapter 2 problem" gag de-chapters to
+  "a problem for another day". INTERNAL chapter structure is untouched: quest
+  `chapter:` fields, `ch1_complete`/`ch2_complete` flags, validator manifests,
+  and Bible §A6 chapter scoping all stand — this is presentation only. Future
+  chapter-close cards follow suit: closure text, no banner.
+- **Verification:** validator + 275 vitest + tsc green; driven live over the
+  dev preview — New Game threads name entry into the cinema, layer counts
+  read back sky 19 / world 67 / fx live, the full flow lands in the bedroom,
+  `intro_wake` drains, `meteor_fell` sets, control releases, zero console
+  errors. A mid-cinema screenshot caught the hill triangles rendering UPSIDE
+  DOWN — the old negative-y vertex coords were latent-invisible behind the
+  sky bug; rebuilt positive-down with the peak in the first vertex row.
+  REVIEW SMELL, stated: never author Phaser triangles with negative vertex
+  coords — bbox normalization flips them silently.
+- **Consequences:** cutscene work must add to the cinema's named layers, never
+  to `cinema` root before the sky; QA bots fast-forward the cinema via pumped
+  frames (no button presses until `intro_wake` — drain it by polling
+  `meteor_fell` per ADR-008 lore); the §B3 music registry gained an ambient
+  one-off track shape (loop + hard stop as a scoring device).
