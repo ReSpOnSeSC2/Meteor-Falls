@@ -170,19 +170,37 @@ class InputBus {
   useProfile(profile: BindingProfile): () => void {
     const prevProfile = this.activeProfile;
     this.activeProfile = profile;
-    this.cur.clear();
-    this.prev.clear();
+    const held = this.readHeldButtons(profile);
+    this.cur = new Set(held);
+    this.prev = new Set(held);
     this.queued.clear();
     this.releaseQueued.clear();
     this.released.clear();
     return () => {
       this.activeProfile = prevProfile;
-      this.cur.clear();
-      this.prev.clear();
+      const restoredHeld = this.readHeldButtons(prevProfile);
+      this.cur = new Set(restoredHeld);
+      this.prev = new Set(restoredHeld);
       this.queued.clear();
       this.releaseQueued.clear();
       this.released.clear();
     };
+  }
+
+  private readHeldButtons(profile: BindingProfile): Set<Btn> {
+    const out = new Set<Btn>();
+    const bindings = this.bindingsFor(profile);
+    for (const b of BTNS) {
+      if (bindings.keys[b].some((k) => this.keysDown.has(k))) out.add(b);
+    }
+    this.touchBtns.forEach((b) => out.add(b));
+    const pad = this.pad();
+    if (pad && !this.capture) {
+      for (const b of BTNS) {
+        if (bindings.pad[b].some((i) => pad.buttons[i]?.pressed)) out.add(b);
+      }
+    }
+    return out;
   }
 
   /* ---------------- rebinding (S12c — SETUP → CONTROLS) ---------------- */
