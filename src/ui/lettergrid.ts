@@ -9,10 +9,9 @@
  * timers); cells and buttons are tap zones (§B4 touch); B erases (and steps
  * out via onEmptyBack when the field is empty); START jumps straight to OK.
  *
- * Layout: buttons pack center-on-200 with 6px gaps — for the full
- * SPACE/BACK/DON'T CARE/OK set this reproduces NameEntryScene's original
- * literals (x 76/138/194/286) exactly; subsets (the initials entry shows
- * BACK/OK only) center themselves the same way.
+ * Layout: buttons pack center-on-200 with 6px gaps. Name entry shows
+ * SPACE/BACK/RANDOM/OK; subsets (the initials entry shows BACK/OK only)
+ * center themselves the same way.
  */
 import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
@@ -33,7 +32,7 @@ export type GridAct = 'space' | 'back' | 'dontcare' | 'ok';
 const BTN_DEFS: Record<GridAct, { label: string; w: number }> = {
   space: { label: 'SPACE', w: 56 },
   back: { label: 'BACK', w: 50 },
-  dontcare: { label: "DON'T CARE", w: 86 },
+  dontcare: { label: 'RANDOM', w: 86 },
   ok: { label: 'OK', w: 38 },
 };
 
@@ -52,7 +51,7 @@ export interface LetterGridOpts {
   onOk: (value: string) => void;
   /** B pressed while the value is already empty (EB: step back a screen) */
   onEmptyBack?: () => void;
-  /** supplies the DON'T CARE replacement value */
+  /** supplies the RANDOM replacement value */
   dontCare?: () => string;
   /** the boxes behind the button labels — provided so this module stays
    *  windowless; NameEntry and the cabinet both pass ui/windows makeBox */

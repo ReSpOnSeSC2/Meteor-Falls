@@ -15,7 +15,7 @@
  * straight to OK) accepts rex/faye/milo/dorin; the player screen starts empty,
  * so key('KeyZ') types the cursor's 'A' first, then key('Enter'); food and
  * thing accept with key('Enter'); the recap asks Yep!/Hold on— and key('KeyZ')
- * confirms. Bots should avoid DON'T CARE — it randomizes.
+ * confirms. Bots should avoid RANDOM — it randomizes.
  */
 import Phaser from 'phaser';
 import { AUDIO } from '../engine/audio';
@@ -135,9 +135,9 @@ export class NameEntryScene extends Phaser.Scene {
     const lines = [
       `${byKey('rex')}, ${byKey('faye')},`,
       `${byKey('milo')} and ${byKey('dorin')}.`,
-      `You: ${byKey('player')}`,
-      `Food: ${byKey('food')}`,
-      `Coolest: ${byKey('thing')}`,
+      `Player name: ${byKey('player')}`,
+      `Favorite food: ${byKey('food')}`,
+      `Coolest thing: ${byKey('thing')}`,
       '',
       'All set?',
     ];

@@ -39,6 +39,15 @@ describe('New Game entry data (Prompt 21)', () => {
     expect(NEW_GAME_ENTRIES.find((e) => e.key === 'thing')?.prefill).toBe(fresh.coolestThing);
   });
 
+  it('setup prompts plainly say what the player is entering', () => {
+    const byKey = (key: string): string => NEW_GAME_ENTRIES.find((e) => e.key === key)?.prompt ?? '';
+
+    expect(byKey('player')).toContain('YOUR name');
+    expect(byKey('player')).not.toMatch(/holding this|shy/i);
+    expect(byKey('food')).toContain('favorite homemade food');
+    expect(byKey('thing')).toContain('coolest thing');
+  });
+
   it('the grid is 5 even rows of 13; caps are the canon constants (nav math depends on it)', () => {
     expect(GRID_ROWS).toHaveLength(5);
     for (const row of GRID_ROWS) expect(row).toHaveLength(13);
