@@ -399,3 +399,32 @@ loop slept; and `renderer.snapshotArea` only fulfills with the loop AWAKE.
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 19 | **The settings, on the player's pad** — rebind SPRINT onto the preferred DualSense button via the capture card and play a cage possession with it; flip the window flavor and read three conversations; BRISK text through a shop; Return to Title and Continue back | ⬜ | ⬜ | the rebind page exists FOR this pad — verify the capture reads its buttons |
+
+## S15c browser pre-flight — 2026-06-12, the third playtest fixed live (ADR-043)
+
+All legs over the dev server via the ADR-008 driver. Driver lore earned this
+session: on a FRESH page, wait for `game.cache.bitmapFont.exists('retro')`
+before starting scenes (mfGS exists before BootScene registers the font);
+`window.shot()` needs the sidecar (`node tools/shot-server.mjs`, :5179) or it
+silently no-ops; and NEVER scene.restart over an open say() — drain pages
+first (the S6 lesson; the everyFrame SHUTDOWN fix now makes the crash class
+survivable, but the lesson stands).
+
+| Check | Result |
+|---|---|
+| **THE NIGHT LINE (overscan)** — pixel-proven root cause: at scrollY 171 screen row 0 read day-grass [164,220,100] over a night map (scroll rounding shifts scrollFactor-0 shapes vs the tilemap by unequal sub-pixels). After `overscanRect`: row 0 reads tinted [73,101,55]/[106,92,78] identical to row 1, bottom row 224 tinted too | ✅ pixel-sampled + s15c_night_top_row.png |
+| **THE SWIRL TRAFFIC LIGHT** — startBattle driven with both advantages: player → 0xa4dc64 (GRASS green), enemy → 0xec5448 (RED); `SWIRL_TINT`/`contactAdvantage` pinned headless (+2 vitest); Bible §A4.2 + Prompt 16 amended | ✅ driven + s15c_swirl_green.png |
+| **LEVEL-UPS WAIT** — two-level victory (L1 + 30 EXP + mailbox share): "jumped to level 2!" HELD 400 input-free frames with the gold ▼ blinking, KeyZ → "jumped to level 3!" held again, KeyZ → deposit line → battle ended at L3/38 EXP | ✅ driven end-to-end |
+| **DAY-AFTER OTTERBROOK** — pajama kid + old-timer read their `dialogueDay` lines in daylight and their originals at 2 A.M.; Mrs. Pemmel's rewritten present-tense 2 A.M. lines read with {rex} resolved | ✅ all four read back in-scene |
+| **BISCUIT'S VERDICT** — hill_road with tick_defeated && !zapper_done builds ONLY `biscuit_road_after` ("pointing at YOU now"); the pre-Tick pointer correctly retired | ✅ read back in-scene |
+| **THE SEATED 6:15** — root cause: player depth only assigned in update(), which the cut lock skips → depth 0 under the seat back (88). buildPlayer now y-sorts at build; first ride spawns (296,100,'up'): hero fully visible at his seat, facing the window reel | ✅ screenshot + s15c_bus_seated.png |
+| **THE ARRIVAL PAN** — three legs sampled live: (6,354) bus stop → (216,98) Department block → (643,147) clock district → (0,363) back on the player; arrival flag set, control released (then a roaming Pigeon Gang ambushed the idle bot — organic proof the world resumed) | ✅ scroll-sampled |
+| **POLLS DIE WITH THE SCENE** — deliberate scene.restart mid-say: 120 pumped frames clean after the everyFrame SHUTDOWN fix (the same flow threw `'chars' of null` every frame before it) | ✅ repro before/after |
+| Console, whole session | ✅ zero product errors (both thrown stacks were harness-induced and are now hardened against) |
+| `npm test` | ✅ validator (41 maps, 331 dialogue scripts) + 277 vitest |
+
+### S15c device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 24 | **The third playtest, on device** — walk Otterbrook at night and confirm no day-lit line at the screen top; sneak a roamer (green swirl) and get ambushed (red swirl); win a fight that levels twice and confirm each level waits for a press; talk to the pajama kid at night AND after dawn; talk to Biscuit on Hill Road right after the Tick falls; ride the 6:15 and watch the seated hero + the slow three-leg Brickton pan | ⬜ | ⬜ | rows 20–23 stay reserved for S14c–f; 25–27 for S15d–f |

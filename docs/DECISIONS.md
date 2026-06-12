@@ -2564,3 +2564,107 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   scripts town→hill traversal must cross hill_road; future "more homes"
   asks land here first. Chapter-route insertions follow this shape: reuse
   the displaced door targets so only the two seam doors change.
+
+## ADR-043 — S15c: the third playtest fixed live + the world-expansion queue (and the numbering drift repaired)
+
+- **Date:** 2026-06-12
+- **Status:** Accepted (user playtest dump, fixed live where small, queued
+  where large: "at night there is one line at the top that still looks like
+  its light out"; "when I surprise an enemy it should show green, when they
+  surprise me it should show red, currently that is reversed"; "after
+  leveling up or multiple level ups there should still be the need to press
+  x between each level up"; "after the battle in the beginning the
+  characters text need to change in the characters main city when its light
+  out"; "when you speak to the dog again coming down the hill after you won
+  the first boss battle v the tick it should say something different"; "on
+  the bus ride to brickton the character UI is off where his head is like
+  blocked by the seat"; "when brickton starts, it spanned through the map
+  but like did it super fast" — plus the OH-triple / road-gate / Brickton-4×
+  decrees, which became queued prompts S15d–S15f.)
+- **Decision — THE OVERSCAN LAW (the night line):** full-screen overlays
+  must outsize the viewport. Pixel-proven root cause: with the camera
+  mid-map (scrollY 171) screen row 0 rendered the world UN-tinted —
+  camera scroll rounding shifts scrollFactor-0 shapes and the tilemap by
+  unequal sub-pixels, exposing a one-pixel day-lit line at the top of every
+  night map. `overscanRect()` (ui/windows.ts, OVERSCAN = 4) bleeds the
+  night tint past every edge; buildNight consumes it. Any future
+  full-screen tint/cover takes the same helper.
+- **Decision — THE SWIRL IS A TRAFFIC LIGHT (Bible §A4.2 + Prompt 16
+  amended):** the Bible's original text gave green to the ENEMY's drop and
+  red to yours; the code faithfully implemented it; the user (and
+  EarthBound) read green as good news. `SWIRL_TINT` + `contactAdvantage()`
+  extracted to battle/formulas.ts (Phaser-free, vitest-pinned): green =
+  player free round, red = ambush, paper = neutral. S14d item 1 keeps the
+  rest of its spec (three sfx, true-grey neutral, spin-direction
+  colorblind channel) — annotated in the queue.
+- **Decision — LEVEL-UPS WAIT FOR YOU:** BattleScene gains `printWait()` —
+  print, then hold until a FRESH A/B press (arms only after both buttons
+  are seen up, so a held fast-forward can never blow through; the ADR-024
+  latched-press class, inverted; gold ▼ blinks at the window corner).
+  Victory's level-jump and ability-realization lines ride it: three
+  level-ups are three pieces of news, not a blur.
+- **Decision — THE TOWN TALKS ABOUT THE NIGHT, THEN THE MORNING:**
+  `NpcDef.dialogueDay` (schema + validator sweep both directions) — spoken
+  instead of `dialogue` when the map is in daylight; the scene caches
+  `isNight` at build. Otterbrook: the old-timer and the pajama kid carry
+  day variants; Mrs. Pemmel's static line (structurally night-only — her
+  day path is the quest machine) rewrote to present-tense 2 A.M. Biscuit
+  on Hill Road splits on `tick_defeated`: pointing at the hill before, a
+  proud verdict (pointing at YOU) on the walk down — data-only dual NPC
+  defs, the existing gate idiom.
+- **Decision — THE 6:15 SEATS ITS HERO:** root cause: the player's depth
+  was only assigned in update(), which the `cut` lock skips, so any map
+  entered INTO a cutscene left him at depth 0 and the seat back (depth 88)
+  swallowed his head. buildPlayer now y-sorts from frame one, and the
+  first ride spawns him AT a seat facing the window (296,100,'up').
+  S14d's "the 6:15 seats the whole party" inherits this seam.
+- **Decision — THE ARRIVAL EARNS ITS PAN:** bricktonArrivalScene's single
+  950ms dash became three slow legs (4200/3200/1800ms, Sine.easeInOut)
+  paced under the §A11 narration; the dialogue stays the clock, holding A
+  fast-forwards everything per ADR-024. S15f re-aims the waypoints when
+  the city quadruples (landmark-derived, never hardcoded).
+- **Decision — POLLS DIE WITH THE SCENE (rode along, QA-caught):**
+  everyFrame() now also unsubscribes itself on the scene's SHUTDOWN event.
+  A stop/restart mid-poll used to leave the handler subscribed to the
+  persistent scene emitter while its UI objects were destroyed — the
+  scene's next life then drove the poll into a corpse every frame (caught
+  live: a say() typewriter setText on a destroyed BitmapText threw on
+  every frame, forever, killing the QA loop; in production the same class
+  waits for any future cutscene that restarts a scene over an open
+  dialogue). Repro driven before and after the fix: a mid-say
+  scene.restart now survives clean.
+- **Decision — THE QUEUE GROWS THE WORLD (prompt authoring):** the user's
+  scale decrees landed as three fully-written prompts — S15d OTTERBROOK
+  GROWS UP (the frozen-core growth law: the 1995 canvas survives
+  byte-identical as the historic core, growth south/east on new streams;
+  city hall + Civic Green + pond park + east lanes; THE SETTLEMENT LADDER
+  into §A5), S15e THE ROAD TO BRICKTON (Meadow Mile + the Overpass; THE
+  ORIENTATION GATE — three Blazer Smiler proctor fights for the visitor
+  badge, binding bus AND foot behind a (visitor_badge || bus_ride_done)
+  grandfather clause, no migration), S15f BRICKTON SPRAWLS (≈2× the grown
+  Otterbrook on the frozen 2077 core, the building catalog, THE CAGE
+  BLOCK readable from the street, and THE BRICKTON MINUTE + THE WARM DIAL
+  TONE replacing the toast "stories" on their existing gate flags). The
+  block runs right after S14d because the HEADROOM PROGRAM is its
+  perf license.
+- **Decision — THE NUMBERING DRIFT, REPAIRED:** the off-queue sessions
+  consumed labels S15/S15b and ADR-041/042, which S14c's QA paragraph had
+  reserved; queue prompts EVERY DOOR OPENS / STATIONS & WHEELS renamed
+  S17/S18 (content untouched); S14c/S14d carry DRIFT NOTES where ADR-042
+  already shipped a slice (Mom's full reset + in-person cure: shipped;
+  homesick flat rate now 0.02); S11b/S12c/S13 headings gained the ✅ DONE
+  markers the footer always asserted, so kickoff rule 1 is mechanical
+  again. ADR numbers are allocated next-free at ship time from here —
+  prompts no longer pin them.
+- **Verification:** validator (41 maps, 331 dialogue scripts) + 277 vitest
+  + tsc green; night row-0 pixel-sampled tinted at top and bottom edges;
+  the swirl driven live both ways (green sneaking up, red ambushed); a
+  triple level-up acknowledged press-by-press; day/night dialogue and
+  Biscuit's verdict read back in-scene; the bus ride screenshot shows the
+  hero seated in full view; the arrival pan walked across three legs.
+- **Consequences:** full-screen overlays take `overscanRect` or they are
+  wrong; swirl colors are formula law (`SWIRL_TINT`) — scenes never
+  hand-pick them; any cutscene-entered map must trust buildPlayer's
+  depth init; `dialogueDay` is the idiom for time-of-day NPC variance
+  (quest machines unaffected); the queue's world block is the next major
+  arc after S14c/S14d, and file order in NEXT_PROMPTS.md IS the queue.

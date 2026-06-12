@@ -313,6 +313,10 @@ export const NpcDefSchema = z.strictObject({
   y: z.number(),
   facing: FacingSchema,
   dialogue: z.string().min(1),
+  /** S15c: spoken INSTEAD of `dialogue` once the map is in daylight (the
+   *  story-night clock or MapDef.night decides) — the town talks about the
+   *  night differently after it survives it. Optional; validator-swept. */
+  dialogueDay: z.string().min(1).optional(),
   wander: z.boolean().optional(),
   /** special rendering: dog uses its own anim set */
   dog: z.boolean().optional(),

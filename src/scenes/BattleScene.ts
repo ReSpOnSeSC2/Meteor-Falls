@@ -15,6 +15,12 @@
  * choreography; and ALL choreography fast-forwards under held A/B at the
  * text typewriter's exact ×4 (ADR-010) — one skip state, applied to dt.
  *
+ * S15c (ADR-043): victory's "jumped to level N!" and "realized X!" lines
+ * ride printWait() — each WAITS for a fresh A/B press (held keys are
+ * ignored until released, the inverted ADR-024 latch). BOT IMPACT: any
+ * recipe that levels up must key('KeyZ') once per level line or the
+ * victory flow stalls at the gold ▼; blind pumping no longer drains it.
+ *
  * ── QA RECIPE — the S11 gauntlet (ADR-008 driver, pump(n, 8.33) one-frame
  * taps; release all keys between chunks, settle fades before pressing).
  * Ran 2026-06-11, logged in docs/QA.md. Driver lore this scene earned:
@@ -701,6 +707,42 @@ export class BattleScene extends Phaser.Scene {
             off();
             resolve();
           }
+        }
+      });
+    });
+  }
+
+  /**
+   * S15c: print, then HOLD the line until a fresh A/B press. Level-ups are
+   * acknowledged one by one (user law) — a held fast-forward must not blow
+   * through them, so the wait arms only after both buttons are seen up
+   * (the ADR-024 latched-press class, inverted).
+   */
+  private async printWait(raw: string): Promise<void> {
+    await this.print(raw);
+    await new Promise<void>((resolve) => {
+      const tip = this.add
+        .bitmapText(258, 48, 'retro', '▼', 6)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1)
+        .setTint(colorOf(px(RAMP.GOLD, 2)));
+      const blink = this.time.addEvent({
+        delay: 320,
+        loop: true,
+        callback: () => tip.setVisible(!tip.visible),
+      });
+      let armed = !INPUT.held('A') && !INPUT.held('B');
+      const off = everyFrame(this, () => {
+        if (!armed) {
+          if (!INPUT.held('A') && !INPUT.held('B')) armed = true;
+          return;
+        }
+        if (INPUT.justPressed('A') || INPUT.justPressed('B')) {
+          AUDIO.sfx('confirm');
+          off();
+          blink.remove();
+          tip.destroy();
+          resolve();
         }
       });
     });
@@ -1976,11 +2018,13 @@ export class BattleScene extends Phaser.Scene {
         h.odoHp.heal(h.hero.maxHp - prevMaxHp);
         h.odoPp.heal(h.hero.maxPp - prevMaxPp);
         AUDIO.jingle('levelup', 1400, null);
-        await this.print(`${h.hero.name} jumped to level ${lvl}!`);
+        // S15c: every level-up (and every realization) waits for its own
+        // press — three level-ups are three pieces of news, not a blur
+        await this.printWait(`${h.hero.name} jumped to level ${lvl}!`);
         const newAbilities = HEROES[h.hero.id].unlocks.filter((u) => u.level === lvl);
         for (const u of newAbilities) {
           const ab = ABILITIES[u.ability];
-          if (ab) await this.print(`${h.hero.name} realized ${ab.name}!`);
+          if (ab) await this.printWait(`${h.hero.name} realized ${ab.name}!`);
         }
       }
     }

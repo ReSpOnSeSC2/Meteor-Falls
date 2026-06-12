@@ -105,7 +105,14 @@ In the final battle, Pray becomes **scripted** (see A8, Chapter 8).
 ## A4. Core Systems (the EarthBound DNA)
 
 1. **Rolling Odometer HP.** HP/PP tick down like a mechanical odometer (~2 digits/sec). A mortal hit can be outraced by healing or by *winning the battle* before the meter hits zero. This is the single most important feel-mechanic — Prompt 13 is dedicated to it.
-2. **Visible overworld enemies, no random encounters.** Touch an enemy to battle. Back-attacks give them a green-swirl first strike; you get red-swirl priority by touching them from behind. If your party vastly outlevels the enemy: **instant auto-win** screen, no battle.
+2. **Visible overworld enemies, no random encounters.** Touch an enemy to battle. The swirl reads like a traffic light: touch them from behind and the swirl is **green** — your free round; let them back-attack you and it is **red** — theirs. If your party vastly outlevels the enemy: **instant auto-win** screen, no battle.
+
+> *(Amended 2026-06-12 per Appendix rule 6, ADR-043: the swirl colors above
+> were originally written reversed — green for the enemy's drop, red for
+> yours. The user's playtest (and EarthBound itself) read green as GOOD
+> NEWS; the engine now shows green = player advantage, red = enemy
+> advantage, paper-grey = neutral. `SWIRL_TINT` in battle/formulas.ts is
+> the pinned source of truth.)*
 3. **Save = Call Your Dad.** Phones (home phones, payphones, banana-shaped novelty phones, a yak with a satellite dish in China) let you call **Dad**, who saves the game ("Have you been eating well, champ?"), tracks playtime, and occasionally insists you take a break. **3 save slots.**
 4. **Money = Dad's deposits.** Battle winnings are deposited by Dad into the **Otterbrook Savings & Loan** card, withdrawn at ATMs worldwide. Mom's home cooking (your favorite food, chosen at game start) cures **Homesickness** — a status Jay randomly contracts that makes him skip turns daydreaming about Mom's cooking. Call Mom to cure it.
 5. **Picnic.** At picnic tables scattered through every region (≈3 per chapter), use a **Picnic Basket** item: full party HP/PP restore + the **Sunny Side** buff (+10% all stats for the next 5 battles). Baskets are bought (Basic), assembled at delis from 3 regional foods (Family), or earned from Buni's quest (Feast — adds auto-revive once). Tables are placed *before* dungeons — finding one is strategy.
@@ -613,8 +620,10 @@ headlessly via the engine API.
 ```
 [Standard Header]
 Implement encounter transitions: overworld contact triggers the EB swirl
-(green = enemy back-attacked you ⇒ enemy free round; red = you touched their
-back ⇒ your free round; neutral otherwise), battle intro text, VICTORY flow
+(green = you touched their back ⇒ your free round; red = enemy back-attacked
+you ⇒ enemy free round; neutral otherwise — amended 2026-06-12 per Appendix
+rule 6, ADR-043: as first written the two colors were swapped), battle intro
+text, VICTORY flow
 ("YOU WON! Jay gained 86 EXP." level-up fanfare + stat gains + new-ability
 text + drops w/ inventory-full handling), DEFEAT flow per §A4.7 (fade,
 "Jay... pick yourself up..." respawn at last save, cash-on-hand halved, party

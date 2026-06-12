@@ -25,6 +25,14 @@
  * and every later save reuses it silently. Continue lives in SaveSlotsScene
  * (recipe in ITS header). A party wipe respawns at the last Dad-save's
  * map/position (GS.respawnPoint) instead of hardcoded rex_home.
+ * S15c (ADR-043) checks: night tint must cover screen row 0 — snapshot +
+ * sample (60,0) over otterbrook at scrollY>0, expect the tinted ~[73,101,55]
+ * never day-[164,220,100]; swirl = GREEN sneaking up on a roamer's back,
+ * RED when one chases you down (SWIRL_TINT is the law); biscuit_road speaks
+ * its _after lines between tick_defeated and zapper_done; old_timer/
+ * pajama_kid read dialogueDay once zapper_done; the 6:15 spawns the hero
+ * seated at (296,100,'up') — player.depth must equal y from frame one;
+ * brickton's arrival pan runs three legs paced by the say() pages.
  * S9: quests (§A10 #1–3). Pemmel/Plummer/Ana/Vivi talk through questTalk()
  * state branches; sniff clues + the spring are flag-gated SIGNS whose beats
  * run in signBeat(); mail delivers by interacting with the five door props
@@ -96,10 +104,19 @@ import type { LinksLaunch } from './LinksScene';
 import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { Dialogue, makeWindow, toast, vars, DEPTH_UI } from '../ui/windows';
+import { Dialogue, makeWindow, toast, vars, DEPTH_UI, overscanRect } from '../ui/windows';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
-import { instantWin, expShare, SUNNY_BATTLES, reviveCost, CURE_ALL_COST, CHAPEL_HEAL } from '../battle/formulas';
+import {
+  instantWin,
+  expShare,
+  SUNNY_BATTLES,
+  reviveCost,
+  CURE_ALL_COST,
+  CHAPEL_HEAL,
+  contactAdvantage,
+  SWIRL_TINT,
+} from '../battle/formulas';
 import { colorOf, RAMP, px } from '../palette';
 
 interface Rect {
@@ -182,6 +199,7 @@ export class OverworldScene extends Phaser.Scene {
   private patrols: PatrolObj[] = [];
   private dlg!: Dialogue;
   private cut = false; // cutscene lock
+  private isNight = false; // set per-build; dialogueDay variants read it (S15c)
   private transitioning = false;
   private battleCooldown = 0;
   private stepTimer = 0;
@@ -231,6 +249,7 @@ export class OverworldScene extends Phaser.Scene {
       !GS.flag('zapper_done') &&
       (this.mapDef.id === 'otterbrook' || this.mapDef.id === 'hill_road' || this.mapDef.id === 'hickory_hill');
     const night = this.mapDef.night === true || storyNight;
+    this.isNight = night; // S15c: NPC dialogueDay variants read this
     if (night) this.buildNight();
     this.showBanner(night);
 
@@ -452,6 +471,10 @@ export class OverworldScene extends Phaser.Scene {
     this.facing = GS.data.facing;
     this.player = this.add.sprite(GS.data.x, GS.data.y, 'rex', standFrame(this.facing));
     this.player.setOrigin(0.5, 1);
+    // S15c: depth was only assigned in update(), which the cut lock skips —
+    // a map entered INTO a cutscene (the 6:15) left the hero at depth 0,
+    // so the seat back swallowed his head. Y-sort from frame one.
+    this.player.setDepth(this.player.y);
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.buildFollowers();
   }
@@ -539,8 +562,11 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private buildNight(): void {
+    // overscanRect: the tint must outsize the viewport or scroll rounding
+    // leaves screen row 0 day-lit — the reported "one line at the top" (S15c)
+    const r = overscanRect(this.scale.width, this.scale.height);
     const o = this.add
-      .rectangle(0, 0, this.scale.width, this.scale.height, colorOf(px(RAMP.NIGHT, 1)))
+      .rectangle(r.x, r.y, r.w, r.h, colorOf(px(RAMP.NIGHT, 1)))
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(800)
@@ -1011,7 +1037,7 @@ export class OverworldScene extends Phaser.Scene {
 
   private async patrolBattle(p: PatrolObj): Promise<void> {
     this.battleCooldown = this.time.now + 1500;
-    // caught = they get the drop on you; sneak up on THEM for the red swirl
+    // caught = they get the drop on you; sneak up on THEM for the green swirl
     const f = this.facingVectorOf(p.facing);
     const toPlayer = new Phaser.Math.Vector2(this.player.x - p.spr.x, this.player.y - p.spr.y).normalize();
     let advantage: 'player' | 'enemy' | 'none' = 'none';
@@ -1092,15 +1118,13 @@ export class OverworldScene extends Phaser.Scene {
       toast(this, `YOU WON without even fighting! +${share} EXP`);
       return;
     }
-    // contact angle → swirl color (§A4.2 / Prompt 16)
+    // contact angle → swirl color (§A4.2 / Prompt 16 — pinned in formulas)
     const toEnemy = new Phaser.Math.Vector2(r.spr.x - this.player.x, r.spr.y - this.player.y).normalize();
     const facingVec = this.facingVector();
     const dotF = facingVec.dot(toEnemy);
     const enemyDir = new Phaser.Math.Vector2(r.vx, r.vy).normalize();
     const enemyFleeing = enemyDir.length() > 0 && enemyDir.dot(toEnemy) > 0.4;
-    let advantage: 'player' | 'enemy' | 'none' = 'none';
-    if (dotF < -0.35) advantage = 'enemy'; // it got our back
-    else if (enemyFleeing && dotF > 0.35) advantage = 'player'; // we got its back
+    const advantage = contactAdvantage(dotF, enemyFleeing);
     await this.startBattle([r.enemyId], advantage, r);
   }
 
@@ -1127,12 +1151,12 @@ export class OverworldScene extends Phaser.Scene {
       this.cut = true;
       AUDIO.sfx('swirl');
       AUDIO.stopMusic();
-      const tintMap = { player: px(RAMP.RED, 2), enemy: px(RAMP.GRASS, 2), none: px(RAMP.PAPER, 1) } as const;
+      // S15c traffic-light law: green = your free round, red = theirs
       const sw = this.add
         .image(this.scale.width / 2, this.scale.height / 2, 'swirl')
         .setScrollFactor(0)
         .setDepth(4000)
-        .setTint(colorOf(tintMap[advantage]))
+        .setTint(colorOf(SWIRL_TINT[advantage]))
         .setScale(0.2)
         .setAlpha(0.9);
       const cover = this.add
@@ -1377,7 +1401,8 @@ export class OverworldScene extends Phaser.Scene {
     }
     // S9: quest givers and quest-state NPCs branch through their machines
     if (await this.questTalk(n)) return;
-    await this.dlg.say(...DIALOGUE[n.def.dialogue]);
+    // S15c: daylight swaps in the day variant where one is authored
+    await this.dlg.say(...DIALOGUE[(!this.isNight && n.def.dialogueDay) || n.def.dialogue]);
   }
 
   /* ---------------- S9: the §A10 #1–3 quest beats (Prompt 26) ----------------
@@ -3116,11 +3141,19 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag('brickton_arrival_done');
     await this.wait(260);
-    this.cameras.main.pan(31 * 16, 6 * 16, 950, 'Sine.easeInOut', true);
-    await this.dlg.say(...DIALOGUE.brickton_arrival.slice(0, 4));
+    // S15c: the city earns a REAL establishing pan — three slow legs paced
+    // under the narration (was one 950ms dash that finished before page one
+    // typed out). The dialogue stays the clock: pages hold each leg on
+    // screen, holding A fast-forwards everything per ADR-024.
+    this.cameras.main.pan(31 * 16, 6 * 16, 4200, 'Sine.easeInOut', true);
+    await this.dlg.say(...DIALOGUE.brickton_arrival.slice(0, 2));
+    this.cameras.main.pan(62 * 16, 14 * 16, 3200, 'Sine.easeInOut', true);
+    await this.dlg.say(...DIALOGUE.brickton_arrival.slice(2, 4));
+    this.cameras.main.pan(this.player.x, this.player.y, 1800, 'Sine.easeInOut', true);
+    await this.dlg.say(DIALOGUE.brickton_arrival[4]);
     this.sparkleBurst(this.player.x, this.player.y - 18, 8);
     AUDIO.sfx('ember');
-    await this.dlg.say(...DIALOGUE.brickton_arrival.slice(4));
+    await this.dlg.say(DIALOGUE.brickton_arrival[5]);
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.cut = false;
   }
@@ -3341,7 +3374,9 @@ export class OverworldScene extends Phaser.Scene {
     // first ride to the city is the full interior scene; after that, quick hops
     if (dest === 'brickton' && !GS.flag('bus_ride_done')) {
       this.registry.set('busDest', dest);
-      this.goThroughDoor('bus_interior', 296, 108, 'left');
+      // S15c: he rides AT a seat, facing the window the reel scrolls past —
+      // feet on the cushion row so the y-sort seats him in front of the back
+      this.goThroughDoor('bus_interior', 296, 100, 'up');
       return;
     }
     if (dest === 'brickton') this.goThroughDoor('brickton', BRICKTON_BUS_SPAWN.x, BRICKTON_BUS_SPAWN.y, 'up');

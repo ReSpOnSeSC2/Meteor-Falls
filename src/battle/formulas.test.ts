@@ -27,6 +27,7 @@ import {
   wearTier,
 } from './formulas';
 import * as F from './formulas';
+import { RAMP, px } from '../palette';
 import { rollPray, prayWeights, PRAY_BASE, type PrayTier } from '../data/abilities';
 import { mulberry32 } from '../spritegen/pixmap';
 import { expForLevel, makeHeroState } from '../engine/state';
@@ -314,5 +315,22 @@ describe('§A4.5 SUNNY SIDE + the §A4.7 hospital economy (S14)', () => {
     expect(F.reviveCost(6)).toBe(34);
     expect(F.reviveCost(13)).toBe(62);
     expect(F.reviveCost(13)).toBeGreaterThan(F.reviveCost(6));
+  });
+});
+
+describe('§A4.2 contact advantage & the swirl traffic-light (S15c, ADR-043)', () => {
+  it('contactAdvantage: behind-us = enemy, fleeing-back = player, face-on = none', () => {
+    expect(F.contactAdvantage(-0.5, false)).toBe('enemy'); // it got our back
+    expect(F.contactAdvantage(-0.36, true)).toBe('enemy'); // their angle wins outright
+    expect(F.contactAdvantage(0.5, true)).toBe('player'); // we got its back
+    expect(F.contactAdvantage(0.5, false)).toBe('none'); // head-on chase, no sneak
+    expect(F.contactAdvantage(0, false)).toBe('none'); // sideswipe
+    expect(F.contactAdvantage(0.36, false)).toBe('none'); // facing it isn't sneaking
+  });
+
+  it('the swirl is a traffic light: GREEN = player free round, RED = ambush (user law — was reversed)', () => {
+    expect(F.SWIRL_TINT.player).toBe(px(RAMP.GRASS, 2));
+    expect(F.SWIRL_TINT.enemy).toBe(px(RAMP.RED, 2));
+    expect(F.SWIRL_TINT.none).toBe(px(RAMP.PAPER, 1));
   });
 });

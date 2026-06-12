@@ -4,6 +4,7 @@
  * mortal-blow survival. Every function takes its RNG so tests are exact.
  */
 import { ITEMS, slotOf } from '../data/items';
+import { RAMP, px } from '../palette';
 import type { HeroState } from '../engine/state';
 
 export type Rng = () => number;
@@ -237,3 +238,25 @@ export function contractHomesick(rng: Rng): boolean {
 export function homesickSkips(rng: Rng): boolean {
   return rng() < HOMESICK_SKIP_CHANCE;
 }
+
+/* ---------------- §A4.2 contact angle & the swirl traffic-light (S15c) ---------------- */
+
+/** contact angle → first strike. dotF = facing·(unit toEnemy); an enemy
+ *  fleeing away from you caught from behind gives up its back. Thresholds
+ *  are the S1 originals, extracted here so the read is pinned headless. */
+export function contactAdvantage(dotF: number, enemyFleeing: boolean): 'player' | 'enemy' | 'none' {
+  if (dotF < -0.35) return 'enemy'; // it got our back
+  if (enemyFleeing && dotF > 0.35) return 'player'; // we got its back
+  return 'none';
+}
+
+/** The swirl reads like a traffic light (user law, S15c — and EB-faithful;
+ *  Bible §A4.2 + Prompt 16 amended in the same commit): GREEN = you snuck
+ *  up and move first, RED = it got the drop on you, paper-grey = neutral.
+ *  The flip ships ahead of queued S14d item 1 — its per-color sfx and
+ *  spin-direction colorblind channel remain queued there. */
+export const SWIRL_TINT: Record<'player' | 'enemy' | 'none', number> = {
+  player: px(RAMP.GRASS, 2),
+  enemy: px(RAMP.RED, 2),
+  none: px(RAMP.PAPER, 1),
+};

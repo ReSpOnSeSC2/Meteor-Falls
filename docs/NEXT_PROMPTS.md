@@ -194,22 +194,26 @@ architectural decision you make to it. TypeScript strict, no `any`.
 CONTINUE THE BUILD. This repo is METEOR FALLS, an EarthBound-style Phaser 3 +
 TypeScript + Vite RPG for Android/browser, built ONE QUEUED PROMPT PER SESSION.
 Where things stand: Chapters 1–2 are COMPLETE and playable end-to-end
-(ADR-001..040 in docs/DECISIONS.md — the boss phase machine, picnics,
+(ADR-001..043 in docs/DECISIONS.md — the boss phase machine, picnics,
 hospitals, AWAKENINGS, THE CAGE streetball + CAGE 2.0, COSTA ESTRELLA LINKS
-golf, the settings suite; saves at v7 behind the migration registry in
+golf, the settings suite, the full-length opening cinema + Hill Road, and the
+S15c third-playtest pass; saves at v7 behind the migration registry in
 src/engine/migrations.ts; the content validator gates npm test AND build; the
-vitest floor is 274 green). The design bible is docs/GAME_BIBLE.md (Part A
+vitest floor is 277 green). The design bible is docs/GAME_BIBLE.md (Part A
 canon with §A-references, Part B architecture, Part C the prompt sequence, the
 Appendix session rules). QA log + the user's device sign-off table live in
-docs/QA.md (rows 1–19 used). The QA driver: window.pump/key/holdKey/shot +
+docs/QA.md (rows 1–19 + 24 used; 20–23 reserved by S14c–f, 25–27 by S15d–f).
+The QA driver: window.pump/key/holdKey/shot +
 mfGS + mfMakeHero + mfBattle.qa(); bot recipes live in scene headers.
 
 YOUR TASK THIS SESSION:
 1. Open docs/NEXT_PROMPTS.md. Find the FIRST "## Prompt" section NOT marked
-   "✅ DONE". (As first written that is S14c — THE PLAYTEST FOUR & THE WORLDS
-   OF SCALE; after it ships this same kickoff finds S14d, then S14e, S14f,
-   S15, S16, then the Bible's Part C chapter prompts per the run-order
-   footer.)
+   "✅ DONE". (As of 2026-06-12 that is S14c — THE PLAYTEST FOUR & THE WORLDS
+   OF SCALE; after it ships this same kickoff finds S14d, then the world
+   block S15d → S15e → S15f, then S14e, S14f, S17, S18, then the Bible's
+   Part C chapter prompts per the run-order footer. Headings carry DRIFT
+   NOTES where off-queue sessions already shipped a slice — re-trace those
+   before building.)
 2. Execute THAT ONE PROMPT in full, exactly as written. The queued prompts
    are self-contained: playtest reports arrive with root causes already
    traced to file:line, canon blocks are written out verbatim-faithful, and
@@ -329,7 +333,7 @@ odometer never upstaged, the whole show skippable, npm test green with
 the fx registry enforced, and the bot finishes its scripted gauntlet.
 ```
 
-## Prompt S11b — THE BATTLE STAGE (battlers act, weapons render, wear states, real doors)
+## Prompt S11b — THE BATTLE STAGE (battlers act, weapons render, wear states, real doors) — ✅ DONE 2026-06-11 (ADR-032; marker added in S15c — the footer always said so)
 
 ```
 [Standard Header]
@@ -568,7 +572,7 @@ previews; the bot completes one seeded 5v5 QUARTER and one 3v3 game to
 manifests enforced); browser loop and android:apk untouched.
 ```
 
-## Prompt S12c — CAGE 2.0 (user spec, captured verbatim-faithful 2026-06-11: the control room)
+## Prompt S12c — CAGE 2.0 (user spec, captured verbatim-faithful 2026-06-11: the control room) — ✅ DONE 2026-06-11 (ADR-036; marker added in S15c)
 
 ```
 [Standard Header]
@@ -674,7 +678,7 @@ pre-flight + one device row; ADR appended; browser loop and android:apk
 untouched.
 ```
 
-## Prompt S13 — COSTA ESTRELLA LINKS (resort golf, the 32-player Invitational)
+## Prompt S13 — COSTA ESTRELLA LINKS (resort golf, the 32-player Invitational) — ✅ DONE 2026-06-11 (ADR-037/038; marker added in S15c)
 
 ```
 [Standard Header]
@@ -751,9 +755,9 @@ BOSS 2 on the machine (clang/telegraph/swap verified live), MIA'S FREEZE
 AWAKENING at the HOLLOW reveal (§A3 amended; save v7 backfill), quests
 #5–6, the Ch.2 §A8 shelf, the full §A11 script, EMBER #2 + the recovery
 exit beat + Uncle Bert's Ch.3 tease. Validator + 270 vitest green; QA.md
-S14 pre-flight + device row 18. NOTE for S15: this queued draft's
+S14 pre-flight + device row 18. NOTE for S17: this queued draft's
 remaining scraps — Otterbrook home interiors (incl. Chad's empty house)
-— roll into S15's interior program below.
+— roll into S17's interior program below.
 
 The original queued draft is kept for the record:
 
@@ -787,6 +791,15 @@ table.
 ```
 
 ## Prompt S14c — THE PLAYTEST FOUR & THE WORLDS OF SCALE (eight chapters become ten)
+
+> DRIFT NOTE (S15c, 2026-06-12): the off-queue S15/S15b sessions consumed
+> ADR-041/042 (the opening cinema; Hill Road) — this prompt's QA paragraph
+> reserved those numbers; allocate the next free ADRs at ship time instead.
+> Item 4 (MOM'S TABLE) is PARTIALLY shipped by ADR-042: every talk with Mom
+> already full-heals HP/PP and cures Homesick in person, free, forever.
+> Still owed from item 4: the sit-down {favoritefood} table scene, the
+> sleep-upstairs fade, the SUNNY SIDE breakfast, and the angels-at-the-
+> doorway line. Re-trace against OverworldScene ~1357–1387 before building.
 
 ```
 [Standard Header]
@@ -886,7 +899,7 @@ table scene (party sits — stage it on the picnic-blanket pattern
 Jay's bed (the S6 fade law) → wake next morning: full HP/PP for every
 STANDING hero, Homesick and every §A4.8 status cured (Mom's cooking
 cures Homesick — §A4.4 made flesh), and the SUNNY SIDE breakfast
-(+10% ×5 battles — Mom is the original hotel; S15's paid hotels
+(+10% ×5 battles — Mom is the original hotel; S17's paid hotels
 inherit HER template, note it in taxonomy row C when that session
 runs). FREE, infinite, no flag-gating. Angels are NOT revived — Mom
 stops at the doorway and worries ("Go see a doctor, sweetheart.
@@ -1036,12 +1049,12 @@ lens), Part C (insert Prompt 30 — Chapter 4 and Prompt 31 — Chapter 5
 in the Prompt-27 chapter template; renumber old 30–34 → 32–36 and
 Phase 7–9's 35–44 → 37–46, each annotated "(formerly Prompt N)").
 Stamp every amendment with the standard Appendix-rule-6 dateline.
-Then update THIS file (NEXT_PROMPTS.md): run order becomes S15 → S16
-→ Prompt 29 (Ch.3) → Prompt 30 (THE FJORD THAT SLEEPS) → Prompt 31
-(MINIMUS) → 32+ (renumbered) — and append the two chapter prompts
-FULLY WRITTEN into the queue (the Prompt-28 [Same template] style,
-folding in every canon block above) so those sessions start cold and
-land hot.
+Then update THIS file (NEXT_PROMPTS.md): run order becomes S14d →
+S15d → S15e → S15f → S14e → S14f → S17 → S18 → Prompt 29 (Ch.3) →
+Prompt 30 (THE FJORD THAT SLEEPS) → Prompt 31 (MINIMUS) → 32+
+(renumbered) — and append the two chapter prompts FULLY WRITTEN into
+the queue (the Prompt-28 [Same template] style, folding in every
+canon block above) so those sessions start cold and land hot.
 
 THE SCALE LAW (the engine seam, THIS session — its own ADR; chapter
 sessions must be able to land both worlds as DATA):
@@ -1049,7 +1062,7 @@ sessions must be able to land both worlds as DATA):
     (≈72×96–96×128) via a giants pass in spritegen off the SAME
     CharacterSpec (ADR-022 construction AT SCALE — drawn span tables,
     never naive-scaled pixels; ADR-020 rules bind; the new ADR
-    supersedes ADR-009's frame law the way S16's bike note
+    supersedes ADR-009's frame law the way S18's bike note
     anticipates, standFrame() preserved). Giant sheets include KNEEL
     frames — dialogue is eye-level; that is the warmth.
  2. 10× AND BEYOND IS ARCHITECTURE, NEVER A SPRITE: terrain-giants
@@ -1123,9 +1136,13 @@ formulas.ts) — it is NOT in scope.
 === MOVEMENT ONE — THE FEEL PASS ===
 
 1. THE SWIRL IS A TRAFFIC LIGHT (user decree — Bible §A4.2 amends).
-Today the contact swirl tints player-advantage RED, enemy-advantage
-GREEN, neutral paper-white (OverworldScene.ts ~1125, tintMap), with
-ONE shared 'swirl' sfx. Flip it to the intuitive read and make the
+[S15c SHIPPED THE FLIP, 2026-06-12 (ADR-043): the user re-reported it,
+so the color law landed early — SWIRL_TINT in battle/formulas.ts is
+the pinned source (green = player, red = enemy, paper neutral) and
+§A4.2 + Prompt 16 carry the amendment. STILL OWED HERE: the three
+sfx presets below, the true-GREY neutral tone (paper survives until
+this session), the spin-direction colorblind channel, and the three
+.shots.] Original spec: flip it to the intuitive read and make the
 sound tell the same story: YOU got the drop = GREEN swirl; neutral =
 GREY (pick the neutral mid-tone from the 64 — never paper-warm);
 THEY got your back = RED. Three NEW ADR-006 synth presets:
@@ -1140,8 +1157,12 @@ green/red line; record the decree in the ADR) and re-shoot the three
 swirls for .shots/.
 
 2. HOMESICK GROWS WITH DISTANCE, NOT WITH SPAM (user report: "Jay
-gets homesick a bit too quickly"). Today: flat HOMESICK_CHANCE = 0.08
-per victory, no geography, no cooldown (formulas.ts ~226). Retune as
+gets homesick a bit too quickly"). [RE-TRACED S15c: ADR-042 already
+dropped the flat rate 0.08 → 0.02 ("the dice calm down") — the
+geography/cooldown/sunny laws below are still owed. Reconcile the
+0.025 base against the user-accepted 0.02: home turf is ZERO either
+way, so keep the abroad base ≤ 0.025 and pin the Ch.1-adjacent bands
+no hotter than today's 0.02.] Retune as
 a pure-data law in formulas.ts, vitest-pinned:
  - BASE 0.025, and ZERO on Chapter-1 home turf (Otterbrook/Brickton
    region maps — you can practically see Mom's street);
@@ -1157,12 +1178,11 @@ HOMESICK_SKIP_CHANCE stays 0.5 — the status stays scary; only the
 frequency tunes. Vitest: distribution per chapter band, the cooldown
 window, the sunny immunity, home-turf zero.
 
-3. MOM CURES IT IN PERSON (user report). Talking to Mom at rex_home
-while rex_homesick cures it on the spot — the hug, no meal required
-(S14c's table ritual stays the deluxe path; phone calls unchanged).
-One new line, played straight (§A11.2): she doesn't ask, she just
-knows. Wire BOTH touchpoints: the mom NPC branch (~1340) and
-callMom()'s at-home hug branch (~2195). Validator-swept dialogue id.
+3. MOM CURES IT IN PERSON (user report). [✅ SHIPPED 2026-06-12 by the
+off-queue S15b session (ADR-042) — every talk with Mom now cures
+Homesick in person via the canon mom_cure_beat, and the phone was
+already two-directional. NOTHING owed here; verify the touchpoints
+still read OverworldScene ~1357–1387 and skip.]
 
 4. CALL FOR HELP — PACKS STACK (user spec: some enemy types call
 reinforcements; be selective — sociality is the criterion). The
@@ -1271,7 +1291,7 @@ AND Puerto Sol (maps_ch2.ts rides the same cityBuildingHeight seam)
 and re-walk the bot behind the row: behind a 1-story shop you now
 tuck to the parapet coping, never into the windows. And answer the
 report's other half in place: DINER and VIDEO are §A11 locked facades
-BY DESIGN until S15's EVERY DOOR OPENS lands their interiors — their
+BY DESIGN until S17's EVERY DOOR OPENS lands their interiors — their
 locked lines stay canon ("closed between breakfast and breakfast").
 
 === MOVEMENT TWO — THE FIRST NATIONAL ===
@@ -1284,10 +1304,10 @@ Outdoor stands exempt (Ana & Vivi accept exact change only; the sign
 says so). Retrofit NOW: the Otterbrook drugstore, Brickton STARMART,
 and Puerto Sol's shops/deli get both props — placed on FRESH seeded
 rng streams (ADR-012/016 law: the 1995/1898 layouts stay
-byte-identical, prove it the usual way). Validator law (the S15
+byte-identical, prove it the usual way). Validator law (the S17
 no-decorative-doors enforcement pattern): any map whose NPCs open a
 shop must contain ≥1 phone + ≥1 atm interactable, exemptions tagged.
-EDIT THE QUEUE in the same commit: S15's taxonomy row C bakes "every
+EDIT THE QUEUE in the same commit: S17's taxonomy row C bakes "every
 hotel lobby: phone + ATM (the S14d law)" so hotels inherit it the day
 they exist.
 
@@ -1308,7 +1328,7 @@ withdraws an exact odd amount by stepper alone.
 
 10. THE SAVINGS & LOAN OPENS — LOANS, AND 27 MAPLE (user spec: banks
 with loans for the car, a mortgage for a HOUSE with creative
-features). The Otterbrook SAVINGS & LOAN gets its interior NOW (S15's
+features). The Otterbrook SAVINGS & LOAN gets its interior NOW (S17's
 row K updates to "landed early in S14d"): the teller line that beats
 the ATM rate by $0 (canon gag), the velvet queue ropes with nobody in
 them, the pen on a chain ("the pen is warm. Someone was just here."),
@@ -1317,8 +1337,8 @@ and THE LOAN DESK — the officer does not blink at a twelve-year-old
  - THE CAR NOTE (gated ch2_complete; $1,500 cap): borrowed cash in
    hand NOW, repaid as a 25% GARNISH of every future Dad deposit
    until principal ×1.1 clears ("The tenth part is for the pen.").
-   One note at a time. It exists to meet S16's PRE-LOVED AUTOS lot —
-   EDIT S16's car bullet in the queue: financing exists at the S&L.
+   One note at a time. It exists to meet S18's PRE-LOVED AUTOS lot —
+   EDIT S18's car bullet in the queue: financing exists at the S&L.
  - THE MORTGAGE (gated ch3_complete + a clear note): 27 MAPLE,
    Otterbrook — plant the FOR SALE sign NOW ("FOR SALE: cozy. One
    previous owner. She took the doorknobs."). $1,500 down + $4,500
@@ -1345,14 +1365,14 @@ and THE LOAN DESK — the officer does not blink at a twelve-year-old
     album, previewed at home.
  e. THE RECORD PLAYER — plays the Homesong stems earned so far, the
     Locket screen's cozy twin (same §A4.9 stem-cap API).
- f. THE FRIDGE — one free regional food per region-flag (the S15
+ f. THE FRIDGE — one free regional food per region-flag (the S17
     row-J law, instantiated here first).
- g. THE GARAGE — empty until S16's car; then it parks here, home
+ g. THE GARAGE — empty until S18's car; then it parks here, home
     becomes a road-map node, and Lucille's spare propeller hangs on
     the wall ("in case." — Bert).
  h. THE MAILBOX — Dad mails a postcard per completed chapter (a
     collectible set, validator-swept; he underlines things), and Ana
-    & Vivi tape a drawing to the fridge after quest #3 — the S15
+    & Vivi tape a drawing to the fridge after quest #3 — the S17
     row-I ledger warmth, here first.
 === MOVEMENT THREE — THE DRUM & THE HITCH (fold into the feel pass) ===
 
@@ -1482,8 +1502,287 @@ working phone + ATM under a green validator law with frozen seeds
 proven byte-identical; the S&L opens with the teller gag and a
 working loan desk; the car note garnishes Dad's deposits; 27 Maple
 sells, opens, and all EIGHT payloads work; save v8 migrates clean;
-the queue's S15/S16 prompts carry their inherited edits; validator +
+the queue's S17/S18 prompts carry their inherited edits; validator +
 vitest green; browser loop and android:apk untouched.
+```
+
+## Prompt S15d — OTTERBROOK GROWS UP (the triple, the civic spine & THE SETTLEMENT LADDER)
+
+```
+[Standard Header]
+S15d — the user's scale decree for the home town, captured 2026-06-12:
+"expand the OH map by alot... it feels a bit congested right now... it
+needs triple the size and needs some much larger buildings like a city
+hall, and this is going to be almost our smallest level so we need to
+scope the rest of the levels to be even bigger from here." Runs AFTER
+S14d — THE HEADROOM PROGRAM (RenderTexture-baked prop layers + the
+pumped p99 ≤ 8.3ms gate) is the license for every map this size.
+
+THE GROWTH LAW (one rule makes the triple safe): otterbrook today is a
+42×32 grid built on the FROZEN 1995 stream (ADR-016). The existing
+canvas is NEVER re-rolled — it survives byte-identical as the HISTORIC
+CORE, anchored at (0,0), so every existing coordinate, door target
+(rex_home 120/117, hill_road's edge door at 18,0, the drugstore/arcade
+doorsteps), quest rect, and spawner stands without edits. Growth is
+SOUTH and EAST ONLY (≈ 73×55 ≈ 3× the area), authored on NEW rng
+streams (1995-civic, 1995-east, 1995-park — the ADR-016 law), with the
+ADR-012 town read: organic seeded irregularity, lanes that bend,
+negative space, never a strip. maps.test re-pins the core sub-rect
+byte-identical against a frozen hash so the law is mechanical, not
+manners. The Hill Road door stays the north edge; the new east edge
+authors the door stub S15e will aim THE ROAD TO BRICKTON at (the
+COSTA_DOOR_FOR_PUERTO_SOL holding-pen pattern — exported, not placed,
+because door targets must exist).
+
+THE DISTRICTS (every prop on the new streams; §A11 signs editorialize
+everywhere; ~10 new enterable shells whose interiors land with S17's
+program — S15d opens THREE fully):
+ 1. THE CIVIC GREEN (south): OTTERBROOK CITY HALL — the "much larger
+    building," a 2.5-story civic facade family in spritegen (columns,
+    pediment, flag, clock-less tower — Brickton owns clocks; drawn at
+    span per ADR-020, never naive-scaled). OPEN INTERIOR: marble-read
+    lobby, the HALL OF RECORDS gag, and MAYOR HAVERSHAM — obsession:
+    proclamations ("I hereby proclaim this conversation PRODUCTIVE.
+    No. Wait. Scratch that. MEMORABLE.") — who proclaims Meteor Day a
+    holiday on the spot if tick_defeated. Flagpole, war-memorial-shaped
+    meteor memorial (it is three days old; the plaque admits it).
+ 2. THE POND PARK (south-east): Biscuit's pond AT LAST ("He smells
+    like pond" earns geography), a bandstand, two picnic tables
+    (§A4.5 — placed BEFORE the road east, finding them is strategy),
+    paddle-boat rental sign (NO BOATS. — the pond), park benches.
+    Light §A7 spawns gated on meteor_fell (pigeon_gang, hill_slug).
+ 3. THE EAST LANES (east): six homes on bending lanes (S17's J-category
+    residences arrive later — shells today with locked_* lines that
+    S17 retires), OTTERBROOK GENERAL (the second OPEN interior: the
+    §A4.7 hospital Otterbrook never had — reviveCost/cure-all wired,
+    one weird doctor line), and the POST OFFICE (third OPEN interior:
+    Mr. Plummer's HQ — his §A10 #2 route gains a HOME; quest machine
+    BYTE-UNTOUCHED, the building is flavor until S17's K category).
+THE BANNER LAW: the town stays a TOWN (settlement tag unchanged) — the
+city-structure sweep must NOT start asserting city grammar here.
+
+THE SETTLEMENT LADDER (Bible §A5 amendment, Appendix rule 6, verbatim
+intent): "Otterbrook is the FLOOR. Every settlement that follows reads
+bigger than it — region hubs grow chapter over chapter (Brickton ≈ 2×
+Otterbrook's grown footprint, and the §A5 capitals beyond it larger
+still, Chandrapore the crown). A chapter session that lands a hub
+smaller than the previous chapter's hub is wrong by definition." Write
+it into §A5 with the dateline, and note the ladder binds Prompts 29+
+(the chapter sessions inherit the floor). Record the growth law + the
+ladder in this session's ADR (next free number — 041/042 were consumed
+by the off-queue cinema/Hill Road sessions).
+
+Storefront walk-behind, night tint (overscanRect — S15c), dialogueDay
+variants, and the door exit-latch all apply to the new acreage for
+free — sweep that they DO (the S14d storefront band law must hold on
+the city hall's tall facade).
+
+QA: pre-flight in docs/QA.md + device row 25: walk every new lane,
+enter all three interiors, picnic at the pond, read the mayor at
+night AND day, prove the core hash pin + p99 gate on the grown map.
+Bot recipe in the OverworldScene header (the new-district walk);
+.shots/ of the Civic Green, the pond at night, city hall interior.
+
+Done when: otterbrook measures ≈3× today's area with the 1995 core
+byte-identical under a hashed test pin; city hall / hospital / post
+office open with their NPCs in §A11 voice (validator-swept, manifests
+extended); the pond park holds two picnic tables and the §A4.5 ritual
+works at both; the §A5 SETTLEMENT LADDER is Bible canon with the
+dateline; the east door stub exports for S15e; p99 ≤ 8.3ms pumped on
+the grown map; validator + full vitest green (the floor only rises);
+frozen streams proven byte-identical.
+```
+
+## Prompt S15e — THE ROAD TO BRICKTON (two walking screens & THE ORIENTATION GATE)
+
+```
+[Standard Header]
+S15e — the user's connector + gate decree, captured 2026-06-12: "we
+need to add a few in between walking map sections to connect the oh
+level with brickston... however there needs to be a section that
+unlocks this level be creative and think of some tasks the character
+must complete to pass this section similiar how you must be[at] the
+7 cops in the earthbound game." Runs AFTER S15d (the road leaves from
+the grown east edge via S15d's exported door stub). Canon cover: §A5
+Ch.1 already reads "On foot / city bus" — this prompt makes "on foot"
+true.
+
+THE TWO SCREENS (≈30×22 each, NEW rng streams ch1-road-1/2, ADR-012
+organic — a road is a line the land argues with):
+ 1. MEADOW MILE: split-rail fences, hay rolls, a farm stand run by
+    the twins' lemonade SUPPLIER (obsession: soil pH small talk), one
+    picnic table, a barn shell (S17 fills it), §A7 spawns ungated
+    (runaway_lawnmower in the wheat, coily_cicada, pigeon_gang) — the
+    road is more dangerous than town, §B4's density law. A sign:
+    "BRICKTON 2 MI. OTTERBROOK 1 MI. THE MIDDLE: YOU ARE HERE."
+ 2. THE OVERPASS: the turnpike crossing — concrete pylons, a dead
+    drive-in screen (it shows one §A11 line of static), hill_slug
+    swarms in the shade, the §A10 #1 sniff-trail does NOT extend here
+    (Biscuit's machine is BYTE-UNTOUCHED), and at the east end THE
+    ORIENTATION CENTER: a too-cheerful modular trailer with a queue
+    of NPCs who have been "almost processed" since Tuesday.
+
+THE ORIENTATION GATE (the 7-cops analog, in this game's satire — the
+Department of Smiles met BEFORE Brickton, so the city's dread has a
+face by the time the bus doors sigh open):
+ - The trailer door is the only way east. Inside, ASSISTANT TO THE
+   REGIONAL SMILE MANAGER, MS. BEAMS (obsession: clipboard alignment)
+   explains nobody enters Brickton on foot without a VISITOR SMILE
+   BADGE. Jay — silent hero — cannot demonstrate a compliant smile.
+   Form B ("Smile-Equivalent Deed Waiver") it is: pass the
+   THREE-POINT INSPECTION — three Blazer Smiler PROCTOR fights, taken
+   back-to-back with a free "complimentary hydration" heal offered
+   between rounds ("Water is PRODUCTIVITY you can drink."). Proctors
+   are CAST blazer_smiler (the S2 Manager precedent — no new §A7 row;
+   the §A9 L6–8 band clears them with effort).
+ - THE RETRY LAW (the S14c Glint lesson, applied at birth): the gate
+   re-asks on EVERY entry until orientation_done — losing a proctor
+   fight returns you to the trailer floor with Ms. Beams' §A11
+   condolence, never a soft-lock, never a one-shot flag. Progress
+   counts on number flags (proctor_1/2/3 — ADR-015, no save bump).
+ - THE BADGE: visitor_badge (a FLAG, not an item — nothing to drop).
+   The GRANDFATHER CLAUSE makes migration unnecessary: every gate
+   reads (visitor_badge || bus_ride_done) — a save already riding
+   buses earned its badge the day the queue didn't exist.
+ - THE GATE BINDS THE BUS TOO (the user's "unlocks this level"): the
+   6:15 driver now wants the badge for the FIRST ride to Brickton
+   ("No badge, no bus. I don't make the rules. The rules wear
+   blazers.") — busAsk('brickton') re-gates on the clause above;
+   rides home are always free. The §A6 flow becomes: zapper_done →
+   the road east OR the bus stop → ORIENTATION → Brickton. Amend the
+   Bible's Ch.1 paragraph (§A6) with the dateline: the crossing into
+   Brickton is EARNED at the Orientation Center.
+ - After the badge: Ms. Beams stamps it in triplicate, the queue
+   NPCs applaud at the wrong moment, and the east door opens onto
+   brickton's west edge (a new edge door near the bus stop — the
+   ADR-042 displaced-door shape: only the two seam doors change).
+
+Vitest: the gate clause (badge | bus_ride_done) headless; proctor
+count flags; door cross-refs ride maps.test for free. Bot recipe in
+the scene header: walk Otterbrook → Meadow Mile → Overpass, LOSE
+proctor 2 on purpose, re-enter, finish, badge granted, walk into
+Brickton, ride the 6:15 home unbadged-checks-skipped. QA pre-flight +
+device row 26; .shots/ of both screens and the trailer interior.
+
+Done when: Otterbrook↔Brickton round-trips ON FOOT through two new
+screens that hold the §B4 density law; the Orientation Center gates
+BOTH routes on (visitor_badge || bus_ride_done) with the three-proctor
+inspection retryable forever; §A6 Ch.1 carries the amendment with the
+dateline; old saves pass the grandfather clause untouched (no
+migration, proven in a test); validator manifests extend for every
+new npc/dialogue/map; validator + full vitest green; frozen streams
+byte-identical.
+```
+
+## Prompt S15f — BRICKTON SPRAWLS (the 4×, the building vocabulary, THE CAGE BLOCK & the two real stories)
+
+```
+[Standard Header]
+S15f — the user's city decree, captured 2026-06-12: "when brickton
+starts, it spanned through the map but like did it super fast" (the
+pan got its three slow legs in S15c — re-aim its waypoints here, they
+must derive from landmarks, never hardcode); "we need to add a bunch
+more building sizes, styles, and types"; "there needs to be a more
+clear indicator how to get to the cage basketball... it needs to look
+like from around it like its a basketball court from the outside";
+"there are supposed to be 2 like story sections you are supposed to
+complete in brickton before being able to get to Mia however these
+are not good and need creative detailed earthbound style story
+sections"; "brickton again needs to be like 4x bigger than its
+current size, it needs to feel sprawling should be like 2x the size
+of the newly size OH town." Runs AFTER S15e (the west edge door
+exists; the headroom gate is law). Today's gate truth, traced:
+bricktonDepartmentGate (OverworldScene ~2451–2461) already requires
+brickton_clock_goal + brickton_dial_goal before dos_f1 opens — but
+both "stories" are walk-on-a-rect trigger scenes (maps.ts ~1022–1023
+→ bricktonClockGoalScene/bricktonDialGoalScene, a camera pan + a
+toast). The FLAGS and the GATE are right; the CONTENT is hollow.
+Replace the scenes, keep the flag ids — saves migrate for free.
+
+THE SPRAWL: brickton today is 72×38 on the FROZEN 2077 stream. The
+S15d growth law verbatim: the existing canvas survives byte-identical
+as DOWNTOWN, anchored (0,0); growth SOUTH and EAST on new streams
+(2077-yards, 2077-heights, 2077-cage) to ≈120×70 — ≈2× the grown
+Otterbrook (the §A5 SETTLEMENT LADDER's first proof), ≈3–4× today's
+Brickton. ADR-012 CITY grammar at full strength (it is tagged
+settlement: 'city'): ≥3 streets joined by avenues, alleys, negative
+space, blocks with backs — and the city-structure sweep re-pins on
+the grown canvas. maps.test hashes the 2077 core sub-rect.
+
+THE DISTRICTS + THE VOCABULARY (spritegen families, ADR-020 drawn
+spans — "sizes, styles, and types" becomes a real catalog the later
+capitals reuse): brownstone WALK-UPS (3-story, stoops), CORNER STORES
+(angled entry, striped awnings in four palette rows), WAREHOUSES
+(roll doors, clerestory windows — THE YARDS district), a 4-story
+OFFICE TOWER family (downtown grows a skyline tooth; S17 still owns
+interiors + the vertical program), ROW DINERS (one is LITTLE
+OTTERBROOK, the §A4.4 gag: the menu is just {favoritefood} seven
+ways), and MAPLE HEIGHTS' brick rows. Shells open with S17; S15f
+opens the story interiors below + keeps every facade walk-behind
+honest (the S14d parapet band on every height).
+
+THE CAGE BLOCK (the user's readability decree): the cage's lot grows
+into a CORNER COURT readable from the street — chain-link fence with
+the painted key + arc VISIBLE through it, a backboard towering over
+the fence line, sneakers-over-the-wire prop, bleacher edge, a
+hand-painted THE CAGE sign with a ball mural, and the gate IS the
+door (indicator law holds). Re-aim the arrival pan's second leg so
+new arrivals SEE the court from the bus. HoopsScene, sim, tapes:
+BYTE-UNTOUCHED — this is the block around the door.
+
+THE TWO STORIES (replace the toasts; flags brickton_clock_goal /
+brickton_dial_goal keep their ids; both must be findable by walking
+and signposted in §A11 voice, no quest markers — EB didn't hold
+hands):
+ STORY ONE — THE BRICKTON MINUTE. The clock tower's minute hand is
+ STUCK at :56 and the whole city runs four minutes late ("the
+ Department calls it an efficiency opportunity"). WINNIE the
+ apprentice horologist (obsession: punctuality is a love language)
+ needs three recoveries, each a small scene in a different district
+ (the story TOURS the sprawl by design): the COUNTERWEIGHT from a
+ Pigeon Gang rooftop nest (fire-escape screen, one fight, the
+ §A7 pigeons' food-theft quirk live), CLOCK OIL from the locked-door
+ bagel shop (the arrival narration's gag pays off — you buy oil
+ through the bagel slot; the §A8 shelf gains nothing, it is a beat,
+ not an item), and the WINDING KEY from the bus depot lost-and-found
+ (the clerk quizzes you on your own arrival — "the 6:15, obviously"
+ — via the ask widget, wrong answers §A11-funny, retry free). Fix
+ the hand → the tower BONGS once → every blazer on every street
+ checks its watch IN UNISON (one silent beat, no music — the first
+ time Brickton is quiet) → brickton_clock_goal.
+ STORY TWO — THE WARM DIAL TONE. Every payphone downtown reads COLD
+ — the Hush eating warmth through the wires, FELT mechanically for
+ the first time (pick up: "the dial tone is room temperature").
+ DOT the line-woman (obsession: she knows everyone by ring cadence)
+ traces the cold to three junction boxes across the new districts,
+ each held by a Smiles patrol (sight-cone fights, the dos pattern
+ outdoors); each re-warmed box plays one more bar of hold-music
+ through the open receiver. The third box: every payphone on the
+ block rings ONCE, together — and somewhere above the Department, a
+ girl you have not met stops humming to listen (the arrival line's
+ promise, kept) → brickton_dial_goal.
+ BOTH DONE → the Department's SMILE SCANNER finally "hears" you:
+ "Your appointment has been... SCHEDULED. Have a PRODUCTIVE rescue."
+ — the gate scene gets one new page; the gate predicate itself is
+ untouched.
+
+QA: pre-flight + device row 27: walk all districts; both stories end
+to end with a deliberate loss inside each (the retry law everywhere);
+the cage court read from the street and entered through the gate;
+the arrival pan re-aimed across the grown skyline; p99 ≤ 8.3ms pumped
+on the 4× map; .shots/ of the cage block, both story climaxes, the
+skyline pan. Bot recipes per story in the scene header.
+
+Done when: brickton measures ≈2× grown-Otterbrook with the 2077 core
+hash-pinned byte-identical; the city-structure sweep passes the grown
+grammar; the building catalog renders in Sprite Lab (walk-up, corner
+store, warehouse, tower, diner) under art rules; the cage reads as a
+court from the public street and the pan shows it; BOTH story
+sections play as multi-step EB beats with retry-proof gating on the
+EXISTING flag ids and the Department gate text acknowledges them;
+the §A5 ladder note gains "Brickton: proven" with the dateline;
+validator manifests extend for every npc/dialogue/map/interior;
+validator + full vitest green; frozen streams byte-identical.
 ```
 
 ## Prompt S14e — THE FORTUNE ARC (user decree: billions by the finale — the Manor, the Comet GT, the Starhopper)
@@ -1555,14 +1854,14 @@ officer remembers you):
    canon — the starter home the manor never invalidates: the
    mailbox postcards and the sisters' fridge drawing live THERE,
    and Jeevesby refuses to poach the fridge gag.
- - THE COMET GT (Ch.6+, $2.5M, the back room of S16's PRE-LOVED
+ - THE COMET GT (Ch.6+, $2.5M, the back room of S18's PRE-LOVED
    lot — "a show car for a movie that never came out"): overworld
    drive ×2.0 outdoors (supersedes the bike's ×1.35 when both are
-   owned), the S16 region road-map UI inherited at twice the
+   owned), the S18 region road-map UI inherited at twice the
    vignette speed, a horn that plays the first two notes of the
    Homesong, valet at every town edge ("NO COMETS. — the floor"
    stands indoors).
- - THE STARHOPPER (Ch.8+, $1.2B, sold at any S16 airport): a
+ - THE STARHOPPER (Ch.8+, $1.2B, sold at any S18 airport): a
    private jet — any VISITED region instantly, airport-to-airport.
    The Ember trail still gates new chapters (§A5 law: flying never
    skips story; Teleport stays the no-luggage option). CABIN
@@ -1597,9 +1896,9 @@ formerly 36) gains NET WORTH.
     on number flags — chapter sessions flip content, never build
     the system. The bot buys a bond and a ticker spread, kills the
     app, reloads, and the portfolio replays byte-equal.
- 4. QUEUE EDITS in the same commit: S16's car section gains the
-    COMET GT back room + valet; S16's airport section gains the
-    Starhopper hangar; S15's row C notes the manor outclasses
+ 4. QUEUE EDITS in the same commit: S18's car section gains the
+    COMET GT back room + valet; S18's airport section gains the
+    Starhopper hangar; S17's row C notes the manor outclasses
     hotels on purpose (status, not function). The S14c chapter
     canon already carries the banknote/ducat beats.
  5. ICONS ONLY for the catalog rows (the ADR-032/034 provisional
@@ -1862,7 +2161,13 @@ proven; tapes replay byte-equal; Permit teaches it; validator +
 vitest green; browser loop and android:apk untouched.
 ```
 
-## Prompt S15 — EVERY DOOR OPENS (the interior program + city vocabulary)
+## Prompt S17 — EVERY DOOR OPENS (the interior program + city vocabulary)
+
+> (Renumbered from S15 in S15c, 2026-06-12: the S15/S15b session labels were
+> consumed by the off-queue cinema and Hill Road sessions, ADR-041/042, and
+> S15c–S15f now carry the third playtest + the world expansions. Content
+> below is untouched — only the label moved. It runs AFTER the world block:
+> its interior program fills the shells S15d–S15f author.)
 
 ```
 [Standard Header]
@@ -1903,7 +2208,8 @@ sessions pull from here instead of inventing):
  J. Residences — every home has a family with one §A11 dynamic, a fridge
     (1 free food/day-equivalent: gated on a per-region flag), mail you
     delivered visible on their table after quest #2.
- K. Civic clutter — bus stations (see S16), post office (Plummer's HQ),
+ K. Civic clutter — bus stations (see S18), post office (Plummer's HQ
+    — its building lands in S15d, the program fills it here),
     the SAVINGS & LOAN finally opens (teller line beats the ATM rate by
     $0 — §A11).
  L. Chapter set-pieces — one per chapter, big interiors (the Department
@@ -1921,7 +2227,11 @@ docs/INTERIORS.md with every category seeded; hotel/hospital/walk-up
 templates render in Sprite Lab; one ledger-callback interior is live.
 ```
 
-## Prompt S16 — STATIONS & WHEELS (bus, bike, car — and the travel UI)
+## Prompt S18 — STATIONS & WHEELS (bus, bike, car — and the travel UI)
+
+> (Renumbered from S16 in S15c, 2026-06-12 — see the S17 note. One inherited
+> edit: item 1's bus stations must respect S15e's ORIENTATION GATE — the
+> first ride to Brickton checks (visitor_badge || bus_ride_done).)
 
 ```
 [Standard Header]
@@ -1959,17 +2269,41 @@ remains strictly better post-Ch.4 (vehicles are flavor + early-game).
 Run order: ~~S11~~ → ~~S11b~~ → ~~S12~~ → ~~S13 (the LINKS — DONE,
 ADR-037/038)~~ → ~~S14 (THE GILDED GRIN — DONE, ADR-039: Chapter 2
 complete on the phase machine, with picnics, hospitals, and the §A6
-recovery exit; saves v7)~~ → **S14c** (the playtest four + THE WORLDS
+recovery exit; saves v7)~~ → ~~off-queue interrupts S15 (the opening
+cinema, ADR-041), S15b (Hill Road + Mom's reset, ADR-042), S15c (the
+third playtest fixed live: the night-line overscan, the swirl
+traffic-light FLIP, the level-up press gate, day-after Otterbrook
+dialogue + Biscuit's verdict, the seated 6:15 ride, the three-leg
+arrival pan — ADR-043; these consumed the S15/S16 labels, hence
+S17/S18 below)~~ → **S14c** (the playtest four + THE WORLDS
 OF SCALE: the Bible grows to TEN chapters — Jötunfjord's giants and
 the Grand Duchy of Minimus land as canon, the scale seams land as
 engine law, and S14c itself appends the two fully-written chapter
-prompts to this queue) → **S14d** (the second playtest: the swirl
-traffic-light, homesick-by-distance, Mom's in-person cure, the nine
-callers, the §A7 drop contract, the 6:15 seats you, the storefront
-walk-behind law, the drum-carry fix, the hitch hunt, the door
-exit-latch, the ATM stepper,
-the ATM-and-phone law, and THE FIRST NATIONAL — the S&L loan desk,
-the car note, and 27 Maple on save v8)
+prompts to this queue; carries a DRIFT NOTE — Mom's reset already
+shipped) → **S14d** (the second playtest: the swirl sfx + colorblind
+spin (the color flip shipped in S15c), homesick-by-distance, the nine
+callers, the §A7 drop contract, the 6:15 seats the PARTY, the
+storefront walk-behind law, the drum-carry fix, the hitch hunt +
+THE HEADROOM PROGRAM (the perf gate that licenses the expansions),
+the door exit-latch, the ATM stepper, the ATM-and-phone law, and
+THE FIRST NATIONAL — the S&L loan desk, the car note, and 27 Maple
+on save v8)
+→ **THE WORLD BLOCK — the user's 2026-06-12 scale decree, in his
+words: "expand the OH map... triple the size... much larger buildings
+like a city hall"; "in between walking map sections... a section that
+unlocks this level [like] the 7 cops in the earthbound game";
+"brickton... 4x bigger... sprawling... 2x the size of the newly size
+OH town." It runs right after S14d because the HEADROOM PROGRAM is
+its license:** **S15d** (OTTERBROOK GROWS UP — the triple on the
+frozen-core growth law, the Civic Green + city hall + pond park +
+east lanes, and THE SETTLEMENT LADDER into §A5) → **S15e** (THE ROAD
+TO BRICKTON — Meadow Mile + the Overpass on foot, and THE ORIENTATION
+GATE: three proctor fights for the visitor badge, binding bus AND
+foot behind the grandfather clause) → **S15f** (BRICKTON SPRAWLS —
+the ≈2×-grown-Otterbrook city on the 2077 frozen core, the building
+catalog, THE CAGE BLOCK readable from the street, and the two REAL
+story sections — THE BRICKTON MINUTE and THE WARM DIAL TONE — on the
+existing gate flags)
 → **S14e** (THE FORTUNE ARC: the §A9 wealth decree — billions by the
 finale on the giants' banknotes, the S&L investment desk, and the
 collectors' market; the big-number law; HILLCREST MANOR, THE COMET
@@ -1983,7 +2317,7 @@ fumbles, and emergent screens — the BEHIND-camera steering remap
 (landed live 2026-06-12; the session pins it), the wider-reading
 BEHIND court, and per-mode CAGE keybindings on a sparse profile
 overlay)
-→ **S15–S16** make the world dense and
+→ **S17–S18** (formerly S15–S16) make the world dense and
 navigable, then Prompt 29 (Chapter 3: Foggybottom + Wintermoor + the
 MAINFRAME on the phase machine — its summons-refill trigger is already
 proven headlessly; it also plants the LOST CAT poster S14c canonized),
@@ -1993,9 +2327,11 @@ renumbered 32+ (Africa onward) and the balance sim (Prompt 39,
 formerly 37) once enough chapters exist to measure. S12 and
 S13 are each big enough to split on their natural seam if a session runs
 long (Appendix rule 2): core game first, tournament + rewards second.
-The "big city like New York" ask maps onto canon:
+(If the fortune/cage polish should outrank the world block after all,
+reorder by moving the S15d–S15f sections below S14f — file order IS
+the queue.) The "big city like New York" ask maps onto canon:
 **Chandrapore (now Ch.7, Prompt 33 after the renumber) is the game's
 biggest city** — three ADR-012 districts, 4–5-story facades, the
-palace/cinema/bazaar sprawl — and Brickton's vertical growth in S15
-gives the US chapter its skyline (THE CAGE gives it its soundtrack of
-chain-link and trash talk).
+palace/cinema/bazaar sprawl — and Brickton's growth in S15f + S17
+gives the US chapter its sprawl and skyline (THE CAGE gives it its
+soundtrack of chain-link and trash talk).

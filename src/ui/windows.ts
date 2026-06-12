@@ -17,6 +17,18 @@ export { vars } from './text';
 export const DEPTH_UI = 1000;
 
 /**
+ * Full-screen overlays (night tint, covers) MUST bleed past the viewport:
+ * camera scroll rounding shifts scrollFactor-0 shapes and the tilemap by
+ * unequal sub-pixels, exposing screen row 0 as an untinted line (playtest,
+ * S15c — pixel-proven at scrollY 171: row 0 read day grass over a night
+ * map). 4px of overscan on every edge absorbs the asymmetry forever.
+ */
+export const OVERSCAN = 4;
+export function overscanRect(w: number, h: number): { x: number; y: number; w: number; h: number } {
+  return { x: -OVERSCAN, y: -OVERSCAN, w: w + OVERSCAN * 2, h: h + OVERSCAN * 2 };
+}
+
+/**
  * Run cb once per rendered frame while the scene runs (ADR-024). UI polls
  * MUST use this instead of 16ms Clock timers: INPUT edges (justPressed) are
  * true for exactly ONE frame, and a Clock timer fires less often than once
@@ -26,7 +38,16 @@ export const DEPTH_UI = 1000;
 export function everyFrame(scene: Phaser.Scene, cb: (dtMs: number) => void): () => void {
   const handler = (_t: number, delta: number): void => cb(delta);
   scene.events.on(Phaser.Scenes.Events.UPDATE, handler);
-  return () => scene.events.off(Phaser.Scenes.Events.UPDATE, handler);
+  const off = (): void => {
+    scene.events.off(Phaser.Scenes.Events.UPDATE, handler);
+  };
+  // S15c: polls die with the scene. A stop/restart mid-poll used to leave
+  // the handler subscribed to the persistent scene emitter while its UI
+  // objects were destroyed — the next life of the scene then drove the
+  // poll into a corpse every frame (caught live: a say() typewriter
+  // setText on a destroyed BitmapText threw on every pump, forever).
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
+  return off;
 }
 
 /** S14b: the live window-flavor texture key (Prompt 6 — per SAVE FILE: the

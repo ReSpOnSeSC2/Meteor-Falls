@@ -1131,6 +1131,9 @@ for (const m of Object.values(MAPS)) {
   // npcs and signs must speak existing dialogue; npc shops must exist
   for (const n of m.npcs) {
     if (!DIALOGUE[n.dialogue]) fail('maps', `${m.id} npc '${n.id}' → unknown dialogue '${n.dialogue}'`);
+    if (n.dialogueDay !== undefined && !DIALOGUE[n.dialogueDay]) {
+      fail('maps', `${m.id} npc '${n.id}' → unknown day dialogue '${n.dialogueDay}'`);
+    }
     if (n.shop !== undefined && !SHOPS[n.shop]) fail('maps', `${m.id} npc '${n.id}' opens unknown shop '${n.shop}'`);
   }
   for (const s of m.signs) {

@@ -9,16 +9,23 @@ import type { DialogueScript } from '../schemas';
 
 export const DIALOGUE: Record<string, DialogueScript> = {
   /* ---------------- NPCs ---------------- */
+  // S15c: at 2 A.M. the BOOM is minutes old — she speaks in the present
+  // tense (her morning ask, q_biscuit_ask, opens at dawn through pemmelBeat)
   npc_pemmel: [
-    '@Oh! {rex}! Did you feel the sky last night? My whole spice rack jumped.',
-    "@Biscuit heard it too. He's been pointing at the hill all morning like a furry compass.",
-    '@If you ever see him wander off, send him home, would you? He smells like pond.',
+    '@{rex}! You felt that too?! The whole house went BOOM. My spice rack is on the floor.',
+    '@Biscuit shot out the door the second it hit. Last I saw him he was halfway up Hill Road, pointing.',
+    '@If you pass him out there, tell him bedtime is a LAW, not a suggestion.',
   ],
   npc_biscuit: ['@Woof! (He smells like pond. He seems enormously proud of this.)'],
   // ADR-042: the Hill Road cameo — he beat you up here, and he was right
   npc_biscuit_road: [
     '@WOOF. WOOF WOOF. (Biscuit is pointing at the hill with his whole body. Even the tail is pointing.)',
     '(He looks at you. He looks at the hill. He looks back at you, to make sure you got the message.)',
+  ],
+  // S15c: the walk back down — the hill has been handled and he knows it
+  npc_biscuit_road_after: [
+    '@WOOF! WOOF WOOF! (Biscuit is pointing at YOU now. The tail has reached a verdict: hero.)',
+    '(He walks one proud little circle, sniffs your shoe, and points himself home. Case closed.)',
   ],
   npc_plummer: [
     '@Thirty-one years delivering mail, and not ONE box ever talked back.',
@@ -34,9 +41,19 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@A meteor, eh? In MY day the sky stayed put.',
     '@Except for birds. We allowed birds.',
   ],
+  // S15c: the morning after — same obsession, new grievance (dialogueDay)
+  npc_oldtimer_day: [
+    '@Everybody keeps asking if I saw the meteor. I was ASLEEP. Like a professional.',
+    '@Now the whole town is outside pointing up. The sky is that way, folks. It always was.',
+  ],
   npc_pajama: [
     "@My mom says I can't go up Hickory Hill because it's 2 AM and a space rock fell on it.",
     '@Moms think of EVERYTHING.',
+  ],
+  // S15c: he made it to sunrise and wants it on the record (dialogueDay)
+  npc_pajama_day: [
+    '@I stayed up the WHOLE night. There was a boom and sirens and everything.',
+    '@Mom says the hill is still off-limits in the daytime too. Moms remember EVERYTHING.',
   ],
   npc_mom_pre: [
     '@{rex}, honey. The sky fell on Hickory Hill and you have your shoes on already. Of course you do.',

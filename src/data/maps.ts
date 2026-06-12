@@ -222,8 +222,9 @@ function buildOtterbrook(): MapDef {
       },
       { id: 'ana', sprite: 'ana', x: 15, y: 15, facing: 'down', dialogue: 'npc_ana' },
       { id: 'vivi', sprite: 'vivi', x: 17, y: 15, facing: 'down', dialogue: 'npc_vivi' },
-      { id: 'old_timer', sprite: 'oldTimer', x: 35, y: 22, facing: 'down', dialogue: 'npc_oldtimer', wander: true },
-      { id: 'pajama_kid', sprite: 'pajamaKid', x: 24, y: 19, facing: 'left', dialogue: 'npc_pajama', wander: true },
+      // S15c: the town reacts to the night, then to the morning after it
+      { id: 'old_timer', sprite: 'oldTimer', x: 35, y: 22, facing: 'down', dialogue: 'npc_oldtimer', dialogueDay: 'npc_oldtimer_day', wander: true },
+      { id: 'pajama_kid', sprite: 'pajamaKid', x: 24, y: 19, facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true },
     ],
     signs: [
       { x: 18, y: 27, dialogue: 'sign_welcome' },
@@ -341,7 +342,11 @@ function buildHillRoad(): MapDef {
       // the dog with opinions about the sky, already on the case (cameo —
       // he keeps the park bench in town for the §A10 #1 machine itself)
       // (dog sheets are east/west only — the POINTING is in the dialogue)
-      { id: 'biscuit_road', sprite: 'dog', x: 15, y: 3, facing: 'right', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'zapper_done' },
+      // S15c: the pointing dog has TWO opinions — the hill before the Tick
+      // falls, YOU after (tick_defeated implies hidden post-dawn for the
+      // first; the second retires at zapper_done exactly like the old gate)
+      { id: 'biscuit_road', sprite: 'dog', x: 15, y: 3, facing: 'right', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
+      { id: 'biscuit_road_after', sprite: 'dog', x: 15, y: 3, facing: 'right', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
     ],
     signs: [
       { x: 17, y: 29, dialogue: 'sign_hill_road' },
