@@ -524,28 +524,34 @@ function buildBrickton(): MapDef {
   const rng = seededRng(1995);
   const jit = (n: number): number => Math.floor(rng() * n);
 
-  const g = new Grid(56, 32, '=');
+  const g = new Grid(72, 38, '=');
   // bounds + the brick spine the north row backs onto
-  g.rect(0, 0, 56, 1, 'B');
-  g.rect(0, 0, 1, 32, 'B');
-  g.rect(55, 0, 1, 32, 'B');
-  g.rect(0, 31, 56, 1, 'B');
-  g.rect(1, 1, 54, 5, 'B');
-  // two streets + the avenue that stitches them
-  g.rect(1, 8, 54, 3, 'R');
-  g.rect(1, 21, 54, 3, 'R');
-  g.rect(25, 8, 3, 16, 'R');
+  g.rect(0, 0, 72, 1, 'B');
+  g.rect(0, 0, 1, 38, 'B');
+  g.rect(71, 0, 1, 38, 'B');
+  g.rect(0, 37, 72, 1, 'B');
+  g.rect(1, 1, 70, 5, 'B');
+  // three streets + two avenues: Brickton is a real city block now, not a strip
+  g.rect(1, 8, 70, 3, 'R');
+  g.rect(1, 21, 70, 3, 'R');
+  g.rect(25, 31, 46, 3, 'R');
+  g.rect(25, 8, 3, 26, 'R');
+  g.rect(58, 21, 3, 13, 'R');
   // dashed centerlines, phase-shifted per street, broken at the avenue + crossings
   const skipA = new Set([17, 18, 23, 24, 25, 26, 27]);
   const skipB = new Set([25, 26, 27, 28, 29]);
-  for (let x = 1; x < 55; x++) {
+  for (let x = 1; x < 71; x++) {
     if (x % 4 < 2 && !skipA.has(x)) g.set(x, 9, 'D');
     if ((x + 2) % 4 < 2 && !skipB.has(x)) g.set(x, 22, 'D');
+    if ((x + 1) % 4 < 2 && x >= 25 && x < 71 && ![58, 59, 60].includes(x)) g.set(x, 32, 'D');
   }
   // crosswalks: by the hospital, and flanking the avenue at each street
   g.rect(17, 8, 2, 3, 'X');
   g.rect(23, 8, 2, 3, 'X');
   g.rect(28, 21, 2, 3, 'X');
+  g.rect(57, 21, 2, 3, 'X');
+  g.rect(25, 30, 3, 2, 'X');
+  g.rect(58, 30, 3, 2, 'X');
   // west mid-block: the parking lot (always emptier than it should be)
   g.rect(2, 13, 8, 5, 'P');
   // east mid-block: the park — corners nibbled so it isn't a rectangle
@@ -554,9 +560,16 @@ function buildBrickton(): MapDef {
   g.rect(53 - jit(3), 13, 3, 1, '=');
   g.rect(41, 18, 2 + jit(3), 1, '=');
   g.rect(52 - jit(2), 18, 3, 1, '=');
+  // east plaza: civic clock, public notices, and too much sidewalk
+  g.rect(58, 12, 11, 7, '.');
+  g.rect(61, 14, 5, 3, '=');
+  g.rect(66, 16, 3, 2, '=');
+  // south market lot: buses, deliveries, and pigeons with committees
+  g.rect(3, 28, 9, 5, 'P');
+  g.rect(34, 25, 11, 4, '.');
   // S14: the EAST GAP — street B runs out the wall to the DOCKS (a plain
   // g.set pair consumes NO rng; every seeded stream stays byte-identical)
-  g.rect(55, 21, 1, 3, 'R');
+  g.rect(71, 21, 1, 3, 'R');
   // SE vacant lot behind its fence — S12: the fence gains a GATE (one tile
   // swapped walkable; a plain g.set consumes NO rng, so the 1995 stream and
   // the whole jittered layout stay byte-identical, ADR-016's rule). The
@@ -568,9 +581,9 @@ function buildBrickton(): MapDef {
   g.rect(48, 27, 5, 3, '.');
   // hedge fragments along the south edge — broken, like real municipal hedges
   let hx = 18;
-  while (hx < 45) {
+  while (hx < 68) {
     const len = 2 + jit(3);
-    if (rng() < 0.75) g.rect(hx, 29, len, 1, 'b');
+    if (rng() < 0.75) g.rect(hx, 35, len, 1, 'b');
     hx += len + 1 + jit(3);
   }
   g.sprinkle(95, ',~ff F', 0.16); // grass fuzz in the park + the lot
@@ -588,6 +601,8 @@ function buildBrickton(): MapDef {
     { sprite: 'bldg_hospital', w: 7, u: 2, x: 16 + jit(2) },
     { sprite: 'bldg_dept', w: 8, u: 2, x: 29 + jit(2) },
     { sprite: 'bldg_bank', w: 6, u: 2, x: 41 + jit(2) },
+    { sprite: 'bldg_video', w: 4, u: 1, x: 51 + jit(2) },
+    { sprite: 'bldg_diner', w: 4, u: 1, x: 58 + jit(2) },
   ];
   for (let i = 1; i < north.length; i++) {
     const min = north[i - 1].x + north[i - 1].w + 1; // never overlap, alleys allowed
@@ -604,6 +619,17 @@ function buildBrickton(): MapDef {
     { sprite: 'bldg_video', w: 4, u: 1, x: 35 + jit(2) },
   ];
   if (midEast[1].x < midEast[0].x + midEast[0].w) midEast[1].x = midEast[0].x + midEast[0].w;
+  const south: Bldg[] = [
+    { sprite: 'bldg_bagels', w: 4, u: 1, x: 30 + jit(2) },
+    { sprite: 'bldg_brickmore', w: 5, u: 2, x: 37 + jit(2) },
+    { sprite: 'bldg_diner', w: 4, u: 1, x: 46 + jit(2) },
+    { sprite: 'bldg_video', w: 4, u: 1, x: 53 + jit(2) },
+    { sprite: 'bldg_bank', w: 6, u: 2, x: 61 + jit(2) },
+  ];
+  for (let i = 1; i < south.length; i++) {
+    const min = south[i - 1].x + south[i - 1].w + 1;
+    if (south[i].x < min) south[i].x = min;
+  }
 
   const bldgProps: PropDef[] = [];
   const place = (b: Bldg, bottomPx: number): PropDef => {
@@ -637,6 +663,7 @@ function buildBrickton(): MapDef {
   };
   north.forEach((b) => place(b, 112)); // doors open onto street A's sidewalk
   [...midWest, ...midEast].forEach((b) => place(b, 304)); // doors face street B
+  south.forEach((b) => place(b, 464)); // doors face the new market street
 
   /* ---- scattered street life ---- */
   const trees: Array<[number, number]> = [[33, 13]]; // lone back-alley tree
@@ -645,6 +672,9 @@ function buildBrickton(): MapDef {
   }
   for (const [tx, ty] of [[19, 27], [31, 28], [39, 27], [44, 28], [12, 28]] as const) {
     if (rng() < 0.6) trees.push([tx, ty]);
+  }
+  for (const [tx, ty] of [[63, 14], [67, 17], [36, 26], [41, 27], [8, 30], [65, 35]] as const) {
+    if (rng() < 0.68) trees.push([tx, ty]);
   }
 
   const FURN_SOLID: Record<string, { ox: number; oy: number; w: number; h: number }> = {
@@ -670,6 +700,11 @@ function buildBrickton(): MapDef {
     const sprite = (['hydrant', 'planter'] as const)[jit(2)];
     furniture.push({ sprite, x: fx, y: 19, solid: FURN_SOLID[sprite] });
   }
+  for (const fx of [30, 35, 44, 51, 57, 66]) {
+    if (rng() < 0.35) continue;
+    const sprite = (['bench', 'hydrant', 'planter'] as const)[jit(3)];
+    furniture.push({ sprite, x: fx, y: 29, solid: FURN_SOLID[sprite] });
+  }
 
   // alley dumpsters: one in the starmart-brickmore gap, one by the parking lot
   const alleyX = north[0].x + north[0].w + 0.1;
@@ -683,8 +718,8 @@ function buildBrickton(): MapDef {
   const rng2 = seededRng(2077);
   const jit2 = (n: number): number => Math.floor(rng2() * n);
   // sidewalk cracks — pure tile swaps, nothing moves
-  for (let y = 6; y < 31; y++) {
-    for (let x = 1; x < 55; x++) {
+  for (let y = 6; y < 37; y++) {
+    for (let x = 1; x < 71; x++) {
       if (g.rows[y][x] === '=' && rng2() < 0.045) g.set(x, y, '1');
     }
   }
@@ -694,6 +729,8 @@ function buildBrickton(): MapDef {
     [10, 30],
     [22, 12],
     [23, 44],
+    [32, 34],
+    [32, 62],
   ] as const) {
     const x = x0 + jit2(8);
     if (g.rows[py][x] === 'R') g.set(x, py, '2');
@@ -704,6 +741,9 @@ function buildBrickton(): MapDef {
   }
   for (const x of [9 + jit2(3), 36 + jit2(3), 51]) {
     if (g.rows[21][x] === 'R') g.set(x, 21, '3');
+  }
+  for (const x of [31 + jit2(3), 49 + jit2(3), 64]) {
+    if (g.rows[31][x] === 'R') g.set(x, 31, '3');
   }
 
   // telephone poles: bases on the mid-block strip and the south sidewalk so
@@ -716,12 +756,15 @@ function buildBrickton(): MapDef {
   for (const cx of [10, 18, 34, 42, 50]) {
     poles.push({ sprite: 'phone_pole', x: cx - 4.125, y: 22.125 });
   }
+  for (const cx of [32, 44, 56, 68]) {
+    poles.push({ sprite: 'phone_pole', x: cx - 4.125, y: 32.125 });
+  }
 
   // parking meters + newspaper boxes on sidewalk B, never at a door column
   // and never on a column the S1 furniture already took
   const occupied = new Set(furniture.map((f) => `${f.x},${f.y}`));
   const meters: PropDef[] = [];
-  for (const mx of [12, 21, 30, 39, 48]) {
+  for (const mx of [12, 21, 30, 39, 48, 57, 66]) {
     if (doorCols.has(mx) || occupied.has(`${mx},19`)) continue;
     if (rng2() < 0.3) continue;
     meters.push({ sprite: 'parking_meter', x: mx + 0.3, y: 18.6, solid: { ox: 3, oy: 14, w: 4, h: 6 } });
@@ -731,6 +774,7 @@ function buildBrickton(): MapDef {
   if (!doorCols.has(nbx)) {
     meters.push({ sprite: 'news_box', x: nbx, y: 18.7, solid: { ox: 2, oy: 12, w: 12, h: 7 } });
   }
+  meters.push({ sprite: 'news_box', x: 61.5, y: 28.8, solid: { ox: 2, oy: 12, w: 12, h: 7 } });
   // trash cans in the north alley gaps (between building solids, row 6)
   for (let i = 1; i < north.length; i++) {
     const gapStart = north[i - 1].x + north[i - 1].w + 0.2;
@@ -752,13 +796,13 @@ function buildBrickton(): MapDef {
     usedCols.add(fx - 1).add(fx).add(fx + 1);
   }
   // mid-block strip between the parking lot and street B (bases on row ~12)
-  for (const tx of [10, 18, 22, 30, 34, 42, 50]) {
+  for (const tx of [10, 18, 22, 30, 34, 42, 50, 62, 68]) {
     if (tx >= 24 && tx <= 28) continue; // avenue mouth
     if (rng2() < 0.2) continue;
     streetTrees.push([tx, 11]);
   }
   // south sidewalk, east of the bus/payphone corner (bases on row ~26)
-  for (const tx of [20, 23, 29, 33, 37, 41, 45, 52]) {
+  for (const tx of [20, 23, 29, 33, 37, 41, 45, 52, 63, 68]) {
     if (tx >= 24 && tx <= 28) continue; // avenue
     if (usedCols.has(tx)) continue; // S1 furniture got there first
     if (Math.abs(tx - 49) <= 1) continue; // the realtor's sign
@@ -770,6 +814,8 @@ function buildBrickton(): MapDef {
     [47, 15],
     [41, 16],
     [52, 13],
+    [63, 15],
+    [67, 13],
   ] as const) {
     if (ty >= 14 && ty <= 16 && Math.abs(tx - picnicX) < 3) continue;
     if (rng2() < 0.4) continue;
@@ -805,6 +851,8 @@ function buildBrickton(): MapDef {
       ...bldgProps,
       { sprite: 'dumpster', x: alleyX, y: 5.4, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
       { sprite: 'dumpster', x: 2, y: 11.9, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
+      { sprite: 'dumpster', x: 6, y: 27.2, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
+      { sprite: 'dumpster', x: 63, y: 24.6, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
       { sprite: 'atm', x: atmX, y: 5.5, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
       // bus stop corner
       { sprite: 'bus_sign', x: 7, y: 26, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
@@ -816,7 +864,11 @@ function buildBrickton(): MapDef {
       // the lot's realtor sign, on the sidewalk where you can actually read it
       { sprite: 'sign', x: 49, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       // S14: the docks sign by the east gap (static placement, no rng)
-      { sprite: 'sign', x: 53, y: 24, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      { sprite: 'sign', x: 68, y: 24, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      { sprite: 'sign', x: 62, y: 14, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      { sprite: 'sign', x: 35, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      { sprite: 'sign', x: 61, y: 28, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      { sprite: 'sign', x: dept.x + 2, y: 5.6, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       // S12: the gate in the lot's fence — THE CAGE is open (no solid; the
       // door zone under it carries you through, chain hanging unlatched)
       { sprite: 'cage_gate', x: 50, y: 25.1 },
@@ -831,12 +883,21 @@ function buildBrickton(): MapDef {
       { id: 'quarter_man', sprite: 'quarterMan', x: 15, y: 27, facing: 'left', dialogue: 'npc_quarter' },
       { id: 'pigeon_kid', sprite: 'pigeonKid', x: 44, y: 15, facing: 'down', dialogue: 'npc_pigeonkid' },
       { id: 'sidewalk_critic', sprite: 'sidewalkCritic', x: 20, y: 19, facing: 'down', dialogue: 'npc_critic', wander: true },
+      { id: 'clock_lady', sprite: 'oldTimer', x: 63, y: 15, facing: 'down', dialogue: 'npc_clock_lady' },
+      { id: 'bagel_scout', sprite: 'pajamaKid', x: 33, y: 29, facing: 'up', dialogue: 'npc_bagel_scout', wander: true },
+      { id: 'blue_watcher', sprite: 'grayCommuter', x: dept.x + 9, y: 7, facing: 'left', dialogue: 'npc_blue_watcher' },
+      { id: 'bus_boy', sprite: 'pigeonKid', x: 7, y: 30, facing: 'right', dialogue: 'npc_bus_boy', wander: true },
+      { id: 'plaza_mime', sprite: 'smilerB', x: 67, y: 17, facing: 'left', dialogue: 'npc_plaza_mime' },
     ],
     signs: [
       { x: 10, y: 27, dialogue: 'sign_brickton' },
       { x: 49, y: 25, dialogue: 'sign_lot' },
       // S14: the docks pointer at the east gap
-      { x: 53, y: 24, dialogue: 'sign_to_docks' },
+      { x: 68, y: 24, dialogue: 'sign_to_docks' },
+      { x: 62, y: 14, dialogue: 'sign_brickton_clock' },
+      { x: 35, y: 25, dialogue: 'sign_market_row' },
+      { x: 61, y: 28, dialogue: 'sign_overpass' },
+      { x: dept.x + 2, y: 6, dialogue: 'sign_blue_notice' },
       // S13: the travel poster reads (coords follow the jittered board)
       { x: posterX, y: 26, dialogue: 'sign_links_poster' },
     ],
@@ -847,16 +908,21 @@ function buildBrickton(): MapDef {
       // fixed — the gate tile was carved without touching the rng streams)
       { x: 50, y: 26, w: 1, h: 1, to: 'the_cage', tx: 320, ty: 60, facing: 'down' },
       // S14: east along street B to the BRICKTON DOCKS (§A5 Ch.2's gate)
-      { x: 55, y: 21, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
+      { x: 71, y: 21, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
     ],
     spawners: [
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 28, y: 6, w: 12, h: 2 } },
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 11, y: 19, w: 13, h: 2 } },
       { enemies: ['pigeon_gang'], count: 1, rect: { x: 2, y: 13, w: 8, h: 5 } },
       { enemies: ['pigeon_gang'], count: 1, rect: { x: 41, y: 13, w: 12, h: 6 } },
+      { enemies: ['blazer_smiler'], count: 1, rect: { x: 56, y: 12, w: 13, h: 7 } },
+      { enemies: ['pigeon_gang'], count: 1, rect: { x: 3, y: 28, w: 9, h: 5 } },
+      { enemies: ['cranky_mailbox'], count: 1, rect: { x: 30, y: 25, w: 16, h: 4 } },
     ],
     triggers: [
       { id: 'bus_stop_brickton', rect: { x: 4, y: 26, w: 4, h: 3 }, once: false },
+      { id: 'brickton_clock_goal', rect: { x: 60, y: 13, w: 8, h: 5 }, once: false },
+      { id: 'brickton_dial_goal', rect: { x: 13, y: 28, w: 5, h: 2 }, once: false },
       // S2: Mom calls the payphone (14,26) once the Department falls
       { id: 'payphone_ring', rect: { x: 12, y: 25, w: 6, h: 4 }, once: false },
     ],

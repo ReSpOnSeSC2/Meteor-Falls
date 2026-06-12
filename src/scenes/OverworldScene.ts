@@ -617,13 +617,15 @@ export class OverworldScene extends Phaser.Scene {
       if (!this.cut && !this.transitioning) this.updatePatrols(dt);
       // a contact battle may have started this frame — don't double-fire
       if (!this.cut && !this.transitioning) {
-        this.checkDoors();
-        this.checkTriggers();
-        // the A that confirmed a menu row this same frame must not also
-        // probe the world (Dialogue.justReleased — the S6 notebook-ask fix)
-        const released = this.dlg.justReleased(this.time.now);
-        if (INPUT.justPressed('A') && !released) void this.interact();
-        if (INPUT.justPressed('START') && !released) this.pauseMenu();
+        void this.checkDoors();
+        if (!this.cut && !this.transitioning) {
+          this.checkTriggers();
+          // the A that confirmed a menu row this same frame must not also
+          // probe the world (Dialogue.justReleased — the S6 notebook-ask fix)
+          const released = this.dlg.justReleased(this.time.now);
+          if (INPUT.justPressed('A') && !released) void this.interact();
+          if (INPUT.justPressed('START') && !released) this.pauseMenu();
+        }
       }
     } else {
       this.player.anims.stop();
@@ -2376,7 +2378,7 @@ export class OverworldScene extends Phaser.Scene {
 
   /* ---------------- doors & triggers ---------------- */
 
-  private checkDoors(): void {
+  private async checkDoors(): Promise<void> {
     for (const d of this.mapDef.doors) {
       const r = { x: d.x * 16, y: d.y * 16, w: d.w * 16, h: d.h * 16 };
       if (
@@ -2408,10 +2410,34 @@ export class OverworldScene extends Phaser.Scene {
         this.player.y > r.y &&
         this.player.y < r.y + r.h
       ) {
+        if (p.door.to === 'dos_f1' && (await this.bricktonDepartmentGate())) return;
         this.goThroughDoor(p.door.to, p.door.tx, p.door.ty, 'up');
         return;
       }
     }
+  }
+
+  private async bricktonDepartmentGate(): Promise<boolean> {
+    if (this.mapDef.id !== 'brickton' || GS.flag('faye_joined')) return false;
+    const clock = !!GS.flag('brickton_clock_goal');
+    const dial = !!GS.flag('brickton_dial_goal');
+    if (clock && dial) {
+      if (!GS.flag('brickton_goals_ready')) {
+        this.cut = true;
+        AUDIO.sfx('confirm');
+        await this.dlg.say(...DIALOGUE.brickton_goal_gate_ready);
+        GS.setFlag('brickton_goals_ready');
+        this.cut = false;
+      }
+      return false;
+    }
+    this.cut = true;
+    AUDIO.sfx('cursor');
+    if (!clock && !dial) await this.dlg.say(...DIALOGUE.brickton_goal_gate_none);
+    else if (!clock) await this.dlg.say(...DIALOGUE.brickton_goal_gate_clock);
+    else await this.dlg.say(...DIALOGUE.brickton_goal_gate_dial);
+    this.cut = false;
+    return true;
   }
 
   private goThroughDoor(to: string, tx: number, ty: number, facing: Facing): void {
@@ -2520,6 +2546,9 @@ export class OverworldScene extends Phaser.Scene {
     if (this.mapDef.id === 'otterbrook' && GS.flag('intro_done') && !GS.flag('chad_joined')) {
       await this.chadJoinScene();
     }
+    if (this.mapDef.id === 'brickton' && GS.flag('bus_ride_done') && !GS.flag('brickton_arrival_done')) {
+      await this.bricktonArrivalScene();
+    }
     // S2: stepping onto the street after the Department falls — Mom's already dialing
     if (this.mapDef.id === 'brickton' && this.momCallPending()) {
       this.cut = true;
@@ -2545,6 +2574,12 @@ export class OverworldScene extends Phaser.Scene {
         break;
       case 'bus_stop_brickton':
         await this.busAsk('otterbrook');
+        break;
+      case 'brickton_clock_goal':
+        if (!GS.flag('faye_joined') && !GS.flag('brickton_clock_goal')) await this.bricktonClockGoalScene();
+        break;
+      case 'brickton_dial_goal':
+        if (!GS.flag('faye_joined') && !GS.flag('brickton_dial_goal')) await this.bricktonDialGoalScene();
         break;
       case 'faye_meet':
         if (GS.flag('holding_open') && !GS.flag('faye_joined')) await this.fayeJoinScene();
@@ -2748,6 +2783,44 @@ export class OverworldScene extends Phaser.Scene {
     GS.data.guest = 'chad';
     GS.setFlag('chad_joined');
     this.addFollower('chad');
+    this.cut = false;
+  }
+
+  private async bricktonArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('brickton_arrival_done');
+    await this.wait(260);
+    this.cameras.main.pan(31 * 16, 6 * 16, 950, 'Sine.easeInOut', true);
+    await this.dlg.say(...DIALOGUE.brickton_arrival.slice(0, 4));
+    this.sparkleBurst(this.player.x, this.player.y - 18, 8);
+    AUDIO.sfx('ember');
+    await this.dlg.say(...DIALOGUE.brickton_arrival.slice(4));
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    this.cut = false;
+  }
+
+  private async bricktonClockGoalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('brickton_clock_goal');
+    AUDIO.sfx('cursor');
+    this.cameras.main.pan(62 * 16, 14 * 16, 700, 'Sine.easeInOut', true);
+    await this.wait(300);
+    AUDIO.sfx('thud');
+    this.sparkleBurst(62 * 16 + 8, 14 * 16 + 8, 10);
+    await this.dlg.say(...DIALOGUE.brickton_goal_clock);
+    toast(this, 'GOAL: BRICKTON MINUTE');
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    this.cut = false;
+  }
+
+  private async bricktonDialGoalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('brickton_dial_goal');
+    AUDIO.sfx('phone');
+    await this.wait(260);
+    this.sparkleBurst(this.player.x, this.player.y - 18, 10);
+    await this.dlg.say(...DIALOGUE.brickton_goal_dial);
+    toast(this, 'GOAL: WARM DIAL TONE');
     this.cut = false;
   }
 

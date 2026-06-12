@@ -76,10 +76,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   intro_card: [
     'Otterbrook, Ohio. Summer, 1995.',
     '2:11 AM.',
+    'The whole town is asleep except the crickets, one porch light, and a dog who has opinions about the sky.',
+    'Somewhere very high up, something answers a question nobody on Earth asked.',
   ],
   intro_wake: [
     'The roar came up through the floor, through the bed, through the back teeth.',
+    'For one bright second your room looks like morning. Then the light folds itself back into night.',
+    'Downstairs, Mom says your name once. Not scared. Just making sure the world still has it.',
     'Something enormous just landed on Hickory Hill.',
+    'The baseball bat beside your desk is suddenly no longer decorative.',
     '({rex} is already putting on his cap. Somehow you knew he would be.)',
   ],
   chad_join: [
@@ -347,13 +352,75 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   bus_narration: [
     'The hill shrinks. The town shrinks.',
+    'Cornfields smear into guardrails. Guardrails become billboards. Billboards begin making promises nobody asked them to keep.',
+    'A sign for BRICKTON CITY rises out of the morning haze, brick by brick, like the world decided to get taller.',
     'It turns out the world was hiding a whole CITY behind the corn.',
   ],
 
   /* ---------------- Brickton City ---------------- */
+  brickton_arrival: [
+    'The bus sighs open on a block that smells like hot pavement, coffee, and a little bit of lightning.',
+    'Brickton does not wake up politely. It clatters. It honks. It sells bagels through a locked door and calls that commerce.',
+    'Across the street, blue blazers move in a line toward the Department of Smiles.',
+    'Their smiles are all the same size.',
+    '(The Star Locket hums once, low and worried. Somewhere above you, a girl you have not met yet hums back.)',
+    'Find the Department. Find the girl who prays.',
+  ],
   sign_brickton: [
     'WELCOME TO BRICKTON CITY — pop. lots.',
     '(Someone has written "OTTERBROOK FITS IN OUR PARKING LOT" underneath. Rude. Accurate.)',
+  ],
+  sign_brickton_clock: [
+    'BRICKTON CIVIC CLOCK — sponsored by people who are late.',
+    '(It is seven minutes fast and extremely confident.)',
+  ],
+  sign_market_row: [
+    'EAST MARKET ROW — bagels, videos, diner, mysteries.',
+    '(The mysteries are closed Tuesdays.)',
+  ],
+  sign_overpass: [
+    'UNDERPASS TO THE OLD FREIGHT STEPS.',
+    '(Somebody painted a smile over the arrow. Somebody else painted teeth on the smile.)',
+  ],
+  sign_blue_notice: [
+    'DEPARTMENT OF SMILES PUBLIC NOTICE:',
+    '"Unauthorized sadness should be reported to your nearest enthusiastic adult."',
+    '(The notice has no phone number. It assumes enthusiasm will find you.)',
+  ],
+  brickton_goal_clock: [
+    'The civic clock clicks seven wrong minutes at once.',
+    'Every blue blazer on the block turns toward it, smiles, and turns away again like a row of appliances.',
+    '@That is Brickton time, honey. (The clock lady taps the glass.) Seven minutes fast, on purpose.',
+    '@A city this big needs a head start on bad news.',
+    '(The Star Locket takes one impossible tick from the clock and keeps it warm.)',
+    '* GOAL: Borrowed a BRICKTON MINUTE!',
+  ],
+  brickton_goal_dial: [
+    'The payphone rings once.',
+    'Nobody is calling. Nobody is NOT calling either. Payphones are complicated.',
+    '@Hear it? (The quarter man smiles without showing teeth.) Area code 216, B flat, warm as toast.',
+    'You hold the Star Locket near the receiver. The dial tone folds itself into the first Heartlight.',
+    '* GOAL: Caught a WARM DIAL TONE!',
+  ],
+  brickton_goal_gate_none: [
+    'The Department doors slide open one inch, inspect your face, and slide shut.',
+    'A tiny speaker says: "APPOINTMENT NOT FOUND. PLEASE ARRIVE WITH A MORE CONVINCING CITY."',
+    '(The Star Locket pulls two ways: toward the civic clock and toward the payphone corner.)',
+  ],
+  brickton_goal_gate_clock: [
+    'The Department doors consider your dial tone and reject your punctuality.',
+    '"PLEASE CONSULT BRICKTON TIME BEFORE ENTERING."',
+    '(The Star Locket ticks toward the civic clock.)',
+  ],
+  brickton_goal_gate_dial: [
+    'The Department doors accept your borrowed minute, then ask for a phone number.',
+    '"EVERY PRODUCTIVE VISITOR MUST BE REACHABLE."',
+    '(The Star Locket hums toward the payphone corner.)',
+  ],
+  brickton_goal_gate_ready: [
+    'The borrowed minute ticks. The warm dial tone hums.',
+    'For one second, the Department doors forget how to say no.',
+    'They open wide enough for two kids, one bat, and one very serious question.',
   ],
   // S12: the FUTURE SITE finally arrived, and it's a basketball cage
   sign_lot: [
@@ -449,6 +516,28 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Brickton General, walk-ins welcome. The clipboard knows if you are sick. I just hold the clipboard.',
     '@...It says you are fine. It says you are EXTREMELY twelve.',
   ],
+  npc_clock_lady: [
+    '@I wind the civic clock every morning. Seven minutes fast, on purpose.',
+    '@A city this big needs a little warning before time arrives.',
+  ],
+  npc_bagel_scout: [
+    '@Bagels are circles with ambition. I am scouting locations for the perfect one.',
+    '@This block has promise. The curb is chewy.',
+  ],
+  npc_blue_watcher: [
+    '@My sister went into the Department for a "smile tune-up."',
+    '@She came out saying "productive" at the end of sentences. Productive.',
+    '@If you go in there, keep one real feeling in your pocket. They check faces first.',
+  ],
+  npc_bus_boy: [
+    '@I rode the 6:15 once and saw a cow look into the city like it owed him money.',
+    '@The cow was right. Brickton owes EVERYBODY money.',
+  ],
+  npc_plaza_mime: [
+    '@...',
+    '(He is a mime. He points at the Department, makes a huge smile with both hands, then pretends to be locked in a very boring box.)',
+    '(Honestly? Clearer than most adults.)',
+  ],
   npc_commuter: [
     '@My husband works in there. The Department of Smiles.',
     '@He smiles all the time now. He used to only smile when he meant it.',
@@ -469,6 +558,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   locked_bagels: [
     'BRICKTON BAGELS is closed. A note on the door: "BACK IN 5."',
     '(The note has been there since 1991. The 5 was never defined.)',
+    'Through the glass, a single bagel rotates in a display case, undefeated.',
   ],
   locked_hospital: [
     'BRICKTON GENERAL. The waiting room is standing-room-only, and most of those standing are pigeons.',
@@ -479,6 +569,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   locked_video: [
     'VIDEO VAULT is closed for "inventory," which through the window appears to be one man rewinding tapes and sighing.',
+    'A cardboard standee for a space movie has been turned to face the wall. It knows too much.',
   ],
   locked_bank: [
     'OTTERBROOK SAVINGS & LOAN, Brickton branch. Closed.',
@@ -487,17 +578,20 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   locked_diner: [
     'The DINER is closed between breakfast and breakfast.',
     'A menu in the window lists "EGGS (various)" and, lower down, "ASK US ABOUT TUESDAY."',
+    'Behind the counter, a pie sits under glass with the patience of a saint.',
   ],
 
   /* ---------------- the Department of Smiles ---------------- */
   npc_receptionist: [
     '@Welcome to the Department of Smiles! Have you smiled today? Don\'t worry. We can fix that.',
     '@Visitors are encouraged to enjoy the lobby, the other floors, and compliance.',
+    '@If you hear singing from upstairs, that is a ventilation feature. We are proud of our ventilation.',
     '@Have a PRODUCTIVE day!',
   ],
   dos_lobby: [
     'DEPARTMENT OF SMILES — "Putting the PRODUCT in PRODUCTIVITY since whenever."',
     '(The exclamation point on the wall logo looks tired.)',
+    'A guestbook asks for NAME, TIME IN, TIME OUT, and FAVORITE APPROVED FACIAL EXPRESSION.',
   ],
   dos_cert: [
     'ELEVATOR INSPECTION CERTIFICATE: "It\'s a great elevator." — an inspector, probably.',
@@ -506,14 +600,17 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   dos_breakroom: [
     'BREAK ROOM — Breaks are limited to feelings of gratitude.',
     '(Someone has scratched "I MISS SATURDAY" into the paint, then apologized underneath.)',
+    'The picnic table has four chairs and zero sandwiches. This is how you know the Hush has been here.',
   ],
   dos_memo1: [
     'MEMO: Effective today, frowning is a meeting.',
     'MEMO: All meetings are mandatory.',
+    'MEMO: Whistling has been replaced by quiet approval.',
   ],
   dos_memo2: [
     'EMPLOYEE OF THE MONTH: EVERYONE!',
     '(Forty identical photos of forty identical smiles. None of them look happy about it.)',
+    'One photo is slightly crooked. It is the bravest thing in the room.',
   ],
   dos_quiet: [
     'FLOOR 3 — QUIET FLOOR. SMILE SOFTLY.',
@@ -521,6 +618,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   dos_memo3: [
     'QUOTA BOARD — SMILES PRODUCED: ALL OF THEM.',
     'SMILES FELT: (this column is empty)',
+    'A third column, labeled SONGS HEARD, has been scratched out so hard the wall shows through.',
   ],
   holding_door_line: [
     'A steel door, riveted shut. A brass plate reads: HOLDING ROOM — PRODUCTIVITY LOCK ENGAGED.',
@@ -569,12 +667,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Forty tiles. I counted twice, in case the first forty were lying. Hi. You\'re {rex}.',
     '@Don\'t look behind you, there\'s nobody else here. The Embers told me. They sing, you know. All eight of them, all over the world, like a choir that got scattered on purpose.',
     '@The one from your hill hums in B flat. It has NOT stopped bragging about you.',
+    '@I kept praying in here. Not because I thought the door would open. Because I wanted to remember what open felt like.',
+    '@Then three little lights turned green, and the door remembered too.',
   ],
   faye_locket: [
     '* {rex} held up the Star Locket. Inside it, one instrument was playing, all alone.',
     '@...That\'s it. That\'s the song I keep hearing through the walls.',
     '(She listens the way some people pray. It turns out to be the same thing.)',
     '@They put me in here because I asked the Manager what he\'s so afraid of. He smiled so wide it stopped being a smile. The door did the answering.',
+    '@But the song never got quieter. That is either a miracle or very stubborn music.',
     '@So. New plan. We go ask him together.',
   ],
   faye_join: [
