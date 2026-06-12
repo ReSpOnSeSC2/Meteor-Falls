@@ -1788,22 +1788,46 @@ byte-equal, and sweep the scene for any remaining raw INPUT.dir()
 read (the tutorial checks) so every directional read agrees with
 the camera.
 
-7. THE COURT GROWS (user: "the court needs to be much wider I
-think"). Court geometry is sim data (COURT in sim.ts) but everything
-pins it: the two drawn courts (cage_court / cage_court_behind —
-redraw at the new size under ADR-020 discipline), the fence and
-bleachers, the behindMap depth scale, AI spacing tendencies, and the
-S12 tape suite. Widen the playing rectangle ≈ +40% (sidelines and
-baselines breathe; the rim-relative law is UNTOUCHED — ARC_R,
-effective range, FINISH_RANGE, and the runway corridor all key off
-the rim, not the fence). Re-tune the AI lane/spacing constants to
-USE the room (snipers drift wider, cutters run longer lanes, the
-paint stays the paint), recalibrate behindMap so the far rim still
-reads at the new depth, re-pin the tape suite (geometry moved —
-regenerate the expected logs; the determinism law itself is
-untouched), and re-shoot both cameras for .shots/. The side
-camera's ball-follow covers the bigger floor; the BEHIND remap
-(item 6) needs zero changes — it reads its basis live.
+7. THE BEHIND COURT READS WIDER (user, refined 2026-06-12: "court
+only needs to be wider on the behind the back view not the side
+view"). So the SIM COURT IS UNTOUCHED — no geometry change, no tape
+re-pins, no AI retune; this is pure presentation in the BEHIND
+projection. Widen behindMap's LATERAL spread (≈ +35–45% more screen
+width per court-y, scaled by depth so the trapezoid keeps its
+perspective and the far rim still reads), redraw cage_court_behind
+to the new proportions (ADR-020 discipline — sidelines, paint, and
+arc must agree with the projection they sit under), and every
+overlay stays honest for free because the meter, popups, cursor,
+and shadows all ride project() — verify it anyway by pixel-sampling
+one athlete parked on each sideline at near and far depth. Clamp
+the spread so the widest row still fits the 400px logical frame
+with the HUD margins intact, then re-shoot BEHIND .shots/. The side
+camera is untouched; the item-6 remap is untouched (it reads sign,
+not scale).
+
+8. YOUR CAGE, YOUR KEYS (user: "I should be able to separately
+change the basketball hotkeys without changing my normal hotkeys").
+Today ONE device-local binding table drives everything (ADR-036:
+"the RPG and the cage both read through the binding table" — this
+item supersedes that sentence; record it in the ADR). Give the
+InputBus BINDING PROFILES: 'game' (the existing table, byte-for-
+byte untouched) and 'cage' — a SPARSE overlay where any row left
+unset falls through to the game binding, so out of the box nothing
+changes anywhere; persisted device-local beside the existing
+localStorage key (never save data, the ADR-036 law). HoopsScene
+activates the cage profile on launch and restores on
+'mf-hoops-closed' (activation is runtime state only — a crash never
+strands the overworld on cage keys). SETUP → CONTROLS grows a CAGE
+tab labeled by the cage's own semantics (SHOOT / PASS / SPRINT /
+DRIBBLE MOVE, the defense reads beside them per the S12c legend),
+under the same capture law per profile: steals resolve WITHIN a
+profile, and the reset row clears the overlay back to fall-through.
+The golf scene keeps reading the game profile (its own overlay is a
+one-line follow-up if ever asked). Vitest: profile resolution
+headless (set/unset fall-through, steal-within-profile, reset);
+the bot rebinds cage SHOOT to a fresh key, sinks a jumper with it,
+exits the cage, and proves overworld A still confirms on the
+original key.
 
 QA: pre-flight + device row 23: hold a jumper and WATCH the fill
 rise into a visible green from BOTH cameras; drain one from deep on
@@ -1813,10 +1837,13 @@ read the spray; runway-dunk a wide-open lane from the arc, then get
 honestly stuffed trying it through a defender; sprint into a set
 big and eat the floor, then knock the handler off the ball and
 scoop the fumble; toggle BEHIND mid-possession and drive at the rim
-with screen-up; run the WIDE court corner to corner in both cameras;
-finish Permit's lesson 9. Append the ADR (046: CAGE 2.1 — the
-scale-anchored meter, the widened green, the runway law, moving
-jumpers, the body law, the behind-camera remap, the wide court).
+with screen-up; feel the BEHIND court's new width sideline to
+sideline while the side view stays familiar; rebind SHOOT on the
+CAGE tab and verify the overworld's A never moved; finish Permit's
+lesson 9. Append the ADR (046: CAGE 2.1 — the scale-anchored meter,
+the widened green, the runway law, moving jumpers, the body law,
+the behind-camera remap, the wider-reading BEHIND court, cage
+binding profiles).
 
 Done when: the fill RISES into a visible green at every legal range
 in both cameras (pixel-sampled, shot for .shots/); the jumper green
@@ -1828,9 +1855,11 @@ the AI uses all of it through the same math; bodies separate,
 screen, and knock down on the seeded table with fumbles claimed
 deterministically and no overlap surviving a tick; BEHIND-mode
 steering stays camera-relative under pinned tests on keys, pad, AND
-touch; the court plays ≈40% wider with the AI using the room and
-the tapes re-pinned; tapes replay byte-equal; Permit teaches it;
-validator + vitest green; browser loop and android:apk untouched.
+touch; the BEHIND view reads ≈40% wider between the sidelines while
+the side view and the sim stay byte-identical; cage keys rebind on
+their own profile with the game profile untouched and fall-through
+proven; tapes replay byte-equal; Permit teaches it; validator +
+vitest green; browser loop and android:apk untouched.
 ```
 
 ## Prompt S15 — EVERY DOOR OPENS (the interior program + city vocabulary)
@@ -1950,8 +1979,10 @@ with the green band finally visible, the widened jumper window, the
 runway-dunk lane law that keeps the psionic arc takeoff but only in
 the wide open, fadeaways + side-steps on the same hold-release
 meter, THE BODY LAW — real player collision with seeded knockdowns,
-fumbles, and emergent screens — and the BEHIND-camera steering
-remap)
+fumbles, and emergent screens — the BEHIND-camera steering remap
+(landed live 2026-06-12; the session pins it), the wider-reading
+BEHIND court, and per-mode CAGE keybindings on a sparse profile
+overlay)
 → **S15–S16** make the world dense and
 navigable, then Prompt 29 (Chapter 3: Foggybottom + Wintermoor + the
 MAINFRAME on the phase machine — its summons-refill trigger is already
