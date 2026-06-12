@@ -472,7 +472,7 @@ the 32-team Classic on **save v5** (bracket + quarter checkpoints +
 auto-written notebooks: process death costs at most the quarter in
 progress — verified by reload), 31 §A11 entrant fives + the walk-on bench
 (Chad guests pre-Milo), rewards through the Prompt-18 flow scaled by
-format/depth + seeded drops, and THE STARTING FOUR ('arms' opens:
+format/depth + seeded drops, and THE STARTING FIVE ('arms' opens:
 heroSpeed/heroGuts read-throughs, "Speed up by N!" previews, hands-full
 raincheck ledger at PERMIT, zero missables; arms art ships as trinket
 icons — ADR-034 amends ADR-032's provisional mapping). Validator: teams/
@@ -506,7 +506,7 @@ finally arrived, and it's a basketball cage. Cast: PERMIT (the announcer
 seen) + bench-crowd minis. New ADR for the SPORT SHEET contract: bespoke
 ≈32×40 multi-frame athlete sheets (dribble idle/run, gather, jumper with
 readable RELEASE frames, layup, THREE dunk cinematics, block leap, steal
-swipe, celebration) generated from CharacterSpec so the four heroes —
+swipe, celebration) generated from CharacterSpec so the playable heroes —
 and every §A11 opponent — inherit ADR-022 faces and ADR-025 hair; ball
 gets real arc/rim/backboard physics + net ripple frames; ADR-020 rules
 bind (deliberate pixels, no scatter, shadows never outlined).
@@ -546,21 +546,21 @@ quarter ride the v5 field) so process death costs at most the quarter
 in progress — a 20-minute game on a phone demands nothing less. Your five =
 the current party plus named WALK-ONS from a data table (Chad guests
 pre-Milo; the walk-on bench is §A11 local color with its own tiny stat
-lines — the four heroes are the stars once Dorin joins; no invented
+lines — the canon heroes are the stars as the party grows to five; no invented
 heroes ever join the PARTY itself).
 REWARDS (data-tuned, §A9-conscious, validator-pinned): every match pays
 EXP through the Prompt 18 flow (level-ups announce post-game) scaled by
 FORMAT and bracket depth — a four-quarter Classic war pays like the war
 it is, a 3v3 run to 21 pays its weight — plus seeded goods drops
 (foods/colas); pickup runs at the cage pay forever, come back anytime. FIRST Classic title pays
-THE STARTING FOUR: four hero-tagged items, the first 'arms'-slot gear
+THE STARTING FIVE: five hero-tagged items, the first 'arms'-slot gear
 (§A8 manifest extension + Bible drift note per Appendix rule 6) — wire
 them the S10 way: new stat read-throughs in battle/formulas.ts
 (heroSpeed/heroGuts beside heroDefense/heroLuck, battle + STATUS reading
 through them) and generalize confirmEquip's preview to the item's
 carried stat ("Speed up by N!"). Hands-full BLOCKS the handoff, zero
 missables; repeat titles pay cash + goods only. NOT a §A10 quest — the
-canon sixteen stay sixteen; no caller, no journal row.
+canon twenty stay twenty; no caller, no journal row.
 Done when: one 5v5 game plays a true four-quarter 20-minute arc —
 shots live and die on release timing, dunks feel earned, crossovers
 break ankles, passes go where you aim, the shot clock forces offense,
@@ -568,7 +568,7 @@ ten athletes hold 60fps — and the full Classic crowns a champion
 across ~2 hours of bracket the player can leave and resume freely;
 first-to-21 3v3 pickup pays XP anytime; drivable by keys, pad, AND the
 touch overlay at pump(n, 8.33); bracket AND quarter checkpoints
-survive process death through v5; THE STARTING FOUR equips with stat
+survive process death through v5; THE STARTING FIVE equips with stat
 previews; the bot completes one seeded 5v5 QUARTER and one 3v3 game to
 21 end-to-end reproducibly; npm test green (teams/walk-ons/rewards
 manifests enforced); browser loop and android:apk untouched.
@@ -982,7 +982,13 @@ MAJOR is a tabletop kingdom — knee-high cathedral, ribbon streets —
 walked ONLY on the PROCESSION WAY (their boulevards fit your boots;
 step off and the Whistle Guards nudge you back — comedy, never
 damage). Citizens are 1/2–1/3 minis with enormous civic pride; crowds
-parade. The treasury pays in MICRO-DUCAT chests — one hundred
+parade. PIPPA QUILL is the duchy's nine-year-old census cadet and royal
+page: she briefs the party from a matchbox podium, records disasters in
+perfect minutes, and gets incandescent when anyone calls her adorable.
+She is the fifth hero, but not a Vibe user; she fights with pinpoint
+marks, royal rallies, pocket patches, and scale tricks. Her arc is the
+chapter's thesis in kid form: being small is not the same as being minor.
+The treasury pays in MICRO-DUCAT chests — one hundred
 thousand coins, $12; the counting outlasts the spending (the §A9
 WEALTH ARC's inverse gag, see S14e). You owe them a crushed orchard
 (the landing), so: #20 CIVIC
@@ -995,7 +1001,8 @@ Stamp Quilt; caller: the Census-Taker, who counts the rings before
 answering). MILO'S CH.5 BUILD (gadgets are built, not awakened —
 ADR-035): the duchy's hundred engineers help him grind Sigrid's spare
 lens into the BIG-LITTLE LENS — Spy gains FOCUS, party-wide for the
-battle (see THE SCALE LAW). The terror: WHISKERZILLA — a perfectly
+battle (see THE SCALE LAW), and Pippa's Royal Thimble anchors her at a
+readable travel scale without "fixing" Minimus. The terror: WHISKERZILLA — a perfectly
 ordinary lost housecat, their kaiju — its bell rolled through Hush
 static and rings FLAT, so the Silent Paw is never heard coming (a
 LOST CAT poster goes up in Foggybottom when Ch.3 lands —
@@ -1007,7 +1014,9 @@ POUNCE — Defend or be knocked flat, Paralyzed; THE FLAT BELL is a
 second 150-HP target granting evasion while it rings — break the bell
 and the purr gives every move away; victory does not defeat it, it
 gets BORED — the duchess knights it SIR WHISKERZILLA, WARDEN OF THE
-REALM; mercy played straight, §A11.2). Ember 5 under the crown;
+REALM; mercy played straight, §A11.2). The duchess appoints Pippa
+FOREIGN MINISTER OF BEING TAKEN SERIOUSLY, and Pippa joins the party
+at chapter close. Ember 5 under the crown;
 Heartlight 5 = THE BELL CHOIR — all one hundred citizens sing into
 the Locket, the Homesong's highest stem; humans passing the meadow
 hear wind chimes. The Homesong now owns its floor (Ch.4) and its
@@ -1031,8 +1040,8 @@ double tempo; the Hedgerow = pizzicato terror, very small strings.
 THE RENUMBER SWEEP (the Bible must read TEN end-to-end with zero
 orphan references — grep every "Ch.4"–"Ch.8" and every §-table row
 you move): §A1 (eleven countries and one planet; 10 chapters, 10
-bosses; length 5.5–7 hr main + ~3.75 hr sides), §A2 (Ten Embers /
-one-tenth / collect all ten), §A3 (Dorin joins Ch.9, Trial at L44;
+bosses; length 40–50 hr total planned play time: 32–38 hr main + 8–12 hr sides/optional), §A2 (Ten Embers /
+one-tenth / collect all ten), §A3 (five main heroes; Pippa Quill joins from Minimus in Ch.5; Ana & Vivi stay Jay's sisters and quest callers; Dorin joins Ch.9, Trial at L46;
 Teleport α story-gate Ch.6, β Ch.8; Mia's ladder per Ch.4 above),
 §A4.5 (~3 tables per chapter holds — ~30), §A4.6 (gates Ch.6/Ch.8),
 §A4.8 (Mushroomized — "Ch.8 spore forest"), §A4.9 (0–10 Embers, ten
@@ -1041,11 +1050,15 @@ three-leg running gag: "she barely makes it" → "she lands in the
 duchy. all of it." → "she has no business making it"), §A6 (insert
 the two chapters above verbatim-faithful; renumber old 4–8 → 6–10;
 restate the end-level ladder 8/13/18/22/26/30/35/40/46/52–55; boss HP
-lines stay canon — Prompt 37's sim may tune data ±10%, never code),
-§A7 (60 standard enemies; the two new rows), §A8 (the two shelves +
+lines stay canon — Prompt 39's sim may tune data ±10%, never code),
+§A7 (200 unique standard enemies: 20 per chapter, no palette-swap counting,
+plus the Enemy Flow Law: map tell + battle hook + identity drop + place-specific death line), §A8 (the two shelves +
 SIGRID'S MONOCLE), §A9 (playtime amended; the Classic note
-untouched), §A10 (20 quests — #17–20 as above, four new CALLERS in
-the finale ledger; Mr. Click 12 → 14 ambushes, one per new world: in
+untouched), §A10 (55 quests — 50 regional quests, five per chapter, plus
+5 cross-world chains, all obeying the Quest Flow Law: varied verb + local
+footprint + mechanical footprint + finale footprint; the named rows above
+stay core callers and each chapter adds the remaining regional slots in its
+content session; Mr. Click 12 → 14 ambushes, one per new world: in
 Lilleby he shoots from VERY far away, in Minimus through a macro
 lens), Part C (insert Prompt 30 — Chapter 4 and Prompt 31 — Chapter 5
 in the Prompt-27 chapter template; renumber old 30–34 → 32–36 and
@@ -1732,7 +1745,7 @@ the assembler only composes. CONTACT SHEETS: the forge emits 5–10
 seeded candidates per enemy → a Sprite Lab contact page + .shots dump;
 the human picks or tweaks; the pick is recorded as partsSpec in the
 enemy's data so the sprite regenerates stable forever. Bosses and the
-four heroes stay fully bespoke — the assembler is for the standard
+five heroes stay fully bespoke — the assembler is for the standard
 roster's first drafts.
 
 THE BOSS TEMPLATES — src/battle/phaseTemplates.ts, each a pure
@@ -2569,7 +2582,7 @@ templates render in Sprite Lab; one ledger-callback interior is live.
 ```
 [Standard Header]
 Formalize getting around WITHOUT touching canon's spine: §A5's chapter
-vehicles stay scripted story beats, and Teleport α/β (Ch.4/Ch.6) stays THE
+vehicles stay scripted story beats, and Teleport α/β (Ch.6/Ch.8) stays THE
 global fast-travel. This prompt adds local pace + money sinks + ritual:
  1. BUS STATIONS: the 6:15's stops become small interiors (bench, schedule
     board in §A11 voice, the driver's obsession canonized) — boarding
@@ -2589,12 +2602,12 @@ global fast-travel. This prompt adds local pace + money sinks + ritual:
  4. AIRPORT (Ch.3+, one per region once Lucille exists): the §A5 legs get
     a ticket-counter UI skin — destination board, boarding pass gag,
     Lucille's flight vignette. Strictly chapter-gated: flying never skips
-    the Ember trail; post-Ch.4 it coexists with Teleport as the themed
+    the Ember trail; post-Ch.6 it coexists with Teleport as the themed
     long-haul (some players ride for the vignettes).
 Done when: fare/bike/car costs satisfy §A9's economy (a car is a real
 choice against gear); all three UIs drive by touch+pad+keys at the
 ADR-024 regime; the validator knows stations/vehicle gates; Teleport
-remains strictly better post-Ch.4 (vehicles are flavor + early-game).
+remains strictly better post-Ch.6 (vehicles are flavor + early-game).
 ```
 
 ---

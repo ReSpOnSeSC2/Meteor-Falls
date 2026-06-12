@@ -58,6 +58,7 @@ import {
   HoopsSim,
   makeRng,
   BLOCK_TIMING,
+  TUNE,
   type Rng,
   type SimEvent,
   type TickInput,
@@ -98,6 +99,9 @@ type CamMode = 'side' | 'behind';
 
 const PAD = 34; // must equal athletes.ts COURT_PAD (court texture margin)
 const CAM_KEY = 'meteor-falls-cage-cam';
+const METER_H = 42;
+const METER_W = 9;
+const METER_FILL_W = 5;
 
 /** the tutorial's lessons, in teaching order (advance on the deed) */
 const TUT_STEPS = [
@@ -162,12 +166,19 @@ export class HoopsScene extends Phaser.Scene {
   private tutPassPending = false;
   private tutDunkSeen = false;
   private tutWaitUntil = 0;
+  private restoreInputProfile: (() => void) | null = null;
 
   constructor() {
     super('hoops');
   }
 
   create(data: HoopsLaunch): void {
+    this.restoreInputProfile?.();
+    this.restoreInputProfile = INPUT.useProfile('hoops');
+    this.events.once('shutdown', () => {
+      this.restoreInputProfile?.();
+      this.restoreInputProfile = null;
+    });
     this.cfg = data;
     this.dlg = new Dialogue(this);
     this.asking = false;
@@ -255,9 +266,9 @@ export class HoopsScene extends Phaser.Scene {
       .setMaxWidth(360)
       .setTint(gold);
     // the over-head meter: a vertical drum that fills toward the green top
-    this.meterBack = this.add.rectangle(0, 0, 7, 30, colorOf(px(RAMP.INK, 0))).setOrigin(0.5, 1).setDepth(72).setVisible(false);
-    this.meterGreen = this.add.rectangle(0, 0, 7, 4, colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 0).setDepth(73).setVisible(false);
-    this.meterFill = this.add.rectangle(0, 0, 3, 2, colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setDepth(74).setVisible(false);
+    this.meterBack = this.add.rectangle(0, 0, METER_W, METER_H, colorOf(px(RAMP.INK, 0))).setOrigin(0.5, 1).setDepth(72).setVisible(false);
+    this.meterGreen = this.add.rectangle(0, 0, METER_W, 1, colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 0).setDepth(73).setVisible(false);
+    this.meterFill = this.add.rectangle(0, 0, METER_FILL_W, 1, colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setDepth(74).setVisible(false);
 
     AUDIO.playMusic('cage');
     if (data.tutorial) this.showTutorialBoard();
@@ -690,7 +701,7 @@ export class HoopsScene extends Phaser.Scene {
         quarter: q + 1,
         scoreUs: this.sim.scoreUs,
         scoreThem: this.sim.scoreThem,
-        clockMs: q + 1 > 4 ? 120_000 : 300_000,
+        clockMs: q + 1 > 4 ? TUNE.OT_MS : TUNE.QUARTER_MS,
       };
       if (GS.activeSlot !== null) GS.saveTo(GS.activeSlot);
     }
@@ -1009,23 +1020,26 @@ export class HoopsScene extends Phaser.Scene {
     this.meterGreen.setVisible(show);
     this.meterFill.setVisible(show);
     if (!show || !read || !who) return;
-    const H = 30;
+    const H = METER_H;
     const p = this.project(who.x, who.y, who.z + 44);
     const sf = behind ? 0 : 1;
-    this.meterBack.setPosition(p.x, p.y + H / 2).setScrollFactor(sf);
+    const top = p.y - H / 2;
+    const bottom = p.y + H / 2;
+    this.meterBack.setPosition(p.x, bottom).setScrollFactor(sf);
+    this.meterBack.setSize(METER_W, H);
     // the green window: [lo, 1] of the drum, drawn from the top down — and
     // when range has CLOSED it (lo ≥ 1), no green is drawn: there is none
-    const winH = (1 - read.lo) * H;
+    const lo = Math.max(0, Math.min(1, read.lo));
+    const winH = (1 - lo) * (H - 2);
     this.meterGreen.setVisible(winH >= 1);
-    this.meterGreen.setPosition(p.x, p.y - H / 2).setScrollFactor(sf);
-    this.meterGreen.height = Math.max(1, winH);
+    this.meterGreen.setPosition(p.x, top + 1).setScrollFactor(sf);
+    this.meterGreen.setSize(METER_W, Math.max(1, winH));
     this.meterGreen.setFillStyle(colorOf(px(read.kind === 'dunk' ? RAMP.GOLD : read.kind === 'layup' ? RAMP.CYAN : RAMP.GRASS, 2)));
     // the fill rises from the bottom; past the top it reads as overfill (red)
     const frac = Math.min(1.12, read.frac);
-    const fillH = Math.max(1, Math.min(1, frac) * (H - 2));
-    this.meterFill.setPosition(p.x, p.y + H / 2 - 1).setScrollFactor(sf);
-    this.meterFill.height = fillH;
-    this.meterFill.width = 3;
+    const fillH = Math.max(1, Math.max(0, Math.min(1, frac)) * (H - 2));
+    this.meterFill.setPosition(p.x, bottom - 1).setScrollFactor(sf);
+    this.meterFill.setSize(METER_FILL_W, fillH);
     this.meterFill.setFillStyle(colorOf(px(frac > 1 ? RAMP.RED : RAMP.PAPER, 3)));
   }
 

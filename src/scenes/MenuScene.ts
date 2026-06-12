@@ -32,7 +32,7 @@ import { MAPS } from '../data/maps';
 import { DIALOGUE } from '../data/dialogue';
 import { journalQuests, currentObjective, objectiveDone, callerEarned } from '../engine/quests';
 import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, vibeHeal } from '../battle/formulas';
-import { INPUT, type Btn } from '../engine/input';
+import { INPUT, type BindingProfile, type Btn } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, vars, DEPTH_UI } from '../ui/windows';
 import { WINDOW_FLAVORS } from '../spritegen/ui';
@@ -622,7 +622,8 @@ export class MenuScene extends Phaser.Scene {
           `Sound: ${AUDIO.muted ? 'OFF' : 'ON'}`,
           `Text speed: ${SPEEDS[speedIdx]}`,
           `Window flavor: ${WINDOW_FLAVORS[flavor]?.name ?? 'CLASSIC'}`,
-          'Controls',
+          'Main Controls',
+          'Basketball Controls',
           'Return to Title',
           'Back',
         ],
@@ -646,11 +647,17 @@ export class MenuScene extends Phaser.Scene {
       }
       if (sel === 3) {
         hint.setVisible(false);
-        await this.controlsPage();
+        await this.controlsPage('main');
         hint.setVisible(true);
         continue;
       }
       if (sel === 4) {
+        hint.setVisible(false);
+        await this.controlsPage('hoops');
+        hint.setVisible(true);
+        continue;
+      }
+      if (sel === 5) {
         if (await this.returnToTitle()) return;
         continue;
       }
@@ -681,14 +688,23 @@ export class MenuScene extends Phaser.Scene {
    * a captured key is STOLEN from whichever action held it (that action
    * falls back to its default). Persisted device-local — never save data. */
 
-  private async controlsPage(): Promise<void> {
-    const ROLES: Array<{ b: Btn; does: string }> = [
-      { b: 'A', does: 'confirm-bash-swing' },
-      { b: 'B', does: 'cancel-run-pass' },
-      { b: 'X', does: 'sprint (cage+links)' },
-      { b: 'Y', does: 'dribble moves (cage)' },
-      { b: 'START', does: 'menu-pause' },
-    ];
+  private async controlsPage(profile: BindingProfile): Promise<void> {
+    const ROLES: Array<{ b: Btn; does: string }> =
+      profile === 'hoops'
+        ? [
+            { b: 'A', does: 'shoot-block-finish' },
+            { b: 'B', does: 'pass-steal-cancel' },
+            { b: 'X', does: 'sprint-slide' },
+            { b: 'Y', does: 'dribble moves' },
+            { b: 'START', does: 'pause' },
+          ]
+        : [
+            { b: 'A', does: 'confirm-bash-swing' },
+            { b: 'B', does: 'cancel-run' },
+            { b: 'X', does: 'sprint (links)' },
+            { b: 'Y', does: 'spare action' },
+            { b: 'START', does: 'menu-pause' },
+          ];
     const keyName = (code: string): string =>
       code
         .replace(/^Key/, '')
@@ -703,7 +719,7 @@ export class MenuScene extends Phaser.Scene {
     // the legend panel (static): what each action means everywhere
     const legend = makeWindow(this, 212, 30, 184, 110);
     const legendTitle = this.add
-      .bitmapText(222, 38, 'retro', 'WHAT THEY DO', 6)
+      .bitmapText(222, 38, 'retro', profile === 'hoops' ? 'HOOPS ACTIONS' : 'MAIN ACTIONS', 6)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
@@ -723,24 +739,25 @@ export class MenuScene extends Phaser.Scene {
     for (;;) {
       const rows = ROLES.map(({ b }) => {
         // long key chords get elided so the pad column never collides
-        const names = INPUT.bindings.keys[b].map(keyName);
+        const bindings = INPUT.bindingsFor(profile);
+        const names = bindings.keys[b].map(keyName);
         const keys = names.length > 2 ? `${names[0]}+..` : names.join('+');
-        const pads = INPUT.bindings.pad[b].map((i) => `BTN ${i}`).join('+');
+        const pads = bindings.pad[b].map((i) => `BTN ${i}`).join('+');
         return `${b.padEnd(6)}${keys.padEnd(10)}${pads}`;
       });
       const sel = await this.pick({
         x: 8,
         y: 8,
         options: [...rows, 'Reset to defaults', 'Back'],
-        title: 'CONTROLS',
+        title: profile === 'hoops' ? 'HOOPS CONTROLS' : 'MAIN CONTROLS',
       });
       if (sel < 0 || sel === rows.length + 1) break;
       if (sel === rows.length) {
-        INPUT.resetBindings();
+        INPUT.resetBindings(profile);
         AUDIO.sfx('confirm');
         continue;
       }
-      await this.captureBinding(ROLES[sel].b, ROLES[sel].does);
+      await this.captureBinding(ROLES[sel].b, ROLES[sel].does, profile);
     }
     legend.destroy();
     legendTitle.destroy();
@@ -751,7 +768,7 @@ export class MenuScene extends Phaser.Scene {
   /** one capture: the next keydown or fresh pad press rebinds; the card
    *  pulses while listening; tap/click cancels (B-key escape is impossible
    *  mid-capture — the press would be swallowed as the new binding) */
-  private captureBinding(btn: Btn, role: string): Promise<void> {
+  private captureBinding(btn: Btn, role: string, profile: BindingProfile): Promise<void> {
     const w = makeWindow(this, 60, 80, 280, 56);
     const t = this.add
       .bitmapText(200, 92, 'retro', `${btn} — ${role}\nPRESS THE NEW KEY OR PAD BUTTON\n(tap or click to cancel)`, 6)
@@ -778,8 +795,8 @@ export class MenuScene extends Phaser.Scene {
         done();
       };
       const cancelCapture = INPUT.captureNext((source, code) => {
-        if (source === 'key') INPUT.rebindKey(btn, code as string);
-        else INPUT.rebindPad(btn, code as number);
+        if (source === 'key') INPUT.rebindKey(btn, code as string, profile);
+        else INPUT.rebindPad(btn, code as number, profile);
         AUDIO.sfx('confirm');
         done();
       });

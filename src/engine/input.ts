@@ -17,6 +17,7 @@
 
 export type Btn = 'A' | 'B' | 'X' | 'Y' | 'START';
 export const BTNS: readonly Btn[] = ['A', 'B', 'X', 'Y', 'START'] as const;
+export type BindingProfile = 'main' | 'hoops';
 
 export interface Bindings {
   keys: Record<Btn, string[]>;
@@ -34,8 +35,11 @@ export const DEFAULT_BINDINGS: Bindings = {
   pad: { A: [0], B: [1], X: [2], Y: [3], START: [9] },
 };
 
-/** device-local persistence key (the meteor-falls-sound pattern) */
-const BIND_KEY = 'meteor-falls-controls';
+/** device-local persistence keys (the meteor-falls-sound pattern) */
+const BIND_KEYS: Record<BindingProfile, string> = {
+  main: 'meteor-falls-controls',
+  hoops: 'meteor-falls-hoops-controls',
+};
 
 function cloneBindings(b: Bindings): Bindings {
   return {
@@ -44,12 +48,12 @@ function cloneBindings(b: Bindings): Bindings {
   };
 }
 
-function loadBindings(): Bindings {
+function loadBindings(profile: BindingProfile, fallback: Bindings = DEFAULT_BINDINGS): Bindings {
   try {
-    const raw = localStorage.getItem(BIND_KEY);
-    if (!raw) return cloneBindings(DEFAULT_BINDINGS);
+    const raw = localStorage.getItem(BIND_KEYS[profile]);
+    if (!raw) return cloneBindings(fallback);
     const parsed: unknown = JSON.parse(raw);
-    const out = cloneBindings(DEFAULT_BINDINGS);
+    const out = cloneBindings(fallback);
     if (parsed && typeof parsed === 'object') {
       const p = parsed as Partial<Bindings>;
       for (const b of BTNS) {
@@ -61,7 +65,7 @@ function loadBindings(): Bindings {
     }
     return out;
   } catch {
-    return cloneBindings(DEFAULT_BINDINGS);
+    return cloneBindings(fallback);
   }
 }
 
@@ -98,8 +102,13 @@ class InputBus {
   private listeners: Listener[] = [];
   gamepadConnected = false;
 
-  /** the live binding table (SETUP → CONTROLS edits it; device-local) */
-  bindings: Bindings = loadBindings();
+  /** the live binding tables (SETUP controls edit them; device-local) */
+  private profiles: Record<BindingProfile, Bindings> = (() => {
+    const main = loadBindings('main');
+    const hoops = loadBindings('hoops', main);
+    return { main, hoops };
+  })();
+  private activeProfile: BindingProfile = 'main';
   private capture: CaptureSink | null = null;
   /** pad buttons already down when capture starts must not auto-capture */
   private padPrevPressed = new Set<number>();
@@ -145,12 +154,35 @@ class InputBus {
   }
 
   private btnForKey(code: string): Btn | null {
-    for (const b of BTNS) if (this.bindings.keys[b].includes(code)) return b;
+    const bindings = this.bindingsFor();
+    for (const b of BTNS) if (bindings.keys[b].includes(code)) return b;
     return null;
   }
 
   onGamepad(l: Listener): void {
     this.listeners.push(l);
+  }
+
+  bindingsFor(profile: BindingProfile = this.activeProfile): Bindings {
+    return this.profiles[profile];
+  }
+
+  useProfile(profile: BindingProfile): () => void {
+    const prevProfile = this.activeProfile;
+    this.activeProfile = profile;
+    this.cur.clear();
+    this.prev.clear();
+    this.queued.clear();
+    this.releaseQueued.clear();
+    this.released.clear();
+    return () => {
+      this.activeProfile = prevProfile;
+      this.cur.clear();
+      this.prev.clear();
+      this.queued.clear();
+      this.releaseQueued.clear();
+      this.released.clear();
+    };
   }
 
   /* ---------------- rebinding (S12c — SETUP → CONTROLS) ---------------- */
@@ -173,33 +205,35 @@ class InputBus {
   }
 
   /** rebind a semantic action to one physical key (replaces its key list) */
-  rebindKey(btn: Btn, code: string): void {
+  rebindKey(btn: Btn, code: string, profile: BindingProfile = this.activeProfile): void {
+    const bindings = this.profiles[profile];
     for (const b of BTNS) {
-      this.bindings.keys[b] = this.bindings.keys[b].filter((k) => k !== code);
-      if (this.bindings.keys[b].length === 0) this.bindings.keys[b] = [...DEFAULT_BINDINGS.keys[b]].filter((k) => k !== code);
+      bindings.keys[b] = bindings.keys[b].filter((k) => k !== code);
+      if (bindings.keys[b].length === 0) bindings.keys[b] = [...DEFAULT_BINDINGS.keys[b]].filter((k) => k !== code);
     }
-    this.bindings.keys[btn] = [code];
-    this.persistBindings();
+    bindings.keys[btn] = [code];
+    this.persistBindings(profile);
   }
 
   /** rebind a semantic action to one pad button index */
-  rebindPad(btn: Btn, idx: number): void {
+  rebindPad(btn: Btn, idx: number, profile: BindingProfile = this.activeProfile): void {
+    const bindings = this.profiles[profile];
     for (const b of BTNS) {
-      this.bindings.pad[b] = this.bindings.pad[b].filter((i) => i !== idx);
-      if (this.bindings.pad[b].length === 0) this.bindings.pad[b] = [...DEFAULT_BINDINGS.pad[b]].filter((i) => i !== idx);
+      bindings.pad[b] = bindings.pad[b].filter((i) => i !== idx);
+      if (bindings.pad[b].length === 0) bindings.pad[b] = [...DEFAULT_BINDINGS.pad[b]].filter((i) => i !== idx);
     }
-    this.bindings.pad[btn] = [idx];
-    this.persistBindings();
+    bindings.pad[btn] = [idx];
+    this.persistBindings(profile);
   }
 
-  resetBindings(): void {
-    this.bindings = cloneBindings(DEFAULT_BINDINGS);
-    this.persistBindings();
+  resetBindings(profile: BindingProfile = this.activeProfile): void {
+    this.profiles[profile] = cloneBindings(DEFAULT_BINDINGS);
+    this.persistBindings(profile);
   }
 
-  private persistBindings(): void {
+  private persistBindings(profile: BindingProfile): void {
     try {
-      localStorage.setItem(BIND_KEY, JSON.stringify(this.bindings));
+      localStorage.setItem(BIND_KEYS[profile], JSON.stringify(this.profiles[profile]));
     } catch {
       /* storage denied — bindings live for the session */
     }
@@ -265,14 +299,15 @@ class InputBus {
     }
     this.prev = this.cur;
     this.cur = new Set<Btn>();
+    const bindings = this.bindingsFor();
     for (const b of BTNS) {
-      if (this.bindings.keys[b].some((k) => this.keysDown.has(k))) this.cur.add(b);
+      if (bindings.keys[b].some((k) => this.keysDown.has(k))) this.cur.add(b);
     }
     this.touchBtns.forEach((b) => this.cur.add(b));
     const pad = this.pad();
     if (pad && !this.capture) {
       for (const b of BTNS) {
-        if (this.bindings.pad[b].some((i) => pad.buttons[i]?.pressed)) this.cur.add(b);
+        if (bindings.pad[b].some((i) => pad.buttons[i]?.pressed)) this.cur.add(b);
       }
     }
     // fold in latched taps, then clear — each press is visible ≥1 full frame

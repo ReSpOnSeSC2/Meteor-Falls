@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "METEOR FALLS — an EarthBound-style RPG. Four kids, eight Embers, one planet at the end of the road.",
+  "description": "METEOR FALLS — an EarthBound-style RPG. Five kids, ten Embers, one planet at the end of the road.",
   "scripts": {
     "dev": "vite --host",
     "build": "tsc --noEmit && npm run validate && vite build",

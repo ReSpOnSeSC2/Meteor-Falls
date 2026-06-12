@@ -256,7 +256,7 @@ export interface SimConfig {
   scoreUs?: number;
   scoreThem?: number;
   quarter?: number;
-  /** ms per 5v5 period (canon 5min; OT periods pass 2min) */
+  /** ms per 5v5 period (Classic now runs 2-minute quarters; OT matches it) */
   clockMs?: number;
   /** S12c tutorial drill: clocks freeze; the visitors stand down until the
    *  scene arms a drill script (PERMIT teaches, the sim obeys) */
@@ -266,7 +266,7 @@ export interface SimConfig {
 /* ---------------- tuning (data-shaped, tests pin the feel) ---------------- */
 
 export const TUNE = {
-  QUARTER_MS: 300_000,
+  QUARTER_MS: 120_000,
   OT_MS: 120_000,
   SHOT_CLOCK_MS: 24_000,
   CHECK_MS: 900,
@@ -281,7 +281,7 @@ export const TUNE = {
   /** the meter can overfill to here before it auto-releases (an auto-miss) */
   METER_CAP: 1.12,
   /** baseline GREEN half-width at the shooter's feet (range scales it shut) */
-  GREEN_BASE: 0.085,
+  GREEN_BASE: 0.105,
   /** double-tap window for the quick crossover */
   XOVER_TAP_MS: 240,
   GRAVITY: 700,
