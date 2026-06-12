@@ -2510,3 +2510,57 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   frames (no button presses until `intro_wake` — drain it by polling
   `meteor_fell` per ADR-008 lore); the §B3 music registry gained an ambient
   one-off track shape (loop + hard stop as a scoring device).
+
+## ADR-042 — S15b: HILL ROAD (the search is a walk), Mom's full reset, the Homesick dice calm down
+
+- **Date:** 2026-06-12
+- **Status:** Accepted (user playtest of the ADR-041 cinema: "we need an extra
+  screen as the character goes through the map to search for it... a winding
+  cliff of some sort with enemies and maybe like some more homes... maybe you
+  meet one character early on that will come into play later"; "everytime I go
+  see my mom she should heal fully my HP and PP"; "the homesick thing pops up
+  way too often... lower that by alot")
+- **Decision — HILL ROAD (Bible §A5 Ch.1 route amended: Otterbrook →
+  hill_road → Hickory Hill):** a 30×34 neighborhood-and-switchback screen
+  between town and the trail. The road climbs in enforced switchbacks (bush
+  walls + the homes' own solids; fence rails along the drops carry the
+  "winding cliff" read), three locked homes sit on a lane (signs editorialize
+  per §A11 — the cat one, the doorbell one, and the canon TV/PANIC line
+  reused), phone poles + trash can dress the street, and §A7 Ch.1 enemies
+  (cicadas, slugs, one cranky mailbox prowling the home lane) spawn gated on
+  `meteor_fell`. Doors rewired BOTH directions (otterbrook's north edge →
+  hill_road 236/506; hill_road's summit → hickory_hill 232/660 — the old
+  town↔hill targets reused so nothing else moves). `storyNight` (S9b clock)
+  gains hill_road, so 2 A.M. follows the whole route. The §A10 #1 sniff
+  trail crosses the road cosmetically (paw_prints + a flavor sign on the
+  q_biscuit_c1→c2 window — the quest machine itself is BYTE-UNTOUCHED).
+- **Decision — THE EARLY CHARACTER IS BISCUIT:** the §A2 cast can't cameo
+  (Mia is canonically IN Brickton until her rescue), but quest #1's beagle is
+  already the night's prophet — the finale caller quote "Biscuit pointed at
+  the sky and BARKED" is existing canon, and the new cinema captions set him
+  up twice. `biscuit_road` parks dead-center on the summit road pointing at
+  the hill (dialogue carries the pointing — dog sheets are east/west only),
+  gated `unlessFlag: 'zapper_done'` like his park self; you squeeze past his
+  solid. Pays off in quest #1 AND the finale.
+- **Decision — MOM IS A FULL RESET (user law):** every talk with Mom heals
+  the party to full HP/PP (down heroes stay down — Mom is not a hospital)
+  and cures Homesick in person (§A4.4's "her voice is the cure" was already
+  two-directional on the phone; in person is strictly closer). The heal line
+  (`npc_mom_heal`, the once-over) speaks only when something was actually
+  fixed; the Homesick cure reuses the canon `mom_cure_beat`.
+- **Decision — HOMESICK_CHANCE 0.08 → 0.02:** the §A4.4 mechanic stays
+  (user: "it's a good mechanic"), the per-victory contraction roll drops 4×.
+  Tests pin the threshold symbolically, so no test edits.
+- **Verification:** validator (41 maps) + 275 vitest + tsc green. Live over
+  the dev preview: town's north edge → HILL ROAD (banner + 2 A.M. night tag),
+  the lane/homes/poles/switchbacks/enemies screenshot-confirmed (mailbox
+  prowling the lane), Biscuit's two pages read back verbatim, summit door →
+  hickory_hill (232,660) and back (236,36), Mom's first-visit branch healed
+  3/0 → full + cleared Homesick via mom_cure_beat + granted gear, second
+  visit healed 12/2 → full behind the once-over line, zero console errors.
+  QA lore: a teleport that lands the bot ~6px from an NPC hides the NPC
+  BEHIND the player sprite (depth) — it looks like a missing NPC and isn't.
+- **Consequences:** the Ch.1 on-foot route is three screens; anything that
+  scripts town→hill traversal must cross hill_road; future "more homes"
+  asks land here first. Chapter-route insertions follow this shape: reuse
+  the displaced door targets so only the two seam doors change.

@@ -234,7 +234,8 @@ function buildOtterbrook(): MapDef {
     ],
     phones: [{ x: 28, y: 14 }],
     doors: [
-      { x: 18, y: 0, w: 6, h: 1, to: 'hickory_hill', tx: 232, ty: 660, facing: 'up' },
+      // ADR-042: town's north edge now climbs HILL ROAD before the trail
+      { x: 18, y: 0, w: 6, h: 1, to: 'hill_road', tx: 236, ty: 506, facing: 'up' },
     ],
     spawners: [
       {
@@ -269,6 +270,98 @@ function buildOtterbrook(): MapDef {
       { id: 'bus_stop', rect: { x: 22, y: 24, w: 3, h: 3 }, once: false },
       { id: 'porch', rect: { x: 6, y: 6, w: 4, h: 2 }, once: true },
     ],
+  };
+}
+
+/* ------------------- HILL ROAD (ADR-042) ------------------- */
+
+/**
+ * The last neighborhood before the trail — inserted between town and the
+ * crater so the search for the meteor is a real walk (user law). A
+ * switchback climb with fence-railed drops, three locked homes on a lane,
+ * §A7 Ch.1 enemies woken by the fall, and Biscuit already up here at 2 AM,
+ * pointing at the hill (he was right; he is ALWAYS right — quest #1 and the
+ * finale's "Biscuit pointed at the sky and BARKED" both pay this off).
+ */
+function buildHillRoad(): MapDef {
+  const g = new Grid(30, 34);
+  g.sprinkle(21, ',~,~ ff', 0.07);
+  // the road: town mouth → home lane → west climb → east climb → summit
+  g.rect(13, 28, 4, 6, ':');
+  g.rect(4, 26, 22, 2, ':');
+  g.rect(4, 18, 2, 8, ':');
+  g.rect(4, 18, 20, 2, ':');
+  g.rect(22, 10, 2, 8, ':');
+  g.rect(11, 10, 13, 2, ':');
+  g.rect(13, 0, 4, 10, ':');
+  // bush walls force the switchbacks (the homes block their own stretch)
+  g.rect(10, 21, 8, 1, 'b');
+  g.rect(22, 21, 2, 1, 'b');
+  g.rect(4, 14, 17, 1, 'b');
+  g.rect(17, 6, 9, 1, 'b');
+  g.rect(4, 6, 8, 1, 'b');
+  // fence rails along the drops — the "winding cliff" read
+  g.rect(6, 17, 15, 1, '-');
+  g.rect(11, 9, 2, 1, '-');
+  g.rect(17, 9, 5, 1, '-');
+  g.rect(6, 24, 3, 1, '-');
+
+  const trees: Array<[number, number]> = [];
+  for (let x = 0; x < 30; x += 2) {
+    if (x < 12 || x > 18) {
+      trees.push([x, 0]);
+      trees.push([x, 32]);
+    }
+  }
+  for (let y = 2; y < 32; y += 2) {
+    trees.push([0, y]);
+    trees.push([28, y]);
+  }
+  trees.push([7, 3], [20, 3], [25, 7], [3, 11], [8, 12], [26, 12], [2, 16], [26, 16], [10, 16]);
+
+  return {
+    id: 'hill_road',
+    name: 'HILL ROAD',
+    music: 'hill',
+    // night rides the §A6 story clock with otterbrook/hickory_hill (S9b)
+    grid: g.out(),
+    props: [
+      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
+      { sprite: 'house_a', x: 6, y: 21.8, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
+      { sprite: 'house_b', x: 18, y: 21.8, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
+      { sprite: 'house_a', x: 24, y: 21.8, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
+      { sprite: 'phone_pole', x: 10.5, y: 24.4, solid: { ox: 5, oy: 26, w: 6, h: 6 } },
+      { sprite: 'phone_pole', x: 22.5, y: 24.4, solid: { ox: 5, oy: 26, w: 6, h: 6 } },
+      { sprite: 'trash_can', x: 26, y: 26.2, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'sign', x: 17, y: 29, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // §A10 #1: the sniff trail crosses the road (same window as the hill clue)
+      { sprite: 'paw_prints', x: 15, y: 13.4, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+    ],
+    npcs: [
+      // the dog with opinions about the sky, already on the case (cameo —
+      // he keeps the park bench in town for the §A10 #1 machine itself)
+      // (dog sheets are east/west only — the POINTING is in the dialogue)
+      { id: 'biscuit_road', sprite: 'dog', x: 15, y: 3, facing: 'right', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'zapper_done' },
+    ],
+    signs: [
+      { x: 17, y: 29, dialogue: 'sign_hill_road' },
+      { x: 7, y: 25, dialogue: 'hill_house_a' },
+      { x: 19, y: 25, dialogue: 'locked_house' },
+      { x: 25, y: 25, dialogue: 'hill_house_b' },
+      { x: 15, y: 13, dialogue: 'hill_road_prints', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+    ],
+    phones: [],
+    doors: [
+      { x: 13, y: 33, w: 4, h: 1, to: 'otterbrook', tx: 336, ty: 24, facing: 'down' },
+      { x: 13, y: 0, w: 4, h: 1, to: 'hickory_hill', tx: 232, ty: 660, facing: 'up' },
+    ],
+    spawners: [
+      { enemies: ['coily_cicada'], count: 2, rect: { x: 6, y: 11, w: 16, h: 6 }, ifFlag: 'meteor_fell' },
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 6, y: 18, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
+      // a mailbox prowling the home lane — it has COMPLAINTS
+      { enemies: ['cranky_mailbox'], count: 1, rect: { x: 18, y: 25, w: 8, h: 3 }, ifFlag: 'meteor_fell' },
+    ],
+    triggers: [],
   };
 }
 
@@ -335,7 +428,7 @@ function buildHill(): MapDef {
       { x: 9, y: 21, dialogue: 'hill_spring' },
     ],
     phones: [],
-    doors: [{ x: 13, y: 45, w: 4, h: 1, to: 'otterbrook', tx: 336, ty: 24, facing: 'down' }],
+    doors: [{ x: 13, y: 45, w: 4, h: 1, to: 'hill_road', tx: 236, ty: 36, facing: 'down' }],
     spawners: [
       { enemies: ['coily_cicada'], count: 3, rect: { x: 6, y: 18, w: 18, h: 8 } },
       { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 6, y: 28, w: 16, h: 8 } },
@@ -1558,6 +1651,7 @@ const hospitalDoorstep = doorstepOf(bricktonMap, 'hospital_int') ?? { tx: 320, t
 export const MAPS: Record<string, MapDef> = {
   ...buildChapter2Maps({ chapelStep: chapelDoorstep, hospitalStep: hospitalDoorstep }),
   otterbrook: otterbrookMap,
+  hill_road: buildHillRoad(),
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),
   rex_bedroom: buildBedroom(),

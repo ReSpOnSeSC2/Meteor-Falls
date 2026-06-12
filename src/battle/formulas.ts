@@ -223,7 +223,9 @@ export const CHAPEL_HEAL = 50;
 
 /* ---- Homesick (§A4.4/§A4.8, S4): Jay-only, cured by Mom's call ---- */
 
-export const HOMESICK_CHANCE = 0.08;
+// ADR-042: was 0.08 — user playtest: "pops up way too often... it just
+// generates way too fast". The mechanic stays; the dice calm down.
+export const HOMESICK_CHANCE = 0.02;
 export const HOMESICK_SKIP_CHANCE = 0.5;
 
 /** rolled once per battle victory — the quiet hits him after the noise */

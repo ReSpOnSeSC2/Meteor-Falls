@@ -228,7 +228,8 @@ export class OverworldScene extends Phaser.Scene {
     // "why is it sometimes dark" fix). MapDef.night remains for places that
     // are genuinely always dark.
     const storyNight =
-      !GS.flag('zapper_done') && (this.mapDef.id === 'otterbrook' || this.mapDef.id === 'hickory_hill');
+      !GS.flag('zapper_done') &&
+      (this.mapDef.id === 'otterbrook' || this.mapDef.id === 'hill_road' || this.mapDef.id === 'hickory_hill');
     const night = this.mapDef.night === true || storyNight;
     if (night) this.buildNight();
     this.showBanner(night);
@@ -1353,6 +1354,24 @@ export class OverworldScene extends Phaser.Scene {
         await this.dlg.say(...DIALOGUE.npc_mom_post);
       } else {
         await this.dlg.say(...DIALOGUE.npc_mom);
+      }
+      // user law (ADR-042): every visit to Mom is a full reset — HP, PP,
+      // and the Homesick ache (§A4.4: her voice is the cure, in person too).
+      // Down heroes stay down — Mom is not a hospital.
+      const fixed = GS.data.party.some((h) => !h.down && (h.hp < h.maxHp || h.pp < h.maxPp));
+      for (const h of GS.data.party) {
+        if (!h.down) {
+          h.hp = h.maxHp;
+          h.pp = h.maxPp;
+        }
+      }
+      if (GS.flag('rex_homesick')) {
+        GS.setFlag('rex_homesick', false);
+        AUDIO.sfx('heal');
+        await this.dlg.say(...DIALOGUE.mom_cure_beat);
+      } else if (fixed) {
+        AUDIO.sfx('heal');
+        await this.dlg.say(...DIALOGUE.npc_mom_heal);
       }
       return;
     }

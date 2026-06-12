@@ -15,6 +15,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@If you ever see him wander off, send him home, would you? He smells like pond.',
   ],
   npc_biscuit: ['@Woof! (He smells like pond. He seems enormously proud of this.)'],
+  // ADR-042: the Hill Road cameo — he beat you up here, and he was right
+  npc_biscuit_road: [
+    '@WOOF. WOOF WOOF. (Biscuit is pointing at the hill with his whole body. Even the tail is pointing.)',
+    '(He looks at you. He looks at the hill. He looks back at you, to make sure you got the message.)',
+  ],
   npc_plummer: [
     '@Thirty-one years delivering mail, and not ONE box ever talked back.',
     '@This morning the one on Maple Street called my route "derivative."',
@@ -43,6 +48,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@I'm proud of you. I don't need to know the details to know that.",
   ],
   npc_mom: ['@Dinner is {favoritefood}. Dinner is always {favoritefood}. I know my audience.'],
+  // ADR-042: the full reset, said only when she actually fixed something
+  npc_mom_heal: [
+    "* Mom's once-over: hair, face, both elbows. Everything checks out. (HP and PP are all the way back.)",
+  ],
 
   /* ---------------- signs (they editorialize) ---------------- */
   sign_welcome: [
@@ -71,6 +80,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   locked_house: [
     'Locked. Inside, a TV is calmly explaining the meteor. The word "PANIC" is used twice, responsibly.',
   ],
+  // ADR-042: the Hill Road homes — the last neighborhood before the trail
+  sign_hill_road: ['HILL ROAD — last houses before the trail.', '(Someone has added: "AND PROUD OF IT.")'],
+  hill_house_a: [
+    'Locked. Behind the door, someone is telling a cat that everything is fine, in a voice that really needs the cat to agree.',
+  ],
+  hill_house_b: [
+    'Locked. The doorbell has a hand-written label: "BROKEN. PLEASE KNOCK. PLEASE DO NOT KNOCK TONIGHT."',
+  ],
+  hill_road_prints: ['(Paw prints, heading uphill. No hesitation in them anywhere.)'],
 
   /* ---------------- cutscenes ---------------- */
   // (ADR-041: intro_card retired — the opening cinema's timed captions in
