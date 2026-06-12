@@ -183,6 +183,71 @@ architectural decision you make to it. TypeScript strict, no `any`.
 
 ---
 
+## THE KICKOFF — paste this into a fresh session to run the queue (reusable; it auto-advances)
+
+```
+Read docs/GAME_BIBLE.md fully before doing anything. It is canon — never invent
+content that contradicts it, never use placeholder/mock data for anything it
+defines. Follow repo conventions in docs/DECISIONS.md and append any new
+architectural decision you make to it. TypeScript strict, no `any`.
+
+CONTINUE THE BUILD. This repo is METEOR FALLS, an EarthBound-style Phaser 3 +
+TypeScript + Vite RPG for Android/browser, built ONE QUEUED PROMPT PER SESSION.
+Where things stand: Chapters 1–2 are COMPLETE and playable end-to-end
+(ADR-001..040 in docs/DECISIONS.md — the boss phase machine, picnics,
+hospitals, AWAKENINGS, THE CAGE streetball + CAGE 2.0, COSTA ESTRELLA LINKS
+golf, the settings suite; saves at v7 behind the migration registry in
+src/engine/migrations.ts; the content validator gates npm test AND build; the
+vitest floor is 274 green). The design bible is docs/GAME_BIBLE.md (Part A
+canon with §A-references, Part B architecture, Part C the prompt sequence, the
+Appendix session rules). QA log + the user's device sign-off table live in
+docs/QA.md (rows 1–19 used). The QA driver: window.pump/key/holdKey/shot +
+mfGS + mfMakeHero + mfBattle.qa(); bot recipes live in scene headers.
+
+YOUR TASK THIS SESSION:
+1. Open docs/NEXT_PROMPTS.md. Find the FIRST "## Prompt" section NOT marked
+   "✅ DONE". (As first written that is S14c — THE PLAYTEST FOUR & THE WORLDS
+   OF SCALE; after it ships this same kickoff finds S14d, then S14e, S14f,
+   S15, S16, then the Bible's Part C chapter prompts per the run-order
+   footer.)
+2. Execute THAT ONE PROMPT in full, exactly as written. The queued prompts
+   are self-contained: playtest reports arrive with root causes already
+   traced to file:line, canon blocks are written out verbatim-faithful, and
+   acceptance lives in each "Done when" paragraph. Where a prompt says
+   "amend the Bible," amend it IN THE SAME COMMIT (Appendix rule 6 — drift
+   is never left undocumented). Where it reserves an ADR number, append that
+   ADR.
+3. Honor the session laws: ONE prompt = one session = one commit (if the
+   prompt runs long, split on its own stated seam and ship the first half
+   COMPLETELY — never half-implement everything); npm run validate green and
+   the FULL vitest suite green before the commit (the floor only rises);
+   new content extends the validator's canon manifests in the same commit;
+   frozen seeded streams (Otterbrook 1995, Brickton 2077, Puerto Sol 1898)
+   stay byte-identical — new props ride NEW rng streams (ADR-016); ADR-020's
+   anti-generation art rules bind anything you draw; ADR-024/038's input
+   idioms bind anything that polls; any save-schema change registers a
+   migration with round-trip tests.
+4. QA before you call it done: log the pre-flight in docs/QA.md per the
+   prompt's QA paragraph, add the prompt's device row (leave every existing
+   box open — the user signs those on his phone), write/extend the bot
+   recipe in the scene header, and capture .shots/ where the prompt asks.
+5. CLOSE THE LOOP: mark the prompt's heading "✅ DONE <date> (ADR-0xx)" in
+   docs/NEXT_PROMPTS.md with a short shipped-summary above the original
+   text (the S11/S12/S14 entries show the pattern), update the run-order
+   footer, and commit in the repo's house style — one dense paragraph
+   naming what shipped and the laws it touched.
+6. STOP after one prompt. Report what shipped, the validator/vitest counts,
+   anything deferred to the split seam, and the playtest-shaped risks the
+   user should poke at on device.
+
+If a queued prompt conflicts with what you find in the code, re-trace before
+changing anything — the code's reality wins for mechanics, the Bible wins for
+canon, and either way the resolution is recorded in the ADR. Never reorder
+the queue on your own.
+```
+
+---
+
 ## Prompt S11 — THE LIVING BATTLE — ✅ DONE 2026-06-11 (ADR-030/031)
 
 Shipped: per-hero 32×32 battle busts rising MOTHER-style from behind the
@@ -1291,44 +1356,67 @@ and THE LOAN DESK — the officer does not blink at a twelve-year-old
     row-I ledger warmth, here first.
 === MOVEMENT THREE — THE DRUM & THE HITCH (fold into the feel pass) ===
 
-11. THE DRUM CARRY IS WRONG AT REST (user report + screenshot: "the
-HP number seems to be glitching" — Jay's hundreds drum parked BETWEEN
-digits at 94 HP while Mia's 056 reads clean). Root cause (traced, the
-real math): OdoDisplay.setValue (BattleScene.ts ~229) computes the
-carry for place p as max(0, lower/(p/10) − 9). For the tens drum
-(p=10) that correctly reads "roll while the ones pass 9→0" — but for
-the hundreds (p=100) it evaluates to (lower−90)/10: it starts rolling
-at x90 and smears the carry across the whole nineties, so ANY resting
-value with a 9 in its tens digit (94, 92, 190…) parks the hundreds
-strip a fraction between cells. The screenshot is exactly 94: carry
-0.4, the strip caught between the bottom of 0 and the top of 1. FIX —
-the carry spans only the final unit before rollover:
-pos = floor(v/p)%10 + max(0, (v % p) − (p − 1)). One line, correct at
-every place. Vitest pins: resting values 56/94/99/100/199/949 land
-EVERY strip on exact integer cells; the carry animates only across
-…99→…00 (both roll directions); the ones drum still rolls
-fractionally. Then eyeball it live at 94 HP and shoot it for .shots/
-— the S14b golf-meter lesson: pixel-sample the strip, don't trust the
-math alone.
+11. THE DRUM CARRY — ROOT-CAUSED AND FIXED LIVE 2026-06-12 (user
+report + screenshot: Jay's hundreds drum parked BETWEEN digits at 94
+HP while Mia's 056 read clean). The carry in OdoDisplay.setValue
+(BattleScene.ts ~229) computed place-p carry as max(0, lower/(p/10)
+− 9) — correct for the tens, but at the hundreds it reads
+(lower−90)/10, smearing the roll across the whole nineties: any
+resting value with a 9 in its tens digit parked the strip mid-cell.
+ALREADY FIXED in the tree: carry = max(0, lower − (p − 1)) — the
+wheel turns only across …99→…00 — and verified live at exactly 94 HP
+(clean 0|9|4, full suite green). THIS SESSION finishes the job: add
+the vitest pins (rest values 56/94/99/100/199/949 land EVERY strip
+on exact integer cells; the carry animates only across the boundary,
+both roll directions; the ones drum still rolls fractionally) and
+bank the before/after pair in .shots/ — the S14b lesson stands:
+pixel-sample the strip, don't trust the math alone.
 
-12. THE HITCH HUNT (user report: "a bit of an unresponsive game from
-time to time… walking through some areas it may have been lagging").
-Hunt it, don't guess it: pull Prompt 42's hidden FPS overlay FORWARD
-(tap the title version string 5× — frame ms + a worst-frame counter),
-add window.mfPerf to the ADR-008 driver (captures frame-time spikes
-with timestamps during bot walks), then bot-walk Otterbrook, Hickory
-Hill, and Brickton end-to-end and log the spike table in docs/QA.md.
-PRIME SUSPECTS to sweep regardless (steady-state allocation hygiene):
-per-frame object literals in the movement hot path (tryMove's box +
-collides() run per axis per entity per frame — reuse scratch rects),
-follower crumb-trail array churn, roamer pursuit vector allocations,
-per-frame setDepth/sort churn on the big maps, spawner
-despawn/respawn thrash at map edges, and footstep/SFX scheduling. Fix
-what the table convicts; ZERO per-frame allocations in steady-state
-walking is the bar. (Prompt 42 keeps the full atlas/profile pass —
-this is the playable-now slice.) Verify on the user's lane: browser
-AND android:apk, pad connected and disconnected. Record before/after
-worst-frame numbers in the same QA.md table.
+12. THE HITCH HUNT & THE BRICKTON HEADROOM (user reports, twice:
+"a bit of an unresponsive game from time to time… may have been
+lagging," then "once it got to brickton it started really feeling a
+bit sluggish in parts… I am really wanting to expand brickton quite
+a bit but the game engine needs to be able to handle it and still
+run smooth and clean"). MEASURED 2026-06-12, live clean-context
+profile so the hunt starts honest: Brickton walks at a FLAT
+4.2ms/frame at 240Hz with 72 display objects and ZERO frames over
+8.5ms across 1,400 sampled — the engine baseline is HEALTHY, so the
+felt slug is spike-shaped or environmental (the user's loaded
+browser session, fullscreen GPU fill at 2–3× the dev-window
+resolution, GC pauses). Act on that three ways:
+ (a) INSTRUMENT THE USER'S LANE FIRST: pull Prompt 42's hidden FPS
+     overlay FORWARD (tap the title version string 5× — frame ms,
+     a worst-frame counter, a rolling 5s spike log), add
+     window.mfPerf to the ADR-008 driver (spike timestamps during
+     bot walks), bot-walk Otterbrook, Hickory Hill, and Brickton
+     end-to-end and log the table in docs/QA.md — and the device
+     row repeats the SAME walk FULLSCREEN on the user's machine,
+     where the slug actually lives. Audit the fullscreen/integer-
+     zoom scale path while there (render cost at 1080p+ vs the dev
+     window).
+ (b) THE HYGIENE SWEEP regardless — cheap insurance, zero risk:
+     per-frame object literals in the movement hot path (tryMove's
+     box + collides() per axis per entity per frame — scratch
+     rects), follower crumb churn, roamer pursuit vectors, setDepth
+     GUARDS (movers re-set depth EVERY frame today — OverworldScene
+     ~679/769/819 — dirtying Phaser's whole display-list sort; set
+     only when y actually changed), dustPuff allocation (~2448 —
+     pool it), spawner thrash at map edges, footstep/SFX
+     scheduling. ZERO per-frame allocations in steady-state walking
+     is the bar.
+ (c) THE HEADROOM PROGRAM — the expansion license: the user intends
+     to grow Brickton substantially; prove the envelope BEFORE the
+     city grows. Bake every static sub-y-sort prop and floor decal
+     into ONE RenderTexture per map at build time (the display list
+     stays small no matter how dense the streets get; tall y-sorted
+     props and movers stay individual sprites); add a dev-only
+     BRICKTON XL synthetic map (~3× props/walkers/roamers/decals,
+     reachable the Sprite Lab way); and land a pumped benchmark —
+     walk XL 1,000 frames, assert p99 ≤ 8.3ms desktop in the QA
+     pre-flight, log the device number in the row. That benchmark
+     is the gate every future city-growth session must keep green.
+     (Prompt 42 keeps the full atlas/profile hardening; this is the
+     playable-now slice + the growth envelope.)
 
 13. DOORS DON'T PING-PONG — THE EXIT LATCH (user report +
 screenshots: holding UP through the Department's elevator doors
@@ -1370,7 +1458,8 @@ cured at home; watch a Smiler sync a colleague in and the cap whiff
 line land; ride the 6:15 SEATED both ways; stroll the plaza behind
 the DINER row and stay out of its windows; rest a drum at exactly 94
 HP and read it clean; walk all three towns with the FPS overlay up
-and no spikes; hold UP at the Department elevator and ride it ONCE;
+and no spikes, then the same walk FULLSCREEN; watch BRICKTON XL hold
+its benchmark; hold UP at the Department elevator and ride it ONCE;
 step an exact $237 out of the ATM; bank a loan, buy
 the car later, sign the mortgage, sleep at 27 Maple, stash a bat in
 the footlocker, hear the phone ring.
@@ -1382,7 +1471,8 @@ never twice in 12 victories, and Mom's hug cures it in person; the
 arrival; one-story storefronts hold you at the parapet (frozen seeds
 proven byte-identical); every drum rests on exact digit cells and
 carries only through the nines; the three towns walk spike-free with
-the overlay up to prove it; the ATM and teller move exact amounts by
+the overlay up to prove it and BRICKTON XL holds p99 ≤ 8.3ms under
+the pumped benchmark; the ATM and teller move exact amounts by
 stepper; no door in the game re-fires under held input until the
 player has stepped off its threshold; the three live callers stack
 the row mid-fight under the caps; Ch.1–2
@@ -1678,6 +1768,43 @@ deterministic:
  reads BODIES — a screener in the lane kills the runway, which is
  the whole point.
 
+6. THE BEHIND CAMERA STEERS WRONG — ROOT-CAUSED AND FIXED LIVE
+2026-06-12 (user report, twice: forward/back/left/right "stay as if
+you are facing the side view"). buildInput (HoopsScene ~395) fed the
+sim RAW d-pad axes while BEHIND renders through the behindMap
+projection. ALREADY FIXED in the tree: the d-pad now rotates through
+the SAME latSign basis project() uses — behind: [dx,dy] ←
+[−dy·s, dx·s] with s = the attacked end's sign, read live from
+viewRim() so a possession flip never inverts the stick; SIDE is
+identity; the sim only ever sees court-space axes (tapes and AI
+reads untouched), and touch/pad inherit since the remap sits at the
+input boundary. VERIFIED live, axis-pure on the ball handler
+attacking the left rim: up Δ(−71,0) straight AT the rim, down
+Δ(+71,0) away, left Δ(0,+71), right Δ(0,−71); side mode unchanged.
+THIS SESSION finishes the job: extract the rotation as a pure
+function with vitest pins (both rims, both modes, a possession
+flip), drive one full BEHIND possession in the bot, replay its tape
+byte-equal, and sweep the scene for any remaining raw INPUT.dir()
+read (the tutorial checks) so every directional read agrees with
+the camera.
+
+7. THE COURT GROWS (user: "the court needs to be much wider I
+think"). Court geometry is sim data (COURT in sim.ts) but everything
+pins it: the two drawn courts (cage_court / cage_court_behind —
+redraw at the new size under ADR-020 discipline), the fence and
+bleachers, the behindMap depth scale, AI spacing tendencies, and the
+S12 tape suite. Widen the playing rectangle ≈ +40% (sidelines and
+baselines breathe; the rim-relative law is UNTOUCHED — ARC_R,
+effective range, FINISH_RANGE, and the runway corridor all key off
+the rim, not the fence). Re-tune the AI lane/spacing constants to
+USE the room (snipers drift wider, cutters run longer lanes, the
+paint stays the paint), recalibrate behindMap so the far rim still
+reads at the new depth, re-pin the tape suite (geometry moved —
+regenerate the expected logs; the determinism law itself is
+untouched), and re-shoot both cameras for .shots/. The side
+camera's ball-follow covers the bigger floor; the BEHIND remap
+(item 6) needs zero changes — it reads its basis live.
+
 QA: pre-flight + device row 23: hold a jumper and WATCH the fill
 rise into a visible green from BOTH cameras; drain one from deep on
 the wider window; fadeaway out of a contest and feel the window
@@ -1685,9 +1812,11 @@ shrink less than the body earned; side-step both directions and
 read the spray; runway-dunk a wide-open lane from the arc, then get
 honestly stuffed trying it through a defender; sprint into a set
 big and eat the floor, then knock the handler off the ball and
-scoop the fumble; finish Permit's lesson 9. Append the ADR (046:
-CAGE 2.1 — the scale-anchored meter, the widened green, the runway
-law, moving jumpers, the body law).
+scoop the fumble; toggle BEHIND mid-possession and drive at the rim
+with screen-up; run the WIDE court corner to corner in both cameras;
+finish Permit's lesson 9. Append the ADR (046: CAGE 2.1 — the
+scale-anchored meter, the widened green, the runway law, moving
+jumpers, the body law, the behind-camera remap, the wide court).
 
 Done when: the fill RISES into a visible green at every legal range
 in both cameras (pixel-sampled, shot for .shots/); the jumper green
@@ -1697,9 +1826,11 @@ still get stuffed at the rim; fadeaways and side-steps shoot off
 the same meter with windows, drifts, and sprays pinned headless;
 the AI uses all of it through the same math; bodies separate,
 screen, and knock down on the seeded table with fumbles claimed
-deterministically and no overlap surviving a tick; tapes replay
-byte-equal; Permit teaches it; validator + vitest green; browser
-loop and android:apk untouched.
+deterministically and no overlap surviving a tick; BEHIND-mode
+steering stays camera-relative under pinned tests on keys, pad, AND
+touch; the court plays ≈40% wider with the AI using the room and
+the tapes re-pinned; tapes replay byte-equal; Permit teaches it;
+validator + vitest green; browser loop and android:apk untouched.
 ```
 
 ## Prompt S15 — EVERY DOOR OPENS (the interior program + city vocabulary)
@@ -1818,8 +1949,9 @@ GT, and THE STARHOPPER as deeds on the title registry)
 with the green band finally visible, the widened jumper window, the
 runway-dunk lane law that keeps the psionic arc takeoff but only in
 the wide open, fadeaways + side-steps on the same hold-release
-meter, and THE BODY LAW — real player collision with seeded
-knockdowns, fumbles, and emergent screens)
+meter, THE BODY LAW — real player collision with seeded knockdowns,
+fumbles, and emergent screens — and the BEHIND-camera steering
+remap)
 → **S15–S16** make the world dense and
 navigable, then Prompt 29 (Chapter 3: Foggybottom + Wintermoor + the
 MAINFRAME on the phase machine — its summons-refill trigger is already

@@ -225,8 +225,11 @@ class OdoDisplay {
       if (p === 1) {
         pos = v % 10;
       } else {
+        // mechanical carry: this wheel turns ONLY while every lower wheel
+        // rolls through …9→0 — i.e. across the final unit before p, never
+        // smeared from x90 (94 at rest parked the hundreds strip mid-cell)
         const lower = v % p;
-        pos = (Math.floor(v / p) % 10) + Math.max(0, lower / (p / 10) - 9);
+        pos = (Math.floor(v / p) % 10) + Math.max(0, lower - (p - 1));
       }
       this.strips[i].y = this.slotY - pos * ODO_CELL_H;
     }

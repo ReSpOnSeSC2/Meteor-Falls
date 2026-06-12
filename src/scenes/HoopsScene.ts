@@ -393,9 +393,22 @@ export class HoopsScene extends Phaser.Scene {
       return;
     }
     const d = INPUT.dir();
+    let ix = Math.sign(d.x) as -1 | 0 | 1;
+    let iy = Math.sign(d.y) as -1 | 0 | 1;
+    if (this.camMode === 'behind') {
+      // camera-relative steering: screen-up drives AT the attacked end and
+      // lateral rides the SAME latSign basis project() uses — the sim only
+      // ever sees court-space axes, so tapes and AI reads are untouched
+      const rim = this.viewRim();
+      const s = rim.x < COURT.W / 2 ? -1 : 1;
+      const cx = (-iy * s) as -1 | 0 | 1;
+      const cy = (ix * s) as -1 | 0 | 1;
+      ix = cx;
+      iy = cy;
+    }
     const input: TickInput = {
-      dx: Math.sign(d.x) as -1 | 0 | 1,
-      dy: Math.sign(d.y) as -1 | 0 | 1,
+      dx: ix,
+      dy: iy,
       aHeld: INPUT.held('A'),
       aPressed: INPUT.justPressed('A'),
       // the latch-backed release edge (ADR-038) — a thumb-lift lands on the

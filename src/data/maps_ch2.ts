@@ -36,9 +36,12 @@ export function buildBricktonDocks(): MapDef {
   // the pier pushes out into it
   g.rect(8, 6, 16, 5, 'd');
   g.rect(22, 7, 4, 3, 'd');
-  // brick spine along the north (the city at your back)
+  // brick spine along the north (the city at your back) — the west wall
+  // opens at y 6–8, the return door's rows (doors[] below): the gap must
+  // stay walkable or the docks seal Brickton off behind the boat
   g.rect(0, 0, 30, 2, 'B');
-  g.rect(0, 2, 1, 12, 'B');
+  g.rect(0, 2, 1, 4, 'B');
+  g.rect(0, 9, 1, 5, 'B');
   return {
     id: 'brickton_docks',
     name: 'BRICKTON DOCKS',
