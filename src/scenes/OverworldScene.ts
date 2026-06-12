@@ -186,14 +186,16 @@ export class OverworldScene extends Phaser.Scene {
   private battleCooldown = 0;
   private stepTimer = 0;
   private fireflies: Phaser.GameObjects.Image[] = [];
+  private openingRequested = false;
 
   constructor() {
     super('overworld');
   }
 
-  init(data: { mapId?: string; x?: number; y?: number; facing?: Facing }): void {
+  init(data: { mapId?: string; x?: number; y?: number; facing?: Facing; opening?: boolean }): void {
     const id = data.mapId ?? GS.data.map;
     this.mapDef = MAPS[id] ?? MAPS.otterbrook;
+    this.openingRequested = data.opening === true;
     GS.data.map = this.mapDef.id;
     if (data.x !== undefined) GS.data.x = data.x;
     if (data.y !== undefined) GS.data.y = data.y;
@@ -2534,6 +2536,11 @@ export class OverworldScene extends Phaser.Scene {
       await this.boatCutscene();
       return;
     }
+    if (this.openingRequested && this.mapDef.id === 'rex_bedroom' && !GS.flag('intro_done')) {
+      this.openingRequested = false;
+      await this.introScene();
+      return;
+    }
     if (this.registry.get('defeated') === true) {
       this.registry.set('defeated', false);
       this.cut = true;
@@ -2756,6 +2763,7 @@ export class OverworldScene extends Phaser.Scene {
   private async introScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('intro_done');
+    await this.openingMeteorCinema();
     const cover = this.add
       .rectangle(0, 0, this.scale.width, this.scale.height, 0x0a0a18)
       .setOrigin(0)
@@ -2771,6 +2779,112 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.intro_wake);
     GS.setFlag('meteor_fell');
     this.cut = false;
+  }
+
+  private async openingMeteorCinema(): Promise<void> {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const cinema = this.add.container(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 20);
+    const world = this.add.container(0, 0);
+    cinema.add(world);
+    const addTo = <T extends Phaser.GameObjects.GameObject>(target: Phaser.GameObjects.Container, obj: T): T => {
+      target.add(obj);
+      return obj;
+    };
+    const waitTween = (cfg: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> =>
+      new Promise((resolve) => {
+        this.tweens.add({ ...cfg, onComplete: () => resolve() });
+      });
+
+    // Full-screen pixel diorama: sky fixed, town layer pans from the hill to home.
+    addTo(cinema, this.add.rectangle(0, 0, W, H, 0x080816).setOrigin(0));
+    addTo(cinema, this.add.rectangle(0, 86, W, 62, 0x151832).setOrigin(0).setAlpha(0.72));
+    addTo(cinema, this.add.rectangle(0, 145, W, H - 145, 0x10151e).setOrigin(0));
+    const stars = [
+      [34, 20, 1],
+      [78, 52, 0.7],
+      [118, 29, 1],
+      [176, 18, 0.6],
+      [238, 44, 0.9],
+      [306, 23, 0.8],
+      [362, 56, 1],
+    ] as const;
+    for (const [x, y, a] of stars) {
+      addTo(cinema, this.add.rectangle(x, y, 2, 2, 0xf8f0d0).setAlpha(a));
+    }
+
+    addTo(world, this.add.rectangle(0, 150, 840, 75, 0x172414).setOrigin(0));
+    addTo(world, this.add.triangle(120, 150, -40, 0, 164, -88, 360, 0, 0x20301b).setOrigin(0.5, 1));
+    addTo(world, this.add.triangle(156, 154, -28, 0, 112, -54, 252, 0, 0x121d16).setOrigin(0.5, 1));
+    addTo(world, this.add.image(118, 150, 'tree_b').setOrigin(0.5, 1).setScale(1.1).setTint(0x384828));
+    addTo(world, this.add.image(182, 154, 'tree_b').setOrigin(0.5, 1).setScale(0.85).setTint(0x2d3d24));
+    addTo(world, this.add.image(476, 150, 'skyline').setOrigin(0.5, 1).setScale(1.1).setTint(0x273042).setAlpha(0.78));
+    addTo(world, this.add.image(548, 154, 'tree_b').setOrigin(0.5, 1).setScale(0.9).setTint(0x344527));
+    addTo(world, this.add.image(610, 151, 'house_rex').setOrigin(0.5, 1).setScale(0.9));
+    addTo(world, this.add.rectangle(600, 118, 16, 10, 0xf8e8a0).setAlpha(0.65));
+    addTo(world, this.add.rectangle(585, 152, 180, 4, 0x23231f).setOrigin(0.5, 0));
+
+    const caption = addTo(
+      cinema,
+      this.add
+        .bitmapText(W / 2, H - 30, 'retro', 'The sky over Hickory Hill holds its breath.', 6)
+        .setOrigin(0.5, 0)
+        .setTint(0xf8f0d0),
+    );
+    await this.wait(700);
+
+    const trail = addTo(cinema, this.add.rectangle(-92, 36, 132, 6, 0xf8e8a0).setAngle(25).setAlpha(0.78));
+    const trailHot = addTo(cinema, this.add.rectangle(-70, 42, 70, 3, 0xf86f4f).setAngle(25).setAlpha(0.92));
+    const meteor = addTo(cinema, this.add.image(-46, 30, 'meteor_rock').setScale(0.6).setAngle(28).setTint(0xf8d868));
+    AUDIO.sfx('ember');
+    this.tweens.add({ targets: trail, alpha: 0.35, duration: 160, yoyo: true, repeat: 5 });
+    this.tweens.add({ targets: trailHot, alpha: 0.25, duration: 120, yoyo: true, repeat: 7 });
+    await waitTween({
+      targets: [meteor, trail, trailHot],
+      x: '+=192',
+      y: '+=92',
+      angle: '+=260',
+      duration: 1350,
+      ease: 'Quad.easeIn',
+    });
+
+    caption.setText('It lands behind town with a sound too big for the clock.');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(820, 0.018);
+    this.cameras.main.flash(420, 248, 232, 160);
+    meteor.destroy();
+    trail.destroy();
+    trailHot.destroy();
+    const craterGlow = addTo(world, this.add.circle(146, 133, 9, 0xf8d868, 0.75));
+    const crater = addTo(world, this.add.image(146, 143, 'meteor_rock').setOrigin(0.5, 1).setScale(0.42).setTint(0xf87848));
+    for (let i = 0; i < 10; i++) {
+      const a = (Math.PI * 2 * i) / 10;
+      const spark = addTo(world, this.add.rectangle(146, 133, 3, 3, i % 2 ? 0xf8e8a0 : 0xf87848));
+      this.tweens.add({
+        targets: spark,
+        x: 146 + Math.cos(a) * (22 + (i % 3) * 7),
+        y: 133 + Math.sin(a) * (10 + (i % 4) * 5),
+        alpha: 0,
+        duration: 650,
+        ease: 'sine.out',
+        onComplete: () => spark.destroy(),
+      });
+    }
+    this.tweens.add({ targets: craterGlow, scale: 2.2, alpha: 0.28, duration: 760, yoyo: true, repeat: 2 });
+    this.tweens.add({ targets: crater, y: 146, duration: 180, yoyo: true, repeat: 1 });
+    await this.wait(950);
+
+    caption.setText('Six blocks away, one porch light wakes up.');
+    const homeGlow = addTo(world, this.add.circle(600, 121, 12, 0xf8e8a0, 0.12));
+    this.tweens.add({ targets: homeGlow, scale: 1.7, alpha: 0.32, duration: 900, yoyo: true, repeat: -1 });
+    await waitTween({ targets: world, x: -392, duration: 2300, ease: 'Sine.easeInOut' });
+    await this.wait(450);
+
+    caption.setText(vars("Upstairs, {rex}'s room remembers it has a window."));
+    await this.wait(900);
+    const fade = addTo(cinema, this.add.rectangle(0, 0, W, H, 0x0a0a18).setOrigin(0).setAlpha(0));
+    await waitTween({ targets: fade, alpha: 1, duration: 520, ease: 'sine.in' });
+    cinema.destroy();
   }
 
   private async chadJoinScene(): Promise<void> {

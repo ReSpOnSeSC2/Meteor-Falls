@@ -74,9 +74,12 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- cutscenes ---------------- */
   intro_card: [
+    'CHAPTER 1: THE NIGHT IT FELL.',
     'Otterbrook, Ohio. Summer, 1995.',
+    'A small town with one hill, one arcade, and one dog who knows too much.',
     '2:11 AM.',
     'The whole town is asleep except the crickets, one porch light, and a dog who has opinions about the sky.',
+    'In {rex}\'s room, the baseball bat leans by the desk, pretending this is a normal night.',
     'Somewhere very high up, something answers a question nobody on Earth asked.',
   ],
   intro_wake: [
@@ -84,8 +87,9 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'For one bright second your room looks like morning. Then the light folds itself back into night.',
     'Downstairs, Mom says your name once. Not scared. Just making sure the world still has it.',
     'Something enormous just landed on Hickory Hill.',
-    'The baseball bat beside your desk is suddenly no longer decorative.',
+    'Your room is yours again: bed, desk, bat, and one very bad idea.',
     '({rex} is already putting on his cap. Somehow you knew he would be.)',
+    '* GOAL: Go downstairs and check on Mom.',
   ],
   chad_join: [
     "@{rex}! Did you SEE that?! The sky EXPLODED! I saw it first, by the way. That's canon now.",

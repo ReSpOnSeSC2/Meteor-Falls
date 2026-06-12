@@ -177,7 +177,7 @@ export class NameEntryScene extends Phaser.Scene {
     AUDIO.stopMusic();
     this.cameras.main.fadeOut(400, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      this.scene.start('overworld', { mapId: GS.data.map });
+      this.scene.start('overworld', { mapId: GS.data.map, opening: true });
     });
   }
 }
