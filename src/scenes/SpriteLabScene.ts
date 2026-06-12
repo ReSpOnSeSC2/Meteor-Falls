@@ -230,7 +230,7 @@ export class SpriteLabScene extends Phaser.Scene {
       this.content.push(t);
     });
     const hint = this.add
-      .bitmapText(170, 44 + labels.length * 16 + 6, 'retro', 'up/down pick Â· A change Â· MENU random', 6)
+      .bitmapText(170, 44 + labels.length * 16 + 6, 'retro', 'up/down pick - A change - MENU random', 6)
       .setTint(colorOf(px(RAMP.NIGHT, 3)));
     this.content.push(hint);
     this.refreshRemixTexts();

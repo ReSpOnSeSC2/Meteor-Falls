@@ -102,7 +102,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@No time. Listen. I'm Glint. I rode in on that rock — escaped from what ELSE rode in on that rock.",
     '@It is called THE HUSH. It eats the warmth between living things. The calls to your mom. The dog meeting you at the door. THE MUSIC.',
     '@The meteor broke into eight EMBERS and scattered along its path, all the way around your world.',
-    '@Four kids carrying the old light can silence it. You are one. You will find the others. One of them— ',
+    '@Four kids carrying the old light can silence it. You are one. You will find the others. One of them—',
     '@Here. The STAR LOCKET. When you stand where an Ember sings, it will record a HEARTLIGHT. Eight Heartlights make the HOMESONG.',
     "@The Homesong is the one frequency the Hush can't eat. Don't ask me how I know. It's literally the only thing my species does.",
     '* {rex} got the Star Locket!',
@@ -310,7 +310,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   q_arcade_ask: [
     "@Welcome to STARPORT II, the sequel. I'm Sal. I own both. The first one's the prequel now — the industry did that, not me.",
     "@I keep scores. The weather: today's a 7,200. You: trending up. That machine over there— (he does not look at it) —that machine is my problem.",
-    '@Guy in a blue blazer. Smiled the WHOLE time. Played ONE game, scored three thousand EXACTLY, signed it "MGR", and left. Who stops on a round number? A QUOTA stops on a round number.',
+    '@Guy in a blue blazer. Smiled the WHOLE time. Played ONE game, scored three thousand EXACTLY, signed it "MGR", and left.',
+    '@Who stops on a round number? A QUOTA stops on a round number.',
     "@Knock him off my board, kid. I'd do it myself, but the staff can't watch me lose. They're cabinets. They talk.",
     '* Sal wants the "MGR" score gone. (Across the room, the machine chirped. It agrees.)',
   ],
@@ -397,18 +398,18 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   brickton_goal_dial: [
     'The payphone rings once.',
-    'Nobody is calling. Nobody is NOT calling either. Payphones are complicated.',
+    'Nobody is calling. Somehow, it still feels answered.',
     '@Hear it? (The quarter man smiles without showing teeth.) Area code 216, B flat, warm as toast.',
     'You hold the Star Locket near the receiver. The dial tone folds itself into the first Heartlight.',
     '* GOAL: Caught a WARM DIAL TONE!',
   ],
   brickton_goal_gate_none: [
     'The Department doors slide open one inch, inspect your face, and slide shut.',
-    'A tiny speaker says: "APPOINTMENT NOT FOUND. PLEASE ARRIVE WITH A MORE CONVINCING CITY."',
+    'A tiny speaker says: "APPOINTMENT NOT FOUND. PLEASE ARRIVE WITH TWO VALID CITY CLUES."',
     '(The Star Locket pulls two ways: toward the civic clock and toward the payphone corner.)',
   ],
   brickton_goal_gate_clock: [
-    'The Department doors consider your dial tone and reject your punctuality.',
+    'The Department doors accept your warm dial tone, then refuse your bad timing.',
     '"PLEASE CONSULT BRICKTON TIME BEFORE ENTERING."',
     '(The Star Locket ticks toward the civic clock.)',
   ],
@@ -925,7 +926,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   boat_crossing_senora: [
     '@...You will pass through the valley? Then look in on my sister, please.',
-    '@Ana Lucia. Gray house by the pen. You will know her by— ',
+    '@Ana Lucia. Gray house by the pen. You will know her by—',
     '@...You used to know her by her laugh. Look in on her. Please.',
   ],
   boat_crossing_2: [

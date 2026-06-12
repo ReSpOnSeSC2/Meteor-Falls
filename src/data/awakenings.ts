@@ -36,7 +36,7 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       ability: 'vibe_surge_a',
       flag: 'awake_surge_a',
       dialogue: 'awake_old_light',
-      toast: '{rex} awakened VIBE SURGE a!',
+      toast: '{rex} awakened VIBE SURGE Alpha!',
     }),
     W({
       id: 'last_spark',
@@ -44,7 +44,7 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       ability: 'lifeup_a',
       flag: 'awake_lifeup_a',
       dialogue: 'awake_last_spark',
-      toast: '{rex} awakened LIFEUP a!',
+      toast: '{rex} awakened LIFEUP Alpha!',
     }),
     W({
       id: 'first_listen',
@@ -52,7 +52,7 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       ability: 'vibe_fire_a',
       flag: 'awake_fire_a',
       dialogue: 'awake_first_listen',
-      toast: '{faye} awakened VIBE FIRE a!',
+      toast: '{faye} awakened VIBE FIRE Alpha!',
     }),
     /* ---- Ch.2 (S14, the §A3 amendment's arc): the HOLLOW reveal ----
      * cold_reads — the Gilded Grin swaps and the gold turns out to be
@@ -66,7 +66,7 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       ability: 'vibe_freeze_a',
       flag: 'awake_freeze_a',
       dialogue: 'awake_cold_reads',
-      toast: '{faye} awakened VIBE FREEZE a!',
+      toast: '{faye} awakened VIBE FREEZE Alpha!',
     }),
   ].map((a) => [a.id, a]),
 );
