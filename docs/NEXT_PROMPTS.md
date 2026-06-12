@@ -1534,6 +1534,174 @@ annotated; the queue edits landed; validator + vitest green;
 browser loop and android:apk untouched.
 ```
 
+## Prompt S14f — CAGE 2.1: THE SHOT DOCTOR (the meter heals, the runway opens, the jumper learns to move)
+
+```
+[Standard Header]
+S14f — the cage playtest answer (user reports + a screenshot from
+PERMIT'S SCHOOL OF CAGE; ADR-029/033/036/038 law stands:
+deterministic Phaser-free sim, vitest first, manifests same-commit).
+Code map: src/hoops/sim.ts (meterOf, greenWindow, TUNE, DUNK_METER,
+FINISH_RANGE_PX, handleOffense ~943, startDunk ~1243); the
+renderer's meter is HoopsScene.renderMeter (~983); frames are
+src/spritegen/athletes.ts (SPORT_FRAME is the pinned contract).
+
+1. THE METER HEALS (user: "shooting bar goes the wrong way and also
+doesnt show the green window" — the screenshot shows the fill strip
+hanging DOWN through the shooter and a stray black fragment floating
+right of him). Root cause (traced — the S14b golf lesson, unlearned
+here): renderMeter mutates Phaser Shape geometry directly —
+meterFill.height = fillH (~1014) and meterGreen.height = winH
+(~1008) — the EXACT bug class S14b fixed in the Links meter
+("Shape.height never rebuilds geometry"; the fix was
+scale-anchored). The fill was built 2px tall, the green 4px: under
+the broken geometry the fill reads downward through the athlete and
+the green never grows into view. FIX the S14b way: fixed-geometry
+rectangles with scaleY driving the size, origins anchored so the
+FILL RISES from the drum's base toward the top and the GREEN sits
+seated at the top spanning [lo, 1] — and PROVE IT BY PIXEL SAMPLING
+in the bot (mid-hold: fill bottom-anchored and rising, green
+present, nothing rendering below the athlete's feet) — the lesson
+S14b wrote down: never trust the math alone. While in there, audit
+the meter in BOTH cameras: renderMeter flips scrollFactor 0/1 with
+the BEHIND toggle (~1001), and the screenshot's stray black
+fragment reads like a meter piece on a stale scrollFactor after a
+camera toggle — toggle mid-possession, re-verify every piece's
+projection, and shoot both cameras for .shots/.
+
+2. THE GREEN GROWS (user: "the green window needs to be bigger for
+shooting"). Data tune, not code: widen the jumper's greenWindow
+meaningfully (≈ +50% across the sht curve — floor, base, and
+per-sht all rise). The RANGE LAW keeps its shape: the window still
+shrinks with distance, still CLOSES at effective range, and the
+S12c zero-beyond-range law is untouched. Retune makeChance falloff
+so slightly-off still reads ≈60%. Re-pin the vitest window curves
+(edges, the close, the 80k-tick no-deep-AI-makes tape) and replay
+Permit's meter lesson so the teaching beat still lands.
+
+3. THE RUNWAY OPENS (user: dunking "from like the three point
+line… thats pretty cool considering these kids are supposed to have
+psionic abilities… but you should only be able to trigger a dunk
+like that in the wide open maybe"). Root cause (traced): the
+contextual finish triggers anywhere inside FINISH_RANGE_PX (165px —
+ADR-038 made finishes easy to GENERATE, but 165px reaches the arc)
+with NO lane check (handleOffense ~946), so a moving A at the
+three-point line launches the full dunk cinematic through traffic.
+Keep the magic, gate it honestly — TWO TIERS:
+ - THE FINISH (unchanged feel, honest range): dunk/layup gather on
+   plain movement inside a tightened FINISH_RANGE_PX (~84px — the
+   paint, not the arc).
+ - THE RUNWAY DUNK (the user's psionic showstopper, now EARNED):
+   from beyond finish range out to ~1.0× ARC_R, A while SPRINTING
+   toward the rim with dnk ≥ 55 triggers the runway ONLY IF THE
+   LANE IS CLEAR — no set defender inside a corridor (≈26px
+   half-width) from athlete to rim, checked at takeoff; any body in
+   the lane and the press is a normal gather instead. The existing
+   dunk flight, styles, and window carry it — and dunkWindow's
+   contest term still rules the rim, so a recovering defender can
+   still STUFF the landing. PERMIT gets a line ("THAT WAS A RUNWAY.
+   THE FAA HAS QUESTIONS.") and the school's dunk lesson teaches
+   the distinction. AI dunkers use the same predicate — pinned by a
+   tape asserting zero contested-lane AI runways.
+ Export the corridor math beside TUNE (RUNWAY) and pin all three
+ outcomes: paint = finish; arc + sprint + rating + clear lane =
+ runway; arc + anyone in the corridor = gather.
+
+4. THE JUMPER LEARNS TO MOVE (user: "there should also be a way if
+Im moving to shoot like fade aways and side to side shots"). Today
+the gather PLANTS you (a.moving = false, ~953) — every jumper is a
+set shot. Add MOVING JUMPERS, all on the same hold-release meter
+(the mechanic never changes; movement changes the WINDOW and the
+BODY):
+ - THE FADEAWAY: gather while holding AWAY from the rim — the
+   athlete drifts backward through the rise. SEPARATION IS THE
+   POINT: the defender-contest shrink computes at RELEASE from the
+   drifted position (a contested look becomes open-ish), but the
+   base window pays ≈ −35%, bought back by sht — a sniper's
+   fadeaway is a weapon, a bruiser's is a prayer.
+ - THE SIDE-STEP: gather while holding lateral — the athlete
+   drifts with the held direction; window ≈ −20%, and the miss
+   BIAS leans toward the drift (the golf push/pull vocabulary
+   reused: a left-drift miss sprays left, named in the miss read).
+ - The SET SHOT stays the baseline and keeps the full (newly
+   widened) window.
+ - AI through the same math (ADR-029, no AI-only physics): snipers
+   gain a data tendency to fadeaway when contested; ball-hawks
+   side-step off the dribble.
+ SPORT_FRAME grows for the bodies (fadeaway lean-back release ×2,
+ lateral drift release ×2 — amend the pinned contract count in the
+ ADR, Sprite Lab rows + the vitest mirror per ADR-033), and
+ PERMIT'S SCHOOL gains lesson 9, THE MOVING PICTURES (fadeaway →
+ side-step → the runway distinction; deed-advanced and replayable
+ like the eight; cage_tutored untouched for old saves).
+Determinism throughout: releases, drift vectors, and window math
+run on SIM_DT quanta — extend the S12 tape suite with a fadeaway
+make, a side-step spray, a runway dunk, and a contested-lane
+gather, all replaying byte-equal.
+
+5. CONTACT IS REAL — THE BODY LAW (user: "there needs to be
+collision detection between players so you can't just run anywhere
+you want and if you go up and run into someone you get knocked over
+sometimes, other times you knock them over"). Today athletes are
+ghosts — every body occupies the same space. Two layers, both
+deterministic:
+ - SEPARATION: every athlete gets a body radius (~9px); each SIM_DT
+   tick resolves overlaps by pushing pairs apart (mass-weighted,
+   fence-aware so nobody gets pinned through the chain-link).
+   Bodies become obstacles: lanes can be WALLED, post play means
+   leaning on someone, and SCREENS become emergent basketball (one
+   AI tendency rides along: post bullies plant themselves in the
+   dribbler's path). AI steering gains simple body-avoidance so the
+   lane-runners flow around traffic instead of piling up.
+ - THE KNOCKDOWN: meaningful contact rolls an outcome through the
+   match rng (seeded — tapes replay byte-equal): walking bumps just
+   shove; a SPRINT collision rolls FORCE (relative speed + sprint
+   state + the body read through dfn) against the other body's
+   BRACE (standing set & facing the contact = braced): the loser
+   STUMBLES (the existing trip frame) or FALLS FLAT (the
+   ankle-ladder's fall frame — the floor outcomes need no new sheet
+   rows), the winner plays through. A knocked-down DRIBBLER
+   FUMBLES: the ball scatters to a seeded point and the nearest
+   athlete claims it — bodies are a real way to force turnovers and
+   a real risk to your own handle. Mutual sprint head-ons can drop
+   BOTH (street comedy, announced straight: PERMIT — "HE FILED NO
+   COMPLAINT. THERE IS NO ONE TO FILE IT WITH." — the CALL YOUR OWN
+   FOULS canon intact: nobody calls this either). Knockdown rolls
+   carry a per-athlete cooldown (~3s) so the cage stays basketball,
+   not bowling. HUD: a "BODIED!" read on the falls (the TIMED!
+   popup pattern).
+ Export the body table beside TUNE (radius, force weights, brace,
+ cooldown, fumble scatter) and pin it in vitest: zero overlap
+ survives a resolution tick; the outcome table at force/brace
+ edges; a fumble claimed deterministically; a collision-heavy tape
+ replaying byte-equal; and the runway-dunk corridor (item 3) now
+ reads BODIES — a screener in the lane kills the runway, which is
+ the whole point.
+
+QA: pre-flight + device row 23: hold a jumper and WATCH the fill
+rise into a visible green from BOTH cameras; drain one from deep on
+the wider window; fadeaway out of a contest and feel the window
+shrink less than the body earned; side-step both directions and
+read the spray; runway-dunk a wide-open lane from the arc, then get
+honestly stuffed trying it through a defender; sprint into a set
+big and eat the floor, then knock the handler off the ball and
+scoop the fumble; finish Permit's lesson 9. Append the ADR (046:
+CAGE 2.1 — the scale-anchored meter, the widened green, the runway
+law, moving jumpers, the body law).
+
+Done when: the fill RISES into a visible green at every legal range
+in both cameras (pixel-sampled, shot for .shots/); the jumper green
+is meaningfully wider and still closes at range; finishes live in
+the paint while runways demand sprint + rating + a clear lane and
+still get stuffed at the rim; fadeaways and side-steps shoot off
+the same meter with windows, drifts, and sprays pinned headless;
+the AI uses all of it through the same math; bodies separate,
+screen, and knock down on the seeded table with fumbles claimed
+deterministically and no overlap surviving a tick; tapes replay
+byte-equal; Permit teaches it; validator + vitest green; browser
+loop and android:apk untouched.
+```
+
 ## Prompt S15 — EVERY DOOR OPENS (the interior program + city vocabulary)
 
 ```
@@ -1646,6 +1814,12 @@ the car note, and 27 Maple on save v8)
 finale on the giants' banknotes, the S&L investment desk, and the
 collectors' market; the big-number law; HILLCREST MANOR, THE COMET
 GT, and THE STARHOPPER as deeds on the title registry)
+→ **S14f** (CAGE 2.1 — THE SHOT DOCTOR: the scale-anchored meter fix
+with the green band finally visible, the widened jumper window, the
+runway-dunk lane law that keeps the psionic arc takeoff but only in
+the wide open, fadeaways + side-steps on the same hold-release
+meter, and THE BODY LAW — real player collision with seeded
+knockdowns, fumbles, and emergent screens)
 → **S15–S16** make the world dense and
 navigable, then Prompt 29 (Chapter 3: Foggybottom + Wintermoor + the
 MAINFRAME on the phase machine — its summons-refill trigger is already
