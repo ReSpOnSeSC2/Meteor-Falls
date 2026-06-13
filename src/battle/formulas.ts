@@ -328,6 +328,38 @@ export function puppetTurns(omega: boolean, rng: Rng): number {
  *  `boosts` — it ticks off like any status) */
 export const STEELED_GUTS = 8;
 
+/* ---- DORIN'S MARTIAL STANCES (§4 — "make his own turn a choice") ----
+ * Two self-buff statuses built on the S16 temp-boost pattern: each reads at a
+ * LIVE stat seam (heroDefense / heroSpeed), never baked into permanent `boosts`,
+ * and ticks off in statusPhase like 'steeled'. Pure + rng-injected so the replay
+ * bot and the unit tests stay exact.
+ *   braced  (Stone Brow Stance) — +Defense AND a physical counter
+ *   flowing (Flowing Step)      — +Speed AND a dodge window
+ */
+
+/** the temporary Defense bump 'braced' grants — read at the heroDefense seam
+ *  (the incoming-damage calc), the steeled-Guts way */
+export const BRACED_DEFENSE = 8;
+
+/** the temporary Speed bump 'flowing' grants — read at the heroSpeed seam
+ *  (run chance + turn tempo) */
+export const FLOWING_SPEED = 6;
+
+/** Stone Brow Stance's counter: a braced monk answers a PHYSICAL hit with ~40%
+ *  of the swing as fist damage, bounced back at the attacker. Resolves at the
+ *  same `reflected` seam mitigateIncoming feeds — never a parallel damage path
+ *  (the build prompt §1.5). "Patience is also a fist." */
+export function bracedCounter(dmg: number): number {
+  return Math.floor(dmg * 0.4);
+}
+
+/** Flowing Step's dodge: ~35% to slip a hit entirely, nudged up a little by
+ *  Speed/Luck. The shared "did this hit miss?" gate — Pippa's evasion routes
+ *  here too — read off the hero's live status before mitigateIncoming. */
+export function flowingDodge(speed: number, luck: number, rng: Rng): boolean {
+  return rng() < Math.min(0.6, 0.35 + (speed + luck) / 400);
+}
+
 /* ---- §A4.5 SUNNY SIDE (S14 / Bible Prompt 23) ---- */
 
 /** the picnic buff covers the NEXT five battles (§A4.5, canon) */

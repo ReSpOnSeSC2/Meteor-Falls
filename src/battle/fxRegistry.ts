@@ -104,8 +104,19 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
   rocket_big: S({ kind: 'ability', family: 'rocket', tier: 2, ramp: RAMP.RED, sfx: 'fx_rocket' }),
   rocket_multi: S({ kind: 'ability', family: 'rocket', tier: 4, ramp: RAMP.RED, sfx: 'fx_rocket' }),
   comet_a: S({ kind: 'ability', family: 'comet', tier: 1, ramp: RAMP.PAPER, sfx: 'fx_comet' }),
-  comet_o: S({ kind: 'ability', family: 'comet', tier: 2, ramp: RAMP.PAPER, sfx: 'fx_comet' }),
+  // Dorin's full Comet ladder — β/γ escalate the same falling-star builder (the
+  // S16 surge work proves the tier pattern); Ω stays the awakened capstone.
+  comet_b: S({ kind: 'ability', family: 'comet', tier: 2, ramp: RAMP.PAPER, sfx: 'fx_comet' }),
+  comet_g: S({ kind: 'ability', family: 'comet', tier: 3, ramp: RAMP.PAPER, sfx: 'fx_comet' }),
+  // Ω is the awakened capstone — the biggest fall of the ladder (a1/b2/g3/o4)
+  comet_o: S({ kind: 'ability', family: 'comet', tier: 4, ramp: RAMP.PAPER, sfx: 'fx_comet' }),
   brainjam: S({ kind: 'ability', family: 'wire_cross', ramp: RAMP.PURPLE, sfx: 'fx_brainjam' }),
+  // Dorin's party Mirror + the two martial stances reuse the barrier snap — the
+  // tint names the stance (mirror = paper still-water, braced = earth/red,
+  // flowing = cyan). No new art, no new STAGE_ANIM rows.
+  mirror_o: S({ kind: 'ability', family: 'barrier', ramp: RAMP.PAPER, sfx: 'fx_shield' }),
+  stone_stance: S({ kind: 'ability', family: 'barrier', ramp: RAMP.EARTH, sfx: 'fx_guard' }),
+  flowing_step: S({ kind: 'ability', family: 'barrier', ramp: RAMP.CYAN, sfx: 'fx_guard' }),
   healing_cure: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.GRASS, sfx: 'fx_cure' }),
   healing_revive: S({ kind: 'ability', family: 'revive', ramp: RAMP.GOLD, sfx: 'fx_revive' }),
   run_up: S({ kind: 'ability', family: 'run_up', ramp: RAMP.ORANGE }),

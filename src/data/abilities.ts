@@ -87,14 +87,40 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'big_bottle_rocket', name: 'Big Bottle Rocket', kind: 'gadget', pp: 0, power: 220, target: 'enemy', element: 'physical', text: '{user} lit a BIG bottle rocket!', fx: 'rocket_big' }),
     A({ id: 'multi_bottle_rocket', name: 'Multi Bottle Rocket', kind: 'gadget', pp: 0, power: 140, target: 'enemies', element: 'physical', text: '{user} lit the whole crate!', fx: 'rocket_multi' }),
 
-    // ---- Dorin
+    // ---- Dorin, THE MONK'S FULL PATH ("Ability Expansion"). The monastery
+    // martial artist's kit roughly doubles (7 → ~14): the Comet, Healing, and
+    // Brainjam ladders complete; Mirror gains a party version (nearly free on
+    // the S16 mitigateIncoming seam); and two MARTIAL STANCES make his own turn
+    // a defensive/offensive choice. He joins late (Ch.9) nearly complete — a
+    // master, not a student — so his unlocks cluster high. Voice: formal, calm,
+    // faintly baffled by the modern world; his battle lines read like sutras.
     A({ id: 'vibe_comet_a', name: 'Vibe Comet Alpha', kind: 'vibe', pp: 20, power: 130, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_a' }),
+    A({ id: 'vibe_comet_b', name: 'Vibe Comet Beta', kind: 'vibe', pp: 30, power: 190, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_b' }),
+    A({ id: 'vibe_comet_g', name: 'Vibe Comet Gamma', kind: 'vibe', pp: 44, power: 250, target: 'enemies', element: 'none', text: 'The mountain answers. The sky falls.', fx: 'comet_g' }),
+    // Comet Ω is the single awakening now (trial_of_the_mute_mountain, §6) — the
+    // mastery earned at the Trial that lets him join. NOT a level unlock.
     A({ id: 'vibe_comet_o', name: 'Vibe Comet Omega', kind: 'vibe', pp: 60, power: 320, target: 'enemies', element: 'none', text: 'The sky opened. The stars remembered.', fx: 'comet_o' }),
     A({ id: 'mirror', name: 'Mirror', kind: 'vibe', pp: 4, power: 0, target: 'self', element: 'none', status: 'mirror', text: '{user} became perfectly still water.', fx: 'mirror_snap' }),
+    // party Mirror — overlaps Jay's Power Shield on purpose but lands FASTER
+    // (Dorin acts first). The 'mirror' status is already party-capable through
+    // mitigateIncoming (S16); 'allies' just loops the existing apply path.
+    A({ id: 'mirror_o', name: 'Mirror Omega', kind: 'vibe', pp: 16, power: 0, target: 'allies', element: 'none', status: 'mirror', text: '{user} made the whole party still water.', fx: 'mirror_o' }),
     A({ id: 'healing_a', name: 'Healing Alpha', kind: 'vibe', pp: 5, power: 0, target: 'ally', element: 'none', status: 'cure', text: '{user} pressed two fingers to the brow.', fx: 'healing_cure' }),
+    // Healing β adds an actual HP heal (α is a status-cure only) so Dorin can
+    // main-heal; Healing Ω is the clutch party pickup — mass revive + 60% HP +
+    // a full cleanse, and his high Speed lands it FIRST (the whole point).
+    A({ id: 'healing_b', name: 'Healing Beta', kind: 'vibe', pp: 12, power: 150, heal: true, target: 'ally', element: 'none', text: '{user} pressed warmth into the wound.', fx: 'healing_cure' }),
     A({ id: 'healing_g', name: 'Healing Gamma', kind: 'vibe', pp: 20, power: 0, target: 'ally', element: 'none', status: 'revive', text: '{user} spoke an old word.', fx: 'healing_revive' }),
+    A({ id: 'healing_o', name: 'Healing Omega', kind: 'vibe', pp: 34, power: 0, target: 'allies', element: 'none', status: 'revive', text: '{user} spoke the old word over everyone.', fx: 'healing_revive' }),
     A({ id: 'brainjam_a', name: 'Brainjam Alpha', kind: 'vibe', pp: 12, power: 0, target: 'enemy', element: 'none', status: 'hushed', text: '{user} crossed the wires of a mind!', fx: 'brainjam' }),
+    // Gamma bridges the single→AoE jump with a LONGER single-target lock — the
+    // anti-caster tool (great vs enemy mages and boss spell phases).
+    A({ id: 'brainjam_g', name: 'Brainjam Gamma', kind: 'vibe', pp: 20, power: 0, target: 'enemy', element: 'none', status: 'hushed', text: '{user} knotted the wires and held them shut!', fx: 'brainjam' }),
     A({ id: 'brainjam_o', name: 'Brainjam Omega', kind: 'vibe', pp: 30, power: 0, target: 'enemies', element: 'none', status: 'hushed', text: '{user} crossed every wire at once!', fx: 'brainjam' }),
+    // MARTIAL STANCES — his turn isn't always "nuke or heal." braced answers a
+    // physical boss (brace + counter); flowing answers a flurry (speed + dodge).
+    A({ id: 'stone_stance', name: 'Stone Brow Stance', kind: 'vibe', pp: 6, power: 0, target: 'self', element: 'none', status: 'braced', text: '{user} settled into Stone Brow Stance. "The mountain answers."', fx: 'stone_stance' }),
+    A({ id: 'flowing_step', name: 'Flowing Step', kind: 'vibe', pp: 6, power: 0, target: 'self', element: 'none', status: 'flowing', text: '{user} flowed into Flowing Step. "Be still water."', fx: 'flowing_step' }),
 
     // ---- Pippa: the page's tactical kit (§A3, S15h). NO Vibe, NO PP — like
     // Milo, her moves are competence not magic, so they ride kind 'physical'
