@@ -101,6 +101,7 @@ import { battlerSheetKey, bustSheetKey, type BattlerLook, type WearTier } from '
 import { ensureBattleArt } from '../spritegen';
 import { wearSpriteKey } from '../spritegen/enemies';
 import { weaponClassOf, swingSfxOf } from '../spritegen/weapons';
+import { itemIconKey } from '../spritegen/icons';
 import {
   physicalDamage,
   smashChance,
@@ -1476,7 +1477,10 @@ export class BattleScene extends Phaser.Scene {
       return false;
     }
     const names = usable.map((id) => ITEMS[id].name);
-    const pick = await this.dlg.ask([...names, 'Back'], { cancelIndex: names.length });
+    const pick = await this.dlg.ask([...names, 'Back'], {
+      cancelIndex: names.length,
+      icons: [...usable.map((id) => itemIconKey(id)), undefined],
+    });
     if (pick >= names.length) return false;
     const itemId = usable[pick];
     const item = ITEMS[itemId];

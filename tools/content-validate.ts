@@ -36,6 +36,7 @@ import { FX_REGISTRY, STAGE_ANIM, itemFxKey } from '../src/battle/fxRegistry';
 import { ENEMIES } from '../src/data/enemies';
 import { ITEMS, slotOf } from '../src/data/items';
 import { WEAPON_ART } from '../src/spritegen/weapons';
+import { ITEM_ICON } from '../src/spritegen/icons';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -248,6 +249,22 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     const item = ITEMS[id];
     if (!item) fail('weapon-art', `WEAPON_ART row '${id}' claims no §A8 item — extend or retire the manifest row`);
     else if (slotOf(item) === null) fail('weapon-art', `WEAPON_ART row '${id}' points at '${id}', which is not equippable`);
+  }
+}
+
+// S16 Movement 8 (ADR-060) — THE ICON ATLAS: WEAPON_ART covered only the
+// equippables; ITEM_ICON widens the law to ALL ItemKind so every §A8 item
+// shows a face in the menus / shops / battle Goods. Gated BOTH directions
+// like WEAPON_ART: an item with no icon row fails, and an icon row that
+// names no item is a dead manifest row.
+{
+  for (const item of Object.values(ITEMS)) {
+    if (!ITEM_ICON[item.id]) {
+      fail('item-icon', `item '${item.id}' (${item.kind}) has no ITEM_ICON row — every §A8 item needs a menu face (spritegen/icons.ts)`);
+    }
+  }
+  for (const id of Object.keys(ITEM_ICON)) {
+    if (!ITEMS[id]) fail('item-icon', `ITEM_ICON row '${id}' claims no §A8 item — extend or retire the manifest row`);
   }
 }
 
@@ -1638,7 +1655,7 @@ const counts = [
   `${Object.keys(HEROES).length} heroes`,
   `${Object.keys(ABILITIES).length} abilities`,
   `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–2 + Bosses 1–2)`,
-  `${Object.keys(ITEMS).length} items`,
+  `${Object.keys(ITEMS).length} items (${Object.keys(ITEM_ICON).length} icons)`,
   `${Object.keys(SHOPS).length} shops`,
   `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,
   `${Object.keys(MAPS).length} maps`,

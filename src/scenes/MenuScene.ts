@@ -39,6 +39,7 @@ import { WINDOW_FLAVORS } from '../spritegen/ui';
 // S4: the list widget + "Offense up by N!" confirm are shared with the shops
 import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
 import { makeItemInfo } from '../ui/iteminfo';
+import { itemIconKey } from '../spritegen/icons';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { colorOf, RAMP, px } from '../palette';
 
@@ -136,6 +137,7 @@ export class MenuScene extends Phaser.Scene {
         x: 96,
         y: 8,
         options: labels,
+        icons: hero.bag.map((id) => itemIconKey(id)),
         cols: labels.length > 7 ? 2 : 1,
         title: `${hero.name}  ${hero.bag.length}/${BAG_MAX}`,
         onHighlight: (i) => info.render(hero.bag[i]),
@@ -284,6 +286,7 @@ export class MenuScene extends Phaser.Scene {
         x: 96,
         y: 8,
         options: keys.map((id) => ITEMS[id]?.name ?? id),
+        icons: keys.map((id) => itemIconKey(id)),
         title: 'KEY ITEMS',
         onHighlight: (i) => info.render(keys[i]),
       });
@@ -437,6 +440,10 @@ export class MenuScene extends Phaser.Scene {
         x: 96,
         y: 8,
         options: labels,
+        icons: EQUIP_SLOTS.map((s) => {
+          const id = hero.equip[s];
+          return id ? itemIconKey(id) : undefined;
+        }),
         title: hero.name,
         onHighlight: (i) => info.render(hero.equip[EQUIP_SLOTS[i]] ?? ''),
       });
@@ -470,6 +477,7 @@ export class MenuScene extends Phaser.Scene {
       x: 130,
       y: 22,
       options: labels,
+      icons: [...cands.map((c) => itemIconKey(c.itemId)), undefined],
       title: slotName(slot),
       onHighlight: (i) => info.render(i < cands.length ? cands[i].itemId : (hero.equip[slot] ?? '')),
     });

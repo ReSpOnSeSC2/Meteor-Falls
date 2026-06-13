@@ -25,6 +25,7 @@ import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, DEPTH_UI } from '../ui/windows';
 import { pick, confirmEquip } from '../ui/pick';
 import { makeItemInfo } from '../ui/iteminfo';
+import { itemIconKey } from '../spritegen/icons';
 
 export class ShopScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -93,6 +94,7 @@ export class ShopScene extends Phaser.Scene {
         x: 96,
         y: 8,
         options: labels,
+        icons: stock.map((i) => itemIconKey(i.id)),
         disabled,
         title: `${this.shop.name}  $${GS.data.cashOnHand}`,
         onHighlight: (i) => info.render(stock[i].id),
@@ -186,6 +188,7 @@ export class ShopScene extends Phaser.Scene {
         x: 96,
         y: 8,
         options: labels,
+        icons: hero.bag.map((id) => itemIconKey(id)),
         disabled,
         cols: labels.length > 7 ? 2 : 1,
         title: `${hero.name} sells  $${GS.data.cashOnHand}`,

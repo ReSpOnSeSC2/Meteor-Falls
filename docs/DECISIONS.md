@@ -3722,3 +3722,47 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   return). The golf round-start lives indoors where it belongs. THE WORLD, DEEPENED's seven
   movements (ADR-050–059) are complete: the building forge, the living-map verbs, the size law,
   the Long Walk, the grown Puerto Sol, the real quests, and now the two new venues.
+
+## ADR-060 — S16 (Movement 8): THE ICON ATLAS — every §A8 item gets a face
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the S16 "THE LIVING WORLD" decree, Movement 8 — the lowest-risk,
+  everywhere-visible win: open the menu and every item/equipment should show a distinct,
+  on-theme icon. The equippable-only WEAPON_ART becomes a universal item-icon law.)
+- **Decision — `ITEM_ICON`, the universal menu-icon registry (`src/spritegen/icons.ts`).** A
+  bespoke 12–16px drawn icon for EVERY item in `ITEMS`, across all eleven ItemKinds
+  (weapon/armor/arms/charm/food/pp/cure/battle/valuable/basket/key). Held-weapon swings and
+  torso-armor dress still live in WEAPON_ART (ADR-032 — composed onto the battler) and had no
+  standalone face, so ITEM_ICON draws them a legible OBJECT (a little bat, a folded jacket). The
+  'trinket' charms/arms (already bespoke icons in WEAPON_ART) are REUSED verbatim — one drawing,
+  two registries. Everything non-equippable is brand-new art to its §A8 flavor: the corn dog on
+  a stick, the layered PB&J, the Star Cola can, Glint's warm spark, the salt shaker, a strip of
+  1995 stamps, the three plainly-escalating picnic baskets, the Star Locket on its chain… Phaser-
+  free (the validator imports it); ADR-020 holds by construction — the Pixmap DSL cannot emit an
+  off-palette color, and outline() lands last so each icon lives in one INK contour.
+- **Decision — the icon law, gated BOTH directions (the WEAPON_ART pattern, widened).**
+  `tools/content-validate.ts` + the `icons.test.ts` mirror sweep ITEM_ICON ⇄ ITEMS both ways: an
+  item with no icon row fails naming the gap; an icon row that names no item is a dead manifest
+  row and fails. The equippable WEAPON_ART pins STAY (weapons.test.ts unchanged) — this is an
+  additive, wider law. The validator now prints "41 items (41 icons)".
+- **Decision — wired into every place a name appears.** `itemIconKey(id)` → `item_<id>`,
+  registered at boot in `index.ts` (one loop over ITEM_ICON). The icons ride the existing per-row
+  `icons` channel of `pick()` (ui/pick.ts): the Items bag, KEY ITEMS, the EQUIP slot page (the
+  equipped piece's face beside each slot) + the equip-candidate list (MenuScene), and the shop
+  BUY/SELL rows (ShopScene). Battle GOODS uses `Dialogue.ask()` not pick(), so ask() gained the
+  SAME optional `icons` param (windows.ts) and `BattleScene.heroGoods` passes it. No new widget —
+  the JOURNAL's caller-phone-icon path (S9) generalised.
+- **Decision — the contact sheet (`npm run art:icons` → `tools/render-icons.ts`).** Renders all
+  41 ITEM_ICON through the real draw into `.shots/icons_s16.png`, grouped by kind, each labelled
+  — the out-of-game icon review (the art:buildings / cast-sheet precedent). Used to iterate the
+  art: the PB&J first read as a dark triangle and the poncho as a hat — both redrawn (a stacked
+  sandwich; a fringed drape with a head hole + border band) until they read at a glance.
+- **Verification:** tsc clean + `npm run validate` green (41 items / 41 icons, both directions)
+  + full vitest **648 green** (+5: icons.test.ts) + `vite build` clean. No FNV re-pin (icons are
+  not a sample-routed generator; WEAPON_ART bodies + order untouched). Visual proof is the contact
+  sheet (the ADR-059 precedent — `preview_screenshot` hangs on the WebGL canvas).
+- **Consequences:** the menus, equip screen, shops, and battle Goods now show a distinct, on-theme
+  face for every item — the "no invisible equipment" rule (ADR-032) extended to the whole §A8
+  catalog. A new item must register an ITEM_ICON row or the build fails; charms/arms inherit their
+  face from WEAPON_ART automatically, while weapons/armor/consumables/keys draw one in icons.ts.
+  First movement of S16 (THE LIVING WORLD) lands.

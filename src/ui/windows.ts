@@ -207,20 +207,37 @@ export class Dialogue {
     });
   }
 
-  /** N-way choice menu. Returns chosen index (B = defaultIndex if allowed). */
-  ask(options: string[], opts: { cancelIndex?: number } = {}): Promise<number> {
+  /** N-way choice menu. Returns chosen index (B = defaultIndex if allowed).
+   *  S16 (ADR-060): an optional per-row `icons` array (texture keys, undefined
+   *  to skip a row) draws a face left of each label — battle Goods reads the
+   *  item icons through it, the way pick() does in the menus. */
+  ask(
+    options: string[],
+    opts: { cancelIndex?: number; icons?: Array<string | undefined> } = {},
+  ): Promise<number> {
     this.busy = true;
     const scene = this.scene;
     const W = scene.scale.width;
     const rowH = 14;
-    const w = Math.max(...options.map((o) => o.length)) * 6 + 36;
+    const iconPad = opts.icons?.some((k) => k !== undefined) ? 13 : 0;
+    const w = Math.max(...options.map((o) => o.length)) * 6 + 36 + iconPad;
     const h = options.length * rowH + 16;
     const x = W - w - 10;
     const y = scene.scale.height - 66 - h - 4;
     const win = makeWindow(scene, x, y, w, h);
+    const icons: Phaser.GameObjects.Image[] = [];
+    opts.icons?.forEach((key, i) => {
+      if (key === undefined) return;
+      icons.push(
+        scene.add
+          .image(x + 24, y + 13 + i * rowH, key)
+          .setScrollFactor(0)
+          .setDepth(DEPTH_UI + 1),
+      );
+    });
     const texts = options.map((o, i) =>
       scene.add
-        .bitmapText(x + 22, y + 9 + i * rowH, 'retro', vars(o), 6)
+        .bitmapText(x + 22 + iconPad, y + 9 + i * rowH, 'retro', vars(o), 6)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1),
     );
@@ -264,6 +281,7 @@ export class Dialogue {
         off();
         win.destroy();
         texts.forEach((t) => t.destroy());
+        icons.forEach((g) => g.destroy());
         zones.forEach((z) => z.destroy());
         hand.destroy();
         this.releasedAt = this.scene.time.now;

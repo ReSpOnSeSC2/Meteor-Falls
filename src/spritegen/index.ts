@@ -109,6 +109,7 @@ import {
   drawChalkBoard,
 } from './tiles';
 import { GENERATED_BUILDINGS } from './buildings';
+import { ITEM_ICON, itemIconKey } from './icons';
 import {
   generateAthleteFrames,
   deriveOpponentSpec,
@@ -636,6 +637,11 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'swirl', makeSpiral());
   addPixmap(scene, 'title_art', drawTitleArt(GAME_W, GAME_H));
   addPixmap(scene, 'logo', drawLogo());
+
+  // S16 Movement 8 (ADR-060) — THE ICON ATLAS: every §A8 item's 12–16px menu
+  // face, registered under itemIconKey(id). The Items bag, Equip screen, shops,
+  // and battle Goods read these through pick()/ask()'s per-row icons.
+  for (const [id, draw] of Object.entries(ITEM_ICON)) addPixmap(scene, itemIconKey(id), draw());
 
   // 2×2 white pixel for fades, particles, flashes
   if (!scene.textures.exists('pixel')) {

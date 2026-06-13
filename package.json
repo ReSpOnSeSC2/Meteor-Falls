@@ -18,6 +18,7 @@
     "art:castsheet": "vite-node tools/cast-sheet.ts",
     "art:facesheet": "vite-node tools/forge-faces.ts",
     "art:buildings": "vite-node tools/render-buildings.ts",
+    "art:icons": "vite-node tools/render-icons.ts",
     "android:sync": "npm run build && npm run art:appart && cap sync android",
     "android:apk": "npm run android:sync && cd android && .\\gradlew assembleDebug && cd .. && node tools/collect-apk.mjs"
   },

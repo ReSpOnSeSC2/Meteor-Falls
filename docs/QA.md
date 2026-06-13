@@ -539,3 +539,27 @@ the `art:buildings` contact sheets. The authoritative thumb-scale p99 walk is th
 | 28 | **The daybreak gate, both states** — at 2 AM walk Otterbrook's EAST edge: the road is barricaded, the sign reads "town asleep," and pushing the gate bumps you back with the sleeping-town line (never an invisible wall). Talk the treeline gawker (night line — "you go look"). Finish the opening (hill → crater → porch); at daybreak confirm the world OPENS in place — barricade gone, gawker + gate-walker on their DAY lines — then walk EAST onto Meadow Mile and route AROUND the meteor roadblock (the worker waves you by; the lower lane is clear) | ⬜ | ⬜ | the rebuild is `porchScene`'s fade-restart; retry law holds (a lost fight never dead-ends the gate) |
 | 29 | **Grown Brickton at thumb scale — the towers READ** — walk into the high-rise downtown and confirm the mega-towers TOWER (tops off the top of the screen, solid all the way round), then walk the full ~20-tile loop AROUND the Starfall Spire to the relocated docks; confirm you can't clip any tower and the docks/cage/dept are all reachable | ⬜ | ⬜ | in-game BFS proves reachability; this is the human's "it feels like a city" read |
 | 30 | **The grown towns breathe** — walk Otterbrook's warm low blocks (no two facades alike, 2–3 stories over the hero) and find the hidden WOODS nook in the SW (the birder + the glade picnic); confirm Brickton's cool glass/neon downtown reads as a DIFFERENT place than Otterbrook (per-area skins) | ⬜ | ⬜ | nooks reward poking; the per-area roster is `AREA_SKINS` |
+
+## S16 Movement 8 pre-flight — 2026-06-13, THE ICON ATLAS (ADR-060)
+
+Every §A8 item gets a bespoke 12–16px menu icon (`ITEM_ICON`, `src/spritegen/icons.ts`), wired
+into the Items bag, KEY ITEMS, the EQUIP page (slots + candidates), shop buy/sell, and battle
+Goods. Verified headlessly this session via tsc + full vitest + the both-directions validator
+gate + the `art:icons` contact sheet (the authoritative icon-art review; `preview_screenshot`
+hangs on the WebGL canvas, so the contact sheet is the visual proof, per the ADR-059 precedent).
+
+| Check | Result |
+|---|---|
+| **Every item has a face, both directions** — the validator + `icons.test.ts` sweep ITEM_ICON ⇄ ITEMS: an item with no icon fails; an icon row naming no item fails | ✅ `41 items (41 icons)`; the equippable WEAPON_ART pins (weapons.test) unchanged |
+| **The contact sheet reads** — `npm run art:icons` → `.shots/icons_s16.png`, all 41 grouped by kind, each labelled; reviewed at 4× | ✅ distinct + on-theme; first-pass PB&J (a dark triangle) and poncho (a hat) redrawn until they read |
+| **The 13 trinket charms/arms reuse their WEAPON_ART icon** — one drawing, two registries (no duplicate art, no drift) | ✅ ITEM_ICON pulls every `kind:'trinket'` from WEAPON_ART; the 28 held-weapon/torso/consumable/key faces are fresh in icons.ts |
+| **Held weapons + torso armor get a standalone menu OBJECT** — they compose onto the battler via WEAPON_ART and had no face | ✅ a little bat/pan/rifle/beads, a folded varsity jacket + a fringed poncho |
+| **Wiring is the existing per-row `icons` channel** — `pick()` (menu/shop) already drew per-row icons (the S9 JOURNAL phone icons); `Dialogue.ask()` gained the same optional `icons` param for battle Goods | ✅ tsc clean across MenuScene ×4, ShopScene ×2, BattleScene Goods, windows.ts ask() |
+| `npm run validate` + `npx vitest run` + `npm run build` | ✅ validator green + **648 vitest** (+5 icons.test) + `vite build` clean; no FNV re-pin (icons are not a sample-routed generator) |
+
+### S16 Movement 8 device rows (appended to the S8 gate)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 31 | **Every item shows its face in the menu** — START → ITEMS on a stocked bag: each row draws its icon left of the name (corn dog, salt shaker, Star Cola…); KEY ITEMS shows the Star Locket; EQUIP shows the equipped piece's icon in each slot AND in the candidate list | ⬜ | ⬜ | icons ride `pick()`; the equipped (E) tag still reads |
+| 32 | **Shops + battle Goods show icons** — a shop BUY/SELL row shows each item's face beside its price; in a battle, the GOODS menu shows the icon beside each usable item | ⬜ | ⬜ | Goods uses `ask()`'s new `icons`; rows shift right for the icon exactly like pick() |

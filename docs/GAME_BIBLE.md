@@ -501,6 +501,15 @@ meteor-falls/
   the far side of the treeline swaps to its `dialogueDay` line, and the road onward
   carries a meteor-drop ROADBLOCK the player must route around — travel is never a
   silent corridor. *(Added 2026-06-13.)*
+- **EVERY ITEM HAS A FACE — the icon atlas (ADR-060).** Every §A8 item, of every ItemKind
+  (weapon/armor/arms/charm/food/pp/cure/battle/valuable/basket/key), maps to a bespoke 12–16px
+  drawn icon (`ITEM_ICON`, `src/spritegen/icons.ts`), shown beside its name in the Items bag,
+  the Equip screen (and in each slot), the shop buy/sell rows, and battle Goods. The law is
+  gated BOTH directions (the validator + a vitest mirror): every item has an icon, and no icon
+  row names a missing item — equipment is never faceless, the way ADR-032 made it never
+  invisible. The equippable WEAPON_ART pins (the battler swing + the torso dress) stand;
+  ITEM_ICON widens the law to ALL kinds (trinket charms/arms reuse their WEAPON_ART icon).
+  *(Added 2026-06-13 per Appendix rule 6, alongside ADR-060.)*
 
 ---
 
