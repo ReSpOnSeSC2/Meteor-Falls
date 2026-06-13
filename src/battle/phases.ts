@@ -41,6 +41,9 @@ export interface PhaseEffects {
   returnStolen(): Promise<void> | void;
   endBattleMercy(): Promise<void> | void;
   partyStatus(status: 'crying' | 'asleep' | 'paralyzed' | 'sunburn' | 'hushed', turns: number): Promise<void> | void;
+  /** S16 (ADR-035 extended): stage a hero awakening mid-battle at a scripted
+   *  beat (the scene routes to battleAwakening; no-ops if already awakened) */
+  awaken(awakening: string): Promise<void> | void;
 }
 
 /** prayTierAtLeast ranking — backfire is the floor, miraculous the ceiling */
@@ -321,6 +324,9 @@ export class PhaseRunner {
         return;
       case 'partyStatus':
         await this.fx.partyStatus(a.status, a.turns);
+        return;
+      case 'awaken':
+        await this.fx.awaken(a.awakening);
         return;
     }
   }

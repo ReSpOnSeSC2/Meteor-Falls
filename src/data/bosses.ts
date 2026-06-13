@@ -59,6 +59,19 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
         once: false,
         actions: [{ kind: 'setForm', form: 'cycle' }],
       },
+      {
+        // S16 (ADR-035 extended): the half-dead DESPERATION blow. The Idol
+        // gathers every fleck of gold in the room into one unblockable-looking
+        // sheet of light — and JAY throws up a wall that ANSWERS it. POWER
+        // SHIELD Σ awakens (the_wall_that_answers; §A11.2-sincere, the second
+        // Ch.2 awakening beside Mia's Freeze). Fires ONCE, late, as a moment.
+        id: 'the_wall',
+        trigger: { kind: 'hpBelow', frac: 0.45 },
+        actions: [
+          { kind: 'scriptLine', line: 'idol_gathering' },
+          { kind: 'awaken', awakening: 'the_wall_that_answers' },
+        ],
+      },
     ],
   }),
 };

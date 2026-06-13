@@ -426,6 +426,9 @@ export class BattleScene extends Phaser.Scene {
         for (const h of this.aliveHeroes()) h.status[status] = turns;
         await this.print(BATTLE_TEXT.party_status_crying);
       },
+      // S16 (ADR-035 extended): a scripted beat can stage an awakening — the
+      // Grin's half-dead blow awakens Jay's POWER SHIELD Σ (the_wall_that_answers)
+      awaken: (id) => this.battleAwakening(id),
     });
     // the initial form's texture (the Grin opens SOLID GOLD)
     bossUnit.spr.setTexture(wearSpriteKey(this.phase.spriteFor(bossUnit.def.sprite), 0));
