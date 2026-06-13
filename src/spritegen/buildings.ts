@@ -149,10 +149,23 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
     // the landmark colossi (hand-placed / footprint spans a slice you round on foot)
     'bldg_colossus_arcology', 'bldg_colossus_spire', 'bldg_colossus_grand',
   ],
-  // PUERTO SOL — Ch.2 colonial port keeps its bespoke bldg_ps_* faces + open-air markets
+  // THE CAGE PARK (S15i Task 6, ADR-059) — the gritty rec-block approach to THE
+  // CAGE: warehouse/brownstone/shop walk-ups in earthy reds + grass-greens. Its
+  // OWN slice (never Brickton's cool glass), hand-placed on the park's city edge.
+  cage_park: skinsFor(['warehouse', 'brownstone', 'shop'], [RAMP.EARTH, RAMP.RED, RAMP.GRASS]),
+  // THE GOLF RESORT (S15i Task 6, ADR-059) — the expensive Costa Estrella
+  // subdivision: bespoke pastel MANSIONS (drawHouse, pitched roofs) + the gatehouse.
+  // Its OWN roster of NEW house sprites, hand-placed along the manicured course.
+  golf_resort: ['mansion_a', 'mansion_b', 'mansion_c', 'golf_gatehouse'],
+  // PUERTO SOL — Ch.2 colonial port keeps its bespoke bldg_ps_* faces + open-air
+  // markets; S15i Task 4 (ADR-057) the grown dock district adds the colonial MEGAS
+  // (cathedral / grand hotel / customs house — tops off-screen) the mega pass stands.
+  // Masonry, not glass — megas are COMMON here (the waterfront has the room Brickton
+  // lacked), but they read as a grand colonial port, never a downtown skyline.
   puerto_sol: [
     'bldg_ps_mercado', 'bldg_ps_clinic', 'bldg_ps_pension', 'bldg_ps_museum', 'bldg_ps_casa',
     'bldg_ps_casa_b', 'bldg_ps_deli', 'bldg_ps_cantina', 'bldg_ps_casa_c', 'bldg_ps_pension_b',
+    'bldg_ps_catedral', 'bldg_ps_gran_hotel', 'bldg_ps_aduana', 'bldg_warehouse',
     ...skinsFor(['market', 'civic'], [RAMP.GOLD, RAMP.ORANGE, RAMP.PAPER]),
   ],
 };

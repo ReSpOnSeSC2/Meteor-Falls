@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildPuertoSol,
+  growPuertoSol,
   buildPyramidRooms,
   rotateRect,
   PYR_ROTOR,
@@ -116,7 +117,7 @@ describe('the pyramid solve — the documented bot line is the real solution', (
 });
 
 describe('PUERTO SOL — the 1898 stream is frozen (the 1995 rule, 4th application)', () => {
-  it('two builds are byte-identical: grid, props, npc positions', () => {
+  it('the FROZEN CORE builds byte-identical twice: grid, props, npc positions', () => {
     const a = buildPuertoSol();
     const b = buildPuertoSol();
     expect(a.grid.join('|')).toBe(b.grid.join('|'));
@@ -124,8 +125,11 @@ describe('PUERTO SOL — the 1898 stream is frozen (the 1995 rule, 4th applicati
     expect(JSON.stringify(a.npcs)).toBe(JSON.stringify(b.npcs));
   });
 
-  it('the live MAPS entry matches a fresh build (no later stream disturbed it)', () => {
-    expect(MAPS.puerto_sol.grid.join('|')).toBe(buildPuertoSol().grid.join('|'));
+  it('the live MAPS entry is the GROWN dock-district city now (ADR-057)', () => {
+    // the byte-identical-CORE proof (the 1898 core sits in the top-left) lives in
+    // world_block.test.ts; here we only assert the live map is the grown build.
+    expect(MAPS.puerto_sol.grid.join('|')).toBe(growPuertoSol().grid.join('|'));
+    expect(MAPS.puerto_sol.grid[0].length).toBeGreaterThan(buildPuertoSol().grid[0].length);
   });
 });
 

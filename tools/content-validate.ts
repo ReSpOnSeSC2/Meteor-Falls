@@ -503,6 +503,28 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       doneFlag: 'q_museum_done',
       caller: { name: 'The Curator', kind: 'damage', power: 435 },
     },
+    // S15i Task 3 (ADR-058) — Movement 4: Ch.1's 5th (the Long Walk route quest) +
+    // a Ch.2 dock-district quest. Pinned both directions like the rest.
+    walkers_register: {
+      name: "The Walkers' Register",
+      chapter: 1,
+      giver: 'road_traveler',
+      startFlag: 'q_walkreg',
+      objectiveFlags: ['q_walkreg_mile', 'q_walkreg_woods', 'q_walkreg_far', 'q_walkreg_signed'],
+      rewardItem: 'walkers_charm',
+      doneFlag: 'q_walkreg_done',
+      caller: { name: 'Old Pell', kind: 'damage', power: 430 },
+    },
+    the_quiet_crate: {
+      name: 'The Quiet Crate',
+      chapter: 2,
+      giver: 'ps_tally',
+      startFlag: 'q_crate',
+      objectiveFlags: ['q_crate_crane', 'q_crate_board', 'q_crate_market', 'q_crate_told'],
+      rewardItem: 'captains_button',
+      doneFlag: 'q_crate_done',
+      caller: { name: 'The Tallyman', kind: 'heal', power: 380 },
+    },
   };
   for (const [id, pin] of Object.entries(canon)) {
     const q = QUESTS[id];
@@ -534,7 +556,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (!placed) fail('canon', `'${id}' giver npc '${pin.giver}' stands on no map`);
   }
   for (const id of Object.keys(QUESTS)) {
-    if (!(id in canon)) fail('canon', `'${id}' is not in the §A10 #1–6 manifest — extend the manifest with its §A10 row, never ad-hoc`);
+    if (!(id in canon)) fail('canon', `'${id}' is not in the §A10 manifest — extend the manifest with its §A10 row, never ad-hoc`);
   }
   // quest flags never collide across quests — the machines stay independent
   const all = Object.values(QUESTS).flatMap((q) => [q.startFlag, q.doneFlag, ...q.objectives.map((o) => o.flag)]);
@@ -746,10 +768,21 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
     if (cage.props.filter((p) => p.sprite === 'backboard').length !== 2) {
       fail('hoops', `a FULL COURT carries two backboards (S12 spec)`);
     }
-    if (!cage.doors.some((d) => d.to === 'brickton')) fail('hoops', `the_cage gate must open back onto Brickton`);
+    // S15i Task 6 (ADR-059): the_cage now opens back onto the CAGE PARK (you walked in
+    // through it); the park carries you on to Brickton (the symmetric approach)
+    if (!cage.doors.some((d) => d.to === 'cage_park')) fail('hoops', `the_cage gate must open back onto the CAGE PARK (ADR-059 re-route)`);
   }
-  if (!MAPS.brickton?.doors.some((d) => d.to === 'the_cage')) {
-    fail('hoops', `Brickton's vacant-lot fence must carry the gate door → the_cage (S12)`);
+  // the cage gate now opens THROUGH the CAGE PARK, which leads into the_cage. The
+  // frozen 2077 core literal still reads → the_cage; the LIVE map's door is re-routed
+  // (a post-build fixup, proven in world_block.test). Both halves of the chain pinned:
+  if (!MAPS.brickton?.doors.some((d) => d.to === 'cage_park')) {
+    fail('hoops', `Brickton's cage gate must open onto cage_park (the approach park, ADR-059)`);
+  }
+  if (!MAPS.cage_park?.doors.some((d) => d.to === 'the_cage')) {
+    fail('hoops', `cage_park must lead into the_cage (you WALK in through the park, ADR-059)`);
+  }
+  if (!MAPS.cage_park?.doors.some((d) => d.to === 'brickton')) {
+    fail('hoops', `cage_park must carry you back to Brickton (ADR-059)`);
   }
   if (!MAPS.brickton?.props.some((p) => p.sprite === 'cage_gate')) {
     fail('hoops', `Brickton needs the cage_gate prop over the carved fence tile`);
@@ -895,7 +928,14 @@ parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id
   if (!costa) {
     fail('links', `'costa_estrella' map is missing (S13's venue)`);
   } else {
-    if (!costa.npcs.some((n) => n.id === 'caddy')) fail('links', `the caddy must stand at costa_estrella`);
+    // S15i Task 6 (ADR-059): the round-start moved INDOORS — FITO the caddy now runs
+    // both formats from inside the new golf_clubhouse (reached through the resort), not
+    // on costa's bare lawn. costa keeps a STARTER at the clifftop gate that opens west
+    // onto the LINKS ESTATES approach (subdivision → clubhouse → the round).
+    if (!MAPS.golf_clubhouse?.npcs.some((n) => n.id === 'caddy')) fail('links', `FITO the caddy must run the round from inside golf_clubhouse (ADR-059)`);
+    if (!costa.doors.some((d) => d.to === 'golf_resort')) fail('links', `costa_estrella must open west onto the golf_resort approach (ADR-059)`);
+    if (!MAPS.golf_resort?.props.some((p) => p.door?.to === 'golf_clubhouse')) fail('links', `the golf_resort clubhouse must open into golf_clubhouse — the indoor round-start (ADR-059)`);
+    if (!MAPS.golf_clubhouse?.doors.some((d) => d.to === 'golf_resort')) fail('links', `golf_clubhouse must lead back out to the resort (ADR-059)`);
     if (!costa.signs.some((s) => s.dialogue === 'sign_costa')) fail('links', `costa_estrella needs its 'sign_costa' plaque`);
     if (!costa.props.some((p) => p.sprite === 'clubhouse')) fail('links', `costa_estrella needs the clubhouse`);
     // S14 (Prompt 28): the wire LANDED — the pin flips to assert the LINK
@@ -1209,7 +1249,9 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
     hickory_hill: 1,
     brickton: 1,
     dos_f2: 1,
-    puerto_sol: 1,
+    // S15i Task 4 (ADR-057): the grown port adds a 2nd rest — a dockside picnic on
+    // the new malecón, before the jungle's pressure (the plaza table is the core's)
+    puerto_sol: 2,
     jungle_2: 1,
     valle_dorado: 1,
     pyramid_ante: 1,
@@ -1598,7 +1640,7 @@ const counts = [
   `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–2 + Bosses 1–2)`,
   `${Object.keys(ITEMS).length} items`,
   `${Object.keys(SHOPS).length} shops`,
-  `${Object.keys(QUESTS).length} quests (§A10 #1–6)`,
+  `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,
   `${Object.keys(MAPS).length} maps`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,

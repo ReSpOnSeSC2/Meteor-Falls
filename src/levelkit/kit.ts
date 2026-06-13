@@ -138,6 +138,8 @@ const SHIPPED_DIMS: Record<string, { w: number; u: number }> = {
   bldg_ps_museum: { w: 6, u: 2 }, bldg_ps_casa: { w: 4, u: 2 }, bldg_ps_casa_b: { w: 4, u: 1 },
   bldg_ps_deli: { w: 4, u: 1 }, bldg_ps_cantina: { w: 5, u: 1 }, bldg_ps_casa_c: { w: 4, u: 1 },
   bldg_ps_pension_b: { w: 5, u: 2 },
+  // S15i Task 4 (ADR-057) — PUERTO SOL's colonial MEGAS (tops off-screen, u≥11)
+  bldg_ps_catedral: { w: 6, u: 11 }, bldg_ps_gran_hotel: { w: 6, u: 12 }, bldg_ps_aduana: { w: 7, u: 11 },
   // S15i hand-authored families
   bldg_apartments: { w: 5, u: 4 }, bldg_office: { w: 5, u: 5 }, bldg_civic: { w: 6, u: 2 },
   bldg_theater: { w: 5, u: 2 }, bldg_market: { w: 6, u: 1 }, bldg_brownstone: { w: 4, u: 3 },

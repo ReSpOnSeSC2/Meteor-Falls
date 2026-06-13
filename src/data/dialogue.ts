@@ -280,6 +280,36 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(You can not hear the city from up here. Not yet. But you will.)',
   ],
 
+  /* -------- S15i Task 3 (ADR-058) — THE WALKERS' REGISTER (Ch.1 #5, the route quest) -------- */
+  q_walkreg_ask: [
+    '@The man on the road shifts his bag from shoulder to shoulder. "Name\'s Hal. Walking to the city. First time on foot."',
+    '@"My uncle Pell keeps the Walkers\' Register up at the overpass. Used to be every kid signed it. Now they all take the bus."',
+    '@"Do me a kindness? Walk the whole way and really LOOK at each stretch. Then sign us both in. Prove the walk still gets walked."',
+  ],
+  q_walkreg_active: [
+    '@"Keep going. Notice the meadow, the woods, the far stretch — the things a bus window slides right past."',
+    '@"Then sign the Register at the overpass. Both names. I\'ll catch up. I always do, eventually."',
+  ],
+  q_walkreg_after: [
+    '@"You signed it. WE signed it." Hal grins like a kid. "I walked the whole way. Tell anybody who asks: it was worth every step."',
+  ],
+  // the three "noticing" tokens (toasts fire on the trigger; these are the journal beats)
+  walkers_register_book: [
+    'THE WALKERS\' REGISTER — a ledger on a post, names going back decades.',
+    '(The recent pages are blank. Everyone takes the bus now. Hal asked you to walk it and sign.)',
+  ],
+  walkers_register_wait: [
+    'The Register waits, pen on a string.',
+    '(You have not really LOOKED at every stretch yet. Walk them first — then your name means something.)',
+  ],
+  walkers_register_sign: [
+    'You write your name. Under it, you write HAL. Two more walkers, in ink, on the long way around.',
+    'Old Pell — turns out he is right there, tending the post — reads it twice and presses a pressed-flower charm into your hand.',
+    '@"Most folks save twenty minutes and never see the meadow," he says. "You saw all of it. Carry that."',
+  ],
+  walkers_register_after: ['(Your name is in the Register now, beside Hal\'s. The long way is still walked. Good.)'],
+  walkers_register_full: ['(Pell holds the charm out, but your hands are full. "It\'ll keep," he says. "Come back lighter.")'],
+
   /* ---------------- S15h — BRICKTON SPRAWLS (the new districts) ---------------- */
   npc_maple_resident: [
     '@Welcome to MAPLE HEIGHTS. No maples. No heights. The brick is real, though.',
@@ -719,6 +749,39 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'THE FUTURE GOT HERE. IT IS A BASKETBALL COURT. — MGMT (of the future)',
     '(The weeds were right to be confident. They got bleachers.)',
   ],
+  /* -------- S15i Task 6 (ADR-059) — THE CAGE PARK (the walk-through approach) -------- */
+  sign_cage_this_way: [
+    'THE CAGE → (this way. up through the gate. you will hear it before you see it.)',
+  ],
+  sign_cage_mural: [
+    'COMMUNITY MURAL — "WE GO UP" (painted by the block, one summer, all of it).',
+    '(Three kids, mid-jump, forever. Somebody touched up the ball just last week.)',
+  ],
+  sign_cage_park: [
+    'CAGE PARK — leash your dog, claim your bench, respect the game.',
+    '(Smaller, at the bottom: "winners stay on. that goes for the park too.")',
+  ],
+  npc_park_old_head: [
+    '@I have watched this park forty years. Best game I ever saw was a Tuesday. Nobody believes me.',
+    '@Kid hit eleven straight from the corner, then walked home for dinner like it was nothing. THAT is the cage.',
+  ],
+  npc_park_kid: [
+    '@One day my name goes on PERMIT\'s board. The BIG one. In CHALK.',
+    '@I am practicing my walk-on face. ...Was that it? No? Okay. Watch this one.',
+  ],
+  cage_park_gift: [
+    'Somebody left a picnic basket on the end bench, a note tucked under the handle.',
+    '"FOR WHOEVER\'S GOT NEXT — EAT FIRST, BALL AFTER." A basket of the good stuff. You should take it.',
+  ],
+  cage_park_gift_done: ['(The bench is bare now. Eat first, ball after. Words to live by.)'],
+  // the first-arrival beat (a cutscene, once) — the park opens up before the cage
+  cage_park_reveal: [
+    'The Brickton sidewalk gives way to grass, a mural, a couple of benches — a whole park you never knew was here.',
+    'Up at the top, past the chain-link, a ball is bouncing. Steady. Patient. Somebody is always there.',
+    'It is the most ALIVE sound this whole gray city has made. Bounce. Bounce. A door, propped open, into something warmer.',
+    'THE CAGE is just up through the gate. You can feel it from here.',
+  ],
+
   /* ---------------- THE CAGE (S12) ---------------- */
   npc_permit: [
     '@PERMIT. I run the cage. I announce the cage. Some say I AM the cage. I let them say it.',
@@ -770,7 +833,46 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   sign_costa: [
     'COSTA ESTRELLA LINKS — est. whenever the tide says.',
-    'HOLE 1 — THE HANDSHAKE waits past this plaque. The caddy waits closer.',
+    'HOLE 1 — THE HANDSHAKE waits past this plaque. The course is west, through the gate.',
+  ],
+  /* -------- S15i Task 6 (ADR-059) — THE LINKS ESTATES (golf resort approach) -------- */
+  sign_links_gate: [
+    'THE LINKS ESTATES → (members & guests. and you, apparently. west through the gate.)',
+    '(A smaller sign: "the CLUBHOUSE is up the cart path. FITO is inside now. mind the sprinklers.")',
+  ],
+  npc_links_starter: [
+    '@Tee times, tee times. I am the STARTER. Without me it is just people hitting rocks at a flag.',
+    '@Your time? ...You do not HAVE one. Go on, the course is empty, it always is. But next time, a TIME.',
+  ],
+  npc_estate_gardener: [
+    '@Forty-one years on this lawn. I know every blade by its first name. That one is Gerald.',
+    '@The members think the course mows itself. I let them think it. Gerald and I have an understanding.',
+  ],
+  npc_estate_member: [
+    '@Bought the big house for the VIEW. Now I close the curtains so the sun does not fade the furniture.',
+    '@Do you play? No? Smart. The course only takes. ...Tell FITO I said hello. He never believes I exist.',
+  ],
+  sign_links_welcome: [
+    'WELCOME TO THE LINKS ESTATES — please drive your cart responsibly and your ambitions quietly.',
+    '(Someone keyed into the marble: "the cage is more fun and it is FREE." Someone else tried to buff it out. Failed.)',
+  ],
+  sign_links_clubhouse: [
+    'CLUBHOUSE & PRO SHOP ↑ — sign in with FITO. Stroke rounds and the Invitational both run from inside.',
+  ],
+  sign_clubhouse_wall: [
+    'THE LINKS — CLUBHOUSE. Soft spikes only. The leaderboard is sacred. FITO keeps it in chalk and in his heart.',
+  ],
+  golf_resort_gift: [
+    'A drinks cooler sits forgotten by the practice green, one cold STAR COLA still bobbing inside.',
+    '"HALFWAY HOUSE — HELP YOURSELF" says the lid. The halfway house is nowhere in sight, but the cola is real.',
+  ],
+  golf_resort_gift_done: ['(The cooler is empty, the ice long melted. The view, at least, is still free.)'],
+  // the first-arrival beat (a cutscene, once) — the estates open up
+  golf_resort_reveal: [
+    'Past the gate, the world goes GREEN — fairway mowed in perfect stripes, mansions the color of expensive ice cream.',
+    'A fountain you could bathe a horse in. Hedges trimmed like they owe somebody money. This is where the money LIVES.',
+    'Somebody mows ALL of this. On purpose. Every single blade. The thought is almost more impressive than the houses.',
+    'Up at the head of the cart path: the clubhouse. FITO is in there, somewhere, measuring the day in putts.',
   ],
   npc_caddy: [
     '@FITO. Caddy. Welcome to Costa Estrella, the only golf on this coast and therefore the best.',
@@ -1261,6 +1363,81 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_ps_porter: [
     '@Crates, crates, crates. You know what is in the heavy ones? Heavier bananas.',
   ],
+
+  /* ---------------- S15i Task 4 (ADR-057) — THE DOCK DISTRICT ---------------- */
+  npc_ps_crane: [
+    '@I run the big crane. I have lifted everything in this port at least once.',
+    '@The heaviest thing was not the anchor. It was a piano. A SAD one. You could feel it through the cable.',
+  ],
+  npc_ps_tally: [
+    '@I count every crate on and off this dock. Today, so far: four hundred and twelve.',
+    '@There is ONE crate I have counted for six years. It never leaves. It never opens.',
+    '@I stopped asking what is inside. Some numbers you just carry, niño.',
+  ],
+  npc_ps_board: [
+    '@I keep the letters on the big departure board. I have a fine J. I have always wanted a Q.',
+    '@No boat goes anywhere with a Q in its name. So I wait. A keeper waits.',
+  ],
+  npc_ps_market: [
+    '@Off the boats, straight to you! A spoon from a shipwreck. A button off a real captain.',
+    '@This? A map to nowhere. Very accurate. It has never ONCE been wrong about nowhere.',
+  ],
+  sign_ps_malecon: [
+    'EL MALECÓN — the working waterfront. Mind the cranes. Mind the cats.',
+    '(Smaller, underneath: "mind the cranes ABOUT the cats.")',
+  ],
+  sign_ps_market: [
+    'DOCKSIDE MARKET — everything here fell off a boat. Legally! ...Mostly. Ask the man.',
+  ],
+  sign_ps_jungle_east: [
+    'EAST: THE JUNGLE → VALLE DORADO. Last shade and a cold drink before the green.',
+    '(Below that, smaller: "the jungle STILL does not validate parking.")',
+  ],
+  // the flag-gated waterfront beat (a cutscene, once) — the harbor + the road east
+  puerto_malecon: [
+    'East of the plaza, the town just keeps going — a whole working waterfront you could not see from the pier.',
+    'Cranes swing crates of who-knows-what. A cathedral tower climbs so high you have to lean back to find the top.',
+    '@Mia takes it in. "It got bigger than the map promised. Towns do that when nobody is watching."',
+    'Past the last warehouse the road bends east, into green. The jungle. Valle Dorado is somewhere on the far side of it.',
+  ],
+  ps_dock_gift: [
+    'Wedged behind the market stalls: a little crate with a bow tied on in a hurry.',
+    'The tag reads, "WHOEVER FINDS IT — GOOD LUCK OUT THERE." Inside, an aloe leaf, for the sun.',
+  ],
+  ps_dock_gift_done: ['(The little crate is empty now. Somebody, somewhere, is glad you found it.)'],
+
+  /* -------- S15i Task 3 (ADR-058) — THE QUIET CRATE (Ch.2 dock-district quest) -------- */
+  q_crate_ask: [
+    '@"You want a real mystery, niño? Not the pyramid. THIS." The tallyman taps a crate gone gray with sea-salt.',
+    '@"Six years I have counted it. It never leaves. It never opens. My ledger has one number that will not sit still, and it is THIS one."',
+    '@"Find out what it is. Ask the crane man, the board-keeper, the salvage man. I am too afraid to, after all this time."',
+  ],
+  q_crate_active: [
+    '@"Three people on this dock know a piece of it. Ask all three, then come back and tell me. Gently. I have grown fond of not knowing."',
+  ],
+  q_crate_crane_clue: [
+    '@The crane man rubs his shoulder. "THAT crate? I lifted it once, when it landed. Heaviest sad thing in the port."',
+    '@"You feel weight through the cable, niño. That was not cargo-sad. That was piano-sad. I would stake the crane on it."',
+  ],
+  q_crate_board_clue: [
+    '@The board-keeper does not even look up. "The boat that left it had no name on my board. Came in, dropped it, sailed before dawn."',
+    '@"A captain who does not want his own name spelled out is a captain leaving something behind on purpose. I kept the blank line. I keep them all."',
+  ],
+  q_crate_market_clue: [
+    '@The salvage man holds up a brass button. "Off that very boat! A captain\'s coat button. Sold the spare to a tourist years ago."',
+    '@"Kept the real one, though. A man who ships his piano and walks away — his luck should go to someone who STAYS to look. Here. For when you tell old Tally."',
+  ],
+  q_crate_open: [
+    'You tell the tallyman, gently: a sea captain who played piano shipped it here, then sailed off and never came back for it.',
+    'He is quiet a long moment. Then, very carefully, he opens the crate. Inside: an upright piano, a folded coat, dust like snow.',
+    '@"Six years," he breathes, and presses one key. It still sings. "The number reconciles. Oh, thank you, niño. Thank you."',
+    'The salvage man\'s brass button finds its way into your hand — the real one, off the folded coat.',
+  ],
+  q_crate_after: [
+    '@"The crate is open. The piano stays — we tuned it, the dock kids play it now." The tallyman taps his ledger. "Clean count. First time in years."',
+  ],
+  q_crate_full: ['@"Take the button — ay, your hands are full. It will keep. Come back lighter, niño."'],
+
   shop_mercado_greet: [
     '@Welcome, welcome! Everything weighed by hand FIRST, scale second.',
     '@The scale and I agree ninety-nine times of a hundred. The hundredth time I am right.',

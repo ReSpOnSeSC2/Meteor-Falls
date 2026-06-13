@@ -11,6 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { buildOtterbrook, growOtterbrook, buildBrickton, growBrickton, OTTERBROOK_EAST_GATE, MAPS } from './maps';
+import { buildPuertoSol, growPuertoSol, PUERTO_SOL_JUNGLE_RETURN } from './maps_ch2';
 import { cityViolations } from '../levelkit/metrics';
 import type { MapDef } from './maps';
 
@@ -198,12 +199,15 @@ describe('BRICKTON — the 2077 core is frozen (≈4× sprawl, stays a city)', (
     expect(JSON.stringify(grown.triggers)).toBe(JSON.stringify(core.triggers)); // the two stories' flags + payphone ring, untouched
   });
 
-  it('the only door change is the relocated docks exit; the Cage gate is byte-identical', () => {
+  it('the door changes are the relocated docks + the re-routed cage (post-build fixups)', () => {
     const core = buildBrickton();
     const grown = MAPS.brickton;
-    const coreCage = core.doors.find((d) => d.to === 'the_cage');
-    const grownCage = grown.doors.find((d) => d.to === 'the_cage');
-    expect(JSON.stringify(grownCage)).toBe(JSON.stringify(coreCage)); // S12 court gate untouched
+    // S15i Task 6 (ADR-059): the FROZEN core literal still reads → the_cage; only the
+    // LIVE map's door target is rewritten through the new CAGE PARK (the foot-door pattern)
+    expect(core.doors.some((d) => d.to === 'the_cage')).toBe(true);
+    expect(grown.doors.some((d) => d.to === 'the_cage')).toBe(false);
+    expect(grown.doors.some((d) => d.to === 'cage_park')).toBe(true); // re-routed through the park
+    expect(MAPS.cage_park.doors.some((d) => d.to === 'the_cage')).toBe(true); // the park leads in
     expect(grown.doors.some((d) => d.to === 'brickton_docks')).toBe(true); // relocated, still wired
     // ADR-056: the foot return now lands on the OVERPASS (the city-adjacent leg),
     // not the town-edge meadow — the long walk reads correctly in both directions
@@ -232,5 +236,77 @@ describe('BRICKTON — the 2077 core is frozen (≈4× sprawl, stays a city)', (
     expect(b.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(true);
     expect(b.triggers.some((t) => t.id === 'brickton_clock_goal')).toBe(true); // THE BRICKTON MINUTE flag
     expect(b.triggers.some((t) => t.id === 'brickton_dial_goal')).toBe(true); // THE WARM DIAL TONE flag
+  });
+});
+
+describe('PUERTO SOL — the 1898 core is frozen (≈3× dock-district growth, stays a city)', () => {
+  it('two grown builds are byte-identical: grid, props, npc positions', () => {
+    const a = growPuertoSol();
+    const b = growPuertoSol();
+    expect(a.grid.join('|')).toBe(b.grid.join('|'));
+    expect(JSON.stringify(a.props)).toBe(JSON.stringify(b.props));
+    expect(JSON.stringify(a.npcs)).toBe(JSON.stringify(b.npcs));
+  });
+
+  it('the live MAPS entry matches a fresh build (no later stream disturbed it)', () => {
+    expect(MAPS.puerto_sol.grid.join('|')).toBe(growPuertoSol().grid.join('|'));
+  });
+
+  it('the frozen 1898 core GRID sits byte-identical in the top-left', () => {
+    coreRegionMatches(MAPS.puerto_sol, buildPuertoSol());
+  });
+
+  it('every 1898 core prop/npc/sign keeps its coordinates; triggers stay a prefix', () => {
+    const core = buildPuertoSol();
+    const grown = MAPS.puerto_sol;
+    expect(JSON.stringify(grown.props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
+    expect(JSON.stringify(grown.npcs.slice(0, core.npcs.length))).toBe(JSON.stringify(core.npcs));
+    expect(JSON.stringify(grown.signs.slice(0, core.signs.length))).toBe(JSON.stringify(core.signs));
+    // the boat round-trip triggers stay FIRST + unchanged; the malecón beat appends
+    expect(JSON.stringify(grown.triggers.slice(0, core.triggers.length))).toBe(JSON.stringify(core.triggers));
+    expect(grown.triggers.some((t) => t.id === 'puerto_malecon')).toBe(true);
+  });
+
+  it('the only door change is the relocated jungle gate; the COSTA gate is byte-identical', () => {
+    const core = buildPuertoSol();
+    const grown = MAPS.puerto_sol;
+    const coreCosta = core.doors.find((d) => d.to === 'costa_estrella');
+    const grownCosta = grown.doors.find((d) => d.to === 'costa_estrella');
+    expect(JSON.stringify(grownCosta)).toBe(JSON.stringify(coreCosta)); // the north gate untouched
+    // the jungle gate relocated to the new FAR-EAST edge (the port moved out with the city)
+    const jungle = grown.doors.find((d) => d.to === 'jungle_1');
+    expect(jungle?.x).toBe(grown.grid[0].length - 1);
+    // and jungle_1's RETURN door lands just inside it (computed, not a baked coord)
+    expect(MAPS.jungle_1.doors.find((d) => d.to === 'puerto_sol')?.tx).toBe(PUERTO_SOL_JUNGLE_RETURN.tx);
+    expect(MAPS.jungle_1.doors.find((d) => d.to === 'puerto_sol')?.ty).toBe(PUERTO_SOL_JUNGLE_RETURN.ty);
+  });
+
+  it('stays a CITY and clears the ADR-012 sweep AT the bigger size', () => {
+    expect(MAPS.puerto_sol.settlement).toBe('city');
+    expect(cityViolations(MAPS.puerto_sol)).toEqual([]);
+  });
+
+  it('grew about 3× and holds the XL envelope (≤12000 tiles, ≤120 props)', () => {
+    const core = buildPuertoSol();
+    const coreTiles = core.grid[0].length * core.grid.length;
+    const grownTiles = MAPS.puerto_sol.grid[0].length * MAPS.puerto_sol.grid.length;
+    expect(grownTiles / coreTiles).toBeGreaterThan(2.5);
+    expect(grownTiles).toBeLessThanOrEqual(12000);
+    expect(MAPS.puerto_sol.props.length).toBeLessThanOrEqual(120);
+  });
+
+  it('the dock district EARNS its size (§B4): megas, a 2nd rest, a present, a beat', () => {
+    const ps = MAPS.puerto_sol;
+    // the colonial MEGAS stand (the mega pass placed them — common here)
+    expect(ps.props.some((p) => p.sprite === 'bldg_ps_catedral' || p.sprite === 'bldg_ps_aduana' || p.sprite === 'bldg_ps_gran_hotel')).toBe(true);
+    // a 2nd §A4.5 rest on the malecón (the core's plaza table is the first)
+    expect(ps.props.filter((p) => p.sprite === 'picnic').length).toBe(2);
+    // a hidden present + its sign (the gift-box pattern)
+    expect(ps.props.some((p) => p.sprite === 'gift_box')).toBe(true);
+    expect(ps.signs.some((s) => s.dialogue === 'ps_dock_gift')).toBe(true);
+    // the boat + departure board + costa wiring all survived (Ch.2 must still run)
+    expect(ps.props.some((p) => p.sprite === 'banana_boat')).toBe(true);
+    expect(ps.props.some((p) => p.sprite === 'departure_board')).toBe(true);
+    expect(ps.triggers.some((t) => t.id === 'board_boat_return')).toBe(true);
   });
 });

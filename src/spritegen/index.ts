@@ -104,6 +104,7 @@ import {
   drawLegendCabinet,
   drawCageGate,
   drawBackboardProp,
+  drawCageMural,
   drawBleachers,
   drawChalkBoard,
 } from './tiles';
@@ -503,6 +504,7 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // who actually play at match start (the ensureBattleArt stance).
   addPixmap(scene, 'cage_gate', drawCageGate());
   addPixmap(scene, 'backboard', drawBackboardProp());
+  addPixmap(scene, 'cage_mural', drawCageMural()); // S15i Task 6 (ADR-059) — the park's mural
   addPixmap(scene, 'bleachers_a', drawBleachers(11));
   addPixmap(scene, 'bleachers_b', drawBleachers(40));
   addPixmap(scene, 'chalk_board', drawChalkBoard());
@@ -544,6 +546,12 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'bldg_ps_cantina', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.PURPLE, signText: 'CANTINA', doorAt: 2, arch: true, litSeed: 28 }));
   addPixmap(scene, 'bldg_ps_casa_c', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.GOLD, signText: 'CASA LUZ', doorAt: 1, arch: true, litSeed: 29 }));
   addPixmap(scene, 'bldg_ps_pension_b', drawCityBuilding({ wallTiles: 5, upperRows: 2, wall: RAMP.BLUE, signText: 'EL FARO', doorAt: 2, arch: true, litSeed: 30 }));
+  // S15i Task 4 (ADR-057) — PUERTO SOL grows up: the colonial MEGAS (u≥11, tops
+  // off-screen) the grown dock district's mega pass stands. Masonry, not glass —
+  // colonial ramps + arched bases, so the port reads grand without going modern.
+  addPixmap(scene, 'bldg_ps_catedral', drawCityBuilding({ wallTiles: 6, upperRows: 11, wall: RAMP.PAPER, signText: 'CATEDRAL', portico: true, doubleDoor: true, arch: true, tower: true, doorAt: 3, litSeed: 31 }));
+  addPixmap(scene, 'bldg_ps_gran_hotel', drawCityBuilding({ wallTiles: 6, upperRows: 12, wall: RAMP.GOLD, signText: 'GRAN HOTEL', balconies: true, arch: true, tower: true, doorAt: 2, litSeed: 32 }));
+  addPixmap(scene, 'bldg_ps_aduana', drawCityBuilding({ wallTiles: 7, upperRows: 11, wall: RAMP.ORANGE, signText: 'ADUANA', portico: true, arch: true, tower: true, doorAt: 3, litSeed: 33 }));
   // VALLE DORADO's houses (drawHouse vocabulary, village looseness)
   addPixmap(scene, 'valle_shop', drawHouse({ wallTiles: 5, wallRows: 2, roof: RAMP.RED, signText: 'LANA', doorAt: 2, awning: RAMP.GOLD, litSeed: 61 }));
   addPixmap(scene, 'valle_clinic', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.CYAN, signText: 'CLINICA', doorAt: 1, awning: RAMP.RED, litSeed: 62 }));
@@ -555,6 +563,13 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // clubhouse (the course itself paints at use-time via ensureLinksArt)
   addPixmap(scene, 'poster_links', drawLinksPoster());
   addPixmap(scene, 'clubhouse', drawHouse({ wallTiles: 5, wallRows: 2, roof: RAMP.ORANGE, signText: 'LINKS', doorAt: 2, awning: RAMP.GOLD, litSeed: 44 }));
+  // S15i Task 6 (ADR-059) — THE GOLF RESORT: expensive subdivision MANSIONS (wide,
+  // tall, pitched roofs, chimneys — pastel resort ramps under ADR-020) + the gatehouse.
+  addPixmap(scene, 'mansion_a', drawHouse({ wallTiles: 7, wallRows: 3, roof: RAMP.RED, roofStyle: 'hip', chimney: true, windows: [0, 2, 4, 6], litSeed: 50 }));
+  addPixmap(scene, 'mansion_b', drawHouse({ wallTiles: 6, wallRows: 3, roof: RAMP.BLUE, roofStyle: 'gable', chimney: true, windows: [0, 2, 4], litSeed: 51 }));
+  addPixmap(scene, 'mansion_c', drawHouse({ wallTiles: 7, wallRows: 2, roof: RAMP.GOLD, roofStyle: 'hip', chimney: true, ac: true, windows: [0, 2, 4, 6], litSeed: 52 }));
+  addPixmap(scene, 'golf_gatehouse', drawHouse({ wallTiles: 5, wallRows: 2, roof: RAMP.PAPER, signText: 'THE LINKS', doorAt: 2, awning: RAMP.CYAN, litSeed: 53 }));
+  addPixmap(scene, 'clubhouse_grand', drawHouse({ wallTiles: 8, wallRows: 3, roof: RAMP.GOLD, roofStyle: 'hip', signText: 'CLUBHOUSE', doorAt: 3, awning: RAMP.GOLD, chimney: true, litSeed: 54 }));
 
   // Brickton downtown — varied heights and lighting so no two facades match
   addPixmap(scene, 'bldg_bagels', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.ORANGE, signText: 'BAGELS', awning: RAMP.RED, doorAt: 1, litSeed: 11 }));

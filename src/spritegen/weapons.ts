@@ -403,6 +403,44 @@ function drawSunPendantIcon(): Pixmap {
   return pm;
 }
 
+/** the Walker's Charm (S15i Task 3 — Ch.1 #5): a pressed wildflower under glass */
+function drawWalkersCharmIcon(): Pixmap {
+  const pm = new Pixmap(13, 13);
+  const glass = px(RAMP.PAPER, 3);
+  const petal = px(RAMP.MAGENTA, 2);
+  pm.ellipse(6, 6, 5, 5, px(RAMP.PAPER, 2)); // the glass frame
+  pm.ellipse(6, 6, 4, 4, glass);
+  // a four-petal flower, hand-placed, pressed flat
+  pm.set(6, 3, petal);
+  pm.set(6, 9, petal);
+  pm.set(3, 6, petal);
+  pm.set(9, 6, petal);
+  pm.set(5, 5, petal);
+  pm.set(7, 5, petal);
+  pm.set(5, 7, petal);
+  pm.set(7, 7, petal);
+  pm.set(6, 6, px(RAMP.GOLD, 3)); // the gold center
+  pm.set(4, 4, px(RAMP.PAPER, 3)); // a glint on the glass
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Captain's Button (S15i Task 3 — Ch.2 dock crate): brass, an anchor stamped in */
+function drawButtonIcon(): Pixmap {
+  const pm = new Pixmap(12, 12);
+  const brass = px(RAMP.GOLD, 2);
+  pm.ellipse(5, 5, 4, 4, brass);
+  pm.ellipse(5, 5, 3, 3, px(RAMP.GOLD, 1)); // the recessed face
+  // a tiny anchor stamped into it
+  pm.vline(5, 3, 4, px(RAMP.GOLD, 3));
+  pm.hline(4, 5, 3, px(RAMP.GOLD, 3));
+  pm.set(3, 6, px(RAMP.GOLD, 3));
+  pm.set(7, 6, px(RAMP.GOLD, 3));
+  pm.set(3, 2, px(RAMP.PAPER, 3)); // shine
+  pm.outline(C.outline);
+  return pm;
+}
+
 /* ================================================================== */
 /* THE REGISTRY — every §A8 equippable, both directions enforced.      */
 
@@ -568,6 +606,15 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
   tin_sun_pendant: {
     kind: 'trinket',
     icon: drawSunPendantIcon,
+  },
+  // S15i Task 3 (ADR-058) — Movement 4 quest charms
+  walkers_charm: {
+    kind: 'trinket',
+    icon: drawWalkersCharmIcon,
+  },
+  captains_button: {
+    kind: 'trinket',
+    icon: drawButtonIcon,
   },
 
   /* ---- THE SUNDAY SET (S13 — the first Invitational's prize) ---- */

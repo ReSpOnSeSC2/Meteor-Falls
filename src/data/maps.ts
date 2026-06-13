@@ -14,7 +14,7 @@ import { buildChapter2Maps } from './maps_ch2';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
 import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
-import { placeFacade } from '../levelkit/kit';
+import { placeFacade, facadeDims } from '../levelkit/kit';
 import { AREA_SKINS } from '../spritegen/buildings';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
@@ -87,6 +87,8 @@ export const CHAR_LEGEND: Record<string, string> = {
   Z: 'pyramid_wall',
   G: 'pyramid_glyph',
   g: 'pyramid_rotor',
+  // S15i Task 6 (ADR-059) — the golf resort's manicured course
+  m: 'fairway',
 };
 
 // treeSprite lives in mapkit.ts (S14 extraction — byte-identical)
@@ -600,7 +602,9 @@ function buildMeadowMile(): MapDef {
       { x: W - 1, y: eastY, w: 1, h: 2, to: 'meadow_woods', tx: 16, ty: eastY * 16, facing: 'right', indicator: 'none' },
     ],
     spawners: draft.spawners,
-    triggers: [],
+    // S15i Task 3 (ADR-058): THE WALKERS' REGISTER token — a strip just east of Hal
+    // (you cross it walking on into the city; fires only while the quest is live)
+    triggers: [{ id: 'walk_token', rect: { x: Math.round(W * 0.32), y: 0, w: 2, h: H }, once: false }],
   };
 }
 
@@ -655,7 +659,11 @@ function buildMeadowWoods(): MapDef {
     spawners: [
       { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: Math.round(W / 3), y: 2, w: Math.round(W / 3), h: H - 4 } },
     ],
-    triggers: [{ id: 'woods_vignette', rect: { x: 1, y: 0, w: 3, h: H }, once: false }],
+    triggers: [
+      { id: 'woods_vignette', rect: { x: 1, y: 0, w: 3, h: H }, once: false },
+      // Task 3 (ADR-058): the WALKERS' REGISTER token, at the glade (what the quiet leaves)
+      { id: 'walk_token', rect: { x: gladeX - 1, y: 0, w: 2, h: H }, once: false },
+    ],
   };
 }
 
@@ -689,7 +697,8 @@ function buildMeadowFar(): MapDef {
       { x: W - 1, y: eastY, w: 1, h: 2, to: 'meadow_overpass', tx: 16, ty: eastY * 16, facing: 'right', indicator: 'none' },
     ],
     spawners: draft.spawners.map((s) => ({ ...s, enemies: ['runaway_lawnmower', 'pigeon_gang'] })),
-    triggers: [],
+    // Task 3 (ADR-058): the WALKERS' REGISTER token (where the air goes electric)
+    triggers: [{ id: 'walk_token', rect: { x: Math.round(W * 0.4), y: 0, w: 2, h: H }, once: false }],
   };
 }
 
@@ -710,6 +719,12 @@ function buildMeadowOverpass(): MapDef {
     { id: 'proctor_b', sprite: 'smilerB', x: W - 4, y: eastY + 1, facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
     { id: 'proctor_c', sprite: 'smilerB', x: W - 6, y: eastY + 2, facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
   ];
+  // S15i Task 3 (ADR-058): THE WALKERS' REGISTER post — Old Pell's ledger on a
+  // post, mid-overpass and OFF the trail (computed so it never blocks the lane);
+  // signing it completes Ch.1 #5 (handled in OverworldScene.signBeat).
+  const regX = Math.round(W * 0.45);
+  const regTrail = trailRowAt(draft.grid, regX);
+  const regY = regTrail + 2 <= H - 2 ? regTrail + 2 : Math.max(1, regTrail - 2);
 
   return {
     id: 'meadow_overpass',
@@ -719,9 +734,14 @@ function buildMeadowOverpass(): MapDef {
     props: [
       ...draft.props,
       { sprite: 'sign', x: W - 6, y: Math.max(1, eastY - 2), solid: WALK_SIGN_SOLID }, // BRICKTON CITY LIMITS
+      { sprite: 'sign', x: regX, y: regY, solid: WALK_SIGN_SOLID }, // the Walkers' Register post
     ],
     npcs: [...proctors],
-    signs: [...draft.signs, { x: W - 6, y: Math.max(1, eastY - 2), dialogue: 'sign_overpass_gate' }],
+    signs: [
+      ...draft.signs,
+      { x: W - 6, y: Math.max(1, eastY - 2), dialogue: 'sign_overpass_gate' },
+      { x: regX, y: regY, dialogue: 'walkers_register_book' },
+    ],
     phones: draft.phones,
     doors: [
       { x: 0, y: westY, w: 1, h: 2, to: 'meadow_far', tx: 16, ty: westY * 16, facing: 'left', indicator: 'none' },
@@ -2214,11 +2234,110 @@ function buildTheCage(): MapDef {
     ],
     phones: [],
     doors: [
-      // back through the gate onto the Brickton sidewalk
-      { x: 19, y: 1, w: 2, h: 1, to: 'brickton', tx: 808, ty: 402, facing: 'up' },
+      // S15i Task 6 (ADR-059): the gate now returns to THE CAGE PARK (you walked in
+      // through it); the park carries you back to Brickton (symmetric approach)
+      { x: 19, y: 1, w: 2, h: 1, to: 'cage_park', tx: 192, ty: 32, facing: 'up' },
     ],
     spawners: [],
     triggers: [],
+  };
+}
+
+/* ------------- THE CAGE PARK — the walk-through approach (S15i Task 6, ADR-059) ------------- *
+ * The user's decree: THE CAGE shouldn't open straight off a Brickton door — it should
+ * have a real neighbourhood PARK in front of it. Brickton's frozen cage gate re-routes
+ * (at the GROWN level, like the docks) THROUGH this park; you cross courts, benches, a
+ * community MURAL and "THE CAGE →" signage, then WALK INTO buildTheCage. Its OWN skin
+ * roster (AREA_SKINS.cage_park — gritty rec-block faces). A present + a cutscene earn it.
+ */
+function buildCagePark(): MapDef {
+  const W = 26;
+  const H = 22;
+  const g = new Grid(W, H, '.');
+  g.sprinkle(2059, ',~ f', 0.07);
+  // the cage's outer chain-link rings the NORTH; a gate gap at the path's head
+  g.rect(0, 0, W, 1, 'C');
+  g.rect(11, 0, 3, 1, 'q'); // the gate gap (asphalt threshold → the_cage)
+  g.rect(0, 1, 1, H - 3, '|'); // west park fence
+  g.rect(W - 1, 1, 1, H - 3, '|'); // east park fence
+  // the central path: the gate down to the city sidewalk
+  g.rect(11, 1, 3, 18, ':');
+  // the city edge — sidewalk the rec-block backs onto + the Brickton return
+  g.rect(0, 19, W, 3, '=');
+  // THE PRACTICE HALF-COURT (east) — a taste of what's ahead
+  g.rect(16, 4, 8, 9, 'q');
+  g.rect(17, 4, 6, 1, 'h'); // baseline
+  g.rect(17, 12, 6, 1, 'h'); // baseline
+  g.rect(20, 5, 1, 7, 'v'); // the lone center stripe
+  g.set(18, 9, 'z'); // a crack the summers left
+
+  // the rec-block on the city edge — TWO faces from THE CAGE PARK's OWN roster,
+  // hand-placed at their true size (ADR-053 spacing) in the SOUTH corners, framing
+  // the entrance (clear of the path + the courts + the present)
+  const recA = AREA_SKINS.cage_park[0];
+  const recB = AREA_SKINS.cage_park[3 % AREA_SKINS.cage_park.length];
+  const dimA = facadeDims(recA);
+  const dimB = facadeDims(recB);
+  const recCenter = placeFacade(recA, 1, 19 * 16 - 4, dimA.w, dimA.u);
+  const recStore = placeFacade(recB, W - 1 - dimB.w, 19 * 16 - 4, dimB.w, dimB.u);
+
+  const OAK_S = { ox: 7, oy: 22, w: 12, h: 10 };
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  // a hidden PRESENT — a basket left on the grass, north-west of the path where the
+  // benches end (open grass, clear of every building + the courts)
+  const gift: PropDef[] = [
+    { sprite: 'gift_box', x: 8, y: 7, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'cage_park_gift' },
+    { sprite: 'gift_box_open', x: 8, y: 7, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'cage_park_gift' },
+  ];
+
+  return {
+    id: 'cage_park',
+    name: 'CAGE PARK',
+    music: 'cage',
+    grid: g.out(),
+    props: [
+      recCenter,
+      recStore,
+      // THE MURAL — a free-standing handball wall on the west, the park's heart
+      { sprite: 'cage_mural', x: 2, y: 6, solid: { ox: 0, oy: 6, w: 46, h: 24 } },
+      // a practice backboard at the court's head
+      { sprite: 'backboard', x: 19, y: 3.2, solid: { ox: 10, oy: 36, w: 7, h: 6 } },
+      // benches to watch from, a fountain, a couple of trees
+      { sprite: 'bench', x: 7, y: 10, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 7, y: 12, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'trash_can', x: 15, y: 16, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: treeSprite(4, 4), x: 4, y: 4, solid: OAK_S },
+      { sprite: treeSprite(22, 17), x: 22, y: 17, solid: OAK_S },
+      ...gift,
+      // signage: the cage is THIS way (north), and the park's plaque
+      { sprite: 'sign', x: 9, y: 2, solid: SIGN_SOLID }, // THE CAGE →
+      { sprite: 'sign', x: 8, y: 8, solid: SIGN_SOLID }, // the mural plaque
+      { sprite: 'sign', x: 14, y: 18, solid: SIGN_SOLID }, // welcome to the park
+    ],
+    npcs: [
+      { id: 'park_old_head', sprite: 'quarterMan', x: 9, y: 10, facing: 'right', dialogue: 'npc_park_old_head', wander: true },
+      { id: 'park_kid', sprite: 'pigeonKid', x: 18, y: 7, facing: 'down', dialogue: 'npc_park_kid', wander: true },
+    ],
+    signs: [
+      { x: 9, y: 2, dialogue: 'sign_cage_this_way' },
+      { x: 8, y: 8, dialogue: 'sign_cage_mural' },
+      { x: 14, y: 18, dialogue: 'sign_cage_park' },
+      // the present (gift-box pattern, gated)
+      { x: 8, y: 8, dialogue: 'cage_park_gift', unlessFlag: 'cage_park_gift' },
+      { x: 8, y: 8, dialogue: 'cage_park_gift_done', ifFlag: 'cage_park_gift' },
+    ],
+    phones: [],
+    doors: [
+      // north through the chain-link gate INTO THE CAGE
+      { x: 11, y: 0, w: 3, h: 1, to: 'the_cage', tx: 320, ty: 60, facing: 'up' },
+      // south back onto the Brickton sidewalk (the cage-gate area)
+      { x: 11, y: H - 1, w: 3, h: 1, to: 'brickton', tx: 808, ty: 402, facing: 'down' },
+    ],
+    spawners: [],
+    triggers: [
+      // the first-arrival beat — the park, the mural, a ball bouncing somewhere ahead
+      { id: 'cage_park_reveal', rect: { x: 10, y: 16, w: 5, h: 3 }, once: true },
+    ],
   };
 }
 
@@ -2281,6 +2400,19 @@ const longWalk = buildLongWalk();
     foot.facing = 'left';
   }
 }
+// S15i Task 6 (ADR-059): THE CAGE gate now opens THROUGH the new CAGE PARK (the
+// user's "give the cage a real park in front" decree). A post-build fixup on the
+// live map — exactly like the foot door above — so the frozen 2077 core's literal
+// door stays byte-identical (it still reads → the_cage); only MAPS.brickton's door
+// target is rewritten, landing you on the park's south path before the courts.
+{
+  const cage = bricktonMap.doors.find((d) => d.to === 'the_cage');
+  if (cage) {
+    cage.to = 'cage_park';
+    cage.tx = 192; // tile 12 — the park's central path, just inside the city entrance
+    cage.ty = 272; // tile 17 — south of the courts, on the cutscene's welcome rect
+  }
+}
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
@@ -2310,6 +2442,11 @@ function buildCostaEstrella(): MapDef {
   // the resort path: gate (south) up to the clubhouse, then west to the tee
   g.rect(12, 8, 3, 8, ':');
   g.rect(5, 8, 10, 2, ':');
+  // S15i Task 6 (ADR-059): the tee path runs ON west to a gate in the cliff wall —
+  // the road to THE LINKS proper (the subdivision + course + the real clubhouse)
+  g.rect(1, 8, 5, 2, ':');
+  g.set(0, 8, ':');
+  g.set(0, 9, ':');
   // hedges square the clubhouse lawn; flowers where the staff insist
   g.rect(17, 6, 6, 1, 'b');
   g.rect(17, 12, 6, 1, 'b');
@@ -2327,25 +2464,166 @@ function buildCostaEstrella(): MapDef {
     grid: g.out(),
     props: [
       // the clubhouse (LINKS over the door, gold awning — Spanish-colonial
-      // by way of a resort brochure)
+      // by way of a resort brochure). S15i Task 6: now the clifftop GATE-house —
+      // the real course + pro shop are west through THE LINKS gate (ADR-059)
       { sprite: 'clubhouse', x: 16, y: 1.6, solid: { ox: 0, oy: 20, w: 80, h: 28 } },
       // the first tee's plaque
       { sprite: 'sign', x: 5, y: 7, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // the gate marker — to the subdivision + the clubhouse
+      { sprite: 'sign', x: 2, y: 10, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       // palms read as the coast's trees (the standard canvas, ADR-019)
       { sprite: 'tree_b', x: 2, y: 2 },
       { sprite: 'tree_b', x: 23, y: 13 },
       { sprite: 'tree', x: 8, y: 13 },
     ],
     npcs: [
-      // FITO measures the world in putts and runs both formats (S13)
-      { id: 'caddy', sprite: 'caddy', x: 6, y: 9, facing: 'down', dialogue: 'npc_caddy' },
+      // S15i Task 6 (ADR-059): FITO the caddy moved INTO the new clubhouse (the
+      // round-start is indoors now); a starter greets you at the clifftop gate
+      { id: 'links_starter', sprite: 'caddy', x: 4, y: 9, facing: 'left', dialogue: 'npc_links_starter', wander: true },
     ],
-    signs: [{ x: 5, y: 8, dialogue: 'sign_costa' }],
+    signs: [
+      { x: 5, y: 8, dialogue: 'sign_costa' },
+      { x: 2, y: 10, dialogue: 'sign_links_gate' },
+    ],
     phones: [],
     atms: [],
     doors: [
       // S14 (Prompt 28): THE ONE-LINE WIRE — the resort joins the world
       COSTA_DOOR_FOR_PUERTO_SOL,
+      // S15i Task 6 (ADR-059): west through the cliff gate to THE LINKS proper
+      { x: 0, y: 8, w: 1, h: 2, to: 'golf_resort', tx: 224, ty: 320, facing: 'left' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/* ------------- THE GOLF RESORT — the subdivision approach (S15i Task 6, ADR-059) ------------- *
+ * The user's decree: golf shouldn't START by talking to a caddy on a bare lawn — it should
+ * be an EXPENSIVE place you walk through. Off costa_estrella's clifftop gate, a manicured
+ * SUBDIVISION: pastel MANSIONS lining a cart path, fairway + bunkers + a water hazard, a
+ * gatehouse, "THE LINKS →" signage, a present, a cutscene — then you WALK INTO the grand
+ * CLUBHOUSE interior, where FITO starts your round (moved indoors from costa). Its OWN skin
+ * roster (AREA_SKINS.golf_resort — the new mansion sprites). The course tile is 'm' (fairway).
+ */
+function buildGolfResort(costaStep: { tx: number; ty: number }): MapDef {
+  const W = 30;
+  const H = 22;
+  const g = new Grid(W, H, '.');
+  g.sprinkle(2061, ',~,~ f', 0.05);
+  // the manicured FAIRWAY runs the WEST, a putting GREEN at the NE, a water hazard
+  g.rect(1, 2, 8, 15, 'm');
+  g.rect(2, 17, 5, 3, 'n'); // a sand bunker
+  g.rect(21, 3, 7, 6, 'm'); // the practice green
+  g.rect(23, 10, 3, 3, 'e'); // a water hazard (you walk around)
+  g.rect(22, 9, 5, 1, 'E'); // its foam lip
+  g.rect(22, 13, 5, 1, 'E');
+  // the cart path: the clifftop gate (south) up to the clubhouse forecourt (north)
+  g.rect(13, 1, 3, 20, ':');
+  // clipped hedges line the manicured edges (geometric, the resort look)
+  g.rect(10, 4, 1, 12, 'b');
+  g.rect(18, 4, 1, 12, 'b');
+  g.rect(11, 19, 8, 1, 'b'); // a low hedge by the entrance
+  // the clubhouse forecourt (north) + the entrance plaza (south)
+  g.rect(10, 1, 9, 1, '=');
+  g.rect(11, 20, 7, 2, '=');
+  // flower beds where the gardeners insist
+  g.set(20, 5, 'f'); g.set(26, 7, 'F'); g.set(9, 12, 'f'); g.set(4, 6, 'F');
+
+  // THE GRAND CLUBHOUSE (north) — opens into the pro-shop interior; + the gatehouse
+  // (south) by the entrance. Both from the resort's OWN roster (drawHouse mansions
+  // are houses, so these are hand-placed, not buildDistrict'd).
+  const clubhouse: PropDef = {
+    sprite: 'clubhouse_grand', x: 11, y: 0.4, solid: { ox: 0, oy: 28, w: 128, h: 30 },
+    door: { ox: 56, oy: 58, w: 16, h: 18, to: 'golf_clubhouse', tx: 128, ty: 150 },
+  };
+  const gatehouse: PropDef = { sprite: 'golf_gatehouse', x: 19, y: 17, solid: { ox: 0, oy: 20, w: 80, h: 28 } };
+  // THE MANSIONS — three, lining the cart path's east side, set back behind the hedge
+  const mansions: PropDef[] = [
+    { sprite: 'mansion_c', x: 20, y: 2.4, solid: { ox: 0, oy: 30, w: 112, h: 40 } },
+    { sprite: 'mansion_a', x: 2, y: 8.4, solid: { ox: 0, oy: 34, w: 112, h: 44 } },
+    { sprite: 'mansion_b', x: 21, y: 12.4, solid: { ox: 0, oy: 34, w: 96, h: 40 } },
+  ];
+
+  const PALM_S = { ox: 7, oy: 22, w: 12, h: 10 };
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  // a hidden PRESENT — a cooler left at the turn (open grass by the green)
+  const gift: PropDef[] = [
+    { sprite: 'gift_box', x: 26, y: 6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'golf_resort_gift' },
+    { sprite: 'gift_box_open', x: 26, y: 6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'golf_resort_gift' },
+  ];
+
+  return {
+    id: 'golf_resort',
+    name: 'THE LINKS ESTATES',
+    music: 'cage',
+    settlement: 'village',
+    grid: g.out(),
+    props: [
+      clubhouse,
+      gatehouse,
+      ...mansions,
+      ...gift,
+      { sprite: 'tree_b', x: 8, y: 3, solid: PALM_S },
+      { sprite: 'tree', x: 27, y: 16, solid: PALM_S },
+      // signage
+      { sprite: 'sign', x: 12, y: 18, solid: SIGN_SOLID }, // THE LINKS / welcome
+      { sprite: 'sign', x: 16, y: 2, solid: SIGN_SOLID }, // CLUBHOUSE / pro shop →
+    ],
+    npcs: [
+      { id: 'estate_gardener', sprite: 'fernLady', x: 9, y: 8, facing: 'right', dialogue: 'npc_estate_gardener', wander: true },
+      { id: 'estate_member', sprite: 'oldTimer', x: 17, y: 14, facing: 'left', dialogue: 'npc_estate_member' },
+    ],
+    signs: [
+      { x: 12, y: 18, dialogue: 'sign_links_welcome' },
+      { x: 16, y: 2, dialogue: 'sign_links_clubhouse' },
+      { x: 26, y: 7, dialogue: 'golf_resort_gift', unlessFlag: 'golf_resort_gift' },
+      { x: 26, y: 7, dialogue: 'golf_resort_gift_done', ifFlag: 'golf_resort_gift' },
+    ],
+    phones: [],
+    doors: [
+      // south back to costa_estrella's clifftop gate (just inside it)
+      { x: 13, y: H - 1, w: 3, h: 1, to: 'costa_estrella', tx: costaStep.tx, ty: costaStep.ty, facing: 'down' },
+    ],
+    spawners: [],
+    triggers: [
+      // the first-arrival beat — the manicured course, the mansions, the clubhouse ahead
+      { id: 'golf_resort_reveal', rect: { x: 12, y: 17, w: 5, h: 3 }, once: true },
+    ],
+  };
+}
+
+/**
+ * THE CLUBHOUSE — the expensive pro-shop interior where the round now starts (the
+ * caddy FITO moved indoors). A warm room: the counter, club racks, a trophy case,
+ * the leaderboard. The bottom door rides back to the resort's clubhouse doorstep.
+ */
+function buildGolfClubhouse(resortExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(16, 11, 'w');
+  g.rect(0, 0, 16, 2, 'W');
+  g.rect(5, 4, 6, 2, 'r'); // a green runner to the counter
+  return {
+    id: 'golf_clubhouse',
+    name: 'THE LINKS — CLUBHOUSE',
+    music: 'cage',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 7, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'shelf_b', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } }, // club racks
+      { sprite: 'shelf_b', x: 13, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'chalk_board', x: 2, y: 7, solid: { ox: 1, oy: 14, w: 31, h: 7 } }, // the leaderboard
+      { sprite: 'planter', x: 13, y: 8, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+    ],
+    npcs: [
+      // FITO runs both formats from behind the counter now (the round-start, indoors)
+      { id: 'caddy', sprite: 'caddy', x: 8, y: 2, facing: 'down', dialogue: 'npc_caddy' },
+    ],
+    signs: [{ x: 4, y: 1, dialogue: 'sign_clubhouse_wall' }],
+    phones: [],
+    doors: [
+      { x: 7, y: 10, w: 2, h: 1, to: 'golf_resort', tx: resortExit.tx, ty: resortExit.ty, facing: 'down', indicator: 'mat' },
     ],
     spawners: [],
     triggers: [],
@@ -2389,6 +2667,16 @@ function growInterior(map: MapDef, minW: number, minH: number): MapDef {
   return { ...map, grid: rows, doors };
 }
 
+// S15i Task 6 (ADR-059): the golf resort + clubhouse, with computed doorsteps —
+// the resort returns you just inside costa's west gate; the clubhouse rides back to
+// the resort's grand-clubhouse doorstep (the doorstepOf pattern).
+const golfResortMap = buildGolfResort({ tx: 24, ty: 128 });
+const golfClubhouseStep = doorstepOf(golfResortMap, 'golf_clubhouse') ?? { tx: 224, ty: 32 };
+const golfMaps = {
+  golf_resort: golfResortMap,
+  golf_clubhouse: buildGolfClubhouse(golfClubhouseStep),
+};
+
 export const MAPS: Record<string, MapDef> = {
   ...buildChapter2Maps({ chapelStep: chapelDoorstep, hospitalStep: hospitalDoorstep }),
   otterbrook: otterbrookMap,
@@ -2411,7 +2699,9 @@ export const MAPS: Record<string, MapDef> = {
   arcade_int: buildArcadeInt(arcadeDoorstep),
   arcade2_int: buildArcade2Int(arcade2Doorstep),
   the_cage: buildTheCage(),
+  cage_park: buildCagePark(), // S15i Task 6 (ADR-059) — the walk-through approach
   costa_estrella: buildCostaEstrella(),
+  ...golfMaps, // S15i Task 6 (ADR-059) — the golf resort + clubhouse (computed doorsteps)
   bus_interior: buildBusInterior(),
 };
 

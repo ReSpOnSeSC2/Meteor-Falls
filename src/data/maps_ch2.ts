@@ -22,7 +22,12 @@
  */
 import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
-import type { MapDef, NpcDef, PropDef } from '../schemas';
+// S15i Task 4 (ADR-057) — PUERTO SOL grows: the forge lays the new DOCK DISTRICT
+// as buildDistrict + placeNook stitched onto the frozen 1898 core (the bones);
+// the soul (NPCs, the cutscene, the present) stays hand-authored.
+import { buildDistrict, placeNook, Streams } from '../levelkit';
+import { AREA_SKINS } from '../spritegen/buildings';
+import type { MapDef, NpcDef, PropDef, SignDef } from '../schemas';
 
 /* ================= THE BRICKTON DOCKS (the Ch.2 gate) ================= */
 
@@ -290,6 +295,189 @@ export function buildPuertoSol(): MapDef {
   };
 }
 
+/* ------------- PUERTO SOL GROWS — THE DOCK DISTRICT (S15i Task 4, ADR-057) ------------- *
+ * The user's scale decree, the World-Block law's fourth application: the §A5 port
+ * should feel like a working CITY, not one plaza. The frozen 1898 core is COPIED
+ * byte-for-byte into the top-left of a 128×44 grid (≈3.2×); every growth write lands
+ * strictly OUTSIDE the 52×34 core (x≥52 || y≥34), so not one core cell can move.
+ *
+ * THE GOTCHA (why this isn't a Brickton clone): the core is WALLED north/east/west
+ * with only the SOUTH (dock/sea) open — you cannot grow east through the frozen wall.
+ * So the new region wraps the core's SOUTHEAST, joined to it through the dock band's
+ * eastern seam (col 51 rows 28-29 = walkable '='). And because cityViolations counts
+ * a "street" row as one exceeding 40% of the GROWN width (~50 cells at W=128), the
+ * core's ~50-cell streets STOP COUNTING — so the grown city's ADR-012 sweep is carried
+ * by NEW full-region streets in the dock district (the core's facades still feed
+ * faceBands at bands 2 & 5). The jungle gate relocates to the new far-east edge.
+ */
+/** the grown port's east jungle gate row (street 2 center) + width — the jungle's
+ *  return door lands just inside it (computed, never a baked jittered coord). */
+const PUERTO_SOL_W = 128;
+const PUERTO_SOL_EAST_GATE_ROW = 25;
+/** where jungle_1's west door drops you back — the lane just inside the new east
+ *  gate (W-2, the street-2 row). buildJungle1 reads this (the doorstepOf analog). */
+export const PUERTO_SOL_JUNGLE_RETURN = {
+  tx: (PUERTO_SOL_W - 2) * 16,
+  ty: PUERTO_SOL_EAST_GATE_ROW * 16,
+} as const;
+
+const PS_OAK = { ox: 7, oy: 22, w: 12, h: 10 } as const;
+
+export function growPuertoSol(): MapDef {
+  const core = buildPuertoSol();
+  const CW = core.grid[0].length; // 52
+  const CH = core.grid.length; // 34
+  const W = PUERTO_SOL_W; // 128
+  const H = 44;
+  const g = new Grid(W, H, '=');
+  // 1) the frozen 1898 core, verbatim, in the top-left
+  for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) g.set(x, y, core.grid[y][x]);
+
+  // 2) the GROWN region's edges (the gotcha: cliff N, wall E, sea S) — only OUTSIDE
+  //    the core, so the frozen cells never move.
+  g.rect(CW, 0, W - CW, 1, 'B'); // north cliff, east of the core
+  g.rect(W - 1, 0, 1, H, 'B'); // new east wall
+  g.rect(0, CH, 1, H - CH, 'B'); // west cliff, below the core
+  // the colonial-plaza floor the dock district stands on (pavers, not gray walk)
+  g.rect(CW, 1, W - CW, 25, 'p');
+  // THE MALECÓN — the new waterfront promenade (dock), continuing the core's dock
+  // band EAST. THE SEAM: it meets the core dock at col 51→52, rows 28-29.
+  g.rect(CW, 26, W - CW, 6, 'd'); // malecón, cols 52-127, rows 26-31
+  // THE HARBOR — sea south of the malecón + below the core (the core keeps its own
+  // 1898 sea; the new water is cols 52+ rows 32+, and cols 1-51 rows 34+)
+  g.rect(CW, 32, W - CW, 1, 'E'); // foam lip along the malecón
+  g.rect(CW, 33, W - CW, H - 33, 'e'); // open harbor SE
+  g.rect(1, CH, CW - 1, H - CH, 'e'); // harbor below the core (cols 1-51)
+
+  // 3) THE DOCK DISTRICT — TWO wide carrying streets (rows 6 + 24, each >40% of the
+  //    grown width so the ADR-012 sweep counts them) joined by an avenue (col 90),
+  //    then the forge lays the bones in PUERTO SOL's OWN colonial skins. The wide
+  //    grid is NON-mega (its facades back onto the streets, ≤3 tall, never crossing a
+  //    lane); the MEGAS rise from a dedicated tall POCKET between the streets — the
+  //    cathedral / grand hotel / customs house, tops off-screen (the Brickton
+  //    downtownHigh precedent — megas need 14 clear rows, so they get their own band,
+  //    common here because the waterfront has the room Brickton's tight core lacked).
+  //    ADR-053: ONE shared footprint list across every district + the hand-placed lots.
+  const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+  // (B FIRST) the MEGA POCKETS — two grand bands FLANKING the avenue (cols 54-86 west,
+  //    96-123 east), so the towers rise on both sides while the avenue (col 90) stays a
+  //    clear canyon between them. They claim their tall footprints before the storefront
+  //    row pass fills the gaps; backing onto street 2 (row 24), rising clear of street 1
+  //    (rows 6-8). Megas are COMMON here — a grand colonial waterfront, not a sparse one.
+  const megaWest = buildDistrict(g, { x: 54, y: 9, w: 32, h: 16 }, new Streams(189803), {
+    layout: 'grid', style: 'bazaar-port', catalog: AREA_SKINS.puerto_sol,
+    streetRows: [24], maxStories: 3, mega: true, occupied,
+  });
+  const megaEast = buildDistrict(g, { x: 96, y: 9, w: 28, h: 16 }, new Streams(189804), {
+    layout: 'grid', style: 'bazaar-port', catalog: AREA_SKINS.puerto_sol,
+    streetRows: [24], maxStories: 3, mega: true, occupied,
+  });
+  // (A) the WIDE storefront grid — carries BOTH streets + the avenue spine (col 90,
+  //    rows 1-25, meeting the malecón at row 26 — one line from the streets down to
+  //    the waterfront and the seam). NON-mega: low colonial faces + dock warehouses.
+  const district = buildDistrict(g, { x: CW, y: 1, w: W - CW - 1, h: 25 }, new Streams(189801), {
+    layout: 'grid', style: 'bazaar-port', catalog: AREA_SKINS.puerto_sol,
+    streetRows: [6, 24], avenueCols: [90], maxStories: 3, occupied,
+  });
+
+  // 4) THE MARKET NOOK (§B4) — a dockside market courtyard on the malecón's west,
+  //    its open left/right edges onto the waterfront (a fully-ringed lot would seal
+  //    itself; 'courtyard' only hedges top/bottom — the memory gotcha). The hidden
+  //    present hides among its stalls.
+  const nook = placeNook(g, { x: 54, y: 26, w: 13, h: 5 }, new Streams(189802), 'courtyard');
+
+  // 5) piers fingering into the harbor (scenery off the malecón — the working-port read)
+  g.rect(60, 31, 3, 6, 'd');
+  g.rect(108, 31, 3, 7, 'd');
+
+  const treesAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
+    xy.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: PS_OAK }));
+
+  // 6) the present (the S9b gift-box pattern), cached among the market stalls. Trees
+  //    are not laid over it; the malecón around it is open dock, so it stays reachable.
+  const giftX = 58;
+  const giftY = 28;
+  const present: PropDef[] = [
+    { sprite: 'gift_box', x: giftX, y: giftY, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'ps_dock_gift' },
+    { sprite: 'gift_box_open', x: giftX, y: giftY, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'ps_dock_gift' },
+  ];
+
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  const props: PropDef[] = [
+    ...core.props,
+    ...megaWest.props,
+    ...megaEast.props,
+    ...district.props,
+    ...nook.props,
+    ...present,
+    // the relocated DEPARTURE BOARD — the freight/onward schedule, dockside
+    { sprite: 'departure_board', x: 82, y: 27.4, solid: { ox: 2, oy: 20, w: 22, h: 8 } },
+    // dock clutter — cargo waiting on the quay (off the walking lane)
+    { sprite: 'crate_bananas', x: 72, y: 27.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    { sprite: 'crate', x: 74.3, y: 28.1, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    { sprite: 'crate', x: 104, y: 27.4, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    { sprite: 'crate_bananas', x: 106.3, y: 28.3, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    // the market nook's stalls (open-air, around the present)
+    { sprite: 'market_stall_a', x: 56, y: 29, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
+    { sprite: 'market_stall_b', x: 62, y: 29, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
+    // §A4.5: a dockside picnic rest before the jungle's pressure (the 2nd PS table)
+    { sprite: 'picnic', x: 98, y: 28.6, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+    { sprite: 'payphone', x: 92, y: 27, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+    // signage
+    { sprite: 'sign', x: 54, y: 25, solid: SIGN_SOLID }, // the malecón / dock district
+    { sprite: 'sign', x: 66, y: 30, solid: SIGN_SOLID }, // the market nook
+    { sprite: 'sign', x: 124, y: 23, solid: SIGN_SOLID }, // EAST → the jungle (relocated gate)
+    // palms on the new waterfront (isolated on open dock — you walk around them)
+    ...treesAt([[68, 30], [88, 30], [120, 30]]),
+  ];
+
+  const npcs: NpcDef[] = [
+    ...core.npcs,
+    // §A11 — one obsession each, all new to the dock district
+    { id: 'ps_crane', sprite: 'dockworker', x: 90, y: 25, facing: 'down', dialogue: 'npc_ps_crane', wander: true },
+    { id: 'ps_tally', sprite: 'captain', x: 100, y: 25, facing: 'down', dialogue: 'npc_ps_tally' },
+    { id: 'ps_board', sprite: 'tomas', x: 84, y: 26, facing: 'down', dialogue: 'npc_ps_board' },
+    { id: 'ps_market', sprite: 'mercadoKeeper', x: 60, y: 28, facing: 'down', dialogue: 'npc_ps_market', wander: true },
+  ];
+
+  const signs: SignDef[] = [
+    ...core.signs,
+    { x: 54, y: 25, dialogue: 'sign_ps_malecon' },
+    { x: 66, y: 30, dialogue: 'sign_ps_market' },
+    { x: 124, y: 23, dialogue: 'sign_ps_jungle_east' },
+    // the present: a sign while sealed, a flavor line once opened (gated)
+    { x: giftX, y: giftY + 1, dialogue: 'ps_dock_gift', unlessFlag: 'ps_dock_gift' },
+    { x: giftX, y: giftY + 1, dialogue: 'ps_dock_gift_done', ifFlag: 'ps_dock_gift' },
+  ];
+
+  // the jungle gate RELOCATES to the new far-east edge (the port moved out with the
+  // city). Its target (jungle_1's west mouth) is unchanged; only its position moves.
+  const keptDoors = core.doors.filter((d) => d.to !== 'jungle_1');
+
+  return {
+    ...core,
+    grid: g.out(),
+    props,
+    npcs,
+    signs,
+    doors: [
+      ...keptDoors, // the COSTA north gate stays byte-identical; the jungle gate relocates ↓
+      { x: W - 1, y: PUERTO_SOL_EAST_GATE_ROW - 1, w: 1, h: 3, to: 'jungle_1', tx: 24, ty: 264, facing: 'right' },
+    ],
+    triggers: [
+      ...core.triggers, // board_boat_return + puerto_arrival stay first + unchanged
+      // the flag-gated waterfront beat — a warm look over the working harbor on first
+      // reaching the malecón (fires once; the cut/dlg/camera pattern in OverworldScene)
+      { id: 'puerto_malecon', rect: { x: 52, y: 27, w: 3, h: 4 }, once: true },
+    ],
+    spawners: [
+      ...core.spawners,
+      // the dock district runs a gentle Ch.2 band, clear of the gateway + the rests
+      { enemies: ['pickpocket_parrot'], count: 1, rect: { x: 96, y: 18, w: 14, h: 4 } },
+    ],
+  };
+}
+
 /* ================= PUERTO SOL interiors ================= */
 
 export function buildMercadoInt(streetExit: { tx: number; ty: number }): MapDef {
@@ -495,7 +683,10 @@ export function buildChapelInt(streetExit: { tx: number; ty: number }): MapDef {
 
 /* ================= THE JUNGLE PATH (2 screens + the grotto) ================= */
 
-export function buildJungle1(): MapDef {
+/** `psReturn` is where the west door drops you back on PUERTO SOL — the lane just
+ *  inside the grown port's relocated jungle gate (the doorstepOf analog, ADR-057).
+ *  Defaults to the grown landing; the frozen core's old spot is gone with the gate. */
+export function buildJungle1(psReturn: { tx: number; ty: number } = PUERTO_SOL_JUNGLE_RETURN): MapDef {
   const g = new Grid(30, 36, 'j');
   // dense walls shape a winding south-north climb
   g.rect(0, 0, 30, 1, 'J');
@@ -539,7 +730,7 @@ export function buildJungle1(): MapDef {
     signs: [{ x: 2, y: 15, dialogue: 'sign_jungle1' }],
     phones: [],
     doors: [
-      { x: 0, y: 15, w: 1, h: 3, to: 'puerto_sol', tx: 800, ty: 344, facing: 'left' },
+      { x: 0, y: 15, w: 1, h: 3, to: 'puerto_sol', tx: psReturn.tx, ty: psReturn.ty, facing: 'left' },
       { x: 28, y: 6, w: 2, h: 3, to: 'jungle_2', tx: 40, ty: 200, facing: 'right' },
     ],
     spawners: [
@@ -1098,7 +1289,10 @@ export function buildChapter2Maps(steps: {
   /** Brickton General's jittered doorstep (derived in maps.ts, ADR-012) */
   hospitalStep: { tx: number; ty: number };
 }): Record<string, MapDef> {
-  const puerto = buildPuertoSol();
+  // S15i Task 4 (ADR-057): the live port is the GROWN city now; the frozen 1898
+  // core sits byte-identical in its top-left (proven in world_block.test). The
+  // interior doorsteps still derive from the core's facade doors (doorstepOf).
+  const puerto = growPuertoSol();
   const valle = buildValleDorado();
   const mercadoStep = doorstepOf(puerto, 'mercado_int') ?? { tx: 96, ty: 130 };
   const clinicStep = doorstepOf(puerto, 'clinic_ps_int') ?? { tx: 224, ty: 130 };

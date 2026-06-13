@@ -3535,3 +3535,190 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   the leg-builder pattern (draft → compute neighbour entries → wire doors → graft
   content) is the template for any future multi-screen route. Movement 4's quests/
   cutscenes can hang real tasks off these legs.
+
+## ADR-057 — S15i (Movement Five / Task 4): PUERTO SOL GROWS — the dock district
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the S15i "MOVEMENT 5" decree: grow the §A5 Ch.2 port the same
+  way Otterbrook/Brickton grew — the World-Block law's FOURTH application — so it reads
+  as a working CITY, not one plaza, and unblocks a real dock-side task.)
+- **Context — THE GOTCHA that makes it not a Brickton clone:** `buildPuertoSol`'s 52×34
+  core is WALLED north/east/west ('B' at col 51 rows 0-27) with only the SOUTH (dock/sea)
+  open — UNLIKE Brickton, whose core had a road gap at its east edge. So you cannot grow
+  east THROUGH the frozen wall. And `cityViolations` counts a "street" row as one whose
+  street cells exceed 40% of the GROWN width (~50 cells at W=128), so the core's ~50-cell
+  streets STOP COUNTING at the bigger size. The grown sweep had to be carried by NEW
+  full-region streets; the core's facades still feed `faceBands` at bands 2 & 5.
+- **Decision — FREEZE THE 1898 CORE, PROVEN.** `buildPuertoSol` is untouched and copied
+  byte-for-byte into the top-left of a 128×44 grid (5632 tiles, ≈3.2×); every growth
+  write lands strictly OUTSIDE the core (`x ≥ 52 || y ≥ 34`). `world_block.test.ts` gains
+  an 8-test PUERTO SOL block: two grown builds byte-identical, the live MAPS entry equals
+  a fresh `growPuertoSol`, the core GRID sits char-for-char in the top-left, and every
+  core prop/npc/sign keeps its coordinates (triggers stay a PREFIX — the malecón beat
+  appends). The byte-identical-core proof MOVED here from maps_ch2.test (which now only
+  asserts the live map is the grown build).
+- **Decision — THE DOCK DISTRICT wraps the SOUTHEAST, joined at the dock-band SEAM.** The
+  only open core edge is the dock band (col 51 rows 28-29 = walkable '='); the new MALECÓN
+  (a waterfront dock band, rows 26-31, cols 52-126) meets it there, and the harbour (sea)
+  fills the south + far edges (the gotcha's cliff-N / wall-E / sea-S edges). An avenue
+  (col 90) drops from the streets to the malecón — one continuous spine to the seam.
+- **Decision — TWO WIDE STREETS carry the ADR-012 sweep; the MEGAS rise from POCKETS.** A
+  non-mega `buildDistrict` lays two full-width streets (rows 6 + 24, each 75 cells > 40%
+  of 128) joined by the avenue — its facades back onto the streets, ≤3 tall, never crossing
+  a lane. The MEGAS (u≥11, tops off-screen) need 14 clear rows, so they get their own tall
+  bands FLANKING the avenue (cols 54-85 + 96-123, backing row 24, rising clear of street 1
+  at rows 6-8) — the Brickton downtownHigh precedent, but COMMON here (5 placed: cathedral
+  / grand hotel / customs house) because the waterfront has the room Brickton's tight core
+  lacked. `cityViolations(MAPS.puerto_sol) === []` AT 128×44 (the maps.test sweep runs on
+  it unexempted). ADR-053: ONE shared `occupied` list across all districts.
+- **Decision — NEW COLONIAL MEGAS, never a downtown reskin (ADR-050 per-area law).** Three
+  bespoke faces register beside the existing `bldg_ps_*` (index.ts addPixmap + SHIPPED_DIMS
+  + AREA_SKINS.puerto_sol): `bldg_ps_catedral` (PAPER, portico, u11), `bldg_ps_gran_hotel`
+  (GOLD, balconies, u12), `bldg_ps_aduana` (ORANGE, portico, u11) — masonry + arched bases,
+  colonial ramps + Spanish signage, so the port reads grand without going modern. The
+  warehouse skin joins the roster too. They render 98-114 × 220-236px (tops past the
+  225px viewport, verified). No COLOSSI/FAMILY change → the levelkit FNV pins never move.
+- **Decision — the JUNGLE GATE RELOCATES (the one door change).** The east gate (was col
+  51 rows 20-22 → jungle_1) moves to the new far-east edge (col 127, the street-2 row);
+  its target (jungle_1's west mouth) is unchanged. `buildJungle1` now takes a `psReturn`
+  (defaulting to the exported `PUERTO_SOL_JUNGLE_RETURN` = the lane just inside the new
+  gate, W-2 × the street row — the doorstepOf analog, ADR-012's computed-coord discipline),
+  so jungle_1's west door lands you correctly. COSTA's north gate + the boat/pier/board/
+  arrival wiring stay byte-identical. `world_block` pins the relocation + the costa freeze.
+- **Decision — it EARNS its size (§B4).** A dockside MARKET NOOK (`placeNook 'courtyard'`
+  on the malecón — open left/right onto the waterfront, the memory gotcha) with stalls; a
+  hidden PRESENT (the gift-box pattern → `aloe_leaf`, signBeat loot); a 2nd §A4.5 rest
+  (the malecón picnic — content-validate's PICNIC TABLES bumped puerto_sol 1→2); four §A11
+  dock NPCs (one obsession each — the crane operator who ranks lifts by sadness, the
+  tallyman with the crate that never reconciles, the board-keeper who waits for a Q, the
+  salvage vendor); piers into the harbour; and a flag-gated CUTSCENE (`puerto_malecon` →
+  `puertoMaleconScene`, the cut/dlg/camera east-pan over the working harbour, once).
+- **Decision — re-proven with a tile+PROP-solid BFS (the validator's BFS ignores prop
+  solids).** A throwaway probe seeded from the core BFS'd the player foot-box over tile
+  solidity + every prop solid (excluding ifFlag props): cityViolations CLEAR, core
+  byte-identical, ALL fixtures (the boat, the costa gate, the relocated jungle gate, every
+  NPC/sign/phone/picnic/present, the malecón trigger) reachable — the 5 off-screen megas
+  + palms strand nothing. Deleted after (the probe pattern from ADR-056). NO FNV re-pin
+  (`buildDistrict`/`placeNook` aren't sample-routed; `buildPuertoSol`'s body is untouched).
+- **Verification:** tsc + `npm run validate` (46 maps — puerto_sol clears reachability +
+  pressure UNWAIVED at the bigger size; 397 dialogue scripts) + full vitest **643 green**
+  (+8 over ADR-056: the world_block PUERTO SOL block) + `vite build` clean. Tiles 5632 ≤
+  12000, props 68 ≤ the pinned ≤120 cap (the p99 lever stays low). Frozen 1898 core
+  byte-identical (re-proven); the boat round-trip, costa wire, pyramid chain untouched.
+  The grown-map `.shots/` (grown Puerto Sol, the market nook) belong to the consolidated
+  QA pass (the ADR-056 precedent — `preview_screenshot` hangs on the WebGL canvas).
+- **Consequences:** the World-Block growth law now has a SEALED-CORE variant (grow around
+  a fully-walled core through its one open edge, carry the sweep with new full-region
+  streets) — the template for any future walled-core city (Lotus Harbor, Chandrapore's
+  districts). The dock district is the home for Task 3's dock-side quest.
+
+## ADR-058 — S15i (Movement Four / Task 3): REAL THINGS TO DO — two quests hung off the grown world
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the S15i "MOVEMENT 4" decree: the grown areas need real tasks +
+  cutscenes, not just space. Ch.1 still OWED its 5th §A10 quest; the new Puerto Sol dock
+  district (ADR-057) was built to host one.)
+- **Decision — TWO new §A10 quests, each wired in ALL THREE places (the strict law).** A
+  quest is live only when it appears in `QUESTS` (quests.ts) AND the §A10 `canon` QuestPin
+  map (content-validate.ts, exact name/chapter/giver/startFlag/objectiveFlags/rewardItem/
+  doneFlag/caller) AND the matching `CHAPTER_MANIFESTS[ch].quests` (chapters.ts) — the
+  validator pins all three BOTH directions. Quest flags are globally unique; the giver npc
+  must stand on a map. The two quests:
+  - **Ch.1 #5 — THE WALKERS' REGISTER (the route quest, §A10 flow law).** Solved WHILE
+    travelling the Long Walk (ADR-056). Hal (the `road_traveler` already on meadow_mile)
+    asks you to walk the whole way and really LOOK at each stretch, then sign the Walkers'
+    Register at the overpass. Three "noticing" tokens fire as a single `walk_token` trigger
+    id — one per leg, the objective flag chosen by `this.mapDef.id` — so it's one runTrigger
+    case, not three. The OVERPASS register post (a `sign`, computed OFF the trail so it never
+    blocks the lane) completes it in `signBeat` (sign → `completeQuest` → reward + caller).
+    Reward: `walkers_charm` (Luck +6). Caller: Old Pell, damage 430. The verb (notice/walk/
+    sign) is new to the ledger; the footprints are local (your name in the Register), mechanical
+    (the charm), and finale (Pell). A sincere ending about going the long way.
+  - **Ch.2 — THE QUIET CRATE (the grown dock district).** The tallyman's six-year mystery: a
+    crate that never leaves, never opens. You ask the crane man (it weighs "piano-sad"), the
+    board-keeper (the boat left no name), the salvage man (a captain's button came off it) —
+    three clues that add up to a sea captain's piano. Return to the tallyman; he opens it; the
+    count reconciles. Reuses the four §A11 dock NPCs Task 4 placed (the giver `ps_tally` + the
+    three clue NPCs via `crateClue`, which returns false when the quest is idle so their own
+    lines still show). Reward: `captains_button` (Luck +7). Caller: The Tallyman, heal 380.
+- **Decision — the reward charms are REAL shipping gear.** `walkers_charm` + `captains_button`
+  are kind `'charm'` (schema-forced Luck bonus, no wielder), added to ITEMS, and — because
+  every equippable needs drawn art — each gets a `WEAPON_ART` trinket row with a bespoke icon
+  (`drawWalkersCharmIcon` a pressed wildflower under glass, `drawButtonIcon` a brass anchor
+  button), palette-conformant under ADR-020. The §A8 charm line is open (only `armor` is a
+  closed list), so no manifest extension was needed beyond the WEAPON_ART rows.
+- **Decision — completion beats ARE the scripted cutscenes (the cut/dlg/camera pattern).** The
+  register-signing (Pell presses the charm into your hand) and the crate-opening (the tallyman
+  plays one key, the count reconciles, the captain's button finds your hand) both run as staged
+  beats with `this.cut`, sparkle bursts, and the victory jingle — the §A11 sincerity the Bible
+  demands, played straight. Both quests are PERMANENTLY non-missable: the Long Walk legs persist
+  beside the bus (a player who bussed can walk back any time), the dock NPCs persist, and a full
+  bag commits nothing (the reward + caller wait) — zero missables, re-proven by a tile+prop BFS
+  (the new register sign + the three token triggers all reachable on every leg).
+- **Verification:** tsc + `npm run validate` (now 8 quests · 41 items · 413 dialogue scripts; the
+  §A10 pins + the chapter manifests green BOTH directions; map-quality still 41 clear + 5 waived —
+  the overpass register sign is reachable, unflagged) + full vitest **643 green** (the WEAPON_ART
+  completeness mirror passes with the two new icons) + `vite build` clean. The tile+prop BFS
+  cleared all four legs' quest fixtures.
+- **Consequences:** Ch.1 now has its full FIVE §A10 quests; Ch.2 has three of five. The
+  quest-wiring recipe (data + the QuestPin + the chapter array + dialogue + a questTalk/signBeat
+  beat + reward art) is the template for the remaining regional quests the grown areas owe
+  (Otterbrook's districts, Brickton's downtown, the other Ch.2+ slots) — left for their sessions
+  per Appendix rule 4. Two more finale callers join the ledger (Old Pell, The Tallyman).
+
+## ADR-059 — S15i (Movement Seven / Task 6): WALK-THROUGH VENUES — the Cage Park + the Golf Resort
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the S15i "MOVEMENT 7" decree: THE CAGE and golf shouldn't open off a
+  bare door / a lawn-side caddy — each deserves an APPROACH you walk through, with new art,
+  signage, a present, and a cutscene. The creative new-art movement, made EXTREMELY detailed.)
+- **Decision — THE CAGE PARK (Brickton → cage_park → the_cage).** `buildCagePark()` (maps.ts):
+  a real neighbourhood park between the city and the court — a practice half-court (asphalt +
+  lines + a backboard), benches, chain-link, a community MURAL (the new `cage_mural` prop:
+  a sunset wall, a big ball, three kids going UP), "THE CAGE →" signage, two §A11 NPCs (the
+  old head who saw the best game on a Tuesday; the kid practicing his walk-on face), a hidden
+  present (`cage_park_gift` → basket_basic), and a first-arrival CUTSCENE (`cage_park_reveal` →
+  `cageParkScene`, a north-pan toward the gate). Its OWN skin roster `AREA_SKINS.cage_park`
+  (a gritty warehouse/brownstone/shop slice — never Brickton's glass). **The re-route:** the
+  frozen 2077 core's cage gate stays byte-identical (literal → the_cage); a POST-BUILD FIXUP
+  on the live map (the ADR-056 foot-door pattern) rewrites MAPS.brickton's door → cage_park,
+  and the_cage's return door now lands on cage_park — symmetric (Brickton ⇄ park ⇄ cage).
+  `the_cage` has no programmatic entries, so changing its return was safe. world_block +
+  the hoops validator pins re-pinned for the re-route.
+- **Decision — THE GOLF RESORT (costa_estrella → golf_resort → golf_clubhouse).** The user's
+  "golf shouldn't start on a bare lawn" decree. `buildGolfResort()` is an expensive SUBDIVISION
+  off costa's clifftop gate: a manicured FAIRWAY (the new `'m'`/`fairway` tile — mown stripes),
+  sand bunkers, a water hazard, three pastel MANSIONS (NEW `mansion_a/b/c` drawHouse sprites —
+  pitched roofs, chimneys, registered) lining a cart path, a gatehouse, "THE LINKS" signage,
+  two §A11 NPCs (the gardener who names every blade; the member who closes his curtains against
+  the view he paid for), a present (`golf_resort_gift` → star_cola), and a CUTSCENE
+  (`golf_resort_reveal` → `golfResortScene`). At the head of the path the GRAND CLUBHOUSE
+  (new `clubhouse_grand` sprite) opens into `buildGolfClubhouse()` — a pro-shop interior where
+  **FITO the caddy now starts the round (moved INDOORS from costa, the task's core ask)**;
+  `caddyBeat` is map-agnostic so the stroke/Invitational flow is unchanged. costa keeps a
+  STARTER greeter at the gate. New roster `AREA_SKINS.golf_resort` (the mansion sprites).
+- **Decision — NEW ART, registered + palette-clean (ADR-020).** `drawCageMural` + `fairwayTile`
+  (tiles.ts, registered in TILESET / `index.ts` / CHAR_LEGEND), the three mansions + gatehouse +
+  `clubhouse_grand` (drawHouse, registered in index.ts). Each AREA wears its OWN roster (the
+  per-area-skins law) — the cage park gritty, the resort pastel, neither reusing another's.
+  Verified to render without throwing at sensible sizes (mansions 98–114px wide, the clubhouse
+  130×82, the mural 46×28, the fairway tile walkable).
+- **Decision — re-proven with the tile+PROP-solid BFS (the validator's BFS ignores prop solids).**
+  Throwaway probes BFS'd the player foot-box over tile + every prop solid: cage_park (mural,
+  rec-block buildings, trees), golf_resort (the three mansions, the gatehouse, the clubhouse,
+  the water hazard), golf_clubhouse, and the re-walked costa_estrella — EVERY sign/npc/present/
+  door-zone reachable and every door landing walkable. (Two first-pass strandings fixed: the cage
+  present sat under a building → moved to open grass; the rec-block + a hedge nook collided →
+  the nook removed, the buildings moved to the south corners.)
+- **Verification:** tsc + `npm run validate` (now 49 maps — +cage_park, golf_resort, golf_clubhouse;
+  431 dialogue scripts; the hoops + links validator pins updated for both re-routes, map-quality
+  44/49 clear + 5 waived, the new venues unflagged) + full vitest **643 green** + `vite build` clean.
+  No FNV re-pin (no sample-routed generator changed; buildCagePark/buildGolfResort are hand-built
+  + hand-placed). The `.shots/` of the cage park, the mural, the resort, and the clubhouse belong
+  to the consolidated QA pass (the ADR-056/057 precedent — `preview_screenshot` hangs on WebGL).
+- **Consequences:** both venues are now walk-through EXPERIENCES with their own art, signage,
+  presents, and cutscenes — and the post-build-fixup re-route pattern (freeze the core literal,
+  rewrite the live door) is proven for a SECOND door (the cage gate, after the docks + foot
+  return). The golf round-start lives indoors where it belongs. THE WORLD, DEEPENED's seven
+  movements (ADR-050–059) are complete: the building forge, the living-map verbs, the size law,
+  the Long Walk, the grown Puerto Sol, the real quests, and now the two new venues.

@@ -48,7 +48,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     ],
     // ADR-056 — THE LONG WALK: the four foot legs bridging Otterbrook → Brickton
     maps: ['otterbrook', 'hill_road', 'hickory_hill', 'brickton', 'bus_interior', 'meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'],
-    quests: ['biscuit_come_home', 'mail_must_move', 'lemonade_empire', 'arcade_legend'],
+    quests: ['biscuit_come_home', 'mail_must_move', 'lemonade_empire', 'arcade_legend', 'walkers_register'],
   },
 
   2: {
@@ -70,7 +70,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
       { id: 'valle_dorado', kind: 'village' },
     ],
     maps: ['brickton_docks', 'puerto_sol', 'jungle_1', 'jungle_2', 'valle_dorado'],
-    quests: ['llama_drama', 'museum_gold'],
+    quests: ['llama_drama', 'museum_gold', 'the_quiet_crate'],
   },
 
   /* =========================== UNLANDED (Ch.3–10) =========================== */

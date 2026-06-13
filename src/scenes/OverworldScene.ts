@@ -1630,9 +1630,86 @@ export class OverworldScene extends Phaser.Scene {
         // cornering it drops the act (it fights when cornered)
         await this.llamaBeat(n, true);
         return true;
+      // S15i Task 3 (ADR-058) — Ch.1 #5: THE WALKERS' REGISTER. Hal gives it;
+      // the three "noticing" tokens fire as triggers; you sign at the overpass post.
+      case 'road_traveler':
+        await this.travelerBeat();
+        return true;
+      // S15i Task 3 — Ch.2 dock quest: THE QUIET CRATE. The tallyman gives + closes
+      // it; the crane man / board-keeper / salvage man each carry one clue.
+      case 'ps_tally':
+        await this.tallyBeat();
+        return true;
+      case 'ps_crane':
+        return this.crateClue('q_crate_crane', 'q_crate_crane_clue');
+      case 'ps_board':
+        return this.crateClue('q_crate_board', 'q_crate_board_clue');
+      case 'ps_market':
+        return this.crateClue('q_crate_market', 'q_crate_market_clue');
       default:
         return false;
     }
+  }
+
+  /* ---------------- S15i Task 3 (ADR-058) — Movement 4 quest beats ---------------- */
+
+  /** Ch.1 #5 — Hal on Meadow Mile gives the route quest (the register is signed
+   *  at the overpass post; the three tokens fire as walk triggers). */
+  private async travelerBeat(): Promise<void> {
+    if (!GS.flag('q_walkreg')) {
+      await this.dlg.say(...DIALOGUE.q_walkreg_ask);
+      GS.setFlag('q_walkreg');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_walkreg_done')) {
+      await this.dlg.say(...DIALOGUE.q_walkreg_after);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_walkreg_active);
+  }
+
+  /** Ch.2 — one dock worker's clue toward THE QUIET CRATE; true once it lands,
+   *  so the NPC's own §A11 line shows the rest of the time (fall-through). */
+  private async crateClue(flag: string, dialogueId: string): Promise<boolean> {
+    if (!GS.flag('q_crate') || GS.flag('q_crate_done') || GS.flag(flag)) return false;
+    await this.dlg.say(...DIALOGUE[dialogueId]);
+    GS.setFlag(flag);
+    AUDIO.sfx('cursor');
+    const n = ['q_crate_crane', 'q_crate_board', 'q_crate_market'].filter((f) => GS.flag(f)).length;
+    toast(this, `A piece of it. (${n}/3 — then tell the tallyman.)`);
+    return true;
+  }
+
+  /** Ch.2 — the tallyman gives the crate quest and, once you know, opens it */
+  private async tallyBeat(): Promise<void> {
+    if (!GS.flag('q_crate')) {
+      await this.dlg.say(...DIALOGUE.q_crate_ask);
+      GS.setFlag('q_crate');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_crate_done')) {
+      await this.dlg.say(...DIALOGUE.q_crate_after);
+      return;
+    }
+    const allClues = ['q_crate_crane', 'q_crate_board', 'q_crate_market'].every((f) => GS.flag(f));
+    if (!allClues) {
+      await this.dlg.say(...DIALOGUE.q_crate_active);
+      return;
+    }
+    const result = completeQuest('the_quiet_crate');
+    if (result === 'hands-full') {
+      await this.dlg.say(...DIALOGUE.q_crate_full);
+      return;
+    }
+    GS.setFlag('q_crate_told');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - 16, 12);
+    await this.dlg.say(...DIALOGUE.q_crate_open);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
   }
 
   /* ---------------- S14: quests #5–6 (§A10, the S9 machines) ---------------- */
@@ -2345,6 +2422,11 @@ export class OverworldScene extends Phaser.Scene {
         meadow_gift_woods: 'basket_basic',
         meadow_gift_far: 'salt_shaker',
         otter_woods_gift: 'star_cola',
+        // S15i Task 4 (ADR-057): the grown Puerto Sol dock district's cached present
+        ps_dock_gift: 'aloe_leaf',
+        // S15i Task 6 (ADR-059): the Cage Park's bench-left basket + the Links cooler
+        cage_park_gift: 'basket_basic',
+        golf_resort_gift: 'star_cola',
       };
       if (dialogueId in loot) {
         const itemId = loot[dialogueId];
@@ -2359,6 +2441,34 @@ export class OverworldScene extends Phaser.Scene {
         this.fadeRestart();
         return true;
       }
+    }
+    // S15i Task 3 (ADR-058) — Ch.1 #5: the WALKERS' REGISTER post. Signing it
+    // completes the route quest (reward + caller via completeQuest); a full bag
+    // commits nothing, so the charm waits (zero missables).
+    if (dialogueId === 'walkers_register_book') {
+      if (GS.flag('q_walkreg_done')) {
+        await this.dlg.say(...DIALOGUE.walkers_register_after);
+        return true;
+      }
+      if (!GS.flag('q_walkreg')) {
+        await this.dlg.say(...DIALOGUE.walkers_register_book); // the dusty ledger (quest not yet taken)
+        return true;
+      }
+      const seenAll = ['q_walkreg_mile', 'q_walkreg_woods', 'q_walkreg_far'].every((f) => GS.flag(f));
+      if (!seenAll) {
+        await this.dlg.say(...DIALOGUE.walkers_register_wait);
+        return true;
+      }
+      const result = completeQuest('walkers_register');
+      if (result === 'hands-full') {
+        await this.dlg.say(...DIALOGUE.walkers_register_full);
+        return true;
+      }
+      GS.setFlag('q_walkreg_signed');
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE.walkers_register_sign);
+      AUDIO.jingle('victory', 1600, this.mapDef.music);
+      return true;
     }
     // S9b: the twins' presents — open once, the empty box stays (gated props)
     if (dialogueId === 'gift_ana' || dialogueId === 'gift_vivi') {
@@ -2824,6 +2934,23 @@ export class OverworldScene extends Phaser.Scene {
       case 'orientation_gate':
         await this.orientationGateScene();
         break;
+      // S15i Task 3 (ADR-058) — THE WALKERS' REGISTER's three "noticing" tokens:
+      // one trigger id per leg, the flag chosen by which leg you're on. Fires only
+      // while the quest is live; non-missable (re-cross any leg to catch a missed one).
+      case 'walk_token': {
+        const tokenFlag: Record<string, string> = {
+          meadow_mile: 'q_walkreg_mile', meadow_woods: 'q_walkreg_woods', meadow_far: 'q_walkreg_far',
+        };
+        const flag = tokenFlag[this.mapDef.id];
+        if (flag && GS.flag('q_walkreg') && !GS.flag('q_walkreg_done') && !GS.flag(flag)) {
+          GS.setFlag(flag);
+          AUDIO.sfx('ember');
+          this.sparkleBurst(this.player.x, this.player.y - 14, 8);
+          const seen = ['q_walkreg_mile', 'q_walkreg_woods', 'q_walkreg_far'].filter((f) => GS.flag(f)).length;
+          toast(this, `You really looked. (${seen}/3 stretches noticed.)`);
+        }
+        break;
+      }
       // S15i M3 (ADR-056) — THE LONG WALK's two flag-gated cutscene beats
       case 'woods_vignette':
         if (!GS.flag('woods_vignette_done')) await this.walkBeat('woods_vignette');
@@ -2862,6 +2989,19 @@ export class OverworldScene extends Phaser.Scene {
         this.cut = true;
         await this.dlg.say(...DIALOGUE.puerto_arrival);
         this.cut = false;
+        break;
+      // S15i Task 4 (ADR-057): the grown DOCK DISTRICT's flag-gated waterfront beat —
+      // a warm look over the working harbor on first crossing into the new malecón
+      case 'puerto_malecon':
+        if (!GS.flag('puerto_malecon_done')) await this.puertoMaleconScene();
+        break;
+      // S15i Task 6 (ADR-059): the CAGE PARK's first-arrival beat (the approach reveal)
+      case 'cage_park_reveal':
+        if (!GS.flag('cage_park_reveal_done')) await this.cageParkScene();
+        break;
+      // S15i Task 6 (ADR-059): the GOLF RESORT's first-arrival beat (the estates reveal)
+      case 'golf_resort_reveal':
+        if (!GS.flag('golf_resort_reveal_done')) await this.golfResortScene();
         break;
       case 'valle_arrival':
         if (!GS.flag('grin_defeated')) {
@@ -3006,6 +3146,67 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch2_card);
     AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /**
+   * S15i Task 4 (ADR-057) — THE MALECÓN: a warm waterfront beat on first crossing
+   * into the grown DOCK DISTRICT. The party takes in the working harbor — cranes,
+   * customs houses, the cathedral tower over it all — and the road east to the
+   * jungle. Paced by a gentle east-pan so each line lands, then home (the cut/dlg/
+   * camera pattern; fires once via puerto_malecon_done).
+   */
+  /**
+   * S15i Task 6 (ADR-059) — THE CAGE PARK: the first-arrival beat. You come off the
+   * Brickton street into a real neighbourhood park — the mural, the practice court, a
+   * ball bouncing somewhere ahead — and the chain-link gate to THE CAGE up at the top.
+   * A gentle north-pan over the narration, then home (the cut/dlg/camera pattern, once).
+   */
+  private async cageParkScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('cage_park_reveal_done');
+    await this.wait(220);
+    // look UP toward the cage gate (north), over the narration, then back
+    this.cameras.main.pan(this.player.x, Math.max(this.player.y - 200, 24), 2400, 'Sine.easeInOut', true);
+    await this.dlg.say(...DIALOGUE.cage_park_reveal.slice(0, 2));
+    AUDIO.sfx('cursor');
+    await this.dlg.say(...DIALOGUE.cage_park_reveal.slice(2));
+    this.cameras.main.pan(this.player.x, this.player.y, 1000, 'Sine.easeInOut', true);
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    this.cut = false;
+  }
+
+  /**
+   * S15i Task 6 (ADR-059) — THE LINKS ESTATES: the first-arrival beat. Past the
+   * clifftop gate, the money: manicured fairway, pastel mansions, a fountain you
+   * could bathe a horse in, and the grand clubhouse up at the head of the cart path.
+   * A north-pan over the narration, then home (cut/dlg/camera, once).
+   */
+  private async golfResortScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('golf_resort_reveal_done');
+    await this.wait(220);
+    this.cameras.main.pan(this.player.x, Math.max(this.player.y - 200, 24), 2400, 'Sine.easeInOut', true);
+    await this.dlg.say(...DIALOGUE.golf_resort_reveal.slice(0, 2));
+    AUDIO.sfx('cursor');
+    await this.dlg.say(...DIALOGUE.golf_resort_reveal.slice(2));
+    this.cameras.main.pan(this.player.x, this.player.y, 1000, 'Sine.easeInOut', true);
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    this.cut = false;
+  }
+
+  private async puertoMaleconScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('puerto_malecon_done');
+    await this.wait(220);
+    const mapW = this.mapDef.grid[0].length * 16;
+    // look east down the quay, over the narration, then back to the party
+    this.cameras.main.pan(Math.min(this.player.x + 220, mapW - 16), this.player.y, 2600, 'Sine.easeInOut', true);
+    await this.dlg.say(...DIALOGUE.puerto_malecon.slice(0, 2));
+    AUDIO.sfx('cursor');
+    await this.dlg.say(...DIALOGUE.puerto_malecon.slice(2));
+    this.cameras.main.pan(this.player.x, this.player.y, 1000, 'Sine.easeInOut', true);
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.cut = false;
   }
 

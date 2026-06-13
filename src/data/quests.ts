@@ -154,5 +154,55 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'damage', power: 435 },
       },
     }),
+
+    /* ---- S15i Task 3 (ADR-058) — Ch.1's 5th quest: the ROUTE quest on the Long
+     * Walk legs (§A10 flow law: solved WHILE travelling, changes how you read the
+     * map). Hal asks you to walk the whole way and notice each stretch; you sign the
+     * Walkers' Register at the overpass. A sincere ending about going the long way. */
+    Q({
+      id: 'walkers_register',
+      name: "The Walkers' Register",
+      chapter: 1,
+      giver: 'road_traveler',
+      startFlag: 'q_walkreg',
+      objectives: [
+        { id: 'mile', text: 'On MEADOW MILE, notice the flower the bus people never slow down to see.', flag: 'q_walkreg_mile' },
+        { id: 'woods', text: 'In the WHISPERWOOD, notice what the quiet leaves behind.', flag: 'q_walkreg_woods' },
+        { id: 'far', text: 'In the FAR MEADOW, notice the spot where the air goes electric.', flag: 'q_walkreg_far' },
+        { id: 'sign', text: "Sign the Walkers' Register at the overpass — both names, yours and Hal's.", flag: 'q_walkreg_signed' },
+      ],
+      rewardItem: 'walkers_charm',
+      doneFlag: 'q_walkreg_done',
+      caller: {
+        name: 'Old Pell',
+        quote: 'The Register has a new name today, and it WALKED here. Tell the dark some folks still go the long way. Everything we have — send it.',
+        effect: { kind: 'damage', power: 430 },
+      },
+    }),
+
+    /* ---- S15i Task 3 (ADR-058) — a Ch.2 dock-district quest (Puerto Sol's grown
+     * waterfront, ADR-057). The tallyman's six-year mystery: one crate that never
+     * leaves, never opens. Ask the crane man, the board-keeper, the salvage man; the
+     * clues add up to a sea captain's piano. A quiet, sincere §A11 dock story. */
+    Q({
+      id: 'the_quiet_crate',
+      name: 'The Quiet Crate',
+      chapter: 2,
+      giver: 'ps_tally',
+      startFlag: 'q_crate',
+      objectives: [
+        { id: 'crane', text: 'Ask the crane man what the strange crate WEIGHS. He lifted it once.', flag: 'q_crate_crane' },
+        { id: 'board', text: 'Ask the board-keeper which boat left it. He remembers every name — even the gone one.', flag: 'q_crate_board' },
+        { id: 'market', text: 'Ask the salvage man what else came off that same boat.', flag: 'q_crate_market' },
+        { id: 'tell', text: 'You know what is inside now. Go tell the tallyman. Gently.', flag: 'q_crate_told' },
+      ],
+      rewardItem: 'captains_button',
+      doneFlag: 'q_crate_done',
+      caller: {
+        name: 'The Tallyman',
+        quote: 'The count is CLEAN, niño! Six years, and it was music the whole time. Take everything — some numbers you let go.',
+        effect: { kind: 'heal', power: 380 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

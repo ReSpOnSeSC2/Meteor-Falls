@@ -373,6 +373,25 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       price: 0,
       text: 'Six llamas contributed. One contributed reluctantly. Defense +12.',
     }),
+    /* ---- S15i Task 3 (ADR-058) — Movement 4 quest rewards ---- */
+    I({
+      id: 'walkers_charm',
+      name: "Walker's Charm",
+      kind: 'charm',
+      luck: 6,
+      usableInBattle: false,
+      price: 0,
+      text: 'A pressed wildflower under glass, signed into the Register. You notice things now. Luck +6.',
+    }),
+    I({
+      id: 'captains_button',
+      name: "Captain's Button",
+      kind: 'charm',
+      luck: 7,
+      usableInBattle: false,
+      price: 0,
+      text: 'Brass, off a coat folded on a piano. It wants to go back to sea. Luck +7.',
+    }),
     I({
       id: 'tin_sun_pendant',
       name: 'Tin Sun Pendant',

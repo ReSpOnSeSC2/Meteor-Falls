@@ -690,6 +690,15 @@ function sandTile(seed: number): Pixmap {
   return pm;
 }
 
+/** S15i Task 6 (ADR-059) — manicured FAIRWAY: bright mown green with mowing stripes
+ *  (deliberate bands, not noise — ADR-020). The golf resort's course tile. */
+function fairwayTile(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.GRASS, 3));
+  for (let y = 1; y < TILE; y += 4) pm.hline(0, y, TILE, px(RAMP.GRASS, 2)); // the cut stripes
+  return pm;
+}
+
 /** jungle floor — deep shaded green, one leaf-litter cluster */
 function jungleFloor(seed: number): Pixmap {
   const pm = new Pixmap(TILE, TILE);
@@ -825,6 +834,7 @@ export const TILESET: TileEntry[] = [
   { name: 'dock', solid: false, make: dockTile },
   { name: 'plaza', solid: false, make: () => plazaTile(2) },
   { name: 'sand_a', solid: false, make: () => sandTile(3) },
+  { name: 'fairway', solid: false, make: fairwayTile }, // S15i Task 6 (ADR-059) — the golf course
   { name: 'jungle_floor', solid: false, make: () => jungleFloor(4) },
   { name: 'jungle_wall', solid: true, make: jungleWall },
   { name: 'pyramid_floor', solid: false, make: () => pyramidFloor(0) },
@@ -3020,6 +3030,40 @@ export function drawBackboardProp(): Pixmap {
   }
   pm.outline(C.outline);
   pm.shadowUnder(13, 42, 7, px(RAMP.INK, 1));
+  return pm;
+}
+
+/** THE CAGE PARK's community MURAL (S15i Task 6, ADR-059) — a painted handball
+ *  wall: a sunset court, a big ball, three kids going UP. Flat fills + deliberate
+ *  marks (ADR-020), solid (you read it, you don't walk through it). */
+export function drawCageMural(): Pixmap {
+  const pm = new Pixmap(46, 28);
+  // the wall: a warm sunset sky over an asphalt band
+  pm.rect(0, 0, 46, 18, px(RAMP.ORANGE, 3));
+  pm.rect(0, 8, 46, 6, px(RAMP.MAGENTA, 2)); // a sunset stripe
+  pm.rect(0, 18, 46, 10, px(RAMP.EARTH, 1)); // the court
+  // the big ball / low sun, off-centre (the focal mark)
+  pm.ellipse(12, 13, 8, 8, px(RAMP.ORANGE, 1));
+  pm.ellipse(12, 13, 7, 7, px(RAMP.GOLD, 3));
+  pm.vline(12, 6, 15, px(RAMP.ORANGE, 0)); // ball seams
+  pm.hline(5, 13, 15, px(RAMP.ORANGE, 0));
+  pm.set(8, 9, px(RAMP.ORANGE, 0));
+  pm.set(16, 18, px(RAMP.ORANGE, 0));
+  // three kids going up — bold flat silhouettes, arms reaching
+  const kid = (x: number, ramp: number): void => {
+    pm.rect(x, 13, 3, 8, px(ramp, 2)); // body
+    pm.set(x + 1, 11, px(RAMP.EARTH, 2)); // head
+    pm.vline(x + 2, 8, 4, px(ramp, 2)); // arm up
+    pm.set(x - 1, 15, px(ramp, 1)); // arm out
+  };
+  kid(26, RAMP.RED);
+  kid(33, RAMP.CYAN);
+  kid(40, RAMP.PURPLE);
+  // the wall frame + a tag corner
+  pm.frame(0, 0, 46, 28, px(RAMP.PAPER, 2));
+  pm.set(3, 24, px(RAMP.CYAN, 3));
+  pm.set(4, 24, px(RAMP.GOLD, 3));
+  pm.outline(C.outline);
   return pm;
 }
 
