@@ -43,6 +43,10 @@ export interface BustTick {
   ward: boolean;
   reflect: boolean;
   steeled: boolean;
+  /** Dorin's martial stances — braced (earth/red) and flowing (cyan) ride the
+   *  same hex PIP, tinted for legibility (the build prompt §1.5 card pips). */
+  braced: boolean;
+  flowing: boolean;
   statuses: CardStatusFlags;
 }
 
@@ -90,6 +94,8 @@ export class BustView {
     ward: false,
     reflect: false,
     steeled: false,
+    braced: false,
+    flowing: false,
     statuses: NO_STATUS,
   };
 
@@ -286,7 +292,8 @@ export class BustView {
     // (reflect/mirror = the answering wall read gold/paper; ward = grass;
     // steeled = red brace; shield = cyan). Priority follows strength.
     const pipOn =
-      (flags.shield || flags.mirror || flags.ward || flags.reflect || flags.steeled) && this.state === 'alive';
+      (flags.shield || flags.mirror || flags.ward || flags.reflect || flags.steeled || flags.braced || flags.flowing) &&
+      this.state === 'alive';
     this.pip.setVisible(pipOn);
     if (pipOn) {
       const tint = flags.reflect
@@ -295,9 +302,9 @@ export class BustView {
           ? colorOf(px(RAMP.PAPER, 3))
           : flags.ward
             ? colorOf(px(RAMP.GRASS, 3))
-            : flags.steeled
-              ? colorOf(px(RAMP.RED, 3))
-              : colorOf(px(RAMP.CYAN, 3));
+            : flags.steeled || flags.braced
+              ? colorOf(px(RAMP.RED, 3)) // the brace/answer pip — steeled + Stone Brow Stance
+              : colorOf(px(RAMP.CYAN, 3)); // shield + Flowing Step
       this.pip.setTint(tint).setAlpha(0.7 + 0.3 * Math.sin(this.animT / 260));
     }
 

@@ -116,6 +116,7 @@ import {
   heroDefense,
   heroSpeed,
   heroGuts,
+  heroLuck,
   contractHomesick,
   homesickSkips,
   cryingMisses,
@@ -132,6 +133,10 @@ import {
   puppetTurns,
   mindImmune,
   STEELED_GUTS,
+  BRACED_DEFENSE,
+  FLOWING_SPEED,
+  bracedCounter,
+  flowingDodge,
 } from '../battle/formulas';
 import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
 import { colorOf, rgbOf, RAMP, px } from '../palette';
@@ -188,6 +193,10 @@ interface HeroStatus {
   ward: number;
   reflect: number;
   steeled: number;
+  /** Dorin's MARTIAL STANCES (§4). braced (Stone Brow Stance) = +Defense AND a
+   *  ~40% physical counter; flowing (Flowing Step) = +Speed AND a ~35% dodge. */
+  braced: number;
+  flowing: number;
 }
 
 const NO_HERO_STATUS = (): HeroStatus => ({
@@ -202,6 +211,8 @@ const NO_HERO_STATUS = (): HeroStatus => ({
   ward: 0,
   reflect: 0,
   steeled: 0,
+  braced: 0,
+  flowing: 0,
 });
 
 interface HeroUnit {
@@ -916,7 +927,7 @@ export class BattleScene extends Phaser.Scene {
       }
       if (options[pick] === 'Run') {
         const maxSpd = Math.max(...this.enemies.filter((e) => e.alive).map((e) => e.def.speed));
-        if (Math.random() < runChance(Math.round(heroSpeed(h.hero) * this.sunny), maxSpd)) {
+        if (Math.random() < runChance(this.heroSpeedS(h), maxSpd)) {
           await this.print(BATTLE_TEXT.run_ok);
           this.finish('ran');
           return false;
@@ -1153,6 +1164,21 @@ export class BattleScene extends Phaser.Scene {
     return Math.round((heroGuts(h.hero) + steeled) * this.sunny);
   }
 
+  /** the same temp-boost seam for Dorin's stances: Stone Brow Stance ('braced')
+   *  reads here as +Defense — the incoming-damage calc bounces off this, never a
+   *  baked-in boost (it ticks off in statusPhase like 'steeled'). */
+  private heroDefenseS(h: HeroUnit): number {
+    const braced = h.status.braced > 0 ? BRACED_DEFENSE : 0;
+    return Math.round((heroDefense(h.hero) + braced) * this.sunny);
+  }
+
+  /** Flowing Step ('flowing') reads here as +Speed — run chance + turn tempo
+   *  pick it up the steeled way (and it feeds the dodge gate in enemyAct). */
+  private heroSpeedS(h: HeroUnit): number {
+    const flowing = h.status.flowing > 0 ? FLOWING_SPEED : 0;
+    return Math.round((heroSpeed(h.hero) + flowing) * this.sunny);
+  }
+
   private heroVibeS(h: HeroUnit): number {
     return Math.round(h.hero.stats.vibe * this.sunny);
   }
@@ -1216,7 +1242,12 @@ export class BattleScene extends Phaser.Scene {
     // ---- resolve targets first (B backs out costless)
     let foeTargets: EnemyUnit[] = [];
     let allyTargets: HeroUnit[] = [];
-    if (ab.status === 'revive') {
+    if (ab.id === 'healing_o') {
+      // Healing Omega — the clutch party pickup: mass revive + 60% HP + a full
+      // cleanse, hitting EVERY ally (down or standing). No fallen-ally pick;
+      // it always lands, and his high Speed lands it FIRST (the build prompt §3).
+      allyTargets = this.heroes;
+    } else if (ab.status === 'revive') {
       const fallen = this.heroes.filter((x) => x.hero.down || x.odoHp.dead);
       if (fallen.length === 0) {
         await this.print(BATTLE_TEXT.no_fallen);
@@ -1321,6 +1352,24 @@ export class BattleScene extends Phaser.Scene {
         }
         return true;
       }
+      // Dorin's MARTIAL STANCES (§4) — self-buffs that make his turn a choice.
+      // Set to 4 (the steeled cadence): the cast turn + ~3 active enemy turns.
+      case 'braced': {
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          t.status.braced = 4;
+          await this.print(this.fill(BATTLE_TEXT.braced_on, t.hero.name));
+        }
+        return true;
+      }
+      case 'flowing': {
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          t.status.flowing = 4;
+          await this.print(this.fill(BATTLE_TEXT.flowing_on, t.hero.name));
+        }
+        return true;
+      }
       // S16 MIND WARP — turn ONE foe against its own allies. Bosses are
       // mind_immune; elites roll a level-scaled resist. Ω (the awakened
       // 'the_borrowed_voice') grips stronger foes and holds 2–3 turns.
@@ -1362,6 +1411,30 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'revive': {
         await this.fx.play(ab.fx, ctx);
+        // Healing Omega — mass revive + 60% HP + full cleanse across the whole
+        // party (the down rise; the standing top up to ≥60%, never reduced).
+        if (ab.id === 'healing_o') {
+          for (const t of allyTargets) {
+            const to60 = Math.max(1, Math.floor(t.hero.maxHp * 0.6));
+            if (t.hero.down || t.odoHp.dead) {
+              t.hero.down = false;
+              t.box.clearTint();
+              t.bust.revive();
+              t.odoHp.set(to60);
+            } else {
+              t.odoHp.set(Math.max(t.odoHp.value, to60));
+            }
+            // the cleanse half of the pickup — every bad status cleared
+            t.status.sunburn = 0;
+            t.status.crying = 0;
+            t.status.asleep = 0;
+            t.status.paralyzed = 0;
+            t.status.hushed = 0;
+          }
+          AUDIO.sfx('heal');
+          await this.print(this.fill(BATTLE_TEXT.revive_all, name));
+          return true;
+        }
         const t = allyTargets[0];
         t.hero.down = false;
         t.odoHp.set(Math.max(1, Math.floor(t.hero.maxHp / 2)));
@@ -1397,8 +1470,12 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'hushed': {
         await this.fx.play(ab.fx, ctx);
+        // Brainjam Gamma is the LONGER single-target lock (the anti-caster tool,
+        // §3) — it bridges the single→AoE jump by holding the wires shut a turn
+        // longer than α/Ω.
+        const turns = ab.id === 'brainjam_g' ? 5 : 3;
         for (const e of foeTargets) {
-          e.hushed = 3;
+          e.hushed = turns;
           await this.print(this.fill('{e} forgot every word it knew!', name, e));
         }
         return true;
@@ -1876,31 +1953,50 @@ export class BattleScene extends Phaser.Scene {
           // S16: an attack declares its CLASS (default physical). The element
           // drives BOTH the impact face and which of Jay's wards answers it.
           const element = move.element ?? 'physical';
+          // Flowing Step: the shared pre-damage MISS gate — a flowing monk slips
+          // the hit entirely (routes through live Speed/Luck; Pippa's evasion
+          // will share this seam). Read off the hero's status BEFORE any damage.
+          if (target.status.flowing > 0 && flowingDodge(this.heroSpeedS(target), heroLuck(target.hero), Math.random)) {
+            await this.print(this.fill(BATTLE_TEXT.flowing_dodge, '', e, target.hero.name));
+            break;
+          }
           // the move answers ON the card: impact burst + shake + flinch
           void this.fx.play(impactKeyOf(element), { targets: [this.cardTarget(target)] });
           this.cameras.main.shake(120, 0.006);
           // S10: defense reads through the 'body' slot (the Champion Jacket);
-          // S14: and through the §A4.5 SUNNY SIDE seam
-          let dmg = physicalDamage(e.def.offense * (move.mult ?? 1), Math.round(heroDefense(target.hero) * this.sunny), Math.random);
+          // S14: and through the §A4.5 SUNNY SIDE seam; Stone Brow Stance's
+          // 'braced' +Defense rides this read too (the temp-boost pattern).
+          let dmg = physicalDamage(e.def.offense * (move.mult ?? 1), this.heroDefenseS(target), Math.random);
           if (target.defending) dmg = Math.max(1, Math.floor(dmg / 2));
           // S16 LAYERED WARDS (§A3 amended) — Shield halves physical, Ward halves
           // elemental, Reflect & Mirror halve everything AND throw some back, with
           // the Bulwark + brace-and-answer synergies. One math seam (formulas.ts).
           const s = target.status;
-          const { taken, reflected } = mitigateIncoming(dmg, element, {
+          const mit = mitigateIncoming(dmg, element, {
             shield: s.shield > 0,
             ward: s.ward > 0,
             reflect: s.reflect > 0,
             mirror: s.mirror > 0,
             steeled: s.steeled > 0,
           });
+          const taken = mit.taken;
+          let reflected = mit.reflected;
+          // Stone Brow Stance: a braced monk answers a PHYSICAL hit with ~40%
+          // fist damage at the SAME `reflected` seam — patience made offense.
+          const countered = s.braced > 0 && element === 'physical';
+          if (countered) reflected += bracedCounter(dmg);
           this.applyHeroDamage(target, taken);
           await this.print(`${target.hero.name} took ${taken}!`);
           if (reflected > 0) {
-            this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `${reflected}`, s.reflect > 0 ? RAMP.GOLD : RAMP.CYAN);
+            const tint = s.reflect > 0 ? RAMP.GOLD : countered ? RAMP.RED : RAMP.CYAN;
+            this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `${reflected}`, tint);
             e.hp = Math.max(1, e.hp - reflected); // a reflection never lands the last hit
-            // the WALL THAT ANSWERS (reflect) vs Dorin's mirror — distinct lines
-            const line = s.reflect > 0 ? BATTLE_TEXT.reflect_back : '{e} caught its own reflection! It lost {t} HP!';
+            // the WALL THAT ANSWERS (reflect) vs the monk's counter vs Dorin's mirror
+            const line = s.reflect > 0
+              ? BATTLE_TEXT.reflect_back
+              : countered
+                ? BATTLE_TEXT.braced_counter
+                : '{e} caught its own reflection! It lost {t} HP!';
             await this.print(this.fill(line, '', e, String(reflected)));
           }
           break;
@@ -2080,6 +2176,9 @@ export class BattleScene extends Phaser.Scene {
       if (s.ward > 0 && --s.ward === 0) await this.print(this.fill(BATTLE_TEXT.ward_off, h.hero.name));
       if (s.reflect > 0 && --s.reflect === 0) await this.print(this.fill(BATTLE_TEXT.reflect_off, h.hero.name));
       if (s.steeled > 0 && --s.steeled === 0) await this.print(this.fill(BATTLE_TEXT.steeled_off, h.hero.name));
+      // Dorin's stances tick down and announce their fade beside the wards
+      if (s.braced > 0 && --s.braced === 0) await this.print(this.fill(BATTLE_TEXT.braced_off, h.hero.name));
+      if (s.flowing > 0 && --s.flowing === 0) await this.print(this.fill(BATTLE_TEXT.flowing_off, h.hero.name));
       if (s.productive > 0 && --s.productive === 0) {
         await this.print(`${h.hero.name} remembered it's summer. Offense is back!`);
       }
@@ -2273,6 +2372,8 @@ export class BattleScene extends Phaser.Scene {
         ward: h.status.ward > 0,
         reflect: h.status.reflect > 0,
         steeled: h.status.steeled > 0,
+        braced: h.status.braced > 0,
+        flowing: h.status.flowing > 0,
         statuses: {
           sunburn: h.status.sunburn > 0,
           crying: h.status.crying > 0,

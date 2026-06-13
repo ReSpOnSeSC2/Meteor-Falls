@@ -1716,6 +1716,17 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(The old light stops being a thing he has and becomes a thing he IS — the whole sky, pouring one way: forward.)',
     'No words. There was never going to be a word big enough. Just the light, and the boy, aimed.',
   ],
+  /* ---- DORIN ("The Monk's Full Path"): the Trial of the Mute Mountain. The
+     beat that gates his joining (Ch.9). Voice: formal, calm, faintly baffled by
+     the modern world; his lines read like sutras (§A11.2, played straight). ---- */
+  awake_trial_of_the_mute_mountain: [
+    'The Mute Mountain has not spoken in nine hundred years. The Trial is simple, the elders say: ask it nothing, and listen until it answers.',
+    '{dorin} sits. The cold comes down off the snow like a hand laid flat on the back of the neck.',
+    '@I have no question. I came only to be still.',
+    'And the mountain, which keeps every star that ever fell on it, leans close — and remembers them all to him at once.',
+    '(Not a gift. A recognition. The full Comet was always his; the mountain only showed him where he had been keeping it.)',
+    '@...Oh. (He stands, unhurried.) It was here the whole time. Thank you for the patience to find it.',
+  ],
   ember2_get: [
     'In the idol\'s hollow, behind where the grin was: a warmth it could not digest.',
     'JAY held up the Star Locket!',
@@ -1793,6 +1804,15 @@ export const BATTLE_TEXT = {
   steeled_on: '{user} set their jaw. (STEELED — Guts up!)',
   steeled_off: '{user} eases off the brace.',
   steeled_survive: '{user} was STEELED — and would not go down!',
+  // Dorin's MARTIAL STANCES (§4): braced = +Defense + a physical counter;
+  // flowing = +Speed + a dodge window. Each prints when it lands, acts, and fades.
+  braced_on: '{user} sank into Stone Brow Stance. (BRACED — Defense up, ready to answer.)',
+  braced_off: '{user} let the mountain go.',
+  braced_counter: 'Patience is also a fist — the blow came straight back! {e} took {t}!',
+  flowing_on: '{user} flowed into Flowing Step. (FLOWING — Speed up, hard to touch.)',
+  flowing_off: "{user}'s step settled.",
+  flowing_dodge: '{t} flowed around it — like water around a stone!',
+  revive_all: 'The old word reached everyone. Nobody at this table stays down — the party rose, breathing!',
   // MIND WARP (status 'puppet'): the borrowed voice fights for you
   puppet_on: '{e} went slack... then turned on its own side!',
   puppet_resist: "{e}'s mind slipped out of {user}'s grip!",

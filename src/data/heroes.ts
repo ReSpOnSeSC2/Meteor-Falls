@@ -111,14 +111,25 @@ export const HEROES: Record<HeroId, HeroDef> = {
     growth: { offense: 2.2, defense: 1.9, speed: 2.0, guts: 1.1, vibe: 2.0, luck: 0.7 },
     hp: { base: 34, lin: 7.0, quad: 0.09 },
     pp: { base: 12, lin: 2.8, quad: 0.035 },
+    // "The Monk's Full Path" — Dorin joins late (Ch.9) nearly complete, so his
+    // unlocks cluster high (L1 on join through ~L51). Vibe Comet Ω is NOT here:
+    // it AWAKENS at the Trial of the Mute Mountain (one-path rule, ADR-035) —
+    // see src/data/awakenings.ts + the content-validate canon manifest.
     unlocks: [
       { level: 1, ability: 'vibe_comet_a' },
+      { level: 1, ability: 'vibe_comet_b' }, // joins ready — the master, not the student
       { level: 1, ability: 'mirror' },
       { level: 1, ability: 'healing_a' },
+      { level: 1, ability: 'healing_b' }, // an actual HP heal so he can main-heal on join
+      { level: 1, ability: 'stone_stance' }, // a stance from the first turn
       { level: 40, ability: 'brainjam_a' },
       { level: 44, ability: 'healing_g' },
+      { level: 45, ability: 'flowing_step' },
+      { level: 46, ability: 'brainjam_g' },
+      { level: 48, ability: 'vibe_comet_g' },
+      { level: 49, ability: 'mirror_o' },
       { level: 50, ability: 'brainjam_o' },
-      { level: 52, ability: 'vibe_comet_o' },
+      { level: 51, ability: 'healing_o' }, // the revive backbone — his defining endgame support
     ],
   },
   // Pippa Quill — the Minimus royal page (§A3, S15h/ADR-048). NO Vibe and NO

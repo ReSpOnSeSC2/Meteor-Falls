@@ -739,6 +739,9 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     the_borrowed_voice: { hero: 'rex', ability: 'mindwarp_o', flag: 'awake_mindwarp_o', dialogue: 'awake_the_borrowed_voice' },
     the_wall_that_answers: { hero: 'rex', ability: 'powershield_s', flag: 'awake_powershield_s', dialogue: 'awake_the_wall_that_answers' },
     the_whole_sky: { hero: 'rex', ability: 'vibe_surge_x', flag: 'awake_surge_x', dialogue: 'awake_the_whole_sky' },
+    // Ch.9 ("The Monk's Full Path") — Dorin's single awakening. The Trial that
+    // gates his joining hands him the full Vibe Comet (Ω moved off his L52 row).
+    trial_of_the_mute_mountain: { hero: 'dorin', ability: 'vibe_comet_o', flag: 'awake_comet_o', dialogue: 'awake_trial_of_the_mute_mountain' },
   };
   for (const [id, pin] of Object.entries(canon)) {
     const a = AWAKENINGS[id];

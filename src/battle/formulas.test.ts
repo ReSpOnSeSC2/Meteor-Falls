@@ -30,6 +30,7 @@ import {
 import * as F from './formulas';
 import { RAMP, px } from '../palette';
 import { rollPray, prayWeights, PRAY_BASE, type PrayTier } from '../data/abilities';
+import { availableAbilities, HEROES } from '../data/heroes';
 import { mulberry32 } from '../spritegen/pixmap';
 import { expForLevel, makeHeroState } from '../engine/state';
 import { ITEMS } from '../data/items';
@@ -476,5 +477,58 @@ describe('S17 (ADR-061) — secondary bonuses, Vibe-on-gear, resists, tonic boos
     expect(heroOffense(rex)).toBe(rex.stats.offense + 4);
     expect(heroVibe(rex)).toBe(rex.stats.vibe + 7);
     expect(F.boostOf(rex, 'offense')).toBe(4);
+  });
+});
+
+describe('DORIN — "The Monk\'s Full Path" (ability expansion)', () => {
+  it('the Comet ladder scales with Vibe and stays NON-elemental (defense-pierce)', () => {
+    // β(190) → γ(250) → Ω(320): each rung out-damages the last at the same Vibe
+    const v = 60;
+    expect(vibeDamage(250, v, () => 0.5)).toBeGreaterThan(vibeDamage(190, v, () => 0.5));
+    expect(vibeDamage(320, v, () => 0.5)).toBeGreaterThan(vibeDamage(250, v, () => 0.5));
+    // Comet is element 'none' — the reliable answer that weakness can't touch
+    const omega = vibeDamage(320, v, () => 0.5);
+    expect(applyWeakness(omega, false)).toBe(omega);
+  });
+
+  it('Stone Brow Stance counter returns ~40% of a physical swing (bracedCounter)', () => {
+    expect(F.bracedCounter(100)).toBe(40);
+    expect(F.bracedCounter(0)).toBe(0);
+    // it never lands the last hit itself — the seam clamps; here we just prove
+    // the math is a strict fraction of the dealt damage
+    expect(F.bracedCounter(255)).toBe(Math.floor(255 * 0.4));
+  });
+
+  it('Flowing Step dodge is a deterministic Speed/Luck roll (flowingDodge)', () => {
+    // a roll under the chance dodges; a roll over it does not — rng injected
+    const fast = makeHeroState('dorin', 50);
+    const chance = Math.min(0.6, 0.35 + (heroSpeed(fast) + heroLuck(fast)) / 400);
+    expect(F.flowingDodge(heroSpeed(fast), heroLuck(fast), () => chance - 0.01)).toBe(true);
+    expect(F.flowingDodge(heroSpeed(fast), heroLuck(fast), () => chance + 0.01)).toBe(false);
+  });
+
+  it('the +Defense / +Speed stance bumps are real, finite seams', () => {
+    expect(F.BRACED_DEFENSE).toBeGreaterThan(0);
+    expect(F.FLOWING_SPEED).toBeGreaterThan(0);
+  });
+
+  it('party Mirror bounces ~1/4 through the shared mitigateIncoming seam (S16)', () => {
+    const mirror: F.WardState = { shield: false, ward: false, reflect: false, mirror: true, steeled: false };
+    const hit = F.mitigateIncoming(100, 'physical', mirror);
+    expect(hit.taken).toBe(50); // halved, like reflect
+    expect(hit.reflected).toBe(25); // but bounces a quarter, not a third — faster, softer
+  });
+
+  it('availableAbilities(dorin) returns the full ~14-ability path with Comet Ω awakened', () => {
+    const ids = availableAbilities('dorin', 99, () => true);
+    // the seven new rows are all reachable
+    for (const id of ['vibe_comet_b', 'vibe_comet_g', 'healing_b', 'healing_o', 'mirror_o', 'brainjam_g', 'stone_stance', 'flowing_step']) {
+      expect(ids).toContain(id);
+    }
+    // Comet Ω is granted by the awakening, NOT a level unlock (one-path rule)
+    expect(ids).toContain('vibe_comet_o');
+    expect(HEROES.dorin.unlocks.some((u) => u.ability === 'vibe_comet_o')).toBe(false);
+    // a full master's kit — roughly double the baseline seven
+    expect(ids.length).toBeGreaterThanOrEqual(14);
   });
 });
