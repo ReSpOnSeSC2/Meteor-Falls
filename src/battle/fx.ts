@@ -570,39 +570,66 @@ export class BattleFx {
 
     switch (spec.family) {
       case 'surge': {
-        // THE SIGNATURE NUKE (S12b rebuild — it must never read as a bash):
-        // a CHARGE at the caster's raised hands (motes converge, three
-        // swelling pulses), the old light TRAVELS the field as a burst
-        // train, then starburst rings escalate per tier (α two → Ω the sky)
+        // THE SIGNATURE NUKE (S12b rebuild — it must never read as a bash; S16
+        // §5 — FIVE rungs, each its own firework, EarthBound-style). A CHARGE at
+        // the caster's raised hands (motes converge, swelling pulses), the old
+        // light TRAVELS the field as a burst train, then the per-tier finale
+        // answers on the targets. The charge + travel are shared; the FIREWORK
+        // ESCALATES (not just scales): α a single bottle-rocket pop · β concentric
+        // rings + an edge bloom · γ rings + the falling-spark "willow" · Ω a
+        // multi-burst volley + palette cycle · Σ the held-flash chrysanthemum
+        // finale that fills the screen and settles to spark-rain. The fx layer
+        // already sits below DEPTH_UI, so the HP wheels stay readable (odometer law).
         this.sfx(tl, 0, spec.sfx);
+        const sigma = tier >= 5;
+        // Σ opens on a HELD white flash and a beat of quiet before anything moves
+        if (sigma) this.flood(tl, 0, 0xffffff, 0.5, 360);
+        const charge = sigma ? 520 : 0;
         if (caster) {
-          tl.event(0, () => this.motes(caster.x, caster.y, 26, ramp, 4, 420));
-          for (let c = 0; c < 3; c++) {
-            this.ring(tl, 60 + c * 120, caster.x, caster.y - 6, 14 - c * 4, 4 + c * 2, c === 2 ? RAMP.GOLD : ramp, 160);
+          tl.event(0, () => this.motes(caster.x, caster.y, sigma ? 40 : 26, ramp, sigma ? 7 : 4, 420));
+          const pulses = sigma ? 4 : 3;
+          for (let c = 0; c < pulses; c++) {
+            this.ring(tl, charge + 60 + c * 120, caster.x, caster.y - 6, 14 - c * 3, 4 + c * 2, c === pulses - 1 ? RAMP.GOLD : ramp, 160);
           }
         }
         targets.forEach((t, i) => {
-          const base = 480 + i * 110;
+          const base = charge + 480 + i * 110;
           if (caster) {
-            // the travel: four bursts cross from the hands to the target
-            for (let s = 0; s < 4; s++) {
-              const p = (s + 1) / 5;
+            // the travel: bursts cross from the hands to the target (more for Σ)
+            const steps = sigma ? 6 : 4;
+            for (let s = 0; s < steps; s++) {
+              const p = (s + 1) / (steps + 1);
               const bx = caster.x + (t.x - caster.x) * p;
               const by = caster.y - 6 + (t.y - (caster.y - 6)) * p;
-              tl.event(380 + s * 40 + i * 110, () => this.burst(bx, by, ramp, 3, 16));
+              tl.event(charge + 380 + s * 36 + i * 110, () => this.burst(bx, by, ramp, 3, 16));
             }
           }
+          // β+: concentric rings (count + size climb with tier)
           for (let r = 0; r < tier + 1; r++) {
             this.ring(tl, base + r * 90, t.x, t.y, 4, 18 + tier * 7 + r * 6, r % 2 === 0 ? ramp : RAMP.GOLD, 300 + r * 40);
           }
+          // γ+: the "willow" — falling spark trails settling after the burst
+          if (tier >= 3) tl.event(base + 120, () => this.rain(t.x, t.y - 6, 30 + tier * 6, ramp, 10 + tier * 3, 520));
           tl.event(base + 60, () => this.burst(t.x, t.y, ramp, 8 + tier * 3, 54 + tier * 14));
           this.hitFlash(tl, base + 80, t);
           hit(i, base + 90);
+          // Σ: the grand chrysanthemum (two huge rings) + sequential secondary
+          // bursts walking across each target, then a slow spark-rain settle
+          if (sigma) {
+            this.ring(tl, base + 140, t.x, t.y, 6, 96, RAMP.GOLD, 520, 3);
+            this.ring(tl, base + 200, t.x, t.y, 6, 128, ramp, 600, 2);
+            for (let s = 0; s < 4; s++) {
+              tl.event(base + 260 + s * 90, () => this.burst(t.x + (s - 1.5) * 16, t.y - 8, s % 2 ? RAMP.GOLD : ramp, 12, 70, 520, 2));
+            }
+            tl.event(base + 540, () => this.rain(t.x, t.y - 10, 48, ramp, 18, 760));
+          }
         });
-        this.shake(tl, 540, 160 + tier * 60, 0.004 + tier * 0.002);
-        if (tier >= 4) this.flood(tl, 520, colorOf(px(ramp, 3)), 0.4, 420);
-        this.palettePulse(tl, 440, ramp);
-        tl.hold(820 + tier * 120 + targets.length * 110);
+        // β/γ: a brief screen-edge bloom; Ω/Σ: the full palette-cycling flood
+        if (tier === 2 || tier === 3) this.flood(tl, charge + 480, colorOf(px(ramp, 2)), 0.16, 220);
+        if (tier >= 4) this.flood(tl, charge + 520, colorOf(px(ramp, 3)), sigma ? 0.5 : 0.4, sigma ? 620 : 420);
+        this.shake(tl, charge + 540, 160 + tier * 60, 0.004 + tier * 0.002);
+        this.palettePulse(tl, charge + 440, ramp);
+        tl.hold(charge + 820 + tier * 120 + targets.length * 110 + (sigma ? 620 : 0));
         break;
       }
       case 'flame_wave': {
@@ -744,6 +771,55 @@ export class BattleFx {
           hit(i, lockAt + 60);
         });
         tl.hold(40 + targets.length * 110 + 5 * 45 + 280 + 420);
+        break;
+      }
+      case 'reflect_field': {
+        // S16 POWER SHIELD — the wall that answers. A standing MIRROR-WALL
+        // rises in front of each ally: horizontal rungs flash in from a point
+        // to full width, the pane holds still as water, then a bright rung
+        // sweeps DOWN it (the bounce-back made visible) and a ring snaps at its
+        // foot. Reuses the boltPool segment idiom (the barrier technique) at a
+        // vertical scale — gold, because gold is the color that gives it back.
+        this.sfx(tl, 60, spec.sfx);
+        const paneH = 30;
+        const rungs = 6;
+        targets.forEach((t, i) => {
+          const at = 40 + i * 90;
+          for (let r = 0; r < rungs; r++) {
+            const yy = t.y - paneH / 2 + (r / (rungs - 1)) * paneH;
+            const myPos = r / (rungs - 1);
+            tl.event(at + r * 26, () => {
+              const b = this.boltPool.take();
+              b.color = colorOf(px(ramp, 3));
+              b.alpha = 0;
+              b.dead = false;
+              b.pts = [t.x, yy, t.x, yy];
+              this.bolts.push(b);
+              const inner = new FxTimeline();
+              // grow from a point to the full rung width
+              inner.span(0, 200, (p) => {
+                const w = 13 * p;
+                b.pts = [t.x - w, yy, t.x + w, yy];
+                b.alpha = 0.4 + 0.6 * p;
+              });
+              // hold, then the downward ANSWER-SWEEP lights each rung as it passes
+              inner.span(200, 760, (p) => {
+                const lit = Math.abs(p - myPos) < 0.18;
+                b.color = colorOf(px(lit ? RAMP.GOLD : ramp, 3));
+                b.alpha = p >= 1 ? 0 : 1 - Math.max(0, (p - 0.75) / 0.25);
+                if (p >= 1) b.dead = true;
+              });
+              this.timelines.push(inner);
+            });
+          }
+          // the snap at the pane's foot: a flash, a closing ring, an answer-burst
+          const snapAt = at + rungs * 26;
+          this.flood(tl, snapAt, colorOf(px(RAMP.GOLD, 3)), 0.2, 240);
+          this.ring(tl, snapAt, t.x, t.y, 6, 16, RAMP.GOLD, 260);
+          tl.event(snapAt + 200, () => this.burst(t.x, t.y + paneH / 2, RAMP.GOLD, 8, 44, 360));
+          hit(i, snapAt + 60);
+        });
+        tl.hold(40 + targets.length * 90 + rungs * 26 + 760 + 200);
         break;
       }
       case 'spiral': {

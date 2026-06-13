@@ -334,3 +334,85 @@ describe('§A4.2 contact advantage & the swirl traffic-light (S15c, ADR-043)', (
     expect(F.SWIRL_TINT.none).toBe(px(RAMP.PAPER, 1));
   });
 });
+
+describe('S16 — "The Old Light, Doubled": Jay\'s expanded kit', () => {
+  it('Vibe Surge Σ scales with Vibe like every Vibe line (power 480)', () => {
+    // the canonical mid roll (rng 0.5 → ×1.0 variance). By ~L40 Jay is ~70 Vibe
+    expect(vibeDamage(480, 70, () => 0.5)).toBe(Math.round(480 * (1 + 70 / 60)));
+    // Σ out-damages Ω (power 341) at the same Vibe — the ladder holds
+    expect(vibeDamage(480, 70, () => 0.5)).toBeGreaterThan(vibeDamage(341, 70, () => 0.5));
+    // no element: it is the answer to elementally-immune foes (never resisted)
+    expect(applyWeakness(vibeDamage(480, 70, () => 0.5), false)).toBe(vibeDamage(480, 70, () => 0.5));
+  });
+
+  describe('layered wards — mitigateIncoming', () => {
+    const none: F.WardState = { shield: false, ward: false, reflect: false, mirror: false, steeled: false };
+
+    it('WARD halves elemental and leaves PHYSICAL untouched (separate layers)', () => {
+      const ward = { ...none, ward: true };
+      expect(F.mitigateIncoming(100, 'fire', ward).taken).toBe(50);
+      expect(F.mitigateIncoming(100, 'freeze', ward).taken).toBe(50);
+      expect(F.mitigateIncoming(100, 'holy', ward).taken).toBe(50);
+      // physical sails straight through a ward — that's Shield's job
+      expect(F.mitigateIncoming(100, 'physical', ward).taken).toBe(100);
+    });
+
+    it('SHIELD halves physical and leaves elemental untouched (the mirror layer of Ward)', () => {
+      const shield = { ...none, shield: true };
+      expect(F.mitigateIncoming(100, 'physical', shield).taken).toBe(50);
+      expect(F.mitigateIncoming(100, 'fire', shield).taken).toBe(100);
+    });
+
+    it('REFLECT halves ALL classes AND bounces ~1/3 back at the attacker', () => {
+      const reflect = { ...none, reflect: true };
+      const phys = F.mitigateIncoming(99, 'physical', reflect);
+      expect(phys.taken).toBe(49); // halved
+      expect(phys.reflected).toBe(33); // ~1/3 of the incoming
+      // bounces typeless 'none' damage too (an unblockable-looking AoE)
+      expect(F.mitigateIncoming(99, 'none', reflect).reflected).toBe(33);
+    });
+
+    it('BRACE-AND-ANSWER: a STEELED hero behind a reflect bounces harder (~1/2)', () => {
+      const braced = { ...none, reflect: true, steeled: true };
+      expect(F.mitigateIncoming(100, 'physical', braced).reflected).toBe(50);
+    });
+
+    it('BULWARK: holding Shield AND Ward trims a little extra (double-guarded)', () => {
+      const bulwark = { ...none, shield: true, ward: true };
+      // physical: shield halves (50), bulwark shaves 15% → 42
+      expect(F.mitigateIncoming(100, 'physical', bulwark).taken).toBe(42);
+      // a lone shield on the same hit only reaches 50 — the stack is strictly better
+      expect(F.mitigateIncoming(100, 'physical', { ...none, shield: true }).taken).toBe(50);
+    });
+
+    it('never zeroes a hit (the §A3 "always ≥1 damage" rule)', () => {
+      const stacked = { shield: true, ward: true, reflect: true, mirror: true, steeled: false };
+      expect(F.mitigateIncoming(1, 'physical', stacked).taken).toBe(1);
+    });
+  });
+
+  describe('MIND WARP — puppet', () => {
+    it('bosses are mind_immune by design; mooks are not', () => {
+      expect(F.mindImmune({ boss: true })).toBe(true);
+      expect(F.mindImmune({ mind_immune: true })).toBe(true);
+      expect(F.mindImmune({})).toBe(false);
+      expect(F.mindImmune({ boss: false })).toBe(false);
+    });
+
+    it('an even-or-lower-level foe never resists (the puppet lands) — control shines on trash', () => {
+      expect(F.puppetResist(10, 10)).toBe(0);
+      expect(F.puppetResist(8, 12)).toBe(0);
+    });
+
+    it('an elite that outlevels Jay resists, clamped at 85%', () => {
+      expect(F.puppetResist(15, 10)).toBeCloseTo(0.2); // +5 levels → 20%
+      expect(F.puppetResist(40, 10)).toBe(0.85); // hard cap, never an auto-fail spell vs a hero
+    });
+
+    it('Ω holds 2–3 turns; α holds exactly 1', () => {
+      expect(F.puppetTurns(false, () => 0.99)).toBe(1);
+      expect(F.puppetTurns(true, () => 0.2)).toBe(3);
+      expect(F.puppetTurns(true, () => 0.9)).toBe(2);
+    });
+  });
+});
