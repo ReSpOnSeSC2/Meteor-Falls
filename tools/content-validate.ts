@@ -304,26 +304,121 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// §A8 weapon-line manifest (S11b, pinned both directions like the roster):
-// the Ch.1 shelf bats + Mia's pan, and the S11b stage-kit line openers.
+/* ============ S17 (ADR-061) — THE CATALOG SPINE (the widened §A8 pins) ============
+ * The §A8 catalog grows from ~140 toward ~500 items. These per-REGION manifests
+ * REPLACE the old narrow Ch.1–2 pins (the flat weapon list, the lone-star_cola
+ * pp line, the two-item armor/arms manifests). Each is gated BOTH directions and
+ * sliced by the item's `band`; a new region adds rows here, never an ad-hoc item.
+ * Every check files under section 'catalog'. */
 {
-  const canon: Record<string, string> = {
-    cracked_bat: 'rex',
-    tball_bat: 'rex',
-    sandlot_slugger: 'rex', // S14 — §A8 Ch.2: the bat line's third rung
-    hand_me_down_pan: 'faye',
-    copper_pan: 'faye', // S14 — §A8 Ch.2: the pan line's second rung
-    pellet_popper: 'milo',
-    cedar_beads: 'dorin',
+  const BANDS = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8', 'ch9', 'ch10', 'cross'] as const;
+
+  // 0. every item carries a band — the per-region slice the quota counts off
+  for (const item of Object.values(ITEMS)) {
+    if (item.band === undefined) {
+      fail('catalog', `item '${item.id}' (${item.kind}) has no band — tag it ch1…ch10 | cross (ITEM_BAND in data/items.ts)`);
+    }
+  }
+
+  // 1. THE WEAPON LADDER, per region (§A8 lines are personal — wielder-tagged).
+  //    Both directions: every listed rung exists with the right wielder + band;
+  //    every kind:'weapon' item sits on some region's ladder.
+  const WEAPON_LADDER: Record<string, Record<string, string>> = {
+    ch1: { cracked_bat: 'rex', tball_bat: 'rex', hand_me_down_pan: 'faye' },
+    ch2: { sandlot_slugger: 'rex', copper_pan: 'faye' },
+    ch3: { pellet_popper: 'milo' }, // Milo's first air rifle — England (defined early)
+    ch9: { cedar_beads: 'dorin' }, // Dorin's first beads — Romania (defined early)
   };
-  for (const [id, wielder] of Object.entries(canon)) {
+  const ladderAll: Record<string, { wielder: string; band: string }> = {};
+  for (const [band, rungs] of Object.entries(WEAPON_LADDER)) {
+    for (const [id, wielder] of Object.entries(rungs)) ladderAll[id] = { wielder, band };
+  }
+  for (const [id, { wielder, band }] of Object.entries(ladderAll)) {
     const item = ITEMS[id];
-    if (!item) fail('canon', `§A8 weapon '${id}' missing from ITEMS`);
-    else if (item.wielder !== wielder) fail('canon', `§A8 weapon '${id}' belongs to '${wielder}', got '${item.wielder ?? 'nobody'}'`);
+    if (!item) { fail('catalog', `§A8 weapon '${id}' missing from ITEMS`); continue; }
+    if (item.wielder !== wielder) fail('catalog', `§A8 weapon '${id}' belongs to '${wielder}', got '${item.wielder ?? 'nobody'}'`);
+    if (item.band !== band) fail('catalog', `§A8 weapon '${id}' is band '${item.band ?? 'none'}', the ladder places it in '${band}'`);
   }
   for (const item of Object.values(ITEMS)) {
-    if (item.kind === 'weapon' && !(item.id in canon)) {
-      fail('canon', `weapon '${item.id}' is not in the §A8 weapon manifest — extend the manifest, never ad-hoc`);
+    if (item.kind === 'weapon' && !(item.id in ladderAll)) {
+      fail('catalog', `weapon '${item.id}' is on no region's §A8 weapon ladder — extend WEAPON_LADDER, never ad-hoc`);
+    }
+  }
+
+  // 2. THE PP LINE, per region (§A8 PP drinks — the Star Cola line, the teas,
+  //    the temple incense). Both directions (generalises the ADR-016 pin).
+  const PP_LINE: Record<string, string[]> = { ch1: ['star_cola'] };
+  const ppAll = new Set(Object.values(PP_LINE).flat());
+  for (const id of ppAll) {
+    const item = ITEMS[id];
+    if (!item) fail('catalog', `PP_LINE names '${id}', missing from ITEMS`);
+    else if (!(item.kind === 'pp' && (item.ppHeal ?? 0) > 0)) fail('catalog', `'${id}' must be kind 'pp' with ppHeal > 0`);
+  }
+  for (const item of Object.values(ITEMS)) {
+    if ((item.kind === 'pp' || item.ppHeal !== undefined) && !ppAll.has(item.id)) {
+      fail('catalog', `'${item.id}' restores PP but sits on no region's PP_LINE — extend the manifest, never ad-hoc`);
+    }
+  }
+
+  // 3. THE ARMOR LINE, per region (§A8 bodies/robes/vests). Both directions.
+  const ARMOR_LINE: Record<string, string[]> = { ch1: ['champion_jacket'], ch2: ['wool_poncho'] };
+  const armorAll = new Set(Object.values(ARMOR_LINE).flat());
+  for (const id of armorAll) {
+    const item = ITEMS[id];
+    if (!item) fail('catalog', `ARMOR_LINE names '${id}', missing from ITEMS`);
+    else if (!(item.kind === 'armor' && (item.defense ?? 0) > 0)) fail('catalog', `'${id}' must be kind 'armor' with defense > 0`);
+  }
+  for (const item of Object.values(ITEMS)) {
+    if (item.kind === 'armor' && !armorAll.has(item.id)) {
+      fail('catalog', `armor '${item.id}' is on no region's ARMOR_LINE — extend the manifest, never ad-hoc`);
+    }
+  }
+
+  // 4. THE HERO-SIGNATURE SET REGISTRY (arms + charm sets), both directions.
+  //    A wielder-tagged arms/charm piece MUST belong to a registered set; each
+  //    set's pieces are the right kind, wielder, and unsellable (a title, not
+  //    stock). Generalises the STARTING FIVE + SUNDAY SET pins so each future
+  //    region set (the Porch, Mercado, Wintermoor… sets) registers ONE row.
+  const SET_REGISTRY: Array<{ name: string; kind: 'arms' | 'charm'; pieces: Record<string, string> }> = [
+    { name: 'THE STARTING FIVE', kind: 'arms', pieces: STARTING_FIVE },
+    { name: 'THE SUNDAY SET', kind: 'charm', pieces: SUNDAY_SET },
+  ];
+  const armsSetIds = new Set<string>();
+  const charmSetIds = new Set<string>();
+  for (const set of SET_REGISTRY) {
+    for (const [heroId, itemId] of Object.entries(set.pieces)) {
+      (set.kind === 'arms' ? armsSetIds : charmSetIds).add(itemId);
+      const item = ITEMS[itemId];
+      if (!item) { fail('catalog', `${set.name} piece '${itemId}' missing from ITEMS`); continue; }
+      if (item.kind !== set.kind) fail('catalog', `${set.name}: '${itemId}' must be kind '${set.kind}', got '${item.kind}'`);
+      if (item.wielder !== heroId) fail('catalog', `${set.name}: '${itemId}' belongs to '${heroId}', got '${item.wielder ?? 'nobody'}'`);
+      if (item.price !== 0) fail('catalog', `${set.name}: '${itemId}' is a title, not merchandise — price must be 0`);
+      if (set.kind === 'charm' && !(item.luck && item.luck > 0)) fail('catalog', `${set.name}: '${itemId}' must carry luck (heroLuck reads the 'other' slot)`);
+    }
+  }
+  for (const item of Object.values(ITEMS)) {
+    if (item.kind === 'arms' && item.wielder !== undefined && !armsSetIds.has(item.id)) {
+      fail('catalog', `'${item.id}' is a wielder-tagged arms piece outside any signature SET — register its set, never ad-hoc`);
+    }
+    if (item.kind === 'charm' && item.wielder !== undefined && !charmSetIds.has(item.id)) {
+      fail('catalog', `'${item.id}' is a wielder-tagged charm outside any signature SET — register its set, never ad-hoc`);
+    }
+  }
+
+  // 5. THE PER-CHAPTER QUOTA — a ratchet toward the §A8 ~40-items/region target
+  //    as the catalog fills. BAND_FLOOR is the current hard minimum; RAISE it as
+  //    each region lands (the "extend the manifest" rule). It fails only if a
+  //    band drops BELOW its floor (items removed without lowering it) — so the
+  //    spine passes at today's 41 items and tightens with every movement.
+  const bandCounts: Record<string, number> = {};
+  for (const b of BANDS) bandCounts[b] = 0;
+  for (const item of Object.values(ITEMS)) if (item.band) bandCounts[item.band] += 1;
+  const BAND_FLOOR: Record<string, number> = {
+    ch1: 23, ch2: 14, ch3: 1, ch4: 0, ch5: 0, ch6: 0, ch7: 0, ch8: 0, ch9: 2, ch10: 0, cross: 1,
+  };
+  for (const b of BANDS) {
+    if (bandCounts[b] < BAND_FLOOR[b]) {
+      fail('catalog', `band '${b}' carries ${bandCounts[b]} items, below its floor ${BAND_FLOOR[b]} (target ≈ 40/region) — items removed without lowering the floor`);
     }
   }
 }
@@ -433,17 +528,8 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S4 (ADR-016) — Star Cola is the lone 'pp' item, and it actually restores PP
-{
-  const ppItems = Object.values(ITEMS).filter((i) => i.kind === 'pp' || i.ppHeal !== undefined);
-  if (ppItems.map((i) => i.id).join(',') !== 'star_cola') {
-    fail('canon', `the Ch.1 'pp' line is star_cola alone, got [${ppItems.map((i) => i.id).join(', ')}]`);
-  }
-  if (!ITEMS.star_cola) fail('canon', `star_cola missing from ITEMS`);
-  else if (!(ITEMS.star_cola.kind === 'pp' && (ITEMS.star_cola.ppHeal ?? 0) > 0)) {
-    fail('canon', `star_cola must be kind 'pp' with ppHeal > 0`);
-  }
-}
+// S4's lone-star_cola 'pp' pin (ADR-016) is GENERALISED into the per-region
+// PP_LINE in THE CATALOG SPINE above (S17/ADR-061) — both directions there.
 
 // §A10 #1–4 (S9 + S10) — the Chapter 1 side quests, pinned in BOTH
 // directions: every canon quest with its exact name/caller/effect/reward/
@@ -598,10 +684,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   if (ITEMS.champion_jacket && !(ITEMS.champion_jacket.kind === 'armor' && (ITEMS.champion_jacket.defense ?? 0) > 0 && ITEMS.champion_jacket.price === 0)) {
     fail('canon', `champion_jacket must be unsellable 'armor' with a defense bonus (§A10 #4)`);
   }
-  const ARMOR_LINE = ['champion_jacket', 'wool_poncho']; // S14: the poncho joins
-  if (Object.values(ITEMS).some((i) => i.kind === 'armor' && !ARMOR_LINE.includes(i.id))) {
-    fail('canon', `the §A8 'armor' line is [${ARMOR_LINE.join(', ')}] — extend the manifest, never ad-hoc`);
-  }
+  // the flat 'armor' line reverse-pin is GENERALISED into the per-region
+  // ARMOR_LINE in THE CATALOG SPINE above (S17/ADR-061); these stay as the
+  // §A10 quest-reward pins (the jacket above, the poncho here).
   if (ITEMS.wool_poncho && !(ITEMS.wool_poncho.kind === 'armor' && (ITEMS.wool_poncho.defense ?? 0) > 0 && ITEMS.wool_poncho.price === 0)) {
     fail('canon', `wool_poncho must be unsellable 'armor' with a defense bonus (§A10 #5)`);
   }
@@ -723,29 +808,12 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
   }
 }
 
-// THE STARTING FIVE (S15h/ADR-048): the first 'arms' line — one piece per
-// hero, wielder-tagged, unsellable, carrying exactly one of speed/guts; and the
-// arms manifest is exactly these five (extend the manifest, never ad-hoc).
+// THE STARTING FIVE (S15h/ADR-048, the first 'arms' line — one wielder-tagged
+// piece per hero) is now checked BOTH directions by the generalised SET_REGISTRY
+// in THE CATALOG SPINE above (S17/ADR-061), alongside every future signature set.
 // Pippa's Minister's Ribbon carries SPEED: §A8 names it "Luck+6", but the arms
 // slot reads speed/guts — luck rides charms (ADR-037), so her Luck+6 is reserved
 // for her SUNDAY SET charm and the arms piece is Speed (the tiny tactician is quick).
-{
-  for (const [heroId, itemId] of Object.entries(STARTING_FIVE)) {
-    const item = ITEMS[itemId];
-    if (!item) {
-      fail('hoops', `STARTING FIVE piece '${itemId}' missing from ITEMS`);
-      continue;
-    }
-    if (item.kind !== 'arms') fail('hoops', `'${itemId}' must be kind 'arms', got '${item.kind}'`);
-    if (item.wielder !== heroId) fail('hoops', `'${itemId}' belongs to '${heroId}', got '${item.wielder ?? 'nobody'}'`);
-    if (item.price !== 0) fail('hoops', `'${itemId}' is a title, not merchandise — price must be 0`);
-  }
-  for (const item of Object.values(ITEMS)) {
-    if (item.kind === 'arms' && !Object.values(STARTING_FIVE).includes(item.id)) {
-      fail('hoops', `'${item.id}' is not in the STARTING FIVE arms manifest — extend the manifest, never ad-hoc`);
-    }
-  }
-}
 
 // the reward tables, pinned (§A9-conscious tuning is deliberate, ADR-034):
 // pickup pays forever, Classic depth scales, drops stay food/cola
@@ -922,23 +990,8 @@ parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id
     else if (item.kind !== 'food' && item.kind !== 'pp') fail('links', `drop '${id}' is kind '${item.kind}' — the clubhouse pays foods and colas`);
   }
 
-  // THE SUNDAY SET (§A8 'other' expansion, both directions)
-  for (const [heroId, itemId] of Object.entries(SUNDAY_SET)) {
-    const item = ITEMS[itemId];
-    if (!item) {
-      fail('links', `SUNDAY SET piece '${itemId}' missing from ITEMS`);
-      continue;
-    }
-    if (item.kind !== 'charm') fail('links', `'${itemId}' must be kind 'charm' ('other' slot), got '${item.kind}'`);
-    if (item.wielder !== heroId) fail('links', `'${itemId}' belongs to '${heroId}', got '${item.wielder ?? 'nobody'}'`);
-    if (item.price !== 0) fail('links', `'${itemId}' is a title, not merchandise — price must be 0`);
-    if (!item.luck || item.luck <= 0) fail('links', `'${itemId}' must carry luck (heroLuck reads the 'other' slot)`);
-  }
-  for (const item of Object.values(ITEMS)) {
-    if (item.kind === 'charm' && item.wielder !== undefined && !Object.values(SUNDAY_SET).includes(item.id)) {
-      fail('links', `'${item.id}' is a wielder-tagged charm outside the SUNDAY SET manifest — extend the manifest, never ad-hoc`);
-    }
-  }
+  // THE SUNDAY SET (§A8 'other' expansion) is now checked BOTH directions by the
+  // generalised SET_REGISTRY in THE CATALOG SPINE above (S17/ADR-061).
 
   // THE VENUE: the resort map, FITO, the plaque, the clubhouse, the tease
   const costa = MAPS.costa_estrella;
@@ -1655,7 +1708,7 @@ const counts = [
   `${Object.keys(HEROES).length} heroes`,
   `${Object.keys(ABILITIES).length} abilities`,
   `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–2 + Bosses 1–2)`,
-  `${Object.keys(ITEMS).length} items (${Object.keys(ITEM_ICON).length} icons)`,
+  `${Object.keys(ITEMS).length} items (${Object.keys(ITEM_ICON).length} icons) across 10 chapters`,
   `${Object.keys(SHOPS).length} shops`,
   `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,
   `${Object.keys(MAPS).length} maps`,
@@ -1671,3 +1724,12 @@ if (errors.length > 0) {
   process.exit(1);
 }
 console.log(`✓ content valid — ${counts} · pray table sums 100`);
+// S17 (ADR-061): the per-chapter catalog distribution — the quota's progress bar
+// toward the §A8 ~40-items/region target (the spine ratchets BAND_FLOOR up as
+// each region lands). Printed on success so the build-out is visible at a glance.
+{
+  const order = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8', 'ch9', 'ch10', 'cross'];
+  const by: Record<string, number> = {};
+  for (const item of Object.values(ITEMS)) if (item.band) by[item.band] = (by[item.band] ?? 0) + 1;
+  console.log(`  catalog by band — ${order.map((b) => `${b}:${by[b] ?? 0}`).join(' ')}`);
+}

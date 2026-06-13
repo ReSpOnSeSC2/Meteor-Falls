@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GS, newGameData, makeHeroState, expForLevel } from './state';
+import { GS, newGameData, makeHeroState, expForLevel, applyTonic } from './state';
 import { ENEMIES } from '../data/enemies';
 import { HEROES, statsAtLevel, maxHpAtLevel, unlockedAbilities, availableAbilities } from '../data/heroes';
 import { ITEMS } from '../data/items';
@@ -162,6 +162,46 @@ describe('hero state', () => {
     expect(rex.hp).toBe(rex.maxHp);
     expect(rex.stats).toEqual(statsAtLevel('rex', 5));
     expect(rex.exp).toBe(expForLevel(5));
+  });
+
+  it('a fresh hero starts with an empty boosts map (S17/ADR-061)', () => {
+    expect(makeHeroState('faye', 8).boosts).toEqual({});
+  });
+});
+
+describe('S17 (ADR-061) — tonics apply permanently (§A4.12)', () => {
+  it('a combat-stat tonic accumulates in boosts, kept apart from stats (level-up safe)', () => {
+    const rex = makeHeroState('rex', 5);
+    applyTonic(rex, { stat: 'guts', amount: 3 });
+    expect(rex.boosts.guts).toBe(3);
+    applyTonic(rex, { stat: 'guts', amount: 2 });
+    expect(rex.boosts.guts).toBe(5);
+    // recomputing stats from base+growth leaves the boost untouched (it lives apart)
+    rex.stats = statsAtLevel('rex', rex.level);
+    expect(rex.boosts.guts).toBe(5);
+  });
+
+  it('a max-HP tonic raises the ceiling AND the current pool, and survives a recompute', () => {
+    const rex = makeHeroState('rex', 5);
+    const baseMax = rex.maxHp;
+    rex.hp = 10;
+    applyTonic(rex, { stat: 'hp', amount: 20 });
+    expect(rex.maxHp).toBe(baseMax + 20);
+    expect(rex.hp).toBe(30);
+    expect(rex.boosts.hp).toBe(20);
+    // the recompute sites re-add boosts.hp — emulate one level-up's maxHp set
+    rex.level = 6;
+    rex.maxHp = maxHpAtLevel('rex', 6) + (rex.boosts.hp ?? 0);
+    expect(rex.maxHp).toBe(maxHpAtLevel('rex', 6) + 20);
+  });
+
+  it('a max-PP tonic raises both pools', () => {
+    const dorin = makeHeroState('dorin', 5);
+    const baseMax = dorin.maxPp;
+    dorin.pp = 2;
+    applyTonic(dorin, { stat: 'pp', amount: 8 });
+    expect(dorin.maxPp).toBe(baseMax + 8);
+    expect(dorin.pp).toBe(10);
   });
 });
 

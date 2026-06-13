@@ -3,17 +3,52 @@
  * physical, power coefficient × Vibe for abilities, Guts drives SMAAASH and
  * mortal-blow survival. Every function takes its RNG so tests are exact.
  */
-import { ITEMS, slotOf } from '../data/items';
+import { ITEMS, slotOf, EQUIP_SLOTS } from '../data/items';
 import { RAMP, px } from '../palette';
 import type { HeroState } from '../engine/state';
+import type { ItemDef, ItemBonus, ResistElement } from '../schemas';
 
 export type Rng = () => number;
 
-/** a hero's swing: base offense + THEIR equipped weapon (S3 — was the
- *  first weapon in the shared bag, applied to everyone) */
+/* ---- S17 (ADR-061): the SECONDARY-bonus + permanent-boost + resist seams ----
+ * Equipment keeps ONE primary slot stat (weapon→Offense, body→Defense,
+ * arms→Speed|Guts, other→Luck) read by the heroX functions below; on TOP of
+ * that, any worn piece may carry a small `bonus` map, a `vibe` rider, or
+ * elemental `resists`, and a TONIC may have permanently raised the hero's stat
+ * (HeroState.boosts). These helpers sum those extras; with the existing 41
+ * items (none carry them, no tonic used) every sum is 0 — identical math. */
+
+/** the items a hero currently has equipped, in slot order */
+export function equippedItems(hero: HeroState): ItemDef[] {
+  const out: ItemDef[] = [];
+  for (const slot of EQUIP_SLOTS) {
+    const id = hero.equip[slot];
+    const it = id ? ITEMS[id] : undefined;
+    if (it) out.push(it);
+  }
+  return out;
+}
+
+/** Σ of one secondary `bonus` stat across worn gear (§A8 secondaries) */
+export function equipBonus(hero: HeroState, stat: keyof ItemBonus): number {
+  return equippedItems(hero).reduce((a, it) => a + (it.bonus?.[stat] ?? 0), 0);
+}
+
+/** Σ of the dedicated `vibe` rider across worn gear (Riddle Ring +Vibe) */
+export function equipVibe(hero: HeroState): number {
+  return equippedItems(hero).reduce((a, it) => a + (it.vibe ?? 0), 0);
+}
+
+/** a permanent tonic boost (§A4.12), 0 if none */
+export function boostOf(hero: HeroState, stat: 'offense' | 'defense' | 'speed' | 'guts' | 'vibe' | 'luck' | 'hp' | 'pp'): number {
+  return hero.boosts?.[stat] ?? 0;
+}
+
+/** a hero's swing: base offense + THEIR equipped weapon (S3) + any secondary
+ *  bonus on worn gear + any permanent Iron-Tonic boost (S17) */
 export function heroOffense(hero: HeroState): number {
   const weapon = hero.equip.weapon ? ITEMS[hero.equip.weapon] : undefined;
-  return hero.stats.offense + (weapon?.offense ?? 0);
+  return hero.stats.offense + (weapon?.offense ?? 0) + equipBonus(hero, 'offense') + boostOf(hero, 'offense');
 }
 
 /** Prompt 19's preview: how much Offense changes if hero equips itemId */
@@ -29,7 +64,7 @@ export function equipDelta(hero: HeroState, itemId: string): number {
  *  the way Offense reads heroOffense. */
 export function heroDefense(hero: HeroState): number {
   const armor = hero.equip.body ? ITEMS[hero.equip.body] : undefined;
-  return hero.stats.defense + (armor?.defense ?? 0);
+  return hero.stats.defense + (armor?.defense ?? 0) + equipBonus(hero, 'defense') + boostOf(hero, 'defense');
 }
 
 /** the S10 armor preview — equipDelta's shape, aimed at the 'body' slot */
@@ -44,7 +79,15 @@ export function equipDefenseDelta(hero: HeroState, itemId: string): number {
  *  STATUS reads this the way Offense reads heroOffense. */
 export function heroLuck(hero: HeroState): number {
   const charm = hero.equip.other ? ITEMS[hero.equip.other] : undefined;
-  return hero.stats.luck + (charm?.luck ?? 0);
+  return hero.stats.luck + (charm?.luck ?? 0) + equipBonus(hero, 'luck') + boostOf(hero, 'luck');
+}
+
+/** a hero's VIBE: base stat + any Vibe rider on worn gear (§A10 Riddle Ring,
+ *  S17) + any Brain-Food-Lunch boost. Vibe ability power reads through this the
+ *  heroOffense way — before S17 nothing buffed Vibe, so battles read the raw
+ *  stat; now gear and tonics can. */
+export function heroVibe(hero: HeroState): number {
+  return hero.stats.vibe + equipVibe(hero) + boostOf(hero, 'vibe');
 }
 
 /** a hero's speed: base stat + their 'arms'-slot gear (S12 — THE STARTING
@@ -52,14 +95,39 @@ export function heroLuck(hero: HeroState): number {
  *  ratings all read through this, the heroOffense way. */
 export function heroSpeed(hero: HeroState): number {
   const arms = hero.equip.arms ? ITEMS[hero.equip.arms] : undefined;
-  return hero.stats.speed + (arms?.speed ?? 0);
+  return hero.stats.speed + (arms?.speed ?? 0) + equipBonus(hero, 'speed') + boostOf(hero, 'speed');
 }
 
 /** a hero's guts: base stat + their 'arms'-slot gear (S12). SMAAASH chance,
  *  mortal-blow survival, the combo cap, and the cage's rim game read here. */
 export function heroGuts(hero: HeroState): number {
   const arms = hero.equip.arms ? ITEMS[hero.equip.arms] : undefined;
-  return hero.stats.guts + (arms?.guts ?? 0);
+  return hero.stats.guts + (arms?.guts ?? 0) + equipBonus(hero, 'guts') + boostOf(hero, 'guts');
+}
+
+/* ---- S17 (ADR-061): elemental resists (§A8 pendants/robes made mechanical) ----
+ * Worn armor + charms may carry `resists` lines; a hero's resist to an element
+ * is the summed pct across gear, capped, applied to incoming elemental damage.
+ * The display lives on the STATUS screen now; the APPLICATION binds at the
+ * hero-damage seam the day enemies carry elemental moves (none do today, so
+ * heroResist is 0 for every current fight — no behaviour change). */
+
+/** cap on stacked elemental resistance — even four pendants can't make a hero
+ *  immune (EB never let you fully no-sell an element) */
+export const RESIST_CAP_PCT = 80;
+
+/** a hero's resistance to one element, 0..RESIST_CAP/100 (a fraction) */
+export function heroResist(hero: HeroState, element: ResistElement): number {
+  const pct = equippedItems(hero).reduce(
+    (a, it) => a + (it.resists?.find((r) => r.element === element)?.pct ?? 0),
+    0,
+  );
+  return Math.min(RESIST_CAP_PCT, pct) / 100;
+}
+
+/** reduce elemental damage by a resist fraction (always leaves ≥1) */
+export function applyResist(dmg: number, resistFrac: number): number {
+  return Math.max(1, Math.round(dmg * (1 - resistFrac)));
 }
 
 /** the S12 arms preview — slot-generalized: an arms piece carries exactly

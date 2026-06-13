@@ -379,3 +379,31 @@ describe('save migration registry (S15h) — v7 → v8: the fifth hero (Pippa)',
     expect(GS.data.heroNames.pippa).toBe(HEROES.pippa.name); // v8 ran
   });
 });
+
+describe('save migration registry (S17) — v8 → v9: the catalog spine (tonic boosts)', () => {
+  beforeEach(() => GS.reset());
+
+  /** a v8 save exactly as S15h wrote them: heroes with no `boosts` map */
+  function v8Save(): Record<string, unknown> {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 8;
+    d.party = (d.party as Array<Record<string, unknown>>).map((h) => {
+      const c = { ...h };
+      delete c.boosts; // a pre-v9 hero never carried tonic boosts
+      return c;
+    });
+    return d;
+  }
+
+  it('backfills an empty boosts map on every hero', () => {
+    GS.deserialize(JSON.stringify(v8Save()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    for (const h of GS.data.party) expect(h.boosts).toEqual({});
+  });
+
+  it('the v1 chain runs all the way to v9: every hero ends with a boosts map', () => {
+    GS.deserialize(JSON.stringify(v1SaveS2()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    for (const h of GS.data.party) expect(h.boosts).toEqual({});
+  });
+});

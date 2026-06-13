@@ -174,9 +174,65 @@ export type EquipSlot = z.infer<typeof EquipSlotSchema>;
  *  S10 adds: 'armor' (the 'body' slot — the Champion Jacket is §A8's first).
  *  S12 adds: 'arms' (the 'arms' slot — THE STARTING FOUR, the Classic's
  *  first-title prize, carry speed/guts the way armor carries defense).
- *  S14 adds: 'basket' (§A4.5 — Picnic Baskets, table-only use). */
-export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable', 'armor', 'arms', 'basket']);
+ *  S14 adds: 'basket' (§A4.5 — Picnic Baskets, table-only use).
+ *  S17 (ADR-061) adds: 'tonic' (§A4.12 — a one-shot consumable that
+ *  PERMANENTLY raises a stat; EarthBound's pills/capsules, made warm). */
+export const ItemKindSchema = z.enum(['weapon', 'food', 'pp', 'cure', 'battle', 'key', 'charm', 'valuable', 'armor', 'arms', 'basket', 'tonic']);
 export type ItemKind = z.infer<typeof ItemKindSchema>;
+
+/** S17 (ADR-061) — THE CATALOG SPINE. The chapter band an item belongs to, so
+ *  the ~500-item catalog (§A8) slices per region: 'ch1'…'ch10' for a region's
+ *  own gear/food/cures, 'cross' for the cross-world chains (the Family Basket
+ *  craftable at any deli, the Lost-&-Found sizes). The validator REQUIRES one
+ *  on every item and counts the per-chapter quota off it. */
+export const ItemBandSchema = z.enum([
+  'ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8', 'ch9', 'ch10', 'cross',
+]);
+export type ItemBand = z.infer<typeof ItemBandSchema>;
+
+/** S17 (ADR-061): the elements gear can resist (§A8 "pendants (elemental
+ *  resists)", made mechanical) — the four Vibe damage elements, never
+ *  physical/none. Aloe Pendant (fire), Cool Charm (freeze), Rubber Brooch
+ *  (volt), Saint's Medal (holy). */
+export const ResistElementSchema = z.enum(['fire', 'freeze', 'volt', 'holy']);
+export type ResistElement = z.infer<typeof ResistElementSchema>;
+
+/** S17 (ADR-061): one elemental resist line — pct% off incoming damage of that
+ *  element (summed across worn gear, capped in formulas.ts) */
+export const ResistDefSchema = z.strictObject({
+  element: ResistElementSchema,
+  pct: z.number().int().min(1).max(100),
+});
+export type ResistDef = z.infer<typeof ResistDefSchema>;
+
+/** S17 (ADR-061): a SECONDARY equip bonus map — equipment keeps ONE primary
+ *  slot stat (the seam: weapon→Offense, body→Defense, arms→Speed|Guts,
+ *  other→Luck) AND may carry small riders summed ON TOP (a late bat that also
+ *  nudges Guts; a vest that adds a little Speed). Vibe is its own field
+ *  (`vibe`), so it is NOT in this map — there is exactly one way to add each. */
+export const ItemBonusSchema = z
+  .strictObject({
+    offense: z.number().int().positive().optional(),
+    defense: z.number().int().positive().optional(),
+    speed: z.number().int().positive().optional(),
+    guts: z.number().int().positive().optional(),
+    luck: z.number().int().positive().optional(),
+  })
+  .refine((b) => Object.keys(b).length > 0, { message: 'bonus map is empty — omit it instead' });
+export type ItemBonus = z.infer<typeof ItemBonusSchema>;
+
+/** S17 (ADR-061): the permanent boost a 'tonic' applies (§A4.12). The six EB
+ *  stats plus max HP / max PP (Growth Spurt Milk, Charged Battery). */
+export const BoostStatSchema = z.enum([
+  'offense', 'defense', 'speed', 'guts', 'vibe', 'luck', 'hp', 'pp',
+]);
+export type BoostStat = z.infer<typeof BoostStatSchema>;
+
+export const TonicBoostSchema = z.strictObject({
+  stat: BoostStatSchema,
+  amount: z.number().int().positive(),
+});
+export type TonicBoost = z.infer<typeof TonicBoostSchema>;
 
 export const ItemDefSchema = z
   .strictObject({
@@ -195,6 +251,21 @@ export const ItemDefSchema = z
      *  exactly one of these; battle + STATUS read through heroSpeed/heroGuts */
     speed: z.number().positive().optional(),
     guts: z.number().positive().optional(),
+    /** S17 (ADR-061): a VIBE bonus on gear (§A10 #13 Riddle Ring "+10 Vibe" —
+     *  canon since S9, but no item field carried it until now). Rides any
+     *  equippable; heroVibe sums it across worn gear. */
+    vibe: z.number().positive().optional(),
+    /** S17 (ADR-061): SECONDARY equip riders summed on top of the primary slot
+     *  stat (equippables only) */
+    bonus: ItemBonusSchema.optional(),
+    /** S17 (ADR-061): elemental resists (armor/charm only) — §A8 pendants made
+     *  mechanical */
+    resists: z.array(ResistDefSchema).min(1).optional(),
+    /** S17 (ADR-061): the permanent boost a 'tonic' applies (§A4.12) */
+    boost: TonicBoostSchema.optional(),
+    /** S17 (ADR-061): the chapter band this item belongs to (§A8 per-region
+     *  catalog slice). The validator REQUIRES one and counts the quota off it. */
+    band: ItemBandSchema.optional(),
     /** §A8 weapon lines are personal — only this hero can equip it */
     wielder: HeroIdSchema.optional(),
     /** battle item damage */
@@ -249,6 +320,28 @@ export const ItemDefSchema = z
     }
     if (item.kind !== 'arms' && armsStats > 0) {
       ctx.addIssue({ code: 'custom', message: `'${item.id}' has speed/guts but kind '${item.kind}' — those ride 'arms' gear` });
+    }
+    // S17 (ADR-061) pairing: kind 'tonic' ⇔ boost — same rule shape as the
+    // older pairings. A tonic that boosts nothing isn't a tonic; a boost on a
+    // non-tonic has nowhere to apply (§A4.12 — tonics apply ON USE, permanently).
+    if (item.kind === 'tonic' && item.boost === undefined) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' is kind 'tonic' but carries no boost (§A4.12)` });
+    }
+    if (item.kind !== 'tonic' && item.boost !== undefined) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' has a boost but kind '${item.kind}' — permanent boosts ride 'tonic'` });
+    }
+    // S17: the secondary/vibe/resist riders attach to EQUIPMENT only (the four
+    // equip kinds). A consumable cannot carry an equip rider.
+    const equippable = item.kind === 'weapon' || item.kind === 'armor' || item.kind === 'arms' || item.kind === 'charm';
+    if (item.vibe !== undefined && !equippable) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' has a vibe bonus but kind '${item.kind}' — Vibe rides equipment` });
+    }
+    if (item.bonus !== undefined && !equippable) {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' has a secondary bonus but kind '${item.kind}' — secondaries ride equipment` });
+    }
+    // S17: resists are §A8 pendants/robes — armor (body) and charms (other) only
+    if (item.resists !== undefined && item.kind !== 'armor' && item.kind !== 'charm') {
+      ctx.addIssue({ code: 'custom', message: `'${item.id}' has resists but kind '${item.kind}' — resists ride armor + charms (§A8)` });
     }
   });
 export type ItemDef = z.infer<typeof ItemDefSchema>;

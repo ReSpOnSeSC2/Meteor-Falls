@@ -3766,3 +3766,67 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   catalog. A new item must register an ITEM_ICON row or the build fails; charms/arms inherit their
   face from WEAPON_ART automatically, while weapons/armor/consumables/keys draw one in icons.ts.
   First movement of S16 (THE LIVING WORLD) lands.
+
+## ADR-061 — S17 (Movement 16): THE CATALOG SPINE — the schema, mechanics & widened pins for ~500 items
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the S17 "THE GREAT CATALOG" decree, Movement 16 — do FIRST. No new
+  items yet: make the catalog ABLE to hold ~500 before pouring them in. The foundation every
+  later movement stands on.)
+- **Decision — the ItemDef schema grows up (`src/schemas`).** New OPTIONAL fields, each gated
+  by a `superRefine` pairing that keeps every older pairing intact: a new `kind:'tonic'`
+  (§A4.12 permanent boost) paired with `boost: {stat, amount}` (stat ∈ the six EB stats + max
+  HP/PP); `vibe` (a Vibe rider on gear — the §A10 Riddle Ring "+10 Vibe" finally has a field);
+  `bonus` (a SECONDARY stat map summed on top of the primary slot stat — offense/defense/speed/
+  guts/luck); `resists: {element, pct}[]` (fire/freeze/volt/holy, armor + charms only — §A8
+  pendants made mechanical); and a `band` ('ch1'…'ch10' | 'cross') so the catalog slices per
+  region. Riders attach to EQUIPMENT only; resists to armor/charm only; boosts to tonics only —
+  all enforced in the refine.
+- **Decision — the stats wire end-to-end, dormant at 41 items (`battle/formulas.ts`).** Each
+  hero seam sums its primary slot stat + any `bonus` rider + any permanent tonic `boost`:
+  heroOffense/Defense/Speed/Guts/Luck, plus a NEW `heroVibe` (base + `vibe` gear + boost). New
+  helpers `heroResist(hero, element)` (summed, capped at `RESIST_CAP_PCT` = 80%) and
+  `applyResist(dmg, frac)` are ready for the day enemies carry elemental moves (none do today,
+  so every fight's resist is 0 — identical math). `boostOf`/`equipBonus`/`equipVibe`/
+  `equippedItems` are the seams' building blocks. With the shipped 41 items (no rider, no tonic
+  used) every new sum is **+0** — no behaviour change, proven by the unchanged 648 tests.
+- **Decision — permanent boosts ride the save (`HeroState.boosts`, v8 → v9).** A tonic writes to
+  a per-hero `boosts` map kept OUT of `stats` (which level-up recomputes from base+growth) so a
+  boost survives leveling; the six combat seams add it, and the THREE level-up recompute sites
+  (Battle/Hoops/Links) re-add `boosts.hp`/`boosts.pp` to max HP/PP. `applyTonic(hero, boost)`
+  (state.ts) applies it — combat stats accumulate; max HP/PP raise the ceiling AND the current
+  pool, EB-style. The v8→v9 migration backfills `{}` (a pre-v9 save never used a tonic — its
+  true history, the v3/v5 empty-field stance).
+- **Decision — the new stats READ everywhere they should.** STATUS shows Vibe through `heroVibe`,
+  adds the `Charm` ('other') slot line that was missing, appends each gear line's "(also +N X)"
+  secondary rider, and prints a `Resist` line when worn gear grants any. The equip preview
+  (`pick.confirmEquip`) appends the same "(also …)" note beneath the primary delta. Tonic use in
+  MenuScene applies the boost with a warm line ("…went up by N — for keeps!"). THE REVIVAL LINE
+  (§A4.12): the hardcoded `glints_spark` branch in BattleScene + MenuScene is GENERALISED to any
+  `cure` listing `'down'`, reviving by the item's own `heal` (the spark's 9999 = full; later
+  tiers — Second Wind weak → the Hallelujah Bell full — slot straight in). The spark's exact fx
+  and lines are preserved.
+- **Decision — the validator pins WIDEN into per-region tables (`tools/content-validate.ts`, the
+  new `catalog` section).** The narrow Ch.1–2 pins are GENERALISED, never deleted: the lone-
+  star_cola `pp` line → `PP_LINE[band]`; the flat armor list → `ARMOR_LINE[band]`; the flat
+  weapon manifest → `WEAPON_LADDER[band]` (every rung wielder- AND band-tagged); the inline
+  STARTING FIVE + SUNDAY SET checks → a `SET_REGISTRY` of hero-signature arms/charm sets,
+  BOTH directions (a wielder-tagged arms/charm piece MUST belong to a registered set — so future
+  generic, un-tagged gear is now allowed where the old check forbade it). Every item must carry a
+  `band`; a per-chapter `BAND_FLOOR` quota ratchets toward the §A8 ~40/region target (it fails
+  only if a band drops below its floor, so it passes at 41 and tightens each movement). The
+  verdict prints "41 items (41 icons) across 10 chapters" + a per-band distribution line.
+- **Decision — the Bible is amended in the SAME commit (Appendix rule 6).** §A8's count moves
+  "~140" → "~500" with the per-category breakdown; §A4.12 (TONICS & THE SECOND WIND) and §A11.8
+  (the glyph law placeholder, built in M22) are added; §B4 gains THE CATALOG SPINE row.
+- **Verification:** `npm run validate` green (41 items / 41 icons across 10 chapters; bands
+  ch1:23 ch2:14 ch3:1 ch9:2 ch10:0 cross:1; the per-region tables pass at 41) + tsc clean + full
+  vitest **663 green** (+15: formulas secondaries/resists/boosts, state tonics, migrations v9,
+  items bands/tonic/notes) + `vite build` clean + `npm run art:icons` re-rendered (41 icons,
+  unchanged — icons are not a sample-routed generator, no FNV re-pin). No frozen-core or
+  world_block change (items/schema/validator are not map generators).
+- **Consequences:** the catalog can now hold tonics, resists, Vibe-gear, and secondary riders —
+  every later S17 movement (the Americas/Old-World/Far-World/Last-World catalogs) pours items in
+  by adding rows to ITEM_BAND + the per-region validator tables, never ad-hoc. STATUS/equip/tonic
+  use/revival all read the new stats correctly with the existing 41 items and zero regressions.
+  The spine of THE GREAT CATALOG lands.

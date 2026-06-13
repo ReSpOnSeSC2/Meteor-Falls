@@ -10,7 +10,7 @@ import { ITEMS, slotOf, BAG_MAX, EQUIP_SLOTS, type EquipSlot } from '../data/ite
 import { MGR_ROW, SCORE_ROWS } from '../data/arcade';
 import { migrateSave, freshHoops } from './migrations';
 import { SaveBank, SLOT_IDS, localStorageDriver, type OpenResult, type SlotId, type SlotPeek } from './saves';
-import type { ArcadeScore, CallerRecord, HoopsState, Stats } from '../schemas';
+import type { ArcadeScore, BoostStat, CallerRecord, HoopsState, Stats, TonicBoost } from '../schemas';
 
 // S5: Stats is z.infer'd from src/schemas — one shape for compile and runtime
 export type { Stats } from '../schemas';
@@ -30,10 +30,15 @@ export interface HeroState {
   bag: string[];
   /** equipped item ids by slot; an equipped item stays in this hero's bag, EB-style */
   equip: Partial<Record<EquipSlot, string>>;
+  /** S17 (v9, ADR-061): permanent TONIC boosts (§A4.12). Kept OUT of `stats`
+   *  (which level-up recomputes from base+growth) so a boost survives leveling:
+   *  the heroX seams add boosts[stat]; max HP/PP are re-added at every recompute
+   *  site. Empty for every save until a tonic is used. */
+  boosts: Partial<Record<BoostStat, number>>;
 }
 
 export interface GameStateData {
-  version: 8;
+  version: 9;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -88,7 +93,26 @@ export function makeHeroState(id: HeroId, level: number, name?: string): HeroSta
     down: false,
     bag: [],
     equip: {},
+    boosts: {},
   };
+}
+
+/**
+ * S17 (ADR-061) — §A4.12: apply a TONIC's permanent boost to a hero. Combat
+ * stats accumulate in `boosts` (the seams add them; level-up can't wipe them);
+ * max HP / max PP raise the stored ceiling AND the current pool by the same
+ * amount, EB-style (Growth Spurt Milk fills what it grows). Idempotent per call.
+ */
+export function applyTonic(hero: HeroState, boost: TonicBoost): void {
+  const { stat, amount } = boost;
+  hero.boosts[stat] = (hero.boosts[stat] ?? 0) + amount;
+  if (stat === 'hp') {
+    hero.maxHp += amount;
+    hero.hp += amount;
+  } else if (stat === 'pp') {
+    hero.maxPp += amount;
+    hero.pp += amount;
+  }
 }
 
 /** canon EXP curve: EXP(L) = 4·L³ ÷ 3 (GAME_BIBLE §A9) */
@@ -116,7 +140,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 8,
+    version: 9,
     party: [rex],
     guest: null,
     keyItems: [],

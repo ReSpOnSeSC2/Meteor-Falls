@@ -134,6 +134,23 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 8. **Status effects:** Sunburn (poison-over-time), Crying (can't aim — gnats, onion ghosts), Asleep, Paralyzed, Homesick (Jay only), **Hushed** (silenced — no Vibe), Mushroomized (Ch.8 spore forest — controls scramble until cured at a doctor).
 9. **The Star Locket.** Key item UI: shows Embers collected (0–10) and plays the growing Homesong on the pause screen — one more instrument layer per Ember.
 
+> *(Amended 2026-06-13 per Appendix rule 6, ADR-061 — **§A4.12 TONICS & THE
+> SECOND WIND.** TONICS are a one-shot consumable (`tonic` ItemKind) that
+> PERMANENTLY raises a stat on use and persists in the save — EarthBound's
+> pills/capsules made literal and warm: Sudden Guts Pill (+Guts), Growth Spurt
+> Milk (+max HP), Charged Battery (+max PP), Brain-Food Lunch (+Vibe),
+> Speed-Demon Soda (+Speed), Iron Tonic (+Offense), Turtle Wax (+Defense), a
+> Lucky Penny (+Luck). Rare and dear by design; a few are quest/boss rewards.
+> The boost rides a per-hero `boosts` map kept apart from level-recomputed
+> stats, so it never washes out on level-up. THE REVIVAL LINE scales a hero
+> back up from a cheap **Second Wind** (revive at 1 HP) through Glint's Spark /
+> Ember and the Guardian-Angel Feather to **Milo's Defibrillator** (a Repaired
+> Gizmo, §A3 Repair made an item — reusable) and the **Hallelujah Bell**
+> (prayer-tier, full revive): mechanically, any `cure` that lists `'down'`
+> revives, healing by its own value. §A4.7's front-desk revival still works for
+> cash; these are the item path. The numbers 10/11 in this list are reserved
+> for the unlanded S16 systems (the dead-air helmet, the overworld PSI keys).)*
+
 ## A5. The World Route & Travel
 
 | Ch. | Region | Locales | Travel in |
@@ -275,7 +292,31 @@ Chapter-by-chapter enemy identity:
 
 Enemy data must include a **map tell**, a **battle hook**, a **drop with identity**, and a **death line**. If any of those four are generic, the enemy is not done. Acceptable: "The Mirage Vendor refunded your confidence." Not acceptable: "Enemy defeated." If an enemy could be moved to another chapter without rewriting its joke, silhouette, and moves, it is not specific enough yet.
 
-## A8. Items (canon catalog — ~140 items; full prices/stats in data files, Prompt 10)
+## A8. Items (canon catalog — ~500 items; full prices/stats in data files, Prompt 10)
+
+> *(Amended 2026-06-13 per Appendix rule 6, ADR-061 — **THE GREAT CATALOG**: the
+> target moves from "~140 items" to **~500 items**, a real shopkeeper's inventory
+> of a world. The rough per-category breakdown the validator counts: ~60 weapons
+> (a 5–7-rung personal ladder for each of the five heroes + funny regional
+> sidegrades), ~70 armor (the hat ladder + bodies/robes/vests/coats per region),
+> ~45 arms (wraps, gloves, bracers — incl. the hero-signature SETS), ~55 charms
+> (pendants/charms: luck + resists + small riders, incl. hero SETS), ~110 foods,
+> ~30 PP drinks, ~35 cures (every §A4.8 status, tiered) + ~12 revival items, ~25
+> tonics (permanent boosts), ~55 battle items, ~45 valuables, ~50 key items, ~12
+> picnic baskets. Every item is unique, iconed (ADR-060), priced to §A9, carries
+> a chapter band, and smells of its exact region (§A11.7). NEW mechanics become
+> canon here: **TONICS** (a `tonic` ItemKind — a one-shot consumable that
+> PERMANENTLY raises a stat: Offense/Defense/Speed/Guts/Luck/Vibe/max HP/max PP;
+> see §A4.12); **the MULTI-TIER REVIVAL LINE** (Second Wind → Glint's Spark →
+> Glint's Ember → Guardian-Angel Feather → Milo's Defibrillator → the Hallelujah
+> Bell; §A4.12); **ELEMENTAL RESIST gear** (armor + charms carry fire/freeze/
+> volt/holy resist %, the "pendants (elemental resists)" line made real); **VIBE
+> on gear** (charms/arms/robes can buff Vibe power — the §A10 Riddle Ring's +10
+> Vibe finally has a field); and **SECONDARY equip bonuses** (equipment keeps ONE
+> primary slot stat — weapon→Offense, body→Defense, arms→Speed|Guts, other→Luck —
+> AND may carry a small rider summed on top, shown as "(also +N X)"). Movement 16
+> (the spine) added the schema + mechanics + the per-region validator tables; the
+> regional catalogs pour the items in, Americas → Mars.)*
 
 **Weapons** — Jay's bats: Cracked → T-Ball → Sandlot Slugger → Aluminum → Hall-of-Famer → *Casey's Last Swing* (Ch.10 drop). Mia's pans: Hand-Me-Down → Copper → Cast-Iron → Chef's → *The Holy Pan*. Milo's guns: Pellet Popper → Spud Gun → Double-Barrel Sparker → *Gauss Lobber*; Bottle Rocket / Big / Multi (consumables). Pippa's kit: Stamp Sling → Needle Saber → Thimble Bell → *Royal Red Pen*. Dorin: Cedar Beads → River Beads → *Comet Bead* (1/128 drop, Null Walker — the chase chase).
 
@@ -510,6 +551,19 @@ meteor-falls/
   invisible. The equippable WEAPON_ART pins (the battler swing + the torso dress) stand;
   ITEM_ICON widens the law to ALL kinds (trinket charms/arms reuse their WEAPON_ART icon).
   *(Added 2026-06-13 per Appendix rule 6, alongside ADR-060.)*
+- **THE CATALOG SPINE — the §A8 catalog can hold ~500 (ADR-061).** `ItemDef` (`src/schemas`)
+  carries optional `vibe`, `bonus` (a secondary stat map summed on top of the primary slot
+  stat), `resists` (fire/freeze/volt/holy %, armor + charm only), a `tonic` ItemKind paired
+  with `boost` (a permanent stat raise, §A4.12), and a `band` ('ch1'…'ch10' | 'cross') — each
+  with a `superRefine` pairing, every older pairing intact. Every item MUST carry a band; the
+  validator slices the catalog per region and ratchets a per-chapter quota (`BAND_FLOOR`) toward
+  the §A8 ~40/region target. The old narrow Ch.1–2 pins are GENERALISED, never deleted, into
+  per-region tables: `PP_LINE`, `ARMOR_LINE`, `WEAPON_LADDER` (wielder- + band-tagged), and a
+  `SET_REGISTRY` of hero-signature arms/charm sets — each gated both directions. Permanent tonic
+  boosts ride `HeroState.boosts` (save v9) kept apart from level-recomputed stats; the heroX
+  seams (incl. a new `heroVibe`) sum primary + bonus + boost; `heroResist`/`applyResist` are
+  ready for elemental enemy moves. STATUS, the equip preview, tonic use, and the revival line all
+  read the new stats. *(Added 2026-06-13 per Appendix rule 6, alongside ADR-061.)*
 
 ---
 
@@ -652,7 +706,8 @@ Shop, Quest (objectives, flags, caller metadata), DialogueScript,
 EncounterTable, MapMeta. Implement tools/content-validate.ts: loads every
 JSON in src/data, validates against schemas, AND cross-checks completeness
 against canon manifests (counts: 5 heroes, 200 unique enemy types from §A7,
-10 bosses + 2 minibosses from §A6, 55 quests from §A10, ~140 items from §A8). Any miss,
+10 bosses + 2 minibosses from §A6, 55 quests from §A10, ~500 items from §A8 — amended
+2026-06-13, ADR-061; was ~140). Any miss,
 mismatch, or string containing "TODO/placeholder/lorem" fails the build.
 ```
 
@@ -689,7 +744,7 @@ prices satisfying the §A9 "equipment refresh ≈ 2 chapters of income" rule.
 Author one shop inventory per town (12 towns) using region-appropriate items.
 ```
 
-**Done when:** validator counts all 200/12/~140/14; `tools/balance-sim.ts` stub created for Prompt 39.
+**Done when:** validator counts all 200/12/~500/14 (items ~140 → ~500, ADR-061); `tools/balance-sim.ts` stub created for Prompt 39.
 
 ### Prompt 11 — Quests, encounter tables, dialogue manifests
 
