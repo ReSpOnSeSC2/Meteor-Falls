@@ -314,11 +314,14 @@ export function growOtterbrook(): MapDef {
   // 2) THE FORGE lays two residential blocks on fresh streams (organic). Each
   //    region is wholly south of the core (y≥34) or east of it (x≥44), so the
   //    helper's region-bounded writes can never reach a core cell.
+  // ADR-053: one shared footprint list so the spacing law holds ACROSS both
+  // regions — no two buildings can touch at the south/east seam either
+  const obOccupied: Array<{ x: number; y: number; w: number; h: number }> = [];
   const south = buildDistrict(g, { x: 28, y: 34, w: 39, h: 19 }, new Streams(19951), {
-    layout: 'organic', style: 'americana', lanes: 3, maxStories: 2, sprinkle: true,
+    layout: 'organic', style: 'americana', lanes: 3, maxStories: 2, sprinkle: true, occupied: obOccupied,
   });
   const east = buildDistrict(g, { x: 44, y: 2, w: 23, h: 12 }, new Streams(19952), {
-    layout: 'organic', style: 'americana', lanes: 2, maxStories: 2, sprinkle: true,
+    layout: 'organic', style: 'americana', lanes: 2, maxStories: 2, sprinkle: true, occupied: obOccupied,
   });
 
   // 3) CONNECTIVE SEAMS — the main street flows south, the cross lane runs east
@@ -1345,14 +1348,16 @@ export function growBrickton(): MapDef {
   // 6) THE FORGE lays the blocks (city grammar) on fresh streams, in regions
   //    clear of the arteries + the gateway. Facades stay ≤2 stories (the catalog
   //    is the shipped bldg_* skin — drawn art is a hand job, ADR-020).
+  // ADR-053: shared footprint list so the spacing law spans all three districts
+  const bkOccupied: Array<{ x: number; y: number; w: number; h: number }> = [];
   const eastNorth = buildDistrict(g, { x: 74, y: 2, w: 66, h: 17 }, new Streams(207701), {
-    layout: 'grid', style: 'americana', streetRows: [9], avenueCols: [120], maxStories: 2,
+    layout: 'grid', style: 'americana', streetRows: [9], avenueCols: [120], maxStories: 2, occupied: bkOccupied,
   });
   const eastSouth = buildDistrict(g, { x: 104, y: 41, w: 36, h: 8 }, new Streams(207702), {
-    layout: 'grid', style: 'americana', streetRows: [44], maxStories: 2,
+    layout: 'grid', style: 'americana', streetRows: [44], maxStories: 2, occupied: bkOccupied,
   });
   const southWest = buildDistrict(g, { x: 2, y: 38, w: 70, h: 10 }, new Streams(207703), {
-    layout: 'grid', style: 'americana', streetRows: [44], avenueCols: [40], maxStories: 2,
+    layout: 'grid', style: 'americana', streetRows: [44], avenueCols: [40], maxStories: 2, occupied: bkOccupied,
   });
 
   // 7) MAPLE HEIGHTS — a hand-built brick row backing onto Maple Street (the

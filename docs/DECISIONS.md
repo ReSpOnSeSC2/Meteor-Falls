@@ -3337,3 +3337,45 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** every room entry now has a sub-second settle; if a future map needs a
   different feel, tune `DOOR_REENTRY_MS` (one constant). Pairs with ADR-051 so collision
   + transitions are both robust at the building boundary.
+
+## ADR-053 — S15i: THE BUILDING SPACING LAW (catalog-sized, never seal a walkway)
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (user, with a screenshot of grown Otterbrook: two buildings
+  touching across a path the hero should walk — "the spacing must be such that anywhere
+  there is a walking area there is adequate spacing between buildings.")
+- **Root cause:** now that collision matches a facade's TRUE drawn footprint (ADR-051),
+  the grammar's old placement was wrong in two ways: it placed each facade at a GUESSED
+  size (`wTiles = S.range(4,6)`, `u = S.range(1,3)`) and kept only a fixed `abs(Δx)<5 &&
+  abs(Δy)<3` separation on the top-left anchor — which ignores real widths and is far too
+  short for a 6-tile-tall building. Result: scattered (organic) buildings overlapped and
+  sealed the lane between them.
+- **Decision — place at TRUE size + keep a walkable margin.** `buildDistrict` replaces
+  `districtFacade` with `tryPlaceFacade`: it sizes every facade from `BUILDING_DIMS`
+  (`facadeDims`) so it renders + collides at exactly the footprint we reserve, and it
+  places the lot ONLY if that footprint (a) sits inside the region top, (b) stays inside
+  the region's right edge, and (c) keeps `PLACE_MARGIN = 2` walkable tiles from every
+  already-placed building (`hasGap`). A reserved door waits for a fitting lot rather than
+  forcing an overlap. The catalog is filtered to `u ≤ maxStories` so a tall facade can't
+  poke into a core copied above. The organic branch over-generates candidates
+  (`(rw·rh)/45`) so the spacing CAPS density instead of leaving the district bare.
+- **Decision — the law spans REGIONS too.** `DistrictOpts.occupied` is a shared
+  footprint list; `growOtterbrook` / `growBrickton` pass ONE array to all of a map's
+  `buildDistrict` calls, so no two buildings touch at a region seam either.
+- **Decision — CITY ROWS are not a violation.** Buildings that LINE a street (a city
+  block — adjacent storefronts sharing a wall, the path being the STREET in front) are
+  correct and untouched. The rule targets walkways BETWEEN scattered buildings; the
+  grammar's streets/lanes are the walkways and buildings face them. The shipped Brickton
+  core's downtown row (bagels↔arcade2) is exactly this — a hand-authored, byte-identical
+  block, left as-is.
+- **Verification:** tsc + full vitest **619 green**, NO re-pin (the levelkit hashes test
+  `buildCity`/`buildTown`/`buildVillage`; `buildDistrict` is the shipped-growth path,
+  re-proven by `world_block` — cores byte-identical, prop counts within the raised caps,
+  `cityViolations` clear). Live: grown Otterbrook = 7 facades, **0 overlaps, min gap 2
+  tiles**; grown Brickton = 34 facades, **0 grown overlaps** (the lone overlap is the
+  frozen-core storefront row above). The screenshot's sealed path is gone.
+- **Consequences:** the spacing law is the placement contract for ALL future growth
+  (every shipped area is grown via `buildDistrict` per ADR-049), so a generated map can
+  never wall off a path. Draft generators (`buildCity`/`buildTown`/`buildVillage`, LAB
+  only) can adopt `tryPlaceFacade` when promoted. Movement Two's nook/underground/woods
+  grammar inherits it.

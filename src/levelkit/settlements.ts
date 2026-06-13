@@ -34,6 +34,7 @@ import {
   ROLE_FACADE,
   BAND_ROSTER,
   placeFacade,
+  facadeDims,
   furniture,
   tree,
   slot,
@@ -436,6 +437,10 @@ export interface DistrictOpts {
   maxStories?: 1 | 2 | 3;
   /** lay a region-bounded ground sprinkle (never touches a copied-in core) */
   sprinkle?: boolean;
+  /** ADR-053: a SHARED building-footprint list. Pass the same array to every
+   *  buildDistrict call for one map and the spacing law holds ACROSS regions too
+   *  (no two buildings seal a walkway at a region seam). Seeded + appended. */
+  occupied?: Array<{ x: number; y: number; w: number; h: number }>;
 }
 
 export interface DistrictResult {
@@ -446,27 +451,69 @@ export interface DistrictResult {
   signs: SignDef[];
 }
 
-/** one facade for a district lot, with an optional reserved door + sign */
-function districtFacade(
+/** a placed building's tile-space footprint (for the spacing law) */
+interface TileRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * THE SPACING LAW (S15i, ADR-053): two buildings must never seal a walkway shut.
+ * Since collision now matches a facade's TRUE drawn footprint, the grammar must
+ * place each building at its real size (BUILDING_DIMS) and keep PLACE_MARGIN
+ * walkable tiles between footprints — so anywhere the player can walk, there's a
+ * lane, never a wall of touching buildings.
+ */
+const PLACE_MARGIN = 2;
+
+/** does `r` keep ≥ PLACE_MARGIN tiles from every already-placed footprint? */
+function hasGap(r: TileRect, placed: readonly TileRect[]): boolean {
+  const m = PLACE_MARGIN;
+  return !placed.some(
+    (q) =>
+      r.x - m < q.x + q.w && r.x + r.w + m > q.x && r.y - m < q.y + q.h && r.y + r.h + m > q.y,
+  );
+}
+
+/**
+ * Try to place ONE district facade at (x, bottomPx). Chooses the sprite (a
+ * reserved door/role wins), sizes it from BUILDING_DIMS (so it renders + collides
+ * at exactly the footprint we space against), and places it ONLY if its footprint
+ * (a) stays inside the region top and (b) keeps a walkable margin from every
+ * building already placed. Returns null (and leaves any reserve unspent) when
+ * there's no room — the caller advances and tries the next lot.
+ */
+function tryPlaceFacade(
   S: Streams,
   catalog: readonly string[],
   reserve: DistrictReserve[],
   signs: SignDef[],
+  placed: TileRect[],
+  regionTop: number,
+  regionRight: number,
   key: string,
   x: number,
   bottomPx: number,
-  wTiles: number,
-  u: 1 | 2 | 3,
-): PropDef {
-  let sprite = catalog[S.int(`${key}_sprite`, catalog.length)];
+): PropDef | null {
+  const pick = catalog[S.int(`${key}_sprite`, catalog.length)];
+  const res = reserve[0];
+  const sprite = res ? res.sprite ?? ROLE_FACADE[res.to] ?? pick : pick;
+  const { w, u } = facadeDims(sprite);
+  const top = Math.floor((bottomPx - cityBuildingHeight(u)) / 16);
+  // a facade may never poke above the region (into a core copied just above it)
+  // nor past its right edge, and must keep a walkable lane from its neighbours
+  const foot: TileRect = { x, y: top, w, h: Math.ceil(cityBuildingHeight(u) / 16) };
+  if (top < regionTop || x + w > regionRight || !hasGap(foot, placed)) return null;
   let door: { to: string; tx: number; ty: number } | undefined;
-  if (reserve.length) {
-    const r = reserve.shift() as DistrictReserve;
-    sprite = r.sprite ?? ROLE_FACADE[r.to] ?? sprite;
-    door = { to: r.to, tx: r.tx ?? 144, ty: r.ty ?? 150 };
-    if (r.sign) signs.push({ x: x + 1, y: Math.max(0, Math.round((bottomPx - cityBuildingHeight(u)) / 16) - 1), dialogue: r.sign });
+  if (res) {
+    reserve.shift();
+    door = { to: res.to, tx: res.tx ?? 144, ty: res.ty ?? 150 };
+    if (res.sign) signs.push({ x: x + 1, y: Math.max(0, top - 1), dialogue: res.sign });
   }
-  return placeFacade(sprite, x, bottomPx, wTiles, u, door);
+  placed.push(foot);
+  return placeFacade(sprite, x, bottomPx, w, u, door);
 }
 
 export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts: DistrictOpts): DistrictResult {
@@ -530,8 +577,13 @@ export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts:
         }
       }
     }
-    // a jittered facade row north of EACH street (≥2 block faces by construction)
+    // a jittered facade row north of EACH street (≥2 block faces by construction).
+    // catalog-driven + spaced: each lot is placed at its TRUE size and only if it
+    // keeps a walkable lane from every other building (ADR-053 — never a sealed row)
     const doorCols = new Set<number>();
+    const placedRects: TileRect[] = opts.occupied ?? [];
+    const catU = catalog.filter((s) => facadeDims(s).u <= maxU); // honour the height cap
+    const rowCatalog = catU.length ? catU : catalog;
     streetRows.forEach((sy, si) => {
       const bottomPx = sy * 16 - 4;
       let x = rx + 1 + S.int(`gBldgStart${si}`, 2);
@@ -542,16 +594,16 @@ export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts:
           x = (next.length ? Math.max(...next) : x) + 5;
           continue;
         }
-        const wTiles = S.range(`gBldgW${si}_${placed}`, 4, 6);
-        if (x + wTiles > rRight - 2) break;
-        const u = Math.min(maxU, S.range(`gBldgU${si}_${placed}`, 1, 3)) as 1 | 2 | 3;
-        const prop = districtFacade(S, catalog, reserve, signs, `gBldg${si}_${placed}`, x, bottomPx, wTiles, u);
-        if (prop.door) doorCols.add(Math.round(prop.x) + 2);
-        props.push(prop);
-        if (S.chance(`gAlley${si}_${placed}`, 0.5)) {
-          props.push(furniture('dumpster', x + wTiles, (bottomPx - 70) / 16));
+        const prop = tryPlaceFacade(S, rowCatalog, reserve, signs, placedRects, ry, rRight - 1, `gBldg${si}_${placed}`, x, bottomPx);
+        const advance = (prop ? facadeDims(prop.sprite).w : 4) + 1 + S.int(`gGap${si}_${placed}`, 2);
+        if (prop) {
+          if (prop.door) doorCols.add(Math.round(prop.x) + 2);
+          props.push(prop);
+          if (S.chance(`gAlley${si}_${placed}`, 0.5)) {
+            props.push(furniture('dumpster', x + facadeDims(prop.sprite).w, (bottomPx - 70) / 16));
+          }
         }
-        x += wTiles + 1 + S.int(`gGap${si}_${placed}`, 2);
+        x += advance;
         placed++;
       }
     });
@@ -588,18 +640,22 @@ export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts:
       const bot = rBot - 3 - S.int(`oSpurBot${l}`, 3);
       for (let y = Math.min(top, bot); y < Math.max(top, bot); y++) g.set(sx, y, ':');
     }
-    const houseXs: Array<[number, number]> = [];
-    const count = Math.max(4, Math.round((rw * rh) / 90));
+    // scattered, catalog-sized, SPACED houses — tryPlaceFacade rejects any lot
+    // whose true footprint would touch a neighbour, so a path is never sealed
+    // (ADR-053). Honour the height cap so a tall facade can't poke into the core.
+    const placedRects: TileRect[] = opts.occupied ?? [];
+    const catU = catalog.filter((s) => facadeDims(s).u <= maxU);
+    const houseCatalog = catU.length ? catU : catalog;
+    // over-generate candidates: the spacing law caps real density, so more
+    // attempts FILL the district with spaced buildings instead of leaving it bare
+    const count = Math.max(8, Math.round((rw * rh) / 45));
     for (let i = 0; i < count; i++) {
       const hx = rx + 3 + S.int(`oHx${i}`, Math.max(1, rw - 8));
       const hy = ry + 3 + S.int(`oHy${i}`, Math.max(1, rh - 9));
-      if (houseXs.some(([x, y]) => Math.abs(x - hx) < 5 && Math.abs(y - hy) < 3)) continue;
-      if (hy * 16 + 60 - cityBuildingHeight(maxU) < (ry - 1) * 16) continue; // never poke into a core above
-      houseXs.push([hx, hy]);
-      const u = Math.min(maxU, S.range(`oHu${i}`, 1, 2)) as 1 | 2;
-      const prop = districtFacade(S, catalog, reserve, signs, `oHouse${i}`, hx, hy * 16 + 60, 4, u);
+      const prop = tryPlaceFacade(S, houseCatalog, reserve, signs, placedRects, ry, rRight - 1, `oHouse${i}`, hx, hy * 16 + 60);
+      if (!prop) continue;
       props.push(prop);
-      if (S.chance(`oTree${i}`, 0.5)) props.push(tree(hx + 5, hy + 1, pack.pines));
+      if (S.chance(`oTree${i}`, 0.5)) props.push(tree(hx + facadeDims(prop.sprite).w + 1, hy + 1, pack.pines));
     }
   }
 

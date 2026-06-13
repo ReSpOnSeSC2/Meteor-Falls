@@ -471,6 +471,13 @@ meteor-falls/
   `window.mfSolids()` is the dev overlay. Entering a room locks doors for ~0.9 s
   (`DOOR_REENTRY_MS`, ADR-052) so the door you came through can't bounce you back.
   *(Added 2026-06-13 per Appendix rule 6, alongside ADR-050/051/052.)*
+- **THE SPACING LAW — buildings never seal a walkway (ADR-053).** Because a facade now
+  collides as its full footprint, the generator (`buildDistrict.tryPlaceFacade`) places
+  every building at its TRUE `BUILDING_DIMS` size and keeps ≥`PLACE_MARGIN` (2) walkable
+  tiles between footprints — across regions too (shared `occupied` list). Anywhere the
+  player can walk, there is a lane, never a wall of touching buildings. City BLOCKS
+  (adjacent storefronts lining a street, the path being the street) are the intended
+  exception, not a violation. *(Added 2026-06-13 alongside ADR-053.)*
 - **EACH AREA FEELS FRESH — per-area building skins (ADR-050).** Every named level
   area draws its facades ONLY from its own curated slice of the catalog (`AREA_SKINS`
   in `src/spritegen/buildings.ts`): a distinct family mix + ramp palette, so no two
