@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { vars } from './text';
+import { vars, glyphify } from './text';
 import { GS, newGameData } from '../engine/state';
 import { DIALOGUE } from '../data/dialogue';
+import { EMOJI_GLYPH, FONT_CHARS } from '../spritegen/font';
+import { ABILITIES } from '../data/abilities';
 
 describe('dialogue text variables (Prompt 6 + 21)', () => {
   beforeEach(() => GS.reset());
@@ -51,6 +53,43 @@ describe('dialogue text variables (Prompt 6 + 21)', () => {
     // the join + manager scenes carry her chosen name everywhere
     expect(DIALOGUE.faye_join.map((p) => vars(p)).join('\n')).toContain('Wren');
     expect(DIALOGUE.manager_intro.map((p) => vars(p)).join('\n')).toContain('Wren');
+  });
+
+  // S-Mia ("Ability Expansion"): the emoji glyph map (§5 caveat — the procedural
+  // font draws no emoji, so a literal codepoint must resolve to a drawn glyph or
+  // it renders as tofu). glyphify() swaps emoji → PUA glyph; the font draws it.
+  it('every authored emoji codepoint resolves to a drawn glyph (no tofu)', () => {
+    for (const [emoji, glyph] of Object.entries(EMOJI_GLYPH)) {
+      // the swap happens…
+      expect(glyphify(emoji)).toBe(glyph);
+      // …and the swapped char is a single code unit the font actually draws
+      expect(glyph.length).toBe(1);
+      expect(FONT_CHARS).toContain(glyph);
+    }
+  });
+
+  it('glyphify strips emoji variation selectors and is idempotent', () => {
+    // ❄️ (snowflake + U+FE0F) collapses to the drawn ❄ glyph
+    expect(glyphify('❄️')).toBe(EMOJI_GLYPH['❄']);
+    // PUA glyphs are not emoji, so re-running is a no-op
+    const once = glyphify('a 🔥 b');
+    expect(glyphify(once)).toBe(once);
+    // plain ASCII passes through untouched (the existing dialogue tests rely on it)
+    expect(glyphify('Hi Jay.')).toBe('Hi Jay.');
+  });
+
+  it("every emoji in Mia's spell lines is one the glyph map can draw", () => {
+    // gather all non-ASCII codepoints from her ability text; after glyphify each
+    // surviving char must be in FONT_CHARS (a face exists — no tofu ships)
+    for (const ab of Object.values(ABILITIES)) {
+      for (const ch of glyphify(ab.text)) {
+        const code = ch.codePointAt(0) ?? 0;
+        if (code < 32 || code > 126) {
+          // tokens like {user} are ASCII; anything left non-ASCII must be a glyph
+          expect(FONT_CHARS).toContain(ch);
+        }
+      }
+    }
   });
 
   it("S6: vars() resolves against a PASSED blob — slot summaries use each slot's own names", () => {

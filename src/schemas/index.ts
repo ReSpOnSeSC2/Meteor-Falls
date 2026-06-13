@@ -152,7 +152,12 @@ export const EnemyDefSchema = z.strictObject({
   level: z.number().int().min(1), // for instant-win checks
   exp: z.number().int().min(0),
   cash: z.number().int().min(0),
-  weakness: z.array(z.enum(['fire', 'freeze', 'volt', 'insect', 'salt'])),
+  weakness: z.array(z.enum(['fire', 'freeze', 'volt', 'insect', 'salt', 'holy'])),
+  /** S-Mia ("The Girl Who Prays"): the OUTGOING resist seam — elements that hit
+   *  this foe for ~×0.5 (Mia's applyElement reads it; `holy` PIERCES a slice, so
+   *  the Embers' light still lands ~×0.75 on a holy-resistant foe). Optional, so
+   *  every shipped enemy parses byte-identical — none resist anything today. */
+  resists: z.array(z.enum(['fire', 'freeze', 'volt', 'holy'])).optional(),
   /** §A7: every enemy has 2–4 moves… */
   moves: z.array(EnemyMoveSchema).min(2).max(4),
   /** …and one flavor death line */

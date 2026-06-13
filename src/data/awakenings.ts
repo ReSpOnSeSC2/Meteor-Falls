@@ -105,6 +105,40 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       dialogue: 'awake_the_whole_sky',
       toast: '{rex} let the WHOLE SKY surge!',
     }),
+    /* ---- MIA ("Ability Expansion"): her three iconic late beats. The grind-
+       and-learn virtuoso keeps MOST spells as level unlocks (§A3 amended); these
+       three AWAKEN as moments. None appears in HEROES.faye.unlocks (one-path).
+       Each grants kind-'vibe' (the validator pins it) and a real dialogue key. */
+    W({
+      // the first Heartlight recorded at a Resonance Site: the Embers' note
+      // becomes something she can SING BACK. Opens her holy / anti-Hush line.
+      id: 'the_first_heartlight',
+      hero: 'faye',
+      ability: 'starsong_a',
+      flag: 'awake_starsong_a',
+      dialogue: 'awake_the_first_heartlight',
+      toast: '{faye} awakened STARSONG Alpha! ✨',
+    }),
+    W({
+      // the late beat where she finally makes a flame the Hush can't smother —
+      // Fire Σ, the whole sky orange and STAYING lit.
+      id: 'the_match_that_stays_lit',
+      hero: 'faye',
+      ability: 'vibe_fire_x',
+      flag: 'awake_fire_x',
+      dialogue: 'awake_the_match_that_stays_lit',
+      toast: '{faye} awakened VIBE FIRE Sigma! 🔥',
+    }),
+    W({
+      // she hears every corrupted Ember at once and pulls the song back out of a
+      // whole field — Magnet Σ, the field-wide drain.
+      id: 'she_hears_it_all',
+      hero: 'faye',
+      ability: 'magnet_x',
+      flag: 'awake_magnet_x',
+      dialogue: 'awake_she_hears_it_all',
+      toast: '{faye} awakened MAGNET Sigma! 🧲',
+    }),
     /* ---- DORIN ("The Monk's Full Path"): his single awakening. The Trial of
        the Mute Mountain is the mastery-earned beat that gates his joining
        (Ch.9) — passing it, he masters the full Comet. Vibe Comet Ω left his

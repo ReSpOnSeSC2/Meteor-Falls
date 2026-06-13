@@ -840,6 +840,13 @@ class AudioSys {
         this.tone('sine', 880, 220, 0.35, 0.06);
         this.tone('sine', 1100, 275, 0.35, 0.04, 0.05);
         break;
+      case 'fx_starsong':
+        // Mia's holy light: a warm rising major chord with a bell shimmer on top
+        this.tone('sine', 523, 523, 0.12, 0.06);
+        this.tone('sine', 659, 659, 0.12, 0.06, 0.07);
+        this.tone('sine', 784, 1568, 0.22, 0.06, 0.14);
+        this.tone('triangle', 1976, 1976, 0.1, 0.03, 0.2);
+        break;
       case 'fx_brainjam':
         this.tone('square', 392, 415, 0.12, 0.07);
         this.tone('square', 415, 392, 0.12, 0.07, 0.12);

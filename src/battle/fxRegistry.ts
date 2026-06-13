@@ -35,6 +35,7 @@ export type FxFamily =
   | 'fizz' // Star Cola: rising fizz
   | 'porchlight' // Glint's Spark: porch-light warmth pooling upward
   | 'comet' // Vibe Comet: falling star streaks
+  | 'starsong' // Mia's Starsong: warm gold notes rising into bursting stars
   | 'siphon' // Magnet: PP trickle drawn back to the caster
   | 'wire_cross' // Brainjam: crossed-wire zigzag over the target's head
   | 'revive' // Healing γ: the §A4.7 return
@@ -77,13 +78,26 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
   fire_b: S({ kind: 'ability', family: 'flame_wave', tier: 2, ramp: RAMP.ORANGE, sfx: 'fx_fire' }),
   fire_g: S({ kind: 'ability', family: 'flame_wave', tier: 3, ramp: RAMP.ORANGE, sfx: 'fx_fire' }),
   fire_o: S({ kind: 'ability', family: 'flame_wave', tier: 4, ramp: RAMP.ORANGE, sfx: 'fx_fire' }),
+  // Mia's Σ tiers (S-Mia): the fifth rung is a genuine FINALE, not tier 4 scaled
+  // up — flame_wave/lattice/bolt all branch tier:5 in fx.ts (the S16 surge pattern).
+  fire_x: S({ kind: 'ability', family: 'flame_wave', tier: 5, ramp: RAMP.ORANGE, sfx: 'fx_fire' }),
   freeze_a: S({ kind: 'ability', family: 'lattice', tier: 1, ramp: RAMP.CYAN, sfx: 'fx_freeze' }),
   freeze_b: S({ kind: 'ability', family: 'lattice', tier: 2, ramp: RAMP.CYAN, sfx: 'fx_freeze' }),
   freeze_g: S({ kind: 'ability', family: 'lattice', tier: 3, ramp: RAMP.CYAN, sfx: 'fx_freeze' }),
   freeze_o: S({ kind: 'ability', family: 'lattice', tier: 4, ramp: RAMP.CYAN, sfx: 'fx_freeze' }),
+  freeze_x: S({ kind: 'ability', family: 'lattice', tier: 5, ramp: RAMP.CYAN, sfx: 'fx_freeze' }),
   volt_a: S({ kind: 'ability', family: 'bolt', tier: 1, ramp: RAMP.GOLD, sfx: 'fx_volt' }),
   volt_b: S({ kind: 'ability', family: 'bolt', tier: 2, ramp: RAMP.GOLD, sfx: 'fx_volt' }),
   volt_g: S({ kind: 'ability', family: 'bolt', tier: 3, ramp: RAMP.GOLD, sfx: 'fx_volt' }),
+  volt_o: S({ kind: 'ability', family: 'bolt', tier: 4, ramp: RAMP.GOLD, sfx: 'fx_volt' }),
+  volt_x: S({ kind: 'ability', family: 'bolt', tier: 5, ramp: RAMP.GOLD, sfx: 'fx_volt' }),
+  // STARSONG — a NEW family: warm gold notes rising into bursting stars (the
+  // anti-Hush light). Tier 5 is the finale (see the 'starsong' case in fx.ts).
+  starsong_a: S({ kind: 'ability', family: 'starsong', tier: 1, ramp: RAMP.GOLD, sfx: 'fx_starsong' }),
+  starsong_b: S({ kind: 'ability', family: 'starsong', tier: 2, ramp: RAMP.GOLD, sfx: 'fx_starsong' }),
+  starsong_g: S({ kind: 'ability', family: 'starsong', tier: 3, ramp: RAMP.GOLD, sfx: 'fx_starsong' }),
+  starsong_o: S({ kind: 'ability', family: 'starsong', tier: 4, ramp: RAMP.GOLD, sfx: 'fx_starsong' }),
+  starsong_x: S({ kind: 'ability', family: 'starsong', tier: 5, ramp: RAMP.GOLD, sfx: 'fx_starsong' }),
   lifeup: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.GRASS, sfx: 'fx_lifeup' }),
   hypno: S({ kind: 'ability', family: 'spiral', ramp: RAMP.PURPLE, sfx: 'fx_hypno' }),
   shield_snap: S({ kind: 'ability', family: 'barrier', ramp: RAMP.CYAN, sfx: 'fx_shield' }),
@@ -218,6 +232,7 @@ export const STAGE_ANIM: Record<FxFamily, StagePose> = {
   fizz: 'oncard',
   porchlight: 'oncard', // the Spark is held up at the card, not paraded
   comet: 'cast',
+  starsong: 'cast', // Mia raises the song, hands up under the gold glow
   siphon: 'aim', // "{user} held out her palm!"
   wire_cross: 'cast',
   revive: 'pray', // Healing γ speaks an old word, kneeling

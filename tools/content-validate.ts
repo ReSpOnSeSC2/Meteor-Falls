@@ -742,6 +742,12 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     // Ch.9 ("The Monk's Full Path") — Dorin's single awakening. The Trial that
     // gates his joining hands him the full Vibe Comet (Ω moved off his L52 row).
     trial_of_the_mute_mountain: { hero: 'dorin', ability: 'vibe_comet_o', flag: 'awake_comet_o', dialogue: 'awake_trial_of_the_mute_mountain' },
+    // "Ability Expansion" — Mia's three iconic late beats (her Starsong opener,
+    // Fire Σ, Magnet Σ). Reserved as awakenings; the rest of her ~30 spells are
+    // level unlocks (one-path rule — none of these three sits in faye.unlocks).
+    the_first_heartlight: { hero: 'faye', ability: 'starsong_a', flag: 'awake_starsong_a', dialogue: 'awake_the_first_heartlight' },
+    the_match_that_stays_lit: { hero: 'faye', ability: 'vibe_fire_x', flag: 'awake_fire_x', dialogue: 'awake_the_match_that_stays_lit' },
+    she_hears_it_all: { hero: 'faye', ability: 'magnet_x', flag: 'awake_magnet_x', dialogue: 'awake_she_hears_it_all' },
   };
   for (const [id, pin] of Object.entries(canon)) {
     const a = AWAKENINGS[id];

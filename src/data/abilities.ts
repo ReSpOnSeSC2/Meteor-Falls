@@ -65,20 +65,60 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'flash_o', name: 'Flash Omega', kind: 'vibe', pp: 16, power: 0, target: 'enemies', element: 'none', status: 'crying', text: '{user} went off like a whole wall of cameras!', fx: 'flash' }),
     A({ id: 'teleport_b', name: 'Teleport Beta', kind: 'vibe', pp: 4, power: 0, target: 'self', element: 'none', text: '{user} found the fast way out!', fx: 'run_up' }),
 
-    // ---- Mia: elemental lines + PRAY
-    A({ id: 'vibe_fire_a', name: 'Vibe Fire Alpha', kind: 'vibe', pp: 6, power: 48, target: 'enemy', element: 'fire', text: '{user} snapped her fingers — FWOOSH!', fx: 'fire_a' }),
-    A({ id: 'vibe_fire_b', name: 'Vibe Fire Beta', kind: 'vibe', pp: 14, power: 125, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH!', fx: 'fire_b' }),
-    A({ id: 'vibe_fire_g', name: 'Vibe Fire Gamma', kind: 'vibe', pp: 28, power: 202, target: 'enemies', element: 'fire', text: 'The air itself caught!', fx: 'fire_g' }),
-    A({ id: 'vibe_fire_o', name: 'Vibe Fire Omega', kind: 'vibe', pp: 49, power: 298, target: 'enemies', element: 'fire', text: 'The air itself caught!', fx: 'fire_o' }),
-    A({ id: 'vibe_freeze_a', name: 'Vibe Freeze Alpha', kind: 'vibe', pp: 7, power: 52, target: 'enemy', element: 'freeze', text: '{user} exhaled winter!', fx: 'freeze_a' }),
-    A({ id: 'vibe_freeze_b', name: 'Vibe Freeze Beta', kind: 'vibe', pp: 15, power: 114, target: 'enemy', element: 'freeze', text: '{user} exhaled winter!', fx: 'freeze_b' }),
-    A({ id: 'vibe_freeze_g', name: 'Vibe Freeze Gamma', kind: 'vibe', pp: 30, power: 187, target: 'enemy', element: 'freeze', text: 'Absolute zero, with feeling!', fx: 'freeze_g' }),
-    A({ id: 'vibe_freeze_o', name: 'Vibe Freeze Omega', kind: 'vibe', pp: 52, power: 286, target: 'enemy', element: 'freeze', text: 'Absolute zero, with feeling!', fx: 'freeze_o' }),
-    A({ id: 'vibe_volt_a', name: 'Vibe Volt Alpha', kind: 'vibe', pp: 9, power: 58, target: 'enemy', element: 'volt', text: '{user} pointed at the sky!', fx: 'volt_a' }),
-    A({ id: 'vibe_volt_b', name: 'Vibe Volt Beta', kind: 'vibe', pp: 19, power: 128, target: 'enemies', element: 'volt', text: '{user} pointed at the sky!', fx: 'volt_b' }),
-    A({ id: 'vibe_volt_g', name: 'Vibe Volt Gamma', kind: 'vibe', pp: 36, power: 209, target: 'enemies', element: 'volt', text: 'The sky answered!', fx: 'volt_g' }),
-    A({ id: 'magnet_a', name: 'Magnet Alpha', kind: 'vibe', pp: 3, power: 0, target: 'enemy', element: 'none', status: 'pp_drain', text: '{user} held out her palm!', fx: 'magnet' }),
+    // ---- Mia, THE GIRL WHO PRAYS — ~30 spells ("Ability Expansion"). The
+    // biggest spellcaster in the game: five full elemental ladders (α/β/γ/Ω/Σ)
+    // plus PRAY and a small utility set, each doing something DIFFERENT. Post-S16
+    // her elemental edge is mechanically loud — the weak/resist multiplier
+    // (applyElement) is the answer Jay's Ward can't take away from her. Several
+    // battle-lines carry emoji flair (🔥❄⚡✨🧲) — they render through the
+    // procedural glyph map (src/ui/text.ts + spritegen/font.ts), zero binary
+    // assets. Voice: kind, steel-spined; the sparkle rides the flourish lines.
+
+    // Ladder 1 — FIRE 🔥 (single→AoE; γ+ apply `burn`, Fire's DoT identity).
+    A({ id: 'vibe_fire_a', name: 'Vibe Fire Alpha', kind: 'vibe', pp: 6, power: 48, target: 'enemy', element: 'fire', text: '{user} snapped her fingers — FWOOSH! 🔥', fx: 'fire_a' }),
+    A({ id: 'vibe_fire_b', name: 'Vibe Fire Beta', kind: 'vibe', pp: 14, power: 125, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH! 🔥🔥', fx: 'fire_b' }),
+    A({ id: 'vibe_fire_g', name: 'Vibe Fire Gamma', kind: 'vibe', pp: 28, power: 202, target: 'enemies', element: 'fire', status: 'burn', text: 'The air itself caught! 🔥🔥🔥', fx: 'fire_g' }),
+    A({ id: 'vibe_fire_o', name: 'Vibe Fire Omega', kind: 'vibe', pp: 49, power: 298, target: 'enemies', element: 'fire', status: 'burn', text: 'The air itself caught!', fx: 'fire_o' }),
+    A({ id: 'vibe_fire_x', name: 'Vibe Fire Sigma', kind: 'vibe', pp: 78, power: 430, target: 'enemies', element: 'fire', status: 'burn', text: '🔥 The whole sky went orange — and stayed. 🔥', fx: 'fire_x' }),
+
+    // Ladder 2 — FREEZE ❄ (the control element; γ+ apply `frozen`, boss-capped).
+    A({ id: 'vibe_freeze_a', name: 'Vibe Freeze Alpha', kind: 'vibe', pp: 7, power: 52, target: 'enemy', element: 'freeze', text: '{user} exhaled winter! ❄', fx: 'freeze_a' }),
+    A({ id: 'vibe_freeze_b', name: 'Vibe Freeze Beta', kind: 'vibe', pp: 15, power: 114, target: 'enemy', element: 'freeze', text: '{user} exhaled winter! ❄❄', fx: 'freeze_b' }),
+    A({ id: 'vibe_freeze_g', name: 'Vibe Freeze Gamma', kind: 'vibe', pp: 30, power: 187, target: 'enemy', element: 'freeze', status: 'frozen', text: 'Absolute zero, with feeling! ❄', fx: 'freeze_g' }),
+    A({ id: 'vibe_freeze_o', name: 'Vibe Freeze Omega', kind: 'vibe', pp: 52, power: 286, target: 'enemy', element: 'freeze', status: 'frozen', text: 'Absolute zero, with feeling!', fx: 'freeze_o' }),
+    A({ id: 'vibe_freeze_x', name: 'Vibe Freeze Sigma', kind: 'vibe', pp: 80, power: 405, target: 'enemies', element: 'freeze', status: 'frozen', text: '❄ She breathed, and the whole room held still. ❄', fx: 'freeze_x' }),
+
+    // Ladder 3 — VOLT ⚡ (AoE + disruption; γ+ apply `paralyzed`, the answer to packs).
+    A({ id: 'vibe_volt_a', name: 'Vibe Volt Alpha', kind: 'vibe', pp: 9, power: 58, target: 'enemy', element: 'volt', text: '{user} pointed at the sky! ⚡', fx: 'volt_a' }),
+    A({ id: 'vibe_volt_b', name: 'Vibe Volt Beta', kind: 'vibe', pp: 19, power: 128, target: 'enemies', element: 'volt', text: '{user} pointed at the sky! ⚡⚡', fx: 'volt_b' }),
+    A({ id: 'vibe_volt_g', name: 'Vibe Volt Gamma', kind: 'vibe', pp: 36, power: 209, target: 'enemies', element: 'volt', status: 'paralyzed', text: 'The sky answered! ⚡', fx: 'volt_g' }),
+    A({ id: 'vibe_volt_o', name: 'Vibe Volt Omega', kind: 'vibe', pp: 55, power: 300, target: 'enemies', element: 'volt', status: 'paralyzed', text: 'The sky answered — and kept answering!', fx: 'volt_o' }),
+    A({ id: 'vibe_volt_x', name: 'Vibe Volt Sigma', kind: 'vibe', pp: 82, power: 420, target: 'enemies', element: 'volt', status: 'paralyzed', text: '⚡ Every hair on every arm stood up at once. ⚡', fx: 'volt_x' }),
+
+    // Ladder 4 — PP STEAL 🧲 (Mia drains enemy magic; Ω/Σ also drain HP, `lifedrain`).
+    A({ id: 'magnet_a', name: 'Magnet Alpha', kind: 'vibe', pp: 3, power: 0, target: 'enemy', element: 'none', status: 'pp_drain', text: '{user} held out her palm! 🧲', fx: 'magnet' }),
+    A({ id: 'magnet_b', name: 'Magnet Beta', kind: 'vibe', pp: 6, power: 0, target: 'enemy', element: 'none', status: 'pp_drain', text: '{user} pulled harder — 🧲💜', fx: 'magnet' }),
+    A({ id: 'magnet_g', name: 'Magnet Gamma', kind: 'vibe', pp: 10, power: 0, target: 'enemies', element: 'none', status: 'pp_drain', text: 'She drew the magic out of the whole room! 🧲', fx: 'magnet' }),
+    A({ id: 'magnet_o', name: 'Magnet Omega', kind: 'vibe', pp: 16, power: 0, target: 'enemy', element: 'none', status: 'lifedrain', text: '🧲 She took the spark AND the warmth. 💜', fx: 'magnet' }),
+    A({ id: 'magnet_x', name: 'Magnet Sigma', kind: 'vibe', pp: 24, power: 0, target: 'enemies', element: 'none', status: 'lifedrain', text: '🧲💜 Every Ember in earshot leaned toward her. 💜🧲', fx: 'magnet' }),
+
+    // Ladder 5 — STARSONG ✨ (holy light, the anti-Hush element; pierces resist).
+    A({ id: 'starsong_a', name: 'Starsong Alpha', kind: 'vibe', pp: 8, power: 56, target: 'enemy', element: 'holy', text: "{user} hummed a note the dark couldn't eat. ✨", fx: 'starsong_a' }),
+    A({ id: 'starsong_b', name: 'Starsong Beta', kind: 'vibe', pp: 17, power: 132, target: 'enemies', element: 'holy', text: '✨ The note spread, warm and gold. ✨', fx: 'starsong_b' }),
+    A({ id: 'starsong_g', name: 'Starsong Gamma', kind: 'vibe', pp: 30, power: 210, target: 'enemies', element: 'holy', text: "Every Ember she'd ever heard answered. 🌟", fx: 'starsong_g' }),
+    A({ id: 'starsong_o', name: 'Starsong Omega', kind: 'vibe', pp: 50, power: 300, target: 'enemies', element: 'holy', text: 'The Homesong, one verse of it, let loose. ✨🌟', fx: 'starsong_o' }),
+    A({ id: 'starsong_x', name: 'Starsong Sigma', kind: 'vibe', pp: 84, power: 440, target: 'enemies', element: 'holy', text: '🌟✨ She sang, and for a moment the Hush remembered being light. ✨🌟', fx: 'starsong_x' }),
+
     A({ id: 'pray', name: 'Pray', kind: 'pray', pp: 0, power: 0, target: 'allies', element: 'holy', text: '{user} prayed with all her heart.', fx: 'pray' }),
+
+    // Utility (4 — non-damage choices that round her to ~30 and make her a party
+    // amplifier). Heartmend = a RELIABLE heal (not hostage to PRAY's RNG); Lucky
+    // Star = party crit/dodge up (`lucky`); Hush Hex = focus-fire enabler
+    // (`exposed`, ×1.3 incoming, stacks with `marked`); Dreamlull = mass sleep.
+    A({ id: 'heartmend_a', name: 'Heartmend', kind: 'vibe', pp: 12, power: 160, heal: true, target: 'ally', element: 'none', text: '{user} pressed a warm hand to a hurt. 💛', fx: 'lifeup' }),
+    A({ id: 'lucky_star', name: 'Lucky Star', kind: 'vibe', pp: 10, power: 0, target: 'allies', element: 'none', status: 'lucky', text: '{user} wished on the first star out. 🍀⭐', fx: 'starsong_a' }),
+    A({ id: 'hush_hex', name: 'Hush Hex', kind: 'vibe', pp: 14, power: 0, target: 'enemies', element: 'none', status: 'exposed', text: '{user} named the hollow in them.', fx: 'brainjam' }),
+    A({ id: 'dreamlull', name: 'Dreamlull', kind: 'vibe', pp: 12, power: 0, target: 'enemies', element: 'none', status: 'asleep', text: '{user} hummed the lullaby Mom used. 🌙', fx: 'hypno' }),
 
     // ---- Milo: gadgets (no Vibe)
     A({ id: 'spy', name: 'Spy', kind: 'gadget', pp: 0, power: 0, target: 'enemy', element: 'none', text: '{user} adjusted his glasses and took notes!', fx: 'spy_scan' }),

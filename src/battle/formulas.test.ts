@@ -532,3 +532,103 @@ describe('DORIN — "The Monk\'s Full Path" (ability expansion)', () => {
     expect(ids.length).toBeGreaterThanOrEqual(14);
   });
 });
+
+/* ================= S-Mia ("Ability Expansion") ================= */
+
+describe("Mia's elemental edge (the OUTGOING weak/resist multiplier)", () => {
+  it('weakness ×1.5, resist ×0.5, neither ×1, never below 1', () => {
+    expect(F.elementMultiplier({ weak: true })).toBe(1.5);
+    expect(F.elementMultiplier({ resist: true })).toBe(0.5);
+    expect(F.elementMultiplier({})).toBe(1);
+    expect(F.applyElement(100, { weak: true })).toBe(150);
+    expect(F.applyElement(100, { resist: true })).toBe(50);
+    expect(F.applyElement(100, {})).toBe(100);
+    expect(F.applyElement(1, { resist: true })).toBe(1); // ≥1 floor
+  });
+
+  it('holy PIERCES a slice of resistance — resisted holy still lands ~×0.75', () => {
+    expect(F.elementMultiplier({ resist: true, holy: true })).toBe(F.HOLY_PIERCE_MUL);
+    expect(F.elementMultiplier({ resist: true, holy: true })).toBeGreaterThan(F.RESIST_MUL);
+    // a weakness still wins outright, even a "resisted" holy reads as weak
+    expect(F.elementMultiplier({ weak: true, resist: true, holy: true })).toBe(1.5);
+    // distinct seam from the incoming ward: applyElement never touches mitigateIncoming
+    expect(F.applyElement(200, { resist: true, holy: true })).toBe(150);
+  });
+});
+
+describe("Mia's focus-fire amplifier (exposed × marked)", () => {
+  it('exposed is ×1.3, marked ×1.25, and they STACK multiplicatively', () => {
+    expect(F.focusMultiplier({ exposed: true })).toBeCloseTo(1.3);
+    expect(F.focusMultiplier({ marked: true })).toBeCloseTo(1.25);
+    expect(F.focusMultiplier({ exposed: true, marked: true })).toBeCloseTo(1.3 * 1.25);
+    expect(F.focusMultiplier({})).toBe(1);
+    // the spike is bigger than either tag alone (coordinated focus-fire pays)
+    const both = F.applyFocus(100, { exposed: true, marked: true });
+    expect(both).toBeGreaterThan(F.applyFocus(100, { exposed: true }));
+    expect(both).toBe(Math.round(100 * 1.3 * 1.25));
+  });
+});
+
+describe("Mia's new statuses (burn / frozen / lifedrain / lucky)", () => {
+  it('burn DoT is ~6% max HP with a floor of 4, over 3 turns', () => {
+    expect(F.burnTick(1000)).toBe(60);
+    expect(F.burnTick(10)).toBe(4); // the min-4 floor on a small foe
+    expect(F.BURN_TURNS).toBe(3);
+  });
+
+  it('frozen lands by tier (γ40 / Ω55 / Σ70%) — an injected roll decides', () => {
+    expect(F.frozenChance(3)).toBeCloseTo(0.4);
+    expect(F.frozenChance(4)).toBeCloseTo(0.55);
+    expect(F.frozenChance(5)).toBeCloseTo(0.7);
+    expect(F.frozenChance(1)).toBe(0); // α/β don't freeze
+    expect(F.frozenLands(5, () => 0.69)).toBe(true);
+    expect(F.frozenLands(5, () => 0.71)).toBe(false);
+  });
+
+  it('the boss control-cap is the SHARED mindImmune gate (frozen mirrors puppet)', () => {
+    expect(F.mindImmune({ boss: true })).toBe(true);
+    expect(F.mindImmune({ mind_immune: true })).toBe(true);
+    expect(F.mindImmune({})).toBe(false);
+  });
+
+  it('lifedrain heals half of what it takes (HP + PP), never below 1', () => {
+    expect(F.lifedrainHeal(100)).toBe(50);
+    expect(F.lifedrainHeal(1)).toBe(1);
+    // the bite scales with Vibe; Σ (AoE) bites less per target than Ω (single)
+    const single = F.lifedrainDamage(false, 60, () => 0.5);
+    const aoe = F.lifedrainDamage(true, 60, () => 0.5);
+    expect(single).toBeGreaterThan(aoe);
+  });
+
+  it("LUCKY STAR's +Luck feeds the SMAAASH/crit roll (smashChance luck term)", () => {
+    // base curve unchanged when no luck is passed (Guts-only callers)
+    expect(smashChance(0)).toBeCloseTo(0.02);
+    expect(smashChance(1000)).toBe(0.2);
+    // luck raises the chance, still capped at the EB 0.2 ceiling
+    expect(smashChance(0, F.LUCKY_LUCK)).toBeGreaterThan(smashChance(0));
+    expect(smashChance(1000, F.LUCKY_LUCK)).toBe(0.2);
+  });
+});
+
+describe("Mia grows to ~30 spells (Ability Expansion)", () => {
+  it('availableAbilities(faye) returns ~30 unique ids — five ladders + PRAY + utility', () => {
+    const ids = availableAbilities('faye', 99, () => true);
+    expect(new Set(ids).size).toBe(ids.length); // unique
+    expect(ids.length).toBe(30);
+    // every ladder reaches its Σ capstone, plus the utility four + PRAY
+    for (const id of [
+      'vibe_fire_x', 'vibe_freeze_x', 'vibe_volt_x', 'magnet_x', 'starsong_x',
+      'starsong_a', 'magnet_o', 'heartmend_a', 'lucky_star', 'hush_hex', 'dreamlull', 'pray',
+    ]) {
+      expect(ids).toContain(id);
+    }
+  });
+
+  it('her 3 iconic beats AWAKEN and are NOT in the level table (one-path rule)', () => {
+    for (const awakened of ['starsong_a', 'vibe_fire_x', 'magnet_x']) {
+      expect(HEROES.faye.unlocks.some((u) => u.ability === awakened)).toBe(false);
+    }
+    // and her opener still prays from L1 (the canon centerpiece, untouched)
+    expect(HEROES.faye.unlocks.some((u) => u.ability === 'pray' && u.level === 1)).toBe(true);
+  });
+});

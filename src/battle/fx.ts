@@ -633,17 +633,22 @@ export class BattleFx {
         break;
       }
       case 'flame_wave': {
-        // a rolling wave of flame sweeping the enemy row left to right
+        // a rolling wave of flame sweeping the enemy row left to right. Σ (tier 5,
+        // Fire Sigma) is a FINALE, not tier 4 scaled up (the build prompt §1.5):
+        // a held flash, a denser wave, and a rising firewall column on each foe.
         this.sfx(tl, 0, spec.sfx);
+        const sigma = tier >= 5;
+        if (sigma) this.flood(tl, 0, 0xffffff, 0.42, 320);
+        const charge = sigma ? 380 : 0;
         const sorted = [...targets].sort((a, b) => a.x - b.x);
         const x0 = Math.min(40, ...sorted.map((t) => t.x - 30));
         const x1 = Math.max(...sorted.map((t) => t.x + 30), x0 + 60);
         const sweepMs = 380 + tier * 60;
         const rowY = sorted[0]?.y ?? 92;
-        tl.span(80, 80 + sweepMs, (p) => {
+        tl.span(charge + 80, charge + 80 + sweepMs, (p) => {
           const wx = x0 + (x1 - x0) * p;
           // deterministic cadence (no dice in fx — the ADR-008 bot replays this)
-          if (Math.floor(p * 60) % 3 === 2) return;
+          if (Math.floor(p * 60) % 3 === 2 && !sigma) return;
           this.spawn(wx, rowY + 18, {
             vy: -(50 + tier * 12),
             vx: 8,
@@ -655,24 +660,44 @@ export class BattleFx {
         });
         sorted.forEach((t) => {
           const i = targets.indexOf(t);
-          const at = 80 + sweepMs * ((t.x - x0) / (x1 - x0));
+          const at = charge + 80 + sweepMs * ((t.x - x0) / (x1 - x0));
           tl.event(at, () => this.burst(t.x, t.y, ramp, 8 + tier * 2, 55));
           this.hitFlash(tl, at + 20, t);
           hit(i, at + 30);
+          // Σ: a firewall climbs each foe — rising sparks + a doubled burst that
+          // hangs (the whole sky went orange, and STAYED)
+          if (sigma) {
+            tl.event(at + 60, () => this.rain(t.x, t.y - 8, 40, RAMP.GOLD, 16, 700));
+            this.ring(tl, at + 90, t.x, t.y, 6, 92, ramp, 560, 2);
+            for (let s = 0; s < 4; s++) {
+              tl.event(at + 150 + s * 80, () => this.spawn(t.x + (s - 1.5) * 10, t.y + 14, { vy: -(120 + s * 18), life: 520, c0: colorOf(px(RAMP.GOLD, 3)), c1: colorOf(px(ramp, 2)), size: 2 }));
+            }
+          }
         });
-        this.palettePulse(tl, 100, ramp);
-        tl.hold(80 + sweepMs + 260);
+        if (sigma) {
+          this.flood(tl, charge + 120, colorOf(px(ramp, 3)), 0.4, 520);
+          this.shake(tl, charge + 160, 320, 0.01);
+        }
+        this.palettePulse(tl, charge + 100, ramp);
+        tl.hold(charge + 80 + sweepMs + 260 + (sigma ? 520 : 0));
         break;
       }
       case 'lattice': {
-        // crystal spokes grow from the target, hang, then shatter
+        // crystal spokes grow from the target, hang, then shatter. Σ (tier 5,
+        // Freeze Sigma) is the FINALE: a held flash, a fuller 12-spoke lattice
+        // that hangs longer, then a hard shatter (the whole room held still).
         this.sfx(tl, 0, spec.sfx);
+        const sigma = tier >= 5;
+        if (sigma) this.flood(tl, 0, 0xffffff, 0.4, 300);
+        const charge = sigma ? 360 : 0;
         targets.forEach((t, i) => {
-          const base = 120 + i * 110;
+          const base = charge + 120 + i * 110;
+          const spokes = sigma ? 12 : 6;
+          const hang = sigma ? 560 : 360;
           tl.event(base, () => {
-            for (let s = 0; s < 6; s++) {
+            for (let s = 0; s < spokes; s++) {
               const b = this.boltPool.take();
-              const a = (s / 6) * Math.PI * 2 + 0.26;
+              const a = (s / spokes) * Math.PI * 2 + 0.26;
               const len = 12 + tier * 4;
               b.pts = [t.x, t.y, t.x + Math.cos(a) * len, t.y + Math.sin(a) * len];
               b.color = colorOf(px(ramp, 3));
@@ -680,32 +705,98 @@ export class BattleFx {
               b.dead = false;
               this.bolts.push(b);
               const inner = new FxTimeline();
-              inner.span(0, 360, (p) => {
+              inner.span(0, hang, (p) => {
                 b.alpha = p < 0.7 ? 0.9 : 0.9 * (1 - (p - 0.7) / 0.3);
                 if (p >= 1) b.dead = true;
               });
               this.timelines.push(inner);
             }
           });
-          tl.event(base + 320, () => this.burst(t.x, t.y, ramp, 10 + tier * 2, 70, 380));
-          this.hitFlash(tl, base + 330, t);
-          hit(i, base + 340);
+          tl.event(base + hang - 40, () => this.burst(t.x, t.y, ramp, 10 + tier * 2, 70, 380));
+          if (sigma) {
+            this.ring(tl, base + hang - 40, t.x, t.y, 8, 96, ramp, 520, 3);
+            tl.event(base + hang, () => this.burst(t.x, t.y, RAMP.PAPER, 18, 110, 480, 2));
+          }
+          this.hitFlash(tl, base + hang - 30, t);
+          hit(i, base + hang - 20);
         });
-        tl.hold(120 + targets.length * 110 + 480);
+        if (sigma) this.shake(tl, charge + 160, 300, 0.009);
+        tl.hold(charge + 120 + targets.length * 110 + 480 + (sigma ? 360 : 0));
         break;
       }
       case 'bolt': {
-        // zigzag bolts from the sky, one per target (tiers add seconds)
+        // zigzag bolts from the sky, one per target (tiers add seconds). Σ (tier 5,
+        // Volt Sigma) is the FINALE: a held white flash, a full barrage of bolts
+        // on every foe, and a strobing flood (every hair on every arm stood up).
         this.sfx(tl, 40, spec.sfx);
-        const times = staggerTimes(targets.length, 120);
+        const sigma = tier >= 5;
+        if (sigma) this.flood(tl, 0, 0xffffff, 0.5, 280);
+        const charge = sigma ? 300 : 0;
+        const times = staggerTimes(targets.length, 120).map((t) => t + charge);
+        const strikes = sigma ? 5 : Math.min(tier, 3);
         targets.forEach((t, i) => {
-          for (let n = 0; n < Math.min(tier, 3); n++) this.bolt(tl, times[i] + n * 70, t.x, t.y, ramp);
-          tl.event(times[i] + 40, () => this.burst(t.x, t.y, ramp, 8, 60));
+          for (let n = 0; n < strikes; n++) this.bolt(tl, times[i] + n * 70, t.x, t.y, ramp);
+          tl.event(times[i] + 40, () => this.burst(t.x, t.y, ramp, sigma ? 16 : 8, sigma ? 90 : 60));
           this.flood(tl, times[i], 0xffffff, 0.18, 120);
           this.hitFlash(tl, times[i] + 50, t);
           hit(i, times[i] + 60);
+          if (sigma) {
+            this.ring(tl, times[i] + 40, t.x, t.y, 6, 88, RAMP.GOLD, 480, 3);
+            for (let s = 0; s < 3; s++) this.flood(tl, times[i] + 120 + s * 90, 0xffffff, 0.22, 70);
+          }
         });
-        tl.hold(120 + targets.length * 110 + 300);
+        if (sigma) this.shake(tl, charge + 60, 320, 0.011);
+        tl.hold(charge + 120 + targets.length * 110 + 300 + (sigma ? 360 : 0));
+        break;
+      }
+      case 'starsong': {
+        // STARSONG (S-Mia) — the anti-Hush light: warm gold notes RISE from below
+        // and BURST into stars over the foes. Tiers add notes, rings, and reach;
+        // Σ (tier 5) is the FINALE — a held gold flood, a sky full of stars, and a
+        // slow chord of spark-rain (the Hush remembered being light, for a moment).
+        this.sfx(tl, 0, spec.sfx);
+        const sigma = tier >= 5;
+        if (sigma) this.flood(tl, 0, colorOf(px(RAMP.GOLD, 3)), 0.34, 360);
+        const charge = sigma ? 380 : 0;
+        if (caster) {
+          // the note gathers at her hands before it rises
+          tl.event(0, () => this.motes(caster.x, caster.y, sigma ? 34 : 20, RAMP.GOLD, sigma ? 6 : 4, 420));
+        }
+        targets.forEach((t, i) => {
+          const base = charge + 200 + i * 100;
+          const notes = sigma ? 7 : 2 + tier;
+          // notes rise from below the foe and bloom into a star at the top
+          for (let n = 0; n < notes; n++) {
+            tl.event(base + n * 40, () =>
+              this.spawn(t.x + (n - notes / 2) * 6, t.y + 20, {
+                vy: -(70 + tier * 12),
+                life: 460 + tier * 30,
+                c0: colorOf(px(RAMP.GOLD, 3)),
+                c1: colorOf(px(ramp, 2)),
+                size: tier >= 3 ? 2 : 1,
+              }),
+            );
+          }
+          for (let r = 0; r < tier; r++) {
+            this.ring(tl, base + 120 + r * 70, t.x, t.y - 4, 4, 22 + tier * 6 + r * 8, RAMP.GOLD, 320 + r * 40);
+          }
+          tl.event(base + 140, () => this.burst(t.x, t.y - 4, RAMP.GOLD, 8 + tier * 2, 56 + tier * 10));
+          this.hitFlash(tl, base + 150, t);
+          hit(i, base + 160);
+          if (sigma) {
+            this.ring(tl, base + 200, t.x, t.y - 4, 6, 110, RAMP.GOLD, 600, 3);
+            for (let s = 0; s < 5; s++) {
+              tl.event(base + 240 + s * 80, () => this.burst(t.x + (s - 2) * 14, t.y - 12, s % 2 ? ramp : RAMP.GOLD, 10, 64, 520, 2));
+            }
+            tl.event(base + 520, () => this.rain(t.x, t.y - 12, 52, RAMP.GOLD, 20, 800));
+          }
+        });
+        if (sigma) {
+          this.flood(tl, charge + 120, colorOf(px(RAMP.GOLD, 3)), 0.36, 560);
+          this.shake(tl, charge + 160, 260, 0.007);
+        }
+        this.palettePulse(tl, charge + 120, RAMP.GOLD);
+        tl.hold(charge + 360 + targets.length * 100 + 320 + (sigma ? 620 : 0));
         break;
       }
       case 'sparkle_rain': {
