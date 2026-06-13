@@ -3455,3 +3455,83 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the size law is the Definition-of-Done check for every future grow:
   bigger than before (unless the place wants smaller), every new acre earning its keep,
   prop count watched as the real budget.
+
+## ADR-056 — S15i (Movement Three): THE LONG WALK — Otterbrook → Brickton on foot, deepened
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the S15i "MOVEMENT 3+" decree: the foot journey between the
+  towns should be a real multi-screen walk, not one connector screen.)
+- **Context:** S15h promoted MEADOW MILE to canon as a SINGLE `buildRoute` screen
+  carrying both the Task-0 meteor roadblock AND the orientation gate. "Deepen the
+  world" wants the walk to be a journey: town park → woods → second meadow →
+  overpass → the city — each leg its own feel, with rests, presents, a Ch.1.5
+  enemy band, and cutscene beats.
+- **Decision — FOUR LEGS, west→east.** `buildLongWalk()` (maps.ts) builds and wires
+  the chain: **meadow_mile** (the town-edge meadow, keeps the meteor roadblock) →
+  **meadow_woods** (WHISPERWOOD, a `buildWoods` forest) → **meadow_far** (THE FAR
+  MEADOW) → **meadow_overpass** (THE OVERPASS, the city line). The "town park" the
+  journey opens at is grown Otterbrook's shipped POND PARK. Otterbrook's east gate
+  lands on meadow_mile; the overpass's east edge is the city line into Brickton.
+- **Decision — COMPUTED inter-leg doors (the ADR-012 route discipline).** Each leg
+  builds with placeholder door targets; the coordinator overwrites every tx/ty to
+  land on the NEIGHBOUR's REAL trail entry — an EAST→neighbour door at the
+  neighbour's west mouth (tile 1, its real trail row read off the draft grid via
+  `trailRowAt`), a WEST→neighbour door at the neighbour's east mouth (tile W-2).
+  Never a hardcoded jittered coordinate. Pinned in `world_block.test` (the chain
+  asserts each door's computed landing).
+- **Decision — THE GATE + GRANDFATHER CLAUSE MOVE TO THE OVERPASS.** The
+  `orientation_gate` trigger + the three Blazer-Smiler proctors relocate off
+  meadow_mile onto meadow_overpass (the city-adjacent leg). `orientationGateScene`
+  is unchanged — badge OR `bus_ride_done` walks you straight in; otherwise three
+  exercises earn the badge, each win sticking (`orient_1..3`), a defeat/flee just
+  respawns you to retry (the retry law holds). The METEOR ROADBLOCK stays on its
+  leg (meadow_mile). Brickton's foot exit (was → meadow_mile) is retargeted to
+  meadow_overpass — computed a few tiles WEST of the gate so arriving never bounces
+  — so the walk reads correctly in BOTH directions (the one door edit is on the
+  appended foot-return only; the frozen 2077 core is byte-identical, re-proven).
+- **Decision — THE Ch.1.5 BAND escalates toward the city.** The §A7 roster gets
+  tougher per leg using only the SHIPPED Ch.1 six: meadow_mile `cranky_mailbox/
+  coily_cicada` (gentlest, near town) → woods `hill_slug_deluxe/coily_cicada` → far
+  `runaway_lawnmower/pigeon_gang` → overpass `pigeon_gang/blazer_smiler` (the city
+  edge, foreshadowing the proctors). One pressure-safe middle-third spawner per leg
+  (grace + proximity clear — proven by the encounter-pressure gate, 44/46).
+- **Decision — RESTS before each hot stretch + HIDDEN PRESENTS.** A payphone +
+  picnic sit at every leg's WEST mouth, before its spawner band (§A4.5/§B4 — pinned
+  in the content-validate picnic manifest, one each). Two hidden presents hide along
+  the way (the S9b gift-box pattern, dispatched in `OverworldScene.signBeat` on a
+  shared loot table): a `basket_basic` on the woods glade, a `salt_shaker` (the
+  anti-Tick callback) taped to a fence post in the far meadow, AND — closing the
+  §B4 "every nook earns a reward" gap — a `star_cola` beside the rest in grown
+  OTTERBROOK's woods nook (the glade had a picnic but no present; ADR-054 left it
+  owed). All three are reachability-proven with a tile+prop-solid BFS (trees + the
+  meteor rock are real solids the validator's BFS ignores). A full bag commits
+  nothing — the reward waits (zero missables).
+- **Decision — TWO flag-gated CUTSCENE BEATS (the cut/dlg/camera pattern).** A warm
+  roadside vignette in the woods (`woods_vignette` → a fawn watching from the ferns)
+  and the "you can see the city now" reveal on the overpass (`city_reveal` → a gentle
+  east-pan over the narration, foreshadowing Mia + the Starfall Spire). Both fire on
+  leg entry (west-edge triggers) and play once (`*_done` flags); the cut lock holds
+  input; triggers fire through the door cooldown (checkTriggers is un-gated by it).
+- **Decision — buildWoods FILLS the forest; trees are CLEARED from fixtures.** The
+  woods leg is `buildWoods` over a blank grid (a winding clearing path + off-path
+  trees, region-contained). `clearTreesIn` drops any tree prop over a rest/present/
+  door mouth so every fixture stays reachable IN-GAME (the validator's BFS ignores
+  prop solids; trees + gift boxes + the meteor rock are real solids — proven by a
+  tile+prop-solid BFS from each leg's west spawn to its east door + every fixture:
+  all four legs traverse, nothing stranded).
+- **Decision — NO FNV re-pin.** The canon legs call `buildRoute`/`buildWoods` with
+  new args but touch NO sample-routed generator body (`generate()` never dispatches
+  to `buildWoods`, and `SAMPLE_RECIPES.meadow_mile` is an independent LAB draft).
+  The levelkit FNV hashes are untouched.
+- **Verification:** tsc + `npm run validate` (now 46 maps: map-quality 41 clear + 5
+  waived, pressure 44 + 2; 385 dialogue scripts) + full vitest **635 green** (the
+  +3 over ADR-055: the world_block MEADOW MILE block became a 7-test THE LONG WALK
+  block) + `vite build`. The tile+prop-solid reachability probe cleared all four
+  legs. Frozen cores byte-identical (re-proven); the meteor roadblock, the orient
+  flags, the bus/badge grandfather clause, and the docks/Cage doors untouched. The
+  `.shots/` foot-leg contact sheets belong to the consolidated QA pass.
+- **Consequences:** the foot journey is a real five-screen walk that earns its size
+  (§B4) — distinct legs, an escalating band, rests, presents, two cutscenes — and
+  the leg-builder pattern (draft → compute neighbour entries → wire doors → graft
+  content) is the template for any future multi-screen route. Movement 4's quests/
+  cutscenes can hang real tasks off these legs.

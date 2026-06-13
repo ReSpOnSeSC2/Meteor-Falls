@@ -188,6 +188,9 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@There IS a picnic table back in the trees. I put it there. For the birds. Fine, for me.',
     '@If you sit quiet long enough, the woods forget you came. It is the best feeling there is.',
   ],
+  // ADR-056 (§B4): the glade present — a sibling reward to the rest
+  otter_woods_gift: ['Half-buried by the picnic table: a cold Star Cola, left for whoever found the quiet first.'],
+  otter_woods_gift_done: ['(The spot is yours now. The birds approve. The birder does not, quite, but he is trying.)'],
 
   /* ---------------- S15h — MEADOW MILE + THE ORIENTATION GATE ---------------- */
   meadow_mile_sign_0: [
@@ -229,6 +232,52 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   orient_arrival: [
     'You cross the overpass into Brickton. The city does not look up.',
     '(Somewhere ahead, a clock is seven minutes fast. On purpose.)',
+  ],
+
+  /* ---------------- S15i M3 — THE LONG WALK (the foot legs) ---------------- */
+  // LEG 1 — MEADOW MILE points the way (clarity: the whole route spelled out)
+  sign_to_whisperwood: [
+    'WHISPERWOOD AHEAD → then the far meadow, then the overpass, then the city.',
+    '(A long way on foot. "The bus is RIGHT THERE," adds a smaller, smugger sign.)',
+  ],
+  // LEG 2 — WHISPERWOOD
+  sign_whisperwood: [
+    'WHISPERWOOD — stay on the path. The trees lean in, but they mean well.',
+    '(Lost & Found, nailed below: one kite, one frisbee, one very patient cat.)',
+  ],
+  meadow_gift_woods: ['Tucked down in the roots: a picnic basket, packed and forgotten. The woods kept it dry.'],
+  meadow_gift_woods_done: ['(The basket is empty now. A squirrel has filed a formal complaint.)'],
+  // the roadside vignette — a quiet woods beat, played warm (a cutscene, once)
+  woods_vignette: [
+    'Halfway through the trees you stop. Something is watching you from the ferns.',
+    'A fawn. Just a fawn — knock-kneed, huge-eared, and deeply unimpressed by you.',
+    'It blinks once and goes back to eating. The woods decide you are allowed through.',
+  ],
+  // LEG 3 — THE FAR MEADOW
+  meadow_far_sign_0: [
+    'THE FAR MEADOW — you are officially Out Past The Edge Of Town now.',
+    '(Pencilled below: "the air gets warm and electric about here. that\'s the city.")',
+  ],
+  npc_far_walker: [
+    '@My big sister WALKED to Brickton once. Took her all day. She came back different.',
+    '@Different GOOD! She high-fives strangers now. The city does that, she says.',
+  ],
+  meadow_gift_far: [
+    'Taped to a fence post: an emergency salt shaker and a note.',
+    'The note reads, in shaky capitals, "FOR THE TICK." ...Somebody up here KNEW.',
+  ],
+  meadow_gift_far_done: ['(The post is bare now, but the warning stands. Salt beats ticks. Remember it.)'],
+  // LEG 4 — THE OVERPASS
+  meadow_overpass_sign_0: [
+    'THE OVERPASS — Brickton city limits. Watch your step, and mind the proctors.',
+    '(Down in the concrete, in chalk: "almost there, kid.")',
+  ],
+  // the "you can see the city now" reveal (a cutscene, once) — foreshadows Mia
+  city_reveal: [
+    'The path lifts onto the overpass — and there it is, laid out below you.',
+    'BRICKTON. Towers, smoke, and one tall new spire catching the last of the sun.',
+    'Somewhere down in all of that is a girl who can hear things sing. You two have not met yet.',
+    '(You can not hear the city from up here. Not yet. But you will.)',
   ],
 
   /* ---------------- S15h — BRICKTON SPRAWLS (the new districts) ---------------- */

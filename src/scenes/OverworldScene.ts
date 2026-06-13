@@ -2336,6 +2336,30 @@ export class OverworldScene extends Phaser.Scene {
       this.fadeRestart();
       return true;
     }
+    // S15i M3 (ADR-056): the deepened world's hidden presents — same gift-box
+    // pattern (the long-walk legs + the grown Otterbrook woods nook). The closed
+    // box swaps for the opened one (gated props); a full bag commits nothing, so
+    // the reward waits until you have room (zero missables, §B4).
+    {
+      const loot: Record<string, string> = {
+        meadow_gift_woods: 'basket_basic',
+        meadow_gift_far: 'salt_shaker',
+        otter_woods_gift: 'star_cola',
+      };
+      if (dialogueId in loot) {
+        const itemId = loot[dialogueId];
+        await this.dlg.say(...DIALOGUE[dialogueId]);
+        if (!GS.addItem(itemId)) {
+          await this.dlg.say(...DIALOGUE.gift_hands_full);
+          return true; // nothing committed — come back with room
+        }
+        GS.setFlag(dialogueId);
+        AUDIO.sfx('confirm');
+        toast(this, `Got ${ITEMS[itemId].name}!`);
+        this.fadeRestart();
+        return true;
+      }
+    }
     // S9b: the twins' presents — open once, the empty box stays (gated props)
     if (dialogueId === 'gift_ana' || dialogueId === 'gift_vivi') {
       const ana = dialogueId === 'gift_ana';
@@ -2799,6 +2823,13 @@ export class OverworldScene extends Phaser.Scene {
         break;
       case 'orientation_gate':
         await this.orientationGateScene();
+        break;
+      // S15i M3 (ADR-056) — THE LONG WALK's two flag-gated cutscene beats
+      case 'woods_vignette':
+        if (!GS.flag('woods_vignette_done')) await this.walkBeat('woods_vignette');
+        break;
+      case 'city_reveal':
+        if (!GS.flag('city_reveal_done')) await this.cityRevealScene();
         break;
       case 'brickton_clock_goal':
         if (!GS.flag('faye_joined') && !GS.flag('brickton_clock_goal')) await this.bricktonClockGoalScene();
@@ -3335,6 +3366,34 @@ export class OverworldScene extends Phaser.Scene {
     this.sparkleBurst(this.player.x, this.player.y - 18, 8);
     AUDIO.sfx('ember');
     await this.dlg.say(DIALOGUE.brickton_arrival[5]);
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    this.cut = false;
+  }
+
+  /* ---------------- THE LONG WALK — roadside beats (S15i M3, ADR-056) ----------------
+   * Two flag-gated cutscenes on the foot journey: a warm roadside vignette in the
+   * woods, and the "you can see the city now" reveal on the overpass. The retry law
+   * rides the engine (a defeat between here and the gate just respawns you; the
+   * beat's done-flag makes it play once). The cut lock holds input throughout. */
+  private async walkBeat(id: string): Promise<void> {
+    this.cut = true;
+    await this.wait(180);
+    await this.dlg.say(...DIALOGUE[id]);
+    GS.setFlag(`${id}_done`);
+    this.cut = false;
+  }
+
+  private async cityRevealScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('city_reveal_done');
+    await this.wait(220);
+    // a gentle look ahead toward the city (east), paced under the narration, then home
+    const mapW = this.mapDef.grid[0].length * 16;
+    this.cameras.main.pan(Math.min(this.player.x + 168, mapW - 16), this.player.y - 16, 2600, 'Sine.easeInOut', true);
+    await this.dlg.say(...DIALOGUE.city_reveal.slice(0, 2));
+    AUDIO.sfx('ember');
+    await this.dlg.say(...DIALOGUE.city_reveal.slice(2));
+    this.cameras.main.pan(this.player.x, this.player.y, 1000, 'Sine.easeInOut', true);
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.cut = false;
   }

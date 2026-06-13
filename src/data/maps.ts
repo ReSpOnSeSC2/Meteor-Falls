@@ -18,7 +18,7 @@ import { placeFacade } from '../levelkit/kit';
 import { AREA_SKINS } from '../spritegen/buildings';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
-import type { MapDef, PropDef, NpcDef } from '../schemas';
+import type { MapDef, PropDef, NpcDef, SignDef } from '../schemas';
 
 // S5: shapes are z.infer'd from src/schemas — compile shape ≡ runtime schema
 export type {
@@ -332,6 +332,13 @@ export function growOtterbrook(): MapDef {
   // says every grown area earns its size with a nook + a reward). Region-bounded,
   // wholly south of the core (y≥46), so the frozen 1995 core stays byte-identical.
   const thicket = buildWoods(g, { x: 1, y: 46, w: 12, h: 9 }, new Streams(19954), { gladeProp: 'picnic' });
+  // §B4 (ADR-056): the nook earns a REAL hidden PRESENT beside its rest — a cached
+  // Star Cola at the glade, a sibling to the picnic. Found via the thicket path
+  // (the glade sits ON it); trees are cleared from its tile so it stays reachable.
+  let gladeRow = 50;
+  for (let y = 46; y < 55; y++) if (g.rows[y]?.[7] === ':') { gladeRow = y; break; }
+  const woodsGift = walkPresent('otter_woods_gift', 9, gladeRow);
+  const thicketProps = clearTreesIn(thicket.props, { x: 8, y: gladeRow - 1, w: 3, h: 3 });
 
   // 3) CONNECTIVE SEAMS — the main street flows south, the cross lane runs east
   //    to the gateway. Both start OUTSIDE the core (row 32 / col 42); the one-tile
@@ -373,7 +380,8 @@ export function growOtterbrook(): MapDef {
     ...core.props,
     ...south.props,
     ...east.props,
-    ...thicket.props,
+    ...thicketProps,
+    ...woodsGift.props,
     { sprite: 'sign', x: 4, y: 44, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the woods trailhead marker
     cityHall,
     { sprite: 'sign', x: 12, y: 41, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // City Hall plaque
@@ -420,6 +428,7 @@ export function growOtterbrook(): MapDef {
     { x: 64, y: 17, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
     // S15i Task 1: the woods nook trailhead
     { x: 4, y: 44, dialogue: 'sign_otter_woods' },
+    ...woodsGift.signs, // ADR-056: the glade present (sign while sealed, flavor after)
     ...south.signs,
     ...east.signs,
   ];
@@ -484,54 +493,84 @@ function buildOtterbrookCityHallInt(streetExit: { tx: number; ty: number }): Map
   };
 }
 
-/* ------------- MEADOW MILE — THE ROAD TO BRICKTON (S15h, ADR-049) ------------- */
-
-/**
- * MEADOW MILE + THE OVERPASS — the foot route between the towns (Movement 2).
- * The FORGE lays the road (buildRoute: a trail that argues with the land,
- * treelines, a picnic + payphone BEFORE the hot middle — §B4, routes run hot).
- * Promoted to canon: the west door lands at Otterbrook's exported east gate
- * (computed), and the east edge is THE ORIENTATION GATE — a trigger, not a plain
- * door — where three Blazer-Smiler proctors test you for the visitor badge.
+/* ------------- THE LONG WALK — Otterbrook → Brickton on foot (S15i M3, ADR-056) ------------- *
+ * The single MEADOW MILE screen grows into a real multi-screen journey (the user's
+ * "deepen the world" decree): town park → woods → second meadow → overpass → the
+ * city. Four legs, each its own feel, wired with COMPUTED leg doors — every door
+ * lands on its neighbour's ACTUAL trail entry, read off the draft grid (never a
+ * hardcoded jittered coord; the ADR-012 route discipline). The §A7 band escalates
+ * Ch.1 → Ch.1.5 as you near Brickton; a rest (payphone + picnic) sits at each leg's
+ * WEST mouth, BEFORE its hot middle (§B4). Two cutscene beats are flag-gated (a
+ * roadside vignette in the woods, the "you can see the city now" reveal on the
+ * overpass). The METEOR ROADBLOCK stays on its leg (meadow_mile, the Hickory-Hill-
+ * adjacent meadow). THE ORIENTATION GATE + the grandfather clause (badge OR bus)
+ * move to the overpass — the city line. Hidden presents hide along the way (the
+ * S9b gift-box pattern). The "town park" the journey opens at is grown Otterbrook's
+ * POND PARK (already shipped, §A4.5 rests on the bank).
  */
+
+const WALK_PHONE_SOLID = { ox: 1, oy: 10, w: 14, h: 16 } as const;
+const WALK_PICNIC_SOLID = { ox: 2, oy: 8, w: 32, h: 14 } as const;
+const WALK_SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 } as const;
+const WALK_GIFT_SOLID = { ox: 1, oy: 7, w: 12, h: 6 } as const;
+
+/** the trail row (':') at a column — the entry a neighbour's door must land on,
+ *  computed off the draft grid (ADR-012: jittered cross-map coords are derived) */
+function trailRowAt(grid: string[], col: number): number {
+  for (let y = 0; y < grid.length - 1; y++) if (grid[y][col] === ':') return y;
+  return Math.round(grid.length / 2);
+}
+
+/** a hidden present: the closed box + its sign while sealed, the opened box + a
+ *  flavor line after. `flag` is the open-state flag; OverworldScene.signBeat maps
+ *  `flag` → the granted item (the S9b gift-box pattern, gated props). */
+function walkPresent(flag: string, x: number, y: number): { props: PropDef[]; signs: SignDef[] } {
+  return {
+    props: [
+      { sprite: 'gift_box', x, y, solid: WALK_GIFT_SOLID, unlessFlag: flag },
+      { sprite: 'gift_box_open', x, y, solid: WALK_GIFT_SOLID, ifFlag: flag },
+    ],
+    signs: [
+      { x, y: y + 1, dialogue: flag, unlessFlag: flag },
+      { x, y: y + 1, dialogue: `${flag}_done`, ifFlag: flag },
+    ],
+  };
+}
+
+/** drop any TREE prop whose tile falls inside `box` — so a fixture (rest, present,
+ *  door mouth) placed there stays reachable in-game (the grid BFS ignores prop
+ *  solids, but trees DO collide; clear them or the reward is walled off) */
+function clearTreesIn(props: PropDef[], box: { x: number; y: number; w: number; h: number }): PropDef[] {
+  const isTree = (s: string): boolean => s === 'tree' || s === 'tree_b' || s === 'tree_c' || s === 'pine';
+  return props.filter((p) => {
+    const px = Math.round(p.x);
+    const py = Math.round(p.y);
+    return !(isTree(p.sprite) && px >= box.x && px < box.x + box.w && py >= box.y && py < box.y + box.h);
+  });
+}
+
+/** LEG 1 — MEADOW MILE: the meadow just east of town, carrying the Task-0 meteor
+ *  roadblock (a Hickory Hill chunk). Otterbrook's east gate lands here; the east
+ *  edge is now a plain door onward to the woods. The gentlest §A7 band (near town). */
 function buildMeadowMile(): MapDef {
   const draft = buildRoute({
     kind: 'route', id: 'meadow_mile', seed: 1500, size: [40, 16],
-    style: 'treeline', encounterBand: 'ch1', signSlots: 2, ends: ['otterbrook', 'brickton'],
+    style: 'treeline', encounterBand: 'ch1', signSlots: 2, ends: ['otterbrook', 'meadow_woods'],
   });
   const W = draft.grid[0].length;
   const H = draft.grid.length;
   const westY = draft.doors[0]?.y ?? Math.round(H / 2);
   const eastY = draft.doors[1]?.y ?? Math.round(H / 2);
-
-  // the OVERPASS proctors man the city line until the visitor badge is earned
-  const proctors: NpcDef[] = [
-    { id: 'proctor_a', sprite: 'smilerB', x: W - 5, y: Math.max(2, eastY - 1), facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
-    { id: 'proctor_b', sprite: 'smilerB', x: W - 4, y: eastY + 1, facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
-    { id: 'proctor_c', sprite: 'smilerB', x: W - 6, y: eastY + 2, facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
-  ];
   const traveler: NpcDef = { id: 'road_traveler', sprite: 'grayCommuter', x: 6, y: westY, facing: 'right', dialogue: 'npc_road_traveler', wander: true };
 
-  // S15i Task 0 — THE METEOR-DROP ROADBLOCK. A chunk of the Hickory Hill meteor
-  // came down on Meadow Mile overnight; the town crew has it sawhorsed off and
-  // you route around it (travel is never a silent corridor — §B4 daybreak law).
-  // Computed from the ACTUAL trail: scan the grid for the ':' lane at a mid-road
-  // column, then block only the UPPER lane so the lower lane stays walkable —
-  // the player squeezes past, never softlocked (reachability proven by the
-  // map-quality sweep). Worker + sign sit on trail tiles, so both stay reachable.
-  const trailRow = (col: number): number => {
-    for (let y = 0; y < H - 1; y++) if (draft.grid[y][col] === ':') return y;
-    return Math.round(H / 2);
-  };
+  // Task 0 — THE METEOR-DROP ROADBLOCK, kept on its leg: a chunk in the UPPER lane,
+  // sawhorsed off; the lower lane stays walkable (you squeeze past — sweep-proven).
   const blockX = Math.round(W * 0.5);
-  const tBlock = trailRow(blockX); // the upper of the two ':' lanes here
+  const tBlock = trailRowAt(draft.grid, blockX);
   const workerX = Math.max(2, blockX - 3);
-  const tWorker = trailRow(workerX);
+  const tWorker = trailRowAt(draft.grid, workerX);
   const roadblock: PropDef[] = [
-    // the fallen chunk, blocking the UPPER lane only (solid covers row tBlock,
-    // leaving tBlock+1 open to squeeze past — proven reachable by the sweep)
     { sprite: 'meteor_rock', x: blockX - 1, y: tBlock - 1, solid: { ox: 2, oy: 16, w: 30, h: 16 } },
-    // a sawhorse continuing the upper-lane barricade just east of the chunk
     { sprite: 'sawhorse', x: blockX + 1, y: tBlock - 1, solid: { ox: 0, oy: 14, w: 30, h: 14 } },
   ];
   const worker: NpcDef = { id: 'roadblock_worker', sprite: 'quarterMan', x: workerX, y: tWorker, facing: 'right', dialogue: 'npc_roadblock_worker' };
@@ -543,29 +582,189 @@ function buildMeadowMile(): MapDef {
     grid: draft.grid,
     props: [
       ...draft.props,
-      { sprite: 'sign', x: W - 6, y: Math.max(1, eastY - 2), solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the city-line marker
+      { sprite: 'sign', x: W - 6, y: Math.max(1, eastY - 2), solid: WALK_SIGN_SOLID }, // → the woods
       ...roadblock,
-      { sprite: 'sign', x: workerX, y: Math.max(1, tWorker - 1), solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the ROAD WORK notice
+      { sprite: 'sign', x: workerX, y: Math.max(1, tWorker - 1), solid: WALK_SIGN_SOLID }, // the ROAD WORK notice
     ],
-    npcs: [traveler, worker, ...proctors],
+    npcs: [traveler, worker],
     signs: [
       ...draft.signs,
-      { x: W - 6, y: Math.max(1, eastY - 2), dialogue: 'sign_overpass_gate' },
+      { x: W - 6, y: Math.max(1, eastY - 2), dialogue: 'sign_to_whisperwood' },
       { x: workerX, y: Math.max(1, tWorker - 1), dialogue: 'sign_roadblock' },
     ],
     phones: draft.phones,
     doors: [
-      // west → Otterbrook's exported east gate (the road's far end, computed)
+      // west → Otterbrook's exported east gate (computed); east → the woods (the
+      // coordinator rewrites tx/ty to the woods' real west entry below)
       { x: 0, y: westY, w: 1, h: 2, to: 'otterbrook', tx: OTTERBROOK_EAST_GATE.x * 16, ty: OTTERBROOK_EAST_GATE.y * 16, facing: 'left', indicator: 'none' },
+      { x: W - 1, y: eastY, w: 1, h: 2, to: 'meadow_woods', tx: 16, ty: eastY * 16, facing: 'right', indicator: 'none' },
     ],
     spawners: draft.spawners,
+    triggers: [],
+  };
+}
+
+/** LEG 2 — WHISPERWOOD: buildWoods fills a forest around a winding clearing path;
+ *  the rests, the glade present, the doors, the spawner + the roadside-vignette
+ *  trigger are grafted on. Trees are FILTERED out of every fixture's tile so the
+ *  whole leg stays reachable in-game. A slightly tougher §A7 band. */
+function buildMeadowWoods(): MapDef {
+  const W = 36;
+  const H = 16;
+  const S = new Streams(1510);
+  const g = new Grid(W, H, '.');
+  g.sprinkle(151001, ',~bb~ f', 0.16);
+  const woods = buildWoods(g, { x: 0, y: 0, w: W, h: H }, S, { pines: true, density: 0.34 });
+  const grid = g.out();
+  const westY = trailRowAt(grid, 0);
+  const eastY = trailRowAt(grid, W - 1);
+  const gladeX = Math.round(W / 2);
+  const gladeY = trailRowAt(grid, gladeX);
+
+  // clear the rest mouth, the glade present, and both door mouths of trees so
+  // every fixture is reachable from the cleared path corridor
+  let trees = woods.props;
+  for (const box of [
+    { x: 0, y: westY - 2, w: 5, h: 5 }, // the west rest clearing
+    { x: gladeX - 2, y: gladeY - 1, w: 4, h: 4 }, // the glade present
+    { x: W - 3, y: eastY - 2, w: 3, h: 5 }, // the east mouth
+  ]) {
+    trees = clearTreesIn(trees, box);
+  }
+
+  const gift = walkPresent('meadow_gift_woods', gladeX - 1, gladeY);
+  return {
+    id: 'meadow_woods',
+    name: 'WHISPERWOOD',
+    music: 'otterbrook',
+    grid,
+    props: [
+      ...trees,
+      { sprite: 'payphone', x: 2, y: westY + 2, solid: WALK_PHONE_SOLID },
+      { sprite: 'picnic', x: 3, y: Math.max(1, westY - 2), solid: WALK_PICNIC_SOLID },
+      { sprite: 'sign', x: 5, y: Math.max(1, westY - 2), solid: WALK_SIGN_SOLID },
+      ...gift.props,
+    ],
+    npcs: [],
+    signs: [{ x: 5, y: Math.max(1, westY - 2), dialogue: 'sign_whisperwood' }, ...gift.signs],
+    phones: [{ x: 2, y: westY + 2 }],
+    doors: [
+      { x: 0, y: westY, w: 1, h: 2, to: 'meadow_mile', tx: 16, ty: westY * 16, facing: 'left', indicator: 'none' },
+      { x: W - 1, y: eastY, w: 1, h: 2, to: 'meadow_far', tx: 16, ty: eastY * 16, facing: 'right', indicator: 'none' },
+    ],
+    spawners: [
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: Math.round(W / 3), y: 2, w: Math.round(W / 3), h: H - 4 } },
+    ],
+    triggers: [{ id: 'woods_vignette', rect: { x: 1, y: 0, w: 3, h: H }, once: false }],
+  };
+}
+
+/** LEG 3 — THE FAR MEADOW: the open stretch before the city edge, an off-trail
+ *  present (the salt-shaker callback) and a tougher §A7 band (mower + pigeons). */
+function buildMeadowFar(): MapDef {
+  const draft = buildRoute({
+    kind: 'route', id: 'meadow_far', seed: 1520, size: [38, 16],
+    style: 'treeline', encounterBand: 'ch1', signSlots: 1, ends: ['meadow_woods', 'meadow_overpass'],
+  });
+  const W = draft.grid[0].length;
+  const H = draft.grid.length;
+  const westY = draft.doors[0]?.y ?? Math.round(H / 2);
+  const eastY = draft.doors[1]?.y ?? Math.round(H / 2);
+  const giftX = Math.round(W * 0.62);
+  const giftY = Math.max(2, trailRowAt(draft.grid, giftX) - 3);
+  const gift = walkPresent('meadow_gift_far', giftX, giftY);
+  const props = clearTreesIn(draft.props, { x: giftX - 1, y: giftY - 1, w: 3, h: 3 });
+
+  return {
+    id: 'meadow_far',
+    name: 'THE FAR MEADOW',
+    music: 'otterbrook',
+    grid: draft.grid,
+    props: [...props, ...gift.props],
+    npcs: [{ id: 'far_walker', sprite: 'pajamaKid', x: 5, y: westY, facing: 'right', dialogue: 'npc_far_walker', wander: true }],
+    signs: [...draft.signs, ...gift.signs],
+    phones: draft.phones,
+    doors: [
+      { x: 0, y: westY, w: 1, h: 2, to: 'meadow_woods', tx: 16, ty: westY * 16, facing: 'left', indicator: 'none' },
+      { x: W - 1, y: eastY, w: 1, h: 2, to: 'meadow_overpass', tx: 16, ty: eastY * 16, facing: 'right', indicator: 'none' },
+    ],
+    spawners: draft.spawners.map((s) => ({ ...s, enemies: ['runaway_lawnmower', 'pigeon_gang'] })),
+    triggers: [],
+  };
+}
+
+/** LEG 4 — THE OVERPASS: the city line. THE ORIENTATION GATE (three proctors +
+ *  the east-edge trigger, grandfather clause intact) and the "you can see the city
+ *  now" reveal live here. The toughest pre-city §A7 band (pigeons + smilers). */
+function buildMeadowOverpass(): MapDef {
+  const draft = buildRoute({
+    kind: 'route', id: 'meadow_overpass', seed: 1530, size: [34, 16],
+    style: 'fenced', encounterBand: 'ch1', signSlots: 1, ends: ['meadow_far', 'brickton'],
+  });
+  const W = draft.grid[0].length;
+  const H = draft.grid.length;
+  const westY = draft.doors[0]?.y ?? Math.round(H / 2);
+  const eastY = draft.doors[1]?.y ?? Math.round(H / 2);
+  const proctors: NpcDef[] = [
+    { id: 'proctor_a', sprite: 'smilerB', x: W - 5, y: Math.max(2, eastY - 1), facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
+    { id: 'proctor_b', sprite: 'smilerB', x: W - 4, y: eastY + 1, facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
+    { id: 'proctor_c', sprite: 'smilerB', x: W - 6, y: eastY + 2, facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
+  ];
+
+  return {
+    id: 'meadow_overpass',
+    name: 'THE OVERPASS',
+    music: 'otterbrook',
+    grid: draft.grid,
+    props: [
+      ...draft.props,
+      { sprite: 'sign', x: W - 6, y: Math.max(1, eastY - 2), solid: WALK_SIGN_SOLID }, // BRICKTON CITY LIMITS
+    ],
+    npcs: [...proctors],
+    signs: [...draft.signs, { x: W - 6, y: Math.max(1, eastY - 2), dialogue: 'sign_overpass_gate' }],
+    phones: draft.phones,
+    doors: [
+      { x: 0, y: westY, w: 1, h: 2, to: 'meadow_far', tx: 16, ty: westY * 16, facing: 'left', indicator: 'none' },
+    ],
+    spawners: draft.spawners.map((s) => ({ ...s, enemies: ['pigeon_gang', 'blazer_smiler'] })),
     triggers: [
-      // THE ORIENTATION GATE — the east edge IS the city line: entering it runs
-      // the gate (three proctor fights → visitor_badge), or walks you straight in
-      // if you already hold the badge OR rode the bus (the grandfather clause).
+      // the "you can see the city now" reveal — on entry from the far meadow (west)
+      { id: 'city_reveal', rect: { x: 1, y: 0, w: 3, h: H }, once: false },
+      // THE ORIENTATION GATE — the east edge IS the city line; the gate runs the
+      // proctor exercises → visitor_badge, or walks you straight in on badge/bus
       { id: 'orientation_gate', rect: { x: W - 3, y: 0, w: 3, h: H }, once: false },
     ],
   };
+}
+
+/** THE LONG WALK — build all four legs and wire their COMPUTED inter-leg doors:
+ *  every door's tx/ty is overwritten to land on the neighbour's REAL trail entry
+ *  (read off the draft), never a hardcoded coordinate (the ADR-012 discipline). */
+function buildLongWalk(): { meadow_mile: MapDef; meadow_woods: MapDef; meadow_far: MapDef; meadow_overpass: MapDef } {
+  const meadow_mile = buildMeadowMile();
+  const meadow_woods = buildMeadowWoods();
+  const meadow_far = buildMeadowFar();
+  const meadow_overpass = buildMeadowOverpass();
+
+  // each leg's real west/east entry (the trail row at its first/last column)
+  const entry = (m: MapDef): { W: number; westY: number; eastY: number } => {
+    const W = m.grid[0].length;
+    return { W, westY: trailRowAt(m.grid, 0), eastY: trailRowAt(m.grid, W - 1) };
+  };
+  const e = { mile: entry(meadow_mile), woods: entry(meadow_woods), far: entry(meadow_far), op: entry(meadow_overpass) };
+  // land an EAST→neighbour door at the neighbour's WEST mouth (tile 1); a
+  // WEST→neighbour door at the neighbour's EAST mouth (tile W-2)
+  const aim = (m: MapDef, to: string, tx: number, ty: number): void => {
+    const d = m.doors.find((x) => x.to === to);
+    if (d) { d.tx = tx; d.ty = ty; }
+  };
+  aim(meadow_mile, 'meadow_woods', 16, e.woods.westY * 16);
+  aim(meadow_woods, 'meadow_mile', (e.mile.W - 2) * 16, e.mile.eastY * 16);
+  aim(meadow_woods, 'meadow_far', 16, e.far.westY * 16);
+  aim(meadow_far, 'meadow_woods', (e.woods.W - 2) * 16, e.woods.eastY * 16);
+  aim(meadow_far, 'meadow_overpass', 16, e.op.westY * 16);
+  aim(meadow_overpass, 'meadow_far', (e.far.W - 2) * 16, e.far.eastY * 16);
+  return { meadow_mile, meadow_woods, meadow_far, meadow_overpass };
 }
 
 /* ------------------- HILL ROAD (ADR-042) ------------------- */
@@ -2064,6 +2263,24 @@ function buildBusInterior(): MapDef {
 
 const otterbrookMap = growOtterbrook();
 const bricktonMap = growBrickton();
+// THE LONG WALK (ADR-056) — the four foot legs, with computed inter-leg doors.
+const longWalk = buildLongWalk();
+// Brickton's foot exit now lands on the OVERPASS (its city-adjacent leg), a few
+// tiles WEST of the orientation gate so arriving never bounces you back through
+// it — computed off the overpass's real trail (ADR-012), facing home (west). The
+// frozen 2077 core is untouched: only this one appended door's target is rewritten.
+{
+  const op = longWalk.meadow_overpass;
+  const opX = op.grid[0].length - 5;
+  const opY = trailRowAt(op.grid, opX);
+  const foot = bricktonMap.doors.find((d) => d.to === 'meadow_mile');
+  if (foot) {
+    foot.to = 'meadow_overpass';
+    foot.tx = opX * 16 + 8;
+    foot.ty = opY * 16;
+    foot.facing = 'left';
+  }
+}
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
@@ -2175,7 +2392,8 @@ function growInterior(map: MapDef, minW: number, minH: number): MapDef {
 export const MAPS: Record<string, MapDef> = {
   ...buildChapter2Maps({ chapelStep: chapelDoorstep, hospitalStep: hospitalDoorstep }),
   otterbrook: otterbrookMap,
-  meadow_mile: buildMeadowMile(),
+  // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
+  ...longWalk,
   hill_road: buildHillRoad(),
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),

@@ -1200,6 +1200,12 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
   // WOODS NOOK hides a fourth — a discoverable rest at the thicket glade.
   const TABLES: Record<string, number> = {
     otterbrook: 4,
+    // ADR-056 — THE LONG WALK: a rest (picnic + payphone) at each leg's west
+    // mouth, BEFORE its hot middle (§A4.5/§B4 — routes run hot)
+    meadow_mile: 1,
+    meadow_woods: 1,
+    meadow_far: 1,
+    meadow_overpass: 1,
     hickory_hill: 1,
     brickton: 1,
     dos_f2: 1,

@@ -46,7 +46,8 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
       { id: 'otterbrook', kind: 'town' },
       { id: 'brickton', kind: 'city' },
     ],
-    maps: ['otterbrook', 'hill_road', 'hickory_hill', 'brickton', 'bus_interior'],
+    // ADR-056 — THE LONG WALK: the four foot legs bridging Otterbrook → Brickton
+    maps: ['otterbrook', 'hill_road', 'hickory_hill', 'brickton', 'bus_interior', 'meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'],
     quests: ['biscuit_come_home', 'mail_must_move', 'lemonade_empire', 'arcade_legend'],
   },
 

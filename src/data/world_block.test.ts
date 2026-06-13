@@ -72,6 +72,9 @@ describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays orga
     expect(MAPS.otterbrook.props.some((p) => p.sprite === 'lemonade')).toBe(true);
     expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'chapel_int')).toBe(true);
     expect(MAPS.otterbrook.triggers.some((t) => t.id === 'bus_stop')).toBe(true);
+    // ADR-056 (§B4): the woods nook earns a hidden present beside its rest
+    expect(MAPS.otterbrook.props.some((p) => p.sprite === 'gift_box')).toBe(true);
+    expect(MAPS.otterbrook.signs.some((s) => s.dialogue === 'otter_woods_gift')).toBe(true);
   });
 
   it('the daybreak gate seals the road east until zapper_done (the daybreak law, §B4)', () => {
@@ -91,44 +94,81 @@ describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays orga
   });
 });
 
-describe('MEADOW MILE — the foot route + the orientation gate (Movement 2)', () => {
-  it('the road is wired two-way to Otterbrook (the exported east gate)', () => {
-    expect(MAPS.meadow_mile).toBeDefined();
-    // Otterbrook leaves EAST onto the road; the road's west door returns to the gate
+describe('THE LONG WALK — the multi-screen foot journey (Movement 3, ADR-056)', () => {
+  const LEGS = ['meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'] as const;
+  /** the trail row (':') at a column — the door-landing the legs compute (ADR-012) */
+  const trailRow = (m: MapDef, col: number): number => {
+    for (let y = 0; y < m.grid.length - 1; y++) if (m.grid[y][col] === ':') return y;
+    return Math.round(m.grid.length / 2);
+  };
+
+  it('all four legs exist, each its own screen', () => {
+    for (const id of LEGS) expect(MAPS[id], id).toBeDefined();
+  });
+
+  it('the west end is wired two-way to Otterbrook (the exported east gate)', () => {
     const east = MAPS.otterbrook.doors.find((d) => d.to === 'meadow_mile');
     expect(east).toBeDefined();
     const back = MAPS.meadow_mile.doors.find((d) => d.to === 'otterbrook');
-    expect(back).toBeDefined();
     expect(back?.tx).toBe(OTTERBROOK_EAST_GATE.x * 16);
     expect(back?.ty).toBe(OTTERBROOK_EAST_GATE.y * 16);
   });
 
-  it('the city line is a TRIGGER (gated), not a plain east door', () => {
-    expect(MAPS.meadow_mile.triggers.some((t) => t.id === 'orientation_gate')).toBe(true);
-    // no straight-through east door — entry is the gated scene
-    expect(MAPS.meadow_mile.doors.some((d) => d.to === 'brickton')).toBe(false);
+  it('the legs chain west→east with COMPUTED two-way doors (landing on the neighbour trail)', () => {
+    const chain: ReadonlyArray<readonly [string, string]> = [
+      ['meadow_mile', 'meadow_woods'],
+      ['meadow_woods', 'meadow_far'],
+      ['meadow_far', 'meadow_overpass'],
+    ];
+    for (const [a, b] of chain) {
+      const fwd = MAPS[a].doors.find((d) => d.to === b);
+      const back = MAPS[b].doors.find((d) => d.to === a);
+      expect(fwd, `${a}→${b}`).toBeDefined();
+      expect(back, `${b}→${a}`).toBeDefined();
+      // forward lands at the neighbour's WEST mouth (tile 1) on its real trail row
+      expect(fwd?.tx).toBe(16);
+      expect(fwd?.ty).toBe(trailRow(MAPS[b], 0) * 16);
+      // back lands at the neighbour's EAST mouth (tile W-2) on its real trail row
+      expect(back?.tx).toBe((MAPS[a].grid[0].length - 2) * 16);
+      expect(back?.ty).toBe(trailRow(MAPS[a], MAPS[a].grid[0].length - 1) * 16);
+    }
   });
 
-  it('three proctors man the line until the badge is earned, and the road rests before it runs hot', () => {
-    const proctors = MAPS.meadow_mile.npcs.filter((n) => n.dialogue === 'npc_proctor');
+  it('the city line is the OVERPASS now (the gate + proctors moved off meadow_mile)', () => {
+    // the gate is a TRIGGER on the overpass, never a plain east door
+    expect(MAPS.meadow_overpass.triggers.some((t) => t.id === 'orientation_gate')).toBe(true);
+    expect(MAPS.meadow_overpass.doors.some((d) => d.to === 'brickton')).toBe(false);
+    // and it is GONE from meadow_mile (relocated to the city-adjacent leg)
+    expect(MAPS.meadow_mile.triggers.some((t) => t.id === 'orientation_gate')).toBe(false);
+    const proctors = MAPS.meadow_overpass.npcs.filter((n) => n.dialogue === 'npc_proctor');
     expect(proctors.length).toBe(3);
     expect(proctors.every((p) => p.unlessFlag === 'visitor_badge')).toBe(true);
-    // §B4: a rest point (payphone) sits west of the hot middle band
-    expect(MAPS.meadow_mile.phones.length).toBeGreaterThanOrEqual(1);
-    expect(MAPS.meadow_mile.spawners.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('carries the meteor-drop roadblock you route around (Task 0)', () => {
+  it('every leg rests before it runs hot (a payphone + a §A7 spawner)', () => {
+    for (const id of LEGS) {
+      expect(MAPS[id].phones.length, `${id} phones`).toBeGreaterThanOrEqual(1);
+      expect(MAPS[id].spawners.length, `${id} spawners`).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('the meteor-drop roadblock stays on its leg (meadow_mile, Task 0)', () => {
     const mm = MAPS.meadow_mile;
-    // the fallen chunk + a sawhorse barricade, a worker waving you around, a sign
     expect(mm.props.some((p) => p.sprite === 'meteor_rock')).toBe(true);
     expect(mm.props.some((p) => p.sprite === 'sawhorse')).toBe(true);
     expect(mm.npcs.some((n) => n.id === 'roadblock_worker' && n.dialogue === 'npc_roadblock_worker')).toBe(true);
     expect(mm.signs.some((s) => s.dialogue === 'sign_roadblock')).toBe(true);
-    // the chunk's solid blocks only the UPPER lane (oy ≥ 16 px = the row below
-    // the sprite's top tile), so the lower lane stays walkable — no soft-lock
-    // (full reachability is proven by the content-validate map-quality sweep)
+    // the chunk's solid blocks only the UPPER lane (oy ≥ 16 px), the lower stays open
     expect(mm.props.find((p) => p.sprite === 'meteor_rock')?.solid?.oy).toBeGreaterThanOrEqual(16);
+  });
+
+  it('carries two flag-gated cutscene beats + hidden presents along the way (§B4)', () => {
+    expect(MAPS.meadow_woods.triggers.some((t) => t.id === 'woods_vignette')).toBe(true);
+    expect(MAPS.meadow_overpass.triggers.some((t) => t.id === 'city_reveal')).toBe(true);
+    // a present on the woods glade + one in the far meadow (the gift-box pattern)
+    expect(MAPS.meadow_woods.props.some((p) => p.sprite === 'gift_box')).toBe(true);
+    expect(MAPS.meadow_far.props.some((p) => p.sprite === 'gift_box')).toBe(true);
+    expect(MAPS.meadow_woods.signs.some((s) => s.dialogue === 'meadow_gift_woods')).toBe(true);
   });
 });
 
@@ -165,7 +205,10 @@ describe('BRICKTON — the 2077 core is frozen (≈4× sprawl, stays a city)', (
     const grownCage = grown.doors.find((d) => d.to === 'the_cage');
     expect(JSON.stringify(grownCage)).toBe(JSON.stringify(coreCage)); // S12 court gate untouched
     expect(grown.doors.some((d) => d.to === 'brickton_docks')).toBe(true); // relocated, still wired
-    expect(grown.doors.some((d) => d.to === 'meadow_mile')).toBe(true); // the foot return
+    // ADR-056: the foot return now lands on the OVERPASS (the city-adjacent leg),
+    // not the town-edge meadow — the long walk reads correctly in both directions
+    expect(grown.doors.some((d) => d.to === 'meadow_overpass')).toBe(true);
+    expect(grown.doors.some((d) => d.to === 'meadow_mile')).toBe(false);
   });
 
   it('stays a CITY and clears the ADR-012 sweep AT the 4× size', () => {
