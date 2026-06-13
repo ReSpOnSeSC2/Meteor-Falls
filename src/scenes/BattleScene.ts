@@ -1588,22 +1588,31 @@ export class BattleScene extends Phaser.Scene {
       await this.print(`About ${item.ppHeal} PP fizzed back.`);
       return true;
     }
-    if (item.id === 'glints_spark') {
+    // §A4.12 THE REVIVAL LINE (S17/ADR-061): any cure that lists 'down' brings
+    // an angel back — it goes to whoever needs it most, healing by the item's
+    // own `heal` (Glint's Spark's 9999 = full; later tiers revive weaker). The
+    // spark's exact fx + lines are preserved when it's the spark itself.
+    if (item.kind === 'cure' && item.cures?.includes('down')) {
+      const isSpark = item.id === 'glints_spark';
       GS.removeItem(itemId, h.hero.id);
       h.bust.poseFor('castA', 700);
-      // §A8: revive, rare — it goes to whoever needs it most
       const downed = this.heroes.find((x) => x.hero.down || x.odoHp.dead);
       const at = downed ? this.cardTarget(downed) : this.cardTarget(h);
       if (fxKey) await this.fx.play(fxKey, { caster: this.cardTarget(h), targets: [at] });
+      const amount = item.heal ?? 1;
       if (downed) {
         downed.hero.down = false;
-        downed.odoHp.set(downed.hero.maxHp);
+        downed.odoHp.set(Math.min(downed.hero.maxHp, amount));
         downed.box.clearTint();
         downed.bust.revive();
-        await this.print(this.fill(BATTLE_TEXT.spark_revive, name, undefined, downed.hero.name));
+        await this.print(
+          isSpark
+            ? this.fill(BATTLE_TEXT.spark_revive, name, undefined, downed.hero.name)
+            : `${downed.hero.name} got back up — ${amount >= downed.hero.maxHp ? 'good as new!' : 'wobbly, but standing!'}`,
+        );
       } else {
-        this.healHero(h, h.hero.maxHp);
-        await this.print('The spark flares — warm as a porch light in late summer. Full recovery!');
+        this.healHero(h, amount);
+        await this.print(isSpark ? 'The spark flares — warm as a porch light in late summer. Full recovery!' : `${name} feels the warmth spread. ${amount} HP back!`);
       }
       return true;
     }
@@ -2152,8 +2161,10 @@ export class BattleScene extends Phaser.Scene {
         const prevMaxHp = h.hero.maxHp;
         const prevMaxPp = h.hero.maxPp;
         h.hero.stats = statsAtLevel(h.hero.id, lvl);
-        h.hero.maxHp = maxHpAtLevel(h.hero.id, lvl);
-        h.hero.maxPp = maxPpAtLevel(h.hero.id, lvl);
+        // S17 (ADR-061): re-add any permanent HP/PP tonic boost so the recompute
+        // doesn't wipe it (combat-stat boosts live in `boosts`, added by the seams)
+        h.hero.maxHp = maxHpAtLevel(h.hero.id, lvl) + (h.hero.boosts?.hp ?? 0);
+        h.hero.maxPp = maxPpAtLevel(h.hero.id, lvl) + (h.hero.boosts?.pp ?? 0);
         h.odoHp.setMax(h.hero.maxHp);
         h.odoPp.setMax(h.hero.maxPp);
         h.odoHp.heal(h.hero.maxHp - prevMaxHp);

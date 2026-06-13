@@ -37,13 +37,18 @@
  * backfills Pippa's name from the canon default. Pippa is NOT added to the
  * party (she hasn't joined — Ch.5 does that), so the existing four ride
  * through untouched, exactly like every save field a later hero never wrote.
+ *
+ * v8 → v9 (S17/ADR-061): THE CATALOG SPINE — heroes gain a `boosts` map for
+ * permanent TONIC effects (§A4.12). No tonic existed before v9, so an empty
+ * map is a pre-v9 save's TRUE history (the v3 empty-ledger / v5 clean-hoops
+ * stance applied to boosts); every existing hero backfills `{}`.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 8;
+export const CURRENT_SAVE_VERSION = 9;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -198,6 +203,20 @@ export const MIGRATIONS: MigrationStep[] = [
       const hn = isObj(raw.heroNames) ? raw.heroNames : (raw.heroNames = {});
       if (typeof hn.pippa !== 'string') hn.pippa = fresh.heroNames.pippa;
       raw.version = 8;
+      return raw;
+    },
+  },
+  {
+    to: 9,
+    migrate(raw) {
+      // S17 (ADR-061): THE CATALOG SPINE — permanent tonic boosts ride a new
+      // per-hero `boosts` map. A pre-v9 save never used a tonic (none existed),
+      // so an empty map is its true history — backfill {} on every hero.
+      const party = (Array.isArray(raw.party) ? raw.party : []).filter(isObj);
+      for (const h of party) {
+        if (!isObj(h.boosts)) h.boosts = {};
+      }
+      raw.version = 9;
       return raw;
     },
   },

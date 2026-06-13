@@ -12,7 +12,7 @@
  */
 import Phaser from 'phaser';
 import { GS, type HeroState } from '../engine/state';
-import { ITEMS, slotOf } from '../data/items';
+import { ITEMS, slotOf, equipSecondaryNote } from '../data/items';
 import { equipDelta, equipDefenseDelta, equipLuckDelta, equipArmsDelta } from '../battle/formulas';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
@@ -198,8 +198,12 @@ export async function confirmEquip(
         ? equipDefenseDelta(hero, itemId)
         : equipDelta(hero, itemId);
   const stat = arms ? arms.stat : slot === 'other' ? 'Luck' : slot === 'body' ? 'Defense' : 'Offense';
-  const preview =
+  const primary =
     d > 0 ? `${stat} up by ${d}!` : d < 0 ? `${stat} down by ${-d}.` : `No change in ${stat}.`;
+  // S17 (ADR-061): the "(also +N X)" rider — secondary bonus + Vibe + resists
+  // the piece carries. Empty for the single-stat classics (the 41-item catalog).
+  const note = equipSecondaryNote(item);
+  const preview = note ? `${primary} ${note}` : primary;
   const sel = await pick(scene, {
     x: 130,
     y: 64,

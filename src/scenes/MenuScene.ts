@@ -24,14 +24,15 @@
  * earned); confirming a row opens its detail page, B/back/tap closes.
  */
 import Phaser from 'phaser';
-import { GS, expForLevel, type HeroState } from '../engine/state';
+import { GS, expForLevel, applyTonic, type HeroState } from '../engine/state';
 import { HEROES, availableAbilities } from '../data/heroes';
-import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, type EquipSlot } from '../data/items';
+import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, boostStatLabel, equipSecondaryNote, type EquipSlot } from '../data/items';
+import type { ResistElement } from '../schemas';
 import { ABILITIES } from '../data/abilities';
 import { MAPS } from '../data/maps';
 import { DIALOGUE } from '../data/dialogue';
 import { journalQuests, currentObjective, objectiveDone, callerEarned } from '../engine/quests';
-import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, vibeHeal } from '../battle/formulas';
+import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, heroVibe, heroResist, vibeHeal } from '../battle/formulas';
 import { INPUT, type BindingProfile, type Btn } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, vars, DEPTH_UI } from '../ui/windows';
@@ -251,11 +252,15 @@ export class MenuScene extends Phaser.Scene {
       await this.dlg.say(`${drinker.name} drank the ${item.name}. About ${item.ppHeal} PP fizzed back!`);
       return;
     }
-    if (item.id === 'glints_spark') {
-      // §A8 "revive, rare" — the interim path back until hospitals (S11)
+    // §A4.12 THE REVIVAL LINE (S17/ADR-061): any cure that lists 'down' brings
+    // an angel back — Glint's Spark (heal 9999 → full) opens the line; later
+    // tiers revive by their own `heal` (Second Wind weak → the Hallelujah Bell
+    // full). The spark's exact lines are preserved when it's the spark itself.
+    if (item.kind === 'cure' && item.cures?.includes('down')) {
       const downed = GS.data.party.filter((h) => h.down);
+      const isSpark = itemId === 'glints_spark';
       if (downed.length === 0) {
-        await this.dlg.say('The spark glows, patient. Nobody needs it right now.');
+        await this.dlg.say(isSpark ? 'The spark glows, patient. Nobody needs it right now.' : `The ${item.name} waits, patient. Nobody needs it right now.`);
         return;
       }
       const t =
@@ -266,9 +271,29 @@ export class MenuScene extends Phaser.Scene {
       const target = downed[t];
       GS.removeItem(itemId, hero.id);
       target.down = false;
-      target.hp = target.maxHp;
+      target.hp = Math.min(target.maxHp, item.heal ?? 1);
       AUDIO.sfx('ember');
-      await this.dlg.say(`The spark flares. ${target.name} got back up, blinking, like it's Saturday.`);
+      await this.dlg.say(
+        isSpark
+          ? `The spark flares. ${target.name} got back up, blinking, like it's Saturday.`
+          : `${target.name} got back up — ${target.hp >= target.maxHp ? 'good as new.' : 'wobbly, but standing.'}`,
+      );
+      return;
+    }
+    // §A4.12 TONICS (S17/ADR-061): a permanent stat boost, applied on use to a
+    // chosen hero. Rare and dear by design; the boost rides the save forever.
+    if (item.kind === 'tonic' && item.boost) {
+      const who = GS.data.party;
+      const t =
+        who.length === 1
+          ? 0
+          : await this.pick({ x: 200, y: 30, options: who.map((h) => h.name), title: 'For who?' });
+      if (t < 0) return;
+      const target = who[t];
+      applyTonic(target, item.boost);
+      GS.removeItem(itemId, hero.id);
+      AUDIO.sfx('ember');
+      await this.dlg.say(`${target.name} took the ${item.name}. ${boostStatLabel(item.boost.stat)} went up by ${item.boost.amount} — for keeps!`);
       return;
     }
     await this.dlg.say(item.text);
@@ -314,7 +339,9 @@ export class MenuScene extends Phaser.Scene {
     const x = 96;
     const y = 8;
     const w = 184; // stops short of the cash corner
-    this.pageObjs.push(makeWindow(this, x, y, w, 152));
+    // S17 (ADR-061): a touch taller for the charm ('Other') slot + a resist
+    // line — but stays clear of the bottom vitals strip (top at H−49)
+    this.pageObjs.push(makeWindow(this, x, y, w, 166));
     const line = (ty: number, s: string, tint?: number): void => {
       const t = this.add
         .bitmapText(x + 12, y + ty, 'retro', s, 6)
@@ -342,21 +369,34 @@ export class MenuScene extends Phaser.Scene {
     }
     line(22, HEROES[h.id].epithet, DIM);
     line(40, `HP ${h.hp}/${h.maxHp}    PP ${h.pp}/${h.maxPp}`);
-    const s = h.stats;
-    // Defense reads through the 'body'-slot armor (S10 — the Champion Jacket)
+    // every combat stat reads through its seam (heroX) so equip + tonic boosts show
     line(58, `Offense ${heroOffense(h)}   Defense ${heroDefense(h)}`);
     // Speed/Guts read through the 'arms' slot (S12 — THE STARTING FOUR)
     line(70, `Speed   ${heroSpeed(h)}   Guts    ${heroGuts(h)}`);
-    // Luck reads through the 'other'-slot charm (S9 — the Lucky Collar)
-    line(82, `Vibe    ${s.vibe}   Luck    ${heroLuck(h)}`);
-    const weapon = h.equip.weapon ? ITEMS[h.equip.weapon]?.name : undefined;
-    line(96, `Weapon  ${weapon ?? 'Nothing'}`, weapon ? undefined : DIM);
-    const body = h.equip.body ? ITEMS[h.equip.body]?.name : undefined;
-    line(106, `Body    ${body ?? 'Nothing'}`, body ? undefined : DIM);
-    const arms = h.equip.arms ? ITEMS[h.equip.arms]?.name : undefined;
-    line(116, `Arms    ${arms ?? 'Nothing'}`, arms ? undefined : DIM);
-    line(126, `EXP ${h.exp}`);
-    line(138, `Next level in ${Math.max(0, expForLevel(h.level + 1) - h.exp)}`, DIM);
+    // Luck reads through the 'other'-slot charm (S9). Vibe now reads through
+    // gear + tonics too (S17 — heroVibe; the Riddle Ring / Brain-Food Lunch)
+    line(82, `Vibe    ${heroVibe(h)}   Luck    ${heroLuck(h)}`);
+    // S17 (ADR-061): each equip line names the piece + its "(also +N X)"
+    // secondary rider (bonus + Vibe; resists ride their own line below). With
+    // the 41-item catalog no piece has a rider, so this reads exactly as before.
+    const equipLine = (ty: number, label: string, slot: EquipSlot): void => {
+      const id = h.equip[slot];
+      const it = id ? ITEMS[id] : undefined;
+      const note = it ? equipSecondaryNote(it, { resists: false }) : '';
+      line(ty, `${label}  ${it?.name ?? 'Nothing'}${note ? ` ${note}` : ''}`, it ? undefined : DIM);
+    };
+    equipLine(96, 'Weapon', 'weapon');
+    equipLine(106, 'Body  ', 'body');
+    equipLine(116, 'Arms  ', 'arms');
+    equipLine(126, 'Charm ', 'other');
+    line(138, `EXP ${h.exp}`);
+    line(148, `Next level in ${Math.max(0, expForLevel(h.level + 1) - h.exp)}`, DIM);
+    // S17: elemental resists, only when worn gear grants any (§A8 pendants)
+    const RES_ELEMS: ResistElement[] = ['fire', 'freeze', 'volt', 'holy'];
+    const res = RES_ELEMS.map((e) => ({ e, p: Math.round(heroResist(h, e) * 100) })).filter((r) => r.p > 0);
+    if (res.length) {
+      line(158, `Resist  ${res.map((r) => `${r.e} ${r.p}%`).join('  ')}`, colorOf(px(RAMP.CYAN, 2)));
+    }
   }
 
   /* ================= VIBE ================= */

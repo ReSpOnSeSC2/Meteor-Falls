@@ -475,8 +475,9 @@ export class LinksScene extends Phaser.Scene {
         const prevHp = hero.maxHp;
         const prevPp = hero.maxPp;
         hero.stats = statsAtLevel(hero.id, hero.level);
-        hero.maxHp = maxHpAtLevel(hero.id, hero.level);
-        hero.maxPp = maxPpAtLevel(hero.id, hero.level);
+        // S17 (ADR-061): permanent HP/PP tonic boosts survive the recompute
+        hero.maxHp = maxHpAtLevel(hero.id, hero.level) + (hero.boosts?.hp ?? 0);
+        hero.maxPp = maxPpAtLevel(hero.id, hero.level) + (hero.boosts?.pp ?? 0);
         hero.hp = Math.min(hero.maxHp, hero.hp + (hero.maxHp - prevHp));
         hero.pp = Math.min(hero.maxPp, hero.pp + (hero.maxPp - prevPp));
         lines.push(LINKS_TEXT.tallyLevel.replace('{name}', hero.name).replace('{n}', String(hero.level)));

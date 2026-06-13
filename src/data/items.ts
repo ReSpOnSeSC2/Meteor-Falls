@@ -4,7 +4,7 @@
  * Types are z.infer'd from src/schemas (S5) — compile shape ≡ runtime schema;
  * the kind 'pp' ⇔ ppHeal pairing (ADR-016) is a schema refinement.
  */
-import type { EquipSlot, ItemDef } from '../schemas';
+import type { BoostStat, EquipSlot, ItemBand, ItemBonus, ItemDef } from '../schemas';
 
 export type { EquipSlot, ItemDef } from '../schemas';
 
@@ -46,8 +46,25 @@ export function itemKindLabel(item: ItemDef): string {
     case 'battle': return 'BATTLE ITEM';
     case 'valuable': return 'VALUABLE';
     case 'basket': return 'PICNIC';
+    case 'tonic': return 'TONIC';
     case 'key': return 'KEY ITEM';
     default: { const never: never = item.kind; return never; }
+  }
+}
+
+/** S17 (ADR-061): the plain-language name of a boostable stat, for the tonic's
+ *  effect line and the "X went up!" use beat (§A4.12). */
+export function boostStatLabel(stat: BoostStat): string {
+  switch (stat) {
+    case 'offense': return 'Offense';
+    case 'defense': return 'Defense';
+    case 'speed': return 'Speed';
+    case 'guts': return 'Guts';
+    case 'vibe': return 'Vibe';
+    case 'luck': return 'Luck';
+    case 'hp': return 'max HP';
+    case 'pp': return 'max PP';
+    default: { const never: never = stat; return never; }
   }
 }
 
@@ -69,6 +86,7 @@ export function itemEffectLine(item: ItemDef): string {
     case 'pp': return `Restores about ${item.ppHeal ?? 0} PP`;
     case 'cure': return item.cures && item.cures.length ? `Cures ${item.cures.join(', ')}` : 'Settles what ails you';
     case 'basket': return 'Open it at a picnic table to share a meal';
+    case 'tonic': return item.boost ? `Permanently raises ${boostStatLabel(item.boost.stat)} by ${item.boost.amount}` : 'A permanent boost';
     case 'valuable': return item.price > 0 ? `Worth $${sellPrice(item)} at a shop counter` : 'Worth something to the right person';
     case 'key': return 'A key item — it opens something, somewhere';
     case 'battle': {
@@ -81,7 +99,61 @@ export function itemEffectLine(item: ItemDef): string {
   }
 }
 
+/** S17 (ADR-061): the "(also +N X)" rider the equip preview + STATUS show
+ *  beneath an item's primary stat — its secondary `bonus` map, `vibe` rider,
+ *  and elemental `resists`, spoken plainly. Empty for a pure single-stat
+ *  classic (the whole 41-item catalog reads exactly as before). */
+export function equipSecondaryNote(item: ItemDef, opts: { resists?: boolean } = {}): string {
+  const withResists = opts.resists ?? true;
+  const parts: string[] = [];
+  if (item.bonus) {
+    for (const [stat, n] of Object.entries(item.bonus)) {
+      if (n) parts.push(`+${n} ${boostStatLabel(stat as keyof ItemBonus)}`);
+    }
+  }
+  if (item.vibe) parts.push(`+${item.vibe} Vibe`);
+  if (withResists && item.resists) for (const r of item.resists) parts.push(`+${r.pct}% ${r.element} resist`);
+  return parts.length ? `(also ${parts.join(', ')})` : '';
+}
+
 const I = (i: ItemDef): ItemDef => i;
+
+/**
+ * S17 (ADR-061) — THE CATALOG SPINE: the chapter band each item belongs to
+ * (§A8 per-region slice). Kept as one readable table beside the literals (the
+ * item objects stay clean) and folded onto each item when ITEMS is built. Every
+ * id MUST appear here — the validator fails naming any gap, both directions. As
+ * the §A8 catalog grows to ~500, a new item adds one row here and one band:
+ *   - 'ch1'…'ch10' = a region's own gear/food/cures/quest goods (where EARNED,
+ *     not where the wielder later joins — the cage's STARTING FIVE is ch1)
+ *   - 'cross'      = the cross-world chains (the deli Family Basket; the §A10
+ *     Lost-&-Found of Impossible Sizes)
+ * Early line-openers sit in their FUTURE region's band: Milo's first gun is
+ * ch3 (England), Dorin's first beads + Buni's Feast Basket are ch9 (Romania).
+ */
+const ITEM_BAND: Record<string, ItemBand> = {
+  // ── Ch.1 USA (Otterbrook / Brickton) — the two shipped chapters' home gear
+  cracked_bat: 'ch1', tball_bat: 'ch1', hand_me_down_pan: 'ch1',
+  corn_dog: 'ch1', pbj: 'ch1', lemonade: 'ch1', salt_shaker: 'ch1',
+  star_cola: 'ch1', glints_spark: 'ch1', star_locket: 'ch1',
+  lucky_collar: 'ch1', fresh_stamps: 'ch1', sugar_bag: 'ch1', lemon_crate: 'ch1',
+  lemonade_jug: 'ch1', champion_jacket: 'ch1', walkers_charm: 'ch1', basket_basic: 'ch1',
+  // the Brickton Classic's first-title prize (THE STARTING FIVE arms) is won in Ch.1
+  cage_sweatband: 'ch1', victory_scrunchie: 'ch1', shooters_sleeve: 'ch1',
+  iron_wristguard: 'ch1', minister_ribbon: 'ch1',
+  // ── Ch.2 South America (Puerto Sol / Valle Dorado)
+  alfajor: 'ch2', aloe_leaf: 'ch2', hanky: 'ch2', sandlot_slugger: 'ch2',
+  copper_pan: 'ch2', wool_poncho: 'ch2', captains_button: 'ch2', tin_sun_pendant: 'ch2',
+  camera: 'ch2', camera_flash: 'ch2',
+  // the Costa Estrella Invitational's first-title prize (THE SUNDAY SET) is South America
+  sunday_visor: 'ch2', sunday_glove: 'ch2', lucky_tee: 'ch2', caddys_marker: 'ch2',
+  // ── line-openers banded to the region they're EARNED in (defined early)
+  pellet_popper: 'ch3', // Milo's first air rifle — England
+  cedar_beads: 'ch9',   // Dorin's first beads — Romania
+  basket_feast: 'ch9',  // Buni's Feast Basket recipe — Romania
+  // ── cross-world: the deli Family Basket crafts in every region
+  basket_family: 'cross',
+};
 
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
   [
@@ -488,5 +560,5 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       price: 0,
       text: 'A coin that has marked ten thousand putts. It knows exactly where it is. Luck +7.',
     }),
-  ].map((i) => [i.id, i]),
+  ].map((i) => [i.id, { ...i, band: ITEM_BAND[i.id] }]),
 );

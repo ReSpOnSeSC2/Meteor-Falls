@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   physicalDamage,
   smashChance,
@@ -8,6 +8,7 @@ import {
   expShare,
   applyWeakness,
   heroOffense,
+  heroVibe,
   heroSpeed,
   heroGuts,
   equipArmsDelta,
@@ -414,5 +415,66 @@ describe('S16 — "The Old Light, Doubled": Jay\'s expanded kit', () => {
       expect(F.puppetTurns(true, () => 0.2)).toBe(3);
       expect(F.puppetTurns(true, () => 0.9)).toBe(2);
     });
+  });
+});
+
+describe('S17 (ADR-061) — secondary bonuses, Vibe-on-gear, resists, tonic boosts', () => {
+  // Synthetic gear carrying the new riders — injected per test, removed after.
+  // No real item carries them yet (M16 is the spine), so the seams are proven
+  // here; with the shipped 41-item catalog every rider is 0 (no behaviour change).
+  const TEST_IDS = ['t_vibe_charm', 't_guts_bat', 't_fire_robe', 't_cap_robe'];
+  const inject = (): void => {
+    ITEMS.t_vibe_charm = { id: 't_vibe_charm', name: 'Test Pendant', kind: 'charm', luck: 1, vibe: 10, usableInBattle: false, price: 0, text: 'test.', band: 'cross' };
+    ITEMS.t_guts_bat = { id: 't_guts_bat', name: 'Test Bat', kind: 'weapon', offense: 5, wielder: 'rex', bonus: { guts: 3 }, usableInBattle: false, price: 0, text: 'test.', band: 'cross' };
+    ITEMS.t_fire_robe = { id: 't_fire_robe', name: 'Test Robe', kind: 'armor', defense: 4, vibe: 2, resists: [{ element: 'fire', pct: 30 }], usableInBattle: false, price: 0, text: 'test.', band: 'cross' };
+    ITEMS.t_cap_robe = { id: 't_cap_robe', name: 'Test Cap Robe', kind: 'armor', defense: 1, resists: [{ element: 'fire', pct: 100 }], usableInBattle: false, price: 0, text: 'test.', band: 'cross' };
+  };
+  afterEach(() => { for (const id of TEST_IDS) delete ITEMS[id]; });
+
+  it('heroVibe reads the dedicated Vibe rider on worn gear', () => {
+    inject();
+    const rex = makeHeroState('rex', 5);
+    expect(heroVibe(rex)).toBe(rex.stats.vibe); // base only
+    rex.equip.other = 't_vibe_charm';
+    expect(heroVibe(rex)).toBe(rex.stats.vibe + 10);
+  });
+
+  it('a secondary bonus stacks on the primary without leaking into other stats', () => {
+    inject();
+    const rex = makeHeroState('rex', 5);
+    const baseGuts = heroGuts(rex);
+    rex.equip.weapon = 't_guts_bat';
+    expect(heroOffense(rex)).toBe(rex.stats.offense + 5); // the primary slot stat
+    expect(heroGuts(rex)).toBe(baseGuts + 3); // the secondary rider
+    expect(heroLuck(rex)).toBe(rex.stats.luck); // no leak
+  });
+
+  it('elemental resists sum per element; applyResist reduces, never below 1', () => {
+    inject();
+    const rex = makeHeroState('rex', 5);
+    expect(F.heroResist(rex, 'fire')).toBe(0);
+    rex.equip.body = 't_fire_robe';
+    expect(F.heroResist(rex, 'fire')).toBeCloseTo(0.3);
+    expect(F.heroResist(rex, 'freeze')).toBe(0); // only the listed element
+    expect(heroVibe(rex)).toBe(rex.stats.vibe + 2); // the robe carries a vibe rider too
+    expect(F.applyResist(100, 0.3)).toBe(70);
+    expect(F.applyResist(1, 0.8)).toBe(1);
+  });
+
+  it('heroResist caps stacked resistance at RESIST_CAP_PCT', () => {
+    inject();
+    const rex = makeHeroState('rex', 5);
+    rex.equip.body = 't_cap_robe'; // a 100%-fire robe
+    expect(F.heroResist(rex, 'fire')).toBeCloseTo(F.RESIST_CAP_PCT / 100);
+  });
+
+  it('a permanent tonic boost rides boosts and every seam reads it', () => {
+    const rex = makeHeroState('rex', 5);
+    expect(F.boostOf(rex, 'offense')).toBe(0);
+    rex.boosts.offense = 4;
+    rex.boosts.vibe = 7;
+    expect(heroOffense(rex)).toBe(rex.stats.offense + 4);
+    expect(heroVibe(rex)).toBe(rex.stats.vibe + 7);
+    expect(F.boostOf(rex, 'offense')).toBe(4);
   });
 });

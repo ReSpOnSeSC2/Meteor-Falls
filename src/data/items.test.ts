@@ -6,7 +6,7 @@
  * guards the MECHANICS line, the part that must never make a player guess.
  */
 import { describe, it, expect } from 'vitest';
-import { ITEMS, itemKindLabel, itemEffectLine } from './items';
+import { ITEMS, itemKindLabel, itemEffectLine, boostStatLabel, equipSecondaryNote } from './items';
 import type { ItemDef } from '../schemas';
 
 const firstOf = (k: ItemDef['kind']): ItemDef | undefined => Object.values(ITEMS).find((i) => i.kind === k);
@@ -42,5 +42,35 @@ describe('S15h — every item yields a category + a plain-language effect', () =
     for (const item of Object.values(ITEMS)) {
       expect(itemKindLabel(item), item.id).toMatch(/^[A-Z ]{3,12}$/);
     }
+  });
+});
+
+describe('S17 (ADR-061) — the catalog spine: bands, tonics, secondary notes', () => {
+  it('every item carries a chapter band (§A8 per-region slice)', () => {
+    for (const item of Object.values(ITEMS)) {
+      expect(item.band, item.id).toBeTruthy();
+    }
+  });
+
+  it('a tonic reads its permanent boost plainly (§A4.12)', () => {
+    const tonic: ItemDef = { id: 'sudden_guts_pill', name: 'Sudden Guts Pill', kind: 'tonic', boost: { stat: 'guts', amount: 2 }, usableInBattle: false, price: 800, text: 'A pill. It dares you.', band: 'ch1' };
+    expect(itemKindLabel(tonic)).toBe('TONIC');
+    expect(itemEffectLine(tonic)).toBe('Permanently raises Guts by 2');
+  });
+
+  it('boostStatLabel names every boostable stat, max HP/PP plainly', () => {
+    expect(boostStatLabel('hp')).toBe('max HP');
+    expect(boostStatLabel('pp')).toBe('max PP');
+    expect(boostStatLabel('vibe')).toBe('Vibe');
+    expect(boostStatLabel('offense')).toBe('Offense');
+  });
+
+  it('equipSecondaryNote lists riders, and is empty for a single-stat classic', () => {
+    expect(equipSecondaryNote(ITEMS.cracked_bat)).toBe(''); // a pure +Offense bat
+    const bat: ItemDef = { id: 'x', name: 'X', kind: 'weapon', offense: 9, wielder: 'rex', bonus: { guts: 2 }, vibe: 3, usableInBattle: false, price: 0, text: '.', band: 'cross' };
+    expect(equipSecondaryNote(bat)).toBe('(also +2 Guts, +3 Vibe)');
+    const robe: ItemDef = { id: 'y', name: 'Y', kind: 'armor', defense: 4, resists: [{ element: 'fire', pct: 25 }], usableInBattle: false, price: 0, text: '.', band: 'cross' };
+    expect(equipSecondaryNote(robe)).toBe('(also +25% fire resist)');
+    expect(equipSecondaryNote(robe, { resists: false })).toBe(''); // STATUS shows resists on their own line
   });
 });
