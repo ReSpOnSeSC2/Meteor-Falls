@@ -1890,4 +1890,26 @@ export const BATTLE_TEXT = {
   no_fallen: 'Everyone is still standing. The old word keeps.',
   cure_clean: '{t} feels scrubbed clean!',
   cure_nothing: '{t} was already fine. Now they are VERY fine.',
+  // PIPPA — "The Page's Full Brief" (S15h+): her tactical statuses, in voice —
+  // precise, diplomatic, furious when called adorable. Battle lines read like
+  // the minutes of a meeting. Each prints when it LANDS, ACTS, and WEARS OFF.
+  marked_on: '{e} is marked. The party will not miss it. (MARKED)',
+  marked_off: "{e} slipped the mark. Noted for the record.",
+  rally_on: '{t} stands quick and lucky! (RALLY — Speed & Luck up)',
+  rally_off: "{t}'s rally settled back to a dignified calm.",
+  focus_on: "{t} found the big-little focus — the next swing can't miss!",
+  minutes_on: '{t}: record corrected. Cleansed, and the next swing lands true.',
+  focus_off: "{t}'s focus eased off.",
+  evasion_on: '{t} stepped to thimble-scale — and left a decoy standing!',
+  evasion_off: '{t} stepped back up to size.',
+  evasion_dodge: '{t} was simply not where the blow expected. How embarrassing for it.',
+  decoy_miss: 'The hit clobbered the decoy! {t} was never there.',
+  guarded_on: '{t} is under diplomatic immunity. One hit will be... declined.',
+  guarded_negate: '{user} stepped in front of {t} — "I will be taking that one." Declined!',
+  rattled_on: '{e} went small and sorry. Its nerve is shaken. (RATTLED)',
+  rattled_off: '{e} straightened its tie and remembered itself.',
+  rattled_skip: '{e} is too cowed by the decree to act!',
+  morale_on: '{user} rang the bellwether — the next prayer and heal will carry!',
+  morale_pray: 'The bellwether carried — the prayer rings one note brighter!',
+  morale_heal: "The bellwether carried — {user}'s mending went further than it should have!",
 };

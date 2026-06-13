@@ -6,7 +6,7 @@
 import { ITEMS, slotOf, EQUIP_SLOTS } from '../data/items';
 import { RAMP, px } from '../palette';
 import type { HeroState } from '../engine/state';
-import type { ItemDef, ItemBonus, ResistElement } from '../schemas';
+import type { ItemDef, ItemBonus, ResistElement, PrayTier } from '../schemas';
 
 export type Rng = () => number;
 
@@ -304,6 +304,75 @@ export function lifedrainHeal(drained: number): number {
  *  (heroLuckS) the steeled way, never baked into permanent `boosts`; raises
  *  crit/SMAAASH and dodge while it holds, then ticks off in statusPhase. */
 export const LUCKY_LUCK = 10;
+
+/* ---- PIPPA — the page's tactical kit (§A3, S15h: NO Vibe, NO PP) ----
+ * Her power is competence, not the old light: she MARKS targets so the big kids
+ * can't whiff, RALLIES morale, stitches wounds, and out-maneuvers things at
+ * thimble-scale. Statuses route through Luck where a stat is needed — she is
+ * absurdly lucky (base Luck 9), and that shows up in the numbers (the dodge math
+ * below). Pure + rng-injected so the ADR-008 replay bot and the unit tests stay
+ * exact; BattleScene reads the result at the matching seam.
+ *
+ * `marked` (enemy) folds into the existing MARKED_MUL/applyFocus amplifier above
+ * (×1.25) AND opens the guaranteed-hit gate here; `frozen`/`cure` are shared
+ * with Mia/Milo and implemented once. */
+
+/** marked (enemy): the party can't miss it AND it takes ×1.25 — 3 turns */
+export const MARKED_TURNS = 3;
+
+/** the shared "is this party hit guaranteed?" gate — a MARKED foe can't be
+ *  missed, and a FOCUSED hero (Big-Little Focus / The Minutes) can't whiff its
+ *  next physical swing. Skips the crying-miss (and any future evasion) gate. */
+export function guaranteedHit(opts: { marked?: boolean; focus?: boolean }): boolean {
+  return opts.marked === true || opts.focus === true;
+}
+
+/** rally (party): quick and lucky — +Speed and +Luck while it holds, read at the
+ *  heroSpeed/heroLuck seams the steeled way. Standing Ovation lasts longer. */
+export const RALLY_SPEED = 5;
+export const RALLY_LUCK = 5;
+export const RALLY_TURNS = 3;
+export const OVATION_TURNS = 5;
+
+/** focus (party): the next physical hit can't miss (the big-little focus combo
+ *  with Milo) — 2 turns, consumed by the swing it guarantees. */
+export const FOCUS_TURNS = 2;
+
+/** evasion (self): the thimble-scale gimmick — a decoy eats the FIRST incoming
+ *  hit outright, then a high dodge each hit, nudged up by Speed/Luck (she is
+ *  absurdly lucky, so her dodge floor is genuinely high). 3 turns. */
+export const EVASION_TURNS = 3;
+export function evasionDodges(speed: number, luck: number, rng: Rng): boolean {
+  return rng() < Math.min(0.85, 0.55 + (speed + luck) / 300);
+}
+
+/** rattled (enemy): Stern Decree's no-magic Offense-down — its hits land ×0.8
+ *  and it has a small chance to be too cowed to act. 3 turns. */
+export const RATTLED_TURNS = 3;
+export const RATTLED_MUL = 0.8;
+export const RATTLED_SKIP_CHANCE = 0.2;
+export function rattledDamage(dmg: number): number {
+  return Math.max(1, Math.round(dmg * RATTLED_MUL));
+}
+export function rattledSkips(rng: Rng): boolean {
+  return rng() < RATTLED_SKIP_CHANCE;
+}
+
+/** morale (party, until consumed): Bellwether — the next PRAY "carries" one tier
+ *  better (feeding Mia's faith mechanic, a cross-character synergy) and the next
+ *  party heal is amplified ×1.5. */
+export const MORALE_HEAL_MUL = 1.5;
+const PRAY_TIER_ORDER: PrayTier[] = ['backfire', 'strange', 'nothing', 'good', 'wonderful', 'miraculous'];
+/** bump a rolled pray tier one rung better (the rung above 'miraculous' is
+ *  itself — morale can't exceed the canon ceiling) */
+export function moraleTierUp(tier: PrayTier): PrayTier {
+  const i = PRAY_TIER_ORDER.indexOf(tier);
+  return i < 0 || i >= PRAY_TIER_ORDER.length - 1 ? tier : PRAY_TIER_ORDER[i + 1];
+}
+/** the amplified heal a morale charge carries (always ≥1) */
+export function moraleHeal(amount: number): number {
+  return Math.max(1, Math.round(amount * MORALE_HEAL_MUL));
+}
 
 /** Guts: chance to survive a mortal blow at 1 HP (§A3) */
 export function gutsSurvive(guts: number, rng: Rng): boolean {

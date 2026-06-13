@@ -144,6 +144,15 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
   scale_step: S({ kind: 'ability', family: 'barrier', ramp: RAMP.CYAN, sfx: 'fx_shield' }),
   big_little_focus: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.PURPLE, sfx: 'fx_lifeup' }),
   bellwether: S({ kind: 'ability', family: 'barrier', ramp: RAMP.GOLD, sfx: 'fx_shield' }),
+  // S15h+ ("The Page's Full Brief") — Pippa's six new faces. All reuse the same
+  // three families (scan/sparkle_rain/barrier), so STAGE_ANIM/fx.ts stay frozen;
+  // only the ramp + reused sfx preset differ.
+  volley_mark: S({ kind: 'ability', family: 'scan', ramp: RAMP.GOLD, sfx: 'fx_spy' }),
+  standing_ovation: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.RED, sfx: 'fx_lifeup' }),
+  field_dressing: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.GRASS, sfx: 'fx_cure' }),
+  diplomatic_immunity: S({ kind: 'ability', family: 'barrier', ramp: RAMP.CYAN, sfx: 'fx_shield' }),
+  stern_decree: S({ kind: 'ability', family: 'scan', ramp: RAMP.PURPLE, sfx: 'fx_spy' }),
+  the_minutes: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.PURPLE, sfx: 'fx_lifeup' }),
 
   /* ---- items (reachable through itemFxKey for every battle-usable item) ---- */
   item_food: S({ kind: 'item', family: 'munch', ramp: RAMP.GOLD, sfx: 'fx_munch' }),
