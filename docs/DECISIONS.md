@@ -3379,3 +3379,79 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   never wall off a path. Draft generators (`buildCity`/`buildTown`/`buildVillage`, LAB
   only) can adopt `tryPlaceFacade` when promoted. Movement Two's nook/underground/woods
   grammar inherits it.
+
+## ADR-054 — S15i (Movement Two): THE LIVING-MAP LAW — the mega pass + the nook/woods/sewer verbs
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the S15i "MOVEMENT 2+" prompt: "maps that breathe — the grammar
+  upgrade." The prompt asked to append this as "ADR-051" and the size law as "ADR-052",
+  but Movement One already consumed ADR-050/051/052/053; per the drift rule the live
+  numbers are **ADR-054** (this) and **ADR-055** (the size law). Same laws, next free ids.)
+- **Context:** §B4's deepened building laws want two things the S15h grammar couldn't do:
+  MEGA-buildings that are COMMON (towers whose tops run off-screen, `u ≥ 11`, `H ≥ 220px`)
+  + landmark colossi, and NOOK variety (shacks/alleys/lots/courtyards/rooftops, wooded
+  pockets, underground/sewer stretches) so a grown map never reads squared-off. Catalog-
+  sized placement (ADR-053) already lands every facade at its true `BUILDING_DIMS`; this
+  ADR adds the height register + the variety verbs on top of it.
+- **Decision — THE MEGA PASS (`DistrictOpts.mega`).** A grid/organic district may run a
+  pass, BEFORE its row pass, that stands the catalog's MEGA facades (`isMega`: `u ≥ 11`)
+  backing onto the region's DEEPEST street, where the most open sky is. It pre-filters the
+  catalog to megas that actually FIT (narrow enough to keep a `PLACE_MARGIN` lane, short
+  enough that `bottomPx − cityBuildingHeight(u) ≥ regionTop·16`), so a pick is never wasted
+  on an oversized colossus, and shares the same `occupied` list — so the row pass spaces
+  its shorter walk-ups into the gaps and the result reads as towers among storefronts. The
+  `top ≥ regionTop` guard means a tower can never poke above the region (into a core copied
+  just above it) or sink through the street. `maxStories` relaxes from `1|2|3` to `number`
+  (the height cap for the ROW pass only; megas are the mega pass's job). Off by default —
+  every prior `buildDistrict` caller is byte-identical (the levelkit FNV pins never move,
+  since `generate()` routes to `buildCity/…`, never `buildDistrict`).
+- **Decision — THE VARIETY VERBS.** `buildWoods` (a clearing path + a glade reward, trees
+  off the path so it's always walkable), `buildUnderground` (a brick-walled sewer stretch
+  with a solid water channel crossed at plank gaps), and `placeNook(kind)` for the five §B4
+  nook kinds. All are region-contained + deterministic (the `buildDistrict` contract);
+  `district.test` pins containment + determinism for each. They return a `DistrictResult`;
+  a session wires the door / hidden reward at promotion. A present belongs in a nook.
+- **Decision — PER-AREA SKINS WIRED.** `growOtterbrook` / `growBrickton` pass
+  `AREA_SKINS[area]` as each district's `catalog`, so Otterbrook draws ONLY its warm low
+  brownstones/shops/cafés (≤3 stories — a sleepy town never towers) and Brickton ONLY its
+  cool glass/neon/theaters + the COMMON mega-towers + a colossus. No two areas read alike.
+- **Verification:** tsc + **632 vitest green** + `vite build`. `district.test` +11 (mega
+  pass lands a tower in-region; off-by-default places none; the three verbs are contained +
+  deterministic). Grown maps re-proven by `world_block` (cores byte-identical) and an
+  in-game collision BFS (tile **+ prop** solids) from each foot-spawn: every door, NPC, and
+  interior reachable — the colossus does NOT strand the docks. Brickton: 4 megas (3 off-
+  screen towers downtown + the Starfall Spire), 146/320 props; Otterbrook: warm low skins +
+  a hidden woods rest, 141/260 props. `cityViolations` clear (`faceBands` is bottomPx-based,
+  so height never moves the sweep — confirmed).
+- **Consequences:** the mega pass + verbs are the grammar for every roomier grow to come
+  (Puerto Sol, the foot-walk legs, the cage park, the golf resort). Brickton's mega density
+  is capped by its tight shipped layout (the avenue walls the one tall pocket at ~26 wide);
+  a future Brickton expansion or the larger fresh areas will scale the read up.
+
+## ADR-055 — S15i (Movement Two): THE SIZE LAW — maps vary, mostly grow, and EARN their size
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (§B4 "MAPS BREATHE, AND MOSTLY GROW"). Paired with ADR-054 (the
+  grammar) — this is the discipline that governs how big a map gets and what fills it.
+- **Decision — vary in size + transition count; mostly grow.** Going forward maps vary in
+  footprint AND in door/transition count, and most keep getting LARGER unless the aesthetic
+  demands smaller (Hawaii reads claustrophobic by design). Size is never growth for its own
+  sake.
+- **Decision — EARN the size with content.** Every grown area must pay for its space:
+  a task/quest or two, purposeful §A11 NPCs (one obsession each), a hidden reward in a nook,
+  a cutscene beat. New space with nothing to do is empty and is a violation. (This pass:
+  Otterbrook's woods nook earns its corner with a hidden rest + a birdwatcher; Brickton's
+  high-rise downtown + colossus earn theirs with the spire-gazer + downtown-suit + signage.
+  The deeper quest/cutscene content is the Movement 3/4 follow-on.)
+- **Decision — PROP COUNT is the p99 lever.** The tilemap CULLS offscreen tiles, so total
+  tile count is a coarse load proxy; the real per-frame cost is PROP count (every prop is a
+  display-list image — `bench-map.ts MAX_PROPS = 320`). Mega-buildings are FEW props for
+  MANY tiles, so they're the cheap way to grow a skyline — lean into them. The authoritative
+  gate stays the browser-pumped XL walk at p99 ≤ 8.3ms (QA pre-flight); `world_block` pins
+  the per-map prop caps (Otterbrook ≤260, Brickton ≤320).
+- **Verification:** the grown maps hold their caps (Otterbrook 141/260, Brickton 146/320),
+  tiles within the envelope (Otterbrook 3920 ≤4000, Brickton 10944 ≤12000), cores byte-
+  identical. tsc + 632 vitest + build green.
+- **Consequences:** the size law is the Definition-of-Done check for every future grow:
+  bigger than before (unless the place wants smaller), every new acre earning its keep,
+  prop count watched as the real budget.

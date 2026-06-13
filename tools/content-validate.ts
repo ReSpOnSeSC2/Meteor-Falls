@@ -1196,9 +1196,10 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
   // ≈3 tables per chapter, placed BEFORE dungeons (§A4.5): the Ch.1 four
   // are canon placements now; Ch.2 sets three more + the antechamber's.
   // S15h (ADR-049): grown Otterbrook adds two POND PARK rests (the §A4.5
-  // beat found before the new south field's danger), so its count is 3.
+  // beat found before the new south field's danger). S15i (ADR-054): the new
+  // WOODS NOOK hides a fourth — a discoverable rest at the thicket glade.
   const TABLES: Record<string, number> = {
-    otterbrook: 3,
+    otterbrook: 4,
     hickory_hill: 1,
     brickton: 1,
     dos_f2: 1,

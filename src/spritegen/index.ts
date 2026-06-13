@@ -55,6 +55,7 @@ import {
   drawCounter,
   drawBugZapper,
   drawMeteorRock,
+  drawSawhorse,
   drawEmber,
   drawLemonadeStand,
   drawBusSign,
@@ -424,6 +425,7 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'counter', drawCounter());
   addPixmap(scene, 'bug_zapper', drawBugZapper());
   addPixmap(scene, 'meteor_rock', drawMeteorRock());
+  addPixmap(scene, 'sawhorse', drawSawhorse()); // S15i Task 0: roadblock + night-gate barricade
   addPixmap(scene, 'ember', drawEmber());
   addPixmap(scene, 'lemonade', drawLemonadeStand());
   addPixmap(scene, 'bus_sign', drawBusSign());

@@ -13,8 +13,8 @@
  */
 export { Streams, namedStream, streamSeed } from './rng';
 export { STYLE_PACKS, BAND_ROSTER, ROLE_FACADE } from './kit';
-export { buildCity, buildTown, buildVillage, buildDistrict } from './settlements';
-export type { DistrictRegion, DistrictReserve, DistrictOpts, DistrictResult } from './settlements';
+export { buildCity, buildTown, buildVillage, buildDistrict, buildWoods, buildUnderground, placeNook } from './settlements';
+export type { DistrictRegion, DistrictReserve, DistrictOpts, DistrictResult, NookKind } from './settlements';
 export { buildInterior } from './interiors';
 export { buildRoute, buildWild } from './routes';
 export { buildTravelScene } from './travel';

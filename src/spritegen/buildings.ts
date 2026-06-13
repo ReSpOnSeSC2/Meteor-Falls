@@ -140,9 +140,13 @@ export function skinsFor(families: readonly string[], ramps?: readonly number[])
 export const AREA_SKINS: Record<string, readonly string[]> = {
   // OTTERBROOK — sleepy 1995 Ohio: low brownstone/shop/cafe walk-ups, warm ramps
   otterbrook: skinsFor(['brownstone', 'shop', 'cafe', 'apartments'], [RAMP.EARTH, RAMP.RED, RAMP.ORANGE, RAMP.GOLD]),
-  // BRICKTON — the 2077 city: glass offices, hotels, neon, theaters, a dept store + the colossi, cool ramps
+  // BRICKTON — the 2077 city: glass offices, hotels, neon, theaters, a dept store,
+  // the COMMON mega-towers (tops off-screen), + the landmark colossi, cool ramps
   brickton: [
     ...skinsFor(['office', 'hotel', 'deptstore', 'theater', 'neon', 'bank'], [RAMP.BLUE, RAMP.CYAN, RAMP.PURPLE, RAMP.NIGHT, RAMP.PAPER, RAMP.MAGENTA]),
+    // the shipped u12–13 mega-towers — COMMON in Brickton (the mega pass drops these)
+    'bldg_tower_glass', 'bldg_tower_arms', 'bldg_tower_corp',
+    // the landmark colossi (hand-placed / footprint spans a slice you round on foot)
     'bldg_colossus_arcology', 'bldg_colossus_spire', 'bldg_colossus_grand',
   ],
   // PUERTO SOL — Ch.2 colonial port keeps its bespoke bldg_ps_* faces + open-air markets

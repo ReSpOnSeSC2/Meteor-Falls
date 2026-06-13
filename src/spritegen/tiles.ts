@@ -1210,6 +1210,38 @@ export function drawMeteorRock(): Pixmap {
   return pm;
 }
 
+/**
+ * A road-work SAWHORSE (S15i, Task 0) — the meteor-drop roadblock's barricade
+ * and the sleeping-town gate at Otterbrook's east line. An A-frame trestle with
+ * a hazard-striped board (orange-on-cream, the universal "do not pass" read).
+ * Placed as a prop; the map gives it a solid that seals the lane it sits on.
+ */
+export function drawSawhorse(): Pixmap {
+  const pm = new Pixmap(26, 20);
+  const wood = px(RAMP.EARTH, 2);
+  const woodD = px(RAMP.EARTH, 1);
+  // splayed A-frame legs
+  pm.line(4, 18, 8, 8, woodD);
+  pm.line(5, 18, 9, 8, wood);
+  pm.line(21, 18, 17, 8, woodD);
+  pm.line(20, 18, 16, 8, wood);
+  // the cross board
+  pm.rect(3, 6, 20, 5, px(RAMP.PAPER, 3));
+  // diagonal hazard stripes, clipped to the board
+  for (let i = -1; i < 5; i++) {
+    const x0 = 4 + i * 4;
+    for (let t = 0; t < 5; t++) {
+      const x = x0 + t;
+      const y = 10 - t;
+      if (x >= 4 && x <= 21 && y >= 6 && y <= 10) pm.set(x, y, px(RAMP.ORANGE, 2));
+    }
+  }
+  pm.frame(3, 6, 20, 5, woodD);
+  pm.outline(C.outline);
+  pm.shadowUnder(13, 19, 9, px(RAMP.GRASS, 1));
+  return pm;
+}
+
 export function drawEmber(): Pixmap {
   const pm = new Pixmap(12, 12);
   pm.set(5, 1, px(RAMP.GOLD, 3));

@@ -35,6 +35,7 @@ import {
   BAND_ROSTER,
   placeFacade,
   facadeDims,
+  isMega,
   furniture,
   tree,
   slot,
@@ -430,11 +431,19 @@ export interface DistrictOpts {
   lanes?: number;
   /** facades that must open a named door (assigned to lots in order) */
   reserve?: readonly DistrictReserve[];
-  /** override the building catalog (defaults to the style pack's) */
+  /** override the building catalog (defaults to the style pack's) — pass an
+   *  AREA_SKINS roster so each area draws only its own facades (ADR-050) */
   catalog?: readonly string[];
-  /** the tallest facade the district draws (default 2 — growth stays low so a
-   *  facade never pokes up into a core copied just above the region) */
-  maxStories?: 1 | 2 | 3;
+  /** the tallest NON-MEGA facade the district's ROWS draw (default 2). A sleepy
+   *  town stays low (2–3); a downtown passes a higher cap (or omits it) so its
+   *  offices/hotels land. The top≥regionTop guard still rejects anything that
+   *  would poke above the region (into a core copied just above it). */
+  maxStories?: number;
+  /** ADR-054 — run a MEGA PASS: after the rows, drop the catalog's MEGA towers
+   *  (isMega: u≥11) backing onto the region's DEEPEST edge, where the most sky
+   *  is. Same top≥regionTop + spacing guards, so a tower never sinks through the
+   *  street or pokes into a frozen core. Brickton-class downtowns set this. */
+  mega?: boolean;
   /** lay a region-bounded ground sprinkle (never touches a copied-in core) */
   sprinkle?: boolean;
   /** ADR-053: a SHARED building-footprint list. Pass the same array to every
@@ -527,6 +536,10 @@ export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts:
   const { x: rx, y: ry, w: rw, h: rh } = region;
   const rRight = rx + rw;
   const rBot = ry + rh;
+  // ADR-053/054: ONE shared footprint list across the whole region (and across
+  // regions when `occupied` is passed) — the row pass, the mega pass, and other
+  // districts all space against it, so no two buildings ever seal a walkway.
+  const placedRects: TileRect[] = opts.occupied ?? [];
 
   // region-bounded sprinkle — a SEPARATE named stream so it can't shift the
   // structural jitter, and it only fills cells already at the default '.'
@@ -538,6 +551,37 @@ export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts:
         if (g.rows[y]?.[x] === '.' && next() < 0.1) {
           g.set(x, y, pack.sprinkle[Math.floor(next() * pack.sprinkle.length)]);
         }
+      }
+    }
+  }
+
+  // ADR-054 — THE MEGA PASS runs FIRST so the towers claim their wide deep-edge
+  // footprints; the row pass then SPACES its shorter facades into the gaps around
+  // them (they share `placedRects`), so a downtown reads as towers among walk-ups.
+  // tryPlaceFacade's top≥regionTop guard rejects any tower whose body would poke
+  // above the region (into a core copied just above it); the spacing law keeps a
+  // walkable lane around each — you ROUND a tower on foot, never clip it.
+  if (opts.mega) {
+    const deepStreet = opts.layout === 'grid' && opts.streetRows?.length ? Math.max(...opts.streetRows) : rBot - 2;
+    const bottomPx = deepStreet * 16 - 4;
+    // only megas that actually FIT this region — narrow enough to leave a lane,
+    // short enough that their top stays inside it. Oversized landmark colossi are
+    // hand-placed in their own carved plaza; the pass keeps picks from being wasted.
+    const megas = catalog.filter(
+      (s) => isMega(s) && facadeDims(s).w + PLACE_MARGIN <= rw && bottomPx - cityBuildingHeight(facadeDims(s).u) >= ry * 16,
+    );
+    if (megas.length) {
+      let x = rx + 1 + S.int('megaStart', 3);
+      let placed = 0;
+      while (x < rRight - 6 && placed < 40) {
+        const prop = tryPlaceFacade(S, megas, [], signs, placedRects, ry, rRight - 1, `mega${placed}`, x, bottomPx);
+        if (prop) {
+          props.push(prop);
+          x += facadeDims(prop.sprite).w + 1 + S.int(`megaGap${placed}`, 2);
+        } else {
+          x += 3;
+        }
+        placed++;
       }
     }
   }
@@ -581,9 +625,10 @@ export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts:
     // catalog-driven + spaced: each lot is placed at its TRUE size and only if it
     // keeps a walkable lane from every other building (ADR-053 — never a sealed row)
     const doorCols = new Set<number>();
-    const placedRects: TileRect[] = opts.occupied ?? [];
-    const catU = catalog.filter((s) => facadeDims(s).u <= maxU); // honour the height cap
-    const rowCatalog = catU.length ? catU : catalog;
+    // rows draw NON-mega facades only, honouring the height cap; megas (if any)
+    // are the mega pass's job (they need the region's deep edge for their sky)
+    const catU = catalog.filter((s) => !isMega(s) && facadeDims(s).u <= maxU);
+    const rowCatalog = catU.length ? catU : catalog.filter((s) => !isMega(s));
     streetRows.forEach((sy, si) => {
       const bottomPx = sy * 16 - 4;
       let x = rx + 1 + S.int(`gBldgStart${si}`, 2);
@@ -643,9 +688,8 @@ export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts:
     // scattered, catalog-sized, SPACED houses — tryPlaceFacade rejects any lot
     // whose true footprint would touch a neighbour, so a path is never sealed
     // (ADR-053). Honour the height cap so a tall facade can't poke into the core.
-    const placedRects: TileRect[] = opts.occupied ?? [];
-    const catU = catalog.filter((s) => facadeDims(s).u <= maxU);
-    const houseCatalog = catU.length ? catU : catalog;
+    const catU = catalog.filter((s) => !isMega(s) && facadeDims(s).u <= maxU);
+    const houseCatalog = catU.length ? catU : catalog.filter((s) => !isMega(s));
     // over-generate candidates: the spacing law caps real density, so more
     // attempts FILL the district with spaced buildings instead of leaving it bare
     const count = Math.max(8, Math.round((rw * rh) / 45));
@@ -660,4 +704,158 @@ export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts:
   }
 
   return { props, doors, signs };
+}
+
+/* ===================== NOOKS + POCKETS (S15i, ADR-054) ===================== *
+ * The variety verbs §B4's size law calls for — small, hand-feeling pockets a
+ * grown map grafts in so it never reads squared-off (a wooded pocket, an
+ * underground sewer stretch, the placeNook family). Each writes ONLY inside its
+ * region (the frozen-core guarantee), rides the named Streams (Prime Law 2), and
+ * returns a DistrictResult; the session wires the door / hidden reward at
+ * promotion. A present belongs in a nook (§B4 — every grown area earns its size).
+ */
+
+const clampN = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
+
+/** the nook palette (§B4) — placeNook grafts ONE of these */
+export type NookKind = 'shack' | 'alley' | 'lot' | 'courtyard' | 'rooftop';
+
+/**
+ * A WOODED POCKET: a winding clearing path threads the region end to end and one
+ * central GLADE stays open (a hidden-reward spot); trees fill the rest, never on
+ * the path corridor (so the pocket is always walkable — no soft-lock).
+ */
+export function buildWoods(
+  g: Grid,
+  region: DistrictRegion,
+  S: Streams,
+  opts?: { pines?: boolean; density?: number; gladeProp?: string },
+): DistrictResult {
+  const { x: rx, y: ry, w: rw, h: rh } = region;
+  const rRight = rx + rw;
+  const rBot = ry + rh;
+  const props: PropDef[] = [];
+  const pathY: number[] = [];
+  let py = clampN(ry + Math.round(rh / 2), ry + 1, rBot - 2);
+  for (let x = rx; x < rRight; x++) {
+    g.set(x, py, ':');
+    pathY[x] = py;
+    if (S.chance(`woodsBend${x}`, 0.24)) py = clampN(py + (S.chance(`woodsDir${x}`, 0.5) ? 1 : -1), ry + 1, rBot - 2);
+  }
+  const gladeX = rx + Math.round(rw / 2);
+  const gladeY = pathY[gladeX] ?? py;
+  // the GLADE reward (a hidden rest/present) — placed on the cleared glade,
+  // reachable via the path. Pushed FIRST so it survives a tight prop budget.
+  if (opts?.gladeProp) props.push(furniture(opts.gladeProp, clampN(gladeX - 1, rx, rRight - 2), gladeY));
+  const density = opts?.density ?? 0.42;
+  for (let y = ry; y < rBot; y++) {
+    for (let x = rx; x < rRight; x++) {
+      if (Math.abs(y - (pathY[x] ?? py)) <= 1) continue; // keep the path corridor clear
+      if (Math.abs(x - gladeX) <= 2 && Math.abs(y - gladeY) <= 1) continue; // the glade
+      if (S.chance(`woodsT${x}_${y}`, density)) props.push(tree(x, y, opts?.pines));
+    }
+  }
+  return { props, doors: [], signs: [] };
+}
+
+/**
+ * AN UNDERGROUND SEWER STRETCH: brick-walled, plank service ledges, a solid water
+ * channel down the middle you cross at plank gaps (both banks stay connected, so
+ * it's walkable end to end). A session wires the manhole door + what's down here.
+ */
+export function buildUnderground(g: Grid, region: DistrictRegion, S: Streams, opts?: { channel?: boolean }): DistrictResult {
+  const { x: rx, y: ry, w: rw, h: rh } = region;
+  const rRight = rx + rw;
+  const rBot = ry + rh;
+  g.rect(rx, ry, rw, rh, 'w'); // the service floor (plank)
+  g.rect(rx, ry, rw, 1, 'B'); // brick walls ring the stretch
+  g.rect(rx, rBot - 1, rw, 1, 'B');
+  g.rect(rx, ry, 1, rh, 'B');
+  g.rect(rRight - 1, ry, 1, rh, 'B');
+  if (opts?.channel !== false && rh >= 6) {
+    const cy = ry + Math.round(rh / 2);
+    for (let x = rx + 2; x < rRight - 2; x++) {
+      if ((x - rx) % 5 !== 0) g.set(x, cy, 'e'); // water, but a plank crossing every 5th tile
+    }
+    g.set(rx + 1, cy, 'E');
+    g.set(rRight - 2, cy, 'E');
+  }
+  const props: PropDef[] = [];
+  if (rh >= 7) {
+    for (let i = 0; i < Math.max(1, Math.round((rw * rh) / 110)); i++) {
+      const px = clampN(rx + 2 + S.int(`sewX${i}`, Math.max(1, rw - 4)), rx + 2, rRight - 3);
+      props.push(furniture('dumpster', px, ry + 1)); // junk against the top wall
+    }
+  }
+  return { props, doors: [], signs: [] };
+}
+
+/**
+ * ONE detailed NOOK grafted into a region (the §B4 palette). Each is a small,
+ * irregular pocket with somewhere a present can hide. Region-contained + seeded.
+ * 'shack' opens a low facade (pass a 1-area catalog + an optional reserved door).
+ */
+export function placeNook(
+  g: Grid,
+  region: DistrictRegion,
+  S: Streams,
+  kind: NookKind,
+  opts?: { catalog?: readonly string[]; reserve?: DistrictReserve },
+): DistrictResult {
+  const { x: rx, y: ry, w: rw, h: rh } = region;
+  const rRight = rx + rw;
+  const rBot = ry + rh;
+  const props: PropDef[] = [];
+  const signs: SignDef[] = [];
+  const placed: TileRect[] = [];
+  switch (kind) {
+    case 'shack': {
+      const cat = opts?.catalog ?? ['bldg_brownstone'];
+      const reserve = opts?.reserve ? [opts.reserve] : [];
+      const prop = tryPlaceFacade(S, cat, reserve, signs, placed, ry, rRight - 1, 'nookShack', rx + 1, (rBot - 1) * 16 - 4);
+      if (prop) props.push(prop);
+      for (let x = rx; x < rRight; x++) g.set(x, rBot - 1, '-'); // a low yard fence
+      break;
+    }
+    case 'alley': {
+      const ax = rx + Math.round(rw / 2);
+      g.rect(ax, ry, 1, rh, ':'); // the 1-wide slot
+      if (ax - 1 >= rx) g.rect(ax - 1, ry, 1, rh, 'B');
+      if (ax + 1 < rRight) g.rect(ax + 1, ry, 1, rh, 'B');
+      props.push(furniture('dumpster', ax, rBot - 2));
+      break;
+    }
+    case 'lot': {
+      g.rect(rx, ry, rw, 1, '-'); // a fenced vacant lot
+      g.rect(rx, rBot - 1, rw, 1, '-');
+      g.rect(rx, ry, 1, rh, '|');
+      g.rect(rRight - 1, ry, 1, rh, '|');
+      props.push(furniture('trash_can', rx + 2, ry + 2));
+      break;
+    }
+    case 'courtyard': {
+      g.rect(rx, ry, rw, rh, '='); // a paved square
+      for (let x = rx; x < rRight; x++) {
+        if (S.chance(`cyTop${x}`, 0.7)) g.set(x, ry, 'b'); // hedge ring, corners nibbled
+        if (S.chance(`cyBot${x}`, 0.7)) g.set(x, rBot - 1, 'b');
+      }
+      props.push(furniture('bench', rx + clampN(Math.round(rw / 2) - 1, 0, rw - 2), ry + Math.round(rh / 2)));
+      break;
+    }
+    case 'rooftop': {
+      g.rect(rx, ry, rw, rh, '='); // the deck
+      for (let x = rx; x < rRight; x++) {
+        g.set(x, ry, 'b'); // a parapet rings the roof
+        g.set(x, rBot - 1, 'b');
+      }
+      for (let y = ry; y < rBot; y++) {
+        g.set(rx, y, 'b');
+        g.set(rRight - 1, y, 'b');
+      }
+      props.push(furniture('water_cooler', rx + 2, ry + 2));
+      props.push(furniture('plant_pot', rRight - 3, rBot - 3));
+      break;
+    }
+  }
+  return { props, doors: [], signs };
 }

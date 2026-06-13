@@ -2591,6 +2591,17 @@ export class OverworldScene extends Phaser.Scene {
         this.player.y - 4 > r.y &&
         this.player.y - 4 < r.y + r.h
       ) {
+        // S15i Task 0 — THE DAYBREAK GATE: the road east stays shut until the
+        // opening ends (zapper_done). A sleeping-town reason, not an invisible
+        // wall — the barricade reads it, this catches anyone skirting the verge.
+        if (d.to === 'meadow_mile' && !GS.flag('zapper_done')) {
+          this.cut = true;
+          AUDIO.sfx('cancel');
+          await this.dlg.say(...DIALOGUE.meadow_gate_asleep);
+          this.cut = false;
+          this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
+          return;
+        }
         // S11b: a real door swings OPEN before it admits you
         if ((d.indicator ?? (this.mapDef.interior ? 'mat' : 'none')) === 'door') {
           this.goThroughInteriorDoor(d);
@@ -3478,6 +3489,10 @@ export class OverworldScene extends Phaser.Scene {
     // of grief, played absolutely straight (§A11.2)
     await this.awakeningBeat('last_spark');
     this.cut = false;
+    // S15i Task 0 — DAYBREAK: dawn has broken (zapper_done is set). Rebuild the
+    // town from data so the world OPENS now (§B4 daybreak law): the night gate
+    // east retires, the treeline NPCs swap to their day lines, the sky lightens.
+    this.fadeRestart();
   }
 
   /* ---------------- S2: Mia, the Manager, and Mom's call (§A6 Ch.1 end) ---------------- */

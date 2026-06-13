@@ -73,6 +73,22 @@ describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays orga
     expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'chapel_int')).toBe(true);
     expect(MAPS.otterbrook.triggers.some((t) => t.id === 'bus_stop')).toBe(true);
   });
+
+  it('the daybreak gate seals the road east until zapper_done (the daybreak law, §B4)', () => {
+    const ob = MAPS.otterbrook;
+    // the foot connector east still exists (kept for Movement 2)...
+    expect(ob.doors.some((d) => d.to === 'meadow_mile')).toBe(true);
+    // ...but a sleeping-town barricade + notice guard it, both gated to RETIRE
+    // at daybreak (the door itself is gated in OverworldScene.checkDoors too)
+    expect(ob.props.find((p) => p.sprite === 'sawhorse')?.unlessFlag).toBe('zapper_done');
+    expect(ob.signs.some((s) => s.dialogue === 'sign_meadow_gate_closed' && s.unlessFlag === 'zapper_done')).toBe(true);
+    // the treeline gawker + the gate walker swap night→day on the daybreak flip
+    const gawker = ob.npcs.find((n) => n.id === 'treeline_gawker');
+    expect(gawker?.dialogue && gawker?.dialogueDay).toBeTruthy();
+    expect(ob.npcs.find((n) => n.id === 'gate_walker')?.dialogueDay).toBeTruthy();
+    // APPEND-ONLY: the frozen 1995 core carries none of the gate (byte-identical above)
+    expect(buildOtterbrook().props.some((p) => p.sprite === 'sawhorse')).toBe(false);
+  });
 });
 
 describe('MEADOW MILE — the foot route + the orientation gate (Movement 2)', () => {
@@ -100,6 +116,19 @@ describe('MEADOW MILE — the foot route + the orientation gate (Movement 2)', (
     // §B4: a rest point (payphone) sits west of the hot middle band
     expect(MAPS.meadow_mile.phones.length).toBeGreaterThanOrEqual(1);
     expect(MAPS.meadow_mile.spawners.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('carries the meteor-drop roadblock you route around (Task 0)', () => {
+    const mm = MAPS.meadow_mile;
+    // the fallen chunk + a sawhorse barricade, a worker waving you around, a sign
+    expect(mm.props.some((p) => p.sprite === 'meteor_rock')).toBe(true);
+    expect(mm.props.some((p) => p.sprite === 'sawhorse')).toBe(true);
+    expect(mm.npcs.some((n) => n.id === 'roadblock_worker' && n.dialogue === 'npc_roadblock_worker')).toBe(true);
+    expect(mm.signs.some((s) => s.dialogue === 'sign_roadblock')).toBe(true);
+    // the chunk's solid blocks only the UPPER lane (oy ≥ 16 px = the row below
+    // the sprite's top tile), so the lower lane stays walkable — no soft-lock
+    // (full reachability is proven by the content-validate map-quality sweep)
+    expect(mm.props.find((p) => p.sprite === 'meteor_rock')?.solid?.oy).toBeGreaterThanOrEqual(16);
   });
 });
 

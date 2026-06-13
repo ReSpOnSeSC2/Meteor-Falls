@@ -13,8 +13,9 @@ import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import { buildChapter2Maps } from './maps_ch2';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
-import { buildDistrict, buildRoute, Streams } from '../levelkit';
+import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
 import { placeFacade } from '../levelkit/kit';
+import { AREA_SKINS } from '../spritegen/buildings';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import type { MapDef, PropDef, NpcDef } from '../schemas';
@@ -317,12 +318,20 @@ export function growOtterbrook(): MapDef {
   // ADR-053: one shared footprint list so the spacing law holds ACROSS both
   // regions — no two buildings can touch at the south/east seam either
   const obOccupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+  // S15i (ADR-050/054): each district draws ONLY Otterbrook's own skin roster —
+  // warm, low brownstones/shops/cafés (no two areas read alike), up to 3 stories
+  // over the hero (a sleepy town never towers; megas are a Brickton thing).
   const south = buildDistrict(g, { x: 28, y: 34, w: 39, h: 19 }, new Streams(19951), {
-    layout: 'organic', style: 'americana', lanes: 3, maxStories: 2, sprinkle: true, occupied: obOccupied,
+    layout: 'organic', style: 'americana', catalog: AREA_SKINS.otterbrook, lanes: 3, maxStories: 3, sprinkle: true, occupied: obOccupied,
   });
   const east = buildDistrict(g, { x: 44, y: 2, w: 23, h: 12 }, new Streams(19952), {
-    layout: 'organic', style: 'americana', lanes: 2, maxStories: 2, sprinkle: true, occupied: obOccupied,
+    layout: 'organic', style: 'americana', catalog: AREA_SKINS.otterbrook, lanes: 2, maxStories: 3, sprinkle: true, occupied: obOccupied,
   });
+  // S15i (ADR-054): a wooded NOOK in the open SW corner, south of City Hall — a
+  // quiet thicket with a hidden picnic at its glade (a rest you discover; §B4
+  // says every grown area earns its size with a nook + a reward). Region-bounded,
+  // wholly south of the core (y≥46), so the frozen 1995 core stays byte-identical.
+  const thicket = buildWoods(g, { x: 1, y: 46, w: 12, h: 9 }, new Streams(19954), { gladeProp: 'picnic' });
 
   // 3) CONNECTIVE SEAMS — the main street flows south, the cross lane runs east
   //    to the gateway. Both start OUTSIDE the core (row 32 / col 42); the one-tile
@@ -364,6 +373,8 @@ export function growOtterbrook(): MapDef {
     ...core.props,
     ...south.props,
     ...east.props,
+    ...thicket.props,
+    { sprite: 'sign', x: 4, y: 44, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the woods trailhead marker
     cityHall,
     { sprite: 'sign', x: 12, y: 41, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // City Hall plaque
     // the Civic Green's dressing
@@ -377,6 +388,11 @@ export function growOtterbrook(): MapDef {
     ...treesAt([[50, 20], [60, 20], [51, 27], [62, 28]]),
     // the gateway marker (the road east; the live door is wired in Movement 2)
     { sprite: 'sign', x: 66, y: 15, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+    // S15i Task 0 — THE DAYBREAK GATE: until the opening ends (zapper_done), the
+    // road east is closed with a sleeping-town barricade (a reason, not an
+    // invisible wall). The door itself is also gated in OverworldScene.checkDoors,
+    // so the verges can't be skirted. At daybreak both retire and the road opens.
+    { sprite: 'sawhorse', x: 67, y: 16, solid: { ox: 0, oy: 2, w: 36, h: 26 }, unlessFlag: 'zapper_done' },
   ];
 
   const npcs = [
@@ -384,7 +400,14 @@ export function growOtterbrook(): MapDef {
     { id: 'green_keeper', sprite: 'fernLady', x: 21, y: 49, facing: 'down' as const, dialogue: 'npc_green_keeper', wander: true },
     { id: 'pond_angler', sprite: 'quarterMan', x: 51, y: 25, facing: 'right' as const, dialogue: 'npc_pond_angler' },
     { id: 'south_neighbor', sprite: 'senora', x: 34, y: 45, facing: 'down' as const, dialogue: 'npc_south_neighbor', wander: true },
-    { id: 'gate_walker', sprite: 'grayCommuter', x: 60, y: 16, facing: 'right' as const, dialogue: 'npc_gate_walker', wander: true },
+    // S15i (ADR-054): the woods nook's resident obsessive (§A11) — a birdwatcher
+    // at the thicket trailhead, who has Opinions about the new picnic spot
+    { id: 'woods_birder', sprite: 'oldTimer', x: 5, y: 45, facing: 'down' as const, dialogue: 'npc_woods_birder' },
+    { id: 'gate_walker', sprite: 'grayCommuter', x: 60, y: 16, facing: 'right' as const, dialogue: 'npc_gate_walker', dialogueDay: 'npc_gate_walker_day', wander: true },
+    // S15i Task 0: the treeline gawker — at 2 AM he points you up the hill and
+    // refuses to go himself; at daybreak (dialogueDay) he's seen the crater and
+    // warns of the blocked road east. Stands by the hill gap, never wanders off it.
+    { id: 'treeline_gawker', sprite: 'pigeonKid', x: 23, y: 4, facing: 'up' as const, dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day' },
   ];
 
   const signs = [
@@ -393,6 +416,10 @@ export function growOtterbrook(): MapDef {
     { x: 16, y: 46, dialogue: 'sign_civic_green' },
     { x: 55, y: 28, dialogue: 'sign_pond_park' },
     { x: 66, y: 15, dialogue: 'sign_meadow_gate' },
+    // S15i Task 0: the closed-gate notice, read at the barricade until daybreak
+    { x: 64, y: 17, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
+    // S15i Task 1: the woods nook trailhead
+    { x: 4, y: 44, dialogue: 'sign_otter_woods' },
     ...south.signs,
     ...east.signs,
   ];
@@ -485,6 +512,30 @@ function buildMeadowMile(): MapDef {
   ];
   const traveler: NpcDef = { id: 'road_traveler', sprite: 'grayCommuter', x: 6, y: westY, facing: 'right', dialogue: 'npc_road_traveler', wander: true };
 
+  // S15i Task 0 — THE METEOR-DROP ROADBLOCK. A chunk of the Hickory Hill meteor
+  // came down on Meadow Mile overnight; the town crew has it sawhorsed off and
+  // you route around it (travel is never a silent corridor — §B4 daybreak law).
+  // Computed from the ACTUAL trail: scan the grid for the ':' lane at a mid-road
+  // column, then block only the UPPER lane so the lower lane stays walkable —
+  // the player squeezes past, never softlocked (reachability proven by the
+  // map-quality sweep). Worker + sign sit on trail tiles, so both stay reachable.
+  const trailRow = (col: number): number => {
+    for (let y = 0; y < H - 1; y++) if (draft.grid[y][col] === ':') return y;
+    return Math.round(H / 2);
+  };
+  const blockX = Math.round(W * 0.5);
+  const tBlock = trailRow(blockX); // the upper of the two ':' lanes here
+  const workerX = Math.max(2, blockX - 3);
+  const tWorker = trailRow(workerX);
+  const roadblock: PropDef[] = [
+    // the fallen chunk, blocking the UPPER lane only (solid covers row tBlock,
+    // leaving tBlock+1 open to squeeze past — proven reachable by the sweep)
+    { sprite: 'meteor_rock', x: blockX - 1, y: tBlock - 1, solid: { ox: 2, oy: 16, w: 30, h: 16 } },
+    // a sawhorse continuing the upper-lane barricade just east of the chunk
+    { sprite: 'sawhorse', x: blockX + 1, y: tBlock - 1, solid: { ox: 0, oy: 14, w: 30, h: 14 } },
+  ];
+  const worker: NpcDef = { id: 'roadblock_worker', sprite: 'quarterMan', x: workerX, y: tWorker, facing: 'right', dialogue: 'npc_roadblock_worker' };
+
   return {
     id: 'meadow_mile',
     name: 'MEADOW MILE',
@@ -493,11 +544,14 @@ function buildMeadowMile(): MapDef {
     props: [
       ...draft.props,
       { sprite: 'sign', x: W - 6, y: Math.max(1, eastY - 2), solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the city-line marker
+      ...roadblock,
+      { sprite: 'sign', x: workerX, y: Math.max(1, tWorker - 1), solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the ROAD WORK notice
     ],
-    npcs: [traveler, ...proctors],
+    npcs: [traveler, worker, ...proctors],
     signs: [
       ...draft.signs,
       { x: W - 6, y: Math.max(1, eastY - 2), dialogue: 'sign_overpass_gate' },
+      { x: workerX, y: Math.max(1, tWorker - 1), dialogue: 'sign_roadblock' },
     ],
     phones: draft.phones,
     doors: [
@@ -1345,19 +1399,28 @@ export function growBrickton(): MapDef {
     }
   }
 
-  // 6) THE FORGE lays the blocks (city grammar) on fresh streams, in regions
-  //    clear of the arteries + the gateway. Facades stay ≤2 stories (the catalog
-  //    is the shipped bldg_* skin — drawn art is a hand job, ADR-020).
-  // ADR-053: shared footprint list so the spacing law spans all three districts
+  // 6) THE FORGE lays the blocks — now in BRICKTON's OWN cool skins (ADR-050):
+  //    glass offices / hotels / neon / theaters + the COMMON mega-towers (their
+  //    tops run off the screen). Drawn art stays a hand job (ADR-020); the skins
+  //    are the deterministic catalog, sliced per-area so Brickton ≠ Otterbrook.
+  // ADR-053: shared footprint list so the spacing law spans every district.
   const bkOccupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+  const skin = AREA_SKINS.brickton;
   const eastNorth = buildDistrict(g, { x: 74, y: 2, w: 66, h: 17 }, new Streams(207701), {
-    layout: 'grid', style: 'americana', streetRows: [9], avenueCols: [120], maxStories: 2, occupied: bkOccupied,
+    layout: 'grid', style: 'americana', catalog: skin, streetRows: [9], avenueCols: [120], maxStories: 3, occupied: bkOccupied,
   });
-  const eastSouth = buildDistrict(g, { x: 104, y: 41, w: 36, h: 8 }, new Streams(207702), {
-    layout: 'grid', style: 'americana', streetRows: [44], maxStories: 2, occupied: bkOccupied,
+  // THE HIGH-RISE DOWNTOWN (ADR-054): a tall open block west of the avenue where
+  // the MEGA PASS stands the u12–13 towers — mega-buildings are COMMON here, their
+  // tops climbing off the top of the screen, shorter glass storefronts in the gaps.
+  const downtownHigh = buildDistrict(g, { x: 74, y: 24, w: 26, h: 25 }, new Streams(207704), {
+    layout: 'grid', style: 'americana', catalog: skin, streetRows: [47], maxStories: 9, mega: true, occupied: bkOccupied,
+  });
+  // eastSouth narrowed to col 124 so the far-east blocks clear for the colossus
+  const eastSouth = buildDistrict(g, { x: 104, y: 41, w: 21, h: 8 }, new Streams(207702), {
+    layout: 'grid', style: 'americana', catalog: skin, streetRows: [44], maxStories: 3, occupied: bkOccupied,
   });
   const southWest = buildDistrict(g, { x: 2, y: 38, w: 70, h: 10 }, new Streams(207703), {
-    layout: 'grid', style: 'americana', streetRows: [44], avenueCols: [40], maxStories: 2, occupied: bkOccupied,
+    layout: 'grid', style: 'americana', catalog: skin, streetRows: [44], avenueCols: [40], maxStories: 3, occupied: bkOccupied,
   });
 
   // 7) MAPLE HEIGHTS — a hand-built brick row backing onto Maple Street (the
@@ -1369,17 +1432,27 @@ export function growBrickton(): MapDef {
     mx += 7;
   }
 
+  // THE COLOSSUS LANDMARK (§B4): STARFALL SPIRE — a sky-tower whose footprint
+  // spans a slice of the far-east blocks; you ROUND it on foot (lanes at col 125
+  // west + cols 141–142 east). It backs onto Maple Street and climbs off-screen.
+  // Hand-placed beyond the narrowed eastSouth so nothing it shadows is required.
+  const spire = placeFacade('bldg_colossus_spire', 126, 63 * 16 - 4, 14, 30);
+
   const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
   const props: PropDef[] = [
     ...core.props,
     ...eastNorth.props,
+    ...downtownHigh.props,
     ...eastSouth.props,
     ...southWest.props,
     ...mapleProps,
+    spire,
     { sprite: 'sign', x: 8, y: 60, solid: SIGN_SOLID }, // MAPLE HEIGHTS marker
     { sprite: 'sign', x: 47, y: 48, solid: SIGN_SOLID }, // the Cage block, read from the new street
     { sprite: 'sign', x: 31, y: 70, solid: SIGN_SOLID }, // the south gateway / city line
     { sprite: 'sign', x: 138, y: 24, solid: SIGN_SOLID }, // to the relocated docks
+    { sprite: 'sign', x: 124, y: 56, solid: SIGN_SOLID }, // the Starfall Spire plaza
+    { sprite: 'sign', x: 86, y: 49, solid: SIGN_SOLID }, // the high-rise downtown
     // a rest point before the new south field's pressure (§A4.5) — a payphone,
     // NOT a picnic (the picnic-count pin holds: Brickton keeps exactly one)
     { sprite: 'payphone', x: 33, y: 67, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
@@ -1391,6 +1464,9 @@ export function growBrickton(): MapDef {
     { id: 'south_vendor', sprite: 'quarterMan', x: 60, y: 49, facing: 'down' as const, dialogue: 'npc_south_vendor' },
     { id: 'new_commuter', sprite: 'grayCommuter', x: 110, y: 22, facing: 'right' as const, dialogue: 'npc_new_commuter', wander: true },
     { id: 'dockward', sprite: 'sidewalkCritic', x: 132, y: 22, facing: 'right' as const, dialogue: 'npc_dockward' },
+    // S15i (ADR-054): the high-rise downtown + the colossus each get a voice (§A11)
+    { id: 'spire_gazer', sprite: 'sidewalkCritic', x: 123, y: 57, facing: 'right' as const, dialogue: 'npc_spire_gazer' },
+    { id: 'downtown_suit', sprite: 'grayCommuter', x: 86, y: 48, facing: 'up' as const, dialogue: 'npc_downtown_suit', wander: true },
   ];
 
   const keptDoors = core.doors.filter((d) => d.to !== 'brickton_docks');
@@ -1405,7 +1481,10 @@ export function growBrickton(): MapDef {
       { x: 47, y: 48, dialogue: 'sign_cage_block' },
       { x: 31, y: 70, dialogue: 'sign_south_gate' },
       { x: 138, y: 24, dialogue: 'sign_new_docks' },
+      { x: 124, y: 56, dialogue: 'sign_spire' },
+      { x: 86, y: 49, dialogue: 'sign_downtown_high' },
       ...eastNorth.signs,
+      ...downtownHigh.signs,
       ...eastSouth.signs,
       ...southWest.signs,
     ],

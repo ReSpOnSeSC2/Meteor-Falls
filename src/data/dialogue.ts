@@ -135,6 +135,60 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'Council meeting Thursday. Topic: a SECOND stop sign. Bold of us.',
   ],
 
+  /* ---------------- S15i Task 0 — THE DAYBREAK GATE + METEOR ROADBLOCK ----------------
+   * The world past the treeline is sealed until dawn (the daybreak law, §B4):
+   * the east line is a closed gate with a sleeping-town reason, never an
+   * invisible wall, and at daybreak every NPC out here swaps to its day line.
+   * Plain and clear — kids read this — EarthBound-flavored, never a riddle. */
+  // the gate walker's morning line (dialogueDay): the line's open, mind the road
+  npc_gate_walker_day: [
+    '@The line to Brickton is OPEN again — sun came up, so the proctors clocked in.',
+    "@Careful on Meadow Mile, though. Something fell in the road overnight. The town crew's out there now.",
+  ],
+  // the treeline gawker — won't go look at 2 AM, full of opinions by daylight
+  npc_treeline_gawker: [
+    '@Did you SEE that? Something fell behind Hickory Hill. A whole chunk of sky, straight down.',
+    "@I'm not going up there. It's 2 in the morning and that is a NIGHT problem.",
+    '@You go look. You seem like a go-look kind of kid.',
+  ],
+  npc_treeline_gawker_day: [
+    '@So that was a meteor. A real one. A REAL meteor, behind Hickory Hill.',
+    '@The whole town walked out to see the crater this morning. I brought a thermos.',
+    "@Careful if you're headed east — the road's blocked off where a piece of it landed.",
+  ],
+  // the meteor-drop roadblock on Meadow Mile — a town worker waving you around
+  npc_roadblock_worker: [
+    '@Whoa — hold up. A chunk of sky landed in the road last night.',
+    "@Still too hot to budge. Nobody's getting a truck through here today.",
+    '@You can squeeze around on the grass if you must. Mind your shoes — that gravel POPS.',
+  ],
+  sign_roadblock: [
+    'ROAD WORK AHEAD. Reason: meteor. (Yes, really.)',
+    'Find another way around. — Otterbrook Public Works',
+  ],
+  // the sealed east line at night — read at the barricade itself
+  sign_meadow_gate_closed: [
+    'GATE CLOSED — Otterbrook rolls up the sidewalks at night.',
+    '(A note is clipped on: "Road opens at sunup. Get some sleep, kiddo.")',
+  ],
+  // shown when you walk into the shut gate before dawn (the door-bump reason)
+  meadow_gate_asleep: [
+    'The road east is gated shut for the night.',
+    'Otterbrook is fast asleep — porch lights, crickets, and one dog who knows something.',
+    'Whatever fell on the hill will keep until morning. Better head back.',
+  ],
+
+  /* ---------------- S15i Task 1 — THE WOODS NOOK (the grown SW thicket) ---------------- */
+  sign_otter_woods: [
+    'OTTERBROOK WOODS — a footpath, a few birds, one good picnic table.',
+    '(Someone scratched below: "best napping in three counties.")',
+  ],
+  npc_woods_birder: [
+    "@Shh. Twelve years I've waited for a cardinal to land on THAT branch. Twelve.",
+    '@There IS a picnic table back in the trees. I put it there. For the birds. Fine, for me.',
+    '@If you sit quiet long enough, the woods forget you came. It is the best feeling there is.',
+  ],
+
   /* ---------------- S15h — MEADOW MILE + THE ORIENTATION GATE ---------------- */
   meadow_mile_sign_0: [
     'MEADOW MILE — one mile of meadow, give or take a meadow.',
@@ -156,10 +210,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Walking to Brickton, huh? Brave. The bus has a roof, you know.',
     "@Mind the proctors at the overpass. They are VERY glad to see you. That's the problem.",
   ],
+  // S15i Task 5 (clarity): plainly STOPPED + TESTED for a badge, and the
+  // "exercises" are a fight — no guessing what the gate wants (kids read this)
   orient_intro: [
-    'A blazer-smiler steps onto the line, clipboard glowing faintly.',
-    "@WELCOME to Brickton Visitor Orientation! Three quick exercises and you're a CERTIFIED guest!",
-    '@Exercise one: enthusiasm. Show us your enthusiasm. (He raises his fists. This is the exercise.)',
+    'A blazer-smiler steps into the road and blocks it, clipboard glowing.',
+    '@HALT, new visitor! Nobody walks into Brickton without a VISITOR BADGE.',
+    '@Orientation is MANDATORY. Three quick... exercises. Pass them and the badge is yours.',
+    '@Exercise one: ENTHUSIASM! (He raises his fists. The "exercise" is a fight. Of course it is.)',
   ],
   orient_round_1: ['@EXERCISE ONE — greet your greeter with ENERGY!'],
   orient_round_2: ['@EXERCISE TWO — maintain eye contact and POSITIVITY!'],
@@ -206,6 +263,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sign_new_docks: [
     'BRICKTON DOCKS → keep east, to the water.',
     '(The old "TO DOCKS" sign downtown still points here. Not wrong, just optimistic.)',
+  ],
+
+  /* ---------------- S15i Task 1 — THE HIGH-RISE DOWNTOWN + THE COLOSSUS ---------------- */
+  sign_downtown_high: [
+    'DOWNTOWN HIGH — mind the wind off the towers, watch for falling memos.',
+    '(A directory lists 200 offices. 199 are "Consolidated Something.")',
+  ],
+  npc_downtown_suit: [
+    "@I work on the 40th floor. I have NEVER seen the top of my own building.",
+    '@You look up, the building just keeps going. At some point you stop looking up and start working. That is the city.',
+  ],
+  sign_spire: [
+    'THE STARFALL SPIRE — tallest thing in Brickton. Observation deck: closed (forever).',
+    '(Smaller: "It is a 20-minute walk AROUND the base. We timed it. Bring a friend.")',
+  ],
+  npc_spire_gazer: [
+    '@That is the Starfall Spire. Goes up so far the top is just... weather.',
+    '@My uncle painted the very tip. He waved at a plane. The plane waved back, he SWEARS.',
+    "@You want to reach the docks, go around it. You can't go through. People have tried.",
   ],
 
   /* ---------------- doors that aren't doors yet ---------------- */
