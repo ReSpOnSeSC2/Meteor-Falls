@@ -732,6 +732,13 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     // S14 — Ch.2's emotional center: the HOLLOW reveal (§A3 ladder amended:
     // Freeze α left Mia's L12 row in the same commit)
     cold_reads: { hero: 'faye', ability: 'vibe_freeze_a', flag: 'awake_freeze_a', dialogue: 'awake_cold_reads' },
+    // S16 ("The Old Light, Doubled") — Jay's three iconic late beats. Reserved
+    // as awakenings (the 80/20 split): true MIND WARP, the party REFLECT, and
+    // the Surge Σ capstone. Each lands mid-to-late, where the §A6 arc has room
+    // (the Resonance Site / a boss's unblockable AoE / the Mars approach).
+    the_borrowed_voice: { hero: 'rex', ability: 'mindwarp_o', flag: 'awake_mindwarp_o', dialogue: 'awake_the_borrowed_voice' },
+    the_wall_that_answers: { hero: 'rex', ability: 'powershield_s', flag: 'awake_powershield_s', dialogue: 'awake_the_wall_that_answers' },
+    the_whole_sky: { hero: 'rex', ability: 'vibe_surge_x', flag: 'awake_surge_x', dialogue: 'awake_the_whole_sky' },
   };
   for (const [id, pin] of Object.entries(canon)) {
     const a = AWAKENINGS[id];

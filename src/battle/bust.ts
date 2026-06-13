@@ -35,9 +35,14 @@ export interface BustTick {
   /** S11b: displayed HP below 33% — the idle becomes the WINDED heave
    *  (the mortal roll still owns the nervous loop, ADR-030) */
   winded: boolean;
-  /** S11b GOOD-status pips: shield/mirror turns remaining ride the card */
+  /** S11b GOOD-status pips: shield/mirror turns remaining ride the card.
+   *  S16 adds the layered-ward pips: ward (elemental), reflect (the wall that
+   *  answers), and steeled (Resolve's Guts buff) — same hex PIP, tinted. */
   shield: boolean;
   mirror: boolean;
+  ward: boolean;
+  reflect: boolean;
+  steeled: boolean;
   statuses: CardStatusFlags;
 }
 
@@ -82,6 +87,9 @@ export class BustView {
     winded: false,
     shield: false,
     mirror: false,
+    ward: false,
+    reflect: false,
+    steeled: false,
     statuses: NO_STATUS,
   };
 
@@ -274,10 +282,22 @@ export class BustView {
 
     // the hex PIP rides the card while shield/mirror turns remain (S11b) —
     // even while the hero is away on stage: the barrier didn't go anywhere
-    const pipOn = (flags.shield || flags.mirror) && this.state === 'alive';
+    // S16: any GOOD ward shows the hex PIP; the tint names which layer is up
+    // (reflect/mirror = the answering wall read gold/paper; ward = grass;
+    // steeled = red brace; shield = cyan). Priority follows strength.
+    const pipOn =
+      (flags.shield || flags.mirror || flags.ward || flags.reflect || flags.steeled) && this.state === 'alive';
     this.pip.setVisible(pipOn);
     if (pipOn) {
-      const tint = flags.shield ? colorOf(px(RAMP.CYAN, 3)) : colorOf(px(RAMP.PAPER, 3));
+      const tint = flags.reflect
+        ? colorOf(px(RAMP.GOLD, 3))
+        : flags.mirror
+          ? colorOf(px(RAMP.PAPER, 3))
+          : flags.ward
+            ? colorOf(px(RAMP.GRASS, 3))
+            : flags.steeled
+              ? colorOf(px(RAMP.RED, 3))
+              : colorOf(px(RAMP.CYAN, 3));
       this.pip.setTint(tint).setAlpha(0.7 + 0.3 * Math.sin(this.animT / 260));
     }
 

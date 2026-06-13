@@ -28,16 +28,30 @@ export const HEROES: Record<HeroId, HeroDef> = {
     // crater prophecy and the porch (src/data/awakenings.ts), not level
     // rows. The level cadence below is SPACED so each unlock lands as an
     // event (§A3 amended per Appendix rule 6).
+    // S16 ("The Old Light, Doubled"): Jay's kit roughly doubles. ~80% of the
+    // new abilities are EARNED here by leveling; the 3 most iconic beats
+    // (Surge Σ, party Reflect, true Mind Warp) AWAKEN as story moments (see
+    // src/data/awakenings.ts) and must NOT appear in this list (one-path rule).
+    // The cadence stays SPACED so each unlock lands as an event (§A3).
     unlocks: [
       { level: 10, ability: 'hypno_a' },
       { level: 14, ability: 'shield_a' },
+      { level: 16, ability: 'ward_a' }, // S16: the elemental layer opens early
       { level: 18, ability: 'vibe_surge_b' },
+      { level: 21, ability: 'mindwarp_a' }, // S16: control one common foe for a turn
       { level: 22, ability: 'lifeup_b' },
       { level: 24, ability: 'flash_a' },
       { level: 26, ability: 'teleport_a' },
+      { level: 28, ability: 'powershield_a' }, // S16: single-target reflect
+      { level: 29, ability: 'hypno_o' }, // S16: mass sleep
       { level: 31, ability: 'vibe_surge_g' },
       { level: 33, ability: 'shield_s' },
+      { level: 33, ability: 'resolve_a' }, // S16: the Guts self-buff
+      { level: 36, ability: 'ward_s' }, // S16: party-wide elemental ward
       { level: 38, ability: 'lifeup_g' },
+      { level: 40, ability: 'flash_o' }, // S16: stronger blind
+      { level: 34, ability: 'teleport_b' }, // S16: the escape upgrade
+      { level: 46, ability: 'lifeup_o' }, // S16: the big party heal
       { level: 47, ability: 'vibe_surge_o' },
     ],
   },

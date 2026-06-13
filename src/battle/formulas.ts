@@ -261,6 +261,73 @@ export function magnetSiphon(rng: Rng): number {
   return 2 + Math.floor(rng() * 5);
 }
 
+/* ---- §A3 LAYERED WARDS (S16 — "The Old Light, Doubled": Jay's defense suite) ----
+ * Three stacking mitigation layers, each gated on the hit's CLASS, plus two
+ * "use all the tools" synergies. Pure + rng-free so the ADR-008 replay bot and
+ * the unit tests are exact; BattleScene reads the result at the damage seam.
+ *   shield  — halves PHYSICAL only (existing status)
+ *   ward    — halves ELEMENTAL only: fire/freeze/volt/holy (S16)
+ *   reflect — halves ALL classes AND bounces ~1/3 back at the attacker (S16)
+ *   mirror  — halves all + bounces ~1/4 (Dorin's existing status, folded in here)
+ * Synergies: BULWARK — holding shield AND ward at once shaves a little extra off
+ * whatever lands (double-guarded); BRACE-AND-ANSWER — a STEELED hero behind a
+ * reflect bounces harder. Layers are multiplicative; the result never zeroes a
+ * hit (the existing "always ≥1 damage" rule the mirror path already obeyed).
+ */
+export interface WardState {
+  shield: boolean;
+  ward: boolean;
+  reflect: boolean;
+  mirror: boolean;
+  /** Resolve's 'steeled' — boosts the reflect/mirror bounce (brace and answer) */
+  steeled: boolean;
+}
+
+const ELEMENTAL_CLASSES = new Set(['fire', 'freeze', 'volt', 'holy']);
+
+/** apply the ward layers to one incoming hit; returns the damage actually
+ *  TAKEN and the amount BOUNCED back at the attacker (0 when no reflect/mirror) */
+export function mitigateIncoming(dmg: number, element: string, w: WardState): { taken: number; reflected: number } {
+  let taken = dmg;
+  if (w.shield && element === 'physical') taken = Math.floor(taken / 2);
+  if (w.ward && ELEMENTAL_CLASSES.has(element)) taken = Math.floor(taken / 2);
+  // reflect/mirror halve EVERY class — physical, elemental, and typeless 'none'
+  if (w.reflect || w.mirror) taken = Math.floor(taken / 2);
+  // BULWARK: double-guarded (shield + ward both held) trims a little more
+  if (w.shield && w.ward) taken = Math.floor(taken * 0.85);
+  taken = Math.max(1, taken);
+  let reflected = 0;
+  if (w.reflect) reflected = Math.floor(dmg / (w.steeled ? 2 : 3)); // brace-and-answer
+  else if (w.mirror) reflected = Math.floor(dmg / 4);
+  return { taken, reflected };
+}
+
+/** S16 MIND WARP ('puppet'): an elite foe's chance to SHRUG OFF the control
+ *  application, scaling with how far it outlevels Jay — clamp((eLvl−jLvl)×4%,
+ *  0..85%). Bosses never roll this; they're mind_immune outright (prompt §4),
+ *  so control stays a crowd/tempo tool, never an "I win" on a boss. */
+export function puppetResist(enemyLevel: number, jayLevel: number): number {
+  return Math.min(0.85, Math.max(0, (enemyLevel - jayLevel) * 0.04));
+}
+
+/** S16 MIND WARP: a foe Jay's puppet can NEVER grip — bosses by design (so
+ *  control never trivializes a boss fight), plus anything explicitly flagged
+ *  mind_immune (the build prompt §4). Shared by BattleScene + the tests. */
+export function mindImmune(def: { boss?: boolean; mind_immune?: boolean }): boolean {
+  return def.boss === true || def.mind_immune === true;
+}
+
+/** S16 MIND WARP duration: α grips one common foe for a turn; Ω (the awakened
+ *  'the_borrowed_voice') holds for 2–3 and can grip stronger enemies */
+export function puppetTurns(omega: boolean, rng: Rng): number {
+  return omega ? 2 + (rng() < 0.5 ? 1 : 0) : 1;
+}
+
+/** S16 RESOLVE: the temporary Guts bump 'steeled' grants (crit chance + the
+ *  1-HP mortal-blow survive read through this; never baked into permanent
+ *  `boosts` — it ticks off like any status) */
+export const STEELED_GUTS = 8;
+
 /* ---- §A4.5 SUNNY SIDE (S14 / Bible Prompt 23) ---- */
 
 /** the picnic buff covers the NEXT five battles (§A4.5, canon) */

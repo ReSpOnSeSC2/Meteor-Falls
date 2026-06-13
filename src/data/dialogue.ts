@@ -1693,6 +1693,29 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Cold reads what gold hides.',
     'Frost gathers along her fingers like it has been waiting its whole life to be asked.',
   ],
+  /* ---- S16 ("The Old Light, Doubled"): Jay's three late awakenings. He
+     barely speaks — let the light do the talking (§A11.2, played straight). ---- */
+  awake_the_borrowed_voice: [
+    'The crowd is one voice now. The Hush hollowed them down to a single droning note, and the note has a door in it.',
+    '@(You don\'t have to do this.)',
+    '({rex} does it anyway. He reaches into the drone the way you\'d reach into cold water — and takes one voice out, gently, like lifting a sleeping kid.)',
+    'It is not a victory. It is the villain\'s own trick, done once, carefully, by someone who hated every second of it.',
+    'The borrowed voice turns toward the others. {rex} does not look proud. He looks like he is keeping a promise to give it back.',
+  ],
+  awake_the_wall_that_answers: [
+    'The light came down like a thrown sheet — too wide to dodge, too fast to block. Nowhere to put the party. No time.',
+    '{rex} did not think. His hands came up on their own.',
+    '(A wall went up between the friends and the blow — still as standing water, and just as honest: it gave the blow straight back.)',
+    'The room rang with its own attack. Everyone was still standing.',
+    '@...Huh. (He shakes out his hands like they stung.) Do it again. I\'ll be here.',
+  ],
+  awake_the_whole_sky: [
+    'Mars is below. Home is a blue speck you could cover with a thumb, and every porch light on it is on.',
+    'And all at once {rex} can feel them — Otterbrook, the Embers, the long road, every friend who ever waved him home.',
+    'It is too much to hold and he does not try to hold it. He lets it through.',
+    '(The old light stops being a thing he has and becomes a thing he IS — the whole sky, pouring one way: forward.)',
+    'No words. There was never going to be a word big enough. Just the light, and the boy, aimed.',
+  ],
   ember2_get: [
     'In the idol\'s hollow, behind where the grin was: a warmth it could not digest.',
     'JAY held up the Star Locket!',
@@ -1759,6 +1782,25 @@ export const BATTLE_TEXT = {
   paralyzed_off: '{user} can move again!',
   hushed_off: "{user}'s voice came back!",
   shield_off: "{user}'s shimmer faded away.",
+  // S16: the layered ward system + the control/buff statuses (§A3 amended).
+  // Each new status prints when it LANDS, when it ACTS, and when it WEARS OFF.
+  ward_on: '{user} is wrapped in a cool elemental veil!',
+  ward_off: "{user}'s veil thinned out.",
+  reflect_on: '{user} stands behind an answering mirror!',
+  reflect_off: "{user}'s mirror went quiet.",
+  reflect_back: "The blow came straight back! {e} took {t}!",
+  bulwark: '{user} is double-guarded — shield AND ward holding!',
+  steeled_on: '{user} set their jaw. (STEELED — Guts up!)',
+  steeled_off: '{user} eases off the brace.',
+  steeled_survive: '{user} was STEELED — and would not go down!',
+  // MIND WARP (status 'puppet'): the borrowed voice fights for you
+  puppet_on: '{e} went slack... then turned on its own side!',
+  puppet_resist: "{e}'s mind slipped out of {user}'s grip!",
+  puppet_immune: "{e}'s mind is too vast and cold to hold.",
+  puppet_act: '{e} (turned!) lashed out at its own!',
+  puppet_nobody: '{e} (turned!) swung at empty air — its allies are gone.',
+  puppet_off: "{e} shook its head clear — the borrowed voice slipped free.",
+  puppet_refund: 'The borrowed voice did its work — a little of the old light flowed back to {user}.',
   // S14: the phase machine's table reads (Prompt 15) + the §A7 Ch.2 mechanics
   boss_stunned: '{e} is reeling! It loses the turn!',
   gold_clang: 'The swing CLANGED off solid gold! Not even a dent!',

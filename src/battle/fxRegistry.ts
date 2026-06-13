@@ -24,8 +24,9 @@ export type FxFamily =
   | 'lattice' // Vibe Freeze: crystal lattice grows, then shatters
   | 'bolt' // Vibe Volt: zigzag bolts from the sky
   | 'sparkle_rain' // Lifeup / Healing α: green sparkle rain
-  | 'barrier' // Shield / Mirror: hex barrier snap
-  | 'spiral' // Hypno: rotating spiral
+  | 'barrier' // Shield / Mirror / Ward / Resolve: hex barrier snap
+  | 'reflect_field' // S16 Power Shield: a standing mirror-wall that answers
+  | 'spiral' // Hypno / Mind Warp: rotating spiral
   | 'screen_flash' // Flash: field-wide white-out (below the UI — odometer law)
   | 'rocket' // Bottle Rockets: arcing projectile + payload burst; tier = volley
   | 'scan' // Spy: scanline sweep + revealed-stats stamp
@@ -70,6 +71,8 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
   surge_b: S({ kind: 'ability', family: 'surge', tier: 2, ramp: RAMP.MAGENTA, sfx: 'fx_surge' }),
   surge_g: S({ kind: 'ability', family: 'surge', tier: 3, ramp: RAMP.MAGENTA, sfx: 'fx_surge' }),
   surge_o: S({ kind: 'ability', family: 'surge', tier: 4, ramp: RAMP.MAGENTA, sfx: 'fx_surge' }),
+  // S16: the fifth rung — the screen-filling chrysanthemum finale (tier 5)
+  surge_x: S({ kind: 'ability', family: 'surge', tier: 5, ramp: RAMP.MAGENTA, sfx: 'fx_surge_x' }),
   fire_a: S({ kind: 'ability', family: 'flame_wave', tier: 1, ramp: RAMP.ORANGE, sfx: 'fx_fire' }),
   fire_b: S({ kind: 'ability', family: 'flame_wave', tier: 2, ramp: RAMP.ORANGE, sfx: 'fx_fire' }),
   fire_g: S({ kind: 'ability', family: 'flame_wave', tier: 3, ramp: RAMP.ORANGE, sfx: 'fx_fire' }),
@@ -85,6 +88,13 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
   hypno: S({ kind: 'ability', family: 'spiral', ramp: RAMP.PURPLE, sfx: 'fx_hypno' }),
   shield_snap: S({ kind: 'ability', family: 'barrier', ramp: RAMP.CYAN, sfx: 'fx_shield' }),
   mirror_snap: S({ kind: 'ability', family: 'barrier', ramp: RAMP.PAPER, sfx: 'fx_shield' }),
+  // S16 — Jay's expanded kit. Mind Warp reuses the Hypno spiral (aim pose);
+  // Ward + Resolve reuse the barrier snap (cast); Power Shield gets its own
+  // reflect_field mirror-wall (the dramatic party-wide awakening look).
+  mindwarp: S({ kind: 'ability', family: 'spiral', ramp: RAMP.PURPLE, sfx: 'fx_mindwarp' }),
+  ward_snap: S({ kind: 'ability', family: 'barrier', ramp: RAMP.GRASS, sfx: 'fx_ward' }),
+  reflect_snap: S({ kind: 'ability', family: 'reflect_field', ramp: RAMP.GOLD, sfx: 'fx_reflect' }),
+  brace_snap: S({ kind: 'ability', family: 'barrier', ramp: RAMP.RED, sfx: 'fx_brace' }),
   flash: S({ kind: 'ability', family: 'screen_flash', ramp: RAMP.GOLD, sfx: 'fx_flash' }),
   magnet: S({ kind: 'ability', family: 'siphon', ramp: RAMP.MAGENTA, sfx: 'fx_magnet' }),
   pray: S({ kind: 'ability', family: 'pray', ramp: RAMP.GOLD }),
@@ -182,6 +192,7 @@ export type StagePose = 'cast' | 'aim' | 'throw' | 'pray' | 'oncard' | 'none';
 
 export const STAGE_ANIM: Record<FxFamily, StagePose> = {
   surge: 'cast',
+  reflect_field: 'cast', // S16 Power Shield: Jay throws up the wall, hands raised
   flame_wave: 'cast',
   lattice: 'cast',
   bolt: 'cast',

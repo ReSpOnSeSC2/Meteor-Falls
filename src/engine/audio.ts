@@ -907,6 +907,38 @@ class AudioSys {
         this.tone('square', 523, 784, 0.1, 0.06);
         this.tone('square', 784, 1047, 0.12, 0.06, 0.1);
         break;
+      /* ---- S16 ("The Old Light, Doubled"): Jay's expanded kit ---- */
+      case 'fx_surge_x':
+        // the FINALE: a held swell, then the chrysanthemum — fx_surge, bigger,
+        // with a deep sub-boom under the noise shimmer (the whole sky)
+        this.tone('square', 165, 660, 0.45, 0.09);
+        this.tone('square', 247, 990, 0.45, 0.07, 0.06);
+        this.tone('square', 330, 1320, 0.5, 0.06, 0.12);
+        this.tone('triangle', 70, 50, 0.6, 0.11, 0.2);
+        this.noise(0.55, 0.06, 5600, 0.18);
+        break;
+      case 'fx_mindwarp':
+        // a mind being turned: two close detuned sines bending the wrong way
+        this.tone('sine', 330, 392, 0.4, 0.06);
+        this.tone('sine', 333, 262, 0.45, 0.05, 0.05);
+        this.noise(0.1, 0.04, 1600, 0.22);
+        break;
+      case 'fx_ward':
+        // the cool veil: fx_shield, a third lower and softer (elemental, not steel)
+        this.tone('triangle', 196, 392, 0.12, 0.07);
+        this.tone('sine', 784, 784, 0.06, 0.04, 0.1);
+        break;
+      case 'fx_reflect':
+        // the answering mirror: the snap, then its own echo a beat behind
+        this.tone('triangle', 262, 524, 0.1, 0.08);
+        this.tone('square', 1047, 1047, 0.05, 0.04, 0.09);
+        this.tone('triangle', 262, 524, 0.1, 0.05, 0.18);
+        break;
+      case 'fx_brace':
+        // STAND: a short, low, resolute double-knock
+        this.tone('triangle', 147, 147, 0.09, 0.1);
+        this.tone('triangle', 196, 196, 0.1, 0.09, 0.09);
+        break;
       /* ---- S11b stage presets: per-weapon swings, doors, the barrier ---- */
       case 'swing_bat':
         // a deep bat whoosh — air parting before the SMAAASH decides

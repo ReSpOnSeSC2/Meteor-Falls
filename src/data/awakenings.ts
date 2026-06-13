@@ -68,6 +68,43 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       dialogue: 'awake_cold_reads',
       toast: '{faye} awakened VIBE FREEZE Alpha!',
     }),
+    /* ---- S16 ("The Old Light, Doubled"): Jay's three iconic late beats. The
+     * 80/20 split (§3) reserves AWAKENINGS for the powers that should land as
+     * MOMENTS, not level-up toasts. Each is staged §A11.2-sincere; none of the
+     * three abilities appears in HEROES.rex.unlocks (one-path rule). They sit
+     * mid-to-late, where the §A6 arc has room (see the dialogue + the chapter
+     * notes in the build prompt §6). */
+    W({
+      // a Resonance Site where the Hush has hollowed a crowd into one droning
+      // voice. To pass, Jay does the unthinkable — borrows ONE of those voices
+      // and turns it. Uneasy, not triumphant: it mirrors what the villain does.
+      id: 'the_borrowed_voice',
+      hero: 'rex',
+      ability: 'mindwarp_o',
+      flag: 'awake_mindwarp_o',
+      dialogue: 'awake_the_borrowed_voice',
+      toast: '{rex} learned to borrow a voice…',
+    }),
+    W({
+      // after a boss nearly wipes the party with an unblockable-looking AoE,
+      // Jay instinctively throws up a wall that BOUNCES it back, saving everyone.
+      id: 'the_wall_that_answers',
+      hero: 'rex',
+      ability: 'powershield_s',
+      flag: 'awake_powershield_s',
+      dialogue: 'awake_the_wall_that_answers',
+      toast: '{rex} raised the wall that answers!',
+    }),
+    W({
+      // the Mars approach: every porch light, every friend, the whole homeward
+      // road surges through him at once. The "fully powered up" moment.
+      id: 'the_whole_sky',
+      hero: 'rex',
+      ability: 'vibe_surge_x',
+      flag: 'awake_surge_x',
+      dialogue: 'awake_the_whole_sky',
+      toast: '{rex} let the WHOLE SKY surge!',
+    }),
   ].map((a) => [a.id, a]),
 );
 

@@ -95,7 +95,7 @@ import { Odometer } from '../battle/odometer';
 import { BattleFx, type FxTarget } from '../battle/fx';
 import { BustView } from '../battle/bust';
 import { StageView } from '../battle/stage';
-import { itemFxKey, stagePoseOf } from '../battle/fxRegistry';
+import { itemFxKey, stagePoseOf, impactKeyOf } from '../battle/fxRegistry';
 import { PhaseRunner, pickRiddle, type DamageClass } from '../battle/phases';
 import { battlerSheetKey, bustSheetKey, type BattlerLook, type WearTier } from '../spritegen/battlers';
 import { ensureBattleArt } from '../spritegen';
@@ -127,6 +127,11 @@ import {
   comboTotal,
   COMBO_WINDOW_MS,
   sunnyMul,
+  mitigateIncoming,
+  puppetResist,
+  puppetTurns,
+  mindImmune,
+  STEELED_GUTS,
 } from '../battle/formulas';
 import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
 import { colorOf, rgbOf, RAMP, px } from '../palette';
@@ -152,6 +157,9 @@ interface EnemyUnit {
   asleep: number;
   crying: number;
   hushed: number;
+  /** S16 MIND WARP: turns this foe is PUPPETED — it acts on the party's side,
+   *  swinging its own moves at its own allies (the build prompt §B). */
+  puppet: number;
   /** S11b wear tier currently displayed — swap-on-change, never redraw */
   wear: WearTier;
   /** S14 §A7 Ch.2 mechanics: the Gilded Beetle's gold form (physical-immune
@@ -175,6 +183,11 @@ interface HeroStatus {
   hushed: number;
   shield: number;
   mirror: number;
+  /** S16 LAYERED WARDS (the build prompt §C). ward = halves incoming ELEMENTAL;
+   *  reflect = halves ALL + bounces ~1/3 back; steeled (Resolve) = +Guts. */
+  ward: number;
+  reflect: number;
+  steeled: number;
 }
 
 const NO_HERO_STATUS = (): HeroStatus => ({
@@ -186,6 +199,9 @@ const NO_HERO_STATUS = (): HeroStatus => ({
   hushed: 0,
   shield: 0,
   mirror: 0,
+  ward: 0,
+  reflect: 0,
+  steeled: 0,
 });
 
 interface HeroUnit {
@@ -441,6 +457,7 @@ export class BattleScene extends Phaser.Scene {
         shield: 0,
         stolenCash: 0,
         summoned: true,
+        puppet: 0,
       });
     }
     await this.print(`${def.article} ${def.name}${n > 1 ? ` and ${n - 1} more` : ''} answered the call!`);
@@ -587,6 +604,7 @@ export class BattleScene extends Phaser.Scene {
         shield: 0,
         stolenCash: 0,
         summoned: false,
+        puppet: 0,
       });
     });
   }
@@ -1127,9 +1145,12 @@ export class BattleScene extends Phaser.Scene {
     return h.status.productive > 0 ? Math.max(1, Math.floor(base * 0.75)) : base;
   }
 
-  /** §A4.5: every battle stat read multiplies through the picnic seam */
+  /** §A4.5: every battle stat read multiplies through the picnic seam.
+   *  S16: RESOLVE's 'steeled' adds a temporary Guts bump on top (raises crit
+   *  and the 1-HP mortal-blow survive) — read here, never baked into boosts. */
   private heroGutsS(h: HeroUnit): number {
-    return Math.round(heroGuts(h.hero) * this.sunny);
+    const steeled = h.status.steeled > 0 ? STEELED_GUTS : 0;
+    return Math.round((heroGuts(h.hero) + steeled) * this.sunny);
   }
 
   private heroVibeS(h: HeroUnit): number {
@@ -1151,8 +1172,8 @@ export class BattleScene extends Phaser.Scene {
     const ids = availableAbilities(h.hero.id, h.hero.level, (f) => GS.flag(f) === true).filter((id) => {
       const a = ABILITIES[id];
       // pray lives on the command row, not in the Vibe list (Prompt 12);
-      // teleport is an overworld run-up, not a battle cast
-      return a && a.kind === 'vibe' && a.id !== 'teleport_a';
+      // teleport (α/β) is an overworld run-up, not a battle cast
+      return a && a.kind === 'vibe' && !a.id.startsWith('teleport_');
     });
     if (ids.length === 0) {
       await this.print(`${name} searched for the old light... not yet.`);
@@ -1271,6 +1292,60 @@ export class BattleScene extends Phaser.Scene {
         }
         return true;
       }
+      // S16 — the LAYERED WARD system. ward halves elemental (4 turns); reflect
+      // halves all + bounces (3 turns, shorter because it's strong); steeled is
+      // Resolve's +Guts buff (4 turns). BULWARK: shield + ward held at once is
+      // called out so the player learns the stack pays off (the §C synergy).
+      case 'ward': {
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          t.status.ward = 4;
+          await this.print(this.fill(BATTLE_TEXT.ward_on, t.hero.name));
+          if (t.status.shield > 0) await this.print(this.fill(BATTLE_TEXT.bulwark, t.hero.name));
+        }
+        return true;
+      }
+      case 'reflect': {
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          t.status.reflect = 3;
+          await this.print(this.fill(BATTLE_TEXT.reflect_on, t.hero.name));
+        }
+        return true;
+      }
+      case 'steeled': {
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          t.status.steeled = 4;
+          await this.print(this.fill(BATTLE_TEXT.steeled_on, t.hero.name));
+        }
+        return true;
+      }
+      // S16 MIND WARP — turn ONE foe against its own allies. Bosses are
+      // mind_immune; elites roll a level-scaled resist. Ω (the awakened
+      // 'the_borrowed_voice') grips stronger foes and holds 2–3 turns.
+      case 'puppet': {
+        await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
+        const omega = ab.id === 'mindwarp_o';
+        for (const e of foeTargets) {
+          if (!e.alive) continue;
+          if (mindImmune(e.def)) {
+            AUDIO.sfx('cancel');
+            await this.print(this.fill(BATTLE_TEXT.puppet_immune, name, e));
+            continue;
+          }
+          // Ω only has to beat HALF the elite's resist (it grips stronger minds)
+          const resist = puppetResist(e.def.level, h.hero.level) * (omega ? 0.5 : 1);
+          if (Math.random() < resist) {
+            await this.print(this.fill(BATTLE_TEXT.puppet_resist, name, e));
+            continue;
+          }
+          e.puppet = puppetTurns(omega, Math.random);
+          e.spr.setTint(colorOf(px(RAMP.PURPLE, 3)));
+          await this.print(this.fill(BATTLE_TEXT.puppet_on, name, e));
+        }
+        return true;
+      }
       case 'cure': {
         await this.fx.play(ab.fx, ctx);
         for (const t of allyTargets) {
@@ -1306,9 +1381,13 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'crying': {
         await this.fx.play(ab.fx, ctx);
+        // S16: Flash Ω is a brighter, stickier blind — higher land rate + a
+        // turn longer than Flash α (the build prompt §3 extras)
+        const omega = ab.id === 'flash_o';
+        const land = omega ? 0.9 : 0.7;
         for (const e of foeTargets) {
-          if (Math.random() < 0.7) {
-            e.crying = 3;
+          if (Math.random() < land) {
+            e.crying = omega ? 4 : 3;
             await this.print(this.fill('{e} burst into tears!', name, e));
           } else {
             await this.print(this.fill('{e} blinked it away!', name, e));
@@ -1736,6 +1815,14 @@ export class BattleScene extends Phaser.Scene {
   private async enemyPhase(): Promise<void> {
     for (const e of this.enemies.slice()) {
       if (!e.alive || this.ended) continue;
+      // S16 MIND WARP: a PUPPETED foe acts on the PARTY's side this round —
+      // it turns its own moves on its own allies (the borrowed voice). The
+      // grip overrides its sleep; it ticks down in the end-of-round loop.
+      if (e.puppet > 0) {
+        await this.puppetAct(e);
+        if (this.ended) return;
+        continue;
+      }
       // §A4.8 on the enemy side: sleepers snooze through the round
       if (e.asleep > 0) {
         if (asleepWakes(Math.random)) {
@@ -1786,27 +1873,36 @@ export class BattleScene extends Phaser.Scene {
             await this.print(this.fill(BATTLE_TEXT.enemy_crying_miss, '', e));
             break;
           }
+          // S16: an attack declares its CLASS (default physical). The element
+          // drives BOTH the impact face and which of Jay's wards answers it.
+          const element = move.element ?? 'physical';
           // the move answers ON the card: impact burst + shake + flinch
-          void this.fx.play('impact_physical', { targets: [this.cardTarget(target)] });
+          void this.fx.play(impactKeyOf(element), { targets: [this.cardTarget(target)] });
           this.cameras.main.shake(120, 0.006);
           // S10: defense reads through the 'body' slot (the Champion Jacket);
           // S14: and through the §A4.5 SUNNY SIDE seam
           let dmg = physicalDamage(e.def.offense * (move.mult ?? 1), Math.round(heroDefense(target.hero) * this.sunny), Math.random);
           if (target.defending) dmg = Math.max(1, Math.floor(dmg / 2));
-          // Shield halves; Mirror halves AND throws some of it back (§A3)
-          if (target.status.mirror > 0) {
-            const back = Math.max(1, Math.floor(dmg / 4));
-            dmg = Math.max(1, Math.floor(dmg / 2));
-            this.applyHeroDamage(target, dmg);
-            await this.print(`${target.hero.name} took ${dmg}!`);
-            this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `${back}`, RAMP.CYAN);
-            e.hp = Math.max(1, e.hp - back); // a reflection never lands the last hit
-            await this.print(this.fill('{e} caught its own reflection! It lost {t} HP!', '', e, String(back)));
-            break;
+          // S16 LAYERED WARDS (§A3 amended) — Shield halves physical, Ward halves
+          // elemental, Reflect & Mirror halve everything AND throw some back, with
+          // the Bulwark + brace-and-answer synergies. One math seam (formulas.ts).
+          const s = target.status;
+          const { taken, reflected } = mitigateIncoming(dmg, element, {
+            shield: s.shield > 0,
+            ward: s.ward > 0,
+            reflect: s.reflect > 0,
+            mirror: s.mirror > 0,
+            steeled: s.steeled > 0,
+          });
+          this.applyHeroDamage(target, taken);
+          await this.print(`${target.hero.name} took ${taken}!`);
+          if (reflected > 0) {
+            this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `${reflected}`, s.reflect > 0 ? RAMP.GOLD : RAMP.CYAN);
+            e.hp = Math.max(1, e.hp - reflected); // a reflection never lands the last hit
+            // the WALL THAT ANSWERS (reflect) vs Dorin's mirror — distinct lines
+            const line = s.reflect > 0 ? BATTLE_TEXT.reflect_back : '{e} caught its own reflection! It lost {t} HP!';
+            await this.print(this.fill(line, '', e, String(reflected)));
           }
-          if (target.status.shield > 0) dmg = Math.max(1, Math.floor(dmg / 2));
-          this.applyHeroDamage(target, dmg);
-          await this.print(`${target.hero.name} took ${dmg}!`);
           break;
         }
         case 'latch': {
@@ -1896,6 +1992,37 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * S16 MIND WARP — a puppeted foe acts FOR the party: it turns one of its own
+   * damage moves on another living enemy (its ally). No ally left = it flails
+   * at empty air. A borrowed blow that KILLS flows a little of the old light
+   * back to Jay (the §B tempo payoff — control that earns the player a turn).
+   */
+  private async puppetAct(e: EnemyUnit): Promise<void> {
+    const others = this.enemies.filter((o) => o.alive && o !== e);
+    this.tweens.add({ targets: e.spr, y: e.spr.y + 5, duration: 90, yoyo: true });
+    if (others.length === 0) {
+      await this.print(this.fill(BATTLE_TEXT.puppet_nobody, '', e));
+      return;
+    }
+    const victim = others[Math.floor(Math.random() * others.length)];
+    await this.print(this.fill(BATTLE_TEXT.puppet_act, '', e));
+    // it swings with its own offense (a damage move's mult, if it has one) —
+    // the borrowed voice hits its kin with their own teeth
+    const dmgMove = e.def.moves.find((m) => m.kind === 'attack' || m.kind === 'strong');
+    const dmg = physicalDamage(e.def.offense * (dmgMove?.mult ?? 1), victim.def.defense, Math.random);
+    void this.fx.play('impact_physical', { targets: [this.foeTarget(victim)] });
+    const wasAlive = victim.alive;
+    await this.damageEnemy(victim, dmg, false, undefined, 'physical');
+    if (wasAlive && !victim.alive) {
+      const jay = this.heroes.find((h) => h.hero.id === 'rex' && !h.hero.down && !h.odoHp.dead);
+      if (jay) {
+        jay.odoPp.heal(6);
+        await this.print(this.fill(BATTLE_TEXT.puppet_refund, jay.hero.name));
+      }
+    }
+  }
+
   private pickMove(e: EnemyUnit): EnemyMove {
     const latchedAlready = this.heroes.some((h) => h.latched);
     let moves = e.def.moves.filter((m) => !(m.kind === 'latch' && latchedAlready));
@@ -1926,7 +2053,8 @@ export class BattleScene extends Phaser.Scene {
     if (wouldDie && gutsSurvive(this.heroGutsS(h), Math.random)) {
       h.odoHp.target = 1;
       h.odoHp.displayed = Math.max(1, h.odoHp.displayed - dmg * 0.5);
-      void this.print(`${h.hero.name} hung on with sheer GUTS!`);
+      // S16: Resolve's 'steeled' is exactly the "don't die" button — name it
+      void this.print(this.fill(h.status.steeled > 0 ? BATTLE_TEXT.steeled_survive : '{user} hung on with sheer GUTS!', h.hero.name));
       return;
     }
     h.odoHp.damage(dmg);
@@ -1948,6 +2076,10 @@ export class BattleScene extends Phaser.Scene {
       if (s.hushed > 0 && --s.hushed === 0) await this.print(this.fill(BATTLE_TEXT.hushed_off, h.hero.name));
       if (s.shield > 0 && --s.shield === 0) await this.print(this.fill(BATTLE_TEXT.shield_off, h.hero.name));
       if (s.mirror > 0 && --s.mirror === 0) await this.print(this.fill(BATTLE_TEXT.shield_off, h.hero.name));
+      // S16 layered wards + the Guts buff tick down and announce their fade
+      if (s.ward > 0 && --s.ward === 0) await this.print(this.fill(BATTLE_TEXT.ward_off, h.hero.name));
+      if (s.reflect > 0 && --s.reflect === 0) await this.print(this.fill(BATTLE_TEXT.reflect_off, h.hero.name));
+      if (s.steeled > 0 && --s.steeled === 0) await this.print(this.fill(BATTLE_TEXT.steeled_off, h.hero.name));
       if (s.productive > 0 && --s.productive === 0) {
         await this.print(`${h.hero.name} remembered it's summer. Offense is back!`);
       }
@@ -1957,6 +2089,11 @@ export class BattleScene extends Phaser.Scene {
       if (e.crying > 0) e.crying--;
       if (e.hushed > 0) e.hushed--;
       if (e.shield > 0) e.shield--;
+      // S16 MIND WARP wears off — the borrowed voice slips free, tint clears
+      if (e.puppet > 0 && --e.puppet === 0) {
+        e.spr.clearTint();
+        await this.print(this.fill(BATTLE_TEXT.puppet_off, '', e));
+      }
       // §A7 Ch.2: the Beetle's gold form wears off — the tint goes with it
       if (e.gilded > 0 && --e.gilded === 0) {
         e.spr.clearTint();
@@ -2133,6 +2270,9 @@ export class BattleScene extends Phaser.Scene {
         winded: tier === 2,
         shield: h.status.shield > 0,
         mirror: h.status.mirror > 0,
+        ward: h.status.ward > 0,
+        reflect: h.status.reflect > 0,
+        steeled: h.status.steeled > 0,
         statuses: {
           sunburn: h.status.sunburn > 0,
           crying: h.status.crying > 0,

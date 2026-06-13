@@ -25,6 +25,46 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'flash_a', name: 'Flash Alpha', kind: 'vibe', pp: 8, power: 0, target: 'enemies', element: 'none', status: 'crying', text: '{user} went off like a camera!', fx: 'flash' }),
     A({ id: 'teleport_a', name: 'Teleport Alpha', kind: 'vibe', pp: 2, power: 0, target: 'self', element: 'none', text: '{user} started running!', fx: 'run_up' }),
 
+    // ---- Jay, DOUBLED (S16 — "The Old Light, Doubled"). The signature gets a
+    // true five-rung ladder ending in a story finale (Σ); Hypno grows into a
+    // real control suite (mass sleep + literal MIND WARP); the shields become a
+    // LAYERED ward system (physical Shield / elemental Ward / all-types Reflect);
+    // and Lifeup caps out beside a clutch self-buff. Every new row is a real
+    // menu choice (§7 of the build prompt) — see the per-pillar notes.
+
+    // Pillar A — Vibe Surge Σ (the screen-filling capstone, awakening). No
+    // element: the answer to elementally-immune foes that shrug off Mia. 96 PP
+    // is most of his bar — "one Σ or three βs" is a per-fight budget decision.
+    A({ id: 'vibe_surge_x', name: 'Vibe Surge Sigma', kind: 'vibe', pp: 96, power: 480, target: 'enemies', element: 'none', text: 'Otterbrook, the Embers, every porch light he ever ran home to — all of it surged through {user}!', fx: 'surge_x' }),
+
+    // Pillar B — mind control. Hypno Ω puts a whole pack to sleep; Mind Warp
+    // turns ONE foe against its own allies (status 'puppet'). Trivial vs trash,
+    // useless vs bosses (mind_immune) and resisted by elites — a tempo tool,
+    // never an "I win" button.
+    A({ id: 'hypno_o', name: 'Hypno Omega', kind: 'vibe', pp: 18, power: 0, target: 'enemies', element: 'none', status: 'asleep', text: '{user} hummed the whole room under!', fx: 'hypno' }),
+    A({ id: 'mindwarp_a', name: 'Mind Warp Alpha', kind: 'vibe', pp: 14, power: 0, target: 'enemy', element: 'none', status: 'puppet', text: '{user} reached in, quiet as a held breath...', fx: 'mindwarp' }),
+    A({ id: 'mindwarp_o', name: 'Mind Warp Omega', kind: 'vibe', pp: 40, power: 0, target: 'enemy', element: 'none', status: 'puppet', text: '{user} borrowed the voice whole — and turned it.', fx: 'mindwarp' }),
+
+    // Pillar C — the layered ward system. Shield (existing) halves PHYSICAL;
+    // Ward halves ELEMENTAL (fire/freeze/volt/holy); Power Shield's 'reflect'
+    // halves ALL and bounces ~1/3 back. Different attacks, different answers —
+    // a careful player stacks Shield+Ward (the BULWARK synergy) on a telegraph.
+    A({ id: 'ward_a', name: 'Ward Alpha', kind: 'vibe', pp: 8, power: 0, target: 'ally', element: 'none', status: 'ward', text: '{user} hung a cool veil in the air!', fx: 'ward_snap' }),
+    A({ id: 'ward_s', name: 'Ward Sigma', kind: 'vibe', pp: 22, power: 0, target: 'allies', element: 'none', status: 'ward', text: '{user} drew the veil over everyone!', fx: 'ward_snap' }),
+    A({ id: 'powershield_a', name: 'Power Shield Alpha', kind: 'vibe', pp: 14, power: 0, target: 'ally', element: 'none', status: 'reflect', text: '{user} set a still, answering mirror in the air!', fx: 'reflect_snap' }),
+    A({ id: 'powershield_s', name: 'Power Shield Sigma', kind: 'vibe', pp: 34, power: 0, target: 'allies', element: 'none', status: 'reflect', text: '{user} raised the wall that answers!', fx: 'reflect_snap' }),
+
+    // Pillar D — Lifeup Ω (Jay can main-heal so Mia is free to nuke) + Resolve
+    // ('steeled': +Guts → crit and a 1-HP mortal-blow survive, a proactive
+    // don't-die button the party otherwise lacks).
+    A({ id: 'lifeup_o', name: 'Lifeup Omega', kind: 'vibe', pp: 40, power: 320, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole sky bright!', fx: 'lifeup' }),
+    A({ id: 'resolve_a', name: 'Resolve', kind: 'vibe', pp: 10, power: 0, target: 'ally', element: 'none', status: 'steeled', text: '{user} caught their eye: stand. STAND.', fx: 'brace_snap' }),
+
+    // Pillar E — the two "full double" extras (trim-first, §3): a stronger
+    // blind and the overworld escape upgrade.
+    A({ id: 'flash_o', name: 'Flash Omega', kind: 'vibe', pp: 16, power: 0, target: 'enemies', element: 'none', status: 'crying', text: '{user} went off like a whole wall of cameras!', fx: 'flash' }),
+    A({ id: 'teleport_b', name: 'Teleport Beta', kind: 'vibe', pp: 4, power: 0, target: 'self', element: 'none', text: '{user} found the fast way out!', fx: 'run_up' }),
+
     // ---- Mia: elemental lines + PRAY
     A({ id: 'vibe_fire_a', name: 'Vibe Fire Alpha', kind: 'vibe', pp: 6, power: 48, target: 'enemy', element: 'fire', text: '{user} snapped her fingers — FWOOSH!', fx: 'fire_a' }),
     A({ id: 'vibe_fire_b', name: 'Vibe Fire Beta', kind: 'vibe', pp: 14, power: 125, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH!', fx: 'fire_b' }),

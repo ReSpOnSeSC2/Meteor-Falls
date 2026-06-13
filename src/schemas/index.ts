@@ -129,6 +129,12 @@ export const EnemyMoveSchema = z.strictObject({
   kind: MoveKindSchema,
   /** multiplier on enemy offense for damage moves */
   mult: z.number().positive().optional(),
+  /** S16: the damage CLASS of an attack/strong move. Omitted = 'physical' (the
+   *  EB default, and what every shipped enemy is). An elemental value lets a
+   *  foe deal fire/freeze/volt/holy — which Jay's WARD halves and his SHIELD
+   *  does NOT, so the layered-ward system has something to answer (the build
+   *  prompt §C "fire boss"). 'none' = unblockable-by-ward typeless damage. */
+  element: ElementSchema.optional(),
   status: z.enum(['sunburn', 'crying', 'asleep', 'productive', 'paralyzed']).optional(),
   text: z.string().min(1),
   weight: z.number().positive(),
@@ -158,6 +164,11 @@ export const EnemyDefSchema = z.strictObject({
   /** psychedelic battle-bg palette ramps [a, b] */
   bg: z.tuple([z.number(), z.number()]),
   boss: z.boolean().optional(),
+  /** S16: Jay's MIND WARP ('puppet') cannot grip this foe — bosses are
+   *  mind_immune by design so control stays a crowd/tempo tool, never an
+   *  "I win" on a boss (§A3 amended; the build prompt §4). Elites instead
+   *  ROLL a level-scaled resist; only the truly immune carry this flag. */
+  mind_immune: z.boolean().optional(),
 });
 export type EnemyDef = z.infer<typeof EnemyDefSchema>;
 
