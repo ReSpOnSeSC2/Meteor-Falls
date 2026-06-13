@@ -107,6 +107,28 @@ const ASCII_GLYPHS: number[][] = [
   A([0, 0, 8, 21, 2, 0, 0]), // ~
 ];
 
+/**
+ * S-Mia: the emoji → Private-Use-Area glyph mapping. Keys are the REAL emoji
+ * codepoints (single code point each, no variation selector) Mia's spell lines
+ * use; values are the BMP PUA char the font actually draws (the RetroFont can
+ * only index single UTF-16 code units, and astral emoji are surrogate pairs).
+ * src/ui/text.ts swaps the literal emoji for these at render time. Add a glyph
+ * to SPECIALS for every value here, or it renders as tofu (the §5 caveat).
+ */
+export const EMOJI_GLYPH: Record<string, string> = {
+  '🔥': '',
+  '❄': '',
+  '⚡': '',
+  '✨': '',
+  '🌟': '',
+  '🧲': '',
+  '💜': '',
+  '💛': '',
+  '🍀': '',
+  '⭐': '',
+  '🌙': '',
+};
+
 const SPECIALS: Array<[string, number[]]> = [
   ['▼', A([0, 31, 31, 14, 14, 4, 0])],
   ['★', A([0, 4, 14, 31, 14, 4, 0])],
@@ -116,6 +138,24 @@ const SPECIALS: Array<[string, number[]]> = [
   ['▶', A([16, 24, 28, 30, 28, 24, 16])],
   ['—', A([0, 0, 0, 31, 0, 0, 0])],
   ['•', A([0, 0, 12, 30, 30, 12, 0])],
+  // ---- S-Mia ("Ability Expansion"): tiny pixel "emoji" glyphs for her spell
+  // lines (🔥❄⚡✨🌟🧲💜💛🍀⭐🌙). Each maps to a Private-Use-Area codepoint
+  // so the RetroFont can index it as a single UTF-16 code unit (real emoji are
+  // astral surrogate pairs the font can't address). The tokenizer in
+  // src/ui/text.ts swaps the literal emoji for these PUA chars at draw time, so
+  // `text` stores the real codepoint and the zero-binary-asset rule holds —
+  // these glyphs are code-drawn, not imported. EMOJI_GLYPH names the mapping.
+  [EMOJI_GLYPH['🔥'], A([4, 4, 14, 14, 31, 31, 14])], // fire
+  [EMOJI_GLYPH['❄'], A([4, 21, 14, 31, 14, 21, 4])], // snowflake
+  [EMOJI_GLYPH['⚡'], A([3, 6, 12, 31, 6, 12, 24])], // lightning bolt
+  [EMOJI_GLYPH['✨'], A([4, 4, 21, 14, 21, 4, 4])], // sparkles
+  [EMOJI_GLYPH['🌟'], A([4, 14, 31, 14, 21, 0, 0])], // glowing star
+  [EMOJI_GLYPH['🧲'], A([27, 17, 17, 17, 17, 14, 0])], // magnet (horseshoe)
+  [EMOJI_GLYPH['💜'], A([0, 10, 31, 31, 14, 4, 0])], // purple heart
+  [EMOJI_GLYPH['💛'], A([0, 10, 31, 31, 14, 4, 0])], // yellow heart
+  [EMOJI_GLYPH['🍀'], A([10, 31, 31, 14, 4, 4, 0])], // clover
+  [EMOJI_GLYPH['⭐'], A([0, 4, 14, 31, 14, 4, 0])], // star
+  [EMOJI_GLYPH['🌙'], A([12, 24, 16, 16, 16, 24, 12])], // crescent moon
 ];
 
 export const FONT_CELL_W = 6;

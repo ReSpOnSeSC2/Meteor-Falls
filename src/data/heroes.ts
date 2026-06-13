@@ -71,18 +71,37 @@ export const HEROES: Record<HeroId, HeroDef> = {
     // S14: VIBE FREEZE α left the L12 row — it AWAKENS at the Gilded
     // Grin's HOLLOW reveal (cold_reads, Ch.2's emotional center; §A3
     // amended). Magnet L15 → Fire β L17 restate unchanged.
+    // "Ability Expansion" — Mia grows to ~30 spells. MOST are EARNED by leveling
+    // (she's a grind-and-learn virtuoso); the 3 iconic beats AWAKEN as story
+    // moments (Starsong α, Fire Σ, Magnet Σ — see src/data/awakenings.ts + the
+    // content-validate canon manifest) and must NOT appear here (one-path rule).
+    // `first_listen`→fire α and `cold_reads`→freeze α stay awakenings too.
     unlocks: [
       { level: 1, ability: 'pray' },
       { level: 15, ability: 'magnet_a' },
       { level: 17, ability: 'vibe_fire_b' },
       { level: 20, ability: 'vibe_volt_a' },
+      { level: 22, ability: 'magnet_b' }, // PP-steal grows: harder pull
       { level: 24, ability: 'vibe_freeze_b' },
+      { level: 25, ability: 'dreamlull' }, // mass sleep (utility)
       { level: 26, ability: 'vibe_volt_b' },
+      { level: 27, ability: 'heartmend_a' }, // a reliable heal beside PRAY's RNG
       { level: 29, ability: 'vibe_fire_g' },
+      { level: 30, ability: 'starsong_b' }, // the holy line widens (α awakens)
+      { level: 31, ability: 'magnet_g' }, // drain the whole room
       { level: 32, ability: 'vibe_freeze_g' },
+      { level: 34, ability: 'lucky_star' }, // party crit/dodge up (utility)
+      { level: 36, ability: 'hush_hex' }, // the focus-fire enabler (utility)
+      { level: 38, ability: 'starsong_g' },
       { level: 40, ability: 'vibe_volt_g' },
+      { level: 42, ability: 'magnet_o' }, // lifedrain — HP + PP
       { level: 44, ability: 'vibe_fire_o' },
       { level: 46, ability: 'vibe_freeze_o' },
+      { level: 47, ability: 'vibe_volt_o' },
+      { level: 48, ability: 'starsong_o' },
+      { level: 52, ability: 'vibe_freeze_x' }, // the Σ capstones cluster at the cap
+      { level: 52, ability: 'vibe_volt_x' },
+      { level: 52, ability: 'starsong_x' },
     ],
   },
   milo: {

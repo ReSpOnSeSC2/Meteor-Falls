@@ -155,9 +155,11 @@ export function physicalDamage(offense: number, defense: number, rng: Rng): numb
   return Math.max(1, Math.round(base * (0.85 + rng() * 0.3)));
 }
 
-/** SMAAASH!! chance — Guts-driven, capped like EB */
-export function smashChance(guts: number): number {
-  return Math.min(0.2, 0.02 + guts / 100);
+/** SMAAASH!! chance — Guts-driven, capped like EB. Mia's LUCKY STAR feeds an
+ *  optional Luck term (raises crit/SMAAASH); base callers pass no luck and read
+ *  the exact old curve. */
+export function smashChance(guts: number, luck = 0): number {
+  return Math.min(0.2, 0.02 + guts / 100 + luck / 300);
 }
 
 export function smashDamage(offense: number, defense: number, rng: Rng): number {
@@ -209,10 +211,99 @@ export function vibeHeal(power: number, vibe: number, rng: Rng): number {
   return Math.max(1, Math.round(power * (1 + vibe / 80) * (0.95 + rng() * 0.1)));
 }
 
-/** elemental weakness ×1.5 */
+/** elemental weakness ×1.5 (the original single-sided multiplier — still the
+ *  item/gadget path; Mia's five-element kit reads the fuller applyElement) */
 export function applyWeakness(dmg: number, weak: boolean): number {
   return weak ? Math.round(dmg * 1.5) : dmg;
 }
+
+/* ---- MIA'S ELEMENTAL EDGE (the OUTGOING hero→enemy multiplier) ----
+ * The five-element kit's whole point: the right element MULTIPLIES the hit. This
+ * is the OUTGOING seam at damageEnemy — distinct from mitigateIncoming (the
+ * enemy→hero ward seam); the two never conflate. ~×1.5 on a weakness, ~×0.5 on a
+ * resist, always ≥1. HOLY pierces a slice of resistance (the Embers' light is
+ * the Hush's bane): a resisted holy hit still lands at ~×0.75, and a holy-weak
+ * foe takes the full weakness. Pure + rng-free so the replay bot stays exact. */
+export const WEAK_MUL = 1.5;
+export const RESIST_MUL = 0.5;
+export const HOLY_PIERCE_MUL = 0.75;
+
+export interface ElementHit {
+  weak?: boolean;
+  resist?: boolean;
+  /** the hit is `holy` (Starsong / Pray) — pierces a slice of resistance */
+  holy?: boolean;
+}
+
+/** the weak/resist/holy multiplier on one hero→enemy hit */
+export function elementMultiplier({ weak = false, resist = false, holy = false }: ElementHit): number {
+  if (weak) return WEAK_MUL; // a weakness wins outright, even a "resisted" holy
+  if (resist) return holy ? HOLY_PIERCE_MUL : RESIST_MUL; // holy pierces half the resist
+  return 1;
+}
+
+/** apply the element multiplier to a hit, never below 1 */
+export function applyElement(dmg: number, hit: ElementHit): number {
+  return Math.max(1, Math.round(dmg * elementMultiplier(hit)));
+}
+
+/* ---- the EXPOSED amplifier (Hush Hex) — the OUTGOING mirror of Jay's ward ----
+ * `exposed` is ×1.3 on every hit the enemy takes; it STACKS MULTIPLICATIVELY
+ * with `marked` (Milo/Pippa's focus-fire tag, ×1.25) so a coordinated focus turn
+ * is the party's biggest spike (the build prompt §8). Applied at damageEnemy,
+ * PARALLEL to (never inside) mitigateIncoming. */
+export const EXPOSED_MUL = 1.3;
+export const MARKED_MUL = 1.25;
+
+/** the focus-fire amplifier on a hit the enemy takes (exposed × marked) */
+export function focusMultiplier(opts: { exposed?: boolean; marked?: boolean }): number {
+  let m = 1;
+  if (opts.exposed) m *= EXPOSED_MUL;
+  if (opts.marked) m *= MARKED_MUL;
+  return m;
+}
+
+/** apply the focus amplifier to a hit, never below 1 */
+export function applyFocus(dmg: number, opts: { exposed?: boolean; marked?: boolean }): number {
+  return Math.max(1, Math.round(dmg * focusMultiplier(opts)));
+}
+
+/* ---- BURN (Fire γ+) — Fire's "stack damage over time" identity vs Freeze's
+ * control. A small flame DoT (~6% max HP, min 4) at the end of the burned foe's
+ * turn, 3 turns; the chip STACKS with `exposed` (the chip-and-amplify combo). */
+export const BURN_TURNS = 3;
+export function burnTick(maxHp: number): number {
+  return Math.max(4, Math.round(maxHp * 0.06));
+}
+
+/* ---- FROZEN (Freeze γ+, SHARED with Milo's Cryo Grenade — ONE implementation)
+ * Skip the next turn, chance by tier (γ40 / Ω55 / Σ70%), 1 turn. Bosses are
+ * capped/immune via the LIVE mindImmune philosophy (reuse the same gate so Freeze
+ * control mirrors Jay's puppet rules exactly — control never trivializes a boss). */
+export const FROZEN_CHANCE: Record<number, number> = { 3: 0.4, 4: 0.55, 5: 0.7 };
+export function frozenChance(tier: number): number {
+  return FROZEN_CHANCE[tier] ?? 0;
+}
+export function frozenLands(tier: number, rng: Rng): boolean {
+  return rng() < frozenChance(tier);
+}
+
+/* ---- LIFEDRAIN (Magnet Ω/Σ) — on hit, Mia takes a bite of enemy HP (on top of
+ * the PP sip) and heals half of it. Partly self-sufficient — but a drain turn is
+ * NOT a nuke turn (the trade). Σ is AoE, so it bites a little less per target. */
+export function lifedrainDamage(aoe: boolean, vibe: number, rng: Rng): number {
+  const base = aoe ? 60 : 95;
+  return Math.max(1, Math.round(base * (1 + vibe / 90) * (0.9 + rng() * 0.2)));
+}
+/** Mia heals half of whatever a lifedrain takes (HP + PP) */
+export function lifedrainHeal(drained: number): number {
+  return Math.max(1, Math.round(drained * 0.5));
+}
+
+/** LUCKY STAR's temporary Luck bump (status 'lucky') — read at the luck seam
+ *  (heroLuckS) the steeled way, never baked into permanent `boosts`; raises
+ *  crit/SMAAASH and dodge while it holds, then ticks off in statusPhase. */
+export const LUCKY_LUCK = 10;
 
 /** Guts: chance to survive a mortal blow at 1 HP (§A3) */
 export function gutsSurvive(guts: number, rng: Rng): boolean {

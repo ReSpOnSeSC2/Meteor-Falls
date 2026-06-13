@@ -3,6 +3,27 @@
  * resolver unit-tests headlessly. All New Game choices flow through here.
  */
 import { GS, heroNameIn, type GameStateData } from '../engine/state';
+import { EMOJI_GLYPH } from '../spritegen/font';
+
+/**
+ * S-Mia ("Ability Expansion"): the emoji TOKENIZER (the §5 caveat). The game
+ * draws its own procedural bitmap font (no emoji glyphs), so a literal 🔥❄⚡
+ * renders as tofu. `text` stores the REAL codepoint; glyphify() swaps it for the
+ * matching code-drawn PUA glyph at draw time (and strips emoji variation
+ * selectors, which the font can't address). Idempotent — PUA glyphs aren't
+ * emoji, so re-running is a no-op (vars() and BattleScene.print both call it).
+ */
+const EMOJI_ENTRIES = Object.entries(EMOJI_GLYPH);
+const VARIATION_SELECTORS = /[︎️]/g;
+
+export function glyphify(text: string): string {
+  if (!text) return text;
+  let out = text.replace(VARIATION_SELECTORS, '');
+  for (const [emoji, glyph] of EMOJI_ENTRIES) {
+    if (out.includes(emoji)) out = out.replaceAll(emoji, glyph);
+  }
+  return out;
+}
 
 /**
  * Every {token} vars() resolves — THE registry. tools/content-validate.ts
@@ -32,5 +53,7 @@ export function vars(text: string, data: GameStateData = GS.data): string {
     if (filled.includes(`{${name}}`)) filled = filled.replaceAll(`{${name}}`, get(data));
   }
   // the Bible's @-speech convention renders as a speech bullet, not a literal @
-  return filled.startsWith('@') ? `•${filled.slice(1)}` : filled;
+  const out = filled.startsWith('@') ? `•${filled.slice(1)}` : filled;
+  // S-Mia: swap any emoji codepoints for their drawn glyphs (§5 caveat)
+  return glyphify(out);
 }

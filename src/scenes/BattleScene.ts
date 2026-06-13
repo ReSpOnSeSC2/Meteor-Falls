@@ -95,7 +95,7 @@ import { Odometer } from '../battle/odometer';
 import { BattleFx, type FxTarget } from '../battle/fx';
 import { BustView } from '../battle/bust';
 import { StageView } from '../battle/stage';
-import { itemFxKey, stagePoseOf, impactKeyOf } from '../battle/fxRegistry';
+import { itemFxKey, stagePoseOf, impactKeyOf, FX_REGISTRY } from '../battle/fxRegistry';
 import { PhaseRunner, pickRiddle, type DamageClass } from '../battle/phases';
 import { battlerSheetKey, bustSheetKey, type BattlerLook, type WearTier } from '../spritegen/battlers';
 import { ensureBattleArt } from '../spritegen';
@@ -109,6 +109,14 @@ import {
   vibeDamage,
   vibeHeal,
   applyWeakness,
+  applyElement,
+  applyFocus,
+  burnTick,
+  BURN_TURNS,
+  frozenLands,
+  lifedrainDamage,
+  lifedrainHeal,
+  LUCKY_LUCK,
   gutsSurvive,
   runChance,
   expShare,
@@ -139,6 +147,7 @@ import {
   flowingDodge,
 } from '../battle/formulas';
 import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
+import { glyphify } from '../ui/text';
 import { colorOf, rgbOf, RAMP, px } from '../palette';
 import { ODO_CELL_W, ODO_CELL_H } from '../spritegen/ui';
 
@@ -175,6 +184,16 @@ interface EnemyUnit {
   stolenCash: number;
   /** S14 phase machine: this unit was summoned mid-battle (bothSummonsDead) */
   summoned: boolean;
+  /** S-Mia: Fire's DoT (turns of `burn`), Freeze's skip-lock (`frozen`, 1 turn),
+   *  Hush Hex's ×1.3 incoming amplifier (`exposed`), and Milo/Pippa's focus tag
+   *  (`marked`, ×1.25) — `exposed` and `marked` stack multiplicatively. */
+  burn: number;
+  frozen: number;
+  exposed: number;
+  marked: number;
+  /** S-Mia: Volt γ+ disruption on the enemy side — a paralyzed foe rolls to skip
+   *  its turn (the hero-side paralyzed mirror), boss-capped via mindImmune. */
+  paralyzed: number;
 }
 
 /** §A4.8 hero-side conditions — turns remaining (0 = clear) */
@@ -197,6 +216,8 @@ interface HeroStatus {
    *  ~40% physical counter; flowing (Flowing Step) = +Speed AND a ~35% dodge. */
   braced: number;
   flowing: number;
+  /** S-Mia LUCKY STAR — temp +Luck (crit/SMAAASH + dodge), read the steeled way */
+  lucky: number;
 }
 
 const NO_HERO_STATUS = (): HeroStatus => ({
@@ -213,6 +234,7 @@ const NO_HERO_STATUS = (): HeroStatus => ({
   steeled: 0,
   braced: 0,
   flowing: 0,
+  lucky: 0,
 });
 
 interface HeroUnit {
@@ -469,6 +491,11 @@ export class BattleScene extends Phaser.Scene {
         stolenCash: 0,
         summoned: true,
         puppet: 0,
+        burn: 0,
+        frozen: 0,
+        exposed: 0,
+        marked: 0,
+        paralyzed: 0,
       });
     }
     await this.print(`${def.article} ${def.name}${n > 1 ? ` and ${n - 1} more` : ''} answered the call!`);
@@ -616,6 +643,11 @@ export class BattleScene extends Phaser.Scene {
         stolenCash: 0,
         summoned: false,
         puppet: 0,
+        burn: 0,
+        frozen: 0,
+        exposed: 0,
+        marked: 0,
+        paralyzed: 0,
       });
     });
   }
@@ -715,7 +747,9 @@ export class BattleScene extends Phaser.Scene {
   /* ---------------- text + fx helpers ---------------- */
 
   private print(raw: string): Promise<void> {
-    const text = raw;
+    // S-Mia: render emoji flair through the glyph map (§5 caveat) — battle
+    // lines reach the BitmapText here, not through vars()
+    const text = glyphify(raw);
     return new Promise((resolve) => {
       this.textObj.setText('');
       let i = 0;
@@ -1076,7 +1110,8 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     const cls = weaponClassOf(h.hero.equip.weapon ?? null);
-    const smashed = Math.random() < smashChance(this.heroGutsS(h));
+    // S-Mia: LUCKY STAR's +Luck raises the SMAAASH/crit roll (heroLuckS seam)
+    const smashed = Math.random() < smashChance(this.heroGutsS(h), this.heroLuckS(h));
     // announce while walking (the combo assembles its own one-liner instead)
     const announce = smashed ? null : this.print(this.fill(BATTLE_TEXT.bash, name));
     await this.stageEnter(h, target.spr.x);
@@ -1181,6 +1216,14 @@ export class BattleScene extends Phaser.Scene {
 
   private heroVibeS(h: HeroUnit): number {
     return Math.round(h.hero.stats.vibe * this.sunny);
+  }
+
+  /** S-Mia LUCKY STAR ('lucky') reads here as +Luck — the steeled temp-boost
+   *  pattern (never baked into `boosts`; ticks off in statusPhase). Feeds the
+   *  SMAAASH/crit roll and the dodge gate while it holds. */
+  private heroLuckS(h: HeroUnit): number {
+    const lucky = h.status.lucky > 0 ? LUCKY_LUCK : 0;
+    return Math.round((heroLuck(h.hero) + lucky) * this.sunny);
   }
 
   /* ---------------- Vibe ---------------- */
@@ -1446,7 +1489,14 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'asleep': {
         await this.fx.play(ab.fx, ctx);
+        // S-Mia DREAMLULL is MASS sleep — a lower land rate than single Hypno (the
+        // trade for hitting the whole room). Single-target sleepers always land.
+        const land = ab.id === 'dreamlull' ? 0.55 : 1;
         for (const e of foeTargets) {
+          if (Math.random() >= land) {
+            await this.print(this.fill('{e} fought off the lullaby!', name, e));
+            continue;
+          }
           e.asleep = 2 + (Math.random() < 0.5 ? 1 : 0);
           await this.print(this.fill('{e} drifted off mid-thought!', name, e));
         }
@@ -1481,10 +1531,59 @@ export class BattleScene extends Phaser.Scene {
         return true;
       }
       case 'pp_drain': {
+        // S-Mia: Magnet α/β/γ — pull enemy magic into Mia's bar. γ is AoE (the
+        // whole room), so sum the sips across every standing foe.
         await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
-        const sip = magnetSiphon(Math.random);
-        h.odoPp.heal(sip);
-        await this.print(this.fill(BATTLE_TEXT.magnet_sip, name, foeTargets[0], String(sip)));
+        let total = 0;
+        for (const e of foeTargets) {
+          if (!e.alive) continue;
+          total += magnetSiphon(Math.random);
+        }
+        if (total > 0) h.odoPp.heal(total);
+        await this.print(this.fill(BATTLE_TEXT.magnet_sip, name, foeTargets[0], String(total)));
+        return true;
+      }
+      case 'lifedrain': {
+        // S-Mia: Magnet Ω/Σ — she takes the SPARK and the WARMTH. PP sip + an HP
+        // bite (Σ AoE bites a little less per target); Mia heals half of all of it.
+        // A drain turn is not a nuke turn — the trade that makes her self-sufficient.
+        await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
+        const aoe = ab.target === 'enemies';
+        let ppGain = 0;
+        let hpDrained = 0;
+        for (const e of foeTargets) {
+          if (!e.alive) continue;
+          ppGain += magnetSiphon(Math.random);
+          const before = e.hp;
+          await this.damageEnemy(e, lifedrainDamage(aoe, this.heroVibeS(h), Math.random), false, undefined, 'vibe');
+          hpDrained += Math.max(0, before - e.hp);
+        }
+        if (ppGain > 0) h.odoPp.heal(ppGain);
+        const back = lifedrainHeal(ppGain + hpDrained);
+        this.healHero(h, back);
+        AUDIO.sfx('heal');
+        await this.print(this.fill(BATTLE_TEXT.lifedrain, name, undefined, String(back)));
+        return true;
+      }
+      // S-Mia LUCKY STAR — a party crit/dodge buff (the steeled temp-boost shape;
+      // heroLuckS reads it, statusPhase ticks it off). A non-nuke turn worth taking.
+      case 'lucky': {
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          t.status.lucky = 4;
+          await this.print(this.fill(BATTLE_TEXT.lucky_on, name, undefined, t.hero.name));
+        }
+        return true;
+      }
+      // S-Mia HUSH HEX — `exposed`: ×1.3 on everything the foe takes for 4 turns,
+      // the party's universal focus-this-target enabler (stacks with `marked`).
+      case 'exposed': {
+        await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
+        for (const e of foeTargets) {
+          if (!e.alive) continue;
+          e.exposed = 4;
+          await this.print(this.fill(BATTLE_TEXT.exposed_on, name, e));
+        }
         return true;
       }
     }
@@ -1504,18 +1603,21 @@ export class BattleScene extends Phaser.Scene {
 
     // ---- damage (vibe lines + bottle rockets)
     await this.fx.play(ab.fx, ctx);
+    const tier = FX_REGISTRY[ab.fx]?.tier ?? 1;
     for (const t of foeTargets) {
       if (!t.alive) continue;
-      const weak =
-        (ab.element === 'fire' && t.def.weakness.includes('fire')) ||
-        (ab.element === 'freeze' && t.def.weakness.includes('freeze')) ||
-        (ab.element === 'volt' && t.def.weakness.includes('volt'));
+      // S-Mia: the full OUTGOING weak/resist multiplier (the hero→enemy seam,
+      // distinct from Jay's incoming mitigateIncoming). `holy` (Starsong) PIERCES
+      // a slice of resistance — the Embers' light is the Hush's bane.
+      const holy = ab.element === 'holy';
+      const weak = ab.element !== 'none' && ab.element !== 'physical' && t.def.weakness.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy');
+      const resist = ab.element !== 'none' && ab.element !== 'physical' && (t.def.resists?.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy') ?? false);
       // gadgets are machines: flat power, no Vibe scaling, defense pierced
       const raw =
         ab.kind === 'gadget'
           ? Math.max(1, Math.round(ab.power * (0.9 + Math.random() * 0.2)))
           : vibeDamage(ab.power, this.heroVibeS(h), Math.random);
-      const dmg = applyWeakness(raw, weak);
+      const dmg = ab.kind === 'gadget' ? applyWeakness(raw, weak) : applyElement(raw, { weak, resist, holy });
       // Vibe Fire burns the Tick's latch away (§A6 Boss 1) — and so does
       // the OLD LIGHT (S12b/ADR-035, §A6 amended): the crater awakening is
       // the diegetic tutorial for the fight that follows it
@@ -1527,11 +1629,43 @@ export class BattleScene extends Phaser.Scene {
         await this.print(BATTLE_TEXT.gold_crack);
       }
       await this.damageEnemy(t, dmg, weak, undefined, ab.kind === 'gadget' ? 'physical' : 'vibe');
+      // S-Mia: the on-hit enemy statuses ride the damage (the switch above let
+      // these fall through). burn = Fire's DoT (γ+); frozen = Freeze's skip-lock,
+      // boss-capped via mindImmune; paralyzed = Volt's disruption, boss-capped too.
+      if (t.alive) await this.applyOnHitStatus(h, t, ab, tier);
     }
     return true;
     } finally {
       // however the cast resolved, the caster walks back to their card
       if (onStage) await this.stageReturn(h);
+    }
+  }
+
+  /** S-Mia: the on-hit enemy statuses a DAMAGE spell rides (the switch let these
+   *  fall through to the damage path). burn = Fire's DoT (γ+); frozen = Freeze's
+   *  1-turn skip-lock; paralyzed = Volt's disruption. `frozen` and `paralyzed`
+   *  honor the boss control-cap (mindImmune) EXACTLY like Jay's puppet — control
+   *  is devastating on packs, capped on bosses, never an "I win" on a boss. */
+  private async applyOnHitStatus(h: HeroUnit, e: EnemyUnit, ab: AbilityDef, tier: number): Promise<void> {
+    if (ab.status === 'burn') {
+      e.burn = BURN_TURNS;
+      await this.print(this.fill(BATTLE_TEXT.burn_on, h.hero.name, e));
+    } else if (ab.status === 'frozen') {
+      if (mindImmune(e.def)) {
+        await this.print(this.fill(BATTLE_TEXT.control_capped, h.hero.name, e));
+      } else if (frozenLands(tier, Math.random)) {
+        e.frozen = 1;
+        await this.print(this.fill(BATTLE_TEXT.frozen_on, h.hero.name, e));
+      } else {
+        await this.print(this.fill(BATTLE_TEXT.frozen_shrug, h.hero.name, e));
+      }
+    } else if (ab.status === 'paralyzed') {
+      if (mindImmune(e.def)) {
+        await this.print(this.fill(BATTLE_TEXT.control_capped, h.hero.name, e));
+      } else {
+        e.paralyzed = 3;
+        await this.print(this.fill(BATTLE_TEXT.enemy_paralyzed_on, h.hero.name, e));
+      }
     }
   }
 
@@ -1812,6 +1946,11 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (cls === 'physical' && e.shield > 0) dmg = Math.max(1, Math.floor(dmg / 2));
+    // S-Mia: the focus-fire amplifier — `exposed` (Hush Hex, ×1.3) stacks
+    // multiplicatively with `marked` (Milo/Pippa, ×1.25). EVERY incoming hit
+    // reads it (bash, vibe, pray, the burn tick) — the OUTGOING mirror of Jay's
+    // ward, applied here PARALLEL to mitigateIncoming, never inside it.
+    dmg = applyFocus(dmg, { exposed: e.exposed > 0, marked: e.marked > 0 });
     e.hp = Math.max(0, e.hp - dmg);
     // floating damage popup (the S10 popFoe idiom) + the printed line —
     // a SMAAAASH combo hands in its one assembled EB line instead (S11b)
@@ -1900,6 +2039,18 @@ export class BattleScene extends Phaser.Scene {
         if (this.ended) return;
         continue;
       }
+      // S-Mia FREEZE: a frozen foe loses its next turn outright (1-turn lockdown,
+      // consumed here). Freeze's control identity — devastating, boss-capped.
+      if (e.frozen > 0) {
+        e.frozen = 0;
+        await this.print(this.fill(BATTLE_TEXT.frozen_skip, '', e));
+        continue;
+      }
+      // S-Mia VOLT: a paralyzed foe rolls to skip (the hero-side paralyzed mirror)
+      if (e.paralyzed > 0 && paralyzedSkips(Math.random)) {
+        await this.print(this.fill(BATTLE_TEXT.enemy_paralyzed_skip, '', e));
+        continue;
+      }
       // §A4.8 on the enemy side: sleepers snooze through the round
       if (e.asleep > 0) {
         if (asleepWakes(Math.random)) {
@@ -1956,7 +2107,7 @@ export class BattleScene extends Phaser.Scene {
           // Flowing Step: the shared pre-damage MISS gate — a flowing monk slips
           // the hit entirely (routes through live Speed/Luck; Pippa's evasion
           // will share this seam). Read off the hero's status BEFORE any damage.
-          if (target.status.flowing > 0 && flowingDodge(this.heroSpeedS(target), heroLuck(target.hero), Math.random)) {
+          if (target.status.flowing > 0 && flowingDodge(this.heroSpeedS(target), this.heroLuckS(target), Math.random)) {
             await this.print(this.fill(BATTLE_TEXT.flowing_dodge, '', e, target.hero.name));
             break;
           }
@@ -2179,6 +2330,8 @@ export class BattleScene extends Phaser.Scene {
       // Dorin's stances tick down and announce their fade beside the wards
       if (s.braced > 0 && --s.braced === 0) await this.print(this.fill(BATTLE_TEXT.braced_off, h.hero.name));
       if (s.flowing > 0 && --s.flowing === 0) await this.print(this.fill(BATTLE_TEXT.flowing_off, h.hero.name));
+      // S-Mia LUCKY STAR fades the steeled way (read at heroLuckS, ticked here)
+      if (s.lucky > 0 && --s.lucky === 0) await this.print(this.fill(BATTLE_TEXT.lucky_off, h.hero.name));
       if (s.productive > 0 && --s.productive === 0) {
         await this.print(`${h.hero.name} remembered it's summer. Offense is back!`);
       }
@@ -2188,6 +2341,16 @@ export class BattleScene extends Phaser.Scene {
       if (e.crying > 0) e.crying--;
       if (e.hushed > 0) e.hushed--;
       if (e.shield > 0) e.shield--;
+      if (e.paralyzed > 0 && --e.paralyzed === 0) await this.print(this.fill(BATTLE_TEXT.enemy_paralyzed_off, '', e));
+      // S-Mia BURN: Fire's DoT chips at end of round (~6% max HP, min 4) — and
+      // the chip rides `exposed` (the chip-and-amplify combo) through damageEnemy.
+      if (e.burn > 0) {
+        e.burn--;
+        await this.damageEnemy(e, burnTick(e.def.hp), false, this.fill(BATTLE_TEXT.burn_tick, '', e), 'vibe');
+        if (e.burn === 0 && e.alive) await this.print(this.fill(BATTLE_TEXT.burn_off, '', e));
+      }
+      // S-Mia HUSH HEX: the ×1.3 amplifier fades
+      if (e.exposed > 0 && --e.exposed === 0) await this.print(this.fill(BATTLE_TEXT.exposed_off, '', e));
       // S16 MIND WARP wears off — the borrowed voice slips free, tint clears
       if (e.puppet > 0 && --e.puppet === 0) {
         e.spr.clearTint();
