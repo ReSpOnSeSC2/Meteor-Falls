@@ -166,12 +166,28 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // Milo, her moves are competence not magic, so they ride kind 'physical'
     // at 0 PP. The statuses below are her Ch.5 battle hooks (the support
     // mechanics wire in when she joins); the faces reuse existing fx families.
-    A({ id: 'pinpoint_mark', name: 'Pinpoint Mark', kind: 'physical', pp: 0, power: 0, target: 'ally', element: 'none', status: 'marked', text: "{user} marked the shot — the next ally hit can't miss!", fx: 'pinpoint_mark' }),
+    A({ id: 'pinpoint_mark', name: 'Pinpoint Mark', kind: 'physical', pp: 0, power: 0, target: 'enemy', element: 'none', status: 'marked', text: "{user} marked the shot — now the party can't miss it!", fx: 'pinpoint_mark' }),
     A({ id: 'royal_rally', name: 'Royal Rally', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'rally', text: '{user} called the rally — the party stands quick and lucky!', fx: 'royal_rally' }),
     A({ id: 'pocket_patch', name: 'Pocket Patch', kind: 'physical', pp: 0, power: 35, heal: true, target: 'ally', element: 'none', status: 'cure', text: '{user} patched an ally up — needle, thread, and a clean bandage!', fx: 'pocket_patch' }),
     A({ id: 'scale_step', name: 'Scale Step', kind: 'physical', pp: 0, power: 0, target: 'self', element: 'none', status: 'evasion', text: '{user} stepped to thimble-scale — and left a decoy standing!', fx: 'scale_step' }),
     A({ id: 'big_little_focus', name: 'Big-Little Focus', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'focus', text: '{user} and the party found the big-little focus!', fx: 'big_little_focus' }),
     A({ id: 'bellwether', name: 'Bellwether', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'morale', text: '{user} rang the bellwether — the next prayer will carry!', fx: 'bellwether' }),
+
+    // ---- Pippa, DOUBLED (S15h+ — "The Page's Full Brief"). Six new tactical
+    // moves take her to ~12, all kind 'physical'/0 PP (competence, not the old
+    // light — none scale on Vibe). They deepen the support/control loop: marks
+    // make the big kids reliable AND set up party AoE turns; rally/focus/morale
+    // lift the team; field medicine keeps the no-magic kids covering upkeep; and
+    // guarded/rattled answer telegraphed boss turns without a drop of magic.
+    // Every face REUSES an existing fx family (scan / sparkle_rain / barrier).
+    // Voice: precise, diplomatic, furious when called adorable — battle lines
+    // read like the minutes of a meeting ("Noted. Marked. Proceed.").
+    A({ id: 'volley_mark', name: 'Volley Mark', kind: 'physical', pp: 0, power: 0, target: 'enemies', element: 'none', status: 'marked', text: '{user} marked the whole row. "Noted. Marked. Proceed."', fx: 'volley_mark' }),
+    A({ id: 'diplomatic_immunity', name: 'Diplomatic Immunity', kind: 'physical', pp: 0, power: 0, target: 'ally', element: 'none', status: 'guarded', text: '{user} stepped in front. "I will be taking that one."', fx: 'diplomatic_immunity' }),
+    A({ id: 'field_dressing', name: 'Field Dressing', kind: 'physical', pp: 0, power: 90, heal: true, target: 'allies', element: 'none', status: 'cure', text: '{user} worked the line — needle, thread, and a stern word.', fx: 'field_dressing' }),
+    A({ id: 'stern_decree', name: 'Stern Decree', kind: 'physical', pp: 0, power: 0, target: 'enemies', element: 'none', status: 'rattled', text: '{user} read them the decree. The room went small and sorry.', fx: 'stern_decree' }),
+    A({ id: 'standing_ovation', name: 'Standing Ovation', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'rally', text: '{user} called the house to its feet — GO!', fx: 'standing_ovation' }),
+    A({ id: 'the_minutes', name: 'The Minutes', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'focus', text: '{user} took the minutes mid-disaster — and corrected the record.', fx: 'the_minutes' }),
   ].map((a) => [a.id, a]),
 );
 

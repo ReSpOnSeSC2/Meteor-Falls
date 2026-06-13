@@ -164,15 +164,25 @@ export const HEROES: Record<HeroId, HeroDef> = {
     growth: { offense: 1.4, defense: 1.5, speed: 1.8, guts: 0.9, vibe: 0, luck: 1.4 },
     hp: { base: 24, lin: 5.0, quad: 0.06 },
     pp: { base: 0, lin: 0, quad: 0 },
-    // §A3: three abilities arrive WHEN SHE JOINS (Ch.5) — the on-join support
+    // §A3: four abilities arrive WHEN SHE JOINS (Ch.5) — the on-join support
     // kit — and Big-Little Focus is the Ch.5 build with Milo (a built ability,
-    // not an awakening). Scale Step (L30) and Bellwether (L44) come later.
+    // not an awakening).
+    // S15h+ ("The Page's Full Brief"): her kit roughly DOUBLES (6 → 12). She has
+    // NO Vibe → NO awakenings; every new move is a level unlock (she earns her
+    // brief through service), spanning ~L20 (the focus-fire enablers) to ~L40.
+    // Scale Step (L30) and Bellwether (L44) keep their canon rows.
     unlocks: [
       { level: 1, ability: 'pinpoint_mark' },
       { level: 1, ability: 'royal_rally' },
       { level: 1, ability: 'pocket_patch' },
       { level: 1, ability: 'big_little_focus' },
+      { level: 20, ability: 'volley_mark' }, // mark the WHOLE row — the party AoE enabler
+      { level: 22, ability: 'diplomatic_immunity' }, // step in front of the telegraphed hit
+      { level: 26, ability: 'field_dressing' }, // party heal + cleanse, 0-PP upkeep
       { level: 30, ability: 'scale_step' },
+      { level: 31, ability: 'stern_decree' }, // the no-magic Offense-down debuff
+      { level: 34, ability: 'standing_ovation' }, // Royal Rally++ — her pre-boss button
+      { level: 40, ability: 'the_minutes' }, // cleanse + focus — her comeback tool
       { level: 44, ability: 'bellwether' },
     ],
   },

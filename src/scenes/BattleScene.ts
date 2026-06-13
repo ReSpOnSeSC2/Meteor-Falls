@@ -145,6 +145,20 @@ import {
   FLOWING_SPEED,
   bracedCounter,
   flowingDodge,
+  MARKED_TURNS,
+  guaranteedHit,
+  RALLY_SPEED,
+  RALLY_LUCK,
+  RALLY_TURNS,
+  OVATION_TURNS,
+  FOCUS_TURNS,
+  EVASION_TURNS,
+  evasionDodges,
+  RATTLED_TURNS,
+  rattledDamage,
+  rattledSkips,
+  moraleTierUp,
+  moraleHeal,
 } from '../battle/formulas';
 import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
 import { glyphify } from '../ui/text';
@@ -194,6 +208,9 @@ interface EnemyUnit {
   /** S-Mia: Volt γ+ disruption on the enemy side — a paralyzed foe rolls to skip
    *  its turn (the hero-side paralyzed mirror), boss-capped via mindImmune. */
   paralyzed: number;
+  /** Pippa STERN DECREE: 'rattled' — the no-magic Offense-down. The foe's hits
+   *  deal ×0.8 and it has a small chance to be too cowed to act. */
+  rattled: number;
 }
 
 /** §A4.8 hero-side conditions — turns remaining (0 = clear) */
@@ -218,6 +235,16 @@ interface HeroStatus {
   flowing: number;
   /** S-Mia LUCKY STAR — temp +Luck (crit/SMAAASH + dodge), read the steeled way */
   lucky: number;
+  /** Pippa's tactical buffs (§A3, S15h+). rally = +Speed/+Luck (Royal Rally /
+   *  Standing Ovation); focus = the next physical hit can't miss (Big-Little
+   *  Focus / The Minutes); evasion = a high dodge each hit + a decoy that eats
+   *  the FIRST one; guarded = the next single-target hit is negated (Diplomatic
+   *  Immunity, until consumed). */
+  rally: number;
+  focus: number;
+  evasion: number;
+  decoy: number;
+  guarded: number;
 }
 
 const NO_HERO_STATUS = (): HeroStatus => ({
@@ -235,6 +262,11 @@ const NO_HERO_STATUS = (): HeroStatus => ({
   braced: 0,
   flowing: 0,
   lucky: 0,
+  rally: 0,
+  focus: 0,
+  evasion: 0,
+  decoy: 0,
+  guarded: 0,
 });
 
 interface HeroUnit {
@@ -357,6 +389,9 @@ export class BattleScene extends Phaser.Scene {
   /** §A4.5 SUNNY SIDE — sampled once at create; the counter burns at finish */
   private sunny = 1;
   private letterAt = 0;
+  /** Pippa BELLWETHER — a party-wide 'morale' charge (until consumed): the next
+   *  PRAY carries one tier better and the next party heal is amplified. */
+  private morale = false;
 
   constructor() {
     super('battle');
@@ -376,6 +411,7 @@ export class BattleScene extends Phaser.Scene {
     this.phase = null;
     this.sunny = 1;
     this.letterAt = 0;
+    this.morale = false;
   }
 
   create(): void {
@@ -499,6 +535,7 @@ export class BattleScene extends Phaser.Scene {
         exposed: 0,
         marked: 0,
         paralyzed: 0,
+        rattled: 0,
       });
     }
     await this.print(`${def.article} ${def.name}${n > 1 ? ` and ${n - 1} more` : ''} answered the call!`);
@@ -651,6 +688,7 @@ export class BattleScene extends Phaser.Scene {
         exposed: 0,
         marked: 0,
         paralyzed: 0,
+        rattled: 0,
       });
     });
   }
@@ -919,6 +957,9 @@ export class BattleScene extends Phaser.Scene {
     const hasPray = all.includes('pray');
     const hasVibe = HEROES[h.hero.id].unlocks.some((u) => ABILITIES[u.ability]?.kind === 'vibe');
     const hasGadgets = all.some((id) => ABILITIES[id]?.kind === 'gadget' && id !== 'repair');
+    // Pippa's command row: her kit is kind 'physical' (competence, not the old
+    // light) — "Tactics" replaces the Vibe she never had (§A3, the Milo shape)
+    const hasTactics = all.some((id) => ABILITIES[id]?.kind === 'physical');
     if (hasPray && this.cfg.prayTutorial && !this.prayHintShown) {
       this.prayHintShown = true;
       await this.print(this.fill(BATTLE_TEXT.pray_hint, name));
@@ -927,6 +968,7 @@ export class BattleScene extends Phaser.Scene {
       const options = ['Bash'];
       if (hasVibe) options.push('Vibe');
       if (hasGadgets) options.push('Gadgets');
+      if (hasTactics) options.push('Tactics');
       if (hasPray) options.push('Pray');
       options.push('Goods', 'Defend');
       if (!this.cfg.boss) options.push('Run');
@@ -948,6 +990,11 @@ export class BattleScene extends Phaser.Scene {
       }
       if (options[pick] === 'Gadgets') {
         const ok = await this.heroGadgets(h);
+        if (ok) return true;
+        continue;
+      }
+      if (options[pick] === 'Tactics') {
+        const ok = await this.heroTactics(h);
         if (ok) return true;
         continue;
       }
@@ -1105,8 +1152,14 @@ export class BattleScene extends Phaser.Scene {
 
   private async heroBash(h: HeroUnit, target: EnemyUnit): Promise<void> {
     const name = h.hero.name;
-    // Crying: can't aim (§A4.8) — the swing never makes it off the card
-    if (h.status.crying > 0 && cryingMisses(Math.random)) {
+    // PIPPA: a MARKED foe can't be missed, and a FOCUSED hero can't whiff its
+    // next physical swing (Big-Little Focus / The Minutes). The guarantee skips
+    // the crying-miss gate; focus is consumed by the swing it makes good.
+    const guaranteed = guaranteedHit({ marked: target.marked > 0, focus: h.status.focus > 0 });
+    if (h.status.focus > 0) h.status.focus = 0;
+    // Crying: can't aim (§A4.8) — the swing never makes it off the card (unless
+    // the shot was marked / the hero focused, in which case it lands true)
+    if (!guaranteed && h.status.crying > 0 && cryingMisses(Math.random)) {
       h.bust.poseFor('lunge', 520);
       await this.print(this.fill(BATTLE_TEXT.bash, name));
       await this.print(this.fill(BATTLE_TEXT.crying_miss, name));
@@ -1211,10 +1264,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** Flowing Step ('flowing') reads here as +Speed — run chance + turn tempo
-   *  pick it up the steeled way (and it feeds the dodge gate in enemyAct). */
+   *  pick it up the steeled way (and it feeds the dodge gate in enemyAct).
+   *  Pippa's RALLY adds +Speed on top (quick and lucky), the same temp-boost way. */
   private heroSpeedS(h: HeroUnit): number {
     const flowing = h.status.flowing > 0 ? FLOWING_SPEED : 0;
-    return Math.round((heroSpeed(h.hero) + flowing) * this.sunny);
+    const rally = h.status.rally > 0 ? RALLY_SPEED : 0;
+    return Math.round((heroSpeed(h.hero) + flowing + rally) * this.sunny);
   }
 
   private heroVibeS(h: HeroUnit): number {
@@ -1226,7 +1281,9 @@ export class BattleScene extends Phaser.Scene {
    *  SMAAASH/crit roll and the dodge gate while it holds. */
   private heroLuckS(h: HeroUnit): number {
     const lucky = h.status.lucky > 0 ? LUCKY_LUCK : 0;
-    return Math.round((heroLuck(h.hero) + lucky) * this.sunny);
+    // Pippa's RALLY adds +Luck on top (quick and lucky) — the same temp-boost way
+    const rally = h.status.rally > 0 ? RALLY_LUCK : 0;
+    return Math.round((heroLuck(h.hero) + lucky + rally) * this.sunny);
   }
 
   /* ---------------- Vibe ---------------- */
@@ -1267,6 +1324,20 @@ export class BattleScene extends Phaser.Scene {
   private async heroGadgets(h: HeroUnit): Promise<boolean> {
     const ids = availableAbilities(h.hero.id, h.hero.level, (f) => GS.flag(f) === true).filter(
       (id) => ABILITIES[id]?.kind === 'gadget' && id !== 'repair',
+    );
+    if (ids.length === 0) return false;
+    const labels = ids.map((id) => ABILITIES[id].name);
+    const pick = await this.dlg.ask([...labels, 'Back'], { cancelIndex: labels.length });
+    if (pick >= labels.length) return false;
+    return this.castAbility(h, ABILITIES[ids[pick]]);
+  }
+
+  /** Pippa's command (§A3, S15h+: NO Vibe, NO PP — her kit is competence, not
+   *  the old light). Mirrors heroGadgets, filtered to kind 'physical': marks,
+   *  rally, field medicine, the diplomatic reads. */
+  private async heroTactics(h: HeroUnit): Promise<boolean> {
+    const ids = availableAbilities(h.hero.id, h.hero.level, (f) => GS.flag(f) === true).filter(
+      (id) => ABILITIES[id]?.kind === 'physical',
     );
     if (ids.length === 0) return false;
     const labels = ids.map((id) => ABILITIES[id].name);
@@ -1348,11 +1419,28 @@ export class BattleScene extends Phaser.Scene {
     // ---- heals
     if (ab.heal) {
       await this.fx.play(ab.fx, ctx);
+      // Pippa BELLWETHER: a held 'morale' charge amplifies the next party heal
+      // (×1.5), consumed once however many allies it touches.
+      const carried = this.morale;
       for (const t of allyTargets) {
-        const amount = vibeHeal(ab.power, this.heroVibeS(h), Math.random);
+        let amount = vibeHeal(ab.power, this.heroVibeS(h), Math.random);
+        if (carried) amount = moraleHeal(amount);
         this.healHero(t, amount);
         AUDIO.sfx('heal');
         await this.print(`${t.hero.name} recovered about ${amount} HP!`);
+        // Pippa's patches CLEAR status too — Pocket Patch / Field Dressing carry
+        // 'cure', so the no-magic kids cover upkeep AND cleanse (0 PP).
+        if (ab.status === 'cure') {
+          t.status.sunburn = 0;
+          t.status.crying = 0;
+          t.status.asleep = 0;
+          t.status.paralyzed = 0;
+          t.status.hushed = 0;
+        }
+      }
+      if (carried) {
+        this.morale = false;
+        await this.print(this.fill(BATTLE_TEXT.morale_heal, name));
       }
       return true;
     }
@@ -1589,6 +1677,95 @@ export class BattleScene extends Phaser.Scene {
         }
         return true;
       }
+      // ---- PIPPA's tactical kit (§A3, S15h+: NO Vibe, NO PP — competence, not
+      // the old light). The mark makes the big kids reliable AND sets up party
+      // AoE turns; rally/focus lift the team; evasion/guarded are defensive reads;
+      // rattled is the no-magic debuff; morale feeds Mia's faith. Her turn ENABLES
+      // a bigger party turn — the central support loop.
+      case 'marked': {
+        // Pinpoint (one shot) / Volley (the whole row): a marked foe can't be
+        // missed by the party AND takes ×1.25 (applyFocus reads e.marked at
+        // damageEnemy). The focus-fire enabler for everyone's burst.
+        await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
+        for (const e of foeTargets) {
+          if (!e.alive) continue;
+          e.marked = MARKED_TURNS;
+          await this.print(this.fill(BATTLE_TEXT.marked_on, name, e));
+        }
+        return true;
+      }
+      case 'rally': {
+        // Royal Rally (3 turns) / Standing Ovation (5 — her pre-boss button):
+        // +Speed and +Luck party-wide (read at heroSpeedS/heroLuckS the steeled
+        // way; her Luck flavor made mechanically real).
+        await this.fx.play(ab.fx, ctx);
+        const turns = ab.id === 'standing_ovation' ? OVATION_TURNS : RALLY_TURNS;
+        for (const t of allyTargets) {
+          t.status.rally = turns;
+          await this.print(this.fill(BATTLE_TEXT.rally_on, name, undefined, t.hero.name));
+        }
+        return true;
+      }
+      case 'focus': {
+        // Big-Little Focus / The Minutes: the next physical hit can't miss. The
+        // Minutes ALSO cleanses a party debuff first — her signature comeback tool.
+        await this.fx.play(ab.fx, ctx);
+        const cleanse = ab.id === 'the_minutes';
+        for (const t of allyTargets) {
+          if (cleanse) {
+            t.status.sunburn = 0;
+            t.status.crying = 0;
+            t.status.asleep = 0;
+            t.status.paralyzed = 0;
+            t.status.hushed = 0;
+          }
+          t.status.focus = FOCUS_TURNS;
+          await this.print(this.fill(cleanse ? BATTLE_TEXT.minutes_on : BATTLE_TEXT.focus_on, name, undefined, t.hero.name));
+        }
+        return true;
+      }
+      case 'evasion': {
+        // Scale Step — the thimble-scale gimmick: a decoy eats the FIRST incoming
+        // hit outright, then a high dodge each hit (routes through live Speed/Luck).
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          t.status.evasion = EVASION_TURNS;
+          t.status.decoy = 1;
+          await this.print(this.fill(BATTLE_TEXT.evasion_on, name, undefined, t.hero.name));
+        }
+        return true;
+      }
+      case 'guarded': {
+        // Diplomatic Immunity — she steps in front: the next single-target hit on
+        // the chosen ally is negated (one charge, until consumed). Protect the
+        // squishy caster on a telegraphed turn — a defensive read, not a reflex.
+        await this.fx.play(ab.fx, ctx);
+        for (const t of allyTargets) {
+          t.status.guarded = 1;
+          await this.print(this.fill(BATTLE_TEXT.guarded_on, name, undefined, t.hero.name));
+        }
+        return true;
+      }
+      case 'rattled': {
+        // Stern Decree — the furious diplomat: enemy Offense down (its hits ×0.8)
+        // plus a small chance to be too cowed to act. Control without magic.
+        await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
+        for (const e of foeTargets) {
+          if (!e.alive) continue;
+          e.rattled = RATTLED_TURNS;
+          await this.print(this.fill(BATTLE_TEXT.rattled_on, name, e));
+        }
+        return true;
+      }
+      case 'morale': {
+        // Bellwether — rings the party up: the next PRAY carries one tier better
+        // and the next party heal is amplified (consumed at those seams). Feeds
+        // Mia's faith mechanic — cross-character synergy is Pippa's identity.
+        await this.fx.play(ab.fx, ctx);
+        this.morale = true;
+        await this.print(this.fill(BATTLE_TEXT.morale_on, name));
+        return true;
+      }
     }
 
     // ---- Spy: the revealed-stats stamp (§A3 — HP + weakness)
@@ -1681,8 +1858,18 @@ export class BattleScene extends Phaser.Scene {
     const at = (): FxTarget => this.stage.point();
     await this.fx.play('pray', { caster: at() });
     await this.print(this.fill(ABILITIES.pray.text, h.hero.name));
-    const tier = this.prayPin ?? rollPray(h.hero.level, this.heroGutsS(h), Math.random);
+    let tier = this.prayPin ?? rollPray(h.hero.level, this.heroGutsS(h), Math.random);
     this.prayPin = null;
+    // PIPPA BELLWETHER: a held 'morale' charge carries the prayer one tier better
+    // (consumed) — the no-magic page feeding Mia's faith (cross-character synergy).
+    if (this.morale) {
+      this.morale = false;
+      const up = moraleTierUp(tier);
+      if (up !== tier) {
+        tier = up;
+        await this.print(BATTLE_TEXT.morale_pray);
+      }
+    }
     await this.print(this.fill(PRAY_TEXT[tier], h.hero.name));
     const aliveE = this.enemies.filter((e) => e.alive);
     // grace reaches the standing; revival stays with hospitals & rare items (§A4.7)
@@ -2054,6 +2241,11 @@ export class BattleScene extends Phaser.Scene {
         await this.print(this.fill(BATTLE_TEXT.enemy_paralyzed_skip, '', e));
         continue;
       }
+      // PIPPA STERN DECREE: a rattled foe may be too cowed to act (small chance)
+      if (e.rattled > 0 && rattledSkips(Math.random)) {
+        await this.print(this.fill(BATTLE_TEXT.rattled_skip, '', e));
+        continue;
+      }
       // §A4.8 on the enemy side: sleepers snooze through the round
       if (e.asleep > 0) {
         if (asleepWakes(Math.random)) {
@@ -2107,9 +2299,28 @@ export class BattleScene extends Phaser.Scene {
           // S16: an attack declares its CLASS (default physical). The element
           // drives BOTH the impact face and which of Jay's wards answers it.
           const element = move.element ?? 'physical';
+          // PIPPA DIPLOMATIC IMMUNITY: a 'guarded' ally is stepped in front of —
+          // the next single-target hit is negated outright (one charge, consumed).
+          if (target.status.guarded > 0) {
+            target.status.guarded = 0;
+            await this.print(this.fill(BATTLE_TEXT.guarded_negate, '', e, target.hero.name));
+            break;
+          }
+          // PIPPA SCALE STEP: the decoy eats the FIRST incoming hit outright...
+          if (target.status.decoy > 0) {
+            target.status.decoy = 0;
+            await this.print(this.fill(BATTLE_TEXT.decoy_miss, '', e, target.hero.name));
+            break;
+          }
+          // ...then a high thimble-scale dodge each hit while evasion holds
+          // (routes through live Speed/Luck — she is absurdly lucky).
+          if (target.status.evasion > 0 && evasionDodges(this.heroSpeedS(target), this.heroLuckS(target), Math.random)) {
+            await this.print(this.fill(BATTLE_TEXT.evasion_dodge, '', e, target.hero.name));
+            break;
+          }
           // Flowing Step: the shared pre-damage MISS gate — a flowing monk slips
-          // the hit entirely (routes through live Speed/Luck; Pippa's evasion
-          // will share this seam). Read off the hero's status BEFORE any damage.
+          // the hit entirely (routes through live Speed/Luck). Read off the
+          // hero's status BEFORE any damage.
           if (target.status.flowing > 0 && flowingDodge(this.heroSpeedS(target), this.heroLuckS(target), Math.random)) {
             await this.print(this.fill(BATTLE_TEXT.flowing_dodge, '', e, target.hero.name));
             break;
@@ -2121,6 +2332,8 @@ export class BattleScene extends Phaser.Scene {
           // S14: and through the §A4.5 SUNNY SIDE seam; Stone Brow Stance's
           // 'braced' +Defense rides this read too (the temp-boost pattern).
           let dmg = physicalDamage(e.def.offense * (move.mult ?? 1), this.heroDefenseS(target), Math.random);
+          // PIPPA STERN DECREE: a rattled foe's Offense is down — its hit lands ×0.8
+          if (e.rattled > 0) dmg = rattledDamage(dmg);
           if (target.defending) dmg = Math.max(1, Math.floor(dmg / 2));
           // S16 LAYERED WARDS (§A3 amended) — Shield halves physical, Ward halves
           // elemental, Reflect & Mirror halve everything AND throw some back, with
@@ -2335,6 +2548,16 @@ export class BattleScene extends Phaser.Scene {
       if (s.flowing > 0 && --s.flowing === 0) await this.print(this.fill(BATTLE_TEXT.flowing_off, h.hero.name));
       // S-Mia LUCKY STAR fades the steeled way (read at heroLuckS, ticked here)
       if (s.lucky > 0 && --s.lucky === 0) await this.print(this.fill(BATTLE_TEXT.lucky_off, h.hero.name));
+      // PIPPA's tactical buffs tick down beside the rest. rally (+Speed/+Luck)
+      // and focus (guaranteed next swing) announce their fade; evasion clears its
+      // leftover decoy on the way out. 'guarded' is until-consumed — it never
+      // ticks (it holds until a hit lands on it or the battle ends).
+      if (s.rally > 0 && --s.rally === 0) await this.print(this.fill(BATTLE_TEXT.rally_off, h.hero.name));
+      if (s.focus > 0 && --s.focus === 0) await this.print(this.fill(BATTLE_TEXT.focus_off, h.hero.name));
+      if (s.evasion > 0 && --s.evasion === 0) {
+        s.decoy = 0;
+        await this.print(this.fill(BATTLE_TEXT.evasion_off, h.hero.name));
+      }
       if (s.productive > 0 && --s.productive === 0) {
         await this.print(`${h.hero.name} remembered it's summer. Offense is back!`);
       }
@@ -2354,6 +2577,10 @@ export class BattleScene extends Phaser.Scene {
       }
       // S-Mia HUSH HEX: the ×1.3 amplifier fades
       if (e.exposed > 0 && --e.exposed === 0) await this.print(this.fill(BATTLE_TEXT.exposed_off, '', e));
+      // PIPPA: the mark fades (the party's free-hit window closes), and Stern
+      // Decree's Offense-down lifts — the room straightens its tie.
+      if (e.marked > 0 && --e.marked === 0) await this.print(this.fill(BATTLE_TEXT.marked_off, '', e));
+      if (e.rattled > 0 && --e.rattled === 0) await this.print(this.fill(BATTLE_TEXT.rattled_off, '', e));
       // S16 MIND WARP wears off — the borrowed voice slips free, tint clears
       if (e.puppet > 0 && --e.puppet === 0) {
         e.spr.clearTint();

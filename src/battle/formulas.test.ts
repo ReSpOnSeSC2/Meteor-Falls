@@ -632,3 +632,83 @@ describe("Mia grows to ~30 spells (Ability Expansion)", () => {
     expect(HEROES.faye.unlocks.some((u) => u.ability === 'pray' && u.level === 1)).toBe(true);
   });
 });
+
+/* ================= PIPPA ("The Page's Full Brief") ================= */
+
+describe('PIPPA — the page\'s tactical kit (NO Vibe, NO PP: competence, not magic)', () => {
+  it('marked makes a party hit UNMISSABLE and AMPLIFIED (×1.25, shared with the focus seam)', () => {
+    // the guaranteed-hit gate opens on either a marked foe or a focused hero
+    expect(F.guaranteedHit({ marked: true })).toBe(true);
+    expect(F.guaranteedHit({ focus: true })).toBe(true);
+    expect(F.guaranteedHit({})).toBe(false);
+    // and the amplify rides the existing focus-fire multiplier (×1.25), so a
+    // marked hit is unmissable AND bigger — the focus-fire enabler
+    expect(F.applyFocus(100, { marked: true })).toBe(Math.round(100 * F.MARKED_MUL));
+    expect(F.applyFocus(100, { marked: true })).toBeGreaterThan(100);
+    expect(F.MARKED_TURNS).toBeGreaterThan(0);
+  });
+
+  it('rally boosts Speed AND Luck (read the steeled way), Ovation lasting longer', () => {
+    expect(F.RALLY_SPEED).toBeGreaterThan(0);
+    expect(F.RALLY_LUCK).toBeGreaterThan(0);
+    // Standing Ovation is the Royal Rally++ — a longer hold (her pre-boss button)
+    expect(F.OVATION_TURNS).toBeGreaterThan(F.RALLY_TURNS);
+  });
+
+  it('focus guarantees the next swing — the big-little combo (consumed, 2 turns)', () => {
+    expect(F.guaranteedHit({ focus: true })).toBe(true);
+    expect(F.FOCUS_TURNS).toBeGreaterThan(0);
+  });
+
+  it('evasion is a HIGH dodge that scales with her absurd Luck (evasionDodges)', () => {
+    // Pippa is the luckiest hero (base Luck 9) — her dodge floor is genuinely high
+    const pippa = makeHeroState('pippa', 30);
+    const chance = Math.min(0.85, 0.55 + (heroSpeed(pippa) + heroLuck(pippa)) / 300);
+    expect(chance).toBeGreaterThan(0.55); // her Speed/Luck lift it above the floor
+    expect(F.evasionDodges(heroSpeed(pippa), heroLuck(pippa), () => chance - 0.01)).toBe(true);
+    expect(F.evasionDodges(heroSpeed(pippa), heroLuck(pippa), () => chance + 0.01)).toBe(false);
+    expect(F.EVASION_TURNS).toBeGreaterThan(0);
+  });
+
+  it('rattled (Stern Decree) lowers enemy damage ×0.8 and rolls a small skip', () => {
+    expect(F.rattledDamage(100)).toBe(80);
+    expect(F.rattledDamage(1)).toBe(1); // never below 1
+    expect(F.rattledDamage(100)).toBeLessThan(100); // the no-magic Offense-down is real
+    expect(F.rattledSkips(() => F.RATTLED_SKIP_CHANCE - 0.01)).toBe(true);
+    expect(F.rattledSkips(() => F.RATTLED_SKIP_CHANCE + 0.01)).toBe(false);
+    expect(F.RATTLED_TURNS).toBeGreaterThan(0);
+  });
+
+  it('morale (Bellwether) carries the next PRAY one tier better and amplifies a heal', () => {
+    // the prayer rings one rung brighter — the cross-character feed to Mia's faith
+    expect(F.moraleTierUp('nothing')).toBe('good');
+    expect(F.moraleTierUp('good')).toBe('wonderful');
+    expect(F.moraleTierUp('wonderful')).toBe('miraculous');
+    // ...but it can't exceed the canon ceiling
+    expect(F.moraleTierUp('miraculous')).toBe('miraculous');
+    // and the next party heal lands ×1.5 (never below 1)
+    expect(F.moraleHeal(100)).toBe(150);
+    expect(F.moraleHeal(1)).toBe(2);
+    expect(F.MORALE_HEAL_MUL).toBeGreaterThan(1);
+  });
+
+  it('availableAbilities(pippa) returns ~12 ids — all LEVEL unlocks, no awakenings', () => {
+    // no Vibe → no awakenings: the flag source can never grant her anything
+    const ids = availableAbilities('pippa', 99, () => false);
+    expect(new Set(ids).size).toBe(ids.length); // unique
+    expect(ids.length).toBe(12);
+    // the six new tactical moves are all reachable by leveling
+    for (const id of [
+      'volley_mark', 'standing_ovation', 'field_dressing',
+      'diplomatic_immunity', 'stern_decree', 'the_minutes',
+    ]) {
+      expect(ids).toContain(id);
+    }
+    // and her on-join four are still there
+    for (const id of ['pinpoint_mark', 'royal_rally', 'pocket_patch', 'big_little_focus']) {
+      expect(ids).toContain(id);
+    }
+    // even with EVERY flag set, nothing extra appears (she earns her brief by service)
+    expect(availableAbilities('pippa', 99, () => true).length).toBe(12);
+  });
+});
