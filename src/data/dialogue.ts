@@ -1680,6 +1680,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'THE IDOL OF THE GILDED GRIN would like your everything!',
   ],
   idol_grin_wider: ['the grin gets wider. there was no room for that. it found room.'],
+  // S16: the Grin's half-dead desperation blow — the telegraph one beat before
+  // Jay's wall answers it (the_wall_that_answers; awake_the_wall_that_answers).
+  idol_gathering: [
+    'The Idol stops grinning. For the first time, it looks AFRAID.',
+    'It drags every fleck of gold in the room into its hands — the corn-light, the wool-light, the late sun — all of it, into one blow too wide to dodge.',
+    'It comes down like a thrown sheet.',
+  ],
   idol_form_solid: ['The Idol seals over — SOLID GOLD, seamless and smug! (Swings will bounce. The old light won\'t.)'],
   idol_form_hollow: [
     'The gold goes dark — and the inside is NOTHING. HOLLOW!',

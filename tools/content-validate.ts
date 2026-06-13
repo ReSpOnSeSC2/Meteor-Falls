@@ -1092,6 +1092,7 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
       for (const a of ph.actions) {
         if (a.kind === 'scriptLine' && !DIALOGUE[a.line]) fail('phase', `'${sc.boss}' phase '${ph.id}' → unknown dialogue '${a.line}'`);
         if (a.kind === 'summon' && !ENEMIES[a.enemy]) fail('phase', `'${sc.boss}' phase '${ph.id}' summons unknown enemy '${a.enemy}'`);
+        if (a.kind === 'awaken' && !AWAKENINGS[a.awakening]) fail('phase', `'${sc.boss}' phase '${ph.id}' → unknown awakening '${a.awakening}'`);
       }
     }
     if (sc.awakeningOnForm && !AWAKENINGS[sc.awakeningOnForm.awakening]) {

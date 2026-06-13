@@ -840,6 +840,12 @@ export const PhaseActionSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('setSpeedMul'), mul: z.number().positive() }),
   z.strictObject({ kind: z.literal('endBattleMercy') }),
   z.strictObject({ kind: z.literal('stunSelf'), turns: z.number().int().min(1) }),
+  /** S16 (ADR-035 extended): stage a hero AWAKENING at a scripted boss beat —
+   *  the §A6 generalization of `awakeningOnForm` to ANY trigger. The Gilded
+   *  Grin uses it for Jay's `the_wall_that_answers` (Power Shield Σ) at its
+   *  half-dead desperation blow. The scene routes it to battleAwakening; the
+   *  validator checks the awakening id exists. */
+  z.strictObject({ kind: z.literal('awaken'), awakening: z.string().min(1) }),
   /** S15g M3c: Whiskerzilla's Flat Bell rings → the boss is evasive until the
    *  bell breaks; the scene reads `evasion` the way it reads `speedMul`. */
   z.strictObject({ kind: z.literal('setEvasion'), on: z.boolean() }),

@@ -22,6 +22,7 @@ function recorder(): { fx: PhaseEffects; log: string[] } {
     returnStolen: () => void log.push('return'),
     endBattleMercy: () => void log.push('mercy'),
     partyStatus: (s, t) => void log.push(`status:${s}:${t}`),
+    awaken: (id) => void log.push(`awaken:${id}`),
   };
   return { fx, log };
 }
@@ -77,6 +78,17 @@ describe('THE GILDED GRIN — the §A6 Ch.2 swap, on its real script', () => {
     for (let t = 4; t <= 11; t++) await r.onBossTurnStart(); // hollow again at 11
     expect(r.form?.id).toBe('hollow');
     expect(r.awakeningDue()).toBeNull();
+  });
+
+  it("Jay's POWER SHIELD Σ awakens at the Grin's half-dead desperation blow — once (S16, ADR-035)", async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.gilded_grin, fx);
+    await r.onHpFrac(0.6); // still above the threshold — nothing yet
+    expect(log).toEqual([]);
+    await r.onHpFrac(0.44); // the desperation blow: telegraph, then the wall answers
+    expect(log).toEqual(['line:idol_gathering', 'awaken:the_wall_that_answers']);
+    await r.onHpFrac(0.2); // never twice — the moment fired once
+    expect(log).toEqual(['line:idol_gathering', 'awaken:the_wall_that_answers']);
   });
 
   it('a fresh form arrives whole — swapping clears any standing crack', async () => {
