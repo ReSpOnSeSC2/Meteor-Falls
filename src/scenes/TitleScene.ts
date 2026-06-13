@@ -65,6 +65,9 @@ export class TitleScene extends Phaser.Scene {
     // S13: the resort is COMPLETE AND STANDALONE ahead of Prompt 28 (the
     // Sprite Lab precedent) — dev builds reach it from the title
     if (import.meta.env.DEV) options.push('Costa Estrella (dev)');
+    // S15g: the LEVELKIT LAB walks generated drafts live (dev-only, the
+    // Sprite Lab precedent — never a player flow)
+    if (import.meta.env.DEV) options.push('Levelkit Lab (dev)');
     const pick = await dlg.ask(options);
     const choice = options[pick];
     if (choice === 'New Game') {
@@ -80,6 +83,10 @@ export class TitleScene extends Phaser.Scene {
       this.started = true;
       AUDIO.stopMusic();
       this.scene.start('overworld', { mapId: 'costa_estrella', x: 13 * 16 + 8, y: 14 * 16, facing: 'up' });
+    } else if (choice === 'Levelkit Lab (dev)') {
+      this.started = true;
+      AUDIO.stopMusic();
+      this.scene.start('levelkitlab');
     } else {
       this.started = true;
       AUDIO.stopMusic();

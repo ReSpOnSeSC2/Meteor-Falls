@@ -428,3 +428,24 @@ survivable, but the lesson stands).
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 24 | **The third playtest, on device** — walk Otterbrook at night and confirm no day-lit line at the screen top; sneak a roamer (green swirl) and get ambushed (red swirl); win a fight that levels twice and confirm each level waits for a press; talk to the pajama kid at night AND after dawn; talk to Biscuit on Hill Road right after the Tick falls; ride the 6:15 and watch the seated hero + the slow three-leg Brickton pan | ⬜ | ⬜ | rows 20–23 stay reserved for S14c–f; 25–27 for S15d–f |
+
+## S15g browser pre-flight — 2026-06-12, THE WORLD FORGE Movement One (ADR-044)
+
+Driven live on the dev server (`levelkitlab` reached directly via the scene
+manager, the Sprite Lab way). The LAB is dev-only; its drafts are injected
+into the RUNTIME MAPS registry for the walk and never touch the source the
+validator reads. Console clean (zero errors) across the whole session.
+
+| Check | Result |
+|---|---|
+| **THE LAB RENDERS THE READ** — `LEVELKIT LAB — zanzibel (seed 4104)`: grid 58×36, props 50, npcs 14, picnic 3, and the live ADR-012 overlay (street rows 6, avenue joins 3, block faces 2, negative space 5%) → **SWEEP: PASS (no exemptions)** in green | ✅ driven + screenshot |
+| **RECIPE CYCLE** — `</>` walks the eight sample recipes (zanzibel → brickmore_heights → …); the title + metrics recompute per recipe | ✅ driven (idx + title read back) |
+| **WALK A GENERATED CITY** — A on brickmore_heights injected the 64×42 city and launched the overworld on it: a real street grid (road + phase-shifted dashed centerline, full-height avenue, crosswalks), curbed sidewalks, the brick spine, role-slot NPCs adapted to live CAST sheets, trees/bench/market-stall, the player walking the sidewalk — the scene runtime never knew it was generated | ✅ driven + screenshot, zero console errors |
+| **DETERMINISM + ENVELOPE** — `npm run bench:map -- zanzibel`: 0.16ms/build over 200, deterministic=true, 58×36 = 2088 tiles / 50 props → WITHIN ENVELOPE | ✅ CLI |
+| `npm test` | ✅ validator (41 maps, 36 clean + 5 waived) + 317 vitest |
+
+### S15g device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 28 | **The forge, at thumb scale** — open the Levelkit Lab from the title's DEV menu; cycle to a generated TOWN (foggybottom) and a generated CITY (zanzibel), read the ADR-012 overlay (PASS) at phone size; reroll the seed live (^v) and watch the street feel change while the sweep stays green; WALK both drafts and confirm the streets/lanes read at thumb scale with no collision snags; `.shots/` of a town draft and a city draft | ⬜ | ⬜ | M2 extends this row with a dungeon draft + contact sheet once the grammars/forge land; rows 25–27 stay reserved for S15d–f |

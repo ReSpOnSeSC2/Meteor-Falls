@@ -1521,7 +1521,18 @@ the queue's S17/S18 prompts carry their inherited edits; validator +
 vitest green; browser loop and android:apk untouched.
 ```
 
-## Prompt S15g — THE WORLD FORGE (the levelkit, the dungeon grammars, the content forges & the chapter scaffold)
+## Prompt S15g — THE WORLD FORGE (the levelkit, the dungeon grammars, the content forges & the chapter scaffold) — ⏳ MOVEMENT ONE LANDED 2026-06-12 (ADR-044)
+
+> PROGRESS (2026-06-12): MOVEMENT ONE shipped complete and gate-green — the
+> deterministic levelkit (`src/levelkit/**`: 7 generators, named mulberry32
+> streams, recipe + `DraftMapDef` schemas), the LEVELKIT LAB (`levelkitlab`,
+> dev-only, walks drafts live with the ADR-012 metrics overlay + seed reroll),
+> the MAP QUALITY VALIDATOR (reachability + door-landing on every canon map,
+> 36 clean + 5 reasoned waivers), `npm run bench:map`, and the determinism +
+> ADR-012-by-construction proofs (40 vitest). NEXT: Movement Two (dungeon
+> grammars + encounter pressure → ADR-045), Movement Three (enemy/sprite/boss
+> forges → ADR-046), Movement Four (chapter manifests + scaffold → ADR-047).
+> Each ships COMPLETE on its movement seam (Appendix rule 2).
 
 > (Queued 2026-06-12 from the user's automation decree, captured verbatim:
 > "build these additional Procedural Automation features that we can use
@@ -1840,10 +1851,11 @@ and android:apk untouched.
 
 ## Prompt S15d — OTTERBROOK GROWS UP (the triple, the civic spine & THE SETTLEMENT LADDER)
 
-> (Inherited edit, S15g: once THE WORLD FORGE has shipped, author the new
-> districts as levelkit recipes on their named streams — the frozen-core,
-> ladder, and perf laws below stand either way; landmarks like city hall
-> stay hand-built.)
+> (Inherited edit, S15g: THE WORLD FORGE Movement One has SHIPPED (ADR-044) —
+> author the new districts as `buildCity`/`buildTown` recipes on their named
+> streams (`src/levelkit/**`), prove them in the LEVELKIT LAB, and let the
+> map-quality gate own reachability; the frozen-core, ladder, and perf laws
+> below stand either way; landmarks like city hall stay hand-built.)
 
 ```
 [Standard Header]
@@ -2635,9 +2647,11 @@ the door exit-latch, the ATM stepper, the ATM-and-phone law, and
 THE FIRST NATIONAL — the S&L loan desk, the car note, and 27 Maple
 on save v8)
 → **S15g** (THE WORLD FORGE — the user's 2026-06-12 automation decree,
-"quicker pace, still production quality, no mock data": the levelkit
-recipe generators for towns/cities/villages/interiors/routes/travel
-scenes outputting plain MapDef under the frozen-stream law; the
+"quicker pace, still production quality, no mock data". MOVEMENT ONE
+SHIPPED 2026-06-12 (ADR-044): the levelkit + the LAB + the map-quality
+gate, all green; Movements Two–Four queued behind it on their seams):
+the levelkit recipe generators for towns/cities/villages/interiors/
+routes/travel scenes outputting plain MapDef under the frozen-stream law; the
 per-site dungeon grammars from the Academy to the Sea of Silence with
 BFS-proven post-conditions; encounter-pressure scoring with hard rules
 in the validator; the enemy forge + composable sprite parts under

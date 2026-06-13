@@ -11,6 +11,7 @@ import { ArcadeScene } from './scenes/ArcadeScene';
 import { HoopsScene } from './scenes/HoopsScene';
 import { LinksScene } from './scenes/LinksScene';
 import { SpriteLabScene } from './scenes/SpriteLabScene';
+import { LevelkitLabScene } from './scenes/LevelkitLabScene';
 import { UIScene } from './scenes/UIScene';
 import { INPUT } from './engine/input';
 import { GS, makeHeroState } from './engine/state';
@@ -32,7 +33,7 @@ const game = new Phaser.Game({
   input: {
     activePointers: 4,
   },
-  scene: [BootScene, TitleScene, NameEntryScene, SaveSlotsScene, OverworldScene, BattleScene, MenuScene, ShopScene, ArcadeScene, HoopsScene, LinksScene, SpriteLabScene, UIScene],
+  scene: [BootScene, TitleScene, NameEntryScene, SaveSlotsScene, OverworldScene, BattleScene, MenuScene, ShopScene, ArcadeScene, HoopsScene, LinksScene, SpriteLabScene, LevelkitLabScene, UIScene],
 });
 
 // S8: Capacitor shell hooks (back=B, audio focus, durable storage). Inert in

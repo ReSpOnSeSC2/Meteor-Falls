@@ -70,7 +70,8 @@ import { CHAR_LEGEND, MAPS } from '../src/data/maps';
 import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue';
 import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
 import { TEXT_VARS } from '../src/ui/text';
-import { tileIndexByName } from '../src/spritegen/tiles';
+import { tileIndexByName, TILESET } from '../src/spritegen/tiles';
+import { mapQualityFlags } from '../src/levelkit/mapcheck';
 import type { ZodType } from 'zod';
 
 const errors: string[] = [];
@@ -1160,6 +1161,53 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
   } catch {
     fail('maps', `CHAR_LEGEND '${ch}' → unknown tile '${name}'`);
   }
+}
+
+/* ========= 3a′. THE MAP QUALITY VALIDATOR (S15g, Prime Law 4) =========
+ * Playability runs on EVERY canon map: content (npcs/signs/phones/atms/
+ * picnics/triggers) must be BFS-reachable across the walkable floor, and
+ * every door must land on a walkable tile of its target. Violations are
+ * FIXED or carry a per-map WAIVER row here (reason + §-reference) — silent
+ * grandfathering is drift. The reachability math lives in the levelkit
+ * library (vitest-pinned); this file owns the gate + the waiver table. */
+{
+  // the engine's own tile solidity (TILESET.solid), keyed by name; ':' (path)
+  // and 'r' (rug) are walkable by construction (OverworldScene.buildTiles)
+  const solidByName = new Map(TILESET.map((t) => [t.name, t.solid]));
+  const isSolidChar = (ch: string): boolean =>
+    ch === ':' || ch === 'r' ? false : solidByName.get(CHAR_LEGEND[ch] ?? 'grass_a') === true;
+
+  // THE WAIVER TABLE — the only canon maps exempt from the reachability gate,
+  // each a SHIPPED, FROZEN, stateful dungeon whose content opens at runtime
+  // (the static grid BFS cannot model the rotor turn / the sealed-room carve).
+  // Movement Two adds per-rotation BFS; until then these are reasoned, visible.
+  const REACH_WAIVERS: Record<string, string> = {
+    pyramid_1: 'mask-switch sign sits past the §A6 rotating floor — static-grid BFS cannot model the rotor state (frozen bespoke)',
+    pyramid_2: 'mask-switch sign sits past the §A6 rotating floor — static-grid BFS cannot model the rotor state (frozen bespoke)',
+    pyramid_3: 'mask-switch sign sits past the §A6 rotating floor — static-grid BFS cannot model the rotor state (frozen bespoke)',
+    pyramid_4: 'the §A6 rotor return-door lands on a rotor wall in the STATIC state; the floor turns to open it (frozen bespoke — Movement Two owns per-rotation proofs)',
+    dos_f3: 'Mia + her sign are sealed in the holding room until carveHoldingRoom() opens it on holding_open (§A6 — the sealed-room reveal is by design)',
+  };
+
+  let clean = 0;
+  for (const m of Object.values(MAPS)) {
+    const flags = mapQualityFlags(m, isSolidChar, MAPS);
+    if (REACH_WAIVERS[m.id]) {
+      // a live waiver must still be needed — else retire it (both directions)
+      if (flags.length === 0) fail('mapquality', `'${m.id}' reachability waiver is UNUSED now — retire it from the table`);
+    } else if (flags.length > 0) {
+      for (const f of flags) fail('mapquality', `${m.id}: ${f} — fix it, or add a reasoned waiver row (Prime Law 4)`);
+    } else {
+      clean += 1;
+    }
+  }
+  for (const id of Object.keys(REACH_WAIVERS)) {
+    if (!MAPS[id]) fail('mapquality', `reachability waiver names unknown map '${id}'`);
+  }
+
+  // the table is VISIBLE in every run (silent grandfathering is drift)
+  console.log(`  map-quality (S15g): ${clean}/${Object.keys(MAPS).length} canon maps clear reachability + door-landing; ${Object.keys(REACH_WAIVERS).length} waived —`);
+  for (const [id, why] of Object.entries(REACH_WAIVERS)) console.log(`    ⚠ ${id}: ${why}`);
 }
 
 /* ================= 3b. shop cross-references (ADR-016) ================= */

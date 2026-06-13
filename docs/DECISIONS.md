@@ -2668,3 +2668,77 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   depth init; `dialogueDay` is the idiom for time-of-day NPC variance
   (quest machines unaffected); the queue's world block is the next major
   arc after S14c/S14d, and file order in NEXT_PROMPTS.md IS the queue.
+
+## ADR-044 — S15g (Movement One): THE LEVELKIT + the map-quality validator
+
+- **Date:** 2026-06-12
+- **Status:** Accepted (THE WORLD FORGE, Movement One of four — the kit + the
+  gate; the dungeon grammars + pressure (M2), the forges (M3), and the
+  chapter scaffold (M4) are queued behind it and will take ADR-045+ next-free.
+  Split on the prompt's own movement seams, the S14a–d / S15a–c cadence.)
+- **Decision — THE PRIME LAWS (every generator obeys all six):** (1) DRAFTS
+  ARE NOT CONTENT — generated output lands in `src/data/drafts/**` or the
+  LEVELKIT LAB, dev-only, EXCLUDED from the MAPS registry, the canon
+  manifests, and the §B4 sweep exactly the way maps/dev/playground always
+  has; yet everything SCHEMA-PARSES (`DraftMapDefSchema`). Promotion is a
+  human act and the user stays the tone editor. (2) DETERMINISM IS LAW —
+  every generator is (recipe + seed) → identical bytes on mulberry32
+  (`seededRng` IS mulberry32; named sub-streams key on (seed, name));
+  `Date.now()`/`Math.random()` never appear under `src/levelkit/**` (a
+  source-scan test proves it). (3) ADR-012/ADR-020 BY CONSTRUCTION —
+  generated cities clear the EXACT ADR-012 sweep maps.test.ts runs (now a
+  shared `cityViolations`, one home) with no exemptions on ≥7 fresh seeds;
+  sprite assembly (M3) will COMPOSE hand-drawn parts, never synthesize. (4)
+  THE VALIDATOR GROWS TEETH — the playability gate runs on EVERY canon map
+  now (below). (5) input/poll = ADR-024/038, draw = ADR-020, the LAB = the
+  Sprite Lab precedent. (6) PERF — `npm run bench:map -- <id>` pre-filters a
+  draft against the S14d XL envelope before a session polishes it.
+- **Decision — THE KIT (`src/levelkit/**`, Phaser-free, vitest-pinnable):**
+  recipe schemas z.infer'd in `src/schemas` (ADR-017 — generators
+  `import type`, zod stays out of the bundle); the canon `MapDefSchema` is
+  UNTOUCHED, `DraftMapDefSchema` is built from its `.shape` with role-tagged
+  NPC slots allowed (a role-tagged slot can never masquerade as canon — the
+  strict `MapDefSchema` REFUSES it, proven). Seven generators output plain
+  DraftMapDef: `buildCity` (the ADR-012 grid law by construction — ≥2
+  streets separated by built blocks, a full-height avenue, facades north of
+  each street = ≥2 faces, crosswalks, negative space, alleys),
+  `buildTown`/`buildVillage` (organic, never a strip), `buildInterior`
+  (seven template families — the structural half of S17's interior program),
+  `buildRoute`/`buildWild` (connector + forest/moor, routes run hot per §B4),
+  `buildTravelScene` (the bus/boat masked-reel per §A5 leg). Style packs are
+  DATA. Each output hash is PINNED (one per generator) — a refactor that
+  shifts one byte fails naming the generator.
+- **Decision — THE LEVELKIT LAB (`levelkitlab`, dev-only):** the title's DEV
+  menu reaches it (the Costa Estrella precedent); it shows the live ADR-012
+  metrics overlay (street rows, avenue joins, block faces, negative-space %,
+  PASS/violations), rerolls the seed in place (^v), and WALKS the draft with
+  the real player/collision/banner by injecting it into the RUNTIME MAPS
+  registry only — invisible to `validate`, which reads the static source.
+  Role-tagged slots get a dev dialogue at walk time (never in data).
+- **Decision — THE MAP QUALITY VALIDATOR (Prime Law 4):** the reachability
+  math is a pure library (`src/levelkit/mapcheck.ts`, vitest-pinned on
+  synthetic grids); `tools/content-validate.ts` drives it over every canon
+  map with the engine's own tile solidity (`TILESET.solid`). Content
+  (npcs/signs/phones/atms/picnics/triggers) must be BFS-reachable across the
+  walkable floor, and every door must land on a walkable target tile. 36/41
+  maps clear it clean; the 5 exceptions carry a VISIBLE WAIVER TABLE inside
+  content-validate (reason + §-ref): the four step-pyramid floors (content
+  past the §A6 rotating floor / a return-door on a rotor wall in the static
+  state) and dos_f3 (Mia sealed in the holding room until carveHoldingRoom).
+  Waivers are checked both directions — a waiver that stops being needed
+  fails as UNUSED. The per-map "spawner ⇒ rest point" rule was REJECTED as a
+  canon gate (it false-flags seven legit dungeons that rest in the preceding
+  town per §A4.5); rest-before-pressure stays a GENERATOR guarantee, proven
+  in the kit test. Chapter enemy bands + picnic counts wait for M4 manifests.
+- **Verification:** tsc + validate (41 maps, 331 dialogue, the new map-quality
+  gate) + 317 vitest green (277 prior, 40 new levelkit). 8 generators
+  hash-pinned + deterministic twice; cities clear ADR-012 on 7 fresh seeds;
+  the role-tag refusal driven both directions; generated city + route content
+  proven all-reachable; `bench:map` reports Zanzibel at 0.16ms/build within
+  the XL envelope; LAB device walk is QA pre-flight row 28.
+- **Consequences:** every later world session SCAFFOLDS first (drafts) then
+  POLISHES (promotion) — the floor only rises. `cityViolations` has one home;
+  any new city (S15d/e/f, Ch.3+) rides the kit's recipes + frozen streams and
+  hand-builds only its landmarks. The map-quality gate means orphaned content
+  and doors-into-walls can never ship silently again — fix it or waive it
+  with a reason, in the same commit. ADR-045+ are reserved next-free for M2–M4.

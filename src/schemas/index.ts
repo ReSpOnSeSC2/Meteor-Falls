@@ -820,3 +820,183 @@ export const BossScriptDefSchema = z
     }
   });
 export type BossScriptDef = z.infer<typeof BossScriptDefSchema>;
+
+/* ============ THE LEVELKIT — recipes + drafts (S15g, ADR-044) ============ */
+
+/**
+ * Generator inputs (recipe + seed → identical bytes, Prime Law 2). These are
+ * DEV-TIME shapes: the levelkit (src/levelkit/**) imports the z.infer'd types
+ * with `import type`, so zod stays out of the game bundle exactly like every
+ * content interface (ADR-017). The generated output is plain MapDef — the
+ * scene runtime never knows a map was generated.
+ */
+
+/** §A7 chapter band a map's spawners draw from (Movement Two enforces bands) */
+export const EncounterBandSchema = z.enum([
+  'ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8', 'ch9', 'ch10',
+]);
+export type EncounterBand = z.infer<typeof EncounterBandSchema>;
+
+/** style PACKS are data: each names a region's prop palette + ground read
+ *  (bazaar-port ≠ fog-stone ≠ painted-gates). The generators dress from the
+ *  pack; the structure (ADR-012 grammar) is style-independent. */
+export const SettlementStyleSchema = z.enum([
+  'americana',    // Ch.1 — Otterbrook/Brickton
+  'bazaar-port',  // Ch.6 — Zanzibel (the recipe example)
+  'fog-stone',    // Ch.3 — Foggybottom
+  'painted-gates',// Ch.8 — Lotus Harbor
+  'spire-canton', // Ch.5 — Minimus Major
+]);
+export type SettlementStyle = z.infer<typeof SettlementStyleSchema>;
+
+export const InteriorTemplateSchema = z.enum([
+  'home', 'shop', 'hospital', 'chapel', 'deli', 'civic', 'hotel',
+]);
+export type InteriorTemplate = z.infer<typeof InteriorTemplateSchema>;
+
+export const RouteStyleSchema = z.enum(['treeline', 'fenced', 'coast', 'ridge']);
+export type RouteStyle = z.infer<typeof RouteStyleSchema>;
+
+export const WildStyleSchema = z.enum(['forest', 'moor']);
+export type WildStyle = z.infer<typeof WildStyleSchema>;
+
+/** one §A5 leg per recipe — the masked-reel travel scenes */
+export const TravelLegSchema = z.enum(['bus', 'boat', 'train', 'riverboat', 'snowcat', 'biplane']);
+export type TravelLeg = z.infer<typeof TravelLegSchema>;
+
+const SizeSchema = z.tuple([z.number().int().min(8), z.number().int().min(8)]);
+
+/** fields every settlement recipe shares */
+const settlementBase = {
+  id: z.string().min(1),
+  seed: z.number().int(),
+  size: SizeSchema,
+  style: SettlementStyleSchema,
+  /** named lots the session hand-builds — story-important parts are polished
+   *  by a human (the user's law); the generator only RESERVES them */
+  landmarks: z.array(z.string().min(1)).optional(),
+  /** facade roles that must open a door: 'shop','hospital','chapel','story_gate'… */
+  requiredDoors: z.array(z.string().min(1)).optional(),
+  /** how many role-tagged NPC slots to scatter (drafts only) */
+  npcSlots: z.number().int().min(0).optional(),
+  /** §A4.5 picnic tables (placed before the dangerous edge) */
+  picnicCount: z.number().int().min(0).optional(),
+  encounterBand: EncounterBandSchema.optional(),
+} as const;
+
+export const CityRecipeSchema = z.strictObject({
+  kind: z.literal('city'),
+  ...settlementBase,
+  /** ≥1 district names: 'harbor','market','clinic','chapel','docks'… */
+  districts: z.array(z.string().min(1)).min(1),
+});
+export type CityRecipe = z.infer<typeof CityRecipeSchema>;
+
+export const TownRecipeSchema = z.strictObject({
+  kind: z.literal('town'),
+  ...settlementBase,
+  /** bending lanes the organic network grows from (1–4) */
+  lanes: z.number().int().min(1).max(4).optional(),
+});
+export type TownRecipe = z.infer<typeof TownRecipeSchema>;
+
+export const VillageRecipeSchema = z.strictObject({
+  kind: z.literal('village'),
+  ...settlementBase,
+});
+export type VillageRecipe = z.infer<typeof VillageRecipeSchema>;
+
+export const InteriorRecipeSchema = z.strictObject({
+  kind: z.literal('interior'),
+  id: z.string().min(1),
+  seed: z.number().int(),
+  template: InteriorTemplateSchema,
+  size: SizeSchema.optional(),
+  /** the map this interior's exit returns to (a door target) */
+  exitTo: z.string().min(1).optional(),
+});
+export type InteriorRecipe = z.infer<typeof InteriorRecipeSchema>;
+
+export const RouteRecipeSchema = z.strictObject({
+  kind: z.literal('route'),
+  id: z.string().min(1),
+  seed: z.number().int(),
+  size: SizeSchema,
+  style: RouteStyleSchema,
+  /** routes outrank towns for §B4 density — spawners ride this band */
+  encounterBand: EncounterBandSchema.optional(),
+  signSlots: z.number().int().min(0).optional(),
+  /** map ids the two ends connect (left/right doors) */
+  ends: z.tuple([z.string().min(1), z.string().min(1)]).optional(),
+});
+export type RouteRecipe = z.infer<typeof RouteRecipeSchema>;
+
+export const WildRecipeSchema = z.strictObject({
+  kind: z.literal('wild'),
+  id: z.string().min(1),
+  seed: z.number().int(),
+  size: SizeSchema,
+  style: WildStyleSchema,
+  encounterBand: EncounterBandSchema.optional(),
+  ends: z.tuple([z.string().min(1), z.string().min(1)]).optional(),
+});
+export type WildRecipe = z.infer<typeof WildRecipeSchema>;
+
+export const TravelRecipeSchema = z.strictObject({
+  kind: z.literal('travel'),
+  id: z.string().min(1),
+  seed: z.number().int(),
+  leg: TravelLegSchema,
+  /** rows of seats either side of the aisle */
+  seatRows: z.number().int().min(1).optional(),
+  exitTo: z.string().min(1).optional(),
+});
+export type TravelRecipe = z.infer<typeof TravelRecipeSchema>;
+
+export const RecipeSchema = z.discriminatedUnion('kind', [
+  CityRecipeSchema,
+  TownRecipeSchema,
+  VillageRecipeSchema,
+  InteriorRecipeSchema,
+  RouteRecipeSchema,
+  WildRecipeSchema,
+  TravelRecipeSchema,
+]);
+export type Recipe = z.infer<typeof RecipeSchema>;
+
+/**
+ * A DRAFT npc slot: position + ROLE, dialogue optional. Legal ONLY in
+ * src/data/drafts/** and the LEVELKIT LAB. The canon NpcDef (strict) has no
+ * `role` key, so a role-tagged slot can never masquerade as shipped content —
+ * the validator/levelkit test proves MapDefSchema REFUSES it. Promotion is a
+ * human act: the tone editor writes the real dialogue and drops the role.
+ */
+export const DraftNpcSchema = z.strictObject({
+  id: z.string().min(1),
+  sprite: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  facing: FacingSchema,
+  dialogue: z.string().min(1).optional(),
+  dialogueDay: z.string().min(1).optional(),
+  role: z.string().min(1).optional(),
+  wander: z.boolean().optional(),
+  dog: z.boolean().optional(),
+  ifFlag: z.string().min(1).optional(),
+  unlessFlag: z.string().min(1).optional(),
+  shop: z.string().min(1).optional(),
+});
+export type DraftNpc = z.infer<typeof DraftNpcSchema>;
+
+/**
+ * DraftMapDef = the canon MapDef shape with role-tagged NPC slots allowed.
+ * Built from MapDefSchema.shape so it tracks the canon schema automatically
+ * (the canon MapDefSchema itself stays UNTOUCHED — Prime Law 1). A draft
+ * still SCHEMA-PARSES (drafts are valid shapes, never junk); it simply lives
+ * outside the MAPS registry and the §B4 sweep, like maps/dev/playground.
+ */
+export const DraftMapDefSchema = z.strictObject({
+  ...MapDefSchema.shape,
+  npcs: z.array(DraftNpcSchema),
+});
+export type DraftMapDef = z.infer<typeof DraftMapDefSchema>;

@@ -13,6 +13,10 @@ import {
   carveHoldingRoom,
   type MapDef,
 } from './maps';
+// S15g: the ADR-012 sweep has ONE home now (src/levelkit/metrics.ts) — the
+// shipped-city check here and the generated-city proof in the levelkit test
+// run the identical function, so they can never drift.
+import { cityViolations } from '../levelkit/metrics';
 
 const maps = Object.values(MAPS);
 
@@ -33,40 +37,6 @@ describe('S1 canon (GAME_BIBLE §A6/§A7/§A4.5, prompt S1)', () => {
 
 describe('ADR-012 — every city follows the Brickton rules (GAME_BIBLE §B4)', () => {
   const cities = maps.filter((m) => m.settlement === 'city');
-  const street = (ch: string): boolean => 'RDX'.includes(ch);
-
-  /** broken rules for a city map; empty = compliant */
-  const cityViolations = (m: MapDef): string[] => {
-    const out: string[] = [];
-    const grid = m.grid;
-    const w = grid[0].length;
-    // ≥2 horizontal street bands separated by a built-up block
-    const roadRows = grid
-      .map((row, y) => ({ y, n: [...row].filter(street).length }))
-      .filter((r) => r.n > Math.floor(w * 0.4))
-      .map((r) => r.y);
-    if (roadRows.length < 6) out.push(`${m.id}: needs at least two streets`);
-    if (!roadRows.some((y, i) => i > 0 && y - roadRows[i - 1] > 1)) {
-      out.push(`${m.id}: streets must be separated by a built-up block`);
-    }
-    // a vertical avenue stitches the streets together
-    let connector = false;
-    for (let x = 0; x < w; x++) {
-      let n = 0;
-      for (let y = 0; y < grid.length; y++) if (street(grid[y][x])) n++;
-      if (n >= 12) connector = true;
-    }
-    if (!connector) out.push(`${m.id}: needs a connecting avenue`);
-    // buildings must front more than one street (the anti-strip rule);
-    // band by each facade's ground line, derived from its solid rect
-    const faces = new Set(
-      m.props
-        .filter((p) => p.sprite.startsWith('bldg_') && p.solid)
-        .map((p) => Math.round((p.y * 16 + (p.solid?.oy ?? 0) + (p.solid?.h ?? 0) + 12) / 64)),
-    );
-    if (faces.size < 2) out.push(`${m.id}: buildings must occupy 2+ block faces`);
-    return out;
-  };
 
   it('city maps are tagged (Brickton today; Ch.2+ cities join this sweep)', () => {
     expect(cities.length).toBeGreaterThanOrEqual(1);
