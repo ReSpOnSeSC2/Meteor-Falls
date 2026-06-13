@@ -189,7 +189,10 @@ export function buildPuertoSol(): MapDef {
       sprite: b.sprite,
       x: b.x,
       y: (bottomPx - H) / 16,
-      solid: { ox: 0, oy: 26, w: b.w * 16 + 2, h: H - 38 },
+      // solid covers the FACADE to the doorstep — oy:10 (was 26) so a hero can't
+      // walk straight ACROSS the upper floors (the walk-through-buildings bug);
+      // bottom stays H-12 so the door zone is reachable (matches brickton).
+      solid: { ox: 0, oy: 10, w: b.w * 16 + 2, h: H - 22 },
     };
     if (b.sprite === 'bldg_ps_mercado') {
       prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'mercado_int', tx: 96, ty: 118 };
@@ -305,12 +308,16 @@ export function buildMercadoInt(streetExit: { tx: number; ty: number }): MapDef 
       { sprite: 'counter', x: 6, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
       { sprite: 'shelf', x: 1, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
       { sprite: 'cola_fridge', x: 8.4, y: 0.25 },
+      // every shop carries an ATM (cash) + a payphone (save) — the user's decree
+      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 10, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
     ],
     npcs: [
       { id: 'mercado_keeper', sprite: 'mercadoKeeper', x: 5, y: 2, facing: 'down', dialogue: 'shop_mercado_greet', shop: 'mercado' },
     ],
     signs: [{ x: 10, y: 1, dialogue: 'sign_mercado_wall' }],
-    phones: [],
+    phones: [{ x: 2, y: 7 }],
+    atms: [{ x: 10, y: 7 }],
     doors: [
       { x: 5, y: 8, w: 2, h: 1, to: 'puerto_sol', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],
@@ -1005,12 +1012,16 @@ export function buildValleShopInt(streetExit: { tx: number; ty: number }): MapDe
       { sprite: 'shelf_b', x: 9, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
       { sprite: 'counter', x: 4, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
       { sprite: 'counter', x: 6, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      // every shop carries an ATM (cash) + a payphone (save) — the user's decree
+      { sprite: 'payphone', x: 2, y: 6, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 9, y: 6, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
     ],
     npcs: [
       { id: 'valle_keeper', sprite: 'senora', x: 5, y: 2, facing: 'down', dialogue: 'shop_valle_greet', shop: 'valle_shop' },
     ],
     signs: [{ x: 9, y: 1, dialogue: 'sign_valle_wall' }],
-    phones: [],
+    phones: [{ x: 2, y: 6 }],
+    atms: [{ x: 9, y: 6 }],
     doors: [
       { x: 5, y: 8, w: 2, h: 1, to: 'valle_dorado', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],

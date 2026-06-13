@@ -276,6 +276,32 @@ function drawWristguardIcon(): Pixmap {
   return pm;
 }
 
+/** Minister's Ribbon (S15h) — the sash of Being Taken Seriously: a gold band
+ *  crossing to a sealed medallion, two tails below (ADR-048, Pippa's arms) */
+function drawMinisterRibbonIcon(): Pixmap {
+  const pm = new Pixmap(14, 13);
+  const gold = px(RAMP.GOLD, 2);
+  const goldL = px(RAMP.GOLD, 3);
+  const goldD = px(RAMP.GOLD, 1);
+  // the sash, shoulder (top-right) down to the medal
+  pm.set(11, 1, goldL);
+  pm.set(10, 1, gold);
+  pm.set(9, 3, gold);
+  pm.set(8, 4, gold);
+  pm.set(7, 5, goldD);
+  pm.set(6, 6, gold);
+  pm.set(5, 7, gold);
+  // the medallion where the sash gathers, a purple seal at its heart
+  pm.ellipse(5, 9, 3, 3, gold);
+  pm.ellipse(5, 9, 2, 2, goldL);
+  pm.set(5, 9, px(RAMP.PURPLE, 2));
+  // two ribbon tails hanging below
+  pm.set(3, 11, goldD);
+  pm.set(7, 11, goldD);
+  pm.outline(C.outline);
+  return pm;
+}
+
 /* ---- THE SUNDAY SET (S13): four clubhouse charms, drawn small ---- */
 
 /** the Sunday Visor — a brim that has read every green on the coast */
@@ -527,6 +553,11 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
   iron_wristguard: {
     kind: 'trinket',
     icon: drawWristguardIcon,
+  },
+  // S15h (ADR-048): Pippa's STARTING FIVE arms piece
+  minister_ribbon: {
+    kind: 'trinket',
+    icon: drawMinisterRibbonIcon,
   },
 
   /* ---- 'other'-slot charms (drawn icons; pockets, not fists) ---- */

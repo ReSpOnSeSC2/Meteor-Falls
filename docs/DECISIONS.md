@@ -2825,3 +2825,191 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   crowd a save phone silently, and `docs/ENCOUNTERS.md` is a tracked artifact
   that flags "annoying or empty" maps before a human reads them. ADR-046/047
   stay reserved next-free for M3 (the forges) and M4 (the chapter scaffold).
+
+## ADR-046 — S15g (Movement Three): THE ENEMY FORGE + THE TEN BOSS TEMPLATES + THE SPRITE FORGE + THE PARTY VITALS BAR
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (THE WORLD FORGE, Movement Three of four — COMPLETE).
+  Landed + gate-green: the enemy forge (3a) wired into the LAB, the ten boss
+  templates (3c) on the phase machine, the user's PARTY VITALS BAR, and now the
+  COMPOSABLE SPRITE PARTS sub-movement (3b — the hand-drawn part catalog + the
+  Sprite Lab, built WITH the user, who picked the Ch.3 faces, §Appendix rule 4;
+  see THE SPRITE FORGE below). All four seams of Movement Three are in. M4 (the
+  chapter scaffold) stays queued for ADR-047.
+- **Decision — THE PRIME LAWS STILL HOLD (ADR-044/045, unchanged):** the forge
+  emits DRAFTS, never content — forged enemies live in the dev registry
+  (`src/levelkit/forge/registry.ts`) and forged bosses in `src/data/drafts/`,
+  both schema-parsing as their canon shapes yet EXCLUDED from the §A7/§A6
+  manifests + the §B4 sweep; a `DraftEnemyDef` carries `role`/`chapter` tags the
+  strict `EnemiesSchema` has no slot for, and a draft boss script drives an
+  UNSHIPPED enemy id, so neither can masquerade as a shipped row (promotion is a
+  human act). Determinism rides the named streams; `Date.now()`/`Math.random()`
+  never appear under `src/levelkit/**`. The SHIPPED content stays FROZEN — the
+  Tick's bespoke latch, the Gilded Grin's script (byte-identical, its
+  phases.test green), the §A7 Ch.1–2 roster — and the count is TEN.
+- **Decision — THE ENEMY FORGE (3a, `src/levelkit/forge/`):** `curves.ts` fits
+  a per-level stat baseline to the shipped §A7 Ch.1–2 rows + the §A6 boss-HP
+  ladder; `enemies.ts` drafts a role-shaped, region-flavoured `DraftEnemyDef`
+  off the chapter midpoint (a §A11 draft death line, a placeholder sprite until
+  3b); `registry.ts` pins one deterministic roster per Ch.3–10 (`buildRoster(ch,
+  1000+ch)`). `BAND_ROSTER` ch3–ch10 now resolve to `forgedBandIds(ch)` and the
+  LEVELKIT LAB injects the forged defs (`stripForgeTags` → canon `EnemyDef`)
+  into the RUNTIME `ENEMIES` on walk — so a walked Ch.3–10 dungeon fights REAL
+  forged foes, the canon `ENEMIES` source untouched. Re-keying `BAND_ROSTER`
+  moved the dungeon spawner rosters, so the 130 dungeon hash pins were
+  regenerated in the same change (the recipe owns the bytes).
+- **Decision — THE TEN BOSS TEMPLATES (3c, `src/levelkit/forge/bosses.ts`):**
+  every §A6 gimmick as a parameterized FACTORY over the proven `PhaseRunner`,
+  returning a plain `BossScriptDef` — `formSwap` (the Grin, SHIPPED reference),
+  `latchDrain` (the Tick archetype; the Tick stays bespoke), `summoner`
+  (Mainframe), `thresholdHeal` (Cobra Raja), `riddle` (Sphinx, pool of 8),
+  `mercyEnding` (Hoaxula), `airborneGrounded` (Paper Dragon), `scriptedSurvival`
+  (Whiskerzilla), `untargetableUntilNoise` (Whisperwig), `elementalGolem` (the
+  two Ch.10 minibosses). Every unshipped §A6 boss (Ch.3–9) + both minibosses is
+  INSTANTIATED as a draft (`src/data/drafts/bosses.ts`) and proven by a HEADLESS
+  gimmick test (the phases.test pattern). The four templates that needed it grew
+  the machine by ADDITIVE primitives ONLY — `noiseOut`/`grounded` + the
+  `untargetable`/`groundedBy`/`surfacesTo` form fields (Whisperwig surfaces,
+  Paper Dragon grounds), `healsFromElement`/`healedBy` (the golem the WRONG
+  element heals), `evasion`/`setEvasion` (Whiskerzilla's Flat Bell), and
+  `latch`/`latchAmount`/`releaseLatch` (the archetype) — each defaulting inert,
+  so the Grin's behaviour and the shipped `PhaseEffects` literal are unchanged.
+- **Decision — THE SPRITE FORGE (3b, `src/spritegen/parts/`):** a forged grunt's
+  face is COMPOSED from hand-drawn parts, never synthesized (ADR-020 BY
+  CONSTRUCTION — the WEAPON_ART precedent applied to whole enemies). Five part
+  FAMILIES, each a `px`-only pixmap function on the 64-colour palette:
+  SILHOUETTE (7 body shapes — blob/carapace/totem/wisp/lump/husk laid as
+  hand-authored `contour` runs with 3-tone volume, ADR-020 rule 3, + `cabinet`,
+  the one hard-edged man-made box for lockers/units, added on the user's art note
+  — they stamp shared `Anchors`), MATERIAL (6 surfaces — chitin/iron/cloth/stone/ember/lacquer
+  — the base ramp + a clustered motif with ≤1 dither seam, rules 1 & 6),
+  ACCESSORY (6 faces — glare/dots/cyclops/grin/antennae/crown), WEAR ACCENT (5
+  damage styles — dents/cracks/tatters/scorch/chips, clustered and ACCUMULATING
+  across tiers), and REGION ACCENT (5 locales — fog/ochre/bog/velvet/dust, a
+  whisper of place + the trim ramp). The COMPOSER (`composeEnemy(spec, wear)`)
+  layers them in a fixed order → `outline()`; `(PartsSpec + seed)` → identical
+  bytes forever (Prime Law 2, named streams). `proposeCandidates(id, role,
+  chapter)` offers 5–10 seeded candidates per grunt from role pools keyed to the
+  chapter's region. `ENEMY_BATTLE_ART resolves THROUGH partsSpec` (`forgedFaceArt`):
+  a picked grunt wears the drums (tiers 0/1/2) like every shipped sprite, except
+  its three textures are composed, not bespoke — `ensureForgedFaces` registers
+  them in the LAB and BattleScene swaps `${sprite}_w1/_w2` on the HP thresholds
+  unchanged. BOSSES + HEROES STAY BESPOKE (`forgedFaceArt` refuses a boss; the
+  five kids are never forged). THE PICK IS A HUMAN ACT: `src/data/drafts/faces.ts`
+  (`FACE_PICKS`) records the chosen `PartsSpec` verbatim (part ids + seed); the
+  registry's `withFace` attaches it and repoints the draft's sprite/mini at UNIQUE
+  `forgeface_<id>`/`forgemini_<id>` keys so a pick can never overwrite shipped art.
+  The Sprite Lab is where the human picks — the SPRITE LAB → THE FORGE page
+  (cycle candidates live, read the recorded pick at all three tiers) and
+  `npm run art:facesheet` → `.shots/` (the cast-sheet precedent). The Ch.3
+  roster (6 grunts) was picked WITH the user this session; Ch.4–10 follow the
+  same act in their chapter sessions (unpicked drafts keep a borrowed placeholder).
+  The validator sweeps the catalog BOTH directions (every pool part exists; every
+  catalog part is reachable — no orphans), and proves every recorded pick
+  composes a non-empty palette-conformant face whose three tiers DIFFER.
+- **Decision — THE PARTY VITALS BAR (`src/ui/vitals.ts`, the user's UI decree):**
+  one EarthBound bottom-of-screen panel per party hero (NAME, HP/PP cur/max, a
+  thin colour-coded bar, a DOWN/HOMESICK tag), reading GS party state LIVE
+  (persists nothing). The MENU draws it persistently and it YIELDS to the item
+  DESCRIPTION PANEL (both bottom-dwellers — decoupled via the `mf-iteminfo-*`
+  scene events, never overlapping, the §A4 readability law). The OVERWORLD pops
+  the SAME strip as a quick glance on the free Y button (§B4 touch + pad + keys;
+  the UIScene thumb-arc surfaces Y while the overworld is live; B / the same
+  button / a tap dismiss it, debounced so the opening input can't re-close it).
+- **Verification:** tsc + validate (unchanged 41-map waivers; the NEW
+  sprite-forge sweep green — catalog both-directions + every recorded pick
+  composes & reads the drums) + the forge's vitest green — 31 enemy-forge + 21
+  registry + 19 boss-template + 11 NEW sprite-forge proofs (composer determinism
+  & palette, the drums on every part, the catalog both-directions, the proposer,
+  the bespoke law) atop the 471 M2 floor — + `vite build`. The boss drafts
+  hash-pinned + schema-parsed + proven unable to masquerade (not in
+  `BOSS_SCRIPTS`, drive no shipped §A7 enemy); the forged rosters pin to
+  `buildRoster(ch, 1000+ch)` PLUS the 3b face layer (which touches only
+  partsSpec/sprite/mini); the Grin's phases.test byte-identical. The vitals bar
+  verified in the browser. 3b verified IN A LAB BATTLE: walking the Wintermoor
+  draft registers the picked roster's composed faces (3 tiers + mini), then a
+  forged grunt (Foggy Locker — carapace/iron/grin) renders its COMPOSED face on
+  the field and at <33% HP swaps to the battered tier (visible cracks) through
+  `wearSpriteKey` — the drums, composed. SHIPPED SPRITES BYTE-IDENTICAL (the
+  shipped draws + ENEMY_BATTLE_ART rows untouched; wear.test still green).
+  Browser dev-loop and `android:apk` paths untouched.
+- **Consequences:** a chapter session (Prompts 29–34) now opens with the boring
+  60% forged — a banded enemy roster, a boss script already firing its gimmick
+  green on the machine — and spends itself on the SOUL (names, jokes, §A11 death
+  lines, the hand-art face) at promotion. The phase machine gained four new
+  archetypes without disturbing a shipped byte. The party can read its HP/PP at
+  a glance from the menu or the overworld, by thumb or pad or key. And a forged
+  grunt now has a FACE — composed from the part catalog, picked by the human,
+  wearing the drums like any shipped foe — so a chapter session inherits not just
+  a banded roster and a firing boss but a first-draft sprite for every grunt,
+  spending itself on the soul (the hand-redrawn promotion) instead of the
+  skeleton. Movement Three is COMPLETE; Movement Four (the chapter scaffold —
+  ChapterManifest + `tools/chapter-scaffold.ts`) is the last seam of THE WORLD
+  FORGE, queued for ADR-047.
+
+## ADR-048 — S15h: THE FIFTH HERO — Pippa Quill (the cast becomes five)
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (canon-filling, not invention: GAME_BIBLE §A3 has named
+  FIVE heroes since the 2026-06-12 amendment, but the code carried four. This
+  lands the roster + schema + sprites + arms gear + the save migration NOW so the
+  Ch.5 Minimus session wires Pippa into the party as a build step, never a
+  scramble. ADR-047 is reserved for the World Forge's sprite-part catalog / M4 —
+  already referenced across `src/spritegen/parts/**`, `drafts/faces.ts`, and the
+  validator — so Pippa took the next free number, 048.)
+- **Decision — THE ROSTER IS FIVE, BY CONSTRUCTION:** `HeroIdSchema` gains
+  `'pippa'` under the frozen-id discipline of ADR-031/023 (she is `pippa` from
+  the start — no rename debt). Every `Record<HeroId>` is now exhaustive over
+  five: `HEROES`, `heroNames` (the save + the New-Game choices), `TEXT_VARS`
+  (a `{pippa}` token Ch.5 dialogue reads). The content validator's hero pin
+  reads FIVE both directions, and a Pippa "no Vibe" cross-check joins Milo's.
+- **Decision — NO VIBE, NO PP (the second Jeff):** §A3 says Pippa has no Vibe.
+  Like Milo she carries `base.vibe 0` and `pp.base 0`; her six §A3 abilities
+  (Pinpoint Mark / Royal Rally / Pocket Patch on-join, Big-Little Focus the Ch.5
+  Milo combo, Scale Step L30, Bellwether L44) ride kind `'physical'` at 0 PP —
+  competence, not the old light. Their statuses (`marked`/`rally`/`evasion`/
+  `focus`/`morale`, plus `cure` on Pocket Patch's small heal) are the Ch.5
+  battle hooks; the faces REUSE existing fx families (scan / sparkle_rain /
+  barrier), so no `STAGE_ANIM` row and no `battle/fx.ts` builder changed. The
+  support mechanics flesh out when she joins — the data, schema, and faces exist
+  and validate now.
+- **Decision — SPRITES ARE ONE SPEC (the ADR-021 pattern, fifth time):** Pippa's
+  overworld sheet, 32×32 battle bust, rear-3/4 stage battler, AND mourning angel
+  all derive from one hand-authored `CharacterSpec` in `CAST` (royal-purple
+  blazer livery, gold braid, a Minister's Ribbon sash `detail`, a no-nonsense
+  page bob). The boot factory's hero loop and the angel-anim list gained
+  `'pippa'`; everything else is generated. She is visible in the Sprite Lab.
+- **Decision — THE STARTING FIVE (ADR-034 renamed):** the Bible's §A8 arms set
+  was already amended to "THE STARTING FIVE" with Pippa's Minister's Ribbon, so
+  the code renamed `STARTING_FOUR`→`STARTING_FIVE` (the const + `_IDS`, the
+  validator manifest both directions, the Overworld `startingFiveHandoff`, the
+  tests, and PERMIT's shipped "four pieces"→"five pieces" line — a factual count
+  sync with the voice untouched). The handoff already carries a not-yet-joined
+  hero's piece to any present carrier via the `handed` raincheck, so Pippa's
+  Ribbon rides a Ch.1–2 carrier and waits for Ch.5 exactly like Milo's and
+  Dorin's pieces do today. **The Bible names the Ribbon "Luck+6" — but the
+  `arms` slot reads speed/guts; luck rides charms (ADR-037).** So the arms piece
+  carries **Speed +6** (the tiny tactician is quick; Mia and Milo, the other
+  support heroes, also got Speed), and Pippa's canon Luck+6 is reserved for her
+  SUNDAY SET charm — the links set ships its fifth when that session lands
+  (the chapters-3+ "assert it as it lands" discipline, applied to a reward set).
+- **Decision — SAVE v7 → v8 (the registry, ADR-015):** one step backfills
+  `heroNames.pippa` from the canon default. Pippa is NOT added to the party (she
+  hasn't joined — Ch.5 does that via a join scene/flag), so the existing four
+  ride through untouched, exactly like every save field a later hero never
+  wrote. Old saves load unbroken; a custom-named v7 save keeps its four names
+  and only GAINS Pippa's.
+- **Verification:** tsc + validate (now `5 heroes · 43 abilities · 39 items`,
+  the 41-map waivers unchanged) + 560 vitest green (the +14 over ADR-046's 546:
+  the v7→v8 migration trio, the eighth New-Game screen, the five-hero roster
+  pin, the fifth arms read-through) + `vite build`. The existing four are
+  byte-identical — their `CharacterSpec`s, `HEROES` rows, and the four shipped
+  STARTING FIVE pieces are untouched (the only `heroes.ts` deletion is the
+  header comment's "Four"→"Five"); Pippa's textures are additive at boot.
+- **Consequences:** the Ch.5 Minimus session opens with Pippa's roster slot,
+  schema, sprites, arms gear, name screen, and save plumbing already proven, and
+  spends itself on the SOUL — her join scene, her §A11 voice, the Big-Little
+  Focus combo wiring, her weapon line (Stamp Sling → … → Royal Red Pen), and the
+  battle mechanics behind her five statuses — per Appendix rule 4. Her SUNDAY
+  SET charm (the canon Luck+6) lands with the links-set expansion. The roster,
+  the layouts that iterate it, and the validators all prove five today.

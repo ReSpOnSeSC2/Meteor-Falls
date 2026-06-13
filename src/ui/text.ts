@@ -17,6 +17,7 @@ export const TEXT_VARS: Record<string, (d: GameStateData) => string> = {
   rex: (d) => heroNameIn(d, 'rex'),
   faye: (d) => heroNameIn(d, 'faye'),
   milo: (d) => heroNameIn(d, 'milo'),
+  pippa: (d) => heroNameIn(d, 'pippa'), // S15h: the fifth name token (Ch.5 dialogue reads it)
   dorin: (d) => heroNameIn(d, 'dorin'),
 };
 

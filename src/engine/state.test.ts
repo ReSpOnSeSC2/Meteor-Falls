@@ -98,7 +98,7 @@ describe('New Game choices (Prompt 21)', () => {
   beforeEach(() => GS.reset());
 
   const CHOICES = {
-    heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+    heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', pippa: 'Quill', dorin: 'Petru' },
     playerName: 'Jay',
     favoriteFood: 'fuzzy pickles',
     coolestThing: 'the 6:15',
@@ -187,7 +187,7 @@ describe('S2 — Mia joins (§A3/§A6, ADR-013/ADR-014)', () => {
 
   it('a two-hero party with a down angel survives a save round-trip', () => {
     GS.applyNewGameChoices({
-      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', pippa: 'Quill', dorin: 'Petru' },
       playerName: 'Jay',
       favoriteFood: 'pancakes',
       coolestThing: 'dial tones',
@@ -273,8 +273,8 @@ describe('Homesick persists on the save until Mom cures it (§A4.4, S4)', () => 
 });
 
 describe('content validation (interim validator, ADR-005)', () => {
-  it('all four canon heroes exist (§A3)', () => {
-    expect(Object.keys(HEROES).sort()).toEqual(['dorin', 'faye', 'milo', 'rex']);
+  it('all five canon heroes exist (§A3)', () => {
+    expect(Object.keys(HEROES).sort()).toEqual(['dorin', 'faye', 'milo', 'pippa', 'rex']);
   });
 
   it('all six §A7 Ch.1 enemies + Boss 1 exist with canon HP', () => {

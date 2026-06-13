@@ -100,6 +100,16 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
   healing_revive: S({ kind: 'ability', family: 'revive', ramp: RAMP.GOLD, sfx: 'fx_revive' }),
   run_up: S({ kind: 'ability', family: 'run_up', ramp: RAMP.ORANGE }),
 
+  /* ---- Pippa's tactical kit (S15h) — every face REUSES an existing family
+     (scan/sparkle_rain/barrier), so STAGE_ANIM and battle/fx.ts need no new
+     rows; only the ramp + the reused sfx preset differ ---- */
+  pinpoint_mark: S({ kind: 'ability', family: 'scan', ramp: RAMP.GOLD, sfx: 'fx_spy' }),
+  royal_rally: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.RED, sfx: 'fx_lifeup' }),
+  pocket_patch: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.GRASS, sfx: 'fx_cure' }),
+  scale_step: S({ kind: 'ability', family: 'barrier', ramp: RAMP.CYAN, sfx: 'fx_shield' }),
+  big_little_focus: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.PURPLE, sfx: 'fx_lifeup' }),
+  bellwether: S({ kind: 'ability', family: 'barrier', ramp: RAMP.GOLD, sfx: 'fx_shield' }),
+
   /* ---- items (reachable through itemFxKey for every battle-usable item) ---- */
   item_food: S({ kind: 'item', family: 'munch', ramp: RAMP.GOLD, sfx: 'fx_munch' }),
   item_cola: S({ kind: 'item', family: 'fizz', ramp: RAMP.CYAN, sfx: 'fx_fizz' }),

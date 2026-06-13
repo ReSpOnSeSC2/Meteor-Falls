@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { GS, makeHeroState, newGameData } from './state';
 import { migrateSave, CURRENT_SAVE_VERSION } from './migrations';
 import { BAG_MAX } from '../data/items';
-import type { HeroId } from '../data/heroes';
+import { HEROES, type HeroId } from '../data/heroes';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
 function v1Hero(id: HeroId, level: number, name?: string): Record<string, unknown> {
@@ -336,5 +336,46 @@ describe('save migration registry (S14) — v6 → v7: Freeze α moves to the aw
   it('no Mia on the save, no flag — the moment keeps', () => {
     GS.deserialize(JSON.stringify(v6Save(null)));
     expect(GS.flag('awake_freeze_a')).toBe(false);
+  });
+});
+
+describe('save migration registry (S15h) — v7 → v8: the fifth hero (Pippa)', () => {
+  beforeEach(() => GS.reset());
+
+  /** a v7 save exactly as S14 wrote them: heroNames with only the four */
+  function v7Save(): Record<string, unknown> {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 7;
+    const hn = { ...(d.heroNames as Record<string, string>) };
+    delete hn.pippa; // a pre-v8 save never knew the fifth name
+    d.heroNames = hn;
+    return d;
+  }
+
+  it("a v7 save backfills Pippa's name and leaves the four untouched", () => {
+    GS.deserialize(JSON.stringify(v7Save()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.heroNames.pippa).toBe(HEROES.pippa.name);
+    expect(GS.data.heroNames.rex).toBe(HEROES.rex.name);
+    expect(GS.data.heroNames.dorin).toBe(HEROES.dorin.name);
+    // she has NOT joined — the party is unchanged (Ch.5 adds her later)
+    expect(GS.data.party.some((h) => h.id === 'pippa')).toBe(false);
+  });
+
+  it('a custom-named v7 save keeps its four names and only ADDS Pippa', () => {
+    const save = v7Save();
+    save.heroNames = { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' };
+    GS.deserialize(JSON.stringify(save));
+    expect(GS.data.heroNames.rex).toBe('Casey');
+    expect(GS.data.heroNames.milo).toBe('Pekoe');
+    expect(GS.data.heroNames.pippa).toBe(HEROES.pippa.name); // the default fills the gap
+  });
+
+  it('the v1 chain runs all the way to v8: bags, ledger, MGR, hoops, awakenings, Pippa', () => {
+    GS.deserialize(JSON.stringify(v1SaveS2()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.hero('rex')?.bag).toContain('cracked_bat'); // v2 ran
+    expect(GS.data.callers).toEqual([]); // v3 ran
+    expect(GS.data.heroNames.pippa).toBe(HEROES.pippa.name); // v8 ran
   });
 });

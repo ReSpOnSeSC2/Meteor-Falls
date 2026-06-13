@@ -23,7 +23,7 @@ import {
   pickupSeed,
   PARTY_SLOT_ID,
   BRACKET_ROUNDS,
-  STARTING_FOUR,
+  STARTING_FIVE,
 } from './hoops';
 import { makeRng } from '../hoops/sim';
 import { makeHeroState } from '../engine/state';
@@ -116,8 +116,8 @@ describe('the fives', () => {
   it('hero court ratings read THROUGH the arms slot (the S12 loop)', () => {
     const rex = makeHeroState('rex', 8);
     const before = heroAthleteRating(rex);
-    rex.bag.push(STARTING_FOUR.rex);
-    rex.equip.arms = STARTING_FOUR.rex; // Champ's Sweatband: Guts +6
+    rex.bag.push(STARTING_FIVE.rex);
+    rex.equip.arms = STARTING_FIVE.rex; // Champ's Sweatband: Guts +6
     const after = heroAthleteRating(rex);
     expect(after.dnk).toBeGreaterThan(before.dnk); // guts drives the rim game
     expect(after.spd).toBe(before.spd);

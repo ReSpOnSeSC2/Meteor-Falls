@@ -254,9 +254,10 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       price: 0,
       text: 'CHAMPION across the back in iron-on letters. Sal pressed every one himself. Defense +8.',
     }),
-    /* ---- S12: THE STARTING FOUR — the Brickton Classic's first-title
+    /* ---- S12 / S15h: THE STARTING FIVE — the Brickton Classic's first-title
        prize, §A8's first 'arms' gear (one piece per hero, wielder-tagged;
-       battle + STATUS read them through heroSpeed/heroGuts) ---- */
+       battle + STATUS read them through heroSpeed/heroGuts). ADR-048 added the
+       fifth (Pippa's Minister's Ribbon) ---- */
     I({
       id: 'cage_sweatband',
       name: "Champ's Sweatband",
@@ -296,6 +297,20 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: false,
       price: 0,
       text: 'The mountain deleted his fear. The cage gave him this instead. Guts +7.',
+    }),
+    // S15h (ADR-048): Pippa's STARTING FIVE arms piece. §A8 names it "Luck+6",
+    // but the arms slot reads Speed/Guts (luck rides charms — ADR-037); the
+    // tiny tactician is quick, so the Ribbon carries Speed. Her canon Luck+6
+    // belongs to her SUNDAY SET charm (unshipped — the links set awaits its 5th).
+    I({
+      id: 'minister_ribbon',
+      name: "Minister's Ribbon",
+      kind: 'arms',
+      speed: 6,
+      wielder: 'pippa',
+      usableInBattle: false,
+      price: 0,
+      text: 'The sash of the Foreign Minister of Being Taken Seriously. Wear it and the room listens. Speed +6.',
     }),
     /* ================= S14 — CHAPTER 2 (§A8 South America) =================
      * The refresh curve: Jay's Sandlot Slugger and Mia's Copper Pan priced so

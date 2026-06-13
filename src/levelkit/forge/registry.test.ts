@@ -24,9 +24,28 @@ import {
 
 describe('S15g M3 — the forged registry is deterministic + canon-seeded', () => {
   for (const ch of FORGE_CHAPTERS) {
-    it(`Ch.${ch}: FIXED_SEED is 1000+ch and the roster matches the pinned buildRoster`, () => {
+    it(`Ch.${ch}: FIXED_SEED is 1000+ch and the roster is the pinned buildRoster + 3b face picks`, () => {
       expect(FIXED_SEED[ch]).toBe(1000 + ch);
-      expect(JSON.stringify(FORGED_ROSTERS[ch])).toBe(JSON.stringify(buildRoster(ch, 1000 + ch)));
+      // S15g 3b: the registry is the pinned roster PLUS the human-recorded face
+      // picks — the face layer touches ONLY partsSpec/sprite/mini, never a stat,
+      // move, or death line. Everything else stays byte-identical to the pin.
+      const base = buildRoster(ch, 1000 + ch);
+      const reg = FORGED_ROSTERS[ch];
+      expect(reg.length).toBe(base.length);
+      reg.forEach((e, i) => {
+        const { partsSpec, sprite, mini, ...rest } = e;
+        const { sprite: baseSprite, mini: baseMini, ...baseRest } = base[i];
+        expect(rest, e.id).toEqual(baseRest);
+        if (partsSpec) {
+          // a picked grunt points its sprite/mini at the composed texture keys
+          expect(sprite).toBe(`forgeface_${e.id}`);
+          expect(mini).toBe(`forgemini_${e.id}`);
+        } else {
+          // an unpicked draft keeps its borrowed placeholder, untouched
+          expect(sprite).toBe(baseSprite);
+          expect(mini).toBe(baseMini);
+        }
+      });
     });
   }
   it('FORGED_ENEMIES keys every forged enemy by id (no roster member dropped)', () => {

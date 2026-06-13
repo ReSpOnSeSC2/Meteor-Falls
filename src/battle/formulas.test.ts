@@ -261,7 +261,7 @@ describe('wear tiers (S11b — battle sprites read the drums)', () => {
   });
 });
 
-describe('the arms slot (S12 — THE STARTING FOUR read-throughs)', () => {
+describe('the arms slot (S12/S15h — THE STARTING FIVE read-throughs)', () => {
   it('heroSpeed/heroGuts read through the arms slot the heroOffense way', () => {
     const rex = makeHeroState('rex', 8);
     const baseSpd = rex.stats.speed;
@@ -288,8 +288,8 @@ describe('the arms slot (S12 — THE STARTING FOUR read-throughs)', () => {
     expect(equipArmsDelta(milo, 'corn_dog')).toEqual({ stat: 'Speed', d: 0 });
   });
 
-  it('every STARTING FOUR piece is wielder-locked arms gear with one stat', () => {
-    for (const id of ['cage_sweatband', 'victory_scrunchie', 'shooters_sleeve', 'iron_wristguard']) {
+  it('every STARTING FIVE piece is wielder-locked arms gear with one stat', () => {
+    for (const id of ['cage_sweatband', 'victory_scrunchie', 'shooters_sleeve', 'iron_wristguard', 'minister_ribbon']) {
       const item = ITEMS[id];
       expect(item.kind).toBe('arms');
       expect(item.wielder).toBeDefined();

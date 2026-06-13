@@ -33,7 +33,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 7;
+  version: 8;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -50,7 +50,7 @@ export interface GameStateData {
   favoriteFood: string;
   playerName: string;
   coolestThing: string;
-  /** Prompt 21 names for all four heroes — joined or not (heroes joining later read theirs from here) */
+  /** Prompt 21 names for all five heroes — joined or not (heroes joining later read theirs from here) */
   heroNames: Record<HeroId, string>;
   /** S9 (v3): the CALLER ledger — one §A10 record per completed side quest,
    *  frozen at completion in earned order. §A6 Ch.8's finale iterates THIS. */
@@ -116,7 +116,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 7,
+    version: 8,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -137,6 +137,7 @@ export function newGameData(): GameStateData {
       rex: HEROES.rex.name,
       faye: HEROES.faye.name,
       milo: HEROES.milo.name,
+      pippa: HEROES.pippa.name,
       dorin: HEROES.dorin.name,
     },
     callers: [],

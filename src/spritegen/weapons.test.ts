@@ -51,6 +51,21 @@ describe('WEAPON_ART ⇄ §A8 equippables (both directions)', () => {
     }
   });
 
+  // S15h: the 'trinket' icons (arms + charms) are drawn on demand by the
+  // equip/status UI, never at boot — so prove every one renders SOMETHING
+  // inside real bounds (this is the only render-proof Pippa's Minister's
+  // Ribbon icon, and its four STARTING FIVE siblings, ever get)
+  it('every trinket icon draws content inside real bounds', () => {
+    for (const [id, art] of Object.entries(WEAPON_ART)) {
+      if (art.kind !== 'trinket') continue;
+      const pm = art.icon();
+      expect(pm.w, `trinket '${id}' icon has no width`).toBeGreaterThan(0);
+      expect(pm.h, `trinket '${id}' icon has no height`).toBeGreaterThan(0);
+      const n = pm.data.reduce((a, c) => a + (c !== T ? 1 : 0), 0);
+      expect(n, `trinket '${id}' icon draws nothing`).toBeGreaterThan(0);
+    }
+  });
+
   it('item detail passes keep the class silhouette but read differently (Cracked vs T-Ball)', () => {
     const draw = (id: string): Uint8Array => {
       const pm = new Pixmap(28, 36);

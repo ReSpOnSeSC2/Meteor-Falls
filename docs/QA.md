@@ -472,3 +472,17 @@ errors) across the session.
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 29 | **The dungeon forge, at thumb scale** — open the Levelkit Lab; page to `laughing_ruins`, read SEALED + "false loops: PROVEN" at phone size; WALK it end-to-end and confirm the maze navigates with no collision snags and that a passage that LOOKS like a loop dead-ends (it is BFS-provably a tree); reroll the seed (^v) and watch the layout reshuffle while the seal holds; confirm a generated dungeon's rest phone sits at the entrance camp BEFORE the first spawner; `.shots/` of a dungeon draft | ⬜ | ⬜ | rows 25–27 stay reserved for S15d–f; M3 (the forges) extends this with a Sprite Lab contact sheet |
+
+### S15g (Movement Three) device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 30 | **The party VITALS BAR + the forged dungeon** — open the START menu and read ALL heroes' HP/PP at the BOTTOM (one panel each: name, HP cur/max, PP cur/max, a thin bar, a DOWN/HOMESICK tag); open ITEMS → a hero's bag and confirm the strip YIELDS to the item description panel (no overlap, no clip) and RESUMES on back-out. From the OVERWORLD press the VITALS button (Y / the thumb-arc Y) and confirm the SAME panel pops; dismiss it with the same button, B, AND a tap — by touch AND pad. Then open the Levelkit Lab, WALK a Ch.3–10 dungeon draft, and confirm it fights FORGED foes (the chapter's banded names, placeholder sprites until 3b); `.shots/` of the menu strip + the overworld glance | ⬜ | ⬜ | 3b extends this with the Sprite Lab contact sheet + the picked `partsSpec`; Pippa (5th panel) lands deferred |
+
+### S15g (Movement 3b) device row — THE SPRITE FORGE (ADR-046, the part catalog + Sprite Lab)
+
+Browser-proven this session via the dev driver: the SPRITE LAB → THE FORGE page renders 8 live composed candidates + the recorded pick at all three wear tiers; walking the Wintermoor draft registers the picked roster's faces and a forged grunt (the Foggy Locker) renders its COMPOSED carapace/iron/grin face in a real battle and swaps to the cracked tier under 33% HP. `.shots/forge_catalog.png` (every silhouette × material), `forge_wear.png` (the drums), `forge_picks.png` (the 6 Ch.3 picks) via `npm run art:facesheet`.
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 31 | **The Sprite Forge, at thumb scale** — open the Sprite Lab from the title's DEV menu and page to THE FORGE; cycle the forged grunts (^v) and the candidate faces (A) and confirm each composed face + its FULL/SCUFFED/BATTERED row read at phone size, and that a Ch.3 grunt shows a green RECORDED pick. Then open the Levelkit Lab, WALK the Wintermoor (Ch.3) dungeon, touch a forged grunt, and confirm it fights with its COMPOSED face — and that it visibly WEARS DOWN (scuff under 66%, batter under 33%) just like a shipped foe. `.shots/` of THE FORGE page + a forged grunt mid-battle at two wear tiers | ⬜ | ⬜ | Ch.3 roster is picked; Ch.4–10 grunts keep a borrowed placeholder until their chapter session picks faces. Bosses + heroes stay bespoke (never forged) |

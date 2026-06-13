@@ -15,11 +15,12 @@ import { HEROES } from './heroes';
 import { newGameData } from '../engine/state';
 
 describe('New Game entry data (Prompt 21)', () => {
-  it('seven screens in canon order', () => {
+  it('eight screens in canon order (S15h: Pippa makes five heroes)', () => {
     expect(NEW_GAME_ENTRIES.map((e) => e.key)).toEqual([
       'rex',
       'faye',
       'milo',
+      'pippa',
       'dorin',
       'player',
       'food',
@@ -29,7 +30,7 @@ describe('New Game entry data (Prompt 21)', () => {
 
   it('hero prefills are the §A3 canon names; food/thing match the save defaults', () => {
     const fresh = newGameData();
-    for (const id of ['rex', 'faye', 'milo', 'dorin'] as const) {
+    for (const id of ['rex', 'faye', 'milo', 'pippa', 'dorin'] as const) {
       const entry = NEW_GAME_ENTRIES.find((e) => e.key === id);
       expect(entry?.prefill).toBe(HEROES[id].name);
       expect(entry?.sprite).toBe(id);

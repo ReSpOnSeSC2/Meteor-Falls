@@ -196,7 +196,7 @@ export function hashOf(s: string): number {
 
 /**
  * A hero's court read derives from their §A3 stats THROUGH the equip
- * read-throughs (heroSpeed/heroGuts — S12's formulas) — THE STARTING FOUR
+ * read-throughs (heroSpeed/heroGuts — S12's formulas) — THE STARTING FIVE
  * makes you better at the very game that awarded it.
  */
 export function heroAthleteRating(h: HeroState): AthleteRating {
@@ -343,7 +343,7 @@ export function pickupSeed(played: number): number {
  * post-game) scaled by FORMAT and bracket depth — a four-quarter Classic war
  * pays like the war it is; a 3v3 run to 21 pays its weight. Pickup pays
  * forever (the anytime XP run). Repeat Classic titles pay cash + goods only;
- * the FIRST pays THE STARTING FOUR.
+ * the FIRST pays THE STARTING FIVE.
  */
 export const HOOPS_REWARDS = {
   pickup: { winExp: 130, lossExp: 55 },
@@ -375,17 +375,23 @@ export function rollDrops(count: number, rng: Rng): string[] {
   return out;
 }
 
-/* ================= THE STARTING FOUR (§A8 'arms', validator-pinned) ====== */
+/* ============== THE STARTING FIVE (§A8 'arms', validator-pinned) ========= */
 
-/** hero id → the arms-slot piece the first Classic title hands them */
-export const STARTING_FOUR: Record<string, string> = {
+/** hero id → the arms-slot piece the first Classic title hands them. S15h
+ *  (ADR-048) added the fifth — Pippa's Minister's Ribbon — the Bible's
+ *  already-amended "THE STARTING FIVE". The handoff carries every piece to
+ *  whoever's present with bag room (the `handed` raincheck ledger), so Pippa's
+ *  rides along to a Ch.1–2 carrier and waits for her Ch.5 join, exactly like
+ *  Milo's and Dorin's pieces do today. */
+export const STARTING_FIVE: Record<string, string> = {
   rex: 'cage_sweatband',
   faye: 'victory_scrunchie',
   milo: 'shooters_sleeve',
   dorin: 'iron_wristguard',
+  pippa: 'minister_ribbon',
 };
 
-export const STARTING_FOUR_IDS: string[] = Object.values(STARTING_FOUR);
+export const STARTING_FIVE_IDS: string[] = Object.values(STARTING_FIVE);
 
 /* ================= HOOPS_TEXT — everything the cage says ================= */
 

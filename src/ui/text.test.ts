@@ -8,7 +8,7 @@ describe('dialogue text variables (Prompt 6 + 21)', () => {
 
   it('resolves every New Game variable', () => {
     GS.applyNewGameChoices({
-      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', pippa: 'Quill', dorin: 'Petru' },
       playerName: 'Jay',
       favoriteFood: 'pancakes',
       coolestThing: 'dial tones',
@@ -39,7 +39,7 @@ describe('dialogue text variables (Prompt 6 + 21)', () => {
 
   it("S2: Mom's payphone call consumes {favoritefood} and {rex} (ADR-013 — no literals)", () => {
     GS.applyNewGameChoices({
-      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', pippa: 'Quill', dorin: 'Petru' },
       playerName: 'Jay',
       favoriteFood: 'pancakes',
       coolestThing: 'dial tones',

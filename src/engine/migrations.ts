@@ -31,13 +31,19 @@
  * Mia already crossed L12 HAD Freeze under the old table — the backfill
  * keeps exactly what the save could already cast, the ADR-035 stance
  * applied to a moved row (losing a known ability on update is never ok).
+ *
+ * v7 → v8 (S15h/ADR-048): the cast expands from four heroes to FIVE — Pippa
+ * Quill (§A3, joins Ch.5). Old saves' heroNames know only the four; the step
+ * backfills Pippa's name from the canon default. Pippa is NOT added to the
+ * party (she hasn't joined — Ch.5 does that), so the existing four ride
+ * through untouched, exactly like every save field a later hero never wrote.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 7;
+export const CURRENT_SAVE_VERSION = 8;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -177,6 +183,21 @@ export const MIGRATIONS: MigrationStep[] = [
         flags.awake_freeze_a = true;
       }
       raw.version = 7;
+      return raw;
+    },
+  },
+  {
+    to: 8,
+    migrate(raw, fresh) {
+      // S15h (ADR-048): the cast expands to FIVE. A pre-v8 save's heroNames
+      // knows only the four — backfill Pippa's name from the canon default
+      // (the name screen named her, or the default stands). No party change:
+      // a hero who hasn't joined isn't on the party list (Pippa joins at Ch.5),
+      // exactly like Milo and Dorin before their chapters, so old saves load
+      // unbroken with their existing four untouched.
+      const hn = isObj(raw.heroNames) ? raw.heroNames : (raw.heroNames = {});
+      if (typeof hn.pippa !== 'string') hn.pippa = fresh.heroNames.pippa;
+      raw.version = 8;
       return raw;
     },
   },

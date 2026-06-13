@@ -48,7 +48,7 @@ import {
   HOOPS_TEXT,
   HOOPS_FILL_TOKENS,
   HOOPS_REWARDS,
-  STARTING_FOUR,
+  STARTING_FIVE,
 } from '../src/data/hoops';
 import { AWAKENINGS } from '../src/data/awakenings';
 import { BOSS_SCRIPTS } from '../src/data/bosses';
@@ -74,6 +74,12 @@ import { TEXT_VARS } from '../src/ui/text';
 import { tileIndexByName, TILESET } from '../src/spritegen/tiles';
 import { mapQualityFlags } from '../src/levelkit/mapcheck';
 import { pressureReport, pressureHardFlags } from '../src/levelkit/pressure';
+// S15g 3b — THE SPRITE FORGE: the part catalog, the composer, the recorded picks
+import { composeEnemy, CATALOG, ROLE_POOLS, CHAPTER_REGION } from '../src/spritegen/parts';
+import { FORGED_ENEMIES } from '../src/levelkit/forge/registry';
+import { FACE_PICKS } from '../src/data/drafts/faces';
+import { PartsSpecSchema } from '../src/schemas';
+import { T } from '../src/palette';
 import type { ZodType } from 'zod';
 
 const errors: string[] = [];
@@ -113,7 +119,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 
 /* ================= 2. canon cross-checks (built so far) ================= */
 
-// §A3 — the four heroes, exactly
+// §A3 — the FIVE heroes, exactly (S15h/ADR-048: Pippa joins the roster)
 {
   const want = HeroIdSchema.options;
   const have = Object.keys(HEROES);
@@ -121,9 +127,10 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const id of have) {
     if (!(want as readonly string[]).includes(id)) fail('canon', `'${id}' is not a §A3 hero`);
   }
-  if (have.length !== 4) fail('canon', `§A3 defines 4 heroes, found ${have.length}`);
+  if (have.length !== 5) fail('canon', `§A3 defines 5 heroes, found ${have.length}`);
 
-  // every unlock must resolve, and §A3 pins: Mia prays from L1; Milo has no Vibe
+  // every unlock must resolve, and §A3 pins: Mia prays from L1; Milo AND Pippa
+  // have no Vibe (the two no-PSI heroes — competence, not the old light)
   for (const h of Object.values(HEROES)) {
     for (const u of h.unlocks) {
       if (!ABILITIES[u.ability]) fail('canon', `${h.id} unlock L${u.level} → unknown ability '${u.ability}'`);
@@ -135,6 +142,10 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   const miloVibe = HEROES.milo.unlocks.filter((u) => ABILITIES[u.ability]?.kind === 'vibe');
   if (miloVibe.length > 0 || HEROES.milo.base.vibe !== 0 || HEROES.milo.pp.base !== 0) {
     fail('canon', `§A3: Milo has no Vibe (found vibe abilities/stats/PP on him)`);
+  }
+  const pippaVibe = HEROES.pippa.unlocks.filter((u) => ABILITIES[u.ability]?.kind === 'vibe');
+  if (pippaVibe.length > 0 || HEROES.pippa.base.vibe !== 0 || HEROES.pippa.pp.base !== 0) {
+    fail('canon', `§A3: Pippa has no Vibe (found vibe abilities/stats/PP on her)`);
   }
 }
 
@@ -669,14 +680,17 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
   }
 }
 
-// THE STARTING FOUR: the first 'arms' line — one piece per hero, wielder-
-// tagged, unsellable, carrying exactly one of speed/guts; and the Ch.1
-// arms manifest is exactly these four (extend the manifest, never ad-hoc)
+// THE STARTING FIVE (S15h/ADR-048): the first 'arms' line — one piece per
+// hero, wielder-tagged, unsellable, carrying exactly one of speed/guts; and the
+// arms manifest is exactly these five (extend the manifest, never ad-hoc).
+// Pippa's Minister's Ribbon carries SPEED: §A8 names it "Luck+6", but the arms
+// slot reads speed/guts — luck rides charms (ADR-037), so her Luck+6 is reserved
+// for her SUNDAY SET charm and the arms piece is Speed (the tiny tactician is quick).
 {
-  for (const [heroId, itemId] of Object.entries(STARTING_FOUR)) {
+  for (const [heroId, itemId] of Object.entries(STARTING_FIVE)) {
     const item = ITEMS[itemId];
     if (!item) {
-      fail('hoops', `STARTING FOUR piece '${itemId}' missing from ITEMS`);
+      fail('hoops', `STARTING FIVE piece '${itemId}' missing from ITEMS`);
       continue;
     }
     if (item.kind !== 'arms') fail('hoops', `'${itemId}' must be kind 'arms', got '${item.kind}'`);
@@ -684,8 +698,8 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
     if (item.price !== 0) fail('hoops', `'${itemId}' is a title, not merchandise — price must be 0`);
   }
   for (const item of Object.values(ITEMS)) {
-    if (item.kind === 'arms' && !Object.values(STARTING_FOUR).includes(item.id)) {
-      fail('hoops', `'${item.id}' is not in the STARTING FOUR arms manifest — extend the manifest, never ad-hoc`);
+    if (item.kind === 'arms' && !Object.values(STARTING_FIVE).includes(item.id)) {
+      fail('hoops', `'${item.id}' is not in the STARTING FIVE arms manifest — extend the manifest, never ad-hoc`);
     }
   }
 }
@@ -1004,6 +1018,55 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
     if (BOSS_SCRIPTS[id]) fail('boss-drafts', `'${id}' is BOTH a shipped boss script and a draft — promote, don't duplicate`);
     if (ENEMIES[id]) fail('boss-drafts', `'${id}' drives a SHIPPED §A7 enemy — a forged draft must not (promotion is a human act)`);
   }
+}
+
+// THE SPRITE FORGE (S15g 3b, ADR-046): the part catalog is swept BOTH directions
+// like WEAPON_ART — every part the proposer can emit exists, and every catalog
+// part is reachable by some role/region (no orphan parts). Then every RECORDED
+// FACE PICK resolves to real parts and COMPOSES a face that reads the drums.
+{
+  const FAMILIES = ['silhouette', 'material', 'accessory', 'wear'] as const;
+  const famOf = (pool: (typeof ROLE_POOLS)[string], fam: (typeof FAMILIES)[number]): string[] =>
+    ({ silhouette: pool.sil, material: pool.mat, accessory: pool.acc, wear: pool.wear })[fam];
+  // forward: every part a pool names exists in the catalog
+  for (const [role, pool] of Object.entries(ROLE_POOLS))
+    for (const fam of FAMILIES)
+      for (const id of famOf(pool, fam))
+        if (!CATALOG[fam].includes(id)) fail('sprite-forge', `ROLE_POOLS.${role}.${fam} names '${id}', absent from the ${fam} catalog`);
+  for (const [ch, region] of Object.entries(CHAPTER_REGION))
+    if (!CATALOG.region.includes(region)) fail('sprite-forge', `CHAPTER_REGION[${ch}] names region '${region}', absent from the catalog`);
+  // backward: every catalog part is reachable by the proposer (no orphan parts)
+  for (const fam of FAMILIES) {
+    const reachable = new Set<string>();
+    for (const pool of Object.values(ROLE_POOLS)) for (const id of famOf(pool, fam)) reachable.add(id);
+    for (const id of CATALOG[fam]) if (!reachable.has(id)) fail('sprite-forge', `${fam} part '${id}' is in the catalog but no role pool can emit it — wire it into ROLE_POOLS or retire it`);
+  }
+  const reachableRegions = new Set(Object.values(CHAPTER_REGION));
+  for (const id of CATALOG.region) if (!reachableRegions.has(id)) fail('sprite-forge', `region '${id}' is in the catalog but no chapter draws it — wire it into CHAPTER_REGION or retire it`);
+
+  // every RECORDED pick keys a forged enemy, parses, resolves to real parts, and
+  // composes a non-empty face whose three wear tiers actually DIFFER (the drums).
+  const count = (data: Uint8Array): number => data.reduce((a, c) => a + (c !== T ? 1 : 0), 0);
+  const same = (a: Uint8Array, b: Uint8Array): boolean => Buffer.from(a).equals(Buffer.from(b));
+  for (const [id, spec] of Object.entries(FACE_PICKS)) {
+    if (!FORGED_ENEMIES[id]) { fail('sprite-forge', `FACE_PICKS['${id}'] matches no forged enemy — extend or retire the pick`); continue; }
+    const parsed = PartsSpecSchema.safeParse(spec);
+    if (!parsed.success) { for (const e of parsed.error.issues) fail('sprite-forge', `FACE_PICKS['${id}']: ${e.message}`); continue; }
+    if (!CATALOG.silhouette.includes(spec.silhouette)) fail('sprite-forge', `FACE_PICKS['${id}'] silhouette '${spec.silhouette}' is not in the catalog`);
+    if (!CATALOG.material.includes(spec.material)) fail('sprite-forge', `FACE_PICKS['${id}'] material '${spec.material}' is not in the catalog`);
+    if (spec.accessory && !CATALOG.accessory.includes(spec.accessory)) fail('sprite-forge', `FACE_PICKS['${id}'] accessory '${spec.accessory}' is not in the catalog`);
+    if (spec.wear && !CATALOG.wear.includes(spec.wear)) fail('sprite-forge', `FACE_PICKS['${id}'] wear '${spec.wear}' is not in the catalog`);
+    if (spec.region && !CATALOG.region.includes(spec.region)) fail('sprite-forge', `FACE_PICKS['${id}'] region '${spec.region}' is not in the catalog`);
+    const t0 = composeEnemy(spec, 0).data, t1 = composeEnemy(spec, 1).data, t2 = composeEnemy(spec, 2).data;
+    if (count(t0) < 50) fail('sprite-forge', `FACE_PICKS['${id}'] composes an empty face (bad part combo)`);
+    if (same(t0, t1)) fail('sprite-forge', `FACE_PICKS['${id}'] scuffed tier is identical to full — the drums must read`);
+    if (same(t1, t2)) fail('sprite-forge', `FACE_PICKS['${id}'] battered tier is identical to scuffed — the drums must read`);
+  }
+  // byte-identity: a picked face's composed key must never collide with a
+  // shipped sprite (it would overwrite shipped art at boot).
+  const shipped = new Set(Object.values(ENEMY_BATTLE_ART).map((a) => a.sprite));
+  for (const def of Object.values(FORGED_ENEMIES))
+    if (def.partsSpec && shipped.has(def.sprite)) fail('sprite-forge', `forged '${def.id}' composed key '${def.sprite}' collides with a shipped sprite — shipped art would be overwritten`);
 }
 
 // PICNIC (Prompt 23 / §A4.5): baskets pinned; the tables stand where canon says

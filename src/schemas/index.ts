@@ -15,7 +15,10 @@ import { z } from 'zod';
 
 /* ---------------- shared ---------------- */
 
-export const HeroIdSchema = z.enum(['rex', 'faye', 'milo', 'dorin']);
+// S15h (ADR-048): the cast expands to FIVE — Pippa Quill, the Minimus royal
+// page (§A3, joins Ch.5). Engine ids stay frozen (rex/faye like ADR-031/023);
+// 'pippa' is her own id from the start.
+export const HeroIdSchema = z.enum(['rex', 'faye', 'milo', 'dorin', 'pippa']);
 export type HeroId = z.infer<typeof HeroIdSchema>;
 
 /** the six EB-DNA stats (§A3) */

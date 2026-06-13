@@ -31,6 +31,7 @@ import type { MapDef, NpcDef } from '../data/maps';
 import { MAPS } from '../data/maps';
 import { ENEMIES } from '../data/enemies';
 import { FORGED_ENEMIES, stripForgeTags } from '../levelkit/forge/registry';
+import { ensureForgedFaces } from '../spritegen';
 import { DIALOGUE } from '../data/dialogue';
 
 export class LevelkitLabScene extends Phaser.Scene {
@@ -129,9 +130,13 @@ export class LevelkitLabScene extends Phaser.Scene {
 
     // inject the forged Ch.3–10 roster into the RUNTIME ENEMIES — tags stripped
     // to the canon EnemyDef shape — exactly the way the map draft goes into MAPS
-    // above. So a walked dungeon fights real forged foes (placeholder sprites
-    // until 3b). The shipped ENEMIES SOURCE is never touched (Prime Law 1).
+    // above. So a walked dungeon fights real forged foes. The shipped ENEMIES
+    // SOURCE is never touched (Prime Law 1).
     for (const [id, def] of Object.entries(FORGED_ENEMIES)) ENEMIES[id] = stripForgeTags(def);
+    // S15g 3b: register the COMPOSED faces of picked grunts (3 wear tiers + mini)
+    // so a fight resolves the real face through partsSpec and wears it down.
+    // Unpicked drafts keep their borrowed placeholder sprite (no-op here).
+    ensureForgedFaces(this, Object.values(FORGED_ENEMIES));
 
     GS.reset(); // a fresh dev party so the overworld can build the player
     AUDIO.sfx('confirm');

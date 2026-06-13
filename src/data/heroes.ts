@@ -1,6 +1,8 @@
 /**
- * The Four Heroes — GAME_BIBLE §A3. All four are fully defined (visible in
- * Sprite Lab); Mia, Milo and Dorin join in their canon chapters.
+ * The Five Heroes — GAME_BIBLE §A3. All five are fully defined (visible in
+ * Sprite Lab); Mia, Milo, Pippa and Dorin join in their canon chapters
+ * (Pippa is S15h/ADR-048's 4→5 expansion — the roster + sprites land now, Ch.5
+ * wires her into the party).
  * Types are z.infer'd from src/schemas (S5) so the compile-time shape and the
  * runtime validation cannot drift; `import type` keeps zod out of the bundle.
  */
@@ -103,6 +105,31 @@ export const HEROES: Record<HeroId, HeroDef> = {
       { level: 44, ability: 'healing_g' },
       { level: 50, ability: 'brainjam_o' },
       { level: 52, ability: 'vibe_comet_o' },
+    ],
+  },
+  // Pippa Quill — the Minimus royal page (§A3, S15h/ADR-048). NO Vibe and NO
+  // PP, like Milo: her kit is competence, not the old light — accuracy, morale,
+  // and a field medic's sewing kit. Tiny, quick, and absurdly lucky; her
+  // signature is reading small targets the taller kids whiff at. Joins Ch.5.
+  pippa: {
+    id: 'pippa',
+    name: 'Pippa',
+    epithet: 'the royal page of Minimus',
+    weapon: 'stamp slings',
+    base: { offense: 3, defense: 4, speed: 6, guts: 4, vibe: 0, luck: 9 },
+    growth: { offense: 1.4, defense: 1.5, speed: 1.8, guts: 0.9, vibe: 0, luck: 1.4 },
+    hp: { base: 24, lin: 5.0, quad: 0.06 },
+    pp: { base: 0, lin: 0, quad: 0 },
+    // §A3: three abilities arrive WHEN SHE JOINS (Ch.5) — the on-join support
+    // kit — and Big-Little Focus is the Ch.5 build with Milo (a built ability,
+    // not an awakening). Scale Step (L30) and Bellwether (L44) come later.
+    unlocks: [
+      { level: 1, ability: 'pinpoint_mark' },
+      { level: 1, ability: 'royal_rally' },
+      { level: 1, ability: 'pocket_patch' },
+      { level: 1, ability: 'big_little_focus' },
+      { level: 30, ability: 'scale_step' },
+      { level: 44, ability: 'bellwether' },
     ],
   },
 };

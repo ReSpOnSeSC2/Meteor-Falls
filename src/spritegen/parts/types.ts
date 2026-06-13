@@ -1,5 +1,5 @@
 /**
- * THE SPRITE FORGE — composition contract (S15g Movement 3b, ADR-047).
+ * THE SPRITE FORGE — composition contract (S15g Movement 3b, ADR-046).
  *
  * A forged enemy's face is COMPOSED from hand-drawn parts, never synthesized
  * (ADR-020 BY CONSTRUCTION). Each part is a `px`-only function on the 64-color

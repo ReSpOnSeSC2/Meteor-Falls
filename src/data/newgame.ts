@@ -1,9 +1,10 @@
 /**
  * New Game setup data — GAME_BIBLE Prompt 21 (§A11 voice).
- * Seven EB-style entry screens: the four heroes (prefilled, editable), the
- * player's own name (the finale's confirm box reads it, §A6 Ch.8), favorite
- * food (Mom's cooking / Homesick cure, §A4), and the coolest thing.
- * Don't-care pulls from the canon-flavored lists below.
+ * Eight EB-style entry screens (S15h: Pippa makes five heroes): the five heroes
+ * (prefilled, editable; named in §A3 order, late-joiners and all — exactly like
+ * Milo and Dorin), the player's own name (the finale's confirm box reads it,
+ * §A6 Ch.8), favorite food (Mom's cooking / Homesick cure, §A4), and the
+ * coolest thing. Don't-care pulls from the canon-flavored lists below.
  */
 import { HEROES, type HeroId } from './heroes';
 
@@ -61,6 +62,15 @@ export const NEW_GAME_ENTRIES: NewGameEntry[] = [
     prefill: HEROES.milo.name,
     cap: NAME_CAP,
     dontCare: ['Milo', 'Gizmo', 'Earl', 'Oolong', 'Pekoe', 'Watt', 'Sprocket', 'Niles'],
+  },
+  {
+    key: 'pippa',
+    kind: 'hero',
+    sprite: 'pippa',
+    prompt: 'Name the royal page of Minimus.',
+    prefill: HEROES.pippa.name,
+    cap: NAME_CAP,
+    dontCare: ['Quill', 'Minnow', 'Tilly', 'Bree', 'Posy', 'Wisp', 'Nib', 'Dot'],
   },
   {
     key: 'dorin',

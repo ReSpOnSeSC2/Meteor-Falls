@@ -17,6 +17,8 @@
 import { Pixmap } from './pixmap';
 import { RAMP, T, px, C } from '../palette';
 import type { WearTier } from './battlers';
+import { composeEnemy } from './parts';
+import type { PartsSpec } from '../schemas';
 
 /* ---------------------------------------------------------------- */
 /* Battle sprites.                                                    */
@@ -1212,6 +1214,20 @@ export const FORM_ART: Record<string, EnemyBattleArt> = {
 /** the wear-tier texture key battle swaps to (tier 0 = the base sprite) */
 export function wearSpriteKey(sprite: string, wear: WearTier): string {
   return wear === 0 ? sprite : `${sprite}_w${wear}`;
+}
+
+/**
+ * S15g 3b — ENEMY_BATTLE_ART, resolved THROUGH a forged enemy's partsSpec. A
+ * picked forged grunt wears the same {sprite, draw:(wear)=>Pixmap} contract as
+ * every shipped sprite, except its three tiers are COMPOSED from the hand-drawn
+ * part catalog (parts/index.ts) instead of one bespoke draw — so it reads the
+ * drums (0/1/2) identically. Returns null for an unpicked draft (it keeps its
+ * borrowed placeholder) and for bosses/heroes (always bespoke, never forged).
+ */
+export function forgedFaceArt(def: { sprite: string; partsSpec?: PartsSpec; boss?: boolean }): EnemyBattleArt | null {
+  if (def.boss || !def.partsSpec) return null;
+  const spec = def.partsSpec;
+  return { sprite: def.sprite, draw: (w) => composeEnemy(spec, w) };
 }
 
 /* ---------------------------------------------------------------- */

@@ -3,6 +3,8 @@
  * Page 1: the cast walking. Page 2: enemy battle sprites. Page 3: the world
  * set. Page 4: REMIX — build a brand-new EarthBound-style character from
  * parameters and watch the engine redraw the full 16-frame sheet instantly.
+ * Page 5 (S15g 3b): THE FORGE — browse forged grunts, cycle their seeded
+ * candidate faces, and read the recorded partsSpec pick at all three wear tiers.
  */
 import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
@@ -13,8 +15,12 @@ import { framesToCanvas } from '../spritegen/pixmap';
 import { standFrame, type Facing } from '../spritegen';
 import { makeWindow, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
+import { composeEnemy, proposeCandidates, FACE_W, FACE_H } from '../spritegen/parts';
+import { FORGED_ENEMIES } from '../levelkit/forge/registry';
+import { FACE_PICKS } from '../data/drafts/faces';
+import type { PartsSpec } from '../schemas';
 
-const PAGES = ['THE CAST', 'COMPANIONS', 'THE OPPOSITION', 'THE WORLD', 'REMIX A KID'] as const;
+const PAGES = ['THE CAST', 'COMPANIONS', 'THE OPPOSITION', 'THE WORLD', 'REMIX A KID', 'THE FORGE'] as const;
 
 const HAIR_STYLES: HairStyle[] = ['short', 'bob', 'sidepart', 'topknot', 'gray', 'none'];
 const TOP_STYLES: TopStyle[] = ['shirt', 'stripe', 'dress', 'gi', 'blazer', 'apron', 'pajama'];
@@ -47,6 +53,12 @@ export class SpriteLabScene extends Phaser.Scene {
   private castSprites: Phaser.GameObjects.Sprite[] = [];
   private castDirTimer = 0;
   private castDir = 0;
+  // S15g 3b — THE FORGE page: browse forged grunts, cycle seeded candidate
+  // faces, and read which partsSpec the human recorded (the pick).
+  private forgeIdx = 0;
+  private forgeCand = 0;
+  private forgeCounter = 0;
+  private forgeList: { id: string; role: string; chapter: number }[] = [];
 
   constructor() {
     super('spritelab');
@@ -85,7 +97,8 @@ export class SpriteLabScene extends Phaser.Scene {
     else if (this.page === 1) this.pageCompanions();
     else if (this.page === 2) this.pageEnemies();
     else if (this.page === 3) this.pageWorld();
-    else this.pageRemix();
+    else if (this.page === 4) this.pageRemix();
+    else this.pageForge();
   }
 
   /** S14b: the cast outgrew one screen (41 and counting) — the page
@@ -150,9 +163,9 @@ export class SpriteLabScene extends Phaser.Scene {
     anim(222, 86, 'angel', 'angel-float', 3);
     anim(222, 100, 'angel', 'angel-float', 1);
     label(222, 108, 'ANGEL');
-    // §A4.7: the four heroes mourn as themselves
-    (['rex', 'faye', 'milo', 'dorin'] as const).forEach((id, i) => {
-      const x = 60 + i * 76;
+    // §A4.7: the five heroes mourn as themselves (§A3 order; S15h adds Pippa)
+    (['rex', 'faye', 'milo', 'pippa', 'dorin'] as const).forEach((id, i) => {
+      const x = 16 + i * 75;
       anim(x, 188, `angel_${id}`, `angel_${id}-float`, 3);
       anim(x + 30, 188, `angel_${id}`, `angel_${id}-float`, 1);
       label(x + 8, 192, `ANGEL ${(id in HEROES ? HEROES[id as HeroId].name : id).toUpperCase()}`);
@@ -341,6 +354,57 @@ export class SpriteLabScene extends Phaser.Scene {
     this.refreshRemixTexts();
   }
 
+  /**
+   * S15g 3b — THE FORGE: browse the forged grunts, cycle their seeded candidate
+   * faces (A), and read which one the human RECORDED as the partsSpec. The
+   * in-game half of the Sprite Lab contact sheet — the human picks a candidate
+   * here (and on `npm run art:facesheet`) and names it; the pick is then written
+   * into FACE_PICKS. The selected candidate shows at all three wear tiers so the
+   * drums read before the pick.
+   */
+  private pageForge(): void {
+    if (this.forgeList.length === 0) {
+      this.forgeList = Object.values(FORGED_ENEMIES)
+        .map((e) => ({ id: e.id, role: e.role, chapter: e.chapter }))
+        .sort((a, b) => a.chapter - b.chapter || a.id.localeCompare(b.id));
+    }
+    const e = this.forgeList[this.forgeIdx % this.forgeList.length];
+    const cands = proposeCandidates(e.id, e.role, e.chapter, 8);
+    this.forgeCand = ((this.forgeCand % cands.length) + cands.length) % cands.length;
+    const label = (x: number, y: number, text: string, ramp: number, shade: 0 | 1 | 2 | 3 = 3, origin = 0): void => {
+      this.content.push(this.add.bitmapText(x, y, 'retro', text, 6).setOrigin(origin, 0).setTint(colorOf(px(ramp, shade))));
+    };
+    label(12, 34, `${e.id}  (${e.role}, Ch.${e.chapter})`, RAMP.GOLD);
+    label(388, 34, `${(this.forgeIdx % this.forgeList.length) + 1}/${this.forgeList.length}  ^v`, RAMP.GOLD, 2, 1);
+    label(12, 48, 'candidates  —  A cycles the pick', RAMP.NIGHT, 3);
+    cands.forEach((spec, i) => {
+      const x = 28 + i * 45;
+      const y = 74;
+      this.forgeFace(spec, 0, x, y, 0.55);
+      if (i === this.forgeCand) this.content.push(this.add.rectangle(x, y, FACE_W * 0.55 + 6, FACE_H * 0.55 + 6).setStrokeStyle(1, colorOf(px(RAMP.GOLD, 3))));
+      label(x, y + 22, `${i}`, i === this.forgeCand ? RAMP.GOLD : RAMP.NIGHT, 3, 0.5);
+    });
+    const sel = cands[this.forgeCand];
+    ['FULL', 'SCUFFED', 'BATTERED'].forEach((name, w) => {
+      const x = 90 + w * 110;
+      this.forgeFace(sel, w as 0 | 1 | 2, x, 150, 0.95);
+      label(x, 184, name, RAMP.CYAN, 3, 0.5);
+    });
+    label(12, 198, `parts ${sel.silhouette}/${sel.material}/${sel.accessory}/${sel.wear}/${sel.region} seed ${sel.seed}`, RAMP.PAPER, 2);
+    const picked = FACE_PICKS[e.id];
+    const pIdx = picked
+      ? cands.findIndex((c) => c.silhouette === picked.silhouette && c.material === picked.material && c.accessory === picked.accessory && c.wear === picked.wear)
+      : -1;
+    label(388, 198, picked ? `RECORDED: cand ${pIdx >= 0 ? pIdx : '?'}` : 'unpicked', picked ? RAMP.GRASS : RAMP.RED, 2, 1);
+  }
+
+  /** compose a forged face live and place it as an image (dev-only textures) */
+  private forgeFace(spec: PartsSpec, wear: 0 | 1 | 2, x: number, y: number, scale: number): void {
+    const key = `forgelab_${this.forgeCounter++}`;
+    this.textures.addCanvas(key, composeEnemy(spec, wear).toCanvas());
+    this.content.push(this.add.image(x, y, key).setOrigin(0.5, 0.5).setScale(scale));
+  }
+
   private navOk(): boolean {
     if (this.time.now > this.navAt) {
       this.navAt = this.time.now + 200;
@@ -401,6 +465,19 @@ export class SpriteLabScene extends Phaser.Scene {
         const dir = (['down', 'left', 'right', 'up'] as const)[this.remixDir];
         const key = this.remixSprite.texture.key;
         this.remixSprite.play(`${key}-walk-${dir}`);
+      }
+    }
+    if (this.page === 5) {
+      if (d.y !== 0 && this.navOk() && this.forgeList.length > 0) {
+        this.forgeIdx = (this.forgeIdx + (d.y > 0 ? 1 : this.forgeList.length - 1)) % this.forgeList.length;
+        this.forgeCand = 0;
+        AUDIO.sfx('cursor');
+        this.showPage();
+      }
+      if (INPUT.justPressed('A')) {
+        this.forgeCand += 1;
+        AUDIO.sfx('confirm');
+        this.showPage();
       }
     }
   }

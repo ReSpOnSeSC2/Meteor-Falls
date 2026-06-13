@@ -15,6 +15,21 @@
  */
 import type { DraftEnemyDef, EnemyDef } from '../../schemas';
 import { buildRoster } from './enemies';
+import { FACE_PICKS } from '../../data/drafts/faces';
+
+/**
+ * S15g 3b — attach the human-recorded FACE PICK to a forged draft and repoint
+ * its sprite/mini at the COMPOSED texture keys the LAB registers
+ * (ensureForgedFaces). The keys are UNIQUE (`forgeface_<id>`), so a picked face
+ * can never collide with — and overwrite — a shipped sprite; shipped art stays
+ * byte-identical. A draft with no pick is returned untouched: it keeps its
+ * borrowed placeholder sprite until a human picks one (promotion is a human act).
+ */
+function withFace(e: DraftEnemyDef): DraftEnemyDef {
+  const spec = FACE_PICKS[e.id];
+  if (!spec) return e;
+  return { ...e, partsSpec: spec, sprite: `forgeface_${e.id}`, mini: `forgemini_${e.id}` };
+}
 
 /** the §A7 chapters the forge drafts (Ch.1–2 stay the shipped, frozen roster) */
 export const FORGE_CHAPTERS: readonly number[] = [3, 4, 5, 6, 7, 8, 9, 10];
@@ -31,14 +46,14 @@ export const FIXED_SEED: Record<number, number> = {
 
 /** the forged roster for each Ch.3–10 (deterministic on FIXED_SEED) */
 export const FORGED_ROSTERS: Record<number, readonly DraftEnemyDef[]> = {
-  3: buildRoster(3, FIXED_SEED[3]),
-  4: buildRoster(4, FIXED_SEED[4]),
-  5: buildRoster(5, FIXED_SEED[5]),
-  6: buildRoster(6, FIXED_SEED[6]),
-  7: buildRoster(7, FIXED_SEED[7]),
-  8: buildRoster(8, FIXED_SEED[8]),
-  9: buildRoster(9, FIXED_SEED[9]),
-  10: buildRoster(10, FIXED_SEED[10]),
+  3: buildRoster(3, FIXED_SEED[3]).map(withFace),
+  4: buildRoster(4, FIXED_SEED[4]).map(withFace),
+  5: buildRoster(5, FIXED_SEED[5]).map(withFace),
+  6: buildRoster(6, FIXED_SEED[6]).map(withFace),
+  7: buildRoster(7, FIXED_SEED[7]).map(withFace),
+  8: buildRoster(8, FIXED_SEED[8]).map(withFace),
+  9: buildRoster(9, FIXED_SEED[9]).map(withFace),
+  10: buildRoster(10, FIXED_SEED[10]).map(withFace),
 };
 
 /** every forged enemy keyed by id — the dev registry the LAB injects (stripped) */

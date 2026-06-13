@@ -133,8 +133,8 @@ export class NameEntryScene extends Phaser.Scene {
     const byKey = (k: string): string =>
       this.values[NEW_GAME_ENTRIES.findIndex((e) => e.key === k)];
     const lines = [
-      `${byKey('rex')}, ${byKey('faye')},`,
-      `${byKey('milo')} and ${byKey('dorin')}.`,
+      `${byKey('rex')}, ${byKey('faye')}, ${byKey('milo')},`,
+      `${byKey('pippa')} and ${byKey('dorin')}.`,
       `Player name: ${byKey('player')}`,
       `Favorite food: ${byKey('food')}`,
       `Coolest thing: ${byKey('thing')}`,
@@ -162,16 +162,21 @@ export class NameEntryScene extends Phaser.Scene {
   }
 
   private finishGame(): void {
+    // S15h: read by KEY, not by position — the NEW_GAME_ENTRIES order owns the
+    // screen sequence, and heroNames is Record<HeroId> (Pippa makes five now)
+    const byKey = (k: string): string =>
+      this.values[NEW_GAME_ENTRIES.findIndex((e) => e.key === k)];
     const choices: NewGameChoices = {
       heroNames: {
-        rex: this.values[0],
-        faye: this.values[1],
-        milo: this.values[2],
-        dorin: this.values[3],
+        rex: byKey('rex'),
+        faye: byKey('faye'),
+        milo: byKey('milo'),
+        pippa: byKey('pippa'),
+        dorin: byKey('dorin'),
       },
-      playerName: this.values[4],
-      favoriteFood: this.values[5],
-      coolestThing: this.values[6],
+      playerName: byKey('player'),
+      favoriteFood: byKey('food'),
+      coolestThing: byKey('thing'),
     };
     GS.applyNewGameChoices(choices);
     AUDIO.stopMusic();

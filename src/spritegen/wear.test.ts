@@ -62,7 +62,7 @@ describe('ENEMY_BATTLE_ART ⇄ §A7 roster (both directions)', () => {
 
 describe('hero wear tiers — busts and battlers degrade with the drums', () => {
   it('bust idle frames differ per tier for every hero', () => {
-    for (const id of ['rex', 'faye', 'milo', 'dorin']) {
+    for (const id of ['rex', 'faye', 'milo', 'pippa', 'dorin']) {
       const t0 = generateBustFrames(CAST[id], null, 0)[BUST_FRAME.idleA].data;
       const t1 = generateBustFrames(CAST[id], null, 1)[BUST_FRAME.idleA].data;
       const t2 = generateBustFrames(CAST[id], null, 2)[BUST_FRAME.idleA].data;
@@ -72,7 +72,7 @@ describe('hero wear tiers — busts and battlers degrade with the drums', () => 
   });
 
   it('battler idle frames differ per tier for every hero', () => {
-    for (const id of ['rex', 'faye', 'milo', 'dorin']) {
+    for (const id of ['rex', 'faye', 'milo', 'pippa', 'dorin']) {
       const look = { weapon: null, body: null };
       const t0 = generateBattlerFrames(CAST[id], look, 0)[BATTLER_FRAME.idleA].data;
       const t1 = generateBattlerFrames(CAST[id], look, 1)[BATTLER_FRAME.idleA].data;
@@ -95,7 +95,7 @@ describe('hero wear tiers — busts and battlers degrade with the drums', () => 
   });
 
   it('every battler sheet ships the full 14-frame stage set', () => {
-    for (const id of ['rex', 'faye', 'milo', 'dorin']) {
+    for (const id of ['rex', 'faye', 'milo', 'pippa', 'dorin']) {
       const frames = generateBattlerFrames(CAST[id], { weapon: null, body: null }, 0);
       expect(frames.length).toBe(14);
       for (const [name, idx] of Object.entries(BATTLER_FRAME)) {

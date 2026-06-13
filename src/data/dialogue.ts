@@ -493,7 +493,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   permit_title_first: [
     '@CHAMPIONS. I have ranked every Classic since the first one, and this one goes in at... high. VERY high.',
-    '@The cage pays its debts. THE STARTING FOUR — four pieces of the game itself. They go where the arms go. That is the slot they are for.',
+    '@The cage pays its debts. THE STARTING FIVE — five pieces of the game itself. They go where the arms go. That is the slot they are for.',
   ],
   permit_hands_full: [
     '@Your hands are full. A champion with full hands is still a champion — I will keep the rest warm. Come back with room.',

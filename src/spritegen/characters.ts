@@ -1477,6 +1477,31 @@ export const CAST: Record<string, CharacterSpec> = {
       }
     },
   },
+  // Pippa Quill — the Minimus royal page (§A3, S15h/ADR-048): a tiny minister
+  // in royal-purple livery with gold braid, hair in a no-nonsense page bob.
+  // Bespoke like every hero — busts + battlers derive from this one spec.
+  pippa: {
+    skin: RAMP.SKIN,
+    hair: RAMP.EARTH,
+    hairStyle: 'bob',
+    top: { ramp: RAMP.PURPLE, style: 'blazer', accent: RAMP.GOLD },
+    bottom: { ramp: RAMP.INK },
+    shoes: RAMP.GOLD,
+    longPants: true, // a minister does not do bare knees
+    mouth: 'hint', // composed; speaks like a diplomat (§A3)
+    // the Minister's Ribbon — a gold sash crossing the chest (front only),
+    // the badge of "Foreign Minister of Being Taken Seriously" (4px, ADR-009)
+    detail: ({ pm, dir, bob, m }) => {
+      if (dir !== 'down') return;
+      const y0 = m.bodyTop + bob;
+      const ribbon = px(RAMP.GOLD, 3);
+      const ribbonD = px(RAMP.GOLD, 1);
+      pm.set(m.bodyX + m.bodyW - 3, y0 + 1, ribbon); // shoulder
+      pm.set(m.bodyX + m.bodyW - 4, y0 + 3, ribbon);
+      pm.set(m.bodyX + m.bodyW - 6, y0 + 5, ribbonD); // crossing down
+      pm.set(m.bodyX + 2, y0 + 7, ribbonD); // the little medal at the hip
+    },
+  },
   // Chad Pickle — Pokey analog: chubby, blond side-part, mustard stripes
   chad: {
     skin: RAMP.SKIN,

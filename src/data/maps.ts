@@ -736,7 +736,12 @@ function buildBrickton(): MapDef {
       sprite: b.sprite,
       x: b.x,
       y: (bottomPx - H) / 16,
-      solid: { ox: 0, oy: 26, w: b.w * 16 + 2, h: H - 38 },
+      // the solid covers the FACADE down to the doorstep — oy:10 (was 26) so a
+      // player can't walk horizontally ACROSS the upper floors (the "walk
+      // through buildings at some angles" bug); the bottom stays at H-12 so the
+      // door zone below it is still reachable, and depth-sort occludes a hero
+      // pressed against the back, so there's no head-above-roof to see.
+      solid: { ox: 0, oy: 10, w: b.w * 16 + 2, h: H - 22 },
     };
     if (b.sprite === 'bldg_dept') {
       prop.door = { ox: 44, oy: H - 14, w: 26, h: 18, to: 'dos_f1', tx: 208, ty: 234 };
@@ -1260,6 +1265,9 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
       { sprite: 'shelf_b', x: 10, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
       // S7: the Star Cola case hums against the back wall
       { sprite: 'cola_fridge', x: 7.4, y: 0.25 },
+      // the user's decree: every shop carries an ATM (cash) + a payphone (save)
+      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 10, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
     ],
     npcs: [
       {
@@ -1286,7 +1294,8 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
       },
     ],
     signs: [{ x: 9, y: 1, dialogue: 'sign_drug_wall' }],
-    phones: [],
+    phones: [{ x: 2, y: 7 }],
+    atms: [{ x: 10, y: 7 }],
     doors: [
       { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],
@@ -1322,6 +1331,9 @@ function buildStarmartInt(streetExit: { tx: number; ty: number }): MapDef {
       { sprite: 'plant_pot', x: 1, y: 8, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
       // S7: the Star Cola case — STARMART's pride
       { sprite: 'cola_fridge', x: 12.2, y: 0.3 },
+      // every shop carries an ATM (cash) + a payphone (save) — the user's decree
+      { sprite: 'payphone', x: 2, y: 9, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 14, y: 9, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
     ],
     npcs: [
       {
@@ -1335,7 +1347,8 @@ function buildStarmartInt(streetExit: { tx: number; ty: number }): MapDef {
       },
     ],
     signs: [{ x: 12, y: 1, dialogue: 'sign_mart_wall' }],
-    phones: [],
+    phones: [{ x: 2, y: 9 }],
+    atms: [{ x: 14, y: 9 }],
     doors: [
       { x: 8, y: 10, w: 2, h: 1, to: 'brickton', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],

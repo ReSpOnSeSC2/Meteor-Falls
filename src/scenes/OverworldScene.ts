@@ -90,8 +90,8 @@ import {
   HOOPS_TEXT,
   TEAMS,
   TEAM_ORDER,
-  STARTING_FOUR,
-  STARTING_FOUR_IDS,
+  STARTING_FIVE,
+  STARTING_FIVE_IDS,
   newBracket,
   nextOpponent,
   classicSeed,
@@ -1806,7 +1806,7 @@ export class OverworldScene extends Phaser.Scene {
    * PERMIT is the gate to both formats; HoopsScene runs the match over a
    * paused world (the S10 cabinet pattern, 'mf-hoops-closed'). Tournament
    * state lives on GS.data.hoops (save v5) — the bracket, the quarter
-   * checkpoint, titles, and the STARTING FOUR raincheck ledger.
+   * checkpoint, titles, and the STARTING FIVE raincheck ledger.
    */
 
   private launchHoops(cfg: HoopsLaunch): void {
@@ -1818,12 +1818,14 @@ export class OverworldScene extends Phaser.Scene {
     this.scene.launch('hoops', cfg);
   }
 
-  /** the first Classic title pays THE STARTING FOUR — hands-full BLOCKS the
+  /** the first Classic title pays THE STARTING FIVE — hands-full BLOCKS the
    *  handoff and PERMIT keeps the rest warm (hoops.handed is the raincheck
-   *  ledger; zero missables, §B4). Returns true if anything got blocked. */
-  private async startingFourHandoff(): Promise<boolean> {
+   *  ledger; zero missables, §B4). Returns true if anything got blocked.
+   *  S15h: Pippa's Minister's Ribbon rides this too — a present carrier holds
+   *  it (the wielder tag still locks who may EQUIP) until her Ch.5 join. */
+  private async startingFiveHandoff(): Promise<boolean> {
     const h = GS.data.hoops;
-    for (const [heroId, itemId] of Object.entries(STARTING_FOUR)) {
+    for (const [heroId, itemId] of Object.entries(STARTING_FIVE)) {
       if (h.handed.includes(itemId)) continue;
       // the piece aims for its hero's bag; anyone with room can carry it home
       const wielder = GS.data.party.find((p) => p.id === heroId && p.bag.length < 14);
@@ -1859,9 +1861,9 @@ export class OverworldScene extends Phaser.Scene {
       await this.dlg.say(...DIALOGUE.permit_tutorial_skip);
     }
     // the champion's debts come first
-    if (h.titles >= 1 && h.handed.length < STARTING_FOUR_IDS.length) {
+    if (h.titles >= 1 && h.handed.length < STARTING_FIVE_IDS.length) {
       await this.dlg.say(...DIALOGUE.permit_title_first);
-      await this.startingFourHandoff();
+      await this.startingFiveHandoff();
       return;
     }
     if (h.titles >= 1 && !GS.flag('cage_repeat_heard')) {

@@ -43,7 +43,7 @@ beforeEach(() => {
 describe('the slot family (3 slots + rolling backup)', () => {
   it('three notebooks hold three parallel playthroughs that never touch', () => {
     GS.applyNewGameChoices({
-      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', pippa: 'Quill', dorin: 'Petru' },
       playerName: 'Jay',
       favoriteFood: 'pancakes',
       coolestThing: 'dial tones',
@@ -180,7 +180,7 @@ describe('forced corruption → rolling-backup recovery (§B1 / ADR-015)', () =>
 describe('slot summaries — derived from the blob, never stored twice', () => {
   it('peek reads name/level/location/playtime/embers off the save', () => {
     GS.applyNewGameChoices({
-      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', dorin: 'Petru' },
+      heroNames: { rex: 'Casey', faye: 'Wren', milo: 'Pekoe', pippa: 'Quill', dorin: 'Petru' },
       playerName: 'Jay',
       favoriteFood: 'pancakes',
       coolestThing: 'dial tones',

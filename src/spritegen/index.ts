@@ -24,6 +24,7 @@ import {
 import {
   ENEMY_BATTLE_ART,
   FORM_ART,
+  forgedFaceArt,
   drawCicadaMini,
   drawSlugMini,
   drawMailboxMini,
@@ -36,6 +37,8 @@ import {
   drawBananaMini,
   drawJitterbugMini,
 } from './enemies';
+import { composeMini } from './parts';
+import type { PartsSpec } from '../schemas';
 import {
   TILESET,
   TILE,
@@ -232,6 +235,28 @@ export function ensureBattleArt(scene: Phaser.Scene, heroId: string, look: Battl
 }
 
 /**
+ * S15g 3b — register the COMPOSED battle faces of picked forged grunts (the
+ * three wear tiers + the overworld mini), the ensureBattleArt stance applied to
+ * the forge. Dev-only: the LEVELKIT LAB calls this before walking a forged
+ * dungeon so a fight resolves the real composed face through partsSpec and wears
+ * it down (BattleScene swaps `${sprite}_w1/_w2` on the hp thresholds). Unpicked
+ * drafts (no partsSpec) and bosses are skipped — they keep their own art.
+ */
+export function ensureForgedFaces(
+  scene: Phaser.Scene,
+  defs: Iterable<{ sprite: string; mini: string; partsSpec?: PartsSpec; boss?: boolean }>,
+): void {
+  for (const def of defs) {
+    const art = forgedFaceArt(def);
+    if (!art) continue;
+    addPixmap(scene, art.sprite, art.draw(0));
+    addPixmap(scene, `${art.sprite}_w1`, art.draw(1));
+    addPixmap(scene, `${art.sprite}_w2`, art.draw(2));
+    if (def.partsSpec) addPixmap(scene, def.mini, composeMini(def.partsSpec));
+  }
+}
+
+/**
  * S12 sport-sheet factory (ADR-033): athletes generate ON MATCH START for
  * the ten (or six) actually playing — the ensureBattleArt stance; a full
  * 31-team boot sweep would cost seconds for fives most saves never meet.
@@ -306,7 +331,7 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // S11b: plus the bare-look battle art (bust wear tiers + the rear-3/4
   // stage battler); equipped looks materialize through ensureBattleArt at
   // battle create — same factory, cached textures, zero per-frame draws.
-  for (const heroId of ['rex', 'faye', 'milo', 'dorin']) {
+  for (const heroId of ['rex', 'faye', 'milo', 'dorin', 'pippa']) {
     addSheet(scene, `angel_${heroId}`, generateAngelFrames(CAST[heroId]), 2);
     addSheet(scene, `bust_${heroId}`, generateBustFrames(CAST[heroId]), 4);
     ensureBattleArt(scene, heroId, { weapon: null, body: null });
@@ -316,7 +341,7 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // the hex PIP — the first GOOD-status indicator (S11b: shield/mirror
   // turns remaining ride the card opposite the ailment row; tinted at use)
   addPixmap(scene, 'hex_pip', drawHexPip());
-  for (const angelKey of ['angel', 'angel_rex', 'angel_faye', 'angel_milo', 'angel_dorin']) {
+  for (const angelKey of ['angel', 'angel_rex', 'angel_faye', 'angel_milo', 'angel_dorin', 'angel_pippa']) {
     if (!scene.anims.exists(`${angelKey}-float`)) {
       scene.anims.create({
         key: `${angelKey}-float`,
