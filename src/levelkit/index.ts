@@ -17,14 +17,19 @@ export { buildCity, buildTown, buildVillage } from './settlements';
 export { buildInterior } from './interiors';
 export { buildRoute, buildWild } from './routes';
 export { buildTravelScene } from './travel';
+export { buildDungeon } from './dungeons';
 export { cityViolations, cityMetrics } from './metrics';
 export type { CityLike, CityMetrics } from './metrics';
+export { pressureReport, pressureHardFlags, bandVerdict, BAND_TARGET, PRESSURE_LIMITS } from './pressure';
+export type { PressureReport, PressureLike } from './pressure';
+export { dungeonFlags, mapQualityFlags, softLockFailures, floorIsTree } from './mapcheck';
 
 import type { Recipe, DraftMapDef } from '../schemas';
 import { buildCity, buildTown, buildVillage } from './settlements';
 import { buildInterior } from './interiors';
 import { buildRoute, buildWild } from './routes';
 import { buildTravelScene } from './travel';
+import { buildDungeon } from './dungeons';
 
 /** dispatch any recipe to its generator (the LAB + bench:map entry point) */
 export function generate(r: Recipe): DraftMapDef {
@@ -43,5 +48,7 @@ export function generate(r: Recipe): DraftMapDef {
       return buildWild(r);
     case 'travel':
       return buildTravelScene(r);
+    case 'dungeon':
+      return buildDungeon(r);
   }
 }

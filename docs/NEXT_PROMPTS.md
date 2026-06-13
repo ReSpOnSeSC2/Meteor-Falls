@@ -1521,7 +1521,7 @@ the queue's S17/S18 prompts carry their inherited edits; validator +
 vitest green; browser loop and android:apk untouched.
 ```
 
-## Prompt S15g — THE WORLD FORGE (the levelkit, the dungeon grammars, the content forges & the chapter scaffold) — ⏳ MOVEMENT ONE LANDED 2026-06-12 (ADR-044)
+## Prompt S15g — THE WORLD FORGE (the levelkit, the dungeon grammars, the content forges & the chapter scaffold) — ⏳ MOVEMENTS ONE–TWO LANDED 2026-06-12/13 (ADR-044/045)
 
 > PROGRESS (2026-06-12): MOVEMENT ONE shipped complete and gate-green — the
 > deterministic levelkit (`src/levelkit/**`: 7 generators, named mulberry32
@@ -1529,10 +1529,24 @@ vitest green; browser loop and android:apk untouched.
 > dev-only, walks drafts live with the ADR-012 metrics overlay + seed reroll),
 > the MAP QUALITY VALIDATOR (reachability + door-landing on every canon map,
 > 36 clean + 5 reasoned waivers), `npm run bench:map`, and the determinism +
-> ADR-012-by-construction proofs (40 vitest). NEXT: Movement Two (dungeon
-> grammars + encounter pressure → ADR-045), Movement Three (enemy/sprite/boss
-> forges → ADR-046), Movement Four (chapter manifests + scaffold → ADR-047).
-> Each ships COMPLETE on its movement seam (Appendix rule 2).
+> ADR-012-by-construction proofs (40 vitest).
+>
+> PROGRESS (2026-06-13): MOVEMENT TWO shipped complete and gate-green (ADR-045)
+> — EIGHT per-SITE dungeon grammars (`src/levelkit/dungeons/`, keyed by name
+> across the renumber: wintermoor_academy, sleepers_spine, the_hedgerow,
+> laughing_ruins, night_train, spore_forest, castle_hoaxula, sea_of_silence),
+> each a recipe→DraftMapDef on Movement One's streams honoring its §A6 law
+> (cure-safe returns generator-PROVEN, false loops BFS-proven NOT loops, the
+> car-count ≤30-min pacing param, the falling-emptiness curve); the GENERALIZED
+> soft-lock post-conditions lifted into `mapcheck.ts` (entrance→exit, boss
+> route, rest-before-pressure, BFS-at-every-state — the pyramid precedent
+> generalized + vitest-pinned against its own rotor); the ENCOUNTER PRESSURE
+> library (`pressure.ts`) + `npm run encounters` → `docs/ENCOUNTERS.md` for all
+> 41 canon maps; the HARD subset (grace + proximity) in the validator (39 clean
+> + 2 pyramid waivers). 130 new dungeon vitest (hash pins ≥3 seeds each), the
+> LAB walks a dungeon draft from its entrance. NEXT: Movement Three (enemy/
+> sprite/boss forges → ADR-046), Movement Four (chapter manifests + scaffold →
+> ADR-047). Each ships COMPLETE on its movement seam (Appendix rule 2).
 
 > (Queued 2026-06-12 from the user's automation decree, captured verbatim:
 > "build these additional Procedural Automation features that we can use

@@ -449,3 +449,26 @@ validator reads. Console clean (zero errors) across the whole session.
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 28 | **The forge, at thumb scale** — open the Levelkit Lab from the title's DEV menu; cycle to a generated TOWN (foggybottom) and a generated CITY (zanzibel), read the ADR-012 overlay (PASS) at phone size; reroll the seed live (^v) and watch the street feel change while the sweep stays green; WALK both drafts and confirm the streets/lanes read at thumb scale with no collision snags; `.shots/` of a town draft and a city draft | ⬜ | ⬜ | M2 extends this row with a dungeon draft + contact sheet once the grammars/forge land; rows 25–27 stay reserved for S15d–f |
+
+## S15g (Movement Two) browser pre-flight — 2026-06-13, THE DUNGEON GRAMMARS + ENCOUNTER PRESSURE (ADR-045)
+
+Driven live on the dev server (`levelkitlab` reached via the scene manager,
+the Sprite Lab way). Drafts are injected into the RUNTIME MAPS registry for
+the walk and never touch the source the validator reads. Console clean (zero
+errors) across the session.
+
+| Check | Result |
+|---|---|
+| **THE LAB READS THE SEAL** — paging to `laughing_ruins` shows the Movement-Two read: **POST-CONDITIONS: SEALED (entrance→exit, boss, rest)** in green, `density 1.23/screen  grace 96px  prox 48px`, and **false loops: PROVEN (the floor is a tree — no real loop)** | ✅ driven (content lines read back) |
+| **REST-BEFORE-SPIKE ON THE PHONE** — the `grace`/`prox` line IS the rest-before-pressure read: a phone sits at the entrance camp, the first spawner is deeper; confirmed the payphone renders at the entrance throat in the walk | ✅ driven + screenshot |
+| **SEED REROLL (^v) STAYS SEALED** — rerolled `laughing_ruins` across seeds 6060 / 6061 / 99 / 31337: the false-loop layout reshuffles (grace 96→704→128→96px) while **SEALED + tree PROVEN** hold every time | ✅ driven (4 seeds read back) |
+| **WALK A GENERATED DUNGEON** — A on `laughing_ruins` injected the 42×34 draft and launched the overworld: the player spawned at the ENTRANCE on a floor tile (`'n'`, `onFloor: true` — a carved dungeon's CENTRE is a wall, so the LAB spawns at `doors[0]`), the 1-wide tree maze of ruined corridors reads at scale, the scene runtime never knew it was generated | ✅ driven + screenshot (`.shots/s15g_m2_laughing_ruins`, zero console errors) |
+| **PROVE A FALSE LOOP IS NOT A LOOP** — `floorIsTree()` on the walked grid is `true` (edges == cells − 1): every passage that looks like it circles back is a dead branch | ✅ driven |
+| `npm run encounters` → `docs/ENCOUNTERS.md` for all 41 canon maps; HARD subset (grace + proximity) | ✅ 39/41 clear, `pyramid_1`/`_2` reasoned-waived (frozen rotor chambers) |
+| `npm test` | ✅ validator (41 maps; map-quality 36+5, pressure 39+2) + 471 vitest (130 new dungeon proofs) |
+
+### S15g (Movement Two) device row (appended to the S8 gate — existing boxes stay open)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 29 | **The dungeon forge, at thumb scale** — open the Levelkit Lab; page to `laughing_ruins`, read SEALED + "false loops: PROVEN" at phone size; WALK it end-to-end and confirm the maze navigates with no collision snags and that a passage that LOOKS like a loop dead-ends (it is BFS-provably a tree); reroll the seed (^v) and watch the layout reshuffle while the seal holds; confirm a generated dungeon's rest phone sits at the entrance camp BEFORE the first spawner; `.shots/` of a dungeon draft | ⬜ | ⬜ | rows 25–27 stay reserved for S15d–f; M3 (the forges) extends this with a Sprite Lab contact sheet |

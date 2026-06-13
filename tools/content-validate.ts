@@ -72,6 +72,7 @@ import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
 import { TEXT_VARS } from '../src/ui/text';
 import { tileIndexByName, TILESET } from '../src/spritegen/tiles';
 import { mapQualityFlags } from '../src/levelkit/mapcheck';
+import { pressureReport, pressureHardFlags } from '../src/levelkit/pressure';
 import type { ZodType } from 'zod';
 
 const errors: string[] = [];
@@ -1208,6 +1209,48 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
   // the table is VISIBLE in every run (silent grandfathering is drift)
   console.log(`  map-quality (S15g): ${clean}/${Object.keys(MAPS).length} canon maps clear reachability + door-landing; ${Object.keys(REACH_WAIVERS).length} waived —`);
   for (const [id, why] of Object.entries(REACH_WAIVERS)) console.log(`    ⚠ ${id}: ${why}`);
+}
+
+/* ====== 3a″. ENCOUNTER PRESSURE — the HARD subset (S15g M2, ADR-045) ======
+ * The two rules that catch a real PLAYABILITY fault run on every canon map:
+ *  - GRACE: a doorway gives a beat before the first contact;
+ *  - PROXIMITY: a spawner never crowds a door/phone/atm/point-trigger.
+ * Everything else (density bands, exposure, unavoidable touches, side paths)
+ * is the SOFT "feel" read in docs/ENCOUNTERS.md (`npm run encounters`) — taste
+ * never blocks the build. A hard flag is FIXED or carries a reasoned WAIVER
+ * here (Prime Law 4). The Movement-Two dungeon POST-CONDITIONS (entrance→exit,
+ * boss route, rest-before-pressure, soft-lock-at-every-state) are asserted on
+ * the generated dungeons at build + pinned in src/levelkit/dungeons.test.ts;
+ * on canon maps the universal half (content reachability) is the 3a′ gate
+ * above, and the two STATEFUL canon maps keep their bespoke per-state proofs
+ * (the pyramid's rotor BFS in maps_ch2.test.ts; Prime Law 5). */
+{
+  const solidByName = new Map(TILESET.map((t) => [t.name, t.solid]));
+  const isSolidChar = (ch: string): boolean =>
+    ch === ':' || ch === 'r' ? false : solidByName.get(CHAR_LEGEND[ch] ?? 'grass_a') === true;
+
+  // FROZEN bespoke rooms whose §A6 design IS point-blank pressure (Prime Law 5)
+  const PRESSURE_WAIVERS: Record<string, string> = {
+    pyramid_1: 'frozen §A6 rotor chamber — the rotor IS the room, so the fight pressure is point-blank by design (shipped bespoke; Movement Two adds nothing here)',
+    pyramid_2: 'frozen §A6 rotor chamber — point-blank pressure by design (shipped bespoke)',
+  };
+
+  let clean = 0;
+  for (const m of Object.values(MAPS)) {
+    const flags = pressureHardFlags(pressureReport(m, isSolidChar));
+    if (PRESSURE_WAIVERS[m.id]) {
+      if (flags.length === 0) fail('pressure', `'${m.id}' pressure waiver is UNUSED now — retire it from the table`);
+    } else if (flags.length > 0) {
+      for (const f of flags) fail('pressure', `${m.id}: ${f} — fix it, or add a reasoned waiver row (Prime Law 4)`);
+    } else {
+      clean += 1;
+    }
+  }
+  for (const id of Object.keys(PRESSURE_WAIVERS)) {
+    if (!MAPS[id]) fail('pressure', `pressure waiver names unknown map '${id}'`);
+  }
+  console.log(`  encounter-pressure (S15g M2): ${clean}/${Object.keys(MAPS).length} canon maps clear grace + proximity; ${Object.keys(PRESSURE_WAIVERS).length} waived (soft read in docs/ENCOUNTERS.md) —`);
+  for (const [id, why] of Object.entries(PRESSURE_WAIVERS)) console.log(`    ⚠ ${id}: ${why}`);
 }
 
 /* ================= 3b. shop cross-references (ADR-016) ================= */

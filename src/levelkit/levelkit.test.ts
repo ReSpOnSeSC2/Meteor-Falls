@@ -41,6 +41,15 @@ const HASH_PINS: Record<string, string> = {
   meadow_mile: 'fa7ffd37',
   bootstep_moor: '3ddedc6c',
   lucille: '80200b19',
+  // Movement Two — the eight dungeon sites (the dungeon test pins ≥3 seeds each)
+  wintermoor_academy: '2a2a95c1',
+  sleepers_spine: '23f9c85f',
+  the_hedgerow: '21004715',
+  laughing_ruins: 'c2e2c9fc',
+  night_train: '49cb42a7',
+  spore_forest: '1ed2f78b',
+  castle_hoaxula: '8a2199b5',
+  sea_of_silence: 'a3047d9d',
 };
 
 describe('S15g — the levelkit is deterministic (Prime Law 2)', () => {

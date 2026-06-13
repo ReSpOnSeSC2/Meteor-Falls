@@ -88,6 +88,20 @@ export const SAMPLE_RECIPES: Record<string, Recipe> = {
     leg: 'biplane',
     seatRows: 3,
   },
+
+  /* THE EIGHT DUNGEON SITES (Movement Two) — one demo recipe each, walked in
+   * the LAB and benched; the dungeon test pins each on three more seeds. */
+  wintermoor_academy: { kind: 'dungeon', id: 'wintermoor_academy', seed: 3030, site: 'wintermoor_academy', encounterBand: 'ch3' },
+  sleepers_spine: { kind: 'dungeon', id: 'sleepers_spine', seed: 4040, site: 'sleepers_spine', encounterBand: 'ch4' },
+  the_hedgerow: { kind: 'dungeon', id: 'the_hedgerow', seed: 5050, site: 'the_hedgerow', encounterBand: 'ch5' },
+  laughing_ruins: { kind: 'dungeon', id: 'laughing_ruins', seed: 6060, site: 'laughing_ruins', encounterBand: 'ch6' },
+  night_train: { kind: 'dungeon', id: 'night_train', seed: 7070, site: 'night_train', encounterBand: 'ch7', rooms: 5 },
+  spore_forest: { kind: 'dungeon', id: 'spore_forest', seed: 8080, site: 'spore_forest', encounterBand: 'ch8' },
+  castle_hoaxula: { kind: 'dungeon', id: 'castle_hoaxula', seed: 9090, site: 'castle_hoaxula', encounterBand: 'ch9' },
+  sea_of_silence: { kind: 'dungeon', id: 'sea_of_silence', seed: 1010, site: 'sea_of_silence', encounterBand: 'ch10' },
 };
 
 export const SAMPLE_IDS = Object.keys(SAMPLE_RECIPES);
+
+/** the dungeon-site recipe ids (the LAB groups them; the test pins them) */
+export const DUNGEON_IDS = SAMPLE_IDS.filter((id) => SAMPLE_RECIPES[id].kind === 'dungeon');

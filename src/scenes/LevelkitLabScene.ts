@@ -10,6 +10,12 @@
  * BOT (S15g): cycle every SAMPLE recipe with </>, reroll seeds with ^v until
  * a city reads green (0 violations) and a town/route walks clean, A to walk,
  * and dump .shots of a town draft, a city draft, and a route draft.
+ *
+ * BOT (S15g Movement Two): the eight DUNGEON sites are in the cycle too. Page
+ * to `laughing_ruins`, read "false loops: PROVEN (the floor is a tree)", press
+ * A and WALK it — every passage that looks like a loop is a dead branch (BFS-
+ * provable). Page to a dungeon, read "POST-CONDITIONS: SEALED" + the rest-
+ * before-spike grace on the phone line, reroll ^v, walk it from the entrance.
  */
 import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
@@ -18,8 +24,9 @@ import { GS } from '../engine/state';
 import { makeWindow, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
 import { SAMPLE_RECIPES, SAMPLE_IDS } from '../levelkit/samples';
-import { generate, cityMetrics } from '../levelkit';
-import type { Recipe, DraftMapDef } from '../schemas';
+import { generate, cityMetrics, pressureReport, dungeonFlags, floorIsTree } from '../levelkit';
+import { isDungeonSolid, silenceCurve } from '../levelkit/dungeons';
+import type { Recipe, DraftMapDef, Facing } from '../schemas';
 import type { MapDef, NpcDef } from '../data/maps';
 import { MAPS } from '../data/maps';
 import { DIALOGUE } from '../data/dialogue';
@@ -90,6 +97,20 @@ export class LevelkitLabScene extends Phaser.Scene {
       const ok = m.violations.length === 0;
       this.line(y, ok ? 'SWEEP: PASS (no exemptions)' : `SWEEP: ${m.violations.length} VIOLATION(S)`, ok ? RAMP.GRASS : RAMP.RED); y += 12;
       for (const v of m.violations) { this.line(y, ` ${v}`, RAMP.RED, 2); y += 10; }
+    } else if (r.kind === 'dungeon') {
+      const flags = dungeonFlags(draft, isDungeonSolid);
+      const pr = pressureReport(draft, isDungeonSolid);
+      const sealed = flags.length === 0;
+      this.line(y, '-- DUNGEON read (Movement Two) --', RAMP.CYAN); y += 12;
+      this.line(y, sealed ? 'POST-CONDITIONS: SEALED (entrance->exit, boss, rest)' : `SOFT-LOCK: ${flags.length}`, sealed ? RAMP.GRASS : RAMP.RED); y += 12;
+      for (const f of flags) { this.line(y, ` ${f}`, RAMP.RED, 2); y += 10; }
+      this.line(y, `density ${pr.density}/screen   grace ${pr.gracePx}px   prox ${pr.proximityPx}px`); y += 12;
+      this.line(y, `rest exposure ${pr.restExposurePx}px   touches ${pr.unavoidableTouches}   side ${pr.sidePaths}`); y += 12;
+      if (r.site === 'laughing_ruins') {
+        const tree = floorIsTree(draft.grid, isDungeonSolid);
+        this.line(y, `false loops: ${tree ? 'PROVEN (the floor is a tree — no real loop)' : 'BROKEN'}`, tree ? RAMP.GOLD : RAMP.RED); y += 12;
+      }
+      if (r.site === 'sea_of_silence') { this.line(y, `emptiness curve ${silenceCurve(draft).join(' > ')}`, RAMP.GOLD); y += 12; }
     } else {
       this.line(y, `settlement ${draft.settlement ?? '(route/interior/travel)'}`, RAMP.CYAN); y += 12;
     }
@@ -107,12 +128,26 @@ export class LevelkitLabScene extends Phaser.Scene {
     GS.reset(); // a fresh dev party so the overworld can build the player
     AUDIO.sfx('confirm');
     AUDIO.stopMusic();
+    const spawn = this.spawnAt(draft);
+    this.scene.start('overworld', { mapId: draft.id, x: spawn.x, y: spawn.y, facing: spawn.facing });
+  }
+
+  /** where to drop the player: a carved dungeon's CENTRE is a wall, so spawn
+   *  drafts that have spawners at their entrance door (doors[0]), facing in */
+  private spawnAt(draft: DraftMapDef): { x: number; y: number; facing: Facing } {
     const gw = draft.grid[0].length;
     const gh = draft.grid.length;
+    const door = draft.doors[0];
+    if (door && draft.spawners.length > 0) {
+      const cx = Math.floor(door.x + door.w / 2);
+      const cy = Math.floor(door.y + door.h / 2);
+      const step: Record<Facing, [number, number]> = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] };
+      const into: Record<Facing, Facing> = { up: 'down', down: 'up', left: 'right', right: 'left' };
+      const [dx, dy] = step[door.facing];
+      return { x: (cx + dx) * 16 + 8, y: (cy + dy) * 16 + 8, facing: into[door.facing] };
+    }
     const inside = draft.interior === true;
-    const x = (inside ? Math.floor(gw / 2) : Math.floor(gw / 2)) * 16 + 8;
-    const y = (inside ? Math.floor(gh / 2) : gh - 4) * 16;
-    this.scene.start('overworld', { mapId: draft.id, x, y, facing: 'up' });
+    return { x: Math.floor(gw / 2) * 16 + 8, y: (inside ? Math.floor(gh / 2) : gh - 4) * 16, facing: 'up' };
   }
 
   /** DraftMapDef → MapDef: drop role tags, give slots the dev dialogue */

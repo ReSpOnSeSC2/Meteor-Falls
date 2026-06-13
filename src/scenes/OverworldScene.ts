@@ -2826,7 +2826,7 @@ export class OverworldScene extends Phaser.Scene {
   /**
    * ADR-041 — the opening, start to finish: the wrong star → it grows → the
    * descent (sonic boom at mid-sky) → impact behind Hickory Hill (whiteout,
-   * shockwaves, debris, dust, aftershocks) → eight motes scatter, one stays
+   * shockwaves, debris, dust, aftershocks) → ten motes scatter, one stays
    * (§A6, wordless) → the town's porch lights wake → pan + push-in on
    * {rex}'s house → fade into the bedroom. Captions are timed — no button
    * presses; the QA driver fast-forwards via pumped frames per ADR-008.
@@ -3062,10 +3062,10 @@ export class OverworldScene extends Phaser.Scene {
     await this.wait(1300);
     await say('It comes down behind Hickory Hill, and the whole town feels it land.');
 
-    /* ---- PHASE 5: eight motes, wordless §A6 — seven leave, one stays ---- */
+    /* ---- PHASE 5: ten motes, wordless §A6 — nine leave, one stays ---- */
     AUDIO.sfx('ember');
     this.time.delayedCall(600, () => AUDIO.sfx('ember'));
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       const m = addTo(world, this.add.rectangle(197, 108, 2, 2, 0xf8f0d0).setAlpha(0));
       const riseX = 110 + i * 15;
       const riseY = 60 - (i % 3) * 7;

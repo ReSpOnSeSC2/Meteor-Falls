@@ -2742,3 +2742,86 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   hand-builds only its landmarks. The map-quality gate means orphaned content
   and doors-into-walls can never ship silently again — fix it or waive it
   with a reason, in the same commit. ADR-045+ are reserved next-free for M2–M4.
+
+## ADR-045 — S15g (Movement Two): THE DUNGEON GRAMMARS + ENCOUNTER PRESSURE
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (THE WORLD FORGE, Movement Two of four — the eight
+  per-SITE dungeon grammars + the encounter-pressure automation + the
+  generalized soft-lock proof, built ON Movement One's kit/gate/streams. The
+  forges (M3) and the chapter scaffold (M4) stay queued for ADR-046/047, split
+  on their own movement seams per Appendix rule 2.)
+- **Decision — THE PRIME LAWS STILL HOLD (ADR-044, unchanged):** dungeon
+  grammars emit `DraftMapDef` (dev-only, schema-parsing, never entering MAPS /
+  the manifests / the §B4 sweep); determinism rides the named mulberry32
+  streams (recipe + seed → identical bytes; `Date.now()`/`Math.random()` never
+  appear under `src/levelkit/**` — the scan now RECURSES into `dungeons/`);
+  ADR-020 by construction; the validator grows teeth (below); the SHIPPED
+  bespoke dungeons (Department of Smiles, the step-pyramid) stay FROZEN and the
+  pyramid's reachability waivers stand — its rotor BFS is bespoke law.
+- **Decision — THE EIGHT GRAMMARS (`src/levelkit/dungeons/`, ONE per SITE,
+  keyed by NAME so the post-S14c renumber can never strand them; never one
+  generic maze — the user's law):** `wintermoor_academy` (spine hall + wings,
+  a sight-cone PATROL dorm reusing `PatrolDef`, a library-stack soft maze, a
+  boiler basement), `sleepers_spine` (the terrain-giant hand→shoulder→ear under
+  THE SCALE LAW, Whisperwig pillar staging), `the_hedgerow` (wide escort lanes,
+  FALSE exits that REJOIN — comedy, never punishment), `laughing_ruins` (a
+  1-wide TREE so the loops are a LIE — BFS-proven acyclic via `floorIsTree`,
+  edges == cells − 1, with twin-prop dressing + riddle signs + echo tags),
+  `night_train` (car-by-car LINEAR; the §A6 ≤30-minute Locket-loss law is a
+  GENERATION PARAMETER — the car count bounds the sequence to [3, 7]; a service
+  crawl over the top), `spore_forest` (winding paths + Mushroomize hazard rects
+  in side pockets + CURE-SAFE return paths generator-PROVEN: a clean margin
+  column means a scrambled kid can always walk out — `trappedZones` throws if
+  not), `castle_hoaxula` (a queue maze + gift shop + a REAL fake-scare loop,
+  then the BACKSTAGE REVEAL behind one seam), `sea_of_silence` (SUBTRACTIVE —
+  three zones at a strictly-FALLING obstacle curve, the emptiness as data). Each
+  builds a deterministic SKELETON (the entrance room is a SAFE CAMP, spawners
+  begin deeper) and lets the seed move only DRESSING — reachability holds for
+  ALL seeds BY CONSTRUCTION; `sealed()` is the build-time safety net.
+- **Decision — THE GENERALIZED POST-CONDITIONS (lifted into
+  `src/levelkit/mapcheck.ts`, pure graph logic on an `isSolid` predicate,
+  vitest-pinned):** entrance→exit reachable; the boss route valid (a
+  'boss'-tagged trigger on the entrance graph); a rest point (phone/picnic) no
+  DEEPER than the first reachable spawner (§A4.5 rest-before-pressure); and
+  `softLockFailures()` — the step-pyramid's BFS-at-every-rotation precedent
+  GENERALIZED: a stateful piece (rotor/lock/switch) presents a finite set of
+  grid STATES, and every target must stay reachable from the entry in EVERY
+  state, not just the initial one. The generalization is PINNED by driving it
+  over the SHIPPED pyramid's own four rotor turns (it reproduces the bespoke
+  `maps_ch2.test` result and CATCHES a deliberately-blocked target). Generators
+  ASSERT all of this at build (throw, naming the site); the dungeon test
+  re-derives it from the produced draft on every pinned seed.
+- **Decision — ENCOUNTER PRESSURE AUTOMATION:** `src/levelkit/pressure.ts`
+  (pure library) scores every map — density per 400×225 screen-equivalent,
+  entrance grace, rest exposure, UNAVOIDABLE TOUCHES (BFS with each spawner
+  DILATED by a pursuit radius — can a walking player cross entrance→exit
+  without a forced fight?), side-path encounters, and spawner proximity to
+  FIXTURES (doors/phones/atms/POINT triggers; big ambient zone triggers are
+  excluded by design — they are SUPPOSED to blanket the danger).
+  `tools/encounter-report.ts` (`npm run encounters`) emits `docs/ENCOUNTERS.md`
+  for all 41 canon maps, grouped by class with §A9 target BANDS (routes hot,
+  settlements cool, dungeons rising). The HARD subset (grace ≥ 16px, proximity
+  ≥ 24px) joins `content-validate.ts` with its own reasoned WAIVER table; the
+  soft "feel" metrics stay report-only so taste never blocks the build — the
+  report is what catches a map that "looks fine but feels annoying or empty."
+- **Verification:** tsc + validate (41 maps; map-quality 36 clean + 5 waived;
+  encounter-pressure 39 clean + 2 waived — `pyramid_1`/`pyramid_2`, frozen
+  rotor chambers whose §A6 pressure is point-blank by design) + 471 vitest
+  green (277 prior floor + 194 levelkit, of which 130 are new dungeon proofs).
+  Eight sites hash-pinned on ≥3 seeds each + deterministic twice + schema-parse
+  + post-conditions sealed + no hard pressure flag; the generalized soft-lock
+  pinned against the pyramid BOTH ways; the cure-safe / tree / car-count /
+  falling-curve laws each pinned; `DUNGEON_WALL` cross-checked against
+  `TILESET.solid`; the Prime-Law-2 scan recurses into `dungeons/`; `bench:map`
+  walks `laughing_ruins` within the XL envelope; the LAB reads the SEALED
+  post-conditions + reroll on the phone and spawns a dungeon draft at its
+  ENTRANCE (a carved dungeon's centre is a wall). `vite build` intact.
+- **Consequences:** any chapter dungeon (Ch.3–10) now SCAFFOLDS from its named
+  grammar — the boring 60% (a sealed, BFS-proven, rest-paced layout in the
+  right §A9 band) is generated; the session spends itself on the SOUL (the
+  hand-art skin, the boss, the dialogue) at promotion. The floor rose: no
+  dungeon draft can ship a soft-lock at any stateful state, no spawner can
+  crowd a save phone silently, and `docs/ENCOUNTERS.md` is a tracked artifact
+  that flags "annoying or empty" maps before a human reads them. ADR-046/047
+  stay reserved next-free for M3 (the forges) and M4 (the chapter scaffold).

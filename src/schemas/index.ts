@@ -953,6 +953,39 @@ export const TravelRecipeSchema = z.strictObject({
 });
 export type TravelRecipe = z.infer<typeof TravelRecipeSchema>;
 
+/**
+ * THE DUNGEON SITES (S15g Movement Two, ADR-045). One grammar per SITE — never
+ * a generic maze — keyed by NAME so the post-S14c chapter renumber can never
+ * strand a grammar (a recipe names its site; the chapter is incidental). The
+ * dispatcher in src/levelkit/dungeons routes each to its bespoke builder.
+ */
+export const DungeonSiteSchema = z.enum([
+  'wintermoor_academy', // Ch.3 England — classroom wings, patrol dorms, stacks
+  'sleepers_spine',     // Ch.4 Norway — the terrain-giant, hand→shoulder→ear
+  'the_hedgerow',       // Ch.5 Minimus — escort lanes + false exits that rejoin
+  'laughing_ruins',     // Ch.6 Africa — echo zones, riddle chambers, false loops
+  'night_train',        // Ch.7 India — car-by-car linear, the ≤30-min law
+  'spore_forest',       // Ch.8 China — Mushroomize zones + cure-safe returns
+  'castle_hoaxula',     // Ch.9 Romania — fake-scare loops, the backstage reveal
+  'sea_of_silence',     // Ch.10 Mars — subtractive, the falling-emptiness curve
+]);
+export type DungeonSite = z.infer<typeof DungeonSiteSchema>;
+
+export const DungeonRecipeSchema = z.strictObject({
+  kind: z.literal('dungeon'),
+  id: z.string().min(1),
+  seed: z.number().int(),
+  site: DungeonSiteSchema,
+  /** overall map size; each grammar clamps to its own structural floor */
+  size: SizeSchema.optional(),
+  /** dungeons rise toward the boss — the band the deepest spawners ride */
+  encounterBand: EncounterBandSchema.optional(),
+  /** car/room count where the grammar honors it (night_train: the §A6
+   *  ≤30-minute Locket-loss pacing law bounds the sequence length) */
+  rooms: z.number().int().min(2).max(12).optional(),
+});
+export type DungeonRecipe = z.infer<typeof DungeonRecipeSchema>;
+
 export const RecipeSchema = z.discriminatedUnion('kind', [
   CityRecipeSchema,
   TownRecipeSchema,
@@ -961,6 +994,7 @@ export const RecipeSchema = z.discriminatedUnion('kind', [
   RouteRecipeSchema,
   WildRecipeSchema,
   TravelRecipeSchema,
+  DungeonRecipeSchema,
 ]);
 export type Recipe = z.infer<typeof RecipeSchema>;
 
