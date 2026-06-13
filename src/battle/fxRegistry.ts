@@ -117,6 +117,16 @@ export const FX_REGISTRY: Record<string, FxSpec> = {
   rocket: S({ kind: 'ability', family: 'rocket', tier: 1, ramp: RAMP.RED, sfx: 'fx_rocket' }),
   rocket_big: S({ kind: 'ability', family: 'rocket', tier: 2, ramp: RAMP.RED, sfx: 'fx_rocket' }),
   rocket_multi: S({ kind: 'ability', family: 'rocket', tier: 4, ramp: RAMP.RED, sfx: 'fx_rocket' }),
+  // Milo "DOUBLED" — six new 0-PP gadgets, every face REUSING an existing family
+  // (scan/bolt/lattice/barrier/sparkle_rain/rocket), so STAGE_ANIM and battle/
+  // fx.ts need no new rows; only ramp/tier/sfx differ. siege_rocket is the third
+  // rocket tier (the boss-buster payload — see the tier:3 branch in fx.ts).
+  scope: S({ kind: 'ability', family: 'scan', ramp: RAMP.GOLD, sfx: 'fx_spy' }),
+  static_bomb: S({ kind: 'ability', family: 'bolt', tier: 2, ramp: RAMP.GOLD, sfx: 'fx_volt' }),
+  cryo_grenade: S({ kind: 'ability', family: 'lattice', tier: 2, ramp: RAMP.CYAN, sfx: 'fx_freeze' }),
+  forcefield_gizmo: S({ kind: 'ability', family: 'barrier', ramp: RAMP.CYAN, sfx: 'fx_shield' }),
+  med_spray: S({ kind: 'ability', family: 'sparkle_rain', ramp: RAMP.GRASS, sfx: 'fx_cure' }),
+  siege_rocket: S({ kind: 'ability', family: 'rocket', tier: 3, ramp: RAMP.RED, sfx: 'fx_rocket' }),
   comet_a: S({ kind: 'ability', family: 'comet', tier: 1, ramp: RAMP.PAPER, sfx: 'fx_comet' }),
   // Dorin's full Comet ladder — β/γ escalate the same falling-star builder (the
   // S16 surge work proves the tier pattern); Ω stays the awakened capstone.
