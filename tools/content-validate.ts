@@ -52,6 +52,7 @@ import {
 } from '../src/data/hoops';
 import { AWAKENINGS } from '../src/data/awakenings';
 import { BOSS_SCRIPTS } from '../src/data/bosses';
+import { DRAFT_BOSS_SCRIPTS, DRAFT_BOSS_IDS } from '../src/data/drafts/bosses';
 import { BossScriptDefSchema } from '../src/schemas';
 import { FORM_ART } from '../src/spritegen/enemies';
 import { CAST } from '../src/spritegen/characters';
@@ -981,6 +982,27 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
   }
   for (const key of Object.keys(FORM_ART)) {
     if (!claimed.has(key)) fail('phase', `FORM_ART row '${key}' is claimed by no boss form — extend or retire the row`);
+  }
+}
+
+// THE FORGED BOSS DRAFTS (S15g M3c, ADR-046): every unshipped §A6 boss + both
+// minibosses, instantiated from the ten templates. DRAFTS ARE NOT CONTENT —
+// they PARSE as BossScriptDef but are EXCLUDED from the strict §A6 checks above
+// (no FORM_ART / DIALOGUE resolution; those are hand-authored at promotion) and
+// can NEVER masquerade as the shipped Grin (the §A7/§A6 manifests refuse them).
+{
+  parseAll('boss-drafts', BossScriptDefSchema as unknown as ZodType, DRAFT_BOSS_SCRIPTS);
+  // the COUNT is law — exactly the seven unshipped bosses + two minibosses
+  const have = Object.keys(DRAFT_BOSS_SCRIPTS).sort();
+  const want = [...DRAFT_BOSS_IDS].sort();
+  if (JSON.stringify(have) !== JSON.stringify(want)) {
+    fail('boss-drafts', `the forge drafts must be exactly [${want.join(', ')}] — found [${have.join(', ')}]`);
+  }
+  for (const [id, sc] of Object.entries(DRAFT_BOSS_SCRIPTS)) {
+    if (sc.boss !== id) fail('boss-drafts', `draft '${id}' drives boss '${sc.boss}' — key and boss must agree`);
+    // a draft can never live in the shipped registry or drive a shipped enemy
+    if (BOSS_SCRIPTS[id]) fail('boss-drafts', `'${id}' is BOTH a shipped boss script and a draft — promote, don't duplicate`);
+    if (ENEMIES[id]) fail('boss-drafts', `'${id}' drives a SHIPPED §A7 enemy — a forged draft must not (promotion is a human act)`);
   }
 }
 

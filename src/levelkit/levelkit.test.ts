@@ -33,23 +33,28 @@ function fnv(obj: unknown): string {
 
 /** one pinned output hash per generator — the ship-freeze proof */
 const HASH_PINS: Record<string, string> = {
-  zanzibel: 'c710e18d',
+  // Movement Three re-keyed BAND_ROSTER ch3–ch10 → the forged rosters, so every
+  // band-bearing draft's spawner ids moved: zanzibel(ch6), foggybottom(ch3),
+  // lilleby(ch4), bootstep_moor(ch4) + all eight dungeons re-pin here; the
+  // bandless/ch1 drafts (brickmore_heights, grand_market_int, meadow_mile,
+  // lucille) are byte-identical.
+  zanzibel: '8f37f5e3',
   brickmore_heights: 'e445325a',
-  foggybottom: '81237782',
-  lilleby: '876ba569',
+  foggybottom: 'afacc20e',
+  lilleby: '66cf9239',
   grand_market_int: 'fd4ef0b7',
   meadow_mile: 'fa7ffd37',
-  bootstep_moor: '3ddedc6c',
+  bootstep_moor: '853e27b2',
   lucille: '80200b19',
   // Movement Two — the eight dungeon sites (the dungeon test pins ≥3 seeds each)
-  wintermoor_academy: '2a2a95c1',
-  sleepers_spine: '23f9c85f',
-  the_hedgerow: '21004715',
-  laughing_ruins: 'c2e2c9fc',
-  night_train: '49cb42a7',
-  spore_forest: '1ed2f78b',
-  castle_hoaxula: '8a2199b5',
-  sea_of_silence: 'a3047d9d',
+  wintermoor_academy: '600554a0',
+  sleepers_spine: '7f0641af',
+  the_hedgerow: 'dedb40c4',
+  laughing_ruins: 'b4538cb0',
+  night_train: '502a7283',
+  spore_forest: 'cb637efb',
+  castle_hoaxula: '711e297c',
+  sea_of_silence: '36e4fc55',
 };
 
 describe('S15g — the levelkit is deterministic (Prime Law 2)', () => {

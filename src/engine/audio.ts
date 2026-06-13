@@ -424,10 +424,10 @@ const TRACKS: Record<string, Track> = {
       },
     ],
   },
-  // THE HOMESONG (§A4.9): eight stems, one per Ember. The Locket screen plays
-  // channels [0..embers) — with one Heartlight, one instrument plays all
-  // alone. Channel 0 is the heartlight lead, so the cue carries over.
-  // (Phase 8 swaps these synth voices for rendered stems behind the same API.)
+  // THE HOMESONG (§A4.9): TEN stems, one per Ember (ten Embers, ten Heartlights).
+  // The Locket screen plays channels [0..embers) — with one Heartlight, one
+  // instrument plays all alone. Channel 0 is the heartlight lead, so the cue
+  // carries over. (Phase 8 swaps these synth voices for rendered stems.)
   homesong: {
     bpm: 76,
     loop: true,
@@ -472,6 +472,19 @@ const TRACKS: Record<string, Track> = {
         wave: 'triangle',
         vol: 0.1,
         notes: ['C2', '-', '-', '-', 'F2', '-', '-', '-', 'G2', '-', '-', '-', 'C2', '-', '-', '-'],
+      },
+      // stem 9 — the late sparkle: a high counter that twinkles in on offbeats
+      {
+        wave: 'sine',
+        vol: 0.03,
+        detune: -3,
+        notes: [null, 'E6', null, 'C6', null, 'A5', null, 'G6', null, 'B5', null, 'C6', null, 'G5', null, 'E6'],
+      },
+      // stem 10 — the full warmth of all ten: a low fifth pad that fills it out
+      {
+        wave: 'triangle',
+        vol: 0.05,
+        notes: ['G3', '-', '-', '-', 'C4', '-', '-', '-', 'D4', '-', '-', '-', 'G3', '-', '-', '-'],
       },
     ],
   },

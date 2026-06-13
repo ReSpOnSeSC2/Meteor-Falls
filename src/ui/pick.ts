@@ -33,6 +33,10 @@ export interface PickOpts {
   /** S9: optional per-row texture key drawn left of the label (the JOURNAL's
    *  earned-caller phone icons) — rows shift right to make room */
   icons?: Array<string | undefined>;
+  /** S15h: fires with the highlighted index on open and on every cursor move
+   *  (pad/key AND mouse hover) — the item menu drives its live description
+   *  panel from this, so a player reads what a thing IS before acting on it */
+  onHighlight?: (index: number) => void;
 }
 
 export const DIM = 0x8890a0;
@@ -98,6 +102,7 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
     hand.setPosition(cx + 8, cy + 4);
   };
   place();
+  opts.onHighlight?.(sel);
   let navAt = 0;
   const navTick = (moving: boolean): boolean => {
     if (!moving) {
@@ -135,6 +140,11 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
         sel = i;
         finish(i);
       });
+      z.on('pointerover', () => {
+        sel = i;
+        place();
+        opts.onHighlight?.(i);
+      });
       return z;
     });
     const off = everyFrame(scene, () => {
@@ -161,6 +171,7 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
         AUDIO.sfx('cursor');
       }
       place();
+      opts.onHighlight?.(sel);
     });
   });
 }

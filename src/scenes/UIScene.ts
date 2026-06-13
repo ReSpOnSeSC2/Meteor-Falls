@@ -111,6 +111,14 @@ export class UIScene extends Phaser.Scene {
     });
   }
 
+  /** §A4 (S15g): the Y button rides the thumb arc as the VITALS quick-glance
+   *  whenever the OVERWORLD is the live scene (the EB "check HP fast" beat) —
+   *  and as the cage's sauce button during HOOPS. X stays hoops-only. */
+  override update(): void {
+    this.btnX?.setVisible(this.hoopsLive);
+    this.btnY?.setVisible(this.hoopsLive || this.scene.isActive('overworld'));
+  }
+
   /** anchor the cluster to the screen corners, pushed inward by any cutout */
   private layoutControls(): void {
     const W = this.scale.width;
@@ -168,7 +176,8 @@ export class UIScene extends Phaser.Scene {
     } else if (this.hoopsLive && hit(this.xCenter, 20)) {
       this.pointerRoles.set(p.id, 'X');
       INPUT.pressBtn('X');
-    } else if (this.hoopsLive && hit(this.yCenter, 20)) {
+    } else if ((this.hoopsLive || this.scene.isActive('overworld')) && hit(this.yCenter, 20)) {
+      // §A4 (S15g): Y on the overworld pops the vitals glance
       this.pointerRoles.set(p.id, 'Y');
       INPUT.pressBtn('Y');
     } else if (x > this.startCenter.x - 30 && y < this.startCenter.y + 14) {

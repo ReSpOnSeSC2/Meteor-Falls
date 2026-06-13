@@ -24,6 +24,7 @@ import { DIALOGUE } from '../data/dialogue';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, DEPTH_UI } from '../ui/windows';
 import { pick, confirmEquip } from '../ui/pick';
+import { makeItemInfo } from '../ui/iteminfo';
 
 export class ShopScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -87,16 +88,18 @@ export class ShopScene extends Phaser.Scene {
       const disabled = new Set(
         stock.map((i, idx) => (i.price > GS.data.cashOnHand ? idx : -1)).filter((i) => i >= 0),
       );
+      const info = makeItemInfo(this);
       const sel = await pick(this, {
         x: 96,
         y: 8,
         options: labels,
         disabled,
         title: `${this.shop.name}  $${GS.data.cashOnHand}`,
+        onHighlight: (i) => info.render(stock[i].id),
       });
+      info.destroy();
       if (sel < 0) return;
       const item = stock[sel];
-      await this.dlg.say(item.text);
       const ok = await pick(this, {
         x: 200,
         y: 30,
@@ -178,6 +181,7 @@ export class ShopScene extends Phaser.Scene {
       const disabled = new Set(
         hero.bag.map((id, i) => (sellPrice(ITEMS[id]) <= 0 ? i : -1)).filter((i) => i >= 0),
       );
+      const info = makeItemInfo(this);
       const sel = await pick(this, {
         x: 96,
         y: 8,
@@ -185,7 +189,9 @@ export class ShopScene extends Phaser.Scene {
         disabled,
         cols: labels.length > 7 ? 2 : 1,
         title: `${hero.name} sells  $${GS.data.cashOnHand}`,
+        onHighlight: (i) => info.render(hero.bag[i]),
       });
+      info.destroy();
       if (sel < 0) return false;
       const itemId = hero.bag[sel];
       const item = ITEMS[itemId];

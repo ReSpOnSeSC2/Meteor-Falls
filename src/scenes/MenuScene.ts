@@ -38,12 +38,17 @@ import { Dialogue, makeWindow, everyFrame, vars, DEPTH_UI } from '../ui/windows'
 import { WINDOW_FLAVORS } from '../spritegen/ui';
 // S4: the list widget + "Offense up by N!" confirm are shared with the shops
 import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
+import { makeItemInfo } from '../ui/iteminfo';
+import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { colorOf, RAMP, px } from '../palette';
 
 export class MenuScene extends Phaser.Scene {
   private dlg!: Dialogue;
   private mapMusic = '';
   private pageObjs: Phaser.GameObjects.GameObject[] = [];
+  /** S15g: the EarthBound bottom-of-screen party vitals strip (yields to the
+   *  item description panel — never overlaps it) */
+  private vitals!: VitalsBar;
 
   constructor() {
     super('menu');
@@ -64,6 +69,10 @@ export class MenuScene extends Phaser.Scene {
       .bitmapText(this.scale.width - cw + 2, 15, 'retro', cash, 6)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
+    // §A4: the party HP/PP strip along the bottom (the user's decree) — it
+    // yields to the item description panel, which also lives at the bottom
+    this.vitals = makeVitalsBar(this, { yieldToItemInfo: true });
+    this.vitals.show();
     void this.mainLoop();
   }
 
@@ -87,6 +96,7 @@ export class MenuScene extends Phaser.Scene {
       else await this.setupPage();
     }
     AUDIO.sfx('cancel');
+    this.vitals.destroy();
     this.game.events.emit('mf-menu-closed');
     this.scene.stop();
   }
@@ -112,13 +122,16 @@ export class MenuScene extends Phaser.Scene {
         return;
       }
       const labels = hero.bag.map((id, i) => `${ITEMS[id]?.name ?? id}${this.equippedTag(hero, id, i)}`);
+      const info = makeItemInfo(this);
       const sel = await this.pick({
         x: 96,
         y: 8,
         options: labels,
         cols: labels.length > 7 ? 2 : 1,
         title: `${hero.name}  ${hero.bag.length}/${BAG_MAX}`,
+        onHighlight: (i) => info.render(hero.bag[i]),
       });
+      info.destroy();
       if (sel < 0) return;
       await this.itemActions(hero, hero.bag[sel]);
     }
@@ -257,12 +270,15 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
     for (;;) {
+      const info = makeItemInfo(this);
       const sel = await this.pick({
         x: 96,
         y: 8,
         options: keys.map((id) => ITEMS[id]?.name ?? id),
         title: 'KEY ITEMS',
+        onHighlight: (i) => info.render(keys[i]),
       });
+      info.destroy();
       if (sel < 0) return;
       await this.dlg.say(ITEMS[keys[sel]]?.text ?? '...');
     }
@@ -379,6 +395,7 @@ export class MenuScene extends Phaser.Scene {
       const amount = vibeHeal(ab.power, hero.stats.vibe, Math.random);
       target.hp = Math.min(target.maxHp, target.hp + amount);
       AUDIO.sfx('heal');
+      this.vitals.refresh(); // HP + PP both changed while the strip is visible
       await this.dlg.say(ab.text.replaceAll('{user}', hero.name), `${target.name} recovered about ${amount} HP!`);
     }
   }
@@ -406,7 +423,15 @@ export class MenuScene extends Phaser.Scene {
         const id = hero.equip[s];
         return `${slotName[s]}  ${id ? (ITEMS[id]?.name ?? id) : 'Nothing'}`;
       });
-      const sel = await this.pick({ x: 96, y: 8, options: labels, title: hero.name });
+      const info = makeItemInfo(this);
+      const sel = await this.pick({
+        x: 96,
+        y: 8,
+        options: labels,
+        title: hero.name,
+        onHighlight: (i) => info.render(hero.equip[EQUIP_SLOTS[i]] ?? ''),
+      });
+      info.destroy();
       if (sel < 0) return;
       await this.slotCandidates(hero, EQUIP_SLOTS[sel]);
     }
@@ -431,7 +456,15 @@ export class MenuScene extends Phaser.Scene {
       (c) => `${ITEMS[c.itemId].name}${c.owner === hero ? '' : `  -${c.owner.name}`}`,
     );
     labels.push('Remove');
-    const sel = await this.pick({ x: 130, y: 22, options: labels, title: slotName(slot) });
+    const info = makeItemInfo(this);
+    const sel = await this.pick({
+      x: 130,
+      y: 22,
+      options: labels,
+      title: slotName(slot),
+      onHighlight: (i) => info.render(i < cands.length ? cands[i].itemId : (hero.equip[slot] ?? '')),
+    });
+    info.destroy();
     if (sel < 0) return;
     if (sel === labels.length - 1) {
       if (hero.equip[slot]) {
@@ -536,7 +569,7 @@ export class MenuScene extends Phaser.Scene {
     const x = 96;
     const y = 8;
     const w = 230;
-    this.pageObjs.push(makeWindow(this, x, y, w, 120));
+    this.pageObjs.push(makeWindow(this, x, y, w, 124));
     const title = this.add
       .bitmapText(x + w / 2, y + 12, 'retro', 'THE STAR LOCKET', 6)
       .setOrigin(0.5, 0)
@@ -544,11 +577,14 @@ export class MenuScene extends Phaser.Scene {
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
     this.pageObjs.push(title);
-    // eight sockets — one Heartlight each (§A4.9)
-    for (let i = 0; i < 8; i++) {
-      const ex = x + 28 + i * 25;
+    // ten sockets — one Heartlight each, two rows of five (§A4.9)
+    for (let i = 0; i < 10; i++) {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const ex = x + 65 + col * 25;
+      const ey = y + 36 + row * 22;
       const img = this.add
-        .image(ex, y + 44, 'ember')
+        .image(ex, ey, 'ember')
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
       if (i < n) {
@@ -566,7 +602,7 @@ export class MenuScene extends Phaser.Scene {
       this.pageObjs.push(img);
     }
     const count = this.add
-      .bitmapText(x + w / 2, y + 64, 'retro', `HEARTLIGHTS: ${n}/8`, 6)
+      .bitmapText(x + w / 2, y + 82, 'retro', `HEARTLIGHTS: ${n}/10`, 6)
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
@@ -578,7 +614,7 @@ export class MenuScene extends Phaser.Scene {
           ? '(One instrument plays, all alone, and refuses to be sad about it.)'
           : `(${n} instruments find each other across the dark.)`;
     const fl = this.add
-      .bitmapText(x + w / 2, y + 86, 'retro', flavor, 6)
+      .bitmapText(x + w / 2, y + 100, 'retro', flavor, 6)
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)

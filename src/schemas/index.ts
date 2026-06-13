@@ -733,6 +733,14 @@ export const PhaseActionSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('setSpeedMul'), mul: z.number().positive() }),
   z.strictObject({ kind: z.literal('endBattleMercy') }),
   z.strictObject({ kind: z.literal('stunSelf'), turns: z.number().int().min(1) }),
+  /** S15g M3c: Whiskerzilla's Flat Bell rings → the boss is evasive until the
+   *  bell breaks; the scene reads `evasion` the way it reads `speedMul`. */
+  z.strictObject({ kind: z.literal('setEvasion'), on: z.boolean() }),
+  /** S15g M3c: the latch archetype (the §A6 Ch.1 Titanic Tick's shape, made a
+   *  TEMPLATE — the shipped Tick stays bespoke engine law). The boss clamps a
+   *  hero and drains `amount` HP each turn; the scene reads `latchAmount` and
+   *  applies it, releasing on the cure hit (`releaseLatch`). */
+  z.strictObject({ kind: z.literal('latch'), amount: z.number().int().positive() }),
   z.strictObject({
     kind: z.literal('partyStatus'),
     status: z.enum(['crying', 'asleep', 'paralyzed', 'sunburn', 'hushed']),
@@ -741,10 +749,24 @@ export const PhaseActionSchema = z.discriminatedUnion('kind', [
 ]);
 export type PhaseAction = z.infer<typeof PhaseActionSchema>;
 
+/** the NOISE sources that ground an airborne/burrowed form (S15g M3c, ADR-046):
+ *  Vibe Volt and the two fireworks the §A6 Ch.4/Ch.8 fights teach. A form lists
+ *  the ones that reach it in `groundedBy`; `noiseOut` honours the list. */
+export const NoiseSourceSchema = z.enum(['volt', 'firecracker', 'bottle_rockets']);
+export type NoiseSource = z.infer<typeof NoiseSourceSchema>;
+
 /** one boss form (the Gilded Grin's SOLID GOLD / HOLLOW, the Paper Dragon's
  *  airborne/grounded). Immunities zero the matching damage class; crackedBy
  *  names the element that suspends them for a beat (Vibe Freeze makes the
- *  gold BRITTLE — the §A6 Ch.2 edge case the fight teaches). */
+ *  gold BRITTLE — the §A6 Ch.2 edge case the fight teaches).
+ *
+ *  S15g M3c (ADR-046) adds the FORGE template fields, all optional so the
+ *  shipped Grin parses byte-identical: `untargetable` (the Whisperwig burrows
+ *  off-target until noise), `groundedBy`/`groundedTurns` (the noise that
+ *  suspends airborne physical-immunity or surfaces a burrow, §A6 Ch.4/Ch.8),
+ *  `surfacesTo` (the form a burrow swaps INTO when noise lands — the awakening
+ *  beat), and `healedBy` (the elemental golem the WRONG element heals, §A6
+ *  Ch.10 minibosses). */
 export const BossFormDefSchema = z.strictObject({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -755,6 +777,16 @@ export const BossFormDefSchema = z.strictObject({
   spriteSuffix: z.string(),
   /** DIALOGUE id printed when the boss takes this form */
   line: z.string().min(1).optional(),
+  /** the boss cannot be targeted in this form until NOISE forces it out */
+  untargetable: z.boolean().optional(),
+  /** noise sources that ground this form (suspend immunity / surface a burrow) */
+  groundedBy: z.array(NoiseSourceSchema).min(1).optional(),
+  /** how many boss turns a grounding lasts (default 2 — the Paper Dragon beat) */
+  groundedTurns: z.number().int().min(1).optional(),
+  /** the form this one SURFACES into when noise lands (the Whisperwig's reveal) */
+  surfacesTo: z.string().min(1).optional(),
+  /** the WRONG element — it HEALS this form instead of harming it (golems) */
+  healedBy: ElementSchema.optional(),
 });
 export type BossFormDef = z.infer<typeof BossFormDefSchema>;
 
@@ -802,6 +834,11 @@ export const BossScriptDefSchema = z
     }
     if (s.awakeningOnForm && !s.forms?.some((f) => f.id === s.awakeningOnForm?.form)) {
       ctx.addIssue({ code: 'custom', message: `awakeningOnForm aims at unknown form '${s.awakeningOnForm.form}'` });
+    }
+    for (const f of s.forms ?? []) {
+      if (f.surfacesTo && !s.forms?.some((g) => g.id === f.surfacesTo)) {
+        ctx.addIssue({ code: 'custom', message: `form '${f.id}' surfacesTo unknown form '${f.surfacesTo}'` });
+      }
     }
     for (const r of s.riddle?.pool ?? []) {
       if (r.correct >= r.options.length) {
@@ -1034,3 +1071,40 @@ export const DraftMapDefSchema = z.strictObject({
   npcs: z.array(DraftNpcSchema),
 });
 export type DraftMapDef = z.infer<typeof DraftMapDefSchema>;
+
+/* ====== THE ENEMY FORGE — drafts (S15g Movement Three, ADR-046) ====== */
+
+/**
+ * The human-picked sprite recipe (Movement 3b): a tuple of hand-drawn part ids
+ * + the seed that composed them, so the chosen look reproduces byte-for-byte
+ * forever. ADR-020 BY CONSTRUCTION — every part is a drawn pixmap, never
+ * synthesized. Optional on a draft until the Sprite Lab pick is recorded.
+ */
+export const PartsSpecSchema = z.strictObject({
+  silhouette: z.string().min(1),
+  material: z.string().min(1),
+  accessory: z.string().min(1).optional(),
+  wear: z.string().min(1).optional(),
+  region: z.string().min(1).optional(),
+  seed: z.number().int(),
+});
+export type PartsSpec = z.infer<typeof PartsSpecSchema>;
+
+/**
+ * A FORGED enemy draft = the canon EnemyDef shape (built from its `.shape` so
+ * it tracks the schema) PLUS the forge's bookkeeping: the ROLE it was drafted
+ * from, the CHAPTER band, and (once the Sprite Lab pick lands) the partsSpec.
+ * The canon `EnemiesSchema` is strict and has no slot for `role`/`chapter`/
+ * `partsSpec`, so a forged draft can NEVER masquerade as a shipped §A7 row —
+ * promotion is a human act (the DraftMapDef pattern, applied to enemies).
+ */
+export const DraftEnemyDefSchema = z.strictObject({
+  ...EnemyDefSchema.shape,
+  /** the forge role this enemy was drafted from (grunt/bruiser/caster/…) */
+  role: z.string().min(1),
+  /** the §A6/§A9 chapter band its stats were forged against */
+  chapter: z.number().int().min(1).max(10),
+  /** 3b: the composed sprite recipe the human picked (added at sprite time) */
+  partsSpec: PartsSpecSchema.optional(),
+});
+export type DraftEnemyDef = z.infer<typeof DraftEnemyDefSchema>;

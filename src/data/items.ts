@@ -31,6 +31,56 @@ export function sellPrice(item: ItemDef): number {
   return Math.floor(item.price / 2);
 }
 
+/** the short category tag shown in the item-menu description panel (S15h UI
+ *  pass). One word the player reads before the effect line — exhaustive over
+ *  ItemKind, so a new kind must be labelled here or it fails to compile. */
+export function itemKindLabel(item: ItemDef): string {
+  switch (item.kind) {
+    case 'weapon': return 'WEAPON';
+    case 'armor': return 'ARMOR';
+    case 'arms': return 'GEAR';
+    case 'charm': return 'CHARM';
+    case 'food': return 'FOOD';
+    case 'pp': return 'PP DRINK';
+    case 'cure': return 'MEDICINE';
+    case 'battle': return 'BATTLE ITEM';
+    case 'valuable': return 'VALUABLE';
+    case 'basket': return 'PICNIC';
+    case 'key': return 'KEY ITEM';
+    default: { const never: never = item.kind; return never; }
+  }
+}
+
+function battleStatusLine(s: NonNullable<ItemDef['status']>): string {
+  return s === 'crying' ? 'makes every foe cry' : s === 'asleep' ? 'puts every foe to sleep' : 'paralyzes every foe';
+}
+
+/** one plain-language line of WHAT THE ITEM DOES — the player should never have
+ *  to guess (S15h items-menu pass). Pure, so the description panel and the
+ *  shops can both read it. EarthBound register: a clear sentence; the joke and
+ *  the flavor stay in `item.text`, this is just the mechanics, spoken simply. */
+export function itemEffectLine(item: ItemDef): string {
+  switch (item.kind) {
+    case 'weapon': return `Offense +${item.offense ?? 0} when equipped`;
+    case 'armor': return `Defense +${item.defense ?? 0} when worn`;
+    case 'arms': return item.speed ? `Speed +${item.speed} when equipped` : `Guts +${item.guts ?? 0} when equipped`;
+    case 'charm': return `Luck +${item.luck ?? 0} when equipped`;
+    case 'food': return `Heals about ${item.heal ?? 0} HP`;
+    case 'pp': return `Restores about ${item.ppHeal ?? 0} PP`;
+    case 'cure': return item.cures && item.cures.length ? `Cures ${item.cures.join(', ')}` : 'Settles what ails you';
+    case 'basket': return 'Open it at a picnic table to share a meal';
+    case 'valuable': return item.price > 0 ? `Worth $${sellPrice(item)} at a shop counter` : 'Worth something to the right person';
+    case 'key': return 'A key item — it opens something, somewhere';
+    case 'battle': {
+      if (item.status) return `In battle: ${battleStatusLine(item.status)}`;
+      if (item.breaksLatch) return 'In battle: frees a hero from a latch';
+      if (item.power) return `In battle: about ${item.power} damage to one foe`;
+      return 'Use this during a battle';
+    }
+    default: { const never: never = item.kind; return never; }
+  }
+}
+
 const I = (i: ItemDef): ItemDef => i;
 
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(

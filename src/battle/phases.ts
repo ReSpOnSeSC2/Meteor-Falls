@@ -22,9 +22,9 @@
  * proves every canon trigger headlessly (phases.test.ts), so Prompts 29–34
  * are data-only.
  */
-import type { BossFormDef, BossPhaseDef, BossScriptDef, Element, PhaseAction, PrayTier, RiddleDef } from '../schemas';
+import type { BossFormDef, BossPhaseDef, BossScriptDef, Element, NoiseSource, PhaseAction, PrayTier, RiddleDef } from '../schemas';
 
-export type { BossFormDef, BossPhaseDef, BossScriptDef, PhaseAction, PhaseTrigger, RiddleDef } from '../schemas';
+export type { BossFormDef, BossPhaseDef, BossScriptDef, NoiseSource, PhaseAction, PhaseTrigger, RiddleDef } from '../schemas';
 
 /** what a damage source IS, for form immunities — bats and thrown goods are
  *  physical; the Vibe lines are vibe; PRAY is faith and always lands (§A2:
@@ -61,6 +61,10 @@ export function prayTierAtLeast(tier: PrayTier, atLeast: PrayTier): boolean {
  *  the brittle beat lasts through the player's next swing */
 export const CRACK_TURNS = 2;
 
+/** how many boss turns NOISE keeps an airborne form grounded (the §A6 Ch.8
+ *  Paper Dragon "knocked down for 2 turns" beat) — a form may override it */
+export const NOISE_TURNS = 2;
+
 export class PhaseRunner {
   readonly def: BossScriptDef;
   private fx: PhaseEffects;
@@ -68,6 +72,16 @@ export class PhaseRunner {
   form: BossFormDef | null = null;
   /** boss turns remaining with immunity suspended (Vibe Freeze on gold) */
   cracked = 0;
+  /** boss turns remaining GROUNDED by noise — an airborne form takes physical
+   *  while this runs (the Paper Dragon knocked down, §A6 Ch.8) */
+  grounded = 0;
+  /** the boss is evasive right now — the scene reads this the way it reads
+   *  speedMul (Whiskerzilla while the Flat Bell rings, §A6 Ch.5) */
+  evasion = false;
+  /** HP the boss drains from a latched hero each turn (0 = not latched). The
+   *  latch ARCHETYPE (the §A6 Ch.1 Tick's shape as a template; the shipped
+   *  Tick stays bespoke). The scene reads this and releases on the cure hit. */
+  latchAmount = 0;
   /** boss turns remaining skipped (the Sphinx's answered riddle) */
   stunned = 0;
   /** ≥2 grants the boss an extra action per round (Paper Dragon desperation) */
@@ -108,17 +122,44 @@ export class PhaseRunner {
 
   /**
    * 0 = the hit clangs off (immune), 1 = it lands. PRAY always lands.
-   * A cracked form's PHYSICAL immunity is suspended (the freeze edge case —
-   * the gold goes brittle and bats land, §A6 Ch.2 as taught by the fight).
+   * A cracked OR noise-grounded form's PHYSICAL immunity is suspended (the
+   * freeze edge case — the gold goes brittle and bats land, §A6 Ch.2; the
+   * Paper Dragon knocked out of the air, §A6 Ch.8 — same suspension, two reads).
    */
   damageMul(source: DamageClass): number {
     if (!this.form) return 1;
     if (source === 'pray') return 1;
     if (source === 'physical' && this.form.physicalImmune) {
-      return this.cracked > 0 ? 1 : 0;
+      return this.cracked > 0 || this.grounded > 0 ? 1 : 0;
     }
     if (source === 'vibe' && this.form.vibeImmune) return 0;
     return 1;
+  }
+
+  /**
+   * Can the party AIM at the boss right now? False only while a burrowed,
+   * untargetable form hides AND no noise has grounded it (the Whisperwig in
+   * the ear canal, §A6 Ch.4 — `noiseOut` surfaces it). Formless / ordinary
+   * forms are always targetable.
+   */
+  targetable(): boolean {
+    return !(this.form?.untargetable === true && this.grounded === 0);
+  }
+
+  /**
+   * The §A6 Ch.10 golem inversion: the WRONG element HEALS the active form
+   * instead of harming it (Freeze on the Tiki Magma Golem, Fire on the Frost
+   * Sentinel). The scene turns a `healedBy` hit into a heal; everything else
+   * resolves normally through `damageMul` / the weakness table.
+   */
+  healsFromElement(el: Element): boolean {
+    return this.form?.healedBy === el;
+  }
+
+  /** the cure hit lands (Vibe Fire / a thrown Salt Shaker on the Tick's shape):
+   *  the latch lets go and the per-turn drain stops. */
+  releaseLatch(): void {
+    this.latchAmount = 0;
   }
 
   /**
@@ -133,6 +174,27 @@ export class PhaseRunner {
     return fresh;
   }
 
+  /**
+   * NOISE lands on the active form (Vibe Volt, a Firecracker String, Bottle
+   * Rockets — §A6 Ch.4/Ch.8). If the form is grounded BY this source it starts
+   * (or refills) the grounded timer — and, if the form SURFACES (the Whisperwig
+   * leaving its burrow), swaps into its surface form, which fires that form's
+   * line and any awakening due. Returns true the moment the noise first lands
+   * so the scene can print the "it's out!" read. A no-op for forms deaf to it.
+   */
+  async noiseOut(source: NoiseSource): Promise<boolean> {
+    const f = this.form;
+    if (!f?.groundedBy?.includes(source)) return false;
+    const fresh = this.grounded === 0;
+    const turns = f.groundedTurns ?? NOISE_TURNS;
+    if (f.surfacesTo) {
+      const next = this.def.forms?.find((g) => g.id === f.surfacesTo);
+      if (next) await this.applyForm(next);
+    }
+    this.grounded = turns;
+    return fresh;
+  }
+
   /* ---------------- trigger events (the scene reports, we fire) ---------------- */
 
   /**
@@ -143,6 +205,7 @@ export class PhaseRunner {
   async onBossTurnStart(): Promise<'act' | 'skip'> {
     this.bossTurns += 1;
     if (this.cracked > 0) this.cracked -= 1;
+    if (this.grounded > 0) this.grounded -= 1;
     for (const p of this.def.phases) {
       if (p.trigger.kind !== 'turnCount') continue;
       const { n, every } = p.trigger;
@@ -198,6 +261,17 @@ export class PhaseRunner {
     for (const a of p.actions) await this.runAction(a);
   }
 
+  /** swap to a form (the setForm action AND noise-surfacing both route here):
+   *  a fresh form arrives whole — crack and grounding clear, the scene paints
+   *  the new texture / line / awakening. A no-op if it is already the form. */
+  private async applyForm(next: BossFormDef): Promise<void> {
+    if (next.id === this.form?.id) return;
+    this.form = next;
+    this.cracked = 0;
+    this.grounded = 0;
+    await this.fx.setForm(next);
+  }
+
   private async runAction(a: PhaseAction): Promise<void> {
     switch (a.kind) {
       case 'scriptLine':
@@ -213,10 +287,7 @@ export class PhaseRunner {
         } else {
           next = forms.find((f) => f.id === a.form);
         }
-        if (!next || next.id === this.form?.id) return;
-        this.form = next;
-        this.cracked = 0; // a fresh form arrives whole
-        await this.fx.setForm(next);
+        if (next) await this.applyForm(next);
         return;
       }
       case 'summon':
@@ -241,6 +312,12 @@ export class PhaseRunner {
         return;
       case 'stunSelf':
         this.stunned += a.turns;
+        return;
+      case 'setEvasion':
+        this.evasion = a.on;
+        return;
+      case 'latch':
+        this.latchAmount = a.amount;
         return;
       case 'partyStatus':
         await this.fx.partyStatus(a.status, a.turns);

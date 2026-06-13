@@ -105,6 +105,7 @@ import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, toast, vars, DEPTH_UI, overscanRect } from '../ui/windows';
+import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
 import {
@@ -205,6 +206,11 @@ export class OverworldScene extends Phaser.Scene {
   private stepTimer = 0;
   private fireflies: Phaser.GameObjects.Image[] = [];
   private openingRequested = false;
+  /** §A4: the overworld VITALS quick-glance (the EB "check HP fast" beat) —
+   *  the same party strip the menu draws, popped on a button with no full menu */
+  private vitalsGlance: VitalsBar | null = null;
+  /** debounce so the opening tap can't immediately re-close (and vice versa) */
+  private vitalsLockUntil = 0;
 
   constructor() {
     super('overworld');
@@ -256,8 +262,41 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.playMusic(this.mapDef.music);
     this.cameras.main.fadeIn(250, 0, 0, 0);
 
+    // §A4: the VITALS quick-glance. The world pausing (battle / menu / shop)
+    // hides it; a tap anywhere dismisses it (debounced so the opening tap
+    // can't), and the START menu draws its OWN strip, so drop this one first.
+    this.vitalsGlance = null;
+    this.events.off(Phaser.Scenes.Events.PAUSE, this.hideVitals).on(Phaser.Scenes.Events.PAUSE, this.hideVitals);
+    this.input.on('pointerdown', () => {
+      if (this.vitalsGlance?.visible && this.time.now >= this.vitalsLockUntil) this.hideVitals();
+    });
+
     void this.onEnterCutscenes();
   }
+
+  /** §A4: pop / drop the EB "check HP fast" glance — the SAME party strip the
+   *  menu draws, from the overworld with no full menu. Bound to the free Y
+   *  button (§B4 pad + keys; UIScene surfaces it on the touch thumb-arc). */
+  private toggleVitals(): void {
+    if (this.time.now < this.vitalsLockUntil) return;
+    this.vitalsLockUntil = this.time.now + 250;
+    if (this.vitalsGlance?.visible) {
+      this.vitalsGlance.hide();
+      AUDIO.sfx('cancel');
+      return;
+    }
+    if (!this.vitalsGlance) this.vitalsGlance = makeVitalsBar(this);
+    this.vitalsGlance.show();
+    AUDIO.sfx('cursor');
+  }
+
+  /** dismiss the glance (B, a tap, or the world pausing under a sub-scene) */
+  private hideVitals = (): void => {
+    if (this.vitalsGlance?.visible) {
+      this.vitalsGlance.hide();
+      this.vitalsLockUntil = this.time.now + 250;
+    }
+  };
 
   /* ---------------- build ---------------- */
 
@@ -654,6 +693,9 @@ export class OverworldScene extends Phaser.Scene {
           const released = this.dlg.justReleased(this.time.now);
           if (INPUT.justPressed('A') && !released) void this.interact();
           if (INPUT.justPressed('START') && !released) this.pauseMenu();
+          // §A4: the VITALS quick-glance — Y toggles it; B dismisses it
+          if (INPUT.justPressed('Y')) this.toggleVitals();
+          else if (this.vitalsGlance?.visible && INPUT.justPressed('B')) this.hideVitals();
         }
       }
     } else {

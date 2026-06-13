@@ -29,6 +29,8 @@ import { isDungeonSolid, silenceCurve } from '../levelkit/dungeons';
 import type { Recipe, DraftMapDef, Facing } from '../schemas';
 import type { MapDef, NpcDef } from '../data/maps';
 import { MAPS } from '../data/maps';
+import { ENEMIES } from '../data/enemies';
+import { FORGED_ENEMIES, stripForgeTags } from '../levelkit/forge/registry';
 import { DIALOGUE } from '../data/dialogue';
 
 export class LevelkitLabScene extends Phaser.Scene {
@@ -124,6 +126,12 @@ export class LevelkitLabScene extends Phaser.Scene {
     D.lk_slot ??= ['@A reserved slot.', '@The tone editor writes this at promotion.'];
     for (const s of draft.signs) D[s.dialogue] ??= ['@A reserved landmark. Hand-built at promotion.'];
     MAPS[draft.id] = this.adapt(draft);
+
+    // inject the forged Ch.3–10 roster into the RUNTIME ENEMIES — tags stripped
+    // to the canon EnemyDef shape — exactly the way the map draft goes into MAPS
+    // above. So a walked dungeon fights real forged foes (placeholder sprites
+    // until 3b). The shipped ENEMIES SOURCE is never touched (Prime Law 1).
+    for (const [id, def] of Object.entries(FORGED_ENEMIES)) ENEMIES[id] = stripForgeTags(def);
 
     GS.reset(); // a fresh dev party so the overworld can build the player
     AUDIO.sfx('confirm');

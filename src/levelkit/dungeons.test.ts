@@ -35,16 +35,18 @@ function fnv(obj: unknown): string {
   return (h >>> 0).toString(16).padStart(8, '0');
 }
 
-/** three pinned (seed → hash) per site — the ship-freeze proof on ≥3 seeds */
+/** three pinned (seed → hash) per site — the ship-freeze proof on ≥3 seeds.
+ *  Re-pinned at S15g M3: BAND_ROSTER ch3–ch10 now resolve to the forged
+ *  rosters, so every site's spawner enemy ids (hence its bytes) moved. */
 const PINS: Record<string, Record<number, string>> = {
-  wintermoor_academy: { 3030: '2a2a95c1', 1: '04ded4b3', 2: 'bd6ce92f' },
-  sleepers_spine: { 4040: '23f9c85f', 1: 'bb3fdede', 2: '32604161' },
-  the_hedgerow: { 5050: '21004715', 1: 'a92d9a12', 2: '854f35bc' },
-  laughing_ruins: { 6060: 'c2e2c9fc', 1: 'b38b1adb', 2: 'c37a6d99' },
-  night_train: { 7070: '49cb42a7', 1: 'c71ed331', 2: '7d3f1730' },
-  spore_forest: { 8080: '1ed2f78b', 1: 'da15a143', 2: '227d6005' },
-  castle_hoaxula: { 9090: '8a2199b5', 1: 'eb79f9b7', 2: '00ddec22' },
-  sea_of_silence: { 1010: 'a3047d9d', 1: 'd04f6e44', 2: '534b0b6e' },
+  wintermoor_academy: { 3030: '600554a0', 1: '6236548e', 2: 'aa93848a' },
+  sleepers_spine: { 4040: '7f0641af', 1: '94daa014', 2: 'faf09bbd' },
+  the_hedgerow: { 5050: 'dedb40c4', 1: '69b3d831', 2: '78cb40b7' },
+  laughing_ruins: { 6060: 'b4538cb0', 1: '402b5b97', 2: '925f1815' },
+  night_train: { 7070: '502a7283', 1: 'b912c1d1', 2: '94ca2252' },
+  spore_forest: { 8080: 'cb637efb', 1: 'df9ceb37', 2: '4a9a94b1' },
+  castle_hoaxula: { 9090: '711e297c', 1: '25de60d6', 2: 'fb5dd45f' },
+  sea_of_silence: { 1010: '36e4fc55', 1: 'ff9f4f66', 2: 'e995a3a8' },
 };
 
 describe('S15g M2 — every dungeon site is deterministic + sealed on 3 seeds', () => {

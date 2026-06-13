@@ -21,6 +21,7 @@ import type {
   EncounterBand,
 } from '../schemas';
 import type { Streams } from './rng';
+import { forgedBandIds } from './forge/registry';
 
 export { Grid, treeSprite };
 
@@ -109,23 +110,24 @@ export const ROLE_FACADE: Record<string, string> = {
 };
 
 /**
- * BAND → roamer roster. Until the enemy forge (Movement Three) lands the
- * §A7 chapters 3–10, every band resolves to a SHIPPED enemy so a draft walks
- * in the LAB without referencing an unbuilt sprite. ch1/ch2 are real today;
- * higher bands borrow the ch2 set (the toughest shipped) as a placeholder —
- * Movement Three swaps in the forged rosters, recipe-keyed.
+ * BAND → roamer roster. ch1/ch2 are the SHIPPED §A7 enemies (frozen). Ch.3–10
+ * now resolve to the FORGED rosters (Movement Three): forgedBandIds(ch) is the
+ * deterministic id list buildRoster(ch, FIXED_SEED[ch]) produces, and the
+ * LEVELKIT LAB injects those forged defs into the RUNTIME ENEMIES (tags
+ * stripped) so a walked Ch.3–10 dungeon fights real forged foes. Canon ENEMIES
+ * never sees a forged draft — promotion is a human act (Prime Law 1).
  */
 export const BAND_ROSTER: Record<EncounterBand, readonly string[]> = {
   ch1: ['cranky_mailbox', 'coily_cicada'],
   ch2: ['pickpocket_parrot', 'gilded_beetle'],
-  ch3: ['gilded_beetle', 'step_mask'],
-  ch4: ['step_mask', 'jungle_jitterbug'],
-  ch5: ['jungle_jitterbug', 'cursed_souvenir'],
-  ch6: ['gilded_beetle', 'jungle_jitterbug'],
-  ch7: ['step_mask', 'cursed_souvenir'],
-  ch8: ['jungle_jitterbug', 'pickpocket_parrot'],
-  ch9: ['cursed_souvenir', 'step_mask'],
-  ch10: ['jungle_jitterbug', 'gilded_beetle'],
+  ch3: forgedBandIds(3),
+  ch4: forgedBandIds(4),
+  ch5: forgedBandIds(5),
+  ch6: forgedBandIds(6),
+  ch7: forgedBandIds(7),
+  ch8: forgedBandIds(8),
+  ch9: forgedBandIds(9),
+  ch10: forgedBandIds(10),
 };
 
 /** generic townsfolk sprites (real CAST sheets) for role-tagged draft slots */
