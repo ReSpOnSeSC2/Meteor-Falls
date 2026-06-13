@@ -207,6 +207,16 @@ export function vibeDamage(power: number, vibe: number, rng: Rng): number {
   return Math.max(1, Math.round(power * (1 + vibe / 60) * (0.9 + rng() * 0.2)));
 }
 
+/* ---- MILO'S GADGETS (no Vibe, no PP) — competence, not the old light ----
+ * Milo's tech is a MACHINE: it reads OFF `power` alone, never the Vibe stat (his
+ * Vibe is 0 by design — he out-engineers magic). Same ±10% rng seam every damage
+ * path keeps, so the bottle rockets and the new EMP/cryo/siege gadgets all scale
+ * identically and sensibly without a drop of Vibe. Pure + rng-injected so the
+ * ADR-008 replay bot and the unit tests stay exact. */
+export function gadgetDamage(power: number, rng: Rng): number {
+  return Math.max(1, Math.round(power * (0.9 + rng() * 0.2)));
+}
+
 export function vibeHeal(power: number, vibe: number, rng: Rng): number {
   return Math.max(1, Math.round(power * (1 + vibe / 80) * (0.95 + rng() * 0.1)));
 }
@@ -280,7 +290,10 @@ export function burnTick(maxHp: number): number {
  * Skip the next turn, chance by tier (γ40 / Ω55 / Σ70%), 1 turn. Bosses are
  * capped/immune via the LIVE mindImmune philosophy (reuse the same gate so Freeze
  * control mirrors Jay's puppet rules exactly — control never trivializes a boss). */
-export const FROZEN_CHANCE: Record<number, number> = { 3: 0.4, 4: 0.55, 5: 0.7 };
+// tiers 3–5 are Mia's Freeze ladder (γ/Ω/Σ); tier 2 is Milo's CRYO GRENADE — a
+// dedicated single-target lockdown tool (his whole turn, fixed 80 dmg, no Vibe),
+// so its skip-lock lands a touch more often than Mia's first freeze rung.
+export const FROZEN_CHANCE: Record<number, number> = { 2: 0.5, 3: 0.4, 4: 0.55, 5: 0.7 };
 export function frozenChance(tier: number): number {
   return FROZEN_CHANCE[tier] ?? 0;
 }

@@ -3,6 +3,7 @@ import {
   physicalDamage,
   smashChance,
   vibeDamage,
+  gadgetDamage,
   runChance,
   instantWin,
   expShare,
@@ -29,7 +30,8 @@ import {
 } from './formulas';
 import * as F from './formulas';
 import { RAMP, px } from '../palette';
-import { rollPray, prayWeights, PRAY_BASE, type PrayTier } from '../data/abilities';
+import { rollPray, prayWeights, PRAY_BASE, ABILITIES, type PrayTier } from '../data/abilities';
+import { FX_REGISTRY } from './fxRegistry';
 import { availableAbilities, HEROES } from '../data/heroes';
 import { mulberry32 } from '../spritegen/pixmap';
 import { expForLevel, makeHeroState } from '../engine/state';
@@ -710,5 +712,77 @@ describe('PIPPA — the page\'s tactical kit (NO Vibe, NO PP: competence, not ma
     }
     // even with EVERY flag set, nothing extra appears (she earns her brief by service)
     expect(availableAbilities('pippa', 99, () => true).length).toBe(12);
+  });
+});
+
+/* ================= MILO ("Gadget Genius, Doubled") ================= */
+
+describe('MILO — gadgets (NO Vibe, NO PP: competence, not the old light)', () => {
+  it('gadgetDamage reads OFF power alone — a rocket hits the same at any Vibe', () => {
+    // there is NO vibe parameter: the machine cannot scale on a stat Milo lacks
+    expect(gadgetDamage(90, () => 0.5)).toBe(90);
+    expect(gadgetDamage(360, () => 0.5)).toBe(360); // the siege rocket, fixed
+    // a ±10% spread, never below 1
+    expect(gadgetDamage(100, () => 0)).toBe(90);
+    expect(gadgetDamage(100, () => 0.9999)).toBe(110);
+    expect(gadgetDamage(0, () => 0.5)).toBe(1);
+    // and it is INDEPENDENT of the vibeDamage curve (which DOES read Vibe up)
+    expect(vibeDamage(90, 60, () => 0.5)).toBeGreaterThan(gadgetDamage(90, () => 0.5));
+  });
+
+  it('every Milo gadget is kind:gadget at 0 PP (no Vibe, no PP — by design)', () => {
+    for (const id of availableAbilities('milo', 99, () => false)) {
+      const ab = ABILITIES[id];
+      expect(ab.kind).toBe('gadget');
+      expect(ab.pp).toBe(0);
+    }
+  });
+
+  it('Static Bomb is a volt AoE + paralyze; volt-weak foes take ×1.5', () => {
+    const ab = ABILITIES.static_bomb;
+    expect(ab.element).toBe('volt');
+    expect(ab.target).toBe('enemies');
+    expect(ab.status).toBe('paralyzed');
+    // the EMP's volt finds a volt-weakness through the gadget path (applyWeakness)
+    expect(applyWeakness(gadgetDamage(70, () => 0.5), true)).toBe(Math.round(70 * 1.5));
+    expect(applyWeakness(gadgetDamage(70, () => 0.5), false)).toBe(70);
+  });
+
+  it('Cryo Grenade freezes (skip-lock) at a real, nonzero chance — shared FROZEN math', () => {
+    const ab = ABILITIES.cryo_grenade;
+    expect(ab.element).toBe('freeze');
+    expect(ab.status).toBe('frozen');
+    // the fx tier the on-hit status reads resolves a genuine skip-lock chance
+    const tier = FX_REGISTRY.cryo_grenade.tier ?? 1;
+    expect(F.frozenChance(tier)).toBeGreaterThan(0);
+    expect(F.frozenLands(tier, () => F.frozenChance(tier) - 0.01)).toBe(true);
+    expect(F.frozenLands(tier, () => F.frozenChance(tier) + 0.01)).toBe(false);
+  });
+
+  it('Forcefield Gizmo deploys a PARTY shield; Med-Spray heals AND clears status', () => {
+    const ff = ABILITIES.forcefield_gizmo;
+    expect(ff.target).toBe('allies'); // party-wide deployable
+    expect(ff.status).toBe('shield'); // the existing physical-halving status, reused
+    expect(ff.power).toBe(0);
+    const med = ABILITIES.med_spray;
+    expect(med.heal).toBe(true);
+    expect(med.status).toBe('cure'); // a reliable 0-PP heal that also cleanses
+    expect(med.power).toBeGreaterThan(0);
+  });
+
+  it('availableAbilities(milo) returns 11 ids — all LEVEL unlocks, no awakenings', () => {
+    const ids = availableAbilities('milo', 99, () => false);
+    expect(new Set(ids).size).toBe(ids.length); // unique
+    expect(ids.length).toBe(11);
+    // the six new gadgets are all reachable by leveling
+    for (const id of ['scope', 'static_bomb', 'cryo_grenade', 'forcefield_gizmo', 'med_spray', 'siege_rocket']) {
+      expect(ids).toContain(id);
+    }
+    // and his original five are still there
+    for (const id of ['spy', 'repair', 'bottle_rocket', 'big_bottle_rocket', 'multi_bottle_rocket']) {
+      expect(ids).toContain(id);
+    }
+    // no Vibe → no awakenings: even with EVERY flag set, nothing extra appears
+    expect(availableAbilities('milo', 99, () => true).length).toBe(11);
   });
 });

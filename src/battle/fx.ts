@@ -940,9 +940,11 @@ export class BattleFx {
         break;
       }
       case 'rocket': {
-        // arcing projectile + payload burst; Multi is a volley
+        // arcing projectile + payload burst. tier 4 (Multi) is a 4-volley; tiers
+        // 2 (Big) and 3 (SIEGE — the boss-buster) are escalating SINGLE payloads
+        // — the bigger the tier, the heavier the burst + shake (tier 2 unchanged).
         const volley = tier >= 4 ? 4 : 1;
-        const big = tier === 2;
+        const big = tier === 2 || tier === 3;
         for (let v = 0; v < volley; v++) {
           const t = targets[v % Math.max(1, targets.length)];
           if (!t) break;
@@ -956,12 +958,12 @@ export class BattleFx {
             this.spawnSparse(p, x, y, RAMP.GOLD);
           });
           tl.event(at + 380, () => {
-            this.burst(t.x, t.y, ramp, big ? 18 : 10, big ? 90 : 65, 460, big ? 2 : 1);
+            this.burst(t.x, t.y, ramp, big ? 18 + (tier - 2) * 8 : 10, big ? 90 + (tier - 2) * 30 : 65, 460, big ? 2 : 1);
             AUDIO.sfx('smash');
           });
           this.hitFlash(tl, at + 390, t);
           hit(targets.indexOf(t), at + 400);
-          if (big) this.shake(tl, at + 380, 180, 0.01);
+          if (big) this.shake(tl, at + 380, 180 + (tier - 2) * 80, 0.01 + (tier - 2) * 0.004);
         }
         tl.hold(volley * 140 + 640);
         break;

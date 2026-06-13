@@ -113,12 +113,24 @@ export const HEROES: Record<HeroId, HeroDef> = {
     growth: { offense: 1.9, defense: 1.8, speed: 1.9, guts: 0.9, vibe: 0, luck: 1.0 },
     hp: { base: 28, lin: 6.0, quad: 0.07 },
     pp: { base: 0, lin: 0, quad: 0 },
+    // "Gadget Genius, Doubled": Milo's kit roughly doubles (5 → 11). He has NO
+    // Vibe → NO awakenings — every gadget is a LEVEL row (pure grind/competence:
+    // he earns his gear by building it). The cadence sits in his active range
+    // (he joins Ch.3 ~L8): Scope opens the force-multiplier game early, the
+    // elemental grenades + deployable shield fill out the toolbox mid-game, and
+    // the boss-buster Siege Rocket caps the line.
     unlocks: [
       { level: 1, ability: 'spy' },
       { level: 1, ability: 'repair' },
       { level: 1, ability: 'bottle_rocket' },
+      { level: 8, ability: 'scope' }, // Spy++: reveal stats AND mark (×1.25, can't-miss)
       { level: 14, ability: 'big_bottle_rocket' },
+      { level: 16, ability: 'forcefield_gizmo' }, // deployable party shield
+      { level: 18, ability: 'static_bomb' }, // EMP: volt AoE + paralyze
+      { level: 20, ability: 'med_spray' }, // 0-PP heal + status cleanse
+      { level: 22, ability: 'cryo_grenade' }, // freeze damage + skip-lock
       { level: 28, ability: 'multi_bottle_rocket' },
+      { level: 34, ability: 'siege_rocket' }, // the boss-buster — 360 fixed, no resource
     ],
   },
   dorin: {

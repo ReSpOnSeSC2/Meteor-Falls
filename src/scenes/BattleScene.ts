@@ -108,6 +108,7 @@ import {
   smashDamage,
   vibeDamage,
   vibeHeal,
+  gadgetDamage,
   applyWeakness,
   applyElement,
   applyFocus,
@@ -1689,6 +1690,16 @@ export class BattleScene extends Phaser.Scene {
         await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
         for (const e of foeTargets) {
           if (!e.alive) continue;
+          // Milo's SCOPE is Spy++: it REVEALS the foe's stats (the spy report)
+          // AND marks it — a force-multiplier that pairs the read with the tag.
+          if (ab.id === 'scope') {
+            await this.print(this.fill(BATTLE_TEXT.spy_report, name, e, String(e.hp)));
+            await this.print(
+              e.def.weakness.length > 0
+                ? this.fill(BATTLE_TEXT.spy_weak, name, e, e.def.weakness.join(', '))
+                : this.fill(BATTLE_TEXT.spy_no_weak, name, e),
+            );
+          }
           e.marked = MARKED_TURNS;
           await this.print(this.fill(BATTLE_TEXT.marked_on, name, e));
         }
@@ -1795,7 +1806,7 @@ export class BattleScene extends Phaser.Scene {
       // gadgets are machines: flat power, no Vibe scaling, defense pierced
       const raw =
         ab.kind === 'gadget'
-          ? Math.max(1, Math.round(ab.power * (0.9 + Math.random() * 0.2)))
+          ? gadgetDamage(ab.power, Math.random)
           : vibeDamage(ab.power, this.heroVibeS(h), Math.random);
       const dmg = ab.kind === 'gadget' ? applyWeakness(raw, weak) : applyElement(raw, { weak, resist, holy });
       // Vibe Fire burns the Tick's latch away (§A6 Boss 1) — and so does

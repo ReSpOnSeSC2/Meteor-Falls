@@ -127,6 +127,21 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'big_bottle_rocket', name: 'Big Bottle Rocket', kind: 'gadget', pp: 0, power: 220, target: 'enemy', element: 'physical', text: '{user} lit a BIG bottle rocket!', fx: 'rocket_big' }),
     A({ id: 'multi_bottle_rocket', name: 'Multi Bottle Rocket', kind: 'gadget', pp: 0, power: 140, target: 'enemies', element: 'physical', text: '{user} lit the whole crate!', fx: 'rocket_multi' }),
 
+    // ---- Milo, DOUBLED ("Gadget Genius, Doubled"). Six new 0-PP gadgets take
+    // his kit 5 → 11 — pure competence, NO Vibe (gadgetDamage reads `power`
+    // alone, his Vibe is 0). He's the party's TOOLBOX, never the nuke: a
+    // force-multiplier MARK (the shared 'marked' status — amplify + can't-miss,
+    // wired once with Pippa's), elemental grenades (volt/freeze) that give the
+    // no-magic team coverage, a deployable party SHIELD, 0-PP healing so the
+    // psychics aren't hostage to PP, and a boss-buster siege rocket. Every face
+    // REUSES an existing fx family. Voice: deadpan, talks to machines.
+    A({ id: 'scope', name: 'Scope', kind: 'gadget', pp: 0, power: 0, target: 'enemy', element: 'none', status: 'marked', text: '{user} ranged the target. "Calibrating… got you."', fx: 'scope' }),
+    A({ id: 'static_bomb', name: 'Static Bomb', kind: 'gadget', pp: 0, power: 70, target: 'enemies', element: 'volt', status: 'paralyzed', text: '{user} armed the EMP. "Discharge."', fx: 'static_bomb' }),
+    A({ id: 'cryo_grenade', name: 'Cryo Grenade', kind: 'gadget', pp: 0, power: 80, target: 'enemy', element: 'freeze', status: 'frozen', text: '{user} pulled the pin. "Coolant away."', fx: 'cryo_grenade' }),
+    A({ id: 'forcefield_gizmo', name: 'Forcefield Gizmo', kind: 'gadget', pp: 0, power: 0, target: 'allies', element: 'none', status: 'shield', text: '{user} deployed the emitter. "Field up — everyone inside."', fx: 'forcefield_gizmo' }),
+    A({ id: 'med_spray', name: 'Med-Spray', kind: 'gadget', pp: 0, power: 120, heal: true, target: 'ally', element: 'none', status: 'cure', text: '{user} hit them with the med-spray. "Hold still."', fx: 'med_spray' }),
+    A({ id: 'siege_rocket', name: 'Siege Rocket', kind: 'gadget', pp: 0, power: 360, target: 'enemy', element: 'physical', text: '{user} shouldered the siege tube. "Payload away."', fx: 'siege_rocket' }),
+
     // ---- Dorin, THE MONK'S FULL PATH ("Ability Expansion"). The monastery
     // martial artist's kit roughly doubles (7 → ~14): the Comet, Healing, and
     // Brainjam ladders complete; Mirror gains a party version (nearly free on
