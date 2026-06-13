@@ -1111,3 +1111,108 @@ export const DraftEnemyDefSchema = z.strictObject({
   partsSpec: PartsSpecSchema.optional(),
 });
 export type DraftEnemyDef = z.infer<typeof DraftEnemyDefSchema>;
+
+/* ====== THE CHAPTER SCAFFOLD — manifests (S15g Movement Four, ADR-047) ====== */
+
+/**
+ * The S14c discipline as a TYPE. A chapter is either:
+ *  - 'shipped' — its content is LIVE in MAPS/ENEMIES/QUESTS/BOSS_SCRIPTS, and
+ *    the validator asserts the manifest AGAINST that live content (Ch.1–2); or
+ *  - 'unlanded' — only the forge DRAFTS exist (a forged roster + a draft boss
+ *    script), and the validator asserts THOSE instead (Ch.3–10).
+ * The day a chapter lands, its session flips this flag and the validator's live
+ * assertions switch on — "asserted as each lands" (the S14c rule, ADR-046).
+ */
+export const ChapterStatusSchema = z.enum(['shipped', 'unlanded']);
+export type ChapterStatus = z.infer<typeof ChapterStatusSchema>;
+
+/** the ten forge boss TEMPLATES (src/levelkit/forge/bosses.ts) plus 'bespoke'
+ *  (the shipped Tick's engine latch + the Ch.10 Hush finale — neither is one of
+ *  the ten). A manifest names the template its boss instantiates from. */
+export const BossTemplateSchema = z.enum([
+  'bespoke',
+  'formSwap', 'latchDrain', 'summoner', 'thresholdHeal', 'riddle',
+  'mercyEnding', 'airborneGrounded', 'scriptedSurvival', 'untargetableUntilNoise', 'elementalGolem',
+]);
+export type BossTemplate = z.infer<typeof BossTemplateSchema>;
+
+/** one §A6 boss row: the §A7 enemy id its script drives, the canon HP (the
+ *  §A6 ladder), and the forge template (or 'bespoke'). */
+export const ChapterBossSchema = z.strictObject({
+  id: z.string().min(1),
+  /** dev/manifest name — §A11.6 keeps chapter/boss names out of player UI */
+  name: z.string().min(1),
+  hp: z.number().int().positive(),
+  template: BossTemplateSchema,
+});
+export type ChapterBoss = z.infer<typeof ChapterBossSchema>;
+
+/** one §A5 settlement of a chapter: the map id, its kind, and (for an unlanded
+ *  chapter) the forge STYLE PACK the scaffold dresses its settlement draft from. */
+export const ChapterSettlementSchema = z.strictObject({
+  id: z.string().min(1),
+  kind: SettlementSchema,
+  style: SettlementStyleSchema.optional(),
+});
+export type ChapterSettlement = z.infer<typeof ChapterSettlementSchema>;
+
+/**
+ * The per-chapter source of truth the validator reads (§A6/§A5/§A7/§A10): the
+ * chapter's maps, dungeon site, settlements, roster band, boss, quests, the
+ * Heartlight/Ember number, and the target level. A SHIPPED manifest is asserted
+ * against live content; an UNLANDED one is asserted against the forge drafts.
+ * tools/chapter-scaffold.ts reads it to emit a chapter's complete draft tree.
+ */
+export const ChapterManifestSchema = z
+  .strictObject({
+    chapter: z.number().int().min(1).max(10),
+    /** internal codename (§A11.6: never player-facing) */
+    title: z.string().min(1),
+    region: z.string().min(1),
+    status: ChapterStatusSchema,
+    /** §A6 target end level (Ch.10 uses the low end of its 52–55 window) */
+    targetLevel: z.number().int().min(1),
+    /** the Ember/Heartlight number — canon: ten Embers, one per chapter (§A2) */
+    ember: z.number().int().min(1).max(10),
+    /** the Homesong stem name, where §A6 names it (Ch.4 "The Deep Hum"…) */
+    heartlight: z.string().min(1).optional(),
+    /** §A7 roster band the chapter's spawners draw from ('ch1'…'ch10') */
+    band: EncounterBandSchema,
+    /** §A5 travel-in leg (Ch.1 walks — omitted) */
+    travel: TravelLegSchema.optional(),
+    /** the Resonance-Site dungeon */
+    dungeon: z.strictObject({
+      /** the dungeon / resonance-site name (dev voice) */
+      name: z.string().min(1),
+      /** the forge grammar (Ch.3–10); a shipped bespoke dungeon omits it */
+      site: DungeonSiteSchema.optional(),
+      /** shipped dungeon map ids (a shipped chapter asserts them live) */
+      maps: z.array(z.string().min(1)).optional(),
+    }),
+    boss: ChapterBossSchema,
+    /** Ch.10's miniboss gauntlet (Frost Sentinel, Tiki Magma Golem) */
+    minibosses: z.array(ChapterBossSchema).optional(),
+    /** §A5 settlements (id + kind + draft style), at least one */
+    settlements: z.array(ChapterSettlementSchema).min(1),
+    /** the chapter's primary overworld map ids (shipped → asserted live) */
+    maps: z.array(z.string().min(1)),
+    /** the §A10 quest ids (shipped → asserted live, both directions) */
+    quests: z.array(z.string().min(1)),
+  })
+  .superRefine((m, ctx) => {
+    // canon (§A2): ten Embers, one per chapter — the number IS the chapter
+    if (m.ember !== m.chapter) {
+      ctx.addIssue({ code: 'custom', message: `chapter ${m.chapter} carries Ember #${m.ember} — the Ember number is the chapter (§A2)` });
+    }
+    // the roster band is the chapter's own band by construction
+    if (m.band !== `ch${m.chapter}`) {
+      ctx.addIssue({ code: 'custom', message: `chapter ${m.chapter} rides band '${m.band}' — must be 'ch${m.chapter}'` });
+    }
+    // a shipped chapter's content is LIVE — it must name the maps it ships
+    if (m.status === 'shipped' && m.maps.length === 0) {
+      ctx.addIssue({ code: 'custom', message: `shipped chapter ${m.chapter} lists no maps (a shipped chapter is asserted against live MAPS)` });
+    }
+  });
+export type ChapterManifest = z.infer<typeof ChapterManifestSchema>;
+
+export const ChapterManifestsSchema = z.record(z.string().min(1), ChapterManifestSchema);

@@ -1523,7 +1523,9 @@ export function drawHouse(o: HouseOpts): Pixmap {
  *  storefront level with display windows + door. Height: 44 + 16·upperRows. */
 export interface CityBuildingOpts {
   wallTiles: number;
-  upperRows: 1 | 2 | 3;
+  /** story count. 1–3 = classic storefront; ≥6 reads as a tower; ≥11 (H≥220px,
+   *  ~14 tiles) is a MEGA-BUILDING whose top runs off-screen (S15i, ADR-050). */
+  upperRows: number;
   wall: number; // ramp
   signText: string;
   /** striped awning over the storefront, in this ramp */
@@ -1539,9 +1541,100 @@ export interface CityBuildingOpts {
   /** S14: Spanish-colonial vocabulary INSIDE the fixed canvas (ADR-019) —
    *  arched window crowns + an arched doorway. Skip the awning with this. */
   arch?: boolean;
+  /** S15i (ADR-050) — the height ladder grows up. The flags below add real
+   *  facade-FAMILY vocabulary so generated districts don't read as five
+   *  reskins; each is purely additive (an unset building draws byte-identical
+   *  to its pre-S15i sprite). Combine with a large `upperRows` for MEGA towers. */
+  /** TOWER read: pilastered curtain-wall bays + ribbon windows + a setback
+   *  ledge + a rooftop water-tank crown (offices/apartments/mega-buildings). */
+  tower?: boolean;
+  /** a balcony slab + rail under each upper window row (apartment blocks) */
+  balconies?: boolean;
+  /** a bulb-lit marquee canopy over the storefront + a tall blade (theaters) */
+  marquee?: boolean;
+  /** ground floor is an arched arcade walk instead of display glass (markets) */
+  colonnade?: boolean;
+  /** columns flanking the door + a pediment notch in the parapet (civic halls) */
+  portico?: boolean;
+  /** the sign band + blade GLOW (neon storefronts — pair with a NIGHT wall) */
+  neon?: boolean;
 }
 
-export const cityBuildingHeight = (upperRows: 1 | 2 | 3): number => 44 + upperRows * 16;
+export const cityBuildingHeight = (upperRows: number): number => 44 + upperRows * 16;
+
+/** TRUE if this opt set reads as a tower (its own window vocabulary) */
+const isTower = (o: CityBuildingOpts): boolean => o.tower === true;
+
+/**
+ * The TOWER upper wall (S15i): pilastered curtain-wall bays of ribbon windows
+ * with stepped setback ledges (more the taller it is), so a many-story shaft
+ * reads as one stacked skyscraper, not a column of identical storefronts. Drawn
+ * INSIDE the same (1,upTop,w,upH) band the storefront grammar reserves, so the
+ * solid/door math is untouched at any height (2–4+ screen colossi included).
+ */
+function drawTowerWall(
+  pm: Pixmap, o: CityBuildingOpts, w: number, upTop: number, upH: number,
+  wallL: number, wallD: number, wallDD: number, litRng: () => number,
+): void {
+  const glassLit = px(RAMP.GOLD, 2);
+  const glass = px(RAMP.CYAN, 1);
+  // vertical pilasters between every bay — lit edge + shadow groove
+  for (let t = 0; t <= o.wallTiles; t++) {
+    const bx = 1 + t * TILE;
+    pm.vline(bx, upTop, upH, wallL);
+    pm.vline(bx + 1, upTop, upH, wallDD);
+  }
+  // ribbon windows, one per bay per floor; spandrel shadow under each
+  for (let r = 0; r < o.upperRows; r++) {
+    const wy = upTop + r * 16 + 4;
+    for (let t = 0; t < o.wallTiles; t++) {
+      const wx = 1 + t * TILE + 4;
+      const lit = litRng() < 0.34;
+      const g = lit ? glassLit : glass;
+      const gm = lit ? px(RAMP.GOLD, 1) : px(RAMP.CYAN, 2);
+      pm.rect(wx, wy, 9, 9, g);
+      pm.vline(wx + 3, wy, 9, gm); // mullions
+      pm.vline(wx + 6, wy, 9, gm);
+      pm.hline(wx, wy + 4, 9, gm);
+      pm.set(wx + 1, wy + 1, lit ? px(RAMP.GOLD, 3) : px(RAMP.CYAN, 3));
+      pm.hline(wx - 1, wy + 9, 11, wallD); // spandrel
+    }
+  }
+  // setback LEDGES: sunlit lips over their own shadow break the shaft into
+  // stacked volumes — the taller the tower, the more steps (the art-deco
+  // stepped-skyscraper read on the 2–4-screen colossi).
+  const ledges =
+    o.upperRows >= 30 ? [0.24, 0.42, 0.58, 0.72, 0.85]
+    : o.upperRows >= 18 ? [0.3, 0.52, 0.72, 0.88]
+    : o.upperRows >= 10 ? [0.5, 0.76]
+    : [0.62];
+  for (const f of ledges) {
+    const sy = upTop + Math.floor(upH * f);
+    pm.hline(1, sy, w, wallL);
+    pm.hline(1, sy + 1, w, wallDD);
+  }
+}
+
+/**
+ * The TOWER crown (S15i): a rooftop water tank on stilts + a mechanical
+ * penthouse, drawn within the parapet's roof-deck rows (no extra canvas
+ * height, so placeFacade's H math is unchanged). Replaces the window-AC unit.
+ */
+function drawTowerCrown(pm: Pixmap, w: number, litRng: () => number): void {
+  const tankX = 3 + Math.floor(litRng() * Math.max(1, w - 22));
+  // penthouse box
+  pm.rect(tankX, 1, 8, 5, px(RAMP.PAPER, 1));
+  pm.hline(tankX, 1, 8, px(RAMP.PAPER, 2));
+  pm.frame(tankX, 1, 8, 5, px(RAMP.PAPER, 0));
+  // water tank: a squat cylinder on four legs, beside the penthouse
+  const tx = Math.min(w - 9, tankX + 11);
+  pm.rect(tx, 2, 7, 4, px(RAMP.EARTH, 1));
+  pm.hline(tx, 2, 7, px(RAMP.EARTH, 2)); // sunlit band
+  pm.set(tx + 1, 1, px(RAMP.EARTH, 2)); // domed lid
+  pm.hline(tx + 1, 0, 5, px(RAMP.EARTH, 2));
+  pm.set(tx + 1, 6, px(RAMP.INK, 1)); // legs
+  pm.set(tx + 5, 6, px(RAMP.INK, 1));
+}
 
 export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
   const w = o.wallTiles * TILE;
@@ -1560,15 +1653,26 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
   pm.rect(1, 3, w, 4, wallD);
   pm.checker(1, 5, w, 2, wallD, wallDD, 1); // dentil dither course
   pm.hline(1, 7, w, wallDD);
-  // rooftop AC unit + a vent pipe, breaking the parapet line
-  const acx = 4 + Math.floor(litRng() * Math.max(1, w - 18));
-  pm.rect(acx, 1, 9, 5, px(RAMP.PAPER, 1));
-  pm.hline(acx, 1, 9, px(RAMP.PAPER, 2));
-  pm.frame(acx, 1, 9, 5, px(RAMP.PAPER, 0));
-  pm.ellipse(acx + 4, 3, 2, 1, px(RAMP.PAPER, 0)); // fan
-  const ventX = Math.min(w - 3, acx + 14);
-  pm.rect(ventX, 1, 2, 4, px(RAMP.PAPER, 0)); // pipe
-  pm.hline(ventX - 1, 1, 4, px(RAMP.PAPER, 1)); // rain cap
+  if (isTower(o)) {
+    // a tower wears a water-tank + penthouse crown, not a window AC unit
+    drawTowerCrown(pm, w, litRng);
+  } else {
+    // rooftop AC unit + a vent pipe, breaking the parapet line
+    const acx = 4 + Math.floor(litRng() * Math.max(1, w - 18));
+    pm.rect(acx, 1, 9, 5, px(RAMP.PAPER, 1));
+    pm.hline(acx, 1, 9, px(RAMP.PAPER, 2));
+    pm.frame(acx, 1, 9, 5, px(RAMP.PAPER, 0));
+    pm.ellipse(acx + 4, 3, 2, 1, px(RAMP.PAPER, 0)); // fan
+    const ventX = Math.min(w - 3, acx + 14);
+    pm.rect(ventX, 1, 2, 4, px(RAMP.PAPER, 0)); // pipe
+    pm.hline(ventX - 1, 1, 4, px(RAMP.PAPER, 1)); // rain cap
+  }
+  // a civic pediment notches the parapet center (drawn over the coping)
+  if (o.portico) {
+    const cx = 1 + Math.floor(w / 2);
+    for (let i = 0; i < 6; i++) pm.hline(cx - i, 1 + (5 - i), i * 2 + 1, wallL);
+    pm.hline(cx - 6, 7, 13, wallDD); // the pediment's shadow base
+  }
 
   /* ---- upper wall + window grid ---- */
   const upTop = 8;
@@ -1576,6 +1680,9 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
   pm.rect(1, upTop, w, upH, wall);
   pm.vline(1, upTop, upH, wallL); // lit corner
   pm.vline(w, upTop, upH, wallD);
+  if (isTower(o)) {
+    drawTowerWall(pm, o, w, upTop, upH, wallL, wallD, wallDD, litRng);
+  } else {
   if (o.wall === RAMP.RED || o.wall === RAMP.ORANGE) {
     // brick coursing
     for (let y = upTop + 3; y < upTop + upH; y += 4) pm.hline(1, y, w, wallD);
@@ -1639,14 +1746,33 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
     pm.set(cx + 5, cy + 3, C.outline);
     pm.hline(cx - 3, cy + 5, 7, px(RAMP.GOLD, 1)); // lower-lip shade
   }
+  } // end non-tower upper wall
+  // balcony slab + rail under each floor (apartment blocks — tower or standard)
+  if (o.balconies) {
+    for (let r = 0; r < o.upperRows; r++) {
+      const by = upTop + r * 16 + 13;
+      pm.hline(1, by, w, wallL); // slab lip in the sun
+      pm.hline(1, by + 1, w, wallDD); // its shadow
+      for (let x = 3; x < w; x += 3) pm.set(x, by - 1, wallD); // rail bars
+    }
+  }
 
   /* ---- sign band ---- */
   const sy = upTop + upH;
-  pm.rect(1, sy, w, 12, px(RAMP.PAPER, 3));
-  pm.frame(1, sy, w, 12, wallDD);
-  pm.hline(2, sy + 1, w - 2, px(RAMP.PAPER, 2)); // band top shade
   const tw = o.signText.length * 6 - 1;
-  drawTextInto(pm, o.signText, Math.floor((w - tw) / 2) + 1, sy + 3, C.inkSoft);
+  if (o.neon) {
+    // a dark fascia with a glowing neon tube tracing it + lit lettering
+    pm.rect(1, sy, w, 12, px(RAMP.NIGHT, 0));
+    pm.frame(1, sy + 1, w, 10, px(RAMP.MAGENTA, 2));
+    pm.hline(2, sy + 2, w - 2, px(RAMP.MAGENTA, 3)); // the lit tube
+    pm.hline(2, sy + 9, w - 2, px(RAMP.PURPLE, 2)); // its glow pooling below
+    drawTextInto(pm, o.signText, Math.floor((w - tw) / 2) + 1, sy + 3, px(RAMP.CYAN, 3));
+  } else {
+    pm.rect(1, sy, w, 12, px(RAMP.PAPER, 3));
+    pm.frame(1, sy, w, 12, wallDD);
+    pm.hline(2, sy + 1, w - 2, px(RAMP.PAPER, 2)); // band top shade
+    drawTextInto(pm, o.signText, Math.floor((w - tw) / 2) + 1, sy + 3, C.inkSoft);
+  }
   if (o.cross) {
     const cx = w - 9;
     pm.rect(cx - 1, sy + 2, 4, 8, px(RAMP.RED, 2));
@@ -1674,6 +1800,14 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
     }
     pm.hline(1, fy + 7, w, wallDD); // awning shadow
   }
+  if (o.marquee) {
+    // a bulb-lit theater canopy juts over the whole storefront
+    pm.rect(0, fy + 1, w + 2, 5, px(RAMP.RED, 1));
+    pm.hline(0, fy + 1, w + 2, px(RAMP.RED, 2)); // lit front edge
+    pm.hline(0, fy + 6, w + 2, C.inkSoft); // canopy underside shadow
+    for (let x = 3; x < w; x += 4) pm.set(x, fy + 5, px(RAMP.GOLD, 3)); // chase bulbs
+    pm.hline(1, fy + 7, w, wallDD); // shadow it throws on the wall
+  }
 
   /* ---- door + display windows (EXACT v2 rects) ---- */
   const doorTile = o.doorAt ?? Math.floor(o.wallTiles / 2);
@@ -1682,6 +1816,33 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
   for (let t = 0; t < o.wallTiles; t++) {
     if (t === doorTile || (o.doubleDoor && t === doorTile + 1)) continue;
     const wx = 1 + t * TILE + 2;
+    if (o.colonnade) {
+      // a market ARCADE: a shaded arched opening you walk under, lantern-lit
+      pm.rect(wx, fy + 6, 12, 15, px(RAMP.NIGHT, 1));
+      pm.contour(wx + 6, fy + 3, [2, 4, 5, 6], px(RAMP.NIGHT, 1)); // arch head
+      pm.vline(wx - 1, fy + 6, 15, wallL); // the pier between arches
+      pm.vline(wx + 12, fy + 6, 15, wallD);
+      pm.set(wx + 6, fy + 12, px(RAMP.GOLD, 2)); // a lantern in the dark
+      pm.set(wx + 6, fy + 13, px(RAMP.GOLD, 3));
+      continue;
+    }
+    if (o.portico) {
+      // a fluted civic column standing in a shadowed recess
+      pm.rect(wx - 1, fy + 4, 14, 17, wallDD); // recess
+      pm.rect(wx + 4, fy + 3, 4, 18, px(RAMP.PAPER, 3)); // shaft
+      pm.vline(wx + 5, fy + 3, 18, px(RAMP.PAPER, 2)); // flute
+      pm.rect(wx + 3, fy + 2, 6, 2, px(RAMP.PAPER, 3)); // capital
+      pm.rect(wx + 3, fy + 20, 6, 2, px(RAMP.PAPER, 1)); // base
+      continue;
+    }
+    if (o.marquee) {
+      // a brass-cased coming-attractions poster
+      pm.rect(wx, fy + 8, 12, 12, px(RAMP.NIGHT, 1));
+      pm.rect(wx + 2, fy + 10, 8, 8, px(RAMP.PURPLE, 2));
+      pm.set(wx + 5, fy + 12, px(RAMP.GOLD, 3)); // a star on the bill
+      pm.frame(wx - 1, fy + 7, 14, 14, px(RAMP.GOLD, 2)); // brass case
+      continue;
+    }
     pm.rect(wx, fy + 7, 12, 13, px(RAMP.CYAN, 1));
     // goods on a shelf behind the glass
     pm.hline(wx + 1, fy + 15, 10, px(RAMP.PAPER, 1));

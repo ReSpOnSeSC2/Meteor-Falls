@@ -2947,6 +2947,80 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   ChapterManifest + `tools/chapter-scaffold.ts`) is the last seam of THE WORLD
   FORGE, queued for ADR-047.
 
+## ADR-047 — S15g (Movement Four): THE CHAPTER SCAFFOLD — ChapterManifest + the retro/unlanded discipline
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (THE WORLD FORGE, Movement Four of four — COMPLETE, the
+  capstone). M1 built the kit + the map-quality gate (ADR-044); M2 the eight
+  dungeon grammars + encounter pressure (ADR-045); M3 the enemy/boss/sprite
+  forges (ADR-046). M4 ties them into a per-chapter SOURCE OF TRUTH and a
+  one-command scaffold. THE WORLD FORGE is now whole.
+- **Decision — THE PRIME LAWS STILL HOLD (ADR-044/045/046, unchanged):** the
+  scaffold emits DRAFTS — a `src/data/drafts/chN/**` tree (dev-only, schema-
+  parsing, EXCLUDED from MAPS / the canon manifests / the §B4 sweep) plus a
+  `docs/chapters/chN/checklist.md`. Determinism is law: the plan's recipe seeds
+  derive from a pure FNV-1a over the id (the `levelkit.test` fnv, on a string
+  key) — `Date.now()`/`Math.random()` never appear under `src/levelkit/**`, and
+  the Prime-Law-2 scan now covers `scaffold.ts`. Promotion is a human act; the
+  shipped content (Ch.1–2) stays frozen.
+- **Decision — THE CHAPTER MANIFEST (`ChapterManifestSchema` in src/schemas,
+  data in `src/data/chapters.ts`):** the per-chapter source of truth the
+  validator reads — `chapter`, internal `title` + `region` (§A11.6 bars chapter
+  titles only from PLAYER-FACING UI; a dev manifest is exactly where they
+  belong), `targetLevel` (§A6), `ember` (the Heartlight number) + the optional
+  `heartlight` stem name where §A6 names it, the roster `band`, the §A5 `travel`
+  leg, the `dungeon` (name + the forge `site` for Ch.3–10 / shipped `maps` for
+  Ch.1–2), the `boss` (id + name + canon HP + the forge `template` or `'bespoke'`)
+  + Ch.10's `minibosses`, the `settlements` (id + kind + draft style), the
+  primary `maps`, and the §A10 `quests`. Schema refinements encode the canon
+  invariants by construction: `ember === chapter` (§A2: ten Embers, one each),
+  `band === chN`, and a shipped chapter must name live maps. Keyed `'1'`…`'10'`.
+- **Decision — THE S14c RULE, MADE A TYPE (`status: 'shipped' | 'unlanded'`):** a
+  SHIPPED manifest (Ch.1–2) is asserted AGAINST LIVE content — every map exists
+  in MAPS, every settlement is tagged its kind, the boss drives a boss-flagged
+  §A7 enemy at the canon HP with a BOSS_SCRIPTS entry (unless `'bespoke'` — the
+  Tick), and the §A10 quests are live + tagged this chapter BOTH directions (a
+  new quest must join the manifest, never ad-hoc). An UNLANDED manifest (Ch.3–10)
+  is asserted against the forge DRAFTS — it names a real dungeon `site`, its
+  `forgedBandIds(ch)` roster is non-empty, its boss rides a `DRAFT_BOSS_SCRIPTS`
+  draft and is NOT yet a shipped enemy (Prime Law 1), and it carries no live maps
+  yet. The §A6 boss-HP ladder pins against the forge's own `BOSS_HP`/`MINIBOSS_HP`
+  constants (one source, no drift); the §A6 finale shell (6,000) is bespoke. And
+  BOTH DIRECTIONS on the forge boss drafts: every `DRAFT_BOSS_ID` is claimed by
+  exactly one unlanded chapter (never strand a draft). The day a chapter lands,
+  its session flips `status` → `'shipped'`, fills the live `maps`/`dungeon.maps`/
+  `quests`, and the live assertions switch on in the same commit — "asserted as
+  each lands."
+- **Decision — THE SCAFFOLD (`npm run scaffold -- chN`):** the PLAN is a pure
+  library (`src/levelkit/scaffold.ts`, vitest-pinned — the mapcheck/pressure
+  precedent: math in the lib, IO in the tool); `tools/chapter-scaffold.ts` reads
+  the manifest and writes the tree. Per chapter it emits the dungeon-grammar
+  recipe (+ a `buildChNDungeon` thunk — recipe over serialized bytes, Prime Law
+  2), the forged roster re-export (`FORGED_ROSTERS[N]`), the forged boss draft(s)
+  (`DRAFT_BOSS_SCRIPTS`), the settlement recipes (+ a `generate` thunk), a barrel,
+  and a checklist that walks the session from "promote the dungeon/roster/boss/
+  settlements/quests" to "flip the manifest + append the ADR." Ch.6 (Zanzibel /
+  `laughing_ruins`) is the worked example, committed under `src/data/drafts/ch6/`.
+- **Verification:** tsc + validate (now prints `10 chapter manifests (2 shipped ·
+  8 unlanded)`; Ch.1–2 assert against live MAPS/ENEMIES/QUESTS/BOSS_SCRIPTS,
+  Ch.3–10 against the forge drafts, both directions on quests + boss drafts) +
+  596 vitest green (the +35 scaffold proofs: every manifest parses, the plan is
+  deterministic, every chapter emits the complete six-file tree, and every
+  unlanded chapter's dungeon recipe BUILDS a valid draft + its settlement recipes
+  parse + its boss draft is forge-backed + its roster is non-empty). The ch6 tree
+  typechecks and is excluded from canon (drafts can never overwrite shipped art).
+  `vite build` intact.
+- **Consequences:** a chapter session (Prompts 29–34) now opens with ONE COMMAND
+  and a complete draft tree + a checklist — the boring 60% (a banded forged
+  roster, a boss firing its gimmick green on the machine, a BFS-proven dungeon in
+  the right §A9 band, settlement recipes, the quest slots named) is generated, so
+  the session spends itself on the SOUL: the §A11 dialogue, the hand-redrawn art,
+  the boss tuning. The manifest is the contract the validator holds every chapter
+  to — before it lands (the forge has the drafts) and after (the live content
+  matches). THE WORLD FORGE is COMPLETE across all four movements: a world session
+  now SCAFFOLDS (drafts) → POLISHES (promotion) → FLIPS (the S14c status) → and
+  the validator asserts the new live content forever. The floor only rises.
+
 ## ADR-048 — S15h: THE FIFTH HERO — Pippa Quill (the cast becomes five)
 
 - **Date:** 2026-06-13
@@ -3013,3 +3087,253 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   battle mechanics behind her five statuses — per Appendix rule 4. Her SUNDAY
   SET charm (the canon Luck+6) lands with the links-set expansion. The roster,
   the layouts that iterate it, and the validators all prove five today.
+
+## ADR-049 — S15h: THE WORLD BLOCK — the towns grow up, the forge becomes a district library
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the user's scale decree: Otterbrook and Brickton should
+  feel BIGGER and lived-in. The S15g LEVELKIT earned the right — its settlement
+  grammar already builds whole towns deterministically; this points it at the
+  TWO SHIPPED maps and grows them without re-drawing or re-walking the cores.)
+- **Decision — THE GROWTH LAW (the spine):** each frozen core stays itself. The
+  untouched `buildOtterbrook()` / `buildBrickton()` run on their current seeds and
+  are COPIED byte-for-byte into the top-left of a larger grid; every growth write
+  lands strictly OUTSIDE the core rectangle (`x ≥ CW || y ≥ CH`), so not one core
+  cell can move. Growth is APPENDED on NEW named streams (`Streams(19951)` etc.),
+  identical every boot. The FORGE lays the bones (streets, blocks, facades,
+  furniture, negative space); the HUMAN builds the soul (the landmark interiors,
+  every NPC + line, the stories). Prime Laws 1–3, applied to canon maps.
+- **Decision — THE FORGE AS A DISTRICT LIBRARY (`buildDistrict`):** `buildCity` /
+  `buildTown` each build a WHOLE map from a blank grid — too coarse to graft onto
+  a shipped core. The new `buildDistrict(grid, region, S, opts)` is the same
+  grammar made STITCHABLE: it lays a `'grid'` district (the buildCity block law)
+  or an `'organic'` one (buildTown's bending lanes) INTO a sub-rectangle of an
+  existing Grid and returns only the props/signs it added. Its load-bearing
+  promise is REGION CONTAINMENT — it writes nothing outside `region` (crosswalk
+  stripes clamp; a region-bounded sprinkle only fills the growth's `'.'`), pinned
+  in `district.test.ts` against a sentinel grid. It is NEW code beside
+  `buildCity`/`buildTown` (their bodies are untouched, so the levelkit FNV pins
+  hold) and pure-seeded (the no-`Math.random` scan still passes).
+- **Decision — BYTE-IDENTICAL, PROVEN (`world_block.test.ts`):** the maps_ch2
+  "two builds byte-identical / the live MAPS entry matches a fresh build" pattern,
+  for BOTH towns, PLUS the stronger proof: the grown grid's top-left region equals
+  the untouched core build char-for-char, and every core prop/npc/sign keeps its
+  coordinates (the merged arrays start with the core's, unchanged). A future change
+  that disturbs a frozen core fails HERE, loudly.
+- **Decision — THE SEALED-CORE EXCEPTION (Brickton's docks door):** Otterbrook's
+  edges are permeable tree-lines, so its new south + east blocks join through
+  open grass. Brickton's 2077 core is a WALLED box with one opening — street B's
+  east gap (col 71, rows 21-23, already road), occupied by the docks door. To let
+  the city flow east into the sprawl, that ONE door RELOCATES to the grown city's
+  new east edge (the port moved out with the city). The grid + every prop stay
+  100% byte-identical; the docks stay reachable; the validator's "some door →
+  brickton_docks" still holds. This is the single, documented exception to
+  byte-for-byte, isolated to one door and pinned in the test.
+- **Decision — OTTERBROOK STAYS A TOWN, BRICKTON STAYS A CITY:** §A5's ladder
+  does not bump the sleepy hometown — grown Otterbrook keeps `settlement: 'town'`
+  (organic, never a strip) and is NOT swept by ADR-012. Brickton keeps
+  `settlement: 'city'` and `cityViolations(MAPS.brickton) === []` is asserted AT
+  144×76 — the maps.test sweep runs on it unexempted, and it clears because the
+  core's streets (≈70 road cells) still exceed 40% of the wider grid, the avenue
+  still rises ≥12, and the faces only multiply.
+- **Decision — PERF: literal 4×, the budget raised, the real gate re-walked.**
+  The user chose literal 4× over capping at the old envelope. Brickton grew to
+  144×76 = 10,944 tiles (exactly 4×); `bench-map.ts` raised `MAX_TILES` 4000→12000
+  and `MAX_PROPS` 260→320. The insight that licenses it: the tilemap layer CULLS
+  offscreen tiles, so total tile count is a coarse proxy — the real p99 lever is
+  PROP count (every prop is a display-list image), and grown Brickton holds 153
+  props (≈ the S14d ~150 reference). The authoritative browser-pumped p99 ≤ 8.3ms
+  walk was re-run on both grown maps: **Otterbrook p99 0.3ms, Brickton p99 0.2ms**
+  — the bigger world holds the real gate.
+- **Decision — MEADOW MILE + THE ORIENTATION GATE (Movement 2):** `buildRoute`
+  lays the foot road (promoted to canon: west door → Otterbrook's exported
+  `OTTERBROOK_EAST_GATE`, the east edge a TRIGGER not a door). Three Blazer-Smiler
+  proctor "exercises" earn the `visitor_badge`; the gate opens on
+  `(visitor_badge || bus_ride_done)`, so the bus AND the foot route both lead in
+  (the grandfather clause). The retry law rides the engine's defeat→respawn and a
+  per-exercise flag (`orient_1..3`): a loss or a flee never dead-ends — the gate
+  waits, won exercises stick.
+- **Decision — THE TWO STORIES, REAL BEATS (Movement 3):** THE BRICKTON MINUTE
+  and THE WARM DIAL TONE keep their EXISTING gate flags (`brickton_clock_goal`,
+  `brickton_dial_goal`) but the walk-on-a-rect toast scenes become staged beats —
+  the clock strikes and the block turns and the clock lady reads you the city and
+  the Locket takes the tick; the phone rings and the quarter man names the note
+  and the dial tone folds into the first Heartlight (a beat of home, §A4.4). Same
+  flags, same gating; richer hand-authored dialogue + paced camera.
+- **Decision — THE FACADE SKIN IS A DRAFT (ADR-020 holds):** the new districts'
+  buildings reuse the shipped `bldg_*` catalog as the draft skin (drawn art is a
+  hand job; promotion adds region facades). City Hall wears the neutral brick
+  skin + an OTTERBROOK CITY HALL plaque (a bespoke facade is a promotion item) —
+  no skin whose baked signage fights its name (the forge-faces-match-the-name
+  rule, applied to a landmark).
+- **Verification:** tsc + `npm run validate` (now 43 maps: map-quality 38 clear +
+  5 waived, pressure 41 + 2; 361 dialogue scripts) + full vitest green (the +23
+  over ADR-048: `district.test` 7, `world_block.test` 16) + `vite build`. The
+  browser p99 walk + `.shots/` of both grown maps (`world_otterbrook_cityhall`,
+  `world_otterbrook_pond`, `world_brickton_downtown`, `world_brickton_maple_heights`,
+  `world_brickton_south_gateway`, `world_meadow_mile_orientation_gate`). The 1995
+  + 2077 cores are byte-identical (proven), all shipped flags + the dos doorstep
+  + the Cage gate + the bus spawn untouched; the browser loop and `android:apk`
+  paths unchanged.
+- **Consequences:** every future "grow a shipped map" or "lay a new district" is
+  now `buildDistrict` + a region + a copy-the-core wrapper + the byte-identical
+  test — the World Forge has a district library, not just a town factory. Promotion
+  items left for their sessions (per Appendix rule 4): bespoke hand-drawn CITY
+  HALL / MAPLE HEIGHTS / civic facades (the catalog skins ship as the draft), and
+  any deeper questline hung off the new Brickton districts. The grown towns, the
+  road, the gate, and the two rebuilt stories all walk + prove today.
+
+## ADR-050 — S15i (Movement One): THE BUILDING FORGE — the catalog grows up, the facade walk-through is fixed everywhere
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the user's S15h review: the towns grew but the buildings
+  are too SMALL for the 16×24 characters and too SAME, and a generated facade can
+  be WALKED THROUGH — the bug they hit on MAPLE HEIGHTS. Movement One of THE
+  WORLD, DEEPENED fixes the catalog + the collision; Movements Two+ grow the maps
+  that wear it.)
+- **Decision — THE FACADE SOLID IS FIXED EVERYWHERE (the walk-through bug):** the
+  levelkit's `facadeSolid()` used `{oy:26, h:H-38}`, leaving the top ~26px of every
+  generated facade walkable — the "walk through the building at some angles" the
+  user hit. It now returns `{ox:0, oy:10, w:wTiles*16+2, h:H-22}`, BYTE-FOR-BYTE the
+  solid Brickton core's `place()` has used since the same fix landed there: the
+  whole facade blocks (mega-buildings included), the bottom stays at `H-12` so the
+  door zone is still reachable, and the foot-anchored depth-sort occludes a hero
+  pressed against the back. **The load-bearing invariant:** `oy + h = H - 12` under
+  BOTH the old and new solids, and `faceBands()` keys on `p.y*16 + oy + h + 12`,
+  which reduces to `bottomPx` — height-independent. So `cityViolations` and every
+  ADR-012 sweep are UNCHANGED by the fix (and by any height increase); only the raw
+  FNV bytes of facade-bearing drafts shift. Re-pinned in `levelkit.test.ts`:
+  `zanzibel`, `foggybottom`, `lilleby` (cities) + `brickmore_heights` (a district);
+  the faceless route/interior drafts and all eight dungeons stayed byte-identical.
+- **Decision — THE HEIGHT LADDER GROWS UP + MEGA-BUILDINGS:** `cityBuildingHeight`
+  and `CityBuildingOpts.upperRows` widen from the `1|2|3` union to `number`
+  (`facadeSolid`/`placeFacade` take `u: number`); the frozen `1|2|3` cores in
+  maps.ts / maps_ch2.ts still satisfy it. MEGA-buildings are `upperRows ≥ 11`
+  (`H ≥ 220px`, ~14 tiles) — TALLER than the 225px viewport, so a hero at the foot
+  cannot see the top. No camera clip is needed: Phaser culls the off-screen rows,
+  and depth = `p.y*16 + img.height` (the foot) means the tall body draws OVER a
+  hero behind/beside it. The shipped towers: `bldg_tower_glass` 98×236,
+  `bldg_tower_arms` 98×236, `bldg_tower_corp` 114×252.
+- **Decision — NEW FACADE FAMILIES, NOT FIVE RESKINS:** `drawCityBuilding` gains
+  PURELY ADDITIVE family flags (an unset building draws byte-identical, so every
+  shipped Brickton + Puerto Sol sprite is untouched): `tower` (pilastered
+  curtain-wall bays + ribbon windows + a setback ledge + a rooftop water-tank
+  crown), `balconies` (a slab + rail per floor — apartments), `marquee` (a bulb-lit
+  theater canopy + brass poster cases), `colonnade` (a ground-floor arched market
+  arcade), `portico` (fluted civic columns + a parapet pediment), `neon` (a glowing
+  tube sign band). Thirteen new sprites register in `spritegen/index.ts`:
+  brownstone · neon · theater · civic · market · apartments · office · warehouse ·
+  deptstore + the three mega towers — all in the Mother 2 palette under ADR-020
+  discipline (flat fills, deliberate marks, no noise).
+- **Decision — THE CATALOG IS DATA (`BUILDING_DIMS`):** the pre-S15i forge picked
+  a facade's story count from a RANDOM `S.range(1,3)`, independent of the sprite it
+  chose — tolerable when every skin was 1-3 stories, FATAL for a mega (a 236px
+  sprite placed as if 60px tall sinks 144px through the street). So every
+  forge-eligible facade's true `{w, u}` is now recorded in `BUILDING_DIMS`
+  (kit.ts), with `facadeDims()` + `isMega()` helpers, so the grammar can place each
+  facade at the size it was actually DRAWN. Movement Two reads this.
+- **Decision — AUTHOR + PROVE NOW, WIRE INTO THE GRAMMAR NEXT:** Movement One ships
+  the catalog and the collision fix, proven. WIRING the bigger/mega skins into
+  `buildDistrict` — where a tall facade must not poke up into a frozen core copied
+  just ABOVE its region — is Movement Two's living-map upgrade (catalog-driven
+  placement + a mega pass + the nook/underground/woods grammar + the Otterbrook /
+  Brickton / Puerto Sol re-grow). Until then the grow functions still cap
+  `maxStories: 2`, so no frozen core is disturbed by this movement.
+- **Verification:** tsc + `npm run validate` (43 maps, unchanged) + full vitest
+  **619 green** (the four facade-bearing levelkit hash pins re-pinned; no other pin,
+  `world_block`, `maps`, `district`, or `scaffold` test moved — `faceBands` proven
+  height-independent). The out-of-game contact sheet `.shots/buildings_s15i.png`
+  (new `npm run art:buildings` → `tools/render-buildings.ts`) renders the whole
+  catalog through the real `drawCityBuilding()` with a 16×24 hero block per row for
+  scale: the families tower 3–5× the hero, the megas ~10× with tops past the
+  viewport. The browser loop + `android:apk` paths are untouched.
+- **Consequences:** the forge has a real, varied catalog with off-screen megas, and
+  the walk-through bug is gone from every generated facade (hashes re-pinned).
+  Movement Two now has the skins AND `BUILDING_DIMS` it needs to grow maps that
+  read alive (the living-map law + the size law land with their own ADRs there).
+
+## ADR-051 — S15i: A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT (texture-true collision)
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (user: "many buildings where the character just moves straight
+  through.") The S15i facade families + colossi exposed a latent bug across the whole
+  game: a building's COLLISION did not match the building you SEE.
+- **Root cause:** map data places a facade at a story count `u`, and the solid was
+  `facadeSolid(w, u)` = `{oy:10, h:cityBuildingHeight(u)-22}`. But the FORGE / grown
+  grammar (`buildDistrict`→`placeFacade`) picks `u` from `S.range(1,3)` INDEPENDENT of
+  the sprite it chose, and even a shipped core could place a 3-story sprite at `u:2`.
+  When the sprite's true pixel height exceeds `44+u·16`, the solid is far too SHORT —
+  the drawn building's lower body has no collision, so the hero walks through it. The
+  earlier `facadeSolid` formula fix (ADR-050) corrected the SHAPE but not this
+  DATA-vs-SPRITE mismatch.
+- **Decision — derive collision from the RENDERED TEXTURE, at scene build.** In
+  `OverworldScene.buildProps`, every `bldg_*` prop's solid is rebuilt from its LOADED
+  texture by `facadeSolids(p, img.width, img.height)`. Collision is therefore EXACTLY
+  what is on screen, no matter what `u` the data used. Non-facade props keep their
+  hand-tuned data solids (furniture you brush past). The collision RESOLVER is unchanged
+  — it was already correct (axis-separated `tryMove` slides on contact; `collides()` is
+  AABB over solid tiles + prop rects). The bug was the rects, not the math.
+- **Decision — SOLID EXCEPT THE DOORWAY (multi-rect, the refinement).** A single rect
+  to the doorstep still left a walkable strip along the storefront base and made the
+  door a "solid + bottom-edge zone." `facadeSolids` now returns the full drawn footprint
+  (eaves at `FACADE_CAP=10` down to the FOOT) MINUS the door column: a doorless facade
+  is one block; a doored facade is left-wall + right-wall + a lintel over the door,
+  leaving only the door column open (height `DOOR_OPENING=18`) so you WALK IN and the
+  lintel stops you through — never through a wall. Proven by vertical `collides()` scans:
+  a wall column blocks foot-to-eaves continuously; the door column is open below the
+  lintel only.
+- **Decision — OBJECT PERMANENCE IS INHERITED.** Roamers (`updateRoamers`) and patrols
+  (`patrolMove`) already test the SAME `collides()` → `this.solids`, so once the rects
+  match the buildings, enemies are blocked too (the user's "enemies pass right through
+  buildings" was the same short-solid root cause — no separate code, verified the
+  enemy-sized box is solid inside a building).
+- **Decision — the ENTRANCE follows the sprite too.** A re-fitted facade's doorstep
+  moves with it, so the door zone is re-derived from the texture
+  (`oy = img.height-14`) into `facadeDoorBox`; `checkDoors`, the doormat, and the
+  night porch-glow all prefer it. Doors that already matched their sprite (every
+  shipped door — only door-less `bldg_brickmore` drifts in core) are byte-identical in
+  behaviour; only the mismatched grown/generated facades move, and their solid + door
+  move together so entry still admits you.
+- **Decision — DATA UNTOUCHED, so the freeze holds.** This is a RUNTIME derivation;
+  no `MapDef`/`PropDef` solid is rewritten. `world_block.test` (byte-identical cores),
+  the levelkit FNV pins, and `cityViolations` all read the DATA and are unmoved — no
+  re-pin. The fix needs no frozen-core edit and reaches shipped + grown + generated
+  maps alike.
+- **Decision — production tooling, fully wired.** A dev-only AUDIT logs every facade
+  whose data solid drifted from its texture (caught loudly, not shipped), and a dev
+  COLLISION OVERLAY (`window.mfSolids(true|false)`) paints every solid rect (red) and
+  entrance zone (cyan) over the world so collision is eyeballable against the sprites.
+  Both are gated behind `import.meta.env.DEV` (inert in production).
+- **Verification:** tsc + full vitest **619 green** (runtime-only; no test pins move).
+  Live proof on grown Brickton: of 41 `bldg_*` facades, **all 41** now carry a solid
+  that matches the texture footprint AND reaches the building's true foot; **19** had
+  a drifted data solid (the walk-through ones) and were re-fitted — the shipped-core
+  faces (starmart/brickmore/hospital/dept) already matched and are unchanged. Doors
+  still admit (zone + doorstep move together). Browser loop + `android:apk` untouched.
+- **Consequences:** "collision = the drawn footprint" is now the law for every
+  overworld building, today and as Movement Two grows the maps — a facade can never be
+  walked through regardless of how the grammar placed it, and `window.mfSolids()` is
+  the standing QA lens for it.
+
+## ADR-052 — S15i: THE DOOR RE-ENTRY COOLDOWN (no more door ping-pong)
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (user: "I keep getting sent back and forth through the hotel and
+  the main overworld... there should be like a second delay after you enter a room.")
+- **Root cause:** a door drops you at the target's spawn `(tx,ty)`, which sits on/at the
+  RETURN door's zone. `checkDoors` runs the very next frame, finds you inside that zone,
+  and sends you straight back — an infinite bounce, and any "instant re-enter the door
+  you came from" is jarring even when it terminates.
+- **Decision — a brief door LOCK on every arrival.** `OverworldScene` carries
+  `doorCooldown` (ms), set to `DOOR_REENTRY_MS = 900` in `create()` (every map arrival —
+  door, bus, respawn), counted down in `update()`. `checkDoors()` early-returns while it
+  is > 0, so NO door (map-edge or facade) can fire until it elapses. The player gets a
+  beat to catch their bearings, and the door they came through cannot bounce them back.
+  Triggers/edges are unaffected (they are flag-gated scenes, not bounce-prone).
+- **Verification:** live — arriving in `otterbrook_cityhall` sets `doorCooldown≈733ms`;
+  standing squarely on the return door for ~0.4 s stayed INSIDE (no bounce); clearing the
+  cooldown and standing on it fired normally (→ `otterbrook`). So the lock blocks the
+  ping-pong without breaking real door use. tsc + full vitest **619 green**.
+- **Consequences:** every room entry now has a sub-second settle; if a future map needs a
+  different feel, tune `DOOR_REENTRY_MS` (one constant). Pairs with ADR-051 so collision
+  + transitions are both robust at the building boundary.

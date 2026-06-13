@@ -4,17 +4,24 @@
  * S14d's pumped p99 ≤ 8.3ms benchmark is the kit's perf LAW, but that gate is
  * a browser-pumped XL walk (the QA pre-flight, window.pump). This is its node-
  * side PRE-FILTER: it proves the generator is fast + deterministic and that a
- * draft's render load sits inside the XL envelope (Brickton-grown holds the
- * gate at ~72×42 / ~150 props) BEFORE a session spends polish on it. A draft
- * that clears here still owes the authoritative browser p99 walk at promotion.
+ * draft's render load sits inside the envelope BEFORE a session spends polish on
+ * it. A draft that clears here still owes the authoritative browser p99 walk at
+ * promotion.
+ *
+ * S15h (ADR-049): THE WORLD BLOCK grew Brickton to a literal 4× sprawl (144×76
+ * ≈ 10,944 tiles). The tilemap layer culls offscreen tiles, so total tile count
+ * is a coarse load proxy, not a per-frame cost — what the p99 walk actually feels
+ * is PROP count (every prop is a display-list image). The envelope is raised to
+ * fit the grown city; the grown Brickton + Otterbrook were re-walked at p99 ≤
+ * 8.3ms in the browser to confirm the bigger world still holds the real gate.
  */
 import { SAMPLE_RECIPES, SAMPLE_IDS } from '../src/levelkit/samples';
 import { generate } from '../src/levelkit';
 import type { Recipe } from '../src/schemas';
 
-// the XL envelope: the budget Brickton-grown walks at p99 ≤ 8.3ms (S14d)
-const MAX_TILES = 4000;
-const MAX_PROPS = 260;
+// the XL envelope: tiles is a coarse (culled) proxy; PROPS is the real p99 lever
+const MAX_TILES = 12000;
+const MAX_PROPS = 320;
 const REBUILDS = 200;
 
 const id = process.argv[2];

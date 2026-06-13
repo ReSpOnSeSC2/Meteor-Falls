@@ -14,6 +14,7 @@
  */
 import { Grid, treeSprite } from '../data/mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
+import { GENERATED_BUILDINGS } from '../spritegen/buildings';
 import type {
   PropDef,
   DraftNpc,
@@ -48,10 +49,18 @@ export const SOLID: Record<string, Solid> = {
 };
 export const TREE_SOLID: Solid = { ox: 7, oy: 22, w: 12, h: 10 };
 
-/** the wide standing footprint of a 1–3 story facade (maps.ts `place()`) */
-export function facadeSolid(wTiles: number, u: 1 | 2 | 3): Solid {
+/**
+ * The wide standing footprint of a facade — matches Brickton core's `place()`
+ * (maps.ts) EXACTLY: oy:10 (was 26) so the whole facade blocks and a player
+ * can't walk horizontally ACROSS the upper floors (the "walk through the
+ * building at some angles" bug the user hit on MAPLE HEIGHTS — ADR-050). The
+ * bottom stays at H-12 so the door zone below it is still reachable, and
+ * depth-sort occludes a hero pressed against the back. `u` is the story count
+ * (now any height — mega-buildings are tall, so their tall body blocks too).
+ */
+export function facadeSolid(wTiles: number, u: number): Solid {
   const H = cityBuildingHeight(u);
-  return { ox: 0, oy: 26, w: wTiles * 16 + 2, h: H - 38 };
+  return { ox: 0, oy: 10, w: wTiles * 16 + 2, h: H - 22 };
 }
 
 /**
@@ -110,6 +119,50 @@ export const ROLE_FACADE: Record<string, string> = {
 };
 
 /**
+ * EVERY forge-eligible facade sprite's TRUE footprint — width in tiles and
+ * story count — mirrored from its drawCityBuilding registration in
+ * spritegen/index.ts (S15i, ADR-050). The grammar reads this so a facade is
+ * placed and collided at the size it was actually DRAWN (the pre-S15i forge
+ * picked a random `u`, so a 3-story sprite could sit as if it were 1 — a
+ * mega-building MUST land at its real height or it sinks through the street).
+ * `u ≥ 11` is a MEGA-building (its top runs off-screen). Unknown sprites fall
+ * back to facadeDims()'s default.
+ */
+const SHIPPED_DIMS: Record<string, { w: number; u: number }> = {
+  // shipped Brickton downtown
+  bldg_bagels: { w: 4, u: 1 }, bldg_starmart: { w: 5, u: 1 }, bldg_hospital: { w: 7, u: 2 },
+  bldg_brickmore: { w: 5, u: 3 }, bldg_dept: { w: 8, u: 2 }, bldg_video: { w: 4, u: 1 },
+  bldg_bank: { w: 6, u: 2 }, bldg_arcade2: { w: 5, u: 1 }, bldg_diner: { w: 4, u: 1 },
+  // PUERTO SOL colonial faces
+  bldg_ps_mercado: { w: 5, u: 1 }, bldg_ps_clinic: { w: 5, u: 1 }, bldg_ps_pension: { w: 5, u: 2 },
+  bldg_ps_museum: { w: 6, u: 2 }, bldg_ps_casa: { w: 4, u: 2 }, bldg_ps_casa_b: { w: 4, u: 1 },
+  bldg_ps_deli: { w: 4, u: 1 }, bldg_ps_cantina: { w: 5, u: 1 }, bldg_ps_casa_c: { w: 4, u: 1 },
+  bldg_ps_pension_b: { w: 5, u: 2 },
+  // S15i hand-authored families
+  bldg_apartments: { w: 5, u: 4 }, bldg_office: { w: 5, u: 5 }, bldg_civic: { w: 6, u: 2 },
+  bldg_theater: { w: 5, u: 2 }, bldg_market: { w: 6, u: 1 }, bldg_brownstone: { w: 4, u: 3 },
+  bldg_warehouse: { w: 8, u: 1 }, bldg_neon: { w: 4, u: 2 }, bldg_deptstore: { w: 8, u: 3 },
+  // S15i MEGA-buildings (tops off-screen)
+  bldg_tower_glass: { w: 6, u: 12 }, bldg_tower_arms: { w: 6, u: 12 }, bldg_tower_corp: { w: 7, u: 13 },
+};
+
+/** the 100+ generated catalog (+ colossi) contributes its true dims here too */
+export const BUILDING_DIMS: Record<string, { w: number; u: number }> = {
+  ...SHIPPED_DIMS,
+  ...Object.fromEntries(GENERATED_BUILDINGS.map((b) => [b.name, { w: b.opts.wallTiles, u: b.opts.upperRows }])),
+};
+
+/** a facade's drawn footprint, or a sane fallback for an unlisted sprite */
+export function facadeDims(sprite: string, fallbackW = 4): { w: number; u: number } {
+  return BUILDING_DIMS[sprite] ?? { w: fallbackW, u: 2 };
+}
+
+/** TRUE when a facade is tall enough that its top runs off the screen */
+export function isMega(sprite: string): boolean {
+  return (BUILDING_DIMS[sprite]?.u ?? 0) >= 11;
+}
+
+/**
  * BAND → roamer roster. ch1/ch2 are the SHIPPED §A7 enemies (frozen). Ch.3–10
  * now resolve to the FORGED rosters (Movement Three): forgedBandIds(ch) is the
  * deterministic id list buildRoster(ch, FIXED_SEED[ch]) produces, and the
@@ -151,7 +204,7 @@ export function placeFacade(
   xTile: number,
   bottomPx: number,
   wTiles: number,
-  u: 1 | 2 | 3,
+  u: number,
   door?: { to: string; tx: number; ty: number },
 ): PropDef {
   const H = cityBuildingHeight(u);

@@ -11,9 +11,13 @@
 import { cityBuildingHeight } from '../spritegen/tiles';
 import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import { buildChapter2Maps } from './maps_ch2';
+// S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
+// stitched onto each frozen core (the bones); the soul stays hand-authored.
+import { buildDistrict, buildRoute, Streams } from '../levelkit';
+import { placeFacade } from '../levelkit/kit';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
-import type { MapDef, PropDef } from '../schemas';
+import type { MapDef, PropDef, NpcDef } from '../schemas';
 
 // S5: shapes are z.infer'd from src/schemas — compile shape ≡ runtime schema
 export type {
@@ -90,7 +94,9 @@ export const CHAR_LEGEND: Record<string, string> = {
 
 /* ------------------- OTTERBROOK ------------------- */
 
-function buildOtterbrook(): MapDef {
+/** THE FROZEN 1995 CORE — byte-identical forever (the byte-identical test
+ *  proves growOtterbrook copies it unchanged into the top-left). */
+export function buildOtterbrook(): MapDef {
   const g = new Grid(42, 32);
   g.sprinkle(7, ',~,~ff F', 0.06);
   // main street (vertical) + cross lane
@@ -270,6 +276,237 @@ function buildOtterbrook(): MapDef {
     triggers: [
       { id: 'bus_stop', rect: { x: 22, y: 24, w: 3, h: 3 }, once: false },
       { id: 'porch', rect: { x: 6, y: 6, w: 4, h: 2 }, once: true },
+    ],
+  };
+}
+
+/* ------------- OTTERBROOK GROWS UP (S15h, ADR-049) ------------- */
+
+/** the grown town's east gateway tile — MEADOW MILE (Movement 2) leaves from
+ *  here. Computed from the grown bounds (W-2, the cross-lane row), never a
+ *  literal baked into the road, so a re-scope can't strand it (ADR-012). */
+export const OTTERBROOK_EAST_GATE = { x: 68, y: 16 } as const;
+
+/** the solid for the standard tree (lifted from the core, byte-identical) */
+const OAK: { ox: number; oy: number; w: number; h: number } = { ox: 7, oy: 22, w: 12, h: 10 };
+
+/**
+ * OTTERBROOK ~3× (1344 → 3920 tiles, inside the ≤4000 XL envelope). The frozen
+ * 1995 core is COPIED byte-for-byte into the top-left of a 70×56 grid; the forge
+ * lays two residential blocks SOUTH + EAST on fresh streams (organic, never a
+ * strip). Every growth grid-write lands at x≥42 OR y≥32 — strictly OUTSIDE the
+ * 42×32 core — so the core stays identical (the byte-identical test proves it).
+ * The landmarks are HAND-BUILT: CITY HALL (a real facade into a civic interior),
+ * the CIVIC GREEN (an irregular nibbled park — §B4 negative space), the POND
+ * PARK (a water feature + §A4.5 picnic rests). The bus corner, lemonade stand,
+ * chapel, the dos doorstep, and every 1995 prop keep their coordinates.
+ */
+export function growOtterbrook(): MapDef {
+  const core = buildOtterbrook();
+  const CW = core.grid[0].length; // 42
+  const CH = core.grid.length; // 32
+  const W = 70;
+  const H = 56;
+  const g = new Grid(W, H, '.');
+  // 1) the frozen core, verbatim, in the top-left
+  for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) g.set(x, y, core.grid[y][x]);
+
+  // 2) THE FORGE lays two residential blocks on fresh streams (organic). Each
+  //    region is wholly south of the core (y≥34) or east of it (x≥44), so the
+  //    helper's region-bounded writes can never reach a core cell.
+  const south = buildDistrict(g, { x: 28, y: 34, w: 39, h: 19 }, new Streams(19951), {
+    layout: 'organic', style: 'americana', lanes: 3, maxStories: 2, sprinkle: true,
+  });
+  const east = buildDistrict(g, { x: 44, y: 2, w: 23, h: 12 }, new Streams(19952), {
+    layout: 'organic', style: 'americana', lanes: 2, maxStories: 2, sprinkle: true,
+  });
+
+  // 3) CONNECTIVE SEAMS — the main street flows south, the cross lane runs east
+  //    to the gateway. Both start OUTSIDE the core (row 32 / col 42); the one-tile
+  //    of core grass between (row 31 / cols 38-41) is already walkable, so the
+  //    new ground joins the old without touching a single frozen cell.
+  g.rect(20, 32, 2, 11, ':'); // main street → the civic spine (rows 32-42)
+  g.rect(42, 16, 28, 2, ':'); // cross lane → MEADOW MILE gateway (cols 42-69, the east edge)
+  g.rect(4, 42, 23, 2, ':'); // the civic lane fronting City Hall + the Green
+
+  // 4) LANDMARK — CITY HALL: a real civic facade opening into a hand-authored
+  //    interior. The draft skin is the neutral shipped brick (ADR-020: drawn art
+  //    is a hand job — a bespoke "CITY HALL" facade is a promotion item; the
+  //    plaque + the Mayor inside name it, and the skin carries no conflicting sign).
+  const cityHall = placeFacade('bldg_brickmore', 6, 40 * 16 + 12, 6, 2, {
+    to: 'otterbrook_cityhall', tx: 120, ty: 128,
+  });
+  g.rect(6, 41, 6, 1, '='); // the hall's front step meets the civic lane
+
+  // 5) LANDMARK — THE CIVIC GREEN: an irregular park, corners nibbled so it
+  //    never reads as a rectangle (§B4 negative space). Hedge fragments, not a
+  //    wall; the interior stays open grass.
+  for (const [hx, hw] of [[14, 4], [20, 5], [25, 2]] as const) g.rect(hx, 45, hw, 1, 'b');
+  for (const [hx, hy] of [[14, 47], [14, 50], [26, 48], [26, 51]] as const) g.set(hx, hy, 'b');
+  g.rect(15, 53, 4, 1, 'b');
+  g.rect(22, 53, 3, 1, 'b');
+  g.set(17, 48, 'f'); g.set(23, 49, 'F'); g.set(19, 51, 'f');
+
+  // 6) LANDMARK — THE POND PARK: a small water feature (the sea tile reads as
+  //    blue water; it is solid — you walk around it), foam at its lip, picnic
+  //    tables on the bank (§A4.5 rests found before the south field's danger).
+  g.rect(53, 22, 6, 4, 'e');
+  g.rect(53, 21, 6, 1, 'E'); g.rect(53, 26, 6, 1, 'E');
+  g.set(52, 23, 'E'); g.set(52, 24, 'E'); g.set(59, 23, 'E'); g.set(59, 24, 'E');
+
+  const treesAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
+    xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
+
+  const props: PropDef[] = [
+    ...core.props,
+    ...south.props,
+    ...east.props,
+    cityHall,
+    { sprite: 'sign', x: 12, y: 41, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // City Hall plaque
+    // the Civic Green's dressing
+    { sprite: 'bench', x: 19, y: 49, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    { sprite: 'sign', x: 16, y: 46, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+    ...treesAt([[15, 46], [25, 47], [16, 52], [24, 52]]),
+    // the Pond Park's rests + shade
+    { sprite: 'picnic', x: 48, y: 24, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+    { sprite: 'picnic', x: 61, y: 24, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+    { sprite: 'sign', x: 55, y: 28, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+    ...treesAt([[50, 20], [60, 20], [51, 27], [62, 28]]),
+    // the gateway marker (the road east; the live door is wired in Movement 2)
+    { sprite: 'sign', x: 66, y: 15, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+  ];
+
+  const npcs = [
+    ...core.npcs,
+    { id: 'green_keeper', sprite: 'fernLady', x: 21, y: 49, facing: 'down' as const, dialogue: 'npc_green_keeper', wander: true },
+    { id: 'pond_angler', sprite: 'quarterMan', x: 51, y: 25, facing: 'right' as const, dialogue: 'npc_pond_angler' },
+    { id: 'south_neighbor', sprite: 'senora', x: 34, y: 45, facing: 'down' as const, dialogue: 'npc_south_neighbor', wander: true },
+    { id: 'gate_walker', sprite: 'grayCommuter', x: 60, y: 16, facing: 'right' as const, dialogue: 'npc_gate_walker', wander: true },
+  ];
+
+  const signs = [
+    ...core.signs,
+    { x: 12, y: 41, dialogue: 'sign_otter_hall' },
+    { x: 16, y: 46, dialogue: 'sign_civic_green' },
+    { x: 55, y: 28, dialogue: 'sign_pond_park' },
+    { x: 66, y: 15, dialogue: 'sign_meadow_gate' },
+    ...south.signs,
+    ...east.signs,
+  ];
+
+  return {
+    ...core,
+    grid: g.out(),
+    props,
+    npcs,
+    signs,
+    doors: [
+      ...core.doors,
+      // THE EXPORTED EAST STUB → MEADOW MILE (Movement 2). The core's doors stay
+      // first + unchanged (the byte-identical test); growth only APPENDS this one.
+      { x: W - 1, y: OTTERBROOK_EAST_GATE.y, w: 1, h: 2, to: 'meadow_mile', tx: 24, ty: 128, facing: 'right', indicator: 'none' },
+    ],
+    spawners: [
+      ...core.spawners,
+      // the woken town's danger reaches the new south field too (gated like the
+      // core's), seated well clear of every door/phone/sign (pressure ≥24px)
+      { enemies: ['cranky_mailbox'], count: 1, rect: { x: 31, y: 47, w: 8, h: 3 }, ifFlag: 'meteor_fell' },
+    ],
+  };
+}
+
+/**
+ * OTTERBROOK CITY HALL — the civic interior the human authors (Prime Law 1).
+ * A warm wood lobby: the clerk's counter, the Mayor at her desk, a notice
+ * board, and a payphone to save. The bottom door rides back to the jittered
+ * facade's doorstep (computed, never hardcoded — the dos_f1 / S4 pattern).
+ */
+function buildOtterbrookCityHallInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(16, 11, 'w');
+  g.rect(0, 0, 16, 2, 'W');
+  g.rect(6, 4, 4, 1, 'r'); // a civic rug runs to the counter
+  g.rect(6, 5, 4, 1, 'r');
+  return {
+    id: 'otterbrook_cityhall',
+    name: 'OTTERBROOK CITY HALL',
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 6, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 8, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'shelf_b', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } }, // records
+      { sprite: 'shelf_b', x: 13, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'payphone', x: 2, y: 8, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'planter', x: 13, y: 8, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+    ],
+    npcs: [
+      { id: 'hall_clerk', sprite: 'fernLady', x: 7, y: 2, facing: 'down', dialogue: 'npc_hall_clerk' },
+      { id: 'mayor_otter', sprite: 'oldTimer', x: 11, y: 6, facing: 'left', dialogue: 'npc_mayor_otter' },
+    ],
+    signs: [{ x: 4, y: 1, dialogue: 'sign_hall_wall' }],
+    phones: [{ x: 2, y: 8 }],
+    doors: [
+      { x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/* ------------- MEADOW MILE — THE ROAD TO BRICKTON (S15h, ADR-049) ------------- */
+
+/**
+ * MEADOW MILE + THE OVERPASS — the foot route between the towns (Movement 2).
+ * The FORGE lays the road (buildRoute: a trail that argues with the land,
+ * treelines, a picnic + payphone BEFORE the hot middle — §B4, routes run hot).
+ * Promoted to canon: the west door lands at Otterbrook's exported east gate
+ * (computed), and the east edge is THE ORIENTATION GATE — a trigger, not a plain
+ * door — where three Blazer-Smiler proctors test you for the visitor badge.
+ */
+function buildMeadowMile(): MapDef {
+  const draft = buildRoute({
+    kind: 'route', id: 'meadow_mile', seed: 1500, size: [40, 16],
+    style: 'treeline', encounterBand: 'ch1', signSlots: 2, ends: ['otterbrook', 'brickton'],
+  });
+  const W = draft.grid[0].length;
+  const H = draft.grid.length;
+  const westY = draft.doors[0]?.y ?? Math.round(H / 2);
+  const eastY = draft.doors[1]?.y ?? Math.round(H / 2);
+
+  // the OVERPASS proctors man the city line until the visitor badge is earned
+  const proctors: NpcDef[] = [
+    { id: 'proctor_a', sprite: 'smilerB', x: W - 5, y: Math.max(2, eastY - 1), facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
+    { id: 'proctor_b', sprite: 'smilerB', x: W - 4, y: eastY + 1, facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
+    { id: 'proctor_c', sprite: 'smilerB', x: W - 6, y: eastY + 2, facing: 'left', dialogue: 'npc_proctor', unlessFlag: 'visitor_badge' },
+  ];
+  const traveler: NpcDef = { id: 'road_traveler', sprite: 'grayCommuter', x: 6, y: westY, facing: 'right', dialogue: 'npc_road_traveler', wander: true };
+
+  return {
+    id: 'meadow_mile',
+    name: 'MEADOW MILE',
+    music: 'otterbrook',
+    grid: draft.grid,
+    props: [
+      ...draft.props,
+      { sprite: 'sign', x: W - 6, y: Math.max(1, eastY - 2), solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the city-line marker
+    ],
+    npcs: [traveler, ...proctors],
+    signs: [
+      ...draft.signs,
+      { x: W - 6, y: Math.max(1, eastY - 2), dialogue: 'sign_overpass_gate' },
+    ],
+    phones: draft.phones,
+    doors: [
+      // west → Otterbrook's exported east gate (the road's far end, computed)
+      { x: 0, y: westY, w: 1, h: 2, to: 'otterbrook', tx: OTTERBROOK_EAST_GATE.x * 16, ty: OTTERBROOK_EAST_GATE.y * 16, facing: 'left', indicator: 'none' },
+    ],
+    spawners: draft.spawners,
+    triggers: [
+      // THE ORIENTATION GATE — the east edge IS the city line: entering it runs
+      // the gate (three proctor fights → visitor_badge), or walks you straight in
+      // if you already hold the badge OR rode the bus (the grandfather clause).
+      { id: 'orientation_gate', rect: { x: W - 3, y: 0, w: 3, h: H }, once: false },
     ],
   };
 }
@@ -611,6 +848,11 @@ function buildViviRoom(): MapDef {
 /** where the bus drops you — OverworldScene's bus flow reads this */
 export const BRICKTON_BUS_SPAWN = { x: 88, y: 476 } as const;
 
+/** where MEADOW MILE drops you on foot (S15h) — the grown city's SOUTH GATEWAY,
+ *  in the new district (the orientation gate reads this). Computed for the 144×76
+ *  grown grid; the bus still lands inside the old downtown (BRICKTON_BUS_SPAWN). */
+export const BRICKTON_FOOT_SPAWN = { x: 30 * 16 + 8, y: 71 * 16 } as const;
+
 /**
  * A real downtown, not a strip: two E-W streets stitched by a cross avenue,
  * buildings in three clusters with jittered placement and varied heights,
@@ -618,7 +860,10 @@ export const BRICKTON_BUS_SPAWN = { x: 88, y: 476 } as const;
  * irregularity comes from one fixed seed (1995 — the summer it fell) so the
  * city is sporadic to the eye but identical on every boot.
  */
-function buildBrickton(): MapDef {
+/** THE FROZEN 2077 CORE — byte-identical forever (the byte-identical test
+ *  proves growBrickton copies its grid + props unchanged into the top-left;
+ *  only the docks EXIT door relocates to the grown city's new edge). */
+export function buildBrickton(): MapDef {
   const rng = seededRng(1995);
   const jit = (n: number): number => Math.floor(rng() * n);
 
@@ -1028,6 +1273,148 @@ function buildBrickton(): MapDef {
       { id: 'brickton_dial_goal', rect: { x: 13, y: 28, w: 5, h: 2 }, once: false },
       // S2: Mom calls the payphone (14,26) once the Department falls
       { id: 'payphone_ring', rect: { x: 12, y: 25, w: 6, h: 4 }, once: false },
+    ],
+  };
+}
+
+/* ------------- BRICKTON SPRAWLS (S15h, ADR-049) ------------- */
+
+/**
+ * BRICKTON ~4× (2736 → 10944 tiles, 144×76). The frozen 2077 core is COPIED
+ * byte-for-byte into the top-left — every tile, every prop, the Cage, the dept,
+ * the bus stop, the clock + dial flags, UNCHANGED. The forge's CITY grammar lays
+ * new walled districts in the L around it (an east band + the south band), all
+ * connected to downtown through the core's ONE existing opening: street B's east
+ * gap (col 71, rows 21-23, already road). The single deliberate exception to
+ * "byte-for-byte": the docks EXIT door relocates from that gap to the grown
+ * city's NEW east edge — the port moved out with the city — so street B can flow
+ * east into the sprawl instead of dead-ending at the old wall. Brickton stays a
+ * `city` and clears the ADR-012 sweep AT 144×76 (the maps.test sweep runs on it).
+ */
+export function growBrickton(): MapDef {
+  const core = buildBrickton();
+  const CW = core.grid[0].length; // 72
+  const CH = core.grid.length; // 38
+  const W = 144;
+  const H = 76;
+  const g = new Grid(W, H, '=');
+  // 1) the frozen 2077 core, verbatim, in the top-left (grid byte-identical)
+  for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) g.set(x, y, core.grid[y][x]);
+
+  // 2) the GROWN city's outer brick walls (only in the new region — never over
+  //    the core). The old downtown's east + south walls become interior walls.
+  g.rect(CW, 0, W - CW, 1, 'B'); // north edge, east of the core
+  g.rect(W - 1, 0, 1, H, 'B'); // new east edge
+  g.rect(0, CH, 1, H - CH, 'B'); // west edge, below the core
+  g.rect(0, H - 1, W, 1, 'B'); // new south edge
+
+  // 3) STREET B runs EAST out the old gap (col 71, rows 21-23 = 'R' in the core)
+  //    across the new east band to the relocated docks at the far edge. A south
+  //    AVENUE drops from it; two E-W streets cross the new districts (the grid
+  //    law extended — the core already clears the sweep, this only adds to it).
+  g.rect(CW, 21, W - CW, 3, 'R'); // street B east extension (reopens the far-edge docks gap)
+  g.rect(100, 24, 3, H - 25, 'R'); // the south connector avenue (drops off street B)
+  g.rect(1, 50, W - 2, 3, 'R'); // SOUTH STREET — spans the sprawl
+  g.rect(1, 63, W - 2, 3, 'R'); // MAPLE STREET — the brick rows back onto it
+  g.rect(29, 53, 3, H - 53, 'R'); // the SOUTH GATEWAY road, down to the city line
+
+  // 4) crosswalks where the avenue meets the new streets, dashed centerlines
+  for (const sy of [50, 63]) {
+    g.rect(98, sy, 2, 3, 'X');
+    g.rect(103, sy, 2, 3, 'X');
+    for (let x = 2; x < W - 2; x++) if (x % 4 < 2 && (x < 98 || x > 104)) g.set(x, sy + 1, 'D');
+  }
+
+  // 5) NEGATIVE SPACE (§B4): an irregular plaza-park east of the avenue, corners
+  //    nibbled so it never reads as a rectangle; a parking lot west of it.
+  g.rect(108, 30, 16, 10, '.');
+  g.rect(108, 30, 3 + (CW % 4), 1, '=');
+  g.rect(120, 39, 4, 1, '=');
+  g.rect(74, 56, 9, 6, 'P');
+  // grass fuzz on the new park cells ONLY — a region-bounded sprinkle that skips
+  // the frozen core (the core HAS '.' park cells; the global Grid.sprinkle would
+  // corrupt them, so we guard x≥CW || y≥CH explicitly)
+  const fuzz = seededRng(2077144);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (x < CW && y < CH) continue; // never touch the 2077 core
+      if (g.rows[y][x] === '.' && fuzz() < 0.08) g.set(x, y, ',~ff F'[Math.floor(fuzz() * 6)]);
+    }
+  }
+
+  // 6) THE FORGE lays the blocks (city grammar) on fresh streams, in regions
+  //    clear of the arteries + the gateway. Facades stay ≤2 stories (the catalog
+  //    is the shipped bldg_* skin — drawn art is a hand job, ADR-020).
+  const eastNorth = buildDistrict(g, { x: 74, y: 2, w: 66, h: 17 }, new Streams(207701), {
+    layout: 'grid', style: 'americana', streetRows: [9], avenueCols: [120], maxStories: 2,
+  });
+  const eastSouth = buildDistrict(g, { x: 104, y: 41, w: 36, h: 8 }, new Streams(207702), {
+    layout: 'grid', style: 'americana', streetRows: [44], maxStories: 2,
+  });
+  const southWest = buildDistrict(g, { x: 2, y: 38, w: 70, h: 10 }, new Streams(207703), {
+    layout: 'grid', style: 'americana', streetRows: [44], avenueCols: [40], maxStories: 2,
+  });
+
+  // 7) MAPLE HEIGHTS — a hand-built brick row backing onto Maple Street (the
+  //    named residential block the growth advertises), + the catalog storefronts.
+  const mapleProps: PropDef[] = [];
+  let mx = 6;
+  for (let i = 0; i < 5; i++) {
+    mapleProps.push(placeFacade('bldg_brickmore', mx, 62 * 16 - 4, 5, 2));
+    mx += 7;
+  }
+
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  const props: PropDef[] = [
+    ...core.props,
+    ...eastNorth.props,
+    ...eastSouth.props,
+    ...southWest.props,
+    ...mapleProps,
+    { sprite: 'sign', x: 8, y: 60, solid: SIGN_SOLID }, // MAPLE HEIGHTS marker
+    { sprite: 'sign', x: 47, y: 48, solid: SIGN_SOLID }, // the Cage block, read from the new street
+    { sprite: 'sign', x: 31, y: 70, solid: SIGN_SOLID }, // the south gateway / city line
+    { sprite: 'sign', x: 138, y: 24, solid: SIGN_SOLID }, // to the relocated docks
+    // a rest point before the new south field's pressure (§A4.5) — a payphone,
+    // NOT a picnic (the picnic-count pin holds: Brickton keeps exactly one)
+    { sprite: 'payphone', x: 33, y: 67, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+  ];
+
+  const npcs = [
+    ...core.npcs,
+    { id: 'maple_resident', sprite: 'fernLady', x: 12, y: 60, facing: 'down' as const, dialogue: 'npc_maple_resident', wander: true },
+    { id: 'south_vendor', sprite: 'quarterMan', x: 60, y: 49, facing: 'down' as const, dialogue: 'npc_south_vendor' },
+    { id: 'new_commuter', sprite: 'grayCommuter', x: 110, y: 22, facing: 'right' as const, dialogue: 'npc_new_commuter', wander: true },
+    { id: 'dockward', sprite: 'sidewalkCritic', x: 132, y: 22, facing: 'right' as const, dialogue: 'npc_dockward' },
+  ];
+
+  const keptDoors = core.doors.filter((d) => d.to !== 'brickton_docks');
+  return {
+    ...core,
+    grid: g.out(),
+    props,
+    npcs,
+    signs: [
+      ...core.signs,
+      { x: 8, y: 60, dialogue: 'sign_maple_heights' },
+      { x: 47, y: 48, dialogue: 'sign_cage_block' },
+      { x: 31, y: 70, dialogue: 'sign_south_gate' },
+      { x: 138, y: 24, dialogue: 'sign_new_docks' },
+      ...eastNorth.signs,
+      ...eastSouth.signs,
+      ...southWest.signs,
+    ],
+    phones: [...core.phones, { x: 33, y: 67 }],
+    doors: [
+      ...keptDoors, // the_cage gate stays byte-identical; the old docks-gap door is relocated ↓
+      { x: W - 1, y: 21, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
+      { x: 29, y: H - 1, w: 3, h: 1, to: 'meadow_mile', tx: 544, ty: 128, facing: 'down', indicator: 'none' },
+    ],
+    spawners: [
+      ...core.spawners,
+      // the new districts run a city band too (clear of the gateway + fixtures)
+      { enemies: ['blazer_smiler'], count: 1, rect: { x: 108, y: 32, w: 14, h: 6 } },
+      { enemies: ['pigeon_gang'], count: 1, rect: { x: 10, y: 40, w: 20, h: 6 } },
     ],
   };
 }
@@ -1591,8 +1978,9 @@ function buildBusInterior(): MapDef {
 
 // doorstepOf lives in mapkit.ts (S14 extraction — byte-identical)
 
-const otterbrookMap = buildOtterbrook();
-const bricktonMap = buildBrickton();
+const otterbrookMap = growOtterbrook();
+const bricktonMap = growBrickton();
+const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
 const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty: 225 };
@@ -1666,9 +2054,44 @@ function buildCostaEstrella(): MapDef {
 const chapelDoorstep = doorstepOf(otterbrookMap, 'chapel_int') ?? { tx: 521, ty: 372 };
 const hospitalDoorstep = doorstepOf(bricktonMap, 'hospital_int') ?? { tx: 320, ty: 121 };
 
+/**
+ * THE USER'S "BIGGER ROOMS" DECREE — a small interior used to FLOAT tiny in the
+ * void (a 9×8 room filled ~⅓ of the screen, the hero lost in a sea of black).
+ * Grow it to a comfortable minimum: pad FLOOR on the right + bottom so existing
+ * content stays put (top-left anchored — the entry spawn still lands inside),
+ * keep the top WALL band across the new width, and ride the bottom EXIT door
+ * down to the new floor edge. Standard single-room interiors only; the validator
+ * re-checks door-landing + reachability on the grown grid (its safety net).
+ */
+function growInterior(map: MapDef, minW: number, minH: number): MapDef {
+  const grid = map.grid;
+  const H = grid.length;
+  const W = grid[0].length;
+  const newW = Math.max(W, minW);
+  const newH = Math.max(H, minH);
+  if (newW === W && newH === H) return map;
+  const wall = grid[0][0];
+  // the top WALL band = the leading rows that are entirely the wall char
+  let wallRows = 0;
+  while (wallRows < H && [...grid[wallRows]].every((c) => c === wall)) wallRows += 1;
+  // FLOOR = the most common char below the wall (handles 'w'/'a'/'o' + rugs)
+  const counts = new Map<string, number>();
+  for (let y = wallRows; y < H; y++) for (const ch of grid[y]) counts.set(ch, (counts.get(ch) ?? 0) + 1);
+  let floor = grid[H - 1][0];
+  let best = -1;
+  for (const [ch, n] of counts) if (n > best) { best = n; floor = ch; }
+  const padR = newW - W;
+  const rows = grid.map((row, y) => (y < wallRows ? wall.repeat(newW) : row + floor.repeat(padR)));
+  for (let y = H; y < newH; y++) rows.push(floor.repeat(newW));
+  // the bottom exit door rides to the new floor edge (interiors exit downward)
+  const doors = map.doors.map((d) => (d.y >= H - 1 ? { ...d, y: newH - 1 } : d));
+  return { ...map, grid: rows, doors };
+}
+
 export const MAPS: Record<string, MapDef> = {
   ...buildChapter2Maps({ chapelStep: chapelDoorstep, hospitalStep: hospitalDoorstep }),
   otterbrook: otterbrookMap,
+  meadow_mile: buildMeadowMile(),
   hill_road: buildHillRoad(),
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),
@@ -1680,6 +2103,7 @@ export const MAPS: Record<string, MapDef> = {
   dos_f1: buildDosF1(deptDoorstep),
   dos_f2: buildDosF2(),
   dos_f3: buildDosF3(),
+  otterbrook_cityhall: buildOtterbrookCityHallInt(cityHallDoorstep),
   drugstore_int: buildDrugstoreInt(drugDoorstep),
   starmart_int: buildStarmartInt(martDoorstep),
   arcade_int: buildArcadeInt(arcadeDoorstep),
@@ -1688,3 +2112,15 @@ export const MAPS: Record<string, MapDef> = {
   costa_estrella: buildCostaEstrella(),
   bus_interior: buildBusInterior(),
 };
+
+// the user's decree — the cramped single-room interiors fill the screen now
+// (no camera zoom, which would scale the HUD; the rooms themselves grow). Multi-
+// room houses, vehicles, and the already-roomy halls (museum/hospital/dos) keep
+// their hand-built size.
+const ROOMY_INTERIORS: readonly string[] = [
+  'drugstore_int', 'starmart_int', 'arcade_int', 'arcade2_int',
+  'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall',
+  'mercado_int', 'clinic_ps_int', 'deli_int', 'chapel_int',
+  'valle_shop_int', 'clinic_valle_int', 'chapel_valle_int',
+];
+for (const id of ROOMY_INTERIORS) if (MAPS[id]) MAPS[id] = growInterior(MAPS[id], 16, 11);

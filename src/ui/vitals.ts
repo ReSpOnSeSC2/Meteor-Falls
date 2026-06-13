@@ -6,11 +6,13 @@
  *
  * Shared by TWO callers:
  *  - the MENU draws it PERSISTENTLY along the bottom; it YIELDS (hides) while
- *    the item DESCRIPTION PANEL is up (both live at the bottom — never overlap,
- *    the §A4 readability law). Pass `yieldToItemInfo` and it listens for the
- *    iteminfo open/close scene events.
+ *    ANY other bottom UI is up — the item DESCRIPTION PANEL *and* a dialogue
+ *    box (item flavor text), which also lives at the bottom (never overlap,
+ *    the §A4 readability law). The MENU owns that call (it knows its dlg.busy +
+ *    description-panel state); `show()`/`hide()` are idempotent so it can drive
+ *    them every frame for free.
  *  - the OVERWORLD pops it as a quick glance on a button (the EB "check HP
- *    fast" beat), dismissed on the same button / B / a tap.
+ *    fast" beat), dismissed on the same button / B / a tap (and on any dialogue).
  *
  * Pure layout over makeWindow + bitmapText + rectangles (no odometer animation —
  * a glance wants a still, instantly-readable number + bar, not a rolling reel).
@@ -43,7 +45,7 @@ function hpRamp(frac: number): number {
 /** every panel piece is a display object with both destroy() and setVisible() */
 type Vis = Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible;
 
-export function makeVitalsBar(scene: Phaser.Scene, opts: { yieldToItemInfo?: boolean } = {}): VitalsBar {
+export function makeVitalsBar(scene: Phaser.Scene): VitalsBar {
   let objs: Vis[] = [];
   let shown = false;
 
@@ -95,20 +97,15 @@ export function makeVitalsBar(scene: Phaser.Scene, opts: { yieldToItemInfo?: boo
     objs.forEach((o) => o.setVisible(shown));
   };
 
-  // the MENU's description panel and this bar both live at the bottom — yield
-  // to it so they never overlap (§A4 readability). Decoupled via scene events.
-  const onYield = (): void => hide();
-  const onResume = (): void => show();
-  if (opts.yieldToItemInfo) {
-    scene.events.on('mf-iteminfo-open', onYield);
-    scene.events.on('mf-iteminfo-closed', onResume);
-  }
-
+  // idempotent so the caller can drive them every frame; show() (re)reads live
+  // party state, hide() just blanks the panels (kept for a cheap re-show)
   function show(): void {
+    if (shown) return;
     shown = true;
     build();
   }
   function hide(): void {
+    if (!shown) return;
     shown = false;
     objs.forEach((o) => o.setVisible(false));
   }
@@ -122,12 +119,6 @@ export function makeVitalsBar(scene: Phaser.Scene, opts: { yieldToItemInfo?: boo
     get visible() {
       return shown;
     },
-    destroy: () => {
-      if (opts.yieldToItemInfo) {
-        scene.events.off('mf-iteminfo-open', onYield);
-        scene.events.off('mf-iteminfo-closed', onResume);
-      }
-      clear();
-    },
+    destroy: clear,
   };
 }

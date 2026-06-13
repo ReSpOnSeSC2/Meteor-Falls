@@ -200,7 +200,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       kind: 'key',
       usableInBattle: false,
       price: 0,
-      text: 'It hums when the Embers sing. 1/8th of a Homesong lives inside.',
+      text: 'It hums when the Embers sing. 1/10th of a Homesong lives inside.',
     }),
     /* ---- S9: §A10 #1–3 quest rewards + supplies ---- */
     I({

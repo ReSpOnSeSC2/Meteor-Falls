@@ -33,15 +33,16 @@ function fnv(obj: unknown): string {
 
 /** one pinned output hash per generator — the ship-freeze proof */
 const HASH_PINS: Record<string, string> = {
-  // Movement Three re-keyed BAND_ROSTER ch3–ch10 → the forged rosters, so every
-  // band-bearing draft's spawner ids moved: zanzibel(ch6), foggybottom(ch3),
-  // lilleby(ch4), bootstep_moor(ch4) + all eight dungeons re-pin here; the
-  // bandless/ch1 drafts (brickmore_heights, grand_market_int, meadow_mile,
-  // lucille) are byte-identical.
-  zanzibel: '8f37f5e3',
-  brickmore_heights: 'e445325a',
-  foggybottom: 'afacc20e',
-  lilleby: '66cf9239',
+  // S15i (ADR-050) fixed facadeSolid (oy:26→10, h:H-38→H-22 — the walk-through
+  // bug) to match Brickton core, so every FACADE-bearing draft's solid bytes
+  // shifted and re-pins here: zanzibel + foggybottom + lilleby (cities) and
+  // brickmore_heights (a facade-laden district). The faceless route/interior
+  // drafts (grand_market_int, meadow_mile, bootstep_moor, lucille) and all
+  // eight dungeons place no city facades, so they stayed byte-identical.
+  zanzibel: '60e9e88e',
+  brickmore_heights: 'c25ff676',
+  foggybottom: 'edeb30f9',
+  lilleby: '3de72061',
   grand_market_int: 'fd4ef0b7',
   meadow_mile: 'fa7ffd37',
   bootstep_moor: '853e27b2',

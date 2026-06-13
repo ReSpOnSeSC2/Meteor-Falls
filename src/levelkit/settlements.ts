@@ -24,7 +24,9 @@ import type {
   SignDef,
   SpawnerDef,
   DoorZone,
+  SettlementStyle,
 } from '../schemas';
+import { cityBuildingHeight } from '../spritegen/tiles';
 import { Streams, streamSeed } from './rng';
 import {
   Grid,
@@ -380,4 +382,226 @@ export function buildVillage(r: VillageRecipe): DraftMapDef {
     spawners: [{ enemies: bandEnemies(r.encounterBand), count: 2, rect: { x: 1, y: 1, w: W - 2, h: 2 } }],
     triggers: [],
   };
+}
+
+/* ============================ buildDistrict ============================ *
+ * THE FORGE AS A DISTRICT LIBRARY (S15h, ADR-049). buildCity/buildTown each
+ * build a WHOLE map from a blank grid — too coarse to graft new growth onto a
+ * SHIPPED core. buildDistrict is the same grammar made stitchable: it lays a
+ * GRID district (the buildCity skeleton — streets, an avenue, jittered facade
+ * rows north of each street, crosswalks, a nibbled park) or an ORGANIC one
+ * (the buildTown skeleton — a bending lane + scattered houses, never a strip)
+ * INTO a sub-rectangle of an existing Grid, and returns ONLY the props/signs
+ * it added. It never writes outside `region`, so a frozen core copied into the
+ * top-left stays byte-identical; determinism still rides the named Streams
+ * (Prime Law 2 — no Date.now/Math.random). NPC slots are NOT emitted: canon
+ * growth hand-authors its souls (Prime Laws 1 + 3), the forge lays the bones.
+ */
+export interface DistrictRegion {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** a facade the district must open into a named interior (assigned in order) */
+export interface DistrictReserve {
+  /** the door target map id */
+  to: string;
+  /** force this facade sprite (else the role/catalog default) */
+  sprite?: string;
+  /** spawn point inside the target (defaults to the kit's 144,150) */
+  tx?: number;
+  ty?: number;
+  /** drop a readable sign over the facade keyed on this dialogue id */
+  sign?: string;
+}
+
+export interface DistrictOpts {
+  /** 'grid' = the buildCity block grammar; 'organic' = buildTown's lanes */
+  layout: 'grid' | 'organic';
+  style: SettlementStyle;
+  /** grid: absolute E–W street rows (each 3 tall, spanning the region width) */
+  streetRows?: readonly number[];
+  /** grid: absolute N–S avenue columns (each 3 wide, spanning the region height) */
+  avenueCols?: readonly number[];
+  /** organic: how many bending lanes branch the network (default 2) */
+  lanes?: number;
+  /** facades that must open a named door (assigned to lots in order) */
+  reserve?: readonly DistrictReserve[];
+  /** override the building catalog (defaults to the style pack's) */
+  catalog?: readonly string[];
+  /** the tallest facade the district draws (default 2 — growth stays low so a
+   *  facade never pokes up into a core copied just above the region) */
+  maxStories?: 1 | 2 | 3;
+  /** lay a region-bounded ground sprinkle (never touches a copied-in core) */
+  sprinkle?: boolean;
+}
+
+export interface DistrictResult {
+  props: PropDef[];
+  /** facade doors are carried on the props; this stays for edge stubs the
+   *  caller may want the helper to compute later (empty today) */
+  doors: DoorZone[];
+  signs: SignDef[];
+}
+
+/** one facade for a district lot, with an optional reserved door + sign */
+function districtFacade(
+  S: Streams,
+  catalog: readonly string[],
+  reserve: DistrictReserve[],
+  signs: SignDef[],
+  key: string,
+  x: number,
+  bottomPx: number,
+  wTiles: number,
+  u: 1 | 2 | 3,
+): PropDef {
+  let sprite = catalog[S.int(`${key}_sprite`, catalog.length)];
+  let door: { to: string; tx: number; ty: number } | undefined;
+  if (reserve.length) {
+    const r = reserve.shift() as DistrictReserve;
+    sprite = r.sprite ?? ROLE_FACADE[r.to] ?? sprite;
+    door = { to: r.to, tx: r.tx ?? 144, ty: r.ty ?? 150 };
+    if (r.sign) signs.push({ x: x + 1, y: Math.max(0, Math.round((bottomPx - cityBuildingHeight(u)) / 16) - 1), dialogue: r.sign });
+  }
+  return placeFacade(sprite, x, bottomPx, wTiles, u, door);
+}
+
+export function buildDistrict(g: Grid, region: DistrictRegion, S: Streams, opts: DistrictOpts): DistrictResult {
+  const pack = STYLE_PACKS[opts.style];
+  const props: PropDef[] = [];
+  const doors: DoorZone[] = [];
+  const signs: SignDef[] = [];
+  const reserve = [...(opts.reserve ?? [])];
+  const catalog = opts.catalog ?? pack.buildings;
+  const maxU = opts.maxStories ?? 2;
+  const { x: rx, y: ry, w: rw, h: rh } = region;
+  const rRight = rx + rw;
+  const rBot = ry + rh;
+
+  // region-bounded sprinkle — a SEPARATE named stream so it can't shift the
+  // structural jitter, and it only fills cells already at the default '.'
+  // (a copied-in core never holds '.', so the core is never touched)
+  if (opts.sprinkle) {
+    const next = S.use('districtSprinkle');
+    for (let y = ry; y < rBot; y++) {
+      for (let x = rx; x < rRight; x++) {
+        if (g.rows[y]?.[x] === '.' && next() < 0.1) {
+          g.set(x, y, pack.sprinkle[Math.floor(next() * pack.sprinkle.length)]);
+        }
+      }
+    }
+  }
+
+  if (opts.layout === 'grid') {
+    const streetRows = opts.streetRows ?? [];
+    const avenueCols = opts.avenueCols ?? [];
+    // streets span the region width; avenues span its height (the connectors)
+    for (const sy of streetRows) g.rect(rx, sy, rw, 3, 'R');
+    for (const ax of avenueCols) g.rect(ax, ry, 3, rh, 'R');
+    // dashed centerlines, phase-shifted per street, broken where avenues cross
+    const avenueSet = new Set(avenueCols.flatMap((ax) => [ax - 1, ax, ax + 1, ax + 2, ax + 3]));
+    streetRows.forEach((sy, i) => {
+      for (let x = rx; x < rRight; x++) {
+        if ((x + i) % 4 < 2 && !avenueSet.has(x)) g.set(x, sy + 1, 'D');
+      }
+    });
+    // crosswalks flank each avenue at each street (clamped INSIDE the region —
+    // a stripe must never reach back over a core copied just outside it)
+    for (const ax of avenueCols) {
+      for (const sy of streetRows) {
+        if (ax - 2 >= rx) g.rect(ax - 2, sy, 2, 3, 'X');
+        if (ax + 5 <= rRight) g.rect(ax + 3, sy, 2, 3, 'X');
+      }
+    }
+    // an irregular park (negative space) in the first wide gap, corners nibbled
+    if (streetRows.length >= 2) {
+      const py = streetRows[0] + 4;
+      const ph = Math.min(5, streetRows[1] - py - 1);
+      if (ph > 2) {
+        const px0 = rx + 3 + S.int('gParkX', 4);
+        const pw = Math.min(12, rRight - px0 - 3);
+        if (pw > 5) {
+          g.rect(px0, py, pw, ph, pack.ground);
+          g.rect(px0, py, 1 + S.int('gParkNibA', 3), 1, pack.pave);
+          g.rect(px0 + pw - 3 + S.int('gParkNibB', 2), py, 3, 1, pack.pave);
+        }
+      }
+    }
+    // a jittered facade row north of EACH street (≥2 block faces by construction)
+    const doorCols = new Set<number>();
+    streetRows.forEach((sy, si) => {
+      const bottomPx = sy * 16 - 4;
+      let x = rx + 1 + S.int(`gBldgStart${si}`, 2);
+      let placed = 0;
+      while (x < rRight - 6) {
+        if (avenueSet.has(x) || avenueSet.has(x + 4)) {
+          const next = avenueCols.filter((a) => a >= x);
+          x = (next.length ? Math.max(...next) : x) + 5;
+          continue;
+        }
+        const wTiles = S.range(`gBldgW${si}_${placed}`, 4, 6);
+        if (x + wTiles > rRight - 2) break;
+        const u = Math.min(maxU, S.range(`gBldgU${si}_${placed}`, 1, 3)) as 1 | 2 | 3;
+        const prop = districtFacade(S, catalog, reserve, signs, `gBldg${si}_${placed}`, x, bottomPx, wTiles, u);
+        if (prop.door) doorCols.add(Math.round(prop.x) + 2);
+        props.push(prop);
+        if (S.chance(`gAlley${si}_${placed}`, 0.5)) {
+          props.push(furniture('dumpster', x + wTiles, (bottomPx - 70) / 16));
+        }
+        x += wTiles + 1 + S.int(`gGap${si}_${placed}`, 2);
+        placed++;
+      }
+    });
+    // street furniture on the sidewalk just south of each street
+    streetRows.forEach((sy, si) => {
+      const fy = sy + 3;
+      if (fy >= rBot - 1) return;
+      for (let fx = rx + 3; fx < rRight - 3; fx += 3 + S.int(`gFurnStep${si}_${fx}`, 3)) {
+        if (doorCols.has(fx) || avenueSet.has(fx)) continue;
+        if (S.chance(`gFurnSkip${si}_${fx}`, 0.45)) continue;
+        props.push(furniture(pack.furniture[S.int(`gFurnPick${si}_${fx}`, pack.furniture.length)], fx, fy));
+      }
+    });
+    // street trees lining the southmost sidewalk
+    const lastFy = streetRows.length ? streetRows[streetRows.length - 1] + 3 : ry + 2;
+    for (let tx = rx + 3; tx < rRight - 3; tx += 4) {
+      if (avenueSet.has(tx) || doorCols.has(tx)) continue;
+      if (lastFy + 1 < rBot - 1 && S.chance(`gTree${tx}`, 0.55)) props.push(tree(tx, lastFy + 1, pack.pines));
+    }
+  } else {
+    // ORGANIC: a bending main lane across the region + branching spurs, then
+    // scattered houses on both sides (never a single strip — buildTown's law)
+    const lanes = opts.lanes ?? 2;
+    let ly = ry + Math.round(rh / 2);
+    for (let x = rx + 1; x < rRight - 1; x++) {
+      g.rect(x, ly, 1, 2, ':');
+      if (S.chance(`oBend${x}`, 0.18)) {
+        ly = Math.max(ry + 2, Math.min(rBot - 4, ly + (S.chance(`oBendDir${x}`, 0.5) ? 1 : -1)));
+      }
+    }
+    for (let l = 1; l < lanes; l++) {
+      const sx = rx + Math.round((rw * l) / (lanes + 1)) + S.jitter(`oSpurX${l}`, 2);
+      const top = ry + 2 + S.int(`oSpurTop${l}`, 3);
+      const bot = rBot - 3 - S.int(`oSpurBot${l}`, 3);
+      for (let y = Math.min(top, bot); y < Math.max(top, bot); y++) g.set(sx, y, ':');
+    }
+    const houseXs: Array<[number, number]> = [];
+    const count = Math.max(4, Math.round((rw * rh) / 90));
+    for (let i = 0; i < count; i++) {
+      const hx = rx + 3 + S.int(`oHx${i}`, Math.max(1, rw - 8));
+      const hy = ry + 3 + S.int(`oHy${i}`, Math.max(1, rh - 9));
+      if (houseXs.some(([x, y]) => Math.abs(x - hx) < 5 && Math.abs(y - hy) < 3)) continue;
+      if (hy * 16 + 60 - cityBuildingHeight(maxU) < (ry - 1) * 16) continue; // never poke into a core above
+      houseXs.push([hx, hy]);
+      const u = Math.min(maxU, S.range(`oHu${i}`, 1, 2)) as 1 | 2;
+      const prop = districtFacade(S, catalog, reserve, signs, `oHouse${i}`, hx, hy * 16 + 60, 4, u);
+      props.push(prop);
+      if (S.chance(`oTree${i}`, 0.5)) props.push(tree(hx + 5, hy + 1, pack.pines));
+    }
+  }
+
+  return { props, doors, signs };
 }

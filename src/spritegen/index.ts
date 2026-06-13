@@ -106,6 +106,7 @@ import {
   drawBleachers,
   drawChalkBoard,
 } from './tiles';
+import { GENERATED_BUILDINGS } from './buildings';
 import {
   generateAthleteFrames,
   deriveOpponentSpec,
@@ -563,6 +564,29 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'bldg_bank', drawCityBuilding({ wallTiles: 6, upperRows: 2, wall: RAMP.PAPER, signText: 'SAVINGS & LOAN', doorAt: 2, litSeed: 17 }));
   addPixmap(scene, 'bldg_arcade2', drawCityBuilding({ wallTiles: 5, upperRows: 1, wall: RAMP.PURPLE, signText: 'STARPORT II', awning: RAMP.GOLD, doorAt: 2, litSeed: 18 }));
   addPixmap(scene, 'bldg_diner', drawCityBuilding({ wallTiles: 4, upperRows: 1, wall: RAMP.RED, signText: 'DINER', awning: RAMP.PAPER, doorAt: 1, litSeed: 19 }));
+
+  // S15i (ADR-050) — THE CATALOG GROWS UP. New facade FAMILIES so generated
+  // districts read as a real city, not five reskins, plus MEGA-BUILDINGS whose
+  // tops run off-screen over a 24px hero. Heights are recorded in BUILDING_DIMS
+  // (levelkit/kit.ts) so the grammar places each by its TRUE size (Movement 2).
+  //   families (storefront scale):
+  addPixmap(scene, 'bldg_apartments', drawCityBuilding({ wallTiles: 5, upperRows: 4, wall: RAMP.ORANGE, signText: 'THE ARMS', balconies: true, doorAt: 2, litSeed: 74 }));
+  addPixmap(scene, 'bldg_office', drawCityBuilding({ wallTiles: 5, upperRows: 5, wall: RAMP.CYAN, signText: 'SUITES', tower: true, doorAt: 2, litSeed: 75 }));
+  addPixmap(scene, 'bldg_civic', drawCityBuilding({ wallTiles: 6, upperRows: 2, wall: RAMP.PAPER, signText: 'CIVIC HALL', portico: true, doubleDoor: true, doorAt: 3, litSeed: 76 }));
+  addPixmap(scene, 'bldg_theater', drawCityBuilding({ wallTiles: 5, upperRows: 2, wall: RAMP.RED, signText: 'ORPHEUM', marquee: true, doubleDoor: true, doorAt: 2, litSeed: 77 }));
+  addPixmap(scene, 'bldg_market', drawCityBuilding({ wallTiles: 6, upperRows: 1, wall: RAMP.GOLD, signText: 'MARKET', colonnade: true, doorAt: 3, litSeed: 78 }));
+  addPixmap(scene, 'bldg_brownstone', drawCityBuilding({ wallTiles: 4, upperRows: 3, wall: RAMP.EARTH, signText: 'FLATS', doorAt: 1, litSeed: 79 }));
+  addPixmap(scene, 'bldg_warehouse', drawCityBuilding({ wallTiles: 8, upperRows: 1, wall: RAMP.PAPER, signText: 'DEPOT', doubleDoor: true, doorAt: 4, litSeed: 80 }));
+  addPixmap(scene, 'bldg_neon', drawCityBuilding({ wallTiles: 4, upperRows: 2, wall: RAMP.NIGHT, signText: 'NEON', neon: true, doorAt: 1, litSeed: 81 }));
+  addPixmap(scene, 'bldg_deptstore', drawCityBuilding({ wallTiles: 8, upperRows: 3, wall: RAMP.PURPLE, signText: 'GRANDE', doubleDoor: true, doorAt: 4, litSeed: 82 }));
+  //   MEGA-BUILDINGS (tops off-screen — H ≥ 220px / ~14 tiles over a 24px hero):
+  addPixmap(scene, 'bldg_tower_glass', drawCityBuilding({ wallTiles: 6, upperRows: 12, wall: RAMP.BLUE, signText: 'MERIDIAN', tower: true, doubleDoor: true, doorAt: 2, litSeed: 71 }));
+  addPixmap(scene, 'bldg_tower_arms', drawCityBuilding({ wallTiles: 6, upperRows: 12, wall: RAMP.RED, signText: 'EMBERTON', tower: true, balconies: true, doorAt: 2, litSeed: 72 }));
+  addPixmap(scene, 'bldg_tower_corp', drawCityBuilding({ wallTiles: 7, upperRows: 13, wall: RAMP.NIGHT, signText: 'OMNICORP', tower: true, neon: true, doubleDoor: true, doorAt: 3, litSeed: 73 }));
+  // THE GENERATED CATALOG (S15i, ADR-050): 100+ deterministic facades across 13
+  // families + the COLOSSI, sliced per-area by AREA_SKINS so each level reads
+  // fresh. The forge (Movement Two) draws each area's growth from its own slice.
+  for (const b of GENERATED_BUILDINGS) addPixmap(scene, b.name, drawCityBuilding(b.opts));
 
   // buildings — deep oblique roofs, gablets, AC, awnings (ADR-019/020)
   addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true, ac: true, litSeed: 5 }));

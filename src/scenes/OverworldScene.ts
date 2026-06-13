@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Overworld: EB-style 8-direction movement with follower conga line, visible
  * roaming enemies (no random encounters — §A4.2), swirl-coded contact
  * advantage, doors, signs, phones (save = call Dad), and the Chapter 1
@@ -39,7 +39,7 @@
  * while q_mail is live. The full bot recipe (Mail Must Move end-to-end)
  * lives in engine/quests.ts's header; the JOURNAL drives from MenuScene.
  *
- * ── S14 QA recipe (THE GILDED GRIN — ran 2026-06-11, log in docs/QA.md):
+ * -- S14 QA recipe (THE GILDED GRIN — ran 2026-06-11, log in docs/QA.md):
  * Driver lore earned here: settle scene RESTARTS before pressing (a
  * restart eats latched presses), and trigger rects are EDGE-fired — a bot
  * canceled inside one must LEAVE and re-enter. KeyX on an ask still picks
@@ -73,6 +73,7 @@ import {
   MAPS,
   CHAR_LEGEND,
   BRICKTON_BUS_SPAWN,
+  BRICKTON_FOOT_SPAWN,
   carveHoldingRoom,
   type DoorZone,
   type MapDef,
@@ -188,6 +189,17 @@ export class OverworldScene extends Phaser.Scene {
   private mapDef!: MapDef;
   private solidTiles: boolean[][] = [];
   private solids: Rect[] = [];
+  /** ADR-051: texture-true entrance zones for facade props whose drawn sprite
+   *  disagrees with the map data's placement `u` — checkDoors prefers these */
+  private facadeDoorBox = new Map<PropDef, Rect>();
+  /** dev-only collision visualiser (toggle via window.mfSolids) */
+  private solidsOverlay?: Phaser.GameObjects.Graphics;
+  /** dev-only: facades whose data solid drifted from the drawn texture */
+  private facadeDrift: string[] = [];
+  /** ms left before any door may fire again — set on every map arrival so a
+   *  door can't instantly bounce you back the way you came (ADR-052 QOL) */
+  private doorCooldown = 0;
+  private static DOOR_REENTRY_MS = 900;
   private player!: Phaser.GameObjects.Sprite;
   private facing: Facing = 'down';
   private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean }> = [];
@@ -235,6 +247,9 @@ export class OverworldScene extends Phaser.Scene {
     this.roamers = [];
     this.patrols = [];
     this.solids = [];
+    this.facadeDoorBox.clear();
+    this.facadeDrift = [];
+    this.solidsOverlay = undefined;
     this.fireflies = [];
     this.holdingDoorImg = null;
     this.insideTriggers.clear();
@@ -246,6 +261,15 @@ export class OverworldScene extends Phaser.Scene {
     this.buildPlayer();
     this.buildRoamers();
     this.buildPatrols();
+    // dev-only collision visualiser: `mfSolids()` paints the solid + entrance
+    // rects over the world (ADR-051 verification); inert in production builds
+    if (import.meta.env.DEV) {
+      (window as unknown as { mfSolids?: (on?: boolean) => string }).mfSolids = (on = true) => this.debugSolids(on);
+    }
+    // ADR-052 QOL: on every arrival, lock doors briefly so the door you came
+    // through can't instantly fire again (the hotel<->overworld ping-pong) and
+    // the player gets a beat to catch their bearings before any door triggers.
+    this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
     // It is 2 AM until Glint's porch scene ends — dawn breaks after (§A6
     // Ch.1), and it breaks over the WHOLE Ch.1 outdoors: the hill shares the
     // story clock instead of carrying a permanent night flag (S9b — the
@@ -393,7 +417,27 @@ export class OverworldScene extends Phaser.Scene {
           : p.sprite;
       const img = this.add.image(p.x * 16, p.y * 16, sprite).setOrigin(0, 0);
       img.setDepth(p.y * 16 + img.height);
-      if (p.solid) {
+      if (sprite.startsWith('bldg_')) {
+        // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
+        // places a facade at a story count `u`; the forge/grown grammar often
+        // picks a `u` that disagrees with the sprite actually drawn, so the data
+        // solid was far too SHORT and the building's lower body had no collision
+        // (the user's "walk straight through"). We rebuild the solid(s) from the
+        // LOADED texture every time: the full drawn footprint MINUS the doorway
+        // you walk into — so collision is exactly what's on screen, on every
+        // shipped / grown / generated map, and you can't pass through a wall to
+        // reach a door. The entrance zone is derived the same way (facadeDoorBox).
+        for (const s of this.facadeSolids(p, img.width, img.height)) this.solids.push(s);
+        if (p.door) {
+          this.facadeDoorBox.set(p, {
+            x: p.x * 16 + p.door.ox,
+            y: p.y * 16 + img.height - 14,
+            w: p.door.w,
+            h: p.door.h,
+          });
+        }
+        this.auditFacade(p, sprite, img.height);
+      } else if (p.solid) {
         this.solids.push({
           x: p.x * 16 + p.solid.ox,
           y: p.y * 16 + p.solid.oy,
@@ -401,6 +445,9 @@ export class OverworldScene extends Phaser.Scene {
           h: p.solid.h,
         });
       }
+    }
+    if (this.facadeDrift.length && import.meta.env.DEV) {
+      console.warn(`[collision] ${this.facadeDrift.length} facade(s) re-fitted to texture on '${this.mapDef.id}':`, this.facadeDrift.slice(0, 8));
     }
     this.buildDoorMarkers();
   }
@@ -449,6 +496,65 @@ export class OverworldScene extends Phaser.Scene {
 
   /** every walkable door gets a visible marker (mat / stairs / elevator /
    *  a real swinging DOOR — S11b) */
+  /**
+   * A facade's collision = its REAL drawn footprint, MINUS the doorway you step
+   * into (ADR-051). Width + height come from the LOADED texture, so collision is
+   * EXACTLY the building on screen no matter what story count the map data placed
+   * it at (the walk-through fix). A DOORLESS facade is ONE solid block from the
+   * eaves (CAP px below the roofline — you can brush them) down to the foot: no
+   * walk-under strip. A DOORED facade is left-wall + right-wall + a lintel over
+   * the door, leaving ONLY the door column open so you can walk in (the entrance
+   * zone admits you there) while the rest of the wall is solid to the ground.
+   */
+  private static FACADE_CAP = 10; // walkable roof-eave margin at the very top
+  private static DOOR_OPENING = 18; // the doorway height left open to walk into
+  private facadeSolids(p: PropDef, wPx: number, hPx: number): Rect[] {
+    const left = p.x * 16;
+    const top = p.y * 16 + OverworldScene.FACADE_CAP;
+    const right = left + wPx;
+    const foot = p.y * 16 + hPx;
+    if (!p.door) return [{ x: left, y: top, w: wPx, h: foot - top }];
+    const dL = left + p.door.ox;
+    const dR = dL + p.door.w;
+    const doorTop = foot - OverworldScene.DOOR_OPENING;
+    const out: Rect[] = [];
+    if (dL > left) out.push({ x: left, y: top, w: dL - left, h: foot - top }); // wall left of the door
+    if (right > dR) out.push({ x: dR, y: top, w: right - dR, h: foot - top }); // wall right of the door
+    if (doorTop > top) out.push({ x: dL, y: top, w: p.door.w, h: doorTop - top }); // lintel over the door
+    return out;
+  }
+
+  /** dev-only: record facades whose DATA solid was SHORTER than the real texture
+   *  body (the placement `u` drifted from the sprite — the walk-through cases) */
+  private auditFacade(p: PropDef, sprite: string, hPx: number): void {
+    if (!import.meta.env.DEV || !p.solid) return;
+    if (p.solid.h < hPx - 26) {
+      this.facadeDrift.push(`${sprite}@(${p.x},${p.y}) data h=${p.solid.h} < body ${hPx - 22}`);
+    }
+  }
+
+  /**
+   * Dev collision visualiser (window.mfSolids(true|false)): paints every solid
+   * rect + each facade entrance zone over the world so collision can be eyeballed
+   * against the sprites. World-space, so it tracks the camera. Production-inert
+   * (only wired under import.meta.env.DEV).
+   */
+  private debugSolids(on = true): string {
+    this.solidsOverlay?.destroy();
+    this.solidsOverlay = undefined;
+    if (!on) return 'collision overlay OFF';
+    const g = this.add.graphics().setDepth(99998);
+    g.fillStyle(0xff3048, 0.3).lineStyle(1, 0xff5068, 0.95);
+    for (const s of this.solids) {
+      g.fillRect(s.x, s.y, s.w, s.h);
+      g.strokeRect(s.x, s.y, s.w, s.h);
+    }
+    g.fillStyle(0x40e0ff, 0.45);
+    for (const r of this.facadeDoorBox.values()) g.fillRect(r.x, r.y, r.w, r.h);
+    this.solidsOverlay = g;
+    return `collision overlay ON — ${this.solids.length} solids, ${this.facadeDoorBox.size} entrances`;
+  }
+
   private buildDoorMarkers(): void {
     this.doorImgs.clear();
     for (const d of this.mapDef.doors) {
@@ -482,11 +588,13 @@ export class OverworldScene extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setDepth(2); // floor decal, characters walk over it
     }
-    // building entrances: a mat on the doorstep
+    // building entrances: a mat on the doorstep (at the texture-true zone if the
+    // facade was re-fitted to its real sprite — ADR-051)
     for (const p of this.mapDef.props) {
       if (!p.door) continue;
+      const box = this.facadeDoorBox.get(p);
       const cx = p.x * 16 + p.door.ox + p.door.w / 2;
-      const by = p.y * 16 + p.door.oy + p.door.h;
+      const by = box ? box.y + box.h : p.y * 16 + p.door.oy + p.door.h;
       this.add.image(cx, by + 4, 'doormat').setOrigin(0.5, 1).setDepth(2);
     }
   }
@@ -614,8 +722,9 @@ export class OverworldScene extends Phaser.Scene {
     // S7: porch lights pool warm light at every doorstep on the 2AM street
     for (const p of this.mapDef.props) {
       if (!p.door) continue;
+      const box = this.facadeDoorBox.get(p);
       const cx = p.x * 16 + p.door.ox + p.door.w / 2;
-      const cy = p.y * 16 + p.door.oy - 6;
+      const cy = (box ? box.y : p.y * 16 + p.door.oy) - 6;
       const glow = this.add
         .circle(cx, cy, 15, colorOf(px(RAMP.GOLD, 2)), 0.22)
         .setDepth(805)
@@ -678,7 +787,11 @@ export class OverworldScene extends Phaser.Scene {
   /* ---------------- update loop ---------------- */
 
   override update(_t: number, dtMs: number): void {
+    // §A4: the vitals glance yields to ANY dialogue (item flavor, NPC, sign) —
+    // both live at the bottom, so never let them overlap
+    if (this.vitalsGlance?.visible && this.dlg.busy) this.hideVitals();
     const dt = Math.min(dtMs, 50) / 1000;
+    if (this.doorCooldown > 0) this.doorCooldown = Math.max(0, this.doorCooldown - dtMs);
     if (!this.cut && !this.dlg.busy && !this.transitioning) {
       this.updatePlayer(dt);
       this.updateRoamers(dt);
@@ -1260,7 +1373,7 @@ export class OverworldScene extends Phaser.Scene {
     // S14 (Bible Prompt 25): ADR-014's interim revive-all RETIRES. The
     // leader picks himself up at the last Dad-save; everyone else rides the
     // trail as haloed angels until a hospital (price scales by level), a
-    // Healing γ, or a rare item brings them back — hospitals ARE the economy.
+    // Healing ?, or a rare item brings them back — hospitals ARE the economy.
     const lead = GS.data.party[0];
     lead.down = false;
     lead.hp = lead.maxHp;
@@ -2469,6 +2582,7 @@ export class OverworldScene extends Phaser.Scene {
   /* ---------------- doors & triggers ---------------- */
 
   private async checkDoors(): Promise<void> {
+    if (this.doorCooldown > 0) return; // ADR-052: just arrived — let doors settle
     for (const d of this.mapDef.doors) {
       const r = { x: d.x * 16, y: d.y * 16, w: d.w * 16, h: d.h * 16 };
       if (
@@ -2488,7 +2602,9 @@ export class OverworldScene extends Phaser.Scene {
     }
     for (const p of this.mapDef.props) {
       if (!p.door) continue;
-      const r = {
+      // ADR-051: prefer the texture-true entrance zone (a facade re-fitted to its
+      // real sprite moves its doorstep with it), else the map data's zone
+      const r = this.facadeDoorBox.get(p) ?? {
         x: p.x * 16 + p.door.ox,
         y: p.y * 16 + p.door.oy,
         w: p.door.w,
@@ -2544,7 +2660,7 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /**
-   * S11b: an interior DOOR opens before it admits you — closed→open swap +
+   * S11b: an interior DOOR opens before it admits you — closed?open swap +
    * the creak, a short hold so the swing reads, then the S7 whoosh path.
    * Re-entry rebuilds the scene from data, so the door stands closed again.
    */
@@ -2669,6 +2785,9 @@ export class OverworldScene extends Phaser.Scene {
         break;
       case 'bus_stop_brickton':
         await this.busAsk('otterbrook');
+        break;
+      case 'orientation_gate':
+        await this.orientationGateScene();
         break;
       case 'brickton_clock_goal':
         if (!GS.flag('faye_joined') && !GS.flag('brickton_clock_goal')) await this.bricktonClockGoalScene();
@@ -3007,8 +3126,15 @@ export class OverworldScene extends Phaser.Scene {
     // reads as "balanced on the mountain", user-rejected)
     const impact = { x: 192, y: 110 };
     const dropMs = 2800;
-    const trailGlow = addTo(fx, this.add.rectangle(312 + 38, 26 - 26, 150, 7, 0xf8e8a0).setAngle(145).setAlpha(0.5));
-    const trailHot = addTo(fx, this.add.rectangle(312 + 21, 26 - 15, 84, 3, 0xf86f4f).setAngle(145).setAlpha(0.9));
+    // The trail STREAMS BEHIND the rock along its travel axis (145°, the line
+    // from the entry point to impact). "Behind" is the unit vector (0.819,
+    // -0.573) — up and to the right, toward where the rock came from. Each
+    // trail rect's CENTER sits ~(half its length) back along that vector, with
+    // a small overlap, so the rock rides the LEADING tip of the streak instead
+    // of floating mid-line (the user's "meteor is in the middle of its trail").
+    const behind = { x: 0.819, y: -0.573 };
+    const trailGlow = addTo(fx, this.add.rectangle(312 + behind.x * 70, 26 + behind.y * 70, 150, 7, 0xf8e8a0).setAngle(145).setAlpha(0.5));
+    const trailHot = addTo(fx, this.add.rectangle(312 + behind.x * 37, 26 + behind.y * 37, 84, 3, 0xf86f4f).setAngle(145).setAlpha(0.9));
     const rock = addTo(fx, this.add.image(312, 26, 'meteor_rock').setScale(0.34).setAngle(28).setTint(0xf8d868));
     AUDIO.sfx('meteor_fall');
     this.tweens.add({ targets: rock, scale: 0.62, angle: '+=210', duration: dropMs, ease: 'quad.in' });
@@ -3202,28 +3328,59 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  /**
+   * THE BRICKTON MINUTE (S15h) — a real beat on the same gate flag (was a
+   * walk-on-a-rect toast). The clock strikes seven wrong minutes, the block of
+   * blazers turns in unison, the CLOCK LADY (the NPC already standing there)
+   * reads you the city, and the Star Locket takes one impossible tick. Paced by
+   * the camera so each line lands, then the Heartlight jingle closes it.
+   */
   private async bricktonClockGoalScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('brickton_clock_goal');
+    // the clock, high over the plaza
+    this.cameras.main.pan(62 * 16, 13 * 16, 900, 'Sine.easeInOut', true);
+    await this.wait(400);
+    AUDIO.sfx('thud'); // it strikes
+    this.sparkleBurst(62 * 16 + 8, 13 * 16 + 6, 10);
+    await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(0, 2)); // the strike + the block turning
+    // the clock lady, leaning on the plaza rail, explains
+    this.cameras.main.pan(63 * 16, 15 * 16, 650, 'Sine.easeInOut', true);
     AUDIO.sfx('cursor');
-    this.cameras.main.pan(62 * 16, 14 * 16, 700, 'Sine.easeInOut', true);
-    await this.wait(300);
-    AUDIO.sfx('thud');
-    this.sparkleBurst(62 * 16 + 8, 14 * 16 + 8, 10);
-    await this.dlg.say(...DIALOGUE.brickton_goal_clock);
+    await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(2, 5)); // "@That is Brickton time…"
+    // back to the hero — the Locket takes the tick
+    this.cameras.main.pan(this.player.x, this.player.y, 650, 'Sine.easeInOut', true);
+    await this.wait(200);
+    this.sparkleBurst(this.player.x, this.player.y - 18, 12);
+    AUDIO.sfx('ember');
+    await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(5)); // the locket keeps it warm + the button
+    AUDIO.jingle('victory', 1600, this.mapDef.music);
     toast(this, 'GOAL: BRICKTON MINUTE');
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.cut = false;
   }
 
+  /**
+   * THE WARM DIAL TONE (S15h) — a real beat on the same gate flag. The payphone
+   * rings with no caller; the QUARTER MAN (already on the corner) names the note;
+   * the Locket folds the dial tone into the first Heartlight, and for one beat the
+   * gray city smells like home (§A4.4). Then the bus exhales it away.
+   */
   private async bricktonDialGoalScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('brickton_dial_goal');
+    // the payphone on the bus-stop corner
+    this.cameras.main.pan(14 * 16, 26 * 16, 800, 'Sine.easeInOut', true);
     AUDIO.sfx('phone');
-    await this.wait(260);
-    this.sparkleBurst(this.player.x, this.player.y - 18, 10);
-    await this.dlg.say(...DIALOGUE.brickton_goal_dial);
+    await this.wait(420);
+    await this.dlg.say(...DIALOGUE.brickton_goal_dial.slice(0, 4)); // the ring + the quarter man names the note
+    // the hero lifts the Locket to the receiver
+    this.sparkleBurst(14 * 16 + 8, 26 * 16, 10);
+    AUDIO.sfx('ember');
+    await this.dlg.say(...DIALOGUE.brickton_goal_dial.slice(4)); // it folds in + the smell of home + the gain
+    AUDIO.jingle('victory', 1600, this.mapDef.music);
     toast(this, 'GOAL: WARM DIAL TONE');
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.cut = false;
   }
 
@@ -3425,6 +3582,45 @@ export class OverworldScene extends Phaser.Scene {
     }
     if (dest === 'brickton') this.goThroughDoor('brickton', BRICKTON_BUS_SPAWN.x, BRICKTON_BUS_SPAWN.y, 'up');
     else this.goThroughDoor('otterbrook', 376, 442, 'up');
+  }
+
+  /* ---------------- THE ORIENTATION GATE (S15h, ADR-049) ---------------- */
+
+  /**
+   * MEADOW MILE's city line. The grandfather clause: the visitor badge OR a bus
+   * ride (`bus_ride_done`) walks you straight in, so BOTH ways into Brickton
+   * lead in. Otherwise three Blazer-Smiler "orientation exercises" (fights) earn
+   * the badge — each win sticks (orient_1..3), so a defeat (the engine respawns
+   * you at the last save) or a flee just sends you back to try again. Never a
+   * dead end — the retry law from birth.
+   */
+  private async orientationGateScene(): Promise<void> {
+    if (GS.flag('visitor_badge') || GS.flag('bus_ride_done')) {
+      AUDIO.stopMusic();
+      this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'up');
+      return;
+    }
+    this.cut = true;
+    AUDIO.sfx('cursor');
+    await this.dlg.say(...DIALOGUE.orient_intro);
+    const rounds = [DIALOGUE.orient_round_1, DIALOGUE.orient_round_2, DIALOGUE.orient_round_3];
+    const done = ['orient_1', 'orient_2', 'orient_3'].filter((f) => GS.flag(f)).length;
+    for (let i = done; i < 3; i++) {
+      await this.dlg.say(...rounds[i]);
+      const outcome = await this.startBattle(['blazer_smiler'], 'none', null, {});
+      if (outcome !== 'victory') {
+        this.cut = false; // defeat respawns at the last save; a flee drops you back on the road
+        return;
+      }
+      GS.setFlag(`orient_${i + 1}`);
+    }
+    GS.setFlag('visitor_badge');
+    AUDIO.jingle('victory', 1800, null);
+    await this.dlg.say(...DIALOGUE.orient_badge);
+    await this.dlg.say(...DIALOGUE.orient_arrival);
+    GS.setFlag('brickton_arrival_done'); // the foot arrival is its own beat — no later bus replay
+    AUDIO.stopMusic();
+    this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'up');
   }
 
   private async busCutscene(): Promise<void> {

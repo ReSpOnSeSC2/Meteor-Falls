@@ -486,3 +486,29 @@ Browser-proven this session via the dev driver: the SPRITE LAB → THE FORGE pag
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | 31 | **The Sprite Forge, at thumb scale** — open the Sprite Lab from the title's DEV menu and page to THE FORGE; cycle the forged grunts (^v) and the candidate faces (A) and confirm each composed face + its FULL/SCUFFED/BATTERED row read at phone size, and that a Ch.3 grunt shows a green RECORDED pick. Then open the Levelkit Lab, WALK the Wintermoor (Ch.3) dungeon, touch a forged grunt, and confirm it fights with its COMPOSED face — and that it visibly WEARS DOWN (scuff under 66%, batter under 33%) just like a shipped foe. `.shots/` of THE FORGE page + a forged grunt mid-battle at two wear tiers | ⬜ | ⬜ | Ch.3 roster is picked; Ch.4–10 grunts keep a borrowed placeholder until their chapter session picks faces. Bosses + heroes stay bespoke (never forged) |
+
+## S15h browser pre-flight — 2026-06-13, THE WORLD BLOCK (ADR-049)
+
+The towns grew up. Verified this session via the ADR-008 dev driver (warp → measured
+`game.step` walk → `window.shot`), the perf legs measured at the §S14d worst case
+(`pump(n, 8.33)`, 120Hz). The authoritative p99 ≤ 8.3ms gate HOLDS at the new sizes:
+
+| Leg | Result |
+|---|---|
+| **Grown Otterbrook renders** (70×56, 3920 tiles, 122 props) — the frozen 1995 core walks byte-identical (DRUGS, STARPORT, the lemonade corner, the kids, the cross lane); the new south civic spine + east blocks lay in clean | ✅ shots `world_otterbrook_cityhall`, `world_otterbrook_pond` |
+| **The landmarks read at thumb scale** — CITY HALL opens its door (the brick draft skin + the OTTERBROOK CITY HALL plaque; a bespoke facade is a promotion item, ADR-020); the CIVIC GREEN's nibbled hedges read as a park, not a rectangle (§B4); the POND PARK's water + two picnic rests sit before the south field | ✅ no collision snags on the walk |
+| **Otterbrook p99 walk** — south through the civic spine, east to the gateway, back | ✅ **p99 0.3ms / max 0.9ms** (gate ≤ 8.3ms) |
+| **Meadow Mile + the orientation gate** — the road wanders (never a straight corridor), treelines both edges, a picnic + payphone BEFORE the hot middle; the three Blazer-Smiler proctors man the overpass; reaching the city line WITHOUT the badge fires the gate scene ("A blazer-smiler steps onto the line…") | ✅ shots `world_meadow_mile_gate`, `world_meadow_mile_orientation_gate` |
+| **Grown Brickton renders** (144×76, 10944 tiles = literal 4×, 153 props) — the frozen 2077 downtown walks byte-identical (DINER/VIDEO, the east park, street B's poled wires, the parking lot, the Cage); MAPLE HEIGHTS' brick rows back onto Maple Street; the south gateway lands the foot route with a payphone rest | ✅ shots `world_brickton_downtown`, `world_brickton_maple_heights`, `world_brickton_south_gateway` |
+| **Brickton p99 walk** — the new south district, north into downtown, east toward the relocated docks | ✅ **p99 0.2ms / max 0.7ms** (gate ≤ 8.3ms — the 4× sprawl holds it; the tilemap culls, prop count barely moved) |
+| **The frozen cores are proven** — `src/data/world_block.test.ts`: two builds byte-identical, the live MAPS entry matches a fresh build, and the core GRID region equals the untouched `buildOtterbrook()`/`buildBrickton()` char-for-char (only Brickton's docks EXIT door relocates) | ✅ vitest |
+| **Brickton clears ADR-012 AT 4×** — `cityViolations(MAPS.brickton) === []` at 144×76 (the maps.test city sweep runs on it unexempted) | ✅ vitest |
+| `npm test` | ✅ validator (43 maps; map-quality 38+5, pressure 41+2) + full vitest green |
+
+### S15h (THE WORLD BLOCK) device rows — the reserved 25–27, claimed (appended to the S8 gate)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| 25 | **Grown Otterbrook, at thumb scale** — walk the grown town end-to-end: read the CIVIC GREEN (nibbled, irregular — a park, not a box), CITY HALL (enter it, talk to the Mayor + clerk, save at the lobby phone, exit lands on the jitter-derived doorstep), and the POND PARK (two picnic rests before the south field's danger) at phone size with NO collision snags; confirm the 1995 core (bus corner, lemonade, chapel) is exactly where it was; `.shots/` of the grown map | ⬜ | ⬜ | the byte-identical core is vitest-proven; this row is the human's thumb-scale read |
+| 26 | **Meadow Mile through the orientation gate** — leave Otterbrook's EAST gate on foot, walk MEADOW MILE (rest at the picnic/phone before the hot middle), reach the overpass, clear the THREE proctor fights for the VISITOR BADGE, and walk into grown Brickton — then confirm the CAGE block reads from the new street and the relocated docks sit at the city's east edge. LOSE a proctor fight on purpose and confirm you wake at the last save and the gate is still there (retry, never a dead end). Then ride the 6:15 instead and confirm the bus ALSO opens the line (the grandfather clause) | ⬜ | ⬜ | the gate scene fires browser-proven; the retry + grandfather paths want a device confirm |
+| 27 | **THE BRICKTON MINUTE + THE WARM DIAL TONE** — walk onto the civic-clock plaza and the bus-stop payphone (the two existing gate flags) and confirm each plays as a REAL staged beat now — the clock strikes, the block turns, the clock lady reads you the city, the Locket takes the tick; the phone rings, the quarter man names the note, the dial tone folds into the first Heartlight — not a bare toast. Both at thumb scale, both advancing cleanly by tap AND pad | ⬜ | ⬜ | same flags as before (`brickton_clock_goal`, `brickton_dial_goal`); the scenes are rebuilt, the gating unchanged |

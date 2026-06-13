@@ -76,9 +76,13 @@ import { mapQualityFlags } from '../src/levelkit/mapcheck';
 import { pressureReport, pressureHardFlags } from '../src/levelkit/pressure';
 // S15g 3b — THE SPRITE FORGE: the part catalog, the composer, the recorded picks
 import { composeEnemy, CATALOG, ROLE_POOLS, CHAPTER_REGION } from '../src/spritegen/parts';
-import { FORGED_ENEMIES } from '../src/levelkit/forge/registry';
+import { FORGED_ENEMIES, forgedBandIds } from '../src/levelkit/forge/registry';
 import { FACE_PICKS } from '../src/data/drafts/faces';
 import { PartsSpecSchema } from '../src/schemas';
+// S15g M4 — THE CHAPTER MANIFESTS: the per-chapter source of truth (ADR-047)
+import { CHAPTER_MANIFESTS } from '../src/data/chapters';
+import { ChapterManifestSchema } from '../src/schemas';
+import { BOSS_HP, MINIBOSS_HP } from '../src/levelkit/forge/curves';
 import { T } from '../src/palette';
 import type { ZodType } from 'zod';
 
@@ -1069,6 +1073,116 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
     if (def.partsSpec && shipped.has(def.sprite)) fail('sprite-forge', `forged '${def.id}' composed key '${def.sprite}' collides with a shipped sprite — shipped art would be overwritten`);
 }
 
+// THE CHAPTER MANIFESTS (S15g M4, ADR-047): the per-chapter source of truth.
+// A 'shipped' manifest is asserted AGAINST LIVE content (Ch.1–2 — maps,
+// settlements, boss, quests all exist and match); an 'unlanded' one is asserted
+// against the forge DRAFTS (Ch.3–10 — a forged roster + a draft boss, and the
+// boss is NOT yet a shipped enemy). The day a chapter lands, its session flips
+// status to 'shipped' and these live assertions switch on (the S14c rule).
+{
+  parseAll('chapters', ChapterManifestSchema as unknown as ZodType, CHAPTER_MANIFESTS);
+
+  // the COUNT is law — exactly ten chapters, keyed '1'..'10' (key === number)
+  const ids = Object.keys(CHAPTER_MANIFESTS);
+  if (ids.length !== 10) fail('chapters', `the §A6 arc is TEN chapters, found ${ids.length}`);
+  for (const [key, m] of Object.entries(CHAPTER_MANIFESTS)) {
+    if (key !== String(m.chapter)) fail('chapters', `manifest key '${key}' carries chapter ${m.chapter} — keys ARE the chapter number`);
+  }
+  for (let ch = 1; ch <= 10; ch++) {
+    if (!CHAPTER_MANIFESTS[String(ch)]) fail('chapters', `Ch.${ch} manifest missing — the arc is 1..10`);
+  }
+
+  for (const m of Object.values(CHAPTER_MANIFESTS)) {
+    const ch = m.chapter;
+
+    // the §A6 boss-HP ladder, pinned against the forge's curve constants (the
+    // shipped + the forged bosses read the same ladder; Ch.10's 6,000 shell is
+    // the bespoke finale, and the two minibosses ride MINIBOSS_HP)
+    if (ch <= 9) {
+      if (m.boss.hp !== BOSS_HP[ch]) fail('chapters', `Ch.${ch} boss '${m.boss.id}' HP is ${m.boss.hp}, §A6 ladder ${BOSS_HP[ch]}`);
+    } else if (m.boss.hp !== 6000) {
+      fail('chapters', `Ch.10 finale '${m.boss.id}' is the 6,000-HP shell (§A6), got ${m.boss.hp}`);
+    }
+    for (const mb of m.minibosses ?? []) {
+      const want = MINIBOSS_HP[mb.id as keyof typeof MINIBOSS_HP];
+      if (want === undefined) fail('chapters', `Ch.${ch} miniboss '${mb.id}' is not in the §A6 MINIBOSS_HP ladder`);
+      else if (mb.hp !== want) fail('chapters', `Ch.${ch} miniboss '${mb.id}' HP is ${mb.hp}, §A6 ${want}`);
+    }
+
+    if (m.status === 'shipped') {
+      // ── LIVE assertions: the manifest must match the shipped content ──
+      for (const id of m.maps) {
+        if (!MAPS[id]) fail('chapters', `Ch.${ch} (shipped) lists map '${id}' — not in MAPS`);
+      }
+      for (const d of m.dungeon.maps ?? []) {
+        if (!MAPS[d]) fail('chapters', `Ch.${ch} dungeon map '${d}' — not in MAPS`);
+      }
+      for (const s of m.settlements) {
+        const map = MAPS[s.id];
+        if (!map) fail('chapters', `Ch.${ch} settlement '${s.id}' — not in MAPS`);
+        else if (map.settlement !== s.kind) fail('chapters', `Ch.${ch} settlement '${s.id}' is tagged '${map.settlement ?? 'none'}', manifest says '${s.kind}'`);
+      }
+      // the boss drives a shipped, boss-flagged §A7 enemy at the canon HP
+      const boss = ENEMIES[m.boss.id];
+      if (!boss) {
+        fail('chapters', `Ch.${ch} boss '${m.boss.id}' — not in ENEMIES (a shipped chapter's boss is live)`);
+      } else {
+        if (boss.boss !== true) fail('chapters', `Ch.${ch} boss '${m.boss.id}' must carry boss: true`);
+        if (boss.hp !== m.boss.hp) fail('chapters', `Ch.${ch} boss '${m.boss.id}' HP is ${boss.hp} in ENEMIES, manifest ${m.boss.hp}`);
+      }
+      // a non-bespoke shipped boss runs on the phase machine (BOSS_SCRIPTS)
+      if (m.boss.template !== 'bespoke' && !BOSS_SCRIPTS[m.boss.id]) {
+        fail('chapters', `Ch.${ch} boss '${m.boss.id}' (template '${m.boss.template}') has no BOSS_SCRIPTS entry`);
+      }
+      // quests: every listed quest is live + tagged this chapter — BOTH directions
+      for (const q of m.quests) {
+        const quest = QUESTS[q];
+        if (!quest) fail('chapters', `Ch.${ch} quest '${q}' — not in QUESTS`);
+        else if (quest.chapter !== ch) fail('chapters', `Ch.${ch} lists quest '${q}', but it is tagged chapter ${quest.chapter}`);
+      }
+      for (const [qid, quest] of Object.entries(QUESTS)) {
+        if (quest.chapter === ch && !m.quests.includes(qid)) {
+          fail('chapters', `quest '${qid}' is chapter ${ch} but absent from the Ch.${ch} manifest — extend the manifest, never ad-hoc`);
+        }
+      }
+    } else {
+      // ── UNLANDED assertions: the forge DRAFTS exist; canon does not yet ──
+      if (!m.dungeon.site) fail('chapters', `unlanded Ch.${ch} names no dungeon site (the forge grammar the scaffold reads)`);
+      if (forgedBandIds(ch).length === 0) fail('chapters', `unlanded Ch.${ch} has no forged roster (forgedBandIds(${ch}) is empty)`);
+      // Prime Law 1: an unlanded boss is a DRAFT, never a shipped §A7 enemy
+      if (ENEMIES[m.boss.id]) fail('chapters', `unlanded Ch.${ch} boss '${m.boss.id}' is already a shipped enemy — promotion is a human act`);
+      if (m.boss.template !== 'bespoke' && !DRAFT_BOSS_SCRIPTS[m.boss.id]) {
+        fail('chapters', `unlanded Ch.${ch} boss '${m.boss.id}' has no forged draft in DRAFT_BOSS_SCRIPTS`);
+      }
+      for (const mb of m.minibosses ?? []) {
+        if (ENEMIES[mb.id]) fail('chapters', `unlanded Ch.${ch} miniboss '${mb.id}' is already a shipped enemy`);
+        if (mb.template !== 'bespoke' && !DRAFT_BOSS_SCRIPTS[mb.id]) {
+          fail('chapters', `unlanded Ch.${ch} miniboss '${mb.id}' has no forged draft in DRAFT_BOSS_SCRIPTS`);
+        }
+      }
+      // a shipped chapter fills these at landing; unlanded carries none yet
+      if (m.maps.length > 0 || (m.dungeon.maps?.length ?? 0) > 0) {
+        fail('chapters', `unlanded Ch.${ch} lists live maps — leave maps/dungeon.maps empty until it lands (the S14c flip)`);
+      }
+    }
+  }
+
+  // BOTH DIRECTIONS on the forge boss drafts: every DRAFT_BOSS_ID is claimed by
+  // exactly one unlanded chapter's boss or miniboss (never strand a draft).
+  const claimed = new Map<string, number>();
+  for (const m of Object.values(CHAPTER_MANIFESTS)) {
+    if (m.status !== 'unlanded') continue;
+    for (const id of [m.boss.id, ...(m.minibosses ?? []).map((b) => b.id)]) {
+      if (DRAFT_BOSS_SCRIPTS[id]) claimed.set(id, (claimed.get(id) ?? 0) + 1);
+    }
+  }
+  for (const id of DRAFT_BOSS_IDS) {
+    const c = claimed.get(id) ?? 0;
+    if (c === 0) fail('chapters', `forged boss draft '${id}' is claimed by no unlanded chapter manifest — wire it into a chapter`);
+    else if (c > 1) fail('chapters', `forged boss draft '${id}' is claimed by ${c} chapter manifests — a draft drives one chapter`);
+  }
+}
+
 // PICNIC (Prompt 23 / §A4.5): baskets pinned; the tables stand where canon says
 {
   if (!(ITEMS.basket_basic?.kind === 'basket' && ITEMS.basket_basic.price > 0)) {
@@ -1080,9 +1194,11 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
     }
   }
   // ≈3 tables per chapter, placed BEFORE dungeons (§A4.5): the Ch.1 four
-  // are canon placements now; Ch.2 sets three more + the antechamber's
+  // are canon placements now; Ch.2 sets three more + the antechamber's.
+  // S15h (ADR-049): grown Otterbrook adds two POND PARK rests (the §A4.5
+  // beat found before the new south field's danger), so its count is 3.
   const TABLES: Record<string, number> = {
-    otterbrook: 1,
+    otterbrook: 3,
     hickory_hill: 1,
     brickton: 1,
     dos_f2: 1,
@@ -1479,6 +1595,7 @@ const counts = [
   `${Object.keys(MAPS).length} maps`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
+  `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,
 ].join(' · ');
 
 if (errors.length > 0) {

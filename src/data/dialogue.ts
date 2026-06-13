@@ -86,6 +86,128 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'TRAIL COURTESY: pack out what you pack in. The slugs have unionized.',
   ],
 
+  /* ---------------- S15h — THE WORLD BLOCK (Otterbrook grew up) ---------------- */
+  // the new south + east blocks: one weird obsession each (§A11), warm + plain
+  npc_green_keeper: [
+    '@The Civic Green is the only park in Ohio with a feelings budget.',
+    "@I plant marigolds wherever the town's been grumpy. We had a LOT of grumpy this spring.",
+    '@Go on, stand on the grass a minute. It works on kids too.',
+  ],
+  npc_pond_angler: [
+    "@Forty years I've fished this pond. Caught a boot once, back in '78. Threw it back. Sportsmanship.",
+    "@There's no fish in here, kid. Never was. That is not the point of a pond.",
+  ],
+  npc_south_neighbor: [
+    '@We just moved out to the new south blocks. You can see SKY back here. Too much sky, if you ask me.',
+    '@In the old part of town, everybody already knew your dog. Out here I had to introduce mine TWICE.',
+  ],
+  npc_gate_walker: [
+    '@Some folks ride the 6:15 to Brickton. I WALK it. Meadow Mile, then the overpass. Builds character.',
+    "@Mind the proctors at the city line — they check your visitor badge. Mine's laminated.",
+  ],
+  npc_mayor_otter: [
+    '@Mayor of Otterbrook, twenty-two years running. Ran unopposed. Ran anyway.',
+    '@We finally built City Hall! Before this I governed from a booth at the diner. Terrible acoustics.',
+    '@New ordinance: the good dog on the WELCOME sign counts as half a citizen. Population 412 and a half.',
+  ],
+  npc_hall_clerk: [
+    '@City Hall — permits, parade routes, lost-and-found. How can I help?',
+    "@Mostly it's lost-and-found. Mostly Biscuit's tennis balls. We keep a whole DRAWER.",
+  ],
+  sign_otter_hall: [
+    'OTTERBROOK CITY HALL — built this year, at long last.',
+    '(The cornerstone went in a little crooked. The Mayor calls it "rustic.")',
+  ],
+  sign_civic_green: [
+    'THE CIVIC GREEN — please DO walk on the grass.',
+    '(A smaller sign underneath: "We mean it. The grass gets lonely.")',
+  ],
+  sign_pond_park: [
+    'POND PARK — no swimming, no lifeguard, no fish.',
+    '(Beneath, in marker: "Excellent for thinking. Bring a sandwich.")',
+  ],
+  sign_meadow_gate: [
+    'MEADOW MILE → BRICKTON CITY — on foot, past the overpass.',
+    '(An arrow points east. Someone added: "...or take the bus, coward.")',
+  ],
+  sign_hall_wall: [
+    'TOWN NOTICE BOARD — Lost dog: found. Bake sale: eaten.',
+    'Council meeting Thursday. Topic: a SECOND stop sign. Bold of us.',
+  ],
+
+  /* ---------------- S15h — MEADOW MILE + THE ORIENTATION GATE ---------------- */
+  meadow_mile_sign_0: [
+    'MEADOW MILE — one mile of meadow, give or take a meadow.',
+    '(Mile marker 0 has been doodled into a smiley face. Of course it has.)',
+  ],
+  meadow_mile_sign_1: [
+    'BRICKTON CITY LIMITS AHEAD — mind the overpass.',
+    '(Hand-painted underneath: "The city is bigger than you. Be polite about it.")',
+  ],
+  sign_overpass_gate: [
+    'BRICKTON VISITOR ORIENTATION — all newcomers processed at the line.',
+    '(Smaller: "Have your badge ready. Or your smile. Preferably both.")',
+  ],
+  npc_proctor: [
+    '@WELCOME, prospective visitor! (The smile does not move when she talks.)',
+    '@Orientation is MANDATORY and FUN. Around here those are the same word.',
+  ],
+  npc_road_traveler: [
+    '@Walking to Brickton, huh? Brave. The bus has a roof, you know.',
+    "@Mind the proctors at the overpass. They are VERY glad to see you. That's the problem.",
+  ],
+  orient_intro: [
+    'A blazer-smiler steps onto the line, clipboard glowing faintly.',
+    "@WELCOME to Brickton Visitor Orientation! Three quick exercises and you're a CERTIFIED guest!",
+    '@Exercise one: enthusiasm. Show us your enthusiasm. (He raises his fists. This is the exercise.)',
+  ],
+  orient_round_1: ['@EXERCISE ONE — greet your greeter with ENERGY!'],
+  orient_round_2: ['@EXERCISE TWO — maintain eye contact and POSITIVITY!'],
+  orient_round_3: ['@FINAL EXERCISE — you may now express how GLAD you are to be here!'],
+  orient_badge: [
+    'The last blazer-smiler straightens his tie and beams, defeated and delighted.',
+    '@CONGRATULATIONS! You are a CERTIFIED VISITOR. Here is your badge. Do not lose it.',
+    '* You got the VISITOR BADGE! The city line is open — you can walk in any time now.',
+  ],
+  orient_arrival: [
+    'You cross the overpass into Brickton. The city does not look up.',
+    '(Somewhere ahead, a clock is seven minutes fast. On purpose.)',
+  ],
+
+  /* ---------------- S15h — BRICKTON SPRAWLS (the new districts) ---------------- */
+  npc_maple_resident: [
+    '@Welcome to MAPLE HEIGHTS. No maples. No heights. The brick is real, though.',
+    '@My apartment has a VIEW. Of another apartment. With a view of mine. We wave.',
+  ],
+  npc_south_vendor: [
+    '@Fresh off the new street! Get your... I genuinely forget what these are. They were on sale.',
+    '@Two for a dollar. One for a dollar. Pricing is an art, not a science.',
+  ],
+  npc_new_commuter: [
+    "@This whole block wasn't here last month. I think. I don't look up much.",
+    '@They built east, then south, then east again. The bus map gave up. I respect that.',
+  ],
+  npc_dockward: [
+    '@Docks? End of the line, keep heading east. They moved the whole port when the city grew.',
+    '@Used to be right downtown. Now it is a HIKE. Progress smells like low tide.',
+  ],
+  sign_maple_heights: [
+    'MAPLE HEIGHTS — brick rows, fair rent, zero maples.',
+    '(A tenant has amended it: "the rent is not fair. the brick is still brick.")',
+  ],
+  sign_cage_block: [
+    'THE CAGE — full court, two blocks north. Respect the chain.',
+    '(An arrow points back toward downtown. The arrow has been dunked on.)',
+  ],
+  sign_south_gate: [
+    'BRICKTON CITY LINE — visitors, mind the overpass.',
+    '(Below: "Meadow Mile, that way. Bring water. Bring a smile. They check.")',
+  ],
+  sign_new_docks: [
+    'BRICKTON DOCKS → keep east, to the water.',
+    '(The old "TO DOCKS" sign downtown still points here. Not wrong, just optimistic.)',
+  ],
+
   /* ---------------- doors that aren't doors yet ---------------- */
   locked_chapel: [
     'The chapel doors are closed this late. A small card reads:',
@@ -421,20 +543,30 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '"Unauthorized sadness should be reported to your nearest enthusiastic adult."',
     '(The notice has no phone number. It assumes enthusiasm will find you.)',
   ],
+  // S15h — THE BRICKTON MINUTE, rebuilt as a real beat (same gate flag): the
+  // clock strikes, the city reacts in unison, the clock lady reads you the city,
+  // and the Star Locket takes one impossible tick. (Paced by the scene's camera.)
   brickton_goal_clock: [
-    'The civic clock clicks seven wrong minutes at once.',
-    'Every blue blazer on the block turns toward it, smiles, and turns away again like a row of appliances.',
-    '@That is Brickton time, honey. (The clock lady taps the glass.) Seven minutes fast, on purpose.',
-    '@A city this big needs a head start on bad news.',
-    '(The Star Locket takes one impossible tick from the clock and keeps it warm.)',
-    '* GOAL: Borrowed a BRICKTON MINUTE!',
+    'High over the plaza, the civic clock clicks SEVEN wrong minutes at once.',
+    'Every blue blazer on the block turns toward it, smiles, and turns back — a row of appliances on the same timer.',
+    '@That is Brickton time, honey. (The clock lady taps the glass without looking up.)',
+    '@Seven minutes fast. On purpose. A city this big needs a head start on bad news.',
+    "@Most folks never notice. You did. That is a city kind of noticing.",
+    'You hold up the Star Locket. It takes one impossible tick off the clock — a minute that never happened — and keeps it warm.',
+    'The clock shows the right time for exactly one second, looks embarrassed, and goes back to being wrong.',
+    '* You borrowed a BRICKTON MINUTE. (The first Heartlight hums in the Locket.)',
   ],
+  // S15h — THE WARM DIAL TONE, rebuilt as a real beat (same gate flag): the
+  // payphone rings with no caller, the quarter man names the note, and the dial
+  // tone folds into the first Heartlight — a beat of home in a gray city (§A4.4).
   brickton_goal_dial: [
-    'The payphone rings once.',
+    'On the corner, the payphone rings exactly once.',
     'Nobody is calling. Somehow, it still feels answered.',
-    '@Hear it? (The quarter man smiles without showing teeth.) Area code 216, B flat, warm as toast.',
-    'You hold the Star Locket near the receiver. The dial tone folds itself into the first Heartlight.',
-    '* GOAL: Caught a WARM DIAL TONE!',
+    '@Hear that? (The quarter man smiles without showing teeth, a coin walking across his knuckles.)',
+    '@Area code 216. B flat. Warm as toast left in the sun. Best sound this whole gray city makes.',
+    'You lift the Locket to the receiver. The dial tone leans in, curious, and folds itself into the first Heartlight.',
+    'For a moment the corner smells like your kitchen at home. Then a bus exhales, and it is just a corner again.',
+    '* You caught a WARM DIAL TONE. (The Homesong gains its first warm note.)',
   ],
   brickton_goal_gate_none: [
     'The Department doors slide open one inch, inspect your face, and slide shut.',

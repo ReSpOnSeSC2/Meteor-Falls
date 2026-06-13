@@ -46,9 +46,11 @@ export class MenuScene extends Phaser.Scene {
   private dlg!: Dialogue;
   private mapMusic = '';
   private pageObjs: Phaser.GameObjects.GameObject[] = [];
-  /** S15g: the EarthBound bottom-of-screen party vitals strip (yields to the
-   *  item description panel — never overlaps it) */
+  /** S15g: the EarthBound bottom-of-screen party vitals strip (yields to any
+   *  other bottom UI — the item description panel AND dialogue — never overlaps) */
   private vitals!: VitalsBar;
+  /** how many item DESCRIPTION panels are open right now (the strip yields) */
+  private infoPanels = 0;
 
   constructor() {
     super('menu');
@@ -69,10 +71,17 @@ export class MenuScene extends Phaser.Scene {
       .bitmapText(this.scale.width - cw + 2, 15, 'retro', cash, 6)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
-    // §A4: the party HP/PP strip along the bottom (the user's decree) — it
-    // yields to the item description panel, which also lives at the bottom
-    this.vitals = makeVitalsBar(this, { yieldToItemInfo: true });
-    this.vitals.show();
+    // §A4: the party HP/PP strip along the bottom (the user's decree). It must
+    // YIELD to anything else that lives at the bottom — the item DESCRIPTION
+    // PANEL *and* a DIALOGUE box (item flavor text) — so they never overlap
+    // (§A4 readability). One predicate, polled each frame; show/hide idempotent.
+    this.vitals = makeVitalsBar(this);
+    this.events.on('mf-iteminfo-open', () => (this.infoPanels += 1));
+    this.events.on('mf-iteminfo-closed', () => (this.infoPanels = Math.max(0, this.infoPanels - 1)));
+    everyFrame(this, () => {
+      if (this.dlg.busy || this.infoPanels > 0) this.vitals.hide();
+      else this.vitals.show();
+    });
     void this.mainLoop();
   }
 

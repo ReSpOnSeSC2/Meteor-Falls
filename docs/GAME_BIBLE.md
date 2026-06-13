@@ -456,6 +456,44 @@ meteor-falls/
   single shop strip. Enforced by the city-structure test sweep; cross-map coordinates
   that touch jittered placement are computed, never hardcoded. *(Amended 2026-06-10 per
   Appendix rule 6, alongside ADR-012.)*
+- **BUILDINGS MATCH THE HUMANS, and the catalog is deep (ADR-050).** Characters are
+  16×24; a storefront reads two-to-three stories OVER the hero, and cities carry
+  **MEGA-buildings** that are COMMON, not rare — towers whose tops run off-screen
+  (`upperRows ≥ 11`, `H ≥ 220px`) and landmark COLOSSI whose footprint spans a slice
+  of the map (you round them on foot). The forge skin pool is 100+ deterministic
+  facades across 13 families (`src/spritegen/buildings.ts`). A FACADE COLLIDES AS ITS
+  REAL DRAWN FOOTPRINT (ADR-051): the OverworldScene rebuilds every `bldg_*` solid +
+  entrance zone from the LOADED TEXTURE at scene-build — the full footprint MINUS the
+  doorway you walk into (left-wall + right-wall + lintel for a doored facade) — so
+  collision matches what's on screen even when the map data placed the facade at a story
+  count that disagrees with the sprite. A building can never be walked through (player
+  OR enemy — roamers/patrols share `collides()`), on any shipped / grown / generated map;
+  `window.mfSolids()` is the dev overlay. Entering a room locks doors for ~0.9 s
+  (`DOOR_REENTRY_MS`, ADR-052) so the door you came through can't bounce you back.
+  *(Added 2026-06-13 per Appendix rule 6, alongside ADR-050/051/052.)*
+- **EACH AREA FEELS FRESH — per-area building skins (ADR-050).** Every named level
+  area draws its facades ONLY from its own curated slice of the catalog (`AREA_SKINS`
+  in `src/spritegen/buildings.ts`): a distinct family mix + ramp palette, so no two
+  areas read alike (Otterbrook's warm low brownstones ≠ Brickton's cool glass towers ≠
+  Puerto Sol's colonial faces). A NEW area MUST register its own skin set — never reuse
+  another area's roster. *(Added 2026-06-13 per Appendix rule 6.)*
+- **MAPS BREATHE, AND MOSTLY GROW (the size law).** Every map feels like a
+  real place — organic irregular edges, varied block shapes + access (linear and
+  sporadic), and NOOK variety (shacks, alleys, vacant lots, courtyards, rooftops,
+  underground/sewer stretches, wooded pockets). Going forward maps vary in size AND in
+  transition count, and most keep getting LARGER unless the aesthetic demands smaller
+  (Hawaii reads claustrophobic, true to life). Stay in the p99 envelope: the tilemap
+  CULLS, so PROP COUNT is the real lever (`bench-map.ts MAX_PROPS`); mega-buildings are
+  few props for many tiles, so lean into them. Every grown area EARNS its size with
+  CONTENT (a task/quest or two, purposeful NPCs, a hidden reward in a nook, a cutscene
+  beat) — new space without new things to do is empty. *(Added 2026-06-13.)*
+- **THE OPENING GATES THE WORLD (the daybreak law).** Ch.1's night section is sealed:
+  the wider world past the hometown treeline is NOT reachable until the beginning ends
+  and it is light out (the `zapper_done` flag flips `storyNight`→day across
+  `otterbrook`/`hill_road`/`hickory_hill`). At daybreak the world OPENS, every NPC on
+  the far side of the treeline swaps to its `dialogueDay` line, and the road onward
+  carries a meteor-drop ROADBLOCK the player must route around — travel is never a
+  silent corridor. *(Added 2026-06-13.)*
 
 ---
 
