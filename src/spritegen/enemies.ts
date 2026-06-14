@@ -1179,6 +1179,48 @@ export interface EnemyBattleArt {
   draw: (wear: WearTier) => Pixmap;
 }
 
+/**
+ * §A7 Ch.3 (ADR-095) — the live England roster's dev-art faces. Each Ch.3 enemy
+ * wears one of the SIX forged Ch.3 faces, grouped by silhouette family (ADR-046),
+ * COMPOSED here from the hand-drawn part catalog (parts/index.ts) so every wear
+ * tier reads the drums exactly like a forged grunt. These are the canon copies of
+ * the forge's Ch.3 picks (the draft FACE_PICKS stays Lab-only, Prime Law 1);
+ * bespoke per-enemy silhouettes land in the art pass. The keys agree with each
+ * EnemyDef.sprite/.mini (wear-gate pinned both directions).
+ */
+export const CH3_FACE_SPECS: Record<string, PartsSpec> = {
+  battle_ch3_grunt_0: { silhouette: 'blob', material: 'iron', accessory: 'dots', wear: 'dents', region: 'fog', seed: 940144808 },
+  battle_ch3_bruiser_1: { silhouette: 'cabinet', material: 'iron', accessory: 'grin', wear: 'dents', region: 'fog', seed: 2802890885 },
+  battle_ch3_caster_2: { silhouette: 'totem', material: 'lacquer', accessory: 'cyclops', wear: 'cracks', region: 'fog', seed: 3603594537 },
+  battle_ch3_lurker_3: { silhouette: 'wisp', material: 'stone', accessory: 'cyclops', wear: 'scorch', region: 'fog', seed: 427607496 },
+  battle_ch3_grunt_4: { silhouette: 'blob', material: 'cloth', accessory: 'glare', wear: 'dents', region: 'fog', seed: 723260049 },
+  battle_ch3_caster_5: { silhouette: 'wisp', material: 'ember', accessory: 'cyclops', wear: 'scorch', region: 'fog', seed: 3953429982 },
+};
+
+/** which forged face each Ch.3 enemy wears (its EnemyDef.sprite must agree) */
+const CH3_ENEMY_FACE: Record<string, string> = {
+  prefect_drone: 'battle_ch3_grunt_4',
+  possessed_textbook: 'battle_ch3_caster_2',
+  fog_hound: 'battle_ch3_lurker_3',
+  tea_poltergeist: 'battle_ch3_caster_5',
+  cricket_eleven: 'battle_ch3_grunt_0',
+  greenhouse_creeper: 'battle_ch3_bruiser_1',
+  pillar_box: 'battle_ch3_bruiser_1',
+  brolly_bat: 'battle_ch3_lurker_3',
+  moor_sheep: 'battle_ch3_grunt_0',
+  soot_imp: 'battle_ch3_grunt_0',
+  detention_desk: 'battle_ch3_bruiser_1',
+  schedule_bell: 'battle_ch3_caster_2',
+  foggy_locker: 'battle_ch3_bruiser_1',
+  tea_trolley: 'battle_ch3_caster_5',
+  telephone_box: 'battle_ch3_bruiser_1',
+  overdue_tome: 'battle_ch3_caster_2',
+  roman_sentry: 'battle_ch3_lurker_3',
+  head_prefect: 'battle_ch3_grunt_4',
+  boiler_golem: 'battle_ch3_caster_5',
+  the_invigilator: 'battle_ch3_lurker_3',
+};
+
 export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   cranky_mailbox: { sprite: 'battle_cranky_mailbox', draw: drawCrankyMailbox },
   runaway_lawnmower: { sprite: 'battle_runaway_lawnmower', draw: drawRunawayLawnmower },
@@ -1197,6 +1239,15 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   banana_bunch: { sprite: 'battle_banana_bunch', draw: drawBananaBunch },
   jungle_jitterbug: { sprite: 'battle_jungle_jitterbug', draw: drawJungleJitterbug },
   gilded_grin: { sprite: 'battle_gilded_grin', draw: (w) => drawGildedGrin(w, false) },
+
+  // §A7 Ch.3 (ADR-095) — the England roster, each wearing its forged face
+  // (CH3_ENEMY_FACE → CH3_FACE_SPECS), composed through the hand-drawn parts.
+  ...Object.fromEntries(
+    Object.entries(CH3_ENEMY_FACE).map(([id, faceKey]) => [
+      id,
+      { sprite: faceKey, draw: (w: WearTier) => composeEnemy(CH3_FACE_SPECS[faceKey], w) },
+    ]),
+  ),
 };
 
 /**

@@ -75,4 +75,21 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_valle_greet',
     farewell: 'shop_valle_bye',
   },
+  /* ---- S18 (ADR-095): the §A8 Ch.3 shelf — Foggybottom's chemist (one shop per
+   *  settlement). TEA IS PP this chapter; the chemist also keeps the chapter's
+   *  cures (the Hushed throat, the chalk-dust tears), damp-stone food, and a hat +
+   *  coat for the moor. Affordable on the Ch.3 Fortune Arc (§A9). One obsession:
+   *  tea is steeped CORRECTLY or not at all. ---- */
+  foggybottom_chemist: {
+    id: 'foggybottom_chemist',
+    name: "BOOTHE'S CHEMIST & TEAS",
+    keeperNpc: 'fb_chemist',
+    stock: [
+      'honey_lozenge', 'eye_drops', 'builders_tea', 'earl_grey', 'school_cocoa',
+      'scone_clotted_cream', 'crumpet', 'fish_and_chips', 'pork_pie', 'marmite_toast',
+      'cricket_cap', 'tweed_waistcoat', 'rain_charm',
+    ],
+    greet: 'shop_fb_chemist_greet',
+    farewell: 'shop_fb_chemist_bye',
+  },
 };

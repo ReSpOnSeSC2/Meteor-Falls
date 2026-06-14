@@ -6,8 +6,95 @@
  * validate` sweeps for typos (S5). Types z.infer'd from src/schemas.
  */
 import type { DialogueScript } from '../schemas';
+import { CITYLIFE_DIALOGUE } from './citylife_text';
 
 export const DIALOGUE: Record<string, DialogueScript> = {
+  // S18 — the occupyCity pass's voice pools (knock-knock + resident/keeper/civic)
+  ...CITYLIFE_DIALOGUE,
+  /* ═══════════════ CHAPTER 3 — ENGLAND (S18, ADR-095, Half 1) ═══════════════
+   * §A11 voice: damp-Tyne stone + institution-fear, one obsession per soul,
+   * sincerity never the joke. The machine-fog is the chapter's dread — kept
+   * plain, never funny. Flair is rare (≤1 warm glyph, only where earned) and
+   * never on the shop's buy/sell surface (§A11.9 discipline). The story beats
+   * (Milo's join, the Borrow, the boss) land in the story half. */
+  // — LUCILLE, the flight in (the §A6 arrival cutscene stages here later) —
+  npc_bert_air: [
+    "@Mind your boots on the wickerwork — that's a LADY you're standing in. Lucille, say hello.",
+    '@She crossed the North Sea on spite and one good magneto. Don\'t thank me, thank her.',
+    '@Fog like soup down there. Machine-made, if you ask a man who reads weather for a living. {g:cloud}',
+  ],
+  sign_lucille_placard: [
+    'A brass placard, lovingly over-polished: "LUCILLE — built 1928, retired never."',
+    '(Below, in Uncle Bert\'s hand: "If you can read this, you are too close to the propeller.")',
+  ],
+  // — FOGGYBOTTOM-ON-TYNE — townsfolk, one obsession each —
+  npc_fb_chemist: [
+    "@Welcome to Boothe's. Cures on the left, biscuits on the right, and the TEA — well, the tea is the whole argument.",
+    "@Builder's for the nerves, Earl Grey for the posture, cocoa for the truly defeated. I'll not be told otherwise.",
+  ],
+  npc_fb_fishmonger: [
+    "@River's wrong today. Flat as a school photo. She's never flat, the Tyne — somebody's gone and TAKEN her ripples.",
+    '@Up at that school, I shouldn\'t wonder. Everything goes quiet up that hill, and quiet costs.',
+  ],
+  npc_fb_post: [
+    '@Don\'t post anything in the red box on the corner. It reads them. It GRADES them.',
+    '@Gave my sister\'s Christmas card a C-minus and "shows little effort." She cried for a week.',
+  ],
+  npc_fb_boy: [
+    '@The fog tastes of pennies now. It never used to taste of anything at all.',
+    "@Me mam says don't lick the fog. But how's she know it's pennies, if she's never licked it?",
+  ],
+  sign_foggybottom: [
+    'FOGGYBOTTOM-ON-TYNE — twinned with nowhere, on account of the fog.',
+    '(Someone has scratched out the weather box and written, simply, "YES.")',
+  ],
+  sign_fog_road: [
+    'THE FOG ROAD — up the hill to Wintermoor Academy, the Old Stones, and worse weather.',
+    '(A newer sign bolted over the old: "ACADEMY GROUNDS — PROSPECTIVE PUPILS ONLY. BE PUNCTUAL.")',
+  ],
+  sign_quay: [
+    'THE QUAY — water steps slippery. The Tyne is colder than it looks, and it looks freezing.',
+  ],
+  // the chemist's shop surface (no flair here — §A11.9 menu/shop discipline)
+  shop_fb_chemist_greet: ["@Boothe's Chemist & Teas. Pick your poison — most of mine are the cure."],
+  shop_fb_chemist_bye: ['@Mind the fog. And steep it properly, for pity\'s sake.'],
+
+  // — THE FOG ROAD (the moor) —
+  npc_moor_rambler: [
+    '@Public footpath, this. Has been since before the school, before the Romans, before the FOG.',
+    '@I walk it every day to prove a point. The point is: you cannot fence a moor. They keep trying.',
+  ],
+  sign_moor: [
+    'THE FOG ROAD — Wintermoor Academy this way. Mind the sheep. The sheep mind nothing.',
+    '(A walker\'s note, pinned and rain-curled: "the hound is not a dog. do not whistle for it.")',
+  ],
+  // — WINTERMOOR ACADEMY (the grounds) —
+  npc_wm_porter: [
+    "@Name, house, and reason for being late. You're ALL late. Everyone is late now — it's school policy.",
+    '@Can\'t let you past the lodge without a slip. The Headmaster issues the slips. The Headmaster is... busy.',
+  ],
+  npc_wm_groundskeeper: [
+    "@Forty years I've kept these grounds. Then the machine started making its own weather and the roses gave UP.",
+    "@Can't think straight without a proper brew — and my thermos's gone cold as the fog. Cold tea's no tea at all.",
+  ],
+  npc_wm_student: [
+    '@We don\'t have lessons any more. We have OPTIMISATION. The bell rings and we feel improved. I think.',
+    "@I used to like Tuesdays. The mainframe optimised Tuesdays. Now there's just... more Monday.",
+  ],
+  sign_wintermoor_gate: [
+    'WINTERMOOR ACADEMY — "We Shape the Whole Child." (Est. 1874. Optimised 13 weeks ago.)',
+    '(A newer brass plate, screwed in crooked: "HAPPINESS IS COMPULSORY AND MEASURED HOURLY.")',
+  ],
+  sign_cricket_pitch: [
+    'THE FIRST XI NETS — practice is now CONTINUOUS, by order of the timetable.',
+    '(Eleven small caps wait in a row on the bench. None of them is allowed to stop.)',
+  ],
+  // — THE OLD STONES (the Resonance Site; the locket scene lands in the story half) —
+  sign_old_stones: [
+    'THE OLD STONES — older than the school, older than the fog, older than asking why.',
+    '(Stand in the middle and they hum, very faintly. Something in your pocket hums back.)',
+  ],
+
   /* ---------------- NPCs ---------------- */
   // S15c: at 2 A.M. the BOOM is minutes old — she speaks in the present
   // tense (her morning ask, q_biscuit_ask, opens at dawn through pemmelBeat)

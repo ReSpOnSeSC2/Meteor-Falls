@@ -106,9 +106,11 @@ import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, toast, vars, DEPTH_UI, overscanRect } from '../ui/windows';
+import { TrafficSim, cellKey } from '../engine/traffic';
+import { VEHICLE_CATALOG, VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
-import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
+import { TILE_SOLID, standFrame, facingFromVec, FACING_VEC, type Facing } from '../spritegen';
 import {
   instantWin,
   expShare,
@@ -223,6 +225,25 @@ export class OverworldScene extends Phaser.Scene {
   private vitalsGlance: VitalsBar | null = null;
   /** debounce so the opening tap can't immediately re-close (and vice versa) */
   private vitalsLockUntil = 0;
+  /** S18 M26 (ADR-067): ambient road traffic — the living-world layer. The sim
+   *  (engine/traffic) owns the WHERE + the SAFETY LAW (it never crushes or corner-
+   *  traps the player); the scene pools + lerps the sprites between tile-hops.
+   *  Built only for OUTDOOR settlement maps that actually have a road grid. */
+  private traffic?: TrafficSim;
+  private trafficSprites = new Map<number, Phaser.GameObjects.Image>();
+  private trafficAccumMs = 0;
+  private trafficRoadVeh: string[] = [];
+  /** full-body collision rects (px) for the live cars — folded into collides()
+   *  so a car is SOLID all the way around (ends + sides), tracking the lerped
+   *  sprite. The sim's SAFETY LAW (never the player's cell / last lane) keeps any
+   *  overlap transient: cars keep rolling, so you're never trapped. */
+  private trafficRects: Rect[] = [];
+  /** native sprite body size per vehicle texture (for the collision rect) */
+  private trafficDims = new Map<string, { w: number; h: number }>();
+  private static TRAFFIC_STEP_MS = 360; // ms per one-tile hop (lerped between)
+  // cars draw at native ~32×19; a hero frame is 24×32, so unscaled cars look like
+  // toys. Scale them up so a sedan reads as a real, person-dwarfing vehicle.
+  private static TRAFFIC_SCALE = 1.7;
 
   constructor() {
     super('overworld');
@@ -261,6 +282,7 @@ export class OverworldScene extends Phaser.Scene {
     this.buildPlayer();
     this.buildRoamers();
     this.buildPatrols();
+    this.buildTraffic();
     // dev-only collision visualiser: `mfSolids()` paints the solid + entrance
     // rects over the world (ADR-051 verification); inert in production builds
     if (import.meta.env.DEV) {
@@ -819,6 +841,113 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.updateNpcs(dt);
     this.updateFireflies(dt);
+    if (!this.transitioning) this.updateTraffic(dtMs);
+  }
+
+  /* ---------------- S18 M26 (ADR-067): ambient road traffic ---------------- */
+
+  /** stable 32-bit hash of a map id → a per-map traffic seed (determinism) */
+  private hashId(s: string): number {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  /** stand up the traffic sim for outdoor settlement maps that have real roads */
+  private buildTraffic(): void {
+    this.traffic = undefined;
+    this.trafficSprites.forEach((s) => s.destroy());
+    this.trafficSprites.clear();
+    this.trafficRects = [];
+    this.trafficAccumMs = 0;
+    if (this.mapDef.interior || !this.mapDef.settlement) return;
+    // collect the drivable cells (road / dashed centerline / crosswalk)
+    const grid = this.mapDef.grid;
+    const roads = new Set<string>();
+    for (let y = 0; y < grid.length; y++) {
+      const row = grid[y];
+      for (let x = 0; x < row.length; x++) {
+        const ch = row[x];
+        if (ch === 'R' || ch === 'D' || ch === 'X') roads.add(cellKey(x, y));
+      }
+    }
+    if (roads.size < 12) return; // a path-only town (Otterbrook) gets no cars
+    // the civilian road fleet (no tanks on Main Street): catalog names are the
+    // sprite keys, so the type the sim carries IS the texture to draw
+    if (this.trafficRoadVeh.length === 0) {
+      for (const v of VEHICLE_CATALOG) {
+        const s = VEHICLE_SPECS[v.type];
+        if (!s || s.terrain !== 'road' || s.hardened) continue;
+        this.trafficRoadVeh.push(v.name);
+        this.trafficDims.set(v.name, { w: s.w, h: s.h });
+      }
+    }
+    if (this.trafficRoadVeh.length === 0) return;
+    const max = Math.max(3, Math.min(16, Math.floor(roads.size / 40)));
+    const seed = this.hashId(this.mapDef.id) ^ 0x7a5f;
+    this.traffic = new TrafficSim({ roads, seed, max, types: this.trafficRoadVeh });
+    this.traffic.spawn();
+    for (const v of this.traffic.vehicles) this.spawnTrafficSprite(v);
+  }
+
+  private spawnTrafficSprite(v: { id: number; type: string; x: number; y: number }): Phaser.GameObjects.Image {
+    const tex = this.textures.exists(v.type) ? v.type : this.trafficRoadVeh[0];
+    const spr = this.add.image(v.x * 16 + 8, v.y * 16 + 8, tex).setOrigin(0.5, 0.6);
+    spr.setScale(OverworldScene.TRAFFIC_SCALE);
+    spr.setDepth(v.y * 16 + 8);
+    this.trafficSprites.set(v.id, spr);
+    return spr;
+  }
+
+  /** advance the sim on a fixed step and lerp the pooled sprites between hops */
+  private updateTraffic(dtMs: number): void {
+    const sim = this.traffic;
+    if (!sim) return;
+    const step = OverworldScene.TRAFFIC_STEP_MS;
+    this.trafficAccumMs += dtMs;
+    if (this.trafficAccumMs >= step) {
+      this.trafficAccumMs -= step;
+      if (this.trafficAccumMs >= step) this.trafficAccumMs = 0; // never spiral after a stall
+      const pcell = { x: Math.floor(this.player.x / 16), y: Math.floor(this.player.y / 16) };
+      sim.step(pcell);
+    }
+    const f = Math.min(1, this.trafficAccumMs / step);
+    const cam = this.cameras.main;
+    const m = 64;
+    const S = OverworldScene.TRAFFIC_SCALE;
+    this.trafficRects = [];
+    for (const v of sim.vehicles) {
+      let spr = this.trafficSprites.get(v.id);
+      if (!spr) spr = this.spawnTrafficSprite(v);
+      const ix = v.px + (v.x - v.px) * f;
+      const iy = v.py + (v.y - v.py) * f;
+      const cx = ix * 16 + 8;
+      const cy = iy * 16 + 8;
+      spr.x = cx;
+      spr.y = cy;
+      spr.setDepth(cy + 8);
+      // face travel: the side-on art rotates onto vertical avenues; flip due-west
+      const vertical = v.dir === 1 || v.dir === 3;
+      spr.setAngle(v.dir === 1 ? 90 : v.dir === 3 ? -90 : 0);
+      spr.setFlipX(v.dir === 2);
+      // SOLID body rect (px) covering the WHOLE car — ends and sides — sized to
+      // the sprite and oriented to travel, inset 4px so brushing past isn't sticky
+      const dim = this.trafficDims.get(v.type) ?? { w: 32, h: 18 };
+      const longPx = dim.w * S;
+      const widePx = dim.h * S;
+      const rw = (vertical ? widePx : longPx) - 4;
+      const rh = (vertical ? longPx : widePx) - 4;
+      this.trafficRects.push({ x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh });
+      const on =
+        cx >= cam.scrollX - m &&
+        cx <= cam.scrollX + cam.width + m &&
+        cy >= cam.scrollY - m &&
+        cy <= cam.scrollY + cam.height + m;
+      spr.setVisible(on);
+    }
   }
 
   private updatePlayer(dt: number): void {
@@ -920,9 +1049,10 @@ export class OverworldScene extends Phaser.Scene {
         }
       }
     }
-    return this.solids.some(
-      (s) => box.x < s.x + s.w && box.x + box.w > s.x && box.y < s.y + s.h && box.y + box.h > s.y,
-    );
+    // props + ambient cars (S18 M26): full-body AABB overlap
+    const hit = (s: Rect): boolean =>
+      box.x < s.x + s.w && box.x + box.w > s.x && box.y < s.y + s.h && box.y + box.h > s.y;
+    return this.solids.some(hit) || this.trafficRects.some(hit);
   }
 
   private updateNpcs(dt: number): void {

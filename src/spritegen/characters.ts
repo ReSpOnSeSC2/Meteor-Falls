@@ -1086,10 +1086,13 @@ function drawRunFrame(spec: CharacterSpec, dir: Dir, pose: Pose): Pixmap {
   return pm;
 }
 
-/** 24 frames: the ADR-009 walk block (down×4, left×4, right×4, up×4 —
- *  indices 0–15, UNTOUCHED law) + the S14b run block appended at 16–23
- *  (downRun×2, leftRun×2, rightRun×2, upRun×2; ADR-040). standFrame()
- *  and every existing index are preserved — append-only. */
+/** 44 frames — the full 8-direction sheet (ADR-096 extends ADR-009/040):
+ *    0–15  walk block (down×4, left×4, right×4, up×4) — ADR-009 law, UNTOUCHED
+ *   16–23  run block (down×2, left×2, right×2, up×2) — ADR-040, UNTOUCHED
+ *   24–35  diagonal WALK (downright×3, downleft×3, upright×3, upleft×3 =
+ *          stand, stepA, stepB per facing) — ADR-096
+ *   36–43  diagonal RUN (downright×2, downleft×2, upright×2, upleft×2) — ADR-096
+ *  Append-only: every legacy index (standFrame/runFrameBase) is preserved. */
 export function generateCharacterFrames(spec: CharacterSpec): Pixmap[] {
   const down = ([0, 1, 2, 3] as Pose[]).map((p) => drawFrame(spec, 'down', p));
   const right = ([0, 1, 2, 3] as Pose[]).map((p) => drawFrame(spec, 'right', p));
@@ -1099,12 +1102,184 @@ export function generateCharacterFrames(spec: CharacterSpec): Pixmap[] {
   const runRight = ([1, 3] as Pose[]).map((p) => drawRunFrame(spec, 'right', p));
   const runLeft = runRight.map((f) => f.flipX());
   const runUp = ([1, 3] as Pose[]).map((p) => drawRunFrame(spec, 'up', p));
-  return [...down, ...left, ...right, ...up, ...runDown, ...runLeft, ...runRight, ...runUp];
+  return [
+    ...down, ...left, ...right, ...up,
+    ...runDown, ...runLeft, ...runRight, ...runUp,
+    ...generateDiagFrames(spec),
+    ...generateDiagRunFrames(spec),
+  ];
 }
 
 /** the run block's first frame for a direction (sheet contract, ADR-040) */
 export function runFrameBase(dirIndex: number): number {
   return 16 + dirIndex * 2;
+}
+
+/** diagonal sheet order (ADR-096) — index here drives every base() below */
+export const DIAG_ORDER = ['downright', 'downleft', 'upright', 'upleft'] as const;
+export type DiagFacing = (typeof DIAG_ORDER)[number];
+/** first frame of a diagonal's WALK triple (stand, stepA, stepB) */
+export function diagWalkBase(facing: DiagFacing): number {
+  return 24 + DIAG_ORDER.indexOf(facing) * 3;
+}
+/** first frame of a diagonal's RUN pair (stepA, stepB) */
+export function diagRunBase(facing: DiagFacing): number {
+  return 36 + DIAG_ORDER.indexOf(facing) * 2;
+}
+
+/* ================================================================== */
+/* DIAGONAL 3/4 FACINGS (ADR-096) — the 8-direction depth pass.        */
+/*                                                                     */
+/* A diagonal frame is the FRONT|BACK frame's far half (a frontal eye, */
+/* the full near shoulder) STITCHED at the centerline to the SIDE      */
+/* frame's near half (the nose bump, the profile hairline), so the     */
+/* head + torso read as TURNED toward the facing. The naive stitch     */
+/* leaves two mismatched eyes, so for the face-visible DOWN diagonals  */
+/* we wipe the eye band and redraw ONE coherent 3/4 eye-pair (both     */
+/* crowded toward the near side, the far eye foreshortened), the nose  */
+/* on the near edge, and the mouth. UP diagonals show the back-turned  */
+/* head and need no face fix. 'left' diagonals mirror the 'right'.     */
+
+/** drawn diagonal facings — the two left variants are flipX of these */
+export type DiagDir = 'downright' | 'upright';
+/** diagonal walk poses stored per facing: stand, stepA, stepB */
+const DIAG_POSES: readonly Pose[] = [0, 1, 3];
+
+/** redraw a clean turned eye-pair + nose + mouth over the stitched head */
+function fixDiagFace(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): void {
+  const y0 = m.headTop + bob;
+  const x0 = m.headX;
+  const w = m.headW;
+  const skin = px(spec.skin, 2);
+  const skinD = px(spec.skin, 1);
+  const lip = px(spec.skin, 0);
+  const { hairB } = hairTones(spec);
+  const eyeY = y0 + 7;
+  const cx = x0 + Math.floor(w / 2);
+  // wipe the stitched eye band back to skin (drops the two mismatched eyes)
+  pm.rect(x0 + 2, eyeY - 1, w - 4, 4, skin);
+  // both eyes crowd toward the NEAR (right) side; the far eye foreshortens
+  const nearX = cx + 2;
+  const farX = cx - 3;
+  const eye = (ex: number, near: boolean): void => {
+    switch (spec.eyes ?? 'tall') {
+      case 'tall':
+        pm.rect(ex, eyeY, 2, 3, C.outline);
+        pm.set(ex, eyeY, C.white);
+        if (!near) pm.set(ex + 1, eyeY + 2, skin); // far eye one row shorter
+        break;
+      case 'dot':
+        pm.rect(ex, eyeY + 1, 2, 2, C.outline);
+        pm.set(ex, eyeY + 1, C.white);
+        break;
+      case 'happy':
+        pm.set(ex - 1, eyeY + 1, C.outline);
+        pm.set(ex, eyeY + 2, C.outline);
+        pm.set(ex + 1, eyeY + 2, C.outline);
+        pm.set(ex + 2, eyeY + 1, C.outline);
+        break;
+      case 'wide':
+        pm.rect(ex - 1, eyeY - 1, 4, 5, C.white);
+        pm.rect(ex + (near ? 1 : 0), eyeY + 1, 2, 2, C.outline);
+        pm.hline(ex - 1, eyeY - 2, 4, skinD);
+        break;
+      case 'glare':
+        pm.rect(ex, eyeY + 1, 2, 2, C.outline);
+        pm.hline(ex - 1, eyeY - 1, 4, hairB);
+        break;
+    }
+  };
+  eye(farX, false);
+  eye(nearX, true);
+  if (spec.glasses) {
+    const g = C.inkSoft;
+    pm.frame(nearX - 1, eyeY - 1, 4, 5, g);
+    pm.frame(farX - 1, eyeY - 1, 3, 5, g);
+    pm.hline(farX + 2, eyeY + 1, nearX - farX - 3, g); // bridge
+    pm.set(nearX + 2, eyeY - 1, px(RAMP.CYAN, 3)); // lens glint
+  }
+  // nose on the near edge, blush on the near cheek
+  pm.set(x0 + w - 3, eyeY + 3, lip);
+  pm.set(x0 + w - 4, eyeY + 3, skinD);
+  if (spec.blush ?? isKid(spec)) pm.hline(x0 + w - 6, eyeY + 3, 2, px(RAMP.RED, 3));
+  // mouth, shifted toward the near side
+  const my = y0 + m.headH - 2;
+  if (spec.grin) {
+    pm.rect(cx, my - 1, 4, 3, C.white);
+    pm.frame(cx, my - 1, 4, 3, C.outline);
+  } else {
+    switch (spec.mouth ?? 'hint') {
+      case 'hint':
+        pm.hline(cx + 1, my, 2, lip);
+        break;
+      case 'smile':
+        pm.set(cx, my, lip);
+        pm.hline(cx + 1, my - 1, 2, lip);
+        pm.set(cx + 3, my - 1, lip);
+        break;
+      case 'open':
+        pm.rect(cx + 1, my - 1, 2, 2, C.outline);
+        pm.set(cx + 1, my, px(RAMP.RED, 1));
+        break;
+      case 'frown':
+        pm.set(cx, my, lip);
+        pm.hline(cx + 1, my - 1, 2, lip);
+        pm.set(cx + 3, my, lip);
+        break;
+      case 'none':
+        break;
+    }
+  }
+}
+
+/** stitch one diagonal frame from a FRONT|BACK frame + the SIDE frame */
+function stitchDiag(front: Pixmap, side: Pixmap): Pixmap {
+  const seam = Math.floor(FRAME_W / 2);
+  const pm = new Pixmap(FRAME_W, FRAME_H);
+  for (let y = 0; y < FRAME_H; y++) {
+    for (let x = 0; x < FRAME_W; x++) {
+      const c = (x < seam ? front : side).get(x, y);
+      if (c !== T) pm.set(x, y, c);
+    }
+  }
+  return pm;
+}
+
+function drawDiagFrame(spec: CharacterSpec, dir: DiagDir, pose: Pose): Pixmap {
+  const m = metrics(spec);
+  const bob = pose === 1 || pose === 3 ? 1 : 0;
+  const up = dir === 'upright';
+  const pm = stitchDiag(drawFrame(spec, up ? 'up' : 'down', pose), drawFrame(spec, 'right', pose));
+  if (!up) fixDiagFace(pm, spec, m, bob);
+  pm.outline(C.outline); // seal the interior stitch seam
+  return pm;
+}
+
+function drawDiagRunFrame(spec: CharacterSpec, dir: DiagDir, pose: Pose): Pixmap {
+  const up = dir === 'upright';
+  const pm = stitchDiag(drawRunFrame(spec, up ? 'up' : 'down', pose), drawRunFrame(spec, 'right', pose));
+  if (!up) fixDiagFace(pm, spec, metrics(spec), 1);
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** 12 diagonal WALK frames: downright×3, downleft×3, upright×3, upleft×3
+ *  (each = stand, stepA, stepB). Left facings mirror the right. */
+export function generateDiagFrames(spec: CharacterSpec): Pixmap[] {
+  const dr = DIAG_POSES.map((p) => drawDiagFrame(spec, 'downright', p));
+  const ur = DIAG_POSES.map((p) => drawDiagFrame(spec, 'upright', p));
+  const dl = dr.map((f) => f.flipX());
+  const ul = ur.map((f) => f.flipX());
+  return [...dr, ...dl, ...ur, ...ul];
+}
+
+/** 8 diagonal RUN frames: downright×2, downleft×2, upright×2, upleft×2 */
+export function generateDiagRunFrames(spec: CharacterSpec): Pixmap[] {
+  const dr = ([1, 3] as Pose[]).map((p) => drawDiagRunFrame(spec, 'downright', p));
+  const ur = ([1, 3] as Pose[]).map((p) => drawDiagRunFrame(spec, 'upright', p));
+  const dl = dr.map((f) => f.flipX());
+  const ul = ur.map((f) => f.flipX());
+  return [...dr, ...dl, ...ur, ...ul];
 }
 
 /* ------------------------------------------------------------------ */

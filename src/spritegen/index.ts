@@ -12,6 +12,10 @@ import {
   generateGlintFrames,
   generateAngelFrames,
   runFrameBase,
+  DIAG_ORDER,
+  diagWalkBase,
+  diagRunBase,
+  type DiagFacing,
 } from './characters';
 import { generateBustFrames, drawThoughtFood, drawHexPip } from './busts';
 import {
@@ -24,6 +28,7 @@ import {
 import {
   ENEMY_BATTLE_ART,
   FORM_ART,
+  CH3_FACE_SPECS,
   forgedFaceArt,
   drawCicadaMini,
   drawSlugMini,
@@ -189,7 +194,10 @@ function addSheet(scene: Phaser.Scene, key: string, frames: Pixmap[], cols: numb
 }
 
 const DIRS = ['down', 'left', 'right', 'up'] as const;
-export type Facing = (typeof DIRS)[number];
+/** the four cardinal facings — the ADR-009 sheet block (0–15) */
+export type Cardinal = (typeof DIRS)[number];
+/** all eight facings (ADR-096): cardinals + the 3/4 diagonals */
+export type Facing = Cardinal | DiagFacing;
 
 function addCharacter(scene: Phaser.Scene, id: string): void {
   const spec = CAST[id];
@@ -219,11 +227,59 @@ function addCharacter(scene: Phaser.Scene, id: string): void {
       });
     }
   });
+  // S?? (ADR-096): the four DIAGONAL 3/4 facings — walk cycles stand→stepA→
+  // stand→stepB off the appended block (24–35), run plays the two diag-run
+  // frames (36–43). Same cadence as the cardinals so the gait reads identical.
+  DIAG_ORDER.forEach((dir) => {
+    const base = diagWalkBase(dir);
+    const walkKey = `${id}-walk-${dir}`;
+    if (!scene.anims.exists(walkKey)) {
+      scene.anims.create({
+        key: walkKey,
+        frames: [base, base + 1, base, base + 2].map((frame) => ({ key: id, frame })),
+        frameRate: 8,
+        repeat: -1,
+      });
+    }
+    const rb = diagRunBase(dir);
+    const runKey = `${id}-run-${dir}`;
+    if (!scene.anims.exists(runKey)) {
+      scene.anims.create({
+        key: runKey,
+        frames: [rb, rb + 1].map((frame) => ({ key: id, frame })),
+        frameRate: 11,
+        repeat: -1,
+      });
+    }
+  });
 }
 
-/** frame index for standing still, given facing */
+/** frame index for standing still, given facing (ADR-096: 8-way) */
 export function standFrame(facing: Facing): number {
-  return DIRS.indexOf(facing) * 4;
+  const c = DIRS.indexOf(facing as Cardinal);
+  return c >= 0 ? c * 4 : diagWalkBase(facing as DiagFacing);
+}
+
+/** unit facing vector for any of the 8 directions (ADR-096) — diagonals
+ *  normalized so dot-product thresholds (contact advantage) stay comparable */
+const D = Math.SQRT1_2;
+export const FACING_VEC: Record<Facing, { x: number; y: number }> = {
+  down: { x: 0, y: 1 },
+  up: { x: 0, y: -1 },
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+  downright: { x: D, y: D },
+  downleft: { x: -D, y: D },
+  upright: { x: D, y: -D },
+  upleft: { x: -D, y: -D },
+};
+
+/** the 8-way facing for an input/movement vector (components in −1..1) */
+export function facingFromVec(dx: number, dy: number): Facing {
+  if (dx === 0 && dy === 0) return 'down';
+  if (dx === 0) return dy > 0 ? 'down' : 'up';
+  if (dy === 0) return dx > 0 ? 'right' : 'left';
+  return `${dy > 0 ? 'down' : 'up'}${dx > 0 ? 'right' : 'left'}` as Facing;
 }
 
 /**
@@ -407,6 +463,11 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'mini_mask', drawMaskMini());
   addPixmap(scene, 'mini_banana', drawBananaMini());
   addPixmap(scene, 'mini_jitterbug', drawJitterbugMini());
+  // §A7 Ch.3 (ADR-095) minis — composed from the same forged faces as the battle
+  // sprites, registered under each shared face's `forgemini_*` key (EnemyDef.mini).
+  for (const [faceKey, spec] of Object.entries(CH3_FACE_SPECS)) {
+    addPixmap(scene, faceKey.replace('battle_ch3_', 'mini_ch3_'), composeMini(spec));
+  }
 
   // tileset strip
   if (!scene.textures.exists('tiles')) {

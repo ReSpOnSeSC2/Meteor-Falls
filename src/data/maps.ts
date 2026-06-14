@@ -11,10 +11,12 @@
 import { cityBuildingHeight } from '../spritegen/tiles';
 import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import { buildChapter2Maps } from './maps_ch2';
+import { buildChapter3Maps } from './maps_ch3';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
 import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
 import { placeFacade, facadeDims } from '../levelkit/kit';
+import { occupyCity } from './citylife';
 import { AREA_SKINS } from '../spritegen/buildings';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
@@ -2705,6 +2707,9 @@ const golfMaps = {
 
 export const MAPS: Record<string, MapDef> = {
   ...buildChapter2Maps({ chapelStep: chapelDoorstep, hospitalStep: hospitalDoorstep }),
+  // S18 (ADR-095) — CHAPTER 3 England (Half 1: maps + encounters + shops; the
+  // manifest stays 'unlanded' until the story/boss half flips it)
+  ...buildChapter3Maps(),
   otterbrook: otterbrookMap,
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,
@@ -2754,5 +2759,26 @@ const MAP_AREA: Record<string, string> = {
   brickton: 'brickton',
   cage_park: 'cage_park',
   puerto_sol: 'puerto_sol',
+  // S18 (ADR-095) — CHAPTER 3 England: the stone town wears its M22 `fraktur`
+  // glyph banner (§A11.8) over the M25 fog-stone skin. The academy + the moor
+  // maps add their 'wintermoor' rows when they land.
+  foggybottom: 'foggybottom',
+  wintermoor_grounds: 'wintermoor',
 };
 for (const [id, area] of Object.entries(MAP_AREA)) if (MAPS[id]) MAPS[id].area = area;
+
+// ─── THE LIVING-CITY PASS (S18) — alive by DEFAULT ──────────────────────────
+// Every grown settlement runs through occupyCity: ~90% of its catalog facades get
+// a door into a footprint-sized interior (homes / shops / cafes / offices /
+// clinics), and the locked ~10% answer a knock with EarthBound-weird refusals.
+// The pass mutates the live map and merges its generated interiors into MAPS. A
+// NEW city becomes alive the moment it's added to this list — never dead by default.
+const LIVING_CITY_SEED: Record<string, number> = {
+  otterbrook: 19951,
+  brickton: 207701,
+  puerto_sol: 1898,
+};
+for (const [id, seed] of Object.entries(LIVING_CITY_SEED)) {
+  const m = MAPS[id];
+  if (m) Object.assign(MAPS, occupyCity(m, { area: id, seed }));
+}

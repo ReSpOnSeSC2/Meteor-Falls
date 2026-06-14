@@ -1095,6 +1095,29 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     banana_bunch: 22,
     jungle_jitterbug: 120,
     gilded_grin: 980,
+    // Chapter 3 (ADR-095) — §A7 England: the seed six + the Enemy Flow Law mix
+    // (4 road/field · 3 dungeon · 2 social · 2 rare · 2 late-pressure · 1 set-piece).
+    // cricket_eleven is 16 EACH (the XI attacks as a group, §A7's notation).
+    prefect_drone: 130,
+    possessed_textbook: 115,
+    fog_hound: 150,
+    tea_poltergeist: 90,
+    cricket_eleven: 16,
+    greenhouse_creeper: 170,
+    pillar_box: 120,
+    brolly_bat: 95,
+    moor_sheep: 140,
+    soot_imp: 88,
+    detention_desk: 155,
+    schedule_bell: 110,
+    foggy_locker: 165,
+    tea_trolley: 130,
+    telephone_box: 145,
+    overdue_tome: 130,
+    roman_sentry: 180,
+    head_prefect: 175,
+    boiler_golem: 190,
+    the_invigilator: 210,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1323,7 +1346,13 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ],
   };
   const have = Object.keys(SHOPS);
-  if (have.length !== 4) fail('canon', `Ch.1–2 ship 4 shops (drugstore, starmart, mercado, valle_shop), found ${have.length}`);
+  // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
+  // four are still stock-pinned by the `canon` loop below; new chapters extend this
+  // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist']);
+  for (const id of have) {
+    if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
+  }
   for (const [id, stock] of Object.entries(canon)) {
     const shop = SHOPS[id];
     if (!shop) {
@@ -1838,7 +1867,10 @@ parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id
     if (!MAPS.golf_resort?.props.some((p) => p.door?.to === 'golf_clubhouse')) fail('links', `the golf_resort clubhouse must open into golf_clubhouse — the indoor round-start (ADR-059)`);
     if (!MAPS.golf_clubhouse?.doors.some((d) => d.to === 'golf_resort')) fail('links', `golf_clubhouse must lead back out to the resort (ADR-059)`);
     if (!costa.signs.some((s) => s.dialogue === 'sign_costa')) fail('links', `costa_estrella needs its 'sign_costa' plaque`);
-    if (!costa.props.some((p) => p.sprite === 'clubhouse')) fail('links', `costa_estrella needs the clubhouse`);
+    // (ADR-059) costa's clifftop clubhouse PROP was intentionally removed — it
+    // duplicated THE LINKS building one screen west (golf_resort), so the clifftop
+    // is just the gate now; the door west to golf_resort (asserted above) is the
+    // live link to the real clubhouse. The stale prop check retired here.
     // S14 (Prompt 28): the wire LANDED — the pin flips to assert the LINK
     if (!costa.doors.some((d) => d.to === 'puerto_sol')) {
       fail('links', `Prompt 28 shipped: costa_estrella must carry COSTA_DOOR_FOR_PUERTO_SOL (the one-line wire)`);
@@ -2158,6 +2190,11 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
     valle_dorado: 1,
     pyramid_ante: 1,
     deli_int: 1,
+    // S18 (ADR-095) — CHAPTER 3 England: three rests before the dungeon (§A4.5) —
+    // the town green, the moor lane, and the academy grounds.
+    foggybottom: 1,
+    foggy_moor: 1,
+    wintermoor_grounds: 1,
   };
   for (const [mapId, count] of Object.entries(TABLES)) {
     const have = MAPS[mapId]?.props.filter((pp) => pp.sprite === 'picnic').length ?? 0;
@@ -2605,7 +2642,7 @@ sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS,
 const counts = [
   `${Object.keys(HEROES).length} heroes`,
   `${Object.keys(ABILITIES).length} abilities`,
-  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–2 + Bosses 1–2)`,
+  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–3 + Bosses 1–2)`,
   `${Object.values(ENEMIES).reduce((a, e) => a + (e.drops?.length ?? 0), 0)} §A7 drops`,
   `${Object.keys(ITEMS).length} items (${Object.keys(ITEM_ICON).length} icons) across 10 chapters`,
   `${Object.keys(SHOPS).length} shops`,
