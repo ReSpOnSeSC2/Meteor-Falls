@@ -4984,3 +4984,28 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the wealth fantasy spans the whole world — buy, flip, and rent across every
   continent, and end up under the Mars dome. M48 adds the rocket + the repeatable Earth↔Mars shuttle
   that makes living there real.
+
+## ADR-089 — S20 (Movement 48): THE ROCKET — The Long Shot, the Earth↔Mars shuttle
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 48 — §A5/§A6; needs the M46 continents + M48 ferry rocket method.)
+- **Decision — the rocket sprite (`rocket`, a new `cls 'rocket'` VEHICLE_SPECS air type).**
+  `drawRocket` (ADR-020): a sleek fuselage nose-right, pointed cone, porthole, tail fins, and a
+  gold/orange exhaust streaming behind (the brightest pixels drawn last). Paper-white + red paint —
+  a hopeful homemade rocket. On the `art:vehicles` sheet (the rocket the user asked for); **96
+  vehicles (36 types)**.
+- **Decision — `src/data/rocket.ts` (THE_LONG_SHOT) + `src/engine/rocket.ts` (launch, pure/tested).**
+  Professor Pemberton's rocket, owned by `title_the_long_shot` (earned at the §A6 Ch.10 launch, then
+  yours). `canLaunch(from, to, keyItems, visited)` flies ONLY the pad↔Mars route (Hawaii / Mauna Lani
+  ↔ Mars), owns-gated, and Ember-law safe (Mars must be visited); it's REPEATABLE both ways (fly to
+  Mars to live, fly home for dinner). `launchCost` burns rocket fuel; `launchDestination` resolves
+  each way. The ferry's `rocket` method (M46) requires exactly this title — one key opens Mars.
+- **Decision — gated (`rocket` + `rocket.test.ts`).** The rocket is a real air type; The Long Shot
+  is well-formed (title_*, positive price, real pad continents, Earth pad = Hawaii, dest = off-Earth
+  Mars); the ferry agrees; the launch is owns/pad/visited-gated and the round trip works.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean,
+  `art:vehicles` re-rendered. No FNV re-pin, no frozen-core change, no save change (ownership rides
+  the title key-item). §A5/§A6 amended.
+- **Consequences:** the rags-to-riches arc closes the loop — drive a continent, ferry to the next,
+  buy in everywhere, and rocket between Earth and Mars at will, a billionaire under the Red Dome who
+  still comes home for Mom's cooking. M49 folds the new fuel/ferry/rocket costs into the balance read.

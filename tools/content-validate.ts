@@ -61,7 +61,9 @@ import { ignitionRequired } from '../src/engine/ignition';
 import { STATIONS, STATION_KINDS } from '../src/data/stations';
 import { sells, stationPricePerUnit, homeChargePricePerUnit, NEEDED_FUEL_KINDS } from '../src/engine/refuel';
 import { CONTINENTS, AREA_CONTINENT, CONTINENT_IDS } from '../src/data/world';
-import { ferryMethodsBetween } from '../src/engine/ferry';
+import { ferryMethodsBetween, METHOD_CRAFT } from '../src/engine/ferry';
+import { THE_LONG_SHOT } from '../src/data/rocket';
+import { canLaunch, EARTH_PAD, MARS, launchCost } from '../src/engine/rocket';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -742,6 +744,32 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const id of CONTINENT_IDS) {
     if (!propContinents.has(id)) fail('world', `continent '${id}' has no buyable property — you must be able to buy in on every continent (§A4.13/ADR-088)`);
   }
+}
+
+// S20 Movement 48 (ADR-089) — THE ROCKET (The Long Shot, §A5/§A6). Gated:
+//  · the rocket is a real VEHICLE_SPECS air type with its own paint;
+//  · The Long Shot is well-formed (a title_*, a positive price, real pad continents,
+//    the Earth pad is Hawaii and the dest is Mars), and the ferry's rocket method
+//    requires exactly that title (one key opens Mars);
+//  · the launch flies ONLY the pad↔Mars route, owns-gated, Ember-law (visited) safe.
+{
+  const r = VEHICLE_SPECS[THE_LONG_SHOT.vehicleType];
+  if (!r) fail('rocket', `The Long Shot is type '${THE_LONG_SHOT.vehicleType}' with no VEHICLE_SPECS row`);
+  else if (r.terrain !== 'air') fail('rocket', `the rocket must be an air craft, got '${r.terrain}'`);
+  if (!THE_LONG_SHOT.title.startsWith('title_')) fail('rocket', `The Long Shot title '${THE_LONG_SHOT.title}' must be a title_* key-item`);
+  if (THE_LONG_SHOT.price <= 0) fail('rocket', 'The Long Shot has a non-positive price');
+  if (!CONTINENTS[THE_LONG_SHOT.earthPad] || !CONTINENTS[THE_LONG_SHOT.marsPad]) fail('rocket', 'The Long Shot pads must be real continents');
+  if (EARTH_PAD !== 'hawaii') fail('rocket', `the Earth pad must be Hawaii (Mauna Lani, §A6), got '${EARTH_PAD}'`);
+  if (MARS !== 'mars' || CONTINENTS.mars.earth !== false) fail('rocket', 'the rocket must fly to off-Earth Mars');
+  if (!METHOD_CRAFT.rocket.includes(THE_LONG_SHOT.title)) fail('rocket', 'the ferry rocket method must require The Long Shot title');
+  if (launchCost() <= 0) fail('rocket', 'a launch must cost rocket fuel');
+  // owns-gated + pad-only + visited-only
+  const owned = [THE_LONG_SHOT.title];
+  if (canLaunch(EARTH_PAD, MARS, [], ['mars']).reason !== 'not_owned') fail('rocket', 'launch must require owning the rocket');
+  if (canLaunch(EARTH_PAD, MARS, owned, []).reason !== 'not_visited') fail('rocket', 'launch must honor the Ember law (Mars visited)');
+  if (canLaunch('usa', MARS, owned, ['mars']).reason !== 'wrong_pads') fail('rocket', 'launch must stage from the Hawaii pad, not just anywhere');
+  if (!canLaunch(EARTH_PAD, MARS, owned, ['mars']).ok) fail('rocket', 'a fully-earned launch to a visited Mars must succeed');
+  if (!canLaunch(MARS, EARTH_PAD, owned, ['mars', 'hawaii']).ok) fail('rocket', 'the return launch (Mars→home) must work — the shuttle is repeatable');
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2300,6 +2328,7 @@ const counts = [
   `fuel (${Object.keys(VEHICLE_SPECS).filter((t) => needsFuel(t)).length} powered · ${Object.keys(VEHICLE_SPECS).filter((t) => !needsFuel(t)).length} human/none)`,
   `${Object.keys(STATIONS).length} fuel stations`,
   `${CONTINENT_IDS.length} continents`,
+  `the Long Shot (Earth↔Mars)`,
   `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,

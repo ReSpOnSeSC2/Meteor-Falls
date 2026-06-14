@@ -382,6 +382,14 @@ parked on (`carLocation`, save v15); the Ember trail stays linear, this is the w
 on top — exactly the rags-to-riches arc (start with nothing → a billionaire who drives their own car
 on every continent and lives on Mars).
 
+**THE ROCKET — THE LONG SHOT (S20 M48, ADR-089).** Professor Pemberton's rocket (§A6 Ch.10) is the
+Earth↔Mars shuttle: a drawn `rocket` sprite (cls 'rocket') and a `title_the_long_shot` key-item earned
+at the launch. Once it flies, the Mauna Lani pad (Hawaii) ↔ Mars route is REPEATABLE (`src/engine/
+rocket.ts`, pure + validated): owns-gated, staged from the pad, Ember-law safe (Mars must be visited),
+and dear to fuel each way. It is the ONLY way to Mars — for you OR your car (the ferry's Mars method
+requires this same title) — so a billionaire can live under the Red Dome and still rocket home for
+Mom's cooking. The story launch is unchanged; this makes it a two-way road afterward.
+
 ## A6. The Ten Chapters & Ten Bosses
 
 > Boss stat lines are canon starting values; Prompt 31–40 wire them. Format: **HP / signature gimmick**.
