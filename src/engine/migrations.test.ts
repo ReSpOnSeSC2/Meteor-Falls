@@ -449,9 +449,22 @@ describe('save migration registry (S18 M29) — v10 → v11: the property market
     expect(GS.data.homeStorage).toEqual({});
   });
 
-  it('the v1 chain runs all the way to v11', () => {
+  it('the v1 chain runs all the way to v11+', () => {
     GS.deserialize(JSON.stringify(v1SaveS2()));
     expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
     expect(GS.data.homeStorage).toEqual({});
+  });
+});
+
+describe('save migration registry (S18 M30) — v11 → v12: the home editor', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills an empty homeLayouts map on a pre-v12 save', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 11;
+    delete d.homeLayouts; // a pre-v12 save decorated nothing
+    GS.deserialize(JSON.stringify(d));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.homeLayouts).toEqual({});
   });
 });

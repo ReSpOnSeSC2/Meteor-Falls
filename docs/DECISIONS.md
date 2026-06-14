@@ -4351,3 +4351,45 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   furniture catalog + the editor scene + COZINESS feeding `sellProceeds`); the agency/lawyer/S&L
   INTERIORS + the buy/sell UI + live placement of 27 MAPLE land on this spine in Otterbrook's
   session and each chapter thereafter (the M18-Part-B way).
+
+## ADR-070 — S18 (Movement 30): THE HOME EDITOR — Sims-style free-placement furniture
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 30 — the fun heart of the property layer; needs M29's
+  ownable homes. Ships the editor's RULES + the catalog + COZINESS; the editor SCENE UI lands
+  with each owned home, on this spine.)
+- **Decision — `src/data/furniture.ts`, THE FURNITURE CATALOG (a typed registry).** 18 pieces,
+  each a `FurnitureDef`: a real drawn sprite key (the existing home props — bed/sofa/desk/
+  counter/cola_fridge/bookshelf/tv/dresser/plant_pot/floor_lamp…), a footprint in tiles, a
+  rotatable flag, a §A4.14 FUNCTION tag (bed/phone/fridge/footlocker/mantel/record_player/
+  mailbox/workbench/kitchen/pet_bed/plant/fish_tank/gnome/seating/lamp/shelf/decor), a theme, a
+  COZINESS value, a price, and a band. Furniture is a world catalog like vehicles/properties
+  (placed in a room, not carried), so it rides its own registry + gate rather than the ITEMS
+  icon-atlas — the purchasable-`furniture`-ItemKind-with-forge-icon presentation is the
+  documented follow-up; the editor's mechanics are what M30 proves.
+- **Decision — `src/engine/homeeditor.ts`, the placement engine (pure, no Phaser).** The editor
+  SCENE (the ArcadeScene/HoopsScene paused-world precedent) renders the ghost + catalog; THIS
+  owns the rules: `footprint`/`cells` (rotation swaps w↔h), `canPlace` (in-bounds floor, no
+  overlap, never the door tile), `roomTraversable` (a BFS from the door over floor-minus-
+  footprints must reach every free tile — refuses any wall-off), `commitPlace` (fits AND stays
+  traversable), `coziness` (sum of points + a variety bonus per distinct function + a theme
+  bonus, 0–100), `restBuff` (a Sunny-Side-lite by coziness), and `serializeLayout`/
+  `deserializeLayout` (the layout IS the save field; restore drops retired pieces). THE LAW: a
+  furnished home can never soft-lock, proven in `homeeditor.test.ts`.
+- **Decision — save v11 → v12 + COZINESS feeds the flip.** A new `homeLayouts: Record<id,
+  Placement[]>` typed field (the array-shaped state earns it; everything else stays flags) +
+  a backfill migration + round-trip test. The editor's `coziness(layout)` feeds
+  `property.sellProceeds(def, ch, seed, coziness)` from M29 — so a furnished flip provably sells
+  for more than an empty one (tested end-to-end here).
+- **Decision — gated (`tools/content-validate.ts` `furniture` + `homeeditor.test.ts`).** Every
+  piece's function is known, footprint positive, coziness ≥ 0, price > 0, band well-formed,
+  sprite + name present; AND the §A4.14 base functions (bed/phone/fridge/footlocker) each have ≥1
+  piece so a home can actually be a base. The verdict prints **18 furniture**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (18 furniture) + full
+  **vitest** green (+~13: the placement law, rotation, traversability empty+furnished, coziness/
+  rest buff, the flip hook, the layout round-trip, the v11→v12 migration) + `vite build` clean.
+  No FNV re-pin, no frozen-core change. §A4.14 amended to canon in the same commit.
+- **Consequences:** the home editor's heart beats — place/rotate/collide/coziness/flip are all
+  settled and tested, and a cozy flip pays off through the M29 economy. The interactive editor
+  SCENE (the ghost preview, the catalog wheel, touch/pad placement) + the live HOME GOODS store +
+  drawing the few new furniture sprites land on this spine when an owned home's session arrives.

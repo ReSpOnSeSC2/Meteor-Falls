@@ -44,6 +44,7 @@ import { PSI_GATES, GATE_KEY, PSI_DUNGEON_BANDS } from '../src/data/psigates';
 import { abilitiesForKey } from '../src/engine/psi';
 import { PROPERTIES, PROPERTY_KINDS, LIVE_PROPERTIES } from '../src/data/properties';
 import { AREA_SKINS as AREA_SKINS_FOR_PROP } from '../src/spritegen/buildings';
+import { FURNITURE, FURNITURE_FUNCTIONS } from '../src/data/furniture';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -395,6 +396,30 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   for (const id of LIVE_PROPERTIES) {
     if (!PROPERTIES[id]) fail('property', `LIVE_PROPERTIES names '${id}' which is not a real property`);
+  }
+}
+
+// S18 Movement 30 (ADR-070) — THE FURNITURE CATALOG (§A4.14). Every piece is a
+// well-formed, placeable, cozy thing. Gated:
+//  · function tag is known; footprint is positive; coziness ≥ 0; price > 0; band
+//    well-formed; a sprite key is named; the name is in voice;
+//  · the FUNCTIONAL §A4.14 core (bed/phone/fridge/footlocker) each has ≥1 piece,
+//    so a furnished home can actually be a base.
+{
+  const FNS = new Set<string>(FURNITURE_FUNCTIONS);
+  const haveFn = new Set<string>();
+  for (const d of Object.values(FURNITURE)) {
+    if (!FNS.has(d.fn)) fail('furniture', `furniture '${d.id}' has unknown function '${d.fn}'`);
+    if (d.w <= 0 || d.h <= 0) fail('furniture', `furniture '${d.id}' has a non-positive footprint`);
+    if (d.cozy < 0) fail('furniture', `furniture '${d.id}' has negative coziness`);
+    if (d.price <= 0) fail('furniture', `furniture '${d.id}' has a non-positive price`);
+    if (!/^ch\d+$/.test(d.band)) fail('furniture', `furniture '${d.id}' band '${d.band}' is malformed`);
+    if (!d.sprite || d.sprite.trim().length === 0) fail('furniture', `furniture '${d.id}' names no sprite`);
+    if (!d.name || d.name.trim().length === 0) fail('furniture', `furniture '${d.id}' has no name`);
+    haveFn.add(d.fn);
+  }
+  for (const core of ['bed', 'phone', 'fridge', 'footlocker'] as const) {
+    if (!haveFn.has(core)) fail('furniture', `the §A4.14 base needs a '${core}' piece — none in the catalog`);
   }
 }
 
@@ -1924,6 +1949,7 @@ const counts = [
   `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
   `${Object.keys(PSI_GATES).length} psi gates`,
   `${Object.keys(PROPERTIES).length} properties`,
+  `${Object.keys(FURNITURE).length} furniture`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,

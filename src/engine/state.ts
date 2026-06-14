@@ -38,7 +38,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 11;
+  version: 12;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -73,6 +73,11 @@ export interface GameStateData {
    *  ownership, loans, and the price-walk seed all ride ADR-015 number/bool FLAGS
    *  (owned_<id>, garnishPrincipal, garnishPaid, propWalk). */
   homeStorage: Record<string, string[]>;
+  /** S18 (v12, ADR-070): THE HOME EDITOR — per-owned-home furniture LAYOUT, keyed
+   *  by property id. Each entry is a list of {f,x,y,rot} placements; COZINESS is
+   *  computed from it (the rest buff + the flip resale lift). Array-shaped, so it
+   *  earns a typed field + a migration (everything else stays ADR-015 flags). */
+  homeLayouts: Record<string, Array<{ f: string; x: number; y: number; rot: 0 | 1 | 2 | 3 }>>;
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -145,7 +150,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 11,
+    version: 12,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -175,6 +180,7 @@ export function newGameData(): GameStateData {
     arcadeScores: [{ ...MGR_ROW }],
     hoops: freshHoops(),
     homeStorage: {},
+    homeLayouts: {},
   };
 }
 

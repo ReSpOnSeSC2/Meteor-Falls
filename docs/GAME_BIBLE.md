@@ -214,6 +214,25 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > chapters. The Ember trail never cares about money; net worth is a number, the callers
 > are the score.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-070 — **§A4.14 THE HOME EDITOR (a
+> Sims-style base you make yours).** Any home you own can be decorated with
+> FREE-PLACEMENT furniture on its room tile grid: open the editor (the paused-world
+> sub-scene precedent), pick a piece from the FURNITURE CATALOG (`src/data/furniture.ts`
+> — each piece a footprint + a §A4.14 FUNCTION + a COZINESS value + a theme + a price),
+> place / move / ROTATE it; the layout saves per-home (`homeLayouts`, save v12). The
+> placement RULES (`src/engine/homeeditor.ts`, validated) guarantee a furnished home
+> can never soft-lock: no overlap, never block the door, and the room stays fully
+> traversable from the door (a BFS refuses any wall-off). Furniture is more than
+> dressing: a home's COZINESS (computed from what you place — points + a variety bonus
+> + a theme bonus, 0–100) gives a small REST BUFF after sleeping (a Sunny-Side-lite)
+> AND raises the property's resale (the flip hook — it feeds `property.sellProceeds`).
+> The §A4.14 use-cases are the FUNCTION tags: THE BED (free full restore), THE PHONE
+> (Dad saves), THE FRIDGE (a free regional food), THE FOOTLOCKER (home storage by
+> tier), THE MANTEL (trophies + Mr. Click photos), THE RECORD PLAYER (the Homesong
+> stems), THE MAILBOX (Dad's postcards), THE WORKBENCH (Milo's Repair), THE KITCHEN
+> COUNTER (picnic baskets), THE PET BED (Biscuit), plus décor that matters (plant,
+> fish tank, gnome, sofa, lamp, rug). The decor is the soul; the buff is the wink.)*
+
 ## A5. The World Route & Travel
 
 | Ch. | Region | Locales | Travel in |

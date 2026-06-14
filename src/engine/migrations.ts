@@ -48,7 +48,7 @@ import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 11;
+export const CURRENT_SAVE_VERSION = 12;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -248,6 +248,17 @@ export const MIGRATIONS: MigrationStep[] = [
       // loans, and the price walk ride ADR-015 flags (no field needed for those).
       if (!isObj(raw.homeStorage)) raw.homeStorage = {};
       raw.version = 11;
+      return raw;
+    },
+  },
+  {
+    to: 12,
+    migrate(raw) {
+      // S18 M30 (ADR-070): THE HOME EDITOR — per-home furniture layouts. A pre-v12
+      // save decorated nothing, so an empty map is its true history. Coziness is
+      // computed from this; an empty layout is coziness 0 (the resale floor).
+      if (!isObj(raw.homeLayouts)) raw.homeLayouts = {};
+      raw.version = 12;
       return raw;
     },
   },
