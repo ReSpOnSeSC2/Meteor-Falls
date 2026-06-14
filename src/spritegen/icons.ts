@@ -667,3 +667,35 @@ export const ITEM_ICON: Record<string, () => Pixmap> = (() => {
   }
   return reg;
 })();
+
+/* ================================================================== */
+/* THE ICON FORGE (S17 Movement 17, ADR-062) — the parametric long tail. */
+
+/**
+ * The §A8 catalog is headed for ~500 items (ADR-061), and 500 faces can be
+ * neither 500 one-offs nor 500 palette-swaps. THE ICON FORGE (iconforge.ts)
+ * composes a face from three independent layers — subcategory SILHOUETTE ×
+ * region RAMP × per-item DETAIL — so each is distinct BY CONSTRUCTION. The
+ * shipped 41 above keep their EXACT bespoke look; every SIGNATURE (hero weapon
+ * rungs, the §A8 SETS, the named key items) stays a hand drawing here / in
+ * WEAPON_ART. The forge is ADDITIVE, for the generic tail.
+ *
+ * M17 builds the forge and adds NO items. The regional catalogs (M18–21) author
+ * a parametric item as ONE fresh ITEM_ICON row that calls forgeIcon with the
+ * item's id as the seed — and the both-directions gate + the distinctness test
+ * keep it honest (a face that collides with another fails the build):
+ *
+ *   alfajor:    () => forgeIcon({ subcat: 'pastry',  band: 'ch2', detail: 'dots',  seed: 'alfajor' }),
+ *   star_pop:   () => forgeIcon({ subcat: 'can',     band: 'ch1', detail: 'label', seed: 'star_pop' }),
+ *   cool_charm: () => forgeIcon({ subcat: 'pendant', band: 'ch4', detail: 'stone', tint: RAMP.CYAN, seed: 'cool_charm' }),
+ */
+export {
+  forgeIcon,
+  forgeGallery,
+  FORGE_CATALOG,
+  SUBCAT_KIND,
+  REGION_RAMPS,
+  ICON_W,
+  ICON_H,
+} from './iconforge';
+export type { IconSpec, Subcat, Detail, ForgeCtx, GallerySample } from './iconforge';

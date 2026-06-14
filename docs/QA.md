@@ -563,3 +563,27 @@ hangs on the WebGL canvas, so the contact sheet is the visual proof, per the ADR
 |---|---|---|---|---|
 | 31 | **Every item shows its face in the menu** — START → ITEMS on a stocked bag: each row draws its icon left of the name (corn dog, salt shaker, Star Cola…); KEY ITEMS shows the Star Locket; EQUIP shows the equipped piece's icon in each slot AND in the candidate list | ⬜ | ⬜ | icons ride `pick()`; the equipped (E) tag still reads |
 | 32 | **Shops + battle Goods show icons** — a shop BUY/SELL row shows each item's face beside its price; in a battle, the GOODS menu shows the icon beside each usable item | ⬜ | ⬜ | Goods uses `ask()`'s new `icons`; rows shift right for the icon exactly like pick() |
+
+## S17 Movement 17 pre-flight — 2026-06-13, THE ICON FORGE AT SCALE (ADR-062)
+
+THE ICON FORGE (`src/spritegen/iconforge.ts`) — the parametric engine for the §A8 ~500-item long
+tail: SUBCATEGORY silhouette × REGION ramp × per-item DETAIL, distinct by construction. M17 is
+RENDER-CAPABILITY only: it adds NO items, so the shipped 41 icons and the menus/shops/battle-Goods
+wiring are byte-unchanged and there is nothing new to drive in the browser this movement. Verified
+headlessly via tsc + full vitest + the both-directions validator gate + the `art:icons` contact
+sheets (the authoritative review; `preview_screenshot` hangs on the WebGL canvas, per ADR-059/060).
+
+| Check | Result |
+|---|---|
+| **The forge renders every planned subcategory** — `npm run art:icons -- --forge` → `.shots/icons_forge.png`, one curated sample (silhouette × sample ramp × sample detail) per subcat, grouped by kind, labelled | ✅ 54 subcategories across 10 kinds; reads distinct + on-theme at 4× |
+| **No two faces are the same drawing** — `icons.test.ts` hashes every ITEM_ICON AND every forge gallery sample; none byte-identical (across + within kinds); per-layer proofs (silhouette / ramp / detail / gem tint each differentiate) | ✅ the slop-detector — 41 shipped + 54 gallery all distinct |
+| **Both-directions gate green, 41 unchanged** — the ADR-060 ITEM_ICON ⇄ ITEMS sweep; the shipped 41 keep their EXACT bespoke look (no new items in M17) | ✅ `41 items (41 icons)`; bands unchanged ch1:23 ch2:14 ch3:1 ch9:2 cross:1 |
+| **The sheets paginate + filter** — default writes a sheet per ItemKind + the combined `icons_s17.png`; `--region chN` filters one region's catalog by item band | ✅ 11 kind pages + combined; `icons_region_ch2.png` |
+| **No FNV re-pin / no frozen-core change** — icons are not sample-routed map generators; the forge seeds off the item id, not a map stream | ✅ no world_block/levelkit touch; determinism proven in vitest |
+| `npm run validate` + `npx vitest run` + `npm run build` | ✅ validator green + **717 vitest** (icons.test.ts +10 forge proofs) + `vite build` clean |
+
+### S17 Movement 17 device rows (appended to the S8 gate)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| — | **No new device scenario** — M17 ships render-capability only (no new items, no UI change); the M8 icon rows (31–32) still cover the menus / shops / battle Goods. The browser p99 loop + `android:apk` paths are unaffected (icon textures are tiny; boot registers ITEM_ICON once) | ⬜ | ⬜ | re-verify at M18 when the Americas catalog pours real forged items into shops / drops |

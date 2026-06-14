@@ -3830,3 +3830,68 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   by adding rows to ITEM_BAND + the per-region validator tables, never ad-hoc. STATUS/equip/tonic
   use/revival all read the new stats correctly with the existing 41 items and zero regressions.
   The spine of THE GREAT CATALOG lands.
+
+## ADR-062 — S17 (Movement 17): THE ICON FORGE AT SCALE — 500 distinct faces by construction
+
+- **Date:** 2026-06-13
+- **Status:** Accepted (the S17 "THE GREAT CATALOG" decree, Movement 17 — build the forge the
+  regional catalogs M18–21 will pour through. RENDER-CAPABILITY only: no new items this movement.)
+- **Context:** ADR-060 gave the shipped 41 items a bespoke hand-drawn 12–16px face each; ADR-061
+  readied the catalog to hold ~500. But 500 faces can be neither 500 hand one-offs (unshippable in a
+  session) nor 500 palette-swaps (the §A11.7 "no AI smell" law forbids it). The icon work needed a
+  system that makes each face distinct BY CONSTRUCTION.
+- **Decision — THE THREE-LAYER FORGE (`src/spritegen/iconforge.ts`).** A parametric icon is the
+  composition of three INDEPENDENT choices, so two icons are never the same drawing:
+  1. **SILHOUETTE = the SUBCATEGORY** — a base shape shared by a family (the `drawBatIcon`/
+     `drawPanIcon` pattern, generalised): `can`, `pastry`, `pendant`, `firework`, `hat`… 54 to start,
+     grouped by ItemKind, each structurally distinct from its siblings (a disc is a `coin` OR a `pill`
+     OR a `medal` by its interior mark, never by luck).
+  2. **RAMP = the REGION palette family** — `REGION_RAMPS[band]` lends a distinct mood pool (warm
+     Americana ch1, Andean clay ch2, fog/slate ch3, fjord-cold ch4, heraldic ch5, savanna+indigo ch6,
+     bazaar-jewel ch7, jade/lacquer ch8, velvet/harvest ch9, cold→dread ch10, neutral cross). The
+     item id SEEDS which ramp its body wears, so a region's parametric goods share a palette without
+     being forced to match — §A11.7 at the pixel level.
+  3. **DETAIL = the per-item MARK** — laid after the fill, before `outline()`: label/stripe/dots/
+     stone/bite/cork/cap/steam/flame/sprout/wrapper/ribbon/crack/star/fuse/tag. This is what makes the
+     Alfajor ≠ the Empanada though both are `pastry`. Extend the vocabulary as items demand.
+  `forgeIcon({ subcat, band, detail, seed, tint })` → Pixmap. PURE: (subcat, band, detail, seed) →
+  identical bytes forever. Phaser-free (the validator + the tool import it). ADR-020 holds BY
+  CONSTRUCTION — the Pixmap DSL emits only palette indices, fills are flat and marks deliberate (no
+  scatter noise), `outline()` lands LAST so each icon lives in one INK contour, and only pure light
+  (a glass glint, via the silhouette's `light`) follows the contour. Self-contained RNG (mulberry32 ⊕
+  fnv of the stable id) — NO levelkit/world_block coupling, NO map FNV re-pin (icons are not
+  sample-routed generators; the seed reproduces a LOOK, not a map stream).
+- **Decision — BESPOKE vs PARAMETRIC, the split.** Every SIGNATURE stays a hand drawing — each
+  hero's weapon rungs incl. the boss-drop tops, the §A8 hero-signature SETS, and the named KEY items
+  keep their `FRESH_ICONS` function / WEAPON_ART trinket reuse in `icons.ts`. The forge is ADDITIVE,
+  for the generic long tail only (generic foods/drinks/gear/cures/tonics/battle items/valuables). The
+  shipped 41 keep their EXACT look: `FRESH_ICONS` + the 13 `kind:'trinket'` reuses are byte-unchanged,
+  and M17 adds NO items.
+- **Decision — the slop-detector, unchanged + strengthened.** The both-directions ITEM_ICON ⇄ ITEMS
+  gate (ADR-060, in `content-validate.ts` + `icons.test.ts`) STANDS. `icons.test.ts` now hashes EVERY
+  ITEM_ICON and EVERY forge gallery sample and asserts no two are byte-identical (across AND within
+  kinds) — so the detail pass MUST differentiate same-subcat items, and a future palette-swap fails
+  the build. Plus per-layer proofs (silhouette: all 54 distinct shapes; ramp: ≥5 distinct across
+  regions for a fixed item; detail + gem tint each differentiate), palette-conformance, and
+  determinism.
+- **Decision — the contact sheets paginate (`tools/render-icons.ts`).** `npm run art:icons` writes a
+  sheet per ItemKind PLUS a combined `icons_s17.png`; `-- --region chN` filters to one region's
+  catalog; `-- --forge` renders the GALLERY — one curated sample of every subcategory (silhouette ×
+  sample ramp × sample detail), the proof AT 41 ITEMS that the forge stamps a distinct, on-theme face
+  for every planned subcategory (since no shipped item uses most subcats yet). Visual review is the
+  sheet, not `preview_screenshot` (ADR-059/060 — it hangs on the WebGL canvas).
+- **Decision — the authoring surface.** `forgeIcon` + the forge types/catalog re-export from
+  `spritegen/icons.ts`. M18–21 author a parametric item as ONE fresh ITEM_ICON row —
+  `() => forgeIcon({ subcat, band, detail, seed: id })` — charms/arms still inherit their WEAPON_ART
+  trinket unless a signature overrides. Pure data; the gate keeps it honest.
+- **Verification:** `npm run validate` green (41 items / 41 icons across 10 chapters; bands unchanged
+  ch1:23 ch2:14 ch3:1 ch9:2 cross:1) + tsc clean + full vitest **717 green** (icons.test.ts +10: the
+  forge distinctness / three-layer / palette / determinism proofs) + `vite build` clean +
+  `npm run art:icons` (+ `--forge`, `--region`) re-rendered. The 41 shipped icons unchanged; the forge
+  gallery = 54 subcategories, all byte-distinct from one another AND from the 41. No FNV re-pin, no
+  frozen-core / world_block change (icons/forge are not map generators).
+- **Consequences:** the regional catalogs (M18 Americas → M21 Mars) author the §A8 long tail as pure
+  data — a subcat + a band + a detail + the id — and the both-directions gate + the distinctness test
+  keep every face honest at scale. The Bible's §B gains the forge bullet (Appendix rule 6). Movement 17
+  of THE GREAT CATALOG lands: the system that stamps 500 distinct, region-true, palette-clean faces so
+  the catalogs that follow are pure, joyful authoring.

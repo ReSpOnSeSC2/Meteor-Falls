@@ -564,6 +564,23 @@ meteor-falls/
   seams (incl. a new `heroVibe`) sum primary + bonus + boost; `heroResist`/`applyResist` are
   ready for elemental enemy moves. STATUS, the equip preview, tonic use, and the revival line all
   read the new stats. *(Added 2026-06-13 per Appendix rule 6, alongside ADR-061.)*
+- **THE ICON FORGE — ~500 distinct faces without slop (ADR-062).** THE ICON ATLAS (ADR-060)
+  gave the shipped items a bespoke face each; the catalog now headed for ~500 (ADR-061) is poured
+  through a PARAMETRIC forge (`src/spritegen/iconforge.ts`) so no face is a one-off OR a palette-swap.
+  Each parametric icon composes THREE independent layers — a SUBCATEGORY silhouette (`can`, `pastry`,
+  `pendant`, `firework`, `hat`…), a REGION ramp (the item's `band` mood pool, seeded off its stable
+  id), and a per-item DETAIL mark (a label, a bite, a cork, a gem, a fuse) — so two icons are never
+  the same drawing BY CONSTRUCTION (§A11.7 at the pixel level: an icon that could move to another
+  region unchanged isn't done). Every SIGNATURE (hero weapon rungs incl. the boss-drop tops, the §A8
+  hero SETS, the named key items) stays a HAND drawing (`icons.ts` / WEAPON_ART); the forge is
+  ADDITIVE, for the generic tail (foods, drinks, generic gear, cures, tonics, battle items,
+  valuables). The both-directions ITEM_ICON ⇄ ITEMS gate (ADR-060) stands, and the distinctness test
+  (every shipped icon AND every forge-gallery sample byte-distinct, across + within kinds) is the
+  slop-detector; `npm run art:icons` paginates a sheet per kind, `--region chN` filters one region,
+  `--forge` renders one sample of every subcategory. ADR-020 holds by construction (px-only DSL,
+  `outline()` last, pure light after). A regional catalog (M18–21) then authors a parametric item as
+  one line — `() => forgeIcon({ subcat, band, detail, seed: id })`. *(Added 2026-06-13 per Appendix
+  rule 6, alongside ADR-062.)*
 
 ---
 
