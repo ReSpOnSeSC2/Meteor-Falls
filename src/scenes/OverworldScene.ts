@@ -1607,7 +1607,10 @@ export class OverworldScene extends Phaser.Scene {
         await this.chapelBeat(n);
         return true;
       case 'deli_keeper':
-        // S14 (Prompt 23): the deli crafts Family (and one day Feast) Baskets
+      case 'deli_otter':
+        // S14 (Prompt 23): the deli crafts Family (and one day Feast) Baskets.
+        // S17 M18 Part B (ADR-063): deli_otter is Ch.1's drugstore lunch counter,
+        // so the Americas Ch.1 foods get a Family Basket counter too (§A4.5).
         await this.deliBeat(n);
         return true;
       case 'tomas':
@@ -2394,6 +2397,47 @@ export class OverworldScene extends Phaser.Scene {
       this.fadeRestart();
       return true;
     }
+    // S17 M18 Part B (ADR-063): the two hero-signature SET caches (a coffee can
+    // on the green, a market stall on the malecón). Each holds all five charms;
+    // they're handed one at a time and each piece is remembered (a per-piece
+    // flag), so a full bag never burns a charm — the cache simply waits with the
+    // rest until you return (zero missables, §B4). The box opens (its master flag)
+    // only once every piece is home.
+    {
+      const SET_CACHE: Record<string, readonly string[]> = {
+        porch_can: ['firefly_jar', 'wind_chime_charm', 'whittled_whistle', 'bottle_cap_medallion', 'lucky_acorn'],
+        mercado_stall: ['friendship_bracelet', 'evil_eye_bead', 'brass_gear_charm', 'tin_milagro', 'jade_frog'],
+      };
+      if (dialogueId in SET_CACHE) {
+        const pieces = SET_CACHE[dialogueId];
+        await this.dlg.say(...DIALOGUE[dialogueId]);
+        let delivered = 0;
+        let full = false;
+        for (let i = 0; i < pieces.length; i++) {
+          const pieceFlag = `${dialogueId}_${i}`;
+          if (GS.flag(pieceFlag)) {
+            delivered++;
+            continue;
+          }
+          if (!GS.addItem(pieces[i])) {
+            full = true;
+            break;
+          }
+          GS.setFlag(pieceFlag);
+          AUDIO.sfx('confirm');
+          toast(this, `Got ${ITEMS[pieces[i]].name}!`);
+          delivered++;
+        }
+        if (delivered >= pieces.length) {
+          GS.setFlag(dialogueId); // the cache is empty — the box swaps to opened
+          AUDIO.jingle('victory', 1600, this.mapDef.music);
+          this.fadeRestart();
+        } else if (full) {
+          await this.dlg.say(...DIALOGUE.gift_hands_full);
+        }
+        return true;
+      }
+    }
     // S14: the grotto's chest run (the S9b gift-box pattern, three deep)
     if (dialogueId.startsWith('grotto_chest_')) {
       const loot: Record<string, string> = {
@@ -2427,6 +2471,14 @@ export class OverworldScene extends Phaser.Scene {
         // S15i Task 6 (ADR-059): the Cage Park's bench-left basket + the Links cooler
         cage_park_gift: 'basket_basic',
         golf_resort_gift: 'star_cola',
+        // S17 M18 Part B (ADR-063): the Americas valuables (sell-fodder loot) + the
+        // two story keys, each a one-grant gift box scattered where its joke lands
+        gift_hubcap: 'spare_hubcap', // Otterbrook pond fence — "worth more to Earl"
+        gift_fools_idol: 'fools_gold_idol', // the Gilded Ruins' gate ramp
+        gift_emerald: 'emerald', // deep jungle, kept in the bark
+        gift_doubloon: 'gold_doubloon', // Puerto Sol dockside
+        gift_boat_ticket: 'banana_boat_ticket', // the §A5 cargo passage stub
+        gift_wish_token: 'wish_token', // the idol's bowl, post-Grin
       };
       if (dialogueId in loot) {
         const itemId = loot[dialogueId];

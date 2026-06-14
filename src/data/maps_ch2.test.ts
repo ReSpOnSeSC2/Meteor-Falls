@@ -14,6 +14,7 @@ import {
   PYR_INITIAL_ROT,
 } from './maps_ch2';
 import { MAPS } from './maps';
+import { ITEMS } from './items';
 
 /** BFS over a rotated room grid: can you walk from A to B? Solids are the
  *  wall/undergrowth chars; everything else (floor, glyph, rotor floor) walks. */
@@ -157,5 +158,80 @@ describe('the §A6 recovery pairs + the boat round trip (zero missables)', () =>
   it('the costa wire round-trips: cliff road up, pier road down', () => {
     expect(MAPS.costa_estrella.doors.some((d) => d.to === 'puerto_sol')).toBe(true);
     expect(MAPS.puerto_sol.doors.some((d) => d.to === 'costa_estrella')).toBe(true);
+  });
+});
+
+describe('S17 M18 Part B (ADR-063) — the Americas placed LIVE in Ch.2', () => {
+  /** every Part B grant is the gift-box pattern: a closed box (retires on `flag`)
+   *  over an opened one, a prompt sign (retires on `flag`) over a flavor sign. The
+   *  box's interaction tile is the sign at (x, y+1) — it must be a walkable grid
+   *  cell, and reachable from `entry` (the static-grid proof; the validator's
+   *  map-quality BFS owns the prop-solid re-proof, which also stays green). */
+  function assertGift(
+    mapId: string,
+    flag: string,
+    x: number,
+    y: number,
+    entry: [number, number],
+    extraIfFlag?: string,
+  ): void {
+    const m = MAPS[mapId];
+    const closed = m.props.find((p) => p.sprite === 'gift_box' && Math.round(p.x) === x && Math.round(p.y) === y);
+    const opened = m.props.find((p) => p.sprite === 'gift_box_open' && Math.round(p.x) === x && Math.round(p.y) === y);
+    expect(closed, `${mapId} closed box ${flag}`).toBeTruthy();
+    expect(closed?.unlessFlag).toBe(flag);
+    expect(opened?.ifFlag).toBe(flag);
+    if (extraIfFlag) expect(closed?.ifFlag).toBe(extraIfFlag); // a second gate (post-Grin)
+    const prompt = m.signs.find((s) => s.dialogue === flag);
+    const flavor = m.signs.find((s) => s.dialogue === `${flag}_done`);
+    expect(prompt, `${mapId} prompt sign ${flag}`).toBeTruthy();
+    expect(prompt?.unlessFlag).toBe(flag);
+    expect(flavor?.ifFlag).toBe(flag);
+    expect(prompt?.x).toBe(x);
+    expect(prompt?.y).toBe(y + 1);
+    // the sign tile is open ground AND reachable — the box seals no lane
+    expect(reachable(m.grid, entry, [x, y + 1]), `${mapId} ${flag} reachable`).toBe(true);
+  }
+
+  it('the MERCADO SET + the dockside doubloon live on the grown malecón', () => {
+    assertGift('puerto_sol', 'mercado_stall', 70, 27, [25, 28]); // a malecón dock tile
+    assertGift('puerto_sol', 'gift_doubloon', 114, 28, [25, 28]);
+  });
+
+  it('the banana-boat passage ticket waits on the Brickton pier', () => {
+    assertGift('brickton_docks', 'gift_boat_ticket', 14, 8, [1, 6]); // just inside the return gap
+  });
+
+  it("the Fool's-Gold Idol sits at the Gilded Ruins' gate ramp", () => {
+    assertGift('pyramid_ante', 'gift_fools_idol', 16, 4, [10, 14]); // just inside the south door
+  });
+
+  it('the Emerald is wedged deep in the jungle, by the rest', () => {
+    assertGift('jungle_2', 'gift_emerald', 35, 22, [1, 12]); // the west mouth
+  });
+
+  it("the Wish Token appears in the idol's bowl once the Grin falls", () => {
+    assertGift('valle_dorado', 'gift_wish_token', 24, 16, [17, 15], 'grin_defeated');
+  });
+
+  it('the SET caches hold all five hero-tagged charms (the §A8 signature sets)', () => {
+    const porch = ['firefly_jar', 'wind_chime_charm', 'whittled_whistle', 'bottle_cap_medallion', 'lucky_acorn'];
+    const mercado = ['friendship_bracelet', 'evil_eye_bead', 'brass_gear_charm', 'tin_milagro', 'jade_frog'];
+    for (const set of [porch, mercado]) {
+      const wielders = new Set(set.map((id) => ITEMS[id]?.wielder));
+      expect(set.every((id) => ITEMS[id]?.kind === 'charm' && ITEMS[id]?.price === 0)).toBe(true);
+      expect(wielders).toEqual(new Set(['rex', 'faye', 'milo', 'pippa', 'dorin'])); // one per hero
+    }
+  });
+
+  it('Ch.2 has its deli + picnic tables, so the Family Basket path is real (§A4.5)', () => {
+    const deli = MAPS.deli_int.npcs.find((n) => n.id === 'deli_keeper');
+    expect(deli?.dialogue).toBe('npc_deli');
+    // three placed Ch.2 rests + the dock + jungle + pyramid tables — well past §A4.5's ≈3
+    const tables = ['puerto_sol', 'valle_dorado', 'jungle_2', 'pyramid_ante', 'deli_int'].reduce(
+      (n, id) => n + MAPS[id].props.filter((p) => p.sprite === 'picnic').length,
+      0,
+    );
+    expect(tables).toBeGreaterThanOrEqual(3);
   });
 });

@@ -29,6 +29,32 @@ import { buildDistrict, placeNook, Streams } from '../levelkit';
 import { AREA_SKINS } from '../spritegen/buildings';
 import type { MapDef, NpcDef, PropDef, SignDef } from '../schemas';
 
+/** S17 M18 Part B (ADR-063): a one-grant gift box + its sign — the maps.ts
+ *  `walkPresent` pattern, inlined for Ch.2 (where the grotto chests + the dock
+ *  present already use it raw). The closed box/sign retire on `flag`; the opened
+ *  box + a flavor sign take their place. `extra.ifFlag` layers a SECOND gate on
+ *  the closed state only (the wish token appears once the Grin falls), so the
+ *  open state still keys cleanly on `flag`. The sub-tile solid never seals a
+ *  lane; callers place the box on an open, BFS-reachable tile. */
+const GIFT_SOLID = { ox: 1, oy: 7, w: 12, h: 6 } as const;
+function giftBox(
+  flag: string,
+  x: number,
+  y: number,
+  extra: { ifFlag?: string } = {},
+): { props: PropDef[]; signs: SignDef[] } {
+  return {
+    props: [
+      { sprite: 'gift_box', x, y, solid: GIFT_SOLID, ...extra, unlessFlag: flag },
+      { sprite: 'gift_box_open', x, y, solid: GIFT_SOLID, ifFlag: flag },
+    ],
+    signs: [
+      { x, y: y + 1, dialogue: flag, ...extra, unlessFlag: flag },
+      { x, y: y + 1, dialogue: `${flag}_done`, ifFlag: flag },
+    ],
+  };
+}
+
 /* ================= THE BRICKTON DOCKS (the Ch.2 gate) ================= */
 
 export function buildBricktonDocks(): MapDef {
@@ -61,6 +87,9 @@ export function buildBricktonDocks(): MapDef {
       { sprite: 'crate_bananas', x: 12.3, y: 9.4, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
       { sprite: 'payphone', x: 4, y: 4, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
       { sprite: 'trash_can', x: 16, y: 3.4, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      // S17 M18 Part B (ADR-063): the banana cargo passage stub (§A5 key item),
+      // pinned under a crate mid-pier (open 'd' deck, clear of the crates/boat)
+      ...giftBox('gift_boat_ticket', 14, 8).props,
     ],
     npcs: [
       { id: 'captain', sprite: 'captain', x: 21, y: 9, facing: 'down', dialogue: 'npc_captain' },
@@ -68,7 +97,10 @@ export function buildBricktonDocks(): MapDef {
       // the Ch.3 tease (zero map yet): Uncle Bert turns up once the Grin falls
       { id: 'uncle_bert', sprite: 'uncleBert', x: 13, y: 5, facing: 'down', dialogue: 'npc_uncle_bert', ifFlag: 'ch2_complete' },
     ],
-    signs: [{ x: 9, y: 5, dialogue: 'sign_departures' }],
+    signs: [
+      { x: 9, y: 5, dialogue: 'sign_departures' },
+      ...giftBox('gift_boat_ticket', 14, 8).signs,
+    ],
     phones: [{ x: 4, y: 4 }],
     doors: [
       // back through the gap onto Brickton's street B
@@ -403,6 +435,14 @@ export function growPuertoSol(): MapDef {
   ];
 
   const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  // S17 M18 Part B (ADR-063): two Americas grants on the grown malecón —
+  //  • THE MERCADO SET, a charm for each hero, cached at the market quay (open
+  //    'd' dock east of the nook stalls).
+  //  • a Gold Doubloon wedged dockside, far east on the promenade.
+  // Both on open waterfront tiles, clear of crates/stalls/palms; the sub-tile
+  // box solid seals no lane (BFS re-proven in the maps_ch2 tests).
+  const mercadoStall = giftBox('mercado_stall', 70, 27);
+  const doubloon = giftBox('gift_doubloon', 114, 28);
   const props: PropDef[] = [
     ...core.props,
     ...megaWest.props,
@@ -410,6 +450,8 @@ export function growPuertoSol(): MapDef {
     ...district.props,
     ...nook.props,
     ...present,
+    ...mercadoStall.props,
+    ...doubloon.props,
     // the relocated DEPARTURE BOARD — the freight/onward schedule, dockside
     { sprite: 'departure_board', x: 82, y: 27.4, solid: { ox: 2, oy: 20, w: 22, h: 8 } },
     // dock clutter — cargo waiting on the quay (off the walking lane)
@@ -448,6 +490,8 @@ export function growPuertoSol(): MapDef {
     // the present: a sign while sealed, a flavor line once opened (gated)
     { x: giftX, y: giftY + 1, dialogue: 'ps_dock_gift', unlessFlag: 'ps_dock_gift' },
     { x: giftX, y: giftY + 1, dialogue: 'ps_dock_gift_done', ifFlag: 'ps_dock_gift' },
+    ...mercadoStall.signs, // ADR-063 Part B: THE MERCADO SET
+    ...doubloon.signs, // ADR-063 Part B: the dockside Gold Doubloon
   ];
 
   // the jungle gate RELOCATES to the new far-east edge (the port moved out with the
@@ -775,12 +819,16 @@ export function buildJungle2(): MapDef {
       // §A4.5: the deep-jungle table (Ch.2's second — strategy before the village)
       { sprite: 'picnic', x: 33, y: 21.4, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'sign', x: 19, y: 24, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // S17 M18 Part B (ADR-063): an Emerald the deep jungle was keeping (valuable),
+      // wedged in the bark by the table's open pocket (BFS-reachable, near the rest)
+      ...giftBox('gift_emerald', 35, 22).props,
     ],
     npcs: [],
     signs: [
       { x: 19, y: 25, dialogue: 'sign_jungle2' },
       // the grotto mouth — easy to walk past, the §A11 sign doesn't help
       { x: 10, y: 2, dialogue: 'sign_grotto' },
+      ...giftBox('gift_emerald', 35, 22).signs,
     ],
     phones: [],
     doors: [
@@ -945,6 +993,10 @@ export function buildValleDorado(): MapDef {
       { sprite: 'picnic', x: 19, y: 23.4, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'phone_table', x: 14, y: 12, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
       { sprite: 'sign', x: 3, y: 18, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // S17 M18 Part B (ADR-063): the Wish Token (§A5 key) appears in the idol's
+      // offering bowl once the Grin falls — the shrine stops eating wishes and
+      // leaves one behind. Open plaza paver below the idol; clear of the woke trio.
+      ...giftBox('gift_wish_token', 24, 16, { ifFlag: 'grin_defeated' }).props,
     ],
     npcs,
     signs: [
@@ -952,6 +1004,7 @@ export function buildValleDorado(): MapDef {
       { x: 24, y: 19, dialogue: 'sign_shrine', unlessFlag: 'grin_defeated' },
       { x: 24, y: 19, dialogue: 'sign_shrine_after', ifFlag: 'grin_defeated' },
       { x: 8, y: 10, dialogue: 'sign_pen' },
+      ...giftBox('gift_wish_token', 24, 16, { ifFlag: 'grin_defeated' }).signs,
     ],
     phones: [{ x: 14, y: 12 }],
     doors: [
@@ -1091,9 +1144,15 @@ export function buildPyramidAnte(): MapDef {
       { sprite: 'picnic', x: 3, y: 11.4, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'sign', x: 14, y: 10, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       { sprite: 'phone_table', x: 16, y: 12, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
+      // S17 M18 Part B (ADR-063): a Fool's-Gold Idol tossed by the gate ramp
+      // (sell-fodder valuable, the joke at the Gilded Ruins' door); open '.' east
+      ...giftBox('gift_fools_idol', 16, 4).props,
     ],
     npcs: [],
-    signs: [{ x: 14, y: 11, dialogue: 'sign_pyramid' }],
+    signs: [
+      { x: 14, y: 11, dialogue: 'sign_pyramid' },
+      ...giftBox('gift_fools_idol', 16, 4).signs,
+    ],
     phones: [{ x: 16, y: 12 }],
     doors: [{ x: 9, y: 15, w: 3, h: 1, to: 'valle_dorado', tx: 288, ty: 456, facing: 'down' }],
     spawners: [

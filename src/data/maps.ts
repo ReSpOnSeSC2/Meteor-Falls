@@ -378,12 +378,23 @@ export function growOtterbrook(): MapDef {
   const treesAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
     xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
 
+  // S17 M18 Part B (ADR-063): two hidden Americas grants on the grown south side.
+  //  • THE PORCH SET coffee can under the Civic Green's oak (open '.' grass, west
+  //    of the south district at cols<28 — never a frozen cell, never a sealed lane).
+  //  • the Spare Hubcap by the Pond Park fence (open ground, rows≥20 below the
+  //    east district). Both sit on hand-laid open tiles; the box's sub-tile solid
+  //    can't wall a lane, and the sign tile stays walkable (BFS re-proven in tests).
+  const porchCan = walkPresent('porch_can', 22, 47);
+  const hubcap = walkPresent('gift_hubcap', 63, 23);
+
   const props: PropDef[] = [
     ...core.props,
     ...south.props,
     ...east.props,
     ...thicketProps,
     ...woodsGift.props,
+    ...porchCan.props,
+    ...hubcap.props,
     { sprite: 'sign', x: 4, y: 44, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the woods trailhead marker
     cityHall,
     { sprite: 'sign', x: 12, y: 41, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // City Hall plaque
@@ -431,6 +442,8 @@ export function growOtterbrook(): MapDef {
     // S15i Task 1: the woods nook trailhead
     { x: 4, y: 44, dialogue: 'sign_otter_woods' },
     ...woodsGift.signs, // ADR-056: the glade present (sign while sealed, flavor after)
+    ...porchCan.signs, // ADR-063 Part B: THE PORCH SET coffee can
+    ...hubcap.signs, // ADR-063 Part B: the Spare Hubcap ("worth more to a man named Earl")
     ...south.signs,
     ...east.signs,
   ];
@@ -1981,6 +1994,18 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
         dog: true,
         ifFlag: 'q_biscuit_c2',
         unlessFlag: 'q_biscuit_c3',
+      },
+      // S17 M18 Part B (§A4.5, ADR-063): Ch.1's deli — the drugstore's
+      // soda-fountain lunch counter. Crafts a FAMILY BASKET from three foods,
+      // so the Americas' Ch.1 foods have a counter that packs them (Ch.2's
+      // Mercado deli was the only one before). Stands at the back fountain.
+      {
+        id: 'deli_otter',
+        sprite: 'deliKeeper',
+        x: 8,
+        y: 2,
+        facing: 'down',
+        dialogue: 'npc_deli_otter',
       },
     ],
     signs: [{ x: 9, y: 1, dialogue: 'sign_drug_wall' }],
