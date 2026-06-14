@@ -5009,3 +5009,30 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the rags-to-riches arc closes the loop — drive a continent, ferry to the next,
   buy in everywhere, and rocket between Earth and Mars at will, a billionaire under the Red Dome who
   still comes home for Mom's cooking. M49 folds the new fuel/ferry/rocket costs into the balance read.
+
+## ADR-090 — S20 (Movement 49): BALANCE & VERIFICATION (fuel / ferry / rocket fold)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 49, the last — the costs fold into §A9; the consolidated proof.)
+- **Decision — the new costs fold into the §A9 economy (tune DATA).** `tools/balance-sim.ts`
+  (`npm run balance`) now prints the FUEL ladder (per type: kind, tank, range in tiles, full-fill
+  cost), the per-region FUEL PRICE spread (gas → the dear Mars electric, the home charger below every
+  pump), and the FERRY + ROCKET fares (sea $1,200 < air $4,000 < rocket-to-Mars $250,000; own the
+  craft, pay ~0.3×; a launch burns $75,000 of fuel). `balance.test.ts` pins it: a tank of gas is a
+  real bite at the Ch.1 ~$1K fortune but a rounding error against the Mars dome, and travel escalates
+  sea < air < rocket.
+- **THE GREAT VERIFICATION (S20, Movements 43–49):** all both-directions gates GREEN — `fuel`
+  (incl. ignition consistency), `stations`, `world` (continents + per-continent property), `rocket` —
+  alongside every inherited gate. The verdict prints: **fuel (32 powered · 4 human/none) · 14 fuel
+  stations · 12 continents · the Long Shot (Earth↔Mars) · 96 vehicles (36 types) · 15 properties**.
+  `tsc --noEmit` clean, full **vitest 968 green** (+60 over S19's 908), `vite build` clean,
+  `npm run validate` green, `npm run balance` reads sane, `art:vehicles` re-rendered (the rocket on
+  the sheet). No FNV re-pin and no frozen-core / `world_block` change across the whole session
+  (95 frozen-core + FNV tests still green). Save schema walked **v13 → v15** (fuel → carLocation),
+  each step migrated + round-trip tested. Seven ADRs (084→090) each landed with its §A4.13/§A4.16/
+  §A4.17/§A5/§A6/§A9 Bible amendment in the same commit.
+- **Consequences:** the rags-to-riches loop is whole and realistic — every vehicle burns fuel
+  (human or CPU), you turn the key (EVs keyless), you pay at the pump or charge cheap at home, you
+  ferry your car across continents in a jumbo jet's hold or a boat's deck, you buy property
+  everywhere, and you rocket between Earth and the Red Dome on Mars at will. The live scene wiring
+  (pump props, the START button, the cargo-load + launch animations) rides these settled spines.

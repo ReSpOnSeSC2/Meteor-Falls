@@ -14,6 +14,12 @@ import { DEALERSHIP } from '../src/data/dealership';
 import { MILITARY_VEHICLES } from '../src/data/military';
 import { walkedPrice } from '../src/engine/property';
 import { sellValue, resaleFactor } from '../src/engine/garage';
+import { VEHICLE_SPECS } from '../src/spritegen/vehicles';
+import { fuelProfile, rangeTiles, needsFuel, BASE_PRICE_PER_UNIT } from '../src/engine/fuel';
+import { STATIONS } from '../src/data/stations';
+import { stationPricePerUnit, homeChargePricePerUnit, refuelAtStation, chargeAtHome } from '../src/engine/refuel';
+import { FERRY_BASE, ferryCost } from '../src/engine/ferry';
+import { launchCost } from '../src/engine/rocket';
 
 const fmt = (n: number): string => '$' + n.toLocaleString('en-US');
 
@@ -50,5 +56,28 @@ for (const m of Object.values(MILITARY_VEHICLES)) {
 console.log('\nFURNITURE price band (the home-goods ladder):\n');
 const fp = Object.values(FURNITURE).map((f) => f.price).sort((a, b) => a - b);
 console.log(`  ${FURNITURE && Object.keys(FURNITURE).length} pieces · cheapest ${fmt(fp[0])} · dearest ${fmt(fp[fp.length - 1])}`);
+
+console.log('\nFUEL (S20 — a full tank goes a long way; you pay to fill, electric is cheap):\n');
+const drivable = Object.keys(VEHICLE_SPECS).filter((t) => needsFuel(t)).sort();
+for (const t of drivable) {
+  const p = fuelProfile(t);
+  const station = STATIONS.brickton_fillup; // a mid-cost-of-living reference pump
+  const cost = p.kind === 'electric'
+    ? chargeAtHome(0, t).cost
+    : (station.fuels.includes(p.kind) ? refuelAtStation(0, t, station).cost : Math.round(p.tank * BASE_PRICE_PER_UNIT[p.kind]));
+  console.log(`  ${t.padEnd(15)} ${p.kind.padEnd(8)} tank ${String(p.tank).padStart(4)}  range ${String(rangeTiles(t)).padStart(6)}t  full-fill ${fmt(cost).padStart(10)}`);
+}
+
+console.log('\nFUEL PRICE by region (per unit gas → Mars electric):\n');
+for (const st of Object.values(STATIONS)) {
+  const kinds = st.fuels.map((k) => `${k} $${stationPricePerUnit(st, k).toFixed(2)}`).join('  ');
+  console.log(`  ${st.area.padEnd(13)} ×${st.priceMult.toFixed(2)}  ${kinds}`);
+}
+console.log(`  home charger (EV): $${homeChargePricePerUnit().toFixed(2)}/unit — cheaper than every pump`);
+
+console.log('\nFERRY + ROCKET (cross-continent — own the craft, pay far less):\n');
+console.log(`  sea     commercial ${fmt(FERRY_BASE.sea).padStart(12)}   own a boat ${fmt(ferryCost('sea', true)).padStart(12)}`);
+console.log(`  air     commercial ${fmt(FERRY_BASE.air).padStart(12)}   own a jet  ${fmt(ferryCost('air', true)).padStart(12)}`);
+console.log(`  rocket  (Mars)     ${fmt(FERRY_BASE.rocket).padStart(12)}   launch fuel ${fmt(launchCost()).padStart(11)}`);
 
 console.log(`\nAt Ch.10 the arc targets ${fmt(fortuneTarget(10))} — the back-half pour fills the gap (tune DATA).\n`);

@@ -283,6 +283,13 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > always beats the pump. Fuel costs fold into the §A9 economy — a rounding error against a mansion,
 > a real bite against a kid's first tank of gas.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-090 — **§A9 fuel, ferry & the rocket fold into the
+> arc.** Fuel fills, cross-continent ferry fares (sea < air, far cheaper if you own the craft), and
+> the rocket launch all ride the §A9 economy as tunable DATA; `npm run balance` prints the fuel
+> ladder + per-region prices + ferry/rocket fares. A tank of gas is a real bite at the Ch.1 ~$1K
+> fortune and a rounding error by the time you own the Red Dome — the rags-to-riches curve, made you
+> can feel it at the pump.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
 > NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
