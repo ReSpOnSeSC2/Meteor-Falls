@@ -78,6 +78,26 @@ describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays orga
     expect(MAPS.otterbrook.signs.some((s) => s.dialogue === 'otter_woods_gift')).toBe(true);
   });
 
+  it('S17 M18 Part B (ADR-063): the PORCH SET coffee can + the Spare Hubcap are placed live', () => {
+    const ob = MAPS.otterbrook;
+    for (const [flag, x, y] of [['porch_can', 22, 47], ['gift_hubcap', 63, 23]] as const) {
+      expect(ob.props.some((p) => p.sprite === 'gift_box' && Math.round(p.x) === x && Math.round(p.y) === y), flag).toBe(true);
+      const prompt = ob.signs.find((s) => s.dialogue === flag);
+      expect(prompt?.unlessFlag, flag).toBe(flag);
+      expect(ob.signs.some((s) => s.dialogue === `${flag}_done` && s.ifFlag === flag), `${flag}_done`).toBe(true);
+      // APPEND-ONLY: the frozen 1995 core carries neither grant (byte-identical above)
+      expect(buildOtterbrook().signs.some((s) => s.dialogue === flag)).toBe(false);
+    }
+  });
+
+  it('S17 M18 Part B (ADR-063): OTTERBROOK DRUG grew a deli lunch counter (§A4.5)', () => {
+    const deli = MAPS.drugstore_int.npcs.find((n) => n.id === 'deli_otter');
+    expect(deli?.dialogue).toBe('npc_deli_otter');
+    // the §A4.5 picnic rests Ch.1 ships (town + pond park + dungeon) clear ≈3
+    const tables = ['otterbrook', 'brickton'].reduce((n, id) => n + MAPS[id].props.filter((p) => p.sprite === 'picnic').length, 0);
+    expect(tables).toBeGreaterThanOrEqual(3);
+  });
+
   it('the daybreak gate seals the road east until zapper_done (the daybreak law, §B4)', () => {
     const ob = MAPS.otterbrook;
     // the foot connector east still exists (kept for Movement 2)...
@@ -304,6 +324,12 @@ describe('PUERTO SOL — the 1898 core is frozen (≈3× dock-district growth, s
     // a hidden present + its sign (the gift-box pattern)
     expect(ps.props.some((p) => p.sprite === 'gift_box')).toBe(true);
     expect(ps.signs.some((s) => s.dialogue === 'ps_dock_gift')).toBe(true);
+    // S17 M18 Part B (ADR-063): the MERCADO SET cache + the dockside doubloon, appended
+    for (const [flag, x, y] of [['mercado_stall', 70, 27], ['gift_doubloon', 114, 28]] as const) {
+      expect(ps.props.some((p) => p.sprite === 'gift_box' && Math.round(p.x) === x && Math.round(p.y) === y), flag).toBe(true);
+      expect(ps.signs.some((s) => s.dialogue === flag && s.unlessFlag === flag), flag).toBe(true);
+      expect(buildPuertoSol().signs.some((s) => s.dialogue === flag)).toBe(false); // append-only
+    }
     // the boat + departure board + costa wiring all survived (Ch.2 must still run)
     expect(ps.props.some((p) => p.sprite === 'banana_boat')).toBe(true);
     expect(ps.props.some((p) => p.sprite === 'departure_board')).toBe(true);

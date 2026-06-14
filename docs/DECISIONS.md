@@ -3977,3 +3977,62 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   new canon/mechanic was introduced (pouring §A8-anticipated items is implementing canon, not deviating —
   the validator manifest is the record), so the Bible needs no amendment this movement. Part B places the
   Americas catalog the rest of the way into the living world.
+
+### Part B — PLACE LIVE (2026-06-14): the 16 deferred items land in the world
+
+- **Status:** Accepted (the documented M18 Part B seam — the second half of the single-session line).
+  Continues PR #7's branch lineage on `claude/americas-catalog-m18-place-live-omge46`. Ships **the
+  live-world placement of every item Part A defined but did not place**, green, append-only, no new canon.
+- **Context:** Part A poured the Americas as data, iconed/priced/banded it, registered the two SETs, and
+  stocked the 31 PRICED items in shops. The 16 NON-shop items — 10 price-0 hero-SET charms, 4 valuables
+  (sell-fodder), 2 story keys — were data-complete but had no GRANT PATH in the world. The world hands the
+  player an item today via (a) `QuestDef.rewardItem` on a quest's doneFlag, or (b) scripted gift-box
+  triggers in `OverworldScene.signBeat` (the grotto chests / the §A10 reward beats / the grown-map presents
+  via `walkPresent`). Per the user's decree ("via existing quest threads OR a hidden gift-box set, your
+  call"), Part B uses the **gift-box pattern** throughout — the cleanest append-only seam, and the CALLER
+  ledger keys off quest doneFlags (not items), so no reward wiring touches the finale.
+- **Decision — the two SETs as multi-grant "cache" gift-boxes (`OverworldScene.ts`, the grown maps).**
+  THE PORCH SET (the coffee can under grown Otterbrook's Civic Green oak) and THE MERCADO SET (a closing
+  market stall on grown Puerto Sol's malecón) each hold all FIVE hero-tagged charms. A new `SET_CACHE`
+  handler in `signBeat` hands the pieces ONE AT A TIME, each remembered by a per-piece flag
+  (`porch_can_0..4` / `mercado_stall_0..4`); a full bag commits nothing further and the cache waits with the
+  rest (zero missables, §B4). The box's master flag (the gift-box pattern's `unlessFlag`/`ifFlag`) flips —
+  swapping closed→opened — only once every piece is home. Placed via `maps.ts` `walkPresent` (Otterbrook)
+  and the new `maps_ch2.ts` `giftBox` helper (Puerto Sol), appended to the GROWN region (never the frozen
+  1995/1898 core).
+- **Decision — the 4 valuables + 2 keys as one-grant gift-boxes (the existing `loot` record).** Each adds
+  one row to `signBeat`'s `loot` map and one `walkPresent`/`giftBox` placement, where its §A11 joke lands:
+  **Spare Hubcap** by the Otterbrook pond fence ("worth more to a man named Earl"); **Fool's-Gold Idol** at
+  the Gilded Ruins' gate ramp (pyramid_ante); **Emerald** wedged in the bark of the deep jungle
+  (jungle_2, by the rest); **Gold Doubloon** dockside on the Puerto Sol malecón; **Banana-Boat Ticket** (the
+  §A5 cargo passage) pinned under a crate on the Brickton pier; **Wish Token** in the idol's offering bowl
+  in Valle Dorado — gated `ifFlag:'grin_defeated'` so it appears only once the shrine stops eating wishes.
+- **Decision — a Ch.1 deli, so §A4.5's Family Basket path is real in the USA too (`maps.ts`, dialogue).**
+  Ch.2 shipped the only deli (Puerto Sol's `deli_int`); Ch.1 had picnic tables but no Family-Basket counter.
+  Part B adds a soda-fountain LUNCH COUNTER NPC (`deli_otter`, dialogue `npc_deli_otter`) to the back of
+  OTTERBROOK DRUG (the non-frozen `drugstore_int`), sharing the shipped `deliBeat` (a new `case 'deli_otter'`
+  beside `deli_keeper`). `deliBeat` already crafts `basket_family` from ANY three `kind:'food'` items, so the
+  Americas' Ch.1 foods now have a counter that packs them. Pure Americana, append-only, zero map-gen risk.
+- **Decision — append-only, reachability re-proven, no lane sealed.** Every box is placed on a hand-laid or
+  grown-open tile; the sub-tile `gift_box` solid (`{ox:1,oy:7,w:12,h:6}`) cannot wall a lane, and the
+  interaction SIGN sits one tile south on walkable ground. New tests BFS each new sign tile from a map entry
+  (`maps_ch2.test.ts` Part B describe; `world_block.test.ts` Otterbrook/Puerto Sol rows), and the validator's
+  map-quality PROP-SOLID sweep stays **44/49 with the same 5 frozen waivers — no new reachability flags**.
+  The frozen-core prefix proofs stay byte-identical (the grants append after every core prop/sign; the
+  1995/1898 cores are asserted to carry none of them).
+- **Verification:** `npm run validate` green (**88 items / 88 icons**, bands ch1:42 ch2:42 unchanged — Part B
+  places existing items, adds none; **456 dialogue** = 439 + 17 Part-B beats; **49 maps**; the 4-shop pin
+  unchanged) + `tsc --noEmit` clean + full **vitest 731 green** (+9: the Part B placement + BFS reachability
+  proofs across Otterbrook/Puerto Sol/Brickton-docks/pyramid/jungle/Valle Dorado + the SET/deli/picnic
+  assertions) + `vite build` clean + `art:icons` re-rendered (`--region ch1/ch2`) and unchanged (no icon
+  touched). No new ITEM_ICON/WEAPON_ART rows, no schema change, no `EnemyDef.drops` field (left deferred to
+  M24 — the items are fully placeable via shops/gift-boxes, so the schema/engine/Bible stay untouched). No
+  FNV re-pin, no frozen-core / world_block sample-routing change, no save migration (inventory references
+  ids; the new flags are plain story flags).
+- **Consequences:** the Americas catalog now LIVES — every one of the 88 items is reachable in the world:
+  31 on shop shelves (Part A), 16 as gift-box loot/keys/titles (Part B), the rest as the shipped weapons/
+  cures/foods. The two hero SETs are earned as warm summer-porch / market-stall caches; the keys sit in
+  their story spots; the valuables scatter as sell-fodder where their jokes land; and both landed regions
+  can assemble a Family Basket. M18 is fully green. The gift-box-cache + per-piece-flag pattern is now the
+  template for placing later regions' price-0 SET pieces (M19–21). The optional enemy `drops` field remains
+  the one deferred thread (M24's balance pass) — flagged, not forgotten.

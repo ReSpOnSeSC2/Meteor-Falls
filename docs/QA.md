@@ -613,3 +613,30 @@ review; `preview_screenshot` hangs on the WebGL canvas, per ADR-059/060).
 |---|---|---|---|---|
 | — | **Shop the Americas** — open any of the 4 shops on a save with cash: the new priced rows (Grilled Cheese, Second Wind, Otterbrook Cap, Empanada, Guardian-Angel Feather, Speed-Demon Soda…) show their forged icon beside the price (icon rows 31–32 cover the UI, unchanged); BUY adds to the bag, SELL halves | ⬜ | ⬜ | item textures are tiny; boot registers the +47 ITEM_ICON rows once — browser p99 loop + `android:apk` paths unaffected |
 | — | **A tonic + a Second Wind in the menu** — use Sudden Guts Pill: "…Guts went up by 4 — for keeps!" and it survives a level-up (save → reload); knock a hero to 0, use Second Wind in battle → revived at a sliver | ⬜ | ⬜ | rides the shipped ADR-061 tonic/revival code; **Part B** lands the gift-box/quest grants of the price-0 SET pieces + the picnic re-proof |
+
+## S17 Movement 18 — Part B (PLACE LIVE): the 16 deferred Americas items land in the world (ADR-063 Part B)
+
+Part B grants a live, reachable home to the 16 items Part A defined but did not place: the two price-0
+hero SETs, the 4 sell-fodder valuables, and the 2 story keys — all via the shipped gift-box pattern
+(a closed box over an opened one, flag-gated, handed only when the bag has room → zero missables). It
+also lands a Ch.1 deli so the §A4.5 Family Basket path is real in the USA too. Append-only on every
+grown/landed map; verified headlessly via tsc + full vitest (incl. the BFS reachability re-proofs) +
+the validator's map-quality prop-solid sweep + `vite build` + the `art:icons` sheets (unchanged — Part B
+adds no items/icons).
+
+| Check | Result |
+|---|---|
+| **The two hero SETs are placed + handed cleanly** — THE PORCH SET (coffee can, grown Otterbrook green) + THE MERCADO SET (market stall, grown Puerto Sol malecón), each holding all 5 hero-tagged charms, dealt one-at-a-time with a per-piece flag so a full bag loses none | ✅ `SET_CACHE` multi-grant handler in `signBeat`; the box's master flag flips only when every piece is home; the §A8 set test asserts 5 charms, price 0, one per hero |
+| **The 4 valuables + 2 keys land where their joke does** — Spare Hubcap (Otterbrook pond / "Earl"), Fool's-Gold Idol (Gilded Ruins ramp), Emerald (deep jungle), Gold Doubloon (Puerto Sol dockside), Banana-Boat Ticket (Brickton pier), Wish Token (the idol's bowl, post-Grin) | ✅ each a `loot`-record gift box; the wish token is `ifFlag:'grin_defeated'`-gated; ids cross-validated against ITEMS |
+| **Every box is REACHABLE + seals NO lane (BFS re-proof)** — the sub-tile box solid + an open sign tile, on hand-laid/grown-open ground; static-grid BFS in the map tests + the validator's prop-solid map-quality sweep | ✅ maps_ch2/world_block tests BFS each sign tile from a map entry; `validate` map-quality still 44/49 (same 5 frozen waivers — no new flags) |
+| **Append-only — no frozen core disturbed** — the grants append after every core prop/sign; the 1995/1898 cores carry none of them | ✅ world_block prefix proofs green; `buildOtterbrook()`/`buildPuertoSol()` carry no Part-B sign (asserted) |
+| **The picnic + deli Family Basket path works with Americas foods** — Ch.2's Mercado deli + Ch.1's new OTTERBROOK DRUG lunch counter both craft `basket_family` from any 3 foods; ≈3+ picnic tables per region | ✅ `deli_otter` wired to `deliBeat`; deli + table existence asserted both regions; deliBeat already accepts any `kind:'food'` (the Americas foods qualify) |
+| **No new canon / FNV re-pin / save migration** — placing §A8 items via the existing gift-box + deli code introduces no mechanic; inventory references ids; no map generator touched | ✅ Bible unamended; no world_block/levelkit/FNV touch; ADR-063 gains a Part B sub-note only |
+| `npm run validate` + `npx vitest run` + `npm run build` | ✅ validator green (88 items / 456 dialogue / 49 maps) + **731 vitest** (+9 Part B map/reach proofs) + `vite build` clean |
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| — | **Open the PORCH SET coffee can** — walk the grown Otterbrook green to the oak, open the can: five charms toast in one by one (firefly_jar…lucky_acorn); with a full bag, the rest wait — come back and the can still has them | ⬜ | ⬜ | per-piece flags `porch_can_0..4`; the box swaps to opened only when all five are home |
+| — | **The MERCADO stall + the dockside loot** — on the Puerto Sol malecón, take the 5-charm tray; pick up the Gold Doubloon east on the dock; sell the Hubcap/Idol/Emerald/Doubloon at any shop (half price) | ⬜ | ⬜ | same multi-grant cache; valuables route through the standard sell flow |
+| — | **The Wish Token after the Grin** — return to Valle Dorado once `grin_defeated`: the token now sits in the idol's bowl (absent before the boss); the Locket hums near it | ⬜ | ⬜ | `ifFlag:'grin_defeated'` on the closed box + prompt sign; still non-missable (always re-reachable) |
+| — | **A Ch.1 Family Basket** — at the OTTERBROOK DRUG lunch counter, hand over 3 USA foods (Corn Dog, Apple Pie Slice, Grilled Cheese) → one Family Basket; use it at a town picnic table for the Sunny Side buff | ⬜ | ⬜ | `deli_otter` shares `deliBeat`; the three-foods-leave / one-basket-lands path is the shipped Ch.2 code |

@@ -1524,6 +1524,73 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   grotto_glyph: ['A carved slab: a small sun, held in two hands. Whoever carved it pressed HARD.'],
 
+  /* ---------------- S17 M18 PART B (ADR-063) — PLACING THE AMERICAS LIVE ----------------
+   * The two hero-signature SET caches (a coffee can / a market stall), the
+   * sell-fodder valuables, and the two story keys — each a flag-gated gift the
+   * world hands over once, when the bag has room (zero missables). */
+
+  // THE PORCH SET — the coffee-can treasures of a 1995 summer, dug up at the green
+  porch_can: [
+    'Under the green\'s old oak, right where you buried it: a coffee can gone soft with rust.',
+    'You pry the lid. Summer of \'95 looks back up at you — every treasure a kid swore he\'d keep forever.',
+  ],
+  porch_can_done: ['(The can\'s empty now, lid set back crooked. The oak will mind it till next summer.)'],
+
+  // THE MERCADO SET — the Puerto Sol market stalls, a charm at every counter
+  mercado_stall: [
+    'The last stall on the malecón is closing up — but the vendor waves you over, conspiratorial.',
+    'A cloth comes off a tray of little charms. "Para los cinco," she says. For the five of you. No charge. Take them.',
+  ],
+  mercado_stall_done: ['(The tray\'s bare. The vendor has already turned to wheel her cart home, humming.)'],
+
+  // spare_hubcap (ch1) — sell-fodder, the joke is who'd want it
+  gift_hubcap: [
+    'Leaned against the pond fence: one chrome hubcap, scratched but proud.',
+    '(A name\'s scrawled on the back in marker: "EARL." Worth more to a man named Earl than to anybody else alive.)',
+  ],
+  gift_hubcap_done: ['(The fence post is bare. Somewhere, Earl\'s Buick rides one cap short. You can fix that, or pawn it.)'],
+
+  // fools_gold_idol (ch2) — near the Gilded Ruins
+  gift_fools_idol: [
+    'Tossed in the dust by the gate ramp: a little grinning idol, heavy and bright.',
+    '(Bright as a promise. Heavy as a lie. The wish carved in its base reads, simply: "be quiet.")',
+  ],
+  gift_fools_idol_done: ['(The spot it sat in stays a little colder than the rest. Pawn it; never wish on it.)'],
+
+  // emerald (ch2) — deeper in the jungle
+  gift_emerald: [
+    'Wedged in a tree\'s knuckle, green fire catching the one ray of sun that finds it down here.',
+    '(An emerald the size of a thumbnail. The jungle was keeping it. The jungle will not miss it.)',
+  ],
+  gift_emerald_done: ['(The knuckle of bark is empty. A parrot somewhere registers a formal complaint.)'],
+
+  // gold_doubloon (ch2) — dockside
+  gift_doubloon: [
+    'Caught between two dock boards, worn smooth: one gold doubloon, old as the harbor.',
+    '(Some sailor\'s last lucky coin, or his first unlucky one. Hard to say. Easy to sell.)',
+  ],
+  gift_doubloon_done: ['(The gap in the boards whistles when the wind comes off the water. Spend it well.)'],
+
+  // banana_boat_ticket (ch2 key) — §A5's cargo-ship passage
+  gift_boat_ticket: [
+    'Pinned under a crate on the pier: a passage stub for the banana cargo run, stamped and smudged.',
+    '(PUERTO SOL, ONE WAY. The captain shrugs — "Somebody paid and never sailed. Keep it. You earned the trip.")',
+  ],
+  gift_boat_ticket_done: ['(The crate\'s lighter now. The gulls have opinions about freeloaders. Let them.)'],
+
+  // wish_token (ch2 key) — in the idol's offering bowl
+  gift_wish_token: [
+    'In the stone bowl at the idol\'s foot, where the wishes used to go: one small clay token, unburned.',
+    '(Somebody set it down and never made the wish. It is warm, the way a held coin is warm. The Locket hums near it.)',
+  ],
+  gift_wish_token_done: ['(The bowl is empty. The idol keeps grinning, but quieter now — like it\'s out of the wish business for good.)'],
+
+  // a Ch.1 deli — OTTERBROOK DRUG's soda-fountain lunch counter (§A4.5)
+  npc_deli_otter: [
+    '@Lunch counter\'s still open, hon! I do a Family Basket if you bring me three good things to pack.',
+    '@Corn dog, slice of pie, whatever you got. Three foods, one basket, and a napkin folded just so.',
+  ],
+
   /* ---------------- VALLE DORADO (§A6 — the village that wished) ---------------- */
   valle_arrival: [
     'The valley opens like a held breath.',
