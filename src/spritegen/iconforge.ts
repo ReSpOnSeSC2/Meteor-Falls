@@ -908,6 +908,33 @@ const SILHOUETTES: Record<string, Silhouette> = {
       for (const y of [5, 7, 9]) pm.hline(5, y, 5, m(accent)); // ruled writing
     },
   },
+
+  /** lantern — S17 M20 (ADR-065): the far-world paper lantern (Lotus Harbor's
+   *  strings of them, a Chandrapore stall's glow). A capped paper globe ribbed
+   *  with frame staves, lit warm within, a tassel swinging below. Additive,
+   *  palette-only (ADR-020) — like M19's `book`. */
+  lantern: {
+    kind: 'valuable',
+    draw: ({ pm, ramp, accent }) => {
+      // the top + bottom caps
+      pm.rect(5, 1, 4, 1, d(EARTH));
+      pm.rect(5, 11, 4, 1, d(EARTH));
+      // the paper globe, fat in the middle
+      const hw = [2, 3, 4, 4, 4, 3, 2];
+      hw.forEach((w, i) => pm.hline(7 - w, 2 + i, 2 * w + 1, m(ramp)));
+      pm.vline(4, 4, 3, l(ramp)); // a lit left flank
+      // the lit core glows through the paper
+      pm.ellipse(7, 6, 2, 2, l(accent));
+      // the frame staves (horizontal ribs)
+      pm.hline(4, 4, 7, d(ramp));
+      pm.hline(3, 6, 9, d(ramp));
+      pm.hline(4, 8, 7, d(ramp));
+      // the tassel hanging below
+      pm.vline(7, 12, 2, m(RED));
+      pm.set(7, 13, l(GOLD));
+    },
+    light: ({ pm }) => pm.set(7, 6, C.white),
+  },
 };
 
 /* ====================================================================== */
@@ -1153,6 +1180,7 @@ const GALLERY_SAMPLE: Record<Subcat, { band: ItemBand; detail?: Detail | Detail[
   banknote: { band: 'ch4' },
   coin: { band: 'ch5' },
   gem: { band: 'ch7', tint: MAGENTA },
+  lantern: { band: 'ch8', detail: 'star' },
   // armor
   hat: { band: 'ch6', detail: 'stripe' },
   garment: { band: 'ch2', detail: 'stripe' },
