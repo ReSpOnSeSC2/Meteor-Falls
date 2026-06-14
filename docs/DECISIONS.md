@@ -4963,3 +4963,24 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the whole world is reachable by your own car without breaking the Ember-trail
   linearity — drive a continent, ferry to the next, and (M48) rocket to Mars. M47 makes sure there's
   property to buy on each one.
+
+## ADR-088 — S20 (Movement 47): PROPERTY ON EVERY CONTINENT (incl. Mars)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 47 — the rags-to-riches → billionaire-on-Mars arc; needs the
+  M46 continent map.)
+- **Decision — seven new buyable homes fill the continents that lacked one.** Casa del Sol (south
+  america), the Kvisthavn Cabin (norway), a Manor in Minimus (tiny footprint, you live AROUND it), a
+  Flat on Lotus Harbor (china), Aurora Station Quarters (alaska), the Mauna Lani Bungalow (hawaii),
+  and THE RED DOME HABITAT on Mars — the endgame billionaire pad at $900,000,000, the dearest property
+  in the game ("the end of the road, and the start of everything"). Each carries the §A11 cozy-agent
+  voice, a unique deed, a real AREA_SKINS area, a band, and a storage tier; all are forward specs
+  (placed when their chapter lands), so LIVE_PROPERTIES is unchanged.
+- **Decision — gated in the `world` block (+ `ferry.test.ts`).** EVERY continent (all 12, incl.
+  Mars) has ≥1 buyable property — you can put down roots anywhere you arrive. The Mars habitat is
+  asserted as the priciest property. The verdict prints **15 properties**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean. No
+  FNV re-pin, no frozen-core change, no save change (ownership rides deeds/flags). §A4.13 amended.
+- **Consequences:** the wealth fantasy spans the whole world — buy, flip, and rent across every
+  continent, and end up under the Mars dome. M48 adds the rocket + the repeatable Earth↔Mars shuttle
+  that makes living there real.

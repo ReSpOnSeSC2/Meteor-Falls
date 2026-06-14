@@ -732,6 +732,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     const m = ferryMethodsBetween(earthPair[0], earthPair[1]);
     if (!m.includes('air') || !m.includes('sea')) fail('world', `Earth↔Earth ferry must offer air + sea, got [${m.join(',')}]`);
   }
+  // S20 M47 (ADR-088): you can buy property on EVERY continent (incl. Mars) — the
+  // rags-to-riches → billionaire-on-Mars arc. Each continent has ≥1 buyable property.
+  const propContinents = new Set<string>();
+  for (const p of Object.values(PROPERTIES)) {
+    const cont = AREA_CONTINENT[p.area];
+    if (cont) propContinents.add(cont);
+  }
+  for (const id of CONTINENT_IDS) {
+    if (!propContinents.has(id)) fail('world', `continent '${id}' has no buyable property — you must be able to buy in on every continent (§A4.13/ADR-088)`);
+  }
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-

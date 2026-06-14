@@ -214,6 +214,13 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > chapters. The Ember trail never cares about money; net worth is a number, the callers
 > are the score.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-088 — **§A4.13 PROPERTY ON EVERY CONTINENT.** You can
+> buy a home on EVERY landmass you arrive on (all 12 continents), the rags-to-riches → billionaire-on-
+> Mars arc made literal: Casa del Sol, the Kvisthavn Cabin, a Manor in Minimus (you live AROUND its
+> shoebox footprint), a Lotus Harbor flat, Aurora Station Quarters, the Mauna Lani Bungalow, and THE
+> RED DOME HABITAT on Mars — the dearest property in the game ($900M), the end of the road and the
+> start of everything. The `world` gate pins that every continent has ≥1 buyable property.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-071 — **§A4.14 THE HOME EDITOR (a
 > Sims-style base you make yours).** Any home you own can be decorated with
 > FREE-PLACEMENT furniture on its room tile grid: open the editor (the paused-world

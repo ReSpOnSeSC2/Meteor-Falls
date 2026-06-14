@@ -8,8 +8,9 @@ import {
   continentOfArea, ferryMethodsBetween, ownsMethodCraft, canFerry,
   ferryCost, bestFerry, carIsHere, FERRY_BASE, OWN_CRAFT_DISCOUNT,
 } from './ferry';
-import { CONTINENTS, AREA_CONTINENT } from '../data/world';
+import { CONTINENTS, AREA_CONTINENT, CONTINENT_IDS } from '../data/world';
 import { CANON_AREAS } from '../spritegen/buildings';
+import { PROPERTIES } from '../data/properties';
 
 describe('the world map — areas group into continents', () => {
   it('every canon area lives on exactly one continent', () => {
@@ -22,6 +23,14 @@ describe('the world map — areas group into continents', () => {
   });
   it('Mars is the only off-Earth continent', () => {
     expect(Object.values(CONTINENTS).filter((c) => !c.earth).map((c) => c.id)).toEqual(['mars']);
+  });
+  it('M47 (ADR-088): every continent has at least one buyable property (incl. Mars)', () => {
+    const withProp = new Set(Object.values(PROPERTIES).map((p) => AREA_CONTINENT[p.area]).filter(Boolean));
+    for (const id of CONTINENT_IDS) expect(withProp.has(id), `continent '${id}' has no property`).toBe(true);
+    // and the Mars billionaire pad is the dearest thing in the game
+    const mars = PROPERTIES.mars_habitat;
+    expect(mars).toBeDefined();
+    expect(Math.max(...Object.values(PROPERTIES).map((p) => p.basePrice))).toBe(mars.basePrice);
   });
 });
 
