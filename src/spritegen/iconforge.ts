@@ -935,6 +935,63 @@ const SILHOUETTES: Record<string, Silhouette> = {
     },
     light: ({ pm }) => pm.set(7, 6, C.white),
   },
+
+  /* ---- S17 M21 (ADR-091) — THE LAST-WORLD CATALOG additions ---- */
+
+  /** parka — the cold-country body (Insulated Suit / sealskin / Mars pressure
+   *  suit): a hooded coat, a fur ruff round the hood, a centre zip. Distinct
+   *  from `garment` by the up-top hood + the bright ruff. */
+  parka: {
+    kind: 'armor',
+    draw: ({ pm, ramp, accent }) => {
+      // the hood opening up top (a dark mouth ringed by a fur ruff)
+      pm.ellipse(7, 3, 3, 2, d(ramp));
+      for (const [x, y] of [[4, 2], [5, 1], [7, 1], [9, 1], [10, 2], [4, 4], [10, 4]] as Array<[number, number]>) pm.set(x, y, l(accent)); // the fur ruff
+      // the coat body widening to a hem
+      const hw = [3, 4, 4, 5, 5, 5];
+      hw.forEach((w, i) => pm.hline(7 - w, 5 + i, 2 * w + 1, m(ramp)));
+      pm.vline(2, 6, 4, m(ramp)); // sleeves
+      pm.vline(12, 6, 4, m(ramp));
+      pm.vline(7, 5, 6, d(ramp)); // the centre zip
+      pm.hline(2, 5, 11, l(ramp)); // lit shoulders
+    },
+  },
+
+  /** foilpack — the astronaut/expedition pouch (Freeze-Dried Ice Cream, Mars
+   *  vending fare, the rations): a vacuum mylar pouch, a crimped heat-seal strip,
+   *  a tear-notch, a printed window. The lonely silver of a meal far from home. */
+  foilpack: {
+    kind: 'food',
+    draw: ({ pm, ramp, accent }) => {
+      pm.rect(3, 3, 8, 9, m(ramp)); // the pouch
+      pm.vline(3, 3, 9, l(ramp)); // a foil sheen down one flank
+      pm.hline(3, 3, 8, l(PAPER)); // the crimped heat-seal strip
+      pm.hline(3, 4, 8, d(PAPER));
+      pm.set(10, 3, T); // the tear-notch out the corner
+      pm.set(10, 4, T);
+      pm.rect(5, 7, 4, 3, m(accent)); // the printed window
+      pm.set(5, 7, l(accent));
+    },
+    light: ({ pm }) => pm.set(4, 6, C.white),
+  },
+
+  /** candle — the Romania candlelit body (the monastery vigil, the castle taper):
+   *  a tall wax pillar in a holder, a lit flame, one running drip. */
+  candle: {
+    kind: 'cure',
+    draw: ({ pm, ramp }) => {
+      pm.rect(5, 4, 4, 8, m(ramp)); // the wax pillar
+      pm.vline(5, 4, 8, l(ramp)); // lit side
+      pm.set(8, 6, d(ramp)); // a running drip
+      pm.set(8, 7, d(ramp));
+      pm.vline(7, 2, 2, d(EARTH)); // the wick
+      pm.set(7, 1, l(ORANGE)); // the flame
+      pm.set(7, 0, l(GOLD));
+      pm.set(6, 1, m(ORANGE));
+      pm.rect(4, 12, 6, 1, d(GOLD)); // the brass holder lip
+    },
+    light: ({ pm }) => pm.set(7, 0, C.white),
+  },
 };
 
 /* ====================================================================== */
@@ -1143,6 +1200,7 @@ const GALLERY_SAMPLE: Record<Subcat, { band: ItemBand; detail?: Detail | Detail[
   bar: { band: 'ch2', detail: 'wrapper' },
   plate: { band: 'ch9', detail: 'steam' },
   cup_cold: { band: 'ch1' },
+  foilpack: { band: 'ch10', detail: 'label' }, // M21 — Mars / expedition fare
   // pp
   can: { band: 'ch1', detail: 'label' },
   bottle: { band: 'ch2', detail: 'label' },
@@ -1156,6 +1214,7 @@ const GALLERY_SAMPLE: Record<Subcat, { band: ItemBand; detail?: Detail | Detail[
   bell: { band: 'ch9', detail: 'star' },
   tape: { band: 'ch1', detail: 'label' },
   feather: { band: 'ch10' },
+  candle: { band: 'ch9', detail: 'star' }, // M21 — Romania candlelit vigil / castle
   // tonic
   pill: { band: 'ch3' },
   capsule: { band: 'ch7' },
@@ -1184,6 +1243,7 @@ const GALLERY_SAMPLE: Record<Subcat, { band: ItemBand; detail?: Detail | Detail[
   // armor
   hat: { band: 'ch6', detail: 'stripe' },
   garment: { band: 'ch2', detail: 'stripe' },
+  parka: { band: 'ch10', detail: 'dots' }, // M21 — Alaska/Mars cold bodies
   // arms
   wrap: { band: 'ch1', detail: 'stripe' },
   glove: { band: 'ch3' },
