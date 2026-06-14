@@ -19,7 +19,8 @@ import { Pixmap, mulberry32 } from './pixmap';
 export type VehicleTerrain = 'road' | 'water' | 'air';
 export type VehicleClass =
   | 'bike' | 'moto' | 'car' | 'suv' | 'van' | 'bus' | 'truck' | 'machine'
-  | 'boat' | 'sub' | 'plane' | 'heli' | 'prop';
+  | 'boat' | 'sub' | 'plane' | 'heli' | 'prop'
+  | 'tank'; // M39 (ADR-080) — the military motor pool's new silhouette family
 
 export interface VehicleSpec {
   /** silhouette family (for grouping + the seat-fit reads) */
@@ -33,6 +34,13 @@ export interface VehicleSpec {
   h: number;
   /** collision footprint relative to the sprite top-left (traffic + parking) */
   solid: { ox: number; oy: number; w: number; h: number };
+  /** M36 (ADR-077): an autopilot toy — this craft can SELF-CREEP driver-less in a
+   *  cleared lot (no Clicker needed), the Nikolai's "summon" gag. control.ts gates it. */
+  selfDrive?: boolean;
+  /** M39 (ADR-080): military hardware is Faraday/DEAD-AIR shielded by default — the
+   *  army hardens its kit against exactly the kid with the remote. A hardened machine
+   *  refuses the Clicker (the existing `shielded` spine) until the shield is knocked off. */
+  hardened?: boolean;
   /** the PAINT-ramp draw (deterministic; rng only seeds tiny per-unit marks) */
   draw: (ramp: number, rng: () => number) => Pixmap;
 }
@@ -68,6 +76,12 @@ interface CarOpts {
   roofX1: number;     // cabin ends
   wedge?: boolean;    // race-car low nose
   tall?: boolean;     // SUV taller body
+  // M35 (ADR-076) — the EXOTIC tier reads unmistakably expensive:
+  open?: boolean;     // convertible roadster — no greenhouse, headrests + a cut windshield
+  scoop?: boolean;    // a hood scoop (the hot-rod muscle car)
+  pipes?: boolean;    // side exhaust pips (the muscle car)
+  chrome?: boolean;   // a chrome belt accent strip (the grand tourer / the limo)
+  pillars?: number[]; // extra glass B-pillars at these x (the limo's long greenhouse)
 }
 function drawCarBody(o: CarOpts, ramp: number, _rng: () => number): Pixmap {
   const p = paint(ramp);
@@ -83,14 +97,30 @@ function drawCarBody(o: CarOpts, ramp: number, _rng: () => number): Pixmap {
   pm.hline(x0, floorY, x1 - x0 + 1, p.dark);
   pm.hline(x0, beltY + 1, x1 - x0 + 1, p.lite); // belt highlight
   if (o.wedge) { pm.set(x1, beltY, T); pm.set(x1 - 1, beltY, p.lite); }
-  // cabin / greenhouse
+  // M35: a chrome accent rocker strip says "money" along the lower flank
+  if (o.chrome) pm.hline(x0 + 1, floorY - 2, x1 - x0 - 2, CHROME);
   const ry = beltY - o.roofH;
-  pm.rect(o.roofX0, ry, o.roofX1 - o.roofX0, o.roofH, p.mid);
-  pm.hline(o.roofX0, ry, o.roofX1 - o.roofX0, p.lite);
-  // windows (windshield slanted + side glass)
-  pm.rect(o.roofX0 + 1, ry + 1, o.roofX1 - o.roofX0 - 2, o.roofH - 1, GLASS);
-  pm.vline(Math.floor((o.roofX0 + o.roofX1) / 2), ry + 1, o.roofH - 1, p.mid); // B-pillar
-  pm.set(o.roofX1 - 1, ry + 1, GLASS_D);
+  if (o.open) {
+    // CONVERTIBLE: an open cabin — a cut windshield up front + two headrests,
+    // the cabin floor showing instead of a roof (the roadster's whole appeal)
+    pm.line(o.roofX1 - 2, beltY - 1, o.roofX1, ry, GLASS);     // raked windshield
+    pm.line(o.roofX1 - 1, beltY - 1, o.roofX1 + 1, ry, CHROME); // its bright frame
+    pm.rect(o.roofX0 + 1, beltY - 2, 2, 2, p.dark);            // driver headrest
+    pm.rect(o.roofX0 + 4, beltY - 2, 2, 2, p.dark);            // passenger headrest
+    pm.hline(o.roofX0, beltY - 1, o.roofX1 - o.roofX0 - 1, p.lite); // tonneau lip
+  } else {
+    // cabin / greenhouse
+    pm.rect(o.roofX0, ry, o.roofX1 - o.roofX0, o.roofH, p.mid);
+    pm.hline(o.roofX0, ry, o.roofX1 - o.roofX0, p.lite);
+    // windows (windshield slanted + side glass)
+    pm.rect(o.roofX0 + 1, ry + 1, o.roofX1 - o.roofX0 - 2, o.roofH - 1, GLASS);
+    pm.vline(Math.floor((o.roofX0 + o.roofX1) / 2), ry + 1, o.roofH - 1, p.mid); // B-pillar
+    for (const px2 of o.pillars ?? []) pm.vline(px2, ry + 1, o.roofH - 1, p.mid); // limo pillars
+    pm.set(o.roofX1 - 1, ry + 1, GLASS_D);
+  }
+  // M35: a hood scoop + side pipes — the hot-rod read
+  if (o.scoop) { pm.rect(o.roofX1 + 1, beltY - 2, 3, 2, p.dark); pm.hline(o.roofX1 + 1, beltY - 2, 3, p.lite); }
+  if (o.pipes) for (let i = 0; i < 3; i++) pm.set(x0 + 3 + i * 2, floorY - 1, CHROME);
   // lamps + bumper
   pm.rect(x1 - 1, beltY + 1, 1, 2, LAMP);
   pm.rect(x0, beltY + 1, 1, 2, TAIL);
@@ -101,7 +131,48 @@ function drawCarBody(o: CarOpts, ramp: number, _rng: () => number): Pixmap {
   pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
   pm.outline(C.outline);
   // a single pure-light glint on the windshield AFTER the contour (ADR-020)
-  pm.set(o.roofX1 - 2, ry + 1, CHROME);
+  if (!o.open) pm.set(o.roofX1 - 2, ry + 1, CHROME);
+  return pm;
+}
+
+/* ─── M36 (ADR-077): THE NIKOLAI — the flagship EV (a wink at Nikola Tesla) ─ */
+
+function drawNikolai(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 34;
+  const beltY = 8;
+  const floorY = 14;
+  const H = floorY + 5;
+  const pm = new Pixmap(W, H);
+  const x0 = 1;
+  const x1 = W - 2;
+  // a low, sleek, slab-sided body — no fussy creases, premium minimalism
+  pm.rect(x0, beltY, x1 - x0 + 1, floorY - beltY, p.body);
+  pm.hline(x0, floorY, x1 - x0 + 1, p.dark);
+  pm.hline(x0, beltY + 1, x1 - x0 + 1, p.lite);
+  // the EV signature — one continuous, near-frameless arched glass greenhouse
+  const ry = beltY - 5;
+  const rx0 = 8;
+  const rx1 = 27;
+  pm.rect(rx0, ry, rx1 - rx0, 5, GLASS_D);           // blacked-out pillar band
+  pm.rect(rx0 + 1, ry + 1, rx1 - rx0 - 2, 4, GLASS); // the glass dome
+  pm.line(rx0, ry + 4, rx0 - 2, beltY, GLASS);       // raked rear glass
+  pm.line(rx1, ry + 4, rx1 + 2, beltY, GLASS);       // raked windshield
+  pm.hline(rx0, ry, rx1 - rx0, p.lite);              // roof highlight
+  // flush, near-hidden door handles (two tiny chrome dashes)
+  pm.set(13, beltY + 3, CHROME);
+  pm.set(20, beltY + 3, CHROME);
+  // THE FRONT LIGHT BAR — a single bright strip across the nose (the face)
+  pm.hline(x1 - 4, beltY + 1, 4, px(RAMP.CYAN, 3));
+  pm.set(x1, beltY + 1, CHROME);
+  pm.rect(x0, beltY + 1, 1, 2, TAIL);                // a thin tail light strip
+  // aero, flush wheels
+  wheel(pm, x0 + 3, floorY + 4);
+  wheel(pm, x1 - 7, floorY + 4);
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  pm.outline(C.outline);
+  // a single pure-light glint on the glass AFTER the contour (ADR-020)
+  pm.set(rx1 - 2, ry + 1, CHROME);
   return pm;
 }
 
@@ -206,6 +277,83 @@ function drawBike(ramp: number, _rng: () => number): Pixmap {
   pm.rect(15, 3, 2, 3, p.dark); // handlebars
   pm.set(10, 4, p.lite);
   pm.shadowUnder(10, 15, 8, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+
+/* ─── M35 (ADR-076): the two-wheeler tier — BMX, road bike, cruiser, sport ─ */
+
+function drawBmx(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const pm = new Pixmap(18, 16);
+  const floorY = 10;
+  // fat little 20" wheels
+  wheel(pm, 2, floorY + 4, 3);
+  wheel(pm, 11, floorY + 4, 3);
+  // compact diamond frame
+  pm.line(4, floorY + 1, 9, 6, p.body);   // down tube
+  pm.line(9, 6, 13, floorY + 1, p.body);  // seat tube
+  pm.line(4, floorY + 1, 13, floorY + 1, p.body); // chainstay
+  pm.rect(8, 5, 3, 2, p.mid);  // seat
+  // the tall BMX bars (a kid's ride)
+  pm.vline(13, 2, 4, p.dark);
+  pm.hline(11, 2, 4, p.dark);
+  pm.set(9, 6, p.lite);
+  pm.shadowUnder(9, 15, 7, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawRoadBike(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const pm = new Pixmap(22, 16);
+  const floorY = 8;
+  // big thin 700c wheels
+  wheel(pm, 2, floorY + 6, 4);
+  wheel(pm, 13, floorY + 6, 4);
+  // a low, long racing diamond
+  pm.line(5, 12, 11, 5, p.body);  // down tube
+  pm.line(11, 5, 16, 12, p.body); // seat tube
+  pm.line(5, 12, 16, 12, p.body); // bottom
+  pm.line(11, 5, 16, 5, p.mid);   // top tube → bars
+  pm.rect(10, 4, 3, 2, p.lite);   // saddle
+  // dropped racing bars
+  pm.set(17, 5, p.dark); pm.set(17, 6, p.dark); pm.set(16, 7, p.dark);
+  pm.shadowUnder(11, 15, 9, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawCruiser(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const pm = new Pixmap(26, 16);
+  const floorY = 10;
+  // long, low tank + a stepped seat
+  pm.rect(7, 6, 11, 4, p.body);
+  pm.hline(7, 6, 11, p.lite);
+  pm.rect(4, 7, 4, 3, p.dark);  // stepped saddle
+  pm.rect(18, 5, 4, 3, p.mid);  // headlight nacelle
+  // big lazy wheels
+  wheel(pm, 1, floorY + 4, 4);
+  wheel(pm, 18, floorY + 4, 4);
+  pm.rect(21, 6, 1, 2, LAMP);
+  pm.line(20, 5, 23, 3, p.dark); // swept-back ape-hangers
+  pm.shadowUnder(13, 15, 12, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawSportBike(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const pm = new Pixmap(24, 16);
+  const floorY = 10;
+  // a crouched, faired body that rises to the nose
+  pm.rect(6, 6, 12, 4, p.body);
+  pm.line(18, 6, 21, 4, p.body); // nose fairing climbing
+  pm.rect(18, 4, 3, 3, p.mid);   // front cowl
+  pm.rect(4, 5, 3, 3, p.dark);   // raised tail unit
+  pm.set(20, 5, GLASS);          // tinted screen
+  wheel(pm, 2, floorY + 4, 3);
+  wheel(pm, 16, floorY + 4, 3);
+  pm.rect(20, 6, 1, 2, LAMP);
+  pm.shadowUnder(12, 15, 11, SHADOW);
   pm.outline(C.outline);
   return pm;
 }
@@ -341,6 +489,137 @@ function drawBlimp(ramp: number, _rng: () => number): Pixmap {
   return pm;
 }
 
+/* ─── M39 (ADR-080): THE MILITARY MOTOR POOL — tank, F-15, Humvee & friends ─ */
+
+function drawTank(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 40;
+  const H = 22;
+  const pm = new Pixmap(W, H);
+  const floorY = 17;
+  // continuous track with road wheels
+  pm.rect(2, floorY - 3, W - 4, 5, px(RAMP.INK, 1));
+  for (let x = 4; x < W - 4; x += 4) pm.set(x, floorY, HUB);
+  // hull with a sloped glacis plate (nose right)
+  pm.rect(4, floorY - 7, W - 8, 5, p.body);
+  pm.hline(4, floorY - 7, W - 8, p.lite);
+  pm.line(W - 4, floorY - 7, W - 1, floorY - 4, p.body); // sloped front
+  // turret + commander's hatch
+  pm.rect(12, floorY - 11, 14, 5, p.mid);
+  pm.hline(12, floorY - 11, 14, p.lite);
+  pm.rect(16, floorY - 13, 3, 2, p.dark);
+  // the main gun reaching right
+  pm.rect(26, floorY - 10, 12, 2, p.dark);
+  pm.set(38, floorY - 10, p.dark);
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawF15(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 40;
+  const H = 22;
+  const pm = new Pixmap(W, H);
+  const midY = 11;
+  // long fuselage, pointed nose right
+  pm.rect(3, midY - 2, W - 6, 4, p.body);
+  pm.line(W - 3, midY, W - 8, midY - 2, p.dark);
+  pm.line(W - 3, midY, W - 8, midY + 2, p.dark);
+  pm.hline(3, midY - 2, W - 6, p.lite);
+  // big swept wings
+  pm.line(22, midY, 14, 2, p.mid);
+  pm.line(22, midY, 14, H - 2, p.mid);
+  pm.line(26, midY, 18, 3, p.mid);
+  pm.line(26, midY, 18, H - 3, p.mid);
+  // the F-15's TWIN tails
+  pm.line(6, midY - 2, 9, 3, p.mid);
+  pm.line(8, midY - 2, 11, 3, p.mid);
+  pm.line(6, midY + 2, 9, H - 3, p.mid);
+  pm.line(8, midY + 2, 11, H - 3, p.mid);
+  // bubble canopy + twin engine nozzles
+  pm.rect(W - 12, midY - 1, 3, 2, GLASS);
+  pm.set(3, midY - 1, px(RAMP.INK, 2));
+  pm.set(3, midY + 1, px(RAMP.INK, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+function drawHumvee(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 34;
+  const floorY = 15;
+  const H = floorY + 6;
+  const pm = new Pixmap(W, H);
+  // wide, boxy, flat body
+  pm.rect(2, 6, W - 4, floorY - 6, p.body);
+  pm.hline(2, 6, W - 4, p.lite);
+  pm.hline(2, floorY, W - 4, p.dark);
+  // slanted windshield + cab
+  pm.rect(W - 12, 4, 9, 4, p.mid);
+  pm.rect(W - 11, 5, 7, 3, GLASS);
+  pm.set(W - 5, 5, GLASS_D);
+  // boxy side windows + a door seam
+  pm.rect(6, 7, 3, 3, GLASS);
+  pm.rect(11, 7, 3, 3, GLASS);
+  pm.vline(16, 7, floorY - 7, p.dark);
+  // big off-road wheels
+  wheel(pm, 4, floorY + 5, 4);
+  wheel(pm, W - 10, floorY + 5, 4);
+  pm.rect(W - 2, 8, 1, 2, LAMP);
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawTroopTransport(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 44;
+  const floorY = 17;
+  const H = floorY + 6;
+  const pm = new Pixmap(W, H);
+  const cabX = W - 13;
+  // cab (right)
+  pm.rect(cabX, 6, 12, floorY - 6, p.body);
+  pm.rect(cabX + 2, 7, 7, 4, GLASS);
+  pm.set(cabX + 8, 7, GLASS_D);
+  // canvas-covered troop bed with bow ribs (where the soldiers ride)
+  const canvas0 = px(RAMP.EARTH, 0);
+  pm.rect(2, 4, cabX - 3, floorY - 4, px(RAMP.EARTH, 1));
+  pm.hline(2, 4, cabX - 3, px(RAMP.EARTH, 2));
+  for (let x = 5; x < cabX - 3; x += 5) pm.vline(x, 4, floorY - 5, canvas0); // bows
+  pm.hline(2, floorY, W - 4, p.dark);
+  pm.rect(W - 2, floorY - 4, 1, 2, LAMP);
+  // six heavy wheels
+  wheel(pm, 4, floorY + 5, 3);
+  wheel(pm, cabX - 8, floorY + 5, 3);
+  wheel(pm, cabX, floorY + 5, 3);
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawAttackHeli(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const pm = new Pixmap(36, 18);
+  // narrow gunship body, tapered nose right
+  pm.rect(6, 8, 16, 5, p.body);
+  pm.hline(6, 8, 16, p.lite);
+  pm.line(22, 8, 26, 11, p.body);  // nose down to the chin gun
+  pm.line(22, 12, 26, 11, p.body);
+  pm.rect(25, 12, 2, 2, px(RAMP.INK, 2)); // chin gun
+  // stepped tandem canopy
+  pm.rect(15, 6, 4, 3, GLASS);
+  pm.rect(19, 7, 3, 2, GLASS);
+  // stub wing + a rocket pod
+  pm.rect(9, 12, 7, 2, p.dark);
+  pm.rect(9, 13, 2, 1, px(RAMP.INK, 2));
+  // tail boom + fin + main rotor
+  pm.rect(2, 9, 5, 2, p.mid);
+  pm.vline(1, 6, 6, p.dark);
+  pm.hline(4, 2, 24, px(RAMP.INK, 2));
+  pm.vline(14, 2, 6, p.dark);
+  pm.shadowUnder(16, 17, 14, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+
 /* ─── THE SPEC TABLE — one row per vehicle TYPE ─────────────────────────── */
 
 function box(w: number, h: number, oy = 0): { ox: number; oy: number; w: number; h: number } {
@@ -349,10 +628,22 @@ function box(w: number, h: number, oy = 0): { ox: number; oy: number; w: number;
 
 export const VEHICLE_SPECS: Record<string, VehicleSpec> = {
   bicycle:     { cls: 'bike',    terrain: 'road', seats: 1,  w: 20, h: 16, solid: box(20, 6, 9),  draw: (r, g) => drawBike(r, g) },
+  // M35 (ADR-076) — the two-wheeler tier: real, distinct, drivable bikes + motorcycles
+  bmx:         { cls: 'bike',    terrain: 'road', seats: 1,  w: 18, h: 16, solid: box(18, 6, 9),  draw: (r, g) => drawBmx(r, g) },
+  road_bike:   { cls: 'bike',    terrain: 'road', seats: 1,  w: 22, h: 16, solid: box(22, 6, 9),  draw: (r, g) => drawRoadBike(r, g) },
   motorcycle:  { cls: 'moto',    terrain: 'road', seats: 2,  w: 22, h: 16, solid: box(22, 6, 9),  draw: (r, g) => drawMoto(r, g) },
+  cruiser:     { cls: 'moto',    terrain: 'road', seats: 2,  w: 26, h: 16, solid: box(26, 6, 9),  draw: (r, g) => drawCruiser(r, g) },
+  sport_bike:  { cls: 'moto',    terrain: 'road', seats: 2,  w: 24, h: 16, solid: box(24, 6, 9),  draw: (r, g) => drawSportBike(r, g) },
   sedan:       { cls: 'car',     terrain: 'road', seats: 4,  w: 32, h: 19, solid: box(32, 7, 10), draw: (r, g) => drawCarBody({ len: 30, roofH: 5, roofX0: 9,  roofX1: 23 }, r, g) },
   ev:          { cls: 'car',     terrain: 'road', seats: 4,  w: 32, h: 19, solid: box(32, 7, 10), draw: (r, g) => drawCarBody({ len: 30, roofH: 6, roofX0: 8,  roofX1: 24 }, r, g) },
+  // M36 (ADR-077) — THE NIKOLAI: the flagship EV. Self-driving "creep" toy (selfDrive).
+  nikolai:     { cls: 'car',     terrain: 'road', seats: 5,  w: 34, h: 19, solid: box(34, 7, 10), selfDrive: true, draw: (r, g) => drawNikolai(r, g) },
   race_car:    { cls: 'car',     terrain: 'road', seats: 2,  w: 34, h: 19, solid: box(34, 6, 10), draw: (r, g) => drawCarBody({ len: 32, roofH: 3, roofX0: 12, roofX1: 22, wedge: true }, r, g) },
+  // M35 (ADR-076) — the HIGH-END / EXOTIC tier (Fortune-Arc priced, seat-fit-correct)
+  grand_tourer:{ cls: 'car',     terrain: 'road', seats: 4,  w: 36, h: 19, solid: box(36, 6, 10), draw: (r, g) => drawCarBody({ len: 34, roofH: 4, roofX0: 13, roofX1: 27, wedge: true, chrome: true }, r, g) },
+  roadster:    { cls: 'car',     terrain: 'road', seats: 2,  w: 32, h: 19, solid: box(32, 6, 10), draw: (r, g) => drawCarBody({ len: 30, roofH: 3, roofX0: 12, roofX1: 24, open: true, chrome: true }, r, g) },
+  limo:        { cls: 'car',     terrain: 'road', seats: 8,  w: 58, h: 19, solid: box(58, 7, 10), draw: (r, g) => drawCarBody({ len: 56, roofH: 5, roofX0: 8, roofX1: 50, chrome: true, pillars: [20, 32, 44] }, r, g) },
+  muscle_car:  { cls: 'car',     terrain: 'road', seats: 4,  w: 35, h: 19, solid: box(35, 7, 10), draw: (r, g) => drawCarBody({ len: 33, roofH: 4, roofX0: 11, roofX1: 23, scoop: true, pipes: true }, r, g) },
   suv:         { cls: 'suv',     terrain: 'road', seats: 5,  w: 33, h: 21, solid: box(33, 8, 10), draw: (r, g) => drawCarBody({ len: 31, roofH: 6, roofX0: 8,  roofX1: 26, tall: true }, r, g) },
   large_suv:   { cls: 'suv',     terrain: 'road', seats: 6,  w: 37, h: 21, solid: box(37, 8, 10), draw: (r, g) => drawCarBody({ len: 35, roofH: 6, roofX0: 8,  roofX1: 30, tall: true }, r, g) },
   van:         { cls: 'van',     terrain: 'road', seats: 7,  w: 34, h: 19, solid: box(34, 9, 5),  draw: (r, g) => drawBox(32, 5, r, g) },
@@ -370,6 +661,13 @@ export const VEHICLE_SPECS: Record<string, VehicleSpec> = {
   jumbo_jet:   { cls: 'plane',   terrain: 'air',  seats: 20, w: 52, h: 22, solid: box(52, 6, 8),  draw: (r, g) => drawPlane(44, r, g, true) },
   helicopter:  { cls: 'heli',    terrain: 'air',  seats: 4,  w: 34, h: 18, solid: box(28, 8, 6),  draw: (r, g) => drawHeli(r, g) },
   blimp:       { cls: 'heli',    terrain: 'air',  seats: 8,  w: 44, h: 22, solid: box(44, 14, 2), draw: (r, g) => drawBlimp(r, g) },
+  // M39 (ADR-080) — THE MILITARY MOTOR POOL: drawn world props + control targets,
+  // `hardened` (Faraday/dead-air shielded) by default — the army hardens its kit.
+  tank:           { cls: 'tank',  terrain: 'road', seats: 3,  w: 40, h: 22, solid: box(40, 9, 8),  hardened: true, draw: (r, g) => drawTank(r, g) },
+  f15:            { cls: 'plane', terrain: 'air',  seats: 1,  w: 40, h: 22, solid: box(40, 6, 8),   hardened: true, draw: (r, g) => drawF15(r, g) },
+  humvee:         { cls: 'suv',   terrain: 'road', seats: 4,  w: 34, h: 21, solid: box(34, 8, 8),   hardened: true, draw: (r, g) => drawHumvee(r, g) },
+  troop_transport:{ cls: 'truck', terrain: 'road', seats: 12, w: 44, h: 23, solid: box(44, 10, 6),  hardened: true, draw: (r, g) => drawTroopTransport(r, g) },
+  attack_heli:    { cls: 'heli',  terrain: 'air',  seats: 2,  w: 36, h: 18, solid: box(36, 8, 6),   hardened: true, draw: (r, g) => drawAttackHeli(r, g) },
 };
 
 /** usable seats to RIDE the party (the driver takes one) — §A4.10 seat-fit law */
@@ -395,10 +693,20 @@ export interface VehicleVariant { name: string; type: string; ramp: number; }
 /** paint pools per type — the colors a vehicle of that kind actually comes in */
 const PAINTS: Record<string, readonly number[]> = {
   bicycle:     [RAMP.RED, RAMP.BLUE, RAMP.GRASS],
+  bmx:         [RAMP.RED, RAMP.GRASS, RAMP.PURPLE],
+  road_bike:   [RAMP.BLUE, RAMP.GRASS, RAMP.RED],
   motorcycle:  [RAMP.RED, RAMP.NIGHT, RAMP.BLUE],
+  cruiser:     [RAMP.NIGHT, RAMP.RED, RAMP.EARTH],
+  sport_bike:  [RAMP.RED, RAMP.BLUE, RAMP.GRASS],
   sedan:       [RAMP.RED, RAMP.BLUE, RAMP.GOLD, RAMP.PAPER, RAMP.FOREST],
   ev:          [RAMP.CYAN, RAMP.PAPER, RAMP.GRASS],
+  // the Nikolai's clean monochrome + accent line (paper/white, night/black, signature red)
+  nikolai:     [RAMP.PAPER, RAMP.NIGHT, RAMP.RED],
   race_car:    [RAMP.RED, RAMP.GOLD, RAMP.PURPLE],
+  grand_tourer:[RAMP.BLUE, RAMP.RED, RAMP.NIGHT, RAMP.GOLD],
+  roadster:    [RAMP.RED, RAMP.GOLD, RAMP.PAPER],
+  limo:        [RAMP.NIGHT, RAMP.PAPER],
+  muscle_car:  [RAMP.RED, RAMP.ORANGE, RAMP.NIGHT],
   suv:         [RAMP.EARTH, RAMP.BLUE, RAMP.PAPER, RAMP.RED],
   large_suv:   [RAMP.NIGHT, RAMP.EARTH, RAMP.PAPER],
   van:         [RAMP.PAPER, RAMP.ORANGE, RAMP.BLUE],
@@ -415,6 +723,12 @@ const PAINTS: Record<string, readonly number[]> = {
   jumbo_jet:   [RAMP.PAPER, RAMP.BLUE],
   helicopter:  [RAMP.FOREST, RAMP.RED, RAMP.NIGHT],
   blimp:       [RAMP.RED, RAMP.GOLD],
+  // M39 — olive-drab + desert-tan war paint
+  tank:            [RAMP.FOREST, RAMP.EARTH],
+  f15:             [RAMP.PAPER, RAMP.FOREST],
+  humvee:          [RAMP.FOREST, RAMP.EARTH],
+  troop_transport: [RAMP.FOREST, RAMP.EARTH],
+  attack_heli:     [RAMP.FOREST, RAMP.NIGHT],
 };
 
 function buildCatalog(): VehicleVariant[] {

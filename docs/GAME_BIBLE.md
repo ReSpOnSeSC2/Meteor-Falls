@@ -233,6 +233,20 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > COUNTER (picnic baskets), THE PET BED (Biscuit), plus décor that matters (plant,
 > fish tank, gnome, sofa, lamp, rug). The decor is the soul; the buff is the wink.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-078/079 — **§A4.15 THE GARAGE & THE DEALERSHIP.**
+> Road vehicles are buyable, sellable, and OWNED — the fleet pattern: a `title_*` key-item + an
+> `owned_*` flag, never the §A8 item catalog (ADR-015 prefer-flags). A CAR DEALERSHIP (Bert's lot,
+> one §A11 obsessive — the NEW-CAR SMELL) LISTS the region's road vehicles by chapter band, buys and
+> sells them on a DEPRECIATION curve (trade-in < sticker always — a banded `RESALE_BY_BAND` factor;
+> cheap early rides lose hardest, dear exotics hold value better but never reach par; "the tenth, and
+> the new-car smell"). The data is `src/data/dealership.ts`; the buy/sell/own math is pure +
+> validated in `src/engine/garage.ts` (`carsForSale`/`buyCar`/`sellCar`/`titleOf`/`ownsCar`), gated
+> both directions (`dealership`). A HOME'S GARAGE stores owned cars by the property's `storageTier`
+> (a starter home holds a couple, a manor a fleet); you pick the ACTIVE car to drive and the rest
+> park visibly. The garage + active ride are the only array/scalar save state this earns (`garage:
+> Record<propertyId, titles[]>` + `activeVehicle`, save v13); everything else rides flags. Prices tie
+> to §A9 / the Fortune Arc; the Ember trail never cares which car you drive.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
 > NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
@@ -253,6 +267,20 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > never a fail. The highway set-pieces, the mandatory drive, the plane-interior, and
 > the Cobra Raja DEAD-AIR-HELMET boss are the per-chapter scene staging that rides
 > these spines + the M26 vehicles + the M27 control system.)*
+
+> *(Added 2026-06-14 per Appendix rule 6, ADR-081 — **§A6 THE ARMY ON OUR TAIL.** A third game-long,
+> NON-MISSABLE flag-chained arc (`src/data/armyarc.ts`, driven by `src/engine/armyarc.ts`, validated
+> ordered + single-terminal). A bumbling-but-earnest GENERAL (Buckle — one obsession: doing everything
+> BY THE BOOK, subsection numbers and all) becomes convinced the party stole a military prototype —
+> really Milo's Clicker pinged a base, OR the Hush spoofed the signal to FRAME them (it RHYMES with
+> the §A4.10 Clicker Question: the Hush turning a hero's gift into a reason to be feared, but peaks on
+> its own beat). The ordered beats: the MISREAD → the CHECKPOINT (a Humvee — drive/talk/disguise past,
+> never a wall) → the helmeted TANK to route AROUND or out-drive (can't be Clickered) → the F-15
+> FLYOVER set-piece → the CLEARING (the party shows Buckle the real signal — the Hush, not them — he
+> apologizes BY THE BOOK and becomes a finale CALLER). The army is WRONG, never EVIL: nobody dies, the
+> Hush stays the only true villain, the General's change of heart is EARNED. The §A7 helmeted hardware
+> can become a mid/late control puzzle once a way to knock a shield off is earned. The checkpoint/tank/
+> flyover SCENES + the pursuit mechanics (M41) stage on this spine.)*
 
 > *(Added 2026-06-14 per Appendix rule 6, ADR-074 — **§A4.10/§A5 THE FLEET (the
 > traversal capstone).** The control power SCALES up the chapters (ADR-035 staging,
@@ -475,6 +503,33 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > cash in hand. The §A8 manifest extends in the validator in the same
 > commit.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-076 — **§A8 THE ROAD ROSTER GROWS.** The §A4.10
+> vehicle forge fleshes out into a real car habit. The TWO-WHEELER tier: a **BMX** + a **road bike**
+> (1 seat each), a **cruiser** + a **sport bike** (2 seats — rider + pillion). The HIGH-END / EXOTIC
+> tier reads unmistakably expensive: a **grand tourer** (long low wedge, chrome rocker), a
+> **roadster** (an OPEN convertible — cut windshield, headrests, no roof), a **stretch limo** (8
+> seats, swallows the whole party), and a hot-rod **muscle car** (hood scoop, side pipes). All are
+> drawn FACING RIGHT under ADR-020, seat-fit-correct (§A4.10), footprint-in-bounds, and Fortune-Arc
+> priced when the §A4.15 dealership sells them. None is a bag weapon — they are world props / drive
+> targets / `title_*` ownership.)*
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-077 — **§A8 THE NIKOLAI** (a wink at Nikola Tesla,
+> never the trademark). The flagship of the EV line: a sleek, silent, premium electric car — a
+> glassy near-frameless greenhouse, flush door handles, a front LIGHT BAR, an instant-torque
+> "ludicrous" launch, and a SELF-CREEP autopilot gag (it can trundle around an empty lot on its own,
+> no Puppet/Clicker needed — a perfect control-system bit, gated so it only creeps in a cleared
+> lot). Five seats (rides the whole party), its own monochrome+accent paint pool, drawn premium
+> under ADR-020.)*
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-080 — **§A7/§A8 THE MILITARY MOTOR POOL.** The army's
+> drawn hardware joins the forge as world props / control targets: a **TANK** (its own `tank`
+> silhouette family — treads, turret, main gun), an **F-15** (a twin-tail fighter, distinct from the
+> civilian jet), a **Humvee**, a **troop transport**, and an **attack helicopter**, in olive-drab and
+> desert tan. Every one wears a DEAD-AIR HELMET / Faraday shield BY DEFAULT (`hardened`) — the army
+> hardens its kit against exactly the kid with the remote — so it refuses the Clicker (the existing
+> `shielded`/`mind_immune` spine, ONE control identity) until the shield is knocked off (the §A7
+> mid/late control puzzle). Route around the helmeted tank, or out-drive it; never a new counter.)*
+
 **Food (HP):** Corn Dog, PB&J, Alfajor, Scone & Clotted Cream, Jollof Bowl, Samosa, Baozi, **Sarmale**, **Mămăligă cu Brânză** (best HP/$ in the game — Buni's), Akutaq, Poke Bowl, Freeze-Dried Ice Cream (Mars vending machines).
 
 **PP:** Star Cola line, Monastery Tea, Temple Incense. **Cures:** Salt Shaker (anti-Tick!), Aloe Leaf (Sunburn), Hanky (Crying), Doctor's Note (Mushroomize), Mom's Voice Tape (Homesick, 3 uses).
@@ -502,6 +557,13 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > balance`) prints the curve + the property/fleet/furniture ladders to tune DATA (never
 > code) toward the targets as each region's catalog pours in; the curve's shape is
 > validator-pinned (`fortune`) + `balance.test.ts`.)*
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-083 — **§A9 the car habit folds into the Fortune
+> Arc.** The §A4.15 dealership prices (a $90 kid's BMX → a $180,000 stretch limo, THE NIKOLAI at
+> $88K) + the depreciation curve ride ON the existing net-worth arc as tunable DATA, never new curve
+> shape; `npm run balance` prints the car ladder (sticker → trade-in, Bert's %) + the military motor
+> pool beside the property/fleet/furniture ladders. The military hardware is the §A6 chase, never for
+> sale. Net worth is still a number; the callers — now including General Buckle — are the score.)*
 
 > *(Amended 2026-06-11 per Appendix rule 6, ADR-034: THE BRICKTON CLASSIC —
 > S12's 32-team 5v5 streetball tournament at the cage — is **optional

@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
   inRange, controllable, candidates, attempt, canCast,
   canRide, rideOrRemote, unlocksGate, fieldLabel,
+  canSelfCreep, selfCreep,
   type Caster, type ControlTarget,
 } from './control';
 
@@ -91,5 +92,20 @@ describe('control — field labels', () => {
   it('Puppet and Clicker read on the wheel', () => {
     expect(fieldLabel('puppet')).toBe('PUPPET');
     expect(fieldLabel('clicker')).toBe('CLICKER');
+  });
+});
+
+describe('M36 (ADR-077) — the Nikolai self-creep autopilot', () => {
+  it('only the Nikolai can self-creep', () => {
+    expect(canSelfCreep('nikolai')).toBe(true);
+    expect(canSelfCreep('sedan')).toBe(false);
+    expect(canSelfCreep('ev')).toBe(false);
+  });
+  it('it creeps only in a CLEARED lot (the EarthBound-safe joke)', () => {
+    expect(selfCreep('nikolai', true)).toEqual({ ok: true, reason: 'ok' });
+    expect(selfCreep('nikolai', false)).toEqual({ ok: false, reason: 'lot_not_clear' });
+  });
+  it('a non-autopilot car refuses the gag outright', () => {
+    expect(selfCreep('sedan', true)).toEqual({ ok: false, reason: 'no_autopilot' });
   });
 });

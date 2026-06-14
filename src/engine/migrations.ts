@@ -42,13 +42,18 @@
  * permanent TONIC effects (§A4.12). No tonic existed before v9, so an empty
  * map is a pre-v9 save's TRUE history (the v3 empty-ledger / v5 clean-hoops
  * stance applied to boosts); every existing hero backfills `{}`.
+ *
+ * v12 → v13 (S19/ADR-079): THE HOME GARAGE — owned-car TITLES parked per home
+ * (`garage`) + the ACTIVE car driven (`activeVehicle`). A pre-v13 save owned no
+ * car (the dealership is v13-new), so an empty garage + no active ride is its
+ * TRUE history (the v11 empty-homeStorage stance applied to the garage).
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 12;
+export const CURRENT_SAVE_VERSION = 13;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -259,6 +264,18 @@ export const MIGRATIONS: MigrationStep[] = [
       // computed from this; an empty layout is coziness 0 (the resale floor).
       if (!isObj(raw.homeLayouts)) raw.homeLayouts = {};
       raw.version = 12;
+      return raw;
+    },
+  },
+  {
+    to: 13,
+    migrate(raw) {
+      // S19 M38 (ADR-079): THE HOME GARAGE — owned-car titles parked per home +
+      // the active ride. A pre-v13 save owned no car (the dealership is v13-new),
+      // so an empty garage + no active vehicle is its true history.
+      if (!isObj(raw.garage)) raw.garage = {};
+      if (typeof raw.activeVehicle !== 'string' && raw.activeVehicle !== null) raw.activeVehicle = null;
+      raw.version = 13;
       return raw;
     },
   },

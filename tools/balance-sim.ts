@@ -10,7 +10,10 @@ import { FORTUNE_ARC, fortuneTarget } from '../src/data/fortune';
 import { PROPERTIES } from '../src/data/properties';
 import { FLEET_CRAFT } from '../src/data/fleet';
 import { FURNITURE } from '../src/data/furniture';
+import { DEALERSHIP } from '../src/data/dealership';
+import { MILITARY_VEHICLES } from '../src/data/military';
 import { walkedPrice } from '../src/engine/property';
+import { sellValue, resaleFactor } from '../src/engine/garage';
 
 const fmt = (n: number): string => '$' + n.toLocaleString('en-US');
 
@@ -31,6 +34,17 @@ for (const p of Object.values(PROPERTIES)) {
 console.log('\nFLEET craft (the Fortune-Arc toys):\n');
 for (const c of Object.values(FLEET_CRAFT)) {
   console.log(`  ${c.id.padEnd(14)} ${c.band.padEnd(5)} ${c.venue.padEnd(8)} ${fmt(c.price).padStart(14)}`);
+}
+
+console.log('\nDEALERSHIP cars (S19 — buy sticker → sell trade-in, Bert keeps the smell):\n');
+for (const c of Object.values(DEALERSHIP).sort((a, b) => a.price - b.price)) {
+  const pct = Math.round(resaleFactor(c) * 100);
+  console.log(`  ${c.id.padEnd(16)} ${c.band.padEnd(5)} ${c.vehicleType.padEnd(13)} ${fmt(c.price).padStart(12)} → ${fmt(sellValue(c)).padStart(12)} (${pct}%)`);
+}
+
+console.log('\nMILITARY motor pool (helmeted hardware — not for sale, the §A6 chase):\n');
+for (const m of Object.values(MILITARY_VEHICLES)) {
+  console.log(`  ${m.type.padEnd(16)} ${m.designation}`);
 }
 
 console.log('\nFURNITURE price band (the home-goods ladder):\n');

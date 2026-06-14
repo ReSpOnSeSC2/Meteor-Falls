@@ -4644,3 +4644,223 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   plane SCENES, live placement of agencies + 27 Maple + the per-region listings, the highway maps,
   the helmet-boss + beat dialogue, and the furniture/deed §A8 icon pours) — the M18-Part-B way,
   each landing with its chapter session. The systems are settled; the world fills in on top.
+
+## ADR-076 — S19 (Movement 35): MORE TWO-WHEELERS + THE EXOTIC TIER
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 35 — fleshes out the M26 vehicle forge for the car habit; the
+  dealership/garage of M37–38 sells these.)
+- **Decision — eight new drawn `VEHICLE_SPECS` types (ADR-020 hand-art, palette-only).** The
+  two-wheeler tier — `bmx` + `road_bike` (cls `bike`, seats 1), `cruiser` + `sport_bike` (cls
+  `moto`, seats 2) — each a distinct hand-drawn silhouette (the kid's tall bars, the racer's drop
+  bars + big thin wheels, the cruiser's long low tank + ape-hangers, the sport bike's crouched
+  fairing). The HIGH-END/exotic tier — `grand_tourer` (seats 4, long low wedge + a chrome rocker),
+  `roadster` (seats 2, an OPEN convertible cabin: cut windshield + headrests, no greenhouse), `limo`
+  (seats 8, a 56px stretch with a three-pillar greenhouse), `muscle_car` (seats 4, a hood scoop +
+  side pipes). `drawCarBody` grew guarded `open/scoop/pipes/chrome/pillars` opts so existing
+  sedan/ev/race/suv draws stay byte-identical; the bikes/motos are their own functions.
+- **Decision — paint pools + the catalog grow automatically.** Each type lists a `PAINTS` pool;
+  `buildCatalog()` fans them into 24 new seeded `veh_*` variants, `index.ts` registers each (it
+  loops `VEHICLE_CATALOG`), and `render-vehicles.ts` renders the new rows (`npm run art:vehicles`).
+- **Decision — gated both directions (`vehicles` + `vehicles.test.ts`), unchanged law.** The forge
+  gate already proves catalog ⇄ specs, palette-only, seat-fit, footprint-in-bounds; the new types
+  ride it. A new `vehicles.test.ts` block pins the tier's seat-fit (a BMX carries nobody, a roadster
+  two, a limo the whole party at ride-7). The verdict climbs to **81 vehicles (29 types)**.
+- **Verification:** `tsc` clean, `npm run validate` green (81 vehicles / 29 types), full vitest
+  green, `vite build` clean, `art:vehicles` re-rendered. No FNV re-pin, no frozen-core change (the
+  forge is sprite data, never a sample-routed map generator). §A8 amended to canon in the same commit.
+- **Consequences:** the road roster reads like a real car habit — a kid on a BMX up to a stretch
+  limo — and the M37 dealership has its inventory to sell. The Nikolai (M36) and the military motor
+  pool (M39) extend the same table.
+
+## ADR-077 — S19 (Movement 36): THE NIKOLAI — the flagship EV
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 36 — the EV-line flagship; the dealership of M37 sells it.)
+- **Decision — `nikolai` joins `VEHICLE_SPECS` (cls `car`, terrain road, seats 5).** A bespoke
+  premium draw (`drawNikolai`, ADR-020): a low slab-sided body, one continuous near-frameless
+  arched GLASS greenhouse (the EV signature, blacked-out pillars), flush near-hidden door handles
+  (two chrome dashes), and a single bright FRONT LIGHT BAR across the nose. Its own clean
+  monochrome+accent paint pool (`veh_nikolai_paper`/`_night`/`_red`). A wink at Nikola Tesla, never
+  the trademark. Ride 4 — it seats the whole party.
+- **Decision — the SELF-CREEP autopilot (`VehicleSpec.selfDrive`, control.ts).** A new optional spec
+  flag marks a craft that can creep DRIVER-LESS on its own — no Puppet, no Clicker. `canSelfCreep`
+  + `selfCreep(vehicleType, lotClear)` are pure logic in the control spine: it only creeps in a
+  CLEARED lot (`lot_not_clear` otherwise — the EarthBound-safe joke), and a non-autopilot car gets
+  `no_autopilot`. The scene bit (the Nikolai trundling an empty lot) lands later; the rule + its
+  test ship now.
+- **Verification:** `tsc` clean, `npm run validate` green (84 vehicles / 30 types), full vitest
+  green (+6: vehicles + control), `vite build` clean, `art:vehicles` re-rendered (the Nikolai reads
+  unmistakably high-end on the sheet). No FNV re-pin, no frozen-core change. §A8 amended.
+- **Consequences:** the EV line has its flagship and the control system its first autopilot toy. The
+  M37 dealership lists the Nikolai at the top of its sticker range.
+
+## ADR-078 — S19 (Movement 37): THE DEALERSHIP — buy / sell / depreciate road vehicles
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 37 — the road-vehicle counterpart to the property agency / the
+  marina; needs the M35/M36 vehicle roster.)
+- **Decision — `src/data/dealership.ts`, the listings (DATA).** `DEALERSHIP` keys 14 buyable road
+  cars (id → vehicleType, band, sticker price, `title_*`, BERT + his honest used-car patter). Bert is
+  one §A11 obsessive: the NEW-CAR SMELL — he huffs it, bottles it, and mourns it leaving the lot
+  (which IS the depreciation, diegetically). Ownership rides the fleet pattern (`title_*` key-item +
+  `owned_*` flag), NOT the §A8 item catalog — no icon-gate / band-floor burden (ADR-015 prefer-flags).
+- **Decision — `src/engine/garage.ts`, the economy (pure, tested).** `carsForSale(chapter)` gates by
+  band; `buyCar` returns the precise reason (`cant_afford`/`not_listed`/`already_owned`/`unknown`/`ok`)
+  + the title to grant; `sellCar` returns the depreciated trade-in + the title to surrender;
+  `resaleFactor`/`sellValue` are the depreciation curve — a banded factor (`RESALE_BY_BAND`, 0.45→0.65)
+  ALWAYS < 1, so the dealer always wins ("the tenth, and the new-car smell"); cheap early rides
+  depreciate hardest, dear exotics hold value better but never reach par. `titleOf`/`ownsCar` read the
+  key-item.
+- **Decision — gated both directions (`dealership` + `garage.test.ts`).** Every car is a real
+  VEHICLE_SPECS ROAD type, positive price, well-formed band, a `title_*` UNIQUE across the dealership
+  AND the fleet (shared key-item space — a title opens one thing), in voice, and depreciates
+  (sellValue < sticker). The test proves listing-by-chapter, the buy gating, and the always-lose
+  depreciation. The verdict prints **14 dealership cars**.
+- **Verification:** `tsc` clean, `npm run validate` green (14 dealership cars), full vitest green
+  (+13), `vite build` clean. No FNV re-pin, no frozen-core change, no save change (titles ride
+  keyItems). §A4.15 amended in the same commit.
+- **Consequences:** the car habit has a place to feed it — buy across the Fortune-Arc bands, sell at
+  a loss when you upgrade. M38 gives the cars somewhere to live (the home garage + the active ride).
+
+## ADR-079 — S19 (Movement 38): THE HOME GARAGE — store & choose your ride (save v13)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 38 — gives the M37 cars somewhere to live; needs the M29
+  property registry + the home-feature precedent.)
+- **Decision — `src/engine/garage.ts` grows the home-garage logic (pure, tested).**
+  `garageCapacity(property)` = `storageTier * 2` for HOMES (a starter holds 2, a manor 6), 0 for
+  non-homes; `garageContents`/`parkCar`/`pullCar` manage the per-property store (park refuses a
+  double-park or an over-capacity car); `setActive(title, owned)` picks the ACTIVE ride you own
+  (null = on foot / everything parked; a car you don't own is refused). The home's garage feature
+  shows the active car parked out front — a data hook the scene reads per-home.
+- **Decision — save bump v12 → v13 (`garage` + `activeVehicle`).** Owned cars per property are
+  array-shaped → they earn a typed field (`garage: Record<propertyId, titles[]>`), and the active
+  ride is the scalar that pairs with it (`activeVehicle: string | null`); everything else stays
+  ADR-015 flags + `title_*` key-items. The `to: 13` migration backfills an empty garage + no active
+  ride on any pre-v13 save (the dealership is v13-new, so that's the true history — the v11
+  empty-homeStorage stance). Round-trip + chain tested in `migrations.test.ts`.
+- **Verification:** `tsc` clean, `npm run validate` green, full **vitest 877 green**, `vite build`
+  clean. Save walks v12 → v13, migrates from v12 + round-trips byte-stable. No FNV re-pin, no
+  frozen-core change. §A4.15 amended (the same block as ADR-078, now naming the garage + v13).
+- **Consequences:** you can buy a car, park it at 27 Maple, swap the active ride, and a manor holds
+  a small fleet — all proven in pure logic + tests. The garage-out-front render + the lot/swap UI
+  land with their chapter scenes; the spine is settled.
+
+## ADR-080 — S19 (Movement 39): THE MILITARY MOTOR POOL — tanks, F-15s & friends
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 39 — the army's hardware; the §A6 pursuit arc of M40–41 rides it.)
+- **Decision — five new drawn `VEHICLE_SPECS` types (ADR-020, olive-drab/desert paint).** `tank`
+  (a NEW `cls 'tank'` silhouette family — treads + turret + main gun, seats 3, road), `f15` (cls
+  `plane`, air, seats 1 — a twin-tail air-superiority fighter distinct from `fighter_jet`), `humvee`
+  (cls `suv`, seats 4, road), `troop_transport` (cls `truck`, seats 12, a canvas-covered troop bed),
+  `attack_heli` (cls `heli`, air, seats 2 — tandem canopy, stub-wing rocket pod, chin gun). Each its
+  own draw function + paint pool; `index.ts`/`render-vehicles.ts` pick them up automatically.
+- **Decision — the HARDENING law (`VehicleSpec.hardened`, control.ts).** Military hardware is
+  Faraday/DEAD-AIR shielded by default (`hardened: true`) — the army hardens its kit against exactly
+  the kid with the remote. `isHardened(type)` + `militaryTarget(id, type, x, y, shieldDown?)` build a
+  ControlTarget whose `shielded` rides the spec's hardening UNLESS the shield's knocked off (the
+  mid/late control puzzle, §A7) — so a fresh tank refuses the Clicker (`blocked`), a de-shielded one
+  yields. ONE control identity, the existing `shielded`/helmet spine — no new counter invented.
+- **Decision — `src/data/military.ts` registry + the `military` gate (both directions).** Every
+  `MILITARY_VEHICLES` entry is a real hardened spec with §A11 voice (the army is bumbling-earnest,
+  never grim); every hardened spec is listed (no orphan hardening). `military.test.ts` proves the
+  pool + that a hardened machine refuses control until de-shielded. The verdict prints **5 military
+  vehicles** and **94 vehicles (35 types)**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green (+12), `vite build`
+  clean, `art:vehicles` re-rendered (the motor pool reads military on the sheet). No FNV re-pin, no
+  frozen-core change. §A7/§A8 amended.
+- **Consequences:** the world has tanks and F-15s as drawn props + control targets, helmeted by
+  default — the diegetic fence the M41 pursuit routes around, and the late control puzzle once a
+  helmet-knock-off is earned. M40 weaves the army-pursuit arc on top.
+
+## ADR-081 — S19 (Movement 40): THE ARMY ON OUR TAIL — the pursuit arc
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 40 — the §A6 army-pursuit arc; rides the M39 motor pool + the
+  M40 pursuit mechanics of M41.)
+- **Decision — `src/data/armyarc.ts`, an ordered NON-MISSABLE beat registry (the storythreads
+  pattern).** Five flag-chained beats: the MISREAD (Milo's Clicker pings a base, or the Hush spoofs
+  it — General Buckle is certain five kids stole a prototype; he is, by the book, wrong), the
+  CHECKPOINT (a Humvee, blinkers on — drive/talk/disguise past, never a wall), the helmeted TANK to
+  route AROUND (the Clicker just gives it a headache), the F-15 FLYOVER set-piece, and the CLEARING
+  (the party shows Buckle the real signal — the Hush, not them — he apologizes BY THE BOOK and joins
+  the finale callers as `general_buckle`). Each beat's `prevFlag` is the prior beat's `flag`, so it
+  fires IN ORDER and the clearing is non-missable. It RHYMES with the §A4.10 Clicker Question (the
+  Hush turning a hero's gift into a reason to be feared) but peaks on its own beat.
+- **Decision — `src/engine/armyarc.ts` drives it (pure).** `nextBeat`/`isResolved`/`earnedCallers` +
+  `armyArcProblems()` (the shared well-formedness check). §A11 to the bone: the army is WRONG, never
+  EVIL — no one dies, the Hush stays the only true villain, and Buckle's change of heart is EARNED.
+  His one obsession is doing everything BY THE BOOK (he quotes subsection numbers); the recruits just
+  miss their moms. The General + recruit voices for the opener + the clearing land in `dialogue.ts`.
+- **Decision — gated both directions (`army-arc` + `armyarc.test.ts`).** Contiguous order, prevFlag
+  links, bands non-decreasing, the misread opens, exactly one clearing terminal (last), the clearing
+  earns a caller, unique flags, all five set-piece kinds present. The test proves in-order firing,
+  non-missable reachability of the clearing, and the earned General caller. The verdict prints **5
+  army-arc beats**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green (+8), `vite build`
+  clean. No FNV re-pin, no frozen-core change, no save change (beats ride flags). §A6 amended.
+- **Consequences:** the army-pursuit arc is a settled, ordered, finale-feeding spine. M41 adds the
+  verifiable pursuit/escape mechanics + the disguise (army fatigues); the per-chapter checkpoint/
+  tank/flyover SCENES stage on top.
+
+## ADR-082 — S19 (Movement 41): PURSUIT MECHANICS + THE SET-PIECES
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 41 — the verifiable spine under the M40 army arc.)
+- **Decision — `src/engine/pursuit.ts`, the chase as a deterministic, tested HEAT model.** HEAT rises
+  by `SEEN_GAIN` (8) when the pursuer has line-of-sight and falls when you EVADE: `drive` (−12, ALWAYS
+  available), `reroute` (−16, around a blocker), `decoy` (−24, a Clicker-driven decoy), `disguise`
+  (−40, army fatigues at a checkpoint). The base evade (drive) nets negative even while seen EVERY
+  step, so escape is guaranteed — `escapeRun` proves it from every starting heat (a 0..MAX sweep) and
+  bounded so a broken model can't hang. Heat reaches `caught` ONLY by idling in the open (fair).
+- **Decision — the helmeted TANK + the safety law.** `tankBlocksControl(type, shieldDown?)` reuses
+  the M39 hardening (`isHardened`) — a fresh tank can't be Clickered; you ROUTE AROUND it.
+  `canRouteAround(grid, start, goal, blocked)` is a 4-neighbour BFS over the road graph with the tank
+  cell removed (the M30 BFS pattern). `pursuerKeepsLane(openLanes)` carries the traffic sim's SAFETY
+  LAW into the chase — the pursuer never takes the player's last lane (never corner-trapped).
+- **Decision — the F-15 FLYOVER + the army-fatigues disguise.** `flyover(steps, damaging=false)` is a
+  finite, ordered beat sequence (incoming → overhead → banking → gone), non-damaging by default
+  (EarthBound spirit). A new `army_fatigues` disguise (faction `army`, added to `DISGUISE_FACTIONS`)
+  slips a checkpoint via the existing disguise engine — proven with `blendsWith`/`madeChance`.
+- **Verification:** `tsc` clean, `npm run validate` green (4 disguises), full vitest green (+14),
+  `vite build` clean. No FNV re-pin, no frozen-core change, no save change. The pursuit can ALWAYS be
+  escaped, proven over many steps; a helmeted tank cleanly refuses control.
+- **Consequences:** the army chase has a soft-lock-proof, deterministic spine the OverworldScene
+  drives — drive/reroute/decoy/disguise to shed heat, route around the helmeted tank, weather the
+  flyover. The per-chapter checkpoint/tank/flyover SCENES render over it.
+
+## ADR-083 — S19 (Movement 42): BALANCE & THE GREAT VERIFICATION (the dealership/military fold)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 42, the last — the curve fold + the consolidated proof that S19
+  lands green across every gate.)
+- **Decision — the new cars fold into the §A9 Fortune Arc (tune DATA, never the curve).** The
+  dealership prices ($90 kid's BMX → $180,000 stretch limo, incl. THE NIKOLAI at $88K) and the
+  military pool ride ON the existing curve as tunable data; `tools/balance-sim.ts` (`npm run balance`)
+  now prints the DEALERSHIP ladder (sticker → depreciated trade-in, with Bert's %) + the MILITARY
+  motor pool alongside the property/fleet/furniture ladders. `balance.test.ts` gains two pins: the
+  car ladder climbs into the back half (a limo dwarfs a starter sedan by >10×) and every car
+  depreciates against its sticker. The FORTUNE_ARC curve shape is unchanged (still gated by `fortune`).
+- **THE GREAT VERIFICATION (S19, Movements 35–42):** all both-directions gates GREEN — `vehicles`,
+  `dealership`, `military`, `army-arc`, `disguise` (army faction added), alongside every inherited
+  gate (area-skins, psi-gate, property, furniture, story-thread, paperboy, fleet, fortune, icon/
+  awakening/quest/catalog). The verdict prints: **94 vehicles (35 types) · 14 dealership cars · 5
+  military vehicles · 5 army-arc beats · 4 disguises** (plus the inherited counts). `tsc --noEmit`
+  clean, full **vitest 908 green** (+62 over the S18 M34 baseline of 846), `vite build` clean,
+  `npm run validate` green, `npm run balance` reads sane, the `art:vehicles` contact sheet renders
+  the new tiers reading distinctly against the hero. No FNV re-pin and no frozen-core / `world_block`
+  change across the whole session (every S19 system is data/engine/sprite, never a sample-routed map
+  generator). Save schema walked **v12 → v13** (the home garage + active ride), migrated + round-trip
+  tested. Eight ADRs (076→083) each landed with its Bible amendment in the same commit; §A4.15/§A6/
+  §A7/§A8/§A9 all amended to canon.
+- **§A11 read-through:** the dealer's patter is warm + obsessed (the new-car smell); General Buckle
+  is funny-but-sincere, WRONG-not-evil, and the Hush stays the only true villain; the clearing is
+  earned + non-missable and strengthens a finale CALLER; no chapter UI anywhere; every new vehicle
+  could not move to another region unchanged (the army's olive-drab kit, the Nikolai's self-creep gag).
+- **Consequences:** S19's SPINE is complete and green — a fleshed-out road roster, the Nikolai, the
+  buy/sell dealership + the home garage (save v13), the helmeted military motor pool, the army-pursuit
+  arc, and the soft-lock-proof chase. The remaining work is per-chapter CONTENT/SCENE pouring on these
+  spines (the lot interior + garage-out-front render, the checkpoint/tank/flyover maps, the General's
+  full chapter staging), each landing with its chapter session. The systems are settled.
