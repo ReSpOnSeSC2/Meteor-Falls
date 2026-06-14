@@ -221,6 +221,21 @@ staged as an AWAKENING/BUILD per ADR-035:
   Faraday-shielded against the Clicker. A helmeted target can't be Puppeted/Clickered — route
   around it (disguise, a PSI gate, a remote vehicle) or knock the helmet off first in a boss fight.
   Introduced as a Department-of-Smiles prototype (Ch.1), refined by the Hush thereafter.
+- **THE TRUST THREAD (the moral weight — play it straight, §A11.2).** Jay can now reach into a
+  person's head and *take the wheel*. That is the Hush's exact crime at small scale, and the party
+  knows it — so the power lands with a beat of fear, not applause. When PUPPET awakens (Ch.3), the
+  party does NOT high-five: Mia goes quiet (she *hears* what it costs the borrowed person); Milo
+  rationalizes it as "just inputs"; the borrowed NPCs come back rattled ("...did I just— why am I
+  holding your bat?"). For a stretch the party keeps a wary distance — a glance, a half-step, a line
+  withheld — and the question hangs: *if Jay can do this, what stops him from doing it to us?* The
+  tone is the deliberate opposite of the Hush: Jay's borrow is **brief, consented-in-spirit,
+  apologetic, and always returns the person whole** — and the arc RESOLVES when Jay chooses NOT to
+  use it on someone he easily could (a refusal beat — he asks instead of taking), earning the
+  party's trust back on-screen. The Hush steals free will FOREVER and never asks; Jay asks, borrows,
+  and gives it back — that contrast IS the thread's point, and the finale's PRAY pays it off. Keep
+  it light-footed and specific (one or two real beats, not a lecture); sincerity is never the joke,
+  and the Hush is never funny. This thread strengthens at least one finale CALLER (a person Jay
+  *didn't* puppet, who answers because he asked).
 - **UX law:** controllable targets are clearly highlighted; seat-fit + range read at a glance;
   driving feels smooth on D-pad + controller; blocked (helmeted/shielded) targets show a clear "no
   signal" tell. Smooth, easy, fun — or it isn't done.
@@ -307,6 +322,9 @@ Weave the new beats into the EXISTING chapters:
 - **Ch.3 (England):** the CONTROL SYSTEM UNLOCKS on Milo's join (Jay's PUPPET awakening + Milo's
   CLICKER build, §A11.2 staged); a control-the-guard beat at Wintermoor; an early remote-drive
   puzzle (Clicker the groundskeeper's mower/cart); a PSI gate (freeze a coolant pipe to cross).
+  **THE TRUST THREAD opens here** (§A4.10): the first borrowed NPC comes back rattled and the party
+  pulls back a step — the wary distance carries through Ch.4–5 in small beats and RESOLVES on Jay's
+  refusal beat (he asks instead of taking) before the back half.
 - **Ch.5 (Minimus):** comedic scale — Puppet a Whistle Guard; Clicker a tiny parade float; the
   duchy's agency lists a knee-high cottage.
 - **Ch.6 (Africa):** the **INVESTMENT DESK** opens at the S&L (the Fortune-Arc wealth engine);
@@ -419,11 +437,14 @@ do them adjacent.
   Clickered — a clear "no signal" tell. Wire the first helmet at the Department of Smiles (Ch.1) and
   helmeted enemy variants (§A7) whose helmet must come off in battle before control works (reuse the
   existing `mind_immune` flag as the data spine).
+- **THE TRUST THREAD (ship the opening beat):** when PUPPET awakens, stage the party's wary reaction
+  + the first rattled borrowed-NPC line (§A4.10, §A11.2 sincere). Set the flag the later beats read;
+  the refusal/resolution beat lands in M31's weave. Keep it one or two real beats, never a lecture.
 - **Re-prove:** control targeting, seat-fit gating, remote-drive area-unlocks, and helmet/shield
   blocks all in a vitest harness over the engine API; BFS the maps that gain drivable vehicles.
 - **DONE-WHEN:** you can Puppet a driver, pile the party into a car, drive a city smoothly, and
-  Clicker an empty truck across a bridge — and a helmeted guard cleanly refuses. Append the ADR;
-  amend §A4.10 to canon as built.
+  Clicker an empty truck across a bridge — and a helmeted guard cleanly refuses; and the party's
+  first uneasy reaction to PUPPET reads on-screen. Append the ADR; amend §A4.10 to canon as built.
 
 ### MOVEMENT 28 — PSI IN THE WORLD (overworld casting + the puzzle gates) — do FOURTH
 Reuses M27's overworld-ability spine.
@@ -504,6 +525,10 @@ Wire the new mechanics into §A6 as REQUIRED, non-missable beats (retry law hold
   the cabin, land sliding by a window, a quiet beat, arrival.
 - **THE HELMET BOSS (Ch.7):** Cobra Raja wears a DEAD-AIR HELMET — phase 1 is knocking it off so
   Puppet/Clicker come online for phase 2.
+- **THE TRUST THREAD — the resolution (§A4.10):** land Jay's REFUSAL beat before the back half (he
+  asks instead of taking someone he easily could), the party closing the wary distance on-screen,
+  and the finale CALLER it strengthens (a person Jay didn't puppet, who answers because he asked).
+  Sincere, light-footed, §A11.2 — never a speech.
 - **Re-prove:** every beat non-missable (post-Teleport reopen where relevant), retry-safe, BFS-clean;
   each adds/strengthens a finale CALLER. **DONE-WHEN:** the disguise gets you to Mia; the drive is the
   only road on; the plane lands. Append the ADR; amend §A6 to canon as built.
@@ -570,7 +595,9 @@ The traversal capstone — needs the control system + the bigger vehicle sprites
   walk + a furnished layout byte-equal across a kill/reload.
 - **The §A11 read-through:** every new line plain-spoken, kid-readable, one obsession per NPC, the
   Hush never funny, Jay's Puppet a comedic *borrow* (never the Hush's theft), sincerity clean. No
-  chapter UI.
+  chapter UI. **The TRUST THREAD** reads as earned, not preachy — the party's unease opens (Ch.3),
+  carries in small beats, and resolves on Jay's refusal; the Hush/Jay contrast (steals forever vs.
+  asks-and-returns) is shown, never explained.
 - **`.shots/`** of: the refreshed per-area buildings; a bustling city with traffic + a gas station +
   driveways; the control-targeting UI; an overworld PSI-Fire/Freeze cast; the disguise sneak; the
   highway; the plane interior; the paperboy route; the real-estate agency + lawyer's office; the
