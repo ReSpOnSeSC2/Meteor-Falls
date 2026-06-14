@@ -20,7 +20,8 @@ export type VehicleTerrain = 'road' | 'water' | 'air';
 export type VehicleClass =
   | 'bike' | 'moto' | 'car' | 'suv' | 'van' | 'bus' | 'truck' | 'machine'
   | 'boat' | 'sub' | 'plane' | 'heli' | 'prop'
-  | 'tank'; // M39 (ADR-080) — the military motor pool's new silhouette family
+  | 'tank'   // M39 (ADR-080) — the military motor pool's new silhouette family
+  | 'rocket'; // M48 (ADR-089) — The Long Shot, the Earth↔Mars shuttle
 
 export interface VehicleSpec {
   /** silhouette family (for grouping + the seat-fit reads) */
@@ -620,6 +621,37 @@ function drawAttackHeli(ramp: number, _rng: () => number): Pixmap {
   return pm;
 }
 
+/* ─── M48 (ADR-089): THE LONG SHOT — the rocket (Earth↔Mars shuttle) ──────── */
+
+function drawRocket(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 44;
+  const H = 22;
+  const pm = new Pixmap(W, H);
+  const midY = 11;
+  // a sleek fuselage in flight, nose pointed RIGHT (the art law read)
+  pm.rect(6, midY - 3, W - 12, 6, p.body);
+  pm.hline(6, midY - 3, W - 12, p.lite);
+  // the pointed nose cone
+  pm.line(W - 6, midY - 3, W - 1, midY, p.mid);
+  pm.line(W - 6, midY + 2, W - 1, midY, p.mid);
+  pm.set(W - 1, midY, CHROME);
+  // a porthole + a window band
+  pm.rect(W - 14, midY - 1, 3, 2, GLASS);
+  pm.set(W - 18, midY, GLASS_D);
+  // tail fins
+  pm.line(6, midY - 3, 2, midY - 6, p.dark);
+  pm.line(6, midY + 2, 2, midY + 6, p.dark);
+  pm.line(6, midY, 1, midY, p.dark);
+  // the booster flame streaming behind (left), pure-light core after the contour
+  pm.rect(2, midY - 1, 4, 2, px(RAMP.ORANGE, 2));
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 4, SHADOW);
+  pm.outline(C.outline);
+  pm.hline(0, midY, 3, px(RAMP.GOLD, 3)); // the brightest exhaust, drawn last
+  pm.set(W - 13, midY - 1, CHROME);       // a glint on the porthole
+  return pm;
+}
+
 /* ─── THE SPEC TABLE — one row per vehicle TYPE ─────────────────────────── */
 
 function box(w: number, h: number, oy = 0): { ox: number; oy: number; w: number; h: number } {
@@ -668,6 +700,8 @@ export const VEHICLE_SPECS: Record<string, VehicleSpec> = {
   humvee:         { cls: 'suv',   terrain: 'road', seats: 4,  w: 34, h: 21, solid: box(34, 8, 8),   hardened: true, draw: (r, g) => drawHumvee(r, g) },
   troop_transport:{ cls: 'truck', terrain: 'road', seats: 12, w: 44, h: 23, solid: box(44, 10, 6),  hardened: true, draw: (r, g) => drawTroopTransport(r, g) },
   attack_heli:    { cls: 'heli',  terrain: 'air',  seats: 2,  w: 36, h: 18, solid: box(36, 8, 6),   hardened: true, draw: (r, g) => drawAttackHeli(r, g) },
+  // M48 (ADR-089) — THE LONG SHOT: Professor Pemberton's rocket, the Earth↔Mars shuttle
+  rocket:         { cls: 'rocket', terrain: 'air', seats: 6,  w: 44, h: 22, solid: box(44, 8, 8),   draw: (r, g) => drawRocket(r, g) },
 };
 
 /** usable seats to RIDE the party (the driver takes one) — §A4.10 seat-fit law */
@@ -729,6 +763,8 @@ const PAINTS: Record<string, readonly number[]> = {
   humvee:          [RAMP.FOREST, RAMP.EARTH],
   troop_transport: [RAMP.FOREST, RAMP.EARTH],
   attack_heli:     [RAMP.FOREST, RAMP.NIGHT],
+  // The Long Shot — a homemade rocket in hopeful paper-white + a gold nose
+  rocket:          [RAMP.PAPER, RAMP.RED],
 };
 
 function buildCatalog(): VehicleVariant[] {

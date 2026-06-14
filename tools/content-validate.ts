@@ -56,6 +56,14 @@ import { sellValue } from '../src/engine/garage';
 import { MILITARY_VEHICLES, MILITARY_TYPES } from '../src/data/military';
 import { ARMY_BEATS } from '../src/data/armyarc';
 import { armyArcProblems } from '../src/engine/armyarc';
+import { fuelProfile, rangeTiles, needsFuel } from '../src/engine/fuel';
+import { ignitionRequired } from '../src/engine/ignition';
+import { STATIONS, STATION_KINDS } from '../src/data/stations';
+import { sells, stationPricePerUnit, homeChargePricePerUnit, NEEDED_FUEL_KINDS } from '../src/engine/refuel';
+import { CONTINENTS, AREA_CONTINENT, CONTINENT_IDS } from '../src/data/world';
+import { ferryMethodsBetween, METHOD_CRAFT } from '../src/engine/ferry';
+import { THE_LONG_SHOT } from '../src/data/rocket';
+import { canLaunch, EARTH_PAD, MARS, launchCost } from '../src/engine/rocket';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -612,6 +620,156 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // the clearing's caller (the General) is named (the §A6 finale payoff)
   const clearing = Object.values(ARMY_BEATS).find((b) => b.kind === 'clearing');
   if (clearing && !clearing.caller) fail('army-arc', 'the clearing earns no finale caller');
+}
+
+// S20 Movement 43 (ADR-084) — THE FUEL SYSTEM (§A4.16). Every vehicle type has a
+// sane fuel profile derived from its class/terrain. Gated:
+//  · the kind is valid; human-powered (bikes/props) carry kind 'none' with a 0 tank
+//    and never need fuel; everything else has a positive tank + economy and a LONG
+//    but finite range (a full tank goes a good distance, but it runs out).
+{
+  const KINDS = new Set(['gas', 'diesel', 'jet', 'electric', 'none']);
+  const HUMAN = new Set(['bicycle', 'bmx', 'road_bike']);
+  for (const type of Object.keys(VEHICLE_SPECS)) {
+    const p = fuelProfile(type);
+    if (!KINDS.has(p.kind)) fail('fuel', `vehicle '${type}' has unknown fuel kind '${p.kind}'`);
+    const spec = VEHICLE_SPECS[type];
+    const human = HUMAN.has(type) || spec.cls === 'bike' || spec.cls === 'prop';
+    if (human) {
+      if (p.kind !== 'none' || needsFuel(type)) fail('fuel', `human-powered '${type}' must run on no fuel`);
+      if (p.tank !== 0) fail('fuel', `human-powered '${type}' must carry a 0 tank`);
+    } else {
+      if (p.kind === 'none') fail('fuel', `powered '${type}' has no fuel kind`);
+      if (p.tank <= 0 || p.econ <= 0) fail('fuel', `powered '${type}' has a non-positive tank/economy`);
+      if (rangeTiles(type) < 500) fail('fuel', `powered '${type}' range ${rangeTiles(type)} is too short to be fun — a tank should go a long way`);
+    }
+    // the EV line runs on electricity (the Nikolai charges cheap), never gas
+    if (type === 'ev' || type === 'nikolai') {
+      if (p.kind !== 'electric') fail('fuel', `'${type}' is an EV and must run on electric`);
+    }
+    // M44 (ADR-085) IGNITION: you turn ON combustion (gas/diesel/jet) ONLY; EVs +
+    // human-powered need no key — ignitionRequired must agree with the fuel kind.
+    const combustion = p.kind === 'gas' || p.kind === 'diesel' || p.kind === 'jet';
+    if (ignitionRequired(type) !== combustion) {
+      fail('fuel', `'${type}' ignition (${ignitionRequired(type)}) disagrees with its fuel kind '${p.kind}' — turn on combustion only`);
+    }
+  }
+}
+
+// S20 Movement 45 (ADR-086) — GAS STATIONS & CHARGING (§A4.17). Where you PAY to
+// fill. Gated BOTH directions:
+//  · every station sits in a real AREA_SKINS area, has a known kind, a non-empty
+//    valid fuel list, a positive price multiplier, and §A11 attendant voice;
+//  · EVERY fuel kind a real vehicle needs (gas/diesel/jet/electric) is sold at ≥1
+//    station — you can never be stranded with nowhere to fill your kind;
+//  · the live USA areas each have a station; home charging is cheaper than ANY
+//    station's electric price (the §A4.16 home-charger promise); Mars sells no gas.
+{
+  const KINDS = new Set<string>(STATION_KINDS);
+  const FUELS = new Set(['gas', 'diesel', 'jet', 'electric']);
+  const soldKinds = new Set<string>();
+  for (const st of Object.values(STATIONS)) {
+    if (!AREA_SKINS_FOR_PROP[st.area]) fail('stations', `station '${st.id}' sits in area '${st.area}' that owns no AREA_SKINS slice (M25)`);
+    if (!KINDS.has(st.kind)) fail('stations', `station '${st.id}' has unknown kind '${st.kind}'`);
+    if (st.fuels.length === 0) fail('stations', `station '${st.id}' sells no fuel`);
+    for (const f of st.fuels) {
+      if (!FUELS.has(f)) fail('stations', `station '${st.id}' sells unknown fuel '${f}'`);
+      soldKinds.add(f);
+    }
+    if (st.priceMult <= 0) fail('stations', `station '${st.id}' has a non-positive price multiplier`);
+    if (!st.attendant || !st.note) fail('stations', `station '${st.id}' has no §A11 attendant/note`);
+  }
+  // every needed fuel kind is sold somewhere (never stranded)
+  for (const k of NEEDED_FUEL_KINDS) {
+    if (!soldKinds.has(k)) fail('stations', `no station sells '${k}' — a vehicle that runs on it could never refuel`);
+  }
+  // the live USA areas each have a station
+  for (const live of ['otterbrook', 'brickton']) {
+    if (!Object.values(STATIONS).some((s) => s.area === live)) fail('stations', `live area '${live}' has no station — gas in each region (§A4.17)`);
+  }
+  // the home charger beats every station's electric price (the §A4.16 promise)
+  const home = homeChargePricePerUnit();
+  for (const st of Object.values(STATIONS)) {
+    if (sells(st, 'electric') && home >= stationPricePerUnit(st, 'electric')) {
+      fail('stations', `home charging (${home}) is not cheaper than station '${st.id}' electric (${stationPricePerUnit(st, 'electric')})`);
+    }
+  }
+  // there's no gasoline on Mars (electric only — the canon gag)
+  const mars = Object.values(STATIONS).find((s) => s.area === 'mars');
+  if (mars && (sells(mars, 'gas') || sells(mars, 'diesel'))) fail('stations', 'Mars sells no gas/diesel — electric only (§A4.17)');
+}
+
+// S20 Movement 46 (ADR-087) — THE WORLD MAP + VEHICLE FERRYING (§A5). Gated BOTH
+// directions:
+//  · every continent's areas are real AREA_SKINS areas; every CANON_AREA belongs
+//    to EXACTLY ONE continent (full coverage, no orphan area, no double-claim);
+//  · exactly one non-Earth continent (Mars); Mars↔Earth ferries are ROCKET-only and
+//    Earth↔Earth ferries are air/sea (the §A5 set-piece travel, on wheels-in-a-hold).
+{
+  const claimed = new Map<string, string>();
+  for (const c of Object.values(CONTINENTS)) {
+    if (c.areas.length === 0) fail('world', `continent '${c.id}' has no areas`);
+    for (const a of c.areas) {
+      if (!AREA_SKINS_FOR_PROP[a]) fail('world', `continent '${c.id}' claims area '${a}' that owns no AREA_SKINS slice (M25)`);
+      const prior = claimed.get(a);
+      if (prior) fail('world', `area '${a}' is claimed by both '${prior}' and '${c.id}' — one area, one continent`);
+      claimed.set(a, c.id);
+    }
+  }
+  // every canon area is placed on a continent (full coverage)
+  for (const a of CANON_AREAS) {
+    if (!AREA_CONTINENT[a]) fail('world', `canon area '${a}' belongs to no continent — place it in CONTINENTS`);
+  }
+  // exactly one off-Earth continent (Mars), and it's named 'mars'
+  const offEarth = Object.values(CONTINENTS).filter((c) => !c.earth).map((c) => c.id);
+  if (offEarth.length !== 1 || offEarth[0] !== 'mars') fail('world', `expected exactly one off-Earth continent 'mars', got [${offEarth.join(',')}]`);
+  // Mars↔Earth is rocket-only; two Earth continents bridge by air/sea
+  for (const id of CONTINENT_IDS) {
+    if (id === 'mars') continue;
+    const toMars = ferryMethodsBetween(id, 'mars');
+    if (JSON.stringify(toMars) !== JSON.stringify(['rocket'])) fail('world', `ferry ${id}→mars must be rocket-only, got [${toMars.join(',')}]`);
+  }
+  const earthPair = CONTINENT_IDS.filter((c) => CONTINENTS[c].earth).slice(0, 2);
+  if (earthPair.length === 2) {
+    const m = ferryMethodsBetween(earthPair[0], earthPair[1]);
+    if (!m.includes('air') || !m.includes('sea')) fail('world', `Earth↔Earth ferry must offer air + sea, got [${m.join(',')}]`);
+  }
+  // S20 M47 (ADR-088): you can buy property on EVERY continent (incl. Mars) — the
+  // rags-to-riches → billionaire-on-Mars arc. Each continent has ≥1 buyable property.
+  const propContinents = new Set<string>();
+  for (const p of Object.values(PROPERTIES)) {
+    const cont = AREA_CONTINENT[p.area];
+    if (cont) propContinents.add(cont);
+  }
+  for (const id of CONTINENT_IDS) {
+    if (!propContinents.has(id)) fail('world', `continent '${id}' has no buyable property — you must be able to buy in on every continent (§A4.13/ADR-088)`);
+  }
+}
+
+// S20 Movement 48 (ADR-089) — THE ROCKET (The Long Shot, §A5/§A6). Gated:
+//  · the rocket is a real VEHICLE_SPECS air type with its own paint;
+//  · The Long Shot is well-formed (a title_*, a positive price, real pad continents,
+//    the Earth pad is Hawaii and the dest is Mars), and the ferry's rocket method
+//    requires exactly that title (one key opens Mars);
+//  · the launch flies ONLY the pad↔Mars route, owns-gated, Ember-law (visited) safe.
+{
+  const r = VEHICLE_SPECS[THE_LONG_SHOT.vehicleType];
+  if (!r) fail('rocket', `The Long Shot is type '${THE_LONG_SHOT.vehicleType}' with no VEHICLE_SPECS row`);
+  else if (r.terrain !== 'air') fail('rocket', `the rocket must be an air craft, got '${r.terrain}'`);
+  if (!THE_LONG_SHOT.title.startsWith('title_')) fail('rocket', `The Long Shot title '${THE_LONG_SHOT.title}' must be a title_* key-item`);
+  if (THE_LONG_SHOT.price <= 0) fail('rocket', 'The Long Shot has a non-positive price');
+  if (!CONTINENTS[THE_LONG_SHOT.earthPad] || !CONTINENTS[THE_LONG_SHOT.marsPad]) fail('rocket', 'The Long Shot pads must be real continents');
+  if (EARTH_PAD !== 'hawaii') fail('rocket', `the Earth pad must be Hawaii (Mauna Lani, §A6), got '${EARTH_PAD}'`);
+  if (MARS !== 'mars' || CONTINENTS.mars.earth !== false) fail('rocket', 'the rocket must fly to off-Earth Mars');
+  if (!METHOD_CRAFT.rocket.includes(THE_LONG_SHOT.title)) fail('rocket', 'the ferry rocket method must require The Long Shot title');
+  if (launchCost() <= 0) fail('rocket', 'a launch must cost rocket fuel');
+  // owns-gated + pad-only + visited-only
+  const owned = [THE_LONG_SHOT.title];
+  if (canLaunch(EARTH_PAD, MARS, [], ['mars']).reason !== 'not_owned') fail('rocket', 'launch must require owning the rocket');
+  if (canLaunch(EARTH_PAD, MARS, owned, []).reason !== 'not_visited') fail('rocket', 'launch must honor the Ember law (Mars visited)');
+  if (canLaunch('usa', MARS, owned, ['mars']).reason !== 'wrong_pads') fail('rocket', 'launch must stage from the Hawaii pad, not just anywhere');
+  if (!canLaunch(EARTH_PAD, MARS, owned, ['mars']).ok) fail('rocket', 'a fully-earned launch to a visited Mars must succeed');
+  if (!canLaunch(MARS, EARTH_PAD, owned, ['mars', 'hawaii']).ok) fail('rocket', 'the return launch (Mars→home) must work — the shuttle is repeatable');
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2167,6 +2325,10 @@ const counts = [
   `${Object.keys(DEALERSHIP).length} dealership cars`,
   `${MILITARY_TYPES.length} military vehicles`,
   `${Object.keys(ARMY_BEATS).length} army-arc beats`,
+  `fuel (${Object.keys(VEHICLE_SPECS).filter((t) => needsFuel(t)).length} powered · ${Object.keys(VEHICLE_SPECS).filter((t) => !needsFuel(t)).length} human/none)`,
+  `${Object.keys(STATIONS).length} fuel stations`,
+  `${CONTINENT_IDS.length} continents`,
+  `the Long Shot (Earth↔Mars)`,
   `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,

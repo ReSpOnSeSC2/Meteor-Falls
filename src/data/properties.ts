@@ -84,6 +84,42 @@ export const PROPERTIES: Record<string, PropertyDef> = Object.fromEntries(
       basePrice: 35000, rent: 0, deed: 'deed_hoaxula_park', storageTier: 3, rundown: true,
       blurb: 'Cozy, in a spooky way! A bankrupt haunted-castle attraction. Real bats. Fake cobwebs. Endless potential.',
     }),
+    // ── S20 M47 (ADR-088): a buyable home on EVERY continent you arrive on ──
+    P({
+      id: 'casa_del_sol', band: 'ch2', name: 'Casa del Sol', area: 'puerto_sol', kind: 'home',
+      basePrice: 9000, rent: 0, deed: 'deed_casa_del_sol', storageTier: 2,
+      blurb: 'Cozy AND sunny! Tile roof, a courtyard, a parrot who came with the deed and will not be leaving. He owns the deed, really.',
+    }),
+    P({
+      id: 'fjord_cabin', band: 'ch4', name: 'The Kvisthavn Cabin', area: 'kvisthavn', kind: 'home',
+      basePrice: 45000, rent: 0, deed: 'deed_fjord_cabin', storageTier: 2,
+      blurb: 'Cozy! Heated floors, a view of the fjord, and a giant two towns over who waves every morning. Wave back. He notices.',
+    }),
+    P({
+      id: 'minimus_manor', band: 'ch5', name: 'A Manor in Minimus', area: 'minimus', kind: 'home',
+      basePrice: 70000, rent: 0, deed: 'deed_minimus_manor', storageTier: 1,
+      blurb: 'Cozy! Eleven grand rooms, total footprint the size of a shoebox. You will live AROUND it. The duchy considers this a feature.',
+    }),
+    P({
+      id: 'lotus_flat', band: 'ch8', name: 'A Flat on Lotus Harbor', area: 'lotus_harbor', kind: 'home',
+      basePrice: 120000, rent: 0, deed: 'deed_lotus_flat', storageTier: 2,
+      blurb: 'Cozy! Red lacquer, a balcony over the water, paper lanterns that the previous owner SWEARS are just paper now.',
+    }),
+    P({
+      id: 'aurora_quarters', band: 'ch10', name: 'Aurora Station Quarters', area: 'aurora', kind: 'home',
+      basePrice: 600000, rent: 0, deed: 'deed_aurora_quarters', storageTier: 2,
+      blurb: 'Cozy — by Alaskan standards, meaning the heater works! Steel walls, aurora out every window, a generator you will name.',
+    }),
+    P({
+      id: 'mauna_bungalow', band: 'ch10', name: 'The Mauna Lani Bungalow', area: 'mauna_lani', kind: 'home',
+      basePrice: 2500000, rent: 0, deed: 'deed_mauna_bungalow', storageTier: 3,
+      blurb: 'Cozy and BAREFOOT! Lava-rock walls, a lanai, the launch pad rumbling next door like a very large, very polite neighbor.',
+    }),
+    P({
+      id: 'mars_habitat', band: 'ch10', name: 'The Red Dome Habitat', area: 'mars', kind: 'home',
+      basePrice: 900000000, rent: 0, deed: 'deed_mars_habitat', storageTier: 3,
+      blurb: 'Cozy, under the dome! Earthrise from the master bedroom, a garden that took some convincing, and the quietest neighborhood in the solar system. The end of the road, and the start of everything.',
+    }),
   ].map((p) => [p.id, p]),
 );
 

@@ -4864,3 +4864,175 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   arc, and the soft-lock-proof chase. The remaining work is per-chapter CONTENT/SCENE pouring on these
   spines (the lot interior + garage-out-front render, the checkpoint/tank/flyover maps, the General's
   full chapter staging), each landing with its chapter session. The systems are settled.
+
+## ADR-084 — S20 (Movement 43): THE FUEL SYSTEM — the tank (save v14)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 43 — the foundation of the §A4.16 fuel/station economy; needs
+  the M26 vehicle forge.)
+- **Decision — `src/engine/fuel.ts`, the fuel model (pure, derived, tested).** Every vehicle type
+  has a FUEL PROFILE — `kind` (`gas`/`diesel`/`jet`/`electric`/`none`), `tank` (units), `econ`
+  (tiles per unit) — DERIVED from its class/terrain with honest overrides (bicycles/BMX/road bike +
+  props are human-powered `none`; the EV line — `ev`, `nikolai` — is `electric`; tanks/trucks/buses/
+  machinery/subs are `diesel`; anything that flies is `jet`; the rest `gas`). A full tank goes a
+  LONG but finite way (`rangeTiles` = tank × econ, ≥500 tiles, exotics thirstier, EVs efficient).
+  `consume(current, type, dist)` drains with distance (floored at 0; human-powered never deplete);
+  `unitsToFill`/`fillCost(price)` cost a fill; `isLow`/`isEmpty` drive the warnings;
+  `BASE_PRICE_PER_UNIT` orders electric ≪ gas < jet (the Nikolai is cheap to charge). The SAME
+  functions serve the player's car AND the CPU traffic pool ("human or cpu", §A4.16).
+- **Decision — save bump v13 → v14 (`fuel`).** Per-car current fuel units ride a typed map keyed by
+  the car's `title_*` (the dealership/garage ownership key). The `to: 14` migration backfills `{}` on
+  any pre-v14 save (the system is v14-new); a car gains a full tank when bought from here on.
+- **Decision — gated (`fuel` + `fuel.test.ts`).** Every type has a valid kind; human-powered carry
+  kind `none` + 0 tank + never need fuel; powered types have positive tank/econ + a ≥500-tile range;
+  the EV line is electric. The verdict prints **fuel (31 powered · 4 human/none)**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean.
+  Save walks v13 → v14, migrated + round-trips byte-stable. No FNV re-pin, no frozen-core change.
+  §A4.16 amended.
+- **Consequences:** the world's vehicles now carry fuel. M44 adds the ignition (you turn it on),
+  M45 the gas stations + charging (where you pay to fill, cheapest charging at home), and the live
+  drain + the low-fuel warning wire into the OverworldScene's driving feel over this spine.
+
+## ADR-085 — S20 (Movement 44): IGNITION — the on/off switch
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 44 — §A4.16; needs M43 fuel.)
+- **Decision — `src/engine/ignition.ts` (pure, tested).** A combustion vehicle (gas/diesel/jet) must
+  be TURNED ON before it'll move; the EV line is KEYLESS (step in, ready); human-powered bikes have
+  nothing to start. `ignitionRequired(type)` is true only for combustion. `startEngine(type, fuel)`
+  catches only with fuel (`no_fuel` → `stalled`); for an EV/bike there's nothing to start
+  (`no_ignition_needed`, running if it can roll). `canDrive(type, running, fuel)` is the wheel-UI
+  gate: a bike always; an EV on charge alone; combustion only when running AND fuelled.
+  `ignitionLabel` returns `START`/`TURN OFF` for combustion, null for EVs/bikes. Ignition is a
+  per-drive RUNTIME state (a car is off when you walk up), so it earns NO save field.
+- **Decision — gated in the `fuel` block.** `ignitionRequired` must agree with the fuel kind
+  (combustion only). `ignition.test.ts` mirrors it + proves start/stall/drive/label behavior.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean. No
+  FNV re-pin, no frozen-core change, no save change. §A4.16 amended (the ignition note).
+- **Consequences:** the wheel UI gains a START button for combustion vehicles; EVs roll keyless. The
+  drain + ignition + the M45 stations complete the §A4.16 driving-realism loop.
+
+## ADR-086 — S20 (Movement 45): GAS STATIONS & CHARGING — pay to fill
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 45 — §A4.17; needs M43 fuel.)
+- **Decision — `src/data/stations.ts` (DATA) + `src/engine/refuel.ts` (math, pure/tested).** 14
+  stations, ≥1 per inhabited region — gas pumps, EV charging stalls, both, airfield jet fuel, or
+  marina diesel — each with a real AREA_SKINS area, a fuel list, a region COST-OF-LIVING multiplier
+  (Mars 2.5×), and a §A11 attendant (Stan's lottery, Nigel's "PETROL not gas", Buni's "fill the
+  tank, fill your plate", the Mars colony AI). `refuelAtStation(current, type, station)` returns the
+  cost + topped-off level (region price × units; won't fill a full tank / a fuel it doesn't sell / a
+  human-powered bike); `chargeAtHome` charges the EV line at `HOME_CHARGE_MULT` (0.4×) — cheapest of
+  all; `stationPricePerUnit`/`homeChargePricePerUnit`/`canRefuelHere`/`stationsInArea` round it out.
+- **Decision — gated both directions (`stations` + `refuel.test.ts`).** Every station area is real,
+  kind/fuels valid, price positive, in voice; EVERY needed fuel kind (gas/diesel/jet/electric) is
+  sold somewhere (never stranded); the live USA areas each have a station; home charging beats every
+  station's electric price (the §A4.16 promise); Mars sells no gas (electric only — the canon gag).
+  The verdict prints **14 fuel stations**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean. No
+  FNV re-pin, no frozen-core change, no save change. §A4.17 amended.
+- **Consequences:** the driving-realism loop is complete — fuel drains (M43), you turn the key (M44),
+  and you pay to fill at a station or charge cheap at home (M45). The pump props + the fill UI render
+  on this spine. M46 lets you ferry the car between continents.
+
+## ADR-087 — S20 (Movement 46): VEHICLE FERRYING — cross the continents by jumbo-jet cargo / boat (save v15)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 46 — §A5 the cross-continent layer; needs the M46 world map.)
+- **Decision — `src/data/world.ts`, the 12 CONTINENTS.** The 17 areas group onto landmasses (usa,
+  south_america, england, norway, minimus, africa, india, china, romania, alaska, hawaii, mars). You
+  DRIVE freely within a continent (its areas are door-connected); you cannot drive an ocean. `AREA_
+  CONTINENT` is the derived area→continent map.
+- **Decision — `src/engine/ferry.ts`, ferrying (pure, tested).** To take your car to another
+  continent you LOAD it: a jumbo jet's cargo hold (AIR), a boat/yacht deck (SEA), or — for Mars —
+  the rocket. `ferryMethodsBetween` (same→none, Earth↔Earth→air/sea, ↔Mars→rocket-only);
+  `canFerry(from,to,owned,visited)` honors the EMBER LAW (visited-only) + the Mars rule (rocket must
+  be owned; no commercial Mars freight → `needs_rocket`); `ferryCost(method, ownsCraft)` charges the
+  commercial fare, discounted to 0.3× if you own a qualifying craft (`METHOD_CRAFT`); `bestFerry`
+  picks the cheapest usable method; `carIsHere` enforces that a car drives only on the continent it's
+  parked on. The user's idea exactly: put the car in the back of a jumbo jet or on a boat.
+- **Decision — save bump v14 → v15 (`carLocation`).** Which continent each owned car is parked on;
+  ferrying moves it; a bought car starts on the dealership's continent. The `to: 15` migration
+  backfills `{}` (ferrying is v15-new).
+- **Decision — gated both directions (`world` + `ferry.test.ts`).** Every continent area is real;
+  every CANON_AREA belongs to exactly one continent (full coverage, no double-claim); exactly one
+  off-Earth continent (Mars); Mars↔Earth is rocket-only, Earth↔Earth is air/sea. The verdict prints
+  **12 continents**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean.
+  Save walks v14 → v15, migrated + round-trips. No FNV re-pin, no frozen-core change. §A5 amended.
+- **Consequences:** the whole world is reachable by your own car without breaking the Ember-trail
+  linearity — drive a continent, ferry to the next, and (M48) rocket to Mars. M47 makes sure there's
+  property to buy on each one.
+
+## ADR-088 — S20 (Movement 47): PROPERTY ON EVERY CONTINENT (incl. Mars)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 47 — the rags-to-riches → billionaire-on-Mars arc; needs the
+  M46 continent map.)
+- **Decision — seven new buyable homes fill the continents that lacked one.** Casa del Sol (south
+  america), the Kvisthavn Cabin (norway), a Manor in Minimus (tiny footprint, you live AROUND it), a
+  Flat on Lotus Harbor (china), Aurora Station Quarters (alaska), the Mauna Lani Bungalow (hawaii),
+  and THE RED DOME HABITAT on Mars — the endgame billionaire pad at $900,000,000, the dearest property
+  in the game ("the end of the road, and the start of everything"). Each carries the §A11 cozy-agent
+  voice, a unique deed, a real AREA_SKINS area, a band, and a storage tier; all are forward specs
+  (placed when their chapter lands), so LIVE_PROPERTIES is unchanged.
+- **Decision — gated in the `world` block (+ `ferry.test.ts`).** EVERY continent (all 12, incl.
+  Mars) has ≥1 buyable property — you can put down roots anywhere you arrive. The Mars habitat is
+  asserted as the priciest property. The verdict prints **15 properties**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean. No
+  FNV re-pin, no frozen-core change, no save change (ownership rides deeds/flags). §A4.13 amended.
+- **Consequences:** the wealth fantasy spans the whole world — buy, flip, and rent across every
+  continent, and end up under the Mars dome. M48 adds the rocket + the repeatable Earth↔Mars shuttle
+  that makes living there real.
+
+## ADR-089 — S20 (Movement 48): THE ROCKET — The Long Shot, the Earth↔Mars shuttle
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 48 — §A5/§A6; needs the M46 continents + M48 ferry rocket method.)
+- **Decision — the rocket sprite (`rocket`, a new `cls 'rocket'` VEHICLE_SPECS air type).**
+  `drawRocket` (ADR-020): a sleek fuselage nose-right, pointed cone, porthole, tail fins, and a
+  gold/orange exhaust streaming behind (the brightest pixels drawn last). Paper-white + red paint —
+  a hopeful homemade rocket. On the `art:vehicles` sheet (the rocket the user asked for); **96
+  vehicles (36 types)**.
+- **Decision — `src/data/rocket.ts` (THE_LONG_SHOT) + `src/engine/rocket.ts` (launch, pure/tested).**
+  Professor Pemberton's rocket, owned by `title_the_long_shot` (earned at the §A6 Ch.10 launch, then
+  yours). `canLaunch(from, to, keyItems, visited)` flies ONLY the pad↔Mars route (Hawaii / Mauna Lani
+  ↔ Mars), owns-gated, and Ember-law safe (Mars must be visited); it's REPEATABLE both ways (fly to
+  Mars to live, fly home for dinner). `launchCost` burns rocket fuel; `launchDestination` resolves
+  each way. The ferry's `rocket` method (M46) requires exactly this title — one key opens Mars.
+- **Decision — gated (`rocket` + `rocket.test.ts`).** The rocket is a real air type; The Long Shot
+  is well-formed (title_*, positive price, real pad continents, Earth pad = Hawaii, dest = off-Earth
+  Mars); the ferry agrees; the launch is owns/pad/visited-gated and the round trip works.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean,
+  `art:vehicles` re-rendered. No FNV re-pin, no frozen-core change, no save change (ownership rides
+  the title key-item). §A5/§A6 amended.
+- **Consequences:** the rags-to-riches arc closes the loop — drive a continent, ferry to the next,
+  buy in everywhere, and rocket between Earth and Mars at will, a billionaire under the Red Dome who
+  still comes home for Mom's cooking. M49 folds the new fuel/ferry/rocket costs into the balance read.
+
+## ADR-090 — S20 (Movement 49): BALANCE & VERIFICATION (fuel / ferry / rocket fold)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 49, the last — the costs fold into §A9; the consolidated proof.)
+- **Decision — the new costs fold into the §A9 economy (tune DATA).** `tools/balance-sim.ts`
+  (`npm run balance`) now prints the FUEL ladder (per type: kind, tank, range in tiles, full-fill
+  cost), the per-region FUEL PRICE spread (gas → the dear Mars electric, the home charger below every
+  pump), and the FERRY + ROCKET fares (sea $1,200 < air $4,000 < rocket-to-Mars $250,000; own the
+  craft, pay ~0.3×; a launch burns $75,000 of fuel). `balance.test.ts` pins it: a tank of gas is a
+  real bite at the Ch.1 ~$1K fortune but a rounding error against the Mars dome, and travel escalates
+  sea < air < rocket.
+- **THE GREAT VERIFICATION (S20, Movements 43–49):** all both-directions gates GREEN — `fuel`
+  (incl. ignition consistency), `stations`, `world` (continents + per-continent property), `rocket` —
+  alongside every inherited gate. The verdict prints: **fuel (32 powered · 4 human/none) · 14 fuel
+  stations · 12 continents · the Long Shot (Earth↔Mars) · 96 vehicles (36 types) · 15 properties**.
+  `tsc --noEmit` clean, full **vitest 968 green** (+60 over S19's 908), `vite build` clean,
+  `npm run validate` green, `npm run balance` reads sane, `art:vehicles` re-rendered (the rocket on
+  the sheet). No FNV re-pin and no frozen-core / `world_block` change across the whole session
+  (95 frozen-core + FNV tests still green). Save schema walked **v13 → v15** (fuel → carLocation),
+  each step migrated + round-trip tested. Seven ADRs (084→090) each landed with its §A4.13/§A4.16/
+  §A4.17/§A5/§A6/§A9 Bible amendment in the same commit.
+- **Consequences:** the rags-to-riches loop is whole and realistic — every vehicle burns fuel
+  (human or CPU), you turn the key (EVs keyless), you pay at the pump or charge cheap at home, you
+  ferry your car across continents in a jumbo jet's hold or a boat's deck, you buy property
+  everywhere, and you rocket between Earth and the Red Dome on Mars at will. The live scene wiring
+  (pump props, the START button, the cargo-load + launch animations) rides these settled spines.

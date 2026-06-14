@@ -12,6 +12,10 @@ import { PROPERTIES } from '../data/properties';
 import { FLEET_CRAFT } from '../data/fleet';
 import { DEALERSHIP } from '../data/dealership';
 import { sellValue } from './garage';
+import { STATIONS } from '../data/stations';
+import { refuelAtStation } from './refuel';
+import { FERRY_BASE } from './ferry';
+import { launchCost } from './rocket';
 
 describe('the Fortune Arc — a well-formed §A9 curve', () => {
   it('covers Ch.1–10 in order', () => {
@@ -76,5 +80,18 @@ describe('the price ladders escalate into the back half', () => {
     for (const c of Object.values(DEALERSHIP)) {
       expect(sellValue(c)).toBeLessThan(c.price);
     }
+  });
+
+  it('a tank of gas is a real bite early but a rounding error against a mansion (S20)', () => {
+    const fill = refuelAtStation(0, 'sedan', STATIONS.brickton_fillup).cost;
+    expect(fill).toBeGreaterThan(0);
+    expect(fill).toBeLessThan(FORTUNE_ARC[0].netWorth); // < a Ch.1 fortune — a real but survivable cost
+    expect(fill).toBeLessThan(PROPERTIES.mars_habitat.basePrice / 1000); // nothing against the Mars dome
+  });
+
+  it('cross-continent travel escalates: sea < air < a rocket to Mars (S20)', () => {
+    expect(FERRY_BASE.sea).toBeLessThan(FERRY_BASE.air);
+    expect(FERRY_BASE.air).toBeLessThan(FERRY_BASE.rocket);
+    expect(launchCost()).toBeGreaterThan(0);
   });
 });

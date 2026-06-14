@@ -214,6 +214,13 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > chapters. The Ember trail never cares about money; net worth is a number, the callers
 > are the score.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-088 — **§A4.13 PROPERTY ON EVERY CONTINENT.** You can
+> buy a home on EVERY landmass you arrive on (all 12 continents), the rags-to-riches → billionaire-on-
+> Mars arc made literal: Casa del Sol, the Kvisthavn Cabin, a Manor in Minimus (you live AROUND its
+> shoebox footprint), a Lotus Harbor flat, Aurora Station Quarters, the Mauna Lani Bungalow, and THE
+> RED DOME HABITAT on Mars — the dearest property in the game ($900M), the end of the road and the
+> start of everything. The `world` gate pins that every continent has ≥1 buyable property.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-071 — **§A4.14 THE HOME EDITOR (a
 > Sims-style base you make yours).** Any home you own can be decorated with
 > FREE-PLACEMENT furniture on its room tile grid: open the editor (the paused-world
@@ -246,6 +253,42 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > park visibly. The garage + active ride are the only array/scalar save state this earns (`garage:
 > Record<propertyId, titles[]>` + `activeVehicle`, save v13); everything else rides flags. Prices tie
 > to §A9 / the Fortune Arc; the Ember trail never cares which car you drive.)*
+
+> *(Added 2026-06-14 per Appendix rule 6, ADR-084 — **§A4.16 THE FUEL SYSTEM (the tank).** Every
+> powered vehicle carries FUEL and burns it as it drives, human-driven OR CPU-driven (the traffic
+> sim refuels its pool the same way). Fuel comes in kinds — `gas` (most road cars), `diesel` (heavy/
+> military/sub), `jet` (anything that flies), `electric` (the EV line), and `none` (human-powered:
+> the bicycle, BMX, road bike — they never need fuel). A full tank goes a PRETTY LONG way (thousands
+> of tiles) but it runs out, and you PAY to fill (§A4.17 stations). The fuel PROFILE — kind, tank,
+> economy — is DERIVED from a vehicle's class/terrain (with honest overrides) in `src/engine/fuel.ts`
+> (pure + validated, gated `fuel`); the player's per-car fuel rides the save (`fuel`, v14), ambient
+> CPU vehicles use the same functions transiently. THE NIKOLAI and the EV line charge on electricity
+> — far cheaper than gas, and cheapest of all at home (§A4.17). Running empty stalls the engine; the
+> Ember trail never cares how full your tank is.)*
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-085 — **§A4.16 IGNITION.** A combustion vehicle
+> (gas/diesel/jet) must be TURNED ON before it moves — a START / TURN OFF button on the wheel UI; turn
+> the key, hear it catch (a dry tank just cranks). The EV line is KEYLESS (step in and it's ready) and
+> human-powered bikes have nothing to start. The rules live in `src/engine/ignition.ts` (pure +
+> validated); ignition is a per-drive RUNTIME state, not save data.)*
+
+> *(Added 2026-06-14 per Appendix rule 6, ADR-086 — **§A4.17 GAS STATIONS & CHARGING.** Every
+> inhabited region has at least one place to PAY to fill: a gas pump, an EV charging stall, both, an
+> airfield (jet fuel), or a marina (boat diesel). Prices ride a per-region COST-OF-LIVING multiplier
+> (Mars is dearest — and Mars sells NO gasoline, electric only; there's no refinery a billion miles
+> out). THE NIKOLAI and the EV line charge here cheap, and CHEAPEST at home (the home charger,
+> `HOME_CHARGE_MULT`). The registry is `src/data/stations.ts` (each station a real §A11 attendant with
+> one obsession); the fill math is pure + validated in `src/engine/refuel.ts`, gated both directions
+> (`stations`): every needed fuel kind is sold somewhere (you're never stranded), and home charging
+> always beats the pump. Fuel costs fold into the §A9 economy — a rounding error against a mansion,
+> a real bite against a kid's first tank of gas.)*
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-090 — **§A9 fuel, ferry & the rocket fold into the
+> arc.** Fuel fills, cross-continent ferry fares (sea < air, far cheaper if you own the craft), and
+> the rocket launch all ride the §A9 economy as tunable DATA; `npm run balance` prints the fuel
+> ladder + per-region prices + ferry/rocket fares. A tank of gas is a real bite at the Ch.1 ~$1K
+> fortune and a rounding error by the time you own the Red Dome — the rags-to-riches curve, made you
+> can feel it at the pump.)*
 
 > *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
@@ -332,6 +375,27 @@ of every road vehicle PLUS the fleet the §A4.10 control power scales into (boat
 heli/blimp), each carrying its true gameplay DATA — a `seats` count (usable-to-ride = seats − 1,
 the seat-fit law), a collision footprint, and the terrain it travels (road/water/air). Pinned
 both directions (`VEHICLE_CATALOG` ⇄ `VEHICLE_SPECS`). None of this replaces an Ember leg.
+
+**THE WORLD MAP — CONTINENTS + VEHICLE FERRYING (S20 M46, ADR-087).** The 17 areas group onto 12
+landmasses (`CONTINENTS`, `src/data/world.ts`): you DRIVE freely WITHIN a continent (its areas are
+door-connected) but you cannot drive an ocean. To take YOUR OWN CAR to another continent you FERRY
+it — load it in a jumbo jet's cargo hold (AIR) or onto a boat/yacht deck (SEA); Mars is reachable
+only by the rocket (§A6 Ch.10 / the Long Shot, repeatable late-game). The rules are pure + validated
+in `src/engine/ferry.ts`: Earth↔Earth ferries by air/sea (commercial freight always available, far
+cheaper if you OWN a qualifying craft), Mars↔Earth by rocket only (must be owned/earned — no
+commercial Mars freight), and EVERY ferry obeys the §A5 EMBER LAW — you can only ferry to a VISITED
+continent, and new chapters still gate on the Embers. A car can only be DRIVEN on the continent it's
+parked on (`carLocation`, save v15); the Ember trail stays linear, this is the wealth/free-roam layer
+on top — exactly the rags-to-riches arc (start with nothing → a billionaire who drives their own car
+on every continent and lives on Mars).
+
+**THE ROCKET — THE LONG SHOT (S20 M48, ADR-089).** Professor Pemberton's rocket (§A6 Ch.10) is the
+Earth↔Mars shuttle: a drawn `rocket` sprite (cls 'rocket') and a `title_the_long_shot` key-item earned
+at the launch. Once it flies, the Mauna Lani pad (Hawaii) ↔ Mars route is REPEATABLE (`src/engine/
+rocket.ts`, pure + validated): owns-gated, staged from the pad, Ember-law safe (Mars must be visited),
+and dear to fuel each way. It is the ONLY way to Mars — for you OR your car (the ferry's Mars method
+requires this same title) — so a billionaire can live under the Red Dome and still rocket home for
+Mom's cooking. The story launch is unchanged; this makes it a two-way road afterward.
 
 ## A6. The Ten Chapters & Ten Bosses
 

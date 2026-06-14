@@ -501,3 +501,52 @@ describe('save migration registry (S19 M38) — v12 → v13: the home garage', (
     expect(GS.data.activeVehicle).toBeNull();
   });
 });
+
+describe('save migration registry (S20 M43) — v13 → v14: the fuel system', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills an empty fuel map on a pre-v14 save', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 13;
+    delete d.fuel; // a pre-v14 save tracked no fuel
+    GS.deserialize(JSON.stringify(d));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.fuel).toEqual({});
+  });
+
+  it('per-car fuel levels round-trip byte-stable', () => {
+    GS.data.fuel = { title_car_sedan: 28.5, title_car_nikolai: 100 };
+    const json = GS.serialize();
+    GS.reset();
+    expect(GS.data.fuel).toEqual({});
+    GS.deserialize(json);
+    expect(GS.data.fuel).toEqual({ title_car_sedan: 28.5, title_car_nikolai: 100 });
+  });
+
+  it('the v1 chain runs all the way to v14', () => {
+    GS.deserialize(JSON.stringify(v1SaveS2()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.fuel).toEqual({});
+  });
+});
+
+describe('save migration registry (S20 M46) — v14 → v15: vehicle ferrying', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills an empty carLocation map on a pre-v15 save', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 14;
+    delete d.carLocation; // a pre-v15 save never ferried
+    GS.deserialize(JSON.stringify(d));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.carLocation).toEqual({});
+  });
+
+  it('car locations round-trip byte-stable', () => {
+    GS.data.carLocation = { title_car_sedan: 'usa', title_car_nikolai: 'mars' };
+    const json = GS.serialize();
+    GS.reset();
+    GS.deserialize(json);
+    expect(GS.data.carLocation).toEqual({ title_car_sedan: 'usa', title_car_nikolai: 'mars' });
+  });
+});
