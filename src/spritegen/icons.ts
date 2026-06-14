@@ -23,6 +23,7 @@
 import { Pixmap } from './pixmap';
 import { RAMP, px, C } from '../palette';
 import { WEAPON_ART } from './weapons';
+import { forgeIcon } from './iconforge';
 
 /** the Phaser texture key an item icon registers under (index.ts) */
 export function itemIconKey(id: string): string {
@@ -652,6 +653,59 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   star_locket: () => drawLocket(),
   lemonade_jug: () => drawJug(),
   camera: () => drawCamera(),
+
+  /* ============ S17 M18 (ADR-063) — THE AMERICAS CATALOG ============
+   * The generic long tail is forged (ADR-062): ONE line each — subcat × band ×
+   * detail × the item id as seed. The both-directions gate + the distinctness
+   * test (icons.test.ts) keep every face honest; where a same-subcat sibling
+   * risked a collision, the detail layer pulls them apart. Signatures (the
+   * weapon sidegrades, the §A8 SETS) stay hand-drawn — the bats/pans reuse
+   * drawBatIcon/drawPanIcon here; the SET charms ride their WEAPON_ART trinket. */
+
+  /* ---- Ch.1 USA — weapon sidegrades (reuse the bat/pan menu faces) ---- */
+  foam_finger: () => drawBatIcon(RAMP.RED, 'carve'),
+  wiffle_bat: () => drawBatIcon(RAMP.PAPER, 'ring'),
+  nonstick_pan: () => drawPanIcon(RAMP.NIGHT, false),
+  /* ---- Ch.1 USA — armor (the hat-ladder head) ---- */
+  otterbrook_cap: () => forgeIcon({ subcat: 'hat', band: 'ch1', detail: 'stripe', seed: 'otterbrook_cap' }),
+  /* ---- Ch.1 USA — foods / drinks / cures / tonic / battle / valuable ---- */
+  grilled_cheese: () => forgeIcon({ subcat: 'sandwich', band: 'ch1', detail: 'bite', seed: 'grilled_cheese' }),
+  apple_pie_slice: () => forgeIcon({ subcat: 'wedge', band: 'ch1', detail: 'steam', seed: 'apple_pie_slice' }),
+  choco_comet_bar: () => forgeIcon({ subcat: 'bar', band: 'ch1', detail: 'wrapper', seed: 'choco_comet_bar' }),
+  bug_juice: () => forgeIcon({ subcat: 'bottle', band: 'ch1', detail: 'cork', seed: 'bug_juice' }),
+  diet_star_cola: () => forgeIcon({ subcat: 'can', band: 'ch1', detail: 'label', seed: 'diet_star_cola' }),
+  moms_voice_tape: () => forgeIcon({ subcat: 'tape', band: 'ch1', detail: ['label', 'dots'], seed: 'moms_voice_tape' }),
+  second_wind: () => forgeIcon({ subcat: 'vial', band: 'ch1', detail: 'star', seed: 'second_wind' }),
+  sudden_guts_pill: () => forgeIcon({ subcat: 'pill', band: 'ch1', seed: 'sudden_guts_pill' }),
+  bug_zapper: () => forgeIcon({ subcat: 'zapper', band: 'ch1', detail: 'tag', seed: 'bug_zapper' }),
+  spare_hubcap: () => forgeIcon({ subcat: 'hubcap', band: 'ch1', detail: 'crack', seed: 'spare_hubcap' }),
+
+  /* ---- Ch.2 South America — armor (chullo / cushma / alpaca vest) ---- */
+  chullo: () => forgeIcon({ subcat: 'hat', band: 'ch2', detail: 'dots', seed: 'chullo' }),
+  cushma: () => forgeIcon({ subcat: 'garment', band: 'ch2', detail: 'stripe', seed: 'cushma' }),
+  alpaca_vest: () => forgeIcon({ subcat: 'garment', band: 'ch2', detail: 'dots', seed: 'alpaca_vest' }),
+  /* ---- Ch.2 South America — foods ---- */
+  empanada: () => forgeIcon({ subcat: 'pastry', band: 'ch2', detail: 'bite', seed: 'empanada' }),
+  ceviche: () => forgeIcon({ subcat: 'bowl', band: 'ch2', detail: 'dots', seed: 'ceviche' }),
+  choripan: () => forgeIcon({ subcat: 'sandwich', band: 'ch2', detail: 'stripe', seed: 'choripan' }),
+  tres_leches: () => forgeIcon({ subcat: 'wedge', band: 'ch2', detail: 'dots', seed: 'tres_leches' }),
+  mango: () => forgeIcon({ subcat: 'fruit', band: 'ch2', detail: 'sprout', seed: 'mango' }),
+  arepa: () => forgeIcon({ subcat: 'loaf', band: 'ch2', detail: 'dots', seed: 'arepa' }),
+  humita: () => forgeIcon({ subcat: 'loaf', band: 'ch2', detail: 'steam', seed: 'humita' }),
+  chicha_morada: () => forgeIcon({ subcat: 'cup_cold', band: 'ch2', accent: RAMP.PURPLE, seed: 'chicha_morada' }),
+  /* ---- Ch.2 South America — drinks / cures / tonic ---- */
+  mate_gourd: () => forgeIcon({ subcat: 'teacup', band: 'ch2', detail: 'steam', seed: 'mate_gourd' }),
+  jungle_fizz: () => forgeIcon({ subcat: 'bottle', band: 'ch2', detail: 'cork', seed: 'jungle_fizz' }),
+  guardian_angel_feather: () => forgeIcon({ subcat: 'feather', band: 'ch2', seed: 'guardian_angel_feather' }),
+  unknot_drops: () => forgeIcon({ subcat: 'vial', band: 'ch2', detail: 'cap', seed: 'unknot_drops' }),
+  speed_demon_soda: () => forgeIcon({ subcat: 'can', band: 'ch2', detail: 'flame', seed: 'speed_demon_soda' }),
+  /* ---- Ch.2 South America — valuables ---- */
+  fools_gold_idol: () => forgeIcon({ subcat: 'idol', band: 'ch2', detail: 'crack', seed: 'fools_gold_idol' }),
+  emerald: () => forgeIcon({ subcat: 'gem', band: 'ch2', ramp: RAMP.GRASS, seed: 'emerald' }),
+  gold_doubloon: () => forgeIcon({ subcat: 'coin', band: 'ch2', seed: 'gold_doubloon' }),
+  /* ---- Ch.2 South America — keys ---- */
+  banana_boat_ticket: () => forgeIcon({ subcat: 'ticket', band: 'ch2', seed: 'banana_boat_ticket' }),
+  wish_token: () => forgeIcon({ subcat: 'coin', band: 'ch2', detail: 'star', seed: 'wish_token' }),
 };
 
 /**

@@ -74,3 +74,54 @@ describe('S17 (ADR-061) — the catalog spine: bands, tonics, secondary notes', 
     expect(equipSecondaryNote(robe, { resists: false })).toBe(''); // STATUS shows resists on their own line
   });
 });
+
+describe('S17 M18 (ADR-063) — THE AMERICAS CATALOG pours real items', () => {
+  it('Ch.1 + Ch.2 each carry ≈40 items, every one banded right', () => {
+    const byBand = (b: string): ItemDef[] => Object.values(ITEMS).filter((i) => i.band === b);
+    expect(byBand('ch1').length).toBeGreaterThanOrEqual(40);
+    expect(byBand('ch2').length).toBeGreaterThanOrEqual(40);
+  });
+
+  it('the §A4.12 REVIVAL LINE floor + rung revive (any cure listing "down")', () => {
+    // Second Wind (cheap, a sliver) → Guardian-Angel Feather (mid) — both revive
+    // because they list 'down', healing by their own value (ADR-061 generalised)
+    for (const id of ['second_wind', 'guardian_angel_feather']) {
+      const it = ITEMS[id];
+      expect(it.kind, id).toBe('cure');
+      expect(it.cures, id).toContain('down');
+      expect(it.heal ?? 0, id).toBeGreaterThan(0);
+    }
+    expect((ITEMS.guardian_angel_feather.heal ?? 0)).toBeGreaterThan(ITEMS.second_wind.heal ?? 0);
+  });
+
+  it('the first tonics permanently raise a stat (§A4.12)', () => {
+    expect(ITEMS.sudden_guts_pill.kind).toBe('tonic');
+    expect(ITEMS.sudden_guts_pill.boost).toEqual({ stat: 'guts', amount: 4 });
+    expect(ITEMS.speed_demon_soda.boost).toEqual({ stat: 'speed', amount: 3 });
+  });
+
+  it('the PORCH + MERCADO SETs are five hero-tagged luck charms each', () => {
+    const porch = ['firefly_jar', 'wind_chime_charm', 'whittled_whistle', 'bottle_cap_medallion', 'lucky_acorn'];
+    const mercado = ['friendship_bracelet', 'evil_eye_bead', 'brass_gear_charm', 'tin_milagro', 'jade_frog'];
+    const wielders = new Set(['rex', 'faye', 'milo', 'dorin', 'pippa']);
+    for (const set of [porch, mercado]) {
+      expect(set.length).toBe(5);
+      expect(new Set(set.map((id) => ITEMS[id].wielder))).toEqual(wielders); // one per hero
+      for (const id of set) {
+        const it = ITEMS[id];
+        expect(it.kind, id).toBe('charm');
+        expect(it.luck ?? 0, id).toBeGreaterThan(0); // luck primary
+        expect(it.price, id).toBe(0); // a title, not stock
+      }
+    }
+    // the Firefly Jar keeps Glint — a small Vibe rider is canon-sweet
+    expect(ITEMS.firefly_jar.vibe).toBeGreaterThan(0);
+  });
+
+  it('the weapon sidegrades are personal, the foam finger is pure self-belief', () => {
+    expect(ITEMS.foam_finger.wielder).toBe('rex');
+    expect(ITEMS.foam_finger.bonus).toEqual({ luck: 8 });
+    expect(ITEMS.foam_finger.offense).toBe(1); // you're not hitting anything
+    expect(ITEMS.nonstick_pan.wielder).toBe('faye');
+  });
+});

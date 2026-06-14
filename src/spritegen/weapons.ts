@@ -24,6 +24,7 @@
  */
 import { Pixmap } from './pixmap';
 import { RAMP, px, C } from '../palette';
+import { forgeIcon } from './iconforge';
 
 /** the swing family a held weapon belongs to — drives choreography + sfx */
 export type WeaponClass = 'bat' | 'pan' | 'rifle' | 'beads';
@@ -441,6 +442,218 @@ function drawButtonIcon(): Pixmap {
   return pm;
 }
 
+/* ---- S17 M18 (ADR-063): THE PORCH SET — the coffee-can treasures of a
+ *      summer porch, drawn small (Ch.1 hero-signature charms) ---- */
+
+/** the Firefly Jar (Jay) — a mason jar that still blinks; it remembers Glint */
+function drawFireflyJarIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const glass = px(RAMP.CYAN, 3);
+  // the jar body + a tin lid
+  pm.rect(3, 4, 7, 9, glass);
+  pm.vline(3, 4, 9, px(RAMP.CYAN, 2)); // shaded glass side
+  pm.rect(3, 2, 7, 2, px(RAMP.PAPER, 1)); // the lid
+  pm.hline(3, 2, 7, px(RAMP.PAPER, 2));
+  pm.set(5, 1, C.outline); // punched air holes
+  pm.set(7, 1, C.outline);
+  // the firefly, mid-blink — a warm gold mote low in the jar
+  pm.set(6, 9, px(RAMP.GOLD, 3));
+  pm.set(6, 10, px(RAMP.GOLD, 2));
+  pm.set(7, 9, px(RAMP.GOLD, 3));
+  pm.set(4, 6, px(RAMP.PAPER, 3)); // a glass glint
+  pm.outline(C.outline);
+  pm.set(6, 9, C.white); // pure light after the contour — it still wants to glow
+  return pm;
+}
+
+/** the Wind-Chime Charm (Mia) — three pipes off the back porch, ringing good news */
+function drawWindChimeIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const wood = px(RAMP.EARTH, 2);
+  const pipe = px(RAMP.CYAN, 2);
+  const pipeL = px(RAMP.CYAN, 3);
+  // the top disc the strings hang from
+  pm.ellipse(6, 3, 3, 1, wood);
+  pm.set(6, 1, px(RAMP.EARTH, 1)); // the hanging loop
+  // three pipes of stepped length
+  pm.vline(3, 5, 5, pipe);
+  pm.vline(6, 5, 7, pipe);
+  pm.vline(9, 5, 4, pipe);
+  pm.set(3, 5, pipeL);
+  pm.set(6, 5, pipeL);
+  pm.set(9, 5, pipeL);
+  // the clapper disc in the middle, lower
+  pm.ellipse(6, 12, 1, 1, px(RAMP.GOLD, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Whittled Whistle (Milo) — carved one rainy afternoon; it even works */
+function drawWhittledWhistleIcon(): Pixmap {
+  const pm = new Pixmap(14, 11);
+  const wood = px(RAMP.EARTH, 2);
+  const woodL = px(RAMP.EARTH, 3);
+  const woodD = px(RAMP.EARTH, 1);
+  // a stubby barrel whistle, mouthpiece left
+  pm.rect(2, 4, 10, 4, wood);
+  pm.hline(2, 4, 10, woodL); // lit top
+  pm.hline(2, 7, 10, woodD);
+  pm.rect(1, 5, 2, 2, woodL); // the mouthpiece nub
+  // the fipple notch + the air hole on top
+  pm.set(6, 4, C.outline);
+  pm.set(6, 3, woodD);
+  pm.set(9, 5, C.outline); // the finger hole
+  pm.set(4, 6, woodD); // a whittle gouge mark
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Bottle-Cap Medallion (Pippa) — a root-beer cap hammered flat, on twine */
+function drawBottleCapMedallionIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const cap = px(RAMP.RED, 2);
+  const capL = px(RAMP.RED, 3);
+  // the twine up to a knot
+  pm.vline(6, 1, 3, px(RAMP.EARTH, 2));
+  pm.set(6, 1, px(RAMP.EARTH, 1));
+  // the flattened cap disc
+  pm.ellipse(6, 9, 4, 4, cap);
+  pm.ellipse(5, 8, 2, 2, capL); // lit face
+  // the crimped edge — little teeth all round
+  for (const [x, y] of [[6, 5], [9, 7], [9, 11], [6, 13], [3, 11], [3, 7]] as Array<[number, number]>) {
+    pm.set(x, y, px(RAMP.RED, 1));
+  }
+  pm.set(7, 9, px(RAMP.GOLD, 3)); // a worn dab of gold lettering
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Lucky Acorn (Dorin) — cap on; it looks like a tiny monk */
+function drawLuckyAcornIcon(): Pixmap {
+  const pm = new Pixmap(12, 14);
+  const nut = px(RAMP.BLOND, 2);
+  const nutL = px(RAMP.BLOND, 3);
+  const cap = px(RAMP.EARTH, 1);
+  const capL = px(RAMP.EARTH, 2);
+  // the nut body
+  pm.ellipse(6, 9, 4, 4, nut);
+  pm.ellipse(5, 8, 2, 2, nutL);
+  pm.set(6, 13, px(RAMP.EARTH, 1)); // the little point
+  // the textured cap
+  pm.contour(6, 3, [2, 3, 4], cap);
+  pm.hline(2, 6, 9, capL); // cap rim
+  pm.set(4, 4, capL); // cap stipple (the "hood")
+  pm.set(7, 4, capL);
+  pm.set(6, 1, cap); // the stem
+  pm.outline(C.outline);
+  return pm;
+}
+
+/* ---- S17 M18 (ADR-063): THE MERCADO SET — the Puerto Sol market stalls,
+ *      drawn small (Ch.2 hero-signature charms) ---- */
+
+/** the Friendship Bracelet (Jay) — three colors a kid would not sell */
+function drawFriendshipBraceletIcon(): Pixmap {
+  const pm = new Pixmap(14, 13);
+  // a flat woven band arching across, chevrons in three threads
+  const rows: Array<[number, number]> = [[5, 3], [6, 5], [7, 7], [8, 5], [9, 3]];
+  // backing band
+  for (let x = 2; x <= 11; x++) pm.set(x, 6, px(RAMP.EARTH, 1));
+  // the chevron stitches in RED / GOLD / CYAN, stepped
+  const cols = [RAMP.RED, RAMP.GOLD, RAMP.CYAN];
+  rows.forEach(([x, y], i) => {
+    const c = px(cols[i % 3], 2);
+    pm.set(x, y, c);
+    pm.set(x, y + 1, px(cols[i % 3], 3));
+  });
+  // the tie strings off each end
+  pm.line(2, 6, 0, 4, px(RAMP.RED, 2));
+  pm.line(11, 6, 13, 8, px(RAMP.CYAN, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Evil-Eye Bead (Mia) — blue glass nazar against mal de ojo */
+function drawEvilEyeBeadIcon(): Pixmap {
+  const pm = new Pixmap(13, 13);
+  // concentric rings: blue, white, cyan, the dark pupil
+  pm.ellipse(6, 7, 5, 5, px(RAMP.BLUE, 2));
+  pm.ellipse(6, 7, 4, 4, px(RAMP.BLUE, 1));
+  pm.ellipse(6, 7, 3, 3, px(RAMP.PAPER, 3));
+  pm.ellipse(6, 7, 2, 2, px(RAMP.CYAN, 2));
+  pm.ellipse(6, 7, 1, 1, C.outline); // the pupil, watching
+  pm.set(6, 1, px(RAMP.EARTH, 2)); // the cord hole at the top
+  pm.set(4, 5, px(RAMP.PAPER, 3)); // a glass glint
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Brass Gear Charm (Milo) — salvaged off a dead clock; turns nothing, perfectly */
+function drawBrassGearIcon(): Pixmap {
+  const pm = new Pixmap(13, 13);
+  const brass = px(RAMP.GOLD, 2);
+  const brassL = px(RAMP.GOLD, 3);
+  // the gear body
+  pm.ellipse(6, 6, 4, 4, brass);
+  pm.ellipse(6, 6, 2, 2, px(RAMP.GOLD, 1)); // recessed hub
+  pm.set(6, 6, C.outline); // the center bore
+  // eight teeth around the rim
+  for (const [x, y] of [[6, 1], [10, 2], [11, 6], [10, 10], [6, 11], [2, 10], [1, 6], [2, 2]] as Array<[number, number]>) {
+    pm.set(x, y, brass);
+  }
+  pm.set(4, 4, brassL); // a polished tooth Milo cleaned
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Tin Milagro (Pippa) — a stamped-tin charm of a thing you hope mends */
+function drawTinMilagroIcon(): Pixmap {
+  const pm = new Pixmap(13, 13);
+  const tin = px(RAMP.PAPER, 2);
+  const tinL = px(RAMP.PAPER, 3);
+  // a little stamped heart (the classic milagro)
+  pm.set(4, 4, tin);
+  pm.set(5, 3, tin);
+  pm.set(6, 4, tin);
+  pm.set(7, 3, tin);
+  pm.set(8, 4, tin);
+  pm.rect(3, 5, 7, 3, tin);
+  pm.contour(6, 8, [3, 2, 1], tin); // tapering to the point
+  pm.hline(4, 5, 5, tinL); // hammered shine across the top
+  pm.set(5, 6, px(RAMP.PAPER, 1)); // a stamped seam
+  pm.set(7, 6, px(RAMP.PAPER, 1));
+  pm.set(6, 1, px(RAMP.EARTH, 2)); // the pin hole
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Jade Frog (Dorin) — a green stone frog mid-leap, going nowhere */
+function drawJadeFrogIcon(): Pixmap {
+  const pm = new Pixmap(14, 12);
+  const jade = px(RAMP.FOREST, 2);
+  const jadeL = px(RAMP.GRASS, 2);
+  const jadeD = px(RAMP.FOREST, 1);
+  // the squat body
+  pm.ellipse(7, 7, 4, 3, jade);
+  pm.ellipse(6, 6, 2, 1, jadeL); // a polished back
+  // the two bulging eyes up top
+  pm.set(5, 3, jade);
+  pm.set(5, 2, jade);
+  pm.set(9, 3, jade);
+  pm.set(9, 2, jade);
+  pm.set(5, 2, jadeL);
+  pm.set(9, 2, jadeL);
+  pm.set(5, 3, C.outline); // pupils
+  pm.set(9, 3, C.outline);
+  // the splayed back legs, mid-leap
+  pm.set(2, 9, jadeD);
+  pm.set(3, 10, jade);
+  pm.set(12, 9, jadeD);
+  pm.set(11, 10, jade);
+  pm.outline(C.outline);
+  return pm;
+}
+
 /* ================================================================== */
 /* THE REGISTRY — every §A8 equippable, both directions enforced.      */
 
@@ -634,6 +847,70 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
     kind: 'trinket',
     icon: drawMarkerIcon,
   },
+
+  /* ============ S17 M18 (ADR-063) — THE AMERICAS CATALOG ============ */
+
+  /* ---- Ch.1 weapon SIDEGRADES (§A8 lines are personal; reuse the bat/pan
+     class silhouettes, item-specific by ramp) ---- */
+  foam_finger: held({
+    class: 'bat',
+    ramp: RAMP.RED, // a giant red #1 — you BELIEVE you are hitting something
+    detail: ({ pm, gx, gy, pose }) => {
+      const one = px(RAMP.PAPER, 3); // the white "1" printed on the foam
+      if (pose === 'back') pm.set(gx - 6, gy - 7, one);
+      else if (pose === 'strike') pm.set(gx + 5, gy - 3, one);
+      else pm.set(gx + 4, gy - 6, one);
+    },
+  }),
+  wiffle_bat: held({
+    class: 'bat',
+    ramp: RAMP.PAPER, // hollow white plastic — the SMAAASH is a polite TOK
+    detail: ({ pm, gx, gy, pose }) => {
+      const hole = px(RAMP.PAPER, 0); // the famous holes
+      if (pose === 'back') pm.set(gx - 7, gy - 8, hole);
+      else if (pose === 'strike') pm.set(gx + 6, gy - 4, hole);
+      else pm.set(gx + 4, gy - 6, hole);
+    },
+  }),
+  nonstick_pan: held({
+    class: 'pan',
+    ramp: RAMP.NIGHT, // black teflon — eggs slide right off, so do consequences
+    detail: ({ pm, gx, gy, pose }) => {
+      if (pose === 'back') pm.set(gx - 6, gy - 8, C.white);
+      else if (pose === 'strike') pm.set(gx + 7, gy - 5, C.white);
+      else pm.set(gx, gy + 4, C.white);
+    },
+  }),
+
+  /* ---- armor 'body' gear (torso re-dress; the §A8 hat/garment ladder) ---- */
+  otterbrook_cap: { kind: 'torso', ramp: RAMP.BLUE, trim: RAMP.PAPER },
+  chullo: { kind: 'torso', ramp: RAMP.RED, trim: RAMP.GOLD },
+  cushma: { kind: 'torso', ramp: RAMP.EARTH, trim: RAMP.RED },
+  alpaca_vest: { kind: 'torso', ramp: RAMP.PAPER, trim: RAMP.EARTH },
+
+  /* ---- generic ARMS (un-tagged; the forge draws the menu trinket) ---- */
+  woven_wristlet: {
+    kind: 'trinket',
+    icon: () => forgeIcon({ subcat: 'wrap', band: 'ch2', detail: 'stripe', seed: 'woven_wristlet' }),
+  },
+  climbing_gloves: {
+    kind: 'trinket',
+    icon: () => forgeIcon({ subcat: 'glove', band: 'ch2', seed: 'climbing_gloves' }),
+  },
+
+  /* ---- THE PORCH SET (Ch.1 hero-signature charms) ---- */
+  firefly_jar: { kind: 'trinket', icon: drawFireflyJarIcon },
+  wind_chime_charm: { kind: 'trinket', icon: drawWindChimeIcon },
+  whittled_whistle: { kind: 'trinket', icon: drawWhittledWhistleIcon },
+  bottle_cap_medallion: { kind: 'trinket', icon: drawBottleCapMedallionIcon },
+  lucky_acorn: { kind: 'trinket', icon: drawLuckyAcornIcon },
+
+  /* ---- THE MERCADO SET (Ch.2 hero-signature charms) ---- */
+  friendship_bracelet: { kind: 'trinket', icon: drawFriendshipBraceletIcon },
+  evil_eye_bead: { kind: 'trinket', icon: drawEvilEyeBeadIcon },
+  brass_gear_charm: { kind: 'trinket', icon: drawBrassGearIcon },
+  tin_milagro: { kind: 'trinket', icon: drawTinMilagroIcon },
+  jade_frog: { kind: 'trinket', icon: drawJadeFrogIcon },
 };
 
 /** the swing family of an equipped weapon id — bare hands are 'fist' */
