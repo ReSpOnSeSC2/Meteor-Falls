@@ -38,7 +38,9 @@ export const HEROES: Record<HeroId, HeroDef> = {
       { level: 14, ability: 'shield_a' },
       { level: 16, ability: 'ward_a' }, // S16: the elemental layer opens early
       { level: 18, ability: 'vibe_surge_b' },
-      { level: 21, ability: 'mindwarp_a' }, // S16: control one common foe for a turn
+      // S18 M27 (ADR-067): mindwarp_a RE-STAGED off this L21 row to the Ch.3 PUPPET
+      // AWAKENING (the_first_borrow) — one power, battle (Mind Warp) + field (Puppet),
+      // engine id frozen, only the TIMING moved. One-path rule keeps it out of here.
       { level: 22, ability: 'lifeup_b' },
       { level: 24, ability: 'flash_a' },
       { level: 26, ability: 'teleport_a' },

@@ -151,6 +151,32 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > cash; these are the item path. The numbers 10/11 in this list are reserved
 > for the unlanded S16 systems (the dead-air helmet, the overworld PSI keys).)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-067 — **§A4.10 THE CONTROL SYSTEM
+> (the borrowed hands).** Two complementary powers the party earns when it becomes
+> THREE (Ch.3, on Milo's join), staged as ADR-035 awakenings/builds. **JAY — VIBE
+> PUPPET (mind control of PEOPLE):** a higher turn of his Hypno line. PUPPET (field)
+> and **Mind Warp** (battle) are now ONE staged power — the engine ability
+> `mindwarp_a`, RE-STAGED off Jay's old L21 level unlock to the Ch.3 PUPPET
+> AWAKENING (`the_first_borrow`); the engine id is FROZEN (ADR-031/023), only the
+> display face + the timing moved. Tap a highlighted person in range, act AS them
+> for a PP-costed window (walk them, open a gate, vouch past a guard, take a
+> driver's seat), then give it back — the comedic, apologetic OPPOSITE of the Hush's
+> permanent theft. **MILO — THE CLICKER (machine control):** a universal remote he
+> builds; pilot an UNOCCUPIED vehicle/machine driver-less to unlock a path. **THE
+> RIDE (combined):** usable seats = `vehicle.seats − 1`; board only if ≥ party size,
+> else Clicker-drive it empty. **THE COUNTER — the DEAD-AIR HELMET** is the diegetic
+> face of the `mind_immune` flag, ONE identity across both contexts (a helmeted enemy
+> resists Mind Warp in battle AND can't be Puppeted on the field; a Faraday-shielded
+> machine refuses the Clicker) — route around it or knock it off in a boss fight. The
+> rules live in `src/engine/control.ts` (targeting, range, the helmet/shield block,
+> PP cost, the seat-fit ride/remote split, remote-drive gate unlocks); the
+> OverworldScene owns the wheel UI + driving feel. **THE TRUST THREAD opens here**
+> (§A11.2): the first time the others SEE Jay PUPPET someone they pull back a step
+> and the borrowed stranger comes back rattled — the start of a game-long slow burn
+> that climaxes at the three-quarter mark (the weave lands in a later movement). It
+> SCALES all game (ADR-035 staging): cars → trucks/buses → boats → planes → subs →
+> yachts.)*
+
 ## A5. The World Route & Travel
 
 | Ch. | Region | Locales | Travel in |

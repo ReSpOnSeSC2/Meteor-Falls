@@ -862,6 +862,10 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     // S14 — Ch.2's emotional center: the HOLLOW reveal (§A3 ladder amended:
     // Freeze α left Mia's L12 row in the same commit)
     cold_reads: { hero: 'faye', ability: 'vibe_freeze_a', flag: 'awake_freeze_a', dialogue: 'awake_cold_reads' },
+    // S18 M27 (ADR-067) — Ch.3 THE FIRST BORROW: the control system unlocks on
+    // Milo's join. mindwarp_a re-staged off rex's L21 row to this awakening (one
+    // power, battle Mind Warp + field Puppet; the trust thread opens here).
+    the_first_borrow: { hero: 'rex', ability: 'mindwarp_a', flag: 'awake_mindwarp_a', dialogue: 'awake_the_first_borrow' },
     // S16 ("The Old Light, Doubled") — Jay's three iconic late beats. Reserved
     // as awakenings (the 80/20 split): true MIND WARP, the party REFLECT, and
     // the Surge Σ capstone. Each lands mid-to-late, where the §A6 arc has room

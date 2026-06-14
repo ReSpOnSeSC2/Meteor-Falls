@@ -4234,3 +4234,49 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   fit); M33 scales the Clicker/Puppet up the same `VEHICLE_SPECS` terrain axis into boats,
   planes, and subs. The live OverworldScene traffic render + the new road fixtures (gas/bus
   stations, garages, driveways) are the documented next step.
+
+## ADR-067 — S18 (Movement 27): THE CONTROL SYSTEM — the borrowed hands (Puppet + Clicker)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 27 — the signature new toy. It also builds the
+  overworld-ability SPINE that M28 (overworld PSI) reuses, so they sit adjacent.)
+- **Decision — `mindwarp` UNIFIED as one staged power; `mindwarp_a` RE-STAGED to a Ch.3
+  awakening (the §A4.10 unify).** PUPPET (field) and Mind Warp (battle) are the SAME ability,
+  not two. `mindwarp_a` moves off Jay's (rex) L21 level-unlock row to the new Ch.3 AWAKENING
+  `the_first_borrow` (flag `awake_mindwarp_a`, dialogue `awake_the_first_borrow`, granted when
+  the party hits three on Milo's join). The engine id `mindwarp_a` is FROZEN (ADR-031/023
+  frozen-id discipline) — only the unlock TIMING + the field display face moved; the battle
+  ability, its fx, and the `mind_immune` counter are untouched. `awakenings.ts` + the
+  content-validate awaken manifest (canon) gain the row; the one-path rule (an awakened ability
+  must NOT also be level-unlocked) is satisfied by dropping the L21 line. The DEAD-AIR HELMET
+  (`mind_immune`) stays the single counter, battle + field.
+- **Decision — the save migrates v9 → v10 (engine id frozen, access preserved).** Availability =
+  level unlocks ∪ awakened flags, so a save that ALREADY earned Mind Warp at L21 must keep it:
+  the v10 migration backfills `awake_mindwarp_a` for any save whose Jay is ≥ L21 (the old unlock
+  level). A save below L21 didn't have it and gains it normally when the Ch.3 awakening fires.
+  `CURRENT_SAVE_VERSION` + the fresh-save literal (`state.ts`) bump to 10; `migrations.test.ts`
+  proves the keep (L21 → has it) and the no-free-lunch (L12 → doesn't) round-trips.
+- **Decision — `src/engine/control.ts`, the overworld-ability SPINE (pure, Phaser-free).** One
+  module owns the §A4.10 RULES so the OverworldScene only owns the wheel UI + the driving feel:
+  `inRange` / `candidates` (the highlight ring), `controllable` / `attempt` (kind + range + the
+  helmet/shield block + the unoccupied-machine rule, returning the precise reason for the "no
+  signal" tell), `canCast` (PP), `canRide` / `rideOrRemote` (the seat-fit ride-vs-remote split,
+  reading `vehicles.seatsFit` as the one source of truth), and `unlocksGate` (remote-drive
+  area-unlocks — bus-only lanes, weight-limited bridges, water gates, exact-type gates). PUPPET
+  targets PEOPLE (helmet blocks), CLICKER targets MACHINES (shield blocks); one counter identity.
+  Proven in `control.test.ts` (12 cases). M28's PSI casts consume the same spine.
+- **Decision — the TRUST THREAD OPENS (ship the opening beat).** `awake_the_first_borrow` stages
+  the first time the others SEE Jay PUPPET someone — Mia goes still, Mia(faye) takes a half-step
+  back, the borrowed guard comes back rattled ("…why am I holding the gate for you kids?"),
+  §A11.2 sincere, never a lecture. The flag `awake_mindwarp_a` is the slow-burn's first link; the
+  game-long escalation + the ~3/4 climax land in the later story-weave movement.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (awaken manifest both
+  directions, 457 dialogue scripts) + full **vitest 772 green** (+14: the control spine 12 +
+  the v9→v10 migration 2) + `vite build` clean. No FNV re-pin, no frozen-core / `world_block`
+  change (control + the re-stage are data/engine, not map generators). §A4.10 amended to canon
+  in the same commit; §A4.12's reserved-10/11 note is now claimed exactly as it foresaw.
+- **Consequences:** the headline power has its rules, its canon, and its first on-screen beat.
+  The interactive OverworldScene wiring (the ability wheel, the target highlight, the borrow/
+  drive feel, helmeted enemy variants in battle) builds on this spine; M28 reuses it for the PSI
+  field-casts and gates; M33 scales Puppet/Clicker up the `VEHICLE_SPECS` terrain axis into the
+  fleet. The seat-fit + gate-unlock math is settled and tested.
