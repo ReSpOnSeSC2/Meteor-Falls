@@ -47,13 +47,17 @@
  * (`garage`) + the ACTIVE car driven (`activeVehicle`). A pre-v13 save owned no
  * car (the dealership is v13-new), so an empty garage + no active ride is its
  * TRUE history (the v11 empty-homeStorage stance applied to the garage).
+ *
+ * v13 → v14 (S20/ADR-084): THE FUEL SYSTEM — current fuel UNITS per owned car
+ * (`fuel`). A pre-v14 save tracked no fuel (the system is v14-new), so an empty
+ * map is its true history; a car gains a full tank when bought from here on.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 13;
+export const CURRENT_SAVE_VERSION = 14;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -276,6 +280,16 @@ export const MIGRATIONS: MigrationStep[] = [
       if (!isObj(raw.garage)) raw.garage = {};
       if (typeof raw.activeVehicle !== 'string' && raw.activeVehicle !== null) raw.activeVehicle = null;
       raw.version = 13;
+      return raw;
+    },
+  },
+  {
+    to: 14,
+    migrate(raw) {
+      // S20 M43 (ADR-084): THE FUEL SYSTEM — per-car fuel units. A pre-v14 save
+      // tracked no fuel (the system is v14-new), so an empty map is its true history.
+      if (!isObj(raw.fuel)) raw.fuel = {};
+      raw.version = 14;
       return raw;
     },
   },

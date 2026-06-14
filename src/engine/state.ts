@@ -38,7 +38,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 13;
+  version: 14;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -85,6 +85,10 @@ export interface GameStateData {
   /** S19 (v13, ADR-079): the ACTIVE car title the party drives (null = on foot /
    *  everything parked). Scalar, but it pairs with `garage` so it migrates with it. */
   activeVehicle: string | null;
+  /** S20 (v14, ADR-084): THE FUEL SYSTEM — current fuel UNITS per owned car title
+   *  (gas/diesel/jet units, or kWh of charge for the EV line). Drains as you drive,
+   *  refills (paid) at a station; human-powered bikes never appear here. */
+  fuel: Record<string, number>;
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -157,7 +161,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 13,
+    version: 14,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -190,6 +194,7 @@ export function newGameData(): GameStateData {
     homeLayouts: {},
     garage: {},
     activeVehicle: null,
+    fuel: {},
   };
 }
 

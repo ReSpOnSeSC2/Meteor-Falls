@@ -56,6 +56,7 @@ import { sellValue } from '../src/engine/garage';
 import { MILITARY_VEHICLES, MILITARY_TYPES } from '../src/data/military';
 import { ARMY_BEATS } from '../src/data/armyarc';
 import { armyArcProblems } from '../src/engine/armyarc';
+import { fuelProfile, rangeTiles, needsFuel } from '../src/engine/fuel';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -612,6 +613,34 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // the clearing's caller (the General) is named (the §A6 finale payoff)
   const clearing = Object.values(ARMY_BEATS).find((b) => b.kind === 'clearing');
   if (clearing && !clearing.caller) fail('army-arc', 'the clearing earns no finale caller');
+}
+
+// S20 Movement 43 (ADR-084) — THE FUEL SYSTEM (§A4.16). Every vehicle type has a
+// sane fuel profile derived from its class/terrain. Gated:
+//  · the kind is valid; human-powered (bikes/props) carry kind 'none' with a 0 tank
+//    and never need fuel; everything else has a positive tank + economy and a LONG
+//    but finite range (a full tank goes a good distance, but it runs out).
+{
+  const KINDS = new Set(['gas', 'diesel', 'jet', 'electric', 'none']);
+  const HUMAN = new Set(['bicycle', 'bmx', 'road_bike']);
+  for (const type of Object.keys(VEHICLE_SPECS)) {
+    const p = fuelProfile(type);
+    if (!KINDS.has(p.kind)) fail('fuel', `vehicle '${type}' has unknown fuel kind '${p.kind}'`);
+    const spec = VEHICLE_SPECS[type];
+    const human = HUMAN.has(type) || spec.cls === 'bike' || spec.cls === 'prop';
+    if (human) {
+      if (p.kind !== 'none' || needsFuel(type)) fail('fuel', `human-powered '${type}' must run on no fuel`);
+      if (p.tank !== 0) fail('fuel', `human-powered '${type}' must carry a 0 tank`);
+    } else {
+      if (p.kind === 'none') fail('fuel', `powered '${type}' has no fuel kind`);
+      if (p.tank <= 0 || p.econ <= 0) fail('fuel', `powered '${type}' has a non-positive tank/economy`);
+      if (rangeTiles(type) < 500) fail('fuel', `powered '${type}' range ${rangeTiles(type)} is too short to be fun — a tank should go a long way`);
+    }
+    // the EV line runs on electricity (the Nikolai charges cheap), never gas
+    if (type === 'ev' || type === 'nikolai') {
+      if (p.kind !== 'electric') fail('fuel', `'${type}' is an EV and must run on electric`);
+    }
+  }
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2167,6 +2196,7 @@ const counts = [
   `${Object.keys(DEALERSHIP).length} dealership cars`,
   `${MILITARY_TYPES.length} military vehicles`,
   `${Object.keys(ARMY_BEATS).length} army-arc beats`,
+  `fuel (${Object.keys(VEHICLE_SPECS).filter((t) => needsFuel(t)).length} powered · ${Object.keys(VEHICLE_SPECS).filter((t) => !needsFuel(t)).length} human/none)`,
   `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,

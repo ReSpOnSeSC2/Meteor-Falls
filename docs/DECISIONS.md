@@ -4864,3 +4864,31 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   arc, and the soft-lock-proof chase. The remaining work is per-chapter CONTENT/SCENE pouring on these
   spines (the lot interior + garage-out-front render, the checkpoint/tank/flyover maps, the General's
   full chapter staging), each landing with its chapter session. The systems are settled.
+
+## ADR-084 — S20 (Movement 43): THE FUEL SYSTEM — the tank (save v14)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 43 — the foundation of the §A4.16 fuel/station economy; needs
+  the M26 vehicle forge.)
+- **Decision — `src/engine/fuel.ts`, the fuel model (pure, derived, tested).** Every vehicle type
+  has a FUEL PROFILE — `kind` (`gas`/`diesel`/`jet`/`electric`/`none`), `tank` (units), `econ`
+  (tiles per unit) — DERIVED from its class/terrain with honest overrides (bicycles/BMX/road bike +
+  props are human-powered `none`; the EV line — `ev`, `nikolai` — is `electric`; tanks/trucks/buses/
+  machinery/subs are `diesel`; anything that flies is `jet`; the rest `gas`). A full tank goes a
+  LONG but finite way (`rangeTiles` = tank × econ, ≥500 tiles, exotics thirstier, EVs efficient).
+  `consume(current, type, dist)` drains with distance (floored at 0; human-powered never deplete);
+  `unitsToFill`/`fillCost(price)` cost a fill; `isLow`/`isEmpty` drive the warnings;
+  `BASE_PRICE_PER_UNIT` orders electric ≪ gas < jet (the Nikolai is cheap to charge). The SAME
+  functions serve the player's car AND the CPU traffic pool ("human or cpu", §A4.16).
+- **Decision — save bump v13 → v14 (`fuel`).** Per-car current fuel units ride a typed map keyed by
+  the car's `title_*` (the dealership/garage ownership key). The `to: 14` migration backfills `{}` on
+  any pre-v14 save (the system is v14-new); a car gains a full tank when bought from here on.
+- **Decision — gated (`fuel` + `fuel.test.ts`).** Every type has a valid kind; human-powered carry
+  kind `none` + 0 tank + never need fuel; powered types have positive tank/econ + a ≥500-tile range;
+  the EV line is electric. The verdict prints **fuel (31 powered · 4 human/none)**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean.
+  Save walks v13 → v14, migrated + round-trips byte-stable. No FNV re-pin, no frozen-core change.
+  §A4.16 amended.
+- **Consequences:** the world's vehicles now carry fuel. M44 adds the ignition (you turn it on),
+  M45 the gas stations + charging (where you pay to fill, cheapest charging at home), and the live
+  drain + the low-fuel warning wire into the OverworldScene's driving feel over this spine.

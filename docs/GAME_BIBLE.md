@@ -247,6 +247,18 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > Record<propertyId, titles[]>` + `activeVehicle`, save v13); everything else rides flags. Prices tie
 > to §A9 / the Fortune Arc; the Ember trail never cares which car you drive.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-084 — **§A4.16 THE FUEL SYSTEM (the tank).** Every
+> powered vehicle carries FUEL and burns it as it drives, human-driven OR CPU-driven (the traffic
+> sim refuels its pool the same way). Fuel comes in kinds — `gas` (most road cars), `diesel` (heavy/
+> military/sub), `jet` (anything that flies), `electric` (the EV line), and `none` (human-powered:
+> the bicycle, BMX, road bike — they never need fuel). A full tank goes a PRETTY LONG way (thousands
+> of tiles) but it runs out, and you PAY to fill (§A4.17 stations). The fuel PROFILE — kind, tank,
+> economy — is DERIVED from a vehicle's class/terrain (with honest overrides) in `src/engine/fuel.ts`
+> (pure + validated, gated `fuel`); the player's per-car fuel rides the save (`fuel`, v14), ambient
+> CPU vehicles use the same functions transiently. THE NIKOLAI and the EV line charge on electricity
+> — far cheaper than gas, and cheapest of all at home (§A4.17). Running empty stalls the engine; the
+> Ember trail never cares how full your tank is.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
 > NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
