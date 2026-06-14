@@ -44,5 +44,16 @@ manifest); 01–10 are the global/cross-chapter art.
   sprites cast the engine shadow.
 - **Wiring:** every PNG registers through `src/spritegen/authored.ts`
   (`preloadAuthoredArt` → `applyAuthoredArt`). Add the file, add one list entry.
+- **Animations — include every frame.** If a slot is engine-**animated**, the PNG
+  must be a **full frame sheet**, not a single still (a one-frame image reads as a
+  frozen pose). The frame-animated slots and their exact layouts:
+  - **Overworld characters → 46 frames, 4 cols × 12 rows of 24×32 = 96×384**
+    (idle breathe/blink + walk ×8 dirs + run ×8 dirs).
+  - **Hero busts → 18 frames (128×160)** · **Hero battlers → 14 frames (112×144).**
+  - New animated props/FX (angel float, glint, dog, songbird…) ship their loop
+    frames. **Enemies are single-image** (the engine bobs them with a tween) — do
+    not frame-animate them. Icons/tiles/facades/vehicles/font are static.
+  - Full contract + the current frame audit: see **§19** of
+    [`../IMAGE_ASSET_MANIFEST.md`](../IMAGE_ASSET_MANIFEST.md).
 - **Source of truth** for ids is always the code (`src/data/*`,
   `src/spritegen/*`) — the checklists here are extracted snapshots.
