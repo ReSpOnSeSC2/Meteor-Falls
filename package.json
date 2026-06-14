@@ -10,6 +10,7 @@
     "preview": "vite preview --host",
     "validate": "vite-node tools/content-validate.ts",
     "bench:map": "vite-node tools/bench-map.ts --",
+    "balance": "vite-node tools/balance-sim.ts",
     "scaffold": "vite-node tools/chapter-scaffold.ts --",
     "encounters": "vite-node tools/encounter-report.ts",
     "test": "npm run validate && vitest run",

@@ -4487,3 +4487,44 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   scaled by chapter and bought with the property fortune, all Ember-law-safe. The boat/plane/sub
   piloting SCENES (the water-handling momentum, takeoff/landing beats, the dive map layer) render
   over these rules when their chapters land; the M26 fleet sprites are already drawn for them.
+
+## ADR-074 — S18 (Movement 34): BALANCE & THE GREAT VERIFICATION — the Fortune Arc
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 34, the last — the curve + the consolidated proof that S18
+  lands green across every gate.)
+- **Decision — `src/data/fortune.ts`, THE FORTUNE ARC (§A9's back-half net-worth curve).** A
+  per-chapter net-worth target the property + flip + rent + fleet economy is tuned toward:
+  Ch.1 ~$1,000 → Ch.10 $3,000,000,000+, monotonic, ≤10× per chapter (escalates BY DESIGN but
+  stays reachable). `fortuneTarget(chapter)` + `fortuneBand(netWorth, chapter)` (under / on_track /
+  ahead, a ±50% band) drive the new NET WORTH stats line (`property.netWorth` = cash + bank +
+  owned property value + fleet titles − loans). The Ch.1–3 battle economy stays tight; the wealth
+  fantasy rides ON TOP and never touches the Ember trail (net worth is a number, the callers are
+  the score).
+- **Decision — `tools/balance-sim.ts` (`npm run balance`), the worktable.** Prints the Fortune
+  curve alongside the property price walk, the fleet price ladder, and the furniture band, so the
+  back-half numbers are tuned BY EYE against §A9 as each region's catalog pours in — tune DATA,
+  never code. The curve's SHAPE is gated (`fortune` in content-validate: Ch.1–10 in order,
+  monotonic, ~$1K start, $3B+ capstone, no >10× jump) + mirrored in `balance.test.ts` (curve +
+  net-worth math + banding + the price ladders climbing into the back half).
+- **THE GREAT VERIFICATION (S18, Movements 25–34):** all both-directions gates GREEN —
+  `area-skins`, `vehicles`, `psi-gate`, `property`, `furniture`, `story-thread`, `disguise`,
+  `paperboy`, `fleet`, `fortune` — alongside the inherited icon/awakening/quest/catalog pins. The
+  verdict prints: **17 area skins · 57 vehicles (21 types) · 8 psi gates · 8 properties · 18
+  furniture · 10 thread beats · 3 disguises · paperboy (28 houses) · 6 fleet craft · fortune arc
+  ($1000→$3B)**. `tsc --noEmit` clean, full **vitest 839 green** (+101 over the S17 baseline of
+  738), `vite build` clean, `npm run validate` green, the art contact sheets render
+  (`art:buildings` incl. the per-area sheet, `art:vehicles`). No FNV re-pin and no frozen-core /
+  `world_block` change across the whole session (every S18 system is data/engine/sprite, never a
+  sample-routed map generator). Save schema walked **v9 → v12** (mindwarp re-stage flag backfill →
+  home storage → home layouts), each step migrated + round-trip tested. Eleven ADRs (064→074... —
+  S18 used 065–074) each landed with its Bible amendment in the same commit; §A4.10/§A4.11/§A4.13/
+  §A4.14/§A5/§A6/§A9/§B all amended to canon.
+- **Consequences:** S18's SPINE is complete and green — area-true buildings, a drivable world with
+  a safe traffic sim + a full vehicle forge, the Puppet/Clicker control system + overworld PSI, the
+  property market + the Sims-style home editor, the two trust/clicker story threads + the disguise
+  sneaks, the paperboy, the fleet, and the Fortune-Arc balance curve. The remaining work is
+  per-chapter CONTENT/SCENE pouring on these spines (the agency/lawyer/home-editor/paperboy/boat/
+  plane SCENES, live placement of agencies + 27 Maple + the per-region listings, the highway maps,
+  the helmet-boss + beat dialogue, and the furniture/deed §A8 icon pours) — the M18-Part-B way,
+  each landing with its chapter session. The systems are settled; the world fills in on top.

@@ -489,6 +489,20 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 - Main story: 32–38 hr (10 chapters averaging 3–4 hr each, with larger cities and dungeons after Ch.3). Side quests and optional long-form content: +8–12 hr. Total planned playability target: **40–50 hr**. Boss attempts budgeted at 1.5 avg (grindy difficulty = some party wipes are expected and fine — that's EarthBound).
 - Cash economy tuned so a full equipment refresh per region costs ≈ 2 chapters of battle income → choices hurt a little, like 1995.
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-074: THE FORTUNE ARC — the §A8/§A9
+> property-tycoon wealth curve. The Ch.1–3 battle economy stays TIGHT (a refresh costs
+> ~2 chapters of income, above); on TOP of it, a player who leans into the property
+> market (buy/flip/rent — §A4.13) + the fleet (§A4.10/§A5) tracks a back-half NET-WORTH
+> arc that escalates BY DESIGN: **Ch.1 ~$1,000 → Ch.10 $3,000,000,000+** (`FORTUNE_ARC`
+> in `src/data/fortune.ts` — monotonic, ≤10× per chapter so it stays reachable). A NET
+> WORTH line joins the stats page (`property.netWorth` = cash + bank + owned property +
+> fleet titles − loans; `fortuneBand` reads it under/on-track/ahead). The Ember trail
+> never cares about money and the epilogue's quiet walk home is unchanged (§A11.2) —
+> net worth is a number, the callers are the score. `tools/balance-sim.ts` (`npm run
+> balance`) prints the curve + the property/fleet/furniture ladders to tune DATA (never
+> code) toward the targets as each region's catalog pours in; the curve's shape is
+> validator-pinned (`fortune`) + `balance.test.ts`.)*
+
 > *(Amended 2026-06-11 per Appendix rule 6, ADR-034: THE BRICKTON CLASSIC —
 > S12's 32-team 5v5 streetball tournament at the cage — is **optional
 > long-form content within the +8–12hr side/optional budget**: five four-quarter

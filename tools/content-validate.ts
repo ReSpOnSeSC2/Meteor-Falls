@@ -52,6 +52,7 @@ import { PAPERBOY, liveRoute } from '../src/data/paperboy';
 import { PaperboySim, prizeEarned } from '../src/paperboy/sim';
 import { FLEET_CRAFT, FLEET_STAGES, WATER_ACCESS, AIR_ACCESS } from '../src/data/fleet';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
+import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -525,6 +526,22 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const t of ['road', 'water', 'air']) {
     if (!seenTerrain.has(t)) fail('fleet', `the fleet never scales into '${t}' — ADR-035 staging is incomplete`);
   }
+}
+
+// S18 Movement 34 (ADR-074) — BALANCE: the §A9 Fortune Arc must be a well-formed
+// curve (Ch.1–10 in order, monotonic, ~$1K → $3B+, no impossible single jump).
+{
+  const bands = FORTUNE_ARC.map((r) => r.band);
+  const want = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8', 'ch9', 'ch10'];
+  if (JSON.stringify(bands) !== JSON.stringify(want)) fail('fortune', `the Fortune Arc must cover Ch.1–10 in order, got ${bands.join(',')}`);
+  for (let i = 1; i < FORTUNE_ARC.length; i++) {
+    const lo = FORTUNE_ARC[i - 1].netWorth;
+    const hi = FORTUNE_ARC[i].netWorth;
+    if (hi <= lo) fail('fortune', `the Fortune Arc dips at ${FORTUNE_ARC[i].band} (${hi} ≤ ${lo})`);
+    if (hi / lo > 10) fail('fortune', `the Fortune Arc jumps too hard at ${FORTUNE_ARC[i].band} (${(hi / lo).toFixed(1)}× — keep it reachable)`);
+  }
+  if (FORTUNE_ARC[0].netWorth > 2_000) fail('fortune', 'the Fortune Arc starts too rich (Ch.1 should be a tight ~$1K)');
+  if (FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth < 3_000_000_000) fail('fortune', 'the Fortune Arc must reach $3B+ by Ch.10');
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2058,6 +2075,7 @@ const counts = [
   `${Object.keys(DISGUISES).length} disguises`,
   `paperboy (${liveRoute().items.filter((i) => i.kind === 'mailbox').length} houses)`,
   `${Object.keys(FLEET_CRAFT).length} fleet craft`,
+  `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,
