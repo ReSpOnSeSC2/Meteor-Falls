@@ -291,6 +291,12 @@ class GameStateStore {
     return this.data.party.some((h) => h.bag.includes(itemId));
   }
 
+  /** does the party hold this shared key item? (§A10 #15 Spice Box, the Star
+   *  Locket, deeds…) — the key-item mirror of hasItem */
+  hasKeyItem(itemId: string): boolean {
+    return this.data.keyItems.includes(itemId);
+  }
+
   /** who carries this item, in party order */
   itemOwner(itemId: string): HeroState | undefined {
     return this.data.party.find((h) => h.bag.includes(itemId));

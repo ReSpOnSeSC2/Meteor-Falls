@@ -547,6 +547,23 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > (the spine) added the schema + mechanics + the per-region validator tables; the
 > regional catalogs pour the items in, Americas → Mars.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-094 — **§A7/§A8 THE DEFERRED
+> MECHANICS ARE NOW LIVE.** What S16/S17 readied as inert DATA, M24 BINDS: **(1) the
+> ELEMENTAL RESIST gear bites** — a worn fire/freeze/volt/holy pendant now HALVES a
+> matching elemental ENEMY hit (the incoming-resist seam, `resistIncoming`), with the
+> first landed elemental move shipped to test it (the Coily Cicada's August glare).
+> **(2) The REUSABLE cures + revives survive use** — a `reusable` cure (the Scroll of
+> Calm) or revive is no longer spent (`consumesOnUse`, in both the battle + menu paths),
+> and the §A4.12 line gains its reusable rung: **Milo's DEFIBRILLATOR** (a Repaired
+> Gizmo made an item — revives at ~280 HP and never runs down) joins the catalog as the
+> ~468th item. **(3) The SPICE BOX feeds the party** — §A10 #15's "cooked foods heal
+> +50%" is bound to the §A8 `food` heal path, keyed off owning the box. **(4) ENEMIES
+> DROP LOOT** — the optional `EnemyDef.drops` field is real: a defeated foe rolls items
+> into the bag EarthBound-style, seeded with §A7 identity (the sunburn cicada leaves the
+> Aloe Leaf; the gold beetle a doubloon — a drop that smells of THAT enemy, never
+> generic loot). All four are gated both directions and unit-tested; none adds save
+> state — the catalog references ids the save already carries.)*
+
 **Weapons** — Jay's bats: Cracked → T-Ball → Sandlot Slugger → Aluminum → Hall-of-Famer → *Casey's Last Swing* (Ch.10 drop). Mia's pans: Hand-Me-Down → Copper → Cast-Iron → Chef's → *The Holy Pan*. Milo's guns: Pellet Popper → Spud Gun → Double-Barrel Sparker → *Gauss Lobber*; Bottle Rocket / Big / Multi (consumables). Pippa's kit: Stamp Sling → Needle Saber → Thimble Bell → *Royal Red Pen*. Dorin: Cedar Beads → River Beads → *Comet Bead* (1/128 drop, Null Walker — the chase chase).
 
 **Armor:** regional hats (Otterbrook Cap → Cricket Cap → Turban of Calm → Paper Crown → Cushma → Fur-Lined Hood), bracelets, pendants (elemental resists), *Star Pendant* (Ch.7).
@@ -647,6 +664,21 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > Reachable from a paper-stand prop in Otterbrook/Brickton, non-missable. THE PRIZE
 > is a finale CALLER (Mr. Plummer, the paper-route tie-in, quest #2) + a flag; the
 > §A8 charm pour (the Steady Hands Charm) rides the catalog manifest in a follow-up.)*
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-094 — **§A9 THE GREAT VERIFICATION
+> VERDICT.** The §A9 curves are now PROVEN, not assumed: `npm run balance` is a
+> human-readable REPORT (the pure `src/battle/verify.ts` behind it) printing the
+> per-character growth curves, the Vibe ability ladders (PP vs power — the §A3/ADR-035
+> signature lines leap **≈2.6× at α→β**, confirmed exactly for Surge/Fire), boss HP vs
+> TIME-TO-KILL at each §A6 target level (every boss falls in a fair **4–10 turns** at a
+> CONSERVATIVE read — base stats, no weapons/items/Pray — so a real geared fight is at
+> least that fast), the §A4 economy (the revival line, the tonics, picnic, hospital, the
+> Spice Box), and the EXP grind. The verdict is recorded in `docs/VERIFICATION.md`; the
+> validator's GREAT-VERIFICATION sweep pins the boss curve (HP + level climb together,
+> landed HP == live data, TTK in the fair window), shop affordability on the Fortune Arc,
+> and that the landed Ch.1–2 slice is COMPLETABLE (B4) — headlessly, via the sim, never by
+> hand. The numbers came out SANE; the tuning is DATA where the sim flags a gap, never
+> code.)*
 
 ## A10. Side Quests (55 — each one adds or strengthens the CALLER ledger)
 

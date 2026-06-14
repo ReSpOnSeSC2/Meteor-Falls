@@ -31,6 +31,29 @@ export function sellPrice(item: ItemDef): number {
   return Math.floor(item.price / 2);
 }
 
+/** S18 M24 (ADR-094): THE REUSABLE-CURE PATH. A `reusable:true` item SURVIVES
+ *  use — the Camera Flash (a flash, not film), the Scroll of Calm (read it as
+ *  often as you need), Milo's Defibrillator (a repaired gizmo, §A4.12). Every
+ *  consume seam (Battle + Menu cure/revive/battle paths) asks THIS one predicate
+ *  so the rule lives in one tested place. Normal consumables (no `reusable`) are
+ *  spent as always. */
+export function consumesOnUse(item: ItemDef): boolean {
+  return item.reusable !== true;
+}
+
+/** §A10 #15 (S18 M24, ADR-094): THE SPICE BOX. Won off the Chandrapore spice
+ *  merchant, it makes "cooked foods heal +50%" — bound to the §A8 `food` heal
+ *  path (the game's prepared regional dishes; raw ingredients are `valuable`).
+ *  Keyed off OWNING the Spice Box key item. */
+export const SPICE_BOX_MUL = 1.5;
+
+/** the §A8 food heal a hero actually recovers — half again as much with the
+ *  Spice Box owned (§A10 #15), the plain value otherwise. Pure + rounded so the
+ *  Battle and Menu food paths agree and it unit-tests exactly. */
+export function spiceFoodHeal(baseHeal: number, hasSpiceBox: boolean): number {
+  return hasSpiceBox ? Math.round(baseHeal * SPICE_BOX_MUL) : baseHeal;
+}
+
 /** the short category tag shown in the item-menu description panel (S15h UI
  *  pass). One word the player reads before the effect line — exhaustive over
  *  ItemKind, so a new kind must be labelled here or it fails to compile. */
@@ -186,7 +209,7 @@ const ITEM_BAND: Record<string, ItemBand> = {
   cricket_cap: 'ch3', school_blazer: 'ch3', tweed_waistcoat: 'ch3', oilcloth_mac: 'ch3',
   fingerless_mitts: 'ch3', cricket_pads: 'ch3',
   lucky_conker: 'ch3', house_pin: 'ch3', brass_compass: 'ch3', rain_charm: 'ch3',
-  spark_coil: 'ch3', cog_grenade: 'ch3', clockwork_sparrow: 'ch3',
+  spark_coil: 'ch3', cog_grenade: 'ch3', clockwork_sparrow: 'ch3', defibrillator: 'ch3',
   broken_gizmo: 'ch3', first_edition: 'ch3', commemorative_tin: 'ch3',
   lucilles_propeller: 'ch3', library_card: 'ch3', thermos: 'ch3',
   // ── Ch.4 NORWAY (Kvisthavn / Bootstep Moor / Lilleby / The Sleeper's Spine)
@@ -1570,6 +1593,19 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: true,
       price: 26,
       text: 'A wind-up bird Milo coaxed back to life. It dive-bombs once, then needs winding again. ~40 damage.',
+    }),
+    // §A4.12 THE REUSABLE REVIVE — Milo's Defibrillator, a Repaired Gizmo made an
+    // item (the revival line's reusable rung; ADR-094 wires the consume-skip).
+    I({
+      id: 'defibrillator',
+      name: 'Defibrillator',
+      kind: 'cure',
+      heal: 280,
+      cures: ['down'],
+      reusable: true,
+      usableInBattle: true,
+      price: 0,
+      text: 'Milo built it from a Broken Gizmo, two paddles, and a coil that holds a charge. CLEAR! — and a fallen friend jolts awake, heart going, at about 280 HP. He rewinds the spring after each use; it never runs out.',
     }),
     // — valuables (the Repair seed; the library; the groundskeeper's shelf) —
     I({

@@ -71,9 +71,15 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       moves: [
         { name: 'dive', kind: 'attack', mult: 1, text: '{e} dive-bombed with a horrible BZZZZT!', weight: 5 },
         { name: 'sun drone', kind: 'status', status: 'sunburn', text: '{e} droned the song of an endless August! {t} got Sunburned!', weight: 3 },
+        // S18 M24 (ADR-094): the first LANDED elemental enemy move — the cicada
+        // focuses the August heat to a white point. A worn fire pendant
+        // (§A8 resists) finally has something to halve (resistIncoming).
+        { name: 'August glare', kind: 'attack', mult: 1.1, element: 'fire', text: '{e} bent the whole white August sky down to one burning point!', weight: 2 },
         { name: 'molt', kind: 'taunt', text: '{e} left a creepy shell on the ground. Nothing happened. It is just creepy.', weight: 2 },
       ],
       deathLine: 'The Coily Cicada went quiet for 17 more years.',
+      // the bug that burns you leaves the cooling leaf — cause, then cure (§A7)
+      drops: [{ item: 'aloe_leaf', chance: 0.15 }],
       sprite: 'battle_coily_cicada',
       mini: 'mini_coily_cicada',
       bg: [RAMP.FOREST, RAMP.GOLD],
@@ -96,6 +102,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'smile', kind: 'taunt', text: '{e} smiled wider. Wider than that. No— wider.', weight: 2 },
       ],
       deathLine: 'The Blazer Smiler finally took a personal day.',
+      // a sad can of the break-room drink, warm now (§A7 — smells of the office)
+      drops: [{ item: 'diet_star_cola', chance: 0.15 }],
       sprite: 'battle_blazer_smiler',
       mini: 'mini_pigeon_gang',
       walker: 'smiler',
@@ -119,6 +127,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'coo', kind: 'taunt', text: '{e} cooed menacingly.', weight: 2 },
       ],
       deathLine: 'The Pigeon Gang dispersed to separate statues.',
+      // it makes off with your snack — sometimes it leaves one behind (§A7)
+      drops: [{ item: 'corn_dog', chance: 0.25 }],
       sprite: 'battle_pigeon_gang',
       mini: 'mini_pigeon_gang',
       bg: [RAMP.PAPER, RAMP.CYAN],
@@ -141,6 +151,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'pose', kind: 'taunt', text: '{e} posed. It clearly thinks the crown is working.', weight: 2 },
       ],
       deathLine: 'The Hill Slug Deluxe was downgraded to standard.',
+      // the "crown" it kept posing in turns out to be a bottle cap (§A7)
+      drops: [{ item: 'bottle_cap_medallion', chance: 0.12 }],
       sprite: 'battle_hill_slug',
       mini: 'mini_hill_slug',
       bg: [RAMP.GRASS, RAMP.PURPLE],
@@ -191,6 +203,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'heavy ram', kind: 'strong', mult: 1.5, text: '{e} rammed with the full weight of its savings!', weight: 3 },
       ],
       deathLine: 'The Gilded Beetle turned out to be mostly beetle.',
+      // a beetle that gilded itself sheds one real coin of its "savings" (§A7)
+      drops: [{ item: 'gold_doubloon', chance: 0.2 }],
       sprite: 'battle_gilded_beetle',
       mini: 'mini_beetle',
       bg: [RAMP.GOLD, RAMP.FOREST],
@@ -213,6 +227,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'regret', kind: 'strong', mult: 1.4, text: '{e} radiated pure buyer\'s remorse!', weight: 2 },
       ],
       deathLine: 'The Cursed Souvenir was finally returned. No receipt necessary.',
+      // the trinket that made you weep leaves the hanky to dry it (§A7)
+      drops: [{ item: 'hanky', chance: 0.18 }],
       sprite: 'battle_cursed_souvenir',
       mini: 'mini_souvenir',
       bg: [RAMP.PURPLE, RAMP.GOLD],

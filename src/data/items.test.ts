@@ -6,7 +6,7 @@
  * guards the MECHANICS line, the part that must never make a player guess.
  */
 import { describe, it, expect } from 'vitest';
-import { ITEMS, itemKindLabel, itemEffectLine, boostStatLabel, equipSecondaryNote } from './items';
+import { ITEMS, itemKindLabel, itemEffectLine, boostStatLabel, equipSecondaryNote, consumesOnUse, spiceFoodHeal, SPICE_BOX_MUL } from './items';
 import type { ItemDef } from '../schemas';
 
 const firstOf = (k: ItemDef['kind']): ItemDef | undefined => Object.values(ITEMS).find((i) => i.kind === k);
@@ -333,5 +333,52 @@ describe('S17 M21 (ADR-091) — THE LAST-WORLD CATALOG pours Ch.9/10 + closes th
     // the Meteor Shard is the dearest thing in the catalog
     const dearest = Object.values(ITEMS).reduce((a, b) => (b.price > a.price ? b : a));
     expect(dearest.id).toBe('meteor_shard_tonic');
+  });
+});
+
+/* ---- S18 M24 (ADR-094) — Debt #2: THE REUSABLE-CURE PATH (consumesOnUse) ---- */
+
+describe('consumesOnUse — a reusable item survives use, a normal one is spent', () => {
+  it('a normal consumable is consumed; a reusable cure/battle item is not', () => {
+    expect(consumesOnUse(ITEMS.second_wind)).toBe(true); // a one-shot revive
+    expect(consumesOnUse(ITEMS.corn_dog)).toBe(true); // a normal food
+    expect(consumesOnUse(ITEMS.scroll_of_calm)).toBe(false); // §A10 #17 — reusable
+    expect(consumesOnUse(ITEMS.camera_flash)).toBe(false); // a flash, not film
+    expect(consumesOnUse(ITEMS.defibrillator)).toBe(false); // §A4.12 — reusable revive
+  });
+
+  it('the Defibrillator is the §A4.12 reusable revive (cures down, heals, never spent)', () => {
+    const d = ITEMS.defibrillator;
+    expect(d.kind).toBe('cure');
+    expect(d.cures).toContain('down');
+    expect(d.heal).toBeGreaterThan(0);
+    expect(d.reusable).toBe(true);
+    expect(d.usableInBattle).toBe(true);
+  });
+
+  it('every reusable item is a cure or a battle item (no reusable food/weapon)', () => {
+    for (const it of Object.values(ITEMS)) {
+      if (it.reusable === true) expect(['cure', 'battle'], it.id).toContain(it.kind);
+    }
+  });
+});
+
+/* ---- S18 M24 (ADR-094) — Debt #3: THE SPICE BOX food-multiplier ---- */
+
+describe('spiceFoodHeal — the Spice Box makes cooked food heal +50% (§A10 #15)', () => {
+  it('owning the box multiplies the heal; without it the food is plain', () => {
+    expect(spiceFoodHeal(60, false)).toBe(60);
+    expect(spiceFoodHeal(60, true)).toBe(Math.round(60 * SPICE_BOX_MUL));
+    expect(spiceFoodHeal(60, true)).toBe(90);
+  });
+
+  it('the multiplier is exactly the §A10 +50% and rounds cleanly', () => {
+    expect(SPICE_BOX_MUL).toBe(1.5);
+    expect(spiceFoodHeal(45, true)).toBe(68); // round(67.5)
+    expect(spiceFoodHeal(1, true)).toBe(2); // round(1.5) — never lost
+  });
+
+  it('the Spice Box is the §A10 #15 key item it keys off', () => {
+    expect(ITEMS.spice_box.kind).toBe('key');
   });
 });

@@ -5326,3 +5326,112 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   distinct-by-the-pixel, and §A11.2/.3/.6/.7/.9-safe. The `{g:NAME}` token + the mixed-run renderer are a
   reusable spine any future caption (a landed chapter's dialogue, a new battle line) draws from for free.
   M23 closes; **M24 BALANCE & THE GREAT VERIFICATION** is the last of S18's three closing movements. ☄️
+
+## ADR-094 — S18 (Movement 24): BALANCE & THE GREAT VERIFICATION — prove it true, clear the four debts
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the S18 polish track, Movement 24 — the LAST of the three closing movements: M22 THE
+  GLYPH FORGE → M23 THE FLAIR WEAVE → **M24 THE GREAT VERIFICATION**. With it, S18 closes.)
+- **The ADR number.** M23 took ADR-093; a grep confirms 093 is the highest, so this is **ADR-094** (the
+  catalog/forge/weave line continues; never reuse a number).
+- **What this movement is.** The capstone that makes the whole machine HONEST: it runs the §A9 numbers, reads
+  them by eye, proves the game is CONSISTENT (the curves are well-formed), COMPLETABLE (the landed slice
+  finishes), and BALANCED (bosses fall in a fair number of turns) — and CLEARS THE FOUR STANDING DEFERRED
+  DEBTS so S18 closes with NO IOUs. Two halves; both green.
+
+### HALF A — THE GREAT VERIFICATION (prove it true)
+
+- **Decision — `npm run balance` grows into a REPORT a human reads (`tools/balance-sim.ts` + the new pure
+  `src/battle/verify.ts`).** The economy half (Fortune Arc / property / fleet / car / fuel / ferry / rocket,
+  ADR-075/083/090) stays; M24 ADDS the COMBAT half, all from EXPECTED values (the mean of each rng'd formula,
+  no Phaser, no dice — deterministic + unit-testable):
+  1. **Per-character GROWTH curves** — HP/PP/Off/Def/Spd/Guts/Vibe per level for all five heroes (the §A9
+     spine), printed at checkpoints L1→52.
+  2. **The Vibe ability LADDERS** — PP cost vs power tier, with the per-tier ×leap printed: Vibe **Surge** and
+     **Fire** α→β are EXACTLY **×2.60** (the §A3/ADR-035 "signature lines leap harder per tier ≈2.6×"
+     promise, proven), Freeze/Volt ×2.19/×2.21, every rung climbing in power AND PP.
+  3. **Boss HP vs TIME-TO-KILL @ §A6 target level** — a CONSERVATIVE model (base stats, no weapons, no items,
+     no Pray/support, party-by-chapter per the §A3 join points, boss defense ≈ its level — a proxy the landed
+     Tick/Grin confirm): every boss falls in **4–10 turns**, so a fair geared fight is at least that fast. The
+     Tick (solo Jay, L8) reads 10 — a meaty tutorial boss; the Hush's 4 is its first-movement shell only
+     (movements 2–3 are scripted survival + PRAY, §A6, not a damage race).
+  4. **The §A4 economy** — the revival line (item→heal→price→reusable), the 22 tonics, the picnic baskets +
+     SUNNY SIDE, the hospital revive ladder + cure-all + chapel, and the Spice Box ×1.5 read.
+  5. **The EXP grind** — EXP(L)=4·L³/3 at each §A6 target (faithfully grindy).
+  The verdict is recorded in **`docs/VERIFICATION.md`** (read by eye — the WebGL canvas hangs
+  `preview_screenshot`, ADR-059/060, so the sim + tests ARE the proof). The §A9 numbers came out SANE — the
+  curves were tuned over prior movements; M24 PROVES them, so no DATA retune was needed (the brief's "tune
+  DATA where the sim flags an imbalance" found nothing to flag).
+- **Decision — the validator's GREAT-VERIFICATION sweep (`tools/content-validate.ts`).** The cross-checks the
+  existing gates DIDN'T make, as new sections: `verify` (boss HP+level climb together; the landed bosses'
+  manifest HP == live ENEMIES HP; every boss TTK in the fair 2–25 window via `verify.ts`; every shop shelf
+  affordable on the Fortune Arc at its chapter; every revive heals + every cure lists a recognised §A4.8
+  status; `AWAKENING_LEVEL ⇄ AWAKENINGS` both ways), plus the four debts' gates below. The VERDICT line stays
+  truthful (now "6 §A7 drops").
+- **Decision — the landed Ch.1–2 slice is provably COMPLETABLE (B4).** `verify.test.ts` pins it headlessly via
+  the manifests + the beatable-boss TTK (Tick 10, Grin 6 at §A6 level) — both chapters `shipped` with live
+  maps + quests + a boss, the ch1→docks→ch2 gate chain coherent. No by-hand playthrough; the sim is the bot.
+
+### HALF B — THE FOUR DEFERRED DEBTS, CLEARED (each FULLY)
+
+- **Decision — Debt #1: heroResist DAMAGE binding (§A8 pendants made to bite).** `resistIncoming(dmg,
+  element, hero)` (`battle/formulas.ts`, pure) binds the S17-ready `heroResist`/`applyResist` at BattleScene's
+  incoming-damage seam — a worn fire/freeze/volt/holy pendant HALVES (by its pct) a matching elemental ENEMY
+  hit, applied GEAR-FIRST and PARALLEL to Jay's active ward (`mitigateIncoming`), the two seams never
+  conflated. The first LANDED elemental enemy move is the **Coily Cicada's "August glare"** (a fire attack, in
+  §A11 voice — it keeps its canon Sunburn quirk; max-4-moves obeyed). Gate `resist`: every elemental enemy
+  move throws one of the four resistable elements AND each of the four is gear-covered (the §A8 set is whole).
+  Test: the Jade Salamander Charm (fire 25%) takes a 100 fire hit to 75, leaves volt/physical untouched, never
+  below 1.
+- **Decision — Debt #2: THE REUSABLE-CURE PATH + Milo's Defibrillator.** `consumesOnUse(item) = !reusable`
+  (`data/items.ts`, the one tested predicate) gates the consume step in BOTH the battle AND menu cure/revive
+  paths (and the Camera-Flash/battle paths, normalised off the old inline `!item.reusable`). The §A4.12
+  **Defibrillator** — Milo's Repaired-Gizmo reusable revive (kind 'cure', cures 'down', heal 280, band ch3,
+  `price 0`, a forged `zapper` icon) — joins the catalog, COMPLETING the revival line (a reusable rung between
+  the Guardian-Angel Feather and the Hallelujah Bell; reusable + a moderate 280 heal is the balance). Gate
+  `reusable`: a reusable item is kind cure/battle only; the Defibrillator cures 'down' + heals + is reusable;
+  the Scroll of Calm stays reusable. Test: a reusable item survives use, a normal one is spent.
+- **Decision — Debt #3: THE SPICE BOX food-multiplier (§A10 #15).** `spiceFoodHeal(heal, hasBox)` (items.ts)
+  ×1.5s the §A8 `food` heal in BOTH the battle AND menu food paths, keyed off owning the Spice Box key item
+  (`GS.hasKeyItem`, a new state mirror of `hasItem`). "Cooked foods" = the catalog's `food` kind (the game's
+  prepared regional dishes; raw ingredients are `valuable`). Test: 60 → 90 owned, 60 plain, rounds cleanly.
+- **Decision — Debt #4: the optional `EnemyDef.drops?: {item, chance}[]` (owed to THIS pass).**
+  `EnemyDropSchema` + `EnemyDef.drops?` (schemas) + `rollDrops(drops, rng)` (formulas.ts, pure + rng-injected,
+  ADR-008 replay-safe) wired into the battle VICTORY rewards: each defeated enemy rolls its drops into the bag,
+  EarthBound-style, with full-hands handling (`awardDrop` — key items to the shared bag, else the first free
+  slot, else left on the ground; new `enemy_drop`/`enemy_drop_full` battle lines). **6 tasteful Ch.1–2 drops**
+  seeded with §A7 identity (a drop that smells of THAT enemy: the sunburn Cicada → Aloe Leaf, the food-thief
+  Pigeon Gang → Corn Dog, the gold Beetle → Doubloon, the crying Souvenir → Hanky, the Blazer Smiler → the
+  break-room Diet Star Cola, the "royal" Hill Slug → its bottle-cap "crown"). Gate `drops` BOTH directions:
+  every drop names a real §A8 item, chance is sane 0<chance≤1, the drop is economy-neutral (expected gross
+  value ≤ the kill's cash + a small floor), key items are boss-only. Test: the roll is independent,
+  deterministic, and every seeded drop is real + cheap.
+- **All four resolved cleanly — none deferred.** Each landed with its binding, a both-directions gate, a unit
+  test, and (for the two earning it) a Bible amendment in the same commit.
+
+### Discipline carried forward
+
+- **Both-directions gates + the distinctness law.** Every new field/registry is pinned in
+  `tools/content-validate.ts` AND a vitest mirror; the Defibrillator's forged icon passes the ADR-060/062
+  slop-detector by construction (a `zapper`/`ch3`/`star`/`defibrillator` seed, byte-distinct from `spark_coil`/
+  `bug_zapper`). The conservative TTK model is a LOWER bound on the party, so a fair read here is fair in play.
+- **NO SAVE MIGRATION (correctly).** Every debt is static catalog data or derived-at-runtime: heroResist reads
+  worn gear, the Defibrillator/Scroll ride the existing inventory id list, the Spice Box reads an existing key
+  item, drops land in existing bag arrays. None adds persistent save state — the save schema is UNCHANGED (no
+  v-bump invented that wasn't needed; old saves load byte-identical). No FNV / `world_block` re-pin (no map
+  generators touched).
+- **The §A11 spine holds** in the new content — the cicada's line and the six drop lines are in voice; the
+  Hush, Mom's calls, and the sincere beats are untouched; no chapter UI leaks (§A11.2/.3/.6/.7).
+- **Verification:** `npm run validate` green (**468 items / 468 icons / 6 §A7 drops**; ch3 42→43 for the
+  Defibrillator) + `npx tsc --noEmit` clean (no `any`) + full `npx vitest run` **1043 green** (+30 over M23's
+  1013: `verify.test.ts` 16 + the four debts' pins in formulas/items) + `npx vite build` clean + `npm run
+  balance` read BY EYE and recorded in `docs/VERIFICATION.md`. The Bible is amended in the SAME commit (§A4.12
+  Defibrillator live + Spice Box live, §A8 resist pendants live, §A9 a balance-verdict clause; Appendix rule 6,
+  dated, in voice).
+- **Consequences:** the game is now PROVABLY consistent, completable, and balanced — the growth curves, ability
+  ladders, boss TTK, and §A4/§A9 economy are read by eye and pinned by tests, and `npm run balance` is a
+  standing worktable any future tuning reads. The four debts the catalog/forges/weave deferred are GONE: the
+  §A8 resist pendants finally bite, the reusable cures/revives survive use (the Defibrillator completes the
+  §A4.12 line), the Spice Box feeds the party, and enemies drop loot with identity. **S18 (M22 → M23 → M24) is
+  COMPLETE — the forges built the world's writing, the weave gave its text a voice, and the verification proved
+  the whole thing honest.** ☄️

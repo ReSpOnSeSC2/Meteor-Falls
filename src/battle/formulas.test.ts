@@ -36,6 +36,7 @@ import { availableAbilities, HEROES } from '../data/heroes';
 import { mulberry32 } from '../spritegen/pixmap';
 import { expForLevel, makeHeroState } from '../engine/state';
 import { ITEMS } from '../data/items';
+import { ENEMIES } from '../data/enemies';
 
 describe('battle formulas', () => {
   it('physical: offense*2 - defense with ±15% variance, min 1', () => {
@@ -784,5 +785,75 @@ describe('MILO — gadgets (NO Vibe, NO PP: competence, not the old light)', () 
     }
     // no Vibe → no awakenings: even with EVERY flag set, nothing extra appears
     expect(availableAbilities('milo', 99, () => true).length).toBe(11);
+  });
+});
+
+/* ---- S18 M24 (ADR-094) — Debt #1: THE §A8 PENDANT SEAM (incoming resist) ---- */
+
+describe('resistIncoming — a worn pendant halves a matching elemental hit', () => {
+  it('the §A8 Jade Salamander Charm (fire 25%) shaves a fire hit, leaves volt/physical alone', () => {
+    const rex = makeHeroState('rex', 20);
+    rex.equip.other = 'jade_salamander_charm'; // fire 25%
+    expect(F.heroResist(rex, 'fire')).toBeCloseTo(0.25, 5);
+    // a 100-point fire hit lands at 75; volt and physical are untouched
+    expect(F.resistIncoming(100, 'fire', rex)).toBe(75);
+    expect(F.resistIncoming(100, 'volt', rex)).toBe(100);
+    expect(F.resistIncoming(100, 'physical', rex)).toBe(100);
+    expect(F.resistIncoming(100, 'none', rex)).toBe(100);
+  });
+
+  it('a hero with no resist gear takes the full elemental hit', () => {
+    const faye = makeHeroState('faye', 20);
+    expect(F.resistIncoming(100, 'fire', faye)).toBe(100);
+    expect(F.resistIncoming(100, 'freeze', faye)).toBe(100);
+  });
+
+  it('an elemental hit is never reduced below 1, even at the resist cap', () => {
+    const rex = makeHeroState('rex', 20);
+    rex.equip.other = 'jade_salamander_charm';
+    expect(F.resistIncoming(1, 'fire', rex)).toBe(1);
+  });
+});
+
+/* ---- S18 M24 (ADR-094) — Debt #4: §A7 LOOT (rollDrops) ---- */
+
+describe('rollDrops — a defeated enemy rolls its identity drops', () => {
+  it('no drops table → nothing', () => {
+    expect(F.rollDrops(undefined, () => 0)).toEqual([]);
+    expect(F.rollDrops([], () => 0)).toEqual([]);
+  });
+
+  it('a guaranteed drop (chance 1) always lands; a near-zero one with a high roll never does', () => {
+    expect(F.rollDrops([{ item: 'corn_dog', chance: 1 }], () => 0.99)).toEqual(['corn_dog']);
+    expect(F.rollDrops([{ item: 'corn_dog', chance: 0.001 }], () => 0.5)).toEqual([]);
+  });
+
+  it('each drop rolls independently — the roll decides each item', () => {
+    const table = [
+      { item: 'a', chance: 0.5 },
+      { item: 'b', chance: 0.5 },
+    ];
+    // a fixed rng that returns 0.2 then 0.8: a drops (0.2<0.5), b does not (0.8<0.5 is false)
+    const seq = [0.2, 0.8];
+    let i = 0;
+    expect(F.rollDrops(table, () => seq[i++])).toEqual(['a']);
+  });
+
+  it('is deterministic for a seeded rng (ADR-008 replay-safe)', () => {
+    const table = [{ item: 'aloe_leaf', chance: 0.3 }];
+    const a = F.rollDrops(table, mulberry32(99));
+    const b = F.rollDrops(table, mulberry32(99));
+    expect(a).toEqual(b);
+  });
+
+  it('every seeded Ch.1–2 drop names a real, cheap §A8 item (economy-neutral)', () => {
+    for (const e of Object.values(ENEMIES)) {
+      for (const d of e.drops ?? []) {
+        expect(ITEMS[d.item], `${e.id} drops ${d.item}`).toBeDefined();
+        expect(d.chance).toBeGreaterThan(0);
+        expect(d.chance).toBeLessThanOrEqual(1);
+        expect(ITEMS[d.item].price * d.chance).toBeLessThanOrEqual(e.cash + 20);
+      }
+    }
   });
 });

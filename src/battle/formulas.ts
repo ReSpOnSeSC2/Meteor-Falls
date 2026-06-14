@@ -130,6 +130,23 @@ export function applyResist(dmg: number, resistFrac: number): number {
   return Math.max(1, Math.round(dmg * (1 - resistFrac)));
 }
 
+/** S18 M24 (ADR-094): THE §A8 PENDANT SEAM on an INCOMING elemental hit. A worn
+ *  resist pendant/robe (summed by heroResist) shaves its pct off a matching
+ *  fire/freeze/volt/holy hit — the §A8 "pendants (elemental resists)" made to
+ *  actually answer a landed elemental ENEMY move. This is DISTINCT from
+ *  mitigateIncoming (Jay's active WARD): both may apply, gear first (here), the
+ *  cast after. A physical/none hit is untouched — pendants resist the four Vibe
+ *  elements only, never the EB-default physical. The S17 heroResist note
+ *  promised "the APPLICATION binds at the hero-damage seam the day enemies carry
+ *  elemental moves"; M24 lands the first such move (the Coily Cicada) and this
+ *  is that seam, pure so the math unit-tests exactly. */
+export function resistIncoming(dmg: number, element: string, hero: HeroState): number {
+  if (element === 'fire' || element === 'freeze' || element === 'volt' || element === 'holy') {
+    return applyResist(dmg, heroResist(hero, element));
+  }
+  return dmg;
+}
+
 /** the S12 arms preview — slot-generalized: an arms piece carries exactly
  *  one stat (schema law), and the preview names THAT stat ("Speed up by N!") */
 export function equipArmsDelta(hero: HeroState, itemId: string): { stat: 'Speed' | 'Guts'; d: number } {
@@ -406,6 +423,22 @@ export function instantWin(avgPartyLevel: number, enemyLevel: number, isBoss: bo
 /** EXP split among conscious heroes, rounded up (everyone gets something) */
 export function expShare(total: number, aliveCount: number): number {
   return Math.max(1, Math.ceil(total / Math.max(1, aliveCount)));
+}
+
+/* ---- §A7 LOOT (S18 M24, ADR-094): a defeated enemy rolls its drops ---- */
+
+/** roll each of a defeated enemy's drops independently; returns the ids that
+ *  landed (EarthBound-style — most fights drop nothing, identity drops are
+ *  deliberately rare). Pure + rng-injected so the ADR-008 replay bot and the
+ *  unit tests stay exact (dice in, items out). */
+export function rollDrops(
+  drops: ReadonlyArray<{ item: string; chance: number }> | undefined,
+  rng: Rng,
+): string[] {
+  if (!drops) return [];
+  const out: string[] = [];
+  for (const d of drops) if (rng() < d.chance) out.push(d.item);
+  return out;
 }
 
 /* ---- §A4.8 status rolls (S11) — injected rng, tested exactly ---- */

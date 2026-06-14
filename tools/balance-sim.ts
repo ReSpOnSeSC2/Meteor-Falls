@@ -1,11 +1,31 @@
 /**
- * THE BALANCE SIM (S18 Movement 34, ADR-074) — prints the Fortune-Arc net-worth
- * curve alongside the property / fleet / furniture price ladders, so the back-half
- * escalation is tuned against §A9's targets BY EYE (tune DATA, never code). The
- * balance.test.ts gate proves the curve is well-formed; this is the worktable.
+ * THE BALANCE SIM (S18 Movement 34, ADR-074; grown into THE GREAT VERIFICATION,
+ * Movement 24, ADR-094) — the worktable a human READS BY EYE to tune the §A9
+ * curves as DATA (never code).
+ *
+ * HALF A (the combat verification, M24): per-hero GROWTH curves, the Vibe
+ * ability LADDERS (PP cost vs power tier + the α→β awakening leap), boss HP vs
+ * TIME-TO-KILL at each §A6 target level, the §A4 economy (revival line / tonics
+ * / picnic / hospital / the Spice Box), and the EXP grind read.
+ * HALF B (the wealth arc, M34/M49): the Fortune Arc + property / fleet / car /
+ * fuel / ferry / rocket ladders.
+ *
+ * verify.test.ts + balance.test.ts PIN the shapes; this prints them.
  *
  *   npm run balance
  */
+import {
+  growthRow,
+  ladder,
+  allBossChecks,
+  AWAKENING_LEVEL,
+  type GrowthRow,
+} from '../src/battle/verify';
+import { ITEMS, SPICE_BOX_MUL } from '../src/data/items';
+import { CHAPTER_MANIFESTS } from '../src/data/chapters';
+import { expForLevel } from '../src/engine/state';
+import { reviveCost, CURE_ALL_COST, CHAPEL_HEAL, SUNNY_MUL, SUNNY_BATTLES } from '../src/battle/formulas';
+import type { HeroId } from '../src/schemas';
 import { FORTUNE_ARC, fortuneTarget } from '../src/data/fortune';
 import { PROPERTIES } from '../src/data/properties';
 import { FLEET_CRAFT } from '../src/data/fleet';
@@ -22,6 +42,89 @@ import { FERRY_BASE, ferryCost } from '../src/engine/ferry';
 import { launchCost } from '../src/engine/rocket';
 
 const fmt = (n: number): string => '$' + n.toLocaleString('en-US');
+const pad = (s: string | number, n: number): string => String(s).padStart(n);
+
+/* ============================================================================
+ * HALF A — THE GREAT VERIFICATION (M24): the combat curves, read by eye.
+ * ========================================================================== */
+
+const HERO_NAME: Record<HeroId, string> = { rex: 'Jay', faye: 'Mia', milo: 'Milo', pippa: 'Pippa', dorin: 'Dorin' };
+const CHECKPOINTS = [1, 8, 13, 18, 22, 26, 30, 35, 40, 46, 52];
+
+console.log('\n================  THE GREAT VERIFICATION (§A9 combat)  ================');
+
+console.log('\nPER-CHARACTER GROWTH CURVES (HP/PP/Off/Def/Spd/Guts/Vibe at key levels)\n');
+for (const id of Object.keys(HERO_NAME) as HeroId[]) {
+  console.log(`  ${HERO_NAME[id]} (${id})`);
+  console.log(`    Lv     HP    PP   Off   Def   Spd  Guts  Vibe`);
+  for (const lv of CHECKPOINTS) {
+    const g: GrowthRow = growthRow(id, lv);
+    console.log(
+      `    ${pad(lv, 2)}  ${pad(g.hp, 5)} ${pad(g.pp, 5)} ${pad(g.offense, 5)} ${pad(g.defense, 5)} ${pad(g.speed, 5)} ${pad(g.guts, 5)} ${pad(g.vibe, 5)}`,
+    );
+  }
+}
+
+console.log('\nVIBE ABILITY LADDERS — PP cost vs power tier (§A3/ADR-035: α→β leaps ≈2.6×)\n');
+for (const base of ['Vibe Surge', 'Vibe Fire', 'Vibe Freeze', 'Vibe Volt', 'Lifeup', 'Vibe Comet']) {
+  const rungs = ladder(base);
+  if (rungs.length === 0) continue;
+  console.log(`  ${base}`);
+  let prevPow = 0;
+  for (const r of rungs) {
+    const leap = prevPow ? '×' + (r.power / prevPow).toFixed(2) : '  —  ';
+    console.log(`    ${r.tier}  PP ${pad(r.pp, 3)}   power ${pad(r.power, 4)}   ${leap} prior`);
+    prevPow = r.power;
+  }
+}
+
+console.log('\nBOSS HP vs TIME-TO-KILL @ §A6 target level (party DPR = base stats, no weapons)\n');
+console.log('  Ch  Boss                       HP   Lv  Party   DPR   TTK  weakness');
+for (const b of allBossChecks()) {
+  console.log(
+    `  ${pad(b.chapter, 2)}  ${b.name.slice(0, 24).padEnd(24)} ${pad(b.hp, 5)}  ${pad(b.level, 2)}   ${b.party.length}    ${pad(b.partyDpr, 4)}  ${pad(b.ttk, 4)}  ${b.weakness.join(',') || '—'}`,
+  );
+}
+console.log('  (TTK is a CONSERVATIVE floor: no weapons, no items, no Pray/support — real geared');
+console.log('   fights fell faster. A fair EB boss is ~5–15 turns; the Tick/Hush are scripted set-pieces.)');
+
+console.log('\nTHE §A4 ECONOMY — the revival line, tonics, picnic, hospital, the Spice Box\n');
+console.log('  REVIVAL LINE (§A4.12 — any cure listing "down" revives by its own heal):');
+for (const it of Object.values(ITEMS)) {
+  if (it.kind === 'cure' && it.cures?.includes('down')) {
+    const full = (it.heal ?? 0) >= 9999 ? ' (full)' : '';
+    console.log(`    ${it.name.padEnd(22)} heal ${pad(it.heal ?? 0, 5)}${full}  ${fmt(it.price).padStart(7)}${it.reusable ? '  REUSABLE' : ''}`);
+  }
+}
+console.log('\n  TONICS (§A4.12 — a permanent +stat, rides the save forever):');
+for (const it of Object.values(ITEMS)) {
+  if (it.kind === 'tonic' && it.boost) {
+    console.log(`    ${it.name.padEnd(22)} +${it.boost.amount} ${it.boost.stat.padEnd(7)}  ${fmt(it.price).padStart(7)}`);
+  }
+}
+console.log('\n  PICNIC BASKETS (§A4.5 — full restore + SUNNY SIDE ×' + SUNNY_MUL + ' all stats, ' + SUNNY_BATTLES + ' battles):');
+for (const it of Object.values(ITEMS)) {
+  if (it.kind === 'basket') console.log(`    ${it.name.padEnd(22)} ${fmt(it.price).padStart(7)}`);
+}
+console.log('\n  HOSPITAL (§A4.7 — pay-to-revive scales by the fallen hero’s level):');
+for (const lv of [8, 18, 30, 46, 52]) console.log(`    revive a Lv${pad(lv, 2)} angel  ${fmt(reviveCost(lv)).padStart(6)}`);
+console.log(`    cure-all-statuses desk  ${fmt(CURE_ALL_COST).padStart(6)}        chapel heal (free)  ${CHAPEL_HEAL} HP party-wide`);
+console.log(`\n  THE SPICE BOX (§A10 #15) — cooked food heals ×${SPICE_BOX_MUL} while owned (e.g. a 60 HP dish → ${Math.round(60 * SPICE_BOX_MUL)}).`);
+
+console.log('\nEXP GRIND (§A9: EXP(L)=4·L³/3, the TOTAL to reach a level) — the §A6 climb\n');
+console.log('  Ch  target Lv   total EXP to reach   +EXP earned this chapter');
+let prevExp = 0;
+for (const ch of Object.keys(CHAPTER_MANIFESTS).map(Number).sort((a, b) => a - b)) {
+  const lv = CHAPTER_MANIFESTS[String(ch)].targetLevel;
+  const total = expForLevel(lv);
+  console.log(`  ${pad(ch, 2)}      ${pad(lv, 2)}        ${pad(total, 9)}            +${pad(total - prevExp, 9)}`);
+  prevExp = total;
+}
+// sanity: every awakening's earned-by level is sane (no late awakening at L1)
+const awakeMisplaced = Object.entries(AWAKENING_LEVEL).filter(([, lv]) => lv < 1 || lv > 60);
+console.log(`  awakening earned-by levels: ${Object.keys(AWAKENING_LEVEL).length} mapped, ${awakeMisplaced.length} out of range\n`);
+
+console.log('\n================  HALF B — THE WEALTH ARC (§A9 Fortune)  ==============');
 
 console.log('\nTHE FORTUNE ARC — §A9 net-worth targets (Ch.1 ~$1K → Ch.10 $3B+)\n');
 let prev = 0;

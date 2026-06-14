@@ -68,7 +68,8 @@ import { ferryMethodsBetween, METHOD_CRAFT } from '../src/engine/ferry';
 import { THE_LONG_SHOT } from '../src/data/rocket';
 import { canLaunch, EARTH_PAD, MARS, launchCost } from '../src/engine/rocket';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
-import { FORTUNE_ARC } from '../src/data/fortune';
+import { FORTUNE_ARC, fortuneTarget } from '../src/data/fortune';
+import { allBossChecks, AWAKENING_LEVEL } from '../src/battle/verify';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -1122,6 +1123,163 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   if (!ENEMIES.cursed_souvenir?.moves.some((m) => m.status === 'crying')) {
     fail('canon', `cursed_souvenir needs a Crying move (§A7)`);
+  }
+}
+
+/* ===================== S18 M24 — THE GREAT VERIFICATION (ADR-094) =====================
+ * The cross-checks the existing gates DON'T make: the four deferred debts pinned
+ * both directions (loot / reusable / resist / the boss curve), plus the §A4
+ * economy and §A9 boss-curve sanity that prove the game is consistent + fair. */
+
+// ── Debt #4: EnemyDef.drops both directions — every drop names a REAL §A8 item,
+//    its chance is sane (schema pins 0<c≤1; re-read for the message), and it is
+//    ECONOMY-NEUTRAL (a drop's expected gross value never dwarfs the kill's cash,
+//    so loot can't break the §A9 economy). §A7: a drop has identity, not loot.
+{
+  let dropCount = 0;
+  for (const e of Object.values(ENEMIES)) {
+    if (!e.drops) continue;
+    for (const d of e.drops) {
+      dropCount++;
+      const item = ITEMS[d.item];
+      if (!item) {
+        fail('drops', `enemy '${e.id}' drops '${d.item}', which is not a real §A8 item`);
+        continue;
+      }
+      if (!(d.chance > 0 && d.chance <= 1)) {
+        fail('drops', `enemy '${e.id}' drop '${d.item}' has chance ${d.chance} — must be 0<chance≤1`);
+      }
+      if (item.kind === 'key' && e.boss !== true) {
+        fail('drops', `enemy '${e.id}' drops key item '${d.item}' — only bosses/set-pieces drop key items (§A7)`);
+      }
+      // economy-neutral: expected gross value ≤ the kill's cash + a small floor
+      const expected = item.price * d.chance;
+      if (expected > e.cash + 20) {
+        fail('drops', `enemy '${e.id}' drop '${d.item}' expects $${expected.toFixed(0)} value vs $${e.cash} cash — not economy-neutral (lower the chance/value, §A9)`);
+      }
+    }
+  }
+  if (dropCount === 0) fail('drops', `no enemy carries a §A7 drop — M24 seeds the landed Ch.1–2 roster`);
+}
+
+// ── Debt #2: `reusable` rides a CURE or BATTLE item only (a reusable food/weapon
+//    is a category error), and the reusable REVIVE (Milo's Defibrillator) lists
+//    'down' so it actually revives. consumesOnUse() reads `reusable` everywhere.
+{
+  for (const it of Object.values(ITEMS)) {
+    if (it.reusable === true && it.kind !== 'cure' && it.kind !== 'battle') {
+      fail('reusable', `'${it.id}' is reusable but kind '${it.kind}' — reusable rides cures + battle items (§A4.12/§A10)`);
+    }
+  }
+  const defib = ITEMS.defibrillator;
+  if (!defib) fail('reusable', `the §A4.12 reusable revive (Defibrillator) is missing from the catalog`);
+  else {
+    if (defib.reusable !== true) fail('reusable', `the Defibrillator must be reusable (§A4.12)`);
+    if (!defib.cures?.includes('down')) fail('reusable', `the Defibrillator must cure 'down' (it's a revive, §A4.12)`);
+    if (!defib.heal || defib.heal <= 0) fail('reusable', `the Defibrillator must heal a positive amount on revive`);
+  }
+  const scroll = ITEMS.scroll_of_calm;
+  if (scroll && scroll.reusable !== true) fail('reusable', `the Scroll of Calm must stay reusable (§A10 #17)`);
+}
+
+// ── Debt #1: every elemental ENEMY move throws one of the four RESISTABLE
+//    elements (fire/freeze/volt/holy) so a §A8 pendant can answer it, and each
+//    of the four is covered by ≥1 piece of gear (the resist set is whole).
+{
+  const RESISTABLE = new Set(['fire', 'freeze', 'volt', 'holy']);
+  const geared = new Set<string>();
+  for (const it of Object.values(ITEMS)) for (const r of it.resists ?? []) geared.add(r.element);
+  for (const el of RESISTABLE) {
+    if (!geared.has(el)) fail('resist', `no §A8 gear resists '${el}' — the four-element resist set is incomplete`);
+  }
+  let elementalMoves = 0;
+  for (const e of Object.values(ENEMIES)) {
+    for (const m of e.moves) {
+      if (m.element && m.element !== 'physical' && m.element !== 'none') {
+        elementalMoves++;
+        if (!RESISTABLE.has(m.element)) {
+          fail('resist', `enemy '${e.id}' move '${m.name}' throws '${m.element}', which no pendant can resist`);
+        } else if (!geared.has(m.element)) {
+          fail('resist', `enemy '${e.id}' throws '${m.element}' but no gear resists it — bind a pendant first (Debt #1)`);
+        }
+      }
+    }
+  }
+  if (elementalMoves === 0) fail('resist', `no landed enemy throws an element — M24 adds one so heroResist has something to halve`);
+}
+
+// ── the §A4 economy fires: every revival item actually heals, every cure lists
+//    only recognised statuses (a typo'd cure would silently do nothing).
+{
+  const CURABLE = new Set(['sunburn', 'crying', 'asleep', 'paralyzed', 'homesick', 'hushed', 'mushroomize', 'down']);
+  for (const it of Object.values(ITEMS)) {
+    if (it.kind !== 'cure' || !it.cures) continue;
+    for (const c of it.cures) {
+      if (!CURABLE.has(c)) fail('verify', `cure '${it.id}' lists unknown status '${c}' — it would cure nothing (§A4.8)`);
+    }
+    if (it.cures.includes('down') && (!it.heal || it.heal <= 0)) {
+      fail('verify', `revive '${it.id}' lists 'down' but has no heal — it would revive at 0 HP (§A4.12)`);
+    }
+  }
+}
+
+// ── §A9 boss curve sanity: HP + target level climb together, the landed bosses'
+//    manifest HP matches their live ENEMIES row, and every boss falls in a FAIR
+//    number of turns at its §A6 level (verify.ts TTK — a conservative read).
+{
+  const checks = allBossChecks();
+  let prevHp = 0;
+  let prevLevel = 0;
+  for (const b of checks) {
+    if (b.hp <= prevHp) fail('verify', `boss curve: Ch.${b.chapter} '${b.name}' HP ${b.hp} ≤ the prior boss's ${prevHp} (the §A6 ladder must climb)`);
+    if (b.level < prevLevel) fail('verify', `boss curve: Ch.${b.chapter} target level ${b.level} < the prior ${prevLevel}`);
+    prevHp = b.hp;
+    prevLevel = b.level;
+    // landed bosses: the manifest HP is the live enemy HP (one source of truth)
+    const live = ENEMIES[b.bossId];
+    if (live && live.hp !== b.hp) fail('verify', `boss '${b.bossId}' manifest HP ${b.hp} ≠ live ENEMIES HP ${live.hp}`);
+    // a fair EB boss falls in a sane window for a party at its level (conservative
+    // floor: base stats, no weapons — so the real geared fight is at least this fast)
+    if (b.ttk < 2 || b.ttk > 25) {
+      fail('verify', `boss '${b.bossId}' TTK ${b.ttk} at Lv${b.level} is out of the fair 2–25 window (tune §A9 DATA, not code)`);
+    }
+  }
+}
+
+// ── shop shelves are affordable on the §A9 Fortune Arc at the shop's chapter:
+//    every stock id is a real item, and no shelf price exceeds the chapter's
+//    net-worth target (you're never priced out of a shelf you've reached).
+{
+  for (const shop of Object.values(SHOPS)) {
+    const chapters = shop.stock
+      .map((id) => ITEMS[id]?.band)
+      .filter((b): b is NonNullable<typeof b> => b !== undefined)
+      .map((b) => Number(/^ch(\d+)$/.exec(b)?.[1] ?? 1));
+    const shopChapter = chapters.length ? Math.min(...chapters) : 1;
+    const cap = fortuneTarget(shopChapter);
+    for (const id of shop.stock) {
+      const item = ITEMS[id];
+      if (!item) {
+        fail('verify', `shop '${shop.id}' stocks '${id}', which is not a real §A8 item`);
+        continue;
+      }
+      if (item.price > cap) {
+        fail('verify', `shop '${shop.id}' stocks '${id}' at ${item.price} > the Ch.${shopChapter} Fortune-Arc target ${cap} — unaffordable shelf (§A9)`);
+      }
+    }
+  }
+}
+
+// ── verify.ts's AWAKENING_LEVEL stays honest both directions: every ADR-035
+//    awakening has an earned-by level (sane 1..60), and no orphan level rows.
+{
+  for (const a of Object.values(AWAKENINGS)) {
+    const lv = AWAKENING_LEVEL[a.id];
+    if (lv === undefined) fail('verify', `awakening '${a.id}' has no AWAKENING_LEVEL (verify.ts) — the TTK read can't place it`);
+    else if (lv < 1 || lv > 60) fail('verify', `awakening '${a.id}' earned-by level ${lv} is out of range 1..60`);
+  }
+  for (const id of Object.keys(AWAKENING_LEVEL)) {
+    if (!AWAKENINGS[id]) fail('verify', `AWAKENING_LEVEL names '${id}', which is not a real awakening — retire the row`);
   }
 }
 
@@ -2448,6 +2606,7 @@ const counts = [
   `${Object.keys(HEROES).length} heroes`,
   `${Object.keys(ABILITIES).length} abilities`,
   `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–2 + Bosses 1–2)`,
+  `${Object.values(ENEMIES).reduce((a, e) => a + (e.drops?.length ?? 0), 0)} §A7 drops`,
   `${Object.keys(ITEMS).length} items (${Object.keys(ITEM_ICON).length} icons) across 10 chapters`,
   `${Object.keys(SHOPS).length} shops`,
   `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,

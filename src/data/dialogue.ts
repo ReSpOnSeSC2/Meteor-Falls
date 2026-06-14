@@ -1907,6 +1907,10 @@ export const BATTLE_TEXT = {
   chad_hide: 'Chad is supervising from a safe distance!',
   chad_poke: 'Chad poked it with a stick! It barely noticed!',
   win: 'YOU WON!',
+  // §A7 LOOT (S18 M24, ADR-094): an identity drop lands in the bag, EB-style;
+  // if every bag is full, the drop is left where it fell (never a wall)
+  enemy_drop: '{e} left behind {t}!',
+  enemy_drop_full: "The {t} dropped — but everyone's hands were full. It stays on the ground.",
   // S2: Mia's first Pray, tutorialized in the Manager fight (§A11.4 — warm)
   pray_hint: "({user}'s hands are already together. PRAY is on her menu — it costs nothing, and it always does SOMETHING.)",
   spark_revive: 'The spark flares — warm as a porch light in late summer. {t} got back up!',
