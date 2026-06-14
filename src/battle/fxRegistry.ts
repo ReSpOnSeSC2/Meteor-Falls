@@ -205,6 +205,9 @@ export const ITEM_FX: Record<string, string> = {
   salt_shaker: 'item_salt',
   glints_spark: 'item_spark',
   camera_flash: 'item_flash',
+  // M18 (ADR-063): the Bug Zapper is a thrown battle item — it rides the
+  // salt-burst stage (a hurled object that lands hard, §A8 "heavy vs insects")
+  bug_zapper: 'item_salt',
 };
 
 export const ITEM_KIND_FX: Record<string, string | undefined> = {

@@ -3895,3 +3895,85 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   keep every face honest at scale. The Bible's §B gains the forge bullet (Appendix rule 6). Movement 17
   of THE GREAT CATALOG lands: the system that stamps 500 distinct, region-true, palette-clean faces so
   the catalogs that follow are pure, joyful authoring.
+
+## ADR-063 — S17 (Movement 18): THE AMERICAS CATALOG — the first real pour (Ch.1 USA + Ch.2 South America)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the S17 "THE GREAT CATALOG" decree, Movement 18 — the FIRST regional pour and
+  the TEMPLATE every later region copies). Ships **Part A — DEFINE + ICON + PRICE + BAND + the
+  validator tables + the two signature SETS bespoke & registered + live SHOP placement**, green. The
+  remaining live placement (the price-0 SET pieces + key items via quests/gift-boxes, picnic
+  re-verification, valuables-as-loot, an optional enemy `drops` field) is split onto a documented
+  **Part B — PLACE LIVE** seam (Appendix rule 2), the natural half-line for a single session.
+- **Context:** ADR-061 readied the schema/mechanics for ~500 items; ADR-062 built THE ICON FORGE that
+  stamps distinct faces by construction. M18 is the first POUR — Ch.1 (USA, summer '95) and Ch.2 (South
+  America) grow from **23 + 14 → 42 + 42** items (**+47**), toward the §A8 ~40/region target. Pure data
+  where the forge allows; hand-drawn only for the signatures.
+- **Decision — the pour (`src/data/items.ts`).** +47 ITEMS literals (each `I({…})` + an `ITEM_BAND` row),
+  region-true (§A11.7), in §A11 voice, priced to §A9 (a full regional refresh ≈ two chapters of income;
+  anchored to cracked_bat 18 / sandlot_slugger 185 / corn_dog 6 / star_cola 9). **Ch.1 USA (+19):** foods
+  (Grilled Cheese, Apple Pie Slice "Mom's, allegedly", Choco Comet Bar), PP (Bug Juice, Diet Star Cola),
+  cures + the **§A4.12 REVIVAL LINE floor** (Mom's Voice Tape → Homesick; **Second Wind**, a cure listing
+  `'down'` at heal 30 — revives at a sliver), the movement's **first TONIC** (Sudden Guts Pill, +4 Guts
+  permanent), a battle item (Bug Zapper — the very model that got Glint), a valuable (Spare Hubcap), the
+  **hat-ladder head** (Otterbrook Cap), three weapon SIDEGRADES (Foam Finger #1: Offense 1 / Luck +8 —
+  self-belief as a stat; Wiffle Bat; Nonstick Pan), and **THE PORCH SET**. **Ch.2 South America (+28):**
+  Andean/dulce/jungle foods (Empanada, Ceviche, Choripán, Tres Leches, Mango, Arepa, Humita, Chicha
+  Morada), PP (Mate Gourd — clockwise!, Jungle Fizz), the next revival rung (**Guardian-Angel Feather**,
+  heal 200) + Unknot Drops (Paralysis), a tonic (Speed-Demon Soda), the gold-idol valuables (Fool's-Gold
+  Idol "the wish was 'be quiet'", Emerald, Gold Doubloon), the chullo/cushma/alpaca armor, generic arms
+  (Woven Wristlet, Climbing Gloves), the banana-boat keys, and **THE MERCADO SET**.
+- **Decision — the two signature SETS, bespoke + registered (`weapons.ts`, `items.ts`).** Like THE
+  STARTING FIVE / THE SUNDAY SET: five hero-tagged charm pieces each (luck primary, price 0 — a title,
+  not stock), each a bespoke WEAPON_ART `trinket` icon auto-reused by ITEM_ICON. **THE PORCH SET** (ch1,
+  the coffee-can treasures of a summer porch): Firefly Jar (Jay — keeps a small Vibe rider, it remembers
+  Glint), Wind-Chime Charm (Mia), Whittled Whistle (Milo), Bottle-Cap Medallion (Pippa), Lucky Acorn
+  (Dorin). **THE MERCADO SET** (ch2, the Puerto Sol stalls): Friendship Bracelet (Jay), Evil-Eye Bead
+  (Mia — mal de ojo), Brass Gear Charm (Milo), Tin Milagro (Pippa), Jade Frog (Dorin). New constants
+  `PORCH_SET` / `MERCADO_SET` (items.ts) feed the validator's `SET_REGISTRY`.
+- **Decision — every face forged or hand-drawn, both-directions + distinct (`spritegen/icons.ts`,
+  `weapons.ts`).** The generic tail is ONE `() => forgeIcon({ subcat, band, detail, seed: id })` row each
+  (28 of them). The signatures stay bespoke: the 3 weapon sidegrades reuse `drawBatIcon`/`drawPanIcon`
+  (RED/PAPER/NIGHT ramps) for the menu face + a held WEAPON_ART swing; the 4 generic armor pieces get a
+  forge menu icon + a `torso` WEAPON_ART row (the §A8 hat ladder rides the body slot); the 2 generic arms
+  get a `trinket` whose icon IS a `forgeIcon` call; the 10 SET charms get hand-drawn `trinket` icons. The
+  distinctness sweep caught exactly one collision (Mom's Voice Tape vs the gallery `tape` sample — same
+  subcat/band/detail, ramp picks aligned), fixed by adding a second detail mark — the test working as
+  designed. ADR-020 holds (palette-only, `outline()` last, pure light after).
+- **Decision — the validator tables widen, the floor ratchets (`tools/content-validate.ts`).**
+  `WEAPON_LADDER[ch1]` += the 3 sidegrades (wielder-tagged); `PP_LINE[ch1]` += Bug Juice/Diet Star Cola,
+  `[ch2]` += Mate Gourd/Jungle Fizz; `ARMOR_LINE[ch1]` += Otterbrook Cap, `[ch2]` += chullo/cushma/alpaca;
+  `SET_REGISTRY` += THE PORCH SET + THE MERCADO SET; `ITEM_FX` += Bug Zapper (rides the salt-burst stage);
+  `BAND_FLOOR` ratchets **ch1 23→42, ch2 14→42** (the spine's "set the floor to the count" rule). The
+  verdict prints **88 items (88 icons)**; bands **ch1:42 ch2:42** ch3:1 ch9:2 cross:1.
+- **Decision — LIVE placement in shops (Part A; `src/data/shops.ts` + the validator's shop pin).** The 31
+  new PRICED, buyable items stock the right counters — OTTERBROOK DRUG (pharmacy food/cures, the revival
+  floor, the cap), STARMART (Diet Star Cola, the novelty weapon rack, the dear tonic), MERCADO DEL SOL
+  (market food, mate, the chullo), LANA & MAS (mountain food, the Guardian-Angel Feather, the rare
+  Speed-Demon Soda vendor, the cliff-path gear). Valuables (sell-fodder), price-0 key items, and the
+  price-0 SET charms are loot/quest goods, never shelf stock — they land in Part B.
+- **Deferred to Part B — PLACE LIVE (the next session).** Grant the price-0 SET pieces + the banana-boat
+  keys + the Wish Token via existing Ch.1/Ch.2 quest threads or hidden gift-boxes on the grown maps
+  (append-only, with the `maps.test.ts` / `world_block.test.ts` tile+PROP-solid BFS reachability re-proof
+  — the box reachable, sealing no lane per PLACE_MARGIN); confirm the Ch.1/Ch.2 picnic tables + the deli
+  Family Basket path; scatter the valuables as world/sell loot; OPTIONALLY add an `EnemyDef.drops?:
+  {item,chance}[]` field wired into the battle rewards path (deferred — no schema/engine change this
+  session, so no save migration and no FNV re-pin). The CALLER ledger keys off quest doneFlags, not items,
+  so any reward wiring stays finale-safe.
+- **Verification:** `npm run validate` green (**88 items / 88 icons** across 10 chapters; bands ch1:42
+  ch2:42 ch3:1 ch9:2 ch10:0 cross:1; the per-region weapon/pp/armor/set ladders pass both directions; the
+  4-shop pin matches) + `tsc --noEmit` clean + full **vitest 722 green** (+5: the M18 catalog test —
+  ≈40/region, the revival line revives, the tonics boost, the two SETs are five hero-tagged luck charms,
+  the foam finger is pure self-belief; the icon distinctness sweep still green at 88 + 54 gallery) +
+  `vite build` clean + `npm run art:icons` re-rendered (`--region ch1`, `--region ch2`, `--forge`) and
+  read by eye — both Americas sheets distinct, region-true (USA warm mix / Andean clay-gold-forest), no
+  AI smell. No FNV re-pin, no frozen-core / world_block change (items/icons are not map generators); no
+  save migration (inventory references ids; tonics already ride v9).
+- **Consequences:** the Americas catalog is poured — a real shopkeeper's inventory of a 1995 summer and
+  an Andean market, every face distinct, every line in voice. The first tonic raises a stat for keeps and
+  the revival line (Second Wind → Guardian-Angel Feather) revives in-menu through the existing ADR-061
+  mechanics. The TEMPLATE is set: M19–21 (Old-World / Far-World / Last-World) are now mostly pure data —
+  add ITEM_BAND rows + the per-region validator rows + the occasional signature, ratchet the floor. No
+  new canon/mechanic was introduced (pouring §A8-anticipated items is implementing canon, not deviating —
+  the validator manifest is the record), so the Bible needs no amendment this movement. Part B places the
+  Americas catalog the rest of the way into the living world.

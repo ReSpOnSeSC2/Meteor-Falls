@@ -587,3 +587,29 @@ sheets (the authoritative review; `preview_screenshot` hangs on the WebGL canvas
 | # | Scenario | Touch | BT pad | Notes |
 |---|---|---|---|---|
 | — | **No new device scenario** — M17 ships render-capability only (no new items, no UI change); the M8 icon rows (31–32) still cover the menus / shops / battle Goods. The browser p99 loop + `android:apk` paths are unaffected (icon textures are tiny; boot registers ITEM_ICON once) | ⬜ | ⬜ | re-verify at M18 when the Americas catalog pours real forged items into shops / drops |
+
+## S17 Movement 18 pre-flight — 2026-06-14, THE AMERICAS CATALOG (ADR-063, Part A)
+
+The first real POUR: Ch.1 (USA) + Ch.2 (South America) grow **23 + 14 → 42 + 42** items (**+47**),
+each defined + iconed + priced + banded, region-true (§A11.7), in §A11 voice. Part A ships data-complete
++ live in SHOPS + the two signature SETS bespoke & registered; live map gift-box/quest grants of the
+price-0 SET pieces + picnic re-verification are the documented Part B seam. Verified headlessly via tsc +
+full vitest + the both-directions validator gate + the `art:icons` regional sheets (the authoritative
+review; `preview_screenshot` hangs on the WebGL canvas, per ADR-059/060).
+
+| Check | Result |
+|---|---|
+| **The Americas catalog reads on its per-region sheets** — `npm run art:icons -- --region ch1` / `--region ch2` → `.shots/icons_region_ch{1,2}.png`, grouped by kind, labelled | ✅ 42 + 42 items; distinct + region-true (USA warm mix / Andean clay-gold-forest), no AI smell, read at 4× |
+| **Both-directions icon + ladder + set gates green** — ITEM_ICON ⇄ ITEMS; WEAPON_ART ⇄ equippables (held/torso/trinket); WEAPON_LADDER / PP_LINE / ARMOR_LINE / SET_REGISTRY both ways; BAND_FLOOR ratcheted to the count | ✅ `88 items (88 icons)`; bands `ch1:42 ch2:42` ch3:1 ch9:2 cross:1; the distinctness sweep caught + fixed one ramp-aligned collision |
+| **A tonic raises a stat for keeps (save v9 round-trip)** — Sudden Guts Pill (+4 Guts) / Speed-Demon Soda (+3 Speed) ride `applyTonic` → `HeroState.boosts` (ADR-061), survive level-up | ✅ items well-formed (`boost:{stat,amount}`); the v9 boosts path + its migration are unchanged (proven by the existing state/migration suite) |
+| **Second Wind revives; the revival line scales** — Second Wind (heal 30) → Guardian-Angel Feather (heal 200), both `cure` listing `'down'` → revive at their own value (ADR-061 generalised path) | ✅ M18 catalog test asserts both revive + the feather out-heals the floor; the in-menu/in-battle `'down'` branch is the shipped ADR-061 code |
+| **New shop items appear + are buyable** — the 31 priced items stock OTTERBROOK DRUG / STARMART / MERCADO DEL SOL / LANA & MAS; the 4-shop pin matches both directions | ✅ shops.ts + the validator shop canon agree; valuables / price-0 keys / SET charms correctly excluded (loot/quest goods) |
+| **No FNV re-pin / no frozen-core change / no save migration** — items + icons are not sample-routed map generators; inventory references ids; tonics already ride v9 | ✅ no world_block/levelkit touch; forge seeds off the item id |
+| `npm run validate` + `npx vitest run` + `npm run build` | ✅ validator green + **722 vitest** (items.test.ts +5 Americas proofs; distinctness still green at 88 + 54 gallery) + `vite build` clean |
+
+### S17 Movement 18 device rows (appended to the S8 gate)
+
+| # | Scenario | Touch | BT pad | Notes |
+|---|---|---|---|---|
+| — | **Shop the Americas** — open any of the 4 shops on a save with cash: the new priced rows (Grilled Cheese, Second Wind, Otterbrook Cap, Empanada, Guardian-Angel Feather, Speed-Demon Soda…) show their forged icon beside the price (icon rows 31–32 cover the UI, unchanged); BUY adds to the bag, SELL halves | ⬜ | ⬜ | item textures are tiny; boot registers the +47 ITEM_ICON rows once — browser p99 loop + `android:apk` paths unaffected |
+| — | **A tonic + a Second Wind in the menu** — use Sudden Guts Pill: "…Guts went up by 4 — for keeps!" and it survives a level-up (save → reload); knock a hero to 0, use Second Wind in battle → revived at a sliver | ⬜ | ⬜ | rides the shipped ADR-061 tonic/revival code; **Part B** lands the gift-box/quest grants of the price-0 SET pieces + the picnic re-proof |

@@ -34,7 +34,7 @@ import { HEROES } from '../src/data/heroes';
 import { ABILITIES, PRAY_BASE, PRAY_TEXT } from '../src/data/abilities';
 import { FX_REGISTRY, STAGE_ANIM, itemFxKey } from '../src/battle/fxRegistry';
 import { ENEMIES } from '../src/data/enemies';
-import { ITEMS, slotOf } from '../src/data/items';
+import { ITEMS, slotOf, PORCH_SET, MERCADO_SET } from '../src/data/items';
 import { WEAPON_ART } from '../src/spritegen/weapons';
 import { ITEM_ICON } from '../src/spritegen/icons';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -324,7 +324,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   //    Both directions: every listed rung exists with the right wielder + band;
   //    every kind:'weapon' item sits on some region's ladder.
   const WEAPON_LADDER: Record<string, Record<string, string>> = {
-    ch1: { cracked_bat: 'rex', tball_bat: 'rex', hand_me_down_pan: 'faye' },
+    // M18 (ADR-063): the Americas sidegrades join Ch.1 (the foam finger is an
+    // investment in self-belief; the nonstick pan is a faye choice vs the copper)
+    ch1: {
+      cracked_bat: 'rex', tball_bat: 'rex', hand_me_down_pan: 'faye',
+      foam_finger: 'rex', wiffle_bat: 'rex', nonstick_pan: 'faye',
+    },
     ch2: { sandlot_slugger: 'rex', copper_pan: 'faye' },
     ch3: { pellet_popper: 'milo' }, // Milo's first air rifle — England (defined early)
     ch9: { cedar_beads: 'dorin' }, // Dorin's first beads — Romania (defined early)
@@ -347,7 +352,10 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 
   // 2. THE PP LINE, per region (§A8 PP drinks — the Star Cola line, the teas,
   //    the temple incense). Both directions (generalises the ADR-016 pin).
-  const PP_LINE: Record<string, string[]> = { ch1: ['star_cola'] };
+  const PP_LINE: Record<string, string[]> = {
+    ch1: ['star_cola', 'bug_juice', 'diet_star_cola'],
+    ch2: ['mate_gourd', 'jungle_fizz'], // M18 (ADR-063) — mate (clockwise!) + jungle fizz
+  };
   const ppAll = new Set(Object.values(PP_LINE).flat());
   for (const id of ppAll) {
     const item = ITEMS[id];
@@ -361,7 +369,11 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 
   // 3. THE ARMOR LINE, per region (§A8 bodies/robes/vests). Both directions.
-  const ARMOR_LINE: Record<string, string[]> = { ch1: ['champion_jacket'], ch2: ['wool_poncho'] };
+  const ARMOR_LINE: Record<string, string[]> = {
+    // M18 (ADR-063): the §A8 hat ladder opens (Otterbrook Cap → Chullo) + Ch.2 bodies
+    ch1: ['champion_jacket', 'otterbrook_cap'],
+    ch2: ['wool_poncho', 'chullo', 'cushma', 'alpaca_vest'],
+  };
   const armorAll = new Set(Object.values(ARMOR_LINE).flat());
   for (const id of armorAll) {
     const item = ITEMS[id];
@@ -382,6 +394,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   const SET_REGISTRY: Array<{ name: string; kind: 'arms' | 'charm'; pieces: Record<string, string> }> = [
     { name: 'THE STARTING FIVE', kind: 'arms', pieces: STARTING_FIVE },
     { name: 'THE SUNDAY SET', kind: 'charm', pieces: SUNDAY_SET },
+    // M18 (ADR-063): the two AMERICAS hero-signature charm sets
+    { name: 'THE PORCH SET', kind: 'charm', pieces: PORCH_SET },
+    { name: 'THE MERCADO SET', kind: 'charm', pieces: MERCADO_SET },
   ];
   const armsSetIds = new Set<string>();
   const charmSetIds = new Set<string>();
@@ -414,7 +429,8 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const b of BANDS) bandCounts[b] = 0;
   for (const item of Object.values(ITEMS)) if (item.band) bandCounts[item.band] += 1;
   const BAND_FLOOR: Record<string, number> = {
-    ch1: 23, ch2: 14, ch3: 1, ch4: 0, ch5: 0, ch6: 0, ch7: 0, ch8: 0, ch9: 2, ch10: 0, cross: 1,
+    // M18 (ADR-063) ratchets ch1 + ch2 to the Americas pour (≈40/region target)
+    ch1: 42, ch2: 42, ch3: 1, ch4: 0, ch5: 0, ch6: 0, ch7: 0, ch8: 0, ch9: 2, ch10: 0, cross: 1,
   };
   for (const b of BANDS) {
     if (bandCounts[b] < BAND_FLOOR[b]) {
@@ -505,11 +521,29 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 // §A8/ADR-016 — exactly the two Ch.1 shops, with their canon shelves
 // (S9 extended both per §A10 #3: the twins' sugar + city-lemon supplies)
 {
+  // M18 (ADR-063): the Americas pour stocks the new priced consumables / gear
+  // into the right counters (valuables, key items, and the price-0 SET charms
+  // are loot/quest goods, never shelf stock).
   const canon: Record<string, string[]> = {
-    drugstore: ['tball_bat', 'corn_dog', 'pbj', 'salt_shaker', 'sugar_bag'],
-    starmart: ['tball_bat', 'hand_me_down_pan', 'star_cola', 'corn_dog', 'pbj', 'salt_shaker', 'lemon_crate', 'basket_basic'],
-    mercado: ['sandlot_slugger', 'alfajor', 'star_cola', 'salt_shaker', 'hanky', 'aloe_leaf', 'basket_basic', 'tin_sun_pendant'],
-    valle_shop: ['copper_pan', 'alfajor', 'corn_dog', 'star_cola', 'aloe_leaf', 'hanky', 'basket_basic'],
+    drugstore: [
+      'tball_bat', 'corn_dog', 'pbj', 'salt_shaker', 'sugar_bag',
+      'grilled_cheese', 'apple_pie_slice', 'bug_juice', 'moms_voice_tape',
+      'second_wind', 'bug_zapper', 'otterbrook_cap',
+    ],
+    starmart: [
+      'tball_bat', 'hand_me_down_pan', 'star_cola', 'corn_dog', 'pbj', 'salt_shaker', 'lemon_crate', 'basket_basic',
+      'diet_star_cola', 'choco_comet_bar', 'foam_finger', 'wiffle_bat', 'nonstick_pan', 'sudden_guts_pill',
+    ],
+    mercado: [
+      'sandlot_slugger', 'alfajor', 'star_cola', 'salt_shaker', 'hanky', 'aloe_leaf', 'basket_basic', 'tin_sun_pendant',
+      'empanada', 'ceviche', 'mango', 'arepa', 'chicha_morada', 'mate_gourd', 'jungle_fizz', 'unknot_drops',
+      'chullo', 'woven_wristlet',
+    ],
+    valle_shop: [
+      'copper_pan', 'alfajor', 'corn_dog', 'star_cola', 'aloe_leaf', 'hanky', 'basket_basic',
+      'choripan', 'tres_leches', 'humita', 'guardian_angel_feather', 'speed_demon_soda',
+      'cushma', 'alpaca_vest', 'climbing_gloves',
+    ],
   };
   const have = Object.keys(SHOPS);
   if (have.length !== 4) fail('canon', `Ch.1–2 ship 4 shops (drugstore, starmart, mercado, valle_shop), found ${have.length}`);
