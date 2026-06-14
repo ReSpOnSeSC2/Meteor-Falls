@@ -530,6 +530,11 @@ export const MapDefSchema = z.strictObject({
    *  the Brickton rules (multi-street grid + connector + multiple block
    *  faces) — maps.test.ts sweeps every map tagged 'city' */
   settlement: SettlementSchema.optional(),
+  /** S18 M22 (ADR-092): the canon §A5/§A6 area this map belongs to. When set, the
+   *  area banner draws the area's region-true decorative GLYPH script beneath the
+   *  place name (§A11.8). Optional — a map without it shows a plain banner. The
+   *  value must be a CANON_AREAS key (validated in tools/content-validate.ts). */
+  area: z.string().min(1).optional(),
   grid: z.array(z.string().min(1)).min(1),
   props: z.array(PropDefSchema),
   npcs: z.array(NpcDefSchema),

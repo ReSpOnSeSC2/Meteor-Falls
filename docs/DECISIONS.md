@@ -5165,3 +5165,90 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   multiplier) are each the clearly-flagged debt of their landing chapter or M24 THE GREAT VERIFICATION.
   Live placement of the Last-World catalog (shops + gift-boxes + quest rewards) follows in each
   chapter's own session, the M18-Part-B way. S17 "THE GREAT CATALOG" closes. ☄️
+
+
+## ADR-092 — S18 (Movement 22): THE GLYPH FORGE — §A11.8 THE GLYPH LAW, built
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the S18 polish track, Movement 22 — the first of the three closing movements:
+  M22 THE GLYPH FORGE → M23 THE FLAIR WEAVE → M24 BALANCE & THE GREAT VERIFICATION)
+- **The renumber (same situation M21 documented).** The S17 road-ahead text calls this movement
+  "ADR-067," but ADR-066–091 are ALREADY TAKEN — the S18/19/20 systems (buildings/area-skins, the
+  control system, PSI gates, the property/garage/fuel/ferry/rocket stack) and M21's Last-World pour all
+  landed in the interim. The highest existing ADR is 091, so this is **ADR-092**. The old number is
+  stale, not wrong; the work is unchanged.
+- **THE GAP this movement closes FIRST.** ADR-061's amendment record claims it added "§A11.8 (the glyph
+  law placeholder, built in M22)" to the Bible — but a grep proves §A11.8 was NEVER written: §A11 stopped
+  at rule 7, with no glyph subsection anywhere. ADR-061 *promised* §A11.8; **M22 delivers it.** This ADR
+  ships the real §A11.8 THE GLYPH LAW as a Bible amendment (Appendix rule 6, in §A11 voice) in the SAME
+  commit as the engine that implements it. (Note: the S17 planning doc sketched §A11.8 as a pixel-emoji
+  `{g:NAME}` "flair" system; the user's M22 brief reorganised the road — M22 is THE GLYPH FORGE
+  (decorative region-true SCRIPT), and the pixel-emoji flair is M23 THE FLAIR WEAVE. §A11.8 is written as
+  THE GLYPH LAW accordingly; the flair weave earns its own rule when M23 lands.)
+- **Context.** EarthBound's world is full of WRITING that isn't English — rune-marks on stones, squiggle-
+  script on foreign signs, banner flourishes, seals over doors, dead machine readouts. Meteor Falls
+  renders real diegetic place-name banners (§A11.6) but had NO systematic, region-true decorative GLYPH
+  vocabulary: every foreign sign, monastery inscription, bazaar banner, Minimus proclamation, and Mars
+  interface readout was plain text or nothing. THE ICON FORGE (ADR-062) had already proven the pattern
+  for fixing exactly this kind of gap — a parametric, deterministic, palette-clean, distinct-by-
+  construction engine — so THE GLYPH FORGE is built as its sibling, not a one-off.
+- **Decision — THE THREE-LAYER GLYPH FORGE (`src/spritegen/glyphforge.ts`).** A glyph RUN is the
+  composition of three INDEPENDENT choices, so two runs are never the same drawing (mirrors ADR-062):
+  1. **SCRIPT FAMILY = the STROKE GRAMMAR** — `colonial` (sign-painted Americana), `deco` (art-deco
+     future city), `talavera` (Andean tile), `fraktur` (blackletter institution), `runic` (carved Norse),
+     `heraldic` (tiny ducal heraldry), `cursive` (flowing bazaar banner), `barscript` (headline-bar
+     bazaar script), `seal` (carved temple seal), `slavonic` (painted-village Cyrillic), `frost`
+     (crystalline Aurora readout), `tiki` (carved island petroglyph), `hush` (the dead Mars interface).
+     13 families to start, each structurally distinct from its siblings (a stave is runic, a loop is
+     cursive, a box is a seal — never by luck). A family draws ONE glyph per 7×11 cell, varied per cell
+     by the seed so a run reads like writing, not a repeated stamp.
+  2. **RAMP = the REGION palette family** — `REGION_RAMPS[band]` REUSED from the icon forge, seeded off
+     the run's stable id, so a glyph wears its region's mood (with per-area `ramp`/`accent` overrides
+     where a place's mood fights its band pool — Brickton's cold deco over warm ch1, Mars's purple/night
+     hush).
+  3. **SEED = a stable id → mulberry32 ⊕ fnv** — lays out the specific run (how many glyphs, which
+     stroke variant each cell takes). NOT a map stream: glyphs need no `world_block` / levelkit re-pin
+     (ADR-062's discipline). `forgeGlyphRun({script, band, seed, length})` → identical bytes forever.
+- **Decision — every canon area owns a region-true script, pinned BOTH directions.** `GLYPH_SCRIPT`
+  (glyphforge.ts) maps each of the 17 `CANON_AREAS` to one `{script, band, …}` the way `AREA_SKINS`
+  (ADR-066) gave each a building roster. Gated both ways in `tools/content-validate.ts` (the new
+  `glyph-script` section) AND a vitest mirror (`src/spritegen/glyphs.test.ts`): every canon area has a
+  script naming a real family + real band whose run draws something; no `GLYPH_SCRIPT` row is an orphan;
+  and any map that DECLARES an `area` (new optional `MapDef.area`) names a real script. The verdict line
+  prints "17 area glyph scripts (13 families)".
+- **Decision — ADR-020 + §A11 hold BY CONSTRUCTION.** The Pixmap DSL takes only palette indices (no API
+  accepts an RGB), strokes are flat + deliberate (no scatter noise), `outline()` lands LAST so each run
+  lives inside one INK contour, and only pure light (a glint) follows it. §A11.6: a script draws abstract
+  stroke-forms, NEVER the Latin alphabet, so a run spells nothing readable — it can't leak a chapter
+  title. §A11.3: the `hush` family is the sparsest writing in the game (most cells nearly empty, broken
+  segments) and never funny — a test asserts it draws fewer pixels than a living region.
+- **Decision — the slop-detector (`src/spritegen/glyphs.test.ts`).** Exactly the ADR-060/062 discipline:
+  every shipped area run AND every `--forge` gallery sample is byte-DISTINCT (no two scripts share a
+  drawing); the three layers each provably differentiate (family / ramp / seed); two areas that share a
+  family (kvisthavn+lilleby `runic`, foggybottom+wintermoor `fraktur`) stay byte-distinct because the
+  seed is the area id; palette-conformance + in-bounds + determinism. No seeded collisions surfaced (the
+  per-cell seed streams spread the runs cleanly).
+- **Decision — wired into the area banner (tastefully).** Boot registers one `glyph_<area>` texture per
+  canon area (`generateAllTextures`, beside the ITEM_ICON loop). `OverworldScene.showBanner` draws the
+  region-true run beneath the diegetic place name when the map declares its area — squiggle-script foreign
+  signage, never readable text. The LIVE Americas overworlds (`otterbrook`/`brickton`/`cage_park`/
+  `puerto_sol`) declare their area now; the unlanded regions inherit the same hook when their maps land
+  (the registry already pins all 17). A new `art:glyphs` tool (`tools/render-glyphs.ts`, the `art:icons`
+  precedent) paginates an area sheet by region + a `--forge` family gallery to `.shots/`.
+- **Verification:** `npm run validate` green (now reporting "17 area glyph scripts (13 families)"; catalog
+  unchanged at 467 items) + `npx tsc --noEmit` clean + full `npx vitest run` **991 green** (+14 glyph
+  proofs: both-directions, the three layers, the slop sweep, palette/determinism, the Hush-is-sparsest
+  read) + `npx vite build` clean + the `art:glyphs` area + `--forge` sheets re-rendered and read BY EYE
+  (ADR-059/060 — NOT `preview_screenshot`): every region's script unmistakable and slop-free (Americana
+  sign-paint vs Brickton deco vs Andean tile vs England blackletter vs Norse runes vs ducal heraldry vs
+  bazaar cursive vs India headline-bar vs temple seal vs village Cyrillic vs Aurora frost vs island tiki
+  vs the sparse, sad Mars hush). No FNV re-pin, no frozen-core / `world_block` change (glyphs are not map
+  generators); no save migration (`MapDef.area` is static map data, not save state). The standing deferred
+  debts (heroResist damage, the reusable-cure path, the Spice Box multiplier, `EnemyDef.drops`) stay
+  deferred — glyph work touched none of them.
+- **Consequences:** the world can now WEAR its writing. Every canon area has a region-true decorative
+  script by construction, distinct-by-the-pixel, §A11.6/§A11.3/§A11.7-safe, served on the area banner and
+  ready for the later signage / inscription / interface surfaces to draw from the same registry. When an
+  unlanded chapter lands, its maps declare their `area` and the banner already wears the right script —
+  no per-place art. M22 closes; M23 THE FLAIR WEAVE (the pixel-emoji `{g:NAME}` battle/dialogue flair) and
+  M24 BALANCE & THE GREAT VERIFICATION are the road ahead. ☄️

@@ -21,6 +21,7 @@
     "art:buildings": "vite-node tools/render-buildings.ts",
     "art:vehicles": "vite-node tools/render-vehicles.ts",
     "art:icons": "vite-node tools/render-icons.ts",
+    "art:glyphs": "vite-node tools/render-glyphs.ts",
     "android:sync": "npm run build && npm run art:appart && cap sync android",
     "android:apk": "npm run android:sync && cd android && .\\gradlew assembleDebug && cd .. && node tools/collect-apk.mjs"
   },

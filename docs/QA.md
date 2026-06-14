@@ -708,3 +708,26 @@ by eye. **The catalog ends with the LAST item in the game — the Player's House
 | **BOTH-DIRECTIONS GATES + the floor ratchet** — ITEM_ICON ⇄ ITEMS, WEAPON_ART ⇄ equippables, WEAPON_LADDER / PP_LINE / ARMOR_LINE both ways; `BAND_FLOOR` ratcheted ch9→45 ch10→76 cross→15; every battle item carries an `ITEM_FX` row | ✅ `validate` prints `ch9:45 ch10:76 cross:15` |
 | **UNLANDED HELD** — no maps*.ts / shops.ts / quests touched; Ch.9/10 aren't landed | ✅ only `data/items.ts`, `spritegen/{icons,weapons,iconforge}.ts`, `battle/fxRegistry.ts`, the validator + tests + docs changed |
 | `npm run validate` + `npx vitest run` + `npx tsc --noEmit` + `npx vite build` | ✅ validator green (**467 items / 467 icons**) + **977 vitest** (+9 M21 catalog proofs) + tsc clean + `vite build` clean + the ch9/ch10/forge sheets re-rendered and read by eye (Romania velvet/harvest/candlelit · Alaska ice · Hawaii magma/island · Mars near-silent dread — no AI smell) |
+
+## S18 M22 (ADR-092) — THE GLYPH FORGE / §A11.8 THE GLYPH LAW
+
+The first of S18's three closing movements (M22 GLYPH FORGE → M23 FLAIR WEAVE → M24 VERIFICATION).
+Builds the icon forge's sibling: a parametric, deterministic, palette-clean engine that stamps a
+DECORATIVE, REGION-TRUE glyph script for every canon §A5/§A6 area, and CLOSES THE GAP ADR-061 left —
+its amendment record claimed it added §A11.8 THE GLYPH LAW, but §A11.8 was never written into the
+Bible (§A11 stopped at rule 7). M22 writes the real §A11.8 AND ships the forge that implements it.
+The catalog is untouched (still 467 items); this movement is ENGINE + LAW + GATE + WIRING. Verified
+headlessly: tsc + full vitest + the validator + `vite build` + the `art:glyphs` area/forge sheets read
+BY EYE (ADR-059/060 — not `preview_screenshot`).
+
+| Check | Result |
+|---|---|
+| **§A11.8 THE GLYPH LAW written** — the gap ADR-061 promised, delivered: §A11.8 added to the Bible (Appendix rule 6, dated, in §A11 voice) — diegetic decoration never chapter UI (§A11.6), abstract stroke-forms that spell nothing readable, the Hush's script sparse + never funny (§A11.3), region-true at the stroke (§A11.7). The discrepancy is documented in ADR-092 | ✅ §A11.8 reads in §A11 voice; the old §A11.8 pixel-emoji sketch is reassigned to M23 THE FLAIR WEAVE (the road's reorganisation, noted in the ADR) |
+| **THE THREE-LAYER FORGE** (`src/spritegen/glyphforge.ts`) — SCRIPT FAMILY (stroke grammar) × REGION RAMP (`REGION_RAMPS` reused) × stable SEED, Phaser-free, ADR-020 by construction (palette-only, `outline()` last, pure light after), NO map FNV / world_block re-pin | ✅ `forgeGlyphRun({script,band,seed,length})` pure → identical bytes forever; 13 script families (colonial/deco/talavera/fraktur/runic/heraldic/cursive/barscript/seal/slavonic/frost/tiki/hush) |
+| **Every canon area owns a region-true script** — `GLYPH_SCRIPT` maps all 17 `CANON_AREAS` the way `AREA_SKINS` (ADR-066) gave each a building roster; the Hush (`mars`) is the sparsest, saddest writing in the game | ✅ 17 areas scripted; America sign-paint / Brickton deco / Andean tile / England blackletter / Norse runes / ducal heraldry / bazaar cursive / India headline-bar / temple seal / village Cyrillic / Aurora frost / island tiki / Mars hush — each unmistakable |
+| **BOTH-DIRECTIONS GATE** — `GLYPH_SCRIPT ⇄ CANON_AREAS` in `tools/content-validate.ts` (the new `glyph-script` section) AND the vitest mirror (`src/spritegen/glyphs.test.ts`): every area has a real script that draws something; no orphan row; any `map.area` names a real script | ✅ `validate` prints "17 area glyph scripts (13 families)"; the gate fails loudly on a missing/orphan/empty script |
+| **THE DISTINCTNESS LAW** (the slop-detector, ADR-060/062 discipline) — every shipped area run + every forge gallery sample byte-distinct; the three layers each differentiate; two areas sharing a family stay distinct via seed=area-id; palette + determinism + the Hush-is-sparsest read | ✅ `glyphs.test.ts` green at 17 areas + the 13-family gallery; NO seeded collisions (the per-cell streams spread cleanly) |
+| **A CONTACT SHEET, READ BY EYE** — `art:glyphs` (the `art:icons` precedent): an area sheet by region + a `--forge` family gallery to `.shots/` | ✅ `glyphs_areas.png` + `glyphs_forge.png` re-rendered and read with the Read tool — region-true, slop-free, no AI smell; the Mars hush sparse + sad |
+| **WIRED TASTEFULLY** — boot registers one `glyph_<area>` texture per area; `OverworldScene.showBanner` draws the region-true run beneath the place name when `MapDef.area` is set; the LIVE Americas overworlds (otterbrook/brickton/cage_park/puerto_sol) declare their area; unlanded regions inherit the hook | ✅ optional `MapDef.area` (validated); banner widens to fit the glyph; §A11.6-safe (decoration, not text) |
+| **DEFERRED DEBTS STAY DEFERRED** — heroResist damage, the reusable-cure path, the Spice Box multiplier, `EnemyDef.drops` — glyph work needed none of them | ✅ no battle-math / enemy-schema / food-path / cure-path change; no save migration (`MapDef.area` is static map data, not save state) |
+| `npm run validate` + `npx vitest run` + `npx tsc --noEmit` + `npx vite build` | ✅ validator green (467 items / 17 area glyph scripts) + **991 vitest** (+14 glyph proofs) + tsc clean + `vite build` clean + the area/forge glyph sheets re-rendered and read by eye |
