@@ -21,5 +21,6 @@ android/app/src/main/res/mipmap-xxxhdpi/
 android/app/src/main/res/drawable-nodpi/splash_art.png
 
 # build/runtime junk
+.tmp/
 .shots-server.log
 vite.config.ts.timestamp-*.mjs
