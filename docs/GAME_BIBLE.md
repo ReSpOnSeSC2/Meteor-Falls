@@ -362,6 +362,19 @@ heli/blimp), each carrying its true gameplay DATA — a `seats` count (usable-to
 the seat-fit law), a collision footprint, and the terrain it travels (road/water/air). Pinned
 both directions (`VEHICLE_CATALOG` ⇄ `VEHICLE_SPECS`). None of this replaces an Ember leg.
 
+**THE WORLD MAP — CONTINENTS + VEHICLE FERRYING (S20 M46, ADR-087).** The 17 areas group onto 12
+landmasses (`CONTINENTS`, `src/data/world.ts`): you DRIVE freely WITHIN a continent (its areas are
+door-connected) but you cannot drive an ocean. To take YOUR OWN CAR to another continent you FERRY
+it — load it in a jumbo jet's cargo hold (AIR) or onto a boat/yacht deck (SEA); Mars is reachable
+only by the rocket (§A6 Ch.10 / the Long Shot, repeatable late-game). The rules are pure + validated
+in `src/engine/ferry.ts`: Earth↔Earth ferries by air/sea (commercial freight always available, far
+cheaper if you OWN a qualifying craft), Mars↔Earth by rocket only (must be owned/earned — no
+commercial Mars freight), and EVERY ferry obeys the §A5 EMBER LAW — you can only ferry to a VISITED
+continent, and new chapters still gate on the Embers. A car can only be DRIVEN on the continent it's
+parked on (`carLocation`, save v15); the Ember trail stays linear, this is the wealth/free-roam layer
+on top — exactly the rags-to-riches arc (start with nothing → a billionaire who drives their own car
+on every continent and lives on Mars).
+
 ## A6. The Ten Chapters & Ten Bosses
 
 > Boss stat lines are canon starting values; Prompt 31–40 wire them. Format: **HP / signature gimmick**.

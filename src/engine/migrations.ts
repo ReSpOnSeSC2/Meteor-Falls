@@ -51,13 +51,17 @@
  * v13 → v14 (S20/ADR-084): THE FUEL SYSTEM — current fuel UNITS per owned car
  * (`fuel`). A pre-v14 save tracked no fuel (the system is v14-new), so an empty
  * map is its true history; a car gains a full tank when bought from here on.
+ *
+ * v14 → v15 (S20/ADR-087): VEHICLE FERRYING — which continent each owned car is
+ * parked on (`carLocation`). A pre-v15 save owned no car off its home continent
+ * (ferrying is v15-new), so an empty map is its true history.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 14;
+export const CURRENT_SAVE_VERSION = 15;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -290,6 +294,16 @@ export const MIGRATIONS: MigrationStep[] = [
       // tracked no fuel (the system is v14-new), so an empty map is its true history.
       if (!isObj(raw.fuel)) raw.fuel = {};
       raw.version = 14;
+      return raw;
+    },
+  },
+  {
+    to: 15,
+    migrate(raw) {
+      // S20 M46 (ADR-087): VEHICLE FERRYING — which continent each car is parked on.
+      // A pre-v15 save never ferried (it's v15-new), so an empty map is its history.
+      if (!isObj(raw.carLocation)) raw.carLocation = {};
+      raw.version = 15;
       return raw;
     },
   },

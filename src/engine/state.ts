@@ -38,7 +38,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 14;
+  version: 15;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -89,6 +89,11 @@ export interface GameStateData {
    *  (gas/diesel/jet units, or kWh of charge for the EV line). Drains as you drive,
    *  refills (paid) at a station; human-powered bikes never appear here. */
   fuel: Record<string, number>;
+  /** S20 (v15, ADR-087): VEHICLE FERRYING — which CONTINENT each owned car title is
+   *  currently parked on. A car can only be DRIVEN on its own continent; ferrying it
+   *  (jumbo-jet cargo / boat deck / the rocket) moves this. Bought cars start on the
+   *  dealership's continent. */
+  carLocation: Record<string, string>;
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -161,7 +166,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 14,
+    version: 15,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -195,6 +200,7 @@ export function newGameData(): GameStateData {
     garage: {},
     activeVehicle: null,
     fuel: {},
+    carLocation: {},
   };
 }
 

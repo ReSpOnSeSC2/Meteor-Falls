@@ -529,3 +529,24 @@ describe('save migration registry (S20 M43) — v13 → v14: the fuel system', (
     expect(GS.data.fuel).toEqual({});
   });
 });
+
+describe('save migration registry (S20 M46) — v14 → v15: vehicle ferrying', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills an empty carLocation map on a pre-v15 save', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 14;
+    delete d.carLocation; // a pre-v15 save never ferried
+    GS.deserialize(JSON.stringify(d));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.carLocation).toEqual({});
+  });
+
+  it('car locations round-trip byte-stable', () => {
+    GS.data.carLocation = { title_car_sedan: 'usa', title_car_nikolai: 'mars' };
+    const json = GS.serialize();
+    GS.reset();
+    GS.deserialize(json);
+    expect(GS.data.carLocation).toEqual({ title_car_sedan: 'usa', title_car_nikolai: 'mars' });
+  });
+});

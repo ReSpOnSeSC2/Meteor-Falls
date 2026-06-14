@@ -60,6 +60,8 @@ import { fuelProfile, rangeTiles, needsFuel } from '../src/engine/fuel';
 import { ignitionRequired } from '../src/engine/ignition';
 import { STATIONS, STATION_KINDS } from '../src/data/stations';
 import { sells, stationPricePerUnit, homeChargePricePerUnit, NEEDED_FUEL_KINDS } from '../src/engine/refuel';
+import { CONTINENTS, AREA_CONTINENT, CONTINENT_IDS } from '../src/data/world';
+import { ferryMethodsBetween } from '../src/engine/ferry';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -693,6 +695,43 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // there's no gasoline on Mars (electric only — the canon gag)
   const mars = Object.values(STATIONS).find((s) => s.area === 'mars');
   if (mars && (sells(mars, 'gas') || sells(mars, 'diesel'))) fail('stations', 'Mars sells no gas/diesel — electric only (§A4.17)');
+}
+
+// S20 Movement 46 (ADR-087) — THE WORLD MAP + VEHICLE FERRYING (§A5). Gated BOTH
+// directions:
+//  · every continent's areas are real AREA_SKINS areas; every CANON_AREA belongs
+//    to EXACTLY ONE continent (full coverage, no orphan area, no double-claim);
+//  · exactly one non-Earth continent (Mars); Mars↔Earth ferries are ROCKET-only and
+//    Earth↔Earth ferries are air/sea (the §A5 set-piece travel, on wheels-in-a-hold).
+{
+  const claimed = new Map<string, string>();
+  for (const c of Object.values(CONTINENTS)) {
+    if (c.areas.length === 0) fail('world', `continent '${c.id}' has no areas`);
+    for (const a of c.areas) {
+      if (!AREA_SKINS_FOR_PROP[a]) fail('world', `continent '${c.id}' claims area '${a}' that owns no AREA_SKINS slice (M25)`);
+      const prior = claimed.get(a);
+      if (prior) fail('world', `area '${a}' is claimed by both '${prior}' and '${c.id}' — one area, one continent`);
+      claimed.set(a, c.id);
+    }
+  }
+  // every canon area is placed on a continent (full coverage)
+  for (const a of CANON_AREAS) {
+    if (!AREA_CONTINENT[a]) fail('world', `canon area '${a}' belongs to no continent — place it in CONTINENTS`);
+  }
+  // exactly one off-Earth continent (Mars), and it's named 'mars'
+  const offEarth = Object.values(CONTINENTS).filter((c) => !c.earth).map((c) => c.id);
+  if (offEarth.length !== 1 || offEarth[0] !== 'mars') fail('world', `expected exactly one off-Earth continent 'mars', got [${offEarth.join(',')}]`);
+  // Mars↔Earth is rocket-only; two Earth continents bridge by air/sea
+  for (const id of CONTINENT_IDS) {
+    if (id === 'mars') continue;
+    const toMars = ferryMethodsBetween(id, 'mars');
+    if (JSON.stringify(toMars) !== JSON.stringify(['rocket'])) fail('world', `ferry ${id}→mars must be rocket-only, got [${toMars.join(',')}]`);
+  }
+  const earthPair = CONTINENT_IDS.filter((c) => CONTINENTS[c].earth).slice(0, 2);
+  if (earthPair.length === 2) {
+    const m = ferryMethodsBetween(earthPair[0], earthPair[1]);
+    if (!m.includes('air') || !m.includes('sea')) fail('world', `Earth↔Earth ferry must offer air + sea, got [${m.join(',')}]`);
+  }
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2250,6 +2289,7 @@ const counts = [
   `${Object.keys(ARMY_BEATS).length} army-arc beats`,
   `fuel (${Object.keys(VEHICLE_SPECS).filter((t) => needsFuel(t)).length} powered · ${Object.keys(VEHICLE_SPECS).filter((t) => !needsFuel(t)).length} human/none)`,
   `${Object.keys(STATIONS).length} fuel stations`,
+  `${CONTINENT_IDS.length} continents`,
   `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,

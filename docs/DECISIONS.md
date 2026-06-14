@@ -4934,3 +4934,32 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the driving-realism loop is complete — fuel drains (M43), you turn the key (M44),
   and you pay to fill at a station or charge cheap at home (M45). The pump props + the fill UI render
   on this spine. M46 lets you ferry the car between continents.
+
+## ADR-087 — S20 (Movement 46): VEHICLE FERRYING — cross the continents by jumbo-jet cargo / boat (save v15)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 46 — §A5 the cross-continent layer; needs the M46 world map.)
+- **Decision — `src/data/world.ts`, the 12 CONTINENTS.** The 17 areas group onto landmasses (usa,
+  south_america, england, norway, minimus, africa, india, china, romania, alaska, hawaii, mars). You
+  DRIVE freely within a continent (its areas are door-connected); you cannot drive an ocean. `AREA_
+  CONTINENT` is the derived area→continent map.
+- **Decision — `src/engine/ferry.ts`, ferrying (pure, tested).** To take your car to another
+  continent you LOAD it: a jumbo jet's cargo hold (AIR), a boat/yacht deck (SEA), or — for Mars —
+  the rocket. `ferryMethodsBetween` (same→none, Earth↔Earth→air/sea, ↔Mars→rocket-only);
+  `canFerry(from,to,owned,visited)` honors the EMBER LAW (visited-only) + the Mars rule (rocket must
+  be owned; no commercial Mars freight → `needs_rocket`); `ferryCost(method, ownsCraft)` charges the
+  commercial fare, discounted to 0.3× if you own a qualifying craft (`METHOD_CRAFT`); `bestFerry`
+  picks the cheapest usable method; `carIsHere` enforces that a car drives only on the continent it's
+  parked on. The user's idea exactly: put the car in the back of a jumbo jet or on a boat.
+- **Decision — save bump v14 → v15 (`carLocation`).** Which continent each owned car is parked on;
+  ferrying moves it; a bought car starts on the dealership's continent. The `to: 15` migration
+  backfills `{}` (ferrying is v15-new).
+- **Decision — gated both directions (`world` + `ferry.test.ts`).** Every continent area is real;
+  every CANON_AREA belongs to exactly one continent (full coverage, no double-claim); exactly one
+  off-Earth continent (Mars); Mars↔Earth is rocket-only, Earth↔Earth is air/sea. The verdict prints
+  **12 continents**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean.
+  Save walks v14 → v15, migrated + round-trips. No FNV re-pin, no frozen-core change. §A5 amended.
+- **Consequences:** the whole world is reachable by your own car without breaking the Ember-trail
+  linearity — drive a continent, ferry to the next, and (M48) rocket to Mars. M47 makes sure there's
+  property to buy on each one.
