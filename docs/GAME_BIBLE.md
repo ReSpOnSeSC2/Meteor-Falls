@@ -507,6 +507,15 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > lot). Five seats (rides the whole party), its own monochrome+accent paint pool, drawn premium
 > under ADR-020.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-080 — **§A7/§A8 THE MILITARY MOTOR POOL.** The army's
+> drawn hardware joins the forge as world props / control targets: a **TANK** (its own `tank`
+> silhouette family — treads, turret, main gun), an **F-15** (a twin-tail fighter, distinct from the
+> civilian jet), a **Humvee**, a **troop transport**, and an **attack helicopter**, in olive-drab and
+> desert tan. Every one wears a DEAD-AIR HELMET / Faraday shield BY DEFAULT (`hardened`) — the army
+> hardens its kit against exactly the kid with the remote — so it refuses the Clicker (the existing
+> `shielded`/`mind_immune` spine, ONE control identity) until the shield is knocked off (the §A7
+> mid/late control puzzle). Route around the helmeted tank, or out-drive it; never a new counter.)*
+
 **Food (HP):** Corn Dog, PB&J, Alfajor, Scone & Clotted Cream, Jollof Bowl, Samosa, Baozi, **Sarmale**, **Mămăligă cu Brânză** (best HP/$ in the game — Buni's), Akutaq, Poke Bowl, Freeze-Dried Ice Cream (Mars vending machines).
 
 **PP:** Star Cola line, Monastery Tea, Temple Incense. **Cures:** Salt Shaker (anti-Tick!), Aloe Leaf (Sunburn), Hanky (Crying), Doctor's Note (Mushroomize), Mom's Voice Tape (Homesick, 3 uses).

@@ -4746,3 +4746,31 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** you can buy a car, park it at 27 Maple, swap the active ride, and a manor holds
   a small fleet — all proven in pure logic + tests. The garage-out-front render + the lot/swap UI
   land with their chapter scenes; the spine is settled.
+
+## ADR-080 — S19 (Movement 39): THE MILITARY MOTOR POOL — tanks, F-15s & friends
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 39 — the army's hardware; the §A6 pursuit arc of M40–41 rides it.)
+- **Decision — five new drawn `VEHICLE_SPECS` types (ADR-020, olive-drab/desert paint).** `tank`
+  (a NEW `cls 'tank'` silhouette family — treads + turret + main gun, seats 3, road), `f15` (cls
+  `plane`, air, seats 1 — a twin-tail air-superiority fighter distinct from `fighter_jet`), `humvee`
+  (cls `suv`, seats 4, road), `troop_transport` (cls `truck`, seats 12, a canvas-covered troop bed),
+  `attack_heli` (cls `heli`, air, seats 2 — tandem canopy, stub-wing rocket pod, chin gun). Each its
+  own draw function + paint pool; `index.ts`/`render-vehicles.ts` pick them up automatically.
+- **Decision — the HARDENING law (`VehicleSpec.hardened`, control.ts).** Military hardware is
+  Faraday/DEAD-AIR shielded by default (`hardened: true`) — the army hardens its kit against exactly
+  the kid with the remote. `isHardened(type)` + `militaryTarget(id, type, x, y, shieldDown?)` build a
+  ControlTarget whose `shielded` rides the spec's hardening UNLESS the shield's knocked off (the
+  mid/late control puzzle, §A7) — so a fresh tank refuses the Clicker (`blocked`), a de-shielded one
+  yields. ONE control identity, the existing `shielded`/helmet spine — no new counter invented.
+- **Decision — `src/data/military.ts` registry + the `military` gate (both directions).** Every
+  `MILITARY_VEHICLES` entry is a real hardened spec with §A11 voice (the army is bumbling-earnest,
+  never grim); every hardened spec is listed (no orphan hardening). `military.test.ts` proves the
+  pool + that a hardened machine refuses control until de-shielded. The verdict prints **5 military
+  vehicles** and **94 vehicles (35 types)**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green (+12), `vite build`
+  clean, `art:vehicles` re-rendered (the motor pool reads military on the sheet). No FNV re-pin, no
+  frozen-core change. §A7/§A8 amended.
+- **Consequences:** the world has tanks and F-15s as drawn props + control targets, helmeted by
+  default — the diegetic fence the M41 pursuit routes around, and the late control puzzle once a
+  helmet-knock-off is earned. M40 weaves the army-pursuit arc on top.

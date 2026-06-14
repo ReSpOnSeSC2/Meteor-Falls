@@ -178,6 +178,24 @@ export function selfCreep(vehicleType: string, lotClear: boolean): SelfCreepResu
   return { ok: true, reason: 'ok' };
 }
 
+/* ─── M39 (ADR-080): HARDENED military hardware — the Clicker counter on wheels ─ */
+
+/** is this vehicle TYPE Faraday/dead-air shielded by default (the army's kit)? */
+export function isHardened(vehicleType: string): boolean {
+  return VEHICLE_SPECS[vehicleType]?.hardened === true;
+}
+
+/**
+ * Build a ControlTarget for a military vehicle. It carries `shielded` from the
+ * spec's hardening UNLESS the shield's been knocked off (the mid/late control
+ * puzzle, §A7) — so a fresh tank refuses the Clicker, a de-shielded one yields.
+ */
+export function militaryTarget(
+  id: string, vehicleType: string, x: number, y: number, shieldDown = false,
+): ControlTarget {
+  return { id, kind: 'machine', x, y, vehicleType, shielded: isHardened(vehicleType) && !shieldDown };
+}
+
 /** the field label for a power (Mind Warp is the battle face; Puppet the field) */
 export function fieldLabel(kind: ControlKind): string {
   return kind === 'puppet' ? 'PUPPET' : 'CLICKER';

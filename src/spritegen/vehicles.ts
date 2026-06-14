@@ -19,7 +19,8 @@ import { Pixmap, mulberry32 } from './pixmap';
 export type VehicleTerrain = 'road' | 'water' | 'air';
 export type VehicleClass =
   | 'bike' | 'moto' | 'car' | 'suv' | 'van' | 'bus' | 'truck' | 'machine'
-  | 'boat' | 'sub' | 'plane' | 'heli' | 'prop';
+  | 'boat' | 'sub' | 'plane' | 'heli' | 'prop'
+  | 'tank'; // M39 (ADR-080) — the military motor pool's new silhouette family
 
 export interface VehicleSpec {
   /** silhouette family (for grouping + the seat-fit reads) */
@@ -36,6 +37,10 @@ export interface VehicleSpec {
   /** M36 (ADR-077): an autopilot toy — this craft can SELF-CREEP driver-less in a
    *  cleared lot (no Clicker needed), the Nikolai's "summon" gag. control.ts gates it. */
   selfDrive?: boolean;
+  /** M39 (ADR-080): military hardware is Faraday/DEAD-AIR shielded by default — the
+   *  army hardens its kit against exactly the kid with the remote. A hardened machine
+   *  refuses the Clicker (the existing `shielded` spine) until the shield is knocked off. */
+  hardened?: boolean;
   /** the PAINT-ramp draw (deterministic; rng only seeds tiny per-unit marks) */
   draw: (ramp: number, rng: () => number) => Pixmap;
 }
@@ -484,6 +489,137 @@ function drawBlimp(ramp: number, _rng: () => number): Pixmap {
   return pm;
 }
 
+/* ─── M39 (ADR-080): THE MILITARY MOTOR POOL — tank, F-15, Humvee & friends ─ */
+
+function drawTank(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 40;
+  const H = 22;
+  const pm = new Pixmap(W, H);
+  const floorY = 17;
+  // continuous track with road wheels
+  pm.rect(2, floorY - 3, W - 4, 5, px(RAMP.INK, 1));
+  for (let x = 4; x < W - 4; x += 4) pm.set(x, floorY, HUB);
+  // hull with a sloped glacis plate (nose right)
+  pm.rect(4, floorY - 7, W - 8, 5, p.body);
+  pm.hline(4, floorY - 7, W - 8, p.lite);
+  pm.line(W - 4, floorY - 7, W - 1, floorY - 4, p.body); // sloped front
+  // turret + commander's hatch
+  pm.rect(12, floorY - 11, 14, 5, p.mid);
+  pm.hline(12, floorY - 11, 14, p.lite);
+  pm.rect(16, floorY - 13, 3, 2, p.dark);
+  // the main gun reaching right
+  pm.rect(26, floorY - 10, 12, 2, p.dark);
+  pm.set(38, floorY - 10, p.dark);
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawF15(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 40;
+  const H = 22;
+  const pm = new Pixmap(W, H);
+  const midY = 11;
+  // long fuselage, pointed nose right
+  pm.rect(3, midY - 2, W - 6, 4, p.body);
+  pm.line(W - 3, midY, W - 8, midY - 2, p.dark);
+  pm.line(W - 3, midY, W - 8, midY + 2, p.dark);
+  pm.hline(3, midY - 2, W - 6, p.lite);
+  // big swept wings
+  pm.line(22, midY, 14, 2, p.mid);
+  pm.line(22, midY, 14, H - 2, p.mid);
+  pm.line(26, midY, 18, 3, p.mid);
+  pm.line(26, midY, 18, H - 3, p.mid);
+  // the F-15's TWIN tails
+  pm.line(6, midY - 2, 9, 3, p.mid);
+  pm.line(8, midY - 2, 11, 3, p.mid);
+  pm.line(6, midY + 2, 9, H - 3, p.mid);
+  pm.line(8, midY + 2, 11, H - 3, p.mid);
+  // bubble canopy + twin engine nozzles
+  pm.rect(W - 12, midY - 1, 3, 2, GLASS);
+  pm.set(3, midY - 1, px(RAMP.INK, 2));
+  pm.set(3, midY + 1, px(RAMP.INK, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+function drawHumvee(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 34;
+  const floorY = 15;
+  const H = floorY + 6;
+  const pm = new Pixmap(W, H);
+  // wide, boxy, flat body
+  pm.rect(2, 6, W - 4, floorY - 6, p.body);
+  pm.hline(2, 6, W - 4, p.lite);
+  pm.hline(2, floorY, W - 4, p.dark);
+  // slanted windshield + cab
+  pm.rect(W - 12, 4, 9, 4, p.mid);
+  pm.rect(W - 11, 5, 7, 3, GLASS);
+  pm.set(W - 5, 5, GLASS_D);
+  // boxy side windows + a door seam
+  pm.rect(6, 7, 3, 3, GLASS);
+  pm.rect(11, 7, 3, 3, GLASS);
+  pm.vline(16, 7, floorY - 7, p.dark);
+  // big off-road wheels
+  wheel(pm, 4, floorY + 5, 4);
+  wheel(pm, W - 10, floorY + 5, 4);
+  pm.rect(W - 2, 8, 1, 2, LAMP);
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawTroopTransport(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 44;
+  const floorY = 17;
+  const H = floorY + 6;
+  const pm = new Pixmap(W, H);
+  const cabX = W - 13;
+  // cab (right)
+  pm.rect(cabX, 6, 12, floorY - 6, p.body);
+  pm.rect(cabX + 2, 7, 7, 4, GLASS);
+  pm.set(cabX + 8, 7, GLASS_D);
+  // canvas-covered troop bed with bow ribs (where the soldiers ride)
+  const canvas0 = px(RAMP.EARTH, 0);
+  pm.rect(2, 4, cabX - 3, floorY - 4, px(RAMP.EARTH, 1));
+  pm.hline(2, 4, cabX - 3, px(RAMP.EARTH, 2));
+  for (let x = 5; x < cabX - 3; x += 5) pm.vline(x, 4, floorY - 5, canvas0); // bows
+  pm.hline(2, floorY, W - 4, p.dark);
+  pm.rect(W - 2, floorY - 4, 1, 2, LAMP);
+  // six heavy wheels
+  wheel(pm, 4, floorY + 5, 3);
+  wheel(pm, cabX - 8, floorY + 5, 3);
+  wheel(pm, cabX, floorY + 5, 3);
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+function drawAttackHeli(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const pm = new Pixmap(36, 18);
+  // narrow gunship body, tapered nose right
+  pm.rect(6, 8, 16, 5, p.body);
+  pm.hline(6, 8, 16, p.lite);
+  pm.line(22, 8, 26, 11, p.body);  // nose down to the chin gun
+  pm.line(22, 12, 26, 11, p.body);
+  pm.rect(25, 12, 2, 2, px(RAMP.INK, 2)); // chin gun
+  // stepped tandem canopy
+  pm.rect(15, 6, 4, 3, GLASS);
+  pm.rect(19, 7, 3, 2, GLASS);
+  // stub wing + a rocket pod
+  pm.rect(9, 12, 7, 2, p.dark);
+  pm.rect(9, 13, 2, 1, px(RAMP.INK, 2));
+  // tail boom + fin + main rotor
+  pm.rect(2, 9, 5, 2, p.mid);
+  pm.vline(1, 6, 6, p.dark);
+  pm.hline(4, 2, 24, px(RAMP.INK, 2));
+  pm.vline(14, 2, 6, p.dark);
+  pm.shadowUnder(16, 17, 14, SHADOW);
+  pm.outline(C.outline);
+  return pm;
+}
+
 /* ─── THE SPEC TABLE — one row per vehicle TYPE ─────────────────────────── */
 
 function box(w: number, h: number, oy = 0): { ox: number; oy: number; w: number; h: number } {
@@ -525,6 +661,13 @@ export const VEHICLE_SPECS: Record<string, VehicleSpec> = {
   jumbo_jet:   { cls: 'plane',   terrain: 'air',  seats: 20, w: 52, h: 22, solid: box(52, 6, 8),  draw: (r, g) => drawPlane(44, r, g, true) },
   helicopter:  { cls: 'heli',    terrain: 'air',  seats: 4,  w: 34, h: 18, solid: box(28, 8, 6),  draw: (r, g) => drawHeli(r, g) },
   blimp:       { cls: 'heli',    terrain: 'air',  seats: 8,  w: 44, h: 22, solid: box(44, 14, 2), draw: (r, g) => drawBlimp(r, g) },
+  // M39 (ADR-080) — THE MILITARY MOTOR POOL: drawn world props + control targets,
+  // `hardened` (Faraday/dead-air shielded) by default — the army hardens its kit.
+  tank:           { cls: 'tank',  terrain: 'road', seats: 3,  w: 40, h: 22, solid: box(40, 9, 8),  hardened: true, draw: (r, g) => drawTank(r, g) },
+  f15:            { cls: 'plane', terrain: 'air',  seats: 1,  w: 40, h: 22, solid: box(40, 6, 8),   hardened: true, draw: (r, g) => drawF15(r, g) },
+  humvee:         { cls: 'suv',   terrain: 'road', seats: 4,  w: 34, h: 21, solid: box(34, 8, 8),   hardened: true, draw: (r, g) => drawHumvee(r, g) },
+  troop_transport:{ cls: 'truck', terrain: 'road', seats: 12, w: 44, h: 23, solid: box(44, 10, 6),  hardened: true, draw: (r, g) => drawTroopTransport(r, g) },
+  attack_heli:    { cls: 'heli',  terrain: 'air',  seats: 2,  w: 36, h: 18, solid: box(36, 8, 6),   hardened: true, draw: (r, g) => drawAttackHeli(r, g) },
 };
 
 /** usable seats to RIDE the party (the driver takes one) — §A4.10 seat-fit law */
@@ -580,6 +723,12 @@ const PAINTS: Record<string, readonly number[]> = {
   jumbo_jet:   [RAMP.PAPER, RAMP.BLUE],
   helicopter:  [RAMP.FOREST, RAMP.RED, RAMP.NIGHT],
   blimp:       [RAMP.RED, RAMP.GOLD],
+  // M39 — olive-drab + desert-tan war paint
+  tank:            [RAMP.FOREST, RAMP.EARTH],
+  f15:             [RAMP.PAPER, RAMP.FOREST],
+  humvee:          [RAMP.FOREST, RAMP.EARTH],
+  troop_transport: [RAMP.FOREST, RAMP.EARTH],
+  attack_heli:     [RAMP.FOREST, RAMP.NIGHT],
 };
 
 function buildCatalog(): VehicleVariant[] {

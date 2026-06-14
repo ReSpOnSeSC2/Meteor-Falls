@@ -53,6 +53,7 @@ import { PaperboySim, prizeEarned } from '../src/paperboy/sim';
 import { FLEET_CRAFT, FLEET_STAGES, WATER_ACCESS, AIR_ACCESS } from '../src/data/fleet';
 import { DEALERSHIP } from '../src/data/dealership';
 import { sellValue } from '../src/engine/garage';
+import { MILITARY_VEHICLES, MILITARY_TYPES } from '../src/data/military';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -567,6 +568,26 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (prior) fail('dealership', `title '${c.title}' is claimed by both '${prior}' and 'dealership:${c.id}'`);
     titles.set(c.title, `dealership:${c.id}`);
     if (sellValue(c) >= c.price) fail('dealership', `car '${c.id}' sells back for ${sellValue(c)} ≥ its ${c.price} sticker — depreciation must always lose`);
+  }
+}
+
+// S19 Movement 39 (ADR-080) — THE MILITARY MOTOR POOL (§A7/§A8). Gated BOTH
+// directions: every MILITARY_VEHICLES entry is a real VEHICLE_SPECS type that is
+// `hardened` (Faraday/dead-air shielded → Clicker-blocked by the existing spine)
+// and carries §A11 voice; AND every hardened spec is listed in the motor pool (no
+// orphan hardening). A hardened machine must REFUSE the Clicker by construction.
+{
+  const listed = new Set<string>(MILITARY_TYPES);
+  for (const m of Object.values(MILITARY_VEHICLES)) {
+    const spec = VEHICLE_SPECS[m.type];
+    if (!spec) { fail('military', `military vehicle '${m.type}' has no VEHICLE_SPECS row`); continue; }
+    if (spec.hardened !== true) fail('military', `military vehicle '${m.type}' is not hardened — the army's kit wears the shield by default`);
+    if (!m.designation || !m.note) fail('military', `military vehicle '${m.type}' has no §A11 designation/note`);
+  }
+  for (const [type, spec] of Object.entries(VEHICLE_SPECS)) {
+    if (spec.hardened === true && !listed.has(type)) {
+      fail('military', `VEHICLE_SPECS '${type}' is hardened but isn't in the military motor pool — list it or drop the hardening`);
+    }
   }
 }
 
@@ -2121,6 +2142,7 @@ const counts = [
   `paperboy (${liveRoute().items.filter((i) => i.kind === 'mailbox').length} houses)`,
   `${Object.keys(FLEET_CRAFT).length} fleet craft`,
   `${Object.keys(DEALERSHIP).length} dealership cars`,
+  `${MILITARY_TYPES.length} military vehicles`,
   `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
