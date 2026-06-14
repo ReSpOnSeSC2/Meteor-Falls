@@ -30,6 +30,10 @@ The two columns separate **what the code draws today** (Ch.1–3 built) from the
 **full-game target** the canon (`docs/GAME_BIBLE.md`, `src/data/chapters.ts`)
 commits to. "Author everything" means the right column.
 
+> **Producing it in parallel?** This whole job is split into 17 standalone work
+> packages in [`docs/asset-packages/`](./asset-packages/INDEX.md) — one brief per
+> agent, each with its own image checklist, sizes, and wiring. Start there.
+
 | Category | In code today | Full-game target | Notes |
 |---|---:|---:|---|
 | Opening / title / framing screens | ~12 | ~12 | logo, title, app icon, name entry, save slots, boot |
