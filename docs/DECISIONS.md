@@ -4911,3 +4911,26 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   FNV re-pin, no frozen-core change, no save change. §A4.16 amended (the ignition note).
 - **Consequences:** the wheel UI gains a START button for combustion vehicles; EVs roll keyless. The
   drain + ignition + the M45 stations complete the §A4.16 driving-realism loop.
+
+## ADR-086 — S20 (Movement 45): GAS STATIONS & CHARGING — pay to fill
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 45 — §A4.17; needs M43 fuel.)
+- **Decision — `src/data/stations.ts` (DATA) + `src/engine/refuel.ts` (math, pure/tested).** 14
+  stations, ≥1 per inhabited region — gas pumps, EV charging stalls, both, airfield jet fuel, or
+  marina diesel — each with a real AREA_SKINS area, a fuel list, a region COST-OF-LIVING multiplier
+  (Mars 2.5×), and a §A11 attendant (Stan's lottery, Nigel's "PETROL not gas", Buni's "fill the
+  tank, fill your plate", the Mars colony AI). `refuelAtStation(current, type, station)` returns the
+  cost + topped-off level (region price × units; won't fill a full tank / a fuel it doesn't sell / a
+  human-powered bike); `chargeAtHome` charges the EV line at `HOME_CHARGE_MULT` (0.4×) — cheapest of
+  all; `stationPricePerUnit`/`homeChargePricePerUnit`/`canRefuelHere`/`stationsInArea` round it out.
+- **Decision — gated both directions (`stations` + `refuel.test.ts`).** Every station area is real,
+  kind/fuels valid, price positive, in voice; EVERY needed fuel kind (gas/diesel/jet/electric) is
+  sold somewhere (never stranded); the live USA areas each have a station; home charging beats every
+  station's electric price (the §A4.16 promise); Mars sells no gas (electric only — the canon gag).
+  The verdict prints **14 fuel stations**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean. No
+  FNV re-pin, no frozen-core change, no save change. §A4.17 amended.
+- **Consequences:** the driving-realism loop is complete — fuel drains (M43), you turn the key (M44),
+  and you pay to fill at a station or charge cheap at home (M45). The pump props + the fill UI render
+  on this spine. M46 lets you ferry the car between continents.

@@ -58,6 +58,8 @@ import { ARMY_BEATS } from '../src/data/armyarc';
 import { armyArcProblems } from '../src/engine/armyarc';
 import { fuelProfile, rangeTiles, needsFuel } from '../src/engine/fuel';
 import { ignitionRequired } from '../src/engine/ignition';
+import { STATIONS, STATION_KINDS } from '../src/data/stations';
+import { sells, stationPricePerUnit, homeChargePricePerUnit, NEEDED_FUEL_KINDS } from '../src/engine/refuel';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -648,6 +650,49 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       fail('fuel', `'${type}' ignition (${ignitionRequired(type)}) disagrees with its fuel kind '${p.kind}' — turn on combustion only`);
     }
   }
+}
+
+// S20 Movement 45 (ADR-086) — GAS STATIONS & CHARGING (§A4.17). Where you PAY to
+// fill. Gated BOTH directions:
+//  · every station sits in a real AREA_SKINS area, has a known kind, a non-empty
+//    valid fuel list, a positive price multiplier, and §A11 attendant voice;
+//  · EVERY fuel kind a real vehicle needs (gas/diesel/jet/electric) is sold at ≥1
+//    station — you can never be stranded with nowhere to fill your kind;
+//  · the live USA areas each have a station; home charging is cheaper than ANY
+//    station's electric price (the §A4.16 home-charger promise); Mars sells no gas.
+{
+  const KINDS = new Set<string>(STATION_KINDS);
+  const FUELS = new Set(['gas', 'diesel', 'jet', 'electric']);
+  const soldKinds = new Set<string>();
+  for (const st of Object.values(STATIONS)) {
+    if (!AREA_SKINS_FOR_PROP[st.area]) fail('stations', `station '${st.id}' sits in area '${st.area}' that owns no AREA_SKINS slice (M25)`);
+    if (!KINDS.has(st.kind)) fail('stations', `station '${st.id}' has unknown kind '${st.kind}'`);
+    if (st.fuels.length === 0) fail('stations', `station '${st.id}' sells no fuel`);
+    for (const f of st.fuels) {
+      if (!FUELS.has(f)) fail('stations', `station '${st.id}' sells unknown fuel '${f}'`);
+      soldKinds.add(f);
+    }
+    if (st.priceMult <= 0) fail('stations', `station '${st.id}' has a non-positive price multiplier`);
+    if (!st.attendant || !st.note) fail('stations', `station '${st.id}' has no §A11 attendant/note`);
+  }
+  // every needed fuel kind is sold somewhere (never stranded)
+  for (const k of NEEDED_FUEL_KINDS) {
+    if (!soldKinds.has(k)) fail('stations', `no station sells '${k}' — a vehicle that runs on it could never refuel`);
+  }
+  // the live USA areas each have a station
+  for (const live of ['otterbrook', 'brickton']) {
+    if (!Object.values(STATIONS).some((s) => s.area === live)) fail('stations', `live area '${live}' has no station — gas in each region (§A4.17)`);
+  }
+  // the home charger beats every station's electric price (the §A4.16 promise)
+  const home = homeChargePricePerUnit();
+  for (const st of Object.values(STATIONS)) {
+    if (sells(st, 'electric') && home >= stationPricePerUnit(st, 'electric')) {
+      fail('stations', `home charging (${home}) is not cheaper than station '${st.id}' electric (${stationPricePerUnit(st, 'electric')})`);
+    }
+  }
+  // there's no gasoline on Mars (electric only — the canon gag)
+  const mars = Object.values(STATIONS).find((s) => s.area === 'mars');
+  if (mars && (sells(mars, 'gas') || sells(mars, 'diesel'))) fail('stations', 'Mars sells no gas/diesel — electric only (§A4.17)');
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2204,6 +2249,7 @@ const counts = [
   `${MILITARY_TYPES.length} military vehicles`,
   `${Object.keys(ARMY_BEATS).length} army-arc beats`,
   `fuel (${Object.keys(VEHICLE_SPECS).filter((t) => needsFuel(t)).length} powered · ${Object.keys(VEHICLE_SPECS).filter((t) => !needsFuel(t)).length} human/none)`,
+  `${Object.keys(STATIONS).length} fuel stations`,
   `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,

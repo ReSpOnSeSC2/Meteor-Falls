@@ -265,6 +265,17 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > human-powered bikes have nothing to start. The rules live in `src/engine/ignition.ts` (pure +
 > validated); ignition is a per-drive RUNTIME state, not save data.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-086 — **§A4.17 GAS STATIONS & CHARGING.** Every
+> inhabited region has at least one place to PAY to fill: a gas pump, an EV charging stall, both, an
+> airfield (jet fuel), or a marina (boat diesel). Prices ride a per-region COST-OF-LIVING multiplier
+> (Mars is dearest — and Mars sells NO gasoline, electric only; there's no refinery a billion miles
+> out). THE NIKOLAI and the EV line charge here cheap, and CHEAPEST at home (the home charger,
+> `HOME_CHARGE_MULT`). The registry is `src/data/stations.ts` (each station a real §A11 attendant with
+> one obsession); the fill math is pure + validated in `src/engine/refuel.ts`, gated both directions
+> (`stations`): every needed fuel kind is sold somewhere (you're never stranded), and home charging
+> always beats the pump. Fuel costs fold into the §A9 economy — a rounding error against a mansion,
+> a real bite against a kid's first tank of gas.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
 > NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
