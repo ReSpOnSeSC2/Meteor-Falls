@@ -4036,3 +4036,100 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   can assemble a Family Basket. M18 is fully green. The gift-box-cache + per-piece-flag pattern is now the
   template for placing later regions' price-0 SET pieces (M19–21). The optional enemy `drops` field remains
   the one deferred thread (M24's balance pass) — flagged, not forgotten.
+
+## ADR-064 — S17 (Movement 19): THE OLD-WORLD CATALOG — the second regional pour (Ch.3 England · Ch.4 Norway · Ch.5 Minimus)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the S17 "THE GREAT CATALOG" decree, Movement 19 — the SECOND regional pour, copying
+  the M18 template (ADR-063) ×3 across the Old-World. Ships **DEFINE + ICON + PRICE + BAND + the per-region
+  validator MANIFEST ONLY**, green. Ch.3/4/5 are UNLANDED (no maps/shops/quests yet, ADR-047), so — unlike
+  M18, which had landed Ch.1/2 to place into — there is nowhere to place items this movement: the validator
+  is the record that the catalog exists and is complete, and live placement happens in each chapter's own
+  session (the way M18 Part B placed the Americas only because Ch.1/2 were already landed).
+- **Context:** ADR-061 readied the schema/mechanics for ~500 items; ADR-062 built THE ICON FORGE; ADR-063
+  poured + placed the Americas (Ch.1/2 → 42 + 42). M19 pours the next three regions toward the §A8 ~40/region
+  target: **ch3 1→42, ch4 0→41, ch5 0→41, cross 1→4** (+126 items, **88 → 214**). Pure data where the forge
+  allows; hand-drawn only for the signatures (the hero weapon rungs incl. the boss-drop tops, the named key
+  items, Pippa's bespoke kit faces).
+- **Decision — the pour (`src/data/items.ts`).** +126 ITEMS literals (each `I({…})` + an `ITEM_BAND` row),
+  region-true (§A11.7), in §A11 voice, priced to §A9 (a full regional refresh ≈ two chapters of income; the
+  chapters get richer climbing — Ch.3 > Ch.2). Per region:
+  - **Ch.3 ENGLAND (+41, damp-grey/brass/tea):** MILO'S GUN LADDER — Pellet Popper (defined early) → **Spud
+    Gun** → **Double-Barrel Sparker** → ***Gauss Lobber*** (the Headmaster Mainframe drop, price 0) — plus the
+    **Cricket Bat** sidegrade (Jay, who does not know the rules); TEA AS PP (Builder's/Earl Grey/School Cocoa
+    → `PP_LINE[ch3]`); the GIZMO/REPAIR line (the **Broken Gizmo** sell-scrap Milo's eyes light up at + the
+    repaired battle goods Spark Coil / Cog Grenade / Clockwork Sparrow); school-fog/institutional foods
+    (Scone & Clotted Cream, Canteen Stodge, Fish & Chips, Sticky Toffee Pudding…); the **Cricket Cap** hat-
+    ladder rung + the school/fog bodies; academic arms/charms (Cricket Pads, Lucky Conker, House Pin); the
+    library/groundskeeper valuables (First Edition, Commemorative Tin); the §A8 key items (Lucille's
+    Propeller, Library Card, Thermos). Two **TONICS** — Iron Tonic (+Offense), Brain-Food Lunch (+Vibe).
+  - **Ch.4 NORWAY (+41, cold-blue/birch/pine):** SCALE is the joke — funny sidegrades (**Frozen Cod** bat /
+    **Lefse Griddle** pan), the **Growth-Spurt Milk** tonic (+20 max HP, from a barn-sized goat), the **Dog-
+    Sized Berry** food; fishing-hamlet fare (Brunost, Fårikål, Multekrem, Lutefisk…); the **Fur-Lined Hood**
+    hat rung (freeze-resist) + the fjord bodies; THE FIRST RESIST PENDANTS — the **Cool Charm** vs cold
+    (`resists:{freeze:25}`) + the hood's freeze rider; the **Firecracker String** (the §A6 Whisperwig NOISE);
+    the **Giant's Banknote** + grey-sea valuables; the §A8 keys (Sigrid's Monocle, Halvor's huge letter).
+    *(§A8 lists Akutaq with the Alaska/Mars group — kept there, NOT poured into Norway, per the §A11.7 "exact
+    region" rule; Norway gets authentic Norwegian fare instead.)*
+  - **Ch.5 MINIMUS (+41, jewel-box velvet):** TINY is the joke — PIPPA'S KIT LADDER — **Stamp Sling** →
+    **Needle Saber** → **Thimble Bell** → ***Royal Red Pen*** (the Foreign Minister's appointment top, price
+    0, "corrections are final"); tiny-everything food/charms (Crumb Loaf, Petit Four, the Marzipan Pig); the
+    **Paper Crown** hat rung + the court bodies; diplomatic arms/charms with Luck/morale riders (Duchy Seal,
+    Morale Medal, Lens Charm); the census/duchy valuables; her scale-anchor key items (**Royal Thimble**,
+    **Big-Little Lens**). Two TONICS — Lucky Penny (+Luck), Charged Battery (+max PP, the duchy's engineers).
+  - **CROSS (+3): THE LOST & FOUND OF IMPOSSIBLE SIZES** (§A10 cross-chain seed) — the **Giant Button** (a
+    shield in Lilleby, a manhole cover in Kvisthavn), the **Impossible Berry**, the **Tiny Postcard** (too
+    small for Dad to read). Banded `cross`, not a single region — they travel the world.
+- **Decision — every face forged or hand-drawn, both-directions + distinct (`spritegen/{icons,weapons,
+  iconforge}.ts`).** The generic tail is ONE `() => forgeIcon({ subcat, band, detail, seed: id })` row each;
+  the signatures stay bespoke. Milo's gun ladder reuses a parametrised `drawRifleIcon(ramp, mark)` (the
+  spud / twin-barrel / gauss-coil marks); the Cricket Bat / Frozen Cod / Lefse Griddle reuse
+  `drawBatIcon`/`drawPanIcon`. Pippa's four kit rungs + the named keys (Lucille's Propeller, Sigrid's
+  Monocle, Royal Thimble, Big-Little Lens) are fresh hand drawings. One new forge SUBCAT — **`book`** (the
+  England library / the duchy census; additive, palette-only, ADR-020 by construction) — bringing the forge
+  to **55 subcategories**. The distinctness sweep caught exactly three seeded collisions (eye_drops vs
+  smelling_salts, oilcloth_mac vs oilskin_slicker — the ch3/ch4 cold pools overlap; wish_token vs the Lucky
+  Penny coin), each fixed by a detail/ramp nudge — the test working as designed.
+- **Decision — PIPPA'S `kit` WEAPON CLASS (`spritegen/weapons.ts` + `engine/audio.ts`).** §A8 gives Pippa a
+  *kit* of tiny implements (sling/saber/bell/pen), none mapping to the existing bat/pan/rifle/beads swings.
+  A fifth `WeaponClass`, **`kit`** — one tiny precise JAB silhouette (`drawKit`), the rungs told apart by ramp
+  + a per-rung head mark, EXACTLY the bat-class pattern — opens for her, with a matching `swing_kit` sfx
+  preset. Additive, in `spritegen` only (her battler composition lands when she joins in the Ch.5 session);
+  the `drawHeldWeapon` switch + `swingSfxOf` + the weapons.test cover it.
+- **Decision — the validator tables widen, the floor ratchets (`tools/content-validate.ts`).** `WEAPON_LADDER`
+  += `ch3` (Milo's 4 rungs + the Cricket Bat) / `ch4` (the 2 sidegrades) / `ch5` (Pippa's 4 rungs);
+  `PP_LINE` += `ch3` (3 teas) / `ch4` (3 cold drinks) / `ch5` (4 tiny vessels); `ARMOR_LINE` += `ch3`/`ch4`/
+  `ch5` (4 each); `ITEM_FX` += the 7 new thrown battle goods; `BAND_FLOOR` ratchets **ch3 1→42, ch4 0→41,
+  ch5 0→41, cross 1→4** (the spine's "set the floor to the count" rule). The charms/arms stay GENERIC
+  (un-tagged), so no SET_REGISTRY rows this movement — England/Norway/Minimus get no hero-signature SET (the
+  Bible names none for them; M20–21 may). The verdict prints **214 items (214 icons)**; bands ch3:42 ch4:41
+  ch5:41 cross:4.
+- **Decision — heroResist stays DATA-ONLY; the binding is DEFERRED (explicit).** The movement brief flagged
+  M19 as the likely place to bind `heroResist` to the damage path. **It is not bound this movement.** No
+  shipped enemy carries an elemental move (ADR-061: "none do today"), so binding resist% would (a) be inert
+  in actual play and (b) drag the battle engine + enemy schema + battle-math tests into an UNLANDED, data-only
+  movement. The resist pendants instead ship their `resists` as DATA — already summed by `heroResist`
+  (capped 80%) and shown in STATUS since ADR-061 — and the actual damage reduction binds in the chapter that
+  lands first (Ch.4 Norway, where cold first bites, with real elemental enemy moves). So: **no `battle/
+  formulas.ts` move-element change, no `EnemyDef` element field, no save migration, and no GAME_BIBLE
+  amendment** (pouring §A8-anticipated items — incl. the resist pendants the §A8/§A10 text already promises —
+  is implementing canon, not introducing a mechanic; the validator manifest is the record, exactly as M18).
+- **Verification:** `npm run validate` green (**214 items / 214 icons** across 10 chapters; bands ch1:42
+  ch2:42 ch3:42 ch4:41 ch5:41 ch9:2 cross:4; the per-region weapon/pp/armor ladders pass both directions) +
+  `tsc --noEmit` clean + full **vitest 738 green** (+7: the M19 catalog test — ≈40/region, the gun + kit
+  ladders climb, the resist pendants carry freeze DATA, the M19 tonics boost, the hat-ladder rungs land, the
+  Lost & Found seeds band `cross`; the distinctness sweep + the 55-subcat forge gallery still green at 214) +
+  `vite build` clean + `npm run art:icons` re-rendered (`--region ch3/ch4/ch5`, `--forge`) and read BY EYE
+  (ADR-059/060 — not `preview_screenshot`): England damp-grey/brass, Norway cold-blue/birch, Minimus jewel-
+  box velvet, the new `book` reading clean, no AI smell. No FNV re-pin, no frozen-core / world_block change
+  (items/icons/forge are not map generators); no save migration (inventory references ids; tonics/resists
+  already ride the ADR-061 v9 schema). UNLANDED held: no maps*.ts / shops.ts / quests touched.
+- **Consequences:** the Old-World catalog is poured — England's gun ladder + tea + canteen stodge, Norway's
+  giant-scale fare + the first cold-resist pendants, Minimus's tiny jewel-box kit — every face distinct, every
+  line in voice, banded and validator-pinned. The template holds for the FAR-WORLD (M20: Ch.6 Africa / Ch.7
+  India / Ch.8 China — the Riddle Ring, the volt-resist Rubber Brooch, more boss-drop rungs) and the
+  LAST-WORLD (M21). The one mechanic the Old-World only *staged* — binding `heroResist` to elemental damage —
+  is now the clearly-flagged debt of whichever of Ch.4–8 lands first (it ships with its own ADR + §A7/§A6
+  amendment + a both-directions gate + battle-math tests, per Appendix rule 6, when an enemy first throws an
+  element). Live placement of the three Old-World catalogs (shops + gift-boxes + quest rewards) follows in
+  each chapter's own landing session, the M18-Part-B way.

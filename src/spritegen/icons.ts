@@ -97,11 +97,14 @@ function drawPanIcon(ramp: number, copper: boolean): Pixmap {
   return pm;
 }
 
-/** an air rifle: stock low-left, barrel to the right, the orange safety tip */
-function drawRifleIcon(): Pixmap {
+/** Milo's gun-ladder menu face: stock low-left, barrel right. The mark walks the
+ *  §A8 ladder — the orange safety tip (Popper) → a loaded spud → twin barrels →
+ *  the Mainframe's gauss coil (the boss-drop top). One silhouette, four rungs. */
+type RifleMark = 'tip' | 'spud' | 'double' | 'gauss';
+function drawRifleIcon(ramp: number, mark: RifleMark): Pixmap {
   const pm = new Pixmap(14, 12);
-  const stock = px(RAMP.EARTH, 1);
-  const stockL = px(RAMP.EARTH, 2);
+  const stock = px(ramp, 1);
+  const stockL = px(ramp, 2);
   const steel = px(RAMP.INK, 1);
   const steelL = px(RAMP.INK, 2);
   // stock (the shoulder end)
@@ -113,10 +116,193 @@ function drawRifleIcon(): Pixmap {
   // trigger guard + grip hint
   pm.set(5, 8, steel);
   pm.set(6, 9, stock);
-  // the safety-orange muzzle tip — Wintermoor insists
-  pm.set(12, 5, px(RAMP.ORANGE, 3));
-  pm.set(12, 6, px(RAMP.ORANGE, 2));
+  if (mark === 'spud') {
+    // a King Edward jammed in the muzzle, the day's ammunition
+    pm.ellipse(12, 5, 2, 2, px(RAMP.BLOND, 2));
+    pm.set(11, 4, px(RAMP.BLOND, 3));
+    pm.set(13, 6, px(RAMP.EARTH, 1)); // a potato eye
+  } else if (mark === 'double') {
+    // a second barrel slung under the first, and a spark off the tips
+    pm.rect(5, 7, 7, 1, steel);
+    pm.set(12, 4, px(RAMP.GOLD, 3));
+    pm.set(13, 5, px(RAMP.GOLD, 2));
+  } else if (mark === 'gauss') {
+    // the magnetic coil wound round the barrel, a captive blue charge at the muzzle
+    pm.vline(7, 4, 4, px(RAMP.GOLD, 2));
+    pm.vline(9, 4, 4, px(RAMP.GOLD, 2));
+    pm.set(12, 5, px(RAMP.CYAN, 3));
+    pm.set(13, 5, px(RAMP.CYAN, 2));
+    pm.set(12, 6, px(RAMP.CYAN, 3));
+  } else {
+    // the safety-orange muzzle tip — Wintermoor insists
+    pm.set(12, 5, px(RAMP.ORANGE, 3));
+    pm.set(12, 6, px(RAMP.ORANGE, 2));
+  }
   pm.outline(C.outline);
+  if (mark === 'gauss') pm.set(12, 5, C.white); // pure light after the contour — the charge glows
+  return pm;
+}
+
+/** a one-bespoke menu face for Lucille's spare propeller (§A8 key item): a
+ *  two-blade airscrew on a brass hub, the way it leans against Uncle Bert's hangar */
+function drawPropellerIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const wood = px(RAMP.EARTH, 2);
+  const woodL = px(RAMP.EARTH, 3);
+  // two blades sweeping from a central hub (a shallow S)
+  pm.line(7, 7, 2, 3, wood);
+  pm.line(7, 7, 3, 2, woodL);
+  pm.line(7, 7, 12, 11, wood);
+  pm.line(7, 7, 11, 12, woodL);
+  pm.set(2, 4, wood); // blade tips broaden
+  pm.set(12, 10, wood);
+  // the brass hub + bolt
+  pm.ellipse(7, 7, 2, 2, px(RAMP.GOLD, 2));
+  pm.set(7, 7, px(RAMP.GOLD, 3));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** Sigrid's Monocle (§A8 key, Ch.4): a reground lens in a brass ring on a chain —
+ *  pond-sized to the party, the reusable Focus of Bootstep Moor */
+function drawMonocleIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const brass = px(RAMP.GOLD, 2);
+  const brassL = px(RAMP.GOLD, 3);
+  // the lens ring, large and low-left
+  pm.ellipse(6, 8, 5, 5, brass);
+  pm.ellipse(6, 8, 4, 4, px(RAMP.CYAN, 1)); // the cold glass
+  pm.ellipse(5, 7, 2, 2, px(RAMP.CYAN, 3)); // a watery highlight
+  // the little adjustment knob + a chain trailing off the top-right
+  pm.set(10, 4, brassL);
+  pm.set(11, 3, brass);
+  pm.set(12, 3, brass);
+  pm.set(13, 4, brass);
+  pm.outline(C.outline);
+  pm.set(5, 6, C.white); // pure light after the contour — a pond catches the sky
+  return pm;
+}
+
+/* ---- Ch.5 MINIMUS — PIPPA'S KIT LADDER menu faces (bespoke signatures). Tiny,
+ *      precise page implements; normal-sized in the bag, absurd in the fiction. ---- */
+
+/** the Stamp Sling: a forked twig sling cradling a loaded postage stamp */
+function drawStampSlingIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const wood = px(RAMP.EARTH, 2);
+  // the Y-fork
+  pm.vline(6, 8, 5, wood);
+  pm.line(6, 8, 3, 4, wood);
+  pm.line(6, 8, 9, 4, wood);
+  // the elastic, drawn back
+  pm.line(3, 4, 6, 7, px(RAMP.RED, 1));
+  pm.line(9, 4, 6, 7, px(RAMP.RED, 1));
+  // the loaded stamp (perforated paper, a tiny crown printed)
+  pm.rect(5, 6, 3, 3, px(RAMP.PURPLE, 2));
+  pm.set(6, 7, px(RAMP.GOLD, 3));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Needle Saber: a darning needle as a rapier, thread looped at the eye */
+function drawNeedleSaberIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const steel = px(RAMP.PAPER, 2);
+  const steelL = px(RAMP.PAPER, 3);
+  // the blade, corner to corner, fine
+  pm.line(3, 11, 11, 3, steel);
+  pm.line(4, 11, 12, 3, steelL);
+  pm.set(12, 2, steelL); // the point
+  // the eye at the pommel + a loop of magenta thread
+  pm.ellipse(3, 11, 1, 1, steel);
+  pm.set(3, 11, C.outline);
+  pm.set(2, 13, px(RAMP.MAGENTA, 2));
+  pm.set(1, 12, px(RAMP.MAGENTA, 3));
+  pm.outline(C.outline);
+  pm.set(11, 3, C.white); // a glint off the tip
+  return pm;
+}
+
+/** the Thimble Bell: a silver thimble inverted as a bell, a clapper below */
+function drawThimbleBellIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const silver = px(RAMP.PAPER, 2);
+  const silverL = px(RAMP.PAPER, 3);
+  // the dimpled thimble dome (a bell)
+  pm.contour(6, 3, [1, 2, 3, 4, 4], silver);
+  pm.hline(2, 8, 9, silverL); // the mouth rim
+  // the dimple texture
+  pm.set(5, 5, px(RAMP.PAPER, 1));
+  pm.set(7, 5, px(RAMP.PAPER, 1));
+  pm.set(6, 4, px(RAMP.PAPER, 1));
+  // a gold clapper swinging below
+  pm.set(6, 10, px(RAMP.GOLD, 2));
+  pm.set(6, 11, px(RAMP.GOLD, 3));
+  // the crown-loop on top
+  pm.set(6, 1, px(RAMP.GOLD, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Royal Red Pen (boss-drop top): a red fountain pen, gold nib, a final mark */
+function drawRedPenIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const red = px(RAMP.RED, 2);
+  const redL = px(RAMP.RED, 3);
+  // the barrel, corner to corner
+  pm.line(2, 11, 9, 4, red);
+  pm.line(3, 11, 10, 4, redL);
+  pm.line(2, 12, 9, 5, px(RAMP.RED, 1));
+  // the gold cap band + clip
+  pm.set(5, 8, px(RAMP.GOLD, 2));
+  pm.set(6, 7, px(RAMP.GOLD, 2));
+  // the gold nib at the tip
+  pm.line(9, 4, 11, 2, px(RAMP.GOLD, 2));
+  pm.set(11, 2, px(RAMP.GOLD, 3));
+  // a small red correction mark, freshly made — corrections are final
+  pm.set(12, 11, redL);
+  pm.set(13, 12, red);
+  pm.set(13, 10, red);
+  pm.outline(C.outline);
+  pm.set(11, 2, C.white); // pure light on the nib
+  return pm;
+}
+
+/** the Royal Thimble (§A8 key — Pippa's scale-anchor): an ornate gold thimble */
+function drawRoyalThimbleIcon(): Pixmap {
+  const pm = new Pixmap(12, 14);
+  const gold = px(RAMP.GOLD, 2);
+  const goldL = px(RAMP.GOLD, 3);
+  const goldD = px(RAMP.GOLD, 1);
+  // the domed thimble
+  pm.contour(6, 2, [1, 2, 3, 4, 4, 4], gold);
+  pm.hline(2, 9, 9, goldL); // the lit rim
+  pm.hline(2, 10, 9, goldD);
+  // the dimpled pattern
+  for (const [x, y] of [[5, 4], [7, 4], [6, 5], [4, 6], [8, 6], [6, 7]] as Array<[number, number]>) {
+    pm.set(x, y, goldD);
+  }
+  // a tiny inset jewel near the crown — a thimble fit for state
+  pm.set(6, 3, px(RAMP.MAGENTA, 2));
+  pm.outline(C.outline);
+  pm.set(4, 3, C.white); // a regal glint
+  return pm;
+}
+
+/** the Big-Little Lens (§A6 Ch.5 build key): a brass loupe, ground true */
+function drawBigLittleLensIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const brass = px(RAMP.GOLD, 2);
+  const brassL = px(RAMP.GOLD, 3);
+  // the lens ring (a loupe), the glass a focused dot of cyan
+  pm.ellipse(6, 6, 5, 5, brass);
+  pm.ellipse(6, 6, 4, 4, px(RAMP.CYAN, 1));
+  pm.ellipse(6, 6, 2, 2, px(RAMP.CYAN, 3)); // a bright focused centre
+  // a folding brass handle out the bottom
+  pm.rect(9, 10, 4, 2, brass);
+  pm.hline(9, 10, 4, brassL);
+  pm.outline(C.outline);
+  pm.set(6, 6, C.white); // the point of perfect focus
   return pm;
 }
 
@@ -622,7 +808,7 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   sandlot_slugger: () => drawBatIcon(RAMP.ORANGE, 'carve'),
   hand_me_down_pan: () => drawPanIcon(RAMP.INK, false),
   copper_pan: () => drawPanIcon(RAMP.ORANGE, true),
-  pellet_popper: () => drawRifleIcon(),
+  pellet_popper: () => drawRifleIcon(RAMP.EARTH, 'tip'),
   cedar_beads: () => drawBeadsIcon(),
   // torso armor (composes on the battler via WEAPON_ART; this is the menu face)
   champion_jacket: () => drawJacketIcon(),
@@ -706,6 +892,136 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   /* ---- Ch.2 South America — keys ---- */
   banana_boat_ticket: () => forgeIcon({ subcat: 'ticket', band: 'ch2', seed: 'banana_boat_ticket' }),
   wish_token: () => forgeIcon({ subcat: 'coin', band: 'ch2', detail: 'star', seed: 'wish_token' }),
+
+  /* ============ S17 M19 (ADR-064) — THE OLD-WORLD CATALOG ============
+   * Ch.3 England · Ch.4 Norway · Ch.5 Minimus. The generic tail is forged (one
+   * line: subcat × band × detail × the id as seed); the hero weapon rungs (incl.
+   * the boss-drop tops) and named key items stay hand-drawn signatures. The
+   * both-directions gate + the distinctness sweep (icons.test.ts) keep every face
+   * honest — where a same-subcat sibling risked a collision, the detail pulls it
+   * apart. England reads damp-grey/brass/tea; the rifles climb one silhouette. */
+
+  /* ---- Ch.3 ENGLAND — Milo's gun ladder (bespoke) + the cricket-bat sidegrade ---- */
+  spud_gun: () => drawRifleIcon(RAMP.NIGHT, 'spud'),
+  double_barrel_sparker: () => drawRifleIcon(RAMP.INK, 'double'),
+  gauss_lobber: () => drawRifleIcon(RAMP.BLUE, 'gauss'),
+  cricket_bat: () => drawBatIcon(RAMP.BLOND, 'carve'),
+  /* ---- Ch.3 — tea (PP), foods, cures, tonics, battle, valuables, keys (forged) ---- */
+  builders_tea: () => forgeIcon({ subcat: 'teacup', band: 'ch3', detail: 'steam', seed: 'builders_tea' }),
+  earl_grey: () => forgeIcon({ subcat: 'teacup', band: 'ch3', detail: 'stripe', seed: 'earl_grey' }),
+  school_cocoa: () => forgeIcon({ subcat: 'teacup', band: 'ch3', detail: 'dots', seed: 'school_cocoa' }),
+  scone_clotted_cream: () => forgeIcon({ subcat: 'pastry', band: 'ch3', detail: 'dots', seed: 'scone_clotted_cream' }),
+  crumpet: () => forgeIcon({ subcat: 'loaf', band: 'ch3', detail: 'steam', seed: 'crumpet' }),
+  fish_and_chips: () => forgeIcon({ subcat: 'bowl', band: 'ch3', detail: 'stripe', seed: 'fish_and_chips' }),
+  bangers_and_mash: () => forgeIcon({ subcat: 'plate', band: 'ch3', detail: 'steam', seed: 'bangers_and_mash' }),
+  canteen_stodge: () => forgeIcon({ subcat: 'plate', band: 'ch3', detail: 'dots', seed: 'canteen_stodge' }),
+  sticky_toffee_pudding: () => forgeIcon({ subcat: 'wedge', band: 'ch3', detail: 'steam', seed: 'sticky_toffee_pudding' }),
+  cucumber_sandwich: () => forgeIcon({ subcat: 'sandwich', band: 'ch3', detail: 'stripe', seed: 'cucumber_sandwich' }),
+  pork_pie: () => forgeIcon({ subcat: 'pastry', band: 'ch3', detail: 'bite', seed: 'pork_pie' }),
+  treacle_tart: () => forgeIcon({ subcat: 'wedge', band: 'ch3', detail: 'dots', seed: 'treacle_tart' }),
+  marmite_toast: () => forgeIcon({ subcat: 'sandwich', band: 'ch3', detail: 'dots', seed: 'marmite_toast' }),
+  eccles_cake: () => forgeIcon({ subcat: 'pastry', band: 'ch3', detail: 'wrapper', seed: 'eccles_cake' }),
+  honey_lozenge: () => forgeIcon({ subcat: 'vial', band: 'ch3', detail: 'dots', seed: 'honey_lozenge' }),
+  eye_drops: () => forgeIcon({ subcat: 'vial', band: 'ch3', detail: 'cap', seed: 'eye_drops' }),
+  iron_tonic: () => forgeIcon({ subcat: 'capsule', band: 'ch3', detail: 'stripe', seed: 'iron_tonic' }),
+  brain_food_lunch: () => forgeIcon({ subcat: 'lunchbox', band: 'ch3', detail: 'label', seed: 'brain_food_lunch' }),
+  spark_coil: () => forgeIcon({ subcat: 'zapper', band: 'ch3', detail: 'fuse', seed: 'spark_coil' }),
+  cog_grenade: () => forgeIcon({ subcat: 'bomb', band: 'ch3', detail: 'fuse', seed: 'cog_grenade' }),
+  clockwork_sparrow: () => forgeIcon({ subcat: 'firework', band: 'ch3', detail: 'star', seed: 'clockwork_sparrow' }),
+  broken_gizmo: () => forgeIcon({ subcat: 'hubcap', band: 'ch3', detail: 'crack', seed: 'broken_gizmo' }),
+  first_edition: () => forgeIcon({ subcat: 'book', band: 'ch3', detail: 'tag', seed: 'first_edition' }),
+  commemorative_tin: () => forgeIcon({ subcat: 'wax_tin', band: 'ch3', detail: 'label', seed: 'commemorative_tin' }),
+  lucilles_propeller: () => drawPropellerIcon(),
+  library_card: () => forgeIcon({ subcat: 'card', band: 'ch3', detail: 'stripe', seed: 'library_card' }),
+  thermos: () => forgeIcon({ subcat: 'bottle', band: 'ch3', detail: 'cap', seed: 'thermos' }),
+  /* ---- Ch.3 — armor menu faces (the swing/dress lives in WEAPON_ART torso) ---- */
+  cricket_cap: () => forgeIcon({ subcat: 'hat', band: 'ch3', detail: 'stripe', seed: 'cricket_cap' }),
+  school_blazer: () => forgeIcon({ subcat: 'garment', band: 'ch3', detail: 'stripe', seed: 'school_blazer' }),
+  tweed_waistcoat: () => forgeIcon({ subcat: 'garment', band: 'ch3', detail: 'dots', seed: 'tweed_waistcoat' }),
+  oilcloth_mac: () => forgeIcon({ subcat: 'garment', band: 'ch3', detail: 'cap', seed: 'oilcloth_mac' }),
+
+  /* ---- Ch.4 NORWAY — sidegrades (bat/pan), the cold-blue fishing-hamlet tail.
+     Cold-blue, birch, deep pine; the scale gag lives in the words, not the px. ---- */
+  frozen_cod: () => drawBatIcon(RAMP.CYAN, 'ring'),
+  lefse_griddle: () => drawPanIcon(RAMP.EARTH, false),
+  cloudberry_cordial: () => forgeIcon({ subcat: 'bottle', band: 'ch4', detail: 'cork', seed: 'cloudberry_cordial' }),
+  birch_sap: () => forgeIcon({ subcat: 'bottle', band: 'ch4', detail: 'label', seed: 'birch_sap' }),
+  gjende_coffee: () => forgeIcon({ subcat: 'can', band: 'ch4', detail: 'steam', seed: 'gjende_coffee' }),
+  brunost: () => forgeIcon({ subcat: 'wedge', band: 'ch4', detail: 'stripe', seed: 'brunost' }),
+  fiskeboller: () => forgeIcon({ subcat: 'bowl', band: 'ch4', detail: 'steam', seed: 'fiskeboller' }),
+  lutefisk: () => forgeIcon({ subcat: 'plate', band: 'ch4', detail: 'dots', seed: 'lutefisk' }),
+  lefse: () => forgeIcon({ subcat: 'loaf', band: 'ch4', detail: 'stripe', seed: 'lefse' }),
+  multekrem: () => forgeIcon({ subcat: 'bowl', band: 'ch4', detail: 'dots', seed: 'multekrem' }),
+  rommegrot: () => forgeIcon({ subcat: 'plate', band: 'ch4', detail: 'steam', seed: 'rommegrot' }),
+  farikal: () => forgeIcon({ subcat: 'plate', band: 'ch4', detail: 'stripe', seed: 'farikal' }),
+  knekkebrod: () => forgeIcon({ subcat: 'bar', band: 'ch4', detail: 'dots', seed: 'knekkebrod' }),
+  dog_sized_berry: () => forgeIcon({ subcat: 'fruit', band: 'ch4', detail: 'sprout', seed: 'dog_sized_berry' }),
+  smoked_salmon: () => forgeIcon({ subcat: 'wedge', band: 'ch4', detail: 'bite', seed: 'smoked_salmon' }),
+  vafler: () => forgeIcon({ subcat: 'pastry', band: 'ch4', detail: 'dots', seed: 'vafler' }),
+  pickled_herring: () => forgeIcon({ subcat: 'bowl', band: 'ch4', detail: 'stripe', seed: 'pickled_herring' }),
+  kransekake: () => forgeIcon({ subcat: 'pastry', band: 'ch4', detail: 'ribbon', seed: 'kransekake' }),
+  salve_of_arnica: () => forgeIcon({ subcat: 'wax_tin', band: 'ch4', detail: 'dots', seed: 'salve_of_arnica' }),
+  smelling_salts: () => forgeIcon({ subcat: 'vial', band: 'ch4', detail: 'cork', seed: 'smelling_salts' }),
+  growth_spurt_milk: () => forgeIcon({ subcat: 'carton', band: 'ch4', detail: 'label', seed: 'growth_spurt_milk' }),
+  cod_liver_oil: () => forgeIcon({ subcat: 'bottle', band: 'ch4', detail: 'cap', seed: 'cod_liver_oil' }),
+  firecracker_string: () => forgeIcon({ subcat: 'string', band: 'ch4', seed: 'firecracker_string' }),
+  snowball_special: () => forgeIcon({ subcat: 'bomb', band: 'ch4', ramp: RAMP.CYAN, seed: 'snowball_special' }),
+  giants_banknote: () => forgeIcon({ subcat: 'banknote', band: 'ch4', detail: 'label', seed: 'giants_banknote' }),
+  amber_chunk: () => forgeIcon({ subcat: 'gem', band: 'ch4', ramp: RAMP.GOLD, seed: 'amber_chunk' }),
+  silver_hoard: () => forgeIcon({ subcat: 'sack', band: 'ch4', detail: 'dots', seed: 'silver_hoard' }),
+  stockfish_bundle: () => forgeIcon({ subcat: 'crate', band: 'ch4', seed: 'stockfish_bundle' }),
+  brass_ships_bell: () => forgeIcon({ subcat: 'bell', band: 'ch4', detail: 'star', seed: 'brass_ships_bell' }),
+  sigrids_monocle: () => drawMonocleIcon(),
+  halvors_letter: () => forgeIcon({ subcat: 'note', band: 'ch4', detail: 'ribbon', seed: 'halvors_letter' }),
+  /* ---- Ch.4 — armor menu faces ---- */
+  fur_lined_hood: () => forgeIcon({ subcat: 'hat', band: 'ch4', detail: 'dots', seed: 'fur_lined_hood' }),
+  wool_sweater: () => forgeIcon({ subcat: 'garment', band: 'ch4', detail: 'dots', seed: 'wool_sweater' }),
+  oilskin_slicker: () => forgeIcon({ subcat: 'garment', band: 'ch4', detail: ['cap', 'dots'], seed: 'oilskin_slicker' }),
+  troll_hide_vest: () => forgeIcon({ subcat: 'garment', band: 'ch4', detail: 'stripe', seed: 'troll_hide_vest' }),
+
+  /* ---- Ch.5 MINIMUS — Pippa's KIT LADDER + named keys (bespoke); the jewel-box
+     tail forged in purple/magenta/gold. Tiny in fiction, normal in the bag. ---- */
+  stamp_sling: () => drawStampSlingIcon(),
+  needle_saber: () => drawNeedleSaberIcon(),
+  thimble_bell: () => drawThimbleBellIcon(),
+  royal_red_pen: () => drawRedPenIcon(),
+  acorn_cup_tea: () => forgeIcon({ subcat: 'teacup', band: 'ch5', detail: 'steam', seed: 'acorn_cup_tea' }),
+  nectar_thimble: () => forgeIcon({ subcat: 'teacup', band: 'ch5', detail: 'dots', seed: 'nectar_thimble' }),
+  dewdrop_cordial: () => forgeIcon({ subcat: 'bottle', band: 'ch5', detail: 'cork', seed: 'dewdrop_cordial' }),
+  mint_julep_drop: () => forgeIcon({ subcat: 'bottle', band: 'ch5', detail: 'label', seed: 'mint_julep_drop' }),
+  crumb_loaf: () => forgeIcon({ subcat: 'loaf', band: 'ch5', detail: 'dots', seed: 'crumb_loaf' }),
+  petit_four: () => forgeIcon({ subcat: 'bar', band: 'ch5', detail: 'ribbon', seed: 'petit_four' }),
+  seed_pie: () => forgeIcon({ subcat: 'wedge', band: 'ch5', detail: 'dots', seed: 'seed_pie' }),
+  honey_drop: () => forgeIcon({ subcat: 'fruit', band: 'ch5', detail: 'star', seed: 'honey_drop' }),
+  ribbon_candy: () => forgeIcon({ subcat: 'bar', band: 'ch5', detail: 'wrapper', seed: 'ribbon_candy' }),
+  royal_tartlet: () => forgeIcon({ subcat: 'pastry', band: 'ch5', detail: 'dots', seed: 'royal_tartlet' }),
+  cheese_sliver: () => forgeIcon({ subcat: 'wedge', band: 'ch5', detail: 'stripe', seed: 'cheese_sliver' }),
+  teaspoon_stew: () => forgeIcon({ subcat: 'plate', band: 'ch5', detail: 'steam', seed: 'teaspoon_stew' }),
+  marzipan_pig: () => forgeIcon({ subcat: 'fruit', band: 'ch5', detail: 'dots', seed: 'marzipan_pig' }),
+  sugared_violet: () => forgeIcon({ subcat: 'pastry', band: 'ch5', detail: 'star', seed: 'sugared_violet' }),
+  powder_wig_dust: () => forgeIcon({ subcat: 'pouch', band: 'ch5', detail: 'dots', seed: 'powder_wig_dust' }),
+  smelling_bouquet: () => forgeIcon({ subcat: 'vial', band: 'ch5', detail: 'ribbon', seed: 'smelling_bouquet' }),
+  lucky_penny_tonic: () => forgeIcon({ subcat: 'coin', band: 'ch5', ramp: RAMP.PURPLE, detail: 'star', seed: 'lucky_penny_tonic' }),
+  charged_battery: () => forgeIcon({ subcat: 'battery', band: 'ch5', detail: 'star', seed: 'charged_battery' }),
+  tin_soldier: () => forgeIcon({ subcat: 'firework', band: 'ch5', detail: 'cap', seed: 'tin_soldier' }),
+  confetti_cannon: () => forgeIcon({ subcat: 'firework', band: 'ch5', detail: 'star', seed: 'confetti_cannon' }),
+  crown_jewel_chip: () => forgeIcon({ subcat: 'gem', band: 'ch5', tint: RAMP.MAGENTA, seed: 'crown_jewel_chip' }),
+  census_ledger: () => forgeIcon({ subcat: 'book', band: 'ch5', detail: 'stripe', seed: 'census_ledger' }),
+  royal_doubloon_tiny: () => forgeIcon({ subcat: 'coin', band: 'ch5', detail: 'dots', seed: 'royal_doubloon_tiny' }),
+  gilt_thimble_collection: () => forgeIcon({ subcat: 'wax_tin', band: 'ch5', detail: 'star', seed: 'gilt_thimble_collection' }),
+  royal_thimble: () => drawRoyalThimbleIcon(),
+  big_little_lens: () => drawBigLittleLensIcon(),
+  procession_pass: () => forgeIcon({ subcat: 'ticket', band: 'ch5', detail: 'ribbon', seed: 'procession_pass' }),
+  /* ---- Ch.5 — armor menu faces ---- */
+  paper_crown: () => forgeIcon({ subcat: 'hat', band: 'ch5', detail: 'star', seed: 'paper_crown' }),
+  velvet_doublet: () => forgeIcon({ subcat: 'garment', band: 'ch5', detail: 'stripe', seed: 'velvet_doublet' }),
+  herald_tabard: () => forgeIcon({ subcat: 'garment', band: 'ch5', detail: 'dots', seed: 'herald_tabard' }),
+  ermine_cape: () => forgeIcon({ subcat: 'garment', band: 'ch5', detail: 'ribbon', seed: 'ermine_cape' }),
+
+  /* ---- CROSS-WORLD — THE LOST & FOUND OF IMPOSSIBLE SIZES (§A10) ---- */
+  giant_button: () => forgeIcon({ subcat: 'hubcap', band: 'cross', detail: 'dots', seed: 'giant_button' }),
+  impossible_berry: () => forgeIcon({ subcat: 'fruit', band: 'cross', detail: 'sprout', seed: 'impossible_berry' }),
+  tiny_postcard: () => forgeIcon({ subcat: 'stamp', band: 'cross', detail: 'label', seed: 'tiny_postcard' }),
 };
 
 /**

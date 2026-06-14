@@ -331,7 +331,20 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       foam_finger: 'rex', wiffle_bat: 'rex', nonstick_pan: 'faye',
     },
     ch2: { sandlot_slugger: 'rex', copper_pan: 'faye' },
-    ch3: { pellet_popper: 'milo' }, // Milo's first air rifle — England (defined early)
+    // M19 (ADR-064): Milo's GUN LADDER (Pellet Popper → Spud Gun → Double-Barrel
+    // Sparker → *Gauss Lobber*, the Mainframe drop) + the Cricket Bat sidegrade (Jay)
+    ch3: {
+      pellet_popper: 'milo', spud_gun: 'milo', double_barrel_sparker: 'milo', gauss_lobber: 'milo',
+      cricket_bat: 'rex',
+    },
+    // M19 (ADR-064): Norway has no joining hero — it arms the party with SCALE
+    // sidegrades (a frozen cod for Jay, a flatbread griddle for Mia)
+    ch4: { frozen_cod: 'rex', lefse_griddle: 'faye' },
+    // M19: PIPPA'S KIT LADDER (Stamp Sling → Needle Saber → Thimble Bell →
+    // *Royal Red Pen*, the Foreign Minister's appointment top) — Minimus
+    ch5: {
+      stamp_sling: 'pippa', needle_saber: 'pippa', thimble_bell: 'pippa', royal_red_pen: 'pippa',
+    },
     ch9: { cedar_beads: 'dorin' }, // Dorin's first beads — Romania (defined early)
   };
   const ladderAll: Record<string, { wielder: string; band: string }> = {};
@@ -355,6 +368,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   const PP_LINE: Record<string, string[]> = {
     ch1: ['star_cola', 'bug_juice', 'diet_star_cola'],
     ch2: ['mate_gourd', 'jungle_fizz'], // M18 (ADR-063) — mate (clockwise!) + jungle fizz
+    ch3: ['builders_tea', 'earl_grey', 'school_cocoa'], // M19 (ADR-064) — TEA AS PP
+    ch4: ['cloudberry_cordial', 'birch_sap', 'gjende_coffee'], // M19 — the moor's cold drinks
+    ch5: ['acorn_cup_tea', 'nectar_thimble', 'dewdrop_cordial', 'mint_julep_drop'], // M19 — tiny vessels
   };
   const ppAll = new Set(Object.values(PP_LINE).flat());
   for (const id of ppAll) {
@@ -373,6 +389,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     // M18 (ADR-063): the §A8 hat ladder opens (Otterbrook Cap → Chullo) + Ch.2 bodies
     ch1: ['champion_jacket', 'otterbrook_cap'],
     ch2: ['wool_poncho', 'chullo', 'cushma', 'alpaca_vest'],
+    // M19 (ADR-064): the Cricket Cap heads Ch.3's rung + the school/fog bodies
+    ch3: ['cricket_cap', 'school_blazer', 'tweed_waistcoat', 'oilcloth_mac'],
+    // M19: the Fur-Lined Hood (freeze-resist) heads Ch.4 + the fjord bodies
+    ch4: ['fur_lined_hood', 'wool_sweater', 'oilskin_slicker', 'troll_hide_vest'],
+    // M19: the Paper Crown heads Ch.5 + the jewel-box court bodies
+    ch5: ['paper_crown', 'velvet_doublet', 'herald_tabard', 'ermine_cape'],
   };
   const armorAll = new Set(Object.values(ARMOR_LINE).flat());
   for (const id of armorAll) {
@@ -429,8 +451,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const b of BANDS) bandCounts[b] = 0;
   for (const item of Object.values(ITEMS)) if (item.band) bandCounts[item.band] += 1;
   const BAND_FLOOR: Record<string, number> = {
-    // M18 (ADR-063) ratchets ch1 + ch2 to the Americas pour (≈40/region target)
-    ch1: 42, ch2: 42, ch3: 1, ch4: 0, ch5: 0, ch6: 0, ch7: 0, ch8: 0, ch9: 2, ch10: 0, cross: 1,
+    // M18 (ADR-063) ratchets ch1 + ch2 to the Americas pour (≈40/region target);
+    // M19 (ADR-064) ratchets ch3 to the England pour (the Old-World, region by region)
+    ch1: 42, ch2: 42, ch3: 42, ch4: 41, ch5: 41, ch6: 0, ch7: 0, ch8: 0, ch9: 2, ch10: 0, cross: 4,
   };
   for (const b of BANDS) {
     if (bandCounts[b] < BAND_FLOOR[b]) {

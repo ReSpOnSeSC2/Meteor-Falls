@@ -878,6 +878,23 @@ const SILHOUETTES: Record<string, Silhouette> = {
     },
   },
 
+  /** book — a bound volume (the library first edition, the duchy census): cover,
+   *  spine, page block, a bookmark ribbon */
+  book: {
+    kind: 'valuable',
+    draw: ({ pm, ramp, accent }) => {
+      pm.rect(3, 2, 8, 11, m(ramp)); // the cover
+      pm.vline(3, 2, 11, d(ramp)); // the spine, in shadow
+      pm.vline(4, 2, 11, l(ramp)); // a lit board edge
+      pm.rect(10, 3, 2, 9, l(PAPER)); // the page block (fore-edge)
+      pm.hline(10, 3, 2, m(PAPER));
+      for (const y of [5, 7, 9]) pm.hline(10, y, 2, d(PAPER)); // page striations
+      pm.rect(5, 5, 4, 3, m(accent)); // a label / device on the cover
+      pm.set(7, 1, m(RED)); // a bookmark ribbon poking from the top
+      pm.set(7, 0, d(RED));
+    },
+  },
+
   /** note — the doctor's note / Rocket Manifest: a paper, lines, a dog-ear */
   note: {
     kind: 'key',
@@ -1128,6 +1145,7 @@ const GALLERY_SAMPLE: Record<Subcat, { band: ItemBand; detail?: Detail | Detail[
   pouch: { band: 'ch6' },
   // valuable
   stamp: { band: 'ch1' },
+  book: { band: 'ch3', detail: 'tag' },
   sack: { band: 'ch2', detail: 'label' },
   crate: { band: 'ch1' },
   idol: { band: 'ch2', detail: 'star', tint: GOLD },

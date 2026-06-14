@@ -208,6 +208,17 @@ export const ITEM_FX: Record<string, string> = {
   // M18 (ADR-063): the Bug Zapper is a thrown battle item — it rides the
   // salt-burst stage (a hurled object that lands hard, §A8 "heavy vs insects")
   bug_zapper: 'item_salt',
+  // M19 (ADR-064) — THE OLD-WORLD CATALOG: the thrown battle goods. Milo's
+  // repaired gizmos (Ch.3), the Whisperwig's NOISE (Ch.4), and Minimus's wind-up
+  // ordnance (Ch.5) all ride the hurled-object salt-burst stage; the spark-coil
+  // and the festive cannon flash the room (item_flash).
+  spark_coil: 'item_flash',
+  cog_grenade: 'item_salt',
+  clockwork_sparrow: 'item_salt',
+  firecracker_string: 'item_salt',
+  snowball_special: 'item_salt',
+  tin_soldier: 'item_salt',
+  confetti_cannon: 'item_flash',
 };
 
 export const ITEM_KIND_FX: Record<string, string | undefined> = {
