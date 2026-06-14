@@ -39,6 +39,7 @@ import { WEAPON_ART } from '../src/spritegen/weapons';
 import { ITEM_ICON } from '../src/spritegen/icons';
 import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
 import { BUILDING_DIMS } from '../src/levelkit/kit';
+import { VEHICLE_CATALOG, VEHICLE_SPECS, usableSeats } from '../src/spritegen/vehicles';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -301,6 +302,42 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (!canon.has(area)) {
       fail('area-skins', `AREA_SKINS has an orphan slice '${area}' — add it to CANON_AREAS or retire the roster`);
     }
+  }
+}
+
+// S18 Movement 26 (ADR-066) — THE VEHICLE FORGE: every drivable/ambient vehicle
+// is a deterministic paint variant carrying its true gameplay DATA (seats →
+// seat-fit, a collision footprint, the terrain it travels). Gated BOTH directions:
+//  · every VEHICLE_CATALOG variant names a real VEHICLE_SPECS type;
+//  · every VEHICLE_SPECS type ships at least one paint variant (no dead spec);
+//  · the spec is sane (terrain valid, seats ≥ 0, footprint inside the sprite, a
+//    ridable vehicle has ≥1 usable seat), and sprite names are unique.
+{
+  const TERRAINS = new Set(['road', 'water', 'air']);
+  const specTypes = new Set(Object.keys(VEHICLE_SPECS));
+  const seen = new Set<string>();
+  const usedTypes = new Set<string>();
+  for (const v of VEHICLE_CATALOG) {
+    if (seen.has(v.name)) fail('vehicles', `vehicle sprite name '${v.name}' is registered twice — names are keys`);
+    seen.add(v.name);
+    if (!specTypes.has(v.type)) {
+      fail('vehicles', `vehicle '${v.name}' has type '${v.type}' with no VEHICLE_SPECS row — extend the spec table, never ad-hoc`);
+      continue;
+    }
+    usedTypes.add(v.type);
+  }
+  for (const type of specTypes) {
+    if (!usedTypes.has(type)) fail('vehicles', `VEHICLE_SPECS type '${type}' has no paint variant in VEHICLE_CATALOG — a dead spec row`);
+    const s = VEHICLE_SPECS[type];
+    if (!TERRAINS.has(s.terrain)) fail('vehicles', `vehicle '${type}' has unknown terrain '${s.terrain}'`);
+    if (s.seats < 0) fail('vehicles', `vehicle '${type}' has negative seats`);
+    // a ridable vehicle (the party can board) must leave ≥1 seat after the driver
+    if (s.cls !== 'prop' && s.cls !== 'machine' && s.cls !== 'bike' && s.seats >= 2 && usableSeats(type) < 1) {
+      fail('vehicles', `vehicle '${type}' seats ${s.seats} but has no usable seat — seat-fit math is off`);
+    }
+    const inX = s.solid.ox >= 0 && s.solid.ox + s.solid.w <= s.w;
+    const inY = s.solid.oy >= 0 && s.solid.oy + s.solid.h <= s.h;
+    if (!inX || !inY) fail('vehicles', `vehicle '${type}' footprint ${JSON.stringify(s.solid)} falls outside its ${s.w}x${s.h} sprite`);
   }
 }
 
@@ -1823,6 +1860,7 @@ const counts = [
   `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,
   `${Object.keys(MAPS).length} maps`,
   `${CANON_AREAS.length} area skins`,
+  `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,

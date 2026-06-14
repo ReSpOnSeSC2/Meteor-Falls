@@ -4182,3 +4182,55 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   change or the build fails. The foundation is set for Movement 26 (the vehicle forge + traffic)
   to drive these streets and Movement 29 (the property market) to put agencies, lawyers, and
   homes on these blocks. First movement of S18 lands.
+
+## ADR-066 — S18 (Movement 26): THE VEHICLE FORGE + THE TRAFFIC SYSTEM — a world with wheels
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 26 — the art + ambiance foundation the control system
+  (M27), the overworld-PSI casts (M28), and the fleet (M33) all ride on. No control yet —
+  just a living world with wheels, drawn and driving.)
+- **Decision — `src/spritegen/vehicles.ts`, THE VEHICLE FORGE (registered in `index.ts`).**
+  The building-catalog pattern (ADR-050) applied to vehicles: a handful of hand-drawn
+  silhouette draws (car body shared by sedan/ev/race/suv, box body for van/bus, cab+bed truck/
+  dump, moto, bike, excavator, trash cans, hull for boat/yacht, sub, plane/jet/jumbo, heli,
+  blimp), each parametrised by a wall-ramp PAINT pool, fan out into **57 named, seeded paint
+  variants across 21 types**. Drawn facing right in a clean 3/4 read against the 16×24 hero;
+  pixel-clean under ADR-020 by construction (palette-only Pixmap DSL, flat fills, deliberate
+  marks, `outline()` last, `shadowUnder()` never outlined) — proven in `vehicles.test.ts` (every
+  pixel is a master-palette index or transparent). `VEHICLE_SPECS` carries each type's true
+  gameplay DATA: a `seats` count (the §A4.10 seat-fit law — usable-to-ride = seats − 1, so a
+  motorcycle fits a party of 1, a sedan ≤3, an SUV 4, a van/bus the whole party), a collision
+  FOOTPRINT, and the TERRAIN it travels (road/water/air — the fleet's scale-up axis). The
+  air/sea craft are DEFINED now and scaled INTO by M33 (ADR-035 staging), not menu-unlocked.
+- **Decision — `VEHICLE_CATALOG` ⇄ `VEHICLE_SPECS`, gated BOTH directions
+  (`tools/content-validate.ts` `vehicles` + `vehicles.test.ts`).** Every catalog variant names
+  a real spec type; every spec ships ≥1 paint variant (no dead spec); names are unique; the
+  spec is sane (terrain valid, seats ≥ 0, footprint inside the sprite, a ridable vehicle keeps
+  ≥1 usable seat). The verdict prints **57 vehicles (21 types)**. `npm run art:vehicles` →
+  `tools/render-vehicles.ts` renders the whole catalog through the real `drawVehicle()` to
+  `.shots/vehicles.png` with the hero for scale + the seat-fit read per row (the contact-sheet
+  precedent; read by eye — not `preview_screenshot`).
+- **Decision — THE TRAFFIC SYSTEM (`src/engine/traffic.ts`), deterministic + safe.** A pure,
+  Phaser-free, seeded simulation: vehicles spawn on a map's road cells and drive the road graph
+  one tile per tick, capped at `max` (the object pool — the renderer culls off-screen). No
+  Math.random / Date.now (Prime Law 2 — same seed → identical traffic, byte-for-byte). It
+  enforces the M26 **SAFETY LAW**: a moving vehicle NEVER enters the player's cell (no crush)
+  and NEVER takes the player's last free road neighbour (no corner-trap) — it yields (pauses)
+  or turns at an intersection instead, and never stacks two cars on a cell. Proven over 200+
+  time-steps on a dense block AND a 1-wide worst-case lane in `traffic.test.ts`. The
+  OverworldScene will interpolate pixel positions between ticks (the `px,py` previous-cell
+  fields) for smooth motion; that runtime wiring + the gas-station/bus-station/garage/driveway
+  fixtures land in a follow-up (they need a tile+PROP BFS re-proof per map, the M26 QA law).
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (57 vehicles / 21 types,
+  both directions) + full **vitest 758 green** (+14: traffic safety/determinism + the vehicle
+  forge gate/seat-fit/art-law) + `vite build` clean + `npm run art:vehicles` rendered + read by
+  eye (sedans/buses/trucks/excavator/boats/planes all read against the hero, paints distinct).
+  No FNV re-pin, no frozen-core / `world_block` change (vehicles + the sim are new modules, not
+  sample-routed map generators); no save change yet (vehicle OWNERSHIP rides M27/M33). §A5 +
+  §B amended in the same commit.
+- **Consequences:** the world has wheels — a deterministic, safe, pooled traffic layer and a
+  full painted vehicle catalog (road now; the fleet defined for later). M27 borrows these
+  vehicles (Jay puppets the driver, Milo clickers the machine, the party rides if the seats
+  fit); M33 scales the Clicker/Puppet up the same `VEHICLE_SPECS` terrain axis into boats,
+  planes, and subs. The live OverworldScene traffic render + the new road fixtures (gas/bus
+  stations, garages, driveways) are the documented next step.

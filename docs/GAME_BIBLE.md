@@ -168,6 +168,19 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 
 The world FEELS open: every region has off-path screens, optional caves, side quests, and once Teleport unlocks (Ch.6) the whole visited world reopens — but the Ember trail keeps the story linear and completable.
 
+**The road/traffic layer (S18 M26, ADR-066).** On TOP of the set-piece travel table above
+(which is unchanged — the Embers keep the journey linear), the world's streets now have
+WHEELS: a deterministic, seeded TRAFFIC system (`src/engine/traffic.ts`) drives cars, buses,
+trucks, bikes, and machinery over a map's road graph as living ambiance + the control
+system's future borrow-targets. It is pure, pooled, and culled for 60fps, and it obeys the
+SAFETY LAW — a moving vehicle never crushes the player and never seals the player's last lane
+(it yields/turns instead; proven over many time-steps in `traffic.test.ts`). The art is THE
+VEHICLE FORGE (`src/spritegen/vehicles.ts`): a deterministic, hand-drawn, RAMP-painted catalog
+of every road vehicle PLUS the fleet the §A4.10 control power scales into (boats/subs/planes/
+heli/blimp), each carrying its true gameplay DATA — a `seats` count (usable-to-ride = seats − 1,
+the seat-fit law), a collision footprint, and the terrain it travels (road/water/air). Pinned
+both directions (`VEHICLE_CATALOG` ⇄ `VEHICLE_SPECS`). None of this replaces an Ember leg.
+
 ## A6. The Ten Chapters & Ten Bosses
 
 > Boss stat lines are canon starting values; Prompt 31–40 wire them. Format: **HP / signature gimmick**.
