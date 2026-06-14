@@ -3124,7 +3124,10 @@ export class OverworldScene extends Phaser.Scene {
     if (from === 'docks') {
       this.goThroughDoor('puerto_sol', PUERTO_SOL_PIER_SPAWN.x, PUERTO_SOL_PIER_SPAWN.y, 'up');
     } else {
-      this.goThroughDoor('brickton_docks', 392, 168, 'up');
+      // land on the pier DECK by the gangplank (tile 20,8) — 392,168 was tile
+      // (24,10), a solid 'sea' tile off the pier's SE nub: the boat dropped you
+      // in the water and you couldn't move (clear of the board_boat trigger too)
+      this.goThroughDoor('brickton_docks', 328, 136, 'up');
     }
   }
 

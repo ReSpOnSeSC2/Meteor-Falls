@@ -2488,10 +2488,10 @@ function buildCostaEstrella(): MapDef {
     settlement: 'village',
     grid: g.out(),
     props: [
-      // the clubhouse (LINKS over the door, gold awning — Spanish-colonial
-      // by way of a resort brochure). S15i Task 6: now the clifftop GATE-house —
-      // the real course + pro shop are west through THE LINKS gate (ADR-059)
-      { sprite: 'clubhouse', x: 16, y: 1.6, solid: { ox: 0, oy: 20, w: 80, h: 28 } },
+      // (removed) the clifftop 'LINKS' clubhouse — it duplicated THE LINKS
+      // building on the very next screen (golf_resort / THE LINKS ESTATES), so
+      // it's gone; the clifftop is just the gate now (ADR-059, the gate door
+      // west to golf_resort still stands in doors[] below)
       // the first tee's plaque
       { sprite: 'sign', x: 5, y: 7, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       // the gate marker — to the subdivision + the clubhouse
@@ -2549,6 +2549,7 @@ function buildGolfResort(costaStep: { tx: number; ty: number }): MapDef {
   g.rect(10, 4, 1, 12, 'b');
   g.rect(18, 4, 1, 12, 'b');
   g.rect(11, 19, 8, 1, 'b'); // a low hedge by the entrance
+  g.rect(13, 19, 3, 1, ':'); // ...with the cart path passing THROUGH it (the gate gap, ADR-059) — the hedge must never seal the entrance plaza off from the course
   // the clubhouse forecourt (north) + the entrance plaza (south)
   g.rect(10, 1, 9, 1, '=');
   g.rect(11, 20, 7, 2, '=');
