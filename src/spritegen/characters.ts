@@ -10,7 +10,7 @@
  * Left is mirrored from right.
  */
 import { Pixmap } from './pixmap';
-import { RAMP, T, px, C } from '../palette';
+import { RAMP, T, px, pxr, SH, C } from '../palette';
 
 export type HairStyle = 'short' | 'bob' | 'sidepart' | 'topknot' | 'gray' | 'none';
 export type TopStyle = 'shirt' | 'stripe' | 'dress' | 'gi' | 'blazer' | 'apron' | 'pajama';
@@ -331,15 +331,21 @@ function headFront(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number, bac
     const cxF = x0 + Math.floor(w / 2);
     const lx = cxF - 4;
     const rx = cxF + 2;
+    // ADR-104 (Prompt 6): defined eyes — a rounded pupil, a PAPER catchlight
+    // upper-left, and a soft upper lash line, keeping per-character variation.
+    const lash = C.inkSoft;
     const eye = (ex: number): void => {
       switch (spec.eyes ?? 'tall') {
-        case 'tall': // the hero eye: 2×3 with a catchlight
+        case 'tall': // the hero eye: rounded 2×3 pupil, catchlight + lash
           pm.rect(ex, eyeY, 2, 3, C.outline);
-          pm.set(ex, eyeY, C.white);
+          pm.set(ex, eyeY, C.white); // catchlight
+          pm.set(ex + 1, eyeY + 2, skinD); // round the lower-outer corner
+          pm.hline(ex, eyeY - 1, 2, lash); // upper lash
           break;
-        case 'dot': // calm 2×2 button eyes
+        case 'dot': // calm button eyes, now with catchlight + lash
           pm.rect(ex, eyeY + 1, 2, 2, C.outline);
           pm.set(ex, eyeY + 1, C.white);
+          pm.hline(ex, eyeY, 2, lash);
           break;
         case 'happy': // closed-content ∪ arcs
           pm.set(ex - 1, eyeY + 1, C.outline);
@@ -350,6 +356,7 @@ function headFront(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number, bac
         case 'wide': // tall whites, pin pupils — the Department issue
           pm.rect(ex - 1, eyeY - 1, 4, 5, C.white);
           pm.rect(ex, eyeY + 1, 2, 2, C.outline);
+          pm.set(ex, eyeY + 1, px(RAMP.PAPER, 3)); // catchlight on the pin pupil
           pm.hline(ex - 1, eyeY - 2, 4, skinD); // socket rim
           break;
         case 'glare': // narrowed, heavy brow
@@ -437,19 +444,26 @@ function torsoFront(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number, po
     }
   } else {
     pm.rect(x0, y0, w, h, base);
-    // weighted shading (ADR-022): lit left edge + chest catch, a 2-column
-    // shaded side, hem dark with a core-shadow corner — reads at game zoom
-    pm.vline(x0, y0, h, lit);
-    pm.vline(x0 + 1, y0, 2, lit);
+    // ADR-104 soft volume: a 5-tone left→right gradient off the 6-stop ramp —
+    // HILITE edge, LIT falloff, BASE core, MID falloff, DARK edge, SHADOW corner
+    // — so the torso reads as a rounded form, not a flat 3-tone slab.
+    const litS = pxr(t.ramp, SH.LIT);
+    const mid = pxr(t.ramp, SH.MID);
+    const core = pxr(t.ramp, SH.SHADOW);
+    pm.vline(x0, y0, h, lit); // hilite catch on the lit edge
+    pm.vline(x0 + 1, y0, h, litS); // soft highlight falloff
     pm.hline(x0 + 1, y0 + 1, 2, lit);
-    pm.vline(x0 + w - 1, y0 + 1, h - 1, dark);
-    pm.vline(x0 + w - 2, y0 + 3, h - 3, dark);
+    pm.vline(x0 + w - 2, y0 + 1, h - 1, mid); // mid falloff into shadow
+    pm.vline(x0 + w - 1, y0 + 1, h - 1, dark); // shaded edge
     pm.hline(x0, hemY, w, dark);
-    pm.set(x0 + w - 2, hemY, px(t.ramp, 0));
-    pm.set(x0 + w - 1, hemY - 1, px(t.ramp, 0));
-    // shoulder rounding
+    pm.set(x0 + w - 2, hemY, core);
+    pm.set(x0 + w - 1, hemY - 1, core);
+    // ADR-104 (Prompt 4): rounder shoulder caps — a 2px chamfer each side that
+    // finish()'s AA + colored outline read as a sloped shoulder, not a square box
     pm.set(x0, y0, T);
+    pm.set(x0 + 1, y0, T);
     pm.set(x0 + w - 1, y0, T);
+    pm.set(x0 + w - 2, y0, T);
 
     switch (t.style) {
       case 'stripe': {
@@ -816,14 +830,18 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
   // single profile eye, in the character's style (ADR-022)
   const eyeY = y0 + 7;
   const ex = x0 + w - 5;
+  // ADR-104 (Prompt 6): the profile eye gets the same catchlight + lash
+  const lashS = C.inkSoft;
   switch (spec.eyes ?? 'tall') {
     case 'tall':
       pm.rect(ex, eyeY, 2, 3, C.outline);
       pm.set(ex, eyeY, C.white);
+      pm.hline(ex, eyeY - 1, 2, lashS); // upper lash
       break;
     case 'dot':
       pm.rect(ex, eyeY + 1, 2, 2, C.outline);
       pm.set(ex, eyeY + 1, C.white);
+      pm.hline(ex, eyeY, 2, lashS);
       break;
     case 'happy':
       pm.set(ex - 1, eyeY + 1, C.outline);
@@ -833,6 +851,7 @@ function headSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): voi
     case 'wide':
       pm.rect(ex - 1, eyeY - 1, 4, 5, C.white);
       pm.rect(ex + 1, eyeY + 1, 2, 2, C.outline); // pupil hunts forward
+      pm.set(ex + 1, eyeY + 1, px(RAMP.PAPER, 3)); // catchlight
       pm.hline(ex - 1, eyeY - 2, 4, skinD);
       break;
     case 'glare':
@@ -1025,7 +1044,7 @@ function legsSide(pm: Pixmap, spec: CharacterSpec, m: Metrics, pose: Pose): void
 
 /* ================================================================== */
 
-function drawFrame(spec: CharacterSpec, dir: Dir, pose: Pose): Pixmap {
+function drawFrame(spec: CharacterSpec, dir: Dir, pose: Pose, finishing = true): Pixmap {
   const pm = new Pixmap(FRAME_W, FRAME_H);
   const m = metrics(spec);
   const bob = pose === 1 || pose === 3 ? 1 : 0;
@@ -1039,9 +1058,12 @@ function drawFrame(spec: CharacterSpec, dir: Dir, pose: Pose): Pixmap {
     headSide(pm, spec, m, bob);
   }
   // S7c: the bespoke one-off pass — after every parametric layer, before
-  // outline() so hand-placed pixels sit inside the same single contour
+  // the finishing contour so hand-placed pixels sit inside the same outline
   spec.detail?.({ pm, dir, pose, bob, m, spec });
-  pm.outline(C.outline);
+  // ADR-101: the selective lit outline + diagonal AA. `finishing:false` returns
+  // the raw color art so the diagonal stitcher can weld two halves and finish
+  // the combined silhouette ONCE (one coherent contour, no seam double-outline).
+  if (finishing) pm.finish();
   return pm;
 }
 
@@ -1053,7 +1075,7 @@ function drawFrame(spec: CharacterSpec, dir: Dir, pose: Pose): Pixmap {
  * the duration of the sprint. Drawn through the same parametric layers as
  * the walk via a metrics override — zero forked draw code.
  */
-function drawRunFrame(spec: CharacterSpec, dir: Dir, pose: Pose): Pixmap {
+function drawRunFrame(spec: CharacterSpec, dir: Dir, pose: Pose, finishing = true): Pixmap {
   const pm = new Pixmap(FRAME_W, FRAME_H);
   const m = metrics(spec);
   const bob = 1; // run poses are always the risen step poses
@@ -1082,7 +1104,7 @@ function drawRunFrame(spec: CharacterSpec, dir: Dir, pose: Pose): Pixmap {
     headSide(pm, set, lean, bob);
   }
   spec.detail?.({ pm, dir, pose, bob, m: lean, spec: set });
-  pm.outline(C.outline);
+  if (finishing) pm.finish();
   return pm;
 }
 
@@ -1161,16 +1183,19 @@ function fixDiagFace(pm: Pixmap, spec: CharacterSpec, m: Metrics, bob: number): 
   // both eyes crowd toward the NEAR (right) side; the far eye foreshortens
   const nearX = cx + 2;
   const farX = cx - 3;
+  const lashD = C.inkSoft;
   const eye = (ex: number, near: boolean): void => {
     switch (spec.eyes ?? 'tall') {
       case 'tall':
         pm.rect(ex, eyeY, 2, 3, C.outline);
         pm.set(ex, eyeY, C.white);
+        if (near) pm.hline(ex, eyeY - 1, 2, lashD); // lash on the near eye
         if (!near) pm.set(ex + 1, eyeY + 2, skin); // far eye one row shorter
         break;
       case 'dot':
         pm.rect(ex, eyeY + 1, 2, 2, C.outline);
         pm.set(ex, eyeY + 1, C.white);
+        if (near) pm.hline(ex, eyeY, 2, lashD);
         break;
       case 'happy':
         pm.set(ex - 1, eyeY + 1, C.outline);
@@ -1249,17 +1274,19 @@ function drawDiagFrame(spec: CharacterSpec, dir: DiagDir, pose: Pose): Pixmap {
   const m = metrics(spec);
   const bob = pose === 1 || pose === 3 ? 1 : 0;
   const up = dir === 'upright';
-  const pm = stitchDiag(drawFrame(spec, up ? 'up' : 'down', pose), drawFrame(spec, 'right', pose));
+  // stitch RAW (un-finished) halves, fix the 3/4 face, then finish the whole
+  // silhouette once — one coherent lit outline + AA across the welded seam.
+  const pm = stitchDiag(drawFrame(spec, up ? 'up' : 'down', pose, false), drawFrame(spec, 'right', pose, false));
   if (!up) fixDiagFace(pm, spec, m, bob);
-  pm.outline(C.outline); // seal the interior stitch seam
+  pm.finish();
   return pm;
 }
 
 function drawDiagRunFrame(spec: CharacterSpec, dir: DiagDir, pose: Pose): Pixmap {
   const up = dir === 'upright';
-  const pm = stitchDiag(drawRunFrame(spec, up ? 'up' : 'down', pose), drawRunFrame(spec, 'right', pose));
+  const pm = stitchDiag(drawRunFrame(spec, up ? 'up' : 'down', pose, false), drawRunFrame(spec, 'right', pose, false));
   if (!up) fixDiagFace(pm, spec, metrics(spec), 1);
-  pm.outline(C.outline);
+  pm.finish();
   return pm;
 }
 
@@ -1280,6 +1307,62 @@ export function generateDiagRunFrames(spec: CharacterSpec): Pixmap[] {
   const dl = dr.map((f) => f.flipX());
   const ul = ur.map((f) => f.flipX());
   return [...dr, ...dl, ...ur, ...ul];
+}
+
+/* ------------------------------------------------------------------ */
+/* IDLE LIFE (ADR-101) — breath + blink, APPENDED at 44+ so the ADR-009/  */
+/* 040/096 sheet contract (frames 0–43) stays untouched. A lot of an EB    */
+/* town's life is the standing idle: the chest that breathes, the periodic */
+/* blink. Down-facing only — the rest pose always faces the camera.        */
+
+/** the idle block's first appended frame (after walk/run/diag = 44) */
+export const IDLE_BREATH = 44; // the inhale: upper body + head rise 1px
+export const IDLE_BLINK = 45; // eyes closed
+
+/** stamp closed lids over the down-facing eye band (skin wipe + a lash line) */
+function stampBlink(pm: Pixmap, spec: CharacterSpec, m: Metrics): void {
+  if (spec.grin) return; // grinners read by the grin, not the eyes
+  const y0 = m.headTop;
+  const x0 = m.headX;
+  const w = m.headW;
+  const skin = px(spec.skin, 2);
+  const eyeY = y0 + 7;
+  const cxF = x0 + Math.floor(w / 2);
+  const lash = (ex: number): void => {
+    pm.rect(ex - 1, eyeY - 1, 4, 4, skin); // wipe the open eye back to skin
+    pm.hline(ex - 1, eyeY + 1, 3, C.outline); // the closed lash
+    pm.set(ex - 1, eyeY + 2, C.inkSoft); // soft lower lid
+  };
+  lash(cxF - 4);
+  lash(cxF + 2);
+  if (spec.glasses) {
+    pm.frame(cxF - 5, eyeY - 1, 4, 5, C.inkSoft); // specs stay on over shut eyes
+    pm.frame(cxF + 1, eyeY - 1, 4, 5, C.inkSoft);
+  }
+}
+
+/** one down-facing idle frame (the rest pose) in the breath or blink variant */
+function drawIdleFrame(spec: CharacterSpec, variant: 'breath' | 'blink'): Pixmap {
+  const pm = new Pixmap(FRAME_W, FRAME_H);
+  const m = metrics(spec);
+  // breath = head + torso top ride up 1px; the torso stretches 1px taller so
+  // it still meets the planted hips (no neck or waist gap on the inhale).
+  const mUp: Metrics =
+    variant === 'breath'
+      ? { ...m, headTop: m.headTop - 1, bodyTop: m.bodyTop - 1, bodyH: m.bodyH + 1 }
+      : m;
+  legsFront(pm, spec, m, 0);
+  torsoFront(pm, spec, mUp, 0, 0, false);
+  headFront(pm, spec, mUp, 0, false);
+  if (variant === 'blink') stampBlink(pm, spec, mUp);
+  spec.detail?.({ pm, dir: 'down', pose: 0, bob: 0, m: mUp, spec });
+  pm.finish();
+  return pm;
+}
+
+/** the two appended idle frames: [breath (44), blink (45)] */
+export function generateIdleFrames(spec: CharacterSpec): Pixmap[] {
+  return [drawIdleFrame(spec, 'breath'), drawIdleFrame(spec, 'blink')];
 }
 
 /* ------------------------------------------------------------------ */

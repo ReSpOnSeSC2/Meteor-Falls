@@ -5686,3 +5686,370 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   slice is provably completable Ch.1 → Ch.2 → Ch.3 (the manifest assertions + the headless boss test). The
   interactive control WHEEL, the bespoke Mainframe silhouette (Prompt 41), and a hard-blocking PSI-gate BFS
   re-proof are the named follow-ups. ☄️
+
+## ADR-100 — THE AUDIO MIXER (crossfade · muffle · volume buses · the synth bend)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the presentation-polish pass's first spine piece — the audio engine grows from two
+  bare gains into a small console. The CROSSFADE ships LIVE for every existing caller; the muffle / per-bus
+  volume / detune APIs are built here and DRIVEN by their own later movements: the SETUP option screen
+  (#7/#8), the map ambience metadata (#16), and battle slow-mo (#3).)
+- **The ADR number.** ADR-099 (Land England Ch.3 Part 2) was the highest; a grep confirms 099 is the top,
+  so this is **ADR-100**.
+- **Context.** `engine/audio.ts` (ADR-006) HARD-CUT between areas: `playMusic()` called `stopMusic()` on its
+  first line, the lone `musicGain` was never ramped, there was no filter anywhere on the music path, and SFX
+  + music shared one fader with no independent volumes. Three asks land on the SAME node graph — a crossfade
+  between areas, a muffle veil for menus/pause/indoors, and player volume sliders — so the graph is reworked
+  ONCE, here, as the shared spine the three consumers hang off.
+- **Decision — THE GRAPH (a console, not two gains).** The persistent nodes become
+  `voice.gain (crossfade 0..1) → musicBus (music vol) → musicMuffle (lowpass) → master (master vol × mute)
+  → destination`, with `tone()/noise() → sfxBus (sfx vol) → master`. SFX DELIBERATELY bypass the muffle (you
+  still hear the confirm blip behind a paused tune). `master` still honors mute (mute zeroes it regardless of
+  the master level — mute wins).
+- **Decision — THE CROSSFADE (#2).** A playing track is now a `MusicVoice` — its OWN crossfade gain + its OWN
+  scheduler clock + held-note table — so two overlap. `playMusic(next)` no longer hard-stops: the outgoing
+  voice ramps to 0 over `CROSSFADE_MS` (500ms) and is disposed after, WHILE the incoming voice rides 0→1.
+  `playMusic(null)` fades to silence; `stopMusic()` stays an IMMEDIATE hard-stop for teardown (scene
+  shutdown). Idempotency + the §A4.9 Homesong stem cap are preserved exactly (the asked-for track is recorded
+  pre-`unlock()` as the old `current` field did, now a getter). Every existing caller — scene music, the
+  victory jingle — gets the crossfade for free, no call-site change.
+- **Decision — THE MUFFLE (#2).** A `lowpass` BiquadFilter sits on the music path ONLY. `setMusicMuffle(0|1|2)`
+  lerps its cutoff (open ≈20kHz → veil 2.2kHz → deep 800Hz) over a short glide; 0 is wide-open (the filter is
+  effectively off). The drivers wire in their movements: a menu/pause veils to 1, an indoor map flag to 1–2.
+- **Decision — THE VOLUME BUSES (#7).** `setBus('master'|'music'|'sfx', 0..1)` sets the bus gain and persists
+  DEVICE-LOCAL under `meteor-falls-vol-*`, restored on `unlock()`. The legacy `meteor-falls-sound` mute flag is
+  UNTOUCHED — it migrates forward as the master mute, kept distinct from the master *level*. `getBus()` reads
+  back for the slider UI. The pure knobs (cutoffs, defaults, clamp, the key map) live in `engine/audiobus.ts`
+  so they unit-test headlessly (audio.ts itself can't run under vitest's node env — it touches window/
+  AudioContext).
+- **Decision — THE SYNTH BEND (#3 hook).** `setMusicDetune(cents)` offsets every note's detune (over its
+  channel's own base detune), applied to held notes immediately + every note scheduled after — the seam
+  battle slow-mo uses to sag the music as time stretches, then release to 0.
+- **Verification:** `npx tsc --noEmit` clean. Full `npx vitest run` GREEN — **1112 tests** (the prior 1053 +
+  59 new): `audio.test.ts` is a fake-Web-Audio harness pinning the graph wiring, the crossfade ramps (old →
+  0 WHILE new → 1, no hard cut), the mute/level interplay, the muffle glide, and the bend; `audiobus.test.ts`
+  pins the pure knobs. Zero regressions. `npm run validate` GREEN. NO save version bump — bus/mute levels are
+  device-local, never save state.
+- **Consequences.** Areas now BLEND instead of clicking; the engine is ready for the menu/pause/indoor muffle,
+  real volume sliders, and slow-mo's audio sag — each landing in its own movement. The mute toggle and every
+  existing music call behave identically from the outside. Named follow-ups: drive `setMusicMuffle` from menu
+  open/close + the §A map `indoor` flag (#16), expose `setBus` as stepped SETUP sliders + a rumble toggle
+  (#7), and call `setMusicDetune` from the battle slow-mo span (#3). ☄️
+
+## ADR-101 — THE POLISH PASS: 6-stop ramps, a Pixmap lighting model, selective outlines + diagonal AA, idle life, palette-swap variety
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the presentation-polish pass's art spine — five asks that make the generated sprites
+  read as *designed* instead of merely on-model, landed as shared infrastructure so every generator inherits
+  them rather than re-hand-shading each.)
+- **The ADR number.** ADR-100 (the audio mixer) was the highest; a grep confirms it, so this is **ADR-101**.
+- **Context.** Five art requests, all rooted in the same gap — the palette had only 4 shades per ramp, so
+  there were no in-between tones to shade a curve or anti-alias a diagonal with, and each generator hand-rolled
+  its own lighting. The fix is structural: widen the ramps, then give the Pixmap layer a lighting/AA/recolor
+  vocabulary every generator can call, so "flat → designed" is one shared change, not 20 rewrites.
+- **Decision — 6-STOP RAMPS, by construction (palette.ts).** Each ramp grows from 4 to **6** shades. The four
+  AUTHORED anchors stay the source of truth (`ANCHORS`); the 6-stop ramps are DERIVED — `[a0, a1, mix(a1,a2),
+  a2, mix(a2,a3), a3]` — so the two new tweens land at slots 2 (MID) and 4 (LIT), in the heavily-used
+  dark→base→light range. `px(ramp, 0|1|2|3)` maps through `[0,1,3,5]` and resolves to the anchors
+  BYTE-FOR-BYTE: every one of the ~3000 existing call sites renders identically (the ADR-019 untouched-call-
+  sites rule). New high-detail code reaches the full ramp via `pxr(ramp, 0..5)` and the semantic `SH` names
+  (SHADOW · DARK · MID · BASE · LIT · HILITE). `PALETTE` is now 96 entries; the stale `0–63` bound in
+  `vehicles.test.ts` moved to `< PALETTE.length` (its sibling art-law tests already derived it that way).
+- **Decision — THE LIGHTING MODEL on Pixmap.** One light direction (`LIGHT` = top-left) for the whole game,
+  expressed as drawing primitives: `litRect`, `litEllipse`, `sphere` fill a form straight to a lit volume off a
+  6-stop ramp (HILITE/LIT top-left → BASE core → DARK/SHADOW lower-right). The flat-disc offenders adopt them
+  first — `composeMini` is now a real lit sphere, not an `ellipse` + a hand-stamped shoulder.
+- **Decision — SELECTIVE OUTLINE + DIAGONAL AA.** `outlineLit()` is a directional outline: the lit rim
+  (top-left edges) takes a soft ink, the shadow rim the darkest, so the contour reads as lit, not stickered.
+  `aaDiag()` softens the INTERIOR of hard convex corners (the fill pixel tucked inside the corner becomes soft
+  ink) — it rounds the staircase WITHOUT ever adding a pixel outside the silhouette (the first attempt sprouted
+  exterior nubs — a prickly halo, caught in the `.shots` review and reversed). `finish(opts?)` runs both;
+  `finish({aa:false})` is the lit-outline-only variant for boxy/architectural props. Generators call `finish()`
+  in place of `outline(C.outline)`.
+- **Decision — IDLE LIFE (animation), append-only.** Characters gain a breath + a blink, drawn as frames
+  **44/45** APPENDED after the ADR-009/040/096 walk/run/diag block (0–43), which stays untouchable law —
+  `generateCharacterFrames` is still exactly 44, and the idle pair ships from `generateIdleFrames`. The breath
+  raises head+torso 1px (the torso stretches to keep meeting the planted hips — no neck/waist gap); the blink
+  stamps closed lids over the down-facing eyes. `addCharacter` binds `${id}-idle-down`; OverworldScene plays it
+  when the player stands still facing the camera, and Sprite Lab's REMIX opens on it. (Walk frames can't grow —
+  the 0–15 block is contract-locked — so the walk's cushioning stays its existing leg-compression + bob, now
+  read better under the lit shading.)
+- **Decision — PALETTE-SWAP VARIETY.** `pm.swapRamp(from,to)` / `pm.recolor({from:to})` remap whole ramps
+  preserving the shade SLOT, so a recolor keeps its lighting intact; `recolorFrames(frames, map)` does it across
+  a whole sheet. One generator → many looks (the cheap NPC/crowd/enemy variety EarthBound leans on), shown live
+  in Sprite Lab's REMIX page as a four-way shirt-swap strip.
+- **Coverage.** The finishing pass is adopted by the organic generators — characters, the enemy forge
+  (`composeEnemy` + `composeMini`), `enemies`, `busts`, `battlers`, `tiles`, `ch2`, `athletes`, `golfers`,
+  `arcade` (≈115 terminal `outline(C.outline)` → `finish()` conversions, `{aa:false}` on the boxy ones). Crisp
+  hard-edged / UI art — buildings, vehicles, weapons, icons, glyphs, flair, the font, window chrome — keeps its
+  flat dark outline on purpose (corner-rounding a building or a glyph would fight the read); it still gains the
+  wider palette and the lighting helpers for any future detail pass.
+- **Verification.** `npx tsc --noEmit` clean. Full `npx vitest run` GREEN — **1142 tests**, including the new
+  `pixmap.test.ts` (8) pinning the lit volumes' light direction, the outline/AA "never grows the silhouette"
+  contract, and the single-pass `recolor`. The art-law gates (palette-only + determinism) hold across every
+  swept generator. `.shots` contact sheets (cast, front/side, forge faces) reviewed by eye: clean rim-lit
+  silhouettes, no halo, faces intact. The character sheet contract test (44 frames, exact left/right mirror,
+  run-leans-forward) is unchanged and green.
+- **Consequences.** "Designed, not flat" is now a property of the Pixmap layer, not a per-sprite chore: any new
+  generator gets the lit volume + finish vocabulary for free, and any sprite can spawn cheap recolor variants.
+  The town breathes. Named follow-ups: extend idle breathing to standing NPCs/followers (the anim already
+  exists for every cast id), and a later pass can retrofit `litRect`/`litEllipse` into the still-hand-shaded
+  hard-edged generators where it wouldn't fight their geometry. ☄️
+
+## ADR-102 — TRANSITION HARDENING (the door audit · the spawn safety-net · two wrong-way fixes)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a playtest-driven fix pass: screens were landing the player at the wrong edge or
+  spawning them stuck on a wall "a lot"). The user asked for an AUDIT TOOL that finds these and then fixes.
+- **The ADR number.** ADR-100 was the audio mixer; the user's concurrent art polish pass took **ADR-101**
+  mid-flight; a fresh grep confirms 101 is now the highest, so this is **ADR-102** (the in-code citations were
+  renumbered off 101 to match — the git-workflow "re-grep at write time" rule in action).
+- **Context.** The existing S15g map-quality gate proved a door landing is WALKABLE, but not that it is the
+  RIGHT spot — and it WAIVES the §A6 rotor rooms. So two faults shipped: `valle_dorado → pyramid_ante` landed
+  the approach's TOP (the "enters from the top, should be the bottom" report), and `jungle_2 → valle_dorado`
+  landed valle's far WEST edge, 584px from its east return gate. Plus the §A6 rotor return-door lands on a
+  static wall (`pyramid_4 → pyramid_3`) — a genuine STUCK.
+- **Decision — THE AUDIT (`doorAudit` in `src/levelkit/mapcheck.ts` + `tools/door-audit.ts` + a validate
+  gate).** Statically, for EVERY zone + prop door across all maps: `landsSolid` (solid/out-of-bounds landing →
+  stuck), `noReturn` (one-way — reported, not gated; some are by design), and `farFromReturn` (WRONG EDGE —
+  measured to the nearest reciprocal return-door's INTERIOR walkable cell, a 64px budget, with vertical
+  connectors stairs/elevator exempt so a stairhead drop never false-positives). `npx vite-node
+  tools/door-audit.ts` prints a grouped report + exits non-zero on real faults; `npm run validate` now carries
+  the same as a hard gate (`door-audit (ADR-102)`), bespoke rotor/sealed rooms waived in step with the
+  reachability waiver. Pinned in `mapcheck.test.ts`.
+- **Decision — THE TWO DATA FIXES (`maps_ch2.ts`).** Both doors now land ONE tile inside the destination, at
+  the reciprocal return doorstep, facing inward: `jungle_2 → valle_dorado` arrives just inside valle's east
+  gate (facing left); `valle_dorado → pyramid_ante` arrives at the SOUTH doorstep facing UP toward the pyramid
+  — the literal "enter from the bottom" the playtest asked for.
+- **Decision — THE SPAWN SAFETY-NET (`OverworldScene.clampSpawnToWalkable`, runtime).** Before the player
+  sprite is built, if the landing tile is solid — a mis-aimed `tx,ty`, OR the §A6 rotor wall in its static
+  state — ring-search outward for the nearest grid-walkable, prop-clear tile and stand there (dev-warns the
+  map). A correct landing is a no-op; this turns the entire "stuck on a screen switch" class into a non-event:
+  the belt to the gate's suspenders. A stuck spawn can now neither SHIP (gate) nor SOFT-LOCK (net).
+- **Verification:** `npx tsc --noEmit` clean. `npx vite-node tools/door-audit.ts` → 0 REAL stuck/wrong-edge
+  after the fixes (1 waived rotor, 1 intended one-way `brickton → meadow_overpass`). `npm run validate` GREEN
+  with the new gate line. Full `npx vitest run` GREEN — **1145 tests**. No save bump.
+- **Consequences.** The two reported wrong-way screens read correctly; the pyramid stuck is rescued at
+  runtime; and any FUTURE content that mis-aims a door (wrong edge or into a wall) fails the build. The §A6
+  rotor stays bespoke-waived but is now also net-protected. Movement-Two's per-rotation BFS remains the
+  named follow-up for proving the rotor states statically. ☄️
+
+## ADR-103 — THE WINDOW LAYOUT LAW (list pagination · no overlap · no off-screen)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a playtest-driven systemic fix — a shop rendered with overlapping/overflowing boxes;
+  the user asked that it be made impossible going forward, with pagination for long lists).
+- **The ADR number.** ADR-102 (transition hardening) was the highest at write time; this is **ADR-103**.
+- **Context.** The ONE shared list widget `pick()` rendered ALL rows unbounded, so a long shop list grew past
+  its frame and over the fixed bottom description panel (`iteminfo`, y≈159); and the top-right cash/bank box
+  computed its width from the text but never clamped it, so a billions-era balance ran off the 400px screen.
+- **Decision — PAGINATE BY CONSTRUCTION (`pick.ts` + pure `paginate.ts`).** `pick()` AUTO-FITS rows to the
+  room between its top and any reserved bottom panel (`reserveBottom`), sizes its frame to ONE page, and
+  paginates the remainder with a gold "▲ 1/3 ▼" marker; the hand cursor, tap zones, and `onHighlight` rebuild
+  per page (page-local geometry), and stepping off a column flips the page. A list can no longer overflow its
+  box — structurally. The page math is a pure, unit-tested `paginate()` (`pick.test.ts`).
+- **Decision — RESERVE THE PANEL.** Shops + the item menu pass `reserveBottom = ITEMINFO_RESERVE`, so the
+  list never grows under the description box. No overlap, ever.
+- **Decision — CLAMP THE CASH BOX (`makeCashBox` in `windows.ts`).** One shared helper used by ShopScene +
+  MenuScene: amounts go through the new `money(n, {abbrev})` formatter ("$1.2B", `src/ui/text.ts`), the window
+  width is capped to the screen, its right edge pinned ≤ screenW-4, and the text rides inside the frame.
+- **Decision — THE DEV TRIPWIRE.** `makeWindow`/`makeBox` `console.warn` (never throw) in DEV when a created
+  box falls outside the screen rect — a loud signal that catches any future off-screen window before it ships.
+- **Verification:** `npx tsc --noEmit` clean; `npm run validate` GREEN; full `npx vitest run` GREEN (incl. the
+  new `paginate()` + `money()` tests). Live-preview confirmed on the 13-item Foggybottom chemist: 7 rows +
+  "1/2 ▼", the down-arrow flips to "▲ 2/2", and the cash box reads "$1.2B BANK $987M" with right edge 396 ≤ 400.
+- **Consequences.** Long lists paginate; boxes cannot overlap the panel or leave the screen; the tripwire
+  flags regressions in dev. The code carries `[PLAYTEST B]` markers. Follow-up: `Dialogue.ask()` shares the
+  same latent unbounded-height pattern (it's only fed short lists today) and should reuse `paginate()` for
+  parity. ☄️
+
+## ADR-104 — HERO FINISH, PART 2: ramp-colored outlines, soft volume, defined faces, party idle, the art loop
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the heroes pushed toward the EarthBound chibi finish — the second half of the polish
+  pass, building on ADR-101's 6-stop palette. Closes the named style gaps: edges, outline idiom, shading,
+  face, animation; every hero stays procedural and zero-asset, and no specific character design is copied.)
+- **The ADR number.** ADR-103 (the window layout law) was the highest; a grep confirms 101/102/103 are taken
+  (the polish-pass round one, transition hardening, and the window law), so this is **ADR-104**.
+- **Context.** ADR-101 widened the palette and gave the Pixmap layer a lighting/AA/outline vocabulary and swept
+  it across generators. The heroes still read boxy vs. the reference: uniform plum outline, flat 3-tone bodies,
+  minimal-dot faces, square shoulders. This round spends the new depth on the cast, across ALL 8 facings.
+- **Decision — named draw helpers (Prompt 2).** `pixmap.ts` gains the vocabulary the character generator calls:
+  `aaEdge` (diagonal stair-corner smoother), `softShade(region, ramp, lightDir)` (re-shade a filled region to a
+  smooth highlight→core→shadow gradient off the 6-stop ramp), `rimLight(ramp, shade)` (1px lighter rim on the
+  lit top-left edge), `dither2` (tight two-shade checker). Palette-only, unit-tested.
+- **Decision — RAMP-COLORED selective outline (Prompt 3, the biggest single win).** `outlineLit` recolors the
+  lit (top-left) rim to the **darkest shade of the adjacent fill's own ramp** — a dark-red edge on a red cap, a
+  tan edge on cream — keeping true dark INK on the shadow/outer rim, so the contour reads rounded, not stamped.
+  Every sprite that calls `finish()` (heroes, enemies, props) inherits it. `aaDiag` was made **color-agnostic**
+  (a mass-behind check instead of a fixed edge-color set) so it still rounds interior corners under the now-
+  varied outline colors.
+- **Decision — soft volume (Prompt 5).** Hero torsos shade in a **5-tone left→right gradient** (HILITE · LIT ·
+  BASE · MID · DARK, SHADOW corner) using ADR-101's two new in-between tones — a rounded form, not a flat slab.
+- **Decision — defined faces (Prompt 6).** Eyes gain a PAPER **catchlight** + a soft upper **lash** + a rounded
+  lower corner in ALL THREE eye paths (front, side profile, 3/4 diagonal face-fix), preserving each character's
+  eye style (tall/dot/happy/wide/glare). Cheek blush + nose dot were already in place (ADR-023).
+- **Decision — rounder form (Prompt 4).** A 2px shoulder chamfer that `finish()`'s AA + colored outline read as
+  a sloped, rounded shoulder cap. The deeper skull/Metrics spans were left ALONE on purpose: the diagonal
+  stitcher, run block, idle frames, and the 44-frame contract all depend on them, and the AA + colored outline
+  already soften the silhouette — reshaping the contract-locked spans was poor risk/reward, so rounding is
+  delivered by the finishing pass, not by resizing.
+- **Decision — party idle (Prompt 7).** ADR-101 added idle breath/blink (frames 44/45). This wires the whole
+  **party** to breathe in the overworld — followers play `${id}-idle-down` when standing, staggered by a per-
+  member phase offset (`setProgress`), so the conga line doesn't inhale in lockstep.
+- **Decision — the art loop (Prompt 8).** `tools/cast-sheet.ts` renders, headless + deterministic, every hero
+  in **all 8 compass facings** (`cast_angles.png`) + a down-facing life strip (`cast_anim.png`) + battle busts
+  (`cast_busts.png`), and copies the prior angle sheet to `cast_angles_prev.png` (before/after). `docs/ART_LOOP.md`
+  documents the one-command "render → open the PNG → describe the next tweak" workflow.
+- **Enemies (the side ask).** Audited Ch.1–3 enemy battle art: all 46 enemies + minis already terminate in
+  `finish()` (Ch.1–2 hand-drawn in `enemies.ts`, Ch.3 forged via `composeEnemy`), `{aa:false}` on the
+  deliberately boxy ones — no flat-fill gaps, no missing generators. They inherit the ramp-colored outline free.
+- **Verification.** `npx tsc --noEmit` clean. Full `npx vitest run` GREEN — **1148 tests** (+3 new in
+  `characters.test.ts`: idle frames non-empty for every cast; all 8 angle stands render content; idle-breath
+  differs from stand). The 44-frame / mirror / run-lean sheet contract is unchanged. `.shots` eyeballed across
+  all 8 angles + the life strip + busts: colored rim, smooth bodies, catchlit faces, sloped shoulders, the
+  blink reads, no halo. In-game boot is clean and the party breathes desynced.
+- **Consequences.** The heroes now carry the EarthBound "crafted" read — depth, smooth edges, colored outline,
+  soft volume, expressive faces, breathing idles — across every facing, still 100% procedural. The remaining
+  gap is pure silhouette identity, which is art direction via the Prompt 8 loop, not more code. A hero can later
+  be hand-perfected as palette-indexed span data with zero binary assets. ☄️
+
+## ADR-105 — THE ATM ODOMETER (a per-digit dialled withdrawal · the ▲◄► font glyphs · a no-tofu gate)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a playtest-driven fix — the ATM could only ever hand you $10/$50/$100 or the *whole*
+  card, useless once the §A9 economy reaches the millions and billions. The ask: let the player withdraw a
+  CHOSEN amount. The first cut used a single nudge-able magnitude step; a follow-up playtest note — *"we need
+  to be able to do multiple 1000s or 100s or 10s at the same time, not one at a time"* — promoted it to a full
+  per-digit ODOMETER, which is what this ADR now describes.)
+- **The ADR number.** ADR-104 (Hero Finish, Part 2) was the highest; a fresh grep of `^## ADR-` confirms
+  100–104 are taken (the audio mixer, the user's two art passes, transition hardening, the window law), so this
+  is **ADR-105** (the in-code citations carry `ADR-105`; re-grep-at-write per the git-workflow rule).
+- **Context.** `OverworldScene.atmFlow()` offered `[10,50,100].filter(≤pool)` plus "All". A four-figure card
+  could only be tapped a tenner at a time; a billion-dollar one could only be drained whole. There was no way to
+  pull, say, $4,500 of a $4,820 balance. The first cut was a single magnitude step the player cycled with ◄►;
+  the playtest follow-up wanted every denomination settable at once — i.e. an odometer.
+- **Decision — `amountColumns(pool)`, the pure brain (`src/ui/amountscale.ts`).** Returns one place-value
+  column per digit, most-significant first, so the player sets the thousands, hundreds, tens (and ones)
+  independently: `$4,820 → [1000,100,10,1]`; `$50 → [10,1]`; `$7 → [1]`; `$1,000,000,000 → [1e9 … 1]`. The
+  column count tracks the balance's magnitude, scaling cleanly from a four-figure card to the §A9 billions. It
+  is Phaser-free — the `audiobus.ts`/`paginate.ts` idiom — so it unit-tests under vitest's node env (the widget
+  that consumes it pulls Phaser + the audio engine and cannot run headless).
+- **Decision — `askAmount(scene, opts)`, the odometer widget (`src/ui/amount.ts`).** A centered, screen-clamped
+  window renders the running amount as DIGIT COLUMNS (2× font, `$` + grouping commas + one digit per column,
+  leading zeros dimmed, the selected column lit gold with ▲/▼ chevrons hovering over it) and the ceiling
+  (`/ $4,820`). All columns are visible at once — no cycling. Input is read PER FRAME exactly like `ui/pick.ts`
+  (`INPUT.dir()` + `everyFrame`): `◄/►` move the cursor between columns (clamped to the ends), `▲/▼` raise/lower
+  the amount by THAT column's place value (clamped to `[0,pool]`, with an ACCELERATING hold-repeat — so "five
+  thousands" is a held ▲ on the thousands column, not five separate taps on a hidden step), `A` confirms
+  (resolves the integer), `B` cancels (resolves `null`). The repeat cadence is WALL-CLOCK timed off
+  `scene.time.now`, never frame-counted (ADR-024), so the dial feels identical at any frame rate. `atmFlow`
+  holds `dlg.busy` across the await so the §888 movement/interact gate keeps the player put while the widget is
+  open; the status line and the "Withdrew …" confirmations now run through `money()` (ADR-103) so a billions
+  balance reads grouped (`$1,234,567`) instead of a bare number.
+- **Decision — the missing arrow glyphs (`src/spritegen/font.ts`).** The procedural 5×7 font shipped `▼` and
+  `→` but never their partners, so the dial's `▲◄►` affordances would have drawn as blank cells (tofu). Added
+  `▲ ◄ ► ←` to `SPECIALS` (append-only — the sheet is `glyphs.length`-derived and the RetroFont reads the
+  dynamic `FONT_CHARS`, so every existing glyph still maps to its old cell). `▲` mirrors `▼`, `◄/►` mirror `▶`,
+  `←` mirrors `→`; all monochrome, palette-clean by construction (ADR-020). Side effect: this *un-tofus*
+  `pick()`'s pagination marker `"▲ 1/3 ▼"`, which has been drawing a blank up-cell since ADR-103 introduced it
+  (the font had `▼` but never `▲`).
+- **Decision — the validator gate (`tools/content-validate.ts`, `ui-glyph`).** A curated `UI_AFFORDANCE_GLYPHS`
+  set (`▲▼◄►←→`) is pinned BOTH ways: each is a single UTF-16 code unit the font KNOWS (`FONT_CHARS`) and DRAWS
+  (a non-empty 5×7 bitmap, rendered through `drawTextInto` into a headless `Pixmap` and ink-counted). Dropping a
+  glyph from `font.ts`, or a widget reaching for an undrawn arrow, now fails `npm run validate` — the same
+  no-tofu discipline as the `{g:}` flair gate. (This gate would have caught the original blank `▲`.)
+- **Verification:** `npx tsc --noEmit` clean. `npm run validate` GREEN — the verdict reads
+  `6 UI affordance glyphs (▲▼◄►←→)`. Full `npx vitest run` GREEN — **1155 tests** (+5 in `amount.test.ts`
+  pinning `amountColumns`: one column per digit most-significant-first, the billions scale, the
+  zero/negative/fractional defensiveness, descending powers of ten ending in 1, count = digit count, coarsest ≤
+  pool). No save version bump (cash/bank live in existing state). Live-preview confirmed on the overworld: every
+  digit column scrolls independently, the cursor moves across columns, leading zeros dim, the ceiling lights
+  gold at MAX, the amount clamps to the pool, and confirm/cancel resolve the integer / null.
+- **Consequences.** The ATM scales with the player's wallet across the whole §A9 economy — set each denomination
+  directly on an odometer, fine or coarse, with the columns the balance's magnitude calls for. The font gained
+  its arrow set (a shared asset the whole UI can now use) and `pick()`'s pagination arrow is fixed for free.
+  `askAmount` is a reusable "enter a number" widget — the SETUP volume sliders (#7) and any future quantity
+  prompt can dial through it. Named follow-up: a "MAX" shortcut button could fill the odometer to the pool in one
+  press for the drain-it-all case. ☄️
+
+## ADR-106 — MULTI-ENEMY ENCOUNTERS + THE JOIN WINDOW (a pack at contact · foes hop in during the swirl)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a playtest-driven feel fix — touching one roamer in a cluster started a tidy 1-v-1 even
+  with three more enemies right there, which read as unfair-in-reverse and un-EarthBound. The ask: let the
+  player get caught by several at once, and give a short window at battle start where nearby foes HOP IN.)
+- **The ADR number.** ADR-105 (the smart-scale ATM) was the highest; a fresh grep confirms 105 is the top, so
+  this is **ADR-106** (in-code citations carry `ADR-106`).
+- **Context.** `OverworldScene.contactBattle()` built the battle from the SINGLE bumped roamer
+  (`startBattle([r.enemyId], …, r)`), and `instantWin` weighed that one foe. But `BattleScene` already seats up
+  to five (the `buildEnemies` letter row A–E — the §A7 Banana Bunch United is a real 5-enemy fight), so the
+  whole capability existed on the battle side and was simply never fed a crowd from the field.
+- **Decision — ONE source of truth for the cap.** `MAX_BATTLE_ENEMIES = 5` lands in the Phaser-free
+  `data/enemies.ts` (next to `introLine`); the overworld's `ENCOUNTER_CAP` reads it, and the validator pins it
+  to BattleScene's five letter seats. The assembler can never out-grow the renderer.
+- **Decision — THE PACK (gather at contact).** On contact, `contactBattle` gathers the bumped roamer plus every
+  other live roamer within `PACK_RADIUS` (30px) of the contact point — nearest-first via the new pure
+  `withinRadius` (`formulas.ts`) — and caps the roster to `ENCOUNTER_CAP`. Duplicate enemy ids are fine (two
+  `cursed_souvenir` → battle letters A/B). The swirl ADVANTAGE is still read from the roamer you actually
+  bumped (the bump sets the traffic-light colour).
+- **Decision — THE JOIN WINDOW (foes hop in during the swirl).** Roamers in a wider alert ring
+  (`JOIN_ALERT_RADIUS` 64px) that didn't make the initial pack become *candidates*. While the swirl spins up,
+  `runJoinWindow` dashes each toward the player (`JOIN_DASH` 165px/s, dt-scaled per ADR-024); any that reach
+  `JOIN_REACH` (15px) hop into the roster (a `!` pop + an `alert` blip), until the five seats fill. Because
+  `cut=true` freezes the normal roamer update during the swirl, the dash is driven here, on its own `everyFrame`
+  loop, and is torn down at launch. The swirl itself runs the standard `SWIRL_MS` (750ms) for a lone contact and
+  the longer `JOIN_WINDOW_MS` (1150ms — the asked-for "1–2s") only when foes are poised to join, so solo
+  encounters keep their snap. All five timings/radii are named, tunable constants.
+- **Decision — GROUP instant-win + group spoils.** `instantWinGroup` (`formulas.ts`) only walks the party
+  through a pack when it vastly outlevels EVERY foe and none is a boss — one tough straggler keeps the fight
+  real. `instantWinPack` sums EXP + cash across the whole pack into one `expShare` award and pops them all. On a
+  real battle, victory clears the entire pack from the field and a getaway scatters all of them (the old
+  single-roamer cleanup, generalised).
+- **Decision — the validator gate (`encounter`).** `MAX_BATTLE_ENEMIES` must be an integer in `[2, 5]` (fits the
+  letter row), and `introLine()` must yield a clean second-person line for EVERY roster the overworld can
+  assemble — 1..cap of one foe (the "and its cousins" path) and a mixed pack (the "X, Y and Z" path) — no empty,
+  placeholder, or unresolved-`{token}` intro for a crowd. Pins the content guarantee both ways.
+- **Verification:** `npx tsc --noEmit` clean. `npm run validate` GREEN — verdict adds
+  `multi-enemy packs ≤5 (clean intros)`. Full `npx vitest run` GREEN — **1156 tests** (+2 in `formulas.test.ts`:
+  `instantWinGroup` — all-weak walks through, one straggler/any boss blocks it, empty never wins, a lone weakling
+  matches the single rule; `withinRadius` — radius filter + nearest-first order + the caller's cap slice). Patrol
+  fights and all scripted boss calls were migrated to the new `pack: Roamer[]` arg (`[]` = no field cleanup) and
+  are unchanged in behaviour. Live-preview on `jungle_2` (7 roamers): a contact assembled a 2-pack and flagged a
+  third as a joiner; the join window appended an in-reach candidate and **capped six candidates at five**; the
+  full `contactBattle → launch` carried `enemyIds:[jungle_jitterbug ×2]`; and a victory cleared the whole pack
+  from the field. No save bump.
+- **Consequences.** Walking into a knot of foes now starts the fight you'd expect — several at once, with
+  stragglers sprinting in as the screen swirls — across every roamer map, with zero new battle-side code (the
+  five-seat renderer was always ready). Patrols stay solo by design. The cap, radii, and window length are all
+  tunable in one place. Named follow-up: the join window could later let a *patrol* drag in adjacent roamers, and
+  the dash could honour collision (today a joiner sprints straight through props, hidden under the fade). ☄️
+
+## ADR-107 — BATTLE FOES CLEAR THE MESSAGE BOX (anchor the face below the intro window)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a playtest UI note — *"the on-screen text box shouldn't generally cover any faces unless
+  absolutely necessary"* — about the battle scene.)
+- **The ADR number.** ADR-106 (multi-enemy encounters) was the highest; a fresh grep confirms it, so this is
+  **ADR-107**.
+- **Context.** `BattleScene.buildTextWindow` places the message box at `makeWindow(6, 6, 268, 56)` — top-left,
+  bottom edge at y62. `buildEnemies` then placed every foe centred at a FIXED `y = boss ? 97 : 92` with a
+  `(0.5,0.5)` origin, so any sprite taller than ~60px had its TOP rise above y62 and poke into the box; a tall
+  foe's face could sit behind the intro line. Bosses already carried a manual `97` bias "so their crown clears
+  the text window" (S7, the Titanic Tick) — the right instinct, applied to only one case.
+- **Decision — anchor by the FACE, not the centre.** `buildEnemies` now creates the sprite, reads its height,
+  and seats it at `y = clamp( max(boss?97:92, ENEMY_TOP + h/2), … , ENEMY_FLOOR − h/2 )`, where
+  `ENEMY_TOP = 64` (2px under the box's y62 bottom) and `ENEMY_FLOOR = 166` (the party HP cards begin at y168).
+  In words: push a sprite DOWN only as far as needed for its top to clear the message box, but never so far that
+  its body rides over the party cards. Short foes are unchanged (the `max` keeps them at 92); tall foes drop just
+  enough to lift their faces clear; a sprite too big to satisfy both keeps its face-priority position (the rare
+  "absolutely necessary" boss). The idle-float tween targets the computed `y` (so the bob is unaffected). This
+  generalises the bespoke boss bias into one rule that covers every foe and every future sprite.
+- **Verification:** `npx tsc --noEmit` clean; `npm run validate` GREEN; full `npx vitest run` GREEN (no test
+  pinned the old fixed `92/97`, and battle layout is visual). Live-preview across single + multi-enemy fights:
+  the intro window no longer overlaps foe faces; short foes sit where they always did; tall foes settle lower
+  with their faces below the box and bodies above the HP cards. No save bump.
+- **Consequences.** The battle intro (and every subsequent message) clears foe faces by construction, for every
+  enemy sprite the forge can produce — no per-enemy hand-tuning. The party cards remain the hard floor, so HP/PP
+  are never occluded. Follow-up: the same face-anchor idea could inform where status callouts (#12) and damage
+  arcs (#17) originate so they, too, never collide with the message box. ☄️

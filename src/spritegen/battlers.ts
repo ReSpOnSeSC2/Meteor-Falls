@@ -621,7 +621,7 @@ function drawBattlerFrame(spec: CharacterSpec, look: BattlerLook, wear: WearTier
     pm.hline(tx + 6, torsoTop + 9, 2, px(RAMP.EARTH, 0)); // second scuff
   }
 
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
 
   /* ---- pure light, stamped after the outline (the ADR-021 idiom) ---- */
   if (o.glow > 0) {

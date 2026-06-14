@@ -30,6 +30,8 @@ export class NameEntryScene extends Phaser.Scene {
   private idx = 0;
   private values: string[] = [];
   private grid: LetterGrid | null = null;
+  /** one-shot guard so a flurry of B presses can't double-fire the title exit */
+  private leaving = false;
 
   private promptText: Phaser.GameObjects.BitmapText | null = null;
   private valueText: Phaser.GameObjects.BitmapText | null = null;
@@ -43,6 +45,7 @@ export class NameEntryScene extends Phaser.Scene {
 
   create(): void {
     this.idx = 0;
+    this.leaving = false;
     this.values = NEW_GAME_ENTRIES.map((e) => e.prefill);
     this.recapObjects = [];
     AUDIO.playMusic('title');
@@ -76,7 +79,7 @@ export class NameEntryScene extends Phaser.Scene {
     });
 
     this.add
-      .bitmapText(200, 188, 'retro', 'A: pick   B: erase   START: done', 6)
+      .bitmapText(200, 188, 'retro', 'A: pick   B: erase / back   START: done', 6)
       .setOrigin(0.5, 0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.NIGHT, 3)));
@@ -112,11 +115,27 @@ export class NameEntryScene extends Phaser.Scene {
     this.valueText?.setText((this.grid?.value ?? '').padEnd(this.entry().cap, '_'));
   }
 
-  /** B on an empty field steps back a screen, EB-style */
+  /** B on an empty field steps back a screen, EB-style; B out of the FIRST
+   *  screen returns to the title/opening screen (so New Game is never a trap) */
   private stepBack(): void {
-    if (this.idx === 0) return;
+    if (this.idx === 0) {
+      this.toTitle();
+      return;
+    }
     this.values[this.idx] = this.grid?.value ?? '';
     this.showEntry(this.idx - 1);
+  }
+
+  /** bail all the way out to the title — the title theme is already playing
+   *  under name entry, so it carries through the fade seamlessly */
+  private toTitle(): void {
+    if (this.leaving) return;
+    this.leaving = true;
+    this.grid?.setLocked(true);
+    this.cameras.main.fadeOut(250, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.start('title');
+    });
   }
 
   private submit(trimmed: string): void {

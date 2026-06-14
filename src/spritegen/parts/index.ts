@@ -64,7 +64,7 @@ export function composeEnemy(spec: PartsSpec, wear: WearTier): Pixmap {
   // the drums accumulate: tier 2 keeps tier 1's marks and adds to them
   if (wear >= 1) (wac ?? FALLBACK_WEAR).mark(ctx, 1);
   if (wear >= 2) (wac ?? FALLBACK_WEAR).mark(ctx, 2);
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101: selective lit outline + diagonal AA
   return pm;
 }
 
@@ -74,13 +74,14 @@ export function composeMini(spec: PartsSpec): Pixmap {
   const mat = MATERIALS[spec.material];
   if (!mat) return pm;
   const ramp = mat.ramp;
-  if (spec.silhouette === 'totem' || spec.silhouette === 'husk') pm.ellipse(8, 9, 4, 6, px(ramp, 2));
-  else if (spec.silhouette === 'lump') pm.ellipse(8, 11, 6, 4, px(ramp, 2));
-  else pm.ellipse(8, 9, 6, 5, px(ramp, 2));
-  pm.ellipse(6, 7, 3, 3, px(ramp, 3)); // the lit shoulder
+  // ADR-101: a LIT VOLUME, not a flat disc — highlight upper-left, core,
+  // shadow lower-right (the lighting model does the old hand-laid shoulder).
+  if (spec.silhouette === 'totem' || spec.silhouette === 'husk') pm.litEllipse(8, 9, 4, 6, ramp);
+  else if (spec.silhouette === 'lump') pm.litEllipse(8, 11, 6, 4, ramp);
+  else pm.litEllipse(8, 9, 6, 5, ramp);
   for (const ex of [6, 10]) {
     pm.set(ex, 9, C.outline);
-    pm.set(ex - 1, 8, px(RAMP.PAPER, 3));
+    pm.set(ex - 1, 8, px(RAMP.PAPER, 3)); // catchlight
   }
   if (spec.accessory === 'crown') {
     pm.hline(5, 3, 6, px(RAMP.GOLD, 2));
@@ -91,7 +92,7 @@ export function composeMini(spec: PartsSpec): Pixmap {
   }
   const reg = spec.region ? REGION_ACCENTS[spec.region] : undefined;
   if (reg) pm.set(8, 14, px(reg.trim, 2));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 

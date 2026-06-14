@@ -189,7 +189,7 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
     pm.rect(23, gy, 3, 2, px(spec.shoes, 1)); // a sneaker, skyward
     pm.rect(24, gy + 3, 3, 2, px(spec.shoes, 1));
     pm.rect(8, gy - 4, 4, 2, skin); // an arm flung
-    pm.outline(C.outline);
+    pm.finish(); // ADR-101
     // little dizzy stars — pure light after outline (the ADR-021 idiom)
     pm.set(3, gy - 6, px(RAMP.GOLD, 3));
     pm.set(7, gy - 8, px(RAMP.GOLD, 2));
@@ -514,7 +514,7 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
   /* ---------------- the head (shared with the golfer sheets, S13) ------ */
   drawProfileHead(pm, spec, hx, hy, torsoTop, o.mouthOpen, o.backTurned);
 
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   // dizzy stars — pure light AFTER outline (the ADR-021 idiom; the stun
   // wobble shares the fall frame's vocabulary, one rung gentler)
   if (o.dizzy) {
@@ -765,7 +765,7 @@ export function drawBall(): Pixmap {
   pm.vline(3, 1, 5, oD); // meridian seam
   pm.set(2, 1, oL); // top-left light
   pm.set(1, 2, oL);
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -819,7 +819,7 @@ export function drawHoopSide(net: 0 | 1 | 2): Pixmap {
     pm.hline(14, 27, 3, chainD); // the splash kicks the skirt out
     pm.hline(22, 26, 3, chainD);
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 

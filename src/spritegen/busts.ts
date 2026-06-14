@@ -528,7 +528,7 @@ function drawBustFrame(spec: CharacterSpec, o: BustOpts, body: string | null = n
     pm.hline(CX + 2, bodyTop + 8, 2, px(RAMP.EARTH, 0)); // second scuff
   }
 
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
 
   /* ---- pure light, stamped after the outline (the ADR-021 rule-2 idiom) ---- */
   if (o.glow > 0) {
@@ -616,7 +616,7 @@ export function drawHexPip(): Pixmap {
   pm.set(4, 2, px(RAMP.PAPER, 2));
   pm.set(2, 5, px(RAMP.PAPER, 2));
   pm.set(6, 5, px(RAMP.PAPER, 2));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -642,6 +642,6 @@ export function drawThoughtFood(): Pixmap {
   pm.set(11, 5, px(RAMP.GOLD, 2)); // butter, probably
   pm.set(6, 3, shade); // steam
   pm.set(9, 2, shade);
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }

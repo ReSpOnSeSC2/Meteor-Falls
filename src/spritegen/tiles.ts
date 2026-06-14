@@ -156,7 +156,7 @@ function bush(): Pixmap {
   pm.set(2, 4, px(RAMP.FOREST, 3));
   pm.set(7, 4, px(RAMP.FOREST, 3));
   pm.hline(2, 15, 12, px(RAMP.FOREST, 0)); // sits on its own shadow
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -924,7 +924,7 @@ export function drawTree(variant: 'round' | 'tall' | 'small' = 'round'): Pixmap 
     pm.ellipse(9, 13, 3, 2, hi);
     pm.hline(9, 26, 9, px(RAMP.FOREST, 0));
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   pm.shadowUnder(13, 32, 9, px(RAMP.FOREST, 0));
   return pm;
 }
@@ -953,7 +953,7 @@ export function drawPine(): Pixmap {
   pm.line(11, 4, 9, 6, hi);
   pm.line(9, 10, 6, 13, hi);
   pm.line(7, 17, 4, 20, hi);
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   pm.shadowUnder(13, 32, 9, px(RAMP.FOREST, 0));
   return pm;
 }
@@ -970,7 +970,7 @@ export function drawSign(): Pixmap {
   pm.set(12, 3, px(RAMP.EARTH, 1));
   pm.rect(6, 11, 3, 6, px(RAMP.EARTH, 1));
   pm.vline(6, 11, 6, px(RAMP.EARTH, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(7, 16, 4, px(RAMP.GRASS, 1));
   return pm;
 }
@@ -984,7 +984,7 @@ export function drawDoormat(): Pixmap {
   pm.hline(4, 5, 10, px(RAMP.EARTH, 2));
   pm.hline(4, 7, 10, px(RAMP.EARTH, 2));
   pm.set(2, 2, px(RAMP.GOLD, 3)); // stitch catch
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1003,7 +1003,7 @@ export function drawStairs(): Pixmap {
   pm.hline(2, 18, 14, px(RAMP.EARTH, 2));
   pm.vline(1, 1, 22, px(RAMP.EARTH, 0));
   pm.vline(16, 1, 22, px(RAMP.EARTH, 0));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1018,7 +1018,7 @@ export function drawPicnicBlanket(): Pixmap {
   pm.ellipse(22, 12, 4, 2, px(RAMP.PAPER, 3));
   pm.ellipse(30, 8, 3, 2, px(RAMP.PAPER, 3));
   pm.set(22, 12, px(RAMP.GOLD, 2)); // something good on the plate
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1040,7 +1040,7 @@ export function drawSongbird(frame: 0 | 1): Pixmap {
     pm.set(5, 10, px(RAMP.ORANGE, 2)); // mid-hop tuck
     pm.set(7, 10, px(RAMP.ORANGE, 2));
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1070,7 +1070,7 @@ export function drawPicnicTable(): Pixmap {
   pm.hline(0, 16, 12, woodL);
   pm.rect(24, 16, 12, 3, wood);
   pm.hline(24, 16, 12, woodL);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(17, 23, 15, px(RAMP.GRASS, 1));
   return pm;
 }
@@ -1092,7 +1092,7 @@ export function drawPhoneTable(): Pixmap {
   pm.set(8, 5, px(RAMP.RED, 1));
   pm.set(13, 9, px(RAMP.RED, 1)); // the cord, heading off-table
   pm.set(14, 10, px(RAMP.RED, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1121,7 +1121,7 @@ export function drawBed(): Pixmap {
   pm.vline(17, 14, 13, px(RAMP.RED, 1));
   pm.rect(2, 26, 16, 2, px(RAMP.EARTH, 1)); // footboard
   pm.hline(2, 26, 16, px(RAMP.EARTH, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1145,7 +1145,7 @@ export function drawDesk(): Pixmap {
   pm.set(15, 6, px(RAMP.RED, 2));
   pm.set(17, 6, px(RAMP.BLUE, 2));
   pm.hline(14, 8, 6, px(RAMP.PAPER, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1167,7 +1167,7 @@ export function drawSofa(): Pixmap {
   pm.hline(2, 15, 30, clothD); // skirt
   pm.set(4, 17, px(RAMP.EARTH, 0)); // feet
   pm.set(29, 17, px(RAMP.EARTH, 0));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1185,7 +1185,7 @@ export function drawCounter(): Pixmap {
   pm.hline(6, 2, 7, px(RAMP.GOLD, 3)); // crimped crust
   pm.set(9, 1, px(RAMP.PAPER, 2)); // steam
   pm.set(8, 0, px(RAMP.PAPER, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1201,7 +1201,7 @@ export function drawBugZapper(): Pixmap {
   pm.set(2, 3, px(RAMP.CYAN, 3)); // glow spill
   pm.set(11, 4, px(RAMP.CYAN, 3));
   pm.hline(4, 0, 6, C.inkSoft);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1216,7 +1216,7 @@ export function drawMeteorRock(): Pixmap {
   pm.line(13, 16, 18, 17, px(RAMP.ORANGE, 1));
   pm.set(14, 9, px(RAMP.GOLD, 3));
   pm.set(17, 12, px(RAMP.GOLD, 3));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1247,7 +1247,7 @@ export function drawSawhorse(): Pixmap {
     }
   }
   pm.frame(3, 6, 20, 5, woodD);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(13, 19, 9, px(RAMP.GRASS, 1));
   return pm;
 }
@@ -1262,7 +1262,7 @@ export function drawEmber(): Pixmap {
   pm.set(1, 5, px(RAMP.GOLD, 3));
   pm.set(9, 5, px(RAMP.GOLD, 3));
   pm.set(5, 5, px(RAMP.PAPER, 3));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1286,7 +1286,7 @@ export function drawLemonadeStand(): Pixmap {
   pm.set(21, 10, px(RAMP.GOLD, 3));
   pm.vline(2, 24, 4, px(RAMP.GOLD, 1));
   pm.vline(33, 24, 4, px(RAMP.GOLD, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1298,7 +1298,7 @@ export function drawBusSign(): Pixmap {
   pm.frame(2, 1, 10, 8, px(RAMP.PAPER, 3));
   drawTextInto(pm, 'B', 5, 2, px(RAMP.PAPER, 3));
   pm.set(3, 2, px(RAMP.BLUE, 3)); // sky glint
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1554,7 +1554,7 @@ export function drawHouse(o: HouseOpts): Pixmap {
     }
   });
 
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1944,7 +1944,7 @@ export function drawCityBuilding(o: CityBuildingOpts): Pixmap {
   pm.vline(w, upTop, H - upTop - 1, wallDD);
   pm.vline(w, upTop + 2, 3, wallD); // a worn patch so the edge isn't a ruler
 
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1968,7 +1968,7 @@ export function drawPayphone(): Pixmap {
   pm.set(10, 12, px(RAMP.GOLD, 3)); // coin slot glint
   pm.rect(1, 24, 14, 3, px(RAMP.BLUE, 1)); // base
   pm.hline(1, 24, 14, px(RAMP.BLUE, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1985,7 +1985,7 @@ export function drawDumpster(): Pixmap {
   pm.set(16, 3, px(RAMP.GOLD, 3)); // a banana peel, classically
   pm.rect(3, 15, 3, 2, C.inkSoft);
   pm.rect(16, 15, 3, 2, C.inkSoft);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2002,7 +2002,7 @@ export function drawBench(): Pixmap {
   pm.vline(14, 1, 3, px(RAMP.EARTH, 1));
   pm.rect(2, 9, 2, 3, C.inkSoft);
   pm.rect(18, 9, 2, 3, C.inkSoft);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2018,7 +2018,7 @@ export function drawHydrant(): Pixmap {
   pm.set(5, 7, px(RAMP.RED, 1)); // chain bolt
   pm.rect(1, 11, 8, 2, px(RAMP.RED, 1));
   pm.hline(1, 11, 8, px(RAMP.RED, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2035,7 +2035,7 @@ export function drawPlanter(): Pixmap {
   pm.set(5, 2, px(RAMP.RED, 3)); // brave little flowers
   pm.set(11, 2, px(RAMP.GOLD, 3));
   pm.set(16, 2, px(RAMP.MAGENTA, 3));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2078,7 +2078,7 @@ export function drawTelephonePole(): Pixmap {
   // a stapled flyer, weathered illegible
   pm.rect(66, 28, 4, 5, px(RAMP.PAPER, 2));
   pm.hline(66, 30, 4, px(RAMP.PAPER, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(67, 46, 5, px(RAMP.INK, 1));
   return pm;
 }
@@ -2099,7 +2099,7 @@ export function drawTrashCan(): Pixmap {
   pm.set(0, 3, tinL);
   pm.rect(6, 0, 3, 2, tinL); // handle
   pm.set(13, 4, tinD);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(7, 16, 5, px(RAMP.PAPER, 0));
   return pm;
 }
@@ -2116,7 +2116,7 @@ export function drawParkingMeter(): Pixmap {
   pm.set(4, 3, px(RAMP.RED, 2)); // the red flag
   pm.set(5, 3, px(RAMP.RED, 2));
   pm.set(6, 7, C.outline); // coin slot
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(5, 20, 3, px(RAMP.PAPER, 0));
   return pm;
 }
@@ -2137,7 +2137,7 @@ export function drawNewspaperBox(): Pixmap {
   pm.hline(4, 13, 8, px(RAMP.BLUE, 1)); // pull handle
   pm.rect(3, 16, 2, 3, px(RAMP.INK, 1)); // legs
   pm.rect(11, 16, 2, 3, px(RAMP.INK, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2160,7 +2160,7 @@ export function drawElevator(): Pixmap {
   pm.set(12, 4, px(RAMP.GOLD, 1));
   pm.set(14, 3, px(RAMP.INK, 2)); // down light, dark
   pm.set(24, 18, px(RAMP.GOLD, 2)); // call button
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2178,7 +2178,7 @@ export function drawWaterCooler(): Pixmap {
   pm.set(8, 12, px(RAMP.RED, 2)); // hot tap nobody trusts
   pm.hline(3, 14, 6, px(RAMP.PAPER, 1)); // drip tray
   pm.rect(1, 19, 10, 2, px(RAMP.PAPER, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2197,7 +2197,7 @@ export function drawCopier(): Pixmap {
   pm.set(4, 11, px(RAMP.CYAN, 2));
   pm.rect(2, 15, 3, 2, C.inkSoft);
   pm.rect(17, 15, 3, 2, C.inkSoft);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2211,7 +2211,7 @@ export function drawPlantPot(): Pixmap {
   pm.hline(4, 13, 7, px(RAMP.EARTH, 3));
   pm.rect(5, 15, 5, 6, px(RAMP.EARTH, 1)); // pot
   pm.vline(5, 15, 6, px(RAMP.EARTH, 2));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -2248,7 +2248,7 @@ export function drawHoldingDoor(lit = 0): Pixmap {
   pm.set(8, 20, lit >= 1 ? px(RAMP.GRASS, 3) : px(RAMP.INK, 1));
   pm.set(10, 20, lit >= 2 ? px(RAMP.GRASS, 3) : px(RAMP.INK, 1));
   pm.set(12, 20, lit >= 3 ? px(RAMP.GRASS, 3) : px(RAMP.INK, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2263,7 +2263,7 @@ export function drawQuotaPanel(): Pixmap {
   pm.set(7, 4, px(RAMP.GRASS, 3));
   pm.set(10, 4, px(RAMP.GRASS, 3));
   pm.hline(4, 8, 6, px(RAMP.GRASS, 2)); // and a smile of its own
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2281,7 +2281,7 @@ export function drawCot(): Pixmap {
   pm.vline(3, 8, 11, px(RAMP.CYAN, 2));
   pm.rect(2, 20, 3, 3, px(RAMP.INK, 1)); // legs
   pm.rect(15, 20, 3, 3, px(RAMP.INK, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2322,7 +2322,7 @@ export function drawInteriorDoor(open: boolean): Pixmap {
     pm.vline(5, 3, 24, px(RAMP.EARTH, 0));
     pm.set(6, 14, px(RAMP.GOLD, 2)); // the knob, catching what light is left
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2338,7 +2338,7 @@ export function drawOfficeDoor(): Pixmap {
   pm.hline(6, 5, 4, C.inkSoft);
   pm.set(13, 14, px(RAMP.GOLD, 3)); // knob
   pm.set(13, 15, px(RAMP.GOLD, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2361,7 +2361,7 @@ export function drawPosterSmile(): Pixmap {
   // illegible inspiration
   pm.hline(4, 15, 8, px(RAMP.INK, 2));
   pm.hline(5, 17, 6, px(RAMP.INK, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2380,7 +2380,7 @@ export function drawPosterChart(): Pixmap {
   pm.set(12, 4, px(RAMP.RED, 3));
   pm.hline(4, 15, 8, px(RAMP.INK, 2));
   pm.hline(5, 17, 5, px(RAMP.INK, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2395,7 +2395,7 @@ export function drawProductivityBanner(): Pixmap {
   // hanging strings
   pm.set(10, 1, px(RAMP.INK, 1));
   pm.set(93, 1, px(RAMP.INK, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2413,7 +2413,7 @@ export function drawBusSeat(): Pixmap {
   pm.hline(1, 20, 14, px(RAMP.FOREST, 1));
   pm.rect(2, 21, 3, 2, C.inkSoft);
   pm.rect(11, 21, 3, 2, C.inkSoft);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2488,7 +2488,7 @@ export function drawShopShelf(seed = 4): Pixmap {
     pm.rect(tagX, boardY + 7, 3, 3, px(RAMP.PAPER, 3));
     pm.set(tagX + 1, boardY + 8, px(RAMP.RED, 1));
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2540,7 +2540,7 @@ export function drawArcadeCabinet(o: { marquee: number; screen: 0 | 1 | 2 }): Pi
   pm.rect(7, 21, 4, 4, px(RAMP.INK, 1));
   pm.set(8, 22, px(RAMP.GOLD, 2)); // coin slot, hopeful
   pm.hline(2, 26, 14, px(RAMP.INK, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2583,7 +2583,7 @@ export function drawLegendCabinet(): Pixmap {
   pm.rect(9, 24, 4, 4, px(RAMP.INK, 1));
   pm.set(10, 25, px(RAMP.GOLD, 2));
   pm.hline(2, 30, 18, px(RAMP.INK, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2615,7 +2615,7 @@ export function drawColaFridge(): Pixmap {
   pm.vline(22, 9, 16, px(RAMP.PAPER, 2)); // handle
   pm.rect(2, 26, 22, 3, px(RAMP.RED, 1)); // kick vent
   for (let x = 4; x < 22; x += 3) pm.vline(x, 27, 1, px(RAMP.RED, 0));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2643,7 +2643,7 @@ export function drawAtm(): Pixmap {
   // cash tray
   pm.rect(3, 20, 10, 2, px(RAMP.BLUE, 0));
   pm.hline(4, 21, 8, px(RAMP.BLUE, 3));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2669,7 +2669,7 @@ export function drawDresser(): Pixmap {
   pm.rect(14, 0, 5, 5, px(RAMP.GOLD, 1)); // frame
   pm.rect(15, 1, 3, 3, px(RAMP.CYAN, 2));
   pm.set(16, 2, px(RAMP.SKIN, 2)); // the waver
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2699,7 +2699,7 @@ export function drawTv(): Pixmap {
   // legs
   pm.rect(3, 17, 2, 2, px(RAMP.EARTH, 0));
   pm.rect(17, 17, 2, 2, px(RAMP.EARTH, 0));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2734,7 +2734,7 @@ export function drawStove(): Pixmap {
   pm.set(9, 16, px(RAMP.ORANGE, 2));
   pm.rect(2, 21, 3, 2, px(RAMP.PAPER, 0)); // feet
   pm.rect(17, 21, 3, 2, px(RAMP.PAPER, 0));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2764,7 +2764,7 @@ export function drawBookshelf(): Pixmap {
     pm.line(19, shelfY + 6, 21, shelfY + 1, px(RAMP.PAPER, 2));
     pm.line(20, shelfY + 6, 22, shelfY + 1, px(RAMP.PAPER, 1));
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2784,7 +2784,7 @@ export function drawFloorLamp(): Pixmap {
   pm.vline(8, 8, 16, px(RAMP.INK, 2));
   pm.vline(9, 8, 16, px(RAMP.INK, 1));
   pm.rect(6, 24, 6, 2, px(RAMP.INK, 1));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -2898,7 +2898,7 @@ export function drawGiftBox(): Pixmap {
   pm.set(5, 2, px(RAMP.GOLD, 3));
   pm.set(8, 2, px(RAMP.GOLD, 3));
   pm.rect(6, 1, 2, 2, px(RAMP.GOLD, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(7, 12, 5, px(RAMP.INK, 1));
   return pm;
 }
@@ -2917,7 +2917,7 @@ export function drawGiftBoxOpen(): Pixmap {
   // the lid leans on the right side, ribbon still on it
   pm.rect(12, 8, 3, 5, px(RAMP.RED, 2));
   pm.vline(13, 8, 5, px(RAMP.GOLD, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(7, 12, 5, px(RAMP.INK, 1));
   return pm;
 }
@@ -3006,7 +3006,7 @@ export function drawCageGate(): Pixmap {
   // the latch chain, hanging open — somebody is ALWAYS here
   pm.vline(13, 8, 5, px(RAMP.GOLD, 1));
   pm.set(12, 13, px(RAMP.GOLD, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(8, 20, 6, px(RAMP.INK, 1));
   return pm;
 }
@@ -3028,7 +3028,7 @@ export function drawBackboardProp(): Pixmap {
   for (let i = 0; i < 5; i++) {
     pm.vline(9 + i * 2, 14, 5 - (i % 2), i % 2 === 0 ? px(RAMP.PAPER, 2) : px(RAMP.PAPER, 1));
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(13, 42, 7, px(RAMP.INK, 1));
   return pm;
 }
@@ -3063,7 +3063,7 @@ export function drawCageMural(): Pixmap {
   pm.frame(0, 0, 46, 28, px(RAMP.PAPER, 2));
   pm.set(3, 24, px(RAMP.CYAN, 3));
   pm.set(4, 24, px(RAMP.GOLD, 3));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -3095,7 +3095,7 @@ export function drawBleachers(crowdSeed: number): Pixmap {
     pm.rect(x, 1, 3, 3, skin); // head
     pm.rect(x - 1, 4, 5, 2, px(ramps[h % ramps.length], 2)); // shoulders
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(32, 24, 26, px(RAMP.INK, 1));
   return pm;
 }
@@ -3125,7 +3125,7 @@ export function drawChalkBoard(): Pixmap {
   }
   pm.vline(16, 10, 9, chalk); // the line everything feeds
   pm.set(16, 20, px(RAMP.GOLD, 3)); // the champion's chalk star
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(17, 28, 9, px(RAMP.INK, 1));
   return pm;
 }

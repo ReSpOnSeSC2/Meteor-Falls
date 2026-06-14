@@ -9,7 +9,7 @@
 import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { CAST, generateCharacterFrames, diagWalkBase, DIAG_ORDER, type CharacterSpec, type HairStyle, type TopStyle, type Build } from '../spritegen/characters';
+import { CAST, generateCharacterFrames, generateIdleFrames, IDLE_BREATH, IDLE_BLINK, diagWalkBase, DIAG_ORDER, type CharacterSpec, type HairStyle, type TopStyle, type Build } from '../spritegen/characters';
 import { HEROES, type HeroId } from '../data/heroes';
 import { framesToCanvas } from '../spritegen/pixmap';
 import { standFrame, type Facing } from '../spritegen';
@@ -50,6 +50,8 @@ export class SpriteLabScene extends Phaser.Scene {
   private remixCounter = 0;
   private remixSprite: Phaser.GameObjects.Sprite | null = null;
   private remixTexts: Phaser.GameObjects.BitmapText[] = [];
+  // ADR-101: the palette-swap strip — one generator, many recolors (live)
+  private remixStrip: Phaser.GameObjects.GameObject[] = [];
   private remixDirTimer = 0;
   private remixDir = 0;
   private navAt = 0;
@@ -87,6 +89,8 @@ export class SpriteLabScene extends Phaser.Scene {
   private clear(): void {
     this.content.forEach((o) => o.destroy());
     this.content = [];
+    this.remixStrip.forEach((o) => o.destroy());
+    this.remixStrip = [];
     this.remixSprite = null;
     this.remixTexts = [];
     this.castSprites = [];
@@ -281,7 +285,8 @@ export class SpriteLabScene extends Phaser.Scene {
   private regenRemix(): void {
     this.remixCounter++;
     const key = `remix_${this.remixCounter}`;
-    const frames = generateCharacterFrames(this.remixSpec);
+    // ADR-101: build the sheet WITH the appended idle frames (44 breath, 45 blink)
+    const frames = [...generateCharacterFrames(this.remixSpec), ...generateIdleFrames(this.remixSpec)];
     const { canvas, fw, fh } = framesToCanvas(frames, 4);
     const tex = this.textures.addCanvas(key, canvas);
     if (tex) frames.forEach((_, i) => tex.add(i, 0, (i % 4) * fw, Math.floor(i / 4) * fh, fw, fh));
@@ -303,11 +308,46 @@ export class SpriteLabScene extends Phaser.Scene {
         repeat: -1,
       });
     });
+    // the down-facing idle: breath + blink, the ADR-101 standing life
+    if (!this.anims.exists(`${key}-idle-down`)) {
+      this.anims.create({
+        key: `${key}-idle-down`,
+        frames: [0, IDLE_BREATH, IDLE_BREATH, 0, 0, 0, IDLE_BLINK, 0, 0, 0].map((frame) => ({ key, frame })),
+        frameRate: 4,
+        repeat: -1,
+      });
+    }
     const old = this.remixSprite;
-    this.remixSprite = this.add.sprite(85, 120, key, standFrame('down')).setScale(5);
-    this.remixSprite.play(`${key}-walk-down`);
+    this.remixSprite = this.add.sprite(85, 116, key, standFrame('down')).setScale(5);
+    this.remixSprite.play(`${key}-idle-down`); // open on the breathing idle
     this.content.push(this.remixSprite);
     old?.destroy();
+    this.buildRemixStrip();
+  }
+
+  /**
+   * ADR-101 — the palette-swap demonstration: the SAME generated kid, recolored
+   * by swapping its shirt ramp to four other ramps. One generator, many looks —
+   * the cheap NPC/crowd variety primitive (pm.recolor), shown live.
+   */
+  private buildRemixStrip(): void {
+    this.remixStrip.forEach((o) => o.destroy());
+    this.remixStrip = [];
+    const base = generateCharacterFrames(this.remixSpec)[standFrame('down')];
+    const swaps = [RAMP.RED, RAMP.BLUE, RAMP.GRASS, RAMP.GOLD];
+    this.remixStrip.push(
+      this.add
+        .bitmapText(86, 178, 'retro', 'PALETTE-SWAP', 6)
+        .setOrigin(0.5, 0)
+        .setTint(colorOf(px(RAMP.GOLD, 2))),
+    );
+    swaps.forEach((toRamp, i) => {
+      const tkey = `remixrc_${this.remixCounter}_${i}`;
+      if (this.textures.exists(tkey)) this.textures.remove(tkey);
+      const pm = base.clone().recolor({ [this.remixSpec.top.ramp]: toRamp });
+      this.textures.addCanvas(tkey, pm.toCanvas());
+      this.remixStrip.push(this.add.image(34 + i * 36, 200, tkey).setOrigin(0.5, 0.5).setScale(1.5));
+    });
   }
 
   private cycleRemixParam(): void {
@@ -478,7 +518,8 @@ export class SpriteLabScene extends Phaser.Scene {
         this.remixDir = (this.remixDir + 1) % COMPASS8.length;
         const dir = COMPASS8[this.remixDir];
         const key = this.remixSprite.texture.key;
-        this.remixSprite.play(`${key}-walk-${dir}`);
+        // ADR-101: the 'down' slot shows the breathing/blinking idle, not a walk
+        this.remixSprite.play(dir === 'down' ? `${key}-idle-down` : `${key}-walk-${dir}`);
       }
     }
     if (this.page === 5) {

@@ -35,11 +35,11 @@ import { journalQuests, currentObjective, objectiveDone, callerEarned } from '..
 import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, heroVibe, heroResist, vibeHeal } from '../battle/formulas';
 import { INPUT, type BindingProfile, type Btn } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { Dialogue, makeWindow, everyFrame, vars, DEPTH_UI } from '../ui/windows';
+import { Dialogue, makeWindow, makeCashBox, everyFrame, vars, DEPTH_UI } from '../ui/windows';
 import { WINDOW_FLAVORS } from '../spritegen/ui';
 // S4: the list widget + "Offense up by N!" confirm are shared with the shops
 import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
-import { makeItemInfo } from '../ui/iteminfo';
+import { makeItemInfo, ITEMINFO_RESERVE } from '../ui/iteminfo';
 import { itemIconKey } from '../spritegen/icons';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { colorOf, RAMP, px } from '../palette';
@@ -65,14 +65,9 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     this.dlg = new Dialogue(this);
-    // cash corner — EB shows your pockets next to the commands
-    const cash = `$${GS.data.cashOnHand}  BANK $${GS.data.banked}`;
-    const cw = cash.length * 6 + 20;
-    makeWindow(this, this.scale.width - cw - 8, 8, cw, 22);
-    this.add
-      .bitmapText(this.scale.width - cw + 2, 15, 'retro', cash, 6)
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI + 1);
+    // cash corner — EB shows your pockets next to the commands. [PLAYTEST B] the
+    // shared, clamped, abbreviated box (never runs off-screen; $1.2M when big).
+    makeCashBox(this, GS.data.cashOnHand, GS.data.banked);
     // §A4: the party HP/PP strip along the bottom (the user's decree). It must
     // YIELD to anything else that lives at the bottom — the item DESCRIPTION
     // PANEL *and* a DIALOGUE box (item flavor text) — so they never overlap
@@ -140,6 +135,7 @@ export class MenuScene extends Phaser.Scene {
         options: labels,
         icons: hero.bag.map((id) => itemIconKey(id)),
         cols: labels.length > 7 ? 2 : 1,
+        reserveBottom: ITEMINFO_RESERVE,
         title: `${hero.name}  ${hero.bag.length}/${BAG_MAX}`,
         onHighlight: (i) => info.render(hero.bag[i]),
       });
@@ -316,6 +312,7 @@ export class MenuScene extends Phaser.Scene {
         y: 8,
         options: keys.map((id) => ITEMS[id]?.name ?? id),
         icons: keys.map((id) => itemIconKey(id)),
+        reserveBottom: ITEMINFO_RESERVE,
         title: 'KEY ITEMS',
         onHighlight: (i) => info.render(keys[i]),
       });
@@ -488,6 +485,7 @@ export class MenuScene extends Phaser.Scene {
           const id = hero.equip[s];
           return id ? itemIconKey(id) : undefined;
         }),
+        reserveBottom: ITEMINFO_RESERVE,
         title: hero.name,
         onHighlight: (i) => info.render(hero.equip[EQUIP_SLOTS[i]] ?? ''),
       });
@@ -522,6 +520,7 @@ export class MenuScene extends Phaser.Scene {
       y: 22,
       options: labels,
       icons: [...cands.map((c) => itemIconKey(c.itemId)), undefined],
+      reserveBottom: ITEMINFO_RESERVE,
       title: slotName(slot),
       onHighlight: (i) => info.render(i < cands.length ? cands[i].itemId : (hero.equip[slot] ?? '')),
     });

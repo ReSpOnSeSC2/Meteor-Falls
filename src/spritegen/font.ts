@@ -1,7 +1,7 @@
 /**
  * 5×7 pixel font rendered into a RetroFont sheet at boot.
  * Glyphs are 7 rows of 5-bit masks (bit 4 = leftmost pixel).
- * Covers printable ASCII 32–126 plus game glyphs: ▼ ★ ♥ … → ▶
+ * Covers printable ASCII 32–126 plus game glyphs: ▼ ▲ ◄ ► ← → ▶ ★ ♥ … — •
  */
 import { Pixmap } from './pixmap';
 import { C } from '../palette';
@@ -131,6 +131,14 @@ export const EMOJI_GLYPH: Record<string, string> = {
 
 const SPECIALS: Array<[string, number[]]> = [
   ['▼', A([0, 31, 31, 14, 14, 4, 0])],
+  // ADR-105: the up/left/right partners of ▼ and → (the smart-scale ATM widget
+  // needs ▲▼◄► affordances; ◄/► mirror ▶, ▲ mirrors ▼, ← mirrors →). Adding
+  // ▲ also un-tofus pick()'s pagination "▲ 1/3 ▼" marker, which has been
+  // drawing a blank up-cell since ADR-103 (the font had ▼ but never ▲).
+  ['▲', A([0, 4, 14, 14, 31, 31, 0])],
+  ['◄', A([1, 3, 7, 15, 7, 3, 1])],
+  ['►', A([16, 24, 28, 30, 28, 24, 16])],
+  ['←', A([0, 4, 8, 31, 8, 4, 0])],
   ['★', A([0, 4, 14, 31, 14, 4, 0])],
   ['♥', A([0, 10, 31, 31, 14, 4, 0])],
   ['…', A([0, 0, 0, 0, 0, 0, 21])],

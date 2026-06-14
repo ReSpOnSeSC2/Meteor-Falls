@@ -1,9 +1,20 @@
 /**
- * The 64-color master palette (GAME_BIBLE §B3) — the single source of truth.
- * Organized as 16 ramps × 4 shades (0 = darkest … 3 = lightest).
- * Every sprite in the game is built from these indices; the sprite engine
- * cannot emit a color outside this table, which is what makes mixed art read
- * as one game.
+ * The master palette (GAME_BIBLE §B3) — the single source of truth.
+ * Organized as 16 ramps. Every sprite in the game is built from these indices;
+ * the sprite engine cannot emit a color outside this table, which is what makes
+ * mixed art read as one game.
+ *
+ * ADR-101 (THE POLISH PASS) widened every ramp from 4 shades to **6**. Detail
+ * lives in the in-between tones: without them you can't shade a curve or
+ * anti-alias a diagonal. The two new stops are inserted in the heavily-used
+ * dark→base→light range, so the lighting model (Pixmap) has a real highlight →
+ * core → shadow falloff to work with on every form.
+ *
+ * The widening is BY CONSTRUCTION backward-compatible (the ADR-019 rule): the
+ * four authored anchor shades keep their exact hex, and `px(ramp, 0|1|2|3)`
+ * still resolves to them byte-for-byte — every one of the ~3000 existing call
+ * sites renders identically. New high-detail code reaches the full ramp through
+ * `pxr(ramp, 0..5)` and the semantic `SH` names.
  */
 
 export const RAMP = {
@@ -28,14 +39,15 @@ export const RAMP = {
 export type RampName = keyof typeof RAMP;
 
 /**
- * ramp -> 4 hex shades, darkest first.
+ * The four AUTHORED anchor shades per ramp, darkest first — the hand-tuned
+ * EarthBound-daylight palette (ADR-019): bright pastel mids, WARM shadows
+ * (every shade-0 leans plum/brown, never gray), cream whites instead of studio
+ * white, sun-yellowed grass. The outline color of every sprite is INK 0.
  *
- * S7 revision (ADR-019): the same 16 ramps re-tuned for EarthBound's daylight —
- * bright pastel mids, WARM shadows (every shade-0 leans plum/brown, never gray),
- * cream whites instead of studio white, sun-yellowed grass. The outline color
- * of every sprite in the game is INK 0, the deep plum.
+ * These remain the source of truth. The 6-stop ramps are derived from them, so
+ * the anchors can never drift out of sync with the colors existing art expects.
  */
-const RAMPS: Record<RampName, [string, string, string, string]> = {
+const ANCHORS: Record<RampName, [string, string, string, string]> = {
   INK: ['#1a1024', '#36284a', '#564a70', '#7e7298'],
   PAPER: ['#94886c', '#c4b89c', '#e8e0c4', '#fcf8e8'],
   SKIN: ['#9c5430', '#cc8454', '#f0b080', '#fcdcb0'],
@@ -54,14 +66,70 @@ const RAMPS: Record<RampName, [string, string, string, string]> = {
   NIGHT: ['#0c0c1c', '#1c2044', '#34386c', '#5064a4'],
 };
 
-/** Flat 64-entry hex palette. Index = ramp * 4 + shade. */
-export const PALETTE: string[] = (Object.keys(RAMPS) as RampName[]).flatMap(
-  (name) => RAMPS[name],
+/** how many shades each ramp now carries (ADR-101: was 4) */
+export const SHADES_PER_RAMP = 6;
+
+/**
+ * Semantic shade indices into a 6-stop ramp (0 darkest … 5 lightest). The
+ * lighting model speaks in these: a lit form runs HILITE/LIT on the light edge,
+ * BASE across the core, DARK/SHADOW where it turns away. MID and LIT are the two
+ * tones ADR-101 added — the in-betweens shading and anti-aliasing need.
+ */
+export const SH = {
+  SHADOW: 0, // core shadow / occlusion (the authored darkest)
+  DARK: 1, // shade side (authored shade-1)
+  MID: 2, // NEW tween: dark → base
+  BASE: 3, // the local color (authored shade-2)
+  LIT: 4, // NEW tween: base → hilite
+  HILITE: 5, // highlight (authored shade-3)
+} as const;
+export type Shade6 = (typeof SH)[keyof typeof SH];
+
+/** average two #rrggbb hex strings channel-wise (the derived in-between tone) */
+function mixHex(a: string, b: string): string {
+  const ai = parseInt(a.slice(1), 16);
+  const bi = parseInt(b.slice(1), 16);
+  const ch = (shift: number): number =>
+    Math.round((((ai >> shift) & 0xff) + ((bi >> shift) & 0xff)) / 2);
+  return (
+    '#' +
+    [ch(16), ch(8), ch(0)].map((v) => v.toString(16).padStart(2, '0')).join('')
+  );
+}
+
+/**
+ * The 6-stop ramps, derived from the 4 anchors:
+ *   [a0, a1, mix(a1,a2), a2, mix(a2,a3), a3]
+ * so the anchors land at 6-stop positions 0,1,3,5 (see FOUR_TO_SIX) and the two
+ * computed tweens sit at 2 (MID) and 4 (LIT).
+ */
+const RAMPS6: Record<RampName, string[]> = Object.fromEntries(
+  (Object.keys(ANCHORS) as RampName[]).map((name) => {
+    const [a0, a1, a2, a3] = ANCHORS[name];
+    return [name, [a0, a1, mixHex(a1, a2), a2, mixHex(a2, a3), a3]];
+  }),
+) as Record<RampName, string[]>;
+
+/** Flat hex palette. Index = ramp * SHADES_PER_RAMP + shade. */
+export const PALETTE: string[] = (Object.keys(RAMPS6) as RampName[]).flatMap(
+  (name) => RAMPS6[name],
 );
 
-/** Palette index from ramp + shade (0 dark … 3 light). */
+/** maps the legacy 4 shade slots onto the 6-stop ramp (anchors preserved) */
+const FOUR_TO_SIX = [0, 1, 3, 5] as const;
+
+/**
+ * Palette index from ramp + the legacy 4-shade slot (0 dark … 3 light).
+ * BY CONSTRUCTION identical to the pre-ADR-101 colors — every existing call
+ * site is untouched. Reach the two new in-between tones via `pxr`.
+ */
 export function px(ramp: number, shade: 0 | 1 | 2 | 3): number {
-  return ramp * 4 + shade;
+  return ramp * SHADES_PER_RAMP + FOUR_TO_SIX[shade];
+}
+
+/** Palette index from ramp + the full 6-stop shade (0 dark … 5 light, see SH). */
+export function pxr(ramp: number, shade: number): number {
+  return ramp * SHADES_PER_RAMP + shade;
 }
 
 /** Transparent marker used by the sprite engine. */
@@ -71,6 +139,7 @@ export const T = 255;
 export const C = {
   outline: px(RAMP.INK, 0),
   inkSoft: px(RAMP.INK, 1),
+  inkAA: pxr(RAMP.INK, SH.MID), // ADR-101: the soft ink the diagonal AA pass lays
   white: px(RAMP.PAPER, 3),
   paper: px(RAMP.PAPER, 2),
   grayLight: px(RAMP.PAPER, 1),

@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CAST,
   generateCharacterFrames,
+  generateIdleFrames,
   generateDiagFrames,
   generateDiagRunFrames,
   runFrameBase,
@@ -111,5 +112,32 @@ describe('ADR-096 — the appended diagonal block (24–43)', () => {
         expect(f[diagRunBase(dir)]).toBeDefined();
       }
     }
+  });
+});
+
+describe('ADR-104 — idle life + all-angles coverage', () => {
+  const nonEmpty = (pm: { data: Uint8Array }): boolean => pm.data.some((c) => c !== 255);
+
+  it('every cast member generates 2 idle frames (breath + blink), both non-empty', () => {
+    for (const id of Object.keys(CAST)) {
+      const idle = generateIdleFrames(CAST[id]);
+      expect(idle.length).toBe(2);
+      expect(nonEmpty(idle[0]), `${id} breath blank`).toBe(true);
+      expect(nonEmpty(idle[1]), `${id} blink blank`).toBe(true);
+    }
+  });
+
+  it('all 8 facing stand frames render content (no blank angle)', () => {
+    const stands = [0, 4, 8, 12, diagWalkBase('downright'), diagWalkBase('downleft'), diagWalkBase('upright'), diagWalkBase('upleft')];
+    for (const id of Object.keys(CAST)) {
+      const f = generateCharacterFrames(CAST[id]);
+      for (const s of stands) expect(nonEmpty(f[s]), `${id} stand frame ${s} blank`).toBe(true);
+    }
+  });
+
+  it('the idle breath frame DIFFERS from the stand frame (it actually moves)', () => {
+    const f = generateCharacterFrames(CAST.rex);
+    const idle = generateIdleFrames(CAST.rex);
+    expect(Buffer.from(idle[0].data).equals(Buffer.from(f[0].data))).toBe(false);
   });
 });

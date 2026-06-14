@@ -105,7 +105,7 @@ export function drawCrankyMailbox(wear: WearTier = 0): Pixmap {
     pm.set(30, 8, blueDD);
     pm.set(31, 8, blueDD);
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -190,7 +190,7 @@ export function drawRunawayLawnmower(wear: WearTier = 0): Pixmap {
     pm.set(33, 6, smoke);
     pm.set(27, 8, px(RAMP.PAPER, 0));
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -266,7 +266,7 @@ export function drawCoilyCicada(wear: WearTier = 0): Pixmap {
     pm.set(17, 39, shellDD);
     pm.set(18, 39, shellDD);
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -381,7 +381,7 @@ export function drawBlazerSmiler(wear: WearTier = 0): Pixmap {
     pm.set(48, 13, px(RAMP.CYAN, 3)); // sweat past the cheek dither
     pm.set(48, 14, px(RAMP.CYAN, 2));
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -456,7 +456,7 @@ export function drawPigeonGang(wear: WearTier = 0): Pixmap {
     pm.hline(70, 56, 2, greyD);
     pm.set(35, 59, greyL);
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -532,7 +532,7 @@ export function drawHillSlugDeluxe(wear: WearTier = 0): Pixmap {
     pm.set(54, 24, bodyD); // the gloss arc dulls where it took the hit
     pm.set(55, 24, bodyD);
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -699,7 +699,7 @@ export function drawTitanicTick(wear: WearTier = 0): Pixmap {
     pm.hline(29, 41, 2, bruise);
     pm.hline(63, 30, 2, bruise);
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -773,7 +773,7 @@ export function drawPickpocketParrot(wear: WearTier = 0): Pixmap {
     pm.set(33, 65, px(RAMP.GOLD, 3));
   }
   pm.checker(26, 36, 10, 8, g, gDD, 1);
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -828,7 +828,7 @@ export function drawGildedBeetle(wear: WearTier = 0): Pixmap {
     pm.set(42, 19, px(RAMP.EARTH, 2));
     pm.set(28, 12, T); // the spark of polish is gone
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -893,7 +893,7 @@ export function drawCursedSouvenir(wear: WearTier = 0): Pixmap {
     pm.line(30, 64, 28, 71, C.outline);
     pm.rect(24, 50, 3, 3, stoneDD); // a body fissure
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   // the tears, after outline: light is never outlined (ADR-021 idiom)
   pm.vline(23, 31, wear >= 1 ? 14 : 9, px(RAMP.CYAN, 3));
   pm.vline(38, 31, wear >= 1 ? 16 : 11, px(RAMP.CYAN, 3));
@@ -956,7 +956,7 @@ export function drawStepMask(wear: WearTier = 0): Pixmap {
     pm.rect(48, 28, 4, 4, C.outline);
     pm.rect(30, 45, 4, 7, T); // a tooth gone
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1004,7 +1004,7 @@ export function drawBananaBunch(wear: WearTier = 0): Pixmap {
   pm.rect(3, 24, 11, 8, px(RAMP.PAPER, 3));
   pm.vline(8, 26, 4, px(RAMP.RED, 2));
   pm.set(8, 31, px(RAMP.RED, 2)); // "!"
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1060,7 +1060,7 @@ export function drawJungleJitterbug(wear: WearTier = 0): Pixmap {
     pm.line(44, 40, 52, 56, shD);
     pm.line(52, 56, 54, 66, shDD);
   }
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   // motion ticks — pure light after outline (it never stops moving)
   pm.set(24, 14, shL);
   pm.set(22, 16, shL);
@@ -1150,7 +1150,7 @@ export function drawGildedGrin(wear: WearTier = 0, hollow = false): Pixmap {
   pm.hline(25, 70, 50, au);
   pm.contour(32, 72, [3, 4, 4, 3], auL);
   pm.contour(68, 72, [3, 4, 4, 3], auD);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   if (!hollow && wear < 2) {
     // the gleam — pure light, stamped after outline (never outlined)
     pm.set(24, 30, px(RAMP.PAPER, 3));
@@ -1301,7 +1301,7 @@ export function drawCicadaMini(): Pixmap {
   pm.line(9, 5, 4, 3, px(RAMP.CYAN, 2));
   pm.line(6, 13, 4, 15, px(RAMP.FOREST, 1));
   pm.line(9, 13, 9, 15, px(RAMP.FOREST, 1));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1319,7 +1319,7 @@ export function drawSlugMini(): Pixmap {
   pm.hline(11, 3, 3, px(RAMP.GOLD, 2)); // crumb of a crown
   pm.set(12, 2, px(RAMP.GOLD, 3));
   pm.set(2, 14, px(RAMP.CYAN, 3)); // slime glint
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1339,7 +1339,7 @@ export function drawMailboxMini(): Pixmap {
   pm.vline(13, 2, 4, px(RAMP.RED, 1));
   pm.rect(6, 10, 3, 7, px(RAMP.EARTH, 1));
   pm.vline(6, 10, 7, px(RAMP.EARTH, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1359,7 +1359,7 @@ export function drawMowerMini(): Pixmap {
   pm.set(4, 12, px(RAMP.PAPER, 2));
   pm.set(0, 6, px(RAMP.GRASS, 2));
   pm.set(1, 9, px(RAMP.GRASS, 3));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1378,7 +1378,7 @@ export function drawPigeonMini(): Pixmap {
   pm.line(3, 10, 1, 12, px(RAMP.PAPER, 1));
   pm.vline(6, 13, 2, px(RAMP.ORANGE, 2));
   pm.vline(8, 13, 2, px(RAMP.ORANGE, 2));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1397,7 +1397,7 @@ export function drawParrotMini(): Pixmap {
   pm.line(4, 6, 1, 3, px(RAMP.GRASS, 1)); // wing
   pm.line(5, 12, 3, 15, px(RAMP.GRASS, 1)); // tail
   pm.vline(9, 13, 2, px(RAMP.GOLD, 1));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1413,7 +1413,7 @@ export function drawBeetleMini(): Pixmap {
   pm.line(5, 13, 4, 15, px(RAMP.EARTH, 0));
   pm.line(9, 13, 9, 15, px(RAMP.EARTH, 0));
   pm.line(12, 12, 14, 15, px(RAMP.EARTH, 0));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1428,7 +1428,7 @@ export function drawSouvenirMini(): Pixmap {
   pm.hline(7, 10, 3, C.outline); // the little frown
   pm.rect(4, 12, 9, 3, px(RAMP.EARTH, 1)); // the base
   pm.set(13, 11, px(RAMP.PAPER, 3)); // price tag corner
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1445,7 +1445,7 @@ export function drawMaskMini(): Pixmap {
   pm.rect(5, 10, 8, 2, px(RAMP.EARTH, 0)); // the calm mouth
   pm.hline(6, 10, 6, px(RAMP.PAPER, 2));
   pm.set(3, 13, px(RAMP.FOREST, 1)); // moss
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -1464,7 +1464,7 @@ export function drawBananaMini(): Pixmap {
   pm.rect(3, 12, 11, 3, px(RAMP.GOLD, 1)); // the crown that unites them
   pm.set(7, 6, C.outline); // the rep's eyes
   pm.set(10, 6, C.outline);
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -1482,6 +1482,6 @@ export function drawJitterbugMini(): Pixmap {
   pm.line(8, 11, 8, 15, px(RAMP.FOREST, 1));
   pm.line(11, 10, 14, 13, px(RAMP.FOREST, 1));
   pm.line(5, 7, 1, 5, px(RAMP.FOREST, 1)); // the kick
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
