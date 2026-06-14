@@ -640,3 +640,27 @@ adds no items/icons).
 | — | **The MERCADO stall + the dockside loot** — on the Puerto Sol malecón, take the 5-charm tray; pick up the Gold Doubloon east on the dock; sell the Hubcap/Idol/Emerald/Doubloon at any shop (half price) | ⬜ | ⬜ | same multi-grant cache; valuables route through the standard sell flow |
 | — | **The Wish Token after the Grin** — return to Valle Dorado once `grin_defeated`: the token now sits in the idol's bowl (absent before the boss); the Locket hums near it | ⬜ | ⬜ | `ifFlag:'grin_defeated'` on the closed box + prompt sign; still non-missable (always re-reachable) |
 | — | **A Ch.1 Family Basket** — at the OTTERBROOK DRUG lunch counter, hand over 3 USA foods (Corn Dog, Apple Pie Slice, Grilled Cheese) → one Family Basket; use it at a town picnic table for the Sunny Side buff | ⬜ | ⬜ | `deli_otter` shares `deliBeat`; the three-foods-leave / one-basket-lands path is the shipped Ch.2 code |
+
+---
+
+## S17 M19 (ADR-064) — THE OLD-WORLD CATALOG (Ch.3 England · Ch.4 Norway · Ch.5 Minimus)
+
+The second regional pour, copying the M18 template ×3. Grows the catalog **88 → 214 items** (+126):
+**ch3 1→42, ch4 0→41, ch5 0→41, cross 1→4**. Ch.3/4/5 are UNLANDED, so this movement is **DATA +
+ICONS + the validator MANIFEST ONLY** — no shops, maps, quests, or gift-boxes were touched (live
+placement lands in each chapter's own session, the way M18 Part B placed the Americas). Every item is
+region-true (§A11.7), in §A11 voice, priced to §A9 (the chapters get richer climbing — Ch.3 > Ch.2),
+banded, and iconed (forged tail / hand-drawn signatures). Verified headlessly: tsc + full vitest + the
+validator + `vite build` + the `art:icons` region/forge sheets read by eye.
+
+| Check | Result |
+|---|---|
+| **Ch.3 England — Milo's chapter** — the GUN LADDER (Pellet Popper → Spud Gun → Double-Barrel Sparker → *Gauss Lobber*, the Mainframe drop), the Cricket Bat sidegrade, TEA AS PP, canteen stodge + proper foods, the gizmo/repair line (Broken Gizmo + repaired battle goods), the Cricket Cap rung, academic gear, library/groundskeeper goods | ✅ 42 items; `WEAPON_LADDER[ch3]` + `PP_LINE[ch3]` + `ARMOR_LINE[ch3]` pass both directions; the gun-ladder test climbs |
+| **Ch.4 Norway — SCALE is the joke** — fishing-hamlet foods (the Dog-Sized Berry, Growth-Spurt Milk for +max HP), funny sidegrades (Frozen Cod / Lefse Griddle), the Fur-Lined Hood rung, THE FIRST RESIST PENDANTS (the **Cool Charm** vs cold, freeze-resist DATA), the Firecracker String (the Whisperwig's NOISE), the Giant's Banknote, Sigrid's Monocle | ✅ 41 items; the resist test asserts `cool_charm`/`fur_lined_hood` carry `freeze` resist; Akutaq held back as Alaskan (§A8 region-true) |
+| **Ch.5 Minimus — TINY is the joke** — PIPPA'S KIT LADDER (Stamp Sling → Needle Saber → Thimble Bell → *Royal Red Pen*, the Minister's appointment top), tiny-everything food/charms, the Paper Crown rung, diplomatic gear (Luck/morale riders), census/duchy valuables, the Royal Thimble + Big-Little Lens scale-anchor keys | ✅ 41 items; a new `kit` WeaponClass (silhouette + sfx) opens for Pippa; her ladder climbs, all `pippa`-tagged |
+| **THE LOST & FOUND OF IMPOSSIBLE SIZES** (§A10 cross-chain seed) — the Giant Button (a shield in Lilleby, a manhole cover in Kvisthavn), the Impossible Berry, the Tiny Postcard (too small for Dad to read) | ✅ 3 items banded `cross` (they travel the world, not one region); the cross-seed test pins the band |
+| **heroResist DECISION — DATA only, binding DEFERRED** — the resist pendants carry real `resists` (summed by `heroResist`, capped at 80%, shown in STATUS, ADR-061); the actual damage-reduction binding waits for the first landed chapter (no shipped enemy carries elemental moves) | ✅ no battle-math / enemy-schema / save-migration change; the Bible needs **no** amendment (no new mechanic shipped — pouring §A8-anticipated items is implementing canon) |
+| **THE DISTINCTNESS LAW** — every new item gets exactly ONE byte-distinct ITEM_ICON; the forge tail is one line each, signatures hand-drawn; one new `book` subcat added (England library / duchy census) | ✅ `icons.test.ts` green at 214 icons + the 55-subcat forge gallery; 3 seeded collisions caught + fixed (eye_drops/smelling_salts, oilcloth/oilskin, wish_token/lucky_penny) — the test working as designed |
+| **BOTH-DIRECTIONS GATES + the floor ratchet** — ITEM_ICON ⇄ ITEMS, WEAPON_ART ⇄ equippables, WEAPON_LADDER / PP_LINE / ARMOR_LINE both ways; `BAND_FLOOR` ratcheted ch3→42 ch4→41 ch5→41 cross→4 | ✅ `validate` prints `ch3:42 ch4:41 ch5:41 … cross:4`; every battle item carries an `ITEM_FX` row |
+| **UNLANDED HELD** — no maps*.ts / shops.ts / quests touched; Ch.3/4/5 aren't landed | ✅ only `data/items.ts`, `spritegen/{icons,weapons,iconforge}.ts`, `battle/fxRegistry.ts`, `engine/audio.ts`, the validator + tests changed |
+| `npm run validate` + `npx vitest run` + `npx tsc --noEmit` + `npx vite build` | ✅ validator green (**214 items / 214 icons**) + **738 vitest** (+7 M19 catalog proofs) + tsc clean + `vite build` clean + the ch3/ch4/ch5/forge sheets re-rendered and read by eye (England damp-grey/brass · Norway cold-blue/birch · Minimus jewel-box velvet — no AI smell) |

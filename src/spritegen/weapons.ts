@@ -26,8 +26,11 @@ import { Pixmap } from './pixmap';
 import { RAMP, px, C } from '../palette';
 import { forgeIcon } from './iconforge';
 
-/** the swing family a held weapon belongs to — drives choreography + sfx */
-export type WeaponClass = 'bat' | 'pan' | 'rifle' | 'beads';
+/** the swing family a held weapon belongs to — drives choreography + sfx.
+ *  S17 M19 (ADR-064): 'kit' opens for Pippa's page implements (Stamp Sling →
+ *  Needle Saber → Thimble Bell → *Royal Red Pen*) — one tiny, precise jab, the
+ *  rungs told apart by ramp + a per-rung mark, EXACTLY the bat-class pattern. */
+export type WeaponClass = 'bat' | 'pan' | 'rifle' | 'beads' | 'kit';
 
 /** the orientations a held weapon is drawn in, per battler pose */
 export type HeldPose = 'rest' | 'back' | 'strike' | 'aim' | 'recoil';
@@ -187,6 +190,31 @@ function drawBeads(ctx: GripCtx, ramp: number): void {
   }
 }
 
+/** kit: Pippa's tiny page implement — a slim shaft with a small head that JABS.
+ *  Precision over force; the rungs differ by ramp + the per-rung detail mark. */
+function drawKit(ctx: GripCtx, ramp: number): void {
+  const { pm, gx, gy, pose } = ctx;
+  const body = px(ramp, 2);
+  const bodyL = px(ramp, 3);
+  const head = px(RAMP.GOLD, 2); // a bright little working head (nib/needle/bell)
+  if (pose === 'back') {
+    // drawn back, head high behind the shoulder, ready to flick
+    pm.line(gx - 1, gy - 1, gx - 6, gy - 6, body);
+    pm.line(gx - 1, gy - 2, gx - 6, gy - 7, bodyL);
+    pm.set(gx - 7, gy - 7, head);
+  } else if (pose === 'strike') {
+    // the thrust: shaft level, head leading at the foe
+    pm.line(gx + 1, gy - 1, gx + 7, gy - 2, body);
+    pm.line(gx + 1, gy - 2, gx + 7, gy - 3, bodyL);
+    pm.set(gx + 8, gy - 2, head);
+  } else {
+    // rest: carried up-right, tidy and small
+    pm.line(gx + 1, gy - 1, gx + 4, gy - 5, body);
+    pm.line(gx + 1, gy - 2, gx + 4, gy - 6, bodyL);
+    pm.set(gx + 4, gy - 6, head);
+  }
+}
+
 export function drawHeldWeapon(ctx: GripCtx, art: HeldArt): void {
   switch (art.class) {
     case 'bat':
@@ -200,6 +228,9 @@ export function drawHeldWeapon(ctx: GripCtx, art: HeldArt): void {
       break;
     case 'beads':
       drawBeads(ctx, art.ramp);
+      break;
+    case 'kit':
+      drawKit(ctx, art.ramp);
       break;
   }
   art.detail?.(ctx);
@@ -911,6 +942,168 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
   brass_gear_charm: { kind: 'trinket', icon: drawBrassGearIcon },
   tin_milagro: { kind: 'trinket', icon: drawTinMilagroIcon },
   jade_frog: { kind: 'trinket', icon: drawJadeFrogIcon },
+
+  /* ============ S17 M19 (ADR-064) — THE OLD-WORLD CATALOG ============ */
+
+  /* ---- Ch.3 ENGLAND — MILO'S GUN LADDER (rifle class; ramp + a per-rung
+     muzzle mark) and the cricket-bat sidegrade (bat class) ---- */
+  spud_gun: held({
+    class: 'rifle',
+    ramp: RAMP.NIGHT,
+    // a King Edward jammed in the muzzle — the day's ammunition
+    detail: ({ pm, gx, gy, pose }) => {
+      const spud = px(RAMP.BLOND, 2);
+      if (pose === 'aim') pm.set(gx + 10, gy - 8, spud);
+      else if (pose === 'recoil') pm.set(gx + 11, gy - 7, spud);
+      else pm.set(gx + 7, gy + 4, spud);
+    },
+  }),
+  double_barrel_sparker: held({
+    class: 'rifle',
+    ramp: RAMP.INK,
+    // a spark off the twin muzzles
+    detail: ({ pm, gx, gy, pose }) => {
+      const spark = px(RAMP.GOLD, 3);
+      if (pose === 'aim') pm.set(gx + 11, gy - 9, spark);
+      else if (pose === 'recoil') pm.set(gx + 12, gy - 8, spark);
+      else pm.set(gx + 8, gy + 3, spark);
+    },
+  }),
+  gauss_lobber: held({
+    class: 'rifle',
+    ramp: RAMP.BLUE,
+    // the magnetised charge glows blue at the muzzle (boss-drop top)
+    detail: ({ pm, gx, gy, pose }) => {
+      const charge = px(RAMP.CYAN, 3);
+      if (pose === 'aim') pm.set(gx + 10, gy - 8, charge);
+      else if (pose === 'recoil') pm.set(gx + 11, gy - 7, charge);
+      else pm.set(gx + 7, gy + 4, charge);
+    },
+  }),
+  cricket_bat: held({
+    class: 'bat',
+    ramp: RAMP.BLOND,
+    // the willow seam + a smear of linseed (carved-in initials, the team's)
+    detail: ({ pm, gx, gy, pose }) => {
+      const seam = px(RAMP.BLOND, 0);
+      if (pose === 'back') pm.set(gx - 7, gy - 8, seam);
+      else if (pose === 'strike') pm.set(gx + 6, gy - 4, seam);
+      else pm.set(gx + 4, gy - 6, seam);
+    },
+  }),
+
+  /* ---- Ch.3 — armor 'body' gear (torso re-dress; the §A8 hat/garment ladder) ---- */
+  cricket_cap: { kind: 'torso', ramp: RAMP.RED, trim: RAMP.BLUE },
+  school_blazer: { kind: 'torso', ramp: RAMP.NIGHT, trim: RAMP.GOLD },
+  tweed_waistcoat: { kind: 'torso', ramp: RAMP.EARTH, trim: RAMP.BLOND },
+  oilcloth_mac: { kind: 'torso', ramp: RAMP.INK, trim: RAMP.BLUE },
+
+  /* ---- Ch.3 — generic ARMS + academic CHARMS (forge trinkets) ---- */
+  fingerless_mitts: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'glove', band: 'ch3', detail: 'stripe', seed: 'fingerless_mitts' }) },
+  cricket_pads: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'bracer', band: 'ch3', seed: 'cricket_pads' }) },
+  lucky_conker: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch3', detail: 'stone', tint: RAMP.EARTH, seed: 'lucky_conker' }) },
+  house_pin: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch3', seed: 'house_pin' }) },
+  brass_compass: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch3', detail: 'stone', tint: RAMP.GOLD, seed: 'brass_compass' }) },
+  rain_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch3', detail: 'stone', tint: RAMP.CYAN, seed: 'rain_charm' }) },
+
+  /* ---- Ch.4 NORWAY — funny SIDEGRADES (a frozen fish, a flatbread griddle) ---- */
+  frozen_cod: held({
+    class: 'bat',
+    ramp: RAMP.CYAN,
+    // the frost rime + a fishy eye near the tip
+    detail: ({ pm, gx, gy, pose }) => {
+      const rime = px(RAMP.PAPER, 3);
+      const eye = px(RAMP.INK, 1);
+      if (pose === 'back') { pm.set(gx - 8, gy - 9, rime); pm.set(gx - 10, gy - 11, eye); }
+      else if (pose === 'strike') { pm.set(gx + 6, gy - 3, rime); pm.set(gx + 8, gy - 4, eye); }
+      else { pm.set(gx + 4, gy - 6, rime); pm.set(gx + 5, gy - 8, eye); }
+    },
+  }),
+  lefse_griddle: held({
+    class: 'pan',
+    ramp: RAMP.EARTH,
+    // the griddle's heat-bloom + a white spark of well-seasoned iron
+    detail: ({ pm, gx, gy, pose }) => {
+      if (pose === 'back') { pm.set(gx - 6, gy - 8, px(RAMP.ORANGE, 2)); pm.set(gx - 7, gy - 9, C.white); }
+      else if (pose === 'strike') { pm.set(gx + 6, gy - 5, px(RAMP.ORANGE, 2)); pm.set(gx + 8, gy - 6, C.white); }
+      else { pm.set(gx, gy + 4, px(RAMP.ORANGE, 2)); pm.set(gx + 2, gy + 5, C.white); }
+    },
+  }),
+
+  /* ---- Ch.4 — armor 'body' gear (the Fur-Lined Hood heads the §A8 rung) ---- */
+  fur_lined_hood: { kind: 'torso', ramp: RAMP.CYAN, trim: RAMP.PAPER },
+  wool_sweater: { kind: 'torso', ramp: RAMP.BLUE, trim: RAMP.PAPER },
+  oilskin_slicker: { kind: 'torso', ramp: RAMP.NIGHT, trim: RAMP.GOLD },
+  troll_hide_vest: { kind: 'torso', ramp: RAMP.FOREST, trim: RAMP.EARTH },
+
+  /* ---- Ch.4 — generic ARMS + the resist CHARMS (forge trinkets) ---- */
+  reindeer_mittens: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'glove', band: 'ch4', detail: 'dots', seed: 'reindeer_mittens' }) },
+  rope_bracer: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'wrap', band: 'ch4', seed: 'rope_bracer' }) },
+  cool_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch4', detail: 'stone', tint: RAMP.CYAN, seed: 'cool_charm' }) },
+  troll_cross: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch4', detail: 'stone', tint: RAMP.INK, seed: 'troll_cross' }) },
+  amber_drop: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch4', detail: 'stone', tint: RAMP.GOLD, seed: 'amber_drop' }) },
+  vegvisir_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch4', detail: 'star', seed: 'vegvisir_charm' }) },
+
+  /* ---- Ch.5 MINIMUS — PIPPA'S KIT LADDER (kit class; one tiny jab, the rungs
+     told apart by ramp + a per-rung head mark; the Royal Red Pen is the top) ---- */
+  stamp_sling: held({
+    class: 'kit',
+    ramp: RAMP.EARTH,
+    // a flash of the licked, loaded stamp at the head
+    detail: ({ pm, gx, gy, pose }) => {
+      const stamp = px(RAMP.PURPLE, 2);
+      if (pose === 'back') pm.set(gx - 7, gy - 7, stamp);
+      else if (pose === 'strike') pm.set(gx + 8, gy - 2, stamp);
+      else pm.set(gx + 4, gy - 6, stamp);
+    },
+  }),
+  needle_saber: held({
+    class: 'kit',
+    ramp: RAMP.PAPER,
+    // a thread of magenta trailing the eye of the needle
+    detail: ({ pm, gx, gy, pose }) => {
+      const thread = px(RAMP.MAGENTA, 2);
+      if (pose === 'back') pm.set(gx + 1, gy + 1, thread);
+      else if (pose === 'strike') pm.set(gx, gy + 1, thread);
+      else pm.set(gx, gy, thread);
+    },
+  }),
+  thimble_bell: held({
+    class: 'kit',
+    ramp: RAMP.PAPER,
+    // a bright ring of the silver bell at the head
+    detail: ({ pm, gx, gy, pose }) => {
+      const ring = px(RAMP.GOLD, 3);
+      if (pose === 'back') pm.set(gx - 7, gy - 7, ring);
+      else if (pose === 'strike') pm.set(gx + 8, gy - 2, ring);
+      else pm.set(gx + 4, gy - 6, ring);
+    },
+  }),
+  royal_red_pen: held({
+    class: 'kit',
+    ramp: RAMP.RED,
+    // the gold nib + a final red correction at the tip (boss-drop top)
+    detail: ({ pm, gx, gy, pose }) => {
+      const nib = px(RAMP.GOLD, 3);
+      if (pose === 'back') { pm.set(gx - 7, gy - 7, nib); pm.set(gx - 6, gy - 8, px(RAMP.RED, 3)); }
+      else if (pose === 'strike') { pm.set(gx + 8, gy - 2, nib); pm.set(gx + 9, gy - 1, px(RAMP.RED, 3)); }
+      else { pm.set(gx + 4, gy - 6, nib); pm.set(gx + 5, gy - 7, px(RAMP.RED, 3)); }
+    },
+  }),
+
+  /* ---- Ch.5 — armor 'body' gear (the Paper Crown heads the §A8 rung) ---- */
+  paper_crown: { kind: 'torso', ramp: RAMP.GOLD, trim: RAMP.PURPLE },
+  velvet_doublet: { kind: 'torso', ramp: RAMP.PURPLE, trim: RAMP.GOLD },
+  herald_tabard: { kind: 'torso', ramp: RAMP.MAGENTA, trim: RAMP.BLUE },
+  ermine_cape: { kind: 'torso', ramp: RAMP.RED, trim: RAMP.PAPER },
+
+  /* ---- Ch.5 — generic ARMS + diplomatic CHARMS (forge trinkets) ---- */
+  lace_cuffs: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'glove', band: 'ch5', detail: 'ribbon', seed: 'lace_cuffs' }) },
+  signet_bracer: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'bracer', band: 'ch5', detail: 'star', seed: 'signet_bracer' }) },
+  duchy_seal_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch5', detail: 'ribbon', seed: 'duchy_seal_charm' }) },
+  morale_medal: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch5', detail: 'star', seed: 'morale_medal' }) },
+  lens_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch5', detail: 'stone', tint: RAMP.CYAN, seed: 'lens_charm' }) },
+  census_quill_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch5', detail: 'stone', tint: RAMP.GOLD, seed: 'census_quill_charm' }) },
 };
 
 /** the swing family of an equipped weapon id — bare hands are 'fist' */
@@ -931,6 +1124,8 @@ export function swingSfxOf(cls: WeaponClass | 'fist'): string {
       return 'rifle_crack';
     case 'beads':
       return 'swing_beads';
+    case 'kit':
+      return 'swing_kit';
     default:
       return 'swing_fist';
   }

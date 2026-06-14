@@ -125,3 +125,68 @@ describe('S17 M18 (ADR-063) — THE AMERICAS CATALOG pours real items', () => {
     expect(ITEMS.nonstick_pan.wielder).toBe('faye');
   });
 });
+
+describe('S17 M19 (ADR-064) — THE OLD-WORLD CATALOG pours Ch.3/4/5', () => {
+  const byBand = (b: string): ItemDef[] => Object.values(ITEMS).filter((i) => i.band === b);
+
+  it('England, Norway, and Minimus each carry ≈40 items', () => {
+    expect(byBand('ch3').length).toBeGreaterThanOrEqual(40);
+    expect(byBand('ch4').length).toBeGreaterThanOrEqual(40);
+    expect(byBand('ch5').length).toBeGreaterThanOrEqual(40);
+  });
+
+  it("Milo's gun ladder climbs (Pellet Popper → … → *Gauss Lobber*), all his", () => {
+    const ladder = ['pellet_popper', 'spud_gun', 'double_barrel_sparker', 'gauss_lobber'];
+    let last = 0;
+    for (const id of ladder) {
+      const it = ITEMS[id];
+      expect(it.kind, id).toBe('weapon');
+      expect(it.wielder, id).toBe('milo');
+      expect(it.offense ?? 0, id).toBeGreaterThan(last); // each rung is a real upgrade
+      last = it.offense ?? 0;
+    }
+    expect(ITEMS.gauss_lobber.price).toBe(0); // the boss-drop top is a drop, not stock
+  });
+
+  it("Pippa's KIT ladder climbs (Stamp Sling → … → *Royal Red Pen*), all hers", () => {
+    const ladder = ['stamp_sling', 'needle_saber', 'thimble_bell', 'royal_red_pen'];
+    let last = 0;
+    for (const id of ladder) {
+      const it = ITEMS[id];
+      expect(it.kind, id).toBe('weapon');
+      expect(it.wielder, id).toBe('pippa');
+      expect(it.offense ?? 0, id).toBeGreaterThan(last);
+      last = it.offense ?? 0;
+    }
+    expect(ITEMS.royal_red_pen.price).toBe(0); // the Minister's appointment, not merch
+    expect(ITEMS.royal_red_pen.bonus).toEqual({ luck: 6 }); // her kit reads Luck/morale
+  });
+
+  it('THE FIRST RESIST PENDANTS carry freeze-resist DATA (the Cool Charm vs cold)', () => {
+    // resist% is wired through heroResist + STATUS (ADR-061); the damage binding
+    // defers to the chapter that lands (ADR-064) — but the DATA ships now, region-true
+    expect(ITEMS.cool_charm.kind).toBe('charm');
+    expect(ITEMS.cool_charm.resists).toEqual([{ element: 'freeze', pct: 25 }]);
+    expect(ITEMS.fur_lined_hood.resists).toEqual([{ element: 'freeze', pct: 20 }]); // on armor too
+  });
+
+  it('the M19 tonics permanently raise their stat (§A4.12)', () => {
+    expect(ITEMS.brain_food_lunch.boost).toEqual({ stat: 'vibe', amount: 3 });
+    expect(ITEMS.growth_spurt_milk.boost).toEqual({ stat: 'hp', amount: 20 }); // the scale joke
+    expect(ITEMS.charged_battery.boost).toEqual({ stat: 'pp', amount: 12 });
+    expect(ITEMS.lucky_penny_tonic.boost).toEqual({ stat: 'luck', amount: 2 });
+  });
+
+  it('the §A8 hat-ladder rungs land (Cricket Cap / Fur-Lined Hood / Paper Crown)', () => {
+    for (const id of ['cricket_cap', 'fur_lined_hood', 'paper_crown']) {
+      expect(ITEMS[id].kind, id).toBe('armor');
+      expect(ITEMS[id].defense ?? 0, id).toBeGreaterThan(0);
+    }
+  });
+
+  it('THE LOST & FOUND OF IMPOSSIBLE SIZES seeds the cross-chain (band cross)', () => {
+    for (const id of ['giant_button', 'impossible_berry', 'tiny_postcard']) {
+      expect(ITEMS[id].band, id).toBe('cross'); // not a single region — it travels the world
+    }
+  });
+});

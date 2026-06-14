@@ -974,6 +974,11 @@ class AudioSys {
         this.noise(0.1, 0.06, 1200);
         this.tone('sine', 240, 120, 0.1, 0.04);
         break;
+      case 'swing_kit':
+        // M19 (ADR-064): Pippa's tiny precise jab — a short tick + a bright ping
+        this.noise(0.03, 0.05, 4200);
+        this.tone('triangle', 1760, 1740, 0.07, 0.03, 0.03);
+        break;
       case 'door_creak':
         // an interior door admits you: hinge creak, then the S7 whoosh family
         this.tone('sawtooth', 180, 320, 0.22, 0.035);

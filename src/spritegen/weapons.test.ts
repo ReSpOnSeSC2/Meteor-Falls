@@ -83,8 +83,12 @@ describe('WEAPON_ART ⇄ §A8 equippables (both directions)', () => {
     expect(weaponClassOf('hand_me_down_pan')).toBe('pan');
     expect(weaponClassOf('pellet_popper')).toBe('rifle');
     expect(weaponClassOf('cedar_beads')).toBe('beads');
+    // M19 (ADR-064): Pippa's KIT class — the gun ladder stays rifle, her kit is its own
+    expect(weaponClassOf('gauss_lobber')).toBe('rifle');
+    expect(weaponClassOf('stamp_sling')).toBe('kit');
+    expect(weaponClassOf('royal_red_pen')).toBe('kit');
     expect(weaponClassOf(null)).toBe('fist');
-    for (const cls of ['bat', 'pan', 'rifle', 'beads', 'fist'] as const) {
+    for (const cls of ['bat', 'pan', 'rifle', 'beads', 'kit', 'fist'] as const) {
       expect(swingSfxOf(cls).length).toBeGreaterThan(0);
     }
   });
