@@ -307,9 +307,10 @@ property's resale value** (the flip hook). Canon home use-cases (invent more, al
 ### §A5 — travel addendum (append; do NOT rewrite the set-piece table)
 
 The set-piece travel table is unchanged (Embers keep the journey linear). NEW: a free-roam
-**road/traffic** layer inside regions; **HIGHWAY** stretches (long driving sections where the map
-IS the road); one **PLANE-INTERIOR** travel scene (the bus/boat-interior precedent applied to a
-flight); and a late-game **FLEET** (boats/planes/subs/yachts, purchasable at marinas/airfields/
+**road/traffic** layer inside regions; **large multi-screen HIGHWAY** set-pieces (long, cinematic
+driving sections where the map IS the road, with ramps, overpasses, mile markers, and mid-route
+rest stops — at least the America interstate and the India approach); one **PLANE-INTERIOR** travel
+scene (the bus/boat-interior precedent applied to a flight); and a late-game **FLEET** (boats/planes/subs/yachts, purchasable at marinas/airfields/
 helipads — including on owned properties) the Clicker scales into. None replace an Ember leg.
 
 ### §A6 — chapter beats (amend the relevant chapters; §A11 voice; no chapter UI)
@@ -519,8 +520,20 @@ Wire the new mechanics into §A6 as REQUIRED, non-missable beats (retry law hold
 - **THE MANDATORY DRIVE (Ch.7):** a stretch where the ONLY way forward is to control a taxi/bus and
   drive the party (in the backseat, bickering) to a place the train can't reach — a real driving
   sequence, EarthBound-funny.
-- **HIGHWAY SECTIONS:** long road maps (the map IS the highway) — America and the India approach —
-  with traffic, ONE optional "road-rage" hostile-vehicle set-piece, and gas-station rest stops.
+- **THE LARGE HIGHWAY SECTIONS:** big, multi-screen long-haul driving set-pieces where the map IS
+  the road — these are meant to feel LONG and cinematic, not a token strip. Build them as their own
+  scrolling road maps (the §A5 travel-scene precedent, but DRIVEN by the player in a vehicle, not a
+  passive vignette): lane traffic to weave through, on-/off-ramps, overpasses, median dressing,
+  mile markers + diegetic signage in §A11 voice ("BRICKTON 40 · NEXT SERVICES: A WHILE"), weather/
+  time-of-day mood, and **gas-station / rest-stop interiors** mid-route as §A4.5-style rests +
+  save points (the fuel sink matters here). Seed at least TWO marquee highways: the **America
+  interstate** (Ch.1.5 / the Long-Walk era, the open-road feel) and the **India approach** (the
+  Ch.7 HIGHWAY chase INTO Chandrapore that flows straight into the MANDATORY DRIVE). Each carries
+  ONE optional "road-rage" hostile-vehicle set-piece (a §A7 one-off, never random) and a quiet
+  party beat in the cabin so the length breathes. Long enough to earn the name; smooth at 60fps
+  (pool + cull traffic — §B4); BFS-clean at several time-steps so a moving rig never corners the
+  player. (The capstone air/sea long-hauls live in M33's fleet + the M31 plane-interior; the
+  highways are the wheels-on-asphalt version.)
 - **THE PLANE-INTERIOR (Ch.10):** a flight scene (the bus/boat-interior precedent) — the party in
   the cabin, land sliding by a window, a quiet beat, arrival.
 - **THE HELMET BOSS (Ch.7):** Cobra Raja wears a DEAD-AIR HELMET — phase 1 is knocking it off so
