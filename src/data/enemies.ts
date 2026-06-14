@@ -333,7 +333,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Prefect Drone was, at last, dismissed for the term.',
       // a Hushed enforcer sheds the enamel badge it polished too hard (§A7)
       drops: [{ item: 'house_pin', chance: 0.15 }],
-      sprite: 'battle_ch3_grunt_4',
+      sprite: 'battle_prefect_drone',
       mini: 'mini_ch3_grunt_4',
       bg: [RAMP.BLUE, RAMP.CYAN],
     }),
@@ -358,7 +358,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Possessed Textbook closed for good — footnotes, appendix and all.',
       // the book that stole your voice came stamped with the matron's lozenge (cause → cure, §A7)
       drops: [{ item: 'honey_lozenge', chance: 0.25 }],
-      sprite: 'battle_ch3_caster_2',
+      sprite: 'battle_possessed_textbook',
       mini: 'mini_ch3_caster_2',
       bg: [RAMP.CYAN, RAMP.NIGHT],
     }),
@@ -382,7 +382,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Fog Hound thinned back out into ordinary bad weather.',
       // a fog-machine made flesh sheds a cracked emitter cog — scrap to anyone but Milo (§A7)
       drops: [{ item: 'broken_gizmo', chance: 0.2 }],
-      sprite: 'battle_ch3_lurker_3',
+      sprite: 'battle_fog_hound',
       mini: 'mini_ch3_lurker_3',
       bg: [RAMP.CYAN, RAMP.PAPER],
     }),
@@ -406,7 +406,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Tea Poltergeist let the pot go cold at last. Filed under: mercy.',
       // misfiled hospitality leaves the brew behind — tea is PP in this chapter (§A7)
       drops: [{ item: 'builders_tea', chance: 0.3 }],
-      sprite: 'battle_ch3_caster_5',
+      sprite: 'battle_tea_poltergeist',
       mini: 'mini_ch3_caster_5',
       bg: [RAMP.CYAN, RAMP.PURPLE],
     }),
@@ -430,7 +430,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'One eleventh of the Cricket Eleven trudged back to the pavilion.',
       // they break for tea after every wicket — a flaky currant cake left on the boundary (§A7)
       drops: [{ item: 'eccles_cake', chance: 0.1 }],
-      sprite: 'battle_ch3_grunt_0',
+      sprite: 'battle_cricket_eleven',
       mini: 'mini_ch3_grunt_0',
       bg: [RAMP.PAPER, RAMP.CYAN],
     }),
@@ -454,7 +454,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Greenhouse Creeper let go of the rocket at last. Milo wept, a little.',
       // it grew through Milo's crashed rocket — a coil of scrap drops from its roots (§A7)
       drops: [{ item: 'broken_gizmo', chance: 0.3 }],
-      sprite: 'battle_ch3_bruiser_1',
+      sprite: 'battle_greenhouse_creeper',
       mini: 'mini_ch3_bruiser_1',
       bg: [RAMP.FOREST, RAMP.CYAN],
     }),
@@ -479,7 +479,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Pillar Box tipped over and posted itself. Return to sender.',
       // a cast-iron hoarder, full of undelivered odds — a royal-wedding tin rolls out (§A7)
       drops: [{ item: 'commemorative_tin', chance: 0.15 }],
-      sprite: 'battle_ch3_bruiser_1',
+      sprite: 'battle_pillar_box',
       mini: 'mini_ch3_bruiser_1',
       bg: [RAMP.RED, RAMP.NIGHT],
     }),
@@ -503,7 +503,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Brolly Bat folded up sulkily — the way they never do when you need them.',
       // a storm-turned umbrella leaves the little tin one on a clip behind (§A7)
       drops: [{ item: 'rain_charm', chance: 0.12 }],
-      sprite: 'battle_ch3_lurker_3',
+      sprite: 'battle_brolly_bat',
       mini: 'mini_ch3_lurker_3',
       bg: [RAMP.BLUE, RAMP.NIGHT],
     }),
@@ -527,7 +527,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Moor Sheep wandered off mid-sentence, as is its ancient right.',
       // a shepherd's lost lunch, jellied and cold, turns up in the wool (§A7)
       drops: [{ item: 'pork_pie', chance: 0.2 }],
-      sprite: 'battle_ch3_grunt_0',
+      sprite: 'battle_moor_sheep',
       mini: 'mini_ch3_grunt_0',
       bg: [RAMP.PAPER, RAMP.EARTH],
     }),
@@ -551,7 +551,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Soot Imp went up the flue for good. The chimney sighed, relieved.',
       // soot in the eyes, drops left behind to clear them (cause → cure, §A7)
       drops: [{ item: 'eye_drops', chance: 0.25 }],
-      sprite: 'battle_ch3_grunt_0',
+      sprite: 'battle_soot_imp',
       mini: 'mini_ch3_grunt_0',
       bg: [RAMP.INK, RAMP.NIGHT],
     }),
@@ -576,7 +576,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Detention Desk was, with great ceremony, finally excused.',
       // a confiscated book has been jammed in its lid for three centuries (§A7)
       drops: [{ item: 'first_edition', chance: 0.06 }],
-      sprite: 'battle_ch3_bruiser_1',
+      sprite: 'battle_detention_desk',
       mini: 'mini_ch3_bruiser_1',
       bg: [RAMP.EARTH, RAMP.NIGHT],
     }),
@@ -600,7 +600,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Schedule Bell rang once more — recess, finally, forever.',
       // it rings for tea break whether anyone wants tea or not (§A7)
       drops: [{ item: 'builders_tea', chance: 0.3 }],
-      sprite: 'battle_ch3_caster_2',
+      sprite: 'battle_schedule_bell',
       mini: 'mini_ch3_caster_2',
       bg: [RAMP.GOLD, RAMP.CYAN],
     }),
@@ -627,7 +627,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { item: 'broken_gizmo', chance: 0.35 },
         { item: 'commemorative_tin', chance: 0.12 },
       ],
-      sprite: 'battle_ch3_bruiser_1',
+      sprite: 'battle_foggy_locker',
       mini: 'mini_ch3_bruiser_1',
       bg: [RAMP.BLUE, RAMP.CYAN],
     }),
@@ -652,7 +652,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Tea Trolley rolled to a polite stop. "Mind how you go."',
       // it can't help serving you on the way out — a scone, jam-and-cream (§A7)
       drops: [{ item: 'scone_clotted_cream', chance: 0.25 }],
-      sprite: 'battle_ch3_caster_5',
+      sprite: 'battle_tea_trolley',
       mini: 'mini_ch3_caster_5',
       bg: [RAMP.PAPER, RAMP.CYAN],
     }),
@@ -676,7 +676,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Telephone Box went off the hook for good. It had said quite enough.',
       // loose change and forgotten tat rattle in the coin slot (§A7)
       drops: [{ item: 'commemorative_tin', chance: 0.1 }],
-      sprite: 'battle_ch3_bruiser_1',
+      sprite: 'battle_telephone_box',
       mini: 'mini_ch3_bruiser_1',
       bg: [RAMP.RED, RAMP.NIGHT],
     }),
@@ -701,7 +701,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Overdue Tome was, at long last, returned. The fine was quietly waived.',
       // the whole point of it: a genuine, ruinously valuable first edition (§A7)
       drops: [{ item: 'first_edition', chance: 0.25 }],
-      sprite: 'battle_ch3_caster_2',
+      sprite: 'battle_overdue_tome',
       mini: 'mini_ch3_caster_2',
       bg: [RAMP.PURPLE, RAMP.NIGHT],
     }),
@@ -725,7 +725,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Roman Sentry saluted the empty moor and finally, gratefully, stood down.',
       // an iron discipline left in a brown bottle for whoever outlasts him (§A7)
       drops: [{ item: 'iron_tonic', chance: 0.05 }],
-      sprite: 'battle_ch3_lurker_3',
+      sprite: 'battle_roman_sentry',
       mini: 'mini_ch3_lurker_3',
       bg: [RAMP.EARTH, RAMP.PAPER],
     }),
@@ -754,7 +754,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { item: 'school_blazer', chance: 0.1 },
         { item: 'house_pin', chance: 0.2 },
       ],
-      sprite: 'battle_ch3_grunt_4',
+      sprite: 'battle_head_prefect',
       mini: 'mini_ch3_grunt_4',
       bg: [RAMP.BLUE, RAMP.PURPLE],
     }),
@@ -781,7 +781,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { item: 'spark_coil', chance: 0.25 },
         { item: 'cog_grenade', chance: 0.15 },
       ],
-      sprite: 'battle_ch3_caster_5',
+      sprite: 'battle_boiler_golem',
       mini: 'mini_ch3_caster_5',
       bg: [RAMP.ORANGE, RAMP.NIGHT],
     }),
@@ -806,7 +806,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Invigilator collected the papers, nodded once, and was no longer there.',
       // a confiscated crib sheet turns out to be a perfectly balanced packed lunch (§A7)
       drops: [{ item: 'brain_food_lunch', chance: 0.05 }],
-      sprite: 'battle_ch3_lurker_3',
+      sprite: 'battle_the_invigilator',
       mini: 'mini_ch3_lurker_3',
       bg: [RAMP.INK, RAMP.CYAN],
       // a silent exam-hall stalker can't be Puppeted — it never had a will to borrow (§A4.10)
@@ -869,7 +869,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'the watching', kind: 'taunt', text: '{e} simply watched. Every screen in the room turned, slowly, to face {t}.', weight: 1 },
       ],
       deathLine: 'The Headmaster Mainframe logged off for the last time. The fog, very slowly, began to forget how.',
-      sprite: 'battle_ch3_lurker_3',
+      sprite: 'battle_headmaster_mainframe',
       mini: 'mini_ch3_lurker_3',
       bg: [RAMP.CYAN, RAMP.NIGHT],
       boss: true,
