@@ -254,6 +254,27 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > the Cobra Raja DEAD-AIR-HELMET boss are the per-chapter scene staging that rides
 > these spines + the M26 vehicles + the M27 control system.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-073 — **§A4.10/§A5 THE FLEET (the
+> traversal capstone).** The control power SCALES up the chapters (ADR-035 staging,
+> `FLEET_STAGES`): cars (Ch.3) → trucks/buses/machinery (Ch.5) → boats (Ch.8) →
+> planes + helicopters (Ch.10) → submarines/yachts (late) — each a staged story
+> moment, not a menu unlock. WATER becomes drivable terrain and AIR a traversal
+> layer (the M26 `VEHICLE_SPECS` terrain axis); the piloting rules live in
+> `src/engine/fleet.ts`: depth (a dinghy hugs rivers, a yacht needs open water, a
+> sub DIVES — `WATER_ACCESS`), launch (a jet needs a runway, a heli lifts off
+> anything flat — `AIR_ACCESS`), and the boat/plane/sub SCENES (momentum/drift, a
+> wake, takeoff + landing, the dive layer) render over them. PURCHASING: the bigger
+> craft are bought at dealers/marinas/airfields/helipads (incl. on owned properties)
+> as key-item TITLES (`FLEET_CRAFT` — the Comet GT, the river dinghy, the Starhopper
+> jet, the Pearl yacht, the Deep Marlin sub, the Sky Taxi heli), priced to the §A9
+> Fortune Arc, sold by §A11 obsessives (Bert, the harbormaster, Roxanne); a purchased
+> craft parks visibly at your property. THE EMBER-TRAIL LAW HOLDS (§A5): a flown/
+> sailed craft reaches VISITED nodes ONLY (`reachesNode`) and new chapters still gate
+> on the Embers; DEAD-AIR-shielded craft + no-fly/no-wake zones (`zoneOpen`) are the
+> diegetic fences. Teleport stays the no-luggage option; the fleet is the wealth +
+> traversal fantasy on top. Validator-pinned (`fleet`): venue↔terrain, unique titles,
+> staging climbs road→water→air.)*
+
 ## A5. The World Route & Travel
 
 | Ch. | Region | Locales | Travel in |

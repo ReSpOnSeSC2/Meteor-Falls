@@ -50,6 +50,8 @@ import { chainProblems } from '../src/engine/storythread';
 import { DISGUISES, DISGUISE_FACTIONS } from '../src/data/disguise';
 import { PAPERBOY, liveRoute } from '../src/data/paperboy';
 import { PaperboySim, prizeEarned } from '../src/paperboy/sim';
+import { FLEET_CRAFT, FLEET_STAGES, WATER_ACCESS, AIR_ACCESS } from '../src/data/fleet';
+import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -482,6 +484,47 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   const result = new PaperboySim(route).run(tape);
   if (!prizeEarned(route, result)) fail('paperboy', 'a PERFECT run does not clear the prize goal — the route is unwinnable');
+}
+
+// S18 Movement 33 (ADR-073) — THE FLEET. Staging + craft must be sound:
+//  · every purchasable craft is a real VEHICLE_SPECS type whose terrain matches its
+//    venue (a marina sells water craft, an airfield/helipad sells air craft, a dealer
+//    road), at a positive price, with a unique title key-item, in voice;
+//  · every staged class/terrain exists; every water/air access type is a real vehicle;
+//  · the control power scales road → water → air in chapter order (ADR-035).
+{
+  const VENUE_TERRAIN: Record<string, string> = { dealer: 'road', marina: 'water', airfield: 'air', helipad: 'air' };
+  const titles = new Map<string, string>();
+  for (const c of Object.values(FLEET_CRAFT)) {
+    const spec = VSPECS_FLEET[c.vehicleType];
+    if (!spec) { fail('fleet', `craft '${c.id}' is type '${c.vehicleType}' with no VEHICLE_SPECS row`); continue; }
+    const want = VENUE_TERRAIN[c.venue];
+    if (spec.terrain !== want) fail('fleet', `craft '${c.id}' sells at a ${c.venue} (expects ${want}) but is a ${spec.terrain} craft`);
+    if (c.price <= 0) fail('fleet', `craft '${c.id}' has a non-positive price`);
+    if (!/^ch\d+$/.test(c.band)) fail('fleet', `craft '${c.id}' band '${c.band}' is malformed`);
+    if (!c.title || !c.title.startsWith('title_')) fail('fleet', `craft '${c.id}' title '${c.title}' must be a title_* key-item`);
+    if (!c.seller || !c.note) fail('fleet', `craft '${c.id}' has no §A11 seller/note`);
+    const prior = titles.get(c.title);
+    if (prior) fail('fleet', `title '${c.title}' owns both '${prior}' and '${c.id}'`);
+    titles.set(c.title, c.id);
+  }
+  for (const m of [WATER_ACCESS, AIR_ACCESS]) {
+    for (const type of Object.keys(m)) {
+      if (!VSPECS_FLEET[type]) fail('fleet', `access table names '${type}' which is no VEHICLE_SPECS type`);
+    }
+  }
+  // staging climbs in chapter order and lists real terrains
+  let lastBand = 0;
+  const seenTerrain = new Set<string>();
+  for (const st of FLEET_STAGES) {
+    const b = Number(/^ch(\d+)$/.exec(st.band)?.[1] ?? 0);
+    if (b < lastBand) fail('fleet', `fleet stage '${st.band}' goes backwards in chapter order`);
+    lastBand = b;
+    seenTerrain.add(st.terrain);
+  }
+  for (const t of ['road', 'water', 'air']) {
+    if (!seenTerrain.has(t)) fail('fleet', `the fleet never scales into '${t}' — ADR-035 staging is incomplete`);
+  }
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2014,6 +2057,7 @@ const counts = [
   `${Object.keys(THREAD_BEATS).length} thread beats`,
   `${Object.keys(DISGUISES).length} disguises`,
   `paperboy (${liveRoute().items.filter((i) => i.kind === 'mailbox').length} houses)`,
+  `${Object.keys(FLEET_CRAFT).length} fleet craft`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,

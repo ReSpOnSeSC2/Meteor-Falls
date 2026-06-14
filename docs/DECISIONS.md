@@ -4454,3 +4454,36 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** a fourth optional long-form minigame is mechanically complete and winnable;
   PaperboyScene (the renderer, the paper-stand prop, the HUD) drops onto this sim, and the prize
   charm pours into §A8 with its icon when the catalog session next runs.
+
+## ADR-073 — S18 (Movement 33): THE FLEET SCALES — boats, planes, subs & purchasing
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 33 — the traversal capstone; needs the M27 control system +
+  the M26 bigger-craft sprites + the M29 property layer.)
+- **Decision — `src/data/fleet.ts` + `src/engine/fleet.ts`, the scale-up rules (pure).** The
+  control power scales up the chapters (ADR-035 staging, `FLEET_STAGES`): cars (Ch.3) → trucks/
+  buses/machinery (Ch.5) → boats (Ch.8) → planes + helis (Ch.10) → subs (late). `controlReach`/
+  `canPilot` answer what's pilotable by chapter (off the M26 `VEHICLE_SPECS` terrain+class axis).
+  WATER is drivable terrain with DEPTH rules (`WATER_ACCESS` — dinghy: river+open, yacht: open,
+  sub: open+deep/dive) and AIR a layer with LAUNCH rules (`AIR_ACCESS` — jets need a runway, helis
+  lift off anything flat). The Ember-trail law holds (`reachesNode` — visited nodes only) and
+  no-fly/no-wake zones (`zoneOpen`) fence a pocket until its chapter.
+- **Decision — PURCHASING as key-item TITLES.** `FLEET_CRAFT` lists six buyable craft at dealers/
+  marinas/airfields/helipads (incl. owned properties): the Comet GT, river dinghy, Starhopper jet,
+  Pearl yacht, Deep Marlin sub, Sky Taxi heli — priced to the §A9 Fortune Arc, sold by §A11
+  obsessives. `craftForSale`/`canBuy`/`titleOf`/`ownsCraft` drive the buy; ownership rides a
+  `title_*` key-item (the property/flag pattern), so a purchased craft parks at your property and
+  is yours to summon — no new save field.
+- **Decision — gated (`tools/content-validate.ts` `fleet` + `fleet.test.ts`).** Every craft is a
+  real VEHICLE_SPECS type whose terrain matches its venue (marina→water, airfield/helipad→air,
+  dealer→road), positive price, unique `title_*`, in voice; access tables name real types; the
+  staging climbs road→water→air in chapter order and covers all three terrains. The test proves
+  the chapter staging, the depth/pad rules, the Ember reach law, zones, and purchasing. The verdict
+  prints **6 fleet craft**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (6 fleet craft) + full
+  **vitest** green (+11) + `vite build` clean. No FNV re-pin, no frozen-core change, no save
+  change (titles ride keyItems). §A4.10/§A5 amended to canon in the same commit.
+- **Consequences:** the control fantasy has its full vertical — road to water to air to the deep,
+  scaled by chapter and bought with the property fortune, all Ember-law-safe. The boat/plane/sub
+  piloting SCENES (the water-handling momentum, takeoff/landing beats, the dive map layer) render
+  over these rules when their chapters land; the M26 fleet sprites are already drawn for them.
