@@ -41,6 +41,7 @@ import { WINDOW_FLAVORS } from '../spritegen/ui';
 import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
 import { makeItemInfo, ITEMINFO_RESERVE } from '../ui/iteminfo';
 import { itemIconKey } from '../spritegen/icons';
+import { heroPortraitKey } from '../spritegen/authored';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { colorOf, RAMP, px } from '../palette';
 
@@ -343,15 +344,28 @@ export class MenuScene extends Phaser.Scene {
     // S17 (ADR-061): a touch taller for the charm ('Other') slot + a resist
     // line — but stays clear of the bottom vitals strip (top at H−49)
     this.pageObjs.push(makeWindow(this, x, y, w, 166));
-    const line = (ty: number, s: string, tint?: number): void => {
+    // the authored 32×32 portrait bust, top-left (EB character-sheet look); the
+    // name/epithet indent past it. No portrait master → no indent, reads as before.
+    const pkey = heroPortraitKey(h.id);
+    const hasPortrait = this.textures.exists(pkey);
+    if (hasPortrait) {
+      const p = this.add
+        .image(x + 12, y + 8, pkey)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1);
+      this.pageObjs.push(p);
+    }
+    const headIndent = hasPortrait ? 38 : 0;
+    const line = (ty: number, s: string, tint?: number, indent = 0): void => {
       const t = this.add
-        .bitmapText(x + 12, y + ty, 'retro', s, 6)
+        .bitmapText(x + 12 + indent, y + ty, 'retro', s, 6)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
       if (tint !== undefined) t.setTint(tint);
       this.pageObjs.push(t);
     };
-    line(10, `${h.name}  L${h.level}`);
+    line(10, `${h.name}  L${h.level}`, undefined, headIndent);
     if (h.down) {
       const d = this.add
         .bitmapText(x + w - 44, y + 10, 'retro', 'DOWN', 6)
@@ -368,7 +382,7 @@ export class MenuScene extends Phaser.Scene {
         .setTint(colorOf(px(RAMP.CYAN, 2)));
       this.pageObjs.push(d);
     }
-    line(22, HEROES[h.id].epithet, DIM);
+    line(22, HEROES[h.id].epithet, DIM, headIndent);
     line(40, `HP ${h.hp}/${h.maxHp}    PP ${h.pp}/${h.maxPp}`);
     // every combat stat reads through its seam (heroX) so equip + tonic boosts show
     line(58, `Offense ${heroOffense(h)}   Defense ${heroDefense(h)}`);

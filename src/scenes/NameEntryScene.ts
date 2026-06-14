@@ -103,9 +103,16 @@ export class NameEntryScene extends Phaser.Scene {
     this.valueBox?.setSize(w, 20);
     this.valueText?.setPosition(x + 8, 39);
     if (e.sprite) {
+      // the hero walks in place while you name them — uses the authored 8-dir
+      // movement frames (the `<id>-walk-down` loop), so the name screen is alive
+      // instead of a frozen face. Falls back to a static front frame if the
+      // animation isn't registered.
+      const walk = `${e.sprite}-walk-down`;
       this.portrait?.setTexture(e.sprite, standFrame('down'));
+      if (this.anims.exists(walk)) this.portrait?.play(walk);
       this.portrait?.setPosition(x - 18, 42).setVisible(true);
     } else {
+      this.portrait?.stop();
       this.portrait?.setVisible(false);
     }
     this.refreshValue();

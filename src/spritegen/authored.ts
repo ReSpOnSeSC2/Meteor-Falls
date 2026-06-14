@@ -68,6 +68,26 @@ const HERO_ART = [
 
 type HeroArt = (typeof HERO_ART)[number];
 
+/**
+ * Single 32×32 hero portrait busts (the `*_bust_32.png` masters). Distinct from
+ * the 18-frame battle-card bust sheets — these are one still face used as menu /
+ * name-entry portrait art. Keyed `portrait_<heroId>`; loaded globally at boot so
+ * any scene can `add.image(x, y, heroPortraitKey(id))`.
+ */
+const HERO_PORTRAIT_ART = [
+  { id: 'rex', url: new URL('../../assets/art/busts/jay_bust_32.png', import.meta.url).href },
+  { id: 'faye', url: new URL('../../assets/art/busts/mia_bust_32.png', import.meta.url).href },
+  { id: 'milo', url: new URL('../../assets/art/busts/milo_bust_32.png', import.meta.url).href },
+  { id: 'pippa', url: new URL('../../assets/art/busts/pippa_bust_32.png', import.meta.url).href },
+  { id: 'dorin', url: new URL('../../assets/art/busts/dorin_bust_32.png', import.meta.url).href },
+] as const;
+
+/** texture key for a hero's single portrait bust (see HERO_PORTRAIT_ART) */
+export function heroPortraitKey(heroId: string): string {
+  return `portrait_${heroId}`;
+}
+
+
 const NPC_CHARACTER_ART = [
   { id: 'chad', key: 'authored_chad_8dir', url: new URL('../../assets/art/characters/chad_8dir_24x32.png', import.meta.url).href },
   { id: 'mom', key: 'authored_mom_8dir', url: new URL('../../assets/art/characters/mom_8dir_24x32.png', import.meta.url).href },
@@ -459,6 +479,7 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
     scene.load.image(art.battlerKey, art.battlerUrl);
   });
   NPC_CHARACTER_ART.forEach((art) => scene.load.image(art.key, art.url));
+  HERO_PORTRAIT_ART.forEach((art) => scene.load.image(heroPortraitKey(art.id), art.url));
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
   ENEMY_BATTLE_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
