@@ -233,6 +233,20 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > COUNTER (picnic baskets), THE PET BED (Biscuit), plus décor that matters (plant,
 > fish tank, gnome, sofa, lamp, rug). The decor is the soul; the buff is the wink.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-078/079 — **§A4.15 THE GARAGE & THE DEALERSHIP.**
+> Road vehicles are buyable, sellable, and OWNED — the fleet pattern: a `title_*` key-item + an
+> `owned_*` flag, never the §A8 item catalog (ADR-015 prefer-flags). A CAR DEALERSHIP (Bert's lot,
+> one §A11 obsessive — the NEW-CAR SMELL) LISTS the region's road vehicles by chapter band, buys and
+> sells them on a DEPRECIATION curve (trade-in < sticker always — a banded `RESALE_BY_BAND` factor;
+> cheap early rides lose hardest, dear exotics hold value better but never reach par; "the tenth, and
+> the new-car smell"). The data is `src/data/dealership.ts`; the buy/sell/own math is pure +
+> validated in `src/engine/garage.ts` (`carsForSale`/`buyCar`/`sellCar`/`titleOf`/`ownsCar`), gated
+> both directions (`dealership`). A HOME'S GARAGE stores owned cars by the property's `storageTier`
+> (a starter home holds a couple, a manor a fleet); you pick the ACTIVE car to drive and the rest
+> park visibly. The garage + active ride are the only array/scalar save state this earns (`garage:
+> Record<propertyId, titles[]>` + `activeVehicle`, save v13); everything else rides flags. Prices tie
+> to §A9 / the Fortune Arc; the Ember trail never cares which car you drive.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
 > NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,

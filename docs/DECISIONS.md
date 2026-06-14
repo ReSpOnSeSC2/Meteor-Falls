@@ -4694,3 +4694,31 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   unmistakably high-end on the sheet). No FNV re-pin, no frozen-core change. §A8 amended.
 - **Consequences:** the EV line has its flagship and the control system its first autopilot toy. The
   M37 dealership lists the Nikolai at the top of its sticker range.
+
+## ADR-078 — S19 (Movement 37): THE DEALERSHIP — buy / sell / depreciate road vehicles
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 37 — the road-vehicle counterpart to the property agency / the
+  marina; needs the M35/M36 vehicle roster.)
+- **Decision — `src/data/dealership.ts`, the listings (DATA).** `DEALERSHIP` keys 14 buyable road
+  cars (id → vehicleType, band, sticker price, `title_*`, BERT + his honest used-car patter). Bert is
+  one §A11 obsessive: the NEW-CAR SMELL — he huffs it, bottles it, and mourns it leaving the lot
+  (which IS the depreciation, diegetically). Ownership rides the fleet pattern (`title_*` key-item +
+  `owned_*` flag), NOT the §A8 item catalog — no icon-gate / band-floor burden (ADR-015 prefer-flags).
+- **Decision — `src/engine/garage.ts`, the economy (pure, tested).** `carsForSale(chapter)` gates by
+  band; `buyCar` returns the precise reason (`cant_afford`/`not_listed`/`already_owned`/`unknown`/`ok`)
+  + the title to grant; `sellCar` returns the depreciated trade-in + the title to surrender;
+  `resaleFactor`/`sellValue` are the depreciation curve — a banded factor (`RESALE_BY_BAND`, 0.45→0.65)
+  ALWAYS < 1, so the dealer always wins ("the tenth, and the new-car smell"); cheap early rides
+  depreciate hardest, dear exotics hold value better but never reach par. `titleOf`/`ownsCar` read the
+  key-item.
+- **Decision — gated both directions (`dealership` + `garage.test.ts`).** Every car is a real
+  VEHICLE_SPECS ROAD type, positive price, well-formed band, a `title_*` UNIQUE across the dealership
+  AND the fleet (shared key-item space — a title opens one thing), in voice, and depreciates
+  (sellValue < sticker). The test proves listing-by-chapter, the buy gating, and the always-lose
+  depreciation. The verdict prints **14 dealership cars**.
+- **Verification:** `tsc` clean, `npm run validate` green (14 dealership cars), full vitest green
+  (+13), `vite build` clean. No FNV re-pin, no frozen-core change, no save change (titles ride
+  keyItems). §A4.15 amended in the same commit.
+- **Consequences:** the car habit has a place to feed it — buy across the Fortune-Arc bands, sell at
+  a loss when you upgrade. M38 gives the cars somewhere to live (the home garage + the active ride).

@@ -51,6 +51,8 @@ import { DISGUISES, DISGUISE_FACTIONS } from '../src/data/disguise';
 import { PAPERBOY, liveRoute } from '../src/data/paperboy';
 import { PaperboySim, prizeEarned } from '../src/paperboy/sim';
 import { FLEET_CRAFT, FLEET_STAGES, WATER_ACCESS, AIR_ACCESS } from '../src/data/fleet';
+import { DEALERSHIP } from '../src/data/dealership';
+import { sellValue } from '../src/engine/garage';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -542,6 +544,30 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   if (FORTUNE_ARC[0].netWorth > 2_000) fail('fortune', 'the Fortune Arc starts too rich (Ch.1 should be a tight ~$1K)');
   if (FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth < 3_000_000_000) fail('fortune', 'the Fortune Arc must reach $3B+ by Ch.10');
+}
+
+// S19 Movement 37 (ADR-078) — THE CAR DEALERSHIP (§A4.15). Every listing is a
+// well-formed, ownable ROAD vehicle that depreciates. Gated BOTH directions:
+//  · every car is a real VEHICLE_SPECS type whose terrain is 'road', at a positive
+//    price, with a well-formed band, a unique `title_*` key-item, and §A11 patter;
+//  · titles are unique ACROSS the dealership AND the fleet (a title opens one thing);
+//  · Bert always wins — every car's trade-in (sellValue) is strictly < its sticker.
+{
+  const titles = new Map<string, string>();
+  for (const c of Object.values(FLEET_CRAFT)) titles.set(c.title, `fleet:${c.id}`); // shared key-item space
+  for (const c of Object.values(DEALERSHIP)) {
+    const spec = VEHICLE_SPECS[c.vehicleType];
+    if (!spec) { fail('dealership', `car '${c.id}' is type '${c.vehicleType}' with no VEHICLE_SPECS row`); continue; }
+    if (spec.terrain !== 'road') fail('dealership', `car '${c.id}' is a ${spec.terrain} craft — the dealership sells ROAD vehicles (marinas/airfields sell the rest)`);
+    if (c.price <= 0) fail('dealership', `car '${c.id}' has a non-positive price`);
+    if (!/^ch\d+$/.test(c.band)) fail('dealership', `car '${c.id}' band '${c.band}' is malformed`);
+    if (!c.title || !c.title.startsWith('title_')) fail('dealership', `car '${c.id}' title '${c.title}' must be a title_* key-item`);
+    if (!c.dealer || !c.note) fail('dealership', `car '${c.id}' has no §A11 dealer/note`);
+    const prior = titles.get(c.title);
+    if (prior) fail('dealership', `title '${c.title}' is claimed by both '${prior}' and 'dealership:${c.id}'`);
+    titles.set(c.title, `dealership:${c.id}`);
+    if (sellValue(c) >= c.price) fail('dealership', `car '${c.id}' sells back for ${sellValue(c)} ≥ its ${c.price} sticker — depreciation must always lose`);
+  }
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2094,6 +2120,7 @@ const counts = [
   `${Object.keys(DISGUISES).length} disguises`,
   `paperboy (${liveRoute().items.filter((i) => i.kind === 'mailbox').length} houses)`,
   `${Object.keys(FLEET_CRAFT).length} fleet craft`,
+  `${Object.keys(DEALERSHIP).length} dealership cars`,
   `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
