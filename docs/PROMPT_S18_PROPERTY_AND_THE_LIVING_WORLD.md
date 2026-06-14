@@ -207,6 +207,19 @@ staged as an AWAKENING/BUILD per ADR-035:
   acts AS them — walk them, open a gate, flip a switch, vouch past a guard, or take a vehicle's
   driver's seat. They snap back bewildered and unharmed ("sorry, ma'am, you're going to
   parallel-park for me"). The OPPOSITE of the Hush.
+  - **ONE POWER, BATTLE + FIELD (unify with the existing `mindwarp`).** PUPPET and the existing
+    battle ability **Mind Warp** (`mindwarp_a` in `src/data/abilities.ts`, today an ~L21 level
+    unlock) are the **same staged power** — not two abilities. RE-STAGE it: move `mindwarp` from a
+    level unlock to the **Ch.3 AWAKENING** (ADR-035, the party hitting three), and let the one
+    ability serve BOTH sides — *Mind Warp* in battle (turn an enemy against its allies) and *Puppet*
+    on the overworld (the borrow). Keep the **engine id `mindwarp` FROZEN** (it's a saved/flagged
+    identifier; only the display name + unlock TIMING move — the ADR-031/023 frozen-id discipline).
+    The **DEAD-AIR HELMET / `mind_immune`** flag counters it in BOTH contexts (a helmeted enemy
+    resists Mind Warp in battle AND can't be Puppeted on the field) — one counter, one identity.
+    Update Jay's §A3 unlock table (drop the L21 row; the awakening replaces it), the awakening
+    manifest in `content-validate.ts`, and `awakenings.ts` so the validator pins it as a Ch.3
+    awakening, not a level unlock. The TRUST THREAD reads cleaner for it: the others fear the *one*
+    thing they've now seen him do to enemies AND to bystanders.
 - **MILO — THE CLICKER (machine control of VEHICLES/MACHINERY).** A universal remote he builds
   (very EarthBound: a TV clicker that drives cars). Point it at an *unoccupied* machine and pilot
   it driver-less — send an empty car/truck/bus somewhere to unlock a path even when the party
@@ -478,7 +491,12 @@ do them adjacent.
 - **JAY — VIBE PUPPET (people):** target a controllable person in range (highlighted); act as them
   for a PP-costed window — walk them, open a gate, flip a switch, vouch past a guard, take a
   vehicle's driver's seat. They snap back unharmed. Stage it as a Hypno-line AWAKENING (ADR-035) on
-  the party hitting three (Ch.3).
+  the party hitting three (Ch.3). **UNIFY with the existing battle `mindwarp`** (§A4.10): re-stage
+  `mindwarp_a` from its ~L21 level unlock to THIS Ch.3 awakening; one ability serves both *Mind Warp*
+  (battle) and *Puppet* (field); freeze the engine id `mindwarp`; move only the display name + the
+  unlock timing; the `mind_immune` flag is the single counter for both. Update Jay's §A3 table,
+  `awakenings.ts`, and the awakening manifest so the validator pins it as a Ch.3 awakening; keep
+  vitest + the migration green (a save that already learned `mindwarp` at L21 keeps it).
 - **MILO — THE CLICKER (machines):** target an unoccupied vehicle/machine; pilot it directly
   (D-pad/stick), driver-less; **remote-drive empty vehicles to unlock areas** (weight-limited
   bridge, bus-only gate, a ferry); run heavy machinery (clear rubble, lift, dump). Stage it as a
