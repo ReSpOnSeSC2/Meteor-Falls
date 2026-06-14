@@ -430,6 +430,40 @@ export function expShare(total: number, aliveCount: number): number {
   return Math.max(1, Math.ceil(total / Math.max(1, aliveCount)));
 }
 
+/**
+ * §A4.2 + ADR-106 — instant auto-win against a PACK. The party only walks
+ * through a multi-enemy contact if it vastly outlevels EVERY foe caught (and
+ * none is a boss). One tough straggler in the group keeps the fight real, so
+ * being pulled into a crowd is never a free win on the strength of the weakest.
+ * An empty group never instant-wins.
+ */
+export function instantWinGroup(
+  avgPartyLevel: number,
+  enemies: ReadonlyArray<{ level: number; boss?: boolean }>,
+): boolean {
+  return enemies.length > 0 && enemies.every((e) => instantWin(avgPartyLevel, e.level, !!e.boss));
+}
+
+/**
+ * ADR-106 — indices of the points within `radius` of (cx,cy), nearest first.
+ * The overworld assembles a multi-enemy encounter with it: the roamer PACK
+ * right on top of you at contact, and the hop-in candidates that rush the fight
+ * during the swirl. Nearest-first so the closest foes claim the limited battle
+ * slots when the cap bites.
+ */
+export function withinRadius(
+  cx: number,
+  cy: number,
+  pts: ReadonlyArray<{ x: number; y: number }>,
+  radius: number,
+): number[] {
+  return pts
+    .map((p, i) => ({ i, d: Math.hypot(p.x - cx, p.y - cy) }))
+    .filter((e) => e.d <= radius)
+    .sort((a, b) => a.d - b.d)
+    .map((e) => e.i);
+}
+
 /* ---- §A7 LOOT (S18 M24, ADR-094): a defeated enemy rolls its drops ---- */
 
 /** roll each of a defeated enemy's drops independently; returns the ids that

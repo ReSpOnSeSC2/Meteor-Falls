@@ -79,6 +79,32 @@ describe('battle formulas', () => {
     expect(expShare(320, 2)).toBe(160);
     expect(expShare(1, 4)).toBe(1);
   });
+
+  it('group instant-win (ADR-106): only when the party outclasses EVERY foe, no boss', () => {
+    // all weak → walk through the pack
+    expect(F.instantWinGroup(8, [{ level: 1 }, { level: 2 }, { level: 1 }])) .toBe(true);
+    // one tough straggler keeps the fight real
+    expect(F.instantWinGroup(8, [{ level: 1 }, { level: 5 }])).toBe(false);
+    // any boss in the pack blocks the auto-win
+    expect(F.instantWinGroup(50, [{ level: 1 }, { level: 1, boss: true }])).toBe(false);
+    // empty pack never instant-wins; a lone weakling matches the single-enemy rule
+    expect(F.instantWinGroup(8, [])).toBe(false);
+    expect(F.instantWinGroup(8, [{ level: 1 }])).toBe(instantWin(8, 1, false));
+  });
+
+  it('withinRadius (ADR-106): filters by radius and returns indices nearest-first', () => {
+    const pts = [
+      { x: 100, y: 0 }, // 0: far (d=100)
+      { x: 10, y: 0 }, //  1: near (d=10)
+      { x: 40, y: 0 }, //  2: mid  (d=40)
+      { x: 0, y: 70 }, //  3: just outside r=64
+    ];
+    expect(F.withinRadius(0, 0, pts, 64)).toEqual([1, 2]); // 0 and 3 excluded, sorted near→far
+    expect(F.withinRadius(0, 0, pts, 0)).toEqual([]); // nothing at exactly the center
+    expect(F.withinRadius(0, 0, [], 64)).toEqual([]); // empty field
+    // the cap is the caller's slice; withinRadius just orders so the closest win
+    expect(F.withinRadius(0, 0, pts, 200).slice(0, 2)).toEqual([1, 2]);
+  });
 });
 
 describe('equipped offense (S3 — the acting hero, not the shared bag)', () => {

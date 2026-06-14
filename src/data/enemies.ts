@@ -907,6 +907,13 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
   ].map((e) => [e.id, e]),
 );
 
+/**
+ * ADR-106 — how many foes a single battle seats. BattleScene lays the letter
+ * row A–E, so a contact pack + its hop-in joiners is capped here, and the
+ * overworld's encounter assembler reads this same number (one source of truth).
+ */
+export const MAX_BATTLE_ENEMIES = 5;
+
 /** §A11.5 — intro lines in classic second person */
 export function introLine(ids: string[]): string {
   const defs = ids.map((id) => ENEMIES[id]);

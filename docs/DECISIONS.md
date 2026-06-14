@@ -5913,3 +5913,143 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   soft volume, expressive faces, breathing idles — across every facing, still 100% procedural. The remaining
   gap is pure silhouette identity, which is art direction via the Prompt 8 loop, not more code. A hero can later
   be hand-perfected as palette-indexed span data with zero binary assets. ☄️
+
+## ADR-105 — THE ATM ODOMETER (a per-digit dialled withdrawal · the ▲◄► font glyphs · a no-tofu gate)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a playtest-driven fix — the ATM could only ever hand you $10/$50/$100 or the *whole*
+  card, useless once the §A9 economy reaches the millions and billions. The ask: let the player withdraw a
+  CHOSEN amount. The first cut used a single nudge-able magnitude step; a follow-up playtest note — *"we need
+  to be able to do multiple 1000s or 100s or 10s at the same time, not one at a time"* — promoted it to a full
+  per-digit ODOMETER, which is what this ADR now describes.)
+- **The ADR number.** ADR-104 (Hero Finish, Part 2) was the highest; a fresh grep of `^## ADR-` confirms
+  100–104 are taken (the audio mixer, the user's two art passes, transition hardening, the window law), so this
+  is **ADR-105** (the in-code citations carry `ADR-105`; re-grep-at-write per the git-workflow rule).
+- **Context.** `OverworldScene.atmFlow()` offered `[10,50,100].filter(≤pool)` plus "All". A four-figure card
+  could only be tapped a tenner at a time; a billion-dollar one could only be drained whole. There was no way to
+  pull, say, $4,500 of a $4,820 balance. The first cut was a single magnitude step the player cycled with ◄►;
+  the playtest follow-up wanted every denomination settable at once — i.e. an odometer.
+- **Decision — `amountColumns(pool)`, the pure brain (`src/ui/amountscale.ts`).** Returns one place-value
+  column per digit, most-significant first, so the player sets the thousands, hundreds, tens (and ones)
+  independently: `$4,820 → [1000,100,10,1]`; `$50 → [10,1]`; `$7 → [1]`; `$1,000,000,000 → [1e9 … 1]`. The
+  column count tracks the balance's magnitude, scaling cleanly from a four-figure card to the §A9 billions. It
+  is Phaser-free — the `audiobus.ts`/`paginate.ts` idiom — so it unit-tests under vitest's node env (the widget
+  that consumes it pulls Phaser + the audio engine and cannot run headless).
+- **Decision — `askAmount(scene, opts)`, the odometer widget (`src/ui/amount.ts`).** A centered, screen-clamped
+  window renders the running amount as DIGIT COLUMNS (2× font, `$` + grouping commas + one digit per column,
+  leading zeros dimmed, the selected column lit gold with ▲/▼ chevrons hovering over it) and the ceiling
+  (`/ $4,820`). All columns are visible at once — no cycling. Input is read PER FRAME exactly like `ui/pick.ts`
+  (`INPUT.dir()` + `everyFrame`): `◄/►` move the cursor between columns (clamped to the ends), `▲/▼` raise/lower
+  the amount by THAT column's place value (clamped to `[0,pool]`, with an ACCELERATING hold-repeat — so "five
+  thousands" is a held ▲ on the thousands column, not five separate taps on a hidden step), `A` confirms
+  (resolves the integer), `B` cancels (resolves `null`). The repeat cadence is WALL-CLOCK timed off
+  `scene.time.now`, never frame-counted (ADR-024), so the dial feels identical at any frame rate. `atmFlow`
+  holds `dlg.busy` across the await so the §888 movement/interact gate keeps the player put while the widget is
+  open; the status line and the "Withdrew …" confirmations now run through `money()` (ADR-103) so a billions
+  balance reads grouped (`$1,234,567`) instead of a bare number.
+- **Decision — the missing arrow glyphs (`src/spritegen/font.ts`).** The procedural 5×7 font shipped `▼` and
+  `→` but never their partners, so the dial's `▲◄►` affordances would have drawn as blank cells (tofu). Added
+  `▲ ◄ ► ←` to `SPECIALS` (append-only — the sheet is `glyphs.length`-derived and the RetroFont reads the
+  dynamic `FONT_CHARS`, so every existing glyph still maps to its old cell). `▲` mirrors `▼`, `◄/►` mirror `▶`,
+  `←` mirrors `→`; all monochrome, palette-clean by construction (ADR-020). Side effect: this *un-tofus*
+  `pick()`'s pagination marker `"▲ 1/3 ▼"`, which has been drawing a blank up-cell since ADR-103 introduced it
+  (the font had `▼` but never `▲`).
+- **Decision — the validator gate (`tools/content-validate.ts`, `ui-glyph`).** A curated `UI_AFFORDANCE_GLYPHS`
+  set (`▲▼◄►←→`) is pinned BOTH ways: each is a single UTF-16 code unit the font KNOWS (`FONT_CHARS`) and DRAWS
+  (a non-empty 5×7 bitmap, rendered through `drawTextInto` into a headless `Pixmap` and ink-counted). Dropping a
+  glyph from `font.ts`, or a widget reaching for an undrawn arrow, now fails `npm run validate` — the same
+  no-tofu discipline as the `{g:}` flair gate. (This gate would have caught the original blank `▲`.)
+- **Verification:** `npx tsc --noEmit` clean. `npm run validate` GREEN — the verdict reads
+  `6 UI affordance glyphs (▲▼◄►←→)`. Full `npx vitest run` GREEN — **1155 tests** (+5 in `amount.test.ts`
+  pinning `amountColumns`: one column per digit most-significant-first, the billions scale, the
+  zero/negative/fractional defensiveness, descending powers of ten ending in 1, count = digit count, coarsest ≤
+  pool). No save version bump (cash/bank live in existing state). Live-preview confirmed on the overworld: every
+  digit column scrolls independently, the cursor moves across columns, leading zeros dim, the ceiling lights
+  gold at MAX, the amount clamps to the pool, and confirm/cancel resolve the integer / null.
+- **Consequences.** The ATM scales with the player's wallet across the whole §A9 economy — set each denomination
+  directly on an odometer, fine or coarse, with the columns the balance's magnitude calls for. The font gained
+  its arrow set (a shared asset the whole UI can now use) and `pick()`'s pagination arrow is fixed for free.
+  `askAmount` is a reusable "enter a number" widget — the SETUP volume sliders (#7) and any future quantity
+  prompt can dial through it. Named follow-up: a "MAX" shortcut button could fill the odometer to the pool in one
+  press for the drain-it-all case. ☄️
+
+## ADR-106 — MULTI-ENEMY ENCOUNTERS + THE JOIN WINDOW (a pack at contact · foes hop in during the swirl)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a playtest-driven feel fix — touching one roamer in a cluster started a tidy 1-v-1 even
+  with three more enemies right there, which read as unfair-in-reverse and un-EarthBound. The ask: let the
+  player get caught by several at once, and give a short window at battle start where nearby foes HOP IN.)
+- **The ADR number.** ADR-105 (the smart-scale ATM) was the highest; a fresh grep confirms 105 is the top, so
+  this is **ADR-106** (in-code citations carry `ADR-106`).
+- **Context.** `OverworldScene.contactBattle()` built the battle from the SINGLE bumped roamer
+  (`startBattle([r.enemyId], …, r)`), and `instantWin` weighed that one foe. But `BattleScene` already seats up
+  to five (the `buildEnemies` letter row A–E — the §A7 Banana Bunch United is a real 5-enemy fight), so the
+  whole capability existed on the battle side and was simply never fed a crowd from the field.
+- **Decision — ONE source of truth for the cap.** `MAX_BATTLE_ENEMIES = 5` lands in the Phaser-free
+  `data/enemies.ts` (next to `introLine`); the overworld's `ENCOUNTER_CAP` reads it, and the validator pins it
+  to BattleScene's five letter seats. The assembler can never out-grow the renderer.
+- **Decision — THE PACK (gather at contact).** On contact, `contactBattle` gathers the bumped roamer plus every
+  other live roamer within `PACK_RADIUS` (30px) of the contact point — nearest-first via the new pure
+  `withinRadius` (`formulas.ts`) — and caps the roster to `ENCOUNTER_CAP`. Duplicate enemy ids are fine (two
+  `cursed_souvenir` → battle letters A/B). The swirl ADVANTAGE is still read from the roamer you actually
+  bumped (the bump sets the traffic-light colour).
+- **Decision — THE JOIN WINDOW (foes hop in during the swirl).** Roamers in a wider alert ring
+  (`JOIN_ALERT_RADIUS` 64px) that didn't make the initial pack become *candidates*. While the swirl spins up,
+  `runJoinWindow` dashes each toward the player (`JOIN_DASH` 165px/s, dt-scaled per ADR-024); any that reach
+  `JOIN_REACH` (15px) hop into the roster (a `!` pop + an `alert` blip), until the five seats fill. Because
+  `cut=true` freezes the normal roamer update during the swirl, the dash is driven here, on its own `everyFrame`
+  loop, and is torn down at launch. The swirl itself runs the standard `SWIRL_MS` (750ms) for a lone contact and
+  the longer `JOIN_WINDOW_MS` (1150ms — the asked-for "1–2s") only when foes are poised to join, so solo
+  encounters keep their snap. All five timings/radii are named, tunable constants.
+- **Decision — GROUP instant-win + group spoils.** `instantWinGroup` (`formulas.ts`) only walks the party
+  through a pack when it vastly outlevels EVERY foe and none is a boss — one tough straggler keeps the fight
+  real. `instantWinPack` sums EXP + cash across the whole pack into one `expShare` award and pops them all. On a
+  real battle, victory clears the entire pack from the field and a getaway scatters all of them (the old
+  single-roamer cleanup, generalised).
+- **Decision — the validator gate (`encounter`).** `MAX_BATTLE_ENEMIES` must be an integer in `[2, 5]` (fits the
+  letter row), and `introLine()` must yield a clean second-person line for EVERY roster the overworld can
+  assemble — 1..cap of one foe (the "and its cousins" path) and a mixed pack (the "X, Y and Z" path) — no empty,
+  placeholder, or unresolved-`{token}` intro for a crowd. Pins the content guarantee both ways.
+- **Verification:** `npx tsc --noEmit` clean. `npm run validate` GREEN — verdict adds
+  `multi-enemy packs ≤5 (clean intros)`. Full `npx vitest run` GREEN — **1156 tests** (+2 in `formulas.test.ts`:
+  `instantWinGroup` — all-weak walks through, one straggler/any boss blocks it, empty never wins, a lone weakling
+  matches the single rule; `withinRadius` — radius filter + nearest-first order + the caller's cap slice). Patrol
+  fights and all scripted boss calls were migrated to the new `pack: Roamer[]` arg (`[]` = no field cleanup) and
+  are unchanged in behaviour. Live-preview on `jungle_2` (7 roamers): a contact assembled a 2-pack and flagged a
+  third as a joiner; the join window appended an in-reach candidate and **capped six candidates at five**; the
+  full `contactBattle → launch` carried `enemyIds:[jungle_jitterbug ×2]`; and a victory cleared the whole pack
+  from the field. No save bump.
+- **Consequences.** Walking into a knot of foes now starts the fight you'd expect — several at once, with
+  stragglers sprinting in as the screen swirls — across every roamer map, with zero new battle-side code (the
+  five-seat renderer was always ready). Patrols stay solo by design. The cap, radii, and window length are all
+  tunable in one place. Named follow-up: the join window could later let a *patrol* drag in adjacent roamers, and
+  the dash could honour collision (today a joiner sprints straight through props, hidden under the fade). ☄️
+
+## ADR-107 — BATTLE FOES CLEAR THE MESSAGE BOX (anchor the face below the intro window)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a playtest UI note — *"the on-screen text box shouldn't generally cover any faces unless
+  absolutely necessary"* — about the battle scene.)
+- **The ADR number.** ADR-106 (multi-enemy encounters) was the highest; a fresh grep confirms it, so this is
+  **ADR-107**.
+- **Context.** `BattleScene.buildTextWindow` places the message box at `makeWindow(6, 6, 268, 56)` — top-left,
+  bottom edge at y62. `buildEnemies` then placed every foe centred at a FIXED `y = boss ? 97 : 92` with a
+  `(0.5,0.5)` origin, so any sprite taller than ~60px had its TOP rise above y62 and poke into the box; a tall
+  foe's face could sit behind the intro line. Bosses already carried a manual `97` bias "so their crown clears
+  the text window" (S7, the Titanic Tick) — the right instinct, applied to only one case.
+- **Decision — anchor by the FACE, not the centre.** `buildEnemies` now creates the sprite, reads its height,
+  and seats it at `y = clamp( max(boss?97:92, ENEMY_TOP + h/2), … , ENEMY_FLOOR − h/2 )`, where
+  `ENEMY_TOP = 64` (2px under the box's y62 bottom) and `ENEMY_FLOOR = 166` (the party HP cards begin at y168).
+  In words: push a sprite DOWN only as far as needed for its top to clear the message box, but never so far that
+  its body rides over the party cards. Short foes are unchanged (the `max` keeps them at 92); tall foes drop just
+  enough to lift their faces clear; a sprite too big to satisfy both keeps its face-priority position (the rare
+  "absolutely necessary" boss). The idle-float tween targets the computed `y` (so the bob is unaffected). This
+  generalises the bespoke boss bias into one rule that covers every foe and every future sprite.
+- **Verification:** `npx tsc --noEmit` clean; `npm run validate` GREEN; full `npx vitest run` GREEN (no test
+  pinned the old fixed `92/97`, and battle layout is visual). Live-preview across single + multi-enemy fights:
+  the intro window no longer overlaps foe faces; short foes sit where they always did; tall foes settle lower
+  with their faces below the box and bodies above the HP cards. No save bump.
+- **Consequences.** The battle intro (and every subsequent message) clears foe faces by construction, for every
+  enemy sprite the forge can produce — no per-enemy hand-tuning. The party cards remain the hard floor, so HP/PP
+  are never occluded. Follow-up: the same face-anchor idea could inform where status callouts (#12) and damage
+  arcs (#17) originate so they, too, never collide with the message box. ☄️

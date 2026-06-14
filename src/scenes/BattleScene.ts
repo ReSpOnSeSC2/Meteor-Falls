@@ -659,13 +659,23 @@ export class BattleScene extends Phaser.Scene {
     const letters = ['A', 'B', 'C', 'D', 'E'];
     const dupes = new Map<string, number>();
     ids.forEach((id) => dupes.set(id, (dupes.get(id) ?? 0) + 1));
+    // ADR-107: anchor each foe's FACE just below the message window (the box is
+    // makeWindow(6,6,268,56) → bottom y62) so the intro never covers it. Only
+    // TALL sprites get pushed down, and never past the party HP cards (y168);
+    // a sprite too big to clear both keeps its face-priority bias (rare bosses).
+    const TEXTBOX_BOTTOM = 62;
+    const ENEMY_TOP = TEXTBOX_BOTTOM + 2; // a breath of clearance under the box
+    const ENEMY_FLOOR = 166; //              the party HP cards begin at y168
     ids.forEach((id, i) => {
       const def = ENEMIES[id];
       const x = (this.scale.width / (ids.length + 1)) * (i + 1);
-      // bosses sit lower so their crown clears the text window (S7: the
-      // Tick's lit dome top is the read — don't hide it behind the intro)
-      const y = def.boss ? 97 : 92;
-      const spr = this.add.image(x, y, def.sprite).setOrigin(0.5, 0.5);
+      const spr = this.add.image(x, 0, def.sprite).setOrigin(0.5, 0.5);
+      // bosses still bias a touch lower (their crown is the read — S7 the Tick),
+      // then everyone is pushed down JUST enough for the sprite top to clear the
+      // message box, capped so the body never rides over the party cards.
+      const half = spr.height / 2;
+      const y = Math.round(Math.min(ENEMY_FLOOR - half, Math.max(def.boss ? 97 : 92, ENEMY_TOP + half)));
+      spr.setY(y);
       // idle float — cosmetic only; battle sprites float, never stand (ADR-020)
       this.tweens.add({
         targets: spr,

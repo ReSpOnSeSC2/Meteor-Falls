@@ -82,7 +82,7 @@ import {
   type PropDef,
 } from '../data/maps';
 import { PYR_ROTOR, PYR_INITIAL_ROT, PUERTO_SOL_PIER_SPAWN, rotateRect } from '../data/maps_ch2';
-import { ENEMIES } from '../data/enemies';
+import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS } from '../data/items';
 import { GS, makeHeroState } from '../engine/state';
@@ -108,7 +108,9 @@ import type { LinksLaunch } from './LinksScene';
 import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { Dialogue, makeWindow, toast, vars, DEPTH_UI, overscanRect } from '../ui/windows';
+import { Dialogue, makeWindow, toast, vars, everyFrame, DEPTH_UI, overscanRect } from '../ui/windows';
+import { askAmount } from '../ui/amount';
+import { money } from '../ui/text';
 import { TrafficSim, cellKey } from '../engine/traffic';
 import { VEHICLE_CATALOG, VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
@@ -116,7 +118,8 @@ import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritege
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
 import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
 import {
-  instantWin,
+  instantWinGroup,
+  withinRadius,
   expShare,
   SUNNY_BATTLES,
   reviveCost,
@@ -178,6 +181,21 @@ const RUN = 115;
 const PURSUE = 85;
 const PATROL_WALK = 38;
 const PATROL_CHASE = 92;
+
+/* ---- ADR-106: multi-enemy contact + the EB-style join window (all tunable) ---- */
+/** the battle seats up to 5 (BattleScene letters A–E) — one source of truth */
+const ENCOUNTER_CAP = MAX_BATTLE_ENEMIES;
+/** roamers this close to the contact point are caught in the same pack at once */
+const PACK_RADIUS = 30;
+/** roamers within this ring (but outside the pack) may RUSH in during the swirl */
+const JOIN_ALERT_RADIUS = 64;
+/** a rushing roamer hops into the fight once it gets this close to the player */
+const JOIN_REACH = 15;
+/** px/s a roamer dashes the fight during the join window (dt-scaled, ADR-024) */
+const JOIN_DASH = 165;
+/** swirl length: the standard snap, and the longer "1–2s" window when foes join */
+const SWIRL_MS = 750;
+const JOIN_WINDOW_MS = 1150;
 
 /** S9 §A10 #2: Mr. Plummer's five doors — facade prop → letter flag + line.
  *  The quest data's objective flags and THIS table must agree; the validator
@@ -1448,7 +1466,8 @@ export class OverworldScene extends Phaser.Scene {
     else if (f.x * toPlayer.x + f.y * toPlayer.y < -0.35) advantage = 'player';
     p.bang?.destroy();
     p.bang = null;
-    const outcome = await this.startBattle([p.def.enemy], advantage, null);
+    // patrols fight solo and own their own dead/give-up cleanup → empty pack
+    const outcome = await this.startBattle([p.def.enemy], advantage, []);
     if (outcome === 'victory') {
       p.dead = true;
       p.spr.destroy();
@@ -1508,27 +1527,56 @@ export class OverworldScene extends Phaser.Scene {
 
   private async contactBattle(r: Roamer): Promise<void> {
     this.battleCooldown = this.time.now + 1500;
-    const def = ENEMIES[r.enemyId];
-    // §A4.2 instant win when vastly overleveled
-    if (instantWin(this.avgPartyLevel(), def.level, !!def.boss)) {
-      r.dead = true;
-      AUDIO.sfx('smash');
-      this.cameras.main.flash(220, 248, 248, 240);
-      this.tweens.add({ targets: r.spr, alpha: 0, scale: 0.3, duration: 250, onComplete: () => r.spr.destroy() });
-      const share = expShare(def.exp, GS.aliveParty().length);
-      GS.aliveParty().forEach((h) => (h.exp += share));
-      GS.data.pendingDeposit += def.cash;
-      toast(this, `YOU WON without even fighting! +${share} EXP`);
+    // ADR-106: a contact pulls in the PACK — roamers right on top of you are
+    // caught in the same fight. Gather nearest-first, capped to the 5 seats.
+    const cx = this.player.x;
+    const cy = this.player.y;
+    const live = this.roamers.filter((o) => !o.dead && o !== r);
+    const packIdx = withinRadius(cx, cy, live.map((o) => ({ x: o.spr.x, y: o.spr.y })), PACK_RADIUS);
+    const pack: Roamer[] = [r, ...packIdx.map((i) => live[i])].slice(0, ENCOUNTER_CAP);
+    const defs = pack.map((m) => ENEMIES[m.enemyId]);
+    // §A4.2 instant win — only when the party outclasses EVERY foe in the pack
+    if (instantWinGroup(this.avgPartyLevel(), defs)) {
+      this.instantWinPack(pack, defs);
       return;
     }
-    // contact angle → swirl color (§A4.2 / Prompt 16 — pinned in formulas)
-    const toEnemy = new Phaser.Math.Vector2(r.spr.x - this.player.x, r.spr.y - this.player.y).normalize();
-    const facingVec = this.facingVector();
-    const dotF = facingVec.dot(toEnemy);
+    // roamers in the wider alert ring (not already packed) may HOP IN during the
+    // swirl — the EB-style join window, run inside startBattle
+    const inPack = new Set(pack);
+    const joiners = live.filter(
+      (o) => !inPack.has(o) && Math.hypot(o.spr.x - cx, o.spr.y - cy) <= JOIN_ALERT_RADIUS,
+    );
+    // contact angle (from the bumped roamer) → swirl color (pinned in formulas)
+    const toEnemy = new Phaser.Math.Vector2(r.spr.x - cx, r.spr.y - cy).normalize();
+    const dotF = this.facingVector().dot(toEnemy);
     const enemyDir = new Phaser.Math.Vector2(r.vx, r.vy).normalize();
     const enemyFleeing = enemyDir.length() > 0 && enemyDir.dot(toEnemy) > 0.4;
     const advantage = contactAdvantage(dotF, enemyFleeing);
-    await this.startBattle([r.enemyId], advantage, r);
+    await this.startBattle(pack.map((m) => m.enemyId), advantage, pack, { joiners });
+  }
+
+  /** §A4.2 + ADR-106: a whole pack the party walks straight through — sum the
+   *  spoils across every foe, pop each, and roll it into one EXP/deposit award. */
+  private instantWinPack(pack: Roamer[], defs: EnemyDef[]): void {
+    AUDIO.sfx('smash');
+    this.cameras.main.flash(220, 248, 248, 240);
+    let exp = 0;
+    let cash = 0;
+    pack.forEach((m, k) => {
+      m.dead = true;
+      this.tweens.add({ targets: m.spr, alpha: 0, scale: 0.3, duration: 250, onComplete: () => m.spr.destroy() });
+      exp += defs[k].exp;
+      cash += defs[k].cash;
+    });
+    const share = expShare(exp, GS.aliveParty().length);
+    GS.aliveParty().forEach((h) => (h.exp += share));
+    GS.data.pendingDeposit += cash;
+    toast(
+      this,
+      pack.length > 1
+        ? `YOU WON without even fighting! ${pack.length} foes scatter · +${share} EXP`
+        : `YOU WON without even fighting! +${share} EXP`,
+    );
   }
 
   private facingVector(): Phaser.Math.Vector2 {
@@ -1539,13 +1587,17 @@ export class OverworldScene extends Phaser.Scene {
   private startBattle(
     enemyIds: string[],
     advantage: 'player' | 'enemy' | 'none',
-    roamer: Roamer | null,
-    opts: { boss?: boolean; glint?: boolean; prayTutorial?: boolean } = {},
+    pack: Roamer[],
+    opts: { boss?: boolean; glint?: boolean; prayTutorial?: boolean; joiners?: Roamer[] } = {},
   ): Promise<'victory' | 'defeat' | 'ran'> {
     return new Promise((resolve) => {
       this.cut = true;
       AUDIO.sfx('swirl');
       AUDIO.stopMusic();
+      // ADR-106: when foes are poised to hop in, the swirl runs longer (the
+      // "1–2s" join window); a lone contact keeps the standard snap.
+      const joiners = opts.joiners ?? [];
+      const swirlMs = joiners.length ? JOIN_WINDOW_MS : SWIRL_MS;
       // S15c traffic-light law: green = your free round, red = theirs
       const sw = this.add
         .image(this.scale.width / 2, this.scale.height / 2, 'swirl')
@@ -1560,12 +1612,18 @@ export class OverworldScene extends Phaser.Scene {
         .setScrollFactor(0)
         .setDepth(3999)
         .setAlpha(0);
-      this.tweens.add({ targets: sw, angle: 720, scale: 3.4, duration: 750, ease: 'cubic.in' });
+      this.tweens.add({ targets: sw, angle: 720, scale: 3.4, duration: swirlMs, ease: 'cubic.in' });
+      // ADR-106: the join window — nearby roamers RUSH the fight while it spins
+      // up. cut=true froze the normal roamer update, so we drive their dash here;
+      // each one that reaches the player joins `pack`/`enemyIds` (capped) in time
+      // for the launch below. Stops when the cover finishes filling.
+      const stopJoin = joiners.length ? this.runJoinWindow(pack, enemyIds, joiners) : () => {};
       this.tweens.add({
         targets: cover,
         alpha: 1,
-        duration: 750,
+        duration: swirlMs,
         onComplete: () => {
+          stopJoin();
           sw.destroy();
           this.game.events.once(
             'mf-battle-end',
@@ -1573,13 +1631,19 @@ export class OverworldScene extends Phaser.Scene {
               cover.destroy();
               this.cut = false;
               this.battleCooldown = this.time.now + 1200;
-              if (outcome === 'victory' && roamer) {
-                roamer.dead = true;
-                roamer.spr.destroy();
+              if (outcome === 'victory') {
+                // the whole pack that fought is cleared from the field
+                for (const m of pack) {
+                  m.dead = true;
+                  m.spr.destroy();
+                }
               }
-              if (outcome === 'ran' && roamer) {
-                roamer.vx = Math.sign(roamer.spr.x - this.player.x) * 70;
-                roamer.vy = Math.sign(roamer.spr.y - this.player.y) * 70;
+              if (outcome === 'ran') {
+                // everyone scatters away from the player on a getaway
+                for (const m of pack) {
+                  m.vx = Math.sign(m.spr.x - this.player.x) * 70;
+                  m.vy = Math.sign(m.spr.y - this.player.y) * 70;
+                }
               }
               if (outcome === 'defeat') {
                 this.handleDefeat();
@@ -1604,6 +1668,44 @@ export class OverworldScene extends Phaser.Scene {
           });
         },
       });
+    });
+  }
+
+  /** ADR-106: run the EB-style JOIN WINDOW. While the swirl fills, roamers in the
+   *  alert ring sprint the player; each that reaches them hops into `pack` and
+   *  `enemyIds` (until the 5 seats fill). dt-scaled (ADR-024). Returns a stop fn
+   *  the caller fires at launch so no dash outlives the window. */
+  private runJoinWindow(pack: Roamer[], enemyIds: string[], joiners: Roamer[]): () => void {
+    const cx = this.player.x;
+    const cy = this.player.y;
+    return everyFrame(this, (dtMs) => {
+      if (pack.length >= ENCOUNTER_CAP) return;
+      const dt = dtMs / 1000;
+      for (const c of joiners) {
+        if (c.dead || pack.includes(c)) continue;
+        const dx = cx - c.spr.x;
+        const dy = cy - c.spr.y;
+        const d = Math.hypot(dx, dy) || 1;
+        c.spr.x += (dx / d) * JOIN_DASH * dt;
+        c.spr.y += (dy / d) * JOIN_DASH * dt;
+        c.spr.setDepth(c.spr.y);
+        if (c.walker) {
+          const f = facing8(dx, dy, 'down'); // ADR-096: 8-way run read
+          const anim = `${c.walker}-run-${f}`;
+          if (c.spr.anims.currentAnim?.key !== anim || !c.spr.anims.isPlaying) c.spr.anims.play(anim, true);
+        }
+        if (d <= JOIN_REACH && pack.length < ENCOUNTER_CAP) {
+          pack.push(c);
+          enemyIds.push(c.enemyId);
+          AUDIO.sfx('alert');
+          const bang = this.add
+            .bitmapText(c.spr.x, c.spr.y - 16, 'retro', '!', 8)
+            .setOrigin(0.5, 1)
+            .setTint(colorOf(px(RAMP.RED, 2)))
+            .setDepth(5000);
+          this.tweens.add({ targets: bang, y: bang.y - 4, alpha: 0, duration: 300, onComplete: () => bang.destroy() });
+        }
+      }
     });
   }
 
@@ -2190,7 +2292,7 @@ export class OverworldScene extends Phaser.Scene {
       AUDIO.sfx('alert');
       this.cameras.main.shake(220, 0.006);
       await this.dlg.say(...DIALOGUE.llama_impostor_reveal);
-      const outcome = await this.startBattle(['gilded_beetle'], 'none', null, {});
+      const outcome = await this.startBattle(['gilded_beetle'], 'none', [], {});
       if (outcome !== 'victory') return;
       this.cut = true;
       GS.setFlag(`q_llama_${num}`);
@@ -3034,11 +3136,17 @@ export class OverworldScene extends Phaser.Scene {
 
   /** S4: the SAVINGS & LOAN's ATM — withdraw/deposit between the card
    *  (GS.data.banked, where Dad deposits) and cash on hand (Prompt 20) */
+  /** S4 (Prompt 20) · ADR-105: the ATM. Withdraw/Deposit DIAL a chosen amount on
+   *  an ODOMETER (`askAmount`/`amountColumns`) — every place value is its own
+   *  digit column (thousands/hundreds/tens/…), all visible, each scrollable —
+   *  instead of the old three fixed presets. The columns scale with the balance
+   *  ($1k/$100/$10/$1 on a four-figure card, up to $1B on a ten-figure one), and
+   *  the dialled amount clamps to the pool. */
   private async atmFlow(): Promise<void> {
     AUDIO.sfx('confirm');
     await this.dlg.say(...DIALOGUE.atm_greet);
     for (;;) {
-      await this.dlg.say(`CARD $${GS.data.banked}   CASH $${GS.data.cashOnHand}`);
+      await this.dlg.say(`CARD ${money(GS.data.banked)}   CASH ${money(GS.data.cashOnHand)}`);
       const op = await this.dlg.ask(['Withdraw', 'Deposit', 'Done'], { cancelIndex: 2 });
       if (op === 2) break;
       const pool = op === 0 ? GS.data.banked : GS.data.cashOnHand;
@@ -3046,17 +3154,23 @@ export class OverworldScene extends Phaser.Scene {
         await this.dlg.say(...(op === 0 ? DIALOGUE.atm_empty_card : DIALOGUE.atm_empty_pocket));
         continue;
       }
-      const presets = [10, 50, 100].filter((a) => a <= pool);
-      const labels = [...presets.map((a) => `$${a}`), `All ($${pool})`, 'Back'];
-      const sel = await this.dlg.ask(labels, { cancelIndex: labels.length - 1 });
-      if (sel >= labels.length - 1) continue;
-      const amount = sel < presets.length ? presets[sel] : pool;
-      const moved = op === 0 ? GS.withdraw(amount) : GS.deposit(amount);
+      // the smart-scale dialler runs over the LIVE overworld — hold the dialogue
+      // lock (the §888 movement/interact gate reads dlg.busy) so the player can't
+      // walk off or re-trigger the ATM while the widget is open.
+      this.dlg.busy = true;
+      const chosen = await askAmount(this, {
+        pool,
+        title: op === 0 ? 'WITHDRAW' : 'DEPOSIT',
+        source: op === 0 ? 'from your CARD' : 'from your CASH',
+      });
+      this.dlg.busy = false;
+      if (chosen === null || chosen <= 0) continue;
+      const moved = op === 0 ? GS.withdraw(chosen) : GS.deposit(chosen);
       AUDIO.sfx('confirm');
       await this.dlg.say(
         op === 0
-          ? `* Withdrew $${moved}. The bills are warm, somehow.`
-          : `* Deposited $${moved}. The machine swallowed politely.`,
+          ? `* Withdrew ${money(moved)}. The bills are warm, somehow.`
+          : `* Deposited ${money(moved)}. The machine swallowed politely.`,
       );
     }
     await this.dlg.say(...DIALOGUE.atm_bye);
@@ -3628,7 +3742,7 @@ export class OverworldScene extends Phaser.Scene {
     this.cameras.main.shake(500, 0.01);
     await this.wait(550);
     await this.dlg.say(...DIALOGUE.apex_grin_wakes);
-    const outcome = await this.startBattle(['gilded_grin'], 'none', null, { boss: true });
+    const outcome = await this.startBattle(['gilded_grin'], 'none', [], { boss: true });
     if (outcome !== 'victory') return;
     this.cut = true;
     GS.setFlag('grin_defeated');
@@ -3747,7 +3861,7 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.sfx('thud');
     this.cameras.main.shake(500, 0.01);
     await this.wait(450);
-    const outcome = await this.startBattle(['headmaster_mainframe'], 'none', null, { boss: true });
+    const outcome = await this.startBattle(['headmaster_mainframe'], 'none', [], { boss: true });
     if (outcome !== 'victory') return;
     this.cut = true;
     GS.setFlag('mainframe_defeated');
@@ -4403,7 +4517,7 @@ export class OverworldScene extends Phaser.Scene {
     } else {
       await this.dlg.say('The crater rim bulges again. It did NOT learn its lesson.');
     }
-    const outcome = await this.startBattle(['titanic_tick'], 'none', null, { boss: true, glint: true });
+    const outcome = await this.startBattle(['titanic_tick'], 'none', [], { boss: true, glint: true });
     if (outcome !== 'victory') return;
     // betrayal #1 resolved mid-battle (guest flag already cleared there);
     // the trail sprite still needs to go
@@ -4503,7 +4617,7 @@ export class OverworldScene extends Phaser.Scene {
     mgr.setDepth(mgr.y);
     await this.dlg.say(...DIALOGUE.manager_intro.slice(1));
     await this.dlg.say(...DIALOGUE.manager_faye_q);
-    const outcome = await this.startBattle(['blazer_smiler', 'blazer_smiler'], 'none', null, {
+    const outcome = await this.startBattle(['blazer_smiler', 'blazer_smiler'], 'none', [], {
       boss: true,
       prayTutorial: true,
     });
@@ -4589,7 +4703,7 @@ export class OverworldScene extends Phaser.Scene {
     const done = ['orient_1', 'orient_2', 'orient_3'].filter((f) => GS.flag(f)).length;
     for (let i = done; i < 3; i++) {
       await this.dlg.say(...rounds[i]);
-      const outcome = await this.startBattle(['blazer_smiler'], 'none', null, {});
+      const outcome = await this.startBattle(['blazer_smiler'], 'none', [], {});
       if (outcome !== 'victory') {
         this.cut = false; // defeat respawns at the last save; a flee drops you back on the road
         return;

@@ -33,10 +33,12 @@ import {
 import { HEROES } from '../src/data/heroes';
 import { ABILITIES, PRAY_BASE, PRAY_TEXT } from '../src/data/abilities';
 import { FX_REGISTRY, STAGE_ANIM, itemFxKey } from '../src/battle/fxRegistry';
-import { ENEMIES } from '../src/data/enemies';
+import { ENEMIES, introLine, MAX_BATTLE_ENEMIES } from '../src/data/enemies';
 import { ITEMS, slotOf, PORCH_SET, MERCADO_SET } from '../src/data/items';
 import { WEAPON_ART } from '../src/spritegen/weapons';
 import { ITEM_ICON } from '../src/spritegen/icons';
+import { FONT_CHARS, drawTextInto } from '../src/spritegen/font';
+import { Pixmap } from '../src/spritegen/pixmap';
 import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
 import { GLYPH_SCRIPT, SCRIPT_CATALOG, areaGlyphRun } from '../src/spritegen/glyphforge';
 import { GLYPH_TOKENS, FLAIR_BY_ELEMENT, FLAIR_BY_RESULT, glyphRegistryNames, flairGlyph } from '../src/spritegen/flair';
@@ -2702,6 +2704,63 @@ for (const e of Object.values(ENEMIES)) {
   }
 }
 
+/* ===== UI affordance glyphs are drawable — no tofu (ADR-105) ===== */
+// The interactive widgets render directional affordances as FONT glyphs: the
+// smart-scale ATM dial (ui/amount.ts) shows ▲▼ to add/subtract and ◄► to cycle
+// the active step; pick()'s pagination marker shows "▲ 1/3 ▼". Each MUST live in
+// the procedural font or it renders as a blank cell — exactly the bug ADR-105
+// fixed (the font shipped ▼ and → but never ▲/◄/►, so pick's ▲ drew tofu). The
+// gate locks them in both ways: every affordance glyph is a single UTF-16 unit
+// the font KNOWS (FONT_CHARS) and DRAWS (a non-empty 5×7 bitmap), so dropping one
+// from spritegen/font.ts — or a widget reaching for an undrawn arrow — fails here.
+const UI_AFFORDANCE_GLYPHS = ['▲', '▼', '◄', '►', '←', '→'];
+{
+  for (const g of UI_AFFORDANCE_GLYPHS) {
+    if (g.length !== 1) {
+      fail('ui-glyph', `affordance glyph '${g}' is not one UTF-16 code unit — the RetroFont indexes a single unit per cell`);
+      continue;
+    }
+    if (!FONT_CHARS.includes(g)) {
+      fail('ui-glyph', `affordance glyph '${g}' is not in the font charset — it renders as a blank cell (tofu); add it to SPECIALS in spritegen/font.ts`);
+      continue;
+    }
+    const pm = new Pixmap(6, 9);
+    drawTextInto(pm, g, 0, 1, 1);
+    const ink = pm.data.reduce((n, c) => n + (c !== 255 ? 1 : 0), 0);
+    if (ink <= 0) fail('ui-glyph', `affordance glyph '${g}' is in the charset but its SPECIALS bitmap draws nothing`);
+  }
+}
+
+/* ===== multi-enemy encounters: cap + clean intro lines (ADR-106) ===== */
+// A contact pulls a PACK into one battle, and nearby foes HOP IN during the
+// swirl, capped at MAX_BATTLE_ENEMIES. Two content guarantees: the cap must fit
+// BattleScene's letter row (A–E = 5 seats), and introLine() must produce a clean
+// second-person line for EVERY roster the overworld can assemble — 1..cap of ONE
+// foe (the "and its cousins" path) and a MIXED pack (the "X, Y and Z" path) — so
+// a crowd never appears with blank, placeholder, or unresolved-{token} intro text.
+{
+  const BATTLE_LETTER_SEATS = 5; // BattleScene.buildEnemies lays letters ['A'..'E']
+  if (!Number.isInteger(MAX_BATTLE_ENEMIES) || MAX_BATTLE_ENEMIES < 2) {
+    fail('encounter', `MAX_BATTLE_ENEMIES must be an integer ≥ 2 for multi-enemy packs — got ${MAX_BATTLE_ENEMIES}`);
+  }
+  if (MAX_BATTLE_ENEMIES > BATTLE_LETTER_SEATS) {
+    fail('encounter', `MAX_BATTLE_ENEMIES (${MAX_BATTLE_ENEMIES}) exceeds BattleScene's ${BATTLE_LETTER_SEATS} letter seats (A–E) — a pack would overflow the row`);
+  }
+  const cleanIntro = (where: string, line: string): void => {
+    if (!line || !line.trim()) fail('encounter', `${where}: introLine produced an empty string`);
+    if (/\{\w+\}/.test(line)) fail('encounter', `${where}: introLine left an unresolved {token} — "${line}"`);
+    if (/\b(todo|placeholder|lorem|undefined)\b/i.test(line)) fail('encounter', `${where}: introLine produced placeholder text — "${line}"`);
+  };
+  const enemyIds = Object.keys(ENEMIES);
+  for (const id of enemyIds) {
+    cleanIntro(`solo '${id}'`, introLine([id]));
+    cleanIntro(`pack ×${MAX_BATTLE_ENEMIES} '${id}'`, introLine(Array(MAX_BATTLE_ENEMIES).fill(id)));
+  }
+  if (enemyIds.length >= MAX_BATTLE_ENEMIES) {
+    cleanIntro('mixed pack', introLine(enemyIds.slice(0, MAX_BATTLE_ENEMIES)));
+  }
+}
+
 /* ================= 5. New Game values fit the letter grid ================= */
 
 {
@@ -2754,6 +2813,8 @@ const counts = [
   `${CANON_AREAS.length} area skins`,
   `${Object.keys(GLYPH_SCRIPT).length} area glyph scripts (${SCRIPT_CATALOG.length} families)`,
   `${GLYPH_TOKENS.length} flair glyphs`,
+  `${UI_AFFORDANCE_GLYPHS.length} UI affordance glyphs (${UI_AFFORDANCE_GLYPHS.join('')})`,
+  `multi-enemy packs ≤${MAX_BATTLE_ENEMIES} (clean intros)`,
   `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
   `${Object.keys(PSI_GATES).length} psi gates`,
   `${Object.keys(PROPERTIES).length} properties`,

@@ -126,6 +126,14 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > NEWS; the engine now shows green = player advantage, red = enemy
 > advantage, paper-grey = neutral. `SWIRL_TINT` in battle/formulas.ts is
 > the pinned source of truth.)*
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-106: a contact now pulls in
+> the whole PACK — every enemy right on top of you joins the same fight — and
+> during the swirl, nearby foes SPRINT in and hop aboard (EarthBound-style),
+> up to five total. The swirl runs a touch longer (~1–2s) when foes are
+> joining, and snaps as before for a lone contact. The instant auto-win only
+> fires when you outclass EVERY foe in the pack — one tough straggler keeps
+> the fight real.)*
 3. **Save = Call Your Dad.** Phones (home phones, payphones, banana-shaped novelty phones, a yak with a satellite dish in China) let you call **Dad**, who saves the game ("Have you been eating well, champ?"), tracks playtime, and occasionally insists you take a break. **3 save slots.**
 4. **Money = Dad's deposits.** Battle winnings are deposited by Dad into the **Otterbrook Savings & Loan** card, withdrawn at ATMs worldwide. Mom's home cooking (your favorite food, chosen at game start) cures **Homesickness** — a status Jay randomly contracts that makes him skip turns daydreaming about Mom's cooking. Call Mom to cure it.
 5. **Picnic.** At picnic tables scattered through every region (≈3 per chapter, ≈30 total), use a **Picnic Basket** item: full party HP/PP restore + the **Sunny Side** buff (+10% all stats for the next 5 battles). Baskets are bought (Basic), assembled at delis from 3 regional foods (Family), or earned from Buni's quest (Feast — adds auto-revive once). Tables are placed *before* dungeons — finding one is strategy.
@@ -1268,6 +1276,8 @@ flash the win screen without entering battle.
 
 **Done when:** all four outcomes reachable in playtesting; instant-win triggers correctly when overleveled.
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-107 — foes are anchored so their FACE clears the message box: a sprite is pushed down only as far as needed for its top to sit just below the intro window, and never so far that its body rides over the party HP cards. The intro line no longer covers enemy faces except for a sprite too large to fit between the box and the cards. Also ADR-106: a contact pulls in the nearby PACK and lets stragglers hop in during the swirl — up to five foes.)*
+
 ### Prompt 17 — Overworld enemy AI & spawning
 
 ```
@@ -1325,6 +1335,8 @@ and Pizza-to-Go gated by story flags later).
 ```
 
 **Done when:** earn → call Dad → withdraw → buy a Sandlot Slugger → Offense up by 14.
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-105 — the ATM no longer offers fixed $10/$50/$100 presets. Withdraw/Deposit now open an **odometer**: the amount shows as digit columns (thousands, hundreds, tens, …, all visible at once), `◄►` move the cursor between columns and `▲▼` raise/lower the amount by that column's place value (hold to accelerate), A confirms, B cancels. The number of columns follows the balance's magnitude — four columns on a four-figure card, up to ten on a billion-dollar one — so the §A9 billions-era economy stays dialable and you can set multiple thousands/hundreds/tens at once. The amount clamps to the balance.)*
 
 ### Prompt 21 — Name entry & New Game setup
 
