@@ -141,6 +141,19 @@ export const EnemyMoveSchema = z.strictObject({
 });
 export type EnemyMove = z.infer<typeof EnemyMoveSchema>;
 
+/** S18 M24 (ADR-094): one EarthBound-style loot roll — a defeated enemy may
+ *  drop `item` (a real §A8 catalog id) with probability `chance` (0<chance≤1).
+ *  Part of the §A7 Enemy Flow Law's "a drop with identity": the Null Walker
+ *  drops the Comet Bead because it remembers where it was, never generic loot.
+ *  Optional on the enemy, so every drop-less enemy parses byte-identical. */
+export const EnemyDropSchema = z.strictObject({
+  /** the §A8 item id that drops (validator pins it to a real item) */
+  item: z.string().min(1),
+  /** drop probability, rolled per defeated enemy — sane 0<chance≤1 */
+  chance: z.number().gt(0).max(1),
+});
+export type EnemyDrop = z.infer<typeof EnemyDropSchema>;
+
 export const EnemyDefSchema = z.strictObject({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -162,6 +175,10 @@ export const EnemyDefSchema = z.strictObject({
   moves: z.array(EnemyMoveSchema).min(2).max(4),
   /** …and one flavor death line */
   deathLine: z.string().min(1),
+  /** S18 M24 (ADR-094): §A7 "a drop with identity" — items this enemy rolls
+   *  into the bag on defeat (EarthBound-style). Optional; gated both directions
+   *  (every drop names a real item, sane chance, economy-neutral). */
+  drops: z.array(EnemyDropSchema).min(1).optional(),
   sprite: z.string().min(1),
   mini: z.string().min(1),
   /** humanoid enemies roam as full character sheets (4-dir walk) instead of a mini */

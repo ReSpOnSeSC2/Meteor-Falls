@@ -1288,6 +1288,7 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   iron_tonic: () => forgeIcon({ subcat: 'capsule', band: 'ch3', detail: 'stripe', seed: 'iron_tonic' }),
   brain_food_lunch: () => forgeIcon({ subcat: 'lunchbox', band: 'ch3', detail: 'label', seed: 'brain_food_lunch' }),
   spark_coil: () => forgeIcon({ subcat: 'zapper', band: 'ch3', detail: 'fuse', seed: 'spark_coil' }),
+  defibrillator: () => forgeIcon({ subcat: 'zapper', band: 'ch3', detail: 'star', seed: 'defibrillator' }),
   cog_grenade: () => forgeIcon({ subcat: 'bomb', band: 'ch3', detail: 'fuse', seed: 'cog_grenade' }),
   clockwork_sparrow: () => forgeIcon({ subcat: 'firework', band: 'ch3', detail: 'star', seed: 'clockwork_sparrow' }),
   broken_gizmo: () => forgeIcon({ subcat: 'hubcap', band: 'ch3', detail: 'crack', seed: 'broken_gizmo' }),

@@ -26,7 +26,7 @@
 import Phaser from 'phaser';
 import { GS, expForLevel, applyTonic, type HeroState } from '../engine/state';
 import { HEROES, availableAbilities } from '../data/heroes';
-import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, boostStatLabel, equipSecondaryNote, type EquipSlot } from '../data/items';
+import { ITEMS, EQUIP_SLOTS, slotOf, BAG_MAX, boostStatLabel, equipSecondaryNote, consumesOnUse, spiceFoodHeal, type EquipSlot } from '../data/items';
 import type { ResistElement } from '../schemas';
 import { ABILITIES } from '../data/abilities';
 import { MAPS } from '../data/maps';
@@ -231,10 +231,12 @@ export class MenuScene extends Phaser.Scene {
           : await this.pick({ x: 200, y: 30, options: alive.map((h) => h.name), title: 'Who eats?' });
       if (t < 0) return;
       const eater = alive[t];
-      eater.hp = Math.min(eater.maxHp, eater.hp + item.heal);
+      // §A10 #15 (S18 M24): the Spice Box makes cooked food heal half again
+      const heal = spiceFoodHeal(item.heal, GS.hasKeyItem('spice_box'));
+      eater.hp = Math.min(eater.maxHp, eater.hp + heal);
       GS.removeItem(itemId, hero.id);
       AUDIO.sfx('heal');
-      await this.dlg.say(`${eater.name} ate the ${item.name}. Recovered about ${item.heal} HP!`);
+      await this.dlg.say(`${eater.name} ate the ${item.name}. Recovered about ${heal} HP!`);
       return;
     }
     // S4: the Star Cola line — PP comes back fizzing (§A8 "PP" items)
@@ -269,7 +271,9 @@ export class MenuScene extends Phaser.Scene {
           : await this.pick({ x: 200, y: 30, options: downed.map((h) => h.name), title: 'For who?' });
       if (t < 0) return;
       const target = downed[t];
-      GS.removeItem(itemId, hero.id);
+      // S18 M24 (ADR-094): a reusable revive (Milo's Defibrillator, §A4.12) is
+      // not spent — it brings the next angel back too
+      if (consumesOnUse(item)) GS.removeItem(itemId, hero.id);
       target.down = false;
       target.hp = Math.min(target.maxHp, item.heal ?? 1);
       AUDIO.sfx('ember');

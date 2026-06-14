@@ -83,7 +83,7 @@
 import Phaser from 'phaser';
 import { ENEMIES, introLine, type EnemyDef, type EnemyMove } from '../data/enemies';
 import { ABILITIES, rollPray, PRAY_TEXT, type AbilityDef, type PrayTier } from '../data/abilities';
-import { ITEMS } from '../data/items';
+import { ITEMS, consumesOnUse, spiceFoodHeal } from '../data/items';
 import { BATTLE_TEXT, DIALOGUE } from '../data/dialogue';
 import { BOSS_SCRIPTS } from '../data/bosses';
 import { AWAKENINGS } from '../data/awakenings';
@@ -160,6 +160,8 @@ import {
   rattledSkips,
   moraleTierUp,
   moraleHeal,
+  resistIncoming,
+  rollDrops,
 } from '../battle/formulas';
 import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
 import { glyphify } from '../ui/text';
@@ -2040,14 +2042,16 @@ export class BattleScene extends Phaser.Scene {
     const name = h.hero.name;
     const fxKey = itemFxKey(item.id, item.kind);
     if (item.kind === 'food' && item.heal) {
+      // §A10 #15 (S18 M24): the Spice Box makes cooked food heal half again
+      const heal = spiceFoodHeal(item.heal, GS.hasKeyItem('spice_box'));
       GS.removeItem(itemId, h.hero.id);
       h.bust.poseFor('rummage', 360);
       await this.print(`${name} wolfed down the ${item.name}!`);
       h.bust.poseFor('munch', 700);
       if (fxKey) await this.fx.play(fxKey, { caster: this.cardTarget(h) });
-      this.healHero(h, item.heal);
+      this.healHero(h, heal);
       AUDIO.sfx('heal');
-      await this.print(`About ${item.heal} HP came back.`);
+      await this.print(`About ${heal} HP came back.`);
       return true;
     }
     // S4: the Star Cola line — PP rolls back up on the drum (§A8 "PP" items)
@@ -2068,7 +2072,9 @@ export class BattleScene extends Phaser.Scene {
     // spark's exact fx + lines are preserved when it's the spark itself.
     if (item.kind === 'cure' && item.cures?.includes('down')) {
       const isSpark = item.id === 'glints_spark';
-      GS.removeItem(itemId, h.hero.id);
+      // S18 M24 (ADR-094): a reusable revive (Milo's Defibrillator, §A4.12) is
+      // not spent — it brings the next angel back too
+      if (consumesOnUse(item)) GS.removeItem(itemId, h.hero.id);
       h.bust.poseFor('castA', 700);
       const downed = this.heroes.find((x) => x.hero.down || x.odoHp.dead);
       const at = downed ? this.cardTarget(downed) : this.cardTarget(h);
@@ -2094,7 +2100,7 @@ export class BattleScene extends Phaser.Scene {
     // whole room into Crying; `reusable` survives the click (it's a flash,
     // not film)
     if (item.kind === 'battle' && item.status) {
-      if (!item.reusable) GS.removeItem(itemId, h.hero.id);
+      if (consumesOnUse(item)) GS.removeItem(itemId, h.hero.id); // the Camera Flash is a flash, not film
       h.bust.poseFor('lunge', 600);
       await this.print(`${name} raised the ${item.name} — say nothing!`);
       const room = this.enemies.filter((x) => x.alive);
@@ -2121,7 +2127,8 @@ export class BattleScene extends Phaser.Scene {
     if (item.kind === 'cure' && item.cures && !item.cures.includes('down')) {
       const t = await this.pickAlly(this.aliveHeroes());
       if (!t) return false;
-      GS.removeItem(itemId, h.hero.id);
+      // S18 M24 (ADR-094): the reusable Scroll of Calm (§A10 #17) is never spent
+      if (consumesOnUse(item)) GS.removeItem(itemId, h.hero.id);
       h.bust.poseFor('rummage', 360);
       if (fxKey) await this.fx.play(fxKey, { caster: this.cardTarget(h), targets: [this.cardTarget(t)] });
       let had = false;
@@ -2150,7 +2157,7 @@ export class BattleScene extends Phaser.Scene {
     if (item.kind === 'battle' && item.power) {
       const target = await this.pickEnemy();
       if (!target) return false;
-      GS.removeItem(itemId, h.hero.id);
+      if (consumesOnUse(item)) GS.removeItem(itemId, h.hero.id); // S18 M24: a reusable thrown gizmo survives
       // S11b: battle items with a throw_arc family LOB from the stage —
       // from throwing range (S12b), the arc is the show
       const onStage = fxKey !== null && stagePoseOf(fxKey) === 'throw';
@@ -2410,6 +2417,13 @@ export class BattleScene extends Phaser.Scene {
           // PIPPA STERN DECREE: a rattled foe's Offense is down — its hit lands ×0.8
           if (e.rattled > 0) dmg = rattledDamage(dmg);
           if (target.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+          // S18 M24 (ADR-094): THE §A8 PENDANT SEAM — a worn fire/freeze/volt/holy
+          // resist pendant (heroResist) shaves its pct off a MATCHING elemental
+          // hit, BEFORE Jay's active ward answers (the two seams stack, gear
+          // first). The §A8 "pendants (elemental resists)" finally bite a landed
+          // elemental enemy move (the Coily Cicada's August glare); a physical
+          // hit is untouched. Distinct from mitigateIncoming below.
+          dmg = resistIncoming(dmg, element, target.hero);
           // S16 LAYERED WARDS (§A3 amended) — Shield halves physical, Ward halves
           // elemental, Reflect & Mirror halve everything AND throw some back, with
           // the Bulwark + brace-and-answer synergies. One math seam (formulas.ts).
@@ -2751,6 +2765,18 @@ export class BattleScene extends Phaser.Scene {
       GS.data.pendingDeposit += totalCash;
       await this.print(`(Dad will deposit $${totalCash}. Call him sometime.)`);
     }
+    // §A7 LOOT (S18 M24, ADR-094): each defeated enemy rolls its identity drops
+    // into the bag, EarthBound-style — one warm line per item that lands, the
+    // bag's full-hands handling when there's nowhere to put it.
+    for (const e of this.enemies) {
+      for (const id of rollDrops(e.def.drops, Math.random)) {
+        const drop = ITEMS[id];
+        if (!drop) continue;
+        const got = this.awardDrop(id);
+        AUDIO.sfx(got ? 'confirm' : 'cancel');
+        await this.print(this.fill(got ? BATTLE_TEXT.enemy_drop : BATTLE_TEXT.enemy_drop_full, '', e, drop.name));
+      }
+    }
     // §A4.4 (S4): the quiet after a win is when Homesick strikes — it rides
     // the save (a flag) until Mom's call cures it
     const rex = this.heroes.find((x) => x.hero.id === 'rex');
@@ -2760,6 +2786,22 @@ export class BattleScene extends Phaser.Scene {
     }
     this.syncHeroMeters();
     this.finish('victory');
+  }
+
+  /** §A7 LOOT (S18 M24, ADR-094): place one dropped item — a key item into the
+   *  shared key bag, anything else into the first party member with a free slot.
+   *  Returns false (EB full-hands) when there's nowhere to put it. */
+  private awardDrop(id: string): boolean {
+    const item = ITEMS[id];
+    if (!item) return false;
+    if (item.kind === 'key') {
+      if (!GS.data.keyItems.includes(id)) GS.data.keyItems.push(id);
+      return true;
+    }
+    for (const h of GS.data.party) {
+      if (GS.addItem(id, h.id)) return true;
+    }
+    return false;
   }
 
   private async defeat(): Promise<void> {
