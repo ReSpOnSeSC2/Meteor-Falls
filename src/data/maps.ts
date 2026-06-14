@@ -20,7 +20,7 @@ import { occupyCity } from './citylife';
 import { AREA_SKINS } from '../spritegen/buildings';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
-import type { MapDef, PropDef, NpcDef, SignDef } from '../schemas';
+import type { MapDef, PropDef, NpcDef, SignDef, AmbienceId, ReflectZone } from '../schemas';
 
 // S5: shapes are z.infer'd from src/schemas — compile shape ≡ runtime schema
 export type {
@@ -421,16 +421,16 @@ export function growOtterbrook(): MapDef {
   const npcs = [
     ...core.npcs,
     { id: 'green_keeper', sprite: 'fernLady', x: 21, y: 49, facing: 'down' as const, dialogue: 'npc_green_keeper', wander: true },
-    { id: 'pond_angler', sprite: 'quarterMan', x: 51, y: 25, facing: 'right' as const, dialogue: 'npc_pond_angler' },
+    { id: 'pond_angler', sprite: 'quarterMan', x: 51, y: 25, facing: 'right' as const, dialogue: 'npc_pond_angler', idle: true, emote: 'think' as const }, // Wave 2 (#4): pondering the still water
     { id: 'south_neighbor', sprite: 'senora', x: 34, y: 45, facing: 'down' as const, dialogue: 'npc_south_neighbor', wander: true },
     // S15i (ADR-054): the woods nook's resident obsessive (§A11) — a birdwatcher
     // at the thicket trailhead, who has Opinions about the new picnic spot
-    { id: 'woods_birder', sprite: 'oldTimer', x: 5, y: 45, facing: 'down' as const, dialogue: 'npc_woods_birder' },
+    { id: 'woods_birder', sprite: 'oldTimer', x: 5, y: 45, facing: 'down' as const, dialogue: 'npc_woods_birder', idle: true, emote: 'happy' as const }, // Wave 2 (#4): delighted by the birds
     { id: 'gate_walker', sprite: 'grayCommuter', x: 60, y: 16, facing: 'right' as const, dialogue: 'npc_gate_walker', dialogueDay: 'npc_gate_walker_day', wander: true },
     // S15i Task 0: the treeline gawker — at 2 AM he points you up the hill and
     // refuses to go himself; at daybreak (dialogueDay) he's seen the crater and
     // warns of the blocked road east. Stands by the hill gap, never wanders off it.
-    { id: 'treeline_gawker', sprite: 'pigeonKid', x: 23, y: 4, facing: 'up' as const, dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day' },
+    { id: 'treeline_gawker', sprite: 'pigeonKid', x: 23, y: 4, facing: 'up' as const, dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' as const }, // Wave 2 (#4): rattled by the crater up the hill
   ];
 
   const signs = [
@@ -2789,4 +2789,47 @@ function cityLifeSeed(id: string): number {
 for (const m of Object.values(MAPS)) {
   if (!m.settlement) continue;
   Object.assign(MAPS, occupyCity(m, { area: m.area ?? m.id, seed: cityLifeSeed(m.id) }));
+}
+
+// ─── Wave 2 (ADR-108) — MAP AMBIENT AUDIO (#16) ─────────────────────────────
+// A per-map ambient BED (engine/ambience.ts) layered under the music, plus an
+// OPTIONAL explicit muffle override (absent → OverworldScene derives the veil from
+// `interior`). Central like MAP_AREA so the whole soundscape reads in one place;
+// applied LAST (after the living-city pass) so the fields can't be clobbered, across
+// every chapter's maps by id. OverworldScene reads both on map load (Wave 3, #2).
+const MAP_AUDIO: Record<string, { ambience?: AmbienceId; muffle?: 0 | 1 | 2 }> = {
+  // CH.3 England — machine-made fog hangs wet over the stone town + the open moor
+  foggybottom: { ambience: 'rain' }, // the damp town on the Tyne
+  foggy_moor: { ambience: 'wind' }, // the exposed fog road
+  the_old_stones: { ambience: 'wind' }, // the Resonance Site, bare to the weather
+  wintermoor_grounds: { ambience: 'wind' }, // the academy's windswept grounds
+  wintermoor_boiler: { ambience: 'machine', muffle: 2 }, // the Hushed mainframe's room — deep + humming
+  // CH.2 South America — the working seafront + the §A6 pyramid depths
+  puerto_sol: { ambience: 'waves' },
+  pyramid_ante: { ambience: 'cave' },
+  // CH.1 USA — the home town park + the busy second city
+  otterbrook: { ambience: 'birds' }, // the pond park + civic green + woods nook
+  brickton: { ambience: 'crowd' }, // the bigger city's street murmur
+};
+for (const [id, a] of Object.entries(MAP_AUDIO)) {
+  const m = MAPS[id];
+  if (!m) continue;
+  if (a.ambience) m.ambience = a.ambience;
+  if (a.muffle !== undefined) m.muffle = a.muffle;
+}
+
+// ─── Wave 2 (ADR-108) — REFLECTIVE SURFACES (#6) ────────────────────────────
+// Tile rects (in tiles) over the maps' water; OverworldScene mirrors nearby actors
+// below each surface line (Wave 3). Central + post-assembly like MAP_AUDIO; the
+// content-validate `reflect` gate proves every rect is in-bounds AND overlaps a
+// reflective (sea) tile, so a grid edit that moves the water fails the build here.
+const MAP_REFLECT: Record<string, ReflectZone[]> = {
+  foggybottom: [{ x: 0, y: 25, w: 40, h: 3, within: 4 }], // the river Tyne along the south lip
+  otterbrook: [{ x: 53, y: 22, w: 6, h: 4, within: 3 }], // the Pond Park water feature
+  golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
+  puerto_sol: [{ x: 0, y: 30, w: 52, h: 4, within: 4 }], // the working seafront
+};
+for (const [id, zones] of Object.entries(MAP_REFLECT)) {
+  const m = MAPS[id];
+  if (m) m.reflect = zones;
 }

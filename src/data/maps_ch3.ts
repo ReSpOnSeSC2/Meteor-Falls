@@ -128,9 +128,9 @@ function buildFoggybottom(): MapDef {
       // a fishmonger on the quay (one obsession: the Tyne's moods)
       { id: 'fb_fishmonger', sprite: 'dockworker', x: 19, y: 20, facing: 'down', dialogue: 'npc_fb_fishmonger', wander: true },
       // the postmistress (one obsession: the pillar box has opinions)
-      { id: 'fb_postmistress', sprite: 'senora', x: 30, y: 14, facing: 'down', dialogue: 'npc_fb_post' },
+      { id: 'fb_postmistress', sprite: 'senora', x: 30, y: 14, facing: 'down', dialogue: 'npc_fb_post', idle: true, emote: 'think' }, // Wave 2 (#4): the pillar box has opinions
       // a damp small boy (one obsession: the fog tastes of pennies)
-      { id: 'fb_boy', sprite: 'pajamaKid', x: 8, y: 11, facing: 'down', dialogue: 'npc_fb_boy', wander: true },
+      { id: 'fb_boy', sprite: 'pajamaKid', x: 8, y: 11, facing: 'down', dialogue: 'npc_fb_boy', wander: true, emote: 'surprise' }, // Wave 2 (#4): the fog tastes of pennies!
     ],
     signs: [
       { x: 6, y: 10, dialogue: 'sign_foggybottom' },

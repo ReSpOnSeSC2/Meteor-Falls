@@ -302,9 +302,9 @@ export function buildPuertoSol(): MapDef {
       { sprite: 'trash_can', x: 2, y: 12, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     ],
     npcs: [
-      { id: 'ps_fisher', sprite: 'dockworker', x: 10, y: 25, facing: 'down', dialogue: 'npc_ps_fisher', wander: true },
+      { id: 'ps_fisher', sprite: 'dockworker', x: 10, y: 25, facing: 'down', dialogue: 'npc_ps_fisher', wander: true, emote: 'think' }, // Wave 2 (#4): reading the sea's moods
       { id: 'ps_nina', sprite: 'wokeB', x: 38, y: 16, facing: 'down', dialogue: 'npc_ps_nina', wander: true },
-      { id: 'ps_stallman', sprite: 'tomas', x: 33, y: 25, facing: 'down', dialogue: 'npc_ps_stall', unlessFlag: 'q_llama' },
+      { id: 'ps_stallman', sprite: 'tomas', x: 33, y: 25, facing: 'down', dialogue: 'npc_ps_stall', unlessFlag: 'q_llama', idle: true, emote: 'happy' }, // Wave 2 (#4): a cheerful market vendor
       { id: 'ps_porter', sprite: 'captain', x: 18, y: 12, facing: 'down', dialogue: 'npc_ps_porter', wander: true },
     ],
     signs: [

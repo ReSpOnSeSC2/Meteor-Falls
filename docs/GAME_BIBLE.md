@@ -307,6 +307,29 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > fortune and a rounding error by the time you own the Red Dome — the rags-to-riches curve, made you
 > can feel it at the pump.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-108 — **§A4.18 THE LIVING-WORLD LAYER
+> (map soundscape · reflections · ambient life).** A map now CARRIES its atmosphere as
+> data so the world reads alive the moment you arrive. An **ambient BED** (`ambience`)
+> layers a low looping texture UNDER the music — RAIN on Foggybottom, moor WIND on the
+> fog road and the Old Stones, the SURF at Puerto Sol, the Hushed mainframe's HUM in the
+> Wintermoor boiler, BIRDSONG in Otterbrook's park, a town MURMUR in the bigger cities,
+> a CAVE drip in the pyramid depths (the eight beds live in `src/engine/ambience.ts`,
+> each a filtered-noise floor with an optional slow sway; `river` is reserved for the
+> brook maps). An **explicit muffle** (`muffle` 0/1/2) overrides the default indoor veil
+> where a room wants it (the boiler sits at DEEP). **Reflective surfaces** (`reflect`)
+> mark the water — the Tyne, the Pond Park, the course hazard, the working seafront —
+> where the overworld mirrors the hero + nearby NPCs as a flipped, alpha-thinned, wavy
+> copy below the surface line. And townsfolk carry **ambient life**: a standing NPC
+> BREATHES (`idle`, the ADR-101 idle frames) and pops an occasional MOOD over its head
+> (`emote` — 🎵 humming, 💤 dozing, … pondering, ❗ noticing). All five are OPTIONAL
+> map/NPC metadata on the §B1 schema, palette-/determinism-clean, pinned by the
+> `emote`/`ambience`/`reflect`/`npc-ambient` validator gates (every emote + ambience id
+> resolves to its registry BOTH directions; every reflect rect sits in-bounds over real
+> water; a dog — its own anim set — never breathes). This movement lands the SCHEMA +
+> the authored soundscape; the bed PLAYBACK (riding the ADR-100 mixer's music path, so
+> the §A4 volume sliders + the muffle veil cover it too) and the reflection/idle
+> RENDERING are the wired follow-ups OverworldScene consumes on map load.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
 > NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
