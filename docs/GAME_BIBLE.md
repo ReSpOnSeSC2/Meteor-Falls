@@ -475,6 +475,16 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > cash in hand. The §A8 manifest extends in the validator in the same
 > commit.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-076 — **§A8 THE ROAD ROSTER GROWS.** The §A4.10
+> vehicle forge fleshes out into a real car habit. The TWO-WHEELER tier: a **BMX** + a **road bike**
+> (1 seat each), a **cruiser** + a **sport bike** (2 seats — rider + pillion). The HIGH-END / EXOTIC
+> tier reads unmistakably expensive: a **grand tourer** (long low wedge, chrome rocker), a
+> **roadster** (an OPEN convertible — cut windshield, headrests, no roof), a **stretch limo** (8
+> seats, swallows the whole party), and a hot-rod **muscle car** (hood scoop, side pipes). All are
+> drawn FACING RIGHT under ADR-020, seat-fit-correct (§A4.10), footprint-in-bounds, and Fortune-Arc
+> priced when the §A4.15 dealership sells them. None is a bag weapon — they are world props / drive
+> targets / `title_*` ownership.)*
+
 **Food (HP):** Corn Dog, PB&J, Alfajor, Scone & Clotted Cream, Jollof Bowl, Samosa, Baozi, **Sarmale**, **Mămăligă cu Brânză** (best HP/$ in the game — Buni's), Akutaq, Poke Bowl, Freeze-Dried Ice Cream (Mars vending machines).
 
 **PP:** Star Cola line, Monastery Tea, Temple Incense. **Cures:** Salt Shaker (anti-Tick!), Aloe Leaf (Sunburn), Hanky (Crying), Doctor's Note (Mushroomize), Mom's Voice Tape (Homesick, 3 uses).

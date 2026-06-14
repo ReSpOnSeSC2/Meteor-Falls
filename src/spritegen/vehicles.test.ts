@@ -59,6 +59,40 @@ describe('the seat-fit law (§A4.10) — usable seats = seats − 1', () => {
   });
 });
 
+describe('M35 (ADR-076) — the two-wheeler + exotic tier', () => {
+  it('the new bikes + motorcycles are real road specs', () => {
+    for (const t of ['bmx', 'road_bike', 'cruiser', 'sport_bike']) {
+      expect(VEHICLE_SPECS[t], `missing spec '${t}'`).toBeDefined();
+      expect(VEHICLE_SPECS[t].terrain).toBe('road');
+    }
+    expect(VEHICLE_SPECS.bmx.cls).toBe('bike');
+    expect(VEHICLE_SPECS.cruiser.cls).toBe('moto');
+  });
+  it('two-wheelers carry no passenger / one passenger like their kin', () => {
+    expect(usableSeats('bmx')).toBe(0);        // a kid's ride, no pillion
+    expect(usableSeats('road_bike')).toBe(0);
+    expect(seatsFit('cruiser', 1)).toBe(true); // a rider + one pillion
+    expect(seatsFit('cruiser', 2)).toBe(false);
+    expect(seatsFit('sport_bike', 1)).toBe(true);
+  });
+  it('the exotic cars are seat-fit-correct and Fortune-Arc shaped', () => {
+    for (const t of ['grand_tourer', 'roadster', 'limo', 'muscle_car']) {
+      expect(VEHICLE_SPECS[t]?.cls, `'${t}' should be a car`).toBe('car');
+    }
+    expect(seatsFit('roadster', 1)).toBe(true);   // a two-seat convertible
+    expect(seatsFit('roadster', 2)).toBe(false);
+    expect(seatsFit('grand_tourer', 3)).toBe(true);
+    expect(seatsFit('limo', 5)).toBe(true);       // a stretch swallows the whole party
+    expect(usableSeats('limo')).toBe(7);
+  });
+  it('every new type ships ≥1 paint variant (both directions hold)', () => {
+    const used = new Set(VEHICLE_CATALOG.map((v) => v.type));
+    for (const t of ['bmx', 'road_bike', 'cruiser', 'sport_bike', 'grand_tourer', 'roadster', 'limo', 'muscle_car']) {
+      expect(used.has(t), `'${t}' has no paint variant`).toBe(true);
+    }
+  });
+});
+
 describe('the art law (ADR-020) — palette-only + deterministic', () => {
   it('every variant draws only master-palette indices (0–63) or transparent', () => {
     for (const v of VEHICLE_CATALOG) {

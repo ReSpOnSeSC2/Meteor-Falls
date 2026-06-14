@@ -4644,3 +4644,31 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   plane SCENES, live placement of agencies + 27 Maple + the per-region listings, the highway maps,
   the helmet-boss + beat dialogue, and the furniture/deed §A8 icon pours) — the M18-Part-B way,
   each landing with its chapter session. The systems are settled; the world fills in on top.
+
+## ADR-076 — S19 (Movement 35): MORE TWO-WHEELERS + THE EXOTIC TIER
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 35 — fleshes out the M26 vehicle forge for the car habit; the
+  dealership/garage of M37–38 sells these.)
+- **Decision — eight new drawn `VEHICLE_SPECS` types (ADR-020 hand-art, palette-only).** The
+  two-wheeler tier — `bmx` + `road_bike` (cls `bike`, seats 1), `cruiser` + `sport_bike` (cls
+  `moto`, seats 2) — each a distinct hand-drawn silhouette (the kid's tall bars, the racer's drop
+  bars + big thin wheels, the cruiser's long low tank + ape-hangers, the sport bike's crouched
+  fairing). The HIGH-END/exotic tier — `grand_tourer` (seats 4, long low wedge + a chrome rocker),
+  `roadster` (seats 2, an OPEN convertible cabin: cut windshield + headrests, no greenhouse), `limo`
+  (seats 8, a 56px stretch with a three-pillar greenhouse), `muscle_car` (seats 4, a hood scoop +
+  side pipes). `drawCarBody` grew guarded `open/scoop/pipes/chrome/pillars` opts so existing
+  sedan/ev/race/suv draws stay byte-identical; the bikes/motos are their own functions.
+- **Decision — paint pools + the catalog grow automatically.** Each type lists a `PAINTS` pool;
+  `buildCatalog()` fans them into 24 new seeded `veh_*` variants, `index.ts` registers each (it
+  loops `VEHICLE_CATALOG`), and `render-vehicles.ts` renders the new rows (`npm run art:vehicles`).
+- **Decision — gated both directions (`vehicles` + `vehicles.test.ts`), unchanged law.** The forge
+  gate already proves catalog ⇄ specs, palette-only, seat-fit, footprint-in-bounds; the new types
+  ride it. A new `vehicles.test.ts` block pins the tier's seat-fit (a BMX carries nobody, a roadster
+  two, a limo the whole party at ride-7). The verdict climbs to **81 vehicles (29 types)**.
+- **Verification:** `tsc` clean, `npm run validate` green (81 vehicles / 29 types), full vitest
+  green, `vite build` clean, `art:vehicles` re-rendered. No FNV re-pin, no frozen-core change (the
+  forge is sprite data, never a sample-routed map generator). §A8 amended to canon in the same commit.
+- **Consequences:** the road roster reads like a real car habit — a kid on a BMX up to a stretch
+  limo — and the M37 dealership has its inventory to sell. The Nikolai (M36) and the military motor
+  pool (M39) extend the same table.
