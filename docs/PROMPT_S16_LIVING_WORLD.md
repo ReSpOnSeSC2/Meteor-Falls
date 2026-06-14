@@ -1,3 +1,11 @@
+> **STATUS (2026-06-14): SUPERSEDED — design appendix only.** Only Movement 8 (THE ICON ATLAS,
+> ADR-060) of this prompt ever shipped; the project then pivoted to the S17 item catalog
+> (ADR-061→063). Movements 9–15 (vehicles, traffic, the control system, overworld PSI, the story
+> weave, the paperboy, the fleet) were **never built**. They are consolidated, with the new
+> property-tycoon market + Sims-style home editor, into the live build prompt
+> **`docs/PROMPT_S18_PROPERTY_AND_THE_LIVING_WORLD.md`** — use that file. This one is kept for
+> its design detail.
+
 # PROMPT — S16: THE LIVING WORLD (Movements 8–15)
 
 > Paste this whole file as the next Claude Code session's opening prompt. It continues
