@@ -42,6 +42,8 @@ import { BUILDING_DIMS } from '../src/levelkit/kit';
 import { VEHICLE_CATALOG, VEHICLE_SPECS, usableSeats } from '../src/spritegen/vehicles';
 import { PSI_GATES, GATE_KEY, PSI_DUNGEON_BANDS } from '../src/data/psigates';
 import { abilitiesForKey } from '../src/engine/psi';
+import { PROPERTIES, PROPERTY_KINDS, LIVE_PROPERTIES } from '../src/data/properties';
+import { AREA_SKINS as AREA_SKINS_FOR_PROP } from '../src/spritegen/buildings';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -364,6 +366,35 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   for (const b of PSI_DUNGEON_BANDS) {
     if (!covered.has(b)) fail('psi-gate', `dungeon band '${b}' has no PSI gate — §A4.11 seeds ≥1 per chapter dungeon`);
+  }
+}
+
+// S18 Movement 29 (ADR-069) — THE PROPERTY MARKET (§A4.13). Every listing is a
+// well-formed, ownable property. Gated:
+//  · kind known; price positive; rent ONLY on shop/rental (homes/flips earn 0);
+//    a home payload sits only on a home; the area is a real AREA_SKINS area (M25);
+//    the band is well-formed; the blurb is in voice (non-empty); storageTier ≥ 1;
+//  · deeds are UNIQUE across all properties (a deed opens exactly one door);
+//  · every LIVE_PROPERTIES id is a real property (the placed-now set is honest).
+{
+  const KINDS = new Set<string>(PROPERTY_KINDS);
+  const deeds = new Map<string, string>();
+  for (const p of Object.values(PROPERTIES)) {
+    if (!KINDS.has(p.kind)) fail('property', `property '${p.id}' has unknown kind '${p.kind}'`);
+    if (p.basePrice <= 0) fail('property', `property '${p.id}' has a non-positive price`);
+    if (!/^ch\d+$/.test(p.band)) fail('property', `property '${p.id}' band '${p.band}' is malformed`);
+    if (!AREA_SKINS_FOR_PROP[p.area]) fail('property', `property '${p.id}' sits in area '${p.area}' that owns no AREA_SKINS slice (M25)`);
+    const earnsRent = p.kind === 'shop' || p.kind === 'rental';
+    if (earnsRent && p.rent <= 0) fail('property', `property '${p.id}' is a ${p.kind} but earns no rent`);
+    if (!earnsRent && p.rent !== 0) fail('property', `property '${p.id}' is a ${p.kind} — only shops/rentals collect rent`);
+    if (p.storageTier < 1) fail('property', `property '${p.id}' has storageTier < 1`);
+    if (!p.blurb || p.blurb.trim().length === 0) fail('property', `property '${p.id}' has no §A11 agent blurb`);
+    const prior = deeds.get(p.deed);
+    if (prior) fail('property', `deed '${p.deed}' opens both '${prior}' and '${p.id}' — a deed is one door`);
+    deeds.set(p.deed, p.id);
+  }
+  for (const id of LIVE_PROPERTIES) {
+    if (!PROPERTIES[id]) fail('property', `LIVE_PROPERTIES names '${id}' which is not a real property`);
   }
 }
 
@@ -1892,6 +1923,7 @@ const counts = [
   `${CANON_AREAS.length} area skins`,
   `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
   `${Object.keys(PSI_GATES).length} psi gates`,
+  `${Object.keys(PROPERTIES).length} properties`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,

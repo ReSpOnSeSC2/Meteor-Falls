@@ -38,7 +38,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 10;
+  version: 11;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -68,6 +68,11 @@ export interface GameStateData {
    *  checkpoints at quarter breaks; titles + the STARTING FOUR raincheck
    *  ledger + the pickup-seed counter all ride here. */
   hoops: HoopsState;
+  /** S18 (v11, ADR-069): THE PROPERTY MARKET — per-owned-home item storage (the
+   *  footlocker), keyed by property id. The only array-shaped property state;
+   *  ownership, loans, and the price-walk seed all ride ADR-015 number/bool FLAGS
+   *  (owned_<id>, garnishPrincipal, garnishPaid, propWalk). */
+  homeStorage: Record<string, string[]>;
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -140,7 +145,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 10,
+    version: 11,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -169,6 +174,7 @@ export function newGameData(): GameStateData {
     // MGR's score is canon (§A10 #4); fresh saves start with him to beat
     arcadeScores: [{ ...MGR_ROW }],
     hoops: freshHoops(),
+    homeStorage: {},
   };
 }
 

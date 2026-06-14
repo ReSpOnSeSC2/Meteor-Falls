@@ -48,7 +48,7 @@ import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 10;
+export const CURRENT_SAVE_VERSION = 11;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -236,6 +236,18 @@ export const MIGRATIONS: MigrationStep[] = [
         flags.awake_mindwarp_a = true;
       }
       raw.version = 10;
+      return raw;
+    },
+  },
+  {
+    to: 11,
+    migrate(raw) {
+      // S18 M29 (ADR-069): THE PROPERTY MARKET — a new per-home item store (the
+      // footlocker), keyed by property id. A pre-v11 save owned no property and
+      // stored nothing home-side, so an empty map is its true history. Ownership,
+      // loans, and the price walk ride ADR-015 flags (no field needed for those).
+      if (!isObj(raw.homeStorage)) raw.homeStorage = {};
+      raw.version = 11;
       return raw;
     },
   },

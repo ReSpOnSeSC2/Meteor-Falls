@@ -193,6 +193,27 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > Pinned both directions (`psi-gate` gate + `psi.test.ts`): every gate's key matches
 > its kind and has a real teacher, and every dungeon band (ch3–10) carries one.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-069 — **§A4.13 THE PROPERTY MARKET
+> (deeds, agencies, lawyers, the flip).** Real estate is a buyable, sellable, OWNABLE
+> layer over the world and the back-half wealth engine (§A9 Fortune Arc). Every town
+> has a REAL-ESTATE AGENCY (an agent with one §A11 obsession — she calls every room
+> "cozy" — who LISTS the region's properties: price, an in-voice blurb, an open-house
+> walk) and a LAWYER'S OFFICE (closing: sign "the crayon box", pay or finance, walk
+> out with THE DEED — a key-item; selling closes here too, minus "the tenth part, for
+> the pen"). The OTTERBROOK SAVINGS & LOAN gains a LOAN DESK (a car note + a mortgage:
+> borrowed cash now, repaid as a 25% GARNISH of every future Dad deposit until the
+> principal × 1.1 clears; one active garnish at a time). A HOME is a base (§A4.14);
+> beyond it you buy run-down cheap, renovate + furnish it (COZINESS lifts resale), and
+> FLIP it through the lawyer, while owned shops/rentals pay RENT into Dad's deposits at
+> chapter boundaries. Prices move at chapter boundaries on a SEEDED deterministic walk
+> per save (ADR-008 replay byte-equal). The registry is DATA (`src/data/properties.ts`)
+> + pure economy math (`src/engine/property.ts`, validated); ownership + loans ride
+> ADR-015 FLAGS, a DEED is a key-item string, and the only array-shaped save state is
+> per-home storage (`homeStorage`, save v11). 27 MAPLE is Otterbrook's live starter;
+> HILLCREST MANOR + the per-region homes are defined/priced and land with their
+> chapters. The Ember trail never cares about money; net worth is a number, the callers
+> are the score.)*
+
 ## A5. The World Route & Travel
 
 | Ch. | Region | Locales | Travel in |

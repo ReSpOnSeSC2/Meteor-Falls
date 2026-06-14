@@ -436,3 +436,22 @@ describe('save migration registry (S18 M27) — v9 → v10: mindwarp re-staged t
     expect(have.includes('mindwarp_a')).toBe(false);
   });
 });
+
+describe('save migration registry (S18 M29) — v10 → v11: the property market', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills an empty homeStorage map on a pre-v11 save', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 10;
+    delete d.homeStorage; // a pre-v11 save owned no property
+    GS.deserialize(JSON.stringify(d));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.homeStorage).toEqual({});
+  });
+
+  it('the v1 chain runs all the way to v11', () => {
+    GS.deserialize(JSON.stringify(v1SaveS2()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.homeStorage).toEqual({});
+  });
+});

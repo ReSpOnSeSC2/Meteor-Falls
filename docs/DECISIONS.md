@@ -4314,3 +4314,40 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   its seeded gate (the spec is waiting), teaches the ability first, and the cast pays it off —
   non-missable, retry-safe. The cast FX + the per-map obstacle props + the tile+PROP BFS re-proof
   (cleared-opens / present-never-strands) land with each dungeon session, on this spine.
+
+## ADR-069 — S18 (Movement 29): THE PROPERTY MARKET — deeds, agencies, lawyers & the flip
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 29 — the wealth + base spine. Build the SYSTEMS; M30
+  makes homes editable, later movements pour the per-region content.)
+- **Decision — `src/data/properties.ts`, the PROPERTY registry.** Each listing is a
+  `PropertyDef`: id, agent name, band, AREA_SKINS area (M25), kind (home/shop/rental/flip),
+  base price, rent (shop/rental only), a deed key-item string, a §A11 agent blurb ("She took
+  the doorknobs."), and a storage tier. 27 MAPLE is Otterbrook's live starter (+ a Brickton
+  rental + a Maple fixer); HILLCREST MANOR (the user's mansion, Ch.7) and the per-region homes/
+  shops/flips are defined/priced and land with their chapters (the unlanded discipline). A DEED
+  is a key-item STRING, NOT an ITEMS row — ADR-015 prefer-flags, so no icon-gate burden.
+- **Decision — `src/engine/property.ts`, the pure economy (ADR-008 deterministic).** The
+  agency/lawyer/S&L all read these stateless functions: `walkedPrice` (the seeded chapter-
+  boundary price walk — same save + seed replays byte-equal, a gentle upward drift = the Fortune
+  Arc), `buyCost`, `sellProceeds` (the walked price lifted by COZINESS — the furnished-flip hook
+  M30 feeds — minus the lawyer's tenth `LAWYER_CUT`), the S&L financing (`loanTarget` = principal
+  × 1.1, `garnishFromDeposit` = 25% capped at owed, `loanCleared`/`loanRemaining`), `rentAccrued`
+  (owned shops/rentals only), and `netWorth` (cash + bank + owned value − loan; the stats line).
+  Ownership + loans ride ADR-015 flags; the only array-shaped save state is per-home `homeStorage`
+  (the footlocker) — the save bumps **v10 → v11** with a backfill migration + round-trip test.
+- **Decision — gated (`tools/content-validate.ts` `property` + `property.test.ts`).** Every
+  listing is well-formed: kind known, price positive, rent only on shop/rental, area is a real
+  AREA_SKINS area, band well-formed, blurb in voice, storageTier ≥ 1; DEEDS are unique (one deed,
+  one door); LIVE_PROPERTIES are all real. The economy test proves the price walk is deterministic
+  + drifts, the lawyer's tenth, the FLIP profits when furnished, the garnish math, rent, and net
+  worth. The verdict prints **8 properties**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (8 properties) + full
+  **vitest** green (+22: the property economy 11 + the v10→v11 migration 2, plus the existing
+  suites re-green at v11) + `vite build` clean. No FNV re-pin, no frozen-core change (the registry
+  + economy are data/logic, not map generators). §A4.13 amended to canon in the same commit.
+- **Consequences:** the wealth + base spine is settled and tested — you can price, finance, buy,
+  rent, flip, and net-worth a property in pure math today. M30 makes a bought home editable (the
+  furniture catalog + the editor scene + COZINESS feeding `sellProceeds`); the agency/lawyer/S&L
+  INTERIORS + the buy/sell UI + live placement of 27 MAPLE land on this spine in Otterbrook's
+  session and each chapter thereafter (the M18-Part-B way).
