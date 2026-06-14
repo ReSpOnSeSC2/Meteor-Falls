@@ -364,6 +364,57 @@ will trickle in.
 
 ---
 
+## 19. Animation requirements & frame contracts
+
+**Every authored PNG that replaces an engine-animated texture MUST be a frame
+sheet containing all the frames the animation expects — never a single still.**
+The engine binds animations to texture frames at boot; a one-frame image where a
+sheet is expected reads as a frozen pose (and can crash if frames are missing).
+
+### What the engine animates (frame sheets required)
+
+| Category | Animated how | Frames | Sheet layout | Status |
+|---|---|---:|---|---|
+| Overworld characters | frame anim: `<id>-idle/walk/run-<dir>` | **46** | 4 cols × 12 rows of 24×32 = **96×384** | ✅ all 47 complete |
+| Hero battle busts | frame anim: idle/cast/pray/hurt… | **18** | 4 cols × 5 rows of 32×32 = **128×160** | ✅ 5 complete |
+| Hero stage battlers | frame anim: swing/cast/throw/aim | **14** | 4 cols × 4 rows of 28×36 = **112×144** | ✅ 5 complete |
+| Mourning angels (`angel_<id>`) | `*-float` 2-frame loop | **2** | 2 cols of the angel cell | procedural (author ⇒ 2 frames) |
+| Glint (`glint-flit`) | 2-frame loop | **2** | — | procedural |
+| Dog (`dog-walk`/`-left`) | 4-frame (E + W trot) | **4** | — | procedural |
+| Picnic songbird | 2 hop frames | **2** | — | procedural |
+| Run dust / Ember sparkle / gift box | short FX frame runs | 2–4 | — | procedural |
+
+### What is NOT frame-animated (a single still is correct)
+
+- **Enemies & bosses** — the battle scene gives every foe a floating **breath bob
+  via a y-tween** on the static image (`BattleScene` ~line 526). One PNG per wear
+  stage (`w0/w1/w2`) is correct; do **not** author per-frame enemy animation
+  unless we add a real attack-telegraph sheet later (a deliberate future feature,
+  not a current gap).
+- **Item / ability / status icons, font, tiles, props, facades, battle
+  backgrounds** — static (backgrounds are shader-animated in code, not by frames).
+- **Vehicles** — multi-**view** (facing swaps), not multi-frame animation; wheels
+  don't spin by frame.
+
+### The frame audit (this pass)
+
+Swept every authored asset on disk against the contract above:
+
+- **Characters:** 47/47 sheets are 96×384 — full walk + run + idle. **0 mis-framed.**
+- **Busts:** 5/5 at 128×160 (18 frames). **Battlers:** 5/5 at 112×144 (14 frames).
+- **Enemies:** 108 single-frame images — correct (engine-tweened).
+
+**Conclusion: no current image needs animation frames added.** The only loose end
+is **47 orphaned `*_8dir_24x32.png`** sheets, superseded by the `*_anim_46_…`
+sheets and no longer referenced — safe to delete (a cleanup, not an animation gap).
+
+### Rule for all future authored art
+
+When a package below produces art for an **animated** slot (characters, busts,
+battlers, and any new animated prop/FX), ship the **full frame sheet** in the
+exact layout above — author every frame, don't hand back a single pose and expect
+the bridge to synthesise the cycle. Static slots stay single-image.
+
 ## Recommended production order
 
 The art that's already authored covers leads + NPCs + Otterbrook + Ch.1–3
