@@ -1,5 +1,5 @@
 /**
- * THE DISGUISE / COSTUME SYSTEM (S18 Movement 31, ADR-071) — §A6 sneaks. Don a
+ * THE DISGUISE / COSTUME SYSTEM (S18 Movement 31, ADR-072) — §A6 sneaks. Don a
  * disguise to blend with a faction (the Smilers, palace guards, Hoaxula's park
  * cast); NPCs of that faction read you as one of them. Getting "made" is a FIGHT,
  * never a fail (the EarthBound spirit). The rules live in `src/engine/disguise.ts`;

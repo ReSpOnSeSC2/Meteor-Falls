@@ -4134,7 +4134,123 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   element). Live placement of the three Old-World catalogs (shops + gift-boxes + quest rewards) follows in
   each chapter's own landing session, the M18-Part-B way.
 
-## ADR-065 — S18 (Movement 25): AREA-TRUE BUILDINGS — every canon area owns its skin
+## ADR-065 — S17 (Movement 20): THE FAR-WORLD CATALOG — the third regional pour (Ch.6 Africa · Ch.7 India · Ch.8 China)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the S17 "THE GREAT CATALOG" decree, Movement 20 — the THIRD regional pour, copying
+  the M19 template (ADR-064) ×3 across the Far-World. Ships **DEFINE + ICON + PRICE + BAND + the per-region
+  validator MANIFEST ONLY**, green. Ch.6/7/8 are UNLANDED (no maps/shops/quests yet, ADR-047), so — exactly
+  as M19 — there is nowhere to place items this movement: the validator is the record that the catalog
+  exists and is complete, and live placement happens in each chapter's own session, the M18-Part-B way.)
+- **Context:** ADR-061 readied the schema/mechanics for ~500 items; ADR-062 built THE ICON FORGE; ADR-063
+  poured + placed the Americas (Ch.1/2 → 42 + 42); ADR-064 poured the Old-World (Ch.3/4/5 → 42/41/41). M20
+  pours the next three regions toward the §A8 ~40/region target: **ch6 0→41, ch7 0→41, ch8 0→41** (+123
+  items, **214 → 337**). Pure data where the forge allows; hand-drawn only for the signatures (the hero
+  weapon rungs incl. the boss-drop tops, the named story-grade keys, the Riddle Ring).
+- **Decision — the pour (`src/data/items.ts`).** +123 ITEMS literals (each `I({…})` + an `ITEM_BAND` row),
+  region-true (§A11.7), in §A11 voice, priced to §A9 (a full regional refresh ≈ two chapters of income; the
+  chapters get richer climbing — Ch.6 > Ch.5, Ch.7 > Ch.6, Ch.8 > Ch.7, anchored to the §A6 levels 30/35/40).
+  Per region (41 each):
+  - **Ch.6 AFRICA (+41, savanna ochre + indigo):** Jay's **Aluminum Bat** → **Hall-of-Famer** (the §A8 mid +
+    top; the Hall-of-Famer is THE LAUGHING SPHINX's boss-drop, price 0) + Mia's **Cast-Iron Pan**; Zanzibel-
+    market + savanna-crossing foods (the **Jollof Bowl** §A8, grilled corn, caravan dates/rations, suya,
+    injera, groundnut stew, akara, fufu…); kola-nut / hibiscus-zobo / baobab PP; the **Turban of Calm**
+    (ARMOR_LINE[ch6] hat rung — "of Calm" is the joke, it does nothing calming) + the savanna bodies; the
+    **RIDDLE RING** (§A10 #13 — the first real VIBE-on-gear, `vibe:10`, the field ADR-061 added, finally
+    filled; bespoke hand-drawn); the **Canteen of the Crossing** (§A10 #14, a reusable-water KEY); the
+    courier-mystic / dust-devil / griot / baobab charms; desert-ruin valuables (a laughing-Sphinx coin, a
+    riddle-stone shard, a bronze mask, a salt slab). Two TONICS — Savanna Grit (+Guts), Baobab Draught
+    (+max HP).
+  - **Ch.7 INDIA (+41, bazaar spice + jewel):** Mia's **Chef's Pan** (§A8 top; COBRA RAJA's boss-drop, price
+    0) + the **Cobra-Charmer's Flute** (a funny `kit` sidegrade for Pippa); Chandrapore street food (the
+    **Samosa** §A8, jalebi, pani puri, butter chicken, biryani, naan, pakora, dosa, the seven-spice chaat…);
+    masala chai / mango lassi / falooda PP; the **Star Pendant** (§A8 Ch.7 charm — a real treasure,
+    `luck:12 + guts`); the **SPICE BOX** (§A10 #15 — a KEY with the "cooked foods heal +50%" flavor, DATA);
+    the **Monkey Paw Charm** (§A10 #16 — +Luck, "the monkey breathing only"); the **Train Ticket** (3rd
+    class, §A8 key, bespoke); the volt-resist **RUBBER BROOCH** (`resists:{volt:25}` DATA); a holy-tier
+    revival (Sacred Ash, river-ghat vibhuti); palace/peacock valuables; a cinema stub (the movie about your
+    party). Two TONICS — Clarified Ghee (+max HP), **Turmeric Draught (+Defense, filling the last §A4.12
+    stat slot)**.
+  - **Ch.8 CHINA (+41, jade · lacquer-red · rice-paper):** Dorin's **River Beads** (defined early, §A8 next
+    rung) + the **Folded-Paper Fan** (THE PAPER DRAGON's own last fold — the boss-drop, price 0, a funny
+    `kit` sidegrade for Pippa); harbor + temple foods (the **Baozi** §A8, jiaozi, mooncake, congee, lychee,
+    duck pancakes, dan dan, egg tart, tofu claypot, sesame ball); jade tea / monks' broth / the §A8 **Temple
+    Incense** PP; the **SCROLL OF CALM** (§A10 #17 — cures Mushroomize, `reusable:true` DATA) + a consumable
+    **Spore Antidote** (the §A4.8 Mushroomize cure tier, debuting here); a temple revival (Joss Paper); the
+    jade/lacquer armor + the **Bamboo Hat** rung; paper-fold charms (the **Paper Crane** — Pippa's "false
+    folds" read), the fire-resist **Jade Salamander** (`resists:{fire:25}` DATA), jade luck; **Yak Treats**
+    (§A8 key, bespoke); porcelain/terracotta valuables + a **Harbor Lantern**. Two TONICS — Ginseng Root
+    (+max HP), Elder's Lesson (+Guts). *(§A8's "Monastery Bell Clapper" is Stone Brow Monastery = Ch.9
+    Romania, kept OUT of China per §A11.7.)*
+- **Decision — WHICH HERO RUNGS, and the boss-drop mapping.** The §A8 MID-RUNGS land here: Jay's
+  **Aluminum → Hall-of-Famer**, Mia's **Cast-Iron → Chef's**, Dorin's **River Beads** (defined early like
+  `cedar_beads`/`pellet_popper`, banded to where it's earned — the Lotus Harbor docks). Each boss-drop top
+  is a price-0 signature: **Hall-of-Famer** off THE LAUGHING SPHINX (Ch.6), **Chef's Pan** off COBRA RAJA
+  (Ch.7), the **Folded-Paper Fan** off THE PAPER DRAGON (Ch.8). All reuse the bat/pan/beads silhouettes
+  (`drawBatIcon`/`drawPanIcon`/`drawBeadsIcon` — `drawBeadsIcon` gained an optional `ramp` so cedar EARTH →
+  river BLUE stays byte-distinct) for the menu face + a held WEAPON_ART swing. The two funny kit sidegrades
+  (cobra-flute, paper-fan) ride Pippa's `kit` class with bespoke menu faces.
+- **Decision — every face forged or hand-drawn, both-directions + distinct (`spritegen/{icons,weapons,
+  iconforge}.ts`).** The generic tail is ONE `() => forgeIcon({ subcat, band, detail, seed: id })` row each;
+  the signatures stay bespoke (the hero weapon rungs; the named keys Train Ticket / Yak Treats / Spice Box /
+  Scroll of Calm; the Riddle Ring's charm trinket). One new forge SUBCAT — **`lantern`** (Lotus Harbor's
+  paper lanterns; additive, palette-only, ADR-020 by construction) — bringing the forge to **56
+  subcategories**. The distinctness sweep caught exactly **seven** seeded collisions (akara/empanada,
+  kola/bug-juice, riddle-shard/crown-jewel, jeweled-pagri/paper-crown, star-ruby/amber-chunk & the gallery
+  gem, baozi/crumpet, sesame-ball/dog-sized-berry — the ch-pool overlaps, exactly as M19's three), each
+  fixed by a detail/ramp nudge — the test working as designed.
+- **THE THREE NEW-MECHANIC DECISIONS — all DATA-only, bindings DEFERRED (the M19 pattern, decided
+  explicitly):**
+  1. **heroResist binding — DEFERRED.** The Rubber Brooch (`volt`) and Jade Salamander (`fire`) ship their
+     `resists` as DATA (summed by `heroResist`, capped 80%, shown in STATUS since ADR-061), joining M19's
+     freeze pendants — so the §A8 fire/freeze/volt resist gear now exists. Still **no shipped enemy carries
+     an elemental move** (ADR-061), so resist% remains inert in play; the actual damage-path binding stays
+     the flagged debt of the first chapter that LANDS with an elemental enemy (it ships then with its own
+     ADR + §A7/§A6 amendment + a both-directions gate + battle-math tests). **No `battle/formulas.ts` change,
+     no `EnemyDef` element field, no save migration, no Bible amendment.**
+  2. **The Spice Box ("cooked foods heal +50%") — DATA-only.** Shipped as a KEY item carrying the flavor;
+     the held-item food multiplier (a `cooked` food tag + the multiplier in the food-use heal path) is a NEW
+     mechanic, deferred to Ch.7's landing. No food-path change, no Bible amendment this movement.
+  3. **The Scroll of Calm (cures Mushroomize, REUSABLE) — DATA-only.** Shipped as a `cure` with
+     `cures:['mushroomize']` and `reusable:true` (the canonical §A10 #17 data), beside a consumable Spore
+     Antidote tier. The battle/menu STATUS-cure path does not yet RESPECT `reusable` on cures (it consumes
+     regardless); that one-line binding is deferred to Ch.8's landing — kept consistent with the deferred
+     reusable-revive Defibrillator (ADR-064). Today the item is UNLANDED (nothing grants it), so the dormant
+     flag is harmless forward-compatible DATA. No cure-path change, no Bible amendment.
+  Because all three ship as §A8-anticipated DATA with NO mechanic bound, the **GAME_BIBLE needs no amendment
+  this movement** (pouring §A8/§A10 items is implementing canon, not introducing a mechanic — the validator
+  manifest is the record, exactly as M18/M19).
+- **Decision — the validator tables widen, the floor ratchets (`tools/content-validate.ts`).** `WEAPON_LADDER`
+  += `ch6` (Jay's 2 rungs + Mia's Cast-Iron) / `ch7` (Mia's Chef's + the cobra-flute) / `ch8` (Dorin's River
+  Beads + the paper-fan); `PP_LINE` += `ch6`/`ch7`/`ch8` (3 each); `ARMOR_LINE` += `ch6`/`ch7`/`ch8` (4 each,
+  the hat rung first); `ITEM_FX` (in `battle/fxRegistry.ts`) += the 6 new thrown battle goods; `BAND_FLOOR`
+  ratchets **ch6 0→41, ch7 0→41, ch8 0→41** (the spine's "set the floor to the count" rule). The charms/arms
+  stay GENERIC (un-tagged), so no SET_REGISTRY rows this movement — the Bible names no Far-World hero SET
+  (M21 may). The verdict prints **337 items (337 icons)**; bands ch6:41 ch7:41 ch8:41.
+- **Verification:** `npm run validate` green (**337 items / 337 icons** across 10 chapters; bands ch1:42
+  ch2:42 ch3:42 ch4:41 ch5:41 ch6:41 ch7:41 ch8:41 ch9:2 cross:4; the per-region weapon/pp/armor ladders pass
+  both directions) + `tsc --noEmit` clean + full **vitest 745 green** (+7: the M20 catalog test — ≈40/region,
+  the §A8 mid-rungs climb with boss-drop tops priced 0, the Riddle Ring fills `vibe:10`, the volt+fire resist
+  pendants carry DATA, the Spice Box/Scroll-of-Calm ship per the three decisions, the M20 tonics fill the
+  §A4.12 Defense slot, the hat-ladder rungs land; the distinctness sweep + the 56-subcat forge gallery still
+  green at 337) + `vite build` clean + `npm run art:icons` re-rendered (`--region ch6/ch7/ch8`, `--forge`) and
+  read BY EYE (ADR-059/060 — not `preview_screenshot`): Africa savanna-ochre/indigo, India bazaar-jewel,
+  China jade/lacquer-red/rice-paper, the new `lantern` reading clean, no AI smell. No FNV re-pin, no
+  frozen-core / world_block change (items/icons/forge are not map generators); no save migration (inventory
+  references ids; tonics/resists/reusable already ride the ADR-061 v9 schema). UNLANDED held: no maps*.ts /
+  shops.ts / quests touched.
+- **Consequences:** the Far-World catalog is poured — Africa's market-music savanna fare + the Riddle Ring's
+  +10 Vibe, India's bazaar feast + the Star Pendant + the volt-resist brooch, China's harbor/temple table +
+  the reusable Scroll of Calm — every face distinct, every line in voice, banded and validator-pinned. The
+  §A4.12 tonic line now covers all eight stats (Turmeric fills Defense); the §A8 resist gear covers
+  fire/freeze/volt. The template holds for the LAST-WORLD (M21, ADR-066 — Ch.9 Romania / Ch.10
+  Alaska→Hawaii→Mars: Dorin's bead tops, the Hallelujah Bell, the endgame tonics, the House Key as the last
+  item, ~500 total). Three mechanics now stand staged-not-bound — `heroResist` damage, the Spice Box food
+  multiplier, the reusable-cure path — each the clearly-flagged debt of its landing chapter (or M24's
+  verification), each to ship with its own ADR + Bible amendment + both-directions gate + tests. Live
+  placement of the three Far-World catalogs follows in each chapter's own session, the M18-Part-B way.
+
+## ADR-066 — S18 (Movement 25): AREA-TRUE BUILDINGS — every canon area owns its skin
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 "PROPERTY & THE LIVING WORLD", Movement 25 — the lowest-risk,
@@ -4183,7 +4299,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   to drive these streets and Movement 29 (the property market) to put agencies, lawyers, and
   homes on these blocks. First movement of S18 lands.
 
-## ADR-066 — S18 (Movement 26): THE VEHICLE FORGE + THE TRAFFIC SYSTEM — a world with wheels
+## ADR-067 — S18 (Movement 26): THE VEHICLE FORGE + THE TRAFFIC SYSTEM — a world with wheels
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 26 — the art + ambiance foundation the control system
@@ -4235,7 +4351,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   planes, and subs. The live OverworldScene traffic render + the new road fixtures (gas/bus
   stations, garages, driveways) are the documented next step.
 
-## ADR-067 — S18 (Movement 27): THE CONTROL SYSTEM — the borrowed hands (Puppet + Clicker)
+## ADR-068 — S18 (Movement 27): THE CONTROL SYSTEM — the borrowed hands (Puppet + Clicker)
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 27 — the signature new toy. It also builds the
@@ -4281,7 +4397,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   field-casts and gates; M33 scales Puppet/Clicker up the `VEHICLE_SPECS` terrain axis into the
   fleet. The seat-fit + gate-unlock math is settled and tested.
 
-## ADR-068 — S18 (Movement 28): OVERWORLD PSI — powers as keys (the puzzle gates)
+## ADR-069 — S18 (Movement 28): OVERWORLD PSI — powers as keys (the puzzle gates)
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 28 — reuses the M27 overworld-ability spine; the §A4.11
@@ -4315,7 +4431,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   non-missable, retry-safe. The cast FX + the per-map obstacle props + the tile+PROP BFS re-proof
   (cleared-opens / present-never-strands) land with each dungeon session, on this spine.
 
-## ADR-069 — S18 (Movement 29): THE PROPERTY MARKET — deeds, agencies, lawyers & the flip
+## ADR-070 — S18 (Movement 29): THE PROPERTY MARKET — deeds, agencies, lawyers & the flip
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 29 — the wealth + base spine. Build the SYSTEMS; M30
@@ -4352,7 +4468,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   INTERIORS + the buy/sell UI + live placement of 27 MAPLE land on this spine in Otterbrook's
   session and each chapter thereafter (the M18-Part-B way).
 
-## ADR-070 — S18 (Movement 30): THE HOME EDITOR — Sims-style free-placement furniture
+## ADR-071 — S18 (Movement 30): THE HOME EDITOR — Sims-style free-placement furniture
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 30 — the fun heart of the property layer; needs M29's
@@ -4394,7 +4510,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   SCENE (the ghost preview, the catalog wheel, touch/pad placement) + the live HOME GOODS store +
   drawing the few new furniture sprites land on this spine when an owned home's session arrives.
 
-## ADR-071 — S18 (Movement 31): THE STORY WEAVE — the trust thread, the clicker question, the disguise sneaks
+## ADR-072 — S18 (Movement 31): THE STORY WEAVE — the trust thread, the clicker question, the disguise sneaks
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 31 — wiring the new mechanics into §A6 as the two game-long
@@ -4426,7 +4542,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   vehicles + M27 control), the plane-interior travel scene, the Cobra Raja DEAD-AIR-HELMET boss
   (a `mind_immune` phase-1), and the beat dialogue — each landing with its chapter session.
 
-## ADR-072 — S18 (Movement 32): THE PAPERBOY — the minigame + the prize
+## ADR-073 — S18 (Movement 32): THE PAPERBOY — the minigame + the prize
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 32 — a self-contained paused-world minigame, the
@@ -4455,7 +4571,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   PaperboyScene (the renderer, the paper-stand prop, the HUD) drops onto this sim, and the prize
   charm pours into §A8 with its icon when the catalog session next runs.
 
-## ADR-073 — S18 (Movement 33): THE FLEET SCALES — boats, planes, subs & purchasing
+## ADR-074 — S18 (Movement 33): THE FLEET SCALES — boats, planes, subs & purchasing
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 33 — the traversal capstone; needs the M27 control system +
@@ -4488,7 +4604,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   piloting SCENES (the water-handling momentum, takeoff/landing beats, the dive map layer) render
   over these rules when their chapters land; the M26 fleet sprites are already drawn for them.
 
-## ADR-074 — S18 (Movement 34): BALANCE & THE GREAT VERIFICATION — the Fortune Arc
+## ADR-075 — S18 (Movement 34): BALANCE & THE GREAT VERIFICATION — the Fortune Arc
 
 - **Date:** 2026-06-14
 - **Status:** Accepted (S18 Movement 34, the last — the curve + the consolidated proof that S18

@@ -607,7 +607,7 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // fresh. The forge (Movement Two) draws each area's growth from its own slice.
   for (const b of GENERATED_BUILDINGS) addPixmap(scene, b.name, drawCityBuilding(b.opts));
 
-  // THE VEHICLE FORGE (S18 M26, ADR-066): the living world's cars/bikes/buses/
+  // THE VEHICLE FORGE (S18 M26, ADR-067): the living world's cars/bikes/buses/
   // trucks/machinery + the deferred fleet (boats/planes/subs), each a deterministic
   // paint variant. The traffic system + the control system + the fleet all draw
   // their props from here; flip/rotate happens at runtime.

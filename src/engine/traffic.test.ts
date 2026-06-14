@@ -1,5 +1,5 @@
 /**
- * S18 Movement 26 (ADR-066) — THE TRAFFIC SYSTEM safety + determinism proofs.
+ * S18 Movement 26 (ADR-067) — THE TRAFFIC SYSTEM safety + determinism proofs.
  *
  * The §B4 / M26 safety law, proven over many time-steps on a dense road graph:
  *   1. NO CRUSH — a vehicle never shares the player's cell.

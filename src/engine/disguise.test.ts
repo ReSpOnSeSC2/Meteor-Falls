@@ -1,5 +1,5 @@
 /**
- * S18 Movement 31 (ADR-071) — THE DISGUISE / COSTUME SYSTEM (§A6 sneaks).
+ * S18 Movement 31 (ADR-072) — THE DISGUISE / COSTUME SYSTEM (§A6 sneaks).
  * Blend-by-faction, the deterministic "made" check, and the always-a-fight law.
  */
 import { describe, it, expect } from 'vitest';

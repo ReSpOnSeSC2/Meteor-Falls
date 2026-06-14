@@ -1,5 +1,5 @@
 /**
- * S18 Movement 29 (ADR-069) — THE PROPERTY ECONOMY (§A4.13).
+ * S18 Movement 29 (ADR-070) — THE PROPERTY ECONOMY (§A4.13).
  *
  * Proves the buy/sell/finance/rent/price-walk math the agency, lawyer, and S&L
  * desk ride on — deterministic (ADR-008 byte-equal replay), and the flip loop

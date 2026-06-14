@@ -223,7 +223,7 @@ export const MIGRATIONS: MigrationStep[] = [
   {
     to: 10,
     migrate(raw) {
-      // S18 M27 (ADR-067): mindwarp_a RE-STAGED from rex's L21 level unlock to the
+      // S18 M27 (ADR-068): mindwarp_a RE-STAGED from rex's L21 level unlock to the
       // Ch.3 PUPPET awakening (the_first_borrow / `awake_mindwarp_a`). Availability =
       // unlocks ∪ awakened flags, so a save that ALREADY earned Mind Warp at L21 must
       // keep it: backfill the awakening flag for any save whose Jay (rex) is ≥ L21
@@ -242,7 +242,7 @@ export const MIGRATIONS: MigrationStep[] = [
   {
     to: 11,
     migrate(raw) {
-      // S18 M29 (ADR-069): THE PROPERTY MARKET — a new per-home item store (the
+      // S18 M29 (ADR-070): THE PROPERTY MARKET — a new per-home item store (the
       // footlocker), keyed by property id. A pre-v11 save owned no property and
       // stored nothing home-side, so an empty map is its true history. Ownership,
       // loans, and the price walk ride ADR-015 flags (no field needed for those).
@@ -254,7 +254,7 @@ export const MIGRATIONS: MigrationStep[] = [
   {
     to: 12,
     migrate(raw) {
-      // S18 M30 (ADR-070): THE HOME EDITOR — per-home furniture layouts. A pre-v12
+      // S18 M30 (ADR-071): THE HOME EDITOR — per-home furniture layouts. A pre-v12
       // save decorated nothing, so an empty map is its true history. Coziness is
       // computed from this; an empty layout is coziness 0 (the resale floor).
       if (!isObj(raw.homeLayouts)) raw.homeLayouts = {};

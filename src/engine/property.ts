@@ -1,5 +1,5 @@
 /**
- * THE PROPERTY ECONOMY (S18 Movement 29, ADR-069) — §A4.13 buy / sell / finance /
+ * THE PROPERTY ECONOMY (S18 Movement 29, ADR-070) — §A4.13 buy / sell / finance /
  * rent / the seeded price walk. Pure, deterministic math (ADR-008 — same save +
  * same seed replays byte-equal): the agency, the lawyer's office, and the S&L loan
  * desk all read these functions; the OverworldScene owns the interiors + the UI.

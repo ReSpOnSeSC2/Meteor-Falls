@@ -1,5 +1,5 @@
 /**
- * S18 Movement 27 (ADR-067) — THE CONTROL SYSTEM spine.
+ * S18 Movement 27 (ADR-068) — THE CONTROL SYSTEM spine.
  *
  * Proves the §A4.10 rules the OverworldScene's wheel UI rides on: targeting +
  * range, the single helmet/shield counter, PP cost, the seat-fit ride/remote

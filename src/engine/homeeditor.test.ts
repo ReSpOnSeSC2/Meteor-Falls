@@ -1,5 +1,5 @@
 /**
- * S18 Movement 30 (ADR-070) — THE HOME EDITOR (§A4.14).
+ * S18 Movement 30 (ADR-071) — THE HOME EDITOR (§A4.14).
  *
  * Proves the placement law (no overlap, never block the door, room stays
  * traversable — a furnished home can't soft-lock), rotation footprints,

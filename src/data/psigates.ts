@@ -1,5 +1,5 @@
 /**
- * PSI GATES (S18 Movement 28, ADR-068) — the §A4.11 "powers as keys" registry:
+ * PSI GATES (S18 Movement 28, ADR-069) — the §A4.11 "powers as keys" registry:
  * overworld obstacles that REACT to a field-cast PSI key. PSI Fire burns vine
  * walls / lights furnaces / melts ice; PSI Freeze bridges waterfalls/geysers/
  * lakes into crossable ice; PSI Flash reveals hidden ways. Each chapter dungeon

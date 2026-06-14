@@ -1,5 +1,5 @@
 /**
- * S18 Movement 25 (ADR-065) — AREA-TRUE BUILDINGS, both directions.
+ * S18 Movement 25 (ADR-066) — AREA-TRUE BUILDINGS, both directions.
  *
  * Mirrors the content-validate `area-skins` gate so a CI run without the
  * validator still catches a forgotten roster, an empty family×ramp filter, a

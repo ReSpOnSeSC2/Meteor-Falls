@@ -1,5 +1,5 @@
 /**
- * THE STORY THREADS (S18 Movement 31, ADR-071) — §A4.10's two game-long arcs as
+ * THE STORY THREADS (S18 Movement 31, ADR-072) — §A4.10's two game-long arcs as
  * ORDERED, FLAG-CHAINED, NON-MISSABLE beat registries:
  *
  *   THE TRUST THREAD (Jay's mirror — free will). Opens the first time the others

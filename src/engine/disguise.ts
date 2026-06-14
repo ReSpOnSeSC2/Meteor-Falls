@@ -1,5 +1,5 @@
 /**
- * DISGUISE RULES (S18 Movement 31, ADR-071) — §A6 sneaks, pure logic. Whether a
+ * DISGUISE RULES (S18 Movement 31, ADR-072) — §A6 sneaks, pure logic. Whether a
  * costume blends you past a faction, and the "made" check (a deterministic roll vs.
  * an NPC's alertness). Getting made is ALWAYS a fight, never a fail.
  */

@@ -1,5 +1,5 @@
 /**
- * S18 Movement 34 (ADR-074) — BALANCE & THE GREAT VERIFICATION (§A9 Fortune Arc).
+ * S18 Movement 34 (ADR-075) — BALANCE & THE GREAT VERIFICATION (§A9 Fortune Arc).
  *
  * Proves the back-half wealth curve is well-formed (monotonic, hits the §A9
  * endpoints, climbs as a smooth arc not an impossible jump), the net-worth math +

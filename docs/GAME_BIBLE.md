@@ -151,7 +151,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > cash; these are the item path. The numbers 10/11 in this list are reserved
 > for the unlanded S16 systems (the dead-air helmet, the overworld PSI keys).)*
 
-> *(Added 2026-06-14 per Appendix rule 6, ADR-067 — **§A4.10 THE CONTROL SYSTEM
+> *(Added 2026-06-14 per Appendix rule 6, ADR-068 — **§A4.10 THE CONTROL SYSTEM
 > (the borrowed hands).** Two complementary powers the party earns when it becomes
 > THREE (Ch.3, on Milo's join), staged as ADR-035 awakenings/builds. **JAY — VIBE
 > PUPPET (mind control of PEOPLE):** a higher turn of his Hypno line. PUPPET (field)
@@ -177,7 +177,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > SCALES all game (ADR-035 staging): cars → trucks/buses → boats → planes → subs →
 > yachts.)*
 
-> *(Added 2026-06-14 per Appendix rule 6, ADR-068 — **§A4.11 PSI IN THE WORLD
+> *(Added 2026-06-14 per Appendix rule 6, ADR-069 — **§A4.11 PSI IN THE WORLD
 > (powers as keys).** Beyond battle, certain abilities are OVERWORLD KEYS,
 > EarthBound-style: **PSI Fire** burns vine walls / lights furnaces / melts ice;
 > **PSI Freeze** freezes coolant pipes, waterfalls, and geysers into crossable ice;
@@ -193,7 +193,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > Pinned both directions (`psi-gate` gate + `psi.test.ts`): every gate's key matches
 > its kind and has a real teacher, and every dungeon band (ch3–10) carries one.)*
 
-> *(Added 2026-06-14 per Appendix rule 6, ADR-069 — **§A4.13 THE PROPERTY MARKET
+> *(Added 2026-06-14 per Appendix rule 6, ADR-070 — **§A4.13 THE PROPERTY MARKET
 > (deeds, agencies, lawyers, the flip).** Real estate is a buyable, sellable, OWNABLE
 > layer over the world and the back-half wealth engine (§A9 Fortune Arc). Every town
 > has a REAL-ESTATE AGENCY (an agent with one §A11 obsession — she calls every room
@@ -214,7 +214,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > chapters. The Ember trail never cares about money; net worth is a number, the callers
 > are the score.)*
 
-> *(Added 2026-06-14 per Appendix rule 6, ADR-070 — **§A4.14 THE HOME EDITOR (a
+> *(Added 2026-06-14 per Appendix rule 6, ADR-071 — **§A4.14 THE HOME EDITOR (a
 > Sims-style base you make yours).** Any home you own can be decorated with
 > FREE-PLACEMENT furniture on its room tile grid: open the editor (the paused-world
 > sub-scene precedent), pick a piece from the FURNITURE CATALOG (`src/data/furniture.ts`
@@ -233,7 +233,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > COUNTER (picnic baskets), THE PET BED (Biscuit), plus décor that matters (plant,
 > fish tank, gnome, sofa, lamp, rug). The decor is the soul; the buff is the wink.)*
 
-> *(Added 2026-06-14 per Appendix rule 6, ADR-071 — **§A6 STORY WEAVE: the two
+> *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
 > NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
 > driven by `src/engine/storythread.ts`, validated ordered + single-terminal). THE
@@ -254,7 +254,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > the Cobra Raja DEAD-AIR-HELMET boss are the per-chapter scene staging that rides
 > these spines + the M26 vehicles + the M27 control system.)*
 
-> *(Added 2026-06-14 per Appendix rule 6, ADR-073 — **§A4.10/§A5 THE FLEET (the
+> *(Added 2026-06-14 per Appendix rule 6, ADR-074 — **§A4.10/§A5 THE FLEET (the
 > traversal capstone).** The control power SCALES up the chapters (ADR-035 staging,
 > `FLEET_STAGES`): cars (Ch.3) → trucks/buses/machinery (Ch.5) → boats (Ch.8) →
 > planes + helicopters (Ch.10) → submarines/yachts (late) — each a staged story
@@ -292,7 +292,7 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 
 The world FEELS open: every region has off-path screens, optional caves, side quests, and once Teleport unlocks (Ch.6) the whole visited world reopens — but the Ember trail keeps the story linear and completable.
 
-**The road/traffic layer (S18 M26, ADR-066).** On TOP of the set-piece travel table above
+**The road/traffic layer (S18 M26, ADR-067).** On TOP of the set-piece travel table above
 (which is unchanged — the Embers keep the journey linear), the world's streets now have
 WHEELS: a deterministic, seeded TRAFFIC system (`src/engine/traffic.ts`) drives cars, buses,
 trucks, bikes, and machinery over a map's road graph as living ambiance + the control
@@ -489,7 +489,7 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 - Main story: 32–38 hr (10 chapters averaging 3–4 hr each, with larger cities and dungeons after Ch.3). Side quests and optional long-form content: +8–12 hr. Total planned playability target: **40–50 hr**. Boss attempts budgeted at 1.5 avg (grindy difficulty = some party wipes are expected and fine — that's EarthBound).
 - Cash economy tuned so a full equipment refresh per region costs ≈ 2 chapters of battle income → choices hurt a little, like 1995.
 
-> *(Amended 2026-06-14 per Appendix rule 6, ADR-074: THE FORTUNE ARC — the §A8/§A9
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-075: THE FORTUNE ARC — the §A8/§A9
 > property-tycoon wealth curve. The Ch.1–3 battle economy stays TIGHT (a refresh costs
 > ~2 chapters of income, above); on TOP of it, a player who leans into the property
 > market (buy/flip/rent — §A4.13) + the fleet (§A4.10/§A5) tracks a back-half NET-WORTH
@@ -511,7 +511,7 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > data, v5). 3v3 pickup at the cage pays EXP forever and fits any session.
 > The 40–50hr target above includes room for this long-form content.)*
 
-> *(Amended 2026-06-14 per Appendix rule 6, ADR-072: THE PAPERBOY — a fourth
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-073: THE PAPERBOY — a fourth
 > optional paused-world minigame alongside the Arcade, the Cage, and the Links.
 > Ride the M26 bicycle down a seeded 3-lane suburban street, throw papers into the
 > mailboxes, dodge the dog / sprinkler / parked car / open car door, and clear the
@@ -696,7 +696,7 @@ meteor-falls/
   resort, and Mars's neon husks + the lone NIGHT needle. Pinned BOTH directions
   (`CANON_AREAS` ⇄ `AREA_SKINS`, `area-skins` gate + `buildings.test.ts`): every area
   has a non-empty roster of REAL facades, no orphan slice, no reskin. *(Added 2026-06-13
-  per Appendix rule 6; extended 2026-06-14 alongside ADR-065.)*
+  per Appendix rule 6; extended 2026-06-14 alongside ADR-066.)*
 - **MAPS BREATHE, AND MOSTLY GROW (the size law).** Every map feels like a
   real place — organic irregular edges, varied block shapes + access (linear and
   sporadic), and NOOK variety (shacks, alleys, vacant lots, courtyards, rooftops,

@@ -1,5 +1,5 @@
 /**
- * THE VEHICLE FORGE CONTACT SHEET (S18 M26, ADR-066) — renders the whole vehicle
+ * THE VEHICLE FORGE CONTACT SHEET (S18 M26, ADR-067) — renders the whole vehicle
  * catalog through the real drawVehicle() into .shots/vehicles.png, the out-of-game
  * half of the vehicle-art review (the render-buildings / render-icons precedent).
  * A 16×24 hero block stands at the left of each row for scale, so "a vehicle reads
@@ -44,7 +44,7 @@ const sheetW = Math.max(...rowW) + PAD;
 const sheetH = PAD + rowH.reduce((s, rh) => s + rh + LABEL_H + GAP + 4, 0) + PAD;
 
 const sheet = new Pixmap(sheetW, sheetH).fill(px(RAMP.NIGHT, 1));
-drawTextInto(sheet, `THE VEHICLE FORGE — ${VEHICLE_CATALOG.length} paint variants across ${rows.length} types (ADR-066)`, PAD, PAD - 4 < 0 ? 0 : 0, px(RAMP.GOLD, 3));
+drawTextInto(sheet, `THE VEHICLE FORGE — ${VEHICLE_CATALOG.length} paint variants across ${rows.length} types (ADR-067)`, PAD, PAD - 4 < 0 ? 0 : 0, px(RAMP.GOLD, 3));
 
 let y = PAD + 6;
 for (let r = 0; r < rows.length; r++) {

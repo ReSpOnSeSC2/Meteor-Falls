@@ -1,5 +1,5 @@
 /**
- * S18 Movement 31 (ADR-071) — THE STORY THREADS (§A4.10).
+ * S18 Movement 31 (ADR-072) — THE STORY THREADS (§A4.10).
  *
  * Proves the Trust Thread + Clicker Question fire IN ORDER, the climax is earned
  * and non-missable, resolution reads, and finale callers accrue.

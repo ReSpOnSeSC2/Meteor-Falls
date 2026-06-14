@@ -1,5 +1,5 @@
 /**
- * THE HOME EDITOR (S18 Movement 30, ADR-070) — §A4.14, free-placement furniture.
+ * THE HOME EDITOR (S18 Movement 30, ADR-071) — §A4.14, free-placement furniture.
  * Pure placement logic, no Phaser: the editor SCENE (the ArcadeScene/HoopsScene
  * paused-world precedent) renders the ghost + the catalog; THIS owns the rules —
  * footprints, rotation, overlap, door-reachability, and COZINESS — so every one

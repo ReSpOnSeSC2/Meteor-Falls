@@ -284,7 +284,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S18 Movement 25 (ADR-065) — AREA-TRUE BUILDINGS: every named §A5/§A6 area owns
+// S18 Movement 25 (ADR-066) — AREA-TRUE BUILDINGS: every named §A5/§A6 area owns
 // its OWN AREA_SKINS slice (a distinct family-mix + ramp palette per the place's
 // feel), so no area is a reskin of another. Gated BOTH directions:
 //  · every CANON_AREA has a non-empty, duplicate-free roster of REAL facade sprites
@@ -318,7 +318,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S18 Movement 26 (ADR-066) — THE VEHICLE FORGE: every drivable/ambient vehicle
+// S18 Movement 26 (ADR-067) — THE VEHICLE FORGE: every drivable/ambient vehicle
 // is a deterministic paint variant carrying its true gameplay DATA (seats →
 // seat-fit, a collision footprint, the terrain it travels). Gated BOTH directions:
 //  · every VEHICLE_CATALOG variant names a real VEHICLE_SPECS type;
@@ -354,7 +354,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S18 Movement 28 (ADR-068) — OVERWORLD PSI GATES (§A4.11 "powers as keys"):
+// S18 Movement 28 (ADR-069) — OVERWORLD PSI GATES (§A4.11 "powers as keys"):
 // every chapter dungeon seeds ≥1 obstacle that reacts to a field-cast PSI key.
 // Gated BOTH directions:
 //  · every gate's kind is known, its `key` agrees with GATE_KEY[kind] (one truth),
@@ -378,7 +378,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S18 Movement 29 (ADR-069) — THE PROPERTY MARKET (§A4.13). Every listing is a
+// S18 Movement 29 (ADR-070) — THE PROPERTY MARKET (§A4.13). Every listing is a
 // well-formed, ownable property. Gated:
 //  · kind known; price positive; rent ONLY on shop/rental (homes/flips earn 0);
 //    a home payload sits only on a home; the area is a real AREA_SKINS area (M25);
@@ -407,7 +407,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S18 Movement 30 (ADR-070) — THE FURNITURE CATALOG (§A4.14). Every piece is a
+// S18 Movement 30 (ADR-071) — THE FURNITURE CATALOG (§A4.14). Every piece is a
 // well-formed, placeable, cozy thing. Gated:
 //  · function tag is known; footprint is positive; coziness ≥ 0; price > 0; band
 //    well-formed; a sprite key is named; the name is in voice;
@@ -431,7 +431,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S18 Movement 31 (ADR-071) — THE STORY THREADS (§A4.10) + the disguise sneaks.
+// S18 Movement 31 (ADR-072) — THE STORY THREADS (§A4.10) + the disguise sneaks.
 // The Trust Thread + the Clicker Question must be well-formed, ordered, non-missable
 // flag chains; disguises must blend into a canon faction.
 {
@@ -464,7 +464,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S18 Movement 32 (ADR-072) — THE PAPERBOY. The live route must be winnable (a
+// S18 Movement 32 (ADR-073) — THE PAPERBOY. The live route must be winnable (a
 // real goal, enough papers + houses) and the prize must be a flag + a finale caller.
 {
   const route = liveRoute();
@@ -487,7 +487,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   if (!prizeEarned(route, result)) fail('paperboy', 'a PERFECT run does not clear the prize goal — the route is unwinnable');
 }
 
-// S18 Movement 33 (ADR-073) — THE FLEET. Staging + craft must be sound:
+// S18 Movement 33 (ADR-074) — THE FLEET. Staging + craft must be sound:
 //  · every purchasable craft is a real VEHICLE_SPECS type whose terrain matches its
 //    venue (a marina sells water craft, an airfield/helipad sells air craft, a dealer
 //    road), at a positive price, with a unique title key-item, in voice;
@@ -528,7 +528,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// S18 Movement 34 (ADR-074) — BALANCE: the §A9 Fortune Arc must be a well-formed
+// S18 Movement 34 (ADR-075) — BALANCE: the §A9 Fortune Arc must be a well-formed
 // curve (Ch.1–10 in order, monotonic, ~$1K → $3B+, no impossible single jump).
 {
   const bands = FORTUNE_ARC.map((r) => r.band);
@@ -621,6 +621,13 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch5: {
       stamp_sling: 'pippa', needle_saber: 'pippa', thimble_bell: 'pippa', royal_red_pen: 'pippa',
     },
+    // M20 (ADR-065) — THE FAR-WORLD CATALOG: the §A8 MID-RUNGS. Jay's Aluminum →
+    // Hall-of-Famer (the Sphinx drop), Mia's Cast-Iron (ch6); Mia's Chef's Pan
+    // (the Cobra Raja drop) + the cobra-flute sidegrade (ch7); Dorin's River Beads
+    // (defined early) + the Paper Dragon's folded-paper fan (the boss drop, ch8).
+    ch6: { aluminum_bat: 'rex', hall_of_famer_bat: 'rex', cast_iron_pan: 'faye' },
+    ch7: { chefs_pan: 'faye', cobra_flute: 'pippa' },
+    ch8: { river_beads: 'dorin', paper_fan: 'pippa' },
     ch9: { cedar_beads: 'dorin' }, // Dorin's first beads — Romania (defined early)
   };
   const ladderAll: Record<string, { wielder: string; band: string }> = {};
@@ -647,6 +654,11 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch3: ['builders_tea', 'earl_grey', 'school_cocoa'], // M19 (ADR-064) — TEA AS PP
     ch4: ['cloudberry_cordial', 'birch_sap', 'gjende_coffee'], // M19 — the moor's cold drinks
     ch5: ['acorn_cup_tea', 'nectar_thimble', 'dewdrop_cordial', 'mint_julep_drop'], // M19 — tiny vessels
+    // M20 (ADR-065) — kola/zobo/baobab (ch6); chai/lassi/falooda (ch7); jade tea,
+    // monks' broth, and the §A8 Temple Incense (ch8)
+    ch6: ['kola_nut_drink', 'hibiscus_tea', 'baobab_juice'],
+    ch7: ['masala_chai', 'mango_lassi', 'falooda'],
+    ch8: ['jade_tea', 'monks_broth', 'temple_incense'],
   };
   const ppAll = new Set(Object.values(PP_LINE).flat());
   for (const id of ppAll) {
@@ -671,6 +683,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch4: ['fur_lined_hood', 'wool_sweater', 'oilskin_slicker', 'troll_hide_vest'],
     // M19: the Paper Crown heads Ch.5 + the jewel-box court bodies
     ch5: ['paper_crown', 'velvet_doublet', 'herald_tabard', 'ermine_cape'],
+    // M20 (ADR-065): the Turban of Calm heads Ch.6 (it does nothing calming) + the
+    // savanna bodies; the jeweled Pagri heads Ch.7 + the bazaar/palace bodies; the
+    // Bamboo Hat heads Ch.8 + the jade/lacquer/saffron bodies
+    ch6: ['turban_of_calm', 'kanga_wrap', 'savanna_cloak', 'mudcloth_vest'],
+    ch7: ['jeweled_pagri', 'silk_kurta', 'embroidered_sherwani', 'nawab_coat'],
+    ch8: ['bamboo_hat', 'silk_changshan', 'lacquer_robe', 'monks_robe'],
   };
   const armorAll = new Set(Object.values(ARMOR_LINE).flat());
   for (const id of armorAll) {
@@ -728,8 +746,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const item of Object.values(ITEMS)) if (item.band) bandCounts[item.band] += 1;
   const BAND_FLOOR: Record<string, number> = {
     // M18 (ADR-063) ratchets ch1 + ch2 to the Americas pour (≈40/region target);
-    // M19 (ADR-064) ratchets ch3 to the England pour (the Old-World, region by region)
-    ch1: 42, ch2: 42, ch3: 42, ch4: 41, ch5: 41, ch6: 0, ch7: 0, ch8: 0, ch9: 2, ch10: 0, cross: 4,
+    // M19 (ADR-064) ratchets ch3/4/5 to the Old-World; M20 (ADR-065) ratchets
+    // ch6/7/8 to the Far-World pour (Africa / India / China, region by region)
+    ch1: 42, ch2: 42, ch3: 42, ch4: 41, ch5: 41, ch6: 41, ch7: 41, ch8: 41, ch9: 2, ch10: 0, cross: 4,
   };
   for (const b of BANDS) {
     if (bandCounts[b] < BAND_FLOOR[b]) {
@@ -1065,7 +1084,7 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     // S14 — Ch.2's emotional center: the HOLLOW reveal (§A3 ladder amended:
     // Freeze α left Mia's L12 row in the same commit)
     cold_reads: { hero: 'faye', ability: 'vibe_freeze_a', flag: 'awake_freeze_a', dialogue: 'awake_cold_reads' },
-    // S18 M27 (ADR-067) — Ch.3 THE FIRST BORROW: the control system unlocks on
+    // S18 M27 (ADR-068) — Ch.3 THE FIRST BORROW: the control system unlocks on
     // Milo's join. mindwarp_a re-staged off rex's L21 row to this awakening (one
     // power, battle Mind Warp + field Puppet; the trust thread opens here).
     the_first_borrow: { hero: 'rex', ability: 'mindwarp_a', flag: 'awake_mindwarp_a', dialogue: 'awake_the_first_borrow' },

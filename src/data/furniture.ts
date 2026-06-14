@@ -1,5 +1,5 @@
 /**
- * THE FURNITURE CATALOG (S18 Movement 30, ADR-070) — §A4.14, the Sims-style base
+ * THE FURNITURE CATALOG (S18 Movement 30, ADR-071) — §A4.14, the Sims-style base
  * you make yours. Each piece is a footprint + a FUNCTION + a COZINESS value; the
  * home editor (`src/engine/homeeditor.ts`) places/moves/rotates them on a room's
  * tile grid and the layout saves per-home (`homeLayouts`, save v12).

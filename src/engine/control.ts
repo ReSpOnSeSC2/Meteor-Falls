@@ -1,5 +1,5 @@
 /**
- * THE CONTROL SYSTEM (S18 Movement 27, ADR-067) — the overworld-ability SPINE
+ * THE CONTROL SYSTEM (S18 Movement 27, ADR-068) — the overworld-ability SPINE
  * Jay's PUPPET, Milo's CLICKER, and (M28) the PSI casts all consume. Pure logic,
  * no Phaser: it answers WHO/WHAT can be controlled from here, whether a cast can
  * be paid for, whether the party can RIDE or must REMOTE-drive, and whether a

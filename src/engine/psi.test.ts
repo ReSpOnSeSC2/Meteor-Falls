@@ -1,5 +1,5 @@
 /**
- * S18 Movement 28 (ADR-068) — OVERWORLD PSI (§A4.11 powers as keys).
+ * S18 Movement 28 (ADR-069) — OVERWORLD PSI (§A4.11 powers as keys).
  *
  * Proves the field-cast rules + mirrors the content-validate `psi-gate` gate:
  * the right key clears the right obstacle, the learned-first law holds, and every

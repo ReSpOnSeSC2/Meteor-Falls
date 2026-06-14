@@ -1,5 +1,5 @@
 /**
- * OVERWORLD PSI (S18 Movement 28, ADR-068) — §A4.11 "powers as keys". The pure
+ * OVERWORLD PSI (S18 Movement 28, ADR-069) — §A4.11 "powers as keys". The pure
  * rules for FIELD-casting a PSI key at an obstacle: which ability counts as which
  * key, whether a hero has LEARNED it (a gate is never the sole teacher), and
  * whether a cast CLEARS a given gate. Reuses the M27 control spine for range +

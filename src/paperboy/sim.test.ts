@@ -1,5 +1,5 @@
 /**
- * S18 Movement 32 (ADR-072) — THE PAPERBOY sim.
+ * S18 Movement 32 (ADR-073) — THE PAPERBOY sim.
  *
  * Proves the minigame law: deterministic (same seed + tape → same score), a clean
  * route is winnable, hazards cost, a bad run floors at 0, and the prize gates on

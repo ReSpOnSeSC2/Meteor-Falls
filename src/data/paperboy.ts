@@ -1,5 +1,5 @@
 /**
- * THE PAPERBOY (S18 Movement 32, ADR-072) — the route config + the prize. The sim
+ * THE PAPERBOY (S18 Movement 32, ADR-073) — the route config + the prize. The sim
  * lives in `src/paperboy/sim.ts`; PaperboyScene renders it (the Arcade/Hoops/Links
  * sub-scene precedent), reachable from a paper-stand prop in Otterbrook/Brickton,
  * non-missable. The PRIZE is a finale CALLER + a flag (the paper-route tie-in, Mr.

@@ -1,5 +1,5 @@
 /**
- * THE PROPERTY MARKET (S18 Movement 29, ADR-069) — §A4.13 deeds, agencies,
+ * THE PROPERTY MARKET (S18 Movement 29, ADR-070) — §A4.13 deeds, agencies,
  * lawyers, and the flip. Real estate is a buyable, sellable, OWNABLE layer over
  * the world and the back-half wealth engine (§A9 Fortune Arc). This is the DATA
  * registry; the economy math lives in `src/engine/property.ts`, the agency/lawyer/

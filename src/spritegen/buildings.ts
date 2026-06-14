@@ -169,7 +169,7 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
     ...skinsFor(['market', 'civic'], [RAMP.GOLD, RAMP.ORANGE, RAMP.PAPER]),
   ],
 
-  // ─── S18 MOVEMENT 25 (ADR-065) — THE UNLANDED AREAS' SKINS ──────────────────
+  // ─── S18 MOVEMENT 25 (ADR-066) — THE UNLANDED AREAS' SKINS ──────────────────
   // Forward-looking rosters: every canon §A5/§A6 area registers its OWN slice now
   // (a distinct family-mix + ramp palette per the place's feel), so when its maps
   // land the forge already wears the right silhouette — no area is ever a reskin of
@@ -247,7 +247,7 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
 
 /**
  * THE CANON AREA LIST — every named §A5/§A6 settlement area that owns an AREA_SKINS
- * slice. The validator pins AREA_SKINS ⇄ this list BOTH directions (ADR-065): a new
+ * slice. The validator pins AREA_SKINS ⇄ this list BOTH directions (ADR-066): a new
  * chapter cannot forget its slice, and a slice cannot orphan a place that doesn't
  * exist. Add a place here AND give it a roster above, in the same change.
  */

@@ -190,3 +190,64 @@ describe('S17 M19 (ADR-064) — THE OLD-WORLD CATALOG pours Ch.3/4/5', () => {
     }
   });
 });
+
+describe('S17 M20 (ADR-065) — THE FAR-WORLD CATALOG pours Ch.6/7/8', () => {
+  const byBand = (b: string): ItemDef[] => Object.values(ITEMS).filter((i) => i.band === b);
+
+  it('Africa, India, and China each carry ≈40 items', () => {
+    expect(byBand('ch6').length).toBeGreaterThanOrEqual(40);
+    expect(byBand('ch7').length).toBeGreaterThanOrEqual(40);
+    expect(byBand('ch8').length).toBeGreaterThanOrEqual(40);
+  });
+
+  it("the §A8 MID-RUNGS land, each wielder-tagged, the boss-drop tops priced 0", () => {
+    // Jay's Aluminum → Hall-of-Famer, Mia's Cast-Iron → Chef's, Dorin's River Beads
+    expect(ITEMS.aluminum_bat.wielder).toBe('rex');
+    expect(ITEMS.cast_iron_pan.wielder).toBe('faye');
+    expect(ITEMS.river_beads.wielder).toBe('dorin');
+    expect(ITEMS.aluminum_bat.offense ?? 0).toBeLessThan(ITEMS.hall_of_famer_bat.offense ?? 0);
+    expect(ITEMS.cast_iron_pan.offense ?? 0).toBeLessThan(ITEMS.chefs_pan.offense ?? 0);
+    // the boss drops (Sphinx / Cobra Raja / Paper Dragon) are drops, not stock
+    expect(ITEMS.hall_of_famer_bat.price).toBe(0);
+    expect(ITEMS.chefs_pan.price).toBe(0);
+    expect(ITEMS.paper_fan.price).toBe(0);
+  });
+
+  it('THE RIDDLE RING finally fills the §A8 "+10 Vibe" field (§A10 #13)', () => {
+    expect(ITEMS.riddle_ring.kind).toBe('charm');
+    expect(ITEMS.riddle_ring.vibe).toBe(10); // the field ADR-061 added, now used
+    expect(ITEMS.riddle_ring.luck ?? 0).toBeGreaterThan(0); // still a charm (heroLuck)
+  });
+
+  it('the resist pendants carry volt + fire DATA (binding deferred, ADR-065)', () => {
+    // the §A8 ELEMENTAL RESIST gear: M19 shipped freeze, M20 ships volt + fire.
+    // resist% is summed by heroResist + shown in STATUS (ADR-061); the damage
+    // binding still waits for the first chapter that LANDS with an elemental enemy.
+    expect(ITEMS.rubber_brooch.resists).toEqual([{ element: 'volt', pct: 25 }]);
+    expect(ITEMS.jade_salamander_charm.resists).toEqual([{ element: 'fire', pct: 25 }]);
+  });
+
+  it('the Spice Box + Scroll of Calm ship per the three M20 DECISIONS (data-only)', () => {
+    // #15 Spice Box: a KEY with the "cooked foods heal +50%" flavor, NOT wired
+    expect(ITEMS.spice_box.kind).toBe('key');
+    // #17 Scroll of Calm: a Mushroomize cure, canonically REUSABLE (the cure-path
+    // binding that RESPECTS reusable is deferred — like M19's reusable Defibrillator)
+    expect(ITEMS.scroll_of_calm.cures).toContain('mushroomize');
+    expect(ITEMS.scroll_of_calm.reusable).toBe(true);
+    // the Mushroomize status (§A4.8) debuts here — a consumable cure tier too
+    expect(ITEMS.spore_antidote.cures).toContain('mushroomize');
+  });
+
+  it('the M20 tonics permanently raise their stat, filling the §A4.12 Defense slot', () => {
+    expect(ITEMS.turmeric_draught.boost).toEqual({ stat: 'defense', amount: 3 });
+    expect(ITEMS.savanna_grit.boost).toEqual({ stat: 'guts', amount: 3 });
+    expect(ITEMS.baobab_draught.boost).toEqual({ stat: 'hp', amount: 18 });
+  });
+
+  it('the §A8 hat-ladder rungs land (Turban of Calm / jeweled Pagri / Bamboo Hat)', () => {
+    for (const id of ['turban_of_calm', 'jeweled_pagri', 'bamboo_hat']) {
+      expect(ITEMS[id].kind, id).toBe('armor');
+      expect(ITEMS[id].defense ?? 0, id).toBeGreaterThan(0);
+    }
+  });
+});

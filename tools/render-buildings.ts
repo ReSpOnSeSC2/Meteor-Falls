@@ -156,7 +156,7 @@ console.log(`wrote .shots/buildings_s15i.png (${sheetW}x${sheetH} @2x)`);
   console.log(`wrote .shots/buildings_catalog.png (${w}x${h} @1x) — ${CITY_CATALOG.length} generated facades`);
 }
 
-/* ---- S18 M25 (ADR-065): PER-AREA SKINS — each area's slice, side by side, so
+/* ---- S18 M25 (ADR-066): PER-AREA SKINS — each area's slice, side by side, so
    "no two areas read alike" is READABLE by eye (otterbrook's warm low walk-ups vs
    minimus's tiny jewel-box vs lilleby's giants' towers vs mars's neon husks). ---- */
 {

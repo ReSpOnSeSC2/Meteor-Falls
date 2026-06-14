@@ -1,5 +1,5 @@
 /**
- * THE TRAFFIC SYSTEM (S18 Movement 26, ADR-066) — deterministic, seeded vehicle
+ * THE TRAFFIC SYSTEM (S18 Movement 26, ADR-067) — deterministic, seeded vehicle
  * movement over a map's road graph: the living-world ambiance the control system
  * (M27) later borrows. Pure logic, no Phaser, no Math.random / Date.now (Prime
  * Law 2) — the OverworldScene interpolates pixel positions between ticks and pools

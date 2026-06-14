@@ -685,6 +685,36 @@ function drawJadeFrogIcon(): Pixmap {
   return pm;
 }
 
+/* ---- S17 M20 (ADR-065): THE FAR-WORLD CATALOG — the one signature charm of
+ *      the pour. §A10 #13's RIDDLE RING is story-grade (the first real VIBE-on-
+ *      gear, +10 Vibe); it earns a hand drawing, not a forge stamp. ---- */
+
+/** the Riddle Ring (Ch.6 — §A10 #13) — a heavy savanna-gold band, an indigo
+ *  stone with a tiny carved glyph that nobody can quite read (the eldest stone's
+ *  riddle, made wearable). The first charm the §A8 "+10 Vibe" field finally fills. */
+function drawRiddleRingIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const gold = px(RAMP.GOLD, 2);
+  const goldL = px(RAMP.GOLD, 3);
+  const goldD = px(RAMP.GOLD, 1);
+  // the thick band, seen at an angle — a fat gold loop
+  pm.ellipse(6, 9, 4, 4, gold);
+  pm.ellipse(6, 9, 2, 2, C.outline); // the finger hole, dark
+  pm.ellipse(6, 9, 4, 4, gold); // re-lay the rim over the hole edge
+  pm.set(3, 9, goldL); // lit near shoulder
+  pm.set(9, 9, goldD); // far shoulder in shadow
+  pm.set(4, 11, goldD);
+  // the raised setting + the indigo riddle-stone up top
+  pm.rect(5, 3, 3, 3, goldL);
+  pm.rect(5, 3, 3, 3, px(RAMP.BLUE, 1)); // the stone bezel, deep indigo
+  pm.set(6, 4, px(RAMP.BLUE, 3)); // a facet catching light
+  // the carved glyph nobody can read (a tiny crooked mark)
+  pm.set(6, 3, px(RAMP.GOLD, 3));
+  pm.outline(C.outline);
+  pm.set(6, 4, C.white); // pure light on the stone — it hums
+  return pm;
+}
+
 /* ================================================================== */
 /* THE REGISTRY — every §A8 equippable, both directions enforced.      */
 
@@ -1104,6 +1134,137 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
   morale_medal: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch5', detail: 'star', seed: 'morale_medal' }) },
   lens_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch5', detail: 'stone', tint: RAMP.CYAN, seed: 'lens_charm' }) },
   census_quill_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch5', detail: 'stone', tint: RAMP.GOLD, seed: 'census_quill_charm' }) },
+
+  /* ============ S17 M20 (ADR-065) — THE FAR-WORLD CATALOG ============
+   * Ch.6 Africa · Ch.7 India · Ch.8 China. The §A8 MID-RUNGS land here: Jay's
+   * Aluminum → Hall-of-Famer, Mia's Cast-Iron → Chef's, Dorin's River Beads —
+   * each a HAND signature (the bat/pan/beads silhouettes, told apart by ramp +
+   * mark), the boss-drop tops priced 0. Plus the two funny kit sidegrades
+   * (Pippa's cobra-flute, the folded-paper fan). Armor re-dresses the torso;
+   * the generic arms/charms ride forge trinkets; the Riddle Ring is bespoke. */
+
+  /* ---- Ch.6 AFRICA — Jay's Aluminum + Hall-of-Famer (the Sphinx drop), Mia's
+     Cast-Iron (savanna ochre + indigo) ---- */
+  aluminum_bat: held({
+    class: 'bat',
+    ramp: RAMP.PAPER, // brushed silver — a regulation ring near the tip
+    detail: ({ pm, gx, gy, pose }) => {
+      const ring = px(RAMP.INK, 2);
+      if (pose === 'back') pm.set(gx - 9, gy - 10, ring);
+      else if (pose === 'strike') pm.set(gx + 7, gy - 4, ring);
+      else pm.set(gx + 5, gy - 7, ring);
+    },
+  }),
+  hall_of_famer_bat: held({
+    class: 'bat',
+    ramp: RAMP.GOLD, // a gilded bat off the Laughing Ruins' old hall — a star burned in
+    detail: ({ pm, gx, gy, pose }) => {
+      const star = px(RAMP.PAPER, 3);
+      if (pose === 'back') pm.set(gx - 8, gy - 9, star);
+      else if (pose === 'strike') pm.set(gx + 8, gy - 4, star);
+      else pm.set(gx + 5, gy - 8, star);
+    },
+  }),
+  cast_iron_pan: held({
+    class: 'pan',
+    ramp: RAMP.INK, // black iron, a warm seasoned bloom and a hard-won gleam
+    detail: ({ pm, gx, gy, pose }) => {
+      if (pose === 'back') { pm.set(gx - 6, gy - 8, px(RAMP.ORANGE, 1)); pm.set(gx - 7, gy - 9, C.white); }
+      else if (pose === 'strike') { pm.set(gx + 6, gy - 5, px(RAMP.ORANGE, 1)); pm.set(gx + 8, gy - 6, C.white); }
+      else { pm.set(gx - 1, gy + 4, px(RAMP.ORANGE, 1)); pm.set(gx + 1, gy + 4, C.white); }
+    },
+  }),
+
+  /* ---- Ch.7 INDIA — Mia's Chef's Pan (the Cobra Raja drop) + the cobra-flute
+     sidegrade (Pippa, kit class) ---- */
+  chefs_pan: held({
+    class: 'pan',
+    ramp: RAMP.GOLD, // a gleaming palace-kitchen pan, brass-bright
+    detail: ({ pm, gx, gy, pose }) => {
+      if (pose === 'back') { pm.set(gx - 6, gy - 8, px(RAMP.PAPER, 3)); pm.set(gx - 7, gy - 9, C.white); }
+      else if (pose === 'strike') { pm.set(gx + 6, gy - 5, px(RAMP.PAPER, 3)); pm.set(gx + 8, gy - 6, C.white); }
+      else { pm.set(gx - 1, gy + 4, px(RAMP.PAPER, 3)); pm.set(gx + 1, gy + 4, C.white); }
+    },
+  }),
+  cobra_flute: held({
+    class: 'kit',
+    ramp: RAMP.GOLD, // a brass been; the charmer's note hangs at the head
+    detail: ({ pm, gx, gy, pose }) => {
+      const note = px(RAMP.MAGENTA, 2);
+      if (pose === 'back') pm.set(gx - 7, gy - 7, note);
+      else if (pose === 'strike') pm.set(gx + 8, gy - 2, note);
+      else pm.set(gx + 4, gy - 6, note);
+    },
+  }),
+
+  /* ---- Ch.8 CHINA — Dorin's River Beads + the folded-paper fan (Pippa, kit;
+     the Paper Dragon's own fold, the boss-drop) ---- */
+  river_beads: held({
+    class: 'beads',
+    ramp: RAMP.BLUE, // river-blue agate; the gold focal bead still blesses each strike
+    detail: ({ pm, gx, gy }) => {
+      pm.set(gx, gy - 1, px(RAMP.GOLD, 2));
+    },
+  }),
+  paper_fan: held({
+    class: 'kit',
+    ramp: RAMP.CYAN, // a rice-paper fan, a lacquer-red rib at the head
+    detail: ({ pm, gx, gy, pose }) => {
+      const rib = px(RAMP.RED, 2);
+      if (pose === 'back') pm.set(gx - 7, gy - 7, rib);
+      else if (pose === 'strike') pm.set(gx + 8, gy - 2, rib);
+      else pm.set(gx + 4, gy - 6, rib);
+    },
+  }),
+
+  /* ---- Ch.6 AFRICA — armor 'body' gear (the Turban of Calm heads the §A8 rung —
+     "of Calm" is the joke; it does nothing calming) + the savanna bodies ---- */
+  turban_of_calm: { kind: 'torso', ramp: RAMP.PAPER, trim: RAMP.GOLD },
+  kanga_wrap: { kind: 'torso', ramp: RAMP.BLUE, trim: RAMP.GOLD },
+  savanna_cloak: { kind: 'torso', ramp: RAMP.EARTH, trim: RAMP.ORANGE },
+  mudcloth_vest: { kind: 'torso', ramp: RAMP.EARTH, trim: RAMP.BLUE },
+
+  /* ---- Ch.6 — generic ARMS + the savanna CHARMS (Riddle Ring bespoke) ---- */
+  beaded_cuff: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'wrap', band: 'ch6', detail: 'dots', seed: 'beaded_cuff' }) },
+  hide_bracer: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'bracer', band: 'ch6', seed: 'hide_bracer' }) },
+  riddle_ring: { kind: 'trinket', icon: drawRiddleRingIcon },
+  dust_devil_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch6', detail: 'stone', tint: RAMP.EARTH, seed: 'dust_devil_charm' }) },
+  fastest_man_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch6', detail: 'star', seed: 'fastest_man_charm' }) },
+  griot_string: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch6', detail: 'stone', tint: RAMP.GOLD, seed: 'griot_string' }) },
+  baobab_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch6', detail: 'stone', tint: RAMP.GRASS, seed: 'baobab_charm' }) },
+
+  /* ---- Ch.7 INDIA — armor 'body' gear (the jeweled Pagri heads the rung) ---- */
+  jeweled_pagri: { kind: 'torso', ramp: RAMP.MAGENTA, trim: RAMP.GOLD },
+  silk_kurta: { kind: 'torso', ramp: RAMP.GOLD, trim: RAMP.RED },
+  embroidered_sherwani: { kind: 'torso', ramp: RAMP.PURPLE, trim: RAMP.GOLD },
+  nawab_coat: { kind: 'torso', ramp: RAMP.RED, trim: RAMP.GOLD },
+
+  /* ---- Ch.7 — generic ARMS + the bazaar CHARMS (Star Pendant, the volt-resist
+     Rubber Brooch as DATA, the Monkey Paw) ---- */
+  glass_bangles: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'wrap', band: 'ch7', detail: 'ribbon', seed: 'glass_bangles' }) },
+  wrestler_wraps: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'glove', band: 'ch7', detail: 'stripe', seed: 'wrestler_wraps' }) },
+  star_pendant: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch7', detail: ['stone', 'star'], tint: RAMP.GOLD, seed: 'star_pendant' }) },
+  monkey_paw_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'paw', band: 'ch7', seed: 'monkey_paw_charm' }) },
+  rubber_brooch: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch7', detail: 'stone', tint: RAMP.GOLD, seed: 'rubber_brooch' }) },
+  brass_elephant: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch7', seed: 'brass_elephant' }) },
+  peacock_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch7', detail: 'stone', tint: RAMP.BLUE, seed: 'peacock_charm' }) },
+
+  /* ---- Ch.8 CHINA — armor 'body' gear (the Bamboo Hat heads the rung; jade,
+     lacquer-red, saffron) ---- */
+  bamboo_hat: { kind: 'torso', ramp: RAMP.GOLD, trim: RAMP.FOREST },
+  silk_changshan: { kind: 'torso', ramp: RAMP.FOREST, trim: RAMP.GOLD },
+  lacquer_robe: { kind: 'torso', ramp: RAMP.RED, trim: RAMP.GOLD },
+  monks_robe: { kind: 'torso', ramp: RAMP.GOLD, trim: RAMP.RED },
+
+  /* ---- Ch.8 — generic ARMS + the paper-fold/jade CHARMS (the fire-resist Jade
+     Salamander as DATA; Pippa's "false folds" paper crane) ---- */
+  silk_armguards: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'glove', band: 'ch8', detail: 'dots', seed: 'silk_armguards' }) },
+  prayer_wraps: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'wrap', band: 'ch8', seed: 'prayer_wraps' }) },
+  paper_crane_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch8', detail: 'ribbon', seed: 'paper_crane_charm' }) },
+  jade_salamander_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch8', detail: 'stone', tint: RAMP.GRASS, seed: 'jade_salamander_charm' }) },
+  jade_pendant: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch8', detail: 'stone', tint: RAMP.FOREST, seed: 'jade_pendant' }) },
+  lucky_knot: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch8', detail: 'ribbon', tint: RAMP.RED, seed: 'lucky_knot' }) },
+  cash_coin_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch8', detail: 'star', seed: 'cash_coin_charm' }) },
 };
 
 /** the swing family of an equipped weapon id — bare hands are 'fist' */

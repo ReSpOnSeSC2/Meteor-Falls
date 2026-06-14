@@ -1,5 +1,5 @@
 /**
- * S18 Movement 26 (ADR-066) — THE VEHICLE FORGE, both directions + the art law.
+ * S18 Movement 26 (ADR-067) — THE VEHICLE FORGE, both directions + the art law.
  *
  * Mirrors the content-validate `vehicles` gate (catalog ⇄ specs) and proves the
  * forge obeys ADR-020 by construction (palette-only, determinism) and the §A4.10

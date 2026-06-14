@@ -68,7 +68,7 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       dialogue: 'awake_cold_reads',
       toast: '{faye} awakened VIBE FREEZE Alpha!',
     }),
-    /* ---- Ch.3 (S18 M27, ADR-067): THE FIRST BORROW — the CONTROL SYSTEM unlocks
+    /* ---- Ch.3 (S18 M27, ADR-068): THE FIRST BORROW — the CONTROL SYSTEM unlocks
      * on the party hitting three (Milo joins). Jay's Hypno line takes its higher
      * turn: PUPPET (mind control of PEOPLE on the field) and Mind Warp (turn an
      * enemy in battle) are ONE staged power — `mindwarp_a`, re-staged here off its

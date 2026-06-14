@@ -1,5 +1,5 @@
 /**
- * THE FORTUNE ARC (S18 Movement 34, ADR-074) — §A9's back-half wealth curve. The
+ * THE FORTUNE ARC (S18 Movement 34, ADR-075) — §A9's back-half wealth curve. The
  * property market, the flip loop, rent, and the fleet are tuned so a player who
  * leans into them tracks this NET-WORTH curve: a tight 1995 economy in Ch.1–3 that
  * escalates BY DESIGN to a back-half power fantasy (Ch.1 ~$1K → Ch.10 $3B+). The

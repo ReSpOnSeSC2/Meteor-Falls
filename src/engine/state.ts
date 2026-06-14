@@ -68,12 +68,12 @@ export interface GameStateData {
    *  checkpoints at quarter breaks; titles + the STARTING FOUR raincheck
    *  ledger + the pickup-seed counter all ride here. */
   hoops: HoopsState;
-  /** S18 (v11, ADR-069): THE PROPERTY MARKET — per-owned-home item storage (the
+  /** S18 (v11, ADR-070): THE PROPERTY MARKET — per-owned-home item storage (the
    *  footlocker), keyed by property id. The only array-shaped property state;
    *  ownership, loans, and the price-walk seed all ride ADR-015 number/bool FLAGS
    *  (owned_<id>, garnishPrincipal, garnishPaid, propWalk). */
   homeStorage: Record<string, string[]>;
-  /** S18 (v12, ADR-070): THE HOME EDITOR — per-owned-home furniture LAYOUT, keyed
+  /** S18 (v12, ADR-071): THE HOME EDITOR — per-owned-home furniture LAYOUT, keyed
    *  by property id. Each entry is a list of {f,x,y,rot} placements; COZINESS is
    *  computed from it (the rest buff + the flip resale lift). Array-shaped, so it
    *  earns a typed field + a migration (everything else stays ADR-015 flags). */

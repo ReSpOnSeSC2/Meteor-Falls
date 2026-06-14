@@ -219,6 +219,15 @@ export const ITEM_FX: Record<string, string> = {
   snowball_special: 'item_salt',
   tin_soldier: 'item_salt',
   confetti_cannon: 'item_flash',
+  // M20 (ADR-065) — THE FAR-WORLD CATALOG: the far-world thrown goods. The
+  // hurled bombs/crackers/folded-tiger ride the salt-burst stage; the dust pot
+  // and the festive Holi cloud blind the room (item_flash, the §A10 #6 family).
+  thornbush_bomb: 'item_salt',
+  dust_pot: 'item_flash',
+  diwali_cracker: 'item_salt',
+  holi_powder: 'item_flash',
+  red_firecracker: 'item_salt',
+  paper_tiger: 'item_salt',
 };
 
 export const ITEM_KIND_FX: Record<string, string | undefined> = {
