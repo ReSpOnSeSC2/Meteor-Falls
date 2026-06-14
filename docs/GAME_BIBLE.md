@@ -177,6 +177,22 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > SCALES all game (ADR-035 staging): cars → trucks/buses → boats → planes → subs →
 > yachts.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-068 — **§A4.11 PSI IN THE WORLD
+> (powers as keys).** Beyond battle, certain abilities are OVERWORLD KEYS,
+> EarthBound-style: **PSI Fire** burns vine walls / lights furnaces / melts ice;
+> **PSI Freeze** freezes coolant pipes, waterfalls, and geysers into crossable ice;
+> **PSI Flash** reveals hidden paths and lights dark rooms; Teleport stays per §A4.6.
+> Field-casting plays a NEW overworld animation and the obstacle reacts. Each gate is
+> a `PsiGateDef` (`src/data/psigates.ts`) with a `kind` and the single `key` that
+> answers it (`GATE_KEY` is the one truth); the casting rules live in
+> `src/engine/psi.ts` (which ability is which key, the learned-first check, which cast
+> clears which gate) and reuse the §A4.10 control spine for range + PP. Every chapter
+> DUNGEON seeds ≥1 gate using a chapter-appropriate ability; the ability is LEARNED
+> first (awakening/level) and the gate pays it off — a gate is never the sole teacher,
+> and is non-missable + retry-safe (a PSI cast has no cooldown and no fail state).
+> Pinned both directions (`psi-gate` gate + `psi.test.ts`): every gate's key matches
+> its kind and has a real teacher, and every dungeon band (ch3–10) carries one.)*
+
 ## A5. The World Route & Travel
 
 | Ch. | Region | Locales | Travel in |

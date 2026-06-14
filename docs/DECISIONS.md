@@ -4280,3 +4280,37 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   drive feel, helmeted enemy variants in battle) builds on this spine; M28 reuses it for the PSI
   field-casts and gates; M33 scales Puppet/Clicker up the `VEHICLE_SPECS` terrain axis into the
   fleet. The seat-fit + gate-unlock math is settled and tested.
+
+## ADR-068 — S18 (Movement 28): OVERWORLD PSI — powers as keys (the puzzle gates)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 28 — reuses the M27 overworld-ability spine; the §A4.11
+  "powers as keys" layer that makes PSI matter outside battle.)
+- **Decision — `src/data/psigates.ts`, the PSI-GATE registry.** Eight forward-looking gates,
+  one per chapter DUNGEON (Ch.3–10), each a `PsiGateDef` with a `kind` (vine_wall / ice_block /
+  furnace / cold_pipe / waterfall / geyser / hidden_path / dark_room), the single `key` that
+  answers it (fire / freeze / flash), and a §A11-clear sign that teaches without explaining the
+  joke. `GATE_KEY` maps kind → key as the ONE source of truth (the validator pins each gate's
+  declared key to it). Like AREA_SKINS (M25), the unlanded chapters' gates are a SPEC the dungeon
+  sessions wear when their maps land — no maps required yet; the obstacle art + the TriggerDef
+  wiring land per dungeon.
+- **Decision — `src/engine/psi.ts`, the field-cast rules (pure, reuses the M27 spine).**
+  `psiKeyOf(abilityId)` (fire/freeze by element, flash by id), `abilitiesForKey` (so a gate has a
+  real teacher), `clearsGate` (right key for the obstacle), `canClearGate` (the LEARNED-FIRST law
+  — no learned key, no clear), and `bestCastFor` (the cheapest learned cast the field UI defaults
+  to, or null → a clear "you'll need a way to {key} this" prompt, never a soft-lock). Range + PP
+  ride the §A4.10 control spine; the OverworldScene owns the new cast FX + the obstacle reaction.
+- **Decision — gated BOTH directions (`tools/content-validate.ts` `psi-gate` + `psi.test.ts`).**
+  Every gate's kind is known, its key agrees with `GATE_KEY[kind]`, its band is a real dungeon
+  band, it has a teachable ability (a learner exists — a gate that can't be opened fails), and it
+  carries a sign; AND every dungeon band (ch3–10) carries ≥1 gate (the §A4.11 ≥1-per-dungeon law).
+  The verdict prints **8 psi gates**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (8 psi gates, both
+  directions) + full **vitest** green (+6: psi keys/casts/learned-first + the dungeon-band law) +
+  `vite build` clean. No FNV re-pin, no frozen-core change (gates + the engine are data/logic, not
+  map generators); no save change (which gates are cleared ride ADR-015 flags when dungeons land).
+  §A4.11 amended to canon in the same commit.
+- **Consequences:** PSI is a world verb, not just a battle button. When a dungeon lands it drops
+  its seeded gate (the spec is waiting), teaches the ability first, and the cast pays it off —
+  non-missable, retry-safe. The cast FX + the per-map obstacle props + the tile+PROP BFS re-proof
+  (cleared-opens / present-never-strands) land with each dungeon session, on this spine.

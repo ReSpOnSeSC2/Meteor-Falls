@@ -40,6 +40,8 @@ import { ITEM_ICON } from '../src/spritegen/icons';
 import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
 import { BUILDING_DIMS } from '../src/levelkit/kit';
 import { VEHICLE_CATALOG, VEHICLE_SPECS, usableSeats } from '../src/spritegen/vehicles';
+import { PSI_GATES, GATE_KEY, PSI_DUNGEON_BANDS } from '../src/data/psigates';
+import { abilitiesForKey } from '../src/engine/psi';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -338,6 +340,30 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     const inX = s.solid.ox >= 0 && s.solid.ox + s.solid.w <= s.w;
     const inY = s.solid.oy >= 0 && s.solid.oy + s.solid.h <= s.h;
     if (!inX || !inY) fail('vehicles', `vehicle '${type}' footprint ${JSON.stringify(s.solid)} falls outside its ${s.w}x${s.h} sprite`);
+  }
+}
+
+// S18 Movement 28 (ADR-068) — OVERWORLD PSI GATES (§A4.11 "powers as keys"):
+// every chapter dungeon seeds ≥1 obstacle that reacts to a field-cast PSI key.
+// Gated BOTH directions:
+//  · every gate's kind is known, its `key` agrees with GATE_KEY[kind] (one truth),
+//    its band is a real dungeon band, it has a teachable ability (a learner exists),
+//    and it carries a §A11 sign;
+//  · every dungeon band (ch3–10) carries ≥1 gate — the ≥1-per-dungeon law.
+{
+  const bands = new Set(PSI_DUNGEON_BANDS);
+  const covered = new Set<string>();
+  for (const g of Object.values(PSI_GATES)) {
+    const expectKey = GATE_KEY[g.kind];
+    if (!expectKey) { fail('psi-gate', `gate '${g.id}' has unknown kind '${g.kind}'`); continue; }
+    if (g.key !== expectKey) fail('psi-gate', `gate '${g.id}' kind '${g.kind}' wants key '${expectKey}', declares '${g.key}'`);
+    if (!bands.has(g.band)) fail('psi-gate', `gate '${g.id}' band '${g.band}' is not a dungeon band`);
+    if (abilitiesForKey(g.key).length === 0) fail('psi-gate', `gate '${g.id}' needs key '${g.key}' but NO ability casts it — a gate that can't be opened`);
+    if (!g.sign || g.sign.trim().length === 0) fail('psi-gate', `gate '${g.id}' has no §A11 sign — teach without explaining the joke`);
+    covered.add(g.band);
+  }
+  for (const b of PSI_DUNGEON_BANDS) {
+    if (!covered.has(b)) fail('psi-gate', `dungeon band '${b}' has no PSI gate — §A4.11 seeds ≥1 per chapter dungeon`);
   }
 }
 
@@ -1865,6 +1891,7 @@ const counts = [
   `${Object.keys(MAPS).length} maps`,
   `${CANON_AREAS.length} area skins`,
   `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
+  `${Object.keys(PSI_GATES).length} psi gates`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,
