@@ -221,6 +221,64 @@ staged as an AWAKENING/BUILD per ADR-035:
   Faraday-shielded against the Clicker. A helmeted target can't be Puppeted/Clickered — route
   around it (disguise, a PSI gate, a remote vehicle) or knock the helmet off first in a boss fight.
   Introduced as a Department-of-Smiles prototype (Ch.1), refined by the Hush thereafter.
+- **THE TRUST THREAD (a game-long slow burn — play it straight, §A11.2).** Jay can now reach into a
+  person's head and *take the wheel* — the Hush's exact crime at small scale. The thread BEGINS the
+  **first time the other heroes SEE him use it** (Ch.3, the PUPPET awakening): not applause, but a
+  beat of quiet fear. From there it is a **slow burn across the WHOLE game**, never a fight — each
+  chapter the party watches Jay puppet another stranger, and the doubt compounds into the question
+  they can't unask: *if he can drive anyone, how would we even know he isn't driving US? Are we
+  following him of our own free will — or because he wants us to?* Surface it in small, specific,
+  recurring beats (a held glance, a half-step back, a withheld line; Mia going quiet because she
+  *hears* what it costs the borrowed person; Milo over-rationalizing it as "just inputs"; later
+  Pippa quietly testing whether a choice was really hers) — sincere, EarthBound-restrained, never
+  melodrama and never a lecture; the borrowed NPCs come back rattled ("...did I just— why am I
+  holding your bat?").
+  - **THE CLIMAX lands at the three-quarter mark (the Ch.7→Ch.8 stretch).** The doubt is finally
+    voiced in the open — ideally with **the Hush weaponizing it to split the party** (its whole
+    nature is stolen will, so it whispers *how do you know the boy isn't holding your strings right
+    now?*). It RESOLVES when the party chooses trust AND Jay proves he is the Hush's exact OPPOSITE:
+    he refuses to take a will even when it would be easy — or would 'fix' things — reaching them as
+    people instead. The heroes realize, on-screen, that they have followed him freely all along.
+  - **After the climax the party is solid** — they trust Jay fully for the rest of the game; Ch.9
+    (Dorin's join + Buni's heart) and the finale play to a bonded party (Dorin, joining post-climax,
+    never carries the doubt). The Hush steals free will FOREVER and never asks; Jay borrows briefly,
+    apologizes, and gives it back — that contrast IS the thread, and it **sets up the finale's PRAY
+    directly:** everyone Jay helped answers the call of their OWN free will — the very thing the
+    party feared they'd lost. Keep every beat light-footed and specific; sincerity is never the
+    joke; the Hush is never funny.
+- **THE CLICKER QUESTION (Milo's mirror — was it the machine, or the boy?).** Milo's power has no
+  minds in it — but it has BLAME. He can flick any machine from across a street, so the moment a
+  machine FAILS near him, fingers point: a malfunction, or the kid with the remote? Where Jay's
+  thread is existential (free will), Milo's is social and practical (accidents, fault,
+  responsibility) — and scarier for being uncertain: at first **Milo himself isn't sure** an idle
+  Clicker didn't bleed a stray signal. He is the boy who "talks to machines more than people," so
+  being doubted *by people* is the wound that lands. The arc is a self-contained seed → crisis →
+  clearing, offset from Jay's so the two never muddy each other:
+  - **THE SEED (Ch.5, Minimus — comedic).** A tiny parade float he was Clickering lurches and
+    flattens something knee-high; the Whistle Guards file a very serious report about a very small
+    disaster. Played for laughs — but it plants the line *"machines act up around that boy."*
+  - **THE CRISIS (Ch.7, Chandrapore).** In the dense-machine chaos of the city a real mechanical
+    failure causes the PARTY a real problem — a crane drops its load / a bridge winch slips / their
+    hired transport quits mid-route — someone gets hurt (a hero goes down off-battle, EarthBound-
+    nonfatal) or the party is stranded AND publicly BLAMED. The doubt goes outward (the town, a
+    teammate) AND inward: reviewing ambiguous Clicker logs, **Milo quietly wonders too** — he goes
+    silent, over-engineers a defense, would almost rather be guilty than uncertain. The Hush is
+    behind it: it **SPOOFED his signal with a Faraday-shielded device to FRAME him** — the same
+    wedge logic it works on Jay's thread (the Hush divides the party by turning each hero's gift
+    into a reason to fear them).
+  - **THE CLEARING (Ch.8, Lotus Harbor — Milo is found trustworthy).** A genuine machine disaster
+    looms (a runaway barge / a failing lock-gate with people aboard) and Milo — still under
+    suspicion — is the ONLY one who can Clicker it to safety. To do it he must be TRUSTED to take
+    the remote in a crisis, in public, right after being blamed. He does it **openly** — narrating
+    every input, logs visible, choosing transparency where the Hush chooses secrecy — saves
+    everyone, and in the doing EXPOSES the spoof that framed him. Cleared by deed AND by truth. His
+    growth: the boy who trusted machines over people lets people rely on HIM, out loud. The party
+    and the town trust him the rest of the game.
+  - **Tone:** warmer and a touch funnier than Jay's thread (Milo earns the jokes), but the crisis
+    is sincere and the stakes are real — never preachy. The two threads RHYME (both are the Hush
+    weaponizing a hero's gift to split the party) yet peak on different beats — Jay's free-will
+    CLIMAX (Ch.7→8) and Milo's blame-and-clear (Ch.5→7→8) — so together they read as one antagonist
+    pressure the party survives by choosing each other.
 - **UX law:** controllable targets are clearly highlighted; seat-fit + range read at a glance;
   driving feels smooth on D-pad + controller; blocked (helmeted/shielded) targets show a clear "no
   signal" tell. Smooth, easy, fun — or it isn't done.
@@ -292,9 +350,10 @@ property's resale value** (the flip hook). Canon home use-cases (invent more, al
 ### §A5 — travel addendum (append; do NOT rewrite the set-piece table)
 
 The set-piece travel table is unchanged (Embers keep the journey linear). NEW: a free-roam
-**road/traffic** layer inside regions; **HIGHWAY** stretches (long driving sections where the map
-IS the road); one **PLANE-INTERIOR** travel scene (the bus/boat-interior precedent applied to a
-flight); and a late-game **FLEET** (boats/planes/subs/yachts, purchasable at marinas/airfields/
+**road/traffic** layer inside regions; **large multi-screen HIGHWAY** set-pieces (long, cinematic
+driving sections where the map IS the road, with ramps, overpasses, mile markers, and mid-route
+rest stops — at least the America interstate and the India approach); one **PLANE-INTERIOR** travel
+scene (the bus/boat-interior precedent applied to a flight); and a late-game **FLEET** (boats/planes/subs/yachts, purchasable at marinas/airfields/
 helipads — including on owned properties) the Clicker scales into. None replace an Ember leg.
 
 ### §A6 — chapter beats (amend the relevant chapters; §A11 voice; no chapter UI)
@@ -307,15 +366,28 @@ Weave the new beats into the EXISTING chapters:
 - **Ch.3 (England):** the CONTROL SYSTEM UNLOCKS on Milo's join (Jay's PUPPET awakening + Milo's
   CLICKER build, §A11.2 staged); a control-the-guard beat at Wintermoor; an early remote-drive
   puzzle (Clicker the groundskeeper's mower/cart); a PSI gate (freeze a coolant pipe to cross).
+  **THE TRUST THREAD OPENS here** (§A4.10): the other heroes SEE Jay puppet someone for the first
+  time, the borrowed NPC comes back rattled, and the party pulls back a step — the slow burn starts.
 - **Ch.5 (Minimus):** comedic scale — Puppet a Whistle Guard; Clicker a tiny parade float; the
-  duchy's agency lists a knee-high cottage.
+  duchy's agency lists a knee-high cottage. **THE CLICKER QUESTION SEED** (§A4.10): the float
+  lurches and flattens something knee-high — a tiny, very-serious disaster that plants "machines act
+  up around that boy."
 - **Ch.6 (Africa):** the **INVESTMENT DESK** opens at the S&L (the Fortune-Arc wealth engine);
   property flipping becomes worthwhile.
 - **Ch.7 (India):** Chandrapore traffic + a **HIGHWAY** chase to the city; the **MANDATORY DRIVE**
   (control a taxi/bus to ferry the party — in the backseat — where the train can't reach); a palace
   **disguise**; **Cobra Raja wears a DEAD-AIR HELMET** (knock it off to win); the bluff above
-  Brickton lists **HILLCREST MANOR** (the user's mansion).
-- **Ch.8 (China):** boats (Clicker the riverboat); machine puzzles with the paper guardians.
+  Brickton lists **HILLCREST MANOR** (the user's mansion). **THE TRUST THREAD peaks toward its
+  climax here** (§A4.10) — the control/helmet theme and the party's doubt come to a head. **THE
+  CLICKER QUESTION CRISIS:** a real mechanical failure injures/strands the party and Milo is
+  publicly blamed (a Hush-spoofed signal frames him; even he isn't sure) — he goes silent under it.
+- **Ch.8 (China):** boats (Clicker the riverboat); machine puzzles with the paper guardians. **THE
+  TRUST-THREAD CLIMAX (the three-quarter mark, §A4.10):** the Hush weaponizes the party's doubt to
+  split them ("how do you know the boy isn't holding your strings?"); the heroes choose trust and
+  Jay proves he's the Hush's opposite — RESOLVED, and the party is bonded for the rest of the game.
+  **THE CLICKER QUESTION CLEARING:** a barge/lock-gate disaster looms and Milo — still suspected —
+  Clickers it to safety in public, narrating every input (transparency vs. the Hush's secrecy),
+  saving everyone AND exposing the spoof that framed him; he's found trustworthy by deed and truth.
 - **Ch.9 (Romania):** Hoaxula's bankrupt theme-park property can be bought + flipped post-mercy (a
   warm, not gag-heavy, beat).
 - **Ch.10 (Alaska→Hawaii→Mars):** the **PLANE-INTERIOR** travel scene (the flight to the launch);
@@ -419,11 +491,18 @@ do them adjacent.
   Clickered — a clear "no signal" tell. Wire the first helmet at the Department of Smiles (Ch.1) and
   helmeted enemy variants (§A7) whose helmet must come off in battle before control works (reuse the
   existing `mind_immune` flag as the data spine).
+- **THE TRUST THREAD (ship the OPENING beat):** when PUPPET awakens, stage the other heroes SEEING
+  Jay use it for the first time — their wary reaction + the first rattled borrowed-NPC line (§A4.10,
+  §A11.2 sincere). Set the flag the slow-burn beats read; the game-long escalation and the ~3/4
+  climax land in M31's weave. Keep it one or two real beats, never a lecture.
+- **THE CLICKER QUESTION (plant the origin):** when Milo BUILDS the Clicker, plant the first hint
+  that people are wary of a kid who can flick any machine (a nervous bystander, a "keep that thing
+  pointed at the floor" line). Set the flag its seed/crisis/clearing beats (Ch.5/7/8) read in M31.
 - **Re-prove:** control targeting, seat-fit gating, remote-drive area-unlocks, and helmet/shield
   blocks all in a vitest harness over the engine API; BFS the maps that gain drivable vehicles.
 - **DONE-WHEN:** you can Puppet a driver, pile the party into a car, drive a city smoothly, and
-  Clicker an empty truck across a bridge — and a helmeted guard cleanly refuses. Append the ADR;
-  amend §A4.10 to canon as built.
+  Clicker an empty truck across a bridge — and a helmeted guard cleanly refuses; and the party's
+  first uneasy reaction to PUPPET reads on-screen. Append the ADR; amend §A4.10 to canon as built.
 
 ### MOVEMENT 28 — PSI IN THE WORLD (overworld casting + the puzzle gates) — do FOURTH
 Reuses M27's overworld-ability spine.
@@ -498,12 +577,39 @@ Wire the new mechanics into §A6 as REQUIRED, non-missable beats (retry law hold
 - **THE MANDATORY DRIVE (Ch.7):** a stretch where the ONLY way forward is to control a taxi/bus and
   drive the party (in the backseat, bickering) to a place the train can't reach — a real driving
   sequence, EarthBound-funny.
-- **HIGHWAY SECTIONS:** long road maps (the map IS the highway) — America and the India approach —
-  with traffic, ONE optional "road-rage" hostile-vehicle set-piece, and gas-station rest stops.
+- **THE LARGE HIGHWAY SECTIONS:** big, multi-screen long-haul driving set-pieces where the map IS
+  the road — these are meant to feel LONG and cinematic, not a token strip. Build them as their own
+  scrolling road maps (the §A5 travel-scene precedent, but DRIVEN by the player in a vehicle, not a
+  passive vignette): lane traffic to weave through, on-/off-ramps, overpasses, median dressing,
+  mile markers + diegetic signage in §A11 voice ("BRICKTON 40 · NEXT SERVICES: A WHILE"), weather/
+  time-of-day mood, and **gas-station / rest-stop interiors** mid-route as §A4.5-style rests +
+  save points (the fuel sink matters here). Seed at least TWO marquee highways: the **America
+  interstate** (Ch.1.5 / the Long-Walk era, the open-road feel) and the **India approach** (the
+  Ch.7 HIGHWAY chase INTO Chandrapore that flows straight into the MANDATORY DRIVE). Each carries
+  ONE optional "road-rage" hostile-vehicle set-piece (a §A7 one-off, never random) and a quiet
+  party beat in the cabin so the length breathes. Long enough to earn the name; smooth at 60fps
+  (pool + cull traffic — §B4); BFS-clean at several time-steps so a moving rig never corners the
+  player. (The capstone air/sea long-hauls live in M33's fleet + the M31 plane-interior; the
+  highways are the wheels-on-asphalt version.)
 - **THE PLANE-INTERIOR (Ch.10):** a flight scene (the bus/boat-interior precedent) — the party in
   the cabin, land sliding by a window, a quiet beat, arrival.
 - **THE HELMET BOSS (Ch.7):** Cobra Raja wears a DEAD-AIR HELMET — phase 1 is knocking it off so
   Puppet/Clicker come online for phase 2.
+- **THE TRUST THREAD — the slow burn + the ~3/4 CLIMAX (§A4.10):** seed the game-long escalation as
+  small, recurring beats (Ch.4–7 — a held glance, a half-step, a withheld line, a teammate testing
+  whether a choice was really theirs, the compounding *"are we even here by our own free will?"*),
+  then land the CLIMAX at the three-quarter mark (the Ch.7→Ch.8 stretch): the Hush weaponizes the
+  doubt to split the party, the heroes choose trust, and Jay proves he's the Hush's opposite (he
+  refuses to take a will even when it's easy). After it resolves the party is bonded for Ch.9–10;
+  the thread feeds the finale's free-will PRAY. Use a flag chain so the beats fire in order and the
+  climax is non-missable. Sincere, light-footed, §A11.2 — never a speech.
+- **THE CLICKER QUESTION — the seed, the crisis & the clearing (§A4.10):** Milo's mirror arc. Land
+  the comedic SEED (Ch.5, the parade-float mishap), the CRISIS (Ch.7 — a mechanical failure injures/
+  strands the party, Milo publicly blamed, the Hush's spoofed-signal frame, his own self-doubt), and
+  the CLEARING (Ch.8, Lotus Harbor — the public barge/lock-gate save where Milo takes the remote in
+  the open, narrates every input, saves everyone, and exposes the spoof). Flag-chain it; the clearing
+  is non-missable; it strengthens a finale CALLER (someone Milo saved who once doubted him). Warmer
+  and a touch funnier than Jay's thread, but the crisis is sincere — never preachy.
 - **Re-prove:** every beat non-missable (post-Teleport reopen where relevant), retry-safe, BFS-clean;
   each adds/strengthens a finale CALLER. **DONE-WHEN:** the disguise gets you to Mia; the drive is the
   only road on; the plane lands. Append the ADR; amend §A6 to canon as built.
@@ -524,14 +630,36 @@ The traversal capstone — needs the control system + the bigger vehicle sprites
 - **Scale the Clicker/Puppet** up the chapters (ADR-035 staging): trucks/buses (Ch.5) → boats
   (Ch.8) → planes (Ch.10) → submarines/yachts (late/NG+). Each scale-up is a staged story moment,
   not a menu unlock.
-- **PURCHASING:** buy vehicles at a dealership/marina/airfield/helipad (including the GARAGE / HELIPAD
-  / MARINA on owned properties — the Comet GT in the PRE-LOVED lot's back room, the Starhopper jet at
-  the airport, a yacht at a marina) as key-item TITLES; a purchased vehicle is yours to summon/drive
-  in free-roam. Cost ties to §A9's Fortune Arc.
-- **Late-game traversal:** planes/subs open optional world pockets (the §A4.6 Teleport-reopen spirit)
-  without breaking the Ember linearity.
-- **DONE-WHEN:** you can buy and pilot a boat/plane, park it at your property, and the control power
-  clearly grew with the party. Append the ADR; amend §A4.10/§A5 to canon as built.
+- **CONTROLLING BOATS (real piloting, not a vignette):** WATER becomes drivable terrain. Build a
+  water-handling mode for the overworld driver — a boat moves on water tiles the way a car moves on
+  road, with momentum/drift that reads different from asphalt (a wake trail, a slower turn), docks
+  + jetties to launch/land, and depth rules (a dinghy hugs rivers; a yacht needs open water). The
+  Ch.8 **Clicker-the-riverboat** beat is the diegetic debut (pilot the empty riverboat up Lotus
+  Harbor's river to open the way); free-roam boating opens coastal/river pockets afterward.
+  Submarines add a DIVE toggle (a second, underwater map layer) for the optional deep pockets. The
+  seat-fit law still applies (a dinghy seats few; a yacht seats the whole party + guests).
+- **FLYING PLANES (real piloting):** AIR becomes a traversal layer. A piloted plane/helicopter lifts
+  off from an **airport runway / heliport / property HELIPAD**, flies a free-roam AIR map over the
+  region (the world sliding below, clouds, altitude read), and LANDS back at an airfield — smooth on
+  D-pad/stick, with a takeoff + landing beat so it feels earned (a botched landing is comic, never
+  punishing — the EarthBound Teleport-crash spirit). Helicopters hover/land anywhere flat; jets need
+  a strip. **The Ember-trail law holds (§A5): flying never skips story** — a plane reaches VISITED
+  airfields only, and new chapters still gate on the Embers (Teleport stays the no-luggage option).
+  This is the wheels-off-the-ground cousin of M31's passive PLANE-INTERIOR scene; here YOU fly.
+- **PURCHASING:** buy craft at a dealership/marina/airfield/helipad (including the GARAGE / MARINA /
+  HELIPAD on owned properties — the Comet GT in the PRE-LOVED lot's back room, the Starhopper jet at
+  the airport, a yacht at a marina, a sub at a late marina) as key-item TITLES; a purchased craft is
+  yours to summon/pilot in free-roam, and parks visibly at your property. Cost ties to §A9's Fortune
+  Arc (the §A11 dealer/harbormaster/Bert's-niece-Roxanne obsessions sell them).
+- **Late-game traversal:** planes/boats/subs open optional world pockets (the §A4.6 Teleport-reopen
+  spirit) without breaking the Ember linearity; DEAD-AIR-shielded craft and no-fly/no-wake zones are
+  the diegetic fences where a pocket must stay closed until its chapter.
+- **Re-prove:** boat water-handling + plane takeoff/land + the dive layer in a vitest harness over
+  the engine API; every water/air map BFS-clean (no launch that strands the party, no landing into a
+  sealed pocket); seat-fit honored across dinghy→yacht and helicopter→jumbo.
+- **DONE-WHEN:** you can pilot a boat across open water and up a river, dive a sub, and fly a plane
+  airfield-to-airfield with a real takeoff and landing — each parked at your property, and the
+  control power clearly grew with the party. Append the ADR; amend §A4.10/§A5 to canon as built.
 
 ### MOVEMENT 34 — BALANCE & THE GREAT VERIFICATION — do LAST
 - **The curve:** sweep property prices, rent yields, flip margins, vehicle costs, and furniture
@@ -570,7 +698,15 @@ The traversal capstone — needs the control system + the bigger vehicle sprites
   walk + a furnished layout byte-equal across a kill/reload.
 - **The §A11 read-through:** every new line plain-spoken, kid-readable, one obsession per NPC, the
   Hush never funny, Jay's Puppet a comedic *borrow* (never the Hush's theft), sincerity clean. No
-  chapter UI.
+  chapter UI. **The TRUST THREAD** reads as earned, not preachy — the party's unease OPENS the first
+  time they see Jay use PUPPET (Ch.3), SLOW-BURNS across the game (the *"are we even free?"* doubt
+  compounding in small beats), CLIMAXES at the three-quarter mark (the Hush's wedge; the party
+  chooses trust), and stays resolved for Ch.9–10; the Hush/Jay contrast (steals forever vs.
+  asks-and-returns) and the finale free-will PRAY payoff are shown, never explained. **The CLICKER
+  QUESTION** (Milo's mirror) reads as its own arc — the comedic SEED (Ch.5), the sincere CRISIS
+  (Ch.7, the framed mechanical failure + his self-doubt), and the public CLEARING (Ch.8, transparency
+  vs. the Hush's secrecy) — warmer and funnier than Jay's, but the stakes are real; the two threads
+  rhyme as one Hush wedge without muddying each other.
 - **`.shots/`** of: the refreshed per-area buildings; a bustling city with traffic + a gas station +
   driveways; the control-targeting UI; an overworld PSI-Fire/Freeze cast; the disguise sneak; the
   highway; the plane interior; the paperboy route; the real-estate agency + lawyer's office; the
