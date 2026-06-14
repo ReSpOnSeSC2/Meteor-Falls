@@ -37,6 +37,8 @@ import { ENEMIES } from '../src/data/enemies';
 import { ITEMS, slotOf, PORCH_SET, MERCADO_SET } from '../src/data/items';
 import { WEAPON_ART } from '../src/spritegen/weapons';
 import { ITEM_ICON } from '../src/spritegen/icons';
+import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
+import { BUILDING_DIMS } from '../src/levelkit/kit';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -265,6 +267,40 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   for (const id of Object.keys(ITEM_ICON)) {
     if (!ITEMS[id]) fail('item-icon', `ITEM_ICON row '${id}' claims no §A8 item — extend or retire the manifest row`);
+  }
+}
+
+// S18 Movement 25 (ADR-065) — AREA-TRUE BUILDINGS: every named §A5/§A6 area owns
+// its OWN AREA_SKINS slice (a distinct family-mix + ramp palette per the place's
+// feel), so no area is a reskin of another. Gated BOTH directions:
+//  · every CANON_AREA has a non-empty, duplicate-free roster of REAL facade sprites
+//    (each name resolves in BUILDING_DIMS or the bespoke house allowlist);
+//  · every AREA_SKINS key is a CANON_AREA (no orphan slice for a place that isn't).
+{
+  const known = new Set<string>([...Object.keys(BUILDING_DIMS), ...BESPOKE_AREA_FACADES]);
+  for (const area of CANON_AREAS) {
+    const roster = AREA_SKINS[area];
+    if (!roster) {
+      fail('area-skins', `canon area '${area}' has no AREA_SKINS roster — register its own slice (spritegen/buildings.ts), never reuse another's`);
+      continue;
+    }
+    if (roster.length === 0) {
+      fail('area-skins', `area '${area}' has an EMPTY roster — a skinsFor() family×ramp filter matched nothing; widen the slice`);
+    }
+    for (const sprite of roster) {
+      // NOTE: the generated catalog legitimately repeats some sprite KEYS (two
+      // tiers can share a `_${u}` suffix), so a name listed twice just weights
+      // the grammar's pick — it is not an error. We only gate that it RESOLVES.
+      if (!known.has(sprite)) {
+        fail('area-skins', `area '${area}' facade '${sprite}' resolves to no registered building (not in BUILDING_DIMS or the bespoke allowlist) — typo or a sprite that was never drawn`);
+      }
+    }
+  }
+  const canon = new Set(CANON_AREAS);
+  for (const area of Object.keys(AREA_SKINS)) {
+    if (!canon.has(area)) {
+      fail('area-skins', `AREA_SKINS has an orphan slice '${area}' — add it to CANON_AREAS or retire the roster`);
+    }
   }
 }
 
@@ -1786,6 +1822,7 @@ const counts = [
   `${Object.keys(SHOPS).length} shops`,
   `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,
   `${Object.keys(MAPS).length} maps`,
+  `${CANON_AREAS.length} area skins`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,

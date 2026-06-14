@@ -4133,3 +4133,52 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   amendment + a both-directions gate + battle-math tests, per Appendix rule 6, when an enemy first throws an
   element). Live placement of the three Old-World catalogs (shops + gift-boxes + quest rewards) follows in
   each chapter's own landing session, the M18-Part-B way.
+
+## ADR-065 — S18 (Movement 25): AREA-TRUE BUILDINGS — every canon area owns its skin
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 "PROPERTY & THE LIVING WORLD", Movement 25 — the lowest-risk,
+  everywhere-visible win and the canvas every later movement sits on: before the world gets
+  wheels and homes, every PLACE should look unmistakably like itself.)
+- **Decision — every canon §A5/§A6 area registers its OWN `AREA_SKINS` slice
+  (`src/spritegen/buildings.ts`).** The per-area law (ADR-050) shipped for the five live
+  Americas areas only; the eight unlanded chapters had no rosters. This movement adds a
+  forward-looking slice for ALL twelve remaining places — `foggybottom`, `wintermoor`,
+  `kvisthavn`, `lilleby`, `minimus`, `zanzibel`, `chandrapore`, `lotus_harbor`, `valea`,
+  `aurora`, `mauna_lani`, `mars` — bringing the registry to **17 areas**. Each is a distinct
+  family-mix + ramp palette chosen for the place's §A6 feel: Foggybottom's damp earth/paper/
+  blue stone vs Wintermoor's pale faculty offices; Kvisthavn's cozy red walk-ups vs Lilleby's
+  giants'-town hotels/apartments + a mega tower + a colossus (the scale-comedy reads on sight);
+  Minimus's HAND-PICKED tiniest tiers (a jewel-box gold/red duchy — no mega can sneak into a
+  town the party steps over); Zanzibel's sun-baked bazaar; Chandrapore's dense theater/emporium/
+  neon riot + a palace-spire colossus; Lotus Harbor's temple red/gold + jade/cyan; Valea's
+  painted-village rustic; Aurora's cold steel; Mauna Lani's lush-but-claustrophobic resort
+  (§B4); Mars's neon husks + the lone NIGHT needle. No new families, no new draw code — the
+  differentiation rides the existing `skinsFor(family, ramp)` slicer + `drawCityBuilding`, so
+  litSeq/FNV pins are untouched.
+- **Decision — `CANON_AREAS` + `BESPOKE_AREA_FACADES`, gated BOTH directions
+  (`tools/content-validate.ts` `area-skins` + `src/spritegen/buildings.test.ts`).** A new
+  `CANON_AREAS` export is the manifest of named areas; the validator pins it ⇄ `AREA_SKINS`:
+  every canon area has a non-empty roster, every facade name resolves to a real registered
+  building (`BUILDING_DIMS` ∪ the bespoke drawHouse allowlist — the golf mansions/gatehouse
+  carry no city dims), and no `AREA_SKINS` key orphans a place that isn't canon. The mirror
+  test adds a reskin guard (no two areas share an identical roster) + feel assertions (Minimus
+  stays ≤3 storeys; Lilleby carries a mega). The catalog's pre-existing duplicate sprite KEYS
+  (two tiers can share a `_${u}` suffix) are explicitly tolerated — a repeated name just weights
+  the grammar's pick, it is not an error. The verdict now prints **17 area skins**.
+- **Decision — `npm run art:buildings` gains the per-area sheet (`tools/render-buildings.ts`).**
+  A new `.shots/buildings_areas.png` draws every area's slice side by side (label + up to six
+  faces, bespoke/shipped names synthesised from `BUILDING_DIMS`), so "no two areas read alike"
+  is provable BY EYE (the ADR-059/060 contact-sheet precedent, not `preview_screenshot`). Read
+  it: Minimus is a tabletop jewel-box, Lilleby towers, Mars is neon dread — each unmistakable.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (17 area skins, both
+  directions) + full **vitest 744 green** (+6: `buildings.test.ts`) + `vite build` clean +
+  `npm run art:buildings` re-rendered (the four sheets, the new per-area one read by eye). No
+  FNV re-pin, no frozen-core / `world_block` change (AREA_SKINS is sliced data over the existing
+  catalog — not a sample-routed generator; FAMILIES order + bodies untouched). No save change.
+- **Consequences:** every named place in the game now has a building identity waiting for it —
+  when a chapter's maps land, the forge already wears the right silhouette and the human only
+  places, never re-specs. A new area MUST add a `CANON_AREAS` row + its own roster in the same
+  change or the build fails. The foundation is set for Movement 26 (the vehicle forge + traffic)
+  to drive these streets and Movement 29 (the property market) to put agencies, lawyers, and
+  homes on these blocks. First movement of S18 lands.

@@ -168,4 +168,101 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
     'bldg_ps_catedral', 'bldg_ps_gran_hotel', 'bldg_ps_aduana', 'bldg_warehouse',
     ...skinsFor(['market', 'civic'], [RAMP.GOLD, RAMP.ORANGE, RAMP.PAPER]),
   ],
+
+  // ─── S18 MOVEMENT 25 (ADR-065) — THE UNLANDED AREAS' SKINS ──────────────────
+  // Forward-looking rosters: every canon §A5/§A6 area registers its OWN slice now
+  // (a distinct family-mix + ramp palette per the place's feel), so when its maps
+  // land the forge already wears the right silhouette — no area is ever a reskin of
+  // another, and the validator pins this both directions (extend, never reuse).
+
+  // CH.3 ENGLAND — FOGGYBOTTOM-ON-TYNE: a damp stone river-town. Low brick
+  // brownstones, a savings bank, a civic hall, a tea cafe — cool paper/earth/blue
+  // masonry, never warm Americana, never glass.
+  foggybottom: skinsFor(['brownstone', 'bank', 'civic', 'cafe'], [RAMP.EARTH, RAMP.PAPER, RAMP.BLUE, RAMP.CYAN]),
+  // CH.3 ENGLAND — WINTERMOOR ACADEMY: institution-as-monster. Pale stone offices,
+  // civic halls + a bank front read as faculty blocks + a porter's lodge; foggy
+  // paper/cyan/blue, taller and colder than the town below it.
+  wintermoor: skinsFor(['office', 'civic', 'bank', 'brownstone'], [RAMP.PAPER, RAMP.CYAN, RAMP.EARTH, RAMP.BLUE]),
+
+  // CH.4 NORWAY — KVISTHAVN: a normal-scale fishing hamlet under the cliffs. Low
+  // weatherboard cafes/shops, a cold-storage cannery, brick walk-ups — red/blue/
+  // earth/paper, cozy and small (the human-sized half of the giant chapter).
+  kvisthavn: skinsFor(['cafe', 'shop', 'brownstone', 'warehouse'], [RAMP.RED, RAMP.BLUE, RAMP.EARTH, RAMP.PAPER]),
+  // CH.4 NORWAY — LILLEBY: the giants' town, where the party walks UNDER the doors.
+  // Everything towers: hotels, apartment arms, a department store, an office block,
+  // plus a real mega + a landmark colossus so the scale-comedy reads on sight.
+  lilleby: [
+    ...skinsFor(['hotel', 'apartments', 'deptstore', 'office'], [RAMP.RED, RAMP.GOLD, RAMP.EARTH, RAMP.BLUE]),
+    'bldg_tower_arms', 'bldg_colossus_grand',
+  ],
+
+  // CH.5 MINIMUS — MINIMUS MAJOR: a tabletop capital shrunk to 1/100. ONLY the
+  // tiniest tiers (1–2 storeys), a jewel-box gold/red duchy palette: a knee-high
+  // cathedral (civic), ribbon-street shops/cafes, a stall market. Hand-picked so a
+  // mega can never sneak into a town the party steps over.
+  minimus: [
+    'bldg_gen_shop_gold_1', 'bldg_gen_cafe_gold_1', 'bldg_gen_civic_gold_2', 'bldg_gen_market_gold_1',
+    'bldg_gen_shop_red_1', 'bldg_gen_cafe_red_1', 'bldg_gen_market_orange_1',
+  ],
+
+  // CH.6 AFRICA — ZANZIBEL: the bazaar port (best market music in the game). Sun-
+  // baked open-air markets, freight warehouses, corner shops, a civic customs hall —
+  // gold/orange/earth/grass, masonry warmed by dust, never cool glass.
+  zanzibel: skinsFor(['market', 'warehouse', 'shop', 'civic'], [RAMP.GOLD, RAMP.ORANGE, RAMP.EARTH, RAMP.GRASS]),
+
+  // CH.7 INDIA — CHANDRAPORE: the game's biggest, densest city. A riot of theaters
+  // (the cinema playing a movie about your party), a department emporium, a grand
+  // hotel, neon, market arcades, apartment towers + a palace spire colossus —
+  // orange/gold/magenta/red/purple, loud and crowded.
+  chandrapore: [
+    ...skinsFor(['deptstore', 'theater', 'hotel', 'market', 'neon', 'apartments'], [RAMP.ORANGE, RAMP.GOLD, RAMP.MAGENTA, RAMP.RED, RAMP.PURPLE]),
+    'bldg_colossus_spire',
+  ],
+
+  // CH.8 CHINA — LOTUS HARBOR: temple-town on the river. Colonnaded markets, porticoed
+  // civic temples, a lacquer-red theater, brick row houses, a riverside tea cafe —
+  // temple red/gold + jade grass + harbor cyan.
+  lotus_harbor: skinsFor(['market', 'civic', 'theater', 'brownstone', 'cafe'], [RAMP.RED, RAMP.GOLD, RAMP.GRASS, RAMP.CYAN]),
+
+  // CH.9 ROMANIA — VALEA STELELOR: the painted village (the emotional heart). Warm
+  // rustic cafes/shops, painted-gate brownstones, a haystack market — red/orange/
+  // gold/grass, low and hand-painted, never a city.
+  valea: skinsFor(['cafe', 'shop', 'brownstone', 'market'], [RAMP.RED, RAMP.ORANGE, RAMP.GOLD, RAMP.GRASS]),
+
+  // CH.10 ALASKA — AURORA STATION: a cold utilitarian outpost, claustrophobic. Steel
+  // warehouses, an office block, a civic comms hall, a bank window — cyan/blue/paper/
+  // night, frozen and functional.
+  aurora: skinsFor(['warehouse', 'office', 'civic', 'bank'], [RAMP.CYAN, RAMP.BLUE, RAMP.PAPER, RAMP.NIGHT]),
+  // CH.10 HAWAII — MAUNA LANI: a launch-pad resort that reads claustrophobic (true to
+  // life — §B4). Lush shops/cafes, a market, a beach hotel — grass/cyan/gold/orange.
+  mauna_lani: skinsFor(['shop', 'cafe', 'market', 'hotel'], [RAMP.GRASS, RAMP.CYAN, RAMP.GOLD, RAMP.ORANGE]),
+  // CH.10 MARS — THE SEA OF SILENCE: dread, alien, sparse. Neon husks, a dead theater
+  // marquee, a department ruin + the lone NIGHT needle colossus — night/purple/magenta,
+  // the music thinning as you pass.
+  mars: [
+    ...skinsFor(['neon', 'theater', 'deptstore'], [RAMP.NIGHT, RAMP.PURPLE, RAMP.MAGENTA]),
+    'bldg_colossus_needle',
+  ],
 };
+
+/**
+ * THE CANON AREA LIST — every named §A5/§A6 settlement area that owns an AREA_SKINS
+ * slice. The validator pins AREA_SKINS ⇄ this list BOTH directions (ADR-065): a new
+ * chapter cannot forget its slice, and a slice cannot orphan a place that doesn't
+ * exist. Add a place here AND give it a roster above, in the same change.
+ */
+export const CANON_AREAS: readonly string[] = [
+  'otterbrook', 'brickton', 'cage_park', 'golf_resort', 'puerto_sol',
+  'foggybottom', 'wintermoor', 'kvisthavn', 'lilleby', 'minimus', 'zanzibel',
+  'chandrapore', 'lotus_harbor', 'valea', 'aurora', 'mauna_lani', 'mars',
+];
+
+/**
+ * Bespoke facade sprites used by AREA_SKINS that are drawn outside the generated
+ * catalog + SHIPPED_DIMS (the golf_resort mansions/gatehouse are drawHouse art, not
+ * drawCityBuilding facades). The validator allows these alongside BUILDING_DIMS so a
+ * roster can name a real, registered sprite that simply doesn't carry city dims.
+ */
+export const BESPOKE_AREA_FACADES: readonly string[] = [
+  'mansion_a', 'mansion_b', 'mansion_c', 'golf_gatehouse',
+];

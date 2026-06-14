@@ -519,12 +519,22 @@ meteor-falls/
   player can walk, there is a lane, never a wall of touching buildings. City BLOCKS
   (adjacent storefronts lining a street, the path being the street) are the intended
   exception, not a violation. *(Added 2026-06-13 alongside ADR-053.)*
-- **EACH AREA FEELS FRESH — per-area building skins (ADR-050).** Every named level
+- **EACH AREA FEELS FRESH — per-area building skins (ADR-050/065).** Every named level
   area draws its facades ONLY from its own curated slice of the catalog (`AREA_SKINS`
   in `src/spritegen/buildings.ts`): a distinct family mix + ramp palette, so no two
   areas read alike (Otterbrook's warm low brownstones ≠ Brickton's cool glass towers ≠
   Puerto Sol's colonial faces). A NEW area MUST register its own skin set — never reuse
-  another area's roster. *(Added 2026-06-13 per Appendix rule 6.)*
+  another area's roster. **ALL seventeen canon §A5/§A6 areas now own a slice** (S18 M25):
+  the live Americas areas PLUS forward-looking specs for every unlanded place — England's
+  damp Foggybottom stone + Wintermoor's pale faculty blocks, Norway's cozy Kvisthavn vs
+  Lilleby's giants'-town towers, Minimus's hand-picked tabletop jewel-box (tiniest tiers
+  only — a mega can never step into a town the party steps over), Zanzibel's sun-baked
+  bazaar, Chandrapore's dense riot + a palace-spire colossus, Lotus Harbor's temple
+  red/gold, Valea's painted-village rustic, Aurora's cold steel, Mauna Lani's lush
+  resort, and Mars's neon husks + the lone NIGHT needle. Pinned BOTH directions
+  (`CANON_AREAS` ⇄ `AREA_SKINS`, `area-skins` gate + `buildings.test.ts`): every area
+  has a non-empty roster of REAL facades, no orphan slice, no reskin. *(Added 2026-06-13
+  per Appendix rule 6; extended 2026-06-14 alongside ADR-065.)*
 - **MAPS BREATHE, AND MOSTLY GROW (the size law).** Every map feels like a
   real place — organic irregular edges, varied block shapes + access (linear and
   sporadic), and NOOK variety (shacks, alleys, vacant lots, courtyards, rooftops,
