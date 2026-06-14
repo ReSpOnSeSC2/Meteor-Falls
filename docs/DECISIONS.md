@@ -4672,3 +4672,25 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the road roster reads like a real car habit — a kid on a BMX up to a stretch
   limo — and the M37 dealership has its inventory to sell. The Nikolai (M36) and the military motor
   pool (M39) extend the same table.
+
+## ADR-077 — S19 (Movement 36): THE NIKOLAI — the flagship EV
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 36 — the EV-line flagship; the dealership of M37 sells it.)
+- **Decision — `nikolai` joins `VEHICLE_SPECS` (cls `car`, terrain road, seats 5).** A bespoke
+  premium draw (`drawNikolai`, ADR-020): a low slab-sided body, one continuous near-frameless
+  arched GLASS greenhouse (the EV signature, blacked-out pillars), flush near-hidden door handles
+  (two chrome dashes), and a single bright FRONT LIGHT BAR across the nose. Its own clean
+  monochrome+accent paint pool (`veh_nikolai_paper`/`_night`/`_red`). A wink at Nikola Tesla, never
+  the trademark. Ride 4 — it seats the whole party.
+- **Decision — the SELF-CREEP autopilot (`VehicleSpec.selfDrive`, control.ts).** A new optional spec
+  flag marks a craft that can creep DRIVER-LESS on its own — no Puppet, no Clicker. `canSelfCreep`
+  + `selfCreep(vehicleType, lotClear)` are pure logic in the control spine: it only creeps in a
+  CLEARED lot (`lot_not_clear` otherwise — the EarthBound-safe joke), and a non-autopilot car gets
+  `no_autopilot`. The scene bit (the Nikolai trundling an empty lot) lands later; the rule + its
+  test ship now.
+- **Verification:** `tsc` clean, `npm run validate` green (84 vehicles / 30 types), full vitest
+  green (+6: vehicles + control), `vite build` clean, `art:vehicles` re-rendered (the Nikolai reads
+  unmistakably high-end on the sheet). No FNV re-pin, no frozen-core change. §A8 amended.
+- **Consequences:** the EV line has its flagship and the control system its first autopilot toy. The
+  M37 dealership lists the Nikolai at the top of its sticker range.

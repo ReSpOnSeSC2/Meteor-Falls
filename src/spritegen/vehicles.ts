@@ -33,6 +33,9 @@ export interface VehicleSpec {
   h: number;
   /** collision footprint relative to the sprite top-left (traffic + parking) */
   solid: { ox: number; oy: number; w: number; h: number };
+  /** M36 (ADR-077): an autopilot toy — this craft can SELF-CREEP driver-less in a
+   *  cleared lot (no Clicker needed), the Nikolai's "summon" gag. control.ts gates it. */
+  selfDrive?: boolean;
   /** the PAINT-ramp draw (deterministic; rng only seeds tiny per-unit marks) */
   draw: (ramp: number, rng: () => number) => Pixmap;
 }
@@ -124,6 +127,47 @@ function drawCarBody(o: CarOpts, ramp: number, _rng: () => number): Pixmap {
   pm.outline(C.outline);
   // a single pure-light glint on the windshield AFTER the contour (ADR-020)
   if (!o.open) pm.set(o.roofX1 - 2, ry + 1, CHROME);
+  return pm;
+}
+
+/* ─── M36 (ADR-077): THE NIKOLAI — the flagship EV (a wink at Nikola Tesla) ─ */
+
+function drawNikolai(ramp: number, _rng: () => number): Pixmap {
+  const p = paint(ramp);
+  const W = 34;
+  const beltY = 8;
+  const floorY = 14;
+  const H = floorY + 5;
+  const pm = new Pixmap(W, H);
+  const x0 = 1;
+  const x1 = W - 2;
+  // a low, sleek, slab-sided body — no fussy creases, premium minimalism
+  pm.rect(x0, beltY, x1 - x0 + 1, floorY - beltY, p.body);
+  pm.hline(x0, floorY, x1 - x0 + 1, p.dark);
+  pm.hline(x0, beltY + 1, x1 - x0 + 1, p.lite);
+  // the EV signature — one continuous, near-frameless arched glass greenhouse
+  const ry = beltY - 5;
+  const rx0 = 8;
+  const rx1 = 27;
+  pm.rect(rx0, ry, rx1 - rx0, 5, GLASS_D);           // blacked-out pillar band
+  pm.rect(rx0 + 1, ry + 1, rx1 - rx0 - 2, 4, GLASS); // the glass dome
+  pm.line(rx0, ry + 4, rx0 - 2, beltY, GLASS);       // raked rear glass
+  pm.line(rx1, ry + 4, rx1 + 2, beltY, GLASS);       // raked windshield
+  pm.hline(rx0, ry, rx1 - rx0, p.lite);              // roof highlight
+  // flush, near-hidden door handles (two tiny chrome dashes)
+  pm.set(13, beltY + 3, CHROME);
+  pm.set(20, beltY + 3, CHROME);
+  // THE FRONT LIGHT BAR — a single bright strip across the nose (the face)
+  pm.hline(x1 - 4, beltY + 1, 4, px(RAMP.CYAN, 3));
+  pm.set(x1, beltY + 1, CHROME);
+  pm.rect(x0, beltY + 1, 1, 2, TAIL);                // a thin tail light strip
+  // aero, flush wheels
+  wheel(pm, x0 + 3, floorY + 4);
+  wheel(pm, x1 - 7, floorY + 4);
+  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  pm.outline(C.outline);
+  // a single pure-light glint on the glass AFTER the contour (ADR-020)
+  pm.set(rx1 - 2, ry + 1, CHROME);
   return pm;
 }
 
@@ -456,6 +500,8 @@ export const VEHICLE_SPECS: Record<string, VehicleSpec> = {
   sport_bike:  { cls: 'moto',    terrain: 'road', seats: 2,  w: 24, h: 16, solid: box(24, 6, 9),  draw: (r, g) => drawSportBike(r, g) },
   sedan:       { cls: 'car',     terrain: 'road', seats: 4,  w: 32, h: 19, solid: box(32, 7, 10), draw: (r, g) => drawCarBody({ len: 30, roofH: 5, roofX0: 9,  roofX1: 23 }, r, g) },
   ev:          { cls: 'car',     terrain: 'road', seats: 4,  w: 32, h: 19, solid: box(32, 7, 10), draw: (r, g) => drawCarBody({ len: 30, roofH: 6, roofX0: 8,  roofX1: 24 }, r, g) },
+  // M36 (ADR-077) — THE NIKOLAI: the flagship EV. Self-driving "creep" toy (selfDrive).
+  nikolai:     { cls: 'car',     terrain: 'road', seats: 5,  w: 34, h: 19, solid: box(34, 7, 10), selfDrive: true, draw: (r, g) => drawNikolai(r, g) },
   race_car:    { cls: 'car',     terrain: 'road', seats: 2,  w: 34, h: 19, solid: box(34, 6, 10), draw: (r, g) => drawCarBody({ len: 32, roofH: 3, roofX0: 12, roofX1: 22, wedge: true }, r, g) },
   // M35 (ADR-076) — the HIGH-END / EXOTIC tier (Fortune-Arc priced, seat-fit-correct)
   grand_tourer:{ cls: 'car',     terrain: 'road', seats: 4,  w: 36, h: 19, solid: box(36, 6, 10), draw: (r, g) => drawCarBody({ len: 34, roofH: 4, roofX0: 13, roofX1: 27, wedge: true, chrome: true }, r, g) },
@@ -511,6 +557,8 @@ const PAINTS: Record<string, readonly number[]> = {
   sport_bike:  [RAMP.RED, RAMP.BLUE, RAMP.GRASS],
   sedan:       [RAMP.RED, RAMP.BLUE, RAMP.GOLD, RAMP.PAPER, RAMP.FOREST],
   ev:          [RAMP.CYAN, RAMP.PAPER, RAMP.GRASS],
+  // the Nikolai's clean monochrome + accent line (paper/white, night/black, signature red)
+  nikolai:     [RAMP.PAPER, RAMP.NIGHT, RAMP.RED],
   race_car:    [RAMP.RED, RAMP.GOLD, RAMP.PURPLE],
   grand_tourer:[RAMP.BLUE, RAMP.RED, RAMP.NIGHT, RAMP.GOLD],
   roadster:    [RAMP.RED, RAMP.GOLD, RAMP.PAPER],

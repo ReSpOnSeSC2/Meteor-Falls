@@ -485,6 +485,14 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > priced when the §A4.15 dealership sells them. None is a bag weapon — they are world props / drive
 > targets / `title_*` ownership.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-077 — **§A8 THE NIKOLAI** (a wink at Nikola Tesla,
+> never the trademark). The flagship of the EV line: a sleek, silent, premium electric car — a
+> glassy near-frameless greenhouse, flush door handles, a front LIGHT BAR, an instant-torque
+> "ludicrous" launch, and a SELF-CREEP autopilot gag (it can trundle around an empty lot on its own,
+> no Puppet/Clicker needed — a perfect control-system bit, gated so it only creeps in a cleared
+> lot). Five seats (rides the whole party), its own monochrome+accent paint pool, drawn premium
+> under ADR-020.)*
+
 **Food (HP):** Corn Dog, PB&J, Alfajor, Scone & Clotted Cream, Jollof Bowl, Samosa, Baozi, **Sarmale**, **Mămăligă cu Brânză** (best HP/$ in the game — Buni's), Akutaq, Poke Bowl, Freeze-Dried Ice Cream (Mars vending machines).
 
 **PP:** Star Cola line, Monastery Tea, Temple Incense. **Cures:** Salt Shaker (anti-Tick!), Aloe Leaf (Sunburn), Hanky (Crying), Doctor's Note (Mushroomize), Mom's Voice Tape (Homesick, 3 uses).

@@ -151,6 +151,33 @@ export function unlocksGate(vehicleType: string, req: GateReq): boolean {
   return true;
 }
 
+/* ─── M36 (ADR-077): SELF-CREEP — the Nikolai's autopilot toy ────────────── */
+
+export type SelfCreepReason = 'ok' | 'no_autopilot' | 'lot_not_clear';
+export interface SelfCreepResult {
+  ok: boolean;
+  reason: SelfCreepReason;
+}
+
+/** does this vehicle TYPE have the self-creep autopilot (the Nikolai gag)? */
+export function canSelfCreep(vehicleType: string): boolean {
+  return VEHICLE_SPECS[vehicleType]?.selfDrive === true;
+}
+
+/**
+ * The Nikolai's party trick: it can creep around DRIVER-LESS on its own — no
+ * Puppet, no Clicker — but ONLY in a cleared lot (the EarthBound-safe joke: it
+ * won't trundle into a crowd). Pure logic; the OverworldScene plays the creep.
+ *   · 'no_autopilot' — this vehicle has no self-drive (most do not);
+ *   · 'lot_not_clear' — there are people/obstacles in the way (the safety law);
+ *   · 'ok' — let it creep.
+ */
+export function selfCreep(vehicleType: string, lotClear: boolean): SelfCreepResult {
+  if (!canSelfCreep(vehicleType)) return { ok: false, reason: 'no_autopilot' };
+  if (!lotClear) return { ok: false, reason: 'lot_not_clear' };
+  return { ok: true, reason: 'ok' };
+}
+
 /** the field label for a power (Mind Warp is the battle face; Puppet the field) */
 export function fieldLabel(kind: ControlKind): string {
   return kind === 'puppet' ? 'PUPPET' : 'CLICKER';

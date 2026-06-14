@@ -93,6 +93,27 @@ describe('M35 (ADR-076) — the two-wheeler + exotic tier', () => {
   });
 });
 
+describe('M36 (ADR-077) — THE NIKOLAI (the flagship EV)', () => {
+  it('is a 5-seat road car (ride 4 — the whole party)', () => {
+    expect(VEHICLE_SPECS.nikolai?.cls).toBe('car');
+    expect(VEHICLE_SPECS.nikolai.terrain).toBe('road');
+    expect(VEHICLE_SPECS.nikolai.seats).toBe(5);
+    expect(usableSeats('nikolai')).toBe(4);
+    expect(seatsFit('nikolai', 4)).toBe(true);
+  });
+  it('carries the self-creep autopilot flag (the only road car that does)', () => {
+    expect(VEHICLE_SPECS.nikolai.selfDrive).toBe(true);
+    expect(VEHICLE_SPECS.sedan.selfDrive).toBeUndefined();
+    expect(VEHICLE_SPECS.ev.selfDrive).toBeUndefined();
+  });
+  it('ships its own monochrome+accent paint pool', () => {
+    const variants = VEHICLE_CATALOG.filter((v) => v.type === 'nikolai').map((v) => v.name);
+    expect(variants).toContain('veh_nikolai_paper');
+    expect(variants).toContain('veh_nikolai_night');
+    expect(variants).toContain('veh_nikolai_red');
+  });
+});
+
 describe('the art law (ADR-020) — palette-only + deterministic', () => {
   it('every variant draws only master-palette indices (0–63) or transparent', () => {
     for (const v of VEHICLE_CATALOG) {
