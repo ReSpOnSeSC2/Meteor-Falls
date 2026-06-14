@@ -4722,3 +4722,27 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   keyItems). §A4.15 amended in the same commit.
 - **Consequences:** the car habit has a place to feed it — buy across the Fortune-Arc bands, sell at
   a loss when you upgrade. M38 gives the cars somewhere to live (the home garage + the active ride).
+
+## ADR-079 — S19 (Movement 38): THE HOME GARAGE — store & choose your ride (save v13)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 38 — gives the M37 cars somewhere to live; needs the M29
+  property registry + the home-feature precedent.)
+- **Decision — `src/engine/garage.ts` grows the home-garage logic (pure, tested).**
+  `garageCapacity(property)` = `storageTier * 2` for HOMES (a starter holds 2, a manor 6), 0 for
+  non-homes; `garageContents`/`parkCar`/`pullCar` manage the per-property store (park refuses a
+  double-park or an over-capacity car); `setActive(title, owned)` picks the ACTIVE ride you own
+  (null = on foot / everything parked; a car you don't own is refused). The home's garage feature
+  shows the active car parked out front — a data hook the scene reads per-home.
+- **Decision — save bump v12 → v13 (`garage` + `activeVehicle`).** Owned cars per property are
+  array-shaped → they earn a typed field (`garage: Record<propertyId, titles[]>`), and the active
+  ride is the scalar that pairs with it (`activeVehicle: string | null`); everything else stays
+  ADR-015 flags + `title_*` key-items. The `to: 13` migration backfills an empty garage + no active
+  ride on any pre-v13 save (the dealership is v13-new, so that's the true history — the v11
+  empty-homeStorage stance). Round-trip + chain tested in `migrations.test.ts`.
+- **Verification:** `tsc` clean, `npm run validate` green, full **vitest 877 green**, `vite build`
+  clean. Save walks v12 → v13, migrates from v12 + round-trips byte-stable. No FNV re-pin, no
+  frozen-core change. §A4.15 amended (the same block as ADR-078, now naming the garage + v13).
+- **Consequences:** you can buy a car, park it at 27 Maple, swap the active ride, and a manor holds
+  a small fleet — all proven in pure logic + tests. The garage-out-front render + the lot/swap UI
+  land with their chapter scenes; the spine is settled.

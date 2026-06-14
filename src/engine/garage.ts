@@ -11,6 +11,7 @@
  * NOT the §A8 item catalog (no icon-gate burden).
  */
 import { DEALERSHIP, type CarForSale } from '../data/dealership';
+import type { PropertyDef } from '../data/properties';
 
 function bandIndex(band: string): number {
   return Number(/^ch(\d+)$/.exec(band)?.[1] ?? 1);
@@ -104,4 +105,50 @@ export function sellCar(carId: string, keyItems: readonly string[]): SellResult 
   const car = DEALERSHIP[carId];
   if (!car || !ownsCar(carId, keyItems)) return { ok: false, proceeds: 0, title: null };
   return { ok: true, proceeds: sellValue(car), title: car.title };
+}
+
+/* ─── M38 (ADR-079): THE HOME GARAGE — store + choose your ride ───────────── */
+
+/** how many cars a property's GARAGE holds — by its storage tier; non-homes hold
+ *  none (a starter home parks a couple, a manor a small fleet). The home's garage
+ *  feature shows the ACTIVE car parked out front (the scene reads this). */
+export function garageCapacity(def: PropertyDef): number {
+  if (def.kind !== 'home') return 0;
+  return def.storageTier * 2;
+}
+
+/** the titles parked at a property (empty when nothing's stored there) */
+export function garageContents(garage: Record<string, string[]>, propertyId: string): string[] {
+  return garage[propertyId] ?? [];
+}
+
+/**
+ * Park a car (by its title) into a property's garage, respecting `capacity`.
+ * Mutates `garage` and returns whether it parked (false if full or already there).
+ */
+export function parkCar(garage: Record<string, string[]>, propertyId: string, title: string, capacity: number): boolean {
+  const here = garage[propertyId] ?? (garage[propertyId] = []);
+  if (here.includes(title)) return false;     // no double-park
+  if (here.length >= capacity) return false;  // garage full
+  here.push(title);
+  return true;
+}
+
+/** Pull a car back out of a property's garage. Returns whether it was there. */
+export function pullCar(garage: Record<string, string[]>, propertyId: string, title: string): boolean {
+  const here = garage[propertyId];
+  if (!here) return false;
+  const i = here.indexOf(title);
+  if (i < 0) return false;
+  here.splice(i, 1);
+  return true;
+}
+
+/**
+ * Resolve the ACTIVE ride: you can only drive a car you OWN. `null` means park
+ * everything (drive nothing); a title you don't own is refused (stays null).
+ */
+export function setActive(title: string | null, ownedTitles: readonly string[]): string | null {
+  if (title === null) return null;
+  return ownedTitles.includes(title) ? title : null;
 }

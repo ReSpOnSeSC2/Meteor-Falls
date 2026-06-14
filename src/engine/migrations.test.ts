@@ -468,3 +468,36 @@ describe('save migration registry (S18 M30) — v11 → v12: the home editor', (
     expect(GS.data.homeLayouts).toEqual({});
   });
 });
+
+describe('save migration registry (S19 M38) — v12 → v13: the home garage', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills an empty garage + no active ride on a pre-v13 save', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 12;
+    delete d.garage;         // a pre-v13 save owned no car
+    delete d.activeVehicle;
+    GS.deserialize(JSON.stringify(d));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.garage).toEqual({});
+    expect(GS.data.activeVehicle).toBeNull();
+  });
+
+  it('a stocked garage + chosen ride round-trip byte-stable', () => {
+    GS.data.garage = { '27_maple': ['title_car_sedan', 'title_car_nikolai'] };
+    GS.data.activeVehicle = 'title_car_nikolai';
+    const json = GS.serialize();
+    GS.reset();
+    expect(GS.data.garage).toEqual({}); // reset really clears it
+    GS.deserialize(json);
+    expect(GS.data.garage).toEqual({ '27_maple': ['title_car_sedan', 'title_car_nikolai'] });
+    expect(GS.data.activeVehicle).toBe('title_car_nikolai');
+  });
+
+  it('the v1 chain runs all the way to v13', () => {
+    GS.deserialize(JSON.stringify(v1SaveS2()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.garage).toEqual({});
+    expect(GS.data.activeVehicle).toBeNull();
+  });
+});

@@ -10,8 +10,10 @@ import { describe, it, expect } from 'vitest';
 import {
   carsForSale, carById, titleOf, ownsCar,
   resaleFactor, sellValue, buyCar, sellCar, canBuyCar,
+  garageCapacity, garageContents, parkCar, pullCar, setActive,
 } from './garage';
 import { DEALERSHIP } from '../data/dealership';
+import { PROPERTIES } from '../data/properties';
 import { VEHICLE_SPECS } from '../spritegen/vehicles';
 
 describe('the dealership — listings gate by chapter', () => {
@@ -81,5 +83,51 @@ describe('the sell — Bert keeps the tenth AND the new-car smell', () => {
   });
   it('cheap early rides depreciate harder than dear exotics', () => {
     expect(resaleFactor(DEALERSHIP.kids_bmx)).toBeLessThan(resaleFactor(DEALERSHIP.the_stretch));
+  });
+});
+
+/* ─── M38 — the home garage (capacity, park/pull, the active ride) ───────── */
+
+describe('M38 (ADR-079) — the home garage', () => {
+  it('capacity scales with the property storage tier; non-homes hold none', () => {
+    expect(garageCapacity(PROPERTIES['27_maple'])).toBeGreaterThan(0);          // tier 1 starter
+    expect(garageCapacity(PROPERTIES.hillcrest_manor)).toBeGreaterThan(
+      garageCapacity(PROPERTIES['27_maple']),                                    // tier 3 manor holds more
+    );
+    expect(garageCapacity(PROPERTIES.brickton_walkup)).toBe(0);                  // a rental is no home garage
+  });
+
+  it('parks a car into a home garage, respecting capacity', () => {
+    const garage: Record<string, string[]> = {};
+    const cap = garageCapacity(PROPERTIES['27_maple']);
+    expect(parkCar(garage, '27_maple', 'title_car_sedan', cap)).toBe(true);
+    expect(garageContents(garage, '27_maple')).toEqual(['title_car_sedan']);
+    expect(parkCar(garage, '27_maple', 'title_car_sedan', cap)).toBe(false); // no double-park
+  });
+
+  it('refuses to overfill a starter garage but a manor swallows more', () => {
+    const garage: Record<string, string[]> = {};
+    // a tiny cap of 1 proves the refusal cleanly
+    expect(parkCar(garage, '27_maple', 'title_car_a', 1)).toBe(true);
+    expect(parkCar(garage, '27_maple', 'title_car_b', 1)).toBe(false); // full
+    // a manor's real capacity holds several
+    const big: Record<string, string[]> = {};
+    const cap = garageCapacity(PROPERTIES.hillcrest_manor);
+    for (let i = 0; i < cap; i++) expect(parkCar(big, 'hillcrest_manor', `title_car_${i}`, cap)).toBe(true);
+    expect(parkCar(big, 'hillcrest_manor', 'title_car_extra', cap)).toBe(false);
+  });
+
+  it('pulls a car back out of the garage', () => {
+    const garage: Record<string, string[]> = { '27_maple': ['title_car_sedan', 'title_car_ev'] };
+    expect(pullCar(garage, '27_maple', 'title_car_sedan')).toBe(true);
+    expect(garageContents(garage, '27_maple')).toEqual(['title_car_ev']);
+    expect(pullCar(garage, '27_maple', 'title_car_sedan')).toBe(false); // already gone
+  });
+
+  it('setActive picks a ride you own; refuses one you do not', () => {
+    const owned = ['title_car_sedan', 'title_car_ev'];
+    expect(setActive('title_car_sedan', owned)).toBe('title_car_sedan');
+    expect(setActive('title_car_limo', owned)).toBeNull(); // not owned — no swap
+    expect(setActive(null, owned)).toBeNull();             // park everything (drive nothing)
   });
 });

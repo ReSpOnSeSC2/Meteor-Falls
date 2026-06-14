@@ -38,7 +38,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 12;
+  version: 13;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -78,6 +78,13 @@ export interface GameStateData {
    *  computed from it (the rest buff + the flip resale lift). Array-shaped, so it
    *  earns a typed field + a migration (everything else stays ADR-015 flags). */
   homeLayouts: Record<string, Array<{ f: string; x: number; y: number; rot: 0 | 1 | 2 | 3 }>>;
+  /** S19 (v13, ADR-079): THE HOME GARAGE — owned-car TITLES parked per property,
+   *  keyed by property id (the §A4.15 garage). Array-shaped, so it earns a typed
+   *  field + a migration; capacity is `garageCapacity(property)`. */
+  garage: Record<string, string[]>;
+  /** S19 (v13, ADR-079): the ACTIVE car title the party drives (null = on foot /
+   *  everything parked). Scalar, but it pairs with `garage` so it migrates with it. */
+  activeVehicle: string | null;
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -150,7 +157,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 12,
+    version: 13,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -181,6 +188,8 @@ export function newGameData(): GameStateData {
     hoops: freshHoops(),
     homeStorage: {},
     homeLayouts: {},
+    garage: {},
+    activeVehicle: null,
   };
 }
 
