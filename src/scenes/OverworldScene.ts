@@ -116,6 +116,7 @@ import { VEHICLE_CATALOG, VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
+import { AUTHORED_WORLD_PROP_DISPLAY_SIZE } from '../spritegen/authored';
 import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
 import {
   instantWinGroup,
@@ -175,6 +176,8 @@ interface NpcObj {
   vy: number;
   think: number;
 }
+
+type AuthoredWorldPropKey = keyof typeof AUTHORED_WORLD_PROP_DISPLAY_SIZE;
 
 const WALK = 70;
 const RUN = 115;
@@ -463,7 +466,9 @@ export class OverworldScene extends Phaser.Scene {
           ? 'mask_switch_lit'
           : p.sprite;
       const img = this.add.image(p.x * 16, p.y * 16, sprite).setOrigin(0, 0);
-      img.setDepth(p.y * 16 + img.height);
+      const displaySize = AUTHORED_WORLD_PROP_DISPLAY_SIZE[sprite as AuthoredWorldPropKey];
+      if (displaySize) img.setDisplaySize(displaySize.w, displaySize.h);
+      img.setDepth(p.y * 16 + img.displayHeight);
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
         // places a facade at a story count `u`; the forge/grown grammar often
