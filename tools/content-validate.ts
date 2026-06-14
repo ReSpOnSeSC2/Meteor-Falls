@@ -39,6 +39,7 @@ import { WEAPON_ART } from '../src/spritegen/weapons';
 import { ITEM_ICON } from '../src/spritegen/icons';
 import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
 import { GLYPH_SCRIPT, SCRIPT_CATALOG, areaGlyphRun } from '../src/spritegen/glyphforge';
+import { GLYPH_TOKENS, FLAIR_BY_ELEMENT, FLAIR_BY_RESULT, glyphRegistryNames, flairGlyph } from '../src/spritegen/flair';
 import { REGION_RAMPS } from '../src/spritegen/iconforge';
 import { BUILDING_DIMS } from '../src/levelkit/kit';
 import { VEHICLE_CATALOG, VEHICLE_SPECS, usableSeats } from '../src/spritegen/vehicles';
@@ -2345,6 +2346,72 @@ for (const e of Object.values(ENEMIES)) {
   sweepTokens('text', `enemy '${e.id}' deathLine`, e.deathLine, BATTLE_TOKENS);
 }
 
+/* ===== 4b. THE FLAIR WEAVE — the {g:NAME} flair gate (S18 M23, ADR-093) ===== */
+// The pixel-emoji `{g:NAME}` layer, pinned BOTH directions (like M22's glyph-script
+// gate) — its colon syntax slips past the {word} token sweep above on purpose, so
+// it owns its own gate:
+//  · every {g:NAME} that appears in data names a REAL drawn glyph (a typo'd
+//    {g:fier} fails the build loudly);
+//  · the registry is pinned BOTH ways — every declared GLYPH_TOKEN is actually
+//    drawn, and every drawn glyph is declared (no orphan, no undeclared draw);
+//  · the battle auto-flair maps reference only real glyphs;
+//  · DISCIPLINE: a literal {g:} only belongs where the MIXED-RUN renderer runs
+//    (DIALOGUE → say(), and battle injects flair at RUNTIME, never in data). A
+//    menu/shop/journal surface renders through ask()/pick()/toast, which can't
+//    draw a sprite — so a stray {g:} there would show raw. The gate forbids it.
+{
+  const GLYPH_SET = new Set<string>(GLYPH_TOKENS);
+  const flairTokensOf = (s: string): string[] => [...s.matchAll(/\{g:(\w+)\}/g)].map((m) => m[1]);
+  const hasFlairTok = (s: string): boolean => /\{g:\w+\}/.test(s);
+
+  // both directions: declared vocabulary ⇄ drawn registry
+  const drawn = new Set(glyphRegistryNames());
+  for (const name of GLYPH_TOKENS) {
+    if (!drawn.has(name)) fail('flair', `GLYPH_TOKENS declares '${name}' but flair.ts draws no such glyph`);
+    const pm = flairGlyph(name);
+    const ink = pm.data.reduce((n, c) => n + (c !== 255 ? 1 : 0), 0);
+    if (ink <= 4) fail('flair', `flair glyph '${name}' draws nothing legible (only ${ink} px)`);
+  }
+  for (const name of drawn) {
+    if (!GLYPH_SET.has(name)) fail('flair', `flair.ts draws '${name}' but it is not declared in GLYPH_TOKENS — add it or retire the drawing`);
+  }
+
+  // the battle auto-flair maps must reference real glyphs
+  for (const [el, g] of Object.entries(FLAIR_BY_ELEMENT)) {
+    if (g && !GLYPH_SET.has(g)) fail('flair', `FLAIR_BY_ELEMENT['${el}'] = '${g}' is not a real glyph`);
+  }
+  for (const [res, g] of Object.entries(FLAIR_BY_RESULT)) {
+    if (!GLYPH_SET.has(g)) fail('flair', `FLAIR_BY_RESULT['${res}'] = '${g}' is not a real glyph`);
+  }
+
+  // forward: every {g:NAME} in DIALOGUE names a real glyph
+  for (const [id, pages] of Object.entries(DIALOGUE)) {
+    pages.forEach((page, i) => {
+      for (const t of flairTokensOf(page)) {
+        if (!GLYPH_SET.has(t)) {
+          fail('flair', `dialogue '${id}' page ${i + 1}: unknown flair {g:${t}} — known: ${[...GLYPH_SET].map((k) => `{g:${k}}`).join(' ')}`);
+        }
+      }
+    });
+  }
+
+  // discipline: NO literal flair on the menu/shop/journal surfaces (they render
+  // through ask()/pick()/toast, never the mixed run; a {g:} there would show raw)
+  const noFlair = (where: string, text: string): void => {
+    if (hasFlairTok(text)) fail('flair', `${where}: literal {g:} flair only belongs in DIALOGUE (the say/print path) — found in "${text}"`);
+  };
+  for (const m of Object.values(MAPS)) noFlair(`map '${m.id}' name`, m.name);
+  for (const item of Object.values(ITEMS)) {
+    noFlair(`item '${item.id}' name`, item.name);
+    noFlair(`item '${item.id}' text`, item.text);
+  }
+  for (const q of Object.values(QUESTS)) {
+    noFlair(`quest '${q.id}' name`, q.name);
+    q.objectives.forEach((o) => noFlair(`quest '${q.id}' objective '${o.id}'`, o.text));
+    noFlair(`quest '${q.id}' caller quote`, q.caller.quote);
+  }
+}
+
 /* ================= 5. New Game values fit the letter grid ================= */
 
 {
@@ -2387,6 +2454,7 @@ const counts = [
   `${Object.keys(MAPS).length} maps`,
   `${CANON_AREAS.length} area skins`,
   `${Object.keys(GLYPH_SCRIPT).length} area glyph scripts (${SCRIPT_CATALOG.length} families)`,
+  `${GLYPH_TOKENS.length} flair glyphs`,
   `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
   `${Object.keys(PSI_GATES).length} psi gates`,
   `${Object.keys(PROPERTIES).length} properties`,
