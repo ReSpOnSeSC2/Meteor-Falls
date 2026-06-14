@@ -306,11 +306,12 @@ function drawBigLittleLensIcon(): Pixmap {
   return pm;
 }
 
-/** a prayer-bead bracelet: a loop of beads, one gold focal bead */
-function drawBeadsIcon(): Pixmap {
+/** a prayer-bead bracelet: a loop of beads, one gold focal bead. The ramp tells
+ *  Dorin's rungs apart (cedar EARTH → river BLUE), the gold focal bead constant. */
+function drawBeadsIcon(ramp: number = RAMP.EARTH): Pixmap {
   const pm = new Pixmap(14, 14);
-  const bead = px(RAMP.EARTH, 2);
-  const beadL = px(RAMP.EARTH, 3);
+  const bead = px(ramp, 2);
+  const beadL = px(ramp, 3);
   // a ring of beads (8 around a loop)
   const at: Array<[number, number]> = [
     [6, 2], [9, 3], [11, 6], [10, 9], [7, 11], [4, 10], [2, 7], [3, 4],
@@ -797,6 +798,155 @@ function drawCamera(): Pixmap {
   return pm;
 }
 
+/* ---- S17 M20 (ADR-065) — THE FAR-WORLD CATALOG: the bespoke signature faces.
+ *      The two funny kit sidegrades (a cobra-flute, a folded-paper fan) and the
+ *      story-grade named keys (Train Ticket, Yak Treats, Spice Box, Scroll of
+ *      Calm) are hand-drawn with love; the generic tail forges below. ---- */
+
+/** the Cobra-Charmer's Flute (Ch.7 sidegrade): a brass been/pungi, a gourd bell,
+ *  fingerholes, a curl of charmed sound rising */
+function drawFluteIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const brass = px(RAMP.GOLD, 2);
+  const brassL = px(RAMP.GOLD, 3);
+  // the gourd wind-chamber, low-left
+  pm.ellipse(4, 10, 3, 3, px(RAMP.EARTH, 2));
+  pm.set(3, 9, px(RAMP.EARTH, 3));
+  // the pipe climbing up-right
+  pm.line(5, 8, 11, 2, brass);
+  pm.line(6, 8, 12, 2, brassL);
+  // the fingerholes
+  pm.set(7, 6, C.outline);
+  pm.set(8, 5, C.outline);
+  pm.set(9, 4, C.outline);
+  // the charmed note rising off the top
+  pm.set(12, 1, px(RAMP.MAGENTA, 2));
+  pm.set(13, 0, px(RAMP.MAGENTA, 3));
+  pm.outline(C.outline);
+  pm.set(12, 2, C.white); // a glint off the brass
+  return pm;
+}
+
+/** the Folded-Paper Fan (Ch.8 boss-drop sidegrade): a rice-paper fan spread on
+ *  lacquer-red ribs — the Paper Dragon's own last fold */
+function drawFanIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const paper = px(RAMP.PAPER, 3);
+  const rib = px(RAMP.RED, 2);
+  const ribD = px(RAMP.RED, 1);
+  // the fan blade — a quarter-circle opening up-right from a low pivot
+  for (let i = 0; i <= 6; i++) {
+    pm.line(4, 12, 4 + i, 12 - (i + 4), paper); // the paper leaves
+  }
+  // the lacquer ribs over the paper
+  pm.line(4, 12, 4, 4, ribD);
+  pm.line(4, 12, 7, 4, rib);
+  pm.line(4, 12, 10, 6, rib);
+  pm.line(4, 12, 11, 9, rib);
+  // the pivot rivet
+  pm.set(4, 12, px(RAMP.GOLD, 3));
+  // the top arc edge
+  pm.line(4, 4, 11, 9, rib);
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Train Ticket, 3rd class (Ch.7 — §A8 key): a printed stub, a punched hole,
+ *  a row of fare-class pips, torn along one perforated edge */
+function drawTrainTicketIcon(): Pixmap {
+  const pm = new Pixmap(14, 12);
+  const card = px(RAMP.BLOND, 3);
+  const cardD = px(RAMP.BLOND, 1);
+  // the stub body
+  pm.rect(2, 2, 10, 8, card);
+  pm.hline(2, 2, 10, px(RAMP.BLOND, 2));
+  pm.frame(2, 2, 10, 8, px(RAMP.EARTH, 2));
+  // a perforated tear down the right third
+  for (let y = 2; y <= 9; y += 2) pm.set(9, y, cardD);
+  // the printed bar + "3rd" pips (three dots, third class)
+  pm.hline(3, 4, 4, px(RAMP.RED, 2));
+  pm.set(3, 7, C.outline);
+  pm.set(5, 7, C.outline);
+  pm.set(7, 7, C.outline);
+  // the conductor's punch hole
+  pm.ellipse(11, 6, 1, 1, px(RAMP.EARTH, 1));
+  pm.set(11, 6, C.outline);
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** Yak Treats (Ch.8 — §A8 key): a little burlap feedbag of hay-cakes for the Yak
+ *  Express, one cake poking out the cinched top */
+function drawYakTreatsIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const burlap = px(RAMP.EARTH, 2);
+  const burlapL = px(RAMP.EARTH, 3);
+  // the cinched bag
+  pm.rect(3, 6, 7, 7, burlap);
+  pm.vline(3, 6, 7, burlapL);
+  pm.hline(3, 12, 7, px(RAMP.EARTH, 1));
+  pm.contour(6, 3, [1, 2, 3], burlap); // the gathered neck
+  pm.hline(4, 5, 5, px(RAMP.RED, 2)); // the tie cord
+  // the hay-cake poking out the top — golden, round
+  pm.ellipse(6, 3, 2, 1, px(RAMP.BLOND, 2));
+  pm.set(5, 3, px(RAMP.BLOND, 3));
+  pm.set(7, 3, px(RAMP.GRASS, 2)); // a wisp of green hay
+  // a burlap weave hint
+  pm.set(5, 9, px(RAMP.EARTH, 1));
+  pm.set(7, 10, px(RAMP.EARTH, 1));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Spice Box (Ch.7 — §A10 #15): a brass masala dabba, lid off, seven little
+ *  bowls of colour inside — the seven spices of the bazaar hunt */
+function drawSpiceBoxIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const brass = px(RAMP.GOLD, 2);
+  const brassL = px(RAMP.GOLD, 3);
+  // the round tin, seen from above
+  pm.ellipse(7, 8, 6, 5, brass);
+  pm.ellipse(7, 8, 5, 4, px(RAMP.GOLD, 1)); // the inner well
+  pm.hline(2, 8, 11, brassL); // the lit front rim
+  // six little spice bowls around a centre one — colours of the bazaar
+  const bowls: Array<[number, number, number]> = [
+    [7, 5, RAMP.ORANGE], [10, 7, RAMP.RED], [10, 10, RAMP.GOLD],
+    [7, 11, RAMP.FOREST], [4, 10, RAMP.EARTH], [4, 7, RAMP.MAGENTA],
+    [7, 8, RAMP.PURPLE],
+  ];
+  for (const [x, y, c] of bowls) {
+    pm.set(x, y, px(c, 2));
+    pm.set(x, y - 1, px(c, 3));
+  }
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** the Scroll of Calm (Ch.8 — §A10 #17, cures Mushroomize, canonically reusable):
+ *  a rice-paper scroll on lacquer rollers, a single calm brush-stroke of ink */
+function drawScrollIcon(): Pixmap {
+  const pm = new Pixmap(14, 13);
+  const paper = px(RAMP.PAPER, 3);
+  const paperD = px(RAMP.PAPER, 1);
+  const roller = px(RAMP.RED, 2);
+  // the two lacquer rollers, top and bottom
+  pm.rect(2, 2, 10, 2, roller);
+  pm.rect(2, 9, 10, 2, roller);
+  pm.set(1, 2, px(RAMP.GOLD, 2)); // the roller knobs
+  pm.set(12, 2, px(RAMP.GOLD, 2));
+  pm.set(1, 9, px(RAMP.GOLD, 2));
+  pm.set(12, 9, px(RAMP.GOLD, 2));
+  // the open paper field
+  pm.rect(2, 4, 10, 5, paper);
+  pm.hline(2, 8, 10, paperD);
+  // one calm brush-stroke — a single grounding line of ink
+  pm.line(4, 6, 9, 5, C.inkSoft);
+  pm.set(10, 5, C.outline); // the stroke's settled end
+  pm.set(5, 7, C.inkSoft); // a small seal mark
+  pm.outline(C.outline);
+  return pm;
+}
+
 /* ================================================================== */
 /* THE REGISTRY — every §A8 item, both directions enforced.            */
 
@@ -1022,6 +1172,131 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   giant_button: () => forgeIcon({ subcat: 'hubcap', band: 'cross', detail: 'dots', seed: 'giant_button' }),
   impossible_berry: () => forgeIcon({ subcat: 'fruit', band: 'cross', detail: 'sprout', seed: 'impossible_berry' }),
   tiny_postcard: () => forgeIcon({ subcat: 'stamp', band: 'cross', detail: 'label', seed: 'tiny_postcard' }),
+
+  /* ============ S17 M20 (ADR-065) — THE FAR-WORLD CATALOG ============
+   * Ch.6 Africa · Ch.7 India · Ch.8 China. The hero weapon rungs reuse the
+   * bat/pan/beads silhouettes (ramp + mark); the two kit sidegrades + the named
+   * keys are bespoke (above); the long tail forges one line each. Savanna ochre/
+   * indigo (ch6) · bazaar spice/jewel (ch7) · jade/lacquer-red/rice-paper (ch8). */
+
+  /* ---- FAR-WORLD weapon menu faces (the swing lives in WEAPON_ART) ---- */
+  aluminum_bat: () => drawBatIcon(RAMP.PAPER, 'carve'),
+  hall_of_famer_bat: () => drawBatIcon(RAMP.GOLD, 'carve'),
+  cast_iron_pan: () => drawPanIcon(RAMP.INK, true),
+  chefs_pan: () => drawPanIcon(RAMP.GOLD, true),
+  river_beads: () => drawBeadsIcon(RAMP.BLUE),
+  cobra_flute: () => drawFluteIcon(),
+  paper_fan: () => drawFanIcon(),
+
+  /* ---- Ch.6 AFRICA — armor menu faces (Turban of Calm rung + savanna bodies) ---- */
+  turban_of_calm: () => forgeIcon({ subcat: 'hat', band: 'ch6', detail: 'stripe', seed: 'turban_of_calm' }),
+  kanga_wrap: () => forgeIcon({ subcat: 'garment', band: 'ch6', detail: 'stripe', seed: 'kanga_wrap' }),
+  savanna_cloak: () => forgeIcon({ subcat: 'garment', band: 'ch6', detail: 'dots', seed: 'savanna_cloak' }),
+  mudcloth_vest: () => forgeIcon({ subcat: 'garment', band: 'ch6', detail: 'cap', seed: 'mudcloth_vest' }),
+  /* ---- Ch.6 — foods (Zanzibel market + the savanna crossing) ---- */
+  jollof_bowl: () => forgeIcon({ subcat: 'bowl', band: 'ch6', detail: 'steam', seed: 'jollof_bowl' }),
+  grilled_corn: () => forgeIcon({ subcat: 'skewer', band: 'ch6', detail: 'stripe', seed: 'grilled_corn' }),
+  caravan_dates: () => forgeIcon({ subcat: 'fruit', band: 'ch6', detail: 'dots', seed: 'caravan_dates' }),
+  caravan_rations: () => forgeIcon({ subcat: 'plate', band: 'ch6', detail: 'dots', seed: 'caravan_rations' }),
+  suya_skewer: () => forgeIcon({ subcat: 'skewer', band: 'ch6', detail: 'flame', seed: 'suya_skewer' }),
+  injera_roll: () => forgeIcon({ subcat: 'loaf', band: 'ch6', detail: 'stripe', seed: 'injera_roll' }),
+  plantain_chips: () => forgeIcon({ subcat: 'bar', band: 'ch6', detail: 'dots', seed: 'plantain_chips' }),
+  groundnut_stew: () => forgeIcon({ subcat: 'bowl', band: 'ch6', detail: 'dots', seed: 'groundnut_stew' }),
+  akara_cake: () => forgeIcon({ subcat: 'pastry', band: 'ch6', detail: ['bite', 'dots'], seed: 'akara_cake' }),
+  spiced_bun: () => forgeIcon({ subcat: 'pastry', band: 'ch6', detail: 'dots', seed: 'spiced_bun' }),
+  coconut_rice: () => forgeIcon({ subcat: 'plate', band: 'ch6', detail: 'steam', seed: 'coconut_rice' }),
+  fufu_bowl: () => forgeIcon({ subcat: 'loaf', band: 'ch6', detail: 'dots', seed: 'fufu_bowl' }),
+  /* ---- Ch.6 — PP / cures / tonics ---- */
+  kola_nut_drink: () => forgeIcon({ subcat: 'bottle', band: 'ch6', detail: ['cork', 'label'], seed: 'kola_nut_drink' }),
+  hibiscus_tea: () => forgeIcon({ subcat: 'teacup', band: 'ch6', detail: 'steam', seed: 'hibiscus_tea' }),
+  baobab_juice: () => forgeIcon({ subcat: 'can', band: 'ch6', detail: 'label', seed: 'baobab_juice' }),
+  shea_balm: () => forgeIcon({ subcat: 'wax_tin', band: 'ch6', detail: 'dots', seed: 'shea_balm' }),
+  neem_drops: () => forgeIcon({ subcat: 'vial', band: 'ch6', detail: 'cap', seed: 'neem_drops' }),
+  savanna_grit: () => forgeIcon({ subcat: 'pill', band: 'ch6', seed: 'savanna_grit' }),
+  baobab_draught: () => forgeIcon({ subcat: 'capsule', band: 'ch6', detail: 'stripe', seed: 'baobab_draught' }),
+  /* ---- Ch.6 — battle / valuables / keys ---- */
+  thornbush_bomb: () => forgeIcon({ subcat: 'bomb', band: 'ch6', detail: 'fuse', seed: 'thornbush_bomb' }),
+  dust_pot: () => forgeIcon({ subcat: 'pouch', band: 'ch6', seed: 'dust_pot' }),
+  laughing_coin: () => forgeIcon({ subcat: 'coin', band: 'ch6', detail: 'crack', seed: 'laughing_coin' }),
+  riddle_shard: () => forgeIcon({ subcat: 'gem', band: 'ch6', ramp: RAMP.BLUE, detail: 'crack', seed: 'riddle_shard' }),
+  bronze_mask: () => forgeIcon({ subcat: 'idol', band: 'ch6', detail: 'star', seed: 'bronze_mask' }),
+  trade_salt: () => forgeIcon({ subcat: 'sack', band: 'ch6', detail: 'dots', seed: 'trade_salt' }),
+  canteen_of_the_crossing: () => forgeIcon({ subcat: 'bottle', band: 'ch6', detail: 'cap', seed: 'canteen_of_the_crossing' }),
+  caravan_charter: () => forgeIcon({ subcat: 'note', band: 'ch6', seed: 'caravan_charter' }),
+
+  /* ---- Ch.7 INDIA — armor menu faces (jeweled Pagri rung + bazaar bodies) ---- */
+  jeweled_pagri: () => forgeIcon({ subcat: 'hat', band: 'ch7', detail: ['star', 'stripe'], seed: 'jeweled_pagri' }),
+  silk_kurta: () => forgeIcon({ subcat: 'garment', band: 'ch7', detail: 'stripe', seed: 'silk_kurta' }),
+  embroidered_sherwani: () => forgeIcon({ subcat: 'garment', band: 'ch7', detail: 'ribbon', seed: 'embroidered_sherwani' }),
+  nawab_coat: () => forgeIcon({ subcat: 'garment', band: 'ch7', detail: 'dots', seed: 'nawab_coat' }),
+  /* ---- Ch.7 — foods (Chandrapore bazaar street food) ---- */
+  samosa: () => forgeIcon({ subcat: 'pastry', band: 'ch7', detail: 'bite', seed: 'samosa' }),
+  jalebi: () => forgeIcon({ subcat: 'pastry', band: 'ch7', detail: 'ribbon', seed: 'jalebi' }),
+  pani_puri: () => forgeIcon({ subcat: 'bowl', band: 'ch7', detail: 'dots', seed: 'pani_puri' }),
+  butter_chicken: () => forgeIcon({ subcat: 'bowl', band: 'ch7', detail: 'steam', seed: 'butter_chicken' }),
+  biryani: () => forgeIcon({ subcat: 'plate', band: 'ch7', detail: 'dots', seed: 'biryani' }),
+  naan: () => forgeIcon({ subcat: 'loaf', band: 'ch7', detail: 'bite', seed: 'naan' }),
+  pakora: () => forgeIcon({ subcat: 'pastry', band: 'ch7', detail: 'dots', seed: 'pakora' }),
+  gulab_jamun: () => forgeIcon({ subcat: 'fruit', band: 'ch7', detail: 'steam', seed: 'gulab_jamun' }),
+  dosa: () => forgeIcon({ subcat: 'loaf', band: 'ch7', detail: 'stripe', seed: 'dosa' }),
+  mango_kulfi: () => forgeIcon({ subcat: 'bar', band: 'ch7', detail: 'wrapper', seed: 'mango_kulfi' }),
+  chaat: () => forgeIcon({ subcat: 'bowl', band: 'ch7', detail: 'stripe', seed: 'chaat' }),
+  /* ---- Ch.7 — PP / cures / tonics / revival ---- */
+  masala_chai: () => forgeIcon({ subcat: 'teacup', band: 'ch7', detail: 'steam', seed: 'masala_chai' }),
+  mango_lassi: () => forgeIcon({ subcat: 'cup_cold', band: 'ch7', seed: 'mango_lassi' }),
+  falooda: () => forgeIcon({ subcat: 'cup_cold', band: 'ch7', ramp: RAMP.MAGENTA, seed: 'falooda' }),
+  antivenom_vial: () => forgeIcon({ subcat: 'vial', band: 'ch7', detail: 'cap', seed: 'antivenom_vial' }),
+  rosewater_drops: () => forgeIcon({ subcat: 'vial', band: 'ch7', detail: 'cork', seed: 'rosewater_drops' }),
+  clarified_ghee: () => forgeIcon({ subcat: 'wax_tin', band: 'ch7', detail: 'label', seed: 'clarified_ghee' }),
+  turmeric_draught: () => forgeIcon({ subcat: 'capsule', band: 'ch7', detail: 'stripe', seed: 'turmeric_draught' }),
+  sacred_ash: () => forgeIcon({ subcat: 'vial', band: 'ch7', detail: 'dots', seed: 'sacred_ash' }),
+  /* ---- Ch.7 — battle / valuables / keys ---- */
+  diwali_cracker: () => forgeIcon({ subcat: 'firework', band: 'ch7', detail: 'fuse', seed: 'diwali_cracker' }),
+  holi_powder: () => forgeIcon({ subcat: 'pouch', band: 'ch7', detail: 'dots', seed: 'holi_powder' }),
+  peacock_plume: () => forgeIcon({ subcat: 'feather', band: 'ch7', seed: 'peacock_plume' }),
+  star_ruby: () => forgeIcon({ subcat: 'gem', band: 'ch7', ramp: RAMP.RED, tint: RAMP.RED, detail: 'star', seed: 'star_ruby' }),
+  brass_lota: () => forgeIcon({ subcat: 'wax_tin', band: 'ch7', detail: 'dots', seed: 'brass_lota' }),
+  silk_bolt: () => forgeIcon({ subcat: 'bar', band: 'ch7', detail: 'ribbon', seed: 'silk_bolt' }),
+  train_ticket: () => drawTrainTicketIcon(),
+  spice_box: () => drawSpiceBoxIcon(),
+  cinema_stub: () => forgeIcon({ subcat: 'ticket', band: 'ch7', detail: 'stripe', seed: 'cinema_stub' }),
+
+  /* ---- Ch.8 CHINA — armor menu faces (Bamboo Hat rung + jade/lacquer bodies) ---- */
+  bamboo_hat: () => forgeIcon({ subcat: 'hat', band: 'ch8', detail: 'dots', seed: 'bamboo_hat' }),
+  silk_changshan: () => forgeIcon({ subcat: 'garment', band: 'ch8', detail: 'stripe', seed: 'silk_changshan' }),
+  lacquer_robe: () => forgeIcon({ subcat: 'garment', band: 'ch8', detail: 'cap', seed: 'lacquer_robe' }),
+  monks_robe: () => forgeIcon({ subcat: 'garment', band: 'ch8', detail: 'dots', seed: 'monks_robe' }),
+  /* ---- Ch.8 — foods (Lotus Harbor + Mt. Shu temple) ---- */
+  baozi: () => forgeIcon({ subcat: 'loaf', band: 'ch8', detail: ['steam', 'dots'], seed: 'baozi' }),
+  jiaozi: () => forgeIcon({ subcat: 'bowl', band: 'ch8', detail: 'dots', seed: 'jiaozi' }),
+  mooncake: () => forgeIcon({ subcat: 'pastry', band: 'ch8', detail: 'star', seed: 'mooncake' }),
+  congee: () => forgeIcon({ subcat: 'bowl', band: 'ch8', detail: 'steam', seed: 'congee' }),
+  lychee: () => forgeIcon({ subcat: 'fruit', band: 'ch8', detail: 'dots', seed: 'lychee' }),
+  peking_pancake: () => forgeIcon({ subcat: 'plate', band: 'ch8', detail: 'stripe', seed: 'peking_pancake' }),
+  dan_dan_noodles: () => forgeIcon({ subcat: 'bowl', band: 'ch8', detail: 'flame', seed: 'dan_dan_noodles' }),
+  spring_roll: () => forgeIcon({ subcat: 'bar', band: 'ch8', detail: 'dots', seed: 'spring_roll' }),
+  egg_tart: () => forgeIcon({ subcat: 'pastry', band: 'ch8', detail: 'dots', seed: 'egg_tart' }),
+  tofu_claypot: () => forgeIcon({ subcat: 'plate', band: 'ch8', detail: 'steam', seed: 'tofu_claypot' }),
+  sesame_ball: () => forgeIcon({ subcat: 'fruit', band: 'ch8', detail: ['dots', 'steam'], seed: 'sesame_ball' }),
+  /* ---- Ch.8 — PP / cures / tonics / revival (Scroll of Calm bespoke) ---- */
+  jade_tea: () => forgeIcon({ subcat: 'teacup', band: 'ch8', detail: 'steam', seed: 'jade_tea' }),
+  monks_broth: () => forgeIcon({ subcat: 'teacup', band: 'ch8', detail: 'dots', seed: 'monks_broth' }),
+  temple_incense: () => forgeIcon({ subcat: 'incense', band: 'ch8', seed: 'temple_incense' }),
+  spore_antidote: () => forgeIcon({ subcat: 'vial', band: 'ch8', detail: 'cap', seed: 'spore_antidote' }),
+  scroll_of_calm: () => drawScrollIcon(),
+  ginseng_root: () => forgeIcon({ subcat: 'capsule', band: 'ch8', detail: 'dots', seed: 'ginseng_root' }),
+  monks_discipline: () => forgeIcon({ subcat: 'pill', band: 'ch8', seed: 'monks_discipline' }),
+  joss_paper: () => forgeIcon({ subcat: 'note', band: 'ch8', detail: 'star', seed: 'joss_paper' }),
+  /* ---- Ch.8 — battle / valuables / keys (the new `lantern` subcat lands) ---- */
+  red_firecracker: () => forgeIcon({ subcat: 'firework', band: 'ch8', detail: 'fuse', seed: 'red_firecracker' }),
+  paper_tiger: () => forgeIcon({ subcat: 'bomb', band: 'ch8', detail: 'star', seed: 'paper_tiger' }),
+  ming_vase: () => forgeIcon({ subcat: 'bottle', band: 'ch8', ramp: RAMP.PAPER, detail: 'stripe', seed: 'ming_vase' }),
+  terracotta_soldier: () => forgeIcon({ subcat: 'idol', band: 'ch8', detail: 'crack', seed: 'terracotta_soldier' }),
+  jade_bi_disc: () => forgeIcon({ subcat: 'hubcap', band: 'ch8', ramp: RAMP.FOREST, seed: 'jade_bi_disc' }),
+  harbor_lantern: () => forgeIcon({ subcat: 'lantern', band: 'ch8', detail: 'star', seed: 'harbor_lantern' }),
+  yak_treats: () => drawYakTreatsIcon(),
+  riverboat_pass: () => forgeIcon({ subcat: 'ticket', band: 'ch8', detail: 'stripe', seed: 'riverboat_pass' }),
+  lotus_seal: () => forgeIcon({ subcat: 'card', band: 'ch8', detail: 'dots', seed: 'lotus_seal' }),
 };
 
 /**

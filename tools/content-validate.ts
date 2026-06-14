@@ -345,6 +345,13 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch5: {
       stamp_sling: 'pippa', needle_saber: 'pippa', thimble_bell: 'pippa', royal_red_pen: 'pippa',
     },
+    // M20 (ADR-065) — THE FAR-WORLD CATALOG: the §A8 MID-RUNGS. Jay's Aluminum →
+    // Hall-of-Famer (the Sphinx drop), Mia's Cast-Iron (ch6); Mia's Chef's Pan
+    // (the Cobra Raja drop) + the cobra-flute sidegrade (ch7); Dorin's River Beads
+    // (defined early) + the Paper Dragon's folded-paper fan (the boss drop, ch8).
+    ch6: { aluminum_bat: 'rex', hall_of_famer_bat: 'rex', cast_iron_pan: 'faye' },
+    ch7: { chefs_pan: 'faye', cobra_flute: 'pippa' },
+    ch8: { river_beads: 'dorin', paper_fan: 'pippa' },
     ch9: { cedar_beads: 'dorin' }, // Dorin's first beads — Romania (defined early)
   };
   const ladderAll: Record<string, { wielder: string; band: string }> = {};
@@ -371,6 +378,11 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch3: ['builders_tea', 'earl_grey', 'school_cocoa'], // M19 (ADR-064) — TEA AS PP
     ch4: ['cloudberry_cordial', 'birch_sap', 'gjende_coffee'], // M19 — the moor's cold drinks
     ch5: ['acorn_cup_tea', 'nectar_thimble', 'dewdrop_cordial', 'mint_julep_drop'], // M19 — tiny vessels
+    // M20 (ADR-065) — kola/zobo/baobab (ch6); chai/lassi/falooda (ch7); jade tea,
+    // monks' broth, and the §A8 Temple Incense (ch8)
+    ch6: ['kola_nut_drink', 'hibiscus_tea', 'baobab_juice'],
+    ch7: ['masala_chai', 'mango_lassi', 'falooda'],
+    ch8: ['jade_tea', 'monks_broth', 'temple_incense'],
   };
   const ppAll = new Set(Object.values(PP_LINE).flat());
   for (const id of ppAll) {
@@ -395,6 +407,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch4: ['fur_lined_hood', 'wool_sweater', 'oilskin_slicker', 'troll_hide_vest'],
     // M19: the Paper Crown heads Ch.5 + the jewel-box court bodies
     ch5: ['paper_crown', 'velvet_doublet', 'herald_tabard', 'ermine_cape'],
+    // M20 (ADR-065): the Turban of Calm heads Ch.6 (it does nothing calming) + the
+    // savanna bodies; the jeweled Pagri heads Ch.7 + the bazaar/palace bodies; the
+    // Bamboo Hat heads Ch.8 + the jade/lacquer/saffron bodies
+    ch6: ['turban_of_calm', 'kanga_wrap', 'savanna_cloak', 'mudcloth_vest'],
+    ch7: ['jeweled_pagri', 'silk_kurta', 'embroidered_sherwani', 'nawab_coat'],
+    ch8: ['bamboo_hat', 'silk_changshan', 'lacquer_robe', 'monks_robe'],
   };
   const armorAll = new Set(Object.values(ARMOR_LINE).flat());
   for (const id of armorAll) {
@@ -452,8 +470,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const item of Object.values(ITEMS)) if (item.band) bandCounts[item.band] += 1;
   const BAND_FLOOR: Record<string, number> = {
     // M18 (ADR-063) ratchets ch1 + ch2 to the Americas pour (≈40/region target);
-    // M19 (ADR-064) ratchets ch3 to the England pour (the Old-World, region by region)
-    ch1: 42, ch2: 42, ch3: 42, ch4: 41, ch5: 41, ch6: 0, ch7: 0, ch8: 0, ch9: 2, ch10: 0, cross: 4,
+    // M19 (ADR-064) ratchets ch3/4/5 to the Old-World; M20 (ADR-065) ratchets
+    // ch6/7/8 to the Far-World pour (Africa / India / China, region by region)
+    ch1: 42, ch2: 42, ch3: 42, ch4: 41, ch5: 41, ch6: 41, ch7: 41, ch8: 41, ch9: 2, ch10: 0, cross: 4,
   };
   for (const b of BANDS) {
     if (bandCounts[b] < BAND_FLOOR[b]) {
