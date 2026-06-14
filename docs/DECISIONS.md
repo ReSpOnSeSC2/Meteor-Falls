@@ -4425,3 +4425,32 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   is per-chapter SCENE staging on these spines: the highway set-pieces + the mandatory drive (M26
   vehicles + M27 control), the plane-interior travel scene, the Cobra Raja DEAD-AIR-HELMET boss
   (a `mind_immune` phase-1), and the beat dialogue — each landing with its chapter session.
+
+## ADR-072 — S18 (Movement 32): THE PAPERBOY — the minigame + the prize
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 32 — a self-contained paused-world minigame, the
+  Arcade/Hoops/Links precedent, riding the M26 bicycle.)
+- **Decision — `src/paperboy/sim.ts`, the deterministic route sim.** Phaser-free under the
+  §A10 minigame law (ADR-029/034/036): a seeded `buildRoute` lays mailboxes on the house lanes
+  + a scatter of hazards (dog/sprinkler/car/open-car-door); `PaperboySim.step(input)` advances a
+  column and resolves deliveries (throw + adjacent lane + a paper in hand) and hazard hits; the
+  score (deliver +100, perfect +500, hazard −40, miss −20) floors at 0 on a bad run (EarthBound-
+  kind — crashing costs pace, never the game). Same seed + same input tape = same run, forever;
+  PaperboyScene is a renderer over this state. `prizeEarned` gates on the deliver goal.
+- **Decision — `src/data/paperboy.ts`, the live route + the prize.** The Otterbrook route is
+  built from a fixed seed (replayable); the PRIZE is a finale CALLER (Mr. Plummer, the paper-
+  route tie-in, quest #2) + a flag (`paperboy_won`). The prize is a flag+caller, not a new ITEMS
+  row — the §A8 charm pour (the Steady Hands Charm) rides the catalog manifest in a follow-up,
+  so M32 stays clear of the band-floor/ladder cascade while still earning a real §A6 caller.
+- **Decision — gated (`tools/content-validate.ts` `paperboy` + `sim.test.ts`).** The live route
+  is WINNABLE: ≥1 house, a sane deliver goal ≤ houses, enough papers, and a PERFECT input tape
+  actually clears the goal (the validator runs the sim to prove it). The verdict prints
+  **paperboy (28 houses)**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green + full **vitest** green (+6:
+  determinism, a clean run wins + earns the prize, a lazy run floors at 0, hazards cost, the prize
+  config) + `vite build` clean. No FNV re-pin, no frozen-core change, no save change (the win is a
+  flag). §A10 amended to canon in the same commit.
+- **Consequences:** a fourth optional long-form minigame is mechanically complete and winnable;
+  PaperboyScene (the renderer, the paper-stand prop, the HUD) drops onto this sim, and the prize
+  charm pours into §A8 with its icon when the catalog session next runs.

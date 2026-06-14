@@ -48,6 +48,8 @@ import { FURNITURE, FURNITURE_FUNCTIONS } from '../src/data/furniture';
 import { THREAD_BEATS, THREAD_IDS } from '../src/data/storythreads';
 import { chainProblems } from '../src/engine/storythread';
 import { DISGUISES, DISGUISE_FACTIONS } from '../src/data/disguise';
+import { PAPERBOY, liveRoute } from '../src/data/paperboy';
+import { PaperboySim, prizeEarned } from '../src/paperboy/sim';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -457,6 +459,29 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (!/^ch\d+$/.test(d.band)) fail('disguise', `disguise '${d.id}' band '${d.band}' is malformed`);
     if (!d.note || d.note.trim().length === 0) fail('disguise', `disguise '${d.id}' has no §A11 note`);
   }
+}
+
+// S18 Movement 32 (ADR-072) — THE PAPERBOY. The live route must be winnable (a
+// real goal, enough papers + houses) and the prize must be a flag + a finale caller.
+{
+  const route = liveRoute();
+  const houses = route.items.filter((i) => i.kind === 'mailbox').length;
+  if (houses < 1) fail('paperboy', 'the route has no houses to deliver to');
+  if (route.deliverGoal < 1 || route.deliverGoal > houses) fail('paperboy', `deliver goal ${route.deliverGoal} is impossible (${houses} houses)`);
+  if (route.papers < route.deliverGoal) fail('paperboy', `only ${route.papers} papers for a goal of ${route.deliverGoal}`);
+  if (!PAPERBOY.prize.flag) fail('paperboy', 'the prize sets no flag');
+  if (!PAPERBOY.prize.caller) fail('paperboy', 'the prize earns no finale caller');
+  // a perfect input tape must actually clear the goal (the minigame is winnable).
+  // The sim increments x THEN resolves, so the k-th input lands on column k.
+  const mail = new Map<number, number>();
+  for (const it of route.items) if (it.kind === 'mailbox') mail.set(it.x, it.lane);
+  const tape: Array<{ lane: 0 | 1 | 2; throw: boolean }> = [];
+  for (let x = 1; x < route.length; x++) {
+    const lane = mail.get(x);
+    tape.push(lane !== undefined ? { lane: lane === 0 ? 0 : 2, throw: true } : { lane: 1, throw: false });
+  }
+  const result = new PaperboySim(route).run(tape);
+  if (!prizeEarned(route, result)) fail('paperboy', 'a PERFECT run does not clear the prize goal — the route is unwinnable');
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -1988,6 +2013,7 @@ const counts = [
   `${Object.keys(FURNITURE).length} furniture`,
   `${Object.keys(THREAD_BEATS).length} thread beats`,
   `${Object.keys(DISGUISES).length} disguises`,
+  `paperboy (${liveRoute().items.filter((i) => i.kind === 'mailbox').length} houses)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,

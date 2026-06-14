@@ -476,6 +476,17 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > data, v5). 3v3 pickup at the cage pays EXP forever and fits any session.
 > The 40–50hr target above includes room for this long-form content.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-072: THE PAPERBOY — a fourth
+> optional paused-world minigame alongside the Arcade, the Cage, and the Links.
+> Ride the M26 bicycle down a seeded 3-lane suburban street, throw papers into the
+> mailboxes, dodge the dog / sprinkler / parked car / open car door, and clear the
+> deliver goal to win. Deterministic + replayable (the §A10 #4 minigame law —
+> `src/paperboy/sim.ts`, inputs in / a score out, same seed + tape = same run);
+> getting "crashed" never fails the run (EarthBound-kind — a bad run floors at 0).
+> Reachable from a paper-stand prop in Otterbrook/Brickton, non-missable. THE PRIZE
+> is a finale CALLER (Mr. Plummer, the paper-route tie-in, quest #2) + a flag; the
+> §A8 charm pour (the Steady Hands Charm) rides the catalog manifest in a follow-up.)*
+
 ## A10. Side Quests (55 — each one adds or strengthens the CALLER ledger)
 
 The shipped game targets **55 quests**: 50 regional quests (5 per chapter) plus 5 cross-world questlines. The first 20 below are the named core ledger quests; chapter sessions add three more per chapter, and late systems add the five cross-world chains. Every quest must be permanently non-missable, journaled in §A11 voice, and either add a new final-battle caller or strengthen an existing caller's scripted effect. Tiny errands are allowed only when they reveal a person, place, joke, or mechanic the main path would miss.
