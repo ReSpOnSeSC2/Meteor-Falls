@@ -26,35 +26,45 @@ Literal id checklists for the big sets live in [`docs/asset-lists/`](./asset-lis
 
 ## 0. Totals at a glance
 
-| Category | Count (approx.) | Notes |
-|---|---:|---|
-| Opening / title / framing screens | ~12 | logo, title, app icon, name entry, save slots, boot |
-| Opening + per-chapter cutscene panels | ~40+ | Ch.1 alone has ~8 beats; grows per chapter |
-| Overworld characters (8-dir) | **47** | 5 heroes + 42 NPCs — see appendix |
-| Hero battle busts | **5 × 18 frames** | the in-battle "cards" |
-| Hero battle-stage battlers | **5 × 14 frames** | (× weapon-class variants) |
-| Enemy families | **35 × 3 wear = 105** | + boss forms / swarm minis |
-| Bosses (bespoke) | **8** | folded into enemy art today |
-| World tiles | **53** | one 16×16 cell each |
-| Props / furniture / set pieces | **~70** | trees, beds, ATMs, payphones… |
-| Building facades / landmarks | **~30** | houses, shops, chapel, city catalog |
-| Battle backgrounds | **~15** | one per area family |
-| Item icons | **469 items** (~250 distinct shapes) | see appendix |
-| Ability icons | **92** | see appendix |
-| Battle FX / flair glyphs | **~40** | elements × hit results |
-| Status-effect icons | **12** | sleep, burn, frozen… |
-| UI chrome | **~25** | window skins, d-pad, buttons, cursor, odometer… |
-| Font | **1 glyph sheet** + 8 emoji glyphs | full character set |
-| Area title banners (glyph scripts) | **15** | decorative per-region wordmarks |
-| Vehicles | **14** + boats | overworld + dealership |
-| Held weapons / charms | **~90** | battle-stage hand art |
-| Minigame: Hoops | **~10** | athletes, ball, hoop, court, bleachers |
-| Minigame: Golf / Links | **~25** | golfers, 18 hole textures, flag, ball |
-| Minigame: Arcade | **~7** | ship, moth, rock, saucer, corndog, bolt |
+The two columns separate **what the code draws today** (Ch.1–3 built) from the
+**full-game target** the canon (`docs/GAME_BIBLE.md`, `src/data/chapters.ts`)
+commits to. "Author everything" means the right column.
 
-**Order-of-magnitude total: ~1,400–1,600 individual images** (counting every
-animation frame and wear variant). The bulk is item icons (469), enemy frames
-(105+), and character sheets (47). See the priority order in §16.
+| Category | In code today | Full-game target | Notes |
+|---|---:|---:|---|
+| Opening / title / framing screens | ~12 | ~12 | logo, title, app icon, name entry, save slots, boot |
+| Cutscene panels | ~8 (Ch.1) | **~80** | §A6 beats + travel set-pieces, ~8/chapter ×10 |
+| Overworld characters (8-dir) | **47** | **~140** | 5 heroes done; ~10–15 new NPCs per unbuilt chapter |
+| Hero battle busts | 5 × 18 frames | 5 × 18 | all 5 heroes already exist |
+| Hero battle-stage battlers | 5 × 14 frames | 5 × 14 (× weapon) | all 5 heroes exist; weapon variants optional |
+| **Enemies** (× 3 wear each) | **35** (=105 imgs) | **200** (=600 imgs) | §A7 law: 20/chapter ×10 — see §18 |
+| Bosses (bespoke) | **3** | **13** | one per chapter + 3 in the Ch.10 finale |
+| World tiles | **53** | **~120** | each region adds its own ground/wall/floor set |
+| Props / furniture / set pieces | **~70** | **~130** | region-specific props per chapter |
+| Building facades / landmarks | **~30** | **~80** | each region's town + landmarks |
+| Battle backgrounds | **~5** | **~12** | one per region family |
+| Item icons | **469** (~250 shapes) | **469+** | already spans all 10 regions' foods — mostly done |
+| Ability icons | **92** | **92+** | already spans the full hero kit |
+| Battle FX / flair glyphs | **~40** | **~40** | elements × hit results |
+| Status-effect icons | **12** | **12** | sleep, burn, frozen… |
+| UI chrome | **~25** | **~30** | + Star Locket / Homesong UI, phone/caller UI |
+| Font | 1 sheet + 8 emoji | 1 sheet + 8 emoji | full character set |
+| Area title banners (glyph scripts) | **15** | **15** | one per region voice |
+| Vehicles | **14** + boats | **~25** | + per-region road cars & travel craft |
+| Travel set-piece craft | 3 | **~8** | boat, biplane, 2 trains, riverboat, snowcat, rocket |
+| Held weapons / charms | **~90** | **~90** | spans the full charm catalog |
+| Regional homes (property) | a few | **15** | the §"cozy" property arc, one per region |
+| Finale callers (credits art) | 0 | **~30+** | every helped NPC who phones Mars — see §18 |
+| Minigame: Hoops | ~10 | ~10 | athletes, ball, hoop, court, bleachers |
+| Minigame: Golf / Links | ~25 | ~25 | golfers, 18 hole textures, flag, ball |
+| Minigame: Arcade | ~7 | ~7 | ship, moth, rock, saucer, corndog, bolt |
+
+**Built today: ~1,400–1,600 images. Full "author everything" game:
+~3,000–3,500 individual images** (every frame + wear variant). The growth is
+almost all in the **seven unbuilt chapters (Ch.4–10)** — see **§18**, which is
+the part not represented anywhere in the current `assets/art/` tree. Item and
+ability icons are the exception: the registries already anticipate all ten
+regions, so that 469/92 work mostly stands for the whole game.
 
 ---
 
@@ -260,20 +270,122 @@ gilded, hushed, marked, paralyzed, puppet, rattled, shield
 
 ---
 
+## 18. Future & unbuilt content — Chapters 4–10
+
+This is the part **not present in `assets/art/` at all today.** METEOR FALLS is
+a ten-chapter, ten-region world tour chasing the **Ten Embers** to Mars
+(`docs/GAME_BIBLE.md` §A6; `CHAPTER_MANIFESTS` in `src/data/chapters.ts`).
+Chapters 1–3 are `shipped`; **Chapters 4–10 are `unlanded`** — designed in canon
+but with no art. Each unbuilt chapter needs a complete region art set.
+
+### The ten chapters
+
+| Ch | Region | Status | Boss (HP) | Settlements | Travel in |
+|---:|---|---|---|---|---|
+| 1 | USA — Otterbrook / Brickton | **shipped** | Titanic Tick (450) | otterbrook, brickton | — |
+| 2 | South America — Puerto Sol / Valle Dorado | **shipped** | Idol of the Gilded Grin (980) | puerto_sol, valle_dorado | banana boat |
+| 3 | England — Foggybottom | **shipped** | Headmaster Mainframe (1600) | foggybottom | biplane "Lucille" |
+| 4 | Norway — Kvisthavn / Lilleby | **unbuilt** | The Whisperwig (1900) | kvisthavn, lilleby | biplane |
+| 5 | Minimus — Minimus Major | **unbuilt** | Whiskerzilla (2150) | minimus_major | biplane |
+| 6 | Africa — Zanzibel | **unbuilt** | The Laughing Sphinx (2300) | zanzibel | biplane |
+| 7 | India — Chandrapore | **unbuilt** | Cobra Raja (3200) | chandrapore | night train |
+| 8 | China — Lotus Harbor | **unbuilt** | The Paper Dragon (4100) | lotus_harbor | riverboat + yak |
+| 9 | Romania — Valea Stelelor | **unbuilt** | Count Hoaxula (5300) | valea_stelelor | Orient Less-Express |
+| 10 | Alaska → Hawaii → Mars | **unbuilt** | **The Hush (6000)** + Frost Sentinel + Tiki Magma Golem | aurora_station, mauna_lani | snowcat → rocket |
+
+### Per-chapter art set (repeat for each of Ch.4–10)
+
+Each unbuilt chapter needs, at minimum:
+
+- [ ] **Region tileset** — ground/wall/floor/water cells in that biome (fjord,
+      hedgerow, bazaar, spore forest, castle, ice/lava/Mars…). ~10–16 new tiles.
+- [ ] **Dungeon art** — the Resonance Site (e.g. "The Sleeper's Spine", "The
+      Laughing Ruins", "Castle Hoaxula") — walls, props, set dressing.
+- [ ] **Settlement(s)** — landmark facades + generic buildings in the region
+      style (`spire-canton`, `bazaar-port`, `painted-gates`, `fog-stone`).
+- [ ] **NPC roster (8-dir)** — townsfolk, shopkeepers, quest-givers. ~10–15 per
+      chapter, same 24×32 / 8-direction contract as §3.
+- [ ] **Enemy roster — 20 enemies × 3 wear = 60 images** (see ecosystem below).
+- [ ] **Boss(es)** — bespoke multi-frame sheet, larger than enemies.
+- [ ] **Battle background** — the region's arena backdrop.
+- [ ] **Cutscene panels** — the chapter's §A6 story beats + the travel-in
+      set-piece. ~6–8 panels.
+- [ ] **Regional home** — one property/interior for the §"cozy" property arc.
+- [ ] **Regional road vehicle(s)** + the travel craft above.
+
+### The §A7 enemy law (this is the big one)
+
+Canon mandates **200 unique enemy types** total (`GAME_BIBLE.md` §A7, lines
+1156/1184) — **20 per chapter**, built as a fixed local ecosystem:
+
+> 4 road/field roamers · 3 dungeon specialists · 2 social/urban oddities ·
+> 2 rare/high-value · 2 late-chapter pressure enemies · 1 set-piece enemy.
+
+**35 of 200 are built (Ch.1–3).** The remaining **~165 enemies × 3 wear stages =
+~495 enemy images** are the single largest unbuilt block. The named bosses for
+each are in the table above; the 20-id rosters per chapter are scaffolded as
+dev-only drafts (`src/data/drafts/chN/`, `npm run scaffold -- chN`) and promoted
+chapter by chapter.
+
+### Travel set-pieces
+
+Each chapter is entered by a signature vehicle/cinematic — these are both
+overworld craft and cutscene art: **banana boat, biplane "Lucille", night
+train, riverboat + yak express, Orient Less-Express, snowcat,** and finally
+**Pemberton's rocket "The Long Shot."**
+
+### The Mars finale (Ch.10) — bespoke
+
+The ending is the game's art centerpiece and needs unique assets:
+
+- [ ] **Three boss forms** — Frost Sentinel (Alaska), Tiki Magma Golem (Hawaii),
+      and **The Hush** itself (Mars), each bespoke and large.
+- [ ] **Mars / Sea of Silence** environment — tileset + backdrop + the rocket
+      interior.
+- [ ] **The Calling — caller portraits.** In the final battle every side-quest
+      NPC the party helped *answers a ringing phone and sends their Vibe.* Base
+      callers: **Mom, Dad, Buni, Pemberton, Chad Pickle** — plus one per
+      completed quest across all regions (**~30+ caller portraits**). This is
+      also the **extended-credits art** (more quests done = more callers).
+- [ ] **Star Locket / Homesong UI** — the key-item screen showing Embers 0–10,
+      one instrument layer per Ember (`GAME_BIBLE.md` §A9; pause-screen UI).
+
+### Already region-complete (no per-chapter work)
+
+Worth stating so you don't double-count: the **item icons (469)** and **ability
+icons (92)** registries already span all ten regions (Norwegian lutefisk,
+Romanian sarmale, Chinese mooncakes, African jollof are all present). Those
+sets stand for the whole game — only a handful of new story items per chapter
+will trickle in.
+
+---
+
 ## Recommended production order
 
-The art that's already authored covers leads + NPCs + Otterbrook + Ch.1 enemies.
-To extend "author everything" with the most visible payoff first:
+The art that's already authored covers leads + NPCs + Otterbrook + Ch.1–3
+enemies. Two tracks run in parallel: **(A) finish the global art** (icons, UI,
+font, polish for already-shipped chapters) and **(B) build the seven unbuilt
+chapters** (§18), one region at a time.
+
+**Track A — global, most visible payoff first:**
 
 1. **Opening + title + Ch.1 cutscene panels** (first impression).
-2. **Item icons** (469 — the biggest visible volume; reused everywhere).
+2. **Item icons** (469 — the biggest visible volume; reused everywhere, all regions).
 3. **Ability icons** (92) + status icons (12) + battle FX.
-4. **Remaining enemies & bosses** per chapter.
-5. **Remaining characters** (full walk/run/idle frames, not just 8 static).
-6. **World tiles + props + facades** per region.
-7. **Battle backgrounds** per region.
-8. **UI chrome + font + glyph banners.**
-9. **Vehicles, weapons/charms, minigame art.**
+4. **Full character frames** (real walk/run/idle, not just 8 static).
+5. **UI chrome + font + glyph banners.**
+6. **Vehicles, weapons/charms, minigame art.**
+
+**Track B — per unbuilt chapter (Ch.4 → Ch.10), each as one bundle:**
+
+For each region, deliver the §18 per-chapter set together — tileset, town
+facades, NPCs, **20-enemy roster (×3 wear)**, boss, battle background, cutscene
+panels, regional home + vehicle. Do them in chapter order (4→10) so the game
+becomes playable region by region. **Save the Mars finale (Ch.10) for last** —
+its three bosses, caller portraits, and Homesong UI are the art centerpiece.
+
+> The single biggest line item across everything is the **§A7 enemy roster:
+> ~165 unbuilt enemies × 3 wear ≈ 495 images.** Plan capacity around it.
 
 ## How art gets wired in
 
