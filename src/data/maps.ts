@@ -2741,3 +2741,17 @@ const ROOMY_INTERIORS: readonly string[] = [
   'valle_shop_int', 'clinic_valle_int', 'chapel_valle_int',
 ];
 for (const id of ROOMY_INTERIORS) if (MAPS[id]) MAPS[id] = growInterior(MAPS[id], 16, 11);
+
+// S18 M22 (ADR-092) — THE GLYPH LAW wired into the LIVE Americas settlement
+// overworlds: each declares its canon §A5/§A6 area so the entry banner wears that
+// region's decorative GLYPH script under the place name (§A11.8, §A11.6-safe). The
+// unlanded regions inherit the same hook when their maps land — the GLYPH_SCRIPT
+// registry already pins every canon area both directions. (validator: map.area
+// must be a real GLYPH_SCRIPT key.)
+const MAP_AREA: Record<string, string> = {
+  otterbrook: 'otterbrook',
+  brickton: 'brickton',
+  cage_park: 'cage_park',
+  puerto_sol: 'puerto_sol',
+};
+for (const [id, area] of Object.entries(MAP_AREA)) if (MAPS[id]) MAPS[id].area = area;

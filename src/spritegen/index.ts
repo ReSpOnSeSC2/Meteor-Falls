@@ -111,6 +111,7 @@ import {
 import { GENERATED_BUILDINGS } from './buildings';
 import { VEHICLE_CATALOG, drawVehicle } from './vehicles';
 import { ITEM_ICON, itemIconKey } from './icons';
+import { GLYPH_SCRIPT, areaGlyphRun, glyphBannerKey } from './glyphforge';
 import {
   generateAthleteFrames,
   deriveOpponentSpec,
@@ -649,6 +650,13 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // face, registered under itemIconKey(id). The Items bag, Equip screen, shops,
   // and battle Goods read these through pick()/ask()'s per-row icons.
   for (const [id, draw] of Object.entries(ITEM_ICON)) addPixmap(scene, itemIconKey(id), draw());
+
+  // S18 Movement 22 (ADR-092) — THE GLYPH FORGE / §A11.8 THE GLYPH LAW: each
+  // canon §A5/§A6 area's region-true decorative SCRIPT, registered under
+  // glyphBannerKey(area). The OverworldScene area banner draws it beneath the
+  // diegetic place name — squiggle-script foreign signage, never readable text
+  // (§A11.6-safe). One run per area, seeded off the area id so it's stable.
+  for (const area of Object.keys(GLYPH_SCRIPT)) addPixmap(scene, glyphBannerKey(area), areaGlyphRun(area));
 
   // 2×2 white pixel for fades, particles, flashes
   if (!scene.textures.exists('pixel')) {

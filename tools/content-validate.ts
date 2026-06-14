@@ -38,6 +38,8 @@ import { ITEMS, slotOf, PORCH_SET, MERCADO_SET } from '../src/data/items';
 import { WEAPON_ART } from '../src/spritegen/weapons';
 import { ITEM_ICON } from '../src/spritegen/icons';
 import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
+import { GLYPH_SCRIPT, SCRIPT_CATALOG, areaGlyphRun } from '../src/spritegen/glyphforge';
+import { REGION_RAMPS } from '../src/spritegen/iconforge';
 import { BUILDING_DIMS } from '../src/levelkit/kit';
 import { VEHICLE_CATALOG, VEHICLE_SPECS, usableSeats } from '../src/spritegen/vehicles';
 import { PSI_GATES, GATE_KEY, PSI_DUNGEON_BANDS } from '../src/data/psigates';
@@ -327,6 +329,49 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const area of Object.keys(AREA_SKINS)) {
     if (!canon.has(area)) {
       fail('area-skins', `AREA_SKINS has an orphan slice '${area}' — add it to CANON_AREAS or retire the roster`);
+    }
+  }
+}
+
+// S18 Movement 22 (ADR-092) — THE GLYPH FORGE / §A11.8 THE GLYPH LAW: every named
+// §A5/§A6 area owns its OWN region-true decorative SCRIPT (the way ADR-066 gave it
+// a building skin), so a foreign sign can never be mistaken for another region's.
+// Gated BOTH directions, like AREA_SKINS:
+//  · every CANON_AREA has a GLYPH_SCRIPT naming a REAL script family + a real
+//    region band, and its forged run actually draws something (§A11.6-safe
+//    decoration — never readable text);
+//  · every GLYPH_SCRIPT row is a CANON_AREA (no orphan script for a place that
+//    isn't).
+{
+  const families = new Set<string>(SCRIPT_CATALOG);
+  const canon = new Set(CANON_AREAS);
+  for (const area of CANON_AREAS) {
+    const spec = GLYPH_SCRIPT[area];
+    if (!spec) {
+      fail('glyph-script', `canon area '${area}' has no GLYPH_SCRIPT — give it a region-true script (spritegen/glyphforge.ts), never reuse another's by accident`);
+      continue;
+    }
+    if (!families.has(spec.script)) {
+      fail('glyph-script', `area '${area}' names unknown script family '${spec.script}' — typo or a family never written`);
+    }
+    if (!REGION_RAMPS[spec.band]) {
+      fail('glyph-script', `area '${area}' band '${spec.band}' has no REGION_RAMPS pool`);
+    }
+    const drawn = areaGlyphRun(area).data.reduce((n, c) => n + (c !== 255 ? 1 : 0), 0);
+    if (drawn <= 3) {
+      fail('glyph-script', `area '${area}' glyph run draws nothing — the script grammar produced an empty surface`);
+    }
+  }
+  for (const area of Object.keys(GLYPH_SCRIPT)) {
+    if (!canon.has(area)) {
+      fail('glyph-script', `GLYPH_SCRIPT has an orphan row '${area}' — add it to CANON_AREAS or retire the script`);
+    }
+  }
+  // any map that DECLARES an area (so its banner wears a region-true glyph run)
+  // must name a real glyph-script area — a typo would silently draw nothing.
+  for (const map of Object.values(MAPS)) {
+    if (map.area !== undefined && !GLYPH_SCRIPT[map.area]) {
+      fail('glyph-script', `map '${map.id}' declares area '${map.area}' that owns no GLYPH_SCRIPT — fix the area key or register the script`);
     }
   }
 }
@@ -2341,6 +2386,7 @@ const counts = [
   `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,
   `${Object.keys(MAPS).length} maps`,
   `${CANON_AREAS.length} area skins`,
+  `${Object.keys(GLYPH_SCRIPT).length} area glyph scripts (${SCRIPT_CATALOG.length} families)`,
   `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
   `${Object.keys(PSI_GATES).length} psi gates`,
   `${Object.keys(PROPERTIES).length} properties`,

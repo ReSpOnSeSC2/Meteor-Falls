@@ -725,6 +725,32 @@ No quest may be permanently missable. Post-Ch.6 Teleport must reopen old threads
 6. **No chapter UI, ever.** Chapter numbers and chapter titles exist only in the Bible, planner, flags, save internals, tests, and developer docs. The shipped game must never show "Chapter 1," "Chapter 5," "The Grand Duchy of Minimus," or any other chapter-card/message as player-facing UI. Area banners may show diegetic place names like "OTTERBROOK" or "MINIMUS MAJOR"; they must not reveal chapter structure.
 7. **No AI smell.** Content must be specific enough that it could not belong to a generic RPG: no "ancient evil rises," no interchangeable fetch errands, no palette-swap enemy padding, no lore paragraphs that sound like a wiki wrote them, and no dialogue that explains the joke. If a line, quest, enemy, item, or town can be moved to another region unchanged, rewrite it until it smells like that exact place.
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-092 — **§A11.8 THE GLYPH LAW.**
+> The world is full of WRITING that isn't English, and it should LOOK it. Every
+> foreign sign, ancient stone, shop banner, monastery inscription, Minimus
+> proclamation, and dead Mars readout wears a DECORATIVE, REGION-TRUE glyph
+> script — the rune-marks on the Sleeper's stones, the flowing flourish over a
+> Zanzibel banner, the carved seal above a Mt. Shu door, the broken segments of a
+> Mars interface. These are made by THE GLYPH FORGE (`src/spritegen/glyphforge.ts`),
+> the icon forge's sibling: a parametric, deterministic, palette-clean engine
+> that stamps a distinct glyph RUN BY CONSTRUCTION from three independent layers —
+> a SCRIPT FAMILY (the stroke grammar: angular runes, looping cursive, square
+> seals, headline-bar bazaar script, broken machine segments for the Hush…), a
+> REGION RAMP (reused from the icon forge, so a glyph wears its region's mood),
+> and a stable SEED (so a place's signage reproduces forever). Every canon §A5/§A6
+> area owns ONE region-true script the way ADR-066 gave it a building skin, pinned
+> BOTH directions. **The hard rules (the §A11 spine, made explicit):** glyphs are
+> DIEGETIC DECORATION, never chapter UI — a script draws abstract stroke-forms,
+> NEVER the Latin alphabet, so a run spells nothing readable and can never leak a
+> chapter title or chapter structure (§A11.6 holds). The Hush's script is sparse,
+> lowercase-feeling, and WRONG — the sparsest writing in the game, and **never
+> funny** (§A11.3). A glyph never carries meaning the words don't (every surface
+> is fully readable without it). And §A11.7 reads at the stroke: a glyph that
+> could move to another region unchanged isn't done — an Africa banner could never
+> be mistaken for a Mt. Shu inscription or a Mars readout. THE GLYPH FORGE serves
+> the area banners first (the diegetic place-name surface), and is built so the
+> later signage, inscription, and interface surfaces draw from the same registry.)*
+
 ---
 
 # PART B — TECHNICAL ARCHITECTURE (decisions are final; prompts assume them)
