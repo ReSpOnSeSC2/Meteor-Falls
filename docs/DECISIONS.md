@@ -4892,3 +4892,22 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the world's vehicles now carry fuel. M44 adds the ignition (you turn it on),
   M45 the gas stations + charging (where you pay to fill, cheapest charging at home), and the live
   drain + the low-fuel warning wire into the OverworldScene's driving feel over this spine.
+
+## ADR-085 — S20 (Movement 44): IGNITION — the on/off switch
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S20 Movement 44 — §A4.16; needs M43 fuel.)
+- **Decision — `src/engine/ignition.ts` (pure, tested).** A combustion vehicle (gas/diesel/jet) must
+  be TURNED ON before it'll move; the EV line is KEYLESS (step in, ready); human-powered bikes have
+  nothing to start. `ignitionRequired(type)` is true only for combustion. `startEngine(type, fuel)`
+  catches only with fuel (`no_fuel` → `stalled`); for an EV/bike there's nothing to start
+  (`no_ignition_needed`, running if it can roll). `canDrive(type, running, fuel)` is the wheel-UI
+  gate: a bike always; an EV on charge alone; combustion only when running AND fuelled.
+  `ignitionLabel` returns `START`/`TURN OFF` for combustion, null for EVs/bikes. Ignition is a
+  per-drive RUNTIME state (a car is off when you walk up), so it earns NO save field.
+- **Decision — gated in the `fuel` block.** `ignitionRequired` must agree with the fuel kind
+  (combustion only). `ignition.test.ts` mirrors it + proves start/stall/drive/label behavior.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green, `vite build` clean. No
+  FNV re-pin, no frozen-core change, no save change. §A4.16 amended (the ignition note).
+- **Consequences:** the wheel UI gains a START button for combustion vehicles; EVs roll keyless. The
+  drain + ignition + the M45 stations complete the §A4.16 driving-realism loop.

@@ -57,6 +57,7 @@ import { MILITARY_VEHICLES, MILITARY_TYPES } from '../src/data/military';
 import { ARMY_BEATS } from '../src/data/armyarc';
 import { armyArcProblems } from '../src/engine/armyarc';
 import { fuelProfile, rangeTiles, needsFuel } from '../src/engine/fuel';
+import { ignitionRequired } from '../src/engine/ignition';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -639,6 +640,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     // the EV line runs on electricity (the Nikolai charges cheap), never gas
     if (type === 'ev' || type === 'nikolai') {
       if (p.kind !== 'electric') fail('fuel', `'${type}' is an EV and must run on electric`);
+    }
+    // M44 (ADR-085) IGNITION: you turn ON combustion (gas/diesel/jet) ONLY; EVs +
+    // human-powered need no key — ignitionRequired must agree with the fuel kind.
+    const combustion = p.kind === 'gas' || p.kind === 'diesel' || p.kind === 'jet';
+    if (ignitionRequired(type) !== combustion) {
+      fail('fuel', `'${type}' ignition (${ignitionRequired(type)}) disagrees with its fuel kind '${p.kind}' — turn on combustion only`);
     }
   }
 }

@@ -259,6 +259,12 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > — far cheaper than gas, and cheapest of all at home (§A4.17). Running empty stalls the engine; the
 > Ember trail never cares how full your tank is.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-085 — **§A4.16 IGNITION.** A combustion vehicle
+> (gas/diesel/jet) must be TURNED ON before it moves — a START / TURN OFF button on the wheel UI; turn
+> the key, hear it catch (a dry tank just cranks). The EV line is KEYLESS (step in and it's ready) and
+> human-powered bikes have nothing to start. The rules live in `src/engine/ignition.ts` (pure +
+> validated); ignition is a per-drive RUNTIME state, not save data.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
 > threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
 > NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
