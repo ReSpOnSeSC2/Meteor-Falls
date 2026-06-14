@@ -109,7 +109,6 @@ import { Dialogue, makeWindow, toast, vars, DEPTH_UI, overscanRect } from '../ui
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { TILE_SOLID, standFrame, type Facing } from '../spritegen';
-import { glyphBannerKey } from '../spritegen/glyphforge';
 import {
   instantWin,
   expShare,
@@ -760,32 +759,16 @@ export class OverworldScene extends Phaser.Scene {
   private showBanner(night = false): void {
     // banner names are all-caps; resolved {rex} et al. get uppercased to match
     const name = vars(this.mapDef.name).toUpperCase();
-    // S18 M22 (ADR-092): a map that declares its §A5/§A6 area wears that region's
-    // decorative GLYPH script beneath the name — foreign signage, never readable
-    // (§A11.6-safe). The texture is registered at boot (glyphBannerKey).
-    const area = this.mapDef.area;
-    const glyphKey = area ? glyphBannerKey(area) : null;
-    const hasGlyph = glyphKey !== null && this.textures.exists(glyphKey);
-    const glyphTex = hasGlyph ? this.textures.get(glyphKey!).getSourceImage() : null;
-    const glyphW = glyphTex ? (glyphTex as HTMLCanvasElement).width : 0;
-    const w = Math.max(name.length * 6 + 24, glyphW + 24, night ? 76 : 0);
-    const h = (night ? 36 : 24) + (hasGlyph ? 14 : 0);
+    // (ADR-092 decorative GLYPH banner removed at the user's request — the entry
+    // card shows just the place name, plus the time tag at night.)
+    const w = Math.max(name.length * 6 + 24, night ? 76 : 0);
+    const h = night ? 36 : 24;
     const win = makeWindow(this, 8, 8, w, h);
     const tx = this.add
       .bitmapText(20, 16, 'retro', name, 6)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
     const fading: Phaser.GameObjects.GameObject[] = [win, tx];
-    if (hasGlyph) {
-      // the region-true glyph run, just under the place name — diegetic flavor
-      const gy = night ? 38 : 26;
-      const glyph = this.add
-        .image(20, gy, glyphKey!)
-        .setOrigin(0, 0)
-        .setScrollFactor(0)
-        .setDepth(DEPTH_UI + 1);
-      fading.push(glyph);
-    }
     if (night) {
       // S9b: the dark overlay gets a label — no guessing what the haze means
       const tag = this.add

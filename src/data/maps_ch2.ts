@@ -103,8 +103,11 @@ export function buildBricktonDocks(): MapDef {
     ],
     phones: [{ x: 4, y: 4 }],
     doors: [
-      // back through the gap onto Brickton's street B
-      { x: 0, y: 6, w: 1, h: 3, to: 'brickton', tx: 856, ty: 360, facing: 'left' },
+      // back through the gap onto Brickton's street B. The LIVE city is the GROWN
+      // 144×76 map, whose docks gap sits at the far-EAST edge (x≈143, street B
+      // rows 21–23) — land just inside it (tile 142,22). The old 856,360 pointed
+      // at the frozen CORE's middle gap, dumping you in mid-downtown (ADR-054 growth).
+      { x: 0, y: 6, w: 1, h: 3, to: 'brickton', tx: 2280, ty: 360, facing: 'left' },
     ],
     spawners: [],
     triggers: [

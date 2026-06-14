@@ -15,7 +15,12 @@ import { FlairLine, hasFlair } from './flairline';
 
 export { vars } from './text';
 
-export const DEPTH_UI = 1000;
+// Dialogue/HUD must paint above ALL world sprites. World depth is y-based
+// (a prop's depth = its bottom edge in px = up to mapHeight*16 + sprite height),
+// so on tall city maps a colossus like THE SPIRE reaches ~1000+ and would cover
+// the text box. Park UI well above any plausible world depth, but BELOW the
+// full-screen door/transition fade at 99998 (the wipe must still cover the UI).
+export const DEPTH_UI = 90000;
 
 /**
  * Full-screen overlays (night tint, covers) MUST bleed past the viewport:

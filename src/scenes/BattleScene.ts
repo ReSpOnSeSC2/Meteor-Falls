@@ -2491,6 +2491,13 @@ export class BattleScene extends Phaser.Scene {
             target.status.productive = 3;
             await this.print(`${target.hero.name} feels horribly PRODUCTIVE! Offense fell!`);
           }
+          if (move.status === 'hushed') {
+            // §A7 Ch.3 — the Possessed Textbook's pop quiz (and the Invigilator's
+            // "no talking") steal a hero's voice: Vibe goes quiet. The engine
+            // already ticks + draws a hushed hero (HERO_STATUS_POOL / STATUS_LANDED).
+            target.status.hushed = 3;
+            await this.print(`${target.hero.name} ${STATUS_LANDED.hushed}`);
+          }
           AUDIO.sfx('cancel');
           break;
         }

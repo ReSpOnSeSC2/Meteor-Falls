@@ -135,7 +135,12 @@ export const EnemyMoveSchema = z.strictObject({
    *  does NOT, so the layered-ward system has something to answer (the build
    *  prompt §C "fire boss"). 'none' = unblockable-by-ward typeless damage. */
   element: ElementSchema.optional(),
-  status: z.enum(['sunburn', 'crying', 'asleep', 'productive', 'paralyzed']).optional(),
+  /** §A7 Ch.3 (ADR-095): 'hushed' joins the move-inflictable statuses — the
+   *  Possessed Textbook's pop quiz (and the Invigilator's "no talking") steal a
+   *  hero's voice, the Hush made a status. The engine already models a hushed
+   *  hero (BattleScene HeroStatus.hushed, STATUS_LANDED.hushed, the bust shimmer,
+   *  partyStatus); this lets a standard §A7 foe inflict it, not just the finale. */
+  status: z.enum(['sunburn', 'crying', 'asleep', 'productive', 'paralyzed', 'hushed']).optional(),
   text: z.string().min(1),
   weight: z.number().positive(),
 });
