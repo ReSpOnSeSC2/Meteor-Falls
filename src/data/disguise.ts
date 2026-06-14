@@ -35,8 +35,13 @@ export const DISGUISES: Record<string, DisguiseDef> = Object.fromEntries(
       id: 'park_costume', name: 'Park Mascot Suit', blendTag: 'hoaxula_cast', band: 'ch9', quality: 0.75,
       note: 'A bankrupt theme-park bat costume. Smells of fog machine. Hoaxula\'s cast wave you right through.',
     }),
+    // M41 (ADR-082) — ARMY FATIGUES: slip the §A6 pursuit checkpoint as one of the recruits
+    D({
+      id: 'army_fatigues', name: 'Army Fatigues', blendTag: 'army', band: 'ch6', quality: 0.7,
+      note: "Recruit-issue, name tape reads 'BORROWED'. Salute, look bored, complain about the food — every soldier does.",
+    }),
   ].map((d) => [d.id, d]),
 );
 
 /** the canon factions a disguise can blend into (validator-pinned) */
-export const DISGUISE_FACTIONS: readonly string[] = ['smiler', 'palace_guard', 'hoaxula_cast'];
+export const DISGUISE_FACTIONS: readonly string[] = ['smiler', 'palace_guard', 'hoaxula_cast', 'army'];

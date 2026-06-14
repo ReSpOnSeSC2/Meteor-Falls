@@ -4804,3 +4804,29 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the army-pursuit arc is a settled, ordered, finale-feeding spine. M41 adds the
   verifiable pursuit/escape mechanics + the disguise (army fatigues); the per-chapter checkpoint/
   tank/flyover SCENES stage on top.
+
+## ADR-082 — S19 (Movement 41): PURSUIT MECHANICS + THE SET-PIECES
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 41 — the verifiable spine under the M40 army arc.)
+- **Decision — `src/engine/pursuit.ts`, the chase as a deterministic, tested HEAT model.** HEAT rises
+  by `SEEN_GAIN` (8) when the pursuer has line-of-sight and falls when you EVADE: `drive` (−12, ALWAYS
+  available), `reroute` (−16, around a blocker), `decoy` (−24, a Clicker-driven decoy), `disguise`
+  (−40, army fatigues at a checkpoint). The base evade (drive) nets negative even while seen EVERY
+  step, so escape is guaranteed — `escapeRun` proves it from every starting heat (a 0..MAX sweep) and
+  bounded so a broken model can't hang. Heat reaches `caught` ONLY by idling in the open (fair).
+- **Decision — the helmeted TANK + the safety law.** `tankBlocksControl(type, shieldDown?)` reuses
+  the M39 hardening (`isHardened`) — a fresh tank can't be Clickered; you ROUTE AROUND it.
+  `canRouteAround(grid, start, goal, blocked)` is a 4-neighbour BFS over the road graph with the tank
+  cell removed (the M30 BFS pattern). `pursuerKeepsLane(openLanes)` carries the traffic sim's SAFETY
+  LAW into the chase — the pursuer never takes the player's last lane (never corner-trapped).
+- **Decision — the F-15 FLYOVER + the army-fatigues disguise.** `flyover(steps, damaging=false)` is a
+  finite, ordered beat sequence (incoming → overhead → banking → gone), non-damaging by default
+  (EarthBound spirit). A new `army_fatigues` disguise (faction `army`, added to `DISGUISE_FACTIONS`)
+  slips a checkpoint via the existing disguise engine — proven with `blendsWith`/`madeChance`.
+- **Verification:** `tsc` clean, `npm run validate` green (4 disguises), full vitest green (+14),
+  `vite build` clean. No FNV re-pin, no frozen-core change, no save change. The pursuit can ALWAYS be
+  escaped, proven over many steps; a helmeted tank cleanly refuses control.
+- **Consequences:** the army chase has a soft-lock-proof, deterministic spine the OverworldScene
+  drives — drive/reroute/decoy/disguise to shed heat, route around the helmeted tank, weather the
+  flyover. The per-chapter checkpoint/tank/flyover SCENES render over it.
