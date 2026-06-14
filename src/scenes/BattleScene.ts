@@ -163,6 +163,8 @@ import {
 } from '../battle/formulas';
 import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
 import { glyphify } from '../ui/text';
+import { FlairLine, hasFlair } from '../ui/flairline';
+import { FLAIR_BY_ELEMENT, FLAIR_BY_RESULT, type FlairResult } from '../spritegen/flair';
 import { colorOf, rgbOf, RAMP, px } from '../palette';
 import { ODO_CELL_W, ODO_CELL_H } from '../spritegen/ui';
 
@@ -377,6 +379,9 @@ export class BattleScene extends Phaser.Scene {
   private fx!: BattleFx;
   private stage!: StageView;
   private textObj!: Phaser.GameObjects.BitmapText;
+  /** S18 M23 (ADR-093): the mixed-run flair renderer bound to `textObj` — engaged
+   *  only on the (sparse) lines battle auto-appends a `{g:NAME}` to. */
+  private flairLine!: FlairLine;
   private odoDisplays: Array<{ d: OdoDisplay; o: Odometer }> = [];
   private chadOdo: OdoDisplay | null = null;
   private ended = false;
@@ -784,6 +789,19 @@ export class BattleScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setMaxWidth(248);
+    this.flairLine = new FlairLine(this, this.textObj, { maxWidthPx: 248, depth: DEPTH_UI + 1 });
+  }
+
+  /** S18 M23: append a flair glyph to a battle caption, by the move's ELEMENT or
+   *  RESULT (§A11.5) — never hand-typed per enemy, and kept sparse (most lines
+   *  pass `undefined` and stay plain). The line is fully readable WITHOUT the
+   *  glyph (§A11.9): the flair only punctuates what the words already say. */
+  private flair(line: string, token: string | undefined): string {
+    return token ? `${line} {g:${token}}` : line;
+  }
+
+  private resultFlair(line: string, result: FlairResult): string {
+    return this.flair(line, FLAIR_BY_RESULT[result]);
   }
 
   /* ---------------- text + fx helpers ---------------- */
@@ -792,6 +810,10 @@ export class BattleScene extends Phaser.Scene {
     // S-Mia: render emoji flair through the glyph map (§5 caveat) — battle
     // lines reach the BitmapText here, not through vars()
     const text = glyphify(raw);
+    // S18 M23: clear any flair sprites the previous line spawned, then branch —
+    // a `{g:NAME}` line lays out as a mixed run; every plain line is unchanged.
+    this.flairLine.clear();
+    if (hasFlair(text)) return this.printFlair(text);
     return new Promise((resolve) => {
       this.textObj.setText('');
       let i = 0;
@@ -808,6 +830,37 @@ export class BattleScene extends Phaser.Scene {
         this.textObj.setText(text.slice(0, i));
         if (i % 4 === 0 && i < text.length) AUDIO.sfx('text');
         if (i >= text.length) {
+          lingerMs -= dt * (fast ? 4 : 1);
+          if (lingerMs <= 0) {
+            off();
+            resolve();
+          }
+        }
+      });
+    });
+  }
+
+  /** the mixed-run twin of print(): identical pace + linger, but the counter
+   *  advances VISUAL UNITS (a glyph = one unit) so the caption timing is unchanged
+   *  and each glyph reveals as one timed beat alongside the letters. */
+  private printFlair(text: string): Promise<void> {
+    const fl = this.flairLine;
+    return new Promise((resolve) => {
+      fl.set(text);
+      const total = fl.units;
+      let i = 0;
+      let acc = 0;
+      let lingerMs = 420;
+      const off = everyFrame(this, (dt) => {
+        const fast = INPUT.held('A') || INPUT.held('B');
+        acc += (fast ? 4 : 1.8 * textSpeedMul()) * (dt / 16);
+        while (acc >= 1 && i < total) {
+          acc -= 1;
+          i++;
+        }
+        fl.reveal(i);
+        if (i % 4 === 0 && i < total) AUDIO.sfx('text');
+        if (i >= total) {
           lingerMs -= dt * (fast ? 4 : 1);
           if (lingerMs <= 0) {
             off();
@@ -1192,10 +1245,14 @@ export class BattleScene extends Phaser.Scene {
     await strikeDone;
     const hits = await this.comboWindow(h, target, cls);
     const total = comboTotal(smash, hits);
-    const line =
+    // S18 M23: the crit gets its burst (§A11.5) — the line still reads SMAAASH!!
+    // without it, so the glyph only punctuates (§A11.9).
+    const line = this.resultFlair(
       hits > 1
         ? `${this.fill(BATTLE_TEXT.bash, name)} ${BATTLE_TEXT.smaaash} x${hits} — ${total} damage!`
-        : `${this.fill(BATTLE_TEXT.bash, name)} ${BATTLE_TEXT.smaaash} ${total} damage!`;
+        : `${this.fill(BATTLE_TEXT.bash, name)} ${BATTLE_TEXT.smaaash} ${total} damage!`,
+      'smash',
+    );
     await this.damageEnemy(target, total, false, line);
     await this.stageReturn(h);
   }
@@ -1405,7 +1462,12 @@ export class BattleScene extends Phaser.Scene {
     } else {
       h.bust.poseFor(ab.kind === 'gadget' ? 'gadget' : 'castA', 700);
     }
-    await this.print(this.fill(ab.text, name));
+    // S18 M23: a hero's elemental cast / heal punctuates its flavor with the
+    // move's glyph (fire/freeze/volt/holy, or a heal's sparkle) — driven by the
+    // ability's element/heal, never per-enemy (§A11.5). Buffs/status casts have
+    // element 'none' and no heal, so they stay plain.
+    const castFlair = ab.heal ? FLAIR_BY_RESULT.heal : FLAIR_BY_ELEMENT[ab.element];
+    await this.print(this.flair(this.fill(ab.text, name), castFlair));
     if (onStage && pose === 'throw') void this.stage.strike('throwB', 380);
     if (!onStage && ab.kind !== 'gadget') h.bust.poseFor('castB', 900);
 
@@ -2166,7 +2228,9 @@ export class BattleScene extends Phaser.Scene {
       // the Tick dies still latched? the tether goes with it
       if (e.def.boss && this.fx.tethered) this.breakLatch();
       await this.fx.play('enemy_dissolve', { targets: [this.foeTarget(e)] });
-      await this.print(e.def.deathLine);
+      // S18 M23: a non-boss KO gets a quiet star (§A11.5). BOSSES stay clean —
+      // their final lines are sincere beats (§A11.2), never punctuated.
+      await this.print(this.flair(e.def.deathLine, e.def.boss ? undefined : FLAIR_BY_RESULT.ko));
       // §A7 Ch.2: the Parrot drops everything it took (pending-cash theft)
       if (e.stolenCash > 0) {
         GS.data.cashOnHand += e.stolenCash;

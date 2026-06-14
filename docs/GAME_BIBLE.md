@@ -751,6 +751,30 @@ No quest may be permanently missable. Post-Ch.6 Teleport must reopen old threads
 > the area banners first (the diegetic place-name surface), and is built so the
 > later signage, inscription, and interface surfaces draw from the same registry.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-093 — **§A11.9 THE FLAIR LAW.**
+> EarthBound's text PUNCTUATES itself with tiny hand-drawn icons — a little flame
+> on a fire hit, a burst on a SMAAASH crit, a star, a heart, a sleepy "zzz". THE
+> FLAIR WEAVE gives Meteor Falls that vocabulary: a small registry of ~8–10px,
+> palette-clean PIXEL GLYPHS inlined IN ANY CAPTION via a `{g:NAME}` token and
+> drawn as a tiny sprite mixed into the letter-by-letter text. This is THE GLYPH
+> FORGE's SIBLING, not the same thing — and the two must never be confused: §A11.8
+> draws DECORATIVE, abstract, REGION-TRUE SCRIPT runs ON SURFACES (signs, banners,
+> inscriptions); §A11.9 draws tiny RECOGNISABLE emoji-glyphs INSIDE A LINE of
+> dialogue or battle text. Flair, not decoration-on-a-wall. **The hard rules (the
+> §A11 spine, made explicit, the same spine §A11.8 obeys):** a glyph NEVER carries
+> meaning the words don't — every line is fully kid-readable WITHOUT it; if a line
+> leans on its glyph for the joke, the line is rewritten (§A11.7). The HUSH never
+> carries a glyph — its lines stay sparse, lowercase, wrong-feeling (§A11.3). The
+> SINCERE beats stay CLEAN: Buni, Mom's phone calls, Dorin's trial, and the finale
+> are never punctuated (§A11.2); in battle, a BOSS's own lines are never flaired
+> (only the party's elemental casts / crits / heals carry the warmth). Flair is
+> never chapter UI and never spells structure (§A11.6). In BATTLE it is automatic
+> and sparse — appended by the move's ELEMENT (fire/freeze/volt/holy) or RESULT
+> (a SMAAASH crit, a heal's sparkle, a foe's quiet KO star), driven by the data,
+> never hand-typed per enemy, and MOST lines stay plain. In DIALOGUE it is
+> hand-placed and RARE — at MOST one warm glyph per line, usually none, only where
+> an NPC's one obsession or a sign's editorial wink truly earns it.)*
+
 ---
 
 # PART B — TECHNICAL ARCHITECTURE (decisions are final; prompts assume them)

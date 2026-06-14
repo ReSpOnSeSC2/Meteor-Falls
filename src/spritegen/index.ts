@@ -112,6 +112,7 @@ import { GENERATED_BUILDINGS } from './buildings';
 import { VEHICLE_CATALOG, drawVehicle } from './vehicles';
 import { ITEM_ICON, itemIconKey } from './icons';
 import { GLYPH_SCRIPT, areaGlyphRun, glyphBannerKey } from './glyphforge';
+import { GLYPH_TOKENS, flairGlyph, flairGlyphKey } from './flair';
 import {
   generateAthleteFrames,
   deriveOpponentSpec,
@@ -657,6 +658,13 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // diegetic place name — squiggle-script foreign signage, never readable text
   // (§A11.6-safe). One run per area, seeded off the area id so it's stable.
   for (const area of Object.keys(GLYPH_SCRIPT)) addPixmap(scene, glyphBannerKey(area), areaGlyphRun(area));
+
+  // S18 Movement 23 (ADR-093) — THE FLAIR WEAVE / §A11.9 THE FLAIR LAW: the tiny
+  // pixel-emoji vocabulary inlined IN TEXT via `{g:NAME}`, registered under
+  // flairGlyphKey(name) (the `flair_` prefix, DISTINCT from M22's decorative
+  // `glyph_<area>` so the two glyph systems never collide). The mixed-run renderer
+  // (ui/flairline.ts) draws these over the reserved text slot in dialogue + battle.
+  for (const name of GLYPH_TOKENS) addPixmap(scene, flairGlyphKey(name), flairGlyph(name));
 
   // 2×2 white pixel for fades, particles, flashes
   if (!scene.textures.exists('pixel')) {

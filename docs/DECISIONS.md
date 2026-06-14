@@ -5252,3 +5252,77 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   unlanded chapter lands, its maps declare their `area` and the banner already wears the right script —
   no per-place art. M22 closes; M23 THE FLAIR WEAVE (the pixel-emoji `{g:NAME}` battle/dialogue flair) and
   M24 BALANCE & THE GREAT VERIFICATION are the road ahead. ☄️
+
+## ADR-093 — S18 (Movement 23): THE FLAIR WEAVE — §A11.9 THE FLAIR LAW, built
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the S18 polish track, Movement 23 — the second of the three closing movements:
+  M22 THE GLYPH FORGE → **M23 THE FLAIR WEAVE** → M24 BALANCE & THE GREAT VERIFICATION)
+- **The two glyph systems are SIBLINGS, never the same thing.** M22 THE GLYPH FORGE draws DECORATIVE,
+  region-true abstract SCRIPT runs ON SURFACES (signs / banners / inscriptions — `src/spritegen/
+  glyphforge.ts`, untouched here). M23 THE FLAIR WEAVE draws tiny RECOGNISABLE pixel-emoji glyphs INLINED
+  IN TEXT via a `{g:NAME}` token (a real 🔥, a 💥 SMAAASH burst, a ⭐, a 💔). A DISTINCT filename
+  (`src/spritegen/flair.ts`) and a DISTINCT texture prefix (`flair_<name>` vs M22's `glyph_<area>`) keep
+  them from ever being confused or clobbered. This movement also writes the REAL **§A11.9 THE FLAIR LAW**
+  into the Bible (the S17 road sketched a "§A11.8 pixel-emoji" idea that M22 reassigned to M23 — ADR-092
+  documented that hand-off; M23 now lands it as its own clause, leaving §A11.8 THE GLYPH LAW intact).
+- **Decision — THE GLYPH VOCABULARY (`src/spritegen/flair.ts`).** A `GLYPH_TOKENS` vocabulary of **42**
+  palette-clean ~11px pixel glyphs (fire/freeze/volt/holy/smash/sparkle · star/heart/broken_heart/tears/
+  note · skull/zzz/sweat · sun/moon/cloud/leaf/droplet · phone/coin/bulb/gear/bell/key/gift/crown ·
+  up_arrow/down_arrow/question/exclaim/anger · corn_dog/pickle/burger/soda/cookie/bone/meteor/paw/bat/
+  lemon). Each is a fixed 11×11 cell drawn through the Pixmap DSL, `outline()` LAST — ADR-020 by
+  construction (palette indices only, no scatter noise). Memoised + registered at boot under
+  `flairGlyphKey(name)` beside the M22 `glyph_<area>` textures (the index.ts precedent). The vocabulary is
+  intentionally BROADER than current usage — it is the palette the weave draws from, and extends as the
+  weave needs.
+- **Decision — THE MIXED-RUN RENDERER (`src/ui/runlayout.ts` + `src/ui/flairline.ts`).** The heart of the
+  movement, split pure-from-glue so the layout unit-tests headlessly (ADR-059/060 — no WebGL):
+  `runlayout.ts` is Phaser-free — it tokenises a caption into ATOMS (one per char, one per glyph),
+  word-wraps them across the monospace grid in CELLS (a char = 1 cell, a glyph reserves 2), and emits the
+  wrapped `text` (glyph slots filled with spaces, `\n` at breaks), each glyph's `{col,line}` placement,
+  and a UNIT→CHAR reveal map where **a glyph counts as ONE visual unit** so the existing caption-timing
+  formula still lands. `flairline.ts` binds that to a live BitmapText: it reads the font's REAL on-screen
+  metrics (Phaser's `RetroFont.Parse` sets `size=6`, `lineHeight=11`, monospace advance 6 — so the glue
+  is correct at whatever scale Phaser renders), disables the BitmapText's own wrap, and overlays one tiny
+  flair sprite per glyph, revealed letter-by-letter as one timed beat. Woven into BOTH `Dialogue`
+  (windows.ts — letter-by-letter reveal, A-to-fast-forward, wrap) AND `BattleScene.print`. A caption with
+  NO `{g:}` token takes the original plain typewriter UNCHANGED, so the 461 existing scripts are
+  byte-identical in behaviour.
+- **Decision — BATTLE AUTO-FLAIR, by element/result, sparse (§A11.5/§A11.9).** `FLAIR_BY_ELEMENT`
+  (fire/freeze/volt/holy) punctuates a hero's elemental CAST flavour; `FLAIR_BY_RESULT` adds a SMAAASH
+  crit's burst, a heal's sparkle, and a NON-BOSS foe's quiet KO star — driven by the move's
+  `element`/`heal` and the result, NEVER hand-typed per enemy. BOSSES' own lines stay clean (§A11.2);
+  most battle lines (plain bashes, misses, status, enemy turns) stay plain.
+- **Decision — DIALOGUE FLAIR, hand-placed + RARE (§A11.9).** A sparse pass adds ONE warm glyph only
+  where an obsession earns it: Ana's lemonade (`{g:lemon}`), Biscuit at the corn-dog stand
+  (`{g:corn_dog}`), Otterbrook's welcome sign / "one very good dog" (`{g:paw}`), and the Casi-Oro
+  curator's REAL-gold fixation (`{g:coin}`). Every line is fully readable WITHOUT its glyph. The Hush,
+  Mom's calls, and every sincere beat stay clean.
+- **Decision — gated BOTH directions + the slop-detector (carried forward, ADR-060/062/092).** A new
+  `flair` section in `tools/content-validate.ts` AND `src/spritegen/flair.test.ts`: every `{g:NAME}` in
+  DIALOGUE names a real glyph (a typo'd `{g:fier}` fails the build); the `GLYPH_TOKENS` vocabulary is
+  pinned BOTH ways against the drawn registry (every declared token is drawn, every drawn glyph declared);
+  the battle maps reference only real glyphs; and a DISCIPLINE rule forbids a literal `{g:}` on the menu/
+  shop/journal surfaces (item/quest/map) that render through `ask()/pick()/toast`, not the mixed run.
+  `flair.test.ts` is the byte-distinctness slop-detector (no two of the 42 share a drawing) + palette/
+  bounds/stability; `runlayout.test.ts` proves the layout + the one-unit-per-glyph timing + that a plain
+  caption is unchanged.
+- **Decision — A CONTACT SHEET, READ BY EYE (`tools/render-flair.ts`, `npm run art:flair`).** The
+  `art:glyphs` precedent: every glyph in a labelled gallery + SAMPLE LINES (an elemental cast, a
+  freeze+volt wrap, a SMAAASH crit, a heal, a foe KO, two warm dialogue lines) rendered through the REAL
+  mixed-run layout to `.shots/flair.png`, and READ WITH THE READ TOOL (not `preview_screenshot`, which
+  hangs on the WebGL canvas — ADR-059/060). Read by eye: all 42 legible + distinct at 11px, the inline
+  glyphs centred on the text line, the mixed run wrapping cleanly. `holy` was redrawn from a square halo
+  (read as a window) to a radiant Latin cross on the eye-check.
+- **Verification:** `npm run validate` green (now reporting "42 flair glyphs"; catalog unchanged at 467
+  items) + `npx tsc --noEmit` clean + full `npx vitest run` **1013 green** (+22: the flair slop-detector +
+  both-directions mirror + battle-map proofs, and the runlayout layout/timing proofs) + `npx vite build`
+  clean + the `art:flair` sheet re-rendered and read by eye. No FNV / `world_block` re-pin (flair glyphs
+  aren't map generators); no save migration (text/flair is static). The standing deferred debts (heroResist
+  damage, the reusable-cure path, the Spice Box multiplier, `EnemyDef.drops`) stay deferred — flair work
+  touched none of them.
+- **Consequences:** the game's text can now PUNCTUATE itself the way EarthBound's does — a flame on a fire
+  hit, a burst on a crit, a star on a KO, a warm wink on an obsessed NPC — by construction palette-clean,
+  distinct-by-the-pixel, and §A11.2/.3/.6/.7/.9-safe. The `{g:NAME}` token + the mixed-run renderer are a
+  reusable spine any future caption (a landed chapter's dialogue, a new battle line) draws from for free.
+  M23 closes; **M24 BALANCE & THE GREAT VERIFICATION** is the last of S18's three closing movements. ☄️

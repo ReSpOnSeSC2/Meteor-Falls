@@ -11,6 +11,7 @@ import { GS } from '../engine/state';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
 import { vars } from './text';
+import { FlairLine, hasFlair } from './flairline';
 
 export { vars } from './text';
 
@@ -96,6 +97,9 @@ export class Dialogue {
   private win: Phaser.GameObjects.NineSlice | null = null;
   private text: Phaser.GameObjects.BitmapText | null = null;
   private cursor: Phaser.GameObjects.BitmapText | null = null;
+  /** S18 M23 (ADR-093): the mixed-run flair renderer, bound to `text`. Lazily
+   *  built; only engaged on pages that carry a `{g:NAME}` token. */
+  private flair: FlairLine | null = null;
   /** true while a say()/ask() is running — owner scene pauses the world */
   busy = false;
   /** scene-time stamp of the last say()/ask() teardown (see justReleased) */
@@ -141,6 +145,7 @@ export class Dialogue {
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
+    this.flair ??= new FlairLine(this.scene, this.text, { maxWidthPx: w - 24, depth: DEPTH_UI + 1 });
     for (const raw of pages) {
       const page = vars(raw);
       await this.typewrite(page);
@@ -152,12 +157,17 @@ export class Dialogue {
   }
 
   private hide(): void {
+    this.flair?.clear();
     this.win?.setVisible(false);
     this.text?.setVisible(false);
     this.cursor?.setVisible(false);
   }
 
   private typewrite(page: string): Promise<void> {
+    // S18 M23: a page that carries inline flair lays out as a mixed run; every
+    // other page (the overwhelming majority) keeps the original plain typewriter.
+    this.flair?.clear();
+    if (hasFlair(page) && this.flair) return this.typewriteFlair(page, this.flair);
     return new Promise((resolve) => {
       const tx = this.text;
       if (!tx) {
@@ -179,6 +189,33 @@ export class Dialogue {
         tx.setText(page.slice(0, i));
         if (i % 3 === 0 && i < page.length) AUDIO.sfx('text');
         if (i >= page.length) {
+          off();
+          resolve();
+        }
+      });
+    });
+  }
+
+  /** the mixed-run twin of typewrite(): the SAME dt-scaled, A-to-fast-forward
+   *  pacing, but the counter advances VISUAL UNITS (a glyph = one unit), so a
+   *  flair page reveals exactly like a plain one and the existing timing holds. */
+  private typewriteFlair(page: string, fl: FlairLine): Promise<void> {
+    return new Promise((resolve) => {
+      fl.set(page);
+      const total = fl.units;
+      this.cursor?.setVisible(false);
+      let i = 0;
+      let acc = 0;
+      const off = everyFrame(this.scene, (dt) => {
+        const fast = INPUT.held('A') || INPUT.held('B');
+        acc += (fast ? 3.2 : textSpeedMul()) * (dt / 16);
+        while (acc >= 1 && i < total) {
+          acc -= 1;
+          i++;
+        }
+        fl.reveal(i);
+        if (i % 3 === 0 && i < total) AUDIO.sfx('text');
+        if (i >= total) {
           off();
           resolve();
         }

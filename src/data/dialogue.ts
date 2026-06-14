@@ -32,7 +32,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@This morning the one on Maple Street called my route "derivative."',
     '@Stay clear of it, kid. Critics bite.',
   ],
-  npc_ana: ['@Lemonade! 25 cents! The secret ingredient is lemons.'],
+  npc_ana: ['@Lemonade! 25 cents! The secret ingredient is lemons. {g:lemon}'],
   npc_vivi: [
     "@Don't listen to Ana. The secret ingredient is a SECOND secret ingredient.",
     '@...It is also lemons.',
@@ -72,7 +72,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- signs (they editorialize) ---------------- */
   sign_welcome: [
-    'WELCOME TO OTTERBROOK — pop. 412 and one very good dog.',
+    'WELCOME TO OTTERBROOK — pop. 412 and one very good dog. {g:paw}',
     '(Someone has written "THE DOG COUNTS DOUBLE" underneath. The town agrees.)',
   ],
   sign_hill: [
@@ -1144,7 +1144,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "(Pond smell, fainter... wait. It turns around here. He went back DOWN. Toward town. Toward... the drugstore?)",
   ],
   npc_biscuit_drug: [
-    '@Woof! (Biscuit is sitting in front of the corn dogs with the patience of a saint and none of the budget.)',
+    '@Woof! (Biscuit is sitting in front of the corn dogs with the patience of a saint and none of the budget.) {g:corn_dog}',
     '(He looks at you. He looks at the corn dogs. He has now explained the situation twice.)',
     '* Biscuit suddenly remembered he has a home! He ZOOMED.',
   ],
@@ -1469,7 +1469,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Take the FEAST. Whoever eats this picnic is not allowed to stay down. Her rule, not mine.',
   ],
   npc_curator: [
-    '@Do you know how many REAL golden idols have passed through this museum?',
+    '@Do you know how many REAL golden idols have passed through this museum? {g:coin}',
     '@Zero. I have authenticated zero real things. I am the best at it in the hemisphere.',
   ],
   museum_wall: ['MUSEO DEL CASI-ORO — "ALMOST," PROUDLY, SINCE 1961.'],
