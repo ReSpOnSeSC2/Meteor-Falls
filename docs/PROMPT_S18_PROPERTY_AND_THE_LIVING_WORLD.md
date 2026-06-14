@@ -562,14 +562,36 @@ The traversal capstone — needs the control system + the bigger vehicle sprites
 - **Scale the Clicker/Puppet** up the chapters (ADR-035 staging): trucks/buses (Ch.5) → boats
   (Ch.8) → planes (Ch.10) → submarines/yachts (late/NG+). Each scale-up is a staged story moment,
   not a menu unlock.
-- **PURCHASING:** buy vehicles at a dealership/marina/airfield/helipad (including the GARAGE / HELIPAD
-  / MARINA on owned properties — the Comet GT in the PRE-LOVED lot's back room, the Starhopper jet at
-  the airport, a yacht at a marina) as key-item TITLES; a purchased vehicle is yours to summon/drive
-  in free-roam. Cost ties to §A9's Fortune Arc.
-- **Late-game traversal:** planes/subs open optional world pockets (the §A4.6 Teleport-reopen spirit)
-  without breaking the Ember linearity.
-- **DONE-WHEN:** you can buy and pilot a boat/plane, park it at your property, and the control power
-  clearly grew with the party. Append the ADR; amend §A4.10/§A5 to canon as built.
+- **CONTROLLING BOATS (real piloting, not a vignette):** WATER becomes drivable terrain. Build a
+  water-handling mode for the overworld driver — a boat moves on water tiles the way a car moves on
+  road, with momentum/drift that reads different from asphalt (a wake trail, a slower turn), docks
+  + jetties to launch/land, and depth rules (a dinghy hugs rivers; a yacht needs open water). The
+  Ch.8 **Clicker-the-riverboat** beat is the diegetic debut (pilot the empty riverboat up Lotus
+  Harbor's river to open the way); free-roam boating opens coastal/river pockets afterward.
+  Submarines add a DIVE toggle (a second, underwater map layer) for the optional deep pockets. The
+  seat-fit law still applies (a dinghy seats few; a yacht seats the whole party + guests).
+- **FLYING PLANES (real piloting):** AIR becomes a traversal layer. A piloted plane/helicopter lifts
+  off from an **airport runway / heliport / property HELIPAD**, flies a free-roam AIR map over the
+  region (the world sliding below, clouds, altitude read), and LANDS back at an airfield — smooth on
+  D-pad/stick, with a takeoff + landing beat so it feels earned (a botched landing is comic, never
+  punishing — the EarthBound Teleport-crash spirit). Helicopters hover/land anywhere flat; jets need
+  a strip. **The Ember-trail law holds (§A5): flying never skips story** — a plane reaches VISITED
+  airfields only, and new chapters still gate on the Embers (Teleport stays the no-luggage option).
+  This is the wheels-off-the-ground cousin of M31's passive PLANE-INTERIOR scene; here YOU fly.
+- **PURCHASING:** buy craft at a dealership/marina/airfield/helipad (including the GARAGE / MARINA /
+  HELIPAD on owned properties — the Comet GT in the PRE-LOVED lot's back room, the Starhopper jet at
+  the airport, a yacht at a marina, a sub at a late marina) as key-item TITLES; a purchased craft is
+  yours to summon/pilot in free-roam, and parks visibly at your property. Cost ties to §A9's Fortune
+  Arc (the §A11 dealer/harbormaster/Bert's-niece-Roxanne obsessions sell them).
+- **Late-game traversal:** planes/boats/subs open optional world pockets (the §A4.6 Teleport-reopen
+  spirit) without breaking the Ember linearity; DEAD-AIR-shielded craft and no-fly/no-wake zones are
+  the diegetic fences where a pocket must stay closed until its chapter.
+- **Re-prove:** boat water-handling + plane takeoff/land + the dive layer in a vitest harness over
+  the engine API; every water/air map BFS-clean (no launch that strands the party, no landing into a
+  sealed pocket); seat-fit honored across dinghy→yacht and helicopter→jumbo.
+- **DONE-WHEN:** you can pilot a boat across open water and up a river, dive a sub, and fly a plane
+  airfield-to-airfield with a real takeoff and landing — each parked at your property, and the
+  control power clearly grew with the party. Append the ADR; amend §A4.10/§A5 to canon as built.
 
 ### MOVEMENT 34 — BALANCE & THE GREAT VERIFICATION — do LAST
 - **The curve:** sweep property prices, rent yields, flip margins, vehicle costs, and furniture
