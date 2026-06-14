@@ -10,8 +10,9 @@ import { AUDIO } from '../engine/audio';
 import { GS } from '../engine/state';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
-import { vars } from './text';
+import { vars, money } from './text';
 import { FlairLine, hasFlair } from './flairline';
+import { paginate, pageOf, ROW_H } from './paginate';
 
 export { vars } from './text';
 
@@ -71,6 +72,25 @@ export function textSpeedMul(): number {
   return n === 0 ? 0.55 : n === 2 ? 1.7 : 1;
 }
 
+/**
+ * [PLAYTEST B] DEV TRIPWIRE: a loud console.warn the instant ANY window/box is
+ * created outside the screen rect. It does NOT throw — a stray pixel must never
+ * crash the game — but it makes an off-screen box impossible to miss in dev (the
+ * cash corner running off the right edge is exactly the bug it catches). Inert in
+ * production (`import.meta.env.DEV`) and guarded for headless/test runs.
+ */
+function boundsCheck(scene: Phaser.Scene, kind: string, x: number, y: number, w: number, h: number): void {
+  const dev = typeof import.meta !== 'undefined' && Boolean(import.meta.env?.DEV);
+  if (!dev) return;
+  const sw = scene.scale.width;
+  const sh = scene.scale.height;
+  if (x < 0 || y < 0 || x + w > sw || y + h > sh) {
+    console.warn(
+      `[ui] ${kind} off-screen: rect (${x},${y},${w}×${h}) right=${x + w} bottom=${y + h} exceeds ${sw}×${sh}`,
+    );
+  }
+}
+
 export function makeWindow(
   scene: Phaser.Scene,
   x: number,
@@ -78,6 +98,7 @@ export function makeWindow(
   w: number,
   h: number,
 ): Phaser.GameObjects.NineSlice {
+  boundsCheck(scene, 'makeWindow', x, y, w, h);
   const win = scene.add.nineslice(x, y, winTexture(), 0, w, h, 8, 8, 8, 8);
   win.setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI);
   return win;
@@ -90,9 +111,40 @@ export function makeBox(
   w: number,
   h: number,
 ): Phaser.GameObjects.NineSlice {
+  boundsCheck(scene, 'makeBox', x, y, w, h);
   const win = scene.add.nineslice(x, y, 'box9', 0, w, h, 6, 6, 6, 6);
   win.setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI);
   return win;
+}
+
+/**
+ * [PLAYTEST B] THE EB cash corner ($X · BANK $Y), shared by the menu AND the
+ * shops so the SAME clamp can never drift between them. Amounts abbreviate
+ * ($1.2M) once big, and the window is CLAMPED so its right edge stays ≤ screen
+ * width: width is capped to `screenW - 12`, and the box is pinned `screenW - w -
+ * 4` from the left so it physically cannot run off the right edge — for any
+ * amount, up to the §A9 billions. The text shares the same right anchor and
+ * rides inside the frame. Returns the objects so the caller can redraw it.
+ */
+export function makeCashBox(
+  scene: Phaser.Scene,
+  cashOnHand: number,
+  banked: number,
+): Phaser.GameObjects.GameObject[] {
+  const sw = scene.scale.width;
+  const cash = `${money(cashOnHand, { abbrev: true })}  BANK ${money(banked, { abbrev: true })}`;
+  // cap the window to the screen (minus an 8px right + 4px safety margin); the
+  // box's left then sits at sw - w - 4, so right edge = sw - 4 ≤ screen, always.
+  const w = Math.min(cash.length * 6 + 20, sw - 12);
+  const bx = sw - w - 4;
+  return [
+    makeWindow(scene, bx, 8, w, 22),
+    scene.add
+      .bitmapText(bx + 10, 15, 'retro', cash, 6)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1)
+      .setMaxWidth(w - 16), // the text is bounded to the frame's interior
+  ];
 }
 
 /* ------------------------------------------------------------------ */
@@ -252,7 +304,13 @@ export class Dialogue {
   /** N-way choice menu. Returns chosen index (B = defaultIndex if allowed).
    *  S16 (ADR-060): an optional per-row `icons` array (texture keys, undefined
    *  to skip a row) draws a face left of each label — battle Goods reads the
-   *  item icons through it, the way pick() does in the menus. */
+   *  item icons through it, the way pick() does in the menus.
+   *
+   *  [PLAYTEST B] The menu's bottom edge is pinned 4px above the dialogue box
+   *  and it grows UPWARD; rows are capped to what fits between the screen top and
+   *  that edge, paginating past it — the same structural overflow guard pick()
+   *  uses, over the shared Phaser-free paginate()/pageOf() math. Short fixed
+   *  lists (every ask() in the game today) stay a single page at the old size. */
   ask(
     options: string[],
     opts: { cancelIndex?: number; icons?: Array<string | undefined> } = {},
@@ -260,38 +318,64 @@ export class Dialogue {
     this.busy = true;
     const scene = this.scene;
     const W = scene.scale.width;
-    const rowH = 14;
+    const rowH = ROW_H;
     const iconPad = opts.icons?.some((k) => k !== undefined) ? 13 : 0;
     const w = Math.max(...options.map((o) => o.length)) * 6 + 36 + iconPad;
-    const h = options.length * rowH + 16;
     const x = W - w - 10;
-    const y = scene.scale.height - 66 - h - 4;
+    // The menu's bottom edge — 4px above the H-66 dialogue box — is the fixed
+    // anchor; AUTO-FIT how many rows fit above it (a 4px top margin + the 16px
+    // frame padding reserved), and PAGINATE the rest. The frame is sized to
+    // perPage (== min(length, fitRows)) so a fitting list keeps the exact old
+    // compact height — h = length*rowH + 16 — and a uniform frame across pages.
+    const menuBottom = scene.scale.height - 66 - 4;
+    const fitRows = Math.max(1, Math.floor((menuBottom - 4 - 16) / rowH));
+    const { perPage, pages } = paginate(options.length, 1, fitRows);
+    const h = perPage * rowH + 16;
+    const y = menuBottom - h; // == scene.scale.height - 66 - h - 4 (the original)
     const win = makeWindow(scene, x, y, w, h);
-    const icons: Phaser.GameObjects.Image[] = [];
-    opts.icons?.forEach((key, i) => {
-      if (key === undefined) return;
-      icons.push(
-        scene.add
-          .image(x + 24, y + 13 + i * rowH, key)
-          .setScrollFactor(0)
-          .setDepth(DEPTH_UI + 1),
-      );
-    });
-    const texts = options.map((o, i) =>
-      scene.add
-        .bitmapText(x + 22 + iconPad, y + 9 + i * rowH, 'retro', vars(o), 6)
-        .setScrollFactor(0)
-        .setDepth(DEPTH_UI + 1),
-    );
+
+    let sel = 0;
+    let page = 0;
+    const indexOfSlot = (slot: number): number => page * perPage + slot;
+    const slotOfIndex = (i: number): number => i - page * perPage;
+    const slotCount = (): number => Math.min(perPage, options.length - page * perPage);
+
     const hand = scene.add
       .image(x + 12, y + 13, 'hand')
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2);
-    let sel = 0;
-    return new Promise((resolve) => {
-      const zones = options.map((_, i) => {
+
+    // per-page pools: labels + icons + tap zones + a "1/3" marker, all rebuilt on
+    // a page flip so the menu can never paint a row (or fire a tap) off its frame.
+    const pageObjs: Phaser.GameObjects.GameObject[] = [];
+    let zones: Phaser.GameObjects.Zone[] = [];
+    let finish: (i: number) => void = () => {};
+
+    const renderPage = (): void => {
+      pageObjs.forEach((o) => o.destroy());
+      pageObjs.length = 0;
+      zones.forEach((z) => z.destroy());
+      zones = [];
+      const n = slotCount();
+      for (let s = 0; s < n; s++) {
+        const i = indexOfSlot(s);
+        const icon = opts.icons?.[i];
+        if (icon !== undefined) {
+          pageObjs.push(
+            scene.add
+              .image(x + 24, y + 13 + s * rowH, icon)
+              .setScrollFactor(0)
+              .setDepth(DEPTH_UI + 1),
+          );
+        }
+        pageObjs.push(
+          scene.add
+            .bitmapText(x + 22 + iconPad, y + 9 + s * rowH, 'retro', vars(options[i]), 6)
+            .setScrollFactor(0)
+            .setDepth(DEPTH_UI + 1),
+        );
         const z = scene.add
-          .zone(x, y + 6 + i * rowH, w, rowH)
+          .zone(x, y + 6 + s * rowH, w, rowH)
           .setOrigin(0, 0)
           .setScrollFactor(0)
           .setDepth(DEPTH_UI + 3)
@@ -300,8 +384,38 @@ export class Dialogue {
           sel = i;
           finish(i);
         });
-        return z;
-      });
+        zones.push(z);
+      }
+      // [PLAYTEST B] the page indicator — gold "1/3" with up/down arrows in the
+      // bottom frame margin (mirrors pick()); absent on the single-page menus.
+      if (pages > 1) {
+        const label = `${page > 0 ? '▲ ' : ''}${page + 1}/${pages}${page < pages - 1 ? ' ▼' : ''}`;
+        pageObjs.push(
+          scene.add
+            .bitmapText(x + w - label.length * 6 - 6, y + h - 11, 'retro', label, 6)
+            .setScrollFactor(0)
+            .setDepth(DEPTH_UI + 1)
+            .setTint(colorOf(px(RAMP.GOLD, 3))),
+        );
+      }
+      hand.y = y + 13 + slotOfIndex(sel) * rowH;
+    };
+
+    return new Promise((resolve) => {
+      finish = (i: number): void => {
+        AUDIO.sfx(opts.cancelIndex === i ? 'cancel' : 'confirm');
+        off();
+        win.destroy();
+        hand.destroy();
+        pageObjs.forEach((o) => o.destroy());
+        zones.forEach((z) => z.destroy());
+        this.releasedAt = this.scene.time.now;
+        this.busy = false;
+        resolve(i);
+      };
+
+      renderPage();
+
       const off = everyFrame(scene, () => {
         const d = INPUT.dir();
         if (INPUT.justPressed('A')) {
@@ -315,21 +429,15 @@ export class Dialogue {
         if (this.navTick(d.y)) {
           sel = (sel + (d.y > 0 ? 1 : options.length - 1)) % options.length;
           AUDIO.sfx('cursor');
+          // sel wraps the WHOLE list; flip to the page that now holds it.
+          const np = pageOf(sel, perPage);
+          if (np !== page) {
+            page = np;
+            renderPage();
+          }
         }
-        hand.y = y + 13 + sel * rowH;
+        hand.y = y + 13 + slotOfIndex(sel) * rowH;
       });
-      const finish = (i: number): void => {
-        AUDIO.sfx(opts.cancelIndex === i ? 'cancel' : 'confirm');
-        off();
-        win.destroy();
-        texts.forEach((t) => t.destroy());
-        icons.forEach((g) => g.destroy());
-        zones.forEach((z) => z.destroy());
-        hand.destroy();
-        this.releasedAt = this.scene.time.now;
-        this.busy = false;
-        resolve(i);
-      };
     });
   }
 

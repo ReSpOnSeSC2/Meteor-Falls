@@ -24,7 +24,7 @@ export function drawArcadeShip(): Pixmap {
   pm.set(14, 4, px(RAMP.RED, 2));
   // fuse spark riding along
   pm.set(3, 3, px(RAMP.GOLD, 3));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -43,7 +43,7 @@ export function drawArcadeMoth(): Pixmap {
   // antennae, optimistic
   pm.set(9, 2, px(RAMP.NIGHT, 3));
   pm.set(10, 1, px(RAMP.NIGHT, 3));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -60,7 +60,7 @@ export function drawArcadeRock(): Pixmap {
   pm.set(4, 5, px(RAMP.PAPER, 3)); // glint of judgement
   pm.set(8, 5, px(RAMP.PAPER, 3));
   pm.hline(5, 8, 3, px(RAMP.INK, 0)); // the frown, load-bearing
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -79,7 +79,7 @@ export function drawArcadeSaucer(): Pixmap {
   pm.set(3, 5, px(RAMP.GOLD, 3));
   pm.set(7, 5, px(RAMP.RED, 2));
   pm.set(11, 5, px(RAMP.GOLD, 3));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -96,7 +96,7 @@ export function drawArcadeCorndog(): Pixmap {
   pm.set(7, 2, px(RAMP.ORANGE, 2));
   pm.set(9, 3, px(RAMP.ORANGE, 2));
   pm.set(11, 2, px(RAMP.ORANGE, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 

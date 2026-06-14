@@ -346,6 +346,15 @@ const GLYPH_DRAW: Record<string, Draw> = {
     pm.set(5, 9, l(RAMP.CYAN)); // the dot
   },
 
+  // ELLIPSIS — a "…" mark (a thinking NPC — three dots on the baseline).
+  ellipsis: (pm) => {
+    // three 2px dots spaced across the line, sitting low like printed "…"
+    for (const ox of [1, 4, 7]) {
+      pm.rect(ox, 7, 2, 2, m(RAMP.BLUE)); // the dot body
+      pm.set(ox, 7, l(RAMP.CYAN)); // a soft top-left glint
+    }
+  },
+
   // EXCLAIM — a "!" mark (surprise — the EarthBound alert).
   exclaim: (pm) => {
     pm.vline(5, 1, 6, m(RAMP.RED));
@@ -486,7 +495,7 @@ export const GLYPH_TOKENS = [
   // objects of this world
   'phone', 'coin', 'bulb', 'gear', 'bell', 'key', 'gift', 'crown',
   // arrows & marks
-  'up_arrow', 'down_arrow', 'question', 'exclaim', 'anger',
+  'up_arrow', 'down_arrow', 'question', 'exclaim', 'ellipsis', 'anger',
   // the EarthBound food winks + this game's icons
   'corn_dog', 'pickle', 'burger', 'soda', 'cookie', 'bone', 'meteor', 'paw', 'bat', 'lemon',
 ] as const;

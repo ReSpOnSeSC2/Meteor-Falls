@@ -107,7 +107,7 @@ import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue'
 import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
 import { TEXT_VARS } from '../src/ui/text';
 import { tileIndexByName, TILESET } from '../src/spritegen/tiles';
-import { mapQualityFlags } from '../src/levelkit/mapcheck';
+import { doorAudit, mapQualityFlags } from '../src/levelkit/mapcheck';
 import { pressureReport, pressureHardFlags } from '../src/levelkit/pressure';
 // S15g 3b — THE SPRITE FORGE: the part catalog, the composer, the recorded picks
 import { composeEnemy, CATALOG, ROLE_POOLS, CHAPTER_REGION } from '../src/spritegen/parts';
@@ -2460,6 +2460,39 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
   // the table is VISIBLE in every run (silent grandfathering is drift)
   console.log(`  map-quality (S15g): ${clean}/${Object.keys(MAPS).length} canon maps clear reachability + door-landing; ${Object.keys(REACH_WAIVERS).length} waived —`);
   for (const [id, why] of Object.entries(REACH_WAIVERS)) console.log(`    ⚠ ${id}: ${why}`);
+}
+
+/* ====== 3a‴. DOOR-LANDING AUDIT — wrong-edge / stuck transitions (ADR-102) ======
+ * The reachability gate above proves a landing is WALKABLE; this proves it is the
+ * RIGHT walkable spot. A door must drop you BESIDE the reciprocal return door, not
+ * across the map (the "you enter from the wrong way" playtest bug) and never inside
+ * a wall (the "stuck" bug). landsSolid + farFromReturn are HARD fails; noReturn (a
+ * one-way door) is only reported — some are by design (a chute, a story shove, the
+ * brickton→overpass through-road). The §A6 stateful bespoke rooms keep the SAME
+ * waivers as the reachability gate (the rotor lands on a static wall by design),
+ * and the runtime spawn safety-net (OverworldScene.clampSpawnToWalkable) is the
+ * belt to this gate's suspenders — so a stuck spawn can't ship OR soft-lock. */
+{
+  const solidByName = new Map(TILESET.map((t) => [t.name, t.solid]));
+  const isSolidChar = (ch: string): boolean =>
+    ch === ':' || ch === 'r' ? false : solidByName.get(CHAR_LEGEND[ch] ?? 'grass_a') === true;
+  const DOOR_WAIVERS = new Set(['pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_4', 'dos_f3']);
+  const findings = doorAudit(MAPS, isSolidChar);
+  let oneWay = 0;
+  for (const f of findings) {
+    const waived = DOOR_WAIVERS.has(f.from) || DOOR_WAIVERS.has(f.to);
+    const hard = f.issue.filter((i) => i === 'landsSolid' || i === 'farFromReturn');
+    if (hard.length > 0 && !waived) {
+      fail(
+        'door-audit',
+        `${f.from} → ${f.to} (${f.kind}) lands @${f.lx},${f.ly} '${f.char}': ${f.detail.join('; ')} — point tx,ty at the return doorstep, or add a reasoned waiver`,
+      );
+    }
+    if (f.issue.includes('noReturn')) oneWay += 1;
+  }
+  console.log(
+    `  door-audit (ADR-102): swept ${Object.keys(MAPS).length} maps — ${findings.length} flag(s), ${oneWay} one-way (reported), ${DOOR_WAIVERS.size} bespoke waived`,
+  );
 }
 
 /* ====== 3a″. ENCOUNTER PRESSURE — the HARD subset (S15g M2, ADR-045) ======

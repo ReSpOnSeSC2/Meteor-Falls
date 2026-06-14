@@ -4,7 +4,26 @@
  * authored through this tiny DSL, which makes palette conformance structural:
  * there is no API that accepts an RGB color.
  */
-import { PALETTE, T } from '../palette';
+import { PALETTE, T, C, SH, SHADES_PER_RAMP, pxr } from '../palette';
+
+/**
+ * The game's single light direction (ADR-101): top-left, everywhere. Every
+ * lit-volume helper below shades toward the lower-right and highlights toward
+ * the upper-left, so a mailbox, a llama, and a hero all catch the light from
+ * the same place — the one change that reads as "designed" instead of flat.
+ */
+export const LIGHT = { x: -1, y: -1 } as const;
+
+/** pick the 6-stop shade for a point on a lit sphere/ellipse. `u` is the
+ *  normalized light-axis coordinate (+1 = full toward the light, −1 = away). */
+function litBand(u: number): number {
+  if (u > 0.6) return SH.HILITE;
+  if (u > 0.3) return SH.LIT;
+  if (u > 0.0) return SH.BASE;
+  if (u > -0.3) return SH.MID;
+  if (u > -0.6) return SH.DARK;
+  return SH.SHADOW;
+}
 
 export class Pixmap {
   readonly w: number;
@@ -183,6 +202,228 @@ export class Pixmap {
     return this;
   }
 
+  /* ================================================================== */
+  /* ADR-101 — THE LIGHTING MODEL. Fill a form straight to a lit volume   */
+  /* off a 6-stop ramp: highlight on the top-left, core across the body,  */
+  /* shadow on the lower-right. One call replaces the hand-laid           */
+  /* lit-edge / core / shaded-edge dance and guarantees the light agrees. */
+
+  /** a lit box: BASE core, LIT top+left bevel (HILITE corner), DARK
+   *  bottom+right bevel (SHADOW corner). The designed-volume primitive. */
+  litRect(x: number, y: number, w: number, h: number, ramp: number): this {
+    if (w <= 0 || h <= 0) return this;
+    this.rect(x, y, w, h, pxr(ramp, SH.BASE));
+    this.hline(x, y + h - 1, w, pxr(ramp, SH.DARK)); // bottom in shade
+    this.vline(x + w - 1, y, h, pxr(ramp, SH.DARK)); // right in shade
+    this.set(x + w - 1, y + h - 1, pxr(ramp, SH.SHADOW)); // core-shadow corner
+    this.hline(x, y, w, pxr(ramp, SH.LIT)); // top catches the light
+    this.vline(x, y, h, pxr(ramp, SH.LIT)); // left catches the light
+    this.set(x, y, pxr(ramp, SH.HILITE)); // hot corner
+    return this;
+  }
+
+  /** a lit ellipse — a 6-band sphere when rx===ry. The fix for every flat
+   *  blob (minis, fruit, heads, lamps): real round volume in one call. */
+  litEllipse(cx: number, cy: number, rx: number, ry: number, ramp: number): this {
+    if (rx <= 0 || ry <= 0) return this;
+    for (let j = -ry; j <= ry; j++) {
+      for (let i = -rx; i <= rx; i++) {
+        const ni = i / rx;
+        const nj = j / ry;
+        if (ni * ni + nj * nj > 1.05) continue;
+        const u = -(ni + nj) / Math.SQRT2; // +1 toward the light (upper-left)
+        this.set(Math.round(cx + i), Math.round(cy + j), pxr(ramp, litBand(u)));
+      }
+    }
+    return this;
+  }
+
+  /** a lit ball (litEllipse with rx===ry===r) */
+  sphere(cx: number, cy: number, r: number, ramp: number): this {
+    return this.litEllipse(cx, cy, r, r, ramp);
+  }
+
+  /**
+   * Selective, RAMP-COLORED outline (ADR-101 / ADR-104, the EarthBound idiom):
+   * the shadow rim (lower-right facing) stays true dark INK against the
+   * background; the LIT rim (top-left facing) is recolored to the DARKEST shade
+   * of the adjacent fill's OWN ramp — a dark red edge on a red cap, a tan edge
+   * on cream — so the contour reads rounded and lit, never stamped. This is the
+   * single biggest "blocky → crafted" win. Only writes the transparent margin,
+   * so call it last and keep a 1px border.
+   */
+  outlineLit(dark = C.outline): this {
+    const src = this.data.slice();
+    const at = (x: number, y: number): number =>
+      x >= 0 && y >= 0 && x < this.w && y < this.h ? src[y * this.w + x] : T;
+    for (let y = 0; y < this.h; y++) {
+      for (let x = 0; x < this.w; x++) {
+        if (at(x, y) !== T) continue;
+        const up = at(x, y - 1) !== T;
+        const dn = at(x, y + 1) !== T;
+        const lf = at(x - 1, y) !== T;
+        const rt = at(x + 1, y) !== T;
+        if (!up && !dn && !lf && !rt) continue;
+        // solid below/right → this rim sits on the lit (upper-left) face
+        const score = (dn ? 1 : 0) + (rt ? 1 : 0) - (up ? 1 : 0) - (lf ? 1 : 0);
+        if (score > 0) {
+          // colored edge: the darkest shade of the lit-facing fill's ramp
+          const fill = dn ? at(x, y + 1) : rt ? at(x + 1, y) : lf ? at(x - 1, y) : at(x, y - 1);
+          this.data[y * this.w + x] = pxr(Math.floor(fill / SHADES_PER_RAMP), SH.SHADOW);
+        } else {
+          this.data[y * this.w + x] = dark;
+        }
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Diagonal anti-alias (ADR-101): softens the hard INTERIOR corners of the
+   * silhouette where the outline turns a sharp convex 90°. The fill pixel
+   * tucked just inside such a corner is replaced with the soft ink, so the
+   * staircase reads as a rounded bevel — WITHOUT ever adding a pixel outside
+   * the contour (no prickly halo, no silhouette growth, background-independent).
+   * It only rewrites FILL pixels (never the outline, never transparent), so the
+   * shape and its 1px margin are preserved exactly.
+   */
+  aaDiag(ink = C.inkAA): this {
+    const src = this.data.slice();
+    const at = (x: number, y: number): number =>
+      x >= 0 && y >= 0 && x < this.w && y < this.h ? src[y * this.w + x] : T;
+    for (let y = 0; y < this.h; y++) {
+      for (let x = 0; x < this.w; x++) {
+        if (at(x, y) === T) continue; // candidate must be solid (a fill pixel)
+        // COLOR-AGNOSTIC convex-corner test (cooperates with the ramp-colored
+        // outline, whose edge pixels are no longer a fixed ink): the two sides
+        // toward the corner are solid, the diagonal-out is exterior (T), and
+        // there is mass BEHIND us (inward diagonal solid) — which proves we're
+        // the fill pixel tucked inside the corner, not a thin border pixel.
+        for (const [dx, dy] of [
+          [1, 1],
+          [-1, 1],
+          [1, -1],
+          [-1, -1],
+        ] as const) {
+          if (
+            at(x + dx, y + dy) === T &&
+            at(x + dx, y) !== T &&
+            at(x, y + dy) !== T &&
+            at(x - dx, y - dy) !== T
+          ) {
+            this.data[y * this.w + x] = ink;
+            break;
+          }
+        }
+      }
+    }
+    return this;
+  }
+
+  /* ================================================================== */
+  /* ADR-104 — named shading helpers the character generator calls       */
+  /* directly (Prompt 2). All operate in palette indices, never RGB.     */
+
+  /** aaEdge — public name for the diagonal stair-corner smoother (alias of
+   *  aaDiag): drop an intermediate-shade pixel on convex stair tips. */
+  aaEdge(ink = C.inkAA): this {
+    return this.aaDiag(ink);
+  }
+
+  /**
+   * softShade — re-shade an already-filled region into a smooth highlight →
+   * core → shadow gradient off a 6-deep ramp, light from the top-left (the one
+   * game light). Only repaints NON-transparent pixels, so it shades the form
+   * the silhouette already laid down without spilling past it.
+   */
+  softShade(x: number, y: number, w: number, h: number, ramp: number, lightDir: 'topleft' | 'top' = 'topleft'): this {
+    const cx = x + (w - 1) / 2;
+    const cy = y + (h - 1) / 2;
+    const rx = Math.max(1, (w - 1) / 2);
+    const ry = Math.max(1, (h - 1) / 2);
+    for (let j = y; j < y + h; j++) {
+      for (let i = x; i < x + w; i++) {
+        if (this.get(i, j) === T) continue;
+        const ni = (i - cx) / rx;
+        const nj = (j - cy) / ry;
+        const u = lightDir === 'top' ? -nj : -(ni + nj) / Math.SQRT2;
+        this.set(i, j, pxr(ramp, litBand(u)));
+      }
+    }
+    return this;
+  }
+
+  /**
+   * rimLight — lay a 1px lighter-shade rim along the LIT (top-left) silhouette
+   * edge of the form: any solid pixel whose top OR left neighbor is transparent
+   * becomes the ramp's LIT shade. The catch of light that rounds a shoulder.
+   */
+  rimLight(ramp: number, shade: number = SH.LIT): this {
+    const src = this.data.slice();
+    const at = (x: number, y: number): number =>
+      x >= 0 && y >= 0 && x < this.w && y < this.h ? src[y * this.w + x] : T;
+    const rim = pxr(ramp, shade);
+    for (let y = 0; y < this.h; y++) {
+      for (let x = 0; x < this.w; x++) {
+        if (at(x, y) === T) continue;
+        if (at(x, y - 1) === T || at(x - 1, y) === T) this.data[y * this.w + x] = rim;
+      }
+    }
+    return this;
+  }
+
+  /** dither2 — a tight 1px checker between two adjacent shades over the
+   *  region's existing pixels (a gentle gradient seam, ADR-020 one-seam rule). */
+  dither2(x: number, y: number, w: number, h: number, a: number, b: number): this {
+    return this.checker(x, y, w, h, a, b, 1);
+  }
+
+  /**
+   * The standard finishing pass (ADR-101): selective outline + diagonal AA.
+   * Generators call this instead of `outline(C.outline)` to get the lit rim
+   * and the de-jagged edge in one line. `lit:false` keeps a flat dark outline
+   * (tiny/UI sprites); `aa:false` skips the AA (sprites with no diagonals).
+   */
+  finish(opts?: { lit?: boolean; aa?: boolean }): this {
+    if (opts?.lit === false) this.outline(C.outline);
+    else this.outlineLit();
+    if (opts?.aa !== false) this.aaDiag();
+    return this;
+  }
+
+  /**
+   * Palette-swap one whole ramp for another (ADR-101) — every shade maps to
+   * the SAME shade slot of the target ramp, so a form's lighting survives the
+   * recolor intact. The cheap-variety primitive: one generator → many looks.
+   */
+  swapRamp(from: number, to: number): this {
+    const f0 = from * SHADES_PER_RAMP;
+    const t0 = to * SHADES_PER_RAMP;
+    for (let i = 0; i < this.data.length; i++) {
+      const c = this.data[i];
+      if (c !== T && c >= f0 && c < f0 + SHADES_PER_RAMP) this.data[i] = t0 + (c - f0);
+    }
+    return this;
+  }
+
+  /**
+   * Recolor several ramps at once from a {fromRamp: toRamp} map, in a single
+   * pass (no chaining — a ramp that is both a source and a target can't double-
+   * remap). The engine behind palette-swap NPC/enemy variety.
+   */
+  recolor(map: Record<number, number>): this {
+    const lut = new Int16Array(SHADES_PER_RAMP * 16);
+    for (let r = 0; r < 16; r++) {
+      const dst = map[r] ?? r;
+      for (let s = 0; s < SHADES_PER_RAMP; s++) lut[r * SHADES_PER_RAMP + s] = dst * SHADES_PER_RAMP + s;
+    }
+    for (let i = 0; i < this.data.length; i++) {
+      const c = this.data[i];
+      if (c !== T && c < lut.length) this.data[i] = lut[c];
+    }
+    return this;
+  }
+
   blit(src: Pixmap, dx: number, dy: number): this {
     for (let y = 0; y < src.h; y++) {
       for (let x = 0; x < src.w; x++) {
@@ -243,6 +484,16 @@ export class Pixmap {
     if (ctx) this.drawTo(ctx, 0, 0);
     return canvas;
   }
+}
+
+/**
+ * Palette-swap a whole animation sheet (ADR-101): clone each frame and remap
+ * its ramps, so ONE generator yields many recolors — the cheap NPC/enemy/crowd
+ * variety EarthBound's overworld leans on. Because recolor preserves the shade
+ * SLOT, every variant keeps its lighting (highlight → core → shadow) intact.
+ */
+export function recolorFrames(frames: Pixmap[], map: Record<number, number>): Pixmap[] {
+  return frames.map((f) => f.clone().recolor(map));
 }
 
 /** deterministic RNG so generated art is stable run-to-run */

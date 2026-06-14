@@ -1,7 +1,31 @@
 /**
  * WebAudio synth: SFX presets + a pattern sequencer (ADR-006).
  * Phase 8 swaps the voices for rendered stems behind this same API.
+ *
+ * THE MIXER (ADR-100). The signal graph is now a small console rather than two
+ * bare gains:
+ *
+ *   voice.gain (crossfade 0..1) ─┐
+ *   voice.gain (crossfade 0..1) ─┴→ musicBus (music vol) → musicMuffle (lowpass
+ *                                     veil) → master (master vol × mute) → dest
+ *   tone()/noise() ────────────────→ sfxBus  (sfx vol) ───────────────→ master
+ *
+ * playMusic() CROSSFADES (ramps the outgoing track to 0 while the incoming rides
+ * up) instead of hard-cutting; a menu/pause/indoor map MUFFLES the music path
+ * (setMusicMuffle); the player sets per-bus volumes (setBus); and battle slow-mo
+ * can BEND the synth (setMusicDetune). SFX deliberately bypass the muffle.
  */
+import {
+  AudioBus,
+  BUS_DEFAULTS,
+  BUS_KEYS,
+  CROSSFADE_MS,
+  MUFFLE_GLIDE_S,
+  MuffleLevel,
+  clamp01,
+  muffleCutoff,
+  parseBusLevel,
+} from './audiobus';
 
 type Wave = OscillatorType | 'noise';
 
@@ -19,6 +43,21 @@ interface Track {
   swing?: number; // 0..0.5 fraction of a step
   loop: boolean;
   channels: Channel[];
+}
+
+/** one playing track instance (ADR-100). Each has its OWN crossfade gain + its
+ *  own scheduler clock so two can overlap during a crossfade. `held` carries the
+ *  per-channel sustaining oscillator + its base detune (so a global slow-mo bend
+ *  rides on top of the channel's own detune). `live` gates the tick after dispose. */
+interface MusicVoice {
+  name: string;
+  gain: GainNode;
+  timer: number | null;
+  step: number;
+  nextTime: number;
+  stems: number;
+  held: Record<number, { osc: OscillatorNode; gain: GainNode; base: number } | undefined>;
+  live: boolean;
 }
 
 const NOTE_OFFSET: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -495,16 +534,30 @@ const TRACKS: Record<string, Track> = {
 class AudioSys {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
-  private musicGain: GainNode | null = null;
+  /** the music sub-mix: voices → musicBus → musicMuffle → master (ADR-100). */
+  private musicBus: GainNode | null = null;
+  private musicMuffle: BiquadFilterNode | null = null;
+  /** SFX sub-mix → master (bypasses the muffle). */
+  private sfxBus: GainNode | null = null;
   private noiseBuf: AudioBuffer | null = null;
-  private timer: number | null = null;
-  private current: string | null = null;
-  private step = 0;
-  private nextTime = 0;
-  private held: Record<number, { osc: OscillatorNode; gain: GainNode } | undefined> = {};
-  /** channel cap for the current track (Homesong stems, §A4.9) */
-  private stems = Infinity;
+  /** the active track and the one crossfading out beneath it (at most one each). */
+  private musicVoice: MusicVoice | null = null;
+  private fadingVoice: MusicVoice | null = null;
+  /** what playMusic was last ASKED to play — survives having no ctx yet, and
+   *  drives idempotency exactly as the old `current` field did. */
+  private intendedName: string | null = null;
+  private intendedStems = Infinity;
+  /** current muffle step + global synth detune (cents) for slow-mo bends. */
+  private muffle: MuffleLevel = 0;
+  private musicDetune = 0;
+  /** per-bus levels (restored from device-local storage on unlock). */
+  private levels: Record<AudioBus, number> = { ...BUS_DEFAULTS };
   muted = false;
+
+  /** the track currently asked-for (back-compat for jingle + callers). */
+  get current(): string | null {
+    return this.intendedName;
+  }
 
   unlock(): void {
     if (this.ctx) {
@@ -515,18 +568,32 @@ class AudioSys {
       window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return;
     this.ctx = new Ctor();
-    this.master = this.ctx.createGain();
-    // honor the persisted sound preference from the first note onward
+    // honor the persisted sound preference + per-bus volumes from the first note
     try {
       this.muted = localStorage.getItem('meteor-falls-sound') === 'off';
+      this.levels.master = parseBusLevel(localStorage.getItem(BUS_KEYS.master), BUS_DEFAULTS.master);
+      this.levels.music = parseBusLevel(localStorage.getItem(BUS_KEYS.music), BUS_DEFAULTS.music);
+      this.levels.sfx = parseBusLevel(localStorage.getItem(BUS_KEYS.sfx), BUS_DEFAULTS.sfx);
     } catch {
-      /* storage unavailable */
+      /* storage unavailable — defaults already seeded */
     }
-    this.master.gain.value = this.muted ? 0 : 0.9;
+    // master: the final fader, zeroed by mute (mute wins over the master level)
+    this.master = this.ctx.createGain();
+    this.master.gain.value = this.muted ? 0 : this.levels.master;
     this.master.connect(this.ctx.destination);
-    this.musicGain = this.ctx.createGain();
-    this.musicGain.gain.value = 1;
-    this.musicGain.connect(this.master);
+    // music path: musicBus (volume) → musicMuffle (lowpass veil) → master
+    this.musicMuffle = this.ctx.createBiquadFilter();
+    this.musicMuffle.type = 'lowpass';
+    this.musicMuffle.frequency.value = muffleCutoff(this.muffle);
+    this.musicMuffle.Q.value = 0.707; // gentle Butterworth knee, no resonant peak
+    this.musicMuffle.connect(this.master);
+    this.musicBus = this.ctx.createGain();
+    this.musicBus.gain.value = this.levels.music;
+    this.musicBus.connect(this.musicMuffle);
+    // sfx path: sfxBus (volume) → master, DELIBERATELY bypassing the muffle
+    this.sfxBus = this.ctx.createGain();
+    this.sfxBus.gain.value = this.levels.sfx;
+    this.sfxBus.connect(this.master);
     // 1s of white noise, reused
     const len = this.ctx.sampleRate;
     this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
@@ -556,7 +623,7 @@ class AudioSys {
 
   setMuted(m: boolean): void {
     this.muted = m;
-    if (this.master) this.master.gain.value = m ? 0 : 0.9;
+    if (this.master) this.master.gain.value = m ? 0 : this.levels.master;
     try {
       localStorage.setItem('meteor-falls-sound', m ? 'off' : 'on');
     } catch {
@@ -580,7 +647,7 @@ class AudioSys {
     vol: number,
     when = 0,
   ): void {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.sfxBus) return;
     const t = this.ctx.currentTime + when;
     const osc = this.ctx.createOscillator();
     const g = this.ctx.createGain();
@@ -589,13 +656,13 @@ class AudioSys {
     if (f1 !== f0) osc.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
     g.gain.setValueAtTime(vol, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    osc.connect(g).connect(this.master);
+    osc.connect(g).connect(this.sfxBus);
     osc.start(t);
     osc.stop(t + dur + 0.02);
   }
 
   private noise(dur: number, vol: number, filterFreq: number, when = 0): void {
-    if (!this.ctx || !this.master || !this.noiseBuf) return;
+    if (!this.ctx || !this.sfxBus || !this.noiseBuf) return;
     const t = this.ctx.currentTime + when;
     const src = this.ctx.createBufferSource();
     src.buffer = this.noiseBuf;
@@ -605,7 +672,7 @@ class AudioSys {
     const g = this.ctx.createGain();
     g.gain.setValueAtTime(vol, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    src.connect(f).connect(g).connect(this.master);
+    src.connect(f).connect(g).connect(this.sfxBus);
     src.start(t, Math.random(), dur + 0.05);
   }
 
@@ -1039,55 +1106,95 @@ class AudioSys {
    */
   playMusic(name: string | null, stems?: number): void {
     const wantStems = stems ?? Infinity;
-    if (this.current === name && this.stems === wantStems) return;
-    this.stopMusic();
-    this.stems = wantStems;
+    // idempotent: already playing (or intending) this exact track + stem count
+    if (this.intendedName === name && this.intendedStems === wantStems) return;
+    this.intendedName = name;
+    this.intendedStems = wantStems;
+    // no context yet (pre-gesture): the intent is recorded and the next call
+    // after unlock() will sound it — exactly the old field-based behavior.
+    if (!this.ctx || !this.musicBus) return;
+    this.applyMusic(name, wantStems);
+  }
+
+  /**
+   * Crossfade the music (#2, ADR-100): ramp the outgoing voice down to 0 (then
+   * dispose it) WHILE the incoming voice rides up — no hard cut. `name === null`
+   * fades the current track out to silence.
+   */
+  private applyMusic(name: string | null, wantStems: number): void {
+    // at most one fade-out at a time — drop any still-fading voice immediately
+    if (this.fadingVoice) this.disposeVoice(this.fadingVoice);
+    if (this.musicVoice) {
+      const out = this.musicVoice;
+      this.musicVoice = null;
+      this.fadingVoice = out;
+      this.rampGain(out.gain, 0, CROSSFADE_MS);
+      window.setTimeout(() => {
+        if (this.fadingVoice === out) this.disposeVoice(out);
+      }, CROSSFADE_MS + 80);
+    }
     if (!name) return;
-    this.current = name;
-    if (!this.ctx) return;
-    this.step = 0;
-    this.nextTime = this.ctx.currentTime + 0.05;
+    const voice = this.startVoice(name, wantStems);
+    this.musicVoice = voice;
+    this.rampGain(voice.gain, 1, CROSSFADE_MS);
+  }
+
+  /** spin up a fresh voice (its own crossfade gain + scheduler clock) and start
+   *  its loop. The caller ramps `voice.gain` in. */
+  private startVoice(name: string, stems: number): MusicVoice {
+    const ctx = this.ctx!;
+    const gain = ctx.createGain();
+    gain.gain.value = 0; // the crossfade ramps this up
+    gain.connect(this.musicBus!);
+    const voice: MusicVoice = {
+      name,
+      gain,
+      timer: null,
+      step: 0,
+      nextTime: ctx.currentTime + 0.05,
+      stems,
+      held: {},
+      live: true,
+    };
     const tick = (): void => {
-      if (!this.ctx || this.current !== name) return;
+      if (!this.ctx || !voice.live) return;
       const track = TRACKS[name];
       const stepDur = 60 / track.bpm / 2; // 8th notes
-      while (this.nextTime < this.ctx.currentTime + 0.12) {
-        const stepIdx = this.step % track.channels[0].notes.length;
-        if (!track.loop && this.step >= track.channels[0].notes.length) {
-          // one-shot finished: release every held (tied) note at the pattern's
-          // end and kill the scheduler — otherwise the last note drones on
-          const end = this.nextTime;
-          Object.keys(this.held).forEach((k) => this.releaseHeld(Number(k), end));
-          if (this.timer !== null) {
-            window.clearInterval(this.timer);
-            this.timer = null;
-          }
-          this.current = null;
+      while (voice.nextTime < this.ctx.currentTime + 0.12) {
+        const stepIdx = voice.step % track.channels[0].notes.length;
+        if (!track.loop && voice.step >= track.channels[0].notes.length) {
+          // one-shot finished: release tied notes at the pattern end, then retire
+          // the voice (clearing the intent only if this was the active track)
+          const end = voice.nextTime;
+          Object.keys(voice.held).forEach((k) => this.releaseHeld(voice, Number(k), end));
+          if (this.musicVoice === voice && this.intendedName === voice.name) this.intendedName = null;
+          this.disposeVoice(voice);
           return;
         }
         const swing = track.swing ? (stepIdx % 2 === 1 ? stepDur * track.swing : 0) : 0;
-        const t = this.nextTime + swing;
+        const t = voice.nextTime + swing;
         track.channels.forEach((ch, ci) => {
-          if (ci >= this.stems) return; // stem not earned yet (§A4.9)
+          if (ci >= voice.stems) return; // stem not earned yet (§A4.9)
           const n = ch.notes[stepIdx];
           if (n === null) {
-            this.releaseHeld(ci, t);
+            this.releaseHeld(voice, ci, t);
             return;
           }
           if (n === '-') return; // tie
-          this.releaseHeld(ci, t);
-          this.scheduleNote(ci, ch, n, t, stepDur);
+          this.releaseHeld(voice, ci, t);
+          this.scheduleNote(voice, ci, ch, n, t, stepDur);
         });
-        this.step++;
-        this.nextTime += stepDur;
+        voice.step++;
+        voice.nextTime += stepDur;
       }
     };
-    this.timer = window.setInterval(tick, 30);
+    voice.timer = window.setInterval(tick, 30);
     tick();
+    return voice;
   }
 
-  private scheduleNote(ci: number, ch: Channel, note: string, t: number, stepDur: number): void {
-    if (!this.ctx || !this.musicGain) return;
+  private scheduleNote(voice: MusicVoice, ci: number, ch: Channel, note: string, t: number, stepDur: number): void {
+    if (!this.ctx) return;
     if (ch.wave === 'noise') {
       if (!this.noiseBuf) return;
       const src = this.ctx.createBufferSource();
@@ -1098,27 +1205,29 @@ class AudioSys {
       const g = this.ctx.createGain();
       g.gain.setValueAtTime(ch.vol, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-      src.connect(f).connect(g).connect(this.musicGain);
+      src.connect(f).connect(g).connect(voice.gain);
       src.start(t, Math.random(), 0.08);
       return;
     }
     const osc = this.ctx.createOscillator();
     osc.type = ch.wave;
     osc.frequency.value = freqOf(note);
-    if (ch.detune) osc.detune.value = ch.detune;
+    // the channel's own detune plus the global slow-mo bend (ADR-100/§A4 slow-mo)
+    const base = ch.detune ?? 0;
+    osc.detune.value = base + this.musicDetune;
     const g = this.ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(ch.vol, t + 0.015);
-    osc.connect(g).connect(this.musicGain);
+    osc.connect(g).connect(voice.gain);
     osc.start(t);
     // safety stop: longest tie run in any track is 4 steps; releaseHeld
     // normally ends notes well before this
     osc.stop(t + stepDur * 8);
-    this.held[ci] = { osc, gain: g };
+    voice.held[ci] = { osc, gain: g, base };
   }
 
-  private releaseHeld(ci: number, t: number): void {
-    const h = this.held[ci];
+  private releaseHeld(voice: MusicVoice, ci: number, t: number): void {
+    const h = voice.held[ci];
     if (!h) return;
     try {
       h.gain.gain.setTargetAtTime(0.0001, t, 0.03);
@@ -1126,19 +1235,108 @@ class AudioSys {
     } catch {
       /* node already stopped */
     }
-    this.held[ci] = undefined;
+    voice.held[ci] = undefined;
   }
 
-  stopMusic(): void {
-    if (this.timer !== null) {
-      window.clearInterval(this.timer);
-      this.timer = null;
+  /** ramp a gain to `to` over `ms` — the crossfade primitive. */
+  private rampGain(g: GainNode, to: number, ms: number): void {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    g.gain.cancelScheduledValues(now);
+    g.gain.setValueAtTime(g.gain.value, now);
+    g.gain.linearRampToValueAtTime(to, now + ms / 1000);
+  }
+
+  /** retire a voice: stop its clock, release held notes, unwire its gain, and
+   *  clear it from the active/fading slots. Safe to call twice. */
+  private disposeVoice(voice: MusicVoice): void {
+    voice.live = false;
+    if (voice.timer !== null) {
+      window.clearInterval(voice.timer);
+      voice.timer = null;
     }
     if (this.ctx) {
       const t = this.ctx.currentTime;
-      Object.keys(this.held).forEach((k) => this.releaseHeld(Number(k), t));
+      Object.keys(voice.held).forEach((k) => this.releaseHeld(voice, Number(k), t));
     }
-    this.current = null;
+    try {
+      voice.gain.disconnect();
+    } catch {
+      /* already disconnected */
+    }
+    if (this.musicVoice === voice) this.musicVoice = null;
+    if (this.fadingVoice === voice) this.fadingVoice = null;
+  }
+
+  /** hard-stop ALL music immediately (no fade) — for teardown/scene shutdown.
+   *  Room-to-room changes go through playMusic(), which crossfades instead. */
+  stopMusic(): void {
+    if (this.fadingVoice) this.disposeVoice(this.fadingVoice);
+    if (this.musicVoice) this.disposeVoice(this.musicVoice);
+    this.intendedName = null;
+    this.intendedStems = Infinity;
+  }
+
+  /**
+   * Set the music MUFFLE veil (#2): 0 open · 1 menu/pause veil · 2 deep/indoor.
+   * Lerps the lowpass cutoff so it glides rather than clicks. Idempotent-safe and
+   * a no-op before unlock (the level is remembered and applied when the graph
+   * comes up).
+   */
+  setMusicMuffle(level: MuffleLevel): void {
+    this.muffle = level;
+    if (!this.ctx || !this.musicMuffle) return;
+    const now = this.ctx.currentTime;
+    const f = this.musicMuffle.frequency;
+    f.cancelScheduledValues(now);
+    f.setValueAtTime(f.value, now);
+    f.linearRampToValueAtTime(muffleCutoff(level), now + MUFFLE_GLIDE_S);
+  }
+
+  /** Set a mixer bus volume 0..1 (#7), persisted device-local. 'master' still
+   *  honors mute (mute zeroes it regardless of level). */
+  setBus(bus: AudioBus, level: number): void {
+    const v = clamp01(level);
+    this.levels[bus] = v;
+    if (bus === 'master') {
+      if (this.master) this.master.gain.value = this.muted ? 0 : v;
+    } else if (bus === 'music') {
+      if (this.musicBus) this.musicBus.gain.value = v;
+    } else if (this.sfxBus) {
+      this.sfxBus.gain.value = v;
+    }
+    try {
+      localStorage.setItem(BUS_KEYS[bus], String(v));
+    } catch {
+      /* storage unavailable — the in-memory level still took */
+    }
+  }
+
+  /** current level of a bus (0..1). */
+  getBus(bus: AudioBus): number {
+    return this.levels[bus];
+  }
+
+  /**
+   * Bend the whole synth by `cents` (ADR-100) — battle slow-mo detunes the music
+   * down as time stretches, then back to 0. Applies to currently-held notes
+   * immediately (over their own base detune) and to every note scheduled after.
+   */
+  setMusicDetune(cents: number): void {
+    this.musicDetune = cents;
+    for (const voice of [this.musicVoice, this.fadingVoice]) {
+      if (!voice) continue;
+      for (const key of Object.keys(voice.held)) {
+        const h = voice.held[Number(key)];
+        if (h) {
+          try {
+            h.osc.detune.value = h.base + cents;
+          } catch {
+            /* node already stopped */
+          }
+        }
+      }
+    }
   }
 
   /** play a one-shot jingle, then resume previous music */

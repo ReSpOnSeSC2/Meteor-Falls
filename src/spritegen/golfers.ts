@@ -188,7 +188,7 @@ function drawGolferFrame(spec: CharacterSpec, pose: Swing): Pixmap {
   // the slump hangs the head: a hint of brow shadow under the hair
   if (slump) pm.hline(hx + 9, hy + 4, 3, skinD);
 
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -310,7 +310,7 @@ export function drawPinFlag(): Pixmap {
   pm.rect(3, 2, 7, 5, px(RAMP.RED, 2)); // the flag
   pm.rect(3, 2, 7, 1, px(RAMP.RED, 3));
   pm.set(9, 6, T);
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -321,7 +321,7 @@ export function drawGolfBall(): Pixmap {
   pm.rect(0, 1, 5, 3, C.white);
   pm.set(1, 1, px(RAMP.PAPER, 3));
   pm.set(3, 3, px(RAMP.PAPER, 2));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   return pm;
 }
 
@@ -371,7 +371,7 @@ export function drawLinksPoster(): Pixmap {
   pm.set(7, 5, C.outline);
   pm.set(8, 6, C.outline);
   pm.hline(4, 21, 12, px(RAMP.PAPER, 3)); // the caption strip
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 

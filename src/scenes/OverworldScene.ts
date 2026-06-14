@@ -649,6 +649,10 @@ export class OverworldScene extends Phaser.Scene {
 
   private buildPlayer(): void {
     this.facing = GS.data.facing;
+    // ADR-102 spawn safety-net: a door/restart can land the player on a solid
+    // tile (a mis-aimed tx,ty, or a §A6 rotor wall in its static state). Nudge to
+    // the nearest walkable tile FIRST, so a screen transition can never soft-lock.
+    this.clampSpawnToWalkable();
     this.player = this.add.sprite(GS.data.x, GS.data.y, 'rex', standFrame(this.facing));
     this.player.setOrigin(0.5, 1);
     // S15c: depth was only assigned in update(), which the cut lock skips —
@@ -657,6 +661,57 @@ export class OverworldScene extends Phaser.Scene {
     this.player.setDepth(this.player.y);
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.buildFollowers();
+  }
+
+  /**
+   * Spawn safety-net (ADR-102). Doors land the player at an authored pixel
+   * (tx,ty); if that tile is solid — a mis-aimed landing, or a §A6 rotor chamber
+   * whose return-door sits on a wall until the floor turns — ring-search outward
+   * for the nearest tile that is BOTH grid-walkable and clear of prop/facade
+   * solids, and stand there instead. A correct landing is a no-op; this only ever
+   * rescues a would-be stuck spawn, so a screen switch can never trap the player.
+   */
+  private clampSpawnToWalkable(): void {
+    const h = this.solidTiles.length;
+    const w = h > 0 ? this.solidTiles[0].length : 0;
+    if (w === 0 || h === 0) return;
+    const walkable = (cx: number, cy: number): boolean => {
+      if (cx < 0 || cy < 0 || cx >= w || cy >= h) return false;
+      if (this.solidTiles[cy][cx]) return false;
+      const fx = cx * 16 + 8;
+      const fy = cy * 16 + 12;
+      for (const s of this.solids) {
+        if (fx >= s.x && fx < s.x + s.w && fy >= s.y && fy < s.y + s.h) return false;
+      }
+      return true;
+    };
+    const col = Math.floor(GS.data.x / 16);
+    const row = Math.floor(GS.data.y / 16);
+    if (walkable(col, row)) return; // the overwhelming common case — nothing to do
+    // expanding rings: the nearest walkable tile wins (Chebyshev shells, Euclid tiebreak)
+    for (let r = 1; r <= 12; r++) {
+      let best: { x: number; y: number; d: number } | null = null;
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; // ring perimeter only
+          const cx = col + dx;
+          const cy = row + dy;
+          if (!walkable(cx, cy)) continue;
+          const d = dx * dx + dy * dy;
+          if (!best || d < best.d) best = { x: cx * 16 + 8, y: cy * 16 + 12, d };
+        }
+      }
+      if (best) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            `[spawn] ${this.mapDef.id}: (${col},${row}) blocked — nudged to (${Math.floor(best.x / 16)},${Math.floor(best.y / 16)})`,
+          );
+        }
+        GS.data.x = best.x;
+        GS.data.y = best.y;
+        return;
+      }
+    }
   }
 
   /** the conga line: every party member behind the leader (Prompt 5), down
@@ -1036,8 +1091,18 @@ export class OverworldScene extends Phaser.Scene {
         if (this.trail.length > 80) this.trail.pop();
       }
     } else {
-      this.player.anims.stop();
-      this.player.setFrame(standFrame(this.facing));
+      // ADR-101: idle LIFE — the down-facing rest pose breathes and blinks
+      // (frames 44/45). Other facings have no idle art, so they hold the
+      // standing frame as before.
+      const idle = `rex-idle-${this.facing}`;
+      if (this.facing === 'down' && this.anims.exists(idle)) {
+        if (this.player.anims.currentAnim?.key !== idle || !this.player.anims.isPlaying) {
+          this.player.anims.play(idle, true);
+        }
+      } else {
+        this.player.anims.stop();
+        this.player.setFrame(standFrame(this.facing));
+      }
     }
     this.player.setDepth(this.player.y);
     this.followers.forEach((f, i) => {
@@ -1061,8 +1126,18 @@ export class OverworldScene extends Phaser.Scene {
       if (moved) {
         if (f.spr.anims.currentAnim?.key !== anim || !f.spr.anims.isPlaying) f.spr.anims.play(anim, true);
       } else {
-        f.spr.anims.stop();
-        f.spr.setFrame(standFrame(crumb.f));
+        // ADR-104 (Prompt 7): the party breathes too — staggered by a per-member
+        // phase offset so the line doesn't inhale in lockstep.
+        const idle = `${f.id}-idle-${crumb.f}`;
+        if (crumb.f === 'down' && this.anims.exists(idle)) {
+          if (f.spr.anims.currentAnim?.key !== idle || !f.spr.anims.isPlaying) {
+            f.spr.anims.play(idle, true);
+            f.spr.anims.setProgress(((i + 1) * 0.37) % 1);
+          }
+        } else {
+          f.spr.anims.stop();
+          f.spr.setFrame(standFrame(crumb.f));
+        }
       }
     });
   }

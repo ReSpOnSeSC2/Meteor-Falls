@@ -57,3 +57,43 @@ export function vars(text: string, data: GameStateData = GS.data): string {
   // S-Mia: swap any emoji codepoints for their drawn glyphs (§5 caveat)
   return glyphify(out);
 }
+
+/** comma-group a non-negative integer: 1234567 → "1,234,567". */
+function group(v: number): string {
+  const s = String(v);
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 === 0) out += ',';
+    out += s[i];
+  }
+  return out;
+}
+
+/**
+ * Format a money amount for display (ADR-pending): comma-grouped ("$1,234,567")
+ * for exact contexts like the ATM, or — with `{abbrev}` — shortened once it gets
+ * big ("$1.2M", "$3.4B", "$1.0T") so it fits tight HUD corners as the §A9 fortune
+ * arc climbs to the billions (the cash/bank box was running off-screen with raw
+ * digits). Display-only; never feed this back into arithmetic.
+ */
+export function money(n: number, opts?: { abbrev?: boolean }): string {
+  const neg = n < 0;
+  const v = Math.abs(Math.floor(n));
+  let body: string;
+  if (opts?.abbrev && v >= 1_000_000) {
+    const units: Array<[number, string]> = [
+      [1e12, 'T'],
+      [1e9, 'B'],
+      [1e6, 'M'],
+    ];
+    const hit = units.find(([b]) => v >= b);
+    const base = hit ? hit[0] : 1e6;
+    const suf = hit ? hit[1] : 'M';
+    const scaled = v / base;
+    // one decimal until it reaches 100 of that unit, then drop it ($120M not $120.4M)
+    body = (scaled >= 100 ? String(Math.floor(scaled)) : scaled.toFixed(1).replace(/\.0$/, '')) + suf;
+  } else {
+    body = group(v);
+  }
+  return `${neg ? '-' : ''}$${body}`;
+}

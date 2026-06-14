@@ -8,6 +8,9 @@ import { Pixmap, framesToCanvas } from './pixmap';
 import {
   CAST,
   generateCharacterFrames,
+  generateIdleFrames,
+  IDLE_BREATH,
+  IDLE_BLINK,
   generateDogFrames,
   generateGlintFrames,
   generateAngelFrames,
@@ -201,7 +204,20 @@ export type Facing = Cardinal | DiagFacing;
 
 function addCharacter(scene: Phaser.Scene, id: string): void {
   const spec = CAST[id];
-  addSheet(scene, id, generateCharacterFrames(spec), 4);
+  // ADR-101: the 44-frame walk/run/diag sheet + the two appended IDLE frames
+  // (44 breath, 45 blink). One sheet, so the idle costs nothing extra to bind.
+  addSheet(scene, id, [...generateCharacterFrames(spec), ...generateIdleFrames(spec)], 4);
+  // the down-facing idle: a slow breath, a periodic blink (ADR-101). The
+  // overworld plays it when the actor is standing still, facing the camera.
+  const idleKey = `${id}-idle-down`;
+  if (!scene.anims.exists(idleKey)) {
+    scene.anims.create({
+      key: idleKey,
+      frames: [0, IDLE_BREATH, IDLE_BREATH, 0, 0, 0, IDLE_BLINK, 0, 0, 0].map((frame) => ({ key: id, frame })),
+      frameRate: 4,
+      repeat: -1,
+    });
+  }
   DIRS.forEach((dir, d) => {
     const walkKey = `${id}-walk-${dir}`;
     if (!scene.anims.exists(walkKey)) {

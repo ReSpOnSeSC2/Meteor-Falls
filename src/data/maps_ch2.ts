@@ -836,7 +836,9 @@ export function buildJungle2(): MapDef {
     phones: [],
     doors: [
       { x: 0, y: 11, w: 1, h: 3, to: 'jungle_1', tx: 440, ty: 120, facing: 'left' },
-      { x: 37, y: 18, w: 1, h: 3, to: 'valle_dorado', tx: 32, ty: 312, facing: 'right' },
+      // ADR-102: land just INSIDE valle's east gate (its return door), facing in —
+      // was dropping the player on valle's far WEST edge, 584px across the village.
+      { x: 37, y: 18, w: 1, h: 3, to: 'valle_dorado', tx: 616, ty: 312, facing: 'left' },
       // the optional grotto, tucked behind the north ribs
       { x: 11, y: 1, w: 2, h: 1, to: 'grotto', tx: 104, ty: 152, facing: 'up' },
     ],
@@ -1012,8 +1014,10 @@ export function buildValleDorado(): MapDef {
     phones: [{ x: 14, y: 12 }],
     doors: [
       { x: 39, y: 18, w: 1, h: 3, to: 'jungle_2', tx: 576, ty: 312, facing: 'right' },
-      // the mountain stair to the pyramid's antechamber
-      { x: 17, y: 29, w: 3, h: 1, to: 'pyramid_ante', tx: 168, ty: 40, facing: 'down' },
+      // the mountain stair to the pyramid's antechamber — ADR-102: land at the
+      // SOUTH doorstep (the valle return door, bottom of the approach) facing UP
+      // toward the gate, not at the top edge (the "enters from the wrong way" bug).
+      { x: 17, y: 29, w: 3, h: 1, to: 'pyramid_ante', tx: 168, ty: 232, facing: 'up' },
     ],
     spawners: [],
     triggers: [

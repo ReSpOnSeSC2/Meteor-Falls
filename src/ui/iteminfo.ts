@@ -21,6 +21,11 @@ export interface ItemInfoPanel {
   destroy: () => void;
 }
 
+/** [PLAYTEST B] the panel's full bottom footprint (box height + its 6px margin).
+ *  Lists that pair with this panel pass it as pick()'s `reserveBottom` so they
+ *  auto-fit ABOVE it and can never overlap — read it here, never re-hardcode. */
+export const ITEMINFO_RESERVE = 60 + 6;
+
 export function makeItemInfo(scene: Phaser.Scene): ItemInfoPanel {
   const x = 8;
   const w = scene.scale.width - 16;

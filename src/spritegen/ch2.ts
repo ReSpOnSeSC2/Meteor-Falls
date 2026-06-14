@@ -27,7 +27,7 @@ export function drawFountain(): Pixmap {
   pm.vline(17, 8, 14, px(RAMP.PAPER, 3));
   pm.vline(22, 8, 14, stoneD);
   pm.contour(20, 4, [3, 4, 4, 3], stone); // the cap
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   // water: pure light, stamped after outline (the ADR-021 idiom)
   pm.vline(19, 2, 4, px(RAMP.CYAN, 3));
   pm.vline(21, 3, 4, px(RAMP.CYAN, 2));
@@ -62,7 +62,7 @@ export function drawMarketStall(stripe: number): Pixmap {
   pm.rect(26, 14, 7, 4, px(RAMP.GRASS, 2)); // limes, organized
   pm.set(27, 15, px(RAMP.GRASS, 3));
   pm.rect(4, 24, 32, 5, px(RAMP.EARTH, 1)); // skirt
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(20, 31, 17, C.inkSoft);
   return pm;
 }
@@ -105,7 +105,7 @@ export function drawBananaBoat(): Pixmap {
   pm.hline(40, 35, 3, px(RAMP.INK, 1));
   pm.hline(45, 35, 3, px(RAMP.INK, 1));
   pm.hline(50, 35, 3, px(RAMP.INK, 1));
-  pm.outline(C.outline);
+  pm.finish(); // ADR-101
   // bow-wave glints — light after outline
   pm.set(12, 44, px(RAMP.CYAN, 3));
   pm.set(116, 44, px(RAMP.CYAN, 3));
@@ -124,7 +124,7 @@ export function drawDepartureBoard(): Pixmap {
   pm.hline(5, 15, 6, px(RAMP.PAPER, 1));
   pm.vline(12, 20, 8, px(RAMP.EARTH, 1)); // post
   pm.vline(13, 20, 8, px(RAMP.EARTH, 2));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(13, 28, 8, C.inkSoft);
   return pm;
 }
@@ -149,7 +149,7 @@ export function drawIdolShrine(): Pixmap {
   // offerings left at the base (deliberate, sad, specific)
   pm.rect(10, 27, 4, 3, px(RAMP.RED, 2)); // a kid's mitten
   pm.ellipse(28, 28, 2, 1, px(RAMP.CYAN, 2)); // somebody's marble
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.set(17, 7, px(RAMP.PAPER, 3)); // the gleam — pure light, after outline
   pm.shadowUnder(20, 42, 14, C.inkSoft);
   return pm;
@@ -189,7 +189,7 @@ export function drawPyramidGate(): Pixmap {
   // torch sconces flanking the mouth
   pm.vline(32, 50, 8, px(RAMP.EARTH, 0));
   pm.vline(63, 50, 8, px(RAMP.EARTH, 0));
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.set(32, 48, px(RAMP.ORANGE, 3)); // flame — light after outline
   pm.set(63, 48, px(RAMP.ORANGE, 3));
   pm.set(32, 47, px(RAMP.GOLD, 3));
@@ -209,7 +209,7 @@ export function drawMaskSwitch(lit: boolean): Pixmap {
   pm.rect(6, 5, 2, 2, lit ? px(RAMP.MAGENTA, 3) : C.outline);
   pm.rect(11, 5, 2, 2, lit ? px(RAMP.MAGENTA, 3) : C.outline);
   pm.hline(7, 9, 5, C.outline); // the set mouth
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   if (lit) {
     pm.set(4, 3, px(RAMP.MAGENTA, 2)); // the hum — light after outline
     pm.set(14, 3, px(RAMP.MAGENTA, 2));
@@ -250,7 +250,7 @@ export function drawPedestal(variant: number): Pixmap {
       pm.set(11, 8, px(RAMP.GOLD, 2));
       break;
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   pm.shadowUnder(11, 28, 7, C.inkSoft);
   return pm;
 }
@@ -271,7 +271,7 @@ export function drawCrate(bananas: boolean): Pixmap {
   } else {
     pm.hline(5, 7, 8, px(RAMP.RED, 1)); // FRAGIL, in spirit
   }
-  pm.outline(C.outline);
+  pm.finish({ aa: false }); // ADR-101
   return pm;
 }
 
@@ -326,7 +326,7 @@ export function generateLlamaFrames(): Pixmap[] {
       pm.vline(13, 13, 5, woolSh);
     }
     pm.line(4, 8, 3, 10, woolSh); // the tail puff
-    pm.outline(C.outline);
+    pm.finish(); // ADR-101
     pm.shadowUnder(9, 18, 7, C.inkSoft);
     return pm;
   };

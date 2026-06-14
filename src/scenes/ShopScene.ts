@@ -22,9 +22,9 @@ import { ITEMS, BAG_MAX, sellPrice, slotOf } from '../data/items';
 import { SHOPS, type ShopDef } from '../data/shops';
 import { DIALOGUE } from '../data/dialogue';
 import { AUDIO } from '../engine/audio';
-import { Dialogue, makeWindow, DEPTH_UI } from '../ui/windows';
+import { Dialogue, makeCashBox } from '../ui/windows';
 import { pick, confirmEquip } from '../ui/pick';
-import { makeItemInfo } from '../ui/iteminfo';
+import { makeItemInfo, ITEMINFO_RESERVE } from '../ui/iteminfo';
 import { itemIconKey } from '../spritegen/icons';
 
 export class ShopScene extends Phaser.Scene {
@@ -47,18 +47,13 @@ export class ShopScene extends Phaser.Scene {
     void this.mainLoop();
   }
 
-  /** the EB cash corner, redrawn after every transaction */
+  /** the EB cash corner, redrawn after every transaction. [PLAYTEST B] the
+   *  amounts ABBREVIATE ($1.2M) so big fortunes stay short, and the window is
+   *  CLAMPED so its right edge can never leave the screen — both the box and
+   *  the text inside it are bounded to the 400px width by construction. */
   private refreshCash(): void {
     this.cashObjs.forEach((o) => o.destroy());
-    const cash = `$${GS.data.cashOnHand}  BANK $${GS.data.banked}`;
-    const cw = cash.length * 6 + 20;
-    this.cashObjs = [
-      makeWindow(this, this.scale.width - cw - 8, 8, cw, 22),
-      this.add
-        .bitmapText(this.scale.width - cw + 2, 15, 'retro', cash, 6)
-        .setScrollFactor(0)
-        .setDepth(DEPTH_UI + 1),
-    ];
+    this.cashObjs = makeCashBox(this, GS.data.cashOnHand, GS.data.banked);
   }
 
   private async mainLoop(): Promise<void> {
@@ -96,6 +91,9 @@ export class ShopScene extends Phaser.Scene {
         options: labels,
         icons: stock.map((i) => itemIconKey(i.id)),
         disabled,
+        // [PLAYTEST B] reserve the description panel so the stock list auto-fits
+        // ABOVE it (long shelves paginate instead of overlapping the panel)
+        reserveBottom: ITEMINFO_RESERVE,
         title: `${this.shop.name}  $${GS.data.cashOnHand}`,
         onHighlight: (i) => info.render(stock[i].id),
       });
@@ -191,6 +189,7 @@ export class ShopScene extends Phaser.Scene {
         icons: hero.bag.map((id) => itemIconKey(id)),
         disabled,
         cols: labels.length > 7 ? 2 : 1,
+        reserveBottom: ITEMINFO_RESERVE,
         title: `${hero.name} sells  $${GS.data.cashOnHand}`,
         onHighlight: (i) => info.render(hero.bag[i]),
       });

@@ -304,3 +304,240 @@ export function mapQualityFlags(m: MapDef, isSolid: IsSolid, maps: Record<string
 
   return flags;
 }
+
+/* ===================================================================== *
+ * THE DOOR AUDIT (S15i playtest C, ADR-045 family) — a STATIC sweep that
+ * walks every transition and asks the two ways a door betrays the player:
+ *   (a) it dumps you onto a SOLID / out-of-bounds tile (you spawn stuck), or
+ *   (b) it lands you nowhere near the reciprocal return-door (you "come in
+ *       from the wrong way" / the wrong edge of the map).
+ * Pure graph + geometry on the same `isSolid(ch)` predicate the validator
+ * builds (no Phaser): the runtime does `scene.restart({mapId:to, x:tx, y:ty})`
+ * then spawns the player at PIXEL (tx,ty), feet-origin — so the landing tile
+ * is (floor(tx/TILE), floor(ty/TILE)), identical to mapQualityFlags above.
+ * Prop `door`s carry no facing and always admit you facing 'up' (the engine
+ * hard-codes it); zone doors carry their own. This function only REPORTS —
+ * the fixes are the project lead's (tools/door-audit.ts owns the gate).
+ *
+ * WRONG-EDGE measurement: a reciprocal door pair shares ONE physical seam, so a
+ * correct landing arrives where you'd STAND to walk back through the return door
+ * — i.e. at that return door's interior cell (doorCell()), NOT on its zone (the
+ * zone sits IN the wall; you can never land on the wall). Anchoring the distance
+ * to the return door's CENTER (the literal spec phrasing) double-counts that
+ * unavoidable ~1.5-tile "one tile inside the doorway" offset and floods the
+ * report with non-bugs; anchoring to doorCell() isolates the true fault (you
+ * landed on a DIFFERENT edge — tens to hundreds of px away). We REPORT the
+ * center distance (spec phrasing, full transparency) but FLAG on the doorCell
+ * distance against the same ~1.5-tile budget.
+ * ===================================================================== */
+
+/** px per tile — the tilemap is built `{ tileWidth: 16, tileHeight: 16 }` */
+const TILE = 16;
+
+/**
+ * px a landing may sit from where you'd STAND to use the reciprocal return door
+ * (its interior doorCell) before it reads as the WRONG edge / wrong way in.
+ *
+ * The playtest spec's first estimate was "~24px ≈ 1.5 tiles", but swept across
+ * the 113 canon maps that is essentially the by-design FLOOR: a normal building
+ * entrance / screen seam lands you one tile inside the threshold, which is
+ * already ~25px from the return door's cell (the feet-origin offset). At 24px
+ * the flag fires on ~87 doors, 86 of them correct. The measured distribution is
+ * sharply bimodal — a dense by-design cluster at 25–58px and a clean GAP up to
+ * the genuine wrong-edge band at ≥142px (a door that drops you on the opposite
+ * side of the map / a different screen entirely: jungle_2→valle_dorado 584px,
+ * wintermoor inter-floor 184–376px, valle_dorado→pyramid_ante 192px). 64px
+ * (≈4 tiles) sits in that empty gap: above every by-design seam, below every
+ * real wrong-edge. Tune here if the maps move — the gap is the truth, not 64.
+ */
+export const FAR_FROM_RETURN_PX = 64;
+
+/** one transition's verdict. `lx,ly` are the destination LANDING tile;
+ *  `char` is the destination tile char there ('' = out of bounds). */
+export interface DoorFinding {
+  /** source map id */
+  from: string;
+  /** destination map id (the door's `to`) */
+  to: string;
+  /** which sort of door this is */
+  kind: 'door' | 'prop';
+  /** landing pixel (the engine spawns the player's feet here) */
+  tx: number;
+  ty: number;
+  /** landing tile = floor(tx/TILE), floor(ty/TILE) */
+  lx: number;
+  ly: number;
+  /** the destination tile char under the landing ('' if out of bounds) */
+  char: string;
+  /** the failure modes (a door can trip more than one) */
+  issue: Array<'landsSolid' | 'noReturn' | 'farFromReturn'>;
+  /** human line per issue, in order */
+  detail: string[];
+}
+
+/** a door's indicator marks VERTICAL connectors (stairs/elevator) — these move
+ *  you between floors, so the reciprocal up-/down-door is NEVER co-located with
+ *  the landing (you step OFF the stairhead into the room); the wrong-EDGE check
+ *  is meaningless for them and is skipped. */
+function isVertical(indicator: string | undefined): boolean {
+  return indicator === 'stairs' || indicator === 'elevator';
+}
+
+/** a normalized door, source-agnostic, for the audit's sweep */
+interface AuditDoor {
+  from: string;
+  to: string;
+  kind: 'door' | 'prop';
+  tx: number;
+  ty: number;
+  /** the source door's indicator (zone doors only; props carry none) */
+  indicator?: string;
+  /** a label for the prop's sprite, purely for richer detail text */
+  label: string;
+}
+
+/** every door (zone + prop) on one map, normalized to PIXELS */
+function auditDoors(id: string, m: MapDef): AuditDoor[] {
+  const out: AuditDoor[] = [];
+  for (const d of m.doors) {
+    out.push({ from: id, to: d.to, kind: 'door', tx: d.tx, ty: d.ty, indicator: d.indicator, label: `door` });
+  }
+  for (const p of m.props) {
+    if (!p.door) continue;
+    out.push({
+      from: id,
+      to: p.door.to,
+      kind: 'prop',
+      tx: p.door.tx,
+      ty: p.door.ty,
+      label: `prop '${p.sprite}' door`,
+    });
+  }
+  return out;
+}
+
+/** the CENTER pixel of a door zone on the destination map (for return math) */
+function zoneCenterPx(d: MapDef['doors'][number]): { cx: number; cy: number } {
+  return { cx: (d.x + d.w / 2) * TILE, cy: (d.y + d.h / 2) * TILE };
+}
+
+/**
+ * THE DOOR AUDIT — structured findings for every BROKEN transition across all
+ * maps (clean doors produce nothing). For each door (zone + prop) on each map:
+ *
+ *   landsSolid     — the landing tile is solid, or out of the destination
+ *                    grid's bounds → the player spawns STUCK.
+ *   noReturn       — the destination map has NO door (zone or prop) whose `to`
+ *                    points back to this map → one-way trip (reported, lower
+ *                    severity: not every door must be reciprocal).
+ *   farFromReturn  — the landing pixel sits > FAR_FROM_RETURN_PX from where you
+ *                    would STAND to use the NEAREST reciprocal return-door (its
+ *                    interior doorCell) on the destination → you arrive at the
+ *                    wrong edge / wrong way. The raw zone-CENTER distance (the
+ *                    spec's phrasing) is reported alongside for transparency.
+ *                    Measured only against zone return-doors — prop doors carry
+ *                    no facing/cell to anchor on; if the only return path is a
+ *                    prop door, the distance is undefined and we don't flag it.
+ *                    VERTICAL connectors (stairs/elevator, either side) are
+ *                    exempt: a stairwell deliberately drops you off the stairhead
+ *                    away from the up-door, which is not a wrong EDGE.
+ *
+ * Pure: the caller supplies `isSolid` (the engine's tile solidity) and the full
+ * `maps` record so destinations + their return-doors resolve.
+ */
+export function doorAudit(maps: Record<string, MapDef>, isSolid: IsSolid): DoorFinding[] {
+  const findings: DoorFinding[] = [];
+  // pre-index, per map, the zone doors that point back OUT to a given source —
+  // these are the candidate "return doors" a landing should arrive beside.
+  const returnZonesByMap: Record<string, MapDef['doors']> = {};
+  for (const [id, m] of Object.entries(maps)) returnZonesByMap[id] = m.doors;
+  // does ANY door (zone OR prop) on `dst` point back to `src`?
+  const hasAnyReturn = (dst: string, src: string): boolean => {
+    const dm = maps[dst];
+    if (!dm) return false;
+    if (dm.doors.some((d) => d.to === src)) return true;
+    return dm.props.some((p) => p.door?.to === src);
+  };
+
+  for (const [id, m] of Object.entries(maps)) {
+    for (const d of auditDoors(id, m)) {
+      const target = maps[d.to];
+      if (!target) continue; // dangling targets are the validator's existing job
+
+      const lx = Math.floor(d.tx / TILE);
+      const ly = Math.floor(d.ty / TILE);
+      const inBounds = ly >= 0 && ly < target.grid.length && lx >= 0 && lx < target.grid[0].length;
+      const char = inBounds ? target.grid[ly][lx] : '';
+
+      const issue: DoorFinding['issue'] = [];
+      const detail: string[] = [];
+
+      // (a) STUCK — solid landing or off the destination grid entirely
+      if (!inBounds) {
+        issue.push('landsSolid');
+        detail.push(
+          `lands OUT OF BOUNDS on ${d.to} (tile ${lx},${ly}; grid is ${target.grid[0].length}×${target.grid.length}) — player spawns stuck`,
+        );
+      } else if (isSolid(char)) {
+        issue.push('landsSolid');
+        detail.push(`lands on SOLID tile '${char}' @${lx},${ly} of ${d.to} — player spawns stuck`);
+      }
+
+      // (b1) one-way: nothing on the destination comes back here
+      if (!hasAnyReturn(d.to, id)) {
+        issue.push('noReturn');
+        detail.push(`${d.to} has no door back to ${id} (one-way)`);
+      } else if (isVertical(d.indicator)) {
+        // VERTICAL connector (stairs/elevator): you step OFF the stairhead into
+        // the floor, deliberately away from the reciprocal up-/down-door — a
+        // big landing↔return gap is by design here, never a wrong EDGE. Skip.
+      } else {
+        // (b2) wrong-edge: a reciprocal pair shares ONE seam, so a correct
+        // landing arrives where you'd STAND to walk back through the return
+        // door — its interior cell (doorCell). Pick the NEAREST zone return-
+        // door to this map (by that interior cell), measure the landing to it,
+        // and flag when it's farther than the ~1.5-tile budget. We also report
+        // the raw zone CENTER distance (the spec's literal phrasing) so the
+        // number is transparent. (Prop returns have no zone facing/cell to
+        // anchor on — if the ONLY way back is a prop door, we don't measure.)
+        const returns = (returnZonesByMap[d.to] ?? []).filter((rd) => rd.to === id);
+        if (returns.length > 0) {
+          let bestCellDist = Infinity;
+          let best = returns[0];
+          let bestCellPx: { x: number; y: number } | null = null;
+          for (const rd of returns) {
+            const cell = doorCell(target.grid, isSolid, rd); // walkable tile inside the return door
+            // anchor px: the interior cell's CENTER if we found one, else the
+            // zone center (a return door whose mouth is fully walled — rare)
+            const ax = cell ? (cell[0] + 0.5) * TILE : zoneCenterPx(rd).cx;
+            const ay = cell ? (cell[1] + 0.5) * TILE : zoneCenterPx(rd).cy;
+            const dist = Math.hypot(d.tx - ax, d.ty - ay);
+            if (dist < bestCellDist) {
+              bestCellDist = dist;
+              best = rd;
+              bestCellPx = { x: ax, y: ay };
+            }
+          }
+          // the matched RETURN door is itself a stairwell/elevator → same logic:
+          // the landing sits off the stairhead by design, not on a wrong edge.
+          if (!isVertical(best.indicator) && bestCellDist > FAR_FROM_RETURN_PX) {
+            const { cx, cy } = zoneCenterPx(best);
+            const centerDist = Math.hypot(d.tx - cx, d.ty - cy);
+            const cellTxt = bestCellPx ? `, you'd return-stand @px(${bestCellPx.x},${bestCellPx.y})` : '';
+            issue.push('farFromReturn');
+            detail.push(
+              `landing (${d.tx},${d.ty}) is ${bestCellDist.toFixed(1)}px (>${FAR_FROM_RETURN_PX}) from where you'd stand to use the nearest return-door on ${d.to} ` +
+                `(zone @tile ${best.x},${best.y} w${best.w}h${best.h}, center ${cx},${cy}=${centerDist.toFixed(1)}px${cellTxt}, facing '${best.facing}') — wrong edge / wrong-way entry`,
+            );
+          }
+        }
+      }
+
+      if (issue.length > 0) {
+        findings.push({ from: id, to: d.to, kind: d.kind, tx: d.tx, ty: d.ty, lx, ly, char, issue, detail });
+      }
+    }
+  }
+
+  return findings;
+}

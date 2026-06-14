@@ -6,6 +6,7 @@
  * seat-fit math.
  */
 import { describe, it, expect } from 'vitest';
+import { PALETTE, T } from '../palette';
 import {
   VEHICLE_CATALOG, VEHICLE_SPECS, drawVehicle, usableSeats, seatsFit,
 } from './vehicles';
@@ -115,12 +116,14 @@ describe('M36 (ADR-077) — THE NIKOLAI (the flagship EV)', () => {
 });
 
 describe('the art law (ADR-020) — palette-only + deterministic', () => {
-  it('every variant draws only master-palette indices (0–63) or transparent', () => {
+  it('every variant draws only master-palette indices or transparent', () => {
+    // ADR-101 widened ramps 4→6, so the valid range is PALETTE.length (the
+    // sibling art-law tests already derive the bound this way).
     for (const v of VEHICLE_CATALOG) {
       const pm = drawVehicle(v.name);
       for (let i = 0; i < pm.data.length; i++) {
         const c = pm.data[i];
-        const ok = c === 255 || (c >= 0 && c <= 63);
+        const ok = c === T || (c >= 0 && c < PALETTE.length);
         expect(ok, `vehicle '${v.name}' has off-palette index ${c}`).toBe(true);
       }
     }
