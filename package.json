@@ -10,6 +10,7 @@
     "preview": "vite preview --host",
     "validate": "vite-node tools/content-validate.ts",
     "bench:map": "vite-node tools/bench-map.ts --",
+    "balance": "vite-node tools/balance-sim.ts",
     "scaffold": "vite-node tools/chapter-scaffold.ts --",
     "encounters": "vite-node tools/encounter-report.ts",
     "test": "npm run validate && vitest run",
@@ -18,6 +19,7 @@
     "art:castsheet": "vite-node tools/cast-sheet.ts",
     "art:facesheet": "vite-node tools/forge-faces.ts",
     "art:buildings": "vite-node tools/render-buildings.ts",
+    "art:vehicles": "vite-node tools/render-vehicles.ts",
     "art:icons": "vite-node tools/render-icons.ts",
     "android:sync": "npm run build && npm run art:appart && cap sync android",
     "android:apk": "npm run android:sync && cd android && .\\gradlew assembleDebug && cd .. && node tools/collect-apk.mjs"

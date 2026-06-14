@@ -1769,6 +1769,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   /* ---- S16 ("The Old Light, Doubled"): Jay's three late awakenings. He
      barely speaks — let the light do the talking (§A11.2, played straight). ---- */
+  awake_the_first_borrow: [
+    'The gate guard won\'t budge, and there\'s no way around. {rex} looks at him a long second — then does the thing he\'s never done to a person.',
+    '({rex} reaches in, quiet as a held breath. For a moment he is wearing the guard like a coat. The man\'s hand lifts the latch. The gate swings.)',
+    '({rex} steps back out of him, gentle, and gives it back.) ...Sorry, sir. You\'re going to have a weird minute.',
+    '(The guard blinks hard.) ...Did I just— why am I holding the gate for you kids? (He shakes it off, unhurt, more confused than angry.)',
+    'Milo is grinning at the puzzle solved. But Mia has gone very still, and {faye} takes a small half-step back from {rex} — the kind you take without deciding to.',
+    '@(...He can do that. To anyone.)',
+    '({rex} doesn\'t look proud. He looks like a kid who just learned he can pick locks, and that not everyone is glad about it.)',
+  ],
   awake_the_borrowed_voice: [
     'The crowd is one voice now. The Hush hollowed them down to a single droning note, and the note has a door in it.',
     '@(You don\'t have to do this.)',

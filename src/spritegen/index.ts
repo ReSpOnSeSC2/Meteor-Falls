@@ -109,6 +109,7 @@ import {
   drawChalkBoard,
 } from './tiles';
 import { GENERATED_BUILDINGS } from './buildings';
+import { VEHICLE_CATALOG, drawVehicle } from './vehicles';
 import { ITEM_ICON, itemIconKey } from './icons';
 import {
   generateAthleteFrames,
@@ -605,6 +606,12 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // families + the COLOSSI, sliced per-area by AREA_SKINS so each level reads
   // fresh. The forge (Movement Two) draws each area's growth from its own slice.
   for (const b of GENERATED_BUILDINGS) addPixmap(scene, b.name, drawCityBuilding(b.opts));
+
+  // THE VEHICLE FORGE (S18 M26, ADR-067): the living world's cars/bikes/buses/
+  // trucks/machinery + the deferred fleet (boats/planes/subs), each a deterministic
+  // paint variant. The traffic system + the control system + the fleet all draw
+  // their props from here; flip/rotate happens at runtime.
+  for (const v of VEHICLE_CATALOG) addPixmap(scene, v.name, drawVehicle(v.name));
 
   // buildings — deep oblique roofs, gablets, AC, awnings (ADR-019/020)
   addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true, ac: true, litSeed: 5 }));

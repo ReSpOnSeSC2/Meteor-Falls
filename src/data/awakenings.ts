@@ -68,6 +68,22 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       dialogue: 'awake_cold_reads',
       toast: '{faye} awakened VIBE FREEZE Alpha!',
     }),
+    /* ---- Ch.3 (S18 M27, ADR-068): THE FIRST BORROW — the CONTROL SYSTEM unlocks
+     * on the party hitting three (Milo joins). Jay's Hypno line takes its higher
+     * turn: PUPPET (mind control of PEOPLE on the field) and Mind Warp (turn an
+     * enemy in battle) are ONE staged power — `mindwarp_a`, re-staged here off its
+     * old L21 unlock (engine id frozen; only the timing moved). The OTHER heroes
+     * SEE him use it for the first time and pull back a step — the TRUST THREAD
+     * opens here (the borrowed stranger comes back rattled), §A11.2 sincere. The
+     * DEAD-AIR HELMET (`mind_immune`) is the single counter, battle + field. */
+    W({
+      id: 'the_first_borrow',
+      hero: 'rex',
+      ability: 'mindwarp_a',
+      flag: 'awake_mindwarp_a',
+      dialogue: 'awake_the_first_borrow',
+      toast: '{rex} learned to PUPPET — borrow a person, briefly…',
+    }),
     /* ---- S16 ("The Old Light, Doubled"): Jay's three iconic late beats. The
      * 80/20 split (§3) reserves AWAKENINGS for the powers that should land as
      * MOMENTS, not level-up toasts. Each is staged §A11.2-sincere; none of the

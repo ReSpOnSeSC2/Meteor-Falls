@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { GS, makeHeroState, newGameData } from './state';
 import { migrateSave, CURRENT_SAVE_VERSION } from './migrations';
 import { BAG_MAX } from '../data/items';
-import { HEROES, type HeroId } from '../data/heroes';
+import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
 function v1Hero(id: HeroId, level: number, name?: string): Record<string, unknown> {
@@ -405,5 +405,66 @@ describe('save migration registry (S17) — v8 → v9: the catalog spine (tonic 
     GS.deserialize(JSON.stringify(v1SaveS2()));
     expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
     for (const h of GS.data.party) expect(h.boosts).toEqual({});
+  });
+});
+
+describe('save migration registry (S18 M27) — v9 → v10: mindwarp re-staged to an awakening', () => {
+  beforeEach(() => GS.reset());
+
+  /** a v9 save with Jay (rex) at a chosen level and no awakening flags yet */
+  function v9Save(rexLevel: number): Record<string, unknown> {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 9;
+    d.flags = {}; // a clean ledger — no awake_mindwarp_a
+    d.party = [makeHeroState('rex', rexLevel) as unknown as Record<string, unknown>];
+    return d;
+  }
+
+  it('a save that already earned Mind Warp at L21 KEEPS it (the awakening flag backfills)', () => {
+    GS.deserialize(JSON.stringify(v9Save(21)));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.flag('awake_mindwarp_a')).toBe(true);
+    const have = availableAbilities('rex', GS.hero('rex')!.level, (f) => GS.flag(f) === true);
+    expect(have.includes('mindwarp_a')).toBe(true);
+  });
+
+  it('a save below the old L21 unlock does NOT get it for free (it awakens in Ch.3)', () => {
+    GS.deserialize(JSON.stringify(v9Save(12)));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.flag('awake_mindwarp_a')).toBe(false);
+    const have = availableAbilities('rex', GS.hero('rex')!.level, (f) => GS.flag(f) === true);
+    expect(have.includes('mindwarp_a')).toBe(false);
+  });
+});
+
+describe('save migration registry (S18 M29) — v10 → v11: the property market', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills an empty homeStorage map on a pre-v11 save', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 10;
+    delete d.homeStorage; // a pre-v11 save owned no property
+    GS.deserialize(JSON.stringify(d));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.homeStorage).toEqual({});
+  });
+
+  it('the v1 chain runs all the way to v11+', () => {
+    GS.deserialize(JSON.stringify(v1SaveS2()));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.homeStorage).toEqual({});
+  });
+});
+
+describe('save migration registry (S18 M30) — v11 → v12: the home editor', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills an empty homeLayouts map on a pre-v12 save', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 11;
+    delete d.homeLayouts; // a pre-v12 save decorated nothing
+    GS.deserialize(JSON.stringify(d));
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.homeLayouts).toEqual({});
   });
 });

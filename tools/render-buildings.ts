@@ -15,7 +15,8 @@ import { Pixmap } from '../src/spritegen/pixmap';
 import { RAMP, px, T } from '../src/palette';
 import { drawCityBuilding, type CityBuildingOpts } from '../src/spritegen/tiles';
 import { drawTextInto } from '../src/spritegen/font';
-import { CITY_CATALOG, COLOSSI } from '../src/spritegen/buildings';
+import { CITY_CATALOG, COLOSSI, AREA_SKINS, CANON_AREAS } from '../src/spritegen/buildings';
+import { BUILDING_DIMS } from '../src/levelkit/kit';
 import { pixmapToPng } from './png';
 
 function blit(dst: Pixmap, src: Pixmap, dx: number, dy: number): void {
@@ -153,4 +154,47 @@ console.log(`wrote .shots/buildings_s15i.png (${sheetW}x${sheetH} @2x)`);
   });
   writeFileSync('.shots/buildings_catalog.png', pixmapToPng(cat, { scale: 1, bg: px(RAMP.NIGHT, 1) }));
   console.log(`wrote .shots/buildings_catalog.png (${w}x${h} @1x) — ${CITY_CATALOG.length} generated facades`);
+}
+
+/* ---- S18 M25 (ADR-066): PER-AREA SKINS — each area's slice, side by side, so
+   "no two areas read alike" is READABLE by eye (otterbrook's warm low walk-ups vs
+   minimus's tiny jewel-box vs lilleby's giants' towers vs mars's neon husks). ---- */
+{
+  // name → CityBuildingOpts for any catalog/colossus facade; bespoke + shipped
+  // names with no opts get a plain wall facade synthesised from BUILDING_DIMS.
+  const optsByName = new Map<string, CityBuildingOpts>();
+  for (const e of [...CITY_CATALOG, ...COLOSSI]) optsByName.set(e.name, e.opts);
+  const drawByName = (name: string): Pixmap => {
+    const o = optsByName.get(name);
+    if (o) return drawCityBuilding(o);
+    const d = BUILDING_DIMS[name] ?? { w: 4, u: 2 };
+    return drawCityBuilding({ wallTiles: d.w, upperRows: d.u, wall: RAMP.PAPER, signText: name.slice(0, 8).toUpperCase(), doorAt: 1, litSeed: 999 });
+  };
+
+  const PREVIEW = 6; // up to this many faces per area row
+  const rows = CANON_AREAS.map((area) => {
+    const names = AREA_SKINS[area].slice(0, PREVIEW);
+    return { area, items: names.map((n) => ({ name: n, pm: drawByName(n) })) };
+  });
+  const rh = rows.map((r) => Math.max(24, ...r.items.map((i) => i.pm.h)));
+  const labelW = 90;
+  const w = PAD + labelW + GAP + Math.max(...rows.map((r) => r.items.reduce((s, i) => s + i.pm.w + GAP, 0))) + PAD;
+  const h = PAD + 12 + rh.reduce((s, v) => s + v + LABEL_H + GAP, 0) + PAD;
+  const sh = new Pixmap(w, h).fill(px(RAMP.NIGHT, 1));
+  drawTextInto(sh, `THE PER-AREA SKINS — ${CANON_AREAS.length} areas, each its own family-mix + ramp palette (ADR-050/065)`, PAD, PAD, px(RAMP.GOLD, 3));
+  let y = PAD + 12;
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r];
+    const ground = y + rh[r];
+    sh.hline(0, ground, w, px(RAMP.NIGHT, 3));
+    drawTextInto(sh, row.area.toUpperCase(), PAD, ground - 8, px(RAMP.CYAN, 3));
+    let x = PAD + labelW + GAP;
+    for (const it of row.items) {
+      blit(sh, it.pm, x, ground - it.pm.h);
+      x += it.pm.w + GAP;
+    }
+    y = ground + LABEL_H + GAP;
+  }
+  writeFileSync('.shots/buildings_areas.png', pixmapToPng(sh, { scale: 1, bg: px(RAMP.NIGHT, 1) }));
+  console.log(`wrote .shots/buildings_areas.png (${w}x${h} @1x) — ${CANON_AREAS.length} per-area slices`);
 }

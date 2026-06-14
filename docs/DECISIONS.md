@@ -4249,3 +4249,398 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   multiplier, the reusable-cure path — each the clearly-flagged debt of its landing chapter (or M24's
   verification), each to ship with its own ADR + Bible amendment + both-directions gate + tests. Live
   placement of the three Far-World catalogs follows in each chapter's own session, the M18-Part-B way.
+
+## ADR-066 — S18 (Movement 25): AREA-TRUE BUILDINGS — every canon area owns its skin
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 "PROPERTY & THE LIVING WORLD", Movement 25 — the lowest-risk,
+  everywhere-visible win and the canvas every later movement sits on: before the world gets
+  wheels and homes, every PLACE should look unmistakably like itself.)
+- **Decision — every canon §A5/§A6 area registers its OWN `AREA_SKINS` slice
+  (`src/spritegen/buildings.ts`).** The per-area law (ADR-050) shipped for the five live
+  Americas areas only; the eight unlanded chapters had no rosters. This movement adds a
+  forward-looking slice for ALL twelve remaining places — `foggybottom`, `wintermoor`,
+  `kvisthavn`, `lilleby`, `minimus`, `zanzibel`, `chandrapore`, `lotus_harbor`, `valea`,
+  `aurora`, `mauna_lani`, `mars` — bringing the registry to **17 areas**. Each is a distinct
+  family-mix + ramp palette chosen for the place's §A6 feel: Foggybottom's damp earth/paper/
+  blue stone vs Wintermoor's pale faculty offices; Kvisthavn's cozy red walk-ups vs Lilleby's
+  giants'-town hotels/apartments + a mega tower + a colossus (the scale-comedy reads on sight);
+  Minimus's HAND-PICKED tiniest tiers (a jewel-box gold/red duchy — no mega can sneak into a
+  town the party steps over); Zanzibel's sun-baked bazaar; Chandrapore's dense theater/emporium/
+  neon riot + a palace-spire colossus; Lotus Harbor's temple red/gold + jade/cyan; Valea's
+  painted-village rustic; Aurora's cold steel; Mauna Lani's lush-but-claustrophobic resort
+  (§B4); Mars's neon husks + the lone NIGHT needle. No new families, no new draw code — the
+  differentiation rides the existing `skinsFor(family, ramp)` slicer + `drawCityBuilding`, so
+  litSeq/FNV pins are untouched.
+- **Decision — `CANON_AREAS` + `BESPOKE_AREA_FACADES`, gated BOTH directions
+  (`tools/content-validate.ts` `area-skins` + `src/spritegen/buildings.test.ts`).** A new
+  `CANON_AREAS` export is the manifest of named areas; the validator pins it ⇄ `AREA_SKINS`:
+  every canon area has a non-empty roster, every facade name resolves to a real registered
+  building (`BUILDING_DIMS` ∪ the bespoke drawHouse allowlist — the golf mansions/gatehouse
+  carry no city dims), and no `AREA_SKINS` key orphans a place that isn't canon. The mirror
+  test adds a reskin guard (no two areas share an identical roster) + feel assertions (Minimus
+  stays ≤3 storeys; Lilleby carries a mega). The catalog's pre-existing duplicate sprite KEYS
+  (two tiers can share a `_${u}` suffix) are explicitly tolerated — a repeated name just weights
+  the grammar's pick, it is not an error. The verdict now prints **17 area skins**.
+- **Decision — `npm run art:buildings` gains the per-area sheet (`tools/render-buildings.ts`).**
+  A new `.shots/buildings_areas.png` draws every area's slice side by side (label + up to six
+  faces, bespoke/shipped names synthesised from `BUILDING_DIMS`), so "no two areas read alike"
+  is provable BY EYE (the ADR-059/060 contact-sheet precedent, not `preview_screenshot`). Read
+  it: Minimus is a tabletop jewel-box, Lilleby towers, Mars is neon dread — each unmistakable.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (17 area skins, both
+  directions) + full **vitest 744 green** (+6: `buildings.test.ts`) + `vite build` clean +
+  `npm run art:buildings` re-rendered (the four sheets, the new per-area one read by eye). No
+  FNV re-pin, no frozen-core / `world_block` change (AREA_SKINS is sliced data over the existing
+  catalog — not a sample-routed generator; FAMILIES order + bodies untouched). No save change.
+- **Consequences:** every named place in the game now has a building identity waiting for it —
+  when a chapter's maps land, the forge already wears the right silhouette and the human only
+  places, never re-specs. A new area MUST add a `CANON_AREAS` row + its own roster in the same
+  change or the build fails. The foundation is set for Movement 26 (the vehicle forge + traffic)
+  to drive these streets and Movement 29 (the property market) to put agencies, lawyers, and
+  homes on these blocks. First movement of S18 lands.
+
+## ADR-067 — S18 (Movement 26): THE VEHICLE FORGE + THE TRAFFIC SYSTEM — a world with wheels
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 26 — the art + ambiance foundation the control system
+  (M27), the overworld-PSI casts (M28), and the fleet (M33) all ride on. No control yet —
+  just a living world with wheels, drawn and driving.)
+- **Decision — `src/spritegen/vehicles.ts`, THE VEHICLE FORGE (registered in `index.ts`).**
+  The building-catalog pattern (ADR-050) applied to vehicles: a handful of hand-drawn
+  silhouette draws (car body shared by sedan/ev/race/suv, box body for van/bus, cab+bed truck/
+  dump, moto, bike, excavator, trash cans, hull for boat/yacht, sub, plane/jet/jumbo, heli,
+  blimp), each parametrised by a wall-ramp PAINT pool, fan out into **57 named, seeded paint
+  variants across 21 types**. Drawn facing right in a clean 3/4 read against the 16×24 hero;
+  pixel-clean under ADR-020 by construction (palette-only Pixmap DSL, flat fills, deliberate
+  marks, `outline()` last, `shadowUnder()` never outlined) — proven in `vehicles.test.ts` (every
+  pixel is a master-palette index or transparent). `VEHICLE_SPECS` carries each type's true
+  gameplay DATA: a `seats` count (the §A4.10 seat-fit law — usable-to-ride = seats − 1, so a
+  motorcycle fits a party of 1, a sedan ≤3, an SUV 4, a van/bus the whole party), a collision
+  FOOTPRINT, and the TERRAIN it travels (road/water/air — the fleet's scale-up axis). The
+  air/sea craft are DEFINED now and scaled INTO by M33 (ADR-035 staging), not menu-unlocked.
+- **Decision — `VEHICLE_CATALOG` ⇄ `VEHICLE_SPECS`, gated BOTH directions
+  (`tools/content-validate.ts` `vehicles` + `vehicles.test.ts`).** Every catalog variant names
+  a real spec type; every spec ships ≥1 paint variant (no dead spec); names are unique; the
+  spec is sane (terrain valid, seats ≥ 0, footprint inside the sprite, a ridable vehicle keeps
+  ≥1 usable seat). The verdict prints **57 vehicles (21 types)**. `npm run art:vehicles` →
+  `tools/render-vehicles.ts` renders the whole catalog through the real `drawVehicle()` to
+  `.shots/vehicles.png` with the hero for scale + the seat-fit read per row (the contact-sheet
+  precedent; read by eye — not `preview_screenshot`).
+- **Decision — THE TRAFFIC SYSTEM (`src/engine/traffic.ts`), deterministic + safe.** A pure,
+  Phaser-free, seeded simulation: vehicles spawn on a map's road cells and drive the road graph
+  one tile per tick, capped at `max` (the object pool — the renderer culls off-screen). No
+  Math.random / Date.now (Prime Law 2 — same seed → identical traffic, byte-for-byte). It
+  enforces the M26 **SAFETY LAW**: a moving vehicle NEVER enters the player's cell (no crush)
+  and NEVER takes the player's last free road neighbour (no corner-trap) — it yields (pauses)
+  or turns at an intersection instead, and never stacks two cars on a cell. Proven over 200+
+  time-steps on a dense block AND a 1-wide worst-case lane in `traffic.test.ts`. The
+  OverworldScene will interpolate pixel positions between ticks (the `px,py` previous-cell
+  fields) for smooth motion; that runtime wiring + the gas-station/bus-station/garage/driveway
+  fixtures land in a follow-up (they need a tile+PROP BFS re-proof per map, the M26 QA law).
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (57 vehicles / 21 types,
+  both directions) + full **vitest 758 green** (+14: traffic safety/determinism + the vehicle
+  forge gate/seat-fit/art-law) + `vite build` clean + `npm run art:vehicles` rendered + read by
+  eye (sedans/buses/trucks/excavator/boats/planes all read against the hero, paints distinct).
+  No FNV re-pin, no frozen-core / `world_block` change (vehicles + the sim are new modules, not
+  sample-routed map generators); no save change yet (vehicle OWNERSHIP rides M27/M33). §A5 +
+  §B amended in the same commit.
+- **Consequences:** the world has wheels — a deterministic, safe, pooled traffic layer and a
+  full painted vehicle catalog (road now; the fleet defined for later). M27 borrows these
+  vehicles (Jay puppets the driver, Milo clickers the machine, the party rides if the seats
+  fit); M33 scales the Clicker/Puppet up the same `VEHICLE_SPECS` terrain axis into boats,
+  planes, and subs. The live OverworldScene traffic render + the new road fixtures (gas/bus
+  stations, garages, driveways) are the documented next step.
+
+## ADR-068 — S18 (Movement 27): THE CONTROL SYSTEM — the borrowed hands (Puppet + Clicker)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 27 — the signature new toy. It also builds the
+  overworld-ability SPINE that M28 (overworld PSI) reuses, so they sit adjacent.)
+- **Decision — `mindwarp` UNIFIED as one staged power; `mindwarp_a` RE-STAGED to a Ch.3
+  awakening (the §A4.10 unify).** PUPPET (field) and Mind Warp (battle) are the SAME ability,
+  not two. `mindwarp_a` moves off Jay's (rex) L21 level-unlock row to the new Ch.3 AWAKENING
+  `the_first_borrow` (flag `awake_mindwarp_a`, dialogue `awake_the_first_borrow`, granted when
+  the party hits three on Milo's join). The engine id `mindwarp_a` is FROZEN (ADR-031/023
+  frozen-id discipline) — only the unlock TIMING + the field display face moved; the battle
+  ability, its fx, and the `mind_immune` counter are untouched. `awakenings.ts` + the
+  content-validate awaken manifest (canon) gain the row; the one-path rule (an awakened ability
+  must NOT also be level-unlocked) is satisfied by dropping the L21 line. The DEAD-AIR HELMET
+  (`mind_immune`) stays the single counter, battle + field.
+- **Decision — the save migrates v9 → v10 (engine id frozen, access preserved).** Availability =
+  level unlocks ∪ awakened flags, so a save that ALREADY earned Mind Warp at L21 must keep it:
+  the v10 migration backfills `awake_mindwarp_a` for any save whose Jay is ≥ L21 (the old unlock
+  level). A save below L21 didn't have it and gains it normally when the Ch.3 awakening fires.
+  `CURRENT_SAVE_VERSION` + the fresh-save literal (`state.ts`) bump to 10; `migrations.test.ts`
+  proves the keep (L21 → has it) and the no-free-lunch (L12 → doesn't) round-trips.
+- **Decision — `src/engine/control.ts`, the overworld-ability SPINE (pure, Phaser-free).** One
+  module owns the §A4.10 RULES so the OverworldScene only owns the wheel UI + the driving feel:
+  `inRange` / `candidates` (the highlight ring), `controllable` / `attempt` (kind + range + the
+  helmet/shield block + the unoccupied-machine rule, returning the precise reason for the "no
+  signal" tell), `canCast` (PP), `canRide` / `rideOrRemote` (the seat-fit ride-vs-remote split,
+  reading `vehicles.seatsFit` as the one source of truth), and `unlocksGate` (remote-drive
+  area-unlocks — bus-only lanes, weight-limited bridges, water gates, exact-type gates). PUPPET
+  targets PEOPLE (helmet blocks), CLICKER targets MACHINES (shield blocks); one counter identity.
+  Proven in `control.test.ts` (12 cases). M28's PSI casts consume the same spine.
+- **Decision — the TRUST THREAD OPENS (ship the opening beat).** `awake_the_first_borrow` stages
+  the first time the others SEE Jay PUPPET someone — Mia goes still, Mia(faye) takes a half-step
+  back, the borrowed guard comes back rattled ("…why am I holding the gate for you kids?"),
+  §A11.2 sincere, never a lecture. The flag `awake_mindwarp_a` is the slow-burn's first link; the
+  game-long escalation + the ~3/4 climax land in the later story-weave movement.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (awaken manifest both
+  directions, 457 dialogue scripts) + full **vitest 772 green** (+14: the control spine 12 +
+  the v9→v10 migration 2) + `vite build` clean. No FNV re-pin, no frozen-core / `world_block`
+  change (control + the re-stage are data/engine, not map generators). §A4.10 amended to canon
+  in the same commit; §A4.12's reserved-10/11 note is now claimed exactly as it foresaw.
+- **Consequences:** the headline power has its rules, its canon, and its first on-screen beat.
+  The interactive OverworldScene wiring (the ability wheel, the target highlight, the borrow/
+  drive feel, helmeted enemy variants in battle) builds on this spine; M28 reuses it for the PSI
+  field-casts and gates; M33 scales Puppet/Clicker up the `VEHICLE_SPECS` terrain axis into the
+  fleet. The seat-fit + gate-unlock math is settled and tested.
+
+## ADR-069 — S18 (Movement 28): OVERWORLD PSI — powers as keys (the puzzle gates)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 28 — reuses the M27 overworld-ability spine; the §A4.11
+  "powers as keys" layer that makes PSI matter outside battle.)
+- **Decision — `src/data/psigates.ts`, the PSI-GATE registry.** Eight forward-looking gates,
+  one per chapter DUNGEON (Ch.3–10), each a `PsiGateDef` with a `kind` (vine_wall / ice_block /
+  furnace / cold_pipe / waterfall / geyser / hidden_path / dark_room), the single `key` that
+  answers it (fire / freeze / flash), and a §A11-clear sign that teaches without explaining the
+  joke. `GATE_KEY` maps kind → key as the ONE source of truth (the validator pins each gate's
+  declared key to it). Like AREA_SKINS (M25), the unlanded chapters' gates are a SPEC the dungeon
+  sessions wear when their maps land — no maps required yet; the obstacle art + the TriggerDef
+  wiring land per dungeon.
+- **Decision — `src/engine/psi.ts`, the field-cast rules (pure, reuses the M27 spine).**
+  `psiKeyOf(abilityId)` (fire/freeze by element, flash by id), `abilitiesForKey` (so a gate has a
+  real teacher), `clearsGate` (right key for the obstacle), `canClearGate` (the LEARNED-FIRST law
+  — no learned key, no clear), and `bestCastFor` (the cheapest learned cast the field UI defaults
+  to, or null → a clear "you'll need a way to {key} this" prompt, never a soft-lock). Range + PP
+  ride the §A4.10 control spine; the OverworldScene owns the new cast FX + the obstacle reaction.
+- **Decision — gated BOTH directions (`tools/content-validate.ts` `psi-gate` + `psi.test.ts`).**
+  Every gate's kind is known, its key agrees with `GATE_KEY[kind]`, its band is a real dungeon
+  band, it has a teachable ability (a learner exists — a gate that can't be opened fails), and it
+  carries a sign; AND every dungeon band (ch3–10) carries ≥1 gate (the §A4.11 ≥1-per-dungeon law).
+  The verdict prints **8 psi gates**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (8 psi gates, both
+  directions) + full **vitest** green (+6: psi keys/casts/learned-first + the dungeon-band law) +
+  `vite build` clean. No FNV re-pin, no frozen-core change (gates + the engine are data/logic, not
+  map generators); no save change (which gates are cleared ride ADR-015 flags when dungeons land).
+  §A4.11 amended to canon in the same commit.
+- **Consequences:** PSI is a world verb, not just a battle button. When a dungeon lands it drops
+  its seeded gate (the spec is waiting), teaches the ability first, and the cast pays it off —
+  non-missable, retry-safe. The cast FX + the per-map obstacle props + the tile+PROP BFS re-proof
+  (cleared-opens / present-never-strands) land with each dungeon session, on this spine.
+
+## ADR-070 — S18 (Movement 29): THE PROPERTY MARKET — deeds, agencies, lawyers & the flip
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 29 — the wealth + base spine. Build the SYSTEMS; M30
+  makes homes editable, later movements pour the per-region content.)
+- **Decision — `src/data/properties.ts`, the PROPERTY registry.** Each listing is a
+  `PropertyDef`: id, agent name, band, AREA_SKINS area (M25), kind (home/shop/rental/flip),
+  base price, rent (shop/rental only), a deed key-item string, a §A11 agent blurb ("She took
+  the doorknobs."), and a storage tier. 27 MAPLE is Otterbrook's live starter (+ a Brickton
+  rental + a Maple fixer); HILLCREST MANOR (the user's mansion, Ch.7) and the per-region homes/
+  shops/flips are defined/priced and land with their chapters (the unlanded discipline). A DEED
+  is a key-item STRING, NOT an ITEMS row — ADR-015 prefer-flags, so no icon-gate burden.
+- **Decision — `src/engine/property.ts`, the pure economy (ADR-008 deterministic).** The
+  agency/lawyer/S&L all read these stateless functions: `walkedPrice` (the seeded chapter-
+  boundary price walk — same save + seed replays byte-equal, a gentle upward drift = the Fortune
+  Arc), `buyCost`, `sellProceeds` (the walked price lifted by COZINESS — the furnished-flip hook
+  M30 feeds — minus the lawyer's tenth `LAWYER_CUT`), the S&L financing (`loanTarget` = principal
+  × 1.1, `garnishFromDeposit` = 25% capped at owed, `loanCleared`/`loanRemaining`), `rentAccrued`
+  (owned shops/rentals only), and `netWorth` (cash + bank + owned value − loan; the stats line).
+  Ownership + loans ride ADR-015 flags; the only array-shaped save state is per-home `homeStorage`
+  (the footlocker) — the save bumps **v10 → v11** with a backfill migration + round-trip test.
+- **Decision — gated (`tools/content-validate.ts` `property` + `property.test.ts`).** Every
+  listing is well-formed: kind known, price positive, rent only on shop/rental, area is a real
+  AREA_SKINS area, band well-formed, blurb in voice, storageTier ≥ 1; DEEDS are unique (one deed,
+  one door); LIVE_PROPERTIES are all real. The economy test proves the price walk is deterministic
+  + drifts, the lawyer's tenth, the FLIP profits when furnished, the garnish math, rent, and net
+  worth. The verdict prints **8 properties**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (8 properties) + full
+  **vitest** green (+22: the property economy 11 + the v10→v11 migration 2, plus the existing
+  suites re-green at v11) + `vite build` clean. No FNV re-pin, no frozen-core change (the registry
+  + economy are data/logic, not map generators). §A4.13 amended to canon in the same commit.
+- **Consequences:** the wealth + base spine is settled and tested — you can price, finance, buy,
+  rent, flip, and net-worth a property in pure math today. M30 makes a bought home editable (the
+  furniture catalog + the editor scene + COZINESS feeding `sellProceeds`); the agency/lawyer/S&L
+  INTERIORS + the buy/sell UI + live placement of 27 MAPLE land on this spine in Otterbrook's
+  session and each chapter thereafter (the M18-Part-B way).
+
+## ADR-071 — S18 (Movement 30): THE HOME EDITOR — Sims-style free-placement furniture
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 30 — the fun heart of the property layer; needs M29's
+  ownable homes. Ships the editor's RULES + the catalog + COZINESS; the editor SCENE UI lands
+  with each owned home, on this spine.)
+- **Decision — `src/data/furniture.ts`, THE FURNITURE CATALOG (a typed registry).** 18 pieces,
+  each a `FurnitureDef`: a real drawn sprite key (the existing home props — bed/sofa/desk/
+  counter/cola_fridge/bookshelf/tv/dresser/plant_pot/floor_lamp…), a footprint in tiles, a
+  rotatable flag, a §A4.14 FUNCTION tag (bed/phone/fridge/footlocker/mantel/record_player/
+  mailbox/workbench/kitchen/pet_bed/plant/fish_tank/gnome/seating/lamp/shelf/decor), a theme, a
+  COZINESS value, a price, and a band. Furniture is a world catalog like vehicles/properties
+  (placed in a room, not carried), so it rides its own registry + gate rather than the ITEMS
+  icon-atlas — the purchasable-`furniture`-ItemKind-with-forge-icon presentation is the
+  documented follow-up; the editor's mechanics are what M30 proves.
+- **Decision — `src/engine/homeeditor.ts`, the placement engine (pure, no Phaser).** The editor
+  SCENE (the ArcadeScene/HoopsScene paused-world precedent) renders the ghost + catalog; THIS
+  owns the rules: `footprint`/`cells` (rotation swaps w↔h), `canPlace` (in-bounds floor, no
+  overlap, never the door tile), `roomTraversable` (a BFS from the door over floor-minus-
+  footprints must reach every free tile — refuses any wall-off), `commitPlace` (fits AND stays
+  traversable), `coziness` (sum of points + a variety bonus per distinct function + a theme
+  bonus, 0–100), `restBuff` (a Sunny-Side-lite by coziness), and `serializeLayout`/
+  `deserializeLayout` (the layout IS the save field; restore drops retired pieces). THE LAW: a
+  furnished home can never soft-lock, proven in `homeeditor.test.ts`.
+- **Decision — save v11 → v12 + COZINESS feeds the flip.** A new `homeLayouts: Record<id,
+  Placement[]>` typed field (the array-shaped state earns it; everything else stays flags) +
+  a backfill migration + round-trip test. The editor's `coziness(layout)` feeds
+  `property.sellProceeds(def, ch, seed, coziness)` from M29 — so a furnished flip provably sells
+  for more than an empty one (tested end-to-end here).
+- **Decision — gated (`tools/content-validate.ts` `furniture` + `homeeditor.test.ts`).** Every
+  piece's function is known, footprint positive, coziness ≥ 0, price > 0, band well-formed,
+  sprite + name present; AND the §A4.14 base functions (bed/phone/fridge/footlocker) each have ≥1
+  piece so a home can actually be a base. The verdict prints **18 furniture**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (18 furniture) + full
+  **vitest** green (+~13: the placement law, rotation, traversability empty+furnished, coziness/
+  rest buff, the flip hook, the layout round-trip, the v11→v12 migration) + `vite build` clean.
+  No FNV re-pin, no frozen-core change. §A4.14 amended to canon in the same commit.
+- **Consequences:** the home editor's heart beats — place/rotate/collide/coziness/flip are all
+  settled and tested, and a cozy flip pays off through the M29 economy. The interactive editor
+  SCENE (the ghost preview, the catalog wheel, touch/pad placement) + the live HOME GOODS store +
+  drawing the few new furniture sprites land on this spine when an owned home's session arrives.
+
+## ADR-072 — S18 (Movement 31): THE STORY WEAVE — the trust thread, the clicker question, the disguise sneaks
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 31 — wiring the new mechanics into §A6 as the two game-long
+  character arcs + the costume sneaks. The per-chapter SCENE staging rides these spines.)
+- **Decision — the two threads as ORDERED, NON-MISSABLE flag chains (`src/data/storythreads.ts`
+  + `src/engine/storythread.ts`).** THE TRUST THREAD (Jay/free-will): open (Ch.3 PUPPET) →
+  four escalations (Ch.4–7) → climax (Ch.8, the Hush's wedge) → resolve (the party bonds). THE
+  CLICKER QUESTION (Milo/blame): seed (Ch.5) → crisis (Ch.7, the spoofed frame) → clearing (Ch.8,
+  the public save that exposes the spoof, earning a finale caller). Each beat carries a `flag` and
+  a `prevFlag` linking to the previous beat, so `nextBeat` fires them strictly in order and the
+  climax/clearing is non-missable; `climaxReady`, `isResolved`, and `earnedCallers` drive the
+  staging + the §A6 PRAY payoff. The trust opener ties to the M27 `the_first_borrow` awakening.
+- **Decision — the disguise/costume system (`src/data/disguise.ts` + `src/engine/disguise.ts`).**
+  Don a costume to blend into a faction (Smilers/palace/Hoaxula's cast); `madeChance` = NPC
+  alertness − disguise quality (a wrong/absent disguise is always made), `isMade` is a
+  deterministic roll, and `onSpotted` is ALWAYS a fight — never a fail (the EarthBound law).
+- **Decision — gated (`tools/content-validate.ts` `story-thread` + `disguise`, + two test files).**
+  `chainProblems` pins each thread: contiguous order, prevFlag links, non-decreasing bands, exactly
+  one terminal as the last beat, unique flags; plus shape checks (trust opens/climaxes/resolves;
+  clicker seeds/crises/clears). Disguises blend into a canon faction, quality ∈ [0,1], band
+  well-formed, §A11 note present. The verdict prints **10 thread beats · 3 disguises**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (story-thread + disguise both
+  pinned) + full **vitest** green (+13: thread order/climax/callers + disguise blend/made/fight) +
+  `vite build` clean. No FNV re-pin, no frozen-core change, no save change (the beat flags ride the
+  existing ADR-015 `flags` ledger). §A6 amended to canon in the same commit.
+- **Consequences:** the two Hush-wedge arcs have an honest, ordered, non-missable spine that the
+  OverworldScene fires at the right beats, and the sneaks have real rules. The remaining M31 work
+  is per-chapter SCENE staging on these spines: the highway set-pieces + the mandatory drive (M26
+  vehicles + M27 control), the plane-interior travel scene, the Cobra Raja DEAD-AIR-HELMET boss
+  (a `mind_immune` phase-1), and the beat dialogue — each landing with its chapter session.
+
+## ADR-073 — S18 (Movement 32): THE PAPERBOY — the minigame + the prize
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 32 — a self-contained paused-world minigame, the
+  Arcade/Hoops/Links precedent, riding the M26 bicycle.)
+- **Decision — `src/paperboy/sim.ts`, the deterministic route sim.** Phaser-free under the
+  §A10 minigame law (ADR-029/034/036): a seeded `buildRoute` lays mailboxes on the house lanes
+  + a scatter of hazards (dog/sprinkler/car/open-car-door); `PaperboySim.step(input)` advances a
+  column and resolves deliveries (throw + adjacent lane + a paper in hand) and hazard hits; the
+  score (deliver +100, perfect +500, hazard −40, miss −20) floors at 0 on a bad run (EarthBound-
+  kind — crashing costs pace, never the game). Same seed + same input tape = same run, forever;
+  PaperboyScene is a renderer over this state. `prizeEarned` gates on the deliver goal.
+- **Decision — `src/data/paperboy.ts`, the live route + the prize.** The Otterbrook route is
+  built from a fixed seed (replayable); the PRIZE is a finale CALLER (Mr. Plummer, the paper-
+  route tie-in, quest #2) + a flag (`paperboy_won`). The prize is a flag+caller, not a new ITEMS
+  row — the §A8 charm pour (the Steady Hands Charm) rides the catalog manifest in a follow-up,
+  so M32 stays clear of the band-floor/ladder cascade while still earning a real §A6 caller.
+- **Decision — gated (`tools/content-validate.ts` `paperboy` + `sim.test.ts`).** The live route
+  is WINNABLE: ≥1 house, a sane deliver goal ≤ houses, enough papers, and a PERFECT input tape
+  actually clears the goal (the validator runs the sim to prove it). The verdict prints
+  **paperboy (28 houses)**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green + full **vitest** green (+6:
+  determinism, a clean run wins + earns the prize, a lazy run floors at 0, hazards cost, the prize
+  config) + `vite build` clean. No FNV re-pin, no frozen-core change, no save change (the win is a
+  flag). §A10 amended to canon in the same commit.
+- **Consequences:** a fourth optional long-form minigame is mechanically complete and winnable;
+  PaperboyScene (the renderer, the paper-stand prop, the HUD) drops onto this sim, and the prize
+  charm pours into §A8 with its icon when the catalog session next runs.
+
+## ADR-074 — S18 (Movement 33): THE FLEET SCALES — boats, planes, subs & purchasing
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 33 — the traversal capstone; needs the M27 control system +
+  the M26 bigger-craft sprites + the M29 property layer.)
+- **Decision — `src/data/fleet.ts` + `src/engine/fleet.ts`, the scale-up rules (pure).** The
+  control power scales up the chapters (ADR-035 staging, `FLEET_STAGES`): cars (Ch.3) → trucks/
+  buses/machinery (Ch.5) → boats (Ch.8) → planes + helis (Ch.10) → subs (late). `controlReach`/
+  `canPilot` answer what's pilotable by chapter (off the M26 `VEHICLE_SPECS` terrain+class axis).
+  WATER is drivable terrain with DEPTH rules (`WATER_ACCESS` — dinghy: river+open, yacht: open,
+  sub: open+deep/dive) and AIR a layer with LAUNCH rules (`AIR_ACCESS` — jets need a runway, helis
+  lift off anything flat). The Ember-trail law holds (`reachesNode` — visited nodes only) and
+  no-fly/no-wake zones (`zoneOpen`) fence a pocket until its chapter.
+- **Decision — PURCHASING as key-item TITLES.** `FLEET_CRAFT` lists six buyable craft at dealers/
+  marinas/airfields/helipads (incl. owned properties): the Comet GT, river dinghy, Starhopper jet,
+  Pearl yacht, Deep Marlin sub, Sky Taxi heli — priced to the §A9 Fortune Arc, sold by §A11
+  obsessives. `craftForSale`/`canBuy`/`titleOf`/`ownsCraft` drive the buy; ownership rides a
+  `title_*` key-item (the property/flag pattern), so a purchased craft parks at your property and
+  is yours to summon — no new save field.
+- **Decision — gated (`tools/content-validate.ts` `fleet` + `fleet.test.ts`).** Every craft is a
+  real VEHICLE_SPECS type whose terrain matches its venue (marina→water, airfield/helipad→air,
+  dealer→road), positive price, unique `title_*`, in voice; access tables name real types; the
+  staging climbs road→water→air in chapter order and covers all three terrains. The test proves
+  the chapter staging, the depth/pad rules, the Ember reach law, zones, and purchasing. The verdict
+  prints **6 fleet craft**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (6 fleet craft) + full
+  **vitest** green (+11) + `vite build` clean. No FNV re-pin, no frozen-core change, no save
+  change (titles ride keyItems). §A4.10/§A5 amended to canon in the same commit.
+- **Consequences:** the control fantasy has its full vertical — road to water to air to the deep,
+  scaled by chapter and bought with the property fortune, all Ember-law-safe. The boat/plane/sub
+  piloting SCENES (the water-handling momentum, takeoff/landing beats, the dive map layer) render
+  over these rules when their chapters land; the M26 fleet sprites are already drawn for them.
+
+## ADR-075 — S18 (Movement 34): BALANCE & THE GREAT VERIFICATION — the Fortune Arc
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 34, the last — the curve + the consolidated proof that S18
+  lands green across every gate.)
+- **Decision — `src/data/fortune.ts`, THE FORTUNE ARC (§A9's back-half net-worth curve).** A
+  per-chapter net-worth target the property + flip + rent + fleet economy is tuned toward:
+  Ch.1 ~$1,000 → Ch.10 $3,000,000,000+, monotonic, ≤10× per chapter (escalates BY DESIGN but
+  stays reachable). `fortuneTarget(chapter)` + `fortuneBand(netWorth, chapter)` (under / on_track /
+  ahead, a ±50% band) drive the new NET WORTH stats line (`property.netWorth` = cash + bank +
+  owned property value + fleet titles − loans). The Ch.1–3 battle economy stays tight; the wealth
+  fantasy rides ON TOP and never touches the Ember trail (net worth is a number, the callers are
+  the score).
+- **Decision — `tools/balance-sim.ts` (`npm run balance`), the worktable.** Prints the Fortune
+  curve alongside the property price walk, the fleet price ladder, and the furniture band, so the
+  back-half numbers are tuned BY EYE against §A9 as each region's catalog pours in — tune DATA,
+  never code. The curve's SHAPE is gated (`fortune` in content-validate: Ch.1–10 in order,
+  monotonic, ~$1K start, $3B+ capstone, no >10× jump) + mirrored in `balance.test.ts` (curve +
+  net-worth math + banding + the price ladders climbing into the back half).
+- **THE GREAT VERIFICATION (S18, Movements 25–34):** all both-directions gates GREEN —
+  `area-skins`, `vehicles`, `psi-gate`, `property`, `furniture`, `story-thread`, `disguise`,
+  `paperboy`, `fleet`, `fortune` — alongside the inherited icon/awakening/quest/catalog pins. The
+  verdict prints: **17 area skins · 57 vehicles (21 types) · 8 psi gates · 8 properties · 18
+  furniture · 10 thread beats · 3 disguises · paperboy (28 houses) · 6 fleet craft · fortune arc
+  ($1000→$3B)**. `tsc --noEmit` clean, full **vitest 839 green** (+101 over the S17 baseline of
+  738), `vite build` clean, `npm run validate` green, the art contact sheets render
+  (`art:buildings` incl. the per-area sheet, `art:vehicles`). No FNV re-pin and no frozen-core /
+  `world_block` change across the whole session (every S18 system is data/engine/sprite, never a
+  sample-routed map generator). Save schema walked **v9 → v12** (mindwarp re-stage flag backfill →
+  home storage → home layouts), each step migrated + round-trip tested. Eleven ADRs (064→074... —
+  S18 used 065–074) each landed with its Bible amendment in the same commit; §A4.10/§A4.11/§A4.13/
+  §A4.14/§A5/§A6/§A9/§B all amended to canon.
+- **Consequences:** S18's SPINE is complete and green — area-true buildings, a drivable world with
+  a safe traffic sim + a full vehicle forge, the Puppet/Clicker control system + overworld PSI, the
+  property market + the Sims-style home editor, the two trust/clicker story threads + the disguise
+  sneaks, the paperboy, the fleet, and the Fortune-Arc balance curve. The remaining work is
+  per-chapter CONTENT/SCENE pouring on these spines (the agency/lawyer/home-editor/paperboy/boat/
+  plane SCENES, live placement of agencies + 27 Maple + the per-region listings, the highway maps,
+  the helmet-boss + beat dialogue, and the furniture/deed §A8 icon pours) — the M18-Part-B way,
+  each landing with its chapter session. The systems are settled; the world fills in on top.

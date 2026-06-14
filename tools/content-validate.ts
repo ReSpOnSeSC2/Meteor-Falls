@@ -37,6 +37,22 @@ import { ENEMIES } from '../src/data/enemies';
 import { ITEMS, slotOf, PORCH_SET, MERCADO_SET } from '../src/data/items';
 import { WEAPON_ART } from '../src/spritegen/weapons';
 import { ITEM_ICON } from '../src/spritegen/icons';
+import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
+import { BUILDING_DIMS } from '../src/levelkit/kit';
+import { VEHICLE_CATALOG, VEHICLE_SPECS, usableSeats } from '../src/spritegen/vehicles';
+import { PSI_GATES, GATE_KEY, PSI_DUNGEON_BANDS } from '../src/data/psigates';
+import { abilitiesForKey } from '../src/engine/psi';
+import { PROPERTIES, PROPERTY_KINDS, LIVE_PROPERTIES } from '../src/data/properties';
+import { AREA_SKINS as AREA_SKINS_FOR_PROP } from '../src/spritegen/buildings';
+import { FURNITURE, FURNITURE_FUNCTIONS } from '../src/data/furniture';
+import { THREAD_BEATS, THREAD_IDS } from '../src/data/storythreads';
+import { chainProblems } from '../src/engine/storythread';
+import { DISGUISES, DISGUISE_FACTIONS } from '../src/data/disguise';
+import { PAPERBOY, liveRoute } from '../src/data/paperboy';
+import { PaperboySim, prizeEarned } from '../src/paperboy/sim';
+import { FLEET_CRAFT, FLEET_STAGES, WATER_ACCESS, AIR_ACCESS } from '../src/data/fleet';
+import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
+import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -266,6 +282,266 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const id of Object.keys(ITEM_ICON)) {
     if (!ITEMS[id]) fail('item-icon', `ITEM_ICON row '${id}' claims no §A8 item — extend or retire the manifest row`);
   }
+}
+
+// S18 Movement 25 (ADR-066) — AREA-TRUE BUILDINGS: every named §A5/§A6 area owns
+// its OWN AREA_SKINS slice (a distinct family-mix + ramp palette per the place's
+// feel), so no area is a reskin of another. Gated BOTH directions:
+//  · every CANON_AREA has a non-empty, duplicate-free roster of REAL facade sprites
+//    (each name resolves in BUILDING_DIMS or the bespoke house allowlist);
+//  · every AREA_SKINS key is a CANON_AREA (no orphan slice for a place that isn't).
+{
+  const known = new Set<string>([...Object.keys(BUILDING_DIMS), ...BESPOKE_AREA_FACADES]);
+  for (const area of CANON_AREAS) {
+    const roster = AREA_SKINS[area];
+    if (!roster) {
+      fail('area-skins', `canon area '${area}' has no AREA_SKINS roster — register its own slice (spritegen/buildings.ts), never reuse another's`);
+      continue;
+    }
+    if (roster.length === 0) {
+      fail('area-skins', `area '${area}' has an EMPTY roster — a skinsFor() family×ramp filter matched nothing; widen the slice`);
+    }
+    for (const sprite of roster) {
+      // NOTE: the generated catalog legitimately repeats some sprite KEYS (two
+      // tiers can share a `_${u}` suffix), so a name listed twice just weights
+      // the grammar's pick — it is not an error. We only gate that it RESOLVES.
+      if (!known.has(sprite)) {
+        fail('area-skins', `area '${area}' facade '${sprite}' resolves to no registered building (not in BUILDING_DIMS or the bespoke allowlist) — typo or a sprite that was never drawn`);
+      }
+    }
+  }
+  const canon = new Set(CANON_AREAS);
+  for (const area of Object.keys(AREA_SKINS)) {
+    if (!canon.has(area)) {
+      fail('area-skins', `AREA_SKINS has an orphan slice '${area}' — add it to CANON_AREAS or retire the roster`);
+    }
+  }
+}
+
+// S18 Movement 26 (ADR-067) — THE VEHICLE FORGE: every drivable/ambient vehicle
+// is a deterministic paint variant carrying its true gameplay DATA (seats →
+// seat-fit, a collision footprint, the terrain it travels). Gated BOTH directions:
+//  · every VEHICLE_CATALOG variant names a real VEHICLE_SPECS type;
+//  · every VEHICLE_SPECS type ships at least one paint variant (no dead spec);
+//  · the spec is sane (terrain valid, seats ≥ 0, footprint inside the sprite, a
+//    ridable vehicle has ≥1 usable seat), and sprite names are unique.
+{
+  const TERRAINS = new Set(['road', 'water', 'air']);
+  const specTypes = new Set(Object.keys(VEHICLE_SPECS));
+  const seen = new Set<string>();
+  const usedTypes = new Set<string>();
+  for (const v of VEHICLE_CATALOG) {
+    if (seen.has(v.name)) fail('vehicles', `vehicle sprite name '${v.name}' is registered twice — names are keys`);
+    seen.add(v.name);
+    if (!specTypes.has(v.type)) {
+      fail('vehicles', `vehicle '${v.name}' has type '${v.type}' with no VEHICLE_SPECS row — extend the spec table, never ad-hoc`);
+      continue;
+    }
+    usedTypes.add(v.type);
+  }
+  for (const type of specTypes) {
+    if (!usedTypes.has(type)) fail('vehicles', `VEHICLE_SPECS type '${type}' has no paint variant in VEHICLE_CATALOG — a dead spec row`);
+    const s = VEHICLE_SPECS[type];
+    if (!TERRAINS.has(s.terrain)) fail('vehicles', `vehicle '${type}' has unknown terrain '${s.terrain}'`);
+    if (s.seats < 0) fail('vehicles', `vehicle '${type}' has negative seats`);
+    // a ridable vehicle (the party can board) must leave ≥1 seat after the driver
+    if (s.cls !== 'prop' && s.cls !== 'machine' && s.cls !== 'bike' && s.seats >= 2 && usableSeats(type) < 1) {
+      fail('vehicles', `vehicle '${type}' seats ${s.seats} but has no usable seat — seat-fit math is off`);
+    }
+    const inX = s.solid.ox >= 0 && s.solid.ox + s.solid.w <= s.w;
+    const inY = s.solid.oy >= 0 && s.solid.oy + s.solid.h <= s.h;
+    if (!inX || !inY) fail('vehicles', `vehicle '${type}' footprint ${JSON.stringify(s.solid)} falls outside its ${s.w}x${s.h} sprite`);
+  }
+}
+
+// S18 Movement 28 (ADR-069) — OVERWORLD PSI GATES (§A4.11 "powers as keys"):
+// every chapter dungeon seeds ≥1 obstacle that reacts to a field-cast PSI key.
+// Gated BOTH directions:
+//  · every gate's kind is known, its `key` agrees with GATE_KEY[kind] (one truth),
+//    its band is a real dungeon band, it has a teachable ability (a learner exists),
+//    and it carries a §A11 sign;
+//  · every dungeon band (ch3–10) carries ≥1 gate — the ≥1-per-dungeon law.
+{
+  const bands = new Set(PSI_DUNGEON_BANDS);
+  const covered = new Set<string>();
+  for (const g of Object.values(PSI_GATES)) {
+    const expectKey = GATE_KEY[g.kind];
+    if (!expectKey) { fail('psi-gate', `gate '${g.id}' has unknown kind '${g.kind}'`); continue; }
+    if (g.key !== expectKey) fail('psi-gate', `gate '${g.id}' kind '${g.kind}' wants key '${expectKey}', declares '${g.key}'`);
+    if (!bands.has(g.band)) fail('psi-gate', `gate '${g.id}' band '${g.band}' is not a dungeon band`);
+    if (abilitiesForKey(g.key).length === 0) fail('psi-gate', `gate '${g.id}' needs key '${g.key}' but NO ability casts it — a gate that can't be opened`);
+    if (!g.sign || g.sign.trim().length === 0) fail('psi-gate', `gate '${g.id}' has no §A11 sign — teach without explaining the joke`);
+    covered.add(g.band);
+  }
+  for (const b of PSI_DUNGEON_BANDS) {
+    if (!covered.has(b)) fail('psi-gate', `dungeon band '${b}' has no PSI gate — §A4.11 seeds ≥1 per chapter dungeon`);
+  }
+}
+
+// S18 Movement 29 (ADR-070) — THE PROPERTY MARKET (§A4.13). Every listing is a
+// well-formed, ownable property. Gated:
+//  · kind known; price positive; rent ONLY on shop/rental (homes/flips earn 0);
+//    a home payload sits only on a home; the area is a real AREA_SKINS area (M25);
+//    the band is well-formed; the blurb is in voice (non-empty); storageTier ≥ 1;
+//  · deeds are UNIQUE across all properties (a deed opens exactly one door);
+//  · every LIVE_PROPERTIES id is a real property (the placed-now set is honest).
+{
+  const KINDS = new Set<string>(PROPERTY_KINDS);
+  const deeds = new Map<string, string>();
+  for (const p of Object.values(PROPERTIES)) {
+    if (!KINDS.has(p.kind)) fail('property', `property '${p.id}' has unknown kind '${p.kind}'`);
+    if (p.basePrice <= 0) fail('property', `property '${p.id}' has a non-positive price`);
+    if (!/^ch\d+$/.test(p.band)) fail('property', `property '${p.id}' band '${p.band}' is malformed`);
+    if (!AREA_SKINS_FOR_PROP[p.area]) fail('property', `property '${p.id}' sits in area '${p.area}' that owns no AREA_SKINS slice (M25)`);
+    const earnsRent = p.kind === 'shop' || p.kind === 'rental';
+    if (earnsRent && p.rent <= 0) fail('property', `property '${p.id}' is a ${p.kind} but earns no rent`);
+    if (!earnsRent && p.rent !== 0) fail('property', `property '${p.id}' is a ${p.kind} — only shops/rentals collect rent`);
+    if (p.storageTier < 1) fail('property', `property '${p.id}' has storageTier < 1`);
+    if (!p.blurb || p.blurb.trim().length === 0) fail('property', `property '${p.id}' has no §A11 agent blurb`);
+    const prior = deeds.get(p.deed);
+    if (prior) fail('property', `deed '${p.deed}' opens both '${prior}' and '${p.id}' — a deed is one door`);
+    deeds.set(p.deed, p.id);
+  }
+  for (const id of LIVE_PROPERTIES) {
+    if (!PROPERTIES[id]) fail('property', `LIVE_PROPERTIES names '${id}' which is not a real property`);
+  }
+}
+
+// S18 Movement 30 (ADR-071) — THE FURNITURE CATALOG (§A4.14). Every piece is a
+// well-formed, placeable, cozy thing. Gated:
+//  · function tag is known; footprint is positive; coziness ≥ 0; price > 0; band
+//    well-formed; a sprite key is named; the name is in voice;
+//  · the FUNCTIONAL §A4.14 core (bed/phone/fridge/footlocker) each has ≥1 piece,
+//    so a furnished home can actually be a base.
+{
+  const FNS = new Set<string>(FURNITURE_FUNCTIONS);
+  const haveFn = new Set<string>();
+  for (const d of Object.values(FURNITURE)) {
+    if (!FNS.has(d.fn)) fail('furniture', `furniture '${d.id}' has unknown function '${d.fn}'`);
+    if (d.w <= 0 || d.h <= 0) fail('furniture', `furniture '${d.id}' has a non-positive footprint`);
+    if (d.cozy < 0) fail('furniture', `furniture '${d.id}' has negative coziness`);
+    if (d.price <= 0) fail('furniture', `furniture '${d.id}' has a non-positive price`);
+    if (!/^ch\d+$/.test(d.band)) fail('furniture', `furniture '${d.id}' band '${d.band}' is malformed`);
+    if (!d.sprite || d.sprite.trim().length === 0) fail('furniture', `furniture '${d.id}' names no sprite`);
+    if (!d.name || d.name.trim().length === 0) fail('furniture', `furniture '${d.id}' has no name`);
+    haveFn.add(d.fn);
+  }
+  for (const core of ['bed', 'phone', 'fridge', 'footlocker'] as const) {
+    if (!haveFn.has(core)) fail('furniture', `the §A4.14 base needs a '${core}' piece — none in the catalog`);
+  }
+}
+
+// S18 Movement 31 (ADR-072) — THE STORY THREADS (§A4.10) + the disguise sneaks.
+// The Trust Thread + the Clicker Question must be well-formed, ordered, non-missable
+// flag chains; disguises must blend into a canon faction.
+{
+  for (const thread of THREAD_IDS) {
+    for (const p of chainProblems(thread)) fail('story-thread', `${thread}: ${p}`);
+  }
+  // every beat flag is unique across BOTH threads (independent machines)
+  const flags = Object.values(THREAD_BEATS).map((b) => b.flag);
+  for (const f of flags) {
+    if (flags.filter((x) => x === f).length > 1) fail('story-thread', `beat flag '${f}' used twice`);
+  }
+  // the trust thread climaxes at the three-quarter mark (Ch.7→8) and resolves; the
+  // clicker question seeds (Ch.5) → crisis (Ch.7) → clears (Ch.8) — pin the shape
+  const trustKinds = Object.values(THREAD_BEATS).filter((b) => b.thread === 'trust').map((b) => b.kind);
+  if (!trustKinds.includes('open')) fail('story-thread', 'the trust thread never OPENS (Ch.3 PUPPET)');
+  if (!trustKinds.includes('climax')) fail('story-thread', 'the trust thread never CLIMAXES (the ~3/4 mark)');
+  if (!trustKinds.includes('resolve')) fail('story-thread', 'the trust thread never RESOLVES (the party bonds)');
+  const clickerKinds = Object.values(THREAD_BEATS).filter((b) => b.thread === 'clicker').map((b) => b.kind);
+  for (const need of ['seed', 'crisis', 'clearing'] as const) {
+    if (!clickerKinds.includes(need)) fail('story-thread', `the clicker question is missing its ${need}`);
+  }
+}
+{
+  const FACTIONS = new Set<string>(DISGUISE_FACTIONS);
+  for (const d of Object.values(DISGUISES)) {
+    if (!FACTIONS.has(d.blendTag)) fail('disguise', `disguise '${d.id}' blends into unknown faction '${d.blendTag}'`);
+    if (d.quality < 0 || d.quality > 1) fail('disguise', `disguise '${d.id}' quality ${d.quality} is out of [0,1]`);
+    if (!/^ch\d+$/.test(d.band)) fail('disguise', `disguise '${d.id}' band '${d.band}' is malformed`);
+    if (!d.note || d.note.trim().length === 0) fail('disguise', `disguise '${d.id}' has no §A11 note`);
+  }
+}
+
+// S18 Movement 32 (ADR-073) — THE PAPERBOY. The live route must be winnable (a
+// real goal, enough papers + houses) and the prize must be a flag + a finale caller.
+{
+  const route = liveRoute();
+  const houses = route.items.filter((i) => i.kind === 'mailbox').length;
+  if (houses < 1) fail('paperboy', 'the route has no houses to deliver to');
+  if (route.deliverGoal < 1 || route.deliverGoal > houses) fail('paperboy', `deliver goal ${route.deliverGoal} is impossible (${houses} houses)`);
+  if (route.papers < route.deliverGoal) fail('paperboy', `only ${route.papers} papers for a goal of ${route.deliverGoal}`);
+  if (!PAPERBOY.prize.flag) fail('paperboy', 'the prize sets no flag');
+  if (!PAPERBOY.prize.caller) fail('paperboy', 'the prize earns no finale caller');
+  // a perfect input tape must actually clear the goal (the minigame is winnable).
+  // The sim increments x THEN resolves, so the k-th input lands on column k.
+  const mail = new Map<number, number>();
+  for (const it of route.items) if (it.kind === 'mailbox') mail.set(it.x, it.lane);
+  const tape: Array<{ lane: 0 | 1 | 2; throw: boolean }> = [];
+  for (let x = 1; x < route.length; x++) {
+    const lane = mail.get(x);
+    tape.push(lane !== undefined ? { lane: lane === 0 ? 0 : 2, throw: true } : { lane: 1, throw: false });
+  }
+  const result = new PaperboySim(route).run(tape);
+  if (!prizeEarned(route, result)) fail('paperboy', 'a PERFECT run does not clear the prize goal — the route is unwinnable');
+}
+
+// S18 Movement 33 (ADR-074) — THE FLEET. Staging + craft must be sound:
+//  · every purchasable craft is a real VEHICLE_SPECS type whose terrain matches its
+//    venue (a marina sells water craft, an airfield/helipad sells air craft, a dealer
+//    road), at a positive price, with a unique title key-item, in voice;
+//  · every staged class/terrain exists; every water/air access type is a real vehicle;
+//  · the control power scales road → water → air in chapter order (ADR-035).
+{
+  const VENUE_TERRAIN: Record<string, string> = { dealer: 'road', marina: 'water', airfield: 'air', helipad: 'air' };
+  const titles = new Map<string, string>();
+  for (const c of Object.values(FLEET_CRAFT)) {
+    const spec = VSPECS_FLEET[c.vehicleType];
+    if (!spec) { fail('fleet', `craft '${c.id}' is type '${c.vehicleType}' with no VEHICLE_SPECS row`); continue; }
+    const want = VENUE_TERRAIN[c.venue];
+    if (spec.terrain !== want) fail('fleet', `craft '${c.id}' sells at a ${c.venue} (expects ${want}) but is a ${spec.terrain} craft`);
+    if (c.price <= 0) fail('fleet', `craft '${c.id}' has a non-positive price`);
+    if (!/^ch\d+$/.test(c.band)) fail('fleet', `craft '${c.id}' band '${c.band}' is malformed`);
+    if (!c.title || !c.title.startsWith('title_')) fail('fleet', `craft '${c.id}' title '${c.title}' must be a title_* key-item`);
+    if (!c.seller || !c.note) fail('fleet', `craft '${c.id}' has no §A11 seller/note`);
+    const prior = titles.get(c.title);
+    if (prior) fail('fleet', `title '${c.title}' owns both '${prior}' and '${c.id}'`);
+    titles.set(c.title, c.id);
+  }
+  for (const m of [WATER_ACCESS, AIR_ACCESS]) {
+    for (const type of Object.keys(m)) {
+      if (!VSPECS_FLEET[type]) fail('fleet', `access table names '${type}' which is no VEHICLE_SPECS type`);
+    }
+  }
+  // staging climbs in chapter order and lists real terrains
+  let lastBand = 0;
+  const seenTerrain = new Set<string>();
+  for (const st of FLEET_STAGES) {
+    const b = Number(/^ch(\d+)$/.exec(st.band)?.[1] ?? 0);
+    if (b < lastBand) fail('fleet', `fleet stage '${st.band}' goes backwards in chapter order`);
+    lastBand = b;
+    seenTerrain.add(st.terrain);
+  }
+  for (const t of ['road', 'water', 'air']) {
+    if (!seenTerrain.has(t)) fail('fleet', `the fleet never scales into '${t}' — ADR-035 staging is incomplete`);
+  }
+}
+
+// S18 Movement 34 (ADR-075) — BALANCE: the §A9 Fortune Arc must be a well-formed
+// curve (Ch.1–10 in order, monotonic, ~$1K → $3B+, no impossible single jump).
+{
+  const bands = FORTUNE_ARC.map((r) => r.band);
+  const want = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8', 'ch9', 'ch10'];
+  if (JSON.stringify(bands) !== JSON.stringify(want)) fail('fortune', `the Fortune Arc must cover Ch.1–10 in order, got ${bands.join(',')}`);
+  for (let i = 1; i < FORTUNE_ARC.length; i++) {
+    const lo = FORTUNE_ARC[i - 1].netWorth;
+    const hi = FORTUNE_ARC[i].netWorth;
+    if (hi <= lo) fail('fortune', `the Fortune Arc dips at ${FORTUNE_ARC[i].band} (${hi} ≤ ${lo})`);
+    if (hi / lo > 10) fail('fortune', `the Fortune Arc jumps too hard at ${FORTUNE_ARC[i].band} (${(hi / lo).toFixed(1)}× — keep it reachable)`);
+  }
+  if (FORTUNE_ARC[0].netWorth > 2_000) fail('fortune', 'the Fortune Arc starts too rich (Ch.1 should be a tight ~$1K)');
+  if (FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth < 3_000_000_000) fail('fortune', 'the Fortune Arc must reach $3B+ by Ch.10');
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -808,6 +1084,10 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     // S14 — Ch.2's emotional center: the HOLLOW reveal (§A3 ladder amended:
     // Freeze α left Mia's L12 row in the same commit)
     cold_reads: { hero: 'faye', ability: 'vibe_freeze_a', flag: 'awake_freeze_a', dialogue: 'awake_cold_reads' },
+    // S18 M27 (ADR-068) — Ch.3 THE FIRST BORROW: the control system unlocks on
+    // Milo's join. mindwarp_a re-staged off rex's L21 row to this awakening (one
+    // power, battle Mind Warp + field Puppet; the trust thread opens here).
+    the_first_borrow: { hero: 'rex', ability: 'mindwarp_a', flag: 'awake_mindwarp_a', dialogue: 'awake_the_first_borrow' },
     // S16 ("The Old Light, Doubled") — Jay's three iconic late beats. Reserved
     // as awakenings (the 80/20 split): true MIND WARP, the party REFLECT, and
     // the Surge Σ capstone. Each lands mid-to-late, where the §A6 arc has room
@@ -1805,6 +2085,16 @@ const counts = [
   `${Object.keys(SHOPS).length} shops`,
   `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,
   `${Object.keys(MAPS).length} maps`,
+  `${CANON_AREAS.length} area skins`,
+  `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
+  `${Object.keys(PSI_GATES).length} psi gates`,
+  `${Object.keys(PROPERTIES).length} properties`,
+  `${Object.keys(FURNITURE).length} furniture`,
+  `${Object.keys(THREAD_BEATS).length} thread beats`,
+  `${Object.keys(DISGUISES).length} disguises`,
+  `paperboy (${liveRoute().items.filter((i) => i.kind === 'mailbox').length} houses)`,
+  `${Object.keys(FLEET_CRAFT).length} fleet craft`,
+  `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,

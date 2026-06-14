@@ -48,7 +48,7 @@ import { MGR_ROW } from '../data/arcade';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 9;
+export const CURRENT_SAVE_VERSION = 12;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -217,6 +217,48 @@ export const MIGRATIONS: MigrationStep[] = [
         if (!isObj(h.boosts)) h.boosts = {};
       }
       raw.version = 9;
+      return raw;
+    },
+  },
+  {
+    to: 10,
+    migrate(raw) {
+      // S18 M27 (ADR-068): mindwarp_a RE-STAGED from rex's L21 level unlock to the
+      // Ch.3 PUPPET awakening (the_first_borrow / `awake_mindwarp_a`). Availability =
+      // unlocks ∪ awakened flags, so a save that ALREADY earned Mind Warp at L21 must
+      // keep it: backfill the awakening flag for any save whose Jay (rex) is ≥ L21
+      // (the old unlock level). A save that never reached L21 didn't have it and gains
+      // it normally when the Ch.3 awakening fires. Engine id frozen — only the path moved.
+      const party = (Array.isArray(raw.party) ? raw.party : []).filter(isObj);
+      const rex = party.find((h) => h.id === 'rex');
+      const flags = isObj(raw.flags) ? raw.flags : (raw.flags = {});
+      if (rex && typeof rex.level === 'number' && rex.level >= 21 && flags.awake_mindwarp_a !== true) {
+        flags.awake_mindwarp_a = true;
+      }
+      raw.version = 10;
+      return raw;
+    },
+  },
+  {
+    to: 11,
+    migrate(raw) {
+      // S18 M29 (ADR-070): THE PROPERTY MARKET — a new per-home item store (the
+      // footlocker), keyed by property id. A pre-v11 save owned no property and
+      // stored nothing home-side, so an empty map is its true history. Ownership,
+      // loans, and the price walk ride ADR-015 flags (no field needed for those).
+      if (!isObj(raw.homeStorage)) raw.homeStorage = {};
+      raw.version = 11;
+      return raw;
+    },
+  },
+  {
+    to: 12,
+    migrate(raw) {
+      // S18 M30 (ADR-071): THE HOME EDITOR — per-home furniture layouts. A pre-v12
+      // save decorated nothing, so an empty map is its true history. Coziness is
+      // computed from this; an empty layout is coziness 0 (the resale floor).
+      if (!isObj(raw.homeLayouts)) raw.homeLayouts = {};
+      raw.version = 12;
       return raw;
     },
   },

@@ -151,6 +151,130 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > cash; these are the item path. The numbers 10/11 in this list are reserved
 > for the unlanded S16 systems (the dead-air helmet, the overworld PSI keys).)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-068 — **§A4.10 THE CONTROL SYSTEM
+> (the borrowed hands).** Two complementary powers the party earns when it becomes
+> THREE (Ch.3, on Milo's join), staged as ADR-035 awakenings/builds. **JAY — VIBE
+> PUPPET (mind control of PEOPLE):** a higher turn of his Hypno line. PUPPET (field)
+> and **Mind Warp** (battle) are now ONE staged power — the engine ability
+> `mindwarp_a`, RE-STAGED off Jay's old L21 level unlock to the Ch.3 PUPPET
+> AWAKENING (`the_first_borrow`); the engine id is FROZEN (ADR-031/023), only the
+> display face + the timing moved. Tap a highlighted person in range, act AS them
+> for a PP-costed window (walk them, open a gate, vouch past a guard, take a
+> driver's seat), then give it back — the comedic, apologetic OPPOSITE of the Hush's
+> permanent theft. **MILO — THE CLICKER (machine control):** a universal remote he
+> builds; pilot an UNOCCUPIED vehicle/machine driver-less to unlock a path. **THE
+> RIDE (combined):** usable seats = `vehicle.seats − 1`; board only if ≥ party size,
+> else Clicker-drive it empty. **THE COUNTER — the DEAD-AIR HELMET** is the diegetic
+> face of the `mind_immune` flag, ONE identity across both contexts (a helmeted enemy
+> resists Mind Warp in battle AND can't be Puppeted on the field; a Faraday-shielded
+> machine refuses the Clicker) — route around it or knock it off in a boss fight. The
+> rules live in `src/engine/control.ts` (targeting, range, the helmet/shield block,
+> PP cost, the seat-fit ride/remote split, remote-drive gate unlocks); the
+> OverworldScene owns the wheel UI + driving feel. **THE TRUST THREAD opens here**
+> (§A11.2): the first time the others SEE Jay PUPPET someone they pull back a step
+> and the borrowed stranger comes back rattled — the start of a game-long slow burn
+> that climaxes at the three-quarter mark (the weave lands in a later movement). It
+> SCALES all game (ADR-035 staging): cars → trucks/buses → boats → planes → subs →
+> yachts.)*
+
+> *(Added 2026-06-14 per Appendix rule 6, ADR-069 — **§A4.11 PSI IN THE WORLD
+> (powers as keys).** Beyond battle, certain abilities are OVERWORLD KEYS,
+> EarthBound-style: **PSI Fire** burns vine walls / lights furnaces / melts ice;
+> **PSI Freeze** freezes coolant pipes, waterfalls, and geysers into crossable ice;
+> **PSI Flash** reveals hidden paths and lights dark rooms; Teleport stays per §A4.6.
+> Field-casting plays a NEW overworld animation and the obstacle reacts. Each gate is
+> a `PsiGateDef` (`src/data/psigates.ts`) with a `kind` and the single `key` that
+> answers it (`GATE_KEY` is the one truth); the casting rules live in
+> `src/engine/psi.ts` (which ability is which key, the learned-first check, which cast
+> clears which gate) and reuse the §A4.10 control spine for range + PP. Every chapter
+> DUNGEON seeds ≥1 gate using a chapter-appropriate ability; the ability is LEARNED
+> first (awakening/level) and the gate pays it off — a gate is never the sole teacher,
+> and is non-missable + retry-safe (a PSI cast has no cooldown and no fail state).
+> Pinned both directions (`psi-gate` gate + `psi.test.ts`): every gate's key matches
+> its kind and has a real teacher, and every dungeon band (ch3–10) carries one.)*
+
+> *(Added 2026-06-14 per Appendix rule 6, ADR-070 — **§A4.13 THE PROPERTY MARKET
+> (deeds, agencies, lawyers, the flip).** Real estate is a buyable, sellable, OWNABLE
+> layer over the world and the back-half wealth engine (§A9 Fortune Arc). Every town
+> has a REAL-ESTATE AGENCY (an agent with one §A11 obsession — she calls every room
+> "cozy" — who LISTS the region's properties: price, an in-voice blurb, an open-house
+> walk) and a LAWYER'S OFFICE (closing: sign "the crayon box", pay or finance, walk
+> out with THE DEED — a key-item; selling closes here too, minus "the tenth part, for
+> the pen"). The OTTERBROOK SAVINGS & LOAN gains a LOAN DESK (a car note + a mortgage:
+> borrowed cash now, repaid as a 25% GARNISH of every future Dad deposit until the
+> principal × 1.1 clears; one active garnish at a time). A HOME is a base (§A4.14);
+> beyond it you buy run-down cheap, renovate + furnish it (COZINESS lifts resale), and
+> FLIP it through the lawyer, while owned shops/rentals pay RENT into Dad's deposits at
+> chapter boundaries. Prices move at chapter boundaries on a SEEDED deterministic walk
+> per save (ADR-008 replay byte-equal). The registry is DATA (`src/data/properties.ts`)
+> + pure economy math (`src/engine/property.ts`, validated); ownership + loans ride
+> ADR-015 FLAGS, a DEED is a key-item string, and the only array-shaped save state is
+> per-home storage (`homeStorage`, save v11). 27 MAPLE is Otterbrook's live starter;
+> HILLCREST MANOR + the per-region homes are defined/priced and land with their
+> chapters. The Ember trail never cares about money; net worth is a number, the callers
+> are the score.)*
+
+> *(Added 2026-06-14 per Appendix rule 6, ADR-071 — **§A4.14 THE HOME EDITOR (a
+> Sims-style base you make yours).** Any home you own can be decorated with
+> FREE-PLACEMENT furniture on its room tile grid: open the editor (the paused-world
+> sub-scene precedent), pick a piece from the FURNITURE CATALOG (`src/data/furniture.ts`
+> — each piece a footprint + a §A4.14 FUNCTION + a COZINESS value + a theme + a price),
+> place / move / ROTATE it; the layout saves per-home (`homeLayouts`, save v12). The
+> placement RULES (`src/engine/homeeditor.ts`, validated) guarantee a furnished home
+> can never soft-lock: no overlap, never block the door, and the room stays fully
+> traversable from the door (a BFS refuses any wall-off). Furniture is more than
+> dressing: a home's COZINESS (computed from what you place — points + a variety bonus
+> + a theme bonus, 0–100) gives a small REST BUFF after sleeping (a Sunny-Side-lite)
+> AND raises the property's resale (the flip hook — it feeds `property.sellProceeds`).
+> The §A4.14 use-cases are the FUNCTION tags: THE BED (free full restore), THE PHONE
+> (Dad saves), THE FRIDGE (a free regional food), THE FOOTLOCKER (home storage by
+> tier), THE MANTEL (trophies + Mr. Click photos), THE RECORD PLAYER (the Homesong
+> stems), THE MAILBOX (Dad's postcards), THE WORKBENCH (Milo's Repair), THE KITCHEN
+> COUNTER (picnic baskets), THE PET BED (Biscuit), plus décor that matters (plant,
+> fish tank, gnome, sofa, lamp, rug). The decor is the soul; the buff is the wink.)*
+
+> *(Added 2026-06-14 per Appendix rule 6, ADR-072 — **§A6 STORY WEAVE: the two
+> threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
+> NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
+> driven by `src/engine/storythread.ts`, validated ordered + single-terminal). THE
+> TRUST THREAD (Jay's free-will mirror): OPENS the first time the others see him
+> PUPPET someone (Ch.3), slow-burns the "are we even free?" doubt across Ch.4–7,
+> CLIMAXES at the three-quarter mark (Ch.7→8 — the Hush weaponizes the doubt to split
+> the party), and RESOLVES when they choose trust and Jay proves he's the Hush's
+> opposite (he refuses to take a will even when it would fix everything) — the party
+> bonds for Ch.9–10 and it feeds the finale free-will PRAY. THE CLICKER QUESTION
+> (Milo's blame mirror): the comedic SEED (Ch.5 parade float), the sincere CRISIS
+> (Ch.7 — a Hush-spoofed signal frames him; even he isn't sure), the public CLEARING
+> (Ch.8 — he Clickers a disaster to safety in the open and exposes the spoof, earning
+> a finale caller). The two RHYME (the Hush turning each hero's gift into a reason to
+> fear them) but peak on different beats. THE DISGUISE/COSTUME SNEAK
+> (`src/data/disguise.ts` + engine): don a costume to blend with a faction (the
+> Smilers Ch.1, palace guards Ch.7, Hoaxula's cast Ch.9); getting "made" is a FIGHT,
+> never a fail. The highway set-pieces, the mandatory drive, the plane-interior, and
+> the Cobra Raja DEAD-AIR-HELMET boss are the per-chapter scene staging that rides
+> these spines + the M26 vehicles + the M27 control system.)*
+
+> *(Added 2026-06-14 per Appendix rule 6, ADR-074 — **§A4.10/§A5 THE FLEET (the
+> traversal capstone).** The control power SCALES up the chapters (ADR-035 staging,
+> `FLEET_STAGES`): cars (Ch.3) → trucks/buses/machinery (Ch.5) → boats (Ch.8) →
+> planes + helicopters (Ch.10) → submarines/yachts (late) — each a staged story
+> moment, not a menu unlock. WATER becomes drivable terrain and AIR a traversal
+> layer (the M26 `VEHICLE_SPECS` terrain axis); the piloting rules live in
+> `src/engine/fleet.ts`: depth (a dinghy hugs rivers, a yacht needs open water, a
+> sub DIVES — `WATER_ACCESS`), launch (a jet needs a runway, a heli lifts off
+> anything flat — `AIR_ACCESS`), and the boat/plane/sub SCENES (momentum/drift, a
+> wake, takeoff + landing, the dive layer) render over them. PURCHASING: the bigger
+> craft are bought at dealers/marinas/airfields/helipads (incl. on owned properties)
+> as key-item TITLES (`FLEET_CRAFT` — the Comet GT, the river dinghy, the Starhopper
+> jet, the Pearl yacht, the Deep Marlin sub, the Sky Taxi heli), priced to the §A9
+> Fortune Arc, sold by §A11 obsessives (Bert, the harbormaster, Roxanne); a purchased
+> craft parks visibly at your property. THE EMBER-TRAIL LAW HOLDS (§A5): a flown/
+> sailed craft reaches VISITED nodes ONLY (`reachesNode`) and new chapters still gate
+> on the Embers; DEAD-AIR-shielded craft + no-fly/no-wake zones (`zoneOpen`) are the
+> diegetic fences. Teleport stays the no-luggage option; the fleet is the wealth +
+> traversal fantasy on top. Validator-pinned (`fleet`): venue↔terrain, unique titles,
+> staging climbs road→water→air.)*
+
 ## A5. The World Route & Travel
 
 | Ch. | Region | Locales | Travel in |
@@ -167,6 +291,19 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 | 10 | 🇺🇸→🌋→🔴 | Aurora Station, Alaska → Mauna Lani launch pad, Hawaii → **MARS: The Sea of Silence** | Snow-cat, then Professor Pemberton's rocket *The Long Shot* |
 
 The world FEELS open: every region has off-path screens, optional caves, side quests, and once Teleport unlocks (Ch.6) the whole visited world reopens — but the Ember trail keeps the story linear and completable.
+
+**The road/traffic layer (S18 M26, ADR-067).** On TOP of the set-piece travel table above
+(which is unchanged — the Embers keep the journey linear), the world's streets now have
+WHEELS: a deterministic, seeded TRAFFIC system (`src/engine/traffic.ts`) drives cars, buses,
+trucks, bikes, and machinery over a map's road graph as living ambiance + the control
+system's future borrow-targets. It is pure, pooled, and culled for 60fps, and it obeys the
+SAFETY LAW — a moving vehicle never crushes the player and never seals the player's last lane
+(it yields/turns instead; proven over many time-steps in `traffic.test.ts`). The art is THE
+VEHICLE FORGE (`src/spritegen/vehicles.ts`): a deterministic, hand-drawn, RAMP-painted catalog
+of every road vehicle PLUS the fleet the §A4.10 control power scales into (boats/subs/planes/
+heli/blimp), each carrying its true gameplay DATA — a `seats` count (usable-to-ride = seats − 1,
+the seat-fit law), a collision footprint, and the terrain it travels (road/water/air). Pinned
+both directions (`VEHICLE_CATALOG` ⇄ `VEHICLE_SPECS`). None of this replaces an Ember leg.
 
 ## A6. The Ten Chapters & Ten Bosses
 
@@ -352,6 +489,20 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 - Main story: 32–38 hr (10 chapters averaging 3–4 hr each, with larger cities and dungeons after Ch.3). Side quests and optional long-form content: +8–12 hr. Total planned playability target: **40–50 hr**. Boss attempts budgeted at 1.5 avg (grindy difficulty = some party wipes are expected and fine — that's EarthBound).
 - Cash economy tuned so a full equipment refresh per region costs ≈ 2 chapters of battle income → choices hurt a little, like 1995.
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-075: THE FORTUNE ARC — the §A8/§A9
+> property-tycoon wealth curve. The Ch.1–3 battle economy stays TIGHT (a refresh costs
+> ~2 chapters of income, above); on TOP of it, a player who leans into the property
+> market (buy/flip/rent — §A4.13) + the fleet (§A4.10/§A5) tracks a back-half NET-WORTH
+> arc that escalates BY DESIGN: **Ch.1 ~$1,000 → Ch.10 $3,000,000,000+** (`FORTUNE_ARC`
+> in `src/data/fortune.ts` — monotonic, ≤10× per chapter so it stays reachable). A NET
+> WORTH line joins the stats page (`property.netWorth` = cash + bank + owned property +
+> fleet titles − loans; `fortuneBand` reads it under/on-track/ahead). The Ember trail
+> never cares about money and the epilogue's quiet walk home is unchanged (§A11.2) —
+> net worth is a number, the callers are the score. `tools/balance-sim.ts` (`npm run
+> balance`) prints the curve + the property/fleet/furniture ladders to tune DATA (never
+> code) toward the targets as each region's catalog pours in; the curve's shape is
+> validator-pinned (`fortune`) + `balance.test.ts`.)*
+
 > *(Amended 2026-06-11 per Appendix rule 6, ADR-034: THE BRICKTON CLASSIC —
 > S12's 32-team 5v5 streetball tournament at the cage — is **optional
 > long-form content within the +8–12hr side/optional budget**: five four-quarter
@@ -359,6 +510,17 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > returned to (the bracket and a live match's quarter checkpoints are save
 > data, v5). 3v3 pickup at the cage pays EXP forever and fits any session.
 > The 40–50hr target above includes room for this long-form content.)*
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-073: THE PAPERBOY — a fourth
+> optional paused-world minigame alongside the Arcade, the Cage, and the Links.
+> Ride the M26 bicycle down a seeded 3-lane suburban street, throw papers into the
+> mailboxes, dodge the dog / sprinkler / parked car / open car door, and clear the
+> deliver goal to win. Deterministic + replayable (the §A10 #4 minigame law —
+> `src/paperboy/sim.ts`, inputs in / a score out, same seed + tape = same run);
+> getting "crashed" never fails the run (EarthBound-kind — a bad run floors at 0).
+> Reachable from a paper-stand prop in Otterbrook/Brickton, non-missable. THE PRIZE
+> is a finale CALLER (Mr. Plummer, the paper-route tie-in, quest #2) + a flag; the
+> §A8 charm pour (the Steady Hands Charm) rides the catalog manifest in a follow-up.)*
 
 ## A10. Side Quests (55 — each one adds or strengthens the CALLER ledger)
 
@@ -519,12 +681,22 @@ meteor-falls/
   player can walk, there is a lane, never a wall of touching buildings. City BLOCKS
   (adjacent storefronts lining a street, the path being the street) are the intended
   exception, not a violation. *(Added 2026-06-13 alongside ADR-053.)*
-- **EACH AREA FEELS FRESH — per-area building skins (ADR-050).** Every named level
+- **EACH AREA FEELS FRESH — per-area building skins (ADR-050/065).** Every named level
   area draws its facades ONLY from its own curated slice of the catalog (`AREA_SKINS`
   in `src/spritegen/buildings.ts`): a distinct family mix + ramp palette, so no two
   areas read alike (Otterbrook's warm low brownstones ≠ Brickton's cool glass towers ≠
   Puerto Sol's colonial faces). A NEW area MUST register its own skin set — never reuse
-  another area's roster. *(Added 2026-06-13 per Appendix rule 6.)*
+  another area's roster. **ALL seventeen canon §A5/§A6 areas now own a slice** (S18 M25):
+  the live Americas areas PLUS forward-looking specs for every unlanded place — England's
+  damp Foggybottom stone + Wintermoor's pale faculty blocks, Norway's cozy Kvisthavn vs
+  Lilleby's giants'-town towers, Minimus's hand-picked tabletop jewel-box (tiniest tiers
+  only — a mega can never step into a town the party steps over), Zanzibel's sun-baked
+  bazaar, Chandrapore's dense riot + a palace-spire colossus, Lotus Harbor's temple
+  red/gold, Valea's painted-village rustic, Aurora's cold steel, Mauna Lani's lush
+  resort, and Mars's neon husks + the lone NIGHT needle. Pinned BOTH directions
+  (`CANON_AREAS` ⇄ `AREA_SKINS`, `area-skins` gate + `buildings.test.ts`): every area
+  has a non-empty roster of REAL facades, no orphan slice, no reskin. *(Added 2026-06-13
+  per Appendix rule 6; extended 2026-06-14 alongside ADR-066.)*
 - **MAPS BREATHE, AND MOSTLY GROW (the size law).** Every map feels like a
   real place — organic irregular edges, varied block shapes + access (linear and
   sporadic), and NOOK variety (shacks, alleys, vacant lots, courtyards, rooftops,
