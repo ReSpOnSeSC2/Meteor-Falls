@@ -54,6 +54,8 @@ import { FLEET_CRAFT, FLEET_STAGES, WATER_ACCESS, AIR_ACCESS } from '../src/data
 import { DEALERSHIP } from '../src/data/dealership';
 import { sellValue } from '../src/engine/garage';
 import { MILITARY_VEHICLES, MILITARY_TYPES } from '../src/data/military';
+import { ARMY_BEATS } from '../src/data/armyarc';
+import { armyArcProblems } from '../src/engine/armyarc';
 import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC } from '../src/data/fortune';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
@@ -589,6 +591,27 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       fail('military', `VEHICLE_SPECS '${type}' is hardened but isn't in the military motor pool — list it or drop the hardening`);
     }
   }
+}
+
+// S19 Movement 40 (ADR-081) — THE ARMY ON OUR TAIL (§A6). The pursuit arc must be
+// a well-formed, ordered, NON-MISSABLE flag chain: contiguous order, prevFlag links,
+// bands non-decreasing, the misread opens, exactly one clearing terminal, and the
+// clearing earns the General as a finale caller. The army is wrong, never the Hush.
+{
+  for (const p of armyArcProblems()) fail('army-arc', p);
+  // every beat flag is unique (independent of the storythreads' flags too)
+  const flags = Object.values(ARMY_BEATS).map((b) => b.flag);
+  for (const f of flags) {
+    if (flags.filter((x) => x === f).length > 1) fail('army-arc', `beat flag '${f}' used twice`);
+  }
+  // the canon set-pieces are all present (checkpoint, helmeted tank, F-15 flyover)
+  const kinds = Object.values(ARMY_BEATS).map((b) => b.kind);
+  for (const need of ['misread', 'checkpoint', 'tank', 'flyover', 'clearing'] as const) {
+    if (!kinds.includes(need)) fail('army-arc', `the arc is missing its ${need} beat`);
+  }
+  // the clearing's caller (the General) is named (the §A6 finale payoff)
+  const clearing = Object.values(ARMY_BEATS).find((b) => b.kind === 'clearing');
+  if (clearing && !clearing.caller) fail('army-arc', 'the clearing earns no finale caller');
 }
 
 // S11b — WEAR TIERS, BOTH DIRECTIONS: every §A7 roster enemy has a wear-
@@ -2143,6 +2166,7 @@ const counts = [
   `${Object.keys(FLEET_CRAFT).length} fleet craft`,
   `${Object.keys(DEALERSHIP).length} dealership cars`,
   `${MILITARY_TYPES.length} military vehicles`,
+  `${Object.keys(ARMY_BEATS).length} army-arc beats`,
   `fortune arc ($${FORTUNE_ARC[0].netWorth}→$${(FORTUNE_ARC[FORTUNE_ARC.length - 1].netWorth / 1e9)}B)`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,

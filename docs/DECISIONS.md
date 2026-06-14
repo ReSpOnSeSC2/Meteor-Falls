@@ -4774,3 +4774,33 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the world has tanks and F-15s as drawn props + control targets, helmeted by
   default — the diegetic fence the M41 pursuit routes around, and the late control puzzle once a
   helmet-knock-off is earned. M40 weaves the army-pursuit arc on top.
+
+## ADR-081 — S19 (Movement 40): THE ARMY ON OUR TAIL — the pursuit arc
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 40 — the §A6 army-pursuit arc; rides the M39 motor pool + the
+  M40 pursuit mechanics of M41.)
+- **Decision — `src/data/armyarc.ts`, an ordered NON-MISSABLE beat registry (the storythreads
+  pattern).** Five flag-chained beats: the MISREAD (Milo's Clicker pings a base, or the Hush spoofs
+  it — General Buckle is certain five kids stole a prototype; he is, by the book, wrong), the
+  CHECKPOINT (a Humvee, blinkers on — drive/talk/disguise past, never a wall), the helmeted TANK to
+  route AROUND (the Clicker just gives it a headache), the F-15 FLYOVER set-piece, and the CLEARING
+  (the party shows Buckle the real signal — the Hush, not them — he apologizes BY THE BOOK and joins
+  the finale callers as `general_buckle`). Each beat's `prevFlag` is the prior beat's `flag`, so it
+  fires IN ORDER and the clearing is non-missable. It RHYMES with the §A4.10 Clicker Question (the
+  Hush turning a hero's gift into a reason to be feared) but peaks on its own beat.
+- **Decision — `src/engine/armyarc.ts` drives it (pure).** `nextBeat`/`isResolved`/`earnedCallers` +
+  `armyArcProblems()` (the shared well-formedness check). §A11 to the bone: the army is WRONG, never
+  EVIL — no one dies, the Hush stays the only true villain, and Buckle's change of heart is EARNED.
+  His one obsession is doing everything BY THE BOOK (he quotes subsection numbers); the recruits just
+  miss their moms. The General + recruit voices for the opener + the clearing land in `dialogue.ts`.
+- **Decision — gated both directions (`army-arc` + `armyarc.test.ts`).** Contiguous order, prevFlag
+  links, bands non-decreasing, the misread opens, exactly one clearing terminal (last), the clearing
+  earns a caller, unique flags, all five set-piece kinds present. The test proves in-order firing,
+  non-missable reachability of the clearing, and the earned General caller. The verdict prints **5
+  army-arc beats**.
+- **Verification:** `tsc` clean, `npm run validate` green, full vitest green (+8), `vite build`
+  clean. No FNV re-pin, no frozen-core change, no save change (beats ride flags). §A6 amended.
+- **Consequences:** the army-pursuit arc is a settled, ordered, finale-feeding spine. M41 adds the
+  verifiable pursuit/escape mechanics + the disguise (army fatigues); the per-chapter checkpoint/
+  tank/flyover SCENES stage on top.

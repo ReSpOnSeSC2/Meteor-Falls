@@ -268,6 +268,20 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > the Cobra Raja DEAD-AIR-HELMET boss are the per-chapter scene staging that rides
 > these spines + the M26 vehicles + the M27 control system.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-081 — **§A6 THE ARMY ON OUR TAIL.** A third game-long,
+> NON-MISSABLE flag-chained arc (`src/data/armyarc.ts`, driven by `src/engine/armyarc.ts`, validated
+> ordered + single-terminal). A bumbling-but-earnest GENERAL (Buckle — one obsession: doing everything
+> BY THE BOOK, subsection numbers and all) becomes convinced the party stole a military prototype —
+> really Milo's Clicker pinged a base, OR the Hush spoofed the signal to FRAME them (it RHYMES with
+> the §A4.10 Clicker Question: the Hush turning a hero's gift into a reason to be feared, but peaks on
+> its own beat). The ordered beats: the MISREAD → the CHECKPOINT (a Humvee — drive/talk/disguise past,
+> never a wall) → the helmeted TANK to route AROUND or out-drive (can't be Clickered) → the F-15
+> FLYOVER set-piece → the CLEARING (the party shows Buckle the real signal — the Hush, not them — he
+> apologizes BY THE BOOK and becomes a finale CALLER). The army is WRONG, never EVIL: nobody dies, the
+> Hush stays the only true villain, the General's change of heart is EARNED. The §A7 helmeted hardware
+> can become a mid/late control puzzle once a way to knock a shield off is earned. The checkpoint/tank/
+> flyover SCENES + the pursuit mechanics (M41) stage on this spine.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-074 — **§A4.10/§A5 THE FLEET (the
 > traversal capstone).** The control power SCALES up the chapters (ADR-035 staging,
 > `FLEET_STAGES`): cars (Ch.3) → trucks/buses/machinery (Ch.5) → boats (Ch.8) →

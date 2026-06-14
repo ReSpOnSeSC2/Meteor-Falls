@@ -1856,6 +1856,32 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "* (The boat home runs whenever you're ready. Bert's at the Brickton docks with a sky to sell you.)",
   ],
 
+  /* ---------------- THE ARMY ON OUR TAIL (S19 M40, §A6) ----------------
+   * GENERAL BUCKLE — one obsession: doing everything BY THE BOOK. He quotes
+   * subsection numbers, he is sincerely sure, and he is sincerely wrong. The
+   * army is bumbling-earnest, never the Hush; nobody is the villain here. The
+   * per-chapter scene staging (checkpoint map, tank route, flyover) rides these. */
+  army_misread: [
+    '@HALT. By the authority of Field Regulation Twelve, you are detained for theft of a military prototype.',
+    '@A classified signal pinged Outpost Buckle at oh-six-hundred. The trail leads to... five children. And a dog.',
+    '@I have read the manual TWICE. The manual does not cover this. I am improvising, which I HATE.',
+    "@(He squints at Milo's remote.) ...That is the prototype. It must be. Nothing that small should work that well.",
+  ],
+  army_misread_recruit: [
+    '@Psst. Kid. The General means well. He alphabetized the tank.',
+    "@I just want to go home. My mom makes this casserole. You wouldn't understand. ...Do you? You do, huh.",
+  ],
+  army_clearing: [
+    '@(General Buckle watches the real signal resolve on the screen — not the kids. The quiet thing. The Hush.)',
+    '@...Subsection Twelve, paragraph four. "When an officer is wrong, he says so. Out loud. To the wronged party."',
+    '@I was wrong. Out loud. To you. I chased the wrong tail clean across two countries, and I am SORRY.',
+    '@The whole battalion stands down. And if that quiet thing ever needs answering — you call this number. We come running.',
+  ],
+  army_clearing_recruit: [
+    "@We're going home! The General cried a little. Said it was the wind. There was no wind.",
+    '@If you ever need an army that mostly waves, we are YOUR army. Tell your dog the tank says hi.',
+  ],
+
 };
 
 /**
