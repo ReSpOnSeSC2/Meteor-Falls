@@ -9,7 +9,7 @@
 import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { CAST, generateCharacterFrames, type CharacterSpec, type HairStyle, type TopStyle, type Build } from '../spritegen/characters';
+import { CAST, generateCharacterFrames, diagWalkBase, DIAG_ORDER, type CharacterSpec, type HairStyle, type TopStyle, type Build } from '../spritegen/characters';
 import { HEROES, type HeroId } from '../data/heroes';
 import { framesToCanvas } from '../spritegen/pixmap';
 import { standFrame, type Facing } from '../spritegen';
@@ -21,6 +21,10 @@ import { FACE_PICKS } from '../data/drafts/faces';
 import type { PartsSpec } from '../schemas';
 
 const PAGES = ['THE CAST', 'COMPANIONS', 'THE OPPOSITION', 'THE WORLD', 'REMIX A KID', 'THE FORGE'] as const;
+
+// ADR-096: the 8-way turn order — walking the compass clockwise so the lab's
+// cast/remix sprites rotate through every facing, diagonals included.
+const COMPASS8: readonly Facing[] = ['down', 'downright', 'right', 'upright', 'up', 'upleft', 'left', 'downleft'];
 
 const HAIR_STYLES: HairStyle[] = ['short', 'bob', 'sidepart', 'topknot', 'gray', 'none'];
 const TOP_STYLES: TopStyle[] = ['shirt', 'stripe', 'dress', 'gi', 'blazer', 'apron', 'pajama'];
@@ -289,6 +293,16 @@ export class SpriteLabScene extends Phaser.Scene {
         repeat: -1,
       });
     });
+    // ADR-096: the remix sheet now carries the four diagonal facings too
+    DIAG_ORDER.forEach((dir) => {
+      const base = diagWalkBase(dir);
+      this.anims.create({
+        key: `${key}-walk-${dir}`,
+        frames: [base, base + 1, base, base + 2].map((frame) => ({ key, frame })),
+        frameRate: 8,
+        repeat: -1,
+      });
+    });
     const old = this.remixSprite;
     this.remixSprite = this.add.sprite(85, 120, key, standFrame('down')).setScale(5);
     this.remixSprite.play(`${key}-walk-down`);
@@ -438,8 +452,8 @@ export class SpriteLabScene extends Phaser.Scene {
       this.castDirTimer += dtMs;
       if (this.castDirTimer > 1400) {
         this.castDirTimer = 0;
-        this.castDir = (this.castDir + 1) % 4;
-        const dir = (['down', 'left', 'right', 'up'] as const)[this.castDir];
+        this.castDir = (this.castDir + 1) % COMPASS8.length;
+        const dir = COMPASS8[this.castDir];
         this.castSprites.forEach((spr) => spr.play(`${spr.texture.key}-walk-${dir}`));
       }
     }
@@ -461,8 +475,8 @@ export class SpriteLabScene extends Phaser.Scene {
       this.remixDirTimer += dtMs;
       if (this.remixDirTimer > 1400 && this.remixSprite) {
         this.remixDirTimer = 0;
-        this.remixDir = (this.remixDir + 1) % 4;
-        const dir = (['down', 'left', 'right', 'up'] as const)[this.remixDir];
+        this.remixDir = (this.remixDir + 1) % COMPASS8.length;
+        const dir = COMPASS8[this.remixDir];
         const key = this.remixSprite.texture.key;
         this.remixSprite.play(`${key}-walk-${dir}`);
       }

@@ -1872,7 +1872,7 @@ export class BattleScene extends Phaser.Scene {
         ab.kind === 'gadget'
           ? gadgetDamage(ab.power, Math.random)
           : vibeDamage(ab.power, this.heroVibeS(h), Math.random);
-      const dmg = ab.kind === 'gadget' ? applyWeakness(raw, weak) : applyElement(raw, { weak, resist, holy });
+      const dmg = ab.kind === 'gadget' ? applyWeakness(raw, weak) : applyElement(raw, { weak, resist, holy, weakMul: t.def.weakMul });
       // Vibe Fire burns the Tick's latch away (§A6 Boss 1) — and so does
       // the OLD LIGHT (S12b/ADR-035, §A6 amended): the crater awakening is
       // the diegetic tutorial for the fight that follows it
@@ -2536,6 +2536,21 @@ export class BattleScene extends Phaser.Scene {
           // §A7 Ch.2 — the Step-Mask casts Shield on itself (halves physical)
           e.shield = 4;
           await this.fx.play('shield_snap', { targets: [this.foeTarget(e)] });
+          break;
+        }
+        case 'mend': {
+          // §A7 Ch.3 (ADR-099) — the Tea Poltergeist tops up the OTHER side's cups:
+          // hospitality, misfiled. It heals every STANDING ally enemy a little (never
+          // itself); alone, there is no one to pour for, so it does nothing.
+          const allies = this.enemies.filter((a) => a.alive && a !== e);
+          if (allies.length > 0) {
+            const amt = 18 + Math.floor(Math.random() * 10);
+            for (const a of allies) {
+              a.hp = Math.min(a.def.hp, a.hp + amt);
+              this.fx.popup(a.spr.x, a.spr.y - a.spr.height / 2 - 2, `+${amt}`, RAMP.GRASS);
+            }
+            AUDIO.sfx('heal');
+          }
           break;
         }
         case 'taunt':

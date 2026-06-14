@@ -5435,3 +5435,254 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   §A4.12 line), the Spice Box feeds the party, and enemies drop loot with identity. **S18 (M22 → M23 → M24) is
   COMPLETE — the forges built the world's writing, the weave gave its text a voice, and the verification proved
   the whole thing honest.** ☄️
+
+## ADR-095 — S18 (Movement 25): LAND ENGLAND — Ch.3 "A Very Foggy Term", PART 1 (maps + encounters + shops)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the first UNLANDED chapter begins to ship — the §A6 Old-World content track
+  OPENS. This movement lands the FIRST HALF of the Appendix-tip-2 seam: maps + encounters + shops. The
+  manifest stays `unlanded`; the STORY/BOSS half — Milo's join, THE FIRST BORROW awakening, the Trust
+  Thread, the Headmaster Mainframe, the Heartlight — flips `CHAPTER_MANIFESTS['3']` → `'shipped'` in the
+  follow-up movement, where the validator's live Ch.3 assertions switch on in the same commit, ADR-047.)
+- **The ADR number.** M24 took ADR-094; a grep confirms 094 is the highest, so this is **ADR-095**.
+- **Decision — THE ENGLAND OVERWORLD + DUNGEON (`src/data/maps_ch3.ts`, spread into MAPS via
+  `buildChapter3Maps`, the buildChapter2Maps precedent).** Ten live maps: LUCILLE (the biplane arrival
+  cutscene container), FOGGYBOTTOM-ON-TYNE (a damp stone town — `settlement: 'town'`, area `foggybottom`),
+  THE FOG ROAD (the moor lane), WINTERMOOR ACADEMY grounds (area `wintermoor`), THE OLD STONES (the §A6
+  Resonance Site), and the WINTERMOOR dungeon — three school floors + the DORM STEALTH WING (sight-cone
+  prefect patrols; a catch is a FIGHT, never a fail — the §A6 stealth-lite rule, the DOS PRODUCTIVITY-LOCK
+  precedent) + the BOILER ROOM (the §A4.11 PSI gate — freeze the coolant line; `psigates.ts`
+  `wintermoor_coolant`, obstacle/sign/`wintermoor_coolant` trigger placed, the freeze-cast wiring rides the
+  story half). Each settlement declares its `area` (MAP_AREA) so its banner wears the M22 `fraktur` glyph
+  script over its M25 stone skin (ADR-066/092); three §A4.5 picnic tables sit before the dungeon, pinned in
+  the validator's TABLES manifest. The §A6 boss room opens off floor 3's sealed office at the flip.
+- **Decision — THE 20 §A7 Ch.3 ENEMIES (`src/data/enemies.ts`).** The seed six (Prefect Drone, Possessed
+  Textbook, Fog Hound, Tea Poltergeist, Cricket Eleven, Greenhouse Creeper) + the Enemy Flow Law mix (4
+  road/field, 3 dungeon, 2 social, 2 rare, 2 late-pressure, 1 set-piece — the silent Invigilator). Each
+  carries a battle HOOK, an identity DROP that smells of THAT foe (economy-neutral, §A9; via M24's
+  `EnemyDef.drops`), and a place-specific DEATH LINE; the MAP TELL rides each one's encounter placement +
+  the maps' signs. They roam the maps' spawners + the dorm patrols. The §A7 canon manifest in
+  `content-validate` extends with all 20 (the ADR-017 rule). DEV-ART: each wears one of the SIX forged Ch.3
+  faces (ADR-046), composed via the part catalog into `ENEMY_BATTLE_ART` (satisfying the `wear` gate) under
+  a non-colliding `battle_ch3_*` key namespace, registered at BOOT (the minis through `composeMini`).
+  Bespoke per-enemy silhouettes are the art pass.
+- **Decision — HUSHED IS NOW A §A7 MOVE STATUS (`src/schemas` + BattleScene).** The Possessed Textbook's
+  pop quiz (and the Invigilator's "no talking") steal a hero's voice: `'hushed'` joins the `EnemyMove`
+  status enum + a one-branch apply in BattleScene's status case. The engine already modelled a hushed hero
+  (`HeroStatus.hushed`, `STATUS_LANDED`, `partyStatus`); this lets a standard §A7 foe inflict the Hush's
+  signature status, not only the finale. The textbook drops `honey_lozenge` — cause → cure (§A7). The Tea
+  Poltergeist's heal-the-enemy-side mechanic is DEFERRED to the combat/boss half (it pairs with the boss's
+  tools); for now it shields itself and flairs the misfiled hospitality.
+- **Decision — TWO Ch.3 SHOPS (`src/data/shops.ts`).** BOOTHE'S CHEMIST & TEAS (the town — the §A8 ch3
+  cures + tea-as-PP + damp-stone food + moor gear) and THE TUCK SHOP (the school — Milo's gun ladder
+  Pellet Popper → Spud Gun → Double-Barrel Sparker, the Gauss Lobber held back as the boss drop, + his
+  repaired-gizmo battle goods + rationed cocoa). The hardcoded Ch.1–2 "exactly 4 shops" canon check
+  GENERALISES to a per-chapter allowlist (the ADR-017 manifest rule applied to shops).
+- **Decision — A STALE GATE RETIRED (`content-validate` `links`).** A concurrent S18 refactor removed
+  `costa_estrella`'s clubhouse PROP (it duplicated `golf_resort`'s, ADR-059) but left the `links` gate
+  requiring `costa.props` to contain a `sprite:'clubhouse'`; the obsolete `costa needs the clubhouse` check
+  is retired (the door west to `golf_resort`, asserted above it, is the live link to the real clubhouse).
+- **Verification:** `npm run validate` GREEN — 34 enemies (§A7 Ch.1–3 + Bosses 1–2), 29 §A7 drops, 6 shops,
+  108 maps (the 10 hand-authored + the living-city auto-interiors), `foggybottom` + `wintermoor` area skins
+  & glyph scripts, three Ch.3 picnic placements pinned. `npx tsc --noEmit` clean. `npx vite build` clean.
+  `npm run balance` read by eye (the §A9 economy + fuel/ferry/rocket ladders sane; the Ch.3 boss TTK reads
+  at the flip, when the boss is live). Full `npx vitest run`: the Ch.3 content passes its suites — the only
+  failures are the CONCURRENT, in-development `occupyCity` "Living-City Law (S18)" feature (Brickton/Puerto
+  Sol at 71% enterable + the frozen-core door additions), independent of Ch.3. No FNV / `world_block` re-pin
+  from Ch.3 (the new maps are hand-authored, not frozen-core generators).
+- **Save migration:** NONE. Milo's join + the awakening + `ch3_complete` are flags (ride free, ADR-015); the
+  control-system save fields exist from S18–S20. No new persisted field is added in Part 1.
+- **Consequences:** the §A6 Old-World track is OPEN. The chapter is playable as an overworld + dungeon shell
+  (Lucille → Foggybottom → the fog road → the academy → the Old Stones; the school's three floors + the dorm
+  stealth wing + the boiler PSI gate), the 20 enemies roam it, and two shops sell the poured §A8 ch3 catalog.
+  PART 2 (the story/boss half) writes the §A11 dialogue beats (Milo's greenhouse crash + JOIN, the machine-
+  fog reveal, THE FIRST BORROW — Jay awakens `mindwarp_a`, the Trust Thread opens as the others recoil, the
+  Mainframe running the school like a factory), the HEADMASTER MAINFRAME boss (1,600 HP, summons two Prefect
+  Drones, Milo's Spy reveals the cooling-fan weak point, Vibe Freeze doubles damage) as a declarative phase
+  machine over the S14 interpreter, the five quests (#7 Overdue, #8 The Groundskeeper's Cuppa + three
+  regional slots), Milo's Repair tutorial + the Defibrillator, the PSI-cast wiring for the coolant gate, the
+  control system going live (the first FLEET_STAGE), the first Ember + Heartlight 3 — and FLIPS the manifest
+  to `'shipped'` (the live Ch.3 assertions switch on) + amends the Bible (§A6 Ch.3 LANDED) in that commit. ☄️
+
+## ADR-096 — THE DEPTH PASS, PART 1: 8-DIRECTION CHARACTERS (diagonal 3/4 facings)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (a "make the world feel 3D" pass, user-requested. PART 1 = characters; PART 2 = the
+  oblique vehicles, ADR-097. Both ship together.)
+- **The ADR number.** M25 took ADR-095; a grep confirms 095 is the highest, so this is **ADR-096**.
+- **Decision — THE DIAGONAL SHEET (append-only, `spritegen/characters.ts`).** The 24×32 sheet GROWS from 24
+  to 44 frames: the ADR-009 walk block (0–15) and the ADR-040 run block (16–23) are UNTOUCHED LAW; the four
+  3/4 diagonal facings append at 24–43 (`downright/downleft/upright/upleft`, each WALK = stand/stepA/stepB at
+  24–35, RUN at 36–43; left facings are the flipX of right). A diagonal frame STITCHES the FRONT|BACK frame's
+  far half to the SIDE frame's near half at the centerline — so the head + torso read as TURNED — then, for
+  the face-visible DOWN diagonals, wipes the two mismatched stitched eyes and redraws ONE coherent 3/4 eye
+  pair (both crowded toward the near side, the far eye foreshortened) + nose on the near edge. Zero new
+  hand-authored art; every hat/glasses/satchel/build carries over. `generateCharacterFrames` stays the one
+  factory; `diagWalkBase`/`diagRunBase` pin the new contract (the `characters.test.ts` law).
+- **Decision — 8-WAY FACING THROUGH THE ENGINE (`spritegen/index.ts`, OverworldScene).** `Facing` widens to
+  eight (cardinals + diagonals); `standFrame` and a new `FACING_VEC`/`facingFromVec`/`facing8` cover all
+  eight. `addCharacter` registers the diagonal walk+run anims for every cast id. The OverworldScene already
+  MOVED diagonally (the input vector was normalized) — it just threw the diagonal away; now it KEEPS it
+  (`facingFromVec` for the discrete player, `facing8` with a 40% threshold for continuous NPC/roamer/patrol
+  velocities — wanderers gained diagonal headings too). Followers inherit it free (they replay the leader's
+  crumb facings). The save's `facing` field widens (no migration — old cardinal values stay valid). The
+  Sprite Lab cycles all eight (the `COMPASS8` order). `GameStateData.facing` stays inlined (Phaser-free).
+
+## ADR-097 — THE DEPTH PASS, PART 2: OBLIQUE 3D VEHICLES (per-direction, seat-fit-scaled)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (PART 2 of the ADR-096 depth pass — the cars stop being cardboard cutouts.)
+- **The ADR number.** Part 1 took ADR-096; this is the paired **ADR-097**.
+- **Decision — PROFILE-EXTRUDE OBLIQUE (`spritegen/vehicles.ts`).** The flat side-elevation car/box/truck
+  draws (`drawCarBody/drawNikolai/drawBox/drawTruck`) are RETIRED. Every four-wheeler now renders through a
+  shared pipeline: build a clean side PROFILE, EXTRUDE its top + front edges up-right by `depth` (top edges
+  sweep into the lit roof/hood plane, right edges into the shaded front face — the building-roof oblique on
+  wheels), then add the near-flank windows + wheels (near pair + a small far pair). A matching FRONT and BACK
+  face (`vehFace`) gives the per-direction art. Bodies live in `CAR_BODIES`, sized so the 24×32 cast VISIBLY
+  fits (a sedan ≈ 2.5 kids long, a bus swallows the party — §A4.10 seat-fit is now a visual truth). Gameplay
+  fields (`cls/seats/terrain/hardened/selfDrive`) are untouched; only art (`w/h/solid/draw`) changed, so the
+  control/fuel/fleet/dealership/military specs + their tests stay green. `drawVehicle` returns the SIDE view
+  (frame 0) for every static use; `drawVehicleViews` returns [side, front, back] for the oblique types.
+- **Decision — TURN BY TEXTURE, NOT BY ROTATION (index.ts + OverworldScene traffic).** A 3/4 sprite can't be
+  rotated 90° onto a vertical avenue and still read, so the SIDE view registers under the base name and
+  `<name>_front`/`<name>_back` register beside it (all three padded to one frame size). The traffic renderer
+  swaps texture by travel direction (E/W = side ±flipX, S = front, N = back) for any vehicle that HAS the
+  `_front` texture, and falls back to the legacy rotate for the one-view types (bikes, boats, planes,
+  machinery, military). `TRAFFIC_SCALE` drops 1.7 → 1.35 since the native art is bigger. A soft CONTACT
+  SHADOW (`mob_shadow`, pooled per-actor in OverworldScene) now sits under every WALKING actor — the single
+  biggest 2D→3D grounding cue; vehicles keep their baked `shadowUnder`. ☄️
+
+## ADR-098 — THE LIVING-CITY PASS OWNS THE CITY IT GENERATES (occupy tenants the canon cores; frozen-core guards GROWTH)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (resolves the occupy ↔ frozen-core/ATM conflict surfaced when the Living-City pass went
+  every-settlement — re-scopes the strict reading of the ADR-049 frozen-core proof.)
+- **The ADR number.** ADR-097 was the highest; this is **ADR-098**.
+- **Context.** The Living-City pass (`occupyCity`, the "no dead facades" law) was rewired to run on EVERY
+  settlement with an id-derived seed. That unmasked a real conflict: occupy auto-doors ~90% of a city's
+  DOORLESS `bldg_` facades — but Brickton (16 core facades, 12 doorless incl. 2 banks) and Puerto Sol (10 core,
+  6 doorless) carry hand-authored CANON cores, and the ADR-049 world-block proof demands those core props stay
+  BYTE-IDENTICAL. occupy adding a door MUTATES a core prop → 2 frozen-core tests red; and it doored
+  `bldg_bank`, which S4/ADR-016 keeps sealed behind its ATM → the ATM test red. The numbers make the tension
+  exact: a byte-frozen core caps Brickton at 63% / Puerto Sol at 67% enterable — under the 75% Living-City Law.
+  You cannot have both a byte-frozen core AND a living one. (Otterbrook has 0 core facades, so it never
+  conflicted — its frozen-core proof stayed green throughout.)
+- **Decision — THE LIVING-CITY PASS WINS, AND OWNS WHAT IT GENERATES.** A city should feel alive (its cantina,
+  casas and pensions OPEN), so occupy is allowed to tenant the canon cores too. The ADR-049 "frozen core" proof
+  is re-scoped to what it was really for — catching accidental GROWTH regressions — by splitting the props
+  check into two halves in `world_block.test.ts`: (1) GROWTH keeps the core byte-identical PRE-occupy
+  (`growBrickton()` vs `buildBrickton()`), and (2) the live map's core props match the core MODULO the `door`
+  field (`propsModuloDoors`) — proving occupy only GRAFTS doors, never moves, drops, or relabels a canon prop.
+  Grid, npc, sign, trigger and door prefixes are untouched by occupy and stay pinned to the live map.
+- **Decision — SEALED FACADES (`citylife.ts`).** A facade can be doorless ON PURPOSE — a bank fronts an ATM,
+  not an apartment. `SEALED_FACADE_SPRITES` (currently `bldg_bank`) are ALWAYS in occupy's locked set (a knock,
+  never an auto-door), on top of the deterministic ~10% lock. So the Brickton SAVINGS & LOAN stays shut behind
+  its ATM (the ADR-016 canon holds) and the ATM test passes unchanged.
+- **Consequences.** Brickton ~92% / Puerto Sol ~90% enterable; banks sealed; the Living-City Law and the ATM
+  test are UNCHANGED. "Frozen core" now means *frozen through growth, before the tenancy pass* — the shipped
+  core's facades may carry occupy's doors, which is intended. New intentionally-sealed canon facades just join
+  `SEALED_FACADE_SPRITES`. (A doored canon facade still needs a walkable doorstep; the map-quality validator
+  enforces that at build time.) ☄️
+
+## ADR-099 — S18 (Movement 26): LAND ENGLAND — Ch.3 "A Very Foggy Term", PART 2 (story + boss + the FLIP)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the §A6 Old-World track's FIRST fully-landed chapter — the SOUL half of the
+  Appendix-tip-2 seam. PART 1 (ADR-095) shipped the maps/encounters/shops with the manifest still
+  `unlanded`; this movement writes the §A11 story beats, promotes the boss, authors the five quests,
+  wires the control/PSI/heal-allies systems, fixes the live clubhouse-door bug, and FLIPS
+  `CHAPTER_MANIFESTS['3']` → `'shipped'` — the validator's live Ch.3 assertions switch on in the same
+  commit, ADR-047.)
+- **The ADR number.** ADR-095 (Ch.3 PART 1) was the highest when this work began, but the user's
+  CONCURRENT depth-pass + living-city work took **096/097/098** mid-flight; a grep confirms 098 is now
+  the highest, so this movement is **ADR-099** (the prompt's "use 096" pre-dated those). Every Ch.3
+  Part-2 source comment carries `ADR-099`; the 8-direction facing refs stay `ADR-096` (untouched).
+- **Decision — THE STORY, in §A11 voice (`src/data/dialogue.ts`).** The arrival (Uncle Bert's "Lucille"
+  drops through the machine-fog onto the Foggybottom quay), MILO'S GREENHOUSE CRASH + JOIN (the party
+  becomes THREE), the homesick-for-a-dad ache (the Professor Pemberton seed, Ch.10 — played straight),
+  the machine-fog reveal (the Mainframe runs the school like a factory and MAKES the fog), the Headmaster
+  Mainframe beats (institution-as-monster; the genuinely-Hush line underneath stays sparse/lowercase/
+  wrong, never funny, §A11.3), and HEARTLIGHT 3 at the Old Stones. Flair stays rare (one `{g:gear}` on
+  Milo's gadget glee; none on the dread/sincere/Heartlight beats). The Part-1 ambient lines already
+  SEEDED every payoff (the grading pillar box, the rambler's footpath, the penny-fog boy, the eleven caps
+  that can't stop, the librarian's three books, the groundskeeper's cold thermos, "bits a clever lad
+  could make something of") — this half pays them off.
+- **Decision — THE CONTROL SYSTEM goes live, SCRIPTED (§A4.10/ADR-068).** On Milo's join the party hits
+  three and Jay AWAKENS VIBE PUPPET / Mind Warp — the engine ability `mindwarp_a`, the awakening
+  `the_first_borrow` (dialogue `awake_the_first_borrow`, pre-seeded in PART 1 + already pinned in the
+  awaken manifest) — staged as the diegetic teach: he PUPPETS the gate-guard porter (`wm_porter`) past
+  the lodge, and THE TRUST THREAD OPENS (`thread_trust_open`, §A6/ADR-072 — the others pull back a
+  half-step; the recoil is written into the awakening beat itself, played STRAIGHT). Milo builds THE
+  CLICKER and cars become the first FLEET_STAGE (`milo_clicker` + `fleet_road` markers). **Scope (per
+  ADR-068's own consequences):** the interactive free-roam puppet/drive/clicker WHEEL UI is the later
+  movement that builds on the M27 engine spine; this movement ships the SCRIPTED beats (the awakening +
+  the porter borrow fire in a real scene; battle Mind Warp/Spy/Repair/Bottle-Rocket are live on Milo's
+  join), satisfying the done-when ("fire in real scenes"). The DEAD-AIR HELMET stays the one counter.
+- **Decision — BOSS 3 PROMOTED: HEADMASTER MAINFRAME (`src/data/bosses.ts` + `enemies.ts`).** The forge
+  `summoner` draft is promoted to a LIVE boss-flagged §A7 enemy (`boss:true`, hp 1600, `mind_immune`,
+  level 18, `weakness:['freeze']`, `weakMul:2`) + a hand-written `BOSS_SCRIPTS` declarative phase machine
+  over the S14 interpreter (open: summon two Prefect Drones; refill: a fresh pair the instant both are
+  down, forever; overclock at 40% HP: a flavor scriptLine, NO new mechanic — the doubled-speed desperation
+  stays the Paper Dragon's identity, kept distinct). Milo's SPY reveals the cooling-fan weak point and Vibe
+  FREEZE literally DOUBLES the hit (§A6) — that rides the ENEMY's data, not the script: the generic §A7
+  weakness is ×1.5, so the boss carries a new optional `weakMul: 2` override (ADR-099 — `ElementHit.weakMul`
+  in `battle/formulas.ts`, defaulted to `WEAK_MUL`) that makes "doubles" literal on the one foe §A6 names it
+  for. Every other enemy keeps ×1.5. The draft is removed from `DRAFT_BOSS_SCRIPTS` + `DRAFT_BOSS_IDS` (Prime Law 1 — a draft may not
+  duplicate a shipped script/enemy); the §A7 canon HP map + the boss:true list gain it; the gimmick is
+  integration-tested headlessly on its REAL script (`phases.test.ts`, +3). Dev-art: it wears the §A7
+  lurker face (`battle_ch3_lurker_3`, an explicit `ENEMY_BATTLE_ART` row) — the bespoke server-colossus
+  silhouette is the dedicated art pass (Prompt 41). The Gauss Lobber is its boss drop, handed in the
+  victory beat (story gear, ADR-035), not `EnemyDef.drops`.
+- **Decision — FIVE §A10 QUESTS (`src/data/quests.ts` + the manifest + the §A10 validator manifest).** #7
+  Overdue (librarian → Library Card + the First Edition bonus) and #8 The Groundskeeper's Cuppa (→ Thermos)
+  + the Flow-Law trio: Return to Sender (local-person; the pillar box → Commemorative Tin), The Penny Fog
+  (hidden-place; the boy's Roman drain → caller+flag), The Last Over (sincere; the cricket match the term
+  won't let end → caller+flag, the XI go home once Mr. Stumps is freed AND the Mainframe's clock stops).
+  Rewards REUSE the live §A8 ch3 catalog (no new ITEMS row, no icon/band cascade); two are caller+flag
+  (the Paperboy precedent, ADR-073). Each adds a finale CALLER. Two new NPCs (`cricket_captain`,
+  `wm_umpire`); the "find" steps fire as active-quest walk triggers (the `walk_token` precedent) routed
+  through one `questPickup` table; the givers mirror `tallyBeat` (`completeQuest` = reward + ledger).
+- **Decision — THE TEA POLTERGEIST'S DEFERRED HEAL (`'mend'`).** ADR-095 deferred its §A7 "heals the
+  enemy side" mechanic; it lands as a new `MoveKind` `'mend'` (schema + a one-branch BattleScene apply
+  that heals every STANDING ally enemy a little, never itself — alone, it does nothing) on the
+  "one more cup?" move, pinned both directions in the validator.
+- **Decision — THE §A4.11 PSI GATE wired (`coolantGate` in OverworldScene, over `engine/psi` + the
+  `wintermoor_coolant` gate).** A real overworld FREEZE cast: taught-first (the party's known abilities
+  are read via `availableAbilities`; Mia learned Vibe Freeze in Ch.2 — `canClearGate`/`bestCastFor`), the
+  no-key branch is the no-soft-lock floor, non-missable + retry-safe (no cooldown, no fail). Freezing the
+  coolant line opens the fog-engine beat (Milo throttles the machine-fog down) + a Broken-Gizmo salvage
+  (Milo's Repair fuel). MILO'S REPAIR TUTORIAL is staged at his join: a Broken Gizmo becomes the §A4.12
+  Defibrillator (already in the ch3 catalog).
+- **Decision — THE FLIP (ADR-047).** `CHAPTER_MANIFESTS['3'].status` → `'shipped'`; `dungeon.site` drops
+  away for live `dungeon.maps` (the 5 wintermoor interiors); `maps` fills with the 5 overworld maps; the
+  settlement `style` drops; `quests` lists all 5. The validator's shipped branch switches on in the same
+  commit (every map live in MAPS, the boss a live boss-flagged §A7 enemy at canon HP with a BOSS_SCRIPTS
+  entry, quests live + tagged ch3 both directions). The draft-claimed check stays consistent
+  (`DRAFT_BOSS_SCRIPTS` ≡ `DRAFT_BOSS_IDS`, both minus the Mainframe).
+- **Decision — THE LINKS CLUBHOUSE DOOR (the live gameplay bug), the ADR-051 way.** Hand-placed landmark
+  `drawHouse` props (the golf resort's grand clubhouse, gatehouse, three mansions) now COLLIDE AS THEIR
+  REAL DRAWN FOOTPRINT: a new `LANDMARK_FACADE_SPRITES` set (`spritegen/buildings.ts`) routes them through
+  the SAME texture-derived `facadeSolids`/`facadeDoorBox` rebuild every `bldg_*` facade gets (extending the
+  existing condition, not hand-tuning a rect). `clubhouse_grand` (an 8×3 house carrying only a 30px data
+  band) no longer lets you walk through its lower body, and its door transition fires at the drawn door's
+  mouth (the texture-true entrance zone), not too deep. The §B4 building laws (ADR-050/051/052/053) hold;
+  pinned in `maps.test.ts`. City Hall is a `bldg_` facade already; the small Ch.1–2 houses keep their
+  tuned data solids (they don't drift).
+- **Save migration:** NONE. Milo's join is a party push created at join-time + a flag (`milo_joined`); the
+  awakening (`awake_mindwarp_a`), `thread_trust_open`, `ch3_complete`, the quest flags, `wm_coolant_frozen`,
+  `milo_clicker`/`fleet_road`, and `wm_gate_open` all ride the ADR-015 flags ledger free. No new persisted
+  field, so no version bump (the control-system save fields + the v9→v10 `awake_mindwarp_a` backfill
+  already shipped in ADR-068).
+- **Verification:** `npm run validate` GREEN (35 enemies — §A7 Ch.1–3 + Bosses 1–3 · 13 quests · 113 maps
+  · ch3:43 items · **10 chapter manifests, 3 shipped · 7 unlanded**). `npx tsc --noEmit` clean. The boss
+  gimmick + the clubhouse fix are vitest-pinned (`phases.test.ts` +3, `maps.test.ts` +3). `npx vite build`
+  + full `npx vitest run` + `npm run balance` read at the close of this movement (the only acceptable reds
+  are the user's in-flight occupyCity/living-city cases, independent of Ch.3). §A6/§A4.10 amended in the
+  same commit (Appendix rule 6).
+- **Consequences:** the §A6 Old-World track has its FIRST fully-shipped chapter — playable Lucille →
+  Foggybottom → the moor → Wintermoor (the school dungeon + the dorm stealth wing + the boiler PSI gate) →
+  the Mainframe → the Old Stones, with Milo joining, the Puppet awakening + Trust Thread opening in real
+  scenes, five non-missable quests feeding the finale ledger, and the §A4.11 freeze-cast castable. The
+  slice is provably completable Ch.1 → Ch.2 → Ch.3 (the manifest assertions + the headless boss test). The
+  interactive control WHEEL, the bespoke Mainframe silhouette (Prompt 41), and a hard-blocking PSI-gate BFS
+  re-proof are the named follow-ups. ☄️

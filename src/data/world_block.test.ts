@@ -23,6 +23,12 @@ function coreRegionMatches(grown: MapDef, core: MapDef): void {
   }
 }
 
+/** occupy (the Living-City tenancy pass, ADR-098) may GRAFT a door onto a canon facade
+ *  but must never move, drop, or relabel one. The props proof drops the door field, so
+ *  position/sprite/solid stay byte-identical while doors are free to appear. */
+const propsModuloDoors = (props: MapDef['props']): string =>
+  JSON.stringify(props, (k, v) => (k === 'door' ? undefined : v));
+
 /** the grown map's arrays START with the core's, unchanged (top-left anchored) */
 function corePrefixUnchanged(grown: MapDef, core: MapDef): void {
   expect(JSON.stringify(grown.props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
@@ -213,7 +219,9 @@ describe('BRICKTON — the 2077 core is frozen (≈4× sprawl, stays a city)', (
   it('every 2077 core prop/npc/sign/trigger keeps its coordinates', () => {
     const core = buildBrickton();
     const grown = MAPS.brickton;
-    expect(JSON.stringify(grown.props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
+    // GROWTH keeps the core byte-identical (pre-occupy); occupy then only grafts doors (ADR-098).
+    expect(JSON.stringify(growBrickton().props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
+    expect(propsModuloDoors(grown.props.slice(0, core.props.length))).toBe(propsModuloDoors(core.props));
     expect(JSON.stringify(grown.npcs.slice(0, core.npcs.length))).toBe(JSON.stringify(core.npcs));
     expect(JSON.stringify(grown.signs.slice(0, core.signs.length))).toBe(JSON.stringify(core.signs));
     expect(JSON.stringify(grown.triggers)).toBe(JSON.stringify(core.triggers)); // the two stories' flags + payphone ring, untouched
@@ -279,7 +287,9 @@ describe('PUERTO SOL — the 1898 core is frozen (≈3× dock-district growth, s
   it('every 1898 core prop/npc/sign keeps its coordinates; triggers stay a prefix', () => {
     const core = buildPuertoSol();
     const grown = MAPS.puerto_sol;
-    expect(JSON.stringify(grown.props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
+    // GROWTH keeps the core byte-identical (pre-occupy); occupy then only grafts doors (ADR-098).
+    expect(JSON.stringify(growPuertoSol().props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
+    expect(propsModuloDoors(grown.props.slice(0, core.props.length))).toBe(propsModuloDoors(core.props));
     expect(JSON.stringify(grown.npcs.slice(0, core.npcs.length))).toBe(JSON.stringify(core.npcs));
     expect(JSON.stringify(grown.signs.slice(0, core.signs.length))).toBe(JSON.stringify(core.signs));
     // the boat round-trip triggers stay FIRST + unchanged; the malecón beat appends

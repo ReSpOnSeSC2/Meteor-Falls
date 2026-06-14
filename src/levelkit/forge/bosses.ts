@@ -110,8 +110,9 @@ export interface SummonerOpts {
 /**
  * The §A6 Ch.3 Headmaster Mainframe: summons a fresh wave the instant every
  * minion is down, forever (bothSummonsDead, repeatable). The "Spy reveals a
- * cooling-fan weak point — Vibe Freeze ×2" lives on the DRAFT enemy's weakness
- * table, not the script (the §A7 weakness system already doubles it).
+ * cooling-fan weak point — Vibe Freeze ×2" lives on the ENEMY's data, not the
+ * script: a freeze weakness (super-effective ×1.5) + a `weakMul: 2` override make
+ * the freeze hit literally double on the live boss (ADR-099); the script stays pure.
  */
 export function summoner(boss: Boss, o: SummonerOpts): BossScriptDef {
   return {

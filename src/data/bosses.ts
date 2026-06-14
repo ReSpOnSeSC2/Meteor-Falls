@@ -74,4 +74,42 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
       },
     ],
   }),
+
+  // BOSS 3 — §A6 Ch.3: HEADMASTER MAINFRAME (1,600 HP), promoted from the forge
+  // 'summoner' draft (ADR-046) at the landing. It summons two PREFECT DRONES on the
+  // first turn and a fresh pair the instant both are down, FOREVER (bothSummonsDead,
+  // repeatable). Milo's SPY reveals the cooling-fan weak point and Vibe FREEZE DOUBLES
+  // the hit — that rides the live enemy's data, not the script: weakness ['freeze'] +
+  // `weakMul: 2` (enemies.ts) make a freeze hit literally ×2 (the generic §A7 weakness is
+  // ×1.5). The 40%-HP OVERCLOCK is the machine's last bluster: flavor only, no new
+  // mechanic — the canon gimmick is the summon loop, and the doubled-speed desperation
+  // stays the Paper Dragon's identity (Ch.8), kept distinct. The Hush bleeding through
+  // mainframe_open is never funny (§A11.3); the bureaucratic horror around it is.
+  headmaster_mainframe: B({
+    boss: 'headmaster_mainframe',
+    phases: [
+      {
+        id: 'open',
+        trigger: { kind: 'turnCount', n: 1 },
+        actions: [
+          { kind: 'scriptLine', line: 'mainframe_open' },
+          { kind: 'summon', enemy: 'prefect_drone', n: 2 },
+        ],
+      },
+      {
+        id: 'refill',
+        trigger: { kind: 'bothSummonsDead' },
+        once: false,
+        actions: [
+          { kind: 'scriptLine', line: 'mainframe_refill' },
+          { kind: 'summon', enemy: 'prefect_drone', n: 2 },
+        ],
+      },
+      {
+        id: 'overclock',
+        trigger: { kind: 'hpBelow', frac: 0.4 },
+        actions: [{ kind: 'scriptLine', line: 'mainframe_overclock' }],
+      },
+    ],
+  }),
 };

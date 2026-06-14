@@ -42,6 +42,7 @@ import { GLYPH_SCRIPT, SCRIPT_CATALOG, areaGlyphRun } from '../src/spritegen/gly
 import { GLYPH_TOKENS, FLAIR_BY_ELEMENT, FLAIR_BY_RESULT, glyphRegistryNames, flairGlyph } from '../src/spritegen/flair';
 import { REGION_RAMPS } from '../src/spritegen/iconforge';
 import { BUILDING_DIMS } from '../src/levelkit/kit';
+import { livingCityViolations } from '../src/levelkit/metrics';
 import { VEHICLE_CATALOG, VEHICLE_SPECS, usableSeats } from '../src/spritegen/vehicles';
 import { PSI_GATES, GATE_KEY, PSI_DUNGEON_BANDS } from '../src/data/psigates';
 import { abilitiesForKey } from '../src/engine/psi';
@@ -1118,6 +1119,8 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     head_prefect: 175,
     boiler_golem: 190,
     the_invigilator: 210,
+    // BOSS 3 (ADR-099) — promoted from the forge draft to a live §A7 enemy at the flip
+    headmaster_mainframe: 1600,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1130,7 +1133,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   for (const id of Object.keys(ENEMIES)) {
     if (!(id in canon)) fail('canon', `'${id}' is not in the §A7 Ch.1–2 + Boss manifest — extend the manifest with its chapter, never ad-hoc`);
   }
-  for (const bossId of ['titanic_tick', 'gilded_grin']) {
+  for (const bossId of ['titanic_tick', 'gilded_grin', 'headmaster_mainframe']) {
     if (ENEMIES[bossId] && ENEMIES[bossId].boss !== true) {
       fail('canon', `§A6: ${bossId} must carry boss: true`);
     }
@@ -1141,6 +1144,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   if (!moveKind('pickpocket_parrot', 'stealcash')) fail('canon', `pickpocket_parrot needs its 'stealcash' move (§A7: steals cash)`);
   if (!moveKind('gilded_beetle', 'gild')) fail('canon', `gilded_beetle needs its 'gild' move (§A7: gold form)`);
   if (!moveKind('step_mask', 'shield')) fail('canon', `step_mask needs its 'shield' move (§A7: casts Shield)`);
+  // §A7 Ch.3 (ADR-099): the Tea Poltergeist's deferred mechanic is now LIVE — it MENDS
+  // the enemy side (hospitality misfiled); the Possessed Textbook + Invigilator HUSH.
+  if (!moveKind('tea_poltergeist', 'mend')) fail('canon', `tea_poltergeist needs its 'mend' move (§A7 Ch.3: heals the enemy side — ADR-099)`);
+  if (!moveKind('possessed_textbook', 'status') || !ENEMIES.possessed_textbook?.moves.some((m) => m.status === 'hushed')) {
+    fail('canon', `possessed_textbook needs a Hushed move (§A7 Ch.3)`);
+  }
   if (!ENEMIES.jungle_jitterbug?.moves.some((m) => m.status === 'paralyzed')) {
     fail('canon', `jungle_jitterbug needs a Paralyze move (§A7)`);
   }
@@ -1349,7 +1358,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist']);
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -1467,6 +1476,59 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       rewardItem: 'captains_button',
       doneFlag: 'q_crate_done',
       caller: { name: 'The Tallyman', kind: 'heal', power: 380 },
+    },
+    // ── CHAPTER 3 (ADR-099) — §A10 #7 Overdue, #8 The Groundskeeper's Cuppa, + the
+    //    three Flow-Law regional slots. Two are caller+flag (no rewardItem, the
+    //    Paperboy precedent ADR-073). Rewards reuse the live §A8 ch3 catalog. ──
+    overdue: {
+      name: 'Overdue',
+      chapter: 3,
+      giver: 'wm_librarian',
+      startFlag: 'q_overdue',
+      objectiveFlags: ['q_overdue_b1', 'q_overdue_b2', 'q_overdue_b3', 'q_overdue_reported'],
+      rewardItem: 'library_card',
+      doneFlag: 'q_overdue_done',
+      caller: { name: 'The Librarian', kind: 'heal', power: 400 },
+    },
+    groundskeepers_cuppa: {
+      name: "The Groundskeeper's Cuppa",
+      chapter: 3,
+      giver: 'wm_groundskeeper',
+      startFlag: 'q_cuppa',
+      objectiveFlags: ['q_cuppa_leaves', 'q_cuppa_milk', 'q_cuppa_water', 'q_cuppa_brewed'],
+      rewardItem: 'thermos',
+      doneFlag: 'q_cuppa_done',
+      caller: { name: 'The Groundskeeper', kind: 'heal', power: 410 },
+    },
+    return_to_sender: {
+      name: 'Return to Sender',
+      chapter: 3,
+      giver: 'fb_postmistress',
+      startFlag: 'q_sender',
+      objectiveFlags: ['q_sender_l1', 'q_sender_l2', 'q_sender_l3', 'q_sender_reported'],
+      rewardItem: 'commemorative_tin',
+      doneFlag: 'q_sender_done',
+      caller: { name: 'The Postmistress', kind: 'damage', power: 440 },
+    },
+    penny_fog: {
+      name: 'The Penny Fog',
+      chapter: 3,
+      giver: 'fb_boy',
+      startFlag: 'q_penny',
+      objectiveFlags: ['q_penny_found', 'q_penny_reported'],
+      rewardItem: undefined,
+      doneFlag: 'q_penny_done',
+      caller: { name: 'The Penny-Fog Boy', kind: 'damage', power: 420 },
+    },
+    the_last_over: {
+      name: 'The Last Over',
+      chapter: 3,
+      giver: 'cricket_captain',
+      startFlag: 'q_over',
+      objectiveFlags: ['q_over_umpire', 'q_over_clock', 'q_over_called'],
+      rewardItem: undefined,
+      doneFlag: 'q_over_done',
+      caller: { name: 'The Cricket Captain', kind: 'damage', power: 450 },
     },
   };
   for (const [id, pin] of Object.entries(canon)) {
@@ -2637,16 +2699,24 @@ function sweepPlaceholders(section: string, node: unknown, path: string): void {
 }
 sweepPlaceholders('§B4', { HEROES, ABILITIES, PRAY_TEXT, ENEMIES, ITEMS, SHOPS, QUESTS, MAPS, DIALOGUE, BATTLE_TEXT, ARCADE_TEXT, TEAMS, WALK_ONS, HOOPS_TEXT, AWAKENINGS, NEW_GAME_ENTRIES, HOLES, GOLFERS, LINKS_TEXT }, 'data');
 
+/* ================= Living-City Law (S18) — no dead settlements ================= */
+// Every settlement must run through occupyCity: ~most facades enterable, and every
+// locked one answers a knock. A new city that forgets the pass FAILS the build here.
+for (const m of Object.values(MAPS)) {
+  if (!m.settlement) continue;
+  for (const v of livingCityViolations(m)) fail('living-city', v);
+}
+
 /* ================= verdict ================= */
 
 const counts = [
   `${Object.keys(HEROES).length} heroes`,
   `${Object.keys(ABILITIES).length} abilities`,
-  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–3 + Bosses 1–2)`,
+  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–3 + Bosses 1–3)`,
   `${Object.values(ENEMIES).reduce((a, e) => a + (e.drops?.length ?? 0), 0)} §A7 drops`,
   `${Object.keys(ITEMS).length} items (${Object.keys(ITEM_ICON).length} icons) across 10 chapters`,
   `${Object.keys(SHOPS).length} shops`,
-  `${Object.keys(QUESTS).length} quests (§A10 #1–6 + the Long Walk register + the dock crate)`,
+  `${Object.keys(QUESTS).length} quests (§A10 #1–8 + the Long Walk register, the dock crate, and the three England regionals)`,
   `${Object.keys(MAPS).length} maps`,
   `${CANON_AREAS.length} area skins`,
   `${Object.keys(GLYPH_SCRIPT).length} area glyph scripts (${SCRIPT_CATALOG.length} families)`,

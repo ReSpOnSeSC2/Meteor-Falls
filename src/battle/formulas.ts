@@ -260,11 +260,16 @@ export interface ElementHit {
   resist?: boolean;
   /** the hit is `holy` (Starsong / Pray) — pierces a slice of resistance */
   holy?: boolean;
+  /** ADR-099: a per-enemy override for the WEAKNESS multiplier (default WEAK_MUL=1.5).
+   *  §A6 Ch.3 says "Vibe Freeze DOUBLES damage" on the Headmaster Mainframe's cooling-fan
+   *  weak point — so that boss carries `weakMul: 2` and a freeze hit literally doubles,
+   *  while every other foe keeps the generic ×1.5. Ignored unless the hit is `weak`. */
+  weakMul?: number;
 }
 
 /** the weak/resist/holy multiplier on one hero→enemy hit */
-export function elementMultiplier({ weak = false, resist = false, holy = false }: ElementHit): number {
-  if (weak) return WEAK_MUL; // a weakness wins outright, even a "resisted" holy
+export function elementMultiplier({ weak = false, resist = false, holy = false, weakMul }: ElementHit): number {
+  if (weak) return weakMul ?? WEAK_MUL; // a weakness wins outright, even a "resisted" holy
   if (resist) return holy ? HOLY_PIERCE_MUL : RESIST_MUL; // holy pierces half the resist
   return 1;
 }

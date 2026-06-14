@@ -114,7 +114,7 @@ import {
   drawChalkBoard,
 } from './tiles';
 import { GENERATED_BUILDINGS } from './buildings';
-import { VEHICLE_CATALOG, drawVehicle } from './vehicles';
+import { VEHICLE_CATALOG, drawVehicleViews } from './vehicles';
 import { ITEM_ICON, itemIconKey } from './icons';
 import { GLYPH_SCRIPT, areaGlyphRun, glyphBannerKey } from './glyphforge';
 import { GLYPH_TOKENS, flairGlyph, flairGlyphKey } from './flair';
@@ -280,6 +280,19 @@ export function facingFromVec(dx: number, dy: number): Facing {
   if (dx === 0) return dy > 0 ? 'down' : 'up';
   if (dy === 0) return dx > 0 ? 'right' : 'left';
   return `${dy > 0 ? 'down' : 'up'}${dx > 0 ? 'right' : 'left'}` as Facing;
+}
+
+/** the 8-way facing for a CONTINUOUS velocity (NPCs): the diagonal only reads
+ *  when both axes are meaningfully present (each ≥ 40% of the other), else it
+ *  snaps to the dominant cardinal. `fallback` holds the facing when at rest. */
+export function facing8(vx: number, vy: number, fallback: Facing = 'down'): Facing {
+  const ax = Math.abs(vx);
+  const ay = Math.abs(vy);
+  if (ax < 1e-3 && ay < 1e-3) return fallback;
+  if (ax > ay * 0.4 && ay > ax * 0.4) {
+    return `${vy > 0 ? 'down' : 'up'}${vx > 0 ? 'right' : 'left'}` as Facing;
+  }
+  return ax > ay ? (vx > 0 ? 'right' : 'left') : vy > 0 ? 'down' : 'up';
 }
 
 /**
@@ -670,11 +683,20 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // fresh. The forge (Movement Two) draws each area's growth from its own slice.
   for (const b of GENERATED_BUILDINGS) addPixmap(scene, b.name, drawCityBuilding(b.opts));
 
-  // THE VEHICLE FORGE (S18 M26, ADR-067): the living world's cars/bikes/buses/
-  // trucks/machinery + the deferred fleet (boats/planes/subs), each a deterministic
-  // paint variant. The traffic system + the control system + the fleet all draw
-  // their props from here; flip/rotate happens at runtime.
-  for (const v of VEHICLE_CATALOG) addPixmap(scene, v.name, drawVehicle(v.name));
+  // THE VEHICLE FORGE (S18 M26, ADR-067; oblique 3D in ADR-097): the living
+  // world's cars/bikes/buses/trucks/machinery + the deferred fleet, each a
+  // deterministic paint variant. The SIDE view registers under the base name
+  // (so every static use — dealership, parked, the forge — stays correct);
+  // four-wheelers also register `<name>_front` / `<name>_back` (same padded
+  // size) so the traffic system TURNS by swapping texture, never rotating a 3/4.
+  for (const v of VEHICLE_CATALOG) {
+    const views = drawVehicleViews(v.name);
+    addPixmap(scene, v.name, views[0]);
+    if (views.length > 1) {
+      addPixmap(scene, `${v.name}_front`, views[1]);
+      addPixmap(scene, `${v.name}_back`, views[2]);
+    }
+  }
 
   // buildings — deep oblique roofs, gablets, AC, awnings (ADR-019/020)
   addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true, ac: true, litSeed: 5 }));
@@ -726,6 +748,15 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // `glyph_<area>` so the two glyph systems never collide). The mixed-run renderer
   // (ui/flairline.ts) draws these over the reserved text slot in dialogue + battle.
   for (const name of GLYPH_TOKENS) addPixmap(scene, flairGlyphKey(name), flairGlyph(name));
+
+  // ADR-097: a soft CONTACT SHADOW stamped under every walking overworld actor
+  // (player, followers, NPCs, roamers) — the single biggest 2D→3D grounding
+  // cue. Drawn dark on transparent; OverworldScene sets the per-actor alpha/size.
+  if (!scene.textures.exists('mob_shadow')) {
+    const sh = new Pixmap(16, 7);
+    sh.ellipse(8, 3, 7, 3, px(RAMP.INK, 0));
+    addPixmap(scene, 'mob_shadow', sh);
+  }
 
   // 2×2 white pixel for fades, particles, flashes
   if (!scene.textures.exists('pixel')) {

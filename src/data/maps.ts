@@ -2773,12 +2773,20 @@ for (const [id, area] of Object.entries(MAP_AREA)) if (MAPS[id]) MAPS[id].area =
 // clinics), and the locked ~10% answer a knock with EarthBound-weird refusals.
 // The pass mutates the live map and merges its generated interiors into MAPS. A
 // NEW city becomes alive the moment it's added to this list — never dead by default.
-const LIVING_CITY_SEED: Record<string, number> = {
-  otterbrook: 19951,
-  brickton: 207701,
-  puerto_sol: 1898,
-};
-for (const [id, seed] of Object.entries(LIVING_CITY_SEED)) {
-  const m = MAPS[id];
-  if (m) Object.assign(MAPS, occupyCity(m, { area: id, seed }));
+function cityLifeSeed(id: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+// EVERY settlement runs the pass (not a hardcoded list) — so any city, present or
+// future, is alive by default. occupyCity only fills DOORLESS 'bldg_' facades, so
+// hand-authored doors/interiors are untouched; a settlement with no catalog
+// facades is a harmless no-op. Object.values() is a snapshot, so the interiors we
+// merge in aren't re-scanned.
+for (const m of Object.values(MAPS)) {
+  if (!m.settlement) continue;
+  Object.assign(MAPS, occupyCity(m, { area: m.area ?? m.id, seed: cityLifeSeed(m.id) }));
 }

@@ -87,6 +87,9 @@ import { DIALOGUE } from '../data/dialogue';
 import { ITEMS } from '../data/items';
 import { GS, makeHeroState } from '../engine/state';
 import { completeQuest } from '../engine/quests';
+import { availableAbilities } from '../data/heroes';
+import { PSI_GATES } from '../data/psigates';
+import { canClearGate, bestCastFor } from '../engine/psi';
 import {
   HOOPS_TEXT,
   TEAMS,
@@ -110,7 +113,8 @@ import { TrafficSim, cellKey } from '../engine/traffic';
 import { VEHICLE_CATALOG, VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
-import { TILE_SOLID, standFrame, facingFromVec, FACING_VEC, type Facing } from '../spritegen';
+import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
+import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
 import {
   instantWin,
   expShare,
@@ -205,6 +209,8 @@ export class OverworldScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Sprite;
   private facing: Facing = 'down';
   private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean }> = [];
+  /** ADR-097: a pooled contact shadow per walking actor (grounding = 3D read) */
+  private shadows: Phaser.GameObjects.Image[] = [];
   private trail: Array<{ x: number; y: number; f: Facing }> = [];
   private holdingDoorImg: Phaser.GameObjects.Image | null = null;
   /** S11b interior doors, keyed by their zone — swung open on entry */
@@ -241,9 +247,10 @@ export class OverworldScene extends Phaser.Scene {
   /** native sprite body size per vehicle texture (for the collision rect) */
   private trafficDims = new Map<string, { w: number; h: number }>();
   private static TRAFFIC_STEP_MS = 360; // ms per one-tile hop (lerped between)
-  // cars draw at native ~32×19; a hero frame is 24×32, so unscaled cars look like
-  // toys. Scale them up so a sedan reads as a real, person-dwarfing vehicle.
-  private static TRAFFIC_SCALE = 1.7;
+  // ADR-097: oblique cars draw bigger native (~47×26, sized so the 24×32 cast
+  // visibly fits), so the on-screen scale drops from 1.7 — a sedan still reads
+  // as a real, person-dwarfing vehicle, just not a parade float.
+  private static TRAFFIC_SCALE = 1.35;
 
   constructor() {
     super('overworld');
@@ -439,7 +446,7 @@ export class OverworldScene extends Phaser.Scene {
           : p.sprite;
       const img = this.add.image(p.x * 16, p.y * 16, sprite).setOrigin(0, 0);
       img.setDepth(p.y * 16 + img.height);
-      if (sprite.startsWith('bldg_')) {
+      if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
         // places a facade at a story count `u`; the forge/grown grammar often
         // picks a `u` that disagrees with the sprite actually drawn, so the data
@@ -449,6 +456,10 @@ export class OverworldScene extends Phaser.Scene {
         // you walk into — so collision is exactly what's on screen, on every
         // shipped / grown / generated map, and you can't pass through a wall to
         // reach a door. The entrance zone is derived the same way (facadeDoorBox).
+        // ADR-099: the hand-placed LANDMARK drawHouse props (the golf clubhouse,
+        // gatehouse, mansions) join the bldg_* facades here — the tall clubhouse_grand
+        // had a 30px data solid under a much taller sprite, so its lower body was
+        // walk-through and its doorstep sat too deep; the texture rebuild fixes both.
         for (const s of this.facadeSolids(p, img.width, img.height)) this.solids.push(s);
         if (p.door) {
           this.facadeDoorBox.set(p, {
@@ -842,6 +853,29 @@ export class OverworldScene extends Phaser.Scene {
     this.updateNpcs(dt);
     this.updateFireflies(dt);
     if (!this.transitioning) this.updateTraffic(dtMs);
+    this.updateShadows();
+  }
+
+  /** ADR-097 — the contact-shadow pass: a soft oval under every WALKING actor,
+   *  at the feet, just beneath its owner's depth. Floating actors (angels) and
+   *  vehicles (their shadow is baked into the sprite) are skipped. The pool
+   *  grows to fit and hides the surplus, so it costs nothing when the map empties. */
+  private updateShadows(): void {
+    const actors: Array<{ x: number; y: number; w: number }> = [];
+    actors.push({ x: this.player.x, y: this.player.y, w: 14 });
+    for (const f of this.followers) if (!f.angel) actors.push({ x: f.spr.x, y: f.spr.y, w: 14 });
+    for (const n of this.npcs) actors.push({ x: n.spr.x, y: n.spr.y, w: n.def.dog ? 10 : 14 });
+    for (const r of this.roamers) if (!r.dead) actors.push({ x: r.spr.x, y: r.spr.y, w: r.walker ? 14 : 12 });
+    for (const p of this.patrols) if (!p.dead) actors.push({ x: p.spr.x, y: p.spr.y, w: 14 });
+    while (this.shadows.length < actors.length) {
+      this.shadows.push(this.add.image(0, 0, 'mob_shadow').setOrigin(0.5, 0.5).setAlpha(0.3));
+    }
+    for (let i = 0; i < this.shadows.length; i++) {
+      const s = this.shadows[i];
+      const a = actors[i];
+      if (!a) { s.setVisible(false); continue; }
+      s.setVisible(true).setPosition(a.x, a.y - 1).setDepth(a.y - 1).setDisplaySize(a.w, Math.max(3, Math.round(a.w * 0.42)));
+    }
   }
 
   /* ---------------- S18 M26 (ADR-067): ambient road traffic ---------------- */
@@ -929,10 +963,20 @@ export class OverworldScene extends Phaser.Scene {
       spr.x = cx;
       spr.y = cy;
       spr.setDepth(cy + 8);
-      // face travel: the side-on art rotates onto vertical avenues; flip due-west
+      // ADR-097: oblique four-wheelers TURN by swapping to their FRONT/BACK
+      // texture (no rotating a 3/4 sprite); legacy one-view vehicles still
+      // rotate the side-on art. dir: 0=E 1=S 2=W 3=N.
       const vertical = v.dir === 1 || v.dir === 3;
-      spr.setAngle(v.dir === 1 ? 90 : v.dir === 3 ? -90 : 0);
-      spr.setFlipX(v.dir === 2);
+      const frontKey = `${v.type}_front`;
+      if (this.textures.exists(frontKey)) {
+        spr.setAngle(0);
+        if (v.dir === 1) { spr.setTexture(frontKey); spr.setFlipX(false); }
+        else if (v.dir === 3) { spr.setTexture(`${v.type}_back`); spr.setFlipX(false); }
+        else { spr.setTexture(v.type); spr.setFlipX(v.dir === 2); }
+      } else {
+        spr.setAngle(v.dir === 1 ? 90 : v.dir === 3 ? -90 : 0);
+        spr.setFlipX(v.dir === 2);
+      }
       // SOLID body rect (px) covering the WHOLE car — ends and sides — sized to
       // the sprite and oriented to travel, inset 4px so brushing past isn't sticky
       const dim = this.trafficDims.get(v.type) ?? { w: 32, h: 18 };
@@ -964,8 +1008,9 @@ export class OverworldScene extends Phaser.Scene {
       moved = nx !== this.player.x || ny !== this.player.y;
       this.player.x = nx;
       this.player.y = ny;
-      if (d.x !== 0) this.facing = d.x > 0 ? 'right' : 'left';
-      else this.facing = d.y > 0 ? 'down' : 'up';
+      // ADR-096: keep the true 8-way facing (diagonals included) instead of
+      // collapsing it to left/right — the diagonal sheet now has the art.
+      this.facing = facingFromVec(d.x, d.y);
       GS.data.x = this.player.x;
       GS.data.y = this.player.y;
       GS.data.facing = this.facing;
@@ -1062,13 +1107,18 @@ export class OverworldScene extends Phaser.Scene {
       if (n.think <= 0) {
         n.think = 1200 + Math.random() * 2200;
         if (Math.random() < 0.55) {
+          // ADR-096: wander the diagonals too (normalized so they don't speed up)
           const dirs = [
             [1, 0],
             [-1, 0],
             [0, 1],
             [0, -1],
+            [0.7, 0.7],
+            [-0.7, 0.7],
+            [0.7, -0.7],
+            [-0.7, -0.7],
           ];
-          const [vx, vy] = dirs[Math.floor(Math.random() * 4)];
+          const [vx, vy] = dirs[Math.floor(Math.random() * dirs.length)];
           n.vx = vx * 22;
           n.vy = vy * 22;
         } else {
@@ -1086,7 +1136,7 @@ export class OverworldScene extends Phaser.Scene {
           n.spr.x = nx;
           n.spr.y = ny;
           n.spr.setDepth(ny);
-          const f: Facing = n.vx !== 0 ? (n.vx > 0 ? 'right' : 'left') : n.vy > 0 ? 'down' : 'up';
+          const f: Facing = facing8(n.vx, n.vy, 'down');
           if (!n.def.dog) {
             const anim = `${n.def.sprite}-walk-${f}`;
             if (n.spr.anims.currentAnim?.key !== anim || !n.spr.anims.isPlaying) n.spr.anims.play(anim, true);
@@ -1144,8 +1194,7 @@ export class OverworldScene extends Phaser.Scene {
       // like people when they've spotted lunch (S9b run cycles)
       if (r.walker) {
         if (moved) {
-          const f: Facing =
-            Math.abs(r.vx) > Math.abs(r.vy) ? (r.vx > 0 ? 'right' : 'left') : r.vy > 0 ? 'down' : 'up';
+          const f: Facing = facing8(r.vx, r.vy, 'down'); // ADR-096: 8-way roam
           const anim = `${r.walker}-${distP < 64 ? 'run' : 'walk'}-${f}`;
           if (r.spr.anims.currentAnim?.key !== anim || !r.spr.anims.isPlaying) r.spr.anims.play(anim, true);
         } else if (r.spr.anims.isPlaying) {
@@ -1179,7 +1228,7 @@ export class OverworldScene extends Phaser.Scene {
           const vy = ((ty - p.spr.y) / d) * PATROL_WALK;
           p.spr.x += vx * dt;
           p.spr.y += vy * dt;
-          p.facing = Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? 'right' : 'left') : vy > 0 ? 'down' : 'up';
+          p.facing = facing8(vx, vy, p.facing); // ADR-096: 8-way patrol read
           this.patrolAnim(p, true, 'walk');
         }
         if (this.patrolSees(p)) {
@@ -1213,7 +1262,7 @@ export class OverworldScene extends Phaser.Scene {
         const ny = this.patrolMove(nx, p.spr.y, 0, (dy / d) * step, true);
         p.spr.x = nx;
         p.spr.y = ny;
-        p.facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+        p.facing = facing8(dx, dy, p.facing); // ADR-096: 8-way chase read
         this.patrolAnim(p, true, 'run');
         if (p.bang) {
           p.bang.x = p.spr.x;
@@ -1293,16 +1342,7 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private facingVectorOf(f: Facing): { x: number; y: number } {
-    switch (f) {
-      case 'up':
-        return { x: 0, y: -1 };
-      case 'down':
-        return { x: 0, y: 1 };
-      case 'left':
-        return { x: -1, y: 0 };
-      default:
-        return { x: 1, y: 0 };
-    }
+    return FACING_VEC[f]; // ADR-096: 8-way (diagonals normalized)
   }
 
   private patrolGiveUp(p: PatrolObj): void {
@@ -1417,16 +1457,8 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private facingVector(): Phaser.Math.Vector2 {
-    switch (this.facing) {
-      case 'up':
-        return new Phaser.Math.Vector2(0, -1);
-      case 'down':
-        return new Phaser.Math.Vector2(0, 1);
-      case 'left':
-        return new Phaser.Math.Vector2(-1, 0);
-      default:
-        return new Phaser.Math.Vector2(1, 0);
-    }
+    const v = FACING_VEC[this.facing]; // ADR-096: 8-way (diagonals normalized)
+    return new Phaser.Math.Vector2(v.x, v.y);
   }
 
   private startBattle(
@@ -1649,6 +1681,15 @@ export class OverworldScene extends Phaser.Scene {
       n.spr.setFrame(standFrame(f));
     }
     AUDIO.sfx('cursor');
+    // Ch.3 (ADR-099) — Boothe's chemist hands over the GOOD leaves for the
+    // groundskeeper's cuppa BEFORE his shop opens (§A10 #8: the keeper IS the source)
+    if (n.def.id === 'fb_chemist' && GS.flag('q_cuppa') && !GS.flag('q_cuppa_done') && !GS.flag('q_cuppa_leaves')) {
+      await this.dlg.say(...DIALOGUE.q_cuppa_leaves);
+      GS.setFlag('q_cuppa_leaves');
+      AUDIO.sfx('confirm');
+      const got = ['q_cuppa_leaves', 'q_cuppa_milk', 'q_cuppa_water'].filter((f) => GS.flag(f)).length;
+      toast(this, `The good leaves. (${got}/3 — then back to the groundskeeper.)`);
+    }
     // S4: keepers ARE their shops — talking opens the buy/sell flow
     if (n.def.shop) {
       this.openShop(n.def.shop);
@@ -1782,6 +1823,28 @@ export class OverworldScene extends Phaser.Scene {
         return this.crateClue('q_crate_board', 'q_crate_board_clue');
       case 'ps_market':
         return this.crateClue('q_crate_market', 'q_crate_market_clue');
+      // ── CHAPTER 3 — ENGLAND (ADR-099): the flight out, the five §A10 givers,
+      //    and the umpire step. Givers mirror tallyBeat (ask → active → complete). ──
+      case 'uncle_bert':
+        await this.boardLucille();
+        return true;
+      case 'wm_librarian':
+        await this.overdueBeat();
+        return true;
+      case 'wm_groundskeeper':
+        await this.cuppaBeat();
+        return true;
+      case 'fb_postmistress':
+        await this.senderBeat();
+        return true;
+      case 'fb_boy':
+        await this.pennyBeat();
+        return true;
+      case 'cricket_captain':
+        await this.overBeat();
+        return true;
+      case 'wm_umpire':
+        return this.umpireStep();
       default:
         return false;
     }
@@ -1846,6 +1909,168 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.q_crate_open);
     AUDIO.jingle('victory', 1800, this.mapDef.music);
     this.cut = false;
+  }
+
+  /* ════════════ CHAPTER 3 — ENGLAND (ADR-099): the five §A10 quest beats ════════════
+   * Each mirrors tallyBeat: the giver's ask arms it (startFlag); the "find" steps fire
+   * as walk triggers (questPickup) or keeper hand-offs; the giver completes it
+   * (completeQuest = reward + the finale CALLER). All non-missable + retry-safe. */
+
+  /** §A10 #7 — the librarian and her three overdue books */
+  private async overdueBeat(): Promise<void> {
+    if (!GS.flag('q_overdue')) {
+      await this.dlg.say(...DIALOGUE.q_overdue_ask);
+      GS.setFlag('q_overdue');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_overdue_done')) {
+      await this.dlg.say(...DIALOGUE.q_overdue_after);
+      return;
+    }
+    if (!['q_overdue_b1', 'q_overdue_b2', 'q_overdue_b3'].every((f) => GS.flag(f))) {
+      await this.dlg.say(...DIALOGUE.q_overdue_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_overdue_full);
+    if (completeQuest('overdue') === 'hands-full') {
+      await this.dlg.say('@Hands full, dear? A library is patient. Come back with room for a card and a book.');
+      return;
+    }
+    GS.setFlag('q_overdue_reported');
+    GS.addItem('first_edition'); // the bonus valuable she lets you keep (the §A11 wink)
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - 16, 12);
+    await this.dlg.say(...DIALOGUE.q_overdue_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A10 #8 — the groundskeeper's exact brew (leaves from the chemist, milk + water as triggers) */
+  private async cuppaBeat(): Promise<void> {
+    if (!GS.flag('q_cuppa')) {
+      await this.dlg.say(...DIALOGUE.q_cuppa_ask);
+      GS.setFlag('q_cuppa');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_cuppa_done')) {
+      await this.dlg.say(...DIALOGUE.q_cuppa_after);
+      return;
+    }
+    if (!['q_cuppa_leaves', 'q_cuppa_milk', 'q_cuppa_water'].every((f) => GS.flag(f))) {
+      await this.dlg.say(...DIALOGUE.q_cuppa_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_cuppa_full);
+    if (completeQuest('groundskeepers_cuppa') === 'hands-full') {
+      await this.dlg.say('@Pockets full? Empty one. A thermos needs somewhere to live.');
+      return;
+    }
+    GS.setFlag('q_cuppa_brewed');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - 16, 10);
+    await this.dlg.say(...DIALOGUE.q_cuppa_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** Ch.3 regional — the postmistress and the three letters the pillar box ate */
+  private async senderBeat(): Promise<void> {
+    if (!GS.flag('q_sender')) {
+      await this.dlg.say(...DIALOGUE.q_sender_ask);
+      GS.setFlag('q_sender');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_sender_done')) {
+      await this.dlg.say(...DIALOGUE.q_sender_after);
+      return;
+    }
+    if (!['q_sender_l1', 'q_sender_l2', 'q_sender_l3'].every((f) => GS.flag(f))) {
+      await this.dlg.say(...DIALOGUE.q_sender_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_sender_full);
+    if (completeQuest('return_to_sender') === 'hands-full') {
+      await this.dlg.say('@Make a pocket spare, love — this tin has earned a good home.');
+      return;
+    }
+    GS.setFlag('q_sender_reported');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - 16, 10);
+    await this.dlg.say(...DIALOGUE.q_sender_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** Ch.3 regional — the damp boy's penny-fog (the hidden Roman drain fires the find) */
+  private async pennyBeat(): Promise<void> {
+    if (!GS.flag('q_penny')) {
+      await this.dlg.say(...DIALOGUE.q_penny_ask);
+      GS.setFlag('q_penny');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_penny_done')) {
+      await this.dlg.say(...DIALOGUE.q_penny_after);
+      return;
+    }
+    if (!GS.flag('q_penny_found')) {
+      await this.dlg.say(...DIALOGUE.q_penny_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_penny_full);
+    completeQuest('penny_fog'); // caller + flag (no item — the boy IS the prize)
+    GS.setFlag('q_penny_reported');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - 16, 10);
+    await this.dlg.say(...DIALOGUE.q_penny_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** Ch.3 regional (sincere) — the cricket captain; the match ends once the umpire is
+   *  free AND the Mainframe's clock has stopped (q_over_clock is set at the boss's fall) */
+  private async overBeat(): Promise<void> {
+    if (!GS.flag('q_over')) {
+      await this.dlg.say(...DIALOGUE.q_over_ask);
+      GS.setFlag('q_over');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_over_done')) {
+      await this.dlg.say(...DIALOGUE.q_over_after);
+      return;
+    }
+    if (!(GS.flag('q_over_umpire') && GS.flag('q_over_clock'))) {
+      await this.dlg.say(...DIALOGUE.q_over_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_over_full);
+    completeQuest('the_last_over'); // caller + flag (the XI going home IS the prize)
+    GS.setFlag('q_over_called');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - 16, 14);
+    await this.dlg.say(...DIALOGUE.q_over_done_beat);
+    AUDIO.jingle('victory', 2000, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** Ch.3 — Mr. Stumps, the umpire filed ABSENT (the "Last Over" find step); true
+   *  once it lands, so his own §A11 line shows the rest of the time (fall-through). */
+  private async umpireStep(): Promise<boolean> {
+    if (!GS.flag('q_over') || GS.flag('q_over_done') || GS.flag('q_over_umpire')) return false;
+    await this.dlg.say(...DIALOGUE.q_over_umpire);
+    GS.setFlag('q_over_umpire');
+    AUDIO.sfx('confirm');
+    toast(this, GS.flag('q_over_clock') ? 'Mr. Stumps is free. Now find the captain.' : 'Mr. Stumps is free — but the clock upstairs still runs.');
+    return true;
   }
 
   /* ---------------- S14: quests #5–6 (§A10, the S9 machines) ---------------- */
@@ -3205,6 +3430,34 @@ export class OverworldScene extends Phaser.Scene {
       case 'apex_grin':
         if (!GS.flag('grin_defeated')) await this.grinScene();
         break;
+      /* ---------------- ADR-099 — Chapter 3 (§A6 England) ---------------- */
+      case 'ch3_arrival':
+        if (!GS.flag('ch3_arrived')) await this.ch3ArrivalScene();
+        break;
+      case 'wm_arrival':
+        if (!GS.flag('milo_joined')) await this.wintermoorArrivalScene();
+        break;
+      case 'mainframe_boss':
+        if (!GS.flag('mainframe_defeated')) await this.mainframeBossScene();
+        break;
+      case 'old_stones_resonance':
+        if (!GS.flag('ch3_complete')) await this.oldStonesScene();
+        break;
+      case 'wintermoor_coolant':
+        await this.coolantGate();
+        break;
+      // the §A10 Ch.3 "find" pickups (books / letters / the drain / milk / water)
+      case 'q_overdue_b1':
+      case 'q_overdue_b2':
+      case 'q_overdue_b3':
+      case 'q_sender_l1':
+      case 'q_sender_l2':
+      case 'q_sender_l3':
+      case 'q_penny_found':
+      case 'q_cuppa_milk':
+      case 'q_cuppa_water':
+        await this.questPickup(id);
+        break;
       default:
         break;
     }
@@ -3334,6 +3587,197 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch2_card);
     AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /* ════════════ S18 (ADR-099) — CHAPTER 3 (§A6 England) scenes ════════════
+   * The flight in, Milo's greenhouse crash + JOIN (the control system goes live),
+   * THE FIRST BORROW (the Trust Thread opens), the Headmaster Mainframe, the §A4.11
+   * coolant cast, and Heartlight 3 at the Old Stones. The grinScene/fayeJoinScene
+   * precedents: commit flags, fade-restart whenever the map must rebuild. */
+
+  /** the §A6 flight out — Uncle Bert ferries the party to England (gated on his
+   *  appearance, which is itself gated on ch2_complete). */
+  private async boardLucille(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.bert_flight_ask);
+    const pick = await this.dlg.ask(['Fly to ENGLAND (Foggybottom)', 'Not yet'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      this.cut = false;
+      return;
+    }
+    AUDIO.stopMusic();
+    // into Lucille's cabin near Bert; walking down fires ch3_arrival, then the hatch
+    // drops you on the Foggybottom quay (the boat_interior precedent)
+    this.goThroughDoor('biplane_interior', 11 * 16, 3 * 16, 'down');
+  }
+
+  /** the §A6 arrival: Lucille drops through the machine-fog onto the quay */
+  private async ch3ArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch3_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(380, 0.006);
+    await this.dlg.say(...DIALOGUE.ch3_arrival);
+    this.cut = false;
+  }
+
+  /** the §A6 set-piece: the porter blocks → Milo crashes the greenhouse + JOINS (the
+   *  party becomes THREE; the control system goes live) → Jay PUPPETS the porter past
+   *  the lodge (THE FIRST BORROW; the Trust Thread opens). One orchestrated cutscene. */
+  private async wintermoorArrivalScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.wm_arrival_porter);
+    // the crash through the greenhouse glass
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(700, 0.012);
+    await this.wait(500);
+    await this.dlg.say(...DIALOGUE.wm_arrival_crash);
+    // Milo emerges and JOINS — the party becomes three (§A3; ~L16, his canon kit)
+    await this.dlg.say(...DIALOGUE.wm_arrival_milo);
+    GS.data.party.push(makeHeroState('milo', 16, GS.data.heroNames.milo));
+    GS.setFlag('milo_joined');
+    GS.addItem('pellet_popper', 'milo');
+    GS.equipItem('milo', 'pellet_popper');
+    AUDIO.sfx('confirm');
+    AUDIO.jingle('levelup', 1400, null);
+    // the homesick-for-a-dad ache (the Pemberton seed, Ch.10) — played straight
+    await this.dlg.say(...DIALOGUE.wm_arrival_dad);
+    // Milo's kit + the REPAIR tutorial: a Broken Gizmo becomes the Defibrillator (§A4.12)
+    await this.dlg.say(...DIALOGUE.wm_arrival_kit);
+    GS.addItem('defibrillator', 'milo');
+    GS.setFlag('repair_taught');
+    AUDIO.sfx('heal');
+    // THE CLICKER — machine control goes live; cars become the first FLEET_STAGE (§A4.10)
+    await this.dlg.say(...DIALOGUE.wm_arrival_clicker);
+    GS.setFlag('milo_clicker');
+    GS.setFlag('fleet_road'); // ADR-074 staging marker — road vehicles drivable from here
+    // the porter still blocks; there is no slip, and no way round
+    await this.dlg.say(...DIALOGUE.wm_arrival_gate);
+    // THE FIRST BORROW: Jay awakens VIBE PUPPET / Mind Warp and borrows the porter past
+    // the gate. The awakening beat (awake_the_first_borrow) carries the recoil itself —
+    // Mia goes still, Mia(faye) takes a half-step back — so the Trust Thread opens here.
+    await this.awakeningBeat('the_first_borrow');
+    GS.setFlag('thread_trust_open'); // §A6/ADR-072 — the trust thread's first link
+    GS.setFlag('wm_gate_open'); // the porter gates out on rebuild (the lodge is clear)
+    await this.dlg.say(...DIALOGUE.wm_arrival_after);
+    this.cut = false;
+    this.fadeRestart(); // the conga picks up Milo; the porter stands aside (data-gated)
+  }
+
+  /** §A6 BOSS 3 — the Headmaster Mainframe (Prompt 15 phase machine carries the fight) */
+  private async mainframeBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.mainframe_door);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(500, 0.01);
+    await this.wait(450);
+    const outcome = await this.startBattle(['headmaster_mainframe'], 'none', null, { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('mainframe_defeated');
+    // "The Last Over" (§A10): the Mainframe ran the school clock; its fall stops it.
+    // Record it whether or not the quest is active yet — the boss may fall BEFORE you
+    // meet the captain (the common path), and canon forbids a missable (non-missable).
+    if (!GS.flag('q_over_done')) GS.setFlag('q_over_clock');
+    // the Gauss Lobber — Milo pries it off the dead coil rack (story gear, ADR-035)
+    GS.addItem('gauss_lobber', 'milo');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.mainframe_win);
+    AUDIO.jingle('victory', 2200, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart(); // the fog lifts on the data (signs/ambient swap on mainframe_defeated)
+  }
+
+  /** §A6 Resonance Site — the Old Stones. Before the boss they only hum shyly; once the
+   *  machine-fog lifts they sing, and the locket records HEARTLIGHT 3 (ch3 closes). */
+  private async oldStonesScene(): Promise<void> {
+    if (!GS.flag('mainframe_defeated')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.old_stones_early);
+      this.cut = false;
+      return;
+    }
+    this.cut = true;
+    GS.setFlag('ember3');
+    GS.data.embers = 3;
+    const ember = this.add.image(this.player.x, this.player.y - 44, 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
+    this.tweens.add({ targets: ember, y: this.player.y - 30, x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - 30, 14);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember3_get);
+    GS.setFlag('ch3_complete'); // §A6 — the chapter button (the §A5 gate to Ch.4)
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.ch3_card);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A4.11 PSI gate — freeze the boiler coolant line (taught-first, non-missable,
+   *  retry-safe). Mia learned Vibe Freeze in Ch.2, so the cast is available; the
+   *  no-key branch is the no-soft-lock floor (ADR-069). Reuses engine/psi + the gate. */
+  private async coolantGate(): Promise<void> {
+    if (GS.flag('wm_coolant_frozen')) {
+      await this.dlg.say('(The coolant line stands frozen solid. Beyond it, the throttled fog-engine mutters to itself.)');
+      return;
+    }
+    const gate = PSI_GATES.wintermoor_coolant;
+    const known = GS.data.party.flatMap((h) => availableAbilities(h.id, h.level, (f) => GS.flag(f) === true));
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.sign_wm_coolant);
+    if (!canClearGate(gate, known) || bestCastFor(gate, known) === null) {
+      await this.dlg.say('(The pipe is already near freezing. To lock it solid you would need to cast FREEZE — and no one here has learned how. Yet.)');
+      this.cut = false;
+      return;
+    }
+    const pick = await this.dlg.ask(['Cast VIBE FREEZE on the line', 'Leave it'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      this.cut = false;
+      return;
+    }
+    AUDIO.sfx('pray');
+    this.cameras.main.flash(360, 168, 224, 255);
+    this.sparkleBurst(this.player.x, this.player.y - 14, 14);
+    await this.wait(400);
+    GS.setFlag('wm_coolant_frozen');
+    await this.dlg.say(...DIALOGUE.wm_fog_engine);
+    GS.addItem('broken_gizmo'); // salvage off the fog-engine — Milo's Repair fuel (§A3)
+    AUDIO.sfx('confirm');
+    AUDIO.jingle('levelup', 1200, this.mapDef.music);
+    toast(this, 'The coolant line is frozen solid.');
+    this.cut = false;
+  }
+
+  /** the §A10 Ch.3 "find" pickups — a walk trigger hands the player a quest beat when
+   *  its quest is active (the walk_token precedent). No-ops otherwise; non-missable. */
+  private static readonly QUEST_PICKUPS: Record<string, { flag: string; dialogue: string; active: string; done: string; of: string[]; giver: string }> = {
+    q_overdue_b1: { flag: 'q_overdue_b1', dialogue: 'q_overdue_b1', active: 'q_overdue', done: 'q_overdue_done', of: ['q_overdue_b1', 'q_overdue_b2', 'q_overdue_b3'], giver: 'the librarian' },
+    q_overdue_b2: { flag: 'q_overdue_b2', dialogue: 'q_overdue_b2', active: 'q_overdue', done: 'q_overdue_done', of: ['q_overdue_b1', 'q_overdue_b2', 'q_overdue_b3'], giver: 'the librarian' },
+    q_overdue_b3: { flag: 'q_overdue_b3', dialogue: 'q_overdue_b3', active: 'q_overdue', done: 'q_overdue_done', of: ['q_overdue_b1', 'q_overdue_b2', 'q_overdue_b3'], giver: 'the librarian' },
+    q_sender_l1: { flag: 'q_sender_l1', dialogue: 'q_sender_l1', active: 'q_sender', done: 'q_sender_done', of: ['q_sender_l1', 'q_sender_l2', 'q_sender_l3'], giver: 'the postmistress' },
+    q_sender_l2: { flag: 'q_sender_l2', dialogue: 'q_sender_l2', active: 'q_sender', done: 'q_sender_done', of: ['q_sender_l1', 'q_sender_l2', 'q_sender_l3'], giver: 'the postmistress' },
+    q_sender_l3: { flag: 'q_sender_l3', dialogue: 'q_sender_l3', active: 'q_sender', done: 'q_sender_done', of: ['q_sender_l1', 'q_sender_l2', 'q_sender_l3'], giver: 'the postmistress' },
+    q_penny_found: { flag: 'q_penny_found', dialogue: 'q_penny_find', active: 'q_penny', done: 'q_penny_done', of: ['q_penny_found'], giver: 'the boy' },
+    q_cuppa_milk: { flag: 'q_cuppa_milk', dialogue: 'q_cuppa_milk', active: 'q_cuppa', done: 'q_cuppa_done', of: ['q_cuppa_leaves', 'q_cuppa_milk', 'q_cuppa_water'], giver: 'the groundskeeper' },
+    q_cuppa_water: { flag: 'q_cuppa_water', dialogue: 'q_cuppa_water', active: 'q_cuppa', done: 'q_cuppa_done', of: ['q_cuppa_leaves', 'q_cuppa_milk', 'q_cuppa_water'], giver: 'the groundskeeper' },
+  };
+
+  private async questPickup(id: string): Promise<void> {
+    const p = OverworldScene.QUEST_PICKUPS[id];
+    if (!p || !GS.flag(p.active) || GS.flag(p.done) || GS.flag(p.flag)) return;
+    this.cut = true;
+    GS.setFlag(p.flag);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(this.player.x, this.player.y - 14, 8);
+    await this.dlg.say(...DIALOGUE[p.dialogue]);
+    const n = p.of.filter((f) => GS.flag(f)).length;
+    toast(this, `(${n}/${p.of.length} — then back to ${p.giver}.)`);
     this.cut = false;
   }
 

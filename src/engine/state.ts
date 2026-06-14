@@ -50,7 +50,10 @@ export interface GameStateData {
   map: string;
   x: number;
   y: number;
-  facing: 'down' | 'left' | 'right' | 'up';
+  // ADR-096: 8-way facing (cardinals + diagonals). Inlined (not imported from
+  // spritegen) so this module stays Phaser-free for headless save tests. Old
+  // saves hold a cardinal value — still valid, no migration needed.
+  facing: 'down' | 'left' | 'right' | 'up' | 'downright' | 'downleft' | 'upright' | 'upleft';
   embers: number;
   favoriteFood: string;
   playerName: string;

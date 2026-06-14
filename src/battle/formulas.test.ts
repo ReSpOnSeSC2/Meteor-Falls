@@ -549,6 +549,13 @@ describe("Mia's elemental edge (the OUTGOING weak/resist multiplier)", () => {
     expect(F.applyElement(1, { resist: true })).toBe(1); // ≥1 floor
   });
 
+  it('ADR-099 — a per-enemy weakMul override DOUBLES (the §A6 Mainframe cooling fan); default stays 1.5', () => {
+    expect(F.elementMultiplier({ weak: true, weakMul: 2 })).toBe(2); // the Mainframe's ×2
+    expect(F.elementMultiplier({ weak: true })).toBe(1.5); // every other foe
+    expect(F.applyElement(100, { weak: true, weakMul: 2 })).toBe(200);
+    expect(F.applyElement(100, { weakMul: 2 })).toBe(100); // ignored unless the hit is weak
+  });
+
   it('holy PIERCES a slice of resistance — resisted holy still lands ~×0.75', () => {
     expect(F.elementMultiplier({ resist: true, holy: true })).toBe(F.HOLY_PIERCE_MUL);
     expect(F.elementMultiplier({ resist: true, holy: true })).toBeGreaterThan(F.RESIST_MUL);

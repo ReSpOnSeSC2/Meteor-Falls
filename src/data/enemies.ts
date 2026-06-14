@@ -401,7 +401,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       moves: [
         { name: 'scalding pour', kind: 'attack', mult: 1.1, element: 'fire', text: '{e} poured a cup three degrees past hospitable over {t}!', weight: 4 },
         { name: 'warm the pot', kind: 'shield', text: '{e} wrapped itself in a cosy and refused to cool down!', weight: 3 },
-        { name: 'one more cup?', kind: 'taunt', text: "{e} topped up the OTHER side's cups. Frightfully rude to refuse.", weight: 3 },
+        { name: 'one more cup?', kind: 'mend', text: "{e} topped up the OTHER side's cups. Frightfully rude to refuse — and frightfully restorative.", weight: 3 },
       ],
       deathLine: 'The Tea Poltergeist let the pot go cold at last. Filed under: mercy.',
       // misfiled hospitality leaves the brew behind — tea is PP in this chapter (§A7)
@@ -839,6 +839,44 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       mini: 'mini_mask',
       bg: [RAMP.GOLD, RAMP.NIGHT],
       boss: true,
+    }),
+    // BOSS 3 — §A6 Ch.3: HEADMASTER MAINFRAME (1,600 HP). Institution-as-monster:
+    // installed to "optimise student happiness", Hushed, now running the school like
+    // a factory and making the fog. It SUMMONS two Prefect Drones each time both are
+    // down (the summon machine lives in src/data/bosses.ts over the S14 interpreter);
+    // Milo's SPY reveals the cooling-fan weak point and Vibe FREEZE DOUBLES the hit —
+    // the `weakMul: 2` override below makes "doubles" literal (§A6); the generic §A7
+    // weakness is ×1.5, so only this foe's cooling fan reads at ×2. mind_immune:
+    // a server with a nameplate has no will to borrow. The genuinely-Hush moments are
+    // never funny; the bureaucratic horror is. The Gauss Lobber is its boss drop,
+    // handed in the victory beat (story gear, ADR-035), so no EnemyDef.drops here.
+    E({
+      id: 'headmaster_mainframe',
+      name: 'HEADMASTER MAINFRAME',
+      article: 'The',
+      hp: 1600,
+      offense: 31,
+      defense: 18,
+      speed: 9,
+      level: 18,
+      exp: 2000,
+      cash: 800,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'reprimand', kind: 'attack', mult: 1.1, text: '{e} printed {t} a formal reprimand at 600 d.p.i. It stung more than paper has any right to.', weight: 4 },
+        { name: 'optimise', kind: 'strong', mult: 1.6, text: '{e} ran {t} through an efficiency review. The findings were brutal and double-spaced.', weight: 3 },
+        { name: 'extra study', kind: 'status', status: 'productive', text: '{e} assigned {t} additional self-improvement. {t} feels optimised, against every wish.', weight: 2 },
+        { name: 'the watching', kind: 'taunt', text: '{e} simply watched. Every screen in the room turned, slowly, to face {t}.', weight: 1 },
+      ],
+      deathLine: 'The Headmaster Mainframe logged off for the last time. The fog, very slowly, began to forget how.',
+      sprite: 'battle_ch3_lurker_3',
+      mini: 'mini_ch3_lurker_3',
+      bg: [RAMP.CYAN, RAMP.NIGHT],
+      boss: true,
+      mind_immune: true,
+      // §A6: "Vibe Freeze doubles damage" on the cooling-fan weak point — so freeze
+      // hits this foe at ×2 (the generic §A7 weakness is ×1.5; this override doubles it)
+      weakMul: 2,
     }),
     // BOSS 1 — §A6: latches onto a hero and drains HP each turn until hit
     // with Vibe Fire or a thrown Salt Shaker.

@@ -121,7 +121,9 @@ export type PrayWeights = z.infer<typeof PrayWeightsSchema>;
 /** S14 adds the §A7 Ch.2 vocabulary: 'stealcash' (Pickpocket Parrot — the
  *  pending-cash theft, recovered on victory), 'gild' (Gilded Beetle's gold
  *  form: physical-immune turns), and 'shield' (Step-Mask casts Shield). */
-export const MoveKindSchema = z.enum(['attack', 'strong', 'status', 'latch', 'drain', 'steal', 'taunt', 'stealcash', 'gild', 'shield']);
+// 'mend' (ADR-099) — §A7 Ch.3 Tea Poltergeist: heals every STANDING ally enemy a
+// little (hospitality misfiled). The deferred half of ADR-095's Tea Poltergeist note.
+export const MoveKindSchema = z.enum(['attack', 'strong', 'status', 'latch', 'drain', 'steal', 'taunt', 'stealcash', 'gild', 'shield', 'mend']);
 export type MoveKind = z.infer<typeof MoveKindSchema>;
 
 export const EnemyMoveSchema = z.strictObject({
@@ -196,6 +198,10 @@ export const EnemyDefSchema = z.strictObject({
    *  "I win" on a boss (§A3 amended; the build prompt §4). Elites instead
    *  ROLL a level-scaled resist; only the truly immune carry this flag. */
   mind_immune: z.boolean().optional(),
+  /** ADR-099: a per-enemy WEAKNESS multiplier override (default 1.5 = WEAK_MUL). §A6
+   *  Ch.3: the Headmaster Mainframe's cooling-fan weak point makes Vibe Freeze "double"
+   *  (×2) literally — only this foe carries it; everything else keeps the generic ×1.5. */
+  weakMul: z.number().min(1).optional(),
 });
 export type EnemyDef = z.infer<typeof EnemyDefSchema>;
 

@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { PhaseRunner, pickRiddle, prayTierAtLeast, CRACK_TURNS, type PhaseEffects } from './phases';
 import { BOSS_SCRIPTS } from '../data/bosses';
+import { ENEMIES } from '../data/enemies';
 import type { BossScriptDef } from '../schemas';
 
 /** effects recorder — every call lands in `log` in order */
@@ -99,6 +100,46 @@ describe('THE GILDED GRIN — the §A6 Ch.2 swap, on its real script', () => {
     for (let t = 4; t <= 7; t++) await r.onBossTurnStart(); // → solid again
     expect(r.form?.id).toBe('solid');
     expect(r.damageMul('physical')).toBe(0); // the old crack didn't carry
+  });
+});
+
+describe('THE HEADMASTER MAINFRAME — the §A6 Ch.3 summon loop, on its real script (ADR-099)', () => {
+  it('opens with two Prefect Drones, then refills the pair every time both are down', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.headmaster_mainframe, fx);
+    await r.onAllSummonsDead(); // nothing summoned yet — the machine is silent
+    expect(log).toEqual([]);
+    await r.onBossTurnStart(); // turn 1 — supervision is assigned
+    expect(log).toEqual(['line:mainframe_open', 'summon:prefect_dronex2']);
+    await r.onAllSummonsDead(); // both drones down → a fresh pair, forever
+    await r.onAllSummonsDead();
+    expect(log).toEqual([
+      'line:mainframe_open', 'summon:prefect_dronex2',
+      'line:mainframe_refill', 'summon:prefect_dronex2',
+      'line:mainframe_refill', 'summon:prefect_dronex2',
+    ]);
+  });
+
+  it('overclocks ONCE through 40% HP — its last bluster, no new mechanic', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.headmaster_mainframe, fx);
+    await r.onHpFrac(0.5); // above the threshold — nothing
+    expect(log).toEqual([]);
+    await r.onHpFrac(0.39); // the cooling fans scream
+    await r.onHpFrac(0.1); // never twice
+    expect(log).toEqual(['line:mainframe_overclock']);
+  });
+
+  it('the §A6 cooling-fan weak point lives on the enemy, not the script — Vibe Freeze literally DOUBLES (ADR-099)', () => {
+    // the summoner declares NO forms/immunities — Milo's Spy + Vibe Freeze land because
+    // the live enemy is weak to freeze AND carries weakMul:2, so a freeze hit is ×2
+    // (the generic §A7 weakness is ×1.5), exactly as §A6 promises ("doubles damage").
+    expect(BOSS_SCRIPTS.headmaster_mainframe.forms).toBeUndefined();
+    expect(ENEMIES.headmaster_mainframe.weakness).toContain('freeze');
+    expect(ENEMIES.headmaster_mainframe.weakMul).toBe(2);
+    expect(ENEMIES.headmaster_mainframe.boss).toBe(true);
+    expect(ENEMIES.headmaster_mainframe.mind_immune).toBe(true);
+    expect(ENEMIES.headmaster_mainframe.hp).toBe(1600);
   });
 });
 

@@ -16,7 +16,8 @@ import {
 // S15g: the ADR-012 sweep has ONE home now (src/levelkit/metrics.ts) — the
 // shipped-city check here and the generated-city proof in the levelkit test
 // run the identical function, so they can never drift.
-import { cityViolations } from '../levelkit/metrics';
+import { cityViolations, livingCityViolations } from '../levelkit/metrics';
+import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
 
 const maps = Object.values(MAPS);
 
@@ -32,6 +33,33 @@ describe('S1 canon (GAME_BIBLE §A6/§A7/§A4.5, prompt S1)', () => {
 
   it('the dungeon entrance survived the jitter', () => {
     expect(MAPS.brickton.props.some((p) => p.door?.to === 'dos_f1')).toBe(true);
+  });
+});
+
+describe('ADR-099 — landmark drawHouse facades collide as their REAL footprint', () => {
+  it('every golf-resort landmark prop is recognised for the texture-true rebuild', () => {
+    // OverworldScene routes any LANDMARK_FACADE sprite through facadeSolids/
+    // facadeDoorBox (the ADR-051 bldg_ path), so collision == the drawn footprint
+    // minus the doorway and the entrance sits at the drawn door's mouth — the fix
+    // for the clubhouse_grand walk-through-walls + too-deep-doorstep faults.
+    const golf = MAPS.golf_resort;
+    const landmarks = golf.props.filter((p) => LANDMARK_FACADE_SPRITES.has(p.sprite));
+    expect(landmarks.map((p) => p.sprite).sort()).toEqual(
+      ['clubhouse_grand', 'golf_gatehouse', 'mansion_a', 'mansion_b', 'mansion_c'].sort(),
+    );
+  });
+
+  it('the LINKS clubhouse keeps its door into the pro-shop (the transition the fix re-aligns)', () => {
+    const club = MAPS.golf_resort.props.find((p) => p.sprite === 'clubhouse_grand');
+    expect(club?.door?.to).toBe('golf_clubhouse');
+    expect(MAPS.golf_clubhouse).toBeDefined();
+  });
+
+  it('no LANDMARK_FACADE sprite is an orphan — each is placed on some map', () => {
+    const placed = new Set(maps.flatMap((m) => m.props.map((p) => p.sprite)));
+    for (const s of LANDMARK_FACADE_SPRITES) {
+      expect(placed.has(s), `${s} should be placed on a map`).toBe(true);
+    }
   });
 });
 
@@ -63,6 +91,48 @@ describe('ADR-012 — every city follows the Brickton rules (GAME_BIBLE §B4)', 
       triggers: [],
     };
     expect(cityViolations(strip).length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('Living-City Law (S18) — settlements are alive by default', () => {
+  it('every settlement passes occupyCity: most buildings enterable, locked ones knock', () => {
+    for (const m of maps.filter((x) => x.settlement)) {
+      expect(livingCityViolations(m)).toEqual([]);
+    }
+  });
+
+  it('the grown cities are richly enterable (Brickton, Puerto Sol)', () => {
+    for (const id of ['brickton', 'puerto_sol']) {
+      const m = maps.find((x) => x.id === id);
+      if (!m) continue;
+      const facades = m.props.filter((p) => p.sprite.startsWith('bldg_') && p.solid);
+      const enterable = facades.filter((p) => p.door).length;
+      expect(facades.length).toBeGreaterThanOrEqual(8);
+      expect(enterable / facades.length).toBeGreaterThanOrEqual(0.75);
+    }
+  });
+
+  it('negative control: a doorless block-city is rejected as dead', () => {
+    const dead: MapDef = {
+      id: 'dead_city',
+      name: 'DEADTOWN',
+      music: null,
+      settlement: 'city',
+      grid: ['='.repeat(20)],
+      props: Array.from({ length: 10 }, (_v, i) => ({
+        sprite: 'bldg_gen_office_blue_2',
+        x: i,
+        y: 0,
+        solid: { ox: 0, oy: 26, w: 66, h: 22 },
+      })),
+      npcs: [],
+      signs: [],
+      phones: [],
+      doors: [],
+      spawners: [],
+      triggers: [],
+    };
+    expect(livingCityViolations(dead).length).toBeGreaterThanOrEqual(1);
   });
 });
 

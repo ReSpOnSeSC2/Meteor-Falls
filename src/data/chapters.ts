@@ -18,15 +18,15 @@
 import type { ChapterManifest } from '../schemas';
 
 /**
- * All ten chapters, keyed by chapter number as a string ('1'…'10'). Ch.1–2 are
- * SHIPPED (the live retro manifests); Ch.3–10 are UNLANDED (the forge has the
+ * All ten chapters, keyed by chapter number as a string ('1'…'10'). Ch.1–3 are
+ * SHIPPED (the live manifests, England landed S18/ADR-099); Ch.4–10 are UNLANDED (the forge has the
  * 60% — a banded roster + a draft boss firing its gimmick — the session spends
  * itself on the SOUL at promotion). Boss HP is the §A6 ladder; the bespoke Tick
  * (Ch.1) and the Hush finale (Ch.10) carry template 'bespoke' (not one of the
  * ten forge templates). Heartlight stem names are recorded where §A6 names them.
  */
 export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
-  /* ============================ SHIPPED (Ch.1–2) ============================ */
+  /* ============================ SHIPPED (Ch.1–3) ============================ */
 
   1: {
     chapter: 1,
@@ -73,23 +73,35 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     quests: ['llama_drama', 'museum_gold', 'the_quiet_crate'],
   },
 
-  /* =========================== UNLANDED (Ch.3–10) =========================== */
-
+  // ADR-099 — THE FLIP: Ch.3 lands (the §A6 Old-World track's first shipped chapter).
+  // status → 'shipped'; the dungeon site becomes live dungeon.maps; the 5 overworld
+  // maps + all 5 quests fill in; the boss is now a live boss-flagged §A7 enemy at
+  // 1,600 HP with a BOSS_SCRIPTS entry — the validator's live Ch.3 assertions switch
+  // on in the same commit (the draft 'site'/settlement 'style' drop away).
   3: {
     chapter: 3,
     title: 'A Very Foggy Term',
     region: 'England',
-    status: 'unlanded',
+    status: 'shipped',
     targetLevel: 18,
     ember: 3,
     band: 'ch3',
     travel: 'biplane', // Uncle Bert's "Lucille"
-    dungeon: { name: 'Wintermoor Academy → The Old Stones', site: 'wintermoor_academy' },
+    dungeon: {
+      name: 'Wintermoor Academy → The Old Stones',
+      // the 3-floor school + the dorm stealth wing + the boiler PSI-gate room; the
+      // §A6 boss room opens off floor 3's sealed office (the mainframe_boss trigger)
+      maps: ['wintermoor_f1', 'wintermoor_f2', 'wintermoor_f3', 'wintermoor_dorm', 'wintermoor_boiler'],
+    },
     boss: { id: 'headmaster_mainframe', name: 'Headmaster Mainframe', hp: 1600, template: 'summoner' },
-    settlements: [{ id: 'foggybottom', kind: 'town', style: 'fog-stone' }],
-    maps: [],
-    quests: ['overdue', 'groundskeepers_cuppa'],
+    settlements: [{ id: 'foggybottom', kind: 'town' }],
+    // the 5 overworld maps from buildChapter3Maps(): the arrival cabin, the damp town,
+    // the moor lane, the academy grounds, and the Old Stones (the §A6 Resonance Site)
+    maps: ['biplane_interior', 'foggybottom', 'foggy_moor', 'wintermoor_grounds', 'the_old_stones'],
+    quests: ['overdue', 'groundskeepers_cuppa', 'return_to_sender', 'penny_fog', 'the_last_over'],
   },
+
+  /* =========================== UNLANDED (Ch.4–10) =========================== */
 
   4: {
     chapter: 4,

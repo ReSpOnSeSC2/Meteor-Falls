@@ -92,4 +92,20 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_fb_chemist_greet',
     farewell: 'shop_fb_chemist_bye',
   },
+  /* ---- S18 (ADR-095): the §A8 Ch.3 DUNGEON shelf — Wintermoor's tuck shop. Milo's
+   *  gun ladder (Pellet Popper → Spud Gun → Double-Barrel Sparker; the Gauss Lobber
+   *  is the boss drop, never sold) + his repaired-gizmo battle goods + rationed
+   *  cocoa. One obsession: what the mainframe doesn't optimise, you buy quietly. ---- */
+  wintermoor_tuck: {
+    id: 'wintermoor_tuck',
+    name: 'THE TUCK SHOP (rationed)',
+    keeperNpc: 'wm_tuck_keeper',
+    stock: [
+      'pellet_popper', 'spud_gun', 'double_barrel_sparker',
+      'spark_coil', 'cog_grenade', 'clockwork_sparrow',
+      'school_cocoa', 'canteen_stodge', 'cricket_pads', 'house_pin', 'brass_compass',
+    ],
+    greet: 'shop_wintermoor_tuck_greet',
+    farewell: 'shop_wintermoor_tuck_bye',
+  },
 };

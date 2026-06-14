@@ -68,183 +68,195 @@ function wheel(pm: Pixmap, x: number, yBottom: number, r = 3): void {
   pm.rect(x + r - 1, yBottom - r - 1, 2, 2, HUB);
 }
 
-/* ─── ROAD: cars (sedan / suv / ev / race share one body draw) ───────────── */
+/* ════════════════════════════════════════════════════════════════════════
+ * ADR-097 — OBLIQUE 3D VEHICLES. A car is no longer a flat side elevation: we
+ * build a clean side PROFILE and EXTRUDE its top + front edges up-right by
+ * `depth`, so the lit roof/hood top plane, the near flank, and the front face
+ * all read at once (the building-roof oblique, now on wheels). We also draw a
+ * matching FRONT and BACK face, so the traffic system TURNS a car onto a
+ * vertical road by swapping frames — never by rotating a 3/4 sprite. Bodies are
+ * sized big enough that the 24px cast visibly fits (§A4.10 seat-fit, now visual).
+ * ════════════════════════════════════════════════════════════════════════ */
 
-interface CarOpts {
-  len: number;        // body length
-  roofH: number;      // cabin height above the belt line
-  roofX0: number;     // cabin starts
-  roofX1: number;     // cabin ends
-  wedge?: boolean;    // race-car low nose
-  tall?: boolean;     // SUV taller body
-  // M35 (ADR-076) — the EXOTIC tier reads unmistakably expensive:
-  open?: boolean;     // convertible roadster — no greenhouse, headrests + a cut windshield
-  scoop?: boolean;    // a hood scoop (the hot-rod muscle car)
-  pipes?: boolean;    // side exhaust pips (the muscle car)
-  chrome?: boolean;   // a chrome belt accent strip (the grand tourer / the limo)
-  pillars?: number[]; // extra glass B-pillars at these x (the limo's long greenhouse)
+export interface CarBody {
+  len: number;   // side body length
+  width: number; // front/back width (top-down)
+  bodyH: number; // lower-body height (side)
+  cabH: number;  // cabin/greenhouse height
+  cab0: number;  // cabin start along len (car)
+  cab1: number;  // cabin end along len (car)
+  depth: number; // oblique extrusion length (the 3D read)
+  axles: number; // wheels per side (2 or 3)
+  box?: boolean; // van/bus: a tall slab cabin with a window strip
+  flat?: boolean;// truck: a short cab on the right + a low bed
+  win?: number;  // box window count
 }
-function drawCarBody(o: CarOpts, ramp: number, _rng: () => number): Pixmap {
-  const p = paint(ramp);
-  const W = o.len + 2;
-  const beltY = o.tall ? 9 : 8;          // top of the lower body
-  const floorY = beltY + (o.tall ? 7 : 6); // body bottom (wheels hang below)
-  const H = floorY + 5;
+
+/** extrude a side-profile MASK (body-colored pixels, T elsewhere) up-right by
+ *  d: top edges sweep into the lit roof/hood, right edges into the shaded front.
+ *  Returns the canvas + the near-face y offset. */
+function extrudeMask(mask: Pixmap, ramp: number, d: number): { pm: Pixmap; oy: number } {
+  const lite = px(ramp, 3);
+  const mid = px(ramp, 1);
+  const W = mask.w + d + 2;
+  const H = mask.h + d + 2;
   const pm = new Pixmap(W, H);
-  const x0 = 1;
-  const x1 = W - 2;
-  // lower body (a touch of taper at the nose for a 3/4 read)
-  pm.rect(x0, beltY, x1 - x0 + 1, floorY - beltY, p.body);
-  pm.hline(x0, floorY, x1 - x0 + 1, p.dark);
-  pm.hline(x0, beltY + 1, x1 - x0 + 1, p.lite); // belt highlight
-  if (o.wedge) { pm.set(x1, beltY, T); pm.set(x1 - 1, beltY, p.lite); }
-  // M35: a chrome accent rocker strip says "money" along the lower flank
-  if (o.chrome) pm.hline(x0 + 1, floorY - 2, x1 - x0 - 2, CHROME);
-  const ry = beltY - o.roofH;
-  if (o.open) {
-    // CONVERTIBLE: an open cabin — a cut windshield up front + two headrests,
-    // the cabin floor showing instead of a roof (the roadster's whole appeal)
-    pm.line(o.roofX1 - 2, beltY - 1, o.roofX1, ry, GLASS);     // raked windshield
-    pm.line(o.roofX1 - 1, beltY - 1, o.roofX1 + 1, ry, CHROME); // its bright frame
-    pm.rect(o.roofX0 + 1, beltY - 2, 2, 2, p.dark);            // driver headrest
-    pm.rect(o.roofX0 + 4, beltY - 2, 2, 2, p.dark);            // passenger headrest
-    pm.hline(o.roofX0, beltY - 1, o.roofX1 - o.roofX0 - 1, p.lite); // tonneau lip
+  const oy = d + 1;
+  for (let y = 0; y < mask.h; y++) {
+    for (let x = 0; x < mask.w; x++) {
+      if (mask.get(x, y) === T) continue;
+      if (mask.get(x, y - 1) === T) for (let k = 1; k <= d; k++) pm.set(x + k, oy + y - k, lite);
+      if (mask.get(x + 1, y) === T) for (let k = 1; k <= d; k++) pm.set(x + k, oy + y - k, k > d - 2 ? lite : mid);
+    }
+  }
+  for (let y = 0; y < mask.h; y++) for (let x = 0; x < mask.w; x++) { const c = mask.get(x, y); if (c !== T) pm.set(x, oy + y, c); }
+  return { pm, oy };
+}
+
+/** the oblique SIDE view (nose right) — the default frame, used everywhere */
+function vehSide(b: CarBody, ramp: number): Pixmap {
+  const { body, lite, dark } = paint(ramp);
+  const beltY = b.box ? 2 : 8;
+  const floorY = beltY + b.bodyH;
+  const cabTop = beltY - b.cabH;
+  const sil = new Pixmap(b.len + 2, floorY + 1);
+  if (b.box) {
+    sil.rect(1, beltY, b.len, b.bodyH, body);
+  } else if (b.flat) {
+    const cabW = Math.max(8, Math.floor(b.len * 0.42));
+    sil.rect(b.len - cabW, beltY - b.cabH, cabW, b.cabH, body); // cab (right)
+    sil.rect(1, beltY, b.len, b.bodyH, body); // chassis/bed
+    sil.set(b.len, beltY - b.cabH, T);
   } else {
-    // cabin / greenhouse
-    pm.rect(o.roofX0, ry, o.roofX1 - o.roofX0, o.roofH, p.mid);
-    pm.hline(o.roofX0, ry, o.roofX1 - o.roofX0, p.lite);
-    // windows (windshield slanted + side glass)
-    pm.rect(o.roofX0 + 1, ry + 1, o.roofX1 - o.roofX0 - 2, o.roofH - 1, GLASS);
-    pm.vline(Math.floor((o.roofX0 + o.roofX1) / 2), ry + 1, o.roofH - 1, p.mid); // B-pillar
-    for (const px2 of o.pillars ?? []) pm.vline(px2, ry + 1, o.roofH - 1, p.mid); // limo pillars
-    pm.set(o.roofX1 - 1, ry + 1, GLASS_D);
+    sil.rect(1, beltY, b.len, b.bodyH, body);
+    sil.rect(b.cab0, cabTop, b.cab1 - b.cab0, b.cabH + 1, body);
+    sil.set(b.cab1 - 1, cabTop, T);
+    sil.set(b.cab0, cabTop, T);
+    sil.set(b.len, beltY, T);
   }
-  // M35: a hood scoop + side pipes — the hot-rod read
-  if (o.scoop) { pm.rect(o.roofX1 + 1, beltY - 2, 3, 2, p.dark); pm.hline(o.roofX1 + 1, beltY - 2, 3, p.lite); }
-  if (o.pipes) for (let i = 0; i < 3; i++) pm.set(x0 + 3 + i * 2, floorY - 1, CHROME);
-  // lamps + bumper
-  pm.rect(x1 - 1, beltY + 1, 1, 2, LAMP);
-  pm.rect(x0, beltY + 1, 1, 2, TAIL);
-  pm.hline(x0, floorY - 1, 2, CHROME);
-  // wheels
-  wheel(pm, x0 + 2, floorY + 4);
-  wheel(pm, x1 - 6, floorY + 4);
-  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
-  pm.outline(C.outline);
-  // a single pure-light glint on the windshield AFTER the contour (ADR-020)
-  if (!o.open) pm.set(o.roofX1 - 2, ry + 1, CHROME);
-  return pm;
-}
-
-/* ─── M36 (ADR-077): THE NIKOLAI — the flagship EV (a wink at Nikola Tesla) ─ */
-
-function drawNikolai(ramp: number, _rng: () => number): Pixmap {
-  const p = paint(ramp);
-  const W = 34;
-  const beltY = 8;
-  const floorY = 14;
-  const H = floorY + 5;
-  const pm = new Pixmap(W, H);
-  const x0 = 1;
-  const x1 = W - 2;
-  // a low, sleek, slab-sided body — no fussy creases, premium minimalism
-  pm.rect(x0, beltY, x1 - x0 + 1, floorY - beltY, p.body);
-  pm.hline(x0, floorY, x1 - x0 + 1, p.dark);
-  pm.hline(x0, beltY + 1, x1 - x0 + 1, p.lite);
-  // the EV signature — one continuous, near-frameless arched glass greenhouse
-  const ry = beltY - 5;
-  const rx0 = 8;
-  const rx1 = 27;
-  pm.rect(rx0, ry, rx1 - rx0, 5, GLASS_D);           // blacked-out pillar band
-  pm.rect(rx0 + 1, ry + 1, rx1 - rx0 - 2, 4, GLASS); // the glass dome
-  pm.line(rx0, ry + 4, rx0 - 2, beltY, GLASS);       // raked rear glass
-  pm.line(rx1, ry + 4, rx1 + 2, beltY, GLASS);       // raked windshield
-  pm.hline(rx0, ry, rx1 - rx0, p.lite);              // roof highlight
-  // flush, near-hidden door handles (two tiny chrome dashes)
-  pm.set(13, beltY + 3, CHROME);
-  pm.set(20, beltY + 3, CHROME);
-  // THE FRONT LIGHT BAR — a single bright strip across the nose (the face)
-  pm.hline(x1 - 4, beltY + 1, 4, px(RAMP.CYAN, 3));
-  pm.set(x1, beltY + 1, CHROME);
-  pm.rect(x0, beltY + 1, 1, 2, TAIL);                // a thin tail light strip
-  // aero, flush wheels
-  wheel(pm, x0 + 3, floorY + 4);
-  wheel(pm, x1 - 7, floorY + 4);
-  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
-  pm.outline(C.outline);
-  // a single pure-light glint on the glass AFTER the contour (ADR-020)
-  pm.set(rx1 - 2, ry + 1, CHROME);
-  return pm;
-}
-
-/* ─── ROAD: vans / buses (box bodies, windows in a row) ──────────────────── */
-
-function drawBox(len: number, win: number, ramp: number, _rng: () => number, tall = false): Pixmap {
-  const p = paint(ramp);
-  const W = len + 2;
-  const roofY = 2;
-  const floorY = tall ? 17 : 14;
-  const H = floorY + 5;
-  const pm = new Pixmap(W, H);
-  const x0 = 1;
-  const x1 = W - 2;
-  pm.rect(x0, roofY, x1 - x0 + 1, floorY - roofY, p.body);
-  pm.hline(x0, roofY, x1 - x0 + 1, p.lite);
-  pm.hline(x0, floorY, x1 - x0 + 1, p.dark);
-  pm.hline(x0, roofY + 3, x1 - x0 + 1, p.mid); // roof rail
-  // a strip of windows
-  const wy = roofY + 4;
-  for (let i = 0; i < win; i++) {
-    const wx = x0 + 2 + i * 5;
-    if (wx + 3 > x1) break;
-    pm.rect(wx, wy, 3, 3, GLASS);
-    pm.set(wx + 2, wy, GLASS_D);
-  }
-  // door seam + lamps
-  pm.vline(x1 - 4, wy, floorY - wy, p.dark);
-  pm.rect(x1 - 1, floorY - 3, 1, 2, LAMP);
-  pm.rect(x0, floorY - 3, 1, 2, TAIL);
-  wheel(pm, x0 + 3, floorY + 4);
-  wheel(pm, x1 - 7, floorY + 4);
-  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
-  pm.outline(C.outline);
-  return pm;
-}
-
-/* ─── ROAD: trucks (cab + flat/dump bed) ─────────────────────────────────── */
-
-function drawTruck(ramp: number, _rng: () => number, dump = false): Pixmap {
-  const p = paint(ramp);
-  const W = 38;
-  const floorY = 16;
-  const H = floorY + 6;
-  const pm = new Pixmap(W, H);
-  // cab (right) + bed (left)
-  const cabX = W - 13;
-  pm.rect(cabX, 3, 12, floorY - 3, p.body); // cab body
-  pm.rect(cabX + 2, 4, 8, 5, GLASS);        // cab window
-  pm.set(cabX + 9, 4, GLASS_D);
-  if (dump) {
-    // raised dump box
-    const gray = px(RAMP.PAPER, 0);
-    pm.rect(2, 4, cabX - 3, floorY - 4, gray);
-    pm.hline(2, 4, cabX - 3, px(RAMP.PAPER, 1));
-    pm.line(2, 4, cabX - 3, 8, p.dark); // tipped lip
+  const { pm, oy } = extrudeMask(sil, ramp, b.depth);
+  pm.hline(1, oy + beltY, b.len, lite); // belt highlight
+  pm.hline(1, oy + floorY - 1, b.len, dark); // rocker shadow
+  if (b.box) {
+    for (let i = 0; i < (b.win ?? 4); i++) { const wx = 3 + i * 5; if (wx + 3 < b.len) { pm.rect(wx, oy + beltY + 2, 3, 3, GLASS); pm.set(wx + 2, oy + beltY + 2, GLASS_D); } }
+  } else if (b.flat) {
+    const cabW = Math.max(8, Math.floor(b.len * 0.42));
+    pm.rect(b.len - cabW + 1, oy + beltY - b.cabH + 1, cabW - 2, b.cabH - 1, GLASS);
+    for (let x = 3; x < b.len - cabW - 1; x += 4) pm.vline(x, oy + beltY - 2, 2, dark); // bed slats
   } else {
-    // flatbed with stake sides
-    pm.rect(2, 8, cabX - 3, floorY - 8, px(RAMP.EARTH, 1));
-    pm.hline(2, 8, cabX - 3, px(RAMP.EARTH, 2));
-    for (let x = 3; x < cabX - 3; x += 4) pm.vline(x, 5, 4, px(RAMP.EARTH, 0));
+    pm.rect(b.cab0 + 1, oy + cabTop + 1, b.cab1 - b.cab0 - 2, b.cabH - 1, GLASS);
+    pm.vline(Math.floor((b.cab0 + b.cab1) / 2), oy + cabTop + 1, b.cabH - 1, body); // B-pillar
+    pm.set(b.cab1 - 1, oy + cabTop + 1, GLASS_D);
   }
-  pm.hline(2, floorY, W - 4, p.dark);
-  pm.rect(W - 2, floorY - 4, 1, 2, LAMP);
-  wheel(pm, 4, floorY + 4);
-  wheel(pm, cabX, floorY + 4);
-  wheel(pm, cabX + 6, floorY + 4);
-  pm.shadowUnder(Math.floor(W / 2), H - 1, Math.floor(W / 2) - 1, SHADOW);
+  // nose headlight (on the extruded front face) + tail light
+  pm.rect(b.len + b.depth - 2, oy + beltY + 1 - b.depth, 2, 2, LAMP);
+  pm.rect(1, oy + beltY + 1, 1, 2, TAIL);
+  pm.hline(1, oy + floorY - 2, 2, CHROME); // rear bumper
+  // wheels — far pair (extruded up-right, small) then near pair, in front
+  const wy = oy + floorY;
+  const xs = b.axles >= 3 ? [2, Math.floor(b.len / 2) - 2, b.len - 7] : [2, b.len - 7];
+  for (const wx of xs) { pm.rect(wx + b.depth, wy - 1 - b.depth, 5, 3, TIRE); pm.set(wx + b.depth + 2, wy - b.depth, HUB); }
+  for (const wx of xs) { pm.rect(wx, wy - 1, 6, 4, TIRE); pm.set(wx, wy - 1, T); pm.set(wx + 5, wy - 1, T); pm.rect(wx + 2, wy, 2, 2, HUB); }
+  pm.shadowUnder(Math.floor(pm.w / 2), pm.h - 1, Math.floor(pm.w / 2) - 2, SHADOW);
   pm.outline(C.outline);
+  if (!b.box && !b.flat) pm.set(b.cab0 + 2, oy + cabTop + 1, CHROME); // windshield glint
+  pm.set(b.len + b.depth - 1, oy + (b.box ? beltY : cabTop) - b.depth + 1, lite); // roof-corner spark
   return pm;
 }
+
+/** the FRONT (toward viewer) or BACK (away) face — vertical fascia + a lit
+ *  roof/hood plane receding up + lit/shaded flank edges, so the volume reads */
+function vehFace(b: CarBody, ramp: number, back: boolean): Pixmap {
+  const { body, lite, mid, dark } = paint(ramp);
+  const cabW = b.box || b.flat ? b.width - 2 : Math.min(b.width - 4, b.cab1 - b.cab0 + 2);
+  const W = b.width + 2;
+  const cx = 1 + Math.floor(b.width / 2);
+  const cabX = cx - Math.floor(cabW / 2);
+  const recede = Math.max(2, b.depth - 1);
+  const roofH = 2;
+  const hoodH = 2;
+  const glassH = b.box ? b.bodyH - 4 : b.cabH;
+  const fasciaH = b.box ? 3 : b.bodyH;
+  const H = 1 + recede + roofH + glassH + hoodH + fasciaH + 6;
+  const pm = new Pixmap(W, H);
+  let y = 1;
+  for (let i = 0; i < recede; i++) { const inset = Math.floor((recede - i) / 2); pm.hline(cabX + 1 + inset, y + i, cabW - 2 - inset * 2, lite); }
+  y += recede;
+  pm.rect(cabX + 1, y, cabW - 2, roofH, lite);
+  pm.hline(cabX + 1, y, cabW - 2, px(RAMP.PAPER, 1));
+  y += roofH;
+  pm.rect(cabX, y, cabW, glassH, back ? GLASS_D : GLASS);
+  pm.vline(cabX, y, glassH, mid);
+  pm.vline(cabX + cabW - 1, y, glassH, mid);
+  if (b.box) for (let i = 1; i < cabW - 1; i += 3) pm.vline(cabX + i, y, glassH, mid); // bus mullions
+  y += glassH;
+  pm.rect(1, y, b.width, hoodH, lite); // hood/trunk sliver
+  y += hoodH;
+  pm.rect(1, y, b.width, fasciaH, mid); // vertical fascia (shaded)
+  pm.vline(1, y, fasciaH, body);
+  pm.vline(b.width, y, fasciaH, dark);
+  pm.rect(cx - 3, y + 1, 6, Math.max(1, fasciaH - 3), dark); // grille / panel
+  if (back) { pm.rect(2, y + 1, 3, 2, TAIL); pm.rect(b.width - 3, y + 1, 3, 2, TAIL); }
+  else { pm.rect(2, y + 1, 3, 2, LAMP); pm.rect(b.width - 3, y + 1, 3, 2, LAMP); }
+  const floorY = y + fasciaH;
+  pm.hline(2, floorY - 1, b.width - 2, CHROME);
+  pm.rect(1, floorY, 3, 3, TIRE);
+  pm.rect(b.width - 2, floorY, 3, 3, TIRE);
+  pm.shadowUnder(cx, floorY + 3, Math.floor(b.width / 2), SHADOW);
+  pm.outline(C.outline);
+  pm.set(cabX + 2, 1 + recede + roofH, CHROME);
+  return pm;
+}
+
+/** pad a view to a target box, anchored bottom-center (sprites share a frame) */
+function padTo(src: Pixmap, w: number, h: number): Pixmap {
+  if (src.w === w && src.h === h) return src;
+  const out = new Pixmap(w, h);
+  const ox = Math.floor((w - src.w) / 2);
+  const oy = h - src.h;
+  for (let y = 0; y < src.h; y++) for (let x = 0; x < src.w; x++) { const c = src.get(x, y); if (c !== T) out.set(ox + x, oy + y, c); }
+  return out;
+}
+
+/** the three oblique views [side, front, back], padded to one frame size */
+export function carViews(b: CarBody, ramp: number): Pixmap[] {
+  const side = vehSide(b, ramp);
+  const front = vehFace(b, ramp, false);
+  const back = vehFace(b, ramp, true);
+  const w = Math.max(side.w, front.w, back.w);
+  const h = Math.max(side.h, front.h, back.h);
+  return [padTo(side, w, h), padTo(front, w, h), padTo(back, w, h)];
+}
+
+/** the shared frame size for a body (ramp-independent) — drives spec w/h */
+export function carFrame(b: CarBody): { w: number; h: number } {
+  const v = carViews(b, RAMP.PAPER)[0];
+  return { w: v.w, h: v.h };
+}
+
+/** ADR-097 bodies for the four-wheeler ROAD fleet — scaled up so a 24px hero
+ *  visibly fits (a sedan ≈ 2.5 kids long; a bus swallows the whole party). */
+export const CAR_BODIES: Record<string, CarBody> = {
+  sedan:        { len: 38, width: 16, bodyH: 6, cabH: 5, cab0: 12, cab1: 28, depth: 5, axles: 2 },
+  ev:           { len: 38, width: 16, bodyH: 6, cabH: 6, cab0: 11, cab1: 29, depth: 5, axles: 2 },
+  nikolai:      { len: 42, width: 17, bodyH: 6, cabH: 5, cab0: 12, cab1: 32, depth: 6, axles: 2 },
+  race_car:     { len: 42, width: 15, bodyH: 5, cabH: 3, cab0: 16, cab1: 28, depth: 4, axles: 2 },
+  grand_tourer: { len: 44, width: 16, bodyH: 5, cabH: 4, cab0: 17, cab1: 33, depth: 6, axles: 2 },
+  roadster:     { len: 38, width: 16, bodyH: 6, cabH: 3, cab0: 15, cab1: 29, depth: 5, axles: 2 },
+  limo:         { len: 66, width: 16, bodyH: 6, cabH: 5, cab0: 10, cab1: 58, depth: 5, axles: 2 },
+  muscle_car:   { len: 42, width: 17, bodyH: 7, cabH: 4, cab0: 14, cab1: 28, depth: 5, axles: 2 },
+  suv:          { len: 40, width: 18, bodyH: 8, cabH: 6, cab0: 10, cab1: 32, depth: 6, axles: 2 },
+  large_suv:    { len: 46, width: 19, bodyH: 8, cabH: 6, cab0: 10, cab1: 38, depth: 6, axles: 2 },
+  van:          { len: 42, width: 18, bodyH: 14, cabH: 0, cab0: 0, cab1: 0, depth: 6, axles: 2, box: true, win: 5 },
+  bus:          { len: 60, width: 19, bodyH: 17, cabH: 0, cab0: 0, cab1: 0, depth: 6, axles: 3, box: true, win: 9 },
+  truck:        { len: 46, width: 18, bodyH: 8, cabH: 6, cab0: 0, cab1: 0, depth: 6, axles: 3, flat: true },
+  dump_truck:   { len: 46, width: 18, bodyH: 10, cabH: 6, cab0: 0, cab1: 0, depth: 6, axles: 3, flat: true },
+};
+
+/* ─── ROAD: cars / vans / buses / trucks ─────────────────────────────────── */
+// The flat side-elevation car/box/truck draws (drawCarBody/drawNikolai/drawBox/
+// drawTruck) were RETIRED in ADR-097 — every four-wheeler now renders through
+// the oblique vehSide/vehFace pipeline above, keyed by its CAR_BODIES entry.
 
 /* ─── ROAD: motorcycle / bicycle ─────────────────────────────────────────── */
 
@@ -658,6 +670,25 @@ function box(w: number, h: number, oy = 0): { ox: number; oy: number; w: number;
   return { ox: 1, oy: oy, w: w - 2, h: h };
 }
 
+/** ADR-097: a four-wheeler spec built from its CAR_BODIES entry — w/h are the
+ *  oblique frame size, the footprint covers the lower body, and `draw` is the
+ *  SIDE view (frame 0; the FRONT/BACK frames ride the sheet via carViews). */
+function carSpec(cls: VehicleClass, seats: number, type: string, extra: { selfDrive?: boolean } = {}): VehicleSpec {
+  const body = CAR_BODIES[type];
+  const f = carFrame(body);
+  const fh = Math.min(f.h - 2, body.bodyH + 7);
+  return {
+    cls,
+    terrain: 'road',
+    seats,
+    w: f.w,
+    h: f.h,
+    solid: { ox: 1, oy: f.h - fh - 1, w: f.w - body.depth - 3, h: fh },
+    ...extra,
+    draw: (r) => carViews(body, r)[0],
+  };
+}
+
 export const VEHICLE_SPECS: Record<string, VehicleSpec> = {
   bicycle:     { cls: 'bike',    terrain: 'road', seats: 1,  w: 20, h: 16, solid: box(20, 6, 9),  draw: (r, g) => drawBike(r, g) },
   // M35 (ADR-076) — the two-wheeler tier: real, distinct, drivable bikes + motorcycles
@@ -666,22 +697,24 @@ export const VEHICLE_SPECS: Record<string, VehicleSpec> = {
   motorcycle:  { cls: 'moto',    terrain: 'road', seats: 2,  w: 22, h: 16, solid: box(22, 6, 9),  draw: (r, g) => drawMoto(r, g) },
   cruiser:     { cls: 'moto',    terrain: 'road', seats: 2,  w: 26, h: 16, solid: box(26, 6, 9),  draw: (r, g) => drawCruiser(r, g) },
   sport_bike:  { cls: 'moto',    terrain: 'road', seats: 2,  w: 24, h: 16, solid: box(24, 6, 9),  draw: (r, g) => drawSportBike(r, g) },
-  sedan:       { cls: 'car',     terrain: 'road', seats: 4,  w: 32, h: 19, solid: box(32, 7, 10), draw: (r, g) => drawCarBody({ len: 30, roofH: 5, roofX0: 9,  roofX1: 23 }, r, g) },
-  ev:          { cls: 'car',     terrain: 'road', seats: 4,  w: 32, h: 19, solid: box(32, 7, 10), draw: (r, g) => drawCarBody({ len: 30, roofH: 6, roofX0: 8,  roofX1: 24 }, r, g) },
+  // ADR-097 — the four-wheeler ROAD fleet, now OBLIQUE 3D (side/front/back),
+  // scaled so the cast visibly fits. Gameplay (cls/seats/terrain) is unchanged.
+  sedan:        carSpec('car', 4, 'sedan'),
+  ev:           carSpec('car', 4, 'ev'),
   // M36 (ADR-077) — THE NIKOLAI: the flagship EV. Self-driving "creep" toy (selfDrive).
-  nikolai:     { cls: 'car',     terrain: 'road', seats: 5,  w: 34, h: 19, solid: box(34, 7, 10), selfDrive: true, draw: (r, g) => drawNikolai(r, g) },
-  race_car:    { cls: 'car',     terrain: 'road', seats: 2,  w: 34, h: 19, solid: box(34, 6, 10), draw: (r, g) => drawCarBody({ len: 32, roofH: 3, roofX0: 12, roofX1: 22, wedge: true }, r, g) },
+  nikolai:      carSpec('car', 5, 'nikolai', { selfDrive: true }),
+  race_car:     carSpec('car', 2, 'race_car'),
   // M35 (ADR-076) — the HIGH-END / EXOTIC tier (Fortune-Arc priced, seat-fit-correct)
-  grand_tourer:{ cls: 'car',     terrain: 'road', seats: 4,  w: 36, h: 19, solid: box(36, 6, 10), draw: (r, g) => drawCarBody({ len: 34, roofH: 4, roofX0: 13, roofX1: 27, wedge: true, chrome: true }, r, g) },
-  roadster:    { cls: 'car',     terrain: 'road', seats: 2,  w: 32, h: 19, solid: box(32, 6, 10), draw: (r, g) => drawCarBody({ len: 30, roofH: 3, roofX0: 12, roofX1: 24, open: true, chrome: true }, r, g) },
-  limo:        { cls: 'car',     terrain: 'road', seats: 8,  w: 58, h: 19, solid: box(58, 7, 10), draw: (r, g) => drawCarBody({ len: 56, roofH: 5, roofX0: 8, roofX1: 50, chrome: true, pillars: [20, 32, 44] }, r, g) },
-  muscle_car:  { cls: 'car',     terrain: 'road', seats: 4,  w: 35, h: 19, solid: box(35, 7, 10), draw: (r, g) => drawCarBody({ len: 33, roofH: 4, roofX0: 11, roofX1: 23, scoop: true, pipes: true }, r, g) },
-  suv:         { cls: 'suv',     terrain: 'road', seats: 5,  w: 33, h: 21, solid: box(33, 8, 10), draw: (r, g) => drawCarBody({ len: 31, roofH: 6, roofX0: 8,  roofX1: 26, tall: true }, r, g) },
-  large_suv:   { cls: 'suv',     terrain: 'road', seats: 6,  w: 37, h: 21, solid: box(37, 8, 10), draw: (r, g) => drawCarBody({ len: 35, roofH: 6, roofX0: 8,  roofX1: 30, tall: true }, r, g) },
-  van:         { cls: 'van',     terrain: 'road', seats: 7,  w: 34, h: 19, solid: box(34, 9, 5),  draw: (r, g) => drawBox(32, 5, r, g) },
-  bus:         { cls: 'bus',     terrain: 'road', seats: 12, w: 50, h: 22, solid: box(50, 12, 5), draw: (r, g) => drawBox(48, 8, r, g, true) },
-  truck:       { cls: 'truck',   terrain: 'road', seats: 3,  w: 38, h: 22, solid: box(38, 10, 6), draw: (r, g) => drawTruck(r, g, false) },
-  dump_truck:  { cls: 'truck',   terrain: 'road', seats: 3,  w: 38, h: 22, solid: box(38, 10, 6), draw: (r, g) => drawTruck(r, g, true) },
+  grand_tourer: carSpec('car', 4, 'grand_tourer'),
+  roadster:     carSpec('car', 2, 'roadster'),
+  limo:         carSpec('car', 8, 'limo'),
+  muscle_car:   carSpec('car', 4, 'muscle_car'),
+  suv:          carSpec('suv', 5, 'suv'),
+  large_suv:    carSpec('suv', 6, 'large_suv'),
+  van:          carSpec('van', 7, 'van'),
+  bus:          carSpec('bus', 12, 'bus'),
+  truck:        carSpec('truck', 3, 'truck'),
+  dump_truck:   carSpec('truck', 3, 'dump_truck'),
   excavator:   { cls: 'machine', terrain: 'road', seats: 1,  w: 34, h: 22, solid: box(26, 8, 8),  draw: (r, g) => drawExcavator(r, g) },
   trash_cans:  { cls: 'prop',    terrain: 'road', seats: 0,  w: 16, h: 16, solid: box(16, 9, 3),  draw: (r, g) => drawTrashCans(r, g) },
   // the fleet — defined now, scaled into by Movements 33 (ADR-035 staging)
@@ -787,10 +820,23 @@ function fnv32(s: string): number {
   return h >>> 0;
 }
 
-/** draw a catalog vehicle by its sprite name (deterministic per name) */
+/** draw a catalog vehicle by its sprite name (deterministic per name) — the
+ *  SIDE view (frame 0), used by menus, the dealership, parked cars, the forge. */
 export function drawVehicle(name: string): Pixmap {
   const v = VEHICLE_CATALOG.find((e) => e.name === name);
   if (!v) return new Pixmap(8, 8);
   const spec = VEHICLE_SPECS[v.type];
   return spec.draw(v.ramp, mulberry32(fnv32(name)));
+}
+
+/** ADR-097: the per-direction view frames for a vehicle — [side, front, back]
+ *  for the oblique four-wheelers (so traffic TURNS by frame, not by rotating a
+ *  3/4 sprite), or a single [side] for the legacy one-view types (bikes, boats,
+ *  planes, machinery, military). index.ts registers these as a sprite sheet. */
+export function drawVehicleViews(name: string): Pixmap[] {
+  const v = VEHICLE_CATALOG.find((e) => e.name === name);
+  if (!v) return [new Pixmap(8, 8)];
+  const body = CAR_BODIES[v.type];
+  if (body) return carViews(body, v.ramp);
+  return [drawVehicle(name)];
 }

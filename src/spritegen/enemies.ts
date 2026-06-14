@@ -1239,6 +1239,10 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   banana_bunch: { sprite: 'battle_banana_bunch', draw: drawBananaBunch },
   jungle_jitterbug: { sprite: 'battle_jungle_jitterbug', draw: drawJungleJitterbug },
   gilded_grin: { sprite: 'battle_gilded_grin', draw: (w) => drawGildedGrin(w, false) },
+  // BOSS 3 (ADR-099) — HEADMASTER MAINFRAME wears the institutional-watcher face
+  // (dev-art: it shares the §A7 lurker silhouette this session; the bespoke server-
+  // colossus silhouette is the dedicated art pass, ADR-095 / Prompt 41).
+  headmaster_mainframe: { sprite: 'battle_ch3_lurker_3', draw: (w: WearTier) => composeEnemy(CH3_FACE_SPECS.battle_ch3_lurker_3, w) },
 
   // §A7 Ch.3 (ADR-095) — the England roster, each wearing its forged face
   // (CH3_ENEMY_FACE → CH3_FACE_SPECS), composed through the hand-drawn parts.

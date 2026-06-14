@@ -294,9 +294,9 @@ describe('S15g M3c — the drafts parse, pin, and cannot masquerade', () => {
     }
   });
 
-  it('the COUNT is law — exactly the seven unshipped bosses + two minibosses', () => {
+  it('the COUNT is law — six unshipped bosses + two minibosses (Ch.3 Mainframe promoted, ADR-099)', () => {
     expect(Object.keys(DRAFT_BOSS_SCRIPTS).sort()).toEqual([...DRAFT_BOSS_IDS].sort());
-    expect(DRAFT_BOSS_IDS.length).toBe(9);
+    expect(DRAFT_BOSS_IDS.length).toBe(8);
   });
 
   it('no draft collides with a shipped boss script or a shipped §A7 enemy', () => {
@@ -308,6 +308,6 @@ describe('S15g M3c — the drafts parse, pin, and cannot masquerade', () => {
 
   it('is byte-stable, twice + hash-pinned (a refactor that shifts one field fails here)', () => {
     expect(JSON.stringify(DRAFT_BOSS_SCRIPTS)).toBe(JSON.stringify(DRAFT_BOSS_SCRIPTS));
-    expect(fnv(DRAFT_BOSS_SCRIPTS)).toBe('3af8b57d'); // (chapter sessions promote these one at a time)
+    expect(fnv(DRAFT_BOSS_SCRIPTS)).toBe('e8f54966'); // (chapter sessions promote these one at a time; Ch.3 Mainframe promoted — ADR-099)
   });
 });

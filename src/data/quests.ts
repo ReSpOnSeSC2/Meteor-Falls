@@ -204,5 +204,116 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'heal', power: 380 },
       },
     }),
+
+    /* ════════════ CHAPTER 3 — ENGLAND (S18, ADR-099): the five §A10 quests ════════════
+     * #7 Overdue + #8 The Groundskeeper's Cuppa (the named core), + the Flow-Law trio:
+     * Return to Sender (local-person), The Penny Fog (hidden-place), The Last Over
+     * (sincere). Rewards reuse the live §A8 ch3 catalog (no new ITEMS row); two are
+     * caller+flag (the Paperboy precedent, ADR-073). Each strengthens the §A6 ledger. */
+
+    /* ---- §A10 #7 — recover three library books from blinking drones ---- */
+    Q({
+      id: 'overdue',
+      name: 'Overdue',
+      chapter: 3,
+      giver: 'wm_librarian',
+      startFlag: 'q_overdue',
+      objectives: [
+        { id: 'b1', text: 'A blinking pupil dragged THE WHISPERING GALLERY into the stacks. Get it back.', flag: 'q_overdue_b1' },
+        { id: 'b2', text: 'KNOTS & THEIR UNDOING is jammed in a form-room locker. Free it.', flag: 'q_overdue_b2' },
+        { id: 'b3', text: 'A first edition walked into the DORMS. Bring it home.', flag: 'q_overdue_b3' },
+        { id: 'report', text: 'Three books, recovered. Tell the Librarian the stacks are whole again.', flag: 'q_overdue_reported' },
+      ],
+      rewardItem: 'library_card',
+      doneFlag: 'q_overdue_done',
+      caller: {
+        name: 'The Librarian',
+        quote: 'The stacks are FULL again — full of loud things, said carefully. Borrow my whole voice. Return it whenever.',
+        effect: { kind: 'heal', power: 400 },
+      },
+    }),
+
+    /* ---- §A10 #8 — brew the groundskeeper's exact order: three ingredients ---- */
+    Q({
+      id: 'groundskeepers_cuppa',
+      name: "The Groundskeeper's Cuppa",
+      chapter: 3,
+      giver: 'wm_groundskeeper',
+      startFlag: 'q_cuppa',
+      objectives: [
+        { id: 'leaves', text: "The GOOD leaves, off Boothe's chemist in town.", flag: 'q_cuppa_leaves' },
+        { id: 'milk', text: 'PROPER milk, from the cricket pavilion cart.', flag: 'q_cuppa_milk' },
+        { id: 'water', text: 'Clean water the fog never touched — the spring at the Old Stones.', flag: 'q_cuppa_water' },
+        { id: 'brew', text: 'Bring all three back and let the groundskeeper brew it right.', flag: 'q_cuppa_brewed' },
+      ],
+      rewardItem: 'thermos',
+      doneFlag: 'q_cuppa_done',
+      caller: {
+        name: 'The Groundskeeper',
+        quote: "Forty years I've kept these grounds — let me keep YOU a minute. A brew for the whole party, hot all the way to Mars.",
+        effect: { kind: 'heal', power: 410 },
+      },
+    }),
+
+    /* ---- Ch.3 regional (local-person): free three letters the pillar box ate ---- */
+    Q({
+      id: 'return_to_sender',
+      name: 'Return to Sender',
+      chapter: 3,
+      giver: 'fb_postmistress',
+      startFlag: 'q_sender',
+      objectives: [
+        { id: 'l1', text: "A graded letter behind the bench on the green. (A child's drawing of a dog.)", flag: 'q_sender_l1' },
+        { id: 'l2', text: 'A letter under a cobble at the quay. (A fisherman, to the river.)', flag: 'q_sender_l2' },
+        { id: 'l3', text: 'A love letter in the back lane. Forty years late.', flag: 'q_sender_l3' },
+        { id: 'report', text: 'Three letters, freed. Get them to the postmistress for delivery.', flag: 'q_sender_reported' },
+      ],
+      rewardItem: 'commemorative_tin',
+      doneFlag: 'q_sender_done',
+      caller: {
+        name: 'The Postmistress',
+        quote: "A box can grade a letter all it likes — it can't STOP one. Special delivery to the end of the world: send it everything.",
+        effect: { kind: 'damage', power: 440 },
+      },
+    }),
+
+    /* ---- Ch.3 regional (hidden-place): the damp boy's penny-tasting fog ---- */
+    Q({
+      id: 'penny_fog',
+      name: 'The Penny Fog',
+      chapter: 3,
+      giver: 'fb_boy',
+      startFlag: 'q_penny',
+      objectives: [
+        { id: 'find', text: 'The broken Roman drain on the moor, where the fog pools thick. Go and taste it.', flag: 'q_penny_found' },
+        { id: 'report', text: 'Bring the boy his proof. (The rules are binding. He made them up.)', flag: 'q_penny_reported' },
+      ],
+      doneFlag: 'q_penny_done',
+      caller: {
+        name: 'The Penny-Fog Boy',
+        quote: "I FLIPPED the lucky coin and it LANDED, and that means it's YOU! Take all my pennies — the heavy ones, the lucky ones, ALL of them!",
+        effect: { kind: 'damage', power: 420 },
+      },
+    }),
+
+    /* ---- Ch.3 regional (sincere): the cricket match the term won't let end ---- */
+    Q({
+      id: 'the_last_over',
+      name: 'The Last Over',
+      chapter: 3,
+      giver: 'cricket_captain',
+      startFlag: 'q_over',
+      objectives: [
+        { id: 'umpire', text: 'Find Mr. Stumps, filed ABSENT by the mainframe. (A form room, marked TRUANT.)', flag: 'q_over_umpire' },
+        { id: 'clock', text: "The match can't end while the thing upstairs runs the clock. Stop it.", flag: 'q_over_clock' },
+        { id: 'stumps', text: 'Umpire found, clock stopped. Tell the captain it can finally be STUMPS.', flag: 'q_over_called' },
+      ],
+      doneFlag: 'q_over_done',
+      caller: {
+        name: 'The Cricket Captain',
+        quote: "STUMPS! We're going HOME — but first the whole First XI bowls for you, all eleven at once. Play it everywhere it hurts!",
+        effect: { kind: 'damage', power: 450 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

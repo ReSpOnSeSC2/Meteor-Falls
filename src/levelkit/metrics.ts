@@ -58,6 +58,36 @@ export function cityViolations(m: CityLike): string[] {
   return out;
 }
 
+/**
+ * THE LIVING-CITY LAW (S18, ADR — alive by default). A settlement must not ship
+ * DEAD: its catalog facades each need a PURPOSE. After occupyCity runs, every
+ * 'bldg_' facade either opens a door (enterable) or answers a knock (a locked
+ * sign), and the enterable share stays high. The build (content-validate) and the
+ * test suite both call this, so a future city that skips occupyCity FAILS the
+ * build — dead-by-default can never regress in.
+ *
+ * Empty = compliant. Skips tiny settlements (<8 facades) where the ratio is noise.
+ */
+export type LivingLike = Pick<MapDef, 'id' | 'props' | 'signs'>;
+
+export function livingCityViolations(m: LivingLike): string[] {
+  const out: string[] = [];
+  const facades = m.props.filter((p) => p.sprite.startsWith('bldg_') && p.solid);
+  if (facades.length < 8) return out; // villages / hand-built strips: not swept
+  const enterable = facades.filter((p) => p.door).length;
+  const pct = enterable / facades.length;
+  if (pct < 0.75) {
+    out.push(`${m.id}: only ${Math.round(pct * 100)}% of buildings are enterable (Living-City Law needs >=75%, target ~90%)`);
+  }
+  // every doorless facade must answer a knock (occupyCity drops a cl_knock_* sign)
+  const locked = facades.length - enterable;
+  const knocks = m.signs.filter((s) => s.dialogue.startsWith('cl_knock_')).length;
+  if (knocks < locked) {
+    out.push(`${m.id}: ${locked - knocks} locked building(s) give no knock-knock response (dead door)`);
+  }
+  return out;
+}
+
 /** live read for the LAB overlay: structure + negative-space share */
 export interface CityMetrics {
   width: number;

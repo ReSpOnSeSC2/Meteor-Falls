@@ -8,13 +8,13 @@
  * act: a chapter session moves its boss into src/data/bosses.ts and the tone
  * editor rewrites every `*_draft` dialogue id into a real §A11 line.
  *
- * Ch.1 Tick + Ch.2 Grin are SHIPPED (bespoke / data/bosses.ts) and absent here.
- * Ch.10's finale (THE HUSH) is bespoke like the Tick — not one of the ten
+ * Ch.1 Tick + Ch.2 Grin + Ch.3 Mainframe are SHIPPED (data/bosses.ts) and absent
+ * here. Ch.10's finale (THE HUSH) is bespoke like the Tick — not one of the ten
  * templates — and lands with the finale, not the forge.
  *
  * The draft dialogue ids (`*_draft`) and the boss/minion enemy ids they drive
- * (headmaster_mainframe, prefect_drone, flat_bell, …) are UNSHIPPED — they
- * resolve to canon only at promotion. Determinism is trivial: static data, no
+ * (the_whisperwig, whiskerzilla, flat_bell, …) are UNSHIPPED — they resolve to
+ * canon only at promotion. Determinism is trivial: static data, no
  * Date.now()/Math.random() (Prime Law 2).
  */
 import type { BossScriptDef, RiddleDef } from '../../schemas';
@@ -24,7 +24,6 @@ import {
   mercyEnding,
   riddle,
   scriptedSurvival,
-  summoner,
   thresholdHeal,
   untargetableUntilNoise,
 } from '../../levelkit/forge/bosses';
@@ -43,12 +42,9 @@ const SPHINX_RIDDLES: RiddleDef[] = [
 ];
 
 export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
-  /* Ch.3 — HEADMASTER MAINFRAME (1,600 HP): refills its Prefect Drones forever */
-  headmaster_mainframe: summoner('headmaster_mainframe', {
-    minion: 'prefect_drone',
-    n: 2,
-    openLine: 'mainframe_open_draft',
-  }),
+  /* Ch.3 — HEADMASTER MAINFRAME: PROMOTED (ADR-099). Now a live boss in
+   * src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy — no longer a
+   * draft (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 
   /* Ch.4 — THE WHISPERWIG (1,900 HP): burrowed/untargetable until noise; hush */
   the_whisperwig: untargetableUntilNoise('the_whisperwig', {
@@ -125,7 +121,7 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
  *  Embers/Heartlights/bosses; Ch.1 Tick + Ch.2 Grin shipped, Ch.10 Hush is the
  *  bespoke finale, leaving these seven + the two minibosses). */
 export const DRAFT_BOSS_IDS = [
-  'headmaster_mainframe',
+  // 'headmaster_mainframe' — PROMOTED to a live boss at the Ch.3 landing (ADR-099)
   'the_whisperwig',
   'whiskerzilla',
   'laughing_sphinx',

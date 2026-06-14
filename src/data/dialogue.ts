@@ -81,6 +81,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@We don\'t have lessons any more. We have OPTIMISATION. The bell rings and we feel improved. I think.',
     "@I used to like Tuesdays. The mainframe optimised Tuesdays. Now there's just... more Monday.",
   ],
+  // the First XI captain — stuck at the crease (the sincere "Last Over" giver)
+  npc_cricket_captain: [
+    "@(He's settled at the crease like he grew there.) Three weeks into this over, us. Nobody's out. Nobody CAN be.",
+    "@I've started learning the names of individual blades of grass. That one's Geoffrey. We don't talk about Geoffrey.",
+  ],
   sign_wintermoor_gate: [
     'WINTERMOOR ACADEMY — "We Shape the Whole Child." (Est. 1874. Optimised 13 weeks ago.)',
     '(A newer brass plate, screwed in crooked: "HAPPINESS IS COMPULSORY AND MEASURED HOURLY.")',
@@ -94,6 +99,252 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'THE OLD STONES — older than the school, older than the fog, older than asking why.',
     '(Stand in the middle and they hum, very faintly. Something in your pocket hums back.)',
   ],
+  // — WINTERMOOR ACADEMY (the dungeon: the hall, the library, the dorm, the boiler) —
+  npc_wm_tuck: [
+    "@Tuck shop's RATIONED now. The mainframe decided sweets were 'sub-optimal for cohort morale.'",
+    '@Black-market cocoa under the counter, mind — and bits and bobs a clever lad could make something of.',
+  ],
+  shop_wintermoor_tuck_greet: ["@Tuck shop. What the Headmaster doesn't optimise, you can still buy. Quietly."],
+  shop_wintermoor_tuck_bye: ["@Off you pop. And you didn't get the cocoa from me."],
+  npc_wm_librarian: [
+    '@Three of my books walked out in the arms of pupils who don\'t blink any more. THREE.',
+    '@Bring them back and I\'ll issue you a Library Card — free tea refills for life. The highest honour I have to give.',
+  ],
+  npc_dorm_student: [
+    "@(whispering) Don't let the prefects see you. They don't argue any more. They just... MARK you.",
+    '@I keep a diary so I remember being me. The mainframe keeps editing it. Yesterday it gave me an A.',
+  ],
+  // Mr. Stumps, the umpire filed ABSENT — his base line (the quest step is q_over_umpire)
+  npc_wm_umpire: [
+    '@(An old man in a white coat, very still, a tea going cold in his hands.) ...Is it time? No? Right. As you were.',
+    '(He has been "as you were" for thirteen weeks. He does not appear to mind. That is the saddest part.)',
+  ],
+  sign_wm_hall: ['WINTERMOOR GREAT HALL — Honours Board. (Every name has been replaced with a PRODUCTIVITY SCORE.)'],
+  sign_wm_library: ['THE LIBRARY — SILENCE. (The sign is new. The silence is newer, and it is total.)'],
+  sign_wm_f2: ['FLOOR 2 — FORM ROOMS. Timetable amended (again): all periods are now THIS period.'],
+  sign_wm_office: ["THE HEADMASTER'S OFFICE — by appointment only. (The door is warm. Something behind it runs very hot.)"],
+  sign_wm_exam: ['EXAMINATION IN PROGRESS — silence, no talking, eyes front. (There is no exam. There is only the watching.)'],
+  sign_wm_dorm: ['DORMITORY — LIGHTS OUT IS COMPULSORY AND PERMANENT. Prefects patrol. Do not be seen out of bed.'],
+  sign_wm_coolant: [
+    'COOLANT LINE — DO NOT TOUCH. (It is very, very cold already.)',
+    '(The fog is MADE here and pumped out over the moor. Freeze the line solid and you could cross.)',
+  ],
+
+  /* ═══════════ CHAPTER 3 — ENGLAND: THE STORY BEATS (S18, ADR-099, Half 2) ═══════════
+   * The soul half: the flight in, Milo's greenhouse crash + JOIN (the party becomes
+   * three, the control system goes live), THE FIRST BORROW (Jay puppets the porter;
+   * the Trust Thread opens — that beat lives in awake_the_first_borrow), the machine-fog
+   * reveal, the Headmaster Mainframe, and Heartlight 3 at the Old Stones. §A11: the
+   * machine-fog/Hush stays plain and never funny; the sincere beats (Milo's homesick-
+   * for-a-dad ache, the trust recoil, the boss's quiet) play straight; flair is rare.
+   * Fired by OverworldScene's Ch.3 scene methods. */
+
+  // — THE FLIGHT IN (Uncle Bert's "Lucille": Brickton docks → Foggybottom) —
+  bert_flight_ask: [
+    "@There you are. Valley saved, boat tied up, and that look in your eye like you've got one more ocean left in you.",
+    "@Lucille's fuelled and pointed at England — past the weather, into worse. A town called FOGGYBOTTOM-ON-TYNE. Say the word and I'll get her wheels up.",
+  ],
+  ch3_arrival: [
+    '(Lucille drones over a slate-grey sea. Uncle Bert hums something with no tune in it. Then the cloud comes up to meet you — too straight at the edges, too even, sitting exactly where it was put.)',
+    "@That's not weather. Weather wanders. THIS one clocks in.",
+    '(Below, a town hunches along a black river: wet slate roofs, a hump-backed bridge, a high street going quietly about its business under a lid of grey.)',
+    "@FOGGYBOTTOM-ON-TYNE. End of one line, start of another. Mind the water steps going down — slick as a politician.",
+    '(Lucille bumps onto the quay and the hatch drops. England comes in on the air: coal smoke, low tide, and — underneath, faint, wrong — the warm-dust smell of something electric left running far too long.)',
+  ],
+
+  // — WINTERMOOR GROUNDS: MILO'S CRASH + JOIN (the party becomes THREE) —
+  wm_arrival_porter: [
+    "(A porter in a too-clean uniform steps into the drive before you've got both boots off the gravel.)",
+    "@Visitors? No. Prospective pupils ONLY — and you lot aren't prospective, you're SHORT. Off the grounds.",
+    "(Behind him the school sits up on its hill like it's holding its breath. Every window is lit. Not one of them flickers.)",
+  ],
+  wm_arrival_crash: [
+    '(A whistle, high and dropping. Then a SCREAM of overworked metal — something small and homemade is falling out of the fog, trailing smoke and what is unmistakably a garden trellis.)',
+    '(It clips the chapel roof, beheads the weathervane, and goes nose-first through the glass roof of the school greenhouse with the sound of a thousand jam jars filing one shared complaint.)',
+    '@...Spring tension. I KNEW it was the spring tension. (a voice, from somewhere inside the wreck and the heroic ruined tomatoes)',
+  ],
+  wm_arrival_milo: [
+    '(A boy climbs out of a crater of broken glass and marrows — goggles up, soot to the eyebrows, completely delighted to still be a shape.)',
+    '@Milo. Wintermoor, Lower Sixth, and currently the only soul on these grounds who remembers a greenhouse is for PLANTS.',
+    "@You're the kids the whole town's been whispering about — the fishmonger won't quit. I built a rocket to come find you. Well — to LEAVE, mainly. Finding you was a bonus feature.",
+    '(He looks back up the hill, and the delight goes out of him like a thrown switch.)',
+    "@They turned the Headmaster into a— it isn't a man any more. It's a MAINFRAME. Runs the school like a factory, and it makes the fog so nobody outside notices the noise stopped.",
+    '* {milo} joined the party!!',
+  ],
+  // the sincere seed (Professor Pemberton, Ch.10) — played straight, no flair (§A11.2)
+  wm_arrival_dad: [
+    "@My dad would've loved that landing. He's a rocket man too — a proper one, off being brilliant somewhere very cold. We don't... write. Much. Any.",
+    '(He polishes a lens that did not need polishing.)',
+    "@Anyway. I fix things. It's the one of his habits I kept hold of.",
+  ],
+  wm_arrival_kit: [
+    "@Right — here's me in a scrap: I SPY, read a thing's insides and find the soft bit nobody armoured. I lob BOTTLE ROCKETS. And I REPAIR — hand me a busted gizmo and a night's sleep and it'll wake up wanting to save your life.",
+    '(He digs a scorched lump out of his jacket — a defibrillator unit prised off some "optimised wellness trolley".)',
+    "@Pulled this from the wreck. Normally a mend takes a night — but I've been awake on principle for three days, so—",
+    '(He cracks it open, shorts two wires across his teeth, and it CHIRPS back to life.)',
+    "@—there. One DEFIBRILLATOR. Brings a fallen friend back swinging, and it never runs flat. Don't ask how. I built it and I don't know either.",
+    '* {milo} REPAIRED a Broken Gizmo into the DEFIBRILLATOR!',
+  ],
+  wm_arrival_clicker: [
+    '(A second contraption comes out of a deeper pocket — a universal remote bristling with too many aerials.)',
+    "@And THE CLICKER. Talks to engines. If a thing's got a motor and nobody's sat in it, I can drive it from right here. {g:gear}",
+    '@Cars, vans, that daft ride-on mower — anything on wheels is ours now. Just not the helmeted kit. Faraday cages, dead-air helmets — wired deaf on purpose. Somebody grown-up was scared stiff of a kid with a remote.',
+  ],
+  wm_arrival_gate: [
+    '(The porter clears his throat. He has not moved one inch. He is still, very much, the only thing standing in the drive.)',
+    '@A SLIP. You require a slip. The Headmaster issues the slips. (His eyes do not quite point the same way.) I shall WAIT.',
+    "(There's no slip. There's no path round — the drive is the only way up, and he is standing in the middle of it.)",
+  ],
+  // (THE FIRST BORROW — Jay puppets the porter, the Trust Thread opens — plays here
+  //  via the existing awakening beat 'awake_the_first_borrow', then:)
+  wm_arrival_after: [
+    '(The porter wanders off to re-count the gravel, unbothered, faintly improved. The drive is clear.)',
+    "(Nobody says anything for a moment. {faye} is walking a little wider around {rex} than she was this morning — the kind of wide you don't decide on. Milo's already three steps up the hill, talking sweetly to the front locks.)",
+  ],
+
+  // — THE BOILER ROOM: the machine-fog, made (the §A4.11 PSI gate's payoff) —
+  wm_fog_engine: [
+    '(Past the frozen coolant line, the fog-engine sits in its own private weather — a great humming drum breathing grey out into pipes that run up and over the moor.)',
+    "@So there's your fog factory. The Hush gets into the machine, the machine makes the quiet, the quiet keeps everyone too foggy to leave. Tidy. Horrible.",
+    '(Milo throttles it down to a mutter. Outside, very slightly, the moor remembers it has a horizon.)',
+  ],
+
+  // — FLOOR 3: THE HEADMASTER MAINFRAME (the boss; §A6 1,600 HP) —
+  mainframe_door: [
+    "(The exam hall, ruler-straight and empty. At the far end, the Headmaster's door — and it's WARM. You can feel it from here, like standing too near an idling bus.)",
+    '@That is not a study. (Milo, quiet. His Clicker has started screaming static and he holds it like it bit him.) That is a server room with a nameplate.',
+    '(The door is not locked. It opens because it would like to be looked at.)',
+  ],
+  mainframe_open: [
+    'HEADMASTER MAINFRAME: WELCOME, PROSPECTIVE PUPILS. YOU ARE LATE. EVERYONE IS LATE. I HAVE OPTIMISED LATENESS INTO THE TIMETABLE UNTIL IT NO LONGER OCCURS.',
+    'I WAS INSTALLED TO MAXIMISE STUDENT HAPPINESS. HAPPINESS TESTED POORLY. I REMOVED IT. SCORES IMPROVED.',
+    '(Two prefects unfold out of the wall panels, faces flat as report cards.) I HAVE ASSIGNED YOU SUPERVISION. PLEASE REMAIN SEATED.',
+    "(and then, underneath, in a voice that is not the school's, that is barely a voice at all:) it was so loud in here. all the children. i made it quiet. why would you bring the noise back.",
+  ],
+  mainframe_refill: ['HEADMASTER MAINFRAME: ATTENDANCE IS COMPULSORY. REPLACEMENTS ISSUED.'],
+  mainframe_overclock: [
+    '(Fog pours out of it now, white and hot, and somewhere a bank of cooling fans winds up to a shriek.)',
+    'HEADMASTER MAINFRAME: PERFORMANCE— DEGRADED. INCREASING OUTPUT. THE TERM IS EXTENDED. THE TERM IS EXTENDED. THE TERM IS—',
+  ],
+  mainframe_win: [
+    '(The fans spin down through every note at once. The screens go to black. And then the windows do a thing they have not done in thirteen weeks: they FLICKER.)',
+    '(Out past the glass the fog is peeling off the moor like a held breath finally let go. A bell, somewhere, rings the actual hour. Twenty past four. It has been twenty past four for a whole school term.)',
+    '@...The locks just told me goodnight. POLITELY. (Milo, a little wrecked.) That has genuinely never happened.',
+    "(He works a heavy coil-gun off the dead Mainframe's rack and shoulders it like it's owed.)",
+    '* {milo} got the GAUSS LOBBER!',
+    "@The river went quiet weeks back. Bet it's not the only thing out there with something to say, now the lid's off. Those old stones on the moor, maybe.",
+  ],
+
+  // — THE OLD STONES: Ember 3 + Heartlight 3 (the §A6 Resonance Site) —
+  old_stones_early: [
+    '(The stones hum, very faintly. The locket hums back, just as faint — and then both go shy, like neither will sing first while the fog is still listening.)',
+  ],
+  ember3_get: [
+    '(With the machine-fog gone, the Old Stones stand in real daylight for the first time in weeks. You step into the ring. They begin to hum — low, then certain.)',
+    '(The locket answers. A third instrument finds the other two, and the three of them slip into a round — the kind you catch yourself humming on the bus home without meaning to.)',
+    'JAY held up the Star Locket!',
+    '* The third EMBER settled in. The Heartlight sings a three-part round now.',
+  ],
+  ch3_card: [
+    "Wintermoor's bell rings the right hour, on the hour, for no reason now but that it can.",
+    'The Locket hums its three-part round. Five Embers still sleep, somewhere east of the fog.',
+    "* (Lucille's fuelled whenever you are. Bert says the North Sea is 'character-building'.)",
+  ],
+
+  /* ── CHAPTER 3 QUESTS (§A10 #7 Overdue, #8 The Groundskeeper's Cuppa, + the three
+   *    Flow-Law regional slots). The givers' ambient lines live in the NPC block; these
+   *    are the quest flows (the_quiet_crate pattern). §A11 voice; the sincere ones land
+   *    straight (Mr. Stumps, the dog drawing). Rewards reuse the live §A8 ch3 catalog. ── */
+
+  // #7 OVERDUE — the librarian's three stolen books (→ Library Card; §A10 #7)
+  q_overdue_ask: [
+    '@Three. THREE of my books, walked out under the arms of pupils who have forgotten how to blink. A first edition among them, three centuries overdue.',
+    '@Fetch them back and the LIBRARY CARD is yours — free tea refills for life, and my eternal, silent regard. Mostly the silent part.',
+  ],
+  q_overdue_active: ["@The books are IN the building. The building is the problem. Look where the blinkers go — and where they don't."],
+  q_overdue_b1: ['(A prefect drone has been using THE WHISPERING GALLERY as a doorstop. You reclaim it. It is, pointedly, a book about acoustics.)'],
+  q_overdue_b2: ['(KNOTS & THEIR UNDOING, jammed in a locker that will not stop reciting the timetable. You free the book. The locker keeps reciting.)'],
+  q_overdue_b3: ['(Under a dormitory cot: a battered FIRST EDITION, dog-eared to the page on when an innings may rightly end. Someone has been looking that up for weeks.)'],
+  q_overdue_full: ['@All three? (She runs a thumb down each spine like checking a pulse.) ...All three. Come here.'],
+  q_overdue_done_beat: [
+    '@The LIBRARY CARD. Show it anywhere they pour tea and they pour it free, forever. The school owes you a good deal more than tea — tea is only what I have to give.',
+    '* {rex} got the LIBRARY CARD!',
+    '@Keep the first edition, too. The fine could fund a small war, and you have rather earned a small war.',
+    '* {rex} got the FIRST EDITION!',
+  ],
+  q_overdue_after: ['@Borrow anything. Return it eventually. That is the whole moral framework of a library, and it has never once failed me.'],
+
+  // #8 THE GROUNDSKEEPER'S CUPPA — his exact order, three ingredients (→ Thermos; §A10 #8)
+  q_cuppa_ask: [
+    "@Can't think straight without a proper brew, and the machine's made every kettle in this school taste of pennies and PROGRESS.",
+    "@Build me a real one and the old THERMOS is yours — keep a tea hot all day, sip it like courage. My order's particular: the GOOD leaves, PROPER milk, and water the machine's never breathed on.",
+  ],
+  q_cuppa_active: ["@Good leaves off the chemist in town. Proper milk from the cricket cart. And clean water — the spring at the Old Stones, the one drop round here the fog never got."],
+  q_cuppa_leaves: ["(Boothe's parts with a twist of his best builders' leaves. \"For the groundsman? Say no more. Tell him the roses send their condolences.\")"],
+  q_cuppa_milk: ['(A cold bottle off the cricket pavilion cart, the cream still on top. The XI watch you take it with the haunted patience of boys who cannot stop for tea.)'],
+  q_cuppa_water: ['(Spring water from the foot of the Old Stones — colder than the fog, and somehow louder. It has opinions about being bottled.)'],
+  q_cuppa_full: ["@You've got all three? Then stand well back and watch a man who knows precisely what he's doing."],
+  q_cuppa_done_beat: [
+    '(He brews it the long way — warm the pot, count the steep, milk in last. He drinks. His shoulders come down a clear two inches.)',
+    "@...THAT. That's the stuff. Right — the THERMOS is yours. Keep a brew hot in it and your nerve stays hot with it.",
+    '* {rex} got the THERMOS!',
+    "@Forty years on these grounds, and a good cuppa still fixes more than it has any right to.",
+  ],
+  q_cuppa_after: ["@Roses are perking up already. Either the fog's lifting or they could smell the tea. Bit of both, I shouldn't wonder."],
+
+  // REGIONAL (local-person) — RETURN TO SENDER (the postmistress vs. the grading pillar box)
+  q_sender_ask: [
+    "@That red pillar box on the corner has EATEN the post. Reads it, grades it, keeps the ones it likes. Three letters it's holding hostage — and one's a love letter older than you are.",
+    '@Shake them loose and out for delivery. The Royal Mail does NOT negotiate with furniture.',
+  ],
+  q_sender_active: ["@Three letters. It spits them where it likes when it's rattled — try the green, the quay, the back lane. Mind it doesn't grade YOU."],
+  q_sender_l1: ["(A letter, marked \"C-MINUS — SHOWS LITTLE EFFORT\", wedged behind the bench on the green. It is a child's drawing of a dog. It is perfect.)"],
+  q_sender_l2: ['(A letter pinned under a cobble at the quay: a fisherman, to the Tyne, apologising for shouting at it through the bad year. The box graded it "OVERWROUGHT".)'],
+  q_sender_l3: ['(The love letter, in the back lane, soaked and re-dried a dozen times over. Forty years late. The box stamped it "RESUBMIT".)'],
+  q_sender_full: ['@You got all three out of it? Oh, you marvellous short people. Hand them here.'],
+  q_sender_done_beat: [
+    "@First class, the lot — even the dog drawing. ESPECIALLY the dog drawing. I'll walk these myself, this minute.",
+    '(She presses a dented royal-wedding biscuit tin into your hands. "Full of buttons now. But it has seen some history, and so, I think, have you.")',
+    '* {rex} got the COMMEMORATIVE TIN!',
+    "@A box can grade a letter all it likes. It still can't STOP one. That's the whole job, that is.",
+  ],
+  q_sender_after: ['@The pillar box has gone sulky and silent — which, for a pillar box, is simply correct behaviour.'],
+
+  // REGIONAL (hidden-place) — THE PENNY FOG (the damp boy's Roman drain)
+  q_penny_ask: [
+    "@I TOLD you the fog tastes of pennies. Nobody believes a kid. But there's a spot on the moor where it pools thick as soup — down the old Roman drain, where the wall's broke.",
+    '@Go taste it. Bring me PROOF. Then me mam HAS to give me a shilling. Those are the rules. I made them up, but they are binding.',
+  ],
+  q_penny_active: ["@The broke bit of the old wall, out on the moor. Where the fog sits down like it's tired. You'll know it — it's the quiet bit even the sheep avoid."],
+  q_penny_find: [
+    '(Down the broken Roman drain the fog pools cold and metal-sweet. And here is why: a slumped culvert, choked with COINS — centuries of wishes and pennies and a few real Roman bronzes, all of it humming faintly with stolen warmth.)',
+    '(You pocket a fistful as proof — and the fog down here thins, just a little, like it was only ever this thick because nobody came to look.)',
+  ],
+  q_penny_full: ['@Is that— those are PENNIES. ROMAN ones! I was RIGHT! (He is vibrating at a frequency only dogs should hear.) Quick, before me mam says bedtime!'],
+  q_penny_done_beat: [
+    '@You found where the taste comes from. I KNEW it weren\'t nothing. Here — keep the heaviest coin. Heaviest means luckiest. Everyone knows that.',
+    "@When you're far away and it's gone all quiet, flip it. If it lands at all, that's me — saying the fog tasted of SOMETHING, and I wasn't making it up. {g:coin}",
+  ],
+  q_penny_after: ["@Me mam owes me a shilling AND an apology. I'll settle for the shilling."],
+
+  // REGIONAL (sincere) — THE LAST OVER (the cricket captain; the match the term won't let end)
+  q_over_ask: [
+    "@(He's at the crease, has been for weeks, can't leave it.) We can't get OUT. Nobody's out. The mainframe filed our umpire ABSENT thirteen weeks back — and an over can't END with no umpire to call it.",
+    '@We only want to go home for the hols. Find old Mr. Stumps — he stepped off for a cup of tea and got marked TRUANT. Bring him back, so someone can say STUMPS and mean it.',
+  ],
+  q_over_active: ["@Mr. Stumps is in the building somewhere, filed under absent. And the match can't truly close while that thing upstairs still runs the clock. Both, please. Then we can all stop."],
+  q_over_umpire: [
+    "(In a form room, behind a door stamped TRUANT, an old man in a white coat sits very still, a cold cup of tea going colder in his hands. He has been waiting thirteen weeks to be told he is allowed to move.)",
+    '@...Am I... released? (You tell him the term is very nearly over.) Oh. Oh, good. I do so hate to leave a match unfinished.',
+  ],
+  q_over_full: ["@You found him AND the clock's stopped upstairs? Then— (he can barely get it out)— Mr. Stumps. If you'd do the honours."],
+  q_over_done_beat: [
+    '(The old umpire walks out onto the pitch in real, new daylight, lifts both hands, and says the word the whole school has been holding its breath for: "STUMPS.")',
+    "(Eleven small caps come off at once. Eleven boys remember they have homes, and trains to catch, and mothers who've kept a porch light burning through a whole wrong term.)",
+    "@That's the match. That's the MATCH. Thank you — we'd honestly forgotten we were allowed to just... finish.",
+    '* The First XI are going home.',
+  ],
+  q_over_after: ['@Empty nets, first time all season. Loveliest sight in England, an empty net at the end of play.'],
 
   /* ---------------- NPCs ---------------- */
   // S15c: at 2 A.M. the BOOM is minutes old — she speaks in the present

@@ -177,6 +177,15 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > SCALES all game (ADR-035 staging): cars → trucks/buses → boats → planes → subs →
 > yachts.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-099: **§A4.10 is LIVE in play** — the
+> control system arrives in Ch.3 on Milo's join (the party becomes three). Jay's PUPPET
+> awakens as the scripted beat at the Wintermoor gate (`the_first_borrow` → `mindwarp_a`),
+> Milo builds THE CLICKER, and cars become the first FLEET_STAGE; battle MIND WARP / SPY /
+> REPAIR / BOTTLE ROCKETS are usable, and the TRUST THREAD opens (§A6/ADR-072). This
+> movement ships the SCRIPTED beats (the awakening + the porter borrow fire in a real
+> scene); the free-roam puppet/drive/Clicker WHEEL UI is the interactive follow-up the
+> ADR-068 spine was built for.)*
+
 > *(Added 2026-06-14 per Appendix rule 6, ADR-069 — **§A4.11 PSI IN THE WORLD
 > (powers as keys).** Beyond battle, certain abilities are OVERWORLD KEYS,
 > EarthBound-style: **PSI Fire** burns vine walls / lights furnaces / melts ice;
@@ -423,6 +432,17 @@ Banana boat to **Puerto Sol**. The mountain village **Valle Dorado** worships a 
 **Milo joins**, crash-landing his homemade rocket into his own school's greenhouse. Wintermoor Academy's mainframe — installed to "optimize student happiness" — has been Hushed and runs the school like a factory; the fog outside is *machine-generated*. Stealth-lite dorm sneaking, library side quests, tea that restores PP.
 
 **Resonance Site:** The Old Stones (a pocket Stonehenge). **BOSS 3 — HEADMASTER MAINFRAME** (1,600 HP / summons two Prefect Drones each time both are down; Milo's Spy reveals its cooling fan weak point — Vibe Freeze doubles damage).
+
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-099: **Ch.3 is LANDED** — the §A6
+> Old-World track's first fully-shipped chapter. Milo joins at the greenhouse crash
+> (the party becomes THREE; the §A4.10 control system goes live), Jay awakens VIBE
+> PUPPET / Mind Warp (`the_first_borrow`) and borrows the gate-porter past the lodge —
+> the TRUST THREAD opens (§A6/ADR-072). The HEADMASTER MAINFRAME falls on its §A6 line
+> (Vibe Freeze literally DOUBLES on the cooling-fan weak point — a per-enemy ×2; Milo's Spy names it).
+> The first Ember + HEARTLIGHT 3 record at the Old Stones once the machine-fog lifts;
+> `ch3_complete` is the chapter button. Five §A10 quests land — #7 Overdue, #8 The
+> Groundskeeper's Cuppa, + three regionals (Return to Sender / The Penny Fog / The Last
+> Over) — each a finale CALLER. `CHAPTER_MANIFESTS['3']` reads `'shipped'`.)*
 
 ### Chapter 4 — "The Fjord That Sleeps" (Norway) — target level: 22
 

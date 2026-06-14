@@ -35,6 +35,10 @@ function mulberry32(seed: number): () => number {
 
 const clamp = (n: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, n));
 
+// Canon facades that are doorless ON PURPOSE — a bank fronts an ATM, not a home, so the
+// Living-City pass must leave it sealed (a knock, never an auto-door). See ADR-098.
+const SEALED_FACADE_SPRITES: ReadonlySet<string> = new Set(['bldg_bank']);
+
 /* ----------------------------- tenancy ----------------------------- */
 
 type Furnish = 'home' | 'shop' | 'cafe' | 'office' | 'clinic';
@@ -246,20 +250,43 @@ export interface OccupyOpts {
 export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef> {
   const rnd = mulberry32(opts.seed >>> 0);
   const interiors: Record<string, MapDef> = {};
+  // DOORLESS catalog facades only — occupyCity never overrides a hand-authored door.
+  const facades = map.props.filter((p) => p.sprite.startsWith('bldg_') && p.solid && !p.door);
+  // THE LAW IS GUARANTEED, NOT GAMBLED. Lock a fixed ~10% COUNT, never a per-facade
+  // coin flip: an independent Bernoulli lock can, on an unlucky seed, roll >25% of a
+  // small city's facades shut and push it under the 75% Living-City Law — which is
+  // exactly how a derived-seed city (puerto_sol) regressed once the hand-tuned seeds
+  // were dropped. A rounded count keeps EVERY settlement ~90% enterable by
+  // construction, so no present-or-future city can breach the law on bad luck. WHICH
+  // facades lock is still seeded, so a city's tenancy stays deterministic per save.
+  //
+  // SEALED facades (ADR-098) are ALWAYS locked, on top of the ~10%: a bank fronts an
+  // ATM, not an apartment, so occupy gives it a knock — never an auto-door that would
+  // overwrite the hand-sealed canon (e.g. the Brickton SAVINGS & LOAN stays shut).
+  const isSealed = (i: number): boolean => SEALED_FACADE_SPRITES.has(facades[i].sprite);
+  const order = facades.map((_p, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  const lockCount = Math.round(facades.length * 0.1);
+  const sealed = order.filter(isSealed);
+  const open = order.filter((i) => !isSealed(i));
+  const locked = new Set<number>([...sealed, ...open.slice(0, Math.max(0, lockCount - sealed.length))]);
+
   let unit = 0;
-  for (const p of map.props) {
-    if (!p.sprite.startsWith('bldg_') || !p.solid || p.door) continue; // facades only, never override a hand-authored door
+  facades.forEach((p, idx) => {
     const { w, u } = facadeDims(p.sprite);
     const Hpx = cityBuildingHeight(u);
     const ox = Math.round((w * 16) / 2) - 8;
     const oy = Hpx - 14;
-    if (rnd() < 0.1) {
+    if (locked.has(idx)) {
       // LOCKED — a knock-knock sign at the would-be door tile (read facing up)
       const sx = Math.floor((p.x * 16 + ox + 8) / 16);
       const sy = Math.floor((p.y * 16 + oy + 9) / 16);
       const sign: SignDef = { x: sx, y: sy, dialogue: KNOCK_IDS[Math.floor(rnd() * KNOCK_IDS.length)] };
       map.signs.push(sign);
-      continue;
+      return;
     }
     // ENTERABLE — a door into a footprint-sized interior
     const arch = pickArchetype(rnd);
@@ -273,7 +300,7 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
     const stepTy = p.y * 16 + oy + 23; // door.h (18) + 5, matches doorstepOf
     const name = arch.names[Math.floor(rnd() * arch.names.length)];
     interiors[id] = buildUnitInterior({ id, name, w: iw, h: ih, exitTo: map.id, stepTx, stepTy, arch, rnd });
-  }
+  });
   dressStreets(map, rnd);
   return interiors;
 }

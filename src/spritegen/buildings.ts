@@ -266,3 +266,19 @@ export const CANON_AREAS: readonly string[] = [
 export const BESPOKE_AREA_FACADES: readonly string[] = [
   'mansion_a', 'mansion_b', 'mansion_c', 'golf_gatehouse',
 ];
+
+/**
+ * ADR-051/099 — LANDMARK FACADES: hand-placed drawHouse props (the golf resort's
+ * grand clubhouse, its gatehouse, and the three mansions) that must COLLIDE AS THEIR
+ * REAL DRAWN FOOTPRINT, not their hand-coded data solid. The clubhouse_grand is a
+ * tall 8×3 house carrying only a 30px data band, so its lower body had no collision
+ * (the user's "walk straight through the walls") and its doorstep sat too deep (you
+ * walked through the drawn door before the transition fired). The OverworldScene
+ * routes these through the SAME texture-derived solid + entrance rebuild that every
+ * `bldg_*` facade gets (ADR-051) — collision == footprint minus the doorway, the
+ * entrance at the drawn door's mouth. (City Hall is a `bldg_` facade already; the
+ * small Ch.1–2 houses keep their tuned data solids — they don't drift.)
+ */
+export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
+  'clubhouse_grand', 'golf_gatehouse', 'mansion_a', 'mansion_b', 'mansion_c',
+]);

@@ -147,7 +147,14 @@ function buildFoggybottom(): MapDef {
       // §A7 town oddities (kept off the high street + away from the doors/phone)
       { enemies: ['pillar_box', 'brolly_bat'], count: 1, rect: { x: 30, y: 18, w: 6, h: 2 } },
     ],
-    triggers: [],
+    // "Return to Sender" (ADR-099) — the three letters the pillar box spat out, on
+    // the green, the quay, and the back lane (active-quest only). The fourth cuppa
+    // ingredient (the GOOD leaves) comes from the chemist himself, not a trigger.
+    triggers: [
+      { id: 'q_sender_l1', rect: { x: 3, y: 18, w: 4, h: 2 }, once: false },
+      { id: 'q_sender_l2', rect: { x: 18, y: 19, w: 3, h: 2 }, once: false },
+      { id: 'q_sender_l3', rect: { x: 5, y: 9, w: 5, h: 1 }, once: false },
+    ],
   };
 }
 
@@ -202,7 +209,9 @@ function buildFoggyMoor(): MapDef {
       { enemies: ['brolly_bat', 'fog_hound'], count: 1, rect: { x: 18, y: 11, w: 6, h: 3 } },
       { enemies: ['roman_sentry'], count: 1, rect: { x: 26, y: 9, w: 4, h: 4 } }, // the rare ghost on the old wall
     ],
-    triggers: [],
+    // "The Penny Fog" (ADR-099) — the broken Roman drain where the fog pools thick,
+    // by the old wall (active-quest only); the hidden-place discovery the boy swears by
+    triggers: [{ id: 'q_penny_found', rect: { x: 25, y: 10, w: 4, h: 3 }, once: false }],
   };
 }
 
@@ -216,39 +225,43 @@ function buildWintermoorGrounds(): MapDef {
   const W = 30;
   const H = 24;
   const g = new Grid(W, H, '.'); // school greens
-  g.rect(14, 2, 2, 21, ':'); // the drive: south gate → the school steps
-  g.rect(4, 11, 22, 2, ':'); // a cross path (greenhouse W ↔ the pitch E)
+  // PALE FACULTY BLOCKS flank the drive — two side districts (cols 2–12 and 17–27)
+  // so the drive lane up the middle is NEVER overwritten (buildDistrict only writes
+  // its own region; ADR-053's shared `occupied` keeps the spacing law across both).
+  const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+  const west = buildDistrict(g, { x: 2, y: 2, w: 11, h: 8 }, new Streams(310311), {
+    layout: 'grid', style: 'fog-stone', catalog: AREA_SKINS.wintermoor, streetRows: [9], maxStories: 3, sprinkle: true, occupied,
+  });
+  const east = buildDistrict(g, { x: 17, y: 2, w: 11, h: 8 }, new Streams(310312), {
+    layout: 'grid', style: 'fog-stone', catalog: AREA_SKINS.wintermoor, streetRows: [9], maxStories: 3, sprinkle: true, occupied,
+  });
+  // the drive + cross path, laid AFTER the districts so they stay walkable
+  g.rect(14, 1, 2, 22, ':'); // the drive: school steps (N) → south gate (S)
+  g.rect(4, 11, 22, 2, ':'); // the cross path (greenhouse W ↔ the cricket pitch E)
   g.rect(0, 0, W, 1, 'B');
   g.rect(0, H - 1, W, 1, 'B');
   g.rect(0, 0, 1, H, 'B');
   g.rect(W - 1, 0, 1, H, 'B');
   g.set(14, H - 1, ':');
   g.set(15, H - 1, ':'); // S gate → the fog road
-  const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
-  const blocks = buildDistrict(g, { x: 2, y: 2, w: 26, h: 8 }, new Streams(310311), {
-    layout: 'grid',
-    style: 'fog-stone',
-    catalog: AREA_SKINS.wintermoor,
-    streetRows: [9],
-    maxStories: 3,
-    sprinkle: true,
-    occupied,
-  });
   return {
     id: 'wintermoor_grounds',
     name: 'WINTERMOOR ACADEMY',
     music: null,
     grid: g.out(),
     props: [
-      ...blocks.props,
-      { sprite: 'counter', x: 13, y: 1.4, solid: { ox: 0, oy: 6, w: 40, h: 12 } }, // the porter's lodge / school steps (the f1 door lands here in the story half)
+      ...west.props,
+      ...east.props,
+      { sprite: 'doormat', x: 14, y: 1.4 }, // the school's front steps (the door is the drive's top)
       { sprite: treeSprite(5, 14), x: 5, y: 14, solid: TREE_SOLID },
       { sprite: 'picnic', x: 22, y: 16, solid: PICNIC_SOLID }, // §A4.5 picnic #3 of 3 (the last rest before the dungeon)
     ],
     npcs: [
-      { id: 'wm_porter', sprite: 'smilerB', x: 12, y: 18, facing: 'down', dialogue: 'npc_wm_porter' },
-      { id: 'wm_groundskeeper', sprite: 'dockworker', x: 6, y: 15, facing: 'down', dialogue: 'npc_wm_groundskeeper', wander: true },
+      { id: 'wm_porter', sprite: 'smilerB', x: 12, y: 18, facing: 'down', dialogue: 'npc_wm_porter', unlessFlag: 'wm_gate_open' }, // the §A6 gate guard — wanders off once Jay borrows him past the lodge
+      { id: 'wm_groundskeeper', sprite: 'dockworker', x: 6, y: 15, facing: 'down', dialogue: 'npc_wm_groundskeeper', wander: true }, // §A10 #8 giver (Cuppa)
       { id: 'wm_student', sprite: 'pajamaKid', x: 24, y: 18, facing: 'down', dialogue: 'npc_wm_student', wander: true },
+      // the First XI captain, stuck at the crease — the sincere "Last Over" giver (ADR-099)
+      { id: 'cricket_captain', sprite: 'pajamaKid', x: 26, y: 17, facing: 'down', dialogue: 'npc_cricket_captain' },
     ],
     signs: [
       { x: 16, y: 20, dialogue: 'sign_wintermoor_gate' },
@@ -257,12 +270,21 @@ function buildWintermoorGrounds(): MapDef {
     phones: [],
     doors: [
       { x: 14, y: H - 1, w: 2, h: 1, to: 'foggy_moor', tx: 24 * 16, ty: 1 * 16, facing: 'down', indicator: 'none' },
+      { x: 14, y: 1, w: 2, h: 1, to: 'wintermoor_f1', tx: 13 * 16, ty: 13 * 16, facing: 'up', indicator: 'door' }, // up the steps into the school
     ],
     spawners: [
       { enemies: ['prefect_drone', 'schedule_bell'], count: 2, rect: { x: 4, y: 16, w: 8, h: 4 } },
       { enemies: ['cricket_eleven'], count: 3, rect: { x: 20, y: 18, w: 7, h: 3 } }, // the XI at the nets
     ],
-    triggers: [],
+    triggers: [
+      // §A6 — the chapter set-piece: the porter blocks, Milo crash-lands his rocket
+      // into the greenhouse + JOINS (party of three), the control system goes live,
+      // and Jay PUPPETS the porter past the lodge (THE FIRST BORROW; the Trust Thread
+      // opens). Fires once, on the first step up the drive from the south gate.
+      { id: 'wm_arrival', rect: { x: 13, y: 18, w: 4, h: 3 }, once: true },
+      // §A10 #8 (Cuppa) — PROPER milk off the cricket pavilion cart (active-quest only)
+      { id: 'q_cuppa_milk', rect: { x: 23, y: 15, w: 4, h: 2 }, once: false },
+    ],
   };
 }
 
@@ -302,7 +324,11 @@ function buildOldStones(): MapDef {
       { x: 10, y: 0, w: 2, h: 1, to: 'foggy_moor', tx: 6 * 16, ty: 14 * 16, facing: 'up', indicator: 'none' },
     ],
     spawners: [{ enemies: ['roman_sentry', 'fog_hound'], count: 1, rect: { x: 3, y: 14, w: 6, h: 2 } }],
-    triggers: [{ id: 'old_stones_resonance', rect: { x: 9, y: 7, w: 4, h: 4 }, once: true }],
+    triggers: [
+      { id: 'old_stones_resonance', rect: { x: 9, y: 7, w: 4, h: 4 }, once: true },
+      // §A10 #8 (Cuppa) — the clean spring at the foot of the stones (active-quest only)
+      { id: 'q_cuppa_water', rect: { x: 8, y: 13, w: 5, h: 2 }, once: false },
+    ],
   };
 }
 
@@ -315,9 +341,6 @@ function buildOldStones(): MapDef {
  * (freeze the coolant pipe) waits for Mia's Vibe Freeze (taught in Ch.2). The
  * §A6 boss room (the Headmaster Mainframe) opens off floor 3 in the story half;
  * for now its door is a sealed panel, and the boss is a forge DRAFT. */
-
-// the open tile each floor lands you on, just inside its down/entrance door
-const F1_ENTRY = { x: 13, y: 13 } as const;
 
 function buildWintermoorF1(): MapDef {
   const W = 28;
@@ -358,14 +381,16 @@ function buildWintermoorF1(): MapDef {
     doors: [
       { x: 13, y: H - 1, w: 2, h: 1, to: 'wintermoor_grounds', tx: 14 * 16, ty: 3 * 16, facing: 'down', indicator: 'door' },
       { x: 25, y: 1, w: 1, h: 1, to: 'wintermoor_f2', tx: 25 * 16, ty: 13 * 16, facing: 'down', indicator: 'stairs' },
-      { x: 2, y: 1, w: 1, h: 1, to: 'wintermoor_boiler', tx: 13 * 16, ty: 13 * 16, facing: 'down', indicator: 'stairs' },
+      { x: 2, y: 1, w: 1, h: 1, to: 'wintermoor_boiler', tx: 13 * 16, ty: 11 * 16, facing: 'down', indicator: 'stairs' },
     ],
     spawners: [
       { enemies: ['possessed_textbook', 'schedule_bell'], count: 2, rect: { x: 7, y: 8, w: 9, h: 4 } },
       { enemies: ['telephone_box', 'tea_poltergeist'], count: 1, rect: { x: 6, y: 4, w: 6, h: 3 } },
       { enemies: ['overdue_tome'], count: 1, rect: { x: 21, y: 5, w: 4, h: 2 } }, // the rare, deep in the stacks
     ],
-    triggers: [],
+    // §A10 #7 (Overdue) — book 1, a drone's doorstop on the approach to the stacks
+    // (active-quest only; clear of the §B4 spawner pressure around the rare tome)
+    triggers: [{ id: 'q_overdue_b1', rect: { x: 17, y: 6, w: 2, h: 3 }, once: false }],
   };
 }
 
@@ -395,19 +420,23 @@ function buildWintermoorF2(): MapDef {
       { sprite: 'dresser', x: 18, y: 6.4, solid: { ox: 0, oy: 8, w: 28, h: 10 } }, // a row of lockers
       { sprite: 'poster_chart', x: 13, y: 0.55 },
     ],
-    npcs: [],
+    npcs: [
+      // Mr. Stumps, the umpire the Mainframe filed ABSENT — "The Last Over" step (ADR-099)
+      { id: 'wm_umpire', sprite: 'dockworker', x: 25, y: 5, facing: 'down', dialogue: 'npc_wm_umpire' },
+    ],
     signs: [{ x: 13, y: 1, dialogue: 'sign_wm_f2' }],
     phones: [],
     doors: [
       { x: 25, y: 1, w: 1, h: 1, to: 'wintermoor_f1', tx: 25 * 16, ty: 13 * 16, facing: 'down', indicator: 'stairs' },
-      { x: 2, y: 1, w: 1, h: 1, to: 'wintermoor_f3', tx: 25 * 16, ty: 13 * 16, facing: 'down', indicator: 'stairs' },
+      { x: 2, y: 1, w: 1, h: 1, to: 'wintermoor_f3', tx: 3 * 16, ty: 11 * 16, facing: 'down', indicator: 'stairs' },
       { x: 13, y: H - 1, w: 2, h: 1, to: 'wintermoor_dorm', tx: 13 * 16, ty: 12 * 16, facing: 'down', indicator: 'door' },
     ],
     spawners: [
       { enemies: ['detention_desk', 'foggy_locker'], count: 2, rect: { x: 5, y: 8, w: 7, h: 1 } },
       { enemies: ['tea_trolley', 'schedule_bell'], count: 1, rect: { x: 16, y: 12, w: 8, h: 2 } },
     ],
-    triggers: [],
+    // §A10 #7 (Overdue) — book 2, jammed in a form-room locker on the central lane
+    triggers: [{ id: 'q_overdue_b2', rect: { x: 13, y: 7, w: 2, h: 4 }, once: false }],
   };
 }
 
@@ -442,7 +471,7 @@ function buildWintermoorF3(): MapDef {
     ],
     phones: [],
     doors: [
-      { x: 25, y: 1, w: 1, h: 1, to: 'wintermoor_f2', tx: 2 * 16, ty: 13 * 16, facing: 'down', indicator: 'stairs' },
+      { x: 24, y: 1, w: 1, h: 1, to: 'wintermoor_f2', tx: 2 * 16, ty: 13 * 16, facing: 'down', indicator: 'stairs' },
     ],
     spawners: [
       { enemies: ['head_prefect'], count: 1, rect: { x: 3, y: 11, w: 6, h: 2 } },
@@ -493,7 +522,8 @@ function buildWintermoorDorm(): MapDef {
       { id: 'dorm_a', enemy: 'prefect_drone', route: [[3, 7], [22, 7]], sight: 5 },
       { id: 'dorm_b', enemy: 'prefect_drone', route: [[22, 11], [3, 11]], sight: 5 },
     ],
-    triggers: [],
+    // §A10 #7 (Overdue) — book 3, the first edition, under a dormitory cot
+    triggers: [{ id: 'q_overdue_b3', rect: { x: 5, y: 10, w: 3, h: 2 }, once: false }],
   };
 }
 
