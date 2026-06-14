@@ -228,6 +228,18 @@ export const ITEM_FX: Record<string, string> = {
   holi_powder: 'item_flash',
   red_firecracker: 'item_salt',
   paper_tiger: 'item_salt',
+  // M21 (ADR-091) — THE LAST-WORLD CATALOG: the last-world thrown goods. The hurled
+  // bombs/torches/flares/grenades ride the salt-burst stage; the blinders (Hoaxula's
+  // stage fog, bear spray, a fistful of black sand) flash the room (item_flash, the
+  // §A10 #6 family). Romania (ch9), then Alaska / Hawaii / Mars (ch10).
+  holy_water: 'item_salt',
+  smoke_bomb: 'item_flash',
+  flare_gun: 'item_salt',
+  bear_spray: 'item_flash',
+  tiki_torch: 'item_salt',
+  sand_throw: 'item_flash',
+  thruster_charge: 'item_salt',
+  emp_grenade: 'item_salt',
 };
 
 export const ITEM_KIND_FX: Record<string, string | undefined> = {

@@ -5036,3 +5036,132 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   ferry your car across continents in a jumbo jet's hold or a boat's deck, you buy property
   everywhere, and you rocket between Earth and the Red Dome on Mars at will. The live scene wiring
   (pump props, the START button, the cargo-load + launch animations) rides these settled spines.
+
+## ADR-091 — S17 (Movement 21): THE LAST-WORLD CATALOG — the fourth & FINAL regional pour (Ch.9 Romania · Ch.10 Alaska→Hawaii→Mars)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the S17 "THE GREAT CATALOG" decree, Movement 21 — the FOURTH and FINAL
+  regional pour, closing §A8 by copying the M20 template (ADR-065) across the last two regions. Ships
+  **DEFINE + ICON + PRICE + BAND + the per-region validator MANIFEST ONLY**, green. Ch.9/10 are
+  UNLANDED (no maps/shops/quests yet, ADR-047), so — exactly as M19/M20 — there is nowhere to place
+  items this movement: the validator is the record that the catalog exists and is complete, and live
+  placement happens in each chapter's own session, the M18-Part-B way.)
+- **The ADR number.** The session brief named this movement "ADR-066," but 066→090 were already
+  consumed by the S18/S19/S20 movements that LANDED between M20 and M21 (area-true buildings, the
+  vehicle/control/property/fleet systems, the fuel/ferry/rocket layer). M21 keeps its place as **S17
+  Movement 21** and takes the next free number, **ADR-091** — the catalog spine (061–065) continues
+  here, just numbered after the systems that shipped in the interim.
+- **Context:** ADR-061 readied the schema/mechanics for ~500 items; ADR-062 built THE ICON FORGE;
+  ADR-063 poured + placed the Americas (Ch.1/2 → 42 + 42); ADR-064 the Old-World (Ch.3/4/5 →
+  42/41/41); ADR-065 the Far-World (Ch.6/7/8 → 41/41/41). M21 pours the LAST two regions toward the
+  §A8 target: **ch9 2→45, ch10 0→76, cross 4→15** (+130 items, **337 → 467**) — landing the grand
+  total near the §A8 ~500 (11 regions ≈ 42 each + the cross chains). It ends with the LAST item in the
+  game — the Player's House Key. Pure data where the forge allows; hand-drawn only for the signatures.
+- **Decision — the pour (`src/data/items.ts`).** +130 ITEMS literals (each `I({…})` + an `ITEM_BAND`
+  row), region-true (§A11.7), in §A11 voice, priced to §A9 (the chapters get richer climbing — Ch.9 >
+  Ch.8, Ch.10 the dearest in the game; anchored to the §A6 target levels 46 / 52–55+):
+  - **Ch.9 ROMANIA (+43 → 45, velvet/harvest/candlelit castle):** Mia's **THE HOLY PAN** (§A8 TOP —
+    the monastery is its sincere home, price 0, a blessing not stock) + the **Candelabra** (COUNT
+    HOAXULA's boss-drop, a Jay bat sidegrade, price 0); **BUNI'S PANTRY** — **Sarmale** (§A8),
+    **Mămăligă cu Brânză** (§A8: the **BEST HP/$ in the game** — 150 HP for $10) and the **five FEAST
+    BASKET ingredients** (§A10 #18 — smântână, brânză de burduf, valley mushrooms, varză murată,
+    grandfather's plums) gathered around the pre-placed `basket_feast`, plus harvest/village foods
+    (cozonac, mici, ciorbă, plăcintă, papanași); **Monastery Tea** (§A8 PP — Stone Brow) + linden tea
+    + socată; the căciulă **hat-ladder rung** + the monk's habit / velvet cloak / sheepskin cojoc /
+    embroidered ie bodies; the **MONASTERY BELL CLAPPER** (§A8 key — Stone Brow, NOT Mt. Shu); the
+    **Saint's Medal** (the §A8 **HOLY**-resist pendant — completing fire/freeze/volt/holy as DATA);
+    Hoaxula's theatrical props that forgot they were props (a fake-fang denture, a Cleveland season
+    pass "VALID 1991", stolen Vibe in a jar, a velvet curtain), a sincere painted icon; the prayer-bead
+    + Mute-Mountain trial charms; a sincere holy-tier revival rung (the **Vigil Candle**); two TONICS
+    (Highland Honey +HP, Censer Incense +Vibe). Tone: Hoaxula's theatrical phase is funny; Buni, the
+    Trial, and the monastery breathe STRAIGHT (§A11.2/3).
+  - **Ch.10 ALASKA → HAWAII → MARS (+76, ONE band, THREE locales — a double pour; cold → dread →
+    magma):**
+    – **ALASKA:** **Akutaq** (§A8 — HELD BACK from Norway per §A11.7, poured HERE as canonically
+    Alaskan), frost fare, the **Insulated Suit** (§A10 #19 reward) + the Aurora fur-hood hat rung +
+    sealskin parka (freeze-resist gear), generator/station valuables, the **snow-cat fuel key**, the
+    **FROST SENTINEL** miniboss drop (Sentinel's Heart, +40% freeze).
+    – **HAWAII:** **Poke Bowl** (§A8), island fare, the **Board of Legends** (§A10 #20 — "Jay's
+    funniest weapon, a sidegrade," a surf legend's longboard swung like a bat), the lei/surf-visor
+    charms, the fire-resist Heat-Shield Vest rung + the **TIKI MAGMA GOLEM** drop (Magma Heart, +40%
+    fire), launch-pad/luau valuables, the **ROCKET MANIFEST** (§A8 key — Pemberton's parts list), and
+    Milo's optional Pemberton-built **ray-gun** (the dad chapter).
+    – **MARS — The Sea of Silence:** **Freeze-Dried Ice Cream** (§A8, the Mars vending machines) + the
+    dread/freeze-dried endgame fare (the new `foilpack`), **Casey's Last Swing** (§A8 Jay TOP, the
+    drop, "there is no joy in Mudville"), **Comet Bead** (§A8 Dorin TOP — the 1/128 Null Walker chase,
+    Vibe +10), the **HALLELUJAH BELL** (§A4.12 revival TOP — full revive, the `'down'` cure path is
+    LIVE so it WORKS today), the dearest endgame tonics (the **Meteor Shard** +Vibe is the dearest
+    item in the catalog, $2000), the **Static Filter** (cures `'hushed'` — the Hush's own silence),
+    and finally **THE PLAYER'S HOUSE KEY** (§A8 — the LAST item, ~the 467th; the post-credits walk
+    home, drawn bespoke with the most love of all, NOT the forge `house_key` stamp). The Hush drops
+    nothing warm; its few words stay sparse and lowercase (§A11.3).
+  - **CROSS (+11 → 15): the other §A10 cross-chains' CATALOG pieces** — a Mr. Click photo print +
+    spare film, a Dad's Postcard ("the front is always wrong in a specific way"), three Traveling
+    Hint Stand objects (a folded map, a suspicious peanut, a "LOOK LEFT" receipt), three Homesong
+    Recording stems (keys that add pause-menu Locket layers), a Minimus spoon (a perfect tuning fork),
+    and a giant zipper pull. The quest/system wiring (the 14 photo ambushes, the postcard cadence, the
+    recording playback) stays for the chapter/M22+ sessions — only the DATA the catalog owns is poured.
+- **Decision — WHICH HERO RUNGS, and the boss-drop mapping.** The §A8 ladders CLOSE: Mia's **THE HOLY
+  PAN** (ch9 monastery — decided as its sincere home over Mars, documented), Jay's **CASEY'S LAST
+  SWING** (ch10 Mars drop), Dorin's **COMET BEAD** (ch10, the 1/128 Null Walker chase) — Dorin's
+  Cedar(ch9)→River(ch8)→Comet(ch10) ladder now closes. The Candelabra is Count Hoaxula's boss-drop
+  (the returned prop). The funny Board of Legends + Pemberton's ray-gun are sidegrades (Jay / Milo).
+  All hero TOPS/boss-drops are price 0. Each TOP is a HAND-DRAWN signature (drawHolyPanIcon /
+  drawCaseysBatIcon / drawCometBeadIcon for the menu face + a held WEAPON_ART row reusing the
+  pan/bat/beads class).
+- **Decision — every face forged or hand-drawn, both-directions + distinct (`spritegen/{icons,weapons,
+  iconforge}.ts`).** The generic tail is ONE `() => forgeIcon({ subcat, band, detail, seed: id })` row
+  each; the signatures stay bespoke (the three hero TOPS; the Board of Legends surfboard; the story
+  keys Monastery Bell Clapper / Rocket Manifest; the prayer-tier Hallelujah Bell; and — with the most
+  love — THE PLAYER'S HOUSE KEY). THREE new forge SUBCATS — **`parka`** (Alaska/Mars cold bodies),
+  **`foilpack`** (Mars/expedition fare), **`candle`** (Romania candlelit vigil) — additive,
+  palette-only, ADR-020 by construction — bringing the forge to **59 subcategories**. The distinctness
+  sweep caught exactly **eight** seeded collisions (censer/temple incense, pineapple/mango,
+  lava-salt/turmeric, thruster/smoke-bomb, cosmonaut/duchy medal, sentinels-heart/gallery-pendant,
+  airlock-card/gallery-note, vigil-candle/gallery-candle — the ch10 cold/dread/magma pool overlapping
+  ch4/ch9 as warned), each fixed by a detail/ramp/subcat nudge — the test working as designed.
+- **THE THREE NEW-MECHANIC DECISIONS — all DATA-only, bindings DEFERRED (the M19/M20 pattern, decided
+  explicitly; M21 kept a PURE catalog pour so the final regional pour is joyful authoring):**
+  1. **heroResist binding — DEFERRED.** Romania's Saint's Medal ships **HOLY** resist DATA, completing
+     the §A8 four (freeze ch4 · volt ch7 · fire ch8 · holy ch9); the Frost Sentinel / Tiki Magma Golem
+     drops ship freeze/fire DATA (+40%). Ch.10 is the strongest candidate yet to BIND `heroResist` —
+     but it is UNLANDED (no battles built), so resist% stays inert in play and the damage-path binding
+     remains the flagged debt of the first chapter that LANDS with an elemental enemy (or M24). **No
+     `battle/formulas.ts` change, no `EnemyDef` element field, no save migration.**
+  2. **The reusable-revive Defibrillator + reusable-cure path — DEFERRED.** The Hallelujah Bell (full
+     revive, CONSUMED) WORKS today via the LIVE `'down'` cure path (ADR-061 §A4.12); the reusable-cure
+     binding (`if (!item.reusable) GS.removeItem(...)`) stays owed (with M20's Scroll of Calm) for M24.
+  3. **The Spice Box food-multiplier — DEFERRED** (owed from M20; not a Ch.9/10 item).
+  Because all three ship as §A8/§A10-anticipated DATA with NO mechanic bound, the **GAME_BIBLE needs
+  no amendment this movement** (pouring §A8 items is implementing canon, not introducing a mechanic —
+  the validator manifest is the record, exactly as M18/M19/M20).
+- **Decision — the validator tables widen, the floor ratchets (`tools/content-validate.ts`).**
+  `WEAPON_LADDER` += `ch9` (Mia's Holy Pan + the Candelabra) / `ch10` (Jay's Casey's + Dorin's Comet +
+  the Board of Legends + Pemberton's ray-gun); `PP_LINE` += `ch9` (3) / `ch10` (6, three locales);
+  `ARMOR_LINE` += `ch9` (5) / `ch10` (8); `ITEM_FX` (in `battle/fxRegistry.ts`) += the 8 new thrown
+  battle goods; `BAND_FLOOR` ratchets **ch9 2→45, ch10 0→76, cross 4→15**. The charms/arms stay GENERIC
+  (un-tagged), so no SET_REGISTRY rows (the Bible names no Last-World hero SET). The verdict prints
+  **467 items (467 icons)**; bands ch9:45 ch10:76 cross:15.
+- **Verification:** `npm run validate` green (**467 items / 467 icons** across 10 chapters; bands ch1:42
+  ch2:42 ch3:42 ch4:41 ch5:41 ch6:41 ch7:41 ch8:41 ch9:45 ch10:76 cross:15; the per-region weapon/pp/
+  armor ladders pass both directions) + `tsc --noEmit` clean + full **vitest 977 green** (+9: the M21
+  catalog test — Ch.9 ~42 / Ch.10 ~76 / cross ~15, the §A8 TOPS close priced 0, the Hallelujah Bell
+  full-revives, Buni's Mămăligă is best-HP/$, the House Key is the last key, Akutaq is Alaskan, the
+  resist set completes with HOLY, the cross-chains seed, the Meteor Shard is the dearest item; the
+  distinctness sweep + the 59-subcat forge gallery still green at 467) + `vite build` clean + `npm run
+  art:icons` re-rendered (`--region ch9/ch10`, `--forge`) and read BY EYE (ADR-059/060 — not
+  `preview_screenshot`): Romania velvet/harvest/candlelit, Alaska ice, Hawaii magma/island, Mars
+  near-silent dread, the three new subcats reading clean, no AI smell. No FNV re-pin, no frozen-core /
+  world_block change (items/icons/forge are not map generators); no save migration (inventory references
+  ids; tonics/resists/reusable already ride the ADR-061 v9 schema). UNLANDED held: no maps*.ts /
+  shops.ts / quests touched.
+- **Consequences:** **THE GREAT CATALOG IS COMPLETE** — ~467 items poured across all 11 regions + the
+  cross chains, every face distinct, every line in voice, banded and validator-pinned. Every §A8 hero
+  weapon ladder is closed (Jay's Casey's, Mia's Holy Pan, Dorin's Comet Bead, all five heroes topped);
+  the multi-tier revival line ends at the working Hallelujah Bell; the elemental-resist gear covers all
+  four elements as DATA; Buni's pantry and the Feast Basket fare land; the cross-world chains are
+  seeded; and the catalog ends the way the game ends — by handing the player the key to their own front
+  door. The three staged-not-bound mechanics (heroResist damage, the reusable-cure path, the Spice Box
+  multiplier) are each the clearly-flagged debt of their landing chapter or M24 THE GREAT VERIFICATION.
+  Live placement of the Last-World catalog (shops + gift-boxes + quest rewards) follows in each
+  chapter's own session, the M18-Part-B way. S17 "THE GREAT CATALOG" closes. ☄️

@@ -21,7 +21,7 @@
  * lives inside one INK contour, and only pure light (a glass glint) follows it.
  */
 import { Pixmap } from './pixmap';
-import { RAMP, px, C } from '../palette';
+import { RAMP, px, C, T } from '../palette';
 import { WEAPON_ART } from './weapons';
 import { forgeIcon } from './iconforge';
 
@@ -947,6 +947,218 @@ function drawScrollIcon(): Pixmap {
   return pm;
 }
 
+/* ---- S17 M21 (ADR-091) — THE LAST-WORLD CATALOG: the bespoke signature faces.
+ *      The hero weapon TOPS that CLOSE the §A8 ladders (Mia's Holy Pan, Jay's
+ *      Casey's Last Swing, Dorin's Comet Bead) + the funny Board of Legends; the
+ *      story-grade named keys (the Monastery Bell Clapper, the Rocket Manifest);
+ *      the prayer-tier Hallelujah Bell; and — with the most love of all — THE
+ *      PLAYER'S HOUSE KEY, the LAST item in the game. Hand-drawn; the tail forges. ---- */
+
+/** The Holy Pan (Mia's §A8 TOP — Stone Brow's three-night blessing): the §A3 disc
+ *  in silver-white, a thin gold halo floating above it. Sincere, not gaudy. */
+function drawHolyPanIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const iron = px(RAMP.PAPER, 2);
+  const ironL = px(RAMP.PAPER, 3);
+  const handle = px(RAMP.EARTH, 2);
+  // the disc, set a little low to leave room for the halo
+  pm.ellipse(6, 9, 4, 4, iron);
+  pm.ellipse(6, 9, 3, 2, ironL); // the cooking face, lit
+  // handle up-right
+  pm.line(9, 7, 12, 4, handle);
+  pm.line(10, 7, 13, 4, handle);
+  // the halo — a thin gold ring floating above
+  pm.ellipse(6, 3, 4, 1, px(RAMP.GOLD, 3));
+  pm.outline(C.outline);
+  pm.set(4, 7, C.white); // a blessed gleam
+  return pm;
+}
+
+/** the Candelabra (COUNT HOAXULA's boss-drop, a Jay bat sidegrade): a brass
+ *  three-arm candle holder, flames lit — the prop he menaced with, now yours */
+function drawCandelabraIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const brass = px(RAMP.GOLD, 2);
+  const brassL = px(RAMP.GOLD, 3);
+  // base + stem
+  pm.rect(5, 12, 4, 1, brass);
+  pm.vline(6, 6, 6, brass);
+  pm.vline(7, 6, 6, brassL);
+  // the two outer arms
+  pm.line(6, 8, 2, 6, brass);
+  pm.line(7, 8, 11, 6, brass);
+  // candle cups, wax, and flames (three)
+  for (const cx of [2, 6, 11]) {
+    pm.set(cx, 5, px(RAMP.PAPER, 3)); // wax
+    pm.set(cx, 4, px(RAMP.ORANGE, 3)); // flame body
+  }
+  pm.outline(C.outline);
+  for (const cx of [2, 6, 11]) pm.set(cx, 3, C.white); // flame tips, pure light after the contour
+  return pm;
+}
+
+/** the Monastery Bell Clapper (§A8 key — Stone Brow's resonance site): the great
+ *  iron tongue of the bell, a hanging loop, a heavy striking ball worn shiny */
+function drawBellClapperIcon(): Pixmap {
+  const pm = new Pixmap(12, 14);
+  const iron = px(RAMP.INK, 2);
+  const ironL = px(RAMP.INK, 3);
+  // the hanging loop up top
+  pm.ellipse(6, 2, 2, 2, iron);
+  pm.set(6, 2, T); // hollow it
+  // the shaft
+  pm.vline(6, 4, 6, iron);
+  pm.vline(7, 4, 6, ironL);
+  // the heavy striking ball
+  pm.ellipse(6, 11, 3, 3, iron);
+  pm.set(5, 10, ironL); // worn shine where it strikes the bell
+  pm.outline(C.outline);
+  pm.set(5, 10, C.white);
+  return pm;
+}
+
+/** the Board of Legends (§A10 #20 — Jay's funniest sidegrade): a surf longboard
+ *  laid corner-to-corner, a centre stringer stripe, a dark fin at the tail */
+function drawSurfboardIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const deck = px(RAMP.CYAN, 2);
+  const deckL = px(RAMP.CYAN, 3);
+  // the board — long and pointed, low-left tail to high-right nose
+  pm.line(2, 12, 11, 3, deck);
+  pm.line(3, 12, 12, 3, deck);
+  pm.line(2, 11, 11, 2, deckL); // lit upper rail
+  pm.set(12, 2, deckL); // the nose
+  // the stringer down the middle
+  pm.line(3, 11, 11, 3, px(RAMP.RED, 2));
+  // the fin near the tail
+  pm.set(3, 13, px(RAMP.NIGHT, 2));
+  pm.set(4, 13, px(RAMP.NIGHT, 2));
+  pm.outline(C.outline);
+  pm.set(11, 3, C.white); // sun off the nose
+  return pm;
+}
+
+/** the Rocket Manifest (§A8 key — Pemberton's parts list): a clipboard, a tiny
+ *  rocket sketch, ruled lines, one green check */
+function drawRocketManifestIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const board = px(RAMP.EARTH, 2);
+  const paper = px(RAMP.PAPER, 3);
+  // the clipboard + paper
+  pm.rect(2, 2, 9, 11, board);
+  pm.rect(3, 3, 7, 9, paper);
+  pm.rect(5, 1, 3, 2, px(RAMP.GOLD, 2)); // the clip
+  // a tiny rocket sketch, left column
+  pm.vline(5, 5, 3, px(RAMP.RED, 2));
+  pm.set(5, 4, px(RAMP.RED, 3)); // nose
+  pm.set(4, 8, px(RAMP.ORANGE, 3)); // flame
+  // ruled list lines + a green check, right column
+  pm.hline(7, 5, 2, C.inkSoft);
+  pm.hline(7, 7, 2, C.inkSoft);
+  pm.set(7, 10, px(RAMP.GRASS, 2));
+  pm.set(8, 9, px(RAMP.GRASS, 2));
+  pm.outline(C.outline);
+  return pm;
+}
+
+/** Casey's Last Swing (Jay's §A8 TOP — the Ch.10 drop): a plain worn ash bat with
+ *  a single gold star burned near the barrel. "There is no joy in Mudville." */
+function drawCaseysBatIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const wood = px(RAMP.BLOND, 2);
+  const woodL = px(RAMP.BLOND, 3);
+  const woodD = px(RAMP.EARTH, 1);
+  // knob
+  pm.rect(2, 11, 2, 2, woodD);
+  // shaft → barrel, corner to corner
+  pm.line(3, 11, 10, 4, wood);
+  pm.line(4, 11, 11, 4, wood);
+  pm.line(3, 10, 10, 3, woodL); // lit upper edge
+  // the fat tip
+  pm.rect(10, 2, 3, 3, wood);
+  pm.set(10, 2, woodL);
+  // the one gold star
+  pm.set(8, 6, px(RAMP.GOLD, 3));
+  pm.set(7, 7, px(RAMP.GOLD, 3));
+  pm.set(8, 7, px(RAMP.GOLD, 2));
+  pm.set(9, 7, px(RAMP.GOLD, 3));
+  pm.set(8, 8, px(RAMP.GOLD, 3));
+  pm.outline(C.outline);
+  pm.set(11, 3, C.white);
+  return pm;
+}
+
+/** Comet Bead (Dorin's §A8 TOP — the 1/128 Null Walker drop): the bead loop with a
+ *  single fallen-star focal bead trailing a comet's tail */
+function drawCometBeadIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const bead = px(RAMP.PURPLE, 2);
+  const beadL = px(RAMP.PURPLE, 3);
+  const at: Array<[number, number]> = [
+    [5, 2], [8, 3], [10, 6], [9, 9], [6, 10], [3, 8], [3, 5],
+  ];
+  for (const [x, y] of at) {
+    pm.rect(x, y, 2, 2, bead);
+    pm.set(x, y, beadL);
+  }
+  // the comet focal bead trailing a tail down-right
+  pm.set(7, 12, px(RAMP.GOLD, 3));
+  pm.set(8, 12, px(RAMP.PAPER, 3));
+  pm.line(9, 12, 12, 13, px(RAMP.CYAN, 2)); // the tail
+  pm.outline(C.outline);
+  pm.set(7, 12, C.white); // the comet head — pure light after the contour
+  return pm;
+}
+
+/** the Hallelujah Bell (§A4.12 revival TOP — full revive): a small gold handbell
+ *  ringing one clear note even in the silence; the note radiates as pure light */
+function drawHallelujahBellIcon(): Pixmap {
+  const pm = new Pixmap(13, 14);
+  const gold = px(RAMP.GOLD, 2);
+  const goldL = px(RAMP.GOLD, 3);
+  // the handle
+  pm.vline(6, 1, 2, px(RAMP.EARTH, 2));
+  pm.set(6, 1, px(RAMP.EARTH, 3));
+  // the bell dome
+  pm.contour(6, 3, [1, 2, 3, 4, 4], gold);
+  pm.hline(2, 8, 9, goldL); // the mouth rim
+  pm.hline(2, 9, 9, px(RAMP.GOLD, 1));
+  pm.set(6, 10, px(RAMP.EARTH, 2)); // the clapper peeking
+  pm.outline(C.outline);
+  // the one clear note, radiating — pure light after the contour (ADR-020)
+  pm.set(4, 4, C.white);
+  pm.set(1, 3, C.white);
+  pm.set(11, 3, C.white);
+  pm.set(0, 6, C.white);
+  pm.set(12, 6, C.white);
+  return pm;
+}
+
+/** THE PLAYER'S HOUSE KEY (§A8 — the LAST item in the game). A worn brass key with
+ *  a little house-shaped bow and a warm gleam: the post-credits walk home, in one
+ *  small object. Given the most love of all. */
+function drawHouseKeyIcon(): Pixmap {
+  const pm = new Pixmap(14, 14);
+  const brass = px(RAMP.GOLD, 2);
+  const brassL = px(RAMP.GOLD, 3);
+  const brassD = px(RAMP.GOLD, 1);
+  // the bow, shaped like a little house — a square body under a peaked roof
+  pm.rect(2, 5, 5, 5, brass);
+  pm.contour(4, 2, [1, 2, 3], brass); // the roof
+  pm.set(4, 4, C.outline); // the ring-hole through the house, where it hangs by the Locket
+  pm.set(4, 7, brassD); // a tiny door
+  pm.set(4, 8, brassD);
+  // the shaft running right
+  pm.rect(7, 7, 6, 2, brass);
+  pm.hline(7, 7, 6, brassL); // the lit top of the shaft
+  // the bit (the teeth that open the one door that matters)
+  pm.set(10, 9, brass);
+  pm.set(12, 9, brass);
+  pm.outline(C.outline);
+  pm.set(3, 6, C.white); // a warm gleam — almost over; almost home
+  return pm;
+}
+
 /* ================================================================== */
 /* THE REGISTRY — every §A8 item, both directions enforced.            */
 
@@ -1297,6 +1509,142 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   yak_treats: () => drawYakTreatsIcon(),
   riverboat_pass: () => forgeIcon({ subcat: 'ticket', band: 'ch8', detail: 'stripe', seed: 'riverboat_pass' }),
   lotus_seal: () => forgeIcon({ subcat: 'card', band: 'ch8', detail: 'dots', seed: 'lotus_seal' }),
+
+  /* ============ S17 M21 (ADR-091) — THE LAST-WORLD CATALOG ============
+   * Ch.9 Romania · Ch.10 Alaska→Hawaii→Mars · the rounded-out cross chains. The
+   * hero weapon TOPS that CLOSE the §A8 ladders + the story-grade named keys + the
+   * Hallelujah Bell + THE PLAYER'S HOUSE KEY are bespoke (above); the long tail
+   * forges one line each. Romania velvet/harvest/candlelit · Alaska ice · Hawaii
+   * magma/island · Mars near-silent dread. */
+
+  /* ---- Ch.9 ROMANIA — the hero TOP + the Hoaxula drop (bespoke menu faces) ---- */
+  holy_pan: () => drawHolyPanIcon(),
+  candelabra: () => drawCandelabraIcon(),
+  /* ---- Ch.9 — armor menu faces (the căciulă hat rung + velvet/harvest bodies) ---- */
+  caciula: () => forgeIcon({ subcat: 'hat', band: 'ch9', detail: 'dots', seed: 'caciula' }),
+  monks_wrap: () => forgeIcon({ subcat: 'garment', band: 'ch9', detail: 'dots', seed: 'monks_wrap' }),
+  velvet_cloak: () => forgeIcon({ subcat: 'garment', band: 'ch9', detail: 'ribbon', seed: 'velvet_cloak' }),
+  sheepskin_cojoc: () => forgeIcon({ subcat: 'garment', band: 'ch9', detail: 'cap', seed: 'sheepskin_cojoc' }),
+  embroidered_ie: () => forgeIcon({ subcat: 'garment', band: 'ch9', detail: 'stripe', seed: 'embroidered_ie' }),
+  /* ---- Ch.9 — Buni's pantry + harvest foods ---- */
+  sarmale: () => forgeIcon({ subcat: 'loaf', band: 'ch9', detail: 'stripe', seed: 'sarmale' }),
+  mamaliga: () => forgeIcon({ subcat: 'bowl', band: 'ch9', detail: 'dots', seed: 'mamaliga' }),
+  smantana: () => forgeIcon({ subcat: 'plate', band: 'ch9', detail: 'dots', seed: 'smantana' }),
+  branza_burduf: () => forgeIcon({ subcat: 'wedge', band: 'ch9', detail: 'stripe', seed: 'branza_burduf' }),
+  valley_mushrooms: () => forgeIcon({ subcat: 'bowl', band: 'ch9', detail: 'sprout', seed: 'valley_mushrooms' }),
+  pickled_cabbage: () => forgeIcon({ subcat: 'bowl', band: 'ch9', detail: 'stripe', seed: 'pickled_cabbage' }),
+  grandfather_plums: () => forgeIcon({ subcat: 'fruit', band: 'ch9', detail: 'sprout', seed: 'grandfather_plums' }),
+  cozonac: () => forgeIcon({ subcat: 'loaf', band: 'ch9', detail: 'wrapper', seed: 'cozonac' }),
+  mici: () => forgeIcon({ subcat: 'plate', band: 'ch9', detail: 'flame', seed: 'mici' }),
+  ciorba: () => forgeIcon({ subcat: 'bowl', band: 'ch9', detail: 'steam', seed: 'ciorba' }),
+  placinta: () => forgeIcon({ subcat: 'pastry', band: 'ch9', detail: 'dots', seed: 'placinta' }),
+  papanasi: () => forgeIcon({ subcat: 'pastry', band: 'ch9', detail: 'star', seed: 'papanasi' }),
+  /* ---- Ch.9 — PP / cures / tonics / battle ---- */
+  monastery_tea: () => forgeIcon({ subcat: 'teacup', band: 'ch9', detail: 'steam', seed: 'monastery_tea' }),
+  linden_tea: () => forgeIcon({ subcat: 'teacup', band: 'ch9', detail: 'dots', seed: 'linden_tea' }),
+  socata: () => forgeIcon({ subcat: 'bottle', band: 'ch9', detail: 'cork', seed: 'socata' }),
+  garlic_braid: () => forgeIcon({ subcat: 'string', band: 'ch9', seed: 'garlic_braid' }),
+  pelin_bitters: () => forgeIcon({ subcat: 'vial', band: 'ch9', detail: 'cork', seed: 'pelin_bitters' }),
+  vigil_candle: () => forgeIcon({ subcat: 'candle', band: 'ch9', detail: 'dots', seed: 'vigil_candle' }),
+  highland_honey: () => forgeIcon({ subcat: 'wax_tin', band: 'ch9', detail: 'label', seed: 'highland_honey' }),
+  censer_incense: () => forgeIcon({ subcat: 'incense', band: 'ch9', detail: 'dots', seed: 'censer_incense' }),
+  holy_water: () => forgeIcon({ subcat: 'bottle', band: 'ch9', detail: 'cap', seed: 'holy_water' }),
+  smoke_bomb: () => forgeIcon({ subcat: 'bomb', band: 'ch9', detail: 'fuse', seed: 'smoke_bomb' }),
+  /* ---- Ch.9 — valuables (Hoaxula's props) + keys (Bell Clapper bespoke) ---- */
+  fake_fang_denture: () => forgeIcon({ subcat: 'gem', band: 'ch9', ramp: RAMP.PAPER, detail: 'dots', seed: 'fake_fang_denture' }),
+  cleveland_season_pass: () => forgeIcon({ subcat: 'ticket', band: 'ch9', detail: 'stripe', seed: 'cleveland_season_pass' }),
+  stolen_vibe_jar: () => forgeIcon({ subcat: 'lantern', band: 'ch9', detail: 'star', seed: 'stolen_vibe_jar' }),
+  velvet_curtain: () => forgeIcon({ subcat: 'sack', band: 'ch9', detail: 'ribbon', seed: 'velvet_curtain' }),
+  painted_icon: () => forgeIcon({ subcat: 'idol', band: 'ch9', detail: 'star', seed: 'painted_icon' }),
+  monastery_bell_clapper: () => drawBellClapperIcon(),
+  orient_express_ticket: () => forgeIcon({ subcat: 'ticket', band: 'ch9', detail: 'dots', seed: 'orient_express_ticket' }),
+  trial_stone: () => forgeIcon({ subcat: 'gem', band: 'ch9', ramp: RAMP.EARTH, seed: 'trial_stone' }),
+
+  /* ---- Ch.10 ALASKA — Aurora Station (cold; freeze-resist gear) ---- */
+  aurora_fur_hood: () => forgeIcon({ subcat: 'hat', band: 'ch10', detail: 'dots', seed: 'aurora_fur_hood' }),
+  insulated_suit: () => forgeIcon({ subcat: 'parka', band: 'ch10', detail: 'dots', seed: 'insulated_suit' }),
+  sealskin_parka: () => forgeIcon({ subcat: 'parka', band: 'ch10', detail: 'stripe', seed: 'sealskin_parka' }),
+  akutaq: () => forgeIcon({ subcat: 'bowl', band: 'ch10', detail: 'dots', seed: 'akutaq' }),
+  salmon_jerky: () => forgeIcon({ subcat: 'bar', band: 'ch10', detail: 'stripe', seed: 'salmon_jerky' }),
+  reindeer_stew: () => forgeIcon({ subcat: 'bowl', band: 'ch10', detail: 'steam', seed: 'reindeer_stew' }),
+  sourdough_flapjacks: () => forgeIcon({ subcat: 'plate', band: 'ch10', detail: 'stripe', seed: 'sourdough_flapjacks' }),
+  crowberry_mash: () => forgeIcon({ subcat: 'bowl', band: 'ch10', detail: 'sprout', seed: 'crowberry_mash' }),
+  aurora_cocoa: () => forgeIcon({ subcat: 'teacup', band: 'ch10', detail: 'steam', seed: 'aurora_cocoa' }),
+  spruce_tip_tea: () => forgeIcon({ subcat: 'teacup', band: 'ch10', detail: 'sprout', seed: 'spruce_tip_tea' }),
+  hand_warmer: () => forgeIcon({ subcat: 'wax_tin', band: 'ch10', detail: 'label', seed: 'hand_warmer' }),
+  salmon_roe: () => forgeIcon({ subcat: 'capsule', band: 'ch10', detail: 'dots', seed: 'salmon_roe' }),
+  flare_gun: () => forgeIcon({ subcat: 'firework', band: 'ch10', detail: 'fuse', seed: 'flare_gun' }),
+  bear_spray: () => forgeIcon({ subcat: 'pouch', band: 'ch10', detail: 'dots', seed: 'bear_spray' }),
+  gold_nugget: () => forgeIcon({ subcat: 'gem', band: 'ch10', ramp: RAMP.GOLD, detail: 'dots', seed: 'gold_nugget' }),
+  generator_coil: () => forgeIcon({ subcat: 'hubcap', band: 'ch10', detail: 'crack', seed: 'generator_coil' }),
+  walrus_ivory: () => forgeIcon({ subcat: 'idol', band: 'ch10', detail: 'star', seed: 'walrus_ivory' }),
+  snowcat_fuel_key: () => forgeIcon({ subcat: 'card', band: 'ch10', detail: 'stripe', seed: 'snowcat_fuel_key' }),
+  station_keycard: () => forgeIcon({ subcat: 'card', band: 'ch10', detail: 'dots', seed: 'station_keycard' }),
+
+  /* ---- Ch.10 HAWAII — Mauna Lani (island, then magma); Board of Legends + the
+     Pemberton ray-gun signatures, the Rocket Manifest bespoke ---- */
+  board_of_legends: () => drawSurfboardIcon(),
+  pembertons_raygun: () => drawRifleIcon(RAMP.PURPLE, 'gauss'),
+  lauhala_hat: () => forgeIcon({ subcat: 'hat', band: 'ch10', detail: 'stripe', seed: 'lauhala_hat' }),
+  heat_shield_vest: () => forgeIcon({ subcat: 'garment', band: 'ch10', detail: 'cap', seed: 'heat_shield_vest' }),
+  aloha_shirt: () => forgeIcon({ subcat: 'garment', band: 'ch10', detail: 'dots', seed: 'aloha_shirt' }),
+  poke_bowl: () => forgeIcon({ subcat: 'bowl', band: 'ch10', detail: 'stripe', seed: 'poke_bowl' }),
+  kalua_pork: () => forgeIcon({ subcat: 'plate', band: 'ch10', detail: 'dots', seed: 'kalua_pork' }),
+  spam_musubi: () => forgeIcon({ subcat: 'bar', band: 'ch10', detail: 'dots', seed: 'spam_musubi' }),
+  malasada: () => forgeIcon({ subcat: 'pastry', band: 'ch10', detail: 'dots', seed: 'malasada' }),
+  pineapple: () => forgeIcon({ subcat: 'fruit', band: 'ch10', detail: ['sprout', 'dots'], seed: 'pineapple' }),
+  loco_moco: () => forgeIcon({ subcat: 'plate', band: 'ch10', detail: 'steam', seed: 'loco_moco' }),
+  kona_coffee: () => forgeIcon({ subcat: 'teacup', band: 'ch10', detail: 'dots', seed: 'kona_coffee' }),
+  coconut_water: () => forgeIcon({ subcat: 'cup_cold', band: 'ch10', seed: 'coconut_water' }),
+  aloe_gel: () => forgeIcon({ subcat: 'leaf', band: 'ch10', seed: 'aloe_gel' }),
+  noni_juice: () => forgeIcon({ subcat: 'bottle', band: 'ch10', detail: 'cork', seed: 'noni_juice' }),
+  lava_salt: () => forgeIcon({ subcat: 'pill', band: 'ch10', detail: 'stripe', seed: 'lava_salt' }),
+  macadamia: () => forgeIcon({ subcat: 'pill', band: 'ch10', detail: 'dots', seed: 'macadamia' }),
+  tiki_torch: () => forgeIcon({ subcat: 'firework', band: 'ch10', detail: 'flame', seed: 'tiki_torch' }),
+  sand_throw: () => forgeIcon({ subcat: 'pouch', band: 'ch10', seed: 'sand_throw' }),
+  black_pearl: () => forgeIcon({ subcat: 'gem', band: 'ch10', ramp: RAMP.NIGHT, seed: 'black_pearl' }),
+  tiki_idol: () => forgeIcon({ subcat: 'idol', band: 'ch10', detail: 'crack', seed: 'tiki_idol' }),
+  rocket_manifest: () => drawRocketManifestIcon(),
+  launch_pad_pass: () => forgeIcon({ subcat: 'ticket', band: 'ch10', detail: 'stripe', seed: 'launch_pad_pass' }),
+
+  /* ---- Ch.10 MARS — The Sea of Silence; the hero TOPS, the Hallelujah Bell, and
+     THE PLAYER'S HOUSE KEY are bespoke; the dread/freeze-dried tail forges ---- */
+  caseys_last_swing: () => drawCaseysBatIcon(),
+  comet_bead: () => drawCometBeadIcon(),
+  pressure_suit: () => forgeIcon({ subcat: 'parka', band: 'ch10', detail: 'cap', seed: 'pressure_suit' }),
+  oxygen_hood: () => forgeIcon({ subcat: 'hat', band: 'ch10', detail: 'cap', seed: 'oxygen_hood' }),
+  freeze_dried_ice_cream: () => forgeIcon({ subcat: 'foilpack', band: 'ch10', detail: 'label', seed: 'freeze_dried_ice_cream' }),
+  freeze_dried_stroganoff: () => forgeIcon({ subcat: 'foilpack', band: 'ch10', detail: 'stripe', seed: 'freeze_dried_stroganoff' }),
+  ration_cube: () => forgeIcon({ subcat: 'bar', band: 'ch10', detail: 'label', seed: 'ration_cube' }),
+  tube_peaches: () => forgeIcon({ subcat: 'foilpack', band: 'ch10', detail: 'dots', seed: 'tube_peaches' }),
+  rehydrated_eggs: () => forgeIcon({ subcat: 'plate', band: 'ch10', detail: 'cap', seed: 'rehydrated_eggs' }),
+  mars_vending_cola: () => forgeIcon({ subcat: 'can', band: 'ch10', detail: 'label', seed: 'mars_vending_cola' }),
+  electrolyte_pouch: () => forgeIcon({ subcat: 'foilpack', band: 'ch10', detail: 'cap', seed: 'electrolyte_pouch' }),
+  static_filter: () => forgeIcon({ subcat: 'card', band: 'ch10', detail: 'cap', seed: 'static_filter' }),
+  hallelujah_bell: () => drawHallelujahBellIcon(),
+  red_planet_iron: () => forgeIcon({ subcat: 'capsule', band: 'ch10', detail: ['stripe', 'dots'], seed: 'red_planet_iron' }),
+  zero_g_serum: () => forgeIcon({ subcat: 'vial', band: 'ch10', detail: 'cap', seed: 'zero_g_serum' }),
+  meteor_shard_tonic: () => forgeIcon({ subcat: 'gem', band: 'ch10', ramp: RAMP.PURPLE, detail: 'star', seed: 'meteor_shard_tonic' }),
+  thruster_charge: () => forgeIcon({ subcat: 'bomb', band: 'ch10', detail: ['fuse', 'dots'], seed: 'thruster_charge' }),
+  emp_grenade: () => forgeIcon({ subcat: 'bomb', band: 'ch10', detail: 'star', seed: 'emp_grenade' }),
+  mars_meteorite: () => forgeIcon({ subcat: 'gem', band: 'ch10', ramp: RAMP.RED, detail: 'crack', seed: 'mars_meteorite' }),
+  cracked_visor: () => forgeIcon({ subcat: 'gem', band: 'ch10', ramp: RAMP.CYAN, detail: 'crack', seed: 'cracked_visor' }),
+  olivine_crystal: () => forgeIcon({ subcat: 'gem', band: 'ch10', ramp: RAMP.GRASS, detail: 'crack', seed: 'olivine_crystal' }),
+  players_house_key: () => drawHouseKeyIcon(),
+  airlock_card: () => forgeIcon({ subcat: 'note', band: 'ch10', detail: 'dots', seed: 'airlock_card' }),
+
+  /* ---- CROSS-WORLD — the rounded-out §A10 chains' CATALOG pieces ---- */
+  mr_click_photo: () => forgeIcon({ subcat: 'card', band: 'cross', detail: 'label', seed: 'mr_click_photo' }),
+  mr_click_film: () => forgeIcon({ subcat: 'wax_tin', band: 'cross', detail: 'dots', seed: 'mr_click_film' }),
+  dads_postcard: () => forgeIcon({ subcat: 'stamp', band: 'cross', detail: 'dots', seed: 'dads_postcard' }),
+  folded_map: () => forgeIcon({ subcat: 'note', band: 'cross', detail: 'stripe', seed: 'folded_map' }),
+  suspicious_peanut: () => forgeIcon({ subcat: 'fruit', band: 'cross', seed: 'suspicious_peanut' }),
+  look_left_receipt: () => forgeIcon({ subcat: 'note', band: 'cross', detail: 'label', seed: 'look_left_receipt' }),
+  homesong_stem: () => forgeIcon({ subcat: 'tape', band: 'cross', detail: 'label', seed: 'homesong_stem' }),
+  homesong_bell_stem: () => forgeIcon({ subcat: 'tape', band: 'cross', detail: 'dots', seed: 'homesong_bell_stem' }),
+  homesong_drum_stem: () => forgeIcon({ subcat: 'tape', band: 'cross', detail: 'stripe', seed: 'homesong_drum_stem' }),
+  minimus_spoon: () => forgeIcon({ subcat: 'bell', band: 'cross', seed: 'minimus_spoon' }),
+  giant_zipper_pull: () => forgeIcon({ subcat: 'hubcap', band: 'cross', detail: 'dots', seed: 'giant_zipper_pull' }),
 };
 
 /**

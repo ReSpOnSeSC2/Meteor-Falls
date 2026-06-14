@@ -251,3 +251,87 @@ describe('S17 M20 (ADR-065) — THE FAR-WORLD CATALOG pours Ch.6/7/8', () => {
     }
   });
 });
+
+describe('S17 M21 (ADR-091) — THE LAST-WORLD CATALOG pours Ch.9/10 + closes the §A8 ladders', () => {
+  const byBand = (b: string): ItemDef[] => Object.values(ITEMS).filter((i) => i.band === b);
+
+  it('Romania (~42) and the three-locale Ch.10 (~76) carry their pours; cross rounds to ~15', () => {
+    expect(byBand('ch9').length).toBeGreaterThanOrEqual(42);
+    expect(byBand('ch10').length).toBeGreaterThanOrEqual(70); // Alaska + Hawaii + Mars, a double pour
+    expect(byBand('cross').length).toBeGreaterThanOrEqual(14);
+  });
+
+  it('the §A8 hero weapon TOPS CLOSE, each wielder-tagged and priced 0 (a drop/blessing)', () => {
+    // Mia's THE HOLY PAN (ch9 monastery), Jay's CASEY'S LAST SWING (ch10 Mars drop),
+    // Dorin's COMET BEAD (ch10, the 1/128 Null Walker chase). Each tops its line.
+    expect(ITEMS.holy_pan.wielder).toBe('faye');
+    expect(ITEMS.holy_pan.offense ?? 0).toBeGreaterThan(ITEMS.chefs_pan.offense ?? 0); // above the Ch.7 mid-top
+    expect(ITEMS.caseys_last_swing.wielder).toBe('rex');
+    expect(ITEMS.caseys_last_swing.offense ?? 0).toBeGreaterThan(ITEMS.hall_of_famer_bat.offense ?? 0);
+    expect(ITEMS.comet_bead.wielder).toBe('dorin');
+    expect(ITEMS.comet_bead.offense ?? 0).toBeGreaterThan(ITEMS.river_beads.offense ?? 0);
+    expect(ITEMS.comet_bead.vibe).toBe(10); // the chase chase remembers; it carries Vibe
+    for (const id of ['holy_pan', 'caseys_last_swing', 'comet_bead']) {
+      expect(ITEMS[id].band, id).toMatch(/^ch(9|10)$/);
+      expect(ITEMS[id].price, id).toBe(0);
+    }
+    // the Board of Legends — Jay's funniest sidegrade (§A10 #20), pure self-belief Luck
+    expect(ITEMS.board_of_legends.wielder).toBe('rex');
+    expect(ITEMS.board_of_legends.bonus).toEqual({ luck: 6 });
+  });
+
+  it('the HALLELUJAH BELL is the revival TOP — a full revive that WORKS today (§A4.12)', () => {
+    expect(ITEMS.hallelujah_bell.kind).toBe('cure');
+    expect(ITEMS.hallelujah_bell.cures).toContain('down'); // the LIVE revival path (ADR-061 §A4.12)
+    expect(ITEMS.hallelujah_bell.heal ?? 0).toBeGreaterThanOrEqual(9999); // full revive
+    expect(ITEMS.hallelujah_bell.reusable).toBeUndefined(); // consumed (unlike the deferred reusable line)
+    // and the sincere Romania rung beneath it revives too (the monastery vigil)
+    expect(ITEMS.vigil_candle.cures).toContain('down');
+    expect(ITEMS.vigil_candle.heal ?? 0).toBeGreaterThan(0);
+  });
+
+  it("Buni's Mămăligă cu Brânză is the BEST HP/$ food in the whole catalog (§A8)", () => {
+    const foods = Object.values(ITEMS).filter((i) => i.kind === 'food' && i.price > 0);
+    const ratio = (i: ItemDef): number => (i.heal ?? 0) / i.price;
+    const best = foods.reduce((a, b) => (ratio(b) > ratio(a) ? b : a));
+    expect(best.id).toBe('mamaliga');
+  });
+
+  it('THE PLAYER\'S HOUSE KEY is the last item — a key, banded to the endgame, priced 0', () => {
+    const key = ITEMS.players_house_key;
+    expect(key.kind).toBe('key');
+    expect(key.band).toBe('ch10'); // it matters at the very end (Mars → the walk home)
+    expect(key.price).toBe(0);
+  });
+
+  it('Akutaq is poured in ALASKA, not Norway (§A8 / §A11.7 — its exact region)', () => {
+    expect(ITEMS.akutaq.band).toBe('ch10');
+    expect(ITEMS.akutaq.kind).toBe('food');
+  });
+
+  it('the §A8 ELEMENTAL RESIST set completes — Romania ships HOLY, the minibosses drop freeze + fire', () => {
+    // M19 freeze · M20 volt+fire · M21 HOLY (the Saint\'s Medal) → all four exist as DATA
+    expect(ITEMS.saints_medal.resists).toEqual([{ element: 'holy', pct: 25 }]);
+    expect(ITEMS.sentinels_heart.resists).toEqual([{ element: 'freeze', pct: 40 }]); // Frost Sentinel drop
+    expect(ITEMS.tiki_magma_charm.resists).toEqual([{ element: 'fire', pct: 40 }]); // Tiki Magma Golem drop
+  });
+
+  it('the cross-world chains seed their CATALOG pieces (band cross)', () => {
+    // Mr. Click's Photo Album · Dad's Postcards · the Traveling Hint Stand · the
+    // Homesong Recordings · more Lost & Found — the quest/system wiring stays for later
+    for (const id of ['mr_click_photo', 'dads_postcard', 'folded_map', 'homesong_stem', 'minimus_spoon']) {
+      expect(ITEMS[id].band, id).toBe('cross');
+    }
+    // the Homesong stems are KEYS that add pause-menu Locket layers
+    expect(ITEMS.homesong_stem.kind).toBe('key');
+  });
+
+  it('the M21 tonics permanently raise their stat — the dearest, rarest in the game (§A4.12)', () => {
+    expect(ITEMS.highland_honey.boost).toEqual({ stat: 'hp', amount: 24 }); // Romania
+    expect(ITEMS.meteor_shard_tonic.boost).toEqual({ stat: 'vibe', amount: 5 }); // Mars — the rarest
+    expect(ITEMS.red_planet_iron.boost).toEqual({ stat: 'offense', amount: 5 });
+    // the Meteor Shard is the dearest thing in the catalog
+    const dearest = Object.values(ITEMS).reduce((a, b) => (b.price > a.price ? b : a));
+    expect(dearest.id).toBe('meteor_shard_tonic');
+  });
+});

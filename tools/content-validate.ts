@@ -856,7 +856,17 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch6: { aluminum_bat: 'rex', hall_of_famer_bat: 'rex', cast_iron_pan: 'faye' },
     ch7: { chefs_pan: 'faye', cobra_flute: 'pippa' },
     ch8: { river_beads: 'dorin', paper_fan: 'pippa' },
-    ch9: { cedar_beads: 'dorin' }, // Dorin's first beads — Romania (defined early)
+    // M21 (ADR-091) — THE LAST-WORLD CATALOG closes the §A8 ladders. Ch.9 Romania:
+    // Dorin's first beads (defined early) + Mia's THE HOLY PAN (her TOP — the
+    // monastery's blessing, its sincere home) + the Candelabra (COUNT HOAXULA's
+    // boss-drop). Ch.10 Mars/Hawaii: Jay's CASEY'S LAST SWING (his TOP, the drop) +
+    // Dorin's COMET BEAD (his TOP, the 1/128 Null Walker chase) + the Board of
+    // Legends (Jay's funniest sidegrade) + Pemberton's ray-gun (Milo's optional).
+    ch9: { cedar_beads: 'dorin', holy_pan: 'faye', candelabra: 'rex' },
+    ch10: {
+      board_of_legends: 'rex', pembertons_raygun: 'milo',
+      caseys_last_swing: 'rex', comet_bead: 'dorin',
+    },
   };
   const ladderAll: Record<string, { wielder: string; band: string }> = {};
   for (const [band, rungs] of Object.entries(WEAPON_LADDER)) {
@@ -887,6 +897,10 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch6: ['kola_nut_drink', 'hibiscus_tea', 'baobab_juice'],
     ch7: ['masala_chai', 'mango_lassi', 'falooda'],
     ch8: ['jade_tea', 'monks_broth', 'temple_incense'],
+    // M21 (ADR-091): the Stone Brow Monastery Tea (§A8) + the valley drinks (ch9);
+    // the Aurora/Mauna Lani/Mars vending drinks (ch10, three locales)
+    ch9: ['monastery_tea', 'linden_tea', 'socata'],
+    ch10: ['aurora_cocoa', 'spruce_tip_tea', 'kona_coffee', 'coconut_water', 'mars_vending_cola', 'electrolyte_pouch'],
   };
   const ppAll = new Set(Object.values(PP_LINE).flat());
   for (const id of ppAll) {
@@ -917,6 +931,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     ch6: ['turban_of_calm', 'kanga_wrap', 'savanna_cloak', 'mudcloth_vest'],
     ch7: ['jeweled_pagri', 'silk_kurta', 'embroidered_sherwani', 'nawab_coat'],
     ch8: ['bamboo_hat', 'silk_changshan', 'lacquer_robe', 'monks_robe'],
+    // M21 (ADR-091): the căciulă heads Ch.9 + the velvet/harvest/monastery bodies;
+    // Ch.10 spans three locales — the Aurora fur-hood + Insulated Suit (§A10 #19,
+    // Alaska), the Lauhala Hat + fire-resist Heat-Shield Vest (Hawaii), the dearest
+    // Pressure Suit + Oxygen Hood (Mars). The hat rung leads each region.
+    ch9: ['caciula', 'monks_wrap', 'velvet_cloak', 'sheepskin_cojoc', 'embroidered_ie'],
+    ch10: [
+      'aurora_fur_hood', 'insulated_suit', 'sealskin_parka',
+      'lauhala_hat', 'heat_shield_vest', 'aloha_shirt',
+      'pressure_suit', 'oxygen_hood',
+    ],
   };
   const armorAll = new Set(Object.values(ARMOR_LINE).flat());
   for (const id of armorAll) {
@@ -976,7 +1000,10 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     // M18 (ADR-063) ratchets ch1 + ch2 to the Americas pour (≈40/region target);
     // M19 (ADR-064) ratchets ch3/4/5 to the Old-World; M20 (ADR-065) ratchets
     // ch6/7/8 to the Far-World pour (Africa / India / China, region by region)
-    ch1: 42, ch2: 42, ch3: 42, ch4: 41, ch5: 41, ch6: 41, ch7: 41, ch8: 41, ch9: 2, ch10: 0, cross: 4,
+    // M21 (ADR-091) — THE LAST-WORLD CATALOG ratchets ch9 (Romania) to its full
+    // pour, ch10 (Alaska→Hawaii→Mars, a triple-locale double pour) to ~76, and the
+    // rounded-out cross chains to 15 — landing the grand total near the §A8 ~500.
+    ch1: 42, ch2: 42, ch3: 42, ch4: 41, ch5: 41, ch6: 41, ch7: 41, ch8: 41, ch9: 45, ch10: 76, cross: 15,
   };
   for (const b of BANDS) {
     if (bandCounts[b] < BAND_FLOOR[b]) {

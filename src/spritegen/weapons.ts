@@ -1265,6 +1265,126 @@ export const WEAPON_ART: Record<string, WeaponArt> = {
   jade_pendant: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch8', detail: 'stone', tint: RAMP.FOREST, seed: 'jade_pendant' }) },
   lucky_knot: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch8', detail: 'ribbon', tint: RAMP.RED, seed: 'lucky_knot' }) },
   cash_coin_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch8', detail: 'star', seed: 'cash_coin_charm' }) },
+
+  /* ============ S17 M21 (ADR-091) — THE LAST-WORLD CATALOG ============
+   * Ch.9 Romania · Ch.10 Alaska→Hawaii→Mars. The §A8 hero ladders CLOSE here: Mia's
+   * THE HOLY PAN (ch9 monastery), Jay's CASEY'S LAST SWING (ch10 Mars drop), Dorin's
+   * COMET BEAD (ch10, the 1/128 Null Walker chase) — each a HAND signature (the pan/
+   * bat/beads silhouettes, told apart by ramp + mark), plus the funny Board of
+   * Legends (Jay, Hawaii) and Pemberton's optional ray-gun (Milo, dad's chapter).
+   * Armor re-dresses the torso; the generic arms/charms ride forge trinkets. */
+
+  /* ---- Ch.9 ROMANIA — Mia's Holy Pan (TOP) + the Candelabra (Hoaxula's boss-drop) ---- */
+  holy_pan: held({
+    class: 'pan',
+    ramp: RAMP.PAPER, // silver-white, blessed; a gold halo-glint where it lands
+    detail: ({ pm, gx, gy, pose }) => {
+      const halo = px(RAMP.GOLD, 3);
+      if (pose === 'back') pm.set(gx - 7, gy - 11, halo);
+      else if (pose === 'strike') { pm.set(gx + 7, gy - 8, halo); pm.set(gx + 8, gy - 7, C.white); }
+      else pm.set(gx, gy + 1, halo);
+    },
+  }),
+  candelabra: held({
+    class: 'bat',
+    ramp: RAMP.GOLD, // heavy brass; a guttering flame at the tip
+    detail: ({ pm, gx, gy, pose }) => {
+      const flame = px(RAMP.ORANGE, 3);
+      if (pose === 'back') pm.set(gx - 11, gy - 13, flame);
+      else if (pose === 'strike') pm.set(gx + 9, gy - 6, flame);
+      else pm.set(gx + 6, gy - 10, flame);
+    },
+  }),
+
+  /* ---- Ch.10 HAWAII — the Board of Legends (Jay, funniest sidegrade) + Pemberton's
+     ray-gun (Milo, the dad chapter) ---- */
+  board_of_legends: held({
+    class: 'bat',
+    ramp: RAMP.CYAN, // a surf longboard swung like a colossal bat; a red stringer
+    detail: ({ pm, gx, gy, pose }) => {
+      const stripe = px(RAMP.RED, 2);
+      if (pose === 'back') pm.set(gx - 6, gy - 6, stripe);
+      else if (pose === 'strike') pm.set(gx + 5, gy - 3, stripe);
+      else pm.set(gx + 3, gy - 5, stripe);
+    },
+  }),
+  pembertons_raygun: held({
+    class: 'rifle',
+    ramp: RAMP.PURPLE, // a sleek ion-lobber; a charged muzzle bead
+    detail: ({ pm, gx, gy, pose }) => {
+      if (pose === 'aim' || pose === 'recoil') pm.set(gx + 10, gy - 8, px(RAMP.MAGENTA, 3));
+    },
+  }),
+
+  /* ---- Ch.10 MARS — Casey's Last Swing (Jay TOP) + Comet Bead (Dorin TOP) ---- */
+  caseys_last_swing: held({
+    class: 'bat',
+    ramp: RAMP.BLOND, // plain worn ash; one gold star burned near the barrel
+    detail: ({ pm, gx, gy, pose }) => {
+      const star = px(RAMP.GOLD, 3);
+      if (pose === 'back') { pm.set(gx - 7, gy - 8, star); pm.set(gx - 8, gy - 9, C.white); }
+      else if (pose === 'strike') { pm.set(gx + 7, gy - 4, star); pm.set(gx + 9, gy - 5, C.white); }
+      else { pm.set(gx + 4, gy - 6, star); pm.set(gx + 5, gy - 8, C.white); }
+    },
+  }),
+  comet_bead: held({
+    class: 'beads',
+    ramp: RAMP.PURPLE, // fallen-star bead; a comet head + a cyan tail on the strike
+    detail: ({ pm, gx, gy, pose }) => {
+      pm.set(gx, gy - 1, px(RAMP.GOLD, 3));
+      if (pose === 'strike') {
+        pm.set(gx + 8, gy - 3, C.white);
+        pm.set(gx + 9, gy - 2, px(RAMP.CYAN, 2));
+      }
+    },
+  }),
+
+  /* ---- Ch.9 ROMANIA — armor 'body' gear (the căciulă heads the §A8 rung) + the
+     velvet/harvest/monastery bodies (candlelit-castle palette) ---- */
+  caciula: { kind: 'torso', ramp: RAMP.EARTH, trim: RAMP.PAPER },
+  monks_wrap: { kind: 'torso', ramp: RAMP.NIGHT, trim: RAMP.GOLD },
+  velvet_cloak: { kind: 'torso', ramp: RAMP.PURPLE, trim: RAMP.GOLD },
+  sheepskin_cojoc: { kind: 'torso', ramp: RAMP.PAPER, trim: RAMP.RED },
+  embroidered_ie: { kind: 'torso', ramp: RAMP.PAPER, trim: RAMP.MAGENTA },
+
+  /* ---- Ch.9 — generic ARMS + the monastery/castle CHARMS (the Saint's Medal is the
+     §A8 HOLY-resist pendant — DATA; un-tagged, no ch9 SET) ---- */
+  monks_wraps: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'wrap', band: 'ch9', detail: 'stripe', seed: 'monks_wraps' }) },
+  embroidered_cuffs: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'glove', band: 'ch9', detail: 'ribbon', seed: 'embroidered_cuffs' }) },
+  prayer_bead_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch9', detail: 'stone', tint: RAMP.EARTH, seed: 'prayer_bead_charm' }) },
+  saints_medal: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch9', detail: 'star', seed: 'saints_medal' }) },
+  trial_keepsake: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch9', detail: 'stone', tint: RAMP.RED, seed: 'trial_keepsake' }) },
+  garlic_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch9', detail: 'stone', tint: RAMP.PAPER, seed: 'garlic_charm' }) },
+
+  /* ---- Ch.10 ALASKA — armor 'body' gear (the Aurora Fur-Hood heads the rung;
+     freeze-resist) + the cold-country charms (the Sentinel's Heart is the Frost
+     Sentinel drop) ---- */
+  aurora_fur_hood: { kind: 'torso', ramp: RAMP.CYAN, trim: RAMP.PAPER },
+  insulated_suit: { kind: 'torso', ramp: RAMP.NIGHT, trim: RAMP.ORANGE },
+  sealskin_parka: { kind: 'torso', ramp: RAMP.NIGHT, trim: RAMP.CYAN },
+  insulated_gloves: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'glove', band: 'ch10', detail: 'dots', seed: 'insulated_gloves' }) },
+  sentinels_heart: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch10', detail: ['stone', 'dots'], tint: RAMP.CYAN, seed: 'sentinels_heart' }) },
+  ulu_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch10', detail: 'star', seed: 'ulu_charm' }) },
+  aurora_locket: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch10', detail: 'stone', tint: RAMP.GRASS, seed: 'aurora_locket' }) },
+
+  /* ---- Ch.10 HAWAII — armor 'body' gear (the Lauhala Hat heads the rung; the
+     Heat-Shield Vest is the fire-resist rung) + the island charms (the Magma Heart
+     is the Tiki Magma Golem drop) ---- */
+  lauhala_hat: { kind: 'torso', ramp: RAMP.GOLD, trim: RAMP.EARTH },
+  heat_shield_vest: { kind: 'torso', ramp: RAMP.RED, trim: RAMP.GOLD },
+  aloha_shirt: { kind: 'torso', ramp: RAMP.CYAN, trim: RAMP.RED },
+  surf_wax_grips: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'wrap', band: 'ch10', detail: 'stripe', seed: 'surf_wax_grips' }) },
+  lei_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch10', detail: 'stone', tint: RAMP.MAGENTA, seed: 'lei_charm' }) },
+  surf_visor: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'brooch', band: 'ch10', detail: 'stone', tint: RAMP.CYAN, seed: 'surf_visor' }) },
+  tiki_magma_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch10', detail: 'stone', tint: RAMP.ORANGE, seed: 'tiki_magma_charm' }) },
+
+  /* ---- Ch.10 MARS — armor 'body' gear (the Pressure Suit, dearest in the game) +
+     the endgame charms ---- */
+  pressure_suit: { kind: 'torso', ramp: RAMP.PAPER, trim: RAMP.ORANGE },
+  oxygen_hood: { kind: 'torso', ramp: RAMP.CYAN, trim: RAMP.NIGHT },
+  eva_gauntlets: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'bracer', band: 'ch10', detail: 'star', seed: 'eva_gauntlets' }) },
+  cosmonaut_medal: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'medal', band: 'ch10', detail: ['ribbon', 'dots'], seed: 'cosmonaut_medal' }) },
+  stardust_charm: { kind: 'trinket', icon: () => forgeIcon({ subcat: 'pendant', band: 'ch10', detail: 'stone', tint: RAMP.PURPLE, seed: 'stardust_charm' }) },
 };
 
 /** the swing family of an equipped weapon id — bare hands are 'fist' */
