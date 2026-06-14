@@ -15,6 +15,8 @@ const TOTAL_BATTLER_FRAMES = 14;
 type SourceImage = HTMLImageElement | HTMLCanvasElement;
 
 const appliedSheets = new Set<string>();
+const CARDINALS = ['down', 'left', 'right', 'up'] as const;
+const DIAGONALS = ['downright', 'downleft', 'upright', 'upleft'] as const;
 
 const HERO_ART = [
   {
@@ -66,6 +68,51 @@ const HERO_ART = [
 
 type HeroArt = (typeof HERO_ART)[number];
 
+const NPC_CHARACTER_ART = [
+  { id: 'chad', key: 'authored_chad_8dir', url: new URL('../../assets/art/characters/chad_8dir_24x32.png', import.meta.url).href },
+  { id: 'mom', key: 'authored_mom_8dir', url: new URL('../../assets/art/characters/mom_8dir_24x32.png', import.meta.url).href },
+  { id: 'mrsPemmel', key: 'authored_mrsPemmel_8dir', url: new URL('../../assets/art/characters/mrsPemmel_8dir_24x32.png', import.meta.url).href },
+  { id: 'mrPlummer', key: 'authored_mrPlummer_8dir', url: new URL('../../assets/art/characters/mrPlummer_8dir_24x32.png', import.meta.url).href },
+  { id: 'ana', key: 'authored_ana_8dir', url: new URL('../../assets/art/characters/ana_8dir_24x32.png', import.meta.url).href },
+  { id: 'vivi', key: 'authored_vivi_8dir', url: new URL('../../assets/art/characters/vivi_8dir_24x32.png', import.meta.url).href },
+  { id: 'oldTimer', key: 'authored_oldTimer_8dir', url: new URL('../../assets/art/characters/oldTimer_8dir_24x32.png', import.meta.url).href },
+  { id: 'pajamaKid', key: 'authored_pajamaKid_8dir', url: new URL('../../assets/art/characters/pajamaKid_8dir_24x32.png', import.meta.url).href },
+  { id: 'smiler', key: 'authored_smiler_8dir', url: new URL('../../assets/art/characters/smiler_8dir_24x32.png', import.meta.url).href },
+  { id: 'smilerB', key: 'authored_smilerB_8dir', url: new URL('../../assets/art/characters/smilerB_8dir_24x32.png', import.meta.url).href },
+  { id: 'nurse', key: 'authored_nurse_8dir', url: new URL('../../assets/art/characters/nurse_8dir_24x32.png', import.meta.url).href },
+  { id: 'manager', key: 'authored_manager_8dir', url: new URL('../../assets/art/characters/manager_8dir_24x32.png', import.meta.url).href },
+  { id: 'quarterMan', key: 'authored_quarterMan_8dir', url: new URL('../../assets/art/characters/quarterMan_8dir_24x32.png', import.meta.url).href },
+  { id: 'pigeonKid', key: 'authored_pigeonKid_8dir', url: new URL('../../assets/art/characters/pigeonKid_8dir_24x32.png', import.meta.url).href },
+  { id: 'sidewalkCritic', key: 'authored_sidewalkCritic_8dir', url: new URL('../../assets/art/characters/sidewalkCritic_8dir_24x32.png', import.meta.url).href },
+  { id: 'grayCommuter', key: 'authored_grayCommuter_8dir', url: new URL('../../assets/art/characters/grayCommuter_8dir_24x32.png', import.meta.url).href },
+  { id: 'drugClerk', key: 'authored_drugClerk_8dir', url: new URL('../../assets/art/characters/drugClerk_8dir_24x32.png', import.meta.url).href },
+  { id: 'martClerk', key: 'authored_martClerk_8dir', url: new URL('../../assets/art/characters/martClerk_8dir_24x32.png', import.meta.url).href },
+  { id: 'arcadeOwner', key: 'authored_arcadeOwner_8dir', url: new URL('../../assets/art/characters/arcadeOwner_8dir_24x32.png', import.meta.url).href },
+  { id: 'permit', key: 'authored_permit_8dir', url: new URL('../../assets/art/characters/permit_8dir_24x32.png', import.meta.url).href },
+  { id: 'busDriver', key: 'authored_busDriver_8dir', url: new URL('../../assets/art/characters/busDriver_8dir_24x32.png', import.meta.url).href },
+  { id: 'fernLady', key: 'authored_fernLady_8dir', url: new URL('../../assets/art/characters/fernLady_8dir_24x32.png', import.meta.url).href },
+  { id: 'caddy', key: 'authored_caddy_8dir', url: new URL('../../assets/art/characters/caddy_8dir_24x32.png', import.meta.url).href },
+  { id: 'captain', key: 'authored_captain_8dir', url: new URL('../../assets/art/characters/captain_8dir_24x32.png', import.meta.url).href },
+  { id: 'dockworker', key: 'authored_dockworker_8dir', url: new URL('../../assets/art/characters/dockworker_8dir_24x32.png', import.meta.url).href },
+  { id: 'mercadoKeeper', key: 'authored_mercadoKeeper_8dir', url: new URL('../../assets/art/characters/mercadoKeeper_8dir_24x32.png', import.meta.url).href },
+  { id: 'deliKeeper', key: 'authored_deliKeeper_8dir', url: new URL('../../assets/art/characters/deliKeeper_8dir_24x32.png', import.meta.url).href },
+  { id: 'curator', key: 'authored_curator_8dir', url: new URL('../../assets/art/characters/curator_8dir_24x32.png', import.meta.url).href },
+  { id: 'tomas', key: 'authored_tomas_8dir', url: new URL('../../assets/art/characters/tomas_8dir_24x32.png', import.meta.url).href },
+  { id: 'docBrickton', key: 'authored_docBrickton_8dir', url: new URL('../../assets/art/characters/docBrickton_8dir_24x32.png', import.meta.url).href },
+  { id: 'docPuerto', key: 'authored_docPuerto_8dir', url: new URL('../../assets/art/characters/docPuerto_8dir_24x32.png', import.meta.url).href },
+  { id: 'docValle', key: 'authored_docValle_8dir', url: new URL('../../assets/art/characters/docValle_8dir_24x32.png', import.meta.url).href },
+  { id: 'priestOtter', key: 'authored_priestOtter_8dir', url: new URL('../../assets/art/characters/priestOtter_8dir_24x32.png', import.meta.url).href },
+  { id: 'priestValle', key: 'authored_priestValle_8dir', url: new URL('../../assets/art/characters/priestValle_8dir_24x32.png', import.meta.url).href },
+  { id: 'wisherA', key: 'authored_wisherA_8dir', url: new URL('../../assets/art/characters/wisherA_8dir_24x32.png', import.meta.url).href },
+  { id: 'wokeA', key: 'authored_wokeA_8dir', url: new URL('../../assets/art/characters/wokeA_8dir_24x32.png', import.meta.url).href },
+  { id: 'wisherB', key: 'authored_wisherB_8dir', url: new URL('../../assets/art/characters/wisherB_8dir_24x32.png', import.meta.url).href },
+  { id: 'wokeB', key: 'authored_wokeB_8dir', url: new URL('../../assets/art/characters/wokeB_8dir_24x32.png', import.meta.url).href },
+  { id: 'wisherC', key: 'authored_wisherC_8dir', url: new URL('../../assets/art/characters/wisherC_8dir_24x32.png', import.meta.url).href },
+  { id: 'wokeC', key: 'authored_wokeC_8dir', url: new URL('../../assets/art/characters/wokeC_8dir_24x32.png', import.meta.url).href },
+  { id: 'senora', key: 'authored_senora_8dir', url: new URL('../../assets/art/characters/senora_8dir_24x32.png', import.meta.url).href },
+  { id: 'uncleBert', key: 'authored_uncleBert_8dir', url: new URL('../../assets/art/characters/uncleBert_8dir_24x32.png', import.meta.url).href },
+] as const;
+
 const WORLD_TILE_ART = {
   key: 'authored_otterbrook_tiles16',
   url: new URL('../../assets/art/world/otterbrook_tiles_16.png', import.meta.url).href,
@@ -90,6 +137,14 @@ const WORLD_TILE_ART = {
 } as const;
 
 const WORLD_PROP_ART = [
+  { key: 'house_rex', url: new URL('../../assets/art/world/facades/house_rex.png', import.meta.url).href },
+  { key: 'house_chad', url: new URL('../../assets/art/world/facades/house_chad.png', import.meta.url).href },
+  { key: 'house_a', url: new URL('../../assets/art/world/facades/house_a.png', import.meta.url).href },
+  { key: 'house_b', url: new URL('../../assets/art/world/facades/house_b.png', import.meta.url).href },
+  { key: 'drugstore', url: new URL('../../assets/art/world/facades/drugstore.png', import.meta.url).href },
+  { key: 'arcade', url: new URL('../../assets/art/world/facades/arcade.png', import.meta.url).href },
+  { key: 'chapel', url: new URL('../../assets/art/world/facades/chapel.png', import.meta.url).href },
+  { key: 'valle_house_b', url: new URL('../../assets/art/world/facades/valle_house_b.png', import.meta.url).href },
   { key: 'tree', url: new URL('../../assets/art/world/props/tree.png', import.meta.url).href },
   { key: 'tree_b', url: new URL('../../assets/art/world/props/tree_b.png', import.meta.url).href },
   { key: 'tree_c', url: new URL('../../assets/art/world/props/tree_c.png', import.meta.url).href },
@@ -106,6 +161,30 @@ const WORLD_PROP_ART = [
   { key: 'tv', url: new URL('../../assets/art/world/props/tv.png', import.meta.url).href },
   { key: 'bookshelf', url: new URL('../../assets/art/world/props/bookshelf.png', import.meta.url).href },
   { key: 'floor_lamp', url: new URL('../../assets/art/world/props/floor_lamp.png', import.meta.url).href },
+] as const;
+
+const ENEMY_BATTLE_ART = [
+  { key: 'battle_cranky_mailbox', url: new URL('../../assets/art/enemies/battle_cranky_mailbox.png', import.meta.url).href },
+  { key: 'battle_cranky_mailbox_w1', url: new URL('../../assets/art/enemies/battle_cranky_mailbox_w1.png', import.meta.url).href },
+  { key: 'battle_cranky_mailbox_w2', url: new URL('../../assets/art/enemies/battle_cranky_mailbox_w2.png', import.meta.url).href },
+  { key: 'battle_runaway_lawnmower', url: new URL('../../assets/art/enemies/battle_runaway_lawnmower.png', import.meta.url).href },
+  { key: 'battle_runaway_lawnmower_w1', url: new URL('../../assets/art/enemies/battle_runaway_lawnmower_w1.png', import.meta.url).href },
+  { key: 'battle_runaway_lawnmower_w2', url: new URL('../../assets/art/enemies/battle_runaway_lawnmower_w2.png', import.meta.url).href },
+  { key: 'battle_coily_cicada', url: new URL('../../assets/art/enemies/battle_coily_cicada.png', import.meta.url).href },
+  { key: 'battle_coily_cicada_w1', url: new URL('../../assets/art/enemies/battle_coily_cicada_w1.png', import.meta.url).href },
+  { key: 'battle_coily_cicada_w2', url: new URL('../../assets/art/enemies/battle_coily_cicada_w2.png', import.meta.url).href },
+  { key: 'battle_blazer_smiler', url: new URL('../../assets/art/enemies/battle_blazer_smiler.png', import.meta.url).href },
+  { key: 'battle_blazer_smiler_w1', url: new URL('../../assets/art/enemies/battle_blazer_smiler_w1.png', import.meta.url).href },
+  { key: 'battle_blazer_smiler_w2', url: new URL('../../assets/art/enemies/battle_blazer_smiler_w2.png', import.meta.url).href },
+  { key: 'battle_pigeon_gang', url: new URL('../../assets/art/enemies/battle_pigeon_gang.png', import.meta.url).href },
+  { key: 'battle_pigeon_gang_w1', url: new URL('../../assets/art/enemies/battle_pigeon_gang_w1.png', import.meta.url).href },
+  { key: 'battle_pigeon_gang_w2', url: new URL('../../assets/art/enemies/battle_pigeon_gang_w2.png', import.meta.url).href },
+  { key: 'battle_hill_slug', url: new URL('../../assets/art/enemies/battle_hill_slug.png', import.meta.url).href },
+  { key: 'battle_hill_slug_w1', url: new URL('../../assets/art/enemies/battle_hill_slug_w1.png', import.meta.url).href },
+  { key: 'battle_hill_slug_w2', url: new URL('../../assets/art/enemies/battle_hill_slug_w2.png', import.meta.url).href },
+  { key: 'battle_titanic_tick', url: new URL('../../assets/art/enemies/battle_titanic_tick.png', import.meta.url).href },
+  { key: 'battle_titanic_tick_w1', url: new URL('../../assets/art/enemies/battle_titanic_tick_w1.png', import.meta.url).href },
+  { key: 'battle_titanic_tick_w2', url: new URL('../../assets/art/enemies/battle_titanic_tick_w2.png', import.meta.url).href },
 ] as const;
 
 function artFor(heroId: string): HeroArt | undefined {
@@ -136,6 +215,17 @@ function replaceTextureSheet(
     tex.add(i, 0, (i % cols) * frameW, Math.floor(i / cols) * frameH, frameW, frameH);
   }
   appliedSheets.add(key);
+}
+
+function clearHeroAnimations(scene: Phaser.Scene, heroId: string): void {
+  const keys = [
+    `${heroId}-idle-down`,
+    ...CARDINALS.flatMap((facing) => [`${heroId}-walk-${facing}`, `${heroId}-run-${facing}`]),
+    ...DIAGONALS.flatMap((facing) => [`${heroId}-walk-${facing}`, `${heroId}-run-${facing}`]),
+  ];
+  keys.forEach((key) => {
+    if (scene.anims.exists(key)) scene.anims.remove(key);
+  });
 }
 
 function replaceTextureImage(scene: Phaser.Scene, key: string, src: SourceImage): void {
@@ -179,32 +269,73 @@ function makeCharacterCanvas(src: SourceImage): HTMLCanvasElement {
     downright: 7,
   } as const;
 
-  const frameSources = new Array<number>(TOTAL_CHARACTER_FRAMES).fill(sourceByFacing.down);
-  for (let i = 0; i < 4; i++) frameSources[i] = sourceByFacing.down;
-  for (let i = 4; i < 8; i++) frameSources[i] = sourceByFacing.left;
-  for (let i = 8; i < 12; i++) frameSources[i] = sourceByFacing.right;
-  for (let i = 12; i < 16; i++) frameSources[i] = sourceByFacing.up;
-  for (let i = 16; i < 18; i++) frameSources[i] = sourceByFacing.down;
-  for (let i = 18; i < 20; i++) frameSources[i] = sourceByFacing.left;
-  for (let i = 20; i < 22; i++) frameSources[i] = sourceByFacing.right;
-  for (let i = 22; i < 24; i++) frameSources[i] = sourceByFacing.up;
-  for (let i = 24; i < 27; i++) frameSources[i] = sourceByFacing.downright;
-  for (let i = 27; i < 30; i++) frameSources[i] = sourceByFacing.downleft;
-  for (let i = 30; i < 33; i++) frameSources[i] = sourceByFacing.upright;
-  for (let i = 33; i < 36; i++) frameSources[i] = sourceByFacing.upleft;
-  for (let i = 36; i < 38; i++) frameSources[i] = sourceByFacing.downright;
-  for (let i = 38; i < 40; i++) frameSources[i] = sourceByFacing.downleft;
-  for (let i = 40; i < 42; i++) frameSources[i] = sourceByFacing.upright;
-  for (let i = 42; i < 44; i++) frameSources[i] = sourceByFacing.upleft;
-  frameSources[44] = sourceByFacing.down;
-  frameSources[45] = sourceByFacing.down;
+  const dirNudge = (sourceIndex: number): { x: number; y: number } => {
+    switch (sourceIndex) {
+      case sourceByFacing.left: return { x: -1, y: 0 };
+      case sourceByFacing.right: return { x: 1, y: 0 };
+      case sourceByFacing.up: return { x: 0, y: -1 };
+      case sourceByFacing.downleft: return { x: -1, y: 1 };
+      case sourceByFacing.downright: return { x: 1, y: 1 };
+      case sourceByFacing.upleft: return { x: -1, y: -1 };
+      case sourceByFacing.upright: return { x: 1, y: -1 };
+      default: return { x: 0, y: 1 };
+    }
+  };
 
-  frameSources.forEach((sourceIndex, frame) => {
+  const drawFrame = (frame: number, sourceIndex: number, pose: 'stand' | 'walkA' | 'walkB' | 'runA' | 'runB' | 'idleBreath' | 'idleBlink'): void => {
     const sx = sourceIndex * FRAME_W;
     const dx = (frame % cols) * FRAME_W;
     const dy = Math.floor(frame / cols) * FRAME_H;
-    ctx.drawImage(src, sx, 0, FRAME_W, FRAME_H, dx, dy, FRAME_W, FRAME_H);
+    const nudge = dirNudge(sourceIndex);
+    const step = pose === 'walkA' || pose === 'runA' ? -1 : pose === 'walkB' || pose === 'runB' ? 1 : 0;
+    const bob = pose === 'walkA' || pose === 'walkB' ? 1 : pose === 'runA' || pose === 'runB' ? 2 : pose === 'idleBreath' ? -1 : 0;
+    const lean = pose === 'runA' || pose === 'runB' ? 1 : 0;
+    const ox = Math.max(-2, Math.min(2, step + nudge.x * lean));
+    const oy = Math.max(-2, Math.min(2, bob + nudge.y * lean));
+
+    // The first authored cast sheets are 8-direction pose sheets, not full
+    // animation sheets. Build a live 46-frame engine sheet from those poses:
+    // stand frames stay exact, walk frames bob/sway, run frames lean into the
+    // facing. That gives every rex-walk/run-* animation real, valid frames while
+    // the next art pass can replace these synthetic in-betweens with hand poses.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(dx, dy, FRAME_W, FRAME_H);
+    ctx.clip();
+    ctx.drawImage(src, sx, 0, FRAME_W, FRAME_H, dx + ox, dy + oy, FRAME_W, FRAME_H);
+    ctx.restore();
+    if (pose === 'idleBlink') {
+      ctx.fillStyle = 'rgba(18, 16, 25, 0.85)';
+      ctx.fillRect(dx + 7, dy + 13, 10, 1);
+    }
+  };
+
+  const walkBlock = [sourceByFacing.down, sourceByFacing.left, sourceByFacing.right, sourceByFacing.up];
+  walkBlock.forEach((sourceIndex, dirIndex) => {
+    const base = dirIndex * 4;
+    drawFrame(base, sourceIndex, 'stand');
+    drawFrame(base + 1, sourceIndex, 'walkA');
+    drawFrame(base + 2, sourceIndex, 'stand');
+    drawFrame(base + 3, sourceIndex, 'walkB');
   });
+  walkBlock.forEach((sourceIndex, dirIndex) => {
+    const base = 16 + dirIndex * 2;
+    drawFrame(base, sourceIndex, 'runA');
+    drawFrame(base + 1, sourceIndex, 'runB');
+  });
+  [sourceByFacing.downright, sourceByFacing.downleft, sourceByFacing.upright, sourceByFacing.upleft].forEach((sourceIndex, dirIndex) => {
+    const base = 24 + dirIndex * 3;
+    drawFrame(base, sourceIndex, 'stand');
+    drawFrame(base + 1, sourceIndex, 'walkA');
+    drawFrame(base + 2, sourceIndex, 'walkB');
+  });
+  [sourceByFacing.downright, sourceByFacing.downleft, sourceByFacing.upright, sourceByFacing.upleft].forEach((sourceIndex, dirIndex) => {
+    const base = 36 + dirIndex * 2;
+    drawFrame(base, sourceIndex, 'runA');
+    drawFrame(base + 1, sourceIndex, 'runB');
+  });
+  drawFrame(44, sourceByFacing.down, 'idleBreath');
+  drawFrame(45, sourceByFacing.down, 'idleBlink');
   return canvas;
 }
 
@@ -240,14 +371,26 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
     scene.load.image(art.bustKey, art.bustUrl);
     scene.load.image(art.battlerKey, art.battlerUrl);
   });
+  NPC_CHARACTER_ART.forEach((art) => scene.load.image(art.key, art.url));
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
+  ENEMY_BATTLE_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
 }
 
 export function applyAuthoredHeroArt(scene: Phaser.Scene): void {
   HERO_ART.forEach((art) => {
     const character = sourceImage(scene, art.characterKey);
-    if (character) replaceTextureSheet(scene, art.id, makeCharacterCanvas(character), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
+    if (character) {
+      clearHeroAnimations(scene, art.id);
+      replaceTextureSheet(scene, art.id, makeCharacterCanvas(character), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
+    }
+  });
+  NPC_CHARACTER_ART.forEach((art) => {
+    const character = sourceImage(scene, art.key);
+    if (character) {
+      clearHeroAnimations(scene, art.id);
+      replaceTextureSheet(scene, art.id, makeCharacterCanvas(character), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
+    }
   });
 }
 
@@ -265,7 +408,7 @@ export function applyAuthoredBattlerSheet(scene: Phaser.Scene, key: string, hero
   if (battler) replaceTextureSheet(scene, key, makeBattlerCanvas(battler), BATTLER_W, BATTLER_H, 4, TOTAL_BATTLER_FRAMES);
 }
 
-function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
+export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   const tileArt = sourceImage(scene, WORLD_TILE_ART.key);
   const baseTiles = sourceImage(scene, 'tiles');
   if (!tileArt || !baseTiles) return;
@@ -288,20 +431,37 @@ function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   replaceTextureSheet(scene, 'tiles', canvas, TILE, TILE, TILESET.length, TILESET.length);
 }
 
-function applyAuthoredWorldProps(scene: Phaser.Scene): void {
+export function applyAuthoredWorldProps(scene: Phaser.Scene): void {
   WORLD_PROP_ART.forEach((art) => {
     const img = sourceImage(scene, `authored_world_${art.key}`);
     if (img) replaceTextureImage(scene, art.key, img);
   });
 }
 
-export function applyAuthoredArt(scene: Phaser.Scene): void {
-  applyAuthoredHeroArt(scene);
+export function applyAuthoredEnemyArt(scene: Phaser.Scene): void {
+  ENEMY_BATTLE_ART.forEach((art) => {
+    const img = sourceImage(scene, `authored_enemy_${art.key}`);
+    if (img) replaceTextureImage(scene, art.key, img);
+  });
+}
+
+export function applyAuthoredBattleArt(scene: Phaser.Scene): void {
   HERO_ART.forEach((art) => {
     for (const wear of [0, 1, 2]) applyAuthoredBustSheet(scene, `bust_${art.id}_none_w${wear}`, art.id);
     for (const wear of [0, 1, 2]) applyAuthoredBattlerSheet(scene, `battler_${art.id}_none_none_w${wear}`, art.id);
     applyAuthoredBustSheet(scene, `bust_${art.id}`, art.id);
   });
+  applyAuthoredEnemyArt(scene);
+}
+
+export function applyAuthoredArt(scene: Phaser.Scene): void {
+  applyAuthoredHeroArt(scene);
+  applyAuthoredBattleArt(scene);
+  applyAuthoredWorldTiles(scene);
+  applyAuthoredWorldProps(scene);
+}
+
+export function applyAuthoredWorldArt(scene: Phaser.Scene): void {
   applyAuthoredWorldTiles(scene);
   applyAuthoredWorldProps(scene);
 }

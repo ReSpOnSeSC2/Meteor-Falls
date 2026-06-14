@@ -465,7 +465,7 @@ export class BattleScene extends Phaser.Scene {
       summon: (enemyId, n) => this.summonUnits(bossUnit, enemyId, n),
       healSelf: async (amount) => {
         bossUnit.hp = Math.min(bossUnit.def.hp, bossUnit.hp + amount);
-        this.fx.popup(bossUnit.spr.x, bossUnit.spr.y - bossUnit.spr.height / 2 - 2, `+${amount}`, RAMP.GRASS);
+        this.fx.popup(bossUnit.spr.x, bossUnit.spr.y - bossUnit.spr.displayHeight / 2 - 2, `+${amount}`, RAMP.GRASS);
         AUDIO.sfx('heal');
         await this.print(`${amount} HP came BACK. That's the wrong direction!`);
       },
@@ -522,6 +522,7 @@ export class BattleScene extends Phaser.Scene {
       const x = boss.spr.x + side * (62 + 14 * Math.floor(i / 2));
       const y = def.boss ? 97 : 92;
       const spr = this.add.image(x, y, def.sprite).setOrigin(0.5, 0.5);
+      this.fitEnemySprite(spr, def, Math.max(1, this.enemies.length + n));
       this.tweens.add({ targets: spr, y: y - 3, duration: 1100 + i * 130, yoyo: true, repeat: -1, ease: 'sine.inout' });
       this.enemies.push({
         def,
@@ -670,10 +671,11 @@ export class BattleScene extends Phaser.Scene {
       const def = ENEMIES[id];
       const x = (this.scale.width / (ids.length + 1)) * (i + 1);
       const spr = this.add.image(x, 0, def.sprite).setOrigin(0.5, 0.5);
+      this.fitEnemySprite(spr, def, ids.length);
       // bosses still bias a touch lower (their crown is the read — S7 the Tick),
       // then everyone is pushed down JUST enough for the sprite top to clear the
       // message box, capped so the body never rides over the party cards.
-      const half = spr.height / 2;
+      const half = spr.displayHeight / 2;
       const y = Math.round(Math.min(ENEMY_FLOOR - half, Math.max(def.boss ? 97 : 92, ENEMY_TOP + half)));
       spr.setY(y);
       // idle float — cosmetic only; battle sprites float, never stand (ADR-020)
@@ -709,6 +711,13 @@ export class BattleScene extends Phaser.Scene {
         rattled: 0,
       });
     });
+  }
+
+  private fitEnemySprite(spr: Phaser.GameObjects.Image, def: EnemyDef, seats: number): void {
+    const maxW = def.boss ? 132 : seats >= 4 ? 70 : seats >= 3 ? 86 : 112;
+    const maxH = def.boss ? 104 : 92;
+    const scale = Math.min(1, maxW / spr.width, maxH / spr.height);
+    spr.setScale(scale);
   }
 
   private buildParty(): void {
@@ -1094,7 +1103,7 @@ export class BattleScene extends Phaser.Scene {
     return new Promise((resolve) => {
       let sel = 0;
       const hand = this.add
-        .image(alive[0].spr.x, alive[0].spr.y - alive[0].spr.height / 2 - 8, 'hand')
+        .image(alive[0].spr.x, alive[0].spr.y - alive[0].spr.displayHeight / 2 - 8, 'hand')
         .setDepth(DEPTH_UI + 3)
         .setAngle(90);
       const zones = alive.map((e, i) => {
@@ -1112,7 +1121,7 @@ export class BattleScene extends Phaser.Scene {
           sel = (sel + (d.x > 0 ? 1 : alive.length - 1)) % alive.length;
           AUDIO.sfx('cursor');
         }
-        hand.setPosition(alive[sel].spr.x, alive[sel].spr.y - alive[sel].spr.height / 2 - 8);
+        hand.setPosition(alive[sel].spr.x, alive[sel].spr.y - alive[sel].spr.displayHeight / 2 - 8);
         if (INPUT.justPressed('A')) done(alive[sel]);
         if (INPUT.justPressed('B')) done(null);
       });
@@ -1286,7 +1295,7 @@ export class BattleScene extends Phaser.Scene {
       // the ring timer drains under the target, at fx depth
       const ring = this.fx.comboRing(
         target.spr.x,
-        target.spr.y + target.spr.height / 2 + 5,
+        target.spr.y + target.spr.displayHeight / 2 + 5,
         () => left / COMBO_WINDOW_MS,
       );
       const off = everyFrame(this, (dt) => {
@@ -1298,7 +1307,7 @@ export class BattleScene extends Phaser.Scene {
           AUDIO.sfx(`combo_${hits}`); // the rising pitch ladder
           void this.stage.strike(cls === 'rifle' ? 'recoil' : 'swing', 150);
           this.fx.burst(target.spr.x, target.spr.y, RAMP.GRASS, 7, 55, 320);
-          this.fx.popup(target.spr.x, target.spr.y - target.spr.height / 2 - 10, `${hits} HITS!`, RAMP.GRASS);
+          this.fx.popup(target.spr.x, target.spr.y - target.spr.displayHeight / 2 - 10, `${hits} HITS!`, RAMP.GRASS);
         }
         if (left <= 0 || hits >= cap) {
           ring.done();
@@ -2234,7 +2243,7 @@ export class BattleScene extends Phaser.Scene {
     e.hp = Math.max(0, e.hp - dmg);
     // floating damage popup (the S10 popFoe idiom) + the printed line —
     // a SMAAAASH combo hands in its one assembled EB line instead (S11b)
-    this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `${dmg}`, weak ? RAMP.GOLD : RAMP.PAPER);
+    this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - 2, `${dmg}`, weak ? RAMP.GOLD : RAMP.PAPER);
     await this.print(line ?? `${dmg} damage${weak ? ' — a sore spot!!' : '!'}`);
     if (e.asleep > 0 && e.hp > 0) {
       e.asleep = 0;
@@ -2455,7 +2464,7 @@ export class BattleScene extends Phaser.Scene {
           await this.print(`${target.hero.name} took ${taken}!`);
           if (reflected > 0) {
             const tint = s.reflect > 0 ? RAMP.GOLD : countered ? RAMP.RED : RAMP.CYAN;
-            this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `${reflected}`, tint);
+            this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - 2, `${reflected}`, tint);
             e.hp = Math.max(1, e.hp - reflected); // a reflection never lands the last hit
             // the WALL THAT ANSWERS (reflect) vs the monk's counter vs Dorin's mirror
             const line = s.reflect > 0
@@ -2486,7 +2495,7 @@ export class BattleScene extends Phaser.Scene {
           this.applyHeroDamage(latchedHero, dmg);
           const sup = Math.floor(dmg / 2);
           e.hp = Math.min(e.def.hp, e.hp + sup);
-          this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `+${sup}`, RAMP.GRASS);
+          this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - 2, `+${sup}`, RAMP.GRASS);
           AUDIO.sfx('fx_latch');
           await this.print(BATTLE_TEXT.latch_drain);
           await this.print(`${latchedHero.hero.name} lost ${dmg} HP!`);
@@ -2530,7 +2539,7 @@ export class BattleScene extends Phaser.Scene {
           GS.data.cashOnHand -= take;
           e.stolenCash += take;
           AUDIO.sfx('cancel');
-          this.fx.popup(e.spr.x, e.spr.y - e.spr.height / 2 - 2, `-$${take}`, RAMP.GOLD);
+          this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - 2, `-$${take}`, RAMP.GOLD);
           await this.print(this.fill(BATTLE_TEXT.parrot_take, '', e, `$${take}`));
           break;
         }
@@ -2557,7 +2566,7 @@ export class BattleScene extends Phaser.Scene {
             const amt = 18 + Math.floor(Math.random() * 10);
             for (const a of allies) {
               a.hp = Math.min(a.def.hp, a.hp + amt);
-              this.fx.popup(a.spr.x, a.spr.y - a.spr.height / 2 - 2, `+${amt}`, RAMP.GRASS);
+              this.fx.popup(a.spr.x, a.spr.y - a.spr.displayHeight / 2 - 2, `+${amt}`, RAMP.GRASS);
             }
             AUDIO.sfx('heal');
           }
