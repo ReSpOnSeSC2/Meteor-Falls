@@ -4393,3 +4393,35 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   settled and tested, and a cozy flip pays off through the M29 economy. The interactive editor
   SCENE (the ghost preview, the catalog wheel, touch/pad placement) + the live HOME GOODS store +
   drawing the few new furniture sprites land on this spine when an owned home's session arrives.
+
+## ADR-071 — S18 (Movement 31): THE STORY WEAVE — the trust thread, the clicker question, the disguise sneaks
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S18 Movement 31 — wiring the new mechanics into §A6 as the two game-long
+  character arcs + the costume sneaks. The per-chapter SCENE staging rides these spines.)
+- **Decision — the two threads as ORDERED, NON-MISSABLE flag chains (`src/data/storythreads.ts`
+  + `src/engine/storythread.ts`).** THE TRUST THREAD (Jay/free-will): open (Ch.3 PUPPET) →
+  four escalations (Ch.4–7) → climax (Ch.8, the Hush's wedge) → resolve (the party bonds). THE
+  CLICKER QUESTION (Milo/blame): seed (Ch.5) → crisis (Ch.7, the spoofed frame) → clearing (Ch.8,
+  the public save that exposes the spoof, earning a finale caller). Each beat carries a `flag` and
+  a `prevFlag` linking to the previous beat, so `nextBeat` fires them strictly in order and the
+  climax/clearing is non-missable; `climaxReady`, `isResolved`, and `earnedCallers` drive the
+  staging + the §A6 PRAY payoff. The trust opener ties to the M27 `the_first_borrow` awakening.
+- **Decision — the disguise/costume system (`src/data/disguise.ts` + `src/engine/disguise.ts`).**
+  Don a costume to blend into a faction (Smilers/palace/Hoaxula's cast); `madeChance` = NPC
+  alertness − disguise quality (a wrong/absent disguise is always made), `isMade` is a
+  deterministic roll, and `onSpotted` is ALWAYS a fight — never a fail (the EarthBound law).
+- **Decision — gated (`tools/content-validate.ts` `story-thread` + `disguise`, + two test files).**
+  `chainProblems` pins each thread: contiguous order, prevFlag links, non-decreasing bands, exactly
+  one terminal as the last beat, unique flags; plus shape checks (trust opens/climaxes/resolves;
+  clicker seeds/crises/clears). Disguises blend into a canon faction, quality ∈ [0,1], band
+  well-formed, §A11 note present. The verdict prints **10 thread beats · 3 disguises**.
+- **Verification:** `tsc --noEmit` clean + `npm run validate` green (story-thread + disguise both
+  pinned) + full **vitest** green (+13: thread order/climax/callers + disguise blend/made/fight) +
+  `vite build` clean. No FNV re-pin, no frozen-core change, no save change (the beat flags ride the
+  existing ADR-015 `flags` ledger). §A6 amended to canon in the same commit.
+- **Consequences:** the two Hush-wedge arcs have an honest, ordered, non-missable spine that the
+  OverworldScene fires at the right beats, and the sneaks have real rules. The remaining M31 work
+  is per-chapter SCENE staging on these spines: the highway set-pieces + the mandatory drive (M26
+  vehicles + M27 control), the plane-interior travel scene, the Cobra Raja DEAD-AIR-HELMET boss
+  (a `mind_immune` phase-1), and the beat dialogue — each landing with its chapter session.

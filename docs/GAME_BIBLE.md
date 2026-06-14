@@ -233,6 +233,27 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > COUNTER (picnic baskets), THE PET BED (Biscuit), plus décor that matters (plant,
 > fish tank, gnome, sofa, lamp, rug). The decor is the soul; the buff is the wink.)*
 
+> *(Added 2026-06-14 per Appendix rule 6, ADR-071 — **§A6 STORY WEAVE: the two
+> threads + the disguise sneaks.** The §A4.10 control system grows two game-long,
+> NON-MISSABLE arcs, each a flag-chained beat registry (`src/data/storythreads.ts`,
+> driven by `src/engine/storythread.ts`, validated ordered + single-terminal). THE
+> TRUST THREAD (Jay's free-will mirror): OPENS the first time the others see him
+> PUPPET someone (Ch.3), slow-burns the "are we even free?" doubt across Ch.4–7,
+> CLIMAXES at the three-quarter mark (Ch.7→8 — the Hush weaponizes the doubt to split
+> the party), and RESOLVES when they choose trust and Jay proves he's the Hush's
+> opposite (he refuses to take a will even when it would fix everything) — the party
+> bonds for Ch.9–10 and it feeds the finale free-will PRAY. THE CLICKER QUESTION
+> (Milo's blame mirror): the comedic SEED (Ch.5 parade float), the sincere CRISIS
+> (Ch.7 — a Hush-spoofed signal frames him; even he isn't sure), the public CLEARING
+> (Ch.8 — he Clickers a disaster to safety in the open and exposes the spoof, earning
+> a finale caller). The two RHYME (the Hush turning each hero's gift into a reason to
+> fear them) but peak on different beats. THE DISGUISE/COSTUME SNEAK
+> (`src/data/disguise.ts` + engine): don a costume to blend with a faction (the
+> Smilers Ch.1, palace guards Ch.7, Hoaxula's cast Ch.9); getting "made" is a FIGHT,
+> never a fail. The highway set-pieces, the mandatory drive, the plane-interior, and
+> the Cobra Raja DEAD-AIR-HELMET boss are the per-chapter scene staging that rides
+> these spines + the M26 vehicles + the M27 control system.)*
+
 ## A5. The World Route & Travel
 
 | Ch. | Region | Locales | Travel in |

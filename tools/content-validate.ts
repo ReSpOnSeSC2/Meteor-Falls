@@ -45,6 +45,9 @@ import { abilitiesForKey } from '../src/engine/psi';
 import { PROPERTIES, PROPERTY_KINDS, LIVE_PROPERTIES } from '../src/data/properties';
 import { AREA_SKINS as AREA_SKINS_FOR_PROP } from '../src/spritegen/buildings';
 import { FURNITURE, FURNITURE_FUNCTIONS } from '../src/data/furniture';
+import { THREAD_BEATS, THREAD_IDS } from '../src/data/storythreads';
+import { chainProblems } from '../src/engine/storythread';
+import { DISGUISES, DISGUISE_FACTIONS } from '../src/data/disguise';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
@@ -420,6 +423,39 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   for (const core of ['bed', 'phone', 'fridge', 'footlocker'] as const) {
     if (!haveFn.has(core)) fail('furniture', `the §A4.14 base needs a '${core}' piece — none in the catalog`);
+  }
+}
+
+// S18 Movement 31 (ADR-071) — THE STORY THREADS (§A4.10) + the disguise sneaks.
+// The Trust Thread + the Clicker Question must be well-formed, ordered, non-missable
+// flag chains; disguises must blend into a canon faction.
+{
+  for (const thread of THREAD_IDS) {
+    for (const p of chainProblems(thread)) fail('story-thread', `${thread}: ${p}`);
+  }
+  // every beat flag is unique across BOTH threads (independent machines)
+  const flags = Object.values(THREAD_BEATS).map((b) => b.flag);
+  for (const f of flags) {
+    if (flags.filter((x) => x === f).length > 1) fail('story-thread', `beat flag '${f}' used twice`);
+  }
+  // the trust thread climaxes at the three-quarter mark (Ch.7→8) and resolves; the
+  // clicker question seeds (Ch.5) → crisis (Ch.7) → clears (Ch.8) — pin the shape
+  const trustKinds = Object.values(THREAD_BEATS).filter((b) => b.thread === 'trust').map((b) => b.kind);
+  if (!trustKinds.includes('open')) fail('story-thread', 'the trust thread never OPENS (Ch.3 PUPPET)');
+  if (!trustKinds.includes('climax')) fail('story-thread', 'the trust thread never CLIMAXES (the ~3/4 mark)');
+  if (!trustKinds.includes('resolve')) fail('story-thread', 'the trust thread never RESOLVES (the party bonds)');
+  const clickerKinds = Object.values(THREAD_BEATS).filter((b) => b.thread === 'clicker').map((b) => b.kind);
+  for (const need of ['seed', 'crisis', 'clearing'] as const) {
+    if (!clickerKinds.includes(need)) fail('story-thread', `the clicker question is missing its ${need}`);
+  }
+}
+{
+  const FACTIONS = new Set<string>(DISGUISE_FACTIONS);
+  for (const d of Object.values(DISGUISES)) {
+    if (!FACTIONS.has(d.blendTag)) fail('disguise', `disguise '${d.id}' blends into unknown faction '${d.blendTag}'`);
+    if (d.quality < 0 || d.quality > 1) fail('disguise', `disguise '${d.id}' quality ${d.quality} is out of [0,1]`);
+    if (!/^ch\d+$/.test(d.band)) fail('disguise', `disguise '${d.id}' band '${d.band}' is malformed`);
+    if (!d.note || d.note.trim().length === 0) fail('disguise', `disguise '${d.id}' has no §A11 note`);
   }
 }
 
@@ -1950,6 +1986,8 @@ const counts = [
   `${Object.keys(PSI_GATES).length} psi gates`,
   `${Object.keys(PROPERTIES).length} properties`,
   `${Object.keys(FURNITURE).length} furniture`,
+  `${Object.keys(THREAD_BEATS).length} thread beats`,
+  `${Object.keys(DISGUISES).length} disguises`,
   `${Object.keys(DIALOGUE).length} dialogue scripts`,
   `${Object.keys(TEAMS).length} Classic fives + ${Object.keys(WALK_ONS).length} walk-ons (S12)`,
   `${Object.keys(CHAPTER_MANIFESTS).length} chapter manifests (${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'shipped').length} shipped · ${Object.values(CHAPTER_MANIFESTS).filter((m) => m.status === 'unlanded').length} unlanded)`,
