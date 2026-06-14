@@ -6053,3 +6053,67 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   enemy sprite the forge can produce — no per-enemy hand-tuning. The party cards remain the hard floor, so HP/PP
   are never occluded. Follow-up: the same face-anchor idea could inform where status callouts (#12) and damage
   arcs (#17) originate so they, too, never collide with the message box. ☄️
+
+## ADR-108 — MAP METADATA: THE LIVING-WORLD SCHEMA (ambient beds · explicit muffle · reflective surfaces · NPC ambient life)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (the presentation-polish program's WAVE 2 — the schema + data FOUNDATION the overworld
+  presence/muffle/reflection movements consume. This movement lands the FIELDS, the ambient-bed registry, the
+  authored soundscape, and the validator gates; the playback/rendering that reads them is Wave 3 — #2 muffle
+  wiring, #4 NPC life, #6 reflections.)
+- **The ADR number.** ADR-107 (battle foes clear the message box) was the highest; a fresh grep of `^## ADR-`
+  confirms 100–107 are taken (the audio mixer, the user's two art passes 101/104, transition hardening, the
+  window law, the ATM odometer, multi-enemy encounters, the face-clearance fix), so this is **ADR-108**
+  (in-code citations carry `ADR-108`; re-grep-at-write per the git-workflow rule, given the live concurrent
+  graphics-overhaul session).
+- **Context.** Three Wave-3 presentation asks all need a map to DECLARE atmosphere the engine can't infer:
+  #16 wants `setMusicMuffle`/an ambient bed driven automatically on map load, #6 wants to know WHICH tiles
+  reflect, and #4 wants townsfolk to carry idle life. `MapDef` already had `interior` + `music` (ADR-006) and
+  `NpcDef` had `wander`, but nothing said "rain falls here", "this water mirrors", or "this NPC hums". Rather
+  than hard-code those per map in OverworldScene, they become DATA on the §B1 schema — the repo's single-source
+  ethos — so the later movements are pure consumers and the validator can pin them.
+- **Decision — THE SCHEMA FIELDS (`src/schemas/index.ts`, optional + back-compatible).** `MapDef` gains
+  `ambience` (an `AmbienceId`), `muffle` (an explicit `0|1|2` override), and `reflect` (an array of
+  `ReflectZone` tile rects, each `{x,y,w,h, within?}`). `NpcDef` gains `idle` (opt into the ADR-101 breath/blink
+  while standing) and `emote` (an `EmoteId` ambient mood). All five are OPTIONAL, so every one of the ~3000
+  existing entries parses byte-identically (the ADR-019 untouched-data rule); `DraftMapDefSchema` inherits them
+  free via `...MapDefSchema.shape`. The id unions (`EMOTE_IDS`, `AMBIENCE_IDS`) are LITERAL tuples in the schema
+  so authoring type-checks and the schema stays a pure zod leaf (no engine import) — they are PINNED equal to
+  their runtime sources by the validator (below).
+- **Decision — THE AMBIENT-BED REGISTRY (`src/engine/ambience.ts`, pure).** Eight beds — `rain · wind · waves ·
+  river · crowd · machine · birds · cave` — each a filtered-NOISE floor (`base` colour + lowpass `cutoff` +
+  low `gain` UNDER the music + an optional slow `sway` for living gusts/swells). Split out exactly like
+  `audiobus.ts` so it unit-tests headlessly (audio.ts can't run under vitest's node env). `AMBIENCE` is
+  `Record<AmbienceId, …>`, so the COMPILER pins the registry to exactly the schema's ids; `river` is reserved
+  vocabulary (the Long Walk brook + future stream maps) and intentionally unreferenced today. Wave 3 (#2) wires
+  these onto real nodes on the ADR-100 mixer's music path, so the §A4 volume sliders + the muffle veil cover the
+  bed too.
+- **Decision — THE AUTHORED SOUNDSCAPE (`src/data/maps.ts`, central + post-assembly).** A `MAP_AUDIO` registry
+  (ambience + optional muffle) and a `MAP_REFLECT` registry (reflective tile rects) are applied to `MAPS` in a
+  loop AFTER the living-city pass — the MAP_AREA idiom (ADR-092), so the whole soundscape reads in ONE place and
+  the fields can't be clobbered by `occupyCity`. Nine maps get a bed (Foggybottom rain, the moor/stones/grounds
+  wind, the Wintermoor boiler `machine` + `muffle:2`, Puerto Sol waves, the pyramid `cave`, Otterbrook birds,
+  Brickton crowd); four water surfaces reflect (the Tyne, the Pond Park, the golf hazard, the seafront).
+  Representative NPCs get ambient life inline (the pond angler ponders, the birder is delighted, the postmistress
+  muses, the fog-boy is startled — across `maps.ts`, `maps_ch2.ts`, `maps_ch3.ts`).
+- **Decision — THE VALIDATOR GATES (`tools/content-validate.ts`, pinned both directions).** `emote` /
+  `ambience`: the schema's `EMOTE_IDS` / `AMBIENCE_IDS` literal unions must equal their runtime sources
+  (`EMOTES` in `engine/emote.ts`, `AMBIENCE` in `engine/ambience.ts`) BOTH ways — add to one side and forget the
+  other and the build fails (the ADR-105 ui-glyph idiom); the AMBIENCE registry must be well-formed (label,
+  noise colour, `gain ∈ (0,1]`, `cutoff > 0`, sane sway). `reflect`: every rect sits inside its map grid AND
+  overlaps ≥1 reflective tile (`sea_a`/`sea_foam`, resolved through `CHAR_LEGEND` — the "grid char → legend →
+  tile" idiom), so a grid edit that moves the water fails the build rather than shipping a dry "mirror".
+  `npc-ambient`: a `dog` NPC (its own anim set, no `${sprite}-idle-down`) can never set `idle`. The verdict adds
+  `8 ambience beds · 9 maps w/ ambient audio · 4 reflective surfaces · 7 ambient NPCs`.
+- **Verification.** `npx tsc --noEmit` clean; `npm run validate` GREEN with the new gates; full `npx vitest run`
+  GREEN — **1173 tests** (+18: `ambience.test.ts` ×14 pins the registry, the two drift unions, and the schema
+  fields' accept/reject; `maps.test.ts` +4 pins the authored wiring — the beds land on the right maps, muffle
+  stays an override, reflect rects sit in-bounds over water, the angler carries its mood and no dog breathes).
+  No save version bump — map/NPC metadata is content, never save state. Cross-refs GAME_BIBLE **§A4.18** (the
+  living-world layer, added this movement) and §B1 (the schema as single source).
+- **Consequences.** A map now declares its atmosphere as data, so the Wave-3 movements are thin consumers:
+  OverworldScene reads `ambience`/`muffle`/`interior` to drive the mixer on load (#2/#16), `reflect` to mirror
+  actors (#6), and `idle`/`emote` to breathe the town (#4) — each landing in its own movement against a schema
+  that already type-checks the authoring and a gate that already guards the data. Named follow-ups: wire the bed
+  playback + the muffle-on-load + the reflection draw + the NPC idle/emote loop (Wave 3), and grow the bed
+  vocabulary (the reserved `river`, a market-stall variant) as new regions land. ☄️

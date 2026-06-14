@@ -177,6 +177,7 @@ import {
 } from './ch2';
 import { makeFontSheet, FONT_CHARS, FONT_CELL_W, FONT_CELL_H, FONT_CHARS_PER_ROW } from './font';
 import { RAMP, C, px } from '../palette';
+import { applyAuthoredBattlerSheet, applyAuthoredBustSheet } from './authored';
 
 export const GAME_W = 400;
 export const GAME_H = 225;
@@ -321,8 +322,12 @@ export function facing8(vx: number, vy: number, fallback: Facing = 'down'): Faci
 export function ensureBattleArt(scene: Phaser.Scene, heroId: string, look: BattlerLook): void {
   const spec = CAST[heroId];
   for (const wear of [0, 1, 2] as WearTier[]) {
-    addSheet(scene, bustSheetKey(heroId, look.body, wear), generateBustFrames(spec, look.body, wear), 4);
-    addSheet(scene, battlerSheetKey(heroId, look, wear), generateBattlerFrames(spec, look, wear), 4);
+    const bustKey = bustSheetKey(heroId, look.body, wear);
+    addSheet(scene, bustKey, generateBustFrames(spec, look.body, wear), 4);
+    applyAuthoredBustSheet(scene, bustKey, heroId);
+    const battlerKey = battlerSheetKey(heroId, look, wear);
+    addSheet(scene, battlerKey, generateBattlerFrames(spec, look, wear), 4);
+    applyAuthoredBattlerSheet(scene, battlerKey, heroId);
   }
 }
 

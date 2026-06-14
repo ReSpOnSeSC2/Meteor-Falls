@@ -446,6 +446,13 @@ export const PropDefSchema = z.strictObject({
 });
 export type PropDef = z.infer<typeof PropDefSchema>;
 
+/** Wave 2 (#4, ADR-108): the ambient-emote vocabulary. Kept as a literal union so
+ *  the schema stays a pure zod leaf (no engine import); PINNED equal to the runtime
+ *  EMOTES table (src/engine/emote.ts) in tools/content-validate.ts, both directions,
+ *  so the two can never drift. Each id resolves to a FLAIR WEAVE glyph at runtime. */
+export const EMOTE_IDS = ['surprise', 'idle', 'sleep', 'think', 'happy'] as const;
+export const EmoteIdSchema = z.enum(EMOTE_IDS);
+
 export const NpcDefSchema = z.strictObject({
   id: z.string().min(1),
   sprite: z.string().min(1),
@@ -458,6 +465,14 @@ export const NpcDefSchema = z.strictObject({
    *  night differently after it survives it. Optional; validator-swept. */
   dialogueDay: z.string().min(1).optional(),
   wander: z.boolean().optional(),
+  /** Wave 2 (#4, ADR-108): play the ADR-101 breath/blink idle (`${sprite}-idle-down`)
+   *  while this NPC stands — the town breathes. Opt-in; a `dog` NPC (its own anim
+   *  set) must NOT set it (the validator forbids the combo). */
+  idle: z.boolean().optional(),
+  /** Wave 2 (#4, ADR-108): an ambient MOOD this NPC occasionally pops over its head
+   *  (🎵 humming, 💤 dozing, … pondering, ❗ noticing) — an EmoteId resolved against
+   *  the EMOTES table at runtime; pinned to exist by the validator. */
+  emote: EmoteIdSchema.optional(),
   /** special rendering: dog uses its own anim set */
   dog: z.boolean().optional(),
   /** flag gates: only present when ifFlag is truthy / unlessFlag is falsy */
@@ -548,12 +563,52 @@ export const SettlementSchema = z.enum(['city', 'town', 'village']);
 
 export const PointSchema = z.strictObject({ x: z.number(), y: z.number() });
 
+/** Wave 2 (#16, ADR-108): the ambient-bed vocabulary. The literal union here is the
+ *  schema's source of truth for map authoring; the registry of HOW each bed is
+ *  synthesised lives in src/engine/ambience.ts (a pure, headless-testable module the
+ *  Record-types against this union, so it must define exactly these keys). The
+ *  validator additionally pins the two equal both directions. */
+export const AMBIENCE_IDS = ['rain', 'wind', 'waves', 'river', 'crowd', 'machine', 'birds', 'cave'] as const;
+export const AmbienceIdSchema = z.enum(AMBIENCE_IDS);
+export type AmbienceId = z.infer<typeof AmbienceIdSchema>;
+
+/** Wave 2 (#6, ADR-108): a reflective surface — a TILE rect over the map's water (the
+ *  validator requires it to overlap a sea tile) over which the overworld mirrors nearby
+ *  actors. The SURFACE LINE is the rect's top edge; an
+ *  actor within `within` tiles above it gets a flipped, alpha-reduced, wavy copy drawn
+ *  below the line, clipped to the rect (the draw lands in Wave 3). The validator proves
+ *  every rect sits inside its grid AND actually overlaps a reflective tile. */
+export const ReflectZoneSchema = z.strictObject({
+  x: z.number().int().min(0),
+  y: z.number().int().min(0),
+  w: z.number().int().positive(),
+  h: z.number().int().positive(),
+  /** how many tiles ABOVE the surface still cast a reflection (default 3, set in
+   *  Wave 3) — a big lake mirrors from farther than a puddle. */
+  within: z.number().int().positive().optional(),
+});
+export type ReflectZone = z.infer<typeof ReflectZoneSchema>;
+
 export const MapDefSchema = z.strictObject({
   id: z.string().min(1),
   name: z.string().min(1),
   music: z.string().min(1).nullable(),
   night: z.boolean().optional(),
   interior: z.boolean().optional(),
+  /** Wave 2 (#16, ADR-108): an ambient sound BED layered UNDER the music on this map
+   *  (rain · wind · waves · machine hum…). src/engine/ambience.ts defines how each is
+   *  synthesised; OverworldScene starts/crossfades it on map load (Wave 3). Optional —
+   *  silent when absent. */
+  ambience: AmbienceIdSchema.optional(),
+  /** Wave 2 (#16/#2, ADR-108): an EXPLICIT music-muffle level for this map (0 open ·
+   *  1 veil · 2 deep, the ADR-100 setMusicMuffle scale). When ABSENT, OverworldScene
+   *  derives the veil from `interior` (indoor → 1). Set this only to override the
+   *  default — e.g. a deep cave/boiler (2) or an open-air indoor atrium (0). */
+  muffle: z.union([z.literal(0), z.literal(1), z.literal(2)]).optional(),
+  /** Wave 2 (#6, ADR-108): reflective surfaces (ponds, the Tyne, water hazards) on
+   *  this map. Each is a tile rect; OverworldScene mirrors nearby actors below the
+   *  surface line (Wave 3). Optional — a clean no-op where none. */
+  reflect: z.array(ReflectZoneSchema).optional(),
   /** settlements get ADR-012 organic looseness; 'city' additionally must pass
    *  the Brickton rules (multi-street grid + connector + multiple block
    *  faces) — maps.test.ts sweeps every map tagged 'city' */

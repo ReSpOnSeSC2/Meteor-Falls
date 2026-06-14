@@ -1643,6 +1643,90 @@ export function generateAngelFrames(spec?: CharacterSpec): Pixmap[] {
 }
 
 /* ------------------------------------------------------------------ */
+/* Pippa's CAPE (ref-art match) — drawn in her detail hook so it lands  */
+/* on every facing for free: the hook runs on the raw down/up/right     */
+/* half-frames BEFORE the diagonal stitcher welds them (see drawFrame /  */
+/* drawDiagFrame), so the 3/4 facings inherit the drape with no extra    */
+/* code. A high collar, a draping mantle that flares past the hem, and   */
+/* the gold minister's sash crossing the chest — the silhouette the      */
+/* rotation sheets read as "caped page", not "kid in a blazer".          */
+function pippaCape({ pm, dir, pose, bob, m }: DetailCtx): void {
+  const capeL = px(RAMP.PURPLE, 3);
+  const cape = px(RAMP.PURPLE, 2);
+  const capeD = px(RAMP.PURPLE, 1);
+  const capeC = px(RAMP.PURPLE, 0);
+  const sash = px(RAMP.GOLD, 2);
+  const sashL = px(RAMP.GOLD, 3);
+  const sashD = px(RAMP.GOLD, 1);
+  const blouse = C.white;
+  const blouseD = px(RAMP.PAPER, 1);
+
+  if (dir === 'down' || dir === 'up') {
+    const x0 = m.bodyX;
+    const w = m.bodyW;
+    const y0 = m.bodyTop + bob;
+    const hemY = y0 + (m.bodyH - bob) - 1;
+    // cape shoulders: fill the blazer's chamfer back in as a rounded mantle
+    pm.set(x0 + 1, y0, cape);
+    pm.set(x0 + w - 2, y0, capeD);
+    // high stand-up collar wings, peeking above the shoulders by the neck
+    pm.set(x0 + 2, y0 - 1, capeD);
+    pm.set(x0 + w - 3, y0 - 1, capeC);
+    // lower cape: fold shadows + a hem that flares WIDER than the body, so it
+    // hangs like a draped mantle instead of a tucked shirt
+    pm.vline(x0 + 2, y0 + 5, hemY - y0 - 4, capeD);
+    pm.vline(x0 + w - 3, y0 + 5, hemY - y0 - 4, capeD);
+    pm.set(x0 - 1, hemY - 1, capeD);
+    pm.set(x0 - 1, hemY, capeD);
+    pm.set(x0 - 2, hemY, capeD);
+    pm.set(x0 + w, hemY - 1, capeC);
+    pm.set(x0 + w, hemY, capeC);
+    pm.set(x0 + w + 1, hemY, capeC);
+    pm.hline(x0 - 1, hemY, w + 2, capeC);
+    pm.set(x0, hemY, capeD);
+    if (dir === 'down') {
+      // white puff sleeves of the blouse, framing the open front
+      pm.rect(x0, y0 + 1, 2, 4, blouse);
+      pm.rect(x0 + w - 2, y0 + 1, 2, 4, blouse);
+      pm.set(x0, y0 + 1, blouse);
+      pm.vline(x0 + w - 1, y0 + 2, 3, blouseD); // shaded side of the right puff
+      pm.set(x0, y0 + 4, blouseD);
+      // the gold minister's sash, crossing left shoulder → right hip
+      pm.line(x0 + 2, y0 + 1, x0 + w - 3, y0 + 7, sash);
+      pm.set(x0 + 2, y0 + 1, sashL);
+      pm.set(x0 + w - 3, y0 + 7, sashD);
+      pm.set(x0 + w - 3, y0 + 8, sashD); // the medal where it ends at the hip
+    } else {
+      // back: cape covers all, one draped fold down the centre of the mantle
+      const cx = x0 + Math.floor(w / 2);
+      pm.vline(cx - 1, y0 + 1, hemY - y0, capeL);
+      pm.vline(cx, y0 + 1, hemY - y0, capeD);
+    }
+  } else {
+    // SIDE (right): the mantle billows behind the back; a white puff sleeve on
+    // the near arm; the gold sash catches on the chest
+    const x0 = m.bodyX + 1;
+    const w = m.bodyW - 2;
+    const y0 = m.bodyTop + bob;
+    const hemY = y0 + (m.bodyH - bob) - 1;
+    pm.vline(x0 - 1, y0 + 1, hemY - y0 + 1, cape);
+    pm.set(x0 - 1, y0 + 1, capeL);
+    pm.vline(x0 - 2, y0 + 4, hemY - y0 - 2, capeD);
+    pm.set(x0 - 3, hemY, capeD); // flared tail
+    pm.set(x0 - 2, hemY, capeC);
+    pm.set(x0, y0 - 1, capeD); // collar at the back of the neck
+    pm.set(x0 + 1, y0 - 1, cape);
+    // white puff sleeve over the near arm (torsoSide draws the arm at ax)
+    const swing = pose === 1 ? 2 : pose === 3 ? -2 : 0;
+    const ax = x0 + Math.floor(w / 2) - 1 + swing;
+    pm.rect(ax, y0 + 1, 2, 3, blouse);
+    pm.set(ax + 1, y0 + 3, blouseD);
+    pm.set(x0 + w - 2, y0 + 4, sash); // gold sash catches on the chest
+    pm.set(x0 + w - 2, y0 + 5, sashD);
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* The cast — canon designs (GAME_BIBLE §A3 + Ch.1 NPCs)               */
 
 export const CAST: Record<string, CharacterSpec> = {
@@ -1662,14 +1746,16 @@ export const CAST: Record<string, CharacterSpec> = {
       pm.set(m.headX + m.headW - 4, m.headTop + bob + 2, seam);
     },
   },
-  // Mia — Paula archetype: blonde, red bow, rose dress — and her pan (§A3)
+  // Mia — Paula archetype: blonde, red bow, RED pinafore dress w/ white collar
+  // (ref art, S-polish): the magenta read too candy-bright; deep red + the
+  // white accent collar is the storybook-pinafore the rotation sheets show.
   faye: {
     skin: RAMP.SKIN,
     hair: RAMP.BLOND,
     hairStyle: 'bob',
     hat: { kind: 'bow', ramp: RAMP.RED },
-    top: { ramp: RAMP.MAGENTA, style: 'dress', accent: RAMP.PAPER },
-    bottom: { ramp: RAMP.MAGENTA },
+    top: { ramp: RAMP.RED, style: 'dress', accent: RAMP.PAPER },
+    bottom: { ramp: RAMP.RED },
     shoes: RAMP.RED,
     held: 'pan',
     mouth: 'smile', // kind, steel-spined (§A3)
@@ -1743,22 +1829,12 @@ export const CAST: Record<string, CharacterSpec> = {
     hair: RAMP.EARTH,
     hairStyle: 'bob',
     top: { ramp: RAMP.PURPLE, style: 'blazer', accent: RAMP.GOLD },
-    bottom: { ramp: RAMP.INK },
-    shoes: RAMP.GOLD,
+    bottom: { ramp: RAMP.NIGHT }, // navy livery trousers (ref art)
+    shoes: RAMP.GOLD, // gold-trimmed boots
     longPants: true, // a minister does not do bare knees
     mouth: 'hint', // composed; speaks like a diplomat (§A3)
-    // the Minister's Ribbon — a gold sash crossing the chest (front only),
-    // the badge of "Foreign Minister of Being Taken Seriously" (4px, ADR-009)
-    detail: ({ pm, dir, bob, m }) => {
-      if (dir !== 'down') return;
-      const y0 = m.bodyTop + bob;
-      const ribbon = px(RAMP.GOLD, 3);
-      const ribbonD = px(RAMP.GOLD, 1);
-      pm.set(m.bodyX + m.bodyW - 3, y0 + 1, ribbon); // shoulder
-      pm.set(m.bodyX + m.bodyW - 4, y0 + 3, ribbon);
-      pm.set(m.bodyX + m.bodyW - 6, y0 + 5, ribbonD); // crossing down
-      pm.set(m.bodyX + 2, y0 + 7, ribbonD); // the little medal at the hip
-    },
+    // the royal-purple page's CAPE + gold minister's sash — see pippaCape()
+    detail: pippaCape,
   },
   // Chad Pickle — Pokey analog: chubby, blond side-part, mustard stripes
   chad: {

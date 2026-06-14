@@ -20,7 +20,9 @@
  */
 import {
   AbilityDefSchema,
+  AMBIENCE_IDS,
   DialogueScriptSchema,
+  EMOTE_IDS,
   EnemyDefSchema,
   HeroDefSchema,
   HeroIdSchema,
@@ -30,6 +32,8 @@ import {
   QuestDefSchema,
   ShopDefSchema,
 } from '../src/schemas';
+import { EMOTES } from '../src/engine/emote';
+import { AMBIENCE, AMBIENCE_BEDS, NOISE_COLORS } from '../src/engine/ambience';
 import { HEROES } from '../src/data/heroes';
 import { ABILITIES, PRAY_BASE, PRAY_TEXT } from '../src/data/abilities';
 import { FX_REGISTRY, STAGE_ANIM, itemFxKey } from '../src/battle/fxRegistry';
@@ -2761,6 +2765,91 @@ const UI_AFFORDANCE_GLYPHS = ['▲', '▼', '◄', '►', '←', '→'];
   }
 }
 
+/* ===== Wave 2 (ADR-108): map ambient audio · reflections · NPC ambient life ===== */
+// The map schema gained an ambient-bed id + an explicit muffle override (#16) and
+// reflective-surface rects (#6); NPCs gained an idle-breath opt-in and an ambient
+// emote (#4). The Zod schema already enforces the value SHAPES (muffle ∈ {0,1,2},
+// emote/ambience ∈ their unions, reflect rects positive ints). This gate pins the
+// cross-references a one-entity-at-a-time schema can't see, BOTH directions:
+//   · the schema's EMOTE_IDS / AMBIENCE_IDS literal unions match their runtime
+//     sources of truth (engine/emote EMOTES, engine/ambience AMBIENCE) — add one to
+//     either side and forget the other, and the build fails here (the ui-glyph idiom);
+//   · the AMBIENCE registry is well-formed (label, noise colour, sane gain/cutoff);
+//   · every reflect rect sits inside its map grid AND actually overlaps a reflective
+//     (water) tile, so a stale rect after a grid edit can't ship a dry "mirror";
+//   · a `dog` NPC (its own anim set, no ${sprite}-idle-down) never opts into idle.
+let waveTwoAudioMaps = 0;
+let waveTwoReflect = 0;
+let waveTwoAmbientNpcs = 0;
+{
+  // (a) emote-id union ⇔ EMOTES, both directions
+  const schemaEmotes = new Set<string>(EMOTE_IDS);
+  const engineEmotes = new Set<string>(Object.keys(EMOTES));
+  for (const id of schemaEmotes) {
+    if (!engineEmotes.has(id)) fail('emote', `schema EMOTE_IDS has '${id}' but engine/emote EMOTES has no such emote`);
+  }
+  for (const id of engineEmotes) {
+    if (!schemaEmotes.has(id)) fail('emote', `engine/emote EMOTES has '${id}' but schema EMOTE_IDS does not — add it to EMOTE_IDS in src/schemas/index.ts`);
+  }
+
+  // (b) ambience-id union ⇔ AMBIENCE registry (both directions) + registry well-formed
+  const schemaAmb = new Set<string>(AMBIENCE_IDS);
+  const regAmb = new Set<string>(Object.keys(AMBIENCE));
+  for (const id of schemaAmb) {
+    if (!regAmb.has(id)) fail('ambience', `schema AMBIENCE_IDS has '${id}' but engine/ambience AMBIENCE has no bed for it`);
+  }
+  for (const id of regAmb) {
+    if (!schemaAmb.has(id)) fail('ambience', `engine/ambience AMBIENCE has '${id}' but schema AMBIENCE_IDS does not — add it to AMBIENCE_IDS in src/schemas/index.ts`);
+  }
+  for (const bed of Object.values(AMBIENCE)) {
+    if (!bed.label.trim()) fail('ambience', `ambience '${bed.id}' has an empty label`);
+    if (!(bed.gain > 0 && bed.gain <= 1)) fail('ambience', `ambience '${bed.id}' gain ${bed.gain} must be in (0,1] — a bed sits UNDER the music`);
+    if (!(bed.cutoff > 0)) fail('ambience', `ambience '${bed.id}' cutoff ${bed.cutoff} must be > 0 Hz`);
+    if (!NOISE_COLORS.includes(bed.base)) fail('ambience', `ambience '${bed.id}' base '${bed.base}' is not a noise colour (${NOISE_COLORS.join('/')})`);
+    if (bed.sway && !(bed.sway.depth > 0 && bed.sway.rate > 0)) fail('ambience', `ambience '${bed.id}' sway depth/rate must be > 0`);
+  }
+
+  // (c) reflect rects: in-bounds of the grid + overlap a reflective (water) tile.
+  //     The reflective tiles are the §A6 sea tiles; resolve each cell's grid char
+  //     through CHAR_LEGEND (the "grid char → legend → tile" idiom) and require ≥1.
+  const REFLECTIVE_TILES = new Set(['sea_a', 'sea_foam']);
+  for (const m of Object.values(MAPS)) {
+    const gw = m.grid[0]?.length ?? 0;
+    const gh = m.grid.length;
+    for (const z of m.reflect ?? []) {
+      waveTwoReflect++;
+      if (z.x + z.w > gw || z.y + z.h > gh) {
+        fail('reflect', `${m.id} reflect rect (${z.x},${z.y} ${z.w}×${z.h}) spills past the ${gw}×${gh}-tile grid`);
+        continue;
+      }
+      let touchesWater = false;
+      for (let ty = z.y; ty < z.y + z.h && !touchesWater; ty++) {
+        for (let tx = z.x; tx < z.x + z.w; tx++) {
+          const ch = m.grid[ty]?.[tx];
+          if (ch && REFLECTIVE_TILES.has(CHAR_LEGEND[ch] ?? '')) {
+            touchesWater = true;
+            break;
+          }
+        }
+      }
+      if (!touchesWater) {
+        fail('reflect', `${m.id} reflect rect (${z.x},${z.y} ${z.w}×${z.h}) covers no reflective tile (${[...REFLECTIVE_TILES].join('/')}) — stale coordinates?`);
+      }
+    }
+  }
+
+  // (d) per-map ambient counts + NPC ambient coherence (a dog can't idle-breathe)
+  for (const m of Object.values(MAPS)) {
+    if (m.ambience !== undefined || m.muffle !== undefined) waveTwoAudioMaps++;
+    for (const n of m.npcs) {
+      if (n.idle || n.emote !== undefined) waveTwoAmbientNpcs++;
+      if (n.dog && n.idle) {
+        fail('npc-ambient', `${m.id} npc '${n.id}' is a dog (own anim set, no idle-breath frames) — drop idle:true`);
+      }
+    }
+  }
+}
+
 /* ================= 5. New Game values fit the letter grid ================= */
 
 {
@@ -2815,6 +2904,7 @@ const counts = [
   `${GLYPH_TOKENS.length} flair glyphs`,
   `${UI_AFFORDANCE_GLYPHS.length} UI affordance glyphs (${UI_AFFORDANCE_GLYPHS.join('')})`,
   `multi-enemy packs ≤${MAX_BATTLE_ENEMIES} (clean intros)`,
+  `${AMBIENCE_BEDS.length} ambience beds · ${waveTwoAudioMaps} maps w/ ambient audio · ${waveTwoReflect} reflective surfaces · ${waveTwoAmbientNpcs} ambient NPCs`,
   `${VEHICLE_CATALOG.length} vehicles (${Object.keys(VEHICLE_SPECS).length} types)`,
   `${Object.keys(PSI_GATES).length} psi gates`,
   `${Object.keys(PROPERTIES).length} properties`,

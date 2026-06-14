@@ -258,3 +258,43 @@ describe('S2 canon — the PRODUCTIVITY LOCK, Mia, and the chapter button (§A6,
     expect(MAPS.brickton.phones).toContainEqual({ x: 14, y: 26 });
   });
 });
+
+describe('Wave 2 (ADR-108) — map ambient audio · reflections · NPC ambient life', () => {
+  it('ambient beds are wired onto the maps that asked for them (#16)', () => {
+    expect(MAPS.foggybottom.ambience).toBe('rain');
+    expect(MAPS.puerto_sol.ambience).toBe('waves');
+    expect(MAPS.otterbrook.ambience).toBe('birds');
+    // the Hushed mainframe's room overrides the indoor veil to DEEP + hums
+    expect(MAPS.wintermoor_boiler.ambience).toBe('machine');
+    expect(MAPS.wintermoor_boiler.muffle).toBe(2);
+  });
+
+  it('muffle is an OVERRIDE only — most maps leave it to derive from `interior`', () => {
+    const withMuffle = maps.filter((m) => m.muffle !== undefined);
+    expect(withMuffle.every((m) => m.muffle === 0 || m.muffle === 1 || m.muffle === 2)).toBe(true);
+    expect(withMuffle.length).toBeLessThan(maps.length); // never blanket-authored
+  });
+
+  it('reflective surfaces sit on maps with water, in-bounds of the grid (#6)', () => {
+    expect((MAPS.foggybottom.reflect ?? []).length).toBeGreaterThan(0);
+    expect((MAPS.otterbrook.reflect ?? []).length).toBeGreaterThan(0);
+    for (const m of maps) {
+      const gw = m.grid[0]?.length ?? 0;
+      const gh = m.grid.length;
+      for (const z of m.reflect ?? []) {
+        expect(z.x + z.w).toBeLessThanOrEqual(gw);
+        expect(z.y + z.h).toBeLessThanOrEqual(gh);
+      }
+    }
+  });
+
+  it('ambient NPCs carry their moods; no dog opts into the idle-breath (#4)', () => {
+    const angler = MAPS.otterbrook.npcs.find((n) => n.id === 'pond_angler');
+    expect(angler?.emote).toBe('think');
+    expect(angler?.idle).toBe(true);
+    // the coherence rule the validator also enforces, pinned here too
+    for (const m of maps) {
+      for (const n of m.npcs) expect(n.dog && n.idle).toBeFalsy();
+    }
+  });
+});
