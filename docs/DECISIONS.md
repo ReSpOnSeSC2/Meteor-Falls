@@ -4830,3 +4830,37 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** the army chase has a soft-lock-proof, deterministic spine the OverworldScene
   drives — drive/reroute/decoy/disguise to shed heat, route around the helmeted tank, weather the
   flyover. The per-chapter checkpoint/tank/flyover SCENES render over it.
+
+## ADR-083 — S19 (Movement 42): BALANCE & THE GREAT VERIFICATION (the dealership/military fold)
+
+- **Date:** 2026-06-14
+- **Status:** Accepted (S19 Movement 42, the last — the curve fold + the consolidated proof that S19
+  lands green across every gate.)
+- **Decision — the new cars fold into the §A9 Fortune Arc (tune DATA, never the curve).** The
+  dealership prices ($90 kid's BMX → $180,000 stretch limo, incl. THE NIKOLAI at $88K) and the
+  military pool ride ON the existing curve as tunable data; `tools/balance-sim.ts` (`npm run balance`)
+  now prints the DEALERSHIP ladder (sticker → depreciated trade-in, with Bert's %) + the MILITARY
+  motor pool alongside the property/fleet/furniture ladders. `balance.test.ts` gains two pins: the
+  car ladder climbs into the back half (a limo dwarfs a starter sedan by >10×) and every car
+  depreciates against its sticker. The FORTUNE_ARC curve shape is unchanged (still gated by `fortune`).
+- **THE GREAT VERIFICATION (S19, Movements 35–42):** all both-directions gates GREEN — `vehicles`,
+  `dealership`, `military`, `army-arc`, `disguise` (army faction added), alongside every inherited
+  gate (area-skins, psi-gate, property, furniture, story-thread, paperboy, fleet, fortune, icon/
+  awakening/quest/catalog). The verdict prints: **94 vehicles (35 types) · 14 dealership cars · 5
+  military vehicles · 5 army-arc beats · 4 disguises** (plus the inherited counts). `tsc --noEmit`
+  clean, full **vitest 908 green** (+62 over the S18 M34 baseline of 846), `vite build` clean,
+  `npm run validate` green, `npm run balance` reads sane, the `art:vehicles` contact sheet renders
+  the new tiers reading distinctly against the hero. No FNV re-pin and no frozen-core / `world_block`
+  change across the whole session (every S19 system is data/engine/sprite, never a sample-routed map
+  generator). Save schema walked **v12 → v13** (the home garage + active ride), migrated + round-trip
+  tested. Eight ADRs (076→083) each landed with its Bible amendment in the same commit; §A4.15/§A6/
+  §A7/§A8/§A9 all amended to canon.
+- **§A11 read-through:** the dealer's patter is warm + obsessed (the new-car smell); General Buckle
+  is funny-but-sincere, WRONG-not-evil, and the Hush stays the only true villain; the clearing is
+  earned + non-missable and strengthens a finale CALLER; no chapter UI anywhere; every new vehicle
+  could not move to another region unchanged (the army's olive-drab kit, the Nikolai's self-creep gag).
+- **Consequences:** S19's SPINE is complete and green — a fleshed-out road roster, the Nikolai, the
+  buy/sell dealership + the home garage (save v13), the helmeted military motor pool, the army-pursuit
+  arc, and the soft-lock-proof chase. The remaining work is per-chapter CONTENT/SCENE pouring on these
+  spines (the lot interior + garage-out-front render, the checkpoint/tank/flyover maps, the General's
+  full chapter staging), each landing with its chapter session. The systems are settled.

@@ -10,6 +10,8 @@ import { FORTUNE_ARC, fortuneTarget, fortuneBand } from '../data/fortune';
 import { netWorth } from './property';
 import { PROPERTIES } from '../data/properties';
 import { FLEET_CRAFT } from '../data/fleet';
+import { DEALERSHIP } from '../data/dealership';
+import { sellValue } from './garage';
 
 describe('the Fortune Arc — a well-formed §A9 curve', () => {
   it('covers Ch.1–10 in order', () => {
@@ -61,5 +63,18 @@ describe('the price ladders escalate into the back half', () => {
     expect(late).toBeGreaterThan(ch1); // back-half property dwarfs the starter
     const dearestCraft = Math.max(...Object.values(FLEET_CRAFT).map((c) => c.price));
     expect(dearestCraft).toBeGreaterThan(ch1 * 100); // the fleet is the wealth toy
+  });
+
+  it('the dealership car ladder climbs into the back half too (S19)', () => {
+    const byBand = Object.values(DEALERSHIP).map((c) => ({ b: Number(/ch(\d+)/.exec(c.band)![1]), v: c.price }));
+    const early = Math.max(...byBand.filter((x) => x.b <= 2).map((x) => x.v));
+    const late = Math.max(...byBand.filter((x) => x.b >= 6).map((x) => x.v));
+    expect(late).toBeGreaterThan(early * 10); // a stretch limo dwarfs a starter sedan
+  });
+
+  it('every car depreciates against its sticker (Bert always wins)', () => {
+    for (const c of Object.values(DEALERSHIP)) {
+      expect(sellValue(c)).toBeLessThan(c.price);
+    }
   });
 });

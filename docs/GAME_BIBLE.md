@@ -558,6 +558,13 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > code) toward the targets as each region's catalog pours in; the curve's shape is
 > validator-pinned (`fortune`) + `balance.test.ts`.)*
 
+> *(Amended 2026-06-14 per Appendix rule 6, ADR-083 — **§A9 the car habit folds into the Fortune
+> Arc.** The §A4.15 dealership prices (a $90 kid's BMX → a $180,000 stretch limo, THE NIKOLAI at
+> $88K) + the depreciation curve ride ON the existing net-worth arc as tunable DATA, never new curve
+> shape; `npm run balance` prints the car ladder (sticker → trade-in, Bert's %) + the military motor
+> pool beside the property/fleet/furniture ladders. The military hardware is the §A6 chase, never for
+> sale. Net worth is still a number; the callers — now including General Buckle — are the score.)*
+
 > *(Amended 2026-06-11 per Appendix rule 6, ADR-034: THE BRICKTON CLASSIC —
 > S12's 32-team 5v5 streetball tournament at the cage — is **optional
 > long-form content within the +8–12hr side/optional budget**: five four-quarter
