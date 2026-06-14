@@ -246,6 +246,39 @@ staged as an AWAKENING/BUILD per ADR-035:
     directly:** everyone Jay helped answers the call of their OWN free will — the very thing the
     party feared they'd lost. Keep every beat light-footed and specific; sincerity is never the
     joke; the Hush is never funny.
+- **THE CLICKER QUESTION (Milo's mirror — was it the machine, or the boy?).** Milo's power has no
+  minds in it — but it has BLAME. He can flick any machine from across a street, so the moment a
+  machine FAILS near him, fingers point: a malfunction, or the kid with the remote? Where Jay's
+  thread is existential (free will), Milo's is social and practical (accidents, fault,
+  responsibility) — and scarier for being uncertain: at first **Milo himself isn't sure** an idle
+  Clicker didn't bleed a stray signal. He is the boy who "talks to machines more than people," so
+  being doubted *by people* is the wound that lands. The arc is a self-contained seed → crisis →
+  clearing, offset from Jay's so the two never muddy each other:
+  - **THE SEED (Ch.5, Minimus — comedic).** A tiny parade float he was Clickering lurches and
+    flattens something knee-high; the Whistle Guards file a very serious report about a very small
+    disaster. Played for laughs — but it plants the line *"machines act up around that boy."*
+  - **THE CRISIS (Ch.7, Chandrapore).** In the dense-machine chaos of the city a real mechanical
+    failure causes the PARTY a real problem — a crane drops its load / a bridge winch slips / their
+    hired transport quits mid-route — someone gets hurt (a hero goes down off-battle, EarthBound-
+    nonfatal) or the party is stranded AND publicly BLAMED. The doubt goes outward (the town, a
+    teammate) AND inward: reviewing ambiguous Clicker logs, **Milo quietly wonders too** — he goes
+    silent, over-engineers a defense, would almost rather be guilty than uncertain. The Hush is
+    behind it: it **SPOOFED his signal with a Faraday-shielded device to FRAME him** — the same
+    wedge logic it works on Jay's thread (the Hush divides the party by turning each hero's gift
+    into a reason to fear them).
+  - **THE CLEARING (Ch.8, Lotus Harbor — Milo is found trustworthy).** A genuine machine disaster
+    looms (a runaway barge / a failing lock-gate with people aboard) and Milo — still under
+    suspicion — is the ONLY one who can Clicker it to safety. To do it he must be TRUSTED to take
+    the remote in a crisis, in public, right after being blamed. He does it **openly** — narrating
+    every input, logs visible, choosing transparency where the Hush chooses secrecy — saves
+    everyone, and in the doing EXPOSES the spoof that framed him. Cleared by deed AND by truth. His
+    growth: the boy who trusted machines over people lets people rely on HIM, out loud. The party
+    and the town trust him the rest of the game.
+  - **Tone:** warmer and a touch funnier than Jay's thread (Milo earns the jokes), but the crisis
+    is sincere and the stakes are real — never preachy. The two threads RHYME (both are the Hush
+    weaponizing a hero's gift to split the party) yet peak on different beats — Jay's free-will
+    CLIMAX (Ch.7→8) and Milo's blame-and-clear (Ch.5→7→8) — so together they read as one antagonist
+    pressure the party survives by choosing each other.
 - **UX law:** controllable targets are clearly highlighted; seat-fit + range read at a glance;
   driving feels smooth on D-pad + controller; blocked (helmeted/shielded) targets show a clear "no
   signal" tell. Smooth, easy, fun — or it isn't done.
@@ -336,18 +369,25 @@ Weave the new beats into the EXISTING chapters:
   **THE TRUST THREAD OPENS here** (§A4.10): the other heroes SEE Jay puppet someone for the first
   time, the borrowed NPC comes back rattled, and the party pulls back a step — the slow burn starts.
 - **Ch.5 (Minimus):** comedic scale — Puppet a Whistle Guard; Clicker a tiny parade float; the
-  duchy's agency lists a knee-high cottage.
+  duchy's agency lists a knee-high cottage. **THE CLICKER QUESTION SEED** (§A4.10): the float
+  lurches and flattens something knee-high — a tiny, very-serious disaster that plants "machines act
+  up around that boy."
 - **Ch.6 (Africa):** the **INVESTMENT DESK** opens at the S&L (the Fortune-Arc wealth engine);
   property flipping becomes worthwhile.
 - **Ch.7 (India):** Chandrapore traffic + a **HIGHWAY** chase to the city; the **MANDATORY DRIVE**
   (control a taxi/bus to ferry the party — in the backseat — where the train can't reach); a palace
   **disguise**; **Cobra Raja wears a DEAD-AIR HELMET** (knock it off to win); the bluff above
   Brickton lists **HILLCREST MANOR** (the user's mansion). **THE TRUST THREAD peaks toward its
-  climax here** (§A4.10) — the control/helmet theme and the party's doubt come to a head.
+  climax here** (§A4.10) — the control/helmet theme and the party's doubt come to a head. **THE
+  CLICKER QUESTION CRISIS:** a real mechanical failure injures/strands the party and Milo is
+  publicly blamed (a Hush-spoofed signal frames him; even he isn't sure) — he goes silent under it.
 - **Ch.8 (China):** boats (Clicker the riverboat); machine puzzles with the paper guardians. **THE
   TRUST-THREAD CLIMAX (the three-quarter mark, §A4.10):** the Hush weaponizes the party's doubt to
   split them ("how do you know the boy isn't holding your strings?"); the heroes choose trust and
   Jay proves he's the Hush's opposite — RESOLVED, and the party is bonded for the rest of the game.
+  **THE CLICKER QUESTION CLEARING:** a barge/lock-gate disaster looms and Milo — still suspected —
+  Clickers it to safety in public, narrating every input (transparency vs. the Hush's secrecy),
+  saving everyone AND exposing the spoof that framed him; he's found trustworthy by deed and truth.
 - **Ch.9 (Romania):** Hoaxula's bankrupt theme-park property can be bought + flipped post-mercy (a
   warm, not gag-heavy, beat).
 - **Ch.10 (Alaska→Hawaii→Mars):** the **PLANE-INTERIOR** travel scene (the flight to the launch);
@@ -455,6 +495,9 @@ do them adjacent.
   Jay use it for the first time — their wary reaction + the first rattled borrowed-NPC line (§A4.10,
   §A11.2 sincere). Set the flag the slow-burn beats read; the game-long escalation and the ~3/4
   climax land in M31's weave. Keep it one or two real beats, never a lecture.
+- **THE CLICKER QUESTION (plant the origin):** when Milo BUILDS the Clicker, plant the first hint
+  that people are wary of a kid who can flick any machine (a nervous bystander, a "keep that thing
+  pointed at the floor" line). Set the flag its seed/crisis/clearing beats (Ch.5/7/8) read in M31.
 - **Re-prove:** control targeting, seat-fit gating, remote-drive area-unlocks, and helmet/shield
   blocks all in a vitest harness over the engine API; BFS the maps that gain drivable vehicles.
 - **DONE-WHEN:** you can Puppet a driver, pile the party into a car, drive a city smoothly, and
@@ -560,6 +603,13 @@ Wire the new mechanics into §A6 as REQUIRED, non-missable beats (retry law hold
   refuses to take a will even when it's easy). After it resolves the party is bonded for Ch.9–10;
   the thread feeds the finale's free-will PRAY. Use a flag chain so the beats fire in order and the
   climax is non-missable. Sincere, light-footed, §A11.2 — never a speech.
+- **THE CLICKER QUESTION — the seed, the crisis & the clearing (§A4.10):** Milo's mirror arc. Land
+  the comedic SEED (Ch.5, the parade-float mishap), the CRISIS (Ch.7 — a mechanical failure injures/
+  strands the party, Milo publicly blamed, the Hush's spoofed-signal frame, his own self-doubt), and
+  the CLEARING (Ch.8, Lotus Harbor — the public barge/lock-gate save where Milo takes the remote in
+  the open, narrates every input, saves everyone, and exposes the spoof). Flag-chain it; the clearing
+  is non-missable; it strengthens a finale CALLER (someone Milo saved who once doubted him). Warmer
+  and a touch funnier than Jay's thread, but the crisis is sincere — never preachy.
 - **Re-prove:** every beat non-missable (post-Teleport reopen where relevant), retry-safe, BFS-clean;
   each adds/strengthens a finale CALLER. **DONE-WHEN:** the disguise gets you to Mia; the drive is the
   only road on; the plane lands. Append the ADR; amend §A6 to canon as built.
@@ -652,7 +702,11 @@ The traversal capstone — needs the control system + the bigger vehicle sprites
   time they see Jay use PUPPET (Ch.3), SLOW-BURNS across the game (the *"are we even free?"* doubt
   compounding in small beats), CLIMAXES at the three-quarter mark (the Hush's wedge; the party
   chooses trust), and stays resolved for Ch.9–10; the Hush/Jay contrast (steals forever vs.
-  asks-and-returns) and the finale free-will PRAY payoff are shown, never explained.
+  asks-and-returns) and the finale free-will PRAY payoff are shown, never explained. **The CLICKER
+  QUESTION** (Milo's mirror) reads as its own arc — the comedic SEED (Ch.5), the sincere CRISIS
+  (Ch.7, the framed mechanical failure + his self-doubt), and the public CLEARING (Ch.8, transparency
+  vs. the Hush's secrecy) — warmer and funnier than Jay's, but the stakes are real; the two threads
+  rhyme as one Hush wedge without muddying each other.
 - **`.shots/`** of: the refreshed per-area buildings; a bustling city with traffic + a gas station +
   driveways; the control-targeting UI; an overworld PSI-Fire/Freeze cast; the disguise sneak; the
   highway; the plane interior; the paperboy route; the real-estate agency + lawyer's office; the
