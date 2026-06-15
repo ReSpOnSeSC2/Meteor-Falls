@@ -124,12 +124,15 @@ Runtime texture keys:
 - `battler_<hero>_<weapon>_<body>_w1`
 - `battler_<hero>_<weapon>_<body>_w2`
 
-Frame size: `28x36`.
+Frame size: `56x72` native (was `28x36`; doubled for crisp HD battlers — the
+runtime cell is `224x288` at `ART_SCALE=4`). `battle/stage.ts` halves
+`STAGE_ACTOR_SCALE` to `0.625` so on-screen size is unchanged. The runtime sheet
+files keep the legacy `_14_28x36.png` name.
 
 Frame count: `14`.
 
-These are separate from the card busts. They are the small rear/three-quarter
-figures that step onto the stage to swing, cast, pray, throw, or aim.
+These are separate from the card busts. They are the rear/three-quarter figures
+that step onto the stage to swing, cast, pray, throw, or aim.
 
 ### Enemies and Bosses
 

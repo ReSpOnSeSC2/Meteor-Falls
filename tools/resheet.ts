@@ -40,7 +40,7 @@ interface Preset {
 const PRESETS: Record<string, Preset> = {
   character: { cols: 4, cell: [24, 32], frames: 46, align: 'bottom' },
   bust: { cols: 4, cell: [32, 32], frames: 18, align: 'center' },
-  battler: { cols: 4, cell: [28, 36], frames: 14, align: 'bottom' },
+  battler: { cols: 4, cell: [56, 72], frames: 14, align: 'bottom' },
   athlete: { cols: 5, cell: [32, 40], frames: 39, align: 'bottom' },
   golfer: { cols: 4, cell: [32, 40], frames: 11, align: 'bottom' },
 };
@@ -188,10 +188,16 @@ function main(): void {
   };
 
   const colHas = new Array<number>(src.w).fill(0);
+  const colTop = new Array<number>(src.w).fill(-1);
+  const colBot = new Array<number>(src.w).fill(-1);
   const rowHas = new Array<number>(src.h).fill(0);
   for (let y = 0; y < src.h; y++) {
     for (let x = 0; x < src.w; x++) {
-      if (isContent(x, y)) { colHas[x]++; rowHas[y]++; }
+      if (isContent(x, y)) {
+        colHas[x]++; rowHas[y]++;
+        if (colTop[x] < 0) colTop[x] = y;
+        colBot[x] = y;
+      }
     }
   }
   const gMinX = colHas.findIndex((n) => n > 0);
@@ -207,11 +213,27 @@ function main(): void {
   // detection mis-cuts. Instead walk the EXPECTED even boundaries and snap each
   // to the EMPTIEST column nearby: robust to both FX noise and uneven spacing.
   // (--equal forces a plain even split with no snapping.)
+  // FX sparkles / thrown orbs sit in the gaps BETWEEN figures and fool the
+  // emptiest-column snap. Treat a column as occupied for CUT-finding only if its
+  // content spans a real figure's height; short isolated blobs (FX) read as
+  // empty, so a gap that holds only a sparkle still cuts cleanly. The per-frame
+  // bbox below still uses colHas, so a frame's own FX stays inside its cell.
+  const minFigH = Math.round(gH * 0.4);
+  const colOcc = colHas.map((n, x) => (colBot[x] - colTop[x] + 1 >= minFigH ? n : 0));
   const span = gMaxX + 1 - gMinX;
   const pitch = span / frames;
   let method: string;
   let bounds: number[];
-  if (args.equal) {
+  if (typeof args.bounds === 'string') {
+    // explicit cut positions (source px), comma-separated, length = frames+1 —
+    // the escape hatch for strips that defeat auto-segmentation (uneven pitch,
+    // figures that touch, FX that bridges a gap).
+    bounds = args.bounds.split(',').map((s) => Math.round(Number(s.trim())));
+    if (bounds.length !== frames + 1 || bounds.some((n) => Number.isNaN(n))) {
+      throw new Error(`--bounds needs ${frames + 1} comma-separated numbers (got ${bounds.length})`);
+    }
+    method = 'explicit bounds';
+  } else if (args.equal) {
     bounds = [];
     for (let k = 0; k <= frames; k++) bounds.push(Math.round(gMinX + (span * k) / frames));
     method = 'equal (forced)';
@@ -224,7 +246,7 @@ function main(): void {
       let bestScore = Infinity;
       for (let x = Math.round(center - win); x <= Math.round(center + win); x++) {
         if (x <= gMinX || x >= gMaxX) continue;
-        const score = colHas[x] * 10000 + Math.abs(x - center); // emptiest wins; tie → nearest expected
+        const score = colOcc[x] * 10000 + Math.abs(x - center); // emptiest wins; tie → nearest expected
         if (score < bestScore) { bestScore = score; best = x; }
       }
       cuts.push(best);

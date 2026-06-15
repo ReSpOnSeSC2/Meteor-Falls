@@ -22,10 +22,12 @@ import { s } from '../spritegen/scale';
 const D_STAGE = DEPTH_UI - 8;
 /** where the battler's feet land (origin 0.5,1) — under the enemy row */
 export const STAGE_Y = s(158);
-// setScale multiplier — STAYS (the battler texture is already ×ART_SCALE; SCALE_CONVENTION)
-const STAGE_ACTOR_SCALE = 1.25;
-// on-screen half-width: native 14px half-frame, upscaled ×ART_SCALE, then ×actor scale
-const STAGE_ACTOR_HALF_W = Math.ceil(s(14) * STAGE_ACTOR_SCALE);
+// setScale multiplier. The battler texture is ×ART_SCALE at the 56×72 native
+// (the 2× hi-res bump in authored.ts), so this was halved 1.25→0.625 to keep
+// the on-screen size identical while the source resolution doubles.
+const STAGE_ACTOR_SCALE = 0.625;
+// on-screen half-width: native 28px half-frame, upscaled ×ART_SCALE, then ×actor scale
+const STAGE_ACTOR_HALF_W = Math.ceil(s(28) * STAGE_ACTOR_SCALE);
 
 type HoldPose = 'idle' | 'cast' | 'aim' | 'pray';
 
@@ -56,7 +58,7 @@ export class StageView {
 
   /** actor center — fx that answer the caster (motes, glows) aim here */
   point(): { x: number; y: number } {
-    return { x: this.spr.x, y: this.spr.y - s(18) * STAGE_ACTOR_SCALE };
+    return { x: this.spr.x, y: this.spr.y - s(36) * STAGE_ACTOR_SCALE };
   }
 
   /**

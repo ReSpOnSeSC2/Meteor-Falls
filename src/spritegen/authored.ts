@@ -12,8 +12,12 @@ const FRAME_W = 24 * ART_SCALE;
 const FRAME_H = 32 * ART_SCALE;
 const BUST_W = 32 * ART_SCALE;
 const BUST_H = 32 * ART_SCALE;
-const BATTLER_W = 28 * ART_SCALE;
-const BATTLER_H = 36 * ART_SCALE;
+// Battler cells are authored at 2× the legacy native (was 28×36) so the
+// rear-3/4 stage figures render crisp on the 1600×900 framebuffer instead of
+// being downsampled into a tiny cell. STAGE_ACTOR_SCALE in battle/stage.ts is
+// halved to match, so on-screen size is unchanged — only the resolution rises.
+const BATTLER_W = 56 * ART_SCALE;
+const BATTLER_H = 72 * ART_SCALE;
 const SPORT_FRAME_W = 32 * ART_SCALE;
 const SPORT_FRAME_H = 40 * ART_SCALE;
 /** runtime tile size (native TILE × ART_SCALE) for authored-tile slicing */
