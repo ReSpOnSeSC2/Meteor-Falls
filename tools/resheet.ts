@@ -255,15 +255,35 @@ function main(): void {
     method = 'snap-to-gap';
   }
 
-  // per-frame horizontal content bbox + the global scale (one consistent size)
+  // per-frame horizontal content bbox + the global scale (one consistent size).
+  // A frame may catch a thin sliver of a neighbour when wide FX (a swung pan, a
+  // cast arc) crosses the cut. So within each band we build occupied runs,
+  // bridge a figure's own internal gaps (legs, arm→prop), then keep only the
+  // runs whose content is a real share of the dominant mass — dropping thin
+  // edge slivers that belong to the next figure.
   const fx: Array<[number, number]> = [];
+  const bridge = Math.max(2, Math.round(pitch * 0.12)); // figure-internal gap tolerance
   for (let i = 0; i < frames; i++) {
     const a = bounds[i];
     const b = bounds[i + 1] - 1;
-    let mn = -1;
-    let mx = -1;
-    for (let x = a; x <= b; x++) if (colHas[x] > 0) { if (mn < 0) mn = x; mx = x; }
-    fx.push(mn < 0 ? [a, b] : [mn, mx]);
+    const runs: Array<{ s: number; e: number; sum: number }> = [];
+    let s = -1;
+    for (let x = a; x <= b; x++) {
+      if (colHas[x] > 0) { if (s < 0) s = x; }
+      else if (s >= 0) { runs.push({ s, e: x - 1, sum: 0 }); s = -1; }
+    }
+    if (s >= 0) runs.push({ s, e: b, sum: 0 });
+    if (runs.length === 0) { fx.push([a, b]); continue; }
+    const merged: Array<{ s: number; e: number; sum: number }> = [runs[0]];
+    for (let r = 1; r < runs.length; r++) {
+      const last = merged[merged.length - 1];
+      if (runs[r].s - last.e - 1 <= bridge) last.e = runs[r].e;
+      else merged.push(runs[r]);
+    }
+    for (const m of merged) { let t = 0; for (let x = m.s; x <= m.e; x++) t += colHas[x]; m.sum = t; }
+    const dominant = Math.max(...merged.map((m) => m.sum));
+    const keep = merged.filter((m) => m.sum >= dominant * 0.2);
+    fx.push([Math.min(...keep.map((m) => m.s)), Math.max(...keep.map((m) => m.e))]);
   }
   const maxFW = Math.max(...fx.map(([a, b]) => b - a + 1));
   // Default: fill cell HEIGHT (one consistent character size; wide poses may
