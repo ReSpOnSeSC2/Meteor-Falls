@@ -11,7 +11,7 @@
  * the universal sad putter slump ×2 · putt address · putt strike — 11.
  */
 import { Pixmap } from './pixmap';
-import { RAMP, T, px, C } from '../palette';
+import { RAMP, T, px, pxr, SH, C } from '../palette';
 import { TILE, HOLES, expandGrid, type HoleDef, type Terrain } from '../links/course';
 import { drawProfileHead, ATHLETE_W, ATHLETE_H } from './athletes';
 import { isKid, type CharacterSpec } from './characters';
@@ -82,12 +82,23 @@ function drawGolferFrame(spec: CharacterSpec, pose: Swing): Pixmap {
 
   /* ---- torso (canon clothes — heroes golf as themselves) ---- */
   const topRamp = spec.top.ramp;
-  pm.rect(tx, torsoTop, tw, torsoH, px(topRamp, 2));
-  pm.vline(tx, torsoTop, torsoH, px(topRamp, 3));
-  pm.vline(tx + tw - 1, torsoTop + 1, torsoH - 1, px(topRamp, 1));
-  pm.hline(tx, torsoBot - 1, tw, px(topRamp, 1));
+  const gHi = pxr(topRamp, SH.HILITE);
+  const gLit = pxr(topRamp, SH.LIT);
+  const gBase = pxr(topRamp, SH.BASE);
+  const gMid = pxr(topRamp, SH.MID);
+  const gDark = pxr(topRamp, SH.DARK);
+  const gShade = pxr(topRamp, SH.SHADOW);
+  pm.rect(tx, torsoTop, tw, torsoH, gBase);
+  pm.vline(tx, torsoTop + 1, torsoH - 1, gHi);
+  pm.vline(tx + 1, torsoTop + 1, torsoH - 1, gLit);
+  pm.vline(tx + tw - 2, torsoTop + 1, torsoH - 1, gMid);
+  pm.vline(tx + tw - 1, torsoTop + 2, torsoH - 2, gDark);
+  pm.hline(tx, torsoBot - 1, tw, gDark);
+  pm.set(tx + tw - 1, torsoBot - 1, gShade);
   pm.set(tx, torsoTop, T);
+  pm.set(tx + 1, torsoTop, T);
   pm.set(tx + tw - 1, torsoTop, T);
+  pm.set(tx + tw - 2, torsoTop, T);
 
   /* ---- arms + THE CLUB (one line of steel; putter is shorter) ---- */
   const club = px(RAMP.PAPER, 1);

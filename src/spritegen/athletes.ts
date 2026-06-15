@@ -26,7 +26,7 @@
  * 31 fives) and the team jersey re-dresses the torso.
  */
 import { Pixmap } from './pixmap';
-import { RAMP, T, px, C } from '../palette';
+import { RAMP, T, px, pxr, SH, C } from '../palette';
 import { COURT } from '../hoops/court';
 import { hairTones, isKid, type CharacterSpec, type EyeStyle, type MouthStyle, type HairStyle } from './characters';
 
@@ -286,9 +286,12 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
 
   /* ---------------- torso ---------------- */
   const topRamp = jersey ? jersey.ramp : spec.top.ramp;
-  const gLit = px(topRamp, 3);
-  const gBase = px(topRamp, 2);
-  const gDark = px(topRamp, 1);
+  const gHi = pxr(topRamp, SH.HILITE);
+  const gLit = pxr(topRamp, SH.LIT);
+  const gBase = pxr(topRamp, SH.BASE);
+  const gMid = pxr(topRamp, SH.MID);
+  const gDark = pxr(topRamp, SH.DARK);
+  const gShade = pxr(topRamp, SH.SHADOW);
   if (dress) {
     pm.rect(tx, torsoTop, tw - 1, 4, gBase);
     for (let i = 0; i < 5; i++) {
@@ -296,22 +299,32 @@ function drawAthleteFrame(spec: CharacterSpec, jersey: JerseyOpts | null, o: Fra
       pm.hline(tx - grow + 1, torsoTop + 4 + i, tw - 1 + grow, gBase);
     }
     pm.hline(tx - 2, torsoBot, tw + 2, gDark); // hem in motion
-    pm.vline(tx, torsoTop + 2, 6, gLit);
+    pm.vline(tx, torsoTop + 2, 6, gHi);
+    pm.vline(tx + 1, torsoTop + 3, 5, gLit);
     pm.vline(tx + tw - 2, torsoTop + 3, 6, gDark); // pleat weight
+    pm.set(tx + tw - 1, torsoBot - 1, gShade);
   } else {
     pm.rect(tx, torsoTop, tw, torsoH, gBase);
-    pm.vline(tx, torsoTop, torsoH, gLit); // lit chest edge (light top-left)
-    pm.vline(tx + tw - 1, torsoTop + 1, torsoH - 1, gDark);
+    // Use the same six-stop rounded torso treatment as the updated cast
+    // sprites, then keep the sport-only arms/legs on top of it.
+    pm.vline(tx, torsoTop + 1, torsoH - 1, gHi);
+    pm.vline(tx + 1, torsoTop + 1, torsoH - 1, gLit);
+    pm.vline(tx + tw - 2, torsoTop + 1, torsoH - 1, gMid);
+    pm.vline(tx + tw - 1, torsoTop + 2, torsoH - 2, gDark);
     pm.hline(tx, torsoBot - 1, tw, gDark);
+    pm.set(tx + tw - 1, torsoBot - 1, gShade);
     pm.set(tx, torsoTop, T);
+    pm.set(tx + 1, torsoTop, T);
     pm.set(tx + tw - 1, torsoTop, T);
+    pm.set(tx + tw - 2, torsoTop, T);
     if (jersey) {
       // the tank: armhole scoops + trim bands — a jersey, not a tee
       pm.vline(tx + 1, torsoTop, 2, skin);
       pm.vline(tx + tw - 2, torsoTop, 2, skinD);
-      pm.hline(tx + 2, torsoTop, tw - 4, px(jersey.trim, 3)); // collar
-      pm.hline(tx, torsoBot - 1, tw, px(jersey.trim, 2)); // waist band
+      pm.hline(tx + 3, torsoTop, tw - 6, px(jersey.trim, 3)); // collar
+      pm.hline(tx + 1, torsoBot - 1, tw - 2, px(jersey.trim, 2)); // waist band
       pm.vline(tx + Math.floor(tw / 2), torsoTop + 2, 3, px(jersey.trim, 2)); // side stripe turned
+      pm.set(tx + 2, torsoTop + 1, gHi);
     } else {
       switch (spec.top.style) {
         case 'stripe': {
@@ -539,14 +552,20 @@ export function drawProfileHead(
   mouthOpen: boolean,
   backTurned: boolean,
 ): void {
-  const skin = px(spec.skin, 2);
-  const skinL = px(spec.skin, 3);
-  const skinD = px(spec.skin, 1);
+  const skin = pxr(spec.skin, SH.BASE);
+  const skinL = pxr(spec.skin, SH.HILITE);
+  const skinSoft = pxr(spec.skin, SH.LIT);
+  const skinMid = pxr(spec.skin, SH.MID);
+  const skinD = pxr(spec.skin, SH.DARK);
+  const skinShade = pxr(spec.skin, SH.SHADOW);
   const { hairB, hair, hairL } = hairTones(spec);
   const last = HEAD_ROWS - 1;
   SIDE_SKULL.forEach(([ins, wd], r) => pm.hline(hx + ins, hy + r, wd, skin));
+  pm.hline(hx + SIDE_SKULL[1][0] + 2, hy + 1, SIDE_SKULL[1][1] - 6, skinL);
+  pm.hline(hx + SIDE_SKULL[2][0] + 1, hy + 2, 4, skinSoft);
   // neck
   pm.rect(hx + 6, hy + last + 1, 3, neckBottomY - (hy + last + 1), skin);
+  pm.vline(hx + 8, hy + last + 1, Math.max(0, neckBottomY - (hy + last + 1)), skinD);
   const bald = spec.hairStyle === 'gray' || spec.hairStyle === 'none';
   const hatted = spec.hat?.kind === 'cap';
 
@@ -561,6 +580,7 @@ export function drawProfileHead(
       for (let r = 0; r <= last - 2; r++) {
         const [ins, wd] = SIDE_SKULL[r];
         pm.rect(hx + ins, hy + r, wd, 1, hair);
+        if (r <= 2) pm.set(hx + ins + 1, hy + r, hairL);
       }
       pm.hline(hx + SIDE_SKULL[0][0] + 1, hy, 3, hairL);
       pm.hline(hx + SIDE_SKULL[last - 2][0] + 1, hy + last - 2, 5, hairB); // nape
@@ -638,6 +658,7 @@ export function drawProfileHead(
   }
   // the profile face: ear, one eye, brow/nose edge, mouth, blush
   pm.rect(hx + 6, hy + 6, 2, 3, skin);
+  pm.set(hx + 6, hy + 6, skinSoft);
   pm.set(hx + 7, hy + 7, skinD); // ear
   const eyeY = hy + 5;
   const ex = hx + 10;
@@ -649,20 +670,24 @@ export function drawProfileHead(
     pm.rect(ex, eyeY + 1, 2, 2, C.outline);
     pm.hline(ex - 1, eyeY - 1, 3, bald ? skinD : hairB);
   } else if (eyes === 'wide') {
-    pm.rect(ex - 1, eyeY - 1, 3, 4, C.white);
-    pm.rect(ex, eyeY, 2, 2, C.outline);
+    pm.rect(ex - 1, eyeY - 1, 4, 5, C.white);
+    pm.rect(ex + 1, eyeY + 1, 2, 2, C.outline);
+    pm.set(ex + 1, eyeY + 1, px(RAMP.PAPER, 3));
+    pm.hline(ex - 1, eyeY - 2, 4, skinD);
   } else {
     pm.rect(ex, eyeY, 2, eyes === 'dot' ? 2 : 3, C.outline);
-    pm.set(ex + 1, eyeY, C.white); // catchlight hunts the rim
+    pm.set(ex, eyeY, C.white); // catchlight hunts the rim
+    pm.hline(ex, eyeY - 1, 2, C.inkSoft);
   }
   if (spec.glasses) {
     pm.frame(ex - 1, eyeY - 1, 4, 5, C.inkSoft);
     pm.hline(hx + 7, eyeY + 1, 2, C.inkSoft);
     pm.set(ex + 2, eyeY - 1, px(RAMP.CYAN, 3));
   }
-  pm.set(hx + HEAD_W - 1, hy + 5, skin); // brow ledge
+  pm.set(hx + HEAD_W - 1, hy + 5, skinSoft); // brow ledge
   pm.set(hx + HEAD_W - 1, hy + 7, skin); // nose bump
-  pm.set(hx + HEAD_W - 1, hy + 8, skinD); // nostril shadow
+  pm.set(hx + HEAD_W - 1, hy + 8, skinShade); // nostril shadow
+  pm.set(hx + HEAD_W - 2, hy + 9, skinMid); // upper lip turn
   if (spec.blush ?? isKid(spec)) pm.hline(hx + 10, hy + 8, 2, px(RAMP.RED, 3));
   const my = hy + 10;
   const mouth: MouthStyle = spec.mouth ?? 'hint';
@@ -670,9 +695,10 @@ export function drawProfileHead(
     pm.rect(hx + 10, my - 1, 2, 2, C.outline);
     pm.set(hx + 10, my, px(RAMP.RED, 1));
   } else if (mouth !== 'none') {
-    pm.hline(hx + 10, my, 2, px(spec.skin, 0));
+    pm.hline(hx + 10, my, 2, skinShade);
   }
   pm.hline(hx + SIDE_SKULL[last][0], hy + last, SIDE_SKULL[last][1] - 3, skinD); // jaw shadow
+  pm.set(hx + SIDE_SKULL[last][0] + 1, hy + last, skinShade);
 }
 
 /** the 25-frame SPORT SHEET for one spec (+ optional team jersey) */
