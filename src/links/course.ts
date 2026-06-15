@@ -1,5 +1,5 @@
 /**
- * COSTA ESTRELLA LINKS — the course (S13). Phaser-free geometry + the nine
+ * COSTA ESTRELLA LINKS — the course (S13). Phaser-free geometry + the eighteen
  * authored holes + the club bag, shared by the sim, the renderer, and the
  * hole-texture painter the way hoops/court.ts is (ADR-034's law: the painted
  * ground IS the physics).
@@ -89,15 +89,15 @@ export const LIES: Record<Terrain, { carry: number; roll: number; acc: number }>
   C: { carry: 0.9, roll: 1.4, acc: 0.6 },
 };
 
-/* ================= THE NINE (validator counts and sweeps) ================= */
+/* ================= THE EIGHTEEN (validator counts and sweeps) ============== */
 
 const H = (h: HoleDef): HoleDef => h;
 const tp = (tx: number, ty: number): Vec => ({ x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 });
 
 /**
- * Nine authored holes, par 36 out of a single clifftop. Names + plaque lines
- * are §A11 (exactly one obsession per landmark); the surf is the west and
- * north of everything.
+ * Eighteen authored holes, par 72 out of a single clifftop. Names + plaque
+ * lines are §A11 (exactly one obsession per landmark); the surf is the west
+ * and north of everything.
  */
 export const HOLES: HoleDef[] = [
   // 1 — a handshake opener: wide fairway, surf far left, one greeting bunker
@@ -291,6 +291,201 @@ export const HOLES: HoleDef[] = [
     tee: tp(8, 31),
     pin: tp(8, 4),
     slope: { x: -8, y: -6 },
+  }),
+  // 10 — back-nine opener: wider landing, tighter green, the gallery suddenly awake
+  H({
+    id: 'h10',
+    name: 'The Gallery Wakes',
+    par: 4,
+    plaque: 'Hole 10 — THE GALLERY WAKES. Par 4. The back nine starts when the bleachers remember they have opinions.',
+    rle: [
+      '3*W2C2R10C2W2',
+      'W2C2R4G3R3C2W2',
+      '2*W2C2R3G5R2C2W2',
+      'W2C2R10C2W2',
+      '3*W2C2R3F5R2C2W2',
+      'W2C2R2S2F5R1C2W2',
+      '10*W2C2R2F6R2C2W2',
+      'W2C2R3F3S2R2C2W2',
+      '5*W2C2R3F4R3C2W2',
+      '2*W2C2R3T4R3C2W2',
+    ],
+    tee: tp(8, 28),
+    pin: tp(8, 4),
+    slope: { x: 10, y: -2 },
+  }),
+  // 11 — a par-3 where the safe miss is not especially safe
+  H({
+    id: 'h11',
+    name: 'The Bell Buoy',
+    par: 3,
+    plaque: 'Hole 11 — THE BELL BUOY. Par 3. Aim at the sound. The caddy assures you this is normal.',
+    rle: [
+      '2*W4C2R6C2W4',
+      'W4C2R2G3R1C2W4',
+      '2*W4C2R1G5C2W4',
+      'W4C2R2G3R1C2W4',
+      'W4C2R2S2R2C2W4',
+      '8*W18',
+      'W4C2R2F2R2C2W4',
+      '2*W4C2R1T4R1C2W4',
+      'W4C2R6C2W4',
+    ],
+    tee: tp(9, 17),
+    pin: tp(9, 3),
+    slope: { x: -12, y: 3 },
+  }),
+  // 12 — bunker ribs across the fairway like somebody combed the beach wrong
+  H({
+    id: 'h12',
+    name: 'The Comb',
+    par: 4,
+    plaque: 'Hole 12 — THE COMB. Par 4. Six bunkers, one fairway, and a groundskeeper with too much confidence.',
+    rle: [
+      '3*C2R12C2',
+      'C2R3G5R4C2',
+      '2*C2R2G6R4C2',
+      'C2R12C2',
+      'C2R2S2F2S2F2S2C2',
+      'C2R2F2S2F2S2R2C2',
+      '11*C2R3F6R3C2',
+      'C2R2F3S3F2R2C2',
+      '6*C2R4F5R3C2',
+      '3*C2R4T4R4C2',
+    ],
+    tee: tp(8, 29),
+    pin: tp(8, 4),
+    slope: { x: 2, y: 8 },
+  }),
+  // 13 — the long par-5 that keeps stepping sideways toward the cliff
+  H({
+    id: 'h13',
+    name: 'Sidehill Argument',
+    par: 5,
+    plaque: 'Hole 13 — SIDEHILL ARGUMENT. Par 5. Every landing area leans away from the last apology.',
+    rle: [
+      '3*W2C2R10C2W2',
+      'W2C2R3G5R2C2W2',
+      '2*W2C2R2G6R2C2W2',
+      'W2C2R10C2W2',
+      '7*W2C2R1F7R2C2W2',
+      '2*W2C3R8C3W2',
+      '9*W2C2R3F5R2C2W2',
+      'W2C2R2S2F4R2C2W2',
+      '11*W2C2R4F4R2C2W2',
+      '4*W2C2R3F4R3C2W2',
+      '3*W2C2R3T4R3C2W2',
+    ],
+    tee: tp(8, 42),
+    pin: tp(8, 4),
+    slope: { x: -10, y: -5 },
+  }),
+  // 14 — a dogleg wrapped around a hotel water feature that became law
+  H({
+    id: 'h14',
+    name: 'The Fountain Dogleg',
+    par: 4,
+    plaque: 'Hole 14 — THE FOUNTAIN DOGLEG. Par 4. The fountain was decorative until the architect found a tee box.',
+    rle: [
+      '3*C2R5W4R5C2',
+      'C2R2G4W3R5C2',
+      '2*C2R1G5W3R5C2',
+      'C2R5W4R5C2',
+      '5*C2R2F4W4R4C2',
+      '3*C2R2F5R2S2R3C2',
+      '7*C2R2F10R2C2',
+      '9*C2R6F5R3C2',
+      '4*C2R6F4R4C2',
+      '3*C2R6T4R4C2',
+    ],
+    tee: tp(9, 35),
+    pin: tp(5, 4),
+    slope: { x: 8, y: 5 },
+  }),
+  // 15 — a short sea-stack with a pin tucked where prudence cannot see it
+  H({
+    id: 'h15',
+    name: 'Postcard Trouble',
+    par: 3,
+    plaque: 'Hole 15 — POSTCARD TROUBLE. Par 3. Beautiful from the tee. Less beautiful from the drop zone.',
+    rle: [
+      '2*W18',
+      'W5C1G5C1W6',
+      '2*W5C1G6C1W5',
+      'W6C1G4C1W6',
+      'W7C4W7',
+      '7*W18',
+      'W5C2R1S2R1C2W5',
+      '2*W5C2T4R1C1W5',
+      'W5C2R4C2W5',
+    ],
+    tee: tp(9, 16),
+    pin: tp(8, 3),
+    slope: { x: 9, y: -4 },
+  }),
+  // 16 — a long fairway that tempts one more club than dignity recommends
+  H({
+    id: 'h16',
+    name: 'One More Club',
+    par: 5,
+    plaque: 'Hole 16 — ONE MORE CLUB. Par 5. The fairway keeps saying yes. The scorecard is less friendly.',
+    rle: [
+      '3*C2R12C2',
+      'C2R4G5R3C2',
+      '2*C2R3G6R3C2',
+      'C2R12C2',
+      '5*C2R3F7R2C2',
+      'C2R3F4S3R2C2',
+      '12*C2R2F8R2C2',
+      'C2R2F3S2F3R2C2',
+      '14*C2R3F6R3C2',
+      '4*C2R4F5R3C2',
+      '3*C2R4T4R4C2',
+    ],
+    tee: tp(8, 44),
+    pin: tp(8, 4),
+    slope: { x: -8, y: -7 },
+  }),
+  // 17 — market-stall narrow, with rough that eats rollout
+  H({
+    id: 'h17',
+    name: 'The Needle Lane',
+    par: 4,
+    plaque: 'Hole 17 — THE NEEDLE LANE. Par 4. The line is there. The line is also laughing.',
+    rle: [
+      '3*C2R12C2',
+      'C2R5G3R4C2',
+      '2*C2R4G4R4C2',
+      'C2R12C2',
+      '18*C2R5F3R4C2',
+      'C2R4S1F3S1R3C2',
+      '5*C2R5F3R4C2',
+      '3*C2R5T4R3C2',
+    ],
+    tee: tp(8, 32),
+    pin: tp(8, 4),
+    slope: { x: 5, y: -11 },
+  }),
+  // 18 — home along the surf, the sunset line's bigger sibling
+  H({
+    id: 'h18',
+    name: 'The Last Glow',
+    par: 4,
+    plaque: 'Hole 18 — THE LAST GLOW. Par 4. The clubhouse windows turn gold before your card does.',
+    rle: [
+      '3*W3C2R8C2W3',
+      'W3C2R2G4R2C2W3',
+      '2*W3C2R1G6R1C2W3',
+      'W3C2R8C2W3',
+      '4*W3C2R1F6R1C2W3',
+      'W3C2R1F3S2F2C2W3',
+      '13*W3C2R1F6R1C2W3',
+      '4*W3C2R2F4R2C2W3',
+      '3*W3C2R2T4R2C2W3',
+    ],
+    tee: tp(8, 31),
+    pin: tp(8, 4),
+    slope: { x: -9, y: -7 },
   }),
 ];
 

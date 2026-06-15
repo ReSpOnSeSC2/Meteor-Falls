@@ -158,7 +158,7 @@ export function linksNextOpponent(seed: number, round: number): string {
   return i % 2 === 0 ? ent[i + 1] : ent[i - 1];
 }
 
-/** each round plays THREE holes, marching around the nine */
+/** each round plays THREE holes, marching around the eighteen */
 export function matchHoles(round: number): HoleDef[] {
   const start = (round * 3) % HOLES.length;
   return [0, 1, 2].map((i) => HOLES[(start + i) % HOLES.length]);
@@ -222,7 +222,7 @@ export const LINKS_FILL_TOKENS = ['n', 'name', 'exp', 'item', 'cash', 'club', 'y
 
 export const LINKS_TEXT = {
   title: 'COSTA ESTRELLA LINKS',
-  tipRound: 'NINE HOLES. THE WIND IS SEEDED AND THE CADDY IS SURE.',
+  tipRound: 'EIGHTEEN HOLES. THE WIND IS SEEDED AND THE CADDY IS SURE.',
   tipMatch: 'MATCH PLAY. THREE HOLES. LOWEST BALL TAKES EACH.',
   holeCard: 'HOLE {n} — PAR {par}',
   strokeLine: 'STROKE {n}',

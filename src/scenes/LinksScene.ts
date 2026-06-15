@@ -17,7 +17,7 @@
  * shrinking perfect window (push/pull curve the flight); putt and chip run
  * the power tap alone.
  *
- * FORMATS: STROKE PLAY — nine holes, EXP forever by the card (strokeExp) +
+ * FORMATS: STROKE PLAY — eighteen holes, EXP forever by the card (strokeExp) +
  * one seeded clubhouse drop. MATCH PLAY (the Invitational) — three holes
  * vs a GOLFERS entrant whose card rolls honestly off acc/agg; all square
  * after three = sudden death. The bracket lives on NUMBER FLAGS
@@ -143,7 +143,7 @@ export class LinksScene extends Phaser.Scene {
     }
     this.wind = windOf(this.roundRng);
 
-    // textures: nine grounds + ball + flag + bursts + the hero's golf sheet
+    // textures: eighteen grounds + ball + flag + bursts + the hero's golf sheet
     const hero = GS.data.party[0];
     this.golferKey = ensureLinksArt(this, hero.id);
 
@@ -383,7 +383,7 @@ export class LinksScene extends Phaser.Scene {
       }
       if (played >= this.holes.length) {
         if (this.upUs === this.upThem) {
-          // SUDDEN DEATH: march on around the nine
+          // SUDDEN DEATH: march on around the eighteen
           this.showBanner(LINKS_TEXT.suddenDeath, 1600);
           const nextHole = HOLES[(HOLES.indexOf(this.holes[this.holes.length - 1]) + 1) % HOLES.length];
           this.holes.push(nextHole);
@@ -395,7 +395,7 @@ export class LinksScene extends Phaser.Scene {
       this.startHole(this.holeIdx + 1);
       return;
     }
-    // stroke play: nine and in
+    // stroke play: eighteen and in
     if (this.holeIdx + 1 >= this.holes.length) {
       await this.strokeTally();
       return;
@@ -411,7 +411,7 @@ export class LinksScene extends Phaser.Scene {
     const exp = strokeExp(score);
     GS.setFlag(LINKS_FLAGS.played, (Number(GS.flag(LINKS_FLAGS.played)) || 0) + 1);
     const lines: string[] = [];
-    lines.push(LINKS_TEXT.tallyRound.replace('{score}', `${score > 0 ? '+' : ''}${score} (${36 + score} ON PAR ${COURSE_PAR})`).replace('{exp}', String(exp)));
+    lines.push(LINKS_TEXT.tallyRound.replace('{score}', `${score > 0 ? '+' : ''}${score} (${COURSE_PAR + score} ON PAR ${COURSE_PAR})`).replace('{exp}', String(exp)));
     this.payExp(exp, lines);
     // one seeded clubhouse drop (forever — §A9-tuned)
     const t = LINKS_REWARDS.drops.table;

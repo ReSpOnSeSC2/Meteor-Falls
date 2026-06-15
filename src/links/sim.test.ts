@@ -10,14 +10,14 @@ import { CLUBS, HOLES, COURSE_PAR, LIES, YD, expandRow, expandGrid, terrainAt, d
 import { makeRng } from '../hoops/sim';
 import { GOLFERS, GOLFER_ORDER, golferHoleScore, linksField, linksEntrants, linksNextOpponent, matchHoles, strokeExp, LINKS_REWARDS } from '../data/links';
 
-describe('the course (nine authored holes)', () => {
+describe('the course (eighteen authored holes)', () => {
   it('RLE expands exactly', () => {
     expect(expandRow('W2C2R10C2W2')).toBe('WWCCRRRRRRRRRRCCWW');
     expect(expandGrid(['2*W3', 'C3'])).toEqual(['WWW', 'WWW', 'CCC']);
   });
 
-  it('nine holes: uniform grids, tee on T, pin on G, par mix 3/4/5', () => {
-    expect(HOLES).toHaveLength(9);
+  it('eighteen holes: uniform grids, tee on T, pin on G, par mix 3/4/5', () => {
+    expect(HOLES).toHaveLength(18);
     const pars = new Set(HOLES.map((h) => h.par));
     expect(pars.has(3) && pars.has(4) && pars.has(5)).toBe(true);
     for (const h of HOLES) {
@@ -29,7 +29,7 @@ describe('the course (nine authored holes)', () => {
       expect(h.name.length).toBeGreaterThan(0);
       expect(h.plaque).toContain(h.name.toUpperCase());
     }
-    expect(COURSE_PAR).toBe(36);
+    expect(COURSE_PAR).toBe(72);
   });
 
   it('the bag descends in carry and the lies tax honestly', () => {
@@ -211,7 +211,7 @@ describe('the Invitational (flags carry the bracket)', () => {
     const opp = linksNextOpponent(2026, 0);
     expect(GOLFERS[opp].tier).toBe(1); // the soft open
     expect(matchHoles(0)).toHaveLength(3);
-    expect(matchHoles(4)[0].id).toBe(HOLES[(4 * 3) % 9].id);
+    expect(matchHoles(4)[0].id).toBe(HOLES[(4 * 3) % HOLES.length].id);
   });
 
   it('golfer curves are honest: more acc, better cards; agg widens tails', () => {

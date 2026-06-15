@@ -841,7 +841,7 @@ export type LinksVec = z.infer<typeof LinksVecSchema>;
 /**
  * One authored hole (S13): RLE terrain rows (T tee · F fairway · R rough ·
  * S sand · W water/surf · G green · C cliff), §A11 name + plaque (the
- * validator counts nine and sweeps the strings), and the green's HONEST
+ * validator counts eighteen and sweeps the strings), and the green's HONEST
  * break — the slope arrows draw exactly what the putt physics apply.
  */
 export const LinksHoleSchema = z.strictObject({

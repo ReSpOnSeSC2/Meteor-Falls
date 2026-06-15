@@ -375,7 +375,7 @@ export function drawLinksPoster(): Pixmap {
   return pm;
 }
 
-/** every hole pre-painted (nine textures, generated once at scene create) */
+/** every hole pre-painted (eighteen textures, generated once at scene create) */
 export function allHoleTextures(): Array<{ id: string; pm: Pixmap }> {
   return HOLES.map((h) => ({ id: `links_${h.id}`, pm: drawHoleTexture(h) }));
 }

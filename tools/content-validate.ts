@@ -18,6 +18,7 @@
  * pray distribution, carveHoldingRoom, ATM math, city structure…) stay in
  * vitest — this file owns existence and cross-reference truth only.
  */
+import { existsSync, readFileSync } from 'node:fs';
 import {
   AbilityDefSchema,
   AMBIENCE_IDS,
@@ -41,6 +42,12 @@ import { ENEMIES, introLine, MAX_BATTLE_ENEMIES } from '../src/data/enemies';
 import { ITEMS, slotOf, PORCH_SET, MERCADO_SET } from '../src/data/items';
 import { WEAPON_ART } from '../src/spritegen/weapons';
 import { ITEM_ICON } from '../src/spritegen/icons';
+import {
+  ABILITY_ICON,
+  BATTLE_FX_ICON,
+  STATUS_ICON,
+  STATUS_ICON_NAMES,
+} from '../src/spritegen/combatIcons';
 import { FONT_CHARS, drawTextInto } from '../src/spritegen/font';
 import { Pixmap } from '../src/spritegen/pixmap';
 import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
@@ -305,6 +312,69 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   for (const id of Object.keys(ITEM_ICON)) {
     if (!ITEMS[id]) fail('item-icon', `ITEM_ICON row '${id}' claims no §A8 item — extend or retire the manifest row`);
+  }
+}
+
+// PKG-05 — ABILITY / STATUS / FX MICRO-ICONS. Like the §A8 icon atlas above,
+// these are pinned both directions against their source registries AND against
+// their exported PNG paths, so the package cannot silently lose a file.
+{
+  const nonT = (pm: Pixmap): number => pm.data.reduce((n, c) => n + (c !== T ? 1 : 0), 0);
+  const expectFile = (section: string, path: string): void => {
+    if (!existsSync(path)) fail(section, `missing exported PNG '${path}'`);
+  };
+  const expectTiny = (section: string, id: string, pm: Pixmap, maxW: number, maxH: number): void => {
+    if (pm.w <= 0 || pm.h <= 0) fail(section, `'${id}' has invalid size ${pm.w}x${pm.h}`);
+    if (pm.w > maxW || pm.h > maxH) fail(section, `'${id}' is ${pm.w}x${pm.h}, must fit ${maxW}x${maxH}`);
+    if (nonT(pm) <= 3) fail(section, `'${id}' draws too little to read (${nonT(pm)} px)`);
+  };
+
+  const packageIds = readFileSync('docs/asset-lists/ability_icons.txt', 'utf8')
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const packageSet = new Set(packageIds);
+  for (const id of Object.keys(ABILITIES)) {
+    if (!packageSet.has(id)) fail('ability-icon', `ability '${id}' is not listed in docs/asset-lists/ability_icons.txt`);
+  }
+  for (const id of packageIds) {
+    const ab = ABILITIES[id];
+    if (!ab) fail('ability-icon', `docs/asset-lists/ability_icons.txt lists unknown ability '${id}'`);
+    const draw = ABILITY_ICON[id];
+    if (!draw) {
+      fail('ability-icon', `ability '${id}' has no ABILITY_ICON row`);
+    } else {
+      expectTiny('ability-icon', id, draw(), 16, 16);
+    }
+    expectFile('ability-icon', `assets/art/icons/abilities/${id}.png`);
+  }
+  for (const id of Object.keys(ABILITY_ICON)) {
+    if (!ABILITIES[id]) fail('ability-icon', `ABILITY_ICON row '${id}' claims no ability`);
+  }
+
+  for (const name of STATUS_ICON_NAMES) {
+    expectTiny('status-icon', name, STATUS_ICON[name](), 8, 8);
+    expectFile('status-icon', `assets/art/icons/status/${name}.png`);
+  }
+  for (const name of Object.keys(STATUS_ICON)) {
+    if (!(STATUS_ICON_NAMES as readonly string[]).includes(name)) fail('status-icon', `STATUS_ICON row '${name}' is not a PKG-05 status badge`);
+  }
+
+  for (const name of GLYPH_TOKENS) {
+    const draw = BATTLE_FX_ICON[name];
+    if (!draw) fail('battle-fx-icon', `flair glyph '${name}' has no BATTLE_FX_ICON row`);
+    else expectTiny('battle-fx-icon', name, draw(), 11, 11);
+    expectFile('battle-fx-icon', `assets/art/fx/${name}.png`);
+  }
+  for (const name of Object.keys(BATTLE_FX_ICON)) {
+    if (!(GLYPH_TOKENS as readonly string[]).includes(name)) fail('battle-fx-icon', `BATTLE_FX_ICON row '${name}' is not a declared flair glyph`);
+  }
+  for (const [element, glyph] of Object.entries(FLAIR_BY_ELEMENT)) {
+    if (glyph && !BATTLE_FX_ICON[glyph]) fail('battle-fx-icon', `FLAIR_BY_ELEMENT['${element}'] points at '${glyph}' with no exported fx icon`);
+    if (element !== 'none' && !FX_REGISTRY[`impact_${element}`]) fail('battle-fx-icon', `element '${element}' has flair but no matching FX_REGISTRY impact key`);
+  }
+  for (const [result, glyph] of Object.entries(FLAIR_BY_RESULT)) {
+    if (!BATTLE_FX_ICON[glyph]) fail('battle-fx-icon', `FLAIR_BY_RESULT['${result}'] points at '${glyph}' with no exported fx icon`);
   }
 }
 
@@ -1878,10 +1948,10 @@ parseAll('links-golfers', GolferDefSchema, GOLFERS);
 parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id, c])));
 
 {
-  // THE COURSE: §A11 demands NINE named holes with plaque lines (counted +
+  // THE COURSE: §A11 demands EIGHTEEN named holes with plaque lines (counted +
   // swept); geometry must hold — uniform grids, tee on T, pin on G
-  if (HOLES.length !== 9) fail('links', `the course is NINE authored holes, found ${HOLES.length}`);
-  if (COURSE_PAR !== 36) fail('links', `the card plays to par 36, got ${COURSE_PAR}`);
+  if (HOLES.length !== 18) fail('links', `the course is EIGHTEEN authored holes, found ${HOLES.length}`);
+  if (COURSE_PAR !== 72) fail('links', `the card plays to par 72, got ${COURSE_PAR}`);
   const pars = HOLES.map((h) => h.par);
   if (!pars.includes(3) || !pars.includes(4) || !pars.includes(5)) fail('links', `the par mix needs 3s, 4s, and a 5 (spec)`);
   for (const h of HOLES) {
@@ -2901,6 +2971,7 @@ const counts = [
   `${Object.keys(MAPS).length} maps`,
   `${CANON_AREAS.length} area skins`,
   `${Object.keys(GLYPH_SCRIPT).length} area glyph scripts (${SCRIPT_CATALOG.length} families)`,
+  `${Object.keys(ABILITY_ICON).length} ability icons · ${STATUS_ICON_NAMES.length} status badges · ${Object.keys(BATTLE_FX_ICON).length} battle fx icons`,
   `${GLYPH_TOKENS.length} flair glyphs`,
   `${UI_AFFORDANCE_GLYPHS.length} UI affordance glyphs (${UI_AFFORDANCE_GLYPHS.join('')})`,
   `multi-enemy packs ≤${MAX_BATTLE_ENEMIES} (clean intros)`,
