@@ -9,11 +9,11 @@
  *   npm run art:flair
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, px, T } from '../src/palette';
-import { drawTextInto } from '../src/spritegen/font';
-import { GLYPH_TOKENS, flairGlyph, glyphCells } from '../src/spritegen/flair';
-import { parseAtoms, layoutAtoms } from '../src/ui/runlayout';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, px, T } from '../../src/palette';
+import { drawTextInto } from '../../src/spritegen/font';
+import { GLYPH_TOKENS, flairGlyph, glyphCells } from '../../src/spritegen/flair';
+import { parseAtoms, layoutAtoms } from '../../src/ui/runlayout';
 import { pixmapToPng } from './png';
 
 const SCALE = 4;

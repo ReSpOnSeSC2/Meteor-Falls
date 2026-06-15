@@ -1,5 +1,12 @@
 # The hero-art loop (ADR-104, Prompt 8)
 
+> ⚠️ **HISTORICAL — superseded by ADR-109.** This procedural hero-art loop is no
+> longer the workflow. Art is now **authored as PNGs** (ChatGPT/imagegen → PNG at
+> the `assets/art/masters` resolution); the `npm run art:castsheet` command below
+> was removed and its tool is parked in `dormant/sprite-tools/`. See
+> [ART_PIPELINE.md](ART_PIPELINE.md). Kept for reference / if the generators are
+> ever revived in a separate program.
+
 Iterate on the procedural hero sprites **by eye** — no drawing, no binary assets.
 Everything is generated from `CharacterSpec` data by `src/spritegen/characters.ts`.
 

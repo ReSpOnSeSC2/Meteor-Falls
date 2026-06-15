@@ -1,9 +1,9 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { C, RAMP, px } from '../src/palette';
-import { Pixmap, mulberry32 } from '../src/spritegen/pixmap';
-import { drawLogo, scalePixmap } from '../src/spritegen/ui';
-import { drawTextInto } from '../src/spritegen/font';
+import { C, RAMP, px } from '../../src/palette';
+import { Pixmap, mulberry32 } from '../../src/spritegen/pixmap';
+import { drawLogo, scalePixmap } from '../../src/spritegen/ui';
+import { drawTextInto } from '../../src/spritegen/font';
 import { pixmapToPng } from './png';
 
 const W = 400;

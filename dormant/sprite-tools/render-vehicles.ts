@@ -8,10 +8,10 @@
  *   npm run art:vehicles
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, px, T } from '../src/palette';
-import { drawTextInto } from '../src/spritegen/font';
-import { VEHICLE_CATALOG, VEHICLE_SPECS, drawVehicle, usableSeats } from '../src/spritegen/vehicles';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, px, T } from '../../src/palette';
+import { drawTextInto } from '../../src/spritegen/font';
+import { VEHICLE_CATALOG, VEHICLE_SPECS, drawVehicle, usableSeats } from '../../src/spritegen/vehicles';
 import { pixmapToPng } from './png';
 
 function blit(dst: Pixmap, src: Pixmap, dx: number, dy: number): void {

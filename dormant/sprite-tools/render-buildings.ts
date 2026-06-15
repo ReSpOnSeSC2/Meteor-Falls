@@ -11,12 +11,12 @@
  * aligned on a ground line, a hero block for scale, names under each.
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, px, T } from '../src/palette';
-import { drawCityBuilding, type CityBuildingOpts } from '../src/spritegen/tiles';
-import { drawTextInto } from '../src/spritegen/font';
-import { CITY_CATALOG, COLOSSI, AREA_SKINS, CANON_AREAS } from '../src/spritegen/buildings';
-import { BUILDING_DIMS } from '../src/levelkit/kit';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, px, T } from '../../src/palette';
+import { drawCityBuilding, type CityBuildingOpts } from '../../src/spritegen/tiles';
+import { drawTextInto } from '../../src/spritegen/font';
+import { CITY_CATALOG, COLOSSI, AREA_SKINS, CANON_AREAS } from '../../src/spritegen/buildings';
+import { BUILDING_DIMS } from '../../src/levelkit/kit';
 import { pixmapToPng } from './png';
 
 function blit(dst: Pixmap, src: Pixmap, dx: number, dy: number): void {

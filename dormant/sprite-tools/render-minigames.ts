@@ -5,9 +5,9 @@
  * package folders requested by docs/asset-packages/PKG-10-minigames.md.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, T, px } from '../src/palette';
-import { drawTextInto } from '../src/spritegen/font';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, T, px } from '../../src/palette';
+import { drawTextInto } from '../../src/spritegen/font';
 import {
   deriveOpponentSpec,
   drawAthleteShadow,
@@ -15,7 +15,7 @@ import {
   drawHoopSide,
   drawCageCourt,
   drawCageBehind,
-} from '../src/spritegen/athletes';
+} from '../../src/spritegen/athletes';
 import {
   asphaltCrack,
   asphaltLineH,
@@ -27,7 +27,7 @@ import {
   drawCageGate,
   drawCageMural,
   drawChalkBoard,
-} from '../src/spritegen/tiles';
+} from '../../src/spritegen/tiles';
 import {
   allHoleTextures,
   drawGolfBall,
@@ -35,7 +35,7 @@ import {
   drawPinFlag,
   drawSandFrames,
   drawSplashFrames,
-} from '../src/spritegen/golfers';
+} from '../../src/spritegen/golfers';
 import {
   drawArcadeBolt,
   drawArcadeCorndog,
@@ -44,7 +44,7 @@ import {
   drawArcadeSaucer,
   drawArcadeShip,
   drawScanline,
-} from '../src/spritegen/arcade';
+} from '../../src/spritegen/arcade';
 import { decodePngToPixmap, pixmapToPng } from './png';
 
 const ROOT = 'assets/art/minigames';

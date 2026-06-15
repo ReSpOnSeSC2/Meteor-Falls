@@ -10,12 +10,12 @@
  *   npm run art:icons -- --forge      # the forge gallery: every subcategory, one sample each
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, px, T } from '../src/palette';
-import { drawTextInto } from '../src/spritegen/font';
-import { ITEMS, itemKindLabel, type ItemDef } from '../src/data/items';
-import { ITEM_ICON, forgeGallery, forgeIcon } from '../src/spritegen/icons';
-import type { ItemBand, ItemKind } from '../src/schemas';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, px, T } from '../../src/palette';
+import { drawTextInto } from '../../src/spritegen/font';
+import { ITEMS, itemKindLabel, type ItemDef } from '../../src/data/items';
+import { ITEM_ICON, forgeGallery, forgeIcon } from '../../src/spritegen/icons';
+import type { ItemBand, ItemKind } from '../../src/schemas';
 import { pixmapToPng } from './png';
 
 const SCALE = 4;

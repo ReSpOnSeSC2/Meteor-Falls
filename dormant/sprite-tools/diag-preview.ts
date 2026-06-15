@@ -11,11 +11,11 @@
  * side/front/back per body type, with a hero for scale).
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { CAST, generateCharacterFrames, generateDiagFrames, FRAME_W, FRAME_H } from '../src/spritegen/characters';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { drawTextInto } from '../src/spritegen/font';
-import { carViews, CAR_BODIES } from '../src/spritegen/vehicles';
-import { RAMP, px, T } from '../src/palette';
+import { CAST, generateCharacterFrames, generateDiagFrames, FRAME_W, FRAME_H } from '../../src/spritegen/characters';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { drawTextInto } from '../../src/spritegen/font';
+import { carViews, CAR_BODIES } from '../../src/spritegen/vehicles';
+import { RAMP, px, T } from '../../src/palette';
 import { pixmapToPng } from './png';
 
 function blit(dst: Pixmap, src: Pixmap, dx: number, dy: number): void {

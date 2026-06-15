@@ -9,16 +9,16 @@
  *   npm run art:glyphs -- --forge # the family gallery: every script grammar, one sample each
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, px, T } from '../src/palette';
-import { drawTextInto } from '../src/spritegen/font';
-import { CANON_AREAS } from '../src/spritegen/buildings';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, px, T } from '../../src/palette';
+import { drawTextInto } from '../../src/spritegen/font';
+import { CANON_AREAS } from '../../src/spritegen/buildings';
 import {
   GLYPH_SCRIPT,
   SCRIPT_VOICE,
   areaGlyphRun,
   forgeGlyphGallery,
-} from '../src/spritegen/glyphforge';
+} from '../../src/spritegen/glyphforge';
 import { pixmapToPng } from './png';
 
 const SCALE = 4;

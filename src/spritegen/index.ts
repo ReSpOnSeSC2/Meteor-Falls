@@ -1,7 +1,20 @@
 /**
- * Boot-time texture factory: runs the sprite engine and registers every
- * texture + animation with Phaser. Zero binary assets — the whole game's art
- * is generated from code in under a second.
+ * ⚠️ FROZEN — PROCEDURAL FALLBACK ONLY. DO NOT ADD OR EXTEND GENERATORS HERE.
+ *
+ * Art is now AUTHORED as PNGs (ChatGPT/imagegen → PNG at the
+ * `assets/art/masters` resolution), sliced into runtime sheets under
+ * `assets/art/**`, and wired into the game via `spritegen/authored.ts`, which
+ * OVERRIDES the textures produced here. The procedural generators in this
+ * directory remain ONLY as the boot/build fallback for categories that do not
+ * yet have an authored PNG. To add or change a sprite, author a PNG and load it
+ * in `authored.ts` — never write a new `draw*` generator. See `/CLAUDE.md` and
+ * `docs/ART_PIPELINE.md`. (The old `npm run art:*` render scripts that built
+ * reference sheets from this code are parked in `dormant/sprite-tools/`.)
+ *
+ * Boot-time texture factory: registers every texture + animation with Phaser.
+ * generateAllTextures() runs as the base layer; BootScene applies the authored
+ * PNGs over it (applyAuthoredHeroArt → generateAllTextures →
+ * applyAuthoredBattleArt → applyAuthoredWorldArt).
  */
 import Phaser from 'phaser';
 import { Pixmap, framesToCanvas } from './pixmap';

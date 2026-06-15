@@ -6117,3 +6117,15 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   that already type-checks the authoring and a gate that already guards the data. Named follow-ups: wire the bed
   playback + the muffle-on-load + the reflection draw + the NPC idle/emote loop (Wave 3), and grow the bed
   vocabulary (the reserved `river`, a market-stall variant) as new regions land. ☄️
+
+## ADR-109 — Art is AUTHORED PNGs (ChatGPT→PNG @ masters res); procedural engine frozen, render tooling parked
+
+- **Date:** 2026-06-14
+- **Status:** Accepted. Supersedes ADR-002's "zero binary assets"; makes ADR-104 ([ART_LOOP.md](ART_LOOP.md)) historical. Canonical workflow doc: [ART_PIPELINE.md](ART_PIPELINE.md).
+- **Context:** Art is now produced with ChatGPT/imagegen and saved as PNGs at the `assets/art/masters/` resolution (the high-res source of truth), sliced into runtime sheets, and loaded OVER the generated base by `spritegen/authored.ts`. The in-repo procedural generators (`src/spritegen/`) and their render CLIs (`tools/render-*.ts`, the `npm run art:*` scripts) kept tempting agents into re-generating art in code instead of using the authored-PNG workflow.
+- **Decision:**
+  1. **Authored PNGs are the workflow.** To add/change a sprite: author a master PNG in `assets/art/masters/<category>/` at the masters resolution, slice/downscale into `assets/art/…`, and wire it into `spritegen/authored.ts`. Per-category resolutions in [ART_PIPELINE.md](ART_PIPELINE.md).
+  2. **Freeze `src/spritegen/`.** It runs at boot ONLY as the fallback base for categories without authored PNGs (icon atlas, font, vehicles, glyphs/flair, particles, fixtures, forged faces, specials). No new or extended `draw*` generators. Freeze banner added to `spritegen/index.ts`.
+  3. **Park the render tooling.** The 19 render/cast/proto/forge tools + shared `png.ts` moved from `tools/` to `dormant/sprite-tools/` (excluded from the build; imports rewritten `../src` → `../../src`). The 13 `art:*` npm scripts were removed; `art:appart` (the Android icon/splash copier — not a sprite generator) stayed in `tools/`.
+  4. **Guardrail.** New root `CLAUDE.md` states the law so future agents reach for authored PNGs, not generators.
+- **Consequences:** The runtime game and `npm run build` / `validate` are unchanged — they still consume `src/spritegen/` as the base, now overridden by authored PNGs. Reviving a parked tool = `npx vite-node dormant/sprite-tools/<tool>.ts`. Full retirement of the engine remains future work: author PNGs + loaders for the still-generated categories, then move `src/spritegen/` to `dormant/` too. ☄️

@@ -10,7 +10,7 @@
  * the ~120px reference canvases. Angle filenames mirror the reference folders.
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { CAST, generateCharacterFrames, diagWalkBase } from '../src/spritegen/characters';
+import { CAST, generateCharacterFrames, diagWalkBase } from '../../src/spritegen/characters';
 import { pixmapToPng } from './png';
 
 // reference-folder angle name -> engine stand-frame index

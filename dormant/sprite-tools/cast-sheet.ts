@@ -28,10 +28,10 @@ import {
   IDLE_BLINK,
   FRAME_W,
   FRAME_H,
-} from '../src/spritegen/characters';
-import { generateBustFrames, BUST_W, BUST_H } from '../src/spritegen/busts';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, T, px } from '../src/palette';
+} from '../../src/spritegen/characters';
+import { generateBustFrames, BUST_W, BUST_H } from '../../src/spritegen/busts';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, T, px } from '../../src/palette';
 import { pixmapToPng } from './png';
 
 function blit(dst: Pixmap, src: Pixmap, dx: number, dy: number): void {

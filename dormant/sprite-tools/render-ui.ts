@@ -13,10 +13,10 @@ import {
   drawSunIcon,
   drawWindowSlice,
   LOCKET_MAX_EMBERS,
-} from '../src/spritegen/ui';
-import { RAMP } from '../src/palette';
-import { EMOJI_GLYPH, EMOJI_GLYPH_NAMES, makeFontPixmap, makeGlyphPixmap } from '../src/spritegen/font';
-import { SCRIPT_CATALOG, scriptBannerRun, type ScriptFamily } from '../src/spritegen/glyphforge';
+} from '../../src/spritegen/ui';
+import { RAMP } from '../../src/palette';
+import { EMOJI_GLYPH, EMOJI_GLYPH_NAMES, makeFontPixmap, makeGlyphPixmap } from '../../src/spritegen/font';
+import { SCRIPT_CATALOG, scriptBannerRun, type ScriptFamily } from '../../src/spritegen/glyphforge';
 import { pixmapToPng } from './png';
 
 const UI_DIR = 'assets/art/ui';
