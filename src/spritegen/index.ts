@@ -119,7 +119,14 @@ import {
 import { GENERATED_BUILDINGS } from './buildings';
 import { VEHICLE_CATALOG, drawVehicleViews } from './vehicles';
 import { ITEM_ICON, itemIconKey } from './icons';
-import { GLYPH_SCRIPT, areaGlyphRun, glyphBannerKey } from './glyphforge';
+import {
+  GLYPH_SCRIPT,
+  SCRIPT_CATALOG,
+  areaGlyphRun,
+  glyphBannerKey,
+  glyphScriptBannerKey,
+  scriptBannerRun,
+} from './glyphforge';
 import { GLYPH_TOKENS, flairGlyph, flairGlyphKey } from './flair';
 import {
   generateAthleteFrames,
@@ -159,6 +166,9 @@ import {
   drawHandCursor,
   drawPhoneIcon,
   drawSunIcon,
+  drawLocketPauseFrame,
+  drawLocketState,
+  LOCKET_MAX_EMBERS,
 } from './ui';
 import {
   drawFountain,
@@ -745,6 +755,8 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'hand', drawHandCursor());
   addPixmap(scene, 'phone_icon', drawPhoneIcon());
   addPixmap(scene, 'sun_icon', drawSunIcon()); // §A4.5 SUNNY SIDE (S14)
+  addPixmap(scene, 'locket_pause_frame', drawLocketPauseFrame());
+  for (let i = 0; i <= LOCKET_MAX_EMBERS; i++) addPixmap(scene, `locket_${i}`, drawLocketState(i));
   addPixmap(scene, 'swirl', makeSpiral());
 
   // S16 Movement 8 (ADR-060) — THE ICON ATLAS: every §A8 item's 12–16px menu
@@ -758,6 +770,7 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // diegetic place name — squiggle-script foreign signage, never readable text
   // (§A11.6-safe). One run per area, seeded off the area id so it's stable.
   for (const area of Object.keys(GLYPH_SCRIPT)) addPixmap(scene, glyphBannerKey(area), areaGlyphRun(area));
+  for (const script of SCRIPT_CATALOG) addPixmap(scene, glyphScriptBannerKey(script), scriptBannerRun(script));
 
   // S18 Movement 23 (ADR-093) — THE FLAIR WEAVE / §A11.9 THE FLAIR LAW: the tiny
   // pixel-emoji vocabulary inlined IN TEXT via `{g:NAME}`, registered under

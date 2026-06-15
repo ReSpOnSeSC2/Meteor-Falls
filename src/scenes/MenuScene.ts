@@ -36,7 +36,7 @@ import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, heroVibe, hero
 import { INPUT, type BindingProfile, type Btn } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, makeCashBox, everyFrame, vars, DEPTH_UI } from '../ui/windows';
-import { WINDOW_FLAVORS } from '../spritegen/ui';
+import { LOCKET_MAX_EMBERS, WINDOW_FLAVORS } from '../spritegen/ui';
 // S4: the list widget + "Offense up by N!" confirm are shared with the shops
 import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
 import { makeItemInfo, ITEMINFO_RESERVE } from '../ui/iteminfo';
@@ -639,44 +639,25 @@ export class MenuScene extends Phaser.Scene {
       await this.dlg.say('You have a pocket. In it: lint, mostly.');
       return;
     }
-    const n = GS.data.embers;
+    const n = Math.max(0, Math.min(LOCKET_MAX_EMBERS, GS.data.embers));
     const x = 96;
     const y = 8;
     const w = 230;
-    this.pageObjs.push(makeWindow(this, x, y, w, 124));
-    const title = this.add
-      .bitmapText(x + w / 2, y + 12, 'retro', 'THE STAR LOCKET', 6)
-      .setOrigin(0.5, 0)
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI + 1)
-      .setTint(colorOf(px(RAMP.GOLD, 3)));
-    this.pageObjs.push(title);
-    // ten sockets — one Heartlight each, two rows of five (§A4.9)
-    for (let i = 0; i < 10; i++) {
-      const col = i % 5;
-      const row = Math.floor(i / 5);
-      const ex = x + 65 + col * 25;
-      const ey = y + 36 + row * 22;
-      const img = this.add
-        .image(ex, ey, 'ember')
+    this.pageObjs.push(
+      this.add
+        .image(x, y, 'locket_pause_frame')
+        .setOrigin(0, 0)
         .setScrollFactor(0)
-        .setDepth(DEPTH_UI + 1);
-      if (i < n) {
-        this.tweens.add({
-          targets: img,
-          scale: { from: 1, to: 1.25 },
-          duration: 900 + i * 90,
-          yoyo: true,
-          repeat: -1,
-          ease: 'sine.inout',
-        });
-      } else {
-        img.setAlpha(0.18);
-      }
-      this.pageObjs.push(img);
-    }
+        .setDepth(DEPTH_UI),
+    );
+    this.pageObjs.push(
+      this.add
+        .image(x + w / 2, y + 57, `locket_${n}`)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1),
+    );
     const count = this.add
-      .bitmapText(x + w / 2, y + 82, 'retro', `HEARTLIGHTS: ${n}/10`, 6)
+      .bitmapText(x + w / 2, y + 84, 'retro', `HEARTLIGHTS: ${n}/10`, 6)
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
@@ -688,7 +669,7 @@ export class MenuScene extends Phaser.Scene {
           ? '(One instrument plays, all alone, and refuses to be sad about it.)'
           : `(${n} instruments find each other across the dark.)`;
     const fl = this.add
-      .bitmapText(x + w / 2, y + 100, 'retro', flavor, 6)
+      .bitmapText(x + w / 2, y + 101, 'retro', flavor, 6)
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)

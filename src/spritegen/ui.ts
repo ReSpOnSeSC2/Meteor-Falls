@@ -188,6 +188,128 @@ export function drawSunIcon(): Pixmap {
   return pm;
 }
 
+export const LOCKET_MAX_EMBERS = 10;
+
+function drawTinyStar(pm: Pixmap, x: number, y: number, c: number): void {
+  pm.set(x, y - 2, c);
+  pm.set(x, y + 2, c);
+  pm.set(x - 2, y, c);
+  pm.set(x + 2, y, c);
+  pm.set(x, y, C.white);
+  pm.set(x - 1, y - 1, c);
+  pm.set(x + 1, y - 1, c);
+  pm.set(x - 1, y + 1, c);
+  pm.set(x + 1, y + 1, c);
+}
+
+function drawInstrument(pm: Pixmap, n: number, x: number, y: number, lit: boolean): void {
+  const body = lit ? px(RAMP.GOLD, 2) : px(RAMP.PAPER, 1);
+  const trim = lit ? px(RAMP.CYAN, 2) : px(RAMP.NIGHT, 3);
+  switch (n % LOCKET_MAX_EMBERS) {
+    case 0: // bell
+      pm.hline(x - 2, y + 2, 5, body);
+      pm.contour(x, y - 2, [1, 2, 2, 2], body);
+      pm.set(x, y + 3, trim);
+      break;
+    case 1: // drum
+      pm.frame(x - 3, y - 2, 7, 5, body);
+      pm.hline(x - 2, y - 1, 5, trim);
+      pm.line(x - 3, y + 4, x + 3, y - 4, body);
+      break;
+    case 2: // flute
+      pm.line(x - 4, y + 2, x + 4, y - 2, body);
+      pm.set(x - 1, y, trim);
+      pm.set(x + 2, y - 1, trim);
+      break;
+    case 3: // horn
+      pm.line(x - 3, y + 1, x + 2, y - 2, body);
+      pm.contour(x + 3, y - 3, [1, 2, 1], body);
+      pm.set(x - 4, y + 2, trim);
+      break;
+    case 4: // harp
+      pm.vline(x - 3, y - 4, 8, body);
+      pm.line(x - 3, y - 4, x + 3, y + 2, body);
+      pm.line(x - 2, y - 1, x + 1, y + 2, trim);
+      pm.line(x - 1, y - 3, x + 2, y, trim);
+      break;
+    case 5: // tambourine
+      pm.ellipse(x, y, 4, 3, body);
+      pm.set(x, y, T);
+      pm.set(x - 3, y, trim);
+      pm.set(x + 3, y, trim);
+      break;
+    case 6: // keys
+      pm.rect(x - 4, y - 2, 8, 4, body);
+      for (let i = -3; i <= 3; i += 2) pm.vline(x + i, y - 2, 4, trim);
+      break;
+    case 7: // fiddle
+      pm.ellipse(x - 1, y - 1, 2, 3, body);
+      pm.vline(x + 2, y - 5, 7, body);
+      pm.line(x - 4, y + 4, x + 4, y - 4, trim);
+      break;
+    case 8: // shaker
+      pm.line(x - 2, y + 4, x + 2, y - 4, body);
+      pm.ellipse(x + 2, y - 4, 2, 2, trim);
+      break;
+    default: // voice
+      pm.ellipse(x - 2, y, 2, 3, body);
+      pm.ellipse(x + 2, y, 2, 3, body);
+      pm.set(x - 2, y, trim);
+      pm.set(x + 2, y, trim);
+      break;
+  }
+}
+
+export function drawLocketState(embers: number): Pixmap {
+  const n = Math.max(0, Math.min(LOCKET_MAX_EMBERS, Math.floor(embers)));
+  const pm = new Pixmap(96, 72);
+  pm.ellipse(48, 64, 28, 5, px(RAMP.INK, 0));
+  // chain and bail
+  for (let i = 0; i < 9; i++) {
+    const lx = 26 + i * 5;
+    pm.ellipse(lx, 8 + (i % 2), 3, 2, px(RAMP.GOLD, i % 2 === 0 ? 1 : 2));
+  }
+  pm.rect(43, 11, 10, 7, px(RAMP.GOLD, 2));
+  pm.frame(44, 12, 8, 5, px(RAMP.GOLD, 3));
+  // locket body
+  pm.ellipse(48, 39, 31, 25, px(RAMP.GOLD, 1));
+  pm.ellipse(48, 36, 27, 22, px(RAMP.GOLD, 2));
+  pm.ellipse(48, 37, 22, 17, px(RAMP.NIGHT, 1));
+  pm.ellipse(48, 37, 18, 13, px(RAMP.NIGHT, 0));
+  drawTinyStar(pm, 48, 36, px(RAMP.GOLD, 3));
+  pm.vline(48, 20, 37, px(RAMP.GOLD, 1));
+
+  const sockets: Array<[number, number]> = [
+    [33, 24], [43, 22], [53, 22], [63, 24], [68, 35],
+    [63, 47], [53, 51], [43, 51], [33, 47], [28, 35],
+  ];
+  sockets.forEach(([sx, sy], i) => {
+    const lit = i < n;
+    pm.ellipse(sx, sy, 6, 5, lit ? px(RAMP.GOLD, 2) : px(RAMP.NIGHT, 2));
+    pm.ellipse(sx, sy, 4, 3, lit ? px(RAMP.ORANGE, 2) : px(RAMP.NIGHT, 1));
+    drawInstrument(pm, i, sx, sy, lit);
+    if (lit) pm.set(sx - 2, sy - 3, C.white);
+  });
+  if (n === LOCKET_MAX_EMBERS) {
+    for (const [sx, sy] of sockets) drawTinyStar(pm, sx, sy, px(RAMP.GOLD, 3));
+  }
+  pm.outline(C.outline);
+  return pm;
+}
+
+export function drawLocketPauseFrame(): Pixmap {
+  const pm = new Pixmap(230, 124);
+  pm.rect(0, 0, pm.w, pm.h, px(RAMP.NIGHT, 1));
+  pm.frame(0, 0, pm.w, pm.h, C.outline);
+  pm.frame(1, 1, pm.w - 2, pm.h - 2, C.white);
+  pm.frame(3, 3, pm.w - 6, pm.h - 6, px(RAMP.GOLD, 2));
+  pm.rect(10, 10, pm.w - 20, pm.h - 20, px(RAMP.NIGHT, 0));
+  drawTextInto(pm, 'THE STAR LOCKET', 69, 15, px(RAMP.GOLD, 3));
+  pm.hline(24, 29, 182, px(RAMP.GOLD, 1));
+  pm.hline(24, 98, 182, px(RAMP.GOLD, 1));
+  return pm;
+}
+
 /* ---------------------------------------------------------------- */
 /* Title screen painting: the meteor streaking over Otterbrook        */
 

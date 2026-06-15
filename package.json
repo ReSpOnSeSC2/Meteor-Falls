@@ -25,6 +25,7 @@
     "art:minigames": "vite-node tools/render-minigames.ts",
     "art:icons": "vite-node tools/render-icons.ts",
     "art:glyphs": "vite-node tools/render-glyphs.ts",
+    "art:ui": "vite-node tools/render-ui.ts",
     "art:flair": "vite-node tools/render-flair.ts",
     "android:sync": "npm run build && npm run art:appart && cap sync android",
     "android:apk": "npm run android:sync && cd android && .\\gradlew assembleDebug && cd .. && node tools/collect-apk.mjs"

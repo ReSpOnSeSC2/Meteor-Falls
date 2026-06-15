@@ -175,6 +175,20 @@ export const FONT_CHARS: string =
   Array.from({ length: 95 }, (_, i) => String.fromCharCode(32 + i)).join('') +
   SPECIALS.map(([ch]) => ch).join('');
 
+export const EMOJI_GLYPH_NAMES: Record<string, string> = {
+  '🔥': 'fire',
+  '❄': 'snow',
+  '⚡': 'bolt',
+  '✨': 'sparkles',
+  '🌟': 'glowing_star',
+  '🧲': 'magnet',
+  '💜': 'purple_heart',
+  '💛': 'yellow_heart',
+  '🍀': 'clover',
+  '⭐': 'star',
+  '🌙': 'moon',
+};
+
 function glyphOf(ch: string): number[] | undefined {
   const code = ch.charCodeAt(0);
   if (code >= 32 && code <= 126) return ASCII_GLYPHS[code - 32];
@@ -199,7 +213,7 @@ export function drawTextInto(pm: Pixmap, text: string, x: number, y: number, c: 
 }
 
 /** Render the full glyph grid (white pixels — tint at use sites). */
-export function makeFontSheet(): HTMLCanvasElement {
+export function makeFontPixmap(): Pixmap {
   const glyphs = [...ASCII_GLYPHS, ...SPECIALS.map(([, g]) => g)];
   const rows = Math.ceil(glyphs.length / FONT_CHARS_PER_ROW);
   const pm = new Pixmap(FONT_CHARS_PER_ROW * FONT_CELL_W, rows * FONT_CELL_H);
@@ -212,5 +226,20 @@ export function makeFontSheet(): HTMLCanvasElement {
       }
     });
   });
-  return pm.toCanvas();
+  return pm;
+}
+
+export function makeFontSheet(): HTMLCanvasElement {
+  return makeFontPixmap().toCanvas();
+}
+
+export function makeGlyphPixmap(ch: string): Pixmap {
+  const pm = new Pixmap(FONT_CELL_W, FONT_CELL_H);
+  const rows = glyphOf(ch);
+  rows?.forEach((bits, y) => {
+    for (let x = 0; x < 5; x++) {
+      if (bits & (1 << (4 - x))) pm.set(x, y + 1, C.white);
+    }
+  });
+  return pm;
 }

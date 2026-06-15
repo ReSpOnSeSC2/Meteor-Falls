@@ -85,6 +85,50 @@ const pick = (r: () => number, n: number): number => Math.floor(r() * n) % n;
 /* so no two regions' writing can be confused at a glance.                   */
 
 const SCRIPTS: Record<string, Script> = {
+  accent: {
+    voice: 'accent-mark festival script',
+    cell: ({ pm, ramp, accent }, x0, y0, r) => {
+      const cx = x0 + 3;
+      const stem = pick(r, 4);
+      if (stem === 0) pm.vline(cx, y0 + 3, 5, m(ramp));
+      else if (stem === 1) pm.line(cx - 2, y0 + 7, cx + 2, y0 + 3, m(ramp));
+      else if (stem === 2) pm.frame(cx - 2, y0 + 3, 5, 5, m(ramp));
+      else {
+        pm.hline(cx - 2, y0 + 6, 5, m(ramp));
+        pm.vline(cx, y0 + 3, 5, m(ramp));
+      }
+      const mark = pick(r, 4);
+      if (mark === 0) pm.hline(cx - 1, y0 + 1, 3, m(accent));
+      else if (mark === 1) pm.line(cx - 1, y0 + 2, cx + 1, y0, m(accent));
+      else if (mark === 2) {
+        pm.set(cx - 1, y0 + 1, m(accent));
+        pm.set(cx + 1, y0 + 1, m(accent));
+      } else {
+        pm.set(cx, y0, l(accent));
+        pm.set(cx - 1, y0 + 1, m(accent));
+        pm.set(cx + 1, y0 + 1, m(accent));
+      }
+    },
+    light: ({ pm }, x0, y0) => pm.set(x0 + 3, y0 + 1, C.white),
+  },
+
+  ramp: {
+    voice: 'stepped transit ramp script',
+    cell: ({ pm, ramp, accent }, x0, y0, r) => {
+      const base = y0 + 8;
+      const rise = 2 + pick(r, 4);
+      pm.line(x0 + 1, base, x0 + 5, base - rise, m(ramp));
+      pm.line(x0 + 1, base + 1, x0 + 5, base + 1 - rise, d(ramp));
+      const ticks = 1 + pick(r, 3);
+      for (let i = 0; i < ticks; i++) {
+        const tx = x0 + 1 + i * 2;
+        pm.vline(tx, base - i, 2, m(accent));
+      }
+      if (pick(r, 2) === 0) pm.hline(x0 + 2, y0 + 2, 4, m(accent));
+      else pm.line(x0 + 2, y0 + 2, x0 + 5, y0 + 4, m(accent));
+    },
+  },
+
   /** COLONIAL — sign-painted Americana caps: a thick post + bars + serif feet.
    *  Otterbrook hardware-store lettering, the diner window, the bus-stop board. */
   colonial: {
@@ -444,6 +488,8 @@ export interface GlyphGallerySample {
 /** a sample band per family for the `--forge` gallery — chosen so the gallery
  *  also reads as a palette tour (each family in a region it actually serves). */
 const GALLERY_BAND: Record<ScriptFamily, ItemBand> = {
+  accent: 'cross',
+  ramp: 'cross',
   colonial: 'ch1', deco: 'ch1', talavera: 'ch2', fraktur: 'ch3', runic: 'ch4',
   heraldic: 'ch5', cursive: 'ch6', barscript: 'ch7', seal: 'ch8', slavonic: 'ch9',
   frost: 'ch10', tiki: 'ch10', hush: 'ch10',
@@ -520,6 +566,14 @@ export const GLYPH_SCRIPT: Record<string, GlyphScriptSpec> = {
 /** the Phaser texture key an area's banner glyph registers under (index.ts) */
 export function glyphBannerKey(area: string): string {
   return `glyph_${area}`;
+}
+
+export function glyphScriptBannerKey(script: ScriptFamily): string {
+  return `glyph_banner_${script}`;
+}
+
+export function scriptBannerRun(script: ScriptFamily): Pixmap {
+  return forgeGlyphRun({ script, band: GALLERY_BAND[script] ?? 'cross', seed: `banner_${script}`, length: 7 });
 }
 
 /** forge an area's region-true glyph run (seeded off the area id, so a place's
