@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TILE, TILESET } from './tiles';
+import { GENERATED_BUILDINGS } from './buildings';
 
 const FRAME_W = 24;
 const FRAME_H = 32;
@@ -97,133 +98,120 @@ export function heroPortraitKey(heroId: string): string {
   return `portrait_${heroId}`;
 }
 
+export function authoredBattleBackdropKey(area: string | undefined): string | null {
+  if (!area) return null;
+  const normalized = area === 'sa' || area === 'south_america' || area === 'puerto_sol' || area === 'valle_dorado'
+    ? 'jungle'
+    : area === 'foggybottom' || area === 'wintermoor'
+      ? 'england'
+      : area;
+  return BATTLE_BACKGROUND_ART.some((art) => art.area === normalized) ? `authored_battle_bg_${normalized}` : null;
+}
+
 
 const NPC_CHARACTER_ART = [
-  { id: 'chad', key: 'authored_chad_8dir', url: new URL('../../assets/art/characters/chad_anim_46_24x32.png', import.meta.url).href },
-  { id: 'mom', key: 'authored_mom_8dir', url: new URL('../../assets/art/characters/mom_anim_46_24x32.png', import.meta.url).href },
-  { id: 'mrsPemmel', key: 'authored_mrsPemmel_8dir', url: new URL('../../assets/art/characters/mrsPemmel_anim_46_24x32.png', import.meta.url).href },
-  { id: 'mrPlummer', key: 'authored_mrPlummer_8dir', url: new URL('../../assets/art/characters/mrPlummer_anim_46_24x32.png', import.meta.url).href },
-  { id: 'ana', key: 'authored_ana_8dir', url: new URL('../../assets/art/characters/ana_anim_46_24x32.png', import.meta.url).href },
-  { id: 'vivi', key: 'authored_vivi_8dir', url: new URL('../../assets/art/characters/vivi_anim_46_24x32.png', import.meta.url).href },
-  { id: 'oldTimer', key: 'authored_oldTimer_8dir', url: new URL('../../assets/art/characters/oldTimer_anim_46_24x32.png', import.meta.url).href },
-  { id: 'pajamaKid', key: 'authored_pajamaKid_8dir', url: new URL('../../assets/art/characters/pajamaKid_anim_46_24x32.png', import.meta.url).href },
-  { id: 'smiler', key: 'authored_smiler_8dir', url: new URL('../../assets/art/characters/smiler_anim_46_24x32.png', import.meta.url).href },
-  { id: 'smilerB', key: 'authored_smilerB_8dir', url: new URL('../../assets/art/characters/smilerB_anim_46_24x32.png', import.meta.url).href },
-  { id: 'nurse', key: 'authored_nurse_8dir', url: new URL('../../assets/art/characters/nurse_anim_46_24x32.png', import.meta.url).href },
-  { id: 'manager', key: 'authored_manager_8dir', url: new URL('../../assets/art/characters/manager_anim_46_24x32.png', import.meta.url).href },
-  { id: 'quarterMan', key: 'authored_quarterMan_8dir', url: new URL('../../assets/art/characters/quarterMan_anim_46_24x32.png', import.meta.url).href },
-  { id: 'pigeonKid', key: 'authored_pigeonKid_8dir', url: new URL('../../assets/art/characters/pigeonKid_anim_46_24x32.png', import.meta.url).href },
-  { id: 'sidewalkCritic', key: 'authored_sidewalkCritic_8dir', url: new URL('../../assets/art/characters/sidewalkCritic_anim_46_24x32.png', import.meta.url).href },
-  { id: 'grayCommuter', key: 'authored_grayCommuter_8dir', url: new URL('../../assets/art/characters/grayCommuter_anim_46_24x32.png', import.meta.url).href },
-  { id: 'drugClerk', key: 'authored_drugClerk_8dir', url: new URL('../../assets/art/characters/drugClerk_anim_46_24x32.png', import.meta.url).href },
-  { id: 'martClerk', key: 'authored_martClerk_8dir', url: new URL('../../assets/art/characters/martClerk_anim_46_24x32.png', import.meta.url).href },
-  { id: 'arcadeOwner', key: 'authored_arcadeOwner_8dir', url: new URL('../../assets/art/characters/arcadeOwner_anim_46_24x32.png', import.meta.url).href },
-  { id: 'permit', key: 'authored_permit_8dir', url: new URL('../../assets/art/characters/permit_anim_46_24x32.png', import.meta.url).href },
-  { id: 'busDriver', key: 'authored_busDriver_8dir', url: new URL('../../assets/art/characters/busDriver_anim_46_24x32.png', import.meta.url).href },
-  { id: 'fernLady', key: 'authored_fernLady_8dir', url: new URL('../../assets/art/characters/fernLady_anim_46_24x32.png', import.meta.url).href },
-  { id: 'caddy', key: 'authored_caddy_8dir', url: new URL('../../assets/art/characters/caddy_anim_46_24x32.png', import.meta.url).href },
-  { id: 'captain', key: 'authored_captain_8dir', url: new URL('../../assets/art/characters/captain_anim_46_24x32.png', import.meta.url).href },
-  { id: 'dockworker', key: 'authored_dockworker_8dir', url: new URL('../../assets/art/characters/dockworker_anim_46_24x32.png', import.meta.url).href },
-  { id: 'mercadoKeeper', key: 'authored_mercadoKeeper_8dir', url: new URL('../../assets/art/characters/mercadoKeeper_anim_46_24x32.png', import.meta.url).href },
-  { id: 'deliKeeper', key: 'authored_deliKeeper_8dir', url: new URL('../../assets/art/characters/deliKeeper_anim_46_24x32.png', import.meta.url).href },
-  { id: 'curator', key: 'authored_curator_8dir', url: new URL('../../assets/art/characters/curator_anim_46_24x32.png', import.meta.url).href },
-  { id: 'tomas', key: 'authored_tomas_8dir', url: new URL('../../assets/art/characters/tomas_anim_46_24x32.png', import.meta.url).href },
-  { id: 'docBrickton', key: 'authored_docBrickton_8dir', url: new URL('../../assets/art/characters/docBrickton_anim_46_24x32.png', import.meta.url).href },
-  { id: 'docPuerto', key: 'authored_docPuerto_8dir', url: new URL('../../assets/art/characters/docPuerto_anim_46_24x32.png', import.meta.url).href },
-  { id: 'docValle', key: 'authored_docValle_8dir', url: new URL('../../assets/art/characters/docValle_anim_46_24x32.png', import.meta.url).href },
-  { id: 'priestOtter', key: 'authored_priestOtter_8dir', url: new URL('../../assets/art/characters/priestOtter_anim_46_24x32.png', import.meta.url).href },
-  { id: 'priestValle', key: 'authored_priestValle_8dir', url: new URL('../../assets/art/characters/priestValle_anim_46_24x32.png', import.meta.url).href },
-  { id: 'wisherA', key: 'authored_wisherA_8dir', url: new URL('../../assets/art/characters/wisherA_anim_46_24x32.png', import.meta.url).href },
-  { id: 'wokeA', key: 'authored_wokeA_8dir', url: new URL('../../assets/art/characters/wokeA_anim_46_24x32.png', import.meta.url).href },
-  { id: 'wisherB', key: 'authored_wisherB_8dir', url: new URL('../../assets/art/characters/wisherB_anim_46_24x32.png', import.meta.url).href },
-  { id: 'wokeB', key: 'authored_wokeB_8dir', url: new URL('../../assets/art/characters/wokeB_anim_46_24x32.png', import.meta.url).href },
-  { id: 'wisherC', key: 'authored_wisherC_8dir', url: new URL('../../assets/art/characters/wisherC_anim_46_24x32.png', import.meta.url).href },
-  { id: 'wokeC', key: 'authored_wokeC_8dir', url: new URL('../../assets/art/characters/wokeC_anim_46_24x32.png', import.meta.url).href },
-  { id: 'senora', key: 'authored_senora_8dir', url: new URL('../../assets/art/characters/senora_anim_46_24x32.png', import.meta.url).href },
-  { id: 'uncleBert', key: 'authored_uncleBert_8dir', url: new URL('../../assets/art/characters/uncleBert_anim_46_24x32.png', import.meta.url).href },
+  { id: 'chad', key: 'authored_chad_8dir', url: new URL('../../assets/art/characters/chad_8dir_24x32.png', import.meta.url).href },
+  { id: 'mom', key: 'authored_mom_8dir', url: new URL('../../assets/art/characters/mom_8dir_24x32.png', import.meta.url).href },
+  { id: 'mrsPemmel', key: 'authored_mrsPemmel_8dir', url: new URL('../../assets/art/characters/mrsPemmel_8dir_24x32.png', import.meta.url).href },
+  { id: 'mrPlummer', key: 'authored_mrPlummer_8dir', url: new URL('../../assets/art/characters/mrPlummer_8dir_24x32.png', import.meta.url).href },
+  { id: 'ana', key: 'authored_ana_8dir', url: new URL('../../assets/art/characters/ana_8dir_24x32.png', import.meta.url).href },
+  { id: 'vivi', key: 'authored_vivi_8dir', url: new URL('../../assets/art/characters/vivi_8dir_24x32.png', import.meta.url).href },
+  { id: 'oldTimer', key: 'authored_oldTimer_8dir', url: new URL('../../assets/art/characters/oldTimer_8dir_24x32.png', import.meta.url).href },
+  { id: 'pajamaKid', key: 'authored_pajamaKid_8dir', url: new URL('../../assets/art/characters/pajamaKid_8dir_24x32.png', import.meta.url).href },
+  { id: 'smiler', key: 'authored_smiler_8dir', url: new URL('../../assets/art/characters/smiler_8dir_24x32.png', import.meta.url).href },
+  { id: 'smilerB', key: 'authored_smilerB_8dir', url: new URL('../../assets/art/characters/smilerB_8dir_24x32.png', import.meta.url).href },
+  { id: 'nurse', key: 'authored_nurse_8dir', url: new URL('../../assets/art/characters/nurse_8dir_24x32.png', import.meta.url).href },
+  { id: 'manager', key: 'authored_manager_8dir', url: new URL('../../assets/art/characters/manager_8dir_24x32.png', import.meta.url).href },
+  { id: 'quarterMan', key: 'authored_quarterMan_8dir', url: new URL('../../assets/art/characters/quarterMan_8dir_24x32.png', import.meta.url).href },
+  { id: 'pigeonKid', key: 'authored_pigeonKid_8dir', url: new URL('../../assets/art/characters/pigeonKid_8dir_24x32.png', import.meta.url).href },
+  { id: 'sidewalkCritic', key: 'authored_sidewalkCritic_8dir', url: new URL('../../assets/art/characters/sidewalkCritic_8dir_24x32.png', import.meta.url).href },
+  { id: 'grayCommuter', key: 'authored_grayCommuter_8dir', url: new URL('../../assets/art/characters/grayCommuter_8dir_24x32.png', import.meta.url).href },
+  { id: 'drugClerk', key: 'authored_drugClerk_8dir', url: new URL('../../assets/art/characters/drugClerk_8dir_24x32.png', import.meta.url).href },
+  { id: 'martClerk', key: 'authored_martClerk_8dir', url: new URL('../../assets/art/characters/martClerk_8dir_24x32.png', import.meta.url).href },
+  { id: 'arcadeOwner', key: 'authored_arcadeOwner_8dir', url: new URL('../../assets/art/characters/arcadeOwner_8dir_24x32.png', import.meta.url).href },
+  { id: 'permit', key: 'authored_permit_8dir', url: new URL('../../assets/art/characters/permit_8dir_24x32.png', import.meta.url).href },
+  { id: 'busDriver', key: 'authored_busDriver_8dir', url: new URL('../../assets/art/characters/busDriver_8dir_24x32.png', import.meta.url).href },
+  { id: 'fernLady', key: 'authored_fernLady_8dir', url: new URL('../../assets/art/characters/fernLady_8dir_24x32.png', import.meta.url).href },
+  { id: 'caddy', key: 'authored_caddy_8dir', url: new URL('../../assets/art/characters/caddy_8dir_24x32.png', import.meta.url).href },
+  { id: 'captain', key: 'authored_captain_8dir', url: new URL('../../assets/art/characters/captain_8dir_24x32.png', import.meta.url).href },
+  { id: 'dockworker', key: 'authored_dockworker_8dir', url: new URL('../../assets/art/characters/dockworker_8dir_24x32.png', import.meta.url).href },
+  { id: 'mercadoKeeper', key: 'authored_mercadoKeeper_8dir', url: new URL('../../assets/art/characters/mercadoKeeper_8dir_24x32.png', import.meta.url).href },
+  { id: 'deliKeeper', key: 'authored_deliKeeper_8dir', url: new URL('../../assets/art/characters/deliKeeper_8dir_24x32.png', import.meta.url).href },
+  { id: 'curator', key: 'authored_curator_8dir', url: new URL('../../assets/art/characters/curator_8dir_24x32.png', import.meta.url).href },
+  { id: 'tomas', key: 'authored_tomas_8dir', url: new URL('../../assets/art/characters/tomas_8dir_24x32.png', import.meta.url).href },
+  { id: 'docBrickton', key: 'authored_docBrickton_8dir', url: new URL('../../assets/art/characters/docBrickton_8dir_24x32.png', import.meta.url).href },
+  { id: 'docPuerto', key: 'authored_docPuerto_8dir', url: new URL('../../assets/art/characters/docPuerto_8dir_24x32.png', import.meta.url).href },
+  { id: 'docValle', key: 'authored_docValle_8dir', url: new URL('../../assets/art/characters/docValle_8dir_24x32.png', import.meta.url).href },
+  { id: 'priestOtter', key: 'authored_priestOtter_8dir', url: new URL('../../assets/art/characters/priestOtter_8dir_24x32.png', import.meta.url).href },
+  { id: 'priestValle', key: 'authored_priestValle_8dir', url: new URL('../../assets/art/characters/priestValle_8dir_24x32.png', import.meta.url).href },
+  { id: 'wisherA', key: 'authored_wisherA_8dir', url: new URL('../../assets/art/characters/wisherA_8dir_24x32.png', import.meta.url).href },
+  { id: 'wokeA', key: 'authored_wokeA_8dir', url: new URL('../../assets/art/characters/wokeA_8dir_24x32.png', import.meta.url).href },
+  { id: 'wisherB', key: 'authored_wisherB_8dir', url: new URL('../../assets/art/characters/wisherB_8dir_24x32.png', import.meta.url).href },
+  { id: 'wokeB', key: 'authored_wokeB_8dir', url: new URL('../../assets/art/characters/wokeB_8dir_24x32.png', import.meta.url).href },
+  { id: 'wisherC', key: 'authored_wisherC_8dir', url: new URL('../../assets/art/characters/wisherC_8dir_24x32.png', import.meta.url).href },
+  { id: 'wokeC', key: 'authored_wokeC_8dir', url: new URL('../../assets/art/characters/wokeC_8dir_24x32.png', import.meta.url).href },
+  { id: 'senora', key: 'authored_senora_8dir', url: new URL('../../assets/art/characters/senora_8dir_24x32.png', import.meta.url).href },
+  { id: 'uncleBert', key: 'authored_uncleBert_8dir', url: new URL('../../assets/art/characters/uncleBert_8dir_24x32.png', import.meta.url).href },
 ] as const;
 
 const WORLD_TILE_ART = {
   key: 'authored_otterbrook_tiles16',
   url: new URL('../../assets/art/world/otterbrook_tiles_16.png', import.meta.url).href,
-  names: [
-    'grass_a',
-    'grass_b',
-    'grass_tuft',
-    'flowers_red',
-    'flowers_gold',
-    'bush',
-    'fence_h',
-    'fence_v',
-    'floor_wood',
-    'wall_int',
-    'rug',
-    'sidewalk',
-    'road',
-    'sidewalk_crack',
-    'sidewalk_curb',
-    'road_patch',
-  ],
-} as const;
+  names: TILESET.map((tile) => tile.name),
+};
+
+const WORLD_PROP_KEYS = [
+  'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
+  'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'sawhorse', 'ember',
+  'lemonade', 'bus_sign', 'doormat', 'stairs', 'door_int', 'door_int_open', 'payphone',
+  'dumpster', 'bench', 'hydrant', 'planter', 'elevator', 'water_cooler', 'copier',
+  'plant_pot', 'holding_door', 'holding_door_1', 'holding_door_2', 'holding_door_3',
+  'quota_panel', 'cot', 'office_door', 'bus_seat', 'bus_windows', 'skyline', 'shelf',
+  'shelf_b', 'atm', 'phone_pole', 'trash_can', 'parking_meter', 'news_box', 'cola_fridge',
+  'dresser', 'tv', 'stove', 'bookshelf', 'floor_lamp', 'poster_smile', 'poster_chart',
+  'banner_productive', 'paw_prints', 'gift_box', 'gift_box_open', 'cab_a', 'cab_b',
+  'cab_c', 'cab_legend', 'cage_gate', 'backboard', 'cage_mural', 'bleachers_a',
+  'bleachers_b', 'chalk_board', 'fountain', 'market_stall_a', 'market_stall_b',
+  'market_stall_c', 'banana_boat', 'departure_board', 'idol_shrine', 'pyramid_gate',
+  'mask_switch', 'mask_switch_lit', 'pedestal_0', 'pedestal_1', 'pedestal_2',
+  'pedestal_3', 'crate', 'crate_bananas', 'gangplank',
+] as const;
+
+const BASE_FACADE_KEYS = [
+  'house_rex', 'house_chad', 'house_a', 'house_b', 'drugstore', 'arcade', 'chapel',
+  'valle_house_b', 'bldg_ps_mercado', 'bldg_ps_clinic', 'bldg_ps_pension',
+  'bldg_ps_museum', 'bldg_ps_casa', 'bldg_ps_casa_b', 'bldg_ps_deli',
+  'bldg_ps_cantina', 'bldg_ps_casa_c', 'bldg_ps_pension_b', 'bldg_ps_catedral',
+  'bldg_ps_gran_hotel', 'bldg_ps_aduana', 'valle_shop', 'valle_clinic',
+  'valle_chapel', 'valle_house', 'clubhouse', 'mansion_a', 'mansion_b', 'mansion_c',
+  'golf_gatehouse', 'clubhouse_grand', 'bldg_bagels', 'bldg_starmart',
+  'bldg_hospital', 'bldg_brickmore', 'bldg_dept', 'bldg_video', 'bldg_bank',
+  'bldg_arcade2', 'bldg_diner', 'bldg_apartments', 'bldg_office', 'bldg_civic',
+  'bldg_theater', 'bldg_market', 'bldg_brownstone', 'bldg_warehouse', 'bldg_neon',
+  'bldg_deptstore', 'bldg_tower_glass', 'bldg_tower_arms', 'bldg_tower_corp',
+] as const;
+
+const WORLD_FACADE_KEYS = Array.from(new Set([
+  ...BASE_FACADE_KEYS,
+  ...GENERATED_BUILDINGS.map((building) => building.name),
+]));
 
 const WORLD_PROP_ART = [
-  { key: 'house_rex', url: new URL('../../assets/art/world/facades/house_rex.png', import.meta.url).href },
-  { key: 'house_chad', url: new URL('../../assets/art/world/facades/house_chad.png', import.meta.url).href },
-  { key: 'house_a', url: new URL('../../assets/art/world/facades/house_a.png', import.meta.url).href },
-  { key: 'house_b', url: new URL('../../assets/art/world/facades/house_b.png', import.meta.url).href },
-  { key: 'drugstore', url: new URL('../../assets/art/world/facades/drugstore.png', import.meta.url).href },
-  { key: 'arcade', url: new URL('../../assets/art/world/facades/arcade.png', import.meta.url).href },
-  { key: 'chapel', url: new URL('../../assets/art/world/facades/chapel.png', import.meta.url).href },
-  { key: 'valle_house_b', url: new URL('../../assets/art/world/facades/valle_house_b.png', import.meta.url).href },
-  { key: 'tree', url: new URL('../../assets/art/world/props/tree.png', import.meta.url).href },
-  { key: 'tree_b', url: new URL('../../assets/art/world/props/tree_b.png', import.meta.url).href },
-  { key: 'tree_c', url: new URL('../../assets/art/world/props/tree_c.png', import.meta.url).href },
-  { key: 'pine', url: new URL('../../assets/art/world/props/pine.png', import.meta.url).href },
-  { key: 'sign', url: new URL('../../assets/art/world/props/sign.png', import.meta.url).href },
-  { key: 'picnic', url: new URL('../../assets/art/world/props/picnic.png', import.meta.url).href },
-  { key: 'picnic_blanket', url: new URL('../../assets/art/world/props/picnic_blanket.png', import.meta.url).href },
-  { key: 'phone_table', url: new URL('../../assets/art/world/props/phone_table.png', import.meta.url).href },
-  { key: 'bed', url: new URL('../../assets/art/world/props/bed.png', import.meta.url).href },
-  { key: 'desk', url: new URL('../../assets/art/world/props/desk.png', import.meta.url).href },
-  { key: 'sofa', url: new URL('../../assets/art/world/props/sofa.png', import.meta.url).href },
-  { key: 'counter', url: new URL('../../assets/art/world/props/counter.png', import.meta.url).href },
-  { key: 'dresser', url: new URL('../../assets/art/world/props/dresser.png', import.meta.url).href },
-  { key: 'tv', url: new URL('../../assets/art/world/props/tv.png', import.meta.url).href },
-  { key: 'bookshelf', url: new URL('../../assets/art/world/props/bookshelf.png', import.meta.url).href },
-  { key: 'floor_lamp', url: new URL('../../assets/art/world/props/floor_lamp.png', import.meta.url).href },
-  { key: 'gift_box', url: new URL('../../assets/art/world/props/gift_box.png', import.meta.url).href },
-  { key: 'gift_box_open', url: new URL('../../assets/art/world/props/gift_box_open.png', import.meta.url).href },
-  { key: 'crate', url: new URL('../../assets/art/world/props/crate.png', import.meta.url).href },
-  { key: 'crate_bananas', url: new URL('../../assets/art/world/props/crate_bananas.png', import.meta.url).href },
-  { key: 'payphone', url: new URL('../../assets/art/world/props/payphone.png', import.meta.url).href },
-  { key: 'dumpster', url: new URL('../../assets/art/world/props/dumpster.png', import.meta.url).href },
-  { key: 'bench', url: new URL('../../assets/art/world/props/bench.png', import.meta.url).href },
-  { key: 'hydrant', url: new URL('../../assets/art/world/props/hydrant.png', import.meta.url).href },
-  { key: 'planter', url: new URL('../../assets/art/world/props/planter.png', import.meta.url).href },
-  { key: 'phone_pole', url: new URL('../../assets/art/world/props/phone_pole.png', import.meta.url).href },
-  { key: 'trash_can', url: new URL('../../assets/art/world/props/trash_can.png', import.meta.url).href },
-  { key: 'parking_meter', url: new URL('../../assets/art/world/props/parking_meter.png', import.meta.url).href },
-  { key: 'news_box', url: new URL('../../assets/art/world/props/news_box.png', import.meta.url).href },
-  { key: 'atm', url: new URL('../../assets/art/world/props/atm.png', import.meta.url).href },
-  { key: 'water_cooler', url: new URL('../../assets/art/world/props/water_cooler.png', import.meta.url).href },
-  { key: 'copier', url: new URL('../../assets/art/world/props/copier.png', import.meta.url).href },
-  { key: 'banana_boat', url: new URL('../../assets/art/world/props/banana_boat.png', import.meta.url).href },
-  { key: 'gangplank', url: new URL('../../assets/art/world/props/gangplank.png', import.meta.url).href },
-  { key: 'departure_board', url: new URL('../../assets/art/world/props/departure_board.png', import.meta.url).href },
-  { key: 'fountain', url: new URL('../../assets/art/world/props/fountain.png', import.meta.url).href },
-  { key: 'market_stall_a', url: new URL('../../assets/art/world/props/market_stall_a.png', import.meta.url).href },
-  { key: 'market_stall_b', url: new URL('../../assets/art/world/props/market_stall_b.png', import.meta.url).href },
-  { key: 'market_stall_c', url: new URL('../../assets/art/world/props/market_stall_c.png', import.meta.url).href },
-  { key: 'idol_shrine', url: new URL('../../assets/art/world/props/idol_shrine.png', import.meta.url).href },
-  { key: 'pyramid_gate', url: new URL('../../assets/art/world/props/pyramid_gate.png', import.meta.url).href },
-  { key: 'mask_switch', url: new URL('../../assets/art/world/props/mask_switch.png', import.meta.url).href },
-  { key: 'mask_switch_lit', url: new URL('../../assets/art/world/props/mask_switch_lit.png', import.meta.url).href },
-  { key: 'pedestal_0', url: new URL('../../assets/art/world/props/pedestal_0.png', import.meta.url).href },
-  { key: 'pedestal_1', url: new URL('../../assets/art/world/props/pedestal_1.png', import.meta.url).href },
-  { key: 'pedestal_2', url: new URL('../../assets/art/world/props/pedestal_2.png', import.meta.url).href },
-  { key: 'pedestal_3', url: new URL('../../assets/art/world/props/pedestal_3.png', import.meta.url).href },
-  { key: 'plant_pot', url: new URL('../../assets/art/world/props/plant_pot.png', import.meta.url).href },
-] as const;
+  ...WORLD_FACADE_KEYS.map((key) => ({
+    key,
+    url: new URL(`../../assets/art/world/facades/${key}.png`, import.meta.url).href,
+  })),
+  ...WORLD_PROP_KEYS.map((key) => ({
+    key,
+    url: new URL(`../../assets/art/world/props/${key}.png`, import.meta.url).href,
+  })),
+];
+
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school'].map((area) => ({
+  area,
+  key: `authored_battle_bg_${area}`,
+  url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,
+}));
 
 export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   gift_box: { w: 14, h: 14 },
@@ -565,6 +553,7 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   HERO_PORTRAIT_ART.forEach((art) => scene.load.image(heroPortraitKey(art.id), art.url));
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
+  BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
   ENEMY_BATTLE_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
 }
 
@@ -656,3 +645,4 @@ export function applyAuthoredWorldArt(scene: Phaser.Scene): void {
   applyAuthoredWorldTiles(scene);
   applyAuthoredWorldProps(scene);
 }
+

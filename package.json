@@ -21,6 +21,7 @@
     "art:castsheet": "vite-node tools/cast-sheet.ts",
     "art:facesheet": "vite-node tools/forge-faces.ts",
     "art:buildings": "vite-node tools/render-buildings.ts",
+    "art:pkg09": "vite-node tools/render-pkg09.ts",
     "art:vehicles": "vite-node tools/render-vehicles.ts",
     "art:minigames": "vite-node tools/render-minigames.ts",
     "art:icons": "vite-node tools/render-icons.ts",

@@ -99,6 +99,7 @@ import { itemFxKey, stagePoseOf, impactKeyOf, FX_REGISTRY } from '../battle/fxRe
 import { PhaseRunner, pickRiddle, type DamageClass } from '../battle/phases';
 import { battlerSheetKey, bustSheetKey, type BattlerLook, type WearTier } from '../spritegen/battlers';
 import { ensureBattleArt } from '../spritegen';
+import { authoredBattleBackdropKey } from '../spritegen/authored';
 import { wearSpriteKey } from '../spritegen/enemies';
 import { weaponClassOf, swingSfxOf } from '../spritegen/weapons';
 import { itemIconKey } from '../spritegen/icons';
@@ -176,6 +177,9 @@ interface BattleConfig {
   guestChad: boolean;
   glintAssist: boolean;
   boss: boolean;
+  /** Optional authored battle backdrop family; otherwise inferred from the first foe. */
+  backdrop?: string;
+  area?: string;
   /** S2: the Manager fight teaches Mia's first Pray with a one-time hint */
   prayTutorial?: boolean;
 }
@@ -635,6 +639,15 @@ export class BattleScene extends Phaser.Scene {
 
   private buildBackground(): void {
     const first = ENEMIES[this.cfg.enemyIds[0]];
+    const backdropKey = authoredBattleBackdropKey(this.cfg.backdrop ?? this.cfg.area ?? this.backdropArea(first.id));
+    if (backdropKey && this.textures.exists(backdropKey)) {
+      this.add
+        .image(0, 0, backdropKey)
+        .setOrigin(0)
+        .setScrollFactor(0)
+        .setDisplaySize(this.scale.width, this.scale.height);
+      return;
+    }
     const [ra, rb] = first.bg;
     if (this.game.renderer.type === Phaser.WEBGL) {
       const [ar, ag, ab] = rgbOf(px(ra, 1));
@@ -651,6 +664,27 @@ export class BattleScene extends Phaser.Scene {
       // pure cosmetic pulse — the one place a tween is still allowed (ADR-024)
       this.tweens.add({ targets: r, alpha: { from: 1, to: 0.7 }, duration: 1400, yoyo: true, repeat: -1 });
     }
+  }
+
+  private backdropArea(enemyId: string): string {
+    if ([
+      'blazer_smiler',
+    ].includes(enemyId)) return 'brickton';
+    if ([
+      'pickpocket_parrot', 'gilded_beetle', 'cursed_souvenir', 'step_mask',
+      'banana_bunch', 'jungle_jitterbug', 'gilded_grin',
+    ].includes(enemyId)) return 'jungle';
+    if ([
+      'prefect_drone', 'possessed_textbook', 'fog_hound', 'greenhouse_creeper',
+      'detention_desk', 'schedule_bell', 'foggy_locker', 'head_prefect',
+      'boiler_golem', 'the_invigilator', 'headmaster_mainframe',
+    ].includes(enemyId)) return 'school';
+    if ([
+      'tea_poltergeist', 'cricket_eleven', 'pillar_box', 'brolly_bat',
+      'moor_sheep', 'soot_imp', 'tea_trolley', 'telephone_box',
+      'overdue_tome', 'roman_sentry',
+    ].includes(enemyId)) return 'england';
+    return 'otterbrook';
   }
 
   private buildEnemies(): void {
