@@ -159,8 +159,6 @@ import {
   drawHandCursor,
   drawPhoneIcon,
   drawSunIcon,
-  drawTitleArt,
-  drawLogo,
 } from './ui';
 import {
   drawFountain,
@@ -748,8 +746,6 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   addPixmap(scene, 'phone_icon', drawPhoneIcon());
   addPixmap(scene, 'sun_icon', drawSunIcon()); // §A4.5 SUNNY SIDE (S14)
   addPixmap(scene, 'swirl', makeSpiral());
-  addPixmap(scene, 'title_art', drawTitleArt(GAME_W, GAME_H));
-  addPixmap(scene, 'logo', drawLogo());
 
   // S16 Movement 8 (ADR-060) — THE ICON ATLAS: every §A8 item's 12–16px menu
   // face, registered under itemIconKey(id). The Items bag, Equip screen, shops,

@@ -150,7 +150,7 @@ export class LinksScene extends Phaser.Scene {
     // ---- the world (per-hole texture swaps in startHole) ----
     // night backdrop: the course is narrower than the screen — the paused
     // world must never show through the gutters
-    this.add.rectangle(200, 113, 404, 230, colorOf(px(RAMP.NIGHT, 0))).setScrollFactor(0).setDepth(-2);
+    this.add.image(0, 0, 'links_bg').setOrigin(0, 0).setScrollFactor(0).setDepth(-3);
     this.course = this.add.image(0, 0, `links_${this.holes[0].id}`).setOrigin(0, 0).setDepth(0);
     this.flag = this.add.image(0, 0, 'links_flag').setOrigin(0.5, 1).setDepth(20);
     this.ballSpr = this.add.image(0, 0, 'links_ball').setDepth(30);

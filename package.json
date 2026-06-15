@@ -16,6 +16,7 @@
     "test": "npm run validate && vitest run",
     "test:watch": "vitest",
     "art:appart": "vite-node tools/render-appart.ts",
+    "art:pkg01": "vite-node tools/render-pkg01.ts",
     "art:castsheet": "vite-node tools/cast-sheet.ts",
     "art:facesheet": "vite-node tools/forge-faces.ts",
     "art:buildings": "vite-node tools/render-buildings.ts",

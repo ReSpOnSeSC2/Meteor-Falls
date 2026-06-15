@@ -16,6 +16,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.add.image(0, 0, 'boot_splash').setOrigin(0, 0);
     // ORDER MATTERS: authored HERO art must land BEFORE generateAllTextures.
     // applyAuthoredHeroArt swaps the 'rex' texture via textures.remove()+addCanvas,
     // which DESTROYS the old Frame objects. generateAllTextures creates the
@@ -31,6 +32,6 @@ export class BootScene extends Phaser.Scene {
     // frames can be painted over in-place. Props have no animation references.
     applyAuthoredWorldArt(this);
     this.scene.launch('ui');
-    this.scene.start('title');
+    this.time.delayedCall(450, () => this.scene.start('title'));
   }
 }

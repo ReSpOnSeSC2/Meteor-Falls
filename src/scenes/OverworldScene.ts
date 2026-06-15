@@ -1651,6 +1651,7 @@ export class OverworldScene extends Phaser.Scene {
                 }
               }
               if (outcome === 'defeat') {
+                this.scene.resume();
                 this.handleDefeat();
                 resolve(outcome);
                 return;
@@ -1727,7 +1728,11 @@ export class OverworldScene extends Phaser.Scene {
     this.registry.set('defeated', true);
     // S6: wake at the last Dad-save's spot (hospitals reuse respawnPoint)
     const p = GS.respawnPoint();
-    this.scene.restart({ mapId: p.mapId, x: p.x, y: p.y, facing: p.facing });
+    this.add.image(0, 0, 'game_over')
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(99999);
+    this.time.delayedCall(900, () => this.scene.restart({ mapId: p.mapId, x: p.x, y: p.y, facing: p.facing }));
   }
 
   /* ---------------- interactions ---------------- */

@@ -82,6 +82,16 @@ const HERO_PORTRAIT_ART = [
   { id: 'dorin', url: new URL('../../assets/art/busts/dorin_bust_32.png', import.meta.url).href },
 ] as const;
 
+const FRAMING_SCREEN_ART = [
+  { key: 'boot_splash', url: new URL('../../assets/art/screens/boot_splash.png', import.meta.url).href },
+  { key: 'title_art', url: new URL('../../assets/art/screens/title_bg.png', import.meta.url).href },
+  { key: 'logo', url: new URL('../../assets/art/screens/title_logo.png', import.meta.url).href },
+  { key: 'name_entry_bg', url: new URL('../../assets/art/screens/name_entry_bg.png', import.meta.url).href },
+  { key: 'save_slots_bg', url: new URL('../../assets/art/screens/save_slots_bg.png', import.meta.url).href },
+  { key: 'links_bg', url: new URL('../../assets/art/screens/links_bg.png', import.meta.url).href },
+  { key: 'game_over', url: new URL('../../assets/art/screens/game_over.png', import.meta.url).href },
+] as const;
+
 /** texture key for a hero's single portrait bust (see HERO_PORTRAIT_ART) */
 export function heroPortraitKey(heroId: string): string {
   return `portrait_${heroId}`;
@@ -545,6 +555,7 @@ function makeBattlerCanvas(src: SourceImage): HTMLCanvasElement {
 }
 
 export function preloadAuthoredArt(scene: Phaser.Scene): void {
+  FRAMING_SCREEN_ART.forEach((art) => scene.load.image(art.key, art.url));
   HERO_ART.forEach((art) => {
     scene.load.image(art.characterKey, art.characterUrl);
     scene.load.image(art.bustKey, art.bustUrl);

@@ -49,6 +49,7 @@ export class NameEntryScene extends Phaser.Scene {
     this.values = NEW_GAME_ENTRIES.map((e) => e.prefill);
     this.recapObjects = [];
     AUDIO.playMusic('title');
+    this.add.image(0, 0, 'name_entry_bg').setOrigin(0, 0).setDepth(-10);
     this.cameras.main.fadeIn(300, 0, 0, 0);
 
     makeWindow(this, 56, 4, 288, 178);

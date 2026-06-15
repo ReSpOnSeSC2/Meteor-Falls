@@ -50,7 +50,7 @@ export class SaveSlotsScene extends Phaser.Scene {
     const W = this.scale.width;
     const gold = colorOf(px(RAMP.GOLD, 3));
     const night = colorOf(px(RAMP.NIGHT, 3));
-    this.add.rectangle(0, 0, W, this.scale.height, colorOf(px(RAMP.NIGHT, 0))).setOrigin(0);
+    this.add.image(0, 0, 'save_slots_bg').setOrigin(0, 0);
 
     const title = "DAD'S NOTEBOOKS";
     makeWindow(this, 8, 8, title.length * 6 + 24, 24);

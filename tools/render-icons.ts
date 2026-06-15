@@ -9,12 +9,12 @@
  *   npm run art:icons -- --region ch2 # just one region's catalog (by item band)
  *   npm run art:icons -- --forge      # the forge gallery: every subcategory, one sample each
  */
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { Pixmap } from '../src/spritegen/pixmap';
 import { RAMP, px, T } from '../src/palette';
 import { drawTextInto } from '../src/spritegen/font';
 import { ITEMS, itemKindLabel, type ItemDef } from '../src/data/items';
-import { ITEM_ICON, forgeGallery } from '../src/spritegen/icons';
+import { ITEM_ICON, forgeGallery, forgeIcon } from '../src/spritegen/icons';
 import type { ItemBand, ItemKind } from '../src/schemas';
 import { pixmapToPng } from './png';
 
@@ -25,6 +25,7 @@ const CELL_H = 22; // icon area
 const LABEL_H = 9;
 const HEADER_H = 11;
 const COLS = 5;
+const ITEM_EXPORT_DIR = 'assets/art/icons/items';
 
 const KIND_ORDER: ItemKind[] = [
   'weapon', 'armor', 'arms', 'charm', 'food', 'pp', 'cure', 'tonic', 'battle', 'valuable', 'basket', 'key',
@@ -85,6 +86,34 @@ function write(name: string, sheet: Pixmap): void {
   console.log(`  wrote .shots/${name} (${sheet.w}x${sheet.h} @${SCALE}x)`);
 }
 
+function parsePackageIds(path: string): string[] {
+  const md = readFileSync(path, 'utf8');
+  return [...md.matchAll(/^-\s+\[[ xX]\]\s+`([^`]+)`/gm)].map((m) => m[1]);
+}
+
+function writeItemIcons(ids: string[], opts: { skipMissing?: boolean; placeholderBands?: boolean } = {}): void {
+  mkdirSync(ITEM_EXPORT_DIR, { recursive: true });
+  const missing = ids.filter((id) => !ITEM_ICON[id]);
+  const placeholderBands = missing.filter((id) => opts.placeholderBands && BANDS.includes(id as ItemBand));
+  const unhandledMissing = missing.filter((id) => !placeholderBands.includes(id));
+  if (unhandledMissing.length) {
+    const message = `missing ITEM_ICON row(s): ${unhandledMissing.join(', ')}`;
+    if (!opts.skipMissing) {
+      console.error(`cannot export ${message}`);
+      process.exit(1);
+    }
+    console.warn(`skipping ${message}`);
+  }
+  for (const id of ids.filter((id) => ITEM_ICON[id])) {
+    writeFileSync(`${ITEM_EXPORT_DIR}/${id}.png`, pixmapToPng(ITEM_ICON[id]()));
+  }
+  for (const id of placeholderBands) {
+    writeFileSync(`${ITEM_EXPORT_DIR}/${id}.png`, pixmapToPng(forgeIcon({ subcat: 'note', band: id as ItemBand, detail: 'label', seed: id })));
+  }
+  if (placeholderBands.length) console.warn(`wrote band placeholder PNG(s): ${placeholderBands.join(', ')}`);
+  console.log(`exported ${ids.length - unhandledMissing.length} item icon PNGs to ${ITEM_EXPORT_DIR}/`);
+}
+
 /** the catalog grouped by kind (skipping empty kinds) */
 function itemsByKind(filter?: (item: ItemDef) => boolean): Group[] {
   return KIND_ORDER.flatMap((kind) => {
@@ -99,12 +128,19 @@ function itemsByKind(filter?: (item: ItemDef) => boolean): Group[] {
 
 const argv = process.argv;
 const wantForge = argv.includes('--forge');
+const wantExportItems = argv.includes('--export-items');
+const skipMissing = argv.includes('--skip-missing');
+const placeholderBands = argv.includes('--placeholder-bands');
+const pi = argv.indexOf('--package');
 const ri = argv.indexOf('--region');
 const region = ri >= 0 ? argv[ri + 1] : null;
 
 mkdirSync('.shots', { recursive: true });
 
-if (wantForge) {
+if (wantExportItems) {
+  const ids = pi >= 0 ? parsePackageIds(argv[pi + 1]) : Object.keys(ITEM_ICON).sort();
+  writeItemIcons(ids, { skipMissing, placeholderBands });
+} else if (wantForge) {
   // THE FORGE GALLERY — one sample per subcategory, grouped by the ItemKind it
   // serves, captioned with the subcat name. The proof (at 41 items, when no
   // shipped item uses most subcats yet) that the forge stamps a distinct,

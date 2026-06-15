@@ -20,7 +20,7 @@ export class TitleScene extends Phaser.Scene {
     this.started = false;
     const W = this.scale.width;
     this.add.image(0, 0, 'title_art').setOrigin(0, 0);
-    const logo = this.add.image(W / 2, 64, 'logo');
+    const logo = this.add.image(W / 2, 58, 'logo').setScale(0.75);
     this.tweens.add({ targets: logo, y: 60, duration: 1800, yoyo: true, repeat: -1, ease: 'sine.inout' });
     this.add
       .bitmapText(W / 2, 110, 'retro', 'An EarthBound-hearted RPG', 6)
