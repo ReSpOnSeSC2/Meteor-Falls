@@ -3,15 +3,21 @@ import { TILE, TILESET } from './tiles';
 import { GENERATED_BUILDINGS } from './buildings';
 import { SPORT_FRAME_COUNT } from './athletes';
 import { GOLF_FRAME_COUNT } from './golfers';
+import { ART_SCALE } from './scale';
 
-const FRAME_W = 24;
-const FRAME_H = 32;
-const BUST_W = 32;
-const BUST_H = 32;
-const BATTLER_W = 28;
-const BATTLER_H = 36;
-const SPORT_FRAME_W = 32;
-const SPORT_FRAME_H = 40;
+// Runtime frame sizes = native authoring size × ART_SCALE. The frozen generators
+// draw at native; authored PNGs are sliced into these (larger) runtime frames, so
+// authored art is supplied at the runtime resolution while ×1 stays identical.
+const FRAME_W = 24 * ART_SCALE;
+const FRAME_H = 32 * ART_SCALE;
+const BUST_W = 32 * ART_SCALE;
+const BUST_H = 32 * ART_SCALE;
+const BATTLER_W = 28 * ART_SCALE;
+const BATTLER_H = 36 * ART_SCALE;
+const SPORT_FRAME_W = 32 * ART_SCALE;
+const SPORT_FRAME_H = 40 * ART_SCALE;
+/** runtime tile size (native TILE × ART_SCALE) for authored-tile slicing */
+const RT_TILE = TILE * ART_SCALE;
 
 const TOTAL_CHARACTER_FRAMES = 46;
 const TOTAL_BUST_FRAMES = 18;
@@ -647,11 +653,11 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   WORLD_TILE_ART.names.forEach((name, authoredIndex) => {
     const tileIndex = TILESET.findIndex((tile) => tile.name === name);
     if (tileIndex < 0) return;
-    ctx.clearRect(tileIndex * TILE, 0, TILE, TILE);
-    ctx.drawImage(tileArt, authoredIndex * TILE, 0, TILE, TILE, tileIndex * TILE, 0, TILE, TILE);
+    ctx.clearRect(tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
+    ctx.drawImage(tileArt, authoredIndex * RT_TILE, 0, RT_TILE, RT_TILE, tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
   });
 
-  replaceTextureSheet(scene, 'tiles', canvas, TILE, TILE, TILESET.length, TILESET.length);
+  replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);
 }
 
 export function applyAuthoredWorldProps(scene: Phaser.Scene): void {

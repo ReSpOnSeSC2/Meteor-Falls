@@ -17,7 +17,8 @@
  * applyAuthoredBattleArt → applyAuthoredWorldArt).
  */
 import Phaser from 'phaser';
-import { Pixmap, framesToCanvas } from './pixmap';
+import { Pixmap, framesToCanvas, upscaleCanvas } from './pixmap';
+import { ART_SCALE } from './scale';
 import {
   CAST,
   generateCharacterFrames,
@@ -201,21 +202,25 @@ import { makeFontSheet, FONT_CHARS, FONT_CELL_W, FONT_CELL_H, FONT_CHARS_PER_ROW
 import { RAMP, C, px } from '../palette';
 import { applyAuthoredAthleteSheet, applyAuthoredBattlerSheet, applyAuthoredBustSheet, applyAuthoredGolferSheet } from './authored';
 
-export const GAME_W = 400;
-export const GAME_H = 225;
+export const GAME_W = 400 * ART_SCALE;
+export const GAME_H = 225 * ART_SCALE;
 
 function addPixmap(scene: Phaser.Scene, key: string, pm: Pixmap): void {
   if (scene.textures.exists(key)) return;
-  scene.textures.addCanvas(key, pm.toCanvas());
+  // Procedural texture: generated at native size, upscaled to runtime (ADR seam).
+  scene.textures.addCanvas(key, upscaleCanvas(pm.toCanvas(), ART_SCALE));
 }
 
 function addSheet(scene: Phaser.Scene, key: string, frames: Pixmap[], cols: number): void {
   if (scene.textures.exists(key)) return;
   const { canvas, fw, fh } = framesToCanvas(frames, cols);
-  const tex = scene.textures.addCanvas(key, canvas);
+  // Upscale the whole sheet ×ART_SCALE; the per-frame atlas rects scale to match.
+  const tex = scene.textures.addCanvas(key, upscaleCanvas(canvas, ART_SCALE));
   if (!tex) return;
+  const rfw = fw * ART_SCALE;
+  const rfh = fh * ART_SCALE;
   frames.forEach((_, i) => {
-    tex.add(i, 0, (i % cols) * fw, Math.floor(i / cols) * fh, fw, fh);
+    tex.add(i, 0, (i % cols) * rfw, Math.floor(i / cols) * rfh, rfw, rfh);
   });
 }
 
@@ -816,23 +821,23 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   if (!scene.textures.exists('pixel')) {
     const pmPix = new Pixmap(2, 2);
     pmPix.fill(C.white);
-    scene.textures.addCanvas('pixel', pmPix.toCanvas());
+    scene.textures.addCanvas('pixel', upscaleCanvas(pmPix.toCanvas(), ART_SCALE));
   }
 
-  // bitmap font
+  // bitmap font — sheet upscaled at the seam; the RetroFont grid scales to match
   if (!scene.textures.exists('fontsheet')) {
-    scene.textures.addCanvas('fontsheet', makeFontSheet());
+    scene.textures.addCanvas('fontsheet', upscaleCanvas(makeFontSheet(), ART_SCALE));
     const config: Phaser.Types.GameObjects.BitmapText.RetroFontConfig = {
       image: 'fontsheet',
-      width: FONT_CELL_W,
-      height: FONT_CELL_H,
+      width: FONT_CELL_W * ART_SCALE,
+      height: FONT_CELL_H * ART_SCALE,
       chars: FONT_CHARS,
       charsPerRow: FONT_CHARS_PER_ROW,
       'spacing.x': 0,
       'spacing.y': 0,
       'offset.x': 0,
       'offset.y': 0,
-      lineSpacing: 2,
+      lineSpacing: 2 * ART_SCALE,
     };
     scene.cache.bitmapFont.add('retro', Phaser.GameObjects.RetroFont.Parse(scene, config));
   }

@@ -21,6 +21,8 @@ import { DEPTH_UI } from '../ui/windows';
 const D_STAGE = DEPTH_UI - 8;
 /** where the battler's feet land (origin 0.5,1) — under the enemy row */
 export const STAGE_Y = 158;
+const STAGE_ACTOR_SCALE = 1.25;
+const STAGE_ACTOR_HALF_W = Math.ceil(14 * STAGE_ACTOR_SCALE);
 
 type HoldPose = 'idle' | 'cast' | 'aim' | 'pray';
 
@@ -40,6 +42,7 @@ export class StageView {
       .image(0, 0, '__DEFAULT')
       .setOrigin(0.5, 1)
       .setScrollFactor(0)
+      .setScale(STAGE_ACTOR_SCALE)
       .setDepth(D_STAGE)
       .setVisible(false);
   }
@@ -50,7 +53,7 @@ export class StageView {
 
   /** actor center — fx that answer the caster (motes, glows) aim here */
   point(): { x: number; y: number } {
-    return { x: this.spr.x, y: this.spr.y - 18 };
+    return { x: this.spr.x, y: this.spr.y - 18 * STAGE_ACTOR_SCALE };
   }
 
   /**
@@ -68,7 +71,8 @@ export class StageView {
     const W = this.scene.scale.width;
     // stand short of the target's center, on the side the hero came from
     const side = from.x <= targetX ? -1 : 1;
-    const toX = Math.max(26, Math.min(W - 26, targetX + side * standoff));
+    const padX = STAGE_ACTOR_HALF_W + 8;
+    const toX = Math.max(padX, Math.min(W - padX, targetX + side * Math.round(standoff * STAGE_ACTOR_SCALE)));
     this.spr
       .setTexture(sheet)
       .setFrame(BATTLER_FRAME.stepA)

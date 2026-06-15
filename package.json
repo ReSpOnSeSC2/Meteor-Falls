@@ -15,6 +15,7 @@
     "encounters": "vite-node tools/encounter-report.ts",
     "test": "npm run validate && vitest run",
     "test:watch": "vitest",
+    "resheet": "vite-node tools/resheet.ts --",
     "art:appart": "vite-node tools/render-appart.ts",
     "android:sync": "npm run build && npm run art:appart && cap sync android",
     "android:apk": "npm run android:sync && cd android && .\\gradlew assembleDebug && cd .. && node tools/collect-apk.mjs"
