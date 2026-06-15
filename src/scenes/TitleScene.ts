@@ -20,14 +20,11 @@ export class TitleScene extends Phaser.Scene {
     this.started = false;
     const W = this.scale.width;
     this.add.image(0, 0, 'title_art').setOrigin(0, 0);
-    const logo = this.add.image(W / 2, 58, 'logo').setScale(0.75);
+    const logo = this.add.image(W / 2, 58, 'logo').setScale(0.78);
     this.tweens.add({ targets: logo, y: 60, duration: 1800, yoyo: true, repeat: -1, ease: 'sine.inout' });
-    this.add
-      .bitmapText(W / 2, 110, 'retro', 'An EarthBound-hearted RPG', 6)
-      .setOrigin(0.5, 0)
-      .setTint(colorOf(px(RAMP.NIGHT, 3)));
+    this.titleText(W / 2, 112, 'A small-town cosmic RPG', colorOf(px(RAMP.CYAN, 3)), 0.85);
     this.pressText = this.add
-      .bitmapText(W / 2, 150, 'retro', '- PRESS A -', 6)
+      .bitmapText(W / 2, 151, 'retro', 'PRESS A / TAP TO BEGIN', 6)
       .setOrigin(0.5, 0)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
     this.time.addEvent({
@@ -35,10 +32,7 @@ export class TitleScene extends Phaser.Scene {
       loop: true,
       callback: () => this.pressText?.setVisible(this.menuOpen ? true : !this.pressText.visible),
     });
-    this.add
-      .bitmapText(W / 2, 212, 'retro', 'v0.1 "FUZZY PICKLES" — touch / pad / keys', 6)
-      .setOrigin(0.5, 0)
-      .setTint(colorOf(px(RAMP.NIGHT, 3)));
+    this.titleText(W / 2, 212, 'v0.1 FUZZY PICKLES', colorOf(px(RAMP.CYAN, 2)), 0.7);
 
     // tap anywhere also works as A on the title
     this.input.on('pointerdown', () => {
@@ -51,6 +45,19 @@ export class TitleScene extends Phaser.Scene {
     if (!this.menuOpen && !this.started && INPUT.justPressed('A')) {
       void this.openMenu();
     }
+  }
+
+  private titleText(x: number, y: number, text: string, tint: number, alpha = 1): Phaser.GameObjects.BitmapText {
+    this.add
+      .bitmapText(x + 1, y + 1, 'retro', text, 6)
+      .setOrigin(0.5, 0)
+      .setTint(colorOf(px(RAMP.NIGHT, 0)))
+      .setAlpha(alpha);
+    return this.add
+      .bitmapText(x, y, 'retro', text, 6)
+      .setOrigin(0.5, 0)
+      .setTint(tint)
+      .setAlpha(alpha);
   }
 
   private async openMenu(): Promise<void> {

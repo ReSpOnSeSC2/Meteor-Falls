@@ -16,7 +16,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.add.image(0, 0, 'boot_splash').setOrigin(0, 0);
+    const W = this.scale.width;
+    this.add.image(0, 0, 'title_art').setOrigin(0, 0);
+    this.add.image(W / 2, 58, 'logo').setScale(0.78);
     // ORDER MATTERS: authored HERO art must land BEFORE generateAllTextures.
     // applyAuthoredHeroArt swaps the 'rex' texture via textures.remove()+addCanvas,
     // which DESTROYS the old Frame objects. generateAllTextures creates the
