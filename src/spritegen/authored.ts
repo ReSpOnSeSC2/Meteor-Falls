@@ -187,7 +187,7 @@ const WORLD_TILE_ART = {
 
 const WORLD_PROP_KEYS = [
   'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
-  'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'sawhorse', 'ember',
+  'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'meteor_rock_hickory_hill', 'sawhorse', 'ember',
   'lemonade', 'bus_sign', 'doormat', 'stairs', 'door_int', 'door_int_open', 'payphone',
   'dumpster', 'bench', 'hydrant', 'planter', 'elevator', 'water_cooler', 'copier',
   'plant_pot', 'holding_door', 'holding_door_1', 'holding_door_2', 'holding_door_3',

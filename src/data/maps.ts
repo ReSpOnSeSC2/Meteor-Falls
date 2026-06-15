@@ -945,7 +945,7 @@ function buildHill(): MapDef {
     grid: g.out(),
     props: [
       ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
-      { sprite: 'meteor_rock', x: 14, y: 5, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
+      { sprite: 'meteor_rock_hickory_hill', x: 14, y: 5, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
       { sprite: 'picnic', x: 11, y: 23, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'sign', x: 12, y: 39, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       // S9 §A10 #1: sniff clue 2 — prints by the picnic table, mid-trail only
