@@ -19,6 +19,7 @@ import { composeEnemy, proposeCandidates, FACE_W, FACE_H } from '../spritegen/pa
 import { FORGED_ENEMIES } from '../levelkit/forge/registry';
 import { FACE_PICKS } from '../data/drafts/faces';
 import type { PartsSpec } from '../schemas';
+import { s } from '../spritegen/scale';
 
 const PAGES = ['THE CAST', 'COMPANIONS', 'THE OPPOSITION', 'THE WORLD', 'REMIX A KID', 'THE FORGE'] as const;
 
@@ -72,15 +73,15 @@ export class SpriteLabScene extends Phaser.Scene {
 
   create(): void {
     this.page = 0;
-    this.add.rectangle(0, 0, 400, 225, colorOf(px(RAMP.NIGHT, 1))).setOrigin(0);
-    makeWindow(this, 6, 4, 388, 24);
+    this.add.rectangle(0, 0, this.scale.width, this.scale.height, colorOf(px(RAMP.NIGHT, 1))).setOrigin(0);
+    makeWindow(this, s(6), s(4), s(388), s(24));
     this.title = this.add
-      .bitmapText(200, 12, 'retro', '', 6)
+      .bitmapText(s(200), s(12), 'retro', '', s(6))
       .setOrigin(0.5, 0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
     this.add
-      .bitmapText(200, 214, 'retro', '</> page   A action   B back to title', 6)
+      .bitmapText(s(200), s(214), 'retro', '</> page   A action   B back to title', s(6))
       .setOrigin(0.5, 0)
       .setTint(colorOf(px(RAMP.NIGHT, 3)));
     this.showPage();
@@ -122,22 +123,22 @@ export class SpriteLabScene extends Phaser.Scene {
       const col = i % 8;
       const row = Math.floor(i / 8) - this.castScroll;
       if (row < 0 || row > 2) return; // off the sheet this scroll
-      const x = 28 + col * 48;
-      const y = 92 + row * 62;
+      const x = s(28 + col * 48);
+      const y = s(92 + row * 62);
       const spr = this.add.sprite(x, y, id, 0).setOrigin(0.5, 1).setScale(1.8);
       spr.play(`${id}-walk-down`);
       // heroes label with their canon DISPLAY name (ADR-023: id 'faye' is
       // a frozen engine identifier; the girl is named Mia)
       const display = id in HEROES ? HEROES[id as HeroId].name : id;
       const label = this.add
-        .bitmapText(x, y + 2, 'retro', display.toUpperCase().slice(0, 7), 6)
+        .bitmapText(x, y + s(2), 'retro', display.toUpperCase().slice(0, 7), s(6))
         .setOrigin(0.5, 0)
         .setTint(colorOf(px(RAMP.PAPER, 2)));
       this.castSprites.push(spr);
       this.content.push(spr, label);
     });
     const pos = this.add
-      .bitmapText(388, 36, 'retro', `${this.castScroll + 1}-${Math.min(this.castScroll + 3, totalRows)}/${totalRows}  ^v`, 6)
+      .bitmapText(s(388), s(36), 'retro', `${this.castScroll + 1}-${Math.min(this.castScroll + 3, totalRows)}/${totalRows}  ^v`, s(6))
       .setOrigin(1, 0)
       .setTint(colorOf(px(RAMP.GOLD, 2)));
     this.content.push(pos);
@@ -145,38 +146,41 @@ export class SpriteLabScene extends Phaser.Scene {
 
   /** S7c: dog/glint/angels at 1x AND 3x — the EB-made-at-both-scales check */
   private pageCompanions(): void {
+    // x/y arrive runtime-scaled from the call sites; only the bitmapText size
+    // is a native literal to scale here.
     const label = (x: number, y: number, text: string): void => {
       this.content.push(
         this.add
-          .bitmapText(x, y, 'retro', text, 6)
+          .bitmapText(x, y, 'retro', text, s(6))
           .setOrigin(0.5, 0)
           .setTint(colorOf(px(RAMP.PAPER, 2))),
       );
     };
+    // `scale` is a setScale multiplier (texture already carries ×ART_SCALE) — kept as-is.
     const anim = (x: number, y: number, key: string, animKey: string, scale: number): void => {
       const spr = this.add.sprite(x, y, key, 0).setOrigin(0.5, 1).setScale(scale);
       spr.play(animKey);
       this.content.push(spr);
     };
     // Biscuit — eastbound + westbound trots, both scales
-    anim(36, 86, 'dog', 'dog-walk', 3);
-    anim(78, 86, 'dog', 'dog-walk-left', 3);
-    anim(57, 104, 'dog', 'dog-walk', 1);
-    label(57, 108, 'BISCUIT');
+    anim(s(36), s(86), 'dog', 'dog-walk', 3);
+    anim(s(78), s(86), 'dog', 'dog-walk-left', 3);
+    anim(s(57), s(104), 'dog', 'dog-walk', 1);
+    label(s(57), s(108), 'BISCUIT');
     // Glint — the heart should visibly beat at 1x
-    anim(150, 86, 'glint', 'glint-flit', 3);
-    anim(150, 102, 'glint', 'glint-flit', 1);
-    label(150, 108, 'GLINT');
+    anim(s(150), s(86), 'glint', 'glint-flit', 3);
+    anim(s(150), s(102), 'glint', 'glint-flit', 1);
+    label(s(150), s(108), 'GLINT');
     // the guest angel, both scales
-    anim(222, 86, 'angel', 'angel-float', 3);
-    anim(222, 100, 'angel', 'angel-float', 1);
-    label(222, 108, 'ANGEL');
+    anim(s(222), s(86), 'angel', 'angel-float', 3);
+    anim(s(222), s(100), 'angel', 'angel-float', 1);
+    label(s(222), s(108), 'ANGEL');
     // §A4.7: the five heroes mourn as themselves (§A3 order; S15h adds Pippa)
     (['rex', 'faye', 'milo', 'pippa', 'dorin'] as const).forEach((id, i) => {
-      const x = 16 + i * 75;
-      anim(x, 188, `angel_${id}`, `angel_${id}-float`, 3);
-      anim(x + 30, 188, `angel_${id}`, `angel_${id}-float`, 1);
-      label(x + 8, 192, `ANGEL ${(id in HEROES ? HEROES[id as HeroId].name : id).toUpperCase()}`);
+      const x = s(16 + i * 75);
+      anim(x, s(188), `angel_${id}`, `angel_${id}-float`, 3);
+      anim(x + s(30), s(188), `angel_${id}`, `angel_${id}-float`, 1);
+      label(x + s(8), s(192), `ANGEL ${(id in HEROES ? HEROES[id as HeroId].name : id).toUpperCase()}`);
     });
   }
 
@@ -193,13 +197,14 @@ export class SpriteLabScene extends Phaser.Scene {
     list.forEach(([key, name], i) => {
       const col = i % 4;
       const row = Math.floor(i / 4);
-      const x = 60 + col * 95;
-      const y = 78 + row * 78;
+      const x = s(60 + col * 95);
+      const y = s(78 + row * 78);
       // v3 battle sprites are EB-scale already (64-96px) — show them near 1:1
       const spr = this.add.image(x, y, key).setScale(key.includes('tick') ? 0.85 : 0.9);
-      this.tweens.add({ targets: spr, y: y - 3, duration: 1000 + i * 100, yoyo: true, repeat: -1 });
+      // y - 3 is a px-space bob amplitude → scale; the 1000+i*100 is a duration (ms) → unchanged.
+      this.tweens.add({ targets: spr, y: y - s(3), duration: 1000 + i * 100, yoyo: true, repeat: -1 });
       const label = this.add
-        .bitmapText(x, y + 34, 'retro', name, 6)
+        .bitmapText(x, y + s(34), 'retro', name, s(6))
         .setOrigin(0.5, 0)
         .setTint(colorOf(px(RAMP.PAPER, 2)));
       this.content.push(spr, label);
@@ -233,10 +238,12 @@ export class SpriteLabScene extends Phaser.Scene {
       ['poster_smile', 270, 192, 1.1],
       ['ember', 292, 192, 1.6],
     ] as const;
-    for (const [key, x, y, s] of items) {
-      this.content.push(this.add.image(x, y, key).setScale(s));
+    // `sc` is the per-item setScale multiplier (texture already ×ART_SCALE) — kept;
+    // only the x/y placement is native px → scaled. (Renamed from `s` to not shadow the import.)
+    for (const [key, x, y, sc] of items) {
+      this.content.push(this.add.image(s(x), s(y), key).setScale(sc));
     }
-    const strip = this.add.image(330, 200, 'tiles').setScale(0.55).setOrigin(0.5);
+    const strip = this.add.image(s(330), s(200), 'tiles').setScale(0.55).setOrigin(0.5);
     this.content.push(strip);
   }
 
@@ -245,13 +252,13 @@ export class SpriteLabScene extends Phaser.Scene {
     const labels = this.remixParamLabels();
     labels.forEach((_, i) => {
       const t = this.add
-        .bitmapText(170, 44 + i * 16, 'retro', '', 6)
+        .bitmapText(s(170), s(44 + i * 16), 'retro', '', s(6))
         .setTint(colorOf(px(RAMP.PAPER, 2)));
       this.remixTexts.push(t);
       this.content.push(t);
     });
     const hint = this.add
-      .bitmapText(170, 44 + labels.length * 16 + 6, 'retro', 'up/down pick - A change - MENU random', 6)
+      .bitmapText(s(170), s(44 + labels.length * 16 + 6), 'retro', 'up/down pick - A change - MENU random', s(6))
       .setTint(colorOf(px(RAMP.NIGHT, 3)));
     this.content.push(hint);
     this.refreshRemixTexts();
@@ -318,7 +325,8 @@ export class SpriteLabScene extends Phaser.Scene {
       });
     }
     const old = this.remixSprite;
-    this.remixSprite = this.add.sprite(85, 116, key, standFrame('down')).setScale(5);
+    // position scales; setScale(5) is a texture multiplier (texture already ×ART_SCALE) — kept.
+    this.remixSprite = this.add.sprite(s(85), s(116), key, standFrame('down')).setScale(5);
     this.remixSprite.play(`${key}-idle-down`); // open on the breathing idle
     this.content.push(this.remixSprite);
     old?.destroy();
@@ -337,7 +345,7 @@ export class SpriteLabScene extends Phaser.Scene {
     const swaps = [RAMP.RED, RAMP.BLUE, RAMP.GRASS, RAMP.GOLD];
     this.remixStrip.push(
       this.add
-        .bitmapText(86, 178, 'retro', 'PALETTE-SWAP', 6)
+        .bitmapText(s(86), s(178), 'retro', 'PALETTE-SWAP', s(6))
         .setOrigin(0.5, 0)
         .setTint(colorOf(px(RAMP.GOLD, 2))),
     );
@@ -346,7 +354,8 @@ export class SpriteLabScene extends Phaser.Scene {
       if (this.textures.exists(tkey)) this.textures.remove(tkey);
       const pm = base.clone().recolor({ [this.remixSpec.top.ramp]: toRamp });
       this.textures.addCanvas(tkey, pm.toCanvas());
-      this.remixStrip.push(this.add.image(34 + i * 36, 200, tkey).setOrigin(0.5, 0.5).setScale(1.5));
+      // position scales; setScale(1.5) is a texture multiplier — kept.
+      this.remixStrip.push(this.add.image(s(34 + i * 36), s(200), tkey).setOrigin(0.5, 0.5).setScale(1.5));
     });
   }
 
@@ -425,34 +434,38 @@ export class SpriteLabScene extends Phaser.Scene {
     const e = this.forgeList[this.forgeIdx % this.forgeList.length];
     const cands = proposeCandidates(e.id, e.role, e.chapter, 8);
     this.forgeCand = ((this.forgeCand % cands.length) + cands.length) % cands.length;
+    // x/y arrive runtime-scaled from the call sites; only the bitmapText size scales here.
     const label = (x: number, y: number, text: string, ramp: number, shade: 0 | 1 | 2 | 3 = 3, origin = 0): void => {
-      this.content.push(this.add.bitmapText(x, y, 'retro', text, 6).setOrigin(origin, 0).setTint(colorOf(px(ramp, shade))));
+      this.content.push(this.add.bitmapText(x, y, 'retro', text, s(6)).setOrigin(origin, 0).setTint(colorOf(px(ramp, shade))));
     };
-    label(12, 34, `${e.id}  (${e.role}, Ch.${e.chapter})`, RAMP.GOLD);
-    label(388, 34, `${(this.forgeIdx % this.forgeList.length) + 1}/${this.forgeList.length}  ^v`, RAMP.GOLD, 2, 1);
-    label(12, 48, 'candidates  —  A cycles the pick', RAMP.NIGHT, 3);
+    label(s(12), s(34), `${e.id}  (${e.role}, Ch.${e.chapter})`, RAMP.GOLD);
+    label(s(388), s(34), `${(this.forgeIdx % this.forgeList.length) + 1}/${this.forgeList.length}  ^v`, RAMP.GOLD, 2, 1);
+    label(s(12), s(48), 'candidates  —  A cycles the pick', RAMP.NIGHT, 3);
     cands.forEach((spec, i) => {
-      const x = 28 + i * 45;
-      const y = 74;
+      const x = s(28 + i * 45);
+      const y = s(74);
       this.forgeFace(spec, 0, x, y, 0.55);
-      if (i === this.forgeCand) this.content.push(this.add.rectangle(x, y, FACE_W * 0.55 + 6, FACE_H * 0.55 + 6).setStrokeStyle(1, colorOf(px(RAMP.GOLD, 3))));
-      label(x, y + 22, `${i}`, i === this.forgeCand ? RAMP.GOLD : RAMP.NIGHT, 3, 0.5);
+      // the highlight frame matches the 0.55-scaled runtime texture: s(FACE_W)*0.55 (the
+      // sprite's setScale multiplier is kept) plus s(6) of native padding.
+      if (i === this.forgeCand) this.content.push(this.add.rectangle(x, y, s(FACE_W) * 0.55 + s(6), s(FACE_H) * 0.55 + s(6)).setStrokeStyle(1, colorOf(px(RAMP.GOLD, 3))));
+      label(x, y + s(22), `${i}`, i === this.forgeCand ? RAMP.GOLD : RAMP.NIGHT, 3, 0.5);
     });
     const sel = cands[this.forgeCand];
     ['FULL', 'SCUFFED', 'BATTERED'].forEach((name, w) => {
-      const x = 90 + w * 110;
-      this.forgeFace(sel, w as 0 | 1 | 2, x, 150, 0.95);
-      label(x, 184, name, RAMP.CYAN, 3, 0.5);
+      const x = s(90 + w * 110);
+      this.forgeFace(sel, w as 0 | 1 | 2, x, s(150), 0.95);
+      label(x, s(184), name, RAMP.CYAN, 3, 0.5);
     });
-    label(12, 198, `parts ${sel.silhouette}/${sel.material}/${sel.accessory}/${sel.wear}/${sel.region} seed ${sel.seed}`, RAMP.PAPER, 2);
+    label(s(12), s(198), `parts ${sel.silhouette}/${sel.material}/${sel.accessory}/${sel.wear}/${sel.region} seed ${sel.seed}`, RAMP.PAPER, 2);
     const picked = FACE_PICKS[e.id];
     const pIdx = picked
       ? cands.findIndex((c) => c.silhouette === picked.silhouette && c.material === picked.material && c.accessory === picked.accessory && c.wear === picked.wear)
       : -1;
-    label(388, 198, picked ? `RECORDED: cand ${pIdx >= 0 ? pIdx : '?'}` : 'unpicked', picked ? RAMP.GRASS : RAMP.RED, 2, 1);
+    label(s(388), s(198), picked ? `RECORDED: cand ${pIdx >= 0 ? pIdx : '?'}` : 'unpicked', picked ? RAMP.GRASS : RAMP.RED, 2, 1);
   }
 
-  /** compose a forged face live and place it as an image (dev-only textures) */
+  /** compose a forged face live and place it as an image (dev-only textures).
+   *  x/y arrive runtime-scaled; `scale` is a setScale multiplier (kept as-is). */
   private forgeFace(spec: PartsSpec, wear: 0 | 1 | 2, x: number, y: number, scale: number): void {
     const key = `forgelab_${this.forgeCounter++}`;
     this.textures.addCanvas(key, composeEnemy(spec, wear).toCanvas());

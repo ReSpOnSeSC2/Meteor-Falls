@@ -19,6 +19,7 @@ import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, DEPTH_UI } from './windows';
 import { colorOf, RAMP, px } from '../palette';
 import { paginate, ROW_H } from './paginate';
+import { s } from '../spritegen/scale';
 
 // re-export the pure page math so callers/tests can reach it through ui/pick too
 export { paginate, pageOf, type PageInfo } from './paginate';
@@ -56,29 +57,30 @@ export const DIM = 0x8890a0;
 export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
   const { options } = opts;
   const cols = Math.max(1, opts.cols ?? 1);
-  const rowH = ROW_H;
-  const iconPad = opts.icons?.some((i) => i !== undefined) ? 13 : 0;
-  const colW = Math.max(...options.map((o) => o.length)) * 6 + 28 + iconPad;
-  const titleH = opts.title ? 22 : 0;
+  const rowH = s(ROW_H); // ROW_H is native px (paginate.ts); pitch in runtime px
+  const iconPad = opts.icons?.some((i) => i !== undefined) ? s(13) : 0;
+  const colW = Math.max(...options.map((o) => o.length)) * s(6) + s(28) + iconPad;
+  const titleH = opts.title ? s(22) : 0;
   // x is clamped once the box width is known; the box can never overflow the
   // RIGHT edge. Pin it now so the height auto-fit can read scale.height fairly.
-  const w = colW * cols + 8;
-  const x = Math.max(4, Math.min(opts.x, scene.scale.width - w - 4));
+  // opts.x/opts.y are runtime px (callers pass s()-scaled coords).
+  const w = colW * cols + s(8);
+  const x = Math.max(s(4), Math.min(opts.x, scene.scale.width - w - s(4)));
   // [PLAYTEST B] AUTO-FIT: how many rows physically fit between the list's top
   // and the reserved bottom panel. The list NEVER grows past this — it paginates.
   // Header offset for page markers lives inside the +16 frame padding (the
   // "▼ more" sits in the bottom margin), so the height budget is purely rows.
   const reserveBottom = Math.max(0, opts.reserveBottom ?? 0);
-  const ly0 = Math.max(4, opts.y) + titleH;
-  const availH = scene.scale.height - ly0 - reserveBottom - 4;
-  const fitRows = Math.max(1, Math.floor((availH - 16) / rowH));
+  const ly0 = Math.max(s(4), opts.y) + titleH;
+  const availH = scene.scale.height - ly0 - reserveBottom - s(4);
+  const fitRows = Math.max(1, Math.floor((availH - s(16)) / rowH));
   const capRows = opts.maxRows !== undefined ? Math.min(opts.maxRows, fitRows) : fitRows;
   const { rowsPerCol, perPage, pages } = paginate(options.length, cols, capRows);
 
   // the window is sized to the PAGE (rowsPerCol), so a 100-item bag and a
   // 3-item one render the same fixed frame — overflow is structurally impossible.
-  const h = rowsPerCol * rowH + 16;
-  const y = Math.max(4, Math.min(opts.y, scene.scale.height - h - titleH - reserveBottom - 4));
+  const h = rowsPerCol * rowH + s(16);
+  const y = Math.max(s(4), Math.min(opts.y, scene.scale.height - h - titleH - reserveBottom - s(4)));
   const ly = y + titleH;
 
   let page = 0;
@@ -87,11 +89,11 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
 
   // --- the title bar (static across pages) ---
   if (opts.title) {
-    const tw = opts.title.length * 6 + 20;
-    made.push(makeWindow(scene, x, y, Math.max(tw, 60), 20));
+    const tw = opts.title.length * s(6) + s(20);
+    made.push(makeWindow(scene, x, y, Math.max(tw, s(60)), s(20)));
     made.push(
       scene.add
-        .bitmapText(x + 10, y + 6, 'retro', opts.title, 6)
+        .bitmapText(x + s(10), y + s(6), 'retro', opts.title, s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.GOLD, 3))),
@@ -104,7 +106,7 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
   const slotPos = (slot: number): { cx: number; cy: number } => {
     const c = Math.floor(slot / rowsPerCol);
     const r = slot % rowsPerCol;
-    return { cx: x + 4 + c * colW, cy: ly + 9 + r * rowH };
+    return { cx: x + s(4) + c * colW, cy: ly + s(9) + r * rowH };
   };
   const slotOfIndex = (i: number): number => i - page * perPage; // page-local slot, or out of range
   const indexOfSlot = (slot: number): number => page * perPage + slot;
@@ -122,7 +124,7 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
 
   const place = (): void => {
     const { cx, cy } = slotPos(slotOfIndex(sel));
-    hand.setPosition(cx + 8, cy + 4);
+    hand.setPosition(cx + s(8), cy + s(4));
   };
 
   // tap zones cover only the VISIBLE page's slots — a tap always maps to the row
@@ -131,11 +133,11 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
     zones.forEach((z) => z.destroy());
     zones = [];
     const n = slotCount();
-    for (let s = 0; s < n; s++) {
-      const i = indexOfSlot(s);
-      const { cx, cy } = slotPos(s);
+    for (let slot = 0; slot < n; slot++) {
+      const i = indexOfSlot(slot);
+      const { cx, cy } = slotPos(slot);
       const z = scene.add
-        .zone(cx, cy - 3, colW, rowH)
+        .zone(cx, cy - s(3), colW, rowH)
         .setOrigin(0, 0)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 3)
@@ -157,17 +159,17 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
     pageObjs.forEach((o) => o.destroy());
     pageObjs.length = 0;
     const n = slotCount();
-    for (let s = 0; s < n; s++) {
-      const i = indexOfSlot(s);
-      const { cx, cy } = slotPos(s);
+    for (let slot = 0; slot < n; slot++) {
+      const i = indexOfSlot(slot);
+      const { cx, cy } = slotPos(slot);
       const icon = opts.icons?.[i];
       if (icon !== undefined) {
         pageObjs.push(
-          scene.add.image(cx + 22, cy + 3, icon).setScrollFactor(0).setDepth(DEPTH_UI + 1),
+          scene.add.image(cx + s(22), cy + s(3), icon).setScrollFactor(0).setDepth(DEPTH_UI + 1),
         );
       }
       const t = scene.add
-        .bitmapText(cx + 18 + iconPad, cy, 'retro', options[i], 6)
+        .bitmapText(cx + s(18) + iconPad, cy, 'retro', options[i], s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
       if (opts.disabled?.has(i)) t.setTint(DIM);
@@ -179,7 +181,7 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
       const label = `${page > 0 ? '▲ ' : ''}${page + 1}/${pages}${page < pages - 1 ? ' ▼' : ''}`;
       pageObjs.push(
         scene.add
-          .bitmapText(x + w - label.length * 6 - 6, ly + h - 11, 'retro', label, 6)
+          .bitmapText(x + w - label.length * s(6) - s(6), ly + h - s(11), 'retro', label, s(6))
           .setScrollFactor(0)
           .setDepth(DEPTH_UI + 1)
           .setTint(colorOf(px(RAMP.GOLD, 3))),
@@ -307,8 +309,8 @@ export async function confirmEquip(
   const note = equipSecondaryNote(item);
   const preview = note ? `${primary} ${note}` : primary;
   const sel = await pick(scene, {
-    x: 130,
-    y: 64,
+    x: s(130),
+    y: s(64),
     options: ['Equip it', 'Never mind'],
     title: `${hero.name}: ${preview}`,
   });

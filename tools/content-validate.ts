@@ -107,7 +107,8 @@ import { CAST } from '../src/spritegen/characters';
 // S12c: the cage's math + frame contracts are Phaser-free and pinnable
 import { SPORT_FRAME, SPORT_FRAME_COUNT } from '../src/spritegen/athletes';
 import { RANGE, METER, BLOCK_TIMING, STEAL_TIMING, MOVES, LAYUP_METER, FINISH_RANGE_PX, effectiveRange, greenWindow, makeChance, dunkWindow, layupWindow } from '../src/hoops/sim';
-import { COURT } from '../src/hoops/court';
+import { COURT_RT } from '../src/hoops/court';
+import { s } from '../src/spritegen/scale';
 // S13: the links — holes, golfers, rewards, the SUNDAY SET, the golfer sheet
 import { HOLES, CLUBS, COURSE_PAR, expandGrid, terrainAt } from '../src/links/course';
 import { GOLFERS, GOLFER_ORDER, LINKS_TEXT, LINKS_FILL_TOKENS, LINKS_REWARDS, SUNDAY_SET } from '../src/data/links';
@@ -1898,10 +1899,10 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
   }
   // the range law: derived from sht, clamped [0.85, 1.35]×ARC_R; the green
   // closes AT range; non-green is zero at 1.5× and beyond
-  if (Math.abs(RANGE.MIN - COURT.ARC_R * 0.85) > 0.001 || Math.abs(RANGE.MAX - COURT.ARC_R * 1.35) > 0.001) {
+  if (Math.abs(RANGE.MIN - COURT_RT.ARC_R * 0.85) > 0.001 || Math.abs(RANGE.MAX - COURT_RT.ARC_R * 1.35) > 0.001) {
     fail('cage2', `effectiveRange clamps to [ARC_R·0.85, ARC_R·1.35] per spec`);
   }
-  if (RANGE.PER_SHT !== 1.2) fail('cage2', `range derives at 1.2px per sht point (spec)`);
+  if (RANGE.PER_SHT !== s(1.2)) fail('cage2', `range derives at 1.2px per sht point (native spec, ×ART_SCALE at runtime)`);
   if (greenWindow(50, effectiveRange(50), 0) !== 0) fail('cage2', `the green window must CLOSE at range`);
   if (makeChance('slight', 50, effectiveRange(50) * 1.5, 0) !== 0) fail('cage2', `non-green make% must be ZERO at 1.5× range`);
   if (makeChance('brick', 50, 10, 0) !== 0) fail('cage2', `way off = ZERO (no brick floor)`);
@@ -1928,7 +1929,7 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
   // the trigger is plain movement inside the finish range, reads exist
   if (layupWindow(50, 0) <= dunkWindow(50, 0)) fail('cage2', `the layup window must be the forgiving one (ADR-038)`);
   if (LAYUP_METER.LO < 0.04 || LAYUP_METER.HI > 0.2) fail('cage2', `LAYUP_METER clamps drifted from spec [0.05, 0.17]-ish bounds`);
-  if (FINISH_RANGE_PX !== 165) fail('cage2', `the finish trigger range is 165px (ADR-038 — easy to generate)`);
+  if (FINISH_RANGE_PX !== s(165)) fail('cage2', `the finish trigger range is 165px native (ADR-038 — ×ART_SCALE at runtime)`);
   for (const key of ['inMake', 'deepMake', 'noGood', 'airPopup'] as const) {
     if (!(key in HOOPS_TEXT) || HOOPS_TEXT[key].length === 0) fail('cage2', `the make/miss reads need HOOPS_TEXT.${key} (ADR-038)`);
   }

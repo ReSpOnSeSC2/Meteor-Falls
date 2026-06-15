@@ -24,11 +24,12 @@ import { DIALOGUE } from '../data/dialogue';
 import { Dialogue, makeWindow, vars, DEPTH_UI } from '../ui/windows';
 import { DIM } from '../ui/pick';
 import { colorOf, RAMP, px } from '../palette';
+import { s } from '../spritegen/scale';
 
-const PANEL_X = 40;
-const PANEL_W = 320;
-const PANEL_H = 46;
-const panelY = (i: number): number => 40 + i * 54;
+const PANEL_X = s(40);
+const PANEL_W = s(320);
+const PANEL_H = s(46);
+const panelY = (i: number): number => s(40) + i * s(54);
 
 export class SaveSlotsScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -50,17 +51,18 @@ export class SaveSlotsScene extends Phaser.Scene {
     const W = this.scale.width;
     const gold = colorOf(px(RAMP.GOLD, 3));
     const night = colorOf(px(RAMP.NIGHT, 3));
-    this.add.image(0, 0, 'save_slots_bg').setOrigin(0, 0);
+    this.add.image(0, 0, 'save_slots_bg').setOrigin(0, 0).setDisplaySize(this.scale.width, this.scale.height);
 
     const title = "DAD'S NOTEBOOKS";
-    makeWindow(this, 8, 8, title.length * 6 + 24, 24);
+    // 6 = native glyph advance, 24 = native padding, 24 = native window height
+    makeWindow(this, s(8), s(8), title.length * s(6) + s(24), s(24));
     this.add
-      .bitmapText(20, 16, 'retro', title, 6)
+      .bitmapText(s(20), s(16), 'retro', title, s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(gold);
     this.add
-      .bitmapText(W / 2, 206, 'retro', 'A: CONTINUE   B: BACK', 6)
+      .bitmapText(W / 2, s(206), 'retro', 'A: CONTINUE   B: BACK', s(6))
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
@@ -70,7 +72,7 @@ export class SaveSlotsScene extends Phaser.Scene {
     this.peeks.forEach((p, i) => this.drawPanel(p, i));
 
     this.hand = this.add
-      .image(PANEL_X - 8, panelY(0) + PANEL_H / 2, 'hand')
+      .image(PANEL_X - s(8), panelY(0) + PANEL_H / 2, 'hand')
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2);
 
@@ -95,9 +97,10 @@ export class SaveSlotsScene extends Phaser.Scene {
     const gold = colorOf(px(RAMP.GOLD, 3));
     const night = colorOf(px(RAMP.NIGHT, 3));
     makeWindow(this, PANEL_X, y, PANEL_W, PANEL_H);
+    // lx/ly are native-px offsets within the panel (call sites pass literals)
     const line = (lx: number, ly: number, text: string): Phaser.GameObjects.BitmapText =>
       this.add
-        .bitmapText(PANEL_X + lx, y + ly, 'retro', text, 6)
+        .bitmapText(PANEL_X + s(lx), y + s(ly), 'retro', text, s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
     const head = line(10, 7, `NOTEBOOK ${SLOT_IDS[i]}`);

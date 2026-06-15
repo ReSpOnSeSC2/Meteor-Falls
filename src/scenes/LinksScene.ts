@@ -57,6 +57,7 @@ import { ITEMS } from '../data/items';
 import { makeRng, type Rng } from '../hoops/sim';
 import { Dialogue, everyFrame, makeWindow, vars, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
+import { s } from '../spritegen/scale';
 
 export interface LinksLaunch {
   kind: 'stroke' | 'match';
@@ -150,30 +151,30 @@ export class LinksScene extends Phaser.Scene {
     // ---- the world (per-hole texture swaps in startHole) ----
     // night backdrop: the course is narrower than the screen — the paused
     // world must never show through the gutters
-    this.add.image(0, 0, 'links_bg').setOrigin(0, 0).setScrollFactor(0).setDepth(-3);
+    this.add.image(0, 0, 'links_bg').setOrigin(0, 0).setDisplaySize(this.scale.width, this.scale.height).setScrollFactor(0).setDepth(-3);
     this.course = this.add.image(0, 0, `links_${this.holes[0].id}`).setOrigin(0, 0).setDepth(0);
     this.flag = this.add.image(0, 0, 'links_flag').setOrigin(0.5, 1).setDepth(20);
     this.ballSpr = this.add.image(0, 0, 'links_ball').setDepth(30);
-    this.aimLine = this.add.rectangle(0, 0, 2, 2, colorOf(px(RAMP.PAPER, 3))).setDepth(25).setAlpha(0.8);
+    this.aimLine = this.add.rectangle(0, 0, s(2), s(2), colorOf(px(RAMP.PAPER, 3))).setDepth(25).setAlpha(0.8);
     this.burst = this.add.sprite(0, 0, 'links_splash', 0).setDepth(35).setVisible(false);
     this.golfer = this.add.sprite(0, 0, this.golferKey, 0).setOrigin(0.5, 1).setDepth(28);
 
-    // ---- HUD ----
+    // ---- HUD ---- (screen-space px on the ×ART_SCALE framebuffer → s())
     const paper = colorOf(px(RAMP.PAPER, 3));
     const gold = colorOf(px(RAMP.GOLD, 3));
-    this.hudTop = this.add.bitmapText(200, 4, 'retro', '', 6).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(gold);
-    this.hudWind = this.add.bitmapText(396, 14, 'retro', '', 6).setOrigin(1, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(colorOf(px(RAMP.CYAN, 2)));
-    this.hudClub = this.add.bitmapText(4, 14, 'retro', '', 6).setScrollFactor(0).setDepth(DEPTH_UI).setTint(paper);
+    this.hudTop = this.add.bitmapText(s(200), s(4), 'retro', '', s(6)).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(gold);
+    this.hudWind = this.add.bitmapText(s(396), s(14), 'retro', '', s(6)).setOrigin(1, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(colorOf(px(RAMP.CYAN, 2)));
+    this.hudClub = this.add.bitmapText(s(4), s(14), 'retro', '', s(6)).setScrollFactor(0).setDepth(DEPTH_UI).setTint(paper);
     this.ticker = this.add
-      .bitmapText(200, 24, 'retro', '', 6)
+      .bitmapText(s(200), s(24), 'retro', '', s(6))
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI)
       .setCenterAlign()
-      .setMaxWidth(380)
+      .setMaxWidth(s(380))
       .setTint(colorOf(px(RAMP.MAGENTA, 2)));
     this.banner = this.add
-      .bitmapText(200, 92, 'retro', '', 12)
+      .bitmapText(s(200), s(92), 'retro', '', s(12))
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI)
@@ -181,18 +182,20 @@ export class LinksScene extends Phaser.Scene {
       .setTint(gold);
     // THE SWING PANE: the big golfer + the meters, fixed bottom-left
     this.panelObjs = [];
-    makeWindow(this, 4, 138, 78, 84);
-    const pane = this.add.sprite(36, 216, this.golferKey, 0).setOrigin(0.5, 1).setScale(1.6).setScrollFactor(0).setDepth(DEPTH_UI + 2);
+    makeWindow(this, s(4), s(138), s(78), s(84));
+    // the golfer TEXTURE is already ×ART_SCALE; setScale(1.6) is a fixed
+    // multiplier on top, so it stays — only the pane's position scales
+    const pane = this.add.sprite(s(36), s(216), this.golferKey, 0).setOrigin(0.5, 1).setScale(1.6).setScrollFactor(0).setDepth(DEPTH_UI + 2);
     this.golferPane = pane;
-    this.add.rectangle(70, 214, 7, 68, colorOf(px(RAMP.INK, 0))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 2);
+    this.add.rectangle(s(70), s(214), s(7), s(68), colorOf(px(RAMP.INK, 0))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 2);
     // S14b: fill + window size by SCALE off a full-height quad — assigning
     // a Phaser Shape's .height does not rebuild its rendered geometry (the
     // root cause of the reported "fill going the wrong way": it never grew)
-    this.meterWin = this.add.rectangle(70, 214, 7, 68, colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
-    this.meterZero = this.add.rectangle(70, 214, 9, 1, colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
-    this.meterFill = this.add.rectangle(70, 214, 5, 68, colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
-    this.meterMark = this.add.rectangle(70, 214, 9, 1, colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
-    this.meterNeedle = this.add.rectangle(70, 214, 9, 2, colorOf(px(RAMP.CYAN, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
+    this.meterWin = this.add.rectangle(s(70), s(214), s(7), s(68), colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
+    this.meterZero = this.add.rectangle(s(70), s(214), s(9), s(1), colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
+    this.meterFill = this.add.rectangle(s(70), s(214), s(5), s(68), colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
+    this.meterMark = this.add.rectangle(s(70), s(214), s(9), s(1), colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
+    this.meterNeedle = this.add.rectangle(s(70), s(214), s(9), s(2), colorOf(px(RAMP.CYAN, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
 
     AUDIO.playMusic('cage');
     this.game.events.emit('mf-links-open');
@@ -208,8 +211,10 @@ export class LinksScene extends Phaser.Scene {
     const hole = this.holes[i];
     this.sim = new GolfSim(hole, this.roundRng, this.wind);
     this.course.setTexture(`links_${hole.id}`);
+    // bounds auto-read the seam-upscaled (×ART_SCALE) hole texture
     this.cameras.main.setBounds(0, 0, this.course.width, this.course.height);
-    this.flag.setPosition(hole.pin.x + 2, hole.pin.y + 1);
+    // pin is native px; the flag rides the runtime world, so scale it + offset
+    this.flag.setPosition(s(hole.pin.x) + s(2), s(hole.pin.y) + s(1));
     this.showHoleCard(hole);
     // the caddy reads the tee (hole 9 at golden hour gets the straight line)
     if (hole.id === 'h9' && !this.sunsetSaid) {
@@ -221,7 +226,8 @@ export class LinksScene extends Phaser.Scene {
   }
 
   private caddyTeeLine(hole: HoleDef): void {
-    const yds = yards(dist(hole.tee.x, hole.tee.y, hole.pin.x, hole.pin.y));
+    // yards() divides by YD (runtime px/yd); feed it the runtime tee→pin span
+    const yds = yards(dist(s(hole.tee.x), s(hole.tee.y), s(hole.pin.x), s(hole.pin.y)));
     const line = LINKS_TEXT.caddyTee[Math.floor(this.voice() * LINKS_TEXT.caddyTee.length)]
       .replace('{yds}', String(yds))
       .replace('{putts}', String(Math.round(yds / 8)))
@@ -234,19 +240,19 @@ export class LinksScene extends Phaser.Scene {
     this.clearPanel();
     const gold = colorOf(px(RAMP.GOLD, 3));
     const paper = colorOf(px(RAMP.PAPER, 2));
-    this.panelWindow(28, 36, 344, 142);
-    this.panelText(200, 46, LINKS_TEXT.title, 8, gold);
-    this.panelText(200, 62, hole.plaque, 6, paper);
+    this.panelWindow(s(28), s(36), s(344), s(142));
+    this.panelText(s(200), s(46), LINKS_TEXT.title, s(8), gold);
+    this.panelText(s(200), s(62), hole.plaque, s(6), paper);
     if (this.cfg.kind === 'match') {
       const g = GOLFERS[this.opponentId];
-      this.panelText(200, 96, `${LINKS_TEXT.boardYou}  vs  ${g.name.toUpperCase()}`, 8, gold);
-      this.panelText(200, 112, LINKS_TEXT.boardLine.replace('{n}', g.line), 6, paper);
-      this.panelText(200, 142, `HOLES: YOU ${this.upUs} — ${this.upThem} THEM`, 6, colorOf(px(RAMP.CYAN, 2)));
+      this.panelText(s(200), s(96), `${LINKS_TEXT.boardYou}  vs  ${g.name.toUpperCase()}`, s(8), gold);
+      this.panelText(s(200), s(112), LINKS_TEXT.boardLine.replace('{n}', g.line), s(6), paper);
+      this.panelText(s(200), s(142), `HOLES: YOU ${this.upUs} — ${this.upThem} THEM`, s(6), colorOf(px(RAMP.CYAN, 2)));
     } else {
       const sofar = this.scoreVsPar();
-      this.panelText(200, 104, `THE CARD SO FAR: ${sofar > 0 ? '+' : ''}${sofar}`, 6, colorOf(px(RAMP.CYAN, 2)));
+      this.panelText(s(200), s(104), `THE CARD SO FAR: ${sofar > 0 ? '+' : ''}${sofar}`, s(6), colorOf(px(RAMP.CYAN, 2)));
     }
-    this.panelText(200, 162, 'A: PLAY    B: WALK OFF', 6, paper);
+    this.panelText(s(200), s(162), 'A: PLAY    B: WALK OFF', s(6), paper);
   }
 
   private scoreVsPar(): number {
@@ -326,7 +332,8 @@ export class LinksScene extends Phaser.Scene {
   }
 
   private burstAt(key: string): void {
-    this.burst.setTexture(key, 0).setPosition(this.sim.ball.x, this.sim.ball.y - 4).setVisible(true);
+    // ball is runtime px; the small upward lift is a runtime offset
+    this.burst.setTexture(key, 0).setPosition(this.sim.ball.x, this.sim.ball.y - s(4)).setVisible(true);
     this.time.delayedCall(110, () => this.burst.setFrame(1));
     this.time.delayedCall(320, () => this.burst.setVisible(false));
   }
@@ -334,11 +341,11 @@ export class LinksScene extends Phaser.Scene {
   /** a one-shot verdict popup over the ball (world-space, drifts up) */
   private strikePopup(text: string, ramp: number): void {
     const t = this.add
-      .bitmapText(this.sim.ball.x, this.sim.ball.y - 18, 'retro', text, 8)
+      .bitmapText(this.sim.ball.x, this.sim.ball.y - s(18), 'retro', text, s(8))
       .setOrigin(0.5, 1)
       .setDepth(60)
       .setTint(colorOf(px(ramp, 3)));
-    this.tweens.add({ targets: t, y: t.y - 14, alpha: 0, duration: 750, onComplete: () => t.destroy() });
+    this.tweens.add({ targets: t, y: t.y - s(14), alpha: 0, duration: 750, onComplete: () => t.destroy() });
   }
 
   /* ================= hole done / match arithmetic ================= */
@@ -494,16 +501,16 @@ export class LinksScene extends Phaser.Scene {
     this.clearPanel();
     const gold = colorOf(px(RAMP.GOLD, 3));
     const paper = colorOf(px(RAMP.PAPER, 2));
-    this.panelWindow(28, 26, 344, 170);
-    this.panelText(200, 34, title, 8, gold);
+    this.panelWindow(s(28), s(26), s(344), s(170));
+    this.panelText(s(200), s(34), title, s(8), gold);
     let row = 0;
     const texts: Phaser.GameObjects.BitmapText[] = [];
     const showPage = (): void => {
       texts.forEach((t) => t.destroy());
       texts.length = 0;
       const page = lines.slice(row, row + 6);
-      page.forEach((l, i) => texts.push(this.panelText(200, 56 + i * 14, l, 6, paper)));
-      texts.push(this.panelText(200, 168, row + 6 < lines.length ? 'A: MORE' : 'A: THE CLUBHOUSE', 6, colorOf(px(RAMP.CYAN, 2))));
+      page.forEach((l, i) => texts.push(this.panelText(s(200), s(56) + i * s(14), l, s(6), paper)));
+      texts.push(this.panelText(s(200), s(168), row + 6 < lines.length ? 'A: MORE' : 'A: THE CLUBHOUSE', s(6), colorOf(px(RAMP.CYAN, 2))));
     };
     showPage();
     await new Promise<void>((resolve) => {
@@ -565,23 +572,23 @@ export class LinksScene extends Phaser.Scene {
 
   private golferFrame(): number {
     const F = GOLF_FRAME;
-    const s = this.sim;
-    const putt = s.mode === 'putt' && (s.phase === 'power' || s.phase === 'roll');
-    switch (s.phase) {
+    const sim = this.sim; // not `s`: `s` is the scale helper
+    const putt = sim.mode === 'putt' && (sim.phase === 'power' || sim.phase === 'roll');
+    switch (sim.phase) {
       case 'aim':
-        return s.swingMode() === 'putt' ? F.puttAddress : F.address;
+        return sim.swingMode() === 'putt' ? F.puttAddress : F.address;
       case 'power':
         if (putt) return F.puttAddress;
-        return s.meterT < 0.55 ? F.backA : F.backB;
+        return sim.meterT < 0.55 ? F.backA : F.backB;
       case 'acc':
         return F.backB;
       case 'flight':
-        return s.ball.z > 6 ? F.followA : F.followB;
+        return sim.ball.z > s(6) ? F.followA : F.followB; // z is runtime px
       case 'roll':
         return putt ? F.puttStrike : F.followB;
       case 'holed': {
-        const strokes = s.strokes;
-        return strokes <= s.hole.par ? F.fistpump : Math.floor(this.elapsed / 420) % 2 === 0 ? F.slumpA : F.slumpB;
+        const strokes = sim.strokes;
+        return strokes <= sim.hole.par ? F.fistpump : Math.floor(this.elapsed / 420) % 2 === 0 ? F.slumpA : F.slumpB;
       }
       default:
         return F.address;
@@ -589,68 +596,72 @@ export class LinksScene extends Phaser.Scene {
   }
 
   private render(): void {
-    const s = this.sim;
-    this.ballSpr.setPosition(s.ball.x, s.ball.y - s.ball.z);
-    this.ballSpr.setScale(1 + Math.min(0.8, s.ball.z / 90));
+    // NOTE: `s` is the scale helper (imported); the sim is `sim` here so the
+    // two never collide. Ball/aim positions out of the sim are already runtime
+    // px; only the literal offsets/denominators added in the scene wear s().
+    const sim = this.sim;
+    this.ballSpr.setPosition(sim.ball.x, sim.ball.y - sim.ball.z);
+    this.ballSpr.setScale(1 + Math.min(0.8, sim.ball.z / s(90))); // z is runtime px → scale the denominator to keep the pop ratio
     // the golfer stands at the ball (face the aim), both world + pane
     const frame = this.golferFrame();
-    this.golfer.setPosition(s.ball.x - 8, s.ball.y + 2);
+    this.golfer.setPosition(sim.ball.x - s(8), sim.ball.y + s(2));
     this.golfer.setTexture(this.golferKey, frame);
-    this.golfer.setFlipX(Math.cos(s.aim) < 0);
-    this.golfer.setVisible(s.phase === 'aim' || s.phase === 'power' || s.phase === 'acc');
+    this.golfer.setFlipX(Math.cos(sim.aim) < 0);
+    this.golfer.setVisible(sim.phase === 'aim' || sim.phase === 'power' || sim.phase === 'acc');
     this.golferPane.setTexture(this.golferKey, frame);
     // the aim tick: a short line off the ball toward the line
-    const show = s.phase === 'aim';
+    const show = sim.phase === 'aim';
     this.aimLine.setVisible(show);
     if (show) {
-      const ax = s.ball.x + Math.cos(s.aim) * 22;
-      const ay = s.ball.y + Math.sin(s.aim) * 22;
+      const ax = sim.ball.x + Math.cos(sim.aim) * s(22);
+      const ay = sim.ball.y + Math.sin(sim.aim) * s(22);
       this.aimLine.setPosition(ax, ay);
     }
-    // ball-cam
+    // ball-cam (follow targets are screen-centre offsets in runtime px; the
+    // 0.1 lerp is unitless)
     const cam = this.cameras.main;
-    cam.scrollX += (s.ball.x - 200 - cam.scrollX) * 0.1;
-    cam.scrollY += (s.ball.y - 120 - cam.scrollY) * 0.1;
+    cam.scrollX += (sim.ball.x - s(200) - cam.scrollX) * 0.1;
+    cam.scrollY += (sim.ball.y - s(120) - cam.scrollY) * 0.1;
     // HUD
     const hole = this.holes[this.holeIdx];
     const holeNo = this.cfg.kind === 'stroke' ? this.holeIdx + 1 : HOLES.indexOf(hole) + 1;
     this.hudTop.setText(
-      `${LINKS_TEXT.holeCard.replace('{n}', String(holeNo)).replace('{par}', String(hole.par))}   ${LINKS_TEXT.strokeLine.replace('{n}', String(s.strokes + (s.phase === 'holed' ? 0 : 1)))}   ${LINKS_TEXT.yardsOut.replace('{yds}', String(s.ydsToPin()))}`,
+      `${LINKS_TEXT.holeCard.replace('{n}', String(holeNo)).replace('{par}', String(hole.par))}   ${LINKS_TEXT.strokeLine.replace('{n}', String(sim.strokes + (sim.phase === 'holed' ? 0 : 1)))}   ${LINKS_TEXT.yardsOut.replace('{yds}', String(sim.ydsToPin()))}`,
     );
     const dirName = Math.abs(this.wind.x) > Math.abs(this.wind.y) ? (this.wind.x > 0 ? 'WEST' : 'EAST') : this.wind.y > 0 ? 'NORTH' : 'SOUTH';
     this.hudWind.setText(
       this.wind.mph === 0 ? LINKS_TEXT.windCalm : LINKS_TEXT.windLine.replace('{putts}', String(windPutts(this.wind.mph))).replace('{name}', dirName),
     );
-    this.hudClub.setText(s.swingMode() === 'putt' ? 'PUTTER' : s.swingMode() === 'chip' ? 'CHIP' : CLUBS[s.clubIdx].name);
+    this.hudClub.setText(sim.swingMode() === 'putt' ? 'PUTTER' : sim.swingMode() === 'chip' ? 'CHIP' : CLUBS[sim.clubIdx].name);
     if (this.ticker.text !== '' && this.elapsed > this.tickerUntil) this.ticker.setText('');
     if (this.banner.text !== '' && this.elapsed > this.bannerUntil) this.banner.setText('');
     // THE 3-TAP METER, the honest read (S14b — "the fill was going the
     // wrong way"): the power fill RISES bottom→top and HOLDS at the captured
     // power (gold mark); during the accuracy phase only the cyan NEEDLE
     // comes back down toward the PURE band at the base. Nothing drains.
-    const inMeter = s.phase === 'power' || s.phase === 'acc';
+    const inMeter = sim.phase === 'power' || sim.phase === 'acc';
     this.meterFill.setVisible(inMeter);
     this.meterWin.setVisible(inMeter);
     this.meterZero.setVisible(inMeter);
-    this.meterMark.setVisible(s.phase === 'acc');
-    this.meterNeedle.setVisible(s.phase === 'acc');
+    this.meterMark.setVisible(sim.phase === 'acc');
+    this.meterNeedle.setVisible(sim.phase === 'acc');
     if (inMeter) {
-      const H = 68;
-      const base = 214;
+      const H = s(68); // meter travel (runtime px) — matches the quad heights
+      const base = s(214);
       // the fill: live needle height while charging; HOLDS at the captured
       // power through the accuracy phase (dimmed) — nothing ever drains
-      const fillFrac = (s.phase === 'power' ? Math.max(0, s.meterT) : s.power) / GOLF.POWER_CAP;
+      const fillFrac = (sim.phase === 'power' ? Math.max(0, sim.meterT) : sim.power) / GOLF.POWER_CAP;
       this.meterFill.setScale(1, Math.max(0.02, fillFrac));
-      this.meterFill.setFillStyle(colorOf(px(RAMP.PAPER, s.phase === 'power' ? 3 : 1)));
+      this.meterFill.setFillStyle(colorOf(px(RAMP.PAPER, sim.phase === 'power' ? 3 : 1)));
       // the PURE band hugs the base: [0 .. accWindow], where the needle
       // must land (tap 3); it shrinks with club × lie, honestly
-      const win = Math.min(1, s.accWindow() / GOLF.POWER_CAP);
-      this.meterWin.setPosition(70, base);
+      const win = Math.min(1, sim.accWindow() / GOLF.POWER_CAP);
+      this.meterWin.setPosition(s(70), base);
       this.meterWin.setScale(1, Math.max(0.03, win));
-      this.meterZero.setPosition(70, base);
-      if (s.phase === 'acc') {
-        this.meterMark.setPosition(70, base - (s.power / GOLF.POWER_CAP) * H);
-        this.meterNeedle.setPosition(70, base - (Math.max(0, s.meterT) / GOLF.POWER_CAP) * H);
+      this.meterZero.setPosition(s(70), base);
+      if (sim.phase === 'acc') {
+        this.meterMark.setPosition(s(70), base - (sim.power / GOLF.POWER_CAP) * H);
+        this.meterNeedle.setPosition(s(70), base - (Math.max(0, sim.meterT) / GOLF.POWER_CAP) * H);
       }
     }
   }
@@ -662,6 +673,8 @@ export class LinksScene extends Phaser.Scene {
     this.panelObjs = [];
   }
 
+  /** x/y/size are runtime px (callers pass s()-scaled values); the maxWidth
+   *  literal scales inside (the cross-function px contract) */
   private panelText(x: number, y: number, text: string, size: number, tint: number): Phaser.GameObjects.BitmapText {
     const t = this.add
       .bitmapText(x, y, 'retro', text, size)
@@ -669,7 +682,7 @@ export class LinksScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2)
       .setCenterAlign()
-      .setMaxWidth(330)
+      .setMaxWidth(s(330))
       .setTint(tint);
     this.panelObjs.push(t);
     return t;

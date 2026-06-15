@@ -21,6 +21,7 @@ import Phaser from 'phaser';
 import { GS } from '../engine/state';
 import { makeWindow, DEPTH_UI } from './windows';
 import { colorOf, RAMP, px } from '../palette';
+import { s } from '../spritegen/scale';
 
 export interface VitalsBar {
   show(): void;
@@ -31,9 +32,10 @@ export interface VitalsBar {
   destroy(): void;
 }
 
-const MARGIN = 4;
-const GAP = 3;
-const PANEL_H = 46;
+// native px → runtime px: the panel strip scales with the framebuffer
+const MARGIN = s(4);
+const GAP = s(3);
+const PANEL_H = s(46);
 
 /** the HP-bar colour by remaining fraction — green, then gold, then red */
 function hpRamp(frac: number): number {
@@ -54,18 +56,18 @@ export function makeVitalsBar(scene: Phaser.Scene): VitalsBar {
     objs = [];
   };
 
-  const text = (x: number, y: number, s: string, ramp: number, shade: 0 | 1 | 2 | 3): Phaser.GameObjects.BitmapText => {
-    const t = scene.add.bitmapText(x, y, 'retro', s, 6).setScrollFactor(0).setDepth(DEPTH_UI + 1).setTint(colorOf(px(ramp, shade)));
+  const text = (x: number, y: number, str: string, ramp: number, shade: 0 | 1 | 2 | 3): Phaser.GameObjects.BitmapText => {
+    const t = scene.add.bitmapText(x, y, 'retro', str, s(6)).setScrollFactor(0).setDepth(DEPTH_UI + 1).setTint(colorOf(px(ramp, shade)));
     objs.push(t);
     return t;
   };
 
   const bar = (x: number, y: number, w: number, frac: number, ramp: number): void => {
     const f = Math.max(0, Math.min(1, frac));
-    const bg = scene.add.rectangle(x, y, w, 3, colorOf(px(RAMP.NIGHT, 2))).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 1);
+    const bg = scene.add.rectangle(x, y, w, s(3), colorOf(px(RAMP.NIGHT, 2))).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 1);
     objs.push(bg);
     if (f > 0) {
-      const fill = scene.add.rectangle(x, y, Math.max(1, Math.round(w * f)), 3, colorOf(px(ramp, 2))).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 2);
+      const fill = scene.add.rectangle(x, y, Math.max(1, Math.round(w * f)), s(3), colorOf(px(ramp, 2))).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 2);
       objs.push(fill);
     }
   };
@@ -77,22 +79,22 @@ export function makeVitalsBar(scene: Phaser.Scene): VitalsBar {
     const W = scene.scale.width;
     const H = scene.scale.height;
     const panelW = Math.floor((W - MARGIN * 2 - GAP * (n - 1)) / n);
-    const y = H - PANEL_H - 3;
+    const y = H - PANEL_H - s(3);
     party.forEach((h, i) => {
       const x = MARGIN + i * (panelW + GAP);
       objs.push(makeWindow(scene, x, y, panelW, PANEL_H));
-      const barW = panelW - 12;
+      const barW = panelW - s(12);
       // name + a status tag (DOWN, then §A4.8 HOMESICK for Rex until Mom's call)
       const homesick = h.id === 'rex' && GS.flag('rex_homesick') === true;
-      text(x + 6, y + 5, h.name, h.down ? RAMP.RED : RAMP.GOLD, 3);
-      if (h.down) text(x + panelW - 28, y + 5, 'DOWN', RAMP.RED, 2);
-      else if (homesick) text(x + panelW - 28, y + 5, 'HOME', RAMP.CYAN, 2);
+      text(x + s(6), y + s(5), h.name, h.down ? RAMP.RED : RAMP.GOLD, 3);
+      if (h.down) text(x + panelW - s(28), y + s(5), 'DOWN', RAMP.RED, 2);
+      else if (homesick) text(x + panelW - s(28), y + s(5), 'HOME', RAMP.CYAN, 2);
       // HP — number then a thin bar
-      text(x + 6, y + 15, `HP ${h.hp}/${h.maxHp}`, RAMP.PAPER, 3);
-      bar(x + 6, y + 24, barW, h.maxHp > 0 ? h.hp / h.maxHp : 0, h.down ? RAMP.RED : hpRamp(h.maxHp > 0 ? h.hp / h.maxHp : 0));
+      text(x + s(6), y + s(15), `HP ${h.hp}/${h.maxHp}`, RAMP.PAPER, 3);
+      bar(x + s(6), y + s(24), barW, h.maxHp > 0 ? h.hp / h.maxHp : 0, h.down ? RAMP.RED : hpRamp(h.maxHp > 0 ? h.hp / h.maxHp : 0));
       // PP — number then a thin bar
-      text(x + 6, y + 30, `PP ${h.pp}/${h.maxPp}`, RAMP.PAPER, 3);
-      bar(x + 6, y + 39, barW, h.maxPp > 0 ? h.pp / h.maxPp : 0, RAMP.CYAN);
+      text(x + s(6), y + s(30), `PP ${h.pp}/${h.maxPp}`, RAMP.PAPER, 3);
+      bar(x + s(6), y + s(39), barW, h.maxPp > 0 ? h.pp / h.maxPp : 0, RAMP.CYAN);
     });
     objs.forEach((o) => o.setVisible(shown));
   };

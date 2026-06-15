@@ -38,7 +38,8 @@ import {
   type SimEvent,
   type TickInput,
 } from './sim';
-import { COURT, pointsFor } from './court';
+import { COURT, COURT_RT, pointsFor } from './court';
+import { s } from '../spritegen/scale';
 
 const five = (tag: string, spd = 50): AthleteDef[] =>
   Array.from({ length: 5 }, (_, i) => ({
@@ -259,12 +260,12 @@ describe('THE FINISH METER (ADR-038): easy to reach, timed to make', () => {
 
 describe('THE RANGE LAW (S12c — the full-court-heave fix)', () => {
   it('effectiveRange derives from sht and clamps to the spec band', () => {
-    expect(effectiveRange(50)).toBe(COURT.ARC_R);
-    expect(effectiveRange(60)).toBeCloseTo(COURT.ARC_R + 12, 5);
-    expect(effectiveRange(8)).toBeCloseTo(COURT.ARC_R * 0.85, 5); // clamped low
-    expect(effectiveRange(99)).toBeCloseTo(COURT.ARC_R * 1.35, 5); // clamped high
-    expect(RANGE.MIN).toBeCloseTo(COURT.ARC_R * 0.85, 5);
-    expect(RANGE.MAX).toBeCloseTo(COURT.ARC_R * 1.35, 5);
+    expect(effectiveRange(50)).toBe(COURT_RT.ARC_R);
+    expect(effectiveRange(60)).toBeCloseTo(COURT_RT.ARC_R + s(12), 5);
+    expect(effectiveRange(8)).toBeCloseTo(COURT_RT.ARC_R * 0.85, 5); // clamped low
+    expect(effectiveRange(99)).toBeCloseTo(COURT_RT.ARC_R * 1.35, 5); // clamped high
+    expect(RANGE.MIN).toBeCloseTo(COURT_RT.ARC_R * 0.85, 5);
+    expect(RANGE.MAX).toBeCloseTo(COURT_RT.ARC_R * 1.35, 5);
   });
 
   it('the GREEN window shrinks with distance and CLOSES TO ZERO at range', () => {
@@ -284,7 +285,7 @@ describe('THE RANGE LAW (S12c — the full-court-heave fix)', () => {
     expect(greenWindow(50, r + 1, 0)).toBe(0);
     expect(greenWindow(50, r * 2, 0)).toBe(0);
     // the old 0.022 floor is dead: no minimum window at silly distance
-    expect(greenWindow(10, 400, 1)).toBe(0);
+    expect(greenWindow(10, s(400), 1)).toBe(0);
   });
 
   it('shooters get more window; a hand in the face squeezes it', () => {
@@ -340,8 +341,8 @@ describe('the meter, rebuilt (S12c): green sits AT THE TOP', () => {
   });
 
   it('contest pressure needs proximity and ideally air', () => {
-    expect(contestOf(60, 0, 0)).toBe(0);
-    expect(contestOf(10, 0, 30)).toBeGreaterThan(contestOf(10, 0, 0));
+    expect(contestOf(s(60), 0, 0)).toBe(0);
+    expect(contestOf(s(10), 0, s(30))).toBeGreaterThan(contestOf(s(10), 0, 0));
   });
 
   it('the dunk meter window scales with dnk and clamps', () => {
@@ -414,13 +415,13 @@ describe('timed defense, end to end (drill-mode scenarios)', () => {
           if (h && h.team === 1) {
             const u = sim.athletes[sim.controlled];
             // teleport the defender to the hip once (test setup, not play)
-            if (Math.abs(u.x - h.x) > 16) {
-              u.x = h.x + 12;
+            if (Math.abs(u.x - h.x) > s(16)) {
+              u.x = h.x + s(12);
               u.y = h.y;
             }
             if (h.state === 'gather' && !jumped && u.leapCd <= 0 && u.z === 0) {
               const releaseMs = h.planFrac * TUNE.METER_MS;
-              const peakMs = ((TUNE.JUMP_V + u.def.rating.dnk * 0.6) / TUNE.GRAVITY) * 1000;
+              const peakMs = ((TUNE.JUMP_V + u.def.rating.dnk * s(0.6)) / TUNE.GRAVITY) * 1000;
               const jumpAt = early ? 0 : releaseMs - peakMs;
               if (h.gatherMs >= jumpAt) {
                 input = { ...IDLE_INPUT, aPressed: true };

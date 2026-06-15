@@ -20,11 +20,29 @@
  * other customer). The cup takes any roll that crosses it slow enough.
  */
 import { CLUBS, LIES, YD, expandGrid, terrainAt, dist, type HoleDef, type Terrain, type Vec } from './course';
+import { s, ART_SCALE } from '../spritegen/scale';
 
 export const SIM_DT = 1000 / 120;
 
 export type Rng = () => number;
 
+/**
+ * The swing constants. The sim runs in RUNTIME px (tee/pin are scaled
+ * ×ART_SCALE on read), so every PIXEL quantity here scales: distances (CUP_R),
+ * velocities px/s (CUP_SPEED, PUTT_V) and accelerations px/s² (CURVE, AFTER,
+ * WIND_PER_MPH, FRICTION_*) all wear s(). The trajectory stays geometrically
+ * similar (S× bigger) traversed in the SAME wall-clock time, so feel + yardage
+ * hold; at ART_SCALE=1 every s(n)===n (byte-identical to the legacy game).
+ *
+ * KEPT (not pixels): POWER_MS/FLIGHT_BASE_MS/CHIP_MS are ms; PUSH_RAD is
+ * radians; POWER_CAP/ACC_FLOOR are meter fractions; WIND_MAX_MPH is mph;
+ * CHIP_CARRY_YD/CHIP_ZONE_YD are YARDS (they reach px through YD, which already
+ * scales). FLIGHT_PER_PX is the subtle one: flightT1 = BASE + carryPx·PER_PX is
+ * a TIME, and launch speed = carryPx/flightT1. carryPx already scales (via YD),
+ * so KEEPING PER_PX makes flightT1 invariant and the launch SPEED scale ×S —
+ * which is exactly what carries the ×S geometry under the ×S accelerations.
+ * Scaling PER_PX too would stretch flight time ×S and over-curve by ×S².
+ */
 export const GOLF = {
   /** power needle: 0 → cap over this many ms (then it pins and waits) */
   POWER_MS: 850,
@@ -34,24 +52,24 @@ export const GOLF = {
   /** push/pull: radians of launch deflection per unit of acc error */
   PUSH_RAD: 0.34,
   /** draw/fade: lateral curve accel per unit of acc error (px/s²) */
-  CURVE: 220,
+  CURVE: s(220),
   /** after-touch: held d-pad accel mid-flight (px/s²) */
-  AFTER: 26,
+  AFTER: s(26),
   /** wind: px/s² per mph; loft rides it (0.6 + loft) */
-  WIND_PER_MPH: 1.05,
+  WIND_PER_MPH: s(1.05),
   WIND_MAX_MPH: 11,
-  /** flight ms per carry px, plus the base */
+  /** flight ms per carry px (KEEP: a time-per-px ratio — see header), + base ms */
   FLIGHT_BASE_MS: 560,
   FLIGHT_PER_PX: 0.85,
   /** rolling friction px/s² (greens run truer than rough) */
-  FRICTION_G: 92,
-  FRICTION_F: 150,
-  FRICTION_R: 320,
-  /** the cup: radius + the max speed it will swallow */
-  CUP_R: 5,
-  CUP_SPEED: 70,
+  FRICTION_G: s(92),
+  FRICTION_F: s(150),
+  FRICTION_R: s(320),
+  /** the cup: radius (px) + the max speed (px/s) it will swallow */
+  CUP_R: s(5),
+  CUP_SPEED: s(70),
   /** putt: launch px/s at full power; chip: carry yards at full power */
-  PUTT_V: 340,
+  PUTT_V: s(340),
   CHIP_CARRY_YD: 32,
   CHIP_MS: 760,
   /** the chip zone: inside this many yards (and off the green) chips */
@@ -132,15 +150,17 @@ export class GolfSim {
     this.grid = expandGrid(hole.rle);
     this.rng = rng;
     this.wind = wind;
-    this.ball = { x: hole.tee.x, y: hole.tee.y, z: 0 };
-    this.lastDry = { x: hole.tee.x, y: hole.tee.y };
-    this.aim = Math.atan2(hole.pin.y - hole.tee.y, hole.pin.x - hole.tee.x);
+    // tee/pin are authored in NATIVE px; the sim works in RUNTIME px (matches
+    // the seam-upscaled ground), so scale them on read. atan2 is scale-free.
+    this.ball = { x: s(hole.tee.x), y: s(hole.tee.y), z: 0 };
+    this.lastDry = { x: s(hole.tee.x), y: s(hole.tee.y) };
+    this.aim = Math.atan2(s(hole.pin.y) - s(hole.tee.y), s(hole.pin.x) - s(hole.tee.x));
     this.autoClub();
   }
 
   /** the bag suggests by distance (B still cycles freely) */
   private autoClub(): void {
-    const ydsToPin = dist(this.ball.x, this.ball.y, this.hole.pin.x, this.hole.pin.y) / YD;
+    const ydsToPin = dist(this.ball.x, this.ball.y, s(this.hole.pin.x), s(this.hole.pin.y)) / YD;
     let best = CLUBS.length - 1;
     for (let i = 0; i < CLUBS.length; i++) {
       if (CLUBS[i].carry >= ydsToPin - 4) best = i;
@@ -149,14 +169,16 @@ export class GolfSim {
   }
 
   lie(): Terrain {
-    return terrainAt(this.grid, this.ball.x, this.ball.y);
+    // The ball is runtime px; terrainAt queries the NATIVE course grid, so bridge
+    // back to native (÷ ART_SCALE) here — the single runtime↔native boundary.
+    return terrainAt(this.grid, this.ball.x / ART_SCALE, this.ball.y / ART_SCALE);
   }
 
   /** what the next swing will be: putt on the green, chip inside 30y, full */
   swingMode(): SwingMode {
     const lie = this.lie();
     if (lie === 'G') return 'putt';
-    const yds = dist(this.ball.x, this.ball.y, this.hole.pin.x, this.hole.pin.y) / YD;
+    const yds = dist(this.ball.x, this.ball.y, s(this.hole.pin.x), s(this.hole.pin.y)) / YD;
     return yds <= GOLF.CHIP_ZONE_YD ? 'chip' : 'full';
   }
 
@@ -166,7 +188,7 @@ export class GolfSim {
   }
 
   ydsToPin(): number {
-    return Math.round(dist(this.ball.x, this.ball.y, this.hole.pin.x, this.hole.pin.y) / YD);
+    return Math.round(dist(this.ball.x, this.ball.y, s(this.hole.pin.x), s(this.hole.pin.y)) / YD);
   }
 
   private emit(e: GolfEvent): void {
@@ -270,7 +292,7 @@ export class GolfSim {
         this.ball.x += this.vx * dt;
         this.ball.y += this.vy * dt;
         this.ball.z = Math.sin(k * Math.PI) * this.apex;
-        if (terrainAt(this.grid, this.ball.x, this.ball.y) !== 'W') {
+        if (this.lie() !== 'W') {
           this.lastDry = { x: this.ball.x, y: this.ball.y };
         }
         if (k >= 1) this.land();
@@ -278,7 +300,7 @@ export class GolfSim {
       }
       case 'roll': {
         const dt = SIM_DT / 1000;
-        const lie = terrainAt(this.grid, this.ball.x, this.ball.y);
+        const lie = this.lie();
         const fr = lie === 'G' ? GOLF.FRICTION_G : lie === 'F' || lie === 'T' ? GOLF.FRICTION_F : GOLF.FRICTION_R;
         const sp = Math.hypot(this.vx, this.vy);
         if (sp > 0) {
@@ -287,31 +309,33 @@ export class GolfSim {
           this.vx = (this.vx / sp) * ns;
           this.vy = (this.vy / sp) * ns;
         }
-        // the green's honest break — exactly the slope the arrows draw
+        // the green's honest break — exactly the slope the arrows draw.
+        // slope is an accel (px/s²) authored in NATIVE units (the arrows are
+        // painted native then seam-upscaled), so scale it to the runtime roll.
         if (lie === 'G') {
-          this.vx += this.hole.slope.x * dt;
-          this.vy += this.hole.slope.y * dt;
+          this.vx += s(this.hole.slope.x) * dt;
+          this.vy += s(this.hole.slope.y) * dt;
         }
         this.ball.x += this.vx * dt;
         this.ball.y += this.vy * dt;
         this.ball.z = 0;
-        // the cup
-        const d = dist(this.ball.x, this.ball.y, this.hole.pin.x, this.hole.pin.y);
+        // the cup (pin in runtime px to match the ball)
+        const d = dist(this.ball.x, this.ball.y, s(this.hole.pin.x), s(this.hole.pin.y));
         const speed = Math.hypot(this.vx, this.vy);
         if (d <= GOLF.CUP_R && speed <= GOLF.CUP_SPEED) {
           this.phase = 'holed';
           this.over = true;
-          this.ball.x = this.hole.pin.x;
-          this.ball.y = this.hole.pin.y;
+          this.ball.x = s(this.hole.pin.x);
+          this.ball.y = s(this.hole.pin.y);
           this.emit({ kind: 'sfx', name: 'swish' });
           this.emit({ kind: 'holed', strokes: this.strokes, par: this.hole.par });
           return;
         }
-        if (terrainAt(this.grid, this.ball.x, this.ball.y) === 'W') {
+        if (this.lie() === 'W') {
           this.splash();
           return;
         }
-        if (speed < 6) {
+        if (speed < s(6)) {
           this.vx = 0;
           this.vy = 0;
           this.settle();
@@ -344,25 +368,33 @@ export class GolfSim {
     }
     const club = CLUBS[this.clubIdx];
     const carryYd = this.mode === 'chip' ? GOLF.CHIP_CARRY_YD : club.carry;
-    const carryPx = Math.max(8, carryYd * YD * this.power * lie.carry);
+    // carryPx is runtime (YD scales); floor it at a runtime minimum carry
+    const carryPx = Math.max(s(8), carryYd * YD * this.power * lie.carry);
     // push/pull deflects the line; the same error CURVES the flight
     const dir = this.aim + -this.acc * GOLF.PUSH_RAD;
     this.dirX = Math.cos(dir);
     this.dirY = Math.sin(dir);
     this.flightT = 0;
-    this.flightT1 = this.mode === 'chip' ? GOLF.CHIP_MS : GOLF.FLIGHT_BASE_MS + carryPx * GOLF.FLIGHT_PER_PX;
+    // flight DURATION is a time (ms) and must NOT scale with the framebuffer,
+    // so derive it from the NATIVE carry (carryPx/ART_SCALE). This keeps
+    // flightT1 invariant across ART_SCALE; the launch speed (carryPx/flightT1)
+    // then scales ×ART_SCALE on its own, so the whole flight — carry, curve,
+    // wind, apex — stays geometrically similar. (At ×1, carryPx/1 = today.)
+    const carryPxNative = carryPx / ART_SCALE;
+    this.flightT1 = this.mode === 'chip' ? GOLF.CHIP_MS : GOLF.FLIGHT_BASE_MS + carryPxNative * GOLF.FLIGHT_PER_PX;
     const v = carryPx / (this.flightT1 / 1000);
     this.vx = this.dirX * v;
     this.vy = this.dirY * v;
     this.curve = this.mode === 'chip' ? 0 : -this.acc * GOLF.CURVE;
     const loft = this.mode === 'chip' ? 0.9 : club.loft;
-    this.apex = 22 + carryPx * loft * 0.16;
+    // apex height is runtime px: a base lift s(22) + a loft-fraction of carryPx
+    this.apex = s(22) + carryPx * loft * 0.16;
     this.phase = 'flight';
     this.emit({ kind: 'sfx', name: 'swing_bat' });
   }
 
   private land(): void {
-    const terr = terrainAt(this.grid, this.ball.x, this.ball.y);
+    const terr = this.lie();
     this.emit({ kind: 'land', terrain: terr });
     if (terr === 'W') {
       this.splash();
@@ -373,7 +405,7 @@ export class GolfSim {
       this.emit({ kind: 'cliff' });
       this.emit({ kind: 'sfx', name: 'thud' });
       const ang = this.rng() * Math.PI * 2;
-      const v = 90 + this.rng() * 120;
+      const v = s(90) + this.rng() * s(120); // cliff-kick speed (px/s) — runtime
       this.vx = Math.cos(ang) * v;
       this.vy = Math.sin(ang) * v;
       this.phase = 'roll';
@@ -390,8 +422,9 @@ export class GolfSim {
     const club = CLUBS[this.clubIdx];
     const rollYd = (this.mode === 'chip' ? 3 : club.roll) * this.power;
     const rollPx = rollYd * YD * (terr === 'G' ? LIES.G.roll : LIES[terr].roll);
-    // convert remaining momentum into a roll at landing speed
-    const v = Math.max(30, rollPx * 1.6);
+    // convert remaining momentum into a roll at landing speed (px/s, runtime;
+    // rollPx already scales via YD, so only the floor needs s())
+    const v = Math.max(s(30), rollPx * 1.6);
     const sp = Math.hypot(this.vx, this.vy) || 1;
     this.vx = (this.vx / sp) * v;
     this.vy = (this.vy / sp) * v;
@@ -414,8 +447,8 @@ export class GolfSim {
   private settle(): void {
     this.phase = 'aim';
     this.ball.z = 0;
-    // re-aim at the pin and re-suggest a club for the new lie
-    this.aim = Math.atan2(this.hole.pin.y - this.ball.y, this.hole.pin.x - this.ball.x);
+    // re-aim at the pin (runtime px, like the ball) and re-suggest a club
+    this.aim = Math.atan2(s(this.hole.pin.y) - this.ball.y, s(this.hole.pin.x) - this.ball.x);
     this.autoClub();
   }
 }

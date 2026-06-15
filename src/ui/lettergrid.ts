@@ -19,21 +19,22 @@ import { AUDIO } from '../engine/audio';
 import { everyFrame, DEPTH_UI } from './windows';
 import { colorOf, RAMP, px } from '../palette';
 import { GRID_ROWS } from '../data/newgame';
+import { s } from '../spritegen/scale';
 
-export const GRID_X = 96; // left edge of the 13-column grid
-export const GRID_Y = 72;
-export const CELL_W = 16;
-export const CELL_H = 15;
-export const BTN_Y = 152;
-export const BTN_H = 16;
+export const GRID_X = s(96); // left edge of the 13-column grid
+export const GRID_Y = s(72);
+export const CELL_W = s(16);
+export const CELL_H = s(15);
+export const BTN_Y = s(152);
+export const BTN_H = s(16);
 
 export type GridAct = 'space' | 'back' | 'dontcare' | 'ok';
 
 const BTN_DEFS: Record<GridAct, { label: string; w: number }> = {
-  space: { label: 'SPACE', w: 56 },
-  back: { label: 'BACK', w: 50 },
-  dontcare: { label: 'RANDOM', w: 86 },
-  ok: { label: 'OK', w: 38 },
+  space: { label: 'SPACE', w: s(56) },
+  back: { label: 'BACK', w: s(50) },
+  dontcare: { label: 'RANDOM', w: s(86) },
+  ok: { label: 'OK', w: s(38) },
 };
 
 /** grid rows 0..4 are letters; this virtual row is the button bar */
@@ -80,11 +81,11 @@ export class LetterGrid {
 
     // button bar: packed widths, 6px gaps, centered on x=200 (see header)
     const acts = opts.buttons ?? (['space', 'back', 'dontcare', 'ok'] as GridAct[]);
-    const total = acts.reduce((a, b) => a + BTN_DEFS[b].w, 0) + (acts.length - 1) * 6;
-    let bx = Math.round(200 - total / 2);
+    const total = acts.reduce((a, b) => a + BTN_DEFS[b].w, 0) + (acts.length - 1) * s(6);
+    let bx = Math.round(s(200) - total / 2);
     this.buttons = acts.map((act) => {
       const def = { act, x: bx, w: BTN_DEFS[act].w };
-      bx += BTN_DEFS[act].w + 6;
+      bx += BTN_DEFS[act].w + s(6);
       return def;
     });
 
@@ -93,7 +94,7 @@ export class LetterGrid {
       [...rowStr].forEach((ch, c) => {
         this.objs.push(
           scene.add
-            .bitmapText(GRID_X + c * CELL_W + 8, GRID_Y + r * CELL_H + 4, 'retro', ch, 6)
+            .bitmapText(GRID_X + c * CELL_W + s(8), GRID_Y + r * CELL_H + s(4), 'retro', ch, s(6))
             .setOrigin(0.5, 0)
             .setScrollFactor(0)
             .setDepth(DEPTH_UI + 1),
@@ -119,7 +120,7 @@ export class LetterGrid {
       this.objs.push(opts.makeBox(scene, b.x, BTN_Y, b.w, BTN_H));
       this.objs.push(
         scene.add
-          .bitmapText(b.x + b.w / 2 + 4, BTN_Y + 5, 'retro', BTN_DEFS[b.act].label, 6)
+          .bitmapText(b.x + b.w / 2 + s(4), BTN_Y + s(5), 'retro', BTN_DEFS[b.act].label, s(6))
           .setOrigin(0.5, 0)
           .setScrollFactor(0)
           .setDepth(DEPTH_UI + 1)
@@ -176,9 +177,9 @@ export class LetterGrid {
   private placeHand(): void {
     if (this.row === BTN_ROW) {
       const b = this.buttons[this.col];
-      this.hand.setPosition(b.x + 5, BTN_Y + 8);
+      this.hand.setPosition(b.x + s(5), BTN_Y + s(8));
     } else {
-      this.hand.setPosition(GRID_X + this.col * CELL_W - 2, GRID_Y + this.row * CELL_H + 7);
+      this.hand.setPosition(GRID_X + this.col * CELL_W - s(2), GRID_Y + this.row * CELL_H + s(7));
     }
   }
 

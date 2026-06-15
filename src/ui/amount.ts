@@ -25,6 +25,7 @@ import { colorOf, px, RAMP } from '../palette';
 import { money } from './text';
 import { DIM } from './pick';
 import { amountColumns } from './amountscale';
+import { s } from '../spritegen/scale';
 
 // the pure column brain lives in a Phaser-free module so it unit-tests headless;
 // re-exported here so callers can reach it through ui/amount too.
@@ -42,8 +43,8 @@ export interface AmountOpts {
 }
 
 const GOLD = (): number => colorOf(px(RAMP.GOLD, 3));
-const DIGIT_SIZE = 12; // 2× the 6px base font for a readable readout
-const CELL_W = 12; //     'retro' is fixed-advance: 6px at size 6 → 12px at size 12
+const DIGIT_SIZE = s(12); // 2× the 6px base font for a readable readout
+const CELL_W = s(12); //     'retro' is fixed-advance: 6px at size 6 → 12px at size 12
 const HINT = '▲▼ adjust  ◄► place  A ok  B back';
 
 /**
@@ -67,17 +68,17 @@ export function askAmount(scene: Phaser.Scene, opts: AmountOpts): Promise<number
   const rowW = cells.length * CELL_W;
 
   // geometry: a centered window sized to the readout + the hint line
-  const w = Math.min(scene.scale.width - 8, Math.max(200, rowW + 28, HINT.length * 6 + 16));
-  const h = 100;
+  const w = Math.min(scene.scale.width - s(8), Math.max(s(200), rowW + s(28), HINT.length * s(6) + s(16)));
+  const h = s(100);
   const x = Math.round((scene.scale.width - w) / 2);
-  const y = 54;
+  const y = s(54);
   const cx = x + w / 2;
-  const rowY = y + 40;
+  const rowY = y + s(40);
   const made: Phaser.GameObjects.GameObject[] = [];
   made.push(makeWindow(scene, x, y, w, h));
 
-  const mk = (px0: number, py: number, s: string, size: number, tint?: number): Phaser.GameObjects.BitmapText => {
-    const t = scene.add.bitmapText(px0, py, 'retro', s, size).setScrollFactor(0).setDepth(DEPTH_UI + 1);
+  const mk = (px0: number, py: number, str: string, size: number, tint?: number): Phaser.GameObjects.BitmapText => {
+    const t = scene.add.bitmapText(px0, py, 'retro', str, size).setScrollFactor(0).setDepth(DEPTH_UI + 1);
     if (tint !== undefined) t.setTint(tint);
     made.push(t);
     return t;
@@ -86,11 +87,11 @@ export function askAmount(scene: Phaser.Scene, opts: AmountOpts): Promise<number
     t.setX(Math.round(cx - t.width / 2));
   };
 
-  const title = mk(0, y + 8, opts.title, 6, GOLD());
+  const title = mk(0, y + s(8), opts.title, s(6), GOLD());
   center(title);
   if (opts.source) {
-    const s = mk(0, y + 18, opts.source, 6, DIM);
-    center(s);
+    const srcT = mk(0, y + s(18), opts.source, s(6), DIM);
+    center(srcT);
   }
 
   // lay the odometer cells left→right, centered; remember each digit cell's x
@@ -104,12 +105,12 @@ export function askAmount(scene: Phaser.Scene, opts: AmountOpts): Promise<number
   });
 
   // the up/down chevrons hover over the SELECTED digit (the font draws them, ADR-105)
-  const chevUp = mk(0, rowY - 11, '▲', 6, GOLD());
-  const chevDn = mk(0, rowY + DIGIT_SIZE + 1, '▼', 6, GOLD());
+  const chevUp = mk(0, rowY - s(11), '▲', s(6), GOLD());
+  const chevDn = mk(0, rowY + DIGIT_SIZE + s(1), '▼', s(6), GOLD());
 
-  const ceil = mk(0, y + 70, `/ ${money(pool)}`, 6, DIM);
+  const ceil = mk(0, y + s(70), `/ ${money(pool)}`, s(6), DIM);
   center(ceil);
-  const hintT = mk(0, y + 84, HINT, 6, DIM);
+  const hintT = mk(0, y + s(84), HINT, s(6), DIM);
   center(hintT);
 
   const render = (): void => {

@@ -9,6 +9,7 @@ import { GS, makeHeroState, newGameData } from './state';
 import { CURRENT_SAVE_VERSION } from './migrations';
 import { BACKUP_KEY, SaveBank, fmtPlaytime, slotKey, type SaveStorage } from './saves';
 import type { HeroId } from '../data/heroes';
+import { s } from '../spritegen/scale';
 
 interface MemoryStore extends SaveStorage {
   m: Map<string, string>;
@@ -227,7 +228,7 @@ describe('slot summaries — derived from the blob, never stored twice', () => {
 
 describe('defeat respawn targeting (§A4.7 — one function S11 reuses)', () => {
   it('no Dad-save yet → Jay\'s house (ADR-014 interim respawn)', () => {
-    expect(GS.respawnPoint()).toEqual({ mapId: 'rex_home', x: 104, y: 124, facing: 'down' });
+    expect(GS.respawnPoint()).toEqual({ mapId: 'rex_home', x: s(104), y: s(124), facing: 'down' });
   });
 
   it('wiping inside the Department targets the Brickton payphone where Dad last saved', () => {

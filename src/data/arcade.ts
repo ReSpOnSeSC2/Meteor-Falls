@@ -18,6 +18,7 @@
  *   he smiled the whole time and stopped the moment it rolled over (§A11).
  */
 import type { ArcadeScore } from '../schemas';
+import { s } from '../spritegen/scale';
 
 export type { ArcadeScore } from '../schemas';
 
@@ -40,13 +41,16 @@ export interface SpawnEvent {
 
 export const ARCADE = {
   runMs: 60_000,
-  ship: { speed: 95, lives: 3, fireCdMs: 130, invulnMs: 1200, bulletSpeed: 240 },
+  // speed/bulletSpeed are px/s → s(); lives is a count, the *Ms are time — kept.
+  ship: { speed: s(95), lives: 3, fireCdMs: 130, invulnMs: 1200, bulletSpeed: s(240) },
   foes: {
-    moth: { hp: 1, pts: 20, vx: -55 },
-    rock: { hp: 2, pts: 35, vx: -30 },
-    saucer: { hp: 1, pts: 50, vx: -92 },
-    corndog: { hp: 1, pts: 5, vx: -70 },
+    // vx is px/s (scaled); hp is a count and pts are score points — both kept.
+    moth: { hp: 1, pts: 20, vx: s(-55) },
+    rock: { hp: 2, pts: 35, vx: s(-30) },
+    saucer: { hp: 1, pts: 50, vx: s(-92) },
+    corndog: { hp: 1, pts: 5, vx: s(-70) },
   },
+  // score points, NOT pixels — unscaled.
   pts: { corndogEat: 300, coolBonus: 1000, letterPool: 600 },
   /** the corn dog cameo and the {coolthing} finale, on the sim clock */
   dogT: 26_500,

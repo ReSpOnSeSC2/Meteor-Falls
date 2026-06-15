@@ -17,6 +17,7 @@ import { BUST_FRAME, type BustFrameName } from '../spritegen/busts';
 import { colorOf, px, RAMP } from '../palette';
 import { DEPTH_UI } from '../ui/windows';
 import { AUDIO } from '../engine/audio';
+import { s } from '../spritegen/scale';
 
 export interface CardStatusFlags {
   sunburn: boolean;
@@ -127,7 +128,9 @@ export class BustView {
     // centered over the HP box — its chest tucks under the card's top edge,
     // so it sits one depth below the box and pokes 22px above it
     this.bust = scene.add
-      .image(cardX + (cardW - 32) / 2, cardY - 22, sheet, BUST_FRAME.idleA)
+      // the bust texture is upscaled ×ART_SCALE at the seam, so its native 32px
+      // width centers against the runtime card as s(32)
+      .image(cardX + (cardW - s(32)) / 2, cardY - s(22), sheet, BUST_FRAME.idleA)
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI - 1);
@@ -140,16 +143,16 @@ export class BustView {
     const mk = (x: number, y: number, w: number, h: number): Phaser.GameObjects.Rectangle =>
       scene.add.rectangle(x, y, w, h, red, 1).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 1).setVisible(false);
     this.edges = [
-      mk(cardX + 1, cardY + 1, cardW - 2, 2),
-      mk(cardX + 1, cardY + 47, cardW - 2, 2),
-      mk(cardX + 1, cardY + 3, 2, 44),
-      mk(cardX + cardW - 3, cardY + 3, 2, 44),
+      mk(cardX + s(1), cardY + s(1), cardW - s(2), s(2)),
+      mk(cardX + s(1), cardY + s(47), cardW - s(2), s(2)),
+      mk(cardX + s(1), cardY + s(3), s(2), s(44)),
+      mk(cardX + cardW - s(3), cardY + s(3), s(2), s(44)),
     ];
     // crying droplets, falling from the bust's eye line
-    for (const dx of [-4, 4]) {
+    for (const dx of [-s(4), s(4)]) {
       this.drops.push(
         scene.add
-          .image(cx + dx, cardY - 10, 'pixel')
+          .image(cx + dx, cardY - s(10), 'pixel')
           .setTint(colorOf(px(RAMP.CYAN, 3)))
           .setScrollFactor(0)
           .setDepth(DEPTH_UI + 2)
@@ -158,7 +161,7 @@ export class BustView {
     }
     // asleep: one drifting z (it puts in the work of three)
     this.zzz = scene.add
-      .bitmapText(cx + 12, cardY - 20, 'retro', 'z', 6)
+      .bitmapText(cx + s(12), cardY - s(20), 'retro', 'z', s(6))
       .setTint(colorOf(px(RAMP.CYAN, 3)))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2)
@@ -167,7 +170,7 @@ export class BustView {
     for (let i = 0; i < 2; i++) {
       this.sparks.push(
         scene.add
-          .image(cardX + 6, cardY - 12, 'pixel')
+          .image(cardX + s(6), cardY - s(12), 'pixel')
           .setTint(colorOf(px(RAMP.GOLD, 3)))
           .setScrollFactor(0)
           .setDepth(DEPTH_UI + 2)
@@ -175,10 +178,10 @@ export class BustView {
       );
     }
     // HUSHED: the muzzle shimmer over the bust's mouth
-    for (const dx of [-2, 2]) {
+    for (const dx of [-s(2), s(2)]) {
       this.shimmer.push(
         scene.add
-          .image(cx + dx, cardY - 7, 'pixel')
+          .image(cx + dx, cardY - s(7), 'pixel')
           .setTint(colorOf(px(RAMP.PURPLE, 3)))
           .setScrollFactor(0)
           .setDepth(DEPTH_UI + 2)
@@ -187,7 +190,7 @@ export class BustView {
     }
     // Homesick: the {favoritefood} thought-bubble beside the bust's head
     this.bubble = scene.add
-      .image(cx + 22, cardY - 26, 'thought_food')
+      .image(cx + s(22), cardY - s(26), 'thought_food')
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2)
       .setVisible(false);
@@ -195,7 +198,7 @@ export class BustView {
     // status indicator, seated on the card's LEFT shoulder, opposite the
     // §A4.8 ailment cluster on the right, so buffs and ailments never collide
     this.pip = scene.add
-      .image(cardX + 7, cardY - 10, 'hex_pip')
+      .image(cardX + s(7), cardY - s(10), 'hex_pip')
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2)
       .setVisible(false);
@@ -221,7 +224,7 @@ export class BustView {
   lift(on: boolean): void {
     if (this.lifted === on) return;
     this.lifted = on;
-    const dy = on ? -2 : 0;
+    const dy = on ? -s(2) : 0;
     this.shakeables.forEach((s) => (s.obj.y = s.baseY + dy));
     this.bust.y = this.bustBaseY + dy;
   }
@@ -233,7 +236,7 @@ export class BustView {
 
   /** bust center in screen px — impact bursts and the Tick's tether aim here */
   point(): { x: number; y: number } {
-    return { x: this.cardX + this.cardW / 2, y: this.cardY - 6 };
+    return { x: this.cardX + this.cardW / 2, y: this.cardY - s(6) };
   }
 
   /** strike a one-shot pose for ms (scaled dt, so it skips like text) */
@@ -281,7 +284,7 @@ export class BustView {
     // card shake — box/labels/bust offset; drums NEVER move (the law)
     if (this.shakeLeft > 0) {
       this.shakeLeft = Math.max(0, this.shakeLeft - dtFx);
-      const k = this.shakeLeft > 0 ? Math.round(Math.sin(this.shakeLeft / 24) * 2) : 0;
+      const k = this.shakeLeft > 0 ? Math.round(Math.sin(this.shakeLeft / 24) * s(2)) : 0;
       this.shakeables.forEach((s) => (s.obj.x = s.baseX + k));
       this.bust.x = this.bustBaseX + k;
     }
@@ -321,7 +324,7 @@ export class BustView {
         this.bust.setVisible(false);
         // the angel takes the bust's place above the card (§A4.7)
         this.angel ??= this.scene.add
-          .sprite(this.cardX + this.cardW / 2, this.cardY - 14, `angel_${this.heroId}`)
+          .sprite(this.cardX + this.cardW / 2, this.cardY - s(14), `angel_${this.heroId}`)
           .setScrollFactor(0)
           .setDepth(DEPTH_UI - 1);
         this.angel.setVisible(true);
@@ -389,43 +392,45 @@ export class BustView {
   }
 
   private overlayTick(): void {
-    const s = this.flags.statuses;
-    this.setOverlays(s);
+    // `st` (not `s`) holds the status flags so the scale helper `s()` stays callable
+    const st = this.flags.statuses;
+    this.setOverlays(st);
     const t = this.animT;
-    if (s.sunburn) {
+    if (st.sunburn) {
       const a = 0.45 + 0.35 * Math.sin(t / 180);
       this.edges.forEach((e) => e.setAlpha(a));
     }
-    if (s.crying) {
-      // droplets fall eye → card top and loop
+    if (st.crying) {
+      // droplets fall eye → card top and loop (the 14px fall scales; the cadence is time)
       this.drops.forEach((d, i) => {
         const ph = ((t + i * 260) % 520) / 520;
-        d.setY(this.cardY - 10 + ph * 14).setAlpha(1 - ph * 0.6);
+        d.setY(this.cardY - s(10) + ph * s(14)).setAlpha(1 - ph * 0.6);
       });
     }
-    if (s.asleep) {
+    if (st.asleep) {
       const ph = (t % 1100) / 1100;
       this.zzz
-        .setY(this.cardY - 20 - ph * 10)
-        .setX(this.cardX + this.cardW / 2 + 12 + Math.sin(ph * 6) * 2)
+        .setY(this.cardY - s(20) - ph * s(10))
+        .setX(this.cardX + this.cardW / 2 + s(12) + Math.sin(ph * 6) * s(2))
         .setAlpha(1 - ph * 0.7);
     }
-    if (s.paralyzed) {
+    if (st.paralyzed) {
       this.sparks.forEach((sp, i) => {
         const step = Math.floor(t / 130) + i * 3;
-        sp.setPosition(this.cardX + 4 + ((step * 13) % (this.cardW - 8)), this.cardY - 16 + ((step * 7) % 56));
+        // the skitter offsets + their wrap ranges are all pixel spans
+        sp.setPosition(this.cardX + s(4) + ((step * s(13)) % (this.cardW - s(8))), this.cardY - s(16) + ((step * s(7)) % s(56)));
         sp.setVisible(step % 3 !== 1);
       });
     }
-    if (s.hushed) {
+    if (st.hushed) {
       this.shimmer.forEach((sh, i) => {
         const on = Math.floor(t / 160 + i) % 2 === 0;
         sh.setTint(colorOf(px(on ? RAMP.PURPLE : RAMP.CYAN, 3)));
-        sh.setY(this.cardY - 7 + (on ? 0 : 1));
+        sh.setY(this.cardY - s(7) + (on ? 0 : s(1)));
       });
     }
-    if (s.homesick) {
-      this.bubble.setY(this.cardY - 26 + Math.sin(t / 400) * 1.5);
+    if (st.homesick) {
+      this.bubble.setY(this.cardY - s(26) + Math.sin(t / 400) * s(1.5));
     }
   }
 }

@@ -14,6 +14,7 @@ import Phaser from 'phaser';
 import { makeWindow, DEPTH_UI } from './windows';
 import { colorOf, RAMP, px } from '../palette';
 import { ITEMS, itemKindLabel, itemEffectLine } from '../data/items';
+import { s } from '../spritegen/scale';
 
 export interface ItemInfoPanel {
   /** re-read the panel for an item id (call from pick()'s onHighlight) */
@@ -24,26 +25,26 @@ export interface ItemInfoPanel {
 /** [PLAYTEST B] the panel's full bottom footprint (box height + its 6px margin).
  *  Lists that pair with this panel pass it as pick()'s `reserveBottom` so they
  *  auto-fit ABOVE it and can never overlap — read it here, never re-hardcode. */
-export const ITEMINFO_RESERVE = 60 + 6;
+export const ITEMINFO_RESERVE = s(60) + s(6);
 
 export function makeItemInfo(scene: Phaser.Scene): ItemInfoPanel {
-  const x = 8;
-  const w = scene.scale.width - 16;
-  const h = 60;
-  const y = scene.scale.height - h - 6;
+  const x = s(8);
+  const w = scene.scale.width - s(16);
+  const h = s(60);
+  const y = scene.scale.height - h - s(6);
   const win = makeWindow(scene, x, y, w, h);
   const mk = (oy: number, ramp: number, shade: 0 | 1 | 2 | 3, maxW?: number): Phaser.GameObjects.BitmapText => {
     const t = scene.add
-      .bitmapText(x + 10, y + oy, 'retro', '', 6)
+      .bitmapText(x + s(10), y + oy, 'retro', '', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(ramp, shade)));
     if (maxW) t.setMaxWidth(maxW);
     return t;
   };
-  const nameT = mk(8, RAMP.GOLD, 3);
-  const effT = mk(22, RAMP.CYAN, 3, w - 20);
-  const flavT = mk(34, RAMP.PAPER, 2, w - 20);
+  const nameT = mk(s(8), RAMP.GOLD, 3);
+  const effT = mk(s(22), RAMP.CYAN, 3, w - s(20));
+  const flavT = mk(s(34), RAMP.PAPER, 2, w - s(20));
   // S15g: the party VITALS BAR also lives at the bottom of the menu — tell it
   // to yield while this panel is up (no listener in the shops; harmless there)
   scene.events.emit('mf-iteminfo-open');

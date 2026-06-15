@@ -24,6 +24,7 @@ import { Dialogue, makeWindow, makeBox, DEPTH_UI } from '../ui/windows';
 import { LetterGrid } from '../ui/lettergrid';
 import { colorOf, RAMP, px } from '../palette';
 import { standFrame } from '../spritegen';
+import { s } from '../spritegen/scale';
 import { NEW_GAME_ENTRIES, randomDontCare } from '../data/newgame';
 
 export class NameEntryScene extends Phaser.Scene {
@@ -49,24 +50,24 @@ export class NameEntryScene extends Phaser.Scene {
     this.values = NEW_GAME_ENTRIES.map((e) => e.prefill);
     this.recapObjects = [];
     AUDIO.playMusic('title');
-    this.add.image(0, 0, 'name_entry_bg').setOrigin(0, 0).setDepth(-10);
+    this.add.image(0, 0, 'name_entry_bg').setOrigin(0, 0).setDisplaySize(this.scale.width, this.scale.height).setDepth(-10);
     this.cameras.main.fadeIn(300, 0, 0, 0);
 
-    makeWindow(this, 56, 4, 288, 178);
+    makeWindow(this, s(56), s(4), s(288), s(178));
 
     this.promptText = this.add
-      .bitmapText(200, 12, 'retro', '', 6)
+      .bitmapText(s(200), s(12), 'retro', '', s(6))
       .setOrigin(0.5, 0)
       .setDepth(DEPTH_UI + 1)
-      .setMaxWidth(264)
+      .setMaxWidth(s(264))
       .setCenterAlign();
 
-    this.valueBox = makeBox(this, 150, 32, 100, 20);
+    this.valueBox = makeBox(this, s(150), s(32), s(100), s(20));
     this.valueText = this.add
-      .bitmapText(158, 39, 'retro', '', 6)
+      .bitmapText(s(158), s(39), 'retro', '', s(6))
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.INK, 0)));
-    this.portrait = this.add.sprite(132, 42, 'rex', standFrame('down')).setDepth(DEPTH_UI + 1);
+    this.portrait = this.add.sprite(s(132), s(42), 'rex', standFrame('down')).setDepth(DEPTH_UI + 1);
 
     // the shared ADR-013 grid (ui/lettergrid.ts since S10)
     this.grid = new LetterGrid(this, {
@@ -80,7 +81,7 @@ export class NameEntryScene extends Phaser.Scene {
     });
 
     this.add
-      .bitmapText(200, 188, 'retro', 'A: pick   B: erase / back   START: done', 6)
+      .bitmapText(s(200), s(188), 'retro', 'A: pick   B: erase / back   START: done', s(6))
       .setOrigin(0.5, 0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.NIGHT, 3)));
@@ -98,11 +99,13 @@ export class NameEntryScene extends Phaser.Scene {
     this.grid?.setValue(this.values[i]);
     this.grid?.setCap(e.cap);
     this.promptText?.setText(e.prompt);
-    const w = e.cap * 6 + 16;
-    const x = Math.round(200 - w / 2 + (e.sprite ? 14 : 0));
-    this.valueBox?.setPosition(x, 32);
-    this.valueBox?.setSize(w, 20);
-    this.valueText?.setPosition(x + 8, 39);
+    // w/x come out runtime-scaled (cap*glyph-advance + padding, 200 anchor, 14
+    // sprite nudge), so the /2 centering stays a unitless divide.
+    const w = e.cap * s(6) + s(16);
+    const x = Math.round(s(200) - w / 2 + (e.sprite ? s(14) : 0));
+    this.valueBox?.setPosition(x, s(32));
+    this.valueBox?.setSize(w, s(20));
+    this.valueText?.setPosition(x + s(8), s(39));
     if (e.sprite) {
       // the hero walks in place while you name them — uses the authored 8-dir
       // movement frames (the `<id>-walk-down` loop), so the name screen is alive
@@ -111,7 +114,7 @@ export class NameEntryScene extends Phaser.Scene {
       const walk = `${e.sprite}-walk-down`;
       this.portrait?.setTexture(e.sprite, standFrame('down'));
       if (this.anims.exists(walk)) this.portrait?.play(walk);
-      this.portrait?.setPosition(x - 18, 42).setVisible(true);
+      this.portrait?.setPosition(x - s(18), s(42)).setVisible(true);
     } else {
       this.portrait?.stop();
       this.portrait?.setVisible(false);
@@ -168,11 +171,12 @@ export class NameEntryScene extends Phaser.Scene {
       '',
       'All set?',
     ];
-    const win = makeWindow(this, 104, 26, 192, 124);
+    const win = makeWindow(this, s(104), s(26), s(192), s(124));
     win.setDepth(DEPTH_UI + 4);
     const texts = lines.map((l, i) =>
       this.add
-        .bitmapText(116, 36 + i * 14, 'retro', l, 6)
+        // 14 = native line height
+        .bitmapText(s(116), s(36) + i * s(14), 'retro', l, s(6))
         .setDepth(DEPTH_UI + 5),
     );
     this.recapObjects = [win, ...texts];

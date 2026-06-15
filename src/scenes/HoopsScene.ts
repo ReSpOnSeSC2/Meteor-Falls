@@ -53,7 +53,8 @@ import { statsAtLevel, maxHpAtLevel, maxPpAtLevel, HEROES } from '../data/heroes
 import { ABILITIES } from '../data/abilities';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { COURT } from '../hoops/court';
+import { COURT_RT } from '../hoops/court';
+import { s, ART_SCALE } from '../spritegen/scale';
 import {
   HoopsSim,
   makeRng,
@@ -97,11 +98,14 @@ export interface HoopsLaunch {
 type Stage = 'board' | 'tip' | 'play' | 'break' | 'tally';
 type CamMode = 'side' | 'behind';
 
-const PAD = 34; // must equal athletes.ts COURT_PAD (court texture margin)
+// the court texture's inbounds margin: native COURT_PAD (34) is upscaled
+// ×ART_SCALE with the texture at the boot seam, so the scene's world→screen
+// offset scales to match it.
+const PAD = s(34); // must equal athletes.ts COURT_PAD (court texture margin)
 const CAM_KEY = 'meteor-falls-cage-cam';
-const METER_H = 42;
-const METER_W = 9;
-const METER_FILL_W = 5;
+const METER_H = s(42); // over-head meter drum: px size
+const METER_W = s(9);
+const METER_FILL_W = s(5);
 
 /** the tutorial's lessons, in teaching order (advance on the deed) */
 const TUT_STEPS = [
@@ -222,23 +226,26 @@ export class HoopsScene extends Phaser.Scene {
     // ---- the world ----
     this.courtSide = this.add.image(0, 0, 'cage_court').setOrigin(0, 0).setDepth(0);
     this.courtBehind = this.add.image(0, 0, 'cage_court_behind').setOrigin(0, 0).setDepth(0).setScrollFactor(0).setVisible(false);
-    this.hoopL = this.add.sprite(PAD + COURT.RIM_L_X - 20, PAD + COURT.RIM_Y, 'hoop_side', 0).setOrigin(0, 0.5).setDepth(50);
+    // hoop posts: PAD + rim are runtime px; the ±20px reach offset scales too
+    this.hoopL = this.add.sprite(PAD + COURT_RT.RIM_L_X - s(20), PAD + COURT_RT.RIM_Y, 'hoop_side', 0).setOrigin(0, 0.5).setDepth(50);
     this.hoopR = this.add
-      .sprite(PAD + COURT.RIM_R_X + 20, PAD + COURT.RIM_Y, 'hoop_side', 0)
+      .sprite(PAD + COURT_RT.RIM_R_X + s(20), PAD + COURT_RT.RIM_Y, 'hoop_side', 0)
       .setOrigin(0, 0.5)
       .setFlipX(true)
       .setDepth(50);
-    this.hoopR.x -= 30; // flipped sprite re-anchors: rim reaches back inboard
-    this.boardBehind = this.add.image(BEHIND.CX, BEHIND.HORIZON + 4, 'backboard').setOrigin(0.5, 1).setDepth(6).setScrollFactor(0).setVisible(false);
-    this.ballShadow = this.add.image(0, 0, 'athlete_shadow').setDepth(4).setAlpha(0.5).setScale(0.5, 0.6);
+    this.hoopR.x -= s(30); // flipped sprite re-anchors: rim reaches back inboard (px)
+    // the BEHIND board sits in behindMap's native screen space (athletes.ts is
+    // frozen) — scale its placement to the runtime frame at the consumption site
+    this.boardBehind = this.add.image(s(BEHIND.CX), s(BEHIND.HORIZON) + s(4), 'backboard').setOrigin(0.5, 1).setDepth(6).setScrollFactor(0).setVisible(false);
+    this.ballShadow = this.add.image(0, 0, 'athlete_shadow').setDepth(4).setAlpha(0.5).setScale(0.5, 0.6); // setScale on an already-upscaled texture — KEEP
     this.ballSpr = this.add.image(0, 0, 'hoop_ball').setDepth(40);
-    this.cursor = this.add.rectangle(0, 0, 6, 3, colorOf(px(RAMP.GOLD, 3))).setDepth(60);
+    this.cursor = this.add.rectangle(0, 0, s(6), s(3), colorOf(px(RAMP.GOLD, 3))).setDepth(60); // px pip size
     this.sprites = [];
     this.shadows = [];
     this.sim.athletes.forEach((a) => {
       this.shadows.push(this.add.image(0, 0, 'athlete_shadow').setDepth(4).setAlpha(0.55));
-      const s = this.add.sprite(0, 0, a.def.key, 0).setOrigin(0.5, 1).setDepth(10);
-      this.sprites.push(s);
+      const spr = this.add.sprite(0, 0, a.def.key, 0).setOrigin(0.5, 1).setDepth(10); // renamed off `s` to keep the scaler unshadowed
+      this.sprites.push(spr);
     });
 
     this.cameras.main.setBounds(0, 0, this.courtSide.width, this.courtSide.height);
@@ -246,29 +253,31 @@ export class HoopsScene extends Phaser.Scene {
     // ---- HUD ----
     const gold = colorOf(px(RAMP.GOLD, 3));
     const paper = colorOf(px(RAMP.PAPER, 3));
-    this.hudScore = this.add.bitmapText(200, 4, 'retro', '', 8).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(gold);
-    this.hudClock = this.add.bitmapText(4, 4, 'retro', '', 6).setScrollFactor(0).setDepth(DEPTH_UI).setTint(paper);
-    this.hudShot = this.add.bitmapText(396, 4, 'retro', '', 6).setOrigin(1, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(colorOf(px(RAMP.CYAN, 2)));
+    // HUD: positions, sizes, and BitmapText size args are all native px → s()
+    this.hudScore = this.add.bitmapText(s(200), s(4), 'retro', '', s(8)).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(gold);
+    this.hudClock = this.add.bitmapText(s(4), s(4), 'retro', '', s(6)).setScrollFactor(0).setDepth(DEPTH_UI).setTint(paper);
+    this.hudShot = this.add.bitmapText(s(396), s(4), 'retro', '', s(6)).setOrigin(1, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(colorOf(px(RAMP.CYAN, 2)));
     this.ticker = this.add
-      .bitmapText(200, 16, 'retro', '', 6)
+      .bitmapText(s(200), s(16), 'retro', '', s(6))
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI)
       .setCenterAlign()
-      .setMaxWidth(380)
+      .setMaxWidth(s(380))
       .setTint(colorOf(px(RAMP.MAGENTA, 2)));
     this.banner = this.add
-      .bitmapText(200, 96, 'retro', '', 12)
+      .bitmapText(s(200), s(96), 'retro', '', s(12))
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI)
       .setCenterAlign()
-      .setMaxWidth(360)
+      .setMaxWidth(s(360))
       .setTint(gold);
-    // the over-head meter: a vertical drum that fills toward the green top
+    // the over-head meter: a vertical drum that fills toward the green top.
+    // METER_W/H already scaled; the 1px seed heights are resized in renderMeter.
     this.meterBack = this.add.rectangle(0, 0, METER_W, METER_H, colorOf(px(RAMP.INK, 0))).setOrigin(0.5, 1).setDepth(72).setVisible(false);
-    this.meterGreen = this.add.rectangle(0, 0, METER_W, 1, colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 0).setDepth(73).setVisible(false);
-    this.meterFill = this.add.rectangle(0, 0, METER_FILL_W, 1, colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setDepth(74).setVisible(false);
+    this.meterGreen = this.add.rectangle(0, 0, METER_W, s(1), colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 0).setDepth(73).setVisible(false);
+    this.meterFill = this.add.rectangle(0, 0, METER_FILL_W, s(1), colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setDepth(74).setVisible(false);
 
     AUDIO.playMusic('cage');
     if (data.tutorial) this.showTutorialBoard();
@@ -282,21 +291,25 @@ export class HoopsScene extends Phaser.Scene {
     this.panelObjs = [];
   }
 
+  /** panel label. x/y/size are passed as NATIVE px by callers; this private
+   *  helper scales them (and its own maxWidth) to runtime — one seam, not 30. */
   private panelText(x: number, y: number, text: string, size: number, tint: number, origin = 0.5): Phaser.GameObjects.BitmapText {
     const t = this.add
-      .bitmapText(x, y, 'retro', text, size)
+      .bitmapText(s(x), s(y), 'retro', text, s(size))
       .setOrigin(origin, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2)
       .setCenterAlign()
-      .setMaxWidth(330)
+      .setMaxWidth(s(330))
       .setTint(tint);
     this.panelObjs.push(t);
     return t;
   }
 
+  /** panel frame. Args are NATIVE px from callers; scaled here before the
+   *  cross-file makeWindow (which expects runtime px per the scale contract). */
   private panelWindow(x: number, y: number, w: number, h: number): void {
-    this.panelObjs.push(makeWindow(this, x, y, w, h));
+    this.panelObjs.push(makeWindow(this, s(x), s(y), s(w), s(h)));
   }
 
   /** the chalk board (classic) or the pickup tip card */
@@ -411,9 +424,9 @@ export class HoopsScene extends Phaser.Scene {
       // lateral rides the SAME latSign basis project() uses — the sim only
       // ever sees court-space axes, so tapes and AI reads are untouched
       const rim = this.viewRim();
-      const s = rim.x < COURT.W / 2 ? -1 : 1;
-      const cx = (-iy * s) as -1 | 0 | 1;
-      const cy = (ix * s) as -1 | 0 | 1;
+      const latSign = rim.x < COURT_RT.W / 2 ? -1 : 1; // ±1 basis (NOT the s() scaler)
+      const cx = (-iy * latSign) as -1 | 0 | 1;
+      const cy = (ix * latSign) as -1 | 0 | 1;
       ix = cx;
       iy = cy;
     }
@@ -558,14 +571,16 @@ export class HoopsScene extends Phaser.Scene {
 
   private popup(wx: number, wy: number, text: string, ramp: number): void {
     const p = this.project(wx, wy, 0);
+    // wx/wy are world px (project handles them). The head clearance and font
+    // size are screen px → scale; the rise/duration is the float tween (px/ms).
     const t = this.add
-      .bitmapText(p.x, p.y - 28 * p.scale, 'retro', text, 8)
+      .bitmapText(p.x, p.y - s(28) * p.scale, 'retro', text, s(8))
       .setOrigin(0.5, 1)
       .setDepth(70)
       .setTint(colorOf(px(ramp, 3)));
     if (this.camMode === 'behind') t.setScrollFactor(0);
     this.popups.push(t);
-    this.tweens.add({ targets: t, y: t.y - 16, alpha: 0, duration: 700, onComplete: () => t.destroy() });
+    this.tweens.add({ targets: t, y: t.y - s(16), alpha: 0, duration: 700, onComplete: () => t.destroy() });
   }
 
   private popupAt(a: Athlete, text: string, ramp: number): void {
@@ -891,7 +906,7 @@ export class HoopsScene extends Phaser.Scene {
         return a.stateT < 300 ? pair[0] : pair[1];
       }
       case 'block':
-        return a.vz > 40 ? F.blockA : F.blockB;
+        return a.vz > s(40) ? F.blockA : F.blockB; // px/s: rising vs falling leap frame
       case 'steal':
         return F.steal;
       case 'spin':
@@ -927,12 +942,22 @@ export class HoopsScene extends Phaser.Scene {
    *  scrolls). BEHIND: behindMap projection (screen-fixed). */
   private project(wx: number, wy: number, z: number): { x: number; y: number; scale: number } {
     if (this.camMode === 'side') {
+      // wx/wy/z are world runtime px; PAD is the scaled court-texture margin
       return { x: PAD + wx, y: PAD + wy - z, scale: 1 };
     }
     const rim = this.viewRim();
-    const latSign = rim.x < COURT.W / 2 ? -1 : 1;
-    const m = behindMap(Math.abs(wx - rim.x), (wy - COURT.RIM_Y) * latSign);
-    return { x: m.x, y: m.y - z * m.scale * 0.85, scale: m.scale };
+    const latSign = rim.x < COURT_RT.W / 2 ? -1 : 1;
+    // behindMap (athletes.ts) is FROZEN: it takes NATIVE court-space depth/lat
+    // and returns NATIVE 400×225 screen coords. Our world coords (wx/wy) and the
+    // rim (viewRim → COURT_RT) are runtime px, so the depth/lat differences are
+    // computed in RUNTIME space then divided back to native for the lookup, and
+    // the returned screen point is scaled UP to the runtime frame. m.scale is the
+    // foreshorten RATIO (unitless) and the sprite texture is already ×ART_SCALE,
+    // so it is used as a setScale multiplier as-is; the z-lift is already runtime px.
+    const depthNative = Math.abs(wx - rim.x) / ART_SCALE;
+    const latNative = ((wy - COURT_RT.RIM_Y) / ART_SCALE) * latSign;
+    const m = behindMap(depthNative, latNative);
+    return { x: s(m.x), y: s(m.y) - z * m.scale * 0.85, scale: m.scale };
   }
 
   private renderWorld(): void {
@@ -944,22 +969,24 @@ export class HoopsScene extends Phaser.Scene {
     this.boardBehind.setVisible(behind);
     if (behind) {
       const rim = this.viewRim();
-      this.courtBehind.setFlipX(rim.x > COURT.W / 2);
+      this.courtBehind.setFlipX(rim.x > COURT_RT.W / 2);
       this.cameras.main.setScroll(0, 0);
     }
     const holderIdx = this.sim.ball.kind === 'held' ? this.sim.ball.by : -1;
     this.sim.athletes.forEach((a, i) => {
-      const s = this.sprites[i];
+      const spr = this.sprites[i]; // renamed from `s` so the s() scaler is usable here
       const defending = this.sim.posTeam !== a.team;
-      s.setTexture(a.def.key, this.frameOf(a, i, holderIdx === i, defending));
-      s.setFlipX(a.face < 0);
-      const p = this.project(a.x, a.y + 6, a.z);
-      s.setPosition(p.x, p.y);
-      s.setScale(p.scale);
-      s.setDepth(behind ? 10 + p.y * 0.2 : 10 + a.y * 0.05);
-      s.setScrollFactor(behind ? 0 : 1);
+      spr.setTexture(a.def.key, this.frameOf(a, i, holderIdx === i, defending));
+      spr.setFlipX(a.face < 0);
+      const p = this.project(a.x, a.y + s(6), a.z); // +6px plants the feet
+      spr.setPosition(p.x, p.y);
+      spr.setScale(p.scale);
+      // depth is z-ORDER (not pixels): the same formula on every sprite keeps
+      // the painter's sort correct at any scale — left unscaled per convention
+      spr.setDepth(behind ? 10 + p.y * 0.2 : 10 + a.y * 0.05);
+      spr.setScrollFactor(behind ? 0 : 1);
       const sh = this.shadows[i];
-      const ps = this.project(a.x, a.y + 5, 0);
+      const ps = this.project(a.x, a.y + s(5), 0); // shadow sits 5px below
       sh.setPosition(ps.x, ps.y);
       sh.setScale(ps.scale);
       sh.setScrollFactor(behind ? 0 : 1);
@@ -970,36 +997,43 @@ export class HoopsScene extends Phaser.Scene {
     let bz = bp.z;
     if (this.sim.ball.kind === 'held') {
       const h = this.sim.athletes[this.sim.ball.by];
-      bz = h.moving || h.state === 'play' ? 4 + Math.abs(Math.sin(this.sim.t * 0.012)) * 14 + h.z : bp.z;
+      // dribble bob (z px): 4px base + 14px sine amplitude; 0.012 is a time
+      // frequency (1/ms) on the sim clock, not pixels
+      bz = h.moving || h.state === 'play' ? s(4) + Math.abs(Math.sin(this.sim.t * 0.012)) * s(14) + h.z : bp.z;
     }
     const pb = this.project(bp.x, bp.y, bz);
     this.ballSpr.setPosition(pb.x, pb.y);
     this.ballSpr.setScale(pb.scale);
     this.ballSpr.setScrollFactor(behind ? 0 : 1);
-    this.ballSpr.setDepth(behind ? 10 + pb.y * 0.2 + 5 : 10 + bp.y * 0.05 + (bz > 40 ? 30 : 1));
-    const pbs = this.project(bp.x, bp.y + 4, 0);
+    // depth is z-order (unscaled); only the bz>40px "ball is up high" test is a
+    // real px threshold against the scaled height
+    this.ballSpr.setDepth(behind ? 10 + pb.y * 0.2 + 5 : 10 + bp.y * 0.05 + (bz > s(40) ? 30 : 1));
+    const pbs = this.project(bp.x, bp.y + s(4), 0); // ball shadow 4px down-court
     this.ballShadow.setPosition(pbs.x, pbs.y);
-    this.ballShadow.setScale(0.5 * pbs.scale, 0.6 * pbs.scale);
+    this.ballShadow.setScale(0.5 * pbs.scale, 0.6 * pbs.scale); // setScale multipliers — KEEP
     this.ballShadow.setScrollFactor(behind ? 0 : 1);
-    this.ballShadow.setAlpha(Math.max(0.2, 0.5 - bz * 0.004));
+    // alpha fades with height: 0.004 is alpha-per-NATIVE-px, so take bz native
+    this.ballShadow.setAlpha(Math.max(0.2, 0.5 - (bz / ART_SCALE) * 0.004));
     // net ripple
     this.netT += 16.7;
     const netFrame = this.netT < 90 ? 1 : this.netT < 220 ? 2 : 0;
     this.hoopL.setFrame(netFrame);
     this.hoopR.setFrame(netFrame);
-    // the controlled-athlete pip
+    // the controlled-athlete pip — floats 38px over the head
     const c = this.sim.athletes[this.sim.controlled];
-    const pc = this.project(c.x, c.y, c.z + 38);
+    const pc = this.project(c.x, c.y, c.z + s(38));
     this.cursor.setPosition(pc.x, pc.y);
     this.cursor.setScrollFactor(behind ? 0 : 1);
     this.cursor.setVisible(this.stage === 'play' && c.team === 0);
     // THE OVER-HEAD METER (S12c): world-space, follows the gatherer/dunker
     this.renderMeter(behind);
-    // camera follows the ball, 2K-style (SIDE only — BEHIND is a fixed seat)
+    // camera follows the ball, 2K-style (SIDE only — BEHIND is a fixed seat).
+    // The 200/112 targets are the screen centre (half of native 400×225) → s();
+    // 0.08 is the unitless follow lerp.
     if (!behind) {
       const cam = this.cameras.main;
-      cam.scrollX += (PAD + bp.x - 200 - cam.scrollX) * 0.08;
-      cam.scrollY += (PAD + bp.y - 112 - cam.scrollY) * 0.08;
+      cam.scrollX += (PAD + bp.x - s(200) - cam.scrollX) * 0.08;
+      cam.scrollY += (PAD + bp.y - s(112) - cam.scrollY) * 0.08;
     }
   }
 
@@ -1021,25 +1055,27 @@ export class HoopsScene extends Phaser.Scene {
     this.meterGreen.setVisible(show);
     this.meterFill.setVisible(show);
     if (!show || !read || !who) return;
-    const H = METER_H;
-    const p = this.project(who.x, who.y, who.z + 44);
+    const H = METER_H; // already scaled
+    const p = this.project(who.x, who.y, who.z + s(44)); // meter floats 44px up
     const sf = behind ? 0 : 1;
     const top = p.y - H / 2;
     const bottom = p.y + H / 2;
     this.meterBack.setPosition(p.x, bottom).setScrollFactor(sf);
     this.meterBack.setSize(METER_W, H);
     // the green window: [lo, 1] of the drum, drawn from the top down — and
-    // when range has CLOSED it (lo ≥ 1), no green is drawn: there is none
+    // when range has CLOSED it (lo ≥ 1), no green is drawn: there is none.
+    // lo/frac are meter FRACTIONS (unitless); the 2px border inset and the 1px
+    // floors/visibility cutoffs are pixels and scale.
     const lo = Math.max(0, Math.min(1, read.lo));
-    const winH = (1 - lo) * (H - 2);
-    this.meterGreen.setVisible(winH >= 1);
-    this.meterGreen.setPosition(p.x, top + 1).setScrollFactor(sf);
-    this.meterGreen.setSize(METER_W, Math.max(1, winH));
+    const winH = (1 - lo) * (H - s(2));
+    this.meterGreen.setVisible(winH >= s(1));
+    this.meterGreen.setPosition(p.x, top + s(1)).setScrollFactor(sf);
+    this.meterGreen.setSize(METER_W, Math.max(s(1), winH));
     this.meterGreen.setFillStyle(colorOf(px(read.kind === 'dunk' ? RAMP.GOLD : read.kind === 'layup' ? RAMP.CYAN : RAMP.GRASS, 2)));
     // the fill rises from the bottom; past the top it reads as overfill (red)
     const frac = Math.min(1.12, read.frac);
-    const fillH = Math.max(1, Math.max(0, Math.min(1, frac)) * (H - 2));
-    this.meterFill.setPosition(p.x, bottom - 1).setScrollFactor(sf);
+    const fillH = Math.max(s(1), Math.max(0, Math.min(1, frac)) * (H - s(2)));
+    this.meterFill.setPosition(p.x, bottom - s(1)).setScrollFactor(sf);
     this.meterFill.setSize(METER_FILL_W, fillH);
     this.meterFill.setFillStyle(colorOf(px(frac > 1 ? RAMP.RED : RAMP.PAPER, 3)));
   }

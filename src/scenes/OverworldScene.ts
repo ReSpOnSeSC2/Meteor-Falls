@@ -130,6 +130,7 @@ import {
   SWIRL_TINT,
 } from '../battle/formulas';
 import { colorOf, RAMP, px } from '../palette';
+import { s, ART_SCALE, TILE_PX } from '../spritegen/scale';
 
 interface Rect {
   x: number;
@@ -179,23 +180,25 @@ interface NpcObj {
 
 type AuthoredWorldPropKey = keyof typeof AUTHORED_WORLD_PROP_DISPLAY_SIZE;
 
-const WALK = 70;
-const RUN = 115;
-const PURSUE = 85;
-const PATROL_WALK = 38;
-const PATROL_CHASE = 92;
+// px/s movement speeds (ADR-024 dt-scaled) — scaled to runtime space so the
+// felt pace is identical at any ART_SCALE (the world grid scales with them).
+const WALK = 70 * ART_SCALE;
+const RUN = 115 * ART_SCALE;
+const PURSUE = 85 * ART_SCALE;
+const PATROL_WALK = 38 * ART_SCALE;
+const PATROL_CHASE = 92 * ART_SCALE;
 
 /* ---- ADR-106: multi-enemy contact + the EB-style join window (all tunable) ---- */
 /** the battle seats up to 5 (BattleScene letters A–E) — one source of truth */
 const ENCOUNTER_CAP = MAX_BATTLE_ENEMIES;
-/** roamers this close to the contact point are caught in the same pack at once */
-const PACK_RADIUS = 30;
-/** roamers within this ring (but outside the pack) may RUSH in during the swirl */
-const JOIN_ALERT_RADIUS = 64;
-/** a rushing roamer hops into the fight once it gets this close to the player */
-const JOIN_REACH = 15;
+/** roamers this close to the contact point are caught in the same pack at once (px) */
+const PACK_RADIUS = s(30);
+/** roamers within this ring (but outside the pack) may RUSH in during the swirl (px) */
+const JOIN_ALERT_RADIUS = s(64);
+/** a rushing roamer hops into the fight once it gets this close to the player (px) */
+const JOIN_REACH = s(15);
 /** px/s a roamer dashes the fight during the join window (dt-scaled, ADR-024) */
-const JOIN_DASH = 165;
+const JOIN_DASH = 165 * ART_SCALE;
 /** swirl length: the standard snap, and the longer "1–2s" window when foes join */
 const SWIRL_MS = 750;
 const JOIN_WINDOW_MS = 1150;
@@ -265,7 +268,7 @@ export class OverworldScene extends Phaser.Scene {
    *  sprite. The sim's SAFETY LAW (never the player's cell / last lane) keeps any
    *  overlap transient: cars keep rolling, so you're never trapped. */
   private trafficRects: Rect[] = [];
-  /** native sprite body size per vehicle texture (for the collision rect) */
+  /** runtime sprite body size per vehicle texture (for the collision rect) */
   private trafficDims = new Map<string, { w: number; h: number }>();
   private static TRAFFIC_STEP_MS = 360; // ms per one-tile hop (lerped between)
   // ADR-097: oblique cars draw bigger native (~47×26, sized so the 24×32 cast
@@ -439,14 +442,16 @@ export class OverworldScene extends Phaser.Scene {
       data.push(row);
       this.solidTiles.push(srow);
     }
-    const map = this.make.tilemap({ data, tileWidth: 16, tileHeight: 16 });
+    // the 'tiles' texture is upscaled to TILE_PX-sized tiles at the boot seam,
+    // so the map's tile size is TILE_PX (16 at ×1) — all tile↔px math uses it.
+    const map = this.make.tilemap({ data, tileWidth: TILE_PX, tileHeight: TILE_PX });
     const tiles = map.addTilesetImage('tiles');
     if (tiles) map.createLayer(0, tiles, 0, 0)?.setDepth(0);
     // center maps smaller than the viewport (interiors float in the void)
     const vw = this.scale.width;
     const vh = this.scale.height;
-    const mw = w * 16;
-    const mh = h * 16;
+    const mw = w * TILE_PX;
+    const mh = h * TILE_PX;
     const bx = Math.min(0, (mw - vw) / 2);
     const by = Math.min(0, (mh - vh) / 2);
     this.cameras.main.setBounds(bx, by, Math.max(mw, vw), Math.max(mh, vh));
@@ -465,10 +470,11 @@ export class OverworldScene extends Phaser.Scene {
         p.sprite === 'mask_switch' && (Number(GS.flag(`pyr_rot_${this.mapDef.id.slice(-1)}`)) || 0) > 0
           ? 'mask_switch_lit'
           : p.sprite;
-      const img = this.add.image(p.x * 16, p.y * 16, sprite).setOrigin(0, 0);
+      const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, sprite).setOrigin(0, 0);
       const displaySize = AUTHORED_WORLD_PROP_DISPLAY_SIZE[sprite as AuthoredWorldPropKey];
-      if (displaySize) img.setDisplaySize(displaySize.w, displaySize.h);
-      img.setDepth(p.y * 16 + img.displayHeight);
+      // AUTHORED_WORLD_PROP_DISPLAY_SIZE is NATIVE map data → scale at read
+      if (displaySize) img.setDisplaySize(s(displaySize.w), s(displaySize.h));
+      img.setDepth(p.y * TILE_PX + img.displayHeight);
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
         // places a facade at a story count `u`; the forge/grown grammar often
@@ -483,22 +489,24 @@ export class OverworldScene extends Phaser.Scene {
         // gatehouse, mansions) join the bldg_* facades here — the tall clubhouse_grand
         // had a 30px data solid under a much taller sprite, so its lower body was
         // walk-through and its doorstep sat too deep; the texture rebuild fixes both.
-        for (const s of this.facadeSolids(p, img.width, img.height)) this.solids.push(s);
+        for (const sr of this.facadeSolids(p, img.width, img.height)) this.solids.push(sr);
         if (p.door) {
+          // img.* are runtime (displayed) px; door.ox/w/h are NATIVE data → s()
           this.facadeDoorBox.set(p, {
-            x: p.x * 16 + p.door.ox,
-            y: p.y * 16 + img.height - 14,
-            w: p.door.w,
-            h: p.door.h,
+            x: p.x * TILE_PX + s(p.door.ox),
+            y: p.y * TILE_PX + img.height - s(14),
+            w: s(p.door.w),
+            h: s(p.door.h),
           });
         }
         this.auditFacade(p, sprite, img.height);
       } else if (p.solid) {
+        // solid.* are NATIVE map data → scale at the read site
         this.solids.push({
-          x: p.x * 16 + p.solid.ox,
-          y: p.y * 16 + p.solid.oy,
-          w: p.solid.w,
-          h: p.solid.h,
+          x: p.x * TILE_PX + s(p.solid.ox),
+          y: p.y * TILE_PX + s(p.solid.oy),
+          w: s(p.solid.w),
+          h: s(p.solid.h),
         });
       }
     }
@@ -529,23 +537,23 @@ export class OverworldScene extends Phaser.Scene {
   private buildHoldingDoor(p: PropDef): void {
     if (GS.flag('holding_open')) {
       this.add
-        .image(p.x * 16 - 26, p.y * 16 + 14, 'quota_panel')
+        .image(p.x * TILE_PX - s(26), p.y * TILE_PX + s(14), 'quota_panel')
         .setOrigin(0, 0)
-        .setDepth(p.y * 16 + 20);
+        .setDepth(p.y * TILE_PX + s(20));
       return;
     }
     const lit = this.quotaCount();
     const img = this.add
-      .image(p.x * 16, p.y * 16, lit > 0 ? `holding_door_${lit}` : 'holding_door')
+      .image(p.x * TILE_PX, p.y * TILE_PX, lit > 0 ? `holding_door_${lit}` : 'holding_door')
       .setOrigin(0, 0);
-    img.setDepth(p.y * 16 + img.height);
+    img.setDepth(p.y * TILE_PX + img.height);
     this.holdingDoorImg = img;
     if (p.solid) {
       this.solids.push({
-        x: p.x * 16 + p.solid.ox,
-        y: p.y * 16 + p.solid.oy,
-        w: p.solid.w,
-        h: p.solid.h,
+        x: p.x * TILE_PX + s(p.solid.ox),
+        y: p.y * TILE_PX + s(p.solid.oy),
+        w: s(p.solid.w),
+        h: s(p.solid.h),
       });
     }
   }
@@ -565,18 +573,20 @@ export class OverworldScene extends Phaser.Scene {
   private static FACADE_CAP = 10; // walkable roof-eave margin at the very top
   private static DOOR_OPENING = 18; // the doorway height left open to walk into
   private facadeSolids(p: PropDef, wPx: number, hPx: number): Rect[] {
-    const left = p.x * 16;
-    const top = p.y * 16 + OverworldScene.FACADE_CAP;
+    // wPx/hPx are runtime (displayed texture) px; FACADE_CAP/DOOR_OPENING and
+    // p.door.* are NATIVE → scale them so the footprint stays texture-true at ×4.
+    const left = p.x * TILE_PX;
+    const top = p.y * TILE_PX + s(OverworldScene.FACADE_CAP);
     const right = left + wPx;
-    const foot = p.y * 16 + hPx;
+    const foot = p.y * TILE_PX + hPx;
     if (!p.door) return [{ x: left, y: top, w: wPx, h: foot - top }];
-    const dL = left + p.door.ox;
-    const dR = dL + p.door.w;
-    const doorTop = foot - OverworldScene.DOOR_OPENING;
+    const dL = left + s(p.door.ox);
+    const dR = dL + s(p.door.w);
+    const doorTop = foot - s(OverworldScene.DOOR_OPENING);
     const out: Rect[] = [];
     if (dL > left) out.push({ x: left, y: top, w: dL - left, h: foot - top }); // wall left of the door
     if (right > dR) out.push({ x: dR, y: top, w: right - dR, h: foot - top }); // wall right of the door
-    if (doorTop > top) out.push({ x: dL, y: top, w: p.door.w, h: doorTop - top }); // lintel over the door
+    if (doorTop > top) out.push({ x: dL, y: top, w: s(p.door.w), h: doorTop - top }); // lintel over the door
     return out;
   }
 
@@ -584,8 +594,9 @@ export class OverworldScene extends Phaser.Scene {
    *  body (the placement `u` drifted from the sprite — the walk-through cases) */
   private auditFacade(p: PropDef, sprite: string, hPx: number): void {
     if (!import.meta.env.DEV || !p.solid) return;
-    if (p.solid.h < hPx - 26) {
-      this.facadeDrift.push(`${sprite}@(${p.x},${p.y}) data h=${p.solid.h} < body ${hPx - 22}`);
+    // hPx is runtime (displayed) px; p.solid.h is NATIVE data → scale to compare
+    if (s(p.solid.h) < hPx - s(26)) {
+      this.facadeDrift.push(`${sprite}@(${p.x},${p.y}) data h=${p.solid.h} < body ${hPx - s(22)}`);
     }
   }
 
@@ -616,31 +627,31 @@ export class OverworldScene extends Phaser.Scene {
     for (const d of this.mapDef.doors) {
       const kind = d.indicator ?? (this.mapDef.interior ? 'mat' : 'none');
       if (kind === 'none') continue;
-      const cx = (d.x + d.w / 2) * 16;
-      const by = (d.y + d.h) * 16;
+      const cx = (d.x + d.w / 2) * TILE_PX;
+      const by = (d.y + d.h) * TILE_PX;
       if (kind === 'elevator') {
         // doors drawn on the wall above the zone; walk into them to ride
-        this.add.image(cx, d.y * 16 + 2, 'elevator').setOrigin(0.5, 1).setDepth(3);
+        this.add.image(cx, d.y * TILE_PX + s(2), 'elevator').setOrigin(0.5, 1).setDepth(3);
         continue;
       }
       if (kind === 'door') {
         // S11b: a doorway through a wall is a DOOR, not a mat (user law) —
         // mounted IN the wall band above the zone, swinging open on entry;
         // the S11 mat stays at its foot
-        const img = this.add.image(cx, d.y * 16, 'door_int').setOrigin(0.5, 1).setDepth(3);
+        const img = this.add.image(cx, d.y * TILE_PX, 'door_int').setOrigin(0.5, 1).setDepth(3);
         this.doorImgs.set(d, img);
-        this.add.image(cx, d.y * 16, 'doormat').setOrigin(0.5, 0).setDepth(2);
+        this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2);
         continue;
       }
       if (kind === 'mat' && d.facing === 'up') {
         // a door THROUGH the north wall: the mat lies at the doorway's foot,
         // flush against the wall base — never floating mid-floor (S11 catch:
         // the rex_hall mats hovered two tiles into the room)
-        this.add.image(cx, d.y * 16, 'doormat').setOrigin(0.5, 0).setDepth(2);
+        this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2);
         continue;
       }
       this.add
-        .image(cx, kind === 'stairs' ? by + 2 : by - 1, kind === 'stairs' ? 'stairs' : 'doormat')
+        .image(cx, kind === 'stairs' ? by + s(2) : by - s(1), kind === 'stairs' ? 'stairs' : 'doormat')
         .setOrigin(0.5, 1)
         .setDepth(2); // floor decal, characters walk over it
     }
@@ -649,9 +660,10 @@ export class OverworldScene extends Phaser.Scene {
     for (const p of this.mapDef.props) {
       if (!p.door) continue;
       const box = this.facadeDoorBox.get(p);
-      const cx = p.x * 16 + p.door.ox + p.door.w / 2;
-      const by = box ? box.y + box.h : p.y * 16 + p.door.oy + p.door.h;
-      this.add.image(cx, by + 4, 'doormat').setOrigin(0.5, 1).setDepth(2);
+      // door.ox/w are NATIVE data → s(); box.* are already runtime
+      const cx = p.x * TILE_PX + s(p.door.ox) + s(p.door.w) / 2;
+      const by = box ? box.y + box.h : p.y * TILE_PX + s(p.door.oy) + s(p.door.h);
+      this.add.image(cx, by + s(4), 'doormat').setOrigin(0.5, 1).setDepth(2);
     }
   }
 
@@ -659,14 +671,14 @@ export class OverworldScene extends Phaser.Scene {
     for (const def of this.mapDef.npcs) {
       if (def.ifFlag && !GS.flag(def.ifFlag)) continue;
       if (def.unlessFlag && GS.flag(def.unlessFlag)) continue;
-      const x = def.x * 16 + 8;
-      const y = def.y * 16 + 22;
+      const x = def.x * TILE_PX + TILE_PX / 2;
+      const y = def.y * TILE_PX + s(22);
       // dogs: frames [0,1]=eastbound, [2,3]=westbound (S7c sheet contract)
       const spr = this.add.sprite(x, y, def.sprite, def.dog ? (def.facing === 'left' ? 2 : 0) : standFrame(def.facing));
       spr.setOrigin(0.5, 1);
       spr.setDepth(y);
       this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000 });
-      this.solids.push({ x: x - 6, y: y - 10, w: 12, h: 10 });
+      this.solids.push({ x: x - s(6), y: y - s(10), w: s(12), h: s(10) });
     }
   }
 
@@ -701,15 +713,15 @@ export class OverworldScene extends Phaser.Scene {
     const walkable = (cx: number, cy: number): boolean => {
       if (cx < 0 || cy < 0 || cx >= w || cy >= h) return false;
       if (this.solidTiles[cy][cx]) return false;
-      const fx = cx * 16 + 8;
-      const fy = cy * 16 + 12;
-      for (const s of this.solids) {
-        if (fx >= s.x && fx < s.x + s.w && fy >= s.y && fy < s.y + s.h) return false;
+      const fx = cx * TILE_PX + TILE_PX / 2;
+      const fy = cy * TILE_PX + s(12);
+      for (const rect of this.solids) {
+        if (fx >= rect.x && fx < rect.x + rect.w && fy >= rect.y && fy < rect.y + rect.h) return false;
       }
       return true;
     };
-    const col = Math.floor(GS.data.x / 16);
-    const row = Math.floor(GS.data.y / 16);
+    const col = Math.floor(GS.data.x / TILE_PX);
+    const row = Math.floor(GS.data.y / TILE_PX);
     if (walkable(col, row)) return; // the overwhelming common case — nothing to do
     // expanding rings: the nearest walkable tile wins (Chebyshev shells, Euclid tiebreak)
     for (let r = 1; r <= 12; r++) {
@@ -721,13 +733,13 @@ export class OverworldScene extends Phaser.Scene {
           const cy = row + dy;
           if (!walkable(cx, cy)) continue;
           const d = dx * dx + dy * dy;
-          if (!best || d < best.d) best = { x: cx * 16 + 8, y: cy * 16 + 12, d };
+          if (!best || d < best.d) best = { x: cx * TILE_PX + TILE_PX / 2, y: cy * TILE_PX + s(12), d };
         }
       }
       if (best) {
         if (import.meta.env.DEV) {
           console.warn(
-            `[spawn] ${this.mapDef.id}: (${col},${row}) blocked — nudged to (${Math.floor(best.x / 16)},${Math.floor(best.y / 16)})`,
+            `[spawn] ${this.mapDef.id}: (${col},${row}) blocked — nudged to (${Math.floor(best.x / TILE_PX)},${Math.floor(best.y / TILE_PX)})`,
           );
         }
         GS.data.x = best.x;
@@ -754,7 +766,7 @@ export class OverworldScene extends Phaser.Scene {
     // S7c: a fallen hero mourns as THEMSELF — angel_<id> when the variant
     // exists, the plain guest angel otherwise (visual only, §A4.7)
     const angelKey = this.textures.exists(`angel_${id}`) ? `angel_${id}` : 'angel';
-    const spr = this.add.sprite(this.player.x, this.player.y + 2, angel ? angelKey : id, 0);
+    const spr = this.add.sprite(this.player.x, this.player.y + s(2), angel ? angelKey : id, 0);
     spr.setOrigin(0.5, 1);
     if (angel) spr.play(`${angelKey}-float`);
     else spr.setFrame(standFrame('down'));
@@ -776,8 +788,8 @@ export class OverworldScene extends Phaser.Scene {
       for (let i = 0; i < sp.count; i++) {
         const enemyId = sp.enemies[Math.floor(Math.random() * sp.enemies.length)];
         const def = ENEMIES[enemyId];
-        const x = (sp.rect.x + Math.random() * sp.rect.w) * 16;
-        const y = (sp.rect.y + Math.random() * sp.rect.h) * 16;
+        const x = (sp.rect.x + Math.random() * sp.rect.w) * TILE_PX;
+        const y = (sp.rect.y + Math.random() * sp.rect.h) * TILE_PX;
         const spr = this.add.sprite(x, y, def.walker ?? def.mini, def.walker ? standFrame('down') : 0);
         spr.setOrigin(0.5, 1);
         spr.setDepth(y);
@@ -788,7 +800,7 @@ export class OverworldScene extends Phaser.Scene {
           vx: 0,
           vy: 0,
           think: 0,
-          home: { x: sp.rect.x * 16, y: sp.rect.y * 16, w: sp.rect.w * 16, h: sp.rect.h * 16 },
+          home: { x: sp.rect.x * TILE_PX, y: sp.rect.y * TILE_PX, w: sp.rect.w * TILE_PX, h: sp.rect.h * TILE_PX },
           dead: false,
         });
       }
@@ -801,7 +813,7 @@ export class OverworldScene extends Phaser.Scene {
       if (def.countFlag && GS.flag(def.countFlag)) continue;
       const walker = ENEMIES[def.enemy].walker ?? 'smiler';
       const [tx, ty] = def.route[0];
-      const spr = this.add.sprite(tx * 16 + 8, ty * 16 + 22, walker, standFrame('down'));
+      const spr = this.add.sprite(tx * TILE_PX + TILE_PX / 2, ty * TILE_PX + s(22), walker, standFrame('down'));
       spr.setOrigin(0.5, 1);
       spr.setDepth(spr.y);
       this.patrols.push({
@@ -834,10 +846,11 @@ export class OverworldScene extends Phaser.Scene {
     for (const p of this.mapDef.props) {
       if (!p.door) continue;
       const box = this.facadeDoorBox.get(p);
-      const cx = p.x * 16 + p.door.ox + p.door.w / 2;
-      const cy = (box ? box.y : p.y * 16 + p.door.oy) - 6;
+      // door.ox/oy/w are NATIVE data → s(); box.* are already runtime
+      const cx = p.x * TILE_PX + s(p.door.ox) + s(p.door.w) / 2;
+      const cy = (box ? box.y : p.y * TILE_PX + s(p.door.oy)) - s(6);
       const glow = this.add
-        .circle(cx, cy, 15, colorOf(px(RAMP.GOLD, 2)), 0.22)
+        .circle(cx, cy, s(15), colorOf(px(RAMP.GOLD, 2)), 0.22)
         .setDepth(805)
         .setBlendMode(Phaser.BlendModes.ADD);
       this.tweens.add({
@@ -872,18 +885,19 @@ export class OverworldScene extends Phaser.Scene {
     const name = vars(this.mapDef.name).toUpperCase();
     // (ADR-092 decorative GLYPH banner removed at the user's request — the entry
     // card shows just the place name, plus the time tag at night.)
-    const w = Math.max(name.length * 6 + 24, night ? 76 : 0);
-    const h = night ? 36 : 24;
-    const win = makeWindow(this, 8, 8, w, h);
+    // retro glyph advance is 6px native; window pad/size are layout px → s()
+    const w = Math.max(name.length * s(6) + s(24), night ? s(76) : 0);
+    const h = night ? s(36) : s(24);
+    const win = makeWindow(this, s(8), s(8), w, h);
     const tx = this.add
-      .bitmapText(20, 16, 'retro', name, 6)
+      .bitmapText(s(20), s(16), 'retro', name, s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
     const fading: Phaser.GameObjects.GameObject[] = [win, tx];
     if (night) {
       // S9b: the dark overlay gets a label — no guessing what the haze means
       const tag = this.add
-        .bitmapText(20, 27, 'retro', '2 A.M.', 6)
+        .bitmapText(s(20), s(27), 'retro', '2 A.M.', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.CYAN, 2)));
@@ -939,20 +953,22 @@ export class OverworldScene extends Phaser.Scene {
    *  vehicles (their shadow is baked into the sprite) are skipped. The pool
    *  grows to fit and hides the surplus, so it costs nothing when the map empties. */
   private updateShadows(): void {
+    // actor footprint widths are native px → s(); positions are already runtime
     const actors: Array<{ x: number; y: number; w: number }> = [];
-    actors.push({ x: this.player.x, y: this.player.y, w: 14 });
-    for (const f of this.followers) if (!f.angel) actors.push({ x: f.spr.x, y: f.spr.y, w: 14 });
-    for (const n of this.npcs) actors.push({ x: n.spr.x, y: n.spr.y, w: n.def.dog ? 10 : 14 });
-    for (const r of this.roamers) if (!r.dead) actors.push({ x: r.spr.x, y: r.spr.y, w: r.walker ? 14 : 12 });
-    for (const p of this.patrols) if (!p.dead) actors.push({ x: p.spr.x, y: p.spr.y, w: 14 });
+    actors.push({ x: this.player.x, y: this.player.y, w: s(14) });
+    for (const f of this.followers) if (!f.angel) actors.push({ x: f.spr.x, y: f.spr.y, w: s(14) });
+    for (const n of this.npcs) actors.push({ x: n.spr.x, y: n.spr.y, w: n.def.dog ? s(10) : s(14) });
+    for (const r of this.roamers) if (!r.dead) actors.push({ x: r.spr.x, y: r.spr.y, w: r.walker ? s(14) : s(12) });
+    for (const p of this.patrols) if (!p.dead) actors.push({ x: p.spr.x, y: p.spr.y, w: s(14) });
     while (this.shadows.length < actors.length) {
       this.shadows.push(this.add.image(0, 0, 'mob_shadow').setOrigin(0.5, 0.5).setAlpha(0.3));
     }
     for (let i = 0; i < this.shadows.length; i++) {
-      const s = this.shadows[i];
+      const sh = this.shadows[i];
       const a = actors[i];
-      if (!a) { s.setVisible(false); continue; }
-      s.setVisible(true).setPosition(a.x, a.y - 1).setDepth(a.y - 1).setDisplaySize(a.w, Math.max(3, Math.round(a.w * 0.42)));
+      if (!a) { sh.setVisible(false); continue; }
+      // 0.42 is a height:width RATIO (keep); the 3px floor is native → s(3)
+      sh.setVisible(true).setPosition(a.x, a.y - s(1)).setDepth(a.y - 1).setDisplaySize(a.w, Math.max(s(3), Math.round(a.w * 0.42)));
     }
   }
 
@@ -991,10 +1007,12 @@ export class OverworldScene extends Phaser.Scene {
     // sprite keys, so the type the sim carries IS the texture to draw
     if (this.trafficRoadVeh.length === 0) {
       for (const v of VEHICLE_CATALOG) {
-        const s = VEHICLE_SPECS[v.type];
-        if (!s || s.terrain !== 'road' || s.hardened) continue;
+        const spec = VEHICLE_SPECS[v.type];
+        if (!spec || spec.terrain !== 'road' || spec.hardened) continue;
         this.trafficRoadVeh.push(v.name);
-        this.trafficDims.set(v.name, { w: s.w, h: s.h });
+        // VEHICLE_SPECS body size is NATIVE → store RUNTIME px (the rect later
+        // multiplies by TRAFFIC_SCALE, a setScale multiplier, to match on-screen)
+        this.trafficDims.set(v.name, { w: s(spec.w), h: s(spec.h) });
       }
     }
     if (this.trafficRoadVeh.length === 0) return;
@@ -1007,9 +1025,9 @@ export class OverworldScene extends Phaser.Scene {
 
   private spawnTrafficSprite(v: { id: number; type: string; x: number; y: number }): Phaser.GameObjects.Image {
     const tex = this.textures.exists(v.type) ? v.type : this.trafficRoadVeh[0];
-    const spr = this.add.image(v.x * 16 + 8, v.y * 16 + 8, tex).setOrigin(0.5, 0.6);
+    const spr = this.add.image(v.x * TILE_PX + TILE_PX / 2, v.y * TILE_PX + TILE_PX / 2, tex).setOrigin(0.5, 0.6);
     spr.setScale(OverworldScene.TRAFFIC_SCALE);
-    spr.setDepth(v.y * 16 + 8);
+    spr.setDepth(v.y * TILE_PX + TILE_PX / 2);
     this.trafficSprites.set(v.id, spr);
     return spr;
   }
@@ -1023,12 +1041,12 @@ export class OverworldScene extends Phaser.Scene {
     if (this.trafficAccumMs >= step) {
       this.trafficAccumMs -= step;
       if (this.trafficAccumMs >= step) this.trafficAccumMs = 0; // never spiral after a stall
-      const pcell = { x: Math.floor(this.player.x / 16), y: Math.floor(this.player.y / 16) };
+      const pcell = { x: Math.floor(this.player.x / TILE_PX), y: Math.floor(this.player.y / TILE_PX) };
       sim.step(pcell);
     }
     const f = Math.min(1, this.trafficAccumMs / step);
     const cam = this.cameras.main;
-    const m = 64;
+    const m = s(64); // off-screen cull margin (px)
     const S = OverworldScene.TRAFFIC_SCALE;
     this.trafficRects = [];
     for (const v of sim.vehicles) {
@@ -1036,11 +1054,11 @@ export class OverworldScene extends Phaser.Scene {
       if (!spr) spr = this.spawnTrafficSprite(v);
       const ix = v.px + (v.x - v.px) * f;
       const iy = v.py + (v.y - v.py) * f;
-      const cx = ix * 16 + 8;
-      const cy = iy * 16 + 8;
+      const cx = ix * TILE_PX + TILE_PX / 2;
+      const cy = iy * TILE_PX + TILE_PX / 2;
       spr.x = cx;
       spr.y = cy;
-      spr.setDepth(cy + 8);
+      spr.setDepth(cy + s(8));
       // ADR-097: oblique four-wheelers TURN by swapping to their FRONT/BACK
       // texture (no rotating a 3/4 sprite); legacy one-view vehicles still
       // rotate the side-on art. dir: 0=E 1=S 2=W 3=N.
@@ -1057,11 +1075,13 @@ export class OverworldScene extends Phaser.Scene {
       }
       // SOLID body rect (px) covering the WHOLE car — ends and sides — sized to
       // the sprite and oriented to travel, inset 4px so brushing past isn't sticky
-      const dim = this.trafficDims.get(v.type) ?? { w: 32, h: 18 };
+      // dim is RUNTIME px; S=TRAFFIC_SCALE is a setScale multiplier (NOT scaled),
+      // so dim*S matches the on-screen sprite. The 4px brush-past inset is native.
+      const dim = this.trafficDims.get(v.type) ?? { w: s(32), h: s(18) };
       const longPx = dim.w * S;
       const widePx = dim.h * S;
-      const rw = (vertical ? widePx : longPx) - 4;
-      const rh = (vertical ? longPx : widePx) - 4;
+      const rw = (vertical ? widePx : longPx) - s(4);
+      const rh = (vertical ? longPx : widePx) - s(4);
       this.trafficRects.push({ x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh });
       const on =
         cx >= cam.scrollX - m &&
@@ -1104,12 +1124,13 @@ export class OverworldScene extends Phaser.Scene {
       if (this.stepTimer <= 0) {
         AUDIO.sfx('step');
         this.stepTimer = running ? 0.18 : 0.28;
-        // running kicks up dust at the heels (S7 juice, Prompt 39)
-        if (running) this.dustPuff(this.player.x - d.x * 4, this.player.y - 2);
+        // running kicks up dust at the heels (S7 juice, Prompt 39) — d is a unit
+        // direction, so d.x*4 is a 4px heel offset; the -2 lifts to the foot
+        if (running) this.dustPuff(this.player.x - d.x * s(4), this.player.y - s(2));
       }
-      // breadcrumb trail for the conga line
+      // breadcrumb trail for the conga line (drop one every 3px of travel)
       const last = this.trail[0];
-      if (!last || Math.hypot(this.player.x - last.x, this.player.y - last.y) >= 3) {
+      if (!last || Math.hypot(this.player.x - last.x, this.player.y - last.y) >= s(3)) {
         this.trail.unshift({ x: this.player.x, y: this.player.y, f: this.facing });
         if (this.trail.length > 80) this.trail.pop();
       }
@@ -1132,9 +1153,9 @@ export class OverworldScene extends Phaser.Scene {
       const crumb = this.trail[(i + 1) * 9];
       if (!crumb) return;
       if (f.angel) {
-        // angels float instead of walk (Prompt 5 / §A4.7)
+        // angels float instead of walk (Prompt 5 / §A4.7) — 4px lift, 1.5px bob
         f.spr.x = crumb.x;
-        f.spr.y = crumb.y - 4 + Math.sin(this.time.now / 280 + i * 2) * 1.5;
+        f.spr.y = crumb.y - s(4) + Math.sin(this.time.now / 280 + i * 2) * s(1.5);
         f.spr.setDepth(crumb.y);
         return;
       }
@@ -1169,16 +1190,16 @@ export class OverworldScene extends Phaser.Scene {
   private tryMove(x: number, y: number, dx: number, dy: number, second = false): number {
     const nx = x + dx;
     const ny = y + dy;
-    const box = { x: nx - 5, y: ny - 9, w: 10, h: 9 };
+    const box = { x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) };
     if (this.collides(box)) return second ? y : x;
     return second ? ny : nx;
   }
 
   private collides(box: Rect): boolean {
-    const x0 = Math.floor(box.x / 16);
-    const y0 = Math.floor(box.y / 16);
-    const x1 = Math.floor((box.x + box.w) / 16);
-    const y1 = Math.floor((box.y + box.h) / 16);
+    const x0 = Math.floor(box.x / TILE_PX);
+    const y0 = Math.floor(box.y / TILE_PX);
+    const x1 = Math.floor((box.x + box.w) / TILE_PX);
+    const y1 = Math.floor((box.y + box.h) / TILE_PX);
     for (let ty = y0; ty <= y1; ty++) {
       for (let tx = x0; tx <= x1; tx++) {
         if (
@@ -1217,8 +1238,9 @@ export class OverworldScene extends Phaser.Scene {
             [-0.7, -0.7],
           ];
           const [vx, vy] = dirs[Math.floor(Math.random() * dirs.length)];
-          n.vx = vx * 22;
-          n.vy = vy * 22;
+          // px/s wander speed (dirs are unit/normalized) → scaled
+          n.vx = vx * s(22);
+          n.vy = vy * s(22);
         } else {
           n.vx = 0;
           n.vy = 0;
@@ -1227,7 +1249,7 @@ export class OverworldScene extends Phaser.Scene {
       if (n.vx !== 0 || n.vy !== 0) {
         const nx = n.spr.x + n.vx * dt;
         const ny = n.spr.y + n.vy * dt;
-        if (Math.abs(nx - n.baseX) > 28 || Math.abs(ny - n.baseY) > 24 || this.collides({ x: nx - 5, y: ny - 9, w: 10, h: 9 })) {
+        if (Math.abs(nx - n.baseX) > s(28) || Math.abs(ny - n.baseY) > s(24) || this.collides({ x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) })) {
           n.vx = 0;
           n.vy = 0;
         } else {
@@ -1254,11 +1276,11 @@ export class OverworldScene extends Phaser.Scene {
       const distP = Math.hypot(this.player.x - r.spr.x, this.player.y - r.spr.y);
       const avgLvl = this.avgPartyLevel();
       const outclassed = avgLvl >= def.level + 6;
-      if (outclassed && distP < 70) {
-        // EB detail: weak enemies flee a strong party
-        r.vx = Math.sign(r.spr.x - this.player.x) * 60;
-        r.vy = Math.sign(r.spr.y - this.player.y) * 60;
-      } else if (distP < 64) {
+      if (outclassed && distP < s(70)) {
+        // EB detail: weak enemies flee a strong party (px/s flee speed)
+        r.vx = Math.sign(r.spr.x - this.player.x) * s(60);
+        r.vy = Math.sign(r.spr.y - this.player.y) * s(60);
+      } else if (distP < s(64)) {
         r.vx = ((this.player.x - r.spr.x) / distP) * PURSUE;
         r.vy = ((this.player.y - r.spr.y) / distP) * PURSUE;
       } else {
@@ -1266,7 +1288,7 @@ export class OverworldScene extends Phaser.Scene {
         if (r.think <= 0) {
           r.think = 800 + Math.random() * 1600;
           const ang = Math.random() * Math.PI * 2;
-          const speed = Math.random() < 0.3 ? 0 : 26;
+          const speed = Math.random() < 0.3 ? 0 : s(26); // px/s wander
           r.vx = Math.cos(ang) * speed;
           r.vy = Math.sin(ang) * speed;
         }
@@ -1274,13 +1296,13 @@ export class OverworldScene extends Phaser.Scene {
       let nx = r.spr.x + r.vx * dt;
       let ny = r.spr.y + r.vy * dt;
       // keep wanderers near home unless chasing
-      if (distP >= 64) {
+      if (distP >= s(64)) {
         nx = Phaser.Math.Clamp(nx, r.home.x, r.home.x + r.home.w);
         ny = Phaser.Math.Clamp(ny, r.home.y, r.home.y + r.home.h);
       }
       let moved = false;
-      if (!this.collides({ x: nx - 5, y: ny - 8, w: 10, h: 8 })) {
-        moved = Math.abs(nx - r.spr.x) + Math.abs(ny - r.spr.y) > 0.1;
+      if (!this.collides({ x: nx - s(5), y: ny - s(8), w: s(10), h: s(8) })) {
+        moved = Math.abs(nx - r.spr.x) + Math.abs(ny - r.spr.y) > s(0.1);
         r.spr.x = nx;
         r.spr.y = ny;
         r.spr.setDepth(ny);
@@ -1293,14 +1315,14 @@ export class OverworldScene extends Phaser.Scene {
       if (r.walker) {
         if (moved) {
           const f: Facing = facing8(r.vx, r.vy, 'down'); // ADR-096: 8-way roam
-          const anim = `${r.walker}-${distP < 64 ? 'run' : 'walk'}-${f}`;
+          const anim = `${r.walker}-${distP < s(64) ? 'run' : 'walk'}-${f}`;
           if (r.spr.anims.currentAnim?.key !== anim || !r.spr.anims.isPlaying) r.spr.anims.play(anim, true);
         } else if (r.spr.anims.isPlaying) {
           r.spr.anims.stop();
           r.spr.setFrame(standFrame('down'));
         }
       }
-      if (distP < 13 && now > this.battleCooldown) {
+      if (distP < s(13) && now > this.battleCooldown) {
         void this.contactBattle(r);
         return;
       }
@@ -1315,10 +1337,10 @@ export class OverworldScene extends Phaser.Scene {
       if (p.dead) continue;
       if (p.state === 'patrol' || p.state === 'return') {
         const [wx, wy] = p.def.route[p.wp];
-        const tx = wx * 16 + 8;
-        const ty = wy * 16 + 22;
+        const tx = wx * TILE_PX + TILE_PX / 2;
+        const ty = wy * TILE_PX + s(22);
         const d = Math.hypot(tx - p.spr.x, ty - p.spr.y);
-        if (d < 2) {
+        if (d < s(2)) {
           p.wp = (p.wp + 1) % p.def.route.length;
           p.state = 'patrol';
         } else {
@@ -1338,11 +1360,11 @@ export class OverworldScene extends Phaser.Scene {
           p.spr.setFrame(standFrame(p.facing));
           AUDIO.sfx('alert');
           p.bang = this.add
-            .bitmapText(p.spr.x, p.spr.y - p.spr.height - 2, 'retro', '!', 8)
+            .bitmapText(p.spr.x, p.spr.y - p.spr.height - s(2), 'retro', '!', s(8))
             .setOrigin(0.5, 1)
             .setTint(colorOf(px(RAMP.RED, 2)))
             .setDepth(5000);
-          this.tweens.add({ targets: p.bang, y: p.bang.y - 3, duration: 120, yoyo: true });
+          this.tweens.add({ targets: p.bang, y: p.bang.y - s(3), duration: 120, yoyo: true });
         }
       } else if (p.state === 'alert') {
         p.alertT -= dt * 1000;
@@ -1364,15 +1386,15 @@ export class OverworldScene extends Phaser.Scene {
         this.patrolAnim(p, true, 'run');
         if (p.bang) {
           p.bang.x = p.spr.x;
-          p.bang.y = p.spr.y - p.spr.height - 2;
+          p.bang.y = p.spr.y - p.spr.height - s(2);
         }
-        if (d > 120) {
+        if (d > s(120)) {
           p.lose += dt;
-          if (p.lose > 1.5) this.patrolGiveUp(p);
+          if (p.lose > 1.5) this.patrolGiveUp(p); // 1.5s, time — unscaled
         } else {
           p.lose = 0;
         }
-        if (d < 13 && now > this.battleCooldown) {
+        if (d < s(13) && now > this.battleCooldown) {
           void this.patrolBattle(p);
           return;
         }
@@ -1396,7 +1418,7 @@ export class OverworldScene extends Phaser.Scene {
   private patrolMove(x: number, y: number, dx: number, dy: number, second: boolean): number {
     const nx = x + dx;
     const ny = y + dy;
-    const box = { x: nx - 5, y: ny - 9, w: 10, h: 9 };
+    const box = { x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) };
     if (this.collides(box)) return second ? y : x;
     return second ? ny : nx;
   }
@@ -1409,23 +1431,23 @@ export class OverworldScene extends Phaser.Scene {
 
   /** facing-cone sight check with solid-tile occlusion */
   private patrolSees(p: PatrolObj): boolean {
-    const range = (p.def.sight ?? 5) * 16;
+    const range = (p.def.sight ?? 5) * TILE_PX; // sight in TILES → px
     const f = this.facingVectorOf(p.facing);
     const ex = p.spr.x;
-    const ey = p.spr.y - 8;
+    const ey = p.spr.y - s(8);
     const rx = this.player.x - ex;
-    const ry = this.player.y - 8 - ey;
+    const ry = this.player.y - s(8) - ey;
     const along = rx * f.x + ry * f.y;
-    if (along < 6 || along > range) return false;
+    if (along < s(6) || along > range) return false;
     const perp = Math.abs(rx * f.y - ry * f.x);
-    if (perp > 14) return false;
+    if (perp > s(14)) return false;
     // line of sight: cubicle walls hide you (stealth-lite, caught = battle not fail)
-    const steps = Math.ceil(along / 8);
+    const steps = Math.ceil(along / s(8)); // ~one sample per 8px along the ray
     for (let i = 1; i < steps; i++) {
       const sx = ex + (rx * i) / steps;
       const sy = ey + (ry * i) / steps;
-      const txi = Math.floor(sx / 16);
-      const tyi = Math.floor(sy / 16);
+      const txi = Math.floor(sx / TILE_PX);
+      const tyi = Math.floor(sy / TILE_PX);
       if (
         tyi < 0 ||
         txi < 0 ||
@@ -1452,7 +1474,7 @@ export class OverworldScene extends Phaser.Scene {
     let best = 0;
     let bestD = Infinity;
     p.def.route.forEach(([wx, wy], i) => {
-      const d = Math.hypot(wx * 16 + 8 - p.spr.x, wy * 16 + 22 - p.spr.y);
+      const d = Math.hypot(wx * TILE_PX + TILE_PX / 2 - p.spr.x, wy * TILE_PX + s(22) - p.spr.y);
       if (d < bestD) {
         bestD = d;
         best = i;
@@ -1518,8 +1540,8 @@ export class OverworldScene extends Phaser.Scene {
 
   private updateFireflies(dt: number): void {
     for (const f of this.fireflies) {
-      f.x += Math.sin(this.time.now / 700 + f.y) * 8 * dt;
-      f.y += Math.cos(this.time.now / 900 + f.x) * 6 * dt;
+      f.x += Math.sin(this.time.now / 700 + f.y) * s(8) * dt;
+      f.y += Math.cos(this.time.now / 900 + f.x) * s(6) * dt;
     }
   }
 
@@ -1644,10 +1666,10 @@ export class OverworldScene extends Phaser.Scene {
                 }
               }
               if (outcome === 'ran') {
-                // everyone scatters away from the player on a getaway
+                // everyone scatters away from the player on a getaway (px/s)
                 for (const m of pack) {
-                  m.vx = Math.sign(m.spr.x - this.player.x) * 70;
-                  m.vy = Math.sign(m.spr.y - this.player.y) * 70;
+                  m.vx = Math.sign(m.spr.x - this.player.x) * s(70);
+                  m.vy = Math.sign(m.spr.y - this.player.y) * s(70);
                 }
               }
               if (outcome === 'defeat') {
@@ -1705,11 +1727,11 @@ export class OverworldScene extends Phaser.Scene {
           enemyIds.push(c.enemyId);
           AUDIO.sfx('alert');
           const bang = this.add
-            .bitmapText(c.spr.x, c.spr.y - 16, 'retro', '!', 8)
+            .bitmapText(c.spr.x, c.spr.y - s(16), 'retro', '!', s(8))
             .setOrigin(0.5, 1)
             .setTint(colorOf(px(RAMP.RED, 2)))
             .setDepth(5000);
-          this.tweens.add({ targets: bang, y: bang.y - 4, alpha: 0, duration: 300, onComplete: () => bang.destroy() });
+          this.tweens.add({ targets: bang, y: bang.y - s(4), alpha: 0, duration: 300, onComplete: () => bang.destroy() });
         }
       }
     });
@@ -1730,6 +1752,7 @@ export class OverworldScene extends Phaser.Scene {
     const p = GS.respawnPoint();
     this.add.image(0, 0, 'game_over')
       .setOrigin(0, 0)
+      .setDisplaySize(this.scale.width, this.scale.height)
       .setScrollFactor(0)
       .setDepth(99999);
     this.time.delayedCall(900, () => this.scene.restart({ mapId: p.mapId, x: p.x, y: p.y, facing: p.facing }));
@@ -1739,28 +1762,30 @@ export class OverworldScene extends Phaser.Scene {
 
   private async interact(): Promise<void> {
     const v = this.facingVector();
-    const probeX = this.player.x + v.x * 16;
-    const probeY = this.player.y - 6 + v.y * 14;
+    // reach one tile ahead (v is a unit facing vector); the -6 lifts the probe
+    // to chest height, v.y*14 leans it a little further when facing up/down
+    const probeX = this.player.x + v.x * TILE_PX;
+    const probeY = this.player.y - s(6) + v.y * s(14);
 
     for (const n of this.npcs) {
-      if (Math.hypot(n.spr.x - probeX, Math.abs(n.spr.y - 6 - probeY)) < 16) {
+      if (Math.hypot(n.spr.x - probeX, Math.abs(n.spr.y - s(6) - probeY)) < s(16)) {
         await this.talkTo(n);
         return;
       }
     }
-    for (const s of this.mapDef.signs) {
+    for (const sign of this.mapDef.signs) {
       // S9: signs gate like NPCs — quest clues exist only mid-trail
-      if (s.ifFlag && !GS.flag(s.ifFlag)) continue;
-      if (s.unlessFlag && GS.flag(s.unlessFlag)) continue;
-      if (Math.hypot(s.x * 16 + 8 - probeX, s.y * 16 + 8 - probeY) < 16) {
+      if (sign.ifFlag && !GS.flag(sign.ifFlag)) continue;
+      if (sign.unlessFlag && GS.flag(sign.unlessFlag)) continue;
+      if (Math.hypot(sign.x * TILE_PX + TILE_PX / 2 - probeX, sign.y * TILE_PX + TILE_PX / 2 - probeY) < s(16)) {
         AUDIO.sfx('cursor');
-        if (await this.signBeat(s.dialogue)) return;
-        await this.dlg.say(...DIALOGUE[s.dialogue]);
+        if (await this.signBeat(sign.dialogue)) return;
+        await this.dlg.say(...DIALOGUE[sign.dialogue]);
         return;
       }
     }
     for (const ph of this.mapDef.phones) {
-      if (Math.hypot(ph.x * 16 + 8 - probeX, ph.y * 16 + 8 - probeY) < 18) {
+      if (Math.hypot(ph.x * TILE_PX + TILE_PX / 2 - probeX, ph.y * TILE_PX + TILE_PX / 2 - probeY) < s(18)) {
         // S2: Mom is calling THIS payphone — answering outranks dialing out
         if (this.mapDef.id === 'brickton' && this.momCallPending()) {
           await this.momPayphoneScene();
@@ -1772,7 +1797,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     // S4: the ATM at the Savings & Loan facade (Prompt 20)
     for (const a of this.mapDef.atms ?? []) {
-      if (Math.hypot(a.x * 16 + 8 - probeX, a.y * 16 + 8 - probeY) < 18) {
+      if (Math.hypot(a.x * TILE_PX + TILE_PX / 2 - probeX, a.y * TILE_PX + TILE_PX / 2 - probeY) < s(18)) {
         await this.atmFlow();
         return;
       }
@@ -1782,7 +1807,7 @@ export class OverworldScene extends Phaser.Scene {
     // a table is just a fine spot and an opinion.
     for (const p of this.mapDef.props) {
       if (p.sprite !== 'picnic') continue;
-      if (Math.hypot(p.x * 16 + 18 - probeX, p.y * 16 + 12 - probeY) < 24) {
+      if (Math.hypot(p.x * TILE_PX + s(18) - probeX, p.y * TILE_PX + s(12) - probeY) < s(24)) {
         await this.picnicFlow(p);
         return;
       }
@@ -1792,11 +1817,12 @@ export class OverworldScene extends Phaser.Scene {
     // of lockedLines: the STARPORT opened, but its mail slot still works)
     for (const p of this.mapDef.props) {
       if (!MAIL_DOORS[p.sprite] || !p.solid) continue;
+      // solid.* are NATIVE data; the ±4/8 pad is px → all scaled at read
       const r = {
-        x: p.x * 16 + p.solid.ox - 4,
-        y: p.y * 16 + p.solid.oy - 4,
-        w: p.solid.w + 8,
-        h: p.solid.h + 8,
+        x: p.x * TILE_PX + s(p.solid.ox) - s(4),
+        y: p.y * TILE_PX + s(p.solid.oy) - s(4),
+        w: s(p.solid.w) + s(8),
+        h: s(p.solid.h) + s(8),
       };
       if (probeX > r.x && probeX < r.x + r.w && probeY > r.y && probeY < r.y + r.h) {
         if (await this.mailDelivery(p.sprite)) {
@@ -1824,11 +1850,12 @@ export class OverworldScene extends Phaser.Scene {
     for (const p of this.mapDef.props) {
       const lineId = lockedLines[p.sprite];
       if (!lineId || !p.solid) continue;
+      // solid.* are NATIVE data; the ±4/8 pad is px → all scaled at read
       const r = {
-        x: p.x * 16 + p.solid.ox - 4,
-        y: p.y * 16 + p.solid.oy - 4,
-        w: p.solid.w + 8,
-        h: p.solid.h + 8,
+        x: p.x * TILE_PX + s(p.solid.ox) - s(4),
+        y: p.y * TILE_PX + s(p.solid.oy) - s(4),
+        w: s(p.solid.w) + s(8),
+        h: s(p.solid.h) + s(8),
       };
       if (probeX > r.x && probeX < r.x + r.w && probeY > r.y && probeY < r.y + r.h) {
         AUDIO.sfx('cursor');
@@ -2092,7 +2119,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('q_crate_told');
     this.cut = true;
     AUDIO.sfx('confirm');
-    this.sparkleBurst(this.player.x, this.player.y - 16, 12);
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
     await this.dlg.say(...DIALOGUE.q_crate_open);
     AUDIO.jingle('victory', 1800, this.mapDef.music);
     this.cut = false;
@@ -2128,7 +2155,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.addItem('first_edition'); // the bonus valuable she lets you keep (the §A11 wink)
     this.cut = true;
     AUDIO.sfx('confirm');
-    this.sparkleBurst(this.player.x, this.player.y - 16, 12);
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
     await this.dlg.say(...DIALOGUE.q_overdue_done_beat);
     AUDIO.jingle('victory', 1800, this.mapDef.music);
     this.cut = false;
@@ -2158,7 +2185,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('q_cuppa_brewed');
     this.cut = true;
     AUDIO.sfx('confirm');
-    this.sparkleBurst(this.player.x, this.player.y - 16, 10);
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 10);
     await this.dlg.say(...DIALOGUE.q_cuppa_done_beat);
     AUDIO.jingle('victory', 1800, this.mapDef.music);
     this.cut = false;
@@ -2188,7 +2215,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('q_sender_reported');
     this.cut = true;
     AUDIO.sfx('confirm');
-    this.sparkleBurst(this.player.x, this.player.y - 16, 10);
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 10);
     await this.dlg.say(...DIALOGUE.q_sender_done_beat);
     AUDIO.jingle('victory', 1800, this.mapDef.music);
     this.cut = false;
@@ -2215,7 +2242,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('q_penny_reported');
     this.cut = true;
     AUDIO.sfx('confirm');
-    this.sparkleBurst(this.player.x, this.player.y - 16, 10);
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 10);
     await this.dlg.say(...DIALOGUE.q_penny_done_beat);
     AUDIO.jingle('victory', 1800, this.mapDef.music);
     this.cut = false;
@@ -2243,7 +2270,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('q_over_called');
     this.cut = true;
     AUDIO.sfx('confirm');
-    this.sparkleBurst(this.player.x, this.player.y - 16, 14);
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 14);
     await this.dlg.say(...DIALOGUE.q_over_done_beat);
     AUDIO.jingle('victory', 2000, this.mapDef.music);
     this.cut = false;
@@ -2314,7 +2341,7 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.sfx('whoosh');
     // the trot home: exit toward the pen, the way every good llama exits
     await new Promise<void>((r) => {
-      this.tweens.add({ targets: n.spr, x: 7 * 16, y: 7 * 16, duration: 620, ease: 'cubic.in', onComplete: () => r() });
+      this.tweens.add({ targets: n.spr, x: 7 * TILE_PX, y: 7 * TILE_PX, duration: 620, ease: 'cubic.in', onComplete: () => r() });
     });
     GS.setFlag(`q_llama_${num}`);
     AUDIO.sfx('confirm');
@@ -2385,7 +2412,7 @@ export class OverworldScene extends Phaser.Scene {
         h.down = false;
         h.hp = h.maxHp;
         AUDIO.sfx('heal');
-        this.sparkleBurst(this.player.x, this.player.y - 14, 10);
+        this.sparkleBurst(this.player.x, this.player.y - s(14), 10);
         await this.dlg.say(`${h.name} sat up like a Saturday morning. Good as new!`);
         this.rebuildFollowers(); // the angel walks out a person
         continue;
@@ -2413,7 +2440,7 @@ export class OverworldScene extends Phaser.Scene {
       if (!h.down) h.hp = Math.min(h.maxHp, h.hp + CHAPEL_HEAL);
     });
     AUDIO.sfx('pray');
-    this.sparkleBurst(this.player.x, this.player.y - 16, 8);
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 8);
     await this.dlg.say(...DIALOGUE.chapel_prayer);
     if (GS.hero('faye')) await this.dlg.say(...DIALOGUE.priest_mia);
   }
@@ -2716,7 +2743,7 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     AUDIO.sfx('whoosh');
     // the ZOOM: he exits stage south, the way every good dog exits
-    this.tweens.add({ targets: n.spr, x: n.spr.x - 20, y: this.scale.height + 40, duration: 480, ease: 'cubic.in' });
+    this.tweens.add({ targets: n.spr, x: n.spr.x - s(20), y: this.scale.height + s(40), duration: 480, ease: 'cubic.in' });
     await this.wait(520);
     this.fadeRestart(); // gated out by q_biscuit_c3 on rebuild
   }
@@ -3223,7 +3250,7 @@ export class OverworldScene extends Phaser.Scene {
   private nearestTable(): PropDef | null {
     for (const p of this.mapDef.props) {
       if (p.sprite !== 'picnic') continue;
-      if (Math.hypot(p.x * 16 + 18 - this.player.x, p.y * 16 + 12 - this.player.y) < 44) return p;
+      if (Math.hypot(p.x * TILE_PX + s(18) - this.player.x, p.y * TILE_PX + s(12) - this.player.y) < s(44)) return p;
     }
     return null;
   }
@@ -3260,19 +3287,19 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.removeItem(basket);
     AUDIO.sfx('confirm');
-    const bx = table.x * 16 + 18;
-    const by = table.y * 16 + 34;
+    const bx = table.x * TILE_PX + s(18);
+    const by = table.y * TILE_PX + s(34);
     // the blanket unrolls
-    const blanket = this.add.image(bx, by, 'picnic_blanket').setOrigin(0.5, 0.5).setDepth(by - 24).setScale(0.15, 1);
+    const blanket = this.add.image(bx, by, 'picnic_blanket').setOrigin(0.5, 0.5).setDepth(by - s(24)).setScale(0.15, 1);
     await new Promise<void>((r) => {
       this.tweens.add({ targets: blanket, scaleX: 1, duration: 320, ease: 'sine.out', onComplete: () => r() });
     });
     // the party sits around it (followers settle onto the blanket's corners)
     const seats: Array<[number, number]> = [
-      [bx - 14, by + 6],
-      [bx + 14, by + 6],
-      [bx - 14, by - 4],
-      [bx + 14, by - 4],
+      [bx - s(14), by + s(6)],
+      [bx + s(14), by + s(6)],
+      [bx - s(14), by - s(4)],
+      [bx + s(14), by - s(4)],
     ];
     this.followers.forEach((f, i) => {
       const [sx, sy] = seats[(i + 1) % seats.length];
@@ -3288,8 +3315,8 @@ export class OverworldScene extends Phaser.Scene {
     this.player.setDepth(seats[0][1]);
     // birds land — two, from offscreen, with a hop
     const birds = [0, 1].map((i) => {
-      const b = this.add.sprite(bx + (i === 0 ? -30 : 34), by - 60, 'songbird', 0).setDepth(by + 20);
-      this.tweens.add({ targets: b, y: by + 14 + i * 4, x: bx + (i === 0 ? -24 : 26), duration: 700 + i * 180, ease: 'sine.in' });
+      const b = this.add.sprite(bx + (i === 0 ? -s(30) : s(34)), by - s(60), 'songbird', 0).setDepth(by + s(20));
+      this.tweens.add({ targets: b, y: by + s(14) + i * s(4), x: bx + (i === 0 ? -s(24) : s(26)), duration: 700 + i * 180, ease: 'sine.in' });
       return b;
     });
     await this.wait(900);
@@ -3306,7 +3333,7 @@ export class OverworldScene extends Phaser.Scene {
       }
     });
     AUDIO.sfx('heal');
-    this.sparkleBurst(bx, by - 8, 12);
+    this.sparkleBurst(bx, by - s(8), 12);
     GS.setFlag('sunny_side', SUNNY_BATTLES);
     if (basket === 'basket_feast') {
       GS.setFlag('feast_armed');
@@ -3316,7 +3343,7 @@ export class OverworldScene extends Phaser.Scene {
     toast(this, `SUNNY SIDE! +10% everything, next ${SUNNY_BATTLES} battles!`);
     await this.wait(600);
     birds.forEach((b) => {
-      this.tweens.add({ targets: b, y: b.y - 70, x: b.x + 30, alpha: 0, duration: 600, onComplete: () => b.destroy() });
+      this.tweens.add({ targets: b, y: b.y - s(70), x: b.x + s(30), alpha: 0, duration: 600, onComplete: () => b.destroy() });
     });
     this.tweens.add({ targets: blanket, alpha: 0, duration: 500, delay: 300, onComplete: () => blanket.destroy() });
     this.cut = false;
@@ -3327,12 +3354,12 @@ export class OverworldScene extends Phaser.Scene {
   private async checkDoors(): Promise<void> {
     if (this.doorCooldown > 0) return; // ADR-052: just arrived — let doors settle
     for (const d of this.mapDef.doors) {
-      const r = { x: d.x * 16, y: d.y * 16, w: d.w * 16, h: d.h * 16 };
+      const r = { x: d.x * TILE_PX, y: d.y * TILE_PX, w: d.w * TILE_PX, h: d.h * TILE_PX };
       if (
         this.player.x > r.x &&
         this.player.x < r.x + r.w &&
-        this.player.y - 4 > r.y &&
-        this.player.y - 4 < r.y + r.h
+        this.player.y - s(4) > r.y &&
+        this.player.y - s(4) < r.y + r.h
       ) {
         // S15i Task 0 — THE DAYBREAK GATE: the road east stays shut until the
         // opening ends (zapper_done). A sleeping-town reason, not an invisible
@@ -3359,10 +3386,10 @@ export class OverworldScene extends Phaser.Scene {
       // ADR-051: prefer the texture-true entrance zone (a facade re-fitted to its
       // real sprite moves its doorstep with it), else the map data's zone
       const r = this.facadeDoorBox.get(p) ?? {
-        x: p.x * 16 + p.door.ox,
-        y: p.y * 16 + p.door.oy,
-        w: p.door.w,
-        h: p.door.h,
+        x: p.x * TILE_PX + s(p.door.ox),
+        y: p.y * TILE_PX + s(p.door.oy),
+        w: s(p.door.w),
+        h: s(p.door.h),
       };
       if (
         this.player.x > r.x &&
@@ -3403,13 +3430,19 @@ export class OverworldScene extends Phaser.Scene {
   private goThroughDoor(to: string, tx: number, ty: number, facing: Facing): void {
     if (this.transitioning) return;
     this.transitioning = true;
-    // S7 juice: doors whoosh and the camera leans in with you
+    // tx/ty are NATIVE door-target pixels (map-data d.tx/d.ty, spawn constants,
+    // or literals) → scale to the runtime space GS.data.x/y lives in. ALL callers
+    // pass native px, so the single scale here covers every door (ADR scale-conv).
+    const rx = s(tx);
+    const ry = s(ty);
+    // S7 juice: doors whoosh and the camera leans in with you. zoomTo(1.08)/
+    // setZoom(1) are ZOOM FACTORS — unchanged (frame + tiles both scale ×ART_SCALE).
     AUDIO.sfx('whoosh');
     this.cameras.main.zoomTo(1.08, 220, 'Sine.easeIn');
     this.cameras.main.fadeOut(220, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.cameras.main.setZoom(1);
-      this.scene.restart({ mapId: to, x: tx, y: ty, facing });
+      this.scene.restart({ mapId: to, x: rx, y: ry, facing });
     });
   }
 
@@ -3435,7 +3468,7 @@ export class OverworldScene extends Phaser.Scene {
     this.time.delayedCall(90, () => puff.setFrame(1));
     this.tweens.add({
       targets: puff,
-      y: y - 4,
+      y: y - s(4),
       alpha: 0,
       duration: 240,
       onComplete: () => puff.destroy(),
@@ -3446,20 +3479,20 @@ export class OverworldScene extends Phaser.Scene {
   private sparkleBurst(x: number, y: number, count = 10): void {
     for (let i = 0; i < count; i++) {
       const ang = (Math.PI * 2 * i) / count + Math.random() * 0.5;
-      const dist = 14 + Math.random() * 16;
-      const s = this.add
+      const dist = s(14) + Math.random() * s(16); // px throw radius
+      const sp = this.add
         .sprite(x, y, 'spark', i % 2)
         .setDepth(9999)
-        .setScale(0.8 + Math.random() * 0.6);
+        .setScale(0.8 + Math.random() * 0.6); // setScale multiplier — unscaled
       this.tweens.add({
-        targets: s,
+        targets: sp,
         x: x + Math.cos(ang) * dist,
-        y: y + Math.sin(ang) * dist - 6,
+        y: y + Math.sin(ang) * dist - s(6),
         alpha: 0,
         scale: 0.3,
         duration: 520 + Math.random() * 260,
         ease: 'cubic.out',
-        onComplete: () => s.destroy(),
+        onComplete: () => sp.destroy(),
       });
     }
   }
@@ -3467,8 +3500,8 @@ export class OverworldScene extends Phaser.Scene {
   private insideTriggers = new Set<string>();
 
   private checkTriggers(): void {
-    const txi = Math.floor(this.player.x / 16);
-    const tyi = Math.floor((this.player.y - 4) / 16);
+    const txi = Math.floor(this.player.x / TILE_PX);
+    const tyi = Math.floor((this.player.y - s(4)) / TILE_PX);
     for (const t of this.mapDef.triggers) {
       const inside =
         txi >= t.rect.x && txi < t.rect.x + t.rect.w && tyi >= t.rect.y && tyi < t.rect.y + t.rect.h;
@@ -3554,7 +3587,7 @@ export class OverworldScene extends Phaser.Scene {
         if (flag && GS.flag('q_walkreg') && !GS.flag('q_walkreg_done') && !GS.flag(flag)) {
           GS.setFlag(flag);
           AUDIO.sfx('ember');
-          this.sparkleBurst(this.player.x, this.player.y - 14, 8);
+          this.sparkleBurst(this.player.x, this.player.y - s(14), 8);
           const seen = ['q_walkreg_mile', 'q_walkreg_woods', 'q_walkreg_far'].filter((f) => GS.flag(f)).length;
           toast(this, `You really looked. (${seen}/3 stretches noticed.)`);
         }
@@ -3699,11 +3732,12 @@ export class OverworldScene extends Phaser.Scene {
   /** the crossing (first ride only): the §A11 deck scene over a scrolling sea */
   private async boatCutscene(): Promise<void> {
     this.cut = true;
-    const mapW = this.mapDef.grid[0].length * 16;
+    const mapW = this.mapDef.grid[0].length * TILE_PX;
     // gulls + the far coast slide by inside the sky band only (ADR-004:
-    // interiors float in void — the masked reel is the bus precedent)
+    // interiors float in void — the masked reel is the bus precedent). The band
+    // + reel y's + slide offsets are native px → s() (scale is a setScale mult).
     const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
-    maskShape.fillRect(0, 6, mapW, 56);
+    maskShape.fillRect(0, s(6), mapW, s(56));
     const paneMask = maskShape.createGeometryMask();
     const reel: Array<{ key: string; y: number; scale: number }> = [
       { key: 'songbird', y: 26, scale: 1 },
@@ -3721,12 +3755,12 @@ export class OverworldScene extends Phaser.Scene {
         const item = reel[Math.min(frame, reel.length - 1)];
         frame++;
         const img = this.add
-          .image(mapW + 40, item.y, item.key)
+          .image(mapW + s(40), s(item.y), item.key)
           .setOrigin(0.5, 1)
           .setScale(item.scale)
           .setDepth(1)
           .setMask(paneMask);
-        this.tweens.add({ targets: img, x: -60, duration: 2600, ease: 'linear', onComplete: () => img.destroy() });
+        this.tweens.add({ targets: img, x: -s(60), duration: 2600, ease: 'linear', onComplete: () => img.destroy() });
       },
     });
     await this.wait(500);
@@ -3759,13 +3793,13 @@ export class OverworldScene extends Phaser.Scene {
     // EMBER #2 — the Heartlight takes its second stem (§A4.9)
     GS.setFlag('ember2');
     GS.data.embers = 2;
-    const ember = this.add.image(9.5 * 16, 4 * 16, 'ember').setDepth(9999);
+    const ember = this.add.image(9.5 * TILE_PX, 4 * TILE_PX, 'ember').setDepth(9999);
     AUDIO.sfx('ember');
     this.sparkleBurst(ember.x, ember.y, 12);
-    this.tweens.add({ targets: ember, y: this.player.y - 30, x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
     AUDIO.playMusic('heartlight');
     await this.wait(1400);
-    this.sparkleBurst(this.player.x, this.player.y - 30, 14);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
     ember.destroy();
     this.cameras.main.flash(300, 248, 232, 160);
     await this.dlg.say(...DIALOGUE.ember2_get);
@@ -3781,7 +3815,7 @@ export class OverworldScene extends Phaser.Scene {
     this.cameras.main.flash(420, 248, 232, 160);
     AUDIO.playMusic('heartlight');
     await this.dlg.say(...DIALOGUE.valle_recovery);
-    this.sparkleBurst(this.player.x, this.player.y - 14, 16);
+    this.sparkleBurst(this.player.x, this.player.y - s(14), 16);
     GS.setFlag('ch2_complete');
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch2_card);
@@ -3901,13 +3935,13 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag('ember3');
     GS.data.embers = 3;
-    const ember = this.add.image(this.player.x, this.player.y - 44, 'ember').setDepth(9999);
+    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
     AUDIO.sfx('ember');
     this.sparkleBurst(ember.x, ember.y, 12);
-    this.tweens.add({ targets: ember, y: this.player.y - 30, x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
     AUDIO.playMusic('heartlight');
     await this.wait(1400);
-    this.sparkleBurst(this.player.x, this.player.y - 30, 14);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
     ember.destroy();
     this.cameras.main.flash(300, 248, 232, 160);
     await this.dlg.say(...DIALOGUE.ember3_get);
@@ -3942,7 +3976,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     AUDIO.sfx('pray');
     this.cameras.main.flash(360, 168, 224, 255);
-    this.sparkleBurst(this.player.x, this.player.y - 14, 14);
+    this.sparkleBurst(this.player.x, this.player.y - s(14), 14);
     await this.wait(400);
     GS.setFlag('wm_coolant_frozen');
     await this.dlg.say(...DIALOGUE.wm_fog_engine);
@@ -3973,7 +4007,7 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag(p.flag);
     AUDIO.sfx('ember');
-    this.sparkleBurst(this.player.x, this.player.y - 14, 8);
+    this.sparkleBurst(this.player.x, this.player.y - s(14), 8);
     await this.dlg.say(...DIALOGUE[p.dialogue]);
     const n = p.of.filter((f) => GS.flag(f)).length;
     toast(this, `(${n}/${p.of.length} — then back to ${p.giver}.)`);
@@ -3998,7 +4032,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('cage_park_reveal_done');
     await this.wait(220);
     // look UP toward the cage gate (north), over the narration, then back
-    this.cameras.main.pan(this.player.x, Math.max(this.player.y - 200, 24), 2400, 'Sine.easeInOut', true);
+    this.cameras.main.pan(this.player.x, Math.max(this.player.y - s(200), s(24)), 2400, 'Sine.easeInOut', true);
     await this.dlg.say(...DIALOGUE.cage_park_reveal.slice(0, 2));
     AUDIO.sfx('cursor');
     await this.dlg.say(...DIALOGUE.cage_park_reveal.slice(2));
@@ -4017,7 +4051,7 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag('golf_resort_reveal_done');
     await this.wait(220);
-    this.cameras.main.pan(this.player.x, Math.max(this.player.y - 200, 24), 2400, 'Sine.easeInOut', true);
+    this.cameras.main.pan(this.player.x, Math.max(this.player.y - s(200), s(24)), 2400, 'Sine.easeInOut', true);
     await this.dlg.say(...DIALOGUE.golf_resort_reveal.slice(0, 2));
     AUDIO.sfx('cursor');
     await this.dlg.say(...DIALOGUE.golf_resort_reveal.slice(2));
@@ -4030,9 +4064,9 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag('puerto_malecon_done');
     await this.wait(220);
-    const mapW = this.mapDef.grid[0].length * 16;
+    const mapW = this.mapDef.grid[0].length * TILE_PX;
     // look east down the quay, over the narration, then back to the party
-    this.cameras.main.pan(Math.min(this.player.x + 220, mapW - 16), this.player.y, 2600, 'Sine.easeInOut', true);
+    this.cameras.main.pan(Math.min(this.player.x + s(220), mapW - s(16)), this.player.y, 2600, 'Sine.easeInOut', true);
     await this.dlg.say(...DIALOGUE.puerto_malecon.slice(0, 2));
     AUDIO.sfx('cursor');
     await this.dlg.say(...DIALOGUE.puerto_malecon.slice(2));
@@ -4071,9 +4105,14 @@ export class OverworldScene extends Phaser.Scene {
    * added `world` first and the sky rects painted over the whole town).
    */
   private async openingMeteorCinema(): Promise<void> {
-    const W = this.scale.width;
-    const H = this.scale.height;
-    const cinema = this.add.container(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 20);
+    // This whole cinema is composed in the NATIVE 400×225 design space (the town
+    // strip, sky bands, star arrays, impact points, debris arcs are all hand-tuned
+    // native px). Rather than wrap ~150 literals, the cinema CONTAINER is scaled
+    // ×ART_SCALE once — every child composes uniformly and ×1 stays identical
+    // (scale 1). So W/H here are the native frame, NOT this.scale.width/height.
+    const W = 400;
+    const H = 225;
+    const cinema = this.add.container(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 20).setScale(ART_SCALE);
     const sky = this.add.container(0, 0);
     const world = this.add.container(0, 0);
     const fx = this.add.container(0, 0);
@@ -4370,9 +4409,9 @@ export class OverworldScene extends Phaser.Scene {
 
   private async chadJoinScene(): Promise<void> {
     this.cut = true;
-    const chad = this.add.sprite(this.player.x + 60, this.player.y, 'chad', standFrame('left'));
+    const chad = this.add.sprite(this.player.x + s(60), this.player.y, 'chad', standFrame('left'));
     chad.setOrigin(0.5, 1).setDepth(chad.y);
-    await this.tweenTo(chad, this.player.x + 18, this.player.y, 900, 'chad');
+    await this.tweenTo(chad, this.player.x + s(18), this.player.y, 900, 'chad');
     await this.dlg.say(...DIALOGUE.chad_join);
     chad.destroy();
     GS.data.guest = 'chad';
@@ -4389,13 +4428,13 @@ export class OverworldScene extends Phaser.Scene {
     // under the narration (was one 950ms dash that finished before page one
     // typed out). The dialogue stays the clock: pages hold each leg on
     // screen, holding A fast-forwards everything per ADR-024.
-    this.cameras.main.pan(31 * 16, 6 * 16, 4200, 'Sine.easeInOut', true);
+    this.cameras.main.pan(31 * TILE_PX, 6 * TILE_PX, 4200, 'Sine.easeInOut', true);
     await this.dlg.say(...DIALOGUE.brickton_arrival.slice(0, 2));
-    this.cameras.main.pan(62 * 16, 14 * 16, 3200, 'Sine.easeInOut', true);
+    this.cameras.main.pan(62 * TILE_PX, 14 * TILE_PX, 3200, 'Sine.easeInOut', true);
     await this.dlg.say(...DIALOGUE.brickton_arrival.slice(2, 4));
     this.cameras.main.pan(this.player.x, this.player.y, 1800, 'Sine.easeInOut', true);
     await this.dlg.say(DIALOGUE.brickton_arrival[4]);
-    this.sparkleBurst(this.player.x, this.player.y - 18, 8);
+    this.sparkleBurst(this.player.x, this.player.y - s(18), 8);
     AUDIO.sfx('ember');
     await this.dlg.say(DIALOGUE.brickton_arrival[5]);
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
@@ -4420,8 +4459,8 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('city_reveal_done');
     await this.wait(220);
     // a gentle look ahead toward the city (east), paced under the narration, then home
-    const mapW = this.mapDef.grid[0].length * 16;
-    this.cameras.main.pan(Math.min(this.player.x + 168, mapW - 16), this.player.y - 16, 2600, 'Sine.easeInOut', true);
+    const mapW = this.mapDef.grid[0].length * TILE_PX;
+    this.cameras.main.pan(Math.min(this.player.x + s(168), mapW - s(16)), this.player.y - s(16), 2600, 'Sine.easeInOut', true);
     await this.dlg.say(...DIALOGUE.city_reveal.slice(0, 2));
     AUDIO.sfx('ember');
     await this.dlg.say(...DIALOGUE.city_reveal.slice(2));
@@ -4441,19 +4480,19 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag('brickton_clock_goal');
     // the clock, high over the plaza
-    this.cameras.main.pan(62 * 16, 13 * 16, 900, 'Sine.easeInOut', true);
+    this.cameras.main.pan(62 * TILE_PX, 13 * TILE_PX, 900, 'Sine.easeInOut', true);
     await this.wait(400);
     AUDIO.sfx('thud'); // it strikes
-    this.sparkleBurst(62 * 16 + 8, 13 * 16 + 6, 10);
+    this.sparkleBurst(62 * TILE_PX + TILE_PX / 2, 13 * TILE_PX + s(6), 10);
     await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(0, 2)); // the strike + the block turning
     // the clock lady, leaning on the plaza rail, explains
-    this.cameras.main.pan(63 * 16, 15 * 16, 650, 'Sine.easeInOut', true);
+    this.cameras.main.pan(63 * TILE_PX, 15 * TILE_PX, 650, 'Sine.easeInOut', true);
     AUDIO.sfx('cursor');
     await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(2, 5)); // "@That is Brickton time…"
     // back to the hero — the Locket takes the tick
     this.cameras.main.pan(this.player.x, this.player.y, 650, 'Sine.easeInOut', true);
     await this.wait(200);
-    this.sparkleBurst(this.player.x, this.player.y - 18, 12);
+    this.sparkleBurst(this.player.x, this.player.y - s(18), 12);
     AUDIO.sfx('ember');
     await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(5)); // the locket keeps it warm + the button
     AUDIO.jingle('victory', 1600, this.mapDef.music);
@@ -4472,12 +4511,12 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag('brickton_dial_goal');
     // the payphone on the bus-stop corner
-    this.cameras.main.pan(14 * 16, 26 * 16, 800, 'Sine.easeInOut', true);
+    this.cameras.main.pan(14 * TILE_PX, 26 * TILE_PX, 800, 'Sine.easeInOut', true);
     AUDIO.sfx('phone');
     await this.wait(420);
     await this.dlg.say(...DIALOGUE.brickton_goal_dial.slice(0, 4)); // the ring + the quarter man names the note
     // the hero lifts the Locket to the receiver
-    this.sparkleBurst(14 * 16 + 8, 26 * 16, 10);
+    this.sparkleBurst(14 * TILE_PX + TILE_PX / 2, 26 * TILE_PX, 10);
     AUDIO.sfx('ember');
     await this.dlg.say(...DIALOGUE.brickton_goal_dial.slice(4)); // it folds in + the smell of home + the gain
     AUDIO.jingle('victory', 1600, this.mapDef.music);
@@ -4496,7 +4535,7 @@ export class OverworldScene extends Phaser.Scene {
     if (!a || GS.flag(a.flag) === true) return;
     this.cameras.main.flash(420, 248, 232, 160);
     AUDIO.sfx('pray');
-    this.sparkleBurst(this.player.x, this.player.y - 14, 16);
+    this.sparkleBurst(this.player.x, this.player.y - s(14), 16);
     await this.dlg.say(...DIALOGUE[a.dialogue]);
     GS.setFlag(a.flag);
     AUDIO.jingle('levelup', 1400, this.mapDef.music);
@@ -4508,10 +4547,10 @@ export class OverworldScene extends Phaser.Scene {
     if (!GS.flag('met_glint')) {
       GS.setFlag('met_glint');
       await this.dlg.say(...DIALOGUE.crater_approach);
-      const glint = this.add.sprite(15.5 * 16, 6.5 * 16, 'glint');
+      const glint = this.add.sprite(15.5 * TILE_PX, 6.5 * TILE_PX, 'glint');
       glint.play('glint-flit').setDepth(9999);
-      const glow = this.add.circle(glint.x, glint.y, 10, colorOf(px(RAMP.GOLD, 3)), 0.25).setDepth(9998);
-      this.tweens.add({ targets: [glint, glow], y: '-=6', duration: 900, yoyo: true, repeat: -1 });
+      const glow = this.add.circle(glint.x, glint.y, s(10), colorOf(px(RAMP.GOLD, 3)), 0.25).setDepth(9998);
+      this.tweens.add({ targets: [glint, glow], y: `-=${s(6)}`, duration: 900, yoyo: true, repeat: -1 });
       AUDIO.sfx('ember');
       await this.dlg.say(...DIALOGUE.glint_prophecy);
       GS.data.keyItems.push('star_locket');
@@ -4537,13 +4576,13 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('ember1');
     GS.data.embers = 1;
     this.cut = true;
-    const ember = this.add.image(15.5 * 16, 7 * 16, 'ember').setDepth(9999).setScale(1);
+    const ember = this.add.image(15.5 * TILE_PX, 7 * TILE_PX, 'ember').setDepth(9999).setScale(1);
     AUDIO.sfx('ember');
     this.sparkleBurst(ember.x, ember.y, 12);
-    this.tweens.add({ targets: ember, y: this.player.y - 30, x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
     AUDIO.playMusic('heartlight');
     await this.wait(1400);
-    this.sparkleBurst(this.player.x, this.player.y - 30, 14);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
     ember.destroy();
     this.cameras.main.flash(300, 248, 232, 160);
     await this.dlg.say(...DIALOGUE.ember_get);
@@ -4555,23 +4594,23 @@ export class OverworldScene extends Phaser.Scene {
   private async porchScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('zapper_done');
-    const glint = this.add.sprite(this.player.x + 40, this.player.y - 40, 'glint');
+    const glint = this.add.sprite(this.player.x + s(40), this.player.y - s(40), 'glint');
     glint.play('glint-flit').setDepth(9999);
-    await this.tweenTo(glint, this.player.x + 12, this.player.y - 18, 800);
+    await this.tweenTo(glint, this.player.x + s(12), this.player.y - s(18), 800);
     await this.dlg.say(DIALOGUE.porch_zapper[0], DIALOGUE.porch_zapper[1]);
     // the zapper claims another hero
-    const zapX = 17 * 16;
-    const zapY = 5.5 * 16;
+    const zapX = 17 * TILE_PX;
+    const zapY = 5.5 * TILE_PX;
     this.tweens.add({ targets: glint, x: zapX, y: zapY, duration: 700, ease: 'sine.in' });
     await this.wait(700);
     AUDIO.sfx('zapper');
     this.cameras.main.flash(280, 160, 236, 236);
     glint.destroy();
     await this.dlg.say(DIALOGUE.porch_zapper[2], DIALOGUE.porch_zapper[3], DIALOGUE.porch_zapper[4]);
-    const spark = this.add.image(zapX, zapY + 10, 'pixel').setTint(colorOf(px(RAMP.GOLD, 3))).setScale(3).setDepth(9999);
-    this.tweens.add({ targets: spark, x: this.player.x, y: this.player.y - 12, duration: 900, ease: 'sine.inout' });
+    const spark = this.add.image(zapX, zapY + s(10), 'pixel').setTint(colorOf(px(RAMP.GOLD, 3))).setScale(3).setDepth(9999);
+    this.tweens.add({ targets: spark, x: this.player.x, y: this.player.y - s(12), duration: 900, ease: 'sine.inout' });
     await this.wait(950);
-    this.sparkleBurst(this.player.x, this.player.y - 12, 10);
+    this.sparkleBurst(this.player.x, this.player.y - s(12), 10);
     spark.destroy();
     GS.addItem('glints_spark');
     AUDIO.sfx('ember');
@@ -4617,13 +4656,13 @@ export class OverworldScene extends Phaser.Scene {
   private async managerScene(): Promise<void> {
     this.cut = true;
     const office = this.mapDef.props.find((p) => p.sprite === 'office_door');
-    const doorX = (office?.x ?? 10.5) * 16 + 8;
-    const doorY = (office?.y ?? 0.375) * 16 + 26;
+    const doorX = (office?.x ?? 10.5) * TILE_PX + TILE_PX / 2;
+    const doorY = (office?.y ?? 0.375) * TILE_PX + s(26);
     AUDIO.sfx('cursor');
     await this.dlg.say(DIALOGUE.manager_intro[0]);
-    const mgr = this.add.sprite(doorX, doorY + 8, 'manager', standFrame('down'));
+    const mgr = this.add.sprite(doorX, doorY + s(8), 'manager', standFrame('down'));
     mgr.setOrigin(0.5, 1).setDepth(mgr.y);
-    await this.tweenTo(mgr, this.player.x - 24, this.player.y, 2000, 'manager');
+    await this.tweenTo(mgr, this.player.x - s(24), this.player.y, 2000, 'manager');
     mgr.setDepth(mgr.y);
     await this.dlg.say(...DIALOGUE.manager_intro.slice(1));
     await this.dlg.say(...DIALOGUE.manager_faye_q);
@@ -4637,7 +4676,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.cut = true;
     GS.setFlag('manager_defeated');
-    await this.tweenTo(mgr, doorX, doorY + 8, 1600, 'manager');
+    await this.tweenTo(mgr, doorX, doorY + s(8), 1600, 'manager');
     mgr.destroy();
     await this.dlg.say(...DIALOGUE.manager_win);
     this.cut = false;
@@ -4731,7 +4770,7 @@ export class OverworldScene extends Phaser.Scene {
 
   private async busCutscene(): Promise<void> {
     this.cut = true;
-    const mapW = this.mapDef.grid[0].length * 16;
+    const mapW = this.mapDef.grid[0].length * TILE_PX;
     // the window scrolls by: town first, then the approach, then the city
     const reel: Array<{ key: string; scale: number }> = [
       { key: 'tree', scale: 1 },
@@ -4746,7 +4785,7 @@ export class OverworldScene extends Phaser.Scene {
     // scenery only exists inside the window band — the void outside the bus
     // (interiors float, ADR-004) must not show passing trees
     const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
-    maskShape.fillRect(0, 8, mapW, 38);
+    maskShape.fillRect(0, s(8), mapW, s(38)); // window band (native px → s())
     const paneMask = maskShape.createGeometryMask();
     let frame = 0;
     const spawner = this.time.addEvent({
@@ -4756,14 +4795,14 @@ export class OverworldScene extends Phaser.Scene {
         const item = reel[Math.min(frame, reel.length - 1)];
         frame++;
         const img = this.add
-          .image(mapW + 40, 45, item.key)
+          .image(mapW + s(40), s(45), item.key)
           .setOrigin(0.5, 1)
           .setScale(item.scale)
           .setDepth(1) // behind the bus_windows overlay, over the sky
           .setMask(paneMask);
         this.tweens.add({
           targets: img,
-          x: -60,
+          x: -s(60),
           duration: 2400,
           ease: 'linear',
           onComplete: () => img.destroy(),

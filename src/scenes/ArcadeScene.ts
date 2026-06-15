@@ -47,16 +47,18 @@ import { Dialogue, makeBox, everyFrame, vars } from '../ui/windows';
 import { LetterGrid } from '../ui/lettergrid';
 import { gridCharset } from '../data/newgame';
 import { colorOf, RAMP, px } from '../palette';
+import { s } from '../spritegen/scale';
 
-// the CRT's inner glass, in screen px (the bezel owns everything outside)
-const CRT_X = 14;
-const CRT_Y = 26;
-const CRT_W = 372;
-const CRT_H = 184;
+// the CRT's inner glass, in screen px (the bezel owns everything outside).
+// native literals → runtime via s(); CRT_R/CRT_B derive and so scale for free.
+const CRT_X = s(14);
+const CRT_Y = s(26);
+const CRT_W = s(372);
+const CRT_H = s(184);
 const CRT_R = CRT_X + CRT_W;
 const CRT_B = CRT_Y + CRT_H;
-/** spawn lanes 0..4 → y centers */
-const laneY = (lane: number): number => 56 + lane * 32;
+/** spawn lanes 0..4 → y centers (lane COUNT stays; the px geometry scales) */
+const laneY = (lane: number): number => s(56) + lane * s(32);
 
 type CabState = 'attract' | 'ready' | 'play' | 'tally' | 'initials' | 'table';
 
@@ -127,24 +129,24 @@ export class ArcadeScene extends Phaser.Scene {
     AUDIO.playMusic('arcade');
 
     // ---- the cabinet around the glass ----
-    this.add.rectangle(0, 0, 400, 225, colorOf(px(RAMP.PURPLE, 1))).setOrigin(0, 0).setDepth(0);
-    this.add.rectangle(2, 2, 396, 221, colorOf(px(RAMP.PURPLE, 0))).setOrigin(0, 0).setDepth(0);
+    this.add.rectangle(0, 0, s(400), s(225), colorOf(px(RAMP.PURPLE, 1))).setOrigin(0, 0).setDepth(0);
+    this.add.rectangle(s(2), s(2), s(396), s(221), colorOf(px(RAMP.PURPLE, 0))).setOrigin(0, 0).setDepth(0);
     // marquee
-    this.add.rectangle(6, 4, 388, 16, colorOf(px(RAMP.GOLD, 2))).setOrigin(0, 0).setDepth(1);
+    this.add.rectangle(s(6), s(4), s(388), s(16), colorOf(px(RAMP.GOLD, 2))).setOrigin(0, 0).setDepth(1);
     this.add
-      .bitmapText(200, 8, 'retro', ARCADE_TEXT.marquee, 6)
+      .bitmapText(s(200), s(8), 'retro', ARCADE_TEXT.marquee, s(6))
       .setOrigin(0.5, 0)
       .setDepth(2)
       .setTint(colorOf(px(RAMP.INK, 0)));
     // the glass
     this.add.rectangle(CRT_X, CRT_Y, CRT_W, CRT_H, colorOf(px(RAMP.NIGHT, 0))).setOrigin(0, 0).setDepth(1);
-    // phosphor starfield — fixed, deliberate, part of the cabinet
+    // phosphor starfield — fixed, deliberate, part of the cabinet (native px)
     const stars = [
       [60, 70, 3], [130, 150, 2], [210, 60, 3], [300, 120, 2], [350, 180, 3],
       [90, 180, 2], [250, 170, 3], [170, 100, 2], [330, 50, 2], [40, 130, 3],
     ] as const;
     for (const [sx, sy, sh] of stars) {
-      this.add.rectangle(sx, sy, 1, 1, colorOf(px(RAMP.NIGHT, sh))).setOrigin(0, 0).setDepth(2);
+      this.add.rectangle(s(sx), s(sy), s(1), s(1), colorOf(px(RAMP.NIGHT, sh))).setOrigin(0, 0).setDepth(2);
     }
     // scanlines over everything on the glass
     this.add
@@ -154,21 +156,21 @@ export class ArcadeScene extends Phaser.Scene {
       .setAlpha(0.14);
 
     // HUD (inside the glass)
-    this.hudScore = this.add.bitmapText(CRT_X + 6, CRT_Y + 4, 'retro', '', 6).setDepth(30).setTint(colorOf(px(RAMP.GOLD, 3)));
+    this.hudScore = this.add.bitmapText(CRT_X + s(6), CRT_Y + s(4), 'retro', '', s(6)).setDepth(30).setTint(colorOf(px(RAMP.GOLD, 3)));
     this.hudTime = this.add
-      .bitmapText(CRT_R - 6, CRT_Y + 4, 'retro', '', 6)
+      .bitmapText(CRT_R - s(6), CRT_Y + s(4), 'retro', '', s(6))
       .setOrigin(1, 0)
       .setDepth(30)
       .setTint(colorOf(px(RAMP.CYAN, 2)));
     this.banner = this.add
-      .bitmapText(200, 70, 'retro', '', 6)
+      .bitmapText(s(200), s(70), 'retro', '', s(6))
       .setOrigin(0.5, 0)
       .setDepth(31)
       .setCenterAlign()
-      .setMaxWidth(CRT_W - 30)
+      .setMaxWidth(CRT_W - s(30))
       .setTint(colorOf(px(RAMP.GOLD, 3)));
 
-    this.ship = this.add.image(40, laneY(2), 'arc_ship').setDepth(10).setVisible(false);
+    this.ship = this.add.image(s(40), laneY(2), 'arc_ship').setDepth(10).setVisible(false);
 
     this.showAttract();
   }
@@ -192,35 +194,35 @@ export class ArcadeScene extends Phaser.Scene {
     };
     add(
       this.add
-        .bitmapText(200, 38, 'retro', ARCADE_TEXT.marquee, 12)
+        .bitmapText(s(200), s(38), 'retro', ARCADE_TEXT.marquee, s(12))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.GOLD, 3))),
     );
     add(
       this.add
-        .bitmapText(200, 58, 'retro', vars(ARCADE_TEXT.attractTag), 6)
+        .bitmapText(s(200), s(58), 'retro', vars(ARCADE_TEXT.attractTag), s(6))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.MAGENTA, 2))),
     );
-    this.drawTable(78, add);
+    this.drawTable(s(78), add);
     this.rosterLine = this.add
-      .bitmapText(200, 172, 'retro', ARCADE_TEXT.rosterMoth, 6)
+      .bitmapText(s(200), s(172), 'retro', ARCADE_TEXT.rosterMoth, s(6))
       .setOrigin(0.5, 0)
       .setDepth(20)
       .setTint(colorOf(px(RAMP.CYAN, 2)));
     add(this.rosterLine);
     add(
       this.add
-        .bitmapText(200, 186, 'retro', ARCADE_TEXT.freeplay, 6)
+        .bitmapText(s(200), s(186), 'retro', ARCADE_TEXT.freeplay, s(6))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.NIGHT, 3))),
     );
     add(
       this.add
-        .bitmapText(200, 198, 'retro', ARCADE_TEXT.insert, 6)
+        .bitmapText(s(200), s(198), 'retro', ARCADE_TEXT.insert, s(6))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.PAPER, 3))),
@@ -229,9 +231,10 @@ export class ArcadeScene extends Phaser.Scene {
 
   /** the five rows, MGR and all — straight off the save (v4) */
   private drawTable(y0: number, add: (o: Phaser.GameObjects.GameObject) => void, blinkRank?: number): void {
+    // y0 arrives pre-scaled (callers pass s()); x/row-pitch literals scale here.
     add(
       this.add
-        .bitmapText(200, y0, 'retro', ARCADE_TEXT.tableTitle, 6)
+        .bitmapText(s(200), y0, 'retro', ARCADE_TEXT.tableTitle, s(6))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.PAPER, 3))),
@@ -242,7 +245,7 @@ export class ArcadeScene extends Phaser.Scene {
         ? `${i + 1}. ${row.initials.padEnd(3, ' ')}  ${String(row.score).padStart(6, '0')}`
         : `${i + 1}. ${ARCADE_TEXT.emptyRow}  ------`;
       const t = this.add
-        .bitmapText(200, y0 + 14 + i * 13, 'retro', label, 6)
+        .bitmapText(s(200), y0 + s(14) + i * s(13), 'retro', label, s(6))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(row ? (i === 0 ? RAMP.GOLD : RAMP.PAPER) : RAMP.NIGHT, i === 0 ? 3 : 2)));
@@ -278,7 +281,7 @@ export class ArcadeScene extends Phaser.Scene {
     // sitting down at the machine is entering the quest (§A10 #4 arms either
     // here or at Sal's ask — no order dependency, zero missables)
     if (!GS.flag('q_arcade')) GS.setFlag('q_arcade');
-    this.ship.setPosition(40, laneY(2)).setVisible(true).setAlpha(1);
+    this.ship.setPosition(s(40), laneY(2)).setVisible(true).setAlpha(1);
     this.refreshHud();
     this.showBanner(vars(ARCADE_TEXT.ready), 900);
     AUDIO.sfx('confirm');
@@ -290,7 +293,7 @@ export class ArcadeScene extends Phaser.Scene {
     this.hudTime.setText(this.state === 'play' || this.state === 'ready' ? `TIME ${left}` : '');
     while (this.hudShips.length < Math.max(0, this.lives - 1)) {
       const i = this.hudShips.length;
-      this.hudShips.push(this.add.image(CRT_X + 14 + i * 20, CRT_B - 10, 'arc_ship').setDepth(30).setAlpha(0.85));
+      this.hudShips.push(this.add.image(CRT_X + s(14) + i * s(20), CRT_B - s(10), 'arc_ship').setDepth(30).setAlpha(0.85));
     }
     while (this.hudShips.length > Math.max(0, this.lives - 1)) {
       this.hudShips.pop()?.destroy();
@@ -362,9 +365,11 @@ export class ArcadeScene extends Phaser.Scene {
 
   private moveShip(dt: number): void {
     const d = INPUT.dir();
+    // ARCADE.ship.speed is px/s already scaled at source (data/arcade.ts).
     const sp = (ARCADE.ship.speed * dt) / 1000;
-    this.ship.x = Phaser.Math.Clamp(this.ship.x + d.x * sp, CRT_X + 12, CRT_X + CRT_W * 0.55);
-    this.ship.y = Phaser.Math.Clamp(this.ship.y + d.y * sp, CRT_Y + 22, CRT_B - 12);
+    // clamp offsets are native px → s(); 0.55 is a width ratio and stays.
+    this.ship.x = Phaser.Math.Clamp(this.ship.x + d.x * sp, CRT_X + s(12), CRT_X + CRT_W * 0.55);
+    this.ship.y = Phaser.Math.Clamp(this.ship.y + d.y * sp, CRT_Y + s(22), CRT_B - s(12));
     // invulnerability blinks on the sim clock (deterministic, dt-scaled)
     this.ship.setAlpha(this.simT < this.invulnUntil ? (Math.floor(this.simT / 90) % 2 === 0 ? 0.35 : 0.9) : 1);
   }
@@ -373,21 +378,22 @@ export class ArcadeScene extends Phaser.Scene {
     this.fireCd -= dt;
     if (!INPUT.held('A') || this.fireCd > 0) return;
     this.fireCd = ARCADE.ship.fireCdMs;
-    this.bolts.push(this.add.image(this.ship.x + 10, this.ship.y, 'arc_bolt').setDepth(9));
+    this.bolts.push(this.add.image(this.ship.x + s(10), this.ship.y, 'arc_bolt').setDepth(9));
     AUDIO.sfx('text');
   }
 
   private spawnDue(): void {
     while (this.nextSpawn < this.spawns.length && this.spawns[this.nextSpawn].t <= this.simT) {
-      const s = this.spawns[this.nextSpawn++];
-      const spr = this.add.image(CRT_R + 12, laneY(s.lane), `arc_${s.kind}`).setDepth(8);
+      // 'ev' (not 's') so it doesn't shadow the s() scale helper used just below
+      const ev = this.spawns[this.nextSpawn++];
+      const spr = this.add.image(CRT_R + s(12), laneY(ev.lane), `arc_${ev.kind}`).setDepth(8);
       this.foes.push({
         spr,
-        kind: s.kind,
-        hp: ARCADE.foes[s.kind].hp,
-        baseY: laneY(s.lane),
+        kind: ev.kind,
+        hp: ARCADE.foes[ev.kind].hp,
+        baseY: laneY(ev.lane),
         t0: this.simT,
-        phase: (s.lane * 7 + this.nextSpawn) % 6,
+        phase: (ev.lane * 7 + this.nextSpawn) % 6,
         dead: false,
       });
     }
@@ -397,18 +403,19 @@ export class ArcadeScene extends Phaser.Scene {
     for (const f of this.foes) {
       if (f.dead) continue;
       const age = this.simT - f.t0;
+      // vx is px/s already scaled at source; amplitudes/clamps below are native px.
       f.spr.x += (ARCADE.foes[f.kind].vx * dt) / 1000;
       if (f.kind === 'moth') {
-        f.spr.y = f.baseY + Math.sin(age / 260 + f.phase) * 14;
+        f.spr.y = f.baseY + Math.sin(age / 260 + f.phase) * s(14);
       } else if (f.kind === 'saucer') {
-        // zigzag: flips heading every 700ms of its own age
+        // zigzag: flips heading every 700ms of its own age (700 is time — kept)
         const leg = Math.floor(age / 700);
         const dir = (leg + f.phase) % 2 === 0 ? 1 : -1;
-        f.spr.y = Phaser.Math.Clamp(f.spr.y + (dir * 46 * dt) / 1000, CRT_Y + 20, CRT_B - 12);
+        f.spr.y = Phaser.Math.Clamp(f.spr.y + (dir * s(46) * dt) / 1000, CRT_Y + s(20), CRT_B - s(12));
       } else if (f.kind === 'corndog') {
-        f.spr.y = f.baseY + Math.sin(age / 320) * 6;
+        f.spr.y = f.baseY + Math.sin(age / 320) * s(6);
       }
-      if (f.spr.x < CRT_X - 16) {
+      if (f.spr.x < CRT_X - s(16)) {
         f.dead = true;
         f.spr.destroy();
       }
@@ -418,10 +425,11 @@ export class ArcadeScene extends Phaser.Scene {
 
   private moveBolts(dt: number): void {
     for (const b of this.bolts) {
+      // bulletSpeed is px/s already scaled at source (data/arcade.ts).
       b.x += (ARCADE.ship.bulletSpeed * dt) / 1000;
     }
     this.bolts = this.bolts.filter((b) => {
-      if (b.x > CRT_R + 6) {
+      if (b.x > CRT_R + s(6)) {
         b.destroy();
         return false;
       }
@@ -436,8 +444,9 @@ export class ArcadeScene extends Phaser.Scene {
     const word = vars('{coolthing}').toUpperCase();
     const chars = [...word].filter((c) => c !== ' ');
     chars.forEach((ch, idx) => {
+      // start offset, per-letter spacing, the y-center and the font size all scale
       const txt = this.add
-        .bitmapText(CRT_R + 14 + idx * 18, 120, 'retro', ch, 12)
+        .bitmapText(CRT_R + s(14) + idx * s(18), s(120), 'retro', ch, s(12))
         .setOrigin(0.5, 0.5)
         .setDepth(8)
         .setTint(colorOf(px(RAMP.MAGENTA, 3)));
@@ -445,18 +454,20 @@ export class ArcadeScene extends Phaser.Scene {
     });
   }
 
-  /** formation spacing — long coolthings tighten so the tail stays on-glass */
+  /** formation spacing — long coolthings tighten so the tail stays on-glass.
+   *  Both the cap (18px) and the total span (210px) are pixels → s(); n is a count. */
   private letterGap(): number {
-    return Math.min(18, Math.floor(210 / Math.max(1, this.letters.length)));
+    return Math.min(s(18), Math.floor(s(210) / Math.max(1, this.letters.length)));
   }
 
   private moveLetters(dt: number): void {
     const gap = this.letterGap();
     for (const l of this.letters) {
       if (l.dead) continue;
-      // the snake: drift in, then weave on the midline
-      if (l.txt.x > CRT_X + 140 + l.idx * gap) l.txt.x -= (38 * dt) / 1000;
-      l.txt.y = 120 + Math.sin(this.simT / 290 + l.idx * 0.7) * 38;
+      // the snake: drift in (140px hold-line, 38px/s), then weave on the midline
+      // (120px center, 38px amplitude). gap is already scaled by letterGap().
+      if (l.txt.x > CRT_X + s(140) + l.idx * gap) l.txt.x -= (s(38) * dt) / 1000;
+      l.txt.y = s(120) + Math.sin(this.simT / 290 + l.idx * 0.7) * s(38);
     }
   }
 
@@ -468,20 +479,21 @@ export class ArcadeScene extends Phaser.Scene {
   /* ================= collisions ================= */
 
   private collide(): void {
-    const shipBox = new Phaser.Geom.Rectangle(this.ship.x - 6, this.ship.y - 3, 13, 7);
+    // every AABB size/offset is native px → s(); the /2 in boxOf is a centering ratio.
+    const shipBox = new Phaser.Geom.Rectangle(this.ship.x - s(6), this.ship.y - s(3), s(13), s(7));
     const boxOf = (img: Phaser.GameObjects.Image | Phaser.GameObjects.BitmapText, w: number, h: number): Phaser.Geom.Rectangle =>
       new Phaser.Geom.Rectangle(img.x - w / 2, img.y - h / 2, w, h);
     const foeSize: Record<FoeKind, [number, number]> = {
-      moth: [10, 8],
-      rock: [12, 10],
-      saucer: [13, 8],
-      corndog: [14, 6],
+      moth: [s(10), s(8)],
+      rock: [s(12), s(10)],
+      saucer: [s(13), s(8)],
+      corndog: [s(14), s(6)],
     };
 
     // bolts vs foes + letters
     for (const b of this.bolts) {
       if (!b.active) continue;
-      const bBox = new Phaser.Geom.Rectangle(b.x - 2, b.y - 1, 5, 3);
+      const bBox = new Phaser.Geom.Rectangle(b.x - s(2), b.y - s(1), s(5), s(3));
       for (const f of this.foes) {
         if (f.dead) continue;
         const [fw, fh] = foeSize[f.kind];
@@ -512,7 +524,7 @@ export class ArcadeScene extends Phaser.Scene {
       if (!b.active) continue;
       for (const l of this.letters) {
         if (l.dead || l.txt.x > CRT_R) continue;
-        if (!Phaser.Geom.Rectangle.Overlaps(bBox, boxOf(l.txt, 10, 12))) continue;
+        if (!Phaser.Geom.Rectangle.Overlaps(bBox, boxOf(l.txt, s(10), s(12)))) continue;
         b.destroy();
         l.dead = true;
         this.popFoe(l.txt.x, l.txt.y, this.letterPts());
@@ -539,7 +551,7 @@ export class ArcadeScene extends Phaser.Scene {
         f.dead = true;
         f.spr.destroy();
         this.score += ARCADE.pts.corndogEat;
-        this.popFoe(this.ship.x, this.ship.y - 10, ARCADE.pts.corndogEat);
+        this.popFoe(this.ship.x, this.ship.y - s(10), ARCADE.pts.corndogEat);
         this.showBanner(ARCADE_TEXT.eatDog, 1500);
         AUDIO.sfx('heal');
         continue;
@@ -549,7 +561,7 @@ export class ArcadeScene extends Phaser.Scene {
     }
     for (const l of this.letters) {
       if (l.dead) continue;
-      if (Phaser.Geom.Rectangle.Overlaps(shipBox, boxOf(l.txt, 10, 12))) {
+      if (Phaser.Geom.Rectangle.Overlaps(shipBox, boxOf(l.txt, s(10), s(12)))) {
         this.shipHit();
         return;
       }
@@ -563,11 +575,11 @@ export class ArcadeScene extends Phaser.Scene {
     this.time.delayedCall(80, () => burst.setFrame(1)); // cosmetic only
     this.time.delayedCall(180, () => burst.destroy());
     const t = this.add
-      .bitmapText(x, y - 6, 'retro', `+${pts}`, 6)
+      .bitmapText(x, y - s(6), 'retro', `+${pts}`, s(6))
       .setOrigin(0.5, 1)
       .setDepth(13)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
-    this.tweens.add({ targets: t, y: y - 18, alpha: 0, duration: 420, onComplete: () => t.destroy() });
+    this.tweens.add({ targets: t, y: y - s(18), alpha: 0, duration: 420, onComplete: () => t.destroy() });
   }
 
   private shipHit(): void {
@@ -581,7 +593,7 @@ export class ArcadeScene extends Phaser.Scene {
       return;
     }
     this.invulnUntil = this.simT + ARCADE.ship.invulnMs;
-    this.ship.setPosition(40, laneY(2));
+    this.ship.setPosition(s(40), laneY(2));
   }
 
   /* ================= eject / tally / initials ================= */
@@ -629,14 +641,14 @@ export class ArcadeScene extends Phaser.Scene {
     };
     add(
       this.add
-        .bitmapText(200, 70, 'retro', reason, 8)
+        .bitmapText(s(200), s(70), 'retro', reason, s(8))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.PAPER, 3))),
     );
     add(
       this.add
-        .bitmapText(200, 92, 'retro', `SCORE ${String(this.score).padStart(6, '0')}`, 12)
+        .bitmapText(s(200), s(92), 'retro', `SCORE ${String(this.score).padStart(6, '0')}`, s(12))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.GOLD, 3))),
@@ -676,20 +688,20 @@ export class ArcadeScene extends Phaser.Scene {
     };
     add(
       this.add
-        .bitmapText(200, 30, 'retro', ARCADE_TEXT.newHigh, 8)
+        .bitmapText(s(200), s(30), 'retro', ARCADE_TEXT.newHigh, s(8))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.MAGENTA, 3))),
     );
     add(
       this.add
-        .bitmapText(118, 48, 'retro', ARCADE_TEXT.initialsPrompt, 6)
+        .bitmapText(s(118), s(48), 'retro', ARCADE_TEXT.initialsPrompt, s(6))
         .setOrigin(0, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.PAPER, 2))),
     );
     const valueText = this.add
-      .bitmapText(266, 44, 'retro', '', 8)
+      .bitmapText(s(266), s(44), 'retro', '', s(8))
       .setOrigin(0, 0)
       .setDepth(21)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
@@ -728,18 +740,18 @@ export class ArcadeScene extends Phaser.Scene {
     const add = (o: Phaser.GameObjects.GameObject): void => {
       this.screenObjs.push(o);
     };
-    this.drawTable(64, add, blinkRank);
+    this.drawTable(s(64), add, blinkRank);
     if (beatTop) {
       add(
         this.add
-          .bitmapText(200, 150, 'retro', ARCADE_TEXT.dethroned, 6)
+          .bitmapText(s(200), s(150), 'retro', ARCADE_TEXT.dethroned, s(6))
           .setOrigin(0.5, 0)
           .setDepth(20)
           .setTint(colorOf(px(RAMP.MAGENTA, 3))),
       );
       add(
         this.add
-          .bitmapText(200, 164, 'retro', ARCADE_TEXT.tellSal, 6)
+          .bitmapText(s(200), s(164), 'retro', ARCADE_TEXT.tellSal, s(6))
           .setOrigin(0.5, 0)
           .setDepth(20)
           .setTint(colorOf(px(RAMP.PAPER, 2))),
@@ -747,7 +759,7 @@ export class ArcadeScene extends Phaser.Scene {
     }
     add(
       this.add
-        .bitmapText(200, 192, 'retro', ARCADE_TEXT.insert, 6)
+        .bitmapText(s(200), s(192), 'retro', ARCADE_TEXT.insert, s(6))
         .setOrigin(0.5, 0)
         .setDepth(20)
         .setTint(colorOf(px(RAMP.PAPER, 3))),
