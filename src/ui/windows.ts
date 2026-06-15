@@ -10,6 +10,7 @@ import { AUDIO } from '../engine/audio';
 import { GS } from '../engine/state';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
+import { s } from '../spritegen/scale';
 import { vars, money } from './text';
 import { FlairLine, hasFlair } from './flairline';
 import { paginate, pageOf, ROW_H } from './paginate';
@@ -99,7 +100,9 @@ export function makeWindow(
   h: number,
 ): Phaser.GameObjects.NineSlice {
   boundsCheck(scene, 'makeWindow', x, y, w, h);
-  const win = scene.add.nineslice(x, y, winTexture(), 0, w, h, 8, 8, 8, 8);
+  // 9-slice corner pieces are 8px native; the corner texture is upscaled
+  // ×ART_SCALE at boot, so the slice sizes must match in runtime px.
+  const win = scene.add.nineslice(x, y, winTexture(), 0, w, h, s(8), s(8), s(8), s(8));
   win.setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI);
   return win;
 }
@@ -112,7 +115,8 @@ export function makeBox(
   h: number,
 ): Phaser.GameObjects.NineSlice {
   boundsCheck(scene, 'makeBox', x, y, w, h);
-  const win = scene.add.nineslice(x, y, 'box9', 0, w, h, 6, 6, 6, 6);
+  // 6px native corner pieces; the box9 texture is upscaled ×ART_SCALE at boot.
+  const win = scene.add.nineslice(x, y, 'box9', 0, w, h, s(6), s(6), s(6), s(6));
   win.setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI);
   return win;
 }
@@ -135,15 +139,16 @@ export function makeCashBox(
   const cash = `${money(cashOnHand, { abbrev: true })}  BANK ${money(banked, { abbrev: true })}`;
   // cap the window to the screen (minus an 8px right + 4px safety margin); the
   // box's left then sits at sw - w - 4, so right edge = sw - 4 ≤ screen, always.
-  const w = Math.min(cash.length * 6 + 20, sw - 12);
-  const bx = sw - w - 4;
+  // sw is already runtime px; the px paddings + the 6px glyph advance scale.
+  const w = Math.min(cash.length * s(6) + s(20), sw - s(12));
+  const bx = sw - w - s(4);
   return [
-    makeWindow(scene, bx, 8, w, 22),
+    makeWindow(scene, bx, s(8), w, s(22)),
     scene.add
-      .bitmapText(bx + 10, 15, 'retro', cash, 6)
+      .bitmapText(bx + s(10), s(15), 'retro', cash, s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
-      .setMaxWidth(w - 16), // the text is bounded to the frame's interior
+      .setMaxWidth(w - s(16)), // the text is bounded to the frame's interior
   ];
 }
 
@@ -181,7 +186,7 @@ export class Dialogue {
   private layout(): { x: number; y: number; w: number; h: number } {
     const W = this.scene.scale.width;
     const H = this.scene.scale.height;
-    return { x: 8, y: H - 66, w: W - 16, h: 60 };
+    return { x: s(8), y: H - s(66), w: W - s(16), h: s(60) };
   }
 
   /** Show pages of dialogue. Each string is one page; @ prefix = speech. */
@@ -192,17 +197,17 @@ export class Dialogue {
     this.win.setTexture(winTexture()); // a flavor change applies live (S14b)
     this.win.setVisible(true);
     this.text ??= this.scene.add
-      .bitmapText(x + 10, y + 8, 'retro', '', 6)
+      .bitmapText(x + s(10), y + s(8), 'retro', '', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
-      .setMaxWidth(w - 24);
+      .setMaxWidth(w - s(24));
     this.text.setVisible(true);
     this.cursor ??= this.scene.add
-      .bitmapText(x + w - 16, y + h - 14, 'retro', '▼', 6)
+      .bitmapText(x + w - s(16), y + h - s(14), 'retro', '▼', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
-    this.flair ??= new FlairLine(this.scene, this.text, { maxWidthPx: w - 24, depth: DEPTH_UI + 1 });
+    this.flair ??= new FlairLine(this.scene, this.text, { maxWidthPx: w - s(24), depth: DEPTH_UI + 1 });
     for (const raw of pages) {
       const page = vars(raw);
       await this.typewrite(page);
@@ -318,19 +323,19 @@ export class Dialogue {
     this.busy = true;
     const scene = this.scene;
     const W = scene.scale.width;
-    const rowH = ROW_H;
-    const iconPad = opts.icons?.some((k) => k !== undefined) ? 13 : 0;
-    const w = Math.max(...options.map((o) => o.length)) * 6 + 36 + iconPad;
-    const x = W - w - 10;
+    const rowH = s(ROW_H); // ROW_H is native px (paginate.ts); pitch in runtime px
+    const iconPad = opts.icons?.some((k) => k !== undefined) ? s(13) : 0;
+    const w = Math.max(...options.map((o) => o.length)) * s(6) + s(36) + iconPad;
+    const x = W - w - s(10);
     // The menu's bottom edge — 4px above the H-66 dialogue box — is the fixed
     // anchor; AUTO-FIT how many rows fit above it (a 4px top margin + the 16px
     // frame padding reserved), and PAGINATE the rest. The frame is sized to
     // perPage (== min(length, fitRows)) so a fitting list keeps the exact old
     // compact height — h = length*rowH + 16 — and a uniform frame across pages.
-    const menuBottom = scene.scale.height - 66 - 4;
-    const fitRows = Math.max(1, Math.floor((menuBottom - 4 - 16) / rowH));
+    const menuBottom = scene.scale.height - s(66) - s(4);
+    const fitRows = Math.max(1, Math.floor((menuBottom - s(4) - s(16)) / rowH));
     const { perPage, pages } = paginate(options.length, 1, fitRows);
-    const h = perPage * rowH + 16;
+    const h = perPage * rowH + s(16);
     const y = menuBottom - h; // == scene.scale.height - 66 - h - 4 (the original)
     const win = makeWindow(scene, x, y, w, h);
 
@@ -341,7 +346,7 @@ export class Dialogue {
     const slotCount = (): number => Math.min(perPage, options.length - page * perPage);
 
     const hand = scene.add
-      .image(x + 12, y + 13, 'hand')
+      .image(x + s(12), y + s(13), 'hand')
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2);
 
@@ -357,25 +362,25 @@ export class Dialogue {
       zones.forEach((z) => z.destroy());
       zones = [];
       const n = slotCount();
-      for (let s = 0; s < n; s++) {
-        const i = indexOfSlot(s);
+      for (let slot = 0; slot < n; slot++) {
+        const i = indexOfSlot(slot);
         const icon = opts.icons?.[i];
         if (icon !== undefined) {
           pageObjs.push(
             scene.add
-              .image(x + 24, y + 13 + s * rowH, icon)
+              .image(x + s(24), y + s(13) + slot * rowH, icon)
               .setScrollFactor(0)
               .setDepth(DEPTH_UI + 1),
           );
         }
         pageObjs.push(
           scene.add
-            .bitmapText(x + 22 + iconPad, y + 9 + s * rowH, 'retro', vars(options[i]), 6)
+            .bitmapText(x + s(22) + iconPad, y + s(9) + slot * rowH, 'retro', vars(options[i]), s(6))
             .setScrollFactor(0)
             .setDepth(DEPTH_UI + 1),
         );
         const z = scene.add
-          .zone(x, y + 6 + s * rowH, w, rowH)
+          .zone(x, y + s(6) + slot * rowH, w, rowH)
           .setOrigin(0, 0)
           .setScrollFactor(0)
           .setDepth(DEPTH_UI + 3)
@@ -392,13 +397,13 @@ export class Dialogue {
         const label = `${page > 0 ? '▲ ' : ''}${page + 1}/${pages}${page < pages - 1 ? ' ▼' : ''}`;
         pageObjs.push(
           scene.add
-            .bitmapText(x + w - label.length * 6 - 6, y + h - 11, 'retro', label, 6)
+            .bitmapText(x + w - label.length * s(6) - s(6), y + h - s(11), 'retro', label, s(6))
             .setScrollFactor(0)
             .setDepth(DEPTH_UI + 1)
             .setTint(colorOf(px(RAMP.GOLD, 3))),
         );
       }
-      hand.y = y + 13 + slotOfIndex(sel) * rowH;
+      hand.y = y + s(13) + slotOfIndex(sel) * rowH;
     };
 
     return new Promise((resolve) => {
@@ -436,7 +441,7 @@ export class Dialogue {
             renderPage();
           }
         }
-        hand.y = y + 13 + slotOfIndex(sel) * rowH;
+        hand.y = y + s(13) + slotOfIndex(sel) * rowH;
       });
     });
   }
@@ -460,10 +465,10 @@ export class Dialogue {
 
 export function toast(scene: Phaser.Scene, message: string): void {
   const W = scene.scale.width;
-  const w = message.length * 6 + 24;
-  const win = makeWindow(scene, (W - w) / 2, 10, w, 24);
+  const w = message.length * s(6) + s(24);
+  const win = makeWindow(scene, (W - w) / 2, s(10), w, s(24));
   const tx = scene.add
-    .bitmapText((W - w) / 2 + 12, 18, 'retro', message, 6)
+    .bitmapText((W - w) / 2 + s(12), s(18), 'retro', message, s(6))
     .setScrollFactor(0)
     .setDepth(DEPTH_UI + 1);
   scene.tweens.add({

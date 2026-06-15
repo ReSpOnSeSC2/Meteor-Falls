@@ -8,7 +8,9 @@
  * Spanish-colonial port. Holes play NORTH (up the grid, tee at the bottom);
  * the surf is real water (a splash costs a stroke and a drop).
  *
- * Units: 1 tile = 16px; YD = 2 px per yard (so a tile is 8 yards). Grids are
+ * Units (native; the world scales ×ART_SCALE at runtime): 1 tile = 16px; YD =
+ * 2 px per yard (so a tile is 8 yards). The painter draws native and the seam
+ * upscales; the sim runs in runtime px (TILE_PX, YD already ×ART_SCALE). Grids are
  * RLE-authored rows ('C2W3R2F6R2W3C2' → 18 tiles; a 'n*' prefix repeats the
  * row) — hand-written, reviewable, expanded by ONE function everything
  * shares. Terrain chars: T tee · F fairway · R rough · S sand · W water/surf
@@ -16,13 +18,25 @@
  */
 
 import type { HoleDef, ClubDef, LinksVec as Vec } from '../schemas';
+import { s } from '../spritegen/scale';
 
 export type { HoleDef, ClubDef };
 export type { LinksVec as Vec } from '../schemas';
 
+/**
+ * NATIVE tile (px). This stays the legacy 16 because the FROZEN hole-texture
+ * painter (`spritegen/golfers.ts`) draws each hole into a NATIVE Pixmap at
+ * `gridW*TILE`, which the registration seam then upscales ×ART_SCALE — so the
+ * paint must NOT pre-scale or the ground would double-scale (×ART_SCALE²).
+ * terrainAt + HOLES stay native; the runtime sim bridges its ball ÷ART_SCALE.
+ */
 export const TILE = 16;
-/** px per yard (carry tables speak yards; the world speaks px) */
-export const YD = 2;
+/**
+ * RUNTIME px per yard = native 2 × ART_SCALE. The world (ball, tee/pin fed to
+ * the sim) lives in runtime px, so a yard is ART_SCALE× more pixels and the
+ * carry tables (which speak yards) keep their yardage. At ×1 this is 2.
+ */
+export const YD = s(2);
 
 export type Terrain = 'T' | 'F' | 'R' | 'S' | 'W' | 'G' | 'C';
 
@@ -49,8 +63,12 @@ export function expandGrid(rle: string[]): string[] {
   return rows;
 }
 
-/** terrain under a px point (off-grid = the surf took it) */
+/** terrain under a NATIVE course-space px point (off-grid = the surf took it) */
 export function terrainAt(grid: string[], x: number, y: number): Terrain {
+  // x/y are NATIVE course-space px: the grid, HOLES and the frozen painter are
+  // all authored native, so this is a native-grid query (÷ native TILE). The
+  // validators pass native hole coords directly; the runtime sim bridges its
+  // ball (÷ ART_SCALE) at GolfSim.lie() — the one runtime↔native boundary.
   const tx = Math.floor(x / TILE);
   const ty = Math.floor(y / TILE);
   if (ty < 0 || ty >= grid.length || tx < 0 || tx >= grid[0].length) return 'W';
@@ -92,6 +110,12 @@ export const LIES: Record<Terrain, { carry: number; roll: number; acc: number }>
 /* ================= THE EIGHTEEN (validator counts and sweeps) ============== */
 
 const H = (h: HoleDef): HoleDef => h;
+/**
+ * Tee/pin in NATIVE px (tile-centred). Kept native (TILE, not TILE_PX) because
+ * the FROZEN painter stamps the cup + slope arrows from `hole.pin` into the
+ * native hole Pixmap; the sim/scene scale these to runtime (×ART_SCALE) where
+ * they read them, so the ball and the seam-upscaled ground stay aligned.
+ */
 const tp = (tx: number, ty: number): Vec => ({ x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 });
 
 /**

@@ -20,7 +20,15 @@
  * `ART_SCALE = 1` reproduces the legacy game byte-for-byte (the regression gate).
  * Flip to 4 only once every domain (world, UI, minigames) is routed through here.
  */
-export const ART_SCALE = 1;
+export const ART_SCALE = 4;
 
 /** Scale a native-space pixel quantity into runtime space. `s(n) === n` at ×1. */
 export const s = (n: number): number => n * ART_SCALE;
+
+/**
+ * Runtime tile size in pixels = native TILE (16, ADR-003) × ART_SCALE.
+ * Scenes do tile↔pixel math against THIS, never the literal 16, so the world
+ * grid scales with the framebuffer. (The frozen tile generators in `tiles.ts`
+ * keep drawing at the native 16.)
+ */
+export const TILE_PX = 16 * ART_SCALE;

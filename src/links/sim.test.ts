@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { GolfSim, GOLF, GOLF_IDLE, windOf, windPutts, type GolfEvent, type GolfInput } from './sim';
 import { CLUBS, HOLES, COURSE_PAR, LIES, YD, expandRow, expandGrid, terrainAt, dist } from './course';
+import { s } from '../spritegen/scale';
 import { makeRng } from '../hoops/sim';
 import { GOLFERS, GOLFER_ORDER, golferHoleScore, linksField, linksEntrants, linksNextOpponent, matchHoles, strokeExp, LINKS_REWARDS } from '../data/links';
 
@@ -73,7 +74,7 @@ function playHole(holeIdx: number, seed: number): { strokes: number; log: GolfEv
     if (sim.phase === 'aim') {
       input = { ...GOLF_IDLE, aPressed: true };
     } else if (sim.phase === 'power') {
-      const d = dist(sim.ball.x, sim.ball.y, sim.hole.pin.x, sim.hole.pin.y);
+      const d = dist(sim.ball.x, sim.ball.y, s(sim.hole.pin.x), s(sim.hole.pin.y));
       let want = 1; // full sends for full swings (the bag self-selects)
       if (sim.mode === 'putt') want = Math.min(1, Math.sqrt(2 * GOLF.FRICTION_G * d) / GOLF.PUTT_V + 0.04);
       if (sim.mode === 'chip') want = Math.min(1, d / (GOLF.CHIP_CARRY_YD * YD) + 0.05);
@@ -185,7 +186,7 @@ describe('the 3-tap meter + the swing law', () => {
     for (let i = 0; i < 4000 && sim.phase !== 'aim'; i++) sim.tick(GOLF_IDLE);
     const splashed = sim.strokes;
     expect(splashed).toBe(2); // the swing + the penalty
-    expect(terrainAt(sim.grid, sim.ball.x, sim.ball.y)).not.toBe('W'); // dropped dry
+    expect(sim.lie()).not.toBe('W'); // dropped dry (lie() bridges runtime→native)
   });
 });
 

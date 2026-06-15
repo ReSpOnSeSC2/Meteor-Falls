@@ -36,6 +36,15 @@ applyAuthoredWorldArt`.
 Author at the masters resolution; export the runtime sheet at the frame size.
 (Runtime frame sizes are the constants in `src/spritegen/authored.ts`.)
 
+> **Scale note (ADR-110).** The runtime framebuffer is **1600×900** (`ART_SCALE = 4`
+> in `src/spritegen/scale.ts`). The runtime frame sizes in the table below are the
+> **×1 base** — the actual runtime export is **native × 4** (tile 16→**64**, char
+> 24×32→**96×128**, bust 32×32→**128×128**, battler 28×36→**112×144**, sport
+> 32×40→**128×160**). Export each runtime sheet at that ×4 size for crisp art; a legacy
+> ×1 sheet still renders (auto-upscaled, chunky) via the transition fallback until you
+> replace it. Full-screen screen PNGs (title/boot/name-entry/save-slots backgrounds)
+> should be authored at **1600×900**.
+
 | Category | Masters source (`assets/art/masters/…`) | Runtime sheet (`assets/art/…`) |
 |---|---|---|
 | Characters (8-angle) | `characters/` ~2172×724 (8 facings in a row) | `characters/` 24×32 per frame · 46-frame sheet (4 cols) |

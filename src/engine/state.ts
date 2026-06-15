@@ -10,6 +10,7 @@ import { ITEMS, slotOf, BAG_MAX, EQUIP_SLOTS, type EquipSlot } from '../data/ite
 import { MGR_ROW, SCORE_ROWS } from '../data/arcade';
 import { migrateSave, freshHoops } from './migrations';
 import { SaveBank, SLOT_IDS, localStorageDriver, type OpenResult, type SlotId, type SlotPeek } from './saves';
+import { s } from '../spritegen/scale';
 import type { ArcadeScore, BoostStat, CallerRecord, HoopsState, Stats, TonicBoost } from '../schemas';
 
 // S5: Stats is z.infer'd from src/schemas — one shape for compile and runtime
@@ -179,8 +180,8 @@ export function newGameData(): GameStateData {
     flags: {},
     playtimeSec: 0,
     map: 'rex_bedroom',
-    x: 72,
-    y: 88,
+    x: s(72),
+    y: s(88),
     facing: 'down',
     embers: 0,
     favoriteFood: 'corn dogs',
@@ -433,7 +434,7 @@ class GameStateStore {
         return { mapId: map, x, y, facing };
       }
     }
-    return { mapId: 'rex_home', x: 104, y: 124, facing: 'down' };
+    return { mapId: 'rex_home', x: s(104), y: s(124), facing: 'down' };
   }
 }
 

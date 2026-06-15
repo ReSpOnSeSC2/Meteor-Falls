@@ -5,6 +5,7 @@
 import { Pixmap, mulberry32 } from './pixmap';
 import { RAMP, T, px, C } from '../palette';
 import { drawTextInto } from './font';
+import { ART_SCALE } from './scale';
 
 export function scalePixmap(src: Pixmap, n: number): Pixmap {
   const out = new Pixmap(src.w * n, src.h * n);
@@ -83,16 +84,26 @@ export function drawBoxSlice(): Pixmap {
   return pm;
 }
 
-/** odometer digit drum: 11 cells (0-9 then 0) of 8×12, light on dark */
-export const ODO_CELL_W = 8;
-export const ODO_CELL_H = 12;
+/**
+ * odometer digit drum: 11 cells (0-9 then 0) of 8×12, light on dark.
+ *
+ * The exported cell dims are RUNTIME px (× ART_SCALE): BattleScene's OdoDisplay
+ * consumes them to place/mask the drum on screen, so they must match the
+ * upscaled 'odo' texture. The DRAW below is FROZEN procedural art — it builds at
+ * the NATIVE 8×12 and the boot seam (addPixmap) upscales the Pixmap ×ART_SCALE,
+ * so it keeps the native literals (ODO_NATIVE_*) and never the runtime size.
+ */
+const ODO_NATIVE_W = 8;
+const ODO_NATIVE_H = 12;
+export const ODO_CELL_W = ODO_NATIVE_W * ART_SCALE;
+export const ODO_CELL_H = ODO_NATIVE_H * ART_SCALE;
 export function drawOdometerStrip(): Pixmap {
-  const pm = new Pixmap(ODO_CELL_W, ODO_CELL_H * 11);
-  pm.rect(0, 0, ODO_CELL_W, ODO_CELL_H * 11, px(RAMP.NIGHT, 0));
+  const pm = new Pixmap(ODO_NATIVE_W, ODO_NATIVE_H * 11);
+  pm.rect(0, 0, ODO_NATIVE_W, ODO_NATIVE_H * 11, px(RAMP.NIGHT, 0));
   for (let i = 0; i < 11; i++) {
     const d = i % 10;
-    drawTextInto(pm, String(d), 2, i * ODO_CELL_H + 3, C.white);
-    pm.hline(0, i * ODO_CELL_H, ODO_CELL_W, px(RAMP.NIGHT, 1));
+    drawTextInto(pm, String(d), 2, i * ODO_NATIVE_H + 3, C.white);
+    pm.hline(0, i * ODO_NATIVE_H, ODO_NATIVE_W, px(RAMP.NIGHT, 1));
   }
   return pm;
 }

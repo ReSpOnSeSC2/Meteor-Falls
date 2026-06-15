@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { generateAllTextures } from '../spritegen';
 import { applyAuthoredBattleArt, applyAuthoredHeroArt, applyAuthoredWorldArt, preloadAuthoredArt } from '../spritegen/authored';
+import { s } from '../spritegen/scale';
 
 /**
  * Boot: run the sprite engine (every texture in the game is generated here,
@@ -17,8 +18,8 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     const W = this.scale.width;
-    this.add.image(0, 0, 'title_art').setOrigin(0, 0);
-    this.add.image(W / 2, 58, 'logo').setScale(0.78);
+    this.add.image(0, 0, 'title_art').setOrigin(0, 0).setDisplaySize(this.scale.width, this.scale.height);
+    this.add.image(W / 2, s(58), 'logo').setScale(0.78);
     // ORDER MATTERS: authored HERO art must land BEFORE generateAllTextures.
     // applyAuthoredHeroArt swaps the 'rex' texture via textures.remove()+addCanvas,
     // which DESTROYS the old Frame objects. generateAllTextures creates the

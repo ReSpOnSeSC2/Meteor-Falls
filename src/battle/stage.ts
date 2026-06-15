@@ -16,13 +16,16 @@ import { FxTimeline } from './fxTimeline';
 import { BATTLER_FRAME, type BattlerFrameName } from '../spritegen/battlers';
 import { AUDIO } from '../engine/audio';
 import { DEPTH_UI } from '../ui/windows';
+import { s } from '../spritegen/scale';
 
 /** the stage band — above the enemy sprites, below every window and card */
 const D_STAGE = DEPTH_UI - 8;
 /** where the battler's feet land (origin 0.5,1) — under the enemy row */
-export const STAGE_Y = 158;
+export const STAGE_Y = s(158);
+// setScale multiplier — STAYS (the battler texture is already ×ART_SCALE; SCALE_CONVENTION)
 const STAGE_ACTOR_SCALE = 1.25;
-const STAGE_ACTOR_HALF_W = Math.ceil(14 * STAGE_ACTOR_SCALE);
+// on-screen half-width: native 14px half-frame, upscaled ×ART_SCALE, then ×actor scale
+const STAGE_ACTOR_HALF_W = Math.ceil(s(14) * STAGE_ACTOR_SCALE);
 
 type HoldPose = 'idle' | 'cast' | 'aim' | 'pray';
 
@@ -53,7 +56,7 @@ export class StageView {
 
   /** actor center — fx that answer the caster (motes, glows) aim here */
   point(): { x: number; y: number } {
-    return { x: this.spr.x, y: this.spr.y - 18 * STAGE_ACTOR_SCALE };
+    return { x: this.spr.x, y: this.spr.y - s(18) * STAGE_ACTOR_SCALE };
   }
 
   /**
@@ -65,13 +68,14 @@ export class StageView {
    * psychics read as melee (the S12b user catch: "Vibe Surge is just a
    * normal bash attack"). The magic travels; the caster doesn't.
    */
-  enter(sheet: string, from: { x: number; y: number }, targetX: number, winded: boolean, standoff = 12): Promise<void> {
+  enter(sheet: string, from: { x: number; y: number }, targetX: number, winded: boolean, standoff = s(12)): Promise<void> {
     this.home = { x: from.x, y: from.y };
     this.winded = winded;
     const W = this.scene.scale.width;
     // stand short of the target's center, on the side the hero came from
     const side = from.x <= targetX ? -1 : 1;
-    const padX = STAGE_ACTOR_HALF_W + 8;
+    // padX is on-screen px; standoff already arrives runtime-scaled, so its ×actor-scale stays
+    const padX = STAGE_ACTOR_HALF_W + s(8);
     const toX = Math.max(padX, Math.min(W - padX, targetX + side * Math.round(standoff * STAGE_ACTOR_SCALE)));
     this.spr
       .setTexture(sheet)

@@ -22,6 +22,10 @@ import { FX_REGISTRY } from './fxRegistry';
 import { AUDIO } from '../engine/audio';
 import { colorOf, px, RAMP } from '../palette';
 import { DEPTH_UI } from '../ui/windows';
+// the native-px scale helper, aliased `sc` — this file uses `s` pervasively as a
+// loop/local (banner scale factor, firework sub-step counters), so the canonical
+// `s` name would shadow-collide. `sc(n) === n` at ART_SCALE=1 (SCALE_CONVENTION).
+import { s as sc } from '../spritegen/scale';
 
 /** field fx (bursts, rings, bolts) — under every card and window */
 const D_FIELD = DEPTH_UI - 10;
@@ -147,7 +151,7 @@ export class BattleFx {
     this.popPool = new Pool<Phaser.GameObjects.BitmapText>(
       () =>
         scene.add
-          .bitmapText(0, 0, 'retro', '', 6)
+          .bitmapText(0, 0, 'retro', '', sc(6))
           .setOrigin(0.5, 1)
           .setDepth(D_POPUP)
           .setScrollFactor(0)
@@ -212,7 +216,7 @@ export class BattleFx {
         this.popPool.give(u.txt);
         continue;
       }
-      u.txt.y = u.y0 - 14 * t;
+      u.txt.y = u.y0 - sc(14) * t;
       u.txt.setAlpha(t > 0.6 ? 1 - (t - 0.6) / 0.4 : 1);
     }
     // tether segments track their endpoints every frame (cards never wait)
@@ -263,15 +267,16 @@ export class BattleFx {
     this.particles.push(p);
   }
 
-  /** radial burst — the workhorse impact read */
-  burst(x: number, y: number, ramp: number, n = 10, speed = 60, life = 420, size = 1): void {
+  /** radial burst — the workhorse impact read. x/y/speed arrive runtime-px
+   *  (callers scale); the gravity pull is an internal native px/s² literal. */
+  burst(x: number, y: number, ramp: number, n = 10, speed = sc(60), life = 420, size = 1): void {
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2 + (i % 2) * 0.3;
       const v = speed * (0.6 + (i % 3) * 0.25);
       this.spawn(x, y, {
         vx: Math.cos(a) * v,
         vy: Math.sin(a) * v,
-        ay: 30,
+        ay: sc(30),
         life: life * (0.7 + (i % 4) * 0.12),
         c0: colorOf(px(ramp, 3)),
         c1: colorOf(px(ramp, 1)),
@@ -280,11 +285,12 @@ export class BattleFx {
     }
   }
 
-  /** sparkles raining down over a width (Lifeup, healing) */
+  /** sparkles raining down over a width (Lifeup, healing). x/y/w runtime-px;
+   *  the spawn-spread offsets and fall speed are internal native px literals. */
   rain(x: number, y: number, w: number, ramp: number, n = 12, life = 600): void {
     for (let i = 0; i < n; i++) {
-      this.spawn(x - w / 2 + (i / (n - 1)) * w, y - 18 - (i % 3) * 6, {
-        vy: 36 + (i % 4) * 8,
+      this.spawn(x - w / 2 + (i / (n - 1)) * w, y - sc(18) - (i % 3) * sc(6), {
+        vy: sc(36) + (i % 4) * sc(8),
         life: life * (0.75 + (i % 3) * 0.18),
         c0: colorOf(px(ramp, 3)),
         c1: colorOf(px(ramp, 2)),
@@ -292,12 +298,13 @@ export class BattleFx {
     }
   }
 
-  /** warm motes drifting upward (pray, porch-light, revive) */
+  /** warm motes drifting upward (pray, porch-light, revive). x/y/w runtime-px;
+   *  the spawn-spread, rise speed and drift are internal native px literals. */
   motes(x: number, y: number, w: number, ramp: number, n = 8, life = 800): void {
     for (let i = 0; i < n; i++) {
-      this.spawn(x - w / 2 + (i / Math.max(1, n - 1)) * w, y + (i % 3) * 4, {
-        vy: -(18 + (i % 4) * 7),
-        vx: (i % 2 === 0 ? 1 : -1) * 4,
+      this.spawn(x - w / 2 + (i / Math.max(1, n - 1)) * w, y + (i % 3) * sc(4), {
+        vy: -(sc(18) + (i % 4) * sc(7)),
+        vx: (i % 2 === 0 ? 1 : -1) * sc(4),
         life: life * (0.7 + (i % 3) * 0.2),
         c0: colorOf(px(ramp, 3)),
         c1: colorOf(px(ramp, 2)),
@@ -305,8 +312,9 @@ export class BattleFx {
     }
   }
 
-  /** an expanding ring driven by a timeline span */
-  ring(tl: FxTimeline, at: number, x: number, y: number, r0: number, r1: number, ramp: number, ms = 320, width = 2): void {
+  /** an expanding ring driven by a timeline span. x/y/r0/r1/width arrive
+   *  runtime-px (callers scale the radii); only the default width is native here. */
+  ring(tl: FxTimeline, at: number, x: number, y: number, r0: number, r1: number, ramp: number, ms = 320, width = sc(2)): void {
     tl.event(at, () => {
       const ring = this.ringPool.take();
       ring.x = x;
@@ -327,8 +335,10 @@ export class BattleFx {
     });
   }
 
-  /** a zigzag bolt flashed for a moment (Volt) */
-  bolt(tl: FxTimeline, at: number, x: number, y: number, ramp: number, fromY = 6): void {
+  /** a zigzag bolt flashed for a moment (Volt). x/y/fromY runtime-px; the
+   *  jitter/zig amplitudes and step heights are internal native px literals
+   *  (the small integer pattern is kept, the resulting px amplitude scales). */
+  bolt(tl: FxTimeline, at: number, x: number, y: number, ramp: number, fromY = sc(6)): void {
     tl.event(at, () => {
       const b = this.boltPool.take();
       b.pts = [];
@@ -336,13 +346,13 @@ export class BattleFx {
       b.alpha = 1;
       b.dead = false;
       let yy = fromY;
-      let xx = x + ((x % 7) - 3) * 2;
+      let xx = x + ((x % 7) - 3) * sc(2);
       b.pts.push(xx, yy);
       let step = 0;
-      while (yy < y - 4) {
-        yy += 9 + (step % 3) * 4;
-        xx = x + (step % 2 === 0 ? -1 : 1) * (7 - Math.min(6, step)) + ((step * 5) % 3);
-        b.pts.push(Math.min(this.scene.scale.width - 2, Math.max(2, xx)), Math.min(y, yy));
+      while (yy < y - sc(4)) {
+        yy += sc(9) + (step % 3) * sc(4);
+        xx = x + (step % 2 === 0 ? -1 : 1) * sc(7 - Math.min(6, step)) + sc((step * 5) % 3);
+        b.pts.push(Math.min(this.scene.scale.width - sc(2), Math.max(sc(2), xx)), Math.min(y, yy));
         step++;
       }
       b.pts.push(x, y);
@@ -390,7 +400,7 @@ export class BattleFx {
         home.x = spr.x;
         home.set = true;
       }
-      spr.x = home.x + (p >= 1 ? 0 : Math.round(Math.sin(p * Math.PI * 4) * 3));
+      spr.x = home.x + (p >= 1 ? 0 : Math.round(Math.sin(p * Math.PI * 4) * sc(3)));
     });
   }
 
@@ -417,16 +427,16 @@ export class BattleFx {
     const ring = this.ringPool.take();
     ring.x = x;
     ring.y = y;
-    ring.width = 2;
+    ring.width = sc(2);
     ring.alpha = 0.9;
     ring.dead = false;
-    ring.r = 14;
+    ring.r = sc(14);
     ring.color = colorOf(px(RAMP.GRASS, 3));
     this.rings.push(ring);
     return {
       tick: () => {
         const p = Math.max(0, Math.min(1, progress()));
-        ring.r = 2 + 12 * p;
+        ring.r = sc(2) + sc(12) * p;
         ring.color = colorOf(px(p > 0.35 ? RAMP.GRASS : RAMP.RED, 3));
       },
       done: () => {
@@ -445,7 +455,7 @@ export class BattleFx {
       for (let i = 0; i < 5; i++) {
         this.bannerTexts.push(
           this.scene.add
-            .bitmapText(0, 0, 'retro', '', 6)
+            .bitmapText(0, 0, 'retro', '', sc(6))
             .setOrigin(0.5)
             .setScrollFactor(0)
             .setDepth(D_POPUP + (i === 4 ? 1 : 0))
@@ -457,11 +467,13 @@ export class BattleFx {
     const ink = colorOf(px(RAMP.INK, 0));
     const g3 = colorOf(px(RAMP.GRASS, 3));
     const g1 = colorOf(px(RAMP.GRASS, 1));
+    // the 4-direction INK outline offsets (px) — scaled; the /3 + banner-scale
+    // factor below shape them into the comic outline
     const offs: Array<[number, number]> = [
-      [-3, 0],
-      [3, 0],
-      [0, -3],
-      [0, 3],
+      [-sc(3), 0],
+      [sc(3), 0],
+      [0, -sc(3)],
+      [0, sc(3)],
       [0, 0],
     ];
     this.bannerTexts.forEach((t, i) => {
@@ -471,12 +483,12 @@ export class BattleFx {
     });
     const tl = new FxTimeline();
     tl.span(0, 130, (p) => {
-      const s = 5 - 2 * p; // the slam: 5× crashing down to 3×
+      const s = 5 - 2 * p; // the slam: 5× crashing down to 3× (a setScale factor — NOT px)
       this.bannerTexts.forEach((t, i) => {
-        t.setScale(s).setPosition(W / 2 + (offs[i][0] * s) / 3, 70 + (offs[i][1] * s) / 3);
+        t.setScale(s).setPosition(W / 2 + (offs[i][0] * s) / 3, sc(70) + (offs[i][1] * s) / 3);
       });
     });
-    tl.event(130, () => this.burst(W / 2, 70, RAMP.GRASS, 12, 80, 420, 2));
+    tl.event(130, () => this.burst(W / 2, sc(70), RAMP.GRASS, 12, sc(80), 420, 2));
     this.shake(tl, 130, 200, 0.012);
     tl.span(720, 860, (p) => this.bannerTexts.forEach((t) => t.setAlpha(1 - p)));
     tl.event(860, () => this.bannerTexts.forEach((t) => t.setVisible(false)));
@@ -510,10 +522,10 @@ export class BattleFx {
     const b = this.tetherTo();
     for (let i = 0; i < 9; i++) {
       const t = i / 8;
-      this.spawn(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t + Math.sin(t * Math.PI) * 8, {
-        vx: (t - 0.5) * 50,
-        vy: -28,
-        ay: 90,
+      this.spawn(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t + Math.sin(t * Math.PI) * sc(8), {
+        vx: (t - 0.5) * sc(50),
+        vy: -sc(28),
+        ay: sc(90),
         life: 460,
         c0: colorOf(px(RAMP.MAGENTA, 3)),
         c1: colorOf(px(RAMP.MAGENTA, 1)),
@@ -532,12 +544,12 @@ export class BattleFx {
     const n = this.tetherSegs.length;
     for (let i = 0; i < n; i++) {
       const t = (i + 0.5) / n;
-      const sag = Math.sin(t * Math.PI) * 8;
+      const sag = Math.sin(t * Math.PI) * sc(8);
       const throb = Math.sin(this.tetherPhase - t * 5);
       const seg = this.tetherSegs[i];
       seg
         .setVisible(true)
-        .setPosition(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t + sag + throb * 1.5)
+        .setPosition(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t + sag + throb * sc(1.5))
         .setTint(colorOf(px(RAMP.MAGENTA, throb > 0.45 ? 3 : 2)))
         .setAlpha(0.85)
         .setScale(throb > 0.45 ? 1.5 : 1);
@@ -586,10 +598,10 @@ export class BattleFx {
         if (sigma) this.flood(tl, 0, 0xffffff, 0.5, 360);
         const charge = sigma ? 520 : 0;
         if (caster) {
-          tl.event(0, () => this.motes(caster.x, caster.y, sigma ? 40 : 26, ramp, sigma ? 7 : 4, 420));
+          tl.event(0, () => this.motes(caster.x, caster.y, sigma ? sc(40) : sc(26), ramp, sigma ? 7 : 4, 420));
           const pulses = sigma ? 4 : 3;
           for (let c = 0; c < pulses; c++) {
-            this.ring(tl, charge + 60 + c * 120, caster.x, caster.y - 6, 14 - c * 3, 4 + c * 2, c === pulses - 1 ? RAMP.GOLD : ramp, 160);
+            this.ring(tl, charge + 60 + c * 120, caster.x, caster.y - sc(6), sc(14 - c * 3), sc(4 + c * 2), c === pulses - 1 ? RAMP.GOLD : ramp, 160);
           }
         }
         targets.forEach((t, i) => {
@@ -600,28 +612,28 @@ export class BattleFx {
             for (let s = 0; s < steps; s++) {
               const p = (s + 1) / (steps + 1);
               const bx = caster.x + (t.x - caster.x) * p;
-              const by = caster.y - 6 + (t.y - (caster.y - 6)) * p;
-              tl.event(charge + 380 + s * 36 + i * 110, () => this.burst(bx, by, ramp, 3, 16));
+              const by = caster.y - sc(6) + (t.y - (caster.y - sc(6))) * p;
+              tl.event(charge + 380 + s * 36 + i * 110, () => this.burst(bx, by, ramp, 3, sc(16)));
             }
           }
           // β+: concentric rings (count + size climb with tier)
           for (let r = 0; r < tier + 1; r++) {
-            this.ring(tl, base + r * 90, t.x, t.y, 4, 18 + tier * 7 + r * 6, r % 2 === 0 ? ramp : RAMP.GOLD, 300 + r * 40);
+            this.ring(tl, base + r * 90, t.x, t.y, sc(4), sc(18 + tier * 7 + r * 6), r % 2 === 0 ? ramp : RAMP.GOLD, 300 + r * 40);
           }
           // γ+: the "willow" — falling spark trails settling after the burst
-          if (tier >= 3) tl.event(base + 120, () => this.rain(t.x, t.y - 6, 30 + tier * 6, ramp, 10 + tier * 3, 520));
-          tl.event(base + 60, () => this.burst(t.x, t.y, ramp, 8 + tier * 3, 54 + tier * 14));
+          if (tier >= 3) tl.event(base + 120, () => this.rain(t.x, t.y - sc(6), sc(30 + tier * 6), ramp, 10 + tier * 3, 520));
+          tl.event(base + 60, () => this.burst(t.x, t.y, ramp, 8 + tier * 3, sc(54 + tier * 14)));
           this.hitFlash(tl, base + 80, t);
           hit(i, base + 90);
           // Σ: the grand chrysanthemum (two huge rings) + sequential secondary
           // bursts walking across each target, then a slow spark-rain settle
           if (sigma) {
-            this.ring(tl, base + 140, t.x, t.y, 6, 96, RAMP.GOLD, 520, 3);
-            this.ring(tl, base + 200, t.x, t.y, 6, 128, ramp, 600, 2);
+            this.ring(tl, base + 140, t.x, t.y, sc(6), sc(96), RAMP.GOLD, 520, sc(3));
+            this.ring(tl, base + 200, t.x, t.y, sc(6), sc(128), ramp, 600, sc(2));
             for (let s = 0; s < 4; s++) {
-              tl.event(base + 260 + s * 90, () => this.burst(t.x + (s - 1.5) * 16, t.y - 8, s % 2 ? RAMP.GOLD : ramp, 12, 70, 520, 2));
+              tl.event(base + 260 + s * 90, () => this.burst(t.x + (s - 1.5) * sc(16), t.y - sc(8), s % 2 ? RAMP.GOLD : ramp, 12, sc(70), 520, 2));
             }
-            tl.event(base + 540, () => this.rain(t.x, t.y - 10, 48, ramp, 18, 760));
+            tl.event(base + 540, () => this.rain(t.x, t.y - sc(10), sc(48), ramp, 18, 760));
           }
         });
         // β/γ: a brief screen-edge bloom; Ω/Σ: the full palette-cycling flood
@@ -641,17 +653,17 @@ export class BattleFx {
         if (sigma) this.flood(tl, 0, 0xffffff, 0.42, 320);
         const charge = sigma ? 380 : 0;
         const sorted = [...targets].sort((a, b) => a.x - b.x);
-        const x0 = Math.min(40, ...sorted.map((t) => t.x - 30));
-        const x1 = Math.max(...sorted.map((t) => t.x + 30), x0 + 60);
+        const x0 = Math.min(sc(40), ...sorted.map((t) => t.x - sc(30)));
+        const x1 = Math.max(...sorted.map((t) => t.x + sc(30)), x0 + sc(60));
         const sweepMs = 380 + tier * 60;
-        const rowY = sorted[0]?.y ?? 92;
+        const rowY = sorted[0]?.y ?? sc(92);
         tl.span(charge + 80, charge + 80 + sweepMs, (p) => {
           const wx = x0 + (x1 - x0) * p;
           // deterministic cadence (no dice in fx — the ADR-008 bot replays this)
           if (Math.floor(p * 60) % 3 === 2 && !sigma) return;
-          this.spawn(wx, rowY + 18, {
-            vy: -(50 + tier * 12),
-            vx: 8,
+          this.spawn(wx, rowY + sc(18), {
+            vy: -sc(50 + tier * 12),
+            vx: sc(8),
             life: 320 + tier * 40,
             c0: colorOf(px(RAMP.GOLD, 3)),
             c1: colorOf(px(ramp, 2)),
@@ -661,16 +673,16 @@ export class BattleFx {
         sorted.forEach((t) => {
           const i = targets.indexOf(t);
           const at = charge + 80 + sweepMs * ((t.x - x0) / (x1 - x0));
-          tl.event(at, () => this.burst(t.x, t.y, ramp, 8 + tier * 2, 55));
+          tl.event(at, () => this.burst(t.x, t.y, ramp, 8 + tier * 2, sc(55)));
           this.hitFlash(tl, at + 20, t);
           hit(i, at + 30);
           // Σ: a firewall climbs each foe — rising sparks + a doubled burst that
           // hangs (the whole sky went orange, and STAYED)
           if (sigma) {
-            tl.event(at + 60, () => this.rain(t.x, t.y - 8, 40, RAMP.GOLD, 16, 700));
-            this.ring(tl, at + 90, t.x, t.y, 6, 92, ramp, 560, 2);
+            tl.event(at + 60, () => this.rain(t.x, t.y - sc(8), sc(40), RAMP.GOLD, 16, 700));
+            this.ring(tl, at + 90, t.x, t.y, sc(6), sc(92), ramp, 560, sc(2));
             for (let s = 0; s < 4; s++) {
-              tl.event(at + 150 + s * 80, () => this.spawn(t.x + (s - 1.5) * 10, t.y + 14, { vy: -(120 + s * 18), life: 520, c0: colorOf(px(RAMP.GOLD, 3)), c1: colorOf(px(ramp, 2)), size: 2 }));
+              tl.event(at + 150 + s * 80, () => this.spawn(t.x + (s - 1.5) * sc(10), t.y + sc(14), { vy: -sc(120 + s * 18), life: 520, c0: colorOf(px(RAMP.GOLD, 3)), c1: colorOf(px(ramp, 2)), size: 2 }));
             }
           }
         });
@@ -698,7 +710,7 @@ export class BattleFx {
             for (let s = 0; s < spokes; s++) {
               const b = this.boltPool.take();
               const a = (s / spokes) * Math.PI * 2 + 0.26;
-              const len = 12 + tier * 4;
+              const len = sc(12 + tier * 4);
               b.pts = [t.x, t.y, t.x + Math.cos(a) * len, t.y + Math.sin(a) * len];
               b.color = colorOf(px(ramp, 3));
               b.alpha = 0.9;
@@ -712,10 +724,10 @@ export class BattleFx {
               this.timelines.push(inner);
             }
           });
-          tl.event(base + hang - 40, () => this.burst(t.x, t.y, ramp, 10 + tier * 2, 70, 380));
+          tl.event(base + hang - 40, () => this.burst(t.x, t.y, ramp, 10 + tier * 2, sc(70), 380));
           if (sigma) {
-            this.ring(tl, base + hang - 40, t.x, t.y, 8, 96, ramp, 520, 3);
-            tl.event(base + hang, () => this.burst(t.x, t.y, RAMP.PAPER, 18, 110, 480, 2));
+            this.ring(tl, base + hang - 40, t.x, t.y, sc(8), sc(96), ramp, 520, sc(3));
+            tl.event(base + hang, () => this.burst(t.x, t.y, RAMP.PAPER, 18, sc(110), 480, 2));
           }
           this.hitFlash(tl, base + hang - 30, t);
           hit(i, base + hang - 20);
@@ -736,12 +748,12 @@ export class BattleFx {
         const strikes = sigma ? 5 : Math.min(tier, 3);
         targets.forEach((t, i) => {
           for (let n = 0; n < strikes; n++) this.bolt(tl, times[i] + n * 70, t.x, t.y, ramp);
-          tl.event(times[i] + 40, () => this.burst(t.x, t.y, ramp, sigma ? 16 : 8, sigma ? 90 : 60));
+          tl.event(times[i] + 40, () => this.burst(t.x, t.y, ramp, sigma ? 16 : 8, sigma ? sc(90) : sc(60)));
           this.flood(tl, times[i], 0xffffff, 0.18, 120);
           this.hitFlash(tl, times[i] + 50, t);
           hit(i, times[i] + 60);
           if (sigma) {
-            this.ring(tl, times[i] + 40, t.x, t.y, 6, 88, RAMP.GOLD, 480, 3);
+            this.ring(tl, times[i] + 40, t.x, t.y, sc(6), sc(88), RAMP.GOLD, 480, sc(3));
             for (let s = 0; s < 3; s++) this.flood(tl, times[i] + 120 + s * 90, 0xffffff, 0.22, 70);
           }
         });
@@ -760,7 +772,7 @@ export class BattleFx {
         const charge = sigma ? 380 : 0;
         if (caster) {
           // the note gathers at her hands before it rises
-          tl.event(0, () => this.motes(caster.x, caster.y, sigma ? 34 : 20, RAMP.GOLD, sigma ? 6 : 4, 420));
+          tl.event(0, () => this.motes(caster.x, caster.y, sigma ? sc(34) : sc(20), RAMP.GOLD, sigma ? 6 : 4, 420));
         }
         targets.forEach((t, i) => {
           const base = charge + 200 + i * 100;
@@ -768,8 +780,8 @@ export class BattleFx {
           // notes rise from below the foe and bloom into a star at the top
           for (let n = 0; n < notes; n++) {
             tl.event(base + n * 40, () =>
-              this.spawn(t.x + (n - notes / 2) * 6, t.y + 20, {
-                vy: -(70 + tier * 12),
+              this.spawn(t.x + (n - notes / 2) * sc(6), t.y + sc(20), {
+                vy: -sc(70 + tier * 12),
                 life: 460 + tier * 30,
                 c0: colorOf(px(RAMP.GOLD, 3)),
                 c1: colorOf(px(ramp, 2)),
@@ -778,17 +790,17 @@ export class BattleFx {
             );
           }
           for (let r = 0; r < tier; r++) {
-            this.ring(tl, base + 120 + r * 70, t.x, t.y - 4, 4, 22 + tier * 6 + r * 8, RAMP.GOLD, 320 + r * 40);
+            this.ring(tl, base + 120 + r * 70, t.x, t.y - sc(4), sc(4), sc(22 + tier * 6 + r * 8), RAMP.GOLD, 320 + r * 40);
           }
-          tl.event(base + 140, () => this.burst(t.x, t.y - 4, RAMP.GOLD, 8 + tier * 2, 56 + tier * 10));
+          tl.event(base + 140, () => this.burst(t.x, t.y - sc(4), RAMP.GOLD, 8 + tier * 2, sc(56 + tier * 10)));
           this.hitFlash(tl, base + 150, t);
           hit(i, base + 160);
           if (sigma) {
-            this.ring(tl, base + 200, t.x, t.y - 4, 6, 110, RAMP.GOLD, 600, 3);
+            this.ring(tl, base + 200, t.x, t.y - sc(4), sc(6), sc(110), RAMP.GOLD, 600, sc(3));
             for (let s = 0; s < 5; s++) {
-              tl.event(base + 240 + s * 80, () => this.burst(t.x + (s - 2) * 14, t.y - 12, s % 2 ? ramp : RAMP.GOLD, 10, 64, 520, 2));
+              tl.event(base + 240 + s * 80, () => this.burst(t.x + (s - 2) * sc(14), t.y - sc(12), s % 2 ? ramp : RAMP.GOLD, 10, sc(64), 520, 2));
             }
-            tl.event(base + 520, () => this.rain(t.x, t.y - 12, 52, RAMP.GOLD, 20, 800));
+            tl.event(base + 520, () => this.rain(t.x, t.y - sc(12), sc(52), RAMP.GOLD, 20, 800));
           }
         });
         if (sigma) {
@@ -802,7 +814,7 @@ export class BattleFx {
       case 'sparkle_rain': {
         this.sfx(tl, 60, spec.sfx);
         targets.forEach((t, i) => {
-          tl.event(80 + i * 90, () => this.rain(t.x, t.y, 44, ramp, 14));
+          tl.event(80 + i * 90, () => this.rain(t.x, t.y, sc(44), ramp, 14));
           hit(i, 260 + i * 90);
         });
         tl.hold(620 + targets.length * 90);
@@ -813,13 +825,14 @@ export class BattleFx {
         // armor being fitted — per-panel lock ticks, then the flash + a
         // closing ring. The persistent hex PIP on the card is BustView's.
         const H = this.scene.scale.height;
+        // the field corners the panels fly in from — the edge margins are px
         const CORNERS = [
-          { x: 6, y: 6 },
-          { x: W - 6, y: 6 },
-          { x: 6, y: H - 60 },
-          { x: W - 6, y: H - 60 },
-          { x: W / 2, y: 4 },
-          { x: W / 2, y: H - 56 },
+          { x: sc(6), y: sc(6) },
+          { x: W - sc(6), y: sc(6) },
+          { x: sc(6), y: H - sc(60) },
+          { x: W - sc(6), y: H - sc(60) },
+          { x: W / 2, y: sc(4) },
+          { x: W / 2, y: H - sc(56) },
         ];
         targets.forEach((t, i) => {
           const at = 40 + i * 110;
@@ -841,7 +854,7 @@ export class BattleFx {
               inner.span(0, 240, (p) => {
                 const cx = corner.x + (t.x - corner.x) * p;
                 const cy = corner.y + (t.y - corner.y) * p;
-                const r = 4 + 7 * p;
+                const r = sc(4) + sc(7) * p;
                 b.pts = [cx + Math.cos(a0) * r, cy + Math.sin(a0) * r, cx + Math.cos(a1) * r, cy + Math.sin(a1) * r];
                 b.alpha = 0.35 + 0.65 * p;
               });
@@ -857,8 +870,8 @@ export class BattleFx {
           // the lock: a flash, the ring closing onto the hex, the snap sfx
           this.sfx(tl, lockAt, spec.sfx);
           this.flood(tl, lockAt, colorOf(px(ramp, 3)), 0.22, 240);
-          this.ring(tl, lockAt, t.x, t.y, 20, 10, ramp, 220);
-          tl.event(lockAt + 30, () => this.burst(t.x, t.y, ramp, 6, 30, 280));
+          this.ring(tl, lockAt, t.x, t.y, sc(20), sc(10), ramp, 220);
+          tl.event(lockAt + 30, () => this.burst(t.x, t.y, ramp, 6, sc(30), 280));
           hit(i, lockAt + 60);
         });
         tl.hold(40 + targets.length * 110 + 5 * 45 + 280 + 420);
@@ -872,7 +885,7 @@ export class BattleFx {
         // foot. Reuses the boltPool segment idiom (the barrier technique) at a
         // vertical scale — gold, because gold is the color that gives it back.
         this.sfx(tl, 60, spec.sfx);
-        const paneH = 30;
+        const paneH = sc(30);
         const rungs = 6;
         targets.forEach((t, i) => {
           const at = 40 + i * 90;
@@ -889,7 +902,7 @@ export class BattleFx {
               const inner = new FxTimeline();
               // grow from a point to the full rung width
               inner.span(0, 200, (p) => {
-                const w = 13 * p;
+                const w = sc(13) * p;
                 b.pts = [t.x - w, yy, t.x + w, yy];
                 b.alpha = 0.4 + 0.6 * p;
               });
@@ -906,8 +919,8 @@ export class BattleFx {
           // the snap at the pane's foot: a flash, a closing ring, an answer-burst
           const snapAt = at + rungs * 26;
           this.flood(tl, snapAt, colorOf(px(RAMP.GOLD, 3)), 0.2, 240);
-          this.ring(tl, snapAt, t.x, t.y, 6, 16, RAMP.GOLD, 260);
-          tl.event(snapAt + 200, () => this.burst(t.x, t.y + paneH / 2, RAMP.GOLD, 8, 44, 360));
+          this.ring(tl, snapAt, t.x, t.y, sc(6), sc(16), RAMP.GOLD, 260);
+          tl.event(snapAt + 200, () => this.burst(t.x, t.y + paneH / 2, RAMP.GOLD, 8, sc(44), 360));
           hit(i, snapAt + 60);
         });
         tl.hold(40 + targets.length * 90 + rungs * 26 + 760 + 200);
@@ -919,7 +932,7 @@ export class BattleFx {
         targets.forEach((t, i) => {
           tl.span(60 + i * 90, 760 + i * 90, (p) => {
             const a = p * Math.PI * 6;
-            const r = 22 * (1 - p);
+            const r = sc(22) * (1 - p);
             this.spawnSparse(p, t.x + Math.cos(a) * r, t.y + Math.sin(a) * r * 0.7, ramp);
           });
           hit(i, 700 + i * 90);
@@ -932,7 +945,7 @@ export class BattleFx {
         this.sfx(tl, 60, spec.sfx);
         this.flood(tl, 60, 0xffffff, 0.5, 460);
         targets.forEach((t, i) => {
-          tl.event(160, () => this.burst(t.x, t.y, ramp, 8, 50));
+          tl.event(160, () => this.burst(t.x, t.y, ramp, 8, sc(50)));
           hit(i, 220 + i * 40);
         });
         this.palettePulse(tl, 80, ramp);
@@ -952,13 +965,13 @@ export class BattleFx {
           this.sfx(tl, at, spec.sfx);
           tl.span(at, at + 380, (p) => {
             const sx = caster?.x ?? W / 2;
-            const sy = caster?.y ?? 200;
+            const sy = caster?.y ?? sc(200);
             const x = sx + (t.x - sx) * p;
-            const y = sy + (t.y - sy) * p - Math.sin(p * Math.PI) * 46;
+            const y = sy + (t.y - sy) * p - Math.sin(p * Math.PI) * sc(46);
             this.spawnSparse(p, x, y, RAMP.GOLD);
           });
           tl.event(at + 380, () => {
-            this.burst(t.x, t.y, ramp, big ? 18 + (tier - 2) * 8 : 10, big ? 90 + (tier - 2) * 30 : 65, 460, big ? 2 : 1);
+            this.burst(t.x, t.y, ramp, big ? 18 + (tier - 2) * 8 : 10, big ? sc(90 + (tier - 2) * 30) : sc(65), 460, big ? 2 : 1);
             AUDIO.sfx('smash');
           });
           this.hitFlash(tl, at + 390, t);
@@ -980,17 +993,17 @@ export class BattleFx {
           b.pts = [0, 0, 0, 0];
           this.bolts.push(b);
           tl.span(40, 480, (p) => {
-            const y = t.y - 26 + 52 * p;
-            b.pts = [t.x - 26, y, t.x + 26, y];
+            const y = t.y - sc(26) + sc(52) * p;
+            b.pts = [t.x - sc(26), y, t.x + sc(26), y];
             b.alpha = p >= 1 ? 0 : 0.9;
             if (p >= 1) b.dead = true;
           });
           // bracket corners stamp the reveal
           tl.event(500, () => {
-            this.burst(t.x - 22, t.y - 22, ramp, 3, 18, 260);
-            this.burst(t.x + 22, t.y - 22, ramp, 3, 18, 260);
-            this.burst(t.x - 22, t.y + 22, ramp, 3, 18, 260);
-            this.burst(t.x + 22, t.y + 22, ramp, 3, 18, 260);
+            this.burst(t.x - sc(22), t.y - sc(22), ramp, 3, sc(18), 260);
+            this.burst(t.x + sc(22), t.y - sc(22), ramp, 3, sc(18), 260);
+            this.burst(t.x - sc(22), t.y + sc(22), ramp, 3, sc(18), 260);
+            this.burst(t.x + sc(22), t.y + sc(22), ramp, 3, sc(18), 260);
           });
           hit(0, 520);
         }
@@ -1004,13 +1017,13 @@ export class BattleFx {
         if (t) {
           tl.span(0, 360, (p) => {
             const sx = caster?.x ?? W / 2;
-            const sy = caster?.y ?? 200;
+            const sy = caster?.y ?? sc(200);
             const x = sx + (t.x - sx) * p;
-            const y = sy + (t.y - sy) * p - Math.sin(p * Math.PI) * 54;
+            const y = sy + (t.y - sy) * p - Math.sin(p * Math.PI) * sc(54);
             this.spawnSparse(p, x, y, RAMP.PAPER);
           });
           tl.event(360, () => {
-            this.burst(t.x, t.y - 8, RAMP.PAPER, 14, 70, 380);
+            this.burst(t.x, t.y - sc(8), RAMP.PAPER, 14, sc(70), 380);
             if (this.tethered) this.severTether();
           });
           this.hitFlash(tl, 380, t);
@@ -1022,8 +1035,8 @@ export class BattleFx {
       case 'munch': {
         this.sfx(tl, 120, spec.sfx);
         if (caster) {
-          tl.event(60, () => this.motes(caster.x, caster.y - 4, 14, ramp, 4, 360));
-          tl.event(260, () => this.burst(caster.x, caster.y, ramp, 4, 22, 280));
+          tl.event(60, () => this.motes(caster.x, caster.y - sc(4), sc(14), ramp, 4, 360));
+          tl.event(260, () => this.burst(caster.x, caster.y, ramp, 4, sc(22), 280));
         }
         targets.forEach((_, i) => hit(i, 300));
         tl.hold(480);
@@ -1032,7 +1045,7 @@ export class BattleFx {
       case 'fizz': {
         this.sfx(tl, 80, spec.sfx);
         if (caster) {
-          tl.span(60, 520, (p) => this.spawnSparse(p, caster.x - 6 + (p * 37) % 12, caster.y + 6 - p * 18, ramp));
+          tl.span(60, 520, (p) => this.spawnSparse(p, caster.x - sc(6) + sc((p * 37) % 12), caster.y + sc(6) - p * sc(18), ramp));
         }
         targets.forEach((_, i) => hit(i, 360));
         tl.hold(560);
@@ -1044,8 +1057,8 @@ export class BattleFx {
         const t = targets[0] ?? caster;
         if (t) {
           this.flood(tl, 60, colorOf(px(RAMP.GOLD, 2)), 0.22, 700);
-          tl.event(120, () => this.motes(t.x, t.y + 8, 26, RAMP.GOLD, 10, 900));
-          this.ring(tl, 200, t.x, t.y, 4, 20, RAMP.GOLD, 420, 1);
+          tl.event(120, () => this.motes(t.x, t.y + sc(8), sc(26), RAMP.GOLD, 10, 900));
+          this.ring(tl, 200, t.x, t.y, sc(4), sc(20), RAMP.GOLD, 420, sc(1));
         }
         targets.forEach((_, i) => hit(i, 420));
         tl.hold(880);
@@ -1057,10 +1070,12 @@ export class BattleFx {
         const n = 5 + tier * 3;
         for (let s = 0; s < n; s++) {
           tl.event(80 + s * 60, () => {
-            const x = 30 + ((s * 83) % (W - 60));
-            this.spawn(x, 4, {
-              vx: -34,
-              vy: 130,
+            // the spread wraps the runtime field width (W already runtime); only
+            // the edge margin and the fall vector are px literals
+            const x = sc(30) + ((s * 83) % (W - sc(60)));
+            this.spawn(x, sc(4), {
+              vx: -sc(34),
+              vy: sc(130),
               life: 420,
               c0: 0xffffff,
               c1: colorOf(px(RAMP.CYAN, 2)),
@@ -1070,7 +1085,7 @@ export class BattleFx {
         }
         targets.forEach((t, i) => {
           const at = 220 + i * 100;
-          tl.event(at, () => this.burst(t.x, t.y, RAMP.CYAN, 10 + tier * 3, 70));
+          tl.event(at, () => this.burst(t.x, t.y, RAMP.CYAN, 10 + tier * 3, sc(70)));
           this.hitFlash(tl, at + 10, t);
           hit(i, at + 20);
         });
@@ -1085,7 +1100,7 @@ export class BattleFx {
         if (t && caster) {
           tl.span(60, 620, (p) => {
             const x = t.x + (caster.x - t.x) * p;
-            const y = t.y + (caster.y - t.y) * p - Math.sin(p * Math.PI) * 12;
+            const y = t.y + (caster.y - t.y) * p - Math.sin(p * Math.PI) * sc(12);
             this.spawnSparse(p, x, y, ramp);
           });
           hit(0, 560);
@@ -1097,9 +1112,9 @@ export class BattleFx {
         // Brainjam: the wires of a mind, crossed
         this.sfx(tl, 80, spec.sfx);
         targets.forEach((t, i) => {
-          this.bolt(tl, 100 + i * 90, t.x - 8, t.y - 6, ramp, t.y - 30);
-          this.bolt(tl, 160 + i * 90, t.x + 8, t.y - 6, ramp, t.y - 30);
-          tl.event(240 + i * 90, () => this.burst(t.x, t.y - 14, ramp, 6, 36, 300));
+          this.bolt(tl, 100 + i * 90, t.x - sc(8), t.y - sc(6), ramp, t.y - sc(30));
+          this.bolt(tl, 160 + i * 90, t.x + sc(8), t.y - sc(6), ramp, t.y - sc(30));
+          tl.event(240 + i * 90, () => this.burst(t.x, t.y - sc(14), ramp, 6, sc(36), 300));
           hit(i, 300 + i * 90);
         });
         tl.hold(420 + targets.length * 90);
@@ -1110,8 +1125,8 @@ export class BattleFx {
         this.sfx(tl, 100, spec.sfx);
         const t = targets[0];
         if (t) {
-          tl.span(60, 700, (p) => this.spawnSparse(p, t.x - 8 + ((p * 53) % 16), t.y + 10 - p * 26, RAMP.GOLD));
-          this.ring(tl, 320, t.x, t.y, 4, 22, RAMP.GOLD, 380);
+          tl.span(60, 700, (p) => this.spawnSparse(p, t.x - sc(8) + sc((p * 53) % 16), t.y + sc(10) - p * sc(26), RAMP.GOLD));
+          this.ring(tl, 320, t.x, t.y, sc(4), sc(22), RAMP.GOLD, 380);
           this.flood(tl, 280, colorOf(px(RAMP.GOLD, 2)), 0.18, 420);
           hit(0, 520);
         }
@@ -1121,7 +1136,7 @@ export class BattleFx {
       case 'pray': {
         // the hands-together beat before the roll (§A11.4 — played straight)
         this.sfx(tl, 0, 'pray');
-        if (caster) tl.event(60, () => this.motes(caster.x, caster.y - 2, 16, RAMP.GOLD, 5, 520));
+        if (caster) tl.event(60, () => this.motes(caster.x, caster.y - sc(2), sc(16), RAMP.GOLD, 5, 520));
         tl.hold(420);
         break;
       }
@@ -1132,7 +1147,7 @@ export class BattleFx {
       case 'impact': {
         this.sfx(tl, 0, spec.sfx);
         targets.forEach((t, i) => {
-          tl.event(i * 100, () => this.burst(t.x, t.y, ramp, 8, 55));
+          tl.event(i * 100, () => this.burst(t.x, t.y, ramp, 8, sc(55)));
           this.hitFlash(tl, i * 100 + 10, t);
           hit(i, i * 100 + 20);
         });
@@ -1145,11 +1160,11 @@ export class BattleFx {
         const t = targets[0];
         if (t) {
           tl.event(0, () => {
-            this.burst(t.x, t.y, RAMP.GOLD, 14, 95, 460, 2);
+            this.burst(t.x, t.y, RAMP.GOLD, 14, sc(95), 460, 2);
             for (let s = 0; s < 8; s++) {
               const b = this.boltPool.take();
               const a = (s / 8) * Math.PI * 2 + 0.2;
-              b.pts = [t.x + Math.cos(a) * 8, t.y + Math.sin(a) * 8, t.x + Math.cos(a) * 26, t.y + Math.sin(a) * 26];
+              b.pts = [t.x + Math.cos(a) * sc(8), t.y + Math.sin(a) * sc(8), t.x + Math.cos(a) * sc(26), t.y + Math.sin(a) * sc(26)];
               b.color = colorOf(px(RAMP.GOLD, 3));
               b.alpha = 1;
               b.dead = false;
@@ -1181,10 +1196,12 @@ export class BattleFx {
             const w = spr.width;
             const h = spr.height;
             for (let i = 0; i < 16; i++) {
+              // spawn span wraps the runtime sprite w/h (auto-scaled); the burst
+              // velocity + gravity are px literals
               this.spawn(t.x - w / 2 + ((i * 37) % w), t.y - h / 2 + ((i * 23) % h), {
-                vx: ((i % 5) - 2) * 16,
-                vy: -22 - (i % 4) * 10,
-                ay: 26,
+                vx: ((i % 5) - 2) * sc(16),
+                vy: -sc(22) - (i % 4) * sc(10),
+                ay: sc(26),
                 life: 520 + (i % 3) * 90,
                 c0: colorOf(px(ramp, 3)),
                 c1: colorOf(px(RAMP.NIGHT, 1)),
@@ -1200,7 +1217,7 @@ export class BattleFx {
         // visual handled by attachTether (persistent); this is the latch SNAP
         this.sfx(tl, 0, spec.sfx);
         const t = targets[0];
-        if (t) tl.event(40, () => this.burst(t.x, t.y, RAMP.MAGENTA, 8, 40, 320));
+        if (t) tl.event(40, () => this.burst(t.x, t.y, RAMP.MAGENTA, 8, sc(40), 320));
         tl.hold(300);
         break;
       }
@@ -1214,8 +1231,8 @@ export class BattleFx {
         this.sfx(tl, 0, spec.sfx);
         const t = targets[0];
         if (t) {
-          tl.span(0, 380, (p) => this.spawnSparse(p, t.x - 6 + ((p * 41) % 12), t.y + 16 - p * 40, ramp));
-          this.ring(tl, 280, t.x, t.y, 2, 18, ramp, 300);
+          tl.span(0, 380, (p) => this.spawnSparse(p, t.x - sc(6) + sc((p * 41) % 12), t.y + sc(16) - p * sc(40), ramp));
+          this.ring(tl, 280, t.x, t.y, sc(2), sc(18), ramp, 300);
         }
         this.flood(tl, 60, colorOf(px(ramp, 2)), 0.2, 360);
         tl.hold(520);
@@ -1228,8 +1245,8 @@ export class BattleFx {
         this.palettePulse(tl, 60, ramp, 500);
         const t = targets[0];
         if (t) {
-          this.ring(tl, 100, t.x, t.y, 6, 34, ramp, 380, 3);
-          tl.event(140, () => this.burst(t.x, t.y, ramp, 16, 80, 460));
+          this.ring(tl, 100, t.x, t.y, sc(6), sc(34), ramp, 380, sc(3));
+          tl.event(140, () => this.burst(t.x, t.y, ramp, 16, sc(80), 460));
           this.hitFlash(tl, 120, t);
         }
         this.shake(tl, 80, 240, 0.012);
@@ -1239,7 +1256,7 @@ export class BattleFx {
       case 'guard': {
         this.sfx(tl, 40, spec.sfx);
         const t = targets[0] ?? caster;
-        if (t) this.ring(tl, 40, t.x, t.y, 16, 9, ramp, 220);
+        if (t) this.ring(tl, 40, t.x, t.y, sc(16), sc(9), ramp, 220);
         tl.hold(300);
         break;
       }
@@ -1247,8 +1264,8 @@ export class BattleFx {
         this.sfx(tl, 40, spec.sfx);
         const t = targets[0] ?? caster;
         if (t) {
-          tl.event(40, () => this.motes(t.x, t.y + 6, 28, ramp, 8, 600));
-          this.ring(tl, 80, t.x, t.y, 4, 16, ramp, 300, 1);
+          tl.event(40, () => this.motes(t.x, t.y + sc(6), sc(28), ramp, 8, 600));
+          this.ring(tl, 80, t.x, t.y, sc(4), sc(16), ramp, 300, sc(1));
         }
         tl.hold(520);
         break;
@@ -1281,12 +1298,12 @@ export class BattleFx {
         this.flood(tl, 0, colorOf(px(RAMP.GOLD, 3)), 0.45, 1100);
         this.palettePulse(tl, 100, RAMP.GOLD, 700);
         for (let i = 0; i < 7; i++) {
-          tl.event(80 + i * 110, () => this.motes(30 + ((i * 67) % (W - 60)), H - 60, 50, RAMP.GOLD, 6, 1000));
+          tl.event(80 + i * 110, () => this.motes(sc(30) + ((i * 67) % (W - sc(60))), H - sc(60), sc(50), RAMP.GOLD, 6, 1000));
         }
         targets.forEach((t, i) => {
           const at = 420 + i * 120;
-          this.ring(tl, at, t.x, t.y, 4, 30, RAMP.GOLD, 420);
-          tl.event(at + 40, () => this.burst(t.x, t.y, RAMP.GOLD, 12, 70));
+          this.ring(tl, at, t.x, t.y, sc(4), sc(30), RAMP.GOLD, 420);
+          tl.event(at + 40, () => this.burst(t.x, t.y, RAMP.GOLD, 12, sc(70)));
           this.hitFlash(tl, at + 50, t);
           tl.event(at + 60, () => ctx.onHit?.(i));
         });
@@ -1298,9 +1315,9 @@ export class BattleFx {
         spec.sfx = 'pray_won';
         this.sfx(tl, 0, spec.sfx);
         this.flood(tl, 60, colorOf(px(RAMP.GOLD, 2)), 0.3, 700);
-        tl.span(60, 660, (p) => this.spawnSparse(p, W * p, 70 + Math.sin(p * 6) * 16, RAMP.GOLD));
+        tl.span(60, 660, (p) => this.spawnSparse(p, W * p, sc(70) + Math.sin(p * 6) * sc(16), RAMP.GOLD));
         targets.forEach((t, i) => {
-          tl.event(360 + i * 100, () => this.burst(t.x, t.y, RAMP.GOLD, 8, 55));
+          tl.event(360 + i * 100, () => this.burst(t.x, t.y, RAMP.GOLD, 8, sc(55)));
           this.hitFlash(tl, 370 + i * 100, t);
           tl.event(380 + i * 100, () => ctx.onHit?.(i));
         });
@@ -1312,7 +1329,7 @@ export class BattleFx {
         spec.sfx = 'pray_good';
         this.sfx(tl, 60, spec.sfx);
         targets.forEach((t, i) => {
-          tl.event(120 + i * 90, () => this.rain(t.x, t.y, 36, RAMP.GOLD, 8));
+          tl.event(120 + i * 90, () => this.rain(t.x, t.y, sc(36), RAMP.GOLD, 8));
           tl.event(320 + i * 90, () => ctx.onHit?.(i));
         });
         tl.hold(760);
@@ -1325,15 +1342,15 @@ export class BattleFx {
         if (caster) {
           tl.span(100, 900, (p) => {
             if (Math.floor(p * 24) % 6 === 0) {
-              this.spawn(caster.x, caster.y - 6 - p * 30, {
-                vy: -6,
+              this.spawn(caster.x, caster.y - sc(6) - p * sc(30), {
+                vy: -sc(6),
                 life: 200,
                 c0: colorOf(px(RAMP.GOLD, 3)),
                 c1: colorOf(px(RAMP.GOLD, 1)),
               });
             }
           });
-          tl.event(940, () => this.burst(caster.x, caster.y - 40, RAMP.GOLD, 3, 14, 240));
+          tl.event(940, () => this.burst(caster.x, caster.y - sc(40), RAMP.GOLD, 3, sc(14), 240));
         }
         tl.hold(1100);
         break;
@@ -1345,11 +1362,11 @@ export class BattleFx {
         const t = targets[0];
         if (caster && t) {
           tl.span(80, 700, (p) => {
-            const x = caster.x + (t.x - caster.x) * p + Math.sin(p * 14) * 10;
-            const y = caster.y + (t.y - caster.y) * p + Math.cos(p * 11) * 8;
+            const x = caster.x + (t.x - caster.x) * p + Math.sin(p * 14) * sc(10);
+            const y = caster.y + (t.y - caster.y) * p + Math.cos(p * 11) * sc(8);
             this.spawnSparse(p, x, y, RAMP.PURPLE);
           });
-          tl.event(700, () => this.burst(t.x, t.y, RAMP.PURPLE, 8, 45));
+          tl.event(700, () => this.burst(t.x, t.y, RAMP.PURPLE, 8, sc(45)));
           this.hitFlash(tl, 710, t);
           tl.event(720, () => ctx.onHit?.(0));
         }
@@ -1363,7 +1380,7 @@ export class BattleFx {
         this.sfx(tl, 60, spec.sfx);
         this.flood(tl, 60, colorOf(px(RAMP.GOLD, 3)), 0.35, 380);
         targets.forEach((t, i) => {
-          tl.event(300 + i * 70, () => this.burst(t.x, t.y - 4, RAMP.GOLD, 4, 26, 300));
+          tl.event(300 + i * 70, () => this.burst(t.x, t.y - sc(4), RAMP.GOLD, 4, sc(26), 300));
           tl.event(340 + i * 70, () => ctx.onHit?.(i));
         });
         tl.hold(720);

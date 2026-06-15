@@ -14,6 +14,7 @@ import { INPUT, type Btn } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { gameInsets } from '../engine/native';
 import { toast } from '../ui/windows';
+import { s } from '../spritegen/scale';
 
 export class UIScene extends Phaser.Scene {
   private controls: Phaser.GameObjects.Container | null = null;
@@ -124,14 +125,14 @@ export class UIScene extends Phaser.Scene {
     const W = this.scale.width;
     const H = this.scale.height;
     const ins = gameInsets(this.sys.game.canvas, W);
-    this.dpadCenter = { x: 46 + ins.left, y: H - 46 - ins.bottom };
-    this.aCenter = { x: W - 26 - ins.right, y: H - 56 - ins.bottom };
-    this.bCenter = { x: W - 56 - ins.right, y: H - 26 - ins.bottom };
+    this.dpadCenter = { x: s(46) + ins.left, y: H - s(46) - ins.bottom };
+    this.aCenter = { x: W - s(26) - ins.right, y: H - s(56) - ins.bottom };
+    this.bCenter = { x: W - s(56) - ins.right, y: H - s(26) - ins.bottom };
     // the thumb arc continues outward: X above A, Y beyond B (S12c — the
     // four sit on one sweep so sprint and sauce are roll-of-the-thumb away)
-    this.xCenter = { x: W - 30 - ins.right, y: H - 92 - ins.bottom };
-    this.yCenter = { x: W - 92 - ins.right, y: H - 30 - ins.bottom };
-    this.startCenter = { x: W - 30 - ins.right, y: 12 + ins.top };
+    this.xCenter = { x: W - s(30) - ins.right, y: H - s(92) - ins.bottom };
+    this.yCenter = { x: W - s(92) - ins.right, y: H - s(30) - ins.bottom };
+    this.startCenter = { x: W - s(30) - ins.right, y: s(12) + ins.top };
     this.dpad?.setPosition(this.dpadCenter.x, this.dpadCenter.y);
     this.btnA?.setPosition(this.aCenter.x, this.aCenter.y);
     this.btnB?.setPosition(this.bCenter.x, this.bCenter.y);
@@ -150,9 +151,9 @@ export class UIScene extends Phaser.Scene {
     const dx = x - this.dpadCenter.x;
     const dy = y - this.dpadCenter.y;
     const dist = Math.hypot(dx, dy);
-    if (existing === 'dpad' || (isDown && dist < 56) || (!existing && p.isDown && dist < 56)) {
+    if (existing === 'dpad' || (isDown && dist < s(56)) || (!existing && p.isDown && dist < s(56))) {
       this.pointerRoles.set(p.id, 'dpad');
-      if (dist < 6) {
+      if (dist < s(6)) {
         INPUT.touchDir.x = 0;
         INPUT.touchDir.y = 0;
       } else {
@@ -167,20 +168,20 @@ export class UIScene extends Phaser.Scene {
 
     const hit = (c: { x: number; y: number }, r: number): boolean => Math.hypot(x - c.x, y - c.y) < r;
     // pressBtn latches the tap (ADR-024) — a sub-frame tap still registers
-    if (hit(this.aCenter, 22)) {
+    if (hit(this.aCenter, s(22))) {
       this.pointerRoles.set(p.id, 'A');
       INPUT.pressBtn('A');
-    } else if (hit(this.bCenter, 22)) {
+    } else if (hit(this.bCenter, s(22))) {
       this.pointerRoles.set(p.id, 'B');
       INPUT.pressBtn('B');
-    } else if (this.hoopsLive && hit(this.xCenter, 20)) {
+    } else if (this.hoopsLive && hit(this.xCenter, s(20))) {
       this.pointerRoles.set(p.id, 'X');
       INPUT.pressBtn('X');
-    } else if ((this.hoopsLive || this.scene.isActive('overworld')) && hit(this.yCenter, 20)) {
+    } else if ((this.hoopsLive || this.scene.isActive('overworld')) && hit(this.yCenter, s(20))) {
       // §A4 (S15g): Y on the overworld pops the vitals glance
       this.pointerRoles.set(p.id, 'Y');
       INPUT.pressBtn('Y');
-    } else if (x > this.startCenter.x - 30 && y < this.startCenter.y + 14) {
+    } else if (x > this.startCenter.x - s(30) && y < this.startCenter.y + s(14)) {
       this.pointerRoles.set(p.id, 'START');
       INPUT.pressBtn('START');
     }

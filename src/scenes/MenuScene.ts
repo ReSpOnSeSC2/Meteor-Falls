@@ -44,6 +44,7 @@ import { itemIconKey } from '../spritegen/icons';
 import { heroPortraitKey } from '../spritegen/authored';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { colorOf, RAMP, px } from '../palette';
+import { s, TILE_PX } from '../spritegen/scale';
 
 export class MenuScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -88,8 +89,8 @@ export class MenuScene extends Phaser.Scene {
   private async mainLoop(): Promise<void> {
     for (;;) {
       const pick = await this.pick({
-        x: 8,
-        y: 8,
+        x: s(8),
+        y: s(8),
         options: ['ITEMS', 'STATUS', 'VIBE', 'EQUIP', 'JOURNAL', 'LOCKET', 'SETUP'],
         startCancels: true,
       });
@@ -131,8 +132,8 @@ export class MenuScene extends Phaser.Scene {
       const labels = hero.bag.map((id, i) => `${ITEMS[id]?.name ?? id}${this.equippedTag(hero, id, i)}`);
       const info = makeItemInfo(this);
       const sel = await this.pick({
-        x: 96,
-        y: 8,
+        x: s(96),
+        y: s(8),
         options: labels,
         icons: hero.bag.map((id) => itemIconKey(id)),
         cols: labels.length > 7 ? 2 : 1,
@@ -158,7 +159,7 @@ export class MenuScene extends Phaser.Scene {
     const wielderInParty =
       slotOf(item) !== null && (!item.wielder || GS.hero(item.wielder) !== undefined);
     const actions = wielderInParty ? ['Equip', 'Use', 'Give', 'Drop'] : ['Use', 'Give', 'Drop'];
-    const sel = await this.pick({ x: 200, y: 30, options: actions, title: item.name });
+    const sel = await this.pick({ x: s(200), y: s(30), options: actions, title: item.name });
     if (sel < 0) return;
     const action = actions[sel];
 
@@ -177,7 +178,7 @@ export class MenuScene extends Phaser.Scene {
         await this.dlg.say('There is nobody else to hold things yet.');
         return;
       }
-      const t = await this.pick({ x: 200, y: 30, options: others.map((h) => h.name), title: 'To who?' });
+      const t = await this.pick({ x: s(200), y: s(30), options: others.map((h) => h.name), title: 'To who?' });
       if (t < 0) return;
       const target = others[t];
       if (target.bag.length >= BAG_MAX) {
@@ -201,7 +202,9 @@ export class MenuScene extends Phaser.Scene {
     const map = MAPS[GS.data.map];
     if (!map) return false;
     return map.props.some(
-      (p) => p.sprite === 'picnic' && Math.hypot(p.x * 16 + 18 - GS.data.x, p.y * 16 + 12 - GS.data.y) < 44,
+      // prop tile→px (* TILE_PX) + native pixel offsets/radius, all in runtime px
+      // to match GS.data.x/y (the runtime player position, set from player.x)
+      (p) => p.sprite === 'picnic' && Math.hypot(p.x * TILE_PX + s(18) - GS.data.x, p.y * TILE_PX + s(12) - GS.data.y) < s(44),
     );
   }
 
@@ -225,7 +228,7 @@ export class MenuScene extends Phaser.Scene {
       const t =
         alive.length === 1
           ? 0
-          : await this.pick({ x: 200, y: 30, options: alive.map((h) => h.name), title: 'Who eats?' });
+          : await this.pick({ x: s(200), y: s(30), options: alive.map((h) => h.name), title: 'Who eats?' });
       if (t < 0) return;
       const eater = alive[t];
       // §A10 #15 (S18 M24): the Spice Box makes cooked food heal half again
@@ -242,7 +245,7 @@ export class MenuScene extends Phaser.Scene {
       const t =
         alive.length === 1
           ? 0
-          : await this.pick({ x: 200, y: 30, options: alive.map((h) => h.name), title: 'Who drinks?' });
+          : await this.pick({ x: s(200), y: s(30), options: alive.map((h) => h.name), title: 'Who drinks?' });
       if (t < 0) return;
       const drinker = alive[t];
       drinker.pp = Math.min(drinker.maxPp, drinker.pp + item.ppHeal);
@@ -265,7 +268,7 @@ export class MenuScene extends Phaser.Scene {
       const t =
         downed.length === 1
           ? 0
-          : await this.pick({ x: 200, y: 30, options: downed.map((h) => h.name), title: 'For who?' });
+          : await this.pick({ x: s(200), y: s(30), options: downed.map((h) => h.name), title: 'For who?' });
       if (t < 0) return;
       const target = downed[t];
       // S18 M24 (ADR-094): a reusable revive (Milo's Defibrillator, §A4.12) is
@@ -288,7 +291,7 @@ export class MenuScene extends Phaser.Scene {
       const t =
         who.length === 1
           ? 0
-          : await this.pick({ x: 200, y: 30, options: who.map((h) => h.name), title: 'For who?' });
+          : await this.pick({ x: s(200), y: s(30), options: who.map((h) => h.name), title: 'For who?' });
       if (t < 0) return;
       const target = who[t];
       applyTonic(target, item.boost);
@@ -309,8 +312,8 @@ export class MenuScene extends Phaser.Scene {
     for (;;) {
       const info = makeItemInfo(this);
       const sel = await this.pick({
-        x: 96,
-        y: 8,
+        x: s(96),
+        y: s(8),
         options: keys.map((id) => ITEMS[id]?.name ?? id),
         icons: keys.map((id) => itemIconKey(id)),
         reserveBottom: ITEMINFO_RESERVE,
@@ -338,37 +341,43 @@ export class MenuScene extends Phaser.Scene {
 
   /** the full §A3 sheet: HP/PP, all six stats, EXP, equipment, DOWN state */
   private renderStatus(h: HeroState): void {
-    const x = 96;
-    const y = 8;
-    const w = 184; // stops short of the cash corner
+    const x = s(96);
+    const y = s(8);
+    const w = s(184); // stops short of the cash corner
+    // local scaled metrics: the `line`/`equipLine` closures below shadow `s`
+    // with a string param, so hoist the glyph cell + left pad as runtime-px
+    // consts and feed already-scaled offsets into them.
+    const fs = s(6); // bitmapText size (native 6px glyph cell)
+    const pad = s(12); // left text inset
     // S17 (ADR-061): a touch taller for the charm ('Other') slot + a resist
     // line — but stays clear of the bottom vitals strip (top at H−49)
-    this.pageObjs.push(makeWindow(this, x, y, w, 166));
+    this.pageObjs.push(makeWindow(this, x, y, w, s(166)));
     // the authored 32×32 portrait bust, top-left (EB character-sheet look); the
     // name/epithet indent past it. No portrait master → no indent, reads as before.
     const pkey = heroPortraitKey(h.id);
     const hasPortrait = this.textures.exists(pkey);
     if (hasPortrait) {
       const p = this.add
-        .image(x + 12, y + 8, pkey)
+        .image(x + pad, y + s(8), pkey)
         .setOrigin(0, 0)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
       this.pageObjs.push(p);
     }
-    const headIndent = hasPortrait ? 38 : 0;
+    const headIndent = hasPortrait ? s(38) : 0;
+    // ty + indent arrive already runtime-scaled from the call sites below
     const line = (ty: number, s: string, tint?: number, indent = 0): void => {
       const t = this.add
-        .bitmapText(x + 12 + indent, y + ty, 'retro', s, 6)
+        .bitmapText(x + pad + indent, y + ty, 'retro', s, fs)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
       if (tint !== undefined) t.setTint(tint);
       this.pageObjs.push(t);
     };
-    line(10, `${h.name}  L${h.level}`, undefined, headIndent);
+    line(s(10), `${h.name}  L${h.level}`, undefined, headIndent);
     if (h.down) {
       const d = this.add
-        .bitmapText(x + w - 44, y + 10, 'retro', 'DOWN', 6)
+        .bitmapText(x + w - s(44), y + s(10), 'retro', 'DOWN', fs)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.RED, 2)));
@@ -376,21 +385,21 @@ export class MenuScene extends Phaser.Scene {
     } else if (h.id === 'rex' && GS.flag('rex_homesick') === true) {
       // §A4.8: HOMESICK rides the save until Mom's call (S4)
       const d = this.add
-        .bitmapText(x + w - 64, y + 10, 'retro', 'HOMESICK', 6)
+        .bitmapText(x + w - s(64), y + s(10), 'retro', 'HOMESICK', fs)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.CYAN, 2)));
       this.pageObjs.push(d);
     }
-    line(22, HEROES[h.id].epithet, DIM, headIndent);
-    line(40, `HP ${h.hp}/${h.maxHp}    PP ${h.pp}/${h.maxPp}`);
+    line(s(22), HEROES[h.id].epithet, DIM, headIndent);
+    line(s(40), `HP ${h.hp}/${h.maxHp}    PP ${h.pp}/${h.maxPp}`);
     // every combat stat reads through its seam (heroX) so equip + tonic boosts show
-    line(58, `Offense ${heroOffense(h)}   Defense ${heroDefense(h)}`);
+    line(s(58), `Offense ${heroOffense(h)}   Defense ${heroDefense(h)}`);
     // Speed/Guts read through the 'arms' slot (S12 — THE STARTING FOUR)
-    line(70, `Speed   ${heroSpeed(h)}   Guts    ${heroGuts(h)}`);
+    line(s(70), `Speed   ${heroSpeed(h)}   Guts    ${heroGuts(h)}`);
     // Luck reads through the 'other'-slot charm (S9). Vibe now reads through
     // gear + tonics too (S17 — heroVibe; the Riddle Ring / Brain-Food Lunch)
-    line(82, `Vibe    ${heroVibe(h)}   Luck    ${heroLuck(h)}`);
+    line(s(82), `Vibe    ${heroVibe(h)}   Luck    ${heroLuck(h)}`);
     // S17 (ADR-061): each equip line names the piece + its "(also +N X)"
     // secondary rider (bonus + Vibe; resists ride their own line below). With
     // the 41-item catalog no piece has a rider, so this reads exactly as before.
@@ -400,17 +409,17 @@ export class MenuScene extends Phaser.Scene {
       const note = it ? equipSecondaryNote(it, { resists: false }) : '';
       line(ty, `${label}  ${it?.name ?? 'Nothing'}${note ? ` ${note}` : ''}`, it ? undefined : DIM);
     };
-    equipLine(96, 'Weapon', 'weapon');
-    equipLine(106, 'Body  ', 'body');
-    equipLine(116, 'Arms  ', 'arms');
-    equipLine(126, 'Charm ', 'other');
-    line(138, `EXP ${h.exp}`);
-    line(148, `Next level in ${Math.max(0, expForLevel(h.level + 1) - h.exp)}`, DIM);
+    equipLine(s(96), 'Weapon', 'weapon');
+    equipLine(s(106), 'Body  ', 'body');
+    equipLine(s(116), 'Arms  ', 'arms');
+    equipLine(s(126), 'Charm ', 'other');
+    line(s(138), `EXP ${h.exp}`);
+    line(s(148), `Next level in ${Math.max(0, expForLevel(h.level + 1) - h.exp)}`, DIM);
     // S17: elemental resists, only when worn gear grants any (§A8 pendants)
     const RES_ELEMS: ResistElement[] = ['fire', 'freeze', 'volt', 'holy'];
     const res = RES_ELEMS.map((e) => ({ e, p: Math.round(heroResist(h, e) * 100) })).filter((r) => r.p > 0);
     if (res.length) {
-      line(158, `Resist  ${res.map((r) => `${r.e} ${r.p}%`).join('  ')}`, colorOf(px(RAMP.CYAN, 2)));
+      line(s(158), `Resist  ${res.map((r) => `${r.e} ${r.p}%`).join('  ')}`, colorOf(px(RAMP.CYAN, 2)));
     }
   }
 
@@ -442,8 +451,8 @@ export class MenuScene extends Phaser.Scene {
       const labels = ids.map((id) => `${ABILITIES[id].name}  ${ABILITIES[id].pp}pp`);
       const disabled = new Set(ids.map((id, i) => (usable(id) ? -1 : i)).filter((i) => i >= 0));
       const sel = await this.pick({
-        x: 96,
-        y: 8,
+        x: s(96),
+        y: s(8),
         options: labels,
         disabled,
         cols: labels.length > 7 ? 2 : 1,
@@ -455,7 +464,7 @@ export class MenuScene extends Phaser.Scene {
       const t =
         alive.length === 1
           ? 0
-          : await this.pick({ x: 200, y: 30, options: alive.map((h) => h.name), title: 'On who?' });
+          : await this.pick({ x: s(200), y: s(30), options: alive.map((h) => h.name), title: 'On who?' });
       if (t < 0) continue;
       const target = alive[t];
       hero.pp -= ab.pp;
@@ -492,8 +501,8 @@ export class MenuScene extends Phaser.Scene {
       });
       const info = makeItemInfo(this);
       const sel = await this.pick({
-        x: 96,
-        y: 8,
+        x: s(96),
+        y: s(8),
         options: labels,
         icons: EQUIP_SLOTS.map((s) => {
           const id = hero.equip[s];
@@ -530,8 +539,8 @@ export class MenuScene extends Phaser.Scene {
     labels.push('Remove');
     const info = makeItemInfo(this);
     const sel = await this.pick({
-      x: 130,
-      y: 22,
+      x: s(130),
+      y: s(22),
       options: labels,
       icons: [...cands.map((c) => itemIconKey(c.itemId)), undefined],
       reserveBottom: ITEMINFO_RESERVE,
@@ -574,8 +583,8 @@ export class MenuScene extends Phaser.Scene {
         return;
       }
       const sel = await this.pick({
-        x: 96,
-        y: 8,
+        x: s(96),
+        y: s(8),
         options: quests.map((q) => q.def.name),
         icons: quests.map((q) => (callerEarned(q.def.id) ? 'phone_icon' : undefined)),
         title: 'JOURNAL',
@@ -592,9 +601,9 @@ export class MenuScene extends Phaser.Scene {
   private renderQuestDetail(questId: string): void {
     const q = journalQuests().find((j) => j.def.id === questId);
     if (!q) return;
-    const x = 96;
-    const y = 8;
-    const w = 230;
+    const x = s(96);
+    const y = s(8);
+    const w = s(230);
     const lines: Array<{ s: string; tint?: number }> = [];
     if (q.status === 'done') {
       lines.push({ s: 'Done. Handled. Legendary.', tint: colorOf(px(RAMP.GOLD, 2)) });
@@ -606,27 +615,28 @@ export class MenuScene extends Phaser.Scene {
         else if (o === now) lines.push({ s: `> ${vars(o.text)}` });
       }
     }
-    const h = 46 + lines.length * 16;
+    // 46px frame + 16px per row (line COUNT stays unscaled; the px metrics scale)
+    const h = s(46) + lines.length * s(16);
     this.pageObjs.push(makeWindow(this, x, y, w, h));
     const title = this.add
-      .bitmapText(x + 12, y + 10, 'retro', q.def.name.toUpperCase(), 6)
+      .bitmapText(x + s(12), y + s(10), 'retro', q.def.name.toUpperCase(), s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
     this.pageObjs.push(title);
     if (callerEarned(questId)) {
       const icon = this.add
-        .image(x + w - 18, y + 13, 'phone_icon')
+        .image(x + w - s(18), y + s(13), 'phone_icon')
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
       this.pageObjs.push(icon);
     }
     lines.forEach((l, i) => {
       const t = this.add
-        .bitmapText(x + 12, y + 30 + i * 16, 'retro', l.s, 6)
+        .bitmapText(x + s(12), y + s(30) + i * s(16), 'retro', l.s, s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setMaxWidth(w - 24);
+        .setMaxWidth(w - s(24));
       if (l.tint !== undefined) t.setTint(l.tint);
       this.pageObjs.push(t);
     });
@@ -640,9 +650,9 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
     const n = Math.max(0, Math.min(LOCKET_MAX_EMBERS, GS.data.embers));
-    const x = 96;
-    const y = 8;
-    const w = 230;
+    const x = s(96);
+    const y = s(8);
+    const w = s(230);
     this.pageObjs.push(
       this.add
         .image(x, y, 'locket_pause_frame')
@@ -652,12 +662,12 @@ export class MenuScene extends Phaser.Scene {
     );
     this.pageObjs.push(
       this.add
-        .image(x + w / 2, y + 57, `locket_${n}`)
+        .image(x + w / 2, y + s(57), `locket_${n}`)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1),
     );
     const count = this.add
-      .bitmapText(x + w / 2, y + 84, 'retro', `HEARTLIGHTS: ${n}/10`, 6)
+      .bitmapText(x + w / 2, y + s(84), 'retro', `HEARTLIGHTS: ${n}/10`, s(6))
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
@@ -669,11 +679,11 @@ export class MenuScene extends Phaser.Scene {
           ? '(One instrument plays, all alone, and refuses to be sad about it.)'
           : `(${n} instruments find each other across the dark.)`;
     const fl = this.add
-      .bitmapText(x + w / 2, y + 101, 'retro', flavor, 6)
+      .bitmapText(x + w / 2, y + s(101), 'retro', flavor, s(6))
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
-      .setMaxWidth(w - 24)
+      .setMaxWidth(w - s(24))
       .setCenterAlign()
       .setTint(DIM);
     this.pageObjs.push(fl);
@@ -695,7 +705,7 @@ export class MenuScene extends Phaser.Scene {
 
   private async setupPage(): Promise<void> {
     const hint = this.add
-      .bitmapText(96, 124, 'retro', '(M on a keyboard flips sound anywhere)', 6)
+      .bitmapText(s(96), s(124), 'retro', '(M on a keyboard flips sound anywhere)', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(DIM);
@@ -707,8 +717,8 @@ export class MenuScene extends Phaser.Scene {
       const speed = rawSpeed === false ? 1 : Number(rawSpeed); // unset = NORMAL
       const speedIdx = speed === 0 || speed === 1 || speed === 2 ? speed : 1;
       const sel = await this.pick({
-        x: 96,
-        y: 8,
+        x: s(96),
+        y: s(8),
         options: [
           `Sound: ${AUDIO.muted ? 'OFF' : 'ON'}`,
           `Text speed: ${SPEEDS[speedIdx]}`,
@@ -808,21 +818,22 @@ export class MenuScene extends Phaser.Scene {
         .replace('Enter', 'ENTER')
         .toUpperCase();
     // the legend panel (static): what each action means everywhere
-    const legend = makeWindow(this, 212, 30, 184, 110);
+    const legend = makeWindow(this, s(212), s(30), s(184), s(110));
     const legendTitle = this.add
-      .bitmapText(222, 38, 'retro', profile === 'hoops' ? 'HOOPS ACTIONS' : 'MAIN ACTIONS', 6)
+      .bitmapText(s(222), s(38), 'retro', profile === 'hoops' ? 'HOOPS ACTIONS' : 'MAIN ACTIONS', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
+    // i is the row INDEX (unscaled); 13 is the per-row px pitch (scaled)
     const legendRows = ROLES.map(({ b, does }, i) =>
       this.add
-        .bitmapText(222, 52 + i * 13, 'retro', `${b.padEnd(6)}${does}`, 6)
+        .bitmapText(s(222), s(52) + i * s(13), 'retro', `${b.padEnd(6)}${does}`, s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(i % 2 === 0 ? colorOf(px(RAMP.PAPER, 3)) : colorOf(px(RAMP.PAPER, 2))),
     );
     const footer = this.add
-      .bitmapText(212, 146, 'retro', 'Pick a row, press the new key\nor pad button. A stolen key\nfalls back to its old default.', 6)
+      .bitmapText(s(212), s(146), 'retro', 'Pick a row, press the new key\nor pad button. A stolen key\nfalls back to its old default.', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(DIM);
@@ -837,8 +848,8 @@ export class MenuScene extends Phaser.Scene {
         return `${b.padEnd(6)}${keys.padEnd(10)}${pads}`;
       });
       const sel = await this.pick({
-        x: 8,
-        y: 8,
+        x: s(8),
+        y: s(8),
         options: [...rows, 'Reset to defaults', 'Back'],
         title: profile === 'hoops' ? 'HOOPS CONTROLS' : 'MAIN CONTROLS',
       });
@@ -860,9 +871,9 @@ export class MenuScene extends Phaser.Scene {
    *  pulses while listening; tap/click cancels (B-key escape is impossible
    *  mid-capture — the press would be swallowed as the new binding) */
   private captureBinding(btn: Btn, role: string, profile: BindingProfile): Promise<void> {
-    const w = makeWindow(this, 60, 80, 280, 56);
+    const w = makeWindow(this, s(60), s(80), s(280), s(56));
     const t = this.add
-      .bitmapText(200, 92, 'retro', `${btn} — ${role}\nPRESS THE NEW KEY OR PAD BUTTON\n(tap or click to cancel)`, 6)
+      .bitmapText(s(200), s(92), 'retro', `${btn} — ${role}\nPRESS THE NEW KEY OR PAD BUTTON\n(tap or click to cancel)`, s(6))
       .setOrigin(0.5, 0)
       .setCenterAlign()
       .setScrollFactor(0)
@@ -904,7 +915,7 @@ export class MenuScene extends Phaser.Scene {
     if (party.length === 1 && !withKeys) return party[0];
     const labels = party.map((h) => `${h.name}${h.down ? ' (down)' : ''}`);
     if (withKeys) labels.push('KEY ITEMS');
-    const sel = await this.pick({ x: 96, y: 8, options: labels });
+    const sel = await this.pick({ x: s(96), y: s(8), options: labels });
     if (sel < 0) return null;
     if (withKeys && sel === labels.length - 1) return 'keys';
     return party[sel];

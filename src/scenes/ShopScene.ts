@@ -26,6 +26,7 @@ import { Dialogue, makeCashBox } from '../ui/windows';
 import { pick, confirmEquip } from '../ui/pick';
 import { makeItemInfo, ITEMINFO_RESERVE } from '../ui/iteminfo';
 import { itemIconKey } from '../spritegen/icons';
+import { s } from '../spritegen/scale';
 
 export class ShopScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -60,8 +61,8 @@ export class ShopScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE[this.shop.greet]);
     for (;;) {
       const sel = await pick(this, {
-        x: 8,
-        y: 8,
+        x: s(8),
+        y: s(8),
         options: ['Buy', 'Sell', 'Leave'],
         startCancels: true,
       });
@@ -86,8 +87,8 @@ export class ShopScene extends Phaser.Scene {
       );
       const info = makeItemInfo(this);
       const sel = await pick(this, {
-        x: 96,
-        y: 8,
+        x: s(96),
+        y: s(8),
         options: labels,
         icons: stock.map((i) => itemIconKey(i.id)),
         disabled,
@@ -101,8 +102,8 @@ export class ShopScene extends Phaser.Scene {
       if (sel < 0) return;
       const item = stock[sel];
       const ok = await pick(this, {
-        x: 200,
-        y: 30,
+        x: s(200),
+        y: s(30),
         options: ['Buy it', 'Never mind'],
         title: `${item.name}: $${item.price}`,
       });
@@ -130,8 +131,8 @@ export class ShopScene extends Phaser.Scene {
       let sel = 0;
       if (party.length > 1) {
         sel = await pick(this, {
-          x: 200,
-          y: 30,
+          x: s(200),
+          y: s(30),
           options: party.map((h) => `${h.name}  ${h.bag.length}/${BAG_MAX}`),
           title: 'Who carries it?',
         });
@@ -155,8 +156,8 @@ export class ShopScene extends Phaser.Scene {
       let who = 0;
       if (party.length > 1) {
         who = await pick(this, {
-          x: 96,
-          y: 8,
+          x: s(96),
+          y: s(8),
           options: party.map((h) => `${h.name}  ${h.bag.length}/${BAG_MAX}`),
           title: 'Whose bag?',
         });
@@ -183,8 +184,8 @@ export class ShopScene extends Phaser.Scene {
       );
       const info = makeItemInfo(this);
       const sel = await pick(this, {
-        x: 96,
-        y: 8,
+        x: s(96),
+        y: s(8),
         options: labels,
         icons: hero.bag.map((id) => itemIconKey(id)),
         disabled,
@@ -199,8 +200,8 @@ export class ShopScene extends Phaser.Scene {
       const item = ITEMS[itemId];
       const half = sellPrice(item);
       const ok = await pick(this, {
-        x: 200,
-        y: 30,
+        x: s(200),
+        y: s(30),
         options: ['Sell it', 'Never mind'],
         title: `${item.name}: $${half}`,
       });

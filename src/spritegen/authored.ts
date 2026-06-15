@@ -429,7 +429,7 @@ function replaceTextureImage(scene: Phaser.Scene, key: string, src: SourceImage)
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(src, 0, 0);
+  ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, canvas.width, canvas.height);
   if (scene.textures.exists(key)) scene.textures.remove(key);
   scene.textures.addCanvas(key, canvas);
   appliedSheets.add(key);
@@ -447,6 +447,18 @@ function makeCharacterCanvas(src: SourceImage): HTMLCanvasElement {
 
   if (src.width >= cols * FRAME_W && src.height >= rows * FRAME_H) {
     ctx.drawImage(src, 0, 0, cols * FRAME_W, rows * FRAME_H, 0, 0, cols * FRAME_W, rows * FRAME_H);
+    return canvas;
+  }
+
+  // Transition fallback (ART_SCALE): a FULL animation sheet authored at a smaller
+  // size than the runtime frame — i.e. legacy ×1 art while ART_SCALE > 1. A full
+  // sheet is portrait (4 cols × 12 rows); an 8-direction pose strip is landscape
+  // (8 cols × 1 row), so aspect distinguishes them. Upscale the small full sheet
+  // (nearest — chunky, like today) to fill the runtime sheet so un-updated art
+  // still renders at ×4 until a runtime-res PNG replaces it, instead of being
+  // misread as an 8-dir strip by the synthesis path below.
+  if (src.height > src.width) {
+    ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, cols * FRAME_W, rows * FRAME_H);
     return canvas;
   }
 
@@ -546,7 +558,7 @@ function makeBustCanvas(src: SourceImage): HTMLCanvasElement {
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(src, 0, 0);
+  ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
 
@@ -559,7 +571,7 @@ function makeBattlerCanvas(src: SourceImage): HTMLCanvasElement {
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(src, 0, 0);
+  ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
 
@@ -570,7 +582,7 @@ function makeImageCanvas(src: SourceImage): HTMLCanvasElement {
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(src, 0, 0);
+  ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
 
@@ -650,11 +662,15 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(baseTiles, 0, 0);
 
+  // Read each authored tile at its OWN cell size (16 for legacy ×1 sheets, 64 for
+  // runtime ×4 sheets) and draw it into the runtime RT_TILE cell — so legacy tile
+  // sheets upscale gracefully at ×4 until a runtime-res sheet replaces them.
+  const authoredCell = Math.max(1, Math.round(tileArt.width / WORLD_TILE_ART.names.length));
   WORLD_TILE_ART.names.forEach((name, authoredIndex) => {
     const tileIndex = TILESET.findIndex((tile) => tile.name === name);
     if (tileIndex < 0) return;
     ctx.clearRect(tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
-    ctx.drawImage(tileArt, authoredIndex * RT_TILE, 0, RT_TILE, RT_TILE, tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
+    ctx.drawImage(tileArt, authoredIndex * authoredCell, 0, authoredCell, authoredCell, tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
   });
 
   replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);

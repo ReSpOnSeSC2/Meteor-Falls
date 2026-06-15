@@ -42,7 +42,8 @@
  * rim), CALL YOUR OWN FOULS and nobody ever has (no foul system — the cage
  * polices itself), and no out of bounds: the chain-link is live.
  */
-import { COURT, HALF, type Vec, rimFor, dist, pointsFor, clampToCage, spacingSpots } from './court';
+import { COURT_RT, HALF_RT, type Vec, rimForRT, dist, pointsForRT, clampToCageRT, spacingSpotsRT } from './court';
+import { s, ART_SCALE } from '../spritegen/scale';
 import type { AthleteRating, HoopsArchetype } from '../schemas';
 
 /** fixed sim quantum — 120Hz so pump(n, 8.33) is exactly 1 tick per frame */
@@ -271,39 +272,44 @@ export const TUNE = {
   SHOT_CLOCK_MS: 24_000,
   CHECK_MS: 900,
   TARGET_3V3: 21,
-  /** base run speed px/s; rating adds on top */
-  RUN: 84,
-  SPD_GAIN: 0.52,
-  TURBO_MUL: 1.36,
-  SLIDE_MUL: 0.86,
+  /** base run speed px/s; rating adds on top — px/s, scales with the frame */
+  RUN: s(84),
+  /** px/s added PER spd point (rating is unitless, so this carries the px/s
+   *  units and scales — keeps top speed proportional to RUN at any ART_SCALE) */
+  SPD_GAIN: s(0.52),
+  TURBO_MUL: 1.36, // unitless speed multiplier — KEEP
+  SLIDE_MUL: 0.86, // unitless speed multiplier — KEEP
   /** shot meter: 0→1 over this many ms of gather (fill rate; release times shots) */
-  METER_MS: 760,
+  METER_MS: 760, // time — KEEP
   /** the meter can overfill to here before it auto-releases (an auto-miss) */
-  METER_CAP: 1.12,
+  METER_CAP: 1.12, // meter fraction — KEEP
   /** baseline GREEN half-width at the shooter's feet (range scales it shut) */
-  GREEN_BASE: 0.105,
+  GREEN_BASE: 0.105, // meter fraction — KEEP
   /** double-tap window for the quick crossover */
-  XOVER_TAP_MS: 240,
-  GRAVITY: 700,
-  JUMP_V: 250,
+  XOVER_TAP_MS: 240, // time — KEEP
+  /** gravity px/s² and jump launch px/s — BOTH scale, so apex (∝ v²/g) scales
+   *  linearly with positions: the jump FEEL is identical at any ART_SCALE */
+  GRAVITY: s(700),
+  JUMP_V: s(250),
 } as const;
 
 /* ============== THE RANGE LAW (S12c — pure, test-pinned) ============== */
 
 export const RANGE = {
-  /** px of range per sht point above/below 50, anchored at the arc */
-  PER_SHT: 1.2,
-  MIN: COURT.ARC_R * 0.85,
-  MAX: COURT.ARC_R * 1.35,
+  /** px of range per sht point above/below 50, anchored at the arc — sht is
+   *  unitless so this literal carries the px units and scales */
+  PER_SHT: s(1.2),
+  MIN: COURT_RT.ARC_R * 0.85, // derived from the scaled arc — auto-scales
+  MAX: COURT_RT.ARC_R * 1.35, // derived from the scaled arc — auto-scales
   /** non-green make% is ZERO at this multiple of range (decays hard to it) */
-  DECAY_END: 1.5,
+  DECAY_END: 1.5, // a multiple of range (ratio) — KEEP
   /** the hard-decay band's make ceiling right at the range line */
-  DECAY_CAP: 0.12,
+  DECAY_CAP: 0.12, // a probability ceiling — KEEP
 } as const;
 
 /** every athlete's EFFECTIVE RANGE in px, derived from sht */
 export function effectiveRange(sht: number): number {
-  return Math.max(RANGE.MIN, Math.min(RANGE.MAX, COURT.ARC_R + (sht - 50) * RANGE.PER_SHT));
+  return Math.max(RANGE.MIN, Math.min(RANGE.MAX, COURT_RT.ARC_R + (sht - 50) * RANGE.PER_SHT));
 }
 
 /**
@@ -368,12 +374,15 @@ export function makeChance(grade: ShotGrade, sht: number, distPx: number, contes
   return Math.max(0, Math.min(1, p));
 }
 
-/** contest pressure 0..1 from the nearest defender's reach on the shooter */
+/** contest pressure 0..1 from the nearest defender's reach on the shooter.
+ *  d and the 44px reach are both runtime px (their ratio is the unitless
+ *  pressure); the 12px z threshold scales too (jump heights scale). */
 export function contestOf(dx: number, dy: number, defZ: number): number {
   const d = Math.hypot(dx, dy);
-  if (d > 44) return 0;
-  const base = (44 - d) / 44;
-  return Math.min(1, base * (defZ > 12 ? 1.35 : 0.8));
+  const reach = s(44);
+  if (d > reach) return 0;
+  const base = (reach - d) / reach;
+  return Math.min(1, base * (defZ > s(12) ? 1.35 : 0.8));
 }
 
 /* ============== TIMED DEFENSE (S12c — the weighting tables) ============== */
@@ -392,8 +401,8 @@ export const BLOCK_TIMING = {
   TIMED: 0.65,
   /** (dfn − sht) · this */
   RATING: 0.004,
-  /** reach: a release further than this can't be eaten at the hand */
-  REACH_PX: 26,
+  /** reach: a release further than this can't be eaten at the hand (px) */
+  REACH_PX: s(26),
   /** proximity scale floor — at max reach you keep this fraction */
   PROX_FLOOR: 0.65,
   LO: 0.05,
@@ -428,7 +437,7 @@ export const STEAL_TIMING = {
   HAWK: 0.08,
   LO: 0.04,
   HI: 0.7,
-  REACH_PX: 24,
+  REACH_PX: s(24), // px reach for the swipe
   /** a failed in-reach swipe leaves you beaten this long */
   WHIFF_BEATEN_MS: 720,
 } as const;
@@ -452,8 +461,8 @@ export const MOVES = {
   TOTAL_MS: 430,
   /** burst carried out of a completed move (btb/btl add a little) */
   BURST_MS: 240,
-  /** a set defender further than this can't be broken */
-  BREAK_RANGE_PX: 36,
+  /** a set defender further than this can't be broken (px) */
+  BREAK_RANGE_PX: s(36),
 } as const;
 
 /** tiered ankle outcomes: fractions of ankleChance — roll under LARGE·p =
@@ -510,8 +519,9 @@ export function layupWindow(sht: number, contest: number): number {
 }
 
 /** the rim-finish trigger: this close, MOVING toward a press = the finish
- *  (no turbo gate — ADR-038 made the finish easy to reach, timed to make) */
-export const FINISH_RANGE_PX = 165;
+ *  (no turbo gate — ADR-038 made the finish easy to reach, timed to make).
+ *  A px distance to the rim — scales with the court. */
+export const FINISH_RANGE_PX = s(165);
 
 /** 3v3 street game-over: FIRST TO 21, WIN BY 2 (pure — tests pin it) */
 export function pickupGameOver(us: number, them: number): boolean {
@@ -593,8 +603,8 @@ export class HoopsSim {
       def,
       team,
       slot,
-      x: COURT.W / 2,
-      y: COURT.H / 2,
+      x: COURT_RT.W / 2,
+      y: COURT_RT.H / 2,
       z: 0,
       vz: 0,
       face: team === 0 ? 1 : -1,
@@ -622,8 +632,8 @@ export class HoopsSim {
 
   /** the rim a team attacks. 3v3: everyone plays the near (left) rim. */
   rimOf(team: 0 | 1): Vec {
-    if (this.format === '3v3') return { x: HALF.RIM.x, y: HALF.RIM.y };
-    return rimFor(team === 0);
+    if (this.format === '3v3') return { x: HALF_RT.RIM.x, y: HALF_RT.RIM.y };
+    return rimForRT(team === 0);
   }
 
   private holderIdx(): number | null {
@@ -638,7 +648,8 @@ export class HoopsSim {
   ballPos(): { x: number; y: number; z: number } {
     if (this.ball.kind === 'held') {
       const h = this.athletes[this.ball.by];
-      return { x: h.x + h.face * 9, y: h.y + 2, z: 12 + h.z };
+      // hand/hip/grip offsets — all px, scale with the frame
+      return { x: h.x + h.face * s(9), y: h.y + s(2), z: s(12) + h.z };
     }
     return { x: this.ball.x, y: this.ball.y, z: this.ball.z };
   }
@@ -682,8 +693,8 @@ export class HoopsSim {
     const three = this.format === '3v3';
     const attackRim = this.rimOf(team);
     const spotBase: Vec = three
-      ? { x: HALF.CHECK.x, y: HALF.CHECK.y }
-      : { x: this.rimOf(team === 0 ? 1 : 0).x, y: COURT.RIM_Y }; // take under your own rim
+      ? { x: HALF_RT.CHECK.x, y: HALF_RT.CHECK.y }
+      : { x: this.rimOf(team === 0 ? 1 : 0).x, y: COURT_RT.RIM_Y }; // take under your own rim
     let handler: Athlete | null = null;
     for (const a of this.athletes) {
       a.state = 'play';
@@ -696,7 +707,7 @@ export class HoopsSim {
       a.planFrac = -1;
       a.dunkFrac = -2;
       a.dunkPlan = -1;
-      const lane = (a.slot - (this.perSide - 1) / 2) * (three ? 84 : 64);
+      const lane = (a.slot - (this.perSide - 1) / 2) * (three ? s(84) : s(64)); // px lane spacing
       if (a.team === team) {
         if (a.slot === 0) {
           a.x = spotBase.x;
@@ -705,14 +716,14 @@ export class HoopsSim {
         } else {
           // spread between the check spot and the attack end
           a.x = spotBase.x + (attackRim.x - spotBase.x) * 0.35;
-          a.y = COURT.RIM_Y + lane;
+          a.y = COURT_RT.RIM_Y + lane;
         }
       } else {
         // defense sets between their marks and the rim they protect
         a.x = spotBase.x + (attackRim.x - spotBase.x) * (a.slot === 0 ? 0.18 : 0.55);
-        a.y = COURT.RIM_Y + lane * 0.8;
+        a.y = COURT_RT.RIM_Y + lane * 0.8;
       }
-      clampToCage(a);
+      clampToCageRT(a);
       a.face = a.x < attackRim.x ? 1 : -1;
     }
     if (handler) {
@@ -884,7 +895,7 @@ export class HoopsSim {
       }
     });
     if (best < 0) return;
-    if (cur.team !== 0 || dist(cur.x, cur.y, bp.x, bp.y) > bestD + 22) this.controlled = best;
+    if (cur.team !== 0 || dist(cur.x, cur.y, bp.x, bp.y) > bestD + s(22)) this.controlled = best; // px hysteresis
   }
 
   /* ---------------- user input: offense ---------------- */
@@ -973,7 +984,7 @@ export class HoopsSim {
       const aim = Math.atan2(dy, dx);
       let da = Math.abs(toDef - aim);
       if (da > Math.PI) da = 2 * Math.PI - da;
-      if (da < 0.9 && dist(a.x, a.y, def.x, def.y) < 52) return 'btl';
+      if (da < 0.9 && dist(a.x, a.y, def.x, def.y) < s(52)) return 'btl'; // 0.9 rad cone; 52px proximity
     }
     return 'btb';
   }
@@ -1005,7 +1016,10 @@ export class HoopsSim {
   private blockLeap(a: Athlete): void {
     a.state = 'block';
     a.stateT = 0;
-    a.vz = TUNE.JUMP_V + a.def.rating.dnk * 0.6;
+    // vz is px/s: JUMP_V is scaled and the per-dnk bonus carries px/s units too
+    // (dnk is unitless), so vz scales. peakMs = vz/GRAVITY is a ratio of two
+    // scaled speeds → the leap's TIMING is identical at any ART_SCALE.
+    a.vz = TUNE.JUMP_V + a.def.rating.dnk * s(0.6);
     a.leapPeakMs = (a.vz / TUNE.GRAVITY) * 1000;
     this.emit({ kind: 'sfx', name: 'jump' });
   }
@@ -1025,8 +1039,8 @@ export class HoopsSim {
   }
 
   private clampWalker(a: Athlete): void {
-    clampToCage(a);
-    if (this.format === '3v3') a.x = Math.min(a.x, HALF.X_MAX);
+    clampToCageRT(a);
+    if (this.format === '3v3') a.x = Math.min(a.x, HALF_RT.X_MAX);
   }
 
   private speedOf(a: Athlete): number {
@@ -1047,7 +1061,7 @@ export class HoopsSim {
     a.face = dir;
     this.emit({ kind: 'sfx', name: 'bounce' });
     const def = this.nearestDefender(a);
-    if (!def || def.state !== 'play' || dist(a.x, a.y, def.x, def.y) > 34) return;
+    if (!def || def.state !== 'play' || dist(a.x, a.y, def.x, def.y) > s(34)) return; // 34px break range
     const committed = def.moving && Math.sign(def.x - a.x) !== Math.sign(dir);
     this.resolveBreak(a, def, committed, 0.8);
   }
@@ -1079,8 +1093,8 @@ export class HoopsSim {
       def.state = 'trip';
       def.stateT = 0;
       def.beatenT = 620;
-      // the stumble carries him a step the wrong way
-      def.x += -a.face * 6;
+      // the stumble carries him a step the wrong way (px)
+      def.x += -a.face * s(6);
       this.clampWalker(def);
       this.emit({ kind: 'ankles', victim: vi, tier: 'trip' });
       this.emit({ kind: 'sfx', name: 'thud' });
@@ -1111,8 +1125,11 @@ export class HoopsSim {
       if (aim !== null) {
         let da = Math.abs(ang - aim);
         if (da > Math.PI) da = 2 * Math.PI - da;
-        if (da > 0.96) return; // outside the cone
-        const score = da * 220 + d * 0.25;
+        if (da > 0.96) return; // outside the cone (radians)
+        // pick score blends angle (radians · 220) with distance: take d in
+        // NATIVE px so the px term keeps the same weight vs. the angle term at
+        // any ART_SCALE (a ×4 d would otherwise swamp the cone preference)
+        const score = da * 220 + (d / ART_SCALE) * 0.25;
         if (score < bestScore) {
           bestScore = score;
           best = i;
@@ -1124,8 +1141,8 @@ export class HoopsSim {
     });
     if (best < 0) return;
     const to = this.athletes[best];
-    // lead the cutter: aim where they're going, not where they were
-    const lead = to.moving ? 30 : 0;
+    // lead the cutter: aim where they're going, not where they were (px)
+    const lead = to.moving ? s(30) : 0;
     const x1 = to.x + lead * (to.face > 0 ? 1 : -1) * 0.7;
     const y1 = to.y;
     const lineLen = Math.max(1, dist(a.x, a.y, x1, y1));
@@ -1138,7 +1155,7 @@ export class HoopsSim {
       const t = Math.max(0, Math.min(1, ((d.x - a.x) * (x1 - a.x) + (d.y - a.y) * (y1 - a.y)) / lineLen ** 2));
       const lx = a.x + (x1 - a.x) * t;
       const ly = a.y + (y1 - a.y) * t;
-      if (dist(d.x, d.y, lx, ly) > 13 || t < 0.15 || t > 0.85) return;
+      if (dist(d.x, d.y, lx, ly) > s(13) || t < 0.15 || t > 0.85) return; // 13px lane; t is a fraction
       if (laneDef === null) {
         laneDef = i;
         laneT = t;
@@ -1152,8 +1169,12 @@ export class HoopsSim {
     if (dFace > Math.PI) dFace = 2 * Math.PI - dFace;
     const style: PassStyle = dFace > 1.75 ? 'btb' : laneDef !== null ? 'bounce' : 'chest';
 
-    let flight = Math.max(180, lineLen * 1.45);
-    if (style === 'bounce') flight *= 1.35; // slower — the price of safe
+    // flight is a DURATION (ms): it must stay scale-invariant so the ball
+    // crosses the (now bigger) gap in the same time as ×1 — i.e. implicitly
+    // faster in px/s, matching every other scaled motion. lineLen is runtime
+    // px, so divide it back to native before the ms-per-px coefficient.
+    let flight = Math.max(180, (lineLen / ART_SCALE) * 1.45);
+    if (style === 'bounce') flight *= 1.35; // slower — the price of safe (ratio)
     if (style === 'btb') flight *= 1.1;
 
     // pass-release window (STEAL_TIMING): a defender MID-SWIPE at the
@@ -1163,7 +1184,7 @@ export class HoopsSim {
     this.athletes.forEach((d, i) => {
       if (picked !== null || d.team === a.team) return;
       if (d.state !== 'steal' || d.stateT > STEAL_TIMING.WINDOW_MS) return;
-      if (dist(d.x, d.y, a.x, a.y) > STEAL_TIMING.REACH_PX + 4) return;
+      if (dist(d.x, d.y, a.x, a.y) > STEAL_TIMING.REACH_PX + s(4)) return; // +4px margin
       this.emit({ kind: 'timed', by: i, action: 'steal' });
       if (this.rng() < stealChance(d.def.rating.dfn, d.def.archetype === 'hawk', a.def.rating.sht, true)) picked = i;
     });
@@ -1183,7 +1204,7 @@ export class HoopsSim {
       from,
       to: best,
       style,
-      x0: a.x + a.face * 9,
+      x0: a.x + a.face * s(9), // hand-release offset (px)
       y0: a.y,
       x1,
       y1,
@@ -1194,7 +1215,7 @@ export class HoopsSim {
       bounced: false,
       x: a.x,
       y: a.y,
-      z: 22,
+      z: s(22), // ball leaves at chest height (px)
     };
     this.emit({ kind: 'sfx', name: style === 'bounce' ? 'bounce' : 'pass' });
   }
@@ -1285,7 +1306,8 @@ export class HoopsSim {
     // a TIMED block eats the release outright (BLOCK_TIMING is the law)
     const blocker = this.findBlocker(a);
     if (blocker) {
-      this.looseBall(a.x + a.face * 8, a.y, 30, blocker.face * 90, (this.rng() - 0.5) * 60, 120);
+      // swatted: x/z are px positions, the rest are px/s knockback velocities
+      this.looseBall(a.x + a.face * s(8), a.y, s(30), blocker.face * s(90), (this.rng() - 0.5) * s(60), s(120));
       this.emit({ kind: 'block', by: this.athletes.indexOf(blocker) });
       this.emit({ kind: 'sfx', name: 'block' });
       return;
@@ -1294,7 +1316,7 @@ export class HoopsSim {
   }
 
   private launchShot(a: Athlete, rim: Vec, d: number, grade: ShotGrade, contest: number): void {
-    const pts = pointsFor(a.x, a.y, rim);
+    const pts = pointsForRT(a.x, a.y, rim);
     const p = makeChance(grade, a.def.rating.sht, d, contest);
     const roll = this.rng();
     const made = roll < p;
@@ -1306,18 +1328,22 @@ export class HoopsSim {
       by: this.athletes.indexOf(a),
       pts,
       d0: d,
-      x0: a.x + a.face * 6,
+      x0: a.x + a.face * s(6), // release offset (px)
       y0: a.y,
-      z0: 46 + a.z,
+      z0: s(46) + a.z, // release height (px)
       rim,
       t: 0,
-      t1: 480 + d * 0.5,
-      apex: COURT.RIM_Z + 34 + d * 0.07,
+      // t1 is a DURATION (ms): the 480ms base stays, and the distance term is
+      // taken in NATIVE px so the arc lasts the same time at any ART_SCALE
+      t1: 480 + (d / ART_SCALE) * 0.5,
+      // apex is a z POSITION (px): RIM_Z + the 34px base scale; the d term
+      // already scales because d is runtime px
+      apex: COURT_RT.RIM_Z + s(34) + d * 0.07,
       outcome,
       green: grade === 'green',
       x: a.x,
       y: a.y,
-      z: 46 + a.z,
+      z: s(46) + a.z,
     };
     if (grade === 'green') this.emit({ kind: 'sfx', name: 'green' });
   }
@@ -1444,14 +1470,14 @@ export class HoopsSim {
     const inRange = d <= range * 0.96; // the RANGE GATE — AI shoots its game
     const forced = this.format === '5v5' && this.shotMs < 4200 && !this.drill;
     if (a.thinkCd > 0 && !forced) {
-      this.seek(a, a.x + a.face * 30, a.y, false);
+      this.seek(a, a.x + a.face * s(30), a.y, false); // drift 30px up-court
       return;
     }
     a.thinkCd = 620;
     const arch = a.def.archetype;
     const r = this.rng();
-    // finishing range — everybody takes the rim when it's there
-    if (d < 64 && contest < 0.55) {
+    // finishing range — everybody takes the rim when it's there (64px)
+    if (d < s(64) && contest < 0.55) {
       if (a.def.rating.dnk >= 52 && r < 0.6) this.startDunk(a, false);
       else this.startLayup(a, false);
       return;
@@ -1481,31 +1507,31 @@ export class HoopsSim {
       case 'rusher':
         if (driveLane || r < 0.25) this.driveTo(a, rim);
         else if (r < 0.45) this.aiPass(a);
-        else this.seek(a, rim.x - Math.sign(rim.x - a.x) * 110, rim.y + (r - 0.5) * 120, true);
+        else this.seek(a, rim.x - Math.sign(rim.x - a.x) * s(110), rim.y + (r - 0.5) * s(120), true); // reset 110/120px off the rim
         return;
       case 'sniper': {
-        const behind = d > COURT.ARC_R;
+        const behind = d > COURT_RT.ARC_R;
         if (behind && inRange && contest < 0.3 && r < 0.62) {
           this.aiShoot(a, d, contest);
           return;
         }
         if (r < 0.3) this.aiPass(a);
-        else this.seek(a, rim.x - Math.sign(rim.x - a.x) * (COURT.ARC_R + 14), rim.y + (r - 0.5) * 190, false);
+        else this.seek(a, rim.x - Math.sign(rim.x - a.x) * (COURT_RT.ARC_R + s(14)), rim.y + (r - 0.5) * s(190), false); // spot up a step beyond the arc (px)
         return;
       }
       case 'post':
-        if (d < 96 && inRange && r < 0.55) {
+        if (d < s(96) && inRange && r < 0.55) {
           this.aiShoot(a, d, contest);
           return;
         }
         if (r < 0.25) this.aiPass(a);
-        else this.driveTo(a, { x: rim.x + (rim.x > COURT.W / 2 ? -52 : 52), y: rim.y + (r - 0.5) * 70 });
+        else this.driveTo(a, { x: rim.x + (rim.x > COURT_RT.W / 2 ? -s(52) : s(52)), y: rim.y + (r - 0.5) * s(70) }); // post up 52/70px off the block
         return;
       default:
         if (driveLane && r < 0.4) this.driveTo(a, rim);
         else if (r < 0.42) this.aiPass(a);
-        else if (d < 120 && inRange && contest < 0.32 && r < 0.7) this.aiShoot(a, d, contest);
-        else this.seek(a, rim.x - Math.sign(rim.x - a.x) * 120, rim.y + (r - 0.5) * 150, false);
+        else if (d < s(120) && inRange && contest < 0.32 && r < 0.7) this.aiShoot(a, d, contest);
+        else this.seek(a, rim.x - Math.sign(rim.x - a.x) * s(120), rim.y + (r - 0.5) * s(150), false); // reset 120/150px out
     }
   }
 
@@ -1554,7 +1580,7 @@ export class HoopsSim {
         best = m;
       }
     }
-    if (!best || bestOpen < 30) return;
+    if (!best || bestOpen < s(30)) return; // needs 30px of daylight
     const dx = Math.sign(best.x - a.x) as -1 | 0 | 1;
     const dy = Math.sign(best.y - a.y) as -1 | 0 | 1;
     this.pass(a, dx, dy);
@@ -1566,7 +1592,7 @@ export class HoopsSim {
       const t = Math.max(0, Math.min(1, ((d.x - a.x) * (rim.x - a.x) + (d.y - a.y) * (rim.y - a.y)) / Math.max(1, dist(a.x, a.y, rim.x, rim.y) ** 2)));
       const lx = a.x + (rim.x - a.x) * t;
       const ly = a.y + (rim.y - a.y) * t;
-      if (dist(d.x, d.y, lx, ly) < 26) return false;
+      if (dist(d.x, d.y, lx, ly) < s(26)) return false; // 26px lane clearance
     }
     return true;
   }
@@ -1579,11 +1605,11 @@ export class HoopsSim {
   private aiOffBall(a: Athlete, holder: Athlete | null): void {
     if (a.state !== 'play') return;
     const rim = this.rimOf(a.team);
-    const spots = spacingSpots(rim, this.format === '5v5' ? a.team === 0 : false);
+    const spots = spacingSpotsRT(rim, this.format === '5v5' ? a.team === 0 : false);
     const spot = spots[(a.spot + this.quarter) % spots.length];
-    // cut when the handler drives: nearest teammate dives baseline
-    if (holder && dist(holder.x, holder.y, rim.x, rim.y) < 130 && dist(a.x, a.y, rim.x, rim.y) < 200) {
-      this.seek(a, rim.x + (rim.x > COURT.W / 2 ? -30 : 30), rim.y + (a.slot % 2 === 0 ? -46 : 46), true);
+    // cut when the handler drives: nearest teammate dives baseline (px gates)
+    if (holder && dist(holder.x, holder.y, rim.x, rim.y) < s(130) && dist(a.x, a.y, rim.x, rim.y) < s(200)) {
+      this.seek(a, rim.x + (rim.x > COURT_RT.W / 2 ? -s(30) : s(30)), rim.y + (a.slot % 2 === 0 ? -s(46) : s(46)), true);
       return;
     }
     this.seek(a, spot.x, spot.y, false);
@@ -1595,7 +1621,7 @@ export class HoopsSim {
         if (d.team === a.team) continue;
         near = Math.min(near, dist(a.x, a.y, d.x, d.y));
       }
-      if (near > 56 && !a.moving) {
+      if (near > s(56) && !a.moving) { // open by 56px and standing
         a.callCd = 3400;
         this.emit({ kind: 'callsForIt', who: this.athletes.indexOf(a) });
       }
@@ -1620,24 +1646,27 @@ export class HoopsSim {
     }
     // AI block: TIME the leap so its peak meets the shooter's release — read
     // off the mark's meter fill, exactly the read the player makes
-    if (mark && mark.state === 'gather' && dist(a.x, a.y, mark.x, mark.y) < 38 && a.z === 0 && a.leapCd <= 0) {
+    if (mark && mark.state === 'gather' && dist(a.x, a.y, mark.x, mark.y) < s(38) && a.z === 0 && a.leapCd <= 0) {
       const frac = mark.gatherMs / TUNE.METER_MS;
-      const peakMs = ((TUNE.JUMP_V + a.def.rating.dnk * 0.6) / TUNE.GRAVITY) * 1000;
+      // peakMs mirrors blockLeap exactly: vz (px/s, scaled) / GRAVITY (px/s²,
+      // scaled) → the leap's time-to-apex is the same ms at any ART_SCALE, so
+      // the meter-fill jump cue (jumpAt) is unchanged. The per-dnk 0.6 scales.
+      const peakMs = ((TUNE.JUMP_V + a.def.rating.dnk * s(0.6)) / TUNE.GRAVITY) * 1000;
       const jumpAt = 1 - peakMs / TUNE.METER_MS;
       if (frac >= jumpAt - 0.05 && this.rng() < 0.09 + a.def.rating.dfn * 0.0012) {
         this.blockLeap(a);
         return;
       }
     }
-    // a late hop at a rising shooter still happens (it just times poorly)
-    if (mark && mark.state === 'rise' && dist(a.x, a.y, mark.x, mark.y) < 30 && a.z === 0 && a.leapCd <= 0) {
+    // a late hop at a rising shooter still happens (it just times poorly, 30px)
+    if (mark && mark.state === 'rise' && dist(a.x, a.y, mark.x, mark.y) < s(30) && a.z === 0 && a.leapCd <= 0) {
       if (this.rng() < 0.05 + a.def.rating.dfn * 0.0007) {
         this.blockLeap(a);
         return;
       }
     }
-    // help: collapse on a drive in my lane
-    if (holder && dist(holder.x, holder.y, rimD.x, rimD.y) < 96 && dist(a.x, a.y, rimD.x, rimD.y) < 130 && !onBall) {
+    // help: collapse on a drive in my lane (px gates)
+    if (holder && dist(holder.x, holder.y, rimD.x, rimD.y) < s(96) && dist(a.x, a.y, rimD.x, rimD.y) < s(130) && !onBall) {
       this.seek(a, (holder.x + rimD.x) / 2, (holder.y + rimD.y) / 2, true);
       return;
     }
@@ -1652,7 +1681,7 @@ export class HoopsSim {
     const dx = x - a.x;
     const dy = y - a.y;
     const d = Math.hypot(dx, dy);
-    if (d < 5) {
+    if (d < s(5)) { // arrived within 5px
       a.moving = false;
       return;
     }
@@ -1661,7 +1690,7 @@ export class HoopsSim {
     a.x += (dx / d) * sp * (SIM_DT / 1000);
     a.y += (dy / d) * sp * (SIM_DT / 1000);
     a.moving = true;
-    if (Math.abs(dx) > 2) a.face = dx > 0 ? 1 : -1;
+    if (Math.abs(dx) > s(2)) a.face = dx > 0 ? 1 : -1; // 2px facing deadzone
     this.clampWalker(a);
   }
 
@@ -1675,7 +1704,8 @@ export class HoopsSim {
     a.leapCd = Math.max(0, a.leapCd - SIM_DT);
     a.burstT = Math.max(0, a.burstT - SIM_DT);
     if (a.burstT > 0 && a.state === 'play') {
-      a.x += a.face * 1.55 * (SIM_DT / 1000) * 60;
+      // burst crawl: 1.55px/frame · 60fps = px/s, scales with the frame
+      a.x += a.face * s(1.55) * (SIM_DT / 1000) * 60;
       this.clampWalker(a);
     }
     // air
@@ -1736,7 +1766,8 @@ export class HoopsSim {
       const k = Math.min(1, a.stateT / T);
       a.x += (rim.x - a.x) * k * 0.28;
       a.y += (rim.y - a.y) * k * 0.28;
-      a.z = Math.sin(k * Math.PI) * (a.state === 'dunk' ? COURT.RIM_Z + 8 : COURT.RIM_Z - 14);
+      // hop apex (z px): RIM_Z scaled, the ±8/14px tweaks scale too
+      a.z = Math.sin(k * Math.PI) * (a.state === 'dunk' ? COURT_RT.RIM_Z + s(8) : COURT_RT.RIM_Z - s(14));
       if (k >= 1) this.finishAtRim(a);
     }
   }
@@ -1766,18 +1797,19 @@ export class HoopsSim {
       let stuffer: Athlete | null = null;
       for (const b of this.athletes) {
         if (b.team === a.team) continue;
-        if (dist(b.x, b.y, rim.x, rim.y) < 30 && (b.state === 'block' || b.z > 18)) {
+        if (dist(b.x, b.y, rim.x, rim.y) < s(30) && (b.state === 'block' || b.z > s(18))) { // 30px at the summit, 18px off the floor
           if (this.rng() < stuffChance(a.def.rating.dnk, b.def.rating.dfn, b.state === 'block')) stuffer = b;
           break;
         }
       }
       if (stuffer) {
-        this.looseBall(rim.x, rim.y, COURT.RIM_Z - 8, -a.face * 110, (this.rng() - 0.5) * 90, 60);
+        // stuffed: z is a px height, the trailing three are px/s knockback
+        this.looseBall(rim.x, rim.y, COURT_RT.RIM_Z - s(8), -a.face * s(110), (this.rng() - 0.5) * s(90), s(60));
         this.emit({ kind: 'stuffed', by: this.athletes.indexOf(stuffer) });
         this.emit({ kind: 'sfx', name: 'block' });
         return;
       }
-      this.looseBall(rim.x, rim.y, COURT.RIM_Z, -a.face * 60, (this.rng() - 0.5) * 80, 100);
+      this.looseBall(rim.x, rim.y, COURT_RT.RIM_Z, -a.face * s(60), (this.rng() - 0.5) * s(80), s(100));
       this.emit({ kind: 'flub', by: i });
       this.emit({ kind: 'sfx', name: 'rim' });
       return;
@@ -1795,7 +1827,8 @@ export class HoopsSim {
     if (this.rng() < p) {
       this.scoreBasket(a.team, 1, rim, false, false, i, 0);
     } else {
-      this.looseBall(rim.x, rim.y, COURT.RIM_Z, (this.rng() - 0.5) * 120, (this.rng() - 0.5) * 100, 90);
+      // rimmed-out layup: px/s scatter off the iron
+      this.looseBall(rim.x, rim.y, COURT_RT.RIM_Z, (this.rng() - 0.5) * s(120), (this.rng() - 0.5) * s(100), s(90));
       this.emit({ kind: 'miss', x: rim.x, y: rim.y, air: false });
       this.emit({ kind: 'sfx', name: 'rim' });
     }
@@ -1834,15 +1867,16 @@ export class HoopsSim {
       // flight profile by style: the bounce pass dives UNDER hands in the
       // lane and kisses the floor at the midpoint; btb rides low and flat
       if (b.style === 'bounce') {
-        b.z = k < 0.5 ? 18 * (1 - k * 2) : 14 * ((k - 0.5) * 2);
+        // dive-under-the-hands profile (z px): down to the floor, back up
+        b.z = k < 0.5 ? s(18) * (1 - k * 2) : s(14) * ((k - 0.5) * 2);
         if (!b.bounced && k >= 0.5) {
           b.bounced = true;
           this.emit({ kind: 'sfx', name: 'bounce' });
         }
       } else if (b.style === 'btb') {
-        b.z = 16 + Math.sin(k * Math.PI) * 8;
+        b.z = s(16) + Math.sin(k * Math.PI) * s(8); // low and flat (px)
       } else {
-        b.z = 22 + Math.sin(k * Math.PI) * 16;
+        b.z = s(22) + Math.sin(k * Math.PI) * s(16); // chest arc (px)
       }
       if (b.picked !== null && k >= b.pickK) {
         const d = this.athletes[b.picked];
@@ -1856,7 +1890,7 @@ export class HoopsSim {
       }
       if (k >= 1) {
         const to = this.athletes[b.to];
-        if (dist(to.x, to.y, b.x1, b.y1) < 34 && to.state !== 'fall') {
+        if (dist(to.x, to.y, b.x1, b.y1) < s(34) && to.state !== 'fall') { // 34px catch radius
           this.ball = { kind: 'held', by: b.to };
           this.posTeam = to.team;
           this.emit({ kind: 'sfx', name: 'catch' });
@@ -1870,23 +1904,24 @@ export class HoopsSim {
       b.t += SIM_DT;
       const k = Math.min(1, b.t / b.t1);
       // air balls die short; everything else flies to the iron
-      const reach = b.outcome === 'air' ? 0.88 : 1;
+      const reach = b.outcome === 'air' ? 0.88 : 1; // air balls fall short (ratio)
       b.x = b.x0 + (b.rim.x - b.x0) * k * reach;
       b.y = b.y0 + (b.rim.y - b.y0) * k * reach;
-      const z1 = b.outcome === 'air' ? COURT.RIM_Z - 18 : COURT.RIM_Z;
+      const z1 = b.outcome === 'air' ? COURT_RT.RIM_Z - s(18) : COURT_RT.RIM_Z; // 18px short of the iron
       b.z = b.z0 + (z1 - b.z0) * k + Math.sin(k * Math.PI) * (b.apex - Math.max(b.z0, z1));
       // GOALTENDING (S12c): near the rim, an airborne defender's hand on the
       // ball — pre-apex contact is a LIVE block (legal); on the way DOWN it
       // is a violation and the basket COUNTS. PERMIT saw it. We all saw it.
-      if (k < 1 && dist(b.x, b.y, b.rim.x, b.rim.y) < 44) {
+      if (k < 1 && dist(b.x, b.y, b.rim.x, b.rim.y) < s(44)) { // within 44px of the iron
         const shooter = this.athletes[b.by];
         for (let i = 0; i < this.athletes.length; i++) {
           const d = this.athletes[i];
-          if (d.team === shooter.team || d.z <= 12) continue;
-          if (dist(d.x, d.y, b.x, b.y) > 11) continue;
-          if (Math.abs(b.z - (d.z + 36)) > 10) continue;
+          if (d.team === shooter.team || d.z <= s(12)) continue; // airborne (12px up)
+          if (dist(d.x, d.y, b.x, b.y) > s(11)) continue; // hand on the ball within 11px
+          if (Math.abs(b.z - (d.z + s(36))) > s(10)) continue; // reach 36px overhead, 10px band
           if (k < 0.5) {
-            this.looseBall(b.x, b.y, b.z, d.face * 80, (this.rng() - 0.5) * 60, 60);
+            // pre-apex swat: px/s knockback
+            this.looseBall(b.x, b.y, b.z, d.face * s(80), (this.rng() - 0.5) * s(60), s(60));
             this.emit({ kind: 'block', by: i });
             this.emit({ kind: 'sfx', name: 'block' });
           } else {
@@ -1911,9 +1946,9 @@ export class HoopsSim {
             this.shotMs = TUNE.SHOT_CLOCK_MS; // iron resets the count (street)
             this.counted.clear();
           }
-          const ang = this.rng() * Math.PI * 2;
-          const sp = 60 + this.rng() * 90;
-          this.looseBall(b.rim.x, b.rim.y, COURT.RIM_Z, Math.cos(ang) * sp, Math.sin(ang) * sp * 0.7, 110 + this.rng() * 60);
+          const ang = this.rng() * Math.PI * 2; // radians
+          const sp = s(60) + this.rng() * s(90); // px/s carom off the rim
+          this.looseBall(b.rim.x, b.rim.y, COURT_RT.RIM_Z, Math.cos(ang) * sp, Math.sin(ang) * sp * 0.7, s(110) + this.rng() * s(60));
           return;
         }
         case 'air': {
@@ -1932,15 +1967,17 @@ export class HoopsSim {
     b.vz -= TUNE.GRAVITY * (SIM_DT / 1000);
     if (b.z <= 0) {
       b.z = 0;
-      b.vz = Math.abs(b.vz) > 40 ? -b.vz * 0.55 : 0;
+      // px/s velocity gates; 0.55 restitution and 0.8 friction are ratios
+      b.vz = Math.abs(b.vz) > s(40) ? -b.vz * 0.55 : 0;
       b.vx *= 0.8;
       b.vy *= 0.8;
-      if (Math.abs(b.vz) > 30) this.emit({ kind: 'sfx', name: 'bounce' });
+      if (Math.abs(b.vz) > s(30)) this.emit({ kind: 'sfx', name: 'bounce' });
     }
-    const fx = -COURT.FENCE + 4;
-    const fx1 = COURT.W + COURT.FENCE - 4;
-    const fy = -COURT.FENCE + 4;
-    const fy1 = COURT.H + COURT.FENCE - 4;
+    // the live fence inset 4px in from the apron (px)
+    const fx = -COURT_RT.FENCE + s(4);
+    const fx1 = COURT_RT.W + COURT_RT.FENCE - s(4);
+    const fy = -COURT_RT.FENCE + s(4);
+    const fy1 = COURT_RT.H + COURT_RT.FENCE - s(4);
     if (b.x < fx || b.x > fx1) {
       b.vx = -b.vx * 0.6;
       b.x = Math.max(fx, Math.min(fx1, b.x));
@@ -1952,14 +1989,17 @@ export class HoopsSim {
       this.emit({ kind: 'sfx', name: 'fence' });
     }
     // the scramble: first body on it takes it (board work is dfn+dnk)
-    if (b.z < 28) {
+    if (b.z < s(28)) { // ball is grabbable below 28px
       let best: number | null = null;
       let bestScore = -Infinity;
       this.athletes.forEach((a, i) => {
         if (a.beatenT > 0 || a.state === 'fall') return;
         const d = dist(a.x, a.y, b.x, b.y);
-        if (d > 17) return;
-        const score = (a.def.rating.dfn + a.def.rating.dnk) / 2 - d * 2 + this.rng() * 14;
+        if (d > s(17)) return; // reach the ball within 17px
+        // ranking is in rating-point space: the distance penalty uses NATIVE
+        // px (divide the scaled d) so it weighs the same against ratings/noise
+        // at any ART_SCALE — otherwise a ×4 d would swamp the ratings
+        const score = (a.def.rating.dfn + a.def.rating.dnk) / 2 - (d / ART_SCALE) * 2 + this.rng() * 14;
         if (score > bestScore) {
           bestScore = score;
           best = i;

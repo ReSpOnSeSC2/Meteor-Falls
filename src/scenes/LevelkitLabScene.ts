@@ -33,6 +33,7 @@ import { ENEMIES } from '../data/enemies';
 import { FORGED_ENEMIES, stripForgeTags } from '../levelkit/forge/registry';
 import { ensureForgedFaces } from '../spritegen';
 import { DIALOGUE } from '../data/dialogue';
+import { s, TILE_PX } from '../spritegen/scale';
 
 export class LevelkitLabScene extends Phaser.Scene {
   private idx = 0;
@@ -48,15 +49,15 @@ export class LevelkitLabScene extends Phaser.Scene {
   create(): void {
     this.idx = 0;
     this.seed = SAMPLE_RECIPES[SAMPLE_IDS[0]].seed;
-    this.add.rectangle(0, 0, 400, 225, colorOf(px(RAMP.NIGHT, 1))).setOrigin(0);
-    makeWindow(this, 6, 4, 388, 24);
+    this.add.rectangle(0, 0, this.scale.width, this.scale.height, colorOf(px(RAMP.NIGHT, 1))).setOrigin(0);
+    makeWindow(this, s(6), s(4), s(388), s(24));
     this.title = this.add
-      .bitmapText(200, 12, 'retro', '', 6)
+      .bitmapText(s(200), s(12), 'retro', '', s(6))
       .setOrigin(0.5, 0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
     this.add
-      .bitmapText(200, 214, 'retro', '</> recipe  ^v reroll seed  A walk  B title', 6)
+      .bitmapText(s(200), s(214), 'retro', '</> recipe  ^v reroll seed  A walk  B title', s(6))
       .setOrigin(0.5, 0)
       .setTint(colorOf(px(RAMP.NIGHT, 3)));
     this.show();
@@ -72,8 +73,10 @@ export class LevelkitLabScene extends Phaser.Scene {
     return { ...SAMPLE_RECIPES[SAMPLE_IDS[this.idx]], seed: this.seed } as Recipe;
   }
 
+  /** y arrives in NATIVE px (the show() ladder stays native for readability);
+   *  the x indent, y, and font size are scaled to runtime here. */
   private line(y: number, text: string, ramp: number = RAMP.PAPER, shade: 0 | 1 | 2 | 3 = 3): Phaser.GameObjects.BitmapText {
-    const t = this.add.bitmapText(20, y, 'retro', text, 6).setTint(colorOf(px(ramp, shade)));
+    const t = this.add.bitmapText(s(20), s(y), 'retro', text, s(6)).setTint(colorOf(px(ramp, shade)));
     this.content.push(t);
     return t;
   }
@@ -125,7 +128,7 @@ export class LevelkitLabScene extends Phaser.Scene {
     // a dev dialogue so role-tagged slots + reserved signs render and talk
     const D = DIALOGUE as Record<string, string[]>;
     D.lk_slot ??= ['@A reserved slot.', '@The tone editor writes this at promotion.'];
-    for (const s of draft.signs) D[s.dialogue] ??= ['@A reserved landmark. Hand-built at promotion.'];
+    for (const sn of draft.signs) D[sn.dialogue] ??= ['@A reserved landmark. Hand-built at promotion.'];
     MAPS[draft.id] = this.adapt(draft);
 
     // inject the forged Ch.3–10 roster into the RUNTIME ENEMIES — tags stripped
@@ -157,10 +160,12 @@ export class LevelkitLabScene extends Phaser.Scene {
       const step: Record<Facing, [number, number]> = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] };
       const into: Record<Facing, Facing> = { up: 'down', down: 'up', left: 'right', right: 'left' };
       const [dx, dy] = step[door.facing];
-      return { x: (cx + dx) * 16 + 8, y: (cy + dy) * 16 + 8, facing: into[door.facing] };
+      // grid coords (cx,cy,dx,dy) are tile UNITS; convert to runtime px and centre
+      // in the tile. The spawn goes to overworld as world px, so it must be ×ART_SCALE.
+      return { x: (cx + dx) * TILE_PX + TILE_PX / 2, y: (cy + dy) * TILE_PX + TILE_PX / 2, facing: into[door.facing] };
     }
     const inside = draft.interior === true;
-    return { x: Math.floor(gw / 2) * 16 + 8, y: (inside ? Math.floor(gh / 2) : gh - 4) * 16, facing: 'up' };
+    return { x: Math.floor(gw / 2) * TILE_PX + TILE_PX / 2, y: (inside ? Math.floor(gh / 2) : gh - 4) * TILE_PX, facing: 'up' };
   }
 
   /** DraftMapDef → MapDef: drop role tags, give slots the dev dialogue */

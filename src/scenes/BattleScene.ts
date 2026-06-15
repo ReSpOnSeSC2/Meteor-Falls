@@ -171,6 +171,7 @@ import { FlairLine, hasFlair } from '../ui/flairline';
 import { FLAIR_BY_ELEMENT, FLAIR_BY_RESULT, type FlairResult } from '../spritegen/flair';
 import { colorOf, rgbOf, RAMP, px } from '../palette';
 import { ODO_CELL_W, ODO_CELL_H } from '../spritegen/ui';
+import { s } from '../spritegen/scale';
 
 interface BattleConfig {
   enemyIds: string[];
@@ -301,13 +302,14 @@ class OdoDisplay {
     this.slotY = y;
     const g = scene.add.graphics().setScrollFactor(0);
     for (let i = 0; i < places; i++) {
-      g.fillStyle(0xffffff).fillRect(x + i * (ODO_CELL_W + 1), y, ODO_CELL_W, ODO_CELL_H);
+      // ODO_CELL_W/_H are already runtime px (other agent); only the 1px inter-cell gap scales
+      g.fillStyle(0xffffff).fillRect(x + i * (ODO_CELL_W + s(1)), y, ODO_CELL_W, ODO_CELL_H);
     }
     g.setVisible(false);
     const mask = g.createGeometryMask();
     for (let i = 0; i < places; i++) {
       const img = scene.add
-        .image(x + i * (ODO_CELL_W + 1), y, 'odo')
+        .image(x + i * (ODO_CELL_W + s(1)), y, 'odo')
         .setOrigin(0, 0)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 2);
@@ -470,7 +472,7 @@ export class BattleScene extends Phaser.Scene {
       summon: (enemyId, n) => this.summonUnits(bossUnit, enemyId, n),
       healSelf: async (amount) => {
         bossUnit.hp = Math.min(bossUnit.def.hp, bossUnit.hp + amount);
-        this.fx.popup(bossUnit.spr.x, bossUnit.spr.y - bossUnit.spr.displayHeight / 2 - 2, `+${amount}`, RAMP.GRASS);
+        this.fx.popup(bossUnit.spr.x, bossUnit.spr.y - bossUnit.spr.displayHeight / 2 - s(2), `+${amount}`, RAMP.GRASS);
         AUDIO.sfx('heal');
         await this.print(`${amount} HP came BACK. That's the wrong direction!`);
       },
@@ -524,11 +526,11 @@ export class BattleScene extends Phaser.Scene {
     const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
     for (let i = 0; i < n; i++) {
       const side = this.enemies.filter((e) => e.summoned).length % 2 === 0 ? -1 : 1;
-      const x = boss.spr.x + side * (62 + 14 * Math.floor(i / 2));
-      const y = def.boss ? 97 : 92;
+      const x = boss.spr.x + side * (s(62) + s(14) * Math.floor(i / 2));
+      const y = def.boss ? s(97) : s(92);
       const spr = this.add.image(x, y, def.sprite).setOrigin(0.5, 0.5);
       this.fitEnemySprite(spr, def, Math.max(1, this.enemies.length + n));
-      this.tweens.add({ targets: spr, y: y - 3, duration: 1100 + i * 130, yoyo: true, repeat: -1, ease: 'sine.inout' });
+      this.tweens.add({ targets: spr, y: y - s(3), duration: 1100 + i * 130, yoyo: true, repeat: -1, ease: 'sine.inout' });
       this.enemies.push({
         def,
         letter: letters[this.letterAt++ % letters.length],
@@ -577,11 +579,11 @@ export class BattleScene extends Phaser.Scene {
   /** §A4.5: the sun icon by the party strip while SUNNY SIDE holds */
   private buildSunIcon(): void {
     const n = Number(GS.flag('sunny_side')) || 0;
-    const x = 14;
-    const y = 152;
+    const x = s(14);
+    const y = s(152);
     this.add.image(x, y, 'sun_icon').setScrollFactor(0).setDepth(DEPTH_UI + 1);
     this.add
-      .bitmapText(x + 8, y - 4, 'retro', `x${n}`, 6)
+      .bitmapText(x + s(8), y - s(4), 'retro', `x${n}`, s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));
@@ -626,10 +628,10 @@ export class BattleScene extends Phaser.Scene {
    *  `standoff` keeps casters at casting distance — only the Bash and the
    *  thrown-item lob walk to arm's reach (S12b: a point-blank cast read as
    *  a melee hit; the magic travels, the caster doesn't). */
-  private async stageEnter(h: HeroUnit, aimX: number, standoff = 12): Promise<void> {
+  private async stageEnter(h: HeroUnit, aimX: number, standoff = s(12)): Promise<void> {
     h.bust.setAway(true);
     const card = h.bust.point();
-    await this.stage.enter(this.battlerSheet(h), { x: card.x, y: card.y + 14 }, aimX, this.isWinded(h), standoff);
+    await this.stage.enter(this.battlerSheet(h), { x: card.x, y: card.y + s(14) }, aimX, this.isWinded(h), standoff);
   }
 
   /** walk back to the card and hand the pose back to the bust */
@@ -699,9 +701,9 @@ export class BattleScene extends Phaser.Scene {
     // makeWindow(6,6,268,56) → bottom y62) so the intro never covers it. Only
     // TALL sprites get pushed down, and never past the party HP cards (y168);
     // a sprite too big to clear both keeps its face-priority bias (rare bosses).
-    const TEXTBOX_BOTTOM = 62;
-    const ENEMY_TOP = TEXTBOX_BOTTOM + 2; // a breath of clearance under the box
-    const ENEMY_FLOOR = 166; //              the party HP cards begin at y168
+    const TEXTBOX_BOTTOM = s(62);
+    const ENEMY_TOP = TEXTBOX_BOTTOM + s(2); // a breath of clearance under the box
+    const ENEMY_FLOOR = s(166); //              the party HP cards begin at y168
     ids.forEach((id, i) => {
       const def = ENEMIES[id];
       const x = (this.scale.width / (ids.length + 1)) * (i + 1);
@@ -711,12 +713,12 @@ export class BattleScene extends Phaser.Scene {
       // then everyone is pushed down JUST enough for the sprite top to clear the
       // message box, capped so the body never rides over the party cards.
       const half = spr.displayHeight / 2;
-      const y = Math.round(Math.min(ENEMY_FLOOR - half, Math.max(def.boss ? 97 : 92, ENEMY_TOP + half)));
+      const y = Math.round(Math.min(ENEMY_FLOOR - half, Math.max(def.boss ? s(97) : s(92), ENEMY_TOP + half)));
       spr.setY(y);
       // idle float — cosmetic only; battle sprites float, never stand (ADR-020)
       this.tweens.add({
         targets: spr,
-        y: y - 3,
+        y: y - s(3),
         duration: 1100 + i * 130,
         yoyo: true,
         repeat: -1,
@@ -749,8 +751,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private fitEnemySprite(spr: Phaser.GameObjects.Image, def: EnemyDef, seats: number): void {
-    const maxW = def.boss ? 132 : seats >= 4 ? 70 : seats >= 3 ? 86 : 112;
-    const maxH = def.boss ? 104 : 92;
+    // on-screen px caps scale with the frame; spr.width/height are the already-×ART_SCALE
+    // texture dims, so the ratio (and the no-upscale clamp at 1) is invariant — the
+    // setScale multiplier STAYS, the texture itself carries the 4× (SCALE_CONVENTION)
+    const maxW = def.boss ? s(132) : seats >= 4 ? s(70) : seats >= 3 ? s(86) : s(112);
+    const maxH = def.boss ? s(104) : s(92);
     const scale = Math.min(1, maxW / spr.width, maxH / spr.height);
     spr.setScale(scale);
   }
@@ -758,36 +763,36 @@ export class BattleScene extends Phaser.Scene {
   private buildParty(): void {
     const party = GS.aliveParty();
     const slots = party.length + (this.cfg.guestChad ? 1 : 0);
-    // four cards must clear a 400px screen; busts keep their pane either way
-    const boxW = slots >= 4 ? 92 : 96;
-    const totalW = slots * (boxW + 6) - 6;
+    // four cards must clear the native 400px screen; busts keep their pane either way
+    const boxW = slots >= 4 ? s(92) : s(96);
+    const totalW = slots * (boxW + s(6)) - s(6);
     let bx = (this.scale.width - totalW) / 2;
     const ink0 = colorOf(px(RAMP.INK, 0));
     const ink1 = colorOf(px(RAMP.INK, 1));
     for (const hero of party) {
-      const box = makeBox(this, bx, 168, boxW, 50);
+      const box = makeBox(this, bx, s(168), boxW, s(50));
       // the MOTHER read: name centered under the bust, HP/PP rows below
       const name = this.add
-        .bitmapText(bx + boxW / 2, 173, 'retro', hero.name, 6)
+        .bitmapText(bx + boxW / 2, s(173), 'retro', hero.name, s(6))
         .setOrigin(0.5, 0)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(ink0);
       const hpLabel = this.add
-        .bitmapText(bx + 10, 185, 'retro', 'HP', 6)
+        .bitmapText(bx + s(10), s(185), 'retro', 'HP', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(ink1);
       const ppLabel = this.add
-        .bitmapText(bx + 10, 200, 'retro', 'PP', 6)
+        .bitmapText(bx + s(10), s(200), 'retro', 'PP', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(ink1);
       const odoHp = new Odometer(hero.hp, hero.maxHp);
       const odoPp = new Odometer(hero.pp, hero.maxPp);
       // drums sit beside their labels — and NEVER move or hide (the law)
-      const dHp = new OdoDisplay(this, bx + 46, 184, 3);
-      const dPp = new OdoDisplay(this, bx + 46, 199, 2);
+      const dHp = new OdoDisplay(this, bx + s(46), s(184), 3);
+      const dPp = new OdoDisplay(this, bx + s(46), s(199), 2);
       dHp.setValue(hero.hp);
       dPp.setValue(hero.pp);
       this.odoDisplays.push({ d: dHp, o: odoHp }, { d: dPp, o: odoPp });
@@ -800,7 +805,7 @@ export class BattleScene extends Phaser.Scene {
         this,
         hero.id,
         bx,
-        168,
+        s(168),
         boxW,
         [box, name, hpLabel, ppLabel],
         bustSheetKey(hero.id, look.body, wear),
@@ -817,35 +822,35 @@ export class BattleScene extends Phaser.Scene {
         look,
         wear,
       });
-      bx += boxW + 6;
+      bx += boxW + s(6);
     }
     if (this.cfg.guestChad) {
-      const box = makeBox(this, bx, 168, boxW, 50);
+      const box = makeBox(this, bx, s(168), boxW, s(50));
       const t1 = this.add
-        .bitmapText(bx + 8, 173, 'retro', 'Chad', 6)
+        .bitmapText(bx + s(8), s(173), 'retro', 'Chad', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(ink0);
       const t2 = this.add
-        .bitmapText(bx + 8, 186, 'retro', 'HP', 6)
+        .bitmapText(bx + s(8), s(186), 'retro', 'HP', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(ink1);
       const hp = new Odometer(35, 35);
-      this.chadOdo = new OdoDisplay(this, bx + 28, 185, 3);
+      this.chadOdo = new OdoDisplay(this, bx + s(28), s(185), 3);
       this.chadOdo.setValue(35);
       this.chad = { hp, box, texts: [t1, t2], fled: false };
     }
   }
 
   private buildTextWindow(): void {
-    makeWindow(this, 6, 6, 268, 56);
+    makeWindow(this, s(6), s(6), s(268), s(56));
     this.textObj = this.add
-      .bitmapText(16, 14, 'retro', '', 6)
+      .bitmapText(s(16), s(14), 'retro', '', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
-      .setMaxWidth(248);
-    this.flairLine = new FlairLine(this, this.textObj, { maxWidthPx: 248, depth: DEPTH_UI + 1 });
+      .setMaxWidth(s(248));
+    this.flairLine = new FlairLine(this, this.textObj, { maxWidthPx: s(248), depth: DEPTH_UI + 1 });
   }
 
   /** S18 M23: append a flair glyph to a battle caption, by the move's ELEMENT or
@@ -937,7 +942,7 @@ export class BattleScene extends Phaser.Scene {
     await this.print(raw);
     await new Promise<void>((resolve) => {
       const tip = this.add
-        .bitmapText(258, 48, 'retro', '▼', 6)
+        .bitmapText(s(258), s(48), 'retro', '▼', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.GOLD, 2)));
@@ -1138,7 +1143,7 @@ export class BattleScene extends Phaser.Scene {
     return new Promise((resolve) => {
       let sel = 0;
       const hand = this.add
-        .image(alive[0].spr.x, alive[0].spr.y - alive[0].spr.displayHeight / 2 - 8, 'hand')
+        .image(alive[0].spr.x, alive[0].spr.y - alive[0].spr.displayHeight / 2 - s(8), 'hand')
         .setDepth(DEPTH_UI + 3)
         .setAngle(90);
       const zones = alive.map((e, i) => {
@@ -1156,7 +1161,7 @@ export class BattleScene extends Phaser.Scene {
           sel = (sel + (d.x > 0 ? 1 : alive.length - 1)) % alive.length;
           AUDIO.sfx('cursor');
         }
-        hand.setPosition(alive[sel].spr.x, alive[sel].spr.y - alive[sel].spr.displayHeight / 2 - 8);
+        hand.setPosition(alive[sel].spr.x, alive[sel].spr.y - alive[sel].spr.displayHeight / 2 - s(8));
         if (INPUT.justPressed('A')) done(alive[sel]);
         if (INPUT.justPressed('B')) done(null);
       });
@@ -1187,11 +1192,11 @@ export class BattleScene extends Phaser.Scene {
       const dimTint = colorOf(px(RAMP.NIGHT, 3));
       const at = (i: number): { x: number; y: number } => {
         const p = pool[i].bust.point();
-        return { x: p.x + 12, y: p.y - 28 };
+        return { x: p.x + s(12), y: p.y - s(28) };
       };
       const hand = this.add.image(at(0).x, at(0).y, 'hand').setDepth(DEPTH_UI + 3).setAngle(90).setScrollFactor(0);
       const tag = this.add
-        .bitmapText(0, 0, 'retro', '', 6)
+        .bitmapText(0, 0, 'retro', '', s(6))
         .setOrigin(0, 0.5)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 3)
@@ -1199,7 +1204,7 @@ export class BattleScene extends Phaser.Scene {
       const zones = pool.map((h, i) => {
         const p = h.bust.point();
         const z = this.add
-          .zone(p.x - 18, p.y - 24, 96, 50)
+          .zone(p.x - s(18), p.y - s(24), s(96), s(50))
           .setOrigin(0, 0)
           .setScrollFactor(0)
           .setDepth(DEPTH_UI + 3)
@@ -1227,7 +1232,7 @@ export class BattleScene extends Phaser.Scene {
           else x.box.setTint(dimTint);
         }
         hand.setPosition(at(sel).x, at(sel).y);
-        tag.setText(`> ${pool[sel].hero.name}`).setPosition(at(sel).x + 8, at(sel).y);
+        tag.setText(`> ${pool[sel].hero.name}`).setPosition(at(sel).x + s(8), at(sel).y);
         if (INPUT.justPressed('A')) done(pool[sel]);
         if (INPUT.justPressed('B')) done(null);
       });
@@ -1330,7 +1335,7 @@ export class BattleScene extends Phaser.Scene {
       // the ring timer drains under the target, at fx depth
       const ring = this.fx.comboRing(
         target.spr.x,
-        target.spr.y + target.spr.displayHeight / 2 + 5,
+        target.spr.y + target.spr.displayHeight / 2 + s(5),
         () => left / COMBO_WINDOW_MS,
       );
       const off = everyFrame(this, (dt) => {
@@ -1341,8 +1346,8 @@ export class BattleScene extends Phaser.Scene {
           hits++;
           AUDIO.sfx(`combo_${hits}`); // the rising pitch ladder
           void this.stage.strike(cls === 'rifle' ? 'recoil' : 'swing', 150);
-          this.fx.burst(target.spr.x, target.spr.y, RAMP.GRASS, 7, 55, 320);
-          this.fx.popup(target.spr.x, target.spr.y - target.spr.displayHeight / 2 - 10, `${hits} HITS!`, RAMP.GRASS);
+          this.fx.burst(target.spr.x, target.spr.y, RAMP.GRASS, 7, s(55), 320);
+          this.fx.popup(target.spr.x, target.spr.y - target.spr.displayHeight / 2 - s(10), `${hits} HITS!`, RAMP.GRASS);
         }
         if (left <= 0 || hits >= cap) {
           ring.done();
@@ -1521,7 +1526,7 @@ export class BattleScene extends Phaser.Scene {
       const aimX = foeTargets.length > 0 ? foeTargets[0].spr.x : this.scale.width / 2;
       // casts/aims/prayers keep CASTING DISTANCE (a point-blank psychic
       // reads as a bash — the S12b user catch); throws lob from range too
-      await this.stageEnter(h, aimX, 72);
+      await this.stageEnter(h, aimX, s(72));
       if (pose === 'throw') await this.stage.strike('throwA', 300);
       else this.stage.hold(pose);
     } else {
@@ -2225,7 +2230,7 @@ export class BattleScene extends Phaser.Scene {
       // from throwing range (S12b), the arc is the show
       const onStage = fxKey !== null && stagePoseOf(fxKey) === 'throw';
       if (onStage) {
-        await this.stageEnter(h, target.spr.x, 72);
+        await this.stageEnter(h, target.spr.x, s(72));
         await this.stage.strike('throwA', 300);
       } else {
         h.bust.poseFor('lunge', 600);
@@ -2287,7 +2292,7 @@ export class BattleScene extends Phaser.Scene {
     e.hp = Math.max(0, e.hp - dmg);
     // floating damage popup (the S10 popFoe idiom) + the printed line —
     // a SMAAAASH combo hands in its one assembled EB line instead (S11b)
-    this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - 2, `${dmg}`, weak ? RAMP.GOLD : RAMP.PAPER);
+    this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `${dmg}`, weak ? RAMP.GOLD : RAMP.PAPER);
     await this.print(line ?? `${dmg} damage${weak ? ' — a sore spot!!' : '!'}`);
     if (e.asleep > 0 && e.hp > 0) {
       e.asleep = 0;
@@ -2304,7 +2309,7 @@ export class BattleScene extends Phaser.Scene {
       // §A7 Ch.2: the Parrot drops everything it took (pending-cash theft)
       if (e.stolenCash > 0) {
         GS.data.cashOnHand += e.stolenCash;
-        this.fx.popup(e.spr.x, e.spr.y - 24, `+$${e.stolenCash}`, RAMP.GOLD);
+        this.fx.popup(e.spr.x, e.spr.y - s(24), `+$${e.stolenCash}`, RAMP.GOLD);
         AUDIO.sfx('confirm');
         await this.print(this.fill(BATTLE_TEXT.parrot_drop, '', e, `$${e.stolenCash}`));
         e.stolenCash = 0;
@@ -2431,7 +2436,7 @@ export class BattleScene extends Phaser.Scene {
       const target =
         move.kind === 'drain' && latchedHero ? latchedHero : targets[Math.floor(Math.random() * targets.length)];
       // enemy lunge — cosmetic
-      this.tweens.add({ targets: e.spr, y: e.spr.y + 5, duration: 90, yoyo: true });
+      this.tweens.add({ targets: e.spr, y: e.spr.y + s(5), duration: 90, yoyo: true });
       await this.print(this.fill(move.text, '', e, target.hero.name));
       switch (move.kind) {
         case 'attack':
@@ -2490,28 +2495,29 @@ export class BattleScene extends Phaser.Scene {
           // S16 LAYERED WARDS (§A3 amended) — Shield halves physical, Ward halves
           // elemental, Reflect & Mirror halve everything AND throw some back, with
           // the Bulwark + brace-and-answer synergies. One math seam (formulas.ts).
-          const s = target.status;
+          // `st` (not `s`) so the scale helper `s()` stays callable in this block
+          const st = target.status;
           const mit = mitigateIncoming(dmg, element, {
-            shield: s.shield > 0,
-            ward: s.ward > 0,
-            reflect: s.reflect > 0,
-            mirror: s.mirror > 0,
-            steeled: s.steeled > 0,
+            shield: st.shield > 0,
+            ward: st.ward > 0,
+            reflect: st.reflect > 0,
+            mirror: st.mirror > 0,
+            steeled: st.steeled > 0,
           });
           const taken = mit.taken;
           let reflected = mit.reflected;
           // Stone Brow Stance: a braced monk answers a PHYSICAL hit with ~40%
           // fist damage at the SAME `reflected` seam — patience made offense.
-          const countered = s.braced > 0 && element === 'physical';
+          const countered = st.braced > 0 && element === 'physical';
           if (countered) reflected += bracedCounter(dmg);
           this.applyHeroDamage(target, taken);
           await this.print(`${target.hero.name} took ${taken}!`);
           if (reflected > 0) {
-            const tint = s.reflect > 0 ? RAMP.GOLD : countered ? RAMP.RED : RAMP.CYAN;
-            this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - 2, `${reflected}`, tint);
+            const tint = st.reflect > 0 ? RAMP.GOLD : countered ? RAMP.RED : RAMP.CYAN;
+            this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `${reflected}`, tint);
             e.hp = Math.max(1, e.hp - reflected); // a reflection never lands the last hit
             // the WALL THAT ANSWERS (reflect) vs the monk's counter vs Dorin's mirror
-            const line = s.reflect > 0
+            const line = st.reflect > 0
               ? BATTLE_TEXT.reflect_back
               : countered
                 ? BATTLE_TEXT.braced_counter
@@ -2524,7 +2530,7 @@ export class BattleScene extends Phaser.Scene {
           target.latched = true;
           // the drain made visible: a throbbing tether, enemy → card (§A6)
           this.fx.attachTether(
-            () => ({ x: e.spr.x, y: e.spr.y + 12 }),
+            () => ({ x: e.spr.x, y: e.spr.y + s(12) }),
             () => target.bust.point(),
           );
           await this.fx.play('latch_tether', { targets: [this.cardTarget(target)] });
@@ -2539,7 +2545,7 @@ export class BattleScene extends Phaser.Scene {
           this.applyHeroDamage(latchedHero, dmg);
           const sup = Math.floor(dmg / 2);
           e.hp = Math.min(e.def.hp, e.hp + sup);
-          this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - 2, `+${sup}`, RAMP.GRASS);
+          this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `+${sup}`, RAMP.GRASS);
           AUDIO.sfx('fx_latch');
           await this.print(BATTLE_TEXT.latch_drain);
           await this.print(`${latchedHero.hero.name} lost ${dmg} HP!`);
@@ -2583,7 +2589,7 @@ export class BattleScene extends Phaser.Scene {
           GS.data.cashOnHand -= take;
           e.stolenCash += take;
           AUDIO.sfx('cancel');
-          this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - 2, `-$${take}`, RAMP.GOLD);
+          this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `-$${take}`, RAMP.GOLD);
           await this.print(this.fill(BATTLE_TEXT.parrot_take, '', e, `$${take}`));
           break;
         }
@@ -2610,7 +2616,7 @@ export class BattleScene extends Phaser.Scene {
             const amt = 18 + Math.floor(Math.random() * 10);
             for (const a of allies) {
               a.hp = Math.min(a.def.hp, a.hp + amt);
-              this.fx.popup(a.spr.x, a.spr.y - a.spr.displayHeight / 2 - 2, `+${amt}`, RAMP.GRASS);
+              this.fx.popup(a.spr.x, a.spr.y - a.spr.displayHeight / 2 - s(2), `+${amt}`, RAMP.GRASS);
             }
             AUDIO.sfx('heal');
           }
@@ -2637,7 +2643,7 @@ export class BattleScene extends Phaser.Scene {
    */
   private async puppetAct(e: EnemyUnit): Promise<void> {
     const others = this.enemies.filter((o) => o.alive && o !== e);
-    this.tweens.add({ targets: e.spr, y: e.spr.y + 5, duration: 90, yoyo: true });
+    this.tweens.add({ targets: e.spr, y: e.spr.y + s(5), duration: 90, yoyo: true });
     if (others.length === 0) {
       await this.print(this.fill(BATTLE_TEXT.puppet_nobody, '', e));
       return;
