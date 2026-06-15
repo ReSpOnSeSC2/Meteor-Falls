@@ -22,6 +22,7 @@
     "art:facesheet": "vite-node tools/forge-faces.ts",
     "art:buildings": "vite-node tools/render-buildings.ts",
     "art:vehicles": "vite-node tools/render-vehicles.ts",
+    "art:minigames": "vite-node tools/render-minigames.ts",
     "art:icons": "vite-node tools/render-icons.ts",
     "art:glyphs": "vite-node tools/render-glyphs.ts",
     "art:flair": "vite-node tools/render-flair.ts",
