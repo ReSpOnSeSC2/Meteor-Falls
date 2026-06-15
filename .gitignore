@@ -24,3 +24,9 @@ android/app/src/main/res/drawable-nodpi/splash_art.png
 .tmp/
 .shots-server.log
 vite.config.ts.timestamp-*.mjs
+
+# scratch art exports at repo root (imagegen drops, tmp logo/title previews)
+/chatgpt-image-*
+/tmp-*
+/title-menu-tested.png
+/title-screen-tested.png
