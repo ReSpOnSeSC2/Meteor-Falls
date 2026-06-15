@@ -119,6 +119,7 @@ import {
 import { GENERATED_BUILDINGS } from './buildings';
 import { VEHICLE_CATALOG, drawVehicleViews } from './vehicles';
 import { ITEM_ICON, itemIconKey } from './icons';
+import { ABILITY_ICON, BATTLE_FX_ICON, STATUS_ICON, abilityIconKey, battleFxIconKey, statusIconKey } from './combatIcons';
 import {
   GLYPH_SCRIPT,
   SCRIPT_CATALOG,
@@ -763,6 +764,13 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // face, registered under itemIconKey(id). The Items bag, Equip screen, shops,
   // and battle Goods read these through pick()/ask()'s per-row icons.
   for (const [id, draw] of Object.entries(ITEM_ICON)) addPixmap(scene, itemIconKey(id), draw());
+
+  // PKG-05: combat micro-icons. Ability menu faces ride the same per-row icon
+  // hook as Goods, status badges are available for battle bust overlays, and the
+  // flair spritelets also get an fx_* alias for binary package parity.
+  for (const [id, draw] of Object.entries(ABILITY_ICON)) addPixmap(scene, abilityIconKey(id), draw());
+  for (const [name, draw] of Object.entries(STATUS_ICON)) addPixmap(scene, statusIconKey(name), draw());
+  for (const [name, draw] of Object.entries(BATTLE_FX_ICON)) addPixmap(scene, battleFxIconKey(name), draw());
 
   // S18 Movement 22 (ADR-092) — THE GLYPH FORGE / §A11.8 THE GLYPH LAW: each
   // canon §A5/§A6 area's region-true decorative SCRIPT, registered under

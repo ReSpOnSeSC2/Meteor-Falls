@@ -103,6 +103,7 @@ import { authoredBattleBackdropKey } from '../spritegen/authored';
 import { wearSpriteKey } from '../spritegen/enemies';
 import { weaponClassOf, swingSfxOf } from '../spritegen/weapons';
 import { itemIconKey } from '../spritegen/icons';
+import { abilityIconKey } from '../spritegen/combatIcons';
 import {
   physicalDamage,
   smashChance,
@@ -1422,7 +1423,10 @@ export class BattleScene extends Phaser.Scene {
       return false;
     }
     const labels = ids.map((id) => `${ABILITIES[id].name}  ${ABILITIES[id].pp}pp`);
-    const pick = await this.dlg.ask([...labels, 'Back'], { cancelIndex: labels.length });
+    const pick = await this.dlg.ask([...labels, 'Back'], {
+      cancelIndex: labels.length,
+      icons: [...ids.map((id) => abilityIconKey(id)), undefined],
+    });
     if (pick >= labels.length) return false;
     const ab = ABILITIES[ids[pick]];
     if (h.odoPp.target < ab.pp) {
@@ -1440,7 +1444,10 @@ export class BattleScene extends Phaser.Scene {
     );
     if (ids.length === 0) return false;
     const labels = ids.map((id) => ABILITIES[id].name);
-    const pick = await this.dlg.ask([...labels, 'Back'], { cancelIndex: labels.length });
+    const pick = await this.dlg.ask([...labels, 'Back'], {
+      cancelIndex: labels.length,
+      icons: [...ids.map((id) => abilityIconKey(id)), undefined],
+    });
     if (pick >= labels.length) return false;
     return this.castAbility(h, ABILITIES[ids[pick]]);
   }
@@ -1454,7 +1461,10 @@ export class BattleScene extends Phaser.Scene {
     );
     if (ids.length === 0) return false;
     const labels = ids.map((id) => ABILITIES[id].name);
-    const pick = await this.dlg.ask([...labels, 'Back'], { cancelIndex: labels.length });
+    const pick = await this.dlg.ask([...labels, 'Back'], {
+      cancelIndex: labels.length,
+      icons: [...ids.map((id) => abilityIconKey(id)), undefined],
+    });
     if (pick >= labels.length) return false;
     return this.castAbility(h, ABILITIES[ids[pick]]);
   }
