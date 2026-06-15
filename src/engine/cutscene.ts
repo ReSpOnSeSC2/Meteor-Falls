@@ -17,7 +17,7 @@ import { INPUT } from './input';
 import { AUDIO } from './audio';
 import { vars } from '../ui/text';
 import { DEPTH_UI, everyFrame } from '../ui/windows';
-import { CUTSCENES, type Cutscene, type CutsceneBeat } from '../data/cutscenes';
+import { CUTSCENES, cutscenePanelFilenames, type Cutscene, type CutsceneBeat } from '../data/cutscenes';
 
 // Eager URL map of every cutscene panel actually on disk. A registry beat with
 // no matching PNG yet is simply skipped (no 404) until its art lands — so a
@@ -40,8 +40,11 @@ function frameKey(chapter: string, art: string, n: number): string {
 }
 
 function panelUrl(chapter: string, art: string, n = 1): string | undefined {
-  const pad = String(n).padStart(2, '0');
-  return PANEL_URLS[`../../assets/art/cutscenes/${chapter}/${art}_${pad}.png`];
+  for (const filename of cutscenePanelFilenames(art, n)) {
+    const url = PANEL_URLS[`../../assets/art/cutscenes/${chapter}/${filename}`];
+    if (url) return url;
+  }
+  return undefined;
 }
 
 /** Queue every registry panel that has art on disk (all frames of animated

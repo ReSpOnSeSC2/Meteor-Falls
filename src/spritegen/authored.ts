@@ -200,6 +200,12 @@ const WORLD_PROP_KEYS = [
   'market_stall_c', 'banana_boat', 'departure_board', 'idol_shrine', 'pyramid_gate',
   'mask_switch', 'mask_switch_lit', 'pedestal_0', 'pedestal_1', 'pedestal_2',
   'pedestal_3', 'crate', 'crate_bananas', 'gangplank',
+  'baobab_shade', 'giant_bootprint_snow', 'palm_a', 'palm_b', 'palm_c', 'palm_d',
+  'postage_stamp_crosswalk', 'puerto_banana_boat', 'puerto_bench', 'puerto_crate',
+  'puerto_crate_bananas', 'puerto_departure_board', 'puerto_fountain', 'puerto_gangplank',
+  'puerto_gift_box', 'puerto_gift_box_open', 'puerto_market_stall_a',
+  'puerto_market_stall_b', 'puerto_market_stall_c', 'puerto_payphone', 'puerto_picnic',
+  'puerto_sign', 'puerto_trash_can',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -216,10 +222,27 @@ const BASE_FACADE_KEYS = [
   'bldg_deptstore', 'bldg_tower_glass', 'bldg_tower_arms', 'bldg_tower_corp',
 ] as const;
 
+const REGION_FACADE_KEYS = [
+  'bldg_kvisthavn_boathouse', 'bldg_kvisthavn_chapel', 'bldg_kvisthavn_fjord_cabin',
+  'bldg_kvisthavn_harbor_cafe', 'bldg_kvisthavn_supply_shop',
+  'bldg_lilleby_giant_inn', 'bldg_lilleby_runic_bank', 'bldg_lilleby_tiny_house',
+  'bldg_lilleby_warehouse',
+  'bldg_minimus_cathedral', 'bldg_minimus_census_office', 'bldg_minimus_major_palace',
+  'bldg_minimus_manor', 'bldg_minimus_needle_armory', 'bldg_minimus_petit_market',
+  'bldg_minimus_post_office', 'bldg_minimus_thimble_inn', 'bldg_minimus_whistle_barracks',
+  'bldg_zanzibel_caravanserai', 'bldg_zanzibel_civic_hall', 'bldg_zanzibel_courier_guild',
+  'bldg_zanzibel_grand_market', 'bldg_zanzibel_harbor_customs', 'bldg_zanzibel_home',
+  'bldg_zanzibel_indigo_dyer', 'bldg_zanzibel_investment_desk', 'bldg_zanzibel_spice_stall',
+] as const;
+
 const WORLD_FACADE_KEYS = Array.from(new Set([
   ...BASE_FACADE_KEYS,
+  ...REGION_FACADE_KEYS,
   ...GENERATED_BUILDINGS.map((building) => building.name),
 ]));
+
+export const AUTHORED_WORLD_PROP_KEYS = WORLD_PROP_KEYS;
+export const AUTHORED_WORLD_FACADE_KEYS = WORLD_FACADE_KEYS;
 
 const WORLD_PROP_ART = [
   ...WORLD_FACADE_KEYS.map((key) => ({

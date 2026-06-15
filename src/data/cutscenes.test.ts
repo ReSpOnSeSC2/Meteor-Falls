@@ -1,14 +1,24 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { CUTSCENES, type CutsceneBeat } from './cutscenes';
+import { CUTSCENES, cutscenePanelFilenames, type CutsceneBeat } from './cutscenes';
 
 const all = Object.values(CUTSCENES);
 
 function panelPath(chapter: string, beat: CutsceneBeat): string {
-  return fileURLToPath(
-    new URL(`../../assets/art/cutscenes/${chapter}/${beat.art}_01.png`, import.meta.url),
-  );
+  const candidates = cutscenePanelFilenames(beat.art).map((filename) => fileURLToPath(
+    new URL(`../../assets/art/cutscenes/${chapter}/${filename}`, import.meta.url),
+  ));
+  return candidates.find((path) => existsSync(path)) ?? candidates[candidates.length - 1];
+}
+
+function pngSize(path: string): { w: number; h: number } {
+  const data = readFileSync(path);
+  return { w: data.readUInt32BE(16), h: data.readUInt32BE(20) };
+}
+
+function beatKeys(): Set<string> {
+  return new Set(all.flatMap((cs) => cs.beats.map((beat) => `${cs.chapter}/${beat.art}`)));
 }
 
 describe('cutscene registry', () => {
@@ -59,5 +69,34 @@ describe('cutscene registry', () => {
     for (const beat of opening.beats) {
       expect(existsSync(panelPath('ch1', beat))).toBe(true);
     }
+  });
+
+  it('prefers runtime-resolution _4x panels over legacy _01 placeholders', () => {
+    const preferred4x: string[] = [];
+    for (const cs of all) {
+      for (const beat of cs.beats) {
+        const path = panelPath(cs.chapter, beat);
+        if (!path.endsWith('_4x.png')) continue;
+        preferred4x.push(`${cs.chapter}/${beat.art}`);
+        expect(pngSize(path), `${path} should be a runtime-resolution cutscene panel`).toEqual({ w: 1600, h: 900 });
+      }
+    }
+    expect(preferred4x).toContain('ch5/big_little_lens_build');
+    expect(preferred4x).toContain('ch6/zanzibel_market');
+  });
+
+  it('does not strand _4x cutscene panels outside the registry', () => {
+    const registered = beatKeys();
+    const stranded: string[] = [];
+    for (let n = 1; n <= 10; n++) {
+      const chapter = `ch${n}`;
+      const dir = fileURLToPath(new URL(`../../assets/art/cutscenes/${chapter}/`, import.meta.url));
+      if (!existsSync(dir)) continue;
+      for (const filename of readdirSync(dir).filter((name) => name.endsWith('_4x.png'))) {
+        const art = filename.replace(/_4x\.png$/, '');
+        if (!registered.has(`${chapter}/${art}`)) stranded.push(`${chapter}/${filename}`);
+      }
+    }
+    expect(stranded).toEqual([]);
   });
 });

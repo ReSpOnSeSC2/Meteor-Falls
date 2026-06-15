@@ -14,7 +14,13 @@
  */
 import { Grid, treeSprite } from '../data/mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
-import { GENERATED_BUILDINGS } from '../spritegen/buildings';
+import {
+  GENERATED_BUILDINGS,
+  KVISTHAVN_FACADES,
+  LILLEBY_FACADES,
+  MINIMUS_FACADES,
+  ZANZIBEL_FACADES,
+} from '../spritegen/buildings';
 import type {
   PropDef,
   DraftNpc,
@@ -148,9 +154,14 @@ const SHIPPED_DIMS: Record<string, { w: number; u: number }> = {
   bldg_tower_glass: { w: 6, u: 12 }, bldg_tower_arms: { w: 6, u: 12 }, bldg_tower_corp: { w: 7, u: 13 },
 };
 
+const AUTHORED_REGION_FACADE_DIMS: Record<string, { w: number; u: number }> = Object.fromEntries(
+  [...KVISTHAVN_FACADES, ...LILLEBY_FACADES, ...MINIMUS_FACADES, ...ZANZIBEL_FACADES].map((name) => [name, { w: 4, u: 0 }]),
+);
+
 /** the 100+ generated catalog (+ colossi) contributes its true dims here too */
 export const BUILDING_DIMS: Record<string, { w: number; u: number }> = {
   ...SHIPPED_DIMS,
+  ...AUTHORED_REGION_FACADE_DIMS,
   ...Object.fromEntries(GENERATED_BUILDINGS.map((b) => [b.name, { w: b.opts.wallTiles, u: b.opts.upperRows }])),
 };
 

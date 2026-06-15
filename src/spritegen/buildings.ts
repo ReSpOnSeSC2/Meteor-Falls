@@ -130,6 +130,28 @@ export function skinsFor(families: readonly string[], ramps?: readonly number[])
   ).map((e) => e.name);
 }
 
+export const KVISTHAVN_FACADES: readonly string[] = [
+  'bldg_kvisthavn_boathouse', 'bldg_kvisthavn_chapel', 'bldg_kvisthavn_fjord_cabin',
+  'bldg_kvisthavn_harbor_cafe', 'bldg_kvisthavn_supply_shop',
+];
+
+export const LILLEBY_FACADES: readonly string[] = [
+  'bldg_lilleby_giant_inn', 'bldg_lilleby_runic_bank', 'bldg_lilleby_tiny_house',
+  'bldg_lilleby_warehouse',
+];
+
+export const MINIMUS_FACADES: readonly string[] = [
+  'bldg_minimus_cathedral', 'bldg_minimus_census_office', 'bldg_minimus_major_palace',
+  'bldg_minimus_manor', 'bldg_minimus_needle_armory', 'bldg_minimus_petit_market',
+  'bldg_minimus_post_office', 'bldg_minimus_thimble_inn', 'bldg_minimus_whistle_barracks',
+];
+
+export const ZANZIBEL_FACADES: readonly string[] = [
+  'bldg_zanzibel_caravanserai', 'bldg_zanzibel_civic_hall', 'bldg_zanzibel_courier_guild',
+  'bldg_zanzibel_grand_market', 'bldg_zanzibel_harbor_customs', 'bldg_zanzibel_home',
+  'bldg_zanzibel_indigo_dyer', 'bldg_zanzibel_investment_desk', 'bldg_zanzibel_spice_stall',
+];
+
 /**
  * AREA_SKINS — the per-area building rosters (the "each area feels fresh" law).
  * Every named level area draws ONLY from its own slice: a distinct family mix +
@@ -187,28 +209,24 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
   // CH.4 NORWAY — KVISTHAVN: a normal-scale fishing hamlet under the cliffs. Low
   // weatherboard cafes/shops, a cold-storage cannery, brick walk-ups — red/blue/
   // earth/paper, cozy and small (the human-sized half of the giant chapter).
-  kvisthavn: skinsFor(['cafe', 'shop', 'brownstone', 'warehouse'], [RAMP.RED, RAMP.BLUE, RAMP.EARTH, RAMP.PAPER]),
+  kvisthavn: KVISTHAVN_FACADES,
   // CH.4 NORWAY — LILLEBY: the giants' town, where the party walks UNDER the doors.
   // Everything towers: hotels, apartment arms, a department store, an office block,
   // plus a real mega + a landmark colossus so the scale-comedy reads on sight.
-  lilleby: [
-    ...skinsFor(['hotel', 'apartments', 'deptstore', 'office'], [RAMP.RED, RAMP.GOLD, RAMP.EARTH, RAMP.BLUE]),
-    'bldg_tower_arms', 'bldg_colossus_grand',
-  ],
+  lilleby: [...LILLEBY_FACADES, 'bldg_tower_arms'],
 
   // CH.5 MINIMUS — MINIMUS MAJOR: a tabletop capital shrunk to 1/100. ONLY the
   // tiniest tiers (1–2 storeys), a jewel-box gold/red duchy palette: a knee-high
   // cathedral (civic), ribbon-street shops/cafes, a stall market. Hand-picked so a
   // mega can never sneak into a town the party steps over.
   minimus: [
-    'bldg_gen_shop_gold_1', 'bldg_gen_cafe_gold_1', 'bldg_gen_civic_gold_2', 'bldg_gen_market_gold_1',
-    'bldg_gen_shop_red_1', 'bldg_gen_cafe_red_1', 'bldg_gen_market_orange_1',
+    ...MINIMUS_FACADES,
   ],
 
   // CH.6 AFRICA — ZANZIBEL: the bazaar port (best market music in the game). Sun-
   // baked open-air markets, freight warehouses, corner shops, a civic customs hall —
   // gold/orange/earth/grass, masonry warmed by dust, never cool glass.
-  zanzibel: skinsFor(['market', 'warehouse', 'shop', 'civic'], [RAMP.GOLD, RAMP.ORANGE, RAMP.EARTH, RAMP.GRASS]),
+  zanzibel: ZANZIBEL_FACADES,
 
   // CH.7 INDIA — CHANDRAPORE: the game's biggest, densest city. A riot of theaters
   // (the cinema playing a movie about your party), a department emporium, a grand
@@ -265,6 +283,7 @@ export const CANON_AREAS: readonly string[] = [
  */
 export const BESPOKE_AREA_FACADES: readonly string[] = [
   'mansion_a', 'mansion_b', 'mansion_c', 'golf_gatehouse',
+  ...KVISTHAVN_FACADES, ...LILLEBY_FACADES, ...MINIMUS_FACADES, ...ZANZIBEL_FACADES,
 ];
 
 /**

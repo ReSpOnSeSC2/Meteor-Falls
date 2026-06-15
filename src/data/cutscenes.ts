@@ -2,10 +2,11 @@
  * CUTSCENE REGISTRY — the data half of the authored-panel cutscene system.
  *
  * A "cutscene" is an ordered list of full-screen painted panels (one PNG per
- * beat, authored at `assets/art/cutscenes/<chapter>/<art>_01.png` per
- * docs/PROMPT_WORLD_ANIMATIONS.md §7). The panels are STILLS; motion is code —
- * Ken Burns drift, cross-fades, timed captions, and per-beat sfx/flash/shake —
- * applied by the player in `src/engine/cutscene.ts`.
+ * beat, authored at `assets/art/cutscenes/<chapter>/<art>_01.png`, or
+ * `<art>_4x.png` when a runtime-resolution panel supersedes an older placeholder).
+ * The panels are STILLS; motion is code — Ken Burns drift, cross-fades, timed
+ * captions, and per-beat sfx/flash/shake — applied by the player in
+ * `src/engine/cutscene.ts`.
  *
  * This file is PURE DATA (no Phaser, no asset imports) so content-validate and
  * unit tests can read it. The engine cross-references each beat's `art` against
@@ -37,7 +38,7 @@ export interface KenBurns {
 
 /** One panel + its motion and cues. */
 export interface CutsceneBeat {
-  /** file stem under `assets/art/cutscenes/<chapter>/` (no `_01.png`). */
+  /** file stem under `assets/art/cutscenes/<chapter>/` (no `_01.png`/`_4x.png`). */
   art: string;
   /** timed narration lines shown over the panel (vars substituted). */
   captions?: string[];
@@ -57,8 +58,8 @@ export interface CutsceneBeat {
   hold?: number;
   /**
    * ANIMATED panel: the number of frames. Files are `<art>_01.png … <art>_NN.png`
-   * (the still convention extended — frame 1 is the same `_01.png`). Played as a
-   * loop under the same Ken Burns/caption motion. Omit (or 1) for a single still.
+   * (the still convention extended; a `_4x.png` can supersede frame 1). Played as
+   * a loop under the same Ken Burns/caption motion. Omit (or 1) for a single still.
    */
   frames?: number;
   /** playback rate (frames/sec) when `frames` > 1. Default 6. */
@@ -79,6 +80,12 @@ export interface Cutscene {
 
 /** Compact scaffold helper: bare panels, captions/cues to be authored later. */
 const panels = (...arts: string[]): CutsceneBeat[] => arts.map((art) => ({ art }));
+
+/** Preferred on-disk filenames for a beat frame, in lookup order. */
+export function cutscenePanelFilenames(art: string, n = 1): readonly string[] {
+  if (n <= 1) return [`${art}_4x.png`, `${art}_01.png`];
+  return [`${art}_${String(n).padStart(2, '0')}.png`];
+}
 
 /* ============================ CHAPTER 1 (Otterbrook) ============================ */
 /* The opening is fully authored (it supersedes the ADR-041 hand-vector cinema).
