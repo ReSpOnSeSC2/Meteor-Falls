@@ -4,13 +4,11 @@
  * Exports the runtime-authored Hoops, Links, and Arcade sprites into the
  * package folders requested by docs/asset-packages/PKG-10-minigames.md.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { Pixmap } from '../src/spritegen/pixmap';
 import { RAMP, T, px } from '../src/palette';
 import { drawTextInto } from '../src/spritegen/font';
-import { CAST } from '../src/spritegen/characters';
 import {
-  generateAthleteFrames,
   deriveOpponentSpec,
   drawAthleteShadow,
   drawBall,
@@ -37,7 +35,6 @@ import {
   drawPinFlag,
   drawSandFrames,
   drawSplashFrames,
-  generateGolferFrames,
 } from '../src/spritegen/golfers';
 import {
   drawArcadeBolt,
@@ -48,7 +45,7 @@ import {
   drawArcadeShip,
   drawScanline,
 } from '../src/spritegen/arcade';
-import { pixmapToPng } from './png';
+import { decodePngToPixmap, pixmapToPng } from './png';
 
 const ROOT = 'assets/art/minigames';
 const SCALE = 4;
@@ -68,6 +65,25 @@ function blit(dst: Pixmap, src: Pixmap, dx: number, dy: number): void {
   }
 }
 
+function crop(src: Pixmap, sx: number, sy: number, w: number, h: number): Pixmap {
+  const out = new Pixmap(w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const c = src.get(sx + x, sy + y);
+      if (c !== T) out.set(x, y, c);
+    }
+  }
+  return out;
+}
+
+function rawSheet(frames: Pixmap[], cols: number): Pixmap {
+  const fw = frames[0].w;
+  const fh = frames[0].h;
+  const out = new Pixmap(cols * fw, Math.ceil(frames.length / cols) * fh);
+  frames.forEach((pm, i) => blit(out, pm, (i % cols) * fw, Math.floor(i / cols) * fh));
+  return out;
+}
+
 function frameSheet(frames: Pixmap[], cols: number, bg = T): Pixmap {
   const pad = 2;
   const fw = frames[0].w;
@@ -81,6 +97,124 @@ function frameSheet(frames: Pixmap[], cols: number, bg = T): Pixmap {
     blit(out, pm, x, y);
   });
   return out;
+}
+
+type SourceSlug = 'jay' | 'mia' | 'dockworker';
+
+const SOURCE = {
+  jay: 'assets/art/characters/jay_anim_46_24x32.png',
+  mia: 'assets/art/characters/mia_anim_46_24x32.png',
+  dockworker: 'assets/art/characters/dockworker_anim_46_24x32.png',
+} as const satisfies Record<SourceSlug, string>;
+
+const SRC_W = 24;
+const SRC_H = 32;
+const SRC_COLS = 4;
+
+function readCharacterFrame(slug: SourceSlug, frame: number): Pixmap {
+  const sheet = decodePngToPixmap(readFileSync(SOURCE[slug]));
+  return crop(sheet, (frame % SRC_COLS) * SRC_W, Math.floor(frame / SRC_COLS) * SRC_H, SRC_W, SRC_H);
+}
+
+function sportFrame(slug: SourceSlug, sourceFrame: number, opts: { x?: number; y?: number; ball?: [number, number]; club?: 'driver' | 'putter' | 'high' } = {}): Pixmap {
+  const out = new Pixmap(32, 40);
+  blit(out, readCharacterFrame(slug, sourceFrame), 4 + (opts.x ?? 0), 7 + (opts.y ?? 0));
+  if (opts.ball) {
+    const [bx, by] = opts.ball;
+    const ball = drawBall();
+    blit(out, ball, bx, by);
+  }
+  if (opts.club) {
+    const shaft = px(RAMP.PAPER, 1);
+    const head = px(RAMP.PAPER, 0);
+    if (opts.club === 'high') {
+      out.line(13, 9, 5, 3, shaft);
+      out.rect(3, 2, 3, 2, head);
+    } else if (opts.club === 'putter') {
+      out.line(20, 24, 24, 37, shaft);
+      out.rect(23, 37, 5, 2, head);
+    } else {
+      out.line(19, 23, 27, 37, shaft);
+      out.rect(26, 37, 4, 2, head);
+    }
+  }
+  return out;
+}
+
+function authoredAthleteFrames(slug: SourceSlug): Pixmap[] {
+  const standR = 8;
+  const stepR = 10;
+  const standR2 = 10;
+  const stepR2 = 8;
+  const standD = 0;
+  const stepD = 2;
+  const standU = 12;
+  const runR0 = 8;
+  const runR1 = 10;
+  const diagR = 24;
+  return [
+    sportFrame(slug, standR, { ball: [23, 25] }),
+    sportFrame(slug, standR2, { y: -1, ball: [23, 23] }),
+    sportFrame(slug, runR0, { x: 1, ball: [24, 26] }),
+    sportFrame(slug, runR1, { x: 1, ball: [23, 24] }),
+    sportFrame(slug, runR0, { x: 1 }),
+    sportFrame(slug, runR1, { x: 1 }),
+    sportFrame(slug, standD, { x: -2 }),
+    sportFrame(slug, stepD, { x: 2 }),
+    sportFrame(slug, standR, { ball: [21, 17] }),
+    sportFrame(slug, diagR, { y: -4, ball: [20, 8] }),
+    sportFrame(slug, standR, { y: -6, ball: [24, 4] }),
+    sportFrame(slug, runR0, { x: 2, y: -1, ball: [24, 13] }),
+    sportFrame(slug, runR1, { x: 2, y: -4, ball: [24, 9] }),
+    sportFrame(slug, diagR, { y: -7, ball: [18, 4] }),
+    sportFrame(slug, standR, { y: -7, ball: [25, 14] }),
+    sportFrame(slug, standU, { y: -7, ball: [12, 24] }),
+    sportFrame(slug, standR, { y: -7, ball: [25, 14] }),
+    sportFrame(slug, stepR, { y: -7, ball: [17, 3] }),
+    sportFrame(slug, standR, { y: -7, ball: [25, 14] }),
+    sportFrame(slug, diagR, { y: -5 }),
+    sportFrame(slug, standR, { y: -7 }),
+    sportFrame(slug, stepR2, { x: 2, ball: [25, 20] }),
+    sportFrame(slug, standD, { x: 1, y: 4 }),
+    sportFrame(slug, standD, { y: -2 }),
+    sportFrame(slug, stepD, { y: -3 }),
+    sportFrame(slug, standU, { ball: [14, 23] }),
+    sportFrame(slug, standR, { x: 2, ball: [22, 20] }),
+    sportFrame(slug, runR1, { ball: [14, 25] }),
+    sportFrame(slug, runR0, { ball: [24, 24] }),
+    sportFrame(slug, standD, { x: -2, ball: [16, 28] }),
+    sportFrame(slug, standD, { x: 2, ball: [14, 28] }),
+    sportFrame(slug, standR, { x: -1 }),
+    sportFrame(slug, standR2, { x: 1 }),
+    sportFrame(slug, runR1, { x: 2 }),
+    sportFrame(slug, standR, { ball: [24, 16] }),
+    sportFrame(slug, standR, { ball: [23, 26] }),
+    sportFrame(slug, runR0, { ball: [14, 23] }),
+    sportFrame(slug, standR, { y: -6, ball: [25, 4] }),
+    sportFrame(slug, standD, { y: 1 }),
+  ];
+}
+
+function authoredGolferFrames(slug: SourceSlug): Pixmap[] {
+  const standR = 8;
+  const stepR = 10;
+  const standR2 = 10;
+  const stepR2 = 8;
+  const standD = 0;
+  const runR0 = 10;
+  return [
+    sportFrame(slug, standR, { club: 'driver' }),
+    sportFrame(slug, stepR, { club: 'high' }),
+    sportFrame(slug, standR2, { y: -1, club: 'high' }),
+    sportFrame(slug, runR0, { x: 2, club: 'driver' }),
+    sportFrame(slug, stepR2, { x: 1, club: 'high' }),
+    sportFrame(slug, standR, { y: -1, club: 'high' }),
+    sportFrame(slug, standD, { y: -2 }),
+    sportFrame(slug, standR, { y: 3, club: 'putter' }),
+    sportFrame(slug, stepR, { y: 4, club: 'putter' }),
+    sportFrame(slug, standR, { club: 'putter' }),
+    sportFrame(slug, runR0, { x: 1, club: 'putter' }),
+  ];
 }
 
 function contactSheet(title: string, cells: Cell[], cols: number): Pixmap {
@@ -129,9 +263,16 @@ function renderHoops(): void {
     { name: 'mural', pm: drawCageMural() },
     { name: 'chalkboard', pm: drawChalkBoard() },
   ];
-  write(dir, 'athlete_rex_sheet', frameSheet(generateAthleteFrames(CAST.rex), 5, BG), { scale: SCALE });
-  write(dir, 'athlete_faye_sheet', frameSheet(generateAthleteFrames(CAST.faye), 5, BG), { scale: SCALE });
-  write(dir, 'athlete_opponent_sheet', frameSheet(generateAthleteFrames(opponent, { ramp: RAMP.BLUE, trim: RAMP.PAPER }), 5, BG), { scale: SCALE });
+  const rexFrames = authoredAthleteFrames('jay');
+  const fayeFrames = authoredAthleteFrames('mia');
+  const opponentFrames = authoredAthleteFrames('dockworker');
+  void opponent;
+  write(dir, 'athlete_rex_runtime', rawSheet(rexFrames, 5));
+  write(dir, 'athlete_faye_runtime', rawSheet(fayeFrames, 5));
+  write(dir, 'athlete_opponent_runtime', rawSheet(opponentFrames, 5));
+  write(dir, 'athlete_rex_sheet', frameSheet(rexFrames, 5, BG), { scale: SCALE });
+  write(dir, 'athlete_faye_sheet', frameSheet(fayeFrames, 5, BG), { scale: SCALE });
+  write(dir, 'athlete_opponent_sheet', frameSheet(opponentFrames, 5, BG), { scale: SCALE });
   write(dir, 'hoop_side_sheet', frameSheet([drawHoopSide(0), drawHoopSide(1), drawHoopSide(2)], 3, BG), { scale: SCALE });
   for (const cell of cells) write(dir, cell.name, cell.pm, { scale: SCALE });
   write(dir, 'court_full', drawCageCourt());
@@ -148,8 +289,12 @@ function renderGolf(): void {
     { name: 'sand', pm: frameSheet(drawSandFrames(), 2, BG) },
     { name: 'poster', pm: drawLinksPoster() },
   ];
-  write(dir, 'golfer_rex_sheet', frameSheet(generateGolferFrames(CAST.rex), 4, BG), { scale: SCALE });
-  write(dir, 'golfer_faye_sheet', frameSheet(generateGolferFrames(CAST.faye), 4, BG), { scale: SCALE });
+  const rexFrames = authoredGolferFrames('jay');
+  const fayeFrames = authoredGolferFrames('mia');
+  write(dir, 'golfer_rex_runtime', rawSheet(rexFrames, 4));
+  write(dir, 'golfer_faye_runtime', rawSheet(fayeFrames, 4));
+  write(dir, 'golfer_rex_sheet', frameSheet(rexFrames, 4, BG), { scale: SCALE });
+  write(dir, 'golfer_faye_sheet', frameSheet(fayeFrames, 4, BG), { scale: SCALE });
   for (const cell of cells) write(dir, cell.name, cell.pm, { scale: SCALE });
   for (const { id, pm } of allHoleTextures()) write(dir, id, pm);
   write(dir, 'golf_contact', contactSheet('PKG-10 LINKS', cells, 5), { scale: SCALE, bg: BG });

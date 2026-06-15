@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { TILE, TILESET } from './tiles';
 import { GENERATED_BUILDINGS } from './buildings';
+import { SPORT_FRAME_COUNT } from './athletes';
+import { GOLF_FRAME_COUNT } from './golfers';
 
 const FRAME_W = 24;
 const FRAME_H = 32;
@@ -8,6 +10,8 @@ const BUST_W = 32;
 const BUST_H = 32;
 const BATTLER_W = 28;
 const BATTLER_H = 36;
+const SPORT_FRAME_W = 32;
+const SPORT_FRAME_H = 40;
 
 const TOTAL_CHARACTER_FRAMES = 46;
 const TOTAL_BUST_FRAMES = 18;
@@ -91,6 +95,17 @@ const FRAMING_SCREEN_ART = [
   { key: 'save_slots_bg', url: new URL('../../assets/art/screens/save_slots_bg.png', import.meta.url).href },
   { key: 'links_bg', url: new URL('../../assets/art/screens/links_bg.png', import.meta.url).href },
   { key: 'game_over', url: new URL('../../assets/art/screens/game_over.png', import.meta.url).href },
+] as const;
+
+const AUTHORED_MINIGAME_ATHLETES = [
+  { id: 'rex', key: 'authored_athlete_rex', url: new URL('../../assets/art/minigames/hoops/athlete_rex_runtime.png', import.meta.url).href },
+  { id: 'faye', key: 'authored_athlete_faye', url: new URL('../../assets/art/minigames/hoops/athlete_faye_runtime.png', import.meta.url).href },
+  { id: 'opponent', key: 'authored_athlete_opponent', url: new URL('../../assets/art/minigames/hoops/athlete_opponent_runtime.png', import.meta.url).href },
+] as const;
+
+const AUTHORED_MINIGAME_GOLFERS = [
+  { id: 'rex', key: 'authored_golfer_rex', url: new URL('../../assets/art/minigames/golf/golfer_rex_runtime.png', import.meta.url).href },
+  { id: 'faye', key: 'authored_golfer_faye', url: new URL('../../assets/art/minigames/golf/golfer_faye_runtime.png', import.meta.url).href },
 ] as const;
 
 /** texture key for a hero's single portrait bust (see HERO_PORTRAIT_ART) */
@@ -542,6 +557,17 @@ function makeBattlerCanvas(src: SourceImage): HTMLCanvasElement {
   return canvas;
 }
 
+function makeImageCanvas(src: SourceImage): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = src.width;
+  canvas.height = src.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(src, 0, 0);
+  return canvas;
+}
+
 export function preloadAuthoredArt(scene: Phaser.Scene): void {
   FRAMING_SCREEN_ART.forEach((art) => scene.load.image(art.key, art.url));
   HERO_ART.forEach((art) => {
@@ -551,6 +577,8 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   });
   NPC_CHARACTER_ART.forEach((art) => scene.load.image(art.key, art.url));
   HERO_PORTRAIT_ART.forEach((art) => scene.load.image(heroPortraitKey(art.id), art.url));
+  AUTHORED_MINIGAME_ATHLETES.forEach((art) => scene.load.image(art.key, art.url));
+  AUTHORED_MINIGAME_GOLFERS.forEach((art) => scene.load.image(art.key, art.url));
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
@@ -586,6 +614,21 @@ export function applyAuthoredBattlerSheet(scene: Phaser.Scene, key: string, hero
   if (!art) return;
   const battler = sourceImage(scene, art.battlerKey);
   if (battler) replaceTextureSheet(scene, key, makeBattlerCanvas(battler), BATTLER_W, BATTLER_H, 4, TOTAL_BATTLER_FRAMES);
+}
+
+export function applyAuthoredAthleteSheet(scene: Phaser.Scene, key: string): void {
+  const id = key.startsWith('athlete_opp_') ? 'opponent' : key.replace(/^athlete_/, '');
+  const art = AUTHORED_MINIGAME_ATHLETES.find((row) => row.id === id);
+  if (!art) return;
+  const img = sourceImage(scene, art.key);
+  if (img) replaceTextureSheet(scene, key, makeImageCanvas(img), SPORT_FRAME_W, SPORT_FRAME_H, 5, SPORT_FRAME_COUNT);
+}
+
+export function applyAuthoredGolferSheet(scene: Phaser.Scene, key: string, heroId: string): void {
+  const art = AUTHORED_MINIGAME_GOLFERS.find((row) => row.id === heroId);
+  if (!art) return;
+  const img = sourceImage(scene, art.key);
+  if (img) replaceTextureSheet(scene, key, makeImageCanvas(img), SPORT_FRAME_W, SPORT_FRAME_H, 4, GOLF_FRAME_COUNT);
 }
 
 export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {

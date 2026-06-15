@@ -7,9 +7,9 @@
  * conformance is by construction: the only colors that can appear are the 64
  * entries of src/palette.ts (plus transparency).
  */
-import { deflateSync } from 'node:zlib';
+import { deflateSync, inflateSync } from 'node:zlib';
 import { PALETTE, T } from '../src/palette';
-import type { Pixmap } from '../src/spritegen/pixmap';
+import { Pixmap } from '../src/spritegen/pixmap';
 
 const CRC_TABLE = ((): Uint32Array => {
   const t = new Uint32Array(256);
@@ -102,4 +102,116 @@ export function pixmapToPng(pm: Pixmap, opts: PixmapPngOpts = {}): Uint8Array {
     }
   }
   return encodePng(w, h, rgba);
+}
+
+function paeth(a: number, b: number, c: number): number {
+  const p = a + b - c;
+  const pa = Math.abs(p - a);
+  const pb = Math.abs(p - b);
+  const pc = Math.abs(p - c);
+  return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+}
+
+const RGB_TO_INDEX = new Map(
+  PALETTE.map((hex, i) => {
+    const [r, g, b] = hexRgb(hex);
+    return [`${r},${g},${b}`, i] as const;
+  }),
+);
+
+function nearestPaletteIndex(r: number, g: number, b: number): number {
+  let best = 0;
+  let bestD = Number.POSITIVE_INFINITY;
+  PALETTE.forEach((hex, i) => {
+    const [pr, pg, pb] = hexRgb(hex);
+    const d = (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2;
+    if (d < bestD) {
+      bestD = d;
+      best = i;
+    }
+  });
+  return best;
+}
+
+/** Decode an 8-bit truecolor PNG into the engine Pixmap palette. */
+export function decodePngToPixmap(bytes: Uint8Array): Pixmap {
+  const sig = [137, 80, 78, 71, 13, 10, 26, 10];
+  sig.forEach((v, i) => {
+    if (bytes[i] !== v) throw new Error('not a PNG');
+  });
+
+  let off = 8;
+  let w = 0;
+  let h = 0;
+  let colorType = 0;
+  const idat: Uint8Array[] = [];
+  while (off < bytes.length) {
+    const len = new DataView(bytes.buffer, bytes.byteOffset + off, 4).getUint32(0);
+    const type = String.fromCharCode(bytes[off + 4], bytes[off + 5], bytes[off + 6], bytes[off + 7]);
+    const data = bytes.subarray(off + 8, off + 8 + len);
+    if (type === 'IHDR') {
+      const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
+      w = dv.getUint32(0);
+      h = dv.getUint32(4);
+      if (data[8] !== 8) throw new Error(`unsupported PNG bit depth ${data[8]}`);
+      colorType = data[9];
+      if (colorType !== 2 && colorType !== 6) throw new Error(`unsupported PNG color type ${colorType}`);
+    } else if (type === 'IDAT') {
+      idat.push(data);
+    } else if (type === 'IEND') {
+      break;
+    }
+    off += 12 + len;
+  }
+
+  const compressed = new Uint8Array(idat.reduce((n, part) => n + part.length, 0));
+  let pos = 0;
+  idat.forEach((part) => {
+    compressed.set(part, pos);
+    pos += part.length;
+  });
+
+  const bpp = colorType === 6 ? 4 : 3;
+  const rowBytes = w * bpp;
+  const raw = inflateSync(compressed);
+  const rgba = new Uint8Array(w * h * 4);
+  let rawOff = 0;
+  let prev = new Uint8Array(rowBytes);
+  for (let y = 0; y < h; y++) {
+    const filter = raw[rawOff++];
+    const row = new Uint8Array(rowBytes);
+    for (let x = 0; x < rowBytes; x++) {
+      const a = x >= bpp ? row[x - bpp] : 0;
+      const b = prev[x] ?? 0;
+      const c = x >= bpp ? prev[x - bpp] : 0;
+      const v = raw[rawOff++];
+      row[x] =
+        filter === 0 ? v :
+        filter === 1 ? (v + a) & 0xff :
+        filter === 2 ? (v + b) & 0xff :
+        filter === 3 ? (v + Math.floor((a + b) / 2)) & 0xff :
+        filter === 4 ? (v + paeth(a, b, c)) & 0xff :
+        (() => { throw new Error(`unsupported PNG filter ${filter}`); })();
+    }
+    for (let x = 0; x < w; x++) {
+      const src = x * bpp;
+      const dst = (y * w + x) * 4;
+      rgba[dst] = row[src];
+      rgba[dst + 1] = row[src + 1];
+      rgba[dst + 2] = row[src + 2];
+      rgba[dst + 3] = colorType === 6 ? row[src + 3] : 255;
+    }
+    prev = row;
+  }
+
+  const pm = new Pixmap(w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 4;
+      if (rgba[o + 3] < 16) continue;
+      const key = `${rgba[o]},${rgba[o + 1]},${rgba[o + 2]}`;
+      pm.set(x, y, RGB_TO_INDEX.get(key) ?? nearestPaletteIndex(rgba[o], rgba[o + 1], rgba[o + 2]));
+    }
+  }
+  return pm;
 }

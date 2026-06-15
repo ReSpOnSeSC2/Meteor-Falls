@@ -186,7 +186,7 @@ import {
 } from './ch2';
 import { makeFontSheet, FONT_CHARS, FONT_CELL_W, FONT_CELL_H, FONT_CHARS_PER_ROW } from './font';
 import { RAMP, C, px } from '../palette';
-import { applyAuthoredBattlerSheet, applyAuthoredBustSheet } from './authored';
+import { applyAuthoredAthleteSheet, applyAuthoredBattlerSheet, applyAuthoredBustSheet, applyAuthoredGolferSheet } from './authored';
 
 export const GAME_W = 400;
 export const GAME_H = 225;
@@ -371,7 +371,7 @@ export function ensureForgedFaces(
  */
 /**
  * S13 links factory (the ensureAthleteArt stance — use-time, cached): the
- * nine hole grounds, the ball/flag/bursts, and the player hero's GOLF sheet
+ * eighteen hole grounds, the ball/flag/bursts, and the player hero's GOLF sheet
  * (cut from the S12 sport-sheet contract). Returns the golfer texture key.
  */
 export function ensureLinksArt(scene: Phaser.Scene, heroId: string): string {
@@ -385,6 +385,7 @@ export function ensureLinksArt(scene: Phaser.Scene, heroId: string): string {
   const key = `golfer_${heroId}`;
   const spec = CAST[heroId];
   if (spec) addSheet(scene, key, generateGolferFrames(spec), 4);
+  applyAuthoredGolferSheet(scene, key, heroId);
   return key;
 }
 
@@ -398,11 +399,13 @@ export function ensureAthleteArt(scene: Phaser.Scene, keys: string[]): void {
       if (!team) continue;
       const spec = deriveOpponentSpec(hashOf(team.id), Number(m[2]), team.jersey);
       addSheet(scene, key, generateAthleteFrames(spec, { ramp: team.jersey, trim: RAMP.PAPER }), 5);
+      applyAuthoredAthleteSheet(scene, key);
     } else {
       const castId = key.replace(/^athlete_/, '');
       const spec = CAST[castId];
       if (!spec) continue;
       addSheet(scene, key, generateAthleteFrames(spec, null), 5);
+      applyAuthoredAthleteSheet(scene, key);
     }
   }
 }
