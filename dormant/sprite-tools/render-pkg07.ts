@@ -1,14 +1,14 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { C, RAMP, T, px } from '../src/palette';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { drawHeldWeapon, WEAPON_ART, type HeldPose, type TorsoArt, type WeaponArt } from '../src/spritegen/weapons';
-import { drawVehicleViews, VEHICLE_CATALOG } from '../src/spritegen/vehicles';
-import { drawBananaBoat, generateLlamaFrames } from '../src/spritegen/ch2';
-import { DEALERSHIP } from '../src/data/dealership';
-import { FLEET_CRAFT } from '../src/data/fleet';
-import { THE_LONG_SHOT } from '../src/data/rocket';
-import { pkg07VehicleArtIds } from '../src/data/pkg07';
+import { C, RAMP, T, px } from '../../src/palette';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { drawHeldWeapon, WEAPON_ART, type HeldPose, type TorsoArt, type WeaponArt } from '../../src/spritegen/weapons';
+import { drawVehicleViews, VEHICLE_CATALOG } from '../../src/spritegen/vehicles';
+import { drawBananaBoat, generateLlamaFrames } from '../../src/spritegen/ch2';
+import { DEALERSHIP } from '../../src/data/dealership';
+import { FLEET_CRAFT } from '../../src/data/fleet';
+import { THE_LONG_SHOT } from '../../src/data/rocket';
+import { pkg07VehicleArtIds } from '../../src/data/pkg07';
 import { pixmapToPng } from './png';
 
 const VEHICLE_DIR = 'assets/art/vehicles';

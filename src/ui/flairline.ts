@@ -31,7 +31,7 @@ export function stripFlair(s: string): string {
 
 /** a glyph sits this many px below the line top so it reads centred on the caps
  *  of the retro font (whose drawn cell is top-weighted). Tuned on the contact
- *  sheet (art:flair) and shared with it so the sheet faithfully previews in-game. */
+ *  sheet (the parked `dormant/sprite-tools/render-flair.ts`) and shared with it so the sheet faithfully previews in-game. */
 export const GLYPH_Y_BIAS = 0;
 
 interface Metrics {

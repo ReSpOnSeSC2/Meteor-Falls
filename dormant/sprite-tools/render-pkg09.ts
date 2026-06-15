@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { C, RAMP, px } from '../src/palette';
-import { Pixmap, mulberry32 } from '../src/spritegen/pixmap';
-import { drawTextInto } from '../src/spritegen/font';
+import { C, RAMP, px } from '../../src/palette';
+import { Pixmap, mulberry32 } from '../../src/spritegen/pixmap';
+import { drawTextInto } from '../../src/spritegen/font';
 import {
   TILE,
   TILESET,
@@ -68,7 +68,7 @@ import {
   drawCageMural,
   drawBleachers,
   drawChalkBoard,
-} from '../src/spritegen/tiles';
+} from '../../src/spritegen/tiles';
 import {
   drawFountain,
   drawMarketStall,
@@ -80,8 +80,8 @@ import {
   drawPedestal,
   drawCrate,
   drawGangplank,
-} from '../src/spritegen/ch2';
-import { GENERATED_BUILDINGS } from '../src/spritegen/buildings';
+} from '../../src/spritegen/ch2';
+import { GENERATED_BUILDINGS } from '../../src/spritegen/buildings';
 import { pixmapToPng } from './png';
 
 type Draw = () => Pixmap;

@@ -873,7 +873,7 @@ No quest may be permanently missable. Post-Ch.6 Teleport must reopen old threads
 | Saves | **IndexedDB** via `idb`, 3 slots + 1 rolling auto-backup, versioned schema with migrations | Survives app updates; localStorage fallback |
 | Content | **100% data-driven** in `/src/data` (enemies, items, abilities, shops, dialogue, quests, encounter tables) validated by **Zod** schemas at build time — authored as typed TS modules whose types are `z.infer`'d from `src/schemas`, not JSON files; the Tiled loader will parse its JSON through the same schemas *(amended 2026-06-10 per Appendix rule 6, ADR-004/ADR-017)* | "No mock data" enforced by CI: `tools/content-validate.ts` fails the build if any entity in the Bible is missing |
 | Audio | OGG music + SFX, generated in-repo (see B3), played via Phaser sound, ducking system for jingles | |
-| Art | CC0 16-bit asset packs + AI-generated sprites unified by a **64-color master palette** and an `npm run art:check` palette-conformance script (see B3) | Easiest path to production quality |
+| Art | **Authored PNGs** (ChatGPT/imagegen → PNG at the `assets/art/masters` resolution), sliced into runtime sheets and loaded over the boot textures by `src/spritegen/authored.ts`. The procedural engine `src/spritegen/` is **frozen** (boot fallback only). See **ADR-109** / [ART_PIPELINE.md](ART_PIPELINE.md) | AI-authored art at masters resolution; one cohesive look |
 | Input | Virtual D-pad + A/B/Start overlay **and** Gamepad API (auto-hides touch UI when a controller connects) | Your requirement #3 |
 | CI | GitHub Actions: typecheck, Zod content validation, Vitest unit tests (battle math), Playwright smoke run, debug-APK artifact | Production ready means provable |
 
@@ -901,7 +901,7 @@ meteor-falls/
 
 ## B3. Asset strategy (production quality, easiest path)
 
-**Art.** Base layer: CC0/free 16-bit packs (Kenney; itch.io CC0 RPG packs) for tiles/props; AI-generated character & enemy sprites (one prompt per sheet, Prompt 40 includes the exact image-prompt templates with the locked palette + 4-frame walk cycles + battle-sprite spec). Everything passes `npm run art:check`, which rejects any PNG using colors outside `palette.gpl` — this single rule is what makes mixed sources look like one game.
+**Art.** *(Updated 2026-06-14, ADR-109 — supersedes the procedural rule of ADR-002 and the CC0/art:check plan below.)* All art is **authored as PNGs** via the ChatGPT/imagegen → PNG workflow at the **`assets/art/masters`** resolution (the high-res source of truth), sliced/downscaled into runtime sheets under `assets/art/**` and loaded by `src/spritegen/authored.ts` (which overrides the boot textures). The procedural engine `src/spritegen/` is **frozen** — it runs at boot only as a fallback for categories that don't have authored PNGs yet. Do **not** extend the generators; the old `npm run art:*` render tools are parked in `dormant/sprite-tools/`. Full workflow + per-category resolutions: [docs/ART_PIPELINE.md](ART_PIPELINE.md).
 
 **Music.** EarthBound-themed chiptune+sample hybrid: tracks are authored as code in **Tone.js** (`tools/music-render.ts` renders them offline to OGG so runtime cost is zero). Prompt 42 contains per-track briefs (tempo, key, mood, EB reference vibe — e.g., Otterbrook = laid-back I-IV shuffle w/ slap bass à la Onett; Mars = near-silent drones with a heartbeat). SFX via jsfxr presets, also rendered to files.
 

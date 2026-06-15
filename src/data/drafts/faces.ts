@@ -9,7 +9,7 @@
  *
  * A forged enemy WITHOUT a pick here keeps its borrowed shipped placeholder —
  * the forge offers candidates; it never decides the face. Picks are taken from
- * the Sprite Lab (`npm run art:facesheet` → .shots/forge_faces.png, the in-game
+ * the Sprite Lab (the parked `dormant/sprite-tools/forge-faces.ts` → .shots/forge_faces.png, ADR-109; the in-game
  * SPRITE LAB → THE FORGE page): the human reads the candidates and names one,
  * and `proposeCandidates(id, role, chapter)[k]` is copied in verbatim.
  */

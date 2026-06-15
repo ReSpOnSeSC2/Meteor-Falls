@@ -1,5 +1,9 @@
 # Meteor Falls Art Direction Reboot
 
+> ⚠️ **HISTORICAL.** Superseded by **ADR-109** — art is now authored as PNGs
+> (ChatGPT/imagegen → PNG at the `assets/art/masters` resolution); see
+> [ART_PIPELINE.md](ART_PIPELINE.md). This reboot doc is kept for context.
+
 ## Why the Previous Overhaul Failed
 
 The rejected overhaul treated "SNES/Mother 3 quality" as a technical problem:

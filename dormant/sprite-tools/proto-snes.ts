@@ -10,8 +10,8 @@
  *   npx vite-node tools/proto-snes.ts   →   .shots/proto_snes_jay.png
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, SH, pxr, C } from '../src/palette';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, SH, pxr, C } from '../../src/palette';
 import { pixmapToPng } from './png';
 
 const W = 32;

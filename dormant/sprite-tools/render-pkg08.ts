@@ -7,9 +7,9 @@
  */
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CAST, generateAngelFrames } from '../src/spritegen/characters';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, T, px } from '../src/palette';
+import { CAST, generateAngelFrames } from '../../src/spritegen/characters';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, T, px } from '../../src/palette';
 import { pixmapToPng } from './png';
 
 const ROOT = process.cwd();

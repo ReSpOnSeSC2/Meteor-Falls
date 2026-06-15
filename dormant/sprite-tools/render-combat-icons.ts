@@ -4,15 +4,15 @@
  *   npm run art:combat-icons
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, T, px } from '../src/palette';
-import { drawTextInto } from '../src/spritegen/font';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, T, px } from '../../src/palette';
+import { drawTextInto } from '../../src/spritegen/font';
 import {
   ABILITY_ICON,
   BATTLE_FX_ICON,
   STATUS_ICON,
   STATUS_ICON_NAMES,
-} from '../src/spritegen/combatIcons';
+} from '../../src/spritegen/combatIcons';
 import { pixmapToPng } from './png';
 
 const ABILITY_DIR = 'assets/art/icons/abilities';

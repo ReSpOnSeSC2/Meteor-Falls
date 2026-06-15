@@ -8,8 +8,8 @@
  * entries of src/palette.ts (plus transparency).
  */
 import { deflateSync, inflateSync } from 'node:zlib';
-import { PALETTE, T } from '../src/palette';
-import { Pixmap } from '../src/spritegen/pixmap';
+import { PALETTE, T } from '../../src/palette';
+import { Pixmap } from '../../src/spritegen/pixmap';
 
 const CRC_TABLE = ((): Uint32Array => {
   const t = new Uint32Array(256);

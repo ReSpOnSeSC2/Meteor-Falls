@@ -412,7 +412,7 @@ export class SpriteLabScene extends Phaser.Scene {
    * S15g 3b — THE FORGE: browse the forged grunts, cycle their seeded candidate
    * faces (A), and read which one the human RECORDED as the partsSpec. The
    * in-game half of the Sprite Lab contact sheet — the human picks a candidate
-   * here (and on `npm run art:facesheet`) and names it; the pick is then written
+   * here (and on the parked `dormant/sprite-tools/forge-faces.ts`) and names it; the pick is then written
    * into FACE_PICKS. The selected candidate shows at all three wear tiers so the
    * drums read before the pick.
    */

@@ -11,8 +11,8 @@
  * forge_faces.png (the seeded candidate sheet per forged grunt — the pickables).
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { Pixmap } from '../src/spritegen/pixmap';
-import { RAMP, T, px } from '../src/palette';
+import { Pixmap } from '../../src/spritegen/pixmap';
+import { RAMP, T, px } from '../../src/palette';
 import { pixmapToPng } from './png';
 import {
   composeEnemy,
@@ -21,10 +21,10 @@ import {
   MATERIALS,
   FACE_W,
   FACE_H,
-} from '../src/spritegen/parts';
-import type { PartsSpec } from '../src/schemas';
-import { FORGED_ROSTERS } from '../src/levelkit/forge/registry';
-import { FACE_PICKS } from '../src/data/drafts/faces';
+} from '../../src/spritegen/parts';
+import type { PartsSpec } from '../../src/schemas';
+import { FORGED_ROSTERS } from '../../src/levelkit/forge/registry';
+import { FACE_PICKS } from '../../src/data/drafts/faces';
 
 function blit(dst: Pixmap, src: Pixmap, dx: number, dy: number): void {
   for (let y = 0; y < src.h; y++)

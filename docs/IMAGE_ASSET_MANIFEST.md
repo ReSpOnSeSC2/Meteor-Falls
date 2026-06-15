@@ -1,5 +1,11 @@
 # Image Asset Manifest — "Author Everything"
 
+> ✅ **This is now the way (ADR-109).** Authored PNGs are canonical: produce art
+> at the `assets/art/masters` resolution and wire it into
+> `src/spritegen/authored.ts`. The old `npm run art:*` render scripts are parked
+> in `dormant/sprite-tools/` (except `art:appart`, the Android icon copier).
+> Full workflow: [ART_PIPELINE.md](ART_PIPELINE.md).
+
 This is the complete, start-to-finish list of every image METEOR FALLS needs if
 we drop the procedural-only rule (ADR-002, "zero binary assets") and ship
 authored art for **everything** — opening screen, cutscenes, characters,
