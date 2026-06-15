@@ -15,7 +15,9 @@ The five leads now have first-pass authored art wired through the runtime bridge
 Each lead has:
 
 - source 8-angle draft: `assets/art/drafts/<name>-8angle-transparent.png`
-- engine overworld source: `assets/art/characters/<name>_8dir_24x32.png`
+- legacy 8-angle runtime slice: `assets/art/characters/<name>_8dir_24x32.png`
+- engine overworld animation sheet: `assets/art/characters/<name>_anim_46_24x32.png`
+- preserved 4x animation master: `assets/art/masters/characters/animation/<name>_anim_46_4x_master.png`
 - source battle bust draft: `assets/art/drafts/<name>-battle-bust-transparent.png`
 - engine battle-card bust sheet: `assets/art/busts/<name>_bust_18_32x32.png`
 - source battle stage draft: `assets/art/drafts/<name>-stage-transparent.png`
@@ -23,7 +25,9 @@ Each lead has:
 - boot bridge: `src/spritegen/authored.ts`
 
 The bridge replaces each lead's runtime texture after the normal generated
-textures are registered. Generated art remains the fallback for everyone else.
+textures are registered. It now also replaces every authored human NPC listed in
+`src/spritegen/authored.ts`. Generated art remains the fallback for any character
+without an authored sheet.
 
 ## Important Engine Contracts
 
@@ -35,8 +39,35 @@ Frame size: `24x32`.
 
 Frame count: `46`.
 
-Current authored source: 8 static facings. The bridge expands those into the
-existing 46-frame contract so all existing animation keys keep working.
+Current authored source: full 46-frame PNG sheets under
+`assets/art/characters/*_anim_46_24x32.png`. The bridge copies a full 46-frame
+sheet directly when present; the old 8-static-facing expansion is only a
+fallback for legacy sheets.
+
+Run/walk frames are authored in image files, not in `src/spritegen/characters.ts`.
+This is why code-only searches can miss the latest run art.
+
+Frame contract:
+
+- `0-15`: cardinal walk frames (`down`, `left`, `right`, `up`; 4 frames each)
+- `16-23`: cardinal run frames (`down`, `left`, `right`, `up`; 2 frames each)
+- `24-35`: diagonal walk frames (`downright`, `downleft`, `upright`, `upleft`; 3 frames each)
+- `36-43`: diagonal run frames (`downright`, `downleft`, `upright`, `upleft`; 2 frames each)
+- `44`: idle breath
+- `45`: idle blink
+
+Run art requirements currently landed:
+
+- all 47 authored human character/NPC sheets have real run frames
+- run frames include pumping arm/leg silhouettes
+- visible faces get exertion expressions
+- run heads lean/tuck forward by facing direction
+- corresponding full-resolution 4x masters are preserved in
+  `assets/art/masters/characters/animation`
+- review sheet: `assets/art/review/character_walk_run_motion_review.png`
+
+The helper used for this pass is `tools/author-run-expressions.ps1`. It is
+repeatable and regenerates both runtime sheets and 4x masters.
 
 Full production target:
 
