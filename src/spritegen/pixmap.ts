@@ -528,3 +528,21 @@ export function framesToCanvas(
   }
   return { canvas, fw, fh, cols, rows };
 }
+
+/**
+ * Nearest-neighbor upscale a canvas by an integer factor (the ADR scale seam).
+ * `scale === 1` returns the input untouched, so the legacy path is a no-op and
+ * stays byte-identical. Used to lift FROZEN procedural textures to the runtime
+ * frame size while the generators keep drawing at native resolution.
+ */
+export function upscaleCanvas(src: HTMLCanvasElement, scale: number): HTMLCanvasElement {
+  if (scale === 1) return src;
+  const out = document.createElement('canvas');
+  out.width = src.width * scale;
+  out.height = src.height * scale;
+  const ctx = out.getContext('2d');
+  if (!ctx) return src;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(src, 0, 0, out.width, out.height);
+  return out;
+}
