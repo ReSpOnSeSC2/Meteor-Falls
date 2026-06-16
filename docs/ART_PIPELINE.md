@@ -57,6 +57,29 @@ Author at the masters resolution; export the runtime sheet at the frame size.
 | Screens | (authored) | `screens/*` (title, boot, name-entry, game-over, …) |
 | Icons | (authored) | `icons/items/*`, `icons/abilities/*`, `icons/status/*`, `fx/*` |
 
+## Walk/run feet — the mirror shortcut (half-authored sheets)
+
+imagegen won't reliably draw a clean *alternating-feet* walk cycle, and you can't
+control which foot it puts forward. You don't have to. A horizontal flip of a
+single front/back stepping pose **is** the other foot, by construction — so you
+can author **one** step per facing and let the slicer generate the opposite-foot
+frame.
+
+- Author the **down** and **up** walk with a single clear step (either foot —
+  whichever imagegen drew). Leave the `walkB`/`runB` cells as a copy of the
+  step (or blank); they get overwritten.
+- Set `mirrorFeet: true` on that character's entry in `HERO_ART` /
+  `NPC_CHARACTER_ART` (`src/spritegen/authored.ts`). At slice time
+  `makeCharacterCanvas` fills the down/up `walkB`/`runB` cells with a horizontal
+  flip of `walkA`/`runA` (frame pairs `1→3`, `13→15`, `16→17`, `22→23`).
+- **Default is off** — it's strictly opt-in, so hand-authored second-foot frames
+  on the existing cast are never clobbered.
+
+Scope: only **down/up** get the foot mirror. Flipping a **profile** (left/right)
+pose changes the *facing*, not the foot, so author those normally (or mirror the
+left column to the right column by hand). Note a flip also mirrors any asymmetry
+(hair part, bag, logo) — usually invisible at 24×32, but check.
+
 ## Fallback (frozen procedural engine)
 
 `src/spritegen/` still generates every texture at boot as the **base** layer,
