@@ -1059,6 +1059,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@Take your time, sport. The cars aren't going anywhere. Mostly because two of them don't start.",
     '@Come back when you\'ve got the cash AND somewhere to park it. A car needs a garage. A garage needs a HOUSE. Funny how it all rolls downhill.',
   ],
+  // S22 (ADR-116) — DOWNTOWN OTTERBROOK (Main & Vine): the little commercial row
+  sign_to_downtown: [
+    'DOWNTOWN OTTERBROOK → "Main & Vine," just past the depot. Hardware, hot lunch, the works.',
+  ],
+  sign_downtown: [
+    'DOWNTOWN OTTERBROOK — "Main & Vine." Hardware, hot lunch, and a haircut you did not ask for.',
+  ],
+  sign_hardware: ["HODGKIN'S HARDWARE — If we don't have it, you didn't need it. (We have it.)"],
+  sign_diner: ['THE SUNNY SIDE — Breakfast all day. Lunch also all day. It is always a meal here.'],
+  sign_barber: ["VINE ST. BARBER — Back in 5. (The sign has said this since 1987.)"],
+  npc_hodgkin: [
+    "@Hardware, huh? Course it is. Nobody comes to Hodgkin's for the AMBIANCE.",
+    '@Bolts, hose, bug spray, mower parts — that mower of Sodd\'s is loose AGAIN, I can hear it from here.',
+    '@You need somethin\' specific, you say the word. I got a whole wall of words.',
+  ],
+  npc_waitress: [
+    '@Sit anywhere, hon, the floor\'s clean-ish. Coffee\'s on the house if you don\'t tell my boss it was.',
+    "@You look like a kid who's had a NIGHT. Eat something. The world's easier on a full stomach. Doctor's orders. I'm not a doctor.",
+  ],
   npc_busdriver: [
     "@Exact change or exact attitude. You've got one of 'em, kid. Sit anywhere.",
   ],

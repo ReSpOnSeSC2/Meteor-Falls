@@ -388,6 +388,14 @@ export function growOtterbrook(): MapDef {
     to: 'bus_depot_int', tx: 120, ty: 128,
   });
 
+  // 8) DOWNTOWN entrance (S22, ADR-116): a street mouth in the open pocket south
+  //    of the Depot opens onto "Main & Vine" (a separate screen — hardware + diner).
+  g.rect(45, 25, 2, 8, ':'); // the walk from the Depot front down to the mouth
+  g.rect(44, 33, 4, 1, ':'); // the doorstep apron
+  const downtownEntry = placeFacade('bldg_brickmore', 44, 32 * 16, 4, 2, {
+    to: 'downtown_otterbrook', tx: 208, ty: 224,
+  });
+
   const treesAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
     xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
 
@@ -406,7 +414,9 @@ export function growOtterbrook(): MapDef {
     // (a redirect sign is appended below); the depot is the real stop.
     ...core.props,
     busDepot,
+    downtownEntry,
     { sprite: 'bench', x: 51, y: 21, solid: { ox: 1, oy: 6, w: 20, h: 6 } }, // the boarding-curb bench
+    { sprite: 'sign', x: 48, y: 32, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // "→ DOWNTOWN"
     ...south.props,
     ...east.props,
     ...thicketProps,
@@ -469,6 +479,8 @@ export function growOtterbrook(): MapDef {
     { x: 4, y: 44, dialogue: 'sign_otter_woods' },
     // S22 (ADR-114): the old bus-stop corner now points to the new Transit Depot
     { x: 23, y: 25, dialogue: 'sign_bus_moved' },
+    // S22 (ADR-116): the downtown street mouth, south of the Depot
+    { x: 48, y: 32, dialogue: 'sign_to_downtown' },
     ...woodsGift.signs, // ADR-056: the glade present (sign while sealed, flavor after)
     ...porchCan.signs, // ADR-063 Part B: THE PORCH SET coffee can
     ...hubcap.signs, // ADR-063 Part B: the Spare Hubcap ("worth more to a man named Earl")
@@ -2230,6 +2242,131 @@ function buildBusDepotInt(streetExit: { tx: number; ty: number }): MapDef {
   };
 }
 
+/* ------------------- DOWNTOWN OTTERBROOK (S22, ADR-116) -------------------
+ * "Main & Vine" — a small commercial screen reached from the open pocket by the
+ * Transit Depot. Two enterable shops (Hodgkin's Hardware + the Sunny Side Diner)
+ * plus a flavor barbershop. Full new screen, so no frozen-core conflict; the
+ * entrance façade is APPENDED to the grown town (below). Gray-boxed on shipped
+ * facade/interior sprites — see docs/CH1_ART_PROMPTS.md (§2/§3) for the art pass.
+ */
+function buildDowntownOtterbrook(entryStreetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(28, 16);
+  g.sprinkle(229, ',~ f', 0.05);
+  g.rect(2, 9, 24, 2, '='); // the shopfront sidewalk
+  g.rect(12, 10, 3, 6, '='); // the walk down to the way home (south edge)
+
+  const hardware = placeFacade('bldg_brickmore', 3, 8 * 16, 5, 2, { to: 'hardware_int', tx: 120, ty: 128 });
+  const diner = placeFacade('bldg_brickmore', 11, 8 * 16, 5, 2, { to: 'diner_int', tx: 120, ty: 128 });
+  const barber = placeFacade('bldg_brickmore', 19, 8 * 16, 5, 2); // flavor only (no door)
+
+  const treeLine: Array<[number, number]> = [];
+  for (let x = 0; x < 28; x += 2) treeLine.push([x, 15]);
+  for (let y = 1; y < 15; y += 2) {
+    treeLine.push([0, y]);
+    treeLine.push([26, y]);
+  }
+
+  return {
+    id: 'downtown_otterbrook',
+    name: 'DOWNTOWN OTTERBROOK',
+    music: 'otterbrook',
+    grid: g.out(),
+    props: [
+      ...treeLine.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK })),
+      hardware,
+      diner,
+      barber,
+      { sprite: 'bench', x: 16, y: 11, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'sign', x: 9, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the district plaque
+      { sprite: 'sign', x: 24, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the barber's "back in 5"
+    ],
+    npcs: [
+      { id: 'downtown_loiterer', sprite: 'oldTimer', x: 18, y: 11, facing: 'down', dialogue: 'npc_pajama_day', wander: true, ifFlag: 'zapper_done' },
+    ],
+    signs: [
+      { x: 9, y: 8, dialogue: 'sign_downtown' },
+      { x: 24, y: 8, dialogue: 'sign_barber' },
+    ],
+    phones: [],
+    doors: [
+      { x: 12, y: 15, w: 3, h: 1, to: 'otterbrook', tx: entryStreetExit.tx, ty: entryStreetExit.ty, facing: 'down', indicator: 'none' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** HODGKIN'S HARDWARE interior (S22, ADR-116) — pegboard walls, a lockbox
+ *  counter, and Hodgkin himself. The night-chain's key shop (Trail Key) lands
+ *  here in a later movement; for now it's a warm, browsable room. */
+function buildHardwareInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(13, 9, 'w');
+  g.rect(0, 0, 13, 2, 'W');
+  return {
+    id: 'hardware_int',
+    name: "HODGKIN'S HARDWARE",
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'shelf', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 10, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf', x: 1, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 10, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 7, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 10, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
+    ],
+    npcs: [
+      { id: 'hodgkin', sprite: 'drugClerk', x: 6, y: 2, facing: 'down', dialogue: 'npc_hodgkin', idle: true },
+    ],
+    signs: [{ x: 9, y: 1, dialogue: 'sign_hardware' }],
+    phones: [{ x: 2, y: 7 }],
+    atms: [{ x: 10, y: 7 }],
+    doors: [
+      { x: 6, y: 8, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** THE SUNNY SIDE DINER interior (S22, ADR-116) — counter stools, a booth, a
+ *  pie case, and a waitress who feeds tired kids. (The §A4.5 Family Basket deli
+ *  stays at the drugstore fountain; this is heart, not a counter.) */
+function buildDinerInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(13, 9, 'w');
+  g.rect(0, 0, 13, 2, 'W');
+  return {
+    id: 'diner_int',
+    name: 'THE SUNNY SIDE',
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 3, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 7, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'cola_fridge', x: 10.4, y: 0.25 },
+      { sprite: 'bench', x: 2, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 9, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+    ],
+    npcs: [
+      { id: 'diner_waitress', sprite: 'mom', x: 6, y: 2, facing: 'down', dialogue: 'npc_waitress', idle: true },
+    ],
+    signs: [{ x: 9, y: 1, dialogue: 'sign_diner' }],
+    phones: [{ x: 2, y: 7 }],
+    atms: [],
+    doors: [
+      { x: 6, y: 8, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
 /**
  * STARMART — Brickton's 24-nonconsecutive-hour mart. Staggered aisles, a
  * keeper who counts the carts, and the §A8 Ch.1 stock incl. Star Cola.
@@ -2651,6 +2788,12 @@ const longWalk = buildLongWalk();
 }
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
 const busDepotDoorstep = doorstepOf(otterbrookMap, 'bus_depot_int') ?? { tx: 760, ty: 392 };
+// S22 (ADR-116) — DOWNTOWN: the entry doorstep on the grown town, then the street
+// screen, then its two shop interiors (doorsteps computed off the street map).
+const downtownStep = doorstepOf(otterbrookMap, 'downtown_otterbrook') ?? { tx: 728, ty: 544 };
+const downtownMap = buildDowntownOtterbrook(downtownStep);
+const hardwareStep = doorstepOf(downtownMap, 'hardware_int') ?? { tx: 96, ty: 150 };
+const dinerStep = doorstepOf(downtownMap, 'diner_int') ?? { tx: 224, ty: 150 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
 const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty: 225 };
@@ -2939,6 +3082,9 @@ export const MAPS: Record<string, MapDef> = {
   dos_f3: buildDosF3(),
   otterbrook_cityhall: buildOtterbrookCityHallInt(cityHallDoorstep),
   bus_depot_int: buildBusDepotInt(busDepotDoorstep),
+  downtown_otterbrook: downtownMap,
+  hardware_int: buildHardwareInt(hardwareStep),
+  diner_int: buildDinerInt(dinerStep),
   drugstore_int: buildDrugstoreInt(drugDoorstep),
   starmart_int: buildStarmartInt(martDoorstep),
   arcade_int: buildArcadeInt(arcadeDoorstep),
@@ -2957,6 +3103,7 @@ export const MAPS: Record<string, MapDef> = {
 const ROOMY_INTERIORS: readonly string[] = [
   'drugstore_int', 'starmart_int', 'arcade_int', 'arcade2_int',
   'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall', 'bus_depot_int',
+  'hardware_int', 'diner_int',
   'mercado_int', 'clinic_ps_int', 'deli_int', 'chapel_int',
   'valle_shop_int', 'clinic_valle_int', 'chapel_valle_int',
 ];
