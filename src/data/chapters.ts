@@ -41,13 +41,13 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
       name: 'The Department of Smiles',
       maps: ['dos_f1', 'dos_f2', 'dos_f3'],
     },
-    boss: { id: 'titanic_tick', name: 'The Titanic Tick', hp: 450, template: 'bespoke' },
+    boss: { id: 'titanic_tick', name: 'The Titanic Tick', hp: 150, template: 'bespoke' },
     settlements: [
       { id: 'otterbrook', kind: 'town' },
       { id: 'brickton', kind: 'city' },
     ],
     // ADR-056 — THE LONG WALK: the four foot legs bridging Otterbrook → Brickton
-    maps: ['otterbrook', 'hill_road', 'hickory_hill', 'brickton', 'bus_interior', 'meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'],
+    maps: ['otterbrook', 'hill_road', 'hickory_trail', 'whisperwood_rise', 'hickory_hill', 'brickton', 'bus_interior', 'meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'],
     quests: ['biscuit_come_home', 'mail_must_move', 'lemonade_empire', 'arcade_legend', 'walkers_register'],
   },
 

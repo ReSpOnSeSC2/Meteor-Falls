@@ -1156,14 +1156,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 // applied to data: adding content = extending THIS table, same commit).
 {
   const canon: Record<string, number> = {
-    // Chapter 1
-    cranky_mailbox: 24,
-    runaway_lawnmower: 38,
-    coily_cicada: 30,
-    blazer_smiler: 55,
-    pigeon_gang: 45,
-    hill_slug_deluxe: 60,
-    titanic_tick: 450,
+    // Chapter 1 — S22 (ADR-111) THE SLOW BURN: §A7/§A6 HP pulled down so the
+    // opener's pre-Vibe fights are a fair scrap at Jay's 1–2 basic. Amended in
+    // GAME_BIBLE §A7/§A6 the same commit (the drift-log rule).
+    cranky_mailbox: 12,
+    runaway_lawnmower: 16,
+    coily_cicada: 14,
+    blazer_smiler: 26,
+    pigeon_gang: 20,
+    hill_slug_deluxe: 28,
+    titanic_tick: 150,
     // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
     // (the union attacks 5×22, §A7's group notation)
     pickpocket_parrot: 70,

@@ -886,7 +886,8 @@ function buildHillRoad(): MapDef {
     phones: [],
     doors: [
       { x: 13, y: 33, w: 4, h: 1, to: 'otterbrook', tx: 336, ty: 24, facing: 'down' },
-      { x: 13, y: 0, w: 4, h: 1, to: 'hickory_hill', tx: 232, ty: 660, facing: 'up' },
+      // S22 (ADR-112): the climb now passes through HICKORY TRAIL before the crater
+      { x: 13, y: 0, w: 4, h: 1, to: 'hickory_trail', tx: 232, ty: 288, facing: 'up' },
     ],
     spawners: [
       { enemies: ['coily_cicada'], count: 2, rect: { x: 6, y: 11, w: 16, h: 6 }, ifFlag: 'meteor_fell' },
@@ -961,13 +962,139 @@ function buildHill(): MapDef {
       { x: 9, y: 21, dialogue: 'hill_spring' },
     ],
     phones: [],
-    doors: [{ x: 13, y: 45, w: 4, h: 1, to: 'hill_road', tx: 236, ty: 36, facing: 'down' }],
+    // S22 (ADR-112): descending from the crater drops into WHISPERWOOD RISE
+    doors: [{ x: 13, y: 45, w: 4, h: 1, to: 'whisperwood_rise', tx: 232, ty: 36, facing: 'down' }],
     spawners: [
       { enemies: ['coily_cicada'], count: 3, rect: { x: 6, y: 18, w: 18, h: 8 } },
       { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 6, y: 28, w: 16, h: 8 } },
       { enemies: ['hill_slug_deluxe'], count: 1, rect: { x: 10, y: 12, w: 12, h: 6 } },
     ],
     triggers: [{ id: 'crater', rect: { x: 11, y: 8, w: 8, h: 3 }, once: true }],
+  };
+}
+
+/* ------------------- THE LONGER CLIMB (S22, ADR-112) -------------------
+ * Two transitional legs slotted BETWEEN hill_road and the crater so the walk
+ * up Hickory Hill earns its payoff: a winding dirt switchback (HICKORY TRAIL)
+ * and a dark wooded rise (WHISPERWOOD RISE). Both ride the §A6 story clock for
+ * night (no `night` field — derived from meteor_fell && !zapper_done like the
+ * rest of the hill). Door landings sit on the path so they stay walkable; the
+ * paw-print sniff trail (§A10 #1) continues across both so Biscuit's clue line
+ * reads unbroken on the longer route. Gray-boxed with shipped sprites — see
+ * docs/CH1_ART_PROMPTS.md for the authored-PNG pass.
+ */
+
+/** HICKORY TRAIL — the winding dirt road. 30×20, an S-curve from the south
+ *  edge (down to HILL ROAD) up to the north edge (up to WHISPERWOOD RISE). */
+function buildHickoryTrail(): MapDef {
+  const g = new Grid(30, 20);
+  g.sprinkle(212, ',~,~ f', 0.07);
+  // the switchback (a dirt S the player actually walks)
+  g.rect(13, 16, 3, 4, ':'); // south stub → HILL ROAD
+  g.rect(6, 14, 10, 2, ':'); // sweep left
+  g.rect(6, 8, 2, 8, ':'); // climb the left rail
+  g.rect(6, 8, 16, 2, ':'); // cross to the right
+  g.rect(20, 2, 2, 8, ':'); // climb the right rail
+  g.rect(13, 2, 9, 2, ':'); // crest back to centre
+  g.rect(13, 0, 3, 4, ':'); // north stub → WHISPERWOOD RISE
+  // brush shaping the drops, fences on the steep edge
+  g.rect(9, 13, 4, 1, 'b');
+  g.rect(16, 7, 4, 1, 'b');
+  g.rect(4, 17, 3, 1, 'b');
+  g.rect(6, 16, 8, 1, '-');
+
+  const trees: Array<[number, number]> = [];
+  for (let x = 0; x < 30; x += 2) {
+    if (x < 12 || x > 17) trees.push([x, 0]);
+    if (x < 12 || x > 17) trees.push([x, 19]);
+  }
+  for (let y = 2; y < 18; y += 2) {
+    trees.push([0, y]);
+    trees.push([28, y]);
+  }
+  trees.push([10, 5], [24, 12], [4, 9], [25, 5], [17, 11]);
+
+  return {
+    id: 'hickory_trail',
+    name: 'HICKORY TRAIL',
+    music: 'hill',
+    ambience: 'wind',
+    grid: g.out(),
+    props: [
+      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: OAK })),
+      { sprite: 'sign', x: 16, y: 17, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // a picnic table before the last push (§A4.5 — placed BEFORE the dungeon)
+      { sprite: 'picnic', x: 9, y: 10, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+      // §A10 #1: the sniff trail keeps climbing (same gates as the road/hill clues)
+      { sprite: 'paw_prints', x: 14, y: 12.4, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+    ],
+    npcs: [],
+    signs: [{ x: 16, y: 17, dialogue: 'sign_hickory_trail' }],
+    phones: [],
+    doors: [
+      { x: 13, y: 19, w: 3, h: 1, to: 'hill_road', tx: 232, ty: 36, facing: 'down' },
+      { x: 13, y: 0, w: 3, h: 1, to: 'whisperwood_rise', tx: 232, ty: 288, facing: 'up' },
+    ],
+    spawners: [
+      { enemies: ['coily_cicada'], count: 2, rect: { x: 6, y: 8, w: 16, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 8, y: 13, w: 12, h: 4 }, ifFlag: 'meteor_fell' },
+    ],
+    triggers: [],
+  };
+}
+
+/** WHISPERWOOD RISE — the dark wooded climb. 30×20, a near-straight aisle of
+ *  pines from the south edge (down to HICKORY TRAIL) up to the crater. */
+function buildWhisperwoodRise(): MapDef {
+  const g = new Grid(30, 20);
+  g.sprinkle(377, ',~,~bb', 0.09);
+  g.rect(13, 0, 3, 20, ':'); // the aisle, edge to edge
+  g.rect(8, 9, 8, 2, ':'); // a small clearing spur (the picnic glade)
+  // dense bramble walls hemming the path in
+  g.rect(5, 5, 5, 1, 'b');
+  g.rect(20, 6, 5, 1, 'b');
+  g.rect(6, 14, 4, 1, 'b');
+  g.rect(19, 13, 5, 1, 'b');
+
+  const trees: Array<[number, number]> = [];
+  for (let x = 0; x < 30; x += 2) {
+    if (x < 12 || x > 16) {
+      trees.push([x, 0]);
+      trees.push([x, 19]);
+    }
+  }
+  for (let y = 1; y < 19; y += 1) {
+    if (y % 2 === 0) {
+      trees.push([0, y], [2, y], [27, y], [29, y]);
+    }
+  }
+  // inner pines crowding the aisle (kept off the path column x13–15)
+  trees.push([6, 4], [22, 4], [9, 7], [20, 8], [7, 12], [23, 11], [10, 16], [21, 16], [6, 9], [24, 14]);
+
+  return {
+    id: 'whisperwood_rise',
+    name: 'WHISPERWOOD RISE',
+    music: 'hill',
+    ambience: 'wind',
+    grid: g.out(),
+    props: [
+      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: OAK })),
+      { sprite: 'sign', x: 16, y: 16, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // §A10 #1: the last paw prints before the crown of the hill
+      { sprite: 'paw_prints', x: 14, y: 10.4, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+    ],
+    npcs: [],
+    signs: [{ x: 16, y: 16, dialogue: 'sign_whisperwood_rise' }],
+    phones: [],
+    doors: [
+      { x: 13, y: 19, w: 3, h: 1, to: 'hickory_trail', tx: 232, ty: 36, facing: 'down' },
+      { x: 13, y: 0, w: 3, h: 1, to: 'hickory_hill', tx: 232, ty: 660, facing: 'up' },
+    ],
+    spawners: [
+      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 8, y: 4, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['hill_slug_deluxe'], count: 1, rect: { x: 8, y: 12, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
+    ],
+    triggers: [],
   };
 }
 
@@ -2714,6 +2841,9 @@ export const MAPS: Record<string, MapDef> = {
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,
   hill_road: buildHillRoad(),
+  // S22 (ADR-112) — THE LONGER CLIMB: two legs between the road and the crater
+  hickory_trail: buildHickoryTrail(),
+  whisperwood_rise: buildWhisperwoodRise(),
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),
   rex_bedroom: buildBedroom(),

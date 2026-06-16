@@ -423,6 +423,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sign_trail: [
     'TRAIL COURTESY: pack out what you pack in. The slugs have unionized.',
   ],
+  // S22 (ADR-112) — THE LONGER CLIMB: two transitional legs up to the crater
+  sign_hickory_trail: [
+    'HICKORY TRAIL — switchbacks ahead. Elevation: yes. A lot of it.',
+    "(A hand-nailed board: \"DIRT ROAD. NO CARS. NO BIKES. The hill said so.\")",
+  ],
+  sign_whisperwood_rise: [
+    'WHISPERWOOD RISE — last of the trees before the bald crown of the hill.',
+    '(The pines lean closer up here. Something fell through them three hours ago.)',
+  ],
 
   /* ---------------- S15h — THE WORLD BLOCK (Otterbrook grew up) ---------------- */
   // the new south + east blocks: one weird obsession each (§A11), warm + plain
