@@ -131,6 +131,9 @@ import {
 } from '../battle/formulas';
 import { colorOf, RAMP, px } from '../palette';
 import { s, ART_SCALE, TILE_PX } from '../spritegen/scale';
+import { showCard, playStagedScene } from '../engine/cutsceneStage';
+import { ch1FirstHeartlight } from '../data/cutscenes_staged';
+import { openingPhase, type OpeningPhase } from '../engine/opening';
 
 interface Rect {
   x: number;
@@ -244,6 +247,7 @@ export class OverworldScene extends Phaser.Scene {
   private patrols: PatrolObj[] = [];
   private dlg!: Dialogue;
   private cut = false; // cutscene lock
+  private entryBlackout?: Phaser.GameObjects.Rectangle; // no world-flash before an entry cutscene
   private isNight = false; // set per-build; dialogueDay variants read it (S15c)
   private transitioning = false;
   private battleCooldown = 0;
@@ -334,9 +338,11 @@ export class OverworldScene extends Phaser.Scene {
     const night = this.mapDef.night === true || storyNight;
     this.isNight = night; // S15c: NPC dialogueDay variants read this
     if (night) this.buildNight();
-    this.showBanner(night);
+    if (this.opPhase() === 0) this.showBanner(night); // no map-name/"2 A.M." banner during the opening cinematic
 
-    AUDIO.playMusic(this.mapDef.music);
+    // 'starfall' runs UNBROKEN across every opening phase (playMusic is idempotent,
+    // so the per-map restarts don't restart it); room music resumes at the wake.
+    AUDIO.playMusic(this.opPhase() > 0 ? 'starfall' : this.mapDef.music);
     this.cameras.main.fadeIn(250, 0, 0, 0);
 
     // §A4: the VITALS quick-glance. The world pausing (battle / menu / shop)
@@ -347,6 +353,14 @@ export class OverworldScene extends Phaser.Scene {
     this.input.on('pointerdown', () => {
       if (this.vitalsGlance?.visible && this.time.now >= this.vitalsLockUntil) this.hideVitals();
     });
+
+    // No world-flash before an entry cutscene: a black cover (oversized so it holds
+    // at any zoom) until the opening phase about to run fades it out.
+    this.entryBlackout = this.opPhase() > 0
+      ? this.add
+          .rectangle(-this.scale.width, -this.scale.height, this.scale.width * 3, this.scale.height * 3, 0x000000)
+          .setOrigin(0).setScrollFactor(0).setDepth(80_000)
+      : undefined;
 
     void this.onEnterCutscenes();
   }
@@ -793,6 +807,9 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private buildRoamers(): void {
+    // suppress overworld enemies during ANY opening-cinematic phase (the maps it
+    // stages on aren't all flag-gated for enemies before the meteor "falls").
+    if (this.opPhase() > 0) return;
     for (const sp of this.mapDef.spawners) {
       if (sp.ifFlag && !GS.flag(sp.ifFlag)) continue;
       if (sp.unlessFlag && GS.flag(sp.unlessFlag)) continue; // S9: guards stand down
@@ -3538,10 +3555,13 @@ export class OverworldScene extends Phaser.Scene {
       await this.boatCutscene();
       return;
     }
-    if (this.openingRequested && this.mapDef.id === 'rex_bedroom' && !GS.flag('intro_done')) {
-      this.openingRequested = false;
-      await this.introScene();
-      return;
+    // Ch.1 opening — a 4-phase cinematic across hickory_hill → otterbrook →
+    // hickory_hill → rex_bedroom (engine/opening.ts), each re-entered after a cut.
+    switch (this.opPhase()) {
+      case 1: this.openingRequested = false; await this.playOpeningCinema(); return;
+      case 2: await this.openingHouseOverview(); return;
+      case 3: await this.openingHillClimb(); return;
+      case 4: await this.introScene(); return;
     }
     if (this.registry.get('defeated') === true) {
       this.registry.set('defeated', false);
@@ -4086,22 +4106,205 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  /** Ch.1 opening, phase 4 — the bedroom wake (after the cinematic's last cut). */
   private async introScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('intro_done');
-    await this.openingMeteorCinema();
-    // the bedroom fades in mid-aftershock: same night, one wall away
-    const cover = this.add
-      .rectangle(0, 0, this.scale.width, this.scale.height, 0x0a0a18)
+    // the bedroom fades in from the create()-placed entry blackout (no world-flash);
+    // the aftershock rumbles as {rex} wakes.
+    const cover = this.entryBlackout ?? this.add
+      .rectangle(0, 0, this.scale.width, this.scale.height, 0x000000)
       .setOrigin(0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI - 1); // below the dialogue windows
+    this.entryBlackout = undefined;
     AUDIO.sfx('rumble');
     this.cameras.main.shake(900, 0.005);
     this.tweens.add({ targets: cover, alpha: 0, duration: 1200, onComplete: () => cover.destroy() });
     await this.wait(1300);
     await this.dlg.say(...DIALOGUE.intro_wake);
     GS.setFlag('meteor_fell');
+    AUDIO.playMusic(this.mapDef.music); // the opening theme hands off to the room
+    this.cut = false;
+  }
+
+  /** Which opening-cinematic phase should run on this map (0 = none). */
+  private opPhase(): OpeningPhase {
+    return openingPhase(
+      this.mapDef.id,
+      { intro_done: !!GS.flag('intro_done'), op_fell: !!GS.flag('op_fell'), op_house: !!GS.flag('op_house') },
+      this.openingRequested,
+    );
+  }
+
+  /** A clean cinematic map-cut: fade to black, then restart on `to` (no door
+   *  whoosh/zoom). The next opening phase reveals the new map behind its blackout. */
+  private cinematicCut(to: string, tx: number, ty: number): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    this.cameras.main.fadeOut(500, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.restart({ mapId: to, x: s(tx), y: s(ty), facing: 'down' });
+    });
+  }
+
+  /**
+   * Ch.1 OPENING phase 1 (Hickory Hill): an establishing card, then the meteor
+   * falls into the REAL crater (camera push-in) → impact → the painted card; then
+   * a cinematic cut to town for the overview. The OLD vector openingMeteorCinema
+   * below is a missing-art fallback only (it never runs once the art is present).
+   */
+  private async playOpeningCinema(): Promise<void> {
+    this.cut = true;
+    if (!this.textures.exists('meteor_rock_hickory_hill')) {
+      await this.openingMeteorCinema();
+      this.entryBlackout?.destroy();
+      this.entryBlackout = undefined;
+      GS.setFlag('op_fell');
+      GS.setFlag('op_house'); // skip the overview phases; drop to the bedroom wake
+      this.cinematicCut('rex_bedroom', 72, 88);
+      return;
+    }
+    const cam = this.cameras.main;
+    cam.stopFollow();
+    this.player.setVisible(false);
+
+    // the landing = the REAL crater. Anchor on the static meteor_rock prop (props
+    // render at ORIGIN (0,0) at tile*TILE_PX), hidden until the fall lands; the
+    // crater CENTER is its top-left PLUS half its drawn size.
+    const landed = this.children.list.filter(
+      (o): o is Phaser.GameObjects.Image =>
+        o instanceof Phaser.GameObjects.Image && o.texture.key === 'meteor_rock_hickory_hill',
+    );
+    landed.forEach((o) => o.setVisible(false));
+    const prop = landed[0];
+    const impactX = prop ? prop.x + prop.displayWidth / 2 : 15 * TILE_PX;
+    const impactY = prop ? prop.y + prop.displayHeight / 2 : 6 * TILE_PX;
+    // zoom 1 (zoom OUT shrinks the scrollFactor-0 night tint below the screen)
+    cam.setZoom(1);
+    cam.centerOn(impactX, impactY);
+
+    // 1) establishing still — the wrong star
+    await showCard(this, 'meteor_2am', { chapter: 'ch1', caption: 'Otterbrook, Ohio. Summer, 1995.' });
+
+    // reveal the live night hill behind the card (fade the no-flash entry blackout)
+    if (this.entryBlackout) {
+      const b = this.entryBlackout;
+      this.entryBlackout = undefined;
+      this.tweens.add({ targets: b, alpha: 0, duration: 450, onComplete: () => b.destroy() });
+    }
+
+    // 2) the descent — it falls into the crater while the camera leans IN (movement)
+    await this.wait(400);
+    cam.zoomTo(1.18, 2700, 'Sine.easeInOut');
+    const shadow = this.add
+      .image(impactX, impactY, 'mob_shadow')
+      .setOrigin(0.5, 0.5).setAlpha(0).setScale(0.5).setDepth(impactY - 1);
+    const meteor = this.add
+      .image(impactX + s(90), impactY - s(300), 'meteor_rock_hickory_hill')
+      .setOrigin(0.5, 0.5).setScale(0.25).setDepth(900_000);
+    const shed = this.time.addEvent({
+      delay: 50, loop: true,
+      callback: () => {
+        const p = this.add.sprite(meteor.x, meteor.y, 'spark', 0).setDepth(899_999).setScale(0.7 + (meteor.y % 5) * 0.1);
+        this.tweens.add({ targets: p, x: p.x + s(8), y: p.y - s(6), alpha: 0, scale: 0.2, duration: 360, onComplete: () => p.destroy() });
+      },
+    });
+    this.tweens.add({ targets: shadow, alpha: 0.55, scale: 1.6, duration: 2600 });
+    await new Promise<void>((res) => {
+      this.tweens.add({ targets: meteor, x: impactX, y: impactY, scale: 1, angle: 200, duration: 2600, ease: 'Quad.easeIn', onComplete: () => res() });
+    });
+    shed.remove();
+
+    // 3) IMPACT — the crater takes it; the static rock becomes the landed meteor
+    AUDIO.sfx('meteor_crash');
+    cam.flash(260, 255, 250, 235);
+    cam.shake(1500, 0.022);
+    meteor.destroy();
+    shadow.destroy();
+    landed.forEach((o) => o.setVisible(true));
+    this.sparkleBurst(impactX, impactY, 18);
+    const glow = this.add.circle(impactX, impactY, s(22), 0xf8d868, 0.5).setDepth(impactY - 2);
+    this.tweens.add({ targets: glow, scale: 1.6, fillAlpha: 0.2, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    await this.wait(900);
+
+    // 4) the painted impact card
+    await showCard(this, 'hickory_hill', { chapter: 'ch1', caption: 'It comes down behind Hickory Hill, and the whole town feels it land.' });
+
+    // hand off to the OVERVIEW (phase 2): cut to town and open on {rex}'s house.
+    GS.setFlag('op_fell');
+    this.cinematicCut('otterbrook', 128, 128);
+  }
+
+  /** Opening phase 2 (Otterbrook): the overview opens on {rex}'s house, holds, then
+   *  pans up toward the road out of town — then cuts to the hill for the climb. */
+  private async openingHouseOverview(): Promise<void> {
+    this.cut = true;
+    const cam = this.cameras.main;
+    cam.stopFollow();
+    this.player.setVisible(false);
+    const house = this.children.list.find(
+      (o): o is Phaser.GameObjects.Image =>
+        o instanceof Phaser.GameObjects.Image && o.texture.key === 'house_rex',
+    );
+    const houseX = house ? house.x + house.displayWidth / 2 : 6 * TILE_PX;
+    const houseY = house ? house.y + house.displayHeight / 2 : 3 * TILE_PX;
+    cam.setZoom(1.3); // POINT at the house (zoom in keeps the night tint covering)
+    cam.centerOn(houseX, houseY);
+    if (this.entryBlackout) {
+      const b = this.entryBlackout;
+      this.entryBlackout = undefined;
+      this.tweens.add({ targets: b, alpha: 0, duration: 500, onComplete: () => b.destroy() });
+    }
+    AUDIO.sfx('rumble');
+    await this.wait(1300); // hold on the sleeping house
+    await new Promise<void>((res) => {
+      cam.pan(13 * TILE_PX, 0, 2600, 'Sine.easeInOut');
+      this.time.delayedCall(2650, () => res());
+    });
+    await this.wait(300);
+    GS.setFlag('op_house');
+    this.cinematicCut('hickory_hill', 232, 660); // the south trail spawn
+  }
+
+  /** Opening phase 3 (Hickory Hill): the overview climbs the hill — the trail up
+   *  from town to the smoking crater — then cuts to the bedroom for the wake. */
+  private async openingHillClimb(): Promise<void> {
+    this.cut = true;
+    const cam = this.cameras.main;
+    cam.stopFollow();
+    this.player.setVisible(false);
+    const landed = this.children.list.find(
+      (o): o is Phaser.GameObjects.Image =>
+        o instanceof Phaser.GameObjects.Image && o.texture.key === 'meteor_rock_hickory_hill',
+    );
+    const craterX = landed ? landed.x + landed.displayWidth / 2 : 15 * TILE_PX;
+    const craterY = landed ? landed.y + landed.displayHeight / 2 : 6 * TILE_PX;
+    const mapH = this.mapDef.grid.length * TILE_PX;
+    cam.setZoom(1);
+    cam.centerOn(craterX, mapH - s(40)); // start at the foot of the hill (the trail up)
+    if (this.entryBlackout) {
+      const b = this.entryBlackout;
+      this.entryBlackout = undefined;
+      this.tweens.add({ targets: b, alpha: 0, duration: 500, onComplete: () => b.destroy() });
+    }
+    const glow = this.add.circle(craterX, craterY, s(22), 0xf8d868, 0.45).setDepth(craterY - 2);
+    this.tweens.add({ targets: glow, scale: 1.6, fillAlpha: 0.2, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    await this.wait(600);
+    AUDIO.sfx('rumble');
+    await new Promise<void>((res) => {
+      cam.pan(craterX, craterY, 4600, 'Sine.easeInOut'); // climb to the crater
+      this.time.delayedCall(4650, () => res());
+    });
+    await this.wait(700);
+    this.cinematicCut('rex_bedroom', 72, 88);
+  }
+
+  /** Hybrid STAGED cutscene — the ch1-close first Heartlight (card → live {faye}/
+   *  {rex} acting it out). Public so a story trigger (or QA) can fire it. */
+  async playFirstHeartlightStaged(): Promise<void> {
+    this.cut = true;
+    await playStagedScene(this, ch1FirstHeartlight, { dialogue: this.dlg });
     this.cut = false;
   }
 

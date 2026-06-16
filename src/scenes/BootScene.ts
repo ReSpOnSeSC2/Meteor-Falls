@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { generateAllTextures } from '../spritegen';
 import { applyAuthoredBattleArt, applyAuthoredHeroArt, applyAuthoredMinigameArt, applyAuthoredWorldArt, preloadAuthoredArt } from '../spritegen/authored';
+import { preloadCutscenePanels } from '../engine/cutscene';
 import { s } from '../spritegen/scale';
 
 /**
@@ -14,6 +15,7 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     preloadAuthoredArt(this);
+    preloadCutscenePanels(this);
   }
 
   create(): void {
