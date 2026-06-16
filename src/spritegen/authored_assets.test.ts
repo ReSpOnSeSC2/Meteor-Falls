@@ -37,7 +37,7 @@ const HERO_ASSETS = [
   { id: 'dorin', art: 'dorin' },
 ] as const;
 
-const HERO_IDS = new Set(HERO_ASSETS.map((hero) => hero.id));
+const HERO_IDS: ReadonlySet<string> = new Set(HERO_ASSETS.map((hero) => hero.id));
 
 function listedNpcIds(): string[] {
   return readFileSync(resolve(process.cwd(), 'docs/asset-lists/characters_8dir.txt'), 'utf8')
@@ -64,8 +64,10 @@ describe('authored hero asset wiring', () => {
     for (const hero of HERO_ASSETS) {
       expect(pngSize(resolve(process.cwd(), `assets/art/characters/${hero.art}_anim_46_4x.png`)), hero.id)
         .toEqual({ w: 384, h: 1536 });
-      expect(pngSize(resolve(process.cwd(), `assets/art/busts/${hero.art}_bust_18_32x32.png`)), hero.id)
-        .toEqual({ w: 128, h: 160 });
+      // The battle bust is now a single high-res portrait (ADR-110 follow-up);
+      // makeBustCanvas tiles it into the 18 BUST_FRAME pose cells at boot.
+      expect(pngSize(resolve(process.cwd(), `assets/art/busts/${hero.art}-battle-bust-transparent.png`)), hero.id)
+        .toEqual({ w: 1254, h: 1254 });
       expect(pngSize(resolve(process.cwd(), `assets/art/busts/${hero.art}_bust_32.png`)), hero.id)
         .toEqual({ w: 32, h: 32 });
       expect(pngSize(resolve(process.cwd(), `assets/art/battlers/${hero.art}_battler_14_28x36.png`)), hero.id)
@@ -100,7 +102,7 @@ describe('authored NPC asset wiring', () => {
     expect(npcIds).toHaveLength(42);
     expect(AUTHORED_NPC_CHARACTER_IDS).toEqual(npcIds);
 
-    const artById = new Map(NPC_CHARACTER_ART.map((art) => [art.id, art]));
+    const artById = new Map<string, (typeof NPC_CHARACTER_ART)[number]>(NPC_CHARACTER_ART.map((art) => [art.id, art]));
     for (const id of npcIds) {
       const art = artById.get(id);
       expect(art?.url, id).toContain(`${id}_8dir_96x128.png`);

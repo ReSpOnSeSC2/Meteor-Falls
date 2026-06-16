@@ -1,0 +1,11 @@
+// preload()
+this.load.spritesheet('jay_walk_s', 'jay_walk_s.png', { frameWidth: 96, frameHeight: 128 });
+
+// create()
+this.anims.create({
+  key: 'jay_walk_s',
+  frames: this.anims.generateFrameNumbers('jay_walk_s', { start: 0, end: 7 }),
+  frameRate: 9, repeat: -1
+});
+const spr = this.add.sprite(x, y, 'jay_walk_s');
+spr.play('jay_walk_s');

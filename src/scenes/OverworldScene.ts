@@ -116,7 +116,7 @@ import { VEHICLE_CATALOG, VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
-import { AUTHORED_WORLD_PROP_DISPLAY_SIZE } from '../spritegen/authored';
+import { AUTHORED_WORLD_PROP_DISPLAY_SIZE, worldSpriteScale } from '../spritegen/authored';
 import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
 import {
   instantWinGroup,
@@ -472,8 +472,16 @@ export class OverworldScene extends Phaser.Scene {
           : p.sprite;
       const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, sprite).setOrigin(0, 0);
       const displaySize = AUTHORED_WORLD_PROP_DISPLAY_SIZE[sprite as AuthoredWorldPropKey];
-      // AUTHORED_WORLD_PROP_DISPLAY_SIZE is NATIVE map data → scale at read
-      if (displaySize) img.setDisplaySize(s(displaySize.w), s(displaySize.h));
+      // Sized props carry NATIVE map dims → scale at read. Everything else goes
+      // through THE WORLD RESIZE RULE (worldSpriteScale): facades land at their
+      // footprint and legacy ×1 art is lifted to runtime res, so homes/props are
+      // no longer ~ART_SCALE× too small on the 1600×900 framebuffer.
+      if (displaySize) {
+        img.setDisplaySize(s(displaySize.w), s(displaySize.h));
+      } else {
+        const sc = worldSpriteScale(sprite, img.width, img.height);
+        if (sc !== 1) img.setScale(sc);
+      }
       img.setDepth(p.y * TILE_PX + img.displayHeight);
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
@@ -489,17 +497,17 @@ export class OverworldScene extends Phaser.Scene {
         // gatehouse, mansions) join the bldg_* facades here — the tall clubhouse_grand
         // had a 30px data solid under a much taller sprite, so its lower body was
         // walk-through and its doorstep sat too deep; the texture rebuild fixes both.
-        for (const sr of this.facadeSolids(p, img.width, img.height)) this.solids.push(sr);
+        for (const sr of this.facadeSolids(p, img.displayWidth, img.displayHeight)) this.solids.push(sr);
         if (p.door) {
-          // img.* are runtime (displayed) px; door.ox/w/h are NATIVE data → s()
+          // img.display* are runtime (placed) px; door.ox/w/h are NATIVE data → s()
           this.facadeDoorBox.set(p, {
             x: p.x * TILE_PX + s(p.door.ox),
-            y: p.y * TILE_PX + img.height - s(14),
+            y: p.y * TILE_PX + img.displayHeight - s(14),
             w: s(p.door.w),
             h: s(p.door.h),
           });
         }
-        this.auditFacade(p, sprite, img.height);
+        this.auditFacade(p, sprite, img.displayHeight);
       } else if (p.solid) {
         // solid.* are NATIVE map data → scale at the read site
         this.solids.push({
@@ -536,17 +544,20 @@ export class OverworldScene extends Phaser.Scene {
    */
   private buildHoldingDoor(p: PropDef): void {
     if (GS.flag('holding_open')) {
-      this.add
+      const panel = this.add
         .image(p.x * TILE_PX - s(26), p.y * TILE_PX + s(14), 'quota_panel')
         .setOrigin(0, 0)
         .setDepth(p.y * TILE_PX + s(20));
+      const psc = worldSpriteScale('quota_panel', panel.width, panel.height);
+      if (psc !== 1) panel.setScale(psc);
       return;
     }
     const lit = this.quotaCount();
-    const img = this.add
-      .image(p.x * TILE_PX, p.y * TILE_PX, lit > 0 ? `holding_door_${lit}` : 'holding_door')
-      .setOrigin(0, 0);
-    img.setDepth(p.y * TILE_PX + img.height);
+    const doorKey = lit > 0 ? `holding_door_${lit}` : 'holding_door';
+    const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, doorKey).setOrigin(0, 0);
+    const dsc = worldSpriteScale(doorKey, img.width, img.height);
+    if (dsc !== 1) img.setScale(dsc);
+    img.setDepth(p.y * TILE_PX + img.displayHeight);
     this.holdingDoorImg = img;
     if (p.solid) {
       this.solids.push({

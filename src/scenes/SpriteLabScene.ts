@@ -11,6 +11,7 @@ import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { CAST, generateCharacterFrames, generateIdleFrames, IDLE_BREATH, IDLE_BLINK, diagWalkBase, DIAG_ORDER, type CharacterSpec, type HairStyle, type TopStyle, type Build } from '../spritegen/characters';
 import { HEROES, type HeroId } from '../data/heroes';
+import { ENEMIES } from '../data/enemies';
 import { framesToCanvas } from '../spritegen/pixmap';
 import { standFrame, type Facing } from '../spritegen';
 import { makeWindow, DEPTH_UI } from '../ui/windows';
@@ -66,6 +67,7 @@ export class SpriteLabScene extends Phaser.Scene {
   private forgeCand = 0;
   private forgeCounter = 0;
   private forgeList: { id: string; role: string; chapter: number }[] = [];
+  private enemyScroll = 0;
 
   constructor() {
     super('spritelab');
@@ -185,30 +187,39 @@ export class SpriteLabScene extends Phaser.Scene {
   }
 
   private pageEnemies(): void {
-    const list = [
-      ['battle_cranky_mailbox', 'MAILBOX'],
-      ['battle_runaway_lawnmower', 'LAWNMOWER'],
-      ['battle_coily_cicada', 'CICADA'],
-      ['battle_pigeon_gang', 'PIGEONS'],
-      ['battle_hill_slug', 'HILL SLUG'],
-      ['battle_blazer_smiler', 'SMILER'],
-      ['battle_titanic_tick', 'TITANIC TICK'],
-    ] as const;
-    list.forEach(([key, name], i) => {
+    const seen = new Set<string>();
+    const list = Object.values(ENEMIES)
+      .filter((e) => {
+        if (seen.has(e.sprite)) return false;
+        seen.add(e.sprite);
+        return this.textures.exists(e.sprite);
+      })
+      .map((e) => [e.sprite, e.name.toUpperCase()] as const);
+    const cols = 4;
+    const visibleRows = 2;
+    const maxScroll = Math.max(0, Math.ceil(list.length / cols) - visibleRows);
+    this.enemyScroll = Math.max(0, Math.min(this.enemyScroll, maxScroll));
+    list.slice(this.enemyScroll * cols, (this.enemyScroll + visibleRows) * cols).forEach(([key, name], i) => {
       const col = i % 4;
       const row = Math.floor(i / 4);
-      const x = s(60 + col * 95);
-      const y = s(78 + row * 78);
-      // v3 battle sprites are EB-scale already (64-96px) — show them near 1:1
-      const spr = this.add.image(x, y, key).setScale(key.includes('tick') ? 0.85 : 0.9);
+      const x = s(50 + col * 100);
+      const y = s(70 + row * 82);
+      const src = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+      const fit = Math.min(s(82) / src.width, s(52) / src.height, 1);
+      const spr = this.add.image(x, y, key).setScale(fit);
       // y - 3 is a px-space bob amplitude → scale; the 1000+i*100 is a duration (ms) → unchanged.
       this.tweens.add({ targets: spr, y: y - s(3), duration: 1000 + i * 100, yoyo: true, repeat: -1 });
       const label = this.add
-        .bitmapText(x, y + s(34), 'retro', name, s(6))
+        .bitmapText(x, y + s(34), 'retro', name.slice(0, 13), s(6))
         .setOrigin(0.5, 0)
         .setTint(colorOf(px(RAMP.PAPER, 2)));
       this.content.push(spr, label);
     });
+    const pos = this.add
+      .bitmapText(s(388), s(36), 'retro', `${this.enemyScroll + 1}-${Math.min(this.enemyScroll + visibleRows, Math.ceil(list.length / cols))}/${Math.ceil(list.length / cols)}  ^v`, s(6))
+      .setOrigin(1, 0)
+      .setTint(colorOf(px(RAMP.GOLD, 2)));
+    this.content.push(pos);
   }
 
   private pageWorld(): void {
@@ -496,6 +507,12 @@ export class SpriteLabScene extends Phaser.Scene {
     if (this.page === 0 && d.y !== 0 && this.navOk()) {
       // S14b: scroll the cast sheet by row
       this.castScroll += d.y > 0 ? 1 : -1;
+      AUDIO.sfx('cursor');
+      this.showPage();
+      return;
+    }
+    if (this.page === 2 && d.y !== 0 && this.navOk()) {
+      this.enemyScroll += d.y > 0 ? 1 : -1;
       AUDIO.sfx('cursor');
       this.showPage();
       return;

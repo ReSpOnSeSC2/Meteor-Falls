@@ -1,0 +1,14 @@
+# Cadence runtime artifacts — rendered sheets, atlases, preview gifs, and
+# per-character project scratch are all regenerated from the masters by the
+# CLI / UI, so they never get committed.
+out/
+projects/
+.work/
+.debug/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/

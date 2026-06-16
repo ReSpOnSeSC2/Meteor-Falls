@@ -100,6 +100,51 @@ def horizontal_segments(img: Image.Image, threshold: int = 5) -> list[tuple[int,
     return segments
 
 
+def recolor_large_upper_white_to_cap_red(img: Image.Image) -> Image.Image:
+    arr = np.array(img.convert("RGBA")).copy()
+    h, w = arr.shape[:2]
+    rgb = arr[:, :, :3].astype(np.int16)
+    yy, _ = np.indices((h, w))
+    white = (
+        (arr[:, :, 3] > 20)
+        & (rgb[:, :, 0] > 205)
+        & (rgb[:, :, 1] > 205)
+        & (rgb[:, :, 2] > 195)
+        & (yy < int(h * 0.45))
+    )
+    seen = np.zeros((h, w), dtype=bool)
+    components: list[list[tuple[int, int]]] = []
+    for y in range(h):
+        for x in range(w):
+            if not white[y, x] or seen[y, x]:
+                continue
+            stack = [(x, y)]
+            seen[y, x] = True
+            pixels: list[tuple[int, int]] = []
+            while stack:
+                cx, cy = stack.pop()
+                pixels.append((cx, cy))
+                for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and white[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True
+                        stack.append((nx, ny))
+            components.append(pixels)
+
+    for pixels in components:
+        if len(pixels) < 450:
+            continue
+        ys = np.array([p[1] for p in pixels])
+        if ys.mean() > h * 0.33:
+            continue
+        for x, y in pixels:
+            lum = int((int(arr[y, x, 0]) + int(arr[y, x, 1]) + int(arr[y, x, 2])) / 3)
+            t = max(0.0, min(1.0, (lum - 190) / 65))
+            arr[y, x, 0] = int(185 + 55 * t)
+            arr[y, x, 1] = int(24 + 42 * t)
+            arr[y, x, 2] = int(24 + 24 * t)
+    return Image.fromarray(arr, "RGBA")
+
+
 def fit_cell(img: Image.Image, fit: Fit = Fit()) -> Image.Image:
     content = crop_content(img)
     scale = min(fit.max_w / content.width, fit.max_h / content.height)
@@ -139,13 +184,14 @@ def checker(size: tuple[int, int], cell: int = 8) -> Image.Image:
 
 
 def extract_sources() -> dict[int, Image.Image]:
-    left_strip = load_rgba(CHAR_DIR / "jay_run_left_nobg_cropped.png")
-    left_segments = horizontal_segments(left_strip)
-    if len(left_segments) != 4:
-        raise RuntimeError(f"expected 4 left-run frames, found {len(left_segments)}")
-    left_frames = [left_strip.crop((x0, 0, x1, left_strip.height)) for x0, x1 in left_segments]
-
-    right_single = crop_content(load_rgba(CHAR_DIR / "jay_anim_run_right_nobg_cropped.png"))
+    no_ponytail_right = load_rgba(CHAR_DIR / "jay_run_right_no_ponytail_transparent.png")
+    no_ponytail_segments = horizontal_segments(no_ponytail_right, 20)
+    if len(no_ponytail_segments) != 4:
+        raise RuntimeError(f"expected 4 no-ponytail right-run frames, found {len(no_ponytail_segments)}")
+    right_frames = [
+        recolor_large_upper_white_to_cap_red(crop_content(no_ponytail_right.crop((x0, 0, x1, no_ponytail_right.height))))
+        for x0, x1 in no_ponytail_segments
+    ]
 
     back = load_rgba(CHAR_DIR / "jay_run_back_transparent.png")
     back_frames = [
@@ -180,15 +226,16 @@ def extract_sources() -> dict[int, Image.Image]:
     back_fit = Fit(max_w=72, max_h=112, bottom=126)
     diag_fit = Fit(max_w=80, max_h=112, bottom=126)
 
-    right_b = crop_content(left_frames[3]).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    left_run_a = right_frames[0].transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    left_run_b = right_frames[1].transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     return {
         16: fit_cell(down_frames[0], front_fit),
         17: fit_cell(down_frames[1], front_fit),
-        18: fit_cell(left_frames[0], side_fit),
-        19: fit_cell(left_frames[3], side_fit),
-        20: fit_cell(right_single, side_fit),
-        21: fit_cell(right_b, side_fit),
+        18: fit_cell(left_run_a, side_fit),
+        19: fit_cell(left_run_b, side_fit),
+        20: fit_cell(right_frames[0], side_fit),
+        21: fit_cell(right_frames[1], side_fit),
         22: fit_cell(back_frames[0], back_fit),
         23: fit_cell(back_frames[1], back_fit),
         36: fit_cell(diagonal_frames["downright_a"], diag_fit),
