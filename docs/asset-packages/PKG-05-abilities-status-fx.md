@@ -3,13 +3,13 @@
 All the small combat iconography.
 
 ## A. Ability icons — 92
-One icon per ability id. Size ≈ 16×16. Path `assets/art/icons/abilities/<id>.png`.
+One icon per ability id. Size ≈16×16 native (≈64×64 runtime). Path `assets/art/icons/abilities/<id>.png`.
 Full id list: [`../asset-lists/ability_icons.txt`](../asset-lists/ability_icons.txt).
 Source of truth: `src/data/abilities.ts`. Used in the battle command menu and
 PSI/skill lists.
 
 ## B. Status-effect icons — 12
-Tiny (≈8×8) overlay badges drawn on busts/battlers. Path
+Tiny (≈8×8 native, ≈32×32 runtime) overlay badges drawn on busts/battlers. Path
 `assets/art/icons/status/<name>.png`:
 `asleep, burn, crying, exposed, frozen, gilded, hushed, marked, paralyzed,
 puppet, rattled, shield` (`src/scenes/BattleScene.ts`).

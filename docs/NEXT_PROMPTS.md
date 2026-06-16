@@ -1721,7 +1721,7 @@ BFS-at-every-rotation precedent generalized).
 
 ENCOUNTER PRESSURE AUTOMATION — tools/encounter-report.ts (library in
 src/levelkit/pressure.ts so vitest pins the math): scores EVERY map —
- - enemy density per screen-equivalent (400×225 logical windows);
+ - enemy density per screen-equivalent (1600×900 logical windows);
  - distance from each entrance to first possible contact (grace);
  - distance from each rest/heal point to the nearest danger zone;
  - unavoidable touches (corridor width vs sight-radius pursuit — BFS

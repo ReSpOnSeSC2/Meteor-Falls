@@ -466,7 +466,7 @@ The art + ambiance foundation the control system rides on. No control yet — ju
   race car, SUV, large SUV, modern EV, truck, dump truck, trash cans, excavator + heavy machinery;
   and — defined now for later movements — boat, yacht, submarine, fighter jet, small plane, jumbo
   jet, blimp, helicopter. Each in **several seeded colors/designs** (a `RAMP`-driven palette like
-  the building catalog), drawn to read against the 16×24 hero, with a clear FOOTPRINT solid and a
+  the building catalog), drawn to read against the hero (24×32 native / 96×128 runtime), with a clear FOOTPRINT solid and a
   `seats` count in a `VEHICLE_DIMS` data table. Pixel-clean under ADR-020; `art:check` green;
   `npm run art:vehicles` contact sheet renders. Both-directions VEHICLE manifest in the validator.
 - **THE TRAFFIC SYSTEM** (a new overworld system): vehicles spawn on `'R'/'D'` road tiles and drive

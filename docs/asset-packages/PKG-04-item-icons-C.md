@@ -1,6 +1,6 @@
 # PKG-04 — Item icons, batch C (155 icons)
 
-One inventory icon per item id below. **Size ≈ 16×16**, transparent.
+One inventory icon per item id below. **Size ≈16×16 native (≈64×64 runtime)**, transparent.
 Path: `assets/art/icons/items/<id>.png`. Source of truth: `src/data/items.ts`;
 shape hints in `ITEM_ICON` (`src/spritegen/icons.ts`). Items span all 10
 regions' foods/gear, so this is whole-game work (not per-chapter).

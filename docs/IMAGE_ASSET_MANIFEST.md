@@ -21,12 +21,14 @@ It is organized so you can produce art category by category. Each section gives:
 
 Literal id checklists for the big sets live in [`docs/asset-lists/`](./asset-lists/).
 
-> **Scale note.** The game currently renders into a **400×225** framebuffer
-> (`GAME_W/GAME_H` in `src/spritegen/index.ts`) with nearest-neighbor scaling.
-> All "engine size" numbers below are that low-res target. If we also raise the
-> render resolution (the separate "hi-res rework" track), every size here scales
-> up by the chosen factor — author at the **highest** resolution you can and let
-> the pipeline downscale, so the same masters survive a resolution bump.
+> **Scale note (ADR-110).** The game renders into a **1600×900** framebuffer
+> (`GAME_W/GAME_H` in `src/spritegen/index.ts`, `ART_SCALE = 4`) with
+> nearest-neighbor scaling. The "engine size" numbers below are the **×1 native
+> base**; the runtime cell is **native × 4** (tile 16→**64**, char 24×32→**96×128**,
+> bust 32×32→**128×128**, battler 28×36→**112×144**, sport 32×40→**128×160**).
+> Full-screen art (boot/title/name-entry/save-slots/links backgrounds and cutscene
+> panels) is authored at **1600×900**. Author at the **highest** resolution you can
+> and let the pipeline downscale, so the same masters survive a resolution bump.
 
 ---
 
@@ -82,16 +84,16 @@ regions, so that 469/92 work mostly stands for the whole game.
 
 The first thing the player sees, plus the wrapper screens.
 
-| Image | Where | Engine size | Source of truth |
+| Image | Where | Engine size (runtime) | Source of truth |
 |---|---|---|---|
-| Studio/boot splash | `BootScene` | 400×225 | `src/scenes/BootScene.ts` |
-| Title logo / wordmark | `TitleScene` | ~300×120 | `src/spritegen/ui.ts` `drawLogo`, `drawTitleArt` |
-| Title background art | `TitleScene` | 400×225 | `src/scenes/TitleScene.ts` |
+| Studio/boot splash | `BootScene` | 1600×900 | `src/scenes/BootScene.ts` |
+| Title logo / wordmark | `TitleScene` | ~1200×480 | `src/spritegen/ui.ts` `drawLogo`, `drawTitleArt` |
+| Title background art | `TitleScene` | 1600×900 | `src/scenes/TitleScene.ts` |
 | Android app icon | launcher | 512×512 + mipmaps | `src/spritegen/ui.ts` `drawAppIcon` |
 | Splash art (Android) | native | 1080×1920-ish | `npm run art:appart` output |
-| Name-entry background | `NameEntryScene` | 400×225 | `src/scenes/NameEntryScene.ts` |
-| Save-slot frame / cards | `SaveSlotsScene` | 400×225 | `src/scenes/SaveSlotsScene.ts` |
-| Links / external screen | `LinksScene` | 400×225 | `src/scenes/LinksScene.ts` |
+| Name-entry background | `NameEntryScene` | 1600×900 | `src/scenes/NameEntryScene.ts` |
+| Save-slot frame / cards | `SaveSlotsScene` | 1600×900 | `src/scenes/SaveSlotsScene.ts` |
+| Links / external screen | `LinksScene` | 1600×900 | `src/scenes/LinksScene.ts` |
 
 ## 2. Cutscenes
 
@@ -109,14 +111,14 @@ the `docs/chapters/` drafts → **208 maps** across regions). Each chapter has a
 similar handful of cinematic beats. Canon beats live in `docs/GAME_BIBLE.md`
 (§A6) — use it as the cutscene shot list. Budget **~40+ panels** game-wide.
 
-Format: full-frame **400×225** (or higher if we lift resolution), one PNG per
+Format: full-frame **1600×900**, one PNG per
 panel; multi-panel beats are just numbered sequences.
 
 ## 3. Overworld characters (8-direction)
 
 Walking sprites for every actor. **47 total** (5 heroes + 42 NPCs).
 
-- **Engine size:** 24×32 per frame.
+- **Engine size:** 96×128 per frame (24×32 native × ART_SCALE 4).
 - **Current contract:** 8 static facings expanded to a 46-frame sheet by the
   bridge. **Production target** (per `docs/GRAPHICS_ASSET_ROLLOUT.md`): real
   frames — 4 cardinal + 4 diagonal **walk** loops, the same 8 **run** loops,
@@ -134,7 +136,7 @@ Walking sprites for every actor. **47 total** (5 heroes + 42 NPCs).
 
 The character portraits sitting above each HP/PP box in battle.
 
-- **5 heroes × 18 frames**, 32×32 each, 4 columns.
+- **5 heroes × 18 frames**, 128×128 runtime each (32×32 native × ART_SCALE 4), 4 columns.
 - **Frame order:** idleA, idleB, lunge, castA, castB, pray, gadget, rummage,
   munch, guard, hurt, nervousA, nervousB, down, cheerA, cheerB, windedA, windedB.
 - **Naming:** `assets/art/busts/<jay|mia|milo|pippa|dorin>_bust_18_32x32.png`.
@@ -144,7 +146,7 @@ The character portraits sitting above each HP/PP box in battle.
 
 The small figures that step onto the stage to swing / cast / pray / throw / aim.
 
-- **5 heroes × 14 frames**, 28×36 each.
+- **5 heroes × 14 frames**, 112×144 runtime each (28×36 native × ART_SCALE 4).
 - Multiply by **weapon class** if we want per-weapon hands (classes: `bat`,
   `pan`, `rifle`, `beads`, `fist` — see `weaponClassOf` in `spritegen/weapons.ts`).
 - **Naming:** `assets/art/battlers/<hero>_battler_14_28x36.png`.
@@ -173,9 +175,9 @@ its own large multi-frame sheet. Budget **8+**, growing per chapter.
 
 ## 8. World tiles
 
-The 16×16 ground/wall/floor cells.
+The ground/wall/floor cells — 64×64 runtime (16×16 native × ART_SCALE 4).
 
-- **53 tiles**, 16×16 each, packed in one strip.
+- **53 tiles**, 64×64 runtime each (16×16 native), packed in one strip.
 - **Naming:** one sheet `assets/art/world/otterbrook_tiles_16.png`; the bridge
   maps named cells by `WORLD_TILE_ART.names`.
 - **Source of truth / full list:** `TILESET` in `src/spritegen/tiles.ts` (see
@@ -314,7 +316,7 @@ Each unbuilt chapter needs, at minimum:
 - [ ] **Settlement(s)** — landmark facades + generic buildings in the region
       style (`spire-canton`, `bazaar-port`, `painted-gates`, `fog-stone`).
 - [ ] **NPC roster (8-dir)** — townsfolk, shopkeepers, quest-givers. ~10–15 per
-      chapter, same 24×32 / 8-direction contract as §3.
+      chapter, same 96×128 runtime (24×32 native) / 8-direction contract as §3.
 - [ ] **Enemy roster — 20 enemies × 3 wear = 60 images** (see ecosystem below).
 - [ ] **Boss(es)** — bespoke multi-frame sheet, larger than enemies.
 - [ ] **Battle background** — the region's arena backdrop.

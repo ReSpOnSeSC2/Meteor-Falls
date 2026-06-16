@@ -8,19 +8,19 @@ in the game** (Ch.1–10 story beats + travel set-pieces).
 
 | File | Where | Size |
 |---|---|---|
-| `assets/art/screens/boot_splash.png` | BootScene | 400×225 |
-| `assets/art/screens/title_bg.png` | TitleScene background | 400×225 |
-| `assets/art/screens/title_logo.png` | wordmark over title | ~300×120 |
-| `assets/art/screens/name_entry_bg.png` | NameEntryScene | 400×225 |
-| `assets/art/screens/save_slots_bg.png` | SaveSlotsScene | 400×225 |
-| `assets/art/screens/links_bg.png` | LinksScene | 400×225 |
+| `assets/art/screens/boot_splash.png` | BootScene | 1600×900 |
+| `assets/art/screens/title_bg.png` | TitleScene background | 1600×900 |
+| `assets/art/screens/title_logo.png` | wordmark over title | ~1200×480 |
+| `assets/art/screens/name_entry_bg.png` | NameEntryScene | 1600×900 |
+| `assets/art/screens/save_slots_bg.png` | SaveSlotsScene | 1600×900 |
+| `assets/art/screens/links_bg.png` | LinksScene | 1600×900 |
 | `assets/art/icons/app_icon.png` | Android launcher | 512×512 |
 | `assets/art/screens/splash_art.png` | Android splash | 1080×1920 |
-| `assets/art/screens/game_over.png` | wipeout / wake-at-save | 400×225 |
+| `assets/art/screens/game_over.png` | wipeout / wake-at-save | 1600×900 |
 
 Replaces `drawTitleArt`/`drawLogo`/`drawAppIcon` in `src/spritegen/ui.ts`.
 
-## B. Cinematic panels — full-frame 400×225, one PNG per beat
+## B. Cinematic panels — full-frame 1600×900, one PNG per beat
 
 Story beats are scripted in the scenes; canon shot list lives in
 `docs/GAME_BIBLE.md §A6`. Number multi-panel beats `_01`, `_02`, …

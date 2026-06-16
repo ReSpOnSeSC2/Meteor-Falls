@@ -1,5 +1,15 @@
 # PROMPT — METEOR FALLS: SNES-Tier Pixel-Art Upgrade (Chrono Trigger / Mother 3 / EarthBound)
 
+> **⚠️ SUPERSEDED — resolution rules.** This brief proposes redrawing the procedural
+> generators at `ART_SCALE = 2` (48×64 hero). That is **not** what shipped. The
+> canonical rules are now **ADR-110**: the render bump is `ART_SCALE = 4` →
+> **1600×900** framebuffer, the procedural engine is **FROZEN** at its native sizes
+> (ADR-109), and the runtime upscales ×4 — so characters render at **96×128**
+> (24×32 native), tiles 64×64, busts 128×128, battlers 112×144, sport 128×160. Art
+> is now **authored as PNGs** ([ART_PIPELINE.md](ART_PIPELINE.md)), not regenerated.
+> The `ART_SCALE = 2` / 48×64 numbers below are kept as the historical proposal;
+> read [SCALE_CONVENTION.md](SCALE_CONVENTION.md) for the live rules.
+
 > **Paste this whole file to the implementing agent.** It is the complete brief for
 > raising every procedurally-generated sprite in the game from the shipping
 > **minimal 24×32 EarthBound look** to a **richer, crisp SNES/GBA JRPG tier** —
