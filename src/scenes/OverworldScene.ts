@@ -3599,10 +3599,20 @@ export class OverworldScene extends Phaser.Scene {
         if (GS.flag('ember1') && !GS.flag('zapper_done')) await this.porchScene();
         break;
       case 'bus_stop':
-        // S22 (ADR-113): the depot stays shuttered until Brickton is reached on
-        // foot (brickton_foot_first) — then the highway (and the bus) reopen.
+        // S22 (ADR-114): the old center stop is retired to a ONE-TIME redirect —
+        // the 6:15 boards at the new Transit Depot (east, by the pond) now. The
+        // trigger is frozen-core, so we just point the player there once.
+        if (GS.flag('zapper_done') && !GS.flag('bus_depot_known')) {
+          await this.dlg.say(...DIALOGUE.bus_stop_moved);
+          GS.setFlag('bus_depot_known');
+        }
+        break;
+      case 'depot_board':
+        // S22 (ADR-113/114): real boarding. The depot stays shuttered until
+        // Brickton is reached on foot (brickton_foot_first); then the highway —
+        // and the 6:15 — reopen.
         if (GS.flag('zapper_done') && GS.flag('brickton_foot_first')) await this.busAsk('brickton');
-        else if (GS.flag('zapper_done')) await this.dlg.say(...DIALOGUE.bus_closed_detour);
+        else await this.dlg.say(...DIALOGUE.bus_closed_detour);
         break;
       case 'bus_stop_brickton':
         await this.busAsk('otterbrook');

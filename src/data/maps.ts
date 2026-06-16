@@ -377,6 +377,17 @@ export function growOtterbrook(): MapDef {
   g.rect(53, 21, 6, 1, 'E'); g.rect(53, 26, 6, 1, 'E');
   g.set(52, 23, 'E'); g.set(52, 24, 'E'); g.set(59, 23, 'E'); g.set(59, 24, 'E');
 
+  // 7) LANDMARK — THE TRANSIT DEPOT (S22, ADR-114): the old bus SIGN becomes a
+  //    real building fronting the cross lane (the road EAST, toward Brickton), in
+  //    the open pocket west of the Pond Park. Wholly outside the frozen core, so
+  //    the 1995 core stays byte-identical; the §A6 bus_stop trigger relocates to
+  //    its curb (below). A waiting-room interior makes it a building you ENTER.
+  g.rect(47, 17, 2, 7, ':'); // spur: the cross lane down to the depot door
+  g.rect(45, 24, 6, 1, '='); // the depot's front step / boarding curb
+  const busDepot = placeFacade('bldg_brickmore', 44, 23 * 16 + 12, 6, 2, {
+    to: 'bus_depot_int', tx: 120, ty: 128,
+  });
+
   const treesAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
     xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
 
@@ -390,7 +401,12 @@ export function growOtterbrook(): MapDef {
   const hubcap = walkPresent('gift_hubcap', 63, 23);
 
   const props: PropDef[] = [
+    // the frozen core's props stay verbatim (the byte-identical core test). The
+    // old bus SIGN keeps its corner but now just POINTS to the new Transit Depot
+    // (a redirect sign is appended below); the depot is the real stop.
     ...core.props,
+    busDepot,
+    { sprite: 'bench', x: 51, y: 21, solid: { ox: 1, oy: 6, w: 20, h: 6 } }, // the boarding-curb bench
     ...south.props,
     ...east.props,
     ...thicketProps,
@@ -404,8 +420,8 @@ export function growOtterbrook(): MapDef {
     { sprite: 'bench', x: 19, y: 49, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
     { sprite: 'sign', x: 16, y: 46, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     ...treesAt([[15, 46], [25, 47], [16, 52], [24, 52]]),
-    // the Pond Park's rests + shade
-    { sprite: 'picnic', x: 48, y: 24, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+    // the Pond Park's rests + shade (the west table moved south off the depot step)
+    { sprite: 'picnic', x: 49, y: 28, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
     { sprite: 'picnic', x: 61, y: 24, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
     { sprite: 'sign', x: 55, y: 28, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     ...treesAt([[50, 20], [60, 20], [51, 27], [62, 28]]),
@@ -431,6 +447,10 @@ export function growOtterbrook(): MapDef {
     // refuses to go himself; at daybreak (dialogueDay) he's seen the crater and
     // warns of the blocked road east. Stands by the hill gap, never wanders off it.
     { id: 'treeline_gawker', sprite: 'pigeonKid', x: 23, y: 4, facing: 'up' as const, dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' as const }, // Wave 2 (#4): rattled by the crater up the hill
+    // S22 (ADR-114): the depot comes ALIVE at daybreak — two commuters at the
+    // curb (gated on zapper_done so the 2 AM opening stays eerily empty)
+    { id: 'bus_waiter1', sprite: 'grayCommuter', x: 52, y: 23, facing: 'left' as const, dialogue: 'npc_bus_waiter1', idle: true, emote: 'think' as const, ifFlag: 'zapper_done' },
+    { id: 'bus_waiter2', sprite: 'senora', x: 46, y: 25, facing: 'up' as const, dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle' as const, ifFlag: 'zapper_done' },
   ];
 
   const signs = [
@@ -443,6 +463,8 @@ export function growOtterbrook(): MapDef {
     { x: 64, y: 17, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
     // S15i Task 1: the woods nook trailhead
     { x: 4, y: 44, dialogue: 'sign_otter_woods' },
+    // S22 (ADR-114): the old bus-stop corner now points to the new Transit Depot
+    { x: 23, y: 25, dialogue: 'sign_bus_moved' },
     ...woodsGift.signs, // ADR-056: the glade present (sign while sealed, flavor after)
     ...porchCan.signs, // ADR-063 Part B: THE PORCH SET coffee can
     ...hubcap.signs, // ADR-063 Part B: the Spare Hubcap ("worth more to a man named Earl")
@@ -468,6 +490,10 @@ export function growOtterbrook(): MapDef {
       // core's), seated well clear of every door/phone/sign (pressure ≥24px)
       { enemies: ['cranky_mailbox'], count: 1, rect: { x: 31, y: 47, w: 8, h: 3 }, ifFlag: 'meteor_fell' },
     ],
+    // triggers stay byte-identical to the frozen core (the world_block test pins
+    // grown.triggers === core.triggers). The old center bus_stop becomes a ONE-TIME
+    // redirect to the new Depot (handled in OverworldScene); real boarding moves
+    // INSIDE the depot's waiting room (an interior `depot_board` trigger).
   };
 }
 
@@ -2149,6 +2175,58 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
 }
 
 /**
+ * THE TRANSIT DEPOT waiting room (S22, ADR-114) — the bus stop is a real
+ * building now. A warm wood waiting room: a ticket window (the clerk), a
+ * schedule board, benches, and a payphone to save. Boarding still happens at
+ * the curb outside (the relocated §A6 bus_stop trigger), so the existing
+ * busAsk flow is untouched — this is the "full building" the stop earned.
+ */
+function buildBusDepotInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(13, 9, 'w');
+  g.rect(0, 0, 13, 2, 'W');
+  return {
+    id: 'bus_depot_int',
+    name: 'OTTERBROOK TRANSIT',
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      // the ticket window + counter along the back
+      { sprite: 'counter', x: 4, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 6, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      // waiting benches
+      { sprite: 'bench', x: 2, y: 5, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 9, y: 5, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      // a payphone to save (Call Dad) + an ATM for fare money
+      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 10, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
+    ],
+    npcs: [
+      {
+        id: 'depot_clerk',
+        sprite: 'quarterMan',
+        x: 5,
+        y: 2,
+        facing: 'down',
+        dialogue: 'npc_depot_clerk',
+        dialogueDay: 'npc_depot_clerk_day',
+        idle: true,
+      },
+    ],
+    signs: [{ x: 9, y: 1, dialogue: 'sign_bus_depot' }],
+    phones: [{ x: 2, y: 7 }],
+    atms: [{ x: 10, y: 7 }],
+    doors: [
+      { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    // S22 (ADR-114): boarding lives HERE now (an interior trigger, free to add) —
+    // step up to the ticket counter to catch the 6:15. Same gating as the old stop.
+    triggers: [{ id: 'depot_board', rect: { x: 4, y: 4, w: 4, h: 1 }, once: false }],
+  };
+}
+
+/**
  * STARMART — Brickton's 24-nonconsecutive-hour mart. Staggered aisles, a
  * keeper who counts the carts, and the §A8 Ch.1 stock incl. Star Cola.
  */
@@ -2568,6 +2646,7 @@ const longWalk = buildLongWalk();
   }
 }
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
+const busDepotDoorstep = doorstepOf(otterbrookMap, 'bus_depot_int') ?? { tx: 760, ty: 392 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
 const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty: 225 };
@@ -2855,6 +2934,7 @@ export const MAPS: Record<string, MapDef> = {
   dos_f2: buildDosF2(),
   dos_f3: buildDosF3(),
   otterbrook_cityhall: buildOtterbrookCityHallInt(cityHallDoorstep),
+  bus_depot_int: buildBusDepotInt(busDepotDoorstep),
   drugstore_int: buildDrugstoreInt(drugDoorstep),
   starmart_int: buildStarmartInt(martDoorstep),
   arcade_int: buildArcadeInt(arcadeDoorstep),
@@ -2872,7 +2952,7 @@ export const MAPS: Record<string, MapDef> = {
 // their hand-built size.
 const ROOMY_INTERIORS: readonly string[] = [
   'drugstore_int', 'starmart_int', 'arcade_int', 'arcade2_int',
-  'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall',
+  'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall', 'bus_depot_int',
   'mercado_int', 'clinic_ps_int', 'deli_int', 'chapel_int',
   'valle_shop_int', 'clinic_valle_int', 'chapel_valle_int',
 ];

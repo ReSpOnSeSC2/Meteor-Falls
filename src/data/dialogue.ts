@@ -1000,9 +1000,36 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // S22 (ADR-113) — THE BUS WAITS: the depot is shuttered until you've reached
   // Brickton once ON FOOT (the meteor closed the highway; the bus follows it back).
   bus_closed_detour: [
-    'The 6:15 is dark. A card is taped inside the windshield:',
+    'The 6:15 is dark. A card is taped inside the depot window:',
     '"NO SERVICE — HIGHWAY CLOSED PAST HICKORY HILL. Meteor detour. Walk the meadow road, folks. — Otterbrook Transit (both of us)."',
     '(The road to Brickton opens once someone gets through on foot. Guess who.)',
+  ],
+  // S22 (ADR-114) — THE DEPOT: the bus stop becomes a real building
+  sign_bus_moved: [
+    'BUS STOP — RELOCATED. Catch the 6:15 at the new TRANSIT DEPOT, east by the pond. →',
+    '(Someone added: "they built a whole BUILDING. With a roof. We are a real town now.")',
+  ],
+  bus_stop_moved: [
+    'A bus used to stop here. Now there is just a sign and a hopeful little bench.',
+    'The 6:15 boards at the TRANSIT DEPOT now — east of here, past the pond.',
+  ],
+  sign_bus_depot: [
+    'OTTERBROOK TRANSIT DEPOT — est. 1952. Routes: BRICKTON (the 6:15).',
+    '(A chalkboard below: "DELAYS: meteor. SAFE TRAVELS: always. LOST MITTENS: bin by the door.")',
+  ],
+  npc_depot_clerk: [
+    "@Tickets? Schedules? A warm place to wait? You're in the right shed, kiddo.",
+    "@The 6:15 boards out at the curb. I'd come point at it for you but my stool and I have an understanding.",
+  ],
+  npc_depot_clerk_day: [
+    "@Highway's open again — heard it from the milk truck before I heard it official.",
+    '@Board out at the curb whenever you like. Tell Brickton the Depot says hello, then immediately regrets it.',
+  ],
+  npc_bus_waiter1: [
+    '@Every morning, same bench, same bus. I find it deeply reassuring and mildly upsetting.',
+  ],
+  npc_bus_waiter2: [
+    "@Is the 6:15 late, or am I early? In Otterbrook it's philosophically the same thing.",
   ],
   npc_busdriver: [
     "@Exact change or exact attitude. You've got one of 'em, kid. Sit anywhere.",
