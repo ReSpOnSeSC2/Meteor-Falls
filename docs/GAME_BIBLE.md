@@ -868,7 +868,8 @@ No quest may be permanently missable. Post-Ch.6 Teleport must reopen old threads
 |---|---|---|
 | Engine | **Phaser 3.80+ / TypeScript / Vite** | Your stack muscle (TS/Vercel), huge ecosystem, perfect for tile RPGs |
 | Mobile shell | **Capacitor 6 → Android APK/AAB** | One codebase; WebView supports Gamepad API for Bluetooth controllers |
-| Maps | **Tiled** (.tmj JSON), 16×16 tiles @ 3× zoom, landscape 16:9 | EarthBound-scale readability on a phone |
+| Maps | **Tiled** (.tmj JSON), 16×16 native tiles (64×64 runtime) @ 3× zoom, landscape 16:9 | EarthBound-scale readability on a phone |
+| Resolution | **1600×900** framebuffer (16:9), nearest-neighbor, `ART_SCALE = 4` (ADR-110). Native ×1 base 400×225; runtime = native × 4 (char 24×32→**96×128**, tile 16→64, bust 32→128, battler 28×36→112×144). See [SCALE_CONVENTION.md](SCALE_CONVENTION.md) | Holds authored detail; `ART_SCALE = 1` still reproduces the legacy 400×225 game byte-for-byte |
 | State | Plain TS game-state singleton + event bus (no React) | Phaser scenes own rendering; state stays serializable for saves |
 | Saves | **IndexedDB** via `idb`, 3 slots + 1 rolling auto-backup, versioned schema with migrations | Survives app updates; localStorage fallback |
 | Content | **100% data-driven** in `/src/data` (enemies, items, abilities, shops, dialogue, quests, encounter tables) validated by **Zod** schemas at build time — authored as typed TS modules whose types are `z.infer`'d from `src/schemas`, not JSON files; the Tiled loader will parse its JSON through the same schemas *(amended 2026-06-10 per Appendix rule 6, ADR-004/ADR-017)* | "No mock data" enforced by CI: `tools/content-validate.ts` fails the build if any entity in the Bible is missing |
@@ -919,7 +920,7 @@ meteor-falls/
   that touch jittered placement are computed, never hardcoded. *(Amended 2026-06-10 per
   Appendix rule 6, alongside ADR-012.)*
 - **BUILDINGS MATCH THE HUMANS, and the catalog is deep (ADR-050).** Characters are
-  16×24; a storefront reads two-to-three stories OVER the hero, and cities carry
+  24×32 native (96×128 runtime at `ART_SCALE = 4`); a storefront reads two-to-three stories OVER the hero, and cities carry
   **MEGA-buildings** that are COMMON, not rare — towers whose tops run off-screen
   (`upperRows ≥ 11`, `H ≥ 220px`) and landmark COLOSSI whose footprint spans a slice
   of the map (you round them on foot). The forge skin pool is 100+ deterministic
@@ -1039,14 +1040,15 @@ architectural decision you make to it. TypeScript strict, no `any`.
 Initialize the Meteor Falls project: Phaser 3.80+, TypeScript strict, Vite,
 Vitest, Playwright, ESLint+Prettier, Zod, idb. Create the exact directory
 layout from GAME_BIBLE.md §B2 with .gitkeep files. Configure Vite for a
-landscape 16:9 mobile web build (960×540 logical, integer scaling).
+landscape 16:9 mobile web build (960×540 logical in this original prompt; later
+amended to 400×225 per ADR-003 and to **1600×900** per ADR-110, integer scaling).
 Add npm scripts: dev, build, test, e2e, validate (runs tools/content-validate.ts,
 stub it for now), art:check (stub), music:render (stub).
 Set up GitHub Actions per §B1 CI row (debug-APK step commented until Phase 9).
 Create docs/DECISIONS.md with an ADR template and the first entry: this stack.
 ```
 
-**Done when:** `npm run dev` shows a black 960×540 canvas with "METEOR FALLS" placeholder text; CI passes; repo matches §B2.
+**Done when:** `npm run dev` shows a black canvas (960×540 at the time of this prompt; now **1600×900** per ADR-110) with "METEOR FALLS" placeholder text; CI passes; repo matches §B2.
 
 ### Prompt 2 — Boot, Title, scene flow & game-state core
 

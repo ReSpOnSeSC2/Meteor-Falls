@@ -62,12 +62,14 @@ Mother 3-style fidelity comes from better pixel placement and animation, not
 necessarily from larger sprites. A full `ART_SCALE = 2` world risks making the
 game feel like enlarged toy art and creates huge map/collision/UI churn.
 
-Recommended native targets:
+Recommended native targets (the ×1 generator/authoring base — per **ADR-110** the
+runtime renders these at `ART_SCALE = 4` → **1600×900**, so on screen a tile is
+64×64 and a 24×32 character is **96×128**):
 
-| Domain | Target |
+| Domain | Target (native) |
 |---|---|
-| World tiles | 16x16 tiles, hand-authored |
-| Overworld characters | 24x32 or 24x40, depending on final proportions |
+| World tiles | 16x16 tiles, hand-authored (64x64 runtime) |
+| Overworld characters | 24x32 or 24x40, depending on final proportions (96x128 runtime at 24x32) |
 | Important NPC variants | same frame contract as player sprites |
 | Battle enemy sprites | 48x48 to 96x96, hand-authored per enemy family |
 | Boss sprites | 96x96 to 160x120, staged individually |

@@ -35,10 +35,12 @@ manifest); 01–10 are the global/cross-chapter art.
 
 ## Shared rules (every package)
 
-- **Render target:** the game framebuffer is **400×225**, nearest-neighbor.
-  Sizes below are that low-res target. **Author at the highest resolution you
-  can** and let the pipeline downscale, so masters survive a future resolution
-  bump. Keep transparent backgrounds (PNG-32).
+- **Render target:** the game framebuffer is **1600×900**, nearest-neighbor
+  (`ART_SCALE = 4` in `src/spritegen/scale.ts`). Runtime cells are **native × 4**
+  (tile 16→64, char 24×32→**96×128**, bust 32×32→128×128, battler 28×36→112×144,
+  sport 32×40→128×160); full-screen art (screens + cutscene panels) is **1600×900**.
+  **Author at the highest resolution you can** and let the pipeline downscale, so
+  masters survive a future resolution bump. Keep transparent backgrounds (PNG-32).
 - **Palette:** match the existing art direction (`docs/ART_DIRECTION_REBOOT.md`,
   the EarthBound/Mother-2 bar). Battle sprites float shadowless; overworld
   sprites cast the engine shadow.
@@ -47,8 +49,8 @@ manifest); 01–10 are the global/cross-chapter art.
 - **Animations — include every frame.** If a slot is engine-**animated**, the PNG
   must be a **full frame sheet**, not a single still (a one-frame image reads as a
   frozen pose). The frame-animated slots and their exact layouts:
-  - **Overworld characters → 46 frames, 4 cols × 12 rows of 24×32 = 96×384**
-    (idle breathe/blink + walk ×8 dirs + run ×8 dirs).
+  - **Overworld characters → 46 frames, 4 cols × 12 rows, 96×128 per frame**
+    (24×32 native × 4; idle breathe/blink + walk ×8 dirs + run ×8 dirs).
   - **Hero busts → 18 frames (128×160)** · **Hero battlers → 14 frames (112×144).**
   - New animated props/FX (angel float, glint, dog, songbird…) ship their loop
     frames. **Enemies are single-image** (the engine bobs them with a tween) — do

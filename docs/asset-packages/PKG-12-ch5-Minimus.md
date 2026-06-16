@@ -8,7 +8,21 @@ A complete art set for an **unlanded** chapter (no art exists yet). Canon source
 - **Settlement(s):** minimus_major
 - **Travel in:** biplane · **Dungeon:** the_hedgerow
 
-## 1. Region tileset (~12–16 cells, 16×16)
+## Resolution target
+The HD render is live: `ART_SCALE = 4` → **1600×900** framebuffer. Runtime cells
+are **native × 4**; size source art to the 4× cell (a gentle reduction, not the
+old 1× crush).
+
+- Tiles: 16×16 native → **64×64** runtime cells.
+- Characters: 24×32 native → **96×128** runtime cells, exactly the
+  `*_4x_master` cell, so they are native at 4× with no downscale.
+- Busts: 32×32 native → **128×128** runtime cells.
+- Battlers: 28×36 native → **112×144** runtime cells.
+- Athletes/golfers: 32×40 native → **128×160** runtime cells.
+
+Full-screen art (cutscene panels, screen backgrounds) is authored at **1600×900**.
+
+## 1. Region tileset (~12–16 cells, 64×64 runtime / 16×16 native)
 Ground/wall/floor/water for the tiny duchy / spire-canton biome. Add new named cells to
 `TILESET` (`src/spritegen/tiles.ts`) and pack into a region strip
 `assets/art/world/Minimus_tiles_16.png`.
@@ -21,7 +35,7 @@ LAB recipe; reskin with hand art. `assets/art/world/dungeons/the_hedgerow/`.
 Landmark + generic buildings for minimus_major in the region style. Path
 `assets/art/world/facades/`.
 
-## 4. NPC roster — ~10–15, 8-dir 24×32
+## 4. NPC roster — ~10–15, 8-dir 96×128 runtime / 24×32 native
 Townsfolk, shopkeepers, quest-givers. Same 8-direction → 46-frame contract as
 the heroes. `assets/art/characters/<id>_8dir_24x32.png`; add ids to
 `NPC_CHARACTER_ART` in `src/spritegen/authored.ts`. (Ids come from the
@@ -48,7 +62,7 @@ stages. `assets/art/enemies/battle_whiskerzilla*.png`.
 ## 7. Battle background
 The region's arena backdrop. `assets/art/backgrounds/the_hedgerow.png`.
 
-## 8. Cutscene panels (~6–8, 400×225)
+## 8. Cutscene panels (~6–8, 1600×900)
 The chapter's §A6 beats + the **biplane** travel-in set-piece. (Coordinate file
 names with PKG-01: `assets/art/cutscenes/ch5/<beat>_NN.png`.)
 

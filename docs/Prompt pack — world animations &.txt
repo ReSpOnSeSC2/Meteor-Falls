@@ -19,7 +19,7 @@ the chat thread / its own pass — this doc is everything else.
 > Characters become **96×128**, which is exactly the `*_4x_master` cell, so they are
 > **native at 4× (no downscale)**. Tiles → 64, busts → 128×128, battlers → 112×144,
 > athletes/golfers → 128×160. Size source art to the **4× cell** (a gentle reduction,
-> not the old 1× crush). This target applies once the HD bump lands in the engine.
+> not the old 1× crush). This target is **live** — the HD bump shipped (ADR-110).
 
 ---
 

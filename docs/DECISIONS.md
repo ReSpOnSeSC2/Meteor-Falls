@@ -41,7 +41,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 ## ADR-003 — Logical resolution 400×225 (16:9), 16×16 tiles, 16×24 characters
 
 - **Date:** 2026-06-10
-- **Status:** Accepted
+- **Status:** Accepted — **superseded by [ADR-110](#adr-110--4-native-resolution-400225--1600900-via-one-art_scale-knob-scale-at-the-seams)**: the logical resolution is now **1600×900** (`ART_SCALE = 4`); runtime tiles are 64×64 and characters render at 96×128. The 400×225 / 16×16 / native sizes below remain the ×1 generator base.
 - **Context:** EarthBound is 256×224 (8:7); a character is ~11% of screen
   height, which is why its sprites read "large." A naive 960×540 logical canvas
   (Prompt 1's first guess) makes 16×24 characters look tiny.
@@ -130,7 +130,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 
 - **Date:** 2026-06-10
 - **Status:** Accepted (supersedes the 16×24 spec in ADR-002/003 after user
-  review: "much more detailed character sprites")
+  review: "much more detailed character sprites"). Per [ADR-110](#adr-110--4-native-resolution-400225--1600900-via-one-art_scale-knob-scale-at-the-seams), 24×32 stays the **native** generator frame; characters render at **96×128** runtime (24×32 × `ART_SCALE` 4).
 - **Context:** 16×24 left too few pixels for faces and garments.
 - **Decision:** Characters are 24×32 (1.5×2 tiles — slightly larger on screen
   than EB's, deliberately). Art rules baked into the generator: light source
@@ -2793,7 +2793,7 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   ASSERT all of this at build (throw, naming the site); the dungeon test
   re-derives it from the produced draft on every pinned seed.
 - **Decision — ENCOUNTER PRESSURE AUTOMATION:** `src/levelkit/pressure.ts`
-  (pure library) scores every map — density per 400×225 screen-equivalent,
+  (pure library) scores every map — density per 1600×900 screen-equivalent (25×14 tiles),
   entrance grace, rest exposure, UNAVOIDABLE TOUCHES (BFS with each spawner
   DILATED by a pursuit radius — can a walking player cross entrance→exit
   without a forced fight?), side-path encounters, and spawner proximity to

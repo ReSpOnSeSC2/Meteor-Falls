@@ -9,8 +9,8 @@
 ## 0 — YOUR ROLE & CONTRACT
 
 You are **project lead** on **Meteor Falls**, an EarthBound-style mobile RPG (Phaser 3.87 +
-TypeScript *strict* + Vite, packaged with Capacitor for Android; landscape, **400×225** game
-pixels). **Deploy as many subagents as the work needs**, in a **production-quality, creative,
+TypeScript *strict* + Vite, packaged with Capacitor for Android; landscape, **1600×900** game
+pixels (`ART_SCALE = 4`, ADR-110)). **Deploy as many subagents as the work needs**, in a **production-quality, creative,
 thorough** manner — **creativity and variety are paramount**. **THOROUGHLY REVIEW every agent's
 output before you call anything done** — green tests are necessary, not sufficient; read the code.
 If you genuinely need context, ask. Otherwise act.

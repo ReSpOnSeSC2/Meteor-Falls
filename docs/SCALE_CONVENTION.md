@@ -1,17 +1,33 @@
-# Scale convention — ART_SCALE resolution migration (working spec)
+# Scale convention — ART_SCALE resolution (canonical)
 
-We are lifting the native framebuffer from **400×225 → 1600×900** by routing every
-**runtime pixel quantity** through one knob, `ART_SCALE` (in
-[`src/spritegen/scale.ts`](../src/spritegen/scale.ts)). It is currently **1** and
-will flip to **4** only after every domain is converted.
+The native framebuffer is **1600×900** (16:9). Every **runtime pixel quantity** is
+routed through one knob, `ART_SCALE` (in
+[`src/spritegen/scale.ts`](../src/spritegen/scale.ts)), which is **4** — lifting the
+legacy **400×225** base to **1600×900** (`400×225 × 4`). Characters render at
+**96×128** (native `24×32 × 4`).
 
-**The iron rule: `ART_SCALE === 1` must stay byte-for-byte identical to today.**
-So always scale via the helpers (`s(n) === n` at ×1, `TILE_PX === 16` at ×1) — never
-hardcode the ×4 numbers.
+**The iron rule: `ART_SCALE === 1` must stay byte-for-byte identical to the legacy
+400×225 game.** So always scale via the helpers (`s(n) === n` at ×1, `TILE_PX === 16`
+at ×1) — never hardcode the ×4 numbers.
 
 > ⚠️ Scaling mistakes are **invisible at ×1** (everything is identity) and only break
 > at ×4. There is no test that catches a missed site. Convert by careful reading and
 > classify every literal deliberately.
+
+## Canonical resolutions
+
+| Thing | Native (×1, generator base) | Runtime (×4, on screen) |
+|---|---|---|
+| Framebuffer / logical screen | 400×225 | **1600×900** |
+| Tile | 16×16 | **64×64** (`TILE_PX`) |
+| Hero / NPC character frame | 24×32 | **96×128** |
+| Battle bust | 32×32 | **128×128** |
+| Stage battler | 28×36 | **112×144** |
+| Sport (athlete / golfer) | 32×40 | **128×160** |
+| Retro glyph cell | 6×9 | 24×36 |
+
+Full-screen art (boot / title / name-entry / save-slots / links backgrounds and
+cutscene / cinematic panels) is authored directly at **1600×900**.
 
 ## Imports
 
@@ -19,8 +35,8 @@ hardcode the ×4 numbers.
 import { s, ART_SCALE, TILE_PX } from '<relative>/spritegen/scale';
 ```
 - `s(n)` — scale a native pixel quantity to runtime.
-- `TILE_PX` — runtime tile size (16 × ART_SCALE). Use for ALL tile↔pixel math.
-- `ART_SCALE` — only if you need the raw factor.
+- `TILE_PX` — runtime tile size (16 × ART_SCALE = **64**). Use for ALL tile↔pixel math.
+- `ART_SCALE` — only if you need the raw factor (**4**).
 
 ## SCALE these (wrap the literal in `s(...)`, or use `TILE_PX`)
 
@@ -78,10 +94,11 @@ this.make.tilemap({ data, tileWidth: TILE_PX, tileHeight: TILE_PX });
 map.addTilesetImage('tiles');           // inherits the map's tile size
 const mw = w * TILE_PX, mh = h * TILE_PX; // camera bounds
 ```
-The `tiles` texture is already upscaled to `TILE_PX`-sized tiles by the boot seam.
+The `tiles` texture is already upscaled to `TILE_PX`-sized (64×64) tiles by the boot seam.
 
 ## Quality bar
 
 Fully wired, **no stubs / TODOs / placeholder values**. Match surrounding style.
 Comment only the non-obvious scalings (e.g. why a given `16` is or isn't pixels).
-Do **not** change `ART_SCALE` (stays 1). Do **not** touch any file outside your scope.
+The `s()`/`TILE_PX` indirection must hold so `ART_SCALE = 1` still reproduces the
+legacy 400×225 game byte-for-byte. Do **not** touch any file outside your scope.

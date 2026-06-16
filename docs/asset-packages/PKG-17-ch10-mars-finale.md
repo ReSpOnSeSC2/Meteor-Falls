@@ -8,6 +8,20 @@ set-pieces. Canon: `CHAPTER_MANIFESTS['10']` (`src/data/chapters.ts`),
 - **Travel:** snowcat → Pemberton's rocket "The Long Shot"
 - **Dungeon:** The Sea of Silence (Mars)
 
+## Resolution target
+The HD render is live: `ART_SCALE = 4` → **1600×900** framebuffer. Runtime cells
+are **native × 4**; size source art to the 4× cell (a gentle reduction, not the
+old 1× crush).
+
+- Tiles: 16×16 native → **64×64** runtime cells.
+- Characters: 24×32 native → **96×128** runtime cells, exactly the
+  `*_4x_master` cell, so they are native at 4× with no downscale.
+- Busts: 32×32 native → **128×128** runtime cells.
+- Battlers: 28×36 native → **112×144** runtime cells.
+- Athletes/golfers: 32×40 native → **128×160** runtime cells.
+
+Full-screen art (cutscene panels, screen backgrounds) is authored at **1600×900**.
+
 ## 1. Three bosses (bespoke, large, ×3 wear each)
 - **Frost Sentinel** (Alaska) — `assets/art/enemies/battle_frost_sentinel*.png`
 - **Tiki Magma Golem** (Hawaii) — `assets/art/enemies/battle_tiki_magma_golem*.png`
@@ -23,7 +37,7 @@ set-pieces. Canon: `CHAPTER_MANIFESTS['10']` (`src/data/chapters.ts`),
 Same §A7 ecosystem as the other chapters, themed across the three legs
 (frost / magma / silence). Ids scaffolded in `src/data/drafts/ch10/`.
 
-## 4. NPC roster — ~10, 8-dir 24×32
+## 4. NPC roster — ~10, 8-dir 96×128 runtime / 24×32 native
 aurora_station + mauna_lani townsfolk.
 
 ## 5. THE CALLING — caller portraits (~30+)  ⭐ unique to the finale
@@ -35,7 +49,7 @@ bust). Path `assets/art/callers/<id>.png`.
   list from `src/data/quests.ts`). More callers = longer extended credits.
 - This doubles as the **extended-credits art**.
 
-## 6. Ending set-piece panels (~12, 400×225)
+## 6. Ending set-piece panels (~12, 1600×900)
 Coordinate with PKG-01 (`assets/art/cutscenes/ch10/`): snowcat run, rocket
 launch, Mars arrival, the phones ringing worldwide, **MIA PRAYS**, the
 player-name confirm, the Homesong in full, the Hush undone, credits.
