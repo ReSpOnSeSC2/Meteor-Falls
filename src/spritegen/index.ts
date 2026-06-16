@@ -271,17 +271,20 @@ function addCharacter(scene: Phaser.Scene, id: string): void {
       });
     }
   });
-  // S?? (ADR-096): the four DIAGONAL 3/4 facings — walk cycles stand→stepA→
-  // stand→stepB off the appended block (24–35), run plays the two diag-run
-  // frames (36–43). Same cadence as the cardinals so the gait reads identical.
+  // S?? (ADR-096): the four DIAGONAL 3/4 facings — run plays the two diag-run
+  // frames (36–43). The WALK alternates the two step poses (walkA↔walkB, 25/26
+  // off the 24–35 block) with NO neutral frame between them: the old
+  // stand→A→stand→B cycle dropped the feet back to the standing pose every other
+  // frame, so the legs spent half the walk planted and the body appeared to GLIDE
+  // (user report). A continuous A↔B stride at a brisk rate reads as real steps.
   DIAG_ORDER.forEach((dir) => {
     const base = diagWalkBase(dir);
     const walkKey = `${id}-walk-${dir}`;
     if (!scene.anims.exists(walkKey)) {
       scene.anims.create({
         key: walkKey,
-        frames: [base, base + 1, base, base + 2].map((frame) => ({ key: id, frame })),
-        frameRate: 8,
+        frames: [base + 1, base + 2].map((frame) => ({ key: id, frame })),
+        frameRate: 6,
         repeat: -1,
       });
     }

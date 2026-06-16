@@ -40,7 +40,7 @@ const HERO_ART = [
     bustKey: 'authored_rex_bust18',
     battlerKey: 'authored_rex_battler14',
     characterUrl: new URL('../../assets/art/characters/jay_anim_46_4x.png', import.meta.url).href,
-    bustUrl: new URL('../../assets/art/busts/jay_bust_18_32x32.png', import.meta.url).href,
+    bustUrl: new URL('../../assets/art/busts/jay-battle-bust-transparent.png', import.meta.url).href,
     battlerUrl: new URL('../../assets/art/battlers/jay_battler_14_28x36.png', import.meta.url).href,
   },
   {
@@ -49,7 +49,7 @@ const HERO_ART = [
     bustKey: 'authored_faye_bust18',
     battlerKey: 'authored_faye_battler14',
     characterUrl: new URL('../../assets/art/characters/mia_anim_46_4x.png', import.meta.url).href,
-    bustUrl: new URL('../../assets/art/busts/mia_bust_18_32x32.png', import.meta.url).href,
+    bustUrl: new URL('../../assets/art/busts/mia-battle-bust-transparent.png', import.meta.url).href,
     battlerUrl: new URL('../../assets/art/battlers/mia_battler_14_28x36.png', import.meta.url).href,
   },
   {
@@ -58,7 +58,7 @@ const HERO_ART = [
     bustKey: 'authored_milo_bust18',
     battlerKey: 'authored_milo_battler14',
     characterUrl: new URL('../../assets/art/characters/milo_anim_46_4x.png', import.meta.url).href,
-    bustUrl: new URL('../../assets/art/busts/milo_bust_18_32x32.png', import.meta.url).href,
+    bustUrl: new URL('../../assets/art/busts/milo-battle-bust-transparent.png', import.meta.url).href,
     battlerUrl: new URL('../../assets/art/battlers/milo_battler_14_28x36.png', import.meta.url).href,
   },
   {
@@ -67,7 +67,7 @@ const HERO_ART = [
     bustKey: 'authored_pippa_bust18',
     battlerKey: 'authored_pippa_battler14',
     characterUrl: new URL('../../assets/art/characters/pippa_anim_46_4x.png', import.meta.url).href,
-    bustUrl: new URL('../../assets/art/busts/pippa_bust_18_32x32.png', import.meta.url).href,
+    bustUrl: new URL('../../assets/art/busts/pippa-battle-bust-transparent.png', import.meta.url).href,
     battlerUrl: new URL('../../assets/art/battlers/pippa_battler_14_28x36.png', import.meta.url).href,
   },
   {
@@ -76,7 +76,7 @@ const HERO_ART = [
     bustKey: 'authored_dorin_bust18',
     battlerKey: 'authored_dorin_battler14',
     characterUrl: new URL('../../assets/art/characters/dorin_anim_46_4x.png', import.meta.url).href,
-    bustUrl: new URL('../../assets/art/busts/dorin_bust_18_32x32.png', import.meta.url).href,
+    bustUrl: new URL('../../assets/art/busts/dorin-battle-bust-transparent.png', import.meta.url).href,
     battlerUrl: new URL('../../assets/art/battlers/dorin_battler_14_28x36.png', import.meta.url).href,
   },
 ] as const;
@@ -117,6 +117,71 @@ const AUTHORED_MINIGAME_GOLFERS = [
   { id: 'rex', key: 'authored_golfer_rex', url: new URL('../../assets/art/minigames/golf/golfer_rex_runtime.png', import.meta.url).href },
   { id: 'faye', key: 'authored_golfer_faye', url: new URL('../../assets/art/minigames/golf/golfer_faye_runtime.png', import.meta.url).href },
 ] as const;
+
+const AUTHORED_HOOPS_SUPPORT_ART = [
+  { key: 'cage_court', file: 'court_full' },
+  { key: 'cage_court_behind', file: 'court_behind' },
+  { key: 'hoop_ball', file: 'ball' },
+  { key: 'athlete_shadow', file: 'shadow' },
+  { key: 'backboard', file: 'backboard' },
+  { key: 'cage_gate', file: 'gate' },
+  { key: 'cage_mural', file: 'mural' },
+  { key: 'bleachers_a', file: 'bleachers_a' },
+  { key: 'bleachers_b', file: 'bleachers_b' },
+  { key: 'chalk_board', file: 'chalkboard' },
+] as const;
+
+const AUTHORED_HOOPS_SIDE_SHEET = {
+  key: 'hoop_side',
+  authoredKey: 'authored_hoops_hoop_side_sheet',
+  url: new URL('../../assets/art/minigames/hoops/hoop_side_sheet.png', import.meta.url).href,
+} as const;
+
+const AUTHORED_GOLF_SUPPORT_ART = [
+  { key: 'links_ball', file: 'ball' },
+  { key: 'links_flag', file: 'flag' },
+  { key: 'links_h1', file: 'links_h1' },
+  { key: 'links_h2', file: 'links_h2' },
+  { key: 'links_h3', file: 'links_h3' },
+  { key: 'links_h4', file: 'links_h4' },
+  { key: 'links_h5', file: 'links_h5' },
+  { key: 'links_h6', file: 'links_h6' },
+  { key: 'links_h7', file: 'links_h7' },
+  { key: 'links_h8', file: 'links_h8' },
+  { key: 'links_h9', file: 'links_h9' },
+  { key: 'links_h10', file: 'links_h10' },
+  { key: 'links_h11', file: 'links_h11' },
+  { key: 'links_h12', file: 'links_h12' },
+  { key: 'links_h13', file: 'links_h13' },
+  { key: 'links_h14', file: 'links_h14' },
+  { key: 'links_h15', file: 'links_h15' },
+  { key: 'links_h16', file: 'links_h16' },
+  { key: 'links_h17', file: 'links_h17' },
+  { key: 'links_h18', file: 'links_h18' },
+] as const;
+
+const AUTHORED_GOLF_SHEETS = [
+  { key: 'links_splash', file: 'splash', frames: 2 },
+  { key: 'links_sand', file: 'sand', frames: 2 },
+] as const;
+
+const AUTHORED_HOOPS_SUPPORT_SOURCES = AUTHORED_HOOPS_SUPPORT_ART.map((art) => ({
+  ...art,
+  authoredKey: `authored_hoops_${art.file}`,
+  url: new URL(`../../assets/art/minigames/hoops/${art.file}.png`, import.meta.url).href,
+}));
+
+const AUTHORED_GOLF_SUPPORT_SOURCES = AUTHORED_GOLF_SUPPORT_ART.map((art) => ({
+  ...art,
+  authoredKey: `authored_golf_${art.file}`,
+  url: new URL(`../../assets/art/minigames/golf/${art.file}.png`, import.meta.url).href,
+}));
+
+const AUTHORED_GOLF_SHEET_SOURCES = AUTHORED_GOLF_SHEETS.map((art) => ({
+  ...art,
+  authoredKey: `authored_golf_${art.file}`,
+  url: new URL(`../../assets/art/minigames/golf/${art.file}.png`, import.meta.url).href,
+}));
 
 /** texture key for a hero's single portrait bust (see HERO_PORTRAIT_ART) */
 export function heroPortraitKey(heroId: string): string {
@@ -246,8 +311,28 @@ const WORLD_FACADE_KEYS = Array.from(new Set([
 export const AUTHORED_WORLD_PROP_KEYS = WORLD_PROP_KEYS;
 export const AUTHORED_WORLD_FACADE_KEYS = WORLD_FACADE_KEYS;
 
+/**
+ * LOW-RES facades — their authored PNGs were legacy ×1 (chunky when lifted to the
+ * 1600×900 framebuffer). Per the "only implement high-res facades" direction we no
+ * longer load these: the PNGs are parked in `dormant/low-res-facades/`, so the keys
+ * fall back to the FROZEN procedural drawHouse/drawCityBuilding base, which registers
+ * at native and upscales ×ART_SCALE at the seam — a CRISP ×4 texture at the correct
+ * size (better than upscaling the ×1 PNG). The generated catalog + colossi are
+ * procedural by nature, so they all live here too. To re-promote one: author a
+ * high-res PNG into assets/art/world/facades/ and remove its key from this set.
+ */
+const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
+  'house_rex', 'house_chad', 'house_a', 'house_b', 'drugstore', 'arcade', 'chapel',
+  'clubhouse', 'clubhouse_grand', 'golf_gatehouse', 'mansion_a', 'mansion_b', 'mansion_c',
+  'valle_house', 'valle_house_b', 'valle_shop', 'valle_clinic', 'valle_chapel',
+  ...GENERATED_BUILDINGS.map((building) => building.name), // bldg_gen_* + colossi
+]);
+
+/** facades loaded as AUTHORED art — the hand-authored ×4 hi-res set only */
+export const AUTHORED_FACADE_KEYS = WORLD_FACADE_KEYS.filter((key) => !LOW_RES_FACADE_KEYS.has(key));
+
 const WORLD_PROP_ART = [
-  ...WORLD_FACADE_KEYS.map((key) => ({
+  ...AUTHORED_FACADE_KEYS.map((key) => ({
     key,
     url: new URL(`../../assets/art/world/facades/${key}.png`, import.meta.url).href,
   })),
@@ -297,6 +382,46 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   pedestal_3: { w: 22, h: 30 },
   plant_pot: { w: 14, h: 22 },
 } as const satisfies Record<string, { w: number; h: number }>;
+
+/** Footprint width in TILES for the generated catalog + colossi, mirrored from
+ *  each entry's drawCityBuilding registration (wallTiles). Hand-authored facades
+ *  are not listed — they fall to the resolution heuristic in worldSpriteScale. */
+const GEN_FACADE_FOOTPRINT_W: Record<string, number> = Object.fromEntries(
+  GENERATED_BUILDINGS.map((b) => [b.name, b.opts.wallTiles]),
+);
+const WORLD_FACADE_KEY_SET: ReadonlySet<string> = new Set(WORLD_FACADE_KEYS);
+
+/**
+ * THE WORLD RESIZE RULE (ADR-110 follow-up). Authored world art ships at MIXED
+ * resolutions: the prop high-res rollout and the hand-authored downtown facades
+ * are drawn at the runtime 4× size, but core houses, the generated catalog, the
+ * colossi and most interior props are still legacy ×1. World sprites render at
+ * their RAW texture size, so the ×1 ones came out ~ART_SCALE× too small after the
+ * 1600×900 migration ("homes and props too small"). This returns the uniform
+ * scale to apply to a PLACED world sprite so it lands at the size it represents,
+ * whatever resolution its PNG happens to be:
+ *
+ *  · a sized prop (AUTHORED_WORLD_PROP_DISPLAY_SIZE) → 1; the scene setDisplaySize's
+ *    it from NATIVE map units, so it is already resolution-independent.
+ *  · a FACADE → scaled to its DECLARED footprint width (generated/colossi via
+ *    wallTiles), but only ever UP so the hand-authored hi-res facades stay 1:1;
+ *    an undeclared facade is legacy ×1 art (≤160px — the native/hi-res gap runs
+ *    130↔232px) lifted to runtime ×ART_SCALE.
+ *  · any other prop still at legacy native size (≤48px either axis — every
+ *    runtime-authored prop is ≥56px) → lifted ×ART_SCALE.
+ *
+ * Scale at PLACEMENT (setScale), never the texture, so a 72-tile colossus keeps
+ * its 1154px texture instead of baking a 4616px one.
+ */
+export function worldSpriteScale(sprite: string, texW: number, texH: number): number {
+  if (sprite in AUTHORED_WORLD_PROP_DISPLAY_SIZE) return 1;
+  if (WORLD_FACADE_KEY_SET.has(sprite)) {
+    const footW = GEN_FACADE_FOOTPRINT_W[sprite];
+    if (footW) return Math.max(1, (footW * RT_TILE) / texW);
+    return texW <= 160 ? ART_SCALE : 1;
+  }
+  return Math.max(texW, texH) <= 48 ? ART_SCALE : 1;
+}
 
 const ENEMY_BATTLE_ART = [
   { key: 'battle_cranky_mailbox', url: new URL('../../assets/art/enemies/battle_cranky_mailbox.png', import.meta.url).href },
@@ -586,8 +711,21 @@ function makeBustCanvas(src: SourceImage): HTMLCanvasElement {
   canvas.height = rows * BUST_H;
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, canvas.width, canvas.height);
+  // BustView addresses 18 BUST_FRAME pose indices, but the authored battle bust is
+  // a SINGLE high-res portrait (one pose). A 4-col × 5-row pose SHEET (aspect ~0.8)
+  // is stretched straight onto the grid; a square/tall single portrait is drawn
+  // into EVERY pose cell so the sheet contract holds (a crisp static bust). Author
+  // a real 4×5 pose sheet later to restore per-pose animation.
+  const isPoseSheet = src.width < src.height * 0.9;
+  ctx.imageSmoothingEnabled = !isPoseSheet; // smooth the portrait downscale; keep pose sheets crisp
+  ctx.imageSmoothingQuality = 'high';
+  if (isPoseSheet) {
+    ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, canvas.width, canvas.height);
+  } else {
+    for (let i = 0; i < TOTAL_BUST_FRAMES; i++) {
+      ctx.drawImage(src, 0, 0, src.width, src.height, (i % cols) * BUST_W, Math.floor(i / cols) * BUST_H, BUST_W, BUST_H);
+    }
+  }
   return canvas;
 }
 
@@ -626,6 +764,10 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   HERO_PORTRAIT_ART.forEach((art) => scene.load.image(heroPortraitKey(art.id), art.url));
   AUTHORED_MINIGAME_ATHLETES.forEach((art) => scene.load.image(art.key, art.url));
   AUTHORED_MINIGAME_GOLFERS.forEach((art) => scene.load.image(art.key, art.url));
+  AUTHORED_HOOPS_SUPPORT_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
+  scene.load.image(AUTHORED_HOOPS_SIDE_SHEET.authoredKey, AUTHORED_HOOPS_SIDE_SHEET.url);
+  AUTHORED_GOLF_SUPPORT_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
+  AUTHORED_GOLF_SHEET_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
@@ -676,6 +818,31 @@ export function applyAuthoredGolferSheet(scene: Phaser.Scene, key: string, heroI
   if (!art) return;
   const img = sourceImage(scene, art.key);
   if (img) replaceTextureSheet(scene, key, makeImageCanvas(img), SPORT_FRAME_W, SPORT_FRAME_H, 4, GOLF_FRAME_COUNT);
+}
+
+export function applyAuthoredMinigameArt(scene: Phaser.Scene): void {
+  AUTHORED_HOOPS_SUPPORT_SOURCES.forEach((art) => {
+    const img = sourceImage(scene, art.authoredKey);
+    if (img) replaceTextureImage(scene, art.key, img);
+  });
+
+  const hoopSide = sourceImage(scene, AUTHORED_HOOPS_SIDE_SHEET.authoredKey);
+  if (hoopSide) {
+    const frameW = Math.max(1, Math.round(hoopSide.width / 3));
+    replaceTextureSheet(scene, AUTHORED_HOOPS_SIDE_SHEET.key, makeImageCanvas(hoopSide), frameW, hoopSide.height, 3, 3);
+  }
+
+  AUTHORED_GOLF_SUPPORT_SOURCES.forEach((art) => {
+    const img = sourceImage(scene, art.authoredKey);
+    if (img) replaceTextureImage(scene, art.key, img);
+  });
+
+  AUTHORED_GOLF_SHEET_SOURCES.forEach((art) => {
+    const img = sourceImage(scene, art.authoredKey);
+    if (!img) return;
+    const frameW = Math.max(1, Math.round(img.width / art.frames));
+    replaceTextureSheet(scene, art.key, makeImageCanvas(img), frameW, img.height, art.frames, art.frames);
+  });
 }
 
 export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
@@ -731,6 +898,7 @@ export function applyAuthoredBattleArt(scene: Phaser.Scene): void {
 export function applyAuthoredArt(scene: Phaser.Scene): void {
   applyAuthoredHeroArt(scene);
   applyAuthoredBattleArt(scene);
+  applyAuthoredMinigameArt(scene);
   applyAuthoredWorldTiles(scene);
   applyAuthoredWorldProps(scene);
 }

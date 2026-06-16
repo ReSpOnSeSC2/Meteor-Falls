@@ -17,8 +17,20 @@ import { INPUT } from './engine/input';
 import { GS, makeHeroState } from './engine/state';
 import { initNativeShell } from './engine/native';
 import { GAME_W, GAME_H } from './spritegen';
+import { startJayAnimatorTool } from './tools/jayAnimatorTool';
 
-const game = new Phaser.Game({
+// dev/debug handles (used by tooling; harmless in production)
+declare global {
+  interface Window {
+    game: Phaser.Game;
+    mfInput: typeof INPUT;
+    mfGS: typeof GS;
+    mfMakeHero: typeof makeHeroState;
+  }
+}
+
+const tool = new URLSearchParams(window.location.search).get('tool');
+const game = tool === 'jay-animator' ? null : new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
   width: GAME_W,
@@ -36,6 +48,11 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, NameEntryScene, SaveSlotsScene, OverworldScene, BattleScene, MenuScene, ShopScene, ArcadeScene, HoopsScene, LinksScene, SpriteLabScene, LevelkitLabScene, UIScene],
 });
 
+if (tool === 'jay-animator') {
+  startJayAnimatorTool();
+}
+
+if (game) {
 // S8: Capacitor shell hooks (back=B, audio focus, durable storage). Inert in
 // the plain browser — the dev loop and QA driver never see a difference.
 initNativeShell();
@@ -50,15 +67,6 @@ game.events.on(Phaser.Core.Events.PRE_STEP, (_time: number, delta: number) => {
   }
 });
 
-// dev/debug handles (used by tooling; harmless in production)
-declare global {
-  interface Window {
-    game: Phaser.Game;
-    mfInput: typeof INPUT;
-    mfGS: typeof GS;
-    mfMakeHero: typeof makeHeroState;
-  }
-}
 window.game = game;
 window.mfInput = INPUT;
 window.mfGS = GS;
@@ -110,4 +118,5 @@ if (import.meta.env.DEV) {
     await pump(3);
     return `shot ${name}`;
   };
+}
 }

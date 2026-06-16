@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { generateAllTextures } from '../spritegen';
-import { applyAuthoredBattleArt, applyAuthoredHeroArt, applyAuthoredWorldArt, preloadAuthoredArt } from '../spritegen/authored';
+import { applyAuthoredBattleArt, applyAuthoredHeroArt, applyAuthoredMinigameArt, applyAuthoredWorldArt, preloadAuthoredArt } from '../spritegen/authored';
 import { s } from '../spritegen/scale';
 
 /**
@@ -31,6 +31,7 @@ export class BootScene extends Phaser.Scene {
     applyAuthoredHeroArt(this);
     generateAllTextures(this);
     applyAuthoredBattleArt(this);
+    applyAuthoredMinigameArt(this);
     // World tiles need the procedural 'tiles' sheet to exist first so selected
     // frames can be painted over in-place. Props have no animation references.
     applyAuthoredWorldArt(this);

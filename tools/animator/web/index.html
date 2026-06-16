@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CADENCE — character animation studio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ===== Top bar ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="wordmark">CADENCE</span>
+      <span class="brand-sub">animation studio</span>
+    </div>
+    <div class="topbar-mid">
+      <span id="projectName" class="project-name">no project</span>
+    </div>
+    <div class="topbar-right">
+      <span class="status" id="engineStatus" title="engine status">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-label mono" id="statusLabel">connecting…</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- ===== Main 3-column shell ===== -->
+  <div class="shell">
+
+    <!-- ---- Left control rail ---- -->
+    <aside class="rail rail-left" id="railLeft">
+      <section class="panel">
+        <h2 class="panel-title">Project</h2>
+
+        <!-- Dropzone / new project -->
+        <div class="dropzone" id="dropzone" tabindex="0" role="button"
+             aria-label="Drop a PNG or click to choose">
+          <div class="dropzone-inner">
+            <div class="dz-icon" aria-hidden="true">＋</div>
+            <div class="dz-text">Drop a PNG sheet<br/>or click to choose</div>
+          </div>
+          <input type="file" id="fileInput" accept="image/png" hidden />
+        </div>
+
+        <label class="field">
+          <span class="field-label">Project name</span>
+          <input type="text" id="newProjectName" class="text-input"
+                 placeholder="e.g. Hero" autocomplete="off" />
+        </label>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="createBtn" disabled>Create project</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="loadJayBtn">Load Jay fixture</button>
+        </div>
+
+        <hr class="divider" />
+
+        <label class="field">
+          <span class="field-label">Open existing</span>
+          <select id="projectList" class="text-input">
+            <option value="">— select project —</option>
+          </select>
+        </label>
+      </section>
+
+      <!-- Direction pad -->
+      <section class="panel" id="facingPanel" hidden>
+        <h2 class="panel-title">Facing</h2>
+        <div class="dirpad" id="dirpad" role="group" aria-label="Direction pad">
+          <!-- 3x3 compass; buttons filled by app.js -->
+        </div>
+        <p class="hint mono" id="facingHint">—</p>
+      </section>
+    </aside>
+
+    <!-- ---- Main stage ---- -->
+    <main class="stage" id="stage">
+
+      <!-- Rig editor -->
+      <section class="panel stage-panel" id="rigPanel" hidden>
+        <div class="panel-head">
+          <h2 class="panel-title">Rig editor</h2>
+          <div class="panel-tools">
+            <label class="toggle">
+              <input type="checkbox" id="showParts" />
+              <span>show parts</span>
+            </label>
+            <span class="readout mono" id="rigDims">—×—</span>
+            <button class="btn btn-sm" id="resetRigBtn">Reset rig</button>
+          </div>
+        </div>
+        <div class="canvas-wrap" id="rigCanvasWrap">
+          <canvas id="rigCanvas" width="384" height="512"></canvas>
+          <div class="mirror-lock" id="rigMirrorLock" hidden>
+            <span id="rigMirrorMsg">mirror</span>
+          </div>
+        </div>
+        <div class="readout-row mono" id="rigCoordReadout">joint: — &nbsp; x — y —</div>
+      </section>
+
+      <!-- Live preview player -->
+      <section class="panel stage-panel" id="previewPanel" hidden>
+        <div class="panel-head">
+          <h2 class="panel-title">Preview</h2>
+          <div class="panel-tools">
+            <div class="seg" role="tablist" aria-label="Preview mode">
+              <button class="seg-btn active" data-mode="frames" id="modeFrames">frames</button>
+              <button class="seg-btn" data-mode="gif" id="modeGif">gif</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-wrap" id="previewCanvasWrap">
+          <canvas id="previewCanvas" width="288" height="384"></canvas>
+          <img id="previewGif" class="preview-gif" alt="preview loop" hidden />
+        </div>
+
+        <div class="player-controls">
+          <button class="btn btn-sm" id="playPauseBtn">▶ play</button>
+          <label class="inline-field">
+            <span class="field-label mono">fps</span>
+            <input type="range" id="previewFps" min="2" max="16" step="1" value="8" />
+            <span class="readout mono" id="previewFpsVal">8</span>
+          </label>
+          <label class="inline-field grow">
+            <span class="field-label mono">pose</span>
+            <input type="range" id="poseScrub" min="0" max="3" step="1" value="0" />
+          </label>
+          <span class="readout mono" id="poseReadout">f0 · pose 0</span>
+        </div>
+      </section>
+
+      <!-- Sheet preview (collapsible) -->
+      <section class="panel stage-panel" id="sheetPanel" hidden>
+        <div class="panel-head collapsible" id="sheetHead">
+          <h2 class="panel-title">
+            <span class="chevron" id="sheetChevron">▾</span> Sheet
+          </h2>
+          <div class="panel-tools">
+            <button class="btn btn-sm" id="rerenderBtn">Re-render</button>
+          </div>
+        </div>
+        <div class="sheet-body" id="sheetBody">
+          <div class="sheet-scroll">
+            <img id="sheetImg" class="sheet-img" alt="full animation sheet" />
+          </div>
+          <p class="caption mono">46-frame *_anim_46_4x.png — 384×1536</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ---- Right inspector ---- -->
+    <aside class="rail rail-right" id="railRight">
+
+      <!-- Joint list -->
+      <section class="panel" id="jointPanel" hidden>
+        <h2 class="panel-title">Joints</h2>
+        <ul class="joint-list" id="jointList"></ul>
+      </section>
+
+      <!-- Motion tuner -->
+      <section class="panel" id="motionPanel" hidden>
+        <h2 class="panel-title">Motion</h2>
+        <div class="seg" role="tablist" aria-label="Motion">
+          <button class="seg-btn active" data-motion="walk" id="tabWalk">Walk</button>
+          <button class="seg-btn" data-motion="run" id="tabRun">Run</button>
+        </div>
+        <div class="sliders" id="motionSliders">
+          <!-- sliders injected by app.js -->
+        </div>
+      </section>
+
+      <!-- Export -->
+      <section class="panel" id="exportPanel" hidden>
+        <h2 class="panel-title">Export</h2>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="exportBtn">Download export.zip</button>
+        </div>
+        <p class="caption mono game-path" id="gamePathHint">
+          drops into assets/art/characters/&lt;id&gt;_anim_46_4x.png
+        </p>
+        <button class="btn btn-ghost btn-sm" id="copyPathBtn">Copy game path</button>
+      </section>
+
+    </aside>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
