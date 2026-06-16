@@ -318,7 +318,7 @@ def main() -> None:
     for name in NAMES:
         repaired = repair_sheet(name)
         master_path = MASTER_DIR / f"{name}_anim_46_4x_master.png"
-        runtime_path = RUNTIME_DIR / f"{name}_anim_46_24x32.png"
+        runtime_path = RUNTIME_DIR / f"{name}_anim_46_4x.png"
         repaired.save(master_path)
         repaired.save(runtime_path)
         validate_sheet(master_path)

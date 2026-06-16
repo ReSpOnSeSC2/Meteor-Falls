@@ -16,7 +16,7 @@ Each lead has:
 
 - source 8-angle draft: `assets/art/drafts/<name>-8angle-transparent.png`
 - legacy 8-angle runtime slice: `assets/art/characters/<name>_8dir_24x32.png`
-- engine overworld animation sheet: `assets/art/characters/<name>_anim_46_24x32.png`
+- engine overworld animation sheet: `assets/art/characters/<name>_anim_46_4x.png`
 - preserved 4x animation master: `assets/art/masters/characters/animation/<name>_anim_46_4x_master.png`
 - source battle bust draft: `assets/art/drafts/<name>-battle-bust-transparent.png`
 - engine battle-card bust sheet: `assets/art/busts/<name>_bust_18_32x32.png`
@@ -35,13 +35,13 @@ without an authored sheet.
 
 Runtime texture key: hero id, for Jay this is `rex`.
 
-Frame size: `24x32`.
+Frame size: `96x128` (`24x32` native pixels at `ART_SCALE = 4`).
 
 Frame count: `46`.
 
 Current authored source: full 46-frame PNG sheets under
-`assets/art/characters/*_anim_46_24x32.png`. The bridge copies a full 46-frame
-sheet directly when present; the old 8-static-facing expansion is only a
+`assets/art/characters/*_anim_46_4x.png`. The bridge copies a full 46-frame
+sheet directly when present; the old 24x32/8-static-facing expansion is only a
 fallback for legacy sheets.
 
 Run/walk frames are authored in image files, not in `src/spritegen/characters.ts`.

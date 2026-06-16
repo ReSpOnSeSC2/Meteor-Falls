@@ -7,16 +7,23 @@ Approved progress sheet:
 Production sheets currently updated:
 - `assets/art/characters/jay_anim_46_4x.png`
 - `assets/art/masters/characters/animation/jay_anim_46_4x_master.png`
-- `assets/art/characters/jay_anim_46_24x32.png`
 
 Approved frame ranges:
 - `0-3`: walk down
 - `4-7`: walk left
 - `8-11`: walk right
 - `12-15`: walk up, front-leg-lower candidate accepted
+- `16-23`: cardinal run frames rebuilt from full-resolution source poses
+- `24-35`: diagonal walk frames
+- `36-43`: diagonal run frames rebuilt from full-resolution source poses
+- `44-45`: idle breath/blink
 
-Pending review:
-- `16-17`: run down, official two-frame run loop redo
+Current full-resolution rebuild:
+- Builder: `tools/build-jay-fullres-animation.py`
+- Full 46-frame review: `assets/art/review/jay_fullres_46_review.png`
+- Run-cell review: `assets/art/review/jay_fullres_run_cells_review.png`
+- Run GIF previews: `assets/art/review/jay_run_*_fullres.gif`
+- Individual frame exports: `_jay_anim_review/fullres_frames`
 
 Candidate under review:
 - `16-17`: run-down candidate from provided source saved at `assets/art/characters/jay_anim_46_4x_run_down_16_17_from_source_candidate.png`
