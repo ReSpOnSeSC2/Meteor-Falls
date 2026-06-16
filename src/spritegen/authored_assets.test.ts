@@ -2,7 +2,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { decodePng } from '../../tools/imageio';
-import { AUTHORED_WORLD_FACADE_KEYS, AUTHORED_WORLD_PROP_KEYS } from './authored';
+import {
+  AUTHORED_NPC_CHARACTER_IDS,
+  AUTHORED_WORLD_FACADE_KEYS,
+  AUTHORED_WORLD_PROP_KEYS,
+  NPC_CHARACTER_ART,
+} from './authored';
 import {
   AREA_SKINS,
   KVISTHAVN_FACADES,
@@ -31,6 +36,15 @@ const HERO_ASSETS = [
   { id: 'pippa', art: 'pippa' },
   { id: 'dorin', art: 'dorin' },
 ] as const;
+
+const HERO_IDS = new Set(HERO_ASSETS.map((hero) => hero.id));
+
+function listedNpcIds(): string[] {
+  return readFileSync(resolve(process.cwd(), 'docs/asset-lists/characters_8dir.txt'), 'utf8')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#') && !HERO_IDS.has(line));
+}
 
 function frameAlphaCount(path: string, frame: number, cellW: number, cellH: number, cols: number): number {
   const img = decodePng(readFileSync(path));
@@ -76,6 +90,22 @@ describe('authored hero asset wiring', () => {
         expect(frameAlphaCount(path, frame, 224, 288, 4), `${hero.id} battler frame ${frame}`)
           .toBeGreaterThan(8000);
       }
+    }
+  });
+});
+
+describe('authored NPC asset wiring', () => {
+  it('matches the PKG-09 character list and loads 96x128-frame sheets', () => {
+    const npcIds = listedNpcIds();
+    expect(npcIds).toHaveLength(42);
+    expect(AUTHORED_NPC_CHARACTER_IDS).toEqual(npcIds);
+
+    const artById = new Map(NPC_CHARACTER_ART.map((art) => [art.id, art]));
+    for (const id of npcIds) {
+      const art = artById.get(id);
+      expect(art?.url, id).toContain(`${id}_8dir_96x128.png`);
+      expect(pngSize(resolve(process.cwd(), `assets/art/characters/${id}_8dir_96x128.png`)), id)
+        .toEqual({ w: 384, h: 1536 });
     }
   });
 });

@@ -5,7 +5,7 @@ Bring the already-shipped (Ch.1–3) overworld up to authored quality.
 ## A. NPC overworld sprites — 42, 8-dir 96×128 runtime / 24×32 native
 Full id list: [`../asset-lists/characters_8dir.txt`](../asset-lists/characters_8dir.txt)
 (skip the 5 heroes — those are PKG-08). Same 8-direction → 46-frame contract as
-PKG-08 §A. Path `assets/art/characters/<id>_8dir_24x32.png`. Wired in
+PKG-08 §A. Path `assets/art/characters/<id>_8dir_96x128.png`. Wired in
 `NPC_CHARACTER_ART` (`src/spritegen/authored.ts`).
 
 ## B. World tiles — the 53-cell set
