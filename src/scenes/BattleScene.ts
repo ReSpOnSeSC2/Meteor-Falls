@@ -165,7 +165,7 @@ import {
   resistIncoming,
   rollDrops,
 } from '../battle/formulas';
-import { Dialogue, makeWindow, makeBox, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
+import { Dialogue, makeWindow, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
 import { glyphify } from '../ui/text';
 import { FlairLine, hasFlair } from '../ui/flairline';
 import { FLAIR_BY_ELEMENT, FLAIR_BY_RESULT, type FlairResult } from '../spritegen/flair';
@@ -767,27 +767,29 @@ export class BattleScene extends Phaser.Scene {
     const boxW = slots >= 4 ? s(92) : s(96);
     const totalW = slots * (boxW + s(6)) - s(6);
     let bx = (this.scale.width - totalW) / 2;
-    const ink0 = colorOf(px(RAMP.INK, 0));
-    const ink1 = colorOf(px(RAMP.INK, 1));
+    // the party card now rides the NAVY window (winTexture) so it matches the
+    // message + command boxes; name/labels go LIGHT paper instead of dark ink
+    const nameInk = colorOf(px(RAMP.PAPER, 3));
+    const labelInk = colorOf(px(RAMP.PAPER, 2));
     for (const hero of party) {
-      const box = makeBox(this, bx, s(168), boxW, s(50));
+      const box = makeWindow(this, bx, s(168), boxW, s(50));
       // the MOTHER read: name centered under the bust, HP/PP rows below
       const name = this.add
         .bitmapText(bx + boxW / 2, s(173), 'retro', hero.name, s(6))
         .setOrigin(0.5, 0)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(ink0);
+        .setTint(nameInk);
       const hpLabel = this.add
         .bitmapText(bx + s(10), s(185), 'retro', 'HP', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(ink1);
+        .setTint(labelInk);
       const ppLabel = this.add
         .bitmapText(bx + s(10), s(200), 'retro', 'PP', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(ink1);
+        .setTint(labelInk);
       const odoHp = new Odometer(hero.hp, hero.maxHp);
       const odoPp = new Odometer(hero.pp, hero.maxPp);
       // drums sit beside their labels — and NEVER move or hide (the law)
@@ -825,17 +827,17 @@ export class BattleScene extends Phaser.Scene {
       bx += boxW + s(6);
     }
     if (this.cfg.guestChad) {
-      const box = makeBox(this, bx, s(168), boxW, s(50));
+      const box = makeWindow(this, bx, s(168), boxW, s(50));
       const t1 = this.add
         .bitmapText(bx + s(8), s(173), 'retro', 'Chad', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(ink0);
+        .setTint(nameInk);
       const t2 = this.add
         .bitmapText(bx + s(8), s(186), 'retro', 'HP', s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
-        .setTint(ink1);
+        .setTint(labelInk);
       const hp = new Odometer(35, 35);
       this.chadOdo = new OdoDisplay(this, bx + s(28), s(185), 3);
       this.chadOdo.setValue(35);

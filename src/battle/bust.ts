@@ -125,12 +125,13 @@ export class BustView {
     this.cardW = cardW;
     this.shakeables = shakeables.map((obj) => ({ obj, baseX: obj.x, baseY: obj.y }));
     // the MOTHER read (user direction): the bust rises from BEHIND the card,
-    // centered over the HP box — its chest tucks under the card's top edge,
-    // so it sits one depth below the box and pokes 22px above it
+    // centered over the HP box — its chest tucks under the card's top edge, so it
+    // sits one depth below the box. RAISED to poke 30px above (was 22): the new
+    // hi-res portrait shows head + shoulders instead of a floating head.
     this.bust = scene.add
       // the bust texture is upscaled ×ART_SCALE at the seam, so its native 32px
       // width centers against the runtime card as s(32)
-      .image(cardX + (cardW - s(32)) / 2, cardY - s(22), sheet, BUST_FRAME.idleA)
+      .image(cardX + (cardW - s(32)) / 2, cardY - s(30), sheet, BUST_FRAME.idleA)
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI - 1);
