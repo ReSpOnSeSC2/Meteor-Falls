@@ -87,6 +87,9 @@ import { DIALOGUE } from '../data/dialogue';
 import { ITEMS } from '../data/items';
 import { GS, makeHeroState } from '../engine/state';
 import { completeQuest } from '../engine/quests';
+import { PROPERTIES } from '../data/properties';
+import { buyCost } from '../engine/property';
+import { carById } from '../engine/garage';
 import { availableAbilities } from '../data/heroes';
 import { PSI_GATES } from '../data/psigates';
 import { canClearGate, bestCastFor } from '../engine/psi';
@@ -1982,6 +1985,60 @@ export class OverworldScene extends Phaser.Scene {
    * fade-restart whenever the map must rebuild (gated NPCs/props/spawners).
    */
 
+  /** the current chapter, read off the Ember ledger (0 embers ⇒ Ch.1) */
+  private chapterNow(): number {
+    let n = 0;
+    for (let i = 1; i <= 10; i++) if (GS.flag(`ember${i}`)) n++;
+    return n + 1;
+  }
+
+  /**
+   * S22 (ADR-115) — OTTERBROOK REALTY: the home-buying TEASER. 27 Maple is for sale
+   * from the very first town; the agent shows the price and the dream, but at ~$1k
+   * to your name it's out of reach — the rags-to-riches hook made literal. It's a
+   * REAL, affordability-gated buy (owned flag + DEED key-item + cash), so it simply
+   * starts impossible and becomes possible as the Fortune Arc climbs.
+   */
+  private async agencyBeat(): Promise<void> {
+    if (GS.data.keyItems.includes('deed_27_maple') || GS.flag('owned_27_maple')) {
+      await this.dlg.say(...DIALOGUE.agency_owned);
+      return;
+    }
+    const def = PROPERTIES['27_maple'];
+    const price = buyCost(def, this.chapterNow(), 0);
+    await this.dlg.say(...DIALOGUE.npc_realtor);
+    const pick = await this.dlg.ask([`Buy 27 Maple ($${price})`, 'Just looking'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      await this.dlg.say(...DIALOGUE.agency_browse);
+      return;
+    }
+    if (GS.data.cashOnHand < price) {
+      await this.dlg.say(...DIALOGUE.agency_too_dear);
+      return;
+    }
+    GS.data.cashOnHand -= price;
+    GS.setFlag('owned_27_maple');
+    GS.data.keyItems.push('deed_27_maple');
+    AUDIO.sfx('confirm');
+    toast(this, 'Got the DEED to 27 MAPLE!');
+    await this.dlg.say(...DIALOGUE.agency_bought);
+  }
+
+  /**
+   * S22 (ADR-115) — BERT'S AUTO: the car-lot TEASER. Browse-only on purpose — even
+   * the cheapest CAR (the Comet sedan) dwarfs a kid's fortune, and you need a HOME
+   * with a garage to park one. Shows the player the path (home → garage → car) and
+   * the real sticker, then sends them off to go get rich.
+   */
+  private async carLotBeat(): Promise<void> {
+    const price = carById('commuter')?.price ?? 5500;
+    await this.dlg.say(...DIALOGUE.npc_car_dealer);
+    await this.dlg.say(
+      `@That cream four-door? The "Comet" sedan — $${price}. Drives like a sofa with ambitions.`,
+    );
+    await this.dlg.say(...DIALOGUE.carlot_browse);
+  }
+
   /** quest-giver conversations; true = handled, false = fall through */
   private async questTalk(n: NpcObj): Promise<boolean> {
     switch (n.def.id) {
@@ -2021,6 +2078,14 @@ export class OverworldScene extends Phaser.Scene {
       case 'priest_valle':
         // S14 (Prompt 25): the free 50 HP party prayer, §A11.4 warm
         await this.chapelBeat(n);
+        return true;
+      case 'realtor_otter':
+        // S22 (ADR-115): the home-buying teaser (real, affordability-gated)
+        await this.agencyBeat();
+        return true;
+      case 'car_dealer_otter':
+        // S22 (ADR-115): the car-lot teaser (browse-only — buy a home first)
+        await this.carLotBeat();
         return true;
       case 'deli_keeper':
       case 'deli_otter':

@@ -280,6 +280,47 @@ Seat count reads as ~4.
 
 ---
 
+## §6 — The tycoon teasers (Otterbrook Realty + Bert's Auto)
+
+Live now as NPC-only teasers on the civic lane (gray-boxed on existing sprites).
+Author these to give them real buildings + cast.
+
+### 6.1 — `npc_realtor` (Otterbrook Realty agent)
+- **Runtime:** characters 24×32 → 96×128, 8-angle.
+- **Prompt:**
+```
+Overworld 8-angle character sheet for an OTTERBROOK REALTY AGENT, 1995 small-town
+real-estate go-getter, ~40s. Blazer a size too eager, a clipboard of listings, a
+"SOLD" rider tucked under one arm, a smile that has appraised your whole life in
+two seconds. Warm palette, EarthBound NPC charm, transparent background.
+```
+
+### 6.2 — `npc_bert` (Bert's Auto salesman)
+- **Prompt:**
+```
+Overworld 8-angle character sheet for BERT, a lovable small-town USED-CAR
+SALESMAN, 1995, ~50s. Loud short-sleeve shirt, a giant key-ring, sunglasses
+pushed up on a sweaty forehead, two thumbs permanently ready for an up. Reads as
+"every car here has a story and none of them are true." Warm palette, transparent
+background.
+```
+
+### 6.3 — `facade_realty` + `facade_autolot`
+- **Runtime:** `world/facades/`.
+- **Prompt:**
+```
+Two small 1995 Ohio storefronts that sit side by side on a town's commercial lane:
+(A) a REAL-ESTATE OFFICE — big window papered with little house listings, a "FOR
+SALE" sandwich board, potted plant; (B) a USED-CAR LOT — a tiny sales shack with a
+string of triangular pennant flags, a spinning "DEALS" sign, two faded price-star
+windshields. Warm, funny, hand-painted EarthBound storefronts, front elevation,
+transparent background, palette-consistent with the rest of Otterbrook.
+```
+
+> The home + car you can BROWSE here but not yet afford ($1,200 home / $5,500 first
+> car) — the rags-to-riches teaser. A parked Comet sedan prop for Bert's lot can use
+> the existing vehicle forge (no authored PNG needed) or a bespoke master via §5.1.
+
 ## Wiring checklist (per asset)
 
 - [ ] Master saved in `assets/art/masters/<category>/` (+ `-transparent` variant).

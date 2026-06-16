@@ -1031,6 +1031,34 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_bus_waiter2: [
     "@Is the 6:15 late, or am I early? In Otterbrook it's philosophically the same thing.",
   ],
+  // S22 (ADR-115) — THE TYCOON TEASERS: you CAN buy a home and a car from the very
+  // first town... someday. Right now they're gloriously out of a 12-year-old's reach.
+  npc_realtor: [
+    '@OTTERBROOK REALTY! You buying? You look like a serious buyer. You look like a man with a briefcase made of allowance.',
+    '@27 MAPLE just came on the market. Cozy! One previous owner — she took the doorknobs, left the beagle.',
+  ],
+  agency_owned: [
+    '@You already own 27 Maple, hon. Go water something. That\'s what owning is, mostly.',
+  ],
+  agency_browse: [
+    '@Just looking? Look all you want. The look is free. The HOUSE is twelve hundred dollars.',
+  ],
+  agency_too_dear: [
+    '@...Twelve hundred dollars. You have, and I am counting generously, NOT that.',
+    '@Tell you what, champ — go save the world a little, come back a tycoon. The door (we have one now) stays open.',
+  ],
+  agency_bought: [
+    'You sign the crayon box. The agent hands you a DEED and a single doorknob "to get you started."',
+    '@Welcome home, neighbor. Try not to put a meteor through it.',
+  ],
+  npc_car_dealer: [
+    "@BERT'S AUTO — where the test drive is a feeling and the prices are a different feeling.",
+    '@See anything you like? Lie to me. It\'s good for both of us.',
+  ],
+  carlot_browse: [
+    "@Take your time, sport. The cars aren't going anywhere. Mostly because two of them don't start.",
+    '@Come back when you\'ve got the cash AND somewhere to park it. A car needs a garage. A garage needs a HOUSE. Funny how it all rolls downhill.',
+  ],
   npc_busdriver: [
     "@Exact change or exact attitude. You've got one of 'em, kid. Sit anywhere.",
   ],

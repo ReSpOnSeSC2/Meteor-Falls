@@ -451,6 +451,10 @@ export function growOtterbrook(): MapDef {
     // curb (gated on zapper_done so the 2 AM opening stays eerily empty)
     { id: 'bus_waiter1', sprite: 'grayCommuter', x: 52, y: 23, facing: 'left' as const, dialogue: 'npc_bus_waiter1', idle: true, emote: 'think' as const, ifFlag: 'zapper_done' },
     { id: 'bus_waiter2', sprite: 'senora', x: 46, y: 25, facing: 'up' as const, dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle' as const, ifFlag: 'zapper_done' },
+    // S22 (ADR-115): the tycoon TEASERS on the civic lane — you can SEE the home +
+    // car you'll someday afford. Both open at daybreak (zapper_done).
+    { id: 'realtor_otter', sprite: 'senora', x: 14, y: 43, facing: 'up' as const, dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
+    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 22, y: 43, facing: 'up' as const, dialogue: 'npc_car_dealer', idle: true, emote: 'happy' as const, ifFlag: 'zapper_done' },
   ];
 
   const signs = [
