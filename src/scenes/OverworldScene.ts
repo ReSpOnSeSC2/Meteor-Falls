@@ -3599,7 +3599,10 @@ export class OverworldScene extends Phaser.Scene {
         if (GS.flag('ember1') && !GS.flag('zapper_done')) await this.porchScene();
         break;
       case 'bus_stop':
-        if (GS.flag('zapper_done')) await this.busAsk('brickton');
+        // S22 (ADR-113): the depot stays shuttered until Brickton is reached on
+        // foot (brickton_foot_first) — then the highway (and the bus) reopen.
+        if (GS.flag('zapper_done') && GS.flag('brickton_foot_first')) await this.busAsk('brickton');
+        else if (GS.flag('zapper_done')) await this.dlg.say(...DIALOGUE.bus_closed_detour);
         break;
       case 'bus_stop_brickton':
         await this.busAsk('otterbrook');
@@ -4956,6 +4959,7 @@ export class OverworldScene extends Phaser.Scene {
   private async orientationGateScene(): Promise<void> {
     if (GS.flag('visitor_badge') || GS.flag('bus_ride_done')) {
       AUDIO.stopMusic();
+      GS.setFlag('brickton_foot_first'); // S22 (ADR-113): the foot arrival opens the bus
       this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'up');
       return;
     }
@@ -4978,6 +4982,7 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.orient_badge);
     await this.dlg.say(...DIALOGUE.orient_arrival);
     GS.setFlag('brickton_arrival_done'); // the foot arrival is its own beat — no later bus replay
+    GS.setFlag('brickton_foot_first'); // S22 (ADR-113): reaching Brickton on foot reopens the highway + the bus
     AUDIO.stopMusic();
     this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'up');
   }

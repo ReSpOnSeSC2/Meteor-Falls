@@ -997,6 +997,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Mom prepaid your fare. She also packed a snack. You already ate the snack.)',
   ],
   bus_ask_home: ['The 6:15 also goes back to OTTERBROOK. Buses are like that.'],
+  // S22 (ADR-113) — THE BUS WAITS: the depot is shuttered until you've reached
+  // Brickton once ON FOOT (the meteor closed the highway; the bus follows it back).
+  bus_closed_detour: [
+    'The 6:15 is dark. A card is taped inside the windshield:',
+    '"NO SERVICE — HIGHWAY CLOSED PAST HICKORY HILL. Meteor detour. Walk the meadow road, folks. — Otterbrook Transit (both of us)."',
+    '(The road to Brickton opens once someone gets through on foot. Guess who.)',
+  ],
   npc_busdriver: [
     "@Exact change or exact attitude. You've got one of 'em, kid. Sit anywhere.",
   ],
