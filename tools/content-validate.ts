@@ -2023,12 +2023,22 @@ parseAll('links-clubs', ClubDefSchema, Object.fromEntries(CLUBS.map((c) => [c.id
     // duplicated THE LINKS building one screen west (golf_resort), so the clifftop
     // is just the gate now; the door west to golf_resort (asserted above) is the
     // live link to the real clubhouse. The stale prop check retired here.
-    // S14 (Prompt 28): the wire LANDED — the pin flips to assert the LINK
-    if (!costa.doors.some((d) => d.to === 'puerto_sol')) {
-      fail('links', `Prompt 28 shipped: costa_estrella must carry COSTA_DOOR_FOR_PUERTO_SOL (the one-line wire)`);
+    // S22 (ADR-123): the cliff road now climbs through the COAST ROAD + RESORT GATE
+    // before the links; the whole round trip is pinned both directions.
+    if (!costa.doors.some((d) => d.to === 'costa_gate')) {
+      fail('links', `costa_estrella must roll back down to costa_gate (the cliff approach, ADR-123)`);
     }
-    if (!MAPS.puerto_sol?.doors.some((d) => d.to === 'costa_estrella')) {
-      fail('links', `Puerto Sol must aim its cliff road back at costa_estrella (the round trip)`);
+    if (!MAPS.costa_gate?.doors.some((d) => d.to === 'costa_estrella')) {
+      fail('links', `costa_gate must lead up into costa_estrella / the links (ADR-123)`);
+    }
+    if (!MAPS.costa_road?.doors.some((d) => d.to === 'costa_gate')) {
+      fail('links', `costa_road must lead up to costa_gate (the cliff approach, ADR-123)`);
+    }
+    if (!MAPS.puerto_sol?.doors.some((d) => d.to === 'costa_road')) {
+      fail('links', `Puerto Sol must aim its cliff road at costa_road (the approach head, ADR-123)`);
+    }
+    if (!MAPS.costa_road?.doors.some((d) => d.to === 'puerto_sol')) {
+      fail('links', `costa_road must carry you back to Puerto Sol (the round trip, ADR-123)`);
     }
   }
   if (COSTA_DOOR_FOR_PUERTO_SOL.to !== 'puerto_sol') fail('links', `the authored world door must aim puerto_sol (one-line wire for Prompt 28)`);

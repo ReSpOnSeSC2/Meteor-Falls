@@ -306,12 +306,16 @@ describe('PUERTO SOL — the 1898 core is frozen (≈3× dock-district growth, s
     expect(grown.triggers.some((t) => t.id === 'puerto_malecon')).toBe(true);
   });
 
-  it('the only door change is the relocated jungle gate; the COSTA gate is byte-identical', () => {
+  it('the relocated jungle gate + the cliff-road re-route off the COSTA gate', () => {
     const core = buildPuertoSol();
     const grown = MAPS.puerto_sol;
-    const coreCosta = core.doors.find((d) => d.to === 'costa_estrella');
-    const grownCosta = grown.doors.find((d) => d.to === 'costa_estrella');
-    expect(JSON.stringify(grownCosta)).toBe(JSON.stringify(coreCosta)); // the north gate untouched
+    // S22 (ADR-123): the FROZEN core gate still reads → costa_estrella; the LIVE map's
+    // target relocates onto the cliff-road approach (the cage/docks pattern).
+    expect(core.doors.some((d) => d.to === 'costa_estrella')).toBe(true);
+    expect(grown.doors.some((d) => d.to === 'costa_estrella')).toBe(false);
+    expect(grown.doors.some((d) => d.to === 'costa_road')).toBe(true); // re-routed up the cliff road
+    expect(MAPS.costa_road.doors.some((d) => d.to === 'costa_gate')).toBe(true); // road → gate
+    expect(MAPS.costa_gate.doors.some((d) => d.to === 'costa_estrella')).toBe(true); // gate → the links
     // the jungle gate relocated to the new FAR-EAST edge (the port moved out with the city)
     const jungle = grown.doors.find((d) => d.to === 'jungle_1');
     expect(jungle?.x).toBe(grown.grid[0].length - 1);

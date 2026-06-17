@@ -2987,6 +2987,83 @@ const arcade2Doorstep = doorstepOf(bricktonMap, 'arcade2_int') ?? { tx: 345, ty:
  */
 export const COSTA_DOOR_FOR_PUERTO_SOL = { x: 12, y: 15, w: 3, h: 1, to: 'puerto_sol', tx: 104, ty: 30, facing: 'down' } as const;
 
+/* ----- THE COSTA ESTRELLA APPROACH (S22, ADR-123) — the cliff road to the links -----
+ * The user's decree (same as the Cage + Docks): the resort shouldn't open one door off
+ * Puerto Sol. The climb to the clifftop links now crosses TWO screens: THE COAST ROAD
+ * (a sea-cliff drive, the harbour far below) → THE RESORT GATE (hedges, a gatehouse, the
+ * members' sign) → COSTA ESTRELLA LINKS → the estates → the clubhouse. NORTH is "up the
+ * cliff, toward the resort" on every screen; the return rolls back down to Puerto Sol.
+ */
+function buildCostaRoad(): MapDef {
+  const g = new Grid(16, 16, '.');
+  g.sprinkle(1318, ',~ f', 0.06);
+  g.rect(0, 0, 5, 16, 'e'); // the harbour, far below the cliff (west)
+  g.rect(5, 0, 1, 16, 'E'); // the foam line at the cliff base
+  g.rect(7, 0, 3, 16, ':'); // the coast road (the route)
+  g.rect(6, 0, 1, 16, '|'); // the guardrail along the drop
+  const OAK_S = { ox: 7, oy: 22, w: 12, h: 10 };
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  // cliff-side palms (east), kept off the road
+  const palms: Array<[number, number]> = [[11, 2], [13, 5], [12, 9], [14, 12], [11, 14]];
+  return {
+    id: 'costa_road',
+    name: 'THE COAST ROAD',
+    music: 'puerto',
+    ambience: 'waves',
+    grid: g.out(),
+    props: [
+      ...palms.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK_S })),
+      { sprite: 'sign', x: 10, y: 8, solid: SIGN_SOLID },
+      { sprite: 'bench', x: 10, y: 12, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    ],
+    npcs: [
+      { id: 'road_gazer', sprite: 'caddy', x: 10, y: 7, facing: 'left', dialogue: 'npc_road_gazer', idle: true, emote: 'happy' },
+    ],
+    signs: [{ x: 10, y: 8, dialogue: 'sign_coast_road' }],
+    phones: [],
+    doors: [
+      { x: 7, y: 15, w: 3, h: 1, to: 'puerto_sol', tx: 104, ty: 30, facing: 'down' },
+      { x: 7, y: 0, w: 3, h: 1, to: 'costa_gate', tx: 128, ty: 208, facing: 'up' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildCostaGate(): MapDef {
+  const g = new Grid(16, 16, '.');
+  g.sprinkle(1319, ',~ F', 0.05);
+  g.rect(7, 0, 3, 16, ':'); // the entrance drive (the route)
+  g.rect(1, 8, 5, 3, 'm'); g.rect(10, 8, 5, 3, 'm'); // manicured lawn either side
+  g.rect(2, 4, 4, 1, 'b'); g.rect(10, 4, 4, 1, 'b'); // clipped hedges
+  g.rect(2, 12, 4, 1, 'b'); g.rect(10, 12, 4, 1, 'b');
+  const OAK_S = { ox: 7, oy: 22, w: 12, h: 10 };
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  return {
+    id: 'costa_gate',
+    name: 'THE RESORT GATE',
+    music: 'puerto',
+    grid: g.out(),
+    props: [
+      { sprite: treeSprite(3, 2), x: 3, y: 2, solid: OAK_S },
+      { sprite: treeSprite(13, 2), x: 13, y: 2, solid: OAK_S },
+      { sprite: 'sign', x: 10, y: 7, solid: SIGN_SOLID }, // the members' sign
+      { sprite: 'bench', x: 5, y: 9, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    ],
+    npcs: [
+      { id: 'gate_valet', sprite: 'caddy', x: 6, y: 7, facing: 'right', dialogue: 'npc_gate_valet', wander: true },
+    ],
+    signs: [{ x: 10, y: 7, dialogue: 'sign_costa_gate' }],
+    phones: [],
+    doors: [
+      { x: 7, y: 15, w: 3, h: 1, to: 'costa_road', tx: 128, ty: 32, facing: 'down' },
+      { x: 7, y: 0, w: 3, h: 1, to: 'costa_estrella', tx: 216, ty: 232, facing: 'up' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
 /** the resort grounds: clubhouse, the caddy at the first tee, the plaque.
  *  Dev-reachable standalone (the Sprite Lab precedent) until Prompt 28. */
 function buildCostaEstrella(): MapDef {
@@ -3044,8 +3121,9 @@ function buildCostaEstrella(): MapDef {
     phones: [],
     atms: [],
     doors: [
-      // S14 (Prompt 28): THE ONE-LINE WIRE — the resort joins the world
-      COSTA_DOOR_FOR_PUERTO_SOL,
+      // S22 (ADR-123): the links roll back down the cliff approach (Links → Gate →
+      // Road → Puerto Sol) instead of one hop home. Same south door, new target.
+      { x: COSTA_DOOR_FOR_PUERTO_SOL.x, y: COSTA_DOOR_FOR_PUERTO_SOL.y, w: 3, h: 1, to: 'costa_gate', tx: 128, ty: 32, facing: 'down' },
       // S15i Task 6 (ADR-059): west through the cliff gate to THE LINKS proper
       { x: 0, y: 8, w: 1, h: 2, to: 'golf_resort', tx: 224, ty: 320, facing: 'left' },
     ],
@@ -3273,6 +3351,9 @@ export const MAPS: Record<string, MapDef> = {
   cage_block: buildCageBlock(),
   cage_lot: buildCageLot(),
   costa_estrella: buildCostaEstrella(),
+  // S22 (ADR-123): the cliff-road approach — Puerto Sol → ROAD → GATE → LINKS
+  costa_road: buildCostaRoad(),
+  costa_gate: buildCostaGate(),
   ...golfMaps, // S15i Task 6 (ADR-059) — the golf resort + clubhouse (computed doorsteps)
   bus_interior: buildBusInterior(),
 };

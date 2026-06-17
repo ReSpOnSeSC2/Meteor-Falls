@@ -1477,6 +1477,17 @@ export function buildChapter2Maps(steps: {
   // core sits byte-identical in its top-left (proven in world_block.test). The
   // interior doorsteps still derive from the core's facade doors (doorstepOf).
   const puerto = growPuertoSol();
+  // S22 (ADR-123): the cliff road now climbs through the COAST ROAD + RESORT GATE
+  // before the links. The FROZEN core door still reads → costa_estrella (byte-identical,
+  // world_block.test); only the LIVE map's target is relocated (the cage/docks pattern).
+  {
+    const costa = puerto.doors.find((d) => d.to === 'costa_estrella');
+    if (costa) {
+      costa.to = 'costa_road';
+      costa.tx = 128; // tile 8 — the coast road's central route
+      costa.ty = 208; // tile 13 — up from town, climbing the cliff
+    }
+  }
   const valle = buildValleDorado();
   const mercadoStep = doorstepOf(puerto, 'mercado_int') ?? { tx: 96, ty: 130 };
   const clinicStep = doorstepOf(puerto, 'clinic_ps_int') ?? { tx: 224, ty: 130 };

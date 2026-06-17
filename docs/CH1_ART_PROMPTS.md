@@ -400,6 +400,27 @@ secretly warm. Each a separate transparent sprite.
 > The approach NPCs (the block kid, the old head, the lot hooper) reuse the shipped
 > Brickton cast for now; authored versions can follow the §4 character pattern.
 
+## §8 — More approach chains (the Docks + the Golf resort)
+
+Same "multiple transitions before you arrive" treatment, live now on shipped tiles.
+
+### 8.1 — `prop_dock_dressing` · the working waterfront (Docks approach)
+```
+A set of TOP-DOWN 1995 working-DOCK props: stacked shipping CRATES (some stenciled
+"BANANAS"), a forklift, mooring BOLLARDS with looped rope, a seawall railing run,
+a wheeling GULL or two, an oil drum. Brick-warehouse greys + sun-faded blues, salt
+and rust. Gritty but warm. Each a separate transparent sprite.
+```
+
+### 8.2 — `tiles_clifroad` + `prop_resort_gate` · the Costa cliff approach (Golf)
+```
+(A) A small seamless TILESET for a COASTAL CLIFF ROAD above a turquoise harbour:
+warm tarmac with a painted edge line, a guardrail run, dusty verge, a foam/water
+edge for the drop. (B) A set of upscale RESORT-GATE props: clipped topiary hedges,
+a little stone GATEHOUSE, a brass "MEMBERS & GUESTS" sign, a palm, a valet stand.
+Bright Mediterranean-resort warmth, EarthBound charm, transparent backgrounds.
+```
+
 ## Wiring checklist (per asset)
 
 - [ ] Master saved in `assets/art/masters/<category>/` (+ `-transparent` variant).

@@ -155,9 +155,15 @@ describe('the §A6 recovery pairs + the boat round trip (zero missables)', () =>
     }
   });
 
-  it('the costa wire round-trips: cliff road up, pier road down', () => {
-    expect(MAPS.costa_estrella.doors.some((d) => d.to === 'puerto_sol')).toBe(true);
-    expect(MAPS.puerto_sol.doors.some((d) => d.to === 'costa_estrella')).toBe(true);
+  it('the costa wire round-trips through the cliff approach (ADR-123)', () => {
+    // S22 (ADR-123): Puerto Sol → COAST ROAD → RESORT GATE → the links, both ways
+    expect(MAPS.puerto_sol.doors.some((d) => d.to === 'costa_road')).toBe(true);
+    expect(MAPS.costa_road.doors.some((d) => d.to === 'costa_gate')).toBe(true);
+    expect(MAPS.costa_gate.doors.some((d) => d.to === 'costa_estrella')).toBe(true);
+    // and back down
+    expect(MAPS.costa_estrella.doors.some((d) => d.to === 'costa_gate')).toBe(true);
+    expect(MAPS.costa_gate.doors.some((d) => d.to === 'costa_road')).toBe(true);
+    expect(MAPS.costa_road.doors.some((d) => d.to === 'puerto_sol')).toBe(true);
   });
 });
 

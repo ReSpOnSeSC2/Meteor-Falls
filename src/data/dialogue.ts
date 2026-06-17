@@ -1876,6 +1876,22 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'NORTH: COSTA ESTRELLA LINKS — golf above the surf.',
     '(The cliff road is steep. The views apologize for it the whole way up.)',
   ],
+  // S22 (ADR-123) — THE COSTA APPROACH: the cliff road + the resort gate
+  sign_coast_road: [
+    'THE COAST ROAD — COSTA ESTRELLA LINKS, keep climbing. Harbour to your left. Do not lean on the rail to find out why it\'s there.',
+  ],
+  npc_road_gazer: [
+    '@Best view on the whole coast, this bend. You can see the banana boat from here — looks like a toy that smells incredible.',
+    '@Links are up top. Keep going. Your legs will file a complaint. Ignore it; the legs are wrong.',
+  ],
+  sign_costa_gate: [
+    'COSTA ESTRELLA LINKS — MEMBERS & GUESTS. Soft spikes. Soft voices. Hard, hard prices.',
+    '(A smaller plaque: "the course doesn\'t care how much you paid. respectfully, neither do the gulls.")',
+  ],
+  npc_gate_valet: [
+    "@Welcome to Costa Estrella! ...You walked UP? From the town? On your FEET? Sir. Madam. Child. There's a ROAD.",
+    '@Through the gate, the starter\'s on the first tee. Mind the hedges — they\'re older than the country.',
+  ],
   sign_jungle_gate: [
     'EAST: THE JUNGLE → VALLE DORADO.',
     '(Below that, smaller: "the jungle does not validate parking.")',
