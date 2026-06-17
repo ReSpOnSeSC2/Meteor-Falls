@@ -609,6 +609,24 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@My big sister WALKED to Brickton once. Took her all day. She came back different.',
     '@Different GOOD! She high-fives strangers now. The city does that, she says.',
   ],
+  // S22 (ADR-124) — THE LIVELINESS PASS: ambient folk on the once-empty legs
+  npc_woods_keeper: [
+    '@Whisperwood keeps to itself, mostly. I keep the rest stop tidy and the squirrels honest.',
+    '@Heard the meteor from in here. The whole canopy went QUIET. ...Birds are back now, see? Good sign.',
+  ],
+  npc_woods_hiker: [
+    '@Which way to the city, the path or the OTHER path? ...There\'s one path. I know. I KNOW. I just like options.',
+  ],
+  npc_far_forager: [
+    '@Chanterelles after a meteor — finest crop in years. Cosmic radiation? Delicious, apparently. We\'ll find out together.',
+  ],
+  npc_overpass_traveler: [
+    '@You can hear it from here, can\'t you? The CITY. That low hum. Like the whole place is thinking out loud.',
+    "@I come up to the overpass just to listen sometimes. Don't tell anyone. They'd make it a whole thing.",
+  ],
+  npc_hill_hiker: [
+    '@Crater\'s still warm, they say. I\'m not going UP there. I\'m a "look at it from a safe distance" enthusiast.',
+  ],
   meadow_gift_far: [
     'Taped to a fence post: an emergency salt shaker and a note.',
     'The note reads, in shaky capitals, "FOR THE TICK." ...Somebody up here KNEW.',

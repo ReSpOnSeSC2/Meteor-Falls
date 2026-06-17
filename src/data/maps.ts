@@ -497,6 +497,9 @@ export function growOtterbrook(): MapDef {
     props,
     npcs,
     signs,
+    // S22 (ADR-124): the living-world layer — park birdsong + the Pond Park mirror
+    ambience: 'birds',
+    reflect: [{ x: 53, y: 21, w: 6, h: 5 }],
     doors: [
       ...core.doors,
       // THE EXPORTED EAST STUB → MEADOW MILE (Movement 2). The core's doors stay
@@ -641,6 +644,7 @@ function buildMeadowMile(): MapDef {
     id: 'meadow_mile',
     name: 'MEADOW MILE',
     music: 'otterbrook',
+    ambience: 'wind', // S22 (ADR-124)
     grid: draft.grid,
     props: [
       ...draft.props,
@@ -701,6 +705,7 @@ function buildMeadowWoods(): MapDef {
     id: 'meadow_woods',
     name: 'WHISPERWOOD',
     music: 'otterbrook',
+    ambience: 'birds', // S22 (ADR-124): the canopy comes back to life at daybreak
     grid,
     props: [
       ...trees,
@@ -709,7 +714,11 @@ function buildMeadowWoods(): MapDef {
       { sprite: 'sign', x: 5, y: Math.max(1, westY - 2), solid: WALK_SIGN_SOLID },
       ...gift.props,
     ],
-    npcs: [],
+    // S22 (ADR-124): the woods were dead (0 NPCs) — a keeper at the rest, a hiker at the mouth
+    npcs: [
+      { id: 'woods_keeper', sprite: 'fernLady', x: 4, y: westY, facing: 'right', dialogue: 'npc_woods_keeper', idle: true, emote: 'happy' },
+      { id: 'woods_hiker', sprite: 'pajamaKid', x: W - 3, y: eastY, facing: 'left', dialogue: 'npc_woods_hiker', wander: true, emote: 'think' },
+    ],
     signs: [{ x: 5, y: Math.max(1, westY - 2), dialogue: 'sign_whisperwood' }, ...gift.signs],
     phones: [{ x: 2, y: westY + 2 }],
     doors: [
@@ -747,9 +756,13 @@ function buildMeadowFar(): MapDef {
     id: 'meadow_far',
     name: 'THE FAR MEADOW',
     music: 'otterbrook',
+    ambience: 'wind', // S22 (ADR-124): the open stretch where the air goes electric
     grid: draft.grid,
     props: [...props, ...gift.props],
-    npcs: [{ id: 'far_walker', sprite: 'pajamaKid', x: 5, y: westY, facing: 'right', dialogue: 'npc_far_walker', wander: true }],
+    npcs: [
+      { id: 'far_walker', sprite: 'pajamaKid', x: 5, y: westY, facing: 'right', dialogue: 'npc_far_walker', wander: true, idle: true, emote: 'think' },
+      { id: 'far_forager', sprite: 'senora', x: Math.round(W * 0.5), y: eastY, facing: 'down', dialogue: 'npc_far_forager', wander: true, emote: 'happy' },
+    ],
     signs: [...draft.signs, ...gift.signs],
     phones: draft.phones,
     doors: [
@@ -790,13 +803,15 @@ function buildMeadowOverpass(): MapDef {
     id: 'meadow_overpass',
     name: 'THE OVERPASS',
     music: 'otterbrook',
+    ambience: 'crowd', // S22 (ADR-124): the city hum reaches the threshold
     grid: draft.grid,
     props: [
       ...draft.props,
       { sprite: 'sign', x: W - 6, y: Math.max(1, eastY - 2), solid: WALK_SIGN_SOLID }, // BRICKTON CITY LIMITS
       { sprite: 'sign', x: regX, y: regY, solid: WALK_SIGN_SOLID }, // the Walkers' Register post
     ],
-    npcs: [...proctors],
+    // S22 (ADR-124): a traveler who comes up just to listen to the city — it's a place, not a checkpoint
+    npcs: [...proctors, { id: 'overpass_traveler', sprite: 'grayCommuter', x: 4, y: westY, facing: 'right', dialogue: 'npc_overpass_traveler', idle: true, emote: 'think' }],
     signs: [
       ...draft.signs,
       { x: W - 6, y: Math.max(1, eastY - 2), dialogue: 'sign_overpass_gate' },
@@ -897,6 +912,7 @@ function buildHillRoad(): MapDef {
     id: 'hill_road',
     name: 'HILL ROAD',
     music: 'hill',
+    ambience: 'wind', // S22 (ADR-124): the hill's bare-shouldered wind
     // night rides the §A6 story clock with otterbrook/hickory_hill (S9b)
     grid: g.out(),
     props: [
@@ -920,6 +936,8 @@ function buildHillRoad(): MapDef {
       // first; the second retires at zapper_done exactly like the old gate)
       { id: 'biscuit_road', sprite: 'dog', x: 15, y: 3, facing: 'right', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
       { id: 'biscuit_road_after', sprite: 'dog', x: 15, y: 3, facing: 'right', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
+      // S22 (ADR-124): a daytime hiker keeps the climb from feeling abandoned
+      { id: 'hill_hiker', sprite: 'oldTimer', x: 15, y: 6, facing: 'down', dialogue: 'npc_hill_hiker', idle: true, emote: 'think', ifFlag: 'zapper_done' },
     ],
     signs: [
       { x: 17, y: 29, dialogue: 'sign_hill_road' },
@@ -1903,6 +1921,7 @@ export function growBrickton(): MapDef {
       ...southWest.signs,
     ],
     phones: [...core.phones, { x: 33, y: 67 }],
+    ambience: 'crowd', // S22 (ADR-124): the downtown murmur
     doors: [
       ...keptDoors, // the_cage gate stays byte-identical; the old docks-gap door is relocated ↓
       // S22 (ADR-122): the docks gap now opens onto THE WAREHOUSES (the approach head),
