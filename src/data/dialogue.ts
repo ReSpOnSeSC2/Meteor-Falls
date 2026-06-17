@@ -2120,6 +2120,24 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Revivals, cures, the works. The angels float to the desk themselves; it is very convenient.',
   ],
   hospital_wall: ['BRICKTON GENERAL — IF YOU CAN READ THIS, YOUR EYES ARE FINE. NEXT WINDOW PLEASE.'],
+  // S22 (ADR-117) — the WARD floor upstairs
+  hospital_f2_sign: [
+    'WARD — QUIET PLEASE. Visiting hours: whenever. Departing hours: when the doctor says.',
+    '(A taped note: "the man in bed 3 is FINE, he just likes the attention.")',
+  ],
+  npc_ward_nurse: [
+    '@Keep it down up here, hon — half these folks fainted at the meteor and the other half at the BILL.',
+    "@Your friends need waking? That's the front desk, downstairs. Up here we mostly do pudding and worrying.",
+  ],
+  npc_ward_patient1: [
+    '@Zzz... the sky fell... zzz... I told them it would... zzz...',
+  ],
+  npc_ward_patient2: [
+    '@I just came in for a splinter and now I have a ROOMMATE who narrates his dreams. (gestures at bed 1)',
+  ],
+  npc_ward_patient3: [
+    '@A meteor, a cult of smiling men, and now hospital gelatin. What a week to be alive. Truly — what a week to be ALIVE.',
+  ],
   hospital_mushroom_note: [
     'MEMO: MUSHROOMIZATION is treated by DOCTORS ONLY (§ policy).',
     '(Below, handwritten: "no, the church cannot do it. yes, we asked.")',
