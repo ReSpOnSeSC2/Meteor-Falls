@@ -105,8 +105,8 @@ describe('authored NPC asset wiring', () => {
     const artById = new Map<string, (typeof NPC_CHARACTER_ART)[number]>(NPC_CHARACTER_ART.map((art) => [art.id, art]));
     for (const id of npcIds) {
       const art = artById.get(id);
-      expect(art?.url, id).toContain(`${id}_8dir_96x128.png`);
-      expect(pngSize(resolve(process.cwd(), `assets/art/characters/${id}_8dir_96x128.png`)), id)
+      expect(art?.url, id).toContain(`${id}_anim_46_4x.png`);
+      expect(pngSize(resolve(process.cwd(), `assets/art/characters/${id}_anim_46_4x.png`)), id)
         .toEqual({ w: 384, h: 1536 });
     }
   });
