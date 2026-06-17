@@ -75,8 +75,8 @@ describe('S15g M3 — the curve is honest (shipped §A7 rows fall in their band)
 
 describe('S15g M3 — the §A6 boss ladder is pinned to canon', () => {
   it('boss HP matches the Bible', () => {
-    // S22 (ADR-111) THE SLOW BURN: Ch.1's bespoke Tick is 150 (was 450)
-    expect(BOSS_HP).toMatchObject({ 1: 150, 2: 980, 3: 1600, 4: 1900, 5: 2150, 6: 2300, 7: 3200, 8: 4100, 9: 5300 });
+    // ADR-122 THE RESCALE: Ch.1–3 dropped to the new combat curve (Tick 60, Idol 300, Mainframe 750); Ch.4–9 await the staged forward retune.
+    expect(BOSS_HP).toMatchObject({ 1: 60, 2: 300, 3: 750, 4: 1900, 5: 2150, 6: 2300, 7: 3200, 8: 4100, 9: 5300 });
   });
   it('the per-level baseline reproduces the Ch.1 anchor (a L1 ~24 HP foe)', () => {
     expect(statAtLevel(1).hp).toBe(25); // Cranky Mailbox neighborhood

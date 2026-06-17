@@ -1182,16 +1182,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     rogue_icecream_truck: 30,
     tick_nymph: 28,
     the_suit: 32,
-    titanic_tick: 150,
+    titanic_tick: 60,
     // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
     // (the union attacks 5×22, §A7's group notation)
     pickpocket_parrot: 70,
     gilded_beetle: 85,
-    cursed_souvenir: 95,
-    step_mask: 110,
+    cursed_souvenir: 78,
+    step_mask: 80,
     banana_bunch: 22,
-    jungle_jitterbug: 120,
-    gilded_grin: 980,
+    jungle_jitterbug: 80,
+    gilded_grin: 300,
     // Chapter 3 (ADR-095) — §A7 England: the seed six + the Enemy Flow Law mix
     // (4 road/field · 3 dungeon · 2 social · 2 rare · 2 late-pressure · 1 set-piece).
     // cricket_eleven is 16 EACH (the XI attacks as a group, §A7's notation).
@@ -1214,9 +1214,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     roman_sentry: 180,
     head_prefect: 175,
     boiler_golem: 190,
-    the_invigilator: 210,
+    the_invigilator: 200,
     // BOSS 3 (ADR-099) — promoted from the forge draft to a live §A7 enemy at the flip
-    headmaster_mainframe: 1600,
+    headmaster_mainframe: 750,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];

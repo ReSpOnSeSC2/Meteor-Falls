@@ -12,11 +12,11 @@ const A = (a: AbilityDef): AbilityDef => a;
 export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
   [
     // ---- Jay: Vibe Surge line (signature nuke), support
-    A({ id: 'vibe_surge_a', name: 'Vibe Surge Alpha', kind: 'vibe', pp: 10, power: 55, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_a' }),
-    A({ id: 'vibe_surge_b', name: 'Vibe Surge Beta', kind: 'vibe', pp: 22, power: 143, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_b' }),
+    A({ id: 'vibe_surge_a', name: 'Vibe Surge Alpha', kind: 'vibe', pp: 6, power: 20, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_a' }),
+    A({ id: 'vibe_surge_b', name: 'Vibe Surge Beta', kind: 'vibe', pp: 18, power: 55, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_b' }),
     A({ id: 'vibe_surge_g', name: 'Vibe Surge Gamma', kind: 'vibe', pp: 38, power: 231, target: 'enemies', element: 'none', text: '{user} let the old light ROAR!', fx: 'surge_g' }),
     A({ id: 'vibe_surge_o', name: 'Vibe Surge Omega', kind: 'vibe', pp: 64, power: 341, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
-    A({ id: 'lifeup_a', name: 'Lifeup Alpha', kind: 'vibe', pp: 5, power: 45, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
+    A({ id: 'lifeup_a', name: 'Lifeup Alpha', kind: 'vibe', pp: 5, power: 12, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
     A({ id: 'lifeup_b', name: 'Lifeup Beta', kind: 'vibe', pp: 11, power: 110, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
     A({ id: 'lifeup_g', name: 'Lifeup Gamma', kind: 'vibe', pp: 24, power: 180, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole chorus!', fx: 'lifeup' }),
     A({ id: 'hypno_a', name: 'Hypno Alpha', kind: 'vibe', pp: 6, power: 0, target: 'enemy', element: 'none', status: 'asleep', text: '{user} hummed a lullaby!', fx: 'hypno' }),
@@ -75,14 +75,14 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // assets. Voice: kind, steel-spined; the sparkle rides the flourish lines.
 
     // Ladder 1 — FIRE 🔥 (single→AoE; γ+ apply `burn`, Fire's DoT identity).
-    A({ id: 'vibe_fire_a', name: 'Vibe Fire Alpha', kind: 'vibe', pp: 6, power: 48, target: 'enemy', element: 'fire', text: '{user} snapped her fingers — FWOOSH! 🔥', fx: 'fire_a' }),
-    A({ id: 'vibe_fire_b', name: 'Vibe Fire Beta', kind: 'vibe', pp: 14, power: 125, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH! 🔥🔥', fx: 'fire_b' }),
+    A({ id: 'vibe_fire_a', name: 'Vibe Fire Alpha', kind: 'vibe', pp: 6, power: 10, target: 'enemy', element: 'fire', text: '{user} snapped her fingers — FWOOSH! 🔥', fx: 'fire_a' }),
+    A({ id: 'vibe_fire_b', name: 'Vibe Fire Beta', kind: 'vibe', pp: 14, power: 26, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH! 🔥🔥', fx: 'fire_b' }),
     A({ id: 'vibe_fire_g', name: 'Vibe Fire Gamma', kind: 'vibe', pp: 28, power: 202, target: 'enemies', element: 'fire', status: 'burn', text: 'The air itself caught! 🔥🔥🔥', fx: 'fire_g' }),
     A({ id: 'vibe_fire_o', name: 'Vibe Fire Omega', kind: 'vibe', pp: 49, power: 298, target: 'enemies', element: 'fire', status: 'burn', text: 'The air itself caught!', fx: 'fire_o' }),
     A({ id: 'vibe_fire_x', name: 'Vibe Fire Sigma', kind: 'vibe', pp: 78, power: 430, target: 'enemies', element: 'fire', status: 'burn', text: '🔥 The whole sky went orange — and stayed. 🔥', fx: 'fire_x' }),
 
     // Ladder 2 — FREEZE ❄ (the control element; γ+ apply `frozen`, boss-capped).
-    A({ id: 'vibe_freeze_a', name: 'Vibe Freeze Alpha', kind: 'vibe', pp: 7, power: 52, target: 'enemy', element: 'freeze', text: '{user} exhaled winter! ❄', fx: 'freeze_a' }),
+    A({ id: 'vibe_freeze_a', name: 'Vibe Freeze Alpha', kind: 'vibe', pp: 7, power: 12, target: 'enemy', element: 'freeze', text: '{user} exhaled winter! ❄', fx: 'freeze_a' }),
     A({ id: 'vibe_freeze_b', name: 'Vibe Freeze Beta', kind: 'vibe', pp: 15, power: 114, target: 'enemy', element: 'freeze', text: '{user} exhaled winter! ❄❄', fx: 'freeze_b' }),
     A({ id: 'vibe_freeze_g', name: 'Vibe Freeze Gamma', kind: 'vibe', pp: 30, power: 187, target: 'enemy', element: 'freeze', status: 'frozen', text: 'Absolute zero, with feeling! ❄', fx: 'freeze_g' }),
     A({ id: 'vibe_freeze_o', name: 'Vibe Freeze Omega', kind: 'vibe', pp: 52, power: 286, target: 'enemy', element: 'freeze', status: 'frozen', text: 'Absolute zero, with feeling!', fx: 'freeze_o' }),
@@ -103,7 +103,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'magnet_x', name: 'Magnet Sigma', kind: 'vibe', pp: 24, power: 0, target: 'enemies', element: 'none', status: 'lifedrain', text: '🧲💜 Every Ember in earshot leaned toward her. 💜🧲', fx: 'magnet' }),
 
     // Ladder 5 — STARSONG ✨ (holy light, the anti-Hush element; pierces resist).
-    A({ id: 'starsong_a', name: 'Starsong Alpha', kind: 'vibe', pp: 8, power: 56, target: 'enemy', element: 'holy', text: "{user} hummed a note the dark couldn't eat. ✨", fx: 'starsong_a' }),
+    A({ id: 'starsong_a', name: 'Starsong Alpha', kind: 'vibe', pp: 8, power: 10, target: 'enemy', element: 'holy', text: "{user} hummed a note the dark couldn't eat. ✨", fx: 'starsong_a' }),
     A({ id: 'starsong_b', name: 'Starsong Beta', kind: 'vibe', pp: 17, power: 132, target: 'enemies', element: 'holy', text: '✨ The note spread, warm and gold. ✨', fx: 'starsong_b' }),
     A({ id: 'starsong_g', name: 'Starsong Gamma', kind: 'vibe', pp: 30, power: 210, target: 'enemies', element: 'holy', text: "Every Ember she'd ever heard answered. 🌟", fx: 'starsong_g' }),
     A({ id: 'starsong_o', name: 'Starsong Omega', kind: 'vibe', pp: 50, power: 300, target: 'enemies', element: 'holy', text: 'The Homesong, one verse of it, let loose. ✨🌟', fx: 'starsong_o' }),
@@ -123,8 +123,8 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // ---- Milo: gadgets (no Vibe)
     A({ id: 'spy', name: 'Spy', kind: 'gadget', pp: 0, power: 0, target: 'enemy', element: 'none', text: '{user} adjusted his glasses and took notes!', fx: 'spy_scan' }),
     A({ id: 'repair', name: 'Repair', kind: 'gadget', pp: 0, power: 0, target: 'self', element: 'none', text: '{user} tinkers while everyone sleeps.', fx: 'repair_overnight' }),
-    A({ id: 'bottle_rocket', name: 'Bottle Rocket', kind: 'gadget', pp: 0, power: 90, target: 'enemy', element: 'physical', text: '{user} lit a bottle rocket! Psssshh!', fx: 'rocket' }),
-    A({ id: 'big_bottle_rocket', name: 'Big Bottle Rocket', kind: 'gadget', pp: 0, power: 220, target: 'enemy', element: 'physical', text: '{user} lit a BIG bottle rocket!', fx: 'rocket_big' }),
+    A({ id: 'bottle_rocket', name: 'Bottle Rocket', kind: 'gadget', pp: 0, power: 28, target: 'enemy', element: 'physical', text: '{user} lit a bottle rocket! Psssshh!', fx: 'rocket' }),
+    A({ id: 'big_bottle_rocket', name: 'Big Bottle Rocket', kind: 'gadget', pp: 0, power: 60, target: 'enemy', element: 'physical', text: '{user} lit a BIG bottle rocket!', fx: 'rocket_big' }),
     A({ id: 'multi_bottle_rocket', name: 'Multi Bottle Rocket', kind: 'gadget', pp: 0, power: 140, target: 'enemies', element: 'physical', text: '{user} lit the whole crate!', fx: 'rocket_multi' }),
 
     // ---- Milo, DOUBLED ("Gadget Genius, Doubled"). Six new 0-PP gadgets take
@@ -136,10 +136,10 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // psychics aren't hostage to PP, and a boss-buster siege rocket. Every face
     // REUSES an existing fx family. Voice: deadpan, talks to machines.
     A({ id: 'scope', name: 'Scope', kind: 'gadget', pp: 0, power: 0, target: 'enemy', element: 'none', status: 'marked', text: '{user} ranged the target. "Calibrating… got you."', fx: 'scope' }),
-    A({ id: 'static_bomb', name: 'Static Bomb', kind: 'gadget', pp: 0, power: 70, target: 'enemies', element: 'volt', status: 'paralyzed', text: '{user} armed the EMP. "Discharge."', fx: 'static_bomb' }),
+    A({ id: 'static_bomb', name: 'Static Bomb', kind: 'gadget', pp: 0, power: 20, target: 'enemies', element: 'volt', status: 'paralyzed', text: '{user} armed the EMP. "Discharge."', fx: 'static_bomb' }),
     A({ id: 'cryo_grenade', name: 'Cryo Grenade', kind: 'gadget', pp: 0, power: 80, target: 'enemy', element: 'freeze', status: 'frozen', text: '{user} pulled the pin. "Coolant away."', fx: 'cryo_grenade' }),
     A({ id: 'forcefield_gizmo', name: 'Forcefield Gizmo', kind: 'gadget', pp: 0, power: 0, target: 'allies', element: 'none', status: 'shield', text: '{user} deployed the emitter. "Field up — everyone inside."', fx: 'forcefield_gizmo' }),
-    A({ id: 'med_spray', name: 'Med-Spray', kind: 'gadget', pp: 0, power: 120, heal: true, target: 'ally', element: 'none', status: 'cure', text: '{user} hit them with the med-spray. "Hold still."', fx: 'med_spray' }),
+    A({ id: 'med_spray', name: 'Med-Spray', kind: 'gadget', pp: 0, power: 90, heal: true, target: 'ally', element: 'none', status: 'cure', text: '{user} hit them with the med-spray. "Hold still."', fx: 'med_spray' }),
     A({ id: 'siege_rocket', name: 'Siege Rocket', kind: 'gadget', pp: 0, power: 360, target: 'enemy', element: 'physical', text: '{user} shouldered the siege tube. "Payload away."', fx: 'siege_rocket' }),
 
     // ---- Dorin, THE MONK'S FULL PATH ("Ability Expansion"). The monastery

@@ -41,7 +41,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
       name: 'The Department of Smiles',
       maps: ['dos_f1', 'dos_f2', 'dos_f3'],
     },
-    boss: { id: 'titanic_tick', name: 'The Titanic Tick', hp: 150, template: 'bespoke' },
+    boss: { id: 'titanic_tick', name: 'The Titanic Tick', hp: 60, template: 'bespoke' },
     settlements: [
       { id: 'otterbrook', kind: 'town' },
       { id: 'brickton', kind: 'city' },
@@ -64,7 +64,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
       name: 'The Step-Pyramid',
       maps: ['pyramid_ante', 'pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_4', 'pyramid_apex'],
     },
-    boss: { id: 'gilded_grin', name: 'Idol of the Gilded Grin', hp: 980, template: 'formSwap' },
+    boss: { id: 'gilded_grin', name: 'Idol of the Gilded Grin', hp: 300, template: 'formSwap' },
     settlements: [
       { id: 'puerto_sol', kind: 'city' },
       { id: 'valle_dorado', kind: 'village' },
@@ -93,7 +93,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
       // §A6 boss room opens off floor 3's sealed office (the mainframe_boss trigger)
       maps: ['wintermoor_f1', 'wintermoor_f2', 'wintermoor_f3', 'wintermoor_dorm', 'wintermoor_boiler'],
     },
-    boss: { id: 'headmaster_mainframe', name: 'Headmaster Mainframe', hp: 1600, template: 'summoner' },
+    boss: { id: 'headmaster_mainframe', name: 'Headmaster Mainframe', hp: 750, template: 'summoner' },
     settlements: [{ id: 'foggybottom', kind: 'town' }],
     // the 5 overworld maps from buildChapter3Maps(): the arrival cabin, the damp town,
     // the moor lane, the academy grounds, and the Old Stones (the §A6 Resonance Site)
