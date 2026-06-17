@@ -1069,6 +1069,20 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sign_hardware: ["HODGKIN'S HARDWARE — If we don't have it, you didn't need it. (We have it.)"],
   sign_diner: ['THE SUNNY SIDE — Breakfast all day. Lunch also all day. It is always a meal here.'],
   sign_barber: ["VINE ST. BARBER — Back in 5. (The sign has said this since 1987.)"],
+  // S22 (ADR-120) — THE OTTERBROOK CLINIC (front desk revive + exam room)
+  sign_clinic: ['OTTERBROOK CLINIC — Walk-ins welcome. Faint-ins carried. Open since the meteor "for obvious reasons."'],
+  clinic_wall: [
+    'OTTERBROOK CLINIC — front desk for the unconscious, back room for the merely unwell.',
+    '(A flyer: "FEELING BLUE IN THE HEAD? That\'s not us. That\'s the thing from the hill. See a priest.")',
+  ],
+  npc_doc_otter: [
+    '@Welcome to the clinic, hon. Small operation — it\'s me, the cot, and a very brave houseplant.',
+    "@Got a friend who's down for the count? I'll wake 'em up for you. Costs a little. Worth a lot.",
+  ],
+  clinic_exam_sign: ['EXAM ROOM — please do not sit on the cot if you are not the patient. (Looking at you, raccoons.)'],
+  npc_clinic_patient: [
+    '@Doc says I\'m "fine, just startled." I watched a STAR fall into Hickory Hill. I will be startled FOREVER.',
+  ],
   npc_hodgkin: [
     "@Hardware, huh? Course it is. Nobody comes to Hodgkin's for the AMBIANCE.",
     '@Bolts, hose, bug spray, mower parts — that mower of Sodd\'s is loose AGAIN, I can hear it from here.',

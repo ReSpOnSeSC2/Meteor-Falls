@@ -26,7 +26,7 @@ the masters PNG; then slice/downscale into the runtime sheet and wire it in
 > | Bert's Auto lot | `quarterMan` NPC | §6.2 Bert · §6.3 façade |
 > | Constable Borden (cop fight) | `grayCommuter` NPC + Blazer battler (LIVE) | §4.3 (overworld + battler + bust) |
 > | Brickton General — WARD floor | cot + docBrickton sprites (LIVE) | §3.4 props (ward bed) |
-> | Otterbrook Clinic / front-desk | — (planned) | §3.4 props · §4.4 clerk |
+> | Otterbrook Clinic (desk + exam) | `bldg_brickmore` + cot/doc sprites (LIVE) | §3.4 props · §4.4 clerk |
 > | First car (Comet) | vehicle forge | §5.1 (optional) |
 
 ---

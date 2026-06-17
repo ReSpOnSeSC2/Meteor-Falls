@@ -2118,6 +2118,7 @@ export class OverworldScene extends Phaser.Scene {
       case 'doc_brickton':
       case 'doc_puerto':
       case 'doc_valle':
+      case 'doc_otter': // S22 (ADR-120): the Otterbrook Clinic front desk
         // S14 (Prompt 25): pay-to-revive angels + the cure-all desk
         await this.hospitalBeat(n);
         return true;

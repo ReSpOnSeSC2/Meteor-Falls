@@ -2268,7 +2268,9 @@ function buildDowntownOtterbrook(entryStreetExit: { tx: number; ty: number }): M
 
   const hardware = placeFacade('bldg_brickmore', 3, 8 * 16, 5, 2, { to: 'hardware_int', tx: 120, ty: 128 });
   const diner = placeFacade('bldg_brickmore', 11, 8 * 16, 5, 2, { to: 'diner_int', tx: 120, ty: 128 });
-  const barber = placeFacade('bldg_brickmore', 19, 8 * 16, 5, 2); // flavor only (no door)
+  // S22 (ADR-120): the third shopfront is the OTTERBROOK CLINIC — the starting
+  // town finally has a front-desk revive (and a back exam room), small-town scale.
+  const clinic = placeFacade('bldg_brickmore', 19, 8 * 16, 5, 2, { to: 'otter_clinic_int', tx: 120, ty: 128 });
 
   const treeLine: Array<[number, number]> = [];
   for (let x = 0; x < 28; x += 2) treeLine.push([x, 15]);
@@ -2286,17 +2288,17 @@ function buildDowntownOtterbrook(entryStreetExit: { tx: number; ty: number }): M
       ...treeLine.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK })),
       hardware,
       diner,
-      barber,
+      clinic,
       { sprite: 'bench', x: 16, y: 11, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
       { sprite: 'sign', x: 9, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the district plaque
-      { sprite: 'sign', x: 24, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the barber's "back in 5"
+      { sprite: 'sign', x: 24, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the clinic shingle
     ],
     npcs: [
       { id: 'downtown_loiterer', sprite: 'oldTimer', x: 18, y: 11, facing: 'down', dialogue: 'npc_pajama_day', wander: true, ifFlag: 'zapper_done' },
     ],
     signs: [
       { x: 9, y: 8, dialogue: 'sign_downtown' },
-      { x: 24, y: 8, dialogue: 'sign_barber' },
+      { x: 24, y: 8, dialogue: 'sign_clinic' },
     ],
     phones: [],
     doors: [
@@ -2372,6 +2374,71 @@ function buildDinerInt(streetExit: { tx: number; ty: number }): MapDef {
     atms: [],
     doors: [
       { x: 6, y: 8, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** THE OTTERBROOK CLINIC — front desk (S22, ADR-120). Small-town scale: a
+ *  reception counter with the doc (front-desk revive, the §A4.7 pay-to-wake
+ *  flow), a couple of waiting chairs, a save payphone, and a back door to the
+ *  EXAM ROOM — the "multiple rooms / multiple doors" shape, town-sized. */
+function buildOtterClinicInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(14, 10, 'w');
+  g.rect(0, 0, 14, 2, 'W');
+  return {
+    id: 'otter_clinic_int',
+    name: 'OTTERBROOK CLINIC',
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 3, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'bench', x: 2, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'plant_pot', x: 9, y: 6, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'payphone', x: 12, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+    ],
+    npcs: [
+      { id: 'doc_otter', sprite: 'docBrickton', x: 4, y: 2, facing: 'down', dialogue: 'npc_doc_otter', idle: true },
+    ],
+    signs: [{ x: 8, y: 1, dialogue: 'clinic_wall' }],
+    phones: [{ x: 12, y: 7 }],
+    doors: [
+      { x: 6, y: 9, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      // the back door to the EXAM ROOM (a second enterable room)
+      { x: 11, y: 2, w: 1, h: 1, to: 'otter_clinic_exam', tx: 48, ty: 64, facing: 'down', indicator: 'door' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** THE OTTERBROOK CLINIC — exam room (S22, ADR-120). A cot, a privacy curtain,
+ *  one nervous patient, and the door back to the front desk. */
+function buildOtterClinicExam(): MapDef {
+  const g = new Grid(12, 9, 'w');
+  g.rect(0, 0, 12, 2, 'W');
+  return {
+    id: 'otter_clinic_exam',
+    name: 'OTTERBROOK CLINIC — EXAM',
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'cot', x: 6, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 9, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'water_cooler', x: 1, y: 5.2, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
+      { sprite: 'poster_chart', x: 4, y: 0.55 },
+    ],
+    npcs: [
+      { id: 'clinic_patient', sprite: 'pajamaKid', x: 7, y: 4, facing: 'down', dialogue: 'npc_clinic_patient', idle: true, emote: 'think' },
+    ],
+    signs: [{ x: 3, y: 1, dialogue: 'clinic_exam_sign' }],
+    phones: [],
+    doors: [
+      { x: 2, y: 2, w: 1, h: 1, to: 'otter_clinic_int', tx: 184, ty: 64, facing: 'down', indicator: 'door' },
     ],
     spawners: [],
     triggers: [],
@@ -2805,6 +2872,7 @@ const downtownStep = doorstepOf(otterbrookMap, 'downtown_otterbrook') ?? { tx: 7
 const downtownMap = buildDowntownOtterbrook(downtownStep);
 const hardwareStep = doorstepOf(downtownMap, 'hardware_int') ?? { tx: 96, ty: 150 };
 const dinerStep = doorstepOf(downtownMap, 'diner_int') ?? { tx: 224, ty: 150 };
+const otterClinicStep = doorstepOf(downtownMap, 'otter_clinic_int') ?? { tx: 352, ty: 150 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
 const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty: 225 };
@@ -3096,6 +3164,8 @@ export const MAPS: Record<string, MapDef> = {
   downtown_otterbrook: downtownMap,
   hardware_int: buildHardwareInt(hardwareStep),
   diner_int: buildDinerInt(dinerStep),
+  otter_clinic_int: buildOtterClinicInt(otterClinicStep),
+  otter_clinic_exam: buildOtterClinicExam(),
   drugstore_int: buildDrugstoreInt(drugDoorstep),
   starmart_int: buildStarmartInt(martDoorstep),
   arcade_int: buildArcadeInt(arcadeDoorstep),
@@ -3114,7 +3184,7 @@ export const MAPS: Record<string, MapDef> = {
 const ROOMY_INTERIORS: readonly string[] = [
   'drugstore_int', 'starmart_int', 'arcade_int', 'arcade2_int',
   'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall', 'bus_depot_int',
-  'hardware_int', 'diner_int',
+  'hardware_int', 'diner_int', 'otter_clinic_int',
   'mercado_int', 'clinic_ps_int', 'deli_int', 'chapel_int',
   'valle_shop_int', 'clinic_valle_int', 'chapel_valle_int',
 ];
