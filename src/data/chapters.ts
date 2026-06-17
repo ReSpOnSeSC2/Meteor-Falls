@@ -114,7 +114,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     band: 'ch4',
     travel: 'biplane', // Lucille's North Sea hop (she barely makes it)
     dungeon: { name: "The Sleeper's Spine → the Sleeper's Ear", site: 'sleepers_spine' },
-    boss: { id: 'the_whisperwig', name: 'The Whisperwig', hp: 1900, template: 'untargetableUntilNoise' },
+    boss: { id: 'the_whisperwig', name: 'The Whisperwig', hp: 1800, template: 'untargetableUntilNoise' },
     settlements: [
       { id: 'kvisthavn', kind: 'village', style: 'spire-canton' },
       { id: 'lilleby', kind: 'village', style: 'spire-canton' },
@@ -134,7 +134,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     band: 'ch5',
     travel: 'biplane', // Lucille lands in the duchy. All of it.
     dungeon: { name: 'The Hedgerow → the Ducal Crown', site: 'the_hedgerow' },
-    boss: { id: 'whiskerzilla', name: 'Whiskerzilla', hp: 2150, template: 'scriptedSurvival' },
+    boss: { id: 'whiskerzilla', name: 'Whiskerzilla', hp: 4000, template: 'scriptedSurvival' },
     settlements: [{ id: 'minimus_major', kind: 'city', style: 'spire-canton' }],
     maps: [],
     quests: ['royal_census', 'civic_repairs'],
@@ -150,7 +150,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     band: 'ch6',
     travel: 'biplane', // Lucille again (she has no business making it)
     dungeon: { name: 'The Laughing Ruins → the Sphinx’s chin', site: 'laughing_ruins' },
-    boss: { id: 'laughing_sphinx', name: 'The Laughing Sphinx', hp: 2300, template: 'riddle' },
+    boss: { id: 'laughing_sphinx', name: 'The Laughing Sphinx', hp: 9000, template: 'riddle' },
     settlements: [{ id: 'zanzibel', kind: 'city', style: 'bazaar-port' }],
     maps: [],
     quests: ['stones_that_speak', 'watering_hole_convoy'],
@@ -166,7 +166,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     band: 'ch7',
     travel: 'train', // the overloaded night train
     dungeon: { name: 'The Night Train → palace throne', site: 'night_train' },
-    boss: { id: 'cobra_raja', name: 'Cobra Raja', hp: 3200, template: 'thresholdHeal' },
+    boss: { id: 'cobra_raja', name: 'Cobra Raja', hp: 20000, template: 'thresholdHeal' },
     settlements: [{ id: 'chandrapore', kind: 'city', style: 'bazaar-port' }],
     maps: [],
     quests: ['seven_spices', 'monkey_who_stole_tuesday'],
@@ -182,7 +182,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     band: 'ch8',
     travel: 'riverboat', // riverboat + the Yak Express
     dungeon: { name: 'The Spore Forest → temple bell', site: 'spore_forest' },
-    boss: { id: 'paper_dragon', name: 'The Paper Dragon', hp: 4100, template: 'airborneGrounded' },
+    boss: { id: 'paper_dragon', name: 'The Paper Dragon', hp: 45000, template: 'airborneGrounded' },
     settlements: [{ id: 'lotus_harbor', kind: 'city', style: 'painted-gates' }],
     maps: [],
     quests: ['brushes_of_mt_shu'],
@@ -198,7 +198,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     band: 'ch9',
     travel: 'train', // the Orient Less-Express (third-class)
     dungeon: { name: 'Castle Hoaxula → monastery bell tower', site: 'castle_hoaxula' },
-    boss: { id: 'count_hoaxula', name: 'Count Hoaxula', hp: 5300, template: 'mercyEnding' },
+    boss: { id: 'count_hoaxula', name: 'Count Hoaxula', hp: 95000, template: 'mercyEnding' },
     settlements: [{ id: 'valea_stelelor', kind: 'village', style: 'painted-gates' }],
     maps: [],
     quests: ['bunis_table'],
@@ -215,10 +215,10 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     travel: 'snowcat', // snow-cat, then Pemberton's rocket The Long Shot
     dungeon: { name: 'The Sea of Silence (Mars)', site: 'sea_of_silence' },
     // the finale shell is bespoke (not one of the ten templates) — like the Tick
-    boss: { id: 'the_hush', name: 'The Hush', hp: 6000, template: 'bespoke' },
+    boss: { id: 'the_hush', name: 'The Hush', hp: 150000, template: 'bespoke' },
     minibosses: [
-      { id: 'frost_sentinel', name: 'Frost Sentinel', hp: 2800, template: 'elementalGolem' },
-      { id: 'tiki_magma_golem', name: 'Tiki Magma Golem', hp: 3000, template: 'elementalGolem' },
+      { id: 'frost_sentinel', name: 'Frost Sentinel', hp: 50000, template: 'elementalGolem' },
+      { id: 'tiki_magma_golem', name: 'Tiki Magma Golem', hp: 50000, template: 'elementalGolem' },
     ],
     settlements: [
       { id: 'aurora_station', kind: 'village', style: 'fog-stone' },

@@ -127,10 +127,10 @@ describe('equipped offense (S3 — the acting hero, not the shared bag)', () => 
     const rex = makeHeroState('rex', 5);
     rex.bag = ['cracked_bat', 'tball_bat'];
     rex.equip.weapon = 'cracked_bat';
-    expect(equipDelta(rex, 'tball_bat')).toBe(4); // 8 - 4
+    expect(equipDelta(rex, 'tball_bat')).toBe(2); // 4 - 2
     expect(equipDelta(rex, 'cracked_bat')).toBe(0); // already wearing it
     rex.equip.weapon = 'tball_bat';
-    expect(equipDelta(rex, 'cracked_bat')).toBe(-4); // downgrades preview too
+    expect(equipDelta(rex, 'cracked_bat')).toBe(-2); // downgrades preview too (4 → 2)
     expect(equipDelta(rex, 'corn_dog')).toBe(0); // not equipment
   });
 

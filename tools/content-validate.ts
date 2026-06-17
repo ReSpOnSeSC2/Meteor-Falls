@@ -2238,12 +2238,12 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
     const ch = m.chapter;
 
     // the §A6 boss-HP ladder, pinned against the forge's curve constants (the
-    // shipped + the forged bosses read the same ladder; Ch.10's 6,000 shell is
-    // the bespoke finale, and the two minibosses ride MINIBOSS_HP)
+    // shipped + the forged bosses read the same ladder; Ch.10's 150,000 shell is
+    // the bespoke 3-phase finale, and the two minibosses ride MINIBOSS_HP)
     if (ch <= 9) {
       if (m.boss.hp !== BOSS_HP[ch]) fail('chapters', `Ch.${ch} boss '${m.boss.id}' HP is ${m.boss.hp}, §A6 ladder ${BOSS_HP[ch]}`);
-    } else if (m.boss.hp !== 6000) {
-      fail('chapters', `Ch.10 finale '${m.boss.id}' is the 6,000-HP shell (§A6), got ${m.boss.hp}`);
+    } else if (m.boss.hp !== 150000) {
+      fail('chapters', `Ch.10 finale '${m.boss.id}' is the 150,000-HP shell (§A6, 3 phases ~50k each), got ${m.boss.hp}`);
     }
     for (const mb of m.minibosses ?? []) {
       const want = MINIBOSS_HP[mb.id as keyof typeof MINIBOSS_HP];

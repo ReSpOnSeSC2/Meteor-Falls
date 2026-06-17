@@ -55,16 +55,16 @@ export const BOSS_HP: Record<number, number> = {
   1: 60,
   2: 300,
   3: 750,
-  4: 1900,
-  5: 2150,
-  6: 2300,
-  7: 3200,
-  8: 4100,
-  9: 5300,
+  4: 1800,
+  5: 4000,
+  6: 9000,
+  7: 20000,
+  8: 45000,
+  9: 95000,
 };
 
 /** the §A6 miniboss HP (Ch.10's Alaska + Hawaii gauntlet) */
-export const MINIBOSS_HP = { frost_sentinel: 2800, tiki_magma_golem: 3000 } as const;
+export const MINIBOSS_HP = { frost_sentinel: 50000, tiki_magma_golem: 50000 } as const;
 
 /** the chapter's MIDPOINT baseline (the level a typical enemy of the chapter
  *  sits at) — the forge scales this by role multipliers. */

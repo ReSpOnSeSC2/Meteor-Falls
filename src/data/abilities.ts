@@ -14,11 +14,11 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // ---- Jay: Vibe Surge line (signature nuke), support
     A({ id: 'vibe_surge_a', name: 'Vibe Surge Alpha', kind: 'vibe', pp: 6, power: 20, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_a' }),
     A({ id: 'vibe_surge_b', name: 'Vibe Surge Beta', kind: 'vibe', pp: 18, power: 55, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_b' }),
-    A({ id: 'vibe_surge_g', name: 'Vibe Surge Gamma', kind: 'vibe', pp: 38, power: 231, target: 'enemies', element: 'none', text: '{user} let the old light ROAR!', fx: 'surge_g' }),
-    A({ id: 'vibe_surge_o', name: 'Vibe Surge Omega', kind: 'vibe', pp: 64, power: 341, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
+    A({ id: 'vibe_surge_g', name: 'Vibe Surge Gamma', kind: 'vibe', pp: 38, power: 1100, target: 'enemies', element: 'none', text: '{user} let the old light ROAR!', fx: 'surge_g' }),
+    A({ id: 'vibe_surge_o', name: 'Vibe Surge Omega', kind: 'vibe', pp: 64, power: 6846, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
     A({ id: 'lifeup_a', name: 'Lifeup Alpha', kind: 'vibe', pp: 5, power: 12, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
-    A({ id: 'lifeup_b', name: 'Lifeup Beta', kind: 'vibe', pp: 11, power: 110, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
-    A({ id: 'lifeup_g', name: 'Lifeup Gamma', kind: 'vibe', pp: 24, power: 180, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole chorus!', fx: 'lifeup' }),
+    A({ id: 'lifeup_b', name: 'Lifeup Beta', kind: 'vibe', pp: 11, power: 116, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
+    A({ id: 'lifeup_g', name: 'Lifeup Gamma', kind: 'vibe', pp: 24, power: 1464, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole chorus!', fx: 'lifeup' }),
     A({ id: 'hypno_a', name: 'Hypno Alpha', kind: 'vibe', pp: 6, power: 0, target: 'enemy', element: 'none', status: 'asleep', text: '{user} hummed a lullaby!', fx: 'hypno' }),
     A({ id: 'shield_a', name: 'Shield Alpha', kind: 'vibe', pp: 6, power: 0, target: 'ally', element: 'none', status: 'shield', text: '{user} raised a shimmer in the air!', fx: 'shield_snap' }),
     A({ id: 'shield_s', name: 'Shield Sigma', kind: 'vibe', pp: 18, power: 0, target: 'allies', element: 'none', status: 'shield', text: '{user} raised a wall of shimmer!', fx: 'shield_snap' }),
@@ -35,7 +35,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // Pillar A — Vibe Surge Σ (the screen-filling capstone, awakening). No
     // element: the answer to elementally-immune foes that shrug off Mia. 96 PP
     // is most of his bar — "one Σ or three βs" is a per-fight budget decision.
-    A({ id: 'vibe_surge_x', name: 'Vibe Surge Sigma', kind: 'vibe', pp: 96, power: 480, target: 'enemies', element: 'none', text: 'Otterbrook, the Embers, every porch light he ever ran home to — all of it surged through {user}!', fx: 'surge_x' }),
+    A({ id: 'vibe_surge_x', name: 'Vibe Surge Sigma', kind: 'vibe', pp: 96, power: 9114, target: 'enemies', element: 'none', text: 'Otterbrook, the Embers, every porch light he ever ran home to — all of it surged through {user}!', fx: 'surge_x' }),
 
     // Pillar B — mind control. Hypno Ω puts a whole pack to sleep; Mind Warp
     // turns ONE foe against its own allies (status 'puppet'). Trivial vs trash,
@@ -57,7 +57,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // Pillar D — Lifeup Ω (Jay can main-heal so Mia is free to nuke) + Resolve
     // ('steeled': +Guts → crit and a 1-HP mortal-blow survive, a proactive
     // don't-die button the party otherwise lacks).
-    A({ id: 'lifeup_o', name: 'Lifeup Omega', kind: 'vibe', pp: 40, power: 320, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole sky bright!', fx: 'lifeup' }),
+    A({ id: 'lifeup_o', name: 'Lifeup Omega', kind: 'vibe', pp: 40, power: 2683, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole sky bright!', fx: 'lifeup' }),
     A({ id: 'resolve_a', name: 'Resolve', kind: 'vibe', pp: 10, power: 0, target: 'ally', element: 'none', status: 'steeled', text: '{user} caught their eye: stand. STAND.', fx: 'brace_snap' }),
 
     // Pillar E — the two "full double" extras (trim-first, §3): a stronger
@@ -77,23 +77,23 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // Ladder 1 — FIRE 🔥 (single→AoE; γ+ apply `burn`, Fire's DoT identity).
     A({ id: 'vibe_fire_a', name: 'Vibe Fire Alpha', kind: 'vibe', pp: 6, power: 10, target: 'enemy', element: 'fire', text: '{user} snapped her fingers — FWOOSH! 🔥', fx: 'fire_a' }),
     A({ id: 'vibe_fire_b', name: 'Vibe Fire Beta', kind: 'vibe', pp: 14, power: 26, target: 'enemies', element: 'fire', text: '{user} snapped her fingers — FWOOSH! 🔥🔥', fx: 'fire_b' }),
-    A({ id: 'vibe_fire_g', name: 'Vibe Fire Gamma', kind: 'vibe', pp: 28, power: 202, target: 'enemies', element: 'fire', status: 'burn', text: 'The air itself caught! 🔥🔥🔥', fx: 'fire_g' }),
-    A({ id: 'vibe_fire_o', name: 'Vibe Fire Omega', kind: 'vibe', pp: 49, power: 298, target: 'enemies', element: 'fire', status: 'burn', text: 'The air itself caught!', fx: 'fire_o' }),
-    A({ id: 'vibe_fire_x', name: 'Vibe Fire Sigma', kind: 'vibe', pp: 78, power: 430, target: 'enemies', element: 'fire', status: 'burn', text: '🔥 The whole sky went orange — and stayed. 🔥', fx: 'fire_x' }),
+    A({ id: 'vibe_fire_g', name: 'Vibe Fire Gamma', kind: 'vibe', pp: 28, power: 508, target: 'enemies', element: 'fire', status: 'burn', text: 'The air itself caught! 🔥🔥🔥', fx: 'fire_g' }),
+    A({ id: 'vibe_fire_o', name: 'Vibe Fire Omega', kind: 'vibe', pp: 49, power: 3239, target: 'enemies', element: 'fire', status: 'burn', text: 'The air itself caught!', fx: 'fire_o' }),
+    A({ id: 'vibe_fire_x', name: 'Vibe Fire Sigma', kind: 'vibe', pp: 78, power: 4311, target: 'enemies', element: 'fire', status: 'burn', text: '🔥 The whole sky went orange — and stayed. 🔥', fx: 'fire_x' }),
 
     // Ladder 2 — FREEZE ❄ (the control element; γ+ apply `frozen`, boss-capped).
     A({ id: 'vibe_freeze_a', name: 'Vibe Freeze Alpha', kind: 'vibe', pp: 7, power: 12, target: 'enemy', element: 'freeze', text: '{user} exhaled winter! ❄', fx: 'freeze_a' }),
-    A({ id: 'vibe_freeze_b', name: 'Vibe Freeze Beta', kind: 'vibe', pp: 15, power: 114, target: 'enemy', element: 'freeze', text: '{user} exhaled winter! ❄❄', fx: 'freeze_b' }),
-    A({ id: 'vibe_freeze_g', name: 'Vibe Freeze Gamma', kind: 'vibe', pp: 30, power: 187, target: 'enemy', element: 'freeze', status: 'frozen', text: 'Absolute zero, with feeling! ❄', fx: 'freeze_g' }),
-    A({ id: 'vibe_freeze_o', name: 'Vibe Freeze Omega', kind: 'vibe', pp: 52, power: 286, target: 'enemy', element: 'freeze', status: 'frozen', text: 'Absolute zero, with feeling!', fx: 'freeze_o' }),
-    A({ id: 'vibe_freeze_x', name: 'Vibe Freeze Sigma', kind: 'vibe', pp: 80, power: 405, target: 'enemies', element: 'freeze', status: 'frozen', text: '❄ She breathed, and the whole room held still. ❄', fx: 'freeze_x' }),
+    A({ id: 'vibe_freeze_b', name: 'Vibe Freeze Beta', kind: 'vibe', pp: 15, power: 72, target: 'enemy', element: 'freeze', text: '{user} exhaled winter! ❄❄', fx: 'freeze_b' }),
+    A({ id: 'vibe_freeze_g', name: 'Vibe Freeze Gamma', kind: 'vibe', pp: 30, power: 971, target: 'enemy', element: 'freeze', status: 'frozen', text: 'Absolute zero, with feeling! ❄', fx: 'freeze_g' }),
+    A({ id: 'vibe_freeze_o', name: 'Vibe Freeze Omega', kind: 'vibe', pp: 52, power: 3162, target: 'enemy', element: 'freeze', status: 'frozen', text: 'Absolute zero, with feeling!', fx: 'freeze_o' }),
+    A({ id: 'vibe_freeze_x', name: 'Vibe Freeze Sigma', kind: 'vibe', pp: 80, power: 8000, target: 'enemies', element: 'freeze', status: 'frozen', text: '❄ She breathed, and the whole room held still. ❄', fx: 'freeze_x' }),
 
     // Ladder 3 — VOLT ⚡ (AoE + disruption; γ+ apply `paralyzed`, the answer to packs).
-    A({ id: 'vibe_volt_a', name: 'Vibe Volt Alpha', kind: 'vibe', pp: 9, power: 58, target: 'enemy', element: 'volt', text: '{user} pointed at the sky! ⚡', fx: 'volt_a' }),
+    A({ id: 'vibe_volt_a', name: 'Vibe Volt Alpha', kind: 'vibe', pp: 9, power: 49, target: 'enemy', element: 'volt', text: '{user} pointed at the sky! ⚡', fx: 'volt_a' }),
     A({ id: 'vibe_volt_b', name: 'Vibe Volt Beta', kind: 'vibe', pp: 19, power: 128, target: 'enemies', element: 'volt', text: '{user} pointed at the sky! ⚡⚡', fx: 'volt_b' }),
-    A({ id: 'vibe_volt_g', name: 'Vibe Volt Gamma', kind: 'vibe', pp: 36, power: 209, target: 'enemies', element: 'volt', status: 'paralyzed', text: 'The sky answered! ⚡', fx: 'volt_g' }),
-    A({ id: 'vibe_volt_o', name: 'Vibe Volt Omega', kind: 'vibe', pp: 55, power: 300, target: 'enemies', element: 'volt', status: 'paralyzed', text: 'The sky answered — and kept answering!', fx: 'volt_o' }),
-    A({ id: 'vibe_volt_x', name: 'Vibe Volt Sigma', kind: 'vibe', pp: 82, power: 420, target: 'enemies', element: 'volt', status: 'paralyzed', text: '⚡ Every hair on every arm stood up at once. ⚡', fx: 'volt_x' }),
+    A({ id: 'vibe_volt_g', name: 'Vibe Volt Gamma', kind: 'vibe', pp: 36, power: 1714, target: 'enemies', element: 'volt', status: 'paralyzed', text: 'The sky answered! ⚡', fx: 'volt_g' }),
+    A({ id: 'vibe_volt_o', name: 'Vibe Volt Omega', kind: 'vibe', pp: 55, power: 6036, target: 'enemies', element: 'volt', status: 'paralyzed', text: 'The sky answered — and kept answering!', fx: 'volt_o' }),
+    A({ id: 'vibe_volt_x', name: 'Vibe Volt Sigma', kind: 'vibe', pp: 82, power: 8000, target: 'enemies', element: 'volt', status: 'paralyzed', text: '⚡ Every hair on every arm stood up at once. ⚡', fx: 'volt_x' }),
 
     // Ladder 4 — PP STEAL 🧲 (Mia drains enemy magic; Ω/Σ also drain HP, `lifedrain`).
     A({ id: 'magnet_a', name: 'Magnet Alpha', kind: 'vibe', pp: 3, power: 0, target: 'enemy', element: 'none', status: 'pp_drain', text: '{user} held out her palm! 🧲', fx: 'magnet' }),
@@ -104,10 +104,10 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
 
     // Ladder 5 — STARSONG ✨ (holy light, the anti-Hush element; pierces resist).
     A({ id: 'starsong_a', name: 'Starsong Alpha', kind: 'vibe', pp: 8, power: 10, target: 'enemy', element: 'holy', text: "{user} hummed a note the dark couldn't eat. ✨", fx: 'starsong_a' }),
-    A({ id: 'starsong_b', name: 'Starsong Beta', kind: 'vibe', pp: 17, power: 132, target: 'enemies', element: 'holy', text: '✨ The note spread, warm and gold. ✨', fx: 'starsong_b' }),
-    A({ id: 'starsong_g', name: 'Starsong Gamma', kind: 'vibe', pp: 30, power: 210, target: 'enemies', element: 'holy', text: "Every Ember she'd ever heard answered. 🌟", fx: 'starsong_g' }),
-    A({ id: 'starsong_o', name: 'Starsong Omega', kind: 'vibe', pp: 50, power: 300, target: 'enemies', element: 'holy', text: 'The Homesong, one verse of it, let loose. ✨🌟', fx: 'starsong_o' }),
-    A({ id: 'starsong_x', name: 'Starsong Sigma', kind: 'vibe', pp: 84, power: 440, target: 'enemies', element: 'holy', text: '🌟✨ She sang, and for a moment the Hush remembered being light. ✨🌟', fx: 'starsong_x' }),
+    A({ id: 'starsong_b', name: 'Starsong Beta', kind: 'vibe', pp: 17, power: 500, target: 'enemies', element: 'holy', text: '✨ The note spread, warm and gold. ✨', fx: 'starsong_b' }),
+    A({ id: 'starsong_g', name: 'Starsong Gamma', kind: 'vibe', pp: 30, power: 1772, target: 'enemies', element: 'holy', text: "Every Ember she'd ever heard answered. 🌟", fx: 'starsong_g' }),
+    A({ id: 'starsong_o', name: 'Starsong Omega', kind: 'vibe', pp: 50, power: 5965, target: 'enemies', element: 'holy', text: 'The Homesong, one verse of it, let loose. ✨🌟', fx: 'starsong_o' }),
+    A({ id: 'starsong_x', name: 'Starsong Sigma', kind: 'vibe', pp: 84, power: 8000, target: 'enemies', element: 'holy', text: '🌟✨ She sang, and for a moment the Hush remembered being light. ✨🌟', fx: 'starsong_x' }),
 
     A({ id: 'pray', name: 'Pray', kind: 'pray', pp: 0, power: 0, target: 'allies', element: 'holy', text: '{user} prayed with all her heart.', fx: 'pray' }),
 
@@ -115,7 +115,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // amplifier). Heartmend = a RELIABLE heal (not hostage to PRAY's RNG); Lucky
     // Star = party crit/dodge up (`lucky`); Hush Hex = focus-fire enabler
     // (`exposed`, ×1.3 incoming, stacks with `marked`); Dreamlull = mass sleep.
-    A({ id: 'heartmend_a', name: 'Heartmend', kind: 'vibe', pp: 12, power: 160, heal: true, target: 'ally', element: 'none', text: '{user} pressed a warm hand to a hurt. 💛', fx: 'lifeup' }),
+    A({ id: 'heartmend_a', name: 'Heartmend', kind: 'vibe', pp: 12, power: 199, heal: true, target: 'ally', element: 'none', text: '{user} pressed a warm hand to a hurt. 💛', fx: 'lifeup' }),
     A({ id: 'lucky_star', name: 'Lucky Star', kind: 'vibe', pp: 10, power: 0, target: 'allies', element: 'none', status: 'lucky', text: '{user} wished on the first star out. 🍀⭐', fx: 'starsong_a' }),
     A({ id: 'hush_hex', name: 'Hush Hex', kind: 'vibe', pp: 14, power: 0, target: 'enemies', element: 'none', status: 'exposed', text: '{user} named the hollow in them.', fx: 'brainjam' }),
     A({ id: 'dreamlull', name: 'Dreamlull', kind: 'vibe', pp: 12, power: 0, target: 'enemies', element: 'none', status: 'asleep', text: '{user} hummed the lullaby Mom used. 🌙', fx: 'hypno' }),
@@ -149,12 +149,12 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // a defensive/offensive choice. He joins late (Ch.9) nearly complete — a
     // master, not a student — so his unlocks cluster high. Voice: formal, calm,
     // faintly baffled by the modern world; his battle lines read like sutras.
-    A({ id: 'vibe_comet_a', name: 'Vibe Comet Alpha', kind: 'vibe', pp: 20, power: 130, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_a' }),
-    A({ id: 'vibe_comet_b', name: 'Vibe Comet Beta', kind: 'vibe', pp: 30, power: 190, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_b' }),
-    A({ id: 'vibe_comet_g', name: 'Vibe Comet Gamma', kind: 'vibe', pp: 44, power: 250, target: 'enemies', element: 'none', text: 'The mountain answers. The sky falls.', fx: 'comet_g' }),
+    A({ id: 'vibe_comet_a', name: 'Vibe Comet Alpha', kind: 'vibe', pp: 20, power: 1070, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_a' }),
+    A({ id: 'vibe_comet_b', name: 'Vibe Comet Beta', kind: 'vibe', pp: 30, power: 2140, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_b' }),
+    A({ id: 'vibe_comet_g', name: 'Vibe Comet Gamma', kind: 'vibe', pp: 44, power: 3280, target: 'enemies', element: 'none', text: 'The mountain answers. The sky falls.', fx: 'comet_g' }),
     // Comet Ω is the single awakening now (trial_of_the_mute_mountain, §6) — the
     // mastery earned at the Trial that lets him join. NOT a level unlock.
-    A({ id: 'vibe_comet_o', name: 'Vibe Comet Omega', kind: 'vibe', pp: 60, power: 320, target: 'enemies', element: 'none', text: 'The sky opened. The stars remembered.', fx: 'comet_o' }),
+    A({ id: 'vibe_comet_o', name: 'Vibe Comet Omega', kind: 'vibe', pp: 60, power: 6497, target: 'enemies', element: 'none', text: 'The sky opened. The stars remembered.', fx: 'comet_o' }),
     A({ id: 'mirror', name: 'Mirror', kind: 'vibe', pp: 4, power: 0, target: 'self', element: 'none', status: 'mirror', text: '{user} became perfectly still water.', fx: 'mirror_snap' }),
     // party Mirror — overlaps Jay's Power Shield on purpose but lands FASTER
     // (Dorin acts first). The 'mirror' status is already party-capable through
@@ -183,7 +183,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // mechanics wire in when she joins); the faces reuse existing fx families.
     A({ id: 'pinpoint_mark', name: 'Pinpoint Mark', kind: 'physical', pp: 0, power: 0, target: 'enemy', element: 'none', status: 'marked', text: "{user} marked the shot — now the party can't miss it!", fx: 'pinpoint_mark' }),
     A({ id: 'royal_rally', name: 'Royal Rally', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'rally', text: '{user} called the rally — the party stands quick and lucky!', fx: 'royal_rally' }),
-    A({ id: 'pocket_patch', name: 'Pocket Patch', kind: 'physical', pp: 0, power: 35, heal: true, target: 'ally', element: 'none', status: 'cure', text: '{user} patched an ally up — needle, thread, and a clean bandage!', fx: 'pocket_patch' }),
+    A({ id: 'pocket_patch', name: 'Pocket Patch', kind: 'physical', pp: 0, power: 360, heal: true, target: 'ally', element: 'none', status: 'cure', text: '{user} patched an ally up — needle, thread, and a clean bandage!', fx: 'pocket_patch' }),
     A({ id: 'scale_step', name: 'Scale Step', kind: 'physical', pp: 0, power: 0, target: 'self', element: 'none', status: 'evasion', text: '{user} stepped to thimble-scale — and left a decoy standing!', fx: 'scale_step' }),
     A({ id: 'big_little_focus', name: 'Big-Little Focus', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'focus', text: '{user} and the party found the big-little focus!', fx: 'big_little_focus' }),
     A({ id: 'bellwether', name: 'Bellwether', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'morale', text: '{user} rang the bellwether — the next prayer will carry!', fx: 'bellwether' }),
@@ -199,7 +199,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // read like the minutes of a meeting ("Noted. Marked. Proceed.").
     A({ id: 'volley_mark', name: 'Volley Mark', kind: 'physical', pp: 0, power: 0, target: 'enemies', element: 'none', status: 'marked', text: '{user} marked the whole row. "Noted. Marked. Proceed."', fx: 'volley_mark' }),
     A({ id: 'diplomatic_immunity', name: 'Diplomatic Immunity', kind: 'physical', pp: 0, power: 0, target: 'ally', element: 'none', status: 'guarded', text: '{user} stepped in front. "I will be taking that one."', fx: 'diplomatic_immunity' }),
-    A({ id: 'field_dressing', name: 'Field Dressing', kind: 'physical', pp: 0, power: 90, heal: true, target: 'allies', element: 'none', status: 'cure', text: '{user} worked the line — needle, thread, and a stern word.', fx: 'field_dressing' }),
+    A({ id: 'field_dressing', name: 'Field Dressing', kind: 'physical', pp: 0, power: 700, heal: true, target: 'allies', element: 'none', status: 'cure', text: '{user} worked the line — needle, thread, and a stern word.', fx: 'field_dressing' }),
     A({ id: 'stern_decree', name: 'Stern Decree', kind: 'physical', pp: 0, power: 0, target: 'enemies', element: 'none', status: 'rattled', text: '{user} read them the decree. The room went small and sorry.', fx: 'stern_decree' }),
     A({ id: 'standing_ovation', name: 'Standing Ovation', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'rally', text: '{user} called the house to its feet — GO!', fx: 'standing_ovation' }),
     A({ id: 'the_minutes', name: 'The Minutes', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'focus', text: '{user} took the minutes mid-disaster — and corrected the record.', fx: 'the_minutes' }),
