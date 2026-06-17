@@ -1905,7 +1905,9 @@ export function growBrickton(): MapDef {
     phones: [...core.phones, { x: 33, y: 67 }],
     doors: [
       ...keptDoors, // the_cage gate stays byte-identical; the old docks-gap door is relocated ↓
-      { x: W - 1, y: 21, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
+      // S22 (ADR-122): the docks gap now opens onto THE WAREHOUSES (the approach head),
+      // not straight onto the pier — Brickton → Warehouses → Seawall → Docks → boat.
+      { x: W - 1, y: 21, w: 1, h: 3, to: 'docks_warehouses', tx: 32, ty: 112, facing: 'right' },
       { x: 29, y: H - 1, w: 3, h: 1, to: 'meadow_mile', tx: 544, ty: 128, facing: 'down', indicator: 'none' },
     ],
     spawners: [

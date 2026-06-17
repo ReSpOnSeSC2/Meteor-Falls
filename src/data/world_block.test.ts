@@ -241,7 +241,11 @@ describe('BRICKTON — the 2077 core is frozen (≈4× sprawl, stays a city)', (
     expect(MAPS.cage_block.doors.some((d) => d.to === 'cage_lot')).toBe(true); // block → lot
     expect(MAPS.cage_lot.doors.some((d) => d.to === 'cage_park')).toBe(true); // lot → park
     expect(MAPS.cage_park.doors.some((d) => d.to === 'the_cage')).toBe(true); // the park leads in
-    expect(grown.doors.some((d) => d.to === 'brickton_docks')).toBe(true); // relocated, still wired
+    // S22 (ADR-122): the docks gap now opens onto the waterfront APPROACH, not the pier
+    expect(grown.doors.some((d) => d.to === 'docks_warehouses')).toBe(true); // re-routed via the approach
+    expect(grown.doors.some((d) => d.to === 'brickton_docks')).toBe(false); // no longer a direct hop
+    expect(MAPS.docks_warehouses.doors.some((d) => d.to === 'docks_seawall')).toBe(true); // warehouses → seawall
+    expect(MAPS.docks_seawall.doors.some((d) => d.to === 'brickton_docks')).toBe(true); // seawall → the pier
     // ADR-056: the foot return now lands on the OVERPASS (the city-adjacent leg),
     // not the town-edge meadow — the long walk reads correctly in both directions
     expect(grown.doors.some((d) => d.to === 'meadow_overpass')).toBe(true);

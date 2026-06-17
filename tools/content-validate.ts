@@ -2378,8 +2378,17 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
 
 // THE BOAT + THE CITY + THE PYRAMID CHAIN (§A5/§A6 Ch.2)
 {
-  if (!MAPS.brickton?.doors.some((d) => d.to === 'brickton_docks')) {
-    fail('ch2', `Brickton's east gap must open onto brickton_docks (§A5 Ch.2)`);
+  // S22 (ADR-122): the east gap now opens onto the waterfront APPROACH, which leads
+  // to the pier — Brickton → WAREHOUSES → SEAWALL → brickton_docks → the boat. The
+  // whole chain to the §A5 crossing stays pinned.
+  if (!MAPS.brickton?.doors.some((d) => d.to === 'docks_warehouses')) {
+    fail('ch2', `Brickton's east gap must open onto docks_warehouses (the approach head, ADR-122)`);
+  }
+  if (!MAPS.docks_warehouses?.doors.some((d) => d.to === 'docks_seawall')) {
+    fail('ch2', `docks_warehouses must lead to docks_seawall (the approach chain, ADR-122)`);
+  }
+  if (!MAPS.docks_seawall?.doors.some((d) => d.to === 'brickton_docks')) {
+    fail('ch2', `docks_seawall must lead to brickton_docks / the pier (the approach chain, ADR-122)`);
   }
   if (!MAPS.brickton_docks?.triggers.some((t) => t.id === 'board_boat')) {
     fail('ch2', `the docks need the board_boat trigger (the ch1_complete gate rides the captain's ask, ADR-014)`);

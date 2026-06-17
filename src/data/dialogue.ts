@@ -1798,6 +1798,22 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'SALIDAS / DEPARTURES: PUERTO SOL — when the bananas are ready.',
     '(The bananas have never once been late.)',
   ],
+  // S22 (ADR-122) — THE DOCKS APPROACH: the working waterfront before the pier
+  sign_docks_warehouses: [
+    'BRICKTON CARGO — AUTHORIZED FOOTWEAR ONLY. The pier is EAST, past the seawall. Mind the forklift.',
+    '(Chalked on a crate: "if it smells like bananas, you\'re going the right way.")',
+  ],
+  npc_dock_worker: [
+    "@Boat? Yeah, yeah, keep headin' east — through the seawall, you'll smell it before you see it.",
+    "@Whole town runs on bananas and we're OUT of the good crates. Don't ask. Long week. Heavy fruit.",
+  ],
+  sign_docks_seawall: [
+    'THE SEAWALL — BRICKTON DOCKS → just ahead. Do not feed the gulls. The gulls have a UNION now.',
+  ],
+  npc_dock_fisher: [
+    '@Forty years off this seawall, kid. Caught two fish and one boot. The boot fought harder.',
+    "@You're for the banana boat? Good. Get gone before the gulls organize. They've been LOOKING at me.",
+  ],
   npc_captain: [
     '@Four thousand and twelve crossings, kid. I measure my whole life in them.',
     '@My first kiss? Crossing nine hundred six. My best soup? Three thousand even.',

@@ -103,17 +103,90 @@ export function buildBricktonDocks(): MapDef {
     ],
     phones: [{ x: 4, y: 4 }],
     doors: [
-      // back through the gap onto Brickton's street B. The LIVE city is the GROWN
-      // 144×76 map, whose docks gap sits at the far-EAST edge (x≈143, street B
-      // rows 21–23) — land just inside it (tile 142,22). The old 856,360 pointed
-      // at the frozen CORE's middle gap, dumping you in mid-downtown (ADR-054 growth).
-      { x: 0, y: 6, w: 1, h: 3, to: 'brickton', tx: 2280, ty: 360, facing: 'left' },
+      // S22 (ADR-122): the pier now threads back down the waterfront approach (Docks →
+      // Seawall → Warehouses → the city), mirroring the walk in. The old direct
+      // 2280,360 hop to Brickton moves to the Warehouses' west door.
+      { x: 0, y: 6, w: 1, h: 3, to: 'docks_seawall', tx: 272, ty: 64, facing: 'left' },
     ],
     spawners: [],
     triggers: [
       // standing at the gangplank — the captain's boarding ask (ch1-gated)
       { id: 'board_boat', rect: { x: 22, y: 7, w: 2, h: 3 }, once: false },
     ],
+  };
+}
+
+/* ----- THE DOCKS APPROACH (S22, ADR-122) — the waterfront walk to the pier -----
+ * The user's decree (same as the Cage): you don't step one door from Brickton onto
+ * the boat. The way to the docks now crosses the working waterfront: Brickton → THE
+ * WAREHOUSES (brick cargo yards) → THE SEAWALL (the quay, the sea at your shoulder)
+ * → BRICKTON DOCKS → the banana boat. EAST is "toward the sea" on every screen; the
+ * return threads back the same way. Gray-boxed on shipped dock tiles/props.
+ */
+export function buildDocksWarehouses(): MapDef {
+  const g = new Grid(20, 14, '=');
+  g.rect(0, 0, 20, 5, 'B'); // north cargo block
+  g.rect(0, 10, 20, 4, 'B'); // south cargo block
+  g.set(5, 7, '2'); g.set(14, 8, '3'); g.set(9, 6, '1'); // road wear (walkable)
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  return {
+    id: 'docks_warehouses',
+    name: 'THE WAREHOUSES',
+    music: 'brickton',
+    grid: g.out(),
+    props: [
+      { sprite: 'crate', x: 4, y: 5.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'crate_bananas', x: 15, y: 5.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'crate', x: 11, y: 9, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'trash_can', x: 7, y: 9, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'phone_pole', x: 3, y: 5, solid: { ox: 5, oy: 26, w: 6, h: 6 } },
+      { sprite: 'sign', x: 13, y: 9, solid: SIGN_SOLID },
+    ],
+    npcs: [
+      { id: 'dock_worker', sprite: 'quarterMan', x: 8, y: 6, facing: 'right', dialogue: 'npc_dock_worker', wander: true },
+    ],
+    signs: [{ x: 13, y: 9, dialogue: 'sign_docks_warehouses' }],
+    phones: [],
+    doors: [
+      { x: 0, y: 6, w: 1, h: 3, to: 'brickton', tx: 2280, ty: 360, facing: 'left' },
+      { x: 19, y: 6, w: 1, h: 3, to: 'docks_seawall', tx: 32, ty: 64, facing: 'right' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+export function buildDocksSeawall(): MapDef {
+  const g = new Grid(20, 14, '=');
+  g.rect(0, 9, 20, 5, 'e'); // the harbour
+  g.rect(0, 8, 20, 1, 'E'); // foam at the seawall
+  g.set(6, 3, '1'); g.set(13, 5, '2');
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  return {
+    id: 'docks_seawall',
+    name: 'THE SEAWALL',
+    music: 'puerto',
+    grid: g.out(),
+    ambience: 'waves',
+    reflect: [{ x: 0, y: 9, w: 20, h: 4 }],
+    props: [
+      { sprite: 'crate', x: 3, y: 1.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'bench', x: 10, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'trash_can', x: 15, y: 2, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'phone_pole', x: 6, y: 1, solid: { ox: 5, oy: 26, w: 6, h: 6 } },
+      { sprite: 'sign', x: 13, y: 2, solid: SIGN_SOLID },
+    ],
+    npcs: [
+      { id: 'dock_fisher', sprite: 'oldTimer', x: 8, y: 6, facing: 'down', dialogue: 'npc_dock_fisher', idle: true, emote: 'think' },
+    ],
+    signs: [{ x: 13, y: 2, dialogue: 'sign_docks_seawall' }],
+    phones: [],
+    doors: [
+      { x: 0, y: 3, w: 1, h: 3, to: 'docks_warehouses', tx: 272, ty: 112, facing: 'left' },
+      { x: 19, y: 3, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
+    ],
+    spawners: [],
+    triggers: [],
   };
 }
 
@@ -1415,6 +1488,9 @@ export function buildChapter2Maps(steps: {
   const rooms = buildPyramidRooms();
   return {
     brickton_docks: buildBricktonDocks(),
+    // S22 (ADR-122): the waterfront approach — Brickton → WAREHOUSES → SEAWALL → DOCKS
+    docks_warehouses: buildDocksWarehouses(),
+    docks_seawall: buildDocksSeawall(),
     boat_interior: buildBoatInterior(),
     hospital_int: buildHospitalInt(steps.hospitalStep),
     hospital_f2: buildHospitalF2(),
