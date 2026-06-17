@@ -1078,6 +1078,32 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Sit anywhere, hon, the floor\'s clean-ish. Coffee\'s on the house if you don\'t tell my boss it was.',
     "@You look like a kid who's had a NIGHT. Eat something. The world's easier on a full stomach. Doctor's orders. I'm not a doctor.",
   ],
+  // S22 (ADR-118) — THE COP FIGHT: Constable Borden, framed by Chad, by-the-book
+  npc_borden_accuse: [
+    '@HOLD it right there, citizen. Constable Borden, Otterbrook P.D. (sole officer, acting chief, crossing guard).',
+    '@Got a report — young Chad Pickle, very upset — says YOU went and "vandalized the whole hill" last night. Crater-sized vandalism. His words.',
+    '@That is a Code 7-B if I ever saw one. And I have seen exactly one. Care to explain yourself?',
+  ],
+  npc_borden_meteor: [
+    '@"A meteor." Mm. Convenient, a meteor. Does a meteor fill out a FORM? Does a meteor have a PERMIT?',
+    "@(He isn't really listening. There's a faint blue hum behind his eyes — the Hush got a little of him too.)",
+  ],
+  npc_borden_silent: [
+    '@Silent, eh? The guilty are silent. So are the innocent. So are mailboxes. PROVES NOTHING, and yet.',
+    "@(There's a faint blue hum behind his eyes. He isn't all here.)",
+  ],
+  npc_borden_threat: [
+    '@I\'m gonna have to DETAIN you, son. By the book. Subsection by subsection. Hold still—',
+  ],
+  npc_borden_cleared: [
+    '@...Oof. What— why am I— OW, my whole back went BY THE BOOK.',
+    "@A meteor. Of course it was a meteor. I watched it come down and then I went all... blue, in the head. That boy Chad played me like a kazoo.",
+    "@You're cleared, son. Fully. Here— the Civic Apology Fund. It's just my donut money, but you EARNED my donut money.",
+    "@Anyone gives you trouble on the road out of town, you tell 'em Borden vouched. By the book.",
+  ],
+  npc_borden_done: [
+    '@Road\'s yours, kid. Try not to vandalize any more celestial bodies. (That was a joke. Mostly.)',
+  ],
   npc_busdriver: [
     "@Exact change or exact attitude. You've got one of 'em, kid. Sit anywhere.",
   ],

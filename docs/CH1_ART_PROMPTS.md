@@ -24,7 +24,7 @@ the masters PNG; then slice/downscale into the runtime sheet and wire it in
 > | Sunny Side Diner | `bldg_brickmore` | §2.2 façade · §3.2 interior · §4.2 waitress |
 > | Otterbrook Realty | `senora` NPC | §6.1 agent · §6.3 façade |
 > | Bert's Auto lot | `quarterMan` NPC | §6.2 Bert · §6.3 façade |
-> | Constable Borden (cop fight) | — (planned) | §4.3 (overworld + battler + bust) |
+> | Constable Borden (cop fight) | `grayCommuter` NPC + Blazer battler (LIVE) | §4.3 (overworld + battler + bust) |
 > | Brickton General — WARD floor | cot + docBrickton sprites (LIVE) | §3.4 props (ward bed) |
 > | Otterbrook Clinic / front-desk | — (planned) | §3.4 props · §4.4 clerk |
 > | First car (Comet) | vehicle forge | §5.1 (optional) |

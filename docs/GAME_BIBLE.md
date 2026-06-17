@@ -475,6 +475,19 @@ Tutorial-by-doing. Meteor crash, Glint's prophecy and death-by-bug-zapper, the n
 > → Hickory Hill crater. The maps land gray-boxed on shipped sprites; the
 > authored-PNG pass is queued in docs/CH1_ART_PROMPTS.md.)*
 
+> *(Amended 2026-06-17 per Appendix rule 6, ADR-118 — **THE COP FIGHT** (Ch.1's
+> §A7 set-piece enemy). **CONSTABLE BORDEN**, Otterbrook's lone lawman (acting
+> chief, crossing guard), is lightly Hushed and fed a frame-up by **Chad Pickle**
+> — Chad reports that *Jay* "vandalized the whole hill," so by daybreak Borden
+> works the case at City Hall and tries to "detain" Jay BY THE BOOK (a deliberate
+> RHYME with General Buckle, §A6/ADR-081). It is an **OPTIONAL town beat, never a
+> wall**: beating him (70 HP, slow-burn — a post-Tick party clears him in a few
+> turns) snaps him clear, clears Jay's name, and pays his donut money ("the Civic
+> Apology Fund," +$80). Defeat/flee just leaves him to try again (the retry law).
+> Borden gray-boxes on the Blazer Smiler battler; the authored battler/bust is
+> queued in docs/CH1_ART_PROMPTS.md (§4.3). Engine: a `borden` §A7 enemy + the
+> `borden_cleared` flag + `constable_borden`'s OverworldScene beat.)*
+
 ### Chapter 2 — "The Gilded Grin" (South America) — target level: 13
 
 Banana boat to **Puerto Sol**. The mountain village **Valle Dorado** worships a golden idol that recently "started granting wishes" (it eats Vibe as payment — wishers go gray and quiet). Llama-herding side content, jungle paths, step-pyramid dungeon with rotating-floor puzzles.

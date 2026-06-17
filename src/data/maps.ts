@@ -465,6 +465,9 @@ export function growOtterbrook(): MapDef {
     // car you'll someday afford. Both open at daybreak (zapper_done).
     { id: 'realtor_otter', sprite: 'senora', x: 14, y: 43, facing: 'up' as const, dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
     { id: 'car_dealer_otter', sprite: 'quarterMan', x: 22, y: 43, facing: 'up' as const, dialogue: 'npc_car_dealer', idle: true, emote: 'happy' as const, ifFlag: 'zapper_done' },
+    // S22 (ADR-118): Constable Borden works the "hill vandalism" case at City Hall
+    // by daybreak — an OPTIONAL cop fight that clears Chad's frame-up (never a wall).
+    { id: 'constable_borden', sprite: 'grayCommuter', x: 10, y: 43, facing: 'up' as const, dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise' as const, ifFlag: 'zapper_done' },
   ];
 
   const signs = [

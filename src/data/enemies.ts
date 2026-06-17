@@ -160,6 +160,33 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       mini: 'mini_hill_slug',
       bg: [RAMP.GRASS, RAMP.PURPLE],
     }),
+    // §A7 Ch.1 SET-PIECE (S22, ADR-118) — CONSTABLE BORDEN, the lone Otterbrook
+    // lawman. Lightly Hushed + framed by Chad into "detaining" Jay over the hill
+    // "vandalism"; the morning cop fight (an OPTIONAL town beat, never a wall) snaps
+    // him back to himself. By-the-book to a comic fault — a deliberate RHYME with
+    // General Buckle (§A6/ADR-081). Slow-burn HP so a post-Tick party clears him fast.
+    E({
+      id: 'borden',
+      name: 'Constable Borden',
+      article: '',
+      hp: 70,
+      offense: 6,
+      defense: 5,
+      speed: 6,
+      level: 6,
+      exp: 40,
+      cash: 30,
+      weakness: [],
+      moves: [
+        { name: 'cite subsection', kind: 'attack', mult: 1, text: '{e} cited Otterbrook Municipal Code 7-B, subsection (ii)!', weight: 5 },
+        { name: 'write a ticket', kind: 'strong', mult: 1.3, text: '{e} wrote {t} up for "loitering with intent to be twelve"!', weight: 3 },
+        { name: 'blow whistle', kind: 'taunt', text: '{e} blew the whistle. Long. Pointedly. It did not accomplish anything.', weight: 2 },
+      ],
+      deathLine: 'Constable Borden sat down hard, blinked twice, and remembered he liked you.',
+      sprite: 'battle_blazer_smiler',
+      mini: 'mini_pigeon_gang',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
     /* ================= §A7 CHAPTER 2 — South America (S14) =================
      * Target level 13; EXP/cash on the §A9 curve between Ch.1's street pay
      * and Boss 2's purse. Every quirk §A7 names is a real mechanic:

@@ -1985,6 +1985,32 @@ export class OverworldScene extends Phaser.Scene {
    * fade-restart whenever the map must rebuild (gated NPCs/props/spawners).
    */
 
+  /**
+   * S22 (ADR-118) — THE COP FIGHT. Constable Borden, lightly Hushed and fed a
+   * frame-up by Chad, tries to "detain" Jay over the hill "vandalism." An OPTIONAL
+   * morning beat (never blocks the road) — beating him snaps him clear, clears
+   * Jay's name, and pays out his donut money. Defeat/flee just leaves him to try
+   * again (the retry law). A deliberate rhyme with the later General Buckle arc.
+   */
+  private async bordenBeat(): Promise<void> {
+    if (GS.flag('borden_cleared')) {
+      await this.dlg.say(...DIALOGUE.npc_borden_done);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.npc_borden_accuse);
+    const pick = await this.dlg.ask(['"It was a METEOR, sir."', 'Say nothing'], { cancelIndex: 1 });
+    await this.dlg.say(...(pick === 0 ? DIALOGUE.npc_borden_meteor : DIALOGUE.npc_borden_silent));
+    await this.dlg.say(...DIALOGUE.npc_borden_threat);
+    const outcome = await this.startBattle(['borden'], 'none', [], {});
+    if (outcome !== 'victory') return; // defeat respawns at the last save; a flee leaves him there
+    GS.setFlag('borden_cleared');
+    GS.data.cashOnHand += 80;
+    AUDIO.jingle('victory', 1600, this.mapDef.music);
+    await this.dlg.say(...DIALOGUE.npc_borden_cleared);
+    toast(this, "Cleared! Borden vouches for you. (+$80)");
+    this.fadeRestart(); // he stands down on the rebuild (borden_cleared)
+  }
+
   /** the current chapter, read off the Ember ledger (0 embers ⇒ Ch.1) */
   private chapterNow(): number {
     let n = 0;
@@ -2086,6 +2112,10 @@ export class OverworldScene extends Phaser.Scene {
       case 'car_dealer_otter':
         // S22 (ADR-115): the car-lot teaser (browse-only — buy a home first)
         await this.carLotBeat();
+        return true;
+      case 'constable_borden':
+        // S22 (ADR-118): the optional cop fight — clears Chad's frame-up
+        await this.bordenBeat();
         return true;
       case 'deli_keeper':
       case 'deli_otter':

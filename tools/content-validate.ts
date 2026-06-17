@@ -1165,6 +1165,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     blazer_smiler: 26,
     pigeon_gang: 20,
     hill_slug_deluxe: 28,
+    borden: 70, // S22 (ADR-118) — the Ch.1 set-piece cop fight (optional town beat)
     titanic_tick: 150,
     // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
     // (the union attacks 5×22, §A7's group notation)
