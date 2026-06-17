@@ -269,11 +269,13 @@ These run *through* the regions and must surface on the maps, not just in text:
 
 So vibrancy can't silently regress, add these to the content validator as each
 chapter lands (mirrors how the Cage/Docks/Golf chains are pinned):
-1. **Ambience coverage:** every non-interior canon map declares an `ambience`
-   from the eight (warn on any outdoor map with none).
-2. **Approach-chain pin:** every chapter manifest lists ≥2 transitional/approach
-   maps between its arrival and its dungeon/hub (the Pillar-5 gate), pinned both
-   directions like `hoops`/`links`/`ch2`.
+1. ✅ **Ambience coverage (LANDED, ADR-124):** HARD gate — every settlement
+   declares an `ambience` bed; SOFT report — outdoor soundscape coverage + thin-
+   life settlements as ⚠ opportunities. (31/31 outdoor maps now carry a bed.)
+2. ✅ **Approach-chain pin (LANDED, ADR-124):** HARD gate — every SHIPPED chapter
+   manifest lists ≥2 transitional/approach maps (route maps = neither interior
+   nor settlement), so the journey is never one door. (Plus the per-hub pins for
+   the Cage/Docks/Golf chains, `hoops`/`links`/`ch2`.)
 3. **Ambient-life floor:** every settlement map has ≥5 NPCs with ≥2 `wander` and
    ≥2 `idle`+`emote`; every route/threshold ≥1 with `idle`/`emote`.
 4. **Reflect-on-water:** any map whose grid contains sea/river tiles in an open

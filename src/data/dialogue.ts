@@ -646,6 +646,20 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_moor_walker: [
     '@Fog\'s thicker than usual, aye? Machine-made, my cousin reckons. My cousin also reckons the Queen is three badgers. Grain of salt.',
   ],
+  // S22 (ADR-124): the last thin-life settlements get a few more residents
+  npc_fb_fishwife: [
+    '@Fresh off the Tyne, pet — well, FRESHISH. The fog\'s been keeping the boats in. Even the FISH look nervous.',
+  ],
+  npc_links_golfer: [
+    '@Played this clifftop course for thirty years. Lost more balls to the SEA than to my swing. Marginally.',
+    '@You hear a humming on the back nine? Aye. We don\'t talk about the back nine.',
+  ],
+  npc_links_caddy: [
+    '@Carry your bag, sir? ...You don\'t HAVE a bag. You have a baseball bat and a frying pan. ...I\'ll allow it. Unconventional.',
+  ],
+  npc_estate_strolling: [
+    '@Lovely estates, aren\'t they? I don\'t live here. I just stroll. The hedges are FANTASTIC and ask no questions.',
+  ],
   meadow_gift_far: [
     'Taped to a fence post: an emergency salt shaker and a note.',
     'The note reads, in shaky capitals, "FOR THE TICK." ...Somebody up here KNEW.',

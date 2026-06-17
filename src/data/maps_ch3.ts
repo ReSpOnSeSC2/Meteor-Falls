@@ -132,6 +132,7 @@ function buildFoggybottom(): MapDef {
       { id: 'fb_postmistress', sprite: 'senora', x: 30, y: 14, facing: 'down', dialogue: 'npc_fb_post', idle: true, emote: 'think' }, // Wave 2 (#4): the pillar box has opinions
       // a damp small boy (one obsession: the fog tastes of pennies)
       { id: 'fb_boy', sprite: 'pajamaKid', x: 8, y: 11, facing: 'down', dialogue: 'npc_fb_boy', wander: true, emote: 'surprise' }, // Wave 2 (#4): the fog tastes of pennies!
+      { id: 'fb_fishwife', sprite: 'senora', x: 20, y: 20, facing: 'left', dialogue: 'npc_fb_fishwife', idle: true, emote: 'happy' }, // S22 (ADR-124): the quayside fishwife
     ],
     signs: [
       { x: 6, y: 10, dialogue: 'sign_foggybottom' },

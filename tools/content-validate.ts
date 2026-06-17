@@ -2967,16 +2967,30 @@ let waveTwoAmbientNpcs = 0;
       fail('vibrancy', `${m.id} is a ${m.settlement} but carries no ambience bed (ADR-124: settlements must be alive — add one from ${AMBIENCE_IDS.join('/')})`);
     }
   }
+  // HARD (Pillar 5 — the Approach Law): a SHIPPED chapter must carry ≥2 transitional
+  // /approach screens — a "route map" is an overworld map that is neither an interior
+  // nor a settlement — so a region is never just "town + dungeon, one door between".
+  for (const [ch, man] of Object.entries(CHAPTER_MANIFESTS)) {
+    if (man.status !== 'shipped') continue;
+    const route = (man.maps ?? []).filter((id) => {
+      const m = MAPS[id];
+      return m !== undefined && !m.interior && m.settlement === undefined;
+    });
+    if (route.length < 2) {
+      fail('vibrancy', `Ch.${ch} ships with only ${route.length} transitional/approach map(s) — ADR-124 Pillar 5 wants ≥2 (the journey is never one door)`);
+    }
+  }
   const outdoor = Object.values(MAPS).filter((m) => !m.interior);
   const silent = outdoor.filter((m) => m.ambience === undefined);
-  // the alive-floor: a town/city/village wants ≥5 residents (Pillar 3 table); flag
-  // the genuinely sparse ones as opportunities (count total — static folk count too)
-  const thin = Object.values(MAPS).filter((m) => m.settlement !== undefined && m.npcs.length < 5);
+  // the alive-floor (Pillar 3 table): towns/cities want ≥5 residents, villages ≥3
+  // (they're genuinely smaller); flag the sparse ones as soft opportunities.
+  const floorFor = (s: string): number => (s === 'village' ? 3 : 5);
+  const thin = Object.values(MAPS).filter((m) => m.settlement !== undefined && m.npcs.length < floorFor(m.settlement));
   console.log(
     `  vibrancy (ADR-124): ${outdoor.length - silent.length}/${outdoor.length} outdoor maps carry a soundscape bed; ${silent.length} still silent · ${thin.length} thin-life settlement(s) —`,
   );
   for (const m of silent) console.log(`    ⚠ ${m.id}: no ambience bed (Pillar 3 — add one from ${AMBIENCE_IDS.join('/')})`);
-  for (const m of thin) console.log(`    ⚠ ${m.id}: settlement has ${m.npcs.length} resident(s) (Pillar 3 alive-floor wants ≥5)`);
+  for (const m of thin) console.log(`    ⚠ ${m.id}: ${m.settlement ?? 'settlement'} has ${m.npcs.length} resident(s) (Pillar 3 alive-floor wants ≥${floorFor(m.settlement ?? '')})`);
 }
 
 /* ================= 5. New Game values fit the letter grid ================= */

@@ -3140,6 +3140,9 @@ function buildCostaEstrella(): MapDef {
       // S15i Task 6 (ADR-059): FITO the caddy moved INTO the new clubhouse (the
       // round-start is indoors now); a starter greets you at the clifftop gate
       { id: 'links_starter', sprite: 'caddy', x: 4, y: 9, facing: 'left', dialogue: 'npc_links_starter', wander: true },
+      // S22 (ADR-124): a golfer + a caddy give the clifftop course some life
+      { id: 'links_golfer', sprite: 'oldTimer', x: 6, y: 9, facing: 'left', dialogue: 'npc_links_golfer', wander: true, emote: 'think' },
+      { id: 'links_caddy', sprite: 'quarterMan', x: 5, y: 10, facing: 'up', dialogue: 'npc_links_caddy', idle: true, emote: 'happy' },
     ],
     signs: [
       { x: 5, y: 8, dialogue: 'sign_costa' },
@@ -3236,6 +3239,7 @@ function buildGolfResort(costaStep: { tx: number; ty: number }): MapDef {
     npcs: [
       { id: 'estate_gardener', sprite: 'fernLady', x: 9, y: 8, facing: 'right', dialogue: 'npc_estate_gardener', wander: true },
       { id: 'estate_member', sprite: 'oldTimer', x: 17, y: 14, facing: 'left', dialogue: 'npc_estate_member' },
+      { id: 'estate_strolling', sprite: 'senora', x: 11, y: 8, facing: 'left', dialogue: 'npc_estate_strolling', wander: true, emote: 'happy' }, // S22 (ADR-124)
     ],
     signs: [
       { x: 12, y: 18, dialogue: 'sign_links_welcome' },
