@@ -334,14 +334,17 @@ export class Dialogue {
     const rowH = s(ROW_H); // ROW_H is native px (paginate.ts); pitch in runtime px
     const iconPad = opts.icons?.some((k) => k !== undefined) ? s(13) : 0;
     const w = Math.max(...options.map((o) => o.length)) * s(6) + s(36) + iconPad;
-    const x = W - w - s(10);
+    const x = this.menuX ?? W - w - s(10);
     // The menu's bottom edge — 4px above the H-66 dialogue box — is the fixed
-    // anchor; AUTO-FIT how many rows fit above it (a 4px top margin + the 16px
-    // frame padding reserved), and PAGINATE the rest. The frame is sized to
-    // perPage (== min(length, fitRows)) so a fitting list keeps the exact old
-    // compact height — h = length*rowH + 16 — and a uniform frame across pages.
+    // anchor; AUTO-FIT how many rows fit above it (a top margin + the 16px frame
+    // padding reserved), and PAGINATE the rest. The frame is sized to perPage
+    // (== min(length, fitRows)) so a fitting list keeps the exact old compact
+    // height — h = length*rowH + 16 — and a uniform frame across pages. menuTopY
+    // (battle's bottom band) bounds how tall the menu may grow so it never rises
+    // into the enemy zone — it paginates instead.
     const menuBottom = this.menuBottomY ?? scene.scale.height - s(66) - s(4);
-    const fitRows = Math.max(1, Math.floor((menuBottom - s(4) - s(16)) / rowH));
+    const menuTop = this.menuTopY ?? s(4);
+    const fitRows = Math.max(1, Math.floor((menuBottom - menuTop - s(16)) / rowH));
     const { perPage, pages } = paginate(options.length, 1, fitRows);
     const h = perPage * rowH + s(16);
     const y = menuBottom - h; // == scene.scale.height - 66 - h - 4 (the original)
