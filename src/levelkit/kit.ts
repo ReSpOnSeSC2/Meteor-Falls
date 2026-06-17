@@ -139,6 +139,9 @@ const SHIPPED_DIMS: Record<string, { w: number; u: number }> = {
   bldg_bagels: { w: 4, u: 1 }, bldg_starmart: { w: 5, u: 1 }, bldg_hospital: { w: 7, u: 2 },
   bldg_brickmore: { w: 5, u: 3 }, bldg_dept: { w: 8, u: 2 }, bldg_video: { w: 4, u: 1 },
   bldg_bank: { w: 6, u: 2 }, bldg_arcade2: { w: 5, u: 1 }, bldg_diner: { w: 4, u: 1 },
+  facade_hardware: { w: 5, u: 1 }, facade_diner: { w: 5, u: 1 },
+  facade_busdepot: { w: 5, u: 1 }, facade_busdepot_open: { w: 5, u: 1 },
+  facade_fillshop: { w: 5, u: 1 }, facade_realty: { w: 4, u: 1 }, facade_autolot: { w: 5, u: 1 },
   // PUERTO SOL colonial faces
   bldg_ps_mercado: { w: 5, u: 1 }, bldg_ps_clinic: { w: 5, u: 1 }, bldg_ps_pension: { w: 5, u: 2 },
   bldg_ps_museum: { w: 6, u: 2 }, bldg_ps_casa: { w: 4, u: 2 }, bldg_ps_casa_b: { w: 4, u: 1 },

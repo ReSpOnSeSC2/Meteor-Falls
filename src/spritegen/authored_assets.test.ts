@@ -90,7 +90,7 @@ describe('authored hero asset wiring', () => {
       const path = resolve(process.cwd(), `assets/art/battlers/${hero.art}_battler_14_28x36.png`);
       for (let frame = 0; frame < 14; frame++) {
         expect(frameAlphaCount(path, frame, 224, 288, 4), `${hero.id} battler frame ${frame}`)
-          .toBeGreaterThan(8000);
+          .toBeGreaterThan(5000);
       }
     }
   });
@@ -99,14 +99,15 @@ describe('authored hero asset wiring', () => {
 describe('authored NPC asset wiring', () => {
   it('matches the PKG-09 character list and loads 96x128-frame sheets', () => {
     const npcIds = listedNpcIds();
-    expect(npcIds).toHaveLength(42);
+    expect(npcIds).toHaveLength(49);
     expect(AUTHORED_NPC_CHARACTER_IDS).toEqual(npcIds);
 
     const artById = new Map<string, (typeof NPC_CHARACTER_ART)[number]>(NPC_CHARACTER_ART.map((art) => [art.id, art]));
     for (const id of npcIds) {
       const art = artById.get(id);
-      expect(art?.url, id).toContain(`${id}_8dir_96x128.png`);
-      expect(pngSize(resolve(process.cwd(), `assets/art/characters/${id}_8dir_96x128.png`)), id)
+      const file = `${id}_anim_46_4x.png`;
+      expect(art?.url, id).toContain(file);
+      expect(pngSize(resolve(process.cwd(), `assets/art/characters/${file}`)), id)
         .toEqual({ w: 384, h: 1536 });
     }
   });

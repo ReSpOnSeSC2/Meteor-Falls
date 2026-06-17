@@ -200,48 +200,55 @@ export function authoredBattleBackdropKey(area: string | undefined): string | nu
 
 
 export const NPC_CHARACTER_ART = [
-  { id: 'chad', key: 'authored_chad_8dir', url: new URL('../../assets/art/characters/chad_8dir_96x128.png', import.meta.url).href },
-  { id: 'mom', key: 'authored_mom_8dir', url: new URL('../../assets/art/characters/mom_8dir_96x128.png', import.meta.url).href },
-  { id: 'mrsPemmel', key: 'authored_mrsPemmel_8dir', url: new URL('../../assets/art/characters/mrsPemmel_8dir_96x128.png', import.meta.url).href },
-  { id: 'mrPlummer', key: 'authored_mrPlummer_8dir', url: new URL('../../assets/art/characters/mrPlummer_8dir_96x128.png', import.meta.url).href },
-  { id: 'ana', key: 'authored_ana_8dir', url: new URL('../../assets/art/characters/ana_8dir_96x128.png', import.meta.url).href },
-  { id: 'vivi', key: 'authored_vivi_8dir', url: new URL('../../assets/art/characters/vivi_8dir_96x128.png', import.meta.url).href },
-  { id: 'oldTimer', key: 'authored_oldTimer_8dir', url: new URL('../../assets/art/characters/oldTimer_8dir_96x128.png', import.meta.url).href },
-  { id: 'pajamaKid', key: 'authored_pajamaKid_8dir', url: new URL('../../assets/art/characters/pajamaKid_8dir_96x128.png', import.meta.url).href },
-  { id: 'smiler', key: 'authored_smiler_8dir', url: new URL('../../assets/art/characters/smiler_8dir_96x128.png', import.meta.url).href },
-  { id: 'smilerB', key: 'authored_smilerB_8dir', url: new URL('../../assets/art/characters/smilerB_8dir_96x128.png', import.meta.url).href },
-  { id: 'nurse', key: 'authored_nurse_8dir', url: new URL('../../assets/art/characters/nurse_8dir_96x128.png', import.meta.url).href },
-  { id: 'manager', key: 'authored_manager_8dir', url: new URL('../../assets/art/characters/manager_8dir_96x128.png', import.meta.url).href },
-  { id: 'quarterMan', key: 'authored_quarterMan_8dir', url: new URL('../../assets/art/characters/quarterMan_8dir_96x128.png', import.meta.url).href },
-  { id: 'pigeonKid', key: 'authored_pigeonKid_8dir', url: new URL('../../assets/art/characters/pigeonKid_8dir_96x128.png', import.meta.url).href },
-  { id: 'sidewalkCritic', key: 'authored_sidewalkCritic_8dir', url: new URL('../../assets/art/characters/sidewalkCritic_8dir_96x128.png', import.meta.url).href },
-  { id: 'grayCommuter', key: 'authored_grayCommuter_8dir', url: new URL('../../assets/art/characters/grayCommuter_8dir_96x128.png', import.meta.url).href },
-  { id: 'drugClerk', key: 'authored_drugClerk_8dir', url: new URL('../../assets/art/characters/drugClerk_8dir_96x128.png', import.meta.url).href },
-  { id: 'martClerk', key: 'authored_martClerk_8dir', url: new URL('../../assets/art/characters/martClerk_8dir_96x128.png', import.meta.url).href },
-  { id: 'arcadeOwner', key: 'authored_arcadeOwner_8dir', url: new URL('../../assets/art/characters/arcadeOwner_8dir_96x128.png', import.meta.url).href },
-  { id: 'permit', key: 'authored_permit_8dir', url: new URL('../../assets/art/characters/permit_8dir_96x128.png', import.meta.url).href },
-  { id: 'busDriver', key: 'authored_busDriver_8dir', url: new URL('../../assets/art/characters/busDriver_8dir_96x128.png', import.meta.url).href },
-  { id: 'fernLady', key: 'authored_fernLady_8dir', url: new URL('../../assets/art/characters/fernLady_8dir_96x128.png', import.meta.url).href },
-  { id: 'caddy', key: 'authored_caddy_8dir', url: new URL('../../assets/art/characters/caddy_8dir_96x128.png', import.meta.url).href },
-  { id: 'captain', key: 'authored_captain_8dir', url: new URL('../../assets/art/characters/captain_8dir_96x128.png', import.meta.url).href },
-  { id: 'dockworker', key: 'authored_dockworker_8dir', url: new URL('../../assets/art/characters/dockworker_8dir_96x128.png', import.meta.url).href },
-  { id: 'mercadoKeeper', key: 'authored_mercadoKeeper_8dir', url: new URL('../../assets/art/characters/mercadoKeeper_8dir_96x128.png', import.meta.url).href },
-  { id: 'deliKeeper', key: 'authored_deliKeeper_8dir', url: new URL('../../assets/art/characters/deliKeeper_8dir_96x128.png', import.meta.url).href },
-  { id: 'curator', key: 'authored_curator_8dir', url: new URL('../../assets/art/characters/curator_8dir_96x128.png', import.meta.url).href },
-  { id: 'tomas', key: 'authored_tomas_8dir', url: new URL('../../assets/art/characters/tomas_8dir_96x128.png', import.meta.url).href },
-  { id: 'docBrickton', key: 'authored_docBrickton_8dir', url: new URL('../../assets/art/characters/docBrickton_8dir_96x128.png', import.meta.url).href },
-  { id: 'docPuerto', key: 'authored_docPuerto_8dir', url: new URL('../../assets/art/characters/docPuerto_8dir_96x128.png', import.meta.url).href },
-  { id: 'docValle', key: 'authored_docValle_8dir', url: new URL('../../assets/art/characters/docValle_8dir_96x128.png', import.meta.url).href },
-  { id: 'priestOtter', key: 'authored_priestOtter_8dir', url: new URL('../../assets/art/characters/priestOtter_8dir_96x128.png', import.meta.url).href },
-  { id: 'priestValle', key: 'authored_priestValle_8dir', url: new URL('../../assets/art/characters/priestValle_8dir_96x128.png', import.meta.url).href },
-  { id: 'wisherA', key: 'authored_wisherA_8dir', url: new URL('../../assets/art/characters/wisherA_8dir_96x128.png', import.meta.url).href },
-  { id: 'wokeA', key: 'authored_wokeA_8dir', url: new URL('../../assets/art/characters/wokeA_8dir_96x128.png', import.meta.url).href },
-  { id: 'wisherB', key: 'authored_wisherB_8dir', url: new URL('../../assets/art/characters/wisherB_8dir_96x128.png', import.meta.url).href },
-  { id: 'wokeB', key: 'authored_wokeB_8dir', url: new URL('../../assets/art/characters/wokeB_8dir_96x128.png', import.meta.url).href },
-  { id: 'wisherC', key: 'authored_wisherC_8dir', url: new URL('../../assets/art/characters/wisherC_8dir_96x128.png', import.meta.url).href },
-  { id: 'wokeC', key: 'authored_wokeC_8dir', url: new URL('../../assets/art/characters/wokeC_8dir_96x128.png', import.meta.url).href },
-  { id: 'senora', key: 'authored_senora_8dir', url: new URL('../../assets/art/characters/senora_8dir_96x128.png', import.meta.url).href },
-  { id: 'uncleBert', key: 'authored_uncleBert_8dir', url: new URL('../../assets/art/characters/uncleBert_8dir_96x128.png', import.meta.url).href },
+  { id: 'chad', key: 'authored_chad_8dir', url: new URL('../../assets/art/characters/chad_anim_46_4x.png', import.meta.url).href },
+  { id: 'mom', key: 'authored_mom_8dir', url: new URL('../../assets/art/characters/mom_anim_46_4x.png', import.meta.url).href },
+  { id: 'mrsPemmel', key: 'authored_mrsPemmel_8dir', url: new URL('../../assets/art/characters/mrsPemmel_anim_46_4x.png', import.meta.url).href },
+  { id: 'mrPlummer', key: 'authored_mrPlummer_8dir', url: new URL('../../assets/art/characters/mrPlummer_anim_46_4x.png', import.meta.url).href },
+  { id: 'ana', key: 'authored_ana_8dir', url: new URL('../../assets/art/characters/ana_anim_46_4x.png', import.meta.url).href },
+  { id: 'vivi', key: 'authored_vivi_8dir', url: new URL('../../assets/art/characters/vivi_anim_46_4x.png', import.meta.url).href },
+  { id: 'oldTimer', key: 'authored_oldTimer_8dir', url: new URL('../../assets/art/characters/oldTimer_anim_46_4x.png', import.meta.url).href },
+  { id: 'pajamaKid', key: 'authored_pajamaKid_8dir', url: new URL('../../assets/art/characters/pajamaKid_anim_46_4x.png', import.meta.url).href },
+  { id: 'smiler', key: 'authored_smiler_8dir', url: new URL('../../assets/art/characters/smiler_anim_46_4x.png', import.meta.url).href },
+  { id: 'smilerB', key: 'authored_smilerB_8dir', url: new URL('../../assets/art/characters/smilerB_anim_46_4x.png', import.meta.url).href },
+  { id: 'nurse', key: 'authored_nurse_8dir', url: new URL('../../assets/art/characters/nurse_anim_46_4x.png', import.meta.url).href },
+  { id: 'manager', key: 'authored_manager_8dir', url: new URL('../../assets/art/characters/manager_anim_46_4x.png', import.meta.url).href },
+  { id: 'quarterMan', key: 'authored_quarterMan_8dir', url: new URL('../../assets/art/characters/quarterMan_anim_46_4x.png', import.meta.url).href },
+  { id: 'pigeonKid', key: 'authored_pigeonKid_8dir', url: new URL('../../assets/art/characters/pigeonKid_anim_46_4x.png', import.meta.url).href },
+  { id: 'sidewalkCritic', key: 'authored_sidewalkCritic_8dir', url: new URL('../../assets/art/characters/sidewalkCritic_anim_46_4x.png', import.meta.url).href },
+  { id: 'grayCommuter', key: 'authored_grayCommuter_8dir', url: new URL('../../assets/art/characters/grayCommuter_anim_46_4x.png', import.meta.url).href },
+  { id: 'drugClerk', key: 'authored_drugClerk_8dir', url: new URL('../../assets/art/characters/drugClerk_anim_46_4x.png', import.meta.url).href },
+  { id: 'martClerk', key: 'authored_martClerk_8dir', url: new URL('../../assets/art/characters/martClerk_anim_46_4x.png', import.meta.url).href },
+  { id: 'arcadeOwner', key: 'authored_arcadeOwner_8dir', url: new URL('../../assets/art/characters/arcadeOwner_anim_46_4x.png', import.meta.url).href },
+  { id: 'permit', key: 'authored_permit_8dir', url: new URL('../../assets/art/characters/permit_anim_46_4x.png', import.meta.url).href },
+  { id: 'busDriver', key: 'authored_busDriver_8dir', url: new URL('../../assets/art/characters/busDriver_anim_46_4x.png', import.meta.url).href },
+  { id: 'fernLady', key: 'authored_fernLady_8dir', url: new URL('../../assets/art/characters/fernLady_anim_46_4x.png', import.meta.url).href },
+  { id: 'caddy', key: 'authored_caddy_8dir', url: new URL('../../assets/art/characters/caddy_anim_46_4x.png', import.meta.url).href },
+  { id: 'captain', key: 'authored_captain_8dir', url: new URL('../../assets/art/characters/captain_anim_46_4x.png', import.meta.url).href },
+  { id: 'dockworker', key: 'authored_dockworker_8dir', url: new URL('../../assets/art/characters/dockworker_anim_46_4x.png', import.meta.url).href },
+  { id: 'mercadoKeeper', key: 'authored_mercadoKeeper_8dir', url: new URL('../../assets/art/characters/mercadoKeeper_anim_46_4x.png', import.meta.url).href },
+  { id: 'deliKeeper', key: 'authored_deliKeeper_8dir', url: new URL('../../assets/art/characters/deliKeeper_anim_46_4x.png', import.meta.url).href },
+  { id: 'curator', key: 'authored_curator_8dir', url: new URL('../../assets/art/characters/curator_anim_46_4x.png', import.meta.url).href },
+  { id: 'tomas', key: 'authored_tomas_8dir', url: new URL('../../assets/art/characters/tomas_anim_46_4x.png', import.meta.url).href },
+  { id: 'docBrickton', key: 'authored_docBrickton_8dir', url: new URL('../../assets/art/characters/docBrickton_anim_46_4x.png', import.meta.url).href },
+  { id: 'docPuerto', key: 'authored_docPuerto_8dir', url: new URL('../../assets/art/characters/docPuerto_anim_46_4x.png', import.meta.url).href },
+  { id: 'docValle', key: 'authored_docValle_8dir', url: new URL('../../assets/art/characters/docValle_anim_46_4x.png', import.meta.url).href },
+  { id: 'priestOtter', key: 'authored_priestOtter_8dir', url: new URL('../../assets/art/characters/priestOtter_anim_46_4x.png', import.meta.url).href },
+  { id: 'priestValle', key: 'authored_priestValle_8dir', url: new URL('../../assets/art/characters/priestValle_anim_46_4x.png', import.meta.url).href },
+  { id: 'wisherA', key: 'authored_wisherA_8dir', url: new URL('../../assets/art/characters/wisherA_anim_46_4x.png', import.meta.url).href },
+  { id: 'wokeA', key: 'authored_wokeA_8dir', url: new URL('../../assets/art/characters/wokeA_anim_46_4x.png', import.meta.url).href },
+  { id: 'wisherB', key: 'authored_wisherB_8dir', url: new URL('../../assets/art/characters/wisherB_anim_46_4x.png', import.meta.url).href },
+  { id: 'wokeB', key: 'authored_wokeB_8dir', url: new URL('../../assets/art/characters/wokeB_anim_46_4x.png', import.meta.url).href },
+  { id: 'wisherC', key: 'authored_wisherC_8dir', url: new URL('../../assets/art/characters/wisherC_anim_46_4x.png', import.meta.url).href },
+  { id: 'wokeC', key: 'authored_wokeC_8dir', url: new URL('../../assets/art/characters/wokeC_anim_46_4x.png', import.meta.url).href },
+  { id: 'senora', key: 'authored_senora_8dir', url: new URL('../../assets/art/characters/senora_anim_46_4x.png', import.meta.url).href },
+  { id: 'uncleBert', key: 'authored_uncleBert_8dir', url: new URL('../../assets/art/characters/uncleBert_anim_46_4x.png', import.meta.url).href },
+  { id: 'npc_hodgkin', key: 'authored_npc_hodgkin_8dir', url: new URL('../../assets/art/characters/npc_hodgkin_anim_46_4x.png', import.meta.url).href },
+  { id: 'npc_waitress', key: 'authored_npc_waitress_8dir', url: new URL('../../assets/art/characters/npc_waitress_anim_46_4x.png', import.meta.url).href },
+  { id: 'npc_borden', key: 'authored_npc_borden_8dir', url: new URL('../../assets/art/characters/npc_borden_anim_46_4x.png', import.meta.url).href },
+  { id: 'npc_clerk', key: 'authored_npc_clerk_8dir', url: new URL('../../assets/art/characters/npc_clerk_anim_46_4x.png', import.meta.url).href },
+  { id: 'npc_depot_clerk', key: 'authored_npc_depot_clerk_8dir', url: new URL('../../assets/art/characters/npc_depot_clerk_anim_46_4x.png', import.meta.url).href },
+  { id: 'npc_realtor', key: 'authored_npc_realtor_8dir', url: new URL('../../assets/art/characters/npc_realtor_anim_46_4x.png', import.meta.url).href },
+  { id: 'npc_bert', key: 'authored_npc_bert_8dir', url: new URL('../../assets/art/characters/npc_bert_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -250,6 +257,12 @@ const WORLD_TILE_ART = {
   key: 'authored_otterbrook_tiles16',
   url: new URL('../../assets/art/world/otterbrook_tiles_16.png', import.meta.url).href,
   names: TILESET.map((tile) => tile.name),
+};
+
+const HICKORY_DIRT_TILE_ART = {
+  key: 'authored_tile_hickory_dirt',
+  url: new URL('../../assets/art/world/tile_hickory_dirt.png', import.meta.url).href,
+  names: Array.from({ length: 32 }, (_, i) => `path_${Math.floor(i / 16)}_${i % 16}`),
 };
 
 const WORLD_PROP_KEYS = [
@@ -273,6 +286,12 @@ const WORLD_PROP_KEYS = [
   'puerto_gift_box', 'puerto_gift_box_open', 'puerto_market_stall_a',
   'puerto_market_stall_b', 'puerto_market_stall_c', 'puerto_payphone', 'puerto_picnic',
   'puerto_sign', 'puerto_trash_can',
+  'prop_pine_whisperwood', 'prop_pine_whisperwood_b', 'prop_pine_whisperwood_c',
+  'prop_trail_marker', 'prop_guardrail', 'prop_culvert',
+  'prop_pegboard_wall', 'prop_tool_shelf', 'prop_lockbox_counter',
+  'prop_counter_stools', 'prop_booth', 'prop_pie_case', 'prop_jukebox',
+  'prop_ticket_window', 'prop_waiting_bench', 'prop_schedule_board',
+  'prop_frontdesk', 'prop_waitingchairs', 'prop_wardbed', 'prop_vending',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -287,6 +306,8 @@ const BASE_FACADE_KEYS = [
   'bldg_arcade2', 'bldg_diner', 'bldg_apartments', 'bldg_office', 'bldg_civic',
   'bldg_theater', 'bldg_market', 'bldg_brownstone', 'bldg_warehouse', 'bldg_neon',
   'bldg_deptstore', 'bldg_tower_glass', 'bldg_tower_arms', 'bldg_tower_corp',
+  'facade_hardware', 'facade_diner', 'facade_busdepot', 'facade_busdepot_open',
+  'facade_fillshop', 'facade_realty', 'facade_autolot',
 ] as const;
 
 const REGION_FACADE_KEYS = [
@@ -381,6 +402,26 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   pedestal_2: { w: 22, h: 30 },
   pedestal_3: { w: 22, h: 30 },
   plant_pot: { w: 14, h: 22 },
+  prop_pine_whisperwood: { w: 32, h: 48 },
+  prop_pine_whisperwood_b: { w: 32, h: 48 },
+  prop_pine_whisperwood_c: { w: 32, h: 48 },
+  prop_trail_marker: { w: 24, h: 32 },
+  prop_guardrail: { w: 56, h: 22 },
+  prop_culvert: { w: 40, h: 32 },
+  prop_pegboard_wall: { w: 46, h: 30 },
+  prop_tool_shelf: { w: 36, h: 30 },
+  prop_lockbox_counter: { w: 46, h: 24 },
+  prop_counter_stools: { w: 50, h: 22 },
+  prop_booth: { w: 34, h: 30 },
+  prop_pie_case: { w: 30, h: 22 },
+  prop_jukebox: { w: 22, h: 34 },
+  prop_ticket_window: { w: 34, h: 32 },
+  prop_waiting_bench: { w: 34, h: 16 },
+  prop_schedule_board: { w: 32, h: 24 },
+  prop_frontdesk: { w: 42, h: 28 },
+  prop_waitingchairs: { w: 42, h: 22 },
+  prop_wardbed: { w: 36, h: 34 },
+  prop_vending: { w: 22, h: 34 },
 } as const satisfies Record<string, { w: number; h: number }>;
 
 /** Footprint width in TILES for the generated catalog + colossi, mirrored from
@@ -424,6 +465,7 @@ export function worldSpriteScale(sprite: string, texW: number, texH: number): nu
 }
 
 const ENEMY_BATTLE_ART = [
+  { key: 'battle_constable_borden', url: new URL('../../assets/art/enemies/battle_constable_borden.png', import.meta.url).href },
   { key: 'battle_cranky_mailbox', url: new URL('../../assets/art/enemies/battle_cranky_mailbox.png', import.meta.url).href },
   { key: 'battle_cranky_mailbox_w1', url: new URL('../../assets/art/enemies/battle_cranky_mailbox_w1.png', import.meta.url).href },
   { key: 'battle_cranky_mailbox_w2', url: new URL('../../assets/art/enemies/battle_cranky_mailbox_w2.png', import.meta.url).href },
@@ -792,6 +834,16 @@ function makeImageCanvas(src: SourceImage): HTMLCanvasElement {
   return canvas;
 }
 
+function drawAuthoredTileStrip(ctx: CanvasRenderingContext2D, tileArt: SourceImage, names: readonly string[]): void {
+  const authoredCell = Math.max(1, Math.round(tileArt.width / names.length));
+  names.forEach((name, authoredIndex) => {
+    const tileIndex = TILESET.findIndex((tile) => tile.name === name);
+    if (tileIndex < 0) return;
+    ctx.clearRect(tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
+    ctx.drawImage(tileArt, authoredIndex * authoredCell, 0, authoredCell, authoredCell, tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
+  });
+}
+
 export function preloadAuthoredArt(scene: Phaser.Scene): void {
   FRAMING_SCREEN_ART.forEach((art) => scene.load.image(art.key, art.url));
   HERO_ART.forEach((art) => {
@@ -808,6 +860,7 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   AUTHORED_GOLF_SUPPORT_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   AUTHORED_GOLF_SHEET_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
+  scene.load.image(HICKORY_DIRT_TILE_ART.key, HICKORY_DIRT_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
   ENEMY_BATTLE_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
@@ -886,8 +939,9 @@ export function applyAuthoredMinigameArt(scene: Phaser.Scene): void {
 
 export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   const tileArt = sourceImage(scene, WORLD_TILE_ART.key);
+  const hickoryTileArt = sourceImage(scene, HICKORY_DIRT_TILE_ART.key);
   const baseTiles = sourceImage(scene, 'tiles');
-  if (!tileArt || !baseTiles) return;
+  if (!baseTiles) return;
 
   const canvas = document.createElement('canvas');
   canvas.width = baseTiles.width;
@@ -900,13 +954,8 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   // Read each authored tile at its OWN cell size (16 for legacy ×1 sheets, 64 for
   // runtime ×4 sheets) and draw it into the runtime RT_TILE cell — so legacy tile
   // sheets upscale gracefully at ×4 until a runtime-res sheet replaces them.
-  const authoredCell = Math.max(1, Math.round(tileArt.width / WORLD_TILE_ART.names.length));
-  WORLD_TILE_ART.names.forEach((name, authoredIndex) => {
-    const tileIndex = TILESET.findIndex((tile) => tile.name === name);
-    if (tileIndex < 0) return;
-    ctx.clearRect(tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
-    ctx.drawImage(tileArt, authoredIndex * authoredCell, 0, authoredCell, authoredCell, tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
-  });
+  if (tileArt) drawAuthoredTileStrip(ctx, tileArt, WORLD_TILE_ART.names);
+  if (hickoryTileArt) drawAuthoredTileStrip(ctx, hickoryTileArt, HICKORY_DIRT_TILE_ART.names);
 
   replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);
 }
