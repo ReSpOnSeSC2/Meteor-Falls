@@ -1859,17 +1859,27 @@ parseAll('hoops-walkons', WalkOnDefSchema, WALK_ONS);
     // through it); the park carries you on to Brickton (the symmetric approach)
     if (!cage.doors.some((d) => d.to === 'cage_park')) fail('hoops', `the_cage gate must open back onto the CAGE PARK (ADR-059 re-route)`);
   }
-  // the cage gate now opens THROUGH the CAGE PARK, which leads into the_cage. The
-  // frozen 2077 core literal still reads → the_cage; the LIVE map's door is re-routed
-  // (a post-build fixup, proven in world_block.test). Both halves of the chain pinned:
-  if (!MAPS.brickton?.doors.some((d) => d.to === 'cage_park')) {
-    fail('hoops', `Brickton's cage gate must open onto cage_park (the approach park, ADR-059)`);
+  // S22 (ADR-121): the cage gate now opens onto the APPROACH CHAIN, which climbs the
+  // rec block to the park and into the_cage. The frozen 2077 core literal still reads
+  // → the_cage; the LIVE map's door is re-routed (a post-build fixup, world_block.test).
+  // The whole walk is pinned both directions: Brickton → BLOCK → LOT → PARK → CAGE.
+  if (!MAPS.brickton?.doors.some((d) => d.to === 'cage_block')) {
+    fail('hoops', `Brickton's cage gate must open onto cage_block (the approach head, ADR-121)`);
+  }
+  if (!MAPS.cage_block?.doors.some((d) => d.to === 'cage_lot')) {
+    fail('hoops', `cage_block must lead up to cage_lot (the approach chain, ADR-121)`);
+  }
+  if (!MAPS.cage_lot?.doors.some((d) => d.to === 'cage_park')) {
+    fail('hoops', `cage_lot must lead up to cage_park (the approach chain, ADR-121)`);
   }
   if (!MAPS.cage_park?.doors.some((d) => d.to === 'the_cage')) {
     fail('hoops', `cage_park must lead into the_cage (you WALK in through the park, ADR-059)`);
   }
-  if (!MAPS.cage_park?.doors.some((d) => d.to === 'brickton')) {
-    fail('hoops', `cage_park must carry you back to Brickton (ADR-059)`);
+  if (!MAPS.cage_block?.doors.some((d) => d.to === 'brickton')) {
+    fail('hoops', `cage_block must carry you back to Brickton (ADR-121)`);
+  }
+  if (!MAPS.cage_park?.doors.some((d) => d.to === 'cage_lot')) {
+    fail('hoops', `cage_park must thread back down to cage_lot (the approach return, ADR-121)`);
   }
   if (!MAPS.brickton?.props.some((p) => p.sprite === 'cage_gate')) {
     fail('hoops', `Brickton needs the cage_gate prop over the carved fence tile`);

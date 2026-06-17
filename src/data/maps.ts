@@ -2781,14 +2781,107 @@ function buildCagePark(): MapDef {
     doors: [
       // north through the chain-link gate INTO THE CAGE
       { x: 11, y: 0, w: 3, h: 1, to: 'the_cage', tx: 320, ty: 60, facing: 'up' },
-      // south back onto the Brickton sidewalk (the cage-gate area)
-      { x: 11, y: H - 1, w: 3, h: 1, to: 'brickton', tx: 808, ty: 402, facing: 'down' },
+      // S22 (ADR-121): south now threads back down the approach (Park → Lot → Block → city)
+      { x: 11, y: H - 1, w: 3, h: 1, to: 'cage_lot', tx: 160, ty: 32, facing: 'down' },
     ],
     spawners: [],
     triggers: [
       // the first-arrival beat — the park, the mural, a ball bouncing somewhere ahead
       { id: 'cage_park_reveal', rect: { x: 10, y: 16, w: 5, h: 3 }, once: true },
     ],
+  };
+}
+
+/* ----- THE CAGE APPROACH (S22, ADR-121) — the neighbourhood walk to the courts -----
+ * The user's decree: THE CAGE shouldn't open one door off Brickton — there are
+ * MULTIPLE map transitions before you even reach CAGE PARK. The walk now climbs the
+ * rec block: Brickton → THE BLOCK (rowhouses, a cross street) → THE LOT (a fenced,
+ * cracked-asphalt warm-up lot) → CAGE PARK → THE CAGE. North is "toward the courts"
+ * on every screen; the Brickton return threads back down the same way. Gray-boxed on
+ * shipped urban tiles/props; see docs/CH1_ART_PROMPTS.md for the authored pass.
+ */
+function buildCageBlock(): MapDef {
+  const g = new Grid(20, 16, '='); // sidewalk underfoot
+  // a cross street through the middle (walkable road; traffic reads it)
+  g.rect(0, 6, 20, 4, 'R');
+  g.rect(0, 7, 20, 1, 'D'); // the faded centerline
+  g.rect(9, 6, 2, 4, 'X'); // the crosswalk the route uses
+  // four brick building masses framing a central corridor (the route runs x9–10)
+  g.rect(0, 0, 6, 6, 'B');
+  g.rect(14, 0, 6, 6, 'B');
+  g.rect(0, 10, 6, 6, 'B');
+  g.rect(14, 10, 6, 6, 'B');
+  // grit (all walkable)
+  g.set(8, 3, '3'); g.set(11, 12, '3'); g.set(7, 13, '1'); g.set(12, 4, '1');
+
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  return {
+    id: 'cage_block',
+    name: 'THE BLOCK',
+    music: 'brickton',
+    grid: g.out(),
+    props: [
+      { sprite: 'trash_can', x: 5, y: 9, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'trash_can', x: 14, y: 5, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'phone_pole', x: 6, y: 11, solid: { ox: 5, oy: 26, w: 6, h: 6 } },
+      { sprite: 'phone_pole', x: 13, y: 3, solid: { ox: 5, oy: 26, w: 6, h: 6 } },
+      { sprite: 'bench', x: 6, y: 4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'sign', x: 12, y: 10, solid: SIGN_SOLID },
+    ],
+    npcs: [
+      { id: 'block_kid', sprite: 'pigeonKid', x: 12, y: 11, facing: 'left', dialogue: 'npc_block_kid', wander: true },
+      { id: 'block_oldhead', sprite: 'quarterMan', x: 7, y: 3, facing: 'down', dialogue: 'npc_block_oldhead', idle: true, emote: 'idle' },
+    ],
+    signs: [{ x: 12, y: 10, dialogue: 'sign_the_block' }],
+    phones: [],
+    doors: [
+      { x: 9, y: 15, w: 2, h: 1, to: 'brickton', tx: 808, ty: 402, facing: 'down' },
+      { x: 9, y: 0, w: 2, h: 1, to: 'cage_lot', tx: 160, ty: 208, facing: 'up' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildCageLot(): MapDef {
+  const g = new Grid(20, 16, 'q'); // cracked asphalt
+  g.sprinkle(2061, 'zz~,z', 0.12); // cracks + weeds (all walkable)
+  // chain-link rings the lot; gate gaps on the route at N (→ park) and S (→ block)
+  g.rect(0, 0, 20, 1, 'C');
+  g.rect(0, 15, 20, 1, 'C');
+  g.rect(0, 1, 1, 14, 'C');
+  g.rect(19, 1, 1, 14, 'C');
+  g.rect(9, 0, 2, 1, 'q'); // north gate gap
+  g.rect(9, 15, 2, 1, 'q'); // south gate gap
+  g.rect(9, 1, 2, 14, 'q'); // the worn route through the weeds
+
+  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
+  const OAK_S = { ox: 7, oy: 22, w: 12, h: 10 };
+  return {
+    id: 'cage_lot',
+    name: 'THE LOT',
+    music: 'cage',
+    grid: g.out(),
+    props: [
+      // the warm-up rim + a graffiti wall — the lot has a soul
+      { sprite: 'backboard', x: 4, y: 3.2, solid: { ox: 10, oy: 36, w: 7, h: 6 } },
+      { sprite: 'cage_mural', x: 14, y: 5, solid: { ox: 0, oy: 6, w: 46, h: 24 } },
+      { sprite: 'trash_can', x: 3, y: 12, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'bench', x: 5, y: 11, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: treeSprite(16, 12), x: 16, y: 12, solid: OAK_S },
+      { sprite: 'sign', x: 13, y: 12, solid: SIGN_SOLID },
+    ],
+    npcs: [
+      { id: 'lot_hooper', sprite: 'pigeonKid', x: 6, y: 8, facing: 'right', dialogue: 'npc_lot_hooper', wander: true },
+    ],
+    signs: [{ x: 13, y: 12, dialogue: 'sign_cage_lot' }],
+    phones: [],
+    doors: [
+      { x: 9, y: 15, w: 2, h: 1, to: 'cage_block', tx: 160, ty: 32, facing: 'down' },
+      { x: 9, y: 0, w: 2, h: 1, to: 'cage_park', tx: 192, ty: 272, facing: 'up' },
+    ],
+    spawners: [],
+    triggers: [],
   };
 }
 
@@ -2859,9 +2952,11 @@ const longWalk = buildLongWalk();
 {
   const cage = bricktonMap.doors.find((d) => d.to === 'the_cage');
   if (cage) {
-    cage.to = 'cage_park';
-    cage.tx = 192; // tile 12 — the park's central path, just inside the city entrance
-    cage.ty = 272; // tile 17 — south of the courts, on the cutscene's welcome rect
+    // S22 (ADR-121): the city door now opens onto THE BLOCK — the first of the
+    // approach screens (Block → Lot → Park → Cage), not straight into the park.
+    cage.to = 'cage_block';
+    cage.tx = 160; // tile 10 — the block's central corridor
+    cage.ty = 208; // tile 13 — up from the city, facing the rec block
   }
 }
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
@@ -3172,6 +3267,9 @@ export const MAPS: Record<string, MapDef> = {
   arcade2_int: buildArcade2Int(arcade2Doorstep),
   the_cage: buildTheCage(),
   cage_park: buildCagePark(), // S15i Task 6 (ADR-059) — the walk-through approach
+  // S22 (ADR-121) — the approach now climbs the rec block: Brickton → BLOCK → LOT → PARK → CAGE
+  cage_block: buildCageBlock(),
+  cage_lot: buildCageLot(),
   costa_estrella: buildCostaEstrella(),
   ...golfMaps, // S15i Task 6 (ADR-059) — the golf resort + clubhouse (computed doorsteps)
   bus_interior: buildBusInterior(),

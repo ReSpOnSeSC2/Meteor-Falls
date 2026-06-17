@@ -234,7 +234,12 @@ describe('BRICKTON — the 2077 core is frozen (≈4× sprawl, stays a city)', (
     // LIVE map's door target is rewritten through the new CAGE PARK (the foot-door pattern)
     expect(core.doors.some((d) => d.to === 'the_cage')).toBe(true);
     expect(grown.doors.some((d) => d.to === 'the_cage')).toBe(false);
-    expect(grown.doors.some((d) => d.to === 'cage_park')).toBe(true); // re-routed through the park
+    // S22 (ADR-121): the city door now opens onto the APPROACH chain, not straight
+    // into the park — Brickton → THE BLOCK → THE LOT → CAGE PARK → THE CAGE
+    expect(grown.doors.some((d) => d.to === 'cage_block')).toBe(true); // re-routed through the block
+    expect(grown.doors.some((d) => d.to === 'cage_park')).toBe(false); // no longer a direct hop
+    expect(MAPS.cage_block.doors.some((d) => d.to === 'cage_lot')).toBe(true); // block → lot
+    expect(MAPS.cage_lot.doors.some((d) => d.to === 'cage_park')).toBe(true); // lot → park
     expect(MAPS.cage_park.doors.some((d) => d.to === 'the_cage')).toBe(true); // the park leads in
     expect(grown.doors.some((d) => d.to === 'brickton_docks')).toBe(true); // relocated, still wired
     // ADR-056: the foot return now lands on the OVERPASS (the city-adjacent leg),

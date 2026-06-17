@@ -360,6 +360,46 @@ transparent background, palette-consistent with the rest of Otterbrook.
 > car) — the rags-to-riches teaser. A parked Comet sedan prop for Bert's lot can use
 > the existing vehicle forge (no authored PNG needed) or a bespoke master via §5.1.
 
+## §7 — The Cage approach (Brickton → Block → Lot → Park → Cage)
+
+Live now gray-boxed on shipped urban tiles/props. These two transitional screens
+make the rec-block walk read like a real neighborhood climb to the courts.
+
+### 7.1 — `tiles_recblock` · gritty Brickton rec-block tileset
+- **Runtime:** `world/` 16×16 → 64 px.
+- **Prompt:**
+```
+A small seamless TILESET for a gritty 1995 inner-city rec block, top-down: cracked
+sidewalk, patched asphalt road with a faded yellow centerline, a worn crosswalk, a
+storm-drain grate, and a chain-link fence run (with a gate-gap variant). Warm but
+weary — sun-bleached concrete, oil-stain greys, a little hopeful green pushing
+through the cracks. EarthBound urban warmth, tiles align edge-to-edge.
+```
+
+### 7.2 — `facade_rowhouse` · brownstone rowhouses (stoops)
+- **Runtime:** `world/facades/`.
+- **Prompt:**
+```
+A short run of 1995 BROWNSTONE ROWHOUSES seen front-elevation/top-down for an
+overworld block: stoops with railings, bay windows, a fire escape zig-zag, a hand
+of laundry lines, a "REC ROW" feel. Warm brick reds and weathered stone. They must
+tile side-by-side into a street wall. Transparent background, restrained palette.
+```
+
+### 7.3 — `prop_lot_dressing` · the warm-up lot
+- **Runtime:** `world/props/`.
+- **Prompt:**
+```
+A set of TOP-DOWN VACANT-LOT props for a basketball warm-up lot: (1) a lone bent
+warm-up RIM on a leaning pole + half a plywood backboard; (2) a graffiti'd handball
+WALL (bright, joyful tags); (3) a tipped SHOPPING CART; (4) a weed clump bursting
+through asphalt; (5) a zip-tied cardboard sign on chain-link. Gritty, lived-in,
+secretly warm. Each a separate transparent sprite.
+```
+
+> The approach NPCs (the block kid, the old head, the lot hooper) reuse the shipped
+> Brickton cast for now; authored versions can follow the §4 character pattern.
+
 ## Wiring checklist (per asset)
 
 - [ ] Master saved in `assets/art/masters/<category>/` (+ `-transparent` variant).

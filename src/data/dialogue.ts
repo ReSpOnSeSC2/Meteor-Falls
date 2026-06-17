@@ -1257,6 +1257,26 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'CAGE PARK — leash your dog, claim your bench, respect the game.',
     '(Smaller, at the bottom: "winners stay on. that goes for the park too.")',
   ],
+  // S22 (ADR-121) — THE APPROACH: the rec-block walk to the courts
+  sign_the_block: [
+    'THE BLOCK — REC ROW. THE CAGE: 2 up, through the lot, you\'ll hear it before you see it.',
+    '(Spray-painted under the arrow: "if you gotta ASK where the cage is, you ain\'t ready. (jk. it\'s up.)")',
+  ],
+  npc_block_kid: [
+    "@The Cage? Keep goin' up, past the lot with the busted fence. Don't run on MY street though, I'm workin' on a wheelie.",
+  ],
+  npc_block_oldhead: [
+    '@Forty years I watch kids walk up this block to the Cage. Same walk every time. Scared going up, ten feet tall coming down.',
+    '@You got the walk. Go on. Mind the lot — the rim out there\'s for warmin\' up, not for HEROES.',
+  ],
+  sign_cage_lot: [
+    'THE LOT — warm-up rim, half a backboard, all the weeds you can dream. THE CAGE → through the gate.',
+    '(A cardboard sign zip-tied to the fence: "GAME INSIDE. THIS IS NOT THE GAME. respectfully.")',
+  ],
+  npc_lot_hooper: [
+    "@You headed to the Cage? Hit a few out here first, loosen up. The rim's honest. Bricks bounce back at YOU out here.",
+    '@Through the gate when you\'re ready. Winners stay on. Losers... also stay, mostly, to argue.',
+  ],
   npc_park_old_head: [
     '@I have watched this park forty years. Best game I ever saw was a Tuesday. Nobody believes me.',
     '@Kid hit eleven straight from the corner, then walked home for dinner like it was nothing. THAT is the cage.',
