@@ -759,7 +759,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@No time. Listen. I'm Glint. I rode in on that rock — escaped from what ELSE rode in on that rock.",
     '@It is called THE HUSH. It eats the warmth between living things. The calls to your mom. The dog meeting you at the door. THE MUSIC.',
     '@The meteor broke into ten EMBERS and scattered along its path, all the way around your world.',
-    '@Four kids carrying the old light can silence it. You are one. You will find the others. One of them—',
+    '@A handful of kids carrying the old light can silence it — the song keeps adding verses, so don\'t hold me to a number. You are the first. You will find the others. One of them—',
     '@Here. The STAR LOCKET. When you stand where an Ember sings, it will record a HEARTLIGHT. Ten Heartlights make the HOMESONG.',
     "@The Homesong is the one frequency the Hush can't eat. Don't ask me how I know. It's literally the only thing my species does.",
     '* {rex} got the Star Locket!',
@@ -780,7 +780,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Somewhere inside the locket, one instrument starts to play.)',
   ],
   glint_after: [
-    '@HA! Eight legs against four kids-worth of light and it STILL lost. Wait. There\'s one of you. You counted as four. Don\'t tell the others.',
+    '@HA! Eight legs, and it STILL lost to one kid with a bat. You fought like four of you out there. ...Don\'t tell the others I said so.',
     '@Come on. Walk home. I\'ll finish the prophecy on the way. It has a REALLY good ending.',
   ],
   /* ---- AWAKENINGS (S12b, ADR-035) — the old light arrives as moments,
@@ -1591,6 +1591,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   manager_win: [
     '(The Manager is still smiling. He backs into his office without using his feet, somehow.)',
+    '(For half a second the smile slips — and under it nothing is smiling at all, just something cold that has been listening the whole time. Then the smile snaps back on, a size too wide.)',
     "@This is fine. This is FINE. I'm promoting myself somewhere QUIETER.",
     '* Click. The nameplate now reads: IN A MEETING. It hopes to stay in it forever.',
     '* Somewhere below, the elevator dinged and went DOWN. Nobody has ever seen it go down.',
