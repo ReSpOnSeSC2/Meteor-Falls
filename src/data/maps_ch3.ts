@@ -118,6 +118,7 @@ function buildFoggybottom(): MapDef {
   return {
     id: 'foggybottom',
     name: 'FOGGYBOTTOM-ON-TYNE',
+    ambience: 'river', // S22 (ADR-124)
     music: null,
     settlement: 'town',
     grid: g.out(),
@@ -185,6 +186,7 @@ function buildFoggyMoor(): MapDef {
   return {
     id: 'foggy_moor',
     name: 'THE FOG ROAD',
+    ambience: 'wind', // S22 (ADR-124)
     music: null,
     grid: g.out(),
     props: [
@@ -196,6 +198,9 @@ function buildFoggyMoor(): MapDef {
     ],
     npcs: [
       { id: 'moor_rambler', sprite: 'tomas', x: 18, y: 8, facing: 'down', dialogue: 'npc_moor_rambler', wander: true },
+      // S22 (ADR-124): the threshold moor was lonely — a shepherd + a fog-walker
+      { id: 'moor_shepherd', sprite: 'fernLady', x: 12, y: 8, facing: 'right', dialogue: 'npc_moor_shepherd', idle: true, emote: 'happy' },
+      { id: 'moor_walker', sprite: 'grayCommuter', x: 8, y: 5, facing: 'down', dialogue: 'npc_moor_walker', wander: true, emote: 'think' },
     ],
     signs: [{ x: 10, y: 8, dialogue: 'sign_moor' }],
     phones: [],
@@ -247,6 +252,7 @@ function buildWintermoorGrounds(): MapDef {
   return {
     id: 'wintermoor_grounds',
     name: 'WINTERMOOR ACADEMY',
+    ambience: 'crowd', // S22 (ADR-124)
     music: null,
     grid: g.out(),
     props: [
@@ -308,6 +314,7 @@ function buildOldStones(): MapDef {
   return {
     id: 'the_old_stones',
     name: 'THE OLD STONES',
+    ambience: 'wind', // S22 (ADR-124)
     music: null,
     grid: g.out(),
     props: [
@@ -360,6 +367,7 @@ function buildWintermoorF1(): MapDef {
   return {
     id: 'wintermoor_f1',
     name: 'WINTERMOOR — GREAT HALL',
+    ambience: 'crowd', // S22 (ADR-124)
     music: null,
     interior: true,
     grid: g.out(),
@@ -412,6 +420,7 @@ function buildWintermoorF2(): MapDef {
   return {
     id: 'wintermoor_f2',
     name: 'WINTERMOOR — FLOOR 2',
+    ambience: 'machine', // S22 (ADR-124)
     music: null,
     interior: true,
     grid: g.out(),
@@ -453,6 +462,7 @@ function buildWintermoorF3(): MapDef {
   return {
     id: 'wintermoor_f3',
     name: 'WINTERMOOR — THE EXAM HALL',
+    ambience: 'crowd', // S22 (ADR-124)
     music: null,
     interior: true,
     grid: g.out(),
@@ -498,6 +508,7 @@ function buildWintermoorDorm(): MapDef {
   return {
     id: 'wintermoor_dorm',
     name: 'WINTERMOOR — DORM WING',
+    ambience: 'machine', // S22 (ADR-124)
     music: null,
     interior: true,
     grid: g.out(),
@@ -540,6 +551,8 @@ function buildWintermoorBoiler(): MapDef {
   return {
     id: 'wintermoor_boiler',
     name: 'WINTERMOOR — BOILER ROOM',
+    ambience: 'machine', // S22 (ADR-124): the Hushed mainframe's hum
+    muffle: 2,
     music: null,
     interior: true,
     grid: g.out(),

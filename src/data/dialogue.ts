@@ -627,6 +627,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_hill_hiker: [
     '@Crater\'s still warm, they say. I\'m not going UP there. I\'m a "look at it from a safe distance" enthusiast.',
   ],
+  // Ch.2 dead-map life (ADR-124)
+  npc_jungle_guide: [
+    '@The jungle watches, niño. It is not unfriendly. It is just... extremely nosy.',
+    '@Valle Dorado is up the path. Step where I step. Or don\'t — the path forgives. The PLANTS do not.',
+  ],
+  npc_jungle_explorer: [
+    '@Twelve years I map this jungle. Today I found a NEW frog. I named it after my ex. It is venomous and never shuts up.',
+  ],
+  npc_pyramid_elder: [
+    '@You climb to the idol? Then you have heard it "grants wishes." Hm. So does a wishing well, and that just drowns coins.',
+    '@Go up if you must. But COUNT your wishes on the way down. The grin keeps the change.',
+  ],
+  // Ch.3 dead-map life (ADR-124)
+  npc_moor_shepherd: [
+    '@The sheep know the moor better than any map. Follow the woolly ones. Not the FOGGY ones — those are rocks. Mostly.',
+  ],
+  npc_moor_walker: [
+    '@Fog\'s thicker than usual, aye? Machine-made, my cousin reckons. My cousin also reckons the Queen is three badgers. Grain of salt.',
+  ],
   meadow_gift_far: [
     'Taped to a fence post: an emergency salt shaker and a note.',
     'The note reads, in shaky capitals, "FOR THE TICK." ...Somebody up here KNEW.',

@@ -355,6 +355,7 @@ export function buildPuertoSol(): MapDef {
     id: 'puerto_sol',
     name: 'PUERTO SOL',
     music: 'puerto',
+    ambience: 'waves', // S22 (ADR-124): the working seafront
     settlement: 'city',
     grid: g.out(),
     props: [
@@ -886,12 +887,13 @@ export function buildJungle1(psReturn: { tx: number; ty: number } = PUERTO_SOL_J
     id: 'jungle_1',
     name: 'JUNGLE PATH',
     music: 'jungle',
+    ambience: 'birds', // S22 (ADR-124)
     grid: g.out(),
     props: [
       ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
       { sprite: 'sign', x: 2, y: 14, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     ],
-    npcs: [],
+    npcs: [{ id: 'jungle_guide', sprite: 'quarterMan', x: 5, y: 15, facing: 'right', dialogue: 'npc_jungle_guide', idle: true, emote: 'surprise' }], // S22 (ADR-124)
     signs: [{ x: 2, y: 15, dialogue: 'sign_jungle1' }],
     phones: [],
     doors: [
@@ -927,6 +929,7 @@ export function buildJungle2(): MapDef {
     id: 'jungle_2',
     name: 'DEEP JUNGLE',
     music: 'jungle',
+    ambience: 'birds', // S22 (ADR-124)
     grid: g.out(),
     props: [
       ...([
@@ -944,7 +947,7 @@ export function buildJungle2(): MapDef {
       // wedged in the bark by the table's open pocket (BFS-reachable, near the rest)
       ...giftBox('gift_emerald', 35, 22).props,
     ],
-    npcs: [],
+    npcs: [{ id: 'jungle_explorer', sprite: 'oldTimer', x: 18, y: 10, facing: 'down', dialogue: 'npc_jungle_explorer', wander: true, emote: 'happy' }], // S22 (ADR-124)
     signs: [
       { x: 19, y: 25, dialogue: 'sign_jungle2' },
       // the grotto mouth — easy to walk past, the §A11 sign doesn't help
@@ -983,6 +986,7 @@ export function buildGrotto(): MapDef {
     id: 'grotto',
     name: 'JUNGLE GROTTO',
     music: 'pyramid',
+    ambience: 'cave', // S22 (ADR-124): the drip in the dark
     interior: true,
     grid: g.out(),
     props: [
@@ -1100,6 +1104,7 @@ export function buildValleDorado(): MapDef {
     id: 'valle_dorado',
     name: 'VALLE DORADO',
     music: 'valle',
+    ambience: 'crowd', // S22 (ADR-124): the village murmur
     settlement: 'village',
     grid: g.out(),
     props: [
@@ -1261,6 +1266,7 @@ export function buildPyramidAnte(): MapDef {
     id: 'pyramid_ante',
     name: 'PYRAMID APPROACH',
     music: 'pyramid',
+    ambience: 'wind', // S22 (ADR-124): the desert wind off the steps
     grid: g.out(),
     props: [
       // the gate face fills the north — its mouth is the way in
@@ -1273,7 +1279,7 @@ export function buildPyramidAnte(): MapDef {
       // (sell-fodder valuable, the joke at the Gilded Ruins' door); open '.' east
       ...giftBox('gift_fools_idol', 16, 4).props,
     ],
-    npcs: [],
+    npcs: [{ id: 'pyramid_elder', sprite: 'senora', x: 13, y: 12, facing: 'left', dialogue: 'npc_pyramid_elder', idle: true, emote: 'think' }], // S22 (ADR-124)
     signs: [
       { x: 14, y: 11, dialogue: 'sign_pyramid' },
       ...giftBox('gift_fools_idol', 16, 4).signs,
@@ -1351,6 +1357,7 @@ export function buildPyramidApex(): MapDef {
     id: 'pyramid_apex',
     name: 'PYRAMID APEX',
     music: 'pyramid',
+    ambience: 'wind', // S22 (ADR-124): the high, thin air
     interior: true,
     grid: g.out(),
     props: [
