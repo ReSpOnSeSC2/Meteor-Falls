@@ -148,10 +148,15 @@ export const HEROES: Record<HeroId, HeroDef> = {
     growth: { offense: 2.2, defense: 1.9, speed: 2.0, guts: 1.1, vibe: 2.0, luck: 0.7 },
     hp: { base: 34, lin: 7.0, quad: 0.09 },
     pp: { base: 12, lin: 2.8, quad: 0.035 },
-    // "The Monk's Full Path" — Dorin joins late (Ch.9) nearly complete, so his
-    // unlocks cluster high (L1 on join through ~L51). Vibe Comet Ω is NOT here:
-    // it AWAKENS at the Trial of the Mute Mountain (one-path rule, ADR-035) —
-    // see src/data/awakenings.ts + the content-validate canon manifest.
+    // "The Long Way Home" (ADR-125) — Dorin joins MID-journey (Ch.5 end, Minimus)
+    // and travels with the party through Ch.10; his AWAKENING lands at the Trial of
+    // the Mute Mountain (Ch.9 homecoming), where Vibe Comet Ω awakens (one-path rule,
+    // ADR-035) — see src/data/awakenings.ts + the content-validate canon manifest.
+    // BUILD-DEFERRED (with Ch.4–10): the L1-clustered unlocks below are the OLD
+    // Ch.9-join shape. When the late chapters land, spread the Comet/Healing rungs
+    // across Ch.5–9 (earn ~L26+), re-derive their power for those levels via
+    // formulas.ts, add a bead rung below cedar_beads, and add `dorin` to BOSS_PARTY
+    // from Ch.6. See GAME_BIBLE §A3 (ADR-125) + BALANCE_CH4-10_SPEC §1d.
     unlocks: [
       { level: 1, ability: 'vibe_comet_a' },
       { level: 1, ability: 'vibe_comet_b' }, // joins ready — the master, not the student

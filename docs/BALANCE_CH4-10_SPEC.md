@@ -135,6 +135,17 @@ spec §1c.)*
 
 ### 1d. Dorin — Comet α/β/γ/Ω + Healing β
 
+> ⚠ **SUPERSEDED BY ADR-125 ("Dorin: The Long Way Home") — re-derive when built.**
+> Dorin now joins **Ch.5 end** (Minimus) and is in `BOSS_PARTY` **from Ch.6**, not Ch.10.
+> The powers in this section were computed for the OLD **Ch.9/L46** join, so they are NOW
+> a CEILING, not the live values: when the Ch.4–10 chapters are built, his Comet/Healing
+> rungs spread across Ch.5–9 (earn ~L26 at Ch.5) and their `power` is re-derived for those
+> earlier earn-levels through the unchanged formulas, and a prayer-bead rung is added below
+> `cedar_beads`. **Net balance effect:** adding Dorin to `BOSS_PARTY[6..9]` raises the
+> mid/late party DPR and directly **resolves the §2 Ch.9 conservative TTK-16 flag** (that
+> fight read slow precisely because the model excluded Dorin). Re-run `npm run balance`
+> after the rebuild. The table below is retained as the Ch.9/10 (fully-grown) end-state.
+
 Dorin joins **Ch9** (party from Ch10). His ladder must climb **by TIER** (`ladder()`
 sorts α→β→γ→Ω and the test wants power increasing), even though `vibe_comet_o` (Ω,
 awaken L46) is earned *before* `vibe_comet_g` (γ, L48). So Comet γ is banded BELOW Ω in
