@@ -1294,7 +1294,11 @@ export class OverworldScene extends Phaser.Scene {
           }
         }
       } else if (!n.def.dog) {
-        n.spr.anims.stop();
+        // ADR-123: a wandering NPC that STOPS must show its clean STAND frame, not
+        // freeze on whatever mid-step walk frame the anim halted on (the "frozen in
+        // the wrong motion" bug). Reset to the resting facing's stand frame.
+        if (n.spr.anims.isPlaying) n.spr.anims.stop();
+        n.spr.setFrame(standFrame(n.def.facing));
       }
     }
   }
