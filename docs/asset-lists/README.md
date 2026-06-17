@@ -5,7 +5,8 @@ Each line is one engine id; use these as production checklists.
 
 | File | Count | What |
 |---|---:|---|
-| `characters_8dir.txt` | 47 | overworld 8-direction sprites (5 heroes + 42 NPCs) |
+| `characters_8dir.txt` | 48 | overworld 8-direction sprites (5 heroes + 42 NPCs + Glint special) |
+| `otterbrook_npcs_46.txt` | 18 | live Otterbrook 46-frame NPC/special targets, including Chad and Glint |
 | `enemy_families.txt` | 35 | enemy families (× 3 wear variants each) |
 | `ability_icons.txt` | 92 | ability / skill icons |
 | `item_icons.txt` | 469 | inventory items |

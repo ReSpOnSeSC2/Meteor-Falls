@@ -68,13 +68,14 @@ npm run resheet -- --in <strip.png> --type <character|bust|battler|athlete|golfe
 
 ## 1. Overworld ambient sprites (the town "breathes")
 
-These are generator-only today (no authored loader yet) — authoring them also
-needs a loader added in `spritegen/authored.ts`.
+These are generator-only today unless noted. Glint is now authored through the
+character loader in `spritegen/authored.ts`; the procedural strip remains a
+fallback.
 
 | Sprite | Key | Frames · cols | Cell | What moves |
 |---|---|---|---|---|
 | Biscuit the dog | `dog` | 4 · 4 | ~20×16 | trot East (0,1) + trot West (2,3) |
-| Glint (firefly spirit) | `glint` | 2 · 2 | ~12×12 | flit/twinkle |
+| Glint (firefly spirit) | `glint` | 46 · 4 | 96×128 | authored special sheet; `glint-flit` uses the first two cells |
 | Mourning angel | `angel`, `angel_<hero>` ×5 | 2 · 2 | ~24×28 | wing flap / float |
 | Picnic songbird | `songbird` | 2 · 2 | ~12×10 | hop / wing flick |
 | Pack llama (Ch2) | `llama` | 4 · 4 | ~24×28 | walk cycle |
@@ -90,7 +91,7 @@ needs a loader added in `spritegen/authored.ts`.
 4) trot-West pose B — facing left, legs extended (mirror of frame 2).
 ```
 
-**Glint (`glint`) — 2 frames, ~12×12:** a tiny luminous fairy/firefly spirit.
+**Glint (`glint`) — 46 frames, 96×128 runtime cells:** a tiny luminous fairy/firefly spirit with a readable face.
 ```
 [preamble] A tiny glowing spark-spirit ("Glint"). Strip of 2 frames: 1) compact,
 softer glow; 2) spread/twinkling, brighter glow with a few sparkle pixels. Loops

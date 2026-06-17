@@ -131,7 +131,6 @@ import {
   drawChalkBoard,
 } from './tiles';
 import { GENERATED_BUILDINGS } from './buildings';
-import { VEHICLE_CATALOG, drawVehicleViews } from './vehicles';
 import { ITEM_ICON, itemIconKey } from './icons';
 import { ABILITY_ICON, BATTLE_FX_ICON, STATUS_ICON, abilityIconKey, battleFxIconKey, statusIconKey } from './combatIcons';
 import {
@@ -736,21 +735,6 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // families + the COLOSSI, sliced per-area by AREA_SKINS so each level reads
   // fresh. The forge (Movement Two) draws each area's growth from its own slice.
   for (const b of GENERATED_BUILDINGS) addPixmap(scene, b.name, drawCityBuilding(b.opts));
-
-  // THE VEHICLE FORGE (S18 M26, ADR-067; oblique 3D in ADR-097): the living
-  // world's cars/bikes/buses/trucks/machinery + the deferred fleet, each a
-  // deterministic paint variant. The SIDE view registers under the base name
-  // (so every static use — dealership, parked, the forge — stays correct);
-  // four-wheelers also register `<name>_front` / `<name>_back` (same padded
-  // size) so the traffic system TURNS by swapping texture, never rotating a 3/4.
-  for (const v of VEHICLE_CATALOG) {
-    const views = drawVehicleViews(v.name);
-    addPixmap(scene, v.name, views[0]);
-    if (views.length > 1) {
-      addPixmap(scene, `${v.name}_front`, views[1]);
-      addPixmap(scene, `${v.name}_back`, views[2]);
-    }
-  }
 
   // buildings — deep oblique roofs, gablets, AC, awnings (ADR-019/020)
   addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true, ac: true, litSeed: 5 }));

@@ -57,7 +57,7 @@ import { ITEMS } from '../data/items';
 import { makeRng, type Rng } from '../hoops/sim';
 import { Dialogue, everyFrame, makeWindow, vars, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
-import { s } from '../spritegen/scale';
+import { s, ART_SCALE } from '../spritegen/scale';
 
 export interface LinksLaunch {
   kind: 'stroke' | 'match';
@@ -211,8 +211,15 @@ export class LinksScene extends Phaser.Scene {
     const hole = this.holes[i];
     this.sim = new GolfSim(hole, this.roundRng, this.wind);
     this.course.setTexture(`links_${hole.id}`);
-    // bounds auto-read the seam-upscaled (×ART_SCALE) hole texture
-    this.cameras.main.setBounds(0, 0, this.course.width, this.course.height);
+    // The hole art is authored at NATIVE resolution (≈244×196), but the whole
+    // playfield — ball/golfer/flag positions out of the sim — lives in
+    // ×ART_SCALE runtime space. So scale the course up to match (smoothly: it's a
+    // painterly ¾ illustration, not pixel art) and bound the camera to the SCALED
+    // size. Without this the course rendered at native size in the top-left
+    // corner while the ball/flag flew out across the bare backdrop.
+    this.course.setScale(ART_SCALE);
+    this.course.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+    this.cameras.main.setBounds(0, 0, this.course.displayWidth, this.course.displayHeight);
     // pin is native px; the flag rides the runtime world, so scale it + offset
     this.flag.setPosition(s(hole.pin.x) + s(2), s(hole.pin.y) + s(1));
     this.showHoleCard(hole);

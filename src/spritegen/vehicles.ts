@@ -249,6 +249,7 @@ export const CAR_BODIES: Record<string, CarBody> = {
   large_suv:    { len: 46, width: 19, bodyH: 8, cabH: 6, cab0: 10, cab1: 38, depth: 6, axles: 2 },
   van:          { len: 42, width: 18, bodyH: 14, cabH: 0, cab0: 0, cab1: 0, depth: 6, axles: 2, box: true, win: 5 },
   bus:          { len: 60, width: 19, bodyH: 17, cabH: 0, cab0: 0, cab1: 0, depth: 6, axles: 3, box: true, win: 9 },
+  school_bus:   { len: 60, width: 19, bodyH: 17, cabH: 0, cab0: 0, cab1: 0, depth: 6, axles: 3, box: true, win: 9 },
   truck:        { len: 46, width: 18, bodyH: 8, cabH: 6, cab0: 0, cab1: 0, depth: 6, axles: 3, flat: true },
   dump_truck:   { len: 46, width: 18, bodyH: 10, cabH: 6, cab0: 0, cab1: 0, depth: 6, axles: 3, flat: true },
 };
@@ -713,6 +714,7 @@ export const VEHICLE_SPECS: Record<string, VehicleSpec> = {
   large_suv:    carSpec('suv', 6, 'large_suv'),
   van:          carSpec('van', 7, 'van'),
   bus:          carSpec('bus', 12, 'bus'),
+  school_bus:   carSpec('bus', 24, 'school_bus'),
   truck:        carSpec('truck', 3, 'truck'),
   dump_truck:   carSpec('truck', 3, 'dump_truck'),
   excavator:   { cls: 'machine', terrain: 'road', seats: 1,  w: 34, h: 22, solid: box(26, 8, 8),  draw: (r, g) => drawExcavator(r, g) },
@@ -778,6 +780,7 @@ const PAINTS: Record<string, readonly number[]> = {
   large_suv:   [RAMP.NIGHT, RAMP.EARTH, RAMP.PAPER],
   van:         [RAMP.PAPER, RAMP.ORANGE, RAMP.BLUE],
   bus:         [RAMP.GOLD, RAMP.RED, RAMP.GRASS],
+  school_bus:  [RAMP.GOLD],
   truck:       [RAMP.BLUE, RAMP.RED, RAMP.EARTH],
   dump_truck:  [RAMP.GOLD, RAMP.ORANGE],
   excavator:   [RAMP.GOLD, RAMP.ORANGE],

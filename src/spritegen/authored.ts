@@ -10,6 +10,12 @@ import { ART_SCALE } from './scale';
 // authored art is supplied at the runtime resolution while ×1 stays identical.
 const FRAME_W = 24 * ART_SCALE;
 const FRAME_H = 32 * ART_SCALE;
+const ENEMY_OW_FRAME_W = 24 * ART_SCALE;
+const ENEMY_OW_FRAME_H = 32 * ART_SCALE;
+const ENEMY_OW_FRAMES = 8;
+const DOG_FRAME_W = 16 * ART_SCALE;
+const DOG_FRAME_H = 16 * ART_SCALE;
+const DOG_FRAMES = 4;
 const BUST_W = 32 * ART_SCALE;
 const BUST_H = 32 * ART_SCALE;
 // Battler cells are authored at 2× the legacy native (was 28×36) so the
@@ -119,8 +125,12 @@ const AUTHORED_MINIGAME_GOLFERS = [
 ] as const;
 
 const AUTHORED_HOOPS_SUPPORT_ART = [
-  { key: 'cage_court', file: 'court_full' },
-  { key: 'cage_court_behind', file: 'court_behind' },
+  // NOTE: court_full.png / court_behind.png are NOT wired here. They are
+  // "down-the-court" perspective illustrations with their own painted hoops,
+  // which collide with the engine's flat ¾ court (sprite hoops at COURT.RIM
+  // positions) — wiring them produced a second, misaligned basket. The court
+  // floor stays procedural (drawCageCourt). Re-author the court art to the
+  // engine's side-view layout (hoops at the rim positions, or none) to use it.
   { key: 'hoop_ball', file: 'ball' },
   { key: 'athlete_shadow', file: 'shadow' },
   { key: 'backboard', file: 'backboard' },
@@ -201,6 +211,7 @@ export function authoredBattleBackdropKey(area: string | undefined): string | nu
 
 export const NPC_CHARACTER_ART = [
   { id: 'chad', key: 'authored_chad_8dir', url: new URL('../../assets/art/characters/chad_anim_46_4x.png', import.meta.url).href },
+  { id: 'glint', key: 'authored_glint_8dir', url: new URL('../../assets/art/characters/glint_anim_46_4x.png', import.meta.url).href },
   { id: 'mom', key: 'authored_mom_8dir', url: new URL('../../assets/art/characters/mom_anim_46_4x.png', import.meta.url).href },
   { id: 'mrsPemmel', key: 'authored_mrsPemmel_8dir', url: new URL('../../assets/art/characters/mrsPemmel_anim_46_4x.png', import.meta.url).href },
   { id: 'mrPlummer', key: 'authored_mrPlummer_8dir', url: new URL('../../assets/art/characters/mrPlummer_anim_46_4x.png', import.meta.url).href },
@@ -253,6 +264,32 @@ export const NPC_CHARACTER_ART = [
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
 
+export const OTTERBROOK_NPC_CHARACTER_IDS = [
+  'chad',
+  'glint',
+  'mom',
+  'mrsPemmel',
+  'mrPlummer',
+  'ana',
+  'vivi',
+  'oldTimer',
+  'pajamaKid',
+  'fernLady',
+  'quarterMan',
+  'senora',
+  'grayCommuter',
+  'pigeonKid',
+  'drugClerk',
+  'deliKeeper',
+  'priestOtter',
+  'busDriver',
+] as const;
+
+const BISCUIT_DOG_ART = {
+  key: 'authored_biscuit_dog',
+  url: new URL('../../assets/art/characters/biscuit_dog_4frame.png', import.meta.url).href,
+} as const;
+
 const WORLD_TILE_ART = {
   key: 'authored_otterbrook_tiles16',
   url: new URL('../../assets/art/world/otterbrook_tiles_16.png', import.meta.url).href,
@@ -295,7 +332,7 @@ const WORLD_PROP_KEYS = [
 ] as const;
 
 const BASE_FACADE_KEYS = [
-  'house_rex', 'house_chad', 'house_a', 'house_b', 'drugstore', 'arcade', 'chapel',
+  'house_rex', 'house_chad', 'house_a', 'house_b', 'house_pink', 'drugstore', 'arcade', 'chapel',
   'valle_house_b', 'bldg_ps_mercado', 'bldg_ps_clinic', 'bldg_ps_pension',
   'bldg_ps_museum', 'bldg_ps_casa', 'bldg_ps_casa_b', 'bldg_ps_deli',
   'bldg_ps_cantina', 'bldg_ps_casa_c', 'bldg_ps_pension_b', 'bldg_ps_catedral',
@@ -332,6 +369,56 @@ const WORLD_FACADE_KEYS = Array.from(new Set([
 export const AUTHORED_WORLD_PROP_KEYS = WORLD_PROP_KEYS;
 export const AUTHORED_WORLD_FACADE_KEYS = WORLD_FACADE_KEYS;
 
+export const AUTHORED_VEHICLE_ART = [
+  'banana_boat',
+  'big_block',
+  'biplane',
+  'boat',
+  'bus',
+  'chrome_hog',
+  'city_ev',
+  'comet_gt',
+  'commuter',
+  'deep_marlin',
+  'drop_top',
+  'grand_tourer',
+  'kids_bmx',
+  'llama',
+  'lucille',
+  'lucille_norway',
+  'minimus_parade_float',
+  'night_train',
+  'old_reliable',
+  'orient_less_express',
+  'pearl_yacht',
+  'river_dinghy',
+  'riverboat',
+  'rocket',
+  'savanna_caravan_truck',
+  'school_bus',
+  'sky_taxi',
+  'snowcat',
+  'starhopper',
+  'ten_speed',
+  'the_long_shot',
+  'the_nikolai',
+  'the_quick_one',
+  'the_stretch',
+  'trail_boss',
+  'train',
+  'vehicle_clunker',
+  'work_van',
+  'yak_express',
+] as const;
+
+export const AUTHORED_VEHICLE_ART_KEYS = AUTHORED_VEHICLE_ART;
+
+const AUTHORED_VEHICLE_SOURCES = AUTHORED_VEHICLE_ART.map((key) => ({
+  key,
+  authoredKey: `authored_vehicle_${key}`,
+  url: new URL(`../../assets/art/vehicles/${key}.png`, import.meta.url).href,
+}));
+
 /**
  * LOW-RES facades — their authored PNGs were legacy ×1 (chunky when lifted to the
  * 1600×900 framebuffer). Per the "only implement high-res facades" direction we no
@@ -343,7 +430,9 @@ export const AUTHORED_WORLD_FACADE_KEYS = WORLD_FACADE_KEYS;
  * high-res PNG into assets/art/world/facades/ and remove its key from this set.
  */
 const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
-  'house_rex', 'house_chad', 'house_a', 'house_b', 'drugstore', 'arcade', 'chapel',
+  // Otterbrook facades (house_rex/chad/a/b, drugstore, arcade, chapel) re-promoted to
+  // authored hi-res — sliced from otterbrook-facades-transparent.png into
+  // assets/art/world/facades/ (tools/slice-otterbrook-facades.js).
   'clubhouse', 'clubhouse_grand', 'golf_gatehouse', 'mansion_a', 'mansion_b', 'mansion_c',
   'valle_house', 'valle_house_b', 'valle_shop', 'valle_clinic', 'valle_chapel',
   ...GENERATED_BUILDINGS.map((building) => building.name), // bldg_gen_* + colossi
@@ -374,11 +463,15 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   gift_box_open: { w: 16, h: 14 },
   crate: { w: 20, h: 18 },
   crate_bananas: { w: 20, h: 18 },
+  cot: { w: 20, h: 24 },
+  counter: { w: 30, h: 18 },
   payphone: { w: 16, h: 28 },
   dumpster: { w: 22, h: 18 },
   bench: { w: 22, h: 13 },
   hydrant: { w: 10, h: 14 },
   planter: { w: 22, h: 16 },
+  elevator: { w: 40, h: 48 },
+  ember: { w: 12, h: 12 },
   phone_pole: { w: 136, h: 48 },
   trash_can: { w: 14, h: 18 },
   parking_meter: { w: 10, h: 22 },
@@ -402,6 +495,27 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   pedestal_2: { w: 22, h: 30 },
   pedestal_3: { w: 22, h: 30 },
   plant_pot: { w: 14, h: 22 },
+  puerto_bench: { w: 22, h: 13 },
+  // Otterbrook hi-res furniture/flora (sliced from otterbrook-world master). The
+  // slices are hi-res; these sizes anchor on the old native HEIGHT (keeps each
+  // prop's ground line + y-sort depth) with art-true widths. See
+  // tools/slice-otterbrook-world.js.
+  tree: { w: 24, h: 34 },
+  tree_b: { w: 25, h: 34 },
+  tree_c: { w: 29, h: 34 },
+  pine: { w: 25, h: 34 },
+  sign: { w: 25, h: 18 },
+  picnic: { w: 30, h: 26 },
+  picnic_blanket: { w: 22, h: 24 },
+  phone_table: { w: 12, h: 18 },
+  bed: { w: 22, h: 30 },
+  sofa: { w: 28, h: 20 },
+  desk: { w: 21, h: 18 },
+  dresser: { w: 24, h: 24 },
+  tv: { w: 23, h: 20 },
+  bookshelf: { w: 33, h: 30 },
+  floor_lamp: { w: 14, h: 30 },
+  paw_prints: { w: 18, h: 12 },
   prop_pine_whisperwood: { w: 32, h: 48 },
   prop_pine_whisperwood_b: { w: 32, h: 48 },
   prop_pine_whisperwood_c: { w: 32, h: 48 },
@@ -614,6 +728,46 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_headmaster_mainframe_w1', url: new URL('../../assets/art/enemies/battle_headmaster_mainframe_w1.png', import.meta.url).href },
   { key: 'battle_headmaster_mainframe_w2', url: new URL('../../assets/art/enemies/battle_headmaster_mainframe_w2.png', import.meta.url).href },
 ] as const;
+
+const ENEMY_OVERWORLD_ART = [
+  'banana_bunch',
+  'blazer_smiler',
+  'boiler_golem',
+  'brolly_bat',
+  'coily_cicada',
+  'cranky_mailbox',
+  'cricket_eleven',
+  'cursed_souvenir',
+  'detention_desk',
+  'fog_hound',
+  'foggy_locker',
+  'gilded_beetle',
+  'greenhouse_creeper',
+  'head_prefect',
+  'hill_slug_deluxe',
+  'jungle_jitterbug',
+  'moor_sheep',
+  'overdue_tome',
+  'pickpocket_parrot',
+  'pigeon_gang',
+  'pillar_box',
+  'possessed_textbook',
+  'prefect_drone',
+  'roman_sentry',
+  'runaway_lawnmower',
+  'schedule_bell',
+  'soot_imp',
+  'step_mask',
+  'tea_poltergeist',
+  'tea_trolley',
+  'telephone_box',
+  'the_invigilator',
+].map((id) => ({
+  id,
+  key: `ow_enemy_${id}`,
+  authoredKey: `authored_ow_enemy_${id}`,
+  url: new URL(`../../assets/art/enemies/overworld/${id}_8dir.png`, import.meta.url).href,
+}));
 
 function artFor(heroId: string): HeroArt | undefined {
   return HERO_ART.find((art) => art.id === heroId);
@@ -852,6 +1006,7 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
     scene.load.image(art.battlerKey, art.battlerUrl);
   });
   NPC_CHARACTER_ART.forEach((art) => scene.load.image(art.key, art.url));
+  scene.load.image(BISCUIT_DOG_ART.key, BISCUIT_DOG_ART.url);
   HERO_PORTRAIT_ART.forEach((art) => scene.load.image(heroPortraitKey(art.id), art.url));
   AUTHORED_MINIGAME_ATHLETES.forEach((art) => scene.load.image(art.key, art.url));
   AUTHORED_MINIGAME_GOLFERS.forEach((art) => scene.load.image(art.key, art.url));
@@ -862,8 +1017,10 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   scene.load.image(HICKORY_DIRT_TILE_ART.key, HICKORY_DIRT_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
+  AUTHORED_VEHICLE_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
   ENEMY_BATTLE_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
+  ENEMY_OVERWORLD_ART.forEach((art) => scene.load.image(art.authoredKey, art.url));
 }
 
 export function applyAuthoredHeroArt(scene: Phaser.Scene): void {
@@ -881,6 +1038,10 @@ export function applyAuthoredHeroArt(scene: Phaser.Scene): void {
       replaceTextureSheet(scene, art.id, makeCharacterCanvas(character), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
     }
   });
+  const biscuit = sourceImage(scene, BISCUIT_DOG_ART.key);
+  if (biscuit) {
+    replaceTextureSheet(scene, 'dog', makeImageCanvas(biscuit), DOG_FRAME_W, DOG_FRAME_H, DOG_FRAMES, DOG_FRAMES);
+  }
 }
 
 export function applyAuthoredBustSheet(scene: Phaser.Scene, key: string, heroId: string): void {
@@ -967,10 +1128,23 @@ export function applyAuthoredWorldProps(scene: Phaser.Scene): void {
   });
 }
 
+export function applyAuthoredVehicleArt(scene: Phaser.Scene): void {
+  AUTHORED_VEHICLE_SOURCES.forEach((art) => {
+    const img = sourceImage(scene, art.authoredKey);
+    if (!img) return;
+    const frameW = Math.max(1, Math.round(img.width / 4));
+    replaceTextureSheet(scene, art.key, makeImageCanvas(img), frameW, img.height, 4, 4);
+  });
+}
+
 export function applyAuthoredEnemyArt(scene: Phaser.Scene): void {
   ENEMY_BATTLE_ART.forEach((art) => {
     const img = sourceImage(scene, `authored_enemy_${art.key}`);
     if (img) replaceTextureImage(scene, art.key, img);
+  });
+  ENEMY_OVERWORLD_ART.forEach((art) => {
+    const img = sourceImage(scene, art.authoredKey);
+    if (img) replaceTextureSheet(scene, art.key, makeImageCanvas(img), ENEMY_OW_FRAME_W, ENEMY_OW_FRAME_H, ENEMY_OW_FRAMES, ENEMY_OW_FRAMES);
   });
 }
 
@@ -989,10 +1163,12 @@ export function applyAuthoredArt(scene: Phaser.Scene): void {
   applyAuthoredMinigameArt(scene);
   applyAuthoredWorldTiles(scene);
   applyAuthoredWorldProps(scene);
+  applyAuthoredVehicleArt(scene);
 }
 
 export function applyAuthoredWorldArt(scene: Phaser.Scene): void {
   applyAuthoredWorldTiles(scene);
   applyAuthoredWorldProps(scene);
+  applyAuthoredVehicleArt(scene);
 }
 

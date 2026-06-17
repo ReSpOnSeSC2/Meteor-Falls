@@ -53,6 +53,7 @@ describe('the seat-fit law (§A4.10) — usable seats = seats − 1', () => {
     expect(seatsFit('suv', 4)).toBe(true);
     expect(seatsFit('van', 5)).toBe(true);
     expect(seatsFit('bus', 5)).toBe(true);
+    expect(seatsFit('school_bus', 5)).toBe(true);
   });
   it('a bicycle carries no passenger (Clicker / paperboy only)', () => {
     expect(usableSeats('bicycle')).toBe(0);
@@ -112,6 +113,15 @@ describe('M36 (ADR-077) — THE NIKOLAI (the flagship EV)', () => {
     expect(variants).toContain('veh_nikolai_paper');
     expect(variants).toContain('veh_nikolai_night');
     expect(variants).toContain('veh_nikolai_red');
+  });
+});
+
+describe('school bus visual identity', () => {
+  it('is a real bus-class vehicle type, separate from the city bus texture id', () => {
+    expect(VEHICLE_SPECS.school_bus?.cls).toBe('bus');
+    expect(VEHICLE_SPECS.school_bus.terrain).toBe('road');
+    expect(VEHICLE_SPECS.school_bus.seats).toBeGreaterThan(VEHICLE_SPECS.bus.seats);
+    expect(VEHICLE_CATALOG.some((v) => v.type === 'school_bus')).toBe(true);
   });
 });
 

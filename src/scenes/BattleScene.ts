@@ -431,6 +431,11 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     this.dlg = new Dialogue(this);
+    // The action menu is a SEPARATE box at the upper-right (clear of the party
+    // cards so it never blends into them) anchored just above the bust tops so it
+    // covers no hero face; foes are laid out to its left (buildEnemies) so none is
+    // hidden behind it. The party busts stay visible the whole time.
+    this.dlg.menuBottomY = s(168) - s(32);
     this.fx = new BattleFx(this);
     this.stage = new StageView(this);
     // §A4.5: the picnic buff reads once per battle; the counter burns at finish
@@ -697,21 +702,30 @@ export class BattleScene extends Phaser.Scene {
     const letters = ['A', 'B', 'C', 'D', 'E'];
     const dupes = new Map<string, number>();
     ids.forEach((id) => dupes.set(id, (dupes.get(id) ?? 0) + 1));
-    // ADR-107: anchor each foe's FACE just below the message window (the box is
-    // makeWindow(6,6,268,56) → bottom y62) so the intro never covers it. Only
-    // TALL sprites get pushed down, and never past the party HP cards (y168);
-    // a sprite too big to clear both keeps its face-priority bias (rare bosses).
+    // ADR-107: anchor each foe's FACE just below the message window (box bottom y62)
+    // so the intro never covers it; foes never ride over the party cards (y168).
     const TEXTBOX_BOTTOM = s(62);
-    const ENEMY_TOP = TEXTBOX_BOTTOM + s(2); // a breath of clearance under the box
-    const ENEMY_FLOOR = s(166); //              the party HP cards begin at y168
+    const ENEMY_TOP = TEXTBOX_BOTTOM + s(2);
+    const ENEMY_FLOOR = s(166);
+    // Keep every foe clear of the upper-right action menu (it right-aligns up to
+    // ~s(90) wide) so a foe is never hidden behind the action box. A lone foe/boss
+    // centers on the full screen (it clears the column on its own and stays
+    // dramatic); two or more share equal slots in the BATTLEFIELD to the left of the
+    // column, each capped to its slot, so a five-wide gang fits without overlapping
+    // itself or sliding under the menu.
+    const n = ids.length;
+    const COMMAND_COL = s(90);
+    const fieldL = s(6);
+    const fieldR = n <= 1 ? this.scale.width : this.scale.width - COMMAND_COL;
+    const slotW = (fieldR - fieldL) / n;
     ids.forEach((id, i) => {
       const def = ENEMIES[id];
-      const x = (this.scale.width / (ids.length + 1)) * (i + 1);
+      const x = Math.round(fieldL + slotW * (i + 0.5));
       const spr = this.add.image(x, 0, def.sprite).setOrigin(0.5, 0.5);
-      this.fitEnemySprite(spr, def, ids.length);
-      // bosses still bias a touch lower (their crown is the read — S7 the Tick),
-      // then everyone is pushed down JUST enough for the sprite top to clear the
-      // message box, capped so the body never rides over the party cards.
+      this.fitEnemySprite(spr, def, n, slotW - s(8));
+      // bosses bias a touch lower (their crown is the read — S7 the Tick), then
+      // everyone is pushed down JUST enough for the sprite top to clear the message
+      // box, capped so the body never rides over the party cards.
       const half = spr.displayHeight / 2;
       const y = Math.round(Math.min(ENEMY_FLOOR - half, Math.max(def.boss ? s(97) : s(92), ENEMY_TOP + half)));
       spr.setY(y);
@@ -750,11 +764,14 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  private fitEnemySprite(spr: Phaser.GameObjects.Image, def: EnemyDef, seats: number): void {
+  private fitEnemySprite(spr: Phaser.GameObjects.Image, def: EnemyDef, seats: number, slotMaxW = Infinity): void {
     // on-screen px caps scale with the frame; spr.width/height are the already-×ART_SCALE
     // texture dims, so the ratio (and the no-upscale clamp at 1) is invariant — the
-    // setScale multiplier STAYS, the texture itself carries the 4× (SCALE_CONVENTION)
-    const maxW = def.boss ? s(132) : seats >= 4 ? s(70) : seats >= 3 ? s(86) : s(112);
+    // setScale multiplier STAYS, the texture itself carries the 4× (SCALE_CONVENTION).
+    // slotMaxW additionally caps a foe to its share of the battlefield, so a crowded
+    // row neither overlaps itself nor spills under the action menu.
+    const seatCap = def.boss ? s(132) : seats >= 4 ? s(70) : seats >= 3 ? s(86) : s(112);
+    const maxW = Math.min(seatCap, slotMaxW);
     const maxH = def.boss ? s(104) : s(92);
     const scale = Math.min(1, maxW / spr.width, maxH / spr.height);
     spr.setScale(scale);
@@ -763,10 +780,17 @@ export class BattleScene extends Phaser.Scene {
   private buildParty(): void {
     const party = GS.aliveParty();
     const slots = party.length + (this.cfg.guestChad ? 1 : 0);
-    // four cards must clear the native 400px screen; busts keep their pane either way
-    const boxW = slots >= 4 ? s(92) : s(96);
-    const totalW = slots * (boxW + s(6)) - s(6);
-    let bx = (this.scale.width - totalW) / 2;
+    // The card strip must clear the screen for the WHOLE party. Four cards fit at
+    // the authored width, but the full five-hero party (S15h: Pippa) overflowed
+    // both edges — so shrink the cards (and tighten the gap) to fit when there are
+    // five. min() never enlarges, so ≤4-card layouts stay byte-identical; the
+    // floor still seats the 3-digit HP drum (it ends at +72 native from the card's
+    // left). Busts keep their pane either way — the 32px portrait centers in any width.
+    const gap = s(slots >= 5 ? 4 : 6);
+    const wantW = slots >= 4 ? s(92) : s(96);
+    const boxW = Math.min(wantW, Math.floor((this.scale.width - s(8) - gap * (slots - 1)) / slots));
+    const totalW = slots * (boxW + gap) - gap;
+    let bx = Math.round((this.scale.width - totalW) / 2);
     // the party card now rides the NAVY window (winTexture) so it matches the
     // message + command boxes; name/labels go LIGHT paper instead of dark ink
     const nameInk = colorOf(px(RAMP.PAPER, 3));
@@ -824,7 +848,7 @@ export class BattleScene extends Phaser.Scene {
         look,
         wear,
       });
-      bx += boxW + s(6);
+      bx += boxW + gap;
     }
     if (this.cfg.guestChad) {
       const box = makeWindow(this, bx, s(168), boxW, s(50));

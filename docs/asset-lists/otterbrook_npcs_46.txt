@@ -1,0 +1,23 @@
+# Live Otterbrook 46-frame character targets.
+# Source: src/data/maps.ts, src/data/maps_ch2.ts chapel_int, and
+# src/scenes/OverworldScene.ts story-only actors.
+# Contract: assets/art/characters/<id>_anim_46_4x.png
+# Layout: 384x1536, 46 frames, 4 columns, 96x128 cells.
+chad
+glint
+mom
+mrsPemmel
+mrPlummer
+ana
+vivi
+oldTimer
+pajamaKid
+fernLady
+quarterMan
+senora
+grayCommuter
+pigeonKid
+drugClerk
+deliKeeper
+priestOtter
+busDriver

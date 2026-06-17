@@ -115,11 +115,13 @@ import { Dialogue, makeWindow, toast, vars, everyFrame, DEPTH_UI, overscanRect }
 import { askAmount } from '../ui/amount';
 import { money } from '../ui/text';
 import { TrafficSim, cellKey } from '../engine/traffic';
-import { VEHICLE_CATALOG, VEHICLE_SPECS } from '../spritegen/vehicles';
+import { DEALERSHIP } from '../data/dealership';
+import { FLEET_CRAFT } from '../data/fleet';
+import { VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
-import { AUTHORED_WORLD_PROP_DISPLAY_SIZE, worldSpriteScale } from '../spritegen/authored';
+import { AUTHORED_VEHICLE_ART_KEYS, AUTHORED_WORLD_PROP_DISPLAY_SIZE, worldSpriteScale } from '../spritegen/authored';
 import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
 import {
   instantWinGroup,
@@ -150,6 +152,9 @@ interface Roamer {
   enemyId: string;
   /** character sheet id when this enemy walks as a person (EnemyDef.walker) */
   walker?: string;
+  /** authored 8-direction enemy sheet id */
+  overworld?: string;
+  facing: Facing;
   vx: number;
   vy: number;
   think: number;
@@ -159,10 +164,24 @@ interface Roamer {
 
 type PatrolState = 'patrol' | 'alert' | 'chase' | 'return';
 
+function enemyOverworldFrame(facing: Facing): number {
+  switch (facing) {
+    case 'down': return 0;
+    case 'downleft': return 1;
+    case 'left': return 2;
+    case 'upleft': return 3;
+    case 'up': return 4;
+    case 'upright': return 5;
+    case 'right': return 6;
+    case 'downright': return 7;
+  }
+}
+
 interface PatrolObj {
   spr: Phaser.GameObjects.Sprite;
   def: PatrolDef;
   walker: string;
+  overworld?: string;
   wp: number;
   state: PatrolState;
   /** ms left in the alert pause */
@@ -185,6 +204,15 @@ interface NpcObj {
 }
 
 type AuthoredWorldPropKey = keyof typeof AUTHORED_WORLD_PROP_DISPLAY_SIZE;
+
+const AUTHORED_VEHICLE_PROP_KEYS = new Set<string>(AUTHORED_VEHICLE_ART_KEYS);
+const TRAFFIC_AUTHORED_VEHICLES = [
+  ...Object.values(DEALERSHIP).map((car) => ({ id: car.id, vehicleType: car.vehicleType })),
+  ...Object.values(FLEET_CRAFT).map((craft) => ({ id: craft.id, vehicleType: craft.vehicleType })),
+  { id: 'bus', vehicleType: 'bus' },
+  { id: 'vehicle_clunker', vehicleType: 'sedan' },
+  { id: 'savanna_caravan_truck', vehicleType: 'truck' },
+] as const;
 
 // px/s movement speeds (ADR-024 dt-scaled) — scaled to runtime space so the
 // felt pace is identical at any ART_SCALE (the world grid scales with them).
@@ -267,7 +295,7 @@ export class OverworldScene extends Phaser.Scene {
    *  traps the player); the scene pools + lerps the sprites between tile-hops.
    *  Built only for OUTDOOR settlement maps that actually have a road grid. */
   private traffic?: TrafficSim;
-  private trafficSprites = new Map<number, Phaser.GameObjects.Image>();
+  private trafficSprites = new Map<number, Phaser.GameObjects.Sprite>();
   private trafficAccumMs = 0;
   private trafficRoadVeh: string[] = [];
   /** full-body collision rects (px) for the live cars — folded into collides()
@@ -488,6 +516,7 @@ export class OverworldScene extends Phaser.Scene {
           ? 'mask_switch_lit'
           : p.sprite;
       const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, sprite).setOrigin(0, 0);
+      if (AUTHORED_VEHICLE_PROP_KEYS.has(sprite)) img.setFrame(0);
       const displaySize = AUTHORED_WORLD_PROP_DISPLAY_SIZE[sprite as AuthoredWorldPropKey];
       // Sized props carry NATIVE map dims → scale at read. Everything else goes
       // through THE WORLD RESIZE RULE (worldSpriteScale): facades land at their
@@ -652,6 +681,15 @@ export class OverworldScene extends Phaser.Scene {
 
   private buildDoorMarkers(): void {
     this.doorImgs.clear();
+    // Door / mat / stairs indicator art is legacy ×1 (~20px); lift it to runtime
+    // res like every other prop, or it renders ART_SCALE× too small (the doors,
+    // mats and steps all looked tiny against the ×4 world).
+    const lift = (im: Phaser.GameObjects.Image): Phaser.GameObjects.Image => {
+      const displaySize = AUTHORED_WORLD_PROP_DISPLAY_SIZE[im.texture.key as AuthoredWorldPropKey];
+      if (displaySize) return im.setDisplaySize(s(displaySize.w), s(displaySize.h));
+      const sc = worldSpriteScale(im.texture.key, im.width, im.height);
+      return sc !== 1 ? im.setScale(sc) : im;
+    };
     for (const d of this.mapDef.doors) {
       const kind = d.indicator ?? (this.mapDef.interior ? 'mat' : 'none');
       if (kind === 'none') continue;
@@ -659,29 +697,31 @@ export class OverworldScene extends Phaser.Scene {
       const by = (d.y + d.h) * TILE_PX;
       if (kind === 'elevator') {
         // doors drawn on the wall above the zone; walk into them to ride
-        this.add.image(cx, d.y * TILE_PX + s(2), 'elevator').setOrigin(0.5, 1).setDepth(3);
+        lift(this.add.image(cx, d.y * TILE_PX + s(2), 'elevator').setOrigin(0.5, 1).setDepth(3));
         continue;
       }
       if (kind === 'door') {
         // S11b: a doorway through a wall is a DOOR, not a mat (user law) —
         // mounted IN the wall band above the zone, swinging open on entry;
         // the S11 mat stays at its foot
-        const img = this.add.image(cx, d.y * TILE_PX, 'door_int').setOrigin(0.5, 1).setDepth(3);
+        const img = lift(this.add.image(cx, d.y * TILE_PX, 'door_int').setOrigin(0.5, 1).setDepth(3));
         this.doorImgs.set(d, img);
-        this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2);
+        lift(this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2));
         continue;
       }
       if (kind === 'mat' && d.facing === 'up') {
         // a door THROUGH the north wall: the mat lies at the doorway's foot,
         // flush against the wall base — never floating mid-floor (S11 catch:
         // the rex_hall mats hovered two tiles into the room)
-        this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2);
+        lift(this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2));
         continue;
       }
-      this.add
-        .image(cx, kind === 'stairs' ? by + s(2) : by - s(1), kind === 'stairs' ? 'stairs' : 'doormat')
-        .setOrigin(0.5, 1)
-        .setDepth(2); // floor decal, characters walk over it
+      lift(
+        this.add
+          .image(cx, kind === 'stairs' ? by + s(2) : by - s(1), kind === 'stairs' ? 'stairs' : 'doormat')
+          .setOrigin(0.5, 1)
+          .setDepth(2),
+      ); // floor decal, characters walk over it
     }
     // building entrances: a mat on the doorstep (at the texture-true zone if the
     // facade was re-fitted to its real sprite — ADR-051)
@@ -691,7 +731,7 @@ export class OverworldScene extends Phaser.Scene {
       // door.ox/w are NATIVE data → s(); box.* are already runtime
       const cx = p.x * TILE_PX + s(p.door.ox) + s(p.door.w) / 2;
       const by = box ? box.y + box.h : p.y * TILE_PX + s(p.door.oy) + s(p.door.h);
-      this.add.image(cx, by + s(4), 'doormat').setOrigin(0.5, 1).setDepth(2);
+      lift(this.add.image(cx, by + s(4), 'doormat').setOrigin(0.5, 1).setDepth(2));
     }
   }
 
@@ -821,13 +861,17 @@ export class OverworldScene extends Phaser.Scene {
         const def = ENEMIES[enemyId];
         const x = (sp.rect.x + Math.random() * sp.rect.w) * TILE_PX;
         const y = (sp.rect.y + Math.random() * sp.rect.h) * TILE_PX;
-        const spr = this.add.sprite(x, y, def.walker ?? def.mini, def.walker ? standFrame('down') : 0);
+        const texture = def.overworld ?? def.walker ?? def.mini;
+        const frame = def.overworld ? enemyOverworldFrame('down') : def.walker ? standFrame('down') : 0;
+        const spr = this.add.sprite(x, y, texture, frame);
         spr.setOrigin(0.5, 1);
         spr.setDepth(y);
         this.roamers.push({
           spr,
           enemyId,
           walker: def.walker,
+          overworld: def.overworld,
+          facing: 'down',
           vx: 0,
           vy: 0,
           think: 0,
@@ -842,15 +886,18 @@ export class OverworldScene extends Phaser.Scene {
     for (const def of this.mapDef.patrols ?? []) {
       // a counted patrol stays down for good — its quota was met (S2)
       if (def.countFlag && GS.flag(def.countFlag)) continue;
-      const walker = ENEMIES[def.enemy].walker ?? 'smiler';
+      const enemy = ENEMIES[def.enemy];
+      const walker = enemy.walker ?? 'smiler';
+      const overworld = enemy.overworld;
       const [tx, ty] = def.route[0];
-      const spr = this.add.sprite(tx * TILE_PX + TILE_PX / 2, ty * TILE_PX + s(22), walker, standFrame('down'));
+      const spr = this.add.sprite(tx * TILE_PX + TILE_PX / 2, ty * TILE_PX + s(22), overworld ?? walker, overworld ? enemyOverworldFrame('down') : standFrame('down'));
       spr.setOrigin(0.5, 1);
       spr.setDepth(spr.y);
       this.patrols.push({
         spr,
         def,
         walker,
+        overworld,
         wp: def.route.length > 1 ? 1 : 0,
         state: 'patrol',
         alertT: 0,
@@ -863,11 +910,14 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private buildNight(): void {
-    // overscanRect: the tint must outsize the viewport or scroll rounding
-    // leaves screen row 0 day-lit — the reported "one line at the top" (S15c)
+    // overscanRect: the tint must outsize the viewport or scroll rounding leaves
+    // screen row 0 day-lit (the "one line at the top", S15c). Oversized by a full
+    // screen on every side so it ALSO covers when a cutscene zooms OUT (a
+    // scrollFactor-0 rect shrinks with zoom; at zoom <1 a screen-sized one leaves
+    // bright borders — the "darkness not covering" bug).
     const r = overscanRect(this.scale.width, this.scale.height);
     const o = this.add
-      .rectangle(r.x, r.y, r.w, r.h, colorOf(px(RAMP.NIGHT, 1)))
+      .rectangle(r.x - this.scale.width, r.y - this.scale.height, r.w + this.scale.width * 2, r.h + this.scale.height * 2, colorOf(px(RAMP.NIGHT, 1)))
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(800)
@@ -1034,16 +1084,16 @@ export class OverworldScene extends Phaser.Scene {
       }
     }
     if (roads.size < 12) return; // a path-only town (Otterbrook) gets no cars
-    // the civilian road fleet (no tanks on Main Street): catalog names are the
-    // sprite keys, so the type the sim carries IS the texture to draw
+    // Civilian road fleet from authored PNGs only: the sim type is the texture key.
     if (this.trafficRoadVeh.length === 0) {
-      for (const v of VEHICLE_CATALOG) {
-        const spec = VEHICLE_SPECS[v.type];
+      for (const v of TRAFFIC_AUTHORED_VEHICLES) {
+        if (!AUTHORED_VEHICLE_PROP_KEYS.has(v.id)) continue;
+        const spec = VEHICLE_SPECS[v.vehicleType];
         if (!spec || spec.terrain !== 'road' || spec.hardened) continue;
-        this.trafficRoadVeh.push(v.name);
+        this.trafficRoadVeh.push(v.id);
         // VEHICLE_SPECS body size is NATIVE → store RUNTIME px (the rect later
-        // multiplies by TRAFFIC_SCALE, a setScale multiplier, to match on-screen)
-        this.trafficDims.set(v.name, { w: s(spec.w), h: s(spec.h) });
+        // multiplies by TRAFFIC_SCALE to match on-screen display size).
+        this.trafficDims.set(v.id, { w: s(spec.w), h: s(spec.h) });
       }
     }
     if (this.trafficRoadVeh.length === 0) return;
@@ -1054,10 +1104,11 @@ export class OverworldScene extends Phaser.Scene {
     for (const v of this.traffic.vehicles) this.spawnTrafficSprite(v);
   }
 
-  private spawnTrafficSprite(v: { id: number; type: string; x: number; y: number }): Phaser.GameObjects.Image {
+  private spawnTrafficSprite(v: { id: number; type: string; x: number; y: number }): Phaser.GameObjects.Sprite {
     const tex = this.textures.exists(v.type) ? v.type : this.trafficRoadVeh[0];
-    const spr = this.add.image(v.x * TILE_PX + TILE_PX / 2, v.y * TILE_PX + TILE_PX / 2, tex).setOrigin(0.5, 0.6);
-    spr.setScale(OverworldScene.TRAFFIC_SCALE);
+    const dim = this.trafficDims.get(tex) ?? { w: s(32), h: s(18) };
+    const spr = this.add.sprite(v.x * TILE_PX + TILE_PX / 2, v.y * TILE_PX + TILE_PX / 2, tex, 0).setOrigin(0.5, 0.6);
+    spr.setDisplaySize(dim.w * OverworldScene.TRAFFIC_SCALE, dim.h * OverworldScene.TRAFFIC_SCALE);
     spr.setDepth(v.y * TILE_PX + TILE_PX / 2);
     this.trafficSprites.set(v.id, spr);
     return spr;
@@ -1090,25 +1141,19 @@ export class OverworldScene extends Phaser.Scene {
       spr.x = cx;
       spr.y = cy;
       spr.setDepth(cy + s(8));
-      // ADR-097: oblique four-wheelers TURN by swapping to their FRONT/BACK
-      // texture (no rotating a 3/4 sprite); legacy one-view vehicles still
-      // rotate the side-on art. dir: 0=E 1=S 2=W 3=N.
+      // Authored vehicle sheets are four motion frames. Traffic still orients the
+      // side art by direction: dir 0=E, 1=S, 2=W, 3=N.
       const vertical = v.dir === 1 || v.dir === 3;
-      const frontKey = `${v.type}_front`;
-      if (this.textures.exists(frontKey)) {
-        spr.setAngle(0);
-        if (v.dir === 1) { spr.setTexture(frontKey); spr.setFlipX(false); }
-        else if (v.dir === 3) { spr.setTexture(`${v.type}_back`); spr.setFlipX(false); }
-        else { spr.setTexture(v.type); spr.setFlipX(v.dir === 2); }
-      } else {
-        spr.setAngle(v.dir === 1 ? 90 : v.dir === 3 ? -90 : 0);
-        spr.setFlipX(v.dir === 2);
-      }
+      const dim = this.trafficDims.get(v.type) ?? { w: s(32), h: s(18) };
+      const animFrame = Math.floor((this.time.now / 130 + v.id) % 4);
+      spr.setTexture(v.type, animFrame);
+      spr.setAngle(v.dir === 1 ? 90 : v.dir === 3 ? -90 : 0);
+      spr.setFlipX(v.dir === 2);
+      spr.setDisplaySize(dim.w * S, dim.h * S);
       // SOLID body rect (px) covering the WHOLE car — ends and sides — sized to
       // the sprite and oriented to travel, inset 4px so brushing past isn't sticky
-      // dim is RUNTIME px; S=TRAFFIC_SCALE is a setScale multiplier (NOT scaled),
-      // so dim*S matches the on-screen sprite. The 4px brush-past inset is native.
-      const dim = this.trafficDims.get(v.type) ?? { w: s(32), h: s(18) };
+      // dim is RUNTIME px; dim*S matches the on-screen sprite. The 4px brush-past
+      // inset is native.
       const longPx = dim.w * S;
       const widePx = dim.h * S;
       const rw = (vertical ? widePx : longPx) - s(4);
@@ -1343,14 +1388,19 @@ export class OverworldScene extends Phaser.Scene {
       }
       // humanoid enemies (walker sheets) animate like people — and SPRINT
       // like people when they've spotted lunch (S9b run cycles)
-      if (r.walker) {
+      if (r.overworld) {
         if (moved) {
-          const f: Facing = facing8(r.vx, r.vy, 'down'); // ADR-096: 8-way roam
-          const anim = `${r.walker}-${distP < s(64) ? 'run' : 'walk'}-${f}`;
+          r.facing = facing8(r.vx, r.vy, r.facing);
+          r.spr.setFrame(enemyOverworldFrame(r.facing));
+        }
+      } else if (r.walker) {
+        if (moved) {
+          r.facing = facing8(r.vx, r.vy, r.facing); // ADR-096: 8-way roam
+          const anim = `${r.walker}-${distP < s(64) ? 'run' : 'walk'}-${r.facing}`;
           if (r.spr.anims.currentAnim?.key !== anim || !r.spr.anims.isPlaying) r.spr.anims.play(anim, true);
         } else if (r.spr.anims.isPlaying) {
           r.spr.anims.stop();
-          r.spr.setFrame(standFrame('down'));
+          r.spr.setFrame(standFrame(r.facing));
         }
       }
       if (distP < s(13) && now > this.battleCooldown) {
@@ -1388,7 +1438,7 @@ export class OverworldScene extends Phaser.Scene {
           this.patrolAnim(p, false, 'walk');
           // face the player for the realization
           p.facing = this.dirToward(p.spr.x, p.spr.y, this.player.x, this.player.y);
-          p.spr.setFrame(standFrame(p.facing));
+          p.spr.setFrame(p.overworld ? enemyOverworldFrame(p.facing) : standFrame(p.facing));
           AUDIO.sfx('alert');
           p.bang = this.add
             .bitmapText(p.spr.x, p.spr.y - p.spr.height - s(2), 'retro', '!', s(8))
@@ -1436,6 +1486,10 @@ export class OverworldScene extends Phaser.Scene {
 
   /** patrols stroll their route and SPRINT a chase (S9b run cycles) */
   private patrolAnim(p: PatrolObj, moving: boolean, gait: 'walk' | 'run'): void {
+    if (p.overworld) {
+      p.spr.setFrame(enemyOverworldFrame(p.facing));
+      return;
+    }
     if (moving) {
       const anim = `${p.walker}-${gait}-${p.facing}`;
       if (p.spr.anims.currentAnim?.key !== anim || !p.spr.anims.isPlaying) p.spr.anims.play(anim, true);
@@ -4331,12 +4385,12 @@ export class OverworldScene extends Phaser.Scene {
     const prop = landed[0];
     const impactX = prop ? prop.x + prop.displayWidth / 2 : 15 * TILE_PX;
     const impactY = prop ? prop.y + prop.displayHeight / 2 : 6 * TILE_PX;
-    // zoom 1 (zoom OUT shrinks the scrollFactor-0 night tint below the screen)
-    cam.setZoom(1);
+    // the night tint now covers at any zoom, so the opening sits WIDER
+    cam.setZoom(0.8);
     cam.centerOn(impactX, impactY);
 
-    // 1) establishing still — the wrong star
-    await showCard(this, 'meteor_2am', { chapter: 'ch1', caption: 'Otterbrook, Ohio. Summer, 1995.' });
+    // 1) establishing still — the wrong star (held long)
+    await showCard(this, 'meteor_2am', { chapter: 'ch1', caption: 'Otterbrook, Ohio. Summer, 1995.', ms: 3800 });
 
     // reveal the live night hill behind the card (fade the no-flash entry blackout)
     if (this.entryBlackout) {
@@ -4345,9 +4399,9 @@ export class OverworldScene extends Phaser.Scene {
       this.tweens.add({ targets: b, alpha: 0, duration: 450, onComplete: () => b.destroy() });
     }
 
-    // 2) the descent — it falls into the crater while the camera leans IN (movement)
-    await this.wait(400);
-    cam.zoomTo(1.18, 2700, 'Sine.easeInOut');
+    // 2) the descent — it falls into the crater while the camera leans IN, slowly
+    await this.wait(700);
+    cam.zoomTo(0.95, 4400, 'Sine.easeInOut');
     const shadow = this.add
       .image(impactX, impactY, 'mob_shadow')
       .setOrigin(0.5, 0.5).setAlpha(0).setScale(0.5).setDepth(impactY - 1);
@@ -4361,9 +4415,9 @@ export class OverworldScene extends Phaser.Scene {
         this.tweens.add({ targets: p, x: p.x + s(8), y: p.y - s(6), alpha: 0, scale: 0.2, duration: 360, onComplete: () => p.destroy() });
       },
     });
-    this.tweens.add({ targets: shadow, alpha: 0.55, scale: 1.6, duration: 2600 });
+    this.tweens.add({ targets: shadow, alpha: 0.55, scale: 1.6, duration: 4000 });
     await new Promise<void>((res) => {
-      this.tweens.add({ targets: meteor, x: impactX, y: impactY, scale: 1, angle: 200, duration: 2600, ease: 'Quad.easeIn', onComplete: () => res() });
+      this.tweens.add({ targets: meteor, x: impactX, y: impactY, scale: 1, angle: 200, duration: 4000, ease: 'Quad.easeIn', onComplete: () => res() });
     });
     shed.remove();
 
@@ -4377,10 +4431,10 @@ export class OverworldScene extends Phaser.Scene {
     this.sparkleBurst(impactX, impactY, 18);
     const glow = this.add.circle(impactX, impactY, s(22), 0xf8d868, 0.5).setDepth(impactY - 2);
     this.tweens.add({ targets: glow, scale: 1.6, fillAlpha: 0.2, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    await this.wait(900);
+    await this.wait(1500);
 
-    // 4) the painted impact card
-    await showCard(this, 'hickory_hill', { chapter: 'ch1', caption: 'It comes down behind Hickory Hill, and the whole town feels it land.' });
+    // 4) the painted impact card (held long)
+    await showCard(this, 'hickory_hill', { chapter: 'ch1', caption: 'It comes down behind Hickory Hill, and the whole town feels it land.', ms: 3800 });
 
     // hand off to the OVERVIEW (phase 2): cut to town and open on {rex}'s house.
     GS.setFlag('op_fell');
@@ -4400,20 +4454,20 @@ export class OverworldScene extends Phaser.Scene {
     );
     const houseX = house ? house.x + house.displayWidth / 2 : 6 * TILE_PX;
     const houseY = house ? house.y + house.displayHeight / 2 : 3 * TILE_PX;
-    cam.setZoom(1.3); // POINT at the house (zoom in keeps the night tint covering)
+    cam.setZoom(0.9); // open on the house + its street (wide), not jammed in close
     cam.centerOn(houseX, houseY);
     if (this.entryBlackout) {
       const b = this.entryBlackout;
       this.entryBlackout = undefined;
-      this.tweens.add({ targets: b, alpha: 0, duration: 500, onComplete: () => b.destroy() });
+      this.tweens.add({ targets: b, alpha: 0, duration: 600, onComplete: () => b.destroy() });
     }
     AUDIO.sfx('rumble');
-    await this.wait(1300); // hold on the sleeping house
+    await this.wait(2000); // hold on the sleeping house
     await new Promise<void>((res) => {
-      cam.pan(13 * TILE_PX, 0, 2600, 'Sine.easeInOut');
-      this.time.delayedCall(2650, () => res());
+      cam.pan(13 * TILE_PX, 0, 4200, 'Sine.easeInOut'); // a slow drift up toward the hill road
+      this.time.delayedCall(4250, () => res());
     });
-    await this.wait(300);
+    await this.wait(500);
     GS.setFlag('op_house');
     this.cinematicCut('hickory_hill', 232, 660); // the south trail spawn
   }
@@ -4432,22 +4486,22 @@ export class OverworldScene extends Phaser.Scene {
     const craterX = landed ? landed.x + landed.displayWidth / 2 : 15 * TILE_PX;
     const craterY = landed ? landed.y + landed.displayHeight / 2 : 6 * TILE_PX;
     const mapH = this.mapDef.grid.length * TILE_PX;
-    cam.setZoom(1);
+    cam.setZoom(0.78); // wide — the whole hill reads as a climb
     cam.centerOn(craterX, mapH - s(40)); // start at the foot of the hill (the trail up)
     if (this.entryBlackout) {
       const b = this.entryBlackout;
       this.entryBlackout = undefined;
-      this.tweens.add({ targets: b, alpha: 0, duration: 500, onComplete: () => b.destroy() });
+      this.tweens.add({ targets: b, alpha: 0, duration: 600, onComplete: () => b.destroy() });
     }
     const glow = this.add.circle(craterX, craterY, s(22), 0xf8d868, 0.45).setDepth(craterY - 2);
     this.tweens.add({ targets: glow, scale: 1.6, fillAlpha: 0.2, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    await this.wait(600);
+    await this.wait(900);
     AUDIO.sfx('rumble');
     await new Promise<void>((res) => {
-      cam.pan(craterX, craterY, 4600, 'Sine.easeInOut'); // climb to the crater
-      this.time.delayedCall(4650, () => res());
+      cam.pan(craterX, craterY, 6500, 'Sine.easeInOut'); // a slow climb to the crater
+      this.time.delayedCall(6550, () => res());
     });
-    await this.wait(700);
+    await this.wait(1000);
     this.cinematicCut('rex_bedroom', 72, 88);
   }
 

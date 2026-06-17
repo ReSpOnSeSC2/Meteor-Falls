@@ -4,9 +4,11 @@ import { describe, expect, it } from 'vitest';
 import { decodePng } from '../../tools/imageio';
 import {
   AUTHORED_NPC_CHARACTER_IDS,
+  AUTHORED_VEHICLE_ART_KEYS,
   AUTHORED_WORLD_FACADE_KEYS,
   AUTHORED_WORLD_PROP_KEYS,
   NPC_CHARACTER_ART,
+  OTTERBROOK_NPC_CHARACTER_IDS,
 } from './authored';
 import {
   AREA_SKINS,
@@ -44,6 +46,13 @@ function listedNpcIds(): string[] {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#') && !HERO_IDS.has(line));
+}
+
+function listedOtterbrookNpcIds(): string[] {
+  return readFileSync(resolve(process.cwd(), 'docs/asset-lists/otterbrook_npcs_46.txt'), 'utf8')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'));
 }
 
 function frameAlphaCount(path: string, frame: number, cellW: number, cellH: number, cols: number): number {
@@ -99,7 +108,7 @@ describe('authored hero asset wiring', () => {
 describe('authored NPC asset wiring', () => {
   it('matches the PKG-09 character list and loads 96x128-frame sheets', () => {
     const npcIds = listedNpcIds();
-    expect(npcIds).toHaveLength(49);
+    expect(npcIds).toHaveLength(50);
     expect(AUTHORED_NPC_CHARACTER_IDS).toEqual(npcIds);
 
     const artById = new Map<string, (typeof NPC_CHARACTER_ART)[number]>(NPC_CHARACTER_ART.map((art) => [art.id, art]));
@@ -110,6 +119,23 @@ describe('authored NPC asset wiring', () => {
       expect(pngSize(resolve(process.cwd(), `assets/art/characters/${file}`)), id)
         .toEqual({ w: 384, h: 1536 });
     }
+  });
+
+  it('keeps every authored NPC frame populated', () => {
+    for (const id of AUTHORED_NPC_CHARACTER_IDS) {
+      const path = resolve(process.cwd(), `assets/art/characters/${id}_anim_46_4x.png`);
+      const minAlpha = id === 'glint' ? 40 : 1500;
+      for (let frame = 0; frame < 46; frame++) {
+        expect(frameAlphaCount(path, frame, 96, 128, 4), `${id} overworld frame ${frame}`)
+          .toBeGreaterThan(minAlpha);
+      }
+    }
+  });
+
+  it('pins the live Otterbrook replacement roster, including Chad and Glint', () => {
+    expect(OTTERBROOK_NPC_CHARACTER_IDS).toEqual(listedOtterbrookNpcIds());
+    expect(OTTERBROOK_NPC_CHARACTER_IDS).toContain('chad');
+    expect(OTTERBROOK_NPC_CHARACTER_IDS).toContain('glint');
   });
 });
 
@@ -130,6 +156,13 @@ describe('authored world asset wiring', () => {
     const registered = new Set<string>(AUTHORED_WORLD_PROP_KEYS);
     for (const key of pngBasenames('assets/art/world/props')) {
       expect(registered.has(key), `prop '${key}' is on disk but never preloaded/applied`).toBe(true);
+    }
+  });
+
+  it('registers every committed vehicle PNG with the authored bridge', () => {
+    const registered = new Set<string>(AUTHORED_VEHICLE_ART_KEYS);
+    for (const key of pngBasenames('assets/art/vehicles')) {
+      expect(registered.has(key), `vehicle '${key}' is on disk but never preloaded/applied`).toBe(true);
     }
   });
 
