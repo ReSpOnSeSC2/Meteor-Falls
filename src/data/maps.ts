@@ -200,7 +200,7 @@ export function buildOtterbrook(): MapDef {
         // S14 (Prompt 25): the chapel opens — zone reaches below the floor
         door: { ox: 17, oy: 78, w: 16, h: 30, to: 'chapel_int', tx: 88, ty: 150 },
       },
-      { sprite: 'lemonade', x: 14, y: 13, solid: { ox: 0, oy: 10, w: 36, h: 18 } },
+      { sprite: 'lemonade', x: 14, y: 10, solid: { ox: 0, oy: 10, w: 36, h: 18 }, ifFlag: 'zapper_done' },
       { sprite: 'picnic', x: 6, y: 25, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'bus_sign', x: 23, y: 25, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
       { sprite: 'phone_table', x: 28, y: 14, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
@@ -231,8 +231,11 @@ export function buildOtterbrook(): MapDef {
         dialogue: 'npc_plummer',
         wander: true,
       },
-      { id: 'ana', sprite: 'ana', x: 15, y: 15, facing: 'down', dialogue: 'npc_ana' },
-      { id: 'vivi', sprite: 'vivi', x: 17, y: 15, facing: 'down', dialogue: 'npc_vivi' },
+      // S?? (ADR-121): the twins are HOME ASLEEP through the meteor night — they
+      // only set up the stand once it's morning (zapper_done). The night versions
+      // live in ana_room / vivi_room. Stand moved north, out of the opening pan.
+      { id: 'ana', sprite: 'ana', x: 13, y: 11, facing: 'down', dialogue: 'npc_ana', ifFlag: 'zapper_done' },
+      { id: 'vivi', sprite: 'vivi', x: 15, y: 11, facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done' },
       // S15c: the town reacts to the night, then to the morning after it
       { id: 'old_timer', sprite: 'oldTimer', x: 35, y: 22, facing: 'down', dialogue: 'npc_oldtimer', dialogueDay: 'npc_oldtimer_day', wander: true },
       { id: 'pajama_kid', sprite: 'pajamaKid', x: 24, y: 19, facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true },
@@ -1269,7 +1272,10 @@ function buildAnaRoom(): MapDef {
       { sprite: 'gift_box', x: 6, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'ana_gift_open' },
       { sprite: 'gift_box_open', x: 6, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'ana_gift_open' },
     ],
-    npcs: [],
+    npcs: [
+      // ADR-121: Ana is home through the meteor night; gone to the stand by morning.
+      { id: 'ana', sprite: 'ana', x: 3, y: 5, facing: 'down', dialogue: 'ana_room_night', unlessFlag: 'zapper_done' },
+    ],
     signs: [
       { x: 6, y: 1, dialogue: 'ana_chart' },
       { x: 1, y: 2, dialogue: 'ana_bed' },
@@ -1300,7 +1306,10 @@ function buildViviRoom(): MapDef {
       { sprite: 'gift_box', x: 2, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'vivi_gift_open' },
       { sprite: 'gift_box_open', x: 2, y: 4.6, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'vivi_gift_open' },
     ],
-    npcs: [],
+    npcs: [
+      // ADR-121: Vivi is home through the meteor night; gone to the stand by morning.
+      { id: 'vivi', sprite: 'vivi', x: 6, y: 5, facing: 'down', dialogue: 'vivi_room_night', unlessFlag: 'zapper_done' },
+    ],
     signs: [
       { x: 2, y: 1, dialogue: 'vivi_jar' },
       { x: 6, y: 2, dialogue: 'vivi_bed' },

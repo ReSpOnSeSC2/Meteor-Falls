@@ -375,6 +375,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@Don't listen to Ana. The secret ingredient is a SECOND secret ingredient.",
     '@...It is also lemons.',
   ],
+  // ADR-121: the twins are home, awake, the night the meteor falls.
+  ana_room_night: [
+    '@{rex}?! Did the sky just— okay, it DID. I am not crazy.',
+    "@Vivi's pretending to be asleep but her eyes are doing the thing. Mom said back to bed. I'm resting my eyes AT the window. It counts.",
+  ],
+  vivi_room_night: [
+    '@2:04 in the morning. One (1) falling star. Very rude about it. I wrote it down — for the records.',
+    '@If you go up the hill, bring back a sample? For science. ...And so I can sell tickets.',
+  ],
   npc_oldtimer: [
     '@A meteor, eh? In MY day the sky stayed put.',
     '@Except for birds. We allowed birds.',

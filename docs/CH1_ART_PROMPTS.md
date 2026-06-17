@@ -534,6 +534,61 @@ gray-box until these load):
   { key: 'battle_the_suit_w2', url: new URL('../../assets/art/enemies/battle_the_suit_w2.png', import.meta.url).href },
 ```
 
+## §8 — The Hush Sentinel (the Mars robot at the crater, ADR-121)
+
+The end-game Mars construct you fight (and REPEL, with Glint's help) the first night.
+It is NOT a Ch.1 creature — it should read **alien, advanced, and frankly too big for
+this game yet**: the foreshadow of Mars. Paste the STYLE PREAMBLE first, but push the
+palette **cold and otherworldly** (the only thing in warm 1995 Ohio that isn't warm):
+matte Mars-dust ed metal, a single unblinking Hush-blue optic, segmented insectile
+limbs, faint broken glyph etching (the §A11.8 Hush script), a low cold glow at the seams.
+
+### 8.1 — `battle_hush_sentinel` (battler, 3 wear tiers)
+- **Runtime:** `assets/art/enemies/battle_hush_sentinel.png` · `…_w1.png` · `…_w2.png`,
+  **112×144** transparent each. (Bigger felt-presence than a normal battler — fill the frame.)
+```
+A front-facing JRPG battler of the HUSH SENTINEL: a tall, alien Mars war-construct
+crashed to Earth — segmented dark-metal body dusted red, folding insectile legs, a
+single large unblinking pale-blue optic, broken alien glyphs etched and faintly lit
+along its plating, cold light bleeding from its seams. Damaged from the fall (one limb
+hangs, a panel sparks). Menacing, advanced, WRONG for a sleepy 1995 town — the only
+cold thing in a warm world. W0 pristine-but-cracked / W1 visibly failing (more sparks,
+drooping limb) / W2 powering down (optic dimming, seams going dark). Same pose all three.
+```
+
+### 8.2 — `sprite_hush_sentinel` (overworld / cutscene figure)
+- **Runtime:** `assets/art/world/props/hush_sentinel.png` (a tall set-piece sprite for the
+  crater scene — it unfolds and looms; ~3–4 tiles tall).
+```
+A top-down/three-quarter overworld set-piece sprite of the HUSH SENTINEL unfolding out
+of a smoking crater at night: tall segmented Mars construct, pale-blue optic casting a
+cold cone of light on the scorched ground, red-dusted plating, broken glyphs aglow.
+Reads as a cutscene threat looming over kid-sized sprites. Transparent background.
+```
+
+### 8.3 — `prop_sentinel_husk` (the landmark it leaves)
+- **Runtime:** `assets/art/world/props/sentinel_husk.png`.
+```
+The powered-DOWN husk of the Hush Sentinel, half-sunk in the Hickory Hill crater: dark
+dead metal, optic gone black, limbs folded and still, red dust settling, a few cold dead
+glyphs. A quiet ominous LANDMARK the town learns to walk around — it will wake again
+much later. Top-down/three-quarter, transparent background.
+```
+
+### 8.4 — `sprite_glint_radiant` (optional — super-Glint for the fight)
+- **Runtime:** `assets/art/fx/glint_radiant.png` (a brighter, larger Glint for the one
+  scene where he goes supernova; the normal Glint sprite already exists).
+```
+The firefly-star creature GLINT at FULL POWER for one scene: the same small warm
+star-bug, but blazing — a corona of golden light, trailing sparks, almost too bright to
+look at, brave and tiny against a cold machine. Warm gold vs the Sentinel's cold blue.
+Transparent background.
+```
+
+> The **Hush-dark** town overlay (desaturate + dim + flickering streetlights as the Tick
+> feeds) is a runtime TINT/shader effect — **no authored art needed**. The Tick's-nest
+> map (the Heart Oak burrow) is a layout built from existing tiles.
+
 ## Wiring checklist (per asset)
 
 - [ ] Master saved in `assets/art/masters/<category>/` (+ `-transparent` variant).
