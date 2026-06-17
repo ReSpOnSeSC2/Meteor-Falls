@@ -11,7 +11,7 @@ import { RAMP } from '../src/palette';
 import { makeImg, encodePng, type Img } from './imageio';
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 
-const TILE = 16, RT = 64, SCALE4 = 4;
+const RT = 64, SCALE4 = 4;
 const DISP = 0.22; // shrink the ×4 world so the PNG is viewable
 
 // real house native sizes (measured via drawHouse) by sprite key
