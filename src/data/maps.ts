@@ -162,7 +162,7 @@ export function buildOtterbrook(): MapDef {
         y: 16.375,
       })),
       // trash cans on the verges, ≥2 tiles from every door/phone/trigger
-      { sprite: 'trash_can', x: 4, y: 8, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'trash_can', x: 4, y: 6.4, solid: { ox: 2, oy: 10, w: 10, h: 7 } }, // tucked beside house_rex's front-left, not stranded in the field
       { sprite: 'trash_can', x: 37, y: 9, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
       {
         sprite: 'house_rex',
@@ -1021,8 +1021,8 @@ function buildBedroom(): MapDef {
     grid: g.out(),
     props: [
       { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
-      { sprite: 'desk', x: 6, y: 2, solid: { ox: 1, oy: 4, w: 24, h: 13 } },
-      { sprite: 'dresser', x: 7.8, y: 0.3 }, // against the wall band (S7)
+      { sprite: 'desk', x: 6, y: 1.55, solid: { ox: 1, oy: 4, w: 24, h: 13 } }, // backed up against the top wall
+      { sprite: 'dresser', x: 8, y: 2.4, solid: { ox: 2, oy: 8, w: 26, h: 14 } }, // on the floor, right of the desk
     ],
     npcs: [],
     signs: [],

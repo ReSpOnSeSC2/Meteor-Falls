@@ -53,6 +53,8 @@ export const FLEET_CRAFT: Record<string, CraftForSale> = Object.fromEntries(
   [
     C({ id: 'comet_gt', vehicleType: 'race_car', venue: 'dealer', band: 'ch1', price: 8000, title: 'title_comet_gt',
       seller: 'Bert', note: "Bert's pre-loved lot, back room. \"She's got one careful owner and four careless ones. Runs like a dream you regret.\"" }),
+    C({ id: 'school_bus', vehicleType: 'school_bus', venue: 'dealer', band: 'ch5', price: 64000, title: 'title_school_bus',
+      seller: 'Bert', note: '"Retired route bus. Seats everybody, smells like pencil shavings and raincoats. The doors still hiss like they mean it."' }),
     C({ id: 'river_dinghy', vehicleType: 'boat', venue: 'marina', band: 'ch8', price: 26000, title: 'title_river_dinghy',
       seller: 'the harbormaster', note: '"Hugs a river like she means it. Don\'t take her past the breakwater or I\'ll hear about it."' }),
     C({ id: 'starhopper', vehicleType: 'small_plane', venue: 'airfield', band: 'ch10', price: 1400000, title: 'title_starhopper',

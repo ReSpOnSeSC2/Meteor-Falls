@@ -15,7 +15,7 @@ The five leads now have first-pass authored art wired through the runtime bridge
 Each lead has:
 
 - source 8-angle draft: `assets/art/drafts/<name>-8angle-transparent.png`
-- legacy 8-angle runtime slice: `assets/art/characters/<name>_8dir_24x32.png`
+- final overworld runtime sheet: `assets/art/characters/<name>_anim_46_4x.png`
 - engine overworld animation sheet: `assets/art/characters/<name>_anim_46_4x.png`
 - preserved 4x animation master: `assets/art/masters/characters/animation/<name>_anim_46_4x_master.png`
 - source battle bust draft: `assets/art/drafts/<name>-battle-bust-transparent.png`
@@ -58,7 +58,7 @@ Frame contract:
 
 Run art requirements currently landed:
 
-- all 47 authored human character/NPC sheets have real run frames
+- all 48 authored character/NPC sheets (5 heroes, 42 human NPCs, and Glint special) have populated run frames
 - run frames include pumping arm/leg silhouettes
 - visible faces get exertion expressions
 - run heads lean/tuck forward by facing direction

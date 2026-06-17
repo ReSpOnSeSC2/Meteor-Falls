@@ -5,9 +5,11 @@ import { THE_LONG_SHOT } from './rocket';
 
 export const PKG07_TRAVEL_VEHICLE_IDS = [
   'banana_boat',
+  'bus',
   'lucille',
   'night_train',
   'riverboat',
+  'school_bus',
   'yak_express',
   'orient_less_express',
   'snowcat',

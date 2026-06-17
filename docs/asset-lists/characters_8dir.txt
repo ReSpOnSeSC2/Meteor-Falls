@@ -4,6 +4,7 @@ milo
 dorin
 pippa
 chad
+glint
 mom
 mrsPemmel
 mrPlummer
@@ -45,3 +46,10 @@ wisherC
 wokeC
 senora
 uncleBert
+npc_hodgkin
+npc_waitress
+npc_borden
+npc_clerk
+npc_depot_clerk
+npc_realtor
+npc_bert

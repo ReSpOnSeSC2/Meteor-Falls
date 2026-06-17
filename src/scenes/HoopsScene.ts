@@ -224,6 +224,12 @@ export class HoopsScene extends Phaser.Scene {
     });
 
     // ---- the world ----
+    // The court floor is the PROCEDURAL cage_court (drawCageCourt) — already built
+    // at the runtime COURT_RT footprint and matched to the engine's flat ¾ court
+    // geometry (sprite hoops at COURT.RIM positions, painted lines/key/arc). The
+    // authored court_full.png is a "down-the-court" perspective illustration with
+    // its OWN painted hoops, so it can't serve as the play surface here (it lands a
+    // second, misaligned basket); it is no longer wired over cage_court (authored.ts).
     this.courtSide = this.add.image(0, 0, 'cage_court').setOrigin(0, 0).setDepth(0);
     this.courtBehind = this.add.image(0, 0, 'cage_court_behind').setOrigin(0, 0).setDepth(0).setScrollFactor(0).setVisible(false);
     // hoop posts: PAD + rim are runtime px; the ±20px reach offset scales too

@@ -37,7 +37,7 @@ Landmark + generic buildings for kvisthavn, lilleby in the region style. Path
 
 ## 4. NPC roster — ~10–15, 8-dir 96×128 runtime / 24×32 native
 Townsfolk, shopkeepers, quest-givers. Same 8-direction → 46-frame contract as
-the heroes. `assets/art/characters/<id>_8dir_24x32.png`; add ids to
+the heroes. `assets/art/characters/<id>_anim_46_4x.png`; add ids to
 `NPC_CHARACTER_ART` in `src/spritegen/authored.ts`. (Ids come from the
 chapter's promoted settlement draft — `src/data/drafts/ch4/`.)
 

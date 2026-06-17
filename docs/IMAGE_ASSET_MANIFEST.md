@@ -46,7 +46,7 @@ commits to. "Author everything" means the right column.
 |---|---:|---:|---|
 | Opening / title / framing screens | ~12 | ~12 | logo, title, app icon, name entry, save slots, boot |
 | Cutscene panels | ~8 (Ch.1) | **~80** | §A6 beats + travel set-pieces, ~8/chapter ×10 |
-| Overworld characters (8-dir) | **47** | **~140** | 5 heroes done; ~10–15 new NPCs per unbuilt chapter |
+| Overworld characters (8-dir) | **48** | **~140** | 5 heroes, 42 human NPCs, and Glint special done; ~10–15 new NPCs per unbuilt chapter |
 | Hero battle busts | 5 × 18 frames | 5 × 18 | all 5 heroes already exist |
 | Hero battle-stage battlers | 5 × 14 frames | 5 × 14 (× weapon) | all 5 heroes exist; weapon variants optional |
 | **Enemies** (× 3 wear each) | **35** (=105 imgs) | **200** (=600 imgs) | §A7 law: 20/chapter ×10 — see §18 |
@@ -116,16 +116,16 @@ panel; multi-panel beats are just numbered sequences.
 
 ## 3. Overworld characters (8-direction)
 
-Walking sprites for every actor. **47 total** (5 heroes + 42 NPCs).
+Walking sprites for every actor. **48 total** (5 heroes + 42 human NPCs + Glint special).
 
 - **Engine size:** 96×128 per frame (24×32 native × ART_SCALE 4).
-- **Current contract:** 8 static facings expanded to a 46-frame sheet by the
-  bridge. **Production target** (per `docs/GRAPHICS_ASSET_ROLLOUT.md`): real
-  frames — 4 cardinal + 4 diagonal **walk** loops, the same 8 **run** loops,
-  plus **idle breathe** and **idle blink** = up to 46 authored frames each.
+- **Current contract:** a full 46-frame authored sheet. Legacy 8-static-facing
+  expansion is fallback only. Real frames include 4 cardinal + 4 diagonal
+  **walk** loops, the same 8 **run** loops, plus **idle breathe** and
+  **idle blink**.
 - **Facing order (must match):** down, down-left, left, up-left, up, up-right,
   right, down-right (counter-clockwise from front).
-- **Naming:** `assets/art/characters/<id>_8dir_24x32.png`.
+- **Naming:** `assets/art/characters/<id>_anim_46_4x.png`.
 - **Source of truth / full list:** [`asset-lists/characters_8dir.txt`](./asset-lists/characters_8dir.txt);
   wired in `NPC_CHARACTER_ART` / `HERO_ART` in `src/spritegen/authored.ts`.
 
@@ -383,11 +383,11 @@ sheet is expected reads as a frozen pose (and can crash if frames are missing).
 
 | Category | Animated how | Frames | Sheet layout | Status |
 |---|---|---:|---|---|
-| Overworld characters | frame anim: `<id>-idle/walk/run-<dir>` | **46** | 4 cols × 12 rows of 24×32 = **96×384** | ✅ all 47 complete |
+| Overworld characters | frame anim: `<id>-idle/walk/run-<dir>` | **46** | 4 cols × 12 rows of 24×32 native = **384×1536 runtime** | ✅ all 48 complete |
 | Hero battle busts | frame anim: idle/cast/pray/hurt… | **18** | 4 cols × 5 rows of 32×32 = **128×160** | ✅ 5 complete |
 | Hero stage battlers | frame anim: swing/cast/throw/aim | **14** | 4 cols × 4 rows of 28×36 = **112×144** | ✅ 5 complete |
 | Mourning angels (`angel_<id>`) | `*-float` 2-frame loop | **2** | 2 cols of the angel cell | procedural (author ⇒ 2 frames) |
-| Glint (`glint-flit`) | 2-frame loop | **2** | — | procedural |
+| Glint (`glint-flit`) | 2-frame loop alias | **2** | first two cells of `glint_anim_46_4x.png` | authored special; procedural fallback remains |
 | Dog (`dog-walk`/`-left`) | 4-frame (E + W trot) | **4** | — | procedural |
 | Picnic songbird | 2 hop frames | **2** | — | procedural |
 | Run dust / Ember sparkle / gift box | short FX frame runs | 2–4 | — | procedural |
@@ -408,12 +408,12 @@ sheet is expected reads as a frozen pose (and can crash if frames are missing).
 
 Swept every authored asset on disk against the contract above:
 
-- **Characters:** 47/47 sheets are 96×384 — full walk + run + idle. **0 mis-framed.**
+- **Characters:** 48/48 sheets are 384×1536 runtime — full walk + run + idle. **0 mis-framed.**
 - **Busts:** 5/5 at 128×160 (18 frames). **Battlers:** 5/5 at 112×144 (14 frames).
 - **Enemies:** 108 single-frame images — correct (engine-tweened).
 
 **Conclusion: no current image needs animation frames added.** The only loose end
-is **47 orphaned `*_8dir_24x32.png`** sheets, superseded by the `*_anim_46_…`
+is any orphaned `*_8dir_24x32.png` sheet, superseded by the `*_anim_46_…`
 sheets and no longer referenced — safe to delete (a cleanup, not an animation gap).
 
 ### Rule for all future authored art

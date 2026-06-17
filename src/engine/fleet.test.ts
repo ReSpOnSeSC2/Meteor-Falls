@@ -19,6 +19,7 @@ describe('fleet — control scales by chapter (ADR-035 staging)', () => {
   });
   it('Ch.5 adds trucks/buses', () => {
     expect(canPilot('bus', 5)).toBe(true);
+    expect(canPilot('school_bus', 5)).toBe(true);
     expect(canPilot('truck', 5)).toBe(true);
   });
   it('Ch.8 adds boats; Ch.10 adds planes + subs', () => {
@@ -69,6 +70,11 @@ describe('fleet — purchasing', () => {
   it('a marina at Ch.10 lists the dinghy, yacht, and sub', () => {
     const ids = craftForSale('marina', 10).map((c) => c.id).sort();
     expect(ids).toEqual(['deep_marlin', 'pearl_yacht', 'river_dinghy']);
+  });
+  it('the school bus lists as its own bus-class dealer craft', () => {
+    const schoolBus = FLEET_CRAFT.school_bus;
+    expect(schoolBus.vehicleType).toBe('school_bus');
+    expect(craftForSale('dealer', 5).map((c) => c.id)).toContain('school_bus');
   });
   it('ownership rides a title key-item, parked at your property', () => {
     expect(titleOf('comet_gt')).toBe('title_comet_gt');

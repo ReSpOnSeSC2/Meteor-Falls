@@ -188,6 +188,8 @@ export const EnemyDefSchema = z.strictObject({
   drops: z.array(EnemyDropSchema).min(1).optional(),
   sprite: z.string().min(1),
   mini: z.string().min(1),
+  /** authored 8-direction overworld sheet for visible roamer/patrol sprites */
+  overworld: z.string().min(1).optional(),
   /** humanoid enemies roam as full character sheets (4-dir walk) instead of a mini */
   walker: z.string().min(1).optional(),
   /** psychedelic battle-bg palette ramps [a, b] */

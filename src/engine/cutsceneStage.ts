@@ -103,8 +103,21 @@ export function showCard(scene: Phaser.Scene, art: string, opts: CardOpts = {}):
     .setDepth(depth)
     .setAlpha(0);
   const cover = Math.max(cam.width / img.width, cam.height / img.height);
-  img.setScale(cover * 1.05);
-  scene.tweens.add({ targets: img, alpha: 1, scale: cover * 1.12, duration: 600, ease: 'sine.out' });
+  const hold = opts.ms ?? 2600;
+  // Continuous Ken Burns: a slow diagonal push-in across the WHOLE card (fade-in
+  // + hold), not just a 600ms nudge that then freezes — keeps the still alive.
+  const panX = s(18);
+  const panY = s(11);
+  img.setScale(cover * 1.06).setPosition(cam.width / 2 - panX, cam.height / 2 - panY);
+  scene.tweens.add({ targets: img, alpha: 1, duration: 600, ease: 'sine.out' });
+  scene.tweens.add({
+    targets: img,
+    scale: cover * 1.26,
+    x: cam.width / 2 + panX,
+    y: cam.height / 2 + panY,
+    duration: 600 + hold,
+    ease: 'sine.inOut',
+  });
   let text: Phaser.GameObjects.BitmapText | null = null;
   if (opts.caption) {
     text = scene.add
@@ -118,7 +131,7 @@ export function showCard(scene: Phaser.Scene, art: string, opts: CardOpts = {}):
       .setAlpha(0);
     scene.tweens.add({ targets: text, alpha: 1, duration: 360, delay: 200 });
   }
-  return waitSkippable(scene, opts.ms ?? 2600).then(
+  return waitSkippable(scene, hold).then(
     () =>
       new Promise<void>((resolve) => {
         scene.tweens.add({

@@ -8,7 +8,42 @@ import type { EnemyDef } from '../schemas';
 
 export type { EnemyDef, EnemyMove, MoveKind } from '../schemas';
 
-const E = (e: EnemyDef): EnemyDef => e;
+const OVERWORLD_SHEET_IDS = new Set<string>([
+  'banana_bunch',
+  'blazer_smiler',
+  'boiler_golem',
+  'brolly_bat',
+  'coily_cicada',
+  'cranky_mailbox',
+  'cricket_eleven',
+  'cursed_souvenir',
+  'detention_desk',
+  'fog_hound',
+  'foggy_locker',
+  'gilded_beetle',
+  'greenhouse_creeper',
+  'head_prefect',
+  'hill_slug_deluxe',
+  'jungle_jitterbug',
+  'moor_sheep',
+  'overdue_tome',
+  'pickpocket_parrot',
+  'pigeon_gang',
+  'pillar_box',
+  'possessed_textbook',
+  'prefect_drone',
+  'roman_sentry',
+  'runaway_lawnmower',
+  'schedule_bell',
+  'soot_imp',
+  'step_mask',
+  'tea_poltergeist',
+  'tea_trolley',
+  'telephone_box',
+  'the_invigilator',
+]);
+
+const E = (e: EnemyDef): EnemyDef => (OVERWORLD_SHEET_IDS.has(e.id) ? { ...e, overworld: `ow_enemy_${e.id}` } : e);
 
 export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
   [

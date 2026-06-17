@@ -166,6 +166,14 @@ export class Dialogue {
   busy = false;
   /** scene-time stamp of the last say()/ask() teardown (see justReleased) */
   private releasedAt = -1;
+  /** Optional overrides for where an ask() menu sits (runtime px). The battle uses
+   *  them to dock the action menu in a BOTTOM-LEFT band (EarthBound layout): menuX
+   *  left edge instead of right-aligning, menuBottomY the bottom anchor, menuTopY
+   *  the highest the menu may grow (so it stays in the band and paginates rather
+   *  than rising into the enemy zone). Null = the default right-aligned placement. */
+  menuX: number | null = null;
+  menuBottomY: number | null = null;
+  menuTopY: number | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -332,7 +340,7 @@ export class Dialogue {
     // frame padding reserved), and PAGINATE the rest. The frame is sized to
     // perPage (== min(length, fitRows)) so a fitting list keeps the exact old
     // compact height — h = length*rowH + 16 — and a uniform frame across pages.
-    const menuBottom = scene.scale.height - s(66) - s(4);
+    const menuBottom = this.menuBottomY ?? scene.scale.height - s(66) - s(4);
     const fitRows = Math.max(1, Math.floor((menuBottom - s(4) - s(16)) / rowH));
     const { perPage, pages } = paginate(options.length, 1, fitRows);
     const h = perPage * rowH + s(16);

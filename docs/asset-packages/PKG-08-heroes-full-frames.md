@@ -8,7 +8,7 @@ Heroes (internal ids): Jay=`rex`, Mia=`faye`, Milo=`milo`, Pippa=`pippa`, Dorin=
 Replace the 8-static-facing sheets with **real** frames: 4 cardinal + 4 diagonal
 walk loops, the same 8 run loops, idle breathe, idle blink. Facing order:
 down, down-left, left, up-left, up, up-right, right, down-right.
-Path `assets/art/characters/<jay|mia|milo|pippa|dorin>_8dir_24x32.png`.
+Path `assets/art/characters/<jay|mia|milo|pippa|dorin>_anim_46_4x.png`.
 
 ## B. Battle busts — 5 × 18 frames, 128×128 runtime (32×32 native × ART_SCALE 4) (4 cols)
 Frame order: idleA, idleB, lunge, castA, castB, pray, gadget, rummage, munch,
