@@ -191,9 +191,11 @@ function main(): void {
   const colTop = new Array<number>(src.w).fill(-1);
   const colBot = new Array<number>(src.w).fill(-1);
   const rowHas = new Array<number>(src.h).fill(0);
+  const mask = new Uint8Array(src.w * src.h); // 1 = content (reused for components)
   for (let y = 0; y < src.h; y++) {
     for (let x = 0; x < src.w; x++) {
       if (isContent(x, y)) {
+        mask[y * src.w + x] = 1;
         colHas[x]++; rowHas[y]++;
         if (colTop[x] < 0) colTop[x] = y;
         colBot[x] = y;
@@ -255,15 +257,67 @@ function main(): void {
     method = 'snap-to-gap';
   }
 
-  // per-frame horizontal content bbox + the global scale (one consistent size)
-  const fx: Array<[number, number]> = [];
+  // --- group content into frames by connected component, not by hard cut ---
+  // FX (a cast reticle, swing arc, sparkles) is often drawn floating in the GAP
+  // between two poses, so a vertical cut slices straight through it and the
+  // halves land in two different cells. Instead: find each frame's figure centre
+  // (the tall-mass centroid in its band), label every connected blob, then assign
+  // each blob WHOLE to its nearest figure centre. A floating reticle goes
+  // entirely to one figure — never split — and each cell is later rendered from a
+  // mask of only its own blobs, so no neighbour can bleed in.
+  const figCenter: number[] = [];
   for (let i = 0; i < frames; i++) {
     const a = bounds[i];
     const b = bounds[i + 1] - 1;
-    let mn = -1;
-    let mx = -1;
-    for (let x = a; x <= b; x++) if (colHas[x] > 0) { if (mn < 0) mn = x; mx = x; }
-    fx.push(mn < 0 ? [a, b] : [mn, mx]);
+    let sw = 0; let swx = 0;
+    for (let x = a; x <= b; x++) if (colOcc[x] > 0) { sw += colOcc[x]; swx += colOcc[x] * x; }
+    if (sw === 0) for (let x = a; x <= b; x++) if (colHas[x] > 0) { sw += colHas[x]; swx += colHas[x] * x; }
+    figCenter.push(sw > 0 ? swx / sw : (a + b) / 2);
+  }
+
+  // connected-component label (8-connectivity) over the content mask
+  const W = src.w;
+  const label = new Int32Array(W * src.h).fill(-1); // -1 unvisited, -2 empty, >=0 component id
+  const comp: Array<{ minX: number; maxX: number; area: number; sumX: number }> = [];
+  const stack: number[] = [];
+  for (let p0 = 0; p0 < mask.length; p0++) {
+    if (label[p0] !== -1) continue;
+    if (mask[p0] === 0) { label[p0] = -2; continue; }
+    const id = comp.length;
+    const c = { minX: p0 % W, maxX: p0 % W, area: 0, sumX: 0 };
+    label[p0] = id; stack.push(p0);
+    while (stack.length) {
+      const p = stack.pop() as number;
+      const px = p % W; const py = (p - px) / W;
+      c.area++; c.sumX += px;
+      if (px < c.minX) c.minX = px; if (px > c.maxX) c.maxX = px;
+      for (let dy = -1; dy <= 1; dy++) {
+        const ny = py + dy; if (ny < 0 || ny >= src.h) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = px + dx; if (nx < 0 || nx >= W) continue;
+          const ni = ny * W + nx; if (label[ni] !== -1) continue;
+          if (mask[ni] === 1) { label[ni] = id; stack.push(ni); } else label[ni] = -2;
+        }
+      }
+    }
+    comp.push(c);
+  }
+
+  // assign each blob to the nearest figure centre; frame bbox = union of its blobs
+  const frameComps: number[][] = Array.from({ length: frames }, () => []);
+  for (let ci = 0; ci < comp.length; ci++) {
+    const cx = comp[ci].sumX / comp[ci].area;
+    let bi = 0; let bd = Infinity;
+    for (let i = 0; i < frames; i++) { const d = Math.abs(cx - figCenter[i]); if (d < bd) { bd = d; bi = i; } }
+    frameComps[bi].push(ci);
+  }
+  const fx: Array<[number, number]> = [];
+  for (let i = 0; i < frames; i++) {
+    const cs = frameComps[i];
+    if (cs.length === 0) { fx.push([bounds[i], bounds[i + 1] - 1]); continue; }
+    let mn = Infinity; let mx = -Infinity;
+    for (const ci of cs) { if (comp[ci].minX < mn) mn = comp[ci].minX; if (comp[ci].maxX > mx) mx = comp[ci].maxX; }
+    fx.push([mn, mx]);
   }
   const maxFW = Math.max(...fx.map(([a, b]) => b - a + 1));
   // Default: fill cell HEIGHT (one consistent character size; wide poses may
@@ -282,10 +336,26 @@ function main(): void {
     const row = Math.floor(i / cols);
     const [a, b] = fx[i];
     const fw = b - a + 1;
+    // masked sub-image: keep ONLY this frame's own blobs so a neighbour figure
+    // overlapping the bbox rect can never bleed in.
+    const keep = new Set(frameComps[i]);
+    const sub = makeImg(fw, gH);
+    for (let y = 0; y < gH; y++) {
+      for (let xx = 0; xx < fw; xx++) {
+        const li = label[(gMinY + y) * W + (a + xx)];
+        if (li < 0 || !keep.has(li)) continue;
+        const so = ((gMinY + y) * W + (a + xx)) * 4;
+        const o = (y * fw + xx) * 4;
+        sub.data[o] = src.data[so]; sub.data[o + 1] = src.data[so + 1];
+        sub.data[o + 2] = src.data[so + 2]; sub.data[o + 3] = src.data[so + 3];
+      }
+    }
     const placedW = Math.max(1, Math.round(fw * s));
     const placedH = Math.max(1, Math.round(gH * s));
-    const cellImg = resample(src, a, gMinY, fw, gH, placedW, placedH);
-    const cx = col * cellW + Math.round((cellW - placedW) / 2);
+    const cellImg = resample(sub, 0, 0, fw, gH, placedW, placedH);
+    // anchor on the FIGURE centre (not the bbox) so the character stays put while
+    // FX extends to one side (clipped to the cell, never into the neighbour).
+    const cx = col * cellW + Math.round(cellW / 2 - (figCenter[i] - a) * s);
     const cy = row * cellH + (align === 'center' ? Math.round((cellH - placedH) / 2) : cellH - pad - placedH);
     blit(sheet, cellImg, cx, cy, { x0: col * cellW, y0: row * cellH, x1: col * cellW + cellW, y1: row * cellH + cellH });
   }
