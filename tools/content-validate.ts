@@ -1166,6 +1166,22 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     pigeon_gang: 20,
     hill_slug_deluxe: 28,
     borden: 70, // S22 (ADR-118) — the Ch.1 set-piece cop fight (optional town beat)
+    // ADR-119 — THE OTTERBROOK 20: the Ch.1 ecosystem fleshed to the §A7 canon
+    // 20 (4 roamers · 3 Dept.-of-Smiles · 2 social/urban · 2 rare/high-value ·
+    // 2 late-pressure). Slow-Burn HP band; rare types pay BIG cash (Fortune Arc).
+    sprinkler_sentry: 18,
+    recycling_raccoon: 16,
+    skeeter_swarm: 14,
+    unionized_gnome: 22,
+    mandatory_memo: 16,
+    motivational_poster: 20,
+    quota_clock: 24,
+    expired_meter: 18,
+    showroom_mannequin: 20,
+    good_investment: 26,
+    rogue_icecream_truck: 30,
+    tick_nymph: 28,
+    the_suit: 32,
     titanic_tick: 150,
     // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
     // (the union attacks 5×22, §A7's group notation)

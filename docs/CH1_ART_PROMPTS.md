@@ -360,6 +360,94 @@ transparent background, palette-consistent with the rest of Otterbrook.
 > car) — the rags-to-riches teaser. A parked Comet sedan prop for Bert's lot can use
 > the existing vehicle forge (no authored PNG needed) or a bespoke master via §5.1.
 
+## §7 — The Otterbrook 20: Chapter 1 enemy battlers (ADR-119)
+
+13 new §A7 Ch.1 enemy types now ship in the data, each GRAY-BOXED on an existing
+battler so the game runs today. Each needs **(B) a front-facing BATTLER** and
+**(M) a 16×16 overworld MINI** to replace the gray-box.
+- **Master (battler):** `battlers/` ~2030×775. **Runtime:** `battlers/` 28×36 → 112×144 (key `battle_<id>`).
+- **Master (mini):** `enemies/` mini sheet. **Runtime:** 16×16 (key `mini_<id>`).
+- Paste the STYLE PREAMBLE first. Tone: a foe you almost feel bad about beating —
+  the neighborhood having its worst Tuesday. Transparent background.
+
+### 7.1 — `battle_sprinkler_sentry` (roamer)
+```
+A lawn SPRINKLER turned cranky guardian — an oscillating brass sprinkler head on a
+spiked base, water arcing off it like a cape, a tiny furious "face" in the nozzle.
+Reads as a suburban yard appliance that has decided the lawn is sovereign territory.
+```
+### 7.2 — `battle_recycling_raccoon` (roamer)
+```
+A plump RACCOON standing on its hind legs out of a tipped recycling bin, a crushed
+soda can in one paw, a five-cent-deposit gleam in its eye, bandit-mask reading as
+literal theft. Mischief, not menace.
+```
+### 7.3 — `battle_skeeter_swarm` (roamer)
+```
+A loose CLOUD OF MOSQUITOES shaped into one battler-sized swarm with a faint
+collective face, a few oversized lead skeeters at the front, motion-whine implied by
+trailing dashes. Reads as the dusk pond at its most annoying.
+```
+### 7.4 — `battle_unionized_gnome` (roamer)
+```
+A ceramic GARDEN GNOME holding a tiny pickaxe and a clipboard, red cap, a little
+"ON STRIKE" attitude in its stance, a hand-lettered grievance sign at its feet.
+Stoic, bureaucratic, immovable.
+```
+### 7.5 — `battle_mandatory_memo` (Dept. of Smiles)
+```
+An animated office MEMO — a single sheet of letterhead with a stapled-on scowl,
+paper-cut edges bared like teeth, "RE: RE: RE:" headers stacking off the top. Crisp,
+cold, institutional.
+```
+### 7.6 — `battle_motivational_poster` (Dept. of Smiles)
+```
+A framed "HANG IN THERE" KITTEN POSTER come alive, the kitten's smile a notch too
+wide and too long, the frame cracking at the corners. Aggressively, menacingly
+encouraging. Faded 1995 office colors.
+```
+### 7.7 — `battle_quota_clock` (Dept. of Smiles)
+```
+A round institutional WALL CLOCK with a clenched face, hands sweeping like fists,
+a frayed power cord twitching like a tail, "OVERTIME" implied. The pressure of time
+made physical.
+```
+### 7.8 — `battle_expired_meter` (social/urban)
+```
+A coin-op PARKING METER on a bent pole, red "VIOLATION" flag up, a ticket pad
+tucked under its head, a smug little dial-face. Petty municipal authority incarnate.
+```
+### 7.9 — `battle_showroom_mannequin` (social/urban)
+```
+A boutique MANNEQUIN mid-strut, one stolen ball-cap balanced on its faceless head,
+a price tag swinging, an exaggerated runway pose held a beat too long. Vain, blank,
+unbothered.
+```
+### 7.10 — `battle_good_investment` (rare/high-value)
+```
+A radiant GOLDEN RETRIEVER with an almost halo-like sheen, sitting proud, tail
+mid-wag, a tiny dollar-sign glint on its collar tag. Reads instantly as "rare and
+worth a LOT" — the rags-to-riches wink. Warm, lovable, premium.
+```
+### 7.11 — `battle_rogue_icecream_truck` (rare/high-value)
+```
+A boxy 1995 ICE-CREAM TRUCK seen three-quarter front, menu decals peeling, a warped
+loudspeaker leaking crooked music notes, headlights like droopy hypnotized eyes.
+Big, slow, and slightly cursed.
+```
+### 7.12 — `battle_tick_nymph` (late pressure)
+```
+A juvenile of the Titanic Tick — a swollen pillbug-tick the size of a dog, glossy
+abdomen, barbed legs poised to LATCH, a smaller echo of the boss's silhouette so the
+player reads the foreshadow. Gross but small. Warning, not yet horror.
+```
+### 7.13 — `battle_the_suit` (late pressure)
+```
+The most-gone Dept. of Smiles SMILER — a sharp gray business suit with a smile
+stretched flat and empty, the eyes two dark unlit voids, a faint cold "Hush" haze at
+the edges (its line is never funny). Quietly wrong; the calm before the boss.
+```
+
 ## Wiring checklist (per asset)
 
 - [ ] Master saved in `assets/art/masters/<category>/` (+ `-transparent` variant).

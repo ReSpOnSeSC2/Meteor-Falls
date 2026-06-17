@@ -251,19 +251,19 @@ export function buildOtterbrook(): MapDef {
     ],
     spawners: [
       {
-        enemies: ['cranky_mailbox'],
+        enemies: ['cranky_mailbox', 'sprinkler_sentry'],
         count: 1,
         rect: { x: 29, y: 19, w: 8, h: 4 },
         ifFlag: 'meteor_fell',
       },
       {
-        enemies: ['runaway_lawnmower'],
+        enemies: ['runaway_lawnmower', 'recycling_raccoon', 'unionized_gnome'],
         count: 1,
         rect: { x: 4, y: 23, w: 8, h: 5 },
         ifFlag: 'meteor_fell',
       },
       {
-        enemies: ['pigeon_gang'],
+        enemies: ['pigeon_gang', 'good_investment'],
         count: 1,
         rect: { x: 25, y: 22, w: 10, h: 5 },
         ifFlag: 'meteor_fell',
@@ -507,7 +507,7 @@ export function growOtterbrook(): MapDef {
       ...core.spawners,
       // the woken town's danger reaches the new south field too (gated like the
       // core's), seated well clear of every door/phone/sign (pressure ≥24px)
-      { enemies: ['cranky_mailbox'], count: 1, rect: { x: 31, y: 47, w: 8, h: 3 }, ifFlag: 'meteor_fell' },
+      { enemies: ['cranky_mailbox', 'skeeter_swarm'], count: 1, rect: { x: 31, y: 47, w: 8, h: 3 }, ifFlag: 'meteor_fell' },
     ],
     // triggers stay byte-identical to the frozen core (the world_block test pins
     // grown.triggers === core.triggers). The old center bus_stop becomes a ONE-TIME
@@ -717,7 +717,7 @@ function buildMeadowWoods(): MapDef {
       { x: W - 1, y: eastY, w: 1, h: 2, to: 'meadow_far', tx: 16, ty: eastY * 16, facing: 'right', indicator: 'none' },
     ],
     spawners: [
-      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: Math.round(W / 3), y: 2, w: Math.round(W / 3), h: H - 4 } },
+      { enemies: ['hill_slug_deluxe', 'coily_cicada', 'recycling_raccoon'], count: 2, rect: { x: Math.round(W / 3), y: 2, w: Math.round(W / 3), h: H - 4 } },
     ],
     triggers: [
       { id: 'woods_vignette', rect: { x: 1, y: 0, w: 3, h: H }, once: false },
@@ -756,7 +756,7 @@ function buildMeadowFar(): MapDef {
       { x: 0, y: westY, w: 1, h: 2, to: 'meadow_woods', tx: 16, ty: westY * 16, facing: 'left', indicator: 'none' },
       { x: W - 1, y: eastY, w: 1, h: 2, to: 'meadow_overpass', tx: 16, ty: eastY * 16, facing: 'right', indicator: 'none' },
     ],
-    spawners: draft.spawners.map((s) => ({ ...s, enemies: ['runaway_lawnmower', 'pigeon_gang'] })),
+    spawners: draft.spawners.map((s) => ({ ...s, enemies: ['runaway_lawnmower', 'pigeon_gang', 'skeeter_swarm'] })),
     // Task 3 (ADR-058): the WALKERS' REGISTER token (where the air goes electric)
     triggers: [{ id: 'walk_token', rect: { x: Math.round(W * 0.4), y: 0, w: 2, h: H }, once: false }],
   };
@@ -806,7 +806,7 @@ function buildMeadowOverpass(): MapDef {
     doors: [
       { x: 0, y: westY, w: 1, h: 2, to: 'meadow_far', tx: 16, ty: westY * 16, facing: 'left', indicator: 'none' },
     ],
-    spawners: draft.spawners.map((s) => ({ ...s, enemies: ['pigeon_gang', 'blazer_smiler'] })),
+    spawners: draft.spawners.map((s) => ({ ...s, enemies: ['pigeon_gang', 'blazer_smiler', 'good_investment'] })),
     triggers: [
       // the "you can see the city now" reveal — on entry from the far meadow (west)
       { id: 'city_reveal', rect: { x: 1, y: 0, w: 3, h: H }, once: false },
@@ -935,10 +935,10 @@ function buildHillRoad(): MapDef {
       { x: 13, y: 0, w: 4, h: 1, to: 'hickory_trail', tx: 232, ty: 288, facing: 'up' },
     ],
     spawners: [
-      { enemies: ['coily_cicada'], count: 2, rect: { x: 6, y: 11, w: 16, h: 6 }, ifFlag: 'meteor_fell' },
+      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 6, y: 11, w: 16, h: 6 }, ifFlag: 'meteor_fell' },
       { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 6, y: 18, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
       // a mailbox prowling the home lane — it has COMPLAINTS
-      { enemies: ['cranky_mailbox'], count: 1, rect: { x: 18, y: 25, w: 8, h: 3 }, ifFlag: 'meteor_fell' },
+      { enemies: ['cranky_mailbox', 'unionized_gnome'], count: 1, rect: { x: 18, y: 25, w: 8, h: 3 }, ifFlag: 'meteor_fell' },
     ],
     triggers: [],
   };
@@ -1010,7 +1010,7 @@ function buildHill(): MapDef {
     // S22 (ADR-112): descending from the crater drops into WHISPERWOOD RISE
     doors: [{ x: 13, y: 45, w: 4, h: 1, to: 'whisperwood_rise', tx: 232, ty: 36, facing: 'down' }],
     spawners: [
-      { enemies: ['coily_cicada'], count: 3, rect: { x: 6, y: 18, w: 18, h: 8 } },
+      { enemies: ['coily_cicada', 'tick_nymph'], count: 3, rect: { x: 6, y: 18, w: 18, h: 8 } },
       { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 6, y: 28, w: 16, h: 8 } },
       { enemies: ['hill_slug_deluxe'], count: 1, rect: { x: 10, y: 12, w: 12, h: 6 } },
     ],
@@ -1144,7 +1144,7 @@ function buildWhisperwoodRise(): MapDef {
       { x: 13, y: 0, w: 3, h: 1, to: 'hickory_hill', tx: 232, ty: 660, facing: 'up' },
     ],
     spawners: [
-      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 8, y: 4, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['coily_cicada', 'hill_slug_deluxe', 'skeeter_swarm'], count: 2, rect: { x: 8, y: 4, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
       { enemies: ['hill_slug_deluxe'], count: 1, rect: { x: 8, y: 12, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
     ],
     triggers: [],
@@ -1730,13 +1730,13 @@ export function buildBrickton(): MapDef {
       { x: 71, y: 21, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
     ],
     spawners: [
-      { enemies: ['blazer_smiler'], count: 1, rect: { x: 28, y: 6, w: 12, h: 2 } },
+      { enemies: ['blazer_smiler', 'showroom_mannequin'], count: 1, rect: { x: 28, y: 6, w: 12, h: 2 } },
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 11, y: 19, w: 13, h: 2 } },
-      { enemies: ['pigeon_gang'], count: 1, rect: { x: 2, y: 13, w: 8, h: 5 } },
+      { enemies: ['pigeon_gang', 'rogue_icecream_truck'], count: 1, rect: { x: 2, y: 13, w: 8, h: 5 } },
       { enemies: ['pigeon_gang'], count: 1, rect: { x: 41, y: 13, w: 12, h: 6 } },
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 56, y: 12, w: 13, h: 7 } },
       { enemies: ['pigeon_gang'], count: 1, rect: { x: 3, y: 28, w: 9, h: 5 } },
-      { enemies: ['cranky_mailbox'], count: 1, rect: { x: 30, y: 25, w: 16, h: 4 } },
+      { enemies: ['cranky_mailbox', 'expired_meter'], count: 1, rect: { x: 30, y: 25, w: 16, h: 4 } },
     ],
     triggers: [
       { id: 'bus_stop_brickton', rect: { x: 4, y: 26, w: 4, h: 3 }, once: false },
@@ -1912,7 +1912,7 @@ export function growBrickton(): MapDef {
       ...core.spawners,
       // the new districts run a city band too (clear of the gateway + fixtures)
       { enemies: ['blazer_smiler'], count: 1, rect: { x: 108, y: 32, w: 14, h: 6 } },
-      { enemies: ['pigeon_gang'], count: 1, rect: { x: 10, y: 40, w: 20, h: 6 } },
+      { enemies: ['pigeon_gang', 'expired_meter'], count: 1, rect: { x: 10, y: 40, w: 20, h: 6 } },
     ],
   };
 }
@@ -2020,7 +2020,7 @@ function buildDosF2(): MapDef {
       { x: 22, y: 2, w: 2, h: 1, to: 'dos_f1', tx: 368, ty: 60, facing: 'down', indicator: 'elevator' },
       { x: 27, y: 2, w: 1, h: 1, to: 'dos_f3', tx: 392, ty: 60, facing: 'down', indicator: 'stairs' },
     ],
-    spawners: [{ enemies: ['blazer_smiler'], count: 1, rect: { x: 3, y: 18, w: 24, h: 3 } }],
+    spawners: [{ enemies: ['blazer_smiler', 'mandatory_memo', 'motivational_poster', 'quota_clock', 'the_suit'], count: 1, rect: { x: 3, y: 18, w: 24, h: 3 } }],
     triggers: [],
     patrols: [
       { id: 'f2a', enemy: 'blazer_smiler', route: [[4, 10], [25, 10]] },
