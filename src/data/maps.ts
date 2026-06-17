@@ -1003,6 +1003,7 @@ function buildHill(): MapDef {
   return {
     id: 'hickory_hill',
     name: 'HICKORY HILL',
+    ambience: 'wind', // S22 (ADR-124)
     music: 'hill',
     // night follows the §A6 story clock (2 AM until zapper_done), not a
     // permanent flag — dawn reaches the hill too (S9b)
@@ -2303,6 +2304,7 @@ function buildDowntownOtterbrook(entryStreetExit: { tx: number; ty: number }): M
   return {
     id: 'downtown_otterbrook',
     name: 'DOWNTOWN OTTERBROOK',
+    ambience: 'crowd', // S22 (ADR-124)
     music: 'otterbrook',
     grid: g.out(),
     props: [
@@ -2682,6 +2684,7 @@ function buildTheCage(): MapDef {
   return {
     id: 'the_cage',
     name: 'THE CAGE',
+    ambience: 'crowd', // S22 (ADR-124)
     music: 'cage',
     grid: g.out(),
     props: [
@@ -2765,6 +2768,7 @@ function buildCagePark(): MapDef {
   return {
     id: 'cage_park',
     name: 'CAGE PARK',
+    ambience: 'crowd', // S22 (ADR-124)
     music: 'cage',
     grid: g.out(),
     props: [
@@ -2839,6 +2843,7 @@ function buildCageBlock(): MapDef {
   return {
     id: 'cage_block',
     name: 'THE BLOCK',
+    ambience: 'crowd', // S22 (ADR-124)
     music: 'brickton',
     grid: g.out(),
     props: [
@@ -2881,6 +2886,7 @@ function buildCageLot(): MapDef {
   return {
     id: 'cage_lot',
     name: 'THE LOT',
+    ambience: 'wind', // S22 (ADR-124)
     music: 'cage',
     grid: g.out(),
     props: [
@@ -3061,6 +3067,7 @@ function buildCostaGate(): MapDef {
   return {
     id: 'costa_gate',
     name: 'THE RESORT GATE',
+    ambience: 'wind', // S22 (ADR-124)
     music: 'puerto',
     grid: g.out(),
     props: [
@@ -3112,6 +3119,7 @@ function buildCostaEstrella(): MapDef {
     id: 'costa_estrella',
     name: 'COSTA ESTRELLA LINKS',
     music: 'cage',
+    ambience: 'wind', // S22 (ADR-124): the clifftop breeze off the surf
     settlement: 'village',
     grid: g.out(),
     props: [
@@ -3211,6 +3219,7 @@ function buildGolfResort(costaStep: { tx: number; ty: number }): MapDef {
     id: 'golf_resort',
     name: 'THE LINKS ESTATES',
     music: 'cage',
+    ambience: 'wind', // S22 (ADR-124): the manicured hush of the estates
     settlement: 'village',
     grid: g.out(),
     props: [

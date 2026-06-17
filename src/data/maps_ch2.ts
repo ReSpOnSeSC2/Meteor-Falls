@@ -76,6 +76,7 @@ export function buildBricktonDocks(): MapDef {
   return {
     id: 'brickton_docks',
     name: 'BRICKTON DOCKS',
+    ambience: 'waves', // S22 (ADR-124)
     music: 'puerto',
     grid: g.out(),
     props: [
@@ -132,6 +133,7 @@ export function buildDocksWarehouses(): MapDef {
   return {
     id: 'docks_warehouses',
     name: 'THE WAREHOUSES',
+    ambience: 'machine', // S22 (ADR-124)
     music: 'brickton',
     grid: g.out(),
     props: [

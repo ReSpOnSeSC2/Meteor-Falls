@@ -2953,6 +2953,32 @@ let waveTwoAmbientNpcs = 0;
   }
 }
 
+/* ===== ADR-124 — THE VIBRANCY GATES (the Map Vibrancy Plan made enforceable) =====
+ * Pillar 3 (the living-world layer) and Pillar 5 (the Approach Law) of
+ * docs/MAP_VIBRANCY_PLAN.md, so "vibrant + alive" can't silently regress:
+ *   · HARD — every settlement (the alive heart of a region) declares a soundscape
+ *     bed. A town/city/village with no ambience reads dead the moment you arrive.
+ *   · SOFT REPORT — outdoor soundscape COVERAGE and thin-life settlements, printed
+ *     as ⚠ opportunities (never a build failure) so the gaps stay visible as the
+ *     unlanded chapters fill in. */
+{
+  for (const m of Object.values(MAPS)) {
+    if (m.settlement && m.ambience === undefined) {
+      fail('vibrancy', `${m.id} is a ${m.settlement} but carries no ambience bed (ADR-124: settlements must be alive — add one from ${AMBIENCE_IDS.join('/')})`);
+    }
+  }
+  const outdoor = Object.values(MAPS).filter((m) => !m.interior);
+  const silent = outdoor.filter((m) => m.ambience === undefined);
+  // the alive-floor: a town/city/village wants ≥5 residents (Pillar 3 table); flag
+  // the genuinely sparse ones as opportunities (count total — static folk count too)
+  const thin = Object.values(MAPS).filter((m) => m.settlement !== undefined && m.npcs.length < 5);
+  console.log(
+    `  vibrancy (ADR-124): ${outdoor.length - silent.length}/${outdoor.length} outdoor maps carry a soundscape bed; ${silent.length} still silent · ${thin.length} thin-life settlement(s) —`,
+  );
+  for (const m of silent) console.log(`    ⚠ ${m.id}: no ambience bed (Pillar 3 — add one from ${AMBIENCE_IDS.join('/')})`);
+  for (const m of thin) console.log(`    ⚠ ${m.id}: settlement has ${m.npcs.length} resident(s) (Pillar 3 alive-floor wants ≥5)`);
+}
+
 /* ================= 5. New Game values fit the letter grid ================= */
 
 {
