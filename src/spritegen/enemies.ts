@@ -1255,22 +1255,23 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   hill_slug_deluxe: { sprite: 'battle_hill_slug', draw: drawHillSlugDeluxe },
   titanic_tick: { sprite: 'battle_titanic_tick', draw: drawTitanicTick },
 
-  // ADR-119 — the Ch.1 ecosystem to 20. All 13 GRAY-BOX on shipped battlers
-  // (registry aliases, not new generators); authored art queued in
-  // docs/CH1_ART_PROMPTS.md. sprite keys MUST match the EnemyDef sprite (S11b).
-  sprinkler_sentry: { sprite: 'battle_runaway_lawnmower', draw: drawRunawayLawnmower },
-  recycling_raccoon: { sprite: 'battle_pigeon_gang', draw: drawPigeonGang },
-  skeeter_swarm: { sprite: 'battle_coily_cicada', draw: drawCoilyCicada },
-  unionized_gnome: { sprite: 'battle_cranky_mailbox', draw: drawCrankyMailbox },
-  mandatory_memo: { sprite: 'battle_cranky_mailbox', draw: drawCrankyMailbox },
-  motivational_poster: { sprite: 'battle_blazer_smiler', draw: drawBlazerSmiler },
-  quota_clock: { sprite: 'battle_runaway_lawnmower', draw: drawRunawayLawnmower },
-  expired_meter: { sprite: 'battle_cranky_mailbox', draw: drawCrankyMailbox },
-  showroom_mannequin: { sprite: 'battle_blazer_smiler', draw: drawBlazerSmiler },
-  good_investment: { sprite: 'battle_pigeon_gang', draw: drawPigeonGang },
-  rogue_icecream_truck: { sprite: 'battle_runaway_lawnmower', draw: drawRunawayLawnmower },
-  tick_nymph: { sprite: 'battle_coily_cicada', draw: drawCoilyCicada },
-  the_suit: { sprite: 'battle_blazer_smiler', draw: drawBlazerSmiler },
+  // ADR-119 — the Ch.1 ecosystem to 20. Each owns its OWN battle_<id> key so an
+  // authored PNG (docs/CH1_ART_PROMPTS.md §7) drops straight in; the `draw` is a
+  // reused generator standing in as the gray-box until that art lands (no new
+  // generator — ADR-109 frozen). sprite key MUST match the EnemyDef sprite (S11b).
+  sprinkler_sentry: { sprite: 'battle_sprinkler_sentry', draw: drawRunawayLawnmower },
+  recycling_raccoon: { sprite: 'battle_recycling_raccoon', draw: drawPigeonGang },
+  skeeter_swarm: { sprite: 'battle_skeeter_swarm', draw: drawCoilyCicada },
+  unionized_gnome: { sprite: 'battle_unionized_gnome', draw: drawCrankyMailbox },
+  mandatory_memo: { sprite: 'battle_mandatory_memo', draw: drawCrankyMailbox },
+  motivational_poster: { sprite: 'battle_motivational_poster', draw: drawBlazerSmiler },
+  quota_clock: { sprite: 'battle_quota_clock', draw: drawRunawayLawnmower },
+  expired_meter: { sprite: 'battle_expired_meter', draw: drawCrankyMailbox },
+  showroom_mannequin: { sprite: 'battle_showroom_mannequin', draw: drawBlazerSmiler },
+  good_investment: { sprite: 'battle_good_investment', draw: drawPigeonGang },
+  rogue_icecream_truck: { sprite: 'battle_rogue_icecream_truck', draw: drawRunawayLawnmower },
+  tick_nymph: { sprite: 'battle_tick_nymph', draw: drawCoilyCicada },
+  the_suit: { sprite: 'battle_the_suit', draw: drawBlazerSmiler },
 
   // §A7 Ch.2 (S14) — every quirk drawn, all three wear tiers authored
   pickpocket_parrot: { sprite: 'battle_pickpocket_parrot', draw: drawPickpocketParrot },

@@ -362,13 +362,33 @@ transparent background, palette-consistent with the rest of Otterbrook.
 
 ## §7 — The Otterbrook 20: Chapter 1 enemy battlers (ADR-119)
 
-13 new §A7 Ch.1 enemy types now ship in the data, each GRAY-BOXED on an existing
-battler so the game runs today. Each needs **(B) a front-facing BATTLER** and
-**(M) a 16×16 overworld MINI** to replace the gray-box.
-- **Master (battler):** `battlers/` ~2030×775. **Runtime:** `battlers/` 28×36 → 112×144 (key `battle_<id>`).
-- **Master (mini):** `enemies/` mini sheet. **Runtime:** 16×16 (key `mini_<id>`).
-- Paste the STYLE PREAMBLE first. Tone: a foe you almost feel bad about beating —
-  the neighborhood having its worst Tuesday. Transparent background.
+13 new §A7 Ch.1 enemy types ship in the data (ADR-119), each running today on a
+gray-box fallback. Each owns its **own** `battle_<id>` texture key, so a generated
+PNG drops straight in — **no code change needed beyond the 3 wiring lines below.**
+
+**WHAT TO MAKE (per enemy): one front-facing BATTLER in THREE WEAR TIERS.** The
+engine cross-fades a battler through 3 states as its HP drops (the EarthBound
+"reads the drums" beat), so every enemy is 3 PNGs:
+- `battle_<id>.png` — **W0 / pristine** (full HP: clean, confident, full color).
+- `battle_<id>_w1.png` — **W1 / worn** (~half HP: dinged, cracked, scuffed, a little rattled).
+- `battle_<id>_w2.png` — **W2 / battered** (near death: barely holding together, drooping, sparks/cracks/smoke, same silhouette).
+Keep the **same pose, framing, and silhouette** across all three — only the damage/wear changes.
+
+**SIZE / FORMAT:** author large (master ~512×640+ per tier, square-ish), export each
+runtime PNG at **112×144 px**, single frame, **fully transparent** background, crisp
+pixels, no anti-alias halo. Paste the **STYLE PREAMBLE** (top of this file) before every prompt.
+
+**WHERE IT GOES:**
+- **Masters:** `assets/art/masters/enemies/` (a combined `ch1-enemies-wear-2-source.png` sheet, or per-enemy files).
+- **Runtime:** `assets/art/enemies/battle_<id>.png`, `…_w1.png`, `…_w2.png`.
+- **Wire it:** add the enemy's 3 lines to the `ENEMY_BATTLE_ART` list in
+  [`src/spritegen/authored.ts`](../src/spritegen/authored.ts) (full block in §7.14 below).
+- **The overworld MINI** (the 16×16 you touch on the map) is **procedural** — it currently
+  reuses a sibling silhouette and needs no art here; a bespoke-mini pass is separate.
+
+**TONE:** a foe you almost feel bad about beating — the neighborhood having its
+worst Tuesday. Funny, warm, slightly strange; never grimdark. (Exception: **The Suit**
+is the one quietly *wrong* one — the Hush peeking through, never funny.)
 
 ### 7.1 — `battle_sprinkler_sentry` (roamer)
 ```
@@ -446,6 +466,72 @@ player reads the foreshadow. Gross but small. Warning, not yet horror.
 The most-gone Dept. of Smiles SMILER — a sharp gray business suit with a smile
 stretched flat and empty, the eyes two dark unlit voids, a faint cold "Hush" haze at
 the edges (its line is never funny). Quietly wrong; the calm before the boss.
+```
+
+### 7.14 — Files, sizes & `authored.ts` wiring (all 13)
+
+Every enemy = **3 PNGs** at **112×144**, transparent, in `assets/art/enemies/`:
+
+| Enemy id | Files (W0 / W1 / W2) |
+|---|---|
+| sprinkler_sentry | `battle_sprinkler_sentry.png` · `…_w1.png` · `…_w2.png` |
+| recycling_raccoon | `battle_recycling_raccoon.png` · `…_w1` · `…_w2` |
+| skeeter_swarm | `battle_skeeter_swarm.png` · `…_w1` · `…_w2` |
+| unionized_gnome | `battle_unionized_gnome.png` · `…_w1` · `…_w2` |
+| mandatory_memo | `battle_mandatory_memo.png` · `…_w1` · `…_w2` |
+| motivational_poster | `battle_motivational_poster.png` · `…_w1` · `…_w2` |
+| quota_clock | `battle_quota_clock.png` · `…_w1` · `…_w2` |
+| expired_meter | `battle_expired_meter.png` · `…_w1` · `…_w2` |
+| showroom_mannequin | `battle_showroom_mannequin.png` · `…_w1` · `…_w2` |
+| good_investment | `battle_good_investment.png` · `…_w1` · `…_w2` |
+| rogue_icecream_truck | `battle_rogue_icecream_truck.png` · `…_w1` · `…_w2` |
+| tick_nymph | `battle_tick_nymph.png` · `…_w1` · `…_w2` |
+| the_suit | `battle_the_suit.png` · `…_w1` · `…_w2` |
+
+When the PNGs exist, paste these into the `ENEMY_BATTLE_ART` array in
+`src/spritegen/authored.ts` (the data already names every key — the game uses the
+gray-box until these load):
+
+```ts
+  { key: 'battle_sprinkler_sentry', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry.png', import.meta.url).href },
+  { key: 'battle_sprinkler_sentry_w1', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry_w1.png', import.meta.url).href },
+  { key: 'battle_sprinkler_sentry_w2', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry_w2.png', import.meta.url).href },
+  { key: 'battle_recycling_raccoon', url: new URL('../../assets/art/enemies/battle_recycling_raccoon.png', import.meta.url).href },
+  { key: 'battle_recycling_raccoon_w1', url: new URL('../../assets/art/enemies/battle_recycling_raccoon_w1.png', import.meta.url).href },
+  { key: 'battle_recycling_raccoon_w2', url: new URL('../../assets/art/enemies/battle_recycling_raccoon_w2.png', import.meta.url).href },
+  { key: 'battle_skeeter_swarm', url: new URL('../../assets/art/enemies/battle_skeeter_swarm.png', import.meta.url).href },
+  { key: 'battle_skeeter_swarm_w1', url: new URL('../../assets/art/enemies/battle_skeeter_swarm_w1.png', import.meta.url).href },
+  { key: 'battle_skeeter_swarm_w2', url: new URL('../../assets/art/enemies/battle_skeeter_swarm_w2.png', import.meta.url).href },
+  { key: 'battle_unionized_gnome', url: new URL('../../assets/art/enemies/battle_unionized_gnome.png', import.meta.url).href },
+  { key: 'battle_unionized_gnome_w1', url: new URL('../../assets/art/enemies/battle_unionized_gnome_w1.png', import.meta.url).href },
+  { key: 'battle_unionized_gnome_w2', url: new URL('../../assets/art/enemies/battle_unionized_gnome_w2.png', import.meta.url).href },
+  { key: 'battle_mandatory_memo', url: new URL('../../assets/art/enemies/battle_mandatory_memo.png', import.meta.url).href },
+  { key: 'battle_mandatory_memo_w1', url: new URL('../../assets/art/enemies/battle_mandatory_memo_w1.png', import.meta.url).href },
+  { key: 'battle_mandatory_memo_w2', url: new URL('../../assets/art/enemies/battle_mandatory_memo_w2.png', import.meta.url).href },
+  { key: 'battle_motivational_poster', url: new URL('../../assets/art/enemies/battle_motivational_poster.png', import.meta.url).href },
+  { key: 'battle_motivational_poster_w1', url: new URL('../../assets/art/enemies/battle_motivational_poster_w1.png', import.meta.url).href },
+  { key: 'battle_motivational_poster_w2', url: new URL('../../assets/art/enemies/battle_motivational_poster_w2.png', import.meta.url).href },
+  { key: 'battle_quota_clock', url: new URL('../../assets/art/enemies/battle_quota_clock.png', import.meta.url).href },
+  { key: 'battle_quota_clock_w1', url: new URL('../../assets/art/enemies/battle_quota_clock_w1.png', import.meta.url).href },
+  { key: 'battle_quota_clock_w2', url: new URL('../../assets/art/enemies/battle_quota_clock_w2.png', import.meta.url).href },
+  { key: 'battle_expired_meter', url: new URL('../../assets/art/enemies/battle_expired_meter.png', import.meta.url).href },
+  { key: 'battle_expired_meter_w1', url: new URL('../../assets/art/enemies/battle_expired_meter_w1.png', import.meta.url).href },
+  { key: 'battle_expired_meter_w2', url: new URL('../../assets/art/enemies/battle_expired_meter_w2.png', import.meta.url).href },
+  { key: 'battle_showroom_mannequin', url: new URL('../../assets/art/enemies/battle_showroom_mannequin.png', import.meta.url).href },
+  { key: 'battle_showroom_mannequin_w1', url: new URL('../../assets/art/enemies/battle_showroom_mannequin_w1.png', import.meta.url).href },
+  { key: 'battle_showroom_mannequin_w2', url: new URL('../../assets/art/enemies/battle_showroom_mannequin_w2.png', import.meta.url).href },
+  { key: 'battle_good_investment', url: new URL('../../assets/art/enemies/battle_good_investment.png', import.meta.url).href },
+  { key: 'battle_good_investment_w1', url: new URL('../../assets/art/enemies/battle_good_investment_w1.png', import.meta.url).href },
+  { key: 'battle_good_investment_w2', url: new URL('../../assets/art/enemies/battle_good_investment_w2.png', import.meta.url).href },
+  { key: 'battle_rogue_icecream_truck', url: new URL('../../assets/art/enemies/battle_rogue_icecream_truck.png', import.meta.url).href },
+  { key: 'battle_rogue_icecream_truck_w1', url: new URL('../../assets/art/enemies/battle_rogue_icecream_truck_w1.png', import.meta.url).href },
+  { key: 'battle_rogue_icecream_truck_w2', url: new URL('../../assets/art/enemies/battle_rogue_icecream_truck_w2.png', import.meta.url).href },
+  { key: 'battle_tick_nymph', url: new URL('../../assets/art/enemies/battle_tick_nymph.png', import.meta.url).href },
+  { key: 'battle_tick_nymph_w1', url: new URL('../../assets/art/enemies/battle_tick_nymph_w1.png', import.meta.url).href },
+  { key: 'battle_tick_nymph_w2', url: new URL('../../assets/art/enemies/battle_tick_nymph_w2.png', import.meta.url).href },
+  { key: 'battle_the_suit', url: new URL('../../assets/art/enemies/battle_the_suit.png', import.meta.url).href },
+  { key: 'battle_the_suit_w1', url: new URL('../../assets/art/enemies/battle_the_suit_w1.png', import.meta.url).href },
+  { key: 'battle_the_suit_w2', url: new URL('../../assets/art/enemies/battle_the_suit_w2.png', import.meta.url).href },
 ```
 
 ## Wiring checklist (per asset)
