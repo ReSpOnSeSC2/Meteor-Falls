@@ -2011,6 +2011,27 @@ export class OverworldScene extends Phaser.Scene {
     this.fadeRestart(); // he stands down on the rebuild (borden_cleared)
   }
 
+  /**
+   * S22 (ADR-119) — HODGKIN'S TRAIL KEY (the soft EarthBound interlock). His demo
+   * mower (a counted patrol on Hickory Trail) breaks loose; shutting it off earns
+   * the TRAIL KEY, which opens his locked supply shed up the trail for a small
+   * reward. Order-independent + optional — never gates the crater (soft gating).
+   */
+  private async hardwareBeat(): Promise<void> {
+    if (GS.flag('has_trail_key')) {
+      await this.dlg.say(...DIALOGUE.npc_hodgkin_after);
+      return;
+    }
+    if (GS.flag('q_mower_caught')) {
+      await this.dlg.say(...DIALOGUE.npc_hodgkin_reward);
+      GS.setFlag('has_trail_key');
+      AUDIO.sfx('confirm');
+      toast(this, 'Got the TRAIL KEY! (opens the shed up Hickory Trail)');
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.npc_hodgkin_ask);
+  }
+
   /** the current chapter, read off the Ember ledger (0 embers ⇒ Ch.1) */
   private chapterNow(): number {
     let n = 0;
@@ -2116,6 +2137,10 @@ export class OverworldScene extends Phaser.Scene {
       case 'constable_borden':
         // S22 (ADR-118): the optional cop fight — clears Chad's frame-up
         await this.bordenBeat();
+        return true;
+      case 'hodgkin':
+        // S22 (ADR-119): the Trail Key interlock (catch his runaway mower)
+        await this.hardwareBeat();
         return true;
       case 'deli_keeper':
       case 'deli_otter':
@@ -3045,6 +3070,23 @@ export class OverworldScene extends Phaser.Scene {
       GS.setFlag('q_biscuit_c2');
       AUDIO.sfx('confirm');
       this.fadeRestart();
+      return true;
+    }
+    // S22 (ADR-119): Hodgkin's locked trail shed — opens with the Trail Key
+    if (dialogueId === 'trail_shed') {
+      if (!GS.flag('has_trail_key')) {
+        await this.dlg.say(...DIALOGUE.trail_shed_locked);
+        return true;
+      }
+      if (GS.flag('shed_looted')) {
+        await this.dlg.say(...DIALOGUE.trail_shed_empty);
+        return true;
+      }
+      await this.dlg.say(...DIALOGUE.trail_shed_open);
+      GS.setFlag('shed_looted');
+      GS.data.cashOnHand += 60;
+      AUDIO.sfx('confirm');
+      toast(this, 'The shed: +$60 (and a granola bar).');
       return true;
     }
     if (dialogueId === 'hill_spring') {

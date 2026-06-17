@@ -1072,9 +1072,14 @@ function buildHickoryTrail(): MapDef {
       { sprite: 'picnic', x: 9, y: 10, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       // §A10 #1: the sniff trail keeps climbing (same gates as the road/hill clues)
       { sprite: 'paw_prints', x: 14, y: 12.4, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+      // S22 (ADR-119): Hodgkin's locked supply shed (the soft Trail Key interlock)
+      { sprite: 'sign', x: 10, y: 7, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     ],
     npcs: [],
-    signs: [{ x: 16, y: 17, dialogue: 'sign_hickory_trail' }],
+    signs: [
+      { x: 16, y: 17, dialogue: 'sign_hickory_trail' },
+      { x: 10, y: 7, dialogue: 'trail_shed' },
+    ],
     phones: [],
     doors: [
       { x: 13, y: 19, w: 3, h: 1, to: 'hill_road', tx: 232, ty: 36, facing: 'down' },
@@ -1084,6 +1089,9 @@ function buildHickoryTrail(): MapDef {
       { enemies: ['coily_cicada'], count: 2, rect: { x: 6, y: 8, w: 16, h: 4 }, ifFlag: 'meteor_fell' },
       { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 8, y: 13, w: 12, h: 4 }, ifFlag: 'meteor_fell' },
     ],
+    // S22 (ADR-119): Hodgkin's runaway demo mower roams the switchbacks; catching
+    // it (countFlag) earns the Trail Key. A counted patrol stays down once beaten.
+    patrols: [{ id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[8, 8.5], [20, 8.5]], countFlag: 'q_mower_caught' }],
     triggers: [],
   };
 }

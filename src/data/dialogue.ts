@@ -1074,6 +1074,34 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Bolts, hose, bug spray, mower parts — that mower of Sodd\'s is loose AGAIN, I can hear it from here.',
     '@You need somethin\' specific, you say the word. I got a whole wall of words.',
   ],
+  // S22 (ADR-119) — THE TRAIL KEY (the soft EarthBound interlock)
+  npc_hodgkin_ask: [
+    '@Hey— actually, you headed up Hickory Trail? Do me a solid.',
+    "@MY demo mower slipped its chain and it's chewin' up the switchbacks right now. Shut the dang thing off for me.",
+    "@You do that, the spare TRAIL KEY's yours — opens my supply shed up on the trail. There's good stuff in there. Define 'good.' Don't.",
+  ],
+  npc_hodgkin_reward: [
+    '@You caught it! I heard it sputter out from DOWN here. Bless you, kid.',
+    '@Here— the TRAIL KEY. That shed up on the switchbacks is yours to raid. Take the granola bar, it\'s judging me.',
+  ],
+  npc_hodgkin_after: [
+    '@Get into the shed yet? Tell me the granola bar found a good home. I need closure.',
+  ],
+  // the sign's registry entry (signBeat intercepts and picks the live variant)
+  trail_shed: [
+    'A weather-beaten TOOL SHED tucked off the switchback. A heavy padlock holds it shut.',
+  ],
+  trail_shed_locked: [
+    'A weather-beaten TOOL SHED tucked off the switchback. A heavy padlock holds it shut.',
+    "(Stenciled on the door: \"HODGKIN'S — KEEP OUT — this means YOU, raccoons.\")",
+  ],
+  trail_shed_open: [
+    'The TRAIL KEY turns. Inside: coils of rope, a dead flashlight, $60 in a coffee can, and one (1) granola bar.',
+    'You pocket the cash and, after a respectful pause, the granola bar.',
+  ],
+  trail_shed_empty: [
+    "The shed's bare now but for the rope and the judging flashlight. You already took the good stuff.",
+  ],
   npc_waitress: [
     '@Sit anywhere, hon, the floor\'s clean-ish. Coffee\'s on the house if you don\'t tell my boss it was.',
     "@You look like a kid who's had a NIGHT. Eat something. The world's easier on a full stomach. Doctor's orders. I'm not a doctor.",

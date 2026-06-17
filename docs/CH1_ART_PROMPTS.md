@@ -113,6 +113,17 @@ horizontally so several can line a drop-off. Warm grey-brown wood. Top-down
 overworld, transparent background.
 ```
 
+### 1.6 — `prop_trail_shed` · Hodgkin's locked supply shed
+- **Runtime:** `world/props/`. (Live now gray-boxed as a sign; this gives it a real building.)
+- **Prompt:**
+```
+A small weather-beaten WOODEN TOOL SHED tucked beside a mountain switchback, seen
+three-quarter top-down. Tar-paper roof, a single plank door with a chunky PADLOCK,
+a stenciled "HODGKIN'S — KEEP OUT" board, a coil of hose on a nail. Sun-grayed
+wood, one cheerful rusty hinge. Reads instantly as "locked, mild treasure inside."
+Transparent background, restrained palette.
+```
+
 ### 1.5 — `prop_culvert` · roadside culvert (flavor)
 - **Runtime:** `world/props/`.
 - **Prompt:**
