@@ -377,6 +377,25 @@ export function growOtterbrook(): MapDef {
   g.rect(53, 21, 6, 1, 'E'); g.rect(53, 26, 6, 1, 'E');
   g.set(52, 23, 'E'); g.set(52, 24, 'E'); g.set(59, 23, 'E'); g.set(59, 24, 'E');
 
+  // 7) LANDMARK — THE TRANSIT DEPOT (S22, ADR-114): the old bus SIGN becomes a
+  //    real building fronting the cross lane (the road EAST, toward Brickton), in
+  //    the open pocket west of the Pond Park. Wholly outside the frozen core, so
+  //    the 1995 core stays byte-identical; the §A6 bus_stop trigger relocates to
+  //    its curb (below). A waiting-room interior makes it a building you ENTER.
+  g.rect(47, 17, 2, 7, ':'); // spur: the cross lane down to the depot door
+  g.rect(45, 24, 6, 1, '='); // the depot's front step / boarding curb
+  const busDepot = placeFacade('bldg_brickmore', 44, 23 * 16 + 12, 6, 2, {
+    to: 'bus_depot_int', tx: 120, ty: 128,
+  });
+
+  // 8) DOWNTOWN entrance (S22, ADR-116): a street mouth in the open pocket south
+  //    of the Depot opens onto "Main & Vine" (a separate screen — hardware + diner).
+  g.rect(45, 25, 2, 8, ':'); // the walk from the Depot front down to the mouth
+  g.rect(44, 33, 4, 1, ':'); // the doorstep apron
+  const downtownEntry = placeFacade('bldg_brickmore', 44, 32 * 16, 4, 2, {
+    to: 'downtown_otterbrook', tx: 208, ty: 224,
+  });
+
   const treesAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
     xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
 
@@ -390,7 +409,14 @@ export function growOtterbrook(): MapDef {
   const hubcap = walkPresent('gift_hubcap', 63, 23);
 
   const props: PropDef[] = [
+    // the frozen core's props stay verbatim (the byte-identical core test). The
+    // old bus SIGN keeps its corner but now just POINTS to the new Transit Depot
+    // (a redirect sign is appended below); the depot is the real stop.
     ...core.props,
+    busDepot,
+    downtownEntry,
+    { sprite: 'bench', x: 51, y: 21, solid: { ox: 1, oy: 6, w: 20, h: 6 } }, // the boarding-curb bench
+    { sprite: 'sign', x: 48, y: 32, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // "→ DOWNTOWN"
     ...south.props,
     ...east.props,
     ...thicketProps,
@@ -404,8 +430,8 @@ export function growOtterbrook(): MapDef {
     { sprite: 'bench', x: 19, y: 49, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
     { sprite: 'sign', x: 16, y: 46, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     ...treesAt([[15, 46], [25, 47], [16, 52], [24, 52]]),
-    // the Pond Park's rests + shade
-    { sprite: 'picnic', x: 48, y: 24, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+    // the Pond Park's rests + shade (the west table moved south off the depot step)
+    { sprite: 'picnic', x: 49, y: 28, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
     { sprite: 'picnic', x: 61, y: 24, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
     { sprite: 'sign', x: 55, y: 28, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     ...treesAt([[50, 20], [60, 20], [51, 27], [62, 28]]),
@@ -431,6 +457,17 @@ export function growOtterbrook(): MapDef {
     // refuses to go himself; at daybreak (dialogueDay) he's seen the crater and
     // warns of the blocked road east. Stands by the hill gap, never wanders off it.
     { id: 'treeline_gawker', sprite: 'pigeonKid', x: 23, y: 4, facing: 'up' as const, dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' as const }, // Wave 2 (#4): rattled by the crater up the hill
+    // S22 (ADR-114): the depot comes ALIVE at daybreak — two commuters at the
+    // curb (gated on zapper_done so the 2 AM opening stays eerily empty)
+    { id: 'bus_waiter1', sprite: 'grayCommuter', x: 52, y: 23, facing: 'left' as const, dialogue: 'npc_bus_waiter1', idle: true, emote: 'think' as const, ifFlag: 'zapper_done' },
+    { id: 'bus_waiter2', sprite: 'senora', x: 46, y: 25, facing: 'up' as const, dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle' as const, ifFlag: 'zapper_done' },
+    // S22 (ADR-115): the tycoon TEASERS on the civic lane — you can SEE the home +
+    // car you'll someday afford. Both open at daybreak (zapper_done).
+    { id: 'realtor_otter', sprite: 'senora', x: 14, y: 43, facing: 'up' as const, dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
+    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 22, y: 43, facing: 'up' as const, dialogue: 'npc_car_dealer', idle: true, emote: 'happy' as const, ifFlag: 'zapper_done' },
+    // S22 (ADR-118): Constable Borden works the "hill vandalism" case at City Hall
+    // by daybreak — an OPTIONAL cop fight that clears Chad's frame-up (never a wall).
+    { id: 'constable_borden', sprite: 'grayCommuter', x: 10, y: 43, facing: 'up' as const, dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise' as const, ifFlag: 'zapper_done' },
   ];
 
   const signs = [
@@ -443,6 +480,10 @@ export function growOtterbrook(): MapDef {
     { x: 64, y: 17, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
     // S15i Task 1: the woods nook trailhead
     { x: 4, y: 44, dialogue: 'sign_otter_woods' },
+    // S22 (ADR-114): the old bus-stop corner now points to the new Transit Depot
+    { x: 23, y: 25, dialogue: 'sign_bus_moved' },
+    // S22 (ADR-116): the downtown street mouth, south of the Depot
+    { x: 48, y: 32, dialogue: 'sign_to_downtown' },
     ...woodsGift.signs, // ADR-056: the glade present (sign while sealed, flavor after)
     ...porchCan.signs, // ADR-063 Part B: THE PORCH SET coffee can
     ...hubcap.signs, // ADR-063 Part B: the Spare Hubcap ("worth more to a man named Earl")
@@ -468,6 +509,10 @@ export function growOtterbrook(): MapDef {
       // core's), seated well clear of every door/phone/sign (pressure ≥24px)
       { enemies: ['cranky_mailbox'], count: 1, rect: { x: 31, y: 47, w: 8, h: 3 }, ifFlag: 'meteor_fell' },
     ],
+    // triggers stay byte-identical to the frozen core (the world_block test pins
+    // grown.triggers === core.triggers). The old center bus_stop becomes a ONE-TIME
+    // redirect to the new Depot (handled in OverworldScene); real boarding moves
+    // INSIDE the depot's waiting room (an interior `depot_board` trigger).
   };
 }
 
@@ -886,7 +931,8 @@ function buildHillRoad(): MapDef {
     phones: [],
     doors: [
       { x: 13, y: 33, w: 4, h: 1, to: 'otterbrook', tx: 336, ty: 24, facing: 'down' },
-      { x: 13, y: 0, w: 4, h: 1, to: 'hickory_hill', tx: 232, ty: 660, facing: 'up' },
+      // S22 (ADR-112): the climb now passes through HICKORY TRAIL before the crater
+      { x: 13, y: 0, w: 4, h: 1, to: 'hickory_trail', tx: 232, ty: 288, facing: 'up' },
     ],
     spawners: [
       { enemies: ['coily_cicada'], count: 2, rect: { x: 6, y: 11, w: 16, h: 6 }, ifFlag: 'meteor_fell' },
@@ -961,13 +1007,147 @@ function buildHill(): MapDef {
       { x: 9, y: 21, dialogue: 'hill_spring' },
     ],
     phones: [],
-    doors: [{ x: 13, y: 45, w: 4, h: 1, to: 'hill_road', tx: 236, ty: 36, facing: 'down' }],
+    // S22 (ADR-112): descending from the crater drops into WHISPERWOOD RISE
+    doors: [{ x: 13, y: 45, w: 4, h: 1, to: 'whisperwood_rise', tx: 232, ty: 36, facing: 'down' }],
     spawners: [
       { enemies: ['coily_cicada'], count: 3, rect: { x: 6, y: 18, w: 18, h: 8 } },
       { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 6, y: 28, w: 16, h: 8 } },
       { enemies: ['hill_slug_deluxe'], count: 1, rect: { x: 10, y: 12, w: 12, h: 6 } },
     ],
     triggers: [{ id: 'crater', rect: { x: 11, y: 8, w: 8, h: 3 }, once: true }],
+  };
+}
+
+/* ------------------- THE LONGER CLIMB (S22, ADR-112) -------------------
+ * Two transitional legs slotted BETWEEN hill_road and the crater so the walk
+ * up Hickory Hill earns its payoff: a winding dirt switchback (HICKORY TRAIL)
+ * and a dark wooded rise (WHISPERWOOD RISE). Both ride the §A6 story clock for
+ * night (no `night` field — derived from meteor_fell && !zapper_done like the
+ * rest of the hill). Door landings sit on the path so they stay walkable; the
+ * paw-print sniff trail (§A10 #1) continues across both so Biscuit's clue line
+ * reads unbroken on the longer route. Gray-boxed with shipped sprites — see
+ * docs/CH1_ART_PROMPTS.md for the authored-PNG pass.
+ */
+
+/** HICKORY TRAIL — the winding dirt road. 30×20, an S-curve from the south
+ *  edge (down to HILL ROAD) up to the north edge (up to WHISPERWOOD RISE). */
+function buildHickoryTrail(): MapDef {
+  const g = new Grid(30, 20);
+  g.sprinkle(212, ',~,~ f', 0.07);
+  // the switchback (a dirt S the player actually walks)
+  g.rect(13, 16, 3, 4, ':'); // south stub → HILL ROAD
+  g.rect(6, 14, 10, 2, ':'); // sweep left
+  g.rect(6, 8, 2, 8, ':'); // climb the left rail
+  g.rect(6, 8, 16, 2, ':'); // cross to the right
+  g.rect(20, 2, 2, 8, ':'); // climb the right rail
+  g.rect(13, 2, 9, 2, ':'); // crest back to centre
+  g.rect(13, 0, 3, 4, ':'); // north stub → WHISPERWOOD RISE
+  // brush shaping the drops, fences on the steep edge
+  g.rect(9, 13, 4, 1, 'b');
+  g.rect(16, 7, 4, 1, 'b');
+  g.rect(4, 17, 3, 1, 'b');
+  g.rect(6, 16, 8, 1, '-');
+
+  const trees: Array<[number, number]> = [];
+  for (let x = 0; x < 30; x += 2) {
+    if (x < 12 || x > 17) trees.push([x, 0]);
+    if (x < 12 || x > 17) trees.push([x, 19]);
+  }
+  for (let y = 2; y < 18; y += 2) {
+    trees.push([0, y]);
+    trees.push([28, y]);
+  }
+  trees.push([10, 5], [24, 12], [4, 9], [25, 5], [17, 11]);
+
+  return {
+    id: 'hickory_trail',
+    name: 'HICKORY TRAIL',
+    music: 'hill',
+    ambience: 'wind',
+    grid: g.out(),
+    props: [
+      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: OAK })),
+      { sprite: 'sign', x: 16, y: 17, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // a picnic table before the last push (§A4.5 — placed BEFORE the dungeon)
+      { sprite: 'picnic', x: 9, y: 10, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+      // §A10 #1: the sniff trail keeps climbing (same gates as the road/hill clues)
+      { sprite: 'paw_prints', x: 14, y: 12.4, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+      // S22 (ADR-119): Hodgkin's locked supply shed (the soft Trail Key interlock)
+      { sprite: 'sign', x: 10, y: 7, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+    ],
+    npcs: [],
+    signs: [
+      { x: 16, y: 17, dialogue: 'sign_hickory_trail' },
+      { x: 10, y: 7, dialogue: 'trail_shed' },
+    ],
+    phones: [],
+    doors: [
+      { x: 13, y: 19, w: 3, h: 1, to: 'hill_road', tx: 232, ty: 36, facing: 'down' },
+      { x: 13, y: 0, w: 3, h: 1, to: 'whisperwood_rise', tx: 232, ty: 288, facing: 'up' },
+    ],
+    spawners: [
+      { enemies: ['coily_cicada'], count: 2, rect: { x: 6, y: 8, w: 16, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 8, y: 13, w: 12, h: 4 }, ifFlag: 'meteor_fell' },
+    ],
+    // S22 (ADR-119): Hodgkin's runaway demo mower roams the switchbacks; catching
+    // it (countFlag) earns the Trail Key. A counted patrol stays down once beaten.
+    patrols: [{ id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[8, 8.5], [20, 8.5]], countFlag: 'q_mower_caught' }],
+    triggers: [],
+  };
+}
+
+/** WHISPERWOOD RISE — the dark wooded climb. 30×20, a near-straight aisle of
+ *  pines from the south edge (down to HICKORY TRAIL) up to the crater. */
+function buildWhisperwoodRise(): MapDef {
+  const g = new Grid(30, 20);
+  g.sprinkle(377, ',~,~bb', 0.09);
+  g.rect(13, 0, 3, 20, ':'); // the aisle, edge to edge
+  g.rect(8, 9, 8, 2, ':'); // a small clearing spur (the picnic glade)
+  // dense bramble walls hemming the path in
+  g.rect(5, 5, 5, 1, 'b');
+  g.rect(20, 6, 5, 1, 'b');
+  g.rect(6, 14, 4, 1, 'b');
+  g.rect(19, 13, 5, 1, 'b');
+
+  const trees: Array<[number, number]> = [];
+  for (let x = 0; x < 30; x += 2) {
+    if (x < 12 || x > 16) {
+      trees.push([x, 0]);
+      trees.push([x, 19]);
+    }
+  }
+  for (let y = 1; y < 19; y += 1) {
+    if (y % 2 === 0) {
+      trees.push([0, y], [2, y], [27, y], [29, y]);
+    }
+  }
+  // inner pines crowding the aisle (kept off the path column x13–15)
+  trees.push([6, 4], [22, 4], [9, 7], [20, 8], [7, 12], [23, 11], [10, 16], [21, 16], [6, 9], [24, 14]);
+
+  return {
+    id: 'whisperwood_rise',
+    name: 'WHISPERWOOD RISE',
+    music: 'hill',
+    ambience: 'wind',
+    grid: g.out(),
+    props: [
+      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: OAK })),
+      { sprite: 'sign', x: 16, y: 16, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
+      // §A10 #1: the last paw prints before the crown of the hill
+      { sprite: 'paw_prints', x: 14, y: 10.4, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+    ],
+    npcs: [],
+    signs: [{ x: 16, y: 16, dialogue: 'sign_whisperwood_rise' }],
+    phones: [],
+    doors: [
+      { x: 13, y: 19, w: 3, h: 1, to: 'hickory_trail', tx: 232, ty: 36, facing: 'down' },
+      { x: 13, y: 0, w: 3, h: 1, to: 'hickory_hill', tx: 232, ty: 660, facing: 'up' },
+    ],
+    spawners: [
+      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 8, y: 4, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['hill_slug_deluxe'], count: 1, rect: { x: 8, y: 12, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
+    ],
+    triggers: [],
   };
 }
 
@@ -2022,6 +2202,250 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
 }
 
 /**
+ * THE TRANSIT DEPOT waiting room (S22, ADR-114) — the bus stop is a real
+ * building now. A warm wood waiting room: a ticket window (the clerk), a
+ * schedule board, benches, and a payphone to save. Boarding still happens at
+ * the curb outside (the relocated §A6 bus_stop trigger), so the existing
+ * busAsk flow is untouched — this is the "full building" the stop earned.
+ */
+function buildBusDepotInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(13, 9, 'w');
+  g.rect(0, 0, 13, 2, 'W');
+  return {
+    id: 'bus_depot_int',
+    name: 'OTTERBROOK TRANSIT',
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      // the ticket window + counter along the back
+      { sprite: 'counter', x: 4, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 6, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      // waiting benches
+      { sprite: 'bench', x: 2, y: 5, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 9, y: 5, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      // a payphone to save (Call Dad) + an ATM for fare money
+      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 10, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
+    ],
+    npcs: [
+      {
+        id: 'depot_clerk',
+        sprite: 'quarterMan',
+        x: 5,
+        y: 2,
+        facing: 'down',
+        dialogue: 'npc_depot_clerk',
+        dialogueDay: 'npc_depot_clerk_day',
+        idle: true,
+      },
+    ],
+    signs: [{ x: 9, y: 1, dialogue: 'sign_bus_depot' }],
+    phones: [{ x: 2, y: 7 }],
+    atms: [{ x: 10, y: 7 }],
+    doors: [
+      { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    // S22 (ADR-114): boarding lives HERE now (an interior trigger, free to add) —
+    // step up to the ticket counter to catch the 6:15. Same gating as the old stop.
+    triggers: [{ id: 'depot_board', rect: { x: 4, y: 4, w: 4, h: 1 }, once: false }],
+  };
+}
+
+/* ------------------- DOWNTOWN OTTERBROOK (S22, ADR-116) -------------------
+ * "Main & Vine" — a small commercial screen reached from the open pocket by the
+ * Transit Depot. Two enterable shops (Hodgkin's Hardware + the Sunny Side Diner)
+ * plus a flavor barbershop. Full new screen, so no frozen-core conflict; the
+ * entrance façade is APPENDED to the grown town (below). Gray-boxed on shipped
+ * facade/interior sprites — see docs/CH1_ART_PROMPTS.md (§2/§3) for the art pass.
+ */
+function buildDowntownOtterbrook(entryStreetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(28, 16);
+  g.sprinkle(229, ',~ f', 0.05);
+  g.rect(2, 9, 24, 2, '='); // the shopfront sidewalk
+  g.rect(12, 10, 3, 6, '='); // the walk down to the way home (south edge)
+
+  const hardware = placeFacade('bldg_brickmore', 3, 8 * 16, 5, 2, { to: 'hardware_int', tx: 120, ty: 128 });
+  const diner = placeFacade('bldg_brickmore', 11, 8 * 16, 5, 2, { to: 'diner_int', tx: 120, ty: 128 });
+  // S22 (ADR-120): the third shopfront is the OTTERBROOK CLINIC — the starting
+  // town finally has a front-desk revive (and a back exam room), small-town scale.
+  const clinic = placeFacade('bldg_brickmore', 19, 8 * 16, 5, 2, { to: 'otter_clinic_int', tx: 120, ty: 128 });
+
+  const treeLine: Array<[number, number]> = [];
+  for (let x = 0; x < 28; x += 2) treeLine.push([x, 15]);
+  for (let y = 1; y < 15; y += 2) {
+    treeLine.push([0, y]);
+    treeLine.push([26, y]);
+  }
+
+  return {
+    id: 'downtown_otterbrook',
+    name: 'DOWNTOWN OTTERBROOK',
+    music: 'otterbrook',
+    grid: g.out(),
+    props: [
+      ...treeLine.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK })),
+      hardware,
+      diner,
+      clinic,
+      { sprite: 'bench', x: 16, y: 11, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'sign', x: 9, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the district plaque
+      { sprite: 'sign', x: 24, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the clinic shingle
+    ],
+    npcs: [
+      { id: 'downtown_loiterer', sprite: 'oldTimer', x: 18, y: 11, facing: 'down', dialogue: 'npc_pajama_day', wander: true, ifFlag: 'zapper_done' },
+    ],
+    signs: [
+      { x: 9, y: 8, dialogue: 'sign_downtown' },
+      { x: 24, y: 8, dialogue: 'sign_clinic' },
+    ],
+    phones: [],
+    doors: [
+      { x: 12, y: 15, w: 3, h: 1, to: 'otterbrook', tx: entryStreetExit.tx, ty: entryStreetExit.ty, facing: 'down', indicator: 'none' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** HODGKIN'S HARDWARE interior (S22, ADR-116) — pegboard walls, a lockbox
+ *  counter, and Hodgkin himself. The night-chain's key shop (Trail Key) lands
+ *  here in a later movement; for now it's a warm, browsable room. */
+function buildHardwareInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(13, 9, 'w');
+  g.rect(0, 0, 13, 2, 'W');
+  return {
+    id: 'hardware_int',
+    name: "HODGKIN'S HARDWARE",
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'shelf', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 10, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf', x: 1, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 10, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 7, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 10, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
+    ],
+    npcs: [
+      { id: 'hodgkin', sprite: 'drugClerk', x: 6, y: 2, facing: 'down', dialogue: 'npc_hodgkin', idle: true },
+    ],
+    signs: [{ x: 9, y: 1, dialogue: 'sign_hardware' }],
+    phones: [{ x: 2, y: 7 }],
+    atms: [{ x: 10, y: 7 }],
+    doors: [
+      { x: 6, y: 8, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** THE SUNNY SIDE DINER interior (S22, ADR-116) — counter stools, a booth, a
+ *  pie case, and a waitress who feeds tired kids. (The §A4.5 Family Basket deli
+ *  stays at the drugstore fountain; this is heart, not a counter.) */
+function buildDinerInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(13, 9, 'w');
+  g.rect(0, 0, 13, 2, 'W');
+  return {
+    id: 'diner_int',
+    name: 'THE SUNNY SIDE',
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 3, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 7, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'cola_fridge', x: 10.4, y: 0.25 },
+      { sprite: 'bench', x: 2, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 9, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+    ],
+    npcs: [
+      { id: 'diner_waitress', sprite: 'mom', x: 6, y: 2, facing: 'down', dialogue: 'npc_waitress', idle: true },
+    ],
+    signs: [{ x: 9, y: 1, dialogue: 'sign_diner' }],
+    phones: [{ x: 2, y: 7 }],
+    atms: [],
+    doors: [
+      { x: 6, y: 8, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** THE OTTERBROOK CLINIC — front desk (S22, ADR-120). Small-town scale: a
+ *  reception counter with the doc (front-desk revive, the §A4.7 pay-to-wake
+ *  flow), a couple of waiting chairs, a save payphone, and a back door to the
+ *  EXAM ROOM — the "multiple rooms / multiple doors" shape, town-sized. */
+function buildOtterClinicInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(14, 10, 'w');
+  g.rect(0, 0, 14, 2, 'W');
+  return {
+    id: 'otter_clinic_int',
+    name: 'OTTERBROOK CLINIC',
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 3, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'bench', x: 2, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'plant_pot', x: 9, y: 6, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'payphone', x: 12, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+    ],
+    npcs: [
+      { id: 'doc_otter', sprite: 'docBrickton', x: 4, y: 2, facing: 'down', dialogue: 'npc_doc_otter', idle: true },
+    ],
+    signs: [{ x: 8, y: 1, dialogue: 'clinic_wall' }],
+    phones: [{ x: 12, y: 7 }],
+    doors: [
+      { x: 6, y: 9, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      // the back door to the EXAM ROOM (a second enterable room)
+      { x: 11, y: 2, w: 1, h: 1, to: 'otter_clinic_exam', tx: 48, ty: 64, facing: 'down', indicator: 'door' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** THE OTTERBROOK CLINIC — exam room (S22, ADR-120). A cot, a privacy curtain,
+ *  one nervous patient, and the door back to the front desk. */
+function buildOtterClinicExam(): MapDef {
+  const g = new Grid(12, 9, 'w');
+  g.rect(0, 0, 12, 2, 'W');
+  return {
+    id: 'otter_clinic_exam',
+    name: 'OTTERBROOK CLINIC — EXAM',
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'cot', x: 6, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 9, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'water_cooler', x: 1, y: 5.2, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
+      { sprite: 'poster_chart', x: 4, y: 0.55 },
+    ],
+    npcs: [
+      { id: 'clinic_patient', sprite: 'pajamaKid', x: 7, y: 4, facing: 'down', dialogue: 'npc_clinic_patient', idle: true, emote: 'think' },
+    ],
+    signs: [{ x: 3, y: 1, dialogue: 'clinic_exam_sign' }],
+    phones: [],
+    doors: [
+      { x: 2, y: 2, w: 1, h: 1, to: 'otter_clinic_int', tx: 184, ty: 64, facing: 'down', indicator: 'door' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/**
  * STARMART — Brickton's 24-nonconsecutive-hour mart. Staggered aisles, a
  * keeper who counts the carts, and the §A8 Ch.1 stock incl. Star Cola.
  */
@@ -2441,6 +2865,14 @@ const longWalk = buildLongWalk();
   }
 }
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
+const busDepotDoorstep = doorstepOf(otterbrookMap, 'bus_depot_int') ?? { tx: 760, ty: 392 };
+// S22 (ADR-116) — DOWNTOWN: the entry doorstep on the grown town, then the street
+// screen, then its two shop interiors (doorsteps computed off the street map).
+const downtownStep = doorstepOf(otterbrookMap, 'downtown_otterbrook') ?? { tx: 728, ty: 544 };
+const downtownMap = buildDowntownOtterbrook(downtownStep);
+const hardwareStep = doorstepOf(downtownMap, 'hardware_int') ?? { tx: 96, ty: 150 };
+const dinerStep = doorstepOf(downtownMap, 'diner_int') ?? { tx: 224, ty: 150 };
+const otterClinicStep = doorstepOf(downtownMap, 'otter_clinic_int') ?? { tx: 352, ty: 150 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
 const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty: 225 };
@@ -2714,6 +3146,9 @@ export const MAPS: Record<string, MapDef> = {
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,
   hill_road: buildHillRoad(),
+  // S22 (ADR-112) — THE LONGER CLIMB: two legs between the road and the crater
+  hickory_trail: buildHickoryTrail(),
+  whisperwood_rise: buildWhisperwoodRise(),
   hickory_hill: buildHill(),
   rex_home: buildRexHome(),
   rex_bedroom: buildBedroom(),
@@ -2725,6 +3160,12 @@ export const MAPS: Record<string, MapDef> = {
   dos_f2: buildDosF2(),
   dos_f3: buildDosF3(),
   otterbrook_cityhall: buildOtterbrookCityHallInt(cityHallDoorstep),
+  bus_depot_int: buildBusDepotInt(busDepotDoorstep),
+  downtown_otterbrook: downtownMap,
+  hardware_int: buildHardwareInt(hardwareStep),
+  diner_int: buildDinerInt(dinerStep),
+  otter_clinic_int: buildOtterClinicInt(otterClinicStep),
+  otter_clinic_exam: buildOtterClinicExam(),
   drugstore_int: buildDrugstoreInt(drugDoorstep),
   starmart_int: buildStarmartInt(martDoorstep),
   arcade_int: buildArcadeInt(arcadeDoorstep),
@@ -2742,7 +3183,8 @@ export const MAPS: Record<string, MapDef> = {
 // their hand-built size.
 const ROOMY_INTERIORS: readonly string[] = [
   'drugstore_int', 'starmart_int', 'arcade_int', 'arcade2_int',
-  'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall',
+  'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall', 'bus_depot_int',
+  'hardware_int', 'diner_int', 'otter_clinic_int',
   'mercado_int', 'clinic_ps_int', 'deli_int', 'chapel_int',
   'valle_shop_int', 'clinic_valle_int', 'chapel_valle_int',
 ];

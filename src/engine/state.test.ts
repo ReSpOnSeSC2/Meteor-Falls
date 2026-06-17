@@ -318,13 +318,14 @@ describe('content validation (interim validator, ADR-005)', () => {
   });
 
   it('all six §A7 Ch.1 enemies + Boss 1 exist with canon HP', () => {
-    expect(ENEMIES.cranky_mailbox.hp).toBe(24);
-    expect(ENEMIES.runaway_lawnmower.hp).toBe(38);
-    expect(ENEMIES.coily_cicada.hp).toBe(30);
-    expect(ENEMIES.blazer_smiler.hp).toBe(55);
-    expect(ENEMIES.pigeon_gang.hp).toBe(45);
-    expect(ENEMIES.hill_slug_deluxe.hp).toBe(60);
-    expect(ENEMIES.titanic_tick.hp).toBe(450);
+    // S22 (ADR-111) THE SLOW BURN: Ch.1 HP pulled down for the 1–2-dmg opener
+    expect(ENEMIES.cranky_mailbox.hp).toBe(12);
+    expect(ENEMIES.runaway_lawnmower.hp).toBe(16);
+    expect(ENEMIES.coily_cicada.hp).toBe(14);
+    expect(ENEMIES.blazer_smiler.hp).toBe(26);
+    expect(ENEMIES.pigeon_gang.hp).toBe(20);
+    expect(ENEMIES.hill_slug_deluxe.hp).toBe(28);
+    expect(ENEMIES.titanic_tick.hp).toBe(150);
     expect(ENEMIES.titanic_tick.boss).toBe(true);
   });
 

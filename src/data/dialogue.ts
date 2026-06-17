@@ -423,6 +423,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sign_trail: [
     'TRAIL COURTESY: pack out what you pack in. The slugs have unionized.',
   ],
+  // S22 (ADR-112) — THE LONGER CLIMB: two transitional legs up to the crater
+  sign_hickory_trail: [
+    'HICKORY TRAIL — switchbacks ahead. Elevation: yes. A lot of it.',
+    "(A hand-nailed board: \"DIRT ROAD. NO CARS. NO BIKES. The hill said so.\")",
+  ],
+  sign_whisperwood_rise: [
+    'WHISPERWOOD RISE — last of the trees before the bald crown of the hill.',
+    '(The pines lean closer up here. Something fell through them three hours ago.)',
+  ],
 
   /* ---------------- S15h — THE WORLD BLOCK (Otterbrook grew up) ---------------- */
   // the new south + east blocks: one weird obsession each (§A11), warm + plain
@@ -988,6 +997,155 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Mom prepaid your fare. She also packed a snack. You already ate the snack.)',
   ],
   bus_ask_home: ['The 6:15 also goes back to OTTERBROOK. Buses are like that.'],
+  // S22 (ADR-113) — THE BUS WAITS: the depot is shuttered until you've reached
+  // Brickton once ON FOOT (the meteor closed the highway; the bus follows it back).
+  bus_closed_detour: [
+    'The 6:15 is dark. A card is taped inside the depot window:',
+    '"NO SERVICE — HIGHWAY CLOSED PAST HICKORY HILL. Meteor detour. Walk the meadow road, folks. — Otterbrook Transit (both of us)."',
+    '(The road to Brickton opens once someone gets through on foot. Guess who.)',
+  ],
+  // S22 (ADR-114) — THE DEPOT: the bus stop becomes a real building
+  sign_bus_moved: [
+    'BUS STOP — RELOCATED. Catch the 6:15 at the new TRANSIT DEPOT, east by the pond. →',
+    '(Someone added: "they built a whole BUILDING. With a roof. We are a real town now.")',
+  ],
+  bus_stop_moved: [
+    'A bus used to stop here. Now there is just a sign and a hopeful little bench.',
+    'The 6:15 boards at the TRANSIT DEPOT now — east of here, past the pond.',
+  ],
+  sign_bus_depot: [
+    'OTTERBROOK TRANSIT DEPOT — est. 1952. Routes: BRICKTON (the 6:15).',
+    '(A chalkboard below: "DELAYS: meteor. SAFE TRAVELS: always. LOST MITTENS: bin by the door.")',
+  ],
+  npc_depot_clerk: [
+    "@Tickets? Schedules? A warm place to wait? You're in the right shed, kiddo.",
+    "@The 6:15 boards out at the curb. I'd come point at it for you but my stool and I have an understanding.",
+  ],
+  npc_depot_clerk_day: [
+    "@Highway's open again — heard it from the milk truck before I heard it official.",
+    '@Board out at the curb whenever you like. Tell Brickton the Depot says hello, then immediately regrets it.',
+  ],
+  npc_bus_waiter1: [
+    '@Every morning, same bench, same bus. I find it deeply reassuring and mildly upsetting.',
+  ],
+  npc_bus_waiter2: [
+    "@Is the 6:15 late, or am I early? In Otterbrook it's philosophically the same thing.",
+  ],
+  // S22 (ADR-115) — THE TYCOON TEASERS: you CAN buy a home and a car from the very
+  // first town... someday. Right now they're gloriously out of a 12-year-old's reach.
+  npc_realtor: [
+    '@OTTERBROOK REALTY! You buying? You look like a serious buyer. You look like a man with a briefcase made of allowance.',
+    '@27 MAPLE just came on the market. Cozy! One previous owner — she took the doorknobs, left the beagle.',
+  ],
+  agency_owned: [
+    '@You already own 27 Maple, hon. Go water something. That\'s what owning is, mostly.',
+  ],
+  agency_browse: [
+    '@Just looking? Look all you want. The look is free. The HOUSE is twelve hundred dollars.',
+  ],
+  agency_too_dear: [
+    '@...Twelve hundred dollars. You have, and I am counting generously, NOT that.',
+    '@Tell you what, champ — go save the world a little, come back a tycoon. The door (we have one now) stays open.',
+  ],
+  agency_bought: [
+    'You sign the crayon box. The agent hands you a DEED and a single doorknob "to get you started."',
+    '@Welcome home, neighbor. Try not to put a meteor through it.',
+  ],
+  npc_car_dealer: [
+    "@BERT'S AUTO — where the test drive is a feeling and the prices are a different feeling.",
+    '@See anything you like? Lie to me. It\'s good for both of us.',
+  ],
+  carlot_browse: [
+    "@Take your time, sport. The cars aren't going anywhere. Mostly because two of them don't start.",
+    '@Come back when you\'ve got the cash AND somewhere to park it. A car needs a garage. A garage needs a HOUSE. Funny how it all rolls downhill.',
+  ],
+  // S22 (ADR-116) — DOWNTOWN OTTERBROOK (Main & Vine): the little commercial row
+  sign_to_downtown: [
+    'DOWNTOWN OTTERBROOK → "Main & Vine," just past the depot. Hardware, hot lunch, the works.',
+  ],
+  sign_downtown: [
+    'DOWNTOWN OTTERBROOK — "Main & Vine." Hardware, hot lunch, and a haircut you did not ask for.',
+  ],
+  sign_hardware: ["HODGKIN'S HARDWARE — If we don't have it, you didn't need it. (We have it.)"],
+  sign_diner: ['THE SUNNY SIDE — Breakfast all day. Lunch also all day. It is always a meal here.'],
+  sign_barber: ["VINE ST. BARBER — Back in 5. (The sign has said this since 1987.)"],
+  // S22 (ADR-120) — THE OTTERBROOK CLINIC (front desk revive + exam room)
+  sign_clinic: ['OTTERBROOK CLINIC — Walk-ins welcome. Faint-ins carried. Open since the meteor "for obvious reasons."'],
+  clinic_wall: [
+    'OTTERBROOK CLINIC — front desk for the unconscious, back room for the merely unwell.',
+    '(A flyer: "FEELING BLUE IN THE HEAD? That\'s not us. That\'s the thing from the hill. See a priest.")',
+  ],
+  npc_doc_otter: [
+    '@Welcome to the clinic, hon. Small operation — it\'s me, the cot, and a very brave houseplant.',
+    "@Got a friend who's down for the count? I'll wake 'em up for you. Costs a little. Worth a lot.",
+  ],
+  clinic_exam_sign: ['EXAM ROOM — please do not sit on the cot if you are not the patient. (Looking at you, raccoons.)'],
+  npc_clinic_patient: [
+    '@Doc says I\'m "fine, just startled." I watched a STAR fall into Hickory Hill. I will be startled FOREVER.',
+  ],
+  npc_hodgkin: [
+    "@Hardware, huh? Course it is. Nobody comes to Hodgkin's for the AMBIANCE.",
+    '@Bolts, hose, bug spray, mower parts — that mower of Sodd\'s is loose AGAIN, I can hear it from here.',
+    '@You need somethin\' specific, you say the word. I got a whole wall of words.',
+  ],
+  // S22 (ADR-119) — THE TRAIL KEY (the soft EarthBound interlock)
+  npc_hodgkin_ask: [
+    '@Hey— actually, you headed up Hickory Trail? Do me a solid.',
+    "@MY demo mower slipped its chain and it's chewin' up the switchbacks right now. Shut the dang thing off for me.",
+    "@You do that, the spare TRAIL KEY's yours — opens my supply shed up on the trail. There's good stuff in there. Define 'good.' Don't.",
+  ],
+  npc_hodgkin_reward: [
+    '@You caught it! I heard it sputter out from DOWN here. Bless you, kid.',
+    '@Here— the TRAIL KEY. That shed up on the switchbacks is yours to raid. Take the granola bar, it\'s judging me.',
+  ],
+  npc_hodgkin_after: [
+    '@Get into the shed yet? Tell me the granola bar found a good home. I need closure.',
+  ],
+  // the sign's registry entry (signBeat intercepts and picks the live variant)
+  trail_shed: [
+    'A weather-beaten TOOL SHED tucked off the switchback. A heavy padlock holds it shut.',
+  ],
+  trail_shed_locked: [
+    'A weather-beaten TOOL SHED tucked off the switchback. A heavy padlock holds it shut.',
+    "(Stenciled on the door: \"HODGKIN'S — KEEP OUT — this means YOU, raccoons.\")",
+  ],
+  trail_shed_open: [
+    'The TRAIL KEY turns. Inside: coils of rope, a dead flashlight, $60 in a coffee can, and one (1) granola bar.',
+    'You pocket the cash and, after a respectful pause, the granola bar.',
+  ],
+  trail_shed_empty: [
+    "The shed's bare now but for the rope and the judging flashlight. You already took the good stuff.",
+  ],
+  npc_waitress: [
+    '@Sit anywhere, hon, the floor\'s clean-ish. Coffee\'s on the house if you don\'t tell my boss it was.',
+    "@You look like a kid who's had a NIGHT. Eat something. The world's easier on a full stomach. Doctor's orders. I'm not a doctor.",
+  ],
+  // S22 (ADR-118) — THE COP FIGHT: Constable Borden, framed by Chad, by-the-book
+  npc_borden_accuse: [
+    '@HOLD it right there, citizen. Constable Borden, Otterbrook P.D. (sole officer, acting chief, crossing guard).',
+    '@Got a report — young Chad Pickle, very upset — says YOU went and "vandalized the whole hill" last night. Crater-sized vandalism. His words.',
+    '@That is a Code 7-B if I ever saw one. And I have seen exactly one. Care to explain yourself?',
+  ],
+  npc_borden_meteor: [
+    '@"A meteor." Mm. Convenient, a meteor. Does a meteor fill out a FORM? Does a meteor have a PERMIT?',
+    "@(He isn't really listening. There's a faint blue hum behind his eyes — the Hush got a little of him too.)",
+  ],
+  npc_borden_silent: [
+    '@Silent, eh? The guilty are silent. So are the innocent. So are mailboxes. PROVES NOTHING, and yet.',
+    "@(There's a faint blue hum behind his eyes. He isn't all here.)",
+  ],
+  npc_borden_threat: [
+    '@I\'m gonna have to DETAIN you, son. By the book. Subsection by subsection. Hold still—',
+  ],
+  npc_borden_cleared: [
+    '@...Oof. What— why am I— OW, my whole back went BY THE BOOK.',
+    "@A meteor. Of course it was a meteor. I watched it come down and then I went all... blue, in the head. That boy Chad played me like a kazoo.",
+    "@You're cleared, son. Fully. Here— the Civic Apology Fund. It's just my donut money, but you EARNED my donut money.",
+    "@Anyone gives you trouble on the road out of town, you tell 'em Borden vouched. By the book.",
+  ],
+  npc_borden_done: [
+    '@Road\'s yours, kid. Try not to vandalize any more celestial bodies. (That was a joke. Mostly.)',
+  ],
   npc_busdriver: [
     "@Exact change or exact attitude. You've got one of 'em, kid. Sit anywhere.",
   ],
@@ -2030,6 +2188,24 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Revivals, cures, the works. The angels float to the desk themselves; it is very convenient.',
   ],
   hospital_wall: ['BRICKTON GENERAL — IF YOU CAN READ THIS, YOUR EYES ARE FINE. NEXT WINDOW PLEASE.'],
+  // S22 (ADR-117) — the WARD floor upstairs
+  hospital_f2_sign: [
+    'WARD — QUIET PLEASE. Visiting hours: whenever. Departing hours: when the doctor says.',
+    '(A taped note: "the man in bed 3 is FINE, he just likes the attention.")',
+  ],
+  npc_ward_nurse: [
+    '@Keep it down up here, hon — half these folks fainted at the meteor and the other half at the BILL.',
+    "@Your friends need waking? That's the front desk, downstairs. Up here we mostly do pudding and worrying.",
+  ],
+  npc_ward_patient1: [
+    '@Zzz... the sky fell... zzz... I told them it would... zzz...',
+  ],
+  npc_ward_patient2: [
+    '@I just came in for a splinter and now I have a ROOMMATE who narrates his dreams. (gestures at bed 1)',
+  ],
+  npc_ward_patient3: [
+    '@A meteor, a cult of smiling men, and now hospital gelatin. What a week to be alive. Truly — what a week to be ALIVE.',
+  ],
   hospital_mushroom_note: [
     'MEMO: MUSHROOMIZATION is treated by DOCTORS ONLY (§ policy).',
     '(Below, handwritten: "no, the church cannot do it. yes, we asked.")',

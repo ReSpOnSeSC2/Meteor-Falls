@@ -689,6 +689,51 @@ export function buildHospitalInt(streetExit: { tx: number; ty: number }): MapDef
     phones: [],
     doors: [
       { x: 9, y: 11, w: 2, h: 1, to: 'brickton', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      // S22 (ADR-117): stairs up to the WARD floor — the front desk (revive) stays
+      // on the ground floor; the patients (and the quiet) live upstairs.
+      { x: 17, y: 2, w: 1, h: 1, to: 'hospital_f2', tx: 272, ty: 60, facing: 'down', indicator: 'stairs' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** BRICKTON GENERAL — floor 2 (S22, ADR-117): the WARD. Rows of cots, a handful
+ *  of patients with something to say, a night nurse, and the stairs back down.
+ *  No street exit (you leave via the ground-floor lobby) — the multi-floor shape
+ *  the user asked every hospital to have. */
+export function buildHospitalF2(): MapDef {
+  const g = new Grid(20, 12, 'o');
+  g.rect(0, 0, 20, 2, 'O');
+  return {
+    id: 'hospital_f2',
+    name: 'BRICKTON GENERAL — WARD',
+    music: 'brickton',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'cot', x: 2, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 5, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 9, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 12, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 2, y: 6.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 5, y: 6.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 9, y: 6.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 12, y: 6.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'water_cooler', x: 18, y: 6.2, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
+      { sprite: 'plant_pot', x: 15, y: 9, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'poster_chart', x: 6, y: 0.55 },
+    ],
+    npcs: [
+      { id: 'ward_nurse', sprite: 'docBrickton', x: 18, y: 3, facing: 'left', dialogue: 'npc_ward_nurse', idle: true },
+      { id: 'ward_patient1', sprite: 'oldTimer', x: 3, y: 4, facing: 'up', dialogue: 'npc_ward_patient1', idle: true, emote: 'sleep' },
+      { id: 'ward_patient2', sprite: 'grayCommuter', x: 10, y: 4, facing: 'up', dialogue: 'npc_ward_patient2', idle: true },
+      { id: 'ward_patient3', sprite: 'senora', x: 6, y: 8, facing: 'up', dialogue: 'npc_ward_patient3', idle: true, emote: 'think' },
+    ],
+    signs: [{ x: 3, y: 1, dialogue: 'hospital_f2_sign' }],
+    phones: [],
+    doors: [
+      { x: 17, y: 2, w: 1, h: 1, to: 'hospital_int', tx: 272, ty: 60, facing: 'down', indicator: 'stairs' },
     ],
     spawners: [],
     triggers: [],
@@ -1372,6 +1417,7 @@ export function buildChapter2Maps(steps: {
     brickton_docks: buildBricktonDocks(),
     boat_interior: buildBoatInterior(),
     hospital_int: buildHospitalInt(steps.hospitalStep),
+    hospital_f2: buildHospitalF2(),
     chapel_int: buildChapelInt(steps.chapelStep),
     puerto_sol: puerto,
     mercado_int: buildMercadoInt(mercadoStep),

@@ -50,7 +50,9 @@ export const CHAPTER_LEVELS: Record<number, [number, number]> = {
 /** the §A6 BOSS HP ladder — canon, pinned (the forge's boss templates read it;
  *  the curve never invents these). Ch.10's finale shell (6,000) is bespoke. */
 export const BOSS_HP: Record<number, number> = {
-  1: 450,
+  // S22 (ADR-111) — THE SLOW BURN: Ch.1's bespoke Tick drops 450→150 to match the
+  // lowered early-game output (Jay L1 basic = 1–2). The ladder still climbs.
+  1: 150,
   2: 980,
   3: 1600,
   4: 1900,

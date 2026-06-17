@@ -20,7 +20,11 @@ export const HEROES: Record<HeroId, HeroDef> = {
     name: 'Jay',
     epithet: 'a quiet kid from Otterbrook',
     weapon: 'bats',
-    base: { offense: 6, defense: 4, speed: 5, guts: 8, vibe: 6, luck: 5 },
+    // S22 (ADR-111) — THE SLOW BURN: Jay's base Offense drops 6→2 so a level-1
+    // bat swing lands for just 1–2 (physicalDamage = max(1, off*2 − def)). The
+    // 2.1 growth slope is untouched, so the curve simply STARTS lower and ramps
+    // the same — the EarthBound opener where a Cranky Mailbox is a real scrap.
+    base: { offense: 2, defense: 4, speed: 5, guts: 8, vibe: 6, luck: 5 },
     growth: { offense: 2.1, defense: 1.7, speed: 1.4, guts: 1.2, vibe: 1.8, luck: 0.8 },
     hp: { base: 30, lin: 6.5, quad: 0.08 },
     pp: { base: 10, lin: 2.4, quad: 0.03 },

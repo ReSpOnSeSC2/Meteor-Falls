@@ -87,6 +87,9 @@ import { DIALOGUE } from '../data/dialogue';
 import { ITEMS } from '../data/items';
 import { GS, makeHeroState } from '../engine/state';
 import { completeQuest } from '../engine/quests';
+import { PROPERTIES } from '../data/properties';
+import { buyCost } from '../engine/property';
+import { carById } from '../engine/garage';
 import { availableAbilities } from '../data/heroes';
 import { PSI_GATES } from '../data/psigates';
 import { canClearGate, bestCastFor } from '../engine/psi';
@@ -1982,6 +1985,107 @@ export class OverworldScene extends Phaser.Scene {
    * fade-restart whenever the map must rebuild (gated NPCs/props/spawners).
    */
 
+  /**
+   * S22 (ADR-118) — THE COP FIGHT. Constable Borden, lightly Hushed and fed a
+   * frame-up by Chad, tries to "detain" Jay over the hill "vandalism." An OPTIONAL
+   * morning beat (never blocks the road) — beating him snaps him clear, clears
+   * Jay's name, and pays out his donut money. Defeat/flee just leaves him to try
+   * again (the retry law). A deliberate rhyme with the later General Buckle arc.
+   */
+  private async bordenBeat(): Promise<void> {
+    if (GS.flag('borden_cleared')) {
+      await this.dlg.say(...DIALOGUE.npc_borden_done);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.npc_borden_accuse);
+    const pick = await this.dlg.ask(['"It was a METEOR, sir."', 'Say nothing'], { cancelIndex: 1 });
+    await this.dlg.say(...(pick === 0 ? DIALOGUE.npc_borden_meteor : DIALOGUE.npc_borden_silent));
+    await this.dlg.say(...DIALOGUE.npc_borden_threat);
+    const outcome = await this.startBattle(['borden'], 'none', [], {});
+    if (outcome !== 'victory') return; // defeat respawns at the last save; a flee leaves him there
+    GS.setFlag('borden_cleared');
+    GS.data.cashOnHand += 80;
+    AUDIO.jingle('victory', 1600, this.mapDef.music);
+    await this.dlg.say(...DIALOGUE.npc_borden_cleared);
+    toast(this, "Cleared! Borden vouches for you. (+$80)");
+    this.fadeRestart(); // he stands down on the rebuild (borden_cleared)
+  }
+
+  /**
+   * S22 (ADR-119) — HODGKIN'S TRAIL KEY (the soft EarthBound interlock). His demo
+   * mower (a counted patrol on Hickory Trail) breaks loose; shutting it off earns
+   * the TRAIL KEY, which opens his locked supply shed up the trail for a small
+   * reward. Order-independent + optional — never gates the crater (soft gating).
+   */
+  private async hardwareBeat(): Promise<void> {
+    if (GS.flag('has_trail_key')) {
+      await this.dlg.say(...DIALOGUE.npc_hodgkin_after);
+      return;
+    }
+    if (GS.flag('q_mower_caught')) {
+      await this.dlg.say(...DIALOGUE.npc_hodgkin_reward);
+      GS.setFlag('has_trail_key');
+      AUDIO.sfx('confirm');
+      toast(this, 'Got the TRAIL KEY! (opens the shed up Hickory Trail)');
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.npc_hodgkin_ask);
+  }
+
+  /** the current chapter, read off the Ember ledger (0 embers ⇒ Ch.1) */
+  private chapterNow(): number {
+    let n = 0;
+    for (let i = 1; i <= 10; i++) if (GS.flag(`ember${i}`)) n++;
+    return n + 1;
+  }
+
+  /**
+   * S22 (ADR-115) — OTTERBROOK REALTY: the home-buying TEASER. 27 Maple is for sale
+   * from the very first town; the agent shows the price and the dream, but at ~$1k
+   * to your name it's out of reach — the rags-to-riches hook made literal. It's a
+   * REAL, affordability-gated buy (owned flag + DEED key-item + cash), so it simply
+   * starts impossible and becomes possible as the Fortune Arc climbs.
+   */
+  private async agencyBeat(): Promise<void> {
+    if (GS.data.keyItems.includes('deed_27_maple') || GS.flag('owned_27_maple')) {
+      await this.dlg.say(...DIALOGUE.agency_owned);
+      return;
+    }
+    const def = PROPERTIES['27_maple'];
+    const price = buyCost(def, this.chapterNow(), 0);
+    await this.dlg.say(...DIALOGUE.npc_realtor);
+    const pick = await this.dlg.ask([`Buy 27 Maple ($${price})`, 'Just looking'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      await this.dlg.say(...DIALOGUE.agency_browse);
+      return;
+    }
+    if (GS.data.cashOnHand < price) {
+      await this.dlg.say(...DIALOGUE.agency_too_dear);
+      return;
+    }
+    GS.data.cashOnHand -= price;
+    GS.setFlag('owned_27_maple');
+    GS.data.keyItems.push('deed_27_maple');
+    AUDIO.sfx('confirm');
+    toast(this, 'Got the DEED to 27 MAPLE!');
+    await this.dlg.say(...DIALOGUE.agency_bought);
+  }
+
+  /**
+   * S22 (ADR-115) — BERT'S AUTO: the car-lot TEASER. Browse-only on purpose — even
+   * the cheapest CAR (the Comet sedan) dwarfs a kid's fortune, and you need a HOME
+   * with a garage to park one. Shows the player the path (home → garage → car) and
+   * the real sticker, then sends them off to go get rich.
+   */
+  private async carLotBeat(): Promise<void> {
+    const price = carById('commuter')?.price ?? 5500;
+    await this.dlg.say(...DIALOGUE.npc_car_dealer);
+    await this.dlg.say(
+      `@That cream four-door? The "Comet" sedan — $${price}. Drives like a sofa with ambitions.`,
+    );
+    await this.dlg.say(...DIALOGUE.carlot_browse);
+  }
+
   /** quest-giver conversations; true = handled, false = fall through */
   private async questTalk(n: NpcObj): Promise<boolean> {
     switch (n.def.id) {
@@ -2014,6 +2118,7 @@ export class OverworldScene extends Phaser.Scene {
       case 'doc_brickton':
       case 'doc_puerto':
       case 'doc_valle':
+      case 'doc_otter': // S22 (ADR-120): the Otterbrook Clinic front desk
         // S14 (Prompt 25): pay-to-revive angels + the cure-all desk
         await this.hospitalBeat(n);
         return true;
@@ -2021,6 +2126,22 @@ export class OverworldScene extends Phaser.Scene {
       case 'priest_valle':
         // S14 (Prompt 25): the free 50 HP party prayer, §A11.4 warm
         await this.chapelBeat(n);
+        return true;
+      case 'realtor_otter':
+        // S22 (ADR-115): the home-buying teaser (real, affordability-gated)
+        await this.agencyBeat();
+        return true;
+      case 'car_dealer_otter':
+        // S22 (ADR-115): the car-lot teaser (browse-only — buy a home first)
+        await this.carLotBeat();
+        return true;
+      case 'constable_borden':
+        // S22 (ADR-118): the optional cop fight — clears Chad's frame-up
+        await this.bordenBeat();
+        return true;
+      case 'hodgkin':
+        // S22 (ADR-119): the Trail Key interlock (catch his runaway mower)
+        await this.hardwareBeat();
         return true;
       case 'deli_keeper':
       case 'deli_otter':
@@ -2952,6 +3073,23 @@ export class OverworldScene extends Phaser.Scene {
       this.fadeRestart();
       return true;
     }
+    // S22 (ADR-119): Hodgkin's locked trail shed — opens with the Trail Key
+    if (dialogueId === 'trail_shed') {
+      if (!GS.flag('has_trail_key')) {
+        await this.dlg.say(...DIALOGUE.trail_shed_locked);
+        return true;
+      }
+      if (GS.flag('shed_looted')) {
+        await this.dlg.say(...DIALOGUE.trail_shed_empty);
+        return true;
+      }
+      await this.dlg.say(...DIALOGUE.trail_shed_open);
+      GS.setFlag('shed_looted');
+      GS.data.cashOnHand += 60;
+      AUDIO.sfx('confirm');
+      toast(this, 'The shed: +$60 (and a granola bar).');
+      return true;
+    }
     if (dialogueId === 'hill_spring') {
       if (GS.flag('q_lemonade') && !GS.flag('q_lemonade_done') && !GS.flag('q_lem_jugfull')) {
         await this.dlg.say(...DIALOGUE.spring_fill);
@@ -3599,7 +3737,20 @@ export class OverworldScene extends Phaser.Scene {
         if (GS.flag('ember1') && !GS.flag('zapper_done')) await this.porchScene();
         break;
       case 'bus_stop':
-        if (GS.flag('zapper_done')) await this.busAsk('brickton');
+        // S22 (ADR-114): the old center stop is retired to a ONE-TIME redirect —
+        // the 6:15 boards at the new Transit Depot (east, by the pond) now. The
+        // trigger is frozen-core, so we just point the player there once.
+        if (GS.flag('zapper_done') && !GS.flag('bus_depot_known')) {
+          await this.dlg.say(...DIALOGUE.bus_stop_moved);
+          GS.setFlag('bus_depot_known');
+        }
+        break;
+      case 'depot_board':
+        // S22 (ADR-113/114): real boarding. The depot stays shuttered until
+        // Brickton is reached on foot (brickton_foot_first); then the highway —
+        // and the 6:15 — reopen.
+        if (GS.flag('zapper_done') && GS.flag('brickton_foot_first')) await this.busAsk('brickton');
+        else await this.dlg.say(...DIALOGUE.bus_closed_detour);
         break;
       case 'bus_stop_brickton':
         await this.busAsk('otterbrook');
@@ -4956,6 +5107,7 @@ export class OverworldScene extends Phaser.Scene {
   private async orientationGateScene(): Promise<void> {
     if (GS.flag('visitor_badge') || GS.flag('bus_ride_done')) {
       AUDIO.stopMusic();
+      GS.setFlag('brickton_foot_first'); // S22 (ADR-113): the foot arrival opens the bus
       this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'up');
       return;
     }
@@ -4978,6 +5130,7 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.orient_badge);
     await this.dlg.say(...DIALOGUE.orient_arrival);
     GS.setFlag('brickton_arrival_done'); // the foot arrival is its own beat — no later bus replay
+    GS.setFlag('brickton_foot_first'); // S22 (ADR-113): reaching Brickton on foot reopens the highway + the bus
     AUDIO.stopMusic();
     this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'up');
   }

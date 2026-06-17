@@ -452,6 +452,42 @@ Tutorial-by-doing. Meteor crash, Glint's prophecy and death-by-bug-zapper, the n
 > before this fight, and the awakening is its diegetic tutorial. Vibe Fire
 > and the Salt Shaker remain canon severs.)*
 
+> *(Amended 2026-06-16 per Appendix rule 6, ADR-111 — **THE SLOW BURN.** The
+> opener is re-tuned for a much gentler power curve: Jay's base Offense drops
+> 6→2 so a level-1 bat swing lands for just **1–2** (physicalDamage = max(1,
+> off·2 − def)), and the §A7 Ch.1 roster + the Tick are pulled down to match so
+> enemy hits land in the **1–5** band and the pre-crater fights (Jay has no Vibe
+> yet) are a fair 5–8-hit scrap, not a slog. New §A7 HP: Cranky Mailbox 12,
+> Runaway Lawnmower 16, Coily Cicada 14, Blazer Smiler 26, Pigeon Gang 20, Hill
+> Slug Deluxe 28; **BOSS 1 — THE TITANIC TICK is now 150 HP** (was 450 — the §A6
+> ladder still climbs), so the fight stays a fair ~5–8 turns once Surge α lands.
+> The 2.1 Offense growth slope is untouched: the curve simply STARTS lower and
+> ramps the same. Pinned both directions — the §A7 canon table + the §A6 BOSS_HP
+> ladder + the interim-validator HP test all carry the new numbers, same commit.)*
+
+> *(Amended 2026-06-16 per Appendix rule 6, ADR-112 — **THE LONGER CLIMB.** Two
+> transitional legs now sit BETWEEN Hill Road and the crater so the ascent earns
+> its payoff: **HICKORY TRAIL** (a winding dirt switchback) and **WHISPERWOOD
+> RISE** (a dark wooded climb of pines). Both ride the §A6 story clock for night
+> and continue the §A10 #1 paw-print sniff trail so Biscuit's clue line reads
+> unbroken on the longer route; a picnic table sits on the trail before the last
+> push (§A4.5). Route: Otterbrook → Hill Road → Hickory Trail → Whisperwood Rise
+> → Hickory Hill crater. The maps land gray-boxed on shipped sprites; the
+> authored-PNG pass is queued in docs/CH1_ART_PROMPTS.md.)*
+
+> *(Amended 2026-06-17 per Appendix rule 6, ADR-118 — **THE COP FIGHT** (Ch.1's
+> §A7 set-piece enemy). **CONSTABLE BORDEN**, Otterbrook's lone lawman (acting
+> chief, crossing guard), is lightly Hushed and fed a frame-up by **Chad Pickle**
+> — Chad reports that *Jay* "vandalized the whole hill," so by daybreak Borden
+> works the case at City Hall and tries to "detain" Jay BY THE BOOK (a deliberate
+> RHYME with General Buckle, §A6/ADR-081). It is an **OPTIONAL town beat, never a
+> wall**: beating him (70 HP, slow-burn — a post-Tick party clears him in a few
+> turns) snaps him clear, clears Jay's name, and pays his donut money ("the Civic
+> Apology Fund," +$80). Defeat/flee just leaves him to try again (the retry law).
+> Borden gray-boxes on the Blazer Smiler battler; the authored battler/bust is
+> queued in docs/CH1_ART_PROMPTS.md (§4.3). Engine: a `borden` §A7 enemy + the
+> `borden_cleared` flag + `constable_borden`'s OverworldScene beat.)*
+
 ### Chapter 2 — "The Gilded Grin" (South America) — target level: 13
 
 Banana boat to **Puerto Sol**. The mountain village **Valle Dorado** worships a golden idol that recently "started granting wishes" (it eats Vibe as payment — wishers go gray and quiet). Llama-herding side content, jungle paths, step-pyramid dungeon with rotating-floor puzzles.
