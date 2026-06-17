@@ -824,7 +824,54 @@ function replaceTextureImage(scene: Phaser.Scene, key: string, src: SourceImage)
   appliedSheets.add(key);
 }
 
-function makeCharacterCanvas(src: SourceImage): HTMLCanvasElement {
+// down & up walk/run frame cells in the 46-frame layout, as [walkA → walkB] /
+// [runA → runB] source→dest pairs. A horizontal flip of a FRONT/BACK stepping
+// pose is — by construction — the other foot, so a "half" sheet authored with a
+// single step per facing yields a full alternating gait without the artist ever
+// controlling which foot imagegen happened to draw. Only down/up qualify: a
+// profile (left/right) flip changes the FACING, not the foot, so those stay as
+// authored. (down: dirIndex 0 → walk base 0, run base 16; up: dirIndex 3 → walk
+// base 12, run base 22 — see the drawFrame layout below.)
+const FOOT_MIRROR_PAIRS: ReadonlyArray<readonly [number, number]> = [
+  [1, 3],
+  [13, 15],
+  [16, 17],
+  [22, 23],
+];
+
+// Copy frame `srcFrame` into frame `dstFrame` horizontally flipped, in place on a
+// 4-column character sheet canvas.
+function mirrorCharacterFrame(ctx: CanvasRenderingContext2D, srcFrame: number, dstFrame: number): void {
+  const cols = 4;
+  const sx = (srcFrame % cols) * FRAME_W;
+  const sy = Math.floor(srcFrame / cols) * FRAME_H;
+  const dx = (dstFrame % cols) * FRAME_W;
+  const dy = Math.floor(dstFrame / cols) * FRAME_H;
+  // Snapshot the source cell first — src and dest can overlap nothing here, but a
+  // detached buffer keeps the flip independent of draw order.
+  const tmp = document.createElement('canvas');
+  tmp.width = FRAME_W;
+  tmp.height = FRAME_H;
+  const tctx = tmp.getContext('2d');
+  if (!tctx) return;
+  tctx.imageSmoothingEnabled = false;
+  tctx.drawImage(ctx.canvas, sx, sy, FRAME_W, FRAME_H, 0, 0, FRAME_W, FRAME_H);
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(dx, dy, FRAME_W, FRAME_H);
+  ctx.translate(dx + FRAME_W, dy);
+  ctx.scale(-1, 1);
+  ctx.drawImage(tmp, 0, 0);
+  ctx.restore();
+}
+
+function applyFootMirror(ctx: CanvasRenderingContext2D): void {
+  for (const [srcFrame, dstFrame] of FOOT_MIRROR_PAIRS) {
+    mirrorCharacterFrame(ctx, srcFrame, dstFrame);
+  }
+}
+
+function makeCharacterCanvas(src: SourceImage, opts: { mirrorFeet?: boolean } = {}): HTMLCanvasElement {
   const cols = 4;
   const rows = Math.ceil(TOTAL_CHARACTER_FRAMES / cols);
   const canvas = document.createElement('canvas');
@@ -836,6 +883,7 @@ function makeCharacterCanvas(src: SourceImage): HTMLCanvasElement {
 
   if (src.width >= cols * FRAME_W && src.height >= rows * FRAME_H) {
     ctx.drawImage(src, 0, 0, cols * FRAME_W, rows * FRAME_H, 0, 0, cols * FRAME_W, rows * FRAME_H);
+    if (opts.mirrorFeet) applyFootMirror(ctx);
     return canvas;
   }
 
@@ -848,6 +896,7 @@ function makeCharacterCanvas(src: SourceImage): HTMLCanvasElement {
   // misread as an 8-dir strip by the synthesis path below.
   if (src.height > src.width) {
     ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, cols * FRAME_W, rows * FRAME_H);
+    if (opts.mirrorFeet) applyFootMirror(ctx);
     return canvas;
   }
 
@@ -1028,14 +1077,16 @@ export function applyAuthoredHeroArt(scene: Phaser.Scene): void {
     const character = sourceImage(scene, art.characterKey);
     if (character) {
       clearHeroAnimations(scene, art.id);
-      replaceTextureSheet(scene, art.id, makeCharacterCanvas(character), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
+      const mirrorFeet = (art as { mirrorFeet?: boolean }).mirrorFeet ?? false;
+      replaceTextureSheet(scene, art.id, makeCharacterCanvas(character, { mirrorFeet }), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
     }
   });
   NPC_CHARACTER_ART.forEach((art) => {
     const character = sourceImage(scene, art.key);
     if (character) {
       clearHeroAnimations(scene, art.id);
-      replaceTextureSheet(scene, art.id, makeCharacterCanvas(character), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
+      const mirrorFeet = (art as { mirrorFeet?: boolean }).mirrorFeet ?? false;
+      replaceTextureSheet(scene, art.id, makeCharacterCanvas(character, { mirrorFeet }), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
     }
   });
   const biscuit = sourceImage(scene, BISCUIT_DOG_ART.key);
