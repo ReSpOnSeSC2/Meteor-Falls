@@ -467,6 +467,10 @@ export const NpcDefSchema = z.strictObject({
    *  night differently after it survives it. Optional; validator-swept. */
   dialogueDay: z.string().min(1).optional(),
   wander: z.boolean().optional(),
+  /** ADR-124: pin an OUTDOOR NPC in place (opt out of the free-roam default —
+   *  a guard, or a quest-giver who must hold a mark). Clerks (`shop`), dogs, and
+   *  all indoor NPCs are already stationary without this. */
+  stationary: z.boolean().optional(),
   /** Wave 2 (#4, ADR-108): play the ADR-101 breath/blink idle (`${sprite}-idle-down`)
    *  while this NPC stands — the town breathes. Opt-in; a `dog` NPC (its own anim
    *  set) must NOT set it (the validator forbids the combo). */

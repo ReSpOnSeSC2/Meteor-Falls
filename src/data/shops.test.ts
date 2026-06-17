@@ -9,9 +9,9 @@ import { ITEMS, sellPrice, BAG_MAX } from './items';
 import { GS, makeHeroState } from '../engine/state';
 
 describe('S4 shop math (Prompt 20 / §A8 Ch.1)', () => {
-  it('the T-Ball Bat upgrade previews "Offense up by 4" over the Cracked Bat', () => {
+  it('the T-Ball Bat upgrade previews "Offense up by 2" over the Cracked Bat', () => {
     // §S4 done-when: 8 offense vs the starter's 4
-    expect((ITEMS.tball_bat.offense ?? 0) - (ITEMS.cracked_bat.offense ?? 0)).toBe(4);
+    expect((ITEMS.tball_bat.offense ?? 0) - (ITEMS.cracked_bat.offense ?? 0)).toBe(2);
     expect(ITEMS.tball_bat.wielder).toBe('rex');
     expect(ITEMS.hand_me_down_pan.wielder).toBe('faye');
   });

@@ -30,7 +30,7 @@
 |---|---|---|---|---|---|
 | Archetype | Ness — silent psychic hero | Paula — psychic + **Pray** | Jeff — gadget genius, no Vibe | Minimus royal page — tiny tactician, support, accuracy, morale | Poo — monastery martial artist |
 | Age / Home | 12, Otterbrook, USA | 11, Brickton, USA | 12, Wintermoor Academy, England | 9, Minimus Major, Grand Duchy of Minimus | 13, Stone Brow Monastery, Romania |
-| Joins | Ch.1 (start) | Ch.1 end (rescued in Brickton) | Ch.3 (crashes his rocket into the Academy greenhouse to reach you) | Ch.5 end (after WHISKERZILLA; appointed Foreign Minister of Being Taken Seriously) | Ch.9 (after the Trial of the Mute Mountain) |
+| Joins | Ch.1 (start) | Ch.1 end (rescued in Brickton) | Ch.3 (crashes his rocket into the Academy greenhouse to reach you) | Ch.5 **start** (found at the gates of Minimus Major; later appointed Foreign Minister of Being Taken Seriously) | Ch.5 **end** (the Walker falls in after WHISKERZILLA; homecoming & awakening at the Trial of the Mute Mountain, Ch.9) |
 | Weapon line | Baseball bats | Frying pans | Air rifles + Bottle Rockets | Stamp slings, sewing-needle sabers, thimble bells | Prayer-bead bracelets (fists) |
 | Specialty | Vibe Surge (signature nuke), Lifeup, Shield, Teleport | Vibe Fire/Freeze/Volt, **PRAY** | Spy, Repair Gizmos, Bottle Rockets, Multi-target tech | Pinpoint Mark, Royal Rally, Pocket Patch, Scale Step, Big-Little Focus | Vibe Comet (Starstorm analog), Mirror, Brainjam |
 | Personality | Silent. Nods. Eats too many corn dogs. | Kind, steel-spined, hears the Embers sing | Talks to machines more than people; tea snob | Takes minutes during disasters; speaks like a diplomat; furious when called adorable | Speaks formally; baffled by vending machines |
@@ -104,6 +104,56 @@ In the final battle, Pray becomes **scripted** (see A6, Chapter 10).
 > Teleport β (canon); Ch.9 Dorin's Trial IS his awakening (canon
 > already staged it); Ch.10 the finale's scripted PRAY is the last one. The
 > validator pins each chapter's manifest as it lands.)*
+
+> *(Added 2026-06-17 per Appendix rule 6, ADR-125 — **§A3/§A6 DORIN: THE LONG
+> WAY HOME.** Dorin is rebuilt from a Ch.9 cold-introduction into a **Ch.5 → Ch.9
+> traveling companion** — present for the back ~60% of the journey (Ch.5 end
+> through Ch.10) instead of two chapters. The story, not just the number, changes:*
+>
+> *• **The vow & the Walkers.** Stone Brow Monastery's elders felt the Hush coming
+> and sent their novices out as **WALKERS** — pilgrims who follow the silence to its
+> source. Dorin is the only one who made it past Europe; the others went quiet on the
+> road (Hushed). His vow: he may not speak his **birth name** until he earns it back
+> from the **MUTE MOUNTAIN** above his village. He is the Hush's mirror and the game's
+> thematic spine made personal — the Hush FORCES silence; Dorin CHOSE it to find
+> peace, and his arc is a boy who finally says his own name aloud and adds his voice
+> to the Homesong that beats the dark.*
+>
+> *• **Cold-open vision (Ch.1–2).** A ~30-second wordless dream/postcard of the
+> snow-stubbled monastery and the Mute Mountain plays early (a Heartlight flicker in
+> Jay's sleep), seeding Romania from the first hour with zero geographic detour.*
+>
+> *• **The cameo (Ch.3–4).** A travel-worn kid in a gi with prayer beads keeps
+> turning up a step ahead — a train platform, a roadside shrine, a market square he's
+> just un-Hushed — never giving his name, always either eating or asleep sitting up.
+> A cheap recurring NPC that plants the hook.*
+>
+> *• **The join (Ch.5, Minimus).** PIPPA is now found at the **START** of Minimus (at
+> the gates of Minimus Major); DORIN joins at the **END** (after WHISKERZILLA),
+> stepping into a losing fight and turning it. He joins as a fellow searcher who
+> understands the silence — NOT an all-knowing master.*
+>
+> *• **The road family (Ch.5–8).** His beads, his grandmother **BUNI** (whose letters
+> he cannot answer under the vow), and the name the mountain "took" are peeled through
+> optional picnic-table chats and his reactions to each country. The party becomes his
+> found family while his real family waits in Romania. His ability ladder now spreads
+> across Ch.5–9 instead of clustering at L46 (better pacing AND gameplay — see the
+> balance note).*
+>
+> *• **The homecoming (Ch.9, Romania).** The **Trial of the Mute Mountain** stays in
+> place but is recast from his introduction into his **AWAKENING / homecoming**: four
+> chapters of buildup pay off, Buni is real and waiting, and he finally **speaks his
+> name** to earn Comet Ω. The Feast Basket / Buni quest lands as catharsis — we don't
+> meet the master, we watched the student become one.*
+>
+> *Supersedes the "Ch.9 Dorin's Trial IS his awakening" line above only as to his
+> JOIN (the Trial/awakening stays Ch.9). **Build deferred** with the Ch.4–10 chapters:
+> when those land, Dorin enters `BOSS_PARTY` from Ch.6 (which also fixes the Ch.9
+> boss's conservative TTK-16 flag — that fight read slow precisely because he wasn't
+> there yet), his Comet/Healing rungs are re-derived for the earlier join levels
+> (~L26 at Ch.5, not L46) through the unchanged formulas, and his prayer-bead weapon
+> line gains an earlier rung below `cedar_beads`. See `docs/BALANCE_CH4-10_SPEC.md`
+> §1d and `docs/DECISIONS.md`.)*
 
 
 > *(Amended 2026-06-11 per Appendix rule 6, ADR-039 — Ch.2's awakening
@@ -580,6 +630,22 @@ Per-chapter expansion mix: 6 seed enemies listed below, 4 road/field roamers, 3 
 
 Every enemy has: sprite, 2–4 moves, weakness tag, EXP/cash/drop-table, and one **flavor death line** ("The Cranky Mailbox returned to sender."). The 200-type target excludes the 10 chapter bosses, minibosses, sports teams, arcade foes, and scripted hazards.
 
+> *(Amended 2026-06-17 per Appendix rule 6, ADR-119 — **THE OTTERBROOK 20.** Ch.1's
+> roster is fleshed from the seed six to the canon **20** §A7 types per the Enemy Flow
+> Law mix: 4 road/field roamers (**Sprinkler Sentry, Recycling Raccoon, Skeeter Swarm,
+> Garden Gnome [Unionized]**), 3 Department-of-Smiles specialists (**Mandatory Memo,
+> Motivational Poster, Quota Clock**), 2 social/urban oddities (**Expired Parking Meter,
+> Showroom Mannequin**), 2 rare/high-value (**The Good Investment** — a literal golden
+> retriever worth a fat purse, the wealth-arc wink; the **Rogue Ice-Cream Truck**), and 2
+> late-chapter pressure (**Tick Nymph** — foreshadows the Titanic Tick's latch; **The
+> Suit** — a fully-Hushed Smiler that inflicts Hushed before the boss), beside Borden's
+> set-piece. Each carries a map tell, a battle hook, an identity drop where it earns one,
+> and a death line. All stat to the ADR-111 Slow-Burn band (HP ~14–32, hits 1–5) for
+> COMBAT, but pay cash on the §A9 INCOME ladder (ADR-120) — the rare types have small HP
+> and BIG purses. All GRAY-BOX on shipped battlers; the 13 authored battlers + minis are
+> queued in docs/CH1_ART_PROMPTS.md §7. The §A7 canon HP table in
+> tools/content-validate.ts carries all 13 the same commit (the drift-log rule).)*
+
 ### Enemy Flow Law — 200 enemies that feel handcrafted
 
 Every standard enemy is a tiny interactive scene, not a stat block. Before the player ever sees a battle menu, the enemy must do something readable on the map: pace, hide, bargain, chase, run away, pretend to be furniture, block a shortcut, guard a picnic table, or make the party wonder whether touching it is wise. The battle then pays that behavior off with a mechanical gag, and the victory text lands the final little joke. The loop is always **see the bit -> touch the bit -> play the bit -> remember the bit**.
@@ -725,6 +791,21 @@ Enemy data must include a **map tell**, a **battle hook**, a **drop with identit
 > balance`) prints the curve + the property/fleet/furniture ladders to tune DATA (never
 > code) toward the targets as each region's catalog pours in; the curve's shape is
 > validator-pinned (`fortune`) + `balance.test.ts`.)*
+
+> *(Added 2026-06-17 per Appendix rule 6, ADR-120 — **§A9 THE INCOME LADDER (money is the
+> OTHER axis).** Two balance axes are explicitly DECOUPLED and must never be conflated.
+> **(1) COMBAT** — damage, heals, ability power, enemy/boss HP — compresses to small
+> EarthBound numbers (the ADR-111 Slow-Burn, to be extended game-wide). **(2) MONEY** —
+> battle cash, quest cash rewards, property/rent/flip + fleet income — SCALES UP HARD to
+> feed the §A9 Fortune Arc (`src/data/fortune.ts`: Ch.1 ~$1K → Ch.10 **$3B+**), because
+> the back-half fantasy is a kid who becomes a jet-setting billionaire — homes on every
+> continent, planes, a yacht, and a rocket to Mars. So a 30-HP enemy can pay a fortune
+> late-game: enemy `cash`, quest rewards, and caller purses ladder PER BAND toward the
+> net-worth floors (Ch.1's **Good Investment** is the seed — tiny HP, big purse).
+> `npm run balance` tunes the income DATA (never code) against `FORTUNE_ARC`; the curve
+> shape stays validator-pinned (`fortune`). **THE RULE FOR ALL FUTURE CONTENT:** set an
+> enemy/quest's HP & damage to the chapter's COMBAT band, but its cash/reward to the
+> chapter's INCOME band — they are different ladders, climbing at different rates.)*
 
 > *(Amended 2026-06-14 per Appendix rule 6, ADR-083 — **§A9 the car habit folds into the Fortune
 > Arc.** The §A4.15 dealership prices (a $90 kid's BMX → a $180,000 stretch limo, THE NIKOLAI at

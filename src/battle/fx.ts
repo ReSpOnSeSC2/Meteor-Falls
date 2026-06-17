@@ -636,8 +636,12 @@ export class BattleFx {
             tl.event(base + 540, () => this.rain(t.x, t.y - sc(10), sc(48), ramp, 18, 760));
           }
         });
-        // β/γ: a brief screen-edge bloom; Ω/Σ: the full palette-cycling flood
-        if (tier === 2 || tier === 3) this.flood(tl, charge + 480, colorOf(px(ramp, 2)), 0.16, 220);
+        // β (single-target): just a brief screen-EDGE bloom.
+        if (tier === 2) this.flood(tl, charge + 480, colorOf(px(ramp, 2)), 0.16, 220);
+        // γ/Ω/Σ are AOE — a FIELD-WIDE flood that escalates so the whole-screen hit
+        // READS as hitting the pack at once (γ a clear wash → Ω brighter → Σ the held
+        // flash), visibly distinct from the single-target α/β rungs.
+        if (tier === 3) this.flood(tl, charge + 480, colorOf(px(ramp, 2)), 0.28, 300);
         if (tier >= 4) this.flood(tl, charge + 520, colorOf(px(ramp, 3)), sigma ? 0.5 : 0.4, sigma ? 620 : 420);
         this.shake(tl, charge + 540, 160 + tier * 60, 0.004 + tier * 0.002);
         this.palettePulse(tl, charge + 440, ramp);

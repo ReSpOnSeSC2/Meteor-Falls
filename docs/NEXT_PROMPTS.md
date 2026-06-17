@@ -1041,7 +1041,7 @@ THE RENUMBER SWEEP (the Bible must read TEN end-to-end with zero
 orphan references — grep every "Ch.4"–"Ch.8" and every §-table row
 you move): §A1 (eleven countries and one planet; 10 chapters, 10
 bosses; length 40–50 hr total planned play time: 32–38 hr main + 8–12 hr sides/optional), §A2 (Ten Embers /
-one-tenth / collect all ten), §A3 (five main heroes; Pippa Quill joins from Minimus in Ch.5; Ana & Vivi stay Jay's sisters and quest callers; Dorin joins Ch.9, Trial at L46;
+one-tenth / collect all ten), §A3 (five main heroes; Pippa Quill joins from Minimus in Ch.5; Ana & Vivi stay Jay's sisters and quest callers; Dorin joins Ch.5 / Minimus end (ADR-125 "The Long Way Home"); homecoming Trial & awakening at Ch.9, ~L46;
 Teleport α story-gate Ch.6, β Ch.8; Mia's ladder per Ch.4 above),
 §A4.5 (~3 tables per chapter holds — ~30), §A4.6 (gates Ch.6/Ch.8),
 §A4.8 (Mushroomized — "Ch.8 spore forest"), §A4.9 (0–10 Embers, ten

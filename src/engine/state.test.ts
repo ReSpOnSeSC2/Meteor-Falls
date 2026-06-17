@@ -325,7 +325,7 @@ describe('content validation (interim validator, ADR-005)', () => {
     expect(ENEMIES.blazer_smiler.hp).toBe(26);
     expect(ENEMIES.pigeon_gang.hp).toBe(20);
     expect(ENEMIES.hill_slug_deluxe.hp).toBe(28);
-    expect(ENEMIES.titanic_tick.hp).toBe(150);
+    expect(ENEMIES.titanic_tick.hp).toBe(60);
     expect(ENEMIES.titanic_tick.boss).toBe(true);
   });
 

@@ -201,6 +201,9 @@ interface NpcObj {
   vx: number;
   vy: number;
   think: number;
+  /** ADR-124: free-roams a small radius (outdoor townsfolk) vs holds position
+   *  (shop/clinic/clerk + interiors + explicit wander:false/stationary). */
+  wanders: boolean;
 }
 
 type AuthoredWorldPropKey = keyof typeof AUTHORED_WORLD_PROP_DISPLAY_SIZE;
@@ -745,8 +748,16 @@ export class OverworldScene extends Phaser.Scene {
       const spr = this.add.sprite(x, y, def.sprite, def.dog ? (def.facing === 'left' ? 2 : 0) : standFrame(def.facing));
       spr.setOrigin(0.5, 1);
       spr.setDepth(y);
-      this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000 });
-      this.solids.push({ x: x - s(6), y: y - s(10), w: s(12), h: s(10) });
+      // ADR-124 — FREE-ROAMING TOWNSFOLK: NPCs wander a small radius by default;
+      // only clerks (a `shop`), explicitly pinned NPCs (wander:false / stationary),
+      // dogs, and INDOOR NPCs (shops/clinics/hotels/homes) hold position.
+      const wanders =
+        def.wander === true ||
+        (def.wander !== false && !def.shop && !def.stationary && !def.dog && !this.mapDef.interior);
+      this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000, wanders });
+      // a wanderer is non-blocking (no stale "ghost" solid left where it spawned);
+      // a pinned NPC keeps its small collision box.
+      if (!wanders) this.solids.push({ x: x - s(6), y: y - s(10), w: s(12), h: s(10) });
     }
   }
 
@@ -1297,7 +1308,7 @@ export class OverworldScene extends Phaser.Scene {
 
   private updateNpcs(dt: number): void {
     for (const n of this.npcs) {
-      if (!n.def.wander || this.cut || this.dlg.busy) continue;
+      if (!n.wanders || this.cut || this.dlg.busy) continue;
       n.think -= dt * 1000;
       if (n.think <= 0) {
         n.think = 1200 + Math.random() * 2200;
@@ -1339,7 +1350,11 @@ export class OverworldScene extends Phaser.Scene {
           }
         }
       } else if (!n.def.dog) {
-        n.spr.anims.stop();
+        // ADR-123: a wandering NPC that STOPS must show its clean STAND frame, not
+        // freeze on whatever mid-step walk frame the anim halted on (the "frozen in
+        // the wrong motion" bug). Reset to the resting facing's stand frame.
+        if (n.spr.anims.isPlaying) n.spr.anims.stop();
+        n.spr.setFrame(standFrame(n.def.facing));
       }
     }
   }

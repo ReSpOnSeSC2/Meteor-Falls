@@ -1166,16 +1166,32 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     pigeon_gang: 20,
     hill_slug_deluxe: 28,
     borden: 70, // S22 (ADR-118) — the Ch.1 set-piece cop fight (optional town beat)
-    titanic_tick: 150,
+    // ADR-119 — THE OTTERBROOK 20: the Ch.1 ecosystem fleshed to the §A7 canon
+    // 20 (4 roamers · 3 Dept.-of-Smiles · 2 social/urban · 2 rare/high-value ·
+    // 2 late-pressure). Slow-Burn HP band; rare types pay BIG cash (Fortune Arc).
+    sprinkler_sentry: 18,
+    recycling_raccoon: 16,
+    skeeter_swarm: 14,
+    unionized_gnome: 22,
+    mandatory_memo: 16,
+    motivational_poster: 20,
+    quota_clock: 24,
+    expired_meter: 18,
+    showroom_mannequin: 20,
+    good_investment: 26,
+    rogue_icecream_truck: 30,
+    tick_nymph: 28,
+    the_suit: 32,
+    titanic_tick: 60,
     // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
     // (the union attacks 5×22, §A7's group notation)
     pickpocket_parrot: 70,
     gilded_beetle: 85,
-    cursed_souvenir: 95,
-    step_mask: 110,
+    cursed_souvenir: 78,
+    step_mask: 80,
     banana_bunch: 22,
-    jungle_jitterbug: 120,
-    gilded_grin: 980,
+    jungle_jitterbug: 80,
+    gilded_grin: 300,
     // Chapter 3 (ADR-095) — §A7 England: the seed six + the Enemy Flow Law mix
     // (4 road/field · 3 dungeon · 2 social · 2 rare · 2 late-pressure · 1 set-piece).
     // cricket_eleven is 16 EACH (the XI attacks as a group, §A7's notation).
@@ -1198,9 +1214,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     roman_sentry: 180,
     head_prefect: 175,
     boiler_golem: 190,
-    the_invigilator: 210,
+    the_invigilator: 200,
     // BOSS 3 (ADR-099) — promoted from the forge draft to a live §A7 enemy at the flip
-    headmaster_mainframe: 1600,
+    headmaster_mainframe: 750,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1354,6 +1370,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     // floor: base stats, no weapons — so the real geared fight is at least this fast)
     if (b.ttk < 2 || b.ttk > 25) {
       fail('verify', `boss '${b.bossId}' TTK ${b.ttk} at Lv${b.level} is out of the fair 2–25 window (tune §A9 DATA, not code)`);
+    }
+    // ── ADR-122/ADR-120 — THE MONETARY VISION: combat numbers stay an axis BELOW
+    //    money. The single biggest combat number of a chapter (its boss HP) must
+    //    sit under that chapter's Fortune-Arc net-worth target, so the big numbers
+    //    a player chases are always DOLLARS (Ch1 ~$1K → Ch10 $3B), never damage.
+    //    This guards the whole game going forward: any future boss/chapter that
+    //    out-scales the money axis fails here.
+    const money = fortuneTarget(b.chapter);
+    if (b.hp >= money) {
+      fail('verify', `monetary vision: Ch.${b.chapter} boss '${b.name}' HP ${b.hp} ≥ the Fortune-Arc target $${money.toLocaleString('en-US')} — combat must stay BELOW the money axis (ADR-120: money is the bigger number)`);
     }
   }
 }
@@ -2212,12 +2238,12 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
     const ch = m.chapter;
 
     // the §A6 boss-HP ladder, pinned against the forge's curve constants (the
-    // shipped + the forged bosses read the same ladder; Ch.10's 6,000 shell is
-    // the bespoke finale, and the two minibosses ride MINIBOSS_HP)
+    // shipped + the forged bosses read the same ladder; Ch.10's 150,000 shell is
+    // the bespoke 3-phase finale, and the two minibosses ride MINIBOSS_HP)
     if (ch <= 9) {
       if (m.boss.hp !== BOSS_HP[ch]) fail('chapters', `Ch.${ch} boss '${m.boss.id}' HP is ${m.boss.hp}, §A6 ladder ${BOSS_HP[ch]}`);
-    } else if (m.boss.hp !== 6000) {
-      fail('chapters', `Ch.10 finale '${m.boss.id}' is the 6,000-HP shell (§A6), got ${m.boss.hp}`);
+    } else if (m.boss.hp !== 150000) {
+      fail('chapters', `Ch.10 finale '${m.boss.id}' is the 150,000-HP shell (§A6, 3 phases ~50k each), got ${m.boss.hp}`);
     }
     for (const mb of m.minibosses ?? []) {
       const want = MINIBOSS_HP[mb.id as keyof typeof MINIBOSS_HP];

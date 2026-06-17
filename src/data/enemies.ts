@@ -222,6 +222,239 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       mini: 'mini_pigeon_gang',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
+
+    /* ================= §A7 CHAPTER 1 — the ecosystem to 20 (ADR-119) =================
+     * 13 new types take Otterbrook/Brickton/the Dept. of Smiles to the canon 20.
+     * Slow-Burn band (HP ~14–32, hits 1–5; rare types pay BIG cash for the
+     * Fortune Arc). Every one: a MAP TELL (comment), a battle HOOK, an identity
+     * DROP where it earns one, and a death line. All GRAY-BOX on shipped
+     * battlers — authored art is queued in docs/CH1_ART_PROMPTS.md. */
+
+    // --- four road/field roamers: suburbia having its worst Tuesday ---
+    E({
+      // TELL: oscillates back and forth guarding a too-green lawn; cross its arc.
+      id: 'sprinkler_sentry',
+      name: 'Sprinkler Sentry',
+      article: 'The',
+      hp: 18, offense: 3, defense: 4, speed: 7, level: 2, exp: 11, cash: 6,
+      weakness: [],
+      moves: [
+        { name: 'tick-tick-tick', kind: 'taunt', text: '{e} swept its head the other way, winding up.', weight: 2 },
+        { name: 'oscillating spray', kind: 'strong', mult: 1.3, text: '{e} caught the whole party on the backswing!', weight: 3 },
+        { name: 'soak', kind: 'status', status: 'crying', text: "{e} got {t} right in the eyes! {t} can't see straight!", weight: 3 },
+      ],
+      deathLine: 'The Sprinkler Sentry retracted into the lawn, coverage complete.',
+      sprite: 'battle_sprinkler_sentry', mini: 'mini_runaway_lawnmower',
+      bg: [RAMP.GRASS, RAMP.CYAN],
+    }),
+    E({
+      // TELL: head-down in a tipped-over can; bolts if you face it, easy from behind.
+      id: 'recycling_raccoon',
+      name: 'Recycling Raccoon',
+      article: 'The',
+      hp: 16, offense: 4, defense: 3, speed: 11, level: 3, exp: 13, cash: 8,
+      weakness: [],
+      moves: [
+        { name: 'rummage', kind: 'attack', mult: 1, text: "{e} went through {t} like last week's mail!", weight: 5 },
+        { name: 'deposit grab', kind: 'stealcash', text: "{e} cashed in {t}'s nickels at the redemption center!", weight: 3 },
+        { name: 'hiss', kind: 'taunt', text: '{e} hissed with the confidence of an animal that pays no rent.', weight: 2 },
+      ],
+      deathLine: 'The Recycling Raccoon waddled off with the five-cent deposit.',
+      drops: [{ item: 'corn_dog', chance: 0.2 }],
+      sprite: 'battle_recycling_raccoon', mini: 'mini_pigeon_gang',
+      bg: [RAMP.NIGHT, RAMP.EARTH],
+    }),
+    E({
+      // TELL: a gray haze hanging over the pond and the trail at dusk.
+      id: 'skeeter_swarm',
+      name: 'Skeeter Swarm',
+      article: 'The',
+      hp: 14, offense: 3, defense: 1, speed: 12, level: 3, exp: 12, cash: 5,
+      weakness: ['fire', 'insect'],
+      moves: [
+        { name: 'whine', kind: 'taunt', text: '{e} whined in that pitch only the back of your neck can hear.', weight: 2 },
+        { name: 'bite, bite, bite', kind: 'attack', mult: 1, text: '{e} got {t} in eleven places at once!', weight: 5 },
+        { name: 'swarm the eyes', kind: 'status', status: 'crying', text: "{e} clouded {t}'s eyes! {t} started swatting at nothing!", weight: 3 },
+      ],
+      deathLine: "The Skeeter Swarm dispersed to ruin somebody else's porch.",
+      drops: [{ item: 'bug_juice', chance: 0.15 }],
+      sprite: 'battle_skeeter_swarm', mini: 'mini_coily_cicada',
+      bg: [RAMP.FOREST, RAMP.NIGHT],
+    }),
+    E({
+      // TELL: stands dead still in the flowerbed; moves a few tiles when you look away.
+      id: 'unionized_gnome',
+      name: 'Garden Gnome, Unionized',
+      article: 'The',
+      hp: 22, offense: 4, defense: 6, speed: 3, level: 4, exp: 16, cash: 9,
+      weakness: [],
+      moves: [
+        { name: 'tiny pickaxe', kind: 'attack', mult: 1.1, text: '{e} swung its little pickaxe with full benefits!', weight: 4 },
+        { name: 'hold the line', kind: 'shield', text: '{e} braced behind its beard. It is not going anywhere.', weight: 2 },
+        { name: 'file a grievance', kind: 'taunt', text: '{e} took notes for the record. The record is very long.', weight: 2 },
+      ],
+      deathLine: 'The Garden Gnome filed one last grievance and clocked out.',
+      drops: [{ item: 'bottle_cap_medallion', chance: 0.08 }],
+      sprite: 'battle_unionized_gnome', mini: 'mini_cranky_mailbox',
+      bg: [RAMP.RED, RAMP.FOREST],
+    }),
+
+    // --- three Department of Smiles specialists: the institution fights back ---
+    E({
+      // TELL: a sheet of paperwork gliding the hall on a fixed patrol; step in its lane.
+      id: 'mandatory_memo',
+      name: 'Mandatory Memo',
+      article: 'The',
+      hp: 16, offense: 4, defense: 2, speed: 8, level: 5, exp: 18, cash: 10,
+      weakness: ['fire'],
+      moves: [
+        { name: 'paper cut', kind: 'attack', mult: 1, text: '{e} sliced {t} on the dotted line!', weight: 5 },
+        { name: 're: re: re:', kind: 'status', status: 'productive', text: "{e} CC'd {t} on everything! {t}'s weekend started leaking away!", weight: 3 },
+        { name: 'reply-all', kind: 'taunt', text: '{e} replied to the whole floor. Nobody asked. Everybody got it.', weight: 2 },
+      ],
+      deathLine: "The Mandatory Memo was filed, at last, under 'No.'",
+      drops: [{ item: 'diet_star_cola', chance: 0.15 }],
+      sprite: 'battle_mandatory_memo', mini: 'mini_cranky_mailbox',
+      bg: [RAMP.PAPER, RAMP.INK],
+    }),
+    E({
+      // TELL: a framed kitten poster whose eyes follow you across the room.
+      id: 'motivational_poster',
+      name: 'Motivational Poster',
+      article: 'The',
+      hp: 20, offense: 4, defense: 4, speed: 5, level: 5, exp: 19, cash: 11,
+      weakness: ['fire'],
+      moves: [
+        { name: 'HANG IN THERE', kind: 'status', status: 'asleep', text: '{e} encouraged {t} so relentlessly that {t} dozed off in self-defense!', weight: 3 },
+        { name: 'forced eye contact', kind: 'attack', mult: 1.1, text: '{e} believed in {t}. It hurt.', weight: 4 },
+        { name: 'live, laugh, languish', kind: 'taunt', text: '{e} reminded everyone that today is a gift. Nobody felt gifted.', weight: 2 },
+      ],
+      deathLine: 'The Motivational Poster curled at the corners and finally let go.',
+      sprite: 'battle_motivational_poster', mini: 'mini_pigeon_gang',
+      bg: [RAMP.CYAN, RAMP.GOLD],
+    }),
+    E({
+      // TELL: a wall clock whose ticking speeds up the closer you stand.
+      id: 'quota_clock',
+      name: 'Quota Clock',
+      article: 'The',
+      hp: 24, offense: 5, defense: 5, speed: 6, level: 6, exp: 22, cash: 13,
+      weakness: ['volt'],
+      moves: [
+        { name: 'deadline', kind: 'attack', mult: 1, text: '{e} reminded {t} that time was, in fact, up!', weight: 4 },
+        { name: 'overtime', kind: 'strong', mult: 1.4, text: '{e} made itself stay late and hit twice as hard!', weight: 3 },
+        { name: 'tick', kind: 'taunt', text: '{e} ticked. Loudly. It wanted you to hear the seconds leave.', weight: 2 },
+      ],
+      deathLine: 'The Quota Clock finally struck five and stopped dead.',
+      sprite: 'battle_quota_clock', mini: 'mini_runaway_lawnmower',
+      bg: [RAMP.INK, RAMP.ORANGE],
+    }),
+
+    // --- two social/urban oddities: town stays mostly safe, mostly ---
+    E({
+      // TELL: blinks red on a Brickton sidewalk; tickets you on sight, fights only if you argue.
+      id: 'expired_meter',
+      name: 'Expired Parking Meter',
+      article: 'The',
+      hp: 18, offense: 3, defense: 5, speed: 4, level: 4, exp: 15, cash: 7,
+      weakness: [],
+      moves: [
+        { name: 'VIOLATION', kind: 'stealcash', text: '{e} wrote {t} a ticket and helped itself to the fine!', weight: 3 },
+        { name: 'coin-slot jam', kind: 'attack', mult: 1.1, text: "{e} ate {t}'s quarter AND {t}'s patience!", weight: 4 },
+        { name: 'flag up', kind: 'taunt', text: '{e} flipped its little red flag. The audacity has a sound.', weight: 2 },
+      ],
+      deathLine: "The Expired Parking Meter accepted that some things can't be charged.",
+      sprite: 'battle_expired_meter', mini: 'mini_cranky_mailbox',
+      bg: [RAMP.RED, RAMP.PAPER],
+    }),
+    E({
+      // TELL: poses in a shop window; only wakes if you try on three hats.
+      id: 'showroom_mannequin',
+      name: 'Showroom Mannequin',
+      article: 'The',
+      hp: 20, offense: 4, defense: 4, speed: 6, level: 5, exp: 17, cash: 10,
+      weakness: [],
+      moves: [
+        { name: 'runway strut', kind: 'attack', mult: 1, text: '{e} strutted straight through {t}!', weight: 4 },
+        { name: 'accessorize', kind: 'steal', text: "{e} decided {t}'s hat completed the look, and took it!", weight: 3 },
+        { name: 'vogue', kind: 'taunt', text: '{e} struck a pose and held it. Held it. Still holding it.', weight: 2 },
+      ],
+      deathLine: 'The Showroom Mannequin returned to the window, deeply unbothered.',
+      drops: [{ item: 'foam_finger', chance: 0.1 }],
+      sprite: 'battle_showroom_mannequin', mini: 'mini_pigeon_gang',
+      bg: [RAMP.MAGENTA, RAMP.PURPLE],
+    }),
+
+    // --- two rare/high-value: little stories that PAY (the Fortune Arc starts here) ---
+    E({
+      // TELL: a rare golden dog that trots across one screen and is gone — catch it for a fat payout.
+      id: 'good_investment',
+      name: 'The Good Investment',
+      article: '',
+      hp: 26, offense: 3, defense: 4, speed: 13, level: 5, exp: 30, cash: 95,
+      weakness: [],
+      moves: [
+        { name: 'fetch', kind: 'attack', mult: 1, text: '{e} brought back the stick and also bowled over {t}!', weight: 4 },
+        { name: 'puppy eyes', kind: 'taunt', text: '{e} looked up at {t}. {t} hesitated. Everyone always hesitates.', weight: 3 },
+        { name: 'good-boy bolt', kind: 'taunt', text: '{e} thought, very seriously, about trotting home.', weight: 3 },
+      ],
+      deathLine: 'The Good Investment trotted home. It was, in every sense, a sound one.',
+      sprite: 'battle_good_investment', mini: 'mini_pigeon_gang',
+      bg: [RAMP.GOLD, RAMP.GRASS],
+    }),
+    E({
+      // TELL: appears only when the music cuts out; rolls past playing a warped jingle.
+      id: 'rogue_icecream_truck',
+      name: 'Rogue Ice-Cream Truck',
+      article: 'The',
+      hp: 30, offense: 4, defense: 6, speed: 5, level: 6, exp: 28, cash: 75,
+      weakness: ['volt'],
+      moves: [
+        { name: 'off-key jingle', kind: 'status', status: 'asleep', text: '{e} played a lullaby with three wrong notes! {t} nodded off!', weight: 3 },
+        { name: 'brain freeze', kind: 'status', status: 'paralyzed', text: '{e} served {t} a cone too fast! {t} seized up, clutching their head!', weight: 3 },
+        { name: 'soft-serve slam', kind: 'strong', mult: 1.3, text: '{e} lurched the whole chassis at {t}!', weight: 3 },
+      ],
+      deathLine: 'The Rogue Ice-Cream Truck coasted to a stop, finally out of jingle.',
+      drops: [{ item: 'diet_star_cola', chance: 0.3 }],
+      sprite: 'battle_rogue_icecream_truck', mini: 'mini_runaway_lawnmower',
+      bg: [RAMP.CYAN, RAMP.MAGENTA],
+    }),
+
+    // --- two late-chapter pressure: remix the lessons right before the Tick ---
+    E({
+      // TELL: small ticks on the crater rim — a warning of what is waiting below.
+      id: 'tick_nymph',
+      name: 'Tick Nymph',
+      article: 'The',
+      hp: 28, offense: 5, defense: 4, speed: 8, level: 6, exp: 24, cash: 14,
+      weakness: ['fire', 'salt', 'insect'],
+      moves: [
+        { name: 'latch on', kind: 'strong', mult: 1.3, text: '{e} sank in and would not let go of {t}!', weight: 4 },
+        { name: 'sip', kind: 'attack', mult: 1, text: "{e} took a little of {t}'s warmth for the road.", weight: 3 },
+        { name: 'chitter', kind: 'taunt', text: '{e} chittered. Somewhere below, something much larger chittered back.', weight: 2 },
+      ],
+      deathLine: 'The Tick Nymph let go and skittered off to grow up. Regrettably.',
+      drops: [{ item: 'salt_shaker', chance: 0.15 }],
+      sprite: 'battle_tick_nymph', mini: 'mini_coily_cicada',
+      bg: [RAMP.PURPLE, RAMP.RED],
+    }),
+    E({
+      // TELL: the most-gone Smiler, patrolling near the holding room; the air goes quiet around it.
+      id: 'the_suit',
+      name: 'The Suit',
+      article: '',
+      hp: 32, offense: 6, defense: 5, speed: 6, level: 7, exp: 26, cash: 16,
+      weakness: [],
+      moves: [
+        { name: 'exit interview', kind: 'strong', mult: 1.2, text: '{e} walked {t} through their shortcomings, item by item!', weight: 4 },
+        { name: 'silence the room', kind: 'status', status: 'hushed', text: "{e} smiled, and the warmth went out of {t}'s voice!", weight: 3 },
+        { name: 'straighten tie', kind: 'taunt', text: '{e} straightened a tie that was already straight. The smile never moved.', weight: 2 },
+      ],
+      deathLine: "The Suit's smile finally reached its eyes. Then both switched off.",
+      sprite: 'battle_the_suit', mini: 'mini_pigeon_gang',
+      bg: [RAMP.INK, RAMP.NIGHT],
+    }),
+
     /* ================= §A7 CHAPTER 2 — South America (S14) =================
      * Target level 13; EXP/cash on the §A9 curve between Ch.1's street pay
      * and Boss 2's purse. Every quirk §A7 names is a real mechanic:
@@ -278,7 +511,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'cursed_souvenir',
       name: 'Cursed Souvenir',
       article: 'The',
-      hp: 95,
+      hp: 78,
       offense: 16,
       defense: 8,
       speed: 7,
@@ -302,7 +535,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'step_mask',
       name: 'Step-Mask',
       article: 'The',
-      hp: 110,
+      hp: 80,
       offense: 17,
       defense: 10,
       speed: 9,
@@ -346,7 +579,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'jungle_jitterbug',
       name: 'Jungle Jitterbug',
       article: 'The',
-      hp: 120,
+      hp: 80,
       offense: 19,
       defense: 9,
       speed: 18,
@@ -855,7 +1088,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'the_invigilator',
       name: 'The Invigilator',
       article: '',
-      hp: 210,
+      hp: 200,
       offense: 30,
       defense: 16,
       speed: 8,
@@ -885,7 +1118,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'gilded_grin',
       name: 'IDOL OF THE GILDED GRIN',
       article: 'The',
-      hp: 980,
+      hp: 300,
       offense: 24,
       defense: 14,
       speed: 10,
@@ -919,7 +1152,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'headmaster_mainframe',
       name: 'HEADMASTER MAINFRAME',
       article: 'The',
-      hp: 1600,
+      hp: 750,
       offense: 31,
       defense: 18,
       speed: 9,
@@ -953,7 +1186,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // fair ~5–8 turns now that solo Jay deals far less per swing (Vibe Surge α,
       // awakened one beat earlier, carries the burst; severing the latch costs
       // turns). EXP stays generous to keep the L8 target reachable.
-      hp: 150,
+      hp: 60,
       offense: 11,
       defense: 7,
       speed: 6,

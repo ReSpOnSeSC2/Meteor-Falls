@@ -360,6 +360,235 @@ transparent background, palette-consistent with the rest of Otterbrook.
 > car) — the rags-to-riches teaser. A parked Comet sedan prop for Bert's lot can use
 > the existing vehicle forge (no authored PNG needed) or a bespoke master via §5.1.
 
+## §7 — The Otterbrook 20: Chapter 1 enemy battlers (ADR-119)
+
+13 new §A7 Ch.1 enemy types ship in the data (ADR-119), each running today on a
+gray-box fallback. Each owns its **own** `battle_<id>` texture key, so a generated
+PNG drops straight in — **no code change needed beyond the 3 wiring lines below.**
+
+**WHAT TO MAKE (per enemy): one front-facing BATTLER in THREE WEAR TIERS.** The
+engine cross-fades a battler through 3 states as its HP drops (the EarthBound
+"reads the drums" beat), so every enemy is 3 PNGs:
+- `battle_<id>.png` — **W0 / pristine** (full HP: clean, confident, full color).
+- `battle_<id>_w1.png` — **W1 / worn** (~half HP: dinged, cracked, scuffed, a little rattled).
+- `battle_<id>_w2.png` — **W2 / battered** (near death: barely holding together, drooping, sparks/cracks/smoke, same silhouette).
+Keep the **same pose, framing, and silhouette** across all three — only the damage/wear changes.
+
+**SIZE / FORMAT:** author large (master ~512×640+ per tier, square-ish), export each
+runtime PNG at **112×144 px**, single frame, **fully transparent** background, crisp
+pixels, no anti-alias halo. Paste the **STYLE PREAMBLE** (top of this file) before every prompt.
+
+**WHERE IT GOES:**
+- **Masters:** `assets/art/masters/enemies/` (a combined `ch1-enemies-wear-2-source.png` sheet, or per-enemy files).
+- **Runtime:** `assets/art/enemies/battle_<id>.png`, `…_w1.png`, `…_w2.png`.
+- **Wire it:** add the enemy's 3 lines to the `ENEMY_BATTLE_ART` list in
+  [`src/spritegen/authored.ts`](../src/spritegen/authored.ts) (full block in §7.14 below).
+- **The overworld MINI** (the 16×16 you touch on the map) is **procedural** — it currently
+  reuses a sibling silhouette and needs no art here; a bespoke-mini pass is separate.
+
+**TONE:** a foe you almost feel bad about beating — the neighborhood having its
+worst Tuesday. Funny, warm, slightly strange; never grimdark. (Exception: **The Suit**
+is the one quietly *wrong* one — the Hush peeking through, never funny.)
+
+### 7.1 — `battle_sprinkler_sentry` (roamer)
+```
+A lawn SPRINKLER turned cranky guardian — an oscillating brass sprinkler head on a
+spiked base, water arcing off it like a cape, a tiny furious "face" in the nozzle.
+Reads as a suburban yard appliance that has decided the lawn is sovereign territory.
+```
+### 7.2 — `battle_recycling_raccoon` (roamer)
+```
+A plump RACCOON standing on its hind legs out of a tipped recycling bin, a crushed
+soda can in one paw, a five-cent-deposit gleam in its eye, bandit-mask reading as
+literal theft. Mischief, not menace.
+```
+### 7.3 — `battle_skeeter_swarm` (roamer)
+```
+A loose CLOUD OF MOSQUITOES shaped into one battler-sized swarm with a faint
+collective face, a few oversized lead skeeters at the front, motion-whine implied by
+trailing dashes. Reads as the dusk pond at its most annoying.
+```
+### 7.4 — `battle_unionized_gnome` (roamer)
+```
+A ceramic GARDEN GNOME holding a tiny pickaxe and a clipboard, red cap, a little
+"ON STRIKE" attitude in its stance, a hand-lettered grievance sign at its feet.
+Stoic, bureaucratic, immovable.
+```
+### 7.5 — `battle_mandatory_memo` (Dept. of Smiles)
+```
+An animated office MEMO — a single sheet of letterhead with a stapled-on scowl,
+paper-cut edges bared like teeth, "RE: RE: RE:" headers stacking off the top. Crisp,
+cold, institutional.
+```
+### 7.6 — `battle_motivational_poster` (Dept. of Smiles)
+```
+A framed "HANG IN THERE" KITTEN POSTER come alive, the kitten's smile a notch too
+wide and too long, the frame cracking at the corners. Aggressively, menacingly
+encouraging. Faded 1995 office colors.
+```
+### 7.7 — `battle_quota_clock` (Dept. of Smiles)
+```
+A round institutional WALL CLOCK with a clenched face, hands sweeping like fists,
+a frayed power cord twitching like a tail, "OVERTIME" implied. The pressure of time
+made physical.
+```
+### 7.8 — `battle_expired_meter` (social/urban)
+```
+A coin-op PARKING METER on a bent pole, red "VIOLATION" flag up, a ticket pad
+tucked under its head, a smug little dial-face. Petty municipal authority incarnate.
+```
+### 7.9 — `battle_showroom_mannequin` (social/urban)
+```
+A boutique MANNEQUIN mid-strut, one stolen ball-cap balanced on its faceless head,
+a price tag swinging, an exaggerated runway pose held a beat too long. Vain, blank,
+unbothered.
+```
+### 7.10 — `battle_good_investment` (rare/high-value)
+```
+A radiant GOLDEN RETRIEVER with an almost halo-like sheen, sitting proud, tail
+mid-wag, a tiny dollar-sign glint on its collar tag. Reads instantly as "rare and
+worth a LOT" — the rags-to-riches wink. Warm, lovable, premium.
+```
+### 7.11 — `battle_rogue_icecream_truck` (rare/high-value)
+```
+A boxy 1995 ICE-CREAM TRUCK seen three-quarter front, menu decals peeling, a warped
+loudspeaker leaking crooked music notes, headlights like droopy hypnotized eyes.
+Big, slow, and slightly cursed.
+```
+### 7.12 — `battle_tick_nymph` (late pressure)
+```
+A juvenile of the Titanic Tick — a swollen pillbug-tick the size of a dog, glossy
+abdomen, barbed legs poised to LATCH, a smaller echo of the boss's silhouette so the
+player reads the foreshadow. Gross but small. Warning, not yet horror.
+```
+### 7.13 — `battle_the_suit` (late pressure)
+```
+The most-gone Dept. of Smiles SMILER — a sharp gray business suit with a smile
+stretched flat and empty, the eyes two dark unlit voids, a faint cold "Hush" haze at
+the edges (its line is never funny). Quietly wrong; the calm before the boss.
+```
+
+### 7.14 — Files, sizes & `authored.ts` wiring (all 13)
+
+Every enemy = **3 PNGs** at **112×144**, transparent, in `assets/art/enemies/`:
+
+| Enemy id | Files (W0 / W1 / W2) |
+|---|---|
+| sprinkler_sentry | `battle_sprinkler_sentry.png` · `…_w1.png` · `…_w2.png` |
+| recycling_raccoon | `battle_recycling_raccoon.png` · `…_w1` · `…_w2` |
+| skeeter_swarm | `battle_skeeter_swarm.png` · `…_w1` · `…_w2` |
+| unionized_gnome | `battle_unionized_gnome.png` · `…_w1` · `…_w2` |
+| mandatory_memo | `battle_mandatory_memo.png` · `…_w1` · `…_w2` |
+| motivational_poster | `battle_motivational_poster.png` · `…_w1` · `…_w2` |
+| quota_clock | `battle_quota_clock.png` · `…_w1` · `…_w2` |
+| expired_meter | `battle_expired_meter.png` · `…_w1` · `…_w2` |
+| showroom_mannequin | `battle_showroom_mannequin.png` · `…_w1` · `…_w2` |
+| good_investment | `battle_good_investment.png` · `…_w1` · `…_w2` |
+| rogue_icecream_truck | `battle_rogue_icecream_truck.png` · `…_w1` · `…_w2` |
+| tick_nymph | `battle_tick_nymph.png` · `…_w1` · `…_w2` |
+| the_suit | `battle_the_suit.png` · `…_w1` · `…_w2` |
+
+When the PNGs exist, paste these into the `ENEMY_BATTLE_ART` array in
+`src/spritegen/authored.ts` (the data already names every key — the game uses the
+gray-box until these load):
+
+```ts
+  { key: 'battle_sprinkler_sentry', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry.png', import.meta.url).href },
+  { key: 'battle_sprinkler_sentry_w1', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry_w1.png', import.meta.url).href },
+  { key: 'battle_sprinkler_sentry_w2', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry_w2.png', import.meta.url).href },
+  { key: 'battle_recycling_raccoon', url: new URL('../../assets/art/enemies/battle_recycling_raccoon.png', import.meta.url).href },
+  { key: 'battle_recycling_raccoon_w1', url: new URL('../../assets/art/enemies/battle_recycling_raccoon_w1.png', import.meta.url).href },
+  { key: 'battle_recycling_raccoon_w2', url: new URL('../../assets/art/enemies/battle_recycling_raccoon_w2.png', import.meta.url).href },
+  { key: 'battle_skeeter_swarm', url: new URL('../../assets/art/enemies/battle_skeeter_swarm.png', import.meta.url).href },
+  { key: 'battle_skeeter_swarm_w1', url: new URL('../../assets/art/enemies/battle_skeeter_swarm_w1.png', import.meta.url).href },
+  { key: 'battle_skeeter_swarm_w2', url: new URL('../../assets/art/enemies/battle_skeeter_swarm_w2.png', import.meta.url).href },
+  { key: 'battle_unionized_gnome', url: new URL('../../assets/art/enemies/battle_unionized_gnome.png', import.meta.url).href },
+  { key: 'battle_unionized_gnome_w1', url: new URL('../../assets/art/enemies/battle_unionized_gnome_w1.png', import.meta.url).href },
+  { key: 'battle_unionized_gnome_w2', url: new URL('../../assets/art/enemies/battle_unionized_gnome_w2.png', import.meta.url).href },
+  { key: 'battle_mandatory_memo', url: new URL('../../assets/art/enemies/battle_mandatory_memo.png', import.meta.url).href },
+  { key: 'battle_mandatory_memo_w1', url: new URL('../../assets/art/enemies/battle_mandatory_memo_w1.png', import.meta.url).href },
+  { key: 'battle_mandatory_memo_w2', url: new URL('../../assets/art/enemies/battle_mandatory_memo_w2.png', import.meta.url).href },
+  { key: 'battle_motivational_poster', url: new URL('../../assets/art/enemies/battle_motivational_poster.png', import.meta.url).href },
+  { key: 'battle_motivational_poster_w1', url: new URL('../../assets/art/enemies/battle_motivational_poster_w1.png', import.meta.url).href },
+  { key: 'battle_motivational_poster_w2', url: new URL('../../assets/art/enemies/battle_motivational_poster_w2.png', import.meta.url).href },
+  { key: 'battle_quota_clock', url: new URL('../../assets/art/enemies/battle_quota_clock.png', import.meta.url).href },
+  { key: 'battle_quota_clock_w1', url: new URL('../../assets/art/enemies/battle_quota_clock_w1.png', import.meta.url).href },
+  { key: 'battle_quota_clock_w2', url: new URL('../../assets/art/enemies/battle_quota_clock_w2.png', import.meta.url).href },
+  { key: 'battle_expired_meter', url: new URL('../../assets/art/enemies/battle_expired_meter.png', import.meta.url).href },
+  { key: 'battle_expired_meter_w1', url: new URL('../../assets/art/enemies/battle_expired_meter_w1.png', import.meta.url).href },
+  { key: 'battle_expired_meter_w2', url: new URL('../../assets/art/enemies/battle_expired_meter_w2.png', import.meta.url).href },
+  { key: 'battle_showroom_mannequin', url: new URL('../../assets/art/enemies/battle_showroom_mannequin.png', import.meta.url).href },
+  { key: 'battle_showroom_mannequin_w1', url: new URL('../../assets/art/enemies/battle_showroom_mannequin_w1.png', import.meta.url).href },
+  { key: 'battle_showroom_mannequin_w2', url: new URL('../../assets/art/enemies/battle_showroom_mannequin_w2.png', import.meta.url).href },
+  { key: 'battle_good_investment', url: new URL('../../assets/art/enemies/battle_good_investment.png', import.meta.url).href },
+  { key: 'battle_good_investment_w1', url: new URL('../../assets/art/enemies/battle_good_investment_w1.png', import.meta.url).href },
+  { key: 'battle_good_investment_w2', url: new URL('../../assets/art/enemies/battle_good_investment_w2.png', import.meta.url).href },
+  { key: 'battle_rogue_icecream_truck', url: new URL('../../assets/art/enemies/battle_rogue_icecream_truck.png', import.meta.url).href },
+  { key: 'battle_rogue_icecream_truck_w1', url: new URL('../../assets/art/enemies/battle_rogue_icecream_truck_w1.png', import.meta.url).href },
+  { key: 'battle_rogue_icecream_truck_w2', url: new URL('../../assets/art/enemies/battle_rogue_icecream_truck_w2.png', import.meta.url).href },
+  { key: 'battle_tick_nymph', url: new URL('../../assets/art/enemies/battle_tick_nymph.png', import.meta.url).href },
+  { key: 'battle_tick_nymph_w1', url: new URL('../../assets/art/enemies/battle_tick_nymph_w1.png', import.meta.url).href },
+  { key: 'battle_tick_nymph_w2', url: new URL('../../assets/art/enemies/battle_tick_nymph_w2.png', import.meta.url).href },
+  { key: 'battle_the_suit', url: new URL('../../assets/art/enemies/battle_the_suit.png', import.meta.url).href },
+  { key: 'battle_the_suit_w1', url: new URL('../../assets/art/enemies/battle_the_suit_w1.png', import.meta.url).href },
+  { key: 'battle_the_suit_w2', url: new URL('../../assets/art/enemies/battle_the_suit_w2.png', import.meta.url).href },
+```
+
+## §8 — The Hush Sentinel (the Mars robot at the crater, ADR-121)
+
+The end-game Mars construct you fight (and REPEL, with Glint's help) the first night.
+It is NOT a Ch.1 creature — it should read **alien, advanced, and frankly too big for
+this game yet**: the foreshadow of Mars. Paste the STYLE PREAMBLE first, but push the
+palette **cold and otherworldly** (the only thing in warm 1995 Ohio that isn't warm):
+matte Mars-dust ed metal, a single unblinking Hush-blue optic, segmented insectile
+limbs, faint broken glyph etching (the §A11.8 Hush script), a low cold glow at the seams.
+
+### 8.1 — `battle_hush_sentinel` (battler, 3 wear tiers)
+- **Runtime:** `assets/art/enemies/battle_hush_sentinel.png` · `…_w1.png` · `…_w2.png`,
+  **112×144** transparent each. (Bigger felt-presence than a normal battler — fill the frame.)
+```
+A front-facing JRPG battler of the HUSH SENTINEL: a tall, alien Mars war-construct
+crashed to Earth — segmented dark-metal body dusted red, folding insectile legs, a
+single large unblinking pale-blue optic, broken alien glyphs etched and faintly lit
+along its plating, cold light bleeding from its seams. Damaged from the fall (one limb
+hangs, a panel sparks). Menacing, advanced, WRONG for a sleepy 1995 town — the only
+cold thing in a warm world. W0 pristine-but-cracked / W1 visibly failing (more sparks,
+drooping limb) / W2 powering down (optic dimming, seams going dark). Same pose all three.
+```
+
+### 8.2 — `sprite_hush_sentinel` (overworld / cutscene figure)
+- **Runtime:** `assets/art/world/props/hush_sentinel.png` (a tall set-piece sprite for the
+  crater scene — it unfolds and looms; ~3–4 tiles tall).
+```
+A top-down/three-quarter overworld set-piece sprite of the HUSH SENTINEL unfolding out
+of a smoking crater at night: tall segmented Mars construct, pale-blue optic casting a
+cold cone of light on the scorched ground, red-dusted plating, broken glyphs aglow.
+Reads as a cutscene threat looming over kid-sized sprites. Transparent background.
+```
+
+### 8.3 — `prop_sentinel_husk` (the landmark it leaves)
+- **Runtime:** `assets/art/world/props/sentinel_husk.png`.
+```
+The powered-DOWN husk of the Hush Sentinel, half-sunk in the Hickory Hill crater: dark
+dead metal, optic gone black, limbs folded and still, red dust settling, a few cold dead
+glyphs. A quiet ominous LANDMARK the town learns to walk around — it will wake again
+much later. Top-down/three-quarter, transparent background.
+```
+
+### 8.4 — `sprite_glint_radiant` (optional — super-Glint for the fight)
+- **Runtime:** `assets/art/fx/glint_radiant.png` (a brighter, larger Glint for the one
+  scene where he goes supernova; the normal Glint sprite already exists).
+```
+The firefly-star creature GLINT at FULL POWER for one scene: the same small warm
+star-bug, but blazing — a corona of golden light, trailing sparks, almost too bright to
+look at, brave and tiny against a cold machine. Warm gold vs the Sentinel's cold blue.
+Transparent background.
+```
+
+> The **Hush-dark** town overlay (desaturate + dim + flickering streetlights as the Tick
+> feeds) is a runtime TINT/shader effect — **no authored art needed**. The Tick's-nest
+> map (the Heart Oak burrow) is a layout built from existing tiles.
+
 ## Wiring checklist (per asset)
 
 - [ ] Master saved in `assets/art/masters/<category>/` (+ `-transparent` variant).

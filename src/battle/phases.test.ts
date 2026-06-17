@@ -139,7 +139,7 @@ describe('THE HEADMASTER MAINFRAME — the §A6 Ch.3 summon loop, on its real sc
     expect(ENEMIES.headmaster_mainframe.weakMul).toBe(2);
     expect(ENEMIES.headmaster_mainframe.boss).toBe(true);
     expect(ENEMIES.headmaster_mainframe.mind_immune).toBe(true);
-    expect(ENEMIES.headmaster_mainframe.hp).toBe(1600);
+    expect(ENEMIES.headmaster_mainframe.hp).toBe(750);
   });
 });
 
