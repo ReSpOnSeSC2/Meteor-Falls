@@ -1371,6 +1371,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (b.ttk < 2 || b.ttk > 25) {
       fail('verify', `boss '${b.bossId}' TTK ${b.ttk} at Lv${b.level} is out of the fair 2–25 window (tune §A9 DATA, not code)`);
     }
+    // ── ADR-122/ADR-120 — THE MONETARY VISION: combat numbers stay an axis BELOW
+    //    money. The single biggest combat number of a chapter (its boss HP) must
+    //    sit under that chapter's Fortune-Arc net-worth target, so the big numbers
+    //    a player chases are always DOLLARS (Ch1 ~$1K → Ch10 $3B), never damage.
+    //    This guards the whole game going forward: any future boss/chapter that
+    //    out-scales the money axis fails here.
+    const money = fortuneTarget(b.chapter);
+    if (b.hp >= money) {
+      fail('verify', `monetary vision: Ch.${b.chapter} boss '${b.name}' HP ${b.hp} ≥ the Fortune-Arc target $${money.toLocaleString('en-US')} — combat must stay BELOW the money axis (ADR-120: money is the bigger number)`);
+    }
   }
 }
 
