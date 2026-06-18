@@ -31,3 +31,7 @@ vite.config.ts.timestamp-*.mjs
 /tmp-*
 /title-menu-tested.png
 /title-screen-tested.png
+
+# Blender NPC pipeline (regenerable artifacts)
+tools/blender/*.blend
+tools/blender/*.blend1
