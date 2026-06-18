@@ -605,6 +605,13 @@ class AudioSys {
       if (document.hidden) void this.ctx.suspend();
       else if (!this.muted) void this.ctx.resume();
     });
+    // REALIZE the pending intent. A track is almost always requested BEFORE this
+    // first gesture (the title theme is asked for on frame 1; the unlocking tap
+    // comes seconds later) — playMusic() can only latch the name while ctx is
+    // null, and its idempotency guard then suppresses every same-track re-request.
+    // So the graph coming up is the one moment that intent can be SOUNDED; without
+    // this the opening music never starts. (No-op when nothing was requested.)
+    if (this.intendedName) this.applyMusic(this.intendedName, this.intendedStems);
   }
 
   /**
@@ -1110,8 +1117,9 @@ class AudioSys {
     if (this.intendedName === name && this.intendedStems === wantStems) return;
     this.intendedName = name;
     this.intendedStems = wantStems;
-    // no context yet (pre-gesture): the intent is recorded and the next call
-    // after unlock() will sound it — exactly the old field-based behavior.
+    // no context yet (pre-gesture): only RECORD the intent. The idempotency guard
+    // above means a later same-track call can't start it, so unlock() is what
+    // sounds this once the audio graph comes up (see the tail of unlock()).
     if (!this.ctx || !this.musicBus) return;
     this.applyMusic(name, wantStems);
   }

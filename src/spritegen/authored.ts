@@ -168,6 +168,9 @@ const AUTHORED_GOLF_SUPPORT_ART = [
   { key: 'links_h16', file: 'links_h16' },
   { key: 'links_h17', file: 'links_h17' },
   { key: 'links_h18', file: 'links_h18' },
+  // behind-the-player POV art: the down-the-fairway backdrop + the back-view golfer
+  { key: 'links_fairway', file: 'fairway_behind' },
+  { key: 'links_golfer_back', file: 'golfer_back' },
 ] as const;
 
 const AUTHORED_GOLF_SHEETS = [
@@ -769,6 +772,13 @@ const ENEMY_OVERWORLD_ART = [
   url: new URL(`../../assets/art/enemies/overworld/${id}_8dir.png`, import.meta.url).href,
 }));
 
+// single-frame OVERWORLD minis (the little roaming sprite an enemy shows on the
+// map — EnemyDef.mini). Authored one-offs for enemies whose procedural mini is a
+// mismatch; loaded + applied exactly like a battler (one image, bare key).
+const ENEMY_MINI_ART = [
+  { key: 'mini_skeeter_swarm', url: new URL('../../assets/art/enemies/mini_skeeter_swarm.png', import.meta.url).href },
+];
+
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);
 export const AUTHORED_ENEMY_OVERWORLD_ART_IDS = ENEMY_OVERWORLD_ART.map((art) => art.id);
 export const AUTHORED_ENEMY_OVERWORLD_ART_KEYS = ENEMY_OVERWORLD_ART.map((art) => art.key);
@@ -1073,6 +1083,7 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   AUTHORED_VEHICLE_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
   ENEMY_BATTLE_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
+  ENEMY_MINI_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
   ENEMY_OVERWORLD_ART.forEach((art) => scene.load.image(art.authoredKey, art.url));
 }
 
@@ -1194,6 +1205,10 @@ export function applyAuthoredVehicleArt(scene: Phaser.Scene): void {
 
 export function applyAuthoredEnemyArt(scene: Phaser.Scene): void {
   ENEMY_BATTLE_ART.forEach((art) => {
+    const img = sourceImage(scene, `authored_enemy_${art.key}`);
+    if (img) replaceTextureImage(scene, art.key, img);
+  });
+  ENEMY_MINI_ART.forEach((art) => {
     const img = sourceImage(scene, `authored_enemy_${art.key}`);
     if (img) replaceTextureImage(scene, art.key, img);
   });

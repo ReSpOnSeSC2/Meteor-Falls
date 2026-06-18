@@ -244,7 +244,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: "The Skeeter Swarm dispersed to ruin somebody else's porch.",
       drops: [{ item: 'bug_juice', chance: 0.15 }],
-      sprite: 'battle_skeeter_swarm', mini: 'mini_coily_cicada',
+      sprite: 'battle_skeeter_swarm', mini: 'mini_skeeter_swarm',
       bg: [RAMP.FOREST, RAMP.NIGHT],
     }),
     E({

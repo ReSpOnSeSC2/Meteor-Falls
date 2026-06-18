@@ -1711,7 +1711,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '* Got THE JUG! (There is a tiny hand-drawn flag on it.)',
   ],
   q_lemonade_active: [
-    '@Sugar: drugstore. City lemons: STARMART. Spring water: the hill. The jug knows what to do.',
+    '@The empire still needs three things: sugar from the drugstore, CITY lemons from the STARMART in Brickton, and spring water — take the jug up Hickory Hill and fill it. Then haul it all back to us.',
   ],
   lem_take_sugar: [
     '@SUGAR! Vivi, log it! (Vivi licks a pencil and writes a number with too many zeroes in it.)',
