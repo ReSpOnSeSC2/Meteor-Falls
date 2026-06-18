@@ -85,6 +85,12 @@ import { VEHICLE_SPECS as VSPECS_FLEET } from '../src/spritegen/vehicles';
 import { FORTUNE_ARC, fortuneTarget } from '../src/data/fortune';
 import { allBossChecks, AWAKENING_LEVEL } from '../src/battle/verify';
 import { ENEMY_BATTLE_ART } from '../src/spritegen/enemies';
+import {
+  AUTHORED_ENEMY_BATTLE_ART_KEYS,
+  AUTHORED_ENEMY_OVERWORLD_ART_IDS,
+  AUTHORED_ENEMY_OVERWORLD_ART_KEYS,
+  AUTHORED_NPC_CHARACTER_IDS,
+} from '../src/spritegen/authored';
 import { SHOPS } from '../src/data/shops';
 import { QUESTS } from '../src/data/quests';
 import { ARCADE_TEXT, MGR_ROW } from '../src/data/arcade';
@@ -117,6 +123,12 @@ import { COSTA_DOOR_FOR_PUERTO_SOL } from '../src/data/maps';
 import { GolferDefSchema, LinksHoleSchema, ClubDefSchema } from '../src/schemas';
 import { AwakeningDefSchema, TeamDefSchema, WalkOnDefSchema } from '../src/schemas';
 import { CHAR_LEGEND, MAPS } from '../src/data/maps';
+import {
+  ENEMY_OVERWORLD_FRAME,
+  ENEMY_OVERWORLD_SHEET_ID_SET,
+  enemyOverworldKey,
+  enemyVisualIdentity,
+} from '../src/data/visuals';
 import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue';
 import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
 import { TEXT_VARS } from '../src/ui/text';
@@ -901,6 +913,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 // capable battle draw in ENEMY_BATTLE_ART (with its sprite key agreeing
 // with the data), and every wear row maps to a roster enemy.
 {
+  const authoredBattle = new Set<string>(AUTHORED_ENEMY_BATTLE_ART_KEYS);
+  const authoredOverworld = new Set<string>(AUTHORED_ENEMY_OVERWORLD_ART_KEYS);
+  const authoredOverworldIds = new Set<string>(AUTHORED_ENEMY_OVERWORLD_ART_IDS);
+  const authoredWalkers = new Set<string>(AUTHORED_NPC_CHARACTER_IDS);
+  for (const id of Object.keys(CAST)) authoredWalkers.add(id);
+
   for (const e of Object.values(ENEMIES)) {
     const row = ENEMY_BATTLE_ART[e.id];
     if (!row) {
@@ -911,8 +929,52 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       fail('wear', `'${e.id}' wear art keys sprite '${row.sprite}' but the data says '${e.sprite}' — the swap would miss`);
     }
   }
+  for (const e of Object.values(ENEMIES)) {
+    if (!authoredBattle.has(e.sprite)) {
+      fail('visual-id', `enemy '${e.id}' battle sprite '${e.sprite}' is not in the authored enemy loader; old procedural battle art would be treated as current`);
+    }
+
+    const identity = enemyVisualIdentity(e);
+    if (ENEMY_OVERWORLD_SHEET_ID_SET.has(e.id)) {
+      const want = enemyOverworldKey(e.id);
+      if (e.overworld !== want) {
+        fail('visual-id', `enemy '${e.id}' must use authored overworld sheet '${want}', got '${e.overworld ?? '(none)'}'`);
+      }
+      if (!authoredOverworld.has(want) || !authoredOverworldIds.has(e.id)) {
+        fail('visual-id', `enemy '${e.id}' claims overworld '${want}' but the authored loader has no matching ${e.id}_8dir.png sheet`);
+      }
+    } else if (e.overworld) {
+      fail('visual-id', `enemy '${e.id}' carries overworld '${e.overworld}' but is not in ENEMY_OVERWORLD_SHEET_IDS; register the identity row or remove the stale field`);
+    }
+    if (identity.field.kind === 'walker' && !authoredWalkers.has(identity.field.key)) {
+      fail('visual-id', `enemy '${e.id}' walker '${identity.field.key}' is not an authored character sheet`);
+    }
+  }
+
   for (const id of Object.keys(ENEMY_BATTLE_ART)) {
     if (!ENEMIES[id]) fail('wear', `ENEMY_BATTLE_ART row '${id}' matches no §A7 roster enemy — extend or retire the row`);
+  }
+}
+
+// Visual identity reverse checks: loaded authored enemy images must be claimed.
+{
+  const claimedBattleKeys = new Set<string>([
+    ...Object.values(ENEMY_BATTLE_ART).map((row) => row.sprite),
+    ...Object.values(FORM_ART).map((row) => row.sprite),
+  ]);
+  for (const key of AUTHORED_ENEMY_BATTLE_ART_KEYS) {
+    if (key.endsWith('_w1') || key.endsWith('_w2')) continue;
+    if (!claimedBattleKeys.has(key)) {
+      fail('visual-id', `authored enemy battle image '${key}' is loaded but no enemy/form claims it; orphan art will mask identity drift`);
+    }
+  }
+  for (const id of AUTHORED_ENEMY_OVERWORLD_ART_IDS) {
+    if (!ENEMY_OVERWORLD_SHEET_ID_SET.has(id)) {
+      fail('visual-id', `authored overworld enemy sheet '${id}_8dir.png' is loaded but not registered in ENEMY_OVERWORLD_SHEET_IDS`);
+    }
+  }
+  if (ENEMY_OVERWORLD_FRAME.w !== 96 || ENEMY_OVERWORLD_FRAME.h !== 128 || ENEMY_OVERWORLD_FRAME.frames !== 8) {
+    fail('visual-id', `enemy overworld frame contract drifted to ${ENEMY_OVERWORLD_FRAME.w}x${ENEMY_OVERWORLD_FRAME.h} x${ENEMY_OVERWORLD_FRAME.frames}`);
   }
 }
 

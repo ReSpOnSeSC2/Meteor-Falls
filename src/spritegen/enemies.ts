@@ -1250,7 +1250,7 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   // S22 (ADR-118): Constable Borden GRAY-BOXES on the Blazer Smiler battler (a
   // blazered Otterbrook adult) — a registry alias, not a new generator. The
   // authored Borden battler/bust is queued in docs/CH1_ART_PROMPTS.md (§4.3).
-  borden: { sprite: 'battle_blazer_smiler', draw: drawBlazerSmiler },
+  borden: { sprite: 'battle_constable_borden', draw: drawBlazerSmiler },
   pigeon_gang: { sprite: 'battle_pigeon_gang', draw: drawPigeonGang },
   hill_slug_deluxe: { sprite: 'battle_hill_slug', draw: drawHillSlugDeluxe },
   titanic_tick: { sprite: 'battle_titanic_tick', draw: drawTitanicTick },

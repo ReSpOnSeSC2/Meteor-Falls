@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { decodePng } from '../../tools/imageio';
 import {
   AUTHORED_NPC_CHARACTER_IDS,
+  AUTHORED_ENEMY_BATTLE_ART_KEYS,
+  AUTHORED_ENEMY_OVERWORLD_ART_IDS,
+  AUTHORED_ENEMY_OVERWORLD_ART_KEYS,
   AUTHORED_VEHICLE_ART_KEYS,
   AUTHORED_WORLD_FACADE_KEYS,
   AUTHORED_WORLD_PROP_KEYS,
@@ -18,6 +21,8 @@ import {
   ZANZIBEL_FACADES,
 } from './buildings';
 import { TILESET } from './tiles';
+import { ENEMY_OVERWORLD_SHEET_IDS } from '../data/visuals';
+import { ENEMY_BATTLE_ART, FORM_ART } from './enemies';
 
 function pngSize(path: string): { w: number; h: number } {
   const data = readFileSync(path);
@@ -171,5 +176,30 @@ describe('authored world asset wiring', () => {
     expect(AREA_SKINS.minimus).toEqual(MINIMUS_FACADES);
     expect(AREA_SKINS.zanzibel).toEqual(ZANZIBEL_FACADES);
     expect(AREA_SKINS.lilleby).toEqual([...LILLEBY_FACADES, 'bldg_tower_arms']);
+  });
+});
+
+describe('authored enemy identity wiring', () => {
+  it('exports every current canon enemy/form battle key', () => {
+    const registered = new Set<string>(AUTHORED_ENEMY_BATTLE_ART_KEYS);
+    const current = new Set<string>([
+      ...Object.values(ENEMY_BATTLE_ART).map((art) => art.sprite),
+      ...Object.values(FORM_ART).map((art) => art.sprite),
+    ]);
+    for (const key of current) {
+      expect(registered.has(key), `current enemy battle '${key}' is not preloaded/applied`).toBe(true);
+    }
+  });
+
+  it('keeps the authored overworld enemy sheet list in one order', () => {
+    expect(AUTHORED_ENEMY_OVERWORLD_ART_IDS).toEqual([...ENEMY_OVERWORLD_SHEET_IDS]);
+    expect(AUTHORED_ENEMY_OVERWORLD_ART_KEYS).toEqual(ENEMY_OVERWORLD_SHEET_IDS.map((id) => `ow_enemy_${id}`));
+  });
+
+  it('loads authored overworld enemy sheets at the 8-frame runtime contract', () => {
+    for (const id of ENEMY_OVERWORLD_SHEET_IDS) {
+      expect(pngSize(resolve(process.cwd(), `assets/art/enemies/overworld/${id}_8dir.png`)), id)
+        .toEqual({ w: 768, h: 128 });
+    }
   });
 });

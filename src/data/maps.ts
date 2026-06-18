@@ -470,7 +470,7 @@ export function growOtterbrook(): MapDef {
     { id: 'car_dealer_otter', sprite: 'quarterMan', x: 22, y: 43, facing: 'up' as const, dialogue: 'npc_car_dealer', idle: true, emote: 'happy' as const, ifFlag: 'zapper_done' },
     // S22 (ADR-118): Constable Borden works the "hill vandalism" case at City Hall
     // by daybreak — an OPTIONAL cop fight that clears Chad's frame-up (never a wall).
-    { id: 'constable_borden', sprite: 'grayCommuter', x: 10, y: 43, facing: 'up' as const, dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise' as const, ifFlag: 'zapper_done' },
+    { id: 'constable_borden', sprite: 'npc_borden', x: 10, y: 43, facing: 'up' as const, dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise' as const, ifFlag: 'zapper_done' },
   ];
 
   const signs = [
@@ -1245,8 +1245,11 @@ function buildRexHall(): MapDef {
       // S11b: doorways through the wall are DOORS (user law) — they swing
       // open before they admit you; mats stay legal only at bottom edges
       { x: 2, y: 2, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up', indicator: 'door' },
-      { x: 7, y: 2, w: 2, h: 1, to: 'ana_room', tx: 72, ty: 100, facing: 'up', indicator: 'door' },
-      { x: 12, y: 2, w: 2, h: 1, to: 'vivi_room', tx: 72, ty: 100, facing: 'up', indicator: 'door' },
+      // land the player ON the welcome mat (the rooms' door zone sits at tile
+      // y:7); ty:100 dropped them a tile high, mid-room. (doorCooldown covers the
+      // spawn so standing on the mat doesn't bounce them straight back out.)
+      { x: 7, y: 2, w: 2, h: 1, to: 'ana_room', tx: 72, ty: 112, facing: 'up', indicator: 'door' },
+      { x: 12, y: 2, w: 2, h: 1, to: 'vivi_room', tx: 72, ty: 112, facing: 'up', indicator: 'door' },
       { x: 15, y: 4, w: 1, h: 2, to: 'rex_home', tx: 200, ty: 132, facing: 'down', indicator: 'stairs' },
     ],
     spawners: [],

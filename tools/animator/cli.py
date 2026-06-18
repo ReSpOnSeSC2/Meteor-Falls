@@ -42,7 +42,7 @@ if _THIS_DIR not in sys.path:
 # Engine is the single source of truth; we only import from it.
 from engine.project import Project  # noqa: E402
 from engine.sheet import CANONICAL  # noqa: E402
-from engine.sourcesheet import CANONICAL_DIRS, slice_source  # noqa: E402
+from engine.sourcesheet import slice_source  # noqa: E402
 
 _MASTER_GLOB = "*-8angle-transparent.png"
 
@@ -171,16 +171,20 @@ def render_character(source_path: str, name: str, out_dir: str) -> dict[str, obj
         if os.path.isfile(atlas_src):
             shutil.copyfile(atlas_src, atlas_dst)
         gifs: list[str] = []
+        gif_errors: list[str] = []
         for facing in CANONICAL:
             if facing not in proj.rigs:
                 continue
             for motion in ("walk", "run"):
-                gif_src = proj.render_preview_gif(facing, motion)
-                gif_dst = os.path.join(out_dir, f"preview_{facing}_{motion}.gif")
-                shutil.copyfile(gif_src, gif_dst)
-                gifs.append(gif_dst)
+                try:
+                    gif_src = proj.render_preview_gif(facing, motion)
+                    gif_dst = os.path.join(out_dir, f"preview_{facing}_{motion}.gif")
+                    shutil.copyfile(gif_src, gif_dst)
+                    gifs.append(gif_dst)
+                except Exception as exc:  # noqa: BLE001
+                    gif_errors.append(f"{facing}/{motion}: {exc}")
     return {"name": name, "id": pid, "sheet": sheet_dst, "size": size,
-            "atlas": atlas_dst, "gifs": gifs}
+            "atlas": atlas_dst, "gifs": gifs, "gif_errors": gif_errors}
 
 
 def install_character(source_path: str, name: str, root: str) -> dict[str, object]:
@@ -198,4 +202,82 @@ def install_character(source_path: str, name: str, root: str) -> dict[str, objec
             "source": source_path}
 
 
-# --------------
+def _print_result(result: dict[str, object]) -> None:
+    for key, value in result.items():
+        if isinstance(value, list):
+            print(f"{key}:")
+            for item in value:
+                print(f"  {item}")
+        else:
+            print(f"{key}: {value}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    root = find_repo_root()
+    parser = argparse.ArgumentParser(description="Render Cadence 46-frame character sheets.")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    render = sub.add_parser("render", help="render one 8-angle source into a scratch directory")
+    render.add_argument("source")
+    render.add_argument("--name", required=True)
+    render.add_argument("--out", default=os.path.join(root, "assets", "art", "review", "cadence"))
+
+    install = sub.add_parser("install", help="render and install one named master")
+    install.add_argument("name")
+
+    all_cmd = sub.add_parser("all", help="render every 8-angle master into a scratch directory")
+    all_cmd.add_argument("--masters", default=masters_dir(root))
+    all_cmd.add_argument("--out", default=os.path.join(root, "assets", "art", "review", "cadence"))
+
+    install_all = sub.add_parser("install-all", help="render and install every 8-angle master")
+    install_all.add_argument("--masters", default=masters_dir(root))
+
+    slice_cmd = sub.add_parser("slice", help="print source slicing diagnostics")
+    slice_cmd.add_argument("source")
+
+    args = parser.parse_args(argv)
+
+    if args.cmd == "render":
+        _print_result(render_character(args.source, args.name, args.out))
+        return 0
+
+    if args.cmd == "install":
+        hits = _source_candidates(root, args.name)
+        if not hits:
+            raise FileNotFoundError(f"no 8-angle source found for {args.name}")
+        _print_result(install_character(hits[0], args.name, root))
+        return 0
+
+    if args.cmd == "all":
+        masters = sorted(glob.glob(os.path.join(args.masters, _MASTER_GLOB)))
+        if not masters:
+            raise FileNotFoundError(f"no masters found in {args.masters}")
+        for source in masters:
+            name = _name_from_master(source)
+            result = render_character(source, name, os.path.join(args.out, name))
+            print(f"rendered {name}: {result['sheet']}")
+        return 0
+
+    if args.cmd == "install-all":
+        masters = sorted(glob.glob(os.path.join(args.masters, _MASTER_GLOB)))
+        if not masters:
+            raise FileNotFoundError(f"no masters found in {args.masters}")
+        for source in masters:
+            name = _name_from_master(source)
+            result = install_character(source, name, root)
+            print(f"installed {name}: {result['installed']}")
+        return 0
+
+    if args.cmd == "slice":
+        sheet = slice_source(args.source)
+        print(f"source: {args.source}")
+        print(f"size: {sheet.size[0]}x{sheet.size[1]}")
+        for compass, cell in sheet.cells.items():
+            print(f"{compass}: x[{cell.src_x0}..{cell.src_x1}) {cell.width}x{cell.height}")
+        return 0
+
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

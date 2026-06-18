@@ -769,6 +769,10 @@ const ENEMY_OVERWORLD_ART = [
   url: new URL(`../../assets/art/enemies/overworld/${id}_8dir.png`, import.meta.url).href,
 }));
 
+export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);
+export const AUTHORED_ENEMY_OVERWORLD_ART_IDS = ENEMY_OVERWORLD_ART.map((art) => art.id);
+export const AUTHORED_ENEMY_OVERWORLD_ART_KEYS = ENEMY_OVERWORLD_ART.map((art) => art.key);
+
 function artFor(heroId: string): HeroArt | undefined {
   return HERO_ART.find((art) => art.id === heroId);
 }
