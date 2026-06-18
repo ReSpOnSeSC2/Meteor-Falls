@@ -6,14 +6,15 @@
  * = same card, forever. LinksScene is a renderer over this state.
  *
  * SWING FEEL (canon, two buttons + the d-pad): aim with the d-pad, B cycles
- * the CLUB BAG, A runs the 3-TAP METER — first tap starts the needle, second
- * sets POWER on the way up, third sets ACCURACY in a shrinking perfect
- * window on the way back down (early = pull/draw, late past the line =
- * push/fade; the window scales by club AND lie). After-touch spin rides the
- * held d-pad mid-flight (capped). Inside 30y the dedicated CHIP meter takes
- * over (power tap only, lofted hop, tiny roll); on the green the PUTT meter
- * reads the grid — the slope arrows draw EXACTLY the acceleration the ball
- * rolls under (honest, validator-pinned by construction: one vector).
+ * the CLUB BAG, A runs the RISE-AND-RETURN METER — A starts the needle, then
+ * two taps shape the shot: POWER on the way up, then ACCURACY as the needle
+ * falls back through a CENTERED perfect window (early/high = pull/draw,
+ * late/low = push/fade; the window scales by club AND lie). EVERY shot takes
+ * both taps now — chips and putts read pull/push too. After-touch spin rides
+ * the held d-pad mid-flight (capped). Inside 30y the CHIP is a lofted hop with
+ * tiny roll (no curve); on the green the PUTT reads the grid — the slope
+ * arrows draw EXACTLY the acceleration the ball rolls under (honest,
+ * validator-pinned by construction: one vector).
  *
  * WATER is a splash: one penalty stroke, drop at the last dry point under
  * the flight. SAND plugs (no roll). CLIFF rock kicks (the round rng's only
@@ -47,8 +48,13 @@ export const GOLF = {
   /** power needle: 0 → cap over this many ms (then it pins and waits) */
   POWER_MS: 850,
   POWER_CAP: 1.12,
-  /** the accuracy needle falls from the captured power back past zero */
+  /** the accuracy needle falls from the TOP of the rail; the green window is
+   *  CENTERED at ACC_CENTER and the captured error is the signed distance from
+   *  it, clamped to ±ACC_MAG (pull = +, push = −). ACC_MAG === |ACC_FLOOR| so an
+   *  un-tapped swing auto-fires at the floor with the SAME max push as ever. */
   ACC_FLOOR: -0.3,
+  ACC_CENTER: 0.5,
+  ACC_MAG: 0.3,
   /** push/pull: radians of launch deflection per unit of acc error */
   PUSH_RAD: 0.34,
   /** draw/fade: lateral curve accel per unit of acc error (px/s²) */
@@ -88,8 +94,8 @@ export interface GolfInput {
 
 export const GOLF_IDLE: GolfInput = { dx: 0, dy: 0, aPressed: false, bPressed: false };
 
-/** the third tap's verdict (full swings): the cage-green equivalent —
- *  PURE inside the window; early pulls, late pushes (ADR-038) */
+/** the accuracy tap's verdict (ALL swings now): the cage-green equivalent —
+ *  PURE inside the centered window; early/high pulls, late/low pushes (ADR-038) */
 export type StrikeQuality = 'pure' | 'pull' | 'push';
 
 export type GolfEvent =
@@ -187,6 +193,18 @@ export class GolfSim {
     return CLUBS[this.clubIdx].accWindow * LIES[this.lie()].acc;
   }
 
+  /** captured POWER from the rising needle — today's exact clamp (the yardage
+   *  contract is unchanged); shared by tick() and the test bot */
+  private powerFromNeedle(m: number): number {
+    return Math.max(0.05, Math.min(1, m));
+  }
+
+  /** captured ACCURACY: the falling needle's signed distance from the centered
+   *  green window, clamped to ±ACC_MAG (pull = +, push = −) */
+  private accFromNeedle(m: number): number {
+    return Math.max(-GOLF.ACC_MAG, Math.min(GOLF.ACC_MAG, m - GOLF.ACC_CENTER));
+  }
+
   ydsToPin(): number {
     return Math.round(dist(this.ball.x, this.ball.y, s(this.hole.pin.x), s(this.hole.pin.y)) / YD);
   }
@@ -238,6 +256,7 @@ export class GolfSim {
           this.mode = this.swingMode();
           this.phase = 'power';
           this.meterT = 0;
+          this.meterDir = 1; // always rise from the bottom (clear any leftover dir)
           this.emit({ kind: 'sfx', name: 'gather' });
         }
         return;
@@ -259,23 +278,22 @@ export class GolfSim {
           return;
         }
         if (input.aPressed) {
-          this.power = Math.max(0.05, Math.min(1, this.meterT));
-          this.meterDir = 1;
-          if (this.mode === 'full') {
-            this.meterT = this.power; // the acc needle falls from the capture
-            this.phase = 'acc';
-          } else {
-            // putts and chips launch straight off the power tap
-            this.acc = 0;
-            this.launch();
-          }
+          // tap 1 captures POWER (same clamp as ever — yardage unchanged); the
+          // needle then snaps to the TOP of the rail and falls as the ACCURACY
+          // needle. EVERY mode now takes the second tap (chips & putts too).
+          this.power = this.powerFromNeedle(this.meterT);
+          this.meterDir = -1;
+          this.meterT = GOLF.POWER_CAP;
+          this.phase = 'acc';
         }
         return;
       }
       case 'acc': {
+        // tap 2 captures ACCURACY: the falling needle's distance from the
+        // centered green window (reuse POWER_MS — same speed as the up-leg)
         this.meterT -= SIM_DT / GOLF.POWER_MS;
         if (input.aPressed || this.meterT <= GOLF.ACC_FLOOR) {
-          this.acc = Math.max(GOLF.ACC_FLOOR, this.meterT);
+          this.acc = this.accFromNeedle(this.meterT);
           this.launch();
         }
         return;
@@ -354,14 +372,17 @@ export class GolfSim {
     this.meterT = -1;
     // the strike-quality read (the cage-green equivalent): PURE inside the
     // window — putts and chips are power-only, so a clean tap reads pure
-    const quality: StrikeQuality = this.mode !== 'full' || Math.abs(this.acc) <= this.accWindow() ? 'pure' : this.acc > 0 ? 'pull' : 'push';
+    const quality: StrikeQuality = Math.abs(this.acc) <= this.accWindow() ? 'pure' : this.acc > 0 ? 'pull' : 'push';
     this.emit({ kind: 'stroke', n: this.strokes, mode: this.mode, quality });
     if (quality === 'pure' && this.mode === 'full') this.emit({ kind: 'sfx', name: 'green' });
     const lie = LIES[this.lie()];
     if (this.mode === 'putt') {
+      // a mishit putt leaves the face off-line (the centered window applies to
+      // putts now); at acc=0 this is byte-identical to a pure putt. Still no curve.
+      const a = this.aim - this.acc * GOLF.PUSH_RAD;
       const v = GOLF.PUTT_V * this.power;
-      this.vx = Math.cos(this.aim) * v;
-      this.vy = Math.sin(this.aim) * v;
+      this.vx = Math.cos(a) * v;
+      this.vy = Math.sin(a) * v;
       this.phase = 'roll';
       this.emit({ kind: 'sfx', name: 'bounce' });
       return;

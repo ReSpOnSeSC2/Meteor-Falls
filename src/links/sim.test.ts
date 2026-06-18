@@ -1,6 +1,6 @@
 /**
  * COSTA ESTRELLA LINKS — the determinism creed, headless (S13). Same seed +
- * same input tape = same card, forever; the 3-tap meter, lies, wind, slopes,
+ * same input tape = same card, forever; the 2-tap meter, lies, wind, slopes,
  * the splash penalty, and the cup are pinned; a scripted BOT plays hole 1
  * tee-to-cup REPRODUCIBLY (the LinksScene header documents the same line).
  */
@@ -78,9 +78,13 @@ function playHole(holeIdx: number, seed: number): { strokes: number; log: GolfEv
       let want = 1; // full sends for full swings (the bag self-selects)
       if (sim.mode === 'putt') want = Math.min(1, Math.sqrt(2 * GOLF.FRICTION_G * d) / GOLF.PUTT_V + 0.04);
       if (sim.mode === 'chip') want = Math.min(1, d / (GOLF.CHIP_CARRY_YD * YD) + 0.05);
-      if (sim.meterT >= Math.min(0.99, want)) input = { ...GOLF_IDLE, aPressed: true };
+      // full sends ride to the top band (power clamps to 1.0); putt/chip tap their
+      // computed power on the up-leg (powerFromNeedle maps it 1:1)
+      const trigger = sim.mode === 'full' ? sim.meterT >= 1.0 : sim.meterT >= Math.min(0.99, want);
+      if (trigger) input = { ...GOLF_IDLE, aPressed: true };
     } else if (sim.phase === 'acc') {
-      if (sim.meterT <= sim.accWindow() * 0.4) input = { ...GOLF_IDLE, aPressed: true };
+      // tap inside the CENTERED green window (meterT ≈ ACC_CENTER 0.5) → pure
+      if (Math.abs(sim.meterT - 0.5) <= sim.accWindow() * 0.4) input = { ...GOLF_IDLE, aPressed: true };
     }
     sim.tick(input);
     log.push(...sim.events);
@@ -137,14 +141,16 @@ describe('THE RESPONSIVENESS LAW (ADR-038) on grass', () => {
       sim.events.length = 0;
       return log.filter((e) => e.kind === 'stroke');
     };
-    const pure = swing((t, w) => t <= w * 0.4);
+    const pure = swing((t, w) => Math.abs(t - 0.5) <= w * 0.4);
     expect(pure[0]?.kind === 'stroke' && pure[0].quality).toBe('pure');
-    const pull = swing((t, w) => t <= w * 3 && t > w * 1.5); // tapped early, above the window
+    const pull = swing((t, w) => t - 0.5 > w * 1.5 && t - 0.5 <= w * 3); // tapped early/high → pull
     expect(pull[0]?.kind === 'stroke' && pull[0].quality).toBe('pull');
+    const push = swing((t, w) => 0.5 - t > w * 1.5 && 0.5 - t <= w * 3); // tapped late/low → push
+    expect(push[0]?.kind === 'stroke' && push[0].quality).toBe('push');
   });
 });
 
-describe('the 3-tap meter + the swing law', () => {
+describe('the 2-tap meter + the swing law', () => {
   it('power bounces (rise → fall → CANCEL); acc falls to the floor', () => {
     const rng = makeRng(3);
     const sim = new GolfSim(HOLES[0], rng, { x: 0, y: 0, mph: 0 });
@@ -187,6 +193,44 @@ describe('the 3-tap meter + the swing law', () => {
     const splashed = sim.strokes;
     expect(splashed).toBe(2); // the swing + the penalty
     expect(sim.lie()).not.toBe('W'); // dropped dry (lie() bridges runtime→native)
+  });
+
+  it('putts now take the accuracy tap and can be mishit (pull/push)', () => {
+    const sim = new GolfSim(HOLES[0], makeRng(3), { x: 0, y: 0, mph: 0 });
+    sim.ball.x = s(HOLES[0].pin.x);
+    sim.ball.y = s(HOLES[0].pin.y);
+    sim.clubIdx = 0; // tightest window so the max-push read is unambiguous
+    expect(sim.swingMode()).toBe('putt');
+    sim.tick({ ...GOLF_IDLE, aPressed: true }); // aim → power
+    for (let i = 0; i < 60 && sim.meterT < 0.5; i++) sim.tick(GOLF_IDLE);
+    sim.tick({ ...GOLF_IDLE, aPressed: true }); // capture power
+    expect(sim.phase).toBe('acc'); // ← the unification: a putt now takes the 2nd tap
+    for (let i = 0; i < 2000 && sim.phase === 'acc'; i++) sim.tick(GOLF_IDLE); // no tap → floor
+    expect(sim.acc).toBeCloseTo(-GOLF.ACC_MAG, 2); // max push
+    const stroke = sim.events.find((e) => e.kind === 'stroke');
+    expect(stroke && stroke.kind === 'stroke' && stroke.quality).toBe('push');
+  });
+
+  it('the accuracy window is centered (0.5) and the error grows with distance', () => {
+    const accAt = (tapAt: number): number => {
+      const sim = new GolfSim(HOLES[0], makeRng(3), { x: 0, y: 0, mph: 0 });
+      sim.tick({ ...GOLF_IDLE, aPressed: true }); // → power
+      for (let i = 0; i < 400 && sim.meterT < 1; i++) sim.tick(GOLF_IDLE);
+      sim.tick({ ...GOLF_IDLE, aPressed: true }); // capture power → 'acc', needle at the top
+      for (let i = 0; i < 2000 && sim.phase === 'acc'; i++) {
+        if (sim.meterT <= tapAt) {
+          sim.tick({ ...GOLF_IDLE, aPressed: true });
+          break;
+        }
+        sim.tick(GOLF_IDLE);
+      }
+      return sim.acc;
+    };
+    expect(accAt(0.5)).toBeCloseTo(0, 1); // dead center → ~straight (sub-window; the tick reads just past 0.5)
+    expect(accAt(0.7)).toBeCloseTo(0.2, 1); // high → pull (+)
+    expect(accAt(0.3)).toBeCloseTo(-0.2, 1); // low → push (−)
+    expect(accAt(-1)).toBeCloseTo(-GOLF.ACC_MAG, 2); // past the floor → clamped to −ACC_MAG
+    expect(Math.abs(accAt(0.8))).toBeGreaterThan(Math.abs(accAt(0.6))); // farther = worse
   });
 });
 
