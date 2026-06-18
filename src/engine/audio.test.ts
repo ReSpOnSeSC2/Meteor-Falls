@@ -272,6 +272,31 @@ describe('the crossfade (#2)', () => {
     expect(v.live).toBe(false);
   });
 
+  it('sounds a track requested BEFORE the first unlock() (the opening-theme path)', () => {
+    // TitleScene.update() asks for the title theme on frame 1 — long before the
+    // tap that unlocks audio. playMusic() can only LATCH the name while ctx is
+    // null, and its idempotency guard then blocks every same-track re-request, so
+    // unlock() must be the thing that finally sounds it. Regression for the
+    // "no music on the opening screen" bug (the other tests unlock() first, so
+    // they never exercised this path).
+    const a = AUDIO as any;
+    a.ctx = null; // rewind to the genuine pre-gesture state
+    a.musicVoice = null;
+    a.fadingVoice = null;
+    a.intendedName = null;
+    a.intendedStems = Infinity;
+
+    AUDIO.playMusic('title'); // latched only — there's no context yet
+    expect(a.musicVoice).toBeNull();
+    expect(a.intendedName).toBe('title');
+
+    AUDIO.unlock(); // the first gesture brings the graph up...
+    expect(a.musicVoice).toBeTruthy(); // ...and the pending track must now sound
+    expect(a.musicVoice.name).toBe('title');
+    expect(a.musicVoice.gain.outs).toContain(a.musicBus); // wired into the mix
+    expect(a.musicVoice.gain.gain.lastTarget()).toBe(1); // ramping IN, not silent
+  });
+
   it('playMusic(null) fades the current track out to silence', () => {
     const a = AUDIO as any;
     AUDIO.playMusic('title');

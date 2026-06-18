@@ -1,0 +1,18 @@
+{
+  "characters": {
+    "chad": [
+      {
+        "op": "importImage",
+        "image": "assets/art/review/blender/chad_frame_16_run_down_a_blender.png",
+        "to": 16,
+        "note": "Blender-rendered run down A"
+      },
+      {
+        "op": "importImage",
+        "image": "assets/art/review/blender/chad_frame_17_run_down_b_blender.png",
+        "to": 17,
+        "note": "Blender-rendered run down B"
+      }
+    ]
+  }
+}

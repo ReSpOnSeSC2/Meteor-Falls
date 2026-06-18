@@ -55,9 +55,10 @@ import { GOLF_FRAME } from '../spritegen/golfers';
 import { ensureLinksArt } from '../spritegen';
 import { ITEMS } from '../data/items';
 import { makeRng, type Rng } from '../hoops/sim';
-import { Dialogue, everyFrame, makeWindow, vars, DEPTH_UI } from '../ui/windows';
+import { Dialogue, everyFrame, makeWindow, makeBox, vars, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
-import { s, ART_SCALE } from '../spritegen/scale';
+import { s } from '../spritegen/scale';
+import { projectHole, projectPoint, type HoleProjection, type FitBox } from '../links/dioramas';
 
 export interface LinksLaunch {
   kind: 'stroke' | 'match';
@@ -86,17 +87,46 @@ export class LinksScene extends Phaser.Scene {
   private opponentId = '';
   private sunsetSaid = false;
 
+  // the hole flyover: the diorama is fit static and the ball arcs across it
   private course!: Phaser.GameObjects.Image;
   private ballSpr!: Phaser.GameObjects.Image;
+  private shadow!: Phaser.GameObjects.Ellipse;
   private flag!: Phaser.GameObjects.Image;
-  private golfer!: Phaser.GameObjects.Sprite;
   private aimLine!: Phaser.GameObjects.Rectangle;
+  private aimDot!: Phaser.GameObjects.Arc;
   private burst!: Phaser.GameObjects.Sprite;
+  /** the golfer stands ON the course at the ball and plays the shot in-world */
+  private golfer!: Phaser.GameObjects.Sprite;
+  /** sim-space stance position; FROZEN through the flight so the golfer holds
+   *  the follow-through at the strike spot while the ball flies on */
+  private golferAnchor = { x: 0, y: 0 };
+  /** the sim→illustration similarity transform for the current hole */
+  private proj!: HoleProjection;
+  /** golf-ball texture is authored ~50px; this reads it small on the course */
+  private readonly ballScale = 0.5;
+  /** on-screen scale of the golfer (texture frame is 128×160 runtime px) */
+  private readonly golferScale = 0.92;
+  /** TOP = immersive overhead course; BEHIND = over-the-shoulder POV (toggle V) */
+  private viewMode: 'top' | 'behind' = 'top';
+  private vKey?: Phaser.Input.Keyboard.Key;
+  /** behind-POV: the authored down-the-fairway backdrop, the back-view golfer,
+   *  and the diorama demoted to a corner minimap */
+  private behindBg!: Phaser.GameObjects.Image;
+  private behindGolfer!: Phaser.GameObjects.Image;
+  private minimapFrame!: Phaser.GameObjects.Graphics;
+  private minimapBall!: Phaser.GameObjects.Arc;
+  /** corner-minimap projection (letterbox fit) — set per hole beside the cover */
+  private projMini!: HoleProjection;
 
   // HUD + the swing pane
   private hudTop!: Phaser.GameObjects.BitmapText;
+  private hudStroke!: Phaser.GameObjects.BitmapText;
+  private hudYds!: Phaser.GameObjects.BitmapText;
   private hudWind!: Phaser.GameObjects.BitmapText;
   private hudClub!: Phaser.GameObjects.BitmapText;
+  private windGfx!: Phaser.GameObjects.Graphics;
+  private windCx = 0;
+  private windCy = 0;
   private ticker!: Phaser.GameObjects.BitmapText;
   private tickerUntil = 0;
   private banner!: Phaser.GameObjects.BitmapText;
@@ -108,6 +138,10 @@ export class LinksScene extends Phaser.Scene {
    *  fill RISES and HOLDS; only the needle comes back down */
   private meterMark!: Phaser.GameObjects.Rectangle;
   private meterNeedle!: Phaser.GameObjects.Rectangle;
+  /** meter rail geometry (runtime px), set in create(), read in render() */
+  private meterX = 0;
+  private meterBase = 0;
+  private meterH = 0;
   private panelObjs: Phaser.GameObjects.GameObject[] = [];
   private elapsed = 0;
   private golferKey = '';
@@ -148,61 +182,109 @@ export class LinksScene extends Phaser.Scene {
     const hero = GS.data.party[0];
     this.golferKey = ensureLinksArt(this, hero.id);
 
-    // ---- the world (per-hole texture swaps in startHole) ----
-    // night backdrop: the course is narrower than the screen — the paused
-    // world must never show through the gutters
-    this.add.image(0, 0, 'links_bg').setOrigin(0, 0).setDisplaySize(this.scale.width, this.scale.height).setScrollFactor(0).setDepth(-3);
-    this.course = this.add.image(0, 0, `links_${this.holes[0].id}`).setOrigin(0, 0).setDepth(0);
-    this.flag = this.add.image(0, 0, 'links_flag').setOrigin(0.5, 1).setDepth(20);
-    this.ballSpr = this.add.image(0, 0, 'links_ball').setDepth(30);
-    this.aimLine = this.add.rectangle(0, 0, s(2), s(2), colorOf(px(RAMP.PAPER, 3))).setDepth(25).setAlpha(0.8);
-    this.burst = this.add.sprite(0, 0, 'links_splash', 0).setDepth(35).setVisible(false);
-    this.golfer = this.add.sprite(0, 0, this.golferKey, 0).setOrigin(0.5, 1).setDepth(28);
-
-    // ---- HUD ---- (screen-space px on the ×ART_SCALE framebuffer → s())
+    const W = this.scale.width;
+    const H = this.scale.height;
     const paper = colorOf(px(RAMP.PAPER, 3));
     const gold = colorOf(px(RAMP.GOLD, 3));
-    this.hudTop = this.add.bitmapText(s(200), s(4), 'retro', '', s(6)).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(gold);
-    this.hudWind = this.add.bitmapText(s(396), s(14), 'retro', '', s(6)).setOrigin(1, 0).setScrollFactor(0).setDepth(DEPTH_UI).setTint(colorOf(px(RAMP.CYAN, 2)));
-    this.hudClub = this.add.bitmapText(s(4), s(14), 'retro', '', s(6)).setScrollFactor(0).setDepth(DEPTH_UI).setTint(paper);
+    const cyan = colorOf(px(RAMP.CYAN, 2));
+    const ink = colorOf(px(RAMP.INK, 0));
+
+    // ---- backdrop: a sky→sea gradient BEHIND the hole. The course now COVERS
+    // the whole screen (immersive on-course view), so this shows only through the
+    // illustration's transparent corners — reading as the surrounding sea.
+    const sky = this.add.graphics().setScrollFactor(0).setDepth(-4);
+    sky.fillGradientStyle(colorOf(px(RAMP.CYAN, 2)), colorOf(px(RAMP.CYAN, 2)), colorOf(px(RAMP.BLUE, 0)), colorOf(px(RAMP.BLUE, 0)), 1);
+    sky.fillRect(0, 0, W, H);
+
+    // ---- the hole: screen-filling, the green IS the playfield (cover set per hole) ----
+    const box = this.dioBox();
+    this.course = this.add.image(box.x + box.w / 2, box.y + box.h / 2, `links_${this.holes[0].id}`).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(0);
+    this.shadow = this.add.ellipse(0, 0, s(8), s(3), ink, 0.42).setScrollFactor(0).setDepth(18).setVisible(false);
+    this.flag = this.add.image(0, 0, 'links_flag').setOrigin(0.5, 1).setScrollFactor(0).setDepth(20).setVisible(false);
+    // the aimer: a gold sight line off the ball + a reticle at the target end
+    this.aimLine = this.add.rectangle(0, 0, s(2), s(3), gold).setOrigin(0, 0.5).setScrollFactor(0).setDepth(22).setAlpha(0.9).setVisible(false);
+    this.aimDot = this.add.circle(0, 0, s(3.5), gold, 0).setStrokeStyle(s(1.5), gold, 0.95).setScrollFactor(0).setDepth(22).setVisible(false);
+    // the golfer plays the shot ON the course; the ball sits at the front foot
+    this.golfer = this.add.sprite(0, 0, this.golferKey, 0).setOrigin(0.5, 1).setScale(this.golferScale).setScrollFactor(0).setDepth(32);
+    this.ballSpr = this.add.image(0, 0, 'links_ball').setScrollFactor(0).setDepth(34).setScale(this.ballScale);
+    this.burst = this.add.sprite(0, 0, 'links_splash', 0).setScrollFactor(0).setDepth(36).setVisible(false);
+
+    // ---- top HUD ribbon: HOLE·PAR (left) · STROKE (centre) · yards (right) ----
+    this.add.rectangle(0, 0, W, s(20), ink, 0.6).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI);
+    this.add.rectangle(0, s(20), W, s(1), gold, 0.45).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI);
+    this.hudTop = this.add.bitmapText(s(8), s(6), 'retro', '', s(7)).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 1).setTint(gold);
+    this.hudStroke = this.add.bitmapText(s(200), s(6), 'retro', '', s(7)).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI + 1).setTint(paper);
+    this.hudYds = this.add.bitmapText(W - s(8), s(6), 'retro', '', s(7)).setOrigin(1, 0).setScrollFactor(0).setDepth(DEPTH_UI + 1).setTint(cyan);
+
+    // ---- wind widget (top-right, just under the ribbon) ----
+    makeBox(this, W - s(80), s(26), s(76), s(34));
+    this.add.bitmapText(W - s(74), s(31), 'retro', 'WIND', s(6)).setScrollFactor(0).setDepth(DEPTH_UI + 1).setTint(paper);
+    this.windCx = W - s(20);
+    this.windCy = s(35);
+    this.windGfx = this.add.graphics().setScrollFactor(0).setDepth(DEPTH_UI + 2);
+    this.hudWind = this.add.bitmapText(W - s(74), s(45), 'retro', '', s(6)).setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH_UI + 1).setTint(cyan);
+
+    // ---- center banner (PURE!/birdie pops) ----
+    this.banner = this.add.bitmapText(s(200), s(70), 'retro', '', s(14)).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH_UI + 1).setCenterAlign().setTint(gold);
+
+    // ---- caddy ticker: a bottom strip right of the swing pane. Origin (0,1)
+    // pins its BOTTOM near the screen edge so a wrapped two-line caddy quip
+    // grows UP instead of clipping off the bottom.
     this.ticker = this.add
-      .bitmapText(s(200), s(24), 'retro', '', s(6))
-      .setOrigin(0.5, 0)
+      .bitmapText(s(98), H - s(7), 'retro', '', s(6))
+      .setOrigin(0, 1)
       .setScrollFactor(0)
-      .setDepth(DEPTH_UI)
-      .setCenterAlign()
-      .setMaxWidth(s(380))
+      .setDepth(DEPTH_UI + 1)
+      .setMaxWidth(W - s(108))
       .setTint(colorOf(px(RAMP.MAGENTA, 2)));
-    this.banner = this.add
-      .bitmapText(s(200), s(92), 'retro', '', s(12))
-      .setOrigin(0.5, 0)
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI)
-      .setCenterAlign()
-      .setTint(gold);
-    // THE SWING PANE: the big golfer + the meters, fixed bottom-left
+
+    // ---- the 3-tap meter: a slim gauge in the bottom-left corner. No window —
+    // the golfer is out on the course now, not boxed in a pane. The club name
+    // rides just above it. ----
     this.panelObjs = [];
-    makeWindow(this, s(4), s(138), s(78), s(84));
-    // the golfer TEXTURE is already ×ART_SCALE; setScale(1.6) is a fixed
-    // multiplier on top, so it stays — only the pane's position scales
-    const pane = this.add.sprite(s(36), s(216), this.golferKey, 0).setOrigin(0.5, 1).setScale(1.6).setScrollFactor(0).setDepth(DEPTH_UI + 2);
-    this.golferPane = pane;
-    this.add.rectangle(s(70), s(214), s(7), s(68), colorOf(px(RAMP.INK, 0))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 2);
+    this.meterX = s(18);
+    this.meterBase = H - s(16);
+    this.meterH = s(100);
+    this.hudClub = this.add.bitmapText(s(8), this.meterBase - this.meterH - s(4), 'retro', '', s(7)).setOrigin(0, 1).setScrollFactor(0).setDepth(DEPTH_UI + 2).setTint(gold);
+    // a faint backing so the gauge reads over the grass
+    this.add.rectangle(this.meterX, this.meterBase, s(13), this.meterH + s(6), ink, 0.5).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI).setStrokeStyle(s(1), colorOf(px(RAMP.GOLD, 2)), 0.5);
     // S14b: fill + window size by SCALE off a full-height quad — assigning
     // a Phaser Shape's .height does not rebuild its rendered geometry (the
     // root cause of the reported "fill going the wrong way": it never grew)
-    this.meterWin = this.add.rectangle(s(70), s(214), s(7), s(68), colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
-    this.meterZero = this.add.rectangle(s(70), s(214), s(9), s(1), colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
-    this.meterFill = this.add.rectangle(s(70), s(214), s(5), s(68), colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
-    this.meterMark = this.add.rectangle(s(70), s(214), s(9), s(1), colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
-    this.meterNeedle = this.add.rectangle(s(70), s(214), s(9), s(2), colorOf(px(RAMP.CYAN, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 4).setVisible(false);
+    this.meterWin = this.add.rectangle(this.meterX, this.meterBase, s(9), this.meterH, colorOf(px(RAMP.GRASS, 2))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 2).setVisible(false);
+    this.meterZero = this.add.rectangle(this.meterX, this.meterBase, s(11), s(1), colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
+    this.meterFill = this.add.rectangle(this.meterX, this.meterBase, s(7), this.meterH, colorOf(px(RAMP.PAPER, 3))).setOrigin(0.5, 1).setScrollFactor(0).setDepth(DEPTH_UI + 2).setVisible(false);
+    this.meterMark = this.add.rectangle(this.meterX, this.meterBase, s(11), s(1), colorOf(px(RAMP.GOLD, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
+    this.meterNeedle = this.add.rectangle(this.meterX, this.meterBase, s(11), s(2), colorOf(px(RAMP.CYAN, 3))).setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH_UI + 3).setVisible(false);
+
+    // ---- behind-the-player POV (press V to switch): an AUTHORED down-the-fairway
+    // backdrop + the back-view golfer, with the diorama demoted to a corner
+    // minimap. Same sim — only the view differs.
+    this.behindBg = this.add.image(W / 2, H / 2, 'links_fairway').setScrollFactor(0).setDepth(-2).setVisible(false);
+    {
+      const src = this.textures.get('links_fairway').getSourceImage() as { width: number; height: number };
+      this.behindBg.setScale(Math.max(W / src.width, H / src.height)); // cover the screen
+    }
+    // the back-view golfer (single authored pose), scaled to ~95 design px tall
+    this.behindGolfer = this.add.image(0, 0, 'links_golfer_back').setOrigin(0.5, 1).setScrollFactor(0).setDepth(32).setVisible(false);
+    {
+      const gsrc = this.textures.get('links_golfer_back').getSourceImage() as { width: number; height: number };
+      this.behindGolfer.setScale(s(95) / Math.max(1, gsrc.height));
+    }
+    this.minimapFrame = this.add.graphics().setScrollFactor(0).setDepth(-1).setVisible(false);
+    this.minimapBall = this.add.circle(0, 0, s(3), paper).setStrokeStyle(s(1), ink, 0.85).setScrollFactor(0).setDepth(1).setVisible(false);
+    this.vKey = this.input.keyboard?.addKey('V');
+    this.add.bitmapText(W - s(6), H - s(6), 'retro', 'V: VIEW', s(5)).setOrigin(1, 1).setScrollFactor(0).setDepth(DEPTH_UI + 1).setTint(paper).setAlpha(0.55);
 
     AUDIO.playMusic('cage');
     this.game.events.emit('mf-links-open');
     this.startHole(0);
   }
 
-  private golferPane!: Phaser.GameObjects.Sprite;
+  /** The screen rect the hole COVERS — the whole screen (the HUD overlays it). */
+  private dioBox(): FitBox {
+    return { x: 0, y: 0, w: this.scale.width, h: this.scale.height };
+  }
 
   /* ================= hole flow ================= */
 
@@ -210,18 +292,29 @@ export class LinksScene extends Phaser.Scene {
     this.holeIdx = i;
     const hole = this.holes[i];
     this.sim = new GolfSim(hole, this.roundRng, this.wind);
-    this.course.setTexture(`links_${hole.id}`);
-    // The hole art is authored at NATIVE resolution (≈244×196), but the whole
-    // playfield — ball/golfer/flag positions out of the sim — lives in
-    // ×ART_SCALE runtime space. So scale the course up to match (smoothly: it's a
-    // painterly ¾ illustration, not pixel art) and bound the camera to the SCALED
-    // size. Without this the course rendered at native size in the top-left
-    // corner while the ball/flag flew out across the bare backdrop.
-    this.course.setScale(ART_SCALE);
+    // The hole art is an AUTHORED ¾-aerial illustration at its own native size
+    // (≈240×180), unrelated to the sim's tile grid. Fit it static into the play
+    // box and solve the sim→illustration similarity transform from the per-hole
+    // tee/cup anchors; render() then maps the ball/aim onto the picture. (No
+    // ball-cam, no camera bounds — the whole hole is on screen at once.)
+    const key = `links_${hole.id}`;
+    this.course.setTexture(key);
     this.course.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-    this.cameras.main.setBounds(0, 0, this.course.displayWidth, this.course.displayHeight);
-    // pin is native px; the flag rides the runtime world, so scale it + offset
-    this.flag.setPosition(s(hole.pin.x) + s(2), s(hole.pin.y) + s(1));
+    const src = this.textures.get(key).getSourceImage() as { width: number; height: number };
+    this.proj = projectHole(hole, src.width, src.height, this.dioBox());
+    // the corner minimap (behind view): the same art, letterbox-fit small
+    const mmBox: FitBox = { x: s(8), y: s(26), w: s(66), h: s(48) };
+    this.projMini = projectHole(hole, src.width, src.height, mmBox, false);
+    this.minimapFrame.clear();
+    this.minimapFrame.fillStyle(colorOf(px(RAMP.INK, 0)), 0.5);
+    this.minimapFrame.fillRect(this.projMini.dx - s(4), this.projMini.dy - s(4), this.projMini.dw + s(8), this.projMini.dh + s(8));
+    this.minimapFrame.lineStyle(s(2), colorOf(px(RAMP.GOLD, 3)), 0.85);
+    this.minimapFrame.strokeRect(this.projMini.dx - s(4), this.projMini.dy - s(4), this.projMini.dw + s(8), this.projMini.dh + s(8));
+    // the diorama draws its own flag at the cup; keep the sprite pin parked
+    // there (hidden) in case we want a crisp marker later
+    const cup = projectPoint(this.proj, s(hole.pin.x), s(hole.pin.y));
+    this.flag.setPosition(cup.x, cup.y);
+    this.applyViewMode();
     this.showHoleCard(hole);
     // the caddy reads the tee (hole 9 at golden hour gets the straight line)
     if (hole.id === 'h9' && !this.sunsetSaid) {
@@ -272,6 +365,9 @@ export class LinksScene extends Phaser.Scene {
     const dt = Math.min(dtMs, 50);
     this.elapsed += dt;
     if (this.asking) return;
+
+    // V toggles top-down ⇄ behind-the-player at any time (card or play)
+    if (this.vKey && Phaser.Input.Keyboard.JustDown(this.vKey)) this.toggleView();
 
     if (this.stage === 'card') {
       if (INPUT.justPressed('A')) {
@@ -339,18 +435,22 @@ export class LinksScene extends Phaser.Scene {
   }
 
   private burstAt(key: string): void {
-    // ball is runtime px; the small upward lift is a runtime offset
-    this.burst.setTexture(key, 0).setPosition(this.sim.ball.x, this.sim.ball.y - s(4)).setVisible(true);
+    // map the ball onto the illustration; the splash/sand sheets are authored
+    // large, so read them small over the ball
+    const at = projectPoint(this.proj, this.sim.ball.x, this.sim.ball.y);
+    this.burst.setTexture(key, 0).setPosition(at.x, at.y - s(4)).setScale(0.5).setVisible(true);
     this.time.delayedCall(110, () => this.burst.setFrame(1));
     this.time.delayedCall(320, () => this.burst.setVisible(false));
   }
 
-  /** a one-shot verdict popup over the ball (world-space, drifts up) */
+  /** a one-shot verdict popup over the ball (mapped to the illustration, drifts up) */
   private strikePopup(text: string, ramp: number): void {
+    const at = projectPoint(this.proj, this.sim.ball.x, this.sim.ball.y);
     const t = this.add
-      .bitmapText(this.sim.ball.x, this.sim.ball.y - s(18), 'retro', text, s(8))
+      .bitmapText(at.x, at.y - s(18), 'retro', text, s(8))
       .setOrigin(0.5, 1)
-      .setDepth(60)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(ramp, 3)));
     this.tweens.add({ targets: t, y: t.y - s(14), alpha: 0, duration: 750, onComplete: () => t.destroy() });
   }
@@ -506,6 +606,9 @@ export class LinksScene extends Phaser.Scene {
 
   private async tallyPanel(title: string, lines: string[]): Promise<void> {
     this.clearPanel();
+    // the round is over — clear the course actors so they don't peek past the
+    // full-screen scorecard
+    [this.golfer, this.ballSpr, this.shadow, this.aimLine, this.aimDot, this.meterFill, this.meterWin, this.meterZero, this.meterMark, this.meterNeedle].forEach((o) => o.setVisible(false));
     const gold = colorOf(px(RAMP.GOLD, 3));
     const paper = colorOf(px(RAMP.PAPER, 2));
     this.panelWindow(s(28), s(26), s(344), s(170));
@@ -603,49 +706,50 @@ export class LinksScene extends Phaser.Scene {
   }
 
   private render(): void {
-    // NOTE: `s` is the scale helper (imported); the sim is `sim` here so the
-    // two never collide. Ball/aim positions out of the sim are already runtime
-    // px; only the literal offsets/denominators added in the scene wear s().
+    // `s` is the scale helper; the sim is `sim`. The sim runs in its own
+    // runtime-px tile space; projectPoint() maps that onto the displayed
+    // illustration. Ball height (z) lifts the sprite by z×(the map scale).
     const sim = this.sim;
-    this.ballSpr.setPosition(sim.ball.x, sim.ball.y - sim.ball.z);
-    this.ballSpr.setScale(1 + Math.min(0.8, sim.ball.z / s(90))); // z is runtime px → scale the denominator to keep the pop ratio
-    // the golfer stands at the ball (face the aim), both world + pane
-    const frame = this.golferFrame();
-    this.golfer.setPosition(sim.ball.x - s(8), sim.ball.y + s(2));
-    this.golfer.setTexture(this.golferKey, frame);
-    this.golfer.setFlipX(Math.cos(sim.aim) < 0);
-    this.golfer.setVisible(sim.phase === 'aim' || sim.phase === 'power' || sim.phase === 'acc');
-    this.golferPane.setTexture(this.golferKey, frame);
-    // the aim tick: a short line off the ball toward the line
-    const show = sim.phase === 'aim';
-    this.aimLine.setVisible(show);
-    if (show) {
-      const ax = sim.ball.x + Math.cos(sim.aim) * s(22);
-      const ay = sim.ball.y + Math.sin(sim.aim) * s(22);
-      this.aimLine.setPosition(ax, ay);
-    }
-    // ball-cam (follow targets are screen-centre offsets in runtime px; the
-    // 0.1 lerp is unitless)
-    const cam = this.cameras.main;
-    cam.scrollX += (sim.ball.x - s(200) - cam.scrollX) * 0.1;
-    cam.scrollY += (sim.ball.y - s(120) - cam.scrollY) * 0.1;
-    // HUD
+    // the actors (ball/golfer/aim) render per VIEW; the HUD below is shared
+    if (this.viewMode === 'behind') this.renderBehindActors();
+    else this.renderTopActors();
+    // ---- HUD ribbon: HOLE·PAR (left) · STROKE (centre) · yards (right) ----
     const hole = this.holes[this.holeIdx];
     const holeNo = this.cfg.kind === 'stroke' ? this.holeIdx + 1 : HOLES.indexOf(hole) + 1;
-    this.hudTop.setText(
-      `${LINKS_TEXT.holeCard.replace('{n}', String(holeNo)).replace('{par}', String(hole.par))}   ${LINKS_TEXT.strokeLine.replace('{n}', String(sim.strokes + (sim.phase === 'holed' ? 0 : 1)))}   ${LINKS_TEXT.yardsOut.replace('{yds}', String(sim.ydsToPin()))}`,
-    );
-    const dirName = Math.abs(this.wind.x) > Math.abs(this.wind.y) ? (this.wind.x > 0 ? 'WEST' : 'EAST') : this.wind.y > 0 ? 'NORTH' : 'SOUTH';
-    this.hudWind.setText(
-      this.wind.mph === 0 ? LINKS_TEXT.windCalm : LINKS_TEXT.windLine.replace('{putts}', String(windPutts(this.wind.mph))).replace('{name}', dirName),
-    );
+    this.hudTop.setText(LINKS_TEXT.holeCard.replace('{n}', String(holeNo)).replace('{par}', String(hole.par)));
+    this.hudStroke.setText(LINKS_TEXT.strokeLine.replace('{n}', String(sim.strokes + (sim.phase === 'holed' ? 0 : 1))));
+    this.hudYds.setText(LINKS_TEXT.yardsOut.replace('{yds}', String(sim.ydsToPin())));
+    // ---- wind widget: a cyan arrow blowing with the wind + the "N putts" read ----
+    this.windGfx.clear();
+    if (this.wind.mph === 0) {
+      this.hudWind.setText('CALM');
+    } else {
+      // compact readout — the arrow blows WITH the wind, so the cardinal
+      // direction reads at a glance without spelling it out in the small box
+      const putts = windPutts(this.wind.mph);
+      this.hudWind.setText(`${putts} ${putts === 1 ? 'PUTT' : 'PUTTS'}`);
+      const ang = Math.atan2(this.wind.y, this.wind.x);
+      const L = s(9);
+      const ux = Math.cos(ang);
+      const uy = Math.sin(ang);
+      const nx = -uy;
+      const ny = ux;
+      const cx = this.windCx;
+      const cy = this.windCy;
+      this.windGfx.fillStyle(colorOf(px(RAMP.CYAN, 3)), 1);
+      this.windGfx.fillTriangle(
+        cx + ux * L,
+        cy + uy * L,
+        cx - ux * L * 0.5 + nx * L * 0.55,
+        cy - uy * L * 0.5 + ny * L * 0.55,
+        cx - ux * L * 0.5 - nx * L * 0.55,
+        cy - uy * L * 0.5 - ny * L * 0.55,
+      );
+    }
     this.hudClub.setText(sim.swingMode() === 'putt' ? 'PUTTER' : sim.swingMode() === 'chip' ? 'CHIP' : CLUBS[sim.clubIdx].name);
     if (this.ticker.text !== '' && this.elapsed > this.tickerUntil) this.ticker.setText('');
     if (this.banner.text !== '' && this.elapsed > this.bannerUntil) this.banner.setText('');
-    // THE 3-TAP METER, the honest read (S14b — "the fill was going the
-    // wrong way"): the power fill RISES bottom→top and HOLDS at the captured
-    // power (gold mark); during the accuracy phase only the cyan NEEDLE
-    // comes back down toward the PURE band at the base. Nothing drains.
+    // ---- THE 3-TAP METER (S14b honest read; only the rail geometry moved) ----
     const inMeter = sim.phase === 'power' || sim.phase === 'acc';
     this.meterFill.setVisible(inMeter);
     this.meterWin.setVisible(inMeter);
@@ -653,24 +757,152 @@ export class LinksScene extends Phaser.Scene {
     this.meterMark.setVisible(sim.phase === 'acc');
     this.meterNeedle.setVisible(sim.phase === 'acc');
     if (inMeter) {
-      const H = s(68); // meter travel (runtime px) — matches the quad heights
-      const base = s(214);
+      const Hm = this.meterH; // meter travel (runtime px) — matches the quad heights
+      const base = this.meterBase;
       // the fill: live needle height while charging; HOLDS at the captured
       // power through the accuracy phase (dimmed) — nothing ever drains
       const fillFrac = (sim.phase === 'power' ? Math.max(0, sim.meterT) : sim.power) / GOLF.POWER_CAP;
       this.meterFill.setScale(1, Math.max(0.02, fillFrac));
       this.meterFill.setFillStyle(colorOf(px(RAMP.PAPER, sim.phase === 'power' ? 3 : 1)));
-      // the PURE band hugs the base: [0 .. accWindow], where the needle
-      // must land (tap 3); it shrinks with club × lie, honestly
+      // the PURE band hugs the base: [0 .. accWindow], where the needle must
+      // land (tap 3); it shrinks with club × lie, honestly
       const win = Math.min(1, sim.accWindow() / GOLF.POWER_CAP);
-      this.meterWin.setPosition(s(70), base);
+      this.meterWin.setPosition(this.meterX, base);
       this.meterWin.setScale(1, Math.max(0.03, win));
-      this.meterZero.setPosition(s(70), base);
+      this.meterZero.setPosition(this.meterX, base);
       if (sim.phase === 'acc') {
-        this.meterMark.setPosition(s(70), base - (sim.power / GOLF.POWER_CAP) * H);
-        this.meterNeedle.setPosition(s(70), base - (Math.max(0, sim.meterT) / GOLF.POWER_CAP) * H);
+        this.meterMark.setPosition(this.meterX, base - (sim.power / GOLF.POWER_CAP) * Hm);
+        this.meterNeedle.setPosition(this.meterX, base - (Math.max(0, sim.meterT) / GOLF.POWER_CAP) * Hm);
       }
     }
+  }
+
+  /* ================= the two views ================= */
+
+  /** TOP view: ball/golfer/aim positioned on the screen-filling diorama. */
+  private renderTopActors(): void {
+    const sim = this.sim;
+    const p = this.proj;
+    const ground = projectPoint(p, sim.ball.x, sim.ball.y);
+    const lift = sim.ball.z * p.scale;
+    const live = sim.phase !== 'holed';
+    this.ballSpr.setPosition(ground.x, ground.y - lift);
+    this.ballSpr.setScale(this.ballScale * (1 + Math.min(0.8, sim.ball.z / s(90))));
+    this.ballSpr.setVisible(live);
+    this.shadow.setVisible(live);
+    this.shadow.setPosition(ground.x, ground.y);
+    this.shadow.setScale(Math.max(0.45, 1 - sim.ball.z / s(140)));
+    this.shadow.setAlpha(Math.max(0.1, 0.42 - sim.ball.z / s(260)));
+    // the golfer stands at the ball and FREEZES at the strike spot through the
+    // flight (the ball flies on alone, the golfer holds the follow-through)
+    if (sim.phase === 'aim' || sim.phase === 'power' || sim.phase === 'acc') {
+      this.golferAnchor = { x: sim.ball.x, y: sim.ball.y };
+    }
+    const face = Math.cos(sim.aim) < 0 ? -1 : 1;
+    const gpos = projectPoint(p, this.golferAnchor.x, this.golferAnchor.y);
+    // stand the golfer to the LEFT of the ball (ball down-the-line at the foot)
+    this.golfer.setPosition(gpos.x - s(22) * face, gpos.y + s(3));
+    this.golfer.setTexture(this.golferKey, this.golferFrame());
+    this.golfer.setFlipX(face < 0);
+    this.golfer.setVisible(true);
+    const show = sim.phase === 'aim';
+    this.aimLine.setVisible(show);
+    this.aimDot.setVisible(show);
+    if (show) {
+      const tip = projectPoint(p, sim.ball.x + Math.cos(sim.aim) * s(48), sim.ball.y + Math.sin(sim.aim) * s(48));
+      const dx = tip.x - ground.x;
+      const dy = tip.y - ground.y;
+      this.aimLine.setPosition(ground.x, ground.y);
+      this.aimLine.setDisplaySize(Math.max(s(8), Math.hypot(dx, dy)), s(3)); // scale-based
+      this.aimLine.setRotation(Math.atan2(dy, dx));
+      this.aimDot.setPosition(tip.x, tip.y);
+    }
+  }
+
+  /** Project a sim-space ground point into the behind-the-player perspective. */
+  private behindXY(simX: number, simY: number): { x: number; y: number; along: number; scale: number } {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    // tuned to the authored fairway photo: the ball starts at the tee (footY)
+    // and travels up to the green/flag drawn ~45% down the backdrop
+    const footY = H * 0.86;
+    const greenY = H * 0.45;
+    const cx = W / 2;
+    const hole = this.holes[this.holeIdx];
+    const tx = s(hole.tee.x);
+    const ty = s(hole.tee.y);
+    const hx = s(hole.pin.x) - tx;
+    const hy = s(hole.pin.y) - ty;
+    const len = Math.hypot(hx, hy) || 1;
+    const ux = hx / len;
+    const uy = hy / len;
+    const dx = simX - tx;
+    const dy = simY - ty;
+    const along = Math.max(0, Math.min(1.04, (dx * ux + dy * uy) / len));
+    const lateral = dx * -uy + dy * ux; // signed perpendicular (sim px)
+    const persp = 1 - 0.62 * along;
+    const x = cx + lateral * 0.55 * persp;
+    const y = footY - (footY - greenY) * Math.pow(along, 0.62);
+    const scale = 1.5 + (0.3 - 1.5) * along; // near (big) → far (small)
+    return { x, y, along, scale };
+  }
+
+  /** BEHIND view: the ball arcs and shrinks into the distance, the golfer plays
+   *  it in the foreground, the diorama rides in the corner minimap. */
+  private renderBehindActors(): void {
+    const sim = this.sim;
+    const H = this.scale.height;
+    const live = sim.phase !== 'holed';
+    const g = this.behindXY(sim.ball.x, sim.ball.y);
+    const zPx = sim.ball.z * 0.5 * (1 - 0.35 * g.along);
+    this.ballSpr.setVisible(live);
+    this.ballSpr.setPosition(g.x, g.y - zPx);
+    this.ballSpr.setScale(this.ballScale * g.scale * (1 + Math.min(0.4, sim.ball.z / s(160))));
+    this.shadow.setVisible(live);
+    this.shadow.setPosition(g.x, g.y);
+    this.shadow.setScale(Math.max(0.35, g.scale * 0.8));
+    this.shadow.setAlpha(0.4);
+    // the back-view golfer stands at the tee in the foreground, facing up the
+    // fairway (the sheet golfer is top-view only). A single authored pose for now.
+    this.golfer.setVisible(false);
+    this.behindGolfer.setVisible(true);
+    this.behindGolfer.setPosition(this.scale.width / 2 - s(18), H * 0.92);
+    // aim reticle: where the shot is pointed, out on the fairway
+    const show = sim.phase === 'aim';
+    this.aimLine.setVisible(false);
+    this.aimDot.setVisible(show);
+    if (show) {
+      const hole = this.holes[this.holeIdx];
+      const len = Math.hypot(s(hole.pin.x) - s(hole.tee.x), s(hole.pin.y) - s(hole.tee.y));
+      const a = this.behindXY(sim.ball.x + Math.cos(sim.aim) * len * 0.55, sim.ball.y + Math.sin(sim.aim) * len * 0.55);
+      this.aimDot.setPosition(a.x, a.y);
+    }
+    // the corner-minimap dot
+    const mb = projectPoint(this.projMini, sim.ball.x, sim.ball.y);
+    this.minimapBall.setVisible(true);
+    this.minimapBall.setPosition(mb.x, mb.y);
+  }
+
+  /** Lay the scene out for the current view: the diorama is either the
+   *  screen-filling course (TOP) or the corner minimap (BEHIND). */
+  private applyViewMode(): void {
+    const behind = this.viewMode === 'behind';
+    const proj = behind ? this.projMini : this.proj;
+    this.course.setScale(proj.fit);
+    this.course.setPosition(proj.dx + proj.dw / 2, proj.dy + proj.dh / 2);
+    this.behindBg.setVisible(behind);
+    this.behindGolfer.setVisible(behind);
+    this.minimapFrame.setVisible(behind);
+    this.minimapBall.setVisible(behind);
+    this.golfer.setVisible(!behind);
+    this.flag.setVisible(false); // both views use art-drawn pins (diorama / fairway photo)
+  }
+
+  private toggleView(): void {
+    this.viewMode = this.viewMode === 'top' ? 'behind' : 'top';
+    this.applyViewMode();
+    this.showBanner(this.viewMode === 'behind' ? 'BEHIND VIEW' : 'TOP-DOWN VIEW', 900);
+    AUDIO.sfx('confirm');
   }
 
   /* ================= panels / plumbing ================= */

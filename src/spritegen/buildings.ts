@@ -295,9 +295,15 @@ export const BESPOKE_AREA_FACADES: readonly string[] = [
  * walked through the drawn door before the transition fired). The OverworldScene
  * routes these through the SAME texture-derived solid + entrance rebuild that every
  * `bldg_*` facade gets (ADR-051) — collision == footprint minus the doorway, the
- * entrance at the drawn door's mouth. (City Hall is a `bldg_` facade already; the
- * small Ch.1–2 houses keep their tuned data solids — they don't drift.)
+ * entrance at the drawn door's mouth. (City Hall is a `bldg_` facade already.)
+ *
+ * The door-less Ch.1–2 cottages join here too: their hand-tuned data solids DID
+ * drift — the drawn bodies are ~310–350px wide but the solids were ~200–264, so
+ * you could walk through the right side. Texture-derived collision matches the
+ * drawn footprint on every map. (house_rex is enterable, so it keeps a corrected
+ * data solid + door zone instead — routing it here would move its door box/glow.)
  */
 export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
   'clubhouse_grand', 'golf_gatehouse', 'mansion_a', 'mansion_b', 'mansion_c',
+  'house_chad', 'house_a', 'house_b',
 ]);

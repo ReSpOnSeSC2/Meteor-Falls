@@ -266,6 +266,10 @@ export class OverworldScene extends Phaser.Scene {
   /** ms left before any door may fire again — set on every map arrival so a
    *  door can't instantly bounce you back the way you came (ADR-052 QOL) */
   private doorCooldown = 0;
+  /** doors the player has STEPPED OFF since arriving. A door only fires once it's
+   *  armed (left at least once), so a spawn that lands ON a door — even one the
+   *  player can't immediately move off of — can't bounce them in/out forever. */
+  private readonly doorsArmed = new Set<object>();
   private static DOOR_REENTRY_MS = 900;
   private player!: Phaser.GameObjects.Sprite;
   private facing: Facing = 'down';
@@ -347,6 +351,7 @@ export class OverworldScene extends Phaser.Scene {
 
     this.buildTiles();
     this.buildProps();
+    this.buildEdgeTreeline();
     this.buildNpcs();
     this.buildPlayer();
     this.buildRoamers();
@@ -361,6 +366,7 @@ export class OverworldScene extends Phaser.Scene {
     // through can't instantly fire again (the hotel<->overworld ping-pong) and
     // the player gets a beat to catch their bearings before any door triggers.
     this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
+    this.doorsArmed.clear(); // re-arm fresh: a door we spawned on must be left first
     // It is 2 AM until Glint's porch scene ends — dawn breaks after (§A6
     // Ch.1), and it breaks over the WHOLE Ch.1 outdoors: the hill shares the
     // story clock instead of carrying a permanent night flag (S9b — the
@@ -502,7 +508,92 @@ export class OverworldScene extends Phaser.Scene {
     const mh = h * TILE_PX;
     const bx = Math.min(0, (mw - vw) / 2);
     const by = Math.min(0, (mh - vh) / 2);
-    this.cameras.main.setBounds(bx, by, Math.max(mw, vw), Math.max(mh, vh));
+    if (this.mapDef.interior) {
+      this.cameras.main.setBounds(bx, by, Math.max(mw, vw), Math.max(mh, vh));
+    } else {
+      // THE OUTDOOR EDGE RULE (see buildEdgeTreeline): paint the void forest-green
+      // and widen the bounds a couple tiles past every edge, so the camera reveals
+      // the border treeline + a forest backdrop instead of bare ground trailing off
+      // into the black margin. Small maps (smaller than the viewport) showed the
+      // void directly; large maps clamp to their edge — the buffer lets both show
+      // a treed boundary.
+      const M = s(40);
+      this.cameras.main.setBounds(bx - M, by - M, Math.max(mw, vw) + 2 * M, Math.max(mh, vh) + 2 * M);
+      this.cameras.main.setBackgroundColor(colorOf(px(RAMP.FOREST, 0)));
+    }
+  }
+
+  /**
+   * THE TREELINE (the "you never see the void" rule). Every OUTDOOR map's edge is
+   * ringed with trees just OUTSIDE the playable grid, so a boundary reads as a wall
+   * of forest rather than bare ground trailing into the black margin — and the ring
+   * doubles as free doodads so maps feel less sparse. Edges that hold a TRANSITION
+   * (a door zone touching the boundary) are left OPEN, so an open gap still means
+   * "you can leave here". Purely DECORATIVE: out-of-bounds tiles are already
+   * impassable (the move check blocks tx/ty < 0 and >= size), so there are no new
+   * solids and nothing the reachability validator sees. Trees sit at a low uniform
+   * depth — behind gameplay, above the ground — so the depth-800 night veil tints
+   * them with everything else. Deterministic per map id: same map, same forest.
+   */
+  private buildEdgeTreeline(): void {
+    if (this.mapDef.interior) return; // rooms are walled; their void is intentional
+    const h = this.solidTiles.length;
+    const w = h > 0 ? this.solidTiles[0].length : 0;
+    if (w < 2 || h < 2) return;
+
+    // deterministic LCG seeded off the map id — no Math.random, so a map renders
+    // the same forest every time (frozen-map byte-identity, screenshot stability)
+    let seed = 2166136261;
+    for (let i = 0; i < this.mapDef.id.length; i++) {
+      seed ^= this.mapDef.id.charCodeAt(i);
+      seed = Math.imul(seed, 16777619);
+    }
+    const rnd = (): number => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+      return (seed >>> 0) / 0xffffffff;
+    };
+
+    // edge tiles that overlap a transition stay OPEN (the gap reads as a way out)
+    const openTop = new Set<number>();
+    const openBottom = new Set<number>();
+    const openLeft = new Set<number>();
+    const openRight = new Set<number>();
+    const pad = 1; // widen the gap a touch so a doorway never feels walled-in
+    for (const d of this.mapDef.doors ?? []) {
+      if (!d.to) continue;
+      if (d.y <= 1) for (let x = d.x - pad; x <= d.x + d.w + pad; x++) openTop.add(x);
+      if (d.y + d.h >= h - 1) for (let x = d.x - pad; x <= d.x + d.w + pad; x++) openBottom.add(x);
+      if (d.x <= 1) for (let y = d.y - pad; y <= d.y + d.h + pad; y++) openLeft.add(y);
+      if (d.x + d.w >= w - 1) for (let y = d.y - pad; y <= d.y + d.h + pad; y++) openRight.add(y);
+    }
+
+    const KEYS = ['tree', 'tree_b', 'tree_c'] as const;
+    const W = w * TILE_PX;
+    const H = h * TILE_PX;
+    const jit = (): number => (rnd() - 0.5) * s(10);
+    const plant = (cx: number, cy: number): void => {
+      const key = KEYS[Math.floor(rnd() * KEYS.length)];
+      const sz = AUTHORED_WORLD_PROP_DISPLAY_SIZE[key];
+      const sc = 0.85 + rnd() * 0.3; // a little size variety so the line isn't a comb
+      this.add
+        .image(cx, cy, key)
+        .setOrigin(0.5, 1)
+        .setDisplaySize(s(sz.w) * sc, s(sz.h) * sc)
+        .setDepth(1); // behind gameplay, above ground; under the depth-800 night veil
+    };
+
+    // top + bottom rows — canopy fills the margin above / below the grid
+    for (let x = 0; x < w; x++) {
+      const cx = x * TILE_PX + TILE_PX / 2 + jit();
+      if (!openTop.has(x)) plant(cx, s(2) + jit()); // base on the top edge, canopy up
+      if (!openBottom.has(x)) plant(cx, H + s(20) + jit()); // base just below, canopy over the seam
+    }
+    // left + right columns — canopy fills the side margins
+    for (let y = 0; y < h; y++) {
+      const cy = y * TILE_PX + TILE_PX + jit();
+      if (!openLeft.has(y)) plant(-s(10) + jit(), cy);
+      if (!openRight.has(y)) plant(W + s(10) + jit(), cy);
+    }
   }
 
   private buildProps(): void {
@@ -927,37 +1018,28 @@ export class OverworldScene extends Phaser.Scene {
     // scrollFactor-0 rect shrinks with zoom; at zoom <1 a screen-sized one leaves
     // bright borders — the "darkness not covering" bug).
     const r = overscanRect(this.scale.width, this.scale.height);
+    // the MULTIPLY veil must sit ABOVE every world object so they ALL darken.
+    // Props/buildings/NPCs depth-sort by their base-y (buildProps), which on a tall
+    // map runs well past any fixed value — a constant 800 left everything below
+    // ~row 12 lit at night (the "not all images adhere to night mode" bug). Park it
+    // just past the tallest possible world depth (map height + a sprite's worth of
+    // margin); the fireflies then lift above it to still shine on top.
+    const nightDepth = this.solidTiles.length * TILE_PX + s(300);
     const o = this.add
       .rectangle(r.x - this.scale.width, r.y - this.scale.height, r.w + this.scale.width * 2, r.h + this.scale.height * 2, colorOf(px(RAMP.NIGHT, 1)))
       .setOrigin(0, 0)
       .setScrollFactor(0)
-      .setDepth(800)
+      .setDepth(nightDepth)
       .setAlpha(0.62);
     o.setBlendMode(Phaser.BlendModes.MULTIPLY);
-    // S7: porch lights pool warm light at every doorstep on the 2AM street
-    for (const p of this.mapDef.props) {
-      if (!p.door) continue;
-      const box = this.facadeDoorBox.get(p);
-      // door.ox/oy/w are NATIVE data → s(); box.* are already runtime
-      const cx = p.x * TILE_PX + s(p.door.ox) + s(p.door.w) / 2;
-      const cy = (box ? box.y : p.y * TILE_PX + s(p.door.oy)) - s(6);
-      const glow = this.add
-        .circle(cx, cy, s(15), colorOf(px(RAMP.GOLD, 2)), 0.22)
-        .setDepth(805)
-        .setBlendMode(Phaser.BlendModes.ADD);
-      this.tweens.add({
-        targets: glow,
-        alpha: { from: 0.85, to: 1 },
-        duration: 1400 + (p.x % 5) * 180,
-        yoyo: true,
-        repeat: -1,
-      });
-    }
+    // (The warm per-doorstep "porch light" glow pools were removed at the user's
+    // request — they read as unnecessary spotlights over the doors. The night
+    // tint above and the fireflies below are the remaining 2AM ambiance.)
     for (let i = 0; i < 9; i++) {
       const f = this.add
         .image(Math.random() * this.scale.width, Math.random() * this.scale.height, 'pixel')
         .setScrollFactor(0)
-        .setDepth(810)
+        .setDepth(nightDepth + 10)
         .setTint(colorOf(px(RAMP.GOLD, 3)))
         .setAlpha(0);
       this.tweens.add({
@@ -2168,6 +2250,11 @@ export class OverworldScene extends Phaser.Scene {
         return true;
       case 'ana':
       case 'vivi':
+        // the Lemonade Empire is a DAYTIME beat (the stand opens at dawn). During
+        // the meteor night the twins are home in their rooms — fall through to
+        // their authored night dialogue (ana_room_night / vivi_room_night) rather
+        // than launching the quest. Mirrors mrs_pemmel's zapper_done gate above.
+        if (!GS.flag('zapper_done')) return false;
         await this.twinsBeat();
         return true;
       case 'biscuit_drug':
@@ -3587,34 +3674,43 @@ export class OverworldScene extends Phaser.Scene {
   /* ---------------- doors & triggers ---------------- */
 
   private async checkDoors(): Promise<void> {
-    if (this.doorCooldown > 0) return; // ADR-052: just arrived — let doors settle
+    // ADR-052 + the RE-ARM guard: a door fires only once the player has STEPPED OFF
+    // its zone since arriving (doorsArmed). This kills the exit-bounce SOFT-LOCK —
+    // a spawn that lands on a door (where a build-time doorstep can mismatch the
+    // texture-derived collision) would otherwise re-fire forever. `doorCooldown`
+    // still gives a brief settle; arming is tracked even while it counts down.
+    const cooling = this.doorCooldown > 0;
     for (const d of this.mapDef.doors) {
       const r = { x: d.x * TILE_PX, y: d.y * TILE_PX, w: d.w * TILE_PX, h: d.h * TILE_PX };
-      if (
+      const inZone =
         this.player.x > r.x &&
         this.player.x < r.x + r.w &&
         this.player.y - s(4) > r.y &&
-        this.player.y - s(4) < r.y + r.h
-      ) {
-        // S15i Task 0 — THE DAYBREAK GATE: the road east stays shut until the
-        // opening ends (zapper_done). A sleeping-town reason, not an invisible
-        // wall — the barricade reads it, this catches anyone skirting the verge.
-        if (d.to === 'meadow_mile' && !GS.flag('zapper_done')) {
-          this.cut = true;
-          AUDIO.sfx('cancel');
-          await this.dlg.say(...DIALOGUE.meadow_gate_asleep);
-          this.cut = false;
-          this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
-          return;
-        }
-        // S11b: a real door swings OPEN before it admits you
-        if ((d.indicator ?? (this.mapDef.interior ? 'mat' : 'none')) === 'door') {
-          this.goThroughInteriorDoor(d);
-        } else {
-          this.goThroughDoor(d.to, d.tx, d.ty, d.facing);
-        }
+        this.player.y - s(4) < r.y + r.h;
+      if (!inZone) {
+        this.doorsArmed.add(d); // stepped clear → armed for next entry
+        continue;
+      }
+      if (cooling || !this.doorsArmed.has(d)) continue; // spawned on it / still settling
+      this.doorsArmed.delete(d);
+      // S15i Task 0 — THE DAYBREAK GATE: the road east stays shut until the
+      // opening ends (zapper_done). A sleeping-town reason, not an invisible
+      // wall — the barricade reads it, this catches anyone skirting the verge.
+      if (d.to === 'meadow_mile' && !GS.flag('zapper_done')) {
+        this.cut = true;
+        AUDIO.sfx('cancel');
+        await this.dlg.say(...DIALOGUE.meadow_gate_asleep);
+        this.cut = false;
+        this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
         return;
       }
+      // S11b: a real door swings OPEN before it admits you
+      if ((d.indicator ?? (this.mapDef.interior ? 'mat' : 'none')) === 'door') {
+        this.goThroughInteriorDoor(d);
+      } else {
+        this.goThroughDoor(d.to, d.tx, d.ty, d.facing);
+      }
+      return;
     }
     for (const p of this.mapDef.props) {
       if (!p.door) continue;
@@ -3626,16 +3722,20 @@ export class OverworldScene extends Phaser.Scene {
         w: s(p.door.w),
         h: s(p.door.h),
       };
-      if (
+      const inZone =
         this.player.x > r.x &&
         this.player.x < r.x + r.w &&
         this.player.y > r.y &&
-        this.player.y < r.y + r.h
-      ) {
-        if (p.door.to === 'dos_f1' && (await this.bricktonDepartmentGate())) return;
-        this.goThroughDoor(p.door.to, p.door.tx, p.door.ty, 'up');
-        return;
+        this.player.y < r.y + r.h;
+      if (!inZone) {
+        this.doorsArmed.add(p);
+        continue;
       }
+      if (cooling || !this.doorsArmed.has(p)) continue;
+      this.doorsArmed.delete(p);
+      if (p.door.to === 'dos_f1' && (await this.bricktonDepartmentGate())) return;
+      this.goThroughDoor(p.door.to, p.door.tx, p.door.ty, 'up');
+      return;
     }
   }
 

@@ -168,9 +168,14 @@ export function buildOtterbrook(): MapDef {
         sprite: 'house_rex',
         x: 5,
         y: 2,
-        solid: { ox: 0, oy: 20, w: 66, h: 34 },
-        // zone reaches below the collision floor so the doorstep is walkable
-        door: { ox: 32, oy: 52, w: 14, h: 28, to: 'rex_home', tx: 104, ty: 124 },
+        // the drawn house is ~79 native wide (316 runtime); the old w:66 solid left
+        // a ~52px walk-through gap on the right side. Match the drawn body width.
+        solid: { ox: 0, oy: 20, w: 79, h: 34 },
+        // door.ox aligns the doorstep + porch glow with the DRAWN door: measured at
+        // texture x≈115 (native ≈24), so s(ox)+s(w)/2 must ≈115 → ox 22 (was 32,
+        // which floated the glow right toward the window). zone reaches below the
+        // collision floor so the doorstep is walkable.
+        door: { ox: 22, oy: 52, w: 14, h: 28, to: 'rex_home', tx: 104, ty: 124 },
       },
       { sprite: 'house_chad', x: 11, y: 2, solid: { ox: 0, oy: 20, w: 66, h: 34 } },
       { sprite: 'house_a', x: 25, y: 2, solid: { ox: 0, oy: 20, w: 50, h: 34 } },
@@ -356,10 +361,11 @@ export function growOtterbrook(): MapDef {
   g.rect(4, 42, 23, 2, ':'); // the civic lane fronting City Hall + the Green
 
   // 4) LANDMARK — CITY HALL: a real civic facade opening into a hand-authored
-  //    interior. The draft skin is the neutral shipped brick (ADR-020: drawn art
-  //    is a hand job — a bespoke "CITY HALL" facade is a promotion item; the
-  //    plaque + the Mayor inside name it, and the skin carries no conflicting sign).
-  const cityHall = placeFacade('bldg_brickmore', 6, 40 * 16 + 12, 6, 2, {
+  //    interior. Wears the bldg_civic skin — a government/civic building — instead
+  //    of the bldg_brickmore brownstone it used to borrow (that read as a city
+  //    apartment block, fire escape and all). The plaque + the Mayor inside name
+  //    it, and the civic skin carries no conflicting sign.
+  const cityHall = placeFacade('bldg_civic', 6, 40 * 16 + 12, 6, 2, {
     to: 'otterbrook_cityhall', tx: 120, ty: 128,
   });
   g.rect(6, 41, 6, 1, '='); // the hall's front step meets the civic lane
@@ -1182,8 +1188,10 @@ function buildRexHome(): MapDef {
     signs: [],
     phones: [{ x: 1, y: 2 }],
     doors: [
-      // ty lands just south of the (now taller) doorstep zone — no re-entry loop
-      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: 120, ty: 117, facing: 'down', indicator: 'mat' },
+      // tx 109 centers the player on the DRAWN door (~world x436); the old 120 put
+      // them ~45px right of it, over the window side. ty lands just south of the
+      // doorstep zone (the door re-arm guard also blocks any exit-bounce now).
+      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: 109, ty: 117, facing: 'down', indicator: 'mat' },
       // S9b: the stairs land on the upstairs hall (three bedrooms up there now)
       { x: 12, y: 9, w: 2, h: 1, to: 'rex_hall', tx: 228, ty: 80, facing: 'left', indicator: 'stairs' },
     ],
