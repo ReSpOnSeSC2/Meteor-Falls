@@ -2,16 +2,26 @@
 
 ## Art is AUTHORED, not generated (read this first)
 
-All sprites and art are **authored as PNGs** via the ChatGPT / imagegen → PNG
-workflow. Source art is produced at the resolution of **`assets/art/masters/`**
-(the high-res source of truth), then sliced/downscaled into runtime sheets under
-**`assets/art/**`** and loaded by **`src/spritegen/authored.ts`**.
+All sprites and art are **authored as PNGs** via the **ChatGPT → PNG** workflow —
+**image generation is ALWAYS ChatGPT** (chatgpt.com image generation), never
+procedural code and never a different model. Source art is produced at the
+resolution of **`assets/art/masters/`** (the high-res source of truth), then
+sliced/downscaled into runtime sheets under **`assets/art/**`** and loaded by
+**`src/spritegen/authored.ts`**.
 
 **To add or change any sprite:**
 1. Author/update the master PNG in `assets/art/masters/` at the masters
    resolution (see [`docs/ART_PIPELINE.md`](docs/ART_PIPELINE.md) for per-category sizes).
 2. Slice/export the runtime PNG into the right folder under `assets/art/...`.
 3. Wire it into `src/spritegen/authored.ts` (it overrides the boot textures).
+
+**Character 46-frame walk sheets** (`<id>_anim_46_4x.png`) are authored/repaired by the
+**ChatGPT reference-paste pipeline**: attach the ORIGINAL sprite as the reference (keeps
+the EarthBound look), generate the 5 facings with a **grounded 2-step walk** (stand → low
+step → stand → step-other-foot, like jay — *not* a high knee-march, *not* a wide lunge),
+then slice (`tools/slice-chroma-strip.js`) → assemble (`tools/assemble-char-sheet.js`) →
+verify (`tools/extract-char-frames.js`) → sync runtime **and** master. Full step-by-step:
+[`docs/ART_PIPELINE.md` § Character 46-frame walk sheets](docs/ART_PIPELINE.md#character-46-frame-walk-sheets--the-chatgpt-reference-paste-pipeline-canonical).
 
 **Do NOT:**
 - ❌ Do **not** write or extend procedural sprite generators. `src/spritegen/`

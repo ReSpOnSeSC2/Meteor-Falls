@@ -17,6 +17,7 @@
  * `{token}` vars are substituted). Empty/omitted captions play as a silent
  * Ken Burns hold — already valid, ready for text.
  */
+import { ENDING_CARDS } from './endings';
 
 /** Ken Burns drift for one beat. Scales are multipliers on the screen-cover
  *  scale; pans are NATIVE px (the engine applies `s()` so they read the same at
@@ -233,6 +234,30 @@ const CH6: Cutscene[] = [
       'sphinx_chin_resonance',
     ),
   },
+  // S21 (ADR-126): THE HELD BREATH unlocks — the Star Locket records the breath
+  // around the song. The reverse Ken Burns (a gentle pull-BACK + soft flash) reads
+  // as the world inhaling, the moment drawn back. Played from OverworldScene.heldBreathBeat.
+  {
+    id: 'ch6_held_breath',
+    chapter: 'ch6',
+    beats: [
+      {
+        art: 'held_breath_awaken',
+        sfx: 'ember',
+        flash: 220,
+        motion: { fromScale: 1.15, toScale: 1.04, panY: 5, ms: 9000, ease: 'sine.inOut' },
+        hold: 500,
+        captions: [
+          'The laughter in the ruins comes around again — the same laugh, the same place, like a record finding the same scratch.',
+          "And then it isn't the laugh that repeats. It's the MOMENT.",
+          '{rex} closes a hand around the Star Locket. It is recording — not the song this time. The breath around it.',
+          'He breathes in. The world breathes in with him. And, for a second, it lets him hold it.',
+          '{faye} is not smiling. "You can put it back, can\'t you. You can make it different."',
+          '"You\'re not changing what happened. You\'re changing what they CHOSE. Be careful which one of those you think it is."',
+        ],
+      },
+    ],
+  },
 ];
 
 const CH7: Cutscene[] = [
@@ -306,9 +331,29 @@ const CH10: Cutscene[] = [
   },
 ];
 
+// S21 (ADR-127): the three Axes' choice-intro panels — silent establishing shots
+// (OverworldScene.runChoice plays `${band}_choice` before the dilemma dialogue).
+// ch10's panel is authored last, so its cutscene no-ops cleanly until the PNG lands.
+const CH_CHOICES: Cutscene[] = [
+  { id: 'ch6_choice', chapter: 'ch6', beats: [{ art: 'choice_ch6_the_string', motion: { fromScale: 1.08, toScale: 1.16, panY: -4, ms: 5200 }, hold: 300 }] },
+  { id: 'ch9_choice', chapter: 'ch9', beats: [{ art: 'choice_ch9_iron_or_open', motion: { fromScale: 1.08, toScale: 1.16, panY: -4, ms: 5200 }, hold: 300 }] },
+  { id: 'ch10_choice', chapter: 'ch10', beats: [{ art: 'choice_ch10_what_the_song_is_for', motion: { fromScale: 1.06, toScale: 1.14, ms: 6000 }, hold: 400 }] },
+];
+
+// S21 (ADR-128): one cutscene per composed-ending CARD — the panel is a gentle
+// still under its caption (OverworldScene.playEnding plays `${card.dialogue}` then
+// says it). Built from ENDING_CARDS so the set stays in lockstep; each no-ops until
+// its `assets/art/cutscenes/ch10/<epi_id>_4x.png` lands.
+const CH_EPILOGUE: Cutscene[] = Object.values(ENDING_CARDS).map((c) => ({
+  id: c.dialogue,
+  chapter: 'ch10',
+  beats: [{ art: c.dialogue, motion: { fromScale: 1.05, toScale: 1.12, ms: 5200 }, hold: 250 }],
+}));
+
 const ALL: Cutscene[] = [
   ...CH1, ...CH2, ...CH3, ...CH4, ...CH5,
   ...CH6, ...CH7, ...CH8, ...CH9, ...CH10,
+  ...CH_CHOICES, ...CH_EPILOGUE,
 ];
 
 /** Every cutscene, keyed by id. Play one with `playCutscene(scene, id)`. */

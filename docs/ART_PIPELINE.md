@@ -80,6 +80,108 @@ pose changes the *facing*, not the foot, so author those normally (or mirror the
 left column to the right column by hand). Note a flip also mirrors any asymmetry
 (hair part, bag, logo) — usually invisible at 24×32, but check.
 
+## Character 46-frame walk sheets — the ChatGPT reference-paste pipeline (canonical)
+
+**The game ALWAYS generates its source images with ChatGPT** (chatgpt.com image
+generation — *not* procedural code, *not* another model). This is the proven,
+canonical way to author or repair any character/NPC `<id>_anim_46_4x.png` walk
+sheet. Validated across the full Ch.1–Ch.6 NPC cast, 2026-06-18.
+
+### Sheet format
+- `<id>_anim_46_4x.png` — **384×1536**, **96×128 per frame**, 4 cols × 12 rows, **46 frames**.
+- Runtime: `assets/art/characters/<id>_anim_46_4x.png`. Master (source of truth):
+  `assets/art/masters/characters/animation/<id>_anim_46_4x_master.png`. Wired via
+  `NPC_CHARACTER_ART` / `HERO_ART` in `src/spritegen/authored.ts`.
+- **Frame map.** Cardinals `DIRS=[down,left,right,up]`: down 0–3, left 4–7, right 8–11,
+  up 12–15 — each plays **[0,1,2,3] = stand, stepA, stand, stepB**. Diagonals
+  `DIAG=[down-right,down-left,up-right,up-left]`: dr 24–26, dl 27–29, ur 30–32, ul 33–35
+  (play [stepA,stepB], de-glided). Frames 16–23 & 36–43 are walk-copies (never play).
+  Idle = 44–45 (copy of frame 0).
+
+### The walk = a 2-STEP GROUNDED stride (match jay — user was firm, twice)
+The cardinal anim reads **STAND → STEP → STAND → STEP-with-other-foot**. Per facing you
+generate a **3-pose strip = [neutral stand, grounded stepA, grounded stepB]**:
+- **STAND** — both feet flat together, still, NOT walking.
+- **STEP** — a small natural step: legs stay **CLOSE together**, one foot planted, the
+  other takes a **short LOW step**, knee only gently bent, **feet staying on/near the
+  ground**. ❌ NOT a high raised-knee march. ❌ NOT a wide flat-footed lunge. Both
+  extremes were explicitly rejected — copy jay's compact grounded step
+  (`assets/art/characters/jay_anim_46_4x.png`), which is a **2-step** walk (stand + two
+  grounded steps), not a 3-pose lift.
+
+### Reference image — feed ChatGPT the ORIGINAL sprite (keeps the EarthBound house style)
+Always attach the **original in-game sprite** as the reference so the regen keeps the
+established design **and the EarthBound/Mother look** (chunky proportions, bold outlines,
+like jay) instead of drifting to generic pixel-anime:
+1. Crop frame 0 of the original sheet (96×128) and upscale 4× → `ref_<id>.png`.
+2. **Bust** originals (waist-up, no legs): add to the prompt "draw the COMPLETE FULL
+   BODY head-to-feet" + invent plausible legs/shoes that fit the character.
+
+### Generate — ChatGPT, one conversation per character, 5 serial facings
+On chatgpt.com, **one conversation per NPC**. Attach the reference, then generate the
+**5 unique facings** as serial follow-ups (each conditions on the prior for consistency):
+**DOWN** (front, face visible) → **LEFT** (strict side profile) → **UP** (from behind,
+NO face) → **DOWN-LEFT** (3/4 front-left) → **UP-LEFT** (3/4 back-left). Right /
+down-right / up-right are produced by **mirroring** at assemble time.
+
+Prompt skeleton (chroma-green so the slicer can key it out):
+> Pixel-art overworld sprite sheet — use the attached image as the EXACT character
+> reference, keep its EarthBound look. ONE solid FLAT chroma-green (#00FF00) background,
+> no shadow/ground/text. A horizontal strip of THREE FULL-BODY poses (head to feet) with
+> wide green gaps, **[facing spec]**. STAND + 2-STEP grounded walk: Pose 1 = STAND (feet
+> together, still); Pose 2 = STEP (legs close, one foot steps forward LOW, feet near the
+> ground, slight knee bend — NOT a high march, NOT a wide lunge); Pose 3 = STEP (other foot).
+
+Facing specs (the strict-profile / from-behind emphasis fixes the two most common
+failures — profiles that come out front, and backs that show the face):
+- **DOWN** — "ALL facing the CAMERA, front, face visible."
+- **LEFT** — "STRICT LEFT SIDE PROFILE: rotate 90° to face LEFT, one eye & one ear, nose
+  pointing left, chest NOT toward the camera."
+- **UP** — "a TRUE view FROM BEHIND (walking AWAY): only the back of the head/body, NO
+  face, NO eyes."
+- **DOWN-LEFT** — "3/4 FRONT angled toward the lower-LEFT, face partly visible."
+- **UP-LEFT** — "3/4 BACK angled toward the upper-LEFT, no face."
+
+### Browser mechanics (automation)
+- **Attach the reference by clipboard paste:** put the PNG on the OS clipboard (PowerShell
+  STA `[Windows.Forms.Clipboard]::SetImage`), then a **REAL mouse-click into the "Ask
+  anything" composer, then Ctrl+V** — a JS `.focus()` alone does NOT make the paste carry
+  the image. Then JS-inject the prompt text (paste-FIRST-then-type) and click
+  `button[data-testid="send-button"]`.
+- **Clipboard recovery:** `SetImage` can wedge — `OpenClipboard` returns Win32 err **5
+  (ACCESS_DENIED)** even though it looks free (the Windows clipboard-history service,
+  `cbdhsvc`). Recovery: click the page to focus it + `navigator.clipboard.writeText(...)`
+  to cycle clipboard ownership, then retry; or have the page draw the ref onto a `<canvas>`
+  and `navigator.clipboard.write([new ClipboardItem({'image/png': blob})])` (canvas blobs
+  decode; raw-byte blobs may not), then Ctrl+V. `file_upload` rejects project/Downloads
+  paths (only session-shared folders). If the service stays wedged it needs an admin
+  `Restart-Service cbdhsvc*` or a re-login.
+- **Capture:** newest generated `<img>` → force `img.decode()` (background tabs report
+  `naturalWidth 0`) → canvas → `toBlob` → `<a download>` with a **unique** filename.
+
+### Slice → assemble → verify → sync (`tools/`)
+1. **Slice** each facing strip: `node tools/slice-chroma-strip.js <src> .shots/<id>_<facing>
+   --expect=3 --h=108 --foot=16`.
+2. **Assemble** (cp the existing sheet → `<id>_build.png`, then place/copy/mirror):
+   ```
+   node tools/assemble-char-sheet.js .shots/<id>_build.png .shots/<id>_build.png \
+    --place=0:_down_0 --place=1:_down_1 --copy=2:0 --place=3:_down_2 \
+    --place=4:_left_0 --place=5:_left_1 --copy=6:4 --place=7:_left_2 \
+    --place=12:_up_0 --place=13:_up_1 --copy=14:12 --place=15:_up_2 \
+    --mirror=8:4 --mirror=9:5 --mirror=10:6 --mirror=11:7 \
+    --place=27:_downleft_0..2 --place=33:_upleft_0..2 \
+    --mirror=24:27 --mirror=25:28 --mirror=26:29 --mirror=30:33 --mirror=31:34 --mirror=32:35 \
+    --copy=16:1 …(walk copies)… --copy=44:0 --copy=45:0
+   ```
+   (right = mirror of left; down-right/up-right = mirror of down-left/up-left; 16–23 & 36–43
+   = walk copies; 44–45 = idle.)
+3. **Verify offline** (cold-boot preview stalls): `node tools/extract-char-frames.js
+   .shots/<id>_build.png .shots/<id>_review.png 0 1 2 3 4 …` and eyeball the montage — rows
+   must read stand-step-stand-step; left = profile; up = back.
+4. **Sync:** `cp .shots/<id>_build.png assets/art/characters/<id>_anim_46_4x.png` (runtime)
+   **and** `…/masters/characters/animation/<id>_anim_46_4x_master.png` (master). Unwired
+   Ch.4–6 NPCs are master-only — sync the master only until their chapter wires them.
+
 ## Fallback (frozen procedural engine)
 
 `src/spritegen/` still generates every texture at boot as the **base** layer,

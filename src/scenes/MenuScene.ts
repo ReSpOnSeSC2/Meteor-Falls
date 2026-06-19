@@ -45,6 +45,11 @@ import { heroPortraitKey } from '../spritegen/authored';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { colorOf, RAMP, px } from '../palette';
 import { s, TILE_PX } from '../spritegen/scale';
+// S21 (ADR-126): the Held Breath — the Locket page hosts the Breath meter + rewind
+import { CHOICES, type ChoiceId } from '../data/choices';
+import { ECHO_ANCHORS, MAX_BREATHS } from '../data/echoes';
+import { breathsLeft, rewindableAnchors, rewindTo } from '../engine/echo';
+import { recordedOption } from '../engine/choice';
 
 export class MenuScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -687,11 +692,74 @@ export class MenuScene extends Phaser.Scene {
       .setCenterAlign()
       .setTint(DIM);
     this.pageObjs.push(fl);
+    // S21 (ADR-126): THE HELD BREATH — the Breath meter rides beside the Embers, and
+    // (with a Breath to spend + a recorded moment) the Locket can hold a breath back:
+    // rewind to a past choice and re-make it (src/engine/echo.ts).
+    const hasBreath = GS.flag('held_breath_unlocked') === true;
+    if (hasBreath) {
+      const b = breathsLeft();
+      const meter = '*'.repeat(b) + '.'.repeat(Math.max(0, MAX_BREATHS - b));
+      const bt = this.add
+        .bitmapText(x + w / 2, y + s(118), 'retro', `BREATH  ${meter}`, s(6))
+        .setOrigin(0.5, 0)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI + 1)
+        .setTint(colorOf(px(RAMP.CYAN, 3)));
+      this.pageObjs.push(bt);
+    }
     // the Homesong grows one stem per Ember; with none it stays politely quiet
     if (n > 0) AUDIO.playMusic('homesong', n);
-    await this.waitDismiss();
+    const anchors = hasBreath && breathsLeft() > 0 ? rewindableAnchors() : [];
+    let restarted = false;
+    if (anchors.length > 0) restarted = await this.echoesPrompt(anchors);
+    else await this.waitDismiss();
+    if (restarted) return; // the overworld was restarted at the rewound state
     this.clearPage();
     if (n > 0) AUDIO.playMusic(this.mapMusic || null);
+  }
+
+  /**
+   * S21 (ADR-126): the Held Breath rewind flow — offered from the LOCKET page when a
+   * Breath is in the bank and a rewindable moment is recorded. Pick a moment, read the
+   * cost, confirm, and the world breathes back: GS restores to the pre-decision state
+   * (src/engine/echo.ts) and the overworld restarts there. Returns true on a rewind.
+   */
+  private async echoesPrompt(anchors: ChoiceId[]): Promise<boolean> {
+    const open = await this.pick({
+      x: s(96),
+      y: s(120),
+      options: ['Hold a breath back…', 'Close'],
+      title: 'THE HELD BREATH',
+    });
+    if (open !== 0) return false;
+    const labels = anchors.map((id) => `Ch.${CHOICES[id].chapter}:  ${recordedOption(id)?.label ?? '…'}`);
+    const which = await this.pick({
+      x: s(96),
+      y: s(8),
+      options: [...labels, 'Never mind'],
+      title: 'GO BACK TO…',
+    });
+    if (which < 0 || which >= anchors.length) return false;
+    const id = anchors[which];
+    await this.dlg.say(...DIALOGUE[ECHO_ANCHORS[id].offerDialogue]);
+    await this.dlg.say(...DIALOGUE[ECHO_ANCHORS[id].costDialogue]);
+    const ok = await this.dlg.ask(['Hold it back', 'Leave it be'], { cancelIndex: 1 });
+    if (ok !== 0) return false;
+    if (!rewindTo(id)) {
+      await this.dlg.say(...DIALOGUE.echo_no_breath);
+      return false;
+    }
+    AUDIO.sfx('ember');
+    await this.dlg.say(...DIALOGUE.echo_done);
+    // the world is rewound — restart the overworld at the restored map/position so the
+    // rewound state (flags, party, map) renders fresh (mirrors returnToTitle's restart)
+    this.clearPage();
+    AUDIO.playMusic(this.mapMusic || null);
+    this.game.events.emit('mf-menu-closed');
+    this.scene.stop('overworld');
+    this.scene.start('overworld', { mapId: GS.data.map, x: GS.data.x, y: GS.data.y, facing: GS.data.facing });
+    this.scene.stop();
+    return true;
   }
 
   /* ================= SETUP ================= */

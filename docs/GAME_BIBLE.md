@@ -899,6 +899,42 @@ Every quest leaves a footprint after completion:
 - **Mechanical footprint:** the player earns a useful item, discount, recipe, caller boost, photo, travel convenience, or repeatable service.
 - **Finale footprint:** the CALLER ledger gains or strengthens a voice. In THE CALLING, each completed quest gets one phone-ring vignette with a quote that could only belong to that person.
 
+> *(Added 2026-06-18 per Appendix rule 6, ADR-126/127/128 — **THE HELD BREATH, THE
+> THREE AXES, AND THE NINE ENDINGS.** The back half gains player CHOICE without
+> rewriting a single canon beat. Spec: `docs/BRANCHING_REDESIGN.md`.)*
+>
+> **The through-line:** the §A4.10 Trust Thread already asks "is the boy holding our
+> strings?" Make it literal — give **Jay** a **time-rewind** and every rewind IS a
+> held string. Jay can bend space (Teleport), will (Puppet), and now time (the Held
+> Breath); the whole back half becomes *the boy who could control everything, learning
+> not to*, and the finale is him giving it up.
+>
+> **THE HELD BREATH (Jay's Locket rewind).** The Star Locket already records *moments*
+> (Heartlights); Jay learns it records the *breath around* them and can make the world
+> take a breath back, letting a friend's CHOICE be re-made. Unlocks Ch.6 (the Laughing
+> Ruins, where Teleport α also lands). It is bounded + costly so choices stay weighty:
+> a finite **Breath bank** (3) refuelled **only by Mia's `wonderful`/`miraculous` PRAY**
+> (faith owns the supply); spending a Breath **locks Puppet** for the map (bend will OR
+> time); every rewind ticks a hidden **rewind-debt** the Trust Thread reads and the
+> golden ending caps; and the **terminal Ch.10 choice is non-rewindable** (renunciation,
+> mirroring Jay's §A6 "refuses to take a will"). The save gains one `echoes` field (v16).
+>
+> **THE THREE AXES (the choices).** Three weighty, no-correct-answer decisions, each on
+> an existing peak, each a binary flag gating later content, party fate, end-game powers,
+> and one of nine endings:
+> - **TRUST · Ch.6 "The Ruins That Laugh"** — *Pull the string* to save Pippa (Puppet, control) **vs** *Open your hand* (trust, let her find her own feet). STRINGS can drive Pippa to leave at Ch.8.
+> - **COMPASSION · Ch.9 Count Hoaxula** — *The Open Hand* (the canon mercy, untouched; Vlad becomes a finale caller) **vs** *The Iron* (Milo's Vibe Siphon banks the **Stolen Light**, a finale edge, but empties Vlad and disturbs **Dorin**, who withholds Comet Ω or leaves).
+> - **FINALE · Ch.10 THE CALLING** — *Silence it* (the canon damage-race) **vs** *Forgive it* (a give-Vibe "Answer" phase, achievable only if you arrive warm enough). Both END the Hush; they differ in what the Homesong *does*.
+>
+> **THE NINE ENDINGS (composed, not bespoke).** The epilogue is a sequence of ~28
+> modular **cards** the flag-state selects across nine slots (tone · hush · world ·
+> the five heroes · home) — the same composition principle as the caller ledger and
+> Mr. Click's album. The 3 binary axes cross to 8 distinct sequences; a golden **"Long
+> Shot"** (fully-virtuous path + a near-full caller ledger + barely any rewinds) is the
+> ninth. Every one of the nine ends on the warm walk home — the branches only change the
+> *weather* of the warmth; the Hush stays sparse, no option is cruel, Buni always says
+> there's time. The canon name-confirm + Homesong + House-Key walk-home are unchanged.
+
 The five cross-world chains are the long-form glue that helps the 40–50 hour target feel playful instead of padded:
 
 - **Mr. Click's Photo Album:** 14 ambush photos, each with a tiny pose choice. The joke evolves: first annoying, then comforting, then heartbreaking when the Mars credits show how young everyone looked at the start. Lilleby's photo is taken from absurd distance; Minimus uses a macro lens and makes Pippa stand on a thimble like a podium.
@@ -1020,6 +1056,8 @@ meteor-falls/
 ## B3. Asset strategy (production quality, easiest path)
 
 **Art.** *(Updated 2026-06-14, ADR-109 — supersedes the procedural rule of ADR-002 and the CC0/art:check plan below.)* All art is **authored as PNGs** via the ChatGPT/imagegen → PNG workflow at the **`assets/art/masters`** resolution (the high-res source of truth), sliced/downscaled into runtime sheets under `assets/art/**` and loaded by `src/spritegen/authored.ts` (which overrides the boot textures). The procedural engine `src/spritegen/` is **frozen** — it runs at boot only as a fallback for categories that don't have authored PNGs yet. Do **not** extend the generators; the old `npm run art:*` render tools are parked in `dormant/sprite-tools/`. Full workflow + per-category resolutions: [docs/ART_PIPELINE.md](ART_PIPELINE.md).
+
+> **Image generation = ChatGPT, always.** Every source image (sprites, busts, enemies, screens, props) is generated with **ChatGPT image generation** — never procedural code, never a different model. Character 46-frame walk sheets (`<id>_anim_46_4x.png`) are authored/repaired by the **ChatGPT reference-paste pipeline**: attach the original sprite as the reference (keeps the EarthBound look), generate the 5 facings with a **grounded 2-step walk** (stand → low step → stand → step-other-foot, like jay — *not* a high march or wide lunge), then slice/assemble/sync. Full step-by-step: [docs/ART_PIPELINE.md § Character 46-frame walk sheets](ART_PIPELINE.md#character-46-frame-walk-sheets--the-chatgpt-reference-paste-pipeline-canonical).
 
 **Music.** EarthBound-themed chiptune+sample hybrid: tracks are authored as code in **Tone.js** (`tools/music-render.ts` renders them offline to OGG so runtime cost is zero). Prompt 42 contains per-track briefs (tempo, key, mood, EB reference vibe — e.g., Otterbrook = laid-back I-IV shuffle w/ slap bass à la Onett; Mars = near-silent drones with a heartbeat). SFX via jsfxr presets, also rendered to files.
 
