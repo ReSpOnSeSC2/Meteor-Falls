@@ -824,6 +824,109 @@ export const AwakeningDefSchema = z.strictObject({
 });
 export type AwakeningDef = z.infer<typeof AwakeningDefSchema>;
 
+/* ---------------- the three Axes: player choices (S21, ADR-127) ----------- */
+
+/** one option of a weighty choice — sets ONE axis flag; may bank a finale caller */
+export const ChoiceOptionSchema = z.strictObject({
+  /** stable id, unique within the choice (the recorded value) */
+  id: z.string().min(1),
+  /** the menu label (vars() tokens allowed) */
+  label: z.string().min(1),
+  /** the iteminfo-style description shown while highlighted */
+  blurb: z.string().min(1),
+  /** the ONE save flag this option sets when chosen (siblings cleared) */
+  flag: z.string().min(1),
+  /** dialogue id: the landing pages played after this option is picked */
+  outro: z.string().min(1),
+  /** extra flags this option implies (downstream content gates) */
+  alsoSets: z.array(z.string().min(1)).optional(),
+  /** a §A6 finale caller this option banks (frozen onto the ledger) */
+  caller: CallerSchema.optional(),
+});
+export type ChoiceOption = z.infer<typeof ChoiceOptionSchema>;
+
+/** a game-long decision point on one of the three ending axes */
+export const ChoiceDefSchema = z.strictObject({
+  id: z.string().min(1),
+  chapter: z.number().int().min(4).max(10),
+  band: z.string().min(1),
+  axis: z.enum(['trust', 'compassion', 'finale']),
+  /** dialogue id: the framing pages played BEFORE the options appear */
+  intro: z.string().min(1),
+  /** flag set once this choice is answered (any option) — gates it once-only */
+  decidedFlag: z.string().min(1),
+  /** the terminal, non-rewindable choice (the Ch.10 finale) */
+  terminal: z.boolean().optional(),
+  options: z.array(ChoiceOptionSchema).min(2).max(3),
+});
+export type ChoiceDef = z.infer<typeof ChoiceDefSchema>;
+
+/* ---------------- the Held Breath: rewind anchors + save state (ADR-126) --- */
+
+/** a rewindable choice anchor — the in-fiction "go back and re-choose" offer */
+export const EchoAnchorDefSchema = z.strictObject({
+  /** the ChoiceId this anchor rewinds to (validated non-terminal) */
+  choice: z.string().min(1),
+  /** dialogue id: the "the moment is still loose…" offer */
+  offerDialogue: z.string().min(1),
+  /** dialogue id: the cost warning before the rewind confirms */
+  costDialogue: z.string().min(1),
+});
+export type EchoAnchorDef = z.infer<typeof EchoAnchorDefSchema>;
+
+/** one captured moment — a full GS.serialize() blob taken before a decision */
+export const EchoSnapshotSchema = z.strictObject({
+  choice: z.string().min(1),
+  chapter: z.number().int(),
+  json: z.string(),
+  at: z.number(),
+});
+export type EchoSnapshot = z.infer<typeof EchoSnapshotSchema>;
+
+/** the v16 save field — the Breath bank + the snapshot ring + the rewind-debt */
+export const EchoStateSchema = z.strictObject({
+  stack: z.array(EchoSnapshotSchema),
+  breaths: z.number().int().nonnegative(),
+  rewindCount: z.number().int().nonnegative(),
+});
+export type EchoState = z.infer<typeof EchoStateSchema>;
+
+/* ---------------- the composed ending: epilogue cards (ADR-128) ----------- */
+
+export const EndingSlotSchema = z.enum([
+  'tone',
+  'hush',
+  'world',
+  'jay',
+  'mia',
+  'milo',
+  'pippa',
+  'dorin',
+  'home',
+]);
+export type EndingSlot = z.infer<typeof EndingSlotSchema>;
+
+/** one modular epilogue card — selected by flags/callers/money, assembled at the finale */
+export const EpilogueCardSchema = z.strictObject({
+  id: z.string().min(1),
+  slot: EndingSlotSchema,
+  /** tie-break within a slot when several qualify (lower = earlier) */
+  order: z.number().int(),
+  /** ALL must hold (flag name → required truthiness) */
+  requires: z.record(z.string().min(1), z.boolean()).optional(),
+  /** caller-count gate (the §A6 PRAY payoff scales the ending) */
+  minCallers: z.number().int().nonnegative().optional(),
+  /** money-band gate (reads fortuneBand) */
+  moneyBand: z.enum(['under', 'on_track', 'ahead']).optional(),
+  /** the cutscene id to play for this card (scaffold; art may land later) */
+  cutscene: z.string().min(1).optional(),
+  /** dialogue id for its caption prose (vars() ok) */
+  dialogue: z.string().min(1),
+  /** always-eligible fallback for its slot (guarantees a non-empty composition) */
+  fallback: z.boolean().optional(),
+});
+export type EpilogueCard = z.infer<typeof EpilogueCardSchema>;
+
 /** the whole v5 field — tournament state IS save data (S12) */
 export const HoopsStateSchema = z.strictObject({
   bracket: HoopsBracketSchema.nullable(),

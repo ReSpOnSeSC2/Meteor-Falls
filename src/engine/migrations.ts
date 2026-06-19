@@ -55,13 +55,20 @@
  * v14 → v15 (S20/ADR-087): VEHICLE FERRYING — which continent each owned car is
  * parked on (`carLocation`). A pre-v15 save owned no car off its home continent
  * (ferrying is v15-new), so an empty map is its true history.
+ *
+ * v15 → v16 (S21/ADR-126): THE HELD BREATH — Jay's Locket rewind rides a new
+ * `echoes` field (the Breath bank + snapshot ring + rewind-debt). A pre-v16 save
+ * never rewound (the power is v16-new), so a full bank, an empty stack, and zero
+ * rewinds is its TRUE history (the v3 empty-ledger stance applied to echoes). The
+ * three Axes (choices) ride ADR-015 flags — an unmade choice is just an unset flag.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
+import { freshEchoes } from '../data/echoes';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 
-export const CURRENT_SAVE_VERSION = 15;
+export const CURRENT_SAVE_VERSION = 16;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -304,6 +311,19 @@ export const MIGRATIONS: MigrationStep[] = [
       // A pre-v15 save never ferried (it's v15-new), so an empty map is its history.
       if (!isObj(raw.carLocation)) raw.carLocation = {};
       raw.version = 15;
+      return raw;
+    },
+  },
+  {
+    to: 16,
+    migrate(raw) {
+      // S21 (ADR-126): THE HELD BREATH — Jay's Locket rewind. A pre-v16 save never
+      // rewound (the power is v16-new), so a full Breath bank with an empty snapshot
+      // stack and zero rewinds is its TRUE history (the v3 empty-ledger stance applied
+      // to echoes). The Axes ride flags, so they need no backfill — an unmade choice is
+      // simply an unset flag, which GS.flag() already reads as `false`.
+      if (!isObj(raw.echoes)) raw.echoes = freshEchoes() as unknown as Raw;
+      raw.version = 16;
       return raw;
     },
   },

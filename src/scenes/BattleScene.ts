@@ -88,6 +88,9 @@ import { BATTLE_TEXT, DIALOGUE } from '../data/dialogue';
 import { BOSS_SCRIPTS } from '../data/bosses';
 import { AWAKENINGS } from '../data/awakenings';
 import { GS, expForLevel, type HeroState } from '../engine/state';
+// S21 (ADR-126): Mia's high-tier PRAY refuels Jay's Held Breath (faith owns the rewind's supply)
+import { breathsLeft, refillBreath } from '../engine/echo';
+import { MAX_BREATHS } from '../data/echoes';
 import { statsAtLevel, maxHpAtLevel, maxPpAtLevel, unlockedAbilities, availableAbilities, HEROES } from '../data/heroes';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
@@ -2040,6 +2043,12 @@ export class BattleScene extends Phaser.Scene {
       }
     }
     await this.print(this.fill(PRAY_TEXT[tier], h.hero.name));
+    // S21 (ADR-126): a 'wonderful'/'miraculous' prayer refuels Jay's HELD BREATH — the
+    // rewind's supply is faith's to give (only once the Locket has learned, Ch.6+).
+    if ((tier === 'wonderful' || tier === 'miraculous') && GS.flag('held_breath_unlocked') === true && breathsLeft() < MAX_BREATHS) {
+      refillBreath(1);
+      await this.print('The light catches in the Locket — a breath, held in reserve.');
+    }
     const aliveE = this.enemies.filter((e) => e.alive);
     // grace reaches the standing; revival stays with hospitals & rare items (§A4.7)
     const standing = this.aliveHeroes();

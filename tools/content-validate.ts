@@ -22,8 +22,11 @@ import { existsSync, readFileSync } from 'node:fs';
 import {
   AbilityDefSchema,
   AMBIENCE_IDS,
+  ChoiceDefSchema,
   DialogueScriptSchema,
+  EchoAnchorDefSchema,
   EMOTE_IDS,
+  EpilogueCardSchema,
   EnemyDefSchema,
   HeroDefSchema,
   HeroIdSchema,
@@ -64,6 +67,10 @@ import { AREA_SKINS as AREA_SKINS_FOR_PROP } from '../src/spritegen/buildings';
 import { FURNITURE, FURNITURE_FUNCTIONS } from '../src/data/furniture';
 import { THREAD_BEATS, THREAD_IDS } from '../src/data/storythreads';
 import { chainProblems } from '../src/engine/storythread';
+import { CHOICES } from '../src/data/choices';
+import { ENDING_CARDS, SLOT_ORDER, KNOWN_ENDING_FLAGS } from '../src/data/endings';
+import { ECHO_ANCHORS } from '../src/data/echoes';
+import { choiceProblems } from '../src/engine/choice';
 import { DISGUISES, DISGUISE_FACTIONS } from '../src/data/disguise';
 import { PAPERBOY, liveRoute } from '../src/data/paperboy';
 import { PaperboySim, prizeEarned } from '../src/paperboy/sim';
@@ -2759,6 +2766,71 @@ for (const q of Object.values(QUESTS)) {
   q.objectives.forEach((o) => sweepTokens('text', `quest '${q.id}' objective '${o.id}'`, o.text, DIALOGUE_TOKENS));
   sweepTokens('text', `quest '${q.id}' caller quote`, q.caller.quote, DIALOGUE_TOKENS);
 }
+
+/* ===== the three Axes + the Held Breath + the composed ending (S21, ADR-126/127/128) =====
+ * Existence + cross-reference truth for the branching layer: every choice parses and
+ * its dialogue/blurbs resolve; every epilogue card is dialogue-backed and gates only on
+ * known flags; every slot has a fallback (no empty composition); echo anchors point at
+ * real, NON-terminal choices. The composer's reachability is proven in vitest. */
+{
+  // every choice parses, is structurally sound, and its dialogue + blurbs resolve
+  for (const def of Object.values(CHOICES)) {
+    const r = ChoiceDefSchema.safeParse(def);
+    if (!r.success) {
+      for (const i of r.error.issues) fail('choice', `${def.id}: ${i.message}`);
+      continue;
+    }
+    if (!DIALOGUE[def.intro]) fail('choice', `${def.id} intro → unknown dialogue '${def.intro}'`);
+    for (const o of def.options) {
+      if (!DIALOGUE[o.outro]) fail('choice', `${def.id}/${o.id} outro → unknown dialogue '${o.outro}'`);
+      sweepTokens('text', `choice '${def.id}' option '${o.id}' label`, o.label, DIALOGUE_TOKENS);
+      sweepTokens('text', `choice '${def.id}' option '${o.id}' blurb`, o.blurb, DIALOGUE_TOKENS);
+      if (o.caller) sweepTokens('text', `choice '${def.id}' option '${o.id}' caller quote`, o.caller.quote, DIALOGUE_TOKENS);
+    }
+  }
+  // structural soundness (chapters 4..10, option ids, flag uniqueness across choices)
+  for (const p of choiceProblems()) fail('choice', p);
+  // choice flags must not collide with story-thread beat flags (independent machines)
+  const threadFlags = new Set(Object.values(THREAD_BEATS).map((b) => b.flag));
+  for (const def of Object.values(CHOICES))
+    for (const o of def.options)
+      if (threadFlags.has(o.flag)) fail('choice', `option flag '${o.flag}' collides with a story-thread beat flag`);
+
+  // every epilogue card parses, its dialogue exists, and its `requires` flags are known
+  const knownFlags = new Set<string>([
+    ...Object.values(CHOICES).flatMap((d) => [d.decidedFlag, ...d.options.flatMap((o) => [o.flag, ...(o.alsoSets ?? [])])]),
+    ...KNOWN_ENDING_FLAGS,
+  ]);
+  for (const card of Object.values(ENDING_CARDS)) {
+    const r = EpilogueCardSchema.safeParse(card);
+    if (!r.success) {
+      for (const i of r.error.issues) fail('ending', `${card.id}: ${i.message}`);
+      continue;
+    }
+    if (!DIALOGUE[card.dialogue]) fail('ending', `card '${card.id}' → unknown dialogue '${card.dialogue}'`);
+    if (card.requires)
+      for (const f of Object.keys(card.requires))
+        if (!knownFlags.has(f)) fail('ending', `card '${card.id}' requires unknown flag '${f}'`);
+  }
+  // every slot has a fallback so no composition can come up empty
+  for (const slot of SLOT_ORDER)
+    if (!Object.values(ENDING_CARDS).some((c) => c.slot === slot && c.fallback))
+      fail('ending', `slot '${slot}' has no fallback card — a composition could be empty`);
+
+  // echo anchors reference real, NON-terminal choices; the terminal song is never anchored
+  for (const [key, a] of Object.entries(ECHO_ANCHORS)) {
+    const r = EchoAnchorDefSchema.safeParse(a);
+    if (!r.success) {
+      for (const i of r.error.issues) fail('echo', `${key}: ${i.message}`);
+      continue;
+    }
+    const def = Object.values(CHOICES).find((d) => d.id === a.choice);
+    if (!def) fail('echo', `anchor '${key}' → unknown choice '${a.choice}'`);
+    else if (def.terminal) fail('echo', `terminal choice '${a.choice}' must not be rewindable`);
+    if (!DIALOGUE[a.offerDialogue]) fail('echo', `anchor '${key}' offer → unknown dialogue '${a.offerDialogue}'`);
+    if (!DIALOGUE[a.costDialogue]) fail('echo', `anchor '${key}' cost → unknown dialogue '${a.costDialogue}'`);
+  }
+}
 // the ARCADE LEGEND cabinet prints through vars() too (S10) — {playername}
 // and {coolthing} are live on the marquee and the boss banner
 for (const [key, line] of Object.entries(ARCADE_TEXT)) {
@@ -3073,6 +3145,8 @@ const counts = [
   `${Object.keys(PROPERTIES).length} properties`,
   `${Object.keys(FURNITURE).length} furniture`,
   `${Object.keys(THREAD_BEATS).length} thread beats`,
+  `${Object.keys(CHOICES).length} choices`,
+  `${Object.keys(ENDING_CARDS).length} ending cards`,
   `${Object.keys(DISGUISES).length} disguises`,
   `paperboy (${liveRoute().items.filter((i) => i.kind === 'mailbox').length} houses)`,
   `${Object.keys(FLEET_CRAFT).length} fleet craft`,

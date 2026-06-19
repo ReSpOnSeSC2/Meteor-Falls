@@ -11,7 +11,8 @@ import { MGR_ROW, SCORE_ROWS } from '../data/arcade';
 import { migrateSave, freshHoops } from './migrations';
 import { SaveBank, SLOT_IDS, localStorageDriver, type OpenResult, type SlotId, type SlotPeek } from './saves';
 import { s } from '../spritegen/scale';
-import type { ArcadeScore, BoostStat, CallerRecord, HoopsState, Stats, TonicBoost } from '../schemas';
+import { freshEchoes } from '../data/echoes';
+import type { ArcadeScore, BoostStat, CallerRecord, EchoState, HoopsState, Stats, TonicBoost } from '../schemas';
 
 // S5: Stats is z.infer'd from src/schemas — one shape for compile and runtime
 export type { Stats } from '../schemas';
@@ -39,7 +40,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 15;
+  version: 16;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -98,6 +99,11 @@ export interface GameStateData {
    *  (jumbo-jet cargo / boat deck / the rocket) moves this. Bought cars start on the
    *  dealership's continent. */
   carLocation: Record<string, string>;
+  /** S21 (v16, ADR-126): THE HELD BREATH — Jay's Locket rewind. The Breath bank,
+   *  the snapshot ring (full GS.serialize() blobs taken before a rewindable
+   *  choice), and the rewind-debt counter the Trust Thread + golden ending read.
+   *  Choices themselves ride ADR-015 flags (axis_*, *_decided) — no field needed. */
+  echoes: EchoState;
 }
 
 /** everything the New Game sequence collects (GAME_BIBLE Prompt 21) */
@@ -170,7 +176,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 15,
+    version: 16,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -205,6 +211,7 @@ export function newGameData(): GameStateData {
     activeVehicle: null,
     fuel: {},
     carLocation: {},
+    echoes: freshEchoes(),
   };
 }
 
