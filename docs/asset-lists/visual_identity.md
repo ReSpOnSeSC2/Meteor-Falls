@@ -3,8 +3,8 @@
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
 - Enemies: 49
-- Fully authored identities: 38
-- Legacy identities: 11
+- Fully authored identities: 44
+- Legacy identities: 5
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
 - Authored battle PNGs on disk but not registered for current runtime: 192
@@ -26,13 +26,13 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | unionized_gnome | otterbrook, hill_road | battle_unionized_gnome | ow_enemy_unionized_gnome | authored | - |
 | mandatory_memo | dos_f2 | battle_mandatory_memo | ow_enemy_mandatory_memo | authored | - |
 | motivational_poster | dos_f2 | battle_motivational_poster | ow_enemy_motivational_poster | authored | - |
-| quota_clock | dos_f2 | battle_quota_clock | mini:mini_runaway_lawnmower | legacy | uses legacy mini 'mini_runaway_lawnmower' instead of authored overworld art |
+| quota_clock | dos_f2 | battle_quota_clock | ow_enemy_quota_clock | authored | - |
 | expired_meter | brickton | battle_expired_meter | mini:mini_cranky_mailbox | legacy | uses legacy mini 'mini_cranky_mailbox' instead of authored overworld art |
-| showroom_mannequin | brickton | battle_showroom_mannequin | mini:mini_pigeon_gang | legacy | uses legacy mini 'mini_pigeon_gang' instead of authored overworld art |
-| good_investment | otterbrook, meadow_overpass | battle_good_investment | mini:mini_pigeon_gang | legacy | uses legacy mini 'mini_pigeon_gang' instead of authored overworld art |
-| rogue_icecream_truck | brickton | battle_rogue_icecream_truck | mini:mini_runaway_lawnmower | legacy | uses legacy mini 'mini_runaway_lawnmower' instead of authored overworld art |
-| tick_nymph | hickory_hill | battle_tick_nymph | mini:mini_coily_cicada | legacy | uses legacy mini 'mini_coily_cicada' instead of authored overworld art |
-| the_suit | dos_f2 | battle_the_suit | mini:mini_pigeon_gang | legacy | uses legacy mini 'mini_pigeon_gang' instead of authored overworld art |
+| showroom_mannequin | brickton | battle_showroom_mannequin | ow_enemy_showroom_mannequin | authored | - |
+| good_investment | otterbrook, meadow_overpass | battle_good_investment | ow_enemy_good_investment | authored | - |
+| rogue_icecream_truck | brickton | battle_rogue_icecream_truck | ow_enemy_rogue_icecream_truck | authored | - |
+| tick_nymph | hickory_hill | battle_tick_nymph | ow_enemy_tick_nymph | authored | - |
+| the_suit | dos_f2 | battle_the_suit | ow_enemy_the_suit | authored | - |
 | pickpocket_parrot | puerto_sol, jungle_1 | battle_pickpocket_parrot | ow_enemy_pickpocket_parrot | authored | - |
 | gilded_beetle | jungle_2, pyramid_ante, pyramid_4 | battle_gilded_beetle | ow_enemy_gilded_beetle | authored | - |
 | cursed_souvenir | jungle_2, grotto, pyramid_2 | battle_cursed_souvenir | ow_enemy_cursed_souvenir | authored | - |
@@ -70,13 +70,7 @@ Each row needs a committed 8-frame runtime sheet and then registration in `ENEMY
 | enemy | display name | map use | battle reference | current fallback | output PNG | runtime key |
 |---|---|---|---|---|---|---|
 | skeeter_swarm | Skeeter Swarm | otterbrook, meadow_far, hill_road, whisperwood_rise | assets/art/enemies/battle_skeeter_swarm.png | mini:mini_skeeter_swarm | assets/art/enemies/overworld/skeeter_swarm_8dir.png | ow_enemy_skeeter_swarm |
-| quota_clock | Quota Clock | dos_f2 | assets/art/enemies/battle_quota_clock.png | mini:mini_runaway_lawnmower | assets/art/enemies/overworld/quota_clock_8dir.png | ow_enemy_quota_clock |
 | expired_meter | Expired Parking Meter | brickton | assets/art/enemies/battle_expired_meter.png | mini:mini_cranky_mailbox | assets/art/enemies/overworld/expired_meter_8dir.png | ow_enemy_expired_meter |
-| showroom_mannequin | Showroom Mannequin | brickton | assets/art/enemies/battle_showroom_mannequin.png | mini:mini_pigeon_gang | assets/art/enemies/overworld/showroom_mannequin_8dir.png | ow_enemy_showroom_mannequin |
-| good_investment | The Good Investment | otterbrook, meadow_overpass | assets/art/enemies/battle_good_investment.png | mini:mini_pigeon_gang | assets/art/enemies/overworld/good_investment_8dir.png | ow_enemy_good_investment |
-| rogue_icecream_truck | Rogue Ice-Cream Truck | brickton | assets/art/enemies/battle_rogue_icecream_truck.png | mini:mini_runaway_lawnmower | assets/art/enemies/overworld/rogue_icecream_truck_8dir.png | ow_enemy_rogue_icecream_truck |
-| tick_nymph | Tick Nymph | hickory_hill | assets/art/enemies/battle_tick_nymph.png | mini:mini_coily_cicada | assets/art/enemies/overworld/tick_nymph_8dir.png | ow_enemy_tick_nymph |
-| the_suit | The Suit | dos_f2 | assets/art/enemies/battle_the_suit.png | mini:mini_pigeon_gang | assets/art/enemies/overworld/the_suit_8dir.png | ow_enemy_the_suit |
 | gilded_grin | IDOL OF THE GILDED GRIN | - | assets/art/enemies/battle_gilded_grin.png | mini:mini_mask | assets/art/enemies/overworld/gilded_grin_8dir.png | ow_enemy_gilded_grin |
 | headmaster_mainframe | HEADMASTER MAINFRAME | - | assets/art/enemies/battle_headmaster_mainframe.png | mini:mini_ch3_lurker_3 | assets/art/enemies/overworld/headmaster_mainframe_8dir.png | ow_enemy_headmaster_mainframe |
 | titanic_tick | TITANIC TICK | - | assets/art/enemies/battle_titanic_tick.png | mini:mini_hill_slug | assets/art/enemies/overworld/titanic_tick_8dir.png | ow_enemy_titanic_tick |

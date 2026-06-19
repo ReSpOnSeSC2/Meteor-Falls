@@ -787,6 +787,13 @@ const ENEMY_OVERWORLD_ART = [
   'unionized_gnome',
   'mandatory_memo',
   'motivational_poster',
+  // final roamers: authored 8-dir sheets replacing the last pixelated procedural minis
+  'quota_clock',
+  'showroom_mannequin',
+  'good_investment',
+  'rogue_icecream_truck',
+  'tick_nymph',
+  'the_suit',
 ].map((id) => ({
   id,
   key: `ow_enemy_${id}`,

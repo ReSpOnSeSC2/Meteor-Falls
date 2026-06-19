@@ -46,6 +46,13 @@ export const ENEMY_OVERWORLD_SHEET_IDS = [
   'unionized_gnome',
   'mandatory_memo',
   'motivational_poster',
+  // final roamers: authored 8-dir sheets replacing the last pixelated procedural minis
+  'quota_clock',
+  'showroom_mannequin',
+  'good_investment',
+  'rogue_icecream_truck',
+  'tick_nymph',
+  'the_suit',
 ] as const;
 
 export type EnemyOverworldSheetId = (typeof ENEMY_OVERWORLD_SHEET_IDS)[number];
