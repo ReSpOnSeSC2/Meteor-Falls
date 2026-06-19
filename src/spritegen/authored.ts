@@ -116,6 +116,13 @@ const FRAMING_SCREEN_ART = [
 const AUTHORED_MINIGAME_ATHLETES = [
   { id: 'rex', key: 'authored_athlete_rex', url: new URL('../../assets/art/minigames/hoops/athlete_rex_runtime.png', import.meta.url).href },
   { id: 'faye', key: 'authored_athlete_faye', url: new URL('../../assets/art/minigames/hoops/athlete_faye_runtime.png', import.meta.url).href },
+  // milo & dorin: distinct cap/trim recolours of the authored rex sheet (the full
+  // 39-frame animation set; ball/skin/kit preserved) via tools/recolor-athlete.js,
+  // until bespoke masters are authored. Replaces their procedural fallback.
+  { id: 'milo', key: 'authored_athlete_milo', url: new URL('../../assets/art/minigames/hoops/athlete_milo_runtime.png', import.meta.url).href },
+  { id: 'dorin', key: 'authored_athlete_dorin', url: new URL('../../assets/art/minigames/hoops/athlete_dorin_runtime.png', import.meta.url).href },
+  // pippa: a magenta recolour of the authored faye sheet (female, matches her)
+  { id: 'pippa', key: 'authored_athlete_pippa', url: new URL('../../assets/art/minigames/hoops/athlete_pippa_runtime.png', import.meta.url).href },
   { id: 'opponent', key: 'authored_athlete_opponent', url: new URL('../../assets/art/minigames/hoops/athlete_opponent_runtime.png', import.meta.url).href },
 ] as const;
 
@@ -125,12 +132,18 @@ const AUTHORED_MINIGAME_GOLFERS = [
 ] as const;
 
 const AUTHORED_HOOPS_SUPPORT_ART = [
-  // NOTE: court_full.png / court_behind.png are NOT wired here. They are
-  // "down-the-court" perspective illustrations with their own painted hoops,
-  // which collide with the engine's flat ¾ court (sprite hoops at COURT.RIM
-  // positions) — wiring them produced a second, misaligned basket. The court
-  // floor stays procedural (drawCageCourt). Re-author the court art to the
-  // engine's side-view layout (hoops at the rim positions, or none) to use it.
+  // The side-view court floor is now an AUTHORED top-down illustration
+  // (court_side.png) composed to drawCageCourt()'s exact texture layout via
+  // tools/compose-hoops-court.js (2960×1744; court fit into the inbounds rect),
+  // so it drops over `cage_court` with the PAD/rim/camera coordinate system
+  // unchanged. (court_full.png / court_behind.png remain parked — they are ¾
+  // "down-the-court" views with their own painted hoops that collide with the
+  // engine's sprite hoops at COURT.RIM.)
+  { key: 'cage_court', file: 'court_side' },
+  // behind-view floor: an authored DOWN-THE-COURT POV (court_behind_pov.png,
+  // 1600×900, the behindMap full-screen seat), far baseline left empty for the
+  // boardBehind hoop sprite. Replaces the procedural drawCageBehind.
+  { key: 'cage_court_behind', file: 'court_behind_pov' },
   { key: 'hoop_ball', file: 'ball' },
   { key: 'athlete_shadow', file: 'shadow' },
   { key: 'backboard', file: 'backboard' },
