@@ -53,6 +53,7 @@ export const ENEMY_OVERWORLD_SHEET_IDS = [
   'rogue_icecream_truck',
   'tick_nymph',
   'the_suit',
+  'expired_meter',
 ] as const;
 
 export type EnemyOverworldSheetId = (typeof ENEMY_OVERWORLD_SHEET_IDS)[number];

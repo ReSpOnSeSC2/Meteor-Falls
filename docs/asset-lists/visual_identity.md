@@ -3,8 +3,8 @@
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
 - Enemies: 49
-- Fully authored identities: 44
-- Legacy identities: 5
+- Fully authored identities: 45
+- Legacy identities: 4
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
 - Authored battle PNGs on disk but not registered for current runtime: 192
@@ -27,7 +27,7 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | mandatory_memo | dos_f2 | battle_mandatory_memo | ow_enemy_mandatory_memo | authored | - |
 | motivational_poster | dos_f2 | battle_motivational_poster | ow_enemy_motivational_poster | authored | - |
 | quota_clock | dos_f2 | battle_quota_clock | ow_enemy_quota_clock | authored | - |
-| expired_meter | brickton | battle_expired_meter | mini:mini_cranky_mailbox | legacy | uses legacy mini 'mini_cranky_mailbox' instead of authored overworld art |
+| expired_meter | brickton | battle_expired_meter | ow_enemy_expired_meter | authored | - |
 | showroom_mannequin | brickton | battle_showroom_mannequin | ow_enemy_showroom_mannequin | authored | - |
 | good_investment | otterbrook, meadow_overpass | battle_good_investment | ow_enemy_good_investment | authored | - |
 | rogue_icecream_truck | brickton | battle_rogue_icecream_truck | ow_enemy_rogue_icecream_truck | authored | - |
@@ -70,7 +70,6 @@ Each row needs a committed 8-frame runtime sheet and then registration in `ENEMY
 | enemy | display name | map use | battle reference | current fallback | output PNG | runtime key |
 |---|---|---|---|---|---|---|
 | skeeter_swarm | Skeeter Swarm | otterbrook, meadow_far, hill_road, whisperwood_rise | assets/art/enemies/battle_skeeter_swarm.png | mini:mini_skeeter_swarm | assets/art/enemies/overworld/skeeter_swarm_8dir.png | ow_enemy_skeeter_swarm |
-| expired_meter | Expired Parking Meter | brickton | assets/art/enemies/battle_expired_meter.png | mini:mini_cranky_mailbox | assets/art/enemies/overworld/expired_meter_8dir.png | ow_enemy_expired_meter |
 | gilded_grin | IDOL OF THE GILDED GRIN | - | assets/art/enemies/battle_gilded_grin.png | mini:mini_mask | assets/art/enemies/overworld/gilded_grin_8dir.png | ow_enemy_gilded_grin |
 | headmaster_mainframe | HEADMASTER MAINFRAME | - | assets/art/enemies/battle_headmaster_mainframe.png | mini:mini_ch3_lurker_3 | assets/art/enemies/overworld/headmaster_mainframe_8dir.png | ow_enemy_headmaster_mainframe |
 | titanic_tick | TITANIC TICK | - | assets/art/enemies/battle_titanic_tick.png | mini:mini_hill_slug | assets/art/enemies/overworld/titanic_tick_8dir.png | ow_enemy_titanic_tick |
