@@ -10,6 +10,7 @@ export const ENEMY_OVERWORLD_SHEET_IDS = [
   'banana_bunch',
   'blazer_smiler',
   'boiler_golem',
+  'borden',
   'brolly_bat',
   'coily_cicada',
   'cranky_mailbox',
@@ -39,6 +40,12 @@ export const ENEMY_OVERWORLD_SHEET_IDS = [
   'tea_trolley',
   'telephone_box',
   'the_invigilator',
+  // overworld-art pass: authored 8-dir sheets replacing borrowed procedural minis
+  'recycling_raccoon',
+  'sprinkler_sentry',
+  'unionized_gnome',
+  'mandatory_memo',
+  'motivational_poster',
 ] as const;
 
 export type EnemyOverworldSheetId = (typeof ENEMY_OVERWORLD_SHEET_IDS)[number];
