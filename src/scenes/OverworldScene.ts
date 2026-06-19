@@ -105,6 +105,13 @@ import {
   pickupSeed,
 } from '../data/hoops';
 import { AWAKENINGS } from '../data/awakenings';
+// S21 (ADR-126/127/128): the Held Breath rewind, the three Axes, the composed ending
+import { playCutscene } from '../engine/cutscene';
+import { CHOICES, type ChoiceId } from '../data/choices';
+import { recordChoice } from '../engine/choice';
+import { captureEcho, isRewindable } from '../engine/echo';
+import { composeEnding, endingContext } from '../engine/ending';
+import { withholdUltimate, isPresent } from '../engine/party';
 import { LINKS_FLAGS, LINKS_TEXT, SUNDAY_SET, linksSeed } from '../data/links';
 import type { HoopsLaunch } from './HoopsScene';
 import type { LinksLaunch } from './LinksScene';
@@ -3971,6 +3978,24 @@ export class OverworldScene extends Phaser.Scene {
           this.cut = false;
         }
         break;
+      /* ---------------- S21 (ADR-126/127/128) — the Held Breath, the Axes, the ending ----------------
+       * Fired by TriggerDef walk-zones the ch6/9/10 maps place at their dramatic beats. The
+       * flows are once-only + retry-safe; pure logic lives in src/engine/{choice,echo,ending}. */
+      case 'held_breath_unlock':
+        await this.heldBreathBeat();
+        break;
+      case 'choice_trust':
+        await this.runChoice('ch6_string');
+        break;
+      case 'choice_compassion':
+        await this.runChoice('ch9_count');
+        break;
+      case 'choice_finale':
+        await this.runChoice('ch10_song');
+        break;
+      case 'compose_ending':
+        await this.playEnding();
+        break;
       /* ---------------- S14 — Chapter 2 (§A6) ---------------- */
       case 'board_boat':
         await this.boatAsk('docks');
@@ -4748,7 +4773,7 @@ export class OverworldScene extends Phaser.Scene {
     await waitTween({ targets: blackIn, alpha: 0, duration: 1100, ease: 'sine.out' });
     blackIn.destroy();
     await say('Otterbrook, Ohio. Summer, 1995.');
-    await say('2:11 AM. Everyone is asleep except the crickets, one porch light, and a dog with opinions about the sky.');
+    await say('2:11 AM. The whole town is asleep — except the crickets, one porch light, and a dog barking up at the sky.');
 
     /* ---- PHASE 2: the wrong star ---- */
     const skyGlow = addTo(fx, this.add.rectangle(0, 0, W, H, 0xf8a868).setOrigin(0).setAlpha(0));
@@ -4905,7 +4930,7 @@ export class OverworldScene extends Phaser.Scene {
         },
       });
     }
-    await say('For one bright second, the night has extra stars. Then they scatter — all but one.');
+    await say('For one bright second, the sky fills with new stars. Then they shoot off in every direction — all but one.');
 
     /* ---- PHASE 6: the town wakes, hill-side first ---- */
     AUDIO.sfx('rumble');
@@ -4919,11 +4944,11 @@ export class OverworldScene extends Phaser.Scene {
           addTo(world, this.add.circle(wrect.x, wrect.y, 9, 0xf8e8a0, 0.1));
         }),
       );
-    await say('One by one, the porch lights of Otterbrook come on. The dog was right.');
+    await say('One by one, porch lights flick on across Otterbrook. The dog was right to bark.');
 
     /* ---- PHASE 7: pan east to the one window that matters ---- */
     const pan = waitTween({ targets: world, x: -392, duration: 3800, ease: 'Sine.easeInOut' });
-    await say('Six blocks east, one upstairs window is about to join them.');
+    await say('Six blocks east, a light is about to come on in one upstairs window too.');
     await pan;
     AUDIO.sfx('light_on');
     rexWindow.setAlpha(0.95);
@@ -5074,6 +5099,70 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag(a.flag);
     AUDIO.jingle('levelup', 1400, this.mapDef.music);
     toast(this, vars(a.toast));
+  }
+
+  /* ---------------- S21 (ADR-126/127/128): the Held Breath, the Axes, the ending ----------------
+   * The rewind unlock + the three weighty choices + the composed finale. Content rides
+   * DIALOGUE (branch_text.ts); authored-panel art is deferred (cutscenes silently skip
+   * missing panels). Pure logic + tests in src/engine/{choice,echo,ending,party}.ts. */
+
+  /** Ch.6 (Laughing Ruins): the Star Locket reveals it records the BREATH around the song —
+   *  Jay can hold a moment back. Staged uneasy (§A11.2); arms the rewind (data/echoes.ts). */
+  private async heldBreathBeat(): Promise<void> {
+    if (GS.flag('held_breath_unlocked') === true) return;
+    this.cut = true;
+    // the authored panel + its captions (assets/art/cutscenes/ch6/held_breath_awaken_4x.png);
+    // playCutscene skips cleanly if the panel is ever missing.
+    await playCutscene(this, 'ch6_held_breath');
+    GS.setFlag('held_breath_unlocked', true);
+    AUDIO.jingle('levelup', 1400, this.mapDef.music);
+    toast(this, `${GS.hero('rex')?.name ?? 'Jay'} learned to hold the world's breath…`);
+    this.cut = false;
+  }
+
+  /** present one of the three Axes: snapshot (if rewindable), frame the dilemma with each
+   *  option's weight, take the pick, record it, land the outro, apply the immediate ripple.
+   *  Once-only + retry-safe (the decidedFlag gates re-entry). */
+  private async runChoice(id: ChoiceId): Promise<void> {
+    const def = CHOICES[id];
+    if (GS.flag(def.decidedFlag) === true) return;
+    this.cut = true;
+    try {
+      if (isRewindable(id)) captureEcho(id); // the Locket records the breath BEFORE the choice
+      await playCutscene(this, `${def.band}_choice`); // authored establishing panel (no-ops if unauthored)
+      await this.dlg.say(...DIALOGUE[def.intro]);
+      for (const o of def.options) await this.dlg.say(`${o.label}  —  ${o.blurb}`);
+      const sel = await this.dlg.ask(def.options.map((o) => o.label));
+      const chosen = def.options[sel] ?? def.options[0];
+      recordChoice(id, chosen.id);
+      AUDIO.sfx('confirm');
+      await this.dlg.say(...DIALOGUE[chosen.outro]);
+      this.applyChoiceRipple(id, chosen.id);
+    } finally {
+      this.cut = false;
+    }
+  }
+
+  /** the immediate, deterministic loadout fallout of a choice (the staged party-fate
+   *  DEPARTURE scenes are their own chapter beats; this sets the power flags). */
+  private applyChoiceRipple(id: ChoiceId, optionId: string): void {
+    // COMPASSION/IRON: emptying Vlad disturbs Dorin — he withholds Vibe Comet Ω for the finale
+    if (id === 'ch9_count' && optionId === 'iron' && isPresent('dorin')) withholdUltimate('dorin');
+    if (id === 'ch9_count' && optionId === 'mercy') withholdUltimate('dorin', false);
+  }
+
+  /** Ch.10 finale: after the canon Homesong / walk-home, assemble + play the epilogue
+   *  cards the player's choices, callers, and rewind-use selected (src/engine/ending.ts). */
+  private async playEnding(): Promise<void> {
+    this.cut = true;
+    try {
+      for (const card of composeEnding(endingContext())) {
+        await playCutscene(this, card.dialogue); // the epi_<id> card panel (no-ops until art lands)
+        await this.dlg.say(...DIALOGUE[card.dialogue]);
+      }
+    } finally {
+      this.cut = false;
+    }
   }
 
   private async craterScene(): Promise<void> {

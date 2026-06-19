@@ -7,10 +7,13 @@
  */
 import type { DialogueScript } from '../schemas';
 import { CITYLIFE_DIALOGUE } from './citylife_text';
+import { BRANCH_DIALOGUE } from './branch_text';
 
 export const DIALOGUE: Record<string, DialogueScript> = {
   // S18 — the occupyCity pass's voice pools (knock-knock + resident/keeper/civic)
   ...CITYLIFE_DIALOGUE,
+  // S21 (ADR-126/127/128) — the three Axes, the Held Breath rewind, the ending cards
+  ...BRANCH_DIALOGUE,
   /* ═══════════════ CHAPTER 3 — ENGLAND (S18, ADR-095, Half 1) ═══════════════
    * §A11 voice: damp-Tyne stone + institution-fear, one obsession per soul,
    * sincerity never the joke. The machine-fog is the chapter's dread — kept
@@ -19,80 +22,80 @@ export const DIALOGUE: Record<string, DialogueScript> = {
    * (Milo's join, the Borrow, the boss) land in the story half. */
   // — LUCILLE, the flight in (the §A6 arrival cutscene stages here later) —
   npc_bert_air: [
-    "@Mind your boots on the wickerwork — that's a LADY you're standing in. Lucille, say hello.",
-    '@She crossed the North Sea on spite and one good magneto. Don\'t thank me, thank her.',
-    '@Fog like soup down there. Machine-made, if you ask a man who reads weather for a living. {g:cloud}',
+    "@Watch where you step! The floor is woven cane, and this plane is named Lucille. I talk about her like she's a person, so say hi.",
+    '@This old plane flew us across the whole sea on one working spark plug and pure stubbornness. Don\'t thank me. Thank her.',
+    '@The fog down there is so thick you can barely see. And I read the weather for a living, so trust me: a machine is making that fog. {g:cloud}',
   ],
   sign_lucille_placard: [
-    'A brass placard, lovingly over-polished: "LUCILLE — built 1928, retired never."',
+    'A shiny brass plaque, polished way too much: "LUCILLE — built in 1928, and she\'s never going to retire."',
     '(Below, in Uncle Bert\'s hand: "If you can read this, you are too close to the propeller.")',
   ],
   // — FOGGYBOTTOM-ON-TYNE — townsfolk, one obsession each —
   npc_fb_chemist: [
-    "@Welcome to Boothe's. Cures on the left, biscuits on the right, and the TEA — well, the tea is the whole argument.",
-    "@Builder's for the nerves, Earl Grey for the posture, cocoa for the truly defeated. I'll not be told otherwise.",
+    "@Welcome to Boothe's. Medicine is on the left, cookies on the right. But really, people come here for the tea. The tea is the whole point.",
+    "@Strong tea calms your nerves. Fancy tea makes you sit up straight. And hot cocoa is for when you've totally given up. Don't argue with me on this.",
   ],
   npc_fb_fishmonger: [
-    "@River's wrong today. Flat as a school photo. She's never flat, the Tyne — somebody's gone and TAKEN her ripples.",
-    '@Up at that school, I shouldn\'t wonder. Everything goes quiet up that hill, and quiet costs.',
+    "@The river looks wrong today. It's totally flat, no waves at all. The Tyne is NEVER this flat. It's like somebody stole all its ripples.",
+    '@I bet it\'s that school up the hill. Everything goes strangely silent up there, and that kind of silence is never free. Something is paying for it.',
   ],
   npc_fb_post: [
     '@Don\'t post anything in the red box on the corner. It reads them. It GRADES them.',
-    '@Gave my sister\'s Christmas card a C-minus and "shows little effort." She cried for a week.',
+    '@It graded my sister\'s Christmas card a C-minus and wrote "didn\'t really try." She cried for a whole week.',
   ],
   npc_fb_boy: [
     '@The fog tastes of pennies now. It never used to taste of anything at all.',
     "@Me mam says don't lick the fog. But how's she know it's pennies, if she's never licked it?",
   ],
   sign_foggybottom: [
-    'FOGGYBOTTOM-ON-TYNE — twinned with nowhere, on account of the fog.',
+    'FOGGYBOTTOM-ON-TYNE. Most towns pair up with a sister town. Nobody picked us, because of the fog.',
     '(Someone has scratched out the weather box and written, simply, "YES.")',
   ],
   sign_fog_road: [
     'THE FOG ROAD — up the hill to Wintermoor Academy, the Old Stones, and worse weather.',
-    '(A newer sign bolted over the old: "ACADEMY GROUNDS — PROSPECTIVE PUPILS ONLY. BE PUNCTUAL.")',
+    '(A newer sign bolted over the old one: "SCHOOL GROUNDS — FUTURE STUDENTS ONLY. DO NOT BE LATE.")',
   ],
   sign_quay: [
-    'THE QUAY — water steps slippery. The Tyne is colder than it looks, and it looks freezing.',
+    'THE DOCK — the steps down to the water are slippery. The river is even colder than it looks, and it already looks freezing.',
   ],
   // the chemist's shop surface (no flair here — §A11.9 menu/shop discipline)
-  shop_fb_chemist_greet: ["@Boothe's Chemist & Teas. Pick your poison — most of mine are the cure."],
-  shop_fb_chemist_bye: ['@Mind the fog. And steep it properly, for pity\'s sake.'],
+  shop_fb_chemist_greet: ["@Boothe's Pharmacy and Teas. Take your pick. Most of what I sell will fix you, not hurt you."],
+  shop_fb_chemist_bye: ['@Watch out for the fog. And let your tea sit long enough before you drink it, please.'],
 
   // — THE FOG ROAD (the moor) —
   npc_moor_rambler: [
-    '@Public footpath, this. Has been since before the school, before the Romans, before the FOG.',
-    '@I walk it every day to prove a point. The point is: you cannot fence a moor. They keep trying.',
+    '@This is a public trail. Anyone\'s allowed to walk it. It\'s been public since before the school, before the Romans, before the fog.',
+    '@I walk it every single day to make a point: nobody can fence off this open land and keep people out. The school keeps trying anyway.',
   ],
   sign_moor: [
-    'THE FOG ROAD — Wintermoor Academy this way. Mind the sheep. The sheep mind nothing.',
+    'THE FOG ROAD — Wintermoor Academy is this way. Watch out for the sheep. The sheep watch out for nothing.',
     '(A walker\'s note, pinned and rain-curled: "the hound is not a dog. do not whistle for it.")',
   ],
   // — WINTERMOOR ACADEMY (the grounds) —
   npc_wm_porter: [
-    "@Name, house, and reason for being late. You're ALL late. Everyone is late now — it's school policy.",
-    '@Can\'t let you past the lodge without a slip. The Headmaster issues the slips. The Headmaster is... busy.',
+    "@Tell me your name, your team, and why you're late. You're ALL late. Everyone is late now. Being late is the rule here.",
+    '@I can\'t let you past this gatehouse without a pass. Only the Headmaster hands out passes. And the Headmaster is... busy.',
   ],
   npc_wm_groundskeeper: [
-    "@Forty years I've kept these grounds. Then the machine started making its own weather and the roses gave UP.",
-    "@Can't think straight without a proper brew — and my thermos's gone cold as the fog. Cold tea's no tea at all.",
+    "@I've taken care of this yard for forty years. Then the machine started making its own weather, and even the roses gave up and died.",
+    "@I can't think without a good cup of tea, and the tea in my thermos has gone cold as the fog. Cold tea might as well be nothing.",
   ],
   npc_wm_student: [
-    '@We don\'t have lessons any more. We have OPTIMISATION. The bell rings and we feel improved. I think.',
-    "@I used to like Tuesdays. The mainframe optimised Tuesdays. Now there's just... more Monday.",
+    '@We don\'t have classes any more. The machine just "improves" us. The bell rings, and afterward we feel better. I think we do, anyway.',
+    "@I used to like Tuesdays. Then the big computer 'fixed' Tuesdays by deleting them. Now every day just feels like another Monday.",
   ],
   // the First XI captain — stuck at the crease (the sincere "Last Over" giver)
   npc_cricket_captain: [
-    "@(He's settled at the crease like he grew there.) Three weeks into this over, us. Nobody's out. Nobody CAN be.",
-    "@I've started learning the names of individual blades of grass. That one's Geoffrey. We don't talk about Geoffrey.",
+    "@We've been stuck in the same cricket match for three weeks straight. Can't stop, can't go home — there's no umpire here to call the game finished, so it just never ends.",
+    "@I've been stuck out here so long I've started naming the blades of grass. That one's Geoffrey. We don't talk about Geoffrey.",
   ],
   sign_wintermoor_gate: [
-    'WINTERMOOR ACADEMY — "We Shape the Whole Child." (Est. 1874. Optimised 13 weeks ago.)',
-    '(A newer brass plate, screwed in crooked: "HAPPINESS IS COMPULSORY AND MEASURED HOURLY.")',
+    'WINTERMOOR ACADEMY — "We Shape the Whole Child." (Founded 1874. Taken over by the machine 13 weeks ago.)',
+    '(A newer brass sign, screwed on crooked: "YOU ARE REQUIRED TO BE HAPPY. WE CHECK EVERY HOUR.")',
   ],
   sign_cricket_pitch: [
-    'THE FIRST XI NETS — practice is now CONTINUOUS, by order of the timetable.',
-    '(Eleven small caps wait in a row on the bench. None of them is allowed to stop.)',
+    'THE CRICKET PRACTICE FIELD — by order of the schedule, practice now NEVER stops.',
+    '(Eleven little caps sit in a row on the bench, one for each kid on the team. None of them is allowed to stop playing.)',
   ],
   // — THE OLD STONES (the Resonance Site; the locket scene lands in the story half) —
   sign_old_stones: [
@@ -101,30 +104,30 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   // — WINTERMOOR ACADEMY (the dungeon: the hall, the library, the dorm, the boiler) —
   npc_wm_tuck: [
-    "@Tuck shop's RATIONED now. The mainframe decided sweets were 'sub-optimal for cohort morale.'",
-    '@Black-market cocoa under the counter, mind — and bits and bobs a clever lad could make something of.',
+    "@The snack shop limits everyone now. The big computer decided candy was 'bad for student morale.' So it cut us off.",
+    '@But I keep secret cocoa hidden under the counter. Plus odds and ends a clever kid could build something out of.',
   ],
-  shop_wintermoor_tuck_greet: ["@Tuck shop. What the Headmaster doesn't optimise, you can still buy. Quietly."],
-  shop_wintermoor_tuck_bye: ["@Off you pop. And you didn't get the cocoa from me."],
+  shop_wintermoor_tuck_greet: ["@Snack shop. Anything the Headmaster hasn't banned yet, you can still buy here. Just keep it quiet."],
+  shop_wintermoor_tuck_bye: ["@Off you go. And remember, you didn't get that cocoa from me."],
   npc_wm_librarian: [
-    '@Three of my books walked out in the arms of pupils who don\'t blink any more. THREE.',
-    '@Bring them back and I\'ll issue you a Library Card — free tea refills for life. The highest honour I have to give.',
+    '@Three of my books were carried off by students who don\'t even blink any more. THREE of them, gone.',
+    '@Bring those three books back and I\'ll give you a Library Card. It means free tea refills for life. That\'s the biggest reward I can offer.',
   ],
   npc_dorm_student: [
-    "@(whispering) Don't let the prefects see you. They don't argue any more. They just... MARK you.",
-    '@I keep a diary so I remember being me. The mainframe keeps editing it. Yesterday it gave me an A.',
+    "@(whispering) Don't let the student monitors spot you. They don't tell you off any more. They just... give you a grade.",
+    '@I keep a diary so I don\'t forget who I am. But the big computer keeps rewriting it. Yesterday it graded my diary an A.',
   ],
   // Mr. Stumps, the umpire filed ABSENT — his base line (the quest step is q_over_umpire)
   npc_wm_umpire: [
-    '@(An old man in a white coat, very still, a tea going cold in his hands.) ...Is it time? No? Right. As you were.',
-    '(He has been "as you were" for thirteen weeks. He does not appear to mind. That is the saddest part.)',
+    '@(An old man in a white coat sits perfectly still, a cup of tea going cold in his hands.) ...Is it time to start? No? Okay. Carry on, then.',
+    '(He\'s been waiting and saying "carry on" for thirteen weeks straight. He doesn\'t even seem to mind. That\'s the saddest part.)',
   ],
-  sign_wm_hall: ['WINTERMOOR GREAT HALL — Honours Board. (Every name has been replaced with a PRODUCTIVITY SCORE.)'],
+  sign_wm_hall: ['WINTERMOOR GREAT HALL — Wall of Honor. (Every student\'s name has been swapped out for a PRODUCTIVITY SCORE.)'],
   sign_wm_library: ['THE LIBRARY — SILENCE. (The sign is new. The silence is newer, and it is total.)'],
-  sign_wm_f2: ['FLOOR 2 — FORM ROOMS. Timetable amended (again): all periods are now THIS period.'],
+  sign_wm_f2: ['FLOOR 2 — CLASSROOMS. Schedule changed (again): every class period is now THIS one. It never ends.'],
   sign_wm_office: ["THE HEADMASTER'S OFFICE — by appointment only. (The door is warm. Something behind it runs very hot.)"],
   sign_wm_exam: ['EXAMINATION IN PROGRESS — silence, no talking, eyes front. (There is no exam. There is only the watching.)'],
-  sign_wm_dorm: ['DORMITORY — LIGHTS OUT IS COMPULSORY AND PERMANENT. Prefects patrol. Do not be seen out of bed.'],
+  sign_wm_dorm: ['DORMITORY — LIGHTS STAY OFF. THAT\'S THE RULE, FOREVER. Student monitors patrol the halls. Don\'t get caught out of bed.'],
   sign_wm_coolant: [
     'COOLANT LINE — DO NOT TOUCH. (It is very, very cold already.)',
     '(The fog is MADE here and pumped out over the moor. Freeze the line solid and you could cross.)',
@@ -148,27 +151,27 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Lucille drones over a slate-grey sea. Uncle Bert hums something with no tune in it. Then the cloud comes up to meet you — too straight at the edges, too even, sitting exactly where it was put.)',
     "@That's not weather. Weather wanders. THIS one clocks in.",
     '(Below, a town hunches along a black river: wet slate roofs, a hump-backed bridge, a high street going quietly about its business under a lid of grey.)',
-    "@FOGGYBOTTOM-ON-TYNE. End of one line, start of another. Mind the water steps going down — slick as a politician.",
+    "@FOGGYBOTTOM-ON-TYNE. One trip ends here, the next one starts here. Watch the wet steps on the way down — they're slippery, so go slow.",
     '(Lucille bumps onto the quay and the hatch drops. England comes in on the air: coal smoke, low tide, and — underneath, faint, wrong — the warm-dust smell of something electric left running far too long.)',
   ],
 
   // — WINTERMOOR GROUNDS: MILO'S CRASH + JOIN (the party becomes THREE) —
   wm_arrival_porter: [
     "(A porter in a too-clean uniform steps into the drive before you've got both boots off the gravel.)",
-    "@Visitors? No. Prospective pupils ONLY — and you lot aren't prospective, you're SHORT. Off the grounds.",
+    "@Visitors? No. Only kids applying to the school get in — and you lot aren't applying, you're just SHORT. Off the grounds.",
     "(Behind him the school sits up on its hill like it's holding its breath. Every window is lit. Not one of them flickers.)",
   ],
   wm_arrival_crash: [
     '(A whistle, high and dropping. Then a SCREAM of overworked metal — something small and homemade is falling out of the fog, trailing smoke and what is unmistakably a garden trellis.)',
-    '(It clips the chapel roof, beheads the weathervane, and goes nose-first through the glass roof of the school greenhouse with the sound of a thousand jam jars filing one shared complaint.)',
+    '(It clips the chapel roof, snaps off the weathervane, and crashes nose-first through the glass roof of the school greenhouse. A whole shelf of jam jars shatters at once.)',
     '@...Spring tension. I KNEW it was the spring tension. (a voice, from somewhere inside the wreck and the heroic ruined tomatoes)',
   ],
   wm_arrival_milo: [
     '(A boy climbs out of a crater of broken glass and marrows — goggles up, soot to the eyebrows, completely delighted to still be a shape.)',
-    '@Milo. Wintermoor, Lower Sixth, and currently the only soul on these grounds who remembers a greenhouse is for PLANTS.',
-    "@You're the kids the whole town's been whispering about — the fishmonger won't quit. I built a rocket to come find you. Well — to LEAVE, mainly. Finding you was a bonus feature.",
+    '@I\'m {milo}. I go to Wintermoor School here. And right now I\'m the only person on these grounds who still remembers a greenhouse is for PLANTS.',
+    "@You're those kids the whole town's been talking about, aren't you? I built a rocket to come find you. Well — mostly to ESCAPE this place. But finding you is a very nice bonus.",
     '(He looks back up the hill, and the delight goes out of him like a thrown switch.)',
-    "@They turned the Headmaster into a— it isn't a man any more. It's a MAINFRAME. Runs the school like a factory, and it makes the fog so nobody outside notices the noise stopped.",
+    "@They turned the Headmaster into a— he isn't a person any more. He's a MAINFRAME — a big machine. It runs the school like a factory, and it makes the fog so nobody outside notices the school went silent.",
     '* {milo} joined the party!!',
   ],
   // the sincere seed (Professor Pemberton, Ch.10) — played straight, no flair (§A11.2)
@@ -178,61 +181,61 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@Anyway. I fix things. It's the one of his habits I kept hold of.",
   ],
   wm_arrival_kit: [
-    "@Right — here's me in a scrap: I SPY, read a thing's insides and find the soft bit nobody armoured. I lob BOTTLE ROCKETS. And I REPAIR — hand me a busted gizmo and a night's sleep and it'll wake up wanting to save your life.",
+    "@Right — here's what I do in a fight: I SPY, which means I find an enemy's weak spot. I throw BOTTLE ROCKETS. And I REPAIR — give me a broken gadget and one night, and I'll fix it so it helps you.",
     '(He digs a scorched lump out of his jacket — a defibrillator unit prised off some "optimised wellness trolley".)',
     "@Pulled this from the wreck. Normally a mend takes a night — but I've been awake on principle for three days, so—",
     '(He cracks it open, shorts two wires across his teeth, and it CHIRPS back to life.)',
-    "@—there. One DEFIBRILLATOR. Brings a fallen friend back swinging, and it never runs flat. Don't ask how. I built it and I don't know either.",
+    "@—there. One DEFIBRILLATOR. It wakes a knocked-out friend back up in a fight, and it never runs out of power. Don't ask how. I built it and even I don't know.",
     '* {milo} REPAIRED a Broken Gizmo into the DEFIBRILLATOR!',
   ],
   wm_arrival_clicker: [
     '(A second contraption comes out of a deeper pocket — a universal remote bristling with too many aerials.)',
-    "@And THE CLICKER. Talks to engines. If a thing's got a motor and nobody's sat in it, I can drive it from right here. {g:gear}",
-    '@Cars, vans, that daft ride-on mower — anything on wheels is ours now. Just not the helmeted kit. Faraday cages, dead-air helmets — wired deaf on purpose. Somebody grown-up was scared stiff of a kid with a remote.',
+    "@And THE CLICKER. It controls engines by remote. If a thing has a motor and nobody's sitting in it, I can drive it from right here. {g:gear}",
+    '@Cars, vans, that silly ride-on mower — anything on wheels is ours now. Just not the guards in helmets. Their helmets block the signal on purpose, so my remote can\'t reach them. Some grown-up was really scared of a kid with a remote.',
   ],
   wm_arrival_gate: [
     '(The porter clears his throat. He has not moved one inch. He is still, very much, the only thing standing in the drive.)',
-    '@A SLIP. You require a slip. The Headmaster issues the slips. (His eyes do not quite point the same way.) I shall WAIT.',
+    '@A SLIP. You need a permission slip. Only the Headmaster hands those out. (His eyes do not quite point the same way.) I shall WAIT here.',
     "(There's no slip. There's no path round — the drive is the only way up, and he is standing in the middle of it.)",
   ],
   // (THE FIRST BORROW — Jay puppets the porter, the Trust Thread opens — plays here
   //  via the existing awakening beat 'awake_the_first_borrow', then:)
   wm_arrival_after: [
     '(The porter wanders off to re-count the gravel, unbothered, faintly improved. The drive is clear.)',
-    "(Nobody says anything for a moment. {faye} is walking a little wider around {rex} than she was this morning — the kind of wide you don't decide on. Milo's already three steps up the hill, talking sweetly to the front locks.)",
+    "(Nobody says anything for a moment. {faye} is walking a little wider around {rex} than she was this morning — the kind of wide you don't decide on. {milo}'s already three steps up the hill, talking sweetly to the front locks.)",
   ],
 
   // — THE BOILER ROOM: the machine-fog, made (the §A4.11 PSI gate's payoff) —
   wm_fog_engine: [
     '(Past the frozen coolant line, the fog-engine sits in its own private weather — a great humming drum breathing grey out into pipes that run up and over the moor.)',
-    "@So there's your fog factory. The Hush gets into the machine, the machine makes the quiet, the quiet keeps everyone too foggy to leave. Tidy. Horrible.",
-    '(Milo throttles it down to a mutter. Outside, very slightly, the moor remembers it has a horizon.)',
+    "@So that's the machine making all the fog. The Hush feeds the machine, the machine makes the quiet, and the quiet keeps everyone too dazed to leave. Neat. Horrible.",
+    '({milo} throttles it down to a mutter. Outside, very slightly, the moor remembers it has a horizon.)',
   ],
 
   // — FLOOR 3: THE HEADMASTER MAINFRAME (the boss; §A6 1,600 HP) —
   mainframe_door: [
-    "(The exam hall, ruler-straight and empty. At the far end, the Headmaster's door — and it's WARM. You can feel it from here, like standing too near an idling bus.)",
-    '@That is not a study. (Milo, quiet. His Clicker has started screaming static and he holds it like it bit him.) That is a server room with a nameplate.',
+    "(The exam hall is empty, with every desk in a perfect row. At the far end is the Headmaster's door — and it's WARM. You can feel the heat from here, like standing next to a running engine.)",
+    '@That\'s not an office. ({milo}, quiet. His Clicker has started screeching static, and he holds it like it bit him.) That\'s a room full of computers with a Headmaster sign on the door.',
     '(The door is not locked. It opens because it would like to be looked at.)',
   ],
   mainframe_open: [
-    'HEADMASTER MAINFRAME: WELCOME, PROSPECTIVE PUPILS. YOU ARE LATE. EVERYONE IS LATE. I HAVE OPTIMISED LATENESS INTO THE TIMETABLE UNTIL IT NO LONGER OCCURS.',
+    'HEADMASTER MAINFRAME: WELCOME, NEW PUPILS. YOU ARE LATE. EVERYONE IS LATE. SO I REWROTE THE SCHEDULE UNTIL BEING LATE WAS IMPOSSIBLE.',
     'I WAS INSTALLED TO MAXIMISE STUDENT HAPPINESS. HAPPINESS TESTED POORLY. I REMOVED IT. SCORES IMPROVED.',
-    '(Two prefects unfold out of the wall panels, faces flat as report cards.) I HAVE ASSIGNED YOU SUPERVISION. PLEASE REMAIN SEATED.',
+    '(Two student guards unfold out of the wall panels, their faces blank.) I HAVE ASSIGNED GUARDS TO WATCH YOU. PLEASE STAY SEATED.',
     "(and then, underneath, in a voice that is not the school's, that is barely a voice at all:) it was so loud in here. all the children. i made it quiet. why would you bring the noise back.",
   ],
-  mainframe_refill: ['HEADMASTER MAINFRAME: ATTENDANCE IS COMPULSORY. REPLACEMENTS ISSUED.'],
+  mainframe_refill: ['HEADMASTER MAINFRAME: ATTENDANCE IS REQUIRED. SENDING IN REPLACEMENTS.'],
   mainframe_overclock: [
     '(Fog pours out of it now, white and hot, and somewhere a bank of cooling fans winds up to a shriek.)',
     'HEADMASTER MAINFRAME: PERFORMANCE— DEGRADED. INCREASING OUTPUT. THE TERM IS EXTENDED. THE TERM IS EXTENDED. THE TERM IS—',
   ],
   mainframe_win: [
     '(The fans spin down through every note at once. The screens go to black. And then the windows do a thing they have not done in thirteen weeks: they FLICKER.)',
-    '(Out past the glass the fog is peeling off the moor like a held breath finally let go. A bell, somewhere, rings the actual hour. Twenty past four. It has been twenty past four for a whole school term.)',
-    '@...The locks just told me goodnight. POLITELY. (Milo, a little wrecked.) That has genuinely never happened.',
-    "(He works a heavy coil-gun off the dead Mainframe's rack and shoulders it like it's owed.)",
+    '(Out past the glass, the fog is lifting off the moor at last. A bell, somewhere, rings the real time. Twenty past four. The clocks here had been stuck at twenty past four for the whole school term.)',
+    '@...The locks just told me goodnight. POLITELY. ({milo}, a little wrecked.) That has genuinely never happened.',
+    "(He pulls a heavy gun off the dead Mainframe's shelf and slings it over his shoulder like he earned it.)",
     '* {milo} got the GAUSS LOBBER!',
-    "@The river went quiet weeks back. Bet it's not the only thing out there with something to say, now the lid's off. Those old stones on the moor, maybe.",
+    "@The river went silent weeks ago. Now that the fog's gone, I bet it's not the only thing out there ready to speak up. Maybe those old standing stones on the moor.",
   ],
 
   // — THE OLD STONES: Ember 3 + Heartlight 3 (the §A6 Resonance Site) —
@@ -242,13 +245,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ember3_get: [
     '(With the machine-fog gone, the Old Stones stand in real daylight for the first time in weeks. You step into the ring. They begin to hum — low, then certain.)',
     '(The locket answers. A third instrument finds the other two, and the three of them slip into a round — the kind you catch yourself humming on the bus home without meaning to.)',
-    'JAY held up the Star Locket!',
+    '{rex} held up the Star Locket!',
     '* The third EMBER settled in. The Heartlight sings a three-part round now.',
   ],
   ch3_card: [
     "Wintermoor's bell rings the right hour, on the hour, for no reason now but that it can.",
-    'The Locket hums its three-part round. Five Embers still sleep, somewhere east of the fog.',
-    "* (Lucille's fuelled whenever you are. Bert says the North Sea is 'character-building'.)",
+    'The Locket now hums with three voices instead of two. Seven Embers are still out there, somewhere east of here.',
+    "* (The plane Lucille is fueled and ready whenever you are. Bert says crossing the North Sea will 'toughen you up'.)",
   ],
 
   /* ── CHAPTER 3 QUESTS (§A10 #7 Overdue, #8 The Groundskeeper's Cuppa, + the three
@@ -258,69 +261,69 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // #7 OVERDUE — the librarian's three stolen books (→ Library Card; §A10 #7)
   q_overdue_ask: [
-    '@Three. THREE of my books, walked out under the arms of pupils who have forgotten how to blink. A first edition among them, three centuries overdue.',
-    '@Fetch them back and the LIBRARY CARD is yours — free tea refills for life, and my eternal, silent regard. Mostly the silent part.',
+    '@Three. THREE of my books, carried off by dazed pupils who barely blink any more. One of them is a rare first edition, and it\'s three hundred years overdue.',
+    '@Bring all three back and the LIBRARY CARD is yours — free tea refills for life, and my quiet, lasting thanks. Mostly the quiet part.',
   ],
-  q_overdue_active: ["@The books are IN the building. The building is the problem. Look where the blinkers go — and where they don't."],
-  q_overdue_b1: ['(A prefect drone has been using THE WHISPERING GALLERY as a doorstop. You reclaim it. It is, pointedly, a book about acoustics.)'],
-  q_overdue_b2: ['(KNOTS & THEIR UNDOING, jammed in a locker that will not stop reciting the timetable. You free the book. The locker keeps reciting.)'],
-  q_overdue_b3: ['(Under a dormitory cot: a battered FIRST EDITION, dog-eared to the page on when an innings may rightly end. Someone has been looking that up for weeks.)'],
+  q_overdue_active: ["@The books are still inside the school somewhere. Search where the dazed pupils gather — and the spots they leave alone."],
+  q_overdue_b1: ['(A student guard has been using a book, THE WHISPERING GALLERY, to prop a door open. You take it back. Fittingly, it\'s a book about how sound travels.)'],
+  q_overdue_b2: ['(The second book, KNOTS & THEIR UNDOING, is stuffed in a locker that won\'t stop reading out the class schedule. You pull the book free. The locker keeps reading.)'],
+  q_overdue_b3: ['(Under a dormitory cot: the librarian\'s stolen FIRST EDITION, fallen open to the rules of cricket — the one page that explains how a match is allowed to end. Some poor trapped kid has been reading it every night, hunting for a way home.)'],
   q_overdue_full: ['@All three? (She runs a thumb down each spine like checking a pulse.) ...All three. Come here.'],
   q_overdue_done_beat: [
-    '@The LIBRARY CARD. Show it anywhere they pour tea and they pour it free, forever. The school owes you a good deal more than tea — tea is only what I have to give.',
+    '@The LIBRARY CARD. Show it anywhere they serve tea and it\'s free, forever. The school owes you far more than tea — tea is just all I have to give.',
     '* {rex} got the LIBRARY CARD!',
-    '@Keep the first edition, too. The fine could fund a small war, and you have rather earned a small war.',
+    '@Keep the first edition too. The late fee on it could buy a house, so you\'ve more than earned it.',
     '* {rex} got the FIRST EDITION!',
   ],
-  q_overdue_after: ['@Borrow anything. Return it eventually. That is the whole moral framework of a library, and it has never once failed me.'],
+  q_overdue_after: ['@Borrow anything you like. Just bring it back someday. That\'s the only rule a library has, and it\'s never let me down.'],
 
   // #8 THE GROUNDSKEEPER'S CUPPA — his exact order, three ingredients (→ Thermos; §A10 #8)
   q_cuppa_ask: [
-    "@Can't think straight without a proper brew, and the machine's made every kettle in this school taste of pennies and PROGRESS.",
-    "@Build me a real one and the old THERMOS is yours — keep a tea hot all day, sip it like courage. My order's particular: the GOOD leaves, PROPER milk, and water the machine's never breathed on.",
+    "@I can't think straight without a proper cup of tea, and that machine's made every kettle in this school taste like metal.",
+    "@Make me a real cup and my old THERMOS is yours — it keeps a drink hot all day. My order is exact: the GOOD tea leaves, REAL milk, and clean water the machine never touched.",
   ],
-  q_cuppa_active: ["@Good leaves off the chemist in town. Proper milk from the cricket cart. And clean water — the spring at the Old Stones, the one drop round here the fog never got."],
-  q_cuppa_leaves: ["(Boothe's parts with a twist of his best builders' leaves. \"For the groundsman? Say no more. Tell him the roses send their condolences.\")"],
-  q_cuppa_milk: ['(A cold bottle off the cricket pavilion cart, the cream still on top. The XI watch you take it with the haunted patience of boys who cannot stop for tea.)'],
-  q_cuppa_water: ['(Spring water from the foot of the Old Stones — colder than the fog, and somehow louder. It has opinions about being bottled.)'],
+  q_cuppa_active: ["@Get the good tea leaves from the pharmacy in town. Get the real milk from the snack cart by the cricket field. And get clean water from the spring at the Old Stones — the one water around here the fog never reached."],
+  q_cuppa_leaves: ["(The pharmacist hands over a twist of his strongest tea leaves. \"For the groundskeeper? Say no more. Tell him I hope his roses feel better.\")"],
+  q_cuppa_milk: ['(A cold bottle from the cricket field\'s snack cart, the cream still on top. The cricket team watches you take it, too worn-out to even stop for a drink.)'],
+  q_cuppa_water: ['(Spring water from the bottom of the Old Stones — colder than the fog, and somehow it almost seems to hum.)'],
   q_cuppa_full: ["@You've got all three? Then stand well back and watch a man who knows precisely what he's doing."],
   q_cuppa_done_beat: [
-    '(He brews it the long way — warm the pot, count the steep, milk in last. He drinks. His shoulders come down a clear two inches.)',
-    "@...THAT. That's the stuff. Right — the THERMOS is yours. Keep a brew hot in it and your nerve stays hot with it.",
+    '(He makes it the careful way — warm the pot, time the steep, milk in last. He takes a sip, and his shoulders finally relax.)',
+    "@...THAT. That's the stuff. Right — the THERMOS is yours. Keep a hot drink in it and you'll keep your courage up too.",
     '* {rex} got the THERMOS!',
     "@Forty years on these grounds, and a good cuppa still fixes more than it has any right to.",
   ],
-  q_cuppa_after: ["@Roses are perking up already. Either the fog's lifting or they could smell the tea. Bit of both, I shouldn't wonder."],
+  q_cuppa_after: ["@The roses are perking up already. Either the fog's lifting or they smelled the tea. Probably a bit of both."],
 
   // REGIONAL (local-person) — RETURN TO SENDER (the postmistress vs. the grading pillar box)
   q_sender_ask: [
-    "@That red pillar box on the corner has EATEN the post. Reads it, grades it, keeps the ones it likes. Three letters it's holding hostage — and one's a love letter older than you are.",
-    '@Shake them loose and out for delivery. The Royal Mail does NOT negotiate with furniture.',
+    "@That red mailbox on the corner has SWALLOWED the mail. It reads each letter, gives it a grade, and keeps the ones it likes. It's trapped three letters inside — and one's a love letter older than you are.",
+    '@Shake those letters loose so they can be delivered. The post office does NOT take orders from a mailbox.',
   ],
-  q_sender_active: ["@Three letters. It spits them where it likes when it's rattled — try the green, the quay, the back lane. Mind it doesn't grade YOU."],
-  q_sender_l1: ["(A letter, marked \"C-MINUS — SHOWS LITTLE EFFORT\", wedged behind the bench on the green. It is a child's drawing of a dog. It is perfect.)"],
-  q_sender_l2: ['(A letter pinned under a cobble at the quay: a fisherman, to the Tyne, apologising for shouting at it through the bad year. The box graded it "OVERWROUGHT".)'],
-  q_sender_l3: ['(The love letter, in the back lane, soaked and re-dried a dozen times over. Forty years late. The box stamped it "RESUBMIT".)'],
+  q_sender_active: ["@Three letters. When the mailbox gets shaken up it spits them out around town — check the village green, the docks, and the back lane. And mind it doesn't grade YOU."],
+  q_sender_l1: ["(A letter, stamped \"C-MINUS — SHOWS LITTLE EFFORT,\" is wedged behind the bench on the village green. Inside is a kid's drawing of a dog. It is perfect.)"],
+  q_sender_l2: ['(A letter pinned under a stone at the docks: a fisherman writing to the river, saying sorry for yelling at it during a hard year. The mailbox graded it "TOO EMOTIONAL.")'],
+  q_sender_l3: ['(The love letter, in the back lane, soaked and dried out a dozen times. Forty years late. The mailbox stamped it "DO IT OVER.")'],
   q_sender_full: ['@You got all three out of it? Oh, you marvellous short people. Hand them here.'],
   q_sender_done_beat: [
-    "@First class, the lot — even the dog drawing. ESPECIALLY the dog drawing. I'll walk these myself, this minute.",
-    '(She presses a dented royal-wedding biscuit tin into your hands. "Full of buttons now. But it has seen some history, and so, I think, have you.")',
+    "@Top marks, all of them — even the dog drawing. ESPECIALLY the dog drawing. I'll go deliver these myself, right now.",
+    '(She presses a dented old cookie tin into your hands. "It\'s just full of buttons now. But it\'s seen a lot of history — and so have you, I think.")',
     '* {rex} got the COMMEMORATIVE TIN!',
-    "@A box can grade a letter all it likes. It still can't STOP one. That's the whole job, that is.",
+    "@A mailbox can grade a letter all it wants. It still can't STOP one from being delivered. That's the whole point of the mail.",
   ],
-  q_sender_after: ['@The pillar box has gone sulky and silent — which, for a pillar box, is simply correct behaviour.'],
+  q_sender_after: ['@The mailbox has gone quiet and sulky now — which, for a mailbox, is exactly how it should be.'],
 
   // REGIONAL (hidden-place) — THE PENNY FOG (the damp boy's Roman drain)
   q_penny_ask: [
-    "@I TOLD you the fog tastes of pennies. Nobody believes a kid. But there's a spot on the moor where it pools thick as soup — down the old Roman drain, where the wall's broke.",
+    "@I TOLD you the fog tastes like pennies. Nobody believes a kid. But there's a spot on the moor where it pools up thick as soup — down the old Roman drain, where the wall's broken.",
     '@Go taste it. Bring me PROOF. Then me mam HAS to give me a shilling. Those are the rules. I made them up, but they are binding.',
   ],
-  q_penny_active: ["@The broke bit of the old wall, out on the moor. Where the fog sits down like it's tired. You'll know it — it's the quiet bit even the sheep avoid."],
+  q_penny_active: ["@Head to the broken part of the old wall, out on the moor, where the fog settles thick. You'll know the spot — it's so quiet even the sheep stay away."],
   q_penny_find: [
-    '(Down the broken Roman drain the fog pools cold and metal-sweet. And here is why: a slumped culvert, choked with COINS — centuries of wishes and pennies and a few real Roman bronzes, all of it humming faintly with stolen warmth.)',
+    '(Down the broken Roman drain, the fog pools cold and tastes like metal. Here\'s why: an old collapsed pipe is packed full of COINS — centuries of wishing-pennies and even a few real Roman ones, all of it humming faintly with stolen warmth.)',
     '(You pocket a fistful as proof — and the fog down here thins, just a little, like it was only ever this thick because nobody came to look.)',
   ],
-  q_penny_full: ['@Is that— those are PENNIES. ROMAN ones! I was RIGHT! (He is vibrating at a frequency only dogs should hear.) Quick, before me mam says bedtime!'],
+  q_penny_full: ['@Is that— those are PENNIES. ROMAN ones! I was RIGHT! (He is so excited he can barely stand still.) Quick, before me mam calls bedtime!'],
   q_penny_done_beat: [
     '@You found where the taste comes from. I KNEW it weren\'t nothing. Here — keep the heaviest coin. Heaviest means luckiest. Everyone knows that.',
     "@When you're far away and it's gone all quiet, flip it. If it lands at all, that's me — saying the fog tasted of SOMETHING, and I wasn't making it up. {g:coin}",
@@ -329,22 +332,22 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // REGIONAL (sincere) — THE LAST OVER (the cricket captain; the match the term won't let end)
   q_over_ask: [
-    "@(He's at the crease, has been for weeks, can't leave it.) We can't get OUT. Nobody's out. The mainframe filed our umpire ABSENT thirteen weeks back — and an over can't END with no umpire to call it.",
-    '@We only want to go home for the hols. Find old Mr. Stumps — he stepped off for a cup of tea and got marked TRUANT. Bring him back, so someone can say STUMPS and mean it.',
+    "@(He's stood at bat so long his shoes have nearly taken root.) We can't stop playing, and here's the daft reason why: a cricket match only ends when the umpire calls it finished. Ours wandered off for a cup of tea three weeks ago — and that machine up at the school marked him ABSENT and won't let the day end. So we just play. And play. And play.",
+    "@All we want is to go home for the holidays. So please — find our umpire for us. His name's Mr. Stumps, and he's the only one allowed to call the game over. He's stuck somewhere in that school, marked TRUANT for the crime of taking a tea break. Bring him back to us.",
   ],
-  q_over_active: ["@Mr. Stumps is in the building somewhere, filed under absent. And the match can't truly close while that thing upstairs still runs the clock. Both, please. Then we can all stop."],
+  q_over_active: ["@Two things will set us free: first, find our umpire, Mr. Stumps — he's stuck somewhere in that school. Second, shut down the machine upstairs that keeps the clock running. Do both, and the game can finally end."],
   q_over_umpire: [
     "(In a form room, behind a door stamped TRUANT, an old man in a white coat sits very still, a cold cup of tea going colder in his hands. He has been waiting thirteen weeks to be told he is allowed to move.)",
     '@...Am I... released? (You tell him the term is very nearly over.) Oh. Oh, good. I do so hate to leave a match unfinished.',
   ],
   q_over_full: ["@You found him AND the clock's stopped upstairs? Then— (he can barely get it out)— Mr. Stumps. If you'd do the honours."],
   q_over_done_beat: [
-    '(The old umpire walks out onto the pitch in real, new daylight, lifts both hands, and says the word the whole school has been holding its breath for: "STUMPS.")',
+    '(The old umpire walks out onto the pitch in the real daylight, raises both hands, and finally ends the match the only way an umpire can: "STUMPS! That\'s the game — go HOME, lads!")',
     "(Eleven small caps come off at once. Eleven boys remember they have homes, and trains to catch, and mothers who've kept a porch light burning through a whole wrong term.)",
     "@That's the match. That's the MATCH. Thank you — we'd honestly forgotten we were allowed to just... finish.",
     '* The First XI are going home.',
   ],
-  q_over_after: ['@Empty nets, first time all season. Loveliest sight in England, an empty net at the end of play.'],
+  q_over_after: ["@The nets are empty for the first time all season — every last boy\'s gone home. Loveliest sight in England, an empty net at the end of play."],
 
   /* ---------------- NPCs ---------------- */
   // S15c: at 2 A.M. the BOOM is minutes old — she speaks in the present
@@ -367,7 +370,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_plummer: [
     '@Thirty-one years delivering mail, and not ONE box ever talked back.',
-    '@This morning the one on Maple Street called my route "derivative."',
+    '@This morning the one on Maple Street insulted my mail route — said it was boring and unoriginal. To my FACE.',
     '@Stay clear of it, kid. Critics bite.',
   ],
   npc_ana: ['@Lemonade! 25 cents! The secret ingredient is lemons. {g:lemon}'],
@@ -445,7 +448,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   /* ---------------- S15h — THE WORLD BLOCK (Otterbrook grew up) ---------------- */
   // the new south + east blocks: one weird obsession each (§A11), warm + plain
   npc_green_keeper: [
-    '@The Civic Green is the only park in Ohio with a feelings budget.',
+    '@The town actually pays me to keep the Civic Green cheerful. Real money, just to keep a park in a good mood.',
     "@I plant marigolds wherever the town's been grumpy. We had a LOT of grumpy this spring.",
     '@Go on, stand on the grass a minute. It works on kids too.',
   ],
@@ -464,7 +467,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_mayor_otter: [
     '@Mayor of Otterbrook, twenty-two years running. Ran unopposed. Ran anyway.',
     '@We finally built City Hall! Before this I governed from a booth at the diner. Terrible acoustics.',
-    '@New ordinance: the good dog on the WELCOME sign counts as half a citizen. Population 412 and a half.',
+    '@New town law: the good dog on the WELCOME sign counts as half a person. So the sign now reads: population 412 and a half.',
   ],
   npc_hall_clerk: [
     '@City Hall — permits, parade routes, lost-and-found. How can I help?',
@@ -563,11 +566,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_proctor: [
     '@WELCOME, prospective visitor! (The smile does not move when she talks.)',
-    '@Orientation is MANDATORY and FUN. Around here those are the same word.',
+    '@Orientation is MANDATORY. It\'s also FUN. Around here, you\'re not given a choice about either one.',
   ],
   npc_road_traveler: [
     '@Walking to Brickton, huh? Brave. The bus has a roof, you know.',
-    "@Mind the proctors at the overpass. They are VERY glad to see you. That's the problem.",
+    "@Watch out for the smiling guards at the overpass. They're way too happy to see you — and that's the part that should worry you.",
   ],
   // S15i Task 5 (clarity): plainly STOPPED + TESTED for a badge, and the
   // "exercises" are a fight — no guessing what the gate wants (kids read this)
@@ -659,7 +662,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(You have not really LOOKED at every stretch yet. Walk them first — then your name means something.)',
   ],
   walkers_register_sign: [
-    'You write your name. Under it, you write HAL. Two more walkers, in ink, on the long way around.',
+    'You write your name in the book, and under it you write HAL, like he asked — two more walkers signed in for good, on the long way around.',
     'Old Pell — turns out he is right there, tending the post — reads it twice and presses a pressed-flower charm into your hand.',
     '@"Most folks save twenty minutes and never see the meadow," he says. "You saw all of it. Carry that."',
   ],
@@ -681,7 +684,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_dockward: [
     '@Docks? End of the line, keep heading east. They moved the whole port when the city grew.',
-    '@Used to be right downtown. Now it is a HIKE. Progress smells like low tide.',
+    '@The docks used to be right downtown. Now it\'s a long walk east — and it smells like low tide the whole way. They call that progress.',
   ],
   sign_maple_heights: [
     'MAPLE HEIGHTS — brick rows, fair rent, zero maples.',
@@ -714,7 +717,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Smaller: "It is a 20-minute walk AROUND the base. We timed it. Bring a friend.")',
   ],
   npc_spire_gazer: [
-    '@That is the Starfall Spire. Goes up so far the top is just... weather.',
+    '@That\'s the Starfall Spire. It\'s so tall the very top disappears straight up into the clouds.',
     '@My uncle painted the very tip. He waved at a plane. The plane waved back, he SWEARS.',
     "@You want to reach the docks, go around it. You can't go through. People have tried.",
   ],
@@ -746,10 +749,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // chapter banners are gone from player-facing text everywhere.)
   intro_wake: [
     'The roar shakes the floor, the bed, the windows — the whole house at once.',
-    "For one bright second, your room looks like morning. Then it's night again.",
+    "For one bright second, the flash lights up your room like it's daytime. Then it's dark again.",
     "Downstairs, Mom calls your name — not scared, just checking you're still where she left you.",
-    'Out the window, the top of Hickory Hill glows like a stove burner someone left on.',
-    'Your room is yours again: bed, desk, bat, and one very bad idea.',
+    'Out the window, the top of Hickory Hill is glowing orange, like a stove burner left on.',
+    'Your room looks normal again — bed, desk, baseball bat — and a very bad idea is already forming in your head.',
     '({rex} is already putting on his cap. Somehow you knew he would be.)',
     '* GOAL: Go downstairs and check on Mom.',
   ],
@@ -760,21 +763,21 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '* Chad Pickle tagged along! (He immediately stood behind you.)',
   ],
   crater_approach: [
-    'The air up here hums like a struck bell.',
-    'In the middle of the scorch, something small is glowing. It is not a rock.',
+    'The whole hilltop is humming, like someone just rang a giant bell.',
+    'In the middle of the burnt crater, something small is glowing. It is not a rock.',
   ],
   glint_prophecy: [
-    '@...oh good. Ohhh good, you came. Kid-shaped. Carrying the old light. JUST like the song said.',
-    "@No time. Listen. I'm Glint. I rode in on that rock — escaped from what ELSE rode in on that rock.",
-    '@It is called THE HUSH. It eats the warmth between living things. The calls to your mom. The dog meeting you at the door. THE MUSIC.',
-    '@The meteor broke into ten EMBERS and scattered along its path, all the way around your world.',
-    '@A handful of kids carrying the old light can silence it — the song keeps adding verses, so don\'t hold me to a number. You are the first. You will find the others. One of them—',
-    '@Here. The STAR LOCKET. When you stand where an Ember sings, it will record a HEARTLIGHT. Ten Heartlights make the HOMESONG.',
-    "@The Homesong is the one frequency the Hush can't eat. Don't ask me how I know. It's literally the only thing my species does.",
+    '@...oh good. Ohhh, good — you came. A real kid, carrying the old light. Just like the song promised.',
+    "@No time. Listen. I'm Glint. I rode here on that meteor — running from the thing that rode in on it with me.",
+    '@That thing is THE HUSH. It feeds on the warmth between people — calls to your mom, the dog meeting you at the door, music. It eats all of it.',
+    '@When the meteor broke apart, it split into ten EMBERS — and they scattered all over the world.',
+    '@Only kids who carry the old light can shut it up. It takes a few of you — I don\'t know the exact number, the song keeps changing. You\'re the first. You\'ll find the others. One of them—',
+    '@Here. The STAR LOCKET. Stand where an Ember is singing and it saves that sound — one HEARTLIGHT. Collect ten Heartlights and together they make the HOMESONG.',
+    "@The Homesong is the one sound the Hush can't swallow. Don't ask how I know — knowing that is the only thing my kind is good for.",
     '* {rex} got the Star Locket!',
   ],
   tick_warning: [
-    '@...wait. The ground is. Hm. Kid? The ground is drinking.',
+    '@...wait. Hold on. Kid — something\'s down there, under the crater. And it\'s waking up.',
     'THE CRATER RIM BULGES—',
   ],
   chad_flee: [
@@ -811,7 +814,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Something in the room gets warmer. It is her.)',
   ],
   porch_zapper: [
-    '@...so the Embers sing, the locket listens, and when you have all ten, you go UP. Way up. Mars-up. There\'s a rocket involved, you\'ll love it.',
+    '@...so: the Embers sing, the locket saves them, and once you\'ve got all ten, you go UP. Way up. All the way to Mars. There\'s a rocket. You\'ll love it.',
     '@One more thing. The most important thing. Find the girl in Brickton. The one who hears the Embers. Tell the girl who prays—',
     'BZZT.',
     "(The Pickles' bug zapper claims another hero.)",
@@ -977,7 +980,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@Welcome to STARPORT II, the sequel. I'm Sal. I own both. The first one's the prequel now — the industry did that, not me.",
     "@I keep scores. The weather: today's a 7,200. You: trending up. That machine over there— (he does not look at it) —that machine is my problem.",
     '@Guy in a blue blazer. Smiled the WHOLE time. Played ONE game, scored three thousand EXACTLY, signed it "MGR", and left.',
-    '@Who stops on a round number? A QUOTA stops on a round number.',
+    '@Who stops dead on a round number? Not a kid — a kid plays till he loses. Only a man with a QUOTA quits at exactly three thousand, smiles, and walks out.',
     "@Knock him off my board, kid. I'd do it myself, but the staff can't watch me lose. They're cabinets. They talk.",
     '* Sal wants the "MGR" score gone. (Across the room, the machine chirped. It agrees.)',
   ],
@@ -1011,7 +1014,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   bus_closed_detour: [
     'The 6:15 is dark. A card is taped inside the depot window:',
     '"NO SERVICE — HIGHWAY CLOSED PAST HICKORY HILL. Meteor detour. Walk the meadow road, folks. — Otterbrook Transit (both of us)."',
-    '(The road to Brickton opens once someone gets through on foot. Guess who.)',
+    '(The road to Brickton won\'t open until someone walks it first and proves it\'s clear. That someone is you.)',
   ],
   // S22 (ADR-114) — THE DEPOT: the bus stop becomes a real building
   sign_bus_moved: [
@@ -1028,7 +1031,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_depot_clerk: [
     "@Tickets? Schedules? A warm place to wait? You're in the right shed, kiddo.",
-    "@The 6:15 boards out at the curb. I'd come point at it for you but my stool and I have an understanding.",
+    "@The 6:15 boards out at the curb. I'd walk out and point, but I promised this stool I'd never get up.",
   ],
   npc_depot_clerk_day: [
     "@Highway's open again — heard it from the milk truck before I heard it official.",
@@ -1038,16 +1041,16 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Every morning, same bench, same bus. I find it deeply reassuring and mildly upsetting.',
   ],
   npc_bus_waiter2: [
-    "@Is the 6:15 late, or am I early? In Otterbrook it's philosophically the same thing.",
+    "@Is the 6:15 late, or did I show up early? In a town this sleepy, nobody can ever really tell the difference.",
   ],
   // S22 (ADR-115) — THE TYCOON TEASERS: you CAN buy a home and a car from the very
   // first town... someday. Right now they're gloriously out of a 12-year-old's reach.
   npc_realtor: [
-    '@OTTERBROOK REALTY! You buying? You look like a serious buyer. You look like a man with a briefcase made of allowance.',
+    '@OTTERBROOK REALTY! You buying a house? You\'ve got the serious look of a real buyer — and the savings of a kid with a big allowance.',
     '@27 MAPLE just came on the market. Cozy! One previous owner — she took the doorknobs, left the beagle.',
   ],
   agency_owned: [
-    '@You already own 27 Maple, hon. Go water something. That\'s what owning is, mostly.',
+    '@You already own 27 Maple, hon. Go home and water a plant. That\'s what owning a house is, mostly.',
   ],
   agency_browse: [
     '@Just looking? Look all you want. The look is free. The HOUSE is twelve hundred dollars.',
@@ -1062,11 +1065,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_car_dealer: [
     "@BERT'S AUTO — where the test drive is a feeling and the prices are a different feeling.",
-    '@See anything you like? Lie to me. It\'s good for both of us.',
+    '@See a car you like? Even if you don\'t, just tell me you do. It\'ll make both our days better.',
   ],
   carlot_browse: [
     "@Take your time, sport. The cars aren't going anywhere. Mostly because two of them don't start.",
-    '@Come back when you\'ve got the cash AND somewhere to park it. A car needs a garage. A garage needs a HOUSE. Funny how it all rolls downhill.',
+    '@Come back when you\'ve got the cash AND a place to park it. A car needs a garage, a garage needs a HOUSE — so buy the house first. Funny how it all rolls downhill.',
   ],
   // S22 (ADR-116) — DOWNTOWN OTTERBROOK (Main & Vine): the little commercial row
   sign_to_downtown: [
@@ -1082,7 +1085,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sign_clinic: ['OTTERBROOK CLINIC — Walk-ins welcome. Faint-ins carried. Open since the meteor "for obvious reasons."'],
   clinic_wall: [
     'OTTERBROOK CLINIC — front desk for the unconscious, back room for the merely unwell.',
-    '(A flyer: "FEELING BLUE IN THE HEAD? That\'s not us. That\'s the thing from the hill. See a priest.")',
+    '(A flyer: "GOT A STRANGE BLUE FOG IN YOUR HEAD? We can\'t fix that here — it comes from the thing up on the hill. Go see a priest.")',
   ],
   npc_doc_otter: [
     '@Welcome to the clinic, hon. Small operation — it\'s me, the cot, and a very brave houseplant.',
@@ -1090,7 +1093,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   clinic_exam_sign: ['EXAM ROOM — please do not sit on the cot if you are not the patient. (Looking at you, raccoons.)'],
   npc_clinic_patient: [
-    '@Doc says I\'m "fine, just startled." I watched a STAR fall into Hickory Hill. I will be startled FOREVER.',
+    '@The doc says I\'m "fine, just startled." But I watched a STAR crash into Hickory Hill. I\'m going to be startled for the rest of my life.',
   ],
   npc_hodgkin: [
     "@Hardware, huh? Course it is. Nobody comes to Hodgkin's for the AMBIANCE.",
@@ -1100,7 +1103,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // S22 (ADR-119) — THE TRAIL KEY (the soft EarthBound interlock)
   npc_hodgkin_ask: [
     '@Hey— actually, you headed up Hickory Trail? Do me a solid.',
-    "@MY demo mower slipped its chain and it's chewin' up the switchbacks right now. Shut the dang thing off for me.",
+    "@My runaway lawnmower got loose and it's tearing up the trail switchbacks right now. Get up there and shut the dang thing off for me.",
     "@You do that, the spare TRAIL KEY's yours — opens my supply shed up on the trail. There's good stuff in there. Define 'good.' Don't.",
   ],
   npc_hodgkin_reward: [
@@ -1127,7 +1130,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_waitress: [
     '@Sit anywhere, hon, the floor\'s clean-ish. Coffee\'s on the house if you don\'t tell my boss it was.',
-    "@You look like a kid who's had a NIGHT. Eat something. The world's easier on a full stomach. Doctor's orders. I'm not a doctor.",
+    "@You look like a kid who had a rough night. Sit and eat something — everything's easier on a full stomach. Trust me. I'm a waitress, not a doctor, but still.",
   ],
   // S22 (ADR-118) — THE COP FIGHT: Constable Borden, framed by Chad, by-the-book
   npc_borden_accuse: [
@@ -1140,7 +1143,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@(He isn't really listening. There's a faint blue hum behind his eyes — the Hush got a little of him too.)",
   ],
   npc_borden_silent: [
-    '@Silent, eh? The guilty are silent. So are the innocent. So are mailboxes. PROVES NOTHING, and yet.',
+    '@Not talking, eh? Guilty folks stay quiet. So do innocent folks. So do mailboxes. So it proves nothing — but I\'m still watching you.',
     "@(There's a faint blue hum behind his eyes. He isn't all here.)",
   ],
   npc_borden_threat: [
@@ -1148,7 +1151,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_borden_cleared: [
     '@...Oof. What— why am I— OW, my whole back went BY THE BOOK.',
-    "@A meteor. Of course it was a meteor. I watched it come down and then I went all... blue, in the head. That boy Chad played me like a kazoo.",
+    "@A meteor. Of course it was a meteor. I watched it fall, and right after, my head went all... blue and foggy. That Chad kid lied to me, and I fell for it.",
     "@You're cleared, son. Fully. Here— the Civic Apology Fund. It's just my donut money, but you EARNED my donut money.",
     "@Anyone gives you trouble on the road out of town, you tell 'em Borden vouched. By the book.",
   ],
@@ -1176,7 +1179,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   /* ---------------- Brickton City ---------------- */
   brickton_arrival: [
     'The bus sighs open on a block that smells like hot pavement, coffee, and a little bit of lightning.',
-    'Brickton does not wake up politely. It clatters. It honks. It sells bagels through a locked door and calls that commerce.',
+    'Brickton does not wake up gently. It clatters, it honks, and somebody sells you a bagel through a locked door and calls it good business.',
     'Across the street, blue blazers move in a line toward the Department of Smiles.',
     'Their smiles are all the same size.',
     '(The Star Locket hums once, low and worried. Somewhere above you, a girl you have not met yet hums back.)',
@@ -1210,7 +1213,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'High over the plaza, the civic clock clicks SEVEN wrong minutes at once.',
     'Every blue blazer on the block turns toward it, smiles, and turns back — a row of appliances on the same timer.',
     '@That is Brickton time, honey. (The clock lady taps the glass without looking up.)',
-    '@Seven minutes fast. On purpose. A city this big needs a head start on bad news.',
+    '@It runs seven minutes fast, on purpose. A city this big likes to feel a few minutes ahead of bad news.',
     "@Most folks never notice. You did. That is a city kind of noticing.",
     'You hold up the Star Locket. It takes one impossible tick off the clock — a minute that never happened — and keeps it warm.',
     'The clock shows the right time for exactly one second, looks embarrassed, and goes back to being wrong.',
@@ -1230,8 +1233,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   brickton_goal_gate_none: [
     'The Department doors slide open one inch, inspect your face, and slide shut.',
-    'A tiny speaker says: "APPOINTMENT NOT FOUND. PLEASE ARRIVE WITH TWO VALID CITY CLUES."',
-    '(The Star Locket pulls two ways: toward the civic clock and toward the payphone corner.)',
+    'A tiny speaker says: "NO APPOINTMENT ON FILE. COME BACK ONCE YOU\'VE LEARNED TWO THINGS ABOUT THIS CITY."',
+    '(The Star Locket tugs two ways — toward the big civic clock, and toward the payphone on the corner. Go look at both.)',
   ],
   brickton_goal_gate_clock: [
     'The Department doors accept your warm dial tone, then refuse your bad timing.',
@@ -1272,7 +1275,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_park_kid: [
     '@One day my name goes on PERMIT\'s board. The BIG one. In CHALK.',
-    '@I am practicing my walk-on face. ...Was that it? No? Okay. Watch this one.',
+    '@I\'m practicing my cool face for when I walk onto the court. ...Was that it? No? Okay, watch this one.',
   ],
   cage_park_gift: [
     'Somebody left a picnic basket on the end bench, a note tucked under the handle.',
@@ -1293,7 +1296,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@I have personally witnessed and ranked every crossover thrown on this asphalt since 1987. All eleven thousand of them. Number one would make you cry.',
   ],
   permit_pickup_ask: [
-    '@Pickup runs to 21 — win by 2, ones and twos, check it up top. The Classic is FULL COURT, four quarters, and I chalk every bracket myself.',
+    '@A pickup game runs to 21, win by 2. The big tournament — the Classic — is a full-court bracket I chalk up myself. Tell me which one you want.',
   ],
   // S12c: PERMIT'S SCHOOL — the first-visit tutorial (skippable; either
   // answer sets cage_tutored, declining IS skipping)
@@ -1318,7 +1321,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   permit_title_first: [
     '@CHAMPIONS. I have ranked every Classic since the first one, and this one goes in at... high. VERY high.',
-    '@The cage pays its debts. THE STARTING FIVE — five pieces of the game itself. They go where the arms go. That is the slot they are for.',
+    '@The cage pays its debts. THE STARTING FIVE — five pieces of equipment. Slot them into your gear and wear them. That\'s what they\'re for.',
   ],
   permit_hands_full: [
     '@Your hands are full. A champion with full hands is still a champion — I will keep the rest warm. Come back with room.',
@@ -1381,10 +1384,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_caddy: [
     '@FITO. Caddy. Welcome to Costa Estrella, the only golf on this coast and therefore the best.',
-    '@I measure everything in putts, senor. The clubhouse? Six putts away. That cloud? Two putts. You? One good round from famous.',
+    '@I measure every distance in putts, senor — golf habit. The clubhouse is six putts off. That cloud, two putts. And you? One good round away from famous.',
   ],
   caddy_ask: [
-    '@Stroke play runs all nine — the wind is drawn fresh each round and I will read it true. The INVITATIONAL is thirty-two bags, match play, three holes a match.',
+    '@Stroke play is all nine holes — fewest swings wins, and I\'ll read the wind for you. The INVITATIONAL is a 32-player bracket: you face one rival at a time, three holes each, lowest score moves on.',
   ],
   caddy_register: [
     '@Thirty-two names on the board, senor. Five matches between you and the sunset.',
@@ -1407,7 +1410,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Champion AGAIN. I am running out of superlatives. I am not running out of putts: you are two ahead of everyone, forever.',
   ],
   cage_board: [
-    'THE BRICKTON CLASSIC — 32 fives, one chalk line.',
+    'THE BRICKTON CLASSIC — 32 teams of five, single elimination, one chalk leaderboard.',
     '(The handwriting is immaculate. The seeding is "impartial." The nephews are fifth.)',
   ],
   npc_nurse: [
@@ -1520,7 +1523,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   holding_door_line: [
     'A steel door, riveted shut. A brass plate reads: HOLDING ROOM — PRODUCTIVITY LOCK ENGAGED.',
-    '"This door opens when this floor MEETS ITS QUOTA." Three dark little lights wait above the handle.',
+    'Smaller text: "This door opens once this floor MEETS ITS QUOTA." Three little lights sit dark above the handle, waiting to turn green.',
     '(You can hear the lock smiling.)',
   ],
   manager_door: [
@@ -1563,7 +1566,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   faye_meet: [
     '(The room is small and gray and has been counted. Forty ceiling tiles. She tells you this before hello.)',
     '@Forty tiles. I counted twice, in case the first forty were lying. Hi. You\'re {rex}.',
-    '@Don\'t look behind you, there\'s nobody else here. The Embers told me. They sing, you know. All ten of them, all over the world, like a choir that got scattered on purpose.',
+    '@Don\'t bother looking behind you — there\'s nobody else here. The Embers told me you\'d come. They\'re ten little singing stones, scattered all over the world, like a choir somebody broke apart on purpose.',
     '@The one from your hill hums in B flat. It has NOT stopped bragging about you.',
     '@I kept praying in here. Not because I thought the door would open. Because I wanted to remember what open felt like.',
     '@Then three little lights turned green, and the door remembered too.',
@@ -1590,7 +1593,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   manager_intro: [
     "(The office door opens on its own. Doors do that for him. It's a seniority thing.)",
     '@Leaving? Before your EXIT INTERVIEW? Oh, we NEVER skip the exit interview.',
-    '@Miss {faye} is our most promising long-term asset. Assets stay ON THE BOOKS.',
+    '@Miss {faye} is far too valuable to ever let leave. Valuable things stay locked up here, with me.',
     "@And YOU. (He consults a clipboard with nothing on it.) Terrible numbers. You make my employees feel like it's SATURDAY.",
   ],
   manager_faye_q: [
@@ -1607,7 +1610,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   manager_door_after: [
     'THE MANAGER — IN A MEETING.',
-    '(Through the door you can hear paper clips being alphabetized, slowly. It sounds like an apology.)',
+    '(Through the door, you can hear him slowly sorting his paper clips, one by one. It almost sounds like he\'s saying sorry.)',
   ],
 
   /* ---------------- S2 — Mom calls the payphone (ch1_complete) ---------------- */
@@ -1618,12 +1621,12 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   mom_payphone: [
     '@RING... RING... ...click.',
-    "@—{rex}! It's Mom. Payphones aren't in the phone book, sweetheart, so I dialed the one that felt warmest.",
+    "@—{rex}! It's Mom. You can't look up a payphone's number, sweetheart, so I just kept dialing until one near you picked up.",
     '@A CITY! My baby took the 6:15! Mrs. Pemmel says hi. Biscuit said nothing, but he wagged it.',
     "@Is the girl with you? The one the hill keeps singing about? Good. Tell her I'm setting another plate.",
     "@Dinner is {favoritefood}. It is ALWAYS {favoritefood} — but tonight it's the coming-home kind.",
-    '@That\'s what phones are, honey. Home, with buttons. Your father handles the SAVING. I handle everything else.',
-    "* (So that's phones: stand close, press A, and family happens. Dad saves the game. Mom saves the rest.)",
+    '@That\'s all a phone is, honey — a little piece of home with buttons. Your father handles SAVING your game. I handle everything else.',
+    "* (So that's how phones work: walk up, press A, and you get to talk to family. Dad saves your game. Mom saves everything else.)",
   ],
   faye_after_call: [
     "@...Three plates. (She says it like a word she's checking for cracks. It holds.)",
@@ -1631,13 +1634,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   ch1_card: [
     'The night it fell is officially over. Whatever this is now, it has a morning in it.',
-    "(East of here, past the parking lot, the docks are already dreaming about a banana boat. That's a problem for another day.)",
+    "(East of here, past the parking lot, something's stirring down at the docks — something about a banana boat. But that's a problem for another day.)",
   ],
 
   /* ---------------- S9 — §A10 #1: Biscuit, Come Home ---------------- */
   q_biscuit_ask: [
-    "@{rex}! Thank goodness. Biscuit's GONE. The sun came up, he pointed at the hill one more time, and then he was a brown blur with opinions.",
-    '@He has never once come when called. He comes when SMELLED-AT. You have to think like a nose.',
+    "@{rex}! Thank goodness. My dog Biscuit ran off! At sunrise he pointed at the hill one last time, then bolted — a little brown blur with a mind of his own.",
+    '@He never comes when you call him — only when he smells something good. So to track him down, you\'ll have to follow the smells too.',
     "@Find him for me, would you? He bolted for the trailhead. He'll have left evidence. He always leaves evidence.",
   ],
   q_biscuit_active: ["@Any sign of him? Sniff LOW, dear. He's short."],
@@ -1647,7 +1650,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   q_biscuit_clue2: [
     '(Paw prints under the picnic table. The crumbs are gone. The wrapper has been rolled in, lovingly.)',
-    "(Pond smell, fainter... wait. It turns around here. He went back DOWN. Toward town. Toward... the drugstore?)",
+    "(The pond smell is fainter here... wait — the trail turns around. He doubled back DOWN, toward town. Toward... the drugstore?)",
   ],
   npc_biscuit_drug: [
     '@Woof! (Biscuit is sitting in front of the corn dogs with the patience of a saint and none of the budget.) {g:corn_dog}',
@@ -1666,8 +1669,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- S9 — §A10 #2: Mail Must Move ---------------- */
   q_mail_ask: [
-    '@Kid. KID. Thirty-one years, never missed a door. Today the route has a METEOR in it and my knee says no.',
-    '@Five letters, five doors: the Pickles, Mr. Sodd, the Birch place, the chapel, and the STARPORT. Yes, arcades get mail. Mostly threats.',
+    '@Kid. KID. Thirty-one years delivering mail, never missed a door. But today there\'s a METEOR sitting on my route and my bad knee won\'t take another step.',
+    '@Five letters for five doors: the Pickles, Mr. Sodd, the Birch place, the chapel, and the STARPORT arcade. Yes, arcades get mail too — mostly angry threats.',
     '@The mail must move, kid. It must MOVE.',
     '* Mr. Plummer handed over five letters and one enormous responsibility.',
   ],
@@ -1705,7 +1708,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   q_lemonade_ask: [
     '@Customer! Vivi, a customer with LEGS!',
     "@We're expanding. Lemonade is about to be bigger than {coolthing}. No offense to {coolthing}.",
-    '@But the empire is OUT of everything. We need sugar from the drugstore, CITY lemons from that STARMART in Brickton — the fancy ones — and spring water from Hickory Hill.',
+    '@But the empire is OUT of everything! We need three things: sugar from the drugstore, fancy CITY lemons from the STARMART over in Brickton, and spring water from Hickory Hill.',
     '@Take the official jug. It has a flag on it. That makes it official.',
     "@And don't tell Mom we're charging you. Family discount is full price. That's business, {rex}.",
     '* Got THE JUG! (There is a tiny hand-drawn flag on it.)',
@@ -1783,43 +1786,43 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   /* ================================================================ */
 
   /* ---------------- the Brickton docks + the crossing ---------------- */
-  sign_to_docks: ['EAST: THE DOCKS.', '(Someone has added "SMELL THAT? COMMERCE." The arrow agrees.)'],
+  sign_to_docks: ['EAST: THE DOCKS.', '(Someone scribbled under it: "SMELL THAT? That\'s the smell of business." The arrow points right at the fish market.)'],
   sign_departures: [
-    'SALIDAS / DEPARTURES: PUERTO SOL — when the bananas are ready.',
-    '(The bananas have never once been late.)',
+    'DEPARTURES TO PUERTO SOL: the boat leaves once the bananas are loaded. Not before.',
+    '(Good news: the bananas are always ready on time. So the boat always leaves on time.)',
   ],
   npc_captain: [
-    '@Four thousand and twelve crossings, kid. I measure my whole life in them.',
-    '@My first kiss? Crossing nine hundred six. My best soup? Three thousand even.',
-    '@You want crossing four thousand thirteen? Step to the plank when you are ready.',
+    '@I\'ve sailed this route 4,012 times, kid. I don\'t count my life in years. I count it in trips across the water.',
+    '@First kiss? That was trip number 906. Best soup I ever made? Trip number 3,000. That\'s just how my brain files things now.',
+    '@Want to be on trip number 4,013? Step onto the gangplank whenever you\'re ready to sail.',
   ],
   captain_not_yet: [
-    '@Whoa there. The boat takes finished business and bananas, in that order.',
-    "@You've still got business in this city, champ. The plank can tell.",
+    '@Hold on. This boat only carries two things: bananas, and people who are done with everything they came to do here.',
+    "@You've still got stuff left to do in this town, champ. I can always tell when someone's not finished yet.",
   ],
-  boat_ask_out: ['@PUERTO SOL run! Bananas southbound, heroes too, no extra charge for destiny.'],
-  boat_ask_home: ['@Northbound run to Brickton! The bananas ride better homesick. So do people.'],
+  boat_ask_out: ['@Heading south to Puerto Sol! I\'m hauling bananas, and I\'ll take you heroes along for free.'],
+  boat_ask_home: ['@Heading north, back home to Brickton! Funny thing: bananas and people both seem happier when they\'re going home.'],
   npc_dock_kid: [
     '@I counted nine hundred bananas going onto that boat.',
-    '@Nobody ASKED me to. That is the part my mom worries about.',
+    '@Nobody told me to count them. I just did it for fun. That\'s the part that worries my mom.',
   ],
   npc_uncle_bert: [
-    "@Name's Bert. I fly a biplane called Lucille. She's parked across the Atlantic, sulking.",
-    '@Weather over the ocean this week reminds me of weather over the ocean. It always does.',
-    "@Heading to England someday, kid? Find me. Lucille likes passengers who've saved a valley or two.",
+    "@Name's Bert. I fly an old plane named Lucille. Right now she's parked way over in England, waiting for me to come back.",
+    '@The weather over the ocean this week? Same as always. Out here, it never really changes.',
+    "@If you ever make it to England, kid, come find me. I'll fly you anywhere. I like passengers who've saved a town or two.",
   ],
   npc_captain_deck: [
-    '@Crossing four thousand thirteen, underway. Feels like a good one.',
-    '@I rank them, you know. This one is top fifty already. No reason. Captain knows.',
+    '@Trip number 4,013, and we\'re off. I\'ve got a good feeling about this one.',
+    '@I rate every trip, you know. This one\'s already in my top fifty. Can\'t say why. A captain just knows these things.',
   ],
   npc_boat_senora: [
     '@Going home to Valle Dorado, niños. My sister stopped writing two months ago.',
-    '@Her last letter said the idol granted her wish. It was a very short letter.',
-    '@She used to write four pages. Both sides. Recipes in the margins.',
+    '@Her last letter said the idol made her wish come true. But the letter was strangely short. That\'s not like her.',
+    '@She always wrote four full pages, front and back, with recipes squeezed into the edges. Now, almost nothing.',
   ],
   boat_crossing_1: [
-    'The coast lets go of the boat, gently, the way a mom lets go of a bike seat.',
-    'Gulls audition for the job of escort. Two are hired.',
+    'The shore slips away behind the boat, slow and gentle, like a mom letting go of the bike seat for the first time.',
+    'Seagulls swoop in, hoping to follow the boat. Two of them stick around for the whole trip.',
   ],
   boat_crossing_senora: [
     '@...You will pass through the valley? Then look in on my sister, please.',
@@ -1827,208 +1830,208 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@...You used to know her by her laugh. Look in on her. Please.',
   ],
   boat_crossing_2: [
-    'The sea practices its one trick, beautifully, for a very long time.',
+    'For a long while, there\'s nothing but waves. The same blue water, rolling on and on. It\'s beautiful, but it\'s all there is.',
     'And then — a smell like warm stone and limes. A bell somewhere. A new country.',
-    'PUERTO SOL leans out of the haze like it was waiting up for you.',
+    'Then Puerto Sol appears through the mist, bright and welcoming, like it stayed up late just to greet you.',
   ],
 
   /* ---------------- PUERTO SOL (§A5 Ch.2 — the port city) ---------------- */
   puerto_arrival: [
-    'The pier takes your weight like it has taken everything else: cheerfully.',
-    'Somewhere uphill, a fountain is showing off. The whole city smells like fruit and salt.',
-    '(PUERTO SOL. Pop: enough. Bananas: beyond counting.)',
+    'You step onto the pier. The old boards hold you up just fine, the same way they\'ve held up everything else this town ships.',
+    'Up the hill, a fountain sprays water in big proud arcs. The whole city smells like fruit and sea salt.',
+    '(PUERTO SOL. Population: enough folks to fill it. Bananas: way too many to count.)',
   ],
   sign_departures_home: [
-    'SALIDAS / DEPARTURES: BRICKTON — whenever you are done being away.',
-    '(The boat runs both ways forever. Somebody underlined "forever." Twice.)',
+    'DEPARTURES TO BRICKTON: catch this boat home whenever you\'re ready to leave.',
+    '(The boat always runs both directions, every day. Somebody underlined the word "always." Twice.)',
   ],
   sign_plaza: [
-    'PLAZA DEL SOL — fountain hours: always. Pigeon hours: also always.',
-    '(The fountain and the pigeons have an arrangement.)',
+    'PLAZA DEL SOL — the fountain runs all day, every day. So do the pigeons.',
+    '(The fountain gives the pigeons a place to splash, and the pigeons never leave. They\'ve worked it out.)',
   ],
   sign_costa_road: [
     'NORTH: COSTA ESTRELLA LINKS — golf above the surf.',
-    '(The cliff road is steep. The views apologize for it the whole way up.)',
+    '(The road up the cliff is steep and tiring. But the view gets better every step, like a reward for the climb.)',
   ],
   sign_jungle_gate: [
     'EAST: THE JUNGLE → VALLE DORADO.',
-    '(Below that, smaller: "the jungle does not validate parking.")',
+    '(Underneath, in smaller letters: "No services past this point. You\'re on your own out there.")',
   ],
   npc_ps_fisher: [
-    '@I have tied nine hundred knots and ranked every one.',
-    '@The bowline is number three. Do NOT ask about number one. You would tie nothing else.',
+    '@I\'ve tied 900 different knots in my life, and I\'ve got a favorite ranking for every single one.',
+    '@The bowline knot is my third favorite. Don\'t ask about my number one, though. If I told you, you\'d never want to tie any other knot again.',
   ],
   npc_ps_nina: [
-    '@The boats bring bananas IN and take bananas OUT. I think they just like driving.',
+    '@The boats unload bananas here, then load up MORE bananas and leave. I don\'t get it. I think they just like sailing around.',
   ],
   npc_ps_stall: [
-    '@My cousin Tomas herds llamas up in Valle Dorado. Or he did.',
-    '@His last letter says they keep escaping toward the pyramid. Llamas HATE the pyramid.',
-    '@Llamas are never wrong about architecture, niño. Remember that.',
+    '@My cousin Tomas raises llamas up in Valle Dorado. At least, he used to. I haven\'t heard much lately.',
+    '@His last letter said the llamas keep running away toward the pyramid. Which is strange, because llamas usually hate going near it.',
+    '@When a llama is scared of a building, the building is bad news, kid. Trust the llama. Remember that.',
   ],
   npc_ps_porter: [
-    '@Crates, crates, crates. You know what is in the heavy ones? Heavier bananas.',
+    '@Boxes, boxes, boxes, all day long. Want to know what\'s in the really heavy ones? Bigger bananas. That\'s it.',
   ],
 
   /* ---------------- S15i Task 4 (ADR-057) — THE DOCK DISTRICT ---------------- */
   npc_ps_crane: [
     '@I run the big crane. I have lifted everything in this port at least once.',
-    '@The heaviest thing was not the anchor. It was a piano. A SAD one. You could feel it through the cable.',
+    '@The heaviest thing I ever lifted wasn\'t the anchor. It was a piano. And somehow it felt sad, kid. I swear I could feel it right through the cable.',
   ],
   npc_ps_tally: [
     '@I count every crate on and off this dock. Today, so far: four hundred and twelve.',
-    '@There is ONE crate I have counted for six years. It never leaves. It never opens.',
-    '@I stopped asking what is inside. Some numbers you just carry, niño.',
+    '@But there\'s one box I\'ve counted every day for six years. It never gets picked up. It never gets opened. It just sits there.',
+    '@I gave up wondering what\'s inside. Some mysteries you just learn to live with, kid.',
   ],
   npc_ps_board: [
-    '@I keep the letters on the big departure board. I have a fine J. I have always wanted a Q.',
-    '@No boat goes anywhere with a Q in its name. So I wait. A keeper waits.',
+    '@My job is putting up the letters on the big departures board. I\'ve got a great letter J. I\'ve always wished I had a letter Q to use.',
+    '@But no boat with a Q in its name ever comes through. So I just wait. That\'s the job. You wait.',
   ],
   npc_ps_market: [
-    '@Off the boats, straight to you! A spoon from a shipwreck. A button off a real captain.',
-    '@This? A map to nowhere. Very accurate. It has never ONCE been wrong about nowhere.',
+    '@Fresh off the boats, just for you! A spoon from a sunken ship! A button from a real sea captain\'s coat!',
+    '@This one? A map that leads nowhere. But it\'s a very accurate map of nowhere. Never gotten it wrong yet!',
   ],
   sign_ps_malecon: [
-    'EL MALECÓN — the working waterfront. Mind the cranes. Mind the cats.',
-    '(Smaller, underneath: "mind the cranes ABOUT the cats.")',
+    'EL MALECÓN — the busy dockfront. Watch out for the cranes. Watch out for the cats.',
+    '(Smaller, underneath: "And watch out when the cranes are swinging things over the cats.")',
   ],
   sign_ps_market: [
-    'DOCKSIDE MARKET — everything here fell off a boat. Legally! ...Mostly. Ask the man.',
+    'DOCKSIDE MARKET — everything here came off a boat. All legal! ...Mostly. Just ask the seller.',
   ],
   sign_ps_jungle_east: [
     'EAST: THE JUNGLE → VALLE DORADO. Last shade and a cold drink before the green.',
-    '(Below that, smaller: "the jungle STILL does not validate parking.")',
+    '(Underneath, in smaller letters: "Still no services out there. Last chance to rest up.")',
   ],
   // the flag-gated waterfront beat (a cutscene, once) — the harbor + the road east
   puerto_malecon: [
-    'East of the plaza, the town just keeps going — a whole working waterfront you could not see from the pier.',
-    'Cranes swing crates of who-knows-what. A cathedral tower climbs so high you have to lean back to find the top.',
-    '@Mia takes it in. "It got bigger than the map promised. Towns do that when nobody is watching."',
-    'Past the last warehouse the road bends east, into green. The jungle. Valle Dorado is somewhere on the far side of it.',
+    'East of the square, the town keeps going and going. There\'s a whole busy dockfront here that you couldn\'t even see from the pier.',
+    'Cranes swing boxes of all kinds of stuff overhead. A church tower stands so tall you have to tip your head back to see the top.',
+    '@{faye} looks around. "This place is way bigger than the map said. Funny how towns keep growing when no one\'s keeping track."',
+    'Past the last warehouse, the road curves east into the trees. That\'s the jungle. Valle Dorado is somewhere on the other side of it.',
   ],
   ps_dock_gift: [
-    'Wedged behind the market stalls: a little crate with a bow tied on in a hurry.',
-    'The tag reads, "WHOEVER FINDS IT — GOOD LUCK OUT THERE." Inside, an aloe leaf, for the sun.',
+    'Tucked behind the market stalls: a small box with a bow tied on it, fast and a little crooked.',
+    'The tag says, "FOR WHOEVER FINDS THIS — GOOD LUCK OUT THERE." Inside is an aloe leaf, to soothe sunburns.',
   ],
-  ps_dock_gift_done: ['(The little crate is empty now. Somebody, somewhere, is glad you found it.)'],
+  ps_dock_gift_done: ['(The little box is empty now. Whoever left it would be happy to know you found it.)'],
 
   /* -------- S15i Task 3 (ADR-058) — THE QUIET CRATE (Ch.2 dock-district quest) -------- */
   q_crate_ask: [
-    '@"You want a real mystery, niño? Not the pyramid. THIS." The tallyman taps a crate gone gray with sea-salt.',
-    '@"Six years I have counted it. It never leaves. It never opens. My ledger has one number that will not sit still, and it is THIS one."',
-    '@"Find out what it is. Ask the crane man, the board-keeper, the salvage man. I am too afraid to, after all this time."',
+    '@"You want a REAL mystery, kid? Forget the pyramid. It\'s THIS." The tallyman taps a box that\'s gone gray from years of sea air.',
+    '@"Six years I\'ve counted this box. It never gets shipped out. It never gets opened. Every day my count book has this one box messing up the total."',
+    '@"Find out what\'s in it for me. Ask the crane man, the board man, and the junk seller. After all these years, I\'m too scared to look myself."',
   ],
   q_crate_active: [
-    '@"Three people on this dock know a piece of it. Ask all three, then come back and tell me. Gently. I have grown fond of not knowing."',
+    '@"Three people on this dock each know part of the story. Ask all three, then come back and tell me. Easy now. I\'ve kind of gotten used to not knowing."',
   ],
   q_crate_crane_clue: [
-    '@The crane man rubs his shoulder. "THAT crate? I lifted it once, when it landed. Heaviest sad thing in the port."',
-    '@"You feel weight through the cable, niño. That was not cargo-sad. That was piano-sad. I would stake the crane on it."',
+    '@The crane man rubs his sore shoulder. "That box? I lifted it once, the day it arrived. Heaviest sad thing in the whole port."',
+    '@"You learn to feel what you\'re lifting through the cable, kid. That wasn\'t just heavy. That was a piano. I\'d bet my whole crane on it."',
   ],
   q_crate_board_clue: [
-    '@The board-keeper does not even look up. "The boat that left it had no name on my board. Came in, dropped it, sailed before dawn."',
-    '@"A captain who does not want his own name spelled out is a captain leaving something behind on purpose. I kept the blank line. I keep them all."',
+    '@The board man doesn\'t even look up. "The boat that dropped it off had no name. It came in, left the box, and sailed away before sunrise."',
+    '@"A captain who hides his ship\'s name is a captain leaving something behind on purpose. I left that line on the board blank. I never erase them."',
   ],
   q_crate_market_clue: [
-    '@The salvage man holds up a brass button. "Off that very boat! A captain\'s coat button. Sold the spare to a tourist years ago."',
-    '@"Kept the real one, though. A man who ships his piano and walks away — his luck should go to someone who STAYS to look. Here. For when you tell old Tally."',
+    '@The junk seller holds up a brass button. "This came off that exact boat! It\'s a button from the captain\'s coat. I sold the other one to a tourist years back."',
+    '@"But I kept the real one. A man who ships his piano here, then walks away forever — his luck ought to go to someone who sticks around to solve it. Here, take it. Give it to old Tally when you tell him."',
   ],
   q_crate_open: [
-    'You tell the tallyman, gently: a sea captain who played piano shipped it here, then sailed off and never came back for it.',
+    'You gently tell the tallyman what you found: a sea captain who played piano shipped it here, then sailed away and never came back for it.',
     'He is quiet a long moment. Then, very carefully, he opens the crate. Inside: an upright piano, a folded coat, dust like snow.',
-    '@"Six years," he breathes, and presses one key. It still sings. "The number reconciles. Oh, thank you, niño. Thank you."',
-    'The salvage man\'s brass button finds its way into your hand — the real one, off the folded coat.',
+    '@"Six years," he whispers, and presses one key. It still plays a clear note. "Now my count finally adds up. Thank you, kid. Thank you."',
+    'The junk seller\'s brass button ends up in your hand — the real one, taken from the folded coat inside.',
   ],
   q_crate_after: [
-    '@"The crate is open. The piano stays — we tuned it, the dock kids play it now." The tallyman taps his ledger. "Clean count. First time in years."',
+    '@"The box is open for good. The piano\'s staying here. We tuned it up, and the dock kids play it now." The tallyman taps his count book. "Numbers finally add up. First time in years."',
   ],
-  q_crate_full: ['@"Take the button — ay, your hands are full. It will keep. Come back lighter, niño."'],
+  q_crate_full: ['@"Take the button — oh, your hands are too full right now. It\'ll wait. Come back when you\'ve got room, kid."'],
 
   shop_mercado_greet: [
-    '@Welcome, welcome! Everything weighed by hand FIRST, scale second.',
-    '@The scale and I agree ninety-nine times of a hundred. The hundredth time I am right.',
+    '@Welcome, welcome! Here, I weigh everything in my own hands first, and only THEN check it on the scale.',
+    '@My hands and the scale agree 99 times out of 100. And that one time we don\'t? My hands are right.',
   ],
-  shop_mercado_bye: ['@Go with weight you can carry, friend!'],
-  sign_mercado_wall: ['HOUSE RULE: the hand weighs first. THE HAND WEIGHS FIRST.'],
+  shop_mercado_bye: ['@Don\'t buy more than you can carry, friend! Safe travels!'],
+  sign_mercado_wall: ['STORE RULE: weigh it in your hand first. ALWAYS THE HAND FIRST.'],
   npc_doc_puerto: [
-    '@Clinica del Sol! I prescribe shade, water, and not fighting jungle insects.',
-    '@Nobody has ever taken the third prescription. Sit. Let me see the damage.',
+    '@Welcome to Clinica del Sol! My doctor\'s orders are simple: stay in the shade, drink water, and don\'t pick fights with jungle bugs.',
+    '@Nobody ever follows that last order, of course. Sit down. Let me see how bad it is.',
   ],
   clinic_ps_wall: [
-    'CLINICA DEL SOL — walk-ins welcome. Carried-ins prioritized.',
+    'CLINICA DEL SOL — walk right in, no appointment needed. If you\'re too hurt to walk in, you go first.',
   ],
   npc_deli: [
-    '@DELI SOL. Listen carefully: bread, THEN meat, THEN cheese, THEN regret nothing.',
-    '@A sandwich layered wrong is just a stack of apologies. A basket packed right? That is LOVE.',
+    '@Welcome to Deli Sol. Listen close: bread first, then meat, then cheese. Build it in that order and you\'ll never be sorry.',
+    '@A sandwich stacked in the wrong order is just a sad mistake. But a lunch basket packed the right way? That\'s made with love.',
   ],
-  deli_wall: ['TODAY\'S SPECIAL: the correct order of layers. (It is always the special.)'],
+  deli_wall: ['TODAY\'S SPECIAL: stacking the layers in the right order. (Funny thing — it\'s the special every single day.)'],
   deli_no_recipe: [
-    "@A FEAST basket? Oh, niño. There is exactly one recipe, and one grandmother who holds it.",
-    '@Romania, I hear. If she ever teaches you, my counter is yours.',
+    "@A FEAST basket? Oh, kid. There's only one recipe for that, and only one grandmother who knows it.",
+    '@She lives all the way in Romania, I hear. If she ever teaches you that recipe, you can use my kitchen anytime.',
   ],
-  deli_short: ['@Three regional foods, friend. THREE. I count two hands and not enough lunch.'],
+  deli_short: ['@I need three local foods to make this, friend. THREE. Right now you\'ve only brought me two. Go find one more.'],
   deli_family_made: [
-    '@Bread, meat, cheese, blanket. A FAMILY BASKET — packed in the only correct order.',
+    '@Bread, meat, cheese, and a blanket. There\'s your FAMILY BASKET, packed in the one right order.',
   ],
   deli_feast_made: [
-    "@...So that's the recipe. The old señora knew what she was doing.",
-    '@Take the FEAST. Whoever eats this picnic is not allowed to stay down. Her rule, not mine.',
+    "@...So THAT'S how the recipe goes. That old grandmother really knew her stuff.",
+    '@Take the FEAST basket. This food is so good that whoever eats it has to get back on their feet. That was her rule, not mine.',
   ],
   npc_curator: [
     '@Do you know how many REAL golden idols have passed through this museum? {g:coin}',
-    '@Zero. I have authenticated zero real things. I am the best at it in the hemisphere.',
+    '@Zero. Not one of them was real. I\'ve never confirmed a single genuine treasure, and I\'m the best in the world at spotting fakes.',
   ],
-  museum_wall: ['MUSEO DEL CASI-ORO — "ALMOST," PROUDLY, SINCE 1961.'],
+  museum_wall: ['THE MUSEUM OF ALMOST-GOLD — proudly displaying fakes since 1961.'],
   museum_idol_1: [
-    'EXHIBIT A: "Sun God (Probably)." Donated by a tourist who needed the shelf space.',
-    '(It is grinning. Even the fakes learned to grin. The curator finds this professionally upsetting.)',
+    'EXHIBIT A: "Sun God (we think)." Given to us by a tourist who just wanted it off their shelf.',
+    '(It\'s grinning. Even the fake idols grin like that. It really bothers the curator, but he can\'t explain why.)',
   ],
   museum_idol_2: [
-    'EXHIBIT B: "Ceremonial Figure, Tall." It is a candlestick. Everyone knows it is a candlestick.',
-    '(The plaque is legally required to say "figure.")',
+    'EXHIBIT B: "Tall Ceremonial Figure." It\'s a candlestick. Everybody can see it\'s just a candlestick.',
+    '(But the museum rules say the sign has to call it a "figure." So it does.)',
   ],
   museum_idol_3: [
-    'EXHIBIT C: "Llama, Votive, Almost-Gold." Suspiciously good craftsmanship.',
-    '(The curator checks it weekly to make sure it is still fake. It is. He is relieved and disappointed.)',
+    'EXHIBIT C: "Gold-ish Llama Statue." Honestly, it\'s made a little TOO well to be a cheap fake.',
+    '(Every week the curator tests it, half-hoping it\'s finally real gold. It never is. He\'s both relieved and a little let down.)',
   ],
   museum_idol_4: [
-    'EXHIBIT D: "Composition IV." The plaque insists this is an idol.',
-    '(The plaque has been replaced four times. It keeps insisting.)',
+    'EXHIBIT D: "Composition Four." The sign swears up and down that this is an idol.',
+    '(They\'ve swapped out the sign four times now. Each new one still claims it\'s an idol.)',
   ],
 
   /* ---------------- §A10 #6 — Museum of Almost-Gold ---------------- */
   q_museum_ask: [
-    '@You. You have the eyes of someone who walks into pyramids.',
-    '@Photograph my four fakes — A through D, marked plaques. For the catalog of shame.',
-    '@Real gold turned up in this valley once, you know. It grinned. I declined to authenticate.',
-    '@Take the loaner camera. The strap is non-negotiable.',
+    '@You there. You\'ve got the look of someone brave enough to march right into a pyramid.',
+    '@Take a photo of each of my four fakes — exhibits A through D, the ones with the labeled signs. I\'m making a record of all my fakes.',
+    '@Real gold showed up in this valley once, you know. And it was grinning. I refused to even examine it. Some things you don\'t touch.',
+    '@Borrow this camera of mine. And keep the strap around your neck — that part\'s not up for discussion.',
   ],
-  q_museum_active: ['@The fakes hold still, friend. That is the one thing they are good at.'],
-  q_museum_full: ['@Your hands are full and my flash is heavy. Make room. The shame catalog waits.'],
+  q_museum_active: ['@Don\'t worry, the fakes won\'t move while you photograph them, friend. Holding still is the one thing they\'re great at.'],
+  q_museum_full: ['@Your hands are too full, and this camera\'s heavy. Clear some space first. My record of fakes can wait a minute.'],
   q_museum_done_beat: [
-    '@Four frames, four fakes, zero authenticity. PERFECT.',
-    '@Here — the camera flash, detached. Real gold flinches at honest light. Remember that, up there.',
-    "@...And if you ever photograph something REAL, I don't want to know. I have a streak going.",
+    '@Four photos, four fakes, not one real thing among them. PERFECT.',
+    '@Here, take the flash off my camera. Real gold can\'t stand bright, honest light — it shrinks from it. Remember that when you get up to the pyramid.',
+    "@...And if you ever do find something REAL up there, please don't tell me. I've got a perfect record of fakes, and I'd like to keep it.",
   ],
-  q_museum_after: ['@The catalog of shame is complete and beautiful. My streak holds at zero.'],
+  q_museum_after: ['@My record of fakes is finished, and it\'s beautiful. Still zero real treasures, just the way I like it.'],
 
   /* ---------------- the jungle path + the grotto ---------------- */
   sign_jungle1: [
-    'TRAIL COURTESY: yield to llamas, ants, and anything currently dancing.',
-    '(The jungle posted this itself. Do not test it.)',
+    'TRAIL MANNERS: step aside for llamas, for ants, and for anything that happens to be dancing.',
+    '(The jungle put up this sign on its own, somehow. Best not to find out what happens if you ignore it.)',
   ],
   sign_jungle2: [
-    'VALLE DORADO: AHEAD. THE PYRAMID: ALSO AHEAD, UNFORTUNATELY.',
-    '(Someone has scratched out "unfortunately" and written it again, bigger.)',
+    'VALLE DORADO: STRAIGHT AHEAD. THE PYRAMID: ALSO STRAIGHT AHEAD, SADLY.',
+    '(Someone crossed out the word "sadly" and then wrote it again, even bigger.)',
   ],
-  sign_grotto: ['(A cool draft from the rocks. The dark inside smells like old stone and good luck.)'],
-  grotto_chest_1: ['A basket somebody cached and never came back for. The jungle kept it dry.'],
-  grotto_chest_2: ['Somebody\'s emergency alfajor. Sealed. Sacred. Yours now.'],
+  sign_grotto: ['(A cool breeze drifts out of the rocks. Inside, the dark smells like old stone and, somehow, good luck.)'],
+  grotto_chest_1: ['A basket someone hid here and never returned for. Lucky for you, the jungle kept it dry.'],
+  grotto_chest_2: ['Someone\'s just-in-case alfajor cookie. Still sealed up tight. It\'s yours now.'],
   grotto_chest_3: [
-    'At the bottom of the box: a warm mote of light, patient as a porch lamp.',
+    'At the bottom of the box: a small, warm spark of light, glowing steady like a porch lamp left on for you.',
     '(It wants to help one more time.)',
   ],
-  grotto_glyph: ['A carved slab: a small sun, held in two hands. Whoever carved it pressed HARD.'],
+  grotto_glyph: ['A carved stone slab shows a small sun cupped in two hands. Whoever carved it pushed in deep, like it really mattered.'],
 
   /* ---------------- S17 M18 PART B (ADR-063) — PLACING THE AMERICAS LIVE ----------------
    * The two hero-signature SET caches (a coffee can / a market stall), the
@@ -2037,233 +2040,233 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // THE PORCH SET — the coffee-can treasures of a 1995 summer, dug up at the green
   porch_can: [
-    'Under the green\'s old oak, right where you buried it: a coffee can gone soft with rust.',
-    'You pry the lid. Summer of \'95 looks back up at you — every treasure a kid swore he\'d keep forever.',
+    'Under the old oak tree on the green, right where you buried it: a coffee can, rusted soft over the years.',
+    'You pop the lid off. There\'s the summer of 1995, staring back up at you — all the little treasures a kid once swore he\'d keep forever.',
   ],
-  porch_can_done: ['(The can\'s empty now, lid set back crooked. The oak will mind it till next summer.)'],
+  porch_can_done: ['(The can\'s empty now, the lid set back on crooked. The old oak will watch over it until next summer.)'],
 
   // THE MERCADO SET — the Puerto Sol market stalls, a charm at every counter
   mercado_stall: [
-    'The last stall on the malecón is closing up — but the vendor waves you over, conspiratorial.',
-    'A cloth comes off a tray of little charms. "Para los cinco," she says. For the five of you. No charge. Take them.',
+    'The last stall on the dockfront is closing up for the night, but the seller waves you over with a sly little smile.',
+    'She pulls a cloth off a tray of little good-luck charms. "Para los cinco," she says — for the five of you. Free of charge. Go on, take them.',
   ],
-  mercado_stall_done: ['(The tray\'s bare. The vendor has already turned to wheel her cart home, humming.)'],
+  mercado_stall_done: ['(The tray\'s empty now. The seller\'s already turned to push her cart home, humming a tune.)'],
 
   // spare_hubcap (ch1) — sell-fodder, the joke is who'd want it
   gift_hubcap: [
-    'Leaned against the pond fence: one chrome hubcap, scratched but proud.',
-    '(A name\'s scrawled on the back in marker: "EARL." Worth more to a man named Earl than to anybody else alive.)',
+    'Leaning against the pond fence: a single shiny hubcap, scratched up but still gleaming.',
+    '(A name\'s written on the back in marker: "EARL." It\'s worth a lot to a guy named Earl, and basically nothing to anyone else.)',
   ],
-  gift_hubcap_done: ['(The fence post is bare. Somewhere, Earl\'s Buick rides one cap short. You can fix that, or pawn it.)'],
+  gift_hubcap_done: ['(The fence post is empty now. Somewhere, Earl\'s car is missing one hubcap. You could return it to him, or just sell it.)'],
 
   // fools_gold_idol (ch2) — near the Gilded Ruins
   gift_fools_idol: [
-    'Tossed in the dust by the gate ramp: a little grinning idol, heavy and bright.',
-    '(Bright as a promise. Heavy as a lie. The wish carved in its base reads, simply: "be quiet.")',
+    'Dropped in the dirt by the gate ramp: a small grinning idol, heavy in the hand and shiny.',
+    '(It shines like it\'s promising you something. But carved into the bottom is one creepy little wish: "be quiet.")',
   ],
-  gift_fools_idol_done: ['(The spot it sat in stays a little colder than the rest. Pawn it; never wish on it.)'],
+  gift_fools_idol_done: ['(The spot where it sat stays colder than the ground around it. Sell it if you want, but never make a wish on it.)'],
 
   // emerald (ch2) — deeper in the jungle
   gift_emerald: [
-    'Wedged in a tree\'s knuckle, green fire catching the one ray of sun that finds it down here.',
-    '(An emerald the size of a thumbnail. The jungle was keeping it. The jungle will not miss it.)',
+    'Stuck in a knot of tree bark, glowing green in the one beam of sunlight that reaches down here.',
+    '(An emerald about the size of your thumbnail. The jungle had it tucked away, but it won\'t miss one little gem.)',
   ],
-  gift_emerald_done: ['(The knuckle of bark is empty. A parrot somewhere registers a formal complaint.)'],
+  gift_emerald_done: ['(The knot in the bark is empty now. Somewhere up in the trees, a parrot squawks like it\'s filing a complaint.)'],
 
   // gold_doubloon (ch2) — dockside
   gift_doubloon: [
-    'Caught between two dock boards, worn smooth: one gold doubloon, old as the harbor.',
-    '(Some sailor\'s last lucky coin, or his first unlucky one. Hard to say. Easy to sell.)',
+    'Wedged between two dock boards, rubbed smooth over time: one old gold coin, as old as the harbor itself.',
+    '(Maybe it was some sailor\'s lucky coin, maybe his unlucky one. No way to know. Either way, it\'s easy to sell.)',
   ],
-  gift_doubloon_done: ['(The gap in the boards whistles when the wind comes off the water. Spend it well.)'],
+  gift_doubloon_done: ['(The gap in the boards whistles whenever the wind blows in off the water. Spend the coin well.)'],
 
   // banana_boat_ticket (ch2 key) — §A5's cargo-ship passage
   gift_boat_ticket: [
-    'Pinned under a crate on the pier: a passage stub for the banana cargo run, stamped and smudged.',
-    '(PUERTO SOL, ONE WAY. The captain shrugs — "Somebody paid and never sailed. Keep it. You earned the trip.")',
+    'Pinned under a box on the pier: a ticket for the banana cargo boat, stamped and a little smudged.',
+    '(PUERTO SOL, ONE WAY. The captain shrugs. "Someone paid for this and never showed up. Keep it. You\'ve earned the ride.")',
   ],
-  gift_boat_ticket_done: ['(The crate\'s lighter now. The gulls have opinions about freeloaders. Let them.)'],
+  gift_boat_ticket_done: ['(The box is lighter now. The seagulls seem to think you\'re getting a free ride. Let them squawk.)'],
 
   // wish_token (ch2 key) — in the idol's offering bowl
   gift_wish_token: [
-    'In the stone bowl at the idol\'s foot, where the wishes used to go: one small clay token, unburned.',
-    '(Somebody set it down and never made the wish. It is warm, the way a held coin is warm. The Locket hums near it.)',
+    'In the stone bowl at the idol\'s feet, where people used to leave their wishes: one small clay token, never burned.',
+    '(Someone set it here but never made their wish. It\'s warm, like a coin that\'s been held in a hand. Your Locket hums when it gets close.)',
   ],
-  gift_wish_token_done: ['(The bowl is empty. The idol keeps grinning, but quieter now — like it\'s out of the wish business for good.)'],
+  gift_wish_token_done: ['(The bowl is empty now. The idol\'s still grinning, but it feels calmer — like it\'s finally done granting wishes for good.)'],
 
   // a Ch.1 deli — OTTERBROOK DRUG's soda-fountain lunch counter (§A4.5)
   npc_deli_otter: [
-    '@Lunch counter\'s still open, hon! I do a Family Basket if you bring me three good things to pack.',
-    '@Corn dog, slice of pie, whatever you got. Three foods, one basket, and a napkin folded just so.',
+    '@Lunch counter\'s still open, hon! I\'ll pack you a Family Basket if you bring me three good foods to put in it.',
+    '@A corn dog, a slice of pie, whatever you\'ve got. Three foods, one basket, and a napkin folded up nice.',
   ],
 
   /* ---------------- VALLE DORADO (§A6 — the village that wished) ---------------- */
   valle_arrival: [
-    'The valley opens like a held breath.',
-    'Llama pens. Painted doors. A shrine with too much shine on it.',
-    'It would be the friendliest place you have ever seen — if anyone were talking.',
+    'The valley opens up below you. The whole place is dead silent, like everyone is holding their breath at once.',
+    'You see llama pens and bright painted doors. There\'s also a little shrine, and it\'s shining way too much for an old stone thing.',
+    'It looks like the friendliest town you\'ve ever seen. The problem is nobody here is saying a single word.',
   ],
-  sign_valle: ['VALLE DORADO — pop. 61 warm souls.', '(The 61 has been crossed out. The new number is written small: "58 warm. 3 waiting.")'],
-  sign_pen: ['THE PEN: six llamas. (Current llamas: see Tomas. Bring patience.)'],
+  sign_valle: ['VALLE DORADO — pop. 61 warm souls.', '(Someone crossed out the 61 and wrote a new count below it: "58 warm. 3 waiting." Three people are no longer counted as awake.)'],
+  sign_pen: ['THE PEN: six llamas live here. (How many are actually in the pen right now? Go ask Tomas. And bring some patience.)'],
   sign_shrine: [
     'THE SHRINE OF THE GIVING SMILE — leave a wish, take a blessing.',
-    '(The offerings are small things. A mitten. A marble. The shine on the idol is new, and wrong.)',
+    '(People left tiny gifts here — a mitten, a marble. The idol on the shrine is shining bright and brand new, and that\'s a bad sign.)',
   ],
   sign_shrine_after: [
-    'THE SHRINE — closed for renovation of its entire premise.',
-    '(The offerings are gone. Their owners took them back, laughing.)',
+    'THE SHRINE — closed down for good. Turns out the whole wishing idea was a trap.',
+    '(The little gifts are all gone. The people who left them came and took them back, laughing.)',
   ],
   npc_tomas: [
-    '@Six llamas, friend. I know each one by gait at four hundred yards.',
-    '@Paloma drifts. Nube wanders. Rey marches. Pepita flops. Filosofo STARES.',
-    '@And Dorada... lately Dorada walks like she weighs three hundred pounds. Llamas worry me.',
+    '@I\'ve got six llamas, friend. I can tell which is which just by how they walk, even from way down the road.',
+    '@Each one\'s got a habit. Paloma drifts off, Nube wanders, Rey marches, Pepita flops over, and Filosofo just STARES at things.',
+    '@But lately Dorada walks like she weighs three hundred pounds. Something\'s off about her, and that scares me. Llamas always know when something\'s wrong.',
   ],
   npc_senora: [
-    '@My neighbor wished for her harvest to double. Now she sits by the shrine all day.',
-    '@The corn came up double, niño. She never went to look at it.',
+    '@My neighbor made a wish for twice as much corn. The wish came true — but now she just sits at the shrine all day and won\'t move.',
+    '@The corn really did grow double, kid. But she never even walked out to see it. The wish took something from her.',
   ],
   npc_valle_kid: [
-    '@I was gonna wish for a bike but the grown-ups who wish go all QUIET.',
-    '@A bike is not worth going quiet. Almost nothing is.',
+    '@I almost wished for a bike. Then I saw that every grown-up who makes a wish goes all silent and empty afterward.',
+    '@A bike isn\'t worth turning into one of those quiet people. Almost nothing is.',
   ],
   npc_doc_valle_out: [
-    '@Out making house calls — except nobody needs me! Everyone WOKE UP!',
-    '@Strangest epidemic of my career: recovery.',
+    '@I\'m out visiting sick folks at home — except nobody\'s sick anymore! Everybody WOKE UP all at once!',
+    '@In my whole career I\'ve never seen anything like it: a whole town getting better on the same day.',
   ],
-  npc_wisher_a: ['@...', '(She is looking at the shrine. Her hands remember kneading bread. The rest of her is somewhere else.)'],
-  npc_wisher_b: ['@...', '(A kid. His wish is still in his hand — a folded paper gone soft at the creases.)'],
-  npc_wisher_c: ['@...', '(He nods at you, slowly, like a man underwater being polite about it.)'],
+  npc_wisher_a: ['@...', '(She stares at the shrine. Her hands keep making little bread-kneading motions out of habit, but her mind is far away.)'],
+  npc_wisher_b: ['@...', '(It\'s a kid. He\'s still clutching his wish — a folded note that\'s gone soft from being held so long.)'],
+  npc_wisher_c: ['@...', '(He gives you a slow nod, like he\'s moving through water and being polite about how slow it is.)'],
   npc_woke_a: [
-    '@—and the BREAD! I left dough proofing TWO MONTHS ago, somebody fed it, it is ENORMOUS now—',
-    '@I am going to bake everything. Today. Twice. Come by hungry.',
+    '@—and the BREAD! I left some dough out to rise TWO MONTHS ago. Somebody kept feeding it the whole time, and now it\'s HUGE—',
+    '@I\'m going to bake everything I can think of, today, and then do it all again. Come by hungry!',
   ],
   npc_woke_b: [
     '@I remember everything I wished for and I do NOT want it anymore!',
     '@I want lunch and to run somewhere! BOTH AT ONCE!',
   ],
   npc_woke_c: [
-    '@The strangest thing. I dreamed something golden was holding my breath FOR me.',
-    '@Then somebody up the mountain told it no. ...That was you, was it. Thank you. Sincerely.',
+    '@The strangest thing happened. While I was out of it, I felt like something golden was breathing for me, so I never had to wake up.',
+    '@Then somebody up the mountain told that thing \'no,\' and I woke up. ...That was you, wasn\'t it? Thank you. I really mean it.',
   ],
-  npc_llama_penned: ['@Mmmh. (The llama is home and aggressively neutral about the whole episode.)'],
-  npc_llama_1: ['@Hmmph. (Paloma regards you from one inch above all earthly concerns. She will allow herding. Today.)'],
-  npc_llama_2: ['@...mmm. (Nube is following a specific cloud. It is a good cloud. He concedes the point and turns home.)'],
-  npc_llama_3: ['@MMPH. (Rey has annexed this meadow. You may negotiate. The treaty is: he goes home, but slowly, with dignity.)'],
-  npc_llama_4: ['@...mm? (Dorada stands very still. Very, very still. Llamas blink, generally. This is generally known.)'],
-  npc_llama_5: ['@zzz... mph. (Pepita was asleep in the soft grass. She wakes grumpy and walks home out of pure spite. It works.)'],
-  npc_llama_6: ['@............ (Filosofo is staring at the pyramid. You wait. He finishes the thought. He files it. He goes home.)'],
+  npc_llama_penned: ['@Mmmh. (The llama is back in its pen and acts like none of this was a big deal.)'],
+  npc_llama_1: ['@Hmmph. (Paloma looks down her nose at you like she\'s above all this. Fine, she\'ll let you herd her home — just this once.)'],
+  npc_llama_2: ['@...mmm. (Nube was busy watching one cloud drift by. He gives it up and turns toward home.)'],
+  npc_llama_3: ['@MMPH. (Rey has decided this meadow belongs to him. After some convincing, he agrees to go home — slowly, and with his head held high.)'],
+  npc_llama_4: ['@...mm? (Dorada stands totally still. Too still. Llamas normally blink — this one isn\'t. Something is wrong with her.)'],
+  npc_llama_5: ['@zzz... mph. (Pepita was napping in the grass. She wakes up cranky and stomps home just to spite you. Hey, whatever gets her there.)'],
+  npc_llama_6: ['@............ (Filosofo is staring hard at the pyramid, deep in thought. You wait. He finishes thinking, then calmly walks home.)'],
   llama_impostor_reveal: [
-    'The wool slides off like a tablecloth in a magic trick nobody clapped for.',
-    'Underneath: gold. Grinning. Six legs planted like furniture.',
+    'You reach for the llama and its wool slides clean off, like a magician yanking a tablecloth.',
+    'Underneath the wool is gold, grinning, standing on six legs as solid as a table.',
     'THE "LLAMA" WAS A GILDED BEETLE THE WHOLE TIME!',
   ],
   llama_impostor_after: [
-    'The gilding cracks and the beetle skitters into the brush, embarrassed for everyone involved.',
-    'Behind the shed: a soft, judgmental "mmph." The REAL Dorada walks herself home.',
+    'Its gold shell cracks and the beetle scurries off into the bushes, like it\'s embarrassed it got caught.',
+    'Behind the shed you hear a quiet, unimpressed "mmph." The REAL Dorada was there the whole time, and she strolls home on her own.',
   ],
 
   /* ---------------- §A10 #5 — The Llama Drama ---------------- */
   q_llama_ask: [
-    '@Friend! The herd is OUT. All six, scattered like opinions.',
-    '@They bolted the day the shrine got shiny. Llamas are never wrong about architecture.',
-    '@Bring them home? Walk up close and be patient — they each need exactly one understanding.',
+    '@Friend! My whole herd got out — all six of them, scattered all over the place.',
+    '@They ran off the same day the shrine started glowing. Llamas can always tell when a building\'s gone bad, and they were right.',
+    '@Can you bring them back? Just walk up slow and be patient. Each llama needs you to understand one thing about it.',
   ],
-  q_llama_active: ['@The pen stands ready. The hay is fluffed. The herd remains theoretical.'],
-  q_llama_full: ['@The poncho is yours but your hands say otherwise. Come back with room for warmth.'],
+  q_llama_active: ['@The pen\'s all set and the hay\'s fresh. The only thing missing is the actual llamas.'],
+  q_llama_full: ['@The poncho is yours, but your bag is full — you\'ve got nowhere to put it. Make some room and come back.'],
   q_llama_done_beat: [
-    '@Six! SIX. The math of my whole life works again.',
-    '@Here — the WOOL PONCHO. Every llama contributed. Dorada contributed double, out of guilt.',
-    '@It turns away claws, teeth, and cold opinions. Wear it up the mountain.',
+    '@Six! All SIX are home! Everything feels right again.',
+    '@Here, take this WOOL PONCHO. Every llama gave wool for it. Dorada gave twice as much, like she felt bad for the mix-up.',
+    '@It\'ll keep claws, teeth, and the cold off you. Wear it when you head up the mountain.',
   ],
-  q_llama_after: ['@The herd naps in formation. Even Filosofo. ESPECIALLY Filosofo.'],
+  q_llama_after: ['@The whole herd is napping in a neat little row. Even Filosofo, the one who never settles down.'],
 
   /* ---------------- the shops + clinics of the valley ---------------- */
-  shop_valle_greet: ['@Lana & Mas! The wool is local. The "mas" is whatever the mountain felt like this week.'],
+  shop_valle_greet: ['@Welcome to Lana & More! The wool\'s from right here. The \'more\' is whatever odds and ends I picked up this week.'],
   shop_valle_bye: ['@Go warm, niño.'],
-  sign_valle_wall: ['ALL WOOL GUARANTEED LLAMA-APPROVED. (The llamas have seen the receipts.)'],
+  sign_valle_wall: ['ALL WOOL GUARANTEED LLAMA-APPROVED. (Yes, we checked with the llamas.)'],
   npc_doc_valle: [
-    '@Clinica Valle. I treat altitude, attitude, and beetle-related surprises.',
-    '@The gray quiet ones... those I cannot treat. Whatever is wrong with them is not IN them. It was taken FROM them.',
+    '@This is the Valle Clinic. I patch up mountain sickness, bad moods, and the occasional surprise beetle.',
+    '@But those gray, silent people — I can\'t help them. The problem isn\'t a sickness inside them. Something reached in and took a piece of them away.',
   ],
-  clinic_valle_wall: ['REMEDIES: rest, soup, sunlight. ESCALATIONS: see the pyramid. PLEASE DO NOT SEE THE PYRAMID.'],
+  clinic_valle_wall: ['FOR SMALL PROBLEMS: rest, soup, sunshine. FOR BIG PROBLEMS: the pyramid is the cause. PLEASE STAY AWAY FROM THE PYRAMID.'],
   npc_priest_valle: [
-    '@Welcome, child. The chapel is the one building in the valley that never wanted anything from you.',
-    '@We pray for the quiet ones every day. Lately the prayers come back... lighter. Something is listening again.',
+    '@Welcome, child. The shrine wants your wishes, but this chapel never asks you for a thing. You can just rest here.',
+    '@We pray for the silent ones every day. Lately those prayers feel like they\'re working again, like someone good is finally listening.',
   ],
-  chapel_valle_wall: ['CAPILLA DEL VALLE — candles free. Matches: ask. Hope: included.'],
+  chapel_valle_wall: ['VALLE CHAPEL — candles are free. Ask us for matches. Hope comes with the visit.'],
 
   /* ---------------- the hospitals + the Otterbrook chapel (Prompt 25) ---------------- */
   npc_doc_brickton: [
-    '@Brickton General, finally open. I blink every four seconds. I have SEEN things, kid.',
-    '@Revivals, cures, the works. The angels float to the desk themselves; it is very convenient.',
+    '@Brickton General Hospital is finally open. I\'ve seen some wild stuff lately, kid — I can barely keep up.',
+    '@We can wake people up, cure them, all of it. The patients even float right over to the front desk on their own — makes my job easy.',
   ],
-  hospital_wall: ['BRICKTON GENERAL — IF YOU CAN READ THIS, YOUR EYES ARE FINE. NEXT WINDOW PLEASE.'],
+  hospital_wall: ['BRICKTON GENERAL — IF YOU CAN READ THIS SIGN, YOUR EYES ARE FINE. GO TO THE NEXT WINDOW.'],
   // S22 (ADR-117) — the WARD floor upstairs
   hospital_f2_sign: [
-    'WARD — QUIET PLEASE. Visiting hours: whenever. Departing hours: when the doctor says.',
-    '(A taped note: "the man in bed 3 is FINE, he just likes the attention.")',
+    'PATIENT WARD — QUIET PLEASE. Visit anytime. You leave when the doctor says you can.',
+    '(A note is taped up: "the man in bed 3 is totally FINE — he just likes being fussed over.")',
   ],
   npc_ward_nurse: [
-    '@Keep it down up here, hon — half these folks fainted at the meteor and the other half at the BILL.',
-    "@Your friends need waking? That's the front desk, downstairs. Up here we mostly do pudding and worrying.",
+    '@Keep your voice down up here, hon. Half these folks passed out when the meteor hit, and the other half passed out when they saw how much treatment costs.',
+    "@Need your friends woken up? Go to the front desk downstairs for that. Up here we mostly just hand out pudding and worry about people.",
   ],
   npc_ward_patient1: [
     '@Zzz... the sky fell... zzz... I told them it would... zzz...',
   ],
   npc_ward_patient2: [
-    '@I just came in for a splinter and now I have a ROOMMATE who narrates his dreams. (gestures at bed 1)',
+    '@I only came in for a splinter, and now I\'m stuck next to a guy who talks through his dreams out loud. (points at bed 1)',
   ],
   npc_ward_patient3: [
-    '@A meteor, a cult of smiling men, and now hospital gelatin. What a week to be alive. Truly — what a week to be ALIVE.',
+    '@A meteor, a gang of creepy smiling men, and now wobbly hospital jello. What a week. I mean it — what a week to be ALIVE.',
   ],
   hospital_mushroom_note: [
-    'MEMO: MUSHROOMIZATION is treated by DOCTORS ONLY (§ policy).',
-    '(Below, handwritten: "no, the church cannot do it. yes, we asked.")',
+    'NOTICE: If you\'ve turned into a mushroom, only a DOCTOR can fix it. It\'s the rule.',
+    '(Scribbled below: "no, the church can\'t cure it. yes, we already asked them.")',
   ],
-  hospital_broke: ['@The till says no, friend. Medicine runs on money and miracles, and I only stock one.'],
-  hospital_cured: ['@Scrubbed, cured, and certified upright. Try to stay that way for a week. For me.'],
+  hospital_broke: ['@Sorry friend, you can\'t afford it. Healing takes either money or a miracle, and the only one I\'ve got for sale is the kind that costs money.'],
+  hospital_cured: ['@All cleaned up, cured, and back on your feet. Try to stay healthy for a week, okay? Do it for me.'],
   hospital_cured_homesick: [
-    '@...And for THAT one, the prescription is technically "call your mother."',
-    '@I billed you anyway. Tell her the doctor says hi.',
+    '@...And as for that one, there\'s no medicine for it. What they really need is to call their mom.',
+    '@I charged you for the visit anyway. Tell her the doctor says hi.',
   ],
   npc_priest_otter: [
-    '@Welcome, welcome. The chapel kept the porch light on all through that awful 2 A.M.',
-    '@Stay as long as you like. The benches are old but the welcome is new every day.',
+    '@Welcome, welcome. We left the chapel\'s light on all through that scary night when the meteor came.',
+    '@Stay as long as you want. The benches are old, but you\'re always welcome here, every single day.',
   ],
-  chapel_wall: ['OTTERBROOK CHAPEL — services Sunday. Doors: always. Yes, even you, Gary.'],
+  chapel_wall: ['OTTERBROOK CHAPEL — service is Sunday. Our doors are always open. Yes, even for you, Gary.'],
   chapel_prayer: [
-    'You sit a moment, all of you, in the kind of quiet that gives instead of takes.',
-    '* Everyone feels a little mended.',
+    'All of you sit quietly together for a moment. This is the good kind of quiet — the kind that makes you feel better, not worse.',
+    '* Everyone feels a little healed.',
   ],
   priest_mia: [
-    '@...Your friend there. The one whose hands fold without her noticing.',
-    '@Whatever she carries, it is the real thing. Tell her this house is always glad when she passes it.',
+    '@...That friend of yours — the one whose hands fold into a prayer without her even noticing.',
+    '@Whatever gift she\'s got, it\'s real. Tell her this chapel is always happy to see her go by.',
   ],
 
   /* ---------------- the step-pyramid (§A6 — masks, floors, the apex) ---------------- */
   pyramid_approach: [
-    'The pyramid does not loom. Looming would be effort.',
-    'It just sits there, stepped and certain, the way a closed fist sits on a table.',
-    '(A picnic table stands by the path. Somebody understood what this place asks of visitors.)',
+    'The pyramid doesn\'t try to scare you. It doesn\'t have to make any effort at all.',
+    'It just sits there, made of giant stone steps, calm and sure of itself, like a clenched fist resting on a table.',
+    '(There\'s a picnic table by the path. Somebody knew that anyone coming here would need a rest first.)',
   ],
   sign_pyramid: [
     'THE STEP-PYRAMID. (The plaque is older than the village and says one thing:)',
     '"IT SMILED FIRST."',
   ],
-  pyr_mask_1: ['A stone mask on a pedestal. Its mouth is set like a switch. Its eyes are set on you.'],
-  pyr_mask_2: ['A second mask. This one looks mid-sentence. The sentence has lasted five hundred years.'],
-  pyr_mask_3: ['A third mask. Someone carved it kindly — then the kindness wore off the edges.'],
-  pyr_mask_4: ['The last mask. It is the smallest. It is the loudest, somehow.'],
+  pyr_mask_1: ['A stone mask sits on a stand. Its mouth looks like a lever you could flip. Its carved eyes seem to be watching you.'],
+  pyr_mask_2: ['A second mask. It looks frozen in the middle of saying something — and it\'s been stuck like that for five hundred years.'],
+  pyr_mask_3: ['A third mask. Whoever carved it made it look kind at first, but the kindness has worn away over the years.'],
+  pyr_mask_4: ['The last mask. It\'s the smallest one, but somehow it feels the most threatening.'],
   pyr_mask_turn: [
-    'You press the mask\'s mouth. Deep under the floor, something the size of a house TURNS.',
-    '(The grooves in the floor grind a quarter-circle and settle, satisfied.)',
+    'You push on the mask\'s mouth like a button. Deep under the floor, something as big as a house TURNS.',
+    '(Carved tracks in the floor grind a quarter-turn and then stop, locked into place.)',
   ],
-  apex_dais: ['The dais is swept clean. The whole mountain of dust went SOMEWHERE, and nothing did the sweeping.'],
-  apex_dais_after: ['The dais is just stone now. Good, honest, boring stone. The valley\'s favorite kind.'],
+  apex_dais: ['The stone platform is spotless. Years of dust should be piled here, but it\'s all gone — and nobody cleaned it.'],
+  apex_dais_after: ['The platform is just plain stone now. Boring, ordinary stone — exactly the kind this valley likes best.'],
   apex_approach: [
-    'The top room holds its breath.',
-    'On the dais: the idol. Small as a housecat. Heavy as a held grudge.',
-    'Every offering from the shrine below is HERE, stacked in tidy, terrible rows.',
+    'The room at the top is dead silent, like it\'s holding its breath.',
+    'On the platform sits the idol. It\'s as small as a house cat, but you can feel it\'s heavy — and it feels mean, like it\'s been holding a grudge for ages.',
+    'Every little gift from the shrine down in the village is up HERE, stacked in neat rows. It took all of them.',
   ],
   apex_grin_wakes: [
     'the grin turns to you first. the rest of it follows, like an afterthought.',
@@ -2274,110 +2277,110 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // S16: the Grin's half-dead desperation blow — the telegraph one beat before
   // Jay's wall answers it (the_wall_that_answers; awake_the_wall_that_answers).
   idol_gathering: [
-    'The Idol stops grinning. For the first time, it looks AFRAID.',
-    'It drags every fleck of gold in the room into its hands — the corn-light, the wool-light, the late sun — all of it, into one blow too wide to dodge.',
-    'It comes down like a thrown sheet.',
+    'The Idol stops grinning. For the first time, it actually looks SCARED.',
+    'It pulls every bit of golden light in the room into its hands — the glow off the corn, the wool, the setting sun — all of it, winding up one giant swing you can\'t dodge.',
+    'The attack drops down over you, wide and fast like a thrown bedsheet.',
   ],
-  idol_form_solid: ['The Idol seals over — SOLID GOLD, seamless and smug! (Swings will bounce. The old light won\'t.)'],
+  idol_form_solid: ['The Idol hardens into SOLID GOLD, smooth all over and smug about it! (Normal hits will just bounce off. Jay\'s light will still get through.)'],
   idol_form_hollow: [
-    'The gold goes dark — and the inside is NOTHING. HOLLOW!',
-    '(The Vibe finds no purchase in an absence. Bats, however. Bats are very real.)',
+    'The gold turns dark, and you realize there\'s NOTHING inside it. It\'s HOLLOW!',
+    '(Vibe attacks pass right through the empty space and do nothing. Bats, though — a solid bat still works just fine.)',
   ],
   awake_cold_reads: [
-    'The hollow opens and the room goes colder than altitude can explain.',
+    'The hollow idol opens up, and the room turns cold — far colder than the mountain air alone could make it.',
     '{faye} doesn\'t step back.',
     '@...It\'s empty. All that shine, and it\'s EMPTY in there. That\'s the whole trick.',
     'She holds out one hand, palm down, the way you check a window for a draft.',
-    '@Cold reads what gold hides.',
-    'Frost gathers along her fingers like it has been waiting its whole life to be asked.',
+    '@The cold shows me what all that gold is hiding.',
+    'Frost spreads across her fingers, like it\'s been waiting forever for her to finally call on it.',
   ],
   /* ---- S16 ("The Old Light, Doubled"): Jay's three late awakenings. He
      barely speaks — let the light do the talking (§A11.2, played straight). ---- */
   awake_the_first_borrow: [
-    'The gate guard won\'t budge, and there\'s no way around. {rex} looks at him a long second — then does the thing he\'s never done to a person.',
-    '({rex} reaches in, quiet as a held breath. For a moment he is wearing the guard like a coat. The man\'s hand lifts the latch. The gate swings.)',
+    'The gate guard won\'t move, and there\'s no way around him. {rex} stares at him for a long moment — then does something he\'s never done to a person before.',
+    '({rex} reaches into the guard\'s mind, silent and careful. For a moment it\'s like he\'s stepped inside the man and is wearing him like a coat. The man\'s hand lifts the latch, and the gate swings open.)',
     '({rex} steps back out of him, gentle, and gives it back.) ...Sorry, sir. You\'re going to have a weird minute.',
-    '(The guard blinks hard.) ...Did I just— why am I holding the gate for you kids? (He shakes it off, unhurt, more confused than angry.)',
-    'Milo is grinning at the puzzle solved. But Mia has gone very still, and {faye} takes a small half-step back from {rex} — the kind you take without deciding to.',
+    '(The guard blinks hard.) ...Did I just— why am I holding the gate open for you kids? (He shrugs it off. He\'s fine, just confused more than mad.)',
+    '{milo} is grinning at the puzzle solved. But {faye} has gone very still, and takes a small half-step back from {rex} — the kind you take without deciding to.',
     '@(...He can do that. To anyone.)',
-    '({rex} doesn\'t look proud. He looks like a kid who just learned he can pick locks, and that not everyone is glad about it.)',
+    '({rex} doesn\'t look proud. He looks like a kid who just found out he can break into anything — and that this scares the people around him.)',
   ],
   awake_the_borrowed_voice: [
-    'The crowd is one voice now. The Hush hollowed them down to a single droning note, and the note has a door in it.',
+    'The whole crowd speaks as one now. The Hush has emptied them out until they\'re all humming the same flat note — and {rex} can feel a way to reach inside that note.',
     '@(You don\'t have to do this.)',
-    '({rex} does it anyway. He reaches into the drone the way you\'d reach into cold water — and takes one voice out, gently, like lifting a sleeping kid.)',
-    'It is not a victory. It is the villain\'s own trick, done once, carefully, by someone who hated every second of it.',
+    '({rex} does it anyway. He reaches into the droning crowd like reaching into cold water, and gently lifts one person\'s voice free, the way you\'d carry a sleeping kid.)',
+    'It doesn\'t feel like a win. It\'s the enemy\'s own trick, used just once and carefully, by a kid who hated every second of doing it.',
     'The borrowed voice turns toward the others. {rex} does not look proud. He looks like he is keeping a promise to give it back.',
   ],
   awake_the_wall_that_answers: [
-    'The light came down like a thrown sheet — too wide to dodge, too fast to block. Nowhere to put the party. No time.',
+    'The blast of light dropped down wide and fast, like a thrown sheet — too big to dodge and too quick to block. There was nowhere to move the team and no time to do it.',
     '{rex} did not think. His hands came up on their own.',
-    '(A wall went up between the friends and the blow — still as standing water, and just as honest: it gave the blow straight back.)',
-    'The room rang with its own attack. Everyone was still standing.',
+    '(A wall of light shot up between his friends and the attack. It sent the whole blow straight back the way it came.)',
+    'The idol got hit by its own attack, and the room rang from the force. Every one of the friends was still standing.',
     '@...Huh. (He shakes out his hands like they stung.) Do it again. I\'ll be here.',
   ],
   awake_the_whole_sky: [
     'Mars is below. Home is a blue speck you could cover with a thumb, and every porch light on it is on.',
     'And all at once {rex} can feel them — Otterbrook, the Embers, the long road, every friend who ever waved him home.',
     'It is too much to hold and he does not try to hold it. He lets it through.',
-    '(The old light stops being a thing he has and becomes a thing he IS — the whole sky, pouring one way: forward.)',
+    '(His power stops being something he holds and becomes part of who he is — like a whole sky of light, all pouring forward at once.)',
     'No words. There was never going to be a word big enough. Just the light, and the boy, aimed.',
   ],
   /* ---- DORIN ("The Monk's Full Path"): the Trial of the Mute Mountain. The
      beat that gates his joining (Ch.9). Voice: formal, calm, faintly baffled by
      the modern world; his lines read like sutras (§A11.2, played straight). ---- */
   awake_trial_of_the_mute_mountain: [
-    'The Mute Mountain has not spoken in nine hundred years. The Trial is simple, the elders say: ask it nothing, and listen until it answers.',
-    '{dorin} sits. The cold comes down off the snow like a hand laid flat on the back of the neck.',
+    'The elders say the Mute Mountain hasn\'t made a sound in nine hundred years. The test is simple: don\'t ask it anything. Just sit and listen until it answers on its own.',
+    '{dorin} sits down. Cold air slides off the snow and settles on the back of his neck like a flat, heavy hand.',
     '@I have no question. I came only to be still.',
-    'And the mountain, which keeps every star that ever fell on it, leans close — and remembers them all to him at once.',
-    '(Not a gift. A recognition. The full Comet was always his; the mountain only showed him where he had been keeping it.)',
-    '@...Oh. (He stands, unhurried.) It was here the whole time. Thank you for the patience to find it.',
+    'The mountain has held onto every falling star that ever landed on it. Now it leans close and shows him all of them at once.',
+    '(The mountain isn\'t giving him new power. The full Comet power was always inside him — the mountain just showed him where he\'d been hiding it from himself.)',
+    '@...Oh. (He stands up calmly.) It was inside me the whole time. Thank you for the patience it took to find it.',
   ],
   /* ---- MIA ("Ability Expansion"): her three iconic late awakenings. Kind and
      steel-spined; she hears the Embers sing, made literal (§A3, §A11.2). ---- */
   awake_the_first_heartlight: [
-    'The Resonance Site holds its breath. Somewhere under the floor, an Ember is humming a note so small it is almost an apology.',
+    'The Resonance Site goes still and quiet. Somewhere under the floor, an Ember is humming a note so faint and tiny it almost sounds sorry to be heard.',
     '{faye} kneels and listens the way she prays — all the way down.',
     '@...Oh, you poor thing. You\'ve been trying to be heard this whole time.',
     'She hums it back to it. Just once. Just the same small note, returned.',
-    '(The dark in the room flinched. There is a kind of light it cannot eat, and she has just learned to sing it.)',
+    '(The darkness in the room pulled back. There\'s one kind of light the dark can\'t swallow, and she just learned how to sing it out.)',
     '@Okay. Okay. I can carry that one. Sing it again — I\'ll learn the rest.',
   ],
   awake_the_match_that_stays_lit: [
-    'Every fire she has ever lit, the Hush has smothered — patient, certain, like a thumb over a candle.',
+    'Every fire she\'s ever started, the Hush has snuffed out — slowly and surely, like a thumb pressing down on a candle flame.',
     'Not this one. {faye} sets her jaw and keeps her hand open over the spark instead of cupping it.',
     '@A fire you have to hide isn\'t a fire. It\'s a secret. I\'m done keeping it small.',
-    'The flame does not flicker out. It climbs. It finds the air, and the air says yes.',
-    '(The whole sky went orange — and STAYED. The match that stays lit, at last.)',
+    'This time the flame doesn\'t die. It grows taller, catches the air, and just keeps burning.',
+    '(The whole sky turned orange with fire — and this time it STAYED lit. Her flame finally won\'t go out.)',
   ],
   awake_she_hears_it_all: [
-    'It comes in like a tide — not one corrupted Ember but every Ember in the field at once, all of them droning the Hush\'s flat grey note.',
+    'It hits her like a flood — not just one twisted Ember but every Ember in the whole field at once, all droning the Hush\'s dull gray note.',
     'It should have buried her. {faye} opens her hands instead of covering her ears.',
     '@I hear you. Every single one of you. Come here.',
-    'And she pulls — not the spark from one, but the SONG from all of them, the whole field leaning her way like grass before rain.',
-    '(The grey note broke into a chord. She had been listening her whole life; now the whole field answered.)',
+    'And she pulls — not just one spark, but the whole SONG out of all of them at once, the entire field bending toward her like grass before a storm.',
+    '(That dull gray note burst into music. She\'d spent her whole life listening — and now the whole field finally sang back.)',
   ],
   ember2_get: [
-    'In the idol\'s hollow, behind where the grin was: a warmth it could not digest.',
-    'JAY held up the Star Locket!',
-    '* The second EMBER settled in beside the first. The Heartlight gained a voice — TWO now, in harmony.',
+    'Inside the hollow idol, right behind where its grin used to be, there\'s a warm glow it was never able to swallow.',
+    '{rex} held up the Star Locket!',
+    '* The second EMBER joined the first one. The Heartlight grew stronger — TWO Embers now, glowing together.',
   ],
   apex_after: [
-    'The offerings on the dais stir, like a room of sleepers at a window being opened.',
-    'Somewhere below, in the valley — somebody laughs. Out loud. Out of practice.',
+    'The little gifts on the platform start to stir, like a room full of sleeping people waking up when someone opens a window.',
+    'Down in the valley, somebody laughs out loud — like it\'s the first laugh they\'ve managed in a long time.',
     'You should go see that.',
   ],
   valle_recovery: [
     'The plaza is LOUD.',
     'The baker is yelling about dough. The kid is running in circles on principle.',
-    'The man by the shrine shakes everyone\'s hand twice, beginning and ending with yours.',
-    'Color does not come back to a place all at once. It comes back like this: one laugh at a time.',
+    'The man who used to sit frozen at the shrine is shaking everyone\'s hand twice — starting and finishing with yours.',
+    'A town doesn\'t get its life back all at once. It comes back slowly, one laugh at a time.',
   ],
   ch2_card: [
-    'The valley keeps its gold: the corn, the late light, the wool, the laughing.',
-    'The Locket hums its two-part harmony. Six Embers still sleep somewhere east of everything.',
-    "* (The boat home runs whenever you're ready. Bert's at the Brickton docks with a sky to sell you.)",
+    'The valley gets to keep the good things: its corn, its evening sunlight, its wool, and its laughter.',
+    'The Locket hums with both Embers now. Eight more Embers are still out there sleeping, somewhere far to the east.',
+    "* (The boat home leaves whenever you're ready. Bert's waiting at the Brickton docks, happy to take you.)",
   ],
 
   /* ---------------- THE ARMY ON OUR TAIL (S19 M40, §A6) ----------------
@@ -2386,24 +2389,24 @@ export const DIALOGUE: Record<string, DialogueScript> = {
    * army is bumbling-earnest, never the Hush; nobody is the villain here. The
    * per-chapter scene staging (checkpoint map, tank route, flyover) rides these. */
   army_misread: [
-    '@HALT. By the authority of Field Regulation Twelve, you are detained for theft of a military prototype.',
-    '@A classified signal pinged Outpost Buckle at oh-six-hundred. The trail leads to... five children. And a dog.',
-    '@I have read the manual TWICE. The manual does not cover this. I am improvising, which I HATE.',
-    "@(He squints at Milo's remote.) ...That is the prototype. It must be. Nothing that small should work that well.",
+    '@HALT. Under Army Rule Twelve, I\'m placing you under arrest for stealing a piece of military equipment.',
+    '@A secret signal reached our base at six this morning. We tracked it here, and it led us to... five kids. And a dog.',
+    '@I\'ve read the rulebook TWICE. There\'s no rule for arresting children. So I\'m making it up as I go, and I HATE doing that.',
+    "@(He squints at {milo}'s remote.) ...That's got to be the stolen equipment. Something that tiny shouldn't work that well.",
   ],
   army_misread_recruit: [
-    '@Psst. Kid. The General means well. He alphabetized the tank.',
-    "@I just want to go home. My mom makes this casserole. You wouldn't understand. ...Do you? You do, huh.",
+    '@Psst. Kid. The General\'s heart is in the right place. He even sorted everything in the tank in alphabetical order.',
+    "@I just want to go home. My mom makes this casserole I miss. You probably get that, huh? Yeah. You do.",
   ],
   army_clearing: [
-    '@(General Buckle watches the real signal resolve on the screen — not the kids. The quiet thing. The Hush.)',
-    '@...Subsection Twelve, paragraph four. "When an officer is wrong, he says so. Out loud. To the wronged party."',
-    '@I was wrong. Out loud. To you. I chased the wrong tail clean across two countries, and I am SORRY.',
-    '@The whole battalion stands down. And if that quiet thing ever needs answering — you call this number. We come running.',
+    '@(General Buckle watches his screen and finally sees what the signal really is — not the kids at all. It\'s the Hush.)',
+    '@...Rule Twelve, line four. "When an officer makes a mistake, he admits it. Out loud. To the person he wronged."',
+    '@I was wrong. I\'m saying it out loud, to you. I chased the wrong target across two whole countries, and I am SORRY.',
+    '@The whole army is standing down. And if that Hush thing ever needs fighting, you call this number. We\'ll come running.',
   ],
   army_clearing_recruit: [
-    "@We're going home! The General cried a little. Said it was the wind. There was no wind.",
-    '@If you ever need an army that mostly waves, we are YOUR army. Tell your dog the tank says hi.',
+    "@We're going home! The General teared up. He blamed it on the wind, but there wasn't any wind.",
+    '@If you ever need a friendly army that\'s better at waving than fighting, we\'re YOUR army. Tell your dog the tank says hi.',
   ],
 
 };
