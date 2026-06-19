@@ -117,9 +117,20 @@ like jay) instead of drifting to generic pixel-anime:
 2. **Bust** originals (waist-up, no legs): add to the prompt "draw the COMPLETE FULL
    BODY head-to-feet" + invent plausible legs/shoes that fit the character.
 
-### Generate — ChatGPT, one conversation per character, 5 serial facings
-On chatgpt.com, **one conversation per NPC**. Attach the reference, then generate the
-**5 unique facings** as serial follow-ups (each conditions on the prior for consistency):
+### Generate — ChatGPT, RE-ATTACH the real character on EVERY facing
+On chatgpt.com, **one conversation per NPC**. **Paste the actual current character art
+(the example) into EVERY facing request — not just the first.** Pull frame 0 of the
+character's OWN sheet from the characters section (`assets/art/characters/<id>_anim_46_4x.png`
+or, for unwired NPCs, the master) as the reference, and re-paste it with each prompt so
+ChatGPT always has the canonical design in view.
+
+> ⚠️ **Do NOT generate the angles as text-only follow-ups.** If you attach the reference
+> once and then ask for the other facings in words, ChatGPT **drifts off both the design
+> and the angle** — once the image scrolls out of immediate view it reinvents the
+> character (LEFT comes out front, backs show the face, clothes/props wander). Re-attaching
+> the real sprite on every facing is the fix that keeps each one on-model.
+
+Generate the **5 unique facings**:
 **DOWN** (front, face visible) → **LEFT** (strict side profile) → **UP** (from behind,
 NO face) → **DOWN-LEFT** (3/4 front-left) → **UP-LEFT** (3/4 back-left). Right /
 down-right / up-right are produced by **mirroring** at assemble time.
@@ -143,11 +154,24 @@ failures — profiles that come out front, and backs that show the face):
 - **UP-LEFT** — "3/4 BACK angled toward the upper-LEFT, no face."
 
 ### Browser mechanics (automation)
-- **Attach the reference by clipboard paste:** put the PNG on the OS clipboard (PowerShell
-  STA `[Windows.Forms.Clipboard]::SetImage`), then a **REAL mouse-click into the "Ask
-  anything" composer, then Ctrl+V** — a JS `.focus()` alone does NOT make the paste carry
-  the image. Then JS-inject the prompt text (paste-FIRST-then-type) and click
-  `button[data-testid="send-button"]`.
+- **Attach the reference by clipboard paste — do this for EVERY facing, not just the
+  first:** put the PNG on the OS clipboard (PowerShell STA `[Windows.Forms.Clipboard]::SetImage`),
+  then a **REAL mouse-click into the composer, then Ctrl+V** — a JS `.focus()` alone does
+  NOT make the paste carry the image. Then JS-inject the prompt text (paste-FIRST-then-type)
+  and click `button[data-testid="send-button"]`. **Verify the thumbnail shows the right
+  character before sending** (the clipboard is shared with whatever else is running, so it
+  gets clobbered — re-`SetImage` and re-paste until correct). The post-navigate **first
+  paste reliably misses**; prime with a throwaway click+Ctrl+V, then paste again.
+- **When the clipboard is actively contended** (e.g. another app/session copying), a one-shot
+  `SetImage` loses the race. Run a **background loop that re-asserts the image every ~120ms for
+  ~15s** (`run_in_background`), then paste inside that window — the reference wins. Verify the
+  attach by JS (`[...form.querySelectorAll('img')].map(i=>i.naturalWidth)` → `[384]`), not a
+  screenshot. `upload_image`, synthetic drag/drop events, and page `fetch` of a local ref are all
+  dead ends (retrieval error / untrusted-event rejection / CSP) — real clipboard paste only.
+- **Re-attach on EVERY facing:** the image generator only sees the CURRENT turn's attachment, so
+  paste the reference again before each facing's prompt. Generate **DOWN → DOWN-LEFT → LEFT → UP →
+  UP-LEFT** (face-views first, backs last) — a down-left generated after the back views drifts to
+  a back; if it does, redo it in a fresh chat. Mind throttling ("making requests too quickly").
 - **Clipboard recovery:** `SetImage` can wedge — `OpenClipboard` returns Win32 err **5
   (ACCESS_DENIED)** even though it looks free (the Windows clipboard-history service,
   `cbdhsvc`). Recovery: click the page to focus it + `navigator.clipboard.writeText(...)`
