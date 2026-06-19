@@ -781,6 +781,7 @@ const ENEMY_OVERWORLD_ART = [
   'rogue_icecream_truck',
   'tick_nymph',
   'the_suit',
+  'expired_meter',
 ].map((id) => ({
   id,
   key: `ow_enemy_${id}`,
