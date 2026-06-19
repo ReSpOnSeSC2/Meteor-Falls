@@ -583,6 +583,8 @@ export function worldSpriteScale(sprite: string, texW: number, texH: number): nu
 
 const ENEMY_BATTLE_ART = [
   { key: 'battle_constable_borden', url: new URL('../../assets/art/enemies/battle_constable_borden.png', import.meta.url).href },
+  { key: 'battle_constable_borden_w1', url: new URL('../../assets/art/enemies/battle_constable_borden_w1.png', import.meta.url).href },
+  { key: 'battle_constable_borden_w2', url: new URL('../../assets/art/enemies/battle_constable_borden_w2.png', import.meta.url).href },
   { key: 'battle_cranky_mailbox', url: new URL('../../assets/art/enemies/battle_cranky_mailbox.png', import.meta.url).href },
   { key: 'battle_cranky_mailbox_w1', url: new URL('../../assets/art/enemies/battle_cranky_mailbox_w1.png', import.meta.url).href },
   { key: 'battle_cranky_mailbox_w2', url: new URL('../../assets/art/enemies/battle_cranky_mailbox_w2.png', import.meta.url).href },
@@ -736,6 +738,7 @@ const ENEMY_OVERWORLD_ART = [
   'banana_bunch',
   'blazer_smiler',
   'boiler_golem',
+  'borden',
   'brolly_bat',
   'coily_cicada',
   'cranky_mailbox',
@@ -765,6 +768,12 @@ const ENEMY_OVERWORLD_ART = [
   'tea_trolley',
   'telephone_box',
   'the_invigilator',
+  // overworld-art pass: authored 8-dir sheets replacing borrowed procedural minis
+  'recycling_raccoon',
+  'sprinkler_sentry',
+  'unionized_gnome',
+  'mandatory_memo',
+  'motivational_poster',
 ].map((id) => ({
   id,
   key: `ow_enemy_${id}`,

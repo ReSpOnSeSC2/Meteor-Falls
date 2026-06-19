@@ -11,6 +11,7 @@
     "validate": "vite-node tools/content-validate.ts",
     "visuals:audit": "vite-node tools/visual-identity-audit.ts",
     "visuals:audit:strict": "vite-node tools/visual-identity-audit.ts --strict",
+    "enemies:frames": "vite-node tools/enemy-frame-audit.ts",
     "anim:audit": "vite-node tools/character-animation-audit.ts",
     "anim:audit:strict": "vite-node tools/character-animation-audit.ts --strict",
     "anim:frame": "vite-node tools/character-frame-export.ts --",
