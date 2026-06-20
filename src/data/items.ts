@@ -1536,7 +1536,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       luck: 7,
       usableInBattle: false,
       price: 60,
-      text: 'A champion conker, baked hard and vinegared, strung on a bootlace. A proven sixer. Luck +7.',
+      text: 'A champion conker, baked hard and vinegared, strung on a bootlace. It has smashed six rivals to bits. Luck +7.',
     }),
     I({
       id: 'house_pin',
@@ -2842,7 +2842,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       bonus: { luck: 4 },
       usableInBattle: false,
       price: 360,
-      text: 'A brass been that sways things larger than itself. Pippa does not charm snakes with it; she charms order out of chaos. Luck +4.',
+      text: 'A brass snake-charmer\'s flute that sways things larger than itself. Pippa does not charm snakes with it; she charms order out of chaos. Luck +4.',
     }),
     // — armor: the §A8 HAT LADDER (jeweled Pagri) + the bazaar/palace bodies —
     I({
@@ -4752,7 +4752,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       kind: 'key',
       usableInBattle: false,
       price: 0,
-      text: 'A postcard from Minimus, printed at true scale. Dad needs the monocle, a steady hand, and his glasses.',
+      text: 'A postcard from Minimus, printed at true (tiny) scale. Dad needs the monocle, a steady hand, and his glasses.',
     }),
     // S17 M21 (ADR-091): the CATALOG pieces of the other §A10 cross-chains. The
     // quest/system wiring (the 14 photo ambushes, the postcard cadence, the

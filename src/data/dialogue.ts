@@ -1313,7 +1313,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Your five is on the chalk. Do not make my handwriting look foolish.',
   ],
   permit_resume: [
-    '@Your game is still ON the chalk — I hold quarters open the way banks hold grudges. Step in when you are ready.',
+    '@Your game is still ON the chalk — I hold your spot the way banks hold grudges. Step in when you are ready.',
   ],
   permit_eliminated: [
     '@The bracket forgot you the moment you lost. I did not. I rank losses too. Yours was top forty.',
