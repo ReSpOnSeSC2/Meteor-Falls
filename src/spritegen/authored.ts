@@ -263,6 +263,13 @@ export const NPC_CHARACTER_ART = [
   { id: 'npc_depot_clerk', key: 'authored_npc_depot_clerk_8dir', url: new URL('../../assets/art/characters/npc_depot_clerk_anim_46_4x.png', import.meta.url).href },
   { id: 'npc_realtor', key: 'authored_npc_realtor_8dir', url: new URL('../../assets/art/characters/npc_realtor_anim_46_4x.png', import.meta.url).href },
   { id: 'npc_bert', key: 'authored_npc_bert_8dir', url: new URL('../../assets/art/characters/npc_bert_anim_46_4x.png', import.meta.url).href },
+  // Ch.4 Norway — Kvisthavn & Lilleby cast (46-frame authored sheets)
+  { id: 'sigrid_spectacles', key: 'authored_sigrid_spectacles_8dir', url: new URL('../../assets/art/characters/sigrid_spectacles_anim_46_4x.png', import.meta.url).href },
+  { id: 'kvisthavn_fisher', key: 'authored_kvisthavn_fisher_8dir', url: new URL('../../assets/art/characters/kvisthavn_fisher_anim_46_4x.png', import.meta.url).href },
+  { id: 'kvisthavn_shopkeeper', key: 'authored_kvisthavn_shopkeeper_8dir', url: new URL('../../assets/art/characters/kvisthavn_shopkeeper_anim_46_4x.png', import.meta.url).href },
+  { id: 'mayor_of_lilleby', key: 'authored_mayor_of_lilleby_8dir', url: new URL('../../assets/art/characters/mayor_of_lilleby_anim_46_4x.png', import.meta.url).href },
+  { id: 'lilleby_giant_child', key: 'authored_lilleby_giant_child_8dir', url: new URL('../../assets/art/characters/lilleby_giant_child_anim_46_4x.png', import.meta.url).href },
+  { id: 'lilleby_undertaker', key: 'authored_lilleby_undertaker_8dir', url: new URL('../../assets/art/characters/lilleby_undertaker_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -455,7 +462,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,
@@ -732,6 +739,21 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_headmaster_mainframe', url: new URL('../../assets/art/enemies/battle_headmaster_mainframe.png', import.meta.url).href },
   { key: 'battle_headmaster_mainframe_w1', url: new URL('../../assets/art/enemies/battle_headmaster_mainframe_w1.png', import.meta.url).href },
   { key: 'battle_headmaster_mainframe_w2', url: new URL('../../assets/art/enemies/battle_headmaster_mainframe_w2.png', import.meta.url).href },
+  // §A7 Ch.4 NORWAY — the three authored Norway battlers + Boss 4 (all three wear
+  // tiers on disk). The Whisperwig's SURFACED form (_exposed) is a §A6 FORM_ART key.
+  { key: 'battle_thunder_snail', url: new URL('../../assets/art/enemies/battle_thunder_snail.png', import.meta.url).href },
+  { key: 'battle_thunder_snail_w1', url: new URL('../../assets/art/enemies/battle_thunder_snail_w1.png', import.meta.url).href },
+  { key: 'battle_thunder_snail_w2', url: new URL('../../assets/art/enemies/battle_thunder_snail_w2.png', import.meta.url).href },
+  { key: 'battle_fjord_gull_bully', url: new URL('../../assets/art/enemies/battle_fjord_gull_bully.png', import.meta.url).href },
+  { key: 'battle_fjord_gull_bully_w1', url: new URL('../../assets/art/enemies/battle_fjord_gull_bully_w1.png', import.meta.url).href },
+  { key: 'battle_fjord_gull_bully_w2', url: new URL('../../assets/art/enemies/battle_fjord_gull_bully_w2.png', import.meta.url).href },
+  { key: 'battle_giant_berry_blocker', url: new URL('../../assets/art/enemies/battle_giant_berry_blocker.png', import.meta.url).href },
+  { key: 'battle_giant_berry_blocker_w1', url: new URL('../../assets/art/enemies/battle_giant_berry_blocker_w1.png', import.meta.url).href },
+  { key: 'battle_giant_berry_blocker_w2', url: new URL('../../assets/art/enemies/battle_giant_berry_blocker_w2.png', import.meta.url).href },
+  { key: 'battle_the_whisperwig', url: new URL('../../assets/art/enemies/battle_the_whisperwig.png', import.meta.url).href },
+  { key: 'battle_the_whisperwig_w1', url: new URL('../../assets/art/enemies/battle_the_whisperwig_w1.png', import.meta.url).href },
+  { key: 'battle_the_whisperwig_w2', url: new URL('../../assets/art/enemies/battle_the_whisperwig_w2.png', import.meta.url).href },
+  { key: 'battle_the_whisperwig_exposed', url: new URL('../../assets/art/enemies/battle_the_whisperwig_exposed.png', import.meta.url).href },
 ] as const;
 
 const ENEMY_OVERWORLD_ART = [
@@ -794,6 +816,7 @@ const ENEMY_OVERWORLD_ART = [
 // mismatch; loaded + applied exactly like a battler (one image, bare key).
 const ENEMY_MINI_ART = [
   { key: 'mini_skeeter_swarm', url: new URL('../../assets/art/enemies/mini_skeeter_swarm.png', import.meta.url).href },
+  { key: 'mini_pigeon_gang', url: new URL('../../assets/art/enemies/mini_pigeon_gang.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);

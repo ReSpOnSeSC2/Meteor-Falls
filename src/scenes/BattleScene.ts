@@ -695,6 +695,15 @@ export class BattleScene extends Phaser.Scene {
       'moor_sheep', 'soot_imp', 'tea_trolley', 'telephone_box',
       'overdue_tome', 'roman_sentry',
     ].includes(enemyId)) return 'england';
+    // CH.4 Norway — the one authored Norway backdrop (the Sleeper's Spine) dresses
+    // every Ch.4 fight, moor to ear, until a dedicated outdoor backdrop lands.
+    if ([
+      'colossal_gnat', 'knitting_needles', 'thunder_snail', 'dog_sized_berry', 'hushed_gull',
+      'junior_jotun', 'moor_midge_cloud', 'boulder_lichen', 'frost_hare', 'bog_cotton_wisp',
+      'earwax_golem', 'dream_leech', 'snore_gust', 'giant_house_cat', 'lost_mitten',
+      'amber_hoard_troll', 'aurora_moth', 'hushed_skua', 'frost_jotun_elder', 'bridge_berry',
+      'the_whisperwig',
+    ].includes(enemyId)) return 'sleepers_spine';
     return 'otterbrook';
   }
 
@@ -1974,6 +1983,19 @@ export class BattleScene extends Phaser.Scene {
       // the OLD LIGHT (S12b/ADR-035, §A6 amended): the crater awakening is
       // the diegetic tutorial for the fight that follows it
       if ((ab.element === 'fire' || ab.id.startsWith('vibe_surge')) && t.def.boss) this.breakLatch();
+      // §A6 Ch.4 — the Whisperwig burrows untargetable until NOISE drags it out:
+      // Vibe Volt or a Bottle Rocket surfaces it (the phase machine's noiseOut),
+      // and nothing reaches a still-burrowed boss. Surfacing also fires Mia's Vibe
+      // Volt α awakening (via the form swap's awakeningDue hook).
+      if (t.def.boss && this.phase) {
+        const noise: 'volt' | 'bottle_rockets' | null =
+          ab.element === 'volt' ? 'volt' : ab.id.includes('bottle_rocket') ? 'bottle_rockets' : null;
+        if (noise && (await this.phase.noiseOut(noise))) await this.print(BATTLE_TEXT.noise_out);
+        if (!this.phase.targetable()) {
+          await this.print(BATTLE_TEXT.boss_burrowed);
+          continue;
+        }
+      }
       // S14: the element may CRACK a scripted form — Vibe Freeze finds the
       // seams in SOLID GOLD, and bats land while it's brittle (§A6 Ch.2;
       // the fight teaches it the turn Mia awakens it)
@@ -2283,6 +2305,18 @@ export class BattleScene extends Phaser.Scene {
       if (item.breaksLatch && target.def.boss) {
         this.breakLatch();
         await this.print(BATTLE_TEXT.salt_break);
+      }
+      // §A6 Ch.4 — a Firecracker String is NOISE: it drags the burrowed Whisperwig
+      // out of the ear (the phase machine's noiseOut). Anything else can't reach it.
+      if (target.def.boss && this.phase) {
+        if (item.id === 'firecracker_string' && (await this.phase.noiseOut('firecracker'))) {
+          await this.print(BATTLE_TEXT.noise_out);
+        }
+        if (!this.phase.targetable()) {
+          await this.print(BATTLE_TEXT.boss_burrowed);
+          if (onStage) await this.stageReturn(h);
+          return true;
+        }
       }
       await this.damageEnemy(target, applyWeakness(item.power, weak), weak);
       if (onStage) await this.stageReturn(h);

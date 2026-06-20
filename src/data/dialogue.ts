@@ -1313,7 +1313,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Your five is on the chalk. Do not make my handwriting look foolish.',
   ],
   permit_resume: [
-    '@Your game is still ON the chalk — I hold quarters open the way banks hold grudges. Step in when you are ready.',
+    '@Your game is still ON the chalk — I hold your spot the way banks hold grudges. Step in when you are ready.',
   ],
   permit_eliminated: [
     '@The bracket forgot you the moment you lost. I did not. I rank losses too. Yours was top forty.',
@@ -2409,6 +2409,211 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@If you ever need a friendly army that\'s better at waving than fighting, we\'re YOUR army. Tell your dog the tank says hi.',
   ],
 
+  /* ══════════════════════ CHAPTER 4 — NORWAY ══════════════════════ *
+   * "The Fjord That Sleeps." The North Sea hop, Kvisthavn under the cliffs, the
+   * 10× moor, the giants of Lilleby, and the Sleeper's Spine. §A11 voice; the
+   * Whisperwig's beats run sincere (§A11.2/.3 — the Hush is never funny). */
+
+  // — THE NORTH SEA HOP: Bert offers the next leg (from Lucille's cabin) —
+  bert_norway_ask: [
+    "@England's behind us and the locket's humming for somewhere colder. There's a fjord up north where the fish are the size of rowboats and the people are NOT, mostly.",
+    "@Lucille's pointed at a hamlet called KVISTHAVN. The North Sea'll try to shake us out of the sky the whole way — so hold something. Say the word.",
+  ],
+  ch4_arrival: [
+    '(Lucille claws over a sea the colour of a knife, loses an argument with the wind twice, and wins it on the third try. Then the cliffs come up — black, wet, enormous — and tucked under them, a string of red boathouses.)',
+    "@KVISTHAVN. End of one leg, start of the next. (Bert pats the dashboard.) She made it. Don't tell her how surprised I am.",
+    '(The hatch drops onto a stone quay. The air is cold and clean and smells of salt, pine, and woodsmoke — and underneath it, low enough to feel in your teeth more than hear, a long, slow HUM. Like something very large, breathing in its sleep.)',
+  ],
+  ch4_card: [
+    "Kvisthavn's bell rings out over the water again, and forty years of a letter finally got read aloud.",
+    'The Locket hums with FOUR voices now — the deepest one yet, the kind you feel in the floor. Six Embers are still out there.',
+    "* (Lucille is fuelled and ready when you are. Bert says the next leg is 'a tabletop kingdom' and won't explain further.)",
+  ],
+
+  // — THE SLEEPER'S EAR: BOSS 4 (the Whisperwig) + Heartlight 4 (The Deep Hum) —
+  whisperwig_door: [
+    "(Deep in the canal, the Sleeper's hum is everywhere — in the walls, the floor, your own ribs. And threaded through it, thin and wrong, a WHISPERING. You can't make out the words. You're fairly sure that's mercy.)",
+    "@It's down in his EAR. ({milo}, very quiet, his Clicker hissing static.) That's what's been making him sleep. That's what's been eating the sound out of this whole country.",
+    '(The whispering stops. It has noticed you noticing it.)',
+  ],
+  whisperwig_open: [
+    'THE WHISPERWIG: ...shhh. shhh. he was so loud, the big one. forty years of dreams, all that NOISE. i made it quiet for him. i can make it quiet for you too.',
+    "(You can't see it. It's burrowed deep in the canal, just a voice and a cold draft. Bats and frying pans find nothing but warm dark.)",
+    '@We can\'t HIT what we can\'t find! ({milo}) — it\'s hiding in the ear. We need to make it come OUT. We need NOISE. Volt it, light a Firecracker String, fire a Bottle Rocket — anything LOUD!',
+  ],
+  whisperwig_burrow: ['(The Whisperwig pulls deeper into the canal. The whispering goes muffled and patient. You can\'t reach it like this.)'],
+  whisperwig_surface: [
+    '(The NOISE rolls down the canal like a thunderclap, and the Whisperwig is FLUSHED OUT — a pale, bristled thing the size of a sofa, blinking in the open, furious to be heard.)',
+    "(And the sound it hated does something to {faye}. She feels the Sleeper's own thunder-snore roll up through the mountain and into her teeth — and grabs it.)",
+  ],
+  whisperwig_whisper: ['THE WHISPERWIG: shhhhhhh. (It pours a wall of whispering over the whole party — and your voices go out from under you.)'],
+  whisperwig_win: [
+    '(The Whisperwig lets go of the ear and curls up small, the whispering finally, completely stopped. For one held breath there is no sound in the whole mountain at all.)',
+    '(Then: a snore. An ENORMOUS, contented, ground-shaking snore. Grandfather Storheim rolls over in his forty-year sleep, and for the first time the dream looks like a good one.)',
+    "@He's just... sleeping now. Properly. ({faye}, listening to something the rest of you can't quite hear.) Come here — the ear. It wants to give us something.",
+  ],
+  sleepers_ear_early: [
+    "(The canal hums, deep and even, but it stays just out of reach — like the Sleeper won't sing for you while that whispering thing is still curled in his ear.)",
+  ],
+  ember4_get: [
+    "(With the Whisperwig gone, the Sleeper's Ear opens up like a cathedral. The hum swells — the deepest note you have ever stood inside, the whole mountain a single warm chord.)",
+    '(The Locket answers. A fourth voice drops in under the other three — a bass so low it is less a sound than a hand on your back. THE DEEP HUM.)',
+    '{rex} held up the Star Locket!',
+    '* The fourth EMBER settled in. The Heartlight sings in four parts now, and the lowest one you feel in the floor.',
+  ],
+
+  // — THE THUNDER-SNORE: Mia awakens VIBE VOLT α (the §A6 Ch.4 awakening, sincere) —
+  awake_the_thunder_snore: [
+    "(The noise drags the Whisperwig into the open — and {faye} feels it: the Sleeper's snore rolling up through a hundred feet of mountain, a charge gathering in the floor, in her shoes, in her teeth.)",
+    "(She doesn't decide to. Her hand comes up on its own, full of borrowed thunder, and the whole canal lights blue-white.)",
+    '* {faye} awakened VIBE VOLT α — the thunder-snore, hers to throw now.',
+  ],
+
+  // — KVISTHAVN NPCs (one obsession each, §A11) —
+  npc_kv_sigrid: [
+    "@Oh — careful, dears, I can't see you properly. I lost my spectacles out on the moor and the whole fjord's gone to SMUDGES.",
+    "@Forty years I've watched that water change its mind every hour, and now I can't tell the waves from the weather. It's the not-seeing-it I can't stand.",
+  ],
+  npc_kv_halvor: [
+    "@The cod used to come in two to a net. Now they come in ONE, and it's the size of a dog, and it's RUDE about it.",
+    "@...There's a letter in my coat I've carried since I was your age. Never sent it. She moved up to Lilleby and got, well. Large. And I got shy. Forty years of shy.",
+  ],
+  npc_kv_bellkeeper: [
+    "@The harbor bell's gone quiet. Not broken — QUIET. The grey thing came through and took its voice, same as it's taking everyone's.",
+    "@A town with no bell is a town that can't say it's still here. Drives me up the wall. Up the BELL-tower, more accurately.",
+  ],
+  npc_kv_shopkeeper: [
+    "@Velkommen! Everything's fresh, everything's cold, and everything was BIGGER last week, I swear it on the cod.",
+    "@If you're headed up the moor — take a Firecracker String. When something's hiding where you can't hit it, you don't need a weapon. You need to be LOUD.",
+  ],
+  npc_kv_kid: [
+    "@If you hum at the fjord, it hums back! Try it! ...Well — it USED to. Lately it just goes 'shhh' and I don't like it.",
+  ],
+
+  // — BOOTSTEP MOOR —
+  npc_moor_walker: [
+    "@Mind the wildlife. The Ember in the mountain's been humming so long it's swelled everything that breathes out here to ten times the size.",
+    "@A midge the size of a fist. A snail that hits like a storm front. A berry you could saddle. Lovely country. Wouldn't sit down in it.",
+  ],
+
+  // — LILLEBY (the giants' town) —
+  npc_ll_mayor: [
+    '@WELCOME TO LILLEBY. (He kneels so his face is merely the size of a door.) Everything here is normal-sized. That is OUR official position and we are sticking to it.',
+    "@Small visitors are SO rare. We'd love to host you a picnic — properly, at YOUR scale. We just, ah. We keep getting the portions wrong. Catastrophically.",
+  ],
+  npc_ll_keeper: [
+    "@(She lowers a hand the size of a table to shake yours, thinks better of it, offers a fingertip instead.) Mind the prices — everything here's giant-made, so it lasts a giant while.",
+  ],
+  npc_ll_sweetheart: [
+    "@A letter? For ME? (She holds it up to one eye; to her it is the size of a postage stamp, which is to say, the size of a real letter to you.) ...Oh. OH. From HALVOR. After all this time.",
+    "@(She is very carefully not crying, at a scale where crying would be a weather event.) Tell that shy old fool I kept a window facing the fjord for forty years. Tell him I'm STILL keeping it.",
+  ],
+  npc_ll_child: [
+    "@You're SO little! Are you a toy? Mamma said I can't keep toys that talk. Are you a toy that talks? This is the best day.",
+  ],
+  npc_ll_undertaker: [
+    "@Forty years I've been the undertaker here and NOBODY has had the decency to die. The Ember keeps everyone humming along. It's terribly dull. I've taken up whittling.",
+  ],
+
+  // — THE SLEEPER'S SPINE (dungeon) — the Dorin cameo (§A3/ADR-125, never named) —
+  npc_spine_walker: [
+    "(A travel-worn kid in a grey gi sits cross-legged on the giant's knuckle, eyes shut, a string of worn prayer beads turning through his fingers. He might be asleep. He might be listening.)",
+    "@...You hear it too. The silence. (He doesn't open his eyes.) I'm following it home. It's the same silence everywhere — only here it has a NAME, and the name is sleeping.",
+    "@(You ask who he is. The beads pause.) ...Not yet. I haven't earned it back yet. Go on. The ear is up the arm. Mind the fall.",
+  ],
+
+  // — KVISTHAVN / BOOTSTEP / LILLEBY / SPINE SIGNS —
+  sign_kvisthavn: ['KVISTHAVN — pop. 60, give or take a fishing season. PLEASE DO NOT FEED THE GULLS. (They are large enough to feed themselves, and you.)'],
+  sign_fjord_road: ['↑ BOOTSTEP MOOR & LILLEBY. The path is safe. The wildlife is not small. These two facts are unrelated and we resent the implication.'],
+  sign_quay_bell: ['THE HARBOR BELL. Rung at dawn, at dusk, and whenever a boat comes home. (Someone has chalked underneath: "and lately, never.")'],
+  sign_bootstep_moor: ['BOOTSTEP MOOR. Everything here grew up. Keep to the lane. If something the size of a shed is asleep on the lane, wait. Or do not. We are a sign, not your mother.'],
+  sign_gorge: ['THE GORGE — cross by the plank bridge. (The plank bridge is currently a very large berry. The Booster Club apologises and is "looking into it".)'],
+  sign_lilleby: ['WELCOME TO LILLEBY. EVERYTHING HERE IS NORMAL-SIZED. — the Lilleby Booster Club (please walk under the doors; the doors are also normal-sized)'],
+  sign_great_table: ['THE GREAT TABLE. Reserved today for our HONOURED SMALL GUESTS. (A place has been set. The fork is, regrettably, the size of a rake.)'],
+  sign_spine_hand: ["THE SLEEPER'S HAND. You are standing on a person. He is asleep. He has been asleep for forty years. Tread softly and go up the arm."],
+  sign_spine_meltfall: ['Meltwater runs off the shoulder cold enough to bite. It is almost solid already. Almost. (A cast of FREEZE would do the rest.)'],
+  sign_sleepers_ear: ["THE SLEEPER'S EAR. The hum is loudest here — and so is the whispering under it. Whatever is making him sleep is making it. Be ready to be LOUD."],
+
+  // — SHOP greetings (§A11 — one obsession at the counter) —
+  shop_kvisthavn_greet: ["@Kvisthavn Kolonial — cold goods, hot coffee, and the loudest little firecrackers north of anywhere. What'll it be?"],
+  shop_kvisthavn_bye: ['@Stay warm. Stay loud. The quiet ones never come back.'],
+  shop_lilleby_greet: ['@(She kneels to the counter.) Everything here is NORMAL-SIZED, which means one of our loaves is a week of yours. Excellent value, technically.'],
+  shop_lilleby_bye: ['@Mind the step on the way out. To you it is a cliff. To us it is a step. Perspective!'],
+
+  /* ── CHAPTER 4 QUESTS (§A10) — the giver flows + the walk-trigger pickups.
+   *    Mirror the Ch.3 pattern (ask → active → full → done_beat → after). ── */
+
+  // #9 SIGRID'S SPECTACLES — the two pond-sized lenses on the moor (→ Sigrid's Monocle)
+  q_sigrid_ask: [
+    "@You're going up the moor anyway? Then — oh, would you? My spectacles flew apart out there. Two lenses, each one grown pond-sized by the hum. I can't even FIND them, let alone wear them.",
+    "@Bring them back and I'll have the smith grind them down to fit again. The little one I'll give to YOU — a Monocle. Sharpens what a body can see. You'll want that, where you're going.",
+  ],
+  q_sigrid_active: ["@Both lenses, dear — one's out past the first bog, the other's catching light up on the high moor. I'd know that glare anywhere. I just can't WALK to it."],
+  q_sigrid_lens1: ['(A lens the size of a pond lies in the bog, throwing the whole grey sky back up at you. It shrinks to a coin in your hand the moment you lift it — Ember-grown, now Ember-let-go.)'],
+  q_sigrid_lens2: ['(The second lens leans against a cairn on the high moor. Through it, far off and upside-down, you can see Kvisthavn — and a tiny figure on the quay, squinting your way.)'],
+  q_sigrid_full: ['@You have BOTH? Oh, let me — (she holds them up, and her whole face changes) — there. THERE you are. And there\'s the fjord, every wave of it. Here, the little lens is yours. Earned.'],
+  q_sigrid_done_beat: [
+    "(Sigrid settles the mended spectacles on her nose and just looks at the water for a while, like she's drinking it.)",
+    '* {rex} got the SIGRID\'S MONOCLE!',
+  ],
+  q_sigrid_after: ['@Forty years of this view and I nearly lost it to a smudge. Thank you, dears. Go careful. I\'ll be watching the water for you — properly, now.'],
+
+  // THE UNSENT LETTER — Halvor's forty-year letter, delivered to Lilleby
+  q_letter_ask: [
+    "@You're crossing to Lilleby? Then— (Halvor digs a soft, folded, much-handled letter out of his coat.) Her name's on the front. She lives up there now. Got large with the rest of them, but she's still HER.",
+    "@I wrote this when I was your age and never had the nerve. Forty years in a coat pocket. ...Take it. Read it to her if she'll let you. I can't do it myself. I tried. I always go shy at the gangplank.",
+    '* {rex} is carrying HALVOR\'S LETTER.',
+  ],
+  q_letter_active: ["@She's up in Lilleby — you'll find her by the window facing the sea, the big one. Just... be gentle. Forty years is a long time to be a coward about a nice thing."],
+  q_letter_deliver: [
+    '@(You hold up the letter. The giant woman at the window goes very still, then lifts it to one enormous, careful eye.)',
+    '@...From Halvor. After all this time. (To her it is a postage stamp; to you, her whisper is the whole room.) Read it to me. I want to hear it small and true.',
+    "(You read it out. It is short, and plain, and forty years overdue, and it is the bravest thing the old fisher ever did.)",
+  ],
+  q_letter_deliver_done: ["@Tell him I kept a window facing the fjord for forty years. Tell him I am STILL keeping it. Now GO — he's waiting, and he's not getting any less shy."],
+  q_letter_full: ["@You... you read it to her? And she— (Halvor sits down hard on a crate.) She kept a WINDOW. Forty years. And I sat here being SHY at a perfectly good window."],
+  q_letter_done_beat: [
+    "(Halvor presses a small charm into your hand — sea-glass, worn smooth by a nervous thumb across four decades.)",
+    '* {rex} got the COOL CHARM!',
+    "@Whatever you're sailing toward, kids — don't wait forty years to say the warm thing. Take this. It kept me steady. Mostly.",
+  ],
+  q_letter_after: ['@I\'m taking the morning boat up to Lilleby. To TALK to her. With my actual mouth. ...Forty years. Don\'t you dare laugh; I\'ll cry, and at my size that\'s just a normal amount of crying.'],
+
+  // THE SILENCED BELL — find the clapper, ring it loud (the NOISE theme; → Brass Ship's Bell)
+  q_bell_ask: [
+    "@The harbor bell's voice got taken by the grey quiet. The clapper rolled off the quay when it went — down among the mooring stones somewhere.",
+    "@Find me the clapper and we'll hang it and RING the old girl till the whole fjord hears. A town that can be heard is a town the quiet can't finish.",
+  ],
+  q_bell_active: ['@The clapper\'s down by the mooring stones, where the quay meets the water. Heavy old thing. Mind your toes.'],
+  q_bell_clapper: ['(The bell\'s clapper lies wedged among the mooring stones, cold and heavy as a forearm. It still has a little ring left in it — you can feel it want to.)'],
+  q_bell_ring: [
+    "(The bellkeeper hangs the clapper, spits on his hands, and nods you to the rope. You pull together.)",
+    "(The bell does not ring so much as DECLARE. The sound rolls out across the water and comes back off the far cliffs, and somewhere up the moor a hundred-foot Sleeper almost, almost stirs.)",
+    '@THERE she is. THAT\'S a town saying it\'s still here. Come back — I owe you something with weight to it.',
+  ],
+  q_bell_full: ['@The bell\'s back in good voice and so am I. Here — take this. You\'ll know when to ring it.'],
+  q_bell_done_beat: [
+    '(He unhooks a small brass ship\'s bell from the rafters and sets it in your hands. It is heavier than it looks, the way important things are.)',
+    '* {rex} got the BRASS SHIP\'S BELL!',
+  ],
+  q_bell_after: ['@Dawn, dusk, and whenever you come home. That\'s when she rings now. Safe travels, loud ones.'],
+
+  // THE GIANT'S PICNIC — a feast cut down to human scale (scale comedy; → Troll Cross)
+  q_picnic_ask: [
+    "@We want to host you PROPERLY. A picnic, your size. But we keep getting it wrong — last time the 'sandwich' needed planning permission.",
+    "@Help us get it right: a slice of brunost cut down to something you can lift, and one berry — just one — which to us is a perfectly normal blueberry. Then we lay the great table and you EAT, and the whole town watches, delighted.",
+  ],
+  q_picnic_active: ['@We need the brunost slice (the keeper\'ll cut it small) and one moor berry. Then up to the great table to lay it all out. We are SO excited. Try not to be alarmed by how excited.'],
+  q_picnic_brunost: ['(The keeper saws a sliver off a wheel of brunost the size of a wagon. To her it is a crumb; to you it is a respectable wedge of cheese. She wraps it like it is precious. It is.)'],
+  q_picnic_berry: ['(You wrestle a single Dog-Sized Berry off the moor bush. The giants will consider this "a blueberry." You will consider it "lunch for a week." Both of you are correct.)'],
+  q_picnic_set: ['(You climb the great table and lay out the tiny feast — the cheese, the berry, a thimble of cloudberry cordial the size of a bucket. It looks, at last, exactly right. Human-sized. Perfect.)'],
+  q_picnic_full: ['@It\'s PERFECT. It\'s the right size and everything! (The Mayor is openly weeping, which on the town green is briefly a humidity event.) Sit, sit — eat — the whole town wants to watch!'],
+  q_picnic_done_beat: [
+    "(You eat a perfect little meal while forty-one giants kneel in a ring and beam down at you like you hung the moon. The Mayor presses an iron Troll Cross into your hands — protection, giant-forged, warm from his pocket.)",
+    '* {rex} got the TROLL CROSS!',
+  ],
+  q_picnic_after: ['@Come back any time, small friends! We\'ll do it again — and NEXT time the fork will be the right size. We\'re ninety percent sure we know which drawer.'],
+
 };
 
 /**
@@ -2491,6 +2696,9 @@ export const BATTLE_TEXT = {
   hollow_slide: 'The Vibe poured into the hollow... and found NOTHING to catch it!',
   gold_crack: 'The frost found the seams! The gold went BRITTLE!',
   beetle_clang: 'It bounced right off the gilding! So shiny. So rude.',
+  // §A6 Ch.4 — the Whisperwig's untargetable-until-noise gimmick (BattleScene.noiseOut)
+  boss_burrowed: "It's burrowed too deep to reach! You need NOISE — Volt, a Firecracker String, a Bottle Rocket!",
+  noise_out: 'The NOISE flushed it out into the open!',
   beetle_dull: "{e}'s gilding wore thin. Underneath: beetle.",
   parrot_lint: '{e} came up with pocket lint and one expired coupon!',
   parrot_take: '{t} GONE! (Beat it before it flies the coop!)',

@@ -1286,6 +1286,30 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     the_invigilator: 200,
     // BOSS 3 (ADR-099) — promoted from the forge draft to a live §A7 enemy at the flip
     headmaster_mainframe: 750,
+    // Chapter 4 (Norway) — §A7 the seed six + the Enemy Flow Law mix (4 road/field ·
+    // 3 dungeon · 2 social · 2 rare · 2 late-pressure · 1 set-piece). SCALE is the gag.
+    colossal_gnat: 90,
+    knitting_needles: 175,
+    thunder_snail: 230,
+    dog_sized_berry: 160,
+    hushed_gull: 200,
+    junior_jotun: 260,
+    moor_midge_cloud: 70,
+    boulder_lichen: 240,
+    frost_hare: 150,
+    bog_cotton_wisp: 120,
+    earwax_golem: 235,
+    dream_leech: 130,
+    snore_gust: 110,
+    giant_house_cat: 220,
+    lost_mitten: 150,
+    amber_hoard_troll: 165,
+    aurora_moth: 130,
+    hushed_skua: 210,
+    frost_jotun_elder: 290,
+    bridge_berry: 300,
+    // BOSS 4 — promoted from the forge draft to a live §A7 enemy at the Norway flip
+    the_whisperwig: 1800,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1533,7 +1557,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck']);
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -1705,6 +1729,49 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       doneFlag: 'q_over_done',
       caller: { name: 'The Cricket Captain', kind: 'damage', power: 450 },
     },
+    // ── CHAPTER 4 (Norway) — §A10 route quest (Sigrid's Spectacles, bible #9) +
+    //    a delivery, a NOISE-themed restoration, and a scale-comedy picnic. Rewards
+    //    reuse the live §A8 ch4 catalog; pinned both directions like the rest. ──
+    sigrids_spectacles: {
+      name: "Sigrid's Spectacles",
+      chapter: 4,
+      giver: 'kv_sigrid',
+      startFlag: 'q_sigrid',
+      objectiveFlags: ['q_sigrid_lens1', 'q_sigrid_lens2', 'q_sigrid_reported'],
+      rewardItem: 'sigrids_monocle',
+      doneFlag: 'q_sigrid_done',
+      caller: { name: 'Sigrid', kind: 'heal', power: 430 },
+    },
+    unsent_letter: {
+      name: 'The Unsent Letter',
+      chapter: 4,
+      giver: 'kv_halvor',
+      startFlag: 'q_letter',
+      objectiveFlags: ['q_letter_taken', 'q_letter_delivered', 'q_letter_reported'],
+      rewardItem: 'cool_charm',
+      doneFlag: 'q_letter_done',
+      caller: { name: 'Halvor', kind: 'heal', power: 420 },
+    },
+    the_silenced_bell: {
+      name: 'The Silenced Bell',
+      chapter: 4,
+      giver: 'kv_bellkeeper',
+      startFlag: 'q_bell',
+      objectiveFlags: ['q_bell_clapper', 'q_bell_rung', 'q_bell_reported'],
+      rewardItem: 'brass_ships_bell',
+      doneFlag: 'q_bell_done',
+      caller: { name: 'The Bellkeeper', kind: 'damage', power: 435 },
+    },
+    the_giants_picnic: {
+      name: "The Giant's Picnic",
+      chapter: 4,
+      giver: 'll_mayor',
+      startFlag: 'q_picnic',
+      objectiveFlags: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'],
+      rewardItem: 'troll_cross',
+      doneFlag: 'q_picnic_done',
+      caller: { name: 'The Mayor of Lilleby', kind: 'heal', power: 425 },
+    },
   };
   for (const [id, pin] of Object.entries(canon)) {
     const q = QUESTS[id];
@@ -1813,6 +1880,10 @@ parseAll('awakenings', AwakeningDefSchema, AWAKENINGS);
     // Milo's join. mindwarp_a re-staged off rex's L21 row to this awakening (one
     // power, battle Mind Warp + field Puppet; the trust thread opens here).
     the_first_borrow: { hero: 'rex', ability: 'mindwarp_a', flag: 'awake_mindwarp_a', dialogue: 'awake_the_first_borrow' },
+    // Ch.4 ("The Fjord That Sleeps") — THE THUNDER-SNORE: Mia awakens Vibe Volt α
+    // the first time the Whisperwig is dragged out of the Sleeper's ear (vibe_volt_a
+    // left her L20 unlock row in the same commit; one-path rule).
+    the_thunder_snore: { hero: 'faye', ability: 'vibe_volt_a', flag: 'awake_volt_a', dialogue: 'awake_the_thunder_snore' },
     // S16 ("The Old Light, Doubled") — Jay's three iconic late beats. Reserved
     // as awakenings (the 80/20 split): true MIND WARP, the party REFLECT, and
     // the Surge Σ capstone. Each lands mid-to-late, where the §A6 arc has room
@@ -3127,11 +3198,11 @@ for (const m of Object.values(MAPS)) {
 const counts = [
   `${Object.keys(HEROES).length} heroes`,
   `${Object.keys(ABILITIES).length} abilities`,
-  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–3 + Bosses 1–3)`,
+  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–4 + Bosses 1–4)`,
   `${Object.values(ENEMIES).reduce((a, e) => a + (e.drops?.length ?? 0), 0)} §A7 drops`,
   `${Object.keys(ITEMS).length} items (${Object.keys(ITEM_ICON).length} icons) across 10 chapters`,
   `${Object.keys(SHOPS).length} shops`,
-  `${Object.keys(QUESTS).length} quests (§A10 #1–8 + the Long Walk register, the dock crate, and the three England regionals)`,
+  `${Object.keys(QUESTS).length} quests (§A10 #1–8 + the England regionals + the four Norway quests)`,
   `${Object.keys(MAPS).length} maps`,
   `${CANON_AREAS.length} area skins`,
   `${Object.keys(GLYPH_SCRIPT).length} area glyph scripts (${SCRIPT_CATALOG.length} families)`,

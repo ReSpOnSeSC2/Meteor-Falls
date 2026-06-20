@@ -12,6 +12,7 @@ import { cityBuildingHeight } from '../spritegen/tiles';
 import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import { buildChapter2Maps } from './maps_ch2';
 import { buildChapter3Maps } from './maps_ch3';
+import { buildChapter4Maps } from './maps_ch4';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
 import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
@@ -3162,6 +3163,9 @@ export const MAPS: Record<string, MapDef> = {
   // S18 (ADR-095) — CHAPTER 3 England (Half 1: maps + encounters + shops; the
   // manifest stays 'unlanded' until the story/boss half flips it)
   ...buildChapter3Maps(),
+  // CHAPTER 4 Norway — "The Fjord That Sleeps" (Kvisthavn / Bootstep Moor /
+  // Lilleby / the Sleeper's Spine). Lands SHIPPED with its story/boss wiring.
+  ...buildChapter4Maps(),
   otterbrook: otterbrookMap,
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,
@@ -3226,6 +3230,9 @@ const MAP_AREA: Record<string, string> = {
   // maps add their 'wintermoor' rows when they land.
   foggybottom: 'foggybottom',
   wintermoor_grounds: 'wintermoor',
+  // CH.4 Norway — the two settlements wear their own M25 skins + glyph banners
+  kvisthavn: 'kvisthavn',
+  lilleby: 'lilleby',
 };
 for (const [id, area] of Object.entries(MAP_AREA)) if (MAPS[id]) MAPS[id].area = area;
 
@@ -3272,6 +3279,14 @@ const MAP_AUDIO: Record<string, { ambience?: AmbienceId; muffle?: 0 | 1 | 2 }> =
   // CH.1 USA — the home town park + the busy second city
   otterbrook: { ambience: 'birds' }, // the pond park + civic green + woods nook
   brickton: { ambience: 'crowd' }, // the bigger city's street murmur
+  // CH.4 Norway — the fjord hamlet, the exposed moor, the giants' high town, and
+  // the deep warm dark inside the Sleeper (the ear sits at DEEP muffle for the boss)
+  kvisthavn: { ambience: 'waves' }, // the quay under the cliffs
+  bootstep_moor: { ambience: 'wind' }, // the open 10× moor
+  lilleby: { ambience: 'wind' }, // the high giants' town
+  spine_hand: { ambience: 'cave' },
+  spine_shoulder: { ambience: 'cave' },
+  spine_ear: { ambience: 'cave', muffle: 2 }, // the Resonance Site, deep in the canal
 };
 for (const [id, a] of Object.entries(MAP_AUDIO)) {
   const m = MAPS[id];
@@ -3290,6 +3305,10 @@ const MAP_REFLECT: Record<string, ReflectZone[]> = {
   otterbrook: [{ x: 53, y: 22, w: 6, h: 4, within: 3 }], // the Pond Park water feature
   golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
   puerto_sol: [{ x: 0, y: 30, w: 52, h: 4, within: 4 }], // the working seafront
+  // CH.4 Norway — the fjord, the moor gorge, and the Sleeper's meltwater fall
+  kvisthavn: [{ x: 0, y: 22, w: 36, h: 2, within: 4 }], // the fjord along the south lip
+  bootstep_moor: [{ x: 22, y: 1, w: 2, h: 7, within: 3 }], // the gorge water
+  spine_shoulder: [{ x: 1, y: 5, w: 22, h: 2, within: 3 }], // the meltwater off the shoulder
 };
 for (const [id, zones] of Object.entries(MAP_REFLECT)) {
   const m = MAPS[id];

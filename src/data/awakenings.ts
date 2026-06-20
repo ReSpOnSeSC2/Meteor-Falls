@@ -84,6 +84,22 @@ export const AWAKENINGS: Record<string, AwakeningDef> = Object.fromEntries(
       dialogue: 'awake_the_first_borrow',
       toast: '{rex} learned to PUPPET — borrow a person, briefly…',
     }),
+    /* ---- Ch.4 (Norway, S?? — the chapter landing): THE THUNDER-SNORE. The
+     * Whisperwig burrows in the Sleeper's ear, untargetable, until NOISE drags it
+     * out — and the FIRST time it surfaces, the thunder-snore Mia feels rolling up
+     * through the mountain's teeth becomes a charge she can throw: VIBE VOLT α
+     * (§A6 Ch.4 boss, staged §A11.2-sincere; bosses.ts awakeningOnForm fires it).
+     * vibe_volt_a LEAVES her HEROES.faye.unlocks row in the same commit (one-path
+     * rule); verify.ts AWAKENING_LEVEL pins it at L20 so the balance read is
+     * unchanged (she has Volt by L22, the Ch.4 target, either way). */
+    W({
+      id: 'the_thunder_snore',
+      hero: 'faye',
+      ability: 'vibe_volt_a',
+      flag: 'awake_volt_a',
+      dialogue: 'awake_the_thunder_snore',
+      toast: '{faye} awakened VIBE VOLT Alpha! ⚡',
+    }),
     /* ---- S16 ("The Old Light, Doubled"): Jay's three iconic late beats. The
      * 80/20 split (§3) reserves AWAKENINGS for the powers that should land as
      * MOMENTS, not level-up toasts. Each is staged §A11.2-sincere; none of the

@@ -2371,6 +2371,25 @@ export class OverworldScene extends Phaser.Scene {
         return true;
       case 'wm_umpire':
         return this.umpireStep();
+      // ── CHAPTER 4 — NORWAY: the cabin-Bert flight offer + the four §A10 givers ──
+      case 'uncle_bert_air':
+        await this.bertAirBeat();
+        return true;
+      case 'kv_sigrid':
+        await this.sigridBeat();
+        return true;
+      case 'kv_halvor':
+        await this.halvorBeat();
+        return true;
+      case 'kv_bellkeeper':
+        await this.bellBeat();
+        return true;
+      case 'll_sweetheart':
+        await this.sweetheartBeat();
+        return true;
+      case 'll_mayor':
+        await this.picnicBeat();
+        return true;
       default:
         return false;
     }
@@ -4054,6 +4073,22 @@ export class OverworldScene extends Phaser.Scene {
       case 'wintermoor_coolant':
         await this.coolantGate();
         break;
+      /* ---------------- Chapter 4 (§A6 Norway) ---------------- */
+      case 'ch4_arrival':
+        if (!GS.flag('ch4_arrived')) await this.ch4ArrivalScene();
+        break;
+      case 'whisperwig_boss':
+        if (!GS.flag('whisperwig_defeated')) await this.whisperwigBossScene();
+        break;
+      case 'sleepers_ear_resonance':
+        if (!GS.flag('ch4_complete')) await this.sleepersEarScene();
+        break;
+      case 'spine_meltfall':
+        await this.meltfallGate();
+        break;
+      case 'moor_bridge_berry':
+        if (!GS.flag('moor_berry_cleared')) await this.bridgeBerryScene();
+        break;
       // the §A10 Ch.3 "find" pickups (books / letters / the drain / milk / water)
       case 'q_overdue_b1':
       case 'q_overdue_b2':
@@ -4064,6 +4099,13 @@ export class OverworldScene extends Phaser.Scene {
       case 'q_penny_found':
       case 'q_cuppa_milk':
       case 'q_cuppa_water':
+      // the §A10 Ch.4 "find" pickups (lenses / clapper / picnic fixings)
+      case 'q_sigrid_lens1':
+      case 'q_sigrid_lens2':
+      case 'q_bell_clapper':
+      case 'q_picnic_brunost':
+      case 'q_picnic_berry':
+      case 'q_picnic_set':
         await this.questPickup(id);
         break;
       default:
@@ -4363,6 +4405,293 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  /* ════════════ CHAPTER 4 — NORWAY ("The Fjord That Sleeps") ════════════ *
+   * The §A6 beats: Lucille's North Sea hop (boarded from the cabin once Ch.3 is
+   * done), the Sleeper's Spine PSI gate, the Whisperwig in the ear (where Mia
+   * awakens Vibe Volt α via the phase machine), and Heartlight 4 (The Deep Hum).
+   * Mirrors the Ch.3 scene structure; flags commit, fade-restart on map rebuilds. */
+
+  /** the §A5 next leg: from Lucille's cabin, Bert flies the party to Norway once
+   *  Ch.3 is complete (the boardLucille precedent — England's flight stays his too). */
+  private async bertAirBeat(): Promise<void> {
+    this.cut = true;
+    if (!GS.flag('ch3_complete') || GS.flag('ch4_arrived')) {
+      // before the North Sea leg is earned (or after it's flown), Bert just chats
+      await this.dlg.say(...DIALOGUE.npc_bert_air);
+      this.cut = false;
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.bert_norway_ask);
+    const pick = await this.dlg.ask(['Fly to NORWAY (Kvisthavn)', 'Not yet'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      this.cut = false;
+      return;
+    }
+    AUDIO.stopMusic();
+    await playCutscene(this, 'ch4_journey'); // the authored North Sea panels (no-ops if missing)
+    // the hatch drops on the Kvisthavn quay; the ch4_arrival trigger fires the beat
+    this.goThroughDoor('kvisthavn', 18 * 16, 8 * 16, 'down');
+  }
+
+  /** the §A6 arrival: Lucille claws over the North Sea and sets down under the cliffs */
+  private async ch4ArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch4_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(420, 0.007);
+    await this.dlg.say(...DIALOGUE.ch4_arrival);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** the §A7 set-piece — the Bridge Berry blocks the gorge until fought or rolled
+   *  aside. Optional + retry-safe (the lane is passable either way; this is the gag). */
+  private async bridgeBerryScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say('(A berry the size of a hay bale has wedged itself across the plank bridge. It is not a metaphor. It is a berry, and it is in the way.)');
+    const outcome = await this.startBattle(['bridge_berry'], 'none', [], {});
+    if (outcome !== 'victory') {
+      this.cut = false;
+      return;
+    }
+    GS.setFlag('moor_berry_cleared');
+    AUDIO.sfx('confirm');
+    await this.dlg.say('(The Bridge Berry rolls off the planks and down into the gorge with a long, descending squelch. The way across is clear, if sticky.)');
+    this.cut = false;
+  }
+
+  /** §A4.11 PSI gate — freeze the meltwater fall off the Sleeper's shoulder to a
+   *  bridge (taught-first: Mia learned Vibe Freeze in Ch.2; no-key branch is the
+   *  no-soft-lock floor, ADR-069). Rewards a Firecracker String — NOISE for the ear. */
+  private async meltfallGate(): Promise<void> {
+    if (GS.flag('spine_meltfall_frozen')) {
+      await this.dlg.say('(The meltwater fall stands frozen to a blue-white bridge. The way up the arm is open.)');
+      return;
+    }
+    const gate = PSI_GATES.spine_meltfall;
+    const known = GS.data.party.flatMap((h) => availableAbilities(h.id, h.level, (f) => GS.flag(f) === true));
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.sign_spine_meltfall);
+    if (!canClearGate(gate, known) || bestCastFor(gate, known) === null) {
+      await this.dlg.say('(The fall is already near freezing. To lock it to a bridge you would need to cast FREEZE — and no one here has learned how. Yet.)');
+      this.cut = false;
+      return;
+    }
+    const pick = await this.dlg.ask(['Cast VIBE FREEZE on the fall', 'Leave it'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      this.cut = false;
+      return;
+    }
+    AUDIO.sfx('pray');
+    this.cameras.main.flash(360, 168, 224, 255);
+    this.sparkleBurst(this.player.x, this.player.y - s(14), 14);
+    await this.wait(400);
+    GS.setFlag('spine_meltfall_frozen');
+    await this.dlg.say('(The fall locks solid mid-pour, a staircase of ice up the giant\'s arm. Caught in the frozen spray, a string of firecrackers somebody dropped — you pocket it. You may want to be LOUD soon.)');
+    GS.addItem('firecracker_string'); // NOISE for the Whisperwig ahead (the gate pays it forward)
+    AUDIO.sfx('confirm');
+    AUDIO.jingle('levelup', 1200, this.mapDef.music);
+    toast(this, 'The meltwater fall is frozen to a bridge.');
+    this.cut = false;
+  }
+
+  /** §A6 BOSS 4 — the Whisperwig (the phase machine carries the untargetable-until-
+   *  noise gimmick + Mia's Vibe Volt α awakening when it first surfaces). */
+  private async whisperwigBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.whisperwig_door);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(460, 0.009);
+    await this.wait(420);
+    const outcome = await this.startBattle(['the_whisperwig'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('whisperwig_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.whisperwig_win);
+    AUDIO.jingle('victory', 2200, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart(); // the canal opens; the resonance trigger can sing now
+  }
+
+  /** §A6 Resonance Site — the Sleeper's Ear. Before the boss it stays shy; once the
+   *  Whisperwig is gone the canal sings, and the locket records HEARTLIGHT 4 (ch4 closes). */
+  private async sleepersEarScene(): Promise<void> {
+    if (!GS.flag('whisperwig_defeated')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.sleepers_ear_early);
+      this.cut = false;
+      return;
+    }
+    this.cut = true;
+    GS.setFlag('ember4');
+    GS.data.embers = 4;
+    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember4_get);
+    GS.setFlag('ch4_complete'); // §A6 — the chapter button (the §A5 gate to Ch.5)
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.ch4_card);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /* ──────────── CHAPTER 4 — the four §A10 quest beats (the Ch.3 pattern) ──────────── */
+
+  /** §A10 #9 — Sigrid's two pond-sized lenses (walk-trigger pickups → her Monocle) */
+  private async sigridBeat(): Promise<void> {
+    if (!GS.flag('q_sigrid')) {
+      await this.dlg.say(...DIALOGUE.q_sigrid_ask);
+      GS.setFlag('q_sigrid');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_sigrid_done')) {
+      await this.dlg.say(...DIALOGUE.q_sigrid_after);
+      return;
+    }
+    if (!['q_sigrid_lens1', 'q_sigrid_lens2'].every((f) => GS.flag(f))) {
+      await this.dlg.say(...DIALOGUE.q_sigrid_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_sigrid_full);
+    if (completeQuest('sigrids_spectacles') === 'hands-full') {
+      await this.dlg.say('@Hands full, dear? Come back with room for a monocle — it\'s worth the pocket.');
+      return;
+    }
+    GS.setFlag('q_sigrid_reported');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
+    await this.dlg.say(...DIALOGUE.q_sigrid_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A10 — Halvor's unsent letter (he gives it; the sweetheart receives it; he closes it) */
+  private async halvorBeat(): Promise<void> {
+    if (!GS.flag('q_letter')) {
+      await this.dlg.say(...DIALOGUE.q_letter_ask);
+      GS.setFlag('q_letter');
+      GS.setFlag('q_letter_taken'); // he hands you the letter as he asks
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_letter_done')) {
+      await this.dlg.say(...DIALOGUE.q_letter_after);
+      return;
+    }
+    if (!GS.flag('q_letter_delivered')) {
+      await this.dlg.say(...DIALOGUE.q_letter_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_letter_full);
+    if (completeQuest('unsent_letter') === 'hands-full') {
+      await this.dlg.say('@Pockets full, friend? Make room — this one comes with a warm thing attached.');
+      return;
+    }
+    GS.setFlag('q_letter_reported');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 10);
+    await this.dlg.say(...DIALOGUE.q_letter_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A10 — the delivery half: read Halvor's letter to his sweetheart in Lilleby */
+  private async sweetheartBeat(): Promise<void> {
+    if (GS.flag('q_letter') && !GS.flag('q_letter_delivered')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.q_letter_deliver);
+      GS.setFlag('q_letter_delivered');
+      AUDIO.sfx('confirm');
+      this.sparkleBurst(this.player.x, this.player.y - s(16), 8);
+      await this.dlg.say(...DIALOGUE.q_letter_deliver_done);
+      this.cut = false;
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.npc_ll_sweetheart);
+  }
+
+  /** §A10 — the silenced harbor bell: find the clapper, ring it loud, report back */
+  private async bellBeat(): Promise<void> {
+    if (!GS.flag('q_bell')) {
+      await this.dlg.say(...DIALOGUE.q_bell_ask);
+      GS.setFlag('q_bell');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_bell_done')) {
+      await this.dlg.say(...DIALOGUE.q_bell_after);
+      return;
+    }
+    if (!GS.flag('q_bell_clapper')) {
+      await this.dlg.say(...DIALOGUE.q_bell_active);
+      return;
+    }
+    if (!GS.flag('q_bell_rung')) {
+      // clapper in hand — ring the bell together (the NOISE payoff)
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.q_bell_ring);
+      GS.setFlag('q_bell_rung');
+      AUDIO.sfx('confirm');
+      this.cameras.main.flash(300, 248, 232, 160);
+      this.cut = false;
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_bell_full);
+    if (completeQuest('the_silenced_bell') === 'hands-full') {
+      await this.dlg.say('@Hands full? Empty a pocket — a ship\'s bell wants carrying properly.');
+      return;
+    }
+    GS.setFlag('q_bell_reported');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 10);
+    await this.dlg.say(...DIALOGUE.q_bell_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A10 — the giants' human-sized picnic (gather the fixings as walk pickups; the
+   *  Mayor lays it on once brunost + berry + table are all set → the Troll Cross) */
+  private async picnicBeat(): Promise<void> {
+    if (!GS.flag('q_picnic')) {
+      await this.dlg.say(...DIALOGUE.q_picnic_ask);
+      GS.setFlag('q_picnic');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_picnic_done')) {
+      await this.dlg.say(...DIALOGUE.q_picnic_after);
+      return;
+    }
+    if (!['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'].every((f) => GS.flag(f))) {
+      await this.dlg.say(...DIALOGUE.q_picnic_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_picnic_full);
+    if (completeQuest('the_giants_picnic') === 'hands-full') {
+      await this.dlg.say('@(He kneels, concerned.) Your tiny pockets are full! Make room for a tiny — well, giant — gift.');
+      return;
+    }
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
+    await this.dlg.say(...DIALOGUE.q_picnic_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
   /** the §A10 Ch.3 "find" pickups — a walk trigger hands the player a quest beat when
    *  its quest is active (the walk_token precedent). No-ops otherwise; non-missable. */
   private static readonly QUEST_PICKUPS: Record<string, { flag: string; dialogue: string; active: string; done: string; of: string[]; giver: string }> = {
@@ -4375,6 +4704,13 @@ export class OverworldScene extends Phaser.Scene {
     q_penny_found: { flag: 'q_penny_found', dialogue: 'q_penny_find', active: 'q_penny', done: 'q_penny_done', of: ['q_penny_found'], giver: 'the boy' },
     q_cuppa_milk: { flag: 'q_cuppa_milk', dialogue: 'q_cuppa_milk', active: 'q_cuppa', done: 'q_cuppa_done', of: ['q_cuppa_leaves', 'q_cuppa_milk', 'q_cuppa_water'], giver: 'the groundskeeper' },
     q_cuppa_water: { flag: 'q_cuppa_water', dialogue: 'q_cuppa_water', active: 'q_cuppa', done: 'q_cuppa_done', of: ['q_cuppa_leaves', 'q_cuppa_milk', 'q_cuppa_water'], giver: 'the groundskeeper' },
+    // CH.4 Norway — the lenses (Sigrid), the bell's clapper, the picnic fixings (Mayor)
+    q_sigrid_lens1: { flag: 'q_sigrid_lens1', dialogue: 'q_sigrid_lens1', active: 'q_sigrid', done: 'q_sigrid_done', of: ['q_sigrid_lens1', 'q_sigrid_lens2'], giver: 'Sigrid' },
+    q_sigrid_lens2: { flag: 'q_sigrid_lens2', dialogue: 'q_sigrid_lens2', active: 'q_sigrid', done: 'q_sigrid_done', of: ['q_sigrid_lens1', 'q_sigrid_lens2'], giver: 'Sigrid' },
+    q_bell_clapper: { flag: 'q_bell_clapper', dialogue: 'q_bell_clapper', active: 'q_bell', done: 'q_bell_done', of: ['q_bell_clapper'], giver: 'the bellkeeper' },
+    q_picnic_brunost: { flag: 'q_picnic_brunost', dialogue: 'q_picnic_brunost', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
+    q_picnic_berry: { flag: 'q_picnic_berry', dialogue: 'q_picnic_berry', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
+    q_picnic_set: { flag: 'q_picnic_set', dialogue: 'q_picnic_set', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
   };
 
   private async questPickup(id: string): Promise<void> {

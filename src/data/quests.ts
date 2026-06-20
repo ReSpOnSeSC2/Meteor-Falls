@@ -46,7 +46,7 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
       giver: 'mr_plummer',
       startFlag: 'q_mail',
       objectives: [
-        { id: 'pickles', text: "A letter for the Pickles'. Slide it past the victory speech.", flag: 'q_mail_pickles' },
+        { id: 'pickles', text: "A letter for the Pickles'. Slip it past Chad's victory speech.", flag: 'q_mail_pickles' },
         { id: 'sodd', text: "A letter for Mr. Sodd. His lawnmower has opinions about the lawn.", flag: 'q_mail_sodd' },
         { id: 'birch', text: 'A letter for the Birch place. The tidy one.', flag: 'q_mail_birch' },
         { id: 'chapel', text: 'A letter for the chapel. He gets his mail like everyone else.', flag: 'q_mail_chapel' },
@@ -219,7 +219,7 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
       giver: 'wm_librarian',
       startFlag: 'q_overdue',
       objectives: [
-        { id: 'b1', text: 'A blinking pupil dragged THE WHISPERING GALLERY into the stacks. Get it back.', flag: 'q_overdue_b1' },
+        { id: 'b1', text: 'A blinking Prefect Drone dragged THE WHISPERING GALLERY into the stacks. Get it back.', flag: 'q_overdue_b1' },
         { id: 'b2', text: 'KNOTS & THEIR UNDOING is jammed in a form-room locker. Free it.', flag: 'q_overdue_b2' },
         { id: 'b3', text: 'A first edition walked into the DORMS. Bring it home.', flag: 'q_overdue_b3' },
         { id: 'report', text: 'Three books, recovered. Tell the Librarian the stacks are whole again.', flag: 'q_overdue_reported' },
@@ -313,6 +313,96 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         name: 'The Cricket Captain',
         quote: "STUMPS! We're going HOME — but first the whole First XI bowls for you, all eleven at once. Play it everywhere it hurts!",
         effect: { kind: 'damage', power: 450 },
+      },
+    }),
+
+    /* ═══════════════ CHAPTER 4 — NORWAY (§A10) ═══════════════ *
+     * Four §A10 quests, pinned both directions in content-validate. The route quest
+     * (Sigrid's Spectacles, bible #9) turns pond-sized lenses into landmarks; a
+     * delivery, a NOISE-themed restoration, and a scale-comedy picnic round it out.
+     * Rewards reuse the live §A8 ch4 catalog; each completion is a finale CALLER. */
+
+    /* ---- §A10 route quest (bible #9): the lenses scattered across Bootstep Moor ---- */
+    Q({
+      id: 'sigrids_spectacles',
+      name: "Sigrid's Spectacles",
+      chapter: 4,
+      giver: 'kv_sigrid',
+      startFlag: 'q_sigrid',
+      objectives: [
+        { id: 'lens1', text: "Sigrid's spectacles blew apart on the moor. One lens is pond-sized, out past the first bog.", flag: 'q_sigrid_lens1' },
+        { id: 'lens2', text: 'The other lens caught the light from the high moor. (You can see the fjord through it. Sideways.)', flag: 'q_sigrid_lens2' },
+        { id: 'report', text: 'Both lenses, ground back down to a size that fits. Bring them home to Sigrid.', flag: 'q_sigrid_reported' },
+      ],
+      rewardItem: 'sigrids_monocle',
+      doneFlag: 'q_sigrid_done',
+      caller: {
+        name: 'Sigrid',
+        quote: 'I can SEE the fjord again, every wave of it. Here — borrow my eyes for the dark place. Look at it dead-on for me.',
+        effect: { kind: 'heal', power: 430 },
+      },
+    }),
+
+    /* ---- §A10 delivery: a letter the fisher never had the nerve to send ---- */
+    Q({
+      id: 'unsent_letter',
+      name: 'The Unsent Letter',
+      chapter: 4,
+      giver: 'kv_halvor',
+      startFlag: 'q_letter',
+      objectives: [
+        { id: 'take', text: "Halvor wrote to his sweetheart in Lilleby forty years ago and never sent it. Take the letter.", flag: 'q_letter_taken' },
+        { id: 'deliver', text: 'She lives in Lilleby now — and she is, like everything there, very large. Find her. (You may have to shout.)', flag: 'q_letter_delivered' },
+        { id: 'report', text: 'Letter delivered. Go tell Halvor what she said. He has been waiting a long time to hear it.', flag: 'q_letter_reported' },
+      ],
+      rewardItem: 'cool_charm',
+      doneFlag: 'q_letter_done',
+      caller: {
+        name: 'Halvor',
+        quote: 'Forty years I sat on those words and she said them right back. Whatever you are facing — you are not facing it alone. Take some warmth.',
+        effect: { kind: 'heal', power: 420 },
+      },
+    }),
+
+    /* ---- §A10 regional (NOISE theme): the harbor bell the Hush muffled ---- */
+    Q({
+      id: 'the_silenced_bell',
+      name: 'The Silenced Bell',
+      chapter: 4,
+      giver: 'kv_bellkeeper',
+      startFlag: 'q_bell',
+      objectives: [
+        { id: 'clapper', text: "Kvisthavn's harbor bell has gone quiet — the Hush took its voice. The clapper rolled off the quay.", flag: 'q_bell_clapper' },
+        { id: 'ring', text: 'Clapper recovered. Hang it, and ring the bell loud enough to be heard across the water.', flag: 'q_bell_rung' },
+        { id: 'report', text: 'The harbor has its bell back. Tell the bellkeeper it rings true again.', flag: 'q_bell_reported' },
+      ],
+      rewardItem: 'brass_ships_bell',
+      doneFlag: 'q_bell_done',
+      caller: {
+        name: 'The Bellkeeper',
+        quote: 'A bell is a town saying I AM STILL HERE. Let me ring it for you — clear across the dark, so the quiet KNOWS we are coming.',
+        effect: { kind: 'damage', power: 435 },
+      },
+    }),
+
+    /* ---- §A10 regional (scale comedy): a picnic the giants can't get right ---- */
+    Q({
+      id: 'the_giants_picnic',
+      name: "The Giant's Picnic",
+      chapter: 4,
+      giver: 'll_mayor',
+      startFlag: 'q_picnic',
+      objectives: [
+        { id: 'brunost', text: 'Lilleby wants to welcome you with a picnic, human-sized. They need a wheel of brunost cut down to a slice you can lift.', flag: 'q_picnic_brunost' },
+        { id: 'berry', text: 'And a berry. Just one. (A Dog-Sized Berry is, to a giant, a perfectly normal blueberry.)', flag: 'q_picnic_berry' },
+        { id: 'set', text: 'Lay the little feast on the great table. The whole town will kneel to watch you eat it.', flag: 'q_picnic_set' },
+      ],
+      rewardItem: 'troll_cross',
+      doneFlag: 'q_picnic_done',
+      caller: {
+        name: 'The Mayor of Lilleby',
+        quote: 'EVERYTHING HERE IS NORMAL-SIZED, and so is our gratitude, which is to say ENORMOUS. The whole town sends its warmth, small friends!',
+        effect: { kind: 'heal', power: 425 },
       },
     }),
   ].map((q) => [q.id, q]),

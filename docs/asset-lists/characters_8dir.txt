@@ -53,3 +53,10 @@ npc_clerk
 npc_depot_clerk
 npc_realtor
 npc_bert
+# Ch.4 Norway — Kvisthavn & Lilleby cast
+sigrid_spectacles
+kvisthavn_fisher
+kvisthavn_shopkeeper
+mayor_of_lilleby
+lilleby_giant_child
+lilleby_undertaker

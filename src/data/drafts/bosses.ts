@@ -25,7 +25,6 @@ import {
   riddle,
   scriptedSurvival,
   thresholdHeal,
-  untargetableUntilNoise,
 } from '../../levelkit/forge/bosses';
 
 /** the §A6 Ch.6 Sphinx ships a pool of 8 (a replay asks a different one) —
@@ -46,14 +45,10 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
    * src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy — no longer a
    * draft (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 
-  /* Ch.4 — THE WHISPERWIG (1,900 HP): burrowed/untargetable until noise; hush */
-  the_whisperwig: untargetableUntilNoise('the_whisperwig', {
-    burrowed: { id: 'burrowed', name: 'BURROWED', spriteSuffix: '', line: 'whisperwig_burrow_draft' },
-    exposed: { id: 'exposed', name: 'FORCED OUT', spriteSuffix: '_exposed', line: 'whisperwig_out_draft' },
-    noise: ['volt', 'firecracker'],
-    awakening: 'thunder_snore', // Mia's Vibe Volt α (draft awakening id)
-    hush: { every: 3, turns: 2 },
-  }),
+  /* Ch.4 — THE WHISPERWIG: PROMOTED (the Norway landing). Now a live boss in
+   * src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy, with the
+   * `the_thunder_snore` awakening (Mia's Vibe Volt α) — no longer a draft (Prime
+   * Law 1: a draft may not duplicate a shipped script or enemy). */
 
   /* Ch.5 — WHISKERZILLA (2,150 HP): the Flat Bell grants evasion; it gets bored */
   whiskerzilla: scriptedSurvival('whiskerzilla', {
@@ -122,7 +117,7 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
  *  bespoke finale, leaving these seven + the two minibosses). */
 export const DRAFT_BOSS_IDS = [
   // 'headmaster_mainframe' — PROMOTED to a live boss at the Ch.3 landing (ADR-099)
-  'the_whisperwig',
+  // 'the_whisperwig' — PROMOTED to a live boss at the Ch.4 Norway landing
   'whiskerzilla',
   'laughing_sphinx',
   'cobra_raja',

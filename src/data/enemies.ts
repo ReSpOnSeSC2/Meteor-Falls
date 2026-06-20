@@ -1172,6 +1172,386 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       bg: [RAMP.MAGENTA, RAMP.NIGHT],
       boss: true,
     }),
+
+    /* ═══════════════════════ §A7 CHAPTER 4 — NORWAY ═══════════════════════ *
+     * "The Fjord That Sleeps" (Kvisthavn / Bootstep Moor / Lilleby / The
+     * Sleeper's Spine). SCALE is the mechanic (§A7): some enemies aren't bigger
+     * numbers, they're bigger PROBLEMS. Cold-blue palette, fire/salt the common
+     * answers, the deep hum under everything. Stats sit on the Ch.4 band (L19–22,
+     * curves.ts sanity). DEV-ART: the 3 authored Norway battlers (snail/gull/
+     * berry) wear their own keys; the rest GRAY-BOX on shipped battlers (ADR-119
+     * pattern — own EnemyDef, borrowed face) until the art pass lands each PNG. */
+
+    /* ---- the §A7 SEED SIX (the chapter's anchors) ---- */
+    E({
+      id: 'colossal_gnat',
+      name: 'Colossal Gnat',
+      article: 'The',
+      hp: 90, offense: 24, defense: 8, speed: 22, level: 19, exp: 95, cash: 48,
+      weakness: ['fire'],
+      moves: [
+        { name: 'whine', kind: 'attack', mult: 1, text: '{e} whined past {t}\'s ear at the exact worst pitch!', weight: 5 },
+        { name: 'eye dive', kind: 'status', status: 'crying', text: '{e} dove straight for {t}\'s eyes!', weight: 3 },
+        { name: 'gnat bite', kind: 'attack', mult: 1.2, text: '{e} bit {t} with surprising commitment!', weight: 3 },
+        { name: 'drone', kind: 'taunt', text: '{e} circled, droning, just out of reach.', weight: 1 },
+      ],
+      deathLine: 'The Colossal Gnat was, at last, swatted. It took both hands and a rolled-up newspaper.',
+      sprite: 'battle_skeeter_swarm', mini: 'mini_skeeter_swarm',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+    E({
+      id: 'knitting_needles',
+      name: 'Runaway Knitting Needles',
+      article: 'The',
+      hp: 175, offense: 28, defense: 14, speed: 16, level: 20, exp: 130, cash: 60,
+      weakness: ['fire', 'volt'],
+      moves: [
+        { name: 'purl two', kind: 'attack', mult: 1, text: '{e} jabbed at {t} — knit one, purl {t}!', weight: 5 },
+        { name: 'drop a stitch', kind: 'status', status: 'paralyzed', text: '{e} laced {t} up tight in a half-finished sleeve!', weight: 3 },
+        { name: 'cast on', kind: 'strong', mult: 1.6, text: '{e} wound up a whole row and let {t} have it!', weight: 3 },
+        { name: 'clack', kind: 'taunt', text: '{e} clacked together, ten to the dozen.', weight: 1 },
+      ],
+      deathLine: 'The Runaway Knitting Needles unravelled. Somewhere, an unfinished sweater sighed with relief.',
+      sprite: 'battle_cursed_souvenir', mini: 'mini_souvenir',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+    E({
+      id: 'thunder_snail',
+      name: 'Thunder Snail',
+      article: 'The',
+      // slow on the field, hits like weather in the fight (§A7 Ch.4)
+      hp: 230, offense: 34, defense: 20, speed: 5, level: 21, exp: 175, cash: 78,
+      weakness: ['salt'],
+      moves: [
+        { name: 'slow roll', kind: 'attack', mult: 1.1, text: '{e} rolled over {t} with the patience of geology!', weight: 4 },
+        { name: 'thunderhead', kind: 'strong', mult: 1.7, text: '{e} pulled a whole storm out of its shell and dropped it on {t}!', weight: 3 },
+        { name: 'squall', kind: 'status', status: 'crying', text: '{e} kicked up a stinging squall of grit and rain!', weight: 2 },
+        { name: 'rumble', kind: 'taunt', text: '{e} rumbled, low and far-off. The light went grey.', weight: 1 },
+      ],
+      deathLine: 'The Thunder Snail rolled on, unhurried. The forecast cleared by evening.',
+      drops: [{ item: 'amber_chunk', chance: 0.1 }],
+      sprite: 'battle_thunder_snail', mini: 'mini_hill_slug',
+      bg: [RAMP.BLUE, RAMP.CYAN],
+    }),
+    E({
+      id: 'dog_sized_berry',
+      name: 'Dog-Sized Berry',
+      article: 'The',
+      // poses as a roadside pickup; heals itself if you let the fight drag (§A7)
+      hp: 160, offense: 22, defense: 12, speed: 10, level: 20, exp: 150, cash: 70,
+      weakness: ['fire'],
+      moves: [
+        { name: 'play dead', kind: 'taunt', text: '{e} sat very still, pretending to be lunch.', weight: 2 },
+        { name: 'sun-ripen', kind: 'mend', text: '{e} drank a little sun and plumped back up!', weight: 3 },
+        { name: 'roll over', kind: 'attack', mult: 1.1, text: '{e} rolled over {t} like a boulder of jam!', weight: 4 },
+        { name: 'squish', kind: 'strong', mult: 1.5, text: '{e} squashed {t} flat and left a stain!', weight: 2 },
+      ],
+      deathLine: 'The Dog-Sized Berry burst at last. It was, after everything, just a berry. A very large, very rude berry.',
+      drops: [{ item: 'dog_sized_berry', chance: 0.5 }],
+      sprite: 'battle_giant_berry_blocker', mini: 'mini_hill_slug',
+      bg: [RAMP.MAGENTA, RAMP.RED],
+    }),
+    E({
+      id: 'hushed_gull',
+      name: 'Hushed Gull, Enormous',
+      article: 'The',
+      hp: 200, offense: 26, defense: 12, speed: 18, level: 21, exp: 160, cash: 72,
+      weakness: ['salt'],
+      moves: [
+        { name: 'dive', kind: 'attack', mult: 1.1, text: '{e} folded its wings and dropped on {t} like a thrown anchor!', weight: 4 },
+        { name: 'snatch', kind: 'steal', text: '{e} snatched a snack right out of {t}\'s hands!', weight: 3 },
+        { name: 'screech', kind: 'status', status: 'hushed', text: '{e} screamed the kind of scream that takes your voice with it!', weight: 2 },
+        { name: 'wheel', kind: 'taunt', text: '{e} wheeled overhead, sizing up the chips.', weight: 1 },
+      ],
+      deathLine: 'The Hushed Gull, Enormous gave back the chip and left in a huff of feathers the size of oars.',
+      drops: [{ item: 'pickled_herring', chance: 0.4 }, { item: 'stockfish_bundle', chance: 0.15 }],
+      sprite: 'battle_fjord_gull_bully', mini: 'mini_pigeon_gang',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+    E({
+      id: 'junior_jotun',
+      name: 'Junior Jötun',
+      article: 'The',
+      // a baby frost-giant; grabs a hero and won't let go (§A7 "grabs a hero")
+      hp: 260, offense: 32, defense: 22, speed: 8, level: 22, exp: 190, cash: 80,
+      weakness: ['fire'],
+      moves: [
+        { name: 'big grab', kind: 'status', status: 'paralyzed', text: '{e} closed one enormous cold fist around {t}!', weight: 3 },
+        { name: 'boulder drop', kind: 'strong', mult: 1.7, text: '{e} dropped a boulder it had been using as a marble on {t}!', weight: 3 },
+        { name: 'stomp', kind: 'attack', mult: 1.1, text: '{e} stomped, and the whole moor jumped — {t} most of all!', weight: 3 },
+        { name: 'yawn', kind: 'taunt', text: '{e} yawned. It was a weather event.', weight: 1 },
+      ],
+      deathLine: 'The Junior Jötun sat down hard, decided it would rather nap, and did. Fair enough.',
+      drops: [{ item: 'giants_banknote', chance: 0.1 }, { item: 'silver_hoard', chance: 0.12 }],
+      sprite: 'battle_step_mask', mini: 'mini_mask',
+      bg: [RAMP.BLUE, RAMP.CYAN],
+    }),
+
+    /* ---- FOUR road/field roamers (Bootstep Moor — scale comedy) ---- */
+    E({
+      id: 'moor_midge_cloud',
+      name: 'Moor-Midge Cloud',
+      article: 'The',
+      hp: 70, offense: 16, defense: 6, speed: 20, level: 19, exp: 70, cash: 35,
+      weakness: ['fire'],
+      moves: [
+        { name: 'cloud up', kind: 'attack', mult: 1, text: '{e} swallowed {t} whole in a haze of tiny wings!', weight: 5 },
+        { name: 'in your eyes', kind: 'status', status: 'crying', text: '{e} got everywhere a midge can get!', weight: 3 },
+        { name: 'a thousand bites', kind: 'attack', mult: 1.2, text: '{e} bit {t} a thousand times, fairly, in turn!', weight: 2 },
+      ],
+      deathLine: 'The Moor-Midge Cloud dispersed on the next gust, grumbling in a thousand tiny voices.',
+      sprite: 'battle_banana_bunch', mini: 'mini_banana',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+    E({
+      id: 'boulder_lichen',
+      name: 'Boulder-Lichen',
+      article: 'The',
+      hp: 240, offense: 24, defense: 26, speed: 4, level: 21, exp: 160, cash: 70,
+      weakness: ['salt'],
+      moves: [
+        { name: 'shrug loose', kind: 'attack', mult: 1.1, text: '{e} shrugged a few tons of itself onto {t}!', weight: 4 },
+        { name: 'great roll', kind: 'strong', mult: 1.7, text: '{e} got rolling, and rolling is hard to argue with!', weight: 3 },
+        { name: 'settle', kind: 'taunt', text: '{e} settled, slowly, into being scenery again.', weight: 2 },
+      ],
+      deathLine: 'The Boulder-Lichen rolled to a stop and went back to pretending it had never moved at all.',
+      drops: [{ item: 'amber_chunk', chance: 0.08 }],
+      sprite: 'battle_hill_slug', mini: 'mini_hill_slug',
+      bg: [RAMP.BLUE, RAMP.CYAN],
+    }),
+    E({
+      id: 'frost_hare',
+      name: 'Enormous Frost-Hare',
+      article: 'The',
+      hp: 150, offense: 30, defense: 12, speed: 24, level: 20, exp: 130, cash: 60,
+      weakness: ['fire'],
+      moves: [
+        { name: 'thumper kick', kind: 'strong', mult: 1.6, text: '{e} kicked with both hind legs and sent {t} skidding!', weight: 4 },
+        { name: 'bound', kind: 'attack', mult: 1.1, text: '{e} bounded clean over {t} and clipped them coming down!', weight: 4 },
+        { name: 'nose twitch', kind: 'taunt', text: '{e} twitched its nose, deeply unimpressed.', weight: 2 },
+      ],
+      deathLine: 'The Enormous Frost-Hare bounded off across the moor, ears flat, thoroughly done with the lot of you.',
+      sprite: 'battle_pickpocket_parrot', mini: 'mini_parrot',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+    E({
+      id: 'bog_cotton_wisp',
+      name: 'Bog-Cotton Wisp',
+      article: 'The',
+      // a weather-sized nuisance that drifts across paths like a moving wall (§A7)
+      hp: 120, offense: 18, defense: 10, speed: 14, level: 19, exp: 110, cash: 55,
+      weakness: ['fire'],
+      moves: [
+        { name: 'drift across', kind: 'attack', mult: 1, text: '{e} drifted across {t}, soft and smothering!', weight: 4 },
+        { name: 'lullaby fluff', kind: 'status', status: 'asleep', text: '{e} settled over {t} like the world\'s most boring blanket!', weight: 3 },
+        { name: 'gather', kind: 'taunt', text: '{e} gathered itself, fluffier and somehow larger.', weight: 2 },
+      ],
+      deathLine: 'The Bog-Cotton Wisp came apart into seeds and floated off to clog some other path entirely.',
+      sprite: 'battle_cursed_souvenir', mini: 'mini_souvenir',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+
+    /* ---- THREE dungeon specialists (The Sleeper's Spine — body terrain) ---- */
+    E({
+      id: 'earwax_golem',
+      name: 'Earwax Amber Golem',
+      article: 'The',
+      hp: 235, offense: 30, defense: 24, speed: 7, level: 21, exp: 175, cash: 75,
+      weakness: ['fire'],
+      moves: [
+        { name: 'amber fist', kind: 'strong', mult: 1.6, text: '{e} swung a fist of warm gold amber at {t}!', weight: 4 },
+        { name: 'seal the canal', kind: 'status', status: 'hushed', text: '{e} packed {t}\'s ears with wax — the world went muffled and small!', weight: 3 },
+        { name: 'grind', kind: 'attack', mult: 1.1, text: '{e} ground {t} against the canal wall!', weight: 2 },
+        { name: 'drip', kind: 'taunt', text: '{e} dripped, slow and golden, and waited.', weight: 1 },
+      ],
+      deathLine: 'The Earwax Amber Golem melted back into the warm dark of the canal, taking its grudge with it.',
+      drops: [{ item: 'amber_chunk', chance: 0.1 }, { item: 'firecracker_string', chance: 0.25 }],
+      sprite: 'battle_step_mask', mini: 'mini_mask',
+      bg: [RAMP.BLUE, RAMP.CYAN],
+    }),
+    E({
+      id: 'dream_leech',
+      name: 'Dream-Leech',
+      article: 'The',
+      hp: 130, offense: 24, defense: 12, speed: 16, level: 20, exp: 150, cash: 70,
+      weakness: ['salt'],
+      moves: [
+        { name: 'sip a dream', kind: 'drain', mult: 1, text: '{e} sipped a warm dream straight out of {t}!', weight: 4 },
+        { name: 'nightmare nip', kind: 'attack', mult: 1.2, text: '{e} nipped {t} with a mouthful of bad dreams!', weight: 3 },
+        { name: 'lull', kind: 'status', status: 'asleep', text: '{e} hummed the Sleeper\'s own breathing at {t}...', weight: 2 },
+      ],
+      deathLine: 'The Dream-Leech let go, fat and dozy, and rolled off into the Sleeper\'s dreams to digest.',
+      drops: [{ item: 'salve_of_arnica', chance: 0.2 }],
+      sprite: 'battle_cursed_souvenir', mini: 'mini_souvenir',
+      bg: [RAMP.PURPLE, RAMP.NIGHT],
+    }),
+    E({
+      id: 'snore_gust',
+      name: 'Snore-Gust',
+      article: 'The',
+      hp: 110, offense: 22, defense: 10, speed: 20, level: 20, exp: 140, cash: 65,
+      weakness: ['volt'],
+      moves: [
+        { name: 'gust', kind: 'attack', mult: 1.1, text: '{e} blasted {t} with one warm sleeping breath!', weight: 4 },
+        { name: 'the big exhale', kind: 'strong', mult: 1.6, text: '{e} wound up the Sleeper\'s biggest snore yet and let it OUT!', weight: 3 },
+        { name: 'warm fug', kind: 'status', status: 'asleep', text: '{e} wrapped {t} in a fug so cozy their eyes drooped...', weight: 2 },
+        { name: 'whistle', kind: 'taunt', text: '{e} whistled through a giant nostril, far above.', weight: 1 },
+      ],
+      deathLine: 'The Snore-Gust faded as the Sleeper breathed back in. In, and out. In, and out.',
+      drops: [{ item: 'firecracker_string', chance: 0.25 }],
+      sprite: 'battle_coily_cicada', mini: 'mini_coily_cicada',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+
+    /* ---- TWO social/urban oddities (Lilleby, the giants' town) ---- */
+    E({
+      id: 'giant_house_cat',
+      name: 'Giant House-Cat',
+      article: 'The',
+      // ordinary to them, a kaiju to you — a quiet seed for Ch.5's Whiskerzilla
+      hp: 220, offense: 28, defense: 16, speed: 16, level: 21, exp: 165, cash: 72,
+      weakness: ['salt'],
+      moves: [
+        { name: 'idle swat', kind: 'attack', mult: 1.1, text: '{e} swatted {t} the way you\'d swat a fly — idly, devastatingly!', weight: 4 },
+        { name: 'pounce', kind: 'strong', mult: 1.7, text: '{e} POUNCED, and the floor became the ceiling for {t}!', weight: 3 },
+        { name: 'knead', kind: 'status', status: 'paralyzed', text: '{e} kneaded {t} into the rug, purring, pinning them flat!', weight: 2 },
+        { name: 'purr', kind: 'taunt', text: '{e} purred. The windows buzzed in their frames.', weight: 1 },
+      ],
+      deathLine: 'The Giant House-Cat lost interest entirely and went to sit in a sunbeam the size of a tennis court.',
+      sprite: 'battle_step_mask', mini: 'mini_mask',
+      bg: [RAMP.GOLD, RAMP.RED],
+    }),
+    E({
+      id: 'lost_mitten',
+      name: 'Lost Giant Mitten',
+      article: 'The',
+      hp: 150, offense: 22, defense: 14, speed: 12, level: 20, exp: 130, cash: 60,
+      weakness: ['fire'],
+      moves: [
+        { name: 'flop', kind: 'attack', mult: 1.1, text: '{e} flopped onto {t} with a damp woollen WHUMP!', weight: 4 },
+        { name: 'grab for a hand', kind: 'status', status: 'paralyzed', text: '{e} swallowed {t} up to the elbow, looking for a hand to hold!', weight: 3 },
+        { name: 'wring', kind: 'strong', mult: 1.5, text: '{e} wrung itself out all over {t}!', weight: 2 },
+      ],
+      deathLine: 'The Lost Giant Mitten went limp. It only ever wanted its other half. (Someone should file a form.)',
+      drops: [{ item: 'reindeer_mittens', chance: 0.15 }],
+      sprite: 'battle_cursed_souvenir', mini: 'mini_souvenir',
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+
+    /* ---- TWO rare / high-value (little stories, the wealth wink) ---- */
+    E({
+      id: 'amber_hoard_troll',
+      name: 'Amber-Hoard Troll',
+      article: 'The',
+      hp: 165, offense: 24, defense: 16, speed: 12, level: 21, exp: 210, cash: 85,
+      weakness: ['fire'],
+      moves: [
+        { name: 'clutch the hoard', kind: 'taunt', text: '{e} pulled its amber close and glared at {t}.', weight: 3 },
+        { name: 'amber chuck', kind: 'strong', mult: 1.7, text: '{e} hurled a fist-sized lump of fossil sunshine at {t}!', weight: 3 },
+        { name: 'scrabble', kind: 'attack', mult: 1.1, text: '{e} scrabbled at {t} with stubby, greedy fingers!', weight: 3 },
+      ],
+      deathLine: 'The Amber-Hoard Troll scattered its treasure and dove under a rock — heartbroken, and a great deal poorer.',
+      drops: [{ item: 'amber_chunk', chance: 0.12 }, { item: 'silver_hoard', chance: 0.15 }],
+      sprite: 'battle_gilded_beetle', mini: 'mini_beetle',
+      bg: [RAMP.GOLD, RAMP.RED],
+    }),
+    E({
+      id: 'aurora_moth',
+      name: 'Aurora Moth',
+      article: 'The',
+      hp: 130, offense: 22, defense: 12, speed: 26, level: 21, exp: 200, cash: 84,
+      weakness: ['salt'],
+      moves: [
+        { name: 'blinding wings', kind: 'status', status: 'crying', text: '{e} beat wings of cold green light right in {t}\'s face!', weight: 3 },
+        { name: 'wing dust', kind: 'attack', mult: 1.2, text: '{e} shook a shimmer of dust over {t}!', weight: 3 },
+        { name: 'flutter off', kind: 'taunt', text: '{e} drifted higher, harder to catch, brighter to see.', weight: 3 },
+      ],
+      deathLine: 'The Aurora Moth lifted off and drew one slow ribbon of light across the dark before it was gone.',
+      drops: [{ item: 'amber_drop', chance: 0.1 }],
+      sprite: 'battle_jungle_jitterbug', mini: 'mini_jitterbug',
+      bg: [RAMP.PURPLE, RAMP.CYAN],
+    }),
+
+    /* ---- TWO late-chapter pressure (earlier lessons, one nasty twist) ---- */
+    E({
+      id: 'hushed_skua',
+      name: 'Hushed Skua',
+      article: 'The',
+      hp: 210, offense: 30, defense: 14, speed: 20, level: 22, exp: 185, cash: 82,
+      weakness: ['salt'],
+      moves: [
+        { name: 'strafe', kind: 'strong', mult: 1.6, text: '{e} came in low and fast and raked {t}!', weight: 4 },
+        { name: 'snatch', kind: 'steal', text: '{e} robbed {t} mid-dive, just to prove the gull could!', weight: 3 },
+        { name: 'shriek', kind: 'status', status: 'hushed', text: '{e} loosed a shriek that stole the words off {t}\'s tongue!', weight: 2 },
+        { name: 'wheel', kind: 'status', status: 'crying', text: '{e} kicked salt spray into {t}\'s eyes!', weight: 1 },
+      ],
+      deathLine: 'The Hushed Skua dropped what it stole and screamed away over the grey water.',
+      drops: [{ item: 'stockfish_bundle', chance: 0.15 }],
+      sprite: 'battle_fjord_gull_bully', mini: 'mini_pigeon_gang',
+      bg: [RAMP.BLUE, RAMP.CYAN],
+    }),
+    E({
+      id: 'frost_jotun_elder',
+      name: 'Frost-Jötun Elder',
+      article: 'The',
+      hp: 290, offense: 34, defense: 24, speed: 9, level: 22, exp: 200, cash: 86,
+      weakness: ['fire'],
+      moves: [
+        { name: 'two-handed grab', kind: 'status', status: 'paralyzed', text: '{e} caught {t} up in both hands like a doll!', weight: 3 },
+        { name: 'avalanche', kind: 'strong', mult: 1.8, text: '{e} brought a whole hillside of snow down on {t}!', weight: 3 },
+        { name: 'backhand', kind: 'attack', mult: 1.2, text: '{e} backhanded {t} clear across the spine!', weight: 3 },
+        { name: 'groan', kind: 'taunt', text: '{e} groaned, and you understood, suddenly, where mountains come from.', weight: 1 },
+      ],
+      deathLine: 'The Frost-Jötun Elder lay back against the slope and was, once more, just part of the mountain.',
+      drops: [{ item: 'giants_banknote', chance: 0.1 }, { item: 'silver_hoard', chance: 0.12 }],
+      sprite: 'battle_step_mask', mini: 'mini_mask',
+      bg: [RAMP.BLUE, RAMP.CYAN],
+    }),
+
+    /* ---- ONE set-piece (breaks the rhythm: a berry that blocks the bridge) ---- */
+    E({
+      id: 'bridge_berry',
+      name: 'Bridge Berry',
+      article: 'The',
+      // a wall with a stem: it blocks the gorge bridge until fought or rolled aside
+      hp: 300, offense: 18, defense: 24, speed: 4, level: 22, exp: 220, cash: 80,
+      weakness: ['fire'],
+      moves: [
+        { name: 'block the way', kind: 'taunt', text: '{e} settled deeper into the bridge mouth. It was not moving.', weight: 3 },
+        { name: 'great roll', kind: 'strong', mult: 1.7, text: '{e} tipped forward and rolled the length of the planks at {t}!', weight: 3 },
+        { name: 'squash', kind: 'attack', mult: 1.2, text: '{e} leaned its whole weight onto {t}!', weight: 3 },
+      ],
+      deathLine: 'The Bridge Berry rolled aside at last, leaving one long red smear and a clear path over the gorge.',
+      drops: [{ item: 'dog_sized_berry', chance: 0.4 }],
+      sprite: 'battle_giant_berry_blocker', mini: 'mini_hill_slug',
+      bg: [RAMP.MAGENTA, RAMP.RED],
+    }),
+
+    /* ---- BOSS 4 — THE WHISPERWIG (§A6 Ch.4, 1,800 HP) ---- *
+     * Burrows in the Sleeper's ear canal — UNTARGETABLE until NOISE forces it out
+     * (Vibe Volt / a Firecracker String / Milo's Bottle Rockets). Every 3rd turn it
+     * whispers party-wide Hushed pressure. MIA AWAKENS VIBE VOLT α the first time it
+     * surfaces (the thunder-snore in her teeth — bosses.ts `awakeningOnForm`). Weak
+     * to volt (the noise that answers it). The fight runs off bosses.ts +
+     * BattleScene's noiseOut/targetable wiring; mind_immune like every boss. */
+    E({
+      id: 'the_whisperwig',
+      name: 'THE WHISPERWIG',
+      article: 'The',
+      hp: 1800, offense: 36, defense: 18, speed: 12, level: 22, exp: 2400, cash: 900,
+      weakness: ['volt'],
+      moves: [
+        { name: 'whisper', kind: 'status', status: 'hushed', text: '{e} whispered something into {t}\'s ear that took the words right out of their mouth.', weight: 3 },
+        { name: 'probe', kind: 'attack', mult: 1.1, text: '{e} pressed deeper into the canal. {t} shuddered to the bone!', weight: 4 },
+        { name: 'needle', kind: 'strong', mult: 1.6, text: '{e} drove a single bristle through {t} like a hot wire!', weight: 3 },
+        { name: 'burrow', kind: 'taunt', text: '{e} dug deeper, out of reach, and the whispering went on.', weight: 2 },
+      ],
+      deathLine: 'The Whisperwig let go of the ear at last. In the new quiet, the Sleeper\'s breathing was the only sound — slow, even, and finally at peace.',
+      sprite: 'battle_the_whisperwig', mini: 'mini_souvenir',
+      bg: [RAMP.NIGHT, RAMP.PURPLE],
+      boss: true,
+      mind_immune: true,
+    }),
   ].map((e) => [e.id, e]),
 );
 
