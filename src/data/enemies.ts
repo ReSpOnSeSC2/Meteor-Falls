@@ -1196,7 +1196,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'drone', kind: 'taunt', text: '{e} circled, droning, just out of reach.', weight: 1 },
       ],
       deathLine: 'The Colossal Gnat was, at last, swatted. It took both hands and a rolled-up newspaper.',
-      sprite: 'battle_skeeter_swarm', mini: 'mini_skeeter_swarm',
+      sprite: 'battle_colossal_gnat', mini: 'mini_skeeter_swarm',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
     E({
@@ -1212,7 +1212,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'clack', kind: 'taunt', text: '{e} clacked together, ten to the dozen.', weight: 1 },
       ],
       deathLine: 'The Runaway Knitting Needles unravelled. Somewhere, an unfinished sweater sighed with relief.',
-      sprite: 'battle_cursed_souvenir', mini: 'mini_souvenir',
+      sprite: 'battle_knitting_needles', mini: 'mini_souvenir',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
     E({
@@ -1283,7 +1283,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Junior Jötun sat down hard, decided it would rather nap, and did. Fair enough.',
       drops: [{ item: 'giants_banknote', chance: 0.1 }, { item: 'silver_hoard', chance: 0.12 }],
-      sprite: 'battle_step_mask', mini: 'mini_mask',
+      sprite: 'battle_junior_jotun', mini: 'mini_mask',
       bg: [RAMP.BLUE, RAMP.CYAN],
     }),
 
@@ -1300,7 +1300,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'a thousand bites', kind: 'attack', mult: 1.2, text: '{e} bit {t} a thousand times, fairly, in turn!', weight: 2 },
       ],
       deathLine: 'The Moor-Midge Cloud dispersed on the next gust, grumbling in a thousand tiny voices.',
-      sprite: 'battle_banana_bunch', mini: 'mini_banana',
+      sprite: 'battle_moor_midge_cloud', mini: 'mini_banana',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
     E({
@@ -1316,7 +1316,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Boulder-Lichen rolled to a stop and went back to pretending it had never moved at all.',
       drops: [{ item: 'amber_chunk', chance: 0.08 }],
-      sprite: 'battle_hill_slug', mini: 'mini_hill_slug',
+      sprite: 'battle_boulder_lichen', mini: 'mini_hill_slug',
       bg: [RAMP.BLUE, RAMP.CYAN],
     }),
     E({
@@ -1331,7 +1331,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'nose twitch', kind: 'taunt', text: '{e} twitched its nose, deeply unimpressed.', weight: 2 },
       ],
       deathLine: 'The Enormous Frost-Hare bounded off across the moor, ears flat, thoroughly done with the lot of you.',
-      sprite: 'battle_pickpocket_parrot', mini: 'mini_parrot',
+      sprite: 'battle_frost_hare', mini: 'mini_parrot',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
     E({
@@ -1347,7 +1347,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'gather', kind: 'taunt', text: '{e} gathered itself, fluffier and somehow larger.', weight: 2 },
       ],
       deathLine: 'The Bog-Cotton Wisp came apart into seeds and floated off to clog some other path entirely.',
-      sprite: 'battle_cursed_souvenir', mini: 'mini_souvenir',
+      sprite: 'battle_bog_cotton_wisp', mini: 'mini_souvenir',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
 
@@ -1366,7 +1366,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Earwax Amber Golem melted back into the warm dark of the canal, taking its grudge with it.',
       drops: [{ item: 'amber_chunk', chance: 0.1 }, { item: 'firecracker_string', chance: 0.25 }],
-      sprite: 'battle_step_mask', mini: 'mini_mask',
+      sprite: 'battle_earwax_golem', mini: 'mini_mask',
       bg: [RAMP.BLUE, RAMP.CYAN],
     }),
     E({
@@ -1382,7 +1382,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Dream-Leech let go, fat and dozy, and rolled off into the Sleeper\'s dreams to digest.',
       drops: [{ item: 'salve_of_arnica', chance: 0.2 }],
-      sprite: 'battle_cursed_souvenir', mini: 'mini_souvenir',
+      sprite: 'battle_dream_leech', mini: 'mini_souvenir',
       bg: [RAMP.PURPLE, RAMP.NIGHT],
     }),
     E({
@@ -1399,7 +1399,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Snore-Gust faded as the Sleeper breathed back in. In, and out. In, and out.',
       drops: [{ item: 'firecracker_string', chance: 0.25 }],
-      sprite: 'battle_coily_cicada', mini: 'mini_coily_cicada',
+      sprite: 'battle_snore_gust', mini: 'mini_coily_cicada',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
 
@@ -1418,7 +1418,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'purr', kind: 'taunt', text: '{e} purred. The windows buzzed in their frames.', weight: 1 },
       ],
       deathLine: 'The Giant House-Cat lost interest entirely and went to sit in a sunbeam the size of a tennis court.',
-      sprite: 'battle_step_mask', mini: 'mini_mask',
+      sprite: 'battle_giant_house_cat', mini: 'mini_mask',
       bg: [RAMP.GOLD, RAMP.RED],
     }),
     E({
@@ -1434,7 +1434,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Lost Giant Mitten went limp. It only ever wanted its other half. (Someone should file a form.)',
       drops: [{ item: 'reindeer_mittens', chance: 0.15 }],
-      sprite: 'battle_cursed_souvenir', mini: 'mini_souvenir',
+      sprite: 'battle_lost_mitten', mini: 'mini_souvenir',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
 
@@ -1452,7 +1452,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Amber-Hoard Troll scattered its treasure and dove under a rock — heartbroken, and a great deal poorer.',
       drops: [{ item: 'amber_chunk', chance: 0.12 }, { item: 'silver_hoard', chance: 0.15 }],
-      sprite: 'battle_gilded_beetle', mini: 'mini_beetle',
+      sprite: 'battle_amber_hoard_troll', mini: 'mini_beetle',
       bg: [RAMP.GOLD, RAMP.RED],
     }),
     E({
@@ -1468,7 +1468,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Aurora Moth lifted off and drew one slow ribbon of light across the dark before it was gone.',
       drops: [{ item: 'amber_drop', chance: 0.1 }],
-      sprite: 'battle_jungle_jitterbug', mini: 'mini_jitterbug',
+      sprite: 'battle_aurora_moth', mini: 'mini_jitterbug',
       bg: [RAMP.PURPLE, RAMP.CYAN],
     }),
 
@@ -1487,7 +1487,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Hushed Skua dropped what it stole and screamed away over the grey water.',
       drops: [{ item: 'stockfish_bundle', chance: 0.15 }],
-      sprite: 'battle_fjord_gull_bully', mini: 'mini_pigeon_gang',
+      sprite: 'battle_hushed_skua', mini: 'mini_pigeon_gang',
       bg: [RAMP.BLUE, RAMP.CYAN],
     }),
     E({
@@ -1504,7 +1504,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Frost-Jötun Elder lay back against the slope and was, once more, just part of the mountain.',
       drops: [{ item: 'giants_banknote', chance: 0.1 }, { item: 'silver_hoard', chance: 0.12 }],
-      sprite: 'battle_step_mask', mini: 'mini_mask',
+      sprite: 'battle_frost_jotun_elder', mini: 'mini_mask',
       bg: [RAMP.BLUE, RAMP.CYAN],
     }),
 

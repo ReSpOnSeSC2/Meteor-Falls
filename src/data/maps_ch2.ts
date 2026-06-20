@@ -1163,8 +1163,11 @@ function buildPyramidRoom(
     grid: g.out(),
     props: [
       // the mask switch lives in the entry lobby (room 4: the west alcove) —
-      // interacting turns the floor a quarter clockwise (the §A6 rotation)
-      { sprite: 'mask_switch', x: 2, y: west ? 4.6 : 11, solid: { ox: 4, oy: 12, w: 10, h: 8 } },
+      // interacting turns the floor a quarter clockwise (the §A6 rotation).
+      // West: sit it INSIDE the alcove floor (rows 6-7), not up in the flank
+      // wall — props anchor top-left, so a y in the wall drew the mask buried
+      // above the alcove and it read as unreachable (the soft-lock report).
+      { sprite: 'mask_switch', x: 2, y: west ? 6.2 : 11, solid: { ox: 4, oy: 12, w: 10, h: 8 } },
     ],
     npcs: [],
     signs: [
