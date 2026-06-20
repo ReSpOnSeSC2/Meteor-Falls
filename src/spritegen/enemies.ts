@@ -1294,6 +1294,34 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
       { sprite: faceKey, draw: (w: WearTier) => composeEnemy(CH3_FACE_SPECS[faceKey], w) },
     ]),
   ),
+
+  // §A7 Ch.4 NORWAY — the snail / gull / berry / Whisperwig wear their OWN authored
+  // PNGs (assets/art/enemies/battle_*; wired in authored.ts, all three tiers on disk).
+  // The rest GRAY-BOX on a shipped battler (ADR-119 pattern — own EnemyDef, borrowed
+  // face) until the art pass paints each one; `draw` is a reused generator standing in
+  // as the boot fallback (ADR-109 frozen — no new generators). sprite keys agree with
+  // each EnemyDef.sprite (S11b wear-gate, both directions).
+  thunder_snail: { sprite: 'battle_thunder_snail', draw: drawHillSlugDeluxe },
+  hushed_gull: { sprite: 'battle_fjord_gull_bully', draw: drawPigeonGang },
+  hushed_skua: { sprite: 'battle_fjord_gull_bully', draw: drawPigeonGang },
+  dog_sized_berry: { sprite: 'battle_giant_berry_blocker', draw: drawHillSlugDeluxe },
+  bridge_berry: { sprite: 'battle_giant_berry_blocker', draw: drawHillSlugDeluxe },
+  the_whisperwig: { sprite: 'battle_the_whisperwig', draw: drawCursedSouvenir },
+  colossal_gnat: { sprite: 'battle_skeeter_swarm', draw: drawCoilyCicada },
+  snore_gust: { sprite: 'battle_coily_cicada', draw: drawCoilyCicada },
+  knitting_needles: { sprite: 'battle_cursed_souvenir', draw: drawCursedSouvenir },
+  bog_cotton_wisp: { sprite: 'battle_cursed_souvenir', draw: drawCursedSouvenir },
+  dream_leech: { sprite: 'battle_cursed_souvenir', draw: drawCursedSouvenir },
+  lost_mitten: { sprite: 'battle_cursed_souvenir', draw: drawCursedSouvenir },
+  junior_jotun: { sprite: 'battle_step_mask', draw: drawStepMask },
+  earwax_golem: { sprite: 'battle_step_mask', draw: drawStepMask },
+  giant_house_cat: { sprite: 'battle_step_mask', draw: drawStepMask },
+  frost_jotun_elder: { sprite: 'battle_step_mask', draw: drawStepMask },
+  boulder_lichen: { sprite: 'battle_hill_slug', draw: drawHillSlugDeluxe },
+  moor_midge_cloud: { sprite: 'battle_banana_bunch', draw: drawBananaBunch },
+  frost_hare: { sprite: 'battle_pickpocket_parrot', draw: drawPickpocketParrot },
+  amber_hoard_troll: { sprite: 'battle_gilded_beetle', draw: drawGildedBeetle },
+  aurora_moth: { sprite: 'battle_jungle_jitterbug', draw: drawJungleJitterbug },
 };
 
 /**
@@ -1306,6 +1334,10 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
  */
 export const FORM_ART: Record<string, EnemyBattleArt> = {
   gilded_grin_hollow: { sprite: 'battle_gilded_grin_hollow', draw: (w) => drawGildedGrin(w, true) },
+  // §A6 Ch.4 — the Whisperwig's SURFACED form (spriteSuffix '_exposed'): noise drags
+  // it out of the ear canal. Authored PNG on disk (battle_the_whisperwig_exposed.png),
+  // wired in authored.ts; the gray-box draw is the boot fallback.
+  the_whisperwig_exposed: { sprite: 'battle_the_whisperwig_exposed', draw: drawCursedSouvenir },
 };
 
 /** the wear-tier texture key battle swaps to (tier 0 = the base sprite) */

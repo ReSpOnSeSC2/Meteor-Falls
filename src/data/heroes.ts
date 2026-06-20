@@ -86,7 +86,8 @@ export const HEROES: Record<HeroId, HeroDef> = {
       { level: 1, ability: 'pray' },
       { level: 15, ability: 'magnet_a' },
       { level: 17, ability: 'vibe_fire_b' },
-      { level: 20, ability: 'vibe_volt_a' },
+      // vibe_volt_a is NOT here — it AWAKENS at the Ch.4 Whisperwig (the_thunder_snore,
+      // awakenings.ts; one-path rule). verify.ts AWAKENING_LEVEL pins its earn at L20.
       { level: 22, ability: 'magnet_b' }, // PP-steal grows: harder pull
       { level: 24, ability: 'vibe_freeze_b' },
       { level: 25, ability: 'dreamlull' }, // mass sleep (utility)

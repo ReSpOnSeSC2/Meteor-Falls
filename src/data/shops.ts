@@ -108,4 +108,40 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_wintermoor_tuck_greet',
     farewell: 'shop_wintermoor_tuck_bye',
   },
+  /* ---- Ch.4 (Norway) — §A8 ch4 shelves. KVISTHAVN's supply shop keeps the
+   *  fjord's food + cures, Jay's Frozen Cod / Mia's Lefse Griddle sidegrades, the
+   *  cold-drink PP line, the FUR-LINED HOOD, and — crucially — the FIRECRACKER
+   *  STRING (the NOISE that drags the Whisperwig out of the Sleeper's ear). One
+   *  obsession: the fish were bigger before the hum. Affordable on the §A9 Ch.4
+   *  arc. ---- */
+  kvisthavn_supply: {
+    id: 'kvisthavn_supply',
+    name: "KVISTHAVN KOLONIAL",
+    keeperNpc: 'kv_shopkeeper',
+    stock: [
+      'frozen_cod', 'lefse_griddle', 'cloudberry_cordial', 'birch_sap', 'gjende_coffee',
+      'brunost', 'fiskeboller', 'lefse', 'smoked_salmon', 'salve_of_arnica', 'smelling_salts',
+      'firecracker_string', 'snowball_special', 'fur_lined_hood', 'wool_sweater', 'reindeer_mittens',
+      'cool_charm', 'basket_basic',
+    ],
+    greet: 'shop_kvisthavn_greet',
+    farewell: 'shop_kvisthavn_bye',
+  },
+  /* ---- Ch.4 (Norway) — LILLEBY's warehouse: everything here is giant-sized and
+   *  priced like it. The dearer goods — the tonics (giant goat's milk, the cod-liver
+   *  penance), the troll charms, the heavy coats, and the long-keeping moor food.
+   *  One obsession: NORMAL-SIZED, insists the sign, while the keeper kneels to
+   *  ring you up. ---- */
+  lilleby_warehouse: {
+    id: 'lilleby_warehouse',
+    name: 'LILLEBY DRY GOODS (normal-sized)',
+    keeperNpc: 'll_keeper',
+    stock: [
+      'lutefisk', 'multekrem', 'rommegrot', 'farikal', 'knekkebrod', 'vafler', 'pickled_herring', 'kransekake',
+      'growth_spurt_milk', 'cod_liver_oil', 'oilskin_slicker', 'troll_hide_vest', 'rope_bracer',
+      'troll_cross', 'amber_drop', 'vegvisir_charm',
+    ],
+    greet: 'shop_lilleby_greet',
+    farewell: 'shop_lilleby_bye',
+  },
 };

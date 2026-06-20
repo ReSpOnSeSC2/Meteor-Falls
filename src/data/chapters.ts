@@ -101,27 +101,40 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     quests: ['overdue', 'groundskeepers_cuppa', 'return_to_sender', 'penny_fog', 'the_last_over'],
   },
 
-  /* =========================== UNLANDED (Ch.4–10) =========================== */
-
+  // THE NORWAY LANDING — Ch.4 flips to 'shipped'. The dungeon site becomes live
+  // dungeon.maps (the Sleeper's Spine: hand → shoulder → ear); the 3 overworld maps
+  // + all 4 §A10 quests fill in; the boss is now a live boss-flagged §A7 enemy at
+  // 1,800 HP with a BOSS_SCRIPTS entry (the_whisperwig draft retired in the same
+  // commit). The validator's live Ch.4 assertions switch on; the draft 'site'/
+  // settlement 'style' drop away (the S14c flip, the ADR-099 England precedent).
   4: {
     chapter: 4,
     title: 'The Fjord That Sleeps',
     region: 'Norway',
-    status: 'unlanded',
+    status: 'shipped',
     targetLevel: 22,
     ember: 4,
     heartlight: 'The Deep Hum',
     band: 'ch4',
     travel: 'biplane', // Lucille's North Sea hop (she barely makes it)
-    dungeon: { name: "The Sleeper's Spine → the Sleeper's Ear", site: 'sleepers_spine' },
+    dungeon: {
+      name: "The Sleeper's Spine → the Sleeper's Ear",
+      // the giant's body as architecture: the hand (entry), the shoulder (the
+      // §A4.11 meltfall PSI gate), and the ear (the §A6 Resonance Site + boss)
+      maps: ['spine_hand', 'spine_shoulder', 'spine_ear'],
+    },
     boss: { id: 'the_whisperwig', name: 'The Whisperwig', hp: 1800, template: 'untargetableUntilNoise' },
     settlements: [
-      { id: 'kvisthavn', kind: 'village', style: 'spire-canton' },
-      { id: 'lilleby', kind: 'village', style: 'spire-canton' },
+      { id: 'kvisthavn', kind: 'village' },
+      { id: 'lilleby', kind: 'village' },
     ],
-    maps: [],
-    quests: ['sigrids_spectacles', 'unsent_letter'],
+    // the 3 overworld maps from buildChapter4Maps(): the fjord hamlet, the 10× moor,
+    // and the giants' town (the dungeon maps live under dungeon.maps above)
+    maps: ['kvisthavn', 'bootstep_moor', 'lilleby'],
+    quests: ['sigrids_spectacles', 'unsent_letter', 'the_silenced_bell', 'the_giants_picnic'],
   },
+
+  /* =========================== UNLANDED (Ch.5–10) =========================== */
 
   5: {
     chapter: 5,

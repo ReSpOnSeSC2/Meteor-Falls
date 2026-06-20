@@ -112,4 +112,54 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
       },
     ],
   }),
+
+  // BOSS 4 — §A6 Ch.4: THE WHISPERWIG (1,800 HP), the `untargetableUntilNoise`
+  // template made real. It BURROWS in the Sleeper's ear canal — untargetable —
+  // until NOISE drags it out: Vibe Volt, a Firecracker String, or Milo's Bottle
+  // Rockets (`groundedBy`; BattleScene.noiseOut honours the list). The surface is
+  // PERMANENT (`surfacesTo`), and the first time it shows its face MIA AWAKENS VIBE
+  // VOLT α — the thunder-snore in her teeth (awakeningOnForm → `the_thunder_snore`,
+  // her Ch.4 emotional beat, §A11.2-sincere). Every 3rd turn it whispers party-wide
+  // HUSHED pressure (no Vibe while it's in your ears). Weak to volt (the noise that
+  // answers it). mind_immune on the EnemyDef keeps Mind Warp a tempo tool, not a win.
+  the_whisperwig: B({
+    boss: 'the_whisperwig',
+    initialForm: 'burrowed',
+    forms: [
+      {
+        id: 'burrowed',
+        name: 'BURROWED',
+        untargetable: true,
+        groundedBy: ['volt', 'firecracker', 'bottle_rockets'],
+        groundedTurns: 3,
+        surfacesTo: 'surfaced',
+        spriteSuffix: '',
+        line: 'whisperwig_burrow',
+      },
+      {
+        id: 'surfaced',
+        name: 'SURFACED',
+        spriteSuffix: '_exposed',
+        line: 'whisperwig_surface',
+      },
+    ],
+    awakeningOnForm: { form: 'surfaced', awakening: 'the_thunder_snore' },
+    phases: [
+      {
+        id: 'open',
+        trigger: { kind: 'turnCount', n: 1 },
+        actions: [{ kind: 'scriptLine', line: 'whisperwig_open' }],
+      },
+      {
+        // every 3rd turn the whispering swells into party-wide Hushed pressure
+        id: 'pressure',
+        trigger: { kind: 'turnCount', n: 3, every: 3 },
+        once: false,
+        actions: [
+          { kind: 'scriptLine', line: 'whisperwig_whisper' },
+          { kind: 'partyStatus', status: 'hushed', turns: 2 },
+        ],
+      },
+    ],
+  }),
 };
