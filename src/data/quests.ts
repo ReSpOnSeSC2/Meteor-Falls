@@ -46,7 +46,7 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
       giver: 'mr_plummer',
       startFlag: 'q_mail',
       objectives: [
-        { id: 'pickles', text: "A letter for the Pickles'. Slide it past the victory speech.", flag: 'q_mail_pickles' },
+        { id: 'pickles', text: "A letter for the Pickles'. Slip it past Chad's victory speech.", flag: 'q_mail_pickles' },
         { id: 'sodd', text: "A letter for Mr. Sodd. His lawnmower has opinions about the lawn.", flag: 'q_mail_sodd' },
         { id: 'birch', text: 'A letter for the Birch place. The tidy one.', flag: 'q_mail_birch' },
         { id: 'chapel', text: 'A letter for the chapel. He gets his mail like everyone else.', flag: 'q_mail_chapel' },
@@ -219,7 +219,7 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
       giver: 'wm_librarian',
       startFlag: 'q_overdue',
       objectives: [
-        { id: 'b1', text: 'A blinking pupil dragged THE WHISPERING GALLERY into the stacks. Get it back.', flag: 'q_overdue_b1' },
+        { id: 'b1', text: 'A blinking Prefect Drone dragged THE WHISPERING GALLERY into the stacks. Get it back.', flag: 'q_overdue_b1' },
         { id: 'b2', text: 'KNOTS & THEIR UNDOING is jammed in a form-room locker. Free it.', flag: 'q_overdue_b2' },
         { id: 'b3', text: 'A first edition walked into the DORMS. Bring it home.', flag: 'q_overdue_b3' },
         { id: 'report', text: 'Three books, recovered. Tell the Librarian the stacks are whole again.', flag: 'q_overdue_reported' },

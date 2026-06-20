@@ -15,7 +15,7 @@ export const CITYLIFE_DIALOGUE: Record<string, DialogueScript> = {
   cl_knock_1: ['You knock. A long pause.', 'A note slides under the door. It reads: "TRY LATER." It is already later.'],
   cl_knock_2: ['The door is locked.', 'From within: the unmistakable sound of someone pretending to vacuum.'],
   cl_knock_3: ['You knock. "Who is it?"', 'You explain who you are. "...Never heard of you," they decide, and that is that.'],
-  cl_knock_4: ['Locked. A small sign reads: BACK IN 5 MINUTES.', 'The ink has faded to the color of a much older promise.'],
+  cl_knock_4: ['Locked. A small sign reads: BACK IN 5 MINUTES.', 'The ink faded years ago. So, you suspect, did the "5 minutes."'],
   cl_knock_5: ['You knock.', 'Something enormous shifts inside, sighs, and settles back to sleep. ...Best not.'],
   cl_knock_6: ['The doorknob refuses you.', 'You sense it has refused better people than you, and enjoyed every minute.'],
   cl_knock_7: ['You knock. "Password?"', 'You don\'t have one. "Correct!! ...no, wait, that\'s not it." The lock holds.'],
@@ -49,7 +49,7 @@ export const CITYLIFE_DIALOGUE: Record<string, DialogueScript> = {
   cl_keeper_4: ['@You break it, you buy it.', '@You buy it, it\'s yours. You stare at it too long, we negotiate.'],
   cl_keeper_5: ['@Half off everything ending in a vowel. Don\'t ask. The owner is an "artist."'],
   cl_keeper_6: ['@We take card, cash, or a really compelling story. All three have worked this week.'],
-  cl_keeper_7: ['@Closing soon. Also opening soon. We exist in a delicate retail superposition.'],
+  cl_keeper_7: ['@Closing soon. Also opening soon. We never did figure out which.'],
   cl_keeper_8: ['@Loyalty card: buy ten, get a heartfelt nod. Far more meaningful than a free one.'],
   cl_keeper_9: ['@Careful by the back shelf. That\'s where we keep the items that hum.'],
 
