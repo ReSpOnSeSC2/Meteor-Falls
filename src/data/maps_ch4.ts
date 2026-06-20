@@ -89,11 +89,11 @@ function buildKvisthavn(): MapDef {
       // Halvor — the fisher, the unsent-letter giver (one obsession: the one that got away, also literally a person)
       { id: 'kv_halvor', sprite: 'kvisthavn_fisher', x: 17, y: 18, facing: 'down', dialogue: 'npc_kv_halvor', stationary: true },
       // the bellkeeper — the silenced-bell giver (one obsession: a town that can be heard)
-      { id: 'kv_bellkeeper', sprite: 'tomas', x: 28, y: 13, facing: 'down', dialogue: 'npc_kv_bellkeeper', stationary: true },
+      { id: 'kv_bellkeeper', sprite: 'aurora_busker', x: 28, y: 13, facing: 'down', dialogue: 'npc_kv_bellkeeper', stationary: true },
       // the supply-shop keeper (one obsession: the fish were BIGGER before the hum)
       { id: 'kv_shopkeeper', sprite: 'kvisthavn_shopkeeper', x: 11, y: 9, facing: 'down', dialogue: 'npc_kv_shopkeeper', shop: 'kvisthavn_supply' },
       // a kid skipping stones (one obsession: the fjord hums back if you hum first)
-      { id: 'kv_kid', sprite: 'pajamaKid', x: 14, y: 19, facing: 'down', dialogue: 'npc_kv_kid', wander: true, emote: 'happy' },
+      { id: 'kv_kid', sprite: 'bell_choir_child', x: 14, y: 19, facing: 'down', dialogue: 'npc_kv_kid', wander: true, emote: 'happy' },
     ],
     signs: [
       { x: 3, y: 11, dialogue: 'sign_kvisthavn' },
@@ -163,7 +163,7 @@ function buildBootstepMoor(): MapDef {
       { sprite: 'picnic', x: 6, y: 5, solid: PICNIC_SOLID }, // §A4.5 picnic #2 of 3
     ],
     npcs: [
-      { id: 'moor_walker', sprite: 'tomas', x: 12, y: 7, facing: 'down', dialogue: 'npc_moor_walker', wander: true },
+      { id: 'moor_walker', sprite: 'bootstep_shepherd', x: 12, y: 7, facing: 'down', dialogue: 'npc_moor_walker', wander: true },
     ],
     signs: [
       { x: 10, y: 9, dialogue: 'sign_bootstep_moor' },
@@ -247,9 +247,9 @@ function buildLilleby(): MapDef {
       // the Mayor — the picnic giver (one obsession: everything here is NORMAL-SIZED)
       { id: 'll_mayor', sprite: 'mayor_of_lilleby', x: 16, y: 13, facing: 'down', dialogue: 'npc_ll_mayor', stationary: true, emote: 'happy' },
       // the warehouse keeper (one obsession: kneeling to ring up very small customers)
-      { id: 'll_keeper', sprite: 'senora', x: 8, y: 9, facing: 'down', dialogue: 'npc_ll_keeper', shop: 'lilleby_warehouse' },
+      { id: 'll_keeper', sprite: 'canteen_keeper', x: 8, y: 9, facing: 'down', dialogue: 'npc_ll_keeper', shop: 'lilleby_warehouse' },
       // Halvor's sweetheart, forty years on (unsent_letter delivery target)
-      { id: 'll_sweetheart', sprite: 'senora', x: 27, y: 13, facing: 'down', dialogue: 'npc_ll_sweetheart', stationary: true, idle: true },
+      { id: 'll_sweetheart', sprite: 'fjord_nurse', x: 27, y: 13, facing: 'down', dialogue: 'npc_ll_sweetheart', stationary: true, idle: true },
       // a giant child (one obsession: the little people are SO well-behaved)
       { id: 'll_child', sprite: 'lilleby_giant_child', x: 12, y: 18, facing: 'down', dialogue: 'npc_ll_child', wander: true },
       // the undertaker (one obsession: nobody here has died; he is very bored)
@@ -312,7 +312,7 @@ function buildSpineHand(): MapDef {
     ],
     npcs: [
       // the Dorin cameo — a travel-worn kid in a gi, asleep sitting up, beads in hand
-      { id: 'spine_walker', sprite: 'pajamaKid', x: 12, y: 7, facing: 'down', dialogue: 'npc_spine_walker', emote: 'sleep' },
+      { id: 'spine_walker', sprite: 'sleepwalker_miner', x: 12, y: 7, facing: 'down', dialogue: 'npc_spine_walker', emote: 'sleep' },
     ],
     signs: [{ x: 11, y: 3, dialogue: 'sign_spine_hand' }],
     phones: [],

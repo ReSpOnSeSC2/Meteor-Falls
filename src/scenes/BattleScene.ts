@@ -695,15 +695,21 @@ export class BattleScene extends Phaser.Scene {
       'moor_sheep', 'soot_imp', 'tea_trolley', 'telephone_box',
       'overdue_tome', 'roman_sentry',
     ].includes(enemyId)) return 'england';
-    // CH.4 Norway — the one authored Norway backdrop (the Sleeper's Spine) dresses
-    // every Ch.4 fight, moor to ear, until a dedicated outdoor backdrop lands.
+    // CH.4 Norway — the DUNGEON foes (the Sleeper's Spine, the sleeping giant's
+    // own body terrain: ear canal, dream, snore) keep the warm cavern backdrop;
+    // the gorge Bridge Berry and the Whisperwig boss fight live in the spine too.
+    if ([
+      'earwax_golem', 'dream_leech', 'snore_gust', 'bridge_berry', 'the_whisperwig',
+    ].includes(enemyId)) return 'sleepers_spine';
+    // every other Ch.4 roamer fights out under the open arctic sky — the Bootstep
+    // Moor, the Kvisthavn quay, the Lilleby streets, the gull-haunted cliffs — all
+    // dressed by the one authored fjord-moor backdrop.
     if ([
       'colossal_gnat', 'knitting_needles', 'thunder_snail', 'dog_sized_berry', 'hushed_gull',
       'junior_jotun', 'moor_midge_cloud', 'boulder_lichen', 'frost_hare', 'bog_cotton_wisp',
-      'earwax_golem', 'dream_leech', 'snore_gust', 'giant_house_cat', 'lost_mitten',
-      'amber_hoard_troll', 'aurora_moth', 'hushed_skua', 'frost_jotun_elder', 'bridge_berry',
-      'the_whisperwig',
-    ].includes(enemyId)) return 'sleepers_spine';
+      'giant_house_cat', 'lost_mitten', 'amber_hoard_troll', 'aurora_moth', 'hushed_skua',
+      'frost_jotun_elder',
+    ].includes(enemyId)) return 'fjord';
     return 'otterbrook';
   }
 

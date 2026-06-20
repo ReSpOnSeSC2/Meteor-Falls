@@ -60,3 +60,10 @@ kvisthavn_shopkeeper
 mayor_of_lilleby
 lilleby_giant_child
 lilleby_undertaker
+# Ch.4 Norway — secondary cast (buskers, wanderers, keepers)
+aurora_busker
+bell_choir_child
+bootstep_shepherd
+canteen_keeper
+fjord_nurse
+sleepwalker_miner
