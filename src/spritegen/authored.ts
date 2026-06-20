@@ -283,6 +283,13 @@ export const NPC_CHARACTER_ART = [
   { id: 'mayor_of_lilleby', key: 'authored_mayor_of_lilleby_8dir', url: new URL('../../assets/art/characters/mayor_of_lilleby_anim_46_4x.png', import.meta.url).href },
   { id: 'lilleby_giant_child', key: 'authored_lilleby_giant_child_8dir', url: new URL('../../assets/art/characters/lilleby_giant_child_anim_46_4x.png', import.meta.url).href },
   { id: 'lilleby_undertaker', key: 'authored_lilleby_undertaker_8dir', url: new URL('../../assets/art/characters/lilleby_undertaker_anim_46_4x.png', import.meta.url).href },
+  // Ch.4 Norway — secondary cast (quay buskers, moor & spine wanderers, town keepers)
+  { id: 'aurora_busker', key: 'authored_aurora_busker_8dir', url: new URL('../../assets/art/characters/aurora_busker_anim_46_4x.png', import.meta.url).href },
+  { id: 'bell_choir_child', key: 'authored_bell_choir_child_8dir', url: new URL('../../assets/art/characters/bell_choir_child_anim_46_4x.png', import.meta.url).href },
+  { id: 'bootstep_shepherd', key: 'authored_bootstep_shepherd_8dir', url: new URL('../../assets/art/characters/bootstep_shepherd_anim_46_4x.png', import.meta.url).href },
+  { id: 'canteen_keeper', key: 'authored_canteen_keeper_8dir', url: new URL('../../assets/art/characters/canteen_keeper_anim_46_4x.png', import.meta.url).href },
+  { id: 'fjord_nurse', key: 'authored_fjord_nurse_8dir', url: new URL('../../assets/art/characters/fjord_nurse_anim_46_4x.png', import.meta.url).href },
+  { id: 'sleepwalker_miner', key: 'authored_sleepwalker_miner_8dir', url: new URL('../../assets/art/characters/sleepwalker_miner_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -475,7 +482,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,
@@ -881,6 +888,23 @@ const ENEMY_OVERWORLD_ART = [
 const ENEMY_MINI_ART = [
   { key: 'mini_skeeter_swarm', url: new URL('../../assets/art/enemies/mini_skeeter_swarm.png', import.meta.url).href },
   { key: 'mini_pigeon_gang', url: new URL('../../assets/art/enemies/mini_pigeon_gang.png', import.meta.url).href },
+  // Ch.4 Norway roamers — authored overworld minis (flat-magenta gen → slice-enemy-mini)
+  { key: 'mini_colossal_gnat', url: new URL('../../assets/art/enemies/mini_colossal_gnat.png', import.meta.url).href },
+  { key: 'mini_frost_hare', url: new URL('../../assets/art/enemies/mini_frost_hare.png', import.meta.url).href },
+  { key: 'mini_knitting_needles', url: new URL('../../assets/art/enemies/mini_knitting_needles.png', import.meta.url).href },
+  { key: 'mini_junior_jotun', url: new URL('../../assets/art/enemies/mini_junior_jotun.png', import.meta.url).href },
+  { key: 'mini_moor_midge_cloud', url: new URL('../../assets/art/enemies/mini_moor_midge_cloud.png', import.meta.url).href },
+  { key: 'mini_boulder_lichen', url: new URL('../../assets/art/enemies/mini_boulder_lichen.png', import.meta.url).href },
+  { key: 'mini_bog_cotton_wisp', url: new URL('../../assets/art/enemies/mini_bog_cotton_wisp.png', import.meta.url).href },
+  { key: 'mini_earwax_golem', url: new URL('../../assets/art/enemies/mini_earwax_golem.png', import.meta.url).href },
+  { key: 'mini_dream_leech', url: new URL('../../assets/art/enemies/mini_dream_leech.png', import.meta.url).href },
+  { key: 'mini_snore_gust', url: new URL('../../assets/art/enemies/mini_snore_gust.png', import.meta.url).href },
+  { key: 'mini_giant_house_cat', url: new URL('../../assets/art/enemies/mini_giant_house_cat.png', import.meta.url).href },
+  { key: 'mini_lost_mitten', url: new URL('../../assets/art/enemies/mini_lost_mitten.png', import.meta.url).href },
+  { key: 'mini_amber_hoard_troll', url: new URL('../../assets/art/enemies/mini_amber_hoard_troll.png', import.meta.url).href },
+  { key: 'mini_aurora_moth', url: new URL('../../assets/art/enemies/mini_aurora_moth.png', import.meta.url).href },
+  { key: 'mini_hushed_skua', url: new URL('../../assets/art/enemies/mini_hushed_skua.png', import.meta.url).href },
+  { key: 'mini_frost_jotun_elder', url: new URL('../../assets/art/enemies/mini_frost_jotun_elder.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);
