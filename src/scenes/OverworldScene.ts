@@ -231,6 +231,9 @@ const RUN = 115 * ART_SCALE;
 const PURSUE = 85 * ART_SCALE;
 const PATROL_WALK = 38 * ART_SCALE;
 const PATROL_CHASE = 92 * ART_SCALE;
+/** dog roamers author into a 16² frame (half a human's 24×32); render them a
+ *  touch larger so a beagle reads as a real dog beside the cast, not a speck. */
+const DOG_DISPLAY_SCALE = 1.5;
 
 /* ---- ADR-106: multi-enemy contact + the EB-style join window (all tunable) ---- */
 /** the battle seats up to 5 (BattleScene letters A–E) — one source of truth */
@@ -845,6 +848,10 @@ export class OverworldScene extends Phaser.Scene {
       // dogs: frames [0,1]=eastbound, [2,3]=westbound (S7c sheet contract)
       const spr = this.add.sprite(x, y, def.sprite, def.dog ? (def.facing === 'left' ? 2 : 0) : standFrame(def.facing));
       spr.setOrigin(0.5, 1);
+      // dogs author into a 16² native frame — half a human's 24×32 — so at 1:1
+      // a beagle reads as a distant speck beside the cast. Lift it so it sits at
+      // a believable dog scale next to the kids (origin is feet, so it stays planted).
+      if (def.dog) spr.setScale(DOG_DISPLAY_SCALE);
       spr.setDepth(y);
       // ADR-124 — FREE-ROAMING TOWNSFOLK: NPCs wander a small radius by default;
       // only clerks (a `shop`), explicitly pinned NPCs (wander:false / stationary),
