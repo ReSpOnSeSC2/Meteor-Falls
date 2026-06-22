@@ -290,6 +290,11 @@ export function buildOtterbrook(): MapDef {
     triggers: [
       { id: 'bus_stop', rect: { x: 22, y: 24, w: 3, h: 3 }, once: false },
       { id: 'porch', rect: { x: 6, y: 6, w: 4, h: 2 }, once: true },
+      // ADR-121: THE HEART OAK in Pond Park (grown-town coords, outside the frozen
+      // core, so it's inert here and fires only on the grown map). Gated in
+      // OverworldScene.runTrigger to daytime-until-tick_defeated; the boss scene
+      // re-arms on re-entry, so a flee/loss can be retried.
+      { id: 'heart_oak', rect: { x: 54, y: 21, w: 3, h: 3 }, once: false },
     ],
   };
 }
@@ -445,13 +450,19 @@ export function growOtterbrook(): MapDef {
     { sprite: 'picnic', x: 61, y: 24, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
     { sprite: 'sign', x: 55, y: 28, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     ...treesAt([[50, 20], [60, 20], [51, 27], [62, 28]]),
+    // ADR-121: THE HEART OAK — the great tree at the town's heart. The Titanic Tick
+    // burrows in here and drains Otterbrook's Vibe (the Hush-dark); the heart_oak
+    // trigger spawns BOSS 1 in daytime until tick_defeated. Reuses the big tree art.
+    { sprite: 'tree_c', x: 55, y: 19, solid: OAK },
     // the gateway marker (the road east; the live door is wired in Movement 2)
     { sprite: 'sign', x: 66, y: 15, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     // S15i Task 0 — THE DAYBREAK GATE: until the opening ends (zapper_done), the
     // road east is closed with a sleeping-town barricade (a reason, not an
     // invisible wall). The door itself is also gated in OverworldScene.checkDoors,
     // so the verges can't be skirted. At daybreak both retire and the road opens.
-    { sprite: 'sawhorse', x: 67, y: 16, solid: { ox: 0, oy: 2, w: 36, h: 26 }, unlessFlag: 'zapper_done' },
+    // S15i Task 0 + ADR-121: the road-east barricade stays up through the sleeping
+    // night AND the Hush-dark — it comes down only when the Tick dies (real dawn).
+    { sprite: 'sawhorse', x: 67, y: 16, solid: { ox: 0, oy: 2, w: 36, h: 26 }, unlessFlag: 'tick_defeated' },
   ];
 
   const npcs = [
@@ -1002,6 +1013,10 @@ function buildHill(): MapDef {
     props: [
       ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
       { sprite: 'meteor_rock_hickory_hill', x: 14, y: 5, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
+      // ADR-121 — the powered-down HUSH SENTINEL husk, half-sunk in the crater after
+      // the first-night repel. A quiet ominous landmark the town walks around; it
+      // wakes again far later (the Ch.10 callback hangs off `sentinel_repelled`).
+      { sprite: 'sentinel_husk', x: 11.5, y: 4, ifFlag: 'sentinel_repelled', solid: { ox: 4, oy: 60, w: 152, h: 40 } },
       { sprite: 'picnic', x: 11, y: 23, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'sign', x: 12, y: 39, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
       // S9 §A10 #1: sniff clue 2 — prints by the picnic table, mid-trail only
@@ -1010,6 +1025,8 @@ function buildHill(): MapDef {
     npcs: [],
     signs: [
       { x: 12, y: 39, dialogue: 'sign_trail' },
+      // ADR-121: read the husk the morning after (only once the Sentinel's been repelled)
+      { x: 13, y: 6, dialogue: 'sign_sentinel_husk', ifFlag: 'sentinel_repelled' },
       // S9 §A10 #1: sniff clue 2 (under the prints, same gates)
       { x: 14, y: 23, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
       // S9 §A10 #3: the spring the Lemonade Empire claimed long ago —

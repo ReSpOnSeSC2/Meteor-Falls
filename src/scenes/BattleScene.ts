@@ -181,6 +181,9 @@ interface BattleConfig {
   advantage: 'player' | 'enemy' | 'none';
   guestChad: boolean;
   glintAssist: boolean;
+  /** ADR-121: Glint goes SUPERNOVA for the Sentinel fight — he carries the damage
+   *  while the scripted repel runs (a temporary super-powered ally, not a chip). */
+  glintSupernova?: boolean;
   boss: boolean;
   /** Optional authored battle backdrop family; otherwise inferred from the first foe. */
   backdrop?: string;
@@ -2431,6 +2434,16 @@ export class BattleScene extends Phaser.Scene {
   private async glintPhase(): Promise<void> {
     const target = this.enemies.find((e) => e.alive);
     if (!target) return;
+    if (this.cfg.glintSupernova) {
+      // ADR-121: against the Hush Sentinel, Glint burns at full power and CARRIES
+      // the fight — a heavy, bright hit every round so the kid feels rescued, not
+      // useful. (The scripted repel ends it regardless; this is the feeling.)
+      await this.print(BATTLE_TEXT.glint_supernova);
+      await this.fx.play('item_spark', { targets: [this.foeTarget(target)] });
+      await this.fx.play('item_spark', { targets: [this.foeTarget(target)] });
+      await this.damageEnemy(target, 30 + Math.floor(Math.random() * 12));
+      return;
+    }
     // Glint's assist is his Spark's warmth aimed like a flashlight (§A8)
     await this.print(BATTLE_TEXT.glint_assist);
     await this.fx.play('item_spark', { targets: [this.foeTarget(target)] });

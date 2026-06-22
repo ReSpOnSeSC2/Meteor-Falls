@@ -1252,6 +1252,10 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     tick_nymph: 28,
     the_suit: 32,
     titanic_tick: 60,
+    // ADR-121 — THE HUSH SENTINEL: the first-night Mars set-piece you REPEL (scripted
+    // endBattleMercy), not a money-axis boss. Small legible HP the repel pre-empts;
+    // NOT a CHAPTER_MANIFESTS boss, so it never hits the boss-curve / monetary checks.
+    hush_sentinel: 40,
     // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
     // (the union attacks 5×22, §A7's group notation)
     pickpocket_parrot: 70,

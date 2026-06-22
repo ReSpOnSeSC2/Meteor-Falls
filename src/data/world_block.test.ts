@@ -104,13 +104,14 @@ describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays orga
     expect(tables).toBeGreaterThanOrEqual(3);
   });
 
-  it('the daybreak gate seals the road east until zapper_done (the daybreak law, §B4)', () => {
+  it('the daybreak gate seals the road east until tick_defeated (daybreak §B4 + the Hush-dark, ADR-121)', () => {
     const ob = MAPS.otterbrook;
     // the foot connector east still exists (kept for Movement 2)...
     expect(ob.doors.some((d) => d.to === 'meadow_mile')).toBe(true);
-    // ...but a sleeping-town barricade + notice guard it, both gated to RETIRE
-    // at daybreak (the door itself is gated in OverworldScene.checkDoors too)
-    expect(ob.props.find((p) => p.sprite === 'sawhorse')?.unlessFlag).toBe('zapper_done');
+    // ...but a barricade guards it. ADR-121: it stays up through the sleeping night
+    // AND the Hush-dark, retiring only when the Heart-Oak Tick dies (real dawn) —
+    // tick_defeated is the single key out (the door is gated in checkDoors too).
+    expect(ob.props.find((p) => p.sprite === 'sawhorse')?.unlessFlag).toBe('tick_defeated');
     expect(ob.signs.some((s) => s.dialogue === 'sign_meadow_gate_closed' && s.unlessFlag === 'zapper_done')).toBe(true);
     // the treeline gawker + the gate walker swap night→day on the daybreak flip
     const gawker = ob.npcs.find((n) => n.id === 'treeline_gawker');
