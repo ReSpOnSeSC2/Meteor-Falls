@@ -5565,8 +5565,10 @@ export class OverworldScene extends Phaser.Scene {
       GS.data.keyItems.push('star_locket');
       // ADR-121: the crater holds a MACHINE, not a bug — the Hush Sentinel unfolds.
       // (Surge α no longer awakens HERE; it awakens mid-fight, scripted in bosses.ts.)
+      // Anchored a fixed offset ABOVE the player (not absolute map tiles) so it's
+      // always framed by the camera — it looms over the kid as it rises.
       const sentinel = this.add
-        .image(14 * TILE_PX, 4 * TILE_PX, 'authored_world_hush_sentinel')
+        .image(this.player.x, this.player.y - s(24), 'authored_world_hush_sentinel')
         .setOrigin(0.5, 1)
         .setDepth(9997)
         .setAlpha(0)
