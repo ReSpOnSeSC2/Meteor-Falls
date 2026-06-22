@@ -181,6 +181,9 @@ interface BattleConfig {
   advantage: 'player' | 'enemy' | 'none';
   guestChad: boolean;
   glintAssist: boolean;
+  /** ADR-121: Glint goes SUPERNOVA for the Sentinel fight — he carries the damage
+   *  while the scripted repel runs (a temporary super-powered ally, not a chip). */
+  glintSupernova?: boolean;
   boss: boolean;
   /** Optional authored battle backdrop family; otherwise inferred from the first foe. */
   backdrop?: string;
@@ -2365,6 +2368,11 @@ export class BattleScene extends Phaser.Scene {
     // ward, applied here PARALLEL to mitigateIncoming, never inside it.
     dmg = applyFocus(dmg, { exposed: e.exposed > 0, marked: e.marked > 0 });
     e.hp = Math.max(0, e.hp - dmg);
+    // ADR-121: the Hush Sentinel is REPELLED, never killed. While Glint blazes a
+    // boss can't be reduced past 1 HP, so a player+Glint burst can't pre-empt the
+    // scripted turn-5 repel (endBattleMercy) — the bar can crash to a sliver, then
+    // Glint drives it off.
+    if (this.cfg.glintSupernova && e.def.boss && e.hp <= 0) e.hp = 1;
     // floating damage popup (the S10 popFoe idiom) + the printed line —
     // a SMAAAASH combo hands in its one assembled EB line instead (S11b)
     this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `${dmg}`, weak ? RAMP.GOLD : RAMP.PAPER);
@@ -2431,6 +2439,19 @@ export class BattleScene extends Phaser.Scene {
   private async glintPhase(): Promise<void> {
     const target = this.enemies.find((e) => e.alive);
     if (!target) return;
+    if (this.cfg.glintSupernova) {
+      // ADR-121: against the Hush Sentinel, Glint burns at full power and CARRIES
+      // the fight — a heavy hit every round (the MAJORITY of the damage; the kid
+      // only chips), and his light closes the party's wounds (he's protecting them).
+      // The scripted repel ends it regardless; this is the feeling.
+      await this.print(BATTLE_TEXT.glint_supernova);
+      await this.fx.play('item_spark', { targets: [this.foeTarget(target)] });
+      await this.fx.play('item_spark', { targets: [this.foeTarget(target)] });
+      await this.damageEnemy(target, 34 + Math.floor(Math.random() * 16));
+      // his corona folds back over the party — wounds close (protection made visible)
+      for (const h of this.aliveHeroes()) this.healHero(h, Math.ceil(h.hero.maxHp * 0.5));
+      return;
+    }
     // Glint's assist is his Spark's warmth aimed like a flashlight (§A8)
     await this.print(BATTLE_TEXT.glint_assist);
     await this.fx.play('item_spark', { targets: [this.foeTarget(target)] });
@@ -2579,14 +2600,23 @@ export class BattleScene extends Phaser.Scene {
             mirror: st.mirror > 0,
             steeled: st.steeled > 0,
           });
-          const taken = mit.taken;
+          let taken = mit.taken;
           let reflected = mit.reflected;
           // Stone Brow Stance: a braced monk answers a PHYSICAL hit with ~40%
           // fist damage at the SAME `reflected` seam — patience made offense.
           const countered = st.braced > 0 && element === 'physical';
           if (countered) reflected += bracedCounter(dmg);
-          this.applyHeroDamage(target, taken);
-          await this.print(`${target.hero.name} took ${taken}!`);
+          // ADR-121: while Glint blazes (the Sentinel fight) he GUARDS the party —
+          // he throws himself into the blast, so only a sliver lands and NEVER the
+          // killing blow (the Sentinel hits full-power; the kid is being protected).
+          if (this.cfg.glintSupernova) {
+            taken = Math.min(Math.floor(taken * 0.2), Math.max(0, target.odoHp.target - 1));
+            this.applyHeroDamage(target, taken);
+            await this.print(this.fill(BATTLE_TEXT.glint_guard, '', e, target.hero.name));
+          } else {
+            this.applyHeroDamage(target, taken);
+            await this.print(`${target.hero.name} took ${taken}!`);
+          }
           if (reflected > 0) {
             const tint = st.reflect > 0 ? RAMP.GOLD : countered ? RAMP.RED : RAMP.CYAN;
             this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `${reflected}`, tint);

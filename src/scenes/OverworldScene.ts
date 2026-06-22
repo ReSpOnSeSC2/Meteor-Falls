@@ -319,6 +319,10 @@ export class OverworldScene extends Phaser.Scene {
   private cut = false; // cutscene lock
   private entryBlackout?: Phaser.GameObjects.Rectangle; // no world-flash before an entry cutscene
   private isNight = false; // set per-build; dialogueDay variants read it (S15c)
+  // ADR-121: THE HUSH-DARK — the Titanic Tick (in the Heart Oak) drains the town's
+  // Vibe after daybreak, so a cold diegetic "night" creeps over Otterbrook in the
+  // daytime until the Tick dies. Rides the night overlay, but cold (sick) not warm.
+  private hushDark = false;
   private transitioning = false;
   private battleCooldown = 0;
   private stepTimer = 0;
@@ -405,8 +409,14 @@ export class OverworldScene extends Phaser.Scene {
     // "why is it sometimes dark" fix). MapDef.night remains for places that
     // are genuinely always dark.
     const storyNight = !GS.flag('zapper_done') && CH1_STORY_NIGHT_MAPS.has(this.mapDef.id);
-    const night = this.mapDef.night === true || storyNight;
+    // ADR-121: after the meteor night ends but before the Heart-Oak Tick is killed,
+    // the Hush-dark blights Otterbrook in broad daylight. It reads as cold/sick
+    // "night" (buildNight branches on this.hushDark), and the town stays locked
+    // (bus dark, road fogged) until tick_defeated breaks it into real dawn.
+    const hushDark = !!GS.flag('zapper_done') && !GS.flag('tick_defeated') && this.mapDef.id === 'otterbrook';
+    const night = this.mapDef.night === true || storyNight || hushDark;
     this.isNight = night; // S15c: NPC dialogueDay variants read this
+    this.hushDark = hushDark;
     if (night) this.buildNight();
     if (this.opPhase() === 0) this.showBanner(night); // no map-name/"2 A.M." banner during the opening cinematic
 
@@ -1059,22 +1069,28 @@ export class OverworldScene extends Phaser.Scene {
     // just past the tallest possible world depth (map height + a sprite's worth of
     // margin); the fireflies then lift above it to still shine on top.
     const nightDepth = this.solidTiles.length * TILE_PX + s(300);
+    // ADR-121: the Hush-dark is a COLDER, shallower veil than 2 AM — a wrong, sick
+    // daylight rather than true night (so it still reads as "daytime, but the warmth
+    // got eaten"), with cold flickering streetlights instead of warm fireflies.
+    const veilColor = this.hushDark ? px(RAMP.CYAN, 1) : px(RAMP.NIGHT, 1);
+    const veilAlpha = this.hushDark ? 0.5 : 0.62;
     const o = this.add
-      .rectangle(r.x - this.scale.width, r.y - this.scale.height, r.w + this.scale.width * 2, r.h + this.scale.height * 2, colorOf(px(RAMP.NIGHT, 1)))
+      .rectangle(r.x - this.scale.width, r.y - this.scale.height, r.w + this.scale.width * 2, r.h + this.scale.height * 2, colorOf(veilColor))
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(nightDepth)
-      .setAlpha(0.62);
+      .setAlpha(veilAlpha);
     o.setBlendMode(Phaser.BlendModes.MULTIPLY);
     // (The warm per-doorstep "porch light" glow pools were removed at the user's
     // request — they read as unnecessary spotlights over the doors. The night
     // tint above and the fireflies below are the remaining 2AM ambiance.)
+    const flickerColor = this.hushDark ? px(RAMP.CYAN, 3) : px(RAMP.GOLD, 3);
     for (let i = 0; i < 9; i++) {
       const f = this.add
         .image(Math.random() * this.scale.width, Math.random() * this.scale.height, 'pixel')
         .setScrollFactor(0)
         .setDepth(nightDepth + 10)
-        .setTint(colorOf(px(RAMP.GOLD, 3)))
+        .setTint(colorOf(flickerColor))
         .setAlpha(0);
       this.tweens.add({
         targets: f,
@@ -1835,7 +1851,7 @@ export class OverworldScene extends Phaser.Scene {
     enemyIds: string[],
     advantage: 'player' | 'enemy' | 'none',
     pack: Roamer[],
-    opts: { boss?: boolean; glint?: boolean; prayTutorial?: boolean; joiners?: Roamer[] } = {},
+    opts: { boss?: boolean; glint?: boolean; glintSupernova?: boolean; prayTutorial?: boolean; joiners?: Roamer[] } = {},
   ): Promise<'victory' | 'defeat' | 'ran'> {
     return new Promise((resolve) => {
       this.cut = true;
@@ -1911,6 +1927,7 @@ export class OverworldScene extends Phaser.Scene {
             advantage,
             guestChad: GS.data.guest === 'chad',
             glintAssist: opts.glint ?? false,
+            glintSupernova: opts.glintSupernova ?? false,
             boss: opts.boss ?? false,
             prayTutorial: opts.prayTutorial ?? false,
           });
@@ -2189,7 +2206,22 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.npc_borden_accuse);
     const pick = await this.dlg.ask(['"It was a METEOR, sir."', 'Say nothing'], { cancelIndex: 1 });
     await this.dlg.say(...(pick === 0 ? DIALOGUE.npc_borden_meteor : DIALOGUE.npc_borden_silent));
+    // ADR-121: he doesn't brawl in the street — he MARCHES you to the station first.
+    // The frame-up + the Hush only tip him into a fight in the holding cell.
+    await this.dlg.say(...DIALOGUE.npc_borden_march);
+    const go = await this.dlg.ask(['Go quietly', 'Protest'], { cancelIndex: 0 });
+    await this.dlg.say(...(go === 0 ? DIALOGUE.npc_borden_quiet : DIALOGUE.npc_borden_protest));
+    // the walk to the little brick station house (fade marks the three blocks)
+    this.cut = true;
+    await new Promise<void>((res) => {
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => res());
+      this.cameras.main.fadeOut(450, 0, 0, 0);
+    });
+    await this.wait(250);
+    this.cameras.main.fadeIn(450, 0, 0, 0);
+    await this.dlg.say(...DIALOGUE.npc_borden_holding);
     await this.dlg.say(...DIALOGUE.npc_borden_threat);
+    this.cut = false;
     const outcome = await this.startBattle(['borden'], 'none', [], {});
     if (outcome !== 'victory') return; // defeat respawns at the last save; a flee leaves him there
     GS.setFlag('borden_cleared');
@@ -3750,13 +3782,15 @@ export class OverworldScene extends Phaser.Scene {
       }
       if (cooling || !this.doorsArmed.has(d)) continue; // spawned on it / still settling
       this.doorsArmed.delete(d);
-      // S15i Task 0 — THE DAYBREAK GATE: the road east stays shut until the
-      // opening ends (zapper_done). A sleeping-town reason, not an invisible
-      // wall — the barricade reads it, this catches anyone skirting the verge.
-      if (d.to === 'meadow_mile' && !GS.flag('zapper_done')) {
+      // THE DAYBREAK GATE (S15i Task 0) + THE HUSH-DARK GATE (ADR-121): the road
+      // east stays shut until the Titanic Tick is killed. First it's the sleeping
+      // 2 AM town (zapper_done); then the Hush-dark fogs the road while the Tick
+      // feeds. A diegetic reason, not an invisible wall — the barricade reads it,
+      // this catches anyone skirting the verge. tick_defeated is the single key out.
+      if (d.to === 'meadow_mile' && !GS.flag('tick_defeated')) {
         this.cut = true;
         AUDIO.sfx('cancel');
-        await this.dlg.say(...DIALOGUE.meadow_gate_asleep);
+        await this.dlg.say(...(GS.flag('zapper_done') ? DIALOGUE.meadow_gate_hushdark : DIALOGUE.meadow_gate_asleep));
         this.cut = false;
         this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
         return;
@@ -3957,10 +3991,18 @@ export class OverworldScene extends Phaser.Scene {
         if (!GS.flag('intro_done')) await this.introScene();
         break;
       case 'crater':
-        if (!GS.flag('tick_defeated')) await this.craterScene();
+        // ADR-121: the first-night crater fight is the HUSH SENTINEL (repelled,
+        // not killed). The Tick is no longer here — it relocates to the Heart Oak.
+        if (!GS.flag('sentinel_repelled')) await this.craterScene();
         break;
       case 'porch':
-        if (GS.flag('ember1') && !GS.flag('zapper_done')) await this.porchScene();
+        if (GS.flag('sentinel_repelled') && !GS.flag('zapper_done')) await this.porchScene();
+        break;
+      // ADR-121: the Titanic Tick has burrowed into the Heart Oak in Pond Park and
+      // is draining the town's Vibe (the Hush-dark). Daytime-only, once the town has
+      // woken from the meteor night; clears when the Tick dies (real dawn).
+      case 'heart_oak':
+        if (GS.flag('zapper_done') && !GS.flag('tick_defeated')) await this.heartOakScene();
         break;
       case 'bus_stop':
         // S22 (ADR-114): the old center stop is retired to a ONE-TIME redirect —
@@ -3972,10 +4014,11 @@ export class OverworldScene extends Phaser.Scene {
         }
         break;
       case 'depot_board':
-        // S22 (ADR-113/114): real boarding. The depot stays shuttered until
-        // Brickton is reached on foot (brickton_foot_first); then the highway —
-        // and the 6:15 — reopen.
-        if (GS.flag('zapper_done') && GS.flag('brickton_foot_first')) await this.busAsk('brickton');
+        // ADR-121: the 6:15 stays dark while the Tick feeds — the Hush-dark has the
+        // town too quiet to run a bus. Killing the Tick floods the Vibe back, the
+        // roads clear, and the highway (and the 6:15) reopen. tick_defeated is the
+        // single key out of Otterbrook.
+        if (GS.flag('tick_defeated')) await this.busAsk('brickton');
         else await this.dlg.say(...DIALOGUE.bus_closed_detour);
         break;
       case 'bus_stop_brickton':
@@ -5544,41 +5587,90 @@ export class OverworldScene extends Phaser.Scene {
       AUDIO.sfx('ember');
       await this.dlg.say(...DIALOGUE.glint_prophecy);
       GS.data.keyItems.push('star_locket');
-      // THE OLD LIGHT (ADR-035): Glint's gift lands one beat before the
-      // fight it answers — the Surge severs the Tick's latch (§A6 amended)
-      await this.awakeningBeat('old_light');
-      await this.dlg.say(...DIALOGUE.tick_warning);
-      this.cameras.main.shake(700, 0.015);
-      AUDIO.sfx('thud');
-      await this.wait(750);
+      // ADR-121: the crater holds a MACHINE, not a bug — the Hush Sentinel unfolds.
+      // (Surge α no longer awakens HERE; it awakens mid-fight, scripted in bosses.ts.)
+      // Anchored a fixed offset ABOVE the player (not absolute map tiles) so it's
+      // always framed by the camera — it looms over the kid as it rises.
+      const sentinel = this.add
+        .image(this.player.x, this.player.y - s(24), 'authored_world_hush_sentinel')
+        .setOrigin(0.5, 1)
+        .setDepth(9997)
+        .setAlpha(0)
+        .setScale(0.6);
+      this.tweens.add({ targets: sentinel, alpha: 1, scale: 1, duration: 1100, ease: 'back.out' });
+      await this.dlg.say(...DIALOGUE.sentinel_warning);
+      // ADR-121: Glint goes SUPERNOVA at the rally — the little flit blazes up into
+      // his radiant full-power form (one forward-facing pose; a glow needs no angles)
+      // with a breathing pulse, and carries the fight from here (glintSupernova).
       glint.destroy();
       glow.destroy();
+      const radiant = this.add
+        .image(15.5 * TILE_PX, 6.5 * TILE_PX, 'authored_world_glint_radiant')
+        .setDepth(9999)
+        .setScale(0.32)
+        .setAlpha(0);
+      this.tweens.add({ targets: radiant, alpha: 1, scale: 0.62, duration: 480, ease: 'sine.out' });
+      this.tweens.add({ targets: radiant, scale: 0.68, duration: 420, yoyo: true, repeat: -1, ease: 'sine.inout', delay: 480 });
+      AUDIO.sfx('ember');
+      this.cameras.main.shake(900, 0.02);
+      AUDIO.sfx('thud');
+      await this.wait(750);
+      radiant.destroy();
+      sentinel.destroy();
     } else {
-      await this.dlg.say('The crater rim bulges again. It did NOT learn its lesson.');
+      await this.dlg.say(...DIALOGUE.sentinel_again);
     }
-    const outcome = await this.startBattle(['titanic_tick'], 'none', [], { boss: true, glint: true });
+    // The Sentinel is "cannot win alone": Glint goes SUPERNOVA and carries it, and
+    // the boss script REPELS it (endBattleMercy) on the scripted turn — which the
+    // scene reads as 'victory'. No kill, no Ember (the Tick lives and relocates).
+    const outcome = await this.startBattle(['hush_sentinel'], 'none', [], { boss: true, glint: true, glintSupernova: true });
     if (outcome !== 'victory') return;
     // betrayal #1 resolved mid-battle (guest flag already cleared there);
     // the trail sprite still needs to go
     GS.data.guest = null;
     this.removeFollower('chad');
+    GS.setFlag('sentinel_repelled');
+    // it leaves a husk in the crater that the town learns to walk around (and that
+    // wakes again, far later — the Ch.10 callback hangs off sentinel_husk_left)
+    GS.setFlag('sentinel_husk_left');
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.sentinel_after);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  // ADR-121 — BOSS 1, relocated. With Glint dead and the town awake, the Titanic
+  // Tick is found burrowed in the Heart Oak in Pond Park, draining Otterbrook's
+  // Vibe (the Hush-dark). Jay fights it SOLO with the already-awakened Surge α + the
+  // Salt Shaker. Beating it earns Ember 1, floods the Vibe back, and breaks the
+  // Hush-dark into real dawn — which opens Brickton (the bus runs).
+  private async heartOakScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.heart_oak_approach);
+    this.cameras.main.shake(700, 0.015);
+    AUDIO.sfx('thud');
+    await this.wait(600);
+    const outcome = await this.startBattle(['titanic_tick'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
     GS.setFlag('tick_defeated');
     GS.setFlag('ember1');
     GS.data.embers = 1;
     this.cut = true;
-    const ember = this.add.image(15.5 * TILE_PX, 7 * TILE_PX, 'ember').setDepth(9999).setScale(1);
+    const ember = this.add.image(this.player.x, this.player.y - s(20), 'ember').setDepth(9999).setScale(1);
     AUDIO.sfx('ember');
     this.sparkleBurst(ember.x, ember.y, 12);
-    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    this.tweens.add({ targets: ember, y: this.player.y - s(34), duration: 1300, ease: 'sine.inout' });
     AUDIO.playMusic('heartlight');
     await this.wait(1400);
-    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+    this.sparkleBurst(this.player.x, this.player.y - s(34), 14);
     ember.destroy();
-    this.cameras.main.flash(300, 248, 232, 160);
+    this.cameras.main.flash(400, 248, 232, 160);
     await this.dlg.say(...DIALOGUE.ember_get);
-    await this.dlg.say(...DIALOGUE.glint_after);
-    AUDIO.playMusic(this.mapDef.music);
+    await this.dlg.say(...DIALOGUE.tick_after);
     this.cut = false;
+    // real dawn: the Vibe floods back, the Hush-dark lifts, shops/NPCs/the 6:15 wake,
+    // and the road out clears. Rebuild the town from data at the new flag state.
+    this.fadeRestart();
   }
 
   private async porchScene(): Promise<void> {

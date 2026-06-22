@@ -325,7 +325,9 @@ describe('content validation (interim validator, ADR-005)', () => {
     expect(ENEMIES.blazer_smiler.hp).toBe(26);
     expect(ENEMIES.pigeon_gang.hp).toBe(20);
     expect(ENEMIES.hill_slug_deluxe.hp).toBe(28);
-    expect(ENEMIES.titanic_tick.hp).toBe(60);
+    // ADR-121 (balance): BOSS 1 relocated LATER (Heart Oak) vs a stronger solo Jay,
+    // bumped 60→100 so it's a real boss scrap.
+    expect(ENEMIES.titanic_tick.hp).toBe(100);
     expect(ENEMIES.titanic_tick.boss).toBe(true);
   });
 

@@ -52,7 +52,9 @@ export const CHAPTER_LEVELS: Record<number, [number, number]> = {
 export const BOSS_HP: Record<number, number> = {
   // S22 (ADR-111) — THE SLOW BURN: Ch.1's bespoke Tick drops 450→150 to match the
   // lowered early-game output (Jay L1 basic = 1–2). The ladder still climbs.
-  1: 60,
+  // ADR-121 (balance): 60→100 — the Tick now fights LATER (the Heart Oak) vs a
+  // stronger solo Jay, so BOSS 1 is a real scrap.
+  1: 100,
   2: 300,
   3: 750,
   4: 1800,

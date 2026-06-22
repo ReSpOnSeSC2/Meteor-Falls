@@ -1254,6 +1254,10 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   pigeon_gang: { sprite: 'battle_pigeon_gang', draw: drawPigeonGang },
   hill_slug_deluxe: { sprite: 'battle_hill_slug', draw: drawHillSlugDeluxe },
   titanic_tick: { sprite: 'battle_titanic_tick', draw: drawTitanicTick },
+  // ADR-121 — THE HUSH SENTINEL: authored battler (3 wear tiers) lands at
+  // battle_hush_sentinel{,_w1,_w2}. The procedural `draw` is just the boot fallback
+  // (it never ships — the PNG overrides it); the Tick face is the nearest gray-box.
+  hush_sentinel: { sprite: 'battle_hush_sentinel', draw: drawTitanicTick },
 
   // ADR-119 — the Ch.1 ecosystem to 20. Each owns its OWN battle_<id> key so an
   // authored PNG (docs/CH1_ART_PROMPTS.md §7) drops straight in; the `draw` is a

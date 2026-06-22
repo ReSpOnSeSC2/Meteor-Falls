@@ -161,27 +161,32 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       mini: 'mini_hill_slug',
       bg: [RAMP.GRASS, RAMP.PURPLE],
     }),
-    // §A7 Ch.1 SET-PIECE (S22, ADR-118) — CONSTABLE BORDEN, the lone Otterbrook
-    // lawman. Lightly Hushed + framed by Chad into "detaining" Jay over the hill
-    // "vandalism"; the morning cop fight (an OPTIONAL town beat, never a wall) snaps
-    // him back to himself. By-the-book to a comic fault — a deliberate RHYME with
-    // General Buckle (§A6/ADR-081). Slow-burn HP so a post-Tick party clears him fast.
+    // §A7 Ch.1 SET-PIECE (S22, ADR-118 / ADR-121) — CONSTABLE BORDEN, the lone
+    // Otterbrook lawman. Lightly Hushed + framed by Chad into "detaining" Jay over
+    // the hill "vandalism"; he marches you toward the station and the frame-up tips
+    // the Hushed cop into a fight (an OPTIONAL town beat, never a wall) — beating
+    // him snaps him back to himself. By-the-book to a comic fault, a deliberate
+    // RHYME with General Buckle (§A6/ADR-081). ADR-121 moved the Tick LATE, so this
+    // is now a PRE-Tick scrap against SOLO Jay (Surge α, no Mia): the 70 HP ceiling
+    // stays (BALANCE_CH1-3 §3), but Offense/move-pressure are tuned UP so a lone kid
+    // actually feels it instead of taking 1 a swing.
     E({
       id: 'borden',
       name: 'Constable Borden',
       article: '',
       hp: 70,
-      offense: 6,
-      defense: 5,
-      speed: 6,
+      offense: 11,
+      defense: 6,
+      speed: 7,
       level: 6,
       exp: 40,
       cash: 30,
       weakness: [],
       moves: [
-        { name: 'cite subsection', kind: 'attack', mult: 1, text: '{e} cited Otterbrook Municipal Code 7-B, subsection (ii)!', weight: 5 },
-        { name: 'write a ticket', kind: 'strong', mult: 1.3, text: '{e} wrote {t} up for "loitering with intent to be twelve"!', weight: 3 },
-        { name: 'blow whistle', kind: 'taunt', text: '{e} blew the whistle. Long. Pointedly. It did not accomplish anything.', weight: 2 },
+        { name: 'cite subsection', kind: 'attack', mult: 1.2, text: '{e} cited Otterbrook Municipal Code 7-B, subsection (ii)!', weight: 5 },
+        { name: 'write a ticket', kind: 'strong', mult: 1.7, text: '{e} wrote {t} up for "loitering with intent to be twelve"!', weight: 4 },
+        { name: 'the long arm', kind: 'strong', mult: 1.5, text: '{e} made a by-the-book GRAB — the long arm of Otterbrook law!', weight: 3 },
+        { name: 'blow whistle', kind: 'taunt', text: '{e} blew the whistle. Long. Pointedly. It did not accomplish anything.', weight: 1 },
       ],
       deathLine: 'Constable Borden sat down hard, blinked twice, and remembered he liked you.',
       sprite: 'battle_constable_borden',
@@ -1148,12 +1153,12 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'titanic_tick',
       name: 'TITANIC TICK',
       article: 'The',
-      // S22 (ADR-111) — THE SLOW BURN: 450→150 HP so the fight still falls in a
-      // fair ~5–8 turns now that solo Jay deals far less per swing (Vibe Surge α,
-      // awakened one beat earlier, carries the burst; severing the latch costs
-      // turns). EXP stays generous to keep the L8 target reachable.
-      hp: 60,
-      offense: 11,
+      // S22 (ADR-111) / ADR-121 (balance): BOSS 1, relocated LATER (the Heart Oak in
+      // Pond Park) so it's fought by a stronger solo Jay (Surge α awakened, a few
+      // levels of town trash behind him). Bumped 60→100 HP + offense 11→13 so it's a
+      // real BOSS scrap, not a 2-turn pop. Stays on the canon ladder (BOSS_HP[1]).
+      hp: 100,
+      offense: 13,
       defense: 7,
       speed: 6,
       level: 7,
@@ -1170,6 +1175,46 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       sprite: 'battle_titanic_tick',
       mini: 'mini_hill_slug',
       bg: [RAMP.MAGENTA, RAMP.NIGHT],
+      boss: true,
+    }),
+    // §A6 / ADR-121 — THE HUSH SENTINEL. The Mars war-construct that rode the
+    // meteor in: an END-GAME-TIER foreshadow you meet on the FIRST night. This is
+    // a "cannot-win-alone" set-piece, NOT a money-axis boss — Glint goes supernova
+    // and carries the fight while Jay's Vibe Surge α awakens mid-battle, and the
+    // Sentinel is REPELLED (endBattleMercy at the scripted turn — see bosses.ts),
+    // not killed. It powers down, sinks into the crater, and leaves a husk landmark
+    // that wakes again FAR later (Ch.10 callback — keep it in the roster forever).
+    // boss:true so its turnCount phases fire; it is deliberately NOT a CHAPTER
+    // manifest boss, so it sidesteps the boss-curve / monetary-vision checks. HP is
+    // a small legible floor (ADR-122) the scripted repel always pre-empts; you
+    // repel a piece of Mars, you do not loot it (exp/cash 0).
+    E({
+      id: 'hush_sentinel',
+      name: 'HUSH SENTINEL',
+      article: 'The',
+      // ADR-121 (balance): the Sentinel fights at FULL POWER — big imposing HP bar,
+      // heavy hits — but it is REPELLED, never killed: while Glint blazes it can't be
+      // reduced past 1 HP (BattleScene.damageEnemy) so a burst can't pre-empt the
+      // scripted turn-5 repel, and GLINT GUARDS the party (incoming hits capped
+      // non-lethal) + does the MAJORITY of the damage (glintPhase). HP is a scary
+      // set-piece number, not on the §A7 small-Ch.1 band (it's an end-game Mars unit).
+      hp: 240,
+      offense: 28,
+      defense: 18,
+      speed: 16,
+      level: 7,
+      exp: 0,
+      cash: 0,
+      weakness: [],
+      moves: [
+        { name: 'cold rake', kind: 'attack', mult: 1.1, text: '{e} swept a segmented limb in a slow, cold arc!', weight: 4 },
+        { name: 'hush pulse', kind: 'strong', mult: 1.5, text: '{e} pulsed Hush-blue light. The warmth bent away from {t}!', weight: 3 },
+        { name: 'fix optic', kind: 'taunt', text: "{e}'s single optic fixed on {t}. It is deciding whether you matter.", weight: 2 },
+      ],
+      deathLine: 'The Hush Sentinel folded its limbs, dimmed, and sank back into the crater. Not dead. Waiting.',
+      sprite: 'battle_hush_sentinel',
+      mini: 'mini_hill_slug',
+      bg: [RAMP.NIGHT, RAMP.PURPLE],
       boss: true,
     }),
 

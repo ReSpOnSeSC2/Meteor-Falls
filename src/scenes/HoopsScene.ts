@@ -102,6 +102,9 @@ type CamMode = 'side' | 'behind';
 // ×ART_SCALE with the texture at the boot seam, so the scene's world→screen
 // offset scales to match it.
 const PAD = s(34); // must equal athletes.ts COURT_PAD (court texture margin)
+// the rim RING sits ~0.38 down the hoop_side frame (backboard above, net+pole
+// below), so anchor the hoop sprite there to land the ring on COURT.RIM_Y
+const HOOP_RIM_ANCHOR = 0.38;
 const CAM_KEY = 'meteor-falls-cage-cam';
 const METER_H = s(42); // over-head meter drum: px size
 const METER_W = s(9);
@@ -233,10 +236,10 @@ export class HoopsScene extends Phaser.Scene {
     this.courtSide = this.add.image(0, 0, 'cage_court').setOrigin(0, 0).setDepth(0);
     this.courtBehind = this.add.image(0, 0, 'cage_court_behind').setOrigin(0, 0).setDepth(0).setScrollFactor(0).setVisible(false);
     // hoop posts: PAD + rim are runtime px; the ±20px reach offset scales too
-    this.hoopL = this.add.sprite(PAD + COURT_RT.RIM_L_X - s(20), PAD + COURT_RT.RIM_Y, 'hoop_side', 0).setOrigin(0, 0.5).setDepth(50);
+    this.hoopL = this.add.sprite(PAD + COURT_RT.RIM_L_X - s(20), PAD + COURT_RT.RIM_Y, 'hoop_side', 0).setOrigin(0, HOOP_RIM_ANCHOR).setDepth(50);
     this.hoopR = this.add
       .sprite(PAD + COURT_RT.RIM_R_X + s(20), PAD + COURT_RT.RIM_Y, 'hoop_side', 0)
-      .setOrigin(0, 0.5)
+      .setOrigin(0, HOOP_RIM_ANCHOR)
       .setFlipX(true)
       .setDepth(50);
     this.hoopR.x -= s(30); // flipped sprite re-anchors: rim reaches back inboard (px)
@@ -1009,7 +1012,10 @@ export class HoopsScene extends Phaser.Scene {
     }
     const pb = this.project(bp.x, bp.y, bz);
     this.ballSpr.setPosition(pb.x, pb.y);
-    this.ballSpr.setScale(pb.scale);
+    // the authored ball.png is ~118px native (nearly an athlete's width). A real
+    // basketball reads ~1/4 the athlete, so size it to a fixed design diameter,
+    // foreshortened by the per-view scale (KEEP pb.scale; only the base was wrong).
+    this.ballSpr.setScale(pb.scale * (s(8) / Math.max(1, this.ballSpr.width)));
     this.ballSpr.setScrollFactor(behind ? 0 : 1);
     // depth is z-order (unscaled); only the bz>40px "ball is up high" test is a
     // real px threshold against the scaled height

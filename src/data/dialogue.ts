@@ -536,6 +536,12 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'Otterbrook is fast asleep — porch lights, crickets, and one dog who knows something.',
     'Whatever fell on the hill will keep until morning. Better head back.',
   ],
+  // ADR-121: the road stays fogged through the Hush-dark, until the Tick is killed
+  meadow_gate_hushdark: [
+    'The road east is still barricaded — and past it, the highway just... fogs out into gray.',
+    "It's the wrong kind of fog. Cold, and quiet, and it gets quieter the longer you look at it.",
+    "Nobody's leaving Otterbrook while the town feels like this. Something's draining the warmth right out of it — and it's coming from Pond Park.",
+  ],
 
   /* ---------------- S15i Task 1 — THE WOODS NOOK (the grown SW thicket) ---------------- */
   sign_otter_woods: [
@@ -780,6 +786,37 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@...wait. Hold on. Kid — something\'s down there, under the crater. And it\'s waking up.',
     'THE CRATER RIM BULGES—',
   ],
+  // ADR-121 — the crater holds the MARS SENTINEL, not the Tick. Glint's "the thing
+  // that rode in on it with me" (glint_prophecy) arrives RIGHT NOW.
+  sentinel_warning: [
+    "@...no. No no no. Kid — the thing I was running from? It rode in WITH me. It's here. It's RIGHT HERE.",
+    'Down in the crater, something the size of a house is standing up on too many legs. A single cold blue eye swings around and finds you.',
+    "@That's a piece of Mars, kid. We are SO far out of our league. But I am NOT letting it have you. Stand BEHIND me—",
+  ],
+  sentinel_again: [
+    'The crater still breathes cold blue light. The Sentinel is still down there, half-risen, waiting for you to come back.',
+    "@Round two, kid. Same plan: you stay alive, I burn bright. GO.",
+  ],
+  sentinel_after: [
+    "(The cold light gutters out. The thing folds itself back into the crater, and the night goes quiet — normal quiet, summer-cricket quiet.)",
+    "@...heh. We did it. We actually— oh. Oh, I am running on FUMES, kid.",
+    '(Glint is dimmer than he was. A lot dimmer. He bobs once, bravely, and points you down the hill toward home.)',
+  ],
+  sign_sentinel_husk: [
+    '(The husk sits half-sunk in the crater, dead metal gone the color of old blood. The eye is a black hole now.)',
+    "(It's cooling, but it isn't rusting. Whatever it's made of, it's just... waiting. You decide not to touch it.)",
+  ],
+  // ADR-121 — BOSS 1 relocated: the Tick in the Heart Oak (Pond Park), draining town
+  heart_oak_approach: [
+    'The great Heart Oak in Pond Park is wrong. The bark has gone gray, the leaves hang colorless, and a low sick hum comes off it in waves.',
+    'A split runs up the trunk — and deep inside, wedged into the living heart of the tree, something eight-legged turns to look at you. It has been DRINKING the town.',
+    "(No Glint this time. Just you, the old light he left behind, and a Salt Shaker in your bag. Make it let go.)",
+  ],
+  tick_after: [
+    "(The Tick is gone, and the warmth it hoarded comes roaring back — into the oak, the pond, the streetlights, the whole gray town all at once.)",
+    'The Hush-dark breaks like a fever. Color floods back. Somewhere east, a bus engine turns over for the first time in days, and the road out of Otterbrook clears in the rising light.',
+    "@(Real morning. Finally.) Okay. Brickton. The girl who prays. Let's go find her.",
+  ],
   chad_flee: [
     '@NOPE. Nope nope nope. I just remembered I\'m allergic to bug juice!',
     "@This is a strategic retreat! Tell everyone I fought GREAT!",
@@ -1013,8 +1050,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // Brickton once ON FOOT (the meteor closed the highway; the bus follows it back).
   bus_closed_detour: [
     'The 6:15 is dark. A card is taped inside the depot window:',
-    '"NO SERVICE — HIGHWAY CLOSED PAST HICKORY HILL. Meteor detour. Walk the meadow road, folks. — Otterbrook Transit (both of us)."',
-    '(The road to Brickton won\'t open until someone walks it first and proves it\'s clear. That someone is you.)',
+    '"NO SERVICE. Driver says she can\'t see the road past Pond Park anymore. Says the whole town\'s gone gray and cold. — Otterbrook Transit (both of us)."',
+    "(The bus won't run while the town feels like this. Whatever's draining Otterbrook is curled up in the Heart Oak in Pond Park. Pull it out, and the warmth — and the road — come back.)",
   ],
   // S22 (ADR-114) — THE DEPOT: the bus stop becomes a real building
   sign_bus_moved: [
@@ -1145,6 +1182,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_borden_silent: [
     '@Not talking, eh? Guilty folks stay quiet. So do innocent folks. So do mailboxes. So it proves nothing — but I\'m still watching you.',
     "@(There's a faint blue hum behind his eyes. He isn't all here.)",
+  ],
+  // ADR-121: slow the escalation — Borden marches you to the station FIRST, and the
+  // frame-up + the Hush only tip him into a fight in the holding cell.
+  npc_borden_march: [
+    '@I\'m not gonna fight a TWELVE-year-old in the street, son. I\'m a professional. We do this BY THE BOOK.',
+    "@You're coming down to the station. It's the little brick one with the one cell and the one chair. Walk in front of me where I can see you. No funny business.",
+  ],
+  npc_borden_quiet: [
+    "@...Good. Quiet and cooperative. I'll note that. The book likes a cooperative detainee.",
+    '(He walks you the three blocks to the station, narrating municipal codes the whole way. You count seven.)',
+  ],
+  npc_borden_protest: [
+    "@Save it for your statement, son. You'll get a statement. There's a FORM. There's always a form.",
+    '(He walks you the three blocks to the station anyway, unmoved, reciting municipal codes. You count seven.)',
+  ],
+  npc_borden_holding: [
+    '(The cell is the size of a closet. Borden gets out the paperwork, licks his pencil, and goes to write up a kid for vandalizing a hill with a meteor.)',
+    "@Name, age, and the nature of the... the... (His pencil stops. The blue hum behind his eyes swells until it's all you can see.)",
+    "@...the VANDALISM. You will CONFESS to the VANDALISM. By the book. By the BOOK. Hold still, son—",
   ],
   npc_borden_threat: [
     '@I\'m gonna have to DETAIN you, son. By the book. Subsection by subsection. Hold still—',
@@ -2455,6 +2511,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sleepers_ear_early: [
     "(The canal hums, deep and even, but it stays just out of reach — like the Sleeper won't sing for you while that whispering thing is still curled in his ear.)",
   ],
+  // ADR-121 — THE HUSH SENTINEL crater fight (super-Glint carries it; Surge α
+  // awakens mid-battle; it is REPELLED, not killed).
+  sentinel_open: [
+    '(The crater is not a hole. It is a DOOR, and something is climbing out of it.)',
+    'Metal the color of dried blood unfolds — legs, then more legs, then a single pale-blue eye that opens like a sunrise on the wrong planet. It is taller than the house. It is older than the town.',
+    "@That — that's not from here. ({rex}, very quietly.) That's not from ANYWHERE here.",
+  ],
+  sentinel_surge: [
+    "@It came in on the meteor, ahead of all of them. A SCOUT. (Glint, fast.) Kid — you can't fight a piece of Mars with a baseball bat. But you've got the old light in you now. LET IT UP.",
+    '(The Star Locket goes hot against your chest. Something that has been asleep since before you were born opens ONE eye.)',
+  ],
+  sentinel_pressure: [
+    "(The Sentinel pulses cold blue, and the warmth goes out of the night — your own voice feels far away, like shouting underwater.)",
+  ],
+  sentinel_repel: [
+    "@NOW — all of it, EVERYTHING I've got! (Glint, blazing white.) GO HOME!",
+    '(Glint detonates into a small, brief sun. The Sentinel throws up a limb, its eye stutters — and then it FOLDS, joint by joint, and sinks back down into the crater it climbed out of.)',
+    '(It is not dead. The eye dims to an ember and goes dark. Whatever it is, it will keep. But not tonight.)',
+  ],
   ember4_get: [
     "(With the Whisperwig gone, the Sleeper's Ear opens up like a cathedral. The hum swells — the deepest note you have ever stood inside, the whole mountain a single warm chord.)",
     '(The Locket answers. A fourth voice drops in under the other three — a bass so low it is less a sound than a hand on your back. THE DEEP HUM.)',
@@ -2636,6 +2711,10 @@ export const BATTLE_TEXT = {
   latch_drain: 'The Tick drinks. The number keeps falling—',
   salt_break: 'The salt hit the seam! The Titanic Tick HISSED and let go!',
   glint_assist: 'Glint flared like a tiny sun! The Tick flinched!',
+  // ADR-121: super-Glint carrying the Sentinel fight — a real sun, not a flicker
+  glint_supernova: 'GLINT BLAZED — a whole summer of light in one bug! The Sentinel reeled!',
+  // ADR-121: Glint GUARDS — the full-power blow that would have ended {t} is caught
+  glint_guard: "The Sentinel's blow would have FLATTENED {t} — but Glint threw himself in front of it!",
   chad_hide: 'Chad is supervising from a safe distance!',
   chad_poke: 'Chad poked it with a stick! It barely noticed!',
   win: 'YOU WON!',

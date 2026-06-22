@@ -162,4 +162,54 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
       },
     ],
   }),
+
+  // §A6 / ADR-121 — THE HUSH SENTINEL, the first-night Mars war-construct. This is
+  // the "cannot-win-alone / repel" set-piece expressed as DATA: super-Glint
+  // (glintSupernova, BattleScene) carries the damage while the script runs to a
+  // FIXED repel. Turn 1 it unfolds; turn 2 the old light answers the impossible odds
+  // and JAY's VIBE SURGE α awakens mid-battle (moved off the overworld — a kid
+  // survives a piece of Mars because the Ember woke, ADR-121 §1.3); every 3rd turn it
+  // pulses party-wide Hushed pressure; on turn 5 Glint overloads it and it is
+  // REPELLED — endBattleMercy ends the fight as a WIN WITHOUT A KILL (it powers down
+  // and sinks into the crater, leaving the husk landmark). It is NOT a manifest boss,
+  // so it never fights the money axis; the Sentinel RETURNS far later (Ch.10 callback
+  // off the `sentinel_repelled` flag — keep this script + enemy in the roster).
+  hush_sentinel: B({
+    boss: 'hush_sentinel',
+    phases: [
+      {
+        id: 'open',
+        trigger: { kind: 'turnCount', n: 1 },
+        actions: [{ kind: 'scriptLine', line: 'sentinel_open' }],
+      },
+      {
+        id: 'surge',
+        trigger: { kind: 'turnCount', n: 2 },
+        actions: [
+          { kind: 'scriptLine', line: 'sentinel_surge' },
+          { kind: 'awaken', awakening: 'old_light' },
+        ],
+      },
+      {
+        id: 'pressure',
+        trigger: { kind: 'turnCount', n: 3, every: 3 },
+        once: false,
+        actions: [
+          { kind: 'scriptLine', line: 'sentinel_pressure' },
+          { kind: 'partyStatus', status: 'hushed', turns: 2 },
+        ],
+      },
+      {
+        // THE REPEL — Glint, gone supernova, overloads it; it powers down and sinks.
+        // endBattleMercy resolves victory without a kill (the Tick is still alive and
+        // relocates; no Ember is earned here).
+        id: 'repel',
+        trigger: { kind: 'turnCount', n: 5 },
+        actions: [
+          { kind: 'scriptLine', line: 'sentinel_repel' },
+          { kind: 'endBattleMercy' },
+        ],
+      },
+    ],
+  }),
 };
