@@ -336,8 +336,9 @@ const WORLD_PROP_KEYS = [
   'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
   'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'meteor_rock_hickory_hill', 'sawhorse', 'ember',
   // ADR-121 — the Hush Sentinel overworld set-piece (rises from the crater) + the
-  // powered-down husk it leaves as an Otterbrook landmark (wakes again, Ch.10).
-  'hush_sentinel', 'sentinel_husk',
+  // powered-down husk it leaves as an Otterbrook landmark (wakes again, Ch.10) +
+  // the super-Glint radiant flare for the "goes supernova" rally beat.
+  'hush_sentinel', 'sentinel_husk', 'glint_radiant',
   'lemonade', 'bus_sign', 'doormat', 'stairs', 'door_int', 'door_int_open', 'payphone',
   'dumpster', 'bench', 'hydrant', 'planter', 'elevator', 'water_cooler', 'copier',
   'plant_pot', 'holding_door', 'holding_door_1', 'holding_door_2', 'holding_door_3',

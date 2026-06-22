@@ -5573,11 +5573,23 @@ export class OverworldScene extends Phaser.Scene {
         .setScale(0.6);
       this.tweens.add({ targets: sentinel, alpha: 1, scale: 1, duration: 1100, ease: 'back.out' });
       await this.dlg.say(...DIALOGUE.sentinel_warning);
+      // ADR-121: Glint goes SUPERNOVA at the rally — the little flit blazes up into
+      // his radiant full-power form (one forward-facing pose; a glow needs no angles)
+      // with a breathing pulse, and carries the fight from here (glintSupernova).
+      glint.destroy();
+      glow.destroy();
+      const radiant = this.add
+        .image(15.5 * TILE_PX, 6.5 * TILE_PX, 'authored_world_glint_radiant')
+        .setDepth(9999)
+        .setScale(0.32)
+        .setAlpha(0);
+      this.tweens.add({ targets: radiant, alpha: 1, scale: 0.62, duration: 480, ease: 'sine.out' });
+      this.tweens.add({ targets: radiant, scale: 0.68, duration: 420, yoyo: true, repeat: -1, ease: 'sine.inout', delay: 480 });
+      AUDIO.sfx('ember');
       this.cameras.main.shake(900, 0.02);
       AUDIO.sfx('thud');
       await this.wait(750);
-      glint.destroy();
-      glow.destroy();
+      radiant.destroy();
       sentinel.destroy();
     } else {
       await this.dlg.say(...DIALOGUE.sentinel_again);
