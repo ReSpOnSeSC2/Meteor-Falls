@@ -335,6 +335,10 @@ const HICKORY_DIRT_TILE_ART = {
 const WORLD_PROP_KEYS = [
   'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
   'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'meteor_rock_hickory_hill', 'sawhorse', 'ember',
+  // ADR-121 — the Hush Sentinel overworld set-piece (rises from the crater) + the
+  // powered-down husk it leaves as an Otterbrook landmark (wakes again, Ch.10) +
+  // the super-Glint radiant flare for the "goes supernova" rally beat.
+  'hush_sentinel', 'sentinel_husk', 'glint_radiant',
   'lemonade', 'bus_sign', 'doormat', 'stairs', 'door_int', 'door_int_open', 'payphone',
   'dumpster', 'bench', 'hydrant', 'planter', 'elevator', 'water_cooler', 'copier',
   'plant_pot', 'holding_door', 'holding_door_1', 'holding_door_2', 'holding_door_3',
@@ -633,6 +637,10 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_titanic_tick', url: new URL('../../assets/art/enemies/battle_titanic_tick.png', import.meta.url).href },
   { key: 'battle_titanic_tick_w1', url: new URL('../../assets/art/enemies/battle_titanic_tick_w1.png', import.meta.url).href },
   { key: 'battle_titanic_tick_w2', url: new URL('../../assets/art/enemies/battle_titanic_tick_w2.png', import.meta.url).href },
+  // ADR-121 — THE HUSH SENTINEL battler, 3 authored wear tiers (the Mars construct).
+  { key: 'battle_hush_sentinel', url: new URL('../../assets/art/enemies/battle_hush_sentinel.png', import.meta.url).href },
+  { key: 'battle_hush_sentinel_w1', url: new URL('../../assets/art/enemies/battle_hush_sentinel_w1.png', import.meta.url).href },
+  { key: 'battle_hush_sentinel_w2', url: new URL('../../assets/art/enemies/battle_hush_sentinel_w2.png', import.meta.url).href },
   { key: 'battle_sprinkler_sentry', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry.png', import.meta.url).href },
   { key: 'battle_sprinkler_sentry_w1', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry_w1.png', import.meta.url).href },
   { key: 'battle_sprinkler_sentry_w2', url: new URL('../../assets/art/enemies/battle_sprinkler_sentry_w2.png', import.meta.url).href },
