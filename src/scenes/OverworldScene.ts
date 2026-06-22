@@ -231,9 +231,31 @@ const RUN = 115 * ART_SCALE;
 const PURSUE = 85 * ART_SCALE;
 const PATROL_WALK = 38 * ART_SCALE;
 const PATROL_CHASE = 92 * ART_SCALE;
+/** Ch.1 OUTDOOR maps that ride the §A6 story clock: it is 2 AM across the whole
+ *  opening — town, the long climb, and the crater — until `zapper_done` (dawn).
+ *  Every map the player traverses BEFORE dawn must be listed here or it renders
+ *  in daylight mid-night (the "why is this section bright at 2 AM" bug). The two
+ *  climb legs HICKORY TRAIL + WHISPERWOOD RISE were added with the rest of the
+ *  hill (ADR-112) but missed this list, so they showed as day between the lit
+ *  hill_road and hickory_hill — keep new connective maps in sync here. (The
+ *  meadow long-walk to Brickton is a POST-dawn daytime route and stays off.) */
+const CH1_STORY_NIGHT_MAPS: ReadonlySet<string> = new Set([
+  'otterbrook',
+  'hill_road',
+  'hickory_trail',
+  'whisperwood_rise',
+  'hickory_hill',
+]);
 /** dog roamers author into a 16² frame (half a human's 24×32); render them a
  *  touch larger so a beagle reads as a real dog beside the cast, not a speck. */
 const DOG_DISPLAY_SCALE = 1.5;
+/** 8-way unit wander headings (diagonals normalized so they don't speed up,
+ *  ADR-096) — module-scoped so an NPC's think-tick reuses it instead of
+ *  re-allocating the array each time. */
+const NPC_WANDER_DIRS: ReadonlyArray<readonly [number, number]> = [
+  [1, 0], [-1, 0], [0, 1], [0, -1],
+  [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7],
+];
 
 /* ---- ADR-106: multi-enemy contact + the EB-style join window (all tunable) ---- */
 /** the battle seats up to 5 (BattleScene letters A–E) — one source of truth */
@@ -382,9 +404,7 @@ export class OverworldScene extends Phaser.Scene {
     // story clock instead of carrying a permanent night flag (S9b — the
     // "why is it sometimes dark" fix). MapDef.night remains for places that
     // are genuinely always dark.
-    const storyNight =
-      !GS.flag('zapper_done') &&
-      (this.mapDef.id === 'otterbrook' || this.mapDef.id === 'hill_road' || this.mapDef.id === 'hickory_hill');
+    const storyNight = !GS.flag('zapper_done') && CH1_STORY_NIGHT_MAPS.has(this.mapDef.id);
     const night = this.mapDef.night === true || storyNight;
     this.isNight = night; // S15c: NPC dialogueDay variants read this
     if (night) this.buildNight();
@@ -1141,23 +1161,33 @@ export class OverworldScene extends Phaser.Scene {
    *  vehicles (their shadow is baked into the sprite) are skipped. The pool
    *  grows to fit and hides the surplus, so it costs nothing when the map empties. */
   private updateShadows(): void {
-    // actor footprint widths are native px → s(); positions are already runtime
-    const actors: Array<{ x: number; y: number; w: number }> = [];
-    actors.push({ x: this.player.x, y: this.player.y, w: s(14) });
-    for (const f of this.followers) if (!f.angel) actors.push({ x: f.spr.x, y: f.spr.y, w: s(14) });
-    for (const n of this.npcs) actors.push({ x: n.spr.x, y: n.spr.y, w: n.def.dog ? s(10) : s(14) });
-    for (const r of this.roamers) if (!r.dead) actors.push({ x: r.spr.x, y: r.spr.y, w: r.walker ? s(14) : s(12) });
-    for (const p of this.patrols) if (!p.dead) actors.push({ x: p.spr.x, y: p.spr.y, w: s(14) });
-    while (this.shadows.length < actors.length) {
-      this.shadows.push(this.add.image(0, 0, 'mob_shadow').setOrigin(0.5, 0.5).setAlpha(0.3));
-    }
-    for (let i = 0; i < this.shadows.length; i++) {
-      const sh = this.shadows[i];
-      const a = actors[i];
-      if (!a) { sh.setVisible(false); continue; }
-      // 0.42 is a height:width RATIO (keep); the 3px floor is native → s(3)
-      sh.setVisible(true).setPosition(a.x, a.y - s(1)).setDepth(a.y - 1).setDisplaySize(a.w, Math.max(s(3), Math.round(a.w * 0.42)));
-    }
+    // Drive the shadow pool DIRECTLY from the live actor lists — the old version
+    // built a fresh `actors` array plus one object literal per actor EVERY frame,
+    // so the per-frame garbage grew with the roamer count and the minor-GC churn
+    // it caused read as micro-stutter in enemy-dense areas. This allocates nothing
+    // per frame. (actor footprint widths are native px → s(); the 0.42 is a
+    // height:width RATIO, the 3px floor is native → s(3).)
+    const wHero = s(14);
+    const wDog = s(10);
+    const wMini = s(12);
+    const lift = s(1);
+    const floor = s(3);
+    let i = 0;
+    const place = (x: number, y: number, w: number): void => {
+      let sh = this.shadows[i];
+      if (!sh) {
+        sh = this.add.image(0, 0, 'mob_shadow').setOrigin(0.5, 0.5).setAlpha(0.3);
+        this.shadows.push(sh);
+      }
+      sh.setVisible(true).setPosition(x, y - lift).setDepth(y - 1).setDisplaySize(w, Math.max(floor, Math.round(w * 0.42)));
+      i++;
+    };
+    place(this.player.x, this.player.y, wHero);
+    for (const f of this.followers) if (!f.angel) place(f.spr.x, f.spr.y, wHero);
+    for (const n of this.npcs) place(n.spr.x, n.spr.y, n.def.dog ? wDog : wHero);
+    for (const r of this.roamers) if (!r.dead) place(r.spr.x, r.spr.y, r.walker ? wHero : wMini);
+    for (const p of this.patrols) if (!p.dead) place(p.spr.x, p.spr.y, wHero);
+    for (; i < this.shadows.length; i++) this.shadows[i].setVisible(false);
   }
 
   /* ---------------- S18 M26 (ADR-067): ambient road traffic ---------------- */
@@ -1253,10 +1283,14 @@ export class OverworldScene extends Phaser.Scene {
       const vertical = v.dir === 1 || v.dir === 3;
       const dim = this.trafficDims.get(v.type) ?? { w: s(32), h: s(18) };
       const animFrame = Math.floor((this.time.now / 130 + v.id) % 4);
-      spr.setTexture(v.type, animFrame);
+      // the sheet anim is just a frame swap — the texture KEY never changes
+      // (setFrame skips the per-call texture-manager lookup setTexture does), and
+      // the on-screen size is fixed per vehicle and set once at spawn. Re-setting
+      // the texture + display size for every car every frame was pure waste on
+      // settlement maps (the traffic-heavy "sluggish in town" spots).
+      spr.setFrame(animFrame);
       spr.setAngle(v.dir === 1 ? 90 : v.dir === 3 ? -90 : 0);
       spr.setFlipX(v.dir === 2);
-      spr.setDisplaySize(dim.w * S, dim.h * S);
       // SOLID body rect (px) covering the WHOLE car — ends and sides — sized to
       // the sprite and oriented to travel, inset 4px so brushing past isn't sticky
       // dim is RUNTIME px; dim*S matches the on-screen sprite. The 4px brush-past
@@ -1410,17 +1444,7 @@ export class OverworldScene extends Phaser.Scene {
         n.think = 1200 + Math.random() * 2200;
         if (Math.random() < 0.55) {
           // ADR-096: wander the diagonals too (normalized so they don't speed up)
-          const dirs = [
-            [1, 0],
-            [-1, 0],
-            [0, 1],
-            [0, -1],
-            [0.7, 0.7],
-            [-0.7, 0.7],
-            [0.7, -0.7],
-            [-0.7, -0.7],
-          ];
-          const [vx, vy] = dirs[Math.floor(Math.random() * dirs.length)];
+          const [vx, vy] = NPC_WANDER_DIRS[Math.floor(Math.random() * NPC_WANDER_DIRS.length)];
           // px/s wander speed (dirs are unit/normalized) → scaled
           n.vx = vx * s(22);
           n.vy = vy * s(22);
@@ -1457,11 +1481,11 @@ export class OverworldScene extends Phaser.Scene {
 
   private updateRoamers(dt: number): void {
     const now = this.time.now;
+    const avgLvl = this.avgPartyLevel(); // party-wide — hoisted out of the per-roamer loop
     for (const r of this.roamers) {
       if (r.dead) continue;
       const def = ENEMIES[r.enemyId];
       const distP = Math.hypot(this.player.x - r.spr.x, this.player.y - r.spr.y);
-      const avgLvl = this.avgPartyLevel();
       const outclassed = avgLvl >= def.level + 6;
       if (outclassed && distP < s(70)) {
         // EB detail: weak enemies flee a strong party (px/s flee speed)
