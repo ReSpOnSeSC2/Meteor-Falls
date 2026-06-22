@@ -2713,6 +2713,8 @@ export const BATTLE_TEXT = {
   glint_assist: 'Glint flared like a tiny sun! The Tick flinched!',
   // ADR-121: super-Glint carrying the Sentinel fight — a real sun, not a flicker
   glint_supernova: 'GLINT BLAZED — a whole summer of light in one bug! The Sentinel reeled!',
+  // ADR-121: Glint GUARDS — the full-power blow that would have ended {t} is caught
+  glint_guard: "The Sentinel's blow would have FLATTENED {t} — but Glint threw himself in front of it!",
   chad_hide: 'Chad is supervising from a safe distance!',
   chad_poke: 'Chad poked it with a stick! It barely noticed!',
   win: 'YOU WON!',

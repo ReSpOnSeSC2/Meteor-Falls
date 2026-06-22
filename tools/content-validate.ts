@@ -1251,11 +1251,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     rogue_icecream_truck: 30,
     tick_nymph: 28,
     the_suit: 32,
-    titanic_tick: 60,
+    titanic_tick: 100,
     // ADR-121 — THE HUSH SENTINEL: the first-night Mars set-piece you REPEL (scripted
-    // endBattleMercy), not a money-axis boss. Small legible HP the repel pre-empts;
-    // NOT a CHAPTER_MANIFESTS boss, so it never hits the boss-curve / monetary checks.
-    hush_sentinel: 40,
+    // endBattleMercy), not a money-axis boss. Full-power set-piece HP (it can't be
+    // killed before the repel); NOT a CHAPTER_MANIFESTS boss, so it never hits the
+    // boss-curve / monetary checks.
+    hush_sentinel: 240,
     // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
     // (the union attacks 5×22, §A7's group notation)
     pickpocket_parrot: 70,

@@ -75,9 +75,9 @@ describe('S15g M3 — the curve is honest (shipped §A7 rows fall in their band)
 
 describe('S15g M3 — the §A6 boss ladder is pinned to canon', () => {
   it('boss HP matches the Bible', () => {
-    // ADR-122 THE RESCALE: the full §A6 ladder on the new geometric curve, end-to-end
-    // (Tick 60 → Hush 150k). Combat grows ~2.1–2.4×/chapter but stays far below the money axis.
-    expect(BOSS_HP).toMatchObject({ 1: 60, 2: 300, 3: 750, 4: 1800, 5: 4000, 6: 9000, 7: 20000, 8: 45000, 9: 95000 });
+    // ADR-122 THE RESCALE: the full §A6 ladder on the new geometric curve, end-to-end.
+    // ADR-121 (balance): Ch.1 Tick 60→100 (relocated later vs a stronger solo Jay).
+    expect(BOSS_HP).toMatchObject({ 1: 100, 2: 300, 3: 750, 4: 1800, 5: 4000, 6: 9000, 7: 20000, 8: 45000, 9: 95000 });
   });
   it('the per-level baseline reproduces the Ch.1 anchor (a L1 ~24 HP foe)', () => {
     expect(statAtLevel(1).hp).toBe(25); // Cranky Mailbox neighborhood

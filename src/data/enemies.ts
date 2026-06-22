@@ -1153,12 +1153,12 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'titanic_tick',
       name: 'TITANIC TICK',
       article: 'The',
-      // S22 (ADR-111) — THE SLOW BURN: 450→150 HP so the fight still falls in a
-      // fair ~5–8 turns now that solo Jay deals far less per swing (Vibe Surge α,
-      // awakened one beat earlier, carries the burst; severing the latch costs
-      // turns). EXP stays generous to keep the L8 target reachable.
-      hp: 60,
-      offense: 11,
+      // S22 (ADR-111) / ADR-121 (balance): BOSS 1, relocated LATER (the Heart Oak in
+      // Pond Park) so it's fought by a stronger solo Jay (Surge α awakened, a few
+      // levels of town trash behind him). Bumped 60→100 HP + offense 11→13 so it's a
+      // real BOSS scrap, not a 2-turn pop. Stays on the canon ladder (BOSS_HP[1]).
+      hp: 100,
+      offense: 13,
       defense: 7,
       speed: 6,
       level: 7,
@@ -1192,10 +1192,16 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'hush_sentinel',
       name: 'HUSH SENTINEL',
       article: 'The',
-      hp: 40,
-      offense: 9,
-      defense: 12,
-      speed: 14,
+      // ADR-121 (balance): the Sentinel fights at FULL POWER — big imposing HP bar,
+      // heavy hits — but it is REPELLED, never killed: while Glint blazes it can't be
+      // reduced past 1 HP (BattleScene.damageEnemy) so a burst can't pre-empt the
+      // scripted turn-5 repel, and GLINT GUARDS the party (incoming hits capped
+      // non-lethal) + does the MAJORITY of the damage (glintPhase). HP is a scary
+      // set-piece number, not on the §A7 small-Ch.1 band (it's an end-game Mars unit).
+      hp: 240,
+      offense: 28,
+      defense: 18,
+      speed: 16,
       level: 7,
       exp: 0,
       cash: 0,
