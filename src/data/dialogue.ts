@@ -2539,7 +2539,9 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // — THE THUNDER-SNORE: Mia awakens VIBE VOLT α (the §A6 Ch.4 awakening, sincere) —
   awake_the_thunder_snore: [
-    "(The noise drags the Whisperwig into the open — and {faye} feels it: the Sleeper's snore rolling up through a hundred feet of mountain, a charge gathering in the floor, in her shoes, in her teeth.)",
+    "(The noise drags the Whisperwig into the open — and {faye} feels it.)",
+    "(The Sleeper's snore, rolling up through a hundred feet of mountain.)",
+    "(A charge gathering in the floor, in her shoes, in her teeth.)",
     "(She doesn't decide to. Her hand comes up on its own, full of borrowed thunder, and the whole canal lights blue-white.)",
     '* {faye} awakened VIBE VOLT α — the thunder-snore, hers to throw now.',
   ],
