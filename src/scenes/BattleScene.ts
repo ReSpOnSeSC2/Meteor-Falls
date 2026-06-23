@@ -581,10 +581,15 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.flash(420, 248, 232, 160);
     AUDIO.sfx('pray');
     if (!owner.hero.down) owner.bust.poseFor('castA', 1200);
-    for (const page of DIALOGUE[a.dialogue] ?? []) await this.print(vars(page));
+    // §A11.2 — the awakening is PLAYER-PACED like the overworld beat (awakeningBeat
+    // uses input-gated dlg.say): printWait holds each page for a fresh A/B press so
+    // the moment lands instead of auto-scrolling past. And the jingle must RESUME the
+    // fight track (the mid-battle twin of OverworldScene passing this.mapDef.music) —
+    // passing null faded the loop to silence and the boss music never came back.
+    for (const page of DIALOGUE[a.dialogue] ?? []) await this.printWait(vars(page));
     GS.setFlag(a.flag);
-    AUDIO.jingle('levelup', 1400, null);
-    await this.print(vars(a.toast));
+    AUDIO.jingle('levelup', 1400, this.cfg.boss ? 'boss' : 'battle');
+    await this.printWait(vars(a.toast));
   }
 
   /** §A4.5: the sun icon by the party strip while SUNNY SIDE holds */
