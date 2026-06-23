@@ -341,7 +341,9 @@ function buildSpineShoulder(): MapDef {
   // Frozen by Vibe Freeze (Mia learned it Ch.2), it becomes a crossable bridge
   // to the ear beyond. Until then, the fall blocks the north way.
   g.rect(1, 5, W - 2, 2, 'e');
-  g.rect(11, 5, 2, 2, 'E'); // the lip the cast freezes (the crossing)
+  g.rect(10, 5, 4, 2, 'E'); // the lip the cast freezes (the crossing, 4 wide to clear
+  // the walker's collision box at the door-entry columns x11/x12 — see the
+  // spine_meltfall_frozen carve in OverworldScene.buildTiles)
   g.set(11, 0, 'o'); // the way up to the ear (N), beyond the fall
   g.set(12, 0, 'o');
   return {
@@ -401,7 +403,10 @@ function buildSpineEar(): MapDef {
     signs: [{ x: 10, y: 11, dialogue: 'sign_sleepers_ear' }],
     phones: [],
     doors: [
-      { x: 10, y: H - 1, w: 2, h: 1, to: 'spine_shoulder', tx: 11 * 16, ty: 1 * 16, facing: 'down', indicator: 'none' },
+      // arrive CENTERED on the 2-wide gap (tile 12, matching spine_hand's tx) so the
+      // walker's collision box clears the x10 wall corner — an off-centre tile-11
+      // arrival jams against the door edge on the backtrack (needs a sideways nudge).
+      { x: 10, y: H - 1, w: 2, h: 1, to: 'spine_shoulder', tx: 12 * 16, ty: 1 * 16, facing: 'down', indicator: 'none' },
     ],
     spawners: [
       { enemies: ['earwax_golem', 'dream_leech'], count: 1, rect: { x: 5, y: 11, w: 5, h: 2 } },

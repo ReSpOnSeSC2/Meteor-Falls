@@ -496,6 +496,14 @@ export class OverworldScene extends Phaser.Scene {
     // identical in solidity to their base tiles.
     const isRoad = (x: number, y: number): boolean =>
       x >= 0 && y >= 0 && x < w && y < h && 'RDX23P'.includes(rows[y][x]);
+    // §A4.11 — the Sleeper's-shoulder meltwater fall: once Vibe Freeze locks it
+    // (spine_meltfall_frozen), its foam-lip crossing ('E', x11-12) becomes a
+    // WALKABLE ice bridge to the ear. Until then 'E' (sea_foam) stays solid.
+    // Without this carve the gate is cosmetic-only (it sets the flag + hands over
+    // the firecracker string but never opens the crossing) and the boss/ember are
+    // unreachable on foot. The shared MapDef grid is untouched — carve per build.
+    const meltCrossingOpen =
+      this.mapDef.id === 'spine_shoulder' && GS.flag('spine_meltfall_frozen') === true;
     const data: number[][] = [];
     this.solidTiles = [];
     for (let y = 0; y < h; y++) {
@@ -531,7 +539,7 @@ export class OverworldScene extends Phaser.Scene {
           idx = tileIndexByName(name);
         }
         row.push(idx);
-        srow.push(TILE_SOLID[idx]);
+        srow.push(meltCrossingOpen && ch === 'E' ? false : TILE_SOLID[idx]);
       }
       data.push(row);
       this.solidTiles.push(srow);
@@ -4561,6 +4569,13 @@ export class OverworldScene extends Phaser.Scene {
     this.sparkleBurst(this.player.x, this.player.y - s(14), 14);
     await this.wait(400);
     GS.setFlag('spine_meltfall_frozen');
+    // open the foam-lip crossing in the LIVE collision now (buildTiles re-carves
+    // it from the flag on any later re-entry) so the bridge is crossable at once.
+    for (let cy = 5; cy <= 6; cy++) {
+      for (let cx = 10; cx <= 13; cx++) {
+        if (this.solidTiles[cy]) this.solidTiles[cy][cx] = false;
+      }
+    }
     await this.dlg.say('(The fall locks solid mid-pour, a staircase of ice up the giant\'s arm. Caught in the frozen spray, a string of firecrackers somebody dropped — you pocket it. You may want to be LOUD soon.)');
     GS.addItem('firecracker_string'); // NOISE for the Whisperwig ahead (the gate pays it forward)
     AUDIO.sfx('confirm');
