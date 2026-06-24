@@ -309,6 +309,14 @@ function buildSpineHand(): MapDef {
     props: [
       { sprite: 'meteor_rock', x: 8, y: 6, solid: ROCK_SOLID }, // a fingernail like a cliff
       { sprite: 'meteor_rock', x: 15, y: 8, solid: ROCK_SOLID },
+      // §A4.11 dressing — coarse giant hair + amber wax pushing up through the warm
+      // skin-floor (non-solid ambient detail; never blocks the small maze)
+      { sprite: 'prop_giant_hair', x: 3, y: 4 },
+      { sprite: 'prop_giant_hair', x: 20, y: 5 },
+      { sprite: 'prop_giant_hair', x: 5, y: 11 },
+      { sprite: 'prop_giant_hair', x: 19, y: 11 },
+      { sprite: 'prop_amber_wax', x: 7, y: 3 },
+      { sprite: 'prop_amber_wax', x: 16, y: 11 },
     ],
     npcs: [
       // the Dorin cameo — a travel-worn kid in a gi, asleep sitting up, beads in hand
@@ -356,6 +364,12 @@ function buildSpineShoulder(): MapDef {
       { sprite: 'meteor_rock', x: 4, y: 9, solid: ROCK_SOLID },
       { sprite: 'meteor_rock', x: 17, y: 9, solid: ROCK_SOLID },
       { sprite: 'prop_trail_marker', x: 12, y: 8 },
+      // §A4.11 dressing — giant hair + amber wax flanking the frozen fall (non-solid;
+      // clear of the crossing/gate rect and the spawner band)
+      { sprite: 'prop_giant_hair', x: 3, y: 3 },
+      { sprite: 'prop_giant_hair', x: 20, y: 3 },
+      { sprite: 'prop_amber_wax', x: 6, y: 11 },
+      { sprite: 'prop_amber_wax', x: 16, y: 11 },
     ],
     npcs: [],
     signs: [{ x: 9, y: 8, dialogue: 'sign_spine_meltfall' }],
@@ -396,8 +410,15 @@ function buildSpineEar(): MapDef {
     interior: true,
     grid: g.out(),
     props: [
-      { sprite: 'meteor_rock', x: 6, y: 7, solid: ROCK_SOLID }, // amber wax, set like stone
-      { sprite: 'meteor_rock', x: 14, y: 7, solid: ROCK_SOLID },
+      // §A6 dressing — the resonance ring centers the chamber AND cues the §A6 ember
+      // site (was under-read vs Ch.3's old_stones); the amber wax is the real prop now
+      // (the meteor_rocks were standing in for it), giant hair lines the lower canal.
+      // All non-solid: the player must still step the resonance trigger underneath.
+      { sprite: 'prop_resonance_stones', x: 10, y: 8 },
+      { sprite: 'prop_amber_wax', x: 6, y: 7 },
+      { sprite: 'prop_amber_wax', x: 14, y: 7 },
+      { sprite: 'prop_giant_hair', x: 4, y: 12 },
+      { sprite: 'prop_giant_hair', x: 17, y: 12 },
     ],
     npcs: [],
     signs: [{ x: 10, y: 11, dialogue: 'sign_sleepers_ear' }],
