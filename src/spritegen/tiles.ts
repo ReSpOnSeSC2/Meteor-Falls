@@ -654,6 +654,27 @@ function seaFoamTile(): Pixmap {
   return pm;
 }
 
+/** §A4.11 — the frozen-meltfall ICE BRIDGE. CYAN is the palette's ice ramp (§B3);
+ *  PAPER-white frost streaks + deeper-cyan hairline cracks give the "blue-white"
+ *  the dialogue promises. Rendered for the 'E' crossing only when the meltfall is
+ *  frozen (OverworldScene.buildTiles); the rest of the fall stays blue sea_a.
+ *  Walkable (solid:false) — the collision carve and this appearance are the two
+ *  halves of one flag (spine_meltfall_frozen). */
+function meltIceTile(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.CYAN, 3)); // pale ice (#acf4f0)
+  // surface sheen — two deliberate white frost streaks (ADR-020: marks, never noise)
+  pm.hline(1, 3, 7, px(RAMP.PAPER, 3)); // #fcf8e8
+  pm.hline(8, 11, 6, px(RAMP.PAPER, 3));
+  // hairline cracks — deeper-cyan veins (the "blue" of blue-white)
+  pm.line(3, 6, 7, 10, px(RAMP.CYAN, 1)); // #2c9cb0
+  pm.line(11, 2, 13, 8, px(RAMP.CYAN, 1));
+  // two cold glints
+  pm.set(12, 5, px(RAMP.PAPER, 3));
+  pm.set(5, 13, px(RAMP.CYAN, 2)); // #54ccd4
+  return pm;
+}
+
 /** pier planks — long warm boards running with the walkway */
 function dockTile(): Pixmap {
   const pm = new Pixmap(TILE, TILE);
@@ -861,6 +882,14 @@ for (let mask = 0; mask < 16; mask++) {
   const mv = mask;
   TILESET.push({ name: `rug_${mv}`, solid: false, make: () => rugTile(mv) });
 }
+
+// §A4.11 — the frozen-meltfall ice bridge, appended at the TAIL so it never
+// shifts an existing tile index (base/path/rug all keep theirs, so the on-disk
+// authored strip stays aligned). The runtime strip otterbrook_tiles_16.png
+// carries one matching column at this same tail index, synced by
+// tools/sync-melt-ice-tile.ts (the strip diverges from the review grid for a
+// couple of hand-authored tiles, so we append rather than re-pack the grid).
+TILESET.push({ name: 'melt_ice', solid: false, make: meltIceTile });
 
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
