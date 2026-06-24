@@ -363,6 +363,8 @@ const WORLD_PROP_KEYS = [
   'prop_counter_stools', 'prop_booth', 'prop_pie_case', 'prop_jukebox',
   'prop_ticket_window', 'prop_waiting_bench', 'prop_schedule_board',
   'prop_frontdesk', 'prop_waitingchairs', 'prop_wardbed', 'prop_vending',
+  // Ch.4 Norway — Sleeper's-Spine interior dressing (inside a sleeping giant)
+  'prop_giant_hair', 'prop_amber_wax', 'prop_resonance_stones',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -570,6 +572,10 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   prop_waitingchairs: { w: 42, h: 22 },
   prop_wardbed: { w: 36, h: 34 },
   prop_vending: { w: 22, h: 34 },
+  // Ch.4 Norway — Sleeper's-Spine interior dressing (native map units; aspect from the sliced PNGs)
+  prop_giant_hair: { w: 27, h: 28 },
+  prop_amber_wax: { w: 18, h: 15 },
+  prop_resonance_stones: { w: 46, h: 43 },
 } as const satisfies Record<string, { w: number; h: number }>;
 
 /** Footprint width in TILES for the generated catalog + colossi, mirrored from
