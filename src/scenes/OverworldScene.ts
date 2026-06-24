@@ -529,7 +529,11 @@ export class OverworldScene extends Phaser.Scene {
           idx = RUG_BASE + mask;
         } else {
           let name = CHAR_LEGEND[ch] ?? 'grass_a';
-          if (name === 'sidewalk') {
+          if (meltCrossingOpen && ch === 'E') {
+            // §A4.11 — the frozen foam-lip crossing reads as a blue-white ice
+            // bridge (mirrors the collision carve below; same cells, same flag)
+            name = 'melt_ice';
+          } else if (name === 'sidewalk') {
             if (isRoad(x, y + 1)) name = 'sidewalk_curb';
             else if (isRoad(x + 1, y)) name = 'sidewalk_curb_e';
             else if (isRoad(x - 1, y)) name = 'sidewalk_curb_w';
