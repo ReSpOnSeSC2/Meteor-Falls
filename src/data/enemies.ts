@@ -1597,6 +1597,406 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       boss: true,
       mind_immune: true,
     }),
+
+    /* ═══════════════════════ §A7 CHAPTER 5 — MINIMUS ═══════════════════════ *
+     * The Grand Duchy of Minimus, shrunk to 1/100 (§A6/§A7). Tiny-but-PROCEDURAL:
+     * enemies fight in FORMATIONS, take VOTES, and exploit the party's huge
+     * hitboxes. Smallness is never weakness — it's procedure. The roster keeps the
+     * §A7 seed six (Tin Parade, Duelist Pip, Crumb Cannoneer, Powder-Wig Wasp,
+     * Wind-Up Wyrmlet, Dust Bunny of Unusual Size) and expands to the Flow-Law 20.
+     * On-curve HP (Ch.5 mid 193; ~95–360 band); citizens are never damaged — the
+     * danger is embarrassment, paperwork, and (at the Crown) a housecat. Death
+     * lines render RAW (literal canon names). Each GRAY-BOXES on a reused face. */
+
+    /* ---- the §A7 SEED SIX (GAME_BIBLE §A7 Ch.5 anchors) ---- */
+    E({
+      id: 'tin_parade',
+      name: 'Tin Parade',
+      article: 'The',
+      // a column of a dozen wind-up tin soldiers that march, halt, and fire as ONE
+      hp: 140, offense: 28, defense: 14, speed: 18, level: 23, exp: 130, cash: 28,
+      weakness: ['volt'],
+      moves: [
+        { name: 'present arms', kind: 'taunt', text: '{e} snapped into a square and presented a hedge of matchstick bayonets.', weight: 2 },
+        { name: 'volley', kind: 'strong', mult: 1.5, text: '{e} fired a single, perfectly-drilled volley at {t}!', weight: 3 },
+        { name: 'quick march', kind: 'attack', mult: 1, text: '{e} marched over {t} in lockstep, apologizing the whole way.', weight: 4 },
+      ],
+      deathLine: 'The Tin Parade broke ranks and toppled like a dozen dominoes. Someone will have to stand them all up again, by hand, in order.',
+      drops: [{ item: 'tin_soldier', chance: 0.18 }],
+      sprite: 'battle_tin_parade', mini: 'mini_banana',
+      bg: [RAMP.RED, RAMP.GOLD],
+    }),
+    E({
+      id: 'duelist_pip',
+      name: 'Duelist Pip',
+      article: 'The',
+      // minuscule and FORMAL — salutes, ripostes, demands satisfaction in writing
+      hp: 165, offense: 34, defense: 12, speed: 28, level: 24, exp: 160, cash: 40,
+      weakness: [],
+      moves: [
+        { name: 'en garde', kind: 'taunt', text: '{e} saluted with a pin-sized rapier and raised an immaculate guard.', weight: 2 },
+        { name: 'riposte', kind: 'strong', mult: 1.6, text: '{e} turned {t}\'s own clumsy swing into a flashing counter!', weight: 3 },
+        { name: 'pinprick', kind: 'attack', mult: 1.1, text: '{e} scored a touch on {t} too quick to see!', weight: 4 },
+      ],
+      deathLine: 'Duelist Pip bowed, acknowledged the touch, and stalked off to demand a rematch by certified mail.',
+      drops: [{ item: 'needle_saber', chance: 0.06 }],
+      sprite: 'battle_duelist_pip', mini: 'mini_jitterbug',
+      bg: [RAMP.PURPLE, RAMP.GOLD],
+    }),
+    E({
+      id: 'crumb_cannoneer',
+      name: 'Crumb Cannoneer',
+      article: 'The',
+      // loads the rations you DROPPED and fires them right back at you
+      hp: 200, offense: 30, defense: 16, speed: 14, level: 24, exp: 170, cash: 36,
+      weakness: ['fire'],
+      moves: [
+        { name: 'load the crumb', kind: 'taunt', text: '{e} rammed a biscuit-crumb down the barrel and sighted along it.', weight: 2 },
+        { name: 'return fire', kind: 'strong', mult: 1.5, text: '{e} fired {t}\'s own rations back at full muzzle velocity!', weight: 3 },
+        { name: 'grapeshot', kind: 'attack', mult: 1, text: '{e} sprayed {t} with a scattering of stale grapeshot!', weight: 4 },
+      ],
+      deathLine: 'The Crumb Cannoneer ran out of ammunition, which is to say snacks, and surrendered with great and crumby dignity.',
+      drops: [{ item: 'crumb_loaf', chance: 0.25 }],
+      sprite: 'battle_crumb_cannoneer', mini: 'mini_cranky_mailbox',
+      bg: [RAMP.EARTH, RAMP.GOLD],
+    }),
+    E({
+      id: 'powderwig_wasp',
+      name: 'Powder-Wig Wasp',
+      article: 'The',
+      // a courtier-wasp in a powdered wig; its minuet drone lulls you to sleep
+      hp: 170, offense: 29, defense: 13, speed: 24, level: 24, exp: 165, cash: 38,
+      weakness: ['insect'],
+      moves: [
+        { name: 'courtly drone', kind: 'status', status: 'asleep', text: '{e} hummed a soporific minuet, and {t}\'s eyelids grew very heavy...', weight: 3 },
+        { name: 'wig powder', kind: 'status', status: 'crying', text: '{e} shook its wig and gave {t} a faceful of scented powder!', weight: 2 },
+        { name: 'court sting', kind: 'attack', mult: 1.2, text: '{e} delivered a sting with a flourish and a tiny bow!', weight: 3 },
+      ],
+      deathLine: 'The Powder-Wig Wasp was unseated from the air. Its wig landed first, and with considerably more ceremony.',
+      drops: [{ item: 'powder_wig_dust', chance: 0.2 }],
+      sprite: 'battle_powderwig_wasp', mini: 'mini_coily_cicada',
+      bg: [RAMP.PAPER, RAMP.PURPLE],
+    }),
+    E({
+      id: 'windup_wyrmlet',
+      name: 'Wind-Up Wyrmlet',
+      article: 'The',
+      // a clockwork dragon-toy that overwinds its own key, then lets the spring GO
+      hp: 185, offense: 27, defense: 15, speed: 26, level: 25, exp: 175, cash: 42,
+      weakness: ['volt'],
+      moves: [
+        { name: 'wind up', kind: 'taunt', text: '{e} cranked its own key one menacing notch tighter.', weight: 2 },
+        { name: 'unwind', kind: 'strong', mult: 1.7, text: '{e} let the whole overwound spring go at {t} at once!', weight: 3 },
+        { name: 'clockwork nip', kind: 'attack', mult: 1, text: '{e} nipped {t} with a little brass overbite.', weight: 4 },
+      ],
+      deathLine: 'The Wind-Up Wyrmlet wound down with a long descending whir and one final, disappointed tick.',
+      sprite: 'battle_windup_wyrmlet', mini: 'mini_hill_slug',
+      bg: [RAMP.GOLD, RAMP.RED],
+    }),
+    E({
+      id: 'dust_bunny',
+      name: 'Dust Bunny of Unusual Size',
+      article: 'The',
+      // a fuzzy under-the-throne dust ball that SPLITS into two indignant halves
+      hp: 150, offense: 25, defense: 10, speed: 20, level: 23, exp: 140, cash: 26,
+      weakness: ['fire'],
+      moves: [
+        { name: 'split', kind: 'taunt', text: '{e} divided into two smaller, equally indignant bunnies.', weight: 2 },
+        { name: 'lint lash', kind: 'attack', mult: 1.1, text: '{e} lashed {t} with a whip of compacted lint!', weight: 4 },
+        { name: 'sneeze cloud', kind: 'status', status: 'crying', text: '{e} burst into a cloud of dust that set {t}\'s eyes streaming!', weight: 3 },
+      ],
+      deathLine: 'The Dust Bunny of Unusual Size came apart into ordinary dust, which the duchy swept up and filed under "Resolved."',
+      sprite: 'battle_dust_bunny', mini: 'mini_hill_slug',
+      bg: [RAMP.EARTH, RAMP.PAPER],
+    }),
+
+    /* ---- 4 road/field roamers — the Procession Way ---- */
+    E({
+      id: 'whistle_guard',
+      name: 'Whistle Guard',
+      article: 'The',
+      // thumb-high constable; halts you "by the book" and blows for a second
+      hp: 200, offense: 28, defense: 18, speed: 16, level: 23, exp: 145, cash: 30,
+      weakness: [],
+      moves: [
+        { name: 'by the book', kind: 'taunt', text: '{e} read {t} the relevant bylaw and blew a shrill whistle for backup.', weight: 3 },
+        { name: 'matchstick baton', kind: 'attack', mult: 1.2, text: '{e} rapped {t} smartly across the shin with a matchstick truncheon!', weight: 4 },
+        { name: 'HALT', kind: 'strong', mult: 1.5, text: '{e} bellowed "HALT, IN THE NAME OF THE DUCHESS!" with the force of its whole tiny lungs!', weight: 2 },
+      ],
+      deathLine: 'The Whistle Guard blew one last plaintive note and went to file an incident report roughly the size of a postage stamp.',
+      sprite: 'battle_whistle_guard', mini: 'mini_mask',
+      bg: [RAMP.BLUE, RAMP.GOLD],
+    }),
+    E({
+      id: 'census_pigeon',
+      name: 'Census Pigeon',
+      article: 'The',
+      // parade-balloon-huge to them, an ordinary pigeon to you; steals snacks
+      hp: 160, offense: 26, defense: 12, speed: 27, level: 23, exp: 135, cash: 28,
+      weakness: ['volt'],
+      moves: [
+        { name: 'shoelace peck', kind: 'attack', mult: 1, text: '{e} pecked furiously at {t}\'s enormous shoelaces!', weight: 4 },
+        { name: 'crumb snatch', kind: 'steal', text: '{e} made off with one of {t}\'s snacks in its beak!', weight: 2 },
+        { name: 'roost', kind: 'taunt', text: '{e} settled on {t}\'s head, blotting out the sun over three city blocks.', weight: 3 },
+      ],
+      deathLine: 'The Census Pigeon was officially counted, found the experience deeply offensive, and flapped off to be uncounted elsewhere.',
+      sprite: 'battle_census_pigeon', mini: 'mini_pigeon_gang',
+      bg: [RAMP.CYAN, RAMP.PAPER],
+    }),
+    E({
+      id: 'toll_clerk',
+      name: 'Toll Clerk',
+      article: 'The',
+      // spends a turn "taking a vote" on your fine, then garnishes your wallet
+      hp: 175, offense: 27, defense: 16, speed: 15, level: 24, exp: 155, cash: 34,
+      weakness: [],
+      moves: [
+        { name: 'take a vote', kind: 'taunt', text: '{e} convened a one-clerk committee to deliberate {t}\'s penalty.', weight: 3 },
+        { name: 'levy a fine', kind: 'stealcash', text: '{e} assessed {t} an immediate and very official toll!', weight: 3 },
+        { name: 'official stamp', kind: 'attack', mult: 1.1, text: '{e} brought a rubber stamp down on {t} with a resounding, bureaucratic THUMP!', weight: 3 },
+      ],
+      deathLine: 'The Toll Clerk\'s committee voted unanimously to adjourn. It collected its little podium and filed out in good order.',
+      drops: [{ item: 'royal_doubloon_tiny', chance: 0.15 }],
+      sprite: 'battle_toll_clerk', mini: 'mini_souvenir',
+      bg: [RAMP.GOLD, RAMP.PURPLE],
+    }),
+    E({
+      id: 'cobble_mite',
+      name: 'Cobble Mite',
+      article: 'The',
+      // hides between cobbles where big feet WHIFF — Pippa's Pinpoint Mark fixes it
+      hp: 95, offense: 30, defense: 8, speed: 26, level: 23, exp: 150, cash: 32,
+      weakness: ['insect'],
+      moves: [
+        { name: 'cobble dive', kind: 'taunt', text: '{e} dropped into the gap between two stones; {t}\'s great swing whiffed clean over it.', weight: 3 },
+        { name: 'ankle nip', kind: 'attack', mult: 1.2, text: '{e} darted out and nipped {t} at the ankle before vanishing again!', weight: 4 },
+        { name: 'gravel spray', kind: 'status', status: 'crying', text: '{e} kicked up a spray of grit into {t}\'s eyes!', weight: 2 },
+      ],
+      deathLine: 'The Cobble Mite was finally pinned between two stones. Up close it was almost cute. Almost.',
+      sprite: 'battle_cobble_mite', mini: 'mini_beetle',
+      bg: [RAMP.EARTH, RAMP.FOREST],
+    }),
+
+    /* ---- 3 dungeon specialists — The Hedgerow ---- */
+    E({
+      id: 'hedge_sprite',
+      name: 'Hedge Sprite',
+      article: 'The',
+      // leaf-clad duelist; ambushes from the maze shadows, then melts back in
+      hp: 220, offense: 33, defense: 16, speed: 24, level: 25, exp: 190, cash: 44,
+      weakness: ['fire'],
+      moves: [
+        { name: 'ambush', kind: 'strong', mult: 1.6, text: '{e} dropped out of the hedge wall onto {t} from nowhere!', weight: 3 },
+        { name: 'leaf-blade', kind: 'attack', mult: 1.2, text: '{e} slashed {t} with a blade honed from a single privet leaf!', weight: 4 },
+        { name: 'rustle', kind: 'taunt', text: '{e} melted back into the green, leaving only a guilty rustle.', weight: 2 },
+      ],
+      deathLine: 'The Hedge Sprite dissolved back into the hedge, leaving one drifting leaf and the strong sense it was still watching.',
+      sprite: 'battle_hedge_sprite', mini: 'mini_jitterbug',
+      bg: [RAMP.FOREST, RAMP.GRASS],
+    }),
+    E({
+      id: 'topiary_knight',
+      name: 'Topiary Knight',
+      article: 'The',
+      // clipped-shrub guardian; hits like a greatsword, slow as a growing season
+      hp: 320, offense: 38, defense: 24, speed: 8, level: 26, exp: 230, cash: 56,
+      weakness: ['fire'],
+      moves: [
+        { name: 'pruned blade', kind: 'strong', mult: 1.8, text: '{e} brought a greatsword of clipped leaves down on {t}!', weight: 3 },
+        { name: 'hedge slam', kind: 'attack', mult: 1.2, text: '{e} slammed its whole leafy bulk into {t}!', weight: 3 },
+        { name: 'root stance', kind: 'taunt', text: '{e} set its roots deep. It would not be moved.', weight: 2 },
+      ],
+      deathLine: 'The Topiary Knight was clipped down to a tidy cube. The duchy\'s gardeners arrived at once to argue whose jurisdiction that was.',
+      drops: [{ item: 'velvet_doublet', chance: 0.1 }],
+      sprite: 'battle_topiary_knight', mini: 'mini_mask',
+      bg: [RAMP.FOREST, RAMP.GOLD],
+    }),
+    E({
+      id: 'bramble_tangle',
+      name: 'Bramble Tangle',
+      article: 'The',
+      // thorn vines that root and entangle a colossus's feet
+      hp: 240, offense: 30, defense: 18, speed: 12, level: 25, exp: 195, cash: 46,
+      weakness: ['fire'],
+      moves: [
+        { name: 'entangle', kind: 'status', status: 'paralyzed', text: '{e} whipped thorn vines around {t}\'s feet and cinched them tight!', weight: 3 },
+        { name: 'thorn lash', kind: 'attack', mult: 1.2, text: '{e} raked {t} with a fistful of bramble!', weight: 4 },
+        { name: 'overgrow', kind: 'strong', mult: 1.5, text: '{e} surged a season\'s growth at {t} all at once!', weight: 2 },
+      ],
+      deathLine: 'The Bramble Tangle was cut back to a stump. It will, the gardeners warn, be back by Tuesday.',
+      sprite: 'battle_bramble_tangle', mini: 'mini_banana',
+      bg: [RAMP.FOREST, RAMP.MAGENTA],
+    }),
+
+    /* ---- 2 social/urban oddities — Minimus Major ---- */
+    E({
+      id: 'lapel_pin_mob',
+      name: 'Lapel-Pin Mob',
+      article: 'The',
+      // citizens who mistake you for civic furniture and CLIMB you (comes 2–3)
+      hp: 105, offense: 24, defense: 10, speed: 22, level: 23, exp: 125, cash: 24,
+      weakness: [],
+      moves: [
+        { name: 'climb aboard', kind: 'attack', mult: 1, text: '{e} scaled {t}\'s trouser-leg like a civic monument!', weight: 4 },
+        { name: 'plant a flag', kind: 'taunt', text: '{e} planted a tiny flag on {t}\'s shoulder, claiming it for the duchy.', weight: 2 },
+        { name: 'earnest chant', kind: 'status', status: 'crying', text: '{e} struck up a chant so earnest it brought {t} to tears!', weight: 3 },
+      ],
+      deathLine: 'The Lapel-Pin Mob was gently brushed off and set down. They formed an orderly queue to do it all again.',
+      sprite: 'battle_lapel_pin_mob', mini: 'mini_beetle',
+      bg: [RAMP.GOLD, RAMP.PAPER],
+    }),
+    E({
+      id: 'town_crier',
+      name: 'Town Crier',
+      article: 'The',
+      // reads proclamations that BUFF its allies ("By order of the Duchess…")
+      hp: 200, offense: 26, defense: 16, speed: 14, level: 24, exp: 175, cash: 40,
+      weakness: [],
+      moves: [
+        { name: 'proclamation', kind: 'mend', text: '{e} cried "BY ORDER OF THE DUCHESS, ALL RANKS SHALL RALLY!" and its allies took heart!', weight: 3 },
+        { name: 'ring the bell', kind: 'taunt', text: '{e} rang a brass handbell — deafening, at this scale.', weight: 2 },
+        { name: 'decree', kind: 'attack', mult: 1.1, text: '{e} read out a decree and rapped {t} with the rolled-up scroll!', weight: 3 },
+      ],
+      deathLine: 'The Town Crier read its own retraction aloud, rolled up the scroll, and declared the matter officially closed.',
+      sprite: 'battle_town_crier', mini: 'mini_souvenir',
+      bg: [RAMP.RED, RAMP.GOLD],
+    }),
+
+    /* ---- 2 rare/high-value — little stories, BIG purses (cash rides the drops) ---- */
+    E({
+      id: 'snuffbox_beetle',
+      name: 'Gilded Snuffbox Beetle',
+      article: 'The',
+      // a jeweled beetle worth a fortune; folds gold (physical-immune) and bolts
+      hp: 210, offense: 28, defense: 20, speed: 26, level: 25, exp: 240, cash: 100,
+      weakness: ['insect'],
+      moves: [
+        { name: 'gild over', kind: 'gild', text: '{e} folded shut into a jeweled snuffbox — hard gold, and slick to a bat!', weight: 3 },
+        { name: 'skitter', kind: 'taunt', text: '{e} feinted toward the gutter, threatening to flee with all that treasure.', weight: 3 },
+        { name: 'gem flick', kind: 'attack', mult: 1.2, text: '{e} flicked a chip of emerald at {t} like a tiddlywink!', weight: 3 },
+      ],
+      deathLine: 'The Gilded Snuffbox Beetle popped open, spilled a king\'s ransom in snuff, and was, the duchy agreed, worth every penny.',
+      drops: [{ item: 'gilt_thimble_collection', chance: 0.3 }, { item: 'royal_doubloon_tiny', chance: 0.4 }],
+      sprite: 'battle_snuffbox_beetle', mini: 'mini_beetle',
+      bg: [RAMP.GOLD, RAMP.MAGENTA],
+    }),
+    E({
+      id: 'tax_assessor',
+      name: 'Royal Tax Assessor',
+      article: 'The',
+      // appears to "assess" your colossal net worth, then flees with the ledger
+      hp: 230, offense: 30, defense: 18, speed: 25, level: 25, exp: 245, cash: 98,
+      weakness: [],
+      moves: [
+        { name: 'assess', kind: 'taunt', text: '{e} appraised {t}\'s colossal net worth aloud, audibly salivating.', weight: 3 },
+        { name: 'on-the-spot levy', kind: 'stealcash', text: '{e} issued {t} an on-the-spot assessment and pocketed the difference!', weight: 3 },
+        { name: 'abscond', kind: 'taunt', text: '{e} edged toward the exit with the ledger clutched to its chest.', weight: 2 },
+      ],
+      deathLine: 'The Royal Tax Assessor was served its own paperwork. It fainted dead away, which the duchy logged as "audited."',
+      drops: [{ item: 'royal_doubloon_tiny', chance: 0.5 }, { item: 'census_ledger', chance: 0.2 }],
+      sprite: 'battle_tax_assessor', mini: 'mini_mask',
+      bg: [RAMP.GOLD, RAMP.BLUE],
+    }),
+
+    /* ---- 2 late-chapter pressure — remix the boss's lessons (Defend / evasion) ---- */
+    E({
+      id: 'halberd_column',
+      name: 'Halberd Column',
+      article: 'The',
+      // a wall of tiny pikes that PUNISHES non-Defend (rhymes with the boss POUNCE)
+      hp: 340, offense: 36, defense: 22, speed: 10, level: 26, exp: 250, cash: 58,
+      weakness: ['volt'],
+      moves: [
+        { name: 'present pikes', kind: 'taunt', text: '{e} levelled a hedge of matchstick halberds at {t}. (DEFEND, or be run through.)', weight: 3 },
+        { name: 'pike charge', kind: 'strong', mult: 1.8, text: '{e} advanced as one bristling wall and ran {t} through!', weight: 3 },
+        { name: 'close ranks', kind: 'attack', mult: 1.2, text: '{e} closed ranks and shoved {t} back with a wall of shields!', weight: 3 },
+      ],
+      deathLine: 'The Halberd Column lowered its pikes, saluted, and marched off in perfect, tiny formation to become someone else\'s problem.',
+      sprite: 'battle_halberd_column', mini: 'mini_banana',
+      bg: [RAMP.BLUE, RAMP.RED],
+    }),
+    E({
+      id: 'bell_ringer_acolyte',
+      name: 'Bell-Ringer Acolyte',
+      article: 'The',
+      // rings a peal granting allies EVASION — telegraphs the boss's Flat Bell
+      hp: 280, offense: 30, defense: 18, speed: 16, level: 26, exp: 235, cash: 52,
+      weakness: ['volt'],
+      moves: [
+        { name: 'warning peal', kind: 'shield', text: '{e} rang a bright warning peal; the toll wrapped its allies in a hard-to-hit shimmer!', weight: 3 },
+        { name: 'clapper swing', kind: 'attack', mult: 1.3, text: '{e} swung the clapper into {t} like a wrecking ball!', weight: 4 },
+        { name: 'belfry echo', kind: 'status', status: 'hushed', text: '{e} rang a note that shook the words right out of {t}!', weight: 2 },
+      ],
+      deathLine: 'The Bell-Ringer Acolyte\'s bell cracked on the final swing. In the ringing silence, everything was suddenly, suspiciously easy to hit.',
+      drops: [{ item: 'thimble_bell', chance: 0.08 }],
+      sprite: 'battle_bell_ringer_acolyte', mini: 'mini_souvenir',
+      bg: [RAMP.GOLD, RAMP.CYAN],
+    }),
+
+    /* ---- 1 set-piece — the §A6 formation battle (Pinpoint Mark turns chaos to order) ---- */
+    E({
+      id: 'grand_parade',
+      name: 'The Grand Parade',
+      article: 'The',
+      // a whole procession that TAKES A VOTE each turn to decide its move
+      hp: 360, offense: 34, defense: 20, speed: 18, level: 26, exp: 260, cash: 60,
+      weakness: [],
+      moves: [
+        { name: 'take a vote', kind: 'taunt', text: '{e} halted the entire procession to ballot its next move. (It carried, narrowly.)', weight: 3 },
+        { name: 'confetti barrage', kind: 'status', status: 'crying', text: '{e} buried {t} under a regulation quantity of festival confetti!', weight: 2 },
+        { name: 'procession crush', kind: 'strong', mult: 1.6, text: '{e} rolled its float forward, by committee, over {t}!', weight: 3 },
+        { name: 'marching band', kind: 'attack', mult: 1.1, text: '{e} brought up the brass section directly into {t}\'s ear!', weight: 3 },
+      ],
+      deathLine: 'The Grand Parade voted, at last, to disperse. The motion carried. They will reconvene, by charter, next festival.',
+      drops: [{ item: 'confetti_cannon', chance: 0.2 }],
+      sprite: 'battle_grand_parade', mini: 'mini_banana',
+      bg: [RAMP.PURPLE, RAMP.GOLD],
+    }),
+
+    /* ---- BOSS 5 — WHISKERZILLA (§A6 Ch.5, 4,000 HP) ---- *
+     * An ordinary lost housecat; to the duchy, a KAIJU asleep on the crown jewel.
+     * The fight is a MERCY/SURVIVAL, not a kill (bosses.ts `scriptedSurvival`): the
+     * FLAT BELL is a second 150-HP target that grants the cat evasion while it
+     * rings — break it and the purr gives every move away. Every 3rd turn the tail
+     * wiggles → POUNCE (Defend or be knocked Flat → Paralyzed). It gets BORED on
+     * turn 12 and the Duchess KNIGHTS it (endBattleMercy — a non-kill win). No
+     * elemental weakness (the gimmick is the bell + the Defend read, not an
+     * element); mind_immune like every boss. */
+    E({
+      id: 'whiskerzilla',
+      name: 'WHISKERZILLA',
+      article: 'The',
+      hp: 4000, offense: 40, defense: 20, speed: 18, level: 26, exp: 3200, cash: 1200,
+      weakness: [],
+      moves: [
+        { name: 'idle swat', kind: 'attack', mult: 1.2, text: '{e} swatted lazily at {t}, and a swat is, at this scale, a calamity.', weight: 4 },
+        { name: 'POUNCE', kind: 'strong', mult: 1.9, text: '{e} POUNCED, and for one terrible moment the whole sky was paw!', weight: 3 },
+        { name: 'knead the crown', kind: 'attack', mult: 1, text: '{e} settled in and kneaded the crown jewel, and the tremor knocked {t} flat.', weight: 3 },
+        { name: 'tail-wiggle', kind: 'taunt', text: '{e}\'s tail began to wiggle. Something enormous was about to happen.', weight: 2 },
+      ],
+      deathLine: 'Whiskerzilla was not defeated — nothing so rude. It simply lost interest, yawned hugely, and the Duchess knighted it where it lay.',
+      sprite: 'battle_whiskerzilla', mini: 'mini_hill_slug',
+      bg: [RAMP.GOLD, RAMP.ORANGE],
+      boss: true,
+      mind_immune: true,
+    }),
+    E({
+      id: 'flat_bell',
+      name: 'The Flat Bell',
+      article: 'The',
+      // the §A6 SECOND target (150 HP): grants Whiskerzilla evasion while it rings;
+      // break it → the cat purrs and every move is telegraphed (bosses.ts summon)
+      hp: 150, offense: 18, defense: 12, speed: 30, level: 26, exp: 0, cash: 0,
+      weakness: ['volt'],
+      moves: [
+        { name: 'ring out', kind: 'taunt', text: '{e} pealed a long flat note, and while it rang Whiskerzilla blurred at the edges.', weight: 3 },
+        { name: 'discordant clang', kind: 'attack', mult: 1, text: '{e} clanged a sour, off-key note that rattled {t} to the teeth!', weight: 3 },
+      ],
+      deathLine: 'The Flat Bell cracked clean through and fell silent. Into the gap where its ringing had been crept a low, enormous purr.',
+      sprite: 'battle_flat_bell', mini: 'mini_souvenir',
+      bg: [RAMP.GOLD, RAMP.CYAN],
+      mind_immune: true,
+    }),
   ].map((e) => [e.id, e]),
 );
 

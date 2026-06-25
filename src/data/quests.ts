@@ -405,5 +405,113 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'heal', power: 425 },
       },
     }),
+
+    /* ═══════════════ CHAPTER 5 (Minimus) — the five §A10 quests ═══════════════ *
+     * Tiny-but-procedural (§A6/§A11): a census that proves every dot has a name, the
+     * colossus-footprint repairs, the cross-scale Lost & Found, the bell choir behind
+     * Heartlight 5, and the minister's macro-lens portrait. Rewards reuse the live §A8
+     * ch5 catalog; pinned both directions in tools/content-validate.ts like the rest. */
+
+    /* ---- §A10 #11 — the royal census: count 100 citizens who will not stand still ---- */
+    Q({
+      id: 'royal_census',
+      name: 'The Royal Census',
+      chapter: 5,
+      giver: 'mn_census',
+      startFlag: 'q_census',
+      objectives: [
+        { id: 'market', text: 'Count the citizens of the market ward. They keep moving — and they keep insisting they have already been counted, by a cousin, last Tuesday.', flag: 'q_census_market' },
+        { id: 'stamps', text: 'Count the ones who keep walking under the postage stamps. (A stamp is, to Minimus, a billboard. They like the shade.)', flag: 'q_census_stamps' },
+        { id: 'report', text: 'Bring the full tally back to the Census-Taker. Every dot has a name; she would like them all written down.', flag: 'q_census_reported' },
+      ],
+      rewardItem: 'census_quill_charm',
+      doneFlag: 'q_census_done',
+      caller: {
+        name: 'The Census-Taker',
+        quote: 'All one hundred, present and named! When you need us — and you will — every last citizen of Minimus answers the roll. LOUDLY. We have been practising.',
+        effect: { kind: 'heal', power: 440 },
+      },
+    }),
+
+    /* ---- §A10 #12 — civic repairs: the shrink (and a few footsteps) broke things ---- */
+    Q({
+      id: 'civic_repairs',
+      name: 'Civic Repairs',
+      chapter: 5,
+      giver: 'mn_engineer',
+      startFlag: 'q_repairs',
+      objectives: [
+        { id: 'bridge', text: 'A colossus stepped clean through the knee-high bridge on the Procession Way. The engineers need it shimmed back level — gently.', flag: 'q_repairs_bridge' },
+        { id: 'well', text: 'The thimble-well ran dry when the water table shrank with the rest. Prime it from a single, enormous dewdrop.', flag: 'q_repairs_well' },
+        { id: 'scaffold', text: 'The matchstick scaffold by the cathedral came down in a sneeze. Re-stack it, splinter by splinter.', flag: 'q_repairs_scaffold' },
+      ],
+      rewardItem: 'signet_bracer',
+      doneFlag: 'q_repairs_done',
+      caller: {
+        name: 'The Duchy Engineer',
+        quote: 'Every bridge, every well, every scaffold — sound again, thanks to you. When the big trouble comes, the whole works pool will throw its weight behind you. Such as it is!',
+        effect: { kind: 'damage', power: 450 },
+      },
+    }),
+
+    /* ---- §A10 regional — THE LOST & FOUND OF IMPOSSIBLE SIZES (cross-scale returns) ---- */
+    Q({
+      id: 'lost_and_found',
+      name: 'The Lost & Found of Impossible Sizes',
+      chapter: 5,
+      giver: 'mn_lostfound',
+      startFlag: 'q_lostfound',
+      objectives: [
+        { id: 'button', text: 'A giant button sits in the lost & found — a shield to you, a manhole cover somewhere else. Pippa insists on returning it correctly, as a diplomatic matter.', flag: 'q_lostfound_button' },
+        { id: 'spoon', text: 'A Minimus spoon turned up, which is — elsewhere — a perfect tuning fork. It hums a low A when you flick it. Find where it belongs.', flag: 'q_lostfound_spoon' },
+        { id: 'filed', text: 'File each return with the clerk. Pippa drafts a treaty for every one. They are all, she says, technically diplomatic incidents.', flag: 'q_lostfound_filed' },
+      ],
+      rewardItem: 'gilt_thimble_collection',
+      doneFlag: 'q_lostfound_done',
+      caller: {
+        name: 'The Lost & Found Clerk',
+        quote: 'Everything returned to its proper size and station. The ledger BALANCES. Do you know how rare that is? Here — let the whole filed-and-found weight of the duchy land on your enemy.',
+        effect: { kind: 'damage', power: 430 },
+      },
+    }),
+
+    /* ---- §A10 regional — THE SILENT BELFRY: restore the bell choir (Heartlight 5) ---- */
+    Q({
+      id: 'the_silent_belfry',
+      name: 'The Silent Belfry',
+      chapter: 5,
+      giver: 'mn_bellkeeper',
+      startFlag: 'q_belfry',
+      objectives: [
+        { id: 'clappers', text: 'The shrink scattered the bell choir\'s clappers across the duchy. Recover them — each is a tuning fork to you, a cathedral bell to them.', flag: 'q_belfry_clappers' },
+        { id: 'ring', text: 'Hang the clappers and ring the choir in order, lowest to highest. The duchy has been waiting forty quiet days to hear it.', flag: 'q_belfry_rung' },
+      ],
+      doneFlag: 'q_belfry_done',
+      caller: {
+        name: 'The Belfry Keeper',
+        quote: 'Listen — the choir rings again, the whole duchy in tune at last. When you need it most, every bell in Minimus will ring for YOU. Ring true, small friend.',
+        effect: { kind: 'heal', power: 455 },
+      },
+    }),
+
+    /* ---- §A10 regional — SAY CHEESE, MINISTER: Mr. Click's macro-lens portrait ---- */
+    Q({
+      id: 'say_cheese_minister',
+      name: 'Say Cheese, Minister',
+      chapter: 5,
+      giver: 'pw_click',
+      startFlag: 'q_cheese',
+      objectives: [
+        { id: 'pose', text: 'Mr. Click wants the minister\'s portrait. Pippa stands on a thimble like a podium and tries very hard to be taken seriously. Hold still.', flag: 'q_cheese_pose' },
+        { id: 'develop', text: 'Mr. Click develops the macro-lens plate. (It takes a while. The duchy is small; the patience is enormous.)', flag: 'q_cheese_developed' },
+      ],
+      rewardItem: 'lens_charm',
+      doneFlag: 'q_cheese_done',
+      caller: {
+        name: 'Mr. Click',
+        quote: 'The portrait hangs in the gallery — the Minister of Being Taken Seriously, life-size, which is to say enormous. Say the word and I\'ll blow it up even BIGGER. FLASH!',
+        effect: { kind: 'damage', power: 425 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

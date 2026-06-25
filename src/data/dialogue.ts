@@ -2691,6 +2691,156 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   q_picnic_after: ['@Come back any time, small friends! We\'ll do it again — and NEXT time the fork will be the right size. We\'re ninety percent sure we know which drawer.'],
 
+  /* ═══════════════ CHAPTER 5 — MINIMUS (the Grand Duchy) ═══════════════
+   * §A11 voice: tiny-but-dignified, civic-proclamation register, everything is
+   * PROCEDURE. Citizens are never in danger from you; YOU are faintly in danger
+   * from THEM. Scale is the joke. Pippa's competence-not-magic; the mercy boss; the
+   * two quiet joins. Never reveal chapter structure in UI (banners say MINIMUS MAJOR). */
+
+  // — THE NEXT LEG: Bert offers the flight to Minimus (from Lucille's cabin) —
+  bert_minimus_ask: [
+    "@Norway's behind us and the locket's pulling somewhere... small. Bert squints at the chart. 'A whole grand duchy, it says here. And then under it, in tiny letters: to scale.'",
+    "@Lucille's pointed at a place called MINIMUS. I'm told the entire kingdom fits on a card table and they are VERY proud of that. So whatever you do — try not to land on it. Say the word.",
+  ],
+
+  // — THE ARRIVAL: Lucille lands "in the duchy. All of it." —
+  ch5_arrival: [
+    '(Lucille comes down as soft as Bert can make her, and STILL the landing rattles teeth for a mile in every direction. The party look down. And down. And down.)',
+    '(A whole kingdom is laid at their feet like a model railway: a cathedral the height of a thumb, ribbon streets, ten thousand windows the size of rice grains — and every single one of them is lit.)',
+    '(A figure no bigger than a clothes-pin marches up the toe of {rex}\'s sneaker, plants its feet, and blows a whistle the size of a pinhead.)',
+    "@HALT, COLOSSI. ...Please. (The smallest, most dignified voice anyone has ever heard.) You are very large, and we are very organized, and those two facts must be kept apart. Keep to the PROCESSION WAY and no one need be... redecorated. This way. Mind the cathedral.",
+  ],
+
+  // — THE BIG-LITTLE LENS: Milo's Ch.5 build (Sigrid's spare lens, ground small) —
+  mn_lens: [
+    "(The Hundred Engineers swarm the workshop bench like one many-handed creature. They take {milo}'s spare Norway lens — Sigrid's, ground for a giant's eye — and they grind it, and grind it, and grind it SMALL.)",
+    "@(The Chief Engineer presents it on a velvet thimble.) The BIG-LITTLE LENS. Clip it to your Clicker, colossus. Now you see the small the way WE see it — and you can lend that seeing to your whole party. We call it Focus. Use it well. Use it gently.",
+    "* {milo}'s SPY became the BIG-LITTLE LENS — party-wide FOCUS, and a travel-scale Pippa can finally read.",
+  ],
+  mn_lens_done: ["@The Lens treating you well, colossus? Keep it clean. A smudge to you is a total eclipse to whatever you're looking at."],
+
+  // — THE HEDGEROW: a scale set-piece read through the Lens (optional flavor) —
+  hedgerow_lens: [
+    '(A single privet leaf has fallen across the path like a footbridge. Through the Big-Little Lens its veins read like steel girders and its edge like a sheer green cliff.)',
+    "@Mind the dewdrop. ({milo}, pointing at a bead of water the size of a beach ball.) To the locals that's a lake with a tragic history. To us it's a slip-and-fall. Single file, careful feet.",
+  ],
+
+  // — THE DUCAL CROWN: BOSS 5 (Whiskerzilla) intro —
+  whiskerzilla_door: [
+    '(The Hedgerow opens onto the Ducal Crown, and the smell arrives first: warm fur, and a great, great deal of it.)',
+    "@...oh, no. (Pippa, very small and very still.) That is a cat. That is just a lost cat. It found the warmest, highest, most important spot in the entire kingdom, and it went to SLEEP on it. We have to move it. We absolutely cannot move it. It is the size of a coastline.",
+    "@So we don't beat it. ({milo}, reading the Lens.) We can't, and we shouldn't. We just have to make it lose interest — survive it, tire it out. And whatever else you do: when that tail starts to go, DEFEND. Everybody. Hard.",
+  ],
+
+  // — the four §A6 boss beats (bosses.ts phase scriptLines) —
+  whisker_bell_ring: [
+    "(High above the napping cat hangs the FLAT BELL, cracked and swinging, ringing a thin sour note. And while it rings, WHISKERZILLA blurs at the edges — hard to fix, hard to land.)",
+    "@The bell! ({pippa}, pointing from {rex}'s shoulder.) While it rings we can't get the measure of the beast — it slips every blow. BREAK the Flat Bell first, and we'll see it true!",
+  ],
+  whisker_pounce: [
+    "(WHISKERZILLA's tail begins, slowly, to wiggle. Every Whistle Guard within a mile screams the very same word at the very same instant:)",
+    '@DEFEND! IT POUNCES! BRACE, COLOSSI — BRACE—! (And then the whole sky is paw.)',
+  ],
+  whisker_purr: [
+    '(The Flat Bell cracks clean through and falls silent. Denied its ringing veil, WHISKERZILLA settles — and begins, enormously, to PURR.)',
+    '(And the purr gives it all away: every gather, every twitch of muscle telegraphed a mile off. You can read the great beast now, plain as a picture book.)',
+  ],
+  whisker_bored: [
+    '(WHISKERZILLA stops, one paw raised. It regards you with the vast, bottomless indifference only a cat can summon. It decides — visibly, conclusively — that you are furniture. Not even interesting furniture.)',
+    '(It yawns. The yawn has WEATHER in it. Then it turns three times, tucks its nose under its tail, and goes back to sleep on the crown jewel as though you were never there at all.)',
+  ],
+
+  // — the WIN (post-battle): the Duchess knights the cat (the §A6 mercy ending) —
+  whiskerzilla_win: [
+    "(You did not defeat WHISKERZILLA. Nothing so rude. You were DISMISSED — which, from a cat, is functionally the same as a blessing.)",
+    '@QUICK — Your Grace, while it sleeps! (Pippa, breathless.)',
+    "(The Grand Duchess steps to the very lip of the dais, draws a needle-sword the length of an eyelash, and dubs the enormous drowsy cat upon its colossal nose.)",
+    "@Arise, SIR Whiskers — Knight-Protector of the Crown, and its monument henceforth. ...Good kitty. STAY. (The cat, knighted, purrs in its sleep. The crisis is now, officially, a landmark.)",
+  ],
+  ducal_crown_early: [
+    "(The Crown hums faint and high and waiting — but it will not sing with a kaiju asleep on top of it. First things first. First, the cat.)",
+  ],
+
+  // — HEARTLIGHT 5: The Bell Choir (Ember 5) —
+  ember5_get: [
+    '(With Sir Whiskers knighted and dozing — officially a monument now, and therefore allowed — the Ducal Crown is free at last to sing. And it does: high and bright, a peal of a hundred tiny bells all at once.)',
+    '(The Locket answers. A fifth voice drops in over the others, the highest yet — a silver thread laid across the deep Norway hum. THE BELL CHOIR.)',
+    '{rex} held up the Star Locket!',
+    '* The fifth EMBER settled in. The Heartlight rings in five parts now — and the newest part is a whole tiny kingdom, ringing its heart out for you.',
+  ],
+
+  // — THE TWO JOINS: Pippa appointed Foreign Minister; Dorin revealed —
+  pippa_join: [
+    "@(The Grand Duchess pitches her voice to fill the square, which at her scale means merely that she is audible.) For service to the Crown — and for being LARGE about it in all the correct ways — Minimus appoints PIPPA QUILL its Foreign Minister of Being Taken Seriously.",
+    "@Go with the colossi, Minister. See that the big world takes small things seriously, for once. Here — the ROYAL THIMBLE. It will keep your scale steady out there, where everything is the wrong size and proud of it.",
+    "@(Pippa climbs onto {rex}'s shoulder, thimble in hand, and does not look back, because a minister does not look back.) ...Right. Where are we colossally going next?",
+    '* {pippa} joined the party — and brought the ROYAL THIMBLE.',
+  ],
+  dorin_join: [
+    '(There is a kid sitting on the duchy wall, swinging his feet over a drop that is, to him, nothing at all. Travel-worn gi. Prayer beads. A half-eaten something. He has been a step ahead of you since the Sleeper\'s hand in Norway, and he has never once offered his name.)',
+    "@You move loud. (He doesn't get up.) Whole kingdom of small, careful people — and you came through it like weather. But you came through it CAREFUL. I watched. You kept the cat from stepping on anyone. That counts.",
+    "@Dorin. I'm headed the same way you are — there's a mountain at the far end of all this with my name already carved on it. No sense walking it alone. Might as well walk it loud.",
+    '* {dorin} joined the party.',
+  ],
+
+  // — the §A6 chapter card (ch5_complete) —
+  ch5_card: [
+    'Minimus rings its own bells again, and a knighted housecat sleeps on the crown jewel where the whole duchy can keep a fond eye on it. The citizens were never once in danger from you. You were, very faintly, the entire time, in danger from THEM. Procedure won.',
+    'The Locket hums with FIVE voices now, and the newest is a whole tiny kingdom that takes itself completely seriously. Five Embers are still out there.',
+    "* (Two new faces walk with you now: a minister the size of a clothes-pin, and a quiet kid in a gi who keeps a step ahead. Lucille is fuelled when you are. Bert says the next leg is 'somewhere that LAUGHS at you,' and will not explain further.)",
+  ],
+
+  // — MINIMUS MAJOR NPCs (one obsession each, §A11) —
+  npc_mn_pippa: [
+    "@Pippa Quill — royal census cadet, page to Her Grace. No — up HERE. On the matchbox. I am not a lapel pin. I am a CIVIL SERVANT. The distinction matters enormously to me and to no one else.",
+    "@You are the single largest diplomatic incident in the recorded history of the duchy, and I have decided to manage you personally. Stay on the Way. Do not sneeze near the cathedral. If anyone asks, you are WITH ME.",
+  ],
+  npc_mn_duchess: [
+    "@(She is the size of a chess queen and twice as composed.) Grand Duchess Millimetta the First, of Minimus. The Ember made us small. The Crown has decided this was a PROMOTION. Rent, you understand, has never been cheaper.",
+    "@You walk carefully, for colossi — and the Whistle Guards speak well of you, which they NEVER do. Help us with our small troubles, and Minimus will remember you fondly, and at your full and frankly excessive size.",
+  ],
+  npc_mn_engineer: [
+    "@Chief Engineer of the Hundred. We grind lenses, mostly — and we hear you carry a spare. A Norway lens, ground for a giant's eye? In our hands it becomes the BIG-LITTLE LENS, and your sharp-eyed friend could see the truly small with it. Properly. At last. Bring it to the bench.",
+    "@And — your arrival cracked a few things. A bridge. A well. A scaffold. Footsteps the size of weather will do that. If you've a careful hour to spare, the works pool would be grateful past saying.",
+  ],
+  npc_mn_census: [
+    "@The Royal Census. One hundred citizens, every one to be counted and NAMED. The trouble is twofold: they will not stand still, and each one insists it has already been counted — by a cousin — last Tuesday. None of them have.",
+    "@Every tiny person has a name. I should like them all written down before — well. Before anything large happens. Will you help me count? You can see over the rooftops. It's a tremendous advantage.",
+  ],
+  npc_mn_provisioner: [
+    "@The Ducal Provisioner, at your colossal service! Everything sold by the GROSS, naturally — to you a single crumb, to us a fortnight of good bread. Mind the shelf, would you. You breathe on it and it's an avalanche.",
+  ],
+  npc_mn_lostfound: [
+    "@Lost & Found of Impossible Sizes. You would not BELIEVE what surfaces when a kingdom shrinks and the rest of the world declines to. A button the size of a tower shield. A spoon that is a tuning fork somewhere east. It all has to go back — correctly. The Minister drafts a treaty for each one. She's thorough.",
+  ],
+  npc_mn_bellkeeper: [
+    "@Forty quiet days. The shrink flung the bell choir's clappers to the four corners of the duchy, and we have not heard our own bells since the coronation. A duchy that cannot ring is only a very small argument with itself. Help me make it sing again?",
+  ],
+
+  // — THE PROCESSION WAY NPCs —
+  npc_pw_click: [
+    "@Mr. Click — macro-lens portraiture! I photograph the small at the size it DESERVES, which is to say enormous. I should very much like the Minister's portrait. Hold still — you'll be in the frame whether you fit or not. You're frightfully hard to miss.",
+  ],
+  npc_pw_guard: [
+    "@Keep to the Way, colossus. By the book. (He consults a book the size of a postage stamp.) Page one: do not step off the Way. Page two: see page one. We Whistle Guards wrote it ourselves, over a weekend. We are very proud of page two.",
+  ],
+
+  // — SIGNS (the duchy's foreign-but-readable heraldic hand) —
+  sign_minimus_major: ['(A signpost the height of a candle, lettered in a fine heraldic hand:) MINIMUS MAJOR — Capital of the Grand Duchy. Pop. 100 (provisional, pending census). Kindly walk on the PROCESSION WAY. Thank you for being careful. — the Crown'],
+  sign_procession_gate: ['(An arch the size of a croquet hoop.) THE PROCESSION WAY begins here. Colossi: this way, and only this way. Everyone else: mind the colossi.'],
+  sign_ducal_court: ["(A velvet rope no thicker than a thread.) THE DUCAL COURT. Her Grace receives visitors of all sizes. Kneeling is optional and, frankly, doesn't help — you'll still be enormous."],
+  sign_procession_way: ['(A milestone the size of a thimble.) THE PROCESSION WAY · Minimus Major (W) · the Hedgerow (E). Stay between the kerbs. The kerbs are load-bearing. To us.'],
+  sign_hedgerow_mouth: ['(A trail marker, hand-lettered, leaning.) THE HEDGEROW — a garden hedge to you; a forest to us. Mind the topiary. It minds you back. The Ducal Crown lies beyond the green.'],
+  sign_the_hedgerow: ['(Carved into a single privet leaf the size of a door:) YOU ARE HERE. (And smaller, beneath:) So is everything else. Keep north and keep your feet.'],
+  sign_ducal_crown: ['(A plaque of beaten gold leaf, knee-high.) THE DUCAL CROWN — crown jewel of Minimus, holiest site of the realm. PLEASE DO NOT WAKE THE— (the rest of the plaque is hidden beneath an enormous, sleeping paw.)'],
+
+  // — THE DUCAL PROVISIONER (shop, §A11) —
+  shop_minimus_greet: ['@The Ducal Provisioner welcomes the colossi! Everything in stock, everything tiny, everything — to you — a positive bargain. Point gently, and point ONCE.'],
+  shop_minimus_bye: ['@Mind the doorway on your way out. To you it is ankle height. To us it represents a generation of structural engineering. Walk careful, big friend.'],
+
+  // — the "Say Cheese, Minister" pickup (active-quest flavor) —
+  q_say_cheese: ["@HOLD it — right there, don't move! (Mr. Click, diving under his black cloth.) Minister Pippa on the thimble, chin UP; Her Grace's portrait behind; and you colossi in the frame whether you fit or not. Three — two — SAY CHEESE! (FLASH.)"],
+
 };
 
 /**

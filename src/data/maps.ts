@@ -13,6 +13,7 @@ import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import { buildChapter2Maps } from './maps_ch2';
 import { buildChapter3Maps } from './maps_ch3';
 import { buildChapter4Maps } from './maps_ch4';
+import { buildChapter5Maps } from './maps_ch5';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
 import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
@@ -3183,6 +3184,9 @@ export const MAPS: Record<string, MapDef> = {
   // CHAPTER 4 Norway — "The Fjord That Sleeps" (Kvisthavn / Bootstep Moor /
   // Lilleby / the Sleeper's Spine). Lands SHIPPED with its story/boss wiring.
   ...buildChapter4Maps(),
+  // CHAPTER 5 Minimus — "The Grand Duchy of Minimus" (Minimus Major / the
+  // Procession Way / the Hedgerow / the Ducal Crown). Lands SHIPPED at the flip.
+  ...buildChapter5Maps(),
   otterbrook: otterbrookMap,
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,
@@ -3250,6 +3254,9 @@ const MAP_AREA: Record<string, string> = {
   // CH.4 Norway — the two settlements wear their own M25 skins + glyph banners
   kvisthavn: 'kvisthavn',
   lilleby: 'lilleby',
+  // CH.5 Minimus — the capital wears the heraldic duchy hand (§A11; banner reads
+  // MINIMUS MAJOR). The road/maze/crown carry no settlement glyph (like the moor/spine).
+  minimus_major: 'minimus',
 };
 for (const [id, area] of Object.entries(MAP_AREA)) if (MAPS[id]) MAPS[id].area = area;
 

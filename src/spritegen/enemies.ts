@@ -1326,6 +1326,34 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   frost_hare: { sprite: 'battle_frost_hare', draw: drawPickpocketParrot },
   amber_hoard_troll: { sprite: 'battle_amber_hoard_troll', draw: drawGildedBeetle },
   aurora_moth: { sprite: 'battle_aurora_moth', draw: drawJungleJitterbug },
+
+  // §A7 Ch.5 MINIMUS — the seed six + the Flow-Law expansion + BOSS 5. Each owns
+  // its OWN battle_<id> key so the authored PNG (docs/CH5_ART_PROMPTS.md) drops
+  // straight in; the `draw` is a REUSED generator standing in as the gray-box
+  // until that art lands (ADR-109 frozen — no new generators). sprite keys agree
+  // with each EnemyDef.sprite (S11b wear-gate, both directions).
+  tin_parade: { sprite: 'battle_tin_parade', draw: drawStepMask },
+  duelist_pip: { sprite: 'battle_duelist_pip', draw: drawBlazerSmiler },
+  crumb_cannoneer: { sprite: 'battle_crumb_cannoneer', draw: drawCrankyMailbox },
+  powderwig_wasp: { sprite: 'battle_powderwig_wasp', draw: drawCoilyCicada },
+  windup_wyrmlet: { sprite: 'battle_windup_wyrmlet', draw: drawRunawayLawnmower },
+  dust_bunny: { sprite: 'battle_dust_bunny', draw: drawHillSlugDeluxe },
+  whistle_guard: { sprite: 'battle_whistle_guard', draw: drawBlazerSmiler },
+  census_pigeon: { sprite: 'battle_census_pigeon', draw: drawPigeonGang },
+  toll_clerk: { sprite: 'battle_toll_clerk', draw: drawBlazerSmiler },
+  cobble_mite: { sprite: 'battle_cobble_mite', draw: drawGildedBeetle },
+  hedge_sprite: { sprite: 'battle_hedge_sprite', draw: drawJungleJitterbug },
+  topiary_knight: { sprite: 'battle_topiary_knight', draw: drawStepMask },
+  bramble_tangle: { sprite: 'battle_bramble_tangle', draw: drawBananaBunch },
+  lapel_pin_mob: { sprite: 'battle_lapel_pin_mob', draw: drawGildedBeetle },
+  town_crier: { sprite: 'battle_town_crier', draw: drawBlazerSmiler },
+  snuffbox_beetle: { sprite: 'battle_snuffbox_beetle', draw: drawGildedBeetle },
+  tax_assessor: { sprite: 'battle_tax_assessor', draw: drawStepMask },
+  halberd_column: { sprite: 'battle_halberd_column', draw: drawBananaBunch },
+  bell_ringer_acolyte: { sprite: 'battle_bell_ringer_acolyte', draw: drawCursedSouvenir },
+  grand_parade: { sprite: 'battle_grand_parade', draw: drawPigeonGang },
+  whiskerzilla: { sprite: 'battle_whiskerzilla', draw: drawHillSlugDeluxe },
+  flat_bell: { sprite: 'battle_flat_bell', draw: drawCursedSouvenir },
 };
 
 /**

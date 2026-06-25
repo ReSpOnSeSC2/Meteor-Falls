@@ -144,4 +144,25 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_lilleby_greet',
     farewell: 'shop_lilleby_bye',
   },
+  /* ---- Ch.5 (Minimus) — THE DUCAL PROVISIONER (Prompt 31): the §A8 ch5 shelf,
+   *  tiny-but-dignified. Pippa's kit-era food (a crumb is a loaf), the nectar/dewdrop
+   *  PP line, powder-wig cures, her stamp-sling + needle-sabre sidegrades, the
+   *  paper-crown court armor, and the duchy charms. One obsession: everything is sold
+   *  by the GROSS, because to the duchy a single biscuit feeds a street. Priced to the
+   *  §A9 Ch.5 arc (richer than Norway). ---- */
+  minimus_provisioner: {
+    id: 'minimus_provisioner',
+    name: 'THE DUCAL PROVISIONER',
+    keeperNpc: 'mn_provisioner',
+    stock: [
+      'crumb_loaf', 'petit_four', 'seed_pie', 'honey_drop', 'cheese_sliver', 'royal_tartlet',
+      'nectar_thimble', 'dewdrop_cordial', 'acorn_cup_tea',
+      'powder_wig_dust', 'smelling_bouquet', 'lucky_penny_tonic',
+      'stamp_sling', 'needle_saber', 'thimble_bell',
+      'paper_crown', 'velvet_doublet', 'lace_cuffs',
+      'duchy_seal_charm', 'morale_medal', 'basket_basic',
+    ],
+    greet: 'shop_minimus_greet',
+    farewell: 'shop_minimus_bye',
+  },
 };

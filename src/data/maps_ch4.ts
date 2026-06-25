@@ -104,6 +104,11 @@ function buildKvisthavn(): MapDef {
     atms: [{ x: 24, y: 11 }],
     doors: [
       { x: W - 1, y: 12, w: 1, h: 2, to: 'bootstep_moor', tx: 16, ty: 9 * 16, facing: 'right', indicator: 'none' },
+      // board Lucille — she's moored at the quay where the North Sea hop set down,
+      // so once the next leg is earned the cabin Bert can fly the party onward (the
+      // foggybottom water-steps precedent; without this a post-Ch.4 party can't reach
+      // the cabin to fly to Minimus — the frontier needs its own boarding point)
+      { x: 16, y: 20, w: 2, h: 1, to: 'biplane_interior', tx: 11 * 16, ty: 8 * 16, facing: 'down', indicator: 'none' },
     ],
     spawners: [
       // a lone gull works the quay (kept off the lane + away from the doors/phone)
