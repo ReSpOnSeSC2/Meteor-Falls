@@ -23,7 +23,6 @@ import {
   elementalGolem,
   mercyEnding,
   riddle,
-  scriptedSurvival,
   thresholdHeal,
 } from '../../levelkit/forge/bosses';
 
@@ -50,13 +49,10 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
    * `the_thunder_snore` awakening (Mia's Vibe Volt α) — no longer a draft (Prime
    * Law 1: a draft may not duplicate a shipped script or enemy). */
 
-  /* Ch.5 — WHISKERZILLA (2,150 HP): the Flat Bell grants evasion; it gets bored */
-  whiskerzilla: scriptedSurvival('whiskerzilla', {
-    bell: { enemy: 'flat_bell', n: 1, ringLine: 'whisker_bell_draft', brokenLine: 'whisker_purr_draft' },
-    pounce: { every: 3, line: 'whisker_pounce_draft' },
-    boredAt: 12,
-    boredLine: 'whisker_bored_draft',
-  }),
+  /* Ch.5 — WHISKERZILLA: PROMOTED (the Minimus landing). Now a live boss in
+   * src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy + the Flat Bell
+   * (its summoned 150-HP second target) — no longer a draft (Prime Law 1: a draft
+   * may not duplicate a shipped script or enemy). */
 
   /* Ch.6 — THE LAUGHING SPHINX (2,300 HP): a riddle; right stuns, wrong cries */
   laughing_sphinx: riddle('laughing_sphinx', {
@@ -118,7 +114,7 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
 export const DRAFT_BOSS_IDS = [
   // 'headmaster_mainframe' — PROMOTED to a live boss at the Ch.3 landing (ADR-099)
   // 'the_whisperwig' — PROMOTED to a live boss at the Ch.4 Norway landing
-  'whiskerzilla',
+  // 'whiskerzilla' — PROMOTED to a live boss at the Ch.5 Minimus landing
   'laughing_sphinx',
   'cobra_raja',
   'paper_dragon',

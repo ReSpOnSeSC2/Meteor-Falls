@@ -136,21 +136,33 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
 
   /* =========================== UNLANDED (Ch.5–10) =========================== */
 
+  // THE MINIMUS LANDING — Ch.5 flips to 'shipped'. The dungeon site becomes live
+  // dungeon.maps (the Hedgerow → the Ducal Crown); the 2 overworld maps + all 5 §A10
+  // quests fill in; the boss is now a live boss-flagged §A7 enemy at 4,000 HP with a
+  // BOSS_SCRIPTS entry (the whiskerzilla draft + the drafts/ch5 tree retired in the
+  // same commit). The validator's live Ch.5 assertions switch on; the draft 'site'/
+  // settlement 'style' drop away (the S14c flip, the ADR-099 / Norway precedent).
   5: {
     chapter: 5,
     title: 'The Grand Duchy of Minimus',
     region: 'Minimus',
-    status: 'unlanded',
+    status: 'shipped',
     targetLevel: 26,
     ember: 5,
     heartlight: 'The Bell Choir',
     band: 'ch5',
     travel: 'biplane', // Lucille lands in the duchy. All of it.
-    dungeon: { name: 'The Hedgerow → the Ducal Crown', site: 'the_hedgerow' },
+    dungeon: {
+      name: 'The Hedgerow → the Ducal Crown',
+      // the hedge maze (a forest at their scale) → the crown jewel + §A6 Resonance Site
+      maps: ['the_hedgerow', 'ducal_crown'],
+    },
     boss: { id: 'whiskerzilla', name: 'Whiskerzilla', hp: 4000, template: 'scriptedSurvival' },
-    settlements: [{ id: 'minimus_major', kind: 'city', style: 'spire-canton' }],
-    maps: [],
-    quests: ['royal_census', 'civic_repairs'],
+    settlements: [{ id: 'minimus_major', kind: 'city' }],
+    // the 2 overworld maps from buildChapter5Maps(): the tabletop capital + the
+    // sanctioned colossi road (the dungeon maps live under dungeon.maps above)
+    maps: ['minimus_major', 'procession_way'],
+    quests: ['royal_census', 'civic_repairs', 'lost_and_found', 'the_silent_belfry', 'say_cheese_minister'],
   },
 
   6: {

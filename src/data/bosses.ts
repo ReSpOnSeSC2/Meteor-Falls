@@ -163,6 +163,60 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
     ],
   }),
 
+  // §A6 Ch.5 — WHISKERZILLA (4,000 HP): an ordinary lost housecat; the duchy's
+  // KAIJU, asleep on the crown jewel. A MERCY/SURVIVAL, not a kill (the
+  // `scriptedSurvival` template, expanded inline). Turn 1 the FLAT BELL appears
+  // (a summoned 150-HP second target) and its ringing grants Whiskerzilla evasion
+  // (setEvasion on). Every 3rd turn the tail wiggles → POUNCE: the party is knocked
+  // Flat → Paralyzed 1 turn (Defend braces it — the Halberd Column taught this).
+  // BREAK the bell (bothSummonsDead) → the purr gives every move away (evasion off).
+  // On turn 12 it gets BORED, yawns, and the Duchess KNIGHTS it: endBattleMercy ends
+  // the fight as a WIN WITHOUT A KILL. No elemental weakness (the gimmick is the bell
+  // + the Defend read); mind_immune rides the EnemyDef. Heartlight 5 — The Bell Choir.
+  whiskerzilla: B({
+    boss: 'whiskerzilla',
+    phases: [
+      {
+        // turn 1 — the Flat Bell drops in, ringing; Whiskerzilla blurs (evasion on)
+        id: 'ring',
+        trigger: { kind: 'turnCount', n: 1 },
+        actions: [
+          { kind: 'scriptLine', line: 'whisker_bell_ring' },
+          { kind: 'summon', enemy: 'flat_bell', n: 1 },
+          { kind: 'setEvasion', on: true },
+        ],
+      },
+      {
+        // every 3rd turn — the tail-wiggle POUNCE knocks the party Flat (Paralyzed 1)
+        id: 'pounce',
+        trigger: { kind: 'turnCount', n: 3, every: 3 },
+        once: false,
+        actions: [
+          { kind: 'scriptLine', line: 'whisker_pounce' },
+          { kind: 'partyStatus', status: 'paralyzed', turns: 1 },
+        ],
+      },
+      {
+        // break the Flat Bell → the purr telegraphs every move (evasion off)
+        id: 'broken',
+        trigger: { kind: 'bothSummonsDead' },
+        actions: [
+          { kind: 'setEvasion', on: false },
+          { kind: 'scriptLine', line: 'whisker_purr' },
+        ],
+      },
+      {
+        // turn 12 — it gets bored and wanders off, ennobled (a non-kill victory)
+        id: 'bored',
+        trigger: { kind: 'turnCount', n: 12 },
+        actions: [
+          { kind: 'scriptLine', line: 'whisker_bored' },
+          { kind: 'endBattleMercy' },
+        ],
+      },
+    ],
+  }),
+
   // §A6 / ADR-121 — THE HUSH SENTINEL, the first-night Mars war-construct. This is
   // the "cannot-win-alone / repel" set-piece expressed as DATA: super-Glint
   // (glintSupernova, BattleScene) carries the damage while the script runs to a

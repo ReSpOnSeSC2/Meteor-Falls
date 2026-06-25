@@ -4175,6 +4175,22 @@ export class OverworldScene extends Phaser.Scene {
       case 'moor_bridge_berry':
         if (!GS.flag('moor_berry_cleared')) await this.bridgeBerryScene();
         break;
+      /* ---------------- Chapter 5 (§A6 Minimus) ---------------- */
+      case 'ch5_arrival':
+        if (!GS.flag('ch5_arrived')) await this.ch5ArrivalScene();
+        break;
+      case 'big_little_lens':
+        if (!GS.flag('big_little_lens_built')) await this.bigLittleLensScene();
+        break;
+      case 'the_hedgerow_lens':
+        if (!GS.flag('hedgerow_lens_seen')) await this.hedgerowLensScene();
+        break;
+      case 'whiskerzilla_boss':
+        if (!GS.flag('whiskerzilla_defeated')) await this.whiskerzillaBossScene();
+        break;
+      case 'ducal_crown_resonance':
+        if (!GS.flag('ch5_complete')) await this.ducalCrownScene();
+        break;
       // the §A10 Ch.3 "find" pickups (books / letters / the drain / milk / water)
       case 'q_overdue_b1':
       case 'q_overdue_b2':
@@ -4501,6 +4517,21 @@ export class OverworldScene extends Phaser.Scene {
    *  Ch.3 is complete (the boardLucille precedent — England's flight stays his too). */
   private async bertAirBeat(): Promise<void> {
     this.cut = true;
+    // the §A5 NEXT leg: once Norway is done, Bert flies the party to MINIMUS (the
+    // newest frontier takes priority — the Norway leg below stays for the backtrack)
+    if (GS.flag('ch4_complete') && !GS.flag('ch5_arrived')) {
+      await this.dlg.say(...DIALOGUE.bert_minimus_ask);
+      const pick = await this.dlg.ask(['Fly to MINIMUS', 'Not yet'], { cancelIndex: 1 });
+      if (pick !== 0) {
+        this.cut = false;
+        return;
+      }
+      AUDIO.stopMusic();
+      await playCutscene(this, 'ch5_journey'); // the authored panels (no-ops if missing)
+      // the hatch drops on the Minimus Major landing square; ch5_arrival fires the beat
+      this.goThroughDoor('minimus_major', 8 * 16, 22 * 16, 'down');
+      return;
+    }
     if (!GS.flag('ch3_complete') || GS.flag('ch4_arrived')) {
       // before the North Sea leg is earned (or after it's flown), Bert just chats
       await this.dlg.say(...DIALOGUE.npc_bert_air);
@@ -4633,6 +4664,119 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('ch4_complete'); // §A6 — the chapter button (the §A5 gate to Ch.5)
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch4_card);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /* ════════════════ CHAPTER 5 — THE GRAND DUCHY OF MINIMUS (§A6) ════════════════ *
+   * The arrival (Lucille lands "in the duchy. All of it."), Milo's Big-Little Lens
+   * build, the Hedgerow lens set-piece, the WHISKERZILLA mercy/survival boss (the phase
+   * machine carries the Flat Bell + the POUNCE + the bored-mercy end), and the Ducal
+   * Crown: Heartlight 5 (The Bell Choir) + the two joins (Pippa as Foreign Minister with
+   * the Royal Thimble; Dorin, the Ch.4 gi-kid cameo, paid off). Mirrors the Ch.4 shape. */
+
+  /** the §A6 arrival — Lucille sets the party down on Minimus Major; a Whistle Guard
+   *  flags them down before they flatten a suburb (the colossi-keep-to-the-Way beat). */
+  private async ch5ArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch5_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(420, 0.006);
+    await this.dlg.say(...DIALOGUE.ch5_arrival);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** the §A6 Milo build — the duchy's hundred engineers grind Sigrid's spare Norway lens
+   *  into the BIG-LITTLE LENS (party-wide Focus). Flavor beat: sets the flag + key item. */
+  private async bigLittleLensScene(): Promise<void> {
+    this.cut = true;
+    if (GS.flag('big_little_lens_built')) {
+      await this.dlg.say(...DIALOGUE.mn_lens_done);
+      this.cut = false;
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.mn_lens);
+    GS.setFlag('big_little_lens_built');
+    GS.addItem('big_little_lens');
+    AUDIO.sfx('confirm');
+    AUDIO.jingle('levelup', 1200, this.mapDef.music);
+    toast(this, "Milo's Spy became the BIG-LITTLE LENS — party-wide Focus.");
+    this.cut = false;
+  }
+
+  /** a scale set-piece in the Hedgerow read through the new Lens (optional flavor; the
+   *  path is always passable — the Lens reads the leaf-bridge, it never gates it). */
+  private async hedgerowLensScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('hedgerow_lens_seen');
+    await this.dlg.say(...DIALOGUE.hedgerow_lens);
+    this.cut = false;
+  }
+
+  /** §A6 BOSS 5 — WHISKERZILLA (the phase machine carries the mercy/survival gimmick:
+   *  the Flat Bell second target + evasion, the POUNCE telegraph, the bored-mercy end).
+   *  Victory is a NON-KILL — the Duchess knights the cat (endBattleMercy → 'victory'). */
+  private async whiskerzillaBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.whiskerzilla_door);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(460, 0.008);
+    await this.wait(420);
+    const outcome = await this.startBattle(['whiskerzilla'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('whiskerzilla_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.whiskerzilla_win);
+    AUDIO.jingle('victory', 2200, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart(); // the Crown is free to sing now; the resonance trigger can fire
+  }
+
+  /** §A6 Resonance Site — the Ducal Crown. Before the cat is moved it stays shy; once
+   *  Whiskerzilla is knighted the Crown sings (HEARTLIGHT 5 — The Bell Choir), and the
+   *  two joins land: Pippa (Foreign Minister + the Royal Thimble) and Dorin (ch5 closes). */
+  private async ducalCrownScene(): Promise<void> {
+    if (!GS.flag('whiskerzilla_defeated')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.ducal_crown_early);
+      this.cut = false;
+      return;
+    }
+    this.cut = true;
+    // HEARTLIGHT 5 — the Bell Choir (Ember 5)
+    GS.setFlag('ember5');
+    GS.data.embers = 5;
+    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember5_get);
+    // THE TWO JOINS (§A6) — both newcomers join AFTER the boss (matches BOSS_PARTY ch5,
+    // which is the 3-hero rex/faye/milo party for the Whiskerzilla fight itself)
+    if (!GS.flag('pippa_joined')) {
+      await this.dlg.say(...DIALOGUE.pippa_join);
+      GS.data.party.push(makeHeroState('pippa', 26, GS.data.heroNames.pippa));
+      GS.setFlag('pippa_joined');
+      GS.addItem('royal_thimble'); // her scale-anchor key item
+      AUDIO.jingle('levelup', 1600, 'heartlight');
+    }
+    if (!GS.flag('dorin_joined')) {
+      await this.dlg.say(...DIALOGUE.dorin_join);
+      GS.data.party.push(makeHeroState('dorin', 26, GS.data.heroNames.dorin));
+      GS.setFlag('dorin_joined'); // his awakening waits for Ch.9 (the Mute Mountain)
+      AUDIO.jingle('levelup', 1600, 'heartlight');
+    }
+    GS.setFlag('ch5_complete'); // §A6 — the chapter button (the §A5 gate to Ch.6)
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.ch5_card);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }

@@ -1,9 +1,15 @@
 # Chapter 5 — "The Grand Duchy of Minimus" — DESIGN SPEC
 
-> Draft for review (2026-06-24). The forge built the boring 60% (`src/data/drafts/ch5/`);
-> this doc is the **soul** — what gets authored on promotion. Canon sources:
+> **SHIPPED — data spine (2026-06-25, ADR-129).** The design below is built: the chapter
+> validates green and is end-to-end playable on gray-box art; the authored ChatGPT→PNG
+> pass is queued in [`docs/CH5_ART_PROMPTS.md`](asset-packages/PKG-12-ch5-Minimus.md).
+> **The §9 open decisions landed to canon:** **A** = 3-hero boss (Pippa & Dorin join AFTER
+> Whiskerzilla, per `BOSS_PARTY[5]`); **B/C** = the §A7 **20** (the canon seed six KEPT +
+> the doc's Minimus types across the Flow-Law mix — *not* the draft's 16); **D** = the
+> Hedgerow hedge-maze; **E** = Whiskerzilla **knighted**. One correction from the draft:
+> regular-enemy HP sits **on the canon curve** (Ch.5 mid 193, ~95–360), not the "400–1,000"
+> proposed in §4 (off-curve — CLAUDE.md "place it on the curve"). Canon sources:
 > `docs/GAME_BIBLE.md` §A6/§A7 + `CHAPTER_MANIFESTS['5']` + `docs/BALANCE_CH4-10_SPEC.md`.
-> Nothing here is built yet — **edit freely / strike anything that's not the chapter you want.**
 
 ---
 

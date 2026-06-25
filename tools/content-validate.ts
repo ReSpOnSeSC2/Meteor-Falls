@@ -1315,6 +1315,33 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     bridge_berry: 300,
     // BOSS 4 — promoted from the forge draft to a live §A7 enemy at the Norway flip
     the_whisperwig: 1800,
+    // Chapter 5 (Minimus) — §A7 the seed six (Tin Parade … Dust Bunny) + the Enemy
+    // Flow Law mix (4 road/field · 3 Hedgerow specialists · 2 social · 2 rare · 2
+    // late-pressure · 1 set-piece). On-curve (Ch.5 mid 193); tiny-but-procedural.
+    tin_parade: 140,
+    duelist_pip: 165,
+    crumb_cannoneer: 200,
+    powderwig_wasp: 170,
+    windup_wyrmlet: 185,
+    dust_bunny: 150,
+    whistle_guard: 200,
+    census_pigeon: 160,
+    toll_clerk: 175,
+    cobble_mite: 95,
+    hedge_sprite: 220,
+    topiary_knight: 320,
+    bramble_tangle: 240,
+    lapel_pin_mob: 105,
+    town_crier: 200,
+    snuffbox_beetle: 210,
+    tax_assessor: 230,
+    halberd_column: 340,
+    bell_ringer_acolyte: 280,
+    grand_parade: 360,
+    // BOSS 5 — promoted from the forge draft to a live §A7 enemy at the Minimus flip,
+    // + the Flat Bell, its summoned 150-HP second target (bosses.ts scriptedSurvival)
+    whiskerzilla: 4000,
+    flat_bell: 150,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1562,7 +1589,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse']);
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -1776,6 +1803,60 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       rewardItem: 'troll_cross',
       doneFlag: 'q_picnic_done',
       caller: { name: 'The Mayor of Lilleby', kind: 'heal', power: 425 },
+    },
+    // ── CHAPTER 5 (Minimus) — §A10 #11 The Royal Census + #12 Civic Repairs + three
+    //    Flow-Law regionals (Lost & Found across scale, the Silent Belfry behind
+    //    Heartlight 5, the minister's macro-lens portrait). The belfry is caller-only
+    //    (the Penny-Fog precedent). Rewards reuse the live §A8 ch5 catalog. ──
+    royal_census: {
+      name: 'The Royal Census',
+      chapter: 5,
+      giver: 'mn_census',
+      startFlag: 'q_census',
+      objectiveFlags: ['q_census_market', 'q_census_stamps', 'q_census_reported'],
+      rewardItem: 'census_quill_charm',
+      doneFlag: 'q_census_done',
+      caller: { name: 'The Census-Taker', kind: 'heal', power: 440 },
+    },
+    civic_repairs: {
+      name: 'Civic Repairs',
+      chapter: 5,
+      giver: 'mn_engineer',
+      startFlag: 'q_repairs',
+      objectiveFlags: ['q_repairs_bridge', 'q_repairs_well', 'q_repairs_scaffold'],
+      rewardItem: 'signet_bracer',
+      doneFlag: 'q_repairs_done',
+      caller: { name: 'The Duchy Engineer', kind: 'damage', power: 450 },
+    },
+    lost_and_found: {
+      name: 'The Lost & Found of Impossible Sizes',
+      chapter: 5,
+      giver: 'mn_lostfound',
+      startFlag: 'q_lostfound',
+      objectiveFlags: ['q_lostfound_button', 'q_lostfound_spoon', 'q_lostfound_filed'],
+      rewardItem: 'gilt_thimble_collection',
+      doneFlag: 'q_lostfound_done',
+      caller: { name: 'The Lost & Found Clerk', kind: 'damage', power: 430 },
+    },
+    the_silent_belfry: {
+      name: 'The Silent Belfry',
+      chapter: 5,
+      giver: 'mn_bellkeeper',
+      startFlag: 'q_belfry',
+      objectiveFlags: ['q_belfry_clappers', 'q_belfry_rung'],
+      rewardItem: undefined,
+      doneFlag: 'q_belfry_done',
+      caller: { name: 'The Belfry Keeper', kind: 'heal', power: 455 },
+    },
+    say_cheese_minister: {
+      name: 'Say Cheese, Minister',
+      chapter: 5,
+      giver: 'pw_click',
+      startFlag: 'q_cheese',
+      objectiveFlags: ['q_cheese_pose', 'q_cheese_developed'],
+      rewardItem: 'lens_charm',
+      doneFlag: 'q_cheese_done',
+      caller: { name: 'Mr. Click', kind: 'damage', power: 425 },
     },
   };
   for (const [id, pin] of Object.entries(canon)) {
@@ -3203,11 +3284,11 @@ for (const m of Object.values(MAPS)) {
 const counts = [
   `${Object.keys(HEROES).length} heroes`,
   `${Object.keys(ABILITIES).length} abilities`,
-  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–4 + Bosses 1–4)`,
+  `${Object.keys(ENEMIES).length} enemies (§A7 Ch.1–5 + Bosses 1–5)`,
   `${Object.values(ENEMIES).reduce((a, e) => a + (e.drops?.length ?? 0), 0)} §A7 drops`,
   `${Object.keys(ITEMS).length} items (${Object.keys(ITEM_ICON).length} icons) across 10 chapters`,
   `${Object.keys(SHOPS).length} shops`,
-  `${Object.keys(QUESTS).length} quests (§A10 #1–8 + the England regionals + the four Norway quests)`,
+  `${Object.keys(QUESTS).length} quests (§A10 #1–12 + the England + Norway + Minimus regionals)`,
   `${Object.keys(MAPS).length} maps`,
   `${CANON_AREAS.length} area skins`,
   `${Object.keys(GLYPH_SCRIPT).length} area glyph scripts (${SCRIPT_CATALOG.length} families)`,

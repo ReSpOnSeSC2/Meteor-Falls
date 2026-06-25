@@ -13,22 +13,40 @@
 - **Boss:** Whiskerzilla (`whiskerzilla`, 4000 HP, template `scriptedSurvival`)
 - **Settlements:** minimus_major (city)
 
+> **STATUS: data spine SHIPPED + green (2026-06-25, ADR-129).** The chapter is
+> end-to-end playable on gray-box art; the authored ChatGPT→PNG pass (PKG-12) is the
+> one remaining item, fully queued in [`docs/CH5_ART_PROMPTS.md`](../../CH5_ART_PROMPTS.md).
+
 ## Promote the draft tree
 
-- [ ] **Dungeon** — walk `CH5_DUNGEON_RECIPE` in the LEVELKIT LAB; reskin with
-      hand art (ADR-020), name the rooms in §A11 voice, place the boss-trigger door.
-- [ ] **Roster** — `CH5_ROSTER` (forged): pick/redraw each face in the Sprite Lab,
-      write §A11 names + death lines, expand to the §A7 twenty, then move the
-      stripped `EnemyDef`s into `src/data/enemies.ts` and extend the §A7 manifest.
-- [ ] **Boss `whiskerzilla`** — rewrite its `*_draft` dialogue ids into real §A11 lines,
-      register `FORM_ART` for any suffixed form, move it into `src/data/bosses.ts`.
-- [ ] **Settlement `minimus_major`** (city) — build the landmarks, write the NPC
-      dialogue + shops, drop the role-tagged draft slots, tag `settlement: 'city'`.
-- [ ] **Quests** — author the five §A10 quests (the named core: `royal_census`, `civic_repairs`);
-      each adds/strengthens a finale CALLER. Wire them into `src/data/quests.ts`.
+- [x] **Dungeon** — `the_hedgerow` (hedge maze) + `ducal_crown` (boss + resonance)
+      hand-built in `src/data/maps_ch5.ts`, §A11-named, with the `whiskerzilla_boss` +
+      `ducal_crown_resonance` triggers. (Hand-art reskin queued — PKG-12 §2.)
+- [x] **Roster** — the §A7 **20** (the canon seed six KEPT + 14 Minimus types across the
+      Flow-Law mix), on-curve HP, §A11 names + death lines, in `src/data/enemies.ts` +
+      the canon HP table + the gray-box `ENEMY_BATTLE_ART` rows + the authored loader keys.
+- [x] **Boss `whiskerzilla`** — expanded from `scriptedSurvival` into `src/data/bosses.ts`
+      (Flat Bell + POUNCE + bored-mercy), real §A11 dialogue; the draft + `drafts/ch5/`
+      retired, the forge pins re-landed. (No suffixed form → no `FORM_ART` needed.)
+- [x] **Settlement `minimus_major`** (city) — a real ADR-012 city grid (two streets +
+      avenue + spire-canton facades), the NPC cast + dialogue, the Ducal Provisioner shop,
+      `settlement: 'city'`, the heraldic glyph banner (MAP_AREA).
+- [x] **Quests** — the five §A10 (`royal_census`, `civic_repairs`, `lost_and_found`,
+      `the_silent_belfry`, `say_cheese_minister`) in `src/data/quests.ts` + the §A10 pin
+      manifest; each a finale CALLER.
 
 ## Land the chapter (the S14c flip)
 
-- [ ] Flip `CHAPTER_MANIFESTS['5'].status` to `'shipped'` and fill in the LIVE
-      `maps` + `dungeon.maps` + `quests` — the validator's live assertions switch on.
-- [ ] `npm test` (tsc + validate + vitest) green; append the chapter's ADR.
+- [x] Flipped `CHAPTER_MANIFESTS['5'].status` to `'shipped'` with the LIVE `maps`
+      (`minimus_major`, `procession_way`) + `dungeon.maps` (`the_hedgerow`, `ducal_crown`)
+      + all 5 `quests`; the validator's live Ch.5 assertions pass (5 shipped · 5 unlanded).
+- [x] `npm run validate` + `npm test` (1233 vitest) + `tsc --noEmit` green; `npm run
+      balance` Whiskerzilla TTK 10 (in window); ADR-129 appended.
+
+## Remaining (the art pass)
+
+- [ ] **PKG-12 authored art** — tileset, dungeon skin, ~12 NPC sheets, 22 battlers ×3 wear
+      + minis, the bespoke Whiskerzilla + Flat Bell, the `the_hedgerow` backdrop, ~7
+      cutscene panels, the manor interior — author + slice + wire per
+      [`docs/CH5_ART_PROMPTS.md`](../../CH5_ART_PROMPTS.md), then `npm run build` (`vite
+      build`) green + the live look/feel eyeball in the preview browser.
