@@ -2719,6 +2719,16 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   mn_lens_done: ["@The Lens treating you well, colossus? Keep it clean. A smudge to you is a total eclipse to whatever you're looking at."],
 
+  // — THE BIG-LITTLE GATE: a colossus only fits a thimble doorway once the Lens can fold the
+  //   whole party down to duchy scale (gated on big_little_lens_built; the shrink is at the step) —
+  duchy_door_too_big: [
+    "(The door comes up to your shin. Even crouched, a colossus does not fit a thimble doorway — and forcing it would fold the dear little building flat.) You'd have to go SMALL to step in there. Properly, duchy-small. Not yet.",
+  ],
+  duchy_door_shrink: [
+    '(You raise the BIG-LITTLE LENS. The duchy does not grow — YOU fold, smoothly and with enormous dignity, down and down, until the doorway is merely a doorway and you are merely a guest who remembered to wipe their feet.)',
+    '* The Big-Little Lens folds the party to duchy scale — small enough to be welcome.',
+  ],
+
   // — THE HEDGEROW: a scale set-piece read through the Lens (optional flavor) —
   hedgerow_lens: [
     '(A single privet leaf has fallen across the path like a footbridge. Through the Big-Little Lens its veins read like steel girders and its edge like a sheer green cliff.)',
