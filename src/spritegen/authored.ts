@@ -298,6 +298,7 @@ export const NPC_CHARACTER_ART = [
   { id: 'teacup_innkeeper', key: 'authored_teacup_innkeeper_8dir', url: new URL('../../assets/art/characters/teacup_innkeeper_anim_46_4x.png', import.meta.url).href },
   { id: 'tiny_postmaster', key: 'authored_tiny_postmaster_8dir', url: new URL('../../assets/art/characters/tiny_postmaster_anim_46_4x.png', import.meta.url).href },
   { id: 'matchbox_herald', key: 'authored_matchbox_herald_8dir', url: new URL('../../assets/art/characters/matchbox_herald_anim_46_4x.png', import.meta.url).href },
+  { id: 'mr_click', key: 'authored_mr_click_8dir', url: new URL('../../assets/art/characters/mr_click_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -388,6 +389,8 @@ const WORLD_PROP_KEYS = [
   'prop_giant_hair', 'prop_amber_wax', 'prop_resonance_stones',
   // Ch.5 Minimus — the Hedgerow maze + the Ducal Crown dressing (PKG-12 §2)
   'hedgerow_leaf_wall', 'hedgerow_thorn_arch', 'ducal_crown_gate', 'matchbox_podium',
+  // Ch.5 Minimus — decorative Grand-Duchy feature props (sliced from Minimus_tiles_16.png cells)
+  'minimus_crown', 'minimus_banner', 'minimus_teacup', 'minimus_thimble',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -471,6 +474,19 @@ export const AUTHORED_VEHICLE_ART = [
 ] as const;
 
 export const AUTHORED_VEHICLE_ART_KEYS = AUTHORED_VEHICLE_ART;
+
+/** ADR-097 DIRECTIONAL vehicles: their authored sheet is 3 frames [side, front, back]
+ *  (NOT the legacy 4 motion frames of the side view). Traffic SWAPS the frame by travel
+ *  direction instead of rotating the 3/4 side art, so vertical lanes read correctly (no
+ *  skew). Add a key here once its front+back views are authored + composed
+ *  (tools/compose-vehicle-directional.cjs). */
+export const DIRECTIONAL_VEHICLE_KEYS = new Set<string>([
+  // the road-traffic four-wheelers, each authored with front + back oblique views
+  'commuter', 'work_van', 'city_ev', 'trail_boss', 'big_block', 'the_nikolai', 'drop_top',
+  'grand_tourer', 'the_stretch', 'comet_gt', 'school_bus', 'bus', 'vehicle_clunker', 'savanna_caravan_truck',
+  // the two-wheelers — head-on front + rear views
+  'kids_bmx', 'ten_speed', 'old_reliable', 'chrome_hog', 'the_quick_one',
+]);
 
 const AUTHORED_VEHICLE_SOURCES = AUTHORED_VEHICLE_ART.map((key) => ({
   key,
@@ -605,6 +621,11 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   hedgerow_thorn_arch: { w: 30, h: 30 },
   ducal_crown_gate: { w: 32, h: 32 },
   matchbox_podium: { w: 16, h: 16 },
+  // Ch.5 Minimus decorative feature props (64px square cells — kept SQUARE so setDisplaySize never distorts)
+  minimus_crown: { w: 32, h: 32 },
+  minimus_banner: { w: 22, h: 22 },
+  minimus_teacup: { w: 18, h: 18 },
+  minimus_thimble: { w: 16, h: 16 },
 } as const satisfies Record<string, { w: number; h: number }>;
 
 /** Footprint width in TILES for the generated catalog + colossi, mirrored from
@@ -1040,8 +1061,10 @@ const ENEMY_MINI_ART = [
   { key: 'mini_halberd_column', url: new URL('../../assets/art/enemies/mini_halberd_column.png', import.meta.url).href },
   { key: 'mini_bell_ringer_acolyte', url: new URL('../../assets/art/enemies/mini_bell_ringer_acolyte.png', import.meta.url).href },
   { key: 'mini_grand_parade', url: new URL('../../assets/art/enemies/mini_grand_parade.png', import.meta.url).href },
-  // Ch.4 straggler — the last actually-roaming enemy on a procedural mini (derived from its battler)
+  // Ch.4 straggler — a roaming enemy lifted off its procedural mini (derived from its battler)
   { key: 'mini_thunder_snail', url: new URL('../../assets/art/enemies/mini_thunder_snail.png', import.meta.url).href },
+  // Ch.1 stragglers — dog_sized_berry + bridge_berry borrow battle_giant_berry_blocker; one shared derived mini
+  { key: 'mini_giant_berry_blocker', url: new URL('../../assets/art/enemies/mini_giant_berry_blocker.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);
@@ -1469,8 +1492,10 @@ export function applyAuthoredVehicleArt(scene: Phaser.Scene): void {
   AUTHORED_VEHICLE_SOURCES.forEach((art) => {
     const img = sourceImage(scene, art.authoredKey);
     if (!img) return;
-    const frameW = Math.max(1, Math.round(img.width / 4));
-    replaceTextureSheet(scene, art.key, makeImageCanvas(img), frameW, img.height, 4, 4);
+    // directional sheets are 3 frames [side, front, back]; legacy are 4 motion frames
+    const frames = DIRECTIONAL_VEHICLE_KEYS.has(art.key) ? 3 : 4;
+    const frameW = Math.max(1, Math.round(img.width / frames));
+    replaceTextureSheet(scene, art.key, makeImageCanvas(img), frameW, img.height, frames, frames);
   });
 }
 

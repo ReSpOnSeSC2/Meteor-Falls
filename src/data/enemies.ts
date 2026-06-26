@@ -1293,7 +1293,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Dog-Sized Berry burst at last. It was, after everything, just a berry. A very large, very rude berry.',
       drops: [{ item: 'dog_sized_berry', chance: 0.5 }],
-      sprite: 'battle_giant_berry_blocker', mini: 'mini_hill_slug',
+      sprite: 'battle_giant_berry_blocker', mini: 'mini_giant_berry_blocker',
       bg: [RAMP.MAGENTA, RAMP.RED],
     }),
     E({
@@ -1568,7 +1568,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Bridge Berry rolled aside at last, leaving one long red smear and a clear path over the gorge.',
       drops: [{ item: 'dog_sized_berry', chance: 0.4 }],
-      sprite: 'battle_giant_berry_blocker', mini: 'mini_hill_slug',
+      sprite: 'battle_giant_berry_blocker', mini: 'mini_giant_berry_blocker',
       bg: [RAMP.MAGENTA, RAMP.RED],
     }),
 

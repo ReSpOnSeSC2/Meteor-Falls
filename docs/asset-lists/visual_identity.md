@@ -3,8 +3,8 @@
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
 - Enemies: 93
-- Fully authored identities: 92
-- Legacy identities: 1
+- Fully authored identities: 93
+- Legacy identities: 0
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
 - Authored battle PNGs on disk but not registered for current runtime: 173
@@ -66,7 +66,7 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | colossal_gnat | bootstep_moor | battle_colossal_gnat | mini:mini_colossal_gnat | authored | - |
 | knitting_needles | - | battle_knitting_needles | mini:mini_knitting_needles | authored | - |
 | thunder_snail | bootstep_moor | battle_thunder_snail | mini:mini_thunder_snail | authored | - |
-| dog_sized_berry | bootstep_moor | battle_giant_berry_blocker | mini:mini_hill_slug | legacy | uses PROCEDURAL mini 'mini_hill_slug' instead of authored overworld art |
+| dog_sized_berry | bootstep_moor | battle_giant_berry_blocker | mini:mini_giant_berry_blocker | authored | - |
 | hushed_gull | kvisthavn | battle_fjord_gull_bully | mini:mini_pigeon_gang | authored | - |
 | junior_jotun | bootstep_moor | battle_junior_jotun | mini:mini_junior_jotun | authored | - |
 | moor_midge_cloud | bootstep_moor | battle_moor_midge_cloud | mini:mini_moor_midge_cloud | authored | - |
@@ -82,7 +82,7 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | aurora_moth | - | battle_aurora_moth | mini:mini_aurora_moth | authored | - |
 | hushed_skua | - | battle_hushed_skua | mini:mini_hushed_skua | authored | - |
 | frost_jotun_elder | - | battle_frost_jotun_elder | mini:mini_frost_jotun_elder | authored | - |
-| bridge_berry | - | battle_giant_berry_blocker | mini:mini_hill_slug | authored | - |
+| bridge_berry | - | battle_giant_berry_blocker | mini:mini_giant_berry_blocker | authored | - |
 | the_whisperwig | - | battle_the_whisperwig | mini:mini_souvenir | authored | - |
 | tin_parade | procession_way | battle_tin_parade | mini:mini_tin_parade | authored | - |
 | duelist_pip | procession_way | battle_duelist_pip | mini:mini_duelist_pip | authored | - |
@@ -113,7 +113,6 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 
 | enemy | display name | map use | battle reference | current fallback | output PNG | runtime key |
 |---|---|---|---|---|---|---|
-| dog_sized_berry | Dog-Sized Berry | bootstep_moor | assets/art/enemies/battle_giant_berry_blocker.png | mini:mini_hill_slug | assets/art/enemies/overworld/dog_sized_berry_8dir.png | ow_enemy_dog_sized_berry |
 
 ## Orphans
 

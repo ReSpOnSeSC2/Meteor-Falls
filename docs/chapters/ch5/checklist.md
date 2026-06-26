@@ -25,9 +25,14 @@
 > AUTHORED hi-res (derived from the battlers, `tools/derive-ch5-minis.ts`) — no more procedural pixel
 > roamers; procedural overworld minis dormanted (CLAUDE.md policy + `visuals:audit` → 92/93 authored).
 > Traffic cars fixed (faced-left art was oriented backward) + Minimus runs dainty matchbox-scale cars.
-> All gates green (1237 tests). Remaining optional polish: an `mr_click` photographer sheet, the strip's
-> decorative cells (teacup/columns/banner/crown/arches — need a grid-char pass), and the lone borrowed-
-> battler roamer `dog_sized_berry` (Ch.1, needs a dedicated battler before it can derive a mini).
+> All gates green (1237 tests). **CONT. 2026-06-26 (s2):** the `mr_click` photographer sheet is DONE
+> (`pw_click` repointed off `curator`; pin 69→70) + `dog_sized_berry`/`bridge_berry` lifted to the
+> authored `mini_giant_berry_blocker` (`visuals:audit` 93/93, 0 legacy) + the 4 redundant `_64` props
+> removed. **CONT (vehicle fix):** the WHOLE road fleet (all 19 vehicles) is now DIRECTIONAL — authored
+> `[side, front, back]` sheets swapped by travel direction (no more vertical-lane skew); see
+> `DIRECTIONAL_VEHICLE_KEYS` in `authored.ts`. **DONE:** the decorative feature art (crown crest + banners
+> in the Ducal Crown, teacup + thimble curios in Minimus Major) placed as NON-solid prop overlays
+> (`minimus_{crown,banner,teacup,thimble}`) — the whole Ch.5 polish backlog (B/C/D/E/F) is now clear.
 
 ## Promote the draft tree
 
@@ -61,8 +66,8 @@
       sheets (`grand_duchess_millimetta`, `spool_engineer`, `royal_census_taker`,
       `whistle_guard_npc`, `teacup_innkeeper`, `tiny_postmaster`, `matchbox_herald`): masters
       synced to runtime, added to `NPC_CHARACTER_ART` + `characters_8dir.txt` (62→69 pin),
-      sprites repointed in `maps_ch5.ts`. (`pw_click` keeps the `curator` stand-in — no
-      photographer master authored.)
+      sprites repointed in `maps_ch5.ts`. (`pw_click` later got a dedicated authored `mr_click`
+      photographer sheet — done 2026-06-26, the 8th Minimus NPC; pin 69→70.)
 - [x] **Enemy battlers** — all **20** §A7 Minimus enemies authored (ChatGPT→PNG, magenta-key
       → `slice-chroma`), ×3 identical-footprint wear tiers (`enemies:frames` 94/94 hi-res, 0
       pixelated) onto their pre-wired `battle_<id>` keys. Masters in `assets/art/masters/generated/`.
