@@ -246,6 +246,25 @@ const CH1_STORY_NIGHT_MAPS: ReadonlySet<string> = new Set([
   'whisperwood_rise',
   'hickory_hill',
 ]);
+/** PKG-12 §A11 — the GRAND DUCHY OF MINIMUS tile reskin. The engine has ONE global
+ *  TILESET (no per-area swap), so buildTiles remaps the shared grid-char tile NAMES to
+ *  the appended Minimus tiles for these maps ONLY (the authored Minimus_tiles_16.png
+ *  strip supplies the visuals). Each Minimus tile carries the SAME solidity as the base
+ *  it replaces, so the remap is purely cosmetic — collision/BFS read the unchanged grid. */
+const MINIMUS_SKIN_MAPS: ReadonlySet<string> = new Set([
+  'minimus_major',
+  'procession_way',
+  'the_hedgerow',
+  'ducal_crown',
+]);
+const MINIMUS_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'minimus_turf', // the duchy turf / maze floor (`.`) → privet velvet-lawn
+  office_floor: 'minimus_turf', // dungeon way-gaps (`o`) blend into the maze floor
+  office_wall: 'minimus_hedge', // the maze + dungeon walls (`O`) → privet hedge (SOLID)
+  sidewalk: 'minimus_cobble', // the Procession Way (`=`) → ribbon cobblestone
+  road: 'minimus_cobble', // Minimus Major's streets (`R`) → cobblestone
+  road_dash: 'minimus_cobble', // the centreline (`D`) — a duchy ribbon needs no lane dash
+};
 /** dog roamers author into a 16² frame (half a human's 24×32); render them a
  *  touch larger so a beagle reads as a real dog beside the cast, not a speck. */
 const DOG_DISPLAY_SCALE = 1.5;
@@ -353,6 +372,11 @@ export class OverworldScene extends Phaser.Scene {
   // visibly fits), so the on-screen scale drops from 1.7 — a sedan still reads
   // as a real, person-dwarfing vehicle, just not a parade float.
   private static TRAFFIC_SCALE = 1.35;
+  /** §A11 PKG-12 — the Grand Duchy of Minimus runs DAINTY traffic: a tabletop capital's
+   *  cars read as little matchbox runabouts, not person-dwarfing sedans. Set per-map in
+   *  buildTraffic; defaults to the standard scale everywhere else. */
+  private static MINIMUS_TRAFFIC_SCALE = 0.5;
+  private trafficScale = OverworldScene.TRAFFIC_SCALE;
 
   constructor() {
     super('overworld');
@@ -504,6 +528,9 @@ export class OverworldScene extends Phaser.Scene {
     // unreachable on foot. The shared MapDef grid is untouched — carve per build.
     const meltCrossingOpen =
       this.mapDef.id === 'spine_shoulder' && GS.flag('spine_meltfall_frozen') === true;
+    // PKG-12 §A11 — render the Ch.5 maps with the Minimus tile skin (cosmetic remap;
+    // collision-preserving — see MINIMUS_TILE_SKIN). Other maps are untouched.
+    const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
     const data: number[][] = [];
     this.solidTiles = [];
     for (let y = 0; y < h; y++) {
@@ -533,6 +560,11 @@ export class OverworldScene extends Phaser.Scene {
             // §A4.11 — the frozen foam-lip crossing reads as a blue-white ice
             // bridge (mirrors the collision carve below; same cells, same flag)
             name = 'melt_ice';
+          } else if (minimusSkin && MINIMUS_TILE_SKIN[name]) {
+            // PKG-12 §A11 — the Grand Duchy reskin (Ch.5 maps only): the shared grid
+            // chars render as privet turf / hedge wall / cobble. The Minimus tile carries
+            // the SAME solidity as the base it replaces, so collision below is unchanged.
+            name = MINIMUS_TILE_SKIN[name];
           } else if (name === 'sidewalk') {
             if (isRoad(x, y + 1)) name = 'sidewalk_curb';
             else if (isRoad(x + 1, y)) name = 'sidewalk_curb_e';
@@ -1237,6 +1269,10 @@ export class OverworldScene extends Phaser.Scene {
     this.trafficSprites.clear();
     this.trafficRects = [];
     this.trafficAccumMs = 0;
+    // §A11 PKG-12 — Minimus runs dainty matchbox-scale traffic (the miniature duchy)
+    this.trafficScale = MINIMUS_SKIN_MAPS.has(this.mapDef.id)
+      ? OverworldScene.MINIMUS_TRAFFIC_SCALE
+      : OverworldScene.TRAFFIC_SCALE;
     if (this.mapDef.interior || !this.mapDef.settlement) return;
     // collect the drivable cells (road / dashed centerline / crosswalk)
     const grid = this.mapDef.grid;
@@ -1273,7 +1309,7 @@ export class OverworldScene extends Phaser.Scene {
     const tex = this.textures.exists(v.type) ? v.type : this.trafficRoadVeh[0];
     const dim = this.trafficDims.get(tex) ?? { w: s(32), h: s(18) };
     const spr = this.add.sprite(v.x * TILE_PX + TILE_PX / 2, v.y * TILE_PX + TILE_PX / 2, tex, 0).setOrigin(0.5, 0.6);
-    spr.setDisplaySize(dim.w * OverworldScene.TRAFFIC_SCALE, dim.h * OverworldScene.TRAFFIC_SCALE);
+    spr.setDisplaySize(dim.w * this.trafficScale, dim.h * this.trafficScale);
     spr.setDepth(v.y * TILE_PX + TILE_PX / 2);
     this.trafficSprites.set(v.id, spr);
     return spr;
@@ -1294,7 +1330,7 @@ export class OverworldScene extends Phaser.Scene {
     const f = Math.min(1, this.trafficAccumMs / step);
     const cam = this.cameras.main;
     const m = s(64); // off-screen cull margin (px)
-    const S = OverworldScene.TRAFFIC_SCALE;
+    const S = this.trafficScale;
     this.trafficRects = [];
     for (const v of sim.vehicles) {
       let spr = this.trafficSprites.get(v.id);
@@ -1317,8 +1353,14 @@ export class OverworldScene extends Phaser.Scene {
       // the texture + display size for every car every frame was pure waste on
       // settlement maps (the traffic-heavy "sluggish in town" spots).
       spr.setFrame(animFrame);
-      spr.setAngle(v.dir === 1 ? 90 : v.dir === 3 ? -90 : 0);
-      spr.setFlipX(v.dir === 2);
+      // The authored vehicle art faces screen-LEFT (front/headlights on the left, a 3/4
+      // oblique view). Orient FROM that: mirror for East, and rotate the front toward
+      // travel for the vertical lanes. (Previously this assumed right-facing art, so every
+      // car drove BACKWARDS — flip on West + the inverted N/S angles. A dedicated top-down
+      // or 4-way directional vehicle sheet would render the vertical lanes perfectly; this
+      // at least points the car the way it's going with the side art we have.)
+      spr.setAngle(v.dir === 1 ? -90 : v.dir === 3 ? 90 : 0); // S → front down, N → front up
+      spr.setFlipX(v.dir === 0); // E → mirror the left-facing art to face right
       // SOLID body rect (px) covering the WHOLE car — ends and sides — sized to
       // the sprite and oriented to travel, inset 4px so brushing past isn't sticky
       // dim is RUNTIME px; dim*S matches the on-screen sprite. The 4px brush-past

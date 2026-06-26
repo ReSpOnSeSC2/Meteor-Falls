@@ -891,6 +891,19 @@ for (let mask = 0; mask < 16; mask++) {
 // couple of hand-authored tiles, so we append rather than re-pack the grid).
 TILESET.push({ name: 'melt_ice', solid: false, make: meltIceTile });
 
+// PKG-12 §A11 — the Grand Duchy of MINIMUS region tiles. At runtime these render from
+// the authored Minimus_tiles_16.png strip, applied ONLY to the Ch.5 maps via a render-
+// time name-remap in OverworldScene.buildTiles (the global TILESET has no per-area swap,
+// so the same grid chars `.`/`O`/`=`/`R` are reskinned by NAME there). The make() painters
+// here are the boot FALLBACK only — REUSED existing painters, so spritegen stays FROZEN
+// (no new art generator). Each carries the SAME solidity as the base tile it stands in
+// for, so the Ch.5 remap is collision-preserving: turf/cobble walkable, hedge solid like
+// office_wall. Appended at the tail (after melt_ice) so no existing index shifts; the
+// otterbrook full-override strip gets matching trailing columns via tools/sync-minimus-tiles.ts.
+TILESET.push({ name: 'minimus_turf', solid: false, make: () => grassBase(1, 5) });
+TILESET.push({ name: 'minimus_hedge', solid: true, make: officeWall });
+TILESET.push({ name: 'minimus_cobble', solid: false, make: sidewalkTile });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

@@ -1275,7 +1275,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Thunder Snail rolled on, unhurried. The forecast cleared by evening.',
       drops: [{ item: 'amber_chunk', chance: 0.1 }],
-      sprite: 'battle_thunder_snail', mini: 'mini_hill_slug',
+      sprite: 'battle_thunder_snail', mini: 'mini_thunder_snail',
       bg: [RAMP.BLUE, RAMP.CYAN],
     }),
     E({
@@ -1623,7 +1623,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Tin Parade broke ranks and toppled like a dozen dominoes. Someone will have to stand them all up again, by hand, in order.',
       drops: [{ item: 'tin_soldier', chance: 0.18 }],
-      sprite: 'battle_tin_parade', mini: 'mini_banana',
+      sprite: 'battle_tin_parade', mini: 'mini_tin_parade',
       bg: [RAMP.RED, RAMP.GOLD],
     }),
     E({
@@ -1640,7 +1640,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'Duelist Pip bowed, acknowledged the touch, and stalked off to demand a rematch by certified mail.',
       drops: [{ item: 'needle_saber', chance: 0.06 }],
-      sprite: 'battle_duelist_pip', mini: 'mini_jitterbug',
+      sprite: 'battle_duelist_pip', mini: 'mini_duelist_pip',
       bg: [RAMP.PURPLE, RAMP.GOLD],
     }),
     E({
@@ -1657,7 +1657,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Crumb Cannoneer ran out of ammunition, which is to say snacks, and surrendered with great and crumby dignity.',
       drops: [{ item: 'crumb_loaf', chance: 0.25 }],
-      sprite: 'battle_crumb_cannoneer', mini: 'mini_cranky_mailbox',
+      sprite: 'battle_crumb_cannoneer', mini: 'mini_crumb_cannoneer',
       bg: [RAMP.EARTH, RAMP.GOLD],
     }),
     E({
@@ -1674,7 +1674,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Powder-Wig Wasp was unseated from the air. Its wig landed first, and with considerably more ceremony.',
       drops: [{ item: 'powder_wig_dust', chance: 0.2 }],
-      sprite: 'battle_powderwig_wasp', mini: 'mini_coily_cicada',
+      sprite: 'battle_powderwig_wasp', mini: 'mini_powderwig_wasp',
       bg: [RAMP.PAPER, RAMP.PURPLE],
     }),
     E({
@@ -1690,7 +1690,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'clockwork nip', kind: 'attack', mult: 1, text: '{e} nipped {t} with a little brass overbite.', weight: 4 },
       ],
       deathLine: 'The Wind-Up Wyrmlet wound down with a long descending whir and one final, disappointed tick.',
-      sprite: 'battle_windup_wyrmlet', mini: 'mini_hill_slug',
+      sprite: 'battle_windup_wyrmlet', mini: 'mini_windup_wyrmlet',
       bg: [RAMP.GOLD, RAMP.RED],
     }),
     E({
@@ -1706,7 +1706,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'sneeze cloud', kind: 'status', status: 'crying', text: '{e} burst into a cloud of dust that set {t}\'s eyes streaming!', weight: 3 },
       ],
       deathLine: 'The Dust Bunny of Unusual Size came apart into ordinary dust, which the duchy swept up and filed under "Resolved."',
-      sprite: 'battle_dust_bunny', mini: 'mini_hill_slug',
+      sprite: 'battle_dust_bunny', mini: 'mini_dust_bunny',
       bg: [RAMP.EARTH, RAMP.PAPER],
     }),
 
@@ -1724,7 +1724,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'HALT', kind: 'strong', mult: 1.5, text: '{e} bellowed "HALT, IN THE NAME OF THE DUCHESS!" with the force of its whole tiny lungs!', weight: 2 },
       ],
       deathLine: 'The Whistle Guard blew one last plaintive note and went to file an incident report roughly the size of a postage stamp.',
-      sprite: 'battle_whistle_guard', mini: 'mini_mask',
+      sprite: 'battle_whistle_guard', mini: 'mini_whistle_guard',
       bg: [RAMP.BLUE, RAMP.GOLD],
     }),
     E({
@@ -1740,7 +1740,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'roost', kind: 'taunt', text: '{e} settled on {t}\'s head, blotting out the sun over three city blocks.', weight: 3 },
       ],
       deathLine: 'The Census Pigeon was officially counted, found the experience deeply offensive, and flapped off to be uncounted elsewhere.',
-      sprite: 'battle_census_pigeon', mini: 'mini_pigeon_gang',
+      sprite: 'battle_census_pigeon', mini: 'mini_census_pigeon',
       bg: [RAMP.CYAN, RAMP.PAPER],
     }),
     E({
@@ -1757,7 +1757,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Toll Clerk\'s committee voted unanimously to adjourn. It collected its little podium and filed out in good order.',
       drops: [{ item: 'royal_doubloon_tiny', chance: 0.15 }],
-      sprite: 'battle_toll_clerk', mini: 'mini_souvenir',
+      sprite: 'battle_toll_clerk', mini: 'mini_toll_clerk',
       bg: [RAMP.GOLD, RAMP.PURPLE],
     }),
     E({
@@ -1773,7 +1773,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'gravel spray', kind: 'status', status: 'crying', text: '{e} kicked up a spray of grit into {t}\'s eyes!', weight: 2 },
       ],
       deathLine: 'The Cobble Mite was finally pinned between two stones. Up close it was almost cute. Almost.',
-      sprite: 'battle_cobble_mite', mini: 'mini_beetle',
+      sprite: 'battle_cobble_mite', mini: 'mini_cobble_mite',
       bg: [RAMP.EARTH, RAMP.FOREST],
     }),
 
@@ -1791,7 +1791,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'rustle', kind: 'taunt', text: '{e} melted back into the green, leaving only a guilty rustle.', weight: 2 },
       ],
       deathLine: 'The Hedge Sprite dissolved back into the hedge, leaving one drifting leaf and the strong sense it was still watching.',
-      sprite: 'battle_hedge_sprite', mini: 'mini_jitterbug',
+      sprite: 'battle_hedge_sprite', mini: 'mini_hedge_sprite',
       bg: [RAMP.FOREST, RAMP.GRASS],
     }),
     E({
@@ -1808,7 +1808,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Topiary Knight was clipped down to a tidy cube. The duchy\'s gardeners arrived at once to argue whose jurisdiction that was.',
       drops: [{ item: 'velvet_doublet', chance: 0.1 }],
-      sprite: 'battle_topiary_knight', mini: 'mini_mask',
+      sprite: 'battle_topiary_knight', mini: 'mini_topiary_knight',
       bg: [RAMP.FOREST, RAMP.GOLD],
     }),
     E({
@@ -1824,7 +1824,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'overgrow', kind: 'strong', mult: 1.5, text: '{e} surged a season\'s growth at {t} all at once!', weight: 2 },
       ],
       deathLine: 'The Bramble Tangle was cut back to a stump. It will, the gardeners warn, be back by Tuesday.',
-      sprite: 'battle_bramble_tangle', mini: 'mini_banana',
+      sprite: 'battle_bramble_tangle', mini: 'mini_bramble_tangle',
       bg: [RAMP.FOREST, RAMP.MAGENTA],
     }),
 
@@ -1842,7 +1842,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'earnest chant', kind: 'status', status: 'crying', text: '{e} struck up a chant so earnest it brought {t} to tears!', weight: 3 },
       ],
       deathLine: 'The Lapel-Pin Mob was gently brushed off and set down. They formed an orderly queue to do it all again.',
-      sprite: 'battle_lapel_pin_mob', mini: 'mini_beetle',
+      sprite: 'battle_lapel_pin_mob', mini: 'mini_lapel_pin_mob',
       bg: [RAMP.GOLD, RAMP.PAPER],
     }),
     E({
@@ -1858,7 +1858,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'decree', kind: 'attack', mult: 1.1, text: '{e} read out a decree and rapped {t} with the rolled-up scroll!', weight: 3 },
       ],
       deathLine: 'The Town Crier read its own retraction aloud, rolled up the scroll, and declared the matter officially closed.',
-      sprite: 'battle_town_crier', mini: 'mini_souvenir',
+      sprite: 'battle_town_crier', mini: 'mini_town_crier',
       bg: [RAMP.RED, RAMP.GOLD],
     }),
 
@@ -1877,7 +1877,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Gilded Snuffbox Beetle popped open, spilled a king\'s ransom in snuff, and was, the duchy agreed, worth every penny.',
       drops: [{ item: 'gilt_thimble_collection', chance: 0.3 }, { item: 'royal_doubloon_tiny', chance: 0.4 }],
-      sprite: 'battle_snuffbox_beetle', mini: 'mini_beetle',
+      sprite: 'battle_snuffbox_beetle', mini: 'mini_snuffbox_beetle',
       bg: [RAMP.GOLD, RAMP.MAGENTA],
     }),
     E({
@@ -1894,7 +1894,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Royal Tax Assessor was served its own paperwork. It fainted dead away, which the duchy logged as "audited."',
       drops: [{ item: 'royal_doubloon_tiny', chance: 0.5 }, { item: 'census_ledger', chance: 0.2 }],
-      sprite: 'battle_tax_assessor', mini: 'mini_mask',
+      sprite: 'battle_tax_assessor', mini: 'mini_tax_assessor',
       bg: [RAMP.GOLD, RAMP.BLUE],
     }),
 
@@ -1912,7 +1912,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'close ranks', kind: 'attack', mult: 1.2, text: '{e} closed ranks and shoved {t} back with a wall of shields!', weight: 3 },
       ],
       deathLine: 'The Halberd Column lowered its pikes, saluted, and marched off in perfect, tiny formation to become someone else\'s problem.',
-      sprite: 'battle_halberd_column', mini: 'mini_banana',
+      sprite: 'battle_halberd_column', mini: 'mini_halberd_column',
       bg: [RAMP.BLUE, RAMP.RED],
     }),
     E({
@@ -1929,7 +1929,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Bell-Ringer Acolyte\'s bell cracked on the final swing. In the ringing silence, everything was suddenly, suspiciously easy to hit.',
       drops: [{ item: 'thimble_bell', chance: 0.08 }],
-      sprite: 'battle_bell_ringer_acolyte', mini: 'mini_souvenir',
+      sprite: 'battle_bell_ringer_acolyte', mini: 'mini_bell_ringer_acolyte',
       bg: [RAMP.GOLD, RAMP.CYAN],
     }),
 
@@ -1949,7 +1949,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Grand Parade voted, at last, to disperse. The motion carried. They will reconvene, by charter, next festival.',
       drops: [{ item: 'confetti_cannon', chance: 0.2 }],
-      sprite: 'battle_grand_parade', mini: 'mini_banana',
+      sprite: 'battle_grand_parade', mini: 'mini_grand_parade',
       bg: [RAMP.PURPLE, RAMP.GOLD],
     }),
 

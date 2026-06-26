@@ -508,7 +508,14 @@ export class BattleScene extends Phaser.Scene {
       },
       partyStatus: async (status, turns) => {
         for (const h of this.aliveHeroes()) h.status[status] = turns;
-        await this.print(BATTLE_TEXT.party_status_crying);
+        const line: Record<typeof status, string> = {
+          crying: BATTLE_TEXT.party_status_crying,
+          asleep: BATTLE_TEXT.party_status_asleep,
+          paralyzed: BATTLE_TEXT.party_status_paralyzed,
+          sunburn: BATTLE_TEXT.party_status_sunburn,
+          hushed: BATTLE_TEXT.party_status_hushed,
+        };
+        await this.print(line[status] ?? BATTLE_TEXT.party_status_crying);
       },
       // S16 (ADR-035 extended): a scripted beat can stage an awakening — the
       // Grin's half-dead blow awakens Jay's POWER SHIELD Σ (the_wall_that_answers)

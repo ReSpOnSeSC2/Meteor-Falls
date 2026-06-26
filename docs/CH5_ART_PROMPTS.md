@@ -136,7 +136,30 @@ the live look/feel eyeball in the preview browser (the boss flow + the two joins
 > `BATTLE_BACKGROUND_ART` + a `backdropArea` Ch.5 branch. ✅ **Build green** + ✅ **live-verified**
 > (Minimus Major NPCs + Whiskerzilla boss/backdrop/party render in the preview).
 > **N/A — Manor interior** (properties are data-only deeds; the design is "live AROUND it").
-> ⏳ **DEFERRED — region tileset (§1) + Hedgerow privet reskin (§2):** `Minimus_tiles_16.png`
-> (16-cell strip) + the 4 `dungeons/the_hedgerow/*_64.png` props are authored on disk but the
-> `TILESET` cell-mapping / reskin convention is an open author decision (the maps render fine on
-> the procedural tileset + `'O'` walls meanwhile). Minis also deferred (reuse registered minis).
+>
+> **UPDATE — 2026-06-26 (continuation pass).** ✅ **Dungeon props (§2) WIRED:** the 4
+> `the_hedgerow/*_64.png` props copied into `world/props/` (clean keys), registered in
+> `WORLD_PROP_KEYS` + `AUTHORED_WORLD_PROP_DISPLAY_SIZE`, placed in `maps_ch5.ts` as NON-solid
+> dressing (hedge leaf-walls + a thorn-arch gateway · the gilt `ducal_crown_gate` dais threshold ·
+> Pippa's `matchbox_podium`); live-verified rendering. ✅ **Boss flow VERIFIED end-to-end:** a new
+> headless `phases.test.ts` block pins the real 12-turn `whiskerzilla` arc, and the preview drove
+> the live battle (launch → Flat Bell summon turn 1 → 12 turns → bored-mercy → victory) + the
+> post-win `ducalCrownScene` (Ember 5 + Pippa + Dorin joins → party 3→5 → `ch5_complete`); the
+> `the_hedgerow` backdrop + battlers render. ✅ **Region tileset (§1) WIRED — Ch.5 render-time skin
+> (author chose all 4 maps):** appended `minimus_turf`/`minimus_hedge`/`minimus_cobble` to `TILESET`
+> (reused painters = FROZEN-safe), surgically grew `otterbrook_tiles_16.png` to 105 cols
+> (`tools/sync-minimus-tiles.ts`), wired `Minimus_tiles_16.png` as a partial-override strip
+> (`MINIMUS_TILE_ART`, cols 4/6/7), and added a COLLISION-PRESERVING name-remap in
+> `OverworldScene.buildTiles` (`MINIMUS_TILE_SKIN`) keyed on the 4 ch5 map ids. LIVE-VERIFIED: privet
+> hedge maze (121/121 `'O'` still solid — no soft-lock), privet/cobble city + crown. All gates green
+> (`build` · `test` 1237 · `enemies:frames` 94/94). The decorative strip cells (teacup/columns/banner/
+> crown/arches) remain for a future grid-char pass.
+>
+> **UPDATE 2 — 2026-06-26 (user playtest fixes).** ✅ **Overworld minis DONE (§9):** all 20 §A7 roamers
+> now use AUTHORED hi-res minis DERIVED from their battlers (`tools/derive-ch5-minis.ts` — crop-alpha +
+> downscale to 64px → `ENEMY_MINI_ART` → repoint each `mini:`), so the field sprite is the enemies-section
+> art, not the old procedural pixel minis. Procedural overworld minis dormanted as policy (CLAUDE.md) +
+> `visuals:audit` fixed to credit authored minis & only flag ROAMING procedural enemies → **92/93 authored,
+> 1 legacy** game-wide (only the borrowed-battler `dog_sized_berry`). ✅ **Traffic cars:** fixed the
+> backward/rotated orientation (the oblique art faces LEFT; code assumed right) + Minimus runs dainty
+> matchbox-scale cars (`MINIMUS_TRAFFIC_SCALE=0.5`). See [[overworld-minis-and-traffic]]. All gates green.

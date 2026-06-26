@@ -340,6 +340,19 @@ const HICKORY_DIRT_TILE_ART = {
   names: Array.from({ length: 32 }, (_, i) => `path_${Math.floor(i / 16)}_${i % 16}`),
 };
 
+// PKG-12 §A11 — the MINIMUS region tile strip (16 cells × 64px). A PARTIAL override:
+// only the tileable ground/wall cells map onto the appended Minimus TILESET names —
+// col 4 = cobblestone → minimus_cobble, col 6 = privet turf → minimus_turf, col 7 =
+// hedge wall → minimus_hedge. The decorative cells (teacup/columns/thimble/banner/crown/
+// arches) stay unused until a grid-char pass places them. Empty names are skipped by
+// drawAuthoredTileStrip. These tiles render ONLY on the Ch.5 maps (the render-time
+// name-remap in OverworldScene.buildTiles); every other map is untouched.
+const MINIMUS_TILE_ART = {
+  key: 'authored_minimus_tiles16',
+  url: new URL('../../assets/art/world/Minimus_tiles_16.png', import.meta.url).href,
+  names: ['', '', '', '', 'minimus_cobble', '', 'minimus_turf', 'minimus_hedge', '', '', '', '', '', '', '', ''],
+};
+
 const WORLD_PROP_KEYS = [
   'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
   'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'meteor_rock_hickory_hill', 'sawhorse', 'ember',
@@ -373,6 +386,8 @@ const WORLD_PROP_KEYS = [
   'prop_frontdesk', 'prop_waitingchairs', 'prop_wardbed', 'prop_vending',
   // Ch.4 Norway — Sleeper's-Spine interior dressing (inside a sleeping giant)
   'prop_giant_hair', 'prop_amber_wax', 'prop_resonance_stones',
+  // Ch.5 Minimus — the Hedgerow maze + the Ducal Crown dressing (PKG-12 §2)
+  'hedgerow_leaf_wall', 'hedgerow_thorn_arch', 'ducal_crown_gate', 'matchbox_podium',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -584,6 +599,12 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   prop_giant_hair: { w: 27, h: 28 },
   prop_amber_wax: { w: 18, h: 15 },
   prop_resonance_stones: { w: 46, h: 43 },
+  // Ch.5 Minimus — the Hedgerow maze + the Ducal Crown dressing (64px square sources,
+  // kept square so the setDisplaySize from native map units never distorts them)
+  hedgerow_leaf_wall: { w: 22, h: 22 },
+  hedgerow_thorn_arch: { w: 30, h: 30 },
+  ducal_crown_gate: { w: 32, h: 32 },
+  matchbox_podium: { w: 16, h: 16 },
 } as const satisfies Record<string, { w: number; h: number }>;
 
 /** Footprint width in TILES for the generated catalog + colossi, mirrored from
@@ -997,11 +1018,38 @@ const ENEMY_MINI_ART = [
   { key: 'mini_aurora_moth', url: new URL('../../assets/art/enemies/mini_aurora_moth.png', import.meta.url).href },
   { key: 'mini_hushed_skua', url: new URL('../../assets/art/enemies/mini_hushed_skua.png', import.meta.url).href },
   { key: 'mini_frost_jotun_elder', url: new URL('../../assets/art/enemies/mini_frost_jotun_elder.png', import.meta.url).href },
+  // Ch.5 Minimus §A7 roamers — DERIVED from the authored hi-res battlers (tools/derive-ch5-minis.ts)
+  // so the overworld sprite IS the enemies-section art, not the old borrowed procedural minis.
+  { key: 'mini_tin_parade', url: new URL('../../assets/art/enemies/mini_tin_parade.png', import.meta.url).href },
+  { key: 'mini_duelist_pip', url: new URL('../../assets/art/enemies/mini_duelist_pip.png', import.meta.url).href },
+  { key: 'mini_crumb_cannoneer', url: new URL('../../assets/art/enemies/mini_crumb_cannoneer.png', import.meta.url).href },
+  { key: 'mini_powderwig_wasp', url: new URL('../../assets/art/enemies/mini_powderwig_wasp.png', import.meta.url).href },
+  { key: 'mini_windup_wyrmlet', url: new URL('../../assets/art/enemies/mini_windup_wyrmlet.png', import.meta.url).href },
+  { key: 'mini_dust_bunny', url: new URL('../../assets/art/enemies/mini_dust_bunny.png', import.meta.url).href },
+  { key: 'mini_whistle_guard', url: new URL('../../assets/art/enemies/mini_whistle_guard.png', import.meta.url).href },
+  { key: 'mini_census_pigeon', url: new URL('../../assets/art/enemies/mini_census_pigeon.png', import.meta.url).href },
+  { key: 'mini_toll_clerk', url: new URL('../../assets/art/enemies/mini_toll_clerk.png', import.meta.url).href },
+  { key: 'mini_cobble_mite', url: new URL('../../assets/art/enemies/mini_cobble_mite.png', import.meta.url).href },
+  { key: 'mini_hedge_sprite', url: new URL('../../assets/art/enemies/mini_hedge_sprite.png', import.meta.url).href },
+  { key: 'mini_topiary_knight', url: new URL('../../assets/art/enemies/mini_topiary_knight.png', import.meta.url).href },
+  { key: 'mini_bramble_tangle', url: new URL('../../assets/art/enemies/mini_bramble_tangle.png', import.meta.url).href },
+  { key: 'mini_lapel_pin_mob', url: new URL('../../assets/art/enemies/mini_lapel_pin_mob.png', import.meta.url).href },
+  { key: 'mini_town_crier', url: new URL('../../assets/art/enemies/mini_town_crier.png', import.meta.url).href },
+  { key: 'mini_snuffbox_beetle', url: new URL('../../assets/art/enemies/mini_snuffbox_beetle.png', import.meta.url).href },
+  { key: 'mini_tax_assessor', url: new URL('../../assets/art/enemies/mini_tax_assessor.png', import.meta.url).href },
+  { key: 'mini_halberd_column', url: new URL('../../assets/art/enemies/mini_halberd_column.png', import.meta.url).href },
+  { key: 'mini_bell_ringer_acolyte', url: new URL('../../assets/art/enemies/mini_bell_ringer_acolyte.png', import.meta.url).href },
+  { key: 'mini_grand_parade', url: new URL('../../assets/art/enemies/mini_grand_parade.png', import.meta.url).href },
+  // Ch.4 straggler — the last actually-roaming enemy on a procedural mini (derived from its battler)
+  { key: 'mini_thunder_snail', url: new URL('../../assets/art/enemies/mini_thunder_snail.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);
 export const AUTHORED_ENEMY_OVERWORLD_ART_IDS = ENEMY_OVERWORLD_ART.map((art) => art.id);
 export const AUTHORED_ENEMY_OVERWORLD_ART_KEYS = ENEMY_OVERWORLD_ART.map((art) => art.key);
+/** authored single-frame overworld minis (hi-res, derived from the battler or authored) —
+ *  not the 8-dir gold standard, but AUTHORED art, NOT a procedural `spritegen` mini. */
+export const AUTHORED_ENEMY_MINI_ART_KEYS = ENEMY_MINI_ART.map((art) => art.key);
 
 function artFor(heroId: string): HeroArt | undefined {
   return HERO_ART.find((art) => art.id === heroId);
@@ -1299,6 +1347,7 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   AUTHORED_GOLF_SHEET_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   scene.load.image(HICKORY_DIRT_TILE_ART.key, HICKORY_DIRT_TILE_ART.url);
+  scene.load.image(MINIMUS_TILE_ART.key, MINIMUS_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
   AUTHORED_VEHICLE_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
@@ -1387,6 +1436,7 @@ export function applyAuthoredMinigameArt(scene: Phaser.Scene): void {
 export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   const tileArt = sourceImage(scene, WORLD_TILE_ART.key);
   const hickoryTileArt = sourceImage(scene, HICKORY_DIRT_TILE_ART.key);
+  const minimusTileArt = sourceImage(scene, MINIMUS_TILE_ART.key);
   const baseTiles = sourceImage(scene, 'tiles');
   if (!baseTiles) return;
 
@@ -1403,6 +1453,7 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   // sheets upscale gracefully at ×4 until a runtime-res sheet replaces them.
   if (tileArt) drawAuthoredTileStrip(ctx, tileArt, WORLD_TILE_ART.names);
   if (hickoryTileArt) drawAuthoredTileStrip(ctx, hickoryTileArt, HICKORY_DIRT_TILE_ART.names);
+  if (minimusTileArt) drawAuthoredTileStrip(ctx, minimusTileArt, MINIMUS_TILE_ART.names);
 
   replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);
 }

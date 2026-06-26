@@ -2,12 +2,12 @@
 
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
-- Enemies: 49
-- Fully authored identities: 45
-- Legacy identities: 4
+- Enemies: 93
+- Fully authored identities: 92
+- Legacy identities: 1
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
-- Authored battle PNGs on disk but not registered for current runtime: 192
+- Authored battle PNGs on disk but not registered for current runtime: 173
 
 ## Enemy Rows
 
@@ -22,7 +22,7 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | borden | - | battle_constable_borden | ow_enemy_borden | authored | - |
 | sprinkler_sentry | otterbrook | battle_sprinkler_sentry | ow_enemy_sprinkler_sentry | authored | - |
 | recycling_raccoon | otterbrook, meadow_woods | battle_recycling_raccoon | ow_enemy_recycling_raccoon | authored | - |
-| skeeter_swarm | otterbrook, meadow_far, hill_road, whisperwood_rise | battle_skeeter_swarm | mini:mini_skeeter_swarm | legacy | uses legacy mini 'mini_skeeter_swarm' instead of authored overworld art |
+| skeeter_swarm | otterbrook, meadow_far, hill_road, whisperwood_rise | battle_skeeter_swarm | mini:mini_skeeter_swarm | authored | - |
 | unionized_gnome | otterbrook, hill_road | battle_unionized_gnome | ow_enemy_unionized_gnome | authored | - |
 | mandatory_memo | dos_f2 | battle_mandatory_memo | ow_enemy_mandatory_memo | authored | - |
 | motivational_poster | dos_f2 | battle_motivational_poster | ow_enemy_motivational_poster | authored | - |
@@ -59,20 +59,61 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | head_prefect | wintermoor_f3 | battle_head_prefect | ow_enemy_head_prefect | authored | - |
 | boiler_golem | wintermoor_boiler | battle_boiler_golem | ow_enemy_boiler_golem | authored | - |
 | the_invigilator | wintermoor_f3 | battle_the_invigilator | ow_enemy_the_invigilator | authored | - |
-| gilded_grin | - | battle_gilded_grin | mini:mini_mask | legacy | uses legacy mini 'mini_mask' instead of authored overworld art |
-| headmaster_mainframe | - | battle_headmaster_mainframe | mini:mini_ch3_lurker_3 | legacy | uses legacy mini 'mini_ch3_lurker_3' instead of authored overworld art |
-| titanic_tick | - | battle_titanic_tick | mini:mini_hill_slug | legacy | uses legacy mini 'mini_hill_slug' instead of authored overworld art |
+| gilded_grin | - | battle_gilded_grin | mini:mini_mask | authored | - |
+| headmaster_mainframe | - | battle_headmaster_mainframe | mini:mini_ch3_lurker_3 | authored | - |
+| titanic_tick | - | battle_titanic_tick | mini:mini_hill_slug | authored | - |
+| hush_sentinel | - | battle_hush_sentinel | mini:mini_hill_slug | authored | - |
+| colossal_gnat | bootstep_moor | battle_colossal_gnat | mini:mini_colossal_gnat | authored | - |
+| knitting_needles | - | battle_knitting_needles | mini:mini_knitting_needles | authored | - |
+| thunder_snail | bootstep_moor | battle_thunder_snail | mini:mini_thunder_snail | authored | - |
+| dog_sized_berry | bootstep_moor | battle_giant_berry_blocker | mini:mini_hill_slug | legacy | uses PROCEDURAL mini 'mini_hill_slug' instead of authored overworld art |
+| hushed_gull | kvisthavn | battle_fjord_gull_bully | mini:mini_pigeon_gang | authored | - |
+| junior_jotun | bootstep_moor | battle_junior_jotun | mini:mini_junior_jotun | authored | - |
+| moor_midge_cloud | bootstep_moor | battle_moor_midge_cloud | mini:mini_moor_midge_cloud | authored | - |
+| boulder_lichen | bootstep_moor | battle_boulder_lichen | mini:mini_boulder_lichen | authored | - |
+| frost_hare | bootstep_moor | battle_frost_hare | mini:mini_frost_hare | authored | - |
+| bog_cotton_wisp | - | battle_bog_cotton_wisp | mini:mini_bog_cotton_wisp | authored | - |
+| earwax_golem | spine_shoulder, spine_ear | battle_earwax_golem | mini:mini_earwax_golem | authored | - |
+| dream_leech | spine_hand, spine_ear | battle_dream_leech | mini:mini_dream_leech | authored | - |
+| snore_gust | spine_hand, spine_shoulder | battle_snore_gust | mini:mini_snore_gust | authored | - |
+| giant_house_cat | lilleby | battle_giant_house_cat | mini:mini_giant_house_cat | authored | - |
+| lost_mitten | lilleby | battle_lost_mitten | mini:mini_lost_mitten | authored | - |
+| amber_hoard_troll | - | battle_amber_hoard_troll | mini:mini_amber_hoard_troll | authored | - |
+| aurora_moth | - | battle_aurora_moth | mini:mini_aurora_moth | authored | - |
+| hushed_skua | - | battle_hushed_skua | mini:mini_hushed_skua | authored | - |
+| frost_jotun_elder | - | battle_frost_jotun_elder | mini:mini_frost_jotun_elder | authored | - |
+| bridge_berry | - | battle_giant_berry_blocker | mini:mini_hill_slug | authored | - |
+| the_whisperwig | - | battle_the_whisperwig | mini:mini_souvenir | authored | - |
+| tin_parade | procession_way | battle_tin_parade | mini:mini_tin_parade | authored | - |
+| duelist_pip | procession_way | battle_duelist_pip | mini:mini_duelist_pip | authored | - |
+| crumb_cannoneer | procession_way | battle_crumb_cannoneer | mini:mini_crumb_cannoneer | authored | - |
+| powderwig_wasp | procession_way, the_hedgerow | battle_powderwig_wasp | mini:mini_powderwig_wasp | authored | - |
+| windup_wyrmlet | procession_way | battle_windup_wyrmlet | mini:mini_windup_wyrmlet | authored | - |
+| dust_bunny | procession_way, the_hedgerow | battle_dust_bunny | mini:mini_dust_bunny | authored | - |
+| whistle_guard | procession_way | battle_whistle_guard | mini:mini_whistle_guard | authored | - |
+| census_pigeon | procession_way | battle_census_pigeon | mini:mini_census_pigeon | authored | - |
+| toll_clerk | procession_way | battle_toll_clerk | mini:mini_toll_clerk | authored | - |
+| cobble_mite | procession_way | battle_cobble_mite | mini:mini_cobble_mite | authored | - |
+| hedge_sprite | the_hedgerow | battle_hedge_sprite | mini:mini_hedge_sprite | authored | - |
+| topiary_knight | the_hedgerow | battle_topiary_knight | mini:mini_topiary_knight | authored | - |
+| bramble_tangle | the_hedgerow | battle_bramble_tangle | mini:mini_bramble_tangle | authored | - |
+| lapel_pin_mob | minimus_major | battle_lapel_pin_mob | mini:mini_lapel_pin_mob | authored | - |
+| town_crier | minimus_major | battle_town_crier | mini:mini_town_crier | authored | - |
+| snuffbox_beetle | procession_way | battle_snuffbox_beetle | mini:mini_snuffbox_beetle | authored | - |
+| tax_assessor | procession_way | battle_tax_assessor | mini:mini_tax_assessor | authored | - |
+| halberd_column | the_hedgerow | battle_halberd_column | mini:mini_halberd_column | authored | - |
+| bell_ringer_acolyte | the_hedgerow | battle_bell_ringer_acolyte | mini:mini_bell_ringer_acolyte | authored | - |
+| grand_parade | procession_way | battle_grand_parade | mini:mini_grand_parade | authored | - |
+| whiskerzilla | - | battle_whiskerzilla | mini:mini_hill_slug | authored | - |
+| flat_bell | - | battle_flat_bell | mini:mini_souvenir | authored | - |
 
-## Missing Enemy Overworld Generation Queue
+## Procedural Overworld Roamer Queue (retire these)
 
-Each row needs a committed 8-frame runtime sheet and then registration in `ENEMY_OVERWORLD_SHEET_IDS` / `src/spritegen/authored.ts`. Output sheets must be `768x128` total: eight `96x128` frames laid left-to-right.
+Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lift (CLAUDE.md): DERIVE an authored hi-res mini from the enemy's battler (`tools/derive-ch5-minis.ts` — crop-to-alpha + downscale) and register it in `ENEMY_MINI_ART`. For the directional gold standard instead, author an 8-frame `768x128` sheet (eight `96x128` frames) + register in `ENEMY_OVERWORLD_SHEET_IDS` / `src/spritegen/authored.ts`.
 
 | enemy | display name | map use | battle reference | current fallback | output PNG | runtime key |
 |---|---|---|---|---|---|---|
-| skeeter_swarm | Skeeter Swarm | otterbrook, meadow_far, hill_road, whisperwood_rise | assets/art/enemies/battle_skeeter_swarm.png | mini:mini_skeeter_swarm | assets/art/enemies/overworld/skeeter_swarm_8dir.png | ow_enemy_skeeter_swarm |
-| gilded_grin | IDOL OF THE GILDED GRIN | - | assets/art/enemies/battle_gilded_grin.png | mini:mini_mask | assets/art/enemies/overworld/gilded_grin_8dir.png | ow_enemy_gilded_grin |
-| headmaster_mainframe | HEADMASTER MAINFRAME | - | assets/art/enemies/battle_headmaster_mainframe.png | mini:mini_ch3_lurker_3 | assets/art/enemies/overworld/headmaster_mainframe_8dir.png | ow_enemy_headmaster_mainframe |
-| titanic_tick | TITANIC TICK | - | assets/art/enemies/battle_titanic_tick.png | mini:mini_hill_slug | assets/art/enemies/overworld/titanic_tick_8dir.png | ow_enemy_titanic_tick |
+| dog_sized_berry | Dog-Sized Berry | bootstep_moor | assets/art/enemies/battle_giant_berry_blocker.png | mini:mini_hill_slug | assets/art/enemies/overworld/dog_sized_berry_8dir.png | ow_enemy_dog_sized_berry |
 
 ## Orphans
 
@@ -147,21 +188,12 @@ Each row needs a committed 8-frame runtime sheet and then registration in `ENEMY
 - battle_fastest_man_echo
 - battle_fastest_man_echo_w1
 - battle_fastest_man_echo_w2
-- battle_fjord_gull_bully
-- battle_fjord_gull_bully_w1
-- battle_fjord_gull_bully_w2
-- battle_flat_bell
-- battle_flat_bell_w1
-- battle_flat_bell_w2
 - battle_frostbitten_postcard
 - battle_frostbitten_postcard_w1
 - battle_frostbitten_postcard_w2
 - battle_giant_banknote_folder
 - battle_giant_banknote_folder_w1
 - battle_giant_banknote_folder_w2
-- battle_giant_berry_blocker
-- battle_giant_berry_blocker_w1
-- battle_giant_berry_blocker_w2
 - battle_gilt_thimble_guard
 - battle_gilt_thimble_guard_w1
 - battle_gilt_thimble_guard_w2
@@ -244,19 +276,12 @@ Each row needs a committed 8-frame runtime sheet and then registration in `ENEMY
 - battle_teacup_tilter
 - battle_teacup_tilter_w1
 - battle_teacup_tilter_w2
-- battle_the_whisperwig
-- battle_the_whisperwig_exposed
-- battle_the_whisperwig_w1
-- battle_the_whisperwig_w2
 - battle_thimble_drummer
 - battle_thimble_drummer_w1
 - battle_thimble_drummer_w2
 - battle_thornbush_bomber
 - battle_thornbush_bomber_w1
 - battle_thornbush_bomber_w2
-- battle_thunder_snail
-- battle_thunder_snail_w1
-- battle_thunder_snail_w2
 - battle_tin_soldier_squad
 - battle_tin_soldier_squad_w1
 - battle_tin_soldier_squad_w2
@@ -266,10 +291,7 @@ Each row needs a committed 8-frame runtime sheet and then registration in `ENEMY
 - battle_trade_salt_heap
 - battle_trade_salt_heap_w1
 - battle_trade_salt_heap_w2
-- battle_whiskerzilla
 - battle_whiskerzilla_knighted
-- battle_whiskerzilla_w1
-- battle_whiskerzilla_w2
 - battle_woolly_pressure_kettle
 - battle_woolly_pressure_kettle_w1
 - battle_woolly_pressure_kettle_w2
