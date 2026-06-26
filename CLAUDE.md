@@ -28,6 +28,15 @@ verify (`tools/extract-char-frames.js`) → sync runtime **and** master. Full st
   is **FROZEN** — it exists only as the boot/build fallback for art that does
   not yet have an authored PNG. Never add a new `draw*`/generator function to
   produce game art.
+- ❌ Do **not** wire an enemy's OVERWORLD roamer to a **procedural mini** (a
+  `spritegen` `mini_*` texture). Overworld enemy sprites are AUTHORED hi-res, just
+  like the battlers — every enemy already has an authored battler, so DERIVE the
+  roamer mini from it (`tools/derive-ch5-minis.ts`: crop-to-alpha + alpha-weighted
+  downscale to ~64px), register the key in `ENEMY_MINI_ART` (`authored.ts`), and
+  point the enemy's `mini:` at it. (Enemies with an authored 8-dir `overworld` sheet
+  keep it — that's the directional gold standard; don't replace those with a single
+  mini.) The procedural `mini_*` are boot-fallback only and are being retired
+  chapter-by-chapter; `npm run visuals:audit` reports the remaining legacy roamers.
 - ❌ Do **not** use the parked tooling in `dormant/sprite-tools/` (the old
   `npm run art:*` render scripts). It is retired and kept only for reuse in a
   separate program.

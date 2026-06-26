@@ -2935,7 +2935,14 @@ export const BATTLE_TEXT = {
   parrot_take: '{t} GONE! (Beat it before it flies the coop!)',
   parrot_drop: 'It dropped the goods! {t} recovered!',
   mercy_end: 'The light settled, soft as a porch lamp. The fight just... ended.',
+  // §A6 boss "whole-party" status — one line per status the phase machine can
+  // inflict (PhaseEffects.partyStatus); BattleScene selects by status, falling
+  // back to the crying line. Printed raw (no {user}/{e} tokens).
   party_status_crying: 'Everyone welled up at once! (CRYING)',
+  party_status_asleep: 'The whole party nodded off where they stood! (ASLEEP)',
+  party_status_paralyzed: "Everyone's nerves seized at once! (PARALYZED)",
+  party_status_sunburn: 'The whole party caught the glare at once! (SUNBURN)',
+  party_status_hushed: 'Every voice went flat at once. (HUSHED)',
   feast_revive: "The Feast Basket's warmth answers! Nobody stays down at THIS table!",
   spy_report: '{e} — about {t} HP left.',
   spy_weak: 'Weak point, circled twice: {t}.',

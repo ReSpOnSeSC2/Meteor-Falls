@@ -18,8 +18,16 @@
 > NPC sheets, all 20 §A7 battlers (×3 wear), the `the_hedgerow` battle backdrop, the
 > bespoke Whiskerzilla + Flat Bell, and the 8 cutscene panels. `npm run build` green; the
 > town + the boss flow eyeballed live in the preview (boss + backdrop + 5-hero party render).
-> DEFERRED polish: the region tileset + the Hedgerow privet reskin (both authored as PNGs but
-> awaiting a `TILESET` cell-mapping decision — see [`docs/CH5_ART_PROMPTS.md`](../../CH5_ART_PROMPTS.md) §1/§2).
+> **CONT. 2026-06-26:** the 4 Hedgerow/Crown dungeon props are WIRED, the boss flow is VERIFIED
+> end-to-end (headless phase test + live drive), and the region TILESET is now wired as a Ch.5
+> render-time skin on all 4 maps (privet hedge maze + velvet turf + cobble; collision-preserving,
+> no Otterbrook bleed — live-verified). **UPDATE 2 (2026-06-26):** the 20 §A7 overworld minis are now
+> AUTHORED hi-res (derived from the battlers, `tools/derive-ch5-minis.ts`) — no more procedural pixel
+> roamers; procedural overworld minis dormanted (CLAUDE.md policy + `visuals:audit` → 92/93 authored).
+> Traffic cars fixed (faced-left art was oriented backward) + Minimus runs dainty matchbox-scale cars.
+> All gates green (1237 tests). Remaining optional polish: an `mr_click` photographer sheet, the strip's
+> decorative cells (teacup/columns/banner/crown/arches — need a grid-char pass), and the lone borrowed-
+> battler roamer `dog_sized_berry` (Ch.1, needs a dedicated battler before it can derive a mini).
 
 ## Promote the draft tree
 
@@ -66,9 +74,32 @@
 - [x] **Build + live verify** — `npm run build` (`tsc` + `validate` + `vite`) green; Minimus
       Major + the Whiskerzilla boss flow eyeballed in the preview (NPC textures loaded +
       instantiated, boss + backdrop + 5-hero party render, no errors).
-- [ ] **Region tileset + Hedgerow privet reskin (DEFERRED)** — `Minimus_tiles_16.png` (16-cell
-      ×64 strip) + the 4 `dungeons/the_hedgerow/*_64.png` props are authored on disk but
-      unwired: the strip has no `TILESET` cell-mapping and the dungeon reskin convention is the
-      author's call (the maps render fine on the procedural tileset + `'O'` walls meanwhile).
+- [x] **Hedgerow + Crown dungeon props (PKG-12 §2)** — the 4 `the_hedgerow/*_64.png` props
+      copied into `world/props/` (clean keys, `_64` dropped), registered in `WORLD_PROP_KEYS` +
+      `AUTHORED_WORLD_PROP_DISPLAY_SIZE`, placed in `maps_ch5.ts`: hedge `leaf_wall` accents +
+      a `thorn_arch` gateway in the Hedgerow, the gilt `ducal_crown_gate` at the Crown dais,
+      Pippa's `matchbox_podium` in Minimus Major. All NON-solid dressing (the `'O'` walls still
+      carry collision — traversal untouched); live-verified rendering in all three maps.
+- [x] **Boss flow VERIFIED (the brief's explicit ask)** — added a headless `phases.test.ts`
+      block driving the real `BOSS_SCRIPTS.whiskerzilla` through the 12-turn arc (turn 1
+      ring→summon `flat_bell`→evasion on; POUNCE @3/6/9/12; `bothSummonsDead`→evasion off + purr;
+      turn 12 bored→`endBattleMercy`). Live-drove the battle in the preview (whiskerzilla
+      launches, Flat Bell summons turn 1, ran all 12 turns → mercy → `battle-end=victory`) and
+      the post-win chain via the real `ducalCrownScene` (Ember 5 / Heartlight 5 + Pippa join
+      (+`royal_thimble`) + Dorin join → party 3→5 → `ch5_complete`). On-foot door transition
+      (Ducal Crown→Hedgerow) confirmed; a regular Hedgerow battle (Bell-Ringer Acolyte) renders
+      on the `the_hedgerow` backdrop. `npm test` 1237 green.
+- [x] **Region tileset — Ch.5 render-time skin (PKG-12 §1, all 4 maps)** — author chose to wire it.
+      Appended 3 tiles to `TILESET` (`minimus_turf` non-solid · `minimus_hedge` SOLID · `minimus_cobble`
+      non-solid; reused painters as boot fallbacks — spritegen stays FROZEN), surgically appended their
+      columns to `otterbrook_tiles_16.png` (`tools/sync-minimus-tiles.ts`, now 6720×64 = 105 tiles),
+      wired `Minimus_tiles_16.png` as a partial-override strip (`MINIMUS_TILE_ART`, cols 4/6/7 →
+      cobble/turf/hedge), and added a COLLISION-PRESERVING name-remap in `OverworldScene.buildTiles`
+      keyed on the 4 Ch.5 map ids (`MINIMUS_TILE_SKIN`: `.`→turf, `O`→hedge[solid], `o`→turf, `=`/`R`/`D`
+      →cobble). Each Minimus tile carries the SAME solidity as the base it replaces. LIVE-VERIFIED: the
+      Hedgerow renders as a privet maze (121/121 `'O'` cells still solid, 0 leaked open — no soft-lock),
+      the Ducal Crown as privet turf + hedge perimeter, Minimus Major as cobble streets + velvet lawns
+      (traffic still runs — grid chars unchanged). All gates green (tsc · validate · build · test 1237).
+      Decorative cells (teacup/columns/thimble/banner/crown/arches) remain for a future grid-char pass.
 - [ ] **Manor interior — N/A** — `minimus_manor` is a data-only deed (no interior map; the
       design is "you live AROUND it"), so no interior art is owed.

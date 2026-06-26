@@ -143,6 +143,54 @@ describe('THE HEADMASTER MAINFRAME — the §A6 Ch.3 summon loop, on its real sc
   });
 });
 
+describe('WHISKERZILLA — the §A6 Ch.5 mercy/survival, on its real script', () => {
+  it('turn 1 rings the Flat Bell in and blurs the cat (a summoned second target + evasion)', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.whiskerzilla, fx);
+    expect(r.evasion).toBe(false);
+    expect(await r.onBossTurnStart()).toBe('act'); // turn 1
+    expect(log).toEqual(['line:whisker_bell_ring', 'summon:flat_bellx1']);
+    expect(r.evasion).toBe(true); // the ringing bell blurs Whiskerzilla
+  });
+
+  it('breaking the Flat Bell drops the blur — the purr gives every move away (evasion off)', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.whiskerzilla, fx);
+    await r.onAllSummonsDead(); // nothing rung yet — the bell trigger stays silent
+    expect(log).toEqual([]);
+    await r.onBossTurnStart(); // turn 1 — the bell rings, evasion on
+    expect(r.evasion).toBe(true);
+    await r.onAllSummonsDead(); // the Flat Bell is broken
+    expect(r.evasion).toBe(false);
+    expect(log).toEqual(['line:whisker_bell_ring', 'summon:flat_bellx1', 'line:whisker_purr']);
+  });
+
+  it('POUNCEs the party Flat every 3rd turn, then gets bored at 12 → mercy (a win without a kill)', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.whiskerzilla, fx);
+    expect(r.mercy).toBe(false);
+    for (let t = 1; t <= 12; t++) await r.onBossTurnStart();
+    expect(log).toEqual([
+      'line:whisker_bell_ring', 'summon:flat_bellx1', // turn 1 — the bell rings in
+      'line:whisker_pounce', 'status:paralyzed:1', // turn 3 — tail-wiggle POUNCE
+      'line:whisker_pounce', 'status:paralyzed:1', // turn 6
+      'line:whisker_pounce', 'status:paralyzed:1', // turn 9
+      'line:whisker_pounce', 'status:paralyzed:1', // turn 12 — one last pounce…
+      'line:whisker_bored', 'mercy', // …then it loses interest (endBattleMercy → victory)
+    ]);
+    expect(r.mercy).toBe(true); // the scene resolves victory WITHOUT a kill
+  });
+
+  it('the survival gimmick rides DATA — 4000 HP, mind_immune, no weakness, no form swaps', () => {
+    expect(ENEMIES.whiskerzilla.hp).toBe(4000);
+    expect(ENEMIES.whiskerzilla.boss).toBe(true);
+    expect(ENEMIES.whiskerzilla.mind_immune).toBe(true);
+    expect(ENEMIES.whiskerzilla.weakness).toEqual([]); // the bell + the Defend read IS the gimmick
+    expect(BOSS_SCRIPTS.whiskerzilla.forms).toBeUndefined();
+    expect(ENEMIES.flat_bell.hp).toBe(150); // the summoned second target, broken to drop the blur
+  });
+});
+
 describe('the OTHER canon triggers (synthetic defs shaped like their chapters)', () => {
   it('summons-refill: bothSummonsDead re-summons every time (the Mainframe)', async () => {
     const def: BossScriptDef = {

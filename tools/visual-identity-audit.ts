@@ -8,6 +8,7 @@ import {
 } from '../src/data/visuals';
 import {
   AUTHORED_ENEMY_BATTLE_ART_KEYS,
+  AUTHORED_ENEMY_MINI_ART_KEYS,
   AUTHORED_ENEMY_OVERWORLD_ART_IDS,
   AUTHORED_ENEMY_OVERWORLD_ART_KEYS,
   AUTHORED_NPC_CHARACTER_IDS,
@@ -22,6 +23,7 @@ const outPath = outArg?.slice('--out='.length) ?? 'docs/asset-lists/visual_ident
 const authoredBattleKeys = new Set<string>(AUTHORED_ENEMY_BATTLE_ART_KEYS);
 const authoredOverworld = new Set(AUTHORED_ENEMY_OVERWORLD_ART_KEYS);
 const authoredOverworldIds = new Set(AUTHORED_ENEMY_OVERWORLD_ART_IDS);
+const authoredMini = new Set<string>(AUTHORED_ENEMY_MINI_ART_KEYS);
 const authoredCharacters = new Set<string>(AUTHORED_NPC_CHARACTER_IDS);
 for (const id of Object.keys(CAST)) authoredCharacters.add(id);
 
@@ -83,7 +85,14 @@ for (const enemy of Object.values(ENEMIES)) {
     }
   } else {
     field = `mini:${identity.field.key}`;
-    notes.push(`uses legacy mini '${identity.field.key}' instead of authored overworld art`);
+    // An authored single mini is hi-res ChatGPT art (just not the 8-dir sheet gold
+    // standard) — only a PROCEDURAL spritegen mini is the legacy "old sprite" style the
+    // overworld is being lifted off of (CLAUDE.md). Credit authored minis as authored,
+    // and only flag a procedural mini when the enemy ACTUALLY ROAMS (mapUse) — a boss /
+    // summon never spawns as a field roamer, so its mini is a never-rendered fallback.
+    if (!authoredMini.has(identity.field.key) && mapUse) {
+      notes.push(`uses PROCEDURAL mini '${identity.field.key}' instead of authored overworld art`);
+    }
   }
 
   if (ENEMY_OVERWORLD_SHEET_ID_SET.has(enemy.id) && enemy.overworld !== `ow_enemy_${enemy.id}`) {
@@ -124,9 +133,9 @@ const lines: string[] = [
   '|---|---|---|---|---|---|',
   ...rows.map((row) => `| ${row.id} | ${row.mapUse || '-'} | ${row.battle} | ${row.field} | ${row.status} | ${row.notes.join('; ') || '-'} |`),
   '',
-  '## Missing Enemy Overworld Generation Queue',
+  '## Procedural Overworld Roamer Queue (retire these)',
   '',
-  'Each row needs a committed 8-frame runtime sheet and then registration in `ENEMY_OVERWORLD_SHEET_IDS` / `src/spritegen/authored.ts`. Output sheets must be `768x128` total: eight `96x128` frames laid left-to-right.',
+  "Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lift (CLAUDE.md): DERIVE an authored hi-res mini from the enemy's battler (`tools/derive-ch5-minis.ts` — crop-to-alpha + downscale) and register it in `ENEMY_MINI_ART`. For the directional gold standard instead, author an 8-frame `768x128` sheet (eight `96x128` frames) + register in `ENEMY_OVERWORLD_SHEET_IDS` / `src/spritegen/authored.ts`.",
   '',
   '| enemy | display name | map use | battle reference | current fallback | output PNG | runtime key |',
   '|---|---|---|---|---|---|---|',

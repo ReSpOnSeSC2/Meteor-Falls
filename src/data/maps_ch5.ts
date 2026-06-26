@@ -94,6 +94,8 @@ function buildMinimusMajor(): MapDef {
     { sprite: 'picnic', x: 25, y: 15, solid: PICNIC_SOLID }, // §A4.5 rest spot (a matchbox table)
     { sprite: 'payphone', x: 30, y: 8.2, solid: PHONE_SOLID },
     { sprite: 'prop_trail_marker', x: 20, y: 22 }, // the court approach marker
+    // PIPPA's matchbox podium — she briefs the colossi from it (mistaken for a lapel pin) — PKG-12 §2
+    { sprite: 'matchbox_podium', x: 10, y: 23 },
   ];
 
   return {
@@ -252,8 +254,10 @@ function buildTheHedgerow(): MapDef {
     music: null,
     grid: g.out(),
     props: [
-      { sprite: treeSprite(3, 14), x: 3, y: 14 }, // hedge dressing (non-solid; the 'O' walls carry collision)
-      { sprite: treeSprite(22, 4), x: 22, y: 4 },
+      // authored privet dressing (non-solid; the 'O' walls carry collision) — PKG-12 §2
+      { sprite: 'hedgerow_leaf_wall', x: 3, y: 14 },
+      { sprite: 'hedgerow_leaf_wall', x: 22, y: 4 },
+      { sprite: 'hedgerow_thorn_arch', x: 12, y: 1 }, // the gateway N to the Ducal Crown (frames the exit; non-solid)
       { sprite: 'meteor_rock', x: 7, y: 9, solid: ROCK_SOLID }, // a fallen acorn the size of a boulder
       { sprite: 'prop_trail_marker', x: 12, y: 13 }, // the Way's last marker before the maze
       { sprite: 'prop_trail_marker', x: 18, y: 8 },
@@ -310,6 +314,8 @@ function buildDucalCrown(): MapDef {
       { sprite: 'prop_resonance_stones', x: 9, y: 9 },
       { sprite: 'prop_trail_marker', x: 5, y: 11 },
       { sprite: 'prop_trail_marker', x: 14, y: 11 },
+      // the gilt boss-trigger arch — the ceremonial threshold onto the dais (non-solid) — PKG-12 §2
+      { sprite: 'ducal_crown_gate', x: 9, y: 11 },
     ],
     npcs: [],
     signs: [{ x: 9, y: 12, dialogue: 'sign_ducal_crown' }],
