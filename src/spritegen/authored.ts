@@ -290,6 +290,14 @@ export const NPC_CHARACTER_ART = [
   { id: 'canteen_keeper', key: 'authored_canteen_keeper_8dir', url: new URL('../../assets/art/characters/canteen_keeper_anim_46_4x.png', import.meta.url).href },
   { id: 'fjord_nurse', key: 'authored_fjord_nurse_8dir', url: new URL('../../assets/art/characters/fjord_nurse_anim_46_4x.png', import.meta.url).href },
   { id: 'sleepwalker_miner', key: 'authored_sleepwalker_miner_8dir', url: new URL('../../assets/art/characters/sleepwalker_miner_anim_46_4x.png', import.meta.url).href },
+  // Ch.5 Minimus — the Grand Duchy cast (46-frame authored sheets; masters synced to runtime)
+  { id: 'grand_duchess_millimetta', key: 'authored_grand_duchess_millimetta_8dir', url: new URL('../../assets/art/characters/grand_duchess_millimetta_anim_46_4x.png', import.meta.url).href },
+  { id: 'spool_engineer', key: 'authored_spool_engineer_8dir', url: new URL('../../assets/art/characters/spool_engineer_anim_46_4x.png', import.meta.url).href },
+  { id: 'royal_census_taker', key: 'authored_royal_census_taker_8dir', url: new URL('../../assets/art/characters/royal_census_taker_anim_46_4x.png', import.meta.url).href },
+  { id: 'whistle_guard_npc', key: 'authored_whistle_guard_npc_8dir', url: new URL('../../assets/art/characters/whistle_guard_npc_anim_46_4x.png', import.meta.url).href },
+  { id: 'teacup_innkeeper', key: 'authored_teacup_innkeeper_8dir', url: new URL('../../assets/art/characters/teacup_innkeeper_anim_46_4x.png', import.meta.url).href },
+  { id: 'tiny_postmaster', key: 'authored_tiny_postmaster_8dir', url: new URL('../../assets/art/characters/tiny_postmaster_anim_46_4x.png', import.meta.url).href },
+  { id: 'matchbox_herald', key: 'authored_matchbox_herald_8dir', url: new URL('../../assets/art/characters/matchbox_herald_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -488,7 +496,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,

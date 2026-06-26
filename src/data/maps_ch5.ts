@@ -108,17 +108,17 @@ function buildMinimusMajor(): MapDef {
       // chapter close; here she is an NPC on her matchbox podium, openly herself)
       { id: 'mn_pippa', sprite: 'pippa', x: 10, y: 22, facing: 'down', dialogue: 'npc_mn_pippa', stationary: true, idle: true, emote: 'think' },
       // GRAND DUCHESS MILLIMETTA I — holds court on the southern square
-      { id: 'mn_duchess', sprite: 'senora', x: 22, y: 23, facing: 'up', dialogue: 'npc_mn_duchess', stationary: true, emote: 'happy' },
+      { id: 'mn_duchess', sprite: 'grand_duchess_millimetta', x: 22, y: 23, facing: 'up', dialogue: 'npc_mn_duchess', stationary: true, emote: 'happy' },
       // the lens engineer — the §A6 Big-Little Lens build + the civic_repairs giver
-      { id: 'mn_engineer', sprite: 'quarterMan', x: 31, y: 14, facing: 'down', dialogue: 'npc_mn_engineer', stationary: true },
+      { id: 'mn_engineer', sprite: 'spool_engineer', x: 31, y: 14, facing: 'down', dialogue: 'npc_mn_engineer', stationary: true },
       // the Census-Taker — the royal_census giver (every tiny person has a name)
-      { id: 'mn_census', sprite: 'npc_clerk', x: 33, y: 16, facing: 'down', dialogue: 'npc_mn_census', stationary: true, idle: true },
+      { id: 'mn_census', sprite: 'royal_census_taker', x: 33, y: 16, facing: 'down', dialogue: 'npc_mn_census', stationary: true, idle: true },
       // the Ducal Provisioner — the §A8 Ch.5 shelf (Prompt 31)
-      { id: 'mn_provisioner', sprite: 'mercadoKeeper', x: 6, y: 8, facing: 'down', dialogue: 'npc_mn_provisioner', shop: 'minimus_provisioner' },
+      { id: 'mn_provisioner', sprite: 'teacup_innkeeper', x: 6, y: 8, facing: 'down', dialogue: 'npc_mn_provisioner', shop: 'minimus_provisioner' },
       // the Lost & Found clerk — the regional Lost & Found of Impossible Sizes giver
-      { id: 'mn_lostfound', sprite: 'npc_depot_clerk', x: 26, y: 19, facing: 'down', dialogue: 'npc_mn_lostfound', wander: true },
+      { id: 'mn_lostfound', sprite: 'tiny_postmaster', x: 26, y: 19, facing: 'down', dialogue: 'npc_mn_lostfound', wander: true },
       // the Belfry keeper — the regional Silent Belfry giver (ties to Heartlight 5)
-      { id: 'mn_bellkeeper', sprite: 'aurora_busker', x: 15, y: 22, facing: 'down', dialogue: 'npc_mn_bellkeeper', stationary: true },
+      { id: 'mn_bellkeeper', sprite: 'matchbox_herald', x: 15, y: 22, facing: 'down', dialogue: 'npc_mn_bellkeeper', stationary: true },
     ],
     signs: [
       { x: 3, y: 8, dialogue: 'sign_minimus_major' },
@@ -189,7 +189,7 @@ function buildProcessionWay(): MapDef {
       // MR. CLICK — the macro-lens photographer (the regional "Say Cheese, Minister")
       { id: 'pw_click', sprite: 'curator', x: 22, y: 11, facing: 'up', dialogue: 'npc_pw_click', stationary: true, idle: true, emote: 'happy' },
       // a Whistle Guard on point duty (one obsession: keep the colossi ON the Way)
-      { id: 'pw_guard', sprite: 'npc_borden', x: 15, y: 9, facing: 'down', dialogue: 'npc_pw_guard', wander: true },
+      { id: 'pw_guard', sprite: 'whistle_guard_npc', x: 15, y: 9, facing: 'down', dialogue: 'npc_pw_guard', wander: true },
     ],
     signs: [
       { x: 3, y: 6, dialogue: 'sign_procession_way' },
