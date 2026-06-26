@@ -2772,9 +2772,9 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — THE TWO JOINS: Pippa appointed Foreign Minister; Dorin revealed —
   pippa_join: [
     "@(The Grand Duchess pitches her voice to fill the square, which at her scale means merely that she is audible.) For service to the Crown — and for being LARGE about it in all the correct ways — Minimus appoints PIPPA QUILL its Foreign Minister of Being Taken Seriously.",
-    "@Go with the colossi, Minister. See that the big world takes small things seriously, for once. Here — the ROYAL THIMBLE. It will keep your scale steady out there, where everything is the wrong size and proud of it.",
-    "@(Pippa climbs onto {rex}'s shoulder, thimble in hand, and does not look back, because a minister does not look back.) ...Right. Where are we colossally going next?",
-    '* {pippa} joined the party — and brought the ROYAL THIMBLE.',
+    "@Go with the colossi, Minister. See that the big world takes small things seriously, for once. Here — the ROYAL THIMBLE. Press it close and it brings you UP to their scale, and holds you there steady, out where everything is the wrong size and proud of it.",
+    "@(Pippa presses the ROYAL THIMBLE to her chest and RISES — lapel-pin to colossus, smooth as a drawn breath — until she stands shoulder to shoulder with the party. She does not wobble, because a minister does not wobble.) ...Right. Where are we colossally going next?",
+    '* {pippa} joined the party — the ROYAL THIMBLE holds her at travel scale.',
   ],
   dorin_join: [
     '(There is a kid sitting on the duchy wall, swinging his feet over a drop that is, to him, nothing at all. Travel-worn gi. Prayer beads. A half-eaten something. He has been a step ahead of you since the Sleeper\'s hand in Norway, and he has never once offered his name.)',

@@ -128,7 +128,7 @@ import { VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
-import { AUTHORED_VEHICLE_ART_KEYS, AUTHORED_WORLD_PROP_DISPLAY_SIZE, worldSpriteScale } from '../spritegen/authored';
+import { AUTHORED_VEHICLE_ART_KEYS, AUTHORED_WORLD_PROP_DISPLAY_SIZE, DIRECTIONAL_VEHICLE_KEYS, worldSpriteScale } from '../spritegen/authored';
 import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
 import {
   instantWinGroup,
@@ -265,6 +265,10 @@ const MINIMUS_TILE_SKIN: Readonly<Record<string, string>> = {
   road: 'minimus_cobble', // Minimus Major's streets (`R`) → cobblestone
   road_dash: 'minimus_cobble', // the centreline (`D`) — a duchy ribbon needs no lane dash
 };
+/** §A11 full-Gulliver: the Minimus NATIVES (citizens, props, facades) render at this scale on
+ *  the Ch.5 maps so the colossi party visibly TOWERS over the tabletop duchy — the same idea as
+ *  MINIMUS_TRAFFIC_SCALE for the dainty cars. The PARTY (player + followers) is NEVER scaled. */
+const MINIMUS_NATIVE_SCALE = 0.5;
 /** dog roamers author into a 16² frame (half a human's 24×32); render them a
  *  touch larger so a beagle reads as a real dog beside the cast, not a speck. */
 const DOG_DISPLAY_SCALE = 1.5;
@@ -696,17 +700,31 @@ export class OverworldScene extends Phaser.Scene {
       const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, sprite).setOrigin(0, 0);
       if (AUTHORED_VEHICLE_PROP_KEYS.has(sprite)) img.setFrame(0);
       const displaySize = AUTHORED_WORLD_PROP_DISPLAY_SIZE[sprite as AuthoredWorldPropKey];
+      // §A11 full-Gulliver: shrink Minimus-NATIVE props so the colossi tower over the duchy's tiny
+      // objects — but NOT facades (their ADR-051 collision/door is texture-coupled) and NOT cars
+      // (already dainty via MINIMUS_TRAFFIC_SCALE).
+      const isFacadeSprite = sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite);
+      const nativeProp =
+        MINIMUS_SKIN_MAPS.has(this.mapDef.id) && !isFacadeSprite && !AUTHORED_VEHICLE_PROP_KEYS.has(sprite);
+      const nps = nativeProp ? MINIMUS_NATIVE_SCALE : 1;
       // Sized props carry NATIVE map dims → scale at read. Everything else goes
       // through THE WORLD RESIZE RULE (worldSpriteScale): facades land at their
       // footprint and legacy ×1 art is lifted to runtime res, so homes/props are
       // no longer ~ART_SCALE× too small on the 1600×900 framebuffer.
       if (displaySize) {
-        img.setDisplaySize(s(displaySize.w), s(displaySize.h));
+        img.setDisplaySize(s(displaySize.w) * nps, s(displaySize.h) * nps);
       } else {
-        const sc = worldSpriteScale(sprite, img.width, img.height);
+        let sc = worldSpriteScale(sprite, img.width, img.height);
+        if (nativeProp) sc *= MINIMUS_NATIVE_SCALE;
         if (sc !== 1) img.setScale(sc);
       }
-      img.setDepth(p.y * TILE_PX + img.displayHeight);
+      // origin is top-left, so a shrunk native prop is re-planted by its FOOT + x-centre
+      if (nativeProp) {
+        const sw = img.displayWidth, sh = img.displayHeight;
+        img.x = p.x * TILE_PX + (sw / MINIMUS_NATIVE_SCALE - sw) / 2;
+        img.y = p.y * TILE_PX + (sh / MINIMUS_NATIVE_SCALE - sh);
+      }
+      img.setDepth(img.y + img.displayHeight);
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
         // places a facade at a story count `u`; the forge/grown grammar often
@@ -926,6 +944,8 @@ export class OverworldScene extends Phaser.Scene {
       // a beagle reads as a distant speck beside the cast. Lift it so it sits at
       // a believable dog scale next to the kids (origin is feet, so it stays planted).
       if (def.dog) spr.setScale(DOG_DISPLAY_SCALE);
+      // §A11 full-Gulliver — Minimus NATIVES shrink so the colossi party towers (heroes unscaled)
+      else if (MINIMUS_SKIN_MAPS.has(this.mapDef.id)) spr.setScale(MINIMUS_NATIVE_SCALE);
       spr.setDepth(y);
       // ADR-124 — FREE-ROAMING TOWNSFOLK: NPCs wander a small radius by default;
       // only clerks (a `shop`), explicitly pinned NPCs (wander:false / stationary),
@@ -1346,21 +1366,22 @@ export class OverworldScene extends Phaser.Scene {
       // side art by direction: dir 0=E, 1=S, 2=W, 3=N.
       const vertical = v.dir === 1 || v.dir === 3;
       const dim = this.trafficDims.get(v.type) ?? { w: s(32), h: s(18) };
-      const animFrame = Math.floor((this.time.now / 130 + v.id) % 4);
-      // the sheet anim is just a frame swap — the texture KEY never changes
-      // (setFrame skips the per-call texture-manager lookup setTexture does), and
-      // the on-screen size is fixed per vehicle and set once at spawn. Re-setting
-      // the texture + display size for every car every frame was pure waste on
-      // settlement maps (the traffic-heavy "sluggish in town" spots).
-      spr.setFrame(animFrame);
-      // The authored vehicle art faces screen-LEFT (front/headlights on the left, a 3/4
-      // oblique view). Orient FROM that: mirror for East, and rotate the front toward
-      // travel for the vertical lanes. (Previously this assumed right-facing art, so every
-      // car drove BACKWARDS — flip on West + the inverted N/S angles. A dedicated top-down
-      // or 4-way directional vehicle sheet would render the vertical lanes perfectly; this
-      // at least points the car the way it's going with the side art we have.)
-      spr.setAngle(v.dir === 1 ? -90 : v.dir === 3 ? 90 : 0); // S → front down, N → front up
-      spr.setFlipX(v.dir === 0); // E → mirror the left-facing art to face right
+      // setFrame is cheap (the texture KEY never changes, so it skips the per-call
+      // texture-manager lookup setTexture does); the on-screen size is fixed per vehicle
+      // at spawn. ADR-097: a DIRECTIONAL sheet is 3 frames [side, front, back] and traffic
+      // SWAPS the frame by travel direction (no skew). A legacy sheet is 4 motion frames of
+      // the side view, oriented by mirror (East) + rotate (the vertical lanes — which skews
+      // a 3/4 sprite; the directional sheet is the real fix).
+      if (DIRECTIONAL_VEHICLE_KEYS.has(v.type)) {
+        // dir 0=E, 1=S, 2=W, 3=N → side(0) for E/W, front(1) driving down, back(2) driving up
+        spr.setFrame(v.dir === 1 ? 1 : v.dir === 3 ? 2 : 0);
+        spr.setAngle(0);
+        spr.setFlipX(v.dir === 0); // E mirrors the front-left side art to front-right
+      } else {
+        spr.setFrame(Math.floor((this.time.now / 130 + v.id) % 4));
+        spr.setAngle(v.dir === 1 ? -90 : v.dir === 3 ? 90 : 0); // S → front down, N → front up
+        spr.setFlipX(v.dir === 0); // E → mirror the left-facing art to face right
+      }
       // SOLID body rect (px) covering the WHOLE car — ends and sides — sized to
       // the sprite and oriented to travel, inset 4px so brushing past isn't sticky
       // dim is RUNTIME px; dim*S matches the on-screen sprite. The 4px brush-past

@@ -96,6 +96,9 @@ function buildMinimusMajor(): MapDef {
     { sprite: 'prop_trail_marker', x: 20, y: 22 }, // the court approach marker
     // PIPPA's matchbox podium — she briefs the colossi from it (mistaken for a lapel pin) — PKG-12 §2
     { sprite: 'matchbox_podium', x: 10, y: 23 },
+    // §E — tiny-duchy curios near Pippa's court (decorative feature tiles as non-solid props)
+    { sprite: 'minimus_teacup', x: 13, y: 23 },
+    { sprite: 'minimus_thimble', x: 7, y: 23 },
   ];
 
   return {
@@ -189,7 +192,7 @@ function buildProcessionWay(): MapDef {
     ],
     npcs: [
       // MR. CLICK — the macro-lens photographer (the regional "Say Cheese, Minister")
-      { id: 'pw_click', sprite: 'curator', x: 22, y: 11, facing: 'up', dialogue: 'npc_pw_click', stationary: true, idle: true, emote: 'happy' },
+      { id: 'pw_click', sprite: 'mr_click', x: 22, y: 11, facing: 'up', dialogue: 'npc_pw_click', stationary: true, idle: true, emote: 'happy' },
       // a Whistle Guard on point duty (one obsession: keep the colossi ON the Way)
       { id: 'pw_guard', sprite: 'whistle_guard_npc', x: 15, y: 9, facing: 'down', dialogue: 'npc_pw_guard', wander: true },
     ],
@@ -316,6 +319,11 @@ function buildDucalCrown(): MapDef {
       { sprite: 'prop_trail_marker', x: 14, y: 11 },
       // the gilt boss-trigger arch — the ceremonial threshold onto the dais (non-solid) — PKG-12 §2
       { sprite: 'ducal_crown_gate', x: 9, y: 11 },
+      // §E decorative Grand-Duchy feature tiles, placed as NON-solid dressing: a royal crown
+      // crest on the dais axis (below the Crown jewel) + ceremonial banners flanking the throne
+      { sprite: 'minimus_crown', x: 9, y: 7 },
+      { sprite: 'minimus_banner', x: 6, y: 1 },
+      { sprite: 'minimus_banner', x: 12, y: 1 },
     ],
     npcs: [],
     signs: [{ x: 9, y: 12, dialogue: 'sign_ducal_crown' }],

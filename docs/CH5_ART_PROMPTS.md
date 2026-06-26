@@ -130,7 +130,7 @@ and wired onto their existing keys — then `npm run build` (the full `vite buil
 the live look/feel eyeball in the preview browser (the boss flow + the two joins).
 
 > **STATUS — LANDED 2026-06-25.** ✅ **NPCs:** 7 placed quest NPCs wired to dedicated
-> 46-frame sheets (`pw_click` keeps the `curator` stand-in). ✅ **Battlers:** all 20 §A7
+> 46-frame sheets (`pw_click` later got its own `mr_click` photographer sheet — done 2026-06-26, 8th NPC). ✅ **Battlers:** all 20 §A7
 > enemies authored ×3 wear (`enemies:frames` 94/94 hi-res). ✅ **Boss + Flat Bell** + ✅ **8
 > cutscene panels:** already authored + wired. ✅ **Backdrop:** `the_hedgerow` added to
 > `BATTLE_BACKGROUND_ART` + a `backdropArea` Ch.5 branch. ✅ **Build green** + ✅ **live-verified**

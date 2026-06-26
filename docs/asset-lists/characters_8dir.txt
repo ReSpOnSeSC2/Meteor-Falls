@@ -75,3 +75,4 @@ whistle_guard_npc
 teacup_innkeeper
 tiny_postmaster
 matchbox_herald
+mr_click
