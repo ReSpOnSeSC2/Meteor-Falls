@@ -128,3 +128,15 @@ Tileset, dungeon, ~12 NPC sheets, 22-battler roster (×3 wear) + minis, the besp
 Flat Bell, the backdrop, ~7 cutscene panels, and the manor interior all authored, sliced,
 and wired onto their existing keys — then `npm run build` (the full `vite build`) green and
 the live look/feel eyeball in the preview browser (the boss flow + the two joins).
+
+> **STATUS — LANDED 2026-06-25.** ✅ **NPCs:** 7 placed quest NPCs wired to dedicated
+> 46-frame sheets (`pw_click` keeps the `curator` stand-in). ✅ **Battlers:** all 20 §A7
+> enemies authored ×3 wear (`enemies:frames` 94/94 hi-res). ✅ **Boss + Flat Bell** + ✅ **8
+> cutscene panels:** already authored + wired. ✅ **Backdrop:** `the_hedgerow` added to
+> `BATTLE_BACKGROUND_ART` + a `backdropArea` Ch.5 branch. ✅ **Build green** + ✅ **live-verified**
+> (Minimus Major NPCs + Whiskerzilla boss/backdrop/party render in the preview).
+> **N/A — Manor interior** (properties are data-only deeds; the design is "live AROUND it").
+> ⏳ **DEFERRED — region tileset (§1) + Hedgerow privet reskin (§2):** `Minimus_tiles_16.png`
+> (16-cell strip) + the 4 `dungeons/the_hedgerow/*_64.png` props are authored on disk but the
+> `TILESET` cell-mapping / reskin convention is an open author decision (the maps render fine on
+> the procedural tileset + `'O'` walls meanwhile). Minis also deferred (reuse registered minis).

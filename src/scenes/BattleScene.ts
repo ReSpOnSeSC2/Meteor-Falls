@@ -718,6 +718,16 @@ export class BattleScene extends Phaser.Scene {
       'giant_house_cat', 'lost_mitten', 'amber_hoard_troll', 'aurora_moth', 'hushed_skua',
       'frost_jotun_elder',
     ].includes(enemyId)) return 'fjord';
+    // CH.5 Minimus — the whole tabletop duchy (Minimus Major, the Procession Way,
+    // the Hedgerow maze, the Ducal Crown) fights under the one authored hedge-maze
+    // backdrop; the boss + its Flat Bell nap on the Crown dais it depicts.
+    if ([
+      'tin_parade', 'duelist_pip', 'crumb_cannoneer', 'powderwig_wasp', 'windup_wyrmlet',
+      'dust_bunny', 'whistle_guard', 'census_pigeon', 'toll_clerk', 'cobble_mite',
+      'hedge_sprite', 'topiary_knight', 'bramble_tangle', 'lapel_pin_mob', 'town_crier',
+      'snuffbox_beetle', 'tax_assessor', 'halberd_column', 'bell_ringer_acolyte', 'grand_parade',
+      'whiskerzilla', 'flat_bell',
+    ].includes(enemyId)) return 'the_hedgerow';
     return 'otterbrook';
   }
 

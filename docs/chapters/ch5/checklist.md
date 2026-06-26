@@ -13,9 +13,13 @@
 - **Boss:** Whiskerzilla (`whiskerzilla`, 4000 HP, template `scriptedSurvival`)
 - **Settlements:** minimus_major (city)
 
-> **STATUS: data spine SHIPPED + green (2026-06-25, ADR-129).** The chapter is
-> end-to-end playable on gray-box art; the authored ChatGPT→PNG pass (PKG-12) is the
-> one remaining item, fully queued in [`docs/CH5_ART_PROMPTS.md`](../../CH5_ART_PROMPTS.md).
+> **STATUS: data spine SHIPPED + green (2026-06-25, ADR-129); PKG-12 authored-art pass
+> LANDED + live-verified (2026-06-25).** The core art is authored and wired: 7 Minimus
+> NPC sheets, all 20 §A7 battlers (×3 wear), the `the_hedgerow` battle backdrop, the
+> bespoke Whiskerzilla + Flat Bell, and the 8 cutscene panels. `npm run build` green; the
+> town + the boss flow eyeballed live in the preview (boss + backdrop + 5-hero party render).
+> DEFERRED polish: the region tileset + the Hedgerow privet reskin (both authored as PNGs but
+> awaiting a `TILESET` cell-mapping decision — see [`docs/CH5_ART_PROMPTS.md`](../../CH5_ART_PROMPTS.md) §1/§2).
 
 ## Promote the draft tree
 
@@ -43,10 +47,28 @@
 - [x] `npm run validate` + `npm test` (1233 vitest) + `tsc --noEmit` green; `npm run
       balance` Whiskerzilla TTK 10 (in window); ADR-129 appended.
 
-## Remaining (the art pass)
+## The art pass (PKG-12)
 
-- [ ] **PKG-12 authored art** — tileset, dungeon skin, ~12 NPC sheets, 22 battlers ×3 wear
-      + minis, the bespoke Whiskerzilla + Flat Bell, the `the_hedgerow` backdrop, ~7
-      cutscene panels, the manor interior — author + slice + wire per
-      [`docs/CH5_ART_PROMPTS.md`](../../CH5_ART_PROMPTS.md), then `npm run build` (`vite
-      build`) green + the live look/feel eyeball in the preview browser.
+- [x] **NPC sheets** — 7 placed Minimus quest NPCs wired to dedicated authored 46-frame
+      sheets (`grand_duchess_millimetta`, `spool_engineer`, `royal_census_taker`,
+      `whistle_guard_npc`, `teacup_innkeeper`, `tiny_postmaster`, `matchbox_herald`): masters
+      synced to runtime, added to `NPC_CHARACTER_ART` + `characters_8dir.txt` (62→69 pin),
+      sprites repointed in `maps_ch5.ts`. (`pw_click` keeps the `curator` stand-in — no
+      photographer master authored.)
+- [x] **Enemy battlers** — all **20** §A7 Minimus enemies authored (ChatGPT→PNG, magenta-key
+      → `slice-chroma`), ×3 identical-footprint wear tiers (`enemies:frames` 94/94 hi-res, 0
+      pixelated) onto their pre-wired `battle_<id>` keys. Masters in `assets/art/masters/generated/`.
+- [x] **Boss + Flat Bell** — bespoke `whiskerzilla` (×3 wear + `_knighted`) + `flat_bell` (×3)
+      already authored + wired; live-verified rendering in the boss battle.
+- [x] **Battle backdrop** — `the_hedgerow.png` (1600×900) added to `BATTLE_BACKGROUND_ART` +
+      a Ch.5 enemy branch in `BattleScene.backdropArea`; renders live in every Ch.5 fight.
+- [x] **Cutscene panels** — the 8 `ch5_journey` beats authored + registered 1:1 in `cutscenes.ts`.
+- [x] **Build + live verify** — `npm run build` (`tsc` + `validate` + `vite`) green; Minimus
+      Major + the Whiskerzilla boss flow eyeballed in the preview (NPC textures loaded +
+      instantiated, boss + backdrop + 5-hero party render, no errors).
+- [ ] **Region tileset + Hedgerow privet reskin (DEFERRED)** — `Minimus_tiles_16.png` (16-cell
+      ×64 strip) + the 4 `dungeons/the_hedgerow/*_64.png` props are authored on disk but
+      unwired: the strip has no `TILESET` cell-mapping and the dungeon reskin convention is the
+      author's call (the maps render fine on the procedural tileset + `'O'` walls meanwhile).
+- [ ] **Manor interior — N/A** — `minimus_manor` is a data-only deed (no interior map; the
+      design is "you live AROUND it"), so no interior art is owed.

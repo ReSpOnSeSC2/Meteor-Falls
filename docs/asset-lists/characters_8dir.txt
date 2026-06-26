@@ -67,3 +67,11 @@ bootstep_shepherd
 canteen_keeper
 fjord_nurse
 sleepwalker_miner
+# Ch.5 Minimus — Grand Duchy cast
+grand_duchess_millimetta
+spool_engineer
+royal_census_taker
+whistle_guard_npc
+teacup_innkeeper
+tiny_postmaster
+matchbox_herald
