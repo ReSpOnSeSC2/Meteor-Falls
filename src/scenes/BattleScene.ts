@@ -743,6 +743,12 @@ export class BattleScene extends Phaser.Scene {
       'caravan_hyena_pack', 'baobab_root_snare', 'laughing_dust_pot', 'sphinx_paw_shadow',
       'laughing_sphinx',
     ].includes(enemyId)) return 'laughing_ruins';
+    // CH.7 India — the bazaar port of Chandrapore, the monsoon road, the night
+    // train, and the Cobra Raja's usurped throne all fight under the one authored
+    // ornate-palace backdrop (gold cobra-columns, crimson drapes, the throne dais).
+    if ([
+      'rickshaw_swarm', 'spice_djinn', 'temple_macaque', 'naga_sentry', 'cobra_raja',
+    ].includes(enemyId)) return 'cobra_palace';
     return 'otterbrook';
   }
 

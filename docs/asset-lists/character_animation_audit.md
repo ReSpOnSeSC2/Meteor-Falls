@@ -5,13 +5,13 @@ This checks the authored 46-frame character sheets against the runtime frame con
 - Frame size: 96x128
 - Sheet size: 384x1536
 - Frame count: 46
-- Registered characters: 79
+- Registered characters: 83
 - Unregistered character sheets on disk: 0
 - Path overrides: 0
-- Characters with issues: 45
+- Characters with issues: 47
 - Errors: 0
-- Warnings: 155
-- Review hints: 217
+- Warnings: 167
+- Review hints: 225
 
 Interactive playback page: [character_animation_audit.html](character_animation_audit.html)
 
@@ -176,6 +176,30 @@ Common presets:
 - REVIEW frame 39: run down-left looks closer to upright than downleft
 - WARN walk left: stand frames 0/2 are not stable (0.116)
 - WARN walk right: stand frames 0/2 are not stable (0.082)
+
+### cp_dabbawala (cp_dabbawala)
+- REVIEW frame 3: walk down looks closer to downleft than down
+- REVIEW frame 15: walk up looks closer to downleft than up
+- REVIEW frame 17: run down looks closer to downleft than down
+- REVIEW frame 23: run up looks closer to downleft than up
+- WARN walk left: step frames 1/3 are nearly frozen (0.008)
+- WARN walk right: step frames 1/3 are nearly frozen (0.008)
+- WARN run left: run pair is nearly frozen (0.008)
+- WARN run right: run pair is nearly frozen (0.008)
+- WARN walk up-right: diagonal step pair is nearly frozen (0.003)
+- WARN walk up-left: diagonal step pair is nearly frozen (0.003)
+- WARN run up-right: run pair is nearly frozen (0.003)
+- WARN run up-left: run pair is nearly frozen (0.003)
+
+### cp_stationmaster (cp_stationmaster)
+- REVIEW frame 3: walk down looks closer to up than down
+- REVIEW frame 15: walk up looks closer to down than up
+- REVIEW frame 17: run down looks closer to up than down
+- REVIEW frame 23: run up looks closer to down than up
+- WARN walk down-right: diagonal step pair is nearly frozen (0.007)
+- WARN walk down-left: diagonal step pair is nearly frozen (0.007)
+- WARN run down-right: run pair is nearly frozen (0.007)
+- WARN run down-left: run pair is nearly frozen (0.007)
 
 ### deliKeeper (deliKeeper)
 - REVIEW frame 6: walk left looks closer to right than left
@@ -552,6 +576,10 @@ Common presets:
 | canteen_keeper | canteen_keeper | npc | 0 |
 | captain | captain | npc | 1 |
 | chad | chad | npc | 10 |
+| cp_dabbawala | cp_dabbawala | npc | 12 |
+| cp_spice_merchant | cp_spice_merchant | npc | 0 |
+| cp_stationmaster | cp_stationmaster | npc | 8 |
+| cp_usher | cp_usher | npc | 0 |
 | curator | curator | npc | 0 |
 | deliKeeper | deliKeeper | npc | 23 |
 | docBrickton | docBrickton | npc | 4 |

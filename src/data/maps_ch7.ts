@@ -107,16 +107,16 @@ function buildChandrapore(): MapDef {
     props,
     npcs: [
       // THE SPICE MERCHANT — keeps the Grand Bazaar shelf (the §A8 Ch.7 shop) and
-      // sets the seven_spices scavenger hunt (placeholder sprite until the art pass)
-      { id: 'cp_spice_merchant', sprite: 'zanzibel_market_queen', x: 6, y: 8, facing: 'down', dialogue: 'npc_cp_spice_merchant', shop: 'chandrapore_bazaar' },
+      // sets the seven_spices scavenger hunt (authored India 46-frame sheet, art pass 2026-06-27)
+      { id: 'cp_spice_merchant', sprite: 'cp_spice_merchant', x: 6, y: 8, facing: 'down', dialogue: 'npc_cp_spice_merchant', shop: 'chandrapore_bazaar' },
       // THE DABBAWALA — the monkey_who_stole_tuesday giver (the Magnate took his tiffin
       // run AND the party's hat off a rooftop)
-      { id: 'cp_dabbawala', sprite: 'zanzibel_dockmaster', x: 33, y: 16, facing: 'down', dialogue: 'npc_cp_dabbawala', stationary: true, idle: true },
+      { id: 'cp_dabbawala', sprite: 'cp_dabbawala', x: 33, y: 16, facing: 'down', dialogue: 'npc_cp_dabbawala', stationary: true, idle: true },
       // THE STATIONMASTER — minds the night train (the dungeon mouth); flavor + signpost
-      { id: 'cp_stationmaster', sprite: 'laughing_ruins_guide', x: 26, y: 19, facing: 'down', dialogue: 'npc_cp_stationmaster', wander: true },
+      { id: 'cp_stationmaster', sprite: 'cp_stationmaster', x: 26, y: 19, facing: 'down', dialogue: 'npc_cp_stationmaster', wander: true },
       // THE CINEMA USHER — the Majestic plays a musical about the party; he will not
       // believe you are them (the bible gag; the chapter's quiet centre)
-      { id: 'cp_usher', sprite: 'baobab_healer', x: 12, y: 22, facing: 'down', dialogue: 'npc_cp_usher', stationary: true, idle: true, emote: 'happy' },
+      { id: 'cp_usher', sprite: 'cp_usher', x: 12, y: 22, facing: 'down', dialogue: 'npc_cp_usher', stationary: true, idle: true, emote: 'happy' },
     ],
     signs: [
       { x: 3, y: 8, dialogue: 'sign_chandrapore' },
