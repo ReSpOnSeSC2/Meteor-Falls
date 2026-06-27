@@ -1060,6 +1060,8 @@ const ENEMY_MINI_ART = [
   { key: 'mini_aurora_moth', url: new URL('../../assets/art/enemies/mini_aurora_moth.png', import.meta.url).href },
   { key: 'mini_hushed_skua', url: new URL('../../assets/art/enemies/mini_hushed_skua.png', import.meta.url).href },
   { key: 'mini_frost_jotun_elder', url: new URL('../../assets/art/enemies/mini_frost_jotun_elder.png', import.meta.url).href },
+  // hushed_gull's own roamer — DERIVED from its battler (was borrowing mini_pigeon_gang, the Ch.1 flock)
+  { key: 'mini_fjord_gull_bully', url: new URL('../../assets/art/enemies/mini_fjord_gull_bully.png', import.meta.url).href },
   // Ch.5 Minimus §A7 roamers — DERIVED from the authored hi-res battlers (tools/derive-ch5-minis.ts)
   // so the overworld sprite IS the enemies-section art, not the old borrowed procedural minis.
   { key: 'mini_tin_parade', url: new URL('../../assets/art/enemies/mini_tin_parade.png', import.meta.url).href },

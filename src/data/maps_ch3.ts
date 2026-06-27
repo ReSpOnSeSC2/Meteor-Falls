@@ -427,9 +427,9 @@ function buildWintermoorF2(): MapDef {
     signs: [{ x: 13, y: 1, dialogue: 'sign_wm_f2' }],
     phones: [],
     doors: [
-      { x: 25, y: 1, w: 1, h: 1, to: 'wintermoor_f1', tx: 25 * 16, ty: 13 * 16, facing: 'down', indicator: 'stairs' },
+      { x: 25, y: 1, w: 1, h: 1, to: 'wintermoor_f1', tx: 24 * 16, ty: 13 * 16, facing: 'down', indicator: 'stairs' }, // land at x:24, clear of the hall payphone solid at (25,13.2)
       { x: 2, y: 1, w: 1, h: 1, to: 'wintermoor_f3', tx: 3 * 16, ty: 11 * 16, facing: 'down', indicator: 'stairs' },
-      { x: 13, y: H - 1, w: 2, h: 1, to: 'wintermoor_dorm', tx: 13 * 16, ty: 12 * 16, facing: 'down', indicator: 'door' },
+      { x: 13, y: H - 1, w: 2, h: 1, to: 'wintermoor_dorm', tx: 13 * 16, ty: 12 * 16, facing: 'up', indicator: 'door' }, // face UP into the room, not at the bottom wall (the dorm's f2 door is at the top)
     ],
     spawners: [
       { enemies: ['detention_desk', 'foggy_locker'], count: 2, rect: { x: 5, y: 8, w: 7, h: 1 } },

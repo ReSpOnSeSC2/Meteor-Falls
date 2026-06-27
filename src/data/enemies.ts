@@ -1310,7 +1310,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Hushed Gull, Enormous gave back the chip and left in a huff of feathers the size of oars.',
       drops: [{ item: 'pickled_herring', chance: 0.4 }, { item: 'stockfish_bundle', chance: 0.15 }],
-      sprite: 'battle_fjord_gull_bully', mini: 'mini_pigeon_gang',
+      sprite: 'battle_fjord_gull_bully', mini: 'mini_fjord_gull_bully',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
     E({

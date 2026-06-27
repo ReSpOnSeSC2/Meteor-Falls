@@ -264,6 +264,13 @@ const MINIMUS_TILE_SKIN: Readonly<Record<string, string>> = {
   sidewalk: 'minimus_cobble', // the Procession Way (`=`) → ribbon cobblestone
   road: 'minimus_cobble', // Minimus Major's streets (`R`) → cobblestone
   road_dash: 'minimus_cobble', // the centreline (`D`) — a duchy ribbon needs no lane dash
+  // the OUTDOOR borders (minimus_major / procession_way perimeters) were rendering generic
+  // Ohio brick + grass against the bespoke Hedgerow/Crown skin — fold them into the duchy too.
+  // Solidity is preserved: brick/bush (solid) → minimus_hedge (solid), grass variants → turf.
+  brick: 'minimus_hedge', // the drystone kerb / city wall (`B`) → privet hedge border (SOLID)
+  bush: 'minimus_hedge', // any solid bush (`b`) → a clipped privet (SOLID)
+  grass_b: 'minimus_turf', // decorative grass (`,`) → velvet lawn
+  grass_tuft: 'minimus_turf', // decorative grass (`~`) → velvet lawn
 };
 /** §A11 full-Gulliver: the Minimus NATIVES (citizens, props, facades) render at this scale on
  *  the Ch.5 maps so the colossi party visibly TOWERS over the tabletop duchy — the same idea as
