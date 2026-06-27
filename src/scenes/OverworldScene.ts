@@ -109,7 +109,7 @@ import { AWAKENINGS } from '../data/awakenings';
 import { playCutscene } from '../engine/cutscene';
 import { CHOICES, type ChoiceId } from '../data/choices';
 import { recordChoice } from '../engine/choice';
-import { captureEcho, isRewindable } from '../engine/echo';
+import { captureEcho, isRewindable, clearPuppetLock } from '../engine/echo';
 import { composeEnding, endingContext } from '../engine/ending';
 import { withholdUltimate, isPresent } from '../engine/party';
 import { LINKS_FLAGS, LINKS_TEXT, SUNDAY_SET, linksSeed } from '../data/links';
@@ -3981,6 +3981,7 @@ export class OverworldScene extends Phaser.Scene {
   private goThroughDoor(to: string, tx: number, ty: number, facing: Facing): void {
     if (this.transitioning) return;
     this.transitioning = true;
+    clearPuppetLock(); // §2.3: leaving the map ends the Held-Breath Puppet-lock (NOT a rewind-restart, which keeps it)
     // tx/ty are NATIVE door-target pixels (map-data d.tx/d.ty, spawn constants,
     // or literals) → scale to the runtime space GS.data.x/y lives in. ALL callers
     // pass native px, so the single scale here covers every door (ADR scale-conv).

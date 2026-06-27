@@ -89,7 +89,7 @@ import { BOSS_SCRIPTS } from '../data/bosses';
 import { AWAKENINGS } from '../data/awakenings';
 import { GS, expForLevel, type HeroState } from '../engine/state';
 // S21 (ADR-126): Mia's high-tier PRAY refuels Jay's Held Breath (faith owns the rewind's supply)
-import { breathsLeft, refillBreath } from '../engine/echo';
+import { breathsLeft, refillBreath, puppetLocked } from '../engine/echo';
 import { MAX_BREATHS } from '../data/echoes';
 import { statsAtLevel, maxHpAtLevel, maxPpAtLevel, unlockedAbilities, availableAbilities, HEROES } from '../data/heroes';
 import { INPUT } from '../engine/input';
@@ -1490,7 +1490,11 @@ export class BattleScene extends Phaser.Scene {
       const a = ABILITIES[id];
       // pray lives on the command row, not in the Vibe list (Prompt 12);
       // teleport (α/β) is an overworld run-up, not a battle cast
-      return a && a.kind === 'vibe' && !a.id.startsWith('teleport_');
+      if (!a || a.kind !== 'vibe' || a.id.startsWith('teleport_')) return false;
+      // S21 (ADR-126): a Held-Breath rewind spent this map locks Puppet — Mind Warp
+      // α/β (status 'puppet') drop off the list until you move on (will OR time)
+      if (a.status === 'puppet' && puppetLocked()) return false;
+      return true;
     });
     if (ids.length === 0) {
       await this.print(`${name} searched for the old light... not yet.`);
