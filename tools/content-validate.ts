@@ -1350,6 +1350,14 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     laughing_dust_pot: 150,
     sphinx_paw_shadow: 190,
     laughing_sphinx: 9000,
+    // Chapter 7 (India) — §A7 the art-matched roster (4 regulars work the Monsoon Road
+    // + the night train) + BOSS 7. On-curve (band ch7, window 31-35; trash HP 240-600).
+    // Money > combat: the Raja's 20000 HP sits far under the Ch.7 Fortune target ($8M).
+    rickshaw_swarm: 360,
+    spice_djinn: 260,
+    temple_macaque: 300,
+    naga_sentry: 560,
+    cobra_raja: 20000,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1597,7 +1605,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar']);
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -1888,6 +1896,29 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       rewardItem: 'griot_string',
       doneFlag: 'q_stones_done',
       caller: { name: 'The Ruins Guide', kind: 'damage', power: 455 },
+    },
+    // ── CHAPTER 7 (India) — §A10 the two named core quests (Seven Spices + the Monkey
+    //    Who Stole Tuesday), each banking a finale CALLER. Givers placed in chandrapore.
+    //    Rewards are the pre-built §A8 ch7 items (the Spice Box + the Monkey Paw Charm). ──
+    seven_spices: {
+      name: 'Seven Spices',
+      chapter: 7,
+      giver: 'cp_spice_merchant',
+      startFlag: 'q_spices',
+      objectiveFlags: ['q_spices_gather', 'q_spices_return'],
+      rewardItem: 'spice_box',
+      doneFlag: 'q_spices_done',
+      caller: { name: 'The Spice Merchant', kind: 'heal', power: 700 },
+    },
+    monkey_who_stole_tuesday: {
+      name: 'The Monkey Who Stole Tuesday',
+      chapter: 7,
+      giver: 'cp_dabbawala',
+      startFlag: 'q_monkey',
+      objectiveFlags: ['q_monkey_chase', 'q_monkey_corner'],
+      rewardItem: 'monkey_paw_charm',
+      doneFlag: 'q_monkey_done',
+      caller: { name: 'The Monkey Magnate', kind: 'damage', power: 690 },
     },
   };
   for (const [id, pin] of Object.entries(canon)) {

@@ -4322,6 +4322,16 @@ export class OverworldScene extends Phaser.Scene {
       case 'sphinx_chin_resonance':
         if (!GS.flag('ch6_complete')) await this.sphinxChinScene();
         break;
+      /* ---------------- Chapter 7 (§A6 India) ---------------- */
+      case 'ch7_arrival':
+        if (!GS.flag('ch7_arrived')) await this.ch7ArrivalScene();
+        break;
+      case 'cobra_raja_boss':
+        if (!GS.flag('cobra_raja_defeated')) await this.cobraRajaBossScene();
+        break;
+      case 'palace_throne_resonance':
+        if (!GS.flag('ch7_complete')) await this.palaceThroneScene();
+        break;
       // the §A10 Ch.3 "find" pickups (books / letters / the drain / milk / water)
       case 'q_overdue_b1':
       case 'q_overdue_b2':
@@ -4648,8 +4658,23 @@ export class OverworldScene extends Phaser.Scene {
    *  Ch.3 is complete (the boardLucille precedent — England's flight stays his too). */
   private async bertAirBeat(): Promise<void> {
     this.cut = true;
-    // the §A5 NEXT leg: once Minimus is done, Bert flies the party to ZANZIBEL (the
+    // the §A5 NEXT leg: once Zanzibel is done, Bert flies the party to CHANDRAPORE (the
     // newest frontier takes priority — the earlier legs below stay for the backtrack)
+    if (GS.flag('ch6_complete') && !GS.flag('ch7_arrived')) {
+      await this.dlg.say(...DIALOGUE.bert_india_ask);
+      const pick = await this.dlg.ask(['Fly to CHANDRAPORE', 'Not yet'], { cancelIndex: 1 });
+      if (pick !== 0) {
+        this.cut = false;
+        return;
+      }
+      AUDIO.stopMusic();
+      await playCutscene(this, 'ch7_journey'); // the authored India panels (no-ops if missing)
+      // the hatch drops on the Chandrapore ghat landing square; ch7_arrival fires the beat
+      this.goThroughDoor('chandrapore', 8 * 16, 22 * 16, 'down');
+      return;
+    }
+    // the §A5 Zanzibel leg: once Minimus is done, Bert flies the party to ZANZIBEL (kept
+    // for the backtrack now that Chandrapore is the frontier)
     if (GS.flag('ch5_complete') && !GS.flag('ch6_arrived')) {
       await this.dlg.say(...DIALOGUE.bert_africa_ask);
       const pick = await this.dlg.ask(['Fly to ZANZIBEL', 'Not yet'], { cancelIndex: 1 });
@@ -5043,6 +5068,73 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('ch6_complete'); // §A6 — the chapter button (the §A5 gate to Ch.7)
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch6_card);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /* ════════════ CHAPTER 7 — THE COBRA'S PALACE (India): arrival → the §A6 boss →
+   * Heartlight 7. Mirrors the Ch.6 shape — a straight chapter, no joins (the party is
+   * whole by now), so the throne's resonance just records Ember 7 and opens the next leg. */
+
+  /** the §A6 arrival — Bert sets the party down on the Chandrapore ghats, into the roar */
+  private async ch7ArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch7_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(380, 0.005);
+    await this.dlg.say(...DIALOGUE.ch7_arrival);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A6 BOSS 7 — THE COBRA RAJA (the phase machine carries the gimmick: every 3rd turn
+   *  a party-wide paralyzing gaze, and a one-time 40% skin-shed that heals +800). A normal
+   *  HP win on its 20000 HP — burn it through the threshold and wake the real king. */
+  private async cobraRajaBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.cobra_raja_door);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(460, 0.008);
+    await this.wait(420);
+    const outcome = await this.startBattle(['cobra_raja'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('cobra_raja_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.cobra_raja_win);
+    AUDIO.jingle('victory', 2200, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart(); // the throne is free to sing now; the resonance trigger can fire
+  }
+
+  /** §A6 Resonance Site — the palace throne. Before the Raja is unmade it keeps its peace;
+   *  once beaten the throne sings (HEARTLIGHT 7 — The Coiled Raga) and Ember 7 lands. No
+   *  joins (the party is whole); ch7_complete opens the §A5 gate to Ch.8. */
+  private async palaceThroneScene(): Promise<void> {
+    if (!GS.flag('cobra_raja_defeated')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.palace_throne_early);
+      this.cut = false;
+      return;
+    }
+    this.cut = true;
+    // HEARTLIGHT 7 — the Coiled Raga (Ember 7)
+    GS.setFlag('ember7');
+    GS.data.embers = 7;
+    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember7_get);
+    GS.setFlag('ch7_complete'); // §A6 — the chapter button (the §A5 gate to Ch.8)
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.ch7_card);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }

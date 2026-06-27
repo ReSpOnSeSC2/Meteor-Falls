@@ -178,4 +178,17 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_zanzibel_greet',
     farewell: 'shop_zanzibel_bye',
   },
+  // §A8 CHAPTER 7 — THE GRAND BAZAAR (Chandrapore's shelf; the Spice Merchant keeps it)
+  chandrapore_bazaar: {
+    id: 'chandrapore_bazaar',
+    name: 'THE GRAND BAZAAR',
+    keeperNpc: 'cp_spice_merchant',
+    stock: [
+      'masala_chai', 'mango_lassi', 'falooda', 'mango_kulfi', 'spiced_bun',
+      'jeweled_pagri', 'silk_kurta', 'embroidered_sherwani',
+      'cobra_flute', 'trade_salt',
+    ],
+    greet: 'shop_chandrapore_greet',
+    farewell: 'shop_chandrapore_bye',
+  },
 };

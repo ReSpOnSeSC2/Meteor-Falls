@@ -304,6 +304,11 @@ export const NPC_CHARACTER_ART = [
   { id: 'zanzibel_dockmaster', key: 'authored_zanzibel_dockmaster_8dir', url: new URL('../../assets/art/characters/zanzibel_dockmaster_anim_46_4x.png', import.meta.url).href },
   { id: 'laughing_ruins_guide', key: 'authored_laughing_ruins_guide_8dir', url: new URL('../../assets/art/characters/laughing_ruins_guide_anim_46_4x.png', import.meta.url).href },
   { id: 'baobab_healer', key: 'authored_baobab_healer_8dir', url: new URL('../../assets/art/characters/baobab_healer_anim_46_4x.png', import.meta.url).href },
+  // Ch.7 India — the Chandrapore cast (46-frame authored sheets; masters synced to runtime)
+  { id: 'cp_spice_merchant', key: 'authored_cp_spice_merchant_8dir', url: new URL('../../assets/art/characters/cp_spice_merchant_anim_46_4x.png', import.meta.url).href },
+  { id: 'cp_dabbawala', key: 'authored_cp_dabbawala_8dir', url: new URL('../../assets/art/characters/cp_dabbawala_anim_46_4x.png', import.meta.url).href },
+  { id: 'cp_stationmaster', key: 'authored_cp_stationmaster_8dir', url: new URL('../../assets/art/characters/cp_stationmaster_anim_46_4x.png', import.meta.url).href },
+  { id: 'cp_usher', key: 'authored_cp_usher_8dir', url: new URL('../../assets/art/characters/cp_usher_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -532,7 +537,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,
@@ -980,6 +985,22 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_laughing_sphinx', url: new URL('../../assets/art/enemies/battle_laughing_sphinx.png', import.meta.url).href },
   { key: 'battle_laughing_sphinx_w1', url: new URL('../../assets/art/enemies/battle_laughing_sphinx_w1.png', import.meta.url).href },
   { key: 'battle_laughing_sphinx_w2', url: new URL('../../assets/art/enemies/battle_laughing_sphinx_w2.png', import.meta.url).href },
+  // Chapter 7 (India) — placeholder clones until the India art pass overwrites the files
+  { key: 'battle_rickshaw_swarm', url: new URL('../../assets/art/enemies/battle_rickshaw_swarm.png', import.meta.url).href },
+  { key: 'battle_rickshaw_swarm_w1', url: new URL('../../assets/art/enemies/battle_rickshaw_swarm_w1.png', import.meta.url).href },
+  { key: 'battle_rickshaw_swarm_w2', url: new URL('../../assets/art/enemies/battle_rickshaw_swarm_w2.png', import.meta.url).href },
+  { key: 'battle_spice_djinn', url: new URL('../../assets/art/enemies/battle_spice_djinn.png', import.meta.url).href },
+  { key: 'battle_spice_djinn_w1', url: new URL('../../assets/art/enemies/battle_spice_djinn_w1.png', import.meta.url).href },
+  { key: 'battle_spice_djinn_w2', url: new URL('../../assets/art/enemies/battle_spice_djinn_w2.png', import.meta.url).href },
+  { key: 'battle_temple_macaque', url: new URL('../../assets/art/enemies/battle_temple_macaque.png', import.meta.url).href },
+  { key: 'battle_temple_macaque_w1', url: new URL('../../assets/art/enemies/battle_temple_macaque_w1.png', import.meta.url).href },
+  { key: 'battle_temple_macaque_w2', url: new URL('../../assets/art/enemies/battle_temple_macaque_w2.png', import.meta.url).href },
+  { key: 'battle_naga_sentry', url: new URL('../../assets/art/enemies/battle_naga_sentry.png', import.meta.url).href },
+  { key: 'battle_naga_sentry_w1', url: new URL('../../assets/art/enemies/battle_naga_sentry_w1.png', import.meta.url).href },
+  { key: 'battle_naga_sentry_w2', url: new URL('../../assets/art/enemies/battle_naga_sentry_w2.png', import.meta.url).href },
+  { key: 'battle_cobra_raja', url: new URL('../../assets/art/enemies/battle_cobra_raja.png', import.meta.url).href },
+  { key: 'battle_cobra_raja_w1', url: new URL('../../assets/art/enemies/battle_cobra_raja_w1.png', import.meta.url).href },
+  { key: 'battle_cobra_raja_w2', url: new URL('../../assets/art/enemies/battle_cobra_raja_w2.png', import.meta.url).href },
 ] as const;
 
 const ENEMY_OVERWORLD_ART = [
@@ -1094,6 +1115,12 @@ const ENEMY_MINI_ART = [
   { key: 'mini_laughing_dust_pot', url: new URL('../../assets/art/enemies/mini_laughing_dust_pot.png', import.meta.url).href },
   { key: 'mini_sphinx_paw_shadow', url: new URL('../../assets/art/enemies/mini_sphinx_paw_shadow.png', import.meta.url).href },
   { key: 'mini_laughing_sphinx', url: new URL('../../assets/art/enemies/mini_laughing_sphinx.png', import.meta.url).href },
+  // Ch.7 (India) — the §A7 roamers derived from their battlers (placeholder clones for now)
+  { key: 'mini_rickshaw_swarm', url: new URL('../../assets/art/enemies/mini_rickshaw_swarm.png', import.meta.url).href },
+  { key: 'mini_spice_djinn', url: new URL('../../assets/art/enemies/mini_spice_djinn.png', import.meta.url).href },
+  { key: 'mini_temple_macaque', url: new URL('../../assets/art/enemies/mini_temple_macaque.png', import.meta.url).href },
+  { key: 'mini_naga_sentry', url: new URL('../../assets/art/enemies/mini_naga_sentry.png', import.meta.url).href },
+  { key: 'mini_cobra_raja', url: new URL('../../assets/art/enemies/mini_cobra_raja.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);

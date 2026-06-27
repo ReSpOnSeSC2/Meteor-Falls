@@ -2092,6 +2092,103 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       boss: true,
       mind_immune: true,
     }),
+
+    /* ══════════════ CHAPTER 7 — THE COBRA'S PALACE (India) ══════════════ *
+     * §A7 the Ch.7 roster (chapter level window 31-35, band ch7). A focused
+     * art-matched set — four regulars work the Monsoon Road + the night train,
+     * and BOSS 7 (THE COBRA RAJA) coils on the stolen crown in the palace throne.
+     * On-curve (Ch.7 band: trash HP 240-600; saffron GOLD/ORANGE/RED ramps).
+     * Region affinity is spread (volt/freeze/fire/salt) — the festival crowd of a
+     * roster. Dev-art: the battlers are placeholder clones until the India art pass. */
+    E({
+      id: 'rickshaw_swarm',
+      name: 'Rickshaw Swarm',
+      article: 'The',
+      hp: 360, offense: 52, defense: 22, speed: 36, level: 32, exp: 520, cash: 95,
+      weakness: ['volt'],
+      moves: [
+        { name: 'three-wheel cutoff', kind: 'attack', mult: 1.2, text: '{e} swung in from three lanes at once and boxed {t} against the kerb!', weight: 5 },
+        { name: 'horn barrage', kind: 'taunt', text: '{e} leaned on every horn it had until {t} could not hear itself think.', weight: 2 },
+        { name: 'meter scam', kind: 'attack', mult: 1, text: '{e} ran the meter UP and the fare straight into {t}.', weight: 3 },
+      ],
+      deathLine: 'The Rickshaw Swarm honked once more, found a fare, and puttered off into the crowd.',
+      drops: [{ item: 'masala_chai', chance: 0.16 }],
+      sprite: 'battle_rickshaw_swarm', mini: 'mini_rickshaw_swarm',
+      bg: [RAMP.GOLD, RAMP.ORANGE],
+    }),
+    E({
+      id: 'spice_djinn',
+      name: 'Spice Djinn',
+      article: 'The',
+      hp: 260, offense: 44, defense: 24, speed: 26, level: 31, exp: 540, cash: 108,
+      weakness: ['freeze', 'salt'],
+      moves: [
+        { name: 'chilli cloud', kind: 'status', status: 'crying', text: '{e} burst into a cloud of red chilli and {t} could only weep and cough.', weight: 3 },
+        { name: 'cardamom puff', kind: 'attack', mult: 1, text: '{e} coughed a stinging puff of the whole bazaar into {t}\'s eyes.', weight: 4 },
+        { name: 'tadka pop', kind: 'strong', mult: 1.5, text: '{e} cracked like hot oil over {t} — seeds spitting everywhere!', weight: 2 },
+      ],
+      deathLine: 'The Spice Djinn collapsed back into a tipped masala dabba, still smelling of seven things at once.',
+      drops: [{ item: 'trade_salt', chance: 0.14 }],
+      sprite: 'battle_spice_djinn', mini: 'mini_spice_djinn',
+      bg: [RAMP.ORANGE, RAMP.RED],
+    }),
+    E({
+      id: 'temple_macaque',
+      name: 'Temple Macaque',
+      article: 'The',
+      hp: 300, offense: 50, defense: 22, speed: 40, level: 33, exp: 500, cash: 120,
+      weakness: [],
+      moves: [
+        { name: 'rooftop pounce', kind: 'strong', mult: 1.6, text: '{e} dropped off a parapet and POUNCED on {t} before the eye could follow.', weight: 4 },
+        { name: 'snatch-and-run', kind: 'attack', mult: 1.1, text: '{e} cuffed {t} and made off with something shiny.', weight: 4 },
+        { name: 'bared-teeth screech', kind: 'taunt', text: '{e} bared its teeth and screeched from a ledge just out of reach.', weight: 2 },
+      ],
+      deathLine: 'The Temple Macaque chittered, bowed mockingly, and vanished over the rooftops with the last word.',
+      drops: [{ item: 'mango_lassi', chance: 0.12 }],
+      sprite: 'battle_temple_macaque', mini: 'mini_temple_macaque',
+      bg: [RAMP.EARTH, RAMP.GOLD],
+    }),
+    E({
+      id: 'naga_sentry',
+      name: 'Naga Sentry',
+      article: 'The',
+      hp: 560, offense: 54, defense: 36, speed: 18, level: 34, exp: 640, cash: 104,
+      weakness: ['fire'],
+      moves: [
+        { name: 'coil and bar', kind: 'attack', mult: 1.1, text: '{e} threw a stone coil across the way and barred {t}\'s path.', weight: 4 },
+        { name: 'crushing wind', kind: 'strong', mult: 1.7, text: '{e} wound tight around {t} and SQUEEZED — the carving groaning.', weight: 3 },
+        { name: 'hooded stare', kind: 'taunt', text: '{e} spread its carved hood and held {t} in an unblinking stone stare.', weight: 3 },
+      ],
+      deathLine: 'The Naga Sentry sank back into its plinth, a guardian carving once more, watching the door.',
+      drops: [{ item: 'falooda', chance: 0.12 }],
+      sprite: 'battle_naga_sentry', mini: 'mini_naga_sentry',
+      bg: [RAMP.PURPLE, RAMP.NIGHT],
+    }),
+
+    /* §A6 BOSS 7 — THE COBRA RAJA (20000 HP): coils on the stolen crown in the usurped
+     * throne room. Every 3rd turn it meets the eye with a PARALYZING gaze (party-wide,
+     * `thresholdHeal` gaze phase), and once at 40% HP it SHEDS its skin and heals +800 —
+     * burn it through the threshold (bosses.ts `cobra_raja` script). No elemental weakness
+     * (the gimmick is the gaze + the shed, not an element); mind_immune like every boss.
+     * Money > combat: 20000 HP sits far under the Ch.7 Fortune target ($8M). */
+    E({
+      id: 'cobra_raja',
+      name: 'THE COBRA RAJA',
+      article: 'The',
+      hp: 20000, offense: 62, defense: 34, speed: 28, level: 35, exp: 12400, cash: 5200,
+      weakness: [],
+      moves: [
+        { name: 'crown lunge', kind: 'attack', mult: 1.2, text: '{e} struck down off the crown at {t} with the whole throne behind it.', weight: 4 },
+        { name: 'paralyzing gaze', kind: 'status', status: 'paralyzed', text: '{e} fixed {t} with a flat golden eye and {t} could not move.', weight: 3 },
+        { name: 'venom spray', kind: 'strong', mult: 1.7, text: '{e} reared its carved hood and sprayed a stinging mist across {t}!', weight: 3 },
+        { name: 'royal hiss', kind: 'taunt', text: '{e} hissed a long cold sentence in a language of kings, and the throne room chilled.', weight: 2 },
+      ],
+      deathLine: 'The Cobra Raja shed its last skin, and what slid out from under the crown was only a tired old king, blinking, the Hush gone out of his eyes.',
+      sprite: 'battle_cobra_raja', mini: 'mini_cobra_raja',
+      bg: [RAMP.GOLD, RAMP.RED],
+      boss: true,
+      mind_immune: true,
+    }),
   ].map((e) => [e.id, e]),
 );
 

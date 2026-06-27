@@ -1361,6 +1361,13 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   laughing_dust_pot: { sprite: 'battle_laughing_dust_pot', draw: drawCursedSouvenir },
   sphinx_paw_shadow: { sprite: 'battle_sphinx_paw_shadow', draw: drawHillSlugDeluxe },
   laughing_sphinx: { sprite: 'battle_laughing_sphinx', draw: drawHillSlugDeluxe },
+  // Chapter 7 (India) — the authored PNGs override these at boot; the draw fns are
+  // only the FROZEN boot fallback (borrowed, never new — CLAUDE.md spritegen freeze).
+  rickshaw_swarm: { sprite: 'battle_rickshaw_swarm', draw: drawPigeonGang },
+  spice_djinn: { sprite: 'battle_spice_djinn', draw: drawCursedSouvenir },
+  temple_macaque: { sprite: 'battle_temple_macaque', draw: drawHillSlugDeluxe },
+  naga_sentry: { sprite: 'battle_naga_sentry', draw: drawBananaBunch },
+  cobra_raja: { sprite: 'battle_cobra_raja', draw: drawHillSlugDeluxe },
 };
 
 /**

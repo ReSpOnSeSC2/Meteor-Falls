@@ -22,7 +22,6 @@ import {
   airborneGrounded,
   elementalGolem,
   mercyEnding,
-  thresholdHeal,
 } from '../../levelkit/forge/bosses';
 
 export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
@@ -44,13 +43,10 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
    * src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy + the 8-riddle pool —
    * no longer a draft (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 
-  /* Ch.7 — COBRA RAJA (3,200 HP): sheds skin once at 40% (+800), gaze every 3 */
-  cobra_raja: thresholdHeal('cobra_raja', {
-    frac: 0.4,
-    healAmount: 800,
-    healLine: 'raja_shed_draft',
-    gaze: { every: 3, status: 'paralyzed', turns: 2 },
-  }),
+  /* Ch.7 — COBRA RAJA: PROMOTED (the Chandrapore landing). Now a live boss in
+   * src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy at canon 20,000 HP
+   * (the gaze + 40% skin-shed) — no longer a draft (Prime Law 1: a draft may not
+   * duplicate a shipped script or enemy). */
 
   /* Ch.8 — THE PAPER DRAGON (4,100 HP): airborne physical-immune; self-immolates */
   paper_dragon: airborneGrounded('paper_dragon', {
@@ -98,7 +94,7 @@ export const DRAFT_BOSS_IDS = [
   // 'the_whisperwig' — PROMOTED to a live boss at the Ch.4 Norway landing
   // 'whiskerzilla' — PROMOTED to a live boss at the Ch.5 Minimus landing
   // 'laughing_sphinx' — PROMOTED to a live boss at the Ch.6 Zanzibel landing
-  'cobra_raja',
+  // 'cobra_raja' — PROMOTED to a live boss at the Ch.7 Chandrapore landing
   'paper_dragon',
   'count_hoaxula',
   'frost_sentinel',

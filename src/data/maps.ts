@@ -15,6 +15,7 @@ import { buildChapter3Maps } from './maps_ch3';
 import { buildChapter4Maps } from './maps_ch4';
 import { buildChapter5Maps } from './maps_ch5';
 import { buildChapter6Maps } from './maps_ch6';
+import { buildChapter7Maps } from './maps_ch7';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
 import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
@@ -3202,6 +3203,9 @@ export const MAPS: Record<string, MapDef> = {
   // CHAPTER 6 Africa — "The Ruins That Laugh" (Zanzibel / the Savanna Run / the
   // Laughing Ruins / the Sphinx's chin). The BRANCH's home (Held Breath + Choice 1).
   ...buildChapter6Maps(),
+  // CHAPTER 7 India — "The Cobra's Palace" (Chandrapore / the Monsoon Road / the
+  // night train / the palace throne). A straight chapter (no branch beat).
+  ...buildChapter7Maps(),
   otterbrook: otterbrookMap,
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,

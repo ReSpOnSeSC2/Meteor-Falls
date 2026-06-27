@@ -81,3 +81,8 @@ zanzibel_market_queen
 zanzibel_dockmaster
 laughing_ruins_guide
 baobab_healer
+# Ch.7 India — Chandrapore cast
+cp_spice_merchant
+cp_dabbawala
+cp_stationmaster
+cp_usher
