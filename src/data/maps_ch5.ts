@@ -202,7 +202,7 @@ function buildProcessionWay(): MapDef {
     ],
     phones: [],
     doors: [
-      { x: 0, y: 7, w: 1, h: 2, to: 'minimus_major', tx: 37 * 16, ty: 13 * 16, facing: 'left', indicator: 'none' },
+      { x: 0, y: 7, w: 1, h: 2, to: 'minimus_major', tx: 37 * 16, ty: 10 * 16, facing: 'left', indicator: 'none' }, // land ON the Procession Way street (rows 9-11), not 2 tiles down on the turf
       { x: W - 1, y: 7, w: 1, h: 2, to: 'the_hedgerow', tx: 12 * 16, ty: 16 * 16, facing: 'right', indicator: 'none' },
     ],
     spawners: [
@@ -329,7 +329,7 @@ function buildDucalCrown(): MapDef {
     signs: [{ x: 9, y: 12, dialogue: 'sign_ducal_crown' }],
     phones: [],
     doors: [
-      { x: 9, y: H - 1, w: 2, h: 1, to: 'the_hedgerow', tx: 12 * 16, ty: 1 * 16, facing: 'down', indicator: 'none' },
+      { x: 9, y: H - 1, w: 2, h: 1, to: 'the_hedgerow', tx: 12 * 16, ty: 2 * 16, facing: 'down', indicator: 'none' }, // land one tile BELOW the thorn-arch prop at (12,1), so the arch frames the exit above (clean depth-sort) instead of overlapping the player
     ],
     spawners: [],
     triggers: [

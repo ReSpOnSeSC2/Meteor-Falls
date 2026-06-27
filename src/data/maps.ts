@@ -719,6 +719,17 @@ function buildMeadowWoods(): MapDef {
     trees = clearTreesIn(trees, box);
   }
 
+  // clearTreesIn only removes tree PROPS — but g.sprinkle can paint a SOLID bush
+  // ('b') onto the WEST door-mouth GRID, wedging the player who arrives here from
+  // meadow_mile (the landing is tile (1, westY), tx:16). Strip any solid bush from
+  // the mouth so the entry is always walkable, never seed-luck (the trail ':' and
+  // grass decor are left intact).
+  for (let yy = Math.max(0, westY - 1); yy <= Math.min(H - 1, westY + 2); yy++) {
+    const row = grid[yy].split('');
+    for (let xx = 0; xx <= 2; xx++) if (row[xx] === 'b') row[xx] = '.';
+    grid[yy] = row.join('');
+  }
+
   const gift = walkPresent('meadow_gift_woods', gladeX - 1, gladeY);
   return {
     id: 'meadow_woods',

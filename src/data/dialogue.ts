@@ -2715,7 +2715,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   mn_lens: [
     "(The Hundred Engineers swarm the workshop bench like one many-handed creature. They take {milo}'s spare Norway lens — Sigrid's, ground for a giant's eye — and they grind it, and grind it, and grind it SMALL.)",
     "@(The Chief Engineer presents it on a velvet thimble.) The BIG-LITTLE LENS. Clip it to your Clicker, colossus. Now you see the small the way WE see it — and you can lend that seeing to your whole party. We call it Focus. Use it well. Use it gently.",
-    "* {milo}'s SPY became the BIG-LITTLE LENS — party-wide FOCUS, and a travel-scale Pippa can finally read.",
+    "* {milo}'s SPY became the BIG-LITTLE LENS — party-wide FOCUS, and a travel-scale {pippa} can finally read.",
   ],
   mn_lens_done: ["@The Lens treating you well, colossus? Keep it clean. A smudge to you is a total eclipse to whatever you're looking at."],
 
@@ -2738,7 +2738,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — THE DUCAL CROWN: BOSS 5 (Whiskerzilla) intro —
   whiskerzilla_door: [
     '(The Hedgerow opens onto the Ducal Crown, and the smell arrives first: warm fur, and a great, great deal of it.)',
-    "@...oh, no. (Pippa, very small and very still.) That is a cat. That is just a lost cat. It found the warmest, highest, most important spot in the entire kingdom, and it went to SLEEP on it. We have to move it. We absolutely cannot move it. It is the size of a coastline.",
+    "@...oh, no. ({pippa}, very small and very still.) That is a cat. That is just a lost cat. It found the warmest, highest, most important spot in the entire kingdom, and it went to SLEEP on it. We have to move it. We absolutely cannot move it. It is the size of a coastline.",
     "@So we don't beat it. ({milo}, reading the Lens.) We can't, and we shouldn't. We just have to make it lose interest — survive it, tire it out. And whatever else you do: when that tail starts to go, DEFEND. Everybody. Hard.",
   ],
 
@@ -2763,7 +2763,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — the WIN (post-battle): the Duchess knights the cat (the §A6 mercy ending) —
   whiskerzilla_win: [
     "(You did not defeat WHISKERZILLA. Nothing so rude. You were DISMISSED — which, from a cat, is functionally the same as a blessing.)",
-    '@QUICK — Your Grace, while it sleeps! (Pippa, breathless.)',
+    '@QUICK — Your Grace, while it sleeps! ({pippa}, breathless.)',
     "(The Grand Duchess steps to the very lip of the dais, draws a needle-sword the length of an eyelash, and dubs the enormous drowsy cat upon its colossal nose.)",
     "@Arise, SIR Whiskers — Knight-Protector of the Crown, and its monument henceforth. ...Good kitty. STAY. (The cat, knighted, purrs in its sleep. The crisis is now, officially, a landmark.)",
   ],
@@ -2781,15 +2781,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // — THE TWO JOINS: Pippa appointed Foreign Minister; Dorin revealed —
   pippa_join: [
-    "@(The Grand Duchess pitches her voice to fill the square, which at her scale means merely that she is audible.) For service to the Crown — and for being LARGE about it in all the correct ways — Minimus appoints PIPPA QUILL its Foreign Minister of Being Taken Seriously.",
+    "@(The Grand Duchess pitches her voice to fill the square, which at her scale means merely that she is audible.) For service to the Crown — and for being LARGE about it in all the correct ways — Minimus appoints {pippa} QUILL its Foreign Minister of Being Taken Seriously.",
     "@Go with the colossi, Minister. See that the big world takes small things seriously, for once. Here — the ROYAL THIMBLE. Press it close and it brings you UP to their scale, and holds you there steady, out where everything is the wrong size and proud of it.",
-    "@(Pippa presses the ROYAL THIMBLE to her chest and RISES — lapel-pin to colossus, smooth as a drawn breath — until she stands shoulder to shoulder with the party. She does not wobble, because a minister does not wobble.) ...Right. Where are we colossally going next?",
+    "@({pippa} presses the ROYAL THIMBLE to her chest and RISES — lapel-pin to colossus, smooth as a drawn breath — until she stands shoulder to shoulder with the party. She does not wobble, because a minister does not wobble.) ...Right. Where are we colossally going next?",
     '* {pippa} joined the party — the ROYAL THIMBLE holds her at travel scale.',
   ],
   dorin_join: [
     '(There is a kid sitting on the duchy wall, swinging his feet over a drop that is, to him, nothing at all. Travel-worn gi. Prayer beads. A half-eaten something. He has been a step ahead of you since the Sleeper\'s hand in Norway, and he has never once offered his name.)',
     "@You move loud. (He doesn't get up.) Whole kingdom of small, careful people — and you came through it like weather. But you came through it CAREFUL. I watched. You kept the cat from stepping on anyone. That counts.",
-    "@Dorin. I'm headed the same way you are — there's a mountain at the far end of all this with my name already carved on it. No sense walking it alone. Might as well walk it loud.",
+    "@{dorin}. I'm headed the same way you are — there's a mountain at the far end of all this with my name already carved on it. No sense walking it alone. Might as well walk it loud.",
     '* {dorin} joined the party.',
   ],
 
@@ -2802,7 +2802,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // — MINIMUS MAJOR NPCs (one obsession each, §A11) —
   npc_mn_pippa: [
-    "@Pippa Quill — royal census cadet, page to Her Grace. No — up HERE. On the matchbox. I am not a lapel pin. I am a CIVIL SERVANT. The distinction matters enormously to me and to no one else.",
+    "@{pippa} Quill — royal census cadet, page to Her Grace. No — up HERE. On the matchbox. I am not a lapel pin. I am a CIVIL SERVANT. The distinction matters enormously to me and to no one else.",
     "@You are the single largest diplomatic incident in the recorded history of the duchy, and I have decided to manage you personally. Stay on the Way. Do not sneeze near the cathedral. If anyone asks, you are WITH ME.",
   ],
   npc_mn_duchess: [
@@ -2849,7 +2849,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   shop_minimus_bye: ['@Mind the doorway on your way out. To you it is ankle height. To us it represents a generation of structural engineering. Walk careful, big friend.'],
 
   // — the "Say Cheese, Minister" pickup (active-quest flavor) —
-  q_say_cheese: ["@HOLD it — right there, don't move! (Mr. Click, diving under his black cloth.) Minister Pippa on the thimble, chin UP; Her Grace's portrait behind; and you colossi in the frame whether you fit or not. Three — two — SAY CHEESE! (FLASH.)"],
+  q_say_cheese: ["@HOLD it — right there, don't move! (Mr. Click, diving under his black cloth.) Minister {pippa} on the thimble, chin UP; Her Grace's portrait behind; and you colossi in the frame whether you fit or not. Three — two — SAY CHEESE! (FLASH.)"],
 
   /* ════════════════ CHAPTER 6 — THE RUINS THAT LAUGH (Africa) ════════════════ */
 
