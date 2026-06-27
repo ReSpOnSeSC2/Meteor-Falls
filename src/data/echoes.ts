@@ -27,6 +27,13 @@ export const GOLDEN_CALLER_THRESHOLD = 45;
 /** rewinds ≤ this keeps the golden "Long Shot" ending reachable */
 export const GOLDEN_REWIND_CAP = 2;
 
+/** FORGIVE (the Hush "Answer" phase-3, ADR-130 §7) is viable iff the party arrives
+ *  WARM enough: the OPEN_HAND compassion choice, OR a caller ledger at least this
+ *  full. Below it — too Iron with too few callers — the attempt is offered but FAILS
+ *  into a forced Silence (the intended tragic beat). Set well under the golden bar:
+ *  mercy OR a rallied community each qualify on their own. */
+export const FORGIVE_CALLER_FLOOR = 24;
+
 /** a new game / pre-v16 save: a full bank, no snapshots, no rewinds yet */
 export function freshEchoes(): EchoState {
   return { stack: [], breaths: MAX_BREATHS, rewindCount: 0 };

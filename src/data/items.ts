@@ -324,7 +324,7 @@ const ITEM_BAND: Record<string, ItemBand> = {
   garlic_braid: 'ch9', pelin_bitters: 'ch9', vigil_candle: 'ch9',
   highland_honey: 'ch9', censer_incense: 'ch9',
   holy_water: 'ch9', smoke_bomb: 'ch9',
-  fake_fang_denture: 'ch9', cleveland_season_pass: 'ch9', stolen_vibe_jar: 'ch9', velvet_curtain: 'ch9', painted_icon: 'ch9',
+  fake_fang_denture: 'ch9', cleveland_season_pass: 'ch9', stolen_vibe_jar: 'ch9', stolen_light: 'ch9', velvet_curtain: 'ch9', painted_icon: 'ch9',
   monastery_bell_clapper: 'ch9', orient_express_ticket: 'ch9', trial_stone: 'ch9',
   prayer_bead_charm: 'ch9', saints_medal: 'ch9', trial_keepsake: 'ch9', garlic_charm: 'ch9',
   monks_wraps: 'ch9', embroidered_cuffs: 'ch9',
@@ -3908,6 +3908,23 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: false,
       price: 220,
       text: 'A mason jar of warmth Hoaxula skimmed off the valley, glowing faint and gold and homesick behind the glass. It belongs to people, not to a man. You will give it back. For now it is worth a fortune to the wrong sort.',
+    }),
+    // S21 (ADR-130): THE STOLEN LIGHT — the IRON inverse of the jar above. If you
+    // chose to KEEP the warmth instead of give it back (Choice 2 / ch9_count IRON,
+    // which sets `stolen_light_banked`), Milo's Vibe Siphon wound it into a weapon.
+    // A banked finale resource: a Quiet-phase CHIP, not a nuke — the one thing that
+    // can touch the Hush while it is canonically un-damageable. Tuned on the canon
+    // combat curve (verified by `npm run balance`, the finale loadout variants); the
+    // money axis is untouched (price 0, doesn't sell). Heavy, never cruel (§12 tone).
+    I({
+      id: 'stolen_light',
+      name: 'The Stolen Light',
+      kind: 'battle',
+      power: 600,
+      reusable: true,
+      usableInBattle: true,
+      price: 0,
+      text: 'The warmth you pulled out of a man and did not put back, wound tight and carried cold. In the Quiet, where the Hush lets nothing else reach it, this still burns. About 600 damage. It was someone\'s. Now it is yours.',
     }),
     I({
       id: 'velvet_curtain',

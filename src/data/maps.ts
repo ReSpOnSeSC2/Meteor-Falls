@@ -14,6 +14,7 @@ import { buildChapter2Maps } from './maps_ch2';
 import { buildChapter3Maps } from './maps_ch3';
 import { buildChapter4Maps } from './maps_ch4';
 import { buildChapter5Maps } from './maps_ch5';
+import { buildChapter6Maps } from './maps_ch6';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
 import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
@@ -3187,6 +3188,9 @@ export const MAPS: Record<string, MapDef> = {
   // CHAPTER 5 Minimus — "The Grand Duchy of Minimus" (Minimus Major / the
   // Procession Way / the Hedgerow / the Ducal Crown). Lands SHIPPED at the flip.
   ...buildChapter5Maps(),
+  // CHAPTER 6 Africa — "The Ruins That Laugh" (Zanzibel / the Savanna Run / the
+  // Laughing Ruins / the Sphinx's chin). The BRANCH's home (Held Breath + Choice 1).
+  ...buildChapter6Maps(),
   otterbrook: otterbrookMap,
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,

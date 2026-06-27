@@ -221,6 +221,23 @@ The ladder climbs smoothly (~2.1–2.4× per chapter, easing to 1.58× at the fi
 the Hush is split across three ~50k phases). `verify.test` "boss HP and target level climb
 together" passes (each row > the one below; Ch3 750 < Ch4 1800).
 
+### The Hush — finale loadout variants (ADR-130, BRANCHING_REDESIGN §4.3)
+
+The "Held Breath" branch makes the Hush fightable at **party size 3/4/5**, with Dorin's
+**Comet Ω** possibly withheld (IRON) and the **Stolen Light** chip possibly banked (IRON).
+Two small, on-curve knobs keep every reachable loadout in the fair **TTK 4–10** window —
+modeled in `src/battle/verify.ts` (`finaleHushChecks`), printed by `npm run balance`, pinned
+by `verify.test.ts`:
+
+- a per-party-size **effective-HP ease** `FINALE_HUSH_HP` = {5: 150k, 4: 138k, 3: 120k} — a
+  wounded party faces a Hush the long road had already worn thinner;
+- the **Stolen Light** per-round chip = its own §A8 item `power` (600), a survival-round
+  reducer, **not** a nuke (well under a tenth of party DPR).
+
+Conservative read (base stats, no weapons): warm full-five **TTK 7** (== `bossCheck(10)`); the
+Dorin-less paths sit at **8–9** (the control path's legible cost); none below 4 or above 10.
+Money > combat holds — every effective HP ≤ 150k ≪ the $3B Ch.10 Fortune target.
+
 ### TTK — computed exactly as `verify.ts` (`bossCheck`)
 
 Model: party = `BOSS_PARTY[ch]`, each hero's `heroDamagePerRound` at the §A6 target level,

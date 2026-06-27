@@ -513,5 +513,45 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'damage', power: 425 },
       },
     }),
+    // ── CHAPTER 6 (Africa) — §A10 the two named core quests: the watering-hole
+    //    convoy (the Dockmaster) + the stones that speak (the Ruins Guide). Each
+    //    banks a finale CALLER (§A6). Data-valid + givers placed in zanzibel (the
+    //    Ch.5 census/belfry precedent — shipped as data, completability is map-light). ──
+    Q({
+      id: 'watering_hole_convoy',
+      name: 'The Watering-Hole Convoy',
+      chapter: 6,
+      giver: 'zn_dockmaster',
+      startFlag: 'q_convoy',
+      objectives: [
+        { id: 'reach', text: "Reach the Dockmaster's stranded caravan at the watering hole, out along the Savanna Run.", flag: 'q_convoy_reach' },
+        { id: 'escort', text: 'See the convoy safe past the hyenas and back onto the track to Zanzibel.', flag: 'q_convoy_escort' },
+      ],
+      rewardItem: 'savanna_cloak',
+      doneFlag: 'q_convoy_done',
+      caller: {
+        name: 'The Dockmaster',
+        quote: 'The convoy made it — every axle, every drop of water, every nervous driver. When the desert closes on YOU, big friend, the whole Zanzibel road turns out to haul you clear. LOUDLY.',
+        effect: { kind: 'heal', power: 460 },
+      },
+    }),
+    Q({
+      id: 'stones_that_speak',
+      name: 'The Stones That Speak',
+      chapter: 6,
+      giver: 'zn_guide',
+      startFlag: 'q_stones',
+      objectives: [
+        { id: 'listen', text: 'In the Laughing Ruins, listen to the echoing stones until they finish the sentence someone left half-said.', flag: 'q_stones_listen' },
+        { id: 'carry', text: 'Carry what the stones remember back down to the Ruins Guide in Zanzibel.', flag: 'q_stones_carry' },
+      ],
+      rewardItem: 'griot_string',
+      doneFlag: 'q_stones_done',
+      caller: {
+        name: 'The Ruins Guide',
+        quote: 'The stones finished their sentence — after all these years — and went quiet, content. When you need a voice in the dark, the old city remembers how to answer. It will answer for YOU now.',
+        effect: { kind: 'damage', power: 455 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

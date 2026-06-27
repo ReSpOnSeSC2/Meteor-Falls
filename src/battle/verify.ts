@@ -18,6 +18,10 @@ import { AWAKENINGS } from '../data/awakenings';
 import { ENEMIES } from '../data/enemies';
 import { CHAPTER_MANIFESTS } from '../data/chapters';
 import { smashChance, WEAK_MUL } from './formulas';
+import { ITEMS } from '../data/items';
+
+/** shared empty exclusion set — the default for the un-gated DPR read */
+const NO_EXCLUDE: ReadonlySet<string> = new Set();
 
 /* ----------------------------- expected damage ----------------------------- */
 
@@ -94,11 +98,13 @@ export function heroBestNuke(
   heroId: HeroId,
   level: number,
   bossWeak: ReadonlySet<string>,
+  exclude: ReadonlySet<string> = NO_EXCLUDE,
 ): { ability: AbilityDef; dmg: number } | null {
   const vibe = statsAtLevel(heroId, level).vibe;
   const maxPp = maxPpAtLevel(heroId, level);
   let best: { ability: AbilityDef; dmg: number } | null = null;
   for (const ab of abilitiesByLevel(heroId, level)) {
+    if (exclude.has(ab.id)) continue; // a withheld ultimate (Comet Ω) — §A6 finale variant
     if (ab.pp > maxPp) continue; // can't afford a single cast
     const dmg = expectedAbilityDamage(ab, vibe, bossWeak);
     if (dmg > 0 && (!best || dmg > best.dmg)) best = { ability: ab, dmg };
@@ -122,10 +128,11 @@ export function heroDamagePerRound(
   level: number,
   bossWeak: ReadonlySet<string>,
   bossDef: number,
+  exclude: ReadonlySet<string> = NO_EXCLUDE,
 ): number {
   const s = statsAtLevel(heroId, level);
   const phys = expectedPhysical(s.offense, bossDef, s.guts);
-  const nuke = heroBestNuke(heroId, level, bossWeak);
+  const nuke = heroBestNuke(heroId, level, bossWeak, exclude);
   if (!nuke || nuke.dmg <= phys) return phys;
   const maxPp = maxPpAtLevel(heroId, level);
   const casts = Math.floor(maxPp / Math.max(1, nuke.ability.pp));
@@ -208,6 +215,90 @@ export function allBossChecks(): BossCheck[] {
     .map((k) => Number(k))
     .sort((a, b) => a - b)
     .map(bossCheck);
+}
+
+/* --------------------------- the finale loadout ---------------------------- */
+
+/**
+ * THE HUSH FINALE VARIANTS (S21, ADR-130) — the one fight the branching reshapes.
+ * Per the Party-Fate axes (src/engine/party.ts, src/data/choices.ts) the Hush is
+ * fought at party size 3, 4, or 5, with Dorin's Comet Ω possibly WITHHELD (IRON)
+ * and the STOLEN LIGHT chip possibly banked (IRON). §4.3 of BRANCHING_REDESIGN.md
+ * demands every reachable loadout stay in the fair TTK window; this is the model
+ * `npm run balance` prints and verify.test.ts pins.
+ *
+ * Two small knobs keep it fair, both on the canon curve (money > combat untouched —
+ * every effective HP is < the base 150k < the Ch.10 Fortune target):
+ *   • a per-party-size effective-HP EASE — a wounded party faces a Hush the long
+ *     road had already worn thinner (the §4.3 "BOSS_HP adjustment keyed to size");
+ *   • the STOLEN LIGHT chip — a Quiet-phase survival-round reducer the control path
+ *     banked, NOT a nuke (its magnitude IS the §A8 item's own `power`, one source).
+ */
+export const HUSH_LEVEL = 52;
+
+/** the Hush's effective HP by party size (§4.3) — base 150k for the full five,
+ *  eased for a wounded party so the worst case (a Dorin-less four/three) clears the
+ *  fair ceiling with headroom rather than sitting at TTK 10. */
+export const FINALE_HUSH_HP: Record<number, number> = { 5: 150000, 4: 138000, 3: 120000 };
+
+/** the banked Stolen Light's per-round chip = its §A8 item power (single source) */
+export const STOLEN_LIGHT_CHIP = ITEMS.stolen_light?.power ?? 0;
+
+/** Dorin's awakened ultimate — dropped from his DPR when the IRON path withholds it */
+const COMET_OMEGA: ReadonlySet<string> = new Set(['vibe_comet_o']);
+
+export interface FinaleVariant {
+  id: string;
+  label: string;
+  party: HeroId[];
+  /** IRON, un-redeemed: Dorin is present but cannot call Comet Ω */
+  cometWithheld: boolean;
+  /** IRON: the Stolen Light is banked and chips each round */
+  stolenLight: boolean;
+}
+
+/**
+ * The reachable finale loadouts, by axis combination (§4–5): sizes 5/4/3, Comet Ω
+ * on/withheld, Stolen Light off (warm) / on (control). The warm full-five is the
+ * canon baseline and equals bossCheck(10).
+ */
+export const FINALE_VARIANTS: FinaleVariant[] = [
+  { id: 'warm', label: 'FREE · OPEN_HAND (full five)', party: ['rex', 'faye', 'milo', 'pippa', 'dorin'], cometWithheld: false, stolenLight: false },
+  { id: 'open_strings', label: 'STRINGS · OPEN_HAND (Pippa calls in)', party: ['rex', 'faye', 'milo', 'dorin'], cometWithheld: false, stolenLight: false },
+  { id: 'iron_full', label: 'FREE · IRON (Ω withheld, Light banked)', party: ['rex', 'faye', 'milo', 'pippa', 'dorin'], cometWithheld: true, stolenLight: true },
+  { id: 'iron_strings', label: 'STRINGS · IRON (no Pippa, Ω withheld)', party: ['rex', 'faye', 'milo', 'dorin'], cometWithheld: true, stolenLight: true },
+  // Dorin (the powerhouse) leaves but a reconciled Pippa stays — the low-DPR four
+  { id: 'iron_dorin_left', label: 'IRON · Dorin left (Pippa stays)', party: ['rex', 'faye', 'milo', 'pippa'], cometWithheld: false, stolenLight: true },
+  { id: 'iron_strings_cold', label: 'STRINGS · IRON · cold (both gone)', party: ['rex', 'faye', 'milo'], cometWithheld: false, stolenLight: true },
+];
+
+export interface FinaleCheck extends FinaleVariant {
+  size: number;
+  hp: number;
+  partyDpr: number;
+  ttk: number;
+}
+
+/** the Hush check for one finale loadout: party DPR (less a withheld Ω, plus the
+ *  Stolen Light chip) vs the party-size-eased HP → TTK. Same conservative model as
+ *  bossCheck (base stats, no weapons), so the read is a fair lower bound. */
+export function finaleHushCheck(v: FinaleVariant): FinaleCheck {
+  const weak: ReadonlySet<string> = new Set(); // the Hush is bespoke — no exploitable weakness
+  const bossDef = HUSH_LEVEL;
+  let partyDpr = 0;
+  for (const h of v.party) {
+    const exclude = v.cometWithheld && h === 'dorin' ? COMET_OMEGA : NO_EXCLUDE;
+    partyDpr += heroDamagePerRound(h, HUSH_LEVEL, weak, bossDef, exclude);
+  }
+  if (v.stolenLight) partyDpr += STOLEN_LIGHT_CHIP;
+  const hp = FINALE_HUSH_HP[v.party.length] ?? FINALE_HUSH_HP[5];
+  const ttk = Math.max(1, Math.ceil(hp / Math.max(1, partyDpr)));
+  return { ...v, size: v.party.length, hp, partyDpr, ttk };
+}
+
+/** every reachable finale loadout, checked — the §4.3 balance read. */
+export function finaleHushChecks(): FinaleCheck[] {
+  return FINALE_VARIANTS.map(finaleHushCheck);
 }
 
 /* ------------------------------ growth + ladders --------------------------- */

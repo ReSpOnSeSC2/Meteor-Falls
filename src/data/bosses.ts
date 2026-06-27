@@ -18,11 +18,24 @@
  * Types are z.infer'd from src/schemas (ADR-017); `npm run validate` parses
  * every script and pins the Grin's manifest both directions.
  */
-import type { BossScriptDef } from '../schemas';
+import type { BossScriptDef, RiddleDef } from '../schemas';
 
 export type { BossScriptDef } from '../schemas';
 
 const B = (b: BossScriptDef): BossScriptDef => b;
+
+/** §A6 Ch.6 — THE LAUGHING SPHINX ships a pool of 8 (a replay asks a different one;
+ *  BattleScene picks one and the riddle phases consume the answer). */
+const SPHINX_RIDDLES: RiddleDef[] = [
+  { q: 'I have a face and two hands but no arms. What am I?', options: ['A clock', 'A liar', 'The desert'], correct: 0 },
+  { q: 'What gets wetter the more it dries?', options: ['A river', 'A towel', 'A cloud'], correct: 1 },
+  { q: 'The more you take, the more you leave behind. What are they?', options: ['Coins', 'Footsteps', 'Regrets'], correct: 1 },
+  { q: 'What has many keys but opens no doors?', options: ['A piano', 'A jailer', 'A map'], correct: 0 },
+  { q: 'I speak without a mouth and hear without ears. What am I?', options: ['A ghost', 'An echo', 'The wind'], correct: 1 },
+  { q: 'What runs all around a yard yet never moves?', options: ['A dog', 'A fence', 'The sun'], correct: 1 },
+  { q: 'What can you catch but never throw?', options: ['A cold', 'A ball', 'A nap'], correct: 0 },
+  { q: 'What has a neck but no head?', options: ['A giraffe', 'A bottle', 'A road'], correct: 1 },
+];
 
 export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
   gilded_grin: B({
@@ -212,6 +225,39 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
         actions: [
           { kind: 'scriptLine', line: 'whisker_bored' },
           { kind: 'endBattleMercy' },
+        ],
+      },
+    ],
+  }),
+
+  // §A6 Ch.6 — THE LAUGHING SPHINX (9,000 HP): naps in its own carved chin and opens
+  // on a RIDDLE (BattleScene reads `riddle`, asks one of the eight on the ask widget).
+  // A RIGHT answer staggers it — it stuns ITSELF three turns (stunSelf), a free window
+  // to burn it down. A WRONG answer is the safe rewind sandbox the Held Breath was for:
+  // the whole party starts Crying three turns (partyStatus) — undoable with NO Trust
+  // cost (ADR-126). No elemental weakness; mind_immune rides the EnemyDef. The `riddle`
+  // template (forge/bosses.ts), expanded inline with real §A11 dialogue ids. Heartlight 6.
+  laughing_sphinx: B({
+    boss: 'laughing_sphinx',
+    riddle: { intro: 'sphinx_riddle_intro', pool: SPHINX_RIDDLES },
+    phases: [
+      {
+        // a RIGHT answer — the Sphinx is so delighted it stuns itself laughing (3 turns)
+        id: 'right',
+        trigger: { kind: 'riddleAnswered', ok: true },
+        actions: [
+          { kind: 'scriptLine', line: 'sphinx_right' },
+          { kind: 'stunSelf', turns: 3 },
+        ],
+      },
+      {
+        // a WRONG answer — the laugh gets into the whole party (Crying 3 turns); this is
+        // the rewind-safe teaching moment (undo it with the Held Breath, no Trust cost)
+        id: 'wrong',
+        trigger: { kind: 'riddleAnswered', ok: false },
+        actions: [
+          { kind: 'scriptLine', line: 'sphinx_wrong' },
+          { kind: 'partyStatus', status: 'crying', turns: 3 },
         ],
       },
     ],

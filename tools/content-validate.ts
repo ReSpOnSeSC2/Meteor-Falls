@@ -1342,6 +1342,14 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     // + the Flat Bell, its summoned 150-HP second target (bosses.ts scriptedSurvival)
     whiskerzilla: 4000,
     flat_bell: 150,
+    // Chapter 6 (Africa) — §A7 the art-matched roster (4 authored battlers work the
+    // Savanna Run + the Laughing Ruins) + BOSS 6. On-curve (band ch6, window 27-31).
+    // Money > combat: the Sphinx's 9000 HP sits far under the Ch.6 Fortune target ($1.2M).
+    caravan_hyena_pack: 220,
+    baobab_root_snare: 340,
+    laughing_dust_pot: 150,
+    sphinx_paw_shadow: 190,
+    laughing_sphinx: 9000,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1589,7 +1597,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner']);
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -1857,6 +1865,29 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       rewardItem: 'lens_charm',
       doneFlag: 'q_cheese_done',
       caller: { name: 'Mr. Click', kind: 'damage', power: 425 },
+    },
+    // ── CHAPTER 6 (Africa) — §A10 the two named core quests (the watering-hole convoy
+    //    + the stones that speak), each banking a finale CALLER. Givers placed in
+    //    zanzibel. Rewards reuse the live §A8 ch6 catalog. ──
+    watering_hole_convoy: {
+      name: 'The Watering-Hole Convoy',
+      chapter: 6,
+      giver: 'zn_dockmaster',
+      startFlag: 'q_convoy',
+      objectiveFlags: ['q_convoy_reach', 'q_convoy_escort'],
+      rewardItem: 'savanna_cloak',
+      doneFlag: 'q_convoy_done',
+      caller: { name: 'The Dockmaster', kind: 'heal', power: 460 },
+    },
+    stones_that_speak: {
+      name: 'The Stones That Speak',
+      chapter: 6,
+      giver: 'zn_guide',
+      startFlag: 'q_stones',
+      objectiveFlags: ['q_stones_listen', 'q_stones_carry'],
+      rewardItem: 'griot_string',
+      doneFlag: 'q_stones_done',
+      caller: { name: 'The Ruins Guide', kind: 'damage', power: 455 },
     },
   };
   for (const [id, pin] of Object.entries(canon)) {

@@ -17,27 +17,13 @@
  * canon only at promotion. Determinism is trivial: static data, no
  * Date.now()/Math.random() (Prime Law 2).
  */
-import type { BossScriptDef, RiddleDef } from '../../schemas';
+import type { BossScriptDef } from '../../schemas';
 import {
   airborneGrounded,
   elementalGolem,
   mercyEnding,
-  riddle,
   thresholdHeal,
 } from '../../levelkit/forge/bosses';
-
-/** the §A6 Ch.6 Sphinx ships a pool of 8 (a replay asks a different one) —
- *  DRAFT riddles, rewritten by the tone editor at promotion. */
-const SPHINX_RIDDLES: RiddleDef[] = [
-  { q: 'I have a face and two hands but no arms. What am I?', options: ['A clock', 'A liar', 'The desert'], correct: 0 },
-  { q: 'What gets wetter the more it dries?', options: ['A river', 'A towel', 'A cloud'], correct: 1 },
-  { q: 'The more you take, the more you leave behind. What are they?', options: ['Coins', 'Footsteps', 'Regrets'], correct: 1 },
-  { q: 'What has many keys but opens no doors?', options: ['A piano', 'A jailer', 'A map'], correct: 0 },
-  { q: 'I speak without a mouth and hear without ears. What am I?', options: ['A ghost', 'An echo', 'The wind'], correct: 1 },
-  { q: 'What runs all around a yard yet never moves?', options: ['A dog', 'A fence', 'The sun'], correct: 1 },
-  { q: 'What can you catch but never throw?', options: ['A cold', 'A ball', 'A nap'], correct: 0 },
-  { q: 'What has a neck but no head?', options: ['A giraffe', 'A bottle', 'A road'], correct: 1 },
-];
 
 export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
   /* Ch.3 — HEADMASTER MAINFRAME: PROMOTED (ADR-099). Now a live boss in
@@ -54,13 +40,9 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
    * (its summoned 150-HP second target) — no longer a draft (Prime Law 1: a draft
    * may not duplicate a shipped script or enemy). */
 
-  /* Ch.6 — THE LAUGHING SPHINX (2,300 HP): a riddle; right stuns, wrong cries */
-  laughing_sphinx: riddle('laughing_sphinx', {
-    intro: 'sphinx_intro_draft',
-    pool: SPHINX_RIDDLES,
-    stunTurns: 3,
-    wrong: { status: 'crying', turns: 3 },
-  }),
+  /* Ch.6 — THE LAUGHING SPHINX: PROMOTED (the Zanzibel landing). Now a live boss in
+   * src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy + the 8-riddle pool —
+   * no longer a draft (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 
   /* Ch.7 — COBRA RAJA (3,200 HP): sheds skin once at 40% (+800), gaze every 3 */
   cobra_raja: thresholdHeal('cobra_raja', {
@@ -115,7 +97,7 @@ export const DRAFT_BOSS_IDS = [
   // 'headmaster_mainframe' — PROMOTED to a live boss at the Ch.3 landing (ADR-099)
   // 'the_whisperwig' — PROMOTED to a live boss at the Ch.4 Norway landing
   // 'whiskerzilla' — PROMOTED to a live boss at the Ch.5 Minimus landing
-  'laughing_sphinx',
+  // 'laughing_sphinx' — PROMOTED to a live boss at the Ch.6 Zanzibel landing
   'cobra_raja',
   'paper_dragon',
   'count_hoaxula',

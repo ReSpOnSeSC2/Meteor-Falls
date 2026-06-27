@@ -18,6 +18,7 @@ import {
   growthRow,
   ladder,
   allBossChecks,
+  finaleHushChecks,
   AWAKENING_LEVEL,
   type GrowthRow,
 } from '../src/battle/verify';
@@ -87,6 +88,16 @@ for (const b of allBossChecks()) {
 }
 console.log('  (TTK is a CONSERVATIVE floor: no weapons, no items, no Pray/support — real geared');
 console.log('   fights fell faster. A fair EB boss is ~5–15 turns; the Tick/Hush are scripted set-pieces.)');
+
+console.log('\nTHE HUSH — FINALE LOADOUT VARIANTS (§4.3, ADR-130): party 3/4/5 × Comet Ω × Stolen Light\n');
+console.log('  Variant                                     Size   Ω     Light    HP     DPR   TTK');
+for (const f of finaleHushChecks()) {
+  console.log(
+    `  ${f.label.padEnd(42)}  ${f.size}    ${f.cometWithheld ? 'held' : ' on '}   ${f.stolenLight ? ' on' : 'off'}  ${pad(f.hp, 6)} ${pad(f.partyDpr, 6)}  ${pad(f.ttk, 3)}`,
+  );
+}
+console.log('  (every reachable path must land in the fair TTK window — verify.test.ts pins it;');
+console.log('   the Stolen Light chip + per-size HP ease keep a wounded party fair. money > combat.)');
 
 console.log('\nTHE §A4 ECONOMY — the revival line, tonics, picnic, hospital, the Spice Box\n');
 console.log('  REVIVAL LINE (§A4.12 — any cure listing "down" revives by its own heal):');

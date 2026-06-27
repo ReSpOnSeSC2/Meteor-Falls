@@ -7,7 +7,7 @@
  */
 import { GS } from './state';
 import { ENDING_CARDS, SLOT_ORDER } from '../data/endings';
-import { GOLDEN_CALLER_THRESHOLD, GOLDEN_REWIND_CAP } from '../data/echoes';
+import { GOLDEN_CALLER_THRESHOLD, GOLDEN_REWIND_CAP, FORGIVE_CALLER_FLOOR } from '../data/echoes';
 import { fortuneBand } from '../data/fortune';
 import type { EpilogueCard } from '../schemas';
 
@@ -33,6 +33,19 @@ export function isLongShot(ctx: EndingContext): boolean {
     ctx.callers >= GOLDEN_CALLER_THRESHOLD &&
     ctx.rewindCount <= GOLDEN_REWIND_CAP
   );
+}
+
+/**
+ * THE FORGIVE GATE (ADR-130, §7) — can the player take the Hush's "Answer" at all?
+ * FORGIVE (the phase-3 give-Vibe ending) is only achievable if the party arrives
+ * WARM: the OPEN_HAND compassion choice, OR a caller ledger at least
+ * FORGIVE_CALLER_FLOOR full. Too Iron with too few callers and the choice is still
+ * offered but FAILS into a forced Silence (the intended tragic beat). Pure; the
+ * BattleScene phase-3 warmth-meter (wired when Ch.10 lands) reads this to decide
+ * whether the meter can complete — the rest of "The Answer" is runtime UI.
+ */
+export function forgiveViable(ctx: EndingContext): boolean {
+  return ctx.flag('axis_compassion_openhand') || ctx.callers >= FORGIVE_CALLER_FLOOR;
 }
 
 /** assemble the epilogue: one best-matching card per slot (fallback guaranteed) */

@@ -11,6 +11,7 @@
  */
 import { GS, makeHeroState } from './state';
 import type { HeroId } from '../data/heroes';
+import { AWAKENINGS } from '../data/awakenings';
 
 /** is this hero in the ACTIVE party right now? */
 export function isPresent(id: HeroId): boolean {
@@ -39,4 +40,21 @@ export function withholdUltimate(id: HeroId, on = true): void {
 }
 export function isWithholding(id: HeroId): boolean {
   return GS.flag(`${id}_withholds`) === true;
+}
+
+/** a hero's awakening-granted ability ids (its story "ultimate(s)" — Comet Ω for
+ *  Dorin via trial_of_the_mute_mountain). Pure; read by the battle gate below. */
+export function awakenedAbilityIds(id: HeroId): Set<string> {
+  return new Set(Object.values(AWAKENINGS).filter((a) => a.hero === id).map((a) => a.ability));
+}
+
+/**
+ * S21 (ADR-130): the BATTLE side of the withhold. While a hero `isWithholding`,
+ * their awakened ultimate drops off the Vibe menu — the IRON-path Dorin can't
+ * call Comet Ω entering Mars until the redemption beat clears the flag. The pure
+ * mirror of `puppetLocked()` (echo.ts): an engine predicate the scene asks per
+ * ability, so the rule lives in one tested place (party.test.ts).
+ */
+export function isWithheldAbility(id: HeroId, abilityId: string): boolean {
+  return isWithholding(id) && awakenedAbilityIds(id).has(abilityId);
 }

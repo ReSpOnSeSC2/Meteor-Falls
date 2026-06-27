@@ -76,3 +76,8 @@ teacup_innkeeper
 tiny_postmaster
 matchbox_herald
 mr_click
+# Ch.6 Africa — Zanzibel cast
+zanzibel_market_queen
+zanzibel_dockmaster
+laughing_ruins_guide
+baobab_healer
