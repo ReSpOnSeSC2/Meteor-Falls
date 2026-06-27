@@ -553,5 +553,45 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'damage', power: 455 },
       },
     }),
+    // ── CHAPTER 7 (India) — §A10 the two named core quests: Seven Spices (the Spice
+    //    Merchant's bazaar-maze hunt) + The Monkey Who Stole Tuesday (the Dabbawala's
+    //    rooftop chase). Each banks a finale CALLER (§A6). Data-valid + givers placed in
+    //    chandrapore (the Ch.5/6 precedent — shipped as data, completability is map-light). ──
+    Q({
+      id: 'seven_spices',
+      name: 'Seven Spices',
+      chapter: 7,
+      giver: 'cp_spice_merchant',
+      startFlag: 'q_spices',
+      objectives: [
+        { id: 'gather', text: "Run the Spice Merchant's list through the Chandrapore bazaar maze and find all seven of his stolen spices.", flag: 'q_spices_gather' },
+        { id: 'return', text: 'Carry the full set back to the Spice Merchant before the lunch rush.', flag: 'q_spices_return' },
+      ],
+      rewardItem: 'spice_box',
+      doneFlag: 'q_spices_done',
+      caller: {
+        name: 'The Spice Merchant',
+        quote: 'Seven spices, all seven, home before the rush — you did in an afternoon what the whole bazaar swore could not be done. When the cold gets into YOUR cooking, big friend, I will season the whole festival in your name.',
+        effect: { kind: 'heal', power: 700 },
+      },
+    }),
+    Q({
+      id: 'monkey_who_stole_tuesday',
+      name: 'The Monkey Who Stole Tuesday',
+      chapter: 7,
+      giver: 'cp_dabbawala',
+      startFlag: 'q_monkey',
+      objectives: [
+        { id: 'chase', text: 'Chase the Monkey Magnate over the rooftops of Chandrapore — he took the Dabbawala\'s run AND your hat.', flag: 'q_monkey_chase' },
+        { id: 'corner', text: 'Corner the Magnate on the cinema roof and get your hat back (and whatever else he is clutching).', flag: 'q_monkey_corner' },
+      ],
+      rewardItem: 'monkey_paw_charm',
+      doneFlag: 'q_monkey_done',
+      caller: {
+        name: 'The Monkey Magnate',
+        quote: '(Static. Then — breathing. Hard, ragged, rhythmic breathing, very close to the receiver. There are no words. There never were. It is, somehow, exactly the help you needed.)',
+        effect: { kind: 'damage', power: 690 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

@@ -263,6 +263,38 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
     ],
   }),
 
+  // §A6 Ch.7 — THE COBRA RAJA (20,000 HP): coils on the stolen crown in the usurped
+  // throne room. Every 3rd turn it meets the eye with a PARALYZING gaze that holds the
+  // whole party (the `gaze` phase — block it with Shield Σ or Mia's Magnet), and once at
+  // 40% HP it SHEDS its skin and HEALS +800 (the `shed` threshold — burn it down fast
+  // through the gap). The `thresholdHeal` template (forge/bosses.ts), expanded inline
+  // with real §A11 dialogue ids. No elemental weakness; mind_immune rides the EnemyDef.
+  // Heartlight 7. Money > combat: 20,000 HP sits far under the Ch.7 Fortune target ($8M).
+  cobra_raja: B({
+    boss: 'cobra_raja',
+    phases: [
+      {
+        // at 40% HP it sheds its skin in one shudder and heals back 800 (once)
+        id: 'shed',
+        trigger: { kind: 'hpBelow', frac: 0.4 },
+        actions: [
+          { kind: 'scriptLine', line: 'cobra_shed' },
+          { kind: 'healSelf', amount: 800 },
+        ],
+      },
+      {
+        // every 3rd turn — the paralyzing gaze holds the whole party (Paralyzed 2 turns)
+        id: 'gaze',
+        trigger: { kind: 'turnCount', n: 3, every: 3 },
+        once: false,
+        actions: [
+          { kind: 'scriptLine', line: 'cobra_gaze' },
+          { kind: 'partyStatus', status: 'paralyzed', turns: 2 },
+        ],
+      },
+    ],
+  }),
+
   // §A6 / ADR-121 — THE HUSH SENTINEL, the first-night Mars war-construct. This is
   // the "cannot-win-alone / repel" set-piece expressed as DATA: super-Glint
   // (glintSupernova, BattleScene) carries the damage while the script runs to a

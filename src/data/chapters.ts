@@ -193,15 +193,21 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     chapter: 7,
     title: "The Cobra's Palace",
     region: 'India',
-    status: 'unlanded',
+    status: 'shipped',
     targetLevel: 35,
     ember: 7,
+    heartlight: 'The Coiled Raga',
     band: 'ch7',
     travel: 'train', // the overloaded night train
-    dungeon: { name: 'The Night Train → palace throne', site: 'night_train' },
+    dungeon: {
+      name: 'The Night Train → palace throne',
+      maps: ['night_train', 'palace_throne'],
+    },
     boss: { id: 'cobra_raja', name: 'Cobra Raja', hp: 20000, template: 'thresholdHeal' },
-    settlements: [{ id: 'chandrapore', kind: 'city', style: 'bazaar-port' }],
-    maps: [],
+    settlements: [{ id: 'chandrapore', kind: 'city' }],
+    // the 2 overworld maps from buildChapter7Maps(): the bazaar city + the monsoon road
+    // (the dungeon maps live under dungeon.maps above)
+    maps: ['chandrapore', 'monsoon_road'],
     quests: ['seven_spices', 'monkey_who_stole_tuesday'],
   },
 

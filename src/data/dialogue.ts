@@ -2930,6 +2930,81 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '* CHAPTER 6 — THE RUINS THAT LAUGH — complete. Six embers carried. Four to go.',
   ],
 
+  /* ════════════════════ CHAPTER 7 — THE COBRA'S PALACE (India) ════════════════════ */
+
+  // — Bert offers the §A5 next leg (bertAirBeat: ch6_complete → CHANDRAPORE) —
+  bert_india_ask: [
+    "@Heard the locket pick up a new note out over the water, so I followed my ears east. (Bert taps the map, grinning.) CHANDRAPORE. Biggest city any of us'll ever see — bazaars you could lose a week in, river ghats, a picture-house. And somewhere over it, a palace gone wrong.",
+    '@Word on the wind is the old Maharaja got... replaced. By something COLD, up on his own throne. Sounds like locket business to me. Say the word and Lucille will have you there by the dinner rush.',
+  ],
+
+  // — the §A6 arrival: Bert noses Lucille down at the Chandrapore ghats —
+  ch7_arrival: [
+    '(Lucille drops out of a copper sky onto the river steps, and CHANDRAPORE hits all at once — frying ghee, marigolds, river-mud, ten thousand voices, a film song blaring from a tin speaker. The city goes up the hill in front of you in every colour at once, and all of it is MOVING.)',
+    '@Okay — okay, I take it back about Zanzibel being loud. ({milo}, turning in a slow circle, overwhelmed and delighted.) THIS is loud. This is the big leagues of loud.',
+    '@A poster the size of a house looks down over the crowd: five painted children and a falling star. THE MELODY OF MEDDLESOME CHILDREN — NOW SHOWING. {pippa} stares up at it. "...That\'s us," she says faintly. "That\'s supposed to be US."',
+  ],
+
+  // — Chandrapore signs —
+  sign_chandrapore: ['(A hand-painted arch over the ghat road, lettered and re-lettered in a dozen scripts:) CHANDRAPORE — Jewel of the River, City of a Thousand Trades. Mind the monkeys. Mind the meter. Mind the cinema queue, it does not move. Welcome, traveller, and welcome your wallet too.'],
+  sign_monsoon_gate: ['(A weathered marker at the up-country gate, an arrow burned into it:) ↑ THE MONSOON ROAD — to the night-train spur and the PALACE beyond. The road is open. The palace is not. Travellers are advised to go in daylight, in company, and to look UP.'],
+  sign_chandrapore_court: ['(A shaded brass bench under a banyan, a plate set into it:) THE BAZAAR COURT — by leave of the (struck out) Maharaja (struck out) the New Throne. All disputes settled here, except the big one, which is settled up the hill.'],
+
+  // — Chandrapore NPCs —
+  npc_cp_spice_merchant: [
+    '@Welcome, welcome, big spenders! I am the Spice Merchant — finest seven-spice masala on the river, and the longest memory in the bazaar. Everything has a price. The spices have SEVEN.',
+    "@Which — funny thing — I am SHORT of just now. A certain monkey, certain rooftops. If great tall folk like you happened to run the maze and find my seven... a merchant remembers a kindness. With dinner. For a YEAR.",
+  ],
+  npc_cp_dabbawala: [
+    "@Dabbawala. I run two hundred hot lunches across this city and never once mix them up — except today, because the MONKEY MAGNATE took my whole tiffin pole off a rooftop. And, I am sorry to say, the hat clean off the small one of yours, too.",
+    '@He goes over the roofs where I cannot follow. But YOU — you are built for cornering a thief on a cinema roof. Get your hat back, and I will get my lunches back, and the whole street will eat on time again.',
+  ],
+  npc_cp_stationmaster: [
+    "@Stationmaster, what's left of me. The night train sits dead on the palace spur — won't go up, won't come down, and the dark between the cars has gone... wrong. Cold things in the couplings now. Things that watch.",
+    "@That's the way to the throne, mind, if you're fool enough or brave enough to want it. Same thing, up here, mostly.",
+  ],
+  npc_cp_usher: [
+    '@One ticket? Sit anywhere, the matinee is empty — everyone is too busy LIVING the story to watch it. Three hours, five brave children, one falling star, terrific songs.',
+    '@(He squints at you. Then at the poster. Then at you.) ...You know, you do look a bit like— no. No, they were much taller. And they could SING. Lovely try, though.',
+  ],
+
+  // — the §A8 Ch.7 shop (the Grand Bazaar shelf) —
+  shop_chandrapore_greet: ['@The Spice Merchant throws open the whole bright shelf! Chai, charms, cloth, courage by the cup, a flute that almost charms snakes — all genuine, all today only, all a STEAL. (Everything in Chandrapore is, today only, a steal.)'],
+  shop_chandrapore_bye: ['@Pleasure, big friend! Tell the bazaar the Spice Merchant sent you — and tell them about the seven spices, it is GREAT for business.'],
+
+  // — Monsoon Road signs —
+  sign_monsoon_road: ['(A leaning milestone, draped with a faded garland:) THE MONSOON ROAD. Keep to the track. The verge belongs to the macaques, the meter-men, and one very old snake who was here before the road was.'],
+  sign_palace_mouth: ['(Two carved naga-pillars frame the way ahead; a warning is scratched on the left one:) THE NIGHT TRAIN — ahead, and the PALACE above it. The Raja is in. (Below, in a shakier hand:) the Raja is NOT the Raja anymore.'],
+
+  // — the night train (dungeon) sign —
+  sign_night_train: ['(A brass plate bolted by a dead carriage door, swinging on one screw:) THE TILAK MAIL — NIGHT SERVICE TO THE PALACE. SERVICE SUSPENDED UNTIL THE THRONE IS ITSELF AGAIN. Mind the gap. Mind the dark. Mind, especially, the couplings.'],
+
+  // — the palace throne sign —
+  sign_palace_throne: ['(A line of inlay runs along the throne-room floor, half the gems prised out:) HERE SITS THE LIGHT OF THE RIVER. (Someone has scratched, under it, recently and in a hurry:) it does not feel like light up here anymore. it feels like being WATCHED.'],
+
+  // — §A6 BOSS 7 — the Cobra Raja (the phase machine reads these) —
+  cobra_shed: ['(The Raja shudders once, head to coil, and SHEDS — a whole skin sloughing off the crown in one papery rush. What is underneath is bright, and new, and angrier, and a little less tired than before.)', '@"Ssso. You would unmake a king. Watch, then, how a king UNMAKES himself — and comes back."'],
+  cobra_gaze: ['(The Raja lifts its carved hood and meets every eye at once with one flat golden stare. For two long turns the whole party stands locked, breath held, unable to so much as blink.)'],
+
+  // — the boss-trigger approach + the win (OverworldScene cobraRajaBossScene) —
+  cobra_raja_door: ['(The throne room is all gold and cold. On the stolen crown, where a man should sit, a great hooded COBRA is coiled — and it is wearing the Maharaja\'s face like a loose mask. {faye} steadies her breath. "There\'s someone still IN there," she says quietly. "Under the Hush. Under the king. We have to wake him, not just win.")'],
+  cobra_raja_win: [
+    '(The last skin slides off the crown — and what is left is not a monster at all. Just an old man, the real Maharaja, blinking in his own throne room as though waking from a long cold dream, the gold gone soft and warm around him.)',
+    '@"...Oh," says the Maharaja, very quietly, looking at his own hands. "Oh, I have been so far away." He looks at you, and at the locket, and something behind his eyes comes back on. "You called me home. Take the throne\'s old song with you. It was never mine to keep — only to pass along."',
+  ],
+  palace_throne_early: ['(The throne hums under its stolen gems, but it will not sing — not while the cold thing wears the crown. The resonance keeps its peace until the true king is woken and the Raja is unmade.)'],
+
+  // — HEARTLIGHT 7 — THE COILED RAGA (Ember 7) —
+  ember7_get: [
+    "(The throne SINGS — not the flat cold pressure of the Hush, but a long warm coiling RAGA that climbs up out of the marble and out over Chandrapore, and for one moment the whole moving roaring city moves to the SAME tune, and does not even know it.)",
+    '@Heartlight 7. ({faye}, hushed.) The Coiled Raga. ...He wasn\'t a monster, {rex}. He was just a king who got too cold and too far from home, like all of them. The locket has the raga now. Seven down. The song is nearly whole.',
+  ],
+  // — the §A6 chapter card (ch7_complete) —
+  ch7_card: [
+    'The palace is warm again, the river throws back the lights of a city that never once stopped moving, and somewhere a very old king is having a very good cup of chai for the first time in years. You go down through the bazaar toward Lucille with a coiled raga in the locket and the growing certainty that the whole song is close enough now to hum.',
+    '* CHAPTER 7 — THE COBRA\'S PALACE — complete. Seven embers carried. Three to go.',
+  ],
+
 };
 
 /**

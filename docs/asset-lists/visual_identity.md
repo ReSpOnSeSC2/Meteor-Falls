@@ -2,8 +2,8 @@
 
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
-- Enemies: 98
-- Fully authored identities: 98
+- Enemies: 103
+- Fully authored identities: 103
 - Legacy identities: 0
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
@@ -111,6 +111,11 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | laughing_dust_pot | laughing_ruins | battle_laughing_dust_pot | mini:mini_laughing_dust_pot | authored | - |
 | sphinx_paw_shadow | laughing_ruins | battle_sphinx_paw_shadow | mini:mini_sphinx_paw_shadow | authored | - |
 | laughing_sphinx | - | battle_laughing_sphinx | mini:mini_laughing_sphinx | authored | - |
+| rickshaw_swarm | monsoon_road | battle_rickshaw_swarm | mini:mini_rickshaw_swarm | authored | - |
+| spice_djinn | monsoon_road, night_train | battle_spice_djinn | mini:mini_spice_djinn | authored | - |
+| temple_macaque | monsoon_road, night_train | battle_temple_macaque | mini:mini_temple_macaque | authored | - |
+| naga_sentry | monsoon_road, night_train | battle_naga_sentry | mini:mini_naga_sentry | authored | - |
+| cobra_raja | - | battle_cobra_raja | mini:mini_cobra_raja | authored | - |
 
 ## Procedural Overworld Roamer Queue (retire these)
 
