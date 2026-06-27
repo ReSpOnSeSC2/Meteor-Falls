@@ -70,6 +70,7 @@ export function rewindTo(id: ChoiceId): boolean {
   // re-seat the meta counters onto the restored timeline, then pay the cost
   GS.data.echoes.breaths = breaths - 1;
   GS.data.echoes.rewindCount = count + 1;
+  lockPuppet(); // §2.3: a Breath spent leaves the Locket too spent to also borrow a will this map (will OR time)
   GS.data.echoes.stack = GS.data.echoes.stack.filter((s) => CHOICES[s.choice as ChoiceId].chapter < chapter);
   clearDownstreamChoiceFlags(chapter); // explicit: clear any flag set outside the snapshot window
   return true;

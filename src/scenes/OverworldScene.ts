@@ -109,7 +109,7 @@ import { AWAKENINGS } from '../data/awakenings';
 import { playCutscene } from '../engine/cutscene';
 import { CHOICES, type ChoiceId } from '../data/choices';
 import { recordChoice } from '../engine/choice';
-import { captureEcho, isRewindable } from '../engine/echo';
+import { captureEcho, isRewindable, clearPuppetLock } from '../engine/echo';
 import { composeEnding, endingContext } from '../engine/ending';
 import { withholdUltimate, isPresent } from '../engine/party';
 import { LINKS_FLAGS, LINKS_TEXT, SUNDAY_SET, linksSeed } from '../data/links';
@@ -700,13 +700,17 @@ export class OverworldScene extends Phaser.Scene {
       const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, sprite).setOrigin(0, 0);
       if (AUTHORED_VEHICLE_PROP_KEYS.has(sprite)) img.setFrame(0);
       const displaySize = AUTHORED_WORLD_PROP_DISPLAY_SIZE[sprite as AuthoredWorldPropKey];
-      // §A11 full-Gulliver: shrink Minimus-NATIVE props so the colossi tower over the duchy's tiny
-      // objects — but NOT facades (their ADR-051 collision/door is texture-coupled) and NOT cars
-      // (already dainty via MINIMUS_TRAFFIC_SCALE).
+      // §A11 full-Gulliver: shrink Minimus-NATIVE objects so the colossi party TOWERS over the
+      // tabletop duchy — props/curios AND now the facades themselves (a building is part of the
+      // tiny duchy too). Cars are excluded (already dainty via MINIMUS_TRAFFIC_SCALE). A facade's
+      // ADR-051 collision/door is texture-coupled, so the shrink + foot re-anchor here is mirrored
+      // (scale-aware) into facadeSolids/facadeDoorBox below so collision stays the building drawn.
       const isFacadeSprite = sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite);
-      const nativeProp =
-        MINIMUS_SKIN_MAPS.has(this.mapDef.id) && !isFacadeSprite && !AUTHORED_VEHICLE_PROP_KEYS.has(sprite);
-      const nps = nativeProp ? MINIMUS_NATIVE_SCALE : 1;
+      const minimusNative = MINIMUS_SKIN_MAPS.has(this.mapDef.id) && !AUTHORED_VEHICLE_PROP_KEYS.has(sprite);
+      const nativeFacade = minimusNative && isFacadeSprite; // a building of the tiny duchy
+      const nativeProp = minimusNative && !isFacadeSprite; // a prop/curio of the tiny duchy
+      const native = nativeProp || nativeFacade;
+      const nps = native ? MINIMUS_NATIVE_SCALE : 1;
       // Sized props carry NATIVE map dims → scale at read. Everything else goes
       // through THE WORLD RESIZE RULE (worldSpriteScale): facades land at their
       // footprint and legacy ×1 art is lifted to runtime res, so homes/props are
@@ -715,11 +719,11 @@ export class OverworldScene extends Phaser.Scene {
         img.setDisplaySize(s(displaySize.w) * nps, s(displaySize.h) * nps);
       } else {
         let sc = worldSpriteScale(sprite, img.width, img.height);
-        if (nativeProp) sc *= MINIMUS_NATIVE_SCALE;
+        if (native) sc *= MINIMUS_NATIVE_SCALE;
         if (sc !== 1) img.setScale(sc);
       }
-      // origin is top-left, so a shrunk native prop is re-planted by its FOOT + x-centre
-      if (nativeProp) {
+      // origin is top-left, so a shrunk native object is re-planted by its FOOT + x-centre
+      if (native) {
         const sw = img.displayWidth, sh = img.displayHeight;
         img.x = p.x * TILE_PX + (sw / MINIMUS_NATIVE_SCALE - sw) / 2;
         img.y = p.y * TILE_PX + (sh / MINIMUS_NATIVE_SCALE - sh);
@@ -739,17 +743,27 @@ export class OverworldScene extends Phaser.Scene {
         // gatehouse, mansions) join the bldg_* facades here — the tall clubhouse_grand
         // had a 30px data solid under a much taller sprite, so its lower body was
         // walk-through and its doorstep sat too deep; the texture rebuild fixes both.
-        for (const sr of this.facadeSolids(p, img.displayWidth, img.displayHeight)) this.solids.push(sr);
+        // §A11 full-Gulliver: a NATIVE Minimus facade was scaled + foot-re-anchored above, so
+        // rebuild its collision from the SHRUNK, re-anchored rect (img.x/img.y + displayW/H) with
+        // the native eave/door constants scaled by the same factor — footprint = building drawn.
+        const fScale = nativeFacade ? MINIMUS_NATIVE_SCALE : 1;
+        for (const sr of this.facadeSolids(p, img.x, img.y, img.displayWidth, img.displayHeight, fScale))
+          this.solids.push(sr);
         if (p.door) {
-          // img.display* are runtime (placed) px; door.ox/w/h are NATIVE data → s()
+          // img.* are runtime (placed) px; door.ox/w/h are NATIVE data → s() × the facade scale.
+          // The entrance zone uses the SAME widened opening as facadeSolids (MIN_DOOR_GAP) so the
+          // door the player can step through and the door that fires are one and the same.
+          const natW = s(p.door.w) * fScale;
+          const gap = Math.max(natW, s(OverworldScene.MIN_DOOR_GAP));
+          const cx = img.x + s(p.door.ox) * fScale + natW / 2;
           this.facadeDoorBox.set(p, {
-            x: p.x * TILE_PX + s(p.door.ox),
-            y: p.y * TILE_PX + img.displayHeight - s(14),
-            w: s(p.door.w),
-            h: s(p.door.h),
+            x: cx - gap / 2,
+            y: img.y + img.displayHeight - s(14) * fScale,
+            w: gap,
+            h: s(p.door.h) * fScale,
           });
         }
-        this.auditFacade(p, sprite, img.displayHeight);
+        if (!nativeFacade) this.auditFacade(p, sprite, img.displayHeight);
       } else if (p.solid) {
         // solid.* are NATIVE map data → scale at the read site
         this.solids.push({
@@ -825,21 +839,32 @@ export class OverworldScene extends Phaser.Scene {
    */
   private static FACADE_CAP = 10; // walkable roof-eave margin at the very top
   private static DOOR_OPENING = 18; // the doorway height left open to walk into
-  private facadeSolids(p: PropDef, wPx: number, hPx: number): Rect[] {
-    // wPx/hPx are runtime (displayed texture) px; FACADE_CAP/DOOR_OPENING and
-    // p.door.* are NATIVE → scale them so the footprint stays texture-true at ×4.
-    const left = p.x * TILE_PX;
-    const top = p.y * TILE_PX + s(OverworldScene.FACADE_CAP);
-    const right = left + wPx;
-    const foot = p.y * TILE_PX + hPx;
+  // §A11: a Minimus facade shrinks to 0.5×, which would leave a ~32px doorway — narrower than the
+  // ~40px player box (tryMove s(10)). Keep the OPENING at least this wide (native px → s(12)=48px)
+  // so a duchy door the player can step through stays passable (the Big-Little gate admits them).
+  private static MIN_DOOR_GAP = 12;
+  private facadeSolids(p: PropDef, leftPx: number, topPx: number, wPx: number, hPx: number, scale = 1): Rect[] {
+    // leftPx/topPx = the facade's DRAWN top-left (the placement origin at full scale, or the
+    // foot-re-anchored origin when a Minimus facade is shrunk); wPx/hPx = its DRAWN size. The
+    // native FACADE_CAP/DOOR_OPENING and p.door.* are × `scale` (1, or MINIMUS_NATIVE_SCALE for a
+    // shrunk facade) so the footprint stays texture-true to the building actually on screen.
+    const left = leftPx;
+    const top = topPx + s(OverworldScene.FACADE_CAP) * scale;
+    const right = leftPx + wPx;
+    const foot = topPx + hPx;
     if (!p.door) return [{ x: left, y: top, w: wPx, h: foot - top }];
-    const dL = left + s(p.door.ox);
-    const dR = dL + s(p.door.w);
-    const doorTop = foot - s(OverworldScene.DOOR_OPENING);
+    // The opening is widened to MIN_DOOR_GAP (≥ the player box) centred on the DRAWN door, so a
+    // shrunk duchy doorway stays passable; full-scale doors keep s(door.w) (max(64,48)=64, no-op).
+    const natW = s(p.door.w) * scale;
+    const cx = left + s(p.door.ox) * scale + natW / 2;
+    const gap = Math.max(natW, s(OverworldScene.MIN_DOOR_GAP));
+    const dL = cx - gap / 2;
+    const dR = cx + gap / 2;
+    const doorTop = foot - s(OverworldScene.DOOR_OPENING) * scale;
     const out: Rect[] = [];
     if (dL > left) out.push({ x: left, y: top, w: dL - left, h: foot - top }); // wall left of the door
     if (right > dR) out.push({ x: dR, y: top, w: right - dR, h: foot - top }); // wall right of the door
-    if (doorTop > top) out.push({ x: dL, y: top, w: s(p.door.w), h: doorTop - top }); // lintel over the door
+    if (doorTop > top) out.push({ x: dL, y: top, w: gap, h: doorTop - top }); // lintel over the door
     return out;
   }
 
@@ -924,8 +949,9 @@ export class OverworldScene extends Phaser.Scene {
     for (const p of this.mapDef.props) {
       if (!p.door) continue;
       const box = this.facadeDoorBox.get(p);
-      // door.ox/w are NATIVE data → s(); box.* are already runtime
-      const cx = p.x * TILE_PX + s(p.door.ox) + s(p.door.w) / 2;
+      // prefer the texture-true entrance zone (it tracks a re-fitted / shrunk facade's doorstep);
+      // fall back to the NATIVE door rect (→ s()) only when no box was built for this facade
+      const cx = box ? box.x + box.w / 2 : p.x * TILE_PX + s(p.door.ox) + s(p.door.w) / 2;
       const by = box ? box.y + box.h : p.y * TILE_PX + s(p.door.oy) + s(p.door.h);
       lift(this.add.image(cx, by + s(4), 'doormat').setOrigin(0.5, 1).setDepth(2));
     }
@@ -1303,6 +1329,19 @@ export class OverworldScene extends Phaser.Scene {
         const ch = row[x];
         if (ch === 'R' || ch === 'D' || ch === 'X') roads.add(cellKey(x, y));
       }
+    }
+    // A SOLID PROP standing on a road cell (a payphone, ATM, bollard…) is invisible to the
+    // sim — it reads only grid road-chars — so cars would drive straight THROUGH it. Carve each
+    // solid prop's footprint out of the drivable set; TrafficSim simply routes around the hole
+    // (chooseMove tries straight→turn→U-turn). Facades line the verges, not the lanes, and own
+    // texture-rebuilt collision, so skip them. Native tile math (16px), matching the grid.
+    for (const p of this.mapDef.props) {
+      if (!p.solid || p.sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(p.sprite)) continue;
+      const x0 = Math.floor((p.x * 16 + p.solid.ox) / 16);
+      const x1 = Math.floor((p.x * 16 + p.solid.ox + p.solid.w - 1) / 16);
+      const y0 = Math.floor((p.y * 16 + p.solid.oy) / 16);
+      const y1 = Math.floor((p.y * 16 + p.solid.oy + p.solid.h - 1) / 16);
+      for (let yy = y0; yy <= y1; yy++) for (let xx = x0; xx <= x1; xx++) roads.delete(cellKey(xx, yy));
     }
     if (roads.size < 12) return; // a path-only town (Otterbrook) gets no cars
     // Civilian road fleet from authored PNGs only: the sim type is the texture key.
@@ -3900,6 +3939,17 @@ export class OverworldScene extends Phaser.Scene {
       if (cooling || !this.doorsArmed.has(p)) continue;
       this.doorsArmed.delete(p);
       if (p.door.to === 'dos_f1' && (await this.bricktonDepartmentGate())) return;
+      // §A11 the Big-Little gate — a duchy building is thimble-small; the colossi may step inside
+      // only once the Big-Little Lens can fold the party down to duchy scale (else turned away).
+      if (
+        MINIMUS_SKIN_MAPS.has(this.mapDef.id) &&
+        (p.sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(p.sprite))
+      ) {
+        if (!(await this.duchyShrinkGate())) {
+          this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
+          return;
+        }
+      }
       this.goThroughDoor(p.door.to, p.door.tx, p.door.ty, 'up');
       return;
     }
@@ -3931,6 +3981,7 @@ export class OverworldScene extends Phaser.Scene {
   private goThroughDoor(to: string, tx: number, ty: number, facing: Facing): void {
     if (this.transitioning) return;
     this.transitioning = true;
+    clearPuppetLock(); // §2.3: leaving the map ends the Held-Breath Puppet-lock (NOT a rewind-restart, which keeps it)
     // tx/ty are NATIVE door-target pixels (map-data d.tx/d.ty, spawn constants,
     // or literals) → scale to the runtime space GS.data.x/y lives in. ALL callers
     // pass native px, so the single scale here covers every door (ADR scale-conv).
@@ -4768,6 +4819,40 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  /** §A11 the Big-Little gate — a duchy doorway is thimble-small, so the colossi can step inside
+   *  only once the Big-Little Lens (the §A6 Milo build) can fold the party down to duchy scale.
+   *  Returns true to admit them (after the threshold shrink beat); false turns them away. */
+  private async duchyShrinkGate(): Promise<boolean> {
+    if (!GS.flag('big_little_lens_built')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.duchy_door_too_big);
+      this.cut = false;
+      return false;
+    }
+    this.cut = true;
+    if (!GS.flag('duchy_shrink_known')) {
+      await this.dlg.say(...DIALOGUE.duchy_door_shrink); // the one-time "how" — the Lens folds them down
+      GS.setFlag('duchy_shrink_known');
+    }
+    await this.shrinkPartyToDuchy(); // fold to duchy scale; the interior receives them at room scale
+    this.cut = false;
+    return true;
+  }
+
+  /** the threshold shrink flourish — the party folds from colossus to duchy scale (origin is feet,
+   *  so they shrink planted). Purely cosmetic: the interior is entered fresh at normal room scale,
+   *  and the skin map rebuilds them at full colossus scale on the way back out. */
+  private async shrinkPartyToDuchy(): Promise<void> {
+    const targets = [this.player, ...this.followers.map((f) => f.spr)];
+    this.sparkleBurst(this.player.x, this.player.y - s(12), 12);
+    AUDIO.sfx('ember');
+    // cosmetic fold-down — fired-and-forgotten so a killed/interrupted tween can never hang the
+    // door gate. The bounded wait (a single delayedCall, not the tween) drives the beat; whatever
+    // of the shrink is still in flight is carried under goThroughDoor's fade into the interior.
+    this.tweens.add({ targets, scaleX: MINIMUS_NATIVE_SCALE, scaleY: MINIMUS_NATIVE_SCALE, duration: 240, ease: 'sine.in' });
+    await this.wait(260);
+  }
+
   /** a scale set-piece in the Hedgerow read through the new Lens (optional flavor; the
    *  path is always passable — the Lens reads the leaf-bridge, it never gates it). */
   private async hedgerowLensScene(): Promise<void> {
@@ -4824,8 +4909,23 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.ember5_get);
     // THE TWO JOINS (§A6) — both newcomers join AFTER the boss (matches BOSS_PARTY ch5,
     // which is the 3-hero rex/faye/milo party for the Whiskerzilla fight itself)
+    let pippaRise: Phaser.GameObjects.Sprite | undefined; // the Royal Thimble grow-tween sprite
     if (!GS.flag('pippa_joined')) {
-      await this.dlg.say(...DIALOGUE.pippa_join);
+      const join = DIALOGUE.pippa_join;
+      await this.dlg.say(...join.slice(0, 2)); // the appointment + the Royal Thimble, offered
+      // §A11 the Royal Thimble beat — Pippa RISES on screen from lapel-pin (Minimus-NATIVE
+      // scale) to colossus (travel scale), planted at her feet so she grows UPWARD beside the
+      // leader, exactly as the line describes. She hands off to the real follower at scene end.
+      pippaRise = this.add
+        .sprite(this.player.x - s(20), this.player.y, 'pippa', standFrame('down'))
+        .setOrigin(0.5, 1)
+        .setScale(MINIMUS_NATIVE_SCALE);
+      pippaRise.setDepth(this.player.y);
+      this.sparkleBurst(pippaRise.x, pippaRise.y - s(8), 10);
+      this.tweens.add({ targets: pippaRise, scaleX: 1, scaleY: 1, duration: 950, ease: 'back.out' });
+      await this.dlg.say(...join.slice(2)); // "...and RISES..." → "{pippa} joined the party"
+      pippaRise.setScale(1); // settle exactly at travel scale (in case the box closed mid-tween)
+      this.sparkleBurst(pippaRise.x, pippaRise.y - s(18), 12);
       GS.data.party.push(makeHeroState('pippa', 26, GS.data.heroNames.pippa));
       GS.setFlag('pippa_joined');
       GS.addItem('royal_thimble'); // her scale-anchor key item
@@ -4840,6 +4940,9 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('ch5_complete'); // §A6 — the chapter button (the §A5 gate to Ch.6)
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch5_card);
+    // the grow-tween sprite hands off to the real follower line now the joins are in the party
+    pippaRise?.destroy();
+    this.rebuildFollowers();
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }

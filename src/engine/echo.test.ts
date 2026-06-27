@@ -18,6 +18,8 @@ import {
   canRewind,
   refillBreath,
   rewindableAnchors,
+  puppetLocked,
+  clearPuppetLock,
 } from './echo';
 
 beforeEach(() => GS.reset());
@@ -108,5 +110,26 @@ describe('the Held Breath — v15 → v16 migration', () => {
     const out = migrateSave(blob, newGameData());
     expect(out.version).toBe(CURRENT_SAVE_VERSION);
     expect(out.echoes).toEqual({ stack: [], breaths: MAX_BREATHS, rewindCount: 0 });
+  });
+});
+
+describe('the Held Breath — a spent Breath locks Puppet (§2.3, bend will OR time)', () => {
+  it('rewinding locks Puppet; a fresh save is unlocked; a map-change clears it', () => {
+    expect(puppetLocked()).toBe(false); // fresh: the Locket is full, Puppet free
+    captureEcho('ch6_string');
+    recordChoice('ch6_string', 'pull');
+    expect(rewindTo('ch6_string')).toBe(true);
+    // the lock must be set AFTER the deserialize (which restores the pre-decision
+    // flags, where Puppet was free) — proving lockPuppet() rides the cost, not the snapshot
+    expect(puppetLocked()).toBe(true);
+    clearPuppetLock(); // goThroughDoor releases it when you leave the map
+    expect(puppetLocked()).toBe(false);
+  });
+  it('a blocked rewind (no Breaths) never locks Puppet', () => {
+    GS.data.echoes.breaths = 0;
+    captureEcho('ch6_string');
+    recordChoice('ch6_string', 'pull');
+    expect(rewindTo('ch6_string')).toBe(false);
+    expect(puppetLocked()).toBe(false);
   });
 });
