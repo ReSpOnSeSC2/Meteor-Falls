@@ -2,12 +2,12 @@
 
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
-- Enemies: 93
-- Fully authored identities: 93
+- Enemies: 98
+- Fully authored identities: 98
 - Legacy identities: 0
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
-- Authored battle PNGs on disk but not registered for current runtime: 173
+- Authored battle PNGs on disk but not registered for current runtime: 158
 
 ## Enemy Rows
 
@@ -106,6 +106,11 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | grand_parade | procession_way | battle_grand_parade | mini:mini_grand_parade | authored | - |
 | whiskerzilla | - | battle_whiskerzilla | mini:mini_hill_slug | authored | - |
 | flat_bell | - | battle_flat_bell | mini:mini_souvenir | authored | - |
+| caravan_hyena_pack | savanna_run | battle_caravan_hyena_pack | mini:mini_caravan_hyena_pack | authored | - |
+| baobab_root_snare | savanna_run, laughing_ruins | battle_baobab_root_snare | mini:mini_baobab_root_snare | authored | - |
+| laughing_dust_pot | laughing_ruins | battle_laughing_dust_pot | mini:mini_laughing_dust_pot | authored | - |
+| sphinx_paw_shadow | laughing_ruins | battle_sphinx_paw_shadow | mini:mini_sphinx_paw_shadow | authored | - |
+| laughing_sphinx | - | battle_laughing_sphinx | mini:mini_laughing_sphinx | authored | - |
 
 ## Procedural Overworld Roamer Queue (retire these)
 
@@ -130,9 +135,6 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_ballot_box_brawler
 - battle_ballot_box_brawler_w1
 - battle_ballot_box_brawler_w2
-- battle_baobab_root_snare
-- battle_baobab_root_snare_w1
-- battle_baobab_root_snare_w2
 - battle_bootstep_boulder
 - battle_bootstep_boulder_w1
 - battle_bootstep_boulder_w2
@@ -151,9 +153,6 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_canteen_mirage
 - battle_canteen_mirage_w1
 - battle_canteen_mirage_w2
-- battle_caravan_hyena_pack
-- battle_caravan_hyena_pack_w1
-- battle_caravan_hyena_pack_w2
 - battle_census_ledger_wraith
 - battle_census_ledger_wraith_w1
 - battle_census_ledger_wraith_w2
@@ -202,13 +201,7 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_hollow_jackal
 - battle_hollow_jackal_w1
 - battle_hollow_jackal_w2
-- battle_laughing_dust_pot
-- battle_laughing_dust_pot_w1
-- battle_laughing_dust_pot_w2
-- battle_laughing_sphinx
 - battle_laughing_sphinx_riddle
-- battle_laughing_sphinx_w1
-- battle_laughing_sphinx_w2
 - battle_magnifying_lens_mite
 - battle_magnifying_lens_mite_w1
 - battle_magnifying_lens_mite_w2
@@ -263,9 +256,6 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_snowshoe_phantom
 - battle_snowshoe_phantom_w1
 - battle_snowshoe_phantom_w2
-- battle_sphinx_paw_shadow
-- battle_sphinx_paw_shadow_w1
-- battle_sphinx_paw_shadow_w2
 - battle_spine_tick
 - battle_spine_tick_w1
 - battle_spine_tick_w2

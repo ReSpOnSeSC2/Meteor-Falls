@@ -5,7 +5,15 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GS } from './state';
-import { departHero, rejoinHero, isPresent, withholdUltimate, isWithholding } from './party';
+import {
+  departHero,
+  rejoinHero,
+  isPresent,
+  withholdUltimate,
+  isWithholding,
+  awakenedAbilityIds,
+  isWithheldAbility,
+} from './party';
 
 beforeEach(() => GS.reset());
 
@@ -36,5 +44,27 @@ describe('party fate — depart + rejoin', () => {
     expect(isWithholding('dorin')).toBe(true);
     withholdUltimate('dorin', false);
     expect(isWithholding('dorin')).toBe(false);
+  });
+});
+
+describe('party fate — the IRON withhold gates the awakened ultimate in battle (ADR-130)', () => {
+  it("Dorin's awakened ability set is exactly Comet Ω (a story grant, not a level unlock)", () => {
+    expect(awakenedAbilityIds('dorin').has('vibe_comet_o')).toBe(true);
+    expect(awakenedAbilityIds('dorin').has('vibe_comet_g')).toBe(false); // γ is a level unlock
+  });
+
+  it('with no withhold flag, the ultimate is freely usable', () => {
+    expect(isWithheldAbility('dorin', 'vibe_comet_o')).toBe(false);
+  });
+
+  it('withholding drops ONLY the awakened ultimate, never his level-unlock comets', () => {
+    withholdUltimate('dorin');
+    expect(isWithheldAbility('dorin', 'vibe_comet_o')).toBe(true);
+    expect(isWithheldAbility('dorin', 'vibe_comet_g')).toBe(false);
+  });
+
+  it("one hero's withhold never gates another hero's ultimate", () => {
+    withholdUltimate('dorin');
+    expect(isWithheldAbility('rex', 'vibe_surge_x')).toBe(false);
   });
 });

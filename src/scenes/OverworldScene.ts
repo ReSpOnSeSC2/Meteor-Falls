@@ -4305,6 +4305,16 @@ export class OverworldScene extends Phaser.Scene {
       case 'ducal_crown_resonance':
         if (!GS.flag('ch5_complete')) await this.ducalCrownScene();
         break;
+      /* ---------------- Chapter 6 (§A6 Africa) ---------------- */
+      case 'ch6_arrival':
+        if (!GS.flag('ch6_arrived')) await this.ch6ArrivalScene();
+        break;
+      case 'laughing_sphinx_boss':
+        if (!GS.flag('laughing_sphinx_defeated')) await this.laughingSphinxBossScene();
+        break;
+      case 'sphinx_chin_resonance':
+        if (!GS.flag('ch6_complete')) await this.sphinxChinScene();
+        break;
       // the §A10 Ch.3 "find" pickups (books / letters / the drain / milk / water)
       case 'q_overdue_b1':
       case 'q_overdue_b2':
@@ -4631,8 +4641,23 @@ export class OverworldScene extends Phaser.Scene {
    *  Ch.3 is complete (the boardLucille precedent — England's flight stays his too). */
   private async bertAirBeat(): Promise<void> {
     this.cut = true;
-    // the §A5 NEXT leg: once Norway is done, Bert flies the party to MINIMUS (the
-    // newest frontier takes priority — the Norway leg below stays for the backtrack)
+    // the §A5 NEXT leg: once Minimus is done, Bert flies the party to ZANZIBEL (the
+    // newest frontier takes priority — the earlier legs below stay for the backtrack)
+    if (GS.flag('ch5_complete') && !GS.flag('ch6_arrived')) {
+      await this.dlg.say(...DIALOGUE.bert_africa_ask);
+      const pick = await this.dlg.ask(['Fly to ZANZIBEL', 'Not yet'], { cancelIndex: 1 });
+      if (pick !== 0) {
+        this.cut = false;
+        return;
+      }
+      AUDIO.stopMusic();
+      await playCutscene(this, 'ch6_journey'); // the authored Africa panels (no-ops if missing)
+      // the hatch drops on the Zanzibel quay landing square; ch6_arrival fires the beat
+      this.goThroughDoor('zanzibel', 8 * 16, 22 * 16, 'down');
+      return;
+    }
+    // the §A5 Minimus leg: once Norway is done, Bert flies the party to MINIMUS (kept
+    // for the backtrack now that Zanzibel is the frontier)
     if (GS.flag('ch4_complete') && !GS.flag('ch5_arrived')) {
       await this.dlg.say(...DIALOGUE.bert_minimus_ask);
       const pick = await this.dlg.ask(['Fly to MINIMUS', 'Not yet'], { cancelIndex: 1 });
@@ -4943,6 +4968,74 @@ export class OverworldScene extends Phaser.Scene {
     // the grow-tween sprite hands off to the real follower line now the joins are in the party
     pippaRise?.destroy();
     this.rebuildFollowers();
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /* ════════════ CHAPTER 6 — THE RUINS THAT LAUGH (Africa): arrival → the §A6 boss →
+   * Heartlight 6. Mirrors the Ch.5 shape, minus the joins — the party is whole by now,
+   * so the chin's resonance just records Ember 6 and opens the next leg. The BRANCH
+   * beats (Held Breath + Choice 1) ride the existing runChoice/heldBreathBeat handlers. */
+
+  /** the §A6 arrival — Lucille sets the party down on the Zanzibel quay, into the noise */
+  private async ch6ArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch6_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(380, 0.005);
+    await this.dlg.say(...DIALOGUE.ch6_arrival);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A6 BOSS 6 — THE LAUGHING SPHINX (the phase machine carries the riddle gimmick:
+   *  BattleScene opens on a riddle, right stuns it / wrong cries the party). A normal
+   *  HP win on its 9000 HP — the wrong-riddle is the rewind-safe sandbox, not a loss. */
+  private async laughingSphinxBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.laughing_sphinx_door);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(460, 0.008);
+    await this.wait(420);
+    const outcome = await this.startBattle(['laughing_sphinx'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('laughing_sphinx_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.laughing_sphinx_win);
+    AUDIO.jingle('victory', 2200, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart(); // the chin is free to sing now; the resonance trigger can fire
+  }
+
+  /** §A6 Resonance Site — the Sphinx's chin. Before the Sphinx is answered it keeps its
+   *  peace; once beaten the chin sings (HEARTLIGHT 6 — The Laughing Chord) and Ember 6
+   *  lands. No joins (the party is whole); ch6_complete opens the §A5 gate to Ch.7. */
+  private async sphinxChinScene(): Promise<void> {
+    if (!GS.flag('laughing_sphinx_defeated')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.sphinx_chin_early);
+      this.cut = false;
+      return;
+    }
+    this.cut = true;
+    // HEARTLIGHT 6 — the Laughing Chord (Ember 6)
+    GS.setFlag('ember6');
+    GS.data.embers = 6;
+    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember6_get);
+    GS.setFlag('ch6_complete'); // §A6 — the chapter button (the §A5 gate to Ch.7)
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.ch6_card);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }

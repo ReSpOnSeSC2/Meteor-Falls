@@ -2337,7 +2337,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'It pulls every bit of golden light in the room into its hands — the glow off the corn, the wool, the setting sun — all of it, winding up one giant swing you can\'t dodge.',
     'The attack drops down over you, wide and fast like a thrown bedsheet.',
   ],
-  idol_form_solid: ['The Idol hardens into SOLID GOLD, smooth all over and smug about it! (Normal hits will just bounce off. Jay\'s light will still get through.)'],
+  idol_form_solid: ['The Idol hardens into SOLID GOLD, smooth all over and smug about it! (Normal hits will just bounce off. {rex}\'s light will still get through.)'],
   idol_form_hollow: [
     'The gold turns dark, and you realize there\'s NOTHING inside it. It\'s HOLLOW!',
     '(Vibe attacks pass right through the empty space and do nothing. Bats, though — a solid bat still works just fine.)',
@@ -2850,6 +2850,85 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // — the "Say Cheese, Minister" pickup (active-quest flavor) —
   q_say_cheese: ["@HOLD it — right there, don't move! (Mr. Click, diving under his black cloth.) Minister Pippa on the thimble, chin UP; Her Grace's portrait behind; and you colossi in the frame whether you fit or not. Three — two — SAY CHEESE! (FLASH.)"],
+
+  /* ════════════════ CHAPTER 6 — THE RUINS THAT LAUGH (Africa) ════════════════ */
+
+  // — the §A5 next leg: Bert flies the party south to Zanzibel (ch5_complete gate) —
+  bert_africa_ask: [
+    "@The locket's humming a market tune now — all bright and crowded and a little bit cracked, like a song someone's still telling a joke over. Bert traces the chart south. 'ZANZIBEL. Bazaar port. Best music on the whole map, they say. And past it...'",
+    '@...past it the chart just says THE RUINS THAT LAUGH, and then in the margin, in a different hand: "do not laugh back." Lucille\'s pointed dead at it. Say the word and we go.',
+  ],
+
+  // — the §A6 arrival: Lucille noses down at the Zanzibel quay —
+  ch6_arrival: [
+    '(Lucille settles onto the quay in a swirl of red dust and the smell of cardamom, salt, and a hundred things frying at once. ZANZIBEL goes up the hill in front of you in stacked ochre and indigo, and every inch of it is SINGING.)',
+    "@Now THIS is a place that knows how to make a racket. ({milo}, delighted, already three stalls deep.) Listen to it. Whole city's playing one big song and nobody told it to.",
+    "@Then somewhere up past the rooftops a SECOND song answers — flatter, older, one beat behind. {pippa} hears it too, and stops smiling. \"...That one,\" she says, \"is coming from the ruins.\"",
+  ],
+
+  // — Zanzibel signs —
+  sign_zanzibel: ['(A painted board over the customs gate, lettered in three alphabets and a lot of confidence:) ZANZIBEL — Bazaar Port of the Gold Coast. Buy anything. Sell anything. Believe HALF of it. Welcome, traveller — mind your purse and your manners.'],
+  sign_savanna_gate: ['(A weathered marker at the east gate, an arrow burned into it pointing inland:) ↑ THE SAVANNA RUN — the caravan track. Water at the third baobab. Beyond that, the LAUGHING RUINS. Travellers are advised to travel in company, and in daylight, and quietly.'],
+  sign_zanzibel_court: ['(A cool stone bench under an awning, a brass plate set into it:) THE MARKET COURT — by grace of the Trade Council. Disputes settled here Tuesdays. All other days, settled LOUDLY, by everyone.'],
+
+  // — Zanzibel NPCs —
+  npc_zn_queen: [
+    '@Welcome, welcome, big spenders! I am the Market Queen — no crown, no throne, just the longest memory and the best scales in Zanzibel. Everything has a price. Some of it even has MY price.',
+    "@You want the grand market shelf? Point and pay. You want the OTHER thing — the ruins, the laughing — that's not a thing I sell. That's a thing the city would rather you bought somewhere else.",
+  ],
+  npc_zn_dockmaster: [
+    "@Dockmaster. I count what comes off the boats and frets about what goes up the Run. And right now I'm fretting about the CONVOY — out at the watering hole, behind schedule, and the hyenas have learned the timetable better than my drivers have.",
+    '@Caravan that size, the desert eats it for a snack and picks its teeth with the axles. If big folk like you happened to walk that way... a Dockmaster remembers a kindness. Loudly, and to everyone.',
+  ],
+  npc_zn_guide: [
+    "@You feel it, don't you. That second song. — I'm the one they send people to when they've felt it and can't unfeel it. I guide folk up to the LAUGHING RUINS. Most of them I guide right back DOWN again, quieter.",
+    "@The stones up there say your own words back to you. One beat late. Tell a joke, they laugh. Scream, they... well. Some of us think the stones are still trying to FINISH a conversation somebody started a very long time ago.",
+  ],
+  npc_zn_healer: [
+    '@Sit. Drink. The well is baobab-sweet and the shade is free, which in Zanzibel makes it the only honest deal in town. You look like people walking toward the ruins. People do that. The well will still be here when you walk back.',
+  ],
+
+  // — the §A8 Ch.6 shop (the Grand Market shelf) —
+  shop_zanzibel_greet: ['@The Market Queen spreads her hands over the whole glorious shelf! Salt, charms, cloth, courage in a cup — all genuine, all today only, all a STEAL. (Everything in Zanzibel is, today only, a steal.)'],
+  shop_zanzibel_bye: ['@Pleasure doing business, big friend! Tell them the Market Queen sent you. Tell them LOUDLY. It is good for the brand.'],
+
+  // — Savanna Run signs —
+  sign_savanna_run: ['(A leaning post on the track, hung with a dry gourd that rattles in the wind:) THE SAVANNA RUN. Keep to the track. The grass keeps things. Some of the things keep teeth.'],
+  sign_ruins_mouth: ['(Two toppled pillars frame the way ahead; someone has scratched a warning into the left one:) THE LAUGHING RUINS — ahead. They are only stones. (Below, in a shakier hand:) they are NOT only stones.'],
+
+  // — the Laughing Ruins (dungeon) sign —
+  sign_laughing_ruins: ['(A fallen lintel, its carved faces all mid-laugh, worn nearly smooth:) HERE THE CITY THAT LAUGHED. It does not say what the joke was. The longer you look at the faces, the less it seems like laughing.'],
+
+  // — the Sphinx's chin sign —
+  sign_sphinx_chin: ["(A step worn into a great carved JAW, an inscription along the lip:) ASK, AND BE ASKED. ANSWER TRUE AND PASS. ANSWER FALSE AND— (the rest is lost where the stone has laughed itself away.)"],
+
+  // — §A6 BOSS 6 — the Laughing Sphinx riddle fight (BattleScene reads these) —
+  sphinx_riddle_intro: [
+    '(The whole chin shifts. Dust pours from a mouth the size of a doorway, and the LAUGHING SPHINX opens one ancient eye, then the other, and looks — actually LOOKS — at you.)',
+    '@"Visitors. How wonderful. It has been so long since anyone got the joke." Its voice is warm, and enormous, and not entirely kind. "We will play the old game. I ask. You answer. Answer TRUE, and I shall be so tickled I forget myself. Answer FALSE..."',
+    '@"...and I am afraid you will find my laughter terribly catching. Now. Listen carefully."',
+  ],
+  sphinx_right: ['(The Sphinx throws back its vast head and ROARS with delight — a laugh so genuine it staggers itself, helpless, off the dais. For three whole turns it can only shake.)', "@\"OH — oh, that's GOOD — that's the right one, you clever, clever small thing—!\""],
+  sphinx_wrong: ['(The Sphinx tuts, almost gently — and then it LAUGHS, and the laugh gets into everyone. The whole party doubles over, helpless, crying with a mirth that is not theirs.)', '@"No, no. But what a lovely try. Here — laugh it off with me. Laugh it ALL off."'],
+
+  // — the boss-trigger approach + the win (OverworldScene laughingSphinxBossScene) —
+  laughing_sphinx_door: ["(The climb ends in a carved jaw bigger than a house. Something inside it is breathing, slow and amused, and the breath smells of a thousand dry years. {pippa} swallows. \"It's awake,\" she says. \"It's been awake the whole time. It was just... waiting to be asked.\")"],
+  laughing_sphinx_win: [
+    '(The Sphinx runs clean out of riddles. It regards you for a long moment — and then it does the last thing you expect. It looks RELIEVED.)',
+    '@"Answered. After all this time. Do you know how long it is, holding a question with no one to ask?" It settles back into its own chin with a sigh like a landslide. "Go on, then. The chord is yours. You earned it honestly. That is the rarest way to earn anything."',
+  ],
+  sphinx_chin_early: ['(The carved chin hums, but it will not sing — not yet. The Sphinx is still curled in it, one eye open, waiting for its game. The resonance keeps its peace until the old question is answered.)'],
+
+  // — HEARTLIGHT 6 — THE LAUGHING CHORD (Ember 6) —
+  ember6_get: [
+    "(The chin SINGS. Not the flat one-beat-late echo — the real thing, at last: a great warm laughing CHORD that rolls down out of the ruins and over Zanzibel, and for one moment the dead city and the living one are singing the SAME song.)",
+    '@Heartlight 6. ({faye}, very quietly.) The Laughing Chord. ...It was never laughing AT anyone, {rex}. It was laughing because it remembered how. The locket has it now. The song is most of the way home.',
+  ],
+  // — the §A6 chapter card (ch6_complete) —
+  ch6_card: [
+    'The Laughing Ruins laugh in tune now, and far below, Zanzibel hears its old sister singing back and does not feel quite so alone in the noise it makes. Somewhere a Sphinx sleeps easy, its question finally answered. You go down the hill toward the boats with a chord in the locket and the strangest feeling that the world just got one joke closer to remembering the whole song.',
+    '* CHAPTER 6 — THE RUINS THAT LAUGH — complete. Six embers carried. Four to go.',
+  ],
 
 };
 

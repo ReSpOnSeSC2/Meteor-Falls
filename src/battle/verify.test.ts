@@ -10,6 +10,7 @@ import {
   expectedPhysical,
   expectedAbilityDamage,
   heroBestNuke,
+  heroDamagePerRound,
   abilitiesByLevel,
   AWAKENING_LEVEL,
   growthRow,
@@ -17,6 +18,10 @@ import {
   bossCheck,
   allBossChecks,
   BOSS_PARTY,
+  finaleHushChecks,
+  FINALE_HUSH_HP,
+  STOLEN_LIGHT_CHIP,
+  type FinaleCheck,
 } from './verify';
 import { ABILITIES } from '../data/abilities';
 import { AWAKENINGS } from '../data/awakenings';
@@ -133,6 +138,62 @@ describe('every §A6 boss falls in a fair number of turns at its target level', 
   it('the party never over-counts: Jay solos the Tick, the party grows to five', () => {
     expect(BOSS_PARTY[1]).toEqual(['rex']);
     expect(BOSS_PARTY[10]).toHaveLength(5);
+  });
+});
+
+describe('the Hush finale stays fair at every reachable party size (§4.3, ADR-130)', () => {
+  const checks = finaleHushChecks();
+  const byId = (id: string): FinaleCheck => {
+    const f = checks.find((c) => c.id === id);
+    expect(f, `finale variant '${id}'`).toBeDefined();
+    return f as FinaleCheck;
+  };
+
+  it('every reachable loadout (3/4/5 × Ω × Stolen Light) lands in the fair TTK 4–10 window', () => {
+    // tighter than the 2–25 suite window on purpose: the finale is the one hand-tuned
+    // set-piece, and §4.3 mandates 4–10 across party sizes and loadouts.
+    expect(checks.length).toBeGreaterThanOrEqual(5);
+    for (const f of checks) {
+      expect(f.ttk, `${f.id} TTK`).toBeGreaterThanOrEqual(4);
+      expect(f.ttk, `${f.id} TTK`).toBeLessThanOrEqual(10);
+    }
+  });
+
+  it('all three party sizes 3/4/5 are represented', () => {
+    expect(new Set(checks.map((f) => f.size))).toEqual(new Set([3, 4, 5]));
+  });
+
+  it('the warm full-five is the canon baseline — it equals bossCheck(10)', () => {
+    const warm = byId('warm');
+    const canon = bossCheck(10);
+    expect(warm.size).toBe(5);
+    expect(warm.hp).toBe(canon.hp);
+    expect(warm.partyDpr).toBe(canon.partyDpr);
+    expect(warm.ttk).toBe(canon.ttk);
+  });
+
+  it('losing the powerhouse (Dorin) costs you — those paths are no easier than warm', () => {
+    const warm = byId('warm');
+    expect(byId('iron_dorin_left').ttk).toBeGreaterThanOrEqual(warm.ttk);
+    expect(byId('iron_strings_cold').ttk).toBeGreaterThanOrEqual(warm.ttk);
+  });
+
+  it('withholding Comet Ω strictly weakens Dorin (the IRON battle-gate has teeth)', () => {
+    const weak = new Set<string>();
+    const full = heroDamagePerRound('dorin', 52, weak, 52);
+    const held = heroDamagePerRound('dorin', 52, weak, 52, new Set(['vibe_comet_o']));
+    expect(held).toBeLessThan(full);
+  });
+
+  it('the Stolen Light is a chip, not a nuke (well under a tenth of the party DPR)', () => {
+    expect(STOLEN_LIGHT_CHIP).toBeGreaterThan(0);
+    expect(STOLEN_LIGHT_CHIP).toBeLessThan(byId('warm').partyDpr * 0.1);
+  });
+
+  it('money > combat: every eased HP is ≤ the canon Hush HP (< the Ch.10 Fortune target)', () => {
+    const canonHp = CHAPTER_MANIFESTS['10'].boss.hp;
+    expect(FINALE_HUSH_HP[5]).toBe(canonHp);
+    for (const hp of Object.values(FINALE_HUSH_HP)) expect(hp).toBeLessThanOrEqual(canonHp);
   });
 });
 

@@ -165,4 +165,17 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_minimus_greet',
     farewell: 'shop_minimus_bye',
   },
+  // §A8 CHAPTER 6 — THE GRAND MARKET (Zanzibel's bazaar shelf; the Market Queen keeps it)
+  zanzibel_bazaar: {
+    id: 'zanzibel_bazaar',
+    name: 'THE GRAND MARKET',
+    keeperNpc: 'zn_queen',
+    stock: [
+      'kola_nut_drink', 'hibiscus_tea', 'baobab_juice', 'savanna_grit', 'baobab_draught',
+      'turban_of_calm', 'kanga_wrap', 'mudcloth_vest',
+      'bronze_mask', 'trade_salt', 'baobab_charm',
+    ],
+    greet: 'shop_zanzibel_greet',
+    farewell: 'shop_zanzibel_bye',
+  },
 };

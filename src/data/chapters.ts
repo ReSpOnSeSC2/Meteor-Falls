@@ -169,15 +169,23 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     chapter: 6,
     title: 'The Ruins That Laugh',
     region: 'Africa',
-    status: 'unlanded',
+    status: 'shipped',
     targetLevel: 30,
     ember: 6,
+    heartlight: 'The Laughing Chord', // §A6 Heartlight 6 — the Homesong's laughing stem
     band: 'ch6',
     travel: 'biplane', // Lucille again (she has no business making it)
-    dungeon: { name: 'The Laughing Ruins → the Sphinx’s chin', site: 'laughing_ruins' },
+    dungeon: {
+      name: 'The Laughing Ruins → the Sphinx’s chin',
+      // the dead carved city (the BRANCH's home — Held Breath + Choice 1) → the
+      // Sphinx's chin (the §A6 boss + Resonance Site)
+      maps: ['laughing_ruins', 'sphinx_chin'],
+    },
     boss: { id: 'laughing_sphinx', name: 'The Laughing Sphinx', hp: 9000, template: 'riddle' },
-    settlements: [{ id: 'zanzibel', kind: 'city', style: 'bazaar-port' }],
-    maps: [],
+    settlements: [{ id: 'zanzibel', kind: 'city' }],
+    // the 2 overworld maps from buildChapter6Maps(): the bazaar port + the caravan
+    // track (the dungeon maps live under dungeon.maps above)
+    maps: ['zanzibel', 'savanna_run'],
     quests: ['stones_that_speak', 'watering_hole_convoy'],
   },
 

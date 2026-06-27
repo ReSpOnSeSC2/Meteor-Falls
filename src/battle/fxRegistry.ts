@@ -240,6 +240,8 @@ export const ITEM_FX: Record<string, string> = {
   sand_throw: 'item_flash',
   thruster_charge: 'item_salt',
   emp_grenade: 'item_salt',
+  // S21 (ADR-130): the Stolen Light burns like a held ember — the porchlight family
+  stolen_light: 'item_spark',
 };
 
 export const ITEM_KIND_FX: Record<string, string | undefined> = {

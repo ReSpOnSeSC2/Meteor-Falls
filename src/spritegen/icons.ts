@@ -1555,6 +1555,8 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   fake_fang_denture: () => forgeIcon({ subcat: 'gem', band: 'ch9', ramp: RAMP.PAPER, detail: 'dots', seed: 'fake_fang_denture' }),
   cleveland_season_pass: () => forgeIcon({ subcat: 'ticket', band: 'ch9', detail: 'stripe', seed: 'cleveland_season_pass' }),
   stolen_vibe_jar: () => forgeIcon({ subcat: 'lantern', band: 'ch9', detail: 'star', seed: 'stolen_vibe_jar' }),
+  // S21 (ADR-130): the Stolen Light — the jar's warmth wound into a weapon (IRON path)
+  stolen_light: () => forgeIcon({ subcat: 'gem', band: 'ch9', ramp: RAMP.GOLD, detail: 'star', seed: 'stolen_light' }),
   velvet_curtain: () => forgeIcon({ subcat: 'sack', band: 'ch9', detail: 'ribbon', seed: 'velvet_curtain' }),
   painted_icon: () => forgeIcon({ subcat: 'idol', band: 'ch9', detail: 'star', seed: 'painted_icon' }),
   monastery_bell_clapper: () => drawBellClapperIcon(),

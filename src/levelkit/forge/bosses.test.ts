@@ -294,9 +294,9 @@ describe('S15g M3c — the drafts parse, pin, and cannot masquerade', () => {
     }
   });
 
-  it('the COUNT is law — four unshipped bosses + two minibosses (Ch.3 Mainframe + Ch.4 Whisperwig + Ch.5 Whiskerzilla promoted)', () => {
+  it('the COUNT is law — three unshipped bosses + two minibosses (Ch.3 Mainframe + Ch.4 Whisperwig + Ch.5 Whiskerzilla + Ch.6 Sphinx promoted)', () => {
     expect(Object.keys(DRAFT_BOSS_SCRIPTS).sort()).toEqual([...DRAFT_BOSS_IDS].sort());
-    expect(DRAFT_BOSS_IDS.length).toBe(6);
+    expect(DRAFT_BOSS_IDS.length).toBe(5);
   });
 
   it('no draft collides with a shipped boss script or a shipped §A7 enemy', () => {
@@ -308,6 +308,6 @@ describe('S15g M3c — the drafts parse, pin, and cannot masquerade', () => {
 
   it('is byte-stable, twice + hash-pinned (a refactor that shifts one field fails here)', () => {
     expect(JSON.stringify(DRAFT_BOSS_SCRIPTS)).toBe(JSON.stringify(DRAFT_BOSS_SCRIPTS));
-    expect(fnv(DRAFT_BOSS_SCRIPTS)).toBe('76cff37c'); // (chapter sessions promote these one at a time; Ch.3 Mainframe + Ch.4 Whisperwig + Ch.5 Whiskerzilla promoted)
+    expect(fnv(DRAFT_BOSS_SCRIPTS)).toBe('ff9af5b0'); // (chapter sessions promote these one at a time; Ch.3 Mainframe + Ch.4 Whisperwig + Ch.5 Whiskerzilla + Ch.6 Sphinx promoted)
   });
 });

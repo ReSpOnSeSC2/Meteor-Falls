@@ -299,6 +299,11 @@ export const NPC_CHARACTER_ART = [
   { id: 'tiny_postmaster', key: 'authored_tiny_postmaster_8dir', url: new URL('../../assets/art/characters/tiny_postmaster_anim_46_4x.png', import.meta.url).href },
   { id: 'matchbox_herald', key: 'authored_matchbox_herald_8dir', url: new URL('../../assets/art/characters/matchbox_herald_anim_46_4x.png', import.meta.url).href },
   { id: 'mr_click', key: 'authored_mr_click_8dir', url: new URL('../../assets/art/characters/mr_click_anim_46_4x.png', import.meta.url).href },
+  // Ch.6 Africa — the Zanzibel cast (46-frame authored sheets; masters synced to runtime)
+  { id: 'zanzibel_market_queen', key: 'authored_zanzibel_market_queen_8dir', url: new URL('../../assets/art/characters/zanzibel_market_queen_anim_46_4x.png', import.meta.url).href },
+  { id: 'zanzibel_dockmaster', key: 'authored_zanzibel_dockmaster_8dir', url: new URL('../../assets/art/characters/zanzibel_dockmaster_anim_46_4x.png', import.meta.url).href },
+  { id: 'laughing_ruins_guide', key: 'authored_laughing_ruins_guide_8dir', url: new URL('../../assets/art/characters/laughing_ruins_guide_anim_46_4x.png', import.meta.url).href },
+  { id: 'baobab_healer', key: 'authored_baobab_healer_8dir', url: new URL('../../assets/art/characters/baobab_healer_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -527,7 +532,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,
@@ -959,6 +964,22 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_flat_bell', url: new URL('../../assets/art/enemies/battle_flat_bell.png', import.meta.url).href },
   { key: 'battle_flat_bell_w1', url: new URL('../../assets/art/enemies/battle_flat_bell_w1.png', import.meta.url).href },
   { key: 'battle_flat_bell_w2', url: new URL('../../assets/art/enemies/battle_flat_bell_w2.png', import.meta.url).href },
+  // Chapter 6 (Africa) — the §A7 Ch.6 battlers (3 HP-wear tiers each, authored PNGs)
+  { key: 'battle_caravan_hyena_pack', url: new URL('../../assets/art/enemies/battle_caravan_hyena_pack.png', import.meta.url).href },
+  { key: 'battle_caravan_hyena_pack_w1', url: new URL('../../assets/art/enemies/battle_caravan_hyena_pack_w1.png', import.meta.url).href },
+  { key: 'battle_caravan_hyena_pack_w2', url: new URL('../../assets/art/enemies/battle_caravan_hyena_pack_w2.png', import.meta.url).href },
+  { key: 'battle_baobab_root_snare', url: new URL('../../assets/art/enemies/battle_baobab_root_snare.png', import.meta.url).href },
+  { key: 'battle_baobab_root_snare_w1', url: new URL('../../assets/art/enemies/battle_baobab_root_snare_w1.png', import.meta.url).href },
+  { key: 'battle_baobab_root_snare_w2', url: new URL('../../assets/art/enemies/battle_baobab_root_snare_w2.png', import.meta.url).href },
+  { key: 'battle_laughing_dust_pot', url: new URL('../../assets/art/enemies/battle_laughing_dust_pot.png', import.meta.url).href },
+  { key: 'battle_laughing_dust_pot_w1', url: new URL('../../assets/art/enemies/battle_laughing_dust_pot_w1.png', import.meta.url).href },
+  { key: 'battle_laughing_dust_pot_w2', url: new URL('../../assets/art/enemies/battle_laughing_dust_pot_w2.png', import.meta.url).href },
+  { key: 'battle_sphinx_paw_shadow', url: new URL('../../assets/art/enemies/battle_sphinx_paw_shadow.png', import.meta.url).href },
+  { key: 'battle_sphinx_paw_shadow_w1', url: new URL('../../assets/art/enemies/battle_sphinx_paw_shadow_w1.png', import.meta.url).href },
+  { key: 'battle_sphinx_paw_shadow_w2', url: new URL('../../assets/art/enemies/battle_sphinx_paw_shadow_w2.png', import.meta.url).href },
+  { key: 'battle_laughing_sphinx', url: new URL('../../assets/art/enemies/battle_laughing_sphinx.png', import.meta.url).href },
+  { key: 'battle_laughing_sphinx_w1', url: new URL('../../assets/art/enemies/battle_laughing_sphinx_w1.png', import.meta.url).href },
+  { key: 'battle_laughing_sphinx_w2', url: new URL('../../assets/art/enemies/battle_laughing_sphinx_w2.png', import.meta.url).href },
 ] as const;
 
 const ENEMY_OVERWORLD_ART = [
@@ -1065,6 +1086,12 @@ const ENEMY_MINI_ART = [
   { key: 'mini_thunder_snail', url: new URL('../../assets/art/enemies/mini_thunder_snail.png', import.meta.url).href },
   // Ch.1 stragglers — dog_sized_berry + bridge_berry borrow battle_giant_berry_blocker; one shared derived mini
   { key: 'mini_giant_berry_blocker', url: new URL('../../assets/art/enemies/mini_giant_berry_blocker.png', import.meta.url).href },
+  // Ch.6 (Africa) — the §A7 roamers lifted off procedural minis (derived from their battlers)
+  { key: 'mini_caravan_hyena_pack', url: new URL('../../assets/art/enemies/mini_caravan_hyena_pack.png', import.meta.url).href },
+  { key: 'mini_baobab_root_snare', url: new URL('../../assets/art/enemies/mini_baobab_root_snare.png', import.meta.url).href },
+  { key: 'mini_laughing_dust_pot', url: new URL('../../assets/art/enemies/mini_laughing_dust_pot.png', import.meta.url).href },
+  { key: 'mini_sphinx_paw_shadow', url: new URL('../../assets/art/enemies/mini_sphinx_paw_shadow.png', import.meta.url).href },
+  { key: 'mini_laughing_sphinx', url: new URL('../../assets/art/enemies/mini_laughing_sphinx.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);

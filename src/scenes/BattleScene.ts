@@ -90,6 +90,8 @@ import { AWAKENINGS } from '../data/awakenings';
 import { GS, expForLevel, type HeroState } from '../engine/state';
 // S21 (ADR-126): Mia's high-tier PRAY refuels Jay's Held Breath (faith owns the rewind's supply)
 import { breathsLeft, refillBreath, puppetLocked } from '../engine/echo';
+// S21 (ADR-130): the IRON path can WITHHOLD a hero's awakened ultimate (Dorin's Comet Ω)
+import { isWithheldAbility } from '../engine/party';
 import { MAX_BREATHS } from '../data/echoes';
 import { statsAtLevel, maxHpAtLevel, maxPpAtLevel, unlockedAbilities, availableAbilities, HEROES } from '../data/heroes';
 import { INPUT } from '../engine/input';
@@ -735,6 +737,12 @@ export class BattleScene extends Phaser.Scene {
       'snuffbox_beetle', 'tax_assessor', 'halberd_column', 'bell_ringer_acolyte', 'grand_parade',
       'whiskerzilla', 'flat_bell',
     ].includes(enemyId)) return 'the_hedgerow';
+    // CH.6 Africa — the bazaar port, the Savanna Run, the Laughing Ruins + the Sphinx's
+    // chin all fight under the one authored laughing-ruins backdrop
+    if ([
+      'caravan_hyena_pack', 'baobab_root_snare', 'laughing_dust_pot', 'sphinx_paw_shadow',
+      'laughing_sphinx',
+    ].includes(enemyId)) return 'laughing_ruins';
     return 'otterbrook';
   }
 
@@ -1494,6 +1502,10 @@ export class BattleScene extends Phaser.Scene {
       // S21 (ADR-126): a Held-Breath rewind spent this map locks Puppet — Mind Warp
       // α/β (status 'puppet') drop off the list until you move on (will OR time)
       if (a.status === 'puppet' && puppetLocked()) return false;
+      // S21 (ADR-130): the IRON path can make Dorin WITHHOLD his awakened ultimate
+      // (Comet Ω) entering Mars — it drops off his Vibe list until the redemption
+      // beat clears the flag. Mirrors the Puppet-lock; here it is a moral debt.
+      if (isWithheldAbility(h.hero.id, a.id)) return false;
       return true;
     });
     if (ids.length === 0) {

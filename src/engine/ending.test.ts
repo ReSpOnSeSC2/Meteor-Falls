@@ -5,9 +5,9 @@
  * and the golden gate + party-fate overrides behave.
  */
 import { describe, it, expect } from 'vitest';
-import { composeEnding, isLongShot, type EndingContext } from './ending';
+import { composeEnding, isLongShot, forgiveViable, type EndingContext } from './ending';
 import { SLOT_ORDER, ENDING_CARDS } from '../data/endings';
-import { GOLDEN_CALLER_THRESHOLD } from '../data/echoes';
+import { GOLDEN_CALLER_THRESHOLD, FORGIVE_CALLER_FLOOR } from '../data/echoes';
 
 const TRUST = ['axis_trust_free', 'axis_trust_strings'] as const;
 const COMP = ['axis_compassion_openhand', 'axis_compassion_iron'] as const;
@@ -73,5 +73,24 @@ describe('composed ending — the golden gate + party fates', () => {
     const left = composeEnding(ctx(['axis_trust_strings', 'pippa_left', 'dorin_left']));
     expect(left.find((c) => c.slot === 'pippa')?.id).toBe('pippa_left');
     expect(left.find((c) => c.slot === 'dorin')?.id).toBe('dorin_left');
+  });
+});
+
+describe('the FORGIVE gate — the Hush "Answer" is viable only when warm (ADR-130 §7)', () => {
+  it('OPEN_HAND alone makes FORGIVE viable, even with zero callers', () => {
+    expect(forgiveViable(ctx(['axis_compassion_openhand'], { callers: 0 }))).toBe(true);
+  });
+
+  it('a full-enough caller ledger makes FORGIVE viable even on the IRON path', () => {
+    expect(forgiveViable(ctx(['axis_compassion_iron'], { callers: FORGIVE_CALLER_FLOOR }))).toBe(true);
+  });
+
+  it('too Iron with too few callers FAILS into a forced Silence', () => {
+    expect(forgiveViable(ctx(['axis_compassion_iron'], { callers: FORGIVE_CALLER_FLOOR - 1 }))).toBe(false);
+    expect(forgiveViable(ctx([], { callers: 0 }))).toBe(false);
+  });
+
+  it('the FORGIVE floor sits below the golden bar (mercy or community each qualify)', () => {
+    expect(FORGIVE_CALLER_FLOOR).toBeLessThan(GOLDEN_CALLER_THRESHOLD);
   });
 });

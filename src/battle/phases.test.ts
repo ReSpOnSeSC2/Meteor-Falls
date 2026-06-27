@@ -191,6 +191,35 @@ describe('WHISKERZILLA — the §A6 Ch.5 mercy/survival, on its real script', ()
   });
 });
 
+describe('THE LAUGHING SPHINX — the §A6 Ch.6 riddle, on its real script', () => {
+  it('a RIGHT answer — it laughs (sphinx_right), then stuns ITSELF 3 turns', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.laughing_sphinx, fx);
+    await r.onRiddleAnswered(true);
+    expect(log).toEqual(['line:sphinx_right']);
+    expect(await r.onBossTurnStart()).toBe('skip'); // helpless with laughter, turn 1
+    expect(await r.onBossTurnStart()).toBe('skip'); // turn 2
+    expect(await r.onBossTurnStart()).toBe('skip'); // turn 3
+    expect(await r.onBossTurnStart()).toBe('act'); // recovered, turn 4
+  });
+
+  it('a WRONG answer sets the whole party Crying 3 turns (the rewind-safe sandbox)', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.laughing_sphinx, fx);
+    await r.onRiddleAnswered(false);
+    expect(log).toEqual(['line:sphinx_wrong', 'status:crying:3']);
+  });
+
+  it('the riddle gimmick rides DATA — 9000 HP, mind_immune, no weakness, a pool of 8, no forms', () => {
+    expect(ENEMIES.laughing_sphinx.hp).toBe(9000);
+    expect(ENEMIES.laughing_sphinx.boss).toBe(true);
+    expect(ENEMIES.laughing_sphinx.mind_immune).toBe(true);
+    expect(ENEMIES.laughing_sphinx.weakness).toEqual([]); // the riddle IS the gimmick, not an element
+    expect(BOSS_SCRIPTS.laughing_sphinx.riddle?.pool.length).toBe(8);
+    expect(BOSS_SCRIPTS.laughing_sphinx.forms).toBeUndefined();
+  });
+});
+
 describe('the OTHER canon triggers (synthetic defs shaped like their chapters)', () => {
   it('summons-refill: bothSummonsDead re-summons every time (the Mainframe)', async () => {
     const def: BossScriptDef = {

@@ -1354,6 +1354,13 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   grand_parade: { sprite: 'battle_grand_parade', draw: drawPigeonGang },
   whiskerzilla: { sprite: 'battle_whiskerzilla', draw: drawHillSlugDeluxe },
   flat_bell: { sprite: 'battle_flat_bell', draw: drawCursedSouvenir },
+  // Chapter 6 (Africa) — the authored PNGs override these at boot; the draw fns are
+  // only the FROZEN boot fallback (borrowed, never new — CLAUDE.md spritegen freeze).
+  caravan_hyena_pack: { sprite: 'battle_caravan_hyena_pack', draw: drawPigeonGang },
+  baobab_root_snare: { sprite: 'battle_baobab_root_snare', draw: drawBananaBunch },
+  laughing_dust_pot: { sprite: 'battle_laughing_dust_pot', draw: drawCursedSouvenir },
+  sphinx_paw_shadow: { sprite: 'battle_sphinx_paw_shadow', draw: drawHillSlugDeluxe },
+  laughing_sphinx: { sprite: 'battle_laughing_sphinx', draw: drawHillSlugDeluxe },
 };
 
 /**

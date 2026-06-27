@@ -1997,6 +1997,101 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       bg: [RAMP.GOLD, RAMP.CYAN],
       mind_immune: true,
     }),
+
+    /* ══════════════ CHAPTER 6 — THE RUINS THAT LAUGH (Africa) ══════════════ *
+     * §A7 the Ch.6 roster (chapter level window 27-31, band ch6). A focused
+     * art-matched set — four authored battlers work the Savanna Run + the
+     * Laughing Ruins, and BOSS 6 (THE LAUGHING SPHINX) naps in its carved chin.
+     * On-curve (Ch.6 forge mid; sun-baked GOLD/ORANGE/EARTH ramps). Region
+     * affinity: freeze + salt bite the dust and the stone. */
+    E({
+      id: 'caravan_hyena_pack',
+      name: 'Caravan Hyena Pack',
+      article: 'The',
+      hp: 220, offense: 36, defense: 16, speed: 30, level: 28, exp: 260, cash: 48,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'pack lunge', kind: 'attack', mult: 1.2, text: '{e} broke from the dust on three sides at once and lunged at {t}!', weight: 5 },
+        { name: 'cackling snap', kind: 'attack', mult: 1, text: '{e} snapped, laughing, and the laugh was the worst part.', weight: 3 },
+        { name: 'unnerving howl', kind: 'taunt', text: '{e} threw back its heads and howled a sound with no bottom to it.', weight: 2 },
+      ],
+      deathLine: 'The Caravan Hyena Pack scattered back into the heat-shimmer, still chuckling.',
+      drops: [{ item: 'kola_nut_drink', chance: 0.16 }],
+      sprite: 'battle_caravan_hyena_pack', mini: 'mini_caravan_hyena_pack',
+      bg: [RAMP.GOLD, RAMP.ORANGE],
+    }),
+    E({
+      id: 'baobab_root_snare',
+      name: 'Baobab Root Snare',
+      article: 'The',
+      hp: 340, offense: 38, defense: 26, speed: 14, level: 29, exp: 320, cash: 52,
+      weakness: ['salt'],
+      moves: [
+        { name: 'root grab', kind: 'attack', mult: 1.1, text: '{e} surged a knuckle of root up under {t} and dragged.', weight: 4 },
+        { name: 'constrict', kind: 'strong', mult: 1.7, text: '{e} wound tight and SQUEEZED — the whole tree leaning into it.', weight: 3 },
+        { name: 'thorn lash', kind: 'attack', mult: 1, text: '{e} whipped a thorned runner across {t}.', weight: 3 },
+      ],
+      deathLine: 'The Baobab Root Snare went slack and sank back into the red earth it came from.',
+      drops: [{ item: 'trade_salt', chance: 0.14 }],
+      sprite: 'battle_baobab_root_snare', mini: 'mini_baobab_root_snare',
+      bg: [RAMP.EARTH, RAMP.GOLD],
+    }),
+    E({
+      id: 'laughing_dust_pot',
+      name: 'Laughing Dust Pot',
+      article: 'The',
+      hp: 150, offense: 24, defense: 17, speed: 22, level: 28, exp: 276, cash: 54,
+      weakness: ['freeze', 'salt'],
+      moves: [
+        { name: 'catching cackle', kind: 'status', status: 'crying', text: '{e} let out a cackle so catching that {t} could not stop laughing — and laughing, and laughing.', weight: 3 },
+        { name: 'dust puff', kind: 'attack', mult: 1, text: '{e} coughed a gritty puff of centuries into {t}\'s eyes.', weight: 4 },
+        { name: 'shatter-laugh', kind: 'strong', mult: 1.5, text: '{e} laughed itself to pieces AT {t} — shards everywhere!', weight: 2 },
+      ],
+      deathLine: 'The Laughing Dust Pot tipped over, gave one last dry giggle, and was only a pot again.',
+      sprite: 'battle_laughing_dust_pot', mini: 'mini_laughing_dust_pot',
+      bg: [RAMP.GOLD, RAMP.RED],
+    }),
+    E({
+      id: 'sphinx_paw_shadow',
+      name: 'Sphinx Paw Shadow',
+      article: 'The',
+      hp: 190, offense: 35, defense: 15, speed: 33, level: 30, exp: 250, cash: 60,
+      weakness: [],
+      moves: [
+        { name: 'pounce from the frieze', kind: 'strong', mult: 1.6, text: '{e} peeled off a carved wall and POUNCED on {t} before the eye could follow.', weight: 4 },
+        { name: 'shadow swipe', kind: 'attack', mult: 1.1, text: '{e} raked {t} with a paw that was mostly dark.', weight: 4 },
+        { name: 'unblinking stare', kind: 'taunt', text: '{e} simply looked at {t}, and the looking was a kind of weight.', weight: 2 },
+      ],
+      deathLine: 'The Sphinx Paw Shadow thinned back into the frieze it had stepped out of.',
+      drops: [{ item: 'riddle_shard', chance: 0.12 }],
+      sprite: 'battle_sphinx_paw_shadow', mini: 'mini_sphinx_paw_shadow',
+      bg: [RAMP.NIGHT, RAMP.GOLD],
+    }),
+
+    /* §A6 BOSS 6 — THE LAUGHING SPHINX (9000 HP): naps in its own carved chin and
+     * answers only RIDDLES (bosses.ts `riddle` template). A right answer stuns it
+     * three turns; a wrong answer sets the whole party Crying — the safe rewind
+     * sandbox the Held Breath was for (ADR-126). No elemental weakness (the gimmick
+     * is the riddle, not an element); mind_immune like every boss. Money > combat:
+     * 9000 HP sits far under the Ch.6 Fortune target ($1.2M). */
+    E({
+      id: 'laughing_sphinx',
+      name: 'THE LAUGHING SPHINX',
+      article: 'The',
+      hp: 9000, offense: 46, defense: 24, speed: 20, level: 31, exp: 5600, cash: 2200,
+      weakness: [],
+      moves: [
+        { name: 'paw swat', kind: 'attack', mult: 1.2, text: '{e} swatted {t} off the dais with the back of one carved paw.', weight: 4 },
+        { name: 'riddling laugh', kind: 'status', status: 'crying', text: '{e} laughed a laugh that got INTO {t} — and {t} could not stop.', weight: 3 },
+        { name: 'sandstorm breath', kind: 'strong', mult: 1.7, text: '{e} breathed out a thousand years of desert at {t}!', weight: 3 },
+        { name: 'booming chuckle', kind: 'taunt', text: '{e} chuckled, and the whole chin rang like a struck bell.', weight: 2 },
+      ],
+      deathLine: 'The Laughing Sphinx ran clean out of riddles, gave one last delighted boom, and went still — pleased, somehow, to have been answered.',
+      sprite: 'battle_laughing_sphinx', mini: 'mini_laughing_sphinx',
+      bg: [RAMP.GOLD, RAMP.EARTH],
+      boss: true,
+      mind_immune: true,
+    }),
   ].map((e) => [e.id, e]),
 );
 
