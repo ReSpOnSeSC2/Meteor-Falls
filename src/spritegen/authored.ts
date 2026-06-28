@@ -764,6 +764,22 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_jungle_jitterbug', url: new URL('../../assets/art/enemies/battle_jungle_jitterbug.png', import.meta.url).href },
   { key: 'battle_jungle_jitterbug_w1', url: new URL('../../assets/art/enemies/battle_jungle_jitterbug_w1.png', import.meta.url).href },
   { key: 'battle_jungle_jitterbug_w2', url: new URL('../../assets/art/enemies/battle_jungle_jitterbug_w2.png', import.meta.url).href },
+  // §A7 Ch.2 expansion — five adopted South-America battlers (orphaned art, now wired)
+  { key: 'battle_brass_market_mimic', url: new URL('../../assets/art/enemies/battle_brass_market_mimic.png', import.meta.url).href },
+  { key: 'battle_brass_market_mimic_w1', url: new URL('../../assets/art/enemies/battle_brass_market_mimic_w1.png', import.meta.url).href },
+  { key: 'battle_brass_market_mimic_w2', url: new URL('../../assets/art/enemies/battle_brass_market_mimic_w2.png', import.meta.url).href },
+  { key: 'battle_bronze_mask_guardian', url: new URL('../../assets/art/enemies/battle_bronze_mask_guardian.png', import.meta.url).href },
+  { key: 'battle_bronze_mask_guardian_w1', url: new URL('../../assets/art/enemies/battle_bronze_mask_guardian_w1.png', import.meta.url).href },
+  { key: 'battle_bronze_mask_guardian_w2', url: new URL('../../assets/art/enemies/battle_bronze_mask_guardian_w2.png', import.meta.url).href },
+  { key: 'battle_cackling_mask', url: new URL('../../assets/art/enemies/battle_cackling_mask.png', import.meta.url).href },
+  { key: 'battle_cackling_mask_w1', url: new URL('../../assets/art/enemies/battle_cackling_mask_w1.png', import.meta.url).href },
+  { key: 'battle_cackling_mask_w2', url: new URL('../../assets/art/enemies/battle_cackling_mask_w2.png', import.meta.url).href },
+  { key: 'battle_confetti_cannon', url: new URL('../../assets/art/enemies/battle_confetti_cannon.png', import.meta.url).href },
+  { key: 'battle_confetti_cannon_w1', url: new URL('../../assets/art/enemies/battle_confetti_cannon_w1.png', import.meta.url).href },
+  { key: 'battle_confetti_cannon_w2', url: new URL('../../assets/art/enemies/battle_confetti_cannon_w2.png', import.meta.url).href },
+  { key: 'battle_postage_stampede', url: new URL('../../assets/art/enemies/battle_postage_stampede.png', import.meta.url).href },
+  { key: 'battle_postage_stampede_w1', url: new URL('../../assets/art/enemies/battle_postage_stampede_w1.png', import.meta.url).href },
+  { key: 'battle_postage_stampede_w2', url: new URL('../../assets/art/enemies/battle_postage_stampede_w2.png', import.meta.url).href },
   { key: 'battle_gilded_grin', url: new URL('../../assets/art/enemies/battle_gilded_grin.png', import.meta.url).href },
   { key: 'battle_gilded_grin_w1', url: new URL('../../assets/art/enemies/battle_gilded_grin_w1.png', import.meta.url).href },
   { key: 'battle_gilded_grin_w2', url: new URL('../../assets/art/enemies/battle_gilded_grin_w2.png', import.meta.url).href },
@@ -1187,6 +1203,12 @@ const ENEMY_MINI_ART = [
   { key: 'mini_rare_riddle_ring', url: new URL('../../assets/art/enemies/mini_rare_riddle_ring.png', import.meta.url).href },
   { key: 'mini_sunbaked_idol', url: new URL('../../assets/art/enemies/mini_sunbaked_idol.png', import.meta.url).href },
   { key: 'mini_fastest_man_echo', url: new URL('../../assets/art/enemies/mini_fastest_man_echo.png', import.meta.url).href },
+  // §A7 Ch.2 expansion — authored roamer minis derived from the adopted battlers
+  { key: 'mini_brass_market_mimic', url: new URL('../../assets/art/enemies/mini_brass_market_mimic.png', import.meta.url).href },
+  { key: 'mini_bronze_mask_guardian', url: new URL('../../assets/art/enemies/mini_bronze_mask_guardian.png', import.meta.url).href },
+  { key: 'mini_cackling_mask', url: new URL('../../assets/art/enemies/mini_cackling_mask.png', import.meta.url).href },
+  { key: 'mini_confetti_cannon', url: new URL('../../assets/art/enemies/mini_confetti_cannon.png', import.meta.url).href },
+  { key: 'mini_postage_stampede', url: new URL('../../assets/art/enemies/mini_postage_stampede.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);

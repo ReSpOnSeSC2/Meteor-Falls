@@ -1265,6 +1265,12 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     step_mask: 80,
     banana_bunch: 22,
     jungle_jitterbug: 80,
+    // §A7 Ch.2 expansion — five adopted South-America battlers (6 → 11), on band
+    brass_market_mimic: 86,
+    bronze_mask_guardian: 88,
+    cackling_mask: 76,
+    confetti_cannon: 74,
+    postage_stampede: 82,
     gilded_grin: 300,
     // Chapter 3 (ADR-095) — §A7 England: the seed six + the Enemy Flow Law mix
     // (4 road/field · 3 dungeon · 2 social · 2 rare · 2 late-pressure · 1 set-piece).
