@@ -520,7 +520,7 @@ export function growPuertoSol(): MapDef {
     spawners: [
       ...core.spawners,
       // the dock district runs a gentle Ch.2 band, clear of the gateway + the rests
-      { enemies: ['pickpocket_parrot'], count: 1, rect: { x: 96, y: 18, w: 14, h: 4 } },
+      { enemies: ['pickpocket_parrot', 'brass_market_mimic'], count: 1, rect: { x: 96, y: 18, w: 14, h: 4 } },
     ],
   };
 }
@@ -826,8 +826,8 @@ export function buildJungle1(psReturn: { tx: number; ty: number } = PUERTO_SOL_J
       { x: 28, y: 6, w: 2, h: 3, to: 'jungle_2', tx: 40, ty: 200, facing: 'right' },
     ],
     spawners: [
-      { enemies: ['pickpocket_parrot', 'banana_bunch'], count: 3, rect: { x: 4, y: 6, w: 22, h: 4 } },
-      { enemies: ['jungle_jitterbug', 'pickpocket_parrot'], count: 2, rect: { x: 4, y: 18, w: 20, h: 4 } },
+      { enemies: ['pickpocket_parrot', 'banana_bunch', 'postage_stampede'], count: 3, rect: { x: 4, y: 6, w: 22, h: 4 } },
+      { enemies: ['jungle_jitterbug', 'pickpocket_parrot', 'confetti_cannon'], count: 2, rect: { x: 4, y: 18, w: 20, h: 4 } },
       { enemies: ['banana_bunch'], count: 2, rect: { x: 5, y: 24, w: 18, h: 4 } },
     ],
     triggers: [],
@@ -1211,7 +1211,7 @@ export function buildPyramidAnte(): MapDef {
     phones: [{ x: 16, y: 12 }],
     doors: [{ x: 9, y: 15, w: 3, h: 1, to: 'valle_dorado', tx: 288, ty: 456, facing: 'down' }],
     spawners: [
-      { enemies: ['step_mask', 'gilded_beetle'], count: 2, rect: { x: 3, y: 5, w: 6, h: 5 } },
+      { enemies: ['step_mask', 'gilded_beetle', 'bronze_mask_guardian'], count: 2, rect: { x: 3, y: 5, w: 6, h: 5 } },
     ],
     triggers: [
       { id: 'pyramid_approach', rect: { x: 8, y: 12, w: 5, h: 2 }, once: true },
@@ -1239,7 +1239,7 @@ export function buildPyramidRooms(): MapDef[] {
         { x: 6, y: 0, w: 3, h: 1, to: 'pyramid_3', tx: 120, ty: 196, facing: 'up', indicator: 'door' },
       ],
       [12, 9],
-      { enemies: ['cursed_souvenir', 'step_mask'], count: 2, rect: { x: 4, y: 1, w: 7, h: 2 } },
+      { enemies: ['cursed_souvenir', 'step_mask', 'cackling_mask'], count: 2, rect: { x: 4, y: 1, w: 7, h: 2 } },
     ),
     buildPyramidRoom(
       'pyramid_3',

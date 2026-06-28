@@ -2,12 +2,12 @@
 
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
-- Enemies: 119
-- Fully authored identities: 119
+- Enemies: 124
+- Fully authored identities: 124
 - Legacy identities: 0
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
-- Authored battle PNGs on disk but not registered for current runtime: 112
+- Authored battle PNGs on disk but not registered for current runtime: 97
 
 ## Enemy Rows
 
@@ -39,6 +39,11 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | step_mask | pyramid_ante, pyramid_1, pyramid_2, pyramid_4 | battle_step_mask | ow_enemy_step_mask | authored | - |
 | banana_bunch | jungle_1, jungle_2 | battle_banana_bunch | ow_enemy_banana_bunch | authored | - |
 | jungle_jitterbug | jungle_1, jungle_2, pyramid_3 | battle_jungle_jitterbug | ow_enemy_jungle_jitterbug | authored | - |
+| brass_market_mimic | puerto_sol | battle_brass_market_mimic | mini:mini_brass_market_mimic | authored | - |
+| bronze_mask_guardian | pyramid_ante | battle_bronze_mask_guardian | mini:mini_bronze_mask_guardian | authored | - |
+| cackling_mask | pyramid_2 | battle_cackling_mask | mini:mini_cackling_mask | authored | - |
+| confetti_cannon | jungle_1 | battle_confetti_cannon | mini:mini_confetti_cannon | authored | - |
+| postage_stampede | jungle_1 | battle_postage_stampede | mini:mini_postage_stampede | authored | - |
 | prefect_drone | wintermoor_grounds, wintermoor_dorm | battle_prefect_drone | ow_enemy_prefect_drone | authored | - |
 | possessed_textbook | wintermoor_f1 | battle_possessed_textbook | ow_enemy_possessed_textbook | authored | - |
 | fog_hound | foggy_moor, the_old_stones | battle_fog_hound | ow_enemy_fog_hound | authored | - |
@@ -159,27 +164,15 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_bootstep_boulder
 - battle_bootstep_boulder_w1
 - battle_bootstep_boulder_w2
-- battle_brass_market_mimic
-- battle_brass_market_mimic_w1
-- battle_brass_market_mimic_w2
-- battle_bronze_mask_guardian
-- battle_bronze_mask_guardian_w1
-- battle_bronze_mask_guardian_w2
 - battle_button_shield_guard
 - battle_button_shield_guard_w1
 - battle_button_shield_guard_w2
-- battle_cackling_mask
-- battle_cackling_mask_w1
-- battle_cackling_mask_w2
 - battle_census_ledger_wraith
 - battle_census_ledger_wraith_w1
 - battle_census_ledger_wraith_w2
 - battle_cold_charm_mimic
 - battle_cold_charm_mimic_w1
 - battle_cold_charm_mimic_w2
-- battle_confetti_cannon
-- battle_confetti_cannon_w1
-- battle_confetti_cannon_w2
 - battle_crumb_knight
 - battle_crumb_knight_w1
 - battle_crumb_knight_w2
@@ -219,9 +212,6 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_pocket_lint_sprite
 - battle_pocket_lint_sprite_w1
 - battle_pocket_lint_sprite_w2
-- battle_postage_stampede
-- battle_postage_stampede_w1
-- battle_postage_stampede_w2
 - battle_rare_crown_jewel_chip
 - battle_rare_crown_jewel_chip_w1
 - battle_rare_crown_jewel_chip_w2

@@ -1284,6 +1284,13 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   step_mask: { sprite: 'battle_step_mask', draw: drawStepMask },
   banana_bunch: { sprite: 'battle_banana_bunch', draw: drawBananaBunch },
   jungle_jitterbug: { sprite: 'battle_jungle_jitterbug', draw: drawJungleJitterbug },
+  // §A7 Ch.2 EXPANSION — five adopted battlers. The authored PNG overrides at
+  // runtime; these frozen draw fns are the never-rendered boot fallback (reused).
+  brass_market_mimic: { sprite: 'battle_brass_market_mimic', draw: drawGildedBeetle },
+  bronze_mask_guardian: { sprite: 'battle_bronze_mask_guardian', draw: drawStepMask },
+  cackling_mask: { sprite: 'battle_cackling_mask', draw: drawStepMask },
+  confetti_cannon: { sprite: 'battle_confetti_cannon', draw: drawRunawayLawnmower },
+  postage_stampede: { sprite: 'battle_postage_stampede', draw: drawJungleJitterbug },
   gilded_grin: { sprite: 'battle_gilded_grin', draw: (w) => drawGildedGrin(w, false) },
   // BOSS 3 (ADR-099) — HEADMASTER MAINFRAME wears the institutional-watcher face
   // (dev-art: it shares the §A7 lurker silhouette this session; the bespoke server-
