@@ -2,12 +2,12 @@
 
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
-- Enemies: 103
-- Fully authored identities: 103
+- Enemies: 119
+- Fully authored identities: 119
 - Legacy identities: 0
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
-- Authored battle PNGs on disk but not registered for current runtime: 158
+- Authored battle PNGs on disk but not registered for current runtime: 112
 
 ## Enemy Rows
 
@@ -107,9 +107,25 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | whiskerzilla | - | battle_whiskerzilla | mini:mini_hill_slug | authored | - |
 | flat_bell | - | battle_flat_bell | mini:mini_souvenir | authored | - |
 | caravan_hyena_pack | savanna_run | battle_caravan_hyena_pack | mini:mini_caravan_hyena_pack | authored | - |
-| baobab_root_snare | savanna_run, laughing_ruins | battle_baobab_root_snare | mini:mini_baobab_root_snare | authored | - |
+| baobab_root_snare | savanna_run | battle_baobab_root_snare | mini:mini_baobab_root_snare | authored | - |
 | laughing_dust_pot | laughing_ruins | battle_laughing_dust_pot | mini:mini_laughing_dust_pot | authored | - |
 | sphinx_paw_shadow | laughing_ruins | battle_sphinx_paw_shadow | mini:mini_sphinx_paw_shadow | authored | - |
+| hollow_jackal | savanna_run | battle_hollow_jackal | mini:mini_hollow_jackal | authored | - |
+| dust_devil_charm | savanna_run | battle_dust_devil_charm | mini:mini_dust_devil_charm | authored | - |
+| salt_flat_lurker | savanna_run | battle_salt_flat_lurker | mini:mini_salt_flat_lurker | authored | - |
+| thornbush_bomber | savanna_run | battle_thornbush_bomber | mini:mini_thornbush_bomber | authored | - |
+| ribbon_serpent | savanna_run | battle_ribbon_serpent | mini:mini_ribbon_serpent | authored | - |
+| canteen_mirage | savanna_run | battle_canteen_mirage | mini:mini_canteen_mirage | authored | - |
+| trade_salt_heap | savanna_run | battle_trade_salt_heap | mini:mini_trade_salt_heap | authored | - |
+| mirage_vendor | savanna_run | battle_mirage_vendor | mini:mini_mirage_vendor | authored | - |
+| griot_string_snare | savanna_run | battle_griot_string_snare | mini:mini_griot_string_snare | authored | - |
+| town_gossip_troll | savanna_run | battle_town_gossip_troll | mini:mini_town_gossip_troll | authored | - |
+| punchline_head | laughing_ruins | battle_punchline_head | mini:mini_punchline_head | authored | - |
+| echoing_riddle | laughing_ruins | battle_echoing_riddle | mini:mini_echoing_riddle | authored | - |
+| laughing_sphinx_riddle | laughing_ruins | battle_laughing_sphinx_riddle | mini:mini_laughing_sphinx_riddle | authored | - |
+| rare_riddle_ring | laughing_ruins | battle_rare_riddle_ring | mini:mini_rare_riddle_ring | authored | - |
+| sunbaked_idol | laughing_ruins | battle_sunbaked_idol | mini:mini_sunbaked_idol | authored | - |
+| fastest_man_echo | laughing_ruins | battle_fastest_man_echo | mini:mini_fastest_man_echo | authored | - |
 | laughing_sphinx | - | battle_laughing_sphinx | mini:mini_laughing_sphinx | authored | - |
 | rickshaw_swarm | monsoon_road | battle_rickshaw_swarm | mini:mini_rickshaw_swarm | authored | - |
 | spice_djinn | monsoon_road, night_train | battle_spice_djinn | mini:mini_spice_djinn | authored | - |
@@ -155,9 +171,6 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_cackling_mask
 - battle_cackling_mask_w1
 - battle_cackling_mask_w2
-- battle_canteen_mirage
-- battle_canteen_mirage_w1
-- battle_canteen_mirage_w2
 - battle_census_ledger_wraith
 - battle_census_ledger_wraith_w1
 - battle_census_ledger_wraith_w2
@@ -176,21 +189,12 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_driftwall_snowbank
 - battle_driftwall_snowbank_w1
 - battle_driftwall_snowbank_w2
-- battle_dust_devil_charm
-- battle_dust_devil_charm_w1
-- battle_dust_devil_charm_w2
 - battle_earwax_wisp
 - battle_earwax_wisp_w1
 - battle_earwax_wisp_w2
-- battle_echoing_riddle
-- battle_echoing_riddle_w1
-- battle_echoing_riddle_w2
 - battle_false_exit_hedge
 - battle_false_exit_hedge_w1
 - battle_false_exit_hedge_w2
-- battle_fastest_man_echo
-- battle_fastest_man_echo_w1
-- battle_fastest_man_echo_w2
 - battle_frostbitten_postcard
 - battle_frostbitten_postcard_w1
 - battle_frostbitten_postcard_w2
@@ -200,19 +204,9 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_gilt_thimble_guard
 - battle_gilt_thimble_guard_w1
 - battle_gilt_thimble_guard_w2
-- battle_griot_string_snare
-- battle_griot_string_snare_w1
-- battle_griot_string_snare_w2
-- battle_hollow_jackal
-- battle_hollow_jackal_w1
-- battle_hollow_jackal_w2
-- battle_laughing_sphinx_riddle
 - battle_magnifying_lens_mite
 - battle_magnifying_lens_mite_w1
 - battle_magnifying_lens_mite_w2
-- battle_mirage_vendor
-- battle_mirage_vendor_w1
-- battle_mirage_vendor_w2
 - battle_moor_lantern
 - battle_moor_lantern_w1
 - battle_moor_lantern_w2
@@ -228,30 +222,18 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_postage_stampede
 - battle_postage_stampede_w1
 - battle_postage_stampede_w2
-- battle_punchline_head
-- battle_punchline_head_w1
-- battle_punchline_head_w2
 - battle_rare_crown_jewel_chip
 - battle_rare_crown_jewel_chip_w1
 - battle_rare_crown_jewel_chip_w2
 - battle_rare_giant_button
 - battle_rare_giant_button_w1
 - battle_rare_giant_button_w2
-- battle_rare_riddle_ring
-- battle_rare_riddle_ring_w1
-- battle_rare_riddle_ring_w2
-- battle_ribbon_serpent
-- battle_ribbon_serpent_w1
-- battle_ribbon_serpent_w2
 - battle_ribcage_rattler
 - battle_ribcage_rattler_w1
 - battle_ribcage_rattler_w2
 - battle_royal_doubloon_roller
 - battle_royal_doubloon_roller_w1
 - battle_royal_doubloon_roller_w2
-- battle_salt_flat_lurker
-- battle_salt_flat_lurker_w1
-- battle_salt_flat_lurker_w2
 - battle_sigrids_lost_lens
 - battle_sigrids_lost_lens_w1
 - battle_sigrids_lost_lens_w2
@@ -264,27 +246,15 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_spine_tick
 - battle_spine_tick_w1
 - battle_spine_tick_w2
-- battle_sunbaked_idol
-- battle_sunbaked_idol_w1
-- battle_sunbaked_idol_w2
 - battle_teacup_tilter
 - battle_teacup_tilter_w1
 - battle_teacup_tilter_w2
 - battle_thimble_drummer
 - battle_thimble_drummer_w1
 - battle_thimble_drummer_w2
-- battle_thornbush_bomber
-- battle_thornbush_bomber_w1
-- battle_thornbush_bomber_w2
 - battle_tin_soldier_squad
 - battle_tin_soldier_squad_w1
 - battle_tin_soldier_squad_w2
-- battle_town_gossip_troll
-- battle_town_gossip_troll_w1
-- battle_town_gossip_troll_w2
-- battle_trade_salt_heap
-- battle_trade_salt_heap_w1
-- battle_trade_salt_heap_w2
 - battle_whiskerzilla_knighted
 - battle_woolly_pressure_kettle
 - battle_woolly_pressure_kettle_w1

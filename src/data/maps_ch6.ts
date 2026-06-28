@@ -182,9 +182,11 @@ function buildSavannaRun(): MapDef {
       { x: W - 1, y: 7, w: 1, h: 2, to: 'laughing_ruins', tx: 9 * 16, ty: 20 * 16, facing: 'right', indicator: 'none' },
     ],
     spawners: [
-      { enemies: ['caravan_hyena_pack', 'baobab_root_snare'], count: 2, rect: { x: 3, y: 3, w: 8, h: 3 } },
-      { enemies: ['baobab_root_snare', 'caravan_hyena_pack'], count: 2, rect: { x: 24, y: 3, w: 9, h: 3 } },
-      { enemies: ['caravan_hyena_pack'], count: 2, rect: { x: 22, y: 11, w: 9, h: 3 } },
+      // §A7 to-twenty: the savanna/desert roamers + the two market-social oddities
+      // draw across the proven rects (the riddle specialists work the ruins below).
+      { enemies: ['caravan_hyena_pack', 'hollow_jackal', 'dust_devil_charm', 'ribbon_serpent'], count: 2, rect: { x: 3, y: 3, w: 8, h: 3 } },
+      { enemies: ['baobab_root_snare', 'thornbush_bomber', 'salt_flat_lurker', 'canteen_mirage'], count: 2, rect: { x: 24, y: 3, w: 9, h: 3 } },
+      { enemies: ['caravan_hyena_pack', 'mirage_vendor', 'griot_string_snare', 'town_gossip_troll', 'trade_salt_heap'], count: 2, rect: { x: 22, y: 11, w: 9, h: 3 } },
     ],
     triggers: [],
   };
@@ -244,9 +246,11 @@ function buildLaughingRuins(): MapDef {
       { x: 9, y: 0, w: 2, h: 1, to: 'sphinx_chin', tx: 9 * 16, ty: 14 * 16, facing: 'up', indicator: 'none' },
     ],
     spawners: [
-      { enemies: ['laughing_dust_pot', 'baobab_root_snare'], count: 2, rect: { x: 2, y: 3, w: 5, h: 4 } },
-      { enemies: ['sphinx_paw_shadow', 'laughing_dust_pot'], count: 2, rect: { x: 13, y: 3, w: 5, h: 4 } },
-      { enemies: ['laughing_dust_pot', 'sphinx_paw_shadow'], count: 2, rect: { x: 2, y: 16, w: 5, h: 4 } },
+      // §A7 to-twenty: the Laughing-Ruins riddle specialists + the set-piece echo
+      // join the two anchors that shipped the dungeon.
+      { enemies: ['laughing_dust_pot', 'punchline_head', 'echoing_riddle'], count: 2, rect: { x: 2, y: 3, w: 5, h: 4 } },
+      { enemies: ['sphinx_paw_shadow', 'sunbaked_idol', 'laughing_sphinx_riddle'], count: 2, rect: { x: 13, y: 3, w: 5, h: 4 } },
+      { enemies: ['laughing_dust_pot', 'echoing_riddle', 'rare_riddle_ring', 'fastest_man_echo'], count: 2, rect: { x: 2, y: 16, w: 5, h: 4 } },
     ],
     triggers: [
       // THE HELD BREATH unlock (§S21/ADR-126) — the looping moment; {rex} learns the

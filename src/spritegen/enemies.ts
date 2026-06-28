@@ -1360,6 +1360,24 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   baobab_root_snare: { sprite: 'battle_baobab_root_snare', draw: drawBananaBunch },
   laughing_dust_pot: { sprite: 'battle_laughing_dust_pot', draw: drawCursedSouvenir },
   sphinx_paw_shadow: { sprite: 'battle_sphinx_paw_shadow', draw: drawHillSlugDeluxe },
+  // §A7 Ch.6 expansion to twenty — the 16 adopted Africa battlers. Authored PNGs
+  // override these at boot; the draw fns are the FROZEN borrowed boot fallback only.
+  hollow_jackal: { sprite: 'battle_hollow_jackal', draw: drawPigeonGang },
+  dust_devil_charm: { sprite: 'battle_dust_devil_charm', draw: drawJungleJitterbug },
+  salt_flat_lurker: { sprite: 'battle_salt_flat_lurker', draw: drawHillSlugDeluxe },
+  thornbush_bomber: { sprite: 'battle_thornbush_bomber', draw: drawBananaBunch },
+  ribbon_serpent: { sprite: 'battle_ribbon_serpent', draw: drawCoilyCicada },
+  canteen_mirage: { sprite: 'battle_canteen_mirage', draw: drawCursedSouvenir },
+  trade_salt_heap: { sprite: 'battle_trade_salt_heap', draw: drawHillSlugDeluxe },
+  mirage_vendor: { sprite: 'battle_mirage_vendor', draw: drawBlazerSmiler },
+  griot_string_snare: { sprite: 'battle_griot_string_snare', draw: drawStepMask },
+  town_gossip_troll: { sprite: 'battle_town_gossip_troll', draw: drawBlazerSmiler },
+  punchline_head: { sprite: 'battle_punchline_head', draw: drawStepMask },
+  echoing_riddle: { sprite: 'battle_echoing_riddle', draw: drawCursedSouvenir },
+  laughing_sphinx_riddle: { sprite: 'battle_laughing_sphinx_riddle', draw: drawHillSlugDeluxe },
+  rare_riddle_ring: { sprite: 'battle_rare_riddle_ring', draw: drawGildedBeetle },
+  sunbaked_idol: { sprite: 'battle_sunbaked_idol', draw: drawStepMask },
+  fastest_man_echo: { sprite: 'battle_fastest_man_echo', draw: drawBlazerSmiler },
   laughing_sphinx: { sprite: 'battle_laughing_sphinx', draw: drawHillSlugDeluxe },
   // Chapter 7 (India) — the authored PNGs override these at boot; the draw fns are
   // only the FROZEN boot fallback (borrowed, never new — CLAUDE.md spritegen freeze).

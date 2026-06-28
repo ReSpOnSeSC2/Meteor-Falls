@@ -1232,7 +1232,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'colossal_gnat',
       name: 'Colossal Gnat',
       article: 'The',
-      hp: 90, offense: 24, defense: 8, speed: 22, level: 19, exp: 95, cash: 48,
+      hp: 205, offense: 24, defense: 8, speed: 22, level: 19, exp: 95, cash: 48,
       weakness: ['fire'],
       moves: [
         { name: 'whine', kind: 'attack', mult: 1, text: '{e} whined past {t}\'s ear at the exact worst pitch!', weight: 5 },
@@ -1248,7 +1248,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'knitting_needles',
       name: 'Runaway Knitting Needles',
       article: 'The',
-      hp: 175, offense: 28, defense: 14, speed: 16, level: 20, exp: 130, cash: 60,
+      hp: 305, offense: 28, defense: 14, speed: 16, level: 20, exp: 130, cash: 60,
       weakness: ['fire', 'volt'],
       moves: [
         { name: 'purl two', kind: 'attack', mult: 1, text: '{e} jabbed at {t} — knit one, purl {t}!', weight: 5 },
@@ -1265,7 +1265,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Thunder Snail',
       article: 'The',
       // slow on the field, hits like weather in the fight (§A7 Ch.4)
-      hp: 230, offense: 34, defense: 20, speed: 5, level: 21, exp: 175, cash: 78,
+      hp: 370, offense: 34, defense: 20, speed: 5, level: 21, exp: 175, cash: 78,
       weakness: ['salt'],
       moves: [
         { name: 'slow roll', kind: 'attack', mult: 1.1, text: '{e} rolled over {t} with the patience of geology!', weight: 4 },
@@ -1283,7 +1283,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Dog-Sized Berry',
       article: 'The',
       // poses as a roadside pickup; heals itself if you let the fight drag (§A7)
-      hp: 160, offense: 22, defense: 12, speed: 10, level: 20, exp: 150, cash: 70,
+      hp: 285, offense: 22, defense: 12, speed: 10, level: 20, exp: 150, cash: 70,
       weakness: ['fire'],
       moves: [
         { name: 'play dead', kind: 'taunt', text: '{e} sat very still, pretending to be lunch.', weight: 2 },
@@ -1300,7 +1300,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'hushed_gull',
       name: 'Hushed Gull, Enormous',
       article: 'The',
-      hp: 200, offense: 26, defense: 12, speed: 18, level: 21, exp: 160, cash: 72,
+      hp: 335, offense: 26, defense: 12, speed: 18, level: 21, exp: 160, cash: 72,
       weakness: ['salt'],
       moves: [
         { name: 'dive', kind: 'attack', mult: 1.1, text: '{e} folded its wings and dropped on {t} like a thrown anchor!', weight: 4 },
@@ -1318,7 +1318,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Junior Jötun',
       article: 'The',
       // a baby frost-giant; grabs a hero and won't let go (§A7 "grabs a hero")
-      hp: 260, offense: 32, defense: 22, speed: 8, level: 22, exp: 190, cash: 80,
+      hp: 405, offense: 32, defense: 22, speed: 8, level: 22, exp: 190, cash: 80,
       weakness: ['fire'],
       moves: [
         { name: 'big grab', kind: 'status', status: 'paralyzed', text: '{e} closed one enormous cold fist around {t}!', weight: 3 },
@@ -1337,7 +1337,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'moor_midge_cloud',
       name: 'Moor-Midge Cloud',
       article: 'The',
-      hp: 70, offense: 16, defense: 6, speed: 20, level: 19, exp: 70, cash: 35,
+      hp: 180, offense: 16, defense: 6, speed: 20, level: 19, exp: 70, cash: 35,
       weakness: ['fire'],
       moves: [
         { name: 'cloud up', kind: 'attack', mult: 1, text: '{e} swallowed {t} whole in a haze of tiny wings!', weight: 5 },
@@ -1352,7 +1352,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'boulder_lichen',
       name: 'Boulder-Lichen',
       article: 'The',
-      hp: 240, offense: 24, defense: 26, speed: 4, level: 21, exp: 160, cash: 70,
+      hp: 380, offense: 24, defense: 26, speed: 4, level: 21, exp: 160, cash: 70,
       weakness: ['salt'],
       moves: [
         { name: 'shrug loose', kind: 'attack', mult: 1.1, text: '{e} shrugged a few tons of itself onto {t}!', weight: 4 },
@@ -1368,7 +1368,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'frost_hare',
       name: 'Enormous Frost-Hare',
       article: 'The',
-      hp: 150, offense: 30, defense: 12, speed: 24, level: 20, exp: 130, cash: 60,
+      hp: 275, offense: 30, defense: 12, speed: 24, level: 20, exp: 130, cash: 60,
       weakness: ['fire'],
       moves: [
         { name: 'thumper kick', kind: 'strong', mult: 1.6, text: '{e} kicked with both hind legs and sent {t} skidding!', weight: 4 },
@@ -1384,7 +1384,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Bog-Cotton Wisp',
       article: 'The',
       // a weather-sized nuisance that drifts across paths like a moving wall (§A7)
-      hp: 120, offense: 18, defense: 10, speed: 14, level: 19, exp: 110, cash: 55,
+      hp: 240, offense: 18, defense: 10, speed: 14, level: 19, exp: 110, cash: 55,
       weakness: ['fire'],
       moves: [
         { name: 'drift across', kind: 'attack', mult: 1, text: '{e} drifted across {t}, soft and smothering!', weight: 4 },
@@ -1401,7 +1401,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'earwax_golem',
       name: 'Earwax Amber Golem',
       article: 'The',
-      hp: 235, offense: 30, defense: 24, speed: 7, level: 21, exp: 175, cash: 75,
+      hp: 375, offense: 30, defense: 24, speed: 7, level: 21, exp: 175, cash: 75,
       weakness: ['fire'],
       moves: [
         { name: 'amber fist', kind: 'strong', mult: 1.6, text: '{e} swung a fist of warm gold amber at {t}!', weight: 4 },
@@ -1418,7 +1418,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'dream_leech',
       name: 'Dream-Leech',
       article: 'The',
-      hp: 130, offense: 24, defense: 12, speed: 16, level: 20, exp: 150, cash: 70,
+      hp: 250, offense: 24, defense: 12, speed: 16, level: 20, exp: 150, cash: 70,
       weakness: ['salt'],
       moves: [
         { name: 'sip a dream', kind: 'drain', mult: 1, text: '{e} sipped a warm dream straight out of {t}!', weight: 4 },
@@ -1434,7 +1434,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'snore_gust',
       name: 'Snore-Gust',
       article: 'The',
-      hp: 110, offense: 22, defense: 10, speed: 20, level: 20, exp: 140, cash: 65,
+      hp: 225, offense: 22, defense: 10, speed: 20, level: 20, exp: 140, cash: 65,
       weakness: ['volt'],
       moves: [
         { name: 'gust', kind: 'attack', mult: 1.1, text: '{e} blasted {t} with one warm sleeping breath!', weight: 4 },
@@ -1454,7 +1454,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Giant House-Cat',
       article: 'The',
       // ordinary to them, a kaiju to you — a quiet seed for Ch.5's Whiskerzilla
-      hp: 220, offense: 28, defense: 16, speed: 16, level: 21, exp: 165, cash: 72,
+      hp: 355, offense: 28, defense: 16, speed: 16, level: 21, exp: 165, cash: 72,
       weakness: ['salt'],
       moves: [
         { name: 'idle swat', kind: 'attack', mult: 1.1, text: '{e} swatted {t} the way you\'d swat a fly — idly, devastatingly!', weight: 4 },
@@ -1470,7 +1470,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'lost_mitten',
       name: 'Lost Giant Mitten',
       article: 'The',
-      hp: 150, offense: 22, defense: 14, speed: 12, level: 20, exp: 130, cash: 60,
+      hp: 275, offense: 22, defense: 14, speed: 12, level: 20, exp: 130, cash: 60,
       weakness: ['fire'],
       moves: [
         { name: 'flop', kind: 'attack', mult: 1.1, text: '{e} flopped onto {t} with a damp woollen WHUMP!', weight: 4 },
@@ -1488,7 +1488,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'amber_hoard_troll',
       name: 'Amber-Hoard Troll',
       article: 'The',
-      hp: 165, offense: 24, defense: 16, speed: 12, level: 21, exp: 210, cash: 85,
+      hp: 290, offense: 24, defense: 16, speed: 12, level: 21, exp: 210, cash: 85,
       weakness: ['fire'],
       moves: [
         { name: 'clutch the hoard', kind: 'taunt', text: '{e} pulled its amber close and glared at {t}.', weight: 3 },
@@ -1504,7 +1504,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'aurora_moth',
       name: 'Aurora Moth',
       article: 'The',
-      hp: 130, offense: 22, defense: 12, speed: 26, level: 21, exp: 200, cash: 84,
+      hp: 250, offense: 22, defense: 12, speed: 26, level: 21, exp: 200, cash: 84,
       weakness: ['salt'],
       moves: [
         { name: 'blinding wings', kind: 'status', status: 'crying', text: '{e} beat wings of cold green light right in {t}\'s face!', weight: 3 },
@@ -1522,7 +1522,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'hushed_skua',
       name: 'Hushed Skua',
       article: 'The',
-      hp: 210, offense: 30, defense: 14, speed: 20, level: 22, exp: 185, cash: 82,
+      hp: 345, offense: 30, defense: 14, speed: 20, level: 22, exp: 185, cash: 82,
       weakness: ['salt'],
       moves: [
         { name: 'strafe', kind: 'strong', mult: 1.6, text: '{e} came in low and fast and raked {t}!', weight: 4 },
@@ -1539,7 +1539,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'frost_jotun_elder',
       name: 'Frost-Jötun Elder',
       article: 'The',
-      hp: 290, offense: 34, defense: 24, speed: 9, level: 22, exp: 200, cash: 86,
+      hp: 440, offense: 34, defense: 24, speed: 9, level: 22, exp: 200, cash: 86,
       weakness: ['fire'],
       moves: [
         { name: 'two-handed grab', kind: 'status', status: 'paralyzed', text: '{e} caught {t} up in both hands like a doll!', weight: 3 },
@@ -1559,7 +1559,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Bridge Berry',
       article: 'The',
       // a wall with a stem: it blocks the gorge bridge until fought or rolled aside
-      hp: 300, offense: 18, defense: 24, speed: 4, level: 22, exp: 220, cash: 80,
+      hp: 450, offense: 18, defense: 24, speed: 4, level: 22, exp: 220, cash: 80,
       weakness: ['fire'],
       moves: [
         { name: 'block the way', kind: 'taunt', text: '{e} settled deeper into the bridge mouth. It was not moving.', weight: 3 },
@@ -1614,7 +1614,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Tin Parade',
       article: 'The',
       // a column of a dozen wind-up tin soldiers that march, halt, and fire as ONE
-      hp: 140, offense: 28, defense: 14, speed: 18, level: 23, exp: 130, cash: 28,
+      hp: 500, offense: 28, defense: 14, speed: 18, level: 23, exp: 130, cash: 28,
       weakness: ['volt'],
       moves: [
         { name: 'present arms', kind: 'taunt', text: '{e} snapped into a square and presented a hedge of matchstick bayonets.', weight: 2 },
@@ -1631,7 +1631,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Duelist Pip',
       article: 'The',
       // minuscule and FORMAL — salutes, ripostes, demands satisfaction in writing
-      hp: 165, offense: 34, defense: 12, speed: 28, level: 24, exp: 160, cash: 40,
+      hp: 560, offense: 34, defense: 12, speed: 28, level: 24, exp: 160, cash: 40,
       weakness: [],
       moves: [
         { name: 'en garde', kind: 'taunt', text: '{e} saluted with a pin-sized rapier and raised an immaculate guard.', weight: 2 },
@@ -1648,7 +1648,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Crumb Cannoneer',
       article: 'The',
       // loads the rations you DROPPED and fires them right back at you
-      hp: 200, offense: 30, defense: 16, speed: 14, level: 24, exp: 170, cash: 36,
+      hp: 640, offense: 30, defense: 16, speed: 14, level: 24, exp: 170, cash: 36,
       weakness: ['fire'],
       moves: [
         { name: 'load the crumb', kind: 'taunt', text: '{e} rammed a biscuit-crumb down the barrel and sighted along it.', weight: 2 },
@@ -1665,7 +1665,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Powder-Wig Wasp',
       article: 'The',
       // a courtier-wasp in a powdered wig; its minuet drone lulls you to sleep
-      hp: 170, offense: 29, defense: 13, speed: 24, level: 24, exp: 165, cash: 38,
+      hp: 570, offense: 29, defense: 13, speed: 24, level: 24, exp: 165, cash: 38,
       weakness: ['insect'],
       moves: [
         { name: 'courtly drone', kind: 'status', status: 'asleep', text: '{e} hummed a soporific minuet, and {t}\'s eyelids grew very heavy...', weight: 3 },
@@ -1682,7 +1682,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Wind-Up Wyrmlet',
       article: 'The',
       // a clockwork dragon-toy that overwinds its own key, then lets the spring GO
-      hp: 185, offense: 27, defense: 15, speed: 26, level: 25, exp: 175, cash: 42,
+      hp: 605, offense: 27, defense: 15, speed: 26, level: 25, exp: 175, cash: 42,
       weakness: ['volt'],
       moves: [
         { name: 'wind up', kind: 'taunt', text: '{e} cranked its own key one menacing notch tighter.', weight: 2 },
@@ -1698,7 +1698,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Dust Bunny of Unusual Size',
       article: 'The',
       // a fuzzy under-the-throne dust ball that SPLITS into two indignant halves
-      hp: 150, offense: 25, defense: 10, speed: 20, level: 23, exp: 140, cash: 26,
+      hp: 525, offense: 25, defense: 10, speed: 20, level: 23, exp: 140, cash: 26,
       weakness: ['fire'],
       moves: [
         { name: 'split', kind: 'taunt', text: '{e} divided into two smaller, equally indignant bunnies.', weight: 2 },
@@ -1716,7 +1716,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Whistle Guard',
       article: 'The',
       // thumb-high constable; halts you "by the book" and blows for a second
-      hp: 200, offense: 28, defense: 18, speed: 16, level: 23, exp: 145, cash: 30,
+      hp: 640, offense: 28, defense: 18, speed: 16, level: 23, exp: 145, cash: 30,
       weakness: [],
       moves: [
         { name: 'by the book', kind: 'taunt', text: '{e} read {t} the relevant bylaw and blew a shrill whistle for backup.', weight: 3 },
@@ -1732,7 +1732,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Census Pigeon',
       article: 'The',
       // parade-balloon-huge to them, an ordinary pigeon to you; steals snacks
-      hp: 160, offense: 26, defense: 12, speed: 27, level: 23, exp: 135, cash: 28,
+      hp: 545, offense: 26, defense: 12, speed: 27, level: 23, exp: 135, cash: 28,
       weakness: ['volt'],
       moves: [
         { name: 'shoelace peck', kind: 'attack', mult: 1, text: '{e} pecked furiously at {t}\'s enormous shoelaces!', weight: 4 },
@@ -1748,7 +1748,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Toll Clerk',
       article: 'The',
       // spends a turn "taking a vote" on your fine, then garnishes your wallet
-      hp: 175, offense: 27, defense: 16, speed: 15, level: 24, exp: 155, cash: 34,
+      hp: 580, offense: 27, defense: 16, speed: 15, level: 24, exp: 155, cash: 34,
       weakness: [],
       moves: [
         { name: 'take a vote', kind: 'taunt', text: '{e} convened a one-clerk committee to deliberate {t}\'s penalty.', weight: 3 },
@@ -1765,7 +1765,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Cobble Mite',
       article: 'The',
       // hides between cobbles where big feet WHIFF — Pippa's Pinpoint Mark fixes it
-      hp: 95, offense: 30, defense: 8, speed: 26, level: 23, exp: 150, cash: 32,
+      hp: 400, offense: 30, defense: 8, speed: 26, level: 23, exp: 150, cash: 32,
       weakness: ['insect'],
       moves: [
         { name: 'cobble dive', kind: 'taunt', text: '{e} dropped into the gap between two stones; {t}\'s great swing whiffed clean over it.', weight: 3 },
@@ -1783,7 +1783,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Hedge Sprite',
       article: 'The',
       // leaf-clad duelist; ambushes from the maze shadows, then melts back in
-      hp: 220, offense: 33, defense: 16, speed: 24, level: 25, exp: 190, cash: 44,
+      hp: 685, offense: 33, defense: 16, speed: 24, level: 25, exp: 190, cash: 44,
       weakness: ['fire'],
       moves: [
         { name: 'ambush', kind: 'strong', mult: 1.6, text: '{e} dropped out of the hedge wall onto {t} from nowhere!', weight: 3 },
@@ -1799,7 +1799,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Topiary Knight',
       article: 'The',
       // clipped-shrub guardian; hits like a greatsword, slow as a growing season
-      hp: 320, offense: 38, defense: 24, speed: 8, level: 26, exp: 230, cash: 56,
+      hp: 910, offense: 38, defense: 24, speed: 8, level: 26, exp: 230, cash: 56,
       weakness: ['fire'],
       moves: [
         { name: 'pruned blade', kind: 'strong', mult: 1.8, text: '{e} brought a greatsword of clipped leaves down on {t}!', weight: 3 },
@@ -1816,7 +1816,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Bramble Tangle',
       article: 'The',
       // thorn vines that root and entangle a colossus's feet
-      hp: 240, offense: 30, defense: 18, speed: 12, level: 25, exp: 195, cash: 46,
+      hp: 730, offense: 30, defense: 18, speed: 12, level: 25, exp: 195, cash: 46,
       weakness: ['fire'],
       moves: [
         { name: 'entangle', kind: 'status', status: 'paralyzed', text: '{e} whipped thorn vines around {t}\'s feet and cinched them tight!', weight: 3 },
@@ -1834,7 +1834,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Lapel-Pin Mob',
       article: 'The',
       // citizens who mistake you for civic furniture and CLIMB you (comes 2–3)
-      hp: 105, offense: 24, defense: 10, speed: 22, level: 23, exp: 125, cash: 24,
+      hp: 425, offense: 24, defense: 10, speed: 22, level: 23, exp: 125, cash: 24,
       weakness: [],
       moves: [
         { name: 'climb aboard', kind: 'attack', mult: 1, text: '{e} scaled {t}\'s trouser-leg like a civic monument!', weight: 4 },
@@ -1850,7 +1850,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Town Crier',
       article: 'The',
       // reads proclamations that BUFF its allies ("By order of the Duchess…")
-      hp: 200, offense: 26, defense: 16, speed: 14, level: 24, exp: 175, cash: 40,
+      hp: 640, offense: 26, defense: 16, speed: 14, level: 24, exp: 175, cash: 40,
       weakness: [],
       moves: [
         { name: 'proclamation', kind: 'mend', text: '{e} cried "BY ORDER OF THE DUCHESS, ALL RANKS SHALL RALLY!" and its allies took heart!', weight: 3 },
@@ -1868,7 +1868,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Gilded Snuffbox Beetle',
       article: 'The',
       // a jeweled beetle worth a fortune; folds gold (physical-immune) and bolts
-      hp: 210, offense: 28, defense: 20, speed: 26, level: 25, exp: 240, cash: 100,
+      hp: 660, offense: 28, defense: 20, speed: 26, level: 25, exp: 240, cash: 100,
       weakness: ['insect'],
       moves: [
         { name: 'gild over', kind: 'gild', text: '{e} folded shut into a jeweled snuffbox — hard gold, and slick to a bat!', weight: 3 },
@@ -1885,7 +1885,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Royal Tax Assessor',
       article: 'The',
       // appears to "assess" your colossal net worth, then flees with the ledger
-      hp: 230, offense: 30, defense: 18, speed: 25, level: 25, exp: 245, cash: 98,
+      hp: 705, offense: 30, defense: 18, speed: 25, level: 25, exp: 245, cash: 98,
       weakness: [],
       moves: [
         { name: 'assess', kind: 'taunt', text: '{e} appraised {t}\'s colossal net worth aloud, audibly salivating.', weight: 3 },
@@ -1904,7 +1904,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Halberd Column',
       article: 'The',
       // a wall of tiny pikes that PUNISHES non-Defend (rhymes with the boss POUNCE)
-      hp: 340, offense: 36, defense: 22, speed: 10, level: 26, exp: 250, cash: 58,
+      hp: 955, offense: 36, defense: 22, speed: 10, level: 26, exp: 250, cash: 58,
       weakness: ['volt'],
       moves: [
         { name: 'present pikes', kind: 'taunt', text: '{e} levelled a hedge of matchstick halberds at {t}. (DEFEND, or be run through.)', weight: 3 },
@@ -1920,7 +1920,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Bell-Ringer Acolyte',
       article: 'The',
       // rings a peal granting allies EVASION — telegraphs the boss's Flat Bell
-      hp: 280, offense: 30, defense: 18, speed: 16, level: 26, exp: 235, cash: 52,
+      hp: 820, offense: 30, defense: 18, speed: 16, level: 26, exp: 235, cash: 52,
       weakness: ['volt'],
       moves: [
         { name: 'warning peal', kind: 'shield', text: '{e} rang a bright warning peal; the toll wrapped its allies in a hard-to-hit shimmer!', weight: 3 },
@@ -1939,7 +1939,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'The Grand Parade',
       article: 'The',
       // a whole procession that TAKES A VOTE each turn to decide its move
-      hp: 360, offense: 34, defense: 20, speed: 18, level: 26, exp: 260, cash: 60,
+      hp: 1000, offense: 34, defense: 20, speed: 18, level: 26, exp: 260, cash: 60,
       weakness: [],
       moves: [
         { name: 'take a vote', kind: 'taunt', text: '{e} halted the entire procession to ballot its next move. (It carried, narrowly.)', weight: 3 },
@@ -2008,7 +2008,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'caravan_hyena_pack',
       name: 'Caravan Hyena Pack',
       article: 'The',
-      hp: 220, offense: 36, defense: 16, speed: 30, level: 28, exp: 260, cash: 48,
+      hp: 1375, offense: 36, defense: 16, speed: 30, level: 28, exp: 260, cash: 48,
       weakness: ['freeze'],
       moves: [
         { name: 'pack lunge', kind: 'attack', mult: 1.2, text: '{e} broke from the dust on three sides at once and lunged at {t}!', weight: 5 },
@@ -2024,7 +2024,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'baobab_root_snare',
       name: 'Baobab Root Snare',
       article: 'The',
-      hp: 340, offense: 38, defense: 26, speed: 14, level: 29, exp: 320, cash: 52,
+      hp: 2200, offense: 38, defense: 26, speed: 14, level: 29, exp: 320, cash: 52,
       weakness: ['salt'],
       moves: [
         { name: 'root grab', kind: 'attack', mult: 1.1, text: '{e} surged a knuckle of root up under {t} and dragged.', weight: 4 },
@@ -2040,7 +2040,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'laughing_dust_pot',
       name: 'Laughing Dust Pot',
       article: 'The',
-      hp: 150, offense: 24, defense: 17, speed: 22, level: 28, exp: 276, cash: 54,
+      hp: 900, offense: 24, defense: 17, speed: 22, level: 28, exp: 276, cash: 54,
       weakness: ['freeze', 'salt'],
       moves: [
         { name: 'catching cackle', kind: 'status', status: 'crying', text: '{e} let out a cackle so catching that {t} could not stop laughing — and laughing, and laughing.', weight: 3 },
@@ -2055,7 +2055,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'sphinx_paw_shadow',
       name: 'Sphinx Paw Shadow',
       article: 'The',
-      hp: 190, offense: 35, defense: 15, speed: 33, level: 30, exp: 250, cash: 60,
+      hp: 1175, offense: 35, defense: 15, speed: 33, level: 30, exp: 250, cash: 60,
       weakness: [],
       moves: [
         { name: 'pounce from the frieze', kind: 'strong', mult: 1.6, text: '{e} peeled off a carved wall and POUNCED on {t} before the eye could follow.', weight: 4 },
@@ -2066,6 +2066,265 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       drops: [{ item: 'riddle_shard', chance: 0.12 }],
       sprite: 'battle_sphinx_paw_shadow', mini: 'mini_sphinx_paw_shadow',
       bg: [RAMP.NIGHT, RAMP.GOLD],
+    }),
+
+    /* ── §A7 CH.6 EXPANSION TO TWENTY ──────────────────────────────────────────
+     * The four art-matched anchors above shipped the chapter; these SIXTEEN finish
+     * the §A7 Flow-Law roster (7 savanna/desert roamers · 3 market-social oddities ·
+     * 5 Laughing-Ruins riddle specialists · 1 set-piece) on already-authored battlers
+     * (the orphaned ChatGPT art, now adopted). On the Ch.6 band (hp 900-2200, level
+     * 28-31); GOLD/ORANGE/EARTH/NIGHT ramps; freeze + salt bite the dust and stone. */
+    E({
+      id: 'hollow_jackal',
+      name: 'Hollow Jackal',
+      article: 'The',
+      hp: 1050, offense: 34, defense: 14, speed: 34, level: 28, exp: 250, cash: 50,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'scavenge lunge', kind: 'attack', mult: 1.2, text: '{e} darted from the long grass and tore at {t}!', weight: 5 },
+        { name: 'hamstring snap', kind: 'strong', mult: 1.5, text: '{e} snapped at the back of {t}\'s knee and YANKED.', weight: 3 },
+        { name: 'hollow howl', kind: 'taunt', text: '{e} howled, and the sound came back wrong — like the desert was laughing along.', weight: 2 },
+      ],
+      deathLine: 'The Hollow Jackal folded into the grass it came from, leaving only paw-prints that filled with dust.',
+      drops: [{ item: 'kola_nut_drink', chance: 0.14 }],
+      sprite: 'battle_hollow_jackal', mini: 'mini_hollow_jackal',
+      bg: [RAMP.GOLD, RAMP.EARTH],
+    }),
+    E({
+      id: 'dust_devil_charm',
+      name: 'Dust Devil',
+      article: 'The',
+      hp: 980, offense: 30, defense: 12, speed: 36, level: 28, exp: 248, cash: 46,
+      weakness: ['salt'],
+      moves: [
+        { name: 'grit spiral', kind: 'attack', mult: 1.1, text: '{e} spun a column of grit straight through {t}.', weight: 4 },
+        { name: 'grit in the eyes', kind: 'status', status: 'crying', text: '{e} flung sand into {t}\'s eyes until they streamed.', weight: 3 },
+        { name: 'whirl-up', kind: 'strong', mult: 1.5, text: '{e} gathered the whole flat into one turning fist and hit {t}.', weight: 3 },
+      ],
+      deathLine: 'The Dust Devil lost its turn, slumped, and was just a little pile of warm sand.',
+      sprite: 'battle_dust_devil_charm', mini: 'mini_dust_devil_charm',
+      bg: [RAMP.ORANGE, RAMP.GOLD],
+    }),
+    E({
+      id: 'salt_flat_lurker',
+      name: 'Salt-Flat Lurker',
+      article: 'The',
+      hp: 1500, offense: 37, defense: 24, speed: 12, level: 29, exp: 300, cash: 54,
+      weakness: [],
+      moves: [
+        { name: 'crust burst', kind: 'strong', mult: 1.6, text: '{e} erupted from the salt crust right under {t}!', weight: 4 },
+        { name: 'brine spit', kind: 'attack', mult: 1.1, text: '{e} spat a stinging gout of brine over {t}.', weight: 4 },
+        { name: 'settle under', kind: 'taunt', text: '{e} sank back below the white until only two eyes showed.', weight: 2 },
+      ],
+      deathLine: 'The Salt-Flat Lurker cracked apart along old seams and went back to being scenery.',
+      drops: [{ item: 'trade_salt', chance: 0.18 }],
+      sprite: 'battle_salt_flat_lurker', mini: 'mini_salt_flat_lurker',
+      bg: [RAMP.PAPER, RAMP.GOLD],
+    }),
+    E({
+      id: 'thornbush_bomber',
+      name: 'Thornbush Bomber',
+      article: 'The',
+      hp: 1100, offense: 33, defense: 18, speed: 24, level: 28, exp: 262, cash: 48,
+      weakness: ['fire'],
+      moves: [
+        { name: 'burr volley', kind: 'attack', mult: 1.1, text: '{e} flung a fistful of barbed burrs that stuck fast in {t}.', weight: 5 },
+        { name: 'thorn mortar', kind: 'strong', mult: 1.6, text: '{e} arced a heavy seed-pod high and dropped it on {t}.', weight: 3 },
+        { name: 'tangle', kind: 'status', status: 'paralyzed', text: '{e} whipped runners around {t}\'s legs and cinched them tight.', weight: 2 },
+      ],
+      deathLine: 'The Thornbush Bomber spent its last burr, rattled once, and dried up on the spot.',
+      sprite: 'battle_thornbush_bomber', mini: 'mini_thornbush_bomber',
+      bg: [RAMP.EARTH, RAMP.GOLD],
+    }),
+    E({
+      id: 'ribbon_serpent',
+      name: 'Ribbon Serpent',
+      article: 'The',
+      hp: 1020, offense: 35, defense: 13, speed: 35, level: 29, exp: 258, cash: 52,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'ribbon strike', kind: 'attack', mult: 1.2, text: '{e} unspooled across the sand and struck {t} faster than the eye.', weight: 5 },
+        { name: 'coil snap', kind: 'strong', mult: 1.5, text: '{e} cinched {t} in a bright coil and snapped it tight.', weight: 3 },
+        { name: 'mesmer-sway', kind: 'status', status: 'asleep', text: '{e} swayed side to side until {t}\'s eyes grew heavy.', weight: 2 },
+      ],
+      deathLine: 'The Ribbon Serpent went limp and lay across the dune like a dropped sash.',
+      sprite: 'battle_ribbon_serpent', mini: 'mini_ribbon_serpent',
+      bg: [RAMP.RED, RAMP.GOLD],
+    }),
+    E({
+      id: 'canteen_mirage',
+      name: 'Canteen Mirage',
+      article: 'The',
+      hp: 940, offense: 28, defense: 16, speed: 30, level: 28, exp: 252, cash: 50,
+      weakness: ['salt'],
+      moves: [
+        { name: 'false oasis', kind: 'status', status: 'asleep', text: '{e} showed {t} cool water and shade until {t} drowsed toward it.', weight: 3 },
+        { name: 'heat ripple', kind: 'attack', mult: 1.1, text: '{e} rippled, and the air itself scalded {t}.', weight: 4 },
+        { name: 'thirst pang', kind: 'strong', mult: 1.5, text: '{e} promised a drink and gave {t} only the ache of wanting one.', weight: 3 },
+      ],
+      deathLine: 'The Canteen Mirage wavered once and was gone — the water had never been there at all.',
+      sprite: 'battle_canteen_mirage', mini: 'mini_canteen_mirage',
+      bg: [RAMP.CYAN, RAMP.GOLD],
+    }),
+    E({
+      id: 'trade_salt_heap',
+      name: 'Trade-Salt Heap',
+      article: 'The',
+      hp: 1620, offense: 36, defense: 28, speed: 10, level: 29, exp: 310, cash: 64,
+      weakness: [],
+      moves: [
+        { name: 'cargo slump', kind: 'attack', mult: 1.1, text: '{e} toppled a hundredweight of caravan salt onto {t}.', weight: 4 },
+        { name: 'abrasive grind', kind: 'strong', mult: 1.6, text: '{e} ground {t} between two pressed slabs of salt.', weight: 3 },
+        { name: 'salt the wounds', kind: 'status', status: 'crying', text: '{e} worked salt into every scrape until {t}\'s eyes ran.', weight: 3 },
+      ],
+      deathLine: 'The Trade-Salt Heap collapsed into a glittering drift worth more than most caravans carry.',
+      drops: [{ item: 'trade_salt', chance: 0.22 }],
+      sprite: 'battle_trade_salt_heap', mini: 'mini_trade_salt_heap',
+      bg: [RAMP.PAPER, RAMP.EARTH],
+    }),
+    E({
+      id: 'mirage_vendor',
+      name: 'Mirage Vendor',
+      article: 'The',
+      hp: 1180, offense: 32, defense: 20, speed: 26, level: 29, exp: 280, cash: 60,
+      weakness: ['salt'],
+      moves: [
+        { name: 'phantom wares', kind: 'taunt', text: '{e} spread a blanket of shimmering goods that vanished when {t} reached for them.', weight: 3 },
+        { name: 'short-change slap', kind: 'attack', mult: 1.1, text: '{e} counted {t}\'s change wrong and slapped down the difference.', weight: 4 },
+        { name: 'haggle to tears', kind: 'status', status: 'crying', text: '{e} haggled so relentlessly that {t}\'s eyes welled up.', weight: 3 },
+        { name: 'closing pitch', kind: 'strong', mult: 1.5, text: '{e} made one final, devastating offer — and {t} could not refuse the blow.', weight: 2 },
+      ],
+      deathLine: 'The Mirage Vendor packed its phantom stall in a blink and shimmered off to fleece some other road.',
+      drops: [{ item: 'laughing_coin', chance: 0.16 }],
+      sprite: 'battle_mirage_vendor', mini: 'mini_mirage_vendor',
+      bg: [RAMP.ORANGE, RAMP.PURPLE],
+    }),
+    E({
+      id: 'griot_string_snare',
+      name: 'Griot\'s String-Snare',
+      article: 'The',
+      hp: 1240, offense: 34, defense: 19, speed: 28, level: 30, exp: 290, cash: 56,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'snaring riff', kind: 'status', status: 'paralyzed', text: '{e} played a phrase that wound around {t} and held the limbs still.', weight: 3 },
+        { name: 'kora lash', kind: 'attack', mult: 1.2, text: '{e} struck {t} with twenty-one taut strings at once.', weight: 4 },
+        { name: 'history-song', kind: 'strong', mult: 1.6, text: '{e} sang the whole long history of the road and let it land on {t}.', weight: 3 },
+      ],
+      deathLine: 'The Griot\'s String-Snare wound down mid-phrase, strings slack, the story politely unfinished.',
+      drops: [{ item: 'hibiscus_tea', chance: 0.14 }],
+      sprite: 'battle_griot_string_snare', mini: 'mini_griot_string_snare',
+      bg: [RAMP.GOLD, RAMP.RED],
+    }),
+    E({
+      id: 'town_gossip_troll',
+      name: 'Town-Gossip Troll',
+      article: 'The',
+      hp: 1060, offense: 30, defense: 21, speed: 23, level: 28, exp: 256, cash: 52,
+      weakness: ['salt'],
+      moves: [
+        { name: 'cutting whisper', kind: 'attack', mult: 1.1, text: '{e} leaned close and said the one true thing {t} did not want said aloud.', weight: 4 },
+        { name: 'public shaming', kind: 'status', status: 'crying', text: '{e} announced {t}\'s business to the whole market until {t} wept.', weight: 3 },
+        { name: 'pile-on', kind: 'strong', mult: 1.5, text: '{e} gathered every idle tongue in the souk and turned them on {t}.', weight: 3 },
+      ],
+      deathLine: 'The Town-Gossip Troll ran out of fresh rumors, sniffed, and shuffled off to find a new ear.',
+      sprite: 'battle_town_gossip_troll', mini: 'mini_town_gossip_troll',
+      bg: [RAMP.PURPLE, RAMP.GOLD],
+    }),
+    E({
+      id: 'punchline_head',
+      name: 'Punchline Head',
+      article: 'The',
+      hp: 1320, offense: 35, defense: 22, speed: 20, level: 30, exp: 300, cash: 54,
+      weakness: [],
+      moves: [
+        { name: 'groaner', kind: 'status', status: 'crying', text: '{e} delivered a pun so terrible that {t} could not stop the tears.', weight: 3 },
+        { name: 'stone-faced jab', kind: 'attack', mult: 1.2, text: '{e} headbutted {t} without changing expression.', weight: 4 },
+        { name: 'setup and payoff', kind: 'strong', mult: 1.6, text: '{e} built a long, patient joke and dropped the punchline on {t} like a slab.', weight: 3 },
+      ],
+      deathLine: 'The Punchline Head cracked a final grin down the middle and tumbled off its plinth, satisfied.',
+      drops: [{ item: 'riddle_shard', chance: 0.14 }],
+      sprite: 'battle_punchline_head', mini: 'mini_punchline_head',
+      bg: [RAMP.EARTH, RAMP.NIGHT],
+    }),
+    E({
+      id: 'echoing_riddle',
+      name: 'Echoing Riddle',
+      article: 'The',
+      hp: 1140, offense: 33, defense: 18, speed: 27, level: 29, exp: 276, cash: 50,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'riddle me', kind: 'status', status: 'paralyzed', text: '{e} asked a question with no answer, and {t} froze trying to find one.', weight: 3 },
+        { name: 'echo slap', kind: 'attack', mult: 1.1, text: '{e} threw {t}\'s own last word back, hard.', weight: 4 },
+        { name: 'recursive loop', kind: 'strong', mult: 1.5, text: '{e} repeated, and repeated, and repeated until the sound bruised {t}.', weight: 3 },
+      ],
+      deathLine: 'The Echoing Riddle answered itself at last, sighed in three fading copies, and was quiet.',
+      sprite: 'battle_echoing_riddle', mini: 'mini_echoing_riddle',
+      bg: [RAMP.NIGHT, RAMP.PURPLE],
+    }),
+    E({
+      id: 'laughing_sphinx_riddle',
+      name: 'Riddle-Shade',
+      article: 'The',
+      hp: 1700, offense: 38, defense: 25, speed: 22, level: 31, exp: 330, cash: 58,
+      weakness: [],
+      moves: [
+        { name: 'lesser riddle', kind: 'status', status: 'crying', text: '{e} posed a riddle in the Sphinx\'s borrowed voice and laughed when {t} faltered.', weight: 3 },
+        { name: 'shade paw', kind: 'attack', mult: 1.2, text: '{e} swept a half-real paw across {t}.', weight: 4 },
+        { name: 'borrowed roar', kind: 'strong', mult: 1.7, text: '{e} loosed an echo of the Sphinx\'s own roar at {t}!', weight: 3 },
+      ],
+      deathLine: 'The Riddle-Shade thinned out, its borrowed laugh trailing back toward the great chin it leaked from.',
+      drops: [{ item: 'riddle_shard', chance: 0.18 }],
+      sprite: 'battle_laughing_sphinx_riddle', mini: 'mini_laughing_sphinx_riddle',
+      bg: [RAMP.GOLD, RAMP.NIGHT],
+    }),
+    E({
+      id: 'rare_riddle_ring',
+      name: 'Riddle Ring',
+      article: 'The',
+      hp: 1300, offense: 36, defense: 30, speed: 30, level: 30, exp: 480, cash: 140,
+      weakness: [],
+      moves: [
+        { name: 'golden glint', kind: 'taunt', text: '{e} caught the light and dared {t} to come and take it.', weight: 3 },
+        { name: 'binding clause', kind: 'status', status: 'paralyzed', text: '{e} snapped shut around {t}\'s wrist and would not let go.', weight: 3 },
+        { name: 'appraising cut', kind: 'strong', mult: 1.6, text: '{e} valued {t} at nothing, and cut accordingly.', weight: 3 },
+      ],
+      deathLine: 'The Riddle Ring sprang open, spilled a single bright answer, and rolled away down a crack in the stone.',
+      drops: [{ item: 'laughing_coin', chance: 0.5 }],
+      sprite: 'battle_rare_riddle_ring', mini: 'mini_rare_riddle_ring',
+      bg: [RAMP.GOLD, RAMP.ORANGE],
+    }),
+    E({
+      id: 'sunbaked_idol',
+      name: 'Sun-Baked Idol',
+      article: 'The',
+      hp: 1900, offense: 38, defense: 27, speed: 14, level: 31, exp: 326, cash: 56,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'kiln glare', kind: 'status', status: 'sunburn', text: '{e} turned its baked face on {t}, and the heat raised blisters.', weight: 3 },
+        { name: 'idol slam', kind: 'attack', mult: 1.2, text: '{e} brought a sun-hot fist down on {t}.', weight: 4 },
+        { name: 'heat shimmer', kind: 'strong', mult: 1.7, text: '{e} loosed the whole day\'s stored sun at {t} in one wave.', weight: 3 },
+      ],
+      deathLine: 'The Sun-Baked Idol cooled at last, cracked from crown to base, and let the desert have it back.',
+      drops: [{ item: 'baobab_juice', chance: 0.14 }],
+      sprite: 'battle_sunbaked_idol', mini: 'mini_sunbaked_idol',
+      bg: [RAMP.ORANGE, RAMP.RED],
+    }),
+    E({
+      id: 'fastest_man_echo',
+      name: 'The Fastest Man, Echoing',
+      article: 'The',
+      hp: 1450, offense: 38, defense: 18, speed: 40, level: 31, exp: 360, cash: 62,
+      weakness: [],
+      moves: [
+        { name: '1961 dash', kind: 'strong', mult: 1.7, text: '{e} crossed the whole ruin between heartbeats and struck {t} from nowhere.', weight: 4 },
+        { name: 'photo finish', kind: 'attack', mult: 1.2, text: '{e} clipped {t} at a speed that should have torn the air.', weight: 4 },
+        { name: 'blur step', kind: 'status', status: 'paralyzed', text: '{e} moved so fast that {t}\'s own nerves locked trying to track it.', weight: 2 },
+        { name: 'after-image', kind: 'taunt', text: '{e} left three of itself standing where one had been.', weight: 2 },
+      ],
+      deathLine: 'The Fastest Man\'s echo tipped an imaginary cap, said something about 1961, and outran even the eye that watched it go.',
+      drops: [{ item: 'kola_nut_drink', chance: 0.2 }],
+      sprite: 'battle_fastest_man_echo', mini: 'mini_fastest_man_echo',
+      bg: [RAMP.CYAN, RAMP.NIGHT],
     }),
 
     /* §A6 BOSS 6 — THE LAUGHING SPHINX (9000 HP): naps in its own carved chin and
@@ -2104,7 +2363,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'rickshaw_swarm',
       name: 'Rickshaw Swarm',
       article: 'The',
-      hp: 360, offense: 52, defense: 22, speed: 36, level: 32, exp: 520, cash: 95,
+      hp: 3000, offense: 52, defense: 22, speed: 36, level: 32, exp: 520, cash: 95,
       weakness: ['volt'],
       moves: [
         { name: 'three-wheel cutoff', kind: 'attack', mult: 1.2, text: '{e} swung in from three lanes at once and boxed {t} against the kerb!', weight: 5 },
@@ -2120,7 +2379,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'spice_djinn',
       name: 'Spice Djinn',
       article: 'The',
-      hp: 260, offense: 44, defense: 24, speed: 26, level: 31, exp: 540, cash: 108,
+      hp: 2000, offense: 44, defense: 24, speed: 26, level: 31, exp: 540, cash: 108,
       weakness: ['freeze', 'salt'],
       moves: [
         { name: 'chilli cloud', kind: 'status', status: 'crying', text: '{e} burst into a cloud of red chilli and {t} could only weep and cough.', weight: 3 },
@@ -2136,7 +2395,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'temple_macaque',
       name: 'Temple Macaque',
       article: 'The',
-      hp: 300, offense: 50, defense: 22, speed: 40, level: 33, exp: 500, cash: 120,
+      hp: 2400, offense: 50, defense: 22, speed: 40, level: 33, exp: 500, cash: 120,
       weakness: [],
       moves: [
         { name: 'rooftop pounce', kind: 'strong', mult: 1.6, text: '{e} dropped off a parapet and POUNCED on {t} before the eye could follow.', weight: 4 },
@@ -2152,7 +2411,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'naga_sentry',
       name: 'Naga Sentry',
       article: 'The',
-      hp: 560, offense: 54, defense: 36, speed: 18, level: 34, exp: 640, cash: 104,
+      hp: 5000, offense: 54, defense: 36, speed: 18, level: 34, exp: 640, cash: 104,
       weakness: ['fire'],
       moves: [
         { name: 'coil and bar', kind: 'attack', mult: 1.1, text: '{e} threw a stone coil across the way and barred {t}\'s path.', weight: 4 },
