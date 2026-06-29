@@ -5,13 +5,13 @@ This checks the authored 46-frame character sheets against the runtime frame con
 - Frame size: 96x128
 - Sheet size: 384x1536
 - Frame count: 46
-- Registered characters: 87
+- Registered characters: 91
 - Unregistered character sheets on disk: 0
 - Path overrides: 0
-- Characters with issues: 51
+- Characters with issues: 55
 - Errors: 0
-- Warnings: 191
-- Review hints: 235
+- Warnings: 217
+- Review hints: 253
 
 Interactive playback page: [character_animation_audit.html](character_animation_audit.html)
 
@@ -545,6 +545,58 @@ Common presets:
 - REVIEW frame 3: walk down looks closer to downright than down
 - REVIEW frame 17: run down looks closer to downright than down
 
+### vs_buni (vs_buni)
+- REVIEW frame 16: run down looks closer to right than down
+- REVIEW frame 17: run down looks closer to left than down
+- REVIEW frame 36: run down-right looks closer to right than downright
+- REVIEW frame 37: run down-right looks closer to right than downright
+- REVIEW frame 38: run down-left looks closer to left than downleft
+- REVIEW frame 39: run down-left looks closer to left than downleft
+- WARN walk down: step frames 1/3 are nearly frozen (0.010)
+- WARN walk left: step frames 1/3 are nearly frozen (0.010)
+- WARN walk right: step frames 1/3 are nearly frozen (0.010)
+- WARN run left: run pair is nearly frozen (0.008)
+- WARN run right: run pair is nearly frozen (0.008)
+- WARN walk down-right: diagonal step pair is nearly frozen (0.010)
+- WARN walk down-left: diagonal step pair is nearly frozen (0.010)
+- WARN run up-right: run pair is nearly frozen (0.003)
+- WARN run up-left: run pair is nearly frozen (0.003)
+
+### vs_kid (vs_kid)
+- WARN run left: run pair is nearly frozen (0.008)
+- WARN run right: run pair is nearly frozen (0.008)
+- WARN run up-right: run pair is nearly frozen (0.003)
+- WARN run up-left: run pair is nearly frozen (0.003)
+
+### vs_provisioner (vs_provisioner)
+- REVIEW frame 16: run down looks closer to right than down
+- REVIEW frame 17: run down looks closer to left than down
+- REVIEW frame 22: run up looks closer to right than up
+- REVIEW frame 23: run up looks closer to left than up
+- REVIEW frame 36: run down-right looks closer to right than downright
+- REVIEW frame 37: run down-right looks closer to right than downright
+- REVIEW frame 38: run down-left looks closer to left than downleft
+- REVIEW frame 39: run down-left looks closer to left than downleft
+- REVIEW frame 40: run up-right looks closer to right than upright
+- REVIEW frame 41: run up-right looks closer to right than upright
+- REVIEW frame 42: run up-left looks closer to left than upleft
+- REVIEW frame 43: run up-left looks closer to left than upleft
+- WARN walk down: step frames 1/3 are nearly frozen (0.009)
+- WARN run left: run pair is nearly frozen (0.008)
+- WARN run right: run pair is nearly frozen (0.008)
+- WARN walk down-right: diagonal step pair is nearly frozen (0.009)
+- WARN walk down-left: diagonal step pair is nearly frozen (0.009)
+- WARN run up-right: run pair is nearly frozen (0.003)
+- WARN run up-left: run pair is nearly frozen (0.003)
+
+### vs_shepherd (vs_shepherd)
+- WARN walk left: step frames 1/3 are nearly frozen (0.006)
+- WARN walk right: step frames 1/3 are nearly frozen (0.006)
+- WARN run left: run pair is nearly frozen (0.008)
+- WARN run right: run pair is nearly frozen (0.008)
+- WARN run up-right: run pair is nearly frozen (0.003)
+- WARN run up-left: run pair is nearly frozen (0.003)
+
 ### whistle_guard_npc (whistle_guard_npc)
 - WARN walk down-right: diagonal step pair is nearly frozen (0.002)
 - WARN walk down-left: diagonal step pair is nearly frozen (0.002)
@@ -680,6 +732,10 @@ Common presets:
 | tomas | tomas | npc | 0 |
 | uncleBert | uncleBert | npc | 0 |
 | vivi | vivi | npc | 0 |
+| vs_buni | vs_buni | npc | 15 |
+| vs_kid | vs_kid | npc | 4 |
+| vs_provisioner | vs_provisioner | npc | 19 |
+| vs_shepherd | vs_shepherd | npc | 6 |
 | whistle_guard_npc | whistle_guard_npc | npc | 8 |
 | wisherA | wisherA | npc | 0 |
 | wisherB | wisherB | npc | 8 |
