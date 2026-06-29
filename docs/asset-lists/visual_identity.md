@@ -69,7 +69,7 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | titanic_tick | - | battle_titanic_tick | mini:mini_hill_slug | authored | - |
 | hush_sentinel | - | battle_hush_sentinel | mini:mini_hill_slug | authored | - |
 | colossal_gnat | bootstep_moor | battle_colossal_gnat | mini:mini_colossal_gnat | authored | - |
-| knitting_needles | - | battle_knitting_needles | mini:mini_knitting_needles | authored | - |
+| knitting_needles | lilleby | battle_knitting_needles | mini:mini_knitting_needles | authored | - |
 | thunder_snail | bootstep_moor | battle_thunder_snail | mini:mini_thunder_snail | authored | - |
 | dog_sized_berry | bootstep_moor | battle_giant_berry_blocker | mini:mini_giant_berry_blocker | authored | - |
 | hushed_gull | kvisthavn | battle_fjord_gull_bully | mini:mini_fjord_gull_bully | authored | - |
@@ -77,16 +77,16 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | moor_midge_cloud | bootstep_moor | battle_moor_midge_cloud | mini:mini_moor_midge_cloud | authored | - |
 | boulder_lichen | bootstep_moor | battle_boulder_lichen | mini:mini_boulder_lichen | authored | - |
 | frost_hare | bootstep_moor | battle_frost_hare | mini:mini_frost_hare | authored | - |
-| bog_cotton_wisp | - | battle_bog_cotton_wisp | mini:mini_bog_cotton_wisp | authored | - |
+| bog_cotton_wisp | bootstep_moor | battle_bog_cotton_wisp | mini:mini_bog_cotton_wisp | authored | - |
 | earwax_golem | spine_shoulder, spine_ear | battle_earwax_golem | mini:mini_earwax_golem | authored | - |
 | dream_leech | spine_hand, spine_ear | battle_dream_leech | mini:mini_dream_leech | authored | - |
 | snore_gust | spine_hand, spine_shoulder | battle_snore_gust | mini:mini_snore_gust | authored | - |
 | giant_house_cat | lilleby | battle_giant_house_cat | mini:mini_giant_house_cat | authored | - |
 | lost_mitten | lilleby | battle_lost_mitten | mini:mini_lost_mitten | authored | - |
-| amber_hoard_troll | - | battle_amber_hoard_troll | mini:mini_amber_hoard_troll | authored | - |
-| aurora_moth | - | battle_aurora_moth | mini:mini_aurora_moth | authored | - |
-| hushed_skua | - | battle_hushed_skua | mini:mini_hushed_skua | authored | - |
-| frost_jotun_elder | - | battle_frost_jotun_elder | mini:mini_frost_jotun_elder | authored | - |
+| amber_hoard_troll | bootstep_moor | battle_amber_hoard_troll | mini:mini_amber_hoard_troll | authored | - |
+| aurora_moth | bootstep_moor | battle_aurora_moth | mini:mini_aurora_moth | authored | - |
+| hushed_skua | bootstep_moor | battle_hushed_skua | mini:mini_hushed_skua | authored | - |
+| frost_jotun_elder | spine_shoulder | battle_frost_jotun_elder | mini:mini_frost_jotun_elder | authored | - |
 | bridge_berry | - | battle_giant_berry_blocker | mini:mini_giant_berry_blocker | authored | - |
 | the_whisperwig | - | battle_the_whisperwig | mini:mini_souvenir | authored | - |
 | tin_parade | procession_way | battle_tin_parade | mini:mini_tin_parade | authored | - |
