@@ -309,6 +309,10 @@ export const NPC_CHARACTER_ART = [
   { id: 'cp_dabbawala', key: 'authored_cp_dabbawala_8dir', url: new URL('../../assets/art/characters/cp_dabbawala_anim_46_4x.png', import.meta.url).href },
   { id: 'cp_stationmaster', key: 'authored_cp_stationmaster_8dir', url: new URL('../../assets/art/characters/cp_stationmaster_anim_46_4x.png', import.meta.url).href },
   { id: 'cp_usher', key: 'authored_cp_usher_8dir', url: new URL('../../assets/art/characters/cp_usher_anim_46_4x.png', import.meta.url).href },
+  // Ch.8 China — the Lotus Harbor cast (46-frame authored sheets; masters synced to runtime)
+  { id: 'lh_harbor_master', key: 'authored_lh_harbor_master_8dir', url: new URL('../../assets/art/characters/lh_harbor_master_anim_46_4x.png', import.meta.url).href },
+  { id: 'lh_calligrapher', key: 'authored_lh_calligrapher_8dir', url: new URL('../../assets/art/characters/lh_calligrapher_anim_46_4x.png', import.meta.url).href },
+  { id: 'lh_lantern_girl', key: 'authored_lh_lantern_girl_8dir', url: new URL('../../assets/art/characters/lh_lantern_girl_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -537,7 +541,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace', 'spore_forest'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,

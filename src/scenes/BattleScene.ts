@@ -749,6 +749,12 @@ export class BattleScene extends Phaser.Scene {
     if ([
       'rickshaw_swarm', 'spice_djinn', 'temple_macaque', 'naga_sentry', 'cobra_raja',
     ].includes(enemyId)) return 'cobra_palace';
+    // CH.8 China — the painted-gate harbor of Lotus Harbor, the Bamboo Road, the
+    // misty Spore Forest, and the Paper Dragon's roost on Mt. Shu all fight under
+    // the one authored spore-forest backdrop (glowing mushrooms, bamboo, drifting spores).
+    if ([
+      'paper_lantern_wisp', 'spore_puffer', 'origami_warrior', 'porcelain_warlord', 'paper_dragon',
+    ].includes(enemyId)) return 'spore_forest';
     return 'otterbrook';
   }
 
