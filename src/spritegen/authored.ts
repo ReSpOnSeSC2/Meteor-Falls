@@ -380,6 +380,16 @@ const CHINA_TILE_ART = {
   names: ['china_ground', 'china_path', 'china_wall'],
 };
 
+// Ch.9 ROMANIA (Valea Stelelor) region tile strip (3 cells × 64px) — a PARTIAL override like
+// China: col 0 = mountain-meadow grass → romania_ground, col 1 = packed dirt road → romania_path,
+// col 2 = mossy castle stonework → romania_wall. Renders ONLY on the Ch.9 maps (the render-time
+// name-remap ROMANIA_TILE_SKIN in OverworldScene.buildTiles); every other map is untouched.
+const ROMANIA_TILE_ART = {
+  key: 'authored_romania_tiles16',
+  url: new URL('../../assets/art/world/Romania_tiles_16.png', import.meta.url).href,
+  names: ['romania_ground', 'romania_path', 'romania_wall'],
+};
+
 const WORLD_PROP_KEYS = [
   'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
   'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'meteor_rock_hickory_hill', 'sawhorse', 'ember',
@@ -557,7 +567,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace', 'spore_forest'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace', 'spore_forest', 'castle_hoaxula'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,
@@ -1107,6 +1117,30 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_paper_dragon_burning', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning.png', import.meta.url).href },
   { key: 'battle_paper_dragon_burning_w1', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning_w1.png', import.meta.url).href },
   { key: 'battle_paper_dragon_burning_w2', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning_w2.png', import.meta.url).href },
+  // CHAPTER 9 (Romania) — the four fresh regulars (placeholder clones until the art pass),
+  // the ADOPTED ribcage_rattler (its own authored battler, the reserve bank), and BOSS 9.
+  { key: 'battle_haystack_mimic', url: new URL('../../assets/art/enemies/battle_haystack_mimic.png', import.meta.url).href },
+  { key: 'battle_haystack_mimic_w1', url: new URL('../../assets/art/enemies/battle_haystack_mimic_w1.png', import.meta.url).href },
+  { key: 'battle_haystack_mimic_w2', url: new URL('../../assets/art/enemies/battle_haystack_mimic_w2.png', import.meta.url).href },
+  { key: 'battle_ribcage_rattler', url: new URL('../../assets/art/enemies/battle_ribcage_rattler.png', import.meta.url).href },
+  { key: 'battle_ribcage_rattler_w1', url: new URL('../../assets/art/enemies/battle_ribcage_rattler_w1.png', import.meta.url).href },
+  { key: 'battle_ribcage_rattler_w2', url: new URL('../../assets/art/enemies/battle_ribcage_rattler_w2.png', import.meta.url).href },
+  { key: 'battle_moss_strigoi', url: new URL('../../assets/art/enemies/battle_moss_strigoi.png', import.meta.url).href },
+  { key: 'battle_moss_strigoi_w1', url: new URL('../../assets/art/enemies/battle_moss_strigoi_w1.png', import.meta.url).href },
+  { key: 'battle_moss_strigoi_w2', url: new URL('../../assets/art/enemies/battle_moss_strigoi_w2.png', import.meta.url).href },
+  { key: 'battle_animated_armor', url: new URL('../../assets/art/enemies/battle_animated_armor.png', import.meta.url).href },
+  { key: 'battle_animated_armor_w1', url: new URL('../../assets/art/enemies/battle_animated_armor_w1.png', import.meta.url).href },
+  { key: 'battle_animated_armor_w2', url: new URL('../../assets/art/enemies/battle_animated_armor_w2.png', import.meta.url).href },
+  { key: 'battle_wolf_of_the_old_road', url: new URL('../../assets/art/enemies/battle_wolf_of_the_old_road.png', import.meta.url).href },
+  { key: 'battle_wolf_of_the_old_road_w1', url: new URL('../../assets/art/enemies/battle_wolf_of_the_old_road_w1.png', import.meta.url).href },
+  { key: 'battle_wolf_of_the_old_road_w2', url: new URL('../../assets/art/enemies/battle_wolf_of_the_old_road_w2.png', import.meta.url).href },
+  { key: 'battle_count_hoaxula', url: new URL('../../assets/art/enemies/battle_count_hoaxula.png', import.meta.url).href },
+  { key: 'battle_count_hoaxula_w1', url: new URL('../../assets/art/enemies/battle_count_hoaxula_w1.png', import.meta.url).href },
+  { key: 'battle_count_hoaxula_w2', url: new URL('../../assets/art/enemies/battle_count_hoaxula_w2.png', import.meta.url).href },
+  // BOSS 9 UNMASKED form (spriteSuffix '_unmasked') — its own full wear-tier family
+  { key: 'battle_count_hoaxula_unmasked', url: new URL('../../assets/art/enemies/battle_count_hoaxula_unmasked.png', import.meta.url).href },
+  { key: 'battle_count_hoaxula_unmasked_w1', url: new URL('../../assets/art/enemies/battle_count_hoaxula_unmasked_w1.png', import.meta.url).href },
+  { key: 'battle_count_hoaxula_unmasked_w2', url: new URL('../../assets/art/enemies/battle_count_hoaxula_unmasked_w2.png', import.meta.url).href },
 ] as const;
 
 const ENEMY_OVERWORLD_ART = [
@@ -1256,6 +1290,13 @@ const ENEMY_MINI_ART = [
   { key: 'mini_origami_warrior', url: new URL('../../assets/art/enemies/mini_origami_warrior.png', import.meta.url).href },
   { key: 'mini_porcelain_warlord', url: new URL('../../assets/art/enemies/mini_porcelain_warlord.png', import.meta.url).href },
   { key: 'mini_paper_dragon', url: new URL('../../assets/art/enemies/mini_paper_dragon.png', import.meta.url).href },
+  // CHAPTER 9 (Romania) — roamer minis derived from the battlers (derive-ch5-minis.ts)
+  { key: 'mini_haystack_mimic', url: new URL('../../assets/art/enemies/mini_haystack_mimic.png', import.meta.url).href },
+  { key: 'mini_ribcage_rattler', url: new URL('../../assets/art/enemies/mini_ribcage_rattler.png', import.meta.url).href },
+  { key: 'mini_moss_strigoi', url: new URL('../../assets/art/enemies/mini_moss_strigoi.png', import.meta.url).href },
+  { key: 'mini_animated_armor', url: new URL('../../assets/art/enemies/mini_animated_armor.png', import.meta.url).href },
+  { key: 'mini_wolf_of_the_old_road', url: new URL('../../assets/art/enemies/mini_wolf_of_the_old_road.png', import.meta.url).href },
+  { key: 'mini_count_hoaxula', url: new URL('../../assets/art/enemies/mini_count_hoaxula.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);
@@ -1563,6 +1604,7 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   scene.load.image(HICKORY_DIRT_TILE_ART.key, HICKORY_DIRT_TILE_ART.url);
   scene.load.image(MINIMUS_TILE_ART.key, MINIMUS_TILE_ART.url);
   scene.load.image(CHINA_TILE_ART.key, CHINA_TILE_ART.url);
+  scene.load.image(ROMANIA_TILE_ART.key, ROMANIA_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
   AUTHORED_VEHICLE_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
@@ -1653,6 +1695,7 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   const hickoryTileArt = sourceImage(scene, HICKORY_DIRT_TILE_ART.key);
   const minimusTileArt = sourceImage(scene, MINIMUS_TILE_ART.key);
   const chinaTileArt = sourceImage(scene, CHINA_TILE_ART.key);
+  const romaniaTileArt = sourceImage(scene, ROMANIA_TILE_ART.key);
   const baseTiles = sourceImage(scene, 'tiles');
   if (!baseTiles) return;
 
@@ -1671,6 +1714,7 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   if (hickoryTileArt) drawAuthoredTileStrip(ctx, hickoryTileArt, HICKORY_DIRT_TILE_ART.names);
   if (minimusTileArt) drawAuthoredTileStrip(ctx, minimusTileArt, MINIMUS_TILE_ART.names);
   if (chinaTileArt) drawAuthoredTileStrip(ctx, chinaTileArt, CHINA_TILE_ART.names);
+  if (romaniaTileArt) drawAuthoredTileStrip(ctx, romaniaTileArt, ROMANIA_TILE_ART.names);
 
   replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);
 }

@@ -233,19 +233,26 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     quests: ['brushes_of_mt_shu'],
   },
 
+  // THE ROMANIA LANDING — Ch.9 flips to 'shipped'. The dungeon site becomes live
+  // dungeon.maps (Castle Hoaxula → the Stone Brow monastery bell tower); the 2 overworld
+  // maps (Valea Stelelor + the Old Road) + the bunis_table quest fill in; Count Hoaxula is
+  // now a live boss-flagged §A7 enemy at canon 95,000 HP (mercyEnding). The COMPASSION axis
+  // (CHOICE 2) turns past the throne. The §A7 HP table + §A10 quest pin land the same commit.
   9: {
     chapter: 9,
     title: 'The Count of Valea Stelelor',
     region: 'Romania',
-    status: 'unlanded',
+    status: 'shipped',
     targetLevel: 46,
     ember: 9,
     band: 'ch9',
     travel: 'train', // the Orient Less-Express (third-class)
-    dungeon: { name: 'Castle Hoaxula → monastery bell tower', site: 'castle_hoaxula' },
+    dungeon: { name: 'Castle Hoaxula → monastery bell tower', maps: ['castle_hoaxula', 'stone_brow_monastery'] },
     boss: { id: 'count_hoaxula', name: 'Count Hoaxula', hp: 95000, template: 'mercyEnding' },
     settlements: [{ id: 'valea_stelelor', kind: 'village', style: 'painted-gates' }],
-    maps: [],
+    // the 2 overworld maps from buildChapter9Maps(): the painted village + the Old Road
+    // (the dungeon maps live under dungeon.maps above)
+    maps: ['valea_stelelor', 'old_road'],
     quests: ['bunis_table'],
   },
 

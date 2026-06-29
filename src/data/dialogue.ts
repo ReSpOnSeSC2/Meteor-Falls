@@ -3078,6 +3078,94 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@"Up the river and up the mountain," says {rex}, shading his eyes at the green hills beyond the town. "...When did UP start meaning trouble every single time?"',
   ],
 
+  /* ════════════════════ CHAPTER 9 — THE COUNT OF VALEA STELELOR (Romania) ════════════════════ */
+
+  // — the §A5 next leg: Bert offers the Romania flight (bertAirBeat, ch8→ch9) —
+  bert_romania_ask: [
+    '@Uncle Bert folds the locket shut, gentle. "This one\'s close to Dorin\'s, son. VALEA STELELOR — Valley of the Stars, up in the old mountains. They\'ve got a vampire, the wire says, scaring a whole valley off its own fields. Locket\'s warm as a stove about it. Number nine."',
+    '@"It\'s where Dorin walked down FROM, you know — the monastery up the brow. Reckon he\'d like to see his Buni." He winks at {dorin}. "Say the word and we fly."',
+  ],
+
+  // — Valea Stelelor signs —
+  sign_valea_stelelor: ['(A painted board on a carved gate, the blue stars on it faded to grey:) VALEA STELELOR — the Valley of the Stars. Population: fewer, lately. Mind the Old Road after dark. Sit at Buni\'s table before you do anything else; she will not take no, and she is right not to.'],
+  sign_old_road_gate: ['(A leaning marker at the village edge, a hand carved pointing up the mountain:) ↑ THE OLD ROAD — to the castle and the monastery beyond. Travellers are advised to go by day, in company, and not at all if the Count has been seen.'],
+  sign_valea_green: ['(A whittled post by the well:) THE VILLAGE GREEN — weddings here, harvests here, the star-festival here, every August, for four hundred years. We have not held it these two years. We mean to again.'],
+
+  // — Valea Stelelor NPCs —
+  npc_vs_buni: [
+    "@(A tiny round grandmother takes {rex}'s face in both floury hands before he can speak.) Sit. SIT. You are skin and worry, all of you, and you, draga — (she frowns at {dorin}, then her whole face folds up) ...you came home. You came HOME. Sit, sit, I will not cry, I am chopping onions, sit.",
+    '@I am making the Feast Basket, the TRUE one, the one that fills a person all the way up — but I am five things short and my knees are eighty years old. Sour cream, cheese in the bark, the barrel cabbage, the smoked meat, the autumn plums. Fetch your Buni her five things, and I will send you up that mountain so full nothing can empty you.',
+  ],
+  npc_vs_provisioner: [
+    '@Off to see the Count, are you? Hah. Buy warm first. A sheepskin against the mountain night, a braid of garlic for the — well. For luck. And the bitters, the pelin, in case you eat something up there you shouldn\'t. Everything fair-priced; we look after travellers here.',
+  ],
+  npc_vs_shepherd: [
+    '@(A shepherd leans on his crook, watching the Old Road.) The wolf is back on the road, the one that calls the others. Bigger than a wolf ought to be, and it sings — SINGS — like the thing up in the castle taught it. Two of my flock, gone in a week. Whatever\'s in that castle, it\'s spreading downhill.',
+  ],
+  npc_vs_kid: [
+    '@(A village child marches up, fearless.) I knocked on the castle door once. On a DARE. The Count answered and did a big swirly cape and said "BEWAAARE" — and then his voice went all flat and tired and he said "...sorry, kid, go home, it\'s not safe," and shut the door soft. Vampires aren\'t supposed to say sorry. I don\'t think he\'s very good at it.',
+  ],
+
+  // — the §A8 Ch.9 shop (the Valea Provisioner shelf) —
+  shop_valea_greet: ['@The provisioner clears a space on the worn counter — sarmale and warm mămăligă, a sheepskin cojoc, a fur căciulă, a braid of garlic, a flask of holy water, the green pelin bitters. "Stock deep before the Old Road, friends. The mountain doesn\'t sell anything but trouble."'],
+  shop_valea_bye: ['@Go careful up there. And come back down — Buni keeps a plate for everyone who goes up that road, and she has too many cold plates already.'],
+
+  // — Old Road signs —
+  sign_old_road: ['(A worn waystone by the mountain track:) THE OLD ROAD — Valea below, Castle Hoaxula above, and the monastery above that. The monks used to walk this in procession. Now only the brave and the foolish walk it at all, and the wise cannot always tell you which they are.'],
+  sign_castle_gate: ['(A grand iron gate, the crest on it freshly painted to look very old:) CASTLE HOAXULA. ABANDON HOPE, etc. (Below, on a smaller, more honest sign:) NOT A LICENSED ATTRACTION. NO REFUNDS. PLEASE MIND THE — the rest has fallen off.'],
+
+  // — Castle Hoaxula signs —
+  sign_castle_hoaxula: ['(Cobwebbed letters over the great hall, the cobwebs visibly made of spun cotton:) WELCOME, MORTAL, TO YOUR DOOM. (A laminated card cable-tied below:) Doom experience approx. 25 min. Gift shop at exit. We hope you enjoyed your scare!'],
+  sign_castle_backstage: ['(A door marked PRIVATE swings open on a wall of paperwork: foreclosure notices, a Cleveland return address, a unionised-actors grievance form, and a single child\'s drawing of a smiling vampire labelled "DAD AT WORK." The Hush hums under all of it, but the paper underneath is only sad.)'],
+
+  // — Stone Brow Monastery sign —
+  sign_stone_brow_monastery: ['(Carved deep into the lintel of the bell tower, worn by centuries of weather:) STONE BROW — where the mountain teaches the young to be quiet enough to hear it. (Newer, below, in {dorin}\'s own careful hand from years ago:) "it took everything away, and then it gave me back the part that was always mine. — D.")'],
+
+  // — §A6 BOSS 9 — Count Hoaxula (the phase machine reads these) —
+  hoaxula_theatrical: ['@(A figure sweeps down the great stair in a swirl of crimson cape, fangs flashing, eyes blazing with cold stolen light.) "FOOLISH MORTALS! You DARE enter the castle of COUNT HOAXULA?! I shall drink your— your very— " (the Vibe crackles, very real, off his fingertips) "—oh, this part\'s REAL, I should mention. Terribly sorry. DOOOOM!"'],
+  hoaxula_steal: ['@(He flourishes his cape, and when it settles something of yours has vanished into it.) "A magician never reveals — ah, a VAMPIRE never reveals his secrets! That bauble is collateral. Theatrical collateral! You\'ll get it back if you survive the SHOW!"'],
+  hoaxula_unmask: ['(You land a blow that knocks the cape wide — and the stolen Vibe stutters, and the whole grand act sags like a tent with the pole pulled out.)'],
+  hoaxula_unmasked: ['@(The accent comes apart into flat, exhausted Ohio.) "...okay. OKAY. You wanna know the truth? The truth is the castle went under in \'19, and a guy in a gray suit offered me a — a BATTERY, he called it, to keep the lights on, and I didn\'t ASK what was in it—" (the Vibe lashes out, wild now, grief-shaped, catching everyone) "—and now I can\'t put it DOWN!"'],
+
+  // — the boss-trigger approach + the win (OverworldScene countHoaxulaBossScene) —
+  count_hoaxula_door: ['(The great hall is all crimson and cobweb and theatrical thunder — and under it, if you look the way {pippa} is looking, the cobwebs are cotton and the thunder is a sound-effects pedal. "It\'s a SET," she whispers. "All of it\'s a set. But—" {faye} closes her eyes, and her face goes soft and sad. "—but the hurt under it is real. Be ready. And {milo}... be gentle if you can.")'],
+  count_hoaxula_win: [
+    '(The stolen Vibe finally lets go of him, all at once, and the Count folds down onto the flagstones — and the cape is just a cape, and the man inside it is just a man, blinking up at five children who came all this way and chose, at the end, to look at him kindly.)',
+    '@"...I scared a whole valley," he says, very quietly. "I didn\'t mean to. I just needed the lights to stay on." {dorin} crouches and puts a hand on his shoulder, and says nothing, the way the mountain taught him. It is enough. It is more than enough.',
+  ],
+  stone_brow_monastery_early: ['(The bell tower stands silent above the castle, the rope still. The mountain keeps its peace until the thing wearing the Count\'s cape has been faced and freed — the resonance will not ring over a valley still afraid.)'],
+
+  // — the COMPASSION axis (CHOICE 2) — runChoice('ch9_count') reads these —
+  choice_ch9_intro: [
+    '(The emptied Count kneels in the wreck of his own haunted house. The stolen Vibe still glows in his chest, loose now, ready to go home — or ready to be TAKEN. {milo} looks at his glove, then at {faye}, then at the long cold road still ahead to Mars.)',
+    '@"I can pull it out," {milo} says, low. "The warmth. Bank it. We\'d have an edge where we\'re going, and he\'d... he\'d live. He\'d just live empty." {faye}\'s hand is already half-raised to pray. {dorin} has gone very still. How does this end?',
+  ],
+  choice_ch9_open: [
+    '@{faye} prays, and the stolen warmth lifts out of the Count gentle as a held breath and pours back down the mountain into the valley it was taken from — the fields, the green, the cold plates on Buni\'s table going warm again.',
+    '(The man who played a vampire for eleven years gets up, and goes home to Cleveland, and promises to phone. You won nothing but the valley back. {dorin} looks at you like you just passed a test he never told you was running.)',
+  ],
+  choice_ch9_iron: [
+    '@{milo}\'s glove closes, and the Vibe Siphon hauls the stolen warmth OUT of the Count in one hard pull — banked, cold and bright, the STOLEN LIGHT, an edge for the dark ahead. The man slumps, alive, emptied, blinking at nothing.',
+    '(It will help. You both know it will help, where you\'re going. {dorin} watches the warmth go into the jar instead of the valley, and his jaw sets, and he does not say a word — which from {dorin}, who learned silence on this very mountain, is the loudest thing he could possibly do.)',
+  ],
+
+  // — HEARTLIGHT 9 — (Ember 9) —
+  ember9_get: [
+    '(High in the Stone Brow bell tower, {dorin} takes the bell-rope in both hands — the rope he was too small to reach the last time he stood here — and rings it, once, true. The note rolls out over the whole freed valley, and the mountain that once deleted him sound by sound gives the sound back, fold on fold, and holds it.)',
+    '@Heartlight 9. ({dorin}, who almost never speaks first, speaks first.) ...The Trial of the Mute Mountain. It took everything, that night, and asked if I would still be myself with nothing left. I said yes. (He looks at the locket, nine songs bright.) I have been saying yes ever since. ...One to go.',
+  ],
+  // — the §A6 chapter card (ch9_complete) —
+  ch9_card: [
+    'You come down the Old Road in the morning with a valley behind you that is holding its star-festival again — you can hear them setting up the green. Buni stood at her gate and fed every one of you until the buttons strained, and pressed the Feast Basket into {dorin}\'s hands, and did not cry, because she was chopping onions, she said, the whole time, all of it, every onion in Romania.',
+    '* CHAPTER 9 — THE COUNT OF VALEA STELELOR — complete. Nine embers carried. One to go.',
+  ],
+
+  // — the §A6 arrival (OverworldScene ch9ArrivalScene) —
+  ch9_arrival: [
+    '(Lucille comes down through cold bright mountain air onto the green at VALEA STELELOR — painted gates, haystacks, woodsmoke, the smell of something simmering all day somewhere close. A whole valley of stars is carved over every doorway, and above it all, far up the brow, a monastery bell tower catches the last of the light.)',
+    '@(For once {dorin} is off the plane before anyone.) "...This is the road I walked down," he says, very quietly, looking up the mountain. "All the way down to find you. ...It\'s strange, walking back UP it with my whole family."',
+  ],
+
 };
 
 /**

@@ -616,5 +616,28 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'heal', power: 1400 },
       },
     }),
+
+    /* ---- §A10 Ch.9 (Romania) — BUNI'S TABLE: the grandmother needs five things up the
+     * valley for the TRUE Feast Basket. Giver placed in valea_stelelor. Reward the Feast
+     * Basket recipe (basket_feast). She banks the warmest finale CALLER (the bible's base
+     * ally — her feast heals the whole party clear across the sky). ---- */
+    Q({
+      id: 'bunis_table',
+      name: "Buni's Table",
+      chapter: 9,
+      giver: 'vs_buni',
+      startFlag: 'q_bunis',
+      objectives: [
+        { id: 'gather', text: 'Buni needs five things for the true Feast Basket — the sour cream, the cheese in the bark, the barrel cabbage, the smoked meat, the autumn plums — scattered up the valley. Bring them home.', flag: 'q_bunis_gather' },
+        { id: 'cook', text: 'Carry the five back to Buni and sit at her table while she cooks the Feast Basket the way only she can.', flag: 'q_bunis_cook' },
+      ],
+      rewardItem: 'basket_feast',
+      doneFlag: 'q_bunis_done',
+      caller: {
+        name: 'Buni',
+        quote: "You go so far, draga mea, and you let yourself get so empty. Not while I am alive. Whenever you are hungry — wherever you are, even up among the cold stars — you sit, and you eat, and you let your Buni feed you full again.",
+        effect: { kind: 'heal', power: 1900 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

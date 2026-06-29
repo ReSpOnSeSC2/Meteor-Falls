@@ -1400,6 +1400,15 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   origami_warrior: { sprite: 'battle_origami_warrior', draw: drawStepMask },
   porcelain_warlord: { sprite: 'battle_porcelain_warlord', draw: drawGildedBeetle },
   paper_dragon: { sprite: 'battle_paper_dragon', draw: drawTitanicTick },
+  // Chapter 9 (Romania) — authored PNGs override these at boot; the draw fns are the
+  // FROZEN boot fallback (borrowed, never new). The .sprite here is what the validator's
+  // visual-id "claimed" check reads, so every §A7 Ch.9 enemy needs a row.
+  haystack_mimic: { sprite: 'battle_haystack_mimic', draw: drawHillSlugDeluxe },
+  ribcage_rattler: { sprite: 'battle_ribcage_rattler', draw: drawStepMask },
+  moss_strigoi: { sprite: 'battle_moss_strigoi', draw: drawCursedSouvenir },
+  animated_armor: { sprite: 'battle_animated_armor', draw: drawGildedBeetle },
+  wolf_of_the_old_road: { sprite: 'battle_wolf_of_the_old_road', draw: drawHillSlugDeluxe },
+  count_hoaxula: { sprite: 'battle_count_hoaxula', draw: drawTitanicTick },
 };
 
 /**
@@ -1420,6 +1429,10 @@ export const FORM_ART: Record<string, EnemyBattleArt> = {
   // it sets itself alight. Authored PNG on disk (battle_paper_dragon_burning.png), wired
   // in authored.ts; the gray-box draw is the boot fallback.
   paper_dragon_burning: { sprite: 'battle_paper_dragon_burning', draw: drawTitanicTick },
+  // §A6 Ch.9 — Count Hoaxula's UNMASKED form (spriteSuffix '_unmasked'): at 50% HP the cape
+  // comes off and the sobbing Cleveland actor is revealed. Authored PNG on disk
+  // (battle_count_hoaxula_unmasked.png), wired in authored.ts; the gray-box draw is the boot fallback.
+  count_hoaxula_unmasked: { sprite: 'battle_count_hoaxula_unmasked', draw: drawTitanicTick },
 };
 
 /** the wear-tier texture key battle swaps to (tier 0 = the base sprite) */

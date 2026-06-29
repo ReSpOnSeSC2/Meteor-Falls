@@ -755,6 +755,12 @@ export class BattleScene extends Phaser.Scene {
     if ([
       'paper_lantern_wisp', 'spore_puffer', 'origami_warrior', 'porcelain_warlord', 'paper_dragon',
     ].includes(enemyId)) return 'spore_forest';
+    // CH.9 Romania — the painted village of Valea Stelelor, the Old Road, Castle Hoaxula,
+    // and the Stone Brow monastery all fight under the one authored gothic-castle-hall
+    // backdrop (stone arches, red carpet, a moonlit window full of bats, the Count's stage).
+    if ([
+      'haystack_mimic', 'moss_strigoi', 'animated_armor', 'wolf_of_the_old_road', 'ribcage_rattler', 'count_hoaxula',
+    ].includes(enemyId)) return 'castle_hoaxula';
     return 'otterbrook';
   }
 

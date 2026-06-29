@@ -2667,6 +2667,127 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       boss: true,
       mind_immune: true,
     }),
+
+    /* ══════════════ CHAPTER 9 — THE COUNT OF VALEA STELELOR (Romania) ══════════════ *
+     * §A7 the Ch.9 roster (chapter level window 42-46, band ch9). The emotional-heart
+     * chapter: props that forgot they were props, old-road dangers, and quiet gothic
+     * tests before Dorin's homecoming. Four art-matched regulars + an ADOPTED gothic
+     * orphan (ribcage_rattler, the §4-B catalog) work Valea Stelelor, the Old Road, and
+     * Castle Hoaxula, and BOSS 9 (COUNT HOAXULA) holds the throne. On-curve (band ch9:
+     * trash HP 11k-26k; village RED/GOLD/GRASS warmth giving way to crypt NIGHT/PURPLE up
+     * the road). Region affinity leans FIRE-weak (the props are straw, paper, greasepaint
+     * — they BURN) + a HOLY thread (the valley's vampire-ward items bite the undead) and a
+     * VOLT shatter on the iron armour. The Moss Strigoi DRAINS (the bible's HP-drain hook).
+     * Dev-art: the four fresh battlers/minis are placeholder clones until the Romania art
+     * pass; ribcage_rattler ships its existing authored battler (the reserve bank). */
+    E({
+      id: 'haystack_mimic',
+      name: 'Haystack Mimic',
+      article: 'The',
+      hp: 12000, offense: 90, defense: 42, speed: 34, level: 42, exp: 1500, cash: 520,
+      weakness: ['fire'],
+      moves: [
+        { name: 'pitchfork jab', kind: 'attack', mult: 1.1, text: '{e} stabbed up out of the straw with a rusted pitchfork and caught {t} clean.', weight: 5 },
+        { name: 'hay burst', kind: 'strong', mult: 1.6, text: '{e} exploded in a smothering cloud of chaff and field-dust that buried {t}!', weight: 3 },
+        { name: 'play dead', kind: 'taunt', text: '{e} slumped back into an ordinary haystack and waited, smug, for {t} to drop their guard.', weight: 2 },
+      ],
+      deathLine: 'The Haystack Mimic came apart in a soft heap of straw, and a startled field-mouse ran out of it and away.',
+      drops: [{ item: 'grandfather_plums', chance: 0.12 }],
+      sprite: 'battle_haystack_mimic', mini: 'mini_haystack_mimic',
+      bg: [RAMP.GOLD, RAMP.GRASS],
+    }),
+    E({
+      id: 'ribcage_rattler',
+      name: 'Ribcage Rattler',
+      article: 'The',
+      hp: 15000, offense: 96, defense: 44, speed: 48, level: 43, exp: 1700, cash: 600,
+      weakness: ['holy'],
+      moves: [
+        { name: 'bone rattle', kind: 'attack', mult: 1.1, text: '{e} clattered the length of its own ribs like a xylophone of teeth and rapped {t} across the knuckles.', weight: 4 },
+        { name: 'rib fling', kind: 'strong', mult: 1.6, text: '{e} snapped a rib loose and hurled it spinning into {t} — then grew it back, grinning.', weight: 3 },
+        { name: 'clatter apart', kind: 'mend', text: '{e} fell into a heap of loose bones and reassembled itself a piece sturdier than before.', weight: 2 },
+      ],
+      deathLine: 'The Ribcage Rattler fell apart one last time and this time forgot the trick of standing back up.',
+      drops: [{ item: 'vigil_candle', chance: 0.1 }],
+      sprite: 'battle_ribcage_rattler', mini: 'mini_ribcage_rattler',
+      bg: [RAMP.NIGHT, RAMP.PURPLE],
+    }),
+    E({
+      id: 'moss_strigoi',
+      name: 'Moss Strigoi',
+      article: 'The',
+      hp: 17000, offense: 98, defense: 46, speed: 30, level: 43, exp: 1800, cash: 660,
+      weakness: ['fire', 'holy'],
+      moves: [
+        { name: 'cold grip', kind: 'attack', mult: 1.1, text: '{e} laid a grave-cold, moss-furred hand on {t} and squeezed the warmth right out.', weight: 4 },
+        { name: 'life sip', kind: 'drain', mult: 1.3, text: '{e} breathed in slow over {t} and drank the living heat, greener and gladder for it.', weight: 3 },
+        { name: 'graveyard moan', kind: 'status', status: 'crying', text: '{e} let out a long wet churchyard moan, and {t}\'s eyes brimmed over before they could help it.', weight: 2 },
+      ],
+      deathLine: 'The Moss Strigoi sighed out a last breath of cold cellar air, lay down in its own moss, and was only a sad old log again.',
+      drops: [{ item: 'pelin_bitters', chance: 0.12 }],
+      sprite: 'battle_moss_strigoi', mini: 'mini_moss_strigoi',
+      bg: [RAMP.GRASS, RAMP.NIGHT],
+    }),
+    E({
+      id: 'animated_armor',
+      name: 'Animated Armor',
+      article: 'The',
+      hp: 20000, offense: 106, defense: 60, speed: 24, level: 44, exp: 2000, cash: 740,
+      weakness: ['volt'],
+      moves: [
+        { name: 'halberd sweep', kind: 'strong', mult: 1.7, text: '{e} brought its great rusted halberd around in a screaming iron arc across {t}!', weight: 3 },
+        { name: 'visor slam', kind: 'attack', mult: 1.2, text: '{e} clanged its empty visor down into {t} with the weight of a whole suit of plate.', weight: 4 },
+        { name: 'parade halt', kind: 'shield', text: '{e} snapped to attention and locked its plates into a hard, gleaming wall of iron.', weight: 2 },
+      ],
+      deathLine: 'The Animated Armor toppled with an enormous crash and lay there empty — just a costume, after all, with nobody ever inside.',
+      drops: [{ item: 'ciorba', chance: 0.1 }],
+      sprite: 'battle_animated_armor', mini: 'mini_animated_armor',
+      bg: [RAMP.EARTH, RAMP.RED],
+    }),
+    E({
+      id: 'wolf_of_the_old_road',
+      name: 'Wolf of the Old Road',
+      article: 'The',
+      hp: 24000, offense: 116, defense: 50, speed: 54, level: 45, exp: 2300, cash: 880,
+      weakness: ['holy', 'fire'],
+      moves: [
+        { name: 'lunge', kind: 'attack', mult: 1.2, text: '{e} came off the dark verge in one long low lunge and bowled {t} into the road-dust.', weight: 4 },
+        { name: 'throat tear', kind: 'strong', mult: 1.8, text: '{e} closed its jaws and worried at {t} with a snarl out of a much older story.', weight: 3 },
+        { name: 'call the pack', kind: 'taunt', text: '{e} threw back its head and howled the long valley-howl, and somewhere up the road an answering howl came back.', weight: 2 },
+      ],
+      deathLine: 'The Wolf of the Old Road sank down in the moonlight, and what lay in the road a moment later was only a tired grey dog, asleep at last.',
+      drops: [{ item: 'mici', chance: 0.12 }],
+      sprite: 'battle_wolf_of_the_old_road', mini: 'mini_wolf_of_the_old_road',
+      bg: [RAMP.NIGHT, RAMP.EARTH],
+    }),
+
+    /* §A6 BOSS 9 — COUNT HOAXULA (95000 HP): the "vampire" terrorising the valley is a
+     * Hushed theme-park actor from Cleveland whose haunted-castle attraction went bankrupt
+     * — now armed with very real STOLEN VIBE. THEATRICAL phase: fake spells, real damage,
+     * steals one equipped item (returned on win). UNMASKED at 50%: the cape comes off, the
+     * Cleveland accent comes out sobbing, the attacks go wild AoE. Mia's PRAY at "good" tier
+     * or better ends his second phase in MERCY — the game's quietest victory (bosses.ts
+     * `count_hoaxula`, the mercyEnding template). Weak to FIRE (he is paper, wax, and
+     * greasepaint); mind_immune like every boss. Money > combat: 95000 HP sits far under
+     * the Ch.9 Fortune target ($400M). */
+    E({
+      id: 'count_hoaxula',
+      name: 'COUNT HOAXULA',
+      article: 'The',
+      hp: 95000, offense: 132, defense: 62, speed: 40, level: 46, exp: 44000, cash: 30000,
+      weakness: ['fire'],
+      moves: [
+        { name: 'theatrical curse', kind: 'strong', mult: 1.7, text: '{e} flung up its cape and intoned a DOOM in cod-Latin — and the fake spell hit {t} with very real, very stolen Vibe!', weight: 4 },
+        { name: 'bat swarm', kind: 'attack', mult: 1.2, text: '{e} loosed a clattering swarm of cardboard-and-wire bats that battered {t} all the same.', weight: 4 },
+        { name: 'command the night', kind: 'taunt', text: '{e} swept low into a stage bow and held the pose, daring {t} to look away from the show.', weight: 2 },
+        { name: 'wild lament', kind: 'strong', mult: 1.9, text: '{e} threw both arms wide and wailed, and the grief came off it in a wide messy wave that caught everyone!', weight: 2 },
+      ],
+      deathLine: 'Count Hoaxula sank to the flagstones, the stolen Vibe guttering out of him — and underneath the greasepaint was only a tired man from Cleveland, blinking, who quietly said he was sorry.',
+      sprite: 'battle_count_hoaxula', mini: 'mini_count_hoaxula',
+      bg: [RAMP.RED, RAMP.NIGHT],
+      boss: true,
+      mind_immune: true,
+    }),
   ].map((e) => [e.id, e]),
 );
 

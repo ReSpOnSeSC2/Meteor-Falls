@@ -20,7 +20,6 @@
 import type { BossScriptDef } from '../../schemas';
 import {
   elementalGolem,
-  mercyEnding,
 } from '../../levelkit/forge/bosses';
 
 export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
@@ -52,16 +51,11 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
    * 45,000 HP (the airborne/grounded gimmick + the 30% self-immolation BURNING form) —
    * no longer a draft (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 
-  /* Ch.9 — COUNT HOAXULA (5,300 HP): steals gear, unmasks at 50%, Pray = mercy */
-  count_hoaxula: mercyEnding('count_hoaxula', {
-    theatrical: { id: 'theatrical', name: 'THEATRICAL', spriteSuffix: '', line: 'hoaxula_theatrical_draft' },
-    unmasked: { id: 'unmasked', name: 'UNMASKED', spriteSuffix: '_unmasked', line: 'hoaxula_unmasked_draft' },
-    unmaskAt: 0.5,
-    unmaskLine: 'hoaxula_unmask_draft',
-    stealAt: 2,
-    stealLine: 'hoaxula_steal_draft',
-    prayTier: 'good',
-  }),
+  /* Ch.9 — COUNT HOAXULA: PROMOTED (the Valea Stelelor landing). Now a live boss in
+   * src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy at canon 95,000 HP
+   * (theatrical → unmasked at 50% → Mia's Pray ends it in mercy, the mercyEnding
+   * template, with the §A11 dialogue ids rewritten from `*_draft`) — no longer a draft
+   * (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 
   /* Ch.10 minibosses — the WRONG element heals the golem (crackedBy is the key) */
   frost_sentinel: elementalGolem('frost_sentinel', {
@@ -89,7 +83,7 @@ export const DRAFT_BOSS_IDS = [
   // 'laughing_sphinx' — PROMOTED to a live boss at the Ch.6 Zanzibel landing
   // 'cobra_raja' — PROMOTED to a live boss at the Ch.7 Chandrapore landing
   // 'paper_dragon' — PROMOTED to a live boss at the Ch.8 Lotus Harbor / Mt. Shu landing
-  'count_hoaxula',
+  // 'count_hoaxula' — PROMOTED to a live boss at the Ch.9 Valea Stelelor landing
   'frost_sentinel',
   'tiki_magma_golem',
 ] as const;

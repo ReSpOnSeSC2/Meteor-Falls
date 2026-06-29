@@ -675,7 +675,7 @@ export type Caller = z.infer<typeof CallerSchema>;
 export const QuestDefSchema = z.strictObject({
   id: z.string().min(1),
   name: z.string().min(1),
-  chapter: z.number().int().min(1).max(8),
+  chapter: z.number().int().min(1).max(9),
   /** npc id of the quest giver */
   giver: z.string().min(1).optional(),
   /** flag set when the giver's ask lands — 'active' derives from it (S9) */
