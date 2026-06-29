@@ -15,9 +15,9 @@
  * Ch.9 carries the COMPASSION axis (the second Held-Breath choice — `choice_compassion`
  * → ch9_count: THE IRON vs THE OPEN HAND), placed past the throne where the unmasked
  * Count kneels. Same ADR-004 code-grid law as every chapter; reachability is GRID-based
- * (mapcheck BFS). Valea wears its OWN painted-village skin (AREA_SKINS.valea); the NPC
- * sheets are dev-art reuse of the earlier cast until the Romania art pass gives Buni and
- * the valley their own. The castle + monastery corridors are kept deliberately open (the
+ * (mapcheck BFS). Valea wears its OWN painted-village skin (AREA_SKINS.valea) and its OWN
+ * authored NPC cast (vs_buni / vs_provisioner / vs_shepherd / vs_kid — 46-frame walk
+ * sheets). The castle + monastery corridors are kept deliberately open (the
  * boss + choice + resonance triggers must fire on foot — no soft-lock, ADR-014).
  */
 import { Grid, treeSprite } from './mapkit';
@@ -95,14 +95,14 @@ function buildValeaStelelor(): MapDef {
     props,
     npcs: [
       // BUNI — the grandmother who keeps the table (the bunis_table giver; the §A10 caller).
-      // She needs five things up the valley for the true Feast Basket. (dev-art: senora sheet)
-      { id: 'vs_buni', sprite: 'senora', x: 7, y: 15, facing: 'down', dialogue: 'npc_vs_buni', stationary: true, idle: true, emote: 'happy' },
+      // She needs five things up the valley for the true Feast Basket. (authored sheet: vs_buni)
+      { id: 'vs_buni', sprite: 'vs_buni', x: 7, y: 15, facing: 'down', dialogue: 'npc_vs_buni', stationary: true, idle: true, emote: 'happy' },
       // THE PROVISIONER — keeps the supply shelf (the §A8 Ch.9 shop)
-      { id: 'vs_provisioner', sprite: 'kvisthavn_shopkeeper', x: 11, y: 9, facing: 'down', dialogue: 'npc_vs_provisioner', shop: 'valea_provisioner' },
+      { id: 'vs_provisioner', sprite: 'vs_provisioner', x: 11, y: 9, facing: 'down', dialogue: 'npc_vs_provisioner', shop: 'valea_provisioner' },
       // THE SHEPHERD — frets about the Wolf of the Old Road and the thing in the castle
-      { id: 'vs_shepherd', sprite: 'bootstep_shepherd', x: 28, y: 13, facing: 'down', dialogue: 'npc_vs_shepherd', stationary: true },
+      { id: 'vs_shepherd', sprite: 'vs_shepherd', x: 28, y: 13, facing: 'down', dialogue: 'npc_vs_shepherd', stationary: true },
       // a village KID — dares the others to go knock on the Count's door (flavor)
-      { id: 'vs_kid', sprite: 'bell_choir_child', x: 14, y: 18, facing: 'down', dialogue: 'npc_vs_kid', wander: true, emote: 'happy' },
+      { id: 'vs_kid', sprite: 'vs_kid', x: 14, y: 18, facing: 'down', dialogue: 'npc_vs_kid', wander: true, emote: 'happy' },
     ],
     signs: [
       { x: 3, y: 11, dialogue: 'sign_valea_stelelor' },

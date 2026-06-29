@@ -91,3 +91,8 @@ lh_harbor_master
 lh_calligrapher
 lh_lantern_girl
 lh_tea_monk
+# Ch.9 Romania — Valea Stelelor cast
+vs_buni
+vs_provisioner
+vs_shepherd
+vs_kid

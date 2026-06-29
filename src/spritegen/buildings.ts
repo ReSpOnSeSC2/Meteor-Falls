@@ -158,6 +158,12 @@ export const LOTUS_HARBOR_FACADES: readonly string[] = [
   'bldg_lotus_harbor_temple', 'bldg_lotus_harbor_theater',
 ];
 
+export const VALEA_FACADES: readonly string[] = [
+  'bldg_valea_painted_house', 'bldg_valea_church', 'bldg_valea_inn',
+  'bldg_valea_shop', 'bldg_valea_cottage', 'bldg_valea_barn',
+  'bldg_valea_mill', 'bldg_valea_hall',
+];
+
 /**
  * AREA_SKINS — the per-area building rosters (the "each area feels fresh" law).
  * Every named level area draws ONLY from its own slice: a distinct family mix +
@@ -248,10 +254,11 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
   // temple red/gold + jade grass + harbor cyan.
   lotus_harbor: LOTUS_HARBOR_FACADES,
 
-  // CH.9 ROMANIA — VALEA STELELOR: the painted village (the emotional heart). Warm
-  // rustic cafes/shops, painted-gate brownstones, a haystack market — red/orange/
-  // gold/grass, low and hand-painted, never a city.
-  valea: skinsFor(['cafe', 'shop', 'brownstone', 'market'], [RAMP.RED, RAMP.ORANGE, RAMP.GOLD, RAMP.GRASS]),
+  // CH.9 ROMANIA — VALEA STELELOR: the painted village (the emotional heart). AUTHORED
+  // painted-Romanian-village facades — a folk-flower-trimmed house, a wooden Orthodox
+  // church, a two-story han (inn), a shop, a humble cottage, a timber barn, a water mill,
+  // and the star-festival pavilion. Low and hand-painted, never a city.
+  valea: VALEA_FACADES,
 
   // CH.10 ALASKA — AURORA STATION: a cold utilitarian outpost, claustrophobic. Steel
   // warehouses, an office block, a civic comms hall, a bank window — cyan/blue/paper/
@@ -290,7 +297,7 @@ export const CANON_AREAS: readonly string[] = [
 export const BESPOKE_AREA_FACADES: readonly string[] = [
   'mansion_a', 'mansion_b', 'mansion_c', 'golf_gatehouse',
   ...KVISTHAVN_FACADES, ...LILLEBY_FACADES, ...MINIMUS_FACADES, ...ZANZIBEL_FACADES,
-  ...LOTUS_HARBOR_FACADES,
+  ...LOTUS_HARBOR_FACADES, ...VALEA_FACADES,
 ];
 
 /**

@@ -314,6 +314,11 @@ export const NPC_CHARACTER_ART = [
   { id: 'lh_calligrapher', key: 'authored_lh_calligrapher_8dir', url: new URL('../../assets/art/characters/lh_calligrapher_anim_46_4x.png', import.meta.url).href },
   { id: 'lh_lantern_girl', key: 'authored_lh_lantern_girl_8dir', url: new URL('../../assets/art/characters/lh_lantern_girl_anim_46_4x.png', import.meta.url).href },
   { id: 'lh_tea_monk', key: 'authored_lh_tea_monk_8dir', url: new URL('../../assets/art/characters/lh_tea_monk_anim_46_4x.png', import.meta.url).href },
+  // Ch.9 Romania — the Valea Stelelor cast (46-frame authored sheets; masters synced to runtime)
+  { id: 'vs_buni', key: 'authored_vs_buni_8dir', url: new URL('../../assets/art/characters/vs_buni_anim_46_4x.png', import.meta.url).href },
+  { id: 'vs_provisioner', key: 'authored_vs_provisioner_8dir', url: new URL('../../assets/art/characters/vs_provisioner_anim_46_4x.png', import.meta.url).href },
+  { id: 'vs_shepherd', key: 'authored_vs_shepherd_8dir', url: new URL('../../assets/art/characters/vs_shepherd_anim_46_4x.png', import.meta.url).href },
+  { id: 'vs_kid', key: 'authored_vs_kid_8dir', url: new URL('../../assets/art/characters/vs_kid_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -460,6 +465,10 @@ const REGION_FACADE_KEYS = [
   'bldg_lotus_harbor_grand_market', 'bldg_lotus_harbor_harbor_office', 'bldg_lotus_harbor_lantern_shop',
   'bldg_lotus_harbor_pagoda', 'bldg_lotus_harbor_row_house', 'bldg_lotus_harbor_tea_house',
   'bldg_lotus_harbor_temple', 'bldg_lotus_harbor_theater',
+  // Ch.9 Romania — Valea Stelelor (authored painted-village facades; AREA_SKINS.valea)
+  'bldg_valea_painted_house', 'bldg_valea_church', 'bldg_valea_inn',
+  'bldg_valea_shop', 'bldg_valea_cottage', 'bldg_valea_barn',
+  'bldg_valea_mill', 'bldg_valea_hall',
 ] as const;
 
 const WORLD_FACADE_KEYS = Array.from(new Set([
