@@ -5,13 +5,13 @@ This checks the authored 46-frame character sheets against the runtime frame con
 - Frame size: 96x128
 - Sheet size: 384x1536
 - Frame count: 46
-- Registered characters: 86
+- Registered characters: 87
 - Unregistered character sheets on disk: 0
 - Path overrides: 0
-- Characters with issues: 50
+- Characters with issues: 51
 - Errors: 0
-- Warnings: 183
-- Review hints: 233
+- Warnings: 191
+- Review hints: 235
 
 Interactive playback page: [character_animation_audit.html](character_animation_audit.html)
 
@@ -358,6 +358,18 @@ Common presets:
 - REVIEW frame 17: run down looks closer to downleft than down
 - REVIEW frame 23: run up looks closer to upleft than up
 
+### lh_tea_monk (lh_tea_monk)
+- REVIEW frame 15: walk up looks closer to upleft than up
+- REVIEW frame 23: run up looks closer to upleft than up
+- WARN walk left: step frames 1/3 are nearly frozen (0.010)
+- WARN walk right: step frames 1/3 are nearly frozen (0.010)
+- WARN run left: run pair is nearly frozen (0.010)
+- WARN run right: run pair is nearly frozen (0.010)
+- WARN walk down-right: diagonal step pair is nearly frozen (0.002)
+- WARN walk down-left: diagonal step pair is nearly frozen (0.002)
+- WARN run down-right: run pair is nearly frozen (0.002)
+- WARN run down-left: run pair is nearly frozen (0.002)
+
 ### lilleby_giant_child (lilleby_giant_child)
 - WARN walk down: step frames 1/3 are nearly frozen (0.010)
 - WARN walk left: step frames 1/3 are nearly frozen (0.005)
@@ -628,6 +640,7 @@ Common presets:
 | lh_calligrapher | lh_calligrapher | npc | 16 |
 | lh_harbor_master | lh_harbor_master | npc | 4 |
 | lh_lantern_girl | lh_lantern_girl | npc | 4 |
+| lh_tea_monk | lh_tea_monk | npc | 10 |
 | lilleby_giant_child | lilleby_giant_child | npc | 6 |
 | lilleby_undertaker | lilleby_undertaker | npc | 4 |
 | manager | manager | npc | 0 |

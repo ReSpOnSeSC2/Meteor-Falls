@@ -88,8 +88,8 @@ function buildLotusHarbor(): MapDef {
     layout: 'grid',
     style: 'painted-gates',
     catalog: AREA_SKINS.lotus_harbor,
-    streetRows: [16],
-    maxStories: 2,
+    streetRows: [17],
+    maxStories: 3,
     sprinkle: true,
     occupied,
   });
@@ -119,7 +119,7 @@ function buildLotusHarbor(): MapDef {
       // workshop sill into the Spore Forest; the §A10 caller)
       { id: 'lh_calligrapher', sprite: 'lh_calligrapher', x: 33, y: 16, facing: 'down', dialogue: 'npc_lh_calligrapher', stationary: true, idle: true },
       // THE TEA-HOUSE MONK — murmurs the temple elder's koan (the Teleport β hint); flavor
-      { id: 'lh_tea_monk', sprite: 'cp_stationmaster', x: 26, y: 19, facing: 'down', dialogue: 'npc_lh_tea_monk', wander: true },
+      { id: 'lh_tea_monk', sprite: 'lh_tea_monk', x: 26, y: 19, facing: 'down', dialogue: 'npc_lh_tea_monk', wander: true },
       // THE LANTERN GIRL — frets over the paper the Hush keeps getting into (the bible read)
       { id: 'lh_lantern_girl', sprite: 'lh_lantern_girl', x: 12, y: 22, facing: 'down', dialogue: 'npc_lh_lantern_girl', stationary: true, idle: true, emote: 'happy' },
     ],
