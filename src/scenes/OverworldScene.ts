@@ -272,6 +272,28 @@ const MINIMUS_TILE_SKIN: Readonly<Record<string, string>> = {
   grass_b: 'minimus_turf', // decorative grass (`,`) → velvet lawn
   grass_tuft: 'minimus_turf', // decorative grass (`~`) → velvet lawn
 };
+/** PKG-15 §1 — the Ch.8 CHINA (Lotus Harbor) tile reskin. Same render-time name-remap as
+ *  MINIMUS_TILE_SKIN: the shared grid chars render as the authored China_tiles_16.png cells
+ *  on the Ch.8 settlement/route/temple maps ONLY (the spore_forest dungeon keeps its own
+ *  look). Each china tile carries the SAME solidity as the base it replaces, so the remap is
+ *  purely cosmetic — collision/BFS read the unchanged grid. */
+const CHINA_SKIN_MAPS: ReadonlySet<string> = new Set([
+  'lotus_harbor',
+  'bamboo_road',
+  'mt_shu_temple',
+]);
+const CHINA_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'china_ground', // the jade river-dust ground (`.`)
+  grass_b: 'china_ground', // decorative grass (`,`)
+  grass_tuft: 'china_ground', // decorative grass (`~`)
+  office_floor: 'china_ground', // temple/interior way-gaps (`o`) blend into the ground
+  road: 'china_path', // Lotus Harbor's streets (`R`) → stone flagstone
+  sidewalk: 'china_path', // the ghat run / avenue (`=`) → flagstone
+  road_dash: 'china_path', // the centreline (`D`) — a temple-town path needs no lane dash
+  office_wall: 'china_wall', // temple + interior walls (`O`) → masonry (SOLID)
+  brick: 'china_wall', // the town wall / river kerb (`B`) → temple masonry (SOLID)
+  bush: 'china_wall', // any solid bush (`b`) → a wall section (SOLID)
+};
 /** §A11 full-Gulliver: the Minimus NATIVES (citizens, props, facades) render at this scale on
  *  the Ch.5 maps so the colossi party visibly TOWERS over the tabletop duchy — the same idea as
  *  MINIMUS_TRAFFIC_SCALE for the dainty cars. The PARTY (player + followers) is NEVER scaled. */
@@ -542,6 +564,7 @@ export class OverworldScene extends Phaser.Scene {
     // PKG-12 §A11 — render the Ch.5 maps with the Minimus tile skin (cosmetic remap;
     // collision-preserving — see MINIMUS_TILE_SKIN). Other maps are untouched.
     const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
+    const chinaSkin = CHINA_SKIN_MAPS.has(this.mapDef.id);
     const data: number[][] = [];
     this.solidTiles = [];
     for (let y = 0; y < h; y++) {
@@ -576,6 +599,11 @@ export class OverworldScene extends Phaser.Scene {
             // chars render as privet turf / hedge wall / cobble. The Minimus tile carries
             // the SAME solidity as the base it replaces, so collision below is unchanged.
             name = MINIMUS_TILE_SKIN[name];
+          } else if (chinaSkin && CHINA_TILE_SKIN[name]) {
+            // PKG-15 §1 — the Lotus Harbor reskin (Ch.8 maps only): the shared grid chars
+            // render as jade river-dust ground / stone flagstone / temple masonry. Same
+            // solidity as the base it replaces, so collision below is unchanged.
+            name = CHINA_TILE_SKIN[name];
           } else if (name === 'sidewalk') {
             if (isRoad(x, y + 1)) name = 'sidewalk_curb';
             else if (isRoad(x + 1, y)) name = 'sidewalk_curb_e';

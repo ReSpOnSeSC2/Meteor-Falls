@@ -17,6 +17,7 @@ import {
   AREA_SKINS,
   KVISTHAVN_FACADES,
   LILLEBY_FACADES,
+  LOTUS_HARBOR_FACADES,
   MINIMUS_FACADES,
   ZANZIBEL_FACADES,
 } from './buildings';
@@ -113,7 +114,7 @@ describe('authored hero asset wiring', () => {
 describe('authored NPC asset wiring', () => {
   it('matches the PKG-09 character list and loads 96x128-frame sheets', () => {
     const npcIds = listedNpcIds();
-    expect(npcIds).toHaveLength(81);
+    expect(npcIds).toHaveLength(82);
     expect(AUTHORED_NPC_CHARACTER_IDS).toEqual(npcIds);
 
     const artById = new Map<string, (typeof NPC_CHARACTER_ART)[number]>(NPC_CHARACTER_ART.map((art) => [art.id, art]));
@@ -175,6 +176,7 @@ describe('authored world asset wiring', () => {
     expect(AREA_SKINS.kvisthavn).toEqual(KVISTHAVN_FACADES);
     expect(AREA_SKINS.minimus).toEqual(MINIMUS_FACADES);
     expect(AREA_SKINS.zanzibel).toEqual(ZANZIBEL_FACADES);
+    expect(AREA_SKINS.lotus_harbor).toEqual(LOTUS_HARBOR_FACADES);
     expect(AREA_SKINS.lilleby).toEqual([...LILLEBY_FACADES, 'bldg_tower_arms']);
   });
 });

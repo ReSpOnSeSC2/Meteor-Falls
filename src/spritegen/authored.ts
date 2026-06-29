@@ -313,6 +313,7 @@ export const NPC_CHARACTER_ART = [
   { id: 'lh_harbor_master', key: 'authored_lh_harbor_master_8dir', url: new URL('../../assets/art/characters/lh_harbor_master_anim_46_4x.png', import.meta.url).href },
   { id: 'lh_calligrapher', key: 'authored_lh_calligrapher_8dir', url: new URL('../../assets/art/characters/lh_calligrapher_anim_46_4x.png', import.meta.url).href },
   { id: 'lh_lantern_girl', key: 'authored_lh_lantern_girl_8dir', url: new URL('../../assets/art/characters/lh_lantern_girl_anim_46_4x.png', import.meta.url).href },
+  { id: 'lh_tea_monk', key: 'authored_lh_tea_monk_8dir', url: new URL('../../assets/art/characters/lh_tea_monk_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);
@@ -366,6 +367,17 @@ const MINIMUS_TILE_ART = {
   key: 'authored_minimus_tiles16',
   url: new URL('../../assets/art/world/Minimus_tiles_16.png', import.meta.url).href,
   names: ['', '', '', '', 'minimus_cobble', '', 'minimus_turf', 'minimus_hedge', '', '', '', '', '', '', '', ''],
+};
+
+// PKG-15 §1 — the Ch.8 CHINA (Lotus Harbor) region tile strip (3 cells × 64px). A PARTIAL
+// override like Minimus: each authored cell maps onto an appended china TILESET name (col 0 =
+// jade river-dust ground → china_ground, col 1 = stone flagstone → china_path, col 2 = temple
+// masonry → china_wall). These render ONLY on the Ch.8 maps (the render-time name-remap
+// CHINA_TILE_SKIN in OverworldScene.buildTiles); every other map is untouched.
+const CHINA_TILE_ART = {
+  key: 'authored_china_tiles16',
+  url: new URL('../../assets/art/world/China_tiles_16.png', import.meta.url).href,
+  names: ['china_ground', 'china_path', 'china_wall'],
 };
 
 const WORLD_PROP_KEYS = [
@@ -434,6 +446,10 @@ const REGION_FACADE_KEYS = [
   'bldg_zanzibel_caravanserai', 'bldg_zanzibel_civic_hall', 'bldg_zanzibel_courier_guild',
   'bldg_zanzibel_grand_market', 'bldg_zanzibel_harbor_customs', 'bldg_zanzibel_home',
   'bldg_zanzibel_indigo_dyer', 'bldg_zanzibel_investment_desk', 'bldg_zanzibel_spice_stall',
+  // Ch.8 China — Lotus Harbor (authored temple-town facades; AREA_SKINS.lotus_harbor)
+  'bldg_lotus_harbor_grand_market', 'bldg_lotus_harbor_harbor_office', 'bldg_lotus_harbor_lantern_shop',
+  'bldg_lotus_harbor_pagoda', 'bldg_lotus_harbor_row_house', 'bldg_lotus_harbor_tea_house',
+  'bldg_lotus_harbor_temple', 'bldg_lotus_harbor_theater',
 ] as const;
 
 const WORLD_FACADE_KEYS = Array.from(new Set([
@@ -1546,6 +1562,7 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   scene.load.image(HICKORY_DIRT_TILE_ART.key, HICKORY_DIRT_TILE_ART.url);
   scene.load.image(MINIMUS_TILE_ART.key, MINIMUS_TILE_ART.url);
+  scene.load.image(CHINA_TILE_ART.key, CHINA_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
   AUTHORED_VEHICLE_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
@@ -1635,6 +1652,7 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   const tileArt = sourceImage(scene, WORLD_TILE_ART.key);
   const hickoryTileArt = sourceImage(scene, HICKORY_DIRT_TILE_ART.key);
   const minimusTileArt = sourceImage(scene, MINIMUS_TILE_ART.key);
+  const chinaTileArt = sourceImage(scene, CHINA_TILE_ART.key);
   const baseTiles = sourceImage(scene, 'tiles');
   if (!baseTiles) return;
 
@@ -1652,6 +1670,7 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   if (tileArt) drawAuthoredTileStrip(ctx, tileArt, WORLD_TILE_ART.names);
   if (hickoryTileArt) drawAuthoredTileStrip(ctx, hickoryTileArt, HICKORY_DIRT_TILE_ART.names);
   if (minimusTileArt) drawAuthoredTileStrip(ctx, minimusTileArt, MINIMUS_TILE_ART.names);
+  if (chinaTileArt) drawAuthoredTileStrip(ctx, chinaTileArt, CHINA_TILE_ART.names);
 
   replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);
 }

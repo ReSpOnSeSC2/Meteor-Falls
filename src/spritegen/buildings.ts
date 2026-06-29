@@ -152,6 +152,12 @@ export const ZANZIBEL_FACADES: readonly string[] = [
   'bldg_zanzibel_indigo_dyer', 'bldg_zanzibel_investment_desk', 'bldg_zanzibel_spice_stall',
 ];
 
+export const LOTUS_HARBOR_FACADES: readonly string[] = [
+  'bldg_lotus_harbor_grand_market', 'bldg_lotus_harbor_harbor_office', 'bldg_lotus_harbor_lantern_shop',
+  'bldg_lotus_harbor_pagoda', 'bldg_lotus_harbor_row_house', 'bldg_lotus_harbor_tea_house',
+  'bldg_lotus_harbor_temple', 'bldg_lotus_harbor_theater',
+];
+
 /**
  * AREA_SKINS — the per-area building rosters (the "each area feels fresh" law).
  * Every named level area draws ONLY from its own slice: a distinct family mix +
@@ -240,7 +246,7 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
   // CH.8 CHINA — LOTUS HARBOR: temple-town on the river. Colonnaded markets, porticoed
   // civic temples, a lacquer-red theater, brick row houses, a riverside tea cafe —
   // temple red/gold + jade grass + harbor cyan.
-  lotus_harbor: skinsFor(['market', 'civic', 'theater', 'brownstone', 'cafe'], [RAMP.RED, RAMP.GOLD, RAMP.GRASS, RAMP.CYAN]),
+  lotus_harbor: LOTUS_HARBOR_FACADES,
 
   // CH.9 ROMANIA — VALEA STELELOR: the painted village (the emotional heart). Warm
   // rustic cafes/shops, painted-gate brownstones, a haystack market — red/orange/
@@ -284,6 +290,7 @@ export const CANON_AREAS: readonly string[] = [
 export const BESPOKE_AREA_FACADES: readonly string[] = [
   'mansion_a', 'mansion_b', 'mansion_c', 'golf_gatehouse',
   ...KVISTHAVN_FACADES, ...LILLEBY_FACADES, ...MINIMUS_FACADES, ...ZANZIBEL_FACADES,
+  ...LOTUS_HARBOR_FACADES,
 ];
 
 /**

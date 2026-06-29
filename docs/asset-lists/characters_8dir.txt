@@ -90,3 +90,4 @@ cp_usher
 lh_harbor_master
 lh_calligrapher
 lh_lantern_girl
+lh_tea_monk
