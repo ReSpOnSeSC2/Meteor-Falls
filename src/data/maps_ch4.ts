@@ -181,10 +181,18 @@ function buildBootstepMoor(): MapDef {
       { x: 15, y: H - 1, w: 2, h: 1, to: 'spine_hand', tx: 12 * 16, ty: 12 * 16, facing: 'up', indicator: 'none' },
     ],
     spawners: [
-      { enemies: ['colossal_gnat', 'moor_midge_cloud'], count: 2, rect: { x: 3, y: 3, w: 8, h: 3 } },
-      { enemies: ['thunder_snail', 'boulder_lichen'], count: 1, rect: { x: 25, y: 3, w: 6, h: 3 } },
+      // the airborne nuisances of the near moor — the gnat, the midge-cloud, and the
+      // §A7 Bog-Cotton Wisp that drifts across the path like a slow soft wall
+      { enemies: ['colossal_gnat', 'moor_midge_cloud', 'bog_cotton_wisp'], count: 2, rect: { x: 3, y: 3, w: 8, h: 3 } },
+      // the FAR moor (east of the gorge — reached only once the Bridge Berry is moved),
+      // so its heavies read as later pressure: the snail, the lichen-troll, and the
+      // §A7 late-pressure Hushed Skua wheeling in off the water to rob and silence
+      { enemies: ['thunder_snail', 'boulder_lichen', 'hushed_skua'], count: 1, rect: { x: 25, y: 3, w: 6, h: 3 } },
       { enemies: ['frost_hare', 'dog_sized_berry'], count: 2, rect: { x: 25, y: 12, w: 7, h: 3 } },
-      { enemies: ['junior_jotun'], count: 1, rect: { x: 9, y: 12, w: 5, h: 3 } }, // the rare grab-bruiser
+      // the moor's single RARE slot (count 1): the grab-bruiser shares it with the §A7
+      // two rare / high-value (the Amber-Hoard Troll's treasure + the Aurora Moth's
+      // wealth-wink), so each stays genuinely uncommon — one rare roamer, 1-of-3 per roll
+      { enemies: ['junior_jotun', 'amber_hoard_troll', 'aurora_moth'], count: 1, rect: { x: 9, y: 12, w: 5, h: 3 } },
     ],
     triggers: [
       // §A10 "Sigrid's Spectacles" — the two pond-sized lenses (active-quest only)
@@ -270,7 +278,9 @@ function buildLilleby(): MapDef {
       { x: 0, y: 11, w: 1, h: 2, to: 'bootstep_moor', tx: 32 * 16, ty: 8 * 16, facing: 'left', indicator: 'none' },
     ],
     spawners: [
-      { enemies: ['giant_house_cat', 'lost_mitten'], count: 1, rect: { x: 25, y: 18, w: 5, h: 2 } },
+      // the giants' domestic things, swelled by the hum: the napping house-cat, the
+      // lost mitten, and the §A7 Runaway Knitting Needles clacking around the south end
+      { enemies: ['giant_house_cat', 'lost_mitten', 'knitting_needles'], count: 1, rect: { x: 25, y: 18, w: 5, h: 2 } },
     ],
     triggers: [
       // §A10 "The Giant's Picnic" — gather the slice + the berry, then lay the table
@@ -384,7 +394,9 @@ function buildSpineShoulder(): MapDef {
       { x: 11, y: 0, w: 2, h: 1, to: 'spine_ear', tx: 11 * 16, ty: 13 * 16, facing: 'up', indicator: 'none' },
     ],
     spawners: [
-      { enemies: ['earwax_golem', 'snore_gust'], count: 2, rect: { x: 4, y: 9, w: 14, h: 3 } },
+      // past the frozen meltfall (the §A4.11 gate) the cold deepens — the §A7 late-
+      // pressure Frost-Jötun Elder hauls itself up off the Sleeper's icy shoulder
+      { enemies: ['earwax_golem', 'snore_gust', 'frost_jotun_elder'], count: 2, rect: { x: 4, y: 9, w: 14, h: 3 } },
     ],
     // §A4.11 PSI gate — freeze the meltwater fall to a bridge (`spine_meltfall`)
     triggers: [{ id: 'spine_meltfall', rect: { x: 10, y: 7, w: 4, h: 1 }, once: false }],
