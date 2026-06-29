@@ -2565,6 +2565,108 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       boss: true,
       mind_immune: true,
     }),
+
+    /* ══════════════ CHAPTER 8 — THE PAPER DRAGON (China) ══════════════ *
+     * §A7 the Ch.8 roster (chapter level window 36-40, band ch8). A focused
+     * art-matched set — four regulars work the Bamboo Road + the Spore Forest,
+     * and BOSS 8 (THE PAPER DRAGON) coils on the temple bell at Mt. Shu. On-curve
+     * (Ch.8 band: trash HP 5k-12k; temple RED/GOLD + jade GRASS + harbor CYAN
+     * ramps). Region affinity leans FIRE-weak (the paper guardians burn) + a VOLT
+     * shatter on the porcelain — the chapter's "shape is unstable" read (§A7). The
+     * Spore Puffer carries the spore-daze (the Mushroomize stand-in, an existing
+     * 'asleep'/'crying' status until the §A4.8 control-scramble mechanic lands).
+     * Dev-art: the battlers/minis are placeholder clones until the China art pass. */
+    E({
+      id: 'paper_lantern_wisp',
+      name: 'Paper Lantern Wisp',
+      article: 'The',
+      hp: 5500, offense: 60, defense: 26, speed: 38, level: 36, exp: 760, cash: 150,
+      weakness: ['fire'],
+      moves: [
+        { name: 'lantern swing', kind: 'attack', mult: 1.1, text: '{e} swung in low off its string and clouted {t} with its burning paper sides.', weight: 5 },
+        { name: 'ember spit', kind: 'strong', mult: 1.6, text: '{e} coughed a gout of candle-flame and scattering sparks over {t}!', weight: 3 },
+        { name: 'paper rustle', kind: 'taunt', text: '{e} rattled its folds and drifted just out of reach, glowing smugly.', weight: 2 },
+      ],
+      deathLine: 'The Paper Lantern Wisp guttered, folded shut, and was only a lantern again, swinging quietly on its string.',
+      drops: [{ item: 'lychee', chance: 0.12 }],
+      sprite: 'battle_paper_lantern_wisp', mini: 'mini_paper_lantern_wisp',
+      bg: [RAMP.RED, RAMP.GOLD],
+    }),
+    E({
+      id: 'spore_puffer',
+      name: 'Spore Puffer',
+      article: 'The',
+      hp: 6500, offense: 58, defense: 30, speed: 24, level: 37, exp: 820, cash: 165,
+      weakness: ['fire', 'salt'],
+      moves: [
+        { name: 'spore cloud', kind: 'status', status: 'asleep', text: '{e} breathed out a sweet drift of spores, and {t}\'s eyelids went heavy as the colours swam.', weight: 3 },
+        { name: 'cap slam', kind: 'attack', mult: 1.1, text: '{e} reared on its stem and slammed its whole soft cap down onto {t}.', weight: 4 },
+        { name: 'stinging puff', kind: 'status', status: 'crying', text: '{e} popped a puff of bitter spores that stung {t}\'s eyes to streaming tears.', weight: 2 },
+      ],
+      deathLine: 'The Spore Puffer sagged into a soft heap of caps and went quietly back to rotting.',
+      drops: [{ item: 'congee', chance: 0.12 }],
+      sprite: 'battle_spore_puffer', mini: 'mini_spore_puffer',
+      bg: [RAMP.GRASS, RAMP.PURPLE],
+    }),
+    E({
+      id: 'origami_warrior',
+      name: 'Origami Warrior',
+      article: 'The',
+      hp: 8000, offense: 66, defense: 38, speed: 30, level: 38, exp: 900, cash: 175,
+      weakness: ['fire', 'volt'],
+      moves: [
+        { name: 'crease strike', kind: 'attack', mult: 1.2, text: '{e} snapped a razor-creased edge across {t} — a papercut the length of an arm.', weight: 4 },
+        { name: 'refold', kind: 'mend', text: '{e} folded itself back along its old creases and smoothed every dent away.', weight: 2 },
+        { name: 'paper storm', kind: 'strong', mult: 1.6, text: '{e} burst into a whirling storm of folded blades and buried {t} in them!', weight: 3 },
+      ],
+      deathLine: 'The Origami Warrior came unfolded all at once — one flat blank sheet, drifting down.',
+      drops: [{ item: 'jiaozi', chance: 0.12 }],
+      sprite: 'battle_origami_warrior', mini: 'mini_origami_warrior',
+      bg: [RAMP.RED, RAMP.PAPER],
+    }),
+    E({
+      id: 'porcelain_warlord',
+      name: 'Porcelain Warlord',
+      article: 'The',
+      hp: 11000, offense: 72, defense: 44, speed: 22, level: 40, exp: 1150, cash: 420,
+      weakness: ['volt'],
+      moves: [
+        { name: 'lacquer smash', kind: 'strong', mult: 1.7, text: '{e} brought a glazed fist down on {t} with the weight of two dynasties.', weight: 3 },
+        { name: 'glaze guard', kind: 'shield', text: '{e} drew a hard cobalt glaze over itself and braced behind it.', weight: 2 },
+        { name: 'kiln charge', kind: 'attack', mult: 1.2, text: '{e} lowered its helmet and charged {t}, still kiln-hot at the seams.', weight: 4 },
+      ],
+      deathLine: 'The Porcelain Warlord cracked once down the middle and burst into a thousand collectible shards.',
+      drops: [{ item: 'jade_tea', chance: 0.1 }],
+      sprite: 'battle_porcelain_warlord', mini: 'mini_porcelain_warlord',
+      bg: [RAMP.GOLD, RAMP.CYAN],
+    }),
+
+    /* §A6 BOSS 8 — THE PAPER DRAGON (45000 HP): the Mt. Shu monks fold paper guardians,
+     * but the Hush got into the paper. It coils on the temple bell, immune to physical
+     * while AIRBORNE — Vibe Volt or Milo's Bottle Rockets ground it for two turns (the
+     * window physical lands) — and when burned under 30% HP it sets ITSELF alight (it's
+     * paper) into a desperate BURNING form at doubled speed (bosses.ts `paper_dragon`
+     * script, the airborneGrounded template). No elemental weakness (the gimmick is the
+     * grounding + the self-immolation, not an element); mind_immune like every boss.
+     * Money > combat: 45000 HP sits far under the Ch.8 Fortune target ($60M). */
+    E({
+      id: 'paper_dragon',
+      name: 'THE PAPER DRAGON',
+      article: 'The',
+      hp: 45000, offense: 80, defense: 42, speed: 34, level: 40, exp: 24000, cash: 9000,
+      weakness: [],
+      moves: [
+        { name: 'tail sweep', kind: 'attack', mult: 1.2, text: '{e} whipped its long folded tail the length of the hall and swept {t} off their feet.', weight: 4 },
+        { name: 'paper storm', kind: 'strong', mult: 1.7, text: '{e} shed a blizzard of razor scales that swirled and sliced at {t}!', weight: 3 },
+        { name: 'searing breath', kind: 'strong', mult: 1.8, text: '{e} breathed a long ribbon of its own fire across {t}, burning brighter as it burned itself.', weight: 2 },
+        { name: 'coiling glide', kind: 'taunt', text: '{e} wound a slow bright coil up through the rafters, just out of every reach.', weight: 2 },
+      ],
+      deathLine: 'The Paper Dragon\'s last fold came loose, and the long bright body drifted down in a hundred cooling scraps — the Hush gone out of the paper at last.',
+      sprite: 'battle_paper_dragon', mini: 'mini_paper_dragon',
+      bg: [RAMP.RED, RAMP.GOLD],
+      boss: true,
+      mind_immune: true,
+    }),
   ].map((e) => [e.id, e]),
 );
 

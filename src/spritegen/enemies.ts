@@ -1393,6 +1393,13 @@ export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   temple_macaque: { sprite: 'battle_temple_macaque', draw: drawHillSlugDeluxe },
   naga_sentry: { sprite: 'battle_naga_sentry', draw: drawBananaBunch },
   cobra_raja: { sprite: 'battle_cobra_raja', draw: drawHillSlugDeluxe },
+  // Chapter 8 (China) — the authored PNGs override these at boot; the draw fns are
+  // only the FROZEN boot fallback (borrowed, never new — CLAUDE.md spritegen freeze).
+  paper_lantern_wisp: { sprite: 'battle_paper_lantern_wisp', draw: drawCursedSouvenir },
+  spore_puffer: { sprite: 'battle_spore_puffer', draw: drawHillSlugDeluxe },
+  origami_warrior: { sprite: 'battle_origami_warrior', draw: drawStepMask },
+  porcelain_warlord: { sprite: 'battle_porcelain_warlord', draw: drawGildedBeetle },
+  paper_dragon: { sprite: 'battle_paper_dragon', draw: drawTitanicTick },
 };
 
 /**
@@ -1409,6 +1416,10 @@ export const FORM_ART: Record<string, EnemyBattleArt> = {
   // it out of the ear canal. Authored PNG on disk (battle_the_whisperwig_exposed.png),
   // wired in authored.ts; the gray-box draw is the boot fallback.
   the_whisperwig_exposed: { sprite: 'battle_the_whisperwig_exposed', draw: drawCursedSouvenir },
+  // §A6 Ch.8 — the Paper Dragon's BURNING form (spriteSuffix '_burning'): under 30% HP
+  // it sets itself alight. Authored PNG on disk (battle_paper_dragon_burning.png), wired
+  // in authored.ts; the gray-box draw is the boot fallback.
+  paper_dragon_burning: { sprite: 'battle_paper_dragon_burning', draw: drawTitanicTick },
 };
 
 /** the wear-tier texture key battle swaps to (tier 0 = the base sprite) */

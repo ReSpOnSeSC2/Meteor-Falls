@@ -295,6 +295,48 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
     ],
   }),
 
+  // §A6 Ch.8 — THE PAPER DRAGON (45,000 HP): the Mt. Shu monks fold paper guardians, but
+  // the Hush got into the paper. It coils on the temple bell, immune to physical while
+  // AIRBORNE — Vibe Volt or Milo's Bottle Rockets ground it for two turns (the window
+  // physical lands, the same suspension the Grin's crack uses) — and burned under 30% HP
+  // it casts Vibe Fire on ITSELF (it's paper) into a desperate BURNING form at doubled
+  // speed. The `airborneGrounded` template (forge/bosses.ts), expanded inline with real
+  // §A11 dialogue ids. No elemental weakness; mind_immune rides the EnemyDef. Heartlight 8.
+  // Money > combat: 45,000 HP sits far under the Ch.8 Fortune target ($60M).
+  paper_dragon: B({
+    boss: 'paper_dragon',
+    initialForm: 'airborne',
+    forms: [
+      {
+        id: 'airborne',
+        name: 'AIRBORNE',
+        physicalImmune: true,
+        groundedBy: ['volt', 'bottle_rockets'],
+        groundedTurns: 2,
+        spriteSuffix: '',
+        line: 'dragon_air',
+      },
+      {
+        id: 'burning',
+        name: 'BURNING',
+        spriteSuffix: '_burning',
+        line: 'dragon_burning',
+      },
+    ],
+    phases: [
+      {
+        // under 30% HP it sets ITSELF alight — the burning form at doubled speed (once)
+        id: 'desperate',
+        trigger: { kind: 'hpBelow', frac: 0.3 },
+        actions: [
+          { kind: 'setForm', form: 'burning' },
+          { kind: 'scriptLine', line: 'dragon_burn' },
+          { kind: 'setSpeedMul', mul: 2 },
+        ],
+      },
+    ],
+  }),
+
   // §A6 / ADR-121 — THE HUSH SENTINEL, the first-night Mars war-construct. This is
   // the "cannot-win-alone / repel" set-piece expressed as DATA: super-Glint
   // (glintSupernova, BattleScene) carries the damage while the script runs to a

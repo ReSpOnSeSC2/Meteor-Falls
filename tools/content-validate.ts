@@ -1382,6 +1382,14 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     temple_macaque: 2400,
     naga_sentry: 5000,
     cobra_raja: 20000,
+    // Chapter 8 (China) — §A7 the art-matched roster (4 regulars work the Bamboo Road +
+    // the Spore Forest) + BOSS 8. On-curve (band ch8, window 36-40; trash HP 5k-12k).
+    // Money > combat: the Paper Dragon's 45000 HP sits far under the Ch.8 Fortune target ($60M).
+    paper_lantern_wisp: 5500,
+    spore_puffer: 6500,
+    origami_warrior: 8000,
+    porcelain_warlord: 11000,
+    paper_dragon: 45000,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1629,7 +1637,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar']);
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -1943,6 +1951,18 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       rewardItem: 'monkey_paw_charm',
       doneFlag: 'q_monkey_done',
       caller: { name: 'The Monkey Magnate', kind: 'damage', power: 690 },
+    },
+    // ── CHAPTER 8 (China) — §A10 the named core quest (Brushes of Mt. Shu), banking a
+    //    finale CALLER. Giver placed in lotus_harbor. Reward the reusable Scroll of Calm. ──
+    brushes_of_mt_shu: {
+      name: 'Brushes of Mt. Shu',
+      chapter: 8,
+      giver: 'lh_calligrapher',
+      startFlag: 'q_brushes',
+      objectiveFlags: ['q_brushes_gather', 'q_brushes_return'],
+      rewardItem: 'scroll_of_calm',
+      doneFlag: 'q_brushes_done',
+      caller: { name: 'The Calligrapher', kind: 'heal', power: 1400 },
     },
   };
   for (const [id, pin] of Object.entries(canon)) {
