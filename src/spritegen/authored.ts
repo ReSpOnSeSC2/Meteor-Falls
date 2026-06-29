@@ -1066,6 +1066,27 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_fastest_man_echo', url: new URL('../../assets/art/enemies/battle_fastest_man_echo.png', import.meta.url).href },
   { key: 'battle_fastest_man_echo_w1', url: new URL('../../assets/art/enemies/battle_fastest_man_echo_w1.png', import.meta.url).href },
   { key: 'battle_fastest_man_echo_w2', url: new URL('../../assets/art/enemies/battle_fastest_man_echo_w2.png', import.meta.url).href },
+  // Ch.8 (China) — the §A7 roster + BOSS 8 (3 wear tiers each; dev-art placeholder
+  // clones until the PKG-15 China art pass overwrites the PNGs in place)
+  { key: 'battle_paper_lantern_wisp', url: new URL('../../assets/art/enemies/battle_paper_lantern_wisp.png', import.meta.url).href },
+  { key: 'battle_paper_lantern_wisp_w1', url: new URL('../../assets/art/enemies/battle_paper_lantern_wisp_w1.png', import.meta.url).href },
+  { key: 'battle_paper_lantern_wisp_w2', url: new URL('../../assets/art/enemies/battle_paper_lantern_wisp_w2.png', import.meta.url).href },
+  { key: 'battle_spore_puffer', url: new URL('../../assets/art/enemies/battle_spore_puffer.png', import.meta.url).href },
+  { key: 'battle_spore_puffer_w1', url: new URL('../../assets/art/enemies/battle_spore_puffer_w1.png', import.meta.url).href },
+  { key: 'battle_spore_puffer_w2', url: new URL('../../assets/art/enemies/battle_spore_puffer_w2.png', import.meta.url).href },
+  { key: 'battle_origami_warrior', url: new URL('../../assets/art/enemies/battle_origami_warrior.png', import.meta.url).href },
+  { key: 'battle_origami_warrior_w1', url: new URL('../../assets/art/enemies/battle_origami_warrior_w1.png', import.meta.url).href },
+  { key: 'battle_origami_warrior_w2', url: new URL('../../assets/art/enemies/battle_origami_warrior_w2.png', import.meta.url).href },
+  { key: 'battle_porcelain_warlord', url: new URL('../../assets/art/enemies/battle_porcelain_warlord.png', import.meta.url).href },
+  { key: 'battle_porcelain_warlord_w1', url: new URL('../../assets/art/enemies/battle_porcelain_warlord_w1.png', import.meta.url).href },
+  { key: 'battle_porcelain_warlord_w2', url: new URL('../../assets/art/enemies/battle_porcelain_warlord_w2.png', import.meta.url).href },
+  { key: 'battle_paper_dragon', url: new URL('../../assets/art/enemies/battle_paper_dragon.png', import.meta.url).href },
+  { key: 'battle_paper_dragon_w1', url: new URL('../../assets/art/enemies/battle_paper_dragon_w1.png', import.meta.url).href },
+  { key: 'battle_paper_dragon_w2', url: new URL('../../assets/art/enemies/battle_paper_dragon_w2.png', import.meta.url).href },
+  // BOSS 8 BURNING form (spriteSuffix '_burning') — its own full wear-tier family
+  { key: 'battle_paper_dragon_burning', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning.png', import.meta.url).href },
+  { key: 'battle_paper_dragon_burning_w1', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning_w1.png', import.meta.url).href },
+  { key: 'battle_paper_dragon_burning_w2', url: new URL('../../assets/art/enemies/battle_paper_dragon_burning_w2.png', import.meta.url).href },
 ] as const;
 
 const ENEMY_OVERWORLD_ART = [
@@ -1209,6 +1230,12 @@ const ENEMY_MINI_ART = [
   { key: 'mini_cackling_mask', url: new URL('../../assets/art/enemies/mini_cackling_mask.png', import.meta.url).href },
   { key: 'mini_confetti_cannon', url: new URL('../../assets/art/enemies/mini_confetti_cannon.png', import.meta.url).href },
   { key: 'mini_postage_stampede', url: new URL('../../assets/art/enemies/mini_postage_stampede.png', import.meta.url).href },
+  // Ch.8 (China) — the §A7 roamers derived from their battlers (placeholder clones for now)
+  { key: 'mini_paper_lantern_wisp', url: new URL('../../assets/art/enemies/mini_paper_lantern_wisp.png', import.meta.url).href },
+  { key: 'mini_spore_puffer', url: new URL('../../assets/art/enemies/mini_spore_puffer.png', import.meta.url).href },
+  { key: 'mini_origami_warrior', url: new URL('../../assets/art/enemies/mini_origami_warrior.png', import.meta.url).href },
+  { key: 'mini_porcelain_warlord', url: new URL('../../assets/art/enemies/mini_porcelain_warlord.png', import.meta.url).href },
+  { key: 'mini_paper_dragon', url: new URL('../../assets/art/enemies/mini_paper_dragon.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);

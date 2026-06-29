@@ -191,4 +191,17 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_chandrapore_greet',
     farewell: 'shop_chandrapore_bye',
   },
+  // §A8 CHAPTER 8 — THE HARBOR MARKET (Lotus Harbor's shelf; the Harbor Master keeps it)
+  lotus_harbor_market: {
+    id: 'lotus_harbor_market',
+    name: 'THE HARBOR MARKET',
+    keeperNpc: 'lh_harbor_master',
+    stock: [
+      'baozi', 'jiaozi', 'congee', 'mooncake', 'jade_tea',
+      'bamboo_hat', 'silk_changshan', 'lacquer_robe',
+      'spore_antidote', 'paper_crane_charm',
+    ],
+    greet: 'shop_lotus_harbor_greet',
+    farewell: 'shop_lotus_harbor_bye',
+  },
 };

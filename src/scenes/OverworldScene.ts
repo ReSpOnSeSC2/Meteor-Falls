@@ -4332,6 +4332,16 @@ export class OverworldScene extends Phaser.Scene {
       case 'palace_throne_resonance':
         if (!GS.flag('ch7_complete')) await this.palaceThroneScene();
         break;
+      /* ---------------- Chapter 8 (§A6 China) ---------------- */
+      case 'ch8_arrival':
+        if (!GS.flag('ch8_arrived')) await this.ch8ArrivalScene();
+        break;
+      case 'paper_dragon_boss':
+        if (!GS.flag('paper_dragon_defeated')) await this.paperDragonBossScene();
+        break;
+      case 'mt_shu_temple_resonance':
+        if (!GS.flag('ch8_complete')) await this.mtShuTempleScene();
+        break;
       // the §A10 Ch.3 "find" pickups (books / letters / the drain / milk / water)
       case 'q_overdue_b1':
       case 'q_overdue_b2':
@@ -4658,8 +4668,23 @@ export class OverworldScene extends Phaser.Scene {
    *  Ch.3 is complete (the boardLucille precedent — England's flight stays his too). */
   private async bertAirBeat(): Promise<void> {
     this.cut = true;
-    // the §A5 NEXT leg: once Zanzibel is done, Bert flies the party to CHANDRAPORE (the
-    // newest frontier takes priority — the earlier legs below stay for the backtrack)
+    // the §A5 NEXT leg: once Chandrapore (Ch.7) is done, Bert flies the party to LOTUS
+    // HARBOR (the newest frontier takes priority — the earlier legs below stay for the backtrack)
+    if (GS.flag('ch7_complete') && !GS.flag('ch8_arrived')) {
+      await this.dlg.say(...DIALOGUE.bert_china_ask);
+      const pick = await this.dlg.ask(['Fly to LOTUS HARBOR', 'Not yet'], { cancelIndex: 1 });
+      if (pick !== 0) {
+        this.cut = false;
+        return;
+      }
+      AUDIO.stopMusic();
+      await playCutscene(this, 'ch8_journey'); // the authored China panels (no-ops if missing)
+      // the hatch drops on the Lotus Harbor ghat landing square; ch8_arrival fires the beat
+      this.goThroughDoor('lotus_harbor', 8 * 16, 22 * 16, 'down');
+      return;
+    }
+    // the §A5 Chandrapore leg: once Zanzibel is done, Bert flies the party to CHANDRAPORE
+    // (kept for the backtrack now that Lotus Harbor is the frontier)
     if (GS.flag('ch6_complete') && !GS.flag('ch7_arrived')) {
       await this.dlg.say(...DIALOGUE.bert_india_ask);
       const pick = await this.dlg.ask(['Fly to CHANDRAPORE', 'Not yet'], { cancelIndex: 1 });
@@ -5135,6 +5160,70 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('ch7_complete'); // §A6 — the chapter button (the §A5 gate to Ch.8)
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch7_card);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** the §A6 arrival — Bert sets the party down on the Lotus Harbor ghats, into the lanterns */
+  private async ch8ArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch8_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(380, 0.005);
+    await this.dlg.say(...DIALOGUE.ch8_arrival);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A6 BOSS 8 — THE PAPER DRAGON (the phase machine carries the gimmick: physical-immune
+   *  while AIRBORNE — Vibe Volt / Milo's Bottle Rockets ground it 2 turns — and a one-time 30%
+   *  self-immolation into a doubled-speed BURNING form). A normal HP win on its 45000 HP —
+   *  ground it, then burn it down before it burns you. */
+  private async paperDragonBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.paper_dragon_door);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(460, 0.008);
+    await this.wait(420);
+    const outcome = await this.startBattle(['paper_dragon'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('paper_dragon_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.paper_dragon_win);
+    AUDIO.jingle('victory', 2200, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart(); // the bell is free to ring now; the resonance trigger can fire
+  }
+
+  /** §A6 Resonance Site — the Mt. Shu temple bell. Before the Dragon is unmade it keeps its
+   *  peace; once beaten the bell rings (HEARTLIGHT 8 — The Folded Hymn) and Ember 8 lands. No
+   *  joins (the party is whole); ch8_complete opens the §A5 gate to Ch.9. */
+  private async mtShuTempleScene(): Promise<void> {
+    if (!GS.flag('paper_dragon_defeated')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.mt_shu_temple_early);
+      this.cut = false;
+      return;
+    }
+    this.cut = true;
+    // HEARTLIGHT 8 — the Folded Hymn (Ember 8)
+    GS.setFlag('ember8');
+    GS.data.embers = 8;
+    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember8_get);
+    GS.setFlag('ch8_complete'); // §A6 — the chapter button (the §A5 gate to Ch.9)
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.ch8_card);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }

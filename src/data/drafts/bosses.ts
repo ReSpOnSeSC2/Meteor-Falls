@@ -19,7 +19,6 @@
  */
 import type { BossScriptDef } from '../../schemas';
 import {
-  airborneGrounded,
   elementalGolem,
   mercyEnding,
 } from '../../levelkit/forge/bosses';
@@ -48,16 +47,10 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
    * (the gaze + 40% skin-shed) — no longer a draft (Prime Law 1: a draft may not
    * duplicate a shipped script or enemy). */
 
-  /* Ch.8 — THE PAPER DRAGON (4,100 HP): airborne physical-immune; self-immolates */
-  paper_dragon: airborneGrounded('paper_dragon', {
-    airborne: { id: 'airborne', name: 'AIRBORNE', spriteSuffix: '', line: 'dragon_air_draft' },
-    noise: ['volt', 'bottle_rockets'],
-    groundedTurns: 2,
-    desperateAt: 0.3,
-    desperateLine: 'dragon_burn_draft',
-    speedMul: 2,
-    burning: { id: 'burning', name: 'BURNING', spriteSuffix: '_burning', line: 'dragon_burning_draft' },
-  }),
+  /* Ch.8 — THE PAPER DRAGON: PROMOTED (the Lotus Harbor / Mt. Shu landing). Now a live
+   * boss in src/data/bosses.ts (BOSS_SCRIPTS) driving a shipped §A7 enemy at canon
+   * 45,000 HP (the airborne/grounded gimmick + the 30% self-immolation BURNING form) —
+   * no longer a draft (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 
   /* Ch.9 — COUNT HOAXULA (5,300 HP): steals gear, unmasks at 50%, Pray = mercy */
   count_hoaxula: mercyEnding('count_hoaxula', {
@@ -95,7 +88,7 @@ export const DRAFT_BOSS_IDS = [
   // 'whiskerzilla' — PROMOTED to a live boss at the Ch.5 Minimus landing
   // 'laughing_sphinx' — PROMOTED to a live boss at the Ch.6 Zanzibel landing
   // 'cobra_raja' — PROMOTED to a live boss at the Ch.7 Chandrapore landing
-  'paper_dragon',
+  // 'paper_dragon' — PROMOTED to a live boss at the Ch.8 Lotus Harbor / Mt. Shu landing
   'count_hoaxula',
   'frost_sentinel',
   'tiki_magma_golem',

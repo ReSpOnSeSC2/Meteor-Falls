@@ -593,5 +593,28 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'damage', power: 690 },
       },
     }),
+    // ── CHAPTER 8 (China) — §A10 the named core quest: Brushes of Mt. Shu (the
+    //    Calligrapher's three brushes, blown off her sill into the Spore Forest). Banks a
+    //    finale CALLER (§A6) and rewards the reusable SCROLL OF CALM (cures Mushroomize,
+    //    §A10 #17). Data-valid + giver placed in lotus_harbor (the Ch.5/6/7 precedent —
+    //    shipped as data, completability is map-light). ──
+    Q({
+      id: 'brushes_of_mt_shu',
+      name: 'Brushes of Mt. Shu',
+      chapter: 8,
+      giver: 'lh_calligrapher',
+      startFlag: 'q_brushes',
+      objectives: [
+        { id: 'gather', text: "Find the Calligrapher's three brushes where the river wind scattered them through the Spore Forest.", flag: 'q_brushes_gather' },
+        { id: 'return', text: 'Carry all three brushes back to the Calligrapher at Lotus Harbor before the temple banner is due.', flag: 'q_brushes_return' },
+      ],
+      rewardItem: 'scroll_of_calm',
+      doneFlag: 'q_brushes_done',
+      caller: {
+        name: 'The Calligrapher',
+        quote: 'Three brushes, all the way down off that wicked mountain, and not a bristle bent — you have a steady hand for great big things. When the world goes all sideways and swimming for YOU, child, hold still: I will draw you one calm line, and the muddle will settle.',
+        effect: { kind: 'heal', power: 1400 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

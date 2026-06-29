@@ -3005,6 +3005,79 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '* CHAPTER 7 — THE COBRA\'S PALACE — complete. Seven embers carried. Three to go.',
   ],
 
+  /* ════════════════════════ CHAPTER 8 — THE PAPER DRAGON (China) ════════════════════════ */
+
+  // — the §A5 next leg: Bert offers the China flight (bertAirBeat, ch7→ch8) —
+  bert_china_ask: [
+    "@Uncle Bert taps the river charts. \"Word came up the wire — paper's gone WRONG away east. Temple-folk fold little paper guards to keep a place safe, and lately the guards have been... unfolding themselves. The locket's humming about it. That'll be number eight.\"",
+    '@"Lucille can\'t land on water, so I\'ll set you down at LOTUS HARBOR and you go up the river from there. Say the word and we fly."',
+  ],
+
+  // — Lotus Harbor signs —
+  sign_lotus_harbor: ['(A lacquer-red gate-board over the ghat road, the gold leaf flaking:) LOTUS HARBOR — Where the River Remembers. Mind the lanterns. Mind the spores up-country. Mind your manners at the temple, the bell is older than your grandmother\'s grandmother.'],
+  sign_bamboo_gate: ['(A weathered marker at the up-country gate, a brush-stroke arrow on it:) ↑ THE BAMBOO ROAD — to the Spore Forest and the Yak Express to MT. SHU. Breathe shallow in the wood. The monks say: run less.'],
+  sign_lotus_harbor_court: ['(A stone bench under a willow, characters carved into the back:) THE TEA COURT — all quarrels settled here over one shared pot, except the big quiet one up the mountain, which no pot has settled yet.'],
+
+  // — Lotus Harbor NPCs —
+  npc_lh_harbor_master: [
+    '@Off the river, are you? I am the Harbor Master — I keep the market shelf and the tide tables and one eye on the weather coming down off Mt. Shu. Everything here is fairly priced. Everything up THERE costs more than money.',
+    '@Stock up before the Bamboo Road. The spores in the forest turn a clear head all sideways — buy the antidote, trust me, your friends will thank you.',
+  ],
+  npc_lh_calligrapher: [
+    '@Oh — visitors with strong arms! I am the Calligrapher. A gust off the river took my three best brushes clean off the sill and away into the Spore Forest, and I cannot finish the temple\'s new prayer-banner without them.',
+    "@Bring my three brushes home and I'll give you the SCROLL OF CALM — one quiet stroke and the worst spore-muddle just... settles. You'll want it before the mountain. Truly.",
+  ],
+  npc_lh_tea_monk: [
+    '@(A tea-house monk refills your cup without being asked.) The elder up at Mt. Shu has only ever taught me one lesson, and only ever the once. He said: "You run too much. Run LESS." I have thought about it for nine years. I think he meant it kindly.',
+  ],
+  npc_lh_lantern_girl: [
+    '@(A girl strings paper lanterns the length of the market.) I fold them tight and true, the way Grandmother showed me — but lately, come morning, some have re-folded themselves into shapes I never taught them. Crane-shapes. Teeth-shapes. I don\'t like the teeth ones.',
+  ],
+
+  // — the §A8 Ch.8 shop (the Harbor Market shelf) —
+  shop_lotus_harbor_greet: ['@The Harbor Master slides the whole shelf your way — buns and tea and broth, a bamboo hat, a silk coat, an antidote for the wood, a lucky paper crane. \"Fair prices, fair weather, fair warning about the mountain. What\'ll it be?\"'],
+  shop_lotus_harbor_bye: ['@Safe travels up the river, friends. Breathe shallow in the spores — and if you meet the dragon, mind you, it does not like the rain.'],
+
+  // — Bamboo Road signs —
+  sign_bamboo_road: ['(A mossy stone by the river track:) THE BAMBOO ROAD — Lotus Harbor below, the Spore Forest above. Travellers who feel the colours start to swim are advised to sit down, breathe, and wait for their head to come back.'],
+  sign_spore_forest_mouth: ['(A leaning gate of grey timber, half-swallowed by giant caps:) ↑ THE SPORE FOREST. Keep to the path. Do not eat the bright ones. Do not trust a familiar face in here — the spores make even old friends look wrong.'],
+
+  // — Spore Forest sign —
+  sign_spore_forest: ['(A trail-marker carved into a fallen log, spores drifting through the letters:) THE SPORE FOREST — the calligrapher\'s brushes blew through here, the monks say, on the same wind that brought the rot. Mind the old KILN ahead; something glazed and proud keeps it.'],
+
+  // — Mt. Shu Temple sign —
+  sign_mt_shu_temple: ['(An inscription worn smooth around the great bell-frame:) HERE HANGS THE VOICE OF THE MOUNTAIN. Ring it true and the valley hears. (Someone has brushed, hastily, below:) the paper got in. the bell will not ring. wake it.'],
+
+  // — §A6 BOSS 8 — the Paper Dragon (the phase machine reads these) —
+  dragon_air: ['(The Dragon uncoils off the bell-frame and POURS itself into the air — a long bright ribbon of folded paper, weightless, wheeling out of every reach. Bats and fists pass clean through it. It needs bringing DOWN.)'],
+  dragon_burn: ['(The Dragon is failing — and rather than fall, it tips its own head to a temple candle and CATCHES. Fire runs the length of it in a heartbeat.)', '@(A dry papery roar, faster now, brighter:) "BURN, then. Burn BRIGHT. The Hush burns brightest of all at the very end—"'],
+  dragon_burning: ['(It is all flame now, folding and unfolding twice as fast, a blazing origami comet loose in the bell-court. It will not last long like this — but neither, it clearly intends, will you.)'],
+
+  // — the boss-trigger approach + the win (OverworldScene paperDragonBossScene) —
+  paper_dragon_door: ['(The bell-court is hushed and high and wrapped in cloud. Around the great bell coils a DRAGON of folded paper, beautiful and wrong, the Hush rustling under every crease. {pippa} squints up at it and tugs {rex}\'s sleeve. "Its weak points are FAKE," she says. "False folds — I can see the real creases under them. When it comes down, hit where I tell you.")'],
+  paper_dragon_win: [
+    '(The last fire gutters out, and the long body comes apart in the air — a hundred soft scraps of plain paper, cooling, drifting down to settle over the bell-court like the quietest snow. The Hush goes out of every one of them.)',
+    '@(The temple elder steps from behind the bell, unhurried, brushing ash from his sleeve.) "You came up the mountain at a dead run, all five of you, and you WON by standing still long enough to look. There — now you understand the lesson. Take the bell\'s voice with you."',
+  ],
+  mt_shu_temple_early: ['(The great bell hangs silent under the coiled paper thing — it will not ring, not while the Hush is folded into the rafters. The resonance keeps its peace until the Paper Dragon is unmade.)'],
+
+  // — HEARTLIGHT 8 — THE FOLDED HYMN (Ember 8) —
+  ember8_get: [
+    '(The bell RINGS — at last, and all the way down the mountain — not a flat Hush-struck clang but a deep folding HYMN that opens out fold over fold over the cloud, and the whole valley breathes out at once and goes still to listen.)',
+    '@Heartlight 8. ({faye}, almost whispering.) The Folded Hymn. ...Eight, {rex}. The locket has eight. It hardly fits the song in anymore — it just wants to SING. Two to go. Two.',
+  ],
+  // — the §A6 chapter card (ch8_complete) —
+  ch8_card: [
+    'The bell still rings somewhere behind you as you come down off Mt. Shu, the spores settling, the paper guardians plain and harmless again on their temple sills. A folded hymn rides in the locket beside seven other songs, and the whole thing is so nearly whole now that {faye} keeps starting to hum without noticing.',
+    '* CHAPTER 8 — THE PAPER DRAGON — complete. Eight embers carried. Two to go.',
+  ],
+
+  // — the §A6 arrival (OverworldScene ch8ArrivalScene) —
+  ch8_arrival: [
+    '(Lucille banks low over a bright river crowded with boats, and sets the party down on the ghats of LOTUS HARBOR — lacquer-red gates, a thousand paper lanterns, a guzheng drifting somewhere up the market over the smell of tea and river-mud.)',
+    '@"Up the river and up the mountain," says {rex}, shading his eyes at the green hills beyond the town. "...When did UP start meaning trouble every single time?"',
+  ],
+
 };
 
 /**

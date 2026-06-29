@@ -215,15 +215,21 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     chapter: 8,
     title: 'The Paper Dragon',
     region: 'China',
-    status: 'unlanded',
+    status: 'shipped',
     targetLevel: 40,
     ember: 8,
+    heartlight: 'The Folded Hymn',
     band: 'ch8',
     travel: 'riverboat', // riverboat + the Yak Express
-    dungeon: { name: 'The Spore Forest → temple bell', site: 'spore_forest' },
+    dungeon: {
+      name: 'The Spore Forest → Mt. Shu temple bell',
+      maps: ['spore_forest', 'mt_shu_temple'],
+    },
     boss: { id: 'paper_dragon', name: 'The Paper Dragon', hp: 45000, template: 'airborneGrounded' },
     settlements: [{ id: 'lotus_harbor', kind: 'city', style: 'painted-gates' }],
-    maps: [],
+    // the 2 overworld maps from buildChapter8Maps(): the harbor city + the bamboo road
+    // (the dungeon maps live under dungeon.maps above)
+    maps: ['lotus_harbor', 'bamboo_road'],
     quests: ['brushes_of_mt_shu'],
   },
 

@@ -2,8 +2,8 @@
 
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
-- Enemies: 124
-- Fully authored identities: 124
+- Enemies: 129
+- Fully authored identities: 129
 - Legacy identities: 0
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
@@ -137,6 +137,11 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | temple_macaque | monsoon_road, night_train | battle_temple_macaque | mini:mini_temple_macaque | authored | - |
 | naga_sentry | monsoon_road, night_train | battle_naga_sentry | mini:mini_naga_sentry | authored | - |
 | cobra_raja | - | battle_cobra_raja | mini:mini_cobra_raja | authored | - |
+| paper_lantern_wisp | bamboo_road | battle_paper_lantern_wisp | mini:mini_paper_lantern_wisp | authored | - |
+| spore_puffer | bamboo_road, spore_forest | battle_spore_puffer | mini:mini_spore_puffer | authored | - |
+| origami_warrior | bamboo_road, spore_forest | battle_origami_warrior | mini:mini_origami_warrior | authored | - |
+| porcelain_warlord | spore_forest | battle_porcelain_warlord | mini:mini_porcelain_warlord | authored | - |
+| paper_dragon | - | battle_paper_dragon | mini:mini_paper_dragon | authored | - |
 
 ## Procedural Overworld Roamer Queue (retire these)
 
