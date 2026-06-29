@@ -86,3 +86,7 @@ cp_spice_merchant
 cp_dabbawala
 cp_stationmaster
 cp_usher
+# Ch.8 China — Lotus Harbor cast
+lh_harbor_master
+lh_calligrapher
+lh_lantern_girl

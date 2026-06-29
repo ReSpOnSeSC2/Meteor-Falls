@@ -114,15 +114,14 @@ function buildLotusHarbor(): MapDef {
     props,
     npcs: [
       // THE HARBOR MASTER — keeps the harbor market shelf (the §A8 Ch.8 shop)
-      // (dev-art reuses an India 46-frame sheet until the PKG-15 China NPC pass)
-      { id: 'lh_harbor_master', sprite: 'cp_spice_merchant', x: 6, y: 8, facing: 'down', dialogue: 'npc_lh_harbor_master', shop: 'lotus_harbor_market' },
+      { id: 'lh_harbor_master', sprite: 'lh_harbor_master', x: 6, y: 8, facing: 'down', dialogue: 'npc_lh_harbor_master', shop: 'lotus_harbor_market' },
       // THE CALLIGRAPHER — the brushes_of_mt_shu giver (her three brushes blew off the
       // workshop sill into the Spore Forest; the §A10 caller)
-      { id: 'lh_calligrapher', sprite: 'cp_usher', x: 33, y: 16, facing: 'down', dialogue: 'npc_lh_calligrapher', stationary: true, idle: true },
+      { id: 'lh_calligrapher', sprite: 'lh_calligrapher', x: 33, y: 16, facing: 'down', dialogue: 'npc_lh_calligrapher', stationary: true, idle: true },
       // THE TEA-HOUSE MONK — murmurs the temple elder's koan (the Teleport β hint); flavor
       { id: 'lh_tea_monk', sprite: 'cp_stationmaster', x: 26, y: 19, facing: 'down', dialogue: 'npc_lh_tea_monk', wander: true },
       // THE LANTERN GIRL — frets over the paper the Hush keeps getting into (the bible read)
-      { id: 'lh_lantern_girl', sprite: 'cp_dabbawala', x: 12, y: 22, facing: 'down', dialogue: 'npc_lh_lantern_girl', stationary: true, idle: true, emote: 'happy' },
+      { id: 'lh_lantern_girl', sprite: 'lh_lantern_girl', x: 12, y: 22, facing: 'down', dialogue: 'npc_lh_lantern_girl', stationary: true, idle: true, emote: 'happy' },
     ],
     signs: [
       { x: 3, y: 8, dialogue: 'sign_lotus_harbor' },

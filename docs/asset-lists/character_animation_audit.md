@@ -5,13 +5,13 @@ This checks the authored 46-frame character sheets against the runtime frame con
 - Frame size: 96x128
 - Sheet size: 384x1536
 - Frame count: 46
-- Registered characters: 83
+- Registered characters: 86
 - Unregistered character sheets on disk: 0
 - Path overrides: 0
-- Characters with issues: 47
+- Characters with issues: 50
 - Errors: 0
-- Warnings: 167
-- Review hints: 225
+- Warnings: 183
+- Review hints: 233
 
 Interactive playback page: [character_animation_audit.html](character_animation_audit.html)
 
@@ -328,6 +328,36 @@ Common presets:
 - WARN run left: run pair is nearly frozen (0.009)
 - WARN run right: run pair is nearly frozen (0.009)
 
+### lh_calligrapher (lh_calligrapher)
+- REVIEW frame 3: walk down looks closer to right than down
+- REVIEW frame 15: walk up looks closer to right than up
+- REVIEW frame 17: run down looks closer to right than down
+- REVIEW frame 23: run up looks closer to right than up
+- WARN walk left: step frames 1/3 are nearly frozen (0.006)
+- WARN walk right: step frames 1/3 are nearly frozen (0.006)
+- WARN run left: run pair is nearly frozen (0.006)
+- WARN run right: run pair is nearly frozen (0.006)
+- WARN walk down-right: diagonal step pair is nearly frozen (0.006)
+- WARN walk down-left: diagonal step pair is nearly frozen (0.006)
+- WARN walk up-right: diagonal step pair is nearly frozen (0.006)
+- WARN walk up-left: diagonal step pair is nearly frozen (0.006)
+- WARN run down-right: run pair is nearly frozen (0.006)
+- WARN run down-left: run pair is nearly frozen (0.006)
+- WARN run up-right: run pair is nearly frozen (0.006)
+- WARN run up-left: run pair is nearly frozen (0.006)
+
+### lh_harbor_master (lh_harbor_master)
+- WARN walk left: step frames 1/3 are nearly frozen (0.007)
+- WARN walk right: step frames 1/3 are nearly frozen (0.007)
+- WARN run left: run pair is nearly frozen (0.007)
+- WARN run right: run pair is nearly frozen (0.007)
+
+### lh_lantern_girl (lh_lantern_girl)
+- REVIEW frame 3: walk down looks closer to downleft than down
+- REVIEW frame 15: walk up looks closer to upleft than up
+- REVIEW frame 17: run down looks closer to downleft than down
+- REVIEW frame 23: run up looks closer to upleft than up
+
 ### lilleby_giant_child (lilleby_giant_child)
 - WARN walk down: step frames 1/3 are nearly frozen (0.010)
 - WARN walk left: step frames 1/3 are nearly frozen (0.005)
@@ -595,6 +625,9 @@ Common presets:
 | kvisthavn_fisher | kvisthavn_fisher | npc | 4 |
 | kvisthavn_shopkeeper | kvisthavn_shopkeeper | npc | 0 |
 | laughing_ruins_guide | laughing_ruins_guide | npc | 0 |
+| lh_calligrapher | lh_calligrapher | npc | 16 |
+| lh_harbor_master | lh_harbor_master | npc | 4 |
+| lh_lantern_girl | lh_lantern_girl | npc | 4 |
 | lilleby_giant_child | lilleby_giant_child | npc | 6 |
 | lilleby_undertaker | lilleby_undertaker | npc | 4 |
 | manager | manager | npc | 0 |
