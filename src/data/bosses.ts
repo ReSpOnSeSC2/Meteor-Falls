@@ -337,6 +337,63 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
     ],
   }),
 
+  // §A6 / ADR-126 — COUNT HOAXULA (the Romania landing): the valley's "vampire" is a
+  // Hushed theme-park actor from Cleveland, broke and armed with stolen Vibe. THEATRICAL
+  // phase — fake spells, real damage; on turn 2 he palms one of the party's equipped
+  // items (returned on win). UNMASKED at 50% HP — the cape drops, the Cleveland accent
+  // sobs through, the attacks go wild AoE. Mia's PRAY at "good" tier or better ends the
+  // second phase in MERCY (the game's quietest victory — returnStolen + endBattleMercy).
+  // The `mercyEnding` template (forge/bosses.ts), expanded inline with real §A11 dialogue
+  // ids. Weak to FIRE (he is paper, wax, and greasepaint); mind_immune rides the EnemyDef.
+  // Heartlight 9. Money > combat: 95,000 HP sits far under the Ch.9 Fortune target ($400M).
+  count_hoaxula: B({
+    boss: 'count_hoaxula',
+    initialForm: 'theatrical',
+    forms: [
+      {
+        id: 'theatrical',
+        name: 'THEATRICAL',
+        spriteSuffix: '',
+        line: 'hoaxula_theatrical',
+      },
+      {
+        id: 'unmasked',
+        name: 'UNMASKED',
+        spriteSuffix: '_unmasked',
+        line: 'hoaxula_unmasked',
+      },
+    ],
+    phases: [
+      {
+        // turn 2 — he palms one equipped item with a flourish (returned on any win)
+        id: 'steal',
+        trigger: { kind: 'turnCount', n: 2 },
+        actions: [
+          { kind: 'scriptLine', line: 'hoaxula_steal' },
+          { kind: 'stealEquipped' },
+        ],
+      },
+      {
+        // under 50% HP — the cape comes off and the man from Cleveland is underneath
+        id: 'unmask',
+        trigger: { kind: 'hpBelow', frac: 0.5 },
+        actions: [
+          { kind: 'setForm', form: 'unmasked' },
+          { kind: 'scriptLine', line: 'hoaxula_unmask' },
+        ],
+      },
+      {
+        // Mia's Pray at "good" or better — the quiet mercy that ends it (returns the gear)
+        id: 'mercy',
+        trigger: { kind: 'prayTierAtLeast', tier: 'good' },
+        actions: [
+          { kind: 'returnStolen' },
+          { kind: 'endBattleMercy' },
+        ],
+      },
+    ],
+  }),
+
   // §A6 / ADR-121 — THE HUSH SENTINEL, the first-night Mars war-construct. This is
   // the "cannot-win-alone / repel" set-piece expressed as DATA: super-Glint
   // (glintSupernova, BattleScene) carries the damage while the script runs to a

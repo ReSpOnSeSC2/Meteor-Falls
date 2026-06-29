@@ -916,6 +916,18 @@ TILESET.push({ name: 'china_ground', solid: false, make: () => grassBase(1, 5) }
 TILESET.push({ name: 'china_path', solid: false, make: sidewalkTile });
 TILESET.push({ name: 'china_wall', solid: true, make: officeWall });
 
+// Ch.9 ROMANIA (Valea Stelelor) region tiles — same contract as the China set above: the
+// authored Romania_tiles_16.png strip supplies the real look at runtime (wired in
+// spritegen/authored.ts), applied ONLY to the Ch.9 maps via the render-time name-remap
+// ROMANIA_TILE_SKIN in OverworldScene.buildTiles. make() = the boot FALLBACK only (REUSED
+// painters, spritegen stays FROZEN), each carrying the SAME solidity as the base tile it
+// stands in for (meadow ground/dirt path walkable, castle stone wall solid like office_wall).
+// Appended at the tail so no existing index shifts; tools/sync-romania-tiles.ts grows the
+// otterbrook full-override strip matching trailing columns.
+TILESET.push({ name: 'romania_ground', solid: false, make: () => grassBase(1, 5) });
+TILESET.push({ name: 'romania_path', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'romania_wall', solid: true, make: officeWall });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

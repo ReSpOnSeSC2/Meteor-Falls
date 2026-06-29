@@ -1390,6 +1390,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     origami_warrior: 8000,
     porcelain_warlord: 11000,
     paper_dragon: 45000,
+    // Chapter 9 (Romania) — §A7 the art-matched roster (4 fresh regulars + the ADOPTED
+    // ribcage_rattler work Valea Stelelor, the Old Road, and Castle Hoaxula) + BOSS 9.
+    // On-curve (band ch9, window 42-46; trash HP 11k-26k). Money > combat: Count Hoaxula's
+    // 95000 HP sits far under the Ch.9 Fortune target ($400M).
+    haystack_mimic: 12000,
+    ribcage_rattler: 15000,
+    moss_strigoi: 17000,
+    animated_armor: 20000,
+    wolf_of_the_old_road: 24000,
+    count_hoaxula: 95000,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1637,7 +1647,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market']);
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -1963,6 +1973,19 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       rewardItem: 'scroll_of_calm',
       doneFlag: 'q_brushes_done',
       caller: { name: 'The Calligrapher', kind: 'heal', power: 1400 },
+    },
+    // ── CHAPTER 9 (Romania) — §A10 the named core quest (Buni's Table), banking the
+    //    warmest finale CALLER (the bible's base ally). Giver placed in valea_stelelor.
+    //    Reward the Feast Basket recipe (basket_feast). ──
+    bunis_table: {
+      name: "Buni's Table",
+      chapter: 9,
+      giver: 'vs_buni',
+      startFlag: 'q_bunis',
+      objectiveFlags: ['q_bunis_gather', 'q_bunis_cook'],
+      rewardItem: 'basket_feast',
+      doneFlag: 'q_bunis_done',
+      caller: { name: 'Buni', kind: 'heal', power: 1900 },
     },
   };
   for (const [id, pin] of Object.entries(canon)) {
@@ -2484,7 +2507,8 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
 // can NEVER masquerade as the shipped Grin (the §A7/§A6 manifests refuse them).
 {
   parseAll('boss-drafts', BossScriptDefSchema as unknown as ZodType, DRAFT_BOSS_SCRIPTS);
-  // the COUNT is law — exactly the seven unshipped bosses + two minibosses
+  // the COUNT is law — exactly the two Ch.10 minibosses remain unshipped (Ch.3-9 bosses
+  // promoted at their landings; the Hush is the bespoke finale, not a forge draft)
   const have = Object.keys(DRAFT_BOSS_SCRIPTS).sort();
   const want = [...DRAFT_BOSS_IDS].sort();
   if (JSON.stringify(have) !== JSON.stringify(want)) {

@@ -2,12 +2,12 @@
 
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
-- Enemies: 129
-- Fully authored identities: 129
+- Enemies: 135
+- Fully authored identities: 135
 - Legacy identities: 0
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
-- Authored battle PNGs on disk but not registered for current runtime: 97
+- Authored battle PNGs on disk but not registered for current runtime: 94
 
 ## Enemy Rows
 
@@ -142,6 +142,12 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | origami_warrior | bamboo_road, spore_forest | battle_origami_warrior | mini:mini_origami_warrior | authored | - |
 | porcelain_warlord | spore_forest | battle_porcelain_warlord | mini:mini_porcelain_warlord | authored | - |
 | paper_dragon | - | battle_paper_dragon | mini:mini_paper_dragon | authored | - |
+| haystack_mimic | valea_stelelor, old_road | battle_haystack_mimic | mini:mini_haystack_mimic | authored | - |
+| ribcage_rattler | castle_hoaxula | battle_ribcage_rattler | mini:mini_ribcage_rattler | authored | - |
+| moss_strigoi | old_road, castle_hoaxula | battle_moss_strigoi | mini:mini_moss_strigoi | authored | - |
+| animated_armor | castle_hoaxula | battle_animated_armor | mini:mini_animated_armor | authored | - |
+| wolf_of_the_old_road | old_road | battle_wolf_of_the_old_road | mini:mini_wolf_of_the_old_road | authored | - |
+| count_hoaxula | - | battle_count_hoaxula | mini:mini_count_hoaxula | authored | - |
 
 ## Procedural Overworld Roamer Queue (retire these)
 
@@ -223,9 +229,6 @@ Each row still resolves to a PROCEDURAL mini (the old pixel style). Cheapest lif
 - battle_rare_giant_button
 - battle_rare_giant_button_w1
 - battle_rare_giant_button_w2
-- battle_ribcage_rattler
-- battle_ribcage_rattler_w1
-- battle_ribcage_rattler_w2
 - battle_royal_doubloon_roller
 - battle_royal_doubloon_roller_w1
 - battle_royal_doubloon_roller_w2

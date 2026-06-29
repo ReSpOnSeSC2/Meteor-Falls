@@ -204,4 +204,16 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_lotus_harbor_greet',
     farewell: 'shop_lotus_harbor_bye',
   },
+  valea_provisioner: {
+    id: 'valea_provisioner',
+    name: 'THE VALEA PROVISIONER',
+    keeperNpc: 'vs_provisioner',
+    stock: [
+      'sarmale', 'mamaliga', 'ciorba', 'cozonac', 'linden_tea',
+      'caciula', 'sheepskin_cojoc',
+      'garlic_braid', 'holy_water', 'pelin_bitters',
+    ],
+    greet: 'shop_valea_greet',
+    farewell: 'shop_valea_bye',
+  },
 };

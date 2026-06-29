@@ -294,6 +294,28 @@ const CHINA_TILE_SKIN: Readonly<Record<string, string>> = {
   brick: 'china_wall', // the town wall / river kerb (`B`) → temple masonry (SOLID)
   bush: 'china_wall', // any solid bush (`b`) → a wall section (SOLID)
 };
+/** Ch.9 ROMANIA (Valea Stelelor) tile reskin — the painted village, the Old Road, Castle
+ *  Hoaxula, and the Stone Brow monastery wear mountain-meadow grass, packed-dirt road, and
+ *  mossy castle stonework. Each Romania tile carries the SAME solidity as the base it replaces,
+ *  so the remap is purely cosmetic — collision/BFS read the unchanged grid. */
+const ROMANIA_SKIN_MAPS: ReadonlySet<string> = new Set([
+  'valea_stelelor',
+  'old_road',
+  'castle_hoaxula',
+  'stone_brow_monastery',
+]);
+const ROMANIA_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'romania_ground', // village earth / verge / castle floor (`.`)
+  grass_b: 'romania_ground', // decorative grass (`,`)
+  grass_tuft: 'romania_ground', // decorative grass (`~`)
+  office_floor: 'romania_ground', // castle/monastery way-gaps (`o`) blend into the ground
+  road: 'romania_path', // the village lane / district streets (`R`) → packed dirt road
+  sidewalk: 'romania_path', // the cart-track lanes (`=`) → packed dirt road
+  road_dash: 'romania_path', // the centreline (`D`) — a mountain road needs no lane dash
+  office_wall: 'romania_wall', // castle + monastery walls (`O`) → castle stone (SOLID)
+  brick: 'romania_wall', // the village border / cliffs (`B`) → castle stone (SOLID)
+  bush: 'romania_wall', // any solid bush (`b`) → a wall section (SOLID)
+};
 /** §A11 full-Gulliver: the Minimus NATIVES (citizens, props, facades) render at this scale on
  *  the Ch.5 maps so the colossi party visibly TOWERS over the tabletop duchy — the same idea as
  *  MINIMUS_TRAFFIC_SCALE for the dainty cars. The PARTY (player + followers) is NEVER scaled. */
@@ -565,6 +587,7 @@ export class OverworldScene extends Phaser.Scene {
     // collision-preserving — see MINIMUS_TILE_SKIN). Other maps are untouched.
     const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
     const chinaSkin = CHINA_SKIN_MAPS.has(this.mapDef.id);
+    const romaniaSkin = ROMANIA_SKIN_MAPS.has(this.mapDef.id);
     const data: number[][] = [];
     this.solidTiles = [];
     for (let y = 0; y < h; y++) {
@@ -604,6 +627,11 @@ export class OverworldScene extends Phaser.Scene {
             // render as jade river-dust ground / stone flagstone / temple masonry. Same
             // solidity as the base it replaces, so collision below is unchanged.
             name = CHINA_TILE_SKIN[name];
+          } else if (romaniaSkin && ROMANIA_TILE_SKIN[name]) {
+            // Ch.9 — the Valea Stelelor reskin (Ch.9 maps only): the shared grid chars render
+            // as mountain-meadow grass / packed-dirt road / mossy castle stone. Same solidity
+            // as the base it replaces, so collision below is unchanged.
+            name = ROMANIA_TILE_SKIN[name];
           } else if (name === 'sidewalk') {
             if (isRoad(x, y + 1)) name = 'sidewalk_curb';
             else if (isRoad(x + 1, y)) name = 'sidewalk_curb_e';
@@ -4242,7 +4270,9 @@ export class OverworldScene extends Phaser.Scene {
         await this.runChoice('ch6_string');
         break;
       case 'choice_compassion':
-        await this.runChoice('ch9_count');
+        // the COMPASSION axis turns on the Count's defeat — gated so the zone past the
+        // throne cannot fire the dilemma before the fight (runChoice self-gates once decided)
+        if (GS.flag('count_hoaxula_defeated')) await this.runChoice('ch9_count');
         break;
       case 'choice_finale':
         await this.runChoice('ch10_song');
@@ -4369,6 +4399,16 @@ export class OverworldScene extends Phaser.Scene {
         break;
       case 'mt_shu_temple_resonance':
         if (!GS.flag('ch8_complete')) await this.mtShuTempleScene();
+        break;
+      /* ---------------- Chapter 9 (§A6 Romania) ---------------- */
+      case 'ch9_arrival':
+        if (!GS.flag('ch9_arrived')) await this.ch9ArrivalScene();
+        break;
+      case 'count_hoaxula_boss':
+        if (!GS.flag('count_hoaxula_defeated')) await this.countHoaxulaBossScene();
+        break;
+      case 'stone_brow_monastery_resonance':
+        if (!GS.flag('ch9_complete')) await this.stoneBrowMonasteryScene();
         break;
       // the §A10 Ch.3 "find" pickups (books / letters / the drain / milk / water)
       case 'q_overdue_b1':
@@ -4696,8 +4736,23 @@ export class OverworldScene extends Phaser.Scene {
    *  Ch.3 is complete (the boardLucille precedent — England's flight stays his too). */
   private async bertAirBeat(): Promise<void> {
     this.cut = true;
-    // the §A5 NEXT leg: once Chandrapore (Ch.7) is done, Bert flies the party to LOTUS
-    // HARBOR (the newest frontier takes priority — the earlier legs below stay for the backtrack)
+    // the §A5 NEXT leg: once Lotus Harbor (Ch.8) is done, Bert flies the party to VALEA
+    // STELELOR (the newest frontier takes priority — the earlier legs below stay for the backtrack)
+    if (GS.flag('ch8_complete') && !GS.flag('ch9_arrived')) {
+      await this.dlg.say(...DIALOGUE.bert_romania_ask);
+      const pick = await this.dlg.ask(['Fly to VALEA STELELOR', 'Not yet'], { cancelIndex: 1 });
+      if (pick !== 0) {
+        this.cut = false;
+        return;
+      }
+      AUDIO.stopMusic();
+      await playCutscene(this, 'ch9_journey'); // the authored Romania panels (no-ops if missing)
+      // the hatch drops on the Valea Stelelor village green; ch9_arrival fires the beat
+      this.goThroughDoor('valea_stelelor', 8 * 16, 20 * 16, 'down');
+      return;
+    }
+    // the §A5 Lotus Harbor leg: once Chandrapore (Ch.7) is done, Bert flies the party to LOTUS
+    // HARBOR (kept for the backtrack now that Valea Stelelor is the frontier)
     if (GS.flag('ch7_complete') && !GS.flag('ch8_arrived')) {
       await this.dlg.say(...DIALOGUE.bert_china_ask);
       const pick = await this.dlg.ask(['Fly to LOTUS HARBOR', 'Not yet'], { cancelIndex: 1 });
@@ -5252,6 +5307,77 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('ch8_complete'); // §A6 — the chapter button (the §A5 gate to Ch.9)
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch8_card);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /* ──────────── CHAPTER 9 — the Romania §A6 beats (arrival / boss+choice / resonance) ──────────── */
+
+  /** the §A6 arrival — Bert sets the party down on the Valea Stelelor green; Dorin's homecoming */
+  private async ch9ArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch9_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(380, 0.005);
+    await this.dlg.say(...DIALOGUE.ch9_arrival);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** §A6 BOSS 9 — COUNT HOAXULA (the mercyEnding phase machine: theatrical → steals one
+   *  equipped item on turn 2 → unmasks at 50% into wild AoE → Mia's PRAY at "good"+ ends
+   *  it in mercy). A win on his 95000 HP returns the stolen gear; then the COMPASSION axis
+   *  turns on the spot — THE IRON vs THE OPEN HAND (runChoice('ch9_count')). */
+  private async countHoaxulaBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.count_hoaxula_door);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(460, 0.008);
+    await this.wait(420);
+    const outcome = await this.startBattle(['count_hoaxula'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('count_hoaxula_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.count_hoaxula_win);
+    AUDIO.jingle('victory', 2200, this.mapDef.music);
+    this.cut = false;
+    // the COMPASSION axis (CHOICE 2) turns on the win — THE IRON vs THE OPEN HAND. The
+    // choice_compassion zone past the throne is a backup (it gates on the same flag);
+    // firing here guarantees the dilemma lands the moment the Count is freed.
+    await this.runChoice('ch9_count');
+    this.fadeRestart(); // the way to the monastery is open; the resonance trigger can fire
+  }
+
+  /** §A6 Resonance Site — the Stone Brow monastery bell tower. Before the Count is unmasked
+   *  it keeps its peace; once he is freed the bell rings (HEARTLIGHT 9) and Ember 9 lands,
+   *  and Dorin's Trial of the Mute Mountain is honoured. The party is whole (Dorin has
+   *  marched since Minimus — ADR-125), so no one joins; ch9_complete opens the §A5 gate to Ch.10. */
+  private async stoneBrowMonasteryScene(): Promise<void> {
+    if (!GS.flag('count_hoaxula_defeated')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.stone_brow_monastery_early);
+      this.cut = false;
+      return;
+    }
+    this.cut = true;
+    // HEARTLIGHT 9 — Dorin rings the bell he was once too small to reach (Ember 9)
+    GS.setFlag('ember9');
+    GS.data.embers = 9;
+    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 12);
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    await this.dlg.say(...DIALOGUE.ember9_get);
+    GS.setFlag('ch9_complete'); // §A6 — the chapter button (the §A5 gate to Ch.10)
+    AUDIO.jingle('victory', 2200, null);
+    await this.dlg.say(...DIALOGUE.ch9_card);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }
