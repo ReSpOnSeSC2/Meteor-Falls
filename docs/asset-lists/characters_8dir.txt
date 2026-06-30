@@ -96,3 +96,10 @@ vs_buni
 vs_provisioner
 vs_shepherd
 vs_kid
+# Ch.10 The Long Shot — Aurora Station (Alaska) & Mauna Lani (Hawaii) cast
+as_keeper
+as_provisioner
+as_radio
+ml_pemberton
+ml_vendor
+ml_local

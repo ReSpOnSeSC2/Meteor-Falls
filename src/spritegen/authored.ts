@@ -370,6 +370,13 @@ export const NPC_CHARACTER_ART = [
   { id: 'vs_provisioner', key: 'authored_vs_provisioner_8dir', url: new URL('../../assets/art/characters/vs_provisioner_anim_46_4x.png', import.meta.url).href },
   { id: 'vs_shepherd', key: 'authored_vs_shepherd_8dir', url: new URL('../../assets/art/characters/vs_shepherd_anim_46_4x.png', import.meta.url).href },
   { id: 'vs_kid', key: 'authored_vs_kid_8dir', url: new URL('../../assets/art/characters/vs_kid_anim_46_4x.png', import.meta.url).href },
+  // Ch.10 The Long Shot — Aurora Station (Alaska) & Mauna Lani (Hawaii) cast (46-frame authored sheets; masters synced to runtime)
+  { id: 'as_keeper', key: 'authored_as_keeper_8dir', url: new URL('../../assets/art/characters/as_keeper_anim_46_4x.png', import.meta.url).href },
+  { id: 'as_provisioner', key: 'authored_as_provisioner_8dir', url: new URL('../../assets/art/characters/as_provisioner_anim_46_4x.png', import.meta.url).href },
+  { id: 'as_radio', key: 'authored_as_radio_8dir', url: new URL('../../assets/art/characters/as_radio_anim_46_4x.png', import.meta.url).href },
+  { id: 'ml_pemberton', key: 'authored_ml_pemberton_8dir', url: new URL('../../assets/art/characters/ml_pemberton_anim_46_4x.png', import.meta.url).href },
+  { id: 'ml_vendor', key: 'authored_ml_vendor_8dir', url: new URL('../../assets/art/characters/ml_vendor_anim_46_4x.png', import.meta.url).href },
+  { id: 'ml_local', key: 'authored_ml_local_8dir', url: new URL('../../assets/art/characters/ml_local_anim_46_4x.png', import.meta.url).href },
 ] as const;
 
 export const AUTHORED_NPC_CHARACTER_IDS = NPC_CHARACTER_ART.map((art) => art.id);

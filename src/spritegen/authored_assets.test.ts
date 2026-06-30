@@ -118,7 +118,7 @@ describe('authored hero asset wiring', () => {
 describe('authored NPC asset wiring', () => {
   it('matches the PKG-09 character list and loads 96x128-frame sheets', () => {
     const npcIds = listedNpcIds();
-    expect(npcIds).toHaveLength(86);
+    expect(npcIds).toHaveLength(92);
     expect(AUTHORED_NPC_CHARACTER_IDS).toEqual(npcIds);
 
     const artById = new Map<string, (typeof NPC_CHARACTER_ART)[number]>(NPC_CHARACTER_ART.map((art) => [art.id, art]));

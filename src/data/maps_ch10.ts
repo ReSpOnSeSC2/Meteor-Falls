@@ -91,11 +91,11 @@ function buildAuroraStation(): MapDef {
     props,
     npcs: [
       // THE STATION KEEPER — keeps the lights on for travelers (the lights_of_aurora giver)
-      { id: 'as_keeper', sprite: 'canteen_keeper', x: 7, y: 14, facing: 'down', dialogue: 'npc_as_keeper', stationary: true, idle: true, emote: 'happy' },
+      { id: 'as_keeper', sprite: 'as_keeper', x: 7, y: 14, facing: 'down', dialogue: 'npc_as_keeper', stationary: true, idle: true, emote: 'happy' },
       // THE PROVISIONER — the §A8 Ch.10 supply shelf
-      { id: 'as_provisioner', sprite: 'npc_depot_clerk', x: 11, y: 9, facing: 'down', dialogue: 'npc_as_provisioner', shop: 'aurora_provisioner' },
+      { id: 'as_provisioner', sprite: 'as_provisioner', x: 11, y: 9, facing: 'down', dialogue: 'npc_as_provisioner', shop: 'aurora_provisioner' },
       // THE RADIO OPERATOR — hears the Sea of Silence in the static
-      { id: 'as_radio', sprite: 'aurora_busker', x: 26, y: 12, facing: 'down', dialogue: 'npc_as_radio', stationary: true },
+      { id: 'as_radio', sprite: 'as_radio', x: 26, y: 12, facing: 'down', dialogue: 'npc_as_radio', stationary: true },
     ],
     signs: [
       { x: 3, y: 10, dialogue: 'sign_aurora_station' },
@@ -228,11 +228,11 @@ function buildMaunaLani(): MapDef {
     props,
     npcs: [
       // PEMBERTON — keeps the rocket THE LONG SHOT (the the_last_wave giver)
-      { id: 'ml_pemberton', sprite: 'captain', x: 16, y: 6, facing: 'down', dialogue: 'npc_ml_pemberton', stationary: true, idle: true, emote: 'happy' },
+      { id: 'ml_pemberton', sprite: 'ml_pemberton', x: 16, y: 6, facing: 'down', dialogue: 'npc_ml_pemberton', stationary: true, idle: true, emote: 'happy' },
       // THE VENDOR — the §A8 Ch.10 market shelf
-      { id: 'ml_vendor', sprite: 'npc_clerk', x: 11, y: 9, facing: 'down', dialogue: 'npc_ml_vendor', shop: 'mauna_vendor' },
+      { id: 'ml_vendor', sprite: 'ml_vendor', x: 11, y: 9, facing: 'down', dialogue: 'npc_ml_vendor', shop: 'mauna_vendor' },
       // A LOCAL — waves the party off ("catch the last wave")
-      { id: 'ml_local', sprite: 'smiler', x: 9, y: 17, facing: 'down', dialogue: 'npc_ml_local', wander: true, emote: 'happy' },
+      { id: 'ml_local', sprite: 'ml_local', x: 9, y: 17, facing: 'down', dialogue: 'npc_ml_local', wander: true, emote: 'happy' },
     ],
     signs: [
       { x: 3, y: 10, dialogue: 'sign_mauna_lani' },

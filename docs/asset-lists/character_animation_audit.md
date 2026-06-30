@@ -5,13 +5,13 @@ This checks the authored 46-frame character sheets against the runtime frame con
 - Frame size: 96x128
 - Sheet size: 384x1536
 - Frame count: 46
-- Registered characters: 91
+- Registered characters: 97
 - Unregistered character sheets on disk: 0
 - Path overrides: 0
-- Characters with issues: 55
+- Characters with issues: 61
 - Errors: 0
-- Warnings: 217
-- Review hints: 253
+- Warnings: 249
+- Review hints: 238
 
 Interactive playback page: [character_animation_audit.html](character_animation_audit.html)
 
@@ -110,6 +110,24 @@ Common presets:
 - WARN run left: run pair is nearly frozen (0.010)
 - WARN run right: run pair is nearly frozen (0.010)
 
+### as_keeper (as_keeper)
+- WARN walk left: step frames 1/3 are nearly frozen (0.000)
+- WARN walk right: step frames 1/3 are nearly frozen (0.000)
+- WARN run left: run pair is nearly frozen (0.000)
+- WARN run right: run pair is nearly frozen (0.000)
+
+### as_provisioner (as_provisioner)
+- WARN walk left: step frames 1/3 are nearly frozen (0.000)
+- WARN walk right: step frames 1/3 are nearly frozen (0.000)
+- WARN run left: run pair is nearly frozen (0.000)
+- WARN run right: run pair is nearly frozen (0.000)
+
+### as_radio (as_radio)
+- WARN walk left: step frames 1/3 are nearly frozen (0.000)
+- WARN walk right: step frames 1/3 are nearly frozen (0.000)
+- WARN run left: run pair is nearly frozen (0.000)
+- WARN run right: run pair is nearly frozen (0.000)
+
 ### baobab_healer (baobab_healer)
 - WARN walk up: step frames 1/3 are nearly frozen (0.010)
 - WARN run up: run pair is nearly frozen (0.010)
@@ -166,16 +184,14 @@ Common presets:
 - REVIEW frame 3: walk down looks closer to downright than down
 
 ### chad (chad)
-- REVIEW frame 6: walk left looks closer to upleft than left
+- REVIEW frame 5: walk left looks closer to upleft than left
 - REVIEW frame 7: walk left looks closer to upleft than left
+- REVIEW frame 9: walk right looks closer to upright than right
+- REVIEW frame 11: walk right looks closer to upright than right
 - REVIEW frame 18: run left looks closer to upleft than left
 - REVIEW frame 19: run left looks closer to upleft than left
-- REVIEW frame 22: run up looks closer to right than up
-- REVIEW frame 23: run up looks closer to right than up
-- REVIEW frame 36: run down-right looks closer to upright than downright
-- REVIEW frame 39: run down-left looks closer to upright than downleft
-- WARN walk left: stand frames 0/2 are not stable (0.116)
-- WARN walk right: stand frames 0/2 are not stable (0.082)
+- REVIEW frame 20: run right looks closer to upright than right
+- REVIEW frame 21: run right looks closer to upright than right
 
 ### cp_dabbawala (cp_dabbawala)
 - REVIEW frame 3: walk down looks closer to downleft than down
@@ -384,22 +400,35 @@ Common presets:
 - WARN run down-right: run pair is nearly frozen (0.007)
 - WARN run down-left: run pair is nearly frozen (0.007)
 
+### ml_local (ml_local)
+- WARN walk left: step frames 1/3 are nearly frozen (0.000)
+- WARN walk right: step frames 1/3 are nearly frozen (0.000)
+- WARN walk up: step frames 1/3 are nearly frozen (0.008)
+- WARN run left: run pair is nearly frozen (0.000)
+- WARN run right: run pair is nearly frozen (0.000)
+- WARN run up: run pair is nearly frozen (0.008)
+- WARN walk up-right: diagonal step pair is nearly frozen (0.008)
+- WARN walk up-left: diagonal step pair is nearly frozen (0.008)
+- WARN run up-right: run pair is nearly frozen (0.008)
+- WARN run up-left: run pair is nearly frozen (0.008)
+
+### ml_pemberton (ml_pemberton)
+- WARN walk left: step frames 1/3 are nearly frozen (0.000)
+- WARN walk right: step frames 1/3 are nearly frozen (0.000)
+- WARN run left: run pair is nearly frozen (0.000)
+- WARN run right: run pair is nearly frozen (0.000)
+
+### ml_vendor (ml_vendor)
+- WARN walk left: step frames 1/3 are nearly frozen (0.000)
+- WARN walk right: step frames 1/3 are nearly frozen (0.000)
+- WARN run left: run pair is nearly frozen (0.000)
+- WARN run right: run pair is nearly frozen (0.000)
+
 ### mrPlummer (mrPlummer)
-- REVIEW frame 11: walk right looks closer to up than right
-- REVIEW frame 15: walk up looks closer to downright than up
-- REVIEW frame 16: run down looks closer to up than down
-- REVIEW frame 17: run down looks closer to downleft than down
-- REVIEW frame 19: run left looks closer to up than left
-- REVIEW frame 20: run right looks closer to downleft than right
-- REVIEW frame 21: run right looks closer to downleft than right
-- REVIEW frame 34: walk up-left looks closer to left than upleft
-- REVIEW frame 35: walk up-left looks closer to left than upleft
-- REVIEW frame 36: run down-right looks closer to left than downright
-- REVIEW frame 37: run down-right looks closer to left than downright
-- REVIEW frame 38: run down-left looks closer to left than downleft
-- REVIEW frame 39: run down-left looks closer to left than downleft
-- REVIEW frame 40: run up-right looks closer to left than upright
-- REVIEW frame 41: run up-right looks closer to right than upright
+- WARN walk up-right: diagonal step pair is nearly frozen (0.008)
+- WARN walk up-left: diagonal step pair is nearly frozen (0.008)
+- WARN run up-right: run pair is nearly frozen (0.008)
+- WARN run up-left: run pair is nearly frozen (0.008)
 
 ### mrsPemmel (mrsPemmel)
 - REVIEW frame 5: walk left looks closer to down than left
@@ -661,6 +690,9 @@ Common presets:
 | rex | jay | hero | 7 |
 | ana | ana | npc | 9 |
 | arcadeOwner | arcadeOwner | npc | 5 |
+| as_keeper | as_keeper | npc | 4 |
+| as_provisioner | as_provisioner | npc | 4 |
+| as_radio | as_radio | npc | 4 |
 | aurora_busker | aurora_busker | npc | 0 |
 | baobab_healer | baobab_healer | npc | 2 |
 | bell_choir_child | bell_choir_child | npc | 2 |
@@ -669,7 +701,7 @@ Common presets:
 | caddy | caddy | npc | 8 |
 | canteen_keeper | canteen_keeper | npc | 0 |
 | captain | captain | npc | 1 |
-| chad | chad | npc | 10 |
+| chad | chad | npc | 8 |
 | cp_dabbawala | cp_dabbawala | npc | 12 |
 | cp_spice_merchant | cp_spice_merchant | npc | 0 |
 | cp_stationmaster | cp_stationmaster | npc | 8 |
@@ -700,9 +732,12 @@ Common presets:
 | matchbox_herald | matchbox_herald | npc | 0 |
 | mayor_of_lilleby | mayor_of_lilleby | npc | 0 |
 | mercadoKeeper | mercadoKeeper | npc | 0 |
+| ml_local | ml_local | npc | 10 |
+| ml_pemberton | ml_pemberton | npc | 4 |
+| ml_vendor | ml_vendor | npc | 4 |
 | mom | mom | npc | 0 |
 | mr_click | mr_click | npc | 0 |
-| mrPlummer | mrPlummer | npc | 15 |
+| mrPlummer | mrPlummer | npc | 4 |
 | mrsPemmel | mrsPemmel | npc | 26 |
 | npc_bert | npc_bert | npc | 0 |
 | npc_borden | npc_borden | npc | 1 |
