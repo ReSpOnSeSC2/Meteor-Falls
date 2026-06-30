@@ -41,6 +41,9 @@ export interface PhaseEffects {
   returnStolen(): Promise<void> | void;
   endBattleMercy(): Promise<void> | void;
   partyStatus(status: 'crying' | 'asleep' | 'paralyzed' | 'sunburn' | 'hushed', turns: number): Promise<void> | void;
+  /** §A6 Ch.10 (ADR-130 §7): the Hush's grief tide — a party-wide HP AoE (the damage
+   *  mirror of partyStatus); the scene loops aliveHeroes and draws `amount` from each */
+  partyDamage(amount: number): Promise<void> | void;
   /** S16 (ADR-035 extended): stage a hero awakening mid-battle at a scripted
    *  beat (the scene routes to battleAwakening; no-ops if already awakened) */
   awaken(awakening: string): Promise<void> | void;
@@ -324,6 +327,9 @@ export class PhaseRunner {
         return;
       case 'partyStatus':
         await this.fx.partyStatus(a.status, a.turns);
+        return;
+      case 'partyDamage':
+        await this.fx.partyDamage(a.amount);
         return;
       case 'awaken':
         await this.fx.awaken(a.awakening);

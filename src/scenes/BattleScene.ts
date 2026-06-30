@@ -354,6 +354,12 @@ class OdoDisplay {
   }
 }
 
+/** §A6 Ch.10 (ADR-130 §7) — THE ANSWER (FORGIVE) warmth meter: brims at WARMTH_MAX, and
+ *  each warmth action (a Vibe/Pray poured into the QUIET Hush) gives WARMTH_GIVE. ~7 answers
+ *  to fill — long enough that the grief tide (every 3rd turn) is a real "outlast it" clock. */
+const WARMTH_MAX = 100;
+const WARMTH_GIVE = 16;
+
 const PLASMA_FRAG = `
 precision mediump float;
 uniform float time;
@@ -401,6 +407,14 @@ export class BattleScene extends Phaser.Scene {
   private flairLine!: FlairLine;
   private odoDisplays: Array<{ d: OdoDisplay; o: Odometer }> = [];
   private chadOdo: OdoDisplay | null = null;
+  /** §A6 Ch.10 finale — THE ANSWER (the FORGIVE path): the warmth meter. In the Hush's
+   *  QUIET, the party stops swinging and POURS warmth in; Vibe/Pray FILL this instead of
+   *  damaging HP, and brimful the loneliness is REACHED (a win without a kill). All null
+   *  off the FORGIVE path — the SILENCE path pulses THE CALLING into its HP instead. */
+  private warmth: Odometer | null = null;
+  private warmthOdo: OdoDisplay | null = null;
+  private warmthUi: Phaser.GameObjects.GameObject[] = [];
+  private warmthDone = false;
   private ended = false;
   private won = false;
   private tickAcc = 0;
@@ -427,6 +441,10 @@ export class BattleScene extends Phaser.Scene {
     this.odoDisplays = [];
     this.chad = null;
     this.chadOdo = null;
+    this.warmth = null;
+    this.warmthOdo = null;
+    this.warmthUi = [];
+    this.warmthDone = false;
     this.ended = false;
     this.won = false;
     this.prayHintShown = false;
@@ -518,6 +536,13 @@ export class BattleScene extends Phaser.Scene {
           hushed: BATTLE_TEXT.party_status_hushed,
         };
         await this.print(line[status] ?? BATTLE_TEXT.party_status_crying);
+      },
+      // §A6 Ch.10 (ADR-130 §7): the Hush's GRIEF rolls out as REAL HP — the loneliness
+      // lands as a wound across the whole party (the damage mirror of partyStatus). Each
+      // hero's card shakes (applyHeroDamage), then one tide-line reads the whole wave.
+      partyDamage: async (amount) => {
+        for (const h of this.aliveHeroes()) this.applyHeroDamage(h, amount);
+        await this.print(BATTLE_TEXT.party_grief);
       },
       // S16 (ADR-035 extended): a scripted beat can stage an awakening — the
       // Grin's half-dead blow awakens Jay's POWER SHIELD Σ (the_wall_that_answers)
@@ -2061,6 +2086,18 @@ export class BattleScene extends Phaser.Scene {
           continue;
         }
       }
+      // §A6 Ch.10 (ADR-130) — the elemental golem INVERSION: the WRONG element FEEDS the
+      // form instead of harming it (Freeze on the Frost Sentinel, Fire on the Tiki Magma
+      // Golem — each form's `healedBy`). The hit lands as a HEAL and is otherwise absorbed
+      // (no crack, no damage, no on-hit status) — the fight's "read the shell" punish.
+      if (t.def.boss && this.phase && ab.element !== 'none' && this.phase.healsFromElement(ab.element)) {
+        const before = t.hp;
+        t.hp = Math.min(t.def.hp, t.hp + dmg);
+        this.fx.popup(t.spr.x, t.spr.y - t.spr.displayHeight / 2 - s(2), `+${t.hp - before}`, RAMP.GRASS);
+        AUDIO.sfx('heal');
+        await this.print(BATTLE_TEXT.boss_heals_element);
+        continue;
+      }
       // S14: the element may CRACK a scripted form — Vibe Freeze finds the
       // seams in SOLID GOLD, and bats land while it's brittle (§A6 Ch.2;
       // the fight teaches it the turn Mia awakens it)
@@ -2409,6 +2446,22 @@ export class BattleScene extends Phaser.Scene {
    * the Beetle's gold form shrugs physical, the Step-Mask's Shield halves it.
    */
   private async damageEnemy(e: EnemyUnit, dmg: number, weak = false, line?: string, cls: DamageClass = 'physical'): Promise<void> {
+    // §A6 Ch.10 — THE ANSWER (FORGIVE): in the QUIET the Hush is past hurting — warmth, not
+    // wounds. The FIRST warmth-class hit raises the meter (right after the hush_quiet read
+    // tells you to reach it with the warm), and every Vibe/Pray/Stolen Light after POURS in
+    // instead of touching its HP (physical still clangs off the QUIET below). SILENCE-path is
+    // unaffected — its flag is exclusive with FORGIVE, so this never fires there.
+    if (
+      !this.warmthDone &&
+      e.def.id === 'the_hush' &&
+      (cls === 'vibe' || cls === 'pray') &&
+      this.phase?.form?.id === 'quiet' &&
+      GS.flag('axis_finale_forgive') === true
+    ) {
+      if (!this.warmth) await this.raiseWarmthMeter();
+      await this.giveWarmth();
+      return;
+    }
     // boss form immunities (the phase machine owns the math)
     if (e.def.boss && this.phase && this.phase.damageMul(cls) === 0) {
       AUDIO.sfx('cancel');
@@ -2524,6 +2577,70 @@ export class BattleScene extends Phaser.Scene {
     return this.heroes.filter((h) => !h.odoHp.dead && !h.hero.down);
   }
 
+  /* ---------------- §A6 Ch.10 finale — THE CALLING (the SILENCE path) ---------------- */
+
+  /** the banked warmth of every soul the party ever helped: the sum of the caller
+   *  ledger's DAMAGE effects (GS.data.callers, §A6 score). Heal-effect callers warm the
+   *  party elsewhere; the CALLING that reaches the Hush is the damage half. */
+  private callingDamage(): number {
+    return GS.data.callers.reduce((sum, c) => sum + (c.effect.kind === 'damage' ? c.effect.power : 0), 0);
+  }
+
+  /** §A6 Ch.10 (ADR-130 §7) — THE CALLING: during the Hush's un-touchable QUIET movement,
+   *  every person you ever stopped to help phones in across the dark AT ONCE, and their
+   *  banked warmth pours THROUGH the quiet (routed as Vibe — warmth is never immune). One
+   *  pulse per Hush turn; more callers = the longest loneliness ends faster. Fully inert
+   *  off the SILENCE path (the FORGIVE path fills the warmth meter instead). */
+  private async callingPulse(boss: EnemyUnit): Promise<void> {
+    if (boss.def.id !== 'the_hush' || this.phase?.form?.id !== 'quiet') return;
+    if (GS.flag('axis_finale_silence') !== true) return;
+    const sum = this.callingDamage();
+    if (sum <= 0) return;
+    await this.print(BATTLE_TEXT.calling_pulse);
+    await this.damageEnemy(boss, sum, false, undefined, 'vibe');
+  }
+
+  /* ---------------- §A6 Ch.10 finale — THE ANSWER (the FORGIVE path) ---------------- */
+
+  /** the QUIET goes up on the FORGIVE path and the warmth meter rises with it: a small
+   *  centered gauge below the Hush. Vibe/Pray pour into it (giveWarmth); brimful = REACHED. */
+  private async raiseWarmthMeter(): Promise<void> {
+    if (this.warmth) return;
+    this.warmth = new Odometer(0, WARMTH_MAX, 90, 90); // rolls UP briskly toward the brim
+    const cx = Math.floor(this.scale.width / 2);
+    const ink = colorOf(px(RAMP.PAPER, 3));
+    const box = makeWindow(this, cx - s(34), s(118), s(68), s(24));
+    const label = this.add
+      .bitmapText(cx - s(28), s(122), 'retro', 'WARMTH', s(6))
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1)
+      .setTint(ink);
+    this.warmthOdo = new OdoDisplay(this, cx + s(2), s(131), 3);
+    this.warmthOdo.setValue(0);
+    this.warmthUi = [box, label];
+    await this.print(BATTLE_TEXT.warmth_appear);
+  }
+
+  /** a single ANSWER: warmth poured into the QUIET. Fills the meter (never its HP); brimful,
+   *  the Hush is REACHED and the fight ends in mercy (post-battle the_answer takes it home). */
+  private async giveWarmth(): Promise<void> {
+    if (!this.warmth || this.warmthDone) return;
+    this.warmth.heal(WARMTH_GIVE);
+    AUDIO.sfx('heal');
+    await this.print(BATTLE_TEXT.warmth_give);
+    if (this.warmth.target >= WARMTH_MAX) {
+      this.warmthDone = true;
+      this.warmth.set(WARMTH_MAX);
+      this.warmthOdo?.setValue(WARMTH_MAX);
+      await this.print(BATTLE_TEXT.warmth_full);
+      // the meter has done its work — clear the gauge, then resolve the win (a mercy-end)
+      this.warmthUi.forEach((o) => o.destroy());
+      this.warmthOdo?.destroy();
+      this.warmthOdo = null;
+      await this.victory();
+    }
+  }
+
   /* ---------------- enemy phase ---------------- */
 
   private async enemyPhase(): Promise<void> {
@@ -2577,6 +2694,10 @@ export class BattleScene extends Phaser.Scene {
           continue;
         }
         if (this.phase.speedMul >= 2) acts = 2;
+        // §A6 Ch.10 — THE CALLING pours in on the SILENCE path (gated; no-op otherwise).
+        // It can drive the Hush to the 12% 'falls' phase (endBattleMercy), so bail if it ends.
+        await this.callingPulse(e);
+        if (this.ended) return;
       }
       for (let act = 0; act < acts && !this.ended && e.alive; act++) {
         await this.enemyAct(e);
@@ -3179,6 +3300,11 @@ export class BattleScene extends Phaser.Scene {
     if (this.chad && this.chadOdo) {
       this.chad.hp.tick(dt);
       this.chadOdo.setValue(Math.max(0, this.chad.hp.displayed));
+    }
+    // §A6 Ch.10 — THE ANSWER: roll the warmth meter up toward the brim as it fills
+    if (this.warmth && this.warmthOdo) {
+      this.warmth.tick(dt);
+      this.warmthOdo.setValue(Math.max(0, Math.round(this.warmth.displayed)));
     }
     this.tickAcc -= dt;
     if (anyRoll && this.tickAcc <= 0) {

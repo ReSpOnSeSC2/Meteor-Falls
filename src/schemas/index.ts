@@ -1061,6 +1061,10 @@ export const PhaseActionSchema = z.discriminatedUnion('kind', [
     status: z.enum(['crying', 'asleep', 'paralyzed', 'sunburn', 'hushed']),
     turns: z.number().int().min(1),
   }),
+  /** §A6 Ch.10 / ADR-130 §7 — the Hush's GRIEF tide: a party-wide DAMAGE AoE, the
+   *  damage mirror of partyStatus (which only inflicts a condition). The scene loops
+   *  aliveHeroes and draws `amount` real HP from each — the loneliness lands as a wound. */
+  z.strictObject({ kind: z.literal('partyDamage'), amount: z.number().int().positive() }),
 ]);
 export type PhaseAction = z.infer<typeof PhaseActionSchema>;
 

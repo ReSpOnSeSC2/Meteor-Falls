@@ -23,6 +23,7 @@ function recorder(): { fx: PhaseEffects; log: string[] } {
     returnStolen: () => void log.push('return'),
     endBattleMercy: () => void log.push('mercy'),
     partyStatus: (s, t) => void log.push(`status:${s}:${t}`),
+    partyDamage: (a) => void log.push(`damage:${a}`),
     awaken: (id) => void log.push(`awaken:${id}`),
   };
   return { fx, log };
@@ -217,6 +218,68 @@ describe('THE LAUGHING SPHINX — the §A6 Ch.6 riddle, on its real script', () 
     expect(ENEMIES.laughing_sphinx.weakness).toEqual([]); // the riddle IS the gimmick, not an element
     expect(BOSS_SCRIPTS.laughing_sphinx.riddle?.pool.length).toBe(8);
     expect(BOSS_SCRIPTS.laughing_sphinx.forms).toBeUndefined();
+  });
+});
+
+describe('THE HUSH — the §A6 Ch.10 finale, on its real script (ADR-130 §7)', () => {
+  it('Movement 1 opens THE STATIC; at 50% it goes un-touchably QUIET (physical clangs, warmth lands)', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.the_hush, fx);
+    await r.onBossTurnStart(); // turn 1 — the wall of white noise and cold
+    expect(log).toEqual(['line:hush_static']);
+    expect(r.damageMul('physical')).toBe(1); // THE STATIC takes everything
+    await r.onHpFrac(0.49); // crossing 50% — it stops fighting back and goes QUIET
+    expect(log).toEqual(['line:hush_static', 'form:quiet', 'line:hush_quiet', 'status:hushed:2']);
+    expect(r.damageMul('physical')).toBe(0); // the QUIET shrugs fists and gadgets…
+    expect(r.damageMul('vibe')).toBe(1); // …but warmth always reaches (NOT vibeImmune — no soft-lock)
+    expect(r.damageMul('pray')).toBe(1); // …and faith is never eaten
+  });
+
+  it('the GRIEF tide lands as REAL party HP THEN flattens every voice, every 3rd turn from turn 4', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.the_hush, fx);
+    for (let t = 1; t <= 7; t++) await r.onBossTurnStart();
+    expect(log.filter((l) => l === 'damage:120')).toHaveLength(2); // grief on turn 4 AND turn 7
+    const i = log.indexOf('line:hush_grief'); // a grief beat = narration → the HP tide → the hush
+    expect(log.slice(i, i + 3)).toEqual(['line:hush_grief', 'damage:120', 'status:hushed:2']);
+  });
+
+  it('at 12% the Hush is REACHED, not killed — endBattleMercy (a win without a kill)', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.the_hush, fx);
+    expect(r.mercy).toBe(false);
+    await r.onHpFrac(0.49); // already QUIET…
+    await r.onHpFrac(0.11); // …then REACHED at 12%
+    expect(log).toContain('line:hush_falls');
+    expect(log).toContain('mercy');
+    expect(r.mercy).toBe(true);
+  });
+
+  it('the finale rides DATA — 150,000 HP, no weakness (no element answers loneliness), STATIC→QUIET', () => {
+    expect(ENEMIES.the_hush.hp).toBe(150000);
+    expect(ENEMIES.the_hush.boss).toBe(true);
+    expect(ENEMIES.the_hush.weakness).toEqual([]);
+    expect(BOSS_SCRIPTS.the_hush.forms?.map((f) => f.id)).toEqual(['static', 'quiet']);
+  });
+});
+
+describe('THE Ch.10 GOLEMS — the §A6 elemental inversion (healedBy), on their real scripts (ADR-130)', () => {
+  it('the FROST SENTINEL: FIRE cracks the shell, FREEZE FEEDS it (the wrong element heals)', () => {
+    const { fx } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.frost_sentinel, fx);
+    expect(r.damageMul('physical')).toBe(0); // the FROST SHELL clangs
+    expect(r.healsFromElement('freeze')).toBe(true); // more cold = the wrong direction
+    expect(r.healsFromElement('fire')).toBe(false); // fire is the CRACK, not the feed
+    expect(r.crackBy('fire')).toBe(true); // …and fire suspends the immunity for a beat
+    expect(r.damageMul('physical')).toBe(1); // brittle now — bats land
+  });
+
+  it('the TIKI MAGMA GOLEM: the mirror — FREEZE cracks, FIRE FEEDS it', () => {
+    const { fx } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.tiki_magma_golem, fx);
+    expect(r.healsFromElement('fire')).toBe(true);
+    expect(r.healsFromElement('freeze')).toBe(false);
+    expect(r.crackBy('freeze')).toBe(true);
   });
 });
 
