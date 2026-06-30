@@ -231,6 +231,13 @@ const RUN = 115 * ART_SCALE;
 const PURSUE = 85 * ART_SCALE;
 const PATROL_WALK = 38 * ART_SCALE;
 const PATROL_CHASE = 92 * ART_SCALE;
+/** ADR-118 rework — Constable Borden's run-you-down speed: brisker than your
+ *  WALK, slower than your RUN, so a sprint can still shake him (the cop fight
+ *  stays optional). Bespoke chase: OverworldScene.bordenChase. */
+const BORDEN_CHASE = 88 * ART_SCALE;
+/** where you spawn INSIDE the station holding cell when Borden marches you in
+ *  (tile ~12.5,3.5 → native px; goThroughDoor scales it to runtime space). */
+const OTTER_CELL = { tx: 200, ty: 56 } as const;
 /** Ch.1 OUTDOOR maps that ride the §A6 story clock: it is 2 AM across the whole
  *  opening — town, the long climb, and the crater — until `zapper_done` (dawn).
  *  Every map the player traverses BEFORE dawn must be listed here or it renders
@@ -389,6 +396,12 @@ export class OverworldScene extends Phaser.Scene {
   private npcs: NpcObj[] = [];
   private roamers: Roamer[] = [];
   private patrols: PatrolObj[] = [];
+  // ADR-118 rework — Constable Borden's run-you-down state (he's an idle NpcObj,
+  // so updateNpcs leaves his sprite to us). Reset on every scene (re)build.
+  private bordenState: 'idle' | 'alert' | 'chase' = 'idle';
+  private bordenAlertT = 0;
+  private bordenBang: Phaser.GameObjects.BitmapText | null = null;
+  private bordenEngaged = false;
   private dlg!: Dialogue;
   private cut = false; // cutscene lock
   private entryBlackout?: Phaser.GameObjects.Rectangle; // no world-flash before an entry cutscene
@@ -1320,6 +1333,7 @@ export class OverworldScene extends Phaser.Scene {
       this.player.anims.stop();
     }
     this.updateNpcs(dt);
+    this.bordenChase(dt);
     this.updateFireflies(dt);
     if (!this.transitioning) this.updateTraffic(dtMs);
     this.updateShadows();
@@ -2369,44 +2383,130 @@ export class OverworldScene extends Phaser.Scene {
    */
 
   /**
-   * S22 (ADR-118) — THE COP FIGHT. Constable Borden, lightly Hushed and fed a
-   * frame-up by Chad, tries to "detain" Jay over the hill "vandalism." An OPTIONAL
-   * morning beat (never blocks the road) — beating him snaps him clear, clears
-   * Jay's name, and pays out his donut money. Defeat/flee just leaves him to try
-   * again (the retry law). A deliberate rhyme with the later General Buckle arc.
+   * S22 (ADR-118, reworked) — THE COP FIGHT. Constable Borden, lightly Hushed and
+   * fed a frame-up by Chad, "detains" Jay over the hill "vandalism." Now a REAL
+   * arc: by daybreak he RUNS you down on the civic lane (no talking to him —
+   * `bordenChase`), MARCHES you into the station's holding cell (`bordenStreetBeat`
+   * → warp), and books you there (`bordenCellBeat` → the fight). Beating him snaps
+   * him clear, clears Jay's name, pays his donut money, and walks you back to the
+   * lane a free kid; a getaway/defeat just leaves him to try again (the retry law).
+   * Still OPTIONAL — a sprint shakes the chase, so it never walls the road.
    */
-  private async bordenBeat(): Promise<void> {
-    if (GS.flag('borden_cleared')) {
-      await this.dlg.say(...DIALOGUE.npc_borden_done);
+  private bordenChase(dt: number): void {
+    if (this.cut || this.dlg.busy || this.transitioning || this.bordenEngaged) return;
+    if (this.mapDef.id !== 'otterbrook') return;
+    if (!GS.flag('zapper_done') || GS.flag('borden_cleared') || GS.flag('borden_marching')) return;
+    const n = this.npcs.find((o) => o.def.id === 'constable_borden');
+    if (!n) return;
+    const dx = this.player.x - n.spr.x;
+    const dy = this.player.y - n.spr.y;
+    const d = Math.hypot(dx, dy);
+    const trackBang = () => {
+      if (this.bordenBang) {
+        this.bordenBang.x = n.spr.x;
+        this.bordenBang.y = n.spr.y - n.spr.height - s(2);
+      }
+    };
+    if (this.bordenState === 'idle') {
+      if (d < s(96)) {
+        this.bordenState = 'alert';
+        this.bordenAlertT = 360;
+        n.spr.setFrame(standFrame(this.dirToward(n.spr.x, n.spr.y, this.player.x, this.player.y)));
+        AUDIO.sfx('alert');
+        this.bordenBang = this.add
+          .bitmapText(n.spr.x, n.spr.y - n.spr.height - s(2), 'retro', '!', s(8))
+          .setOrigin(0.5, 1)
+          .setTint(colorOf(px(RAMP.RED, 2)))
+          .setDepth(5000);
+        this.tweens.add({ targets: this.bordenBang, y: this.bordenBang.y - s(3), duration: 120, yoyo: true });
+      }
       return;
     }
+    if (this.bordenState === 'alert') {
+      this.bordenAlertT -= dt * 1000;
+      trackBang();
+      if (this.bordenAlertT <= 0) this.bordenState = 'chase';
+      return;
+    }
+    // a sprint can outrun his official trot → he gives up and resets (stays optional)
+    if (d > s(240)) {
+      this.bordenState = 'idle';
+      this.bordenBang?.destroy();
+      this.bordenBang = null;
+      n.spr.anims.stop();
+      n.spr.setFrame(standFrame(n.def.facing));
+      return;
+    }
+    // chase — the patrols' axis-separated slide so he doesn't stick on a corner
+    const step = BORDEN_CHASE * dt;
+    const nx = this.patrolMove(n.spr.x, n.spr.y, (dx / d) * step, 0, false);
+    const ny = this.patrolMove(nx, n.spr.y, 0, (dy / d) * step, true);
+    n.spr.x = nx;
+    n.spr.y = ny;
+    n.spr.setDepth(ny);
+    const f = facing8(dx, dy, n.def.facing);
+    const gait = this.anims.exists(`${n.def.sprite}-run-${f}`) ? 'run' : 'walk';
+    const anim = `${n.def.sprite}-${gait}-${f}`;
+    if (n.spr.anims.currentAnim?.key !== anim || !n.spr.anims.isPlaying) n.spr.anims.play(anim, true);
+    trackBang();
+    if (d < s(14)) {
+      this.bordenEngaged = true;
+      this.cut = true;
+      this.bordenBang?.destroy();
+      this.bordenBang = null;
+      n.spr.anims.stop();
+      void this.bordenStreetBeat();
+    }
+  }
+
+  /**
+   * The street confrontation, then the MARCH: accuse → your answer → he walks you
+   * the three blocks to the station and you spawn INSIDE the holding cell. (The
+   * fight itself fires from `bordenCellBeat` once the cell map loads.)
+   */
+  private async bordenStreetBeat(): Promise<void> {
+    if (GS.flag('borden_marching') || GS.flag('borden_cleared')) return;
+    this.cut = true;
+    this.bordenEngaged = true;
     await this.dlg.say(...DIALOGUE.npc_borden_accuse);
     const pick = await this.dlg.ask(['"It was a METEOR, sir."', 'Say nothing'], { cancelIndex: 1 });
     await this.dlg.say(...(pick === 0 ? DIALOGUE.npc_borden_meteor : DIALOGUE.npc_borden_silent));
     // ADR-121: he doesn't brawl in the street — he MARCHES you to the station first.
-    // The frame-up + the Hush only tip him into a fight in the holding cell.
     await this.dlg.say(...DIALOGUE.npc_borden_march);
     const go = await this.dlg.ask(['Go quietly', 'Protest'], { cancelIndex: 0 });
     await this.dlg.say(...(go === 0 ? DIALOGUE.npc_borden_quiet : DIALOGUE.npc_borden_protest));
-    // the walk to the little brick station house (fade marks the three blocks)
+    // the real walk now — warp INTO the station's holding cell (he books you there)
+    GS.setFlag('borden_marching');
+    this.goThroughDoor('otter_station', OTTER_CELL.tx, OTTER_CELL.ty, 'down');
+  }
+
+  /**
+   * Booked — fires on entering the station cell mid-march: the holding-cell
+   * dialogue, then the fight, IN the cell. Win clears your name and walks you back
+   * to the lane; a getaway bounces you out (the cell never traps you); defeat
+   * respawns at the last save (handleDefeat). Either way `borden_marching` clears.
+   */
+  private async bordenCellBeat(): Promise<void> {
     this.cut = true;
-    await new Promise<void>((res) => {
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => res());
-      this.cameras.main.fadeOut(450, 0, 0, 0);
-    });
-    await this.wait(250);
-    this.cameras.main.fadeIn(450, 0, 0, 0);
     await this.dlg.say(...DIALOGUE.npc_borden_holding);
     await this.dlg.say(...DIALOGUE.npc_borden_threat);
     this.cut = false;
     const outcome = await this.startBattle(['borden'], 'none', [], {});
-    if (outcome !== 'victory') return; // defeat respawns at the last save; a flee leaves him there
+    const back = this.mapDef.doors[0];
+    const backTx = back?.tx ?? 248;
+    const backTy = back?.ty ?? 680;
+    if (outcome !== 'victory') {
+      GS.setFlag('borden_marching', false);
+      if (outcome === 'ran') this.goThroughDoor('otterbrook', backTx, backTy, 'down');
+      return; // 'defeat' → handleDefeat already owns the respawn
+    }
     GS.setFlag('borden_cleared');
+    GS.setFlag('borden_marching', false);
     GS.data.cashOnHand += 80;
     AUDIO.jingle('victory', 1600, this.mapDef.music);
     await this.dlg.say(...DIALOGUE.npc_borden_cleared);
     toast(this, "Cleared! Borden vouches for you. (+$80)");
-    this.fadeRestart(); // he stands down on the rebuild (borden_cleared)
+    this.goThroughDoor('otterbrook', backTx, backTy, 'down'); // back to the lane, a free kid
   }
 
   /**
@@ -2539,8 +2639,10 @@ export class OverworldScene extends Phaser.Scene {
         await this.carLotBeat();
         return true;
       case 'constable_borden':
-        // S22 (ADR-118): the optional cop fight — clears Chad's frame-up
-        await this.bordenBeat();
+        // ADR-118 rework: normally he RUNS you down (bordenChase) — but if you
+        // walk up and talk first, it's the same march; once cleared he's a friendly.
+        if (GS.flag('borden_cleared')) await this.dlg.say(...DIALOGUE.npc_borden_done);
+        else await this.bordenStreetBeat();
         return true;
       case 'hodgkin':
         // S22 (ADR-119): the Trail Key interlock (catch his runaway mower)
@@ -4140,6 +4242,12 @@ export class OverworldScene extends Phaser.Scene {
     }
     if (this.mapDef.id === 'boat_interior') {
       await this.boatCutscene();
+      return;
+    }
+    // ADR-118 rework — booked: you arrive INSIDE the station cell mid-march, and
+    // Borden's holding-cell beat + the cop fight fire here (not a fake fade).
+    if (this.mapDef.id === 'otter_station' && GS.flag('borden_marching') && !GS.flag('borden_cleared')) {
+      await this.bordenCellBeat();
       return;
     }
     // Ch.1 opening — a 4-phase cinematic across hickory_hill → otterbrook →

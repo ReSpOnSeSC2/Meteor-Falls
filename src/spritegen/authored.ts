@@ -499,6 +499,9 @@ const BASE_FACADE_KEYS = [
   'bldg_deptstore', 'bldg_tower_glass', 'bldg_tower_arms', 'bldg_tower_corp',
   'facade_hardware', 'facade_diner', 'facade_busdepot', 'facade_busdepot_open',
   'facade_fillshop', 'facade_realty', 'facade_autolot',
+  // ADR-118 rework — the Otterbrook STATION HOUSE (the little brick P.D. Borden
+  // marches you into). Authored hi-res facade; sizes like bldg_civic next door.
+  'facade_otter_station',
 ] as const;
 
 const REGION_FACADE_KEYS = [

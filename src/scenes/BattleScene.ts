@@ -405,6 +405,8 @@ export class BattleScene extends Phaser.Scene {
   /** S18 M23 (ADR-093): the mixed-run flair renderer bound to `textObj` — engaged
    *  only on the (sparse) lines battle auto-appends a `{g:NAME}` to. */
   private flairLine!: FlairLine;
+  /** ▼ advance prompt for paginated long captions (print()). */
+  private captionCursor!: Phaser.GameObjects.BitmapText;
   private odoDisplays: Array<{ d: OdoDisplay; o: Odometer }> = [];
   private chadOdo: OdoDisplay | null = null;
   /** §A6 Ch.10 finale — THE ANSWER (the FORGIVE path): the warmth meter. In the Hush's
@@ -978,16 +980,65 @@ export class BattleScene extends Phaser.Scene {
 
   private buildTextWindow(): void {
     makeWindow(this, s(6), s(6), s(268), s(56));
-    // The window's 9-slice border eats s(8) each side, so the inner frame ends at
-    // s(264). Wrap the caption at s(240) (40px clear of the inner border) instead of
-    // s(248) — at the old width a full line rendered flush against the right frame
-    // and long boss lines spilled past it. FlairLine shares the same bound.
     this.textObj = this.add
       .bitmapText(s(16), s(14), 'retro', '', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
-      .setMaxWidth(s(240));
-    this.flairLine = new FlairLine(this, this.textObj, { maxWidthPx: s(240), depth: DEPTH_UI + 1 });
+      .setMaxWidth(s(248));
+    this.flairLine = new FlairLine(this, this.textObj, { maxWidthPx: s(248), depth: DEPTH_UI + 1 });
+    // The caption window holds ~3 lines (its inner frame), but boss scriptLines are
+    // authored as full prose paragraphs that wrap to 5–11 lines — they used to spill
+    // straight out the bottom of the frame. print() now paginates a long caption into
+    // frame-sized pages, advance-gated by this ▼ cursor (parked at the box's bottom-
+    // right, like the dialogue box's).
+    this.captionCursor = this.add
+      .bitmapText(s(6) + s(268) - s(14), s(6) + s(56) - s(14), 'retro', '▼', s(6))
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1)
+      .setTint(colorOf(px(RAMP.GOLD, 3)))
+      .setVisible(false);
+  }
+
+  /** Caption window line capacity (clean inner-frame fit): the window is s(56) tall,
+   *  the 9-slice border eats s(8) top+bottom, the text sits at s(14), and a line is
+   *  s(11) tall (font lineHeight). floor((s(56)-s(8)-(s(14)-s(6))) / s(11)) ≈ 3. */
+  private static readonly CAPTION_MAX_LINES = 3;
+
+  /** Split a caption into page-sized chunks. Sets the (wrapped) text on textObj to
+   *  read back Phaser's own line breaks, then groups those lines CAPTION_MAX_LINES at
+   *  a time. A short caption returns a single page (unchanged behaviour). */
+  private paginateCaption(text: string): string[] {
+    this.textObj.setText(text);
+    const bounds = this.textObj.getTextBounds(true);
+    const wrapped = (bounds.wrappedText ?? text) || text;
+    const lines = wrapped.split('\n');
+    const per = BattleScene.CAPTION_MAX_LINES;
+    if (lines.length <= per) return [text];
+    const pages: string[] = [];
+    for (let i = 0; i < lines.length; i += per) pages.push(lines.slice(i, i + per).join('\n'));
+    return pages;
+  }
+
+  /** Wait for an A/B press, blinking the caption cursor — the battle twin of
+   *  Dialogue.waitAdvance(), used between pages of a long caption. */
+  private waitCaptionAdvance(): Promise<void> {
+    return new Promise((resolve) => {
+      this.captionCursor?.setVisible(true);
+      const blink = this.time.addEvent({
+        delay: 350,
+        loop: true,
+        callback: () => this.captionCursor?.setVisible(!this.captionCursor.visible),
+      });
+      const off = everyFrame(this, () => {
+        if (INPUT.justPressed('A') || INPUT.justPressed('B')) {
+          AUDIO.sfx('cursor');
+          blink.remove();
+          off();
+          this.captionCursor?.setVisible(false);
+          resolve();
+        }
+      });
+    });
   }
 
   /** S18 M23: append a flair glyph to a battle caption, by the move's ELEMENT or
@@ -1012,27 +1063,56 @@ export class BattleScene extends Phaser.Scene {
     // a `{g:NAME}` line lays out as a mixed run; every plain line is unchanged.
     this.flairLine.clear();
     if (hasFlair(text)) return this.printFlair(text);
+    // A short caption is one page (unchanged: type → linger → auto-dismiss). A long
+    // boss line that wraps past the frame is split into pages, advance-gated between
+    // them so it reads like dialogue instead of spilling out the bottom.
+    return this.printPages(this.paginateCaption(text));
+  }
+
+  private async printPages(pages: string[]): Promise<void> {
+    for (let p = 0; p < pages.length; p++) {
+      await this.typeCaptionPage(pages[p]);
+      // gate between pages on a press; the final page auto-dismisses after a linger
+      if (p < pages.length - 1) await this.waitCaptionAdvance();
+      else await this.lingerCaption();
+    }
+  }
+
+  /** Type one page into the caption window (no linger); resolves when fully shown. */
+  private typeCaptionPage(page: string): Promise<void> {
     return new Promise((resolve) => {
       this.textObj.setText('');
       let i = 0;
       let acc = 0;
-      let lingerMs = 420; // the finished line stays up; holding A/B burns it 4x
       // per-frame + dt-scaled (ADR-024): same pace on every display
       const off = everyFrame(this, (dt) => {
         const fast = INPUT.held('A') || INPUT.held('B');
         acc += (fast ? 4 : 1.8 * textSpeedMul()) * (dt / 16);
-        while (acc >= 1 && i < text.length) {
+        while (acc >= 1 && i < page.length) {
           acc -= 1;
           i++;
         }
-        this.textObj.setText(text.slice(0, i));
-        if (i % 4 === 0 && i < text.length) AUDIO.sfx('text');
-        if (i >= text.length) {
-          lingerMs -= dt * (fast ? 4 : 1);
-          if (lingerMs <= 0) {
-            off();
-            resolve();
-          }
+        this.textObj.setText(page.slice(0, i));
+        if (i % 4 === 0 && i < page.length) AUDIO.sfx('text');
+        if (i >= page.length) {
+          off();
+          resolve();
+        }
+      });
+    });
+  }
+
+  /** The finished line stays up briefly, then auto-dismisses; holding A/B burns the
+   *  linger 4× (the original print() tail). */
+  private lingerCaption(): Promise<void> {
+    return new Promise((resolve) => {
+      let lingerMs = 420;
+      const off = everyFrame(this, (dt) => {
+        const fast = INPUT.held('A') || INPUT.held('B');
+        lingerMs -= dt * (fast ? 4 : 1);
+        if (lingerMs <= 0) {
+          off();
+          resolve();
         }
       });
     });
