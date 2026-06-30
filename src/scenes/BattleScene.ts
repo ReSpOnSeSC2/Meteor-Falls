@@ -489,14 +489,18 @@ export class BattleScene extends Phaser.Scene {
     if (!bossUnit) return;
     const script = BOSS_SCRIPTS[bossUnit.def.id];
     this.phase = new PhaseRunner(script, {
+      // boss/finale NARRATION is read, not skimmed: each page HOLDS until a fresh
+      // A/B press (printWait) instead of auto-dismissing on a timed linger. The Hush's
+      // movements (and every boss telegraph) used to flash their last page by before the
+      // player could read it — the finale "text goes through without selecting" report.
       scriptLine: async (id) => {
-        for (const page of DIALOGUE[id] ?? []) await this.print(vars(page));
+        for (const page of DIALOGUE[id] ?? []) await this.printWait(vars(page));
       },
       setForm: async (form) => {
         await this.fx.play('phase_swap', { targets: [this.foeTarget(bossUnit)] });
         bossUnit.spr.setTexture(wearSpriteKey(this.phase?.spriteFor(bossUnit.def.sprite) ?? bossUnit.def.sprite, bossUnit.wear));
         if (form.line) {
-          for (const page of DIALOGUE[form.line] ?? []) await this.print(vars(page));
+          for (const page of DIALOGUE[form.line] ?? []) await this.printWait(vars(page));
         }
         // ADR-035: a form's first appearance can BE the chapter's awakening
         const due = this.phase?.awakeningDue();

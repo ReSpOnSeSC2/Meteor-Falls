@@ -229,6 +229,12 @@ const TRAFFIC_AUTHORED_VEHICLES = [
 const WALK = 70 * ART_SCALE;
 const RUN = 115 * ART_SCALE;
 const PURSUE = 85 * ART_SCALE;
+// conga-line smoothing rate (per second): followers EASE toward their breadcrumb each
+// frame instead of hard-snapping to it. The trail only drops a crumb every s(3) of
+// travel, so a snap teleported each follower ~12px in jerky hops (looked like frame-
+// rate stutter next to Jay's smooth per-frame walk). dt-scaled so it's display-rate
+// independent (ADR-024); a large gap still snaps (teleport / fresh map).
+const FOLLOW_EASE = 30;
 const PATROL_WALK = 38 * ART_SCALE;
 const PATROL_CHASE = 92 * ART_SCALE;
 /** ADR-118 rework — Constable Borden's run-you-down speed: brisker than your
@@ -1301,20 +1307,30 @@ export class OverworldScene extends Phaser.Scene {
     const h = this.solidTiles.length;
     const w = h > 0 ? this.solidTiles[0].length : 0;
     if (w === 0 || h === 0) return;
-    const walkable = (cx: number, cy: number): boolean => {
-      if (cx < 0 || cy < 0 || cx >= w || cy >= h) return false;
-      if (this.solidTiles[cy][cx]) return false;
-      const fx = cx * TILE_PX + TILE_PX / 2;
-      const fy = cy * TILE_PX + s(12);
+    // Does the player's BODY BOX fit with feet at (fx,fy)? (the same box tryMove uses.)
+    // A single-TILE test missed a landing on a walkable tile whose body box still pokes
+    // into an ADJACENT solid — the top row of a 2-tall door mouth, where the box reaches
+    // up into the border corner (the Aurora ice-field entry soft-lock). Tiles + prop
+    // solids only — no npc/traffic deps, since this runs before they go live.
+    const fits = (fx: number, fy: number): boolean => {
+      const bx = fx - s(5), by = fy - s(9), bw = s(10), bh = s(9);
+      const tx0 = Math.floor(bx / TILE_PX), ty0 = Math.floor(by / TILE_PX);
+      const tx1 = Math.floor((bx + bw) / TILE_PX), ty1 = Math.floor((by + bh) / TILE_PX);
+      for (let ty = ty0; ty <= ty1; ty++) {
+        for (let tx = tx0; tx <= tx1; tx++) {
+          if (ty < 0 || tx < 0 || ty >= h || tx >= w || this.solidTiles[ty][tx]) return false;
+        }
+      }
       for (const rect of this.solids) {
-        if (fx >= rect.x && fx < rect.x + rect.w && fy >= rect.y && fy < rect.y + rect.h) return false;
+        if (bx < rect.x + rect.w && bx + bw > rect.x && by < rect.y + rect.h && by + bh > rect.y) return false;
       }
       return true;
     };
+    // the EXACT landing the door aimed at — if the whole body fits, nothing to do
+    if (fits(GS.data.x, GS.data.y)) return;
     const col = Math.floor(GS.data.x / TILE_PX);
     const row = Math.floor(GS.data.y / TILE_PX);
-    if (walkable(col, row)) return; // the overwhelming common case — nothing to do
-    // expanding rings: the nearest walkable tile wins (Chebyshev shells, Euclid tiebreak)
+    // expanding rings: nearest tile whose BODY BOX is clear wins (Chebyshev shells, Euclid tiebreak)
     for (let r = 1; r <= 12; r++) {
       let best: { x: number; y: number; d: number } | null = null;
       for (let dy = -r; dy <= r; dy++) {
@@ -1322,15 +1338,17 @@ export class OverworldScene extends Phaser.Scene {
           if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; // ring perimeter only
           const cx = col + dx;
           const cy = row + dy;
-          if (!walkable(cx, cy)) continue;
+          const fx = cx * TILE_PX + TILE_PX / 2;
+          const fy = cy * TILE_PX + s(12);
+          if (!fits(fx, fy)) continue;
           const d = dx * dx + dy * dy;
-          if (!best || d < best.d) best = { x: cx * TILE_PX + TILE_PX / 2, y: cy * TILE_PX + s(12), d };
+          if (!best || d < best.d) best = { x: fx, y: fy, d };
         }
       }
       if (best) {
         if (import.meta.env.DEV) {
           console.warn(
-            `[spawn] ${this.mapDef.id}: (${col},${row}) blocked — nudged to (${Math.floor(best.x / TILE_PX)},${Math.floor(best.y / TILE_PX)})`,
+            `[spawn] ${this.mapDef.id}: (${col},${row}) body-blocked — nudged to (${Math.floor(best.x / TILE_PX)},${Math.floor(best.y / TILE_PX)})`,
           );
         }
         GS.data.x = best.x;
@@ -1771,11 +1789,14 @@ export class OverworldScene extends Phaser.Scene {
         // direction, so d.x*4 is a 4px heel offset; the -2 lifts to the foot
         if (running) this.dustPuff(this.player.x - d.x * s(4), this.player.y - s(2));
       }
-      // breadcrumb trail for the conga line (drop one every 3px of travel)
+      // breadcrumb trail for the conga line. A FINE trail (one crumb every s(1) of
+      // travel, 3× denser than before) lets each follower's eased target advance ~a
+      // few px per frame instead of jumping a full s(3) every 3rd frame — so the eased
+      // motion comes out UNIFORM (was a [7,5,2]px pulse). Cap scales 3× to match.
       const last = this.trail[0];
-      if (!last || Math.hypot(this.player.x - last.x, this.player.y - last.y) >= s(3)) {
+      if (!last || Math.hypot(this.player.x - last.x, this.player.y - last.y) >= s(1)) {
         this.trail.unshift({ x: this.player.x, y: this.player.y, f: this.facing });
-        if (this.trail.length > 80) this.trail.pop();
+        if (this.trail.length > 240) this.trail.pop();
       }
     } else {
       // ADR-101: idle LIFE — the down-facing rest pose breathes and blinks
@@ -1793,7 +1814,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.player.setDepth(this.player.y);
     this.followers.forEach((f, i) => {
-      const crumb = this.trail[(i + 1) * 9];
+      const crumb = this.trail[(i + 1) * 27]; // 27 crumbs back at s(1) spacing = the same (i+1)*108px conga gap as the old *9 at s(3)
       if (!crumb) return;
       if (f.angel) {
         // angels float instead of walk (Prompt 5 / §A4.7) — 4px lift, 1.5px bob
@@ -1810,15 +1831,27 @@ export class OverworldScene extends Phaser.Scene {
         f.spr.setDepth(crumb.y);
         return;
       }
-      f.spr.x = crumb.x;
-      f.spr.y = crumb.y;
-      f.spr.setDepth(crumb.y);
-      // S9b fix: followers snap to their crumb, so a per-frame "did I move"
-      // check was false between trail updates — the anim restarted every few
-      // frames and froze on its first frame. The LEADER's motion drives the
-      // conga: while Jay moves, everyone behind him walks (or runs).
+      // ADR-024: EASE toward the crumb each frame instead of HARD-SNAPPING. The trail
+      // drops a crumb only every s(3) of travel, so snapping teleported the conga ~12px
+      // in jerky hops (the "followers stutter, not smooth like Jay" report). A big gap
+      // (a teleport / a fresh map) still snaps so no one slides across the screen.
+      const fdx = crumb.x - f.spr.x;
+      const fdy = crumb.y - f.spr.y;
+      const fdist = Math.hypot(fdx, fdy);
+      if (fdist > s(40)) {
+        f.spr.x = crumb.x;
+        f.spr.y = crumb.y;
+      } else {
+        const k = 1 - Math.exp(-FOLLOW_EASE * dt);
+        f.spr.x += fdx * k;
+        f.spr.y += fdy * k;
+      }
+      f.spr.setDepth(f.spr.y);
+      // each follower WALKS while it's still closing on its crumb and stands once
+      // settled — a per-member motion check works now that they move every frame (not
+      // in hops). The LEADER's run flag still picks the gait. crumb.f = its facing.
       const anim = `${f.id}-${running ? 'run' : 'walk'}-${crumb.f}`;
-      if (moved) {
+      if (fdist > s(1)) {
         if (f.spr.anims.currentAnim?.key !== anim || !f.spr.anims.isPlaying) f.spr.anims.play(anim, true);
       } else {
         // ADR-104 (Prompt 7): the party breathes too — staggered by a per-member

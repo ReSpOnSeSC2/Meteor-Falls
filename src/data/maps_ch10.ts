@@ -104,7 +104,7 @@ function buildAuroraStation(): MapDef {
     phones: [{ x: 22, y: 10 }],
     atms: [{ x: 24, y: 10 }],
     doors: [
-      { x: W - 1, y: 11, w: 1, h: 2, to: 'aurora_ice_field', tx: 1 * 16, ty: 7 * 16, facing: 'right', indicator: 'none' },
+      { x: W - 1, y: 11, w: 1, h: 2, to: 'aurora_ice_field', tx: 1 * 16, ty: 8 * 16, facing: 'right', indicator: 'none' }, // land on the LOWER mouth row — y7 put the body box up into the solid border corner (0,6) → soft-lock
       // board Lucille — parked at the gate (the FRONTIER nav law; the Valea/Lotus precedent)
       { x: 8, y: 20, w: 2, h: 1, to: 'biplane_interior', tx: 11 * 16, ty: 8 * 16, facing: 'down', indicator: 'none' },
     ],

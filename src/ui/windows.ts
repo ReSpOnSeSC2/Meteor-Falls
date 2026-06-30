@@ -217,9 +217,13 @@ export class Dialogue {
       .setTint(colorOf(px(RAMP.GOLD, 3)));
     this.flair ??= new FlairLine(this.scene, this.text, { maxWidthPx: w - s(24), depth: DEPTH_UI + 1 });
     for (const raw of pages) {
-      const page = vars(raw);
-      await this.typewrite(page);
-      await this.waitAdvance();
+      // a long string is split into box-sized sub-pages (paginate) so it advances
+      // page-by-page instead of spilling out the bottom of the frame (the finale
+      // narration — the_answer / the_calling / hush_namesong — overflowed badly).
+      for (const sub of this.paginate(vars(raw))) {
+        await this.typewrite(sub);
+        await this.waitAdvance();
+      }
     }
     this.hide();
     this.releasedAt = this.scene.time.now;
@@ -231,6 +235,28 @@ export class Dialogue {
     this.win?.setVisible(false);
     this.text?.setVisible(false);
     this.cursor?.setVisible(false);
+  }
+
+  /** Caption capacity of the dialogue frame (h=s(60), text at +s(8), the ▼ cursor parked
+   *  at the bottom) — the same clean 3-line fit the battle caption uses. */
+  private static readonly MAX_LINES = 3;
+
+  /** Split one say() page into box-sized sub-pages — the overworld twin of the battle's
+   *  paginateCaption(). Set the text so Phaser computes its own wrapping, read those lines
+   *  back, then group them MAX_LINES at a time. A short page returns unchanged; a page with
+   *  inline flair is left whole (a {g:NAME} mixed run doesn't survive line-splitting, and
+   *  flair pages are short). */
+  private paginate(page: string): string[] {
+    if (!this.text || hasFlair(page)) return [page];
+    this.text.setText(page);
+    const bounds = this.text.getTextBounds(true);
+    const wrapped = (bounds.wrappedText ?? page) || page;
+    const lines = wrapped.split('\n');
+    const per = Dialogue.MAX_LINES;
+    if (lines.length <= per) return [page];
+    const out: string[] = [];
+    for (let i = 0; i < lines.length; i += per) out.push(lines.slice(i, i + per).join('\n'));
+    return out;
   }
 
   private typewrite(page: string): Promise<void> {
