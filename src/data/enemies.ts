@@ -1303,8 +1303,10 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
     // that wakes again FAR later (Ch.10 callback — keep it in the roster forever).
     // boss:true so its turnCount phases fire; it is deliberately NOT a CHAPTER
     // manifest boss, so it sidesteps the boss-curve / monetary-vision checks. HP is
-    // a small legible floor (ADR-122) the scripted repel always pre-empts; you
-    // repel a piece of Mars, you do not loot it (exp/cash 0).
+    // a small legible floor (ADR-122) the scripted repel always pre-empts. You don't
+    // LOOT a repelled piece of Mars (cash 0), but surviving it is a real boss-grade
+    // beat — so it pays boss EXP (240, just under the Heart-Oak Tick's 320; the old
+    // exp:0 made the climactic first fight hand out a single point, which felt broken).
     E({
       id: 'hush_sentinel',
       name: 'HUSH SENTINEL',
@@ -1320,7 +1322,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       defense: 18,
       speed: 16,
       level: 7,
-      exp: 0,
+      exp: 240,
       cash: 0,
       weakness: [],
       moves: [

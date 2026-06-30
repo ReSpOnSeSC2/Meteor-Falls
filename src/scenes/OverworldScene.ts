@@ -505,7 +505,12 @@ export class OverworldScene extends Phaser.Scene {
     // the Hush-dark blights Otterbrook in broad daylight. It reads as cold/sick
     // "night" (buildNight branches on this.hushDark), and the town stays locked
     // (bus dark, road fogged) until tick_defeated breaks it into real dawn.
-    const hushDark = !!GS.flag('zapper_done') && !GS.flag('tick_defeated') && this.mapDef.id === 'otterbrook';
+    // ADR-131: it covers the SAME maps that were meteor-night (the Otterbrook +
+    // Hickory Hill cluster), not just 'otterbrook' — gating on the town alone left
+    // the lit hill abutting the blighted town, a day/night SEAM that read as a
+    // colour bug (the very seam CH1_STORY_NIGHT_MAPS exists to prevent). The blight
+    // is the whole drained area now, so there's no jarring hill→town colour jump.
+    const hushDark = !!GS.flag('zapper_done') && !GS.flag('tick_defeated') && CH1_STORY_NIGHT_MAPS.has(this.mapDef.id);
     const night = this.mapDef.night === true || storyNight || hushDark;
     this.isNight = night; // S15c: NPC dialogueDay variants read this
     this.hushDark = hushDark;
@@ -1615,11 +1620,11 @@ export class OverworldScene extends Phaser.Scene {
     const nx = x + dx;
     const ny = y + dy;
     const box = { x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) };
-    if (this.collides(box)) return second ? y : x;
+    if (this.collides(box, 'player')) return second ? y : x;
     return second ? ny : nx;
   }
 
-  private collides(box: Rect): boolean {
+  private collides(box: Rect, actor?: 'player' | NpcObj): boolean {
     const x0 = Math.floor(box.x / TILE_PX);
     const y0 = Math.floor(box.y / TILE_PX);
     const x1 = Math.floor((box.x + box.w) / TILE_PX);
@@ -1640,7 +1645,24 @@ export class OverworldScene extends Phaser.Scene {
     // props + ambient cars (S18 M26): full-body AABB overlap
     const hit = (s: Rect): boolean =>
       box.x < s.x + s.w && box.x + box.w > s.x && box.y < s.y + s.h && box.y + box.h > s.y;
-    return this.solids.some(hit) || this.trafficRects.some(hit);
+    if (this.solids.some(hit) || this.trafficRects.some(hit)) return true;
+    // ADR-131: the player and WANDERING townsfolk are SOLID to each other (and to
+    // other wanderers) — the kid bumps people instead of walking through them. A
+    // wanderer can't be a static `solids` rect (it would leave a "ghost" where it
+    // spawned, see buildNpcs), so it's tested LIVE at its sprite position here.
+    // Opt-in: only the player's tryMove ('player') and a wanderer's own step (its
+    // NpcObj) pass `actor` — roamers/patrols pass nothing and keep the old
+    // prop-only check. The moving actor is excluded so it never hits its own box.
+    if (actor !== undefined) {
+      for (const n of this.npcs) {
+        if (!n.wanders || n === actor) continue;
+        if (hit({ x: n.spr.x - s(6), y: n.spr.y - s(10), w: s(12), h: s(10) })) return true;
+      }
+      if (actor !== 'player' && this.player && hit({ x: this.player.x - s(5), y: this.player.y - s(9), w: s(10), h: s(9) })) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private updateNpcs(dt: number): void {
@@ -1663,7 +1685,7 @@ export class OverworldScene extends Phaser.Scene {
       if (n.vx !== 0 || n.vy !== 0) {
         const nx = n.spr.x + n.vx * dt;
         const ny = n.spr.y + n.vy * dt;
-        if (Math.abs(nx - n.baseX) > s(28) || Math.abs(ny - n.baseY) > s(24) || this.collides({ x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) })) {
+        if (Math.abs(nx - n.baseX) > s(28) || Math.abs(ny - n.baseY) > s(24) || this.collides({ x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) }, n)) {
           n.vx = 0;
           n.vy = 0;
         } else {
