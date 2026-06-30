@@ -2937,7 +2937,9 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
     pyramid_1: 'mask-switch sign sits past the §A6 rotating floor — static-grid BFS cannot model the rotor state (frozen bespoke)',
     pyramid_2: 'mask-switch sign sits past the §A6 rotating floor — static-grid BFS cannot model the rotor state (frozen bespoke)',
     pyramid_3: 'mask-switch sign sits past the §A6 rotating floor — static-grid BFS cannot model the rotor state (frozen bespoke)',
-    pyramid_4: 'the §A6 rotor return-door lands on a rotor wall in the STATIC state; the floor turns to open it (frozen bespoke — Movement Two owns per-rotation proofs)',
+    // pyramid_4 needs NO reachability waiver: its return-door now lands on the
+    // carved channel floor (13,7), not the flank wall, and its west-alcove mask
+    // is reachable in the static grid — so the map clears map-quality on its own.
     dos_f3: 'Mia + her sign are sealed in the holding room until carveHoldingRoom() opens it on holding_open (§A6 — the sealed-room reveal is by design)',
   };
 

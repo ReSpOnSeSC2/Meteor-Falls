@@ -52,6 +52,7 @@ import {
   linksSeed,
 } from '../data/links';
 import { ensureLinksArt } from '../spritegen';
+import { ensureGolfBehindArt, freeGolfBehindArt } from '../spritegen/authored';
 import { ITEMS } from '../data/items';
 import { makeRng, type Rng } from '../hoops/sim';
 import { Dialogue, everyFrame, makeWindow, makeBox, vars, DEPTH_UI } from '../ui/windows';
@@ -124,6 +125,9 @@ export class LinksScene extends Phaser.Scene {
   /** the backdrop texture key currently shown — so updateBehindBackdrop only
    *  re-textures on an actual shot-context change */
   private behindBgKey = '';
+  /** the hole whose big behind-view backdrops are currently resident — freed as
+   *  the next hole's set is fetched (the 1600×900 POV art is loaded use-time) */
+  private prevBehindHoleId = '';
   private behindGolfer!: Phaser.GameObjects.Image;
   private minimapFrame!: Phaser.GameObjects.Graphics;
   private minimapBall!: Phaser.GameObjects.Arc;
@@ -381,7 +385,13 @@ export class LinksScene extends Phaser.Scene {
     const hole = this.holes[i];
     this.sim = new GolfSim(hole, this.roundRng, this.wind);
     this.behindShotOrigin = { x: s(hole.tee.x), y: s(hole.tee.y) }; // tee shot starts here
-    this.behindBgKey = ''; // recompute the behind backdrop for the new hole
+    // Fetch THIS hole's behind-view backdrops (big 1600×900 POV paintings) use-
+    // time and free the last hole's. Park behindBg on the always-resident fairway
+    // until they arrive — never leave it pointing at a texture we just freed.
+    this.behindBg.setTexture('links_fairway');
+    this.behindBgKey = 'links_fairway';
+    ensureGolfBehindArt(this, hole.id, this.prevBehindHoleId);
+    this.prevBehindHoleId = hole.id;
     this.settleHoldUntil = 0;
     this.settleStartedAt = 0;
     this.settleFlashOn = false;
@@ -1361,6 +1371,8 @@ export class LinksScene extends Phaser.Scene {
   }
 
   private close(): void {
+    // release this round's resident behind-view backdrops (big 1600×900 art)
+    if (this.prevBehindHoleId) freeGolfBehindArt(this, this.prevBehindHoleId);
     AUDIO.sfx('cancel');
     this.game.events.emit('mf-links-closed');
     this.scene.stop();

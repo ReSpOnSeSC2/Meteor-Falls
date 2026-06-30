@@ -2808,7 +2808,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'drift away', kind: 'taunt', text: '{e} thinned to a wisp of breath and drifted just out of reach, daring {t} to follow into the white.', weight: 2 },
       ],
       deathLine: 'The Frost Wisp unspooled into a last thread of vapor and was gone, and the air where it hung felt almost warm.',
-      sprite: 'battle_bog_cotton_wisp', mini: 'mini_bog_cotton_wisp', // ART-PASS: author battle_frost_wisp + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_frost_wisp', mini: 'mini_frost_wisp', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
     E({
@@ -2823,7 +2823,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'frost bellow', kind: 'taunt', text: '{e} threw back its head and bellowed a cloud of frost that hung glittering between it and {t}.', weight: 2 },
       ],
       deathLine: 'The Icehorn Caribou folded onto the ice with a groan, its black antlers ringing once like struck glass before it lay still.',
-      sprite: 'battle_frost_hare', mini: 'mini_frost_hare', // ART-PASS: author battle_icehorn_caribou + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_icehorn_caribou', mini: 'mini_icehorn_caribou', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.CYAN, RAMP.PAPER],
     }),
 
@@ -2840,7 +2840,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'dance on the coals', kind: 'taunt', text: '{e} did a gleeful little jig on the red-hot rock, grinning at {t} through the heat-shimmer.', weight: 2 },
       ],
       deathLine: 'The Cinder Imp’s grin sputtered, its last sparks scattering across the lava flat like dying fireflies.',
-      sprite: 'battle_dust_devil_charm', mini: 'mini_dust_devil_charm', // ART-PASS: author battle_cinder_imp + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_cinder_imp', mini: 'mini_cinder_imp', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.RED, RAMP.ORANGE],
     }),
     E({
@@ -2855,7 +2855,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'shell up', kind: 'taunt', text: '{e} tucked into its smoking obsidian shell and sat there glowing, immovable, watching {t}.', weight: 2 },
       ],
       deathLine: 'The Ash Crab’s obsidian shell split with a sharp crack and crumbled to warm black gravel.',
-      sprite: 'battle_cobble_mite', mini: 'mini_cobble_mite', // ART-PASS: author battle_ash_crab + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_ash_crab', mini: 'mini_ash_crab', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.RED, RAMP.EARTH],
     }),
 
@@ -2872,7 +2872,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'drift on the dead sea', kind: 'taunt', text: '{e} bobbed once on the silent red waste and turned its empty face toward {t}, waiting.', weight: 2 },
       ],
       deathLine: 'The Silent Drifter sighed itself inside-out and sank without a ripple into the dust of the dead sea.',
-      sprite: 'battle_hushed_skua', mini: 'mini_hushed_skua', // ART-PASS: author battle_silent_drifter + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_silent_drifter', mini: 'mini_silent_drifter', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.PURPLE, RAMP.INK],
     }),
     E({
@@ -2887,7 +2887,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'scramble', kind: 'status', status: 'paralyzed', text: '{e} flooded {t} with a wash of garbled signal, and {t}’s nerves seized mid-motion.', weight: 2 },
       ],
       deathLine: 'The Static Wraith dissolved into a last burst of white noise, then a flat, ringing silence.',
-      sprite: 'battle_hollow_jackal', mini: 'mini_hollow_jackal', // ART-PASS: author battle_static_wraith + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_static_wraith', mini: 'mini_static_wraith', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.NIGHT, RAMP.PURPLE],
     }),
 
@@ -2904,7 +2904,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'flash freeze', kind: 'status', status: 'paralyzed', text: '{e} exhaled a sheet of killing cold, and a rime of frost locked {t}’s joints stiff.', weight: 3 },
       ],
       deathLine: 'A long fracture raced up through the Frost Sentinel, the Aurora-light winking out along the seams, and it cracked apart and went still — just glacier again.',
-      sprite: 'battle_frost_jotun_elder', mini: 'mini_frost_jotun_elder', // ART-PASS: author battle_frost_sentinel + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_frost_sentinel', mini: 'mini_frost_sentinel', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.CYAN, RAMP.BLUE],
       boss: true,
       mind_immune: true,
@@ -2923,7 +2923,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'magma vent', kind: 'status', status: 'sunburn', text: '{e} cracked open along its seams and breathed lava-heat over {t}, searing skin that kept on smoldering.', weight: 3 },
       ],
       deathLine: 'The Tiki Magma Golem’s core dimmed from white to red to nothing, its lava veins crusting black as it cooled, at last, back into silent stone.',
-      sprite: 'battle_boiler_golem', mini: 'mini_amber_hoard_troll', // ART-PASS: author battle_tiki_magma_golem + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_tiki_magma_golem', mini: 'mini_tiki_magma_golem', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.RED, RAMP.ORANGE],
       boss: true,
       mind_immune: true,
@@ -2949,7 +2949,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'it simply waits', kind: 'taunt', text: '{e} goes very, very still, the way a house gets after everyone has gone, and it waits — and the waiting alone is almost too much to bear.', weight: 2 },
       ],
       deathLine: 'The Hush did not fall. It only grew quiet at last, the cold ebbing out of the air, and for one long held breath it seemed to reach back — and then, gently, it let go.',
-      sprite: 'battle_hush_sentinel', mini: 'mini_hushed_skua', // ART-PASS: author battle_the_hush + repoint (Ch.10 placeholder reuse)
+      sprite: 'battle_the_hush', mini: 'mini_the_hush', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.INK, RAMP.PURPLE],
       boss: true,
       mind_immune: true,

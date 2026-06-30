@@ -184,6 +184,18 @@ const AUTHORED_GOLF_SUPPORT_ART = [
   // behind-the-player POV art: the down-the-fairway backdrop + the back-view golfer
   { key: 'links_fairway', file: 'fairway_behind' },
   { key: 'links_golfer_back', file: 'golfer_back' },
+  // the back-view swing cycle + hole-out reactions (LinksScene.BEHIND_POSES).
+  // Small sheets (~1MB all told), so they ride the boot preload like the
+  // address pose above — without them the golfer goes to a missing texture the
+  // instant the club leaves address (top/impact/finish/putt/pump/slump).
+  { key: 'links_golfer_back_top', file: 'golfer_back_top' },
+  { key: 'links_golfer_back_impact', file: 'golfer_back_impact' },
+  { key: 'links_golfer_back_finish', file: 'golfer_back_finish' },
+  { key: 'links_golfer_back_putt', file: 'golfer_back_putt' },
+  { key: 'links_golfer_back_pump_a', file: 'golfer_back_pump_a' },
+  { key: 'links_golfer_back_pump_b', file: 'golfer_back_pump_b' },
+  { key: 'links_golfer_back_slump_a', file: 'golfer_back_slump_a' },
+  { key: 'links_golfer_back_slump_b', file: 'golfer_back_slump_b' },
 ] as const;
 
 const AUTHORED_GOLF_SHEETS = [
@@ -208,6 +220,45 @@ const AUTHORED_GOLF_SHEET_SOURCES = AUTHORED_GOLF_SHEETS.map((art) => ({
   authoredKey: `authored_golf_${art.file}`,
   url: new URL(`../../assets/art/minigames/golf/${art.file}.png`, import.meta.url).href,
 }));
+
+/**
+ * The behind-the-player POV backdrops are big — each hole authors four
+ * shot-context paintings (tee / approach / bunker / putt) at the full 1600×900,
+ * ~2MB apiece, so all eighteen holes total ~166MB. That CANNOT ride the boot
+ * preload, so they load USE-TIME, one hole at a time (the `ensureLinksArt`
+ * stance), and the previous hole's set is freed as the next is fetched — the
+ * resident POV art stays bounded at a single hole. Textures land under
+ * `links_<holeId>_<ctx>`; LinksScene.updateBehindBackdrop polls for them and
+ * falls back to `links_fairway` until the current hole's set arrives. */
+const GOLF_BEHIND_CONTEXTS = ['tee', 'approach', 'bunker', 'putt'] as const;
+
+export function golfBehindBackdropKey(holeId: string, ctx: string): string {
+  return `links_${holeId}_${ctx}`;
+}
+
+/** Free one hole's behind-view backdrops (call on hole change / scene close). */
+export function freeGolfBehindArt(scene: Phaser.Scene, holeId: string): void {
+  for (const ctx of GOLF_BEHIND_CONTEXTS) {
+    const key = golfBehindBackdropKey(holeId, ctx);
+    if (scene.textures.exists(key)) scene.textures.remove(key);
+  }
+}
+
+/** Queue this hole's behind-view backdrops (skipping any already resident) and
+ *  free the previous hole's. Loads run on the scene's loader; the scene polls
+ *  `textures.exists` each frame, so no completion callback is needed. */
+export function ensureGolfBehindArt(scene: Phaser.Scene, holeId: string, previousHoleId?: string): void {
+  if (previousHoleId && previousHoleId !== holeId) freeGolfBehindArt(scene, previousHoleId);
+  let queued = false;
+  for (const ctx of GOLF_BEHIND_CONTEXTS) {
+    const key = golfBehindBackdropKey(holeId, ctx);
+    if (scene.textures.exists(key)) continue;
+    const file = `${holeId}_${ctx}`;
+    scene.load.image(key, new URL(`../../assets/art/minigames/golf/${file}.png`, import.meta.url).href);
+    queued = true;
+  }
+  if (queued && !scene.load.isLoading()) scene.load.start();
+}
 
 /** texture key for a hero's single portrait bust (see HERO_PORTRAIT_ART) */
 export function heroPortraitKey(heroId: string): string {
@@ -576,7 +627,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace', 'spore_forest', 'castle_hoaxula'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace', 'spore_forest', 'castle_hoaxula', 'aurora', 'mauna_lani', 'sea_of_silence'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,
@@ -1150,6 +1201,36 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_count_hoaxula_unmasked', url: new URL('../../assets/art/enemies/battle_count_hoaxula_unmasked.png', import.meta.url).href },
   { key: 'battle_count_hoaxula_unmasked_w1', url: new URL('../../assets/art/enemies/battle_count_hoaxula_unmasked_w1.png', import.meta.url).href },
   { key: 'battle_count_hoaxula_unmasked_w2', url: new URL('../../assets/art/enemies/battle_count_hoaxula_unmasked_w2.png', import.meta.url).href },
+  // §A7 Ch.10 THE LONG SHOT (Alaska / Hawaii / Mars) — 6 regulars + 2 elemental
+  // minibosses + the finale boss THE HUSH, each an authored magenta-keyed battler
+  // with the ×0.88/×0.76 wear trio. (Replaces the Ch.10 placeholder-reuse pass.)
+  { key: 'battle_frost_wisp', url: new URL('../../assets/art/enemies/battle_frost_wisp.png', import.meta.url).href },
+  { key: 'battle_frost_wisp_w1', url: new URL('../../assets/art/enemies/battle_frost_wisp_w1.png', import.meta.url).href },
+  { key: 'battle_frost_wisp_w2', url: new URL('../../assets/art/enemies/battle_frost_wisp_w2.png', import.meta.url).href },
+  { key: 'battle_icehorn_caribou', url: new URL('../../assets/art/enemies/battle_icehorn_caribou.png', import.meta.url).href },
+  { key: 'battle_icehorn_caribou_w1', url: new URL('../../assets/art/enemies/battle_icehorn_caribou_w1.png', import.meta.url).href },
+  { key: 'battle_icehorn_caribou_w2', url: new URL('../../assets/art/enemies/battle_icehorn_caribou_w2.png', import.meta.url).href },
+  { key: 'battle_cinder_imp', url: new URL('../../assets/art/enemies/battle_cinder_imp.png', import.meta.url).href },
+  { key: 'battle_cinder_imp_w1', url: new URL('../../assets/art/enemies/battle_cinder_imp_w1.png', import.meta.url).href },
+  { key: 'battle_cinder_imp_w2', url: new URL('../../assets/art/enemies/battle_cinder_imp_w2.png', import.meta.url).href },
+  { key: 'battle_ash_crab', url: new URL('../../assets/art/enemies/battle_ash_crab.png', import.meta.url).href },
+  { key: 'battle_ash_crab_w1', url: new URL('../../assets/art/enemies/battle_ash_crab_w1.png', import.meta.url).href },
+  { key: 'battle_ash_crab_w2', url: new URL('../../assets/art/enemies/battle_ash_crab_w2.png', import.meta.url).href },
+  { key: 'battle_silent_drifter', url: new URL('../../assets/art/enemies/battle_silent_drifter.png', import.meta.url).href },
+  { key: 'battle_silent_drifter_w1', url: new URL('../../assets/art/enemies/battle_silent_drifter_w1.png', import.meta.url).href },
+  { key: 'battle_silent_drifter_w2', url: new URL('../../assets/art/enemies/battle_silent_drifter_w2.png', import.meta.url).href },
+  { key: 'battle_static_wraith', url: new URL('../../assets/art/enemies/battle_static_wraith.png', import.meta.url).href },
+  { key: 'battle_static_wraith_w1', url: new URL('../../assets/art/enemies/battle_static_wraith_w1.png', import.meta.url).href },
+  { key: 'battle_static_wraith_w2', url: new URL('../../assets/art/enemies/battle_static_wraith_w2.png', import.meta.url).href },
+  { key: 'battle_frost_sentinel', url: new URL('../../assets/art/enemies/battle_frost_sentinel.png', import.meta.url).href },
+  { key: 'battle_frost_sentinel_w1', url: new URL('../../assets/art/enemies/battle_frost_sentinel_w1.png', import.meta.url).href },
+  { key: 'battle_frost_sentinel_w2', url: new URL('../../assets/art/enemies/battle_frost_sentinel_w2.png', import.meta.url).href },
+  { key: 'battle_tiki_magma_golem', url: new URL('../../assets/art/enemies/battle_tiki_magma_golem.png', import.meta.url).href },
+  { key: 'battle_tiki_magma_golem_w1', url: new URL('../../assets/art/enemies/battle_tiki_magma_golem_w1.png', import.meta.url).href },
+  { key: 'battle_tiki_magma_golem_w2', url: new URL('../../assets/art/enemies/battle_tiki_magma_golem_w2.png', import.meta.url).href },
+  { key: 'battle_the_hush', url: new URL('../../assets/art/enemies/battle_the_hush.png', import.meta.url).href },
+  { key: 'battle_the_hush_w1', url: new URL('../../assets/art/enemies/battle_the_hush_w1.png', import.meta.url).href },
+  { key: 'battle_the_hush_w2', url: new URL('../../assets/art/enemies/battle_the_hush_w2.png', import.meta.url).href },
 ] as const;
 
 const ENEMY_OVERWORLD_ART = [
@@ -1306,6 +1387,16 @@ const ENEMY_MINI_ART = [
   { key: 'mini_animated_armor', url: new URL('../../assets/art/enemies/mini_animated_armor.png', import.meta.url).href },
   { key: 'mini_wolf_of_the_old_road', url: new URL('../../assets/art/enemies/mini_wolf_of_the_old_road.png', import.meta.url).href },
   { key: 'mini_count_hoaxula', url: new URL('../../assets/art/enemies/mini_count_hoaxula.png', import.meta.url).href },
+  // CHAPTER 10 (The Long Shot) — roamer minis derived from the battlers (derive-ch5-minis.ts)
+  { key: 'mini_frost_wisp', url: new URL('../../assets/art/enemies/mini_frost_wisp.png', import.meta.url).href },
+  { key: 'mini_icehorn_caribou', url: new URL('../../assets/art/enemies/mini_icehorn_caribou.png', import.meta.url).href },
+  { key: 'mini_cinder_imp', url: new URL('../../assets/art/enemies/mini_cinder_imp.png', import.meta.url).href },
+  { key: 'mini_ash_crab', url: new URL('../../assets/art/enemies/mini_ash_crab.png', import.meta.url).href },
+  { key: 'mini_silent_drifter', url: new URL('../../assets/art/enemies/mini_silent_drifter.png', import.meta.url).href },
+  { key: 'mini_static_wraith', url: new URL('../../assets/art/enemies/mini_static_wraith.png', import.meta.url).href },
+  { key: 'mini_frost_sentinel', url: new URL('../../assets/art/enemies/mini_frost_sentinel.png', import.meta.url).href },
+  { key: 'mini_tiki_magma_golem', url: new URL('../../assets/art/enemies/mini_tiki_magma_golem.png', import.meta.url).href },
+  { key: 'mini_the_hush', url: new URL('../../assets/art/enemies/mini_the_hush.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);

@@ -20,7 +20,7 @@ import Phaser from 'phaser';
 import { s } from '../spritegen/scale';
 import { INPUT } from './input';
 import { AUDIO } from './audio';
-import { Dialogue, everyFrame } from '../ui/windows';
+import { Dialogue, everyFrame, vars } from '../ui/windows';
 import { popEmote, type EmoteHandle, type EmoteId } from './emote';
 import { standFrame, type Facing } from '../spritegen';
 import { cutscenePanelKey } from './cutscene';
@@ -141,6 +141,52 @@ export function showCard(scene: Phaser.Scene, art: string, opts: CardOpts = {}):
           onComplete: () => {
             img.destroy();
             text?.destroy();
+            resolve();
+          },
+        });
+      }),
+  );
+}
+
+/**
+ * Show a TIMED narration caption over the LIVE scene (no card image) — the
+ * cinematic-pan counterpart to showCard's caption: fade in, hold (skippable),
+ * fade out. Used to narrate the opening's silent overworld pans so the player
+ * is never just watching the camera drift with no idea what they're looking at.
+ * Tokens ({rex}…) resolve via vars(); a soft shade plate keeps the words legible
+ * over bright world tiles. Resolves once it has fully faded out.
+ */
+export function showCaption(scene: Phaser.Scene, text: string, opts: { ms?: number; depth?: number } = {}): Promise<void> {
+  const cam = scene.cameras.main;
+  const hold = opts.ms ?? 2600;
+  const depth = opts.depth ?? D.cardText;
+  const t = scene.add
+    .bitmapText(cam.width / 2, cam.height - s(34), 'retro', vars(text), s(6))
+    .setOrigin(0.5, 0)
+    .setCenterAlign()
+    .setMaxWidth(cam.width - s(40))
+    .setTint(0xf8f0d0)
+    .setScrollFactor(0)
+    .setDepth(depth)
+    .setAlpha(0);
+  // a soft dark plate behind the words — the night maps are dark, but a bright
+  // moon/firefly tile under the line shouldn't wash it out.
+  const plate = scene.add
+    .rectangle(cam.width / 2, t.y + t.height / 2, t.width + s(16), t.height + s(8), 0x000000, 0.5)
+    .setScrollFactor(0)
+    .setDepth(depth - 1)
+    .setAlpha(0);
+  scene.tweens.add({ targets: [t, plate], alpha: 1, duration: 360 });
+  return waitSkippable(scene, hold).then(
+    () =>
+      new Promise<void>((resolve) => {
+        scene.tweens.add({
+          targets: [t, plate],
+          alpha: 0,
+          duration: 420,
+          onComplete: () => {
+            t.destroy();
+            plate.destroy();
             resolve();
           },
         });

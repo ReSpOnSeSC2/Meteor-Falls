@@ -143,7 +143,7 @@ import {
 } from '../battle/formulas';
 import { colorOf, RAMP, px } from '../palette';
 import { s, ART_SCALE, TILE_PX } from '../spritegen/scale';
-import { showCard, playStagedScene } from '../engine/cutsceneStage';
+import { showCard, showCaption, playStagedScene } from '../engine/cutsceneStage';
 import { ch1FirstHeartlight } from '../data/cutscenes_staged';
 import { openingPhase, type OpeningPhase } from '../engine/opening';
 
@@ -5909,6 +5909,8 @@ export class OverworldScene extends Phaser.Scene {
     // 2) the descent — it falls into the crater while the camera leans IN, slowly
     await this.wait(700);
     cam.zoomTo(0.95, 4400, 'Sine.easeInOut');
+    // narrate the fall so the silent overworld beat reads as story, not screensaver
+    void showCaption(this, 'A wrong star falls over Otterbrook — too low, too bright, and coming down fast.', { ms: 3000 });
     const shadow = this.add
       .image(impactX, impactY, 'mob_shadow')
       .setOrigin(0.5, 0.5).setAlpha(0).setScale(0.5).setDepth(impactY - 1);
@@ -5969,12 +5971,12 @@ export class OverworldScene extends Phaser.Scene {
       this.tweens.add({ targets: b, alpha: 0, duration: 600, onComplete: () => b.destroy() });
     }
     AUDIO.sfx('rumble');
-    await this.wait(2000); // hold on the sleeping house
-    await new Promise<void>((res) => {
-      cam.pan(13 * TILE_PX, 0, 4200, 'Sine.easeInOut'); // a slow drift up toward the hill road
-      this.time.delayedCall(4250, () => res());
-    });
-    await this.wait(500);
+    // establish on the sleeping house, with a line so the player knows whose it is
+    await showCaption(this, "Down one of these streets, a kid named {rex} is fast asleep — same as the whole town.", { ms: 2800 });
+    // then drift up toward the hill road, narrating what's waiting up there
+    cam.pan(13 * TILE_PX, 0, 4200, 'Sine.easeInOut'); // a slow drift up toward the hill road
+    await showCaption(this, "But something came down on the hill tonight, and it's still glowing up there.", { ms: 3400 });
+    await this.wait(400);
     GS.setFlag('op_house');
     this.cinematicCut('hickory_hill', 232, 660); // the south trail spawn
   }
@@ -6002,13 +6004,13 @@ export class OverworldScene extends Phaser.Scene {
     }
     const glow = this.add.circle(craterX, craterY, s(22), 0xf8d868, 0.45).setDepth(craterY - 2);
     this.tweens.add({ targets: glow, scale: 1.6, fillAlpha: 0.2, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    await this.wait(900);
+    await this.wait(700);
     AUDIO.sfx('rumble');
-    await new Promise<void>((res) => {
-      cam.pan(craterX, craterY, 6500, 'Sine.easeInOut'); // a slow climb to the crater
-      this.time.delayedCall(6550, () => res());
-    });
-    await this.wait(1000);
+    cam.pan(craterX, craterY, 6500, 'Sine.easeInOut'); // a slow climb to the crater
+    // two lines pace the climb so the long pan reads as a story beat, not dead air
+    await showCaption(this, "The trail climbs Hickory Hill, toward a light that wasn't there yesterday.", { ms: 2600 });
+    await showCaption(this, 'Whatever fell is still up there — still glowing, still warm.', { ms: 2400 });
+    await this.wait(800);
     this.cinematicCut('rex_bedroom', 72, 88);
   }
 
@@ -6555,6 +6557,15 @@ export class OverworldScene extends Phaser.Scene {
         .setAlpha(0)
         .setScale(0.6);
       this.tweens.add({ targets: sentinel, alpha: 1, scale: 1, duration: 1100, ease: 'back.out' });
+      // The Sentinel erupts from the crater RIGHT where Glint was hovering, so the
+      // flit (and its glow) darts clear of the construct's silhouette instead of
+      // sitting buried in its base through the whole warning. Park it just left of
+      // the Sentinel's left edge (sentinel.width is the final scale-1 width); the
+      // supernova then blazes up from this same spot.
+      const sentinelLeft = this.player.x - sentinel.width / 2;
+      const glintRestX = sentinelLeft - glint.displayWidth / 2 - s(12);
+      const glintRestY = 6.5 * TILE_PX;
+      this.tweens.add({ targets: [glint, glow], x: glintRestX, duration: 650, ease: 'sine.inOut' });
       await this.dlg.say(...DIALOGUE.sentinel_warning);
       // ADR-121: Glint goes SUPERNOVA at the rally — the little flit blazes up into
       // his radiant full-power form (one forward-facing pose; a glow needs no angles)
@@ -6562,7 +6573,7 @@ export class OverworldScene extends Phaser.Scene {
       glint.destroy();
       glow.destroy();
       const radiant = this.add
-        .image(15.5 * TILE_PX, 6.5 * TILE_PX, 'authored_world_glint_radiant')
+        .image(glintRestX, glintRestY, 'authored_world_glint_radiant')
         .setDepth(9999)
         .setScale(0.32)
         .setAlpha(0);

@@ -1,6 +1,6 @@
 /**
  * Chapter 2 map BEHAVIOR (S14): the §A6 pyramid rotation as a deterministic
- * permutation, the documented solve (the bot line: 1 → 1 → 2 → 2 presses),
+ * permutation, the documented solve (the bot line: 1 → 1 → 2 → 1 presses),
  * Puerto Sol's frozen 1898 stream, and the recovery gating pairs. Existence
  * and cross-reference truth stays in tools/content-validate.ts (S5 law).
  */
@@ -96,7 +96,7 @@ describe('the pyramid solve — the documented bot line is the real solution', (
     pyramid_4: [7, 1],
   };
   // the scene-header bot line: presses per room, in chain order
-  const PRESSES: Record<string, number> = { pyramid_1: 1, pyramid_2: 1, pyramid_3: 2, pyramid_4: 2 };
+  const PRESSES: Record<string, number> = { pyramid_1: 1, pyramid_2: 1, pyramid_3: 2, pyramid_4: 1 };
 
   for (const room of ['pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_4']) {
     it(`${room}: blocked as found, OPEN after ${PRESSES[room]} press(es)`, () => {

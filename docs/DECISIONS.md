@@ -2303,8 +2303,10 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
     ADR-014 fade-restart per press; flags `pyr_rot_N` carry it, no save
     step). The solve reads on the floor (the T is visible; glyphs point)
     and is PROVEN in vitest by BFS: every room blocked as found, open
-    after the documented presses (**1 → 1 → 2 → 2**), and the mask
-    reachable at every rotation — no soft-lock by construction.
+    after the documented presses (**1 → 1 → 2 → 1**), and the mask
+    reachable at every rotation — no soft-lock by construction. (Room 4
+    starts at rotation 2 so its west door opens into the roomy south lobby —
+    you land able to move, one press bridges to the apex — not a sealed alcove.)
   - **§A7 Ch.2, all six + BOSS 2** (HP pins both directions): every quirk
     is a real mechanic — the Parrot's **pending-cash theft** (cash leaves
     NOW, rides the bird, drops on its defeat; run away and it keeps every

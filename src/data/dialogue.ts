@@ -1214,6 +1214,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_borden_done: [
     '@Road\'s yours, kid. Try not to vandalize any more celestial bodies. (That was a joke. Mostly.)',
   ],
+  sign_station_wall: [
+    'A brass plaque, polished daily: OTTERBROOK POLICE DEPARTMENT.',
+    'Below it, hand-lettered on an index card: "To Protect. To Serve. To File In Triplicate." One (1) cell. One (1) chair. One (1) good pencil.',
+  ],
   npc_busdriver: [
     "@Exact change or exact attitude. You've got one of 'em, kid. Sit anywhere.",
   ],

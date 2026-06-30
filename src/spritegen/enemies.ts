@@ -1243,18 +1243,17 @@ const CH3_ENEMY_FACE: Record<string, string> = {
 
 export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
   // §A6 Ch.10 — THE LAST MILE roster (frost / magma / Mars + 2 minibosses + THE HUSH
-  // finale). SPINE PLACEHOLDER: each REUSES an existing authored battler so the chapter
-  // ships fully authored-clean (ART-PASS: author the dedicated battle_<id> trio + repoint
-  // here and in enemies.ts). The gray-box `draw` is only the boot fallback (ADR-109).
-  frost_wisp: { sprite: 'battle_bog_cotton_wisp', draw: drawTitanicTick },
-  icehorn_caribou: { sprite: 'battle_frost_hare', draw: drawTitanicTick },
-  cinder_imp: { sprite: 'battle_dust_devil_charm', draw: drawTitanicTick },
-  ash_crab: { sprite: 'battle_cobble_mite', draw: drawTitanicTick },
-  silent_drifter: { sprite: 'battle_hushed_skua', draw: drawTitanicTick },
-  static_wraith: { sprite: 'battle_hollow_jackal', draw: drawTitanicTick },
-  frost_sentinel: { sprite: 'battle_frost_jotun_elder', draw: drawTitanicTick },
-  tiki_magma_golem: { sprite: 'battle_boiler_golem', draw: drawTitanicTick },
-  the_hush: { sprite: 'battle_hush_sentinel', draw: drawTitanicTick },
+  // finale). Authored magenta-keyed battlers (base/_w1/_w2) loaded via authored.ts; the
+  // gray-box `draw` is only the boot fallback (ADR-109).
+  frost_wisp: { sprite: 'battle_frost_wisp', draw: drawTitanicTick },
+  icehorn_caribou: { sprite: 'battle_icehorn_caribou', draw: drawTitanicTick },
+  cinder_imp: { sprite: 'battle_cinder_imp', draw: drawTitanicTick },
+  ash_crab: { sprite: 'battle_ash_crab', draw: drawTitanicTick },
+  silent_drifter: { sprite: 'battle_silent_drifter', draw: drawTitanicTick },
+  static_wraith: { sprite: 'battle_static_wraith', draw: drawTitanicTick },
+  frost_sentinel: { sprite: 'battle_frost_sentinel', draw: drawTitanicTick },
+  tiki_magma_golem: { sprite: 'battle_tiki_magma_golem', draw: drawTitanicTick },
+  the_hush: { sprite: 'battle_the_hush', draw: drawTitanicTick },
 
   cranky_mailbox: { sprite: 'battle_cranky_mailbox', draw: drawCrankyMailbox },
   runaway_lawnmower: { sprite: 'battle_runaway_lawnmower', draw: drawRunawayLawnmower },

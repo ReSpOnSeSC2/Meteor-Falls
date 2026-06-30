@@ -1,19 +1,25 @@
 /**
  * SaveSlotsScene — Title's CONTINUE (S6 / GAME_BIBLE §A4.3 + Prompt 22).
- * Three notebook panels; every line is DERIVED from the slot blob on the
- * spot — name, level, location, playtime, embers live once, in the save.
- * Locations render vars(location, slotBlob).toUpperCase() so "{rex}'S
- * HOUSE" follows each slot's OWN rename (ADR-013 banner pattern). A
+ *
+ * "DAD'S NOTEBOOKS": the save slots are Dad's three worn field journals, laid
+ * out on his desk under the lamp (the authored hi-res `save_slots_bg`). Every
+ * line is DERIVED from the slot blob on the spot — name, level, location,
+ * playtime, embers live once, in the save — and is written in ink ON the
+ * notebook's open page. Locations render vars(location, slotBlob).toUpperCase()
+ * so "{rex}'S HOUSE" follows each slot's OWN rename (ADR-013 banner pattern). A
  * smudged (corrupt) notebook recovers from Dad's rolling backup with his
  * apology; if even the backup can't vouch, Dad says so and the list stays
  * (ADR-018). The title theme keeps playing underneath, like name entry.
  *
+ * (S?? — the old procedural notebook-window panels were retired for the authored
+ * desk art at the user's request: "remove the old sprite-looking style.")
+ *
  * QA recipe (ADR-008/013 bots): with any save present, from the title —
  * key('KeyZ') opens the menu, key('KeyZ') picks Continue (top row) → here.
- * ArrowDown/ArrowUp move the hand across the three panels (wraps), KeyZ
- * continues the selected notebook — on a smudged one, drain Dad's apology
- * pages with KeyZ first — and KeyX returns to the title. Touch: tap a
- * panel. Continuing fades to the overworld at the blob's exact map/x/y.
+ * ArrowDown/ArrowUp move the gold highlight across the three notebooks (wraps),
+ * KeyZ continues the selected notebook — on a smudged one, drain Dad's apology
+ * pages with KeyZ first — and KeyX returns to the title. Touch: tap a notebook.
+ * Continuing fades to the overworld at the blob's exact map/x/y.
  */
 import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
@@ -21,20 +27,26 @@ import { AUDIO } from '../engine/audio';
 import { GS } from '../engine/state';
 import { SLOT_IDS, fmtPlaytime, type SlotPeek } from '../engine/saves';
 import { DIALOGUE } from '../data/dialogue';
-import { Dialogue, makeWindow, vars, DEPTH_UI } from '../ui/windows';
-import { DIM } from '../ui/pick';
+import { Dialogue, vars, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
 import { s } from '../spritegen/scale';
 
-const PANEL_X = s(40);
-const PANEL_W = s(320);
-const PANEL_H = s(46);
-const panelY = (i: number): number => s(40) + i * s(54);
+/** The three open-notebook spreads in the authored desk art, in GAME px (the
+ *  bg fills 1600×900). Measured from save_slots_bg by cream-page luminance:
+ *  centres at y≈153/433/715, each spread ~x500–1100. */
+const BOOKS = [
+  { x: 502, y: 40, w: 596, h: 226 },
+  { x: 502, y: 320, w: 596, h: 226 },
+  { x: 502, y: 596, w: 596, h: 240 },
+] as const;
+
+const INK = 0x35230f; // dark espresso — primary ink on the cream page
+const INK_SOFT = 0x7a5c39; // faded sepia — secondary lines / empty + smudged
 
 export class SaveSlotsScene extends Phaser.Scene {
   private dlg!: Dialogue;
   private peeks: SlotPeek[] = [];
-  private hand!: Phaser.GameObjects.Image;
+  private highlight!: Phaser.GameObjects.Graphics;
   private sel = 0;
   private busy = false;
   private navAt = 0;
@@ -48,41 +60,31 @@ export class SaveSlotsScene extends Phaser.Scene {
     this.busy = false;
     this.navAt = 0;
     this.dlg = new Dialogue(this);
-    const W = this.scale.width;
     const gold = colorOf(px(RAMP.GOLD, 3));
-    const night = colorOf(px(RAMP.NIGHT, 3));
     this.add.image(0, 0, 'save_slots_bg').setOrigin(0, 0).setDisplaySize(this.scale.width, this.scale.height);
 
-    const title = "DAD'S NOTEBOOKS";
-    // 6 = native glyph advance, 24 = native padding, 24 = native window height
-    makeWindow(this, s(8), s(8), title.length * s(6) + s(24), s(24));
-    this.add
-      .bitmapText(s(20), s(16), 'retro', title, s(6))
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI + 1)
-      .setTint(gold);
-    this.add
-      .bitmapText(W / 2, s(206), 'retro', 'A: CONTINUE   B: BACK', s(6))
-      .setOrigin(0.5, 0)
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI + 1)
-      .setTint(night);
+    // title + controls hint sit on the dark wood, above the top notebook and
+    // below the bottom one — a thin dark plate keeps them legible on the grain.
+    const W = this.scale.width;
+    this.plaque(W / 2, s(15), "DAD'S NOTEBOOKS", s(6), gold);
+    this.plaque(W / 2, s(214), 'A: CONTINUE    B: BACK', s(5), colorOf(px(RAMP.PAPER, 3)));
 
     this.peeks = GS.slotPeeks();
-    this.peeks.forEach((p, i) => this.drawPanel(p, i));
+    this.peeks.forEach((p, i) => this.drawNotebook(p, i));
 
-    this.hand = this.add
-      .image(PANEL_X - s(8), panelY(0) + PANEL_H / 2, 'hand')
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI + 2);
+    // the selection mark: a soft gold frame around the chosen notebook, pulsing.
+    this.highlight = this.add.graphics().setScrollFactor(0).setDepth(DEPTH_UI - 1);
+    this.tweens.add({ targets: this.highlight, alpha: { from: 0.95, to: 0.4 }, duration: 700, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    this.point(0);
 
-    // §B4: every panel is also a tap target
+    // §B4: every notebook is also a tap target
     this.peeks.forEach((_, i) => {
+      const b = BOOKS[i];
       const z = this.add
-        .zone(PANEL_X, panelY(i), PANEL_W, PANEL_H)
+        .zone(b.x, b.y, b.w, b.h)
         .setOrigin(0, 0)
         .setScrollFactor(0)
-        .setDepth(DEPTH_UI + 3)
+        .setDepth(DEPTH_UI)
         .setInteractive({ useHandCursor: true });
       z.on('pointerdown', () => {
         if (this.busy || this.dlg.busy) return;
@@ -92,38 +94,59 @@ export class SaveSlotsScene extends Phaser.Scene {
     });
   }
 
-  private drawPanel(p: SlotPeek, i: number): void {
-    const y = panelY(i);
-    const gold = colorOf(px(RAMP.GOLD, 3));
-    const night = colorOf(px(RAMP.NIGHT, 3));
-    makeWindow(this, PANEL_X, y, PANEL_W, PANEL_H);
-    // lx/ly are native-px offsets within the panel (call sites pass literals)
-    const line = (lx: number, ly: number, text: string): Phaser.GameObjects.BitmapText =>
+  /** a centered label on a small dark plate so light text reads on the wood. */
+  private plaque(cx: number, y: number, text: string, size: number, tint: number): void {
+    const t = this.add
+      .bitmapText(cx, y, 'retro', text, size)
+      .setOrigin(0.5, 0)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 1)
+      .setTint(tint);
+    this.add
+      .rectangle(cx, y + t.height / 2, t.width + s(12), t.height + s(6), 0x000000, 0.32)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI);
+    t.setDepth(DEPTH_UI + 1); // keep text above its plate
+  }
+
+  private drawNotebook(p: SlotPeek, i: number): void {
+    const b = BOOKS[i];
+    const cx = b.x + b.w / 2;
+    const cy = b.y + b.h / 2;
+    // a line written in ink, centered across the open spread
+    const ink = (dy: number, text: string, size: number, tint: number): Phaser.GameObjects.BitmapText =>
       this.add
-        .bitmapText(PANEL_X + s(lx), y + s(ly), 'retro', text, s(6))
+        .bitmapText(cx, cy + dy, 'retro', text, size)
+        .setOrigin(0.5, 0.5)
         .setScrollFactor(0)
-        .setDepth(DEPTH_UI + 1);
-    const head = line(10, 7, `NOTEBOOK ${SLOT_IDS[i]}`);
+        .setDepth(DEPTH_UI)
+        .setTint(tint);
+
     if (p === 'empty') {
-      head.setTint(DIM);
-      line(10, 21, '(a new page. it smells like possibility.)').setTint(DIM);
+      ink(0, '( a new page. it smells like possibility. )', s(6), INK_SOFT);
       return;
     }
     if (p === 'corrupt') {
-      head.setTint(gold);
-      line(10, 21, '(this page is... smudged. very smudged.)').setTint(DIM);
+      ink(-s(6), `NOTEBOOK ${SLOT_IDS[i]}`, s(6), INK);
+      ink(s(7), '( this page is... smudged. very smudged. )', s(6), INK_SOFT);
       return;
     }
-    head.setTint(gold);
-    line(116, 7, `${p.name}  L${p.level}`);
+    // a full notebook: name + level, then where they are, then how far they've come
+    ink(-s(11), `${p.name.toUpperCase()}    LV ${p.level}`, s(8), INK);
     // the location follows the slot's OWN renames — vars against ITS blob
-    line(10, 19, vars(p.location, p.data).toUpperCase());
-    line(10, 31, `TIME ${fmtPlaytime(p.playtimeSec)}    EMBERS ${p.embers}/8`).setTint(night);
+    ink(s(1), vars(p.location, p.data).toUpperCase(), s(6), INK);
+    ink(s(12), `TIME ${fmtPlaytime(p.playtimeSec)}      EMBERS ${p.embers}/8`, s(6), INK_SOFT);
   }
 
   private point(i: number): void {
     this.sel = i;
-    this.hand.setY(panelY(i) + PANEL_H / 2);
+    const b = BOOKS[i];
+    const gold = colorOf(px(RAMP.GOLD, 3));
+    const pad = s(6);
+    this.highlight
+      .clear()
+      .lineStyle(s(1.5), gold, 1)
+      .strokeRoundedRect(b.x - pad, b.y - pad, b.w + pad * 2, b.h + pad * 2, s(5));
   }
 
   override update(): void {

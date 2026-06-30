@@ -786,6 +786,19 @@ export class BattleScene extends Phaser.Scene {
     if ([
       'haystack_mimic', 'moss_strigoi', 'animated_armor', 'wolf_of_the_old_road', 'ribcage_rattler', 'count_hoaxula',
     ].includes(enemyId)) return 'castle_hoaxula';
+    // CH.10 The Long Shot — three biomes, three authored backdrops. The Alaska leg
+    // (Aurora Station + the ice field + the Frost Sentinel) fights under the aurora.
+    if ([
+      'frost_wisp', 'icehorn_caribou', 'frost_sentinel',
+    ].includes(enemyId)) return 'aurora';
+    // The Hawaii leg (Mauna Lani + the magma flats + the Tiki Magma Golem) fights on the lava field.
+    if ([
+      'cinder_imp', 'ash_crab', 'tiki_magma_golem',
+    ].includes(enemyId)) return 'mauna_lani';
+    // The Mars finale (the Sea of Silence + the Hush) fights on the silent red dead-sea.
+    if ([
+      'silent_drifter', 'static_wraith', 'the_hush',
+    ].includes(enemyId)) return 'sea_of_silence';
     return 'otterbrook';
   }
 
@@ -965,12 +978,16 @@ export class BattleScene extends Phaser.Scene {
 
   private buildTextWindow(): void {
     makeWindow(this, s(6), s(6), s(268), s(56));
+    // The window's 9-slice border eats s(8) each side, so the inner frame ends at
+    // s(264). Wrap the caption at s(240) (40px clear of the inner border) instead of
+    // s(248) — at the old width a full line rendered flush against the right frame
+    // and long boss lines spilled past it. FlairLine shares the same bound.
     this.textObj = this.add
       .bitmapText(s(16), s(14), 'retro', '', s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
-      .setMaxWidth(s(248));
-    this.flairLine = new FlairLine(this, this.textObj, { maxWidthPx: s(248), depth: DEPTH_UI + 1 });
+      .setMaxWidth(s(240));
+    this.flairLine = new FlairLine(this, this.textObj, { maxWidthPx: s(240), depth: DEPTH_UI + 1 });
   }
 
   /** S18 M23: append a flair glyph to a battle caption, by the move's ELEMENT or

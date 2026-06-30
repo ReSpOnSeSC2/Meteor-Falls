@@ -382,6 +382,15 @@ export function growOtterbrook(): MapDef {
   });
   g.rect(6, 41, 6, 1, '='); // the hall's front step meets the civic lane
 
+  // 4b) LANDMARK — THE STATION HOUSE (ADR-118 rework): a real little brick P.D.
+  //     east of City Hall on the same civic lane. Constable Borden MARCHES you
+  //     into its holding cell for the cop fight (no more fake fade-to-same-spot);
+  //     walked into off the lane any other time it's just a quiet station.
+  const station = placeFacade('facade_otter_station', 13, 40 * 16 + 12, 6, 2, {
+    to: 'otter_station', tx: 120, ty: 128,
+  });
+  g.rect(13, 41, 6, 1, '='); // the station's front step meets the civic lane
+
   // 5) LANDMARK — THE CIVIC GREEN: an irregular park, corners nibbled so it
   //    never reads as a rectangle (§B4 negative space). Hedge fragments, not a
   //    wall; the interior stays open grass.
@@ -447,6 +456,8 @@ export function growOtterbrook(): MapDef {
     { sprite: 'sign', x: 4, y: 44, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the woods trailhead marker
     cityHall,
     { sprite: 'sign', x: 12, y: 41, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // City Hall plaque
+    station,
+    { sprite: 'sign', x: 19, y: 41, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // STATION plaque
     // the Civic Green's dressing
     { sprite: 'bench', x: 19, y: 49, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
     { sprite: 'sign', x: 16, y: 46, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
@@ -490,11 +501,14 @@ export function growOtterbrook(): MapDef {
     { id: 'bus_waiter2', sprite: 'senora', x: 46, y: 25, facing: 'up' as const, dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle' as const, ifFlag: 'zapper_done' },
     // S22 (ADR-115): the tycoon TEASERS on the civic lane — you can SEE the home +
     // car you'll someday afford. Both open at daybreak (zapper_done).
-    { id: 'realtor_otter', sprite: 'senora', x: 14, y: 43, facing: 'up' as const, dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
+    { id: 'realtor_otter', sprite: 'senora', x: 24, y: 43, facing: 'up' as const, dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
     { id: 'car_dealer_otter', sprite: 'quarterMan', x: 22, y: 43, facing: 'up' as const, dialogue: 'npc_car_dealer', idle: true, emote: 'happy' as const, ifFlag: 'zapper_done' },
-    // S22 (ADR-118): Constable Borden works the "hill vandalism" case at City Hall
-    // by daybreak — an OPTIONAL cop fight that clears Chad's frame-up (never a wall).
-    { id: 'constable_borden', sprite: 'npc_borden', x: 10, y: 43, facing: 'up' as const, dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise' as const, ifFlag: 'zapper_done' },
+    // S22 (ADR-118 rework): Constable Borden works the "hill vandalism" frame-up
+    // out of the new STATION HOUSE by daybreak. He RUNS you down on sight (no need
+    // to talk to him) and marches you into the holding cell — an OPTIONAL cop fight
+    // that clears Chad's frame-up (never a wall). After he's cleared he stays on the
+    // lane as a friendly (talk → npc_borden_done). Chase + beats: OverworldScene.
+    { id: 'constable_borden', sprite: 'npc_borden', x: 16, y: 43, facing: 'up' as const, dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise' as const, ifFlag: 'zapper_done', unlessFlag: 'borden_marching' },
   ];
 
   const signs = [
@@ -574,6 +588,51 @@ function buildOtterbrookCityHallInt(streetExit: { tx: number; ty: number }): Map
     ],
     signs: [{ x: 4, y: 1, dialogue: 'sign_hall_wall' }],
     phones: [{ x: 2, y: 8 }],
+    doors: [
+      { x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/**
+ * THE OTTERBROOK STATION HOUSE — the little brick P.D.'s one room: a booking
+ * desk, the case files, and a single holding CELL in the back-right corner (a
+ * cot, a walled-off front with a barred doorway). Walked in off the civic lane
+ * it's a quiet station; but when Constable Borden MARCHES you in (flag
+ * `borden_marching`) you spawn INSIDE the cell and he books you — the cop fight
+ * fires here (OverworldScene.bordenCellBeat). The bottom door rides back to the
+ * jittered facade's doorstep (computed via doorstepOf — the dos_f1 pattern).
+ */
+function buildOtterStationInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(16, 11, 'w');
+  g.rect(0, 0, 16, 2, 'W'); // back wall
+  // the HOLDING CELL — a back-right alcove. West wall + a front rail with a
+  // one-tile barred doorway; its east side is the room's own edge.
+  g.rect(10, 2, 1, 5, 'W'); // the cell's west wall (col 10, rows 2-6)
+  g.rect(11, 6, 5, 1, 'W'); // the cell's front rail (row 6, cols 11-15)
+  g.set(13, 6, 'w');        // ...save the cell-door gap
+  return {
+    id: 'otter_station',
+    name: 'OTTERBROOK STATION',
+    music: 'otterbrook',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'counter', x: 3, y: 4, solid: { ox: 0, oy: 4, w: 30, h: 14 } }, // the booking desk
+      { sprite: 'shelf_b', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } }, // case files
+      { sprite: 'planter', x: 7, y: 8, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+      { sprite: 'cot', x: 11, y: 2, solid: { ox: 1, oy: 12, w: 18, h: 10 } }, // the cell bunk
+    ],
+    npcs: [
+      // Borden books you in the cell — present only while he's marched you in
+      // (the beat fires on entry; once you're cleared he's gone from here, back on
+      // the lane). Talking is moot — bordenCellBeat takes over the moment you land.
+      { id: 'borden_cell', sprite: 'npc_borden', x: 14, y: 3, facing: 'down', dialogue: 'npc_borden_holding', ifFlag: 'borden_marching', unlessFlag: 'borden_cleared' },
+    ],
+    signs: [{ x: 4, y: 1, dialogue: 'sign_station_wall' }],
+    phones: [],
     doors: [
       { x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],
@@ -2920,6 +2979,7 @@ const longWalk = buildLongWalk();
   }
 }
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
+const otterStationDoorstep = doorstepOf(otterbrookMap, 'otter_station') ?? { tx: 248, ty: 680 };
 const busDepotDoorstep = doorstepOf(otterbrookMap, 'bus_depot_int') ?? { tx: 760, ty: 392 };
 // S22 (ADR-116) — DOWNTOWN: the entry doorstep on the grown town, then the street
 // screen, then its two shop interiors (doorsteps computed off the street map).
@@ -3237,6 +3297,7 @@ export const MAPS: Record<string, MapDef> = {
   dos_f2: buildDosF2(),
   dos_f3: buildDosF3(),
   otterbrook_cityhall: buildOtterbrookCityHallInt(cityHallDoorstep),
+  otter_station: buildOtterStationInt(otterStationDoorstep),
   bus_depot_int: buildBusDepotInt(busDepotDoorstep),
   downtown_otterbrook: downtownMap,
   hardware_int: buildHardwareInt(hardwareStep),
@@ -3260,7 +3321,7 @@ export const MAPS: Record<string, MapDef> = {
 // their hand-built size.
 const ROOMY_INTERIORS: readonly string[] = [
   'drugstore_int', 'starmart_int', 'arcade_int', 'arcade2_int',
-  'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall', 'bus_depot_int',
+  'rex_bedroom', 'ana_room', 'vivi_room', 'otterbrook_cityhall', 'otter_station', 'bus_depot_int',
   'hardware_int', 'diner_int', 'otter_clinic_int',
   'mercado_int', 'clinic_ps_int', 'deli_int', 'chapel_int',
   'valle_shop_int', 'clinic_valle_int', 'chapel_valle_int',

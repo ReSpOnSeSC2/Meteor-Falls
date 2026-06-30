@@ -18,7 +18,8 @@
  * fade-restarts per ADR-014). The T's arms read on the floor, so the solve
  * is visual: turn the channel until it bridges your door to the next.
  *   Bot line (documented for the ADR-008 driver): presses per room
- *   1 → 1 → 2 → 2 (rooms start at rotations 0/2/3/1; room 3 exits EAST).
+ *   1 → 1 → 2 → 1 (rooms start at rotations 0/2/3/2; room 3 exits EAST,
+ *   room 4 is entered from the west into its south lobby — one press bridges up).
  */
 import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
@@ -1080,7 +1081,14 @@ export const PYR_INITIAL_ROT: Record<string, number> = {
   pyramid_1: 0,
   pyramid_2: 2,
   pyramid_3: 3,
-  pyramid_4: 1,
+  // room 4 is entered from the WEST. At rotation 1 the channel is the full
+  // vertical bar (N↔S already open), so the west door could only feed an
+  // ISOLATED entry alcove — you spawned boxed in a 9-tile pocket with nothing
+  // to do but the switch (the "can't move on entry" soft-lock report). Start it
+  // at rotation 2 instead (⊤, north arm closed): the west door now opens
+  // straight into the roomy south lobby (45 tiles), and ONE press bridges up to
+  // the apex. Roomy landing + a single productive press, no sealed box.
+  pyramid_4: 2,
 };
 
 /**
@@ -1146,9 +1154,12 @@ function buildPyramidRoom(
     g.rect(11, 7, 3, 1, 'Y');
   }
   if (id === 'pyramid_4') {
-    // room 4 is entered from the WEST (room 3 exits east): door + a small
-    // alcove through the west flank — the mask waits IN the alcove, so the
-    // switch is always reachable from the door (no soft-lock; tested)
+    // room 4 is entered from the WEST (room 3 exits east): door + a short
+    // alcove through the west flank that holds the mask. With the room's
+    // initial rotation now 2 (PYR_INITIAL_ROT, ⊤), the rotor bar (row 7) is
+    // open the moment you arrive, so this alcove reads straight through into
+    // the roomy south lobby — you land able to move, not boxed in. One press
+    // (→ rot 3) then bridges the channel up to the apex door.
     g.rect(0, 5, 1, 3, 'Y');
     g.rect(1, 6, 3, 2, 'Y');
     g.rect(6, 13, 3, 1, 'Z'); // no south door here
@@ -1255,7 +1266,10 @@ export function buildPyramidRooms(): MapDef[] {
       'pyramid_4',
       'north',
       [
-        { x: 0, y: 5, w: 1, h: 3, to: 'pyramid_3', tx: 208, ty: 104, facing: 'left' },
+        // back to room 3's east channel — land on the carved channel floor
+        // (13,7), NOT (13,6) which is the flank WALL (ty 104 spawned you inside
+        // a solid tile; the safety-net then had to fish you out — fixed here).
+        { x: 0, y: 5, w: 1, h: 3, to: 'pyramid_3', tx: 208, ty: 120, facing: 'left' },
         { x: 6, y: 0, w: 3, h: 1, to: 'pyramid_apex', tx: 144, ty: 180, facing: 'up', indicator: 'door' },
       ],
       [12, 2],
