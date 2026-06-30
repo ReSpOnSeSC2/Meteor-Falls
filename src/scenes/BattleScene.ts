@@ -82,7 +82,7 @@
  */
 import Phaser from 'phaser';
 import { ENEMIES, introLine, type EnemyDef, type EnemyMove } from '../data/enemies';
-import { ABILITIES, rollPray, PRAY_TEXT, type AbilityDef, type PrayTier } from '../data/abilities';
+import { ABILITIES, groupAbilityFamilies, rollPray, PRAY_TEXT, type AbilityDef, type PrayTier } from '../data/abilities';
 import { ITEMS, consumesOnUse, spiceFoodHeal } from '../data/items';
 import { BATTLE_TEXT, DIALOGUE } from '../data/dialogue';
 import { BOSS_SCRIPTS } from '../data/bosses';
@@ -1655,19 +1655,7 @@ export class BattleScene extends Phaser.Scene {
       await this.print(`${name} searched for the old light... not yet.`);
       return false;
     }
-    const labels = ids.map((id) => `${ABILITIES[id].name}  ${ABILITIES[id].pp}pp`);
-    const pick = await this.dlg.ask([...labels, 'Back'], {
-      cancelIndex: labels.length,
-      icons: [...ids.map((id) => abilityIconKey(id)), undefined],
-    });
-    if (pick >= labels.length) return false;
-    const ab = ABILITIES[ids[pick]];
-    if (h.odoPp.target < ab.pp) {
-      await this.print('Not enough PP!');
-      return false;
-    }
-    const done = await this.castAbility(h, ab);
-    return done;
+    return this.pickAbilityFromFamilies(h, ids);
   }
 
   /** Milo's command (§A3: Spy, Bottle Rockets — Repair works overnight) */
@@ -1676,13 +1664,7 @@ export class BattleScene extends Phaser.Scene {
       (id) => ABILITIES[id]?.kind === 'gadget' && id !== 'repair',
     );
     if (ids.length === 0) return false;
-    const labels = ids.map((id) => ABILITIES[id].name);
-    const pick = await this.dlg.ask([...labels, 'Back'], {
-      cancelIndex: labels.length,
-      icons: [...ids.map((id) => abilityIconKey(id)), undefined],
-    });
-    if (pick >= labels.length) return false;
-    return this.castAbility(h, ABILITIES[ids[pick]]);
+    return this.pickAbilityFromFamilies(h, ids);
   }
 
   /** Pippa's command (§A3, S15h+: NO Vibe, NO PP — her kit is competence, not
@@ -1693,13 +1675,54 @@ export class BattleScene extends Phaser.Scene {
       (id) => ABILITIES[id]?.kind === 'physical',
     );
     if (ids.length === 0) return false;
-    const labels = ids.map((id) => ABILITIES[id].name);
-    const pick = await this.dlg.ask([...labels, 'Back'], {
-      cancelIndex: labels.length,
-      icons: [...ids.map((id) => abilityIconKey(id)), undefined],
-    });
-    if (pick >= labels.length) return false;
-    return this.castAbility(h, ABILITIES[ids[pick]]);
+    return this.pickAbilityFromFamilies(h, ids);
+  }
+
+  /**
+   * ADR-133 — the GROUPED ability picker, shared by Vibe / Gadgets / Tactics. A whole
+   * ladder (Vibe Fire α…Σ) meshes into ONE family box ("Vibe Fire  ►") that opens a rung
+   * submenu; a non-laddered ability shows directly and casts on pick. Two levels max, so a
+   * late-game Mia reads ~9 family rows instead of ~25 flat rungs. Back/B steps out one
+   * level (rung→family, family→command row); insufficient PP re-shows the menu rather than
+   * dumping the whole turn. Targeting + cost are still resolved by castAbility, unchanged.
+   */
+  private async pickAbilityFromFamilies(h: HeroUnit, ids: string[]): Promise<boolean> {
+    const groups = groupAbilityFamilies(ids);
+    for (;;) {
+      // top level: one row per family. A multi-rung ladder shows its name + a ► affordance
+      // and the icon of its strongest rung; a lone ability shows its own name + PP.
+      const topLabels = groups.map((g) =>
+        g.ids.length > 1
+          ? `${g.family}  ►`
+          : `${ABILITIES[g.ids[0]].name}  ${ABILITIES[g.ids[0]].pp}pp`,
+      );
+      const topIcons = groups.map((g) => abilityIconKey(g.ids[g.ids.length - 1]));
+      const pick = await this.dlg.ask([...topLabels, 'Back'], {
+        cancelIndex: topLabels.length,
+        icons: [...topIcons, undefined],
+      });
+      if (pick >= topLabels.length) return false; // Back / B → out to the command row
+
+      const group = groups[pick];
+      let chosenId = group.ids[0];
+      if (group.ids.length > 1) {
+        // submenu: the ladder's rungs, α→Σ (PP order), each with its PP cost + icon
+        const rungLabels = group.ids.map((id) => `${ABILITIES[id].name}  ${ABILITIES[id].pp}pp`);
+        const sub = await this.dlg.ask([...rungLabels, 'Back'], {
+          cancelIndex: rungLabels.length,
+          icons: [...group.ids.map((id) => abilityIconKey(id)), undefined],
+        });
+        if (sub >= rungLabels.length) continue; // Back → re-show the family list
+        chosenId = group.ids[sub];
+      }
+
+      const ab = ABILITIES[chosenId];
+      if (ab.pp > 0 && h.odoPp.target < ab.pp) {
+        await this.print('Not enough PP!');
+        continue; // let them pick again instead of losing the turn
+      }
+      return this.castAbility(h, ab);
+    }
   }
 
   /**

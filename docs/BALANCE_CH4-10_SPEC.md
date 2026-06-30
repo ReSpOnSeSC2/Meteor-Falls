@@ -74,6 +74,13 @@ L22/26/30/35/40/46/52).
 
 ### 1a. Jay (`rex`) — Vibe Surge γ/Ω/Σ + Lifeup β/γ/Ω
 
+> **⚠ AMENDED BY ADR-133 (curve re-eval).** The Surge γ/Ω row VALUES below are SUPERSEDED.
+> The ADR-122 numbers (γ pw1100 @ L31, Ω pw6846 @ L47) left Surge β as Jay's best nuke for
+> FOUR chapters (Ch.3–6 dead zone). SHIPPED values: **Surge γ pw360 / pp26 / earn L26 (Ch.5)**,
+> **Surge Ω pw1250 / pp44 / earn L35 (Ch.7)**; α/β/Σ + the Lifeup rows are unchanged. The
+> player-facing read becomes 666 (Ch.5) → 2,646 (Ch.7) → 24,000 (Ch.10 Σ), tracking the band
+> with no dead pick. Method identical (`power = target ÷ (1+Vibe/60)` at the new earn-level).
+
 | id | tier | band | earn L | Vibe | new `power` | new `pp` | resulting |
 |---|---|---|---|---|---|---|---|
 | `vibe_surge_g` | γ | Ch7 | L31 | 60 | **1100** *(was 231)* | **38** *(keep)* | dmg **2200** |
@@ -134,6 +141,14 @@ Rocket 28 / Big Bottle Rocket 60 / Static Bomb 20 / Med-Spray 90 already set in 
 spec §1c.)*
 
 ### 1d. Dorin — Comet α/β/γ/Ω + Healing β
+
+> **✅ NOW APPLIED BY ADR-133 (curve re-eval).** The re-derivation this section flagged as
+> deferred is DONE. SHIPPED Comet values (re-derived for his REAL join, L26 / Ch.5-end →
+> Ch.10): **α pw430**, **β pw900 (earn L33)**, **γ pw2000 (earn L40, now BEFORE the L46 Ω
+> awakening)**, **Ω pw3400**; pp unchanged (20/30/44/60). His support rungs spread L34→L51,
+> and `dorin` was added to `BOSS_PARTY[6-9]` (verify.ts) — which resolves the §2 Ch.9 TTK-12
+> flag (12→8). Player-facing: 896 (Ch.6) → 9,577 (Ch.10), on-band the whole way (was ~×4 over).
+> The OLD Ch.9-ceiling table below is retained only as the historical derivation.
 
 > ⚠ **SUPERSEDED BY ADR-125 ("Dorin: The Long Way Home") — re-derive when built.**
 > Dorin now joins **Ch.5 end** (Minimus) and is in `BOSS_PARTY` **from Ch.6**, not Ch.10.

@@ -50,7 +50,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
       { level: 26, ability: 'teleport_a' },
       { level: 28, ability: 'powershield_a' }, // S16: single-target reflect
       { level: 29, ability: 'hypno_o' }, // S16: mass sleep
-      { level: 31, ability: 'vibe_surge_g' },
+      { level: 26, ability: 'vibe_surge_g' }, // ADR-133: L31→26 (Ch.5) — kills the β dead zone
       { level: 33, ability: 'shield_s' },
       { level: 33, ability: 'resolve_a' }, // S16: the Guts self-buff
       { level: 36, ability: 'ward_s' }, // S16: party-wide elemental ward
@@ -58,7 +58,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
       { level: 40, ability: 'flash_o' }, // S16: stronger blind
       { level: 34, ability: 'teleport_b' }, // S16: the escape upgrade
       { level: 46, ability: 'lifeup_o' }, // S16: the big party heal
-      { level: 47, ability: 'vibe_surge_o' },
+      { level: 35, ability: 'vibe_surge_o' }, // ADR-133: L47→35 (Ch.7) — Ω lands mid-game, not wasted in Ch.10
     ],
   },
   faye: {
@@ -149,28 +149,30 @@ export const HEROES: Record<HeroId, HeroDef> = {
     growth: { offense: 2.2, defense: 1.9, speed: 2.0, guts: 1.1, vibe: 2.0, luck: 0.7 },
     hp: { base: 34, lin: 7.0, quad: 0.09 },
     pp: { base: 12, lin: 2.8, quad: 0.035 },
-    // "The Long Way Home" (ADR-125) — Dorin joins MID-journey (Ch.5 end, Minimus)
+    // "The Long Way Home" (ADR-125) — Dorin joins MID-journey (Ch.5 end, Minimus, L26)
     // and travels with the party through Ch.10; his AWAKENING lands at the Trial of
     // the Mute Mountain (Ch.9 homecoming), where Vibe Comet Ω awakens (one-path rule,
     // ADR-035) — see src/data/awakenings.ts + the content-validate canon manifest.
-    // BUILD-DEFERRED (with Ch.4–10): the L1-clustered unlocks below are the OLD
-    // Ch.9-join shape. When the late chapters land, spread the Comet/Healing rungs
-    // across Ch.5–9 (earn ~L26+), re-derive their power for those levels via
-    // formulas.ts, add a bead rung below cedar_beads, and add `dorin` to BOSS_PARTY
-    // from Ch.6. See GAME_BIBLE §A3 (ADR-125) + BALANCE_CH4-10_SPEC §1d.
+    // ADR-133 (curve re-eval): the OLD shape clustered Comet β at L1-on-join (a ~4,170
+    // AoE the moment he joined at L26 — ×4 over the Ch.5 band) and put γ at L48, AFTER
+    // its own Ω awakening (L46). RE-SPACED so he GROWS with the party across Ch.6→10:
+    // Comet α on-join (Ch.6), β L33 (Ch.7), γ L40 (Ch.8), Ω awakens L46 (Ch.9-10); his
+    // support rungs (brainjam/flowing/healing γ/mirror Ω) spread L34→L51 instead of all
+    // dumping at L44+. Powers re-derived in abilities.ts; `dorin` added to BOSS_PARTY[6-9]
+    // (verify.ts) to match his real presence. See BALANCE_CH4-10_SPEC §1d (now applied).
     unlocks: [
-      { level: 1, ability: 'vibe_comet_a' },
-      { level: 1, ability: 'vibe_comet_b' }, // joins ready — the master, not the student
+      { level: 1, ability: 'vibe_comet_a' }, // on-join (L26) — the master enters ready
       { level: 1, ability: 'mirror' },
       { level: 1, ability: 'healing_a' },
       { level: 1, ability: 'healing_b' }, // an actual HP heal so he can main-heal on join
       { level: 1, ability: 'stone_stance' }, // a stance from the first turn
-      { level: 40, ability: 'brainjam_a' },
-      { level: 44, ability: 'healing_g' },
-      { level: 45, ability: 'flowing_step' },
+      { level: 33, ability: 'vibe_comet_b' }, // Ch.7 — the second rung earns, no longer free on join
+      { level: 34, ability: 'brainjam_a' }, // anti-caster control mid-game
+      { level: 36, ability: 'flowing_step' },
+      { level: 40, ability: 'vibe_comet_g' }, // Ch.8 — γ now lands BEFORE the Ω awakening (L46)
+      { level: 42, ability: 'healing_g' },
+      { level: 44, ability: 'mirror_o' }, // party reflect
       { level: 46, ability: 'brainjam_g' },
-      { level: 48, ability: 'vibe_comet_g' },
-      { level: 49, ability: 'mirror_o' },
       { level: 50, ability: 'brainjam_o' },
       { level: 51, ability: 'healing_o' }, // the revive backbone — his defining endgame support
     ],
