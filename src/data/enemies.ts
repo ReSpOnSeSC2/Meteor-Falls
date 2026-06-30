@@ -2942,7 +2942,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
      * Money > combat: 150000 HP sits far under the Ch.10 Fortune target ($3B). */
     E({
       id: 'the_hush',
-      name: 'The Hush',
+      name: 'Hush', // 'The' is the article — introLine/{e} render "The Hush" (was "The The Hush")
       article: 'The',
       hp: 150000, offense: 145, defense: 66, speed: 56, level: 52, exp: 0, cash: 0,
       weakness: [],

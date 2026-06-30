@@ -505,7 +505,7 @@ const WORLD_PROP_KEYS = [
   'dresser', 'tv', 'stove', 'bookshelf', 'floor_lamp', 'poster_smile', 'poster_chart',
   'banner_productive', 'paw_prints', 'gift_box', 'gift_box_open', 'cab_a', 'cab_b',
   'cab_c', 'cab_legend', 'cage_gate', 'backboard', 'cage_mural', 'bleachers_a',
-  'bleachers_b', 'chalk_board', 'fountain', 'market_stall_a', 'market_stall_b',
+  'bleachers_b', 'chalk_board', 'fountain', 'well', 'market_stall_a', 'market_stall_b',
   'market_stall_c', 'banana_boat', 'departure_board', 'idol_shrine', 'pyramid_gate',
   'mask_switch', 'mask_switch_lit', 'pedestal_0', 'pedestal_1', 'pedestal_2',
   'pedestal_3', 'crate', 'crate_bananas', 'gangplank',
@@ -724,6 +724,7 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   gangplank: { w: 24, h: 20 },
   departure_board: { w: 26, h: 30 },
   fountain: { w: 40, h: 38 },
+  well: { w: 24, h: 32 }, // stone well-head (Ch.6–10 village dressing) — authored magenta-keyed prop
   market_stall_a: { w: 40, h: 34 },
   market_stall_b: { w: 40, h: 34 },
   market_stall_c: { w: 40, h: 34 },
