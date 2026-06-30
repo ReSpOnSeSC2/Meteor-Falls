@@ -2383,7 +2383,10 @@ export class BattleScene extends Phaser.Scene {
           return true;
         }
       }
-      await this.damageEnemy(target, applyWeakness(item.power, weak), weak);
+      // §A6 Ch.10 — STOLEN LIGHT is stolen VIBE: route it as 'vibe' damage so it reaches
+      // THE HUSH even through its physical-immune QUIET movement (the IRON path's finale edge).
+      const itemDmgClass = item.id === 'stolen_light' ? 'vibe' : 'physical';
+      await this.damageEnemy(target, applyWeakness(item.power, weak), weak, undefined, itemDmgClass);
       if (onStage) await this.stageReturn(h);
       return true;
     }
@@ -2429,6 +2432,9 @@ export class BattleScene extends Phaser.Scene {
     // scripted turn-5 repel (endBattleMercy) — the bar can crash to a sliver, then
     // Glint drives it off.
     if (this.cfg.glintSupernova && e.def.boss && e.hp <= 0) e.hp = 1;
+    // §A6 Ch.10 — THE HUSH is never KILLED, only REACHED: clamp it to a sliver so the 12%
+    // mercy-end (its 'falls' phase, endBattleMercy) always resolves the finale, not a kill.
+    if (e.def.id === 'the_hush' && e.hp <= 0) e.hp = 1;
     // floating damage popup (the S10 popFoe idiom) + the printed line —
     // a SMAAAASH combo hands in its one assembled EB line instead (S11b)
     this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `${dmg}`, weak ? RAMP.GOLD : RAMP.PAPER);

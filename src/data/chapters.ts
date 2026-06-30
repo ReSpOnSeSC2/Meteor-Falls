@@ -260,12 +260,12 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     chapter: 10,
     title: 'The Long Shot',
     region: 'Alaska → Hawaii → Mars',
-    status: 'unlanded',
+    status: 'shipped',
     targetLevel: 52, // the §A6 52–55+ window's floor
     ember: 10,
     band: 'ch10',
     travel: 'snowcat', // snow-cat, then Pemberton's rocket The Long Shot
-    dungeon: { name: 'The Sea of Silence (Mars)', site: 'sea_of_silence' },
+    dungeon: { name: 'The Sea of Silence (Mars)', maps: ['sea_of_silence'] },
     // the finale shell is bespoke (not one of the ten templates) — like the Tick
     boss: { id: 'the_hush', name: 'The Hush', hp: 150000, template: 'bespoke' },
     minibosses: [
@@ -276,7 +276,9 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
       { id: 'aurora_station', kind: 'village', style: 'fog-stone' },
       { id: 'mauna_lani', kind: 'village', style: 'fog-stone' },
     ],
-    maps: [],
+    // the 4 overworld maps from buildChapter10Maps(): the two settlements + the two
+    // gauntlet fields (the Sea of Silence dungeon lives under dungeon.maps above)
+    maps: ['aurora_station', 'aurora_ice_field', 'mauna_lani', 'lani_magma_flats'],
     quests: ['lights_of_aurora', 'the_last_wave'],
   },
 };

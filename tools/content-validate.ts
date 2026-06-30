@@ -1400,6 +1400,20 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     animated_armor: 20000,
     wolf_of_the_old_road: 24000,
     count_hoaxula: 95000,
+    // Chapter 10 (Alaska → Hawaii → Mars, THE LONG SHOT) — §A7 the finale roster: 6
+    // regulars (2 frost / 2 magma / 2 Mars) work the gauntlet fields, the two §A6
+    // elemental-golem MINIBOSSES gate the road (50k each, MINIBOSS_HP), and THE HUSH is
+    // the bespoke 150k finale. On-curve (band ch10, window 50-52; trash HP 18k-27k).
+    // Money > combat: every HP sits far under the Ch.10 Fortune target ($3B).
+    frost_wisp: 18000,
+    icehorn_caribou: 25000,
+    cinder_imp: 19000,
+    ash_crab: 26000,
+    silent_drifter: 22000,
+    static_wraith: 27000,
+    frost_sentinel: 50000,
+    tiki_magma_golem: 50000,
+    the_hush: 150000,
   };
   for (const [id, hp] of Object.entries(canon)) {
     const e = ENEMIES[id];
@@ -1647,7 +1661,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner']);
+  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner', 'aurora_provisioner', 'mauna_vendor']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -1986,6 +2000,30 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       rewardItem: 'basket_feast',
       doneFlag: 'q_bunis_done',
       caller: { name: 'Buni', kind: 'heal', power: 1900 },
+    },
+    // ── CHAPTER 10 (Alaska → Hawaii → Mars) — §A10 the two map-light finale data quests
+    //    that bank the §A6 CALLING ledger: Lights of Aurora (the Station Keeper, Alaska)
+    //    and The Last Wave (Pemberton, Hawaii). Givers as_keeper / ml_pemberton land with
+    //    the Ch.10 maps; rewards reuse the live §A8 ch10 catalog (aurora_cocoa / rocket_manifest). ──
+    lights_of_aurora: {
+      name: 'Lights of Aurora',
+      chapter: 10,
+      giver: 'as_keeper',
+      startFlag: 'q_aurora',
+      objectiveFlags: ['q_aurora_gather', 'q_aurora_relit'],
+      rewardItem: 'aurora_cocoa',
+      doneFlag: 'q_aurora_done',
+      caller: { name: 'The Station Keeper', kind: 'heal', power: 2000 },
+    },
+    the_last_wave: {
+      name: 'The Last Wave',
+      chapter: 10,
+      giver: 'ml_pemberton',
+      startFlag: 'q_last_wave',
+      objectiveFlags: ['q_last_wave_gather', 'q_last_wave_fit'],
+      rewardItem: 'rocket_manifest',
+      doneFlag: 'q_last_wave_done',
+      caller: { name: 'Pemberton', kind: 'damage', power: 2200 },
     },
   };
   for (const [id, pin] of Object.entries(canon)) {

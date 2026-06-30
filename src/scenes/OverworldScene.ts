@@ -110,7 +110,7 @@ import { playCutscene } from '../engine/cutscene';
 import { CHOICES, type ChoiceId } from '../data/choices';
 import { recordChoice } from '../engine/choice';
 import { captureEcho, isRewindable, clearPuppetLock } from '../engine/echo';
-import { composeEnding, endingContext } from '../engine/ending';
+import { composeEnding, endingContext, forgiveViable } from '../engine/ending';
 import { withholdUltimate, isPresent } from '../engine/party';
 import { LINKS_FLAGS, LINKS_TEXT, SUNDAY_SET, linksSeed } from '../data/links';
 import type { HoopsLaunch } from './HoopsScene';
@@ -4275,7 +4275,9 @@ export class OverworldScene extends Phaser.Scene {
         if (GS.flag('count_hoaxula_defeated')) await this.runChoice('ch9_count');
         break;
       case 'choice_finale':
-        await this.runChoice('ch10_song');
+        // the Hush speaks, the STRINGS player gives the choice to Mia, CHOICE 3 is set,
+        // and the FORGIVE-viability gate may force Silence (the full beat, not just the pick)
+        await this.theFinaleChoiceScene();
         break;
       case 'compose_ending':
         await this.playEnding();
@@ -4409,6 +4411,28 @@ export class OverworldScene extends Phaser.Scene {
         break;
       case 'stone_brow_monastery_resonance':
         if (!GS.flag('ch9_complete')) await this.stoneBrowMonasteryScene();
+        break;
+      /* ---------------- Chapter 10 (§A6 The Long Shot — FINALE) ---------------- */
+      case 'ch10_arrival':
+        if (!GS.flag('ch10_arrived')) await this.ch10ArrivalScene();
+        break;
+      case 'ch10_decode':
+        if (!GS.flag('ch10_decoded')) await this.ch10DecodeScene();
+        break;
+      case 'frost_sentinel_boss':
+        if (!GS.flag('frost_sentinel_defeated')) await this.frostSentinelBossScene();
+        break;
+      case 'tiki_magma_golem_boss':
+        if (!GS.flag('tiki_magma_golem_defeated')) await this.tikiMagmaGolemBossScene();
+        break;
+      case 'ch10_launch':
+        if (!GS.flag('ch10_launched')) await this.ch10LaunchScene();
+        break;
+      case 'ch10_mars_arrival':
+        if (!GS.flag('ch10_mars_arrived')) await this.ch10MarsArrivalScene();
+        break;
+      case 'the_hush_boss':
+        if (!GS.flag('the_hush_defeated')) await this.theHushBossScene();
         break;
       // the §A10 Ch.3 "find" pickups (books / letters / the drain / milk / water)
       case 'q_overdue_b1':
@@ -4736,6 +4760,21 @@ export class OverworldScene extends Phaser.Scene {
    *  Ch.3 is complete (the boardLucille precedent — England's flight stays his too). */
   private async bertAirBeat(): Promise<void> {
     this.cut = true;
+    // the §A5 FINAL leg: once Romania (Ch.9) is done, Bert flies the party north to the
+    // snowcat for AURORA STATION (Ch.10 — the newest frontier takes priority)
+    if (GS.flag('ch9_complete') && !GS.flag('ch10_arrived')) {
+      await this.dlg.say(...DIALOGUE.bert_alaska_ask);
+      const pick = await this.dlg.ask(['Fly north to AURORA STATION', 'Not yet'], { cancelIndex: 1 });
+      if (pick !== 0) {
+        this.cut = false;
+        return;
+      }
+      AUDIO.stopMusic();
+      await playCutscene(this, 'ch10_journey'); // the snowcat-run panels (no-ops if missing)
+      // the snowcat sets the party down on the Aurora Station green; ch10_arrival fires the beat
+      this.goThroughDoor('aurora_station', 8 * 16, 19 * 16, 'down');
+      return;
+    }
     // the §A5 NEXT leg: once Lotus Harbor (Ch.8) is done, Bert flies the party to VALEA
     // STELELOR (the newest frontier takes priority — the earlier legs below stay for the backtrack)
     if (GS.flag('ch8_complete') && !GS.flag('ch9_arrived')) {
@@ -5380,6 +5419,160 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.ch9_card);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
+  }
+
+  /* ──────────── CHAPTER 10 — THE LONG SHOT (§A6 the finale: Alaska → Hawaii → Mars) ──────────── */
+
+  /** the §A6 arrival — the snowcat sets the party down at Aurora Station, the last leg. */
+  private async ch10ArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch10_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(360, 0.005);
+    await this.dlg.say(...DIALOGUE.ch10_arrival);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** the station radio decodes where the Hush is — out past Mars, the Sea of Silence. */
+  private async ch10DecodeScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch10_decoded');
+    await this.dlg.say(...DIALOGUE.ch10_decode);
+    this.cut = false;
+  }
+
+  /** §A6 MINIBOSS A — the FROST SENTINEL bars the Aurora ice road (the elemental-golem
+   *  gimmick: its FROST SHELL is physical-immune until Mia's FIRE cracks it). Its win
+   *  opens the way to Pemberton's seaplane south (the E door to Mauna Lani). */
+  private async frostSentinelBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.frost_sentinel_intro);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(460, 0.008);
+    await this.wait(420);
+    const outcome = await this.startBattle(['frost_sentinel'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('frost_sentinel_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 200, 240, 255);
+    await this.dlg.say(...DIALOGUE.frost_sentinel_win);
+    AUDIO.jingle('victory', 2000, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart(); // the cracked golem clears; the road E opens
+  }
+
+  /** §A6 MINIBOSS B — the TIKI MAGMA GOLEM bars the Mauna Lani launch road (its MAGMA
+   *  CORE is physical-immune until Mia's FREEZE quenches it). Its win clears the pad. */
+  private async tikiMagmaGolemBossScene(): Promise<void> {
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.tiki_magma_golem_intro);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(460, 0.008);
+    await this.wait(420);
+    const outcome = await this.startBattle(['tiki_magma_golem'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('tiki_magma_golem_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(420, 255, 200, 140);
+    await this.dlg.say(...DIALOGUE.tiki_magma_golem_win);
+    AUDIO.jingle('victory', 2000, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart();
+  }
+
+  /** THE LONG SHOT — Pemberton's rocket lights and throws the party to Mars. Gated past
+   *  the Tiki Golem (the gantry sits beyond it on the flats). */
+  private async ch10LaunchScene(): Promise<void> {
+    if (!GS.flag('tiki_magma_golem_defeated')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.sign_the_long_shot);
+      this.cut = false;
+      return;
+    }
+    this.cut = true;
+    GS.setFlag('ch10_launched');
+    await this.dlg.say(...DIALOGUE.ch10_launch);
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(900, 0.012);
+    AUDIO.stopMusic();
+    await this.wait(700);
+    // The Long Shot throws them off Earth — the hatch opens on the dead sea
+    this.goThroughDoor('sea_of_silence', 9 * 16, 23 * 16, 'up');
+  }
+
+  /** the §A6 arrival on Mars — the Sea of Silence, where the Hush waits. */
+  private async ch10MarsArrivalScene(): Promise<void> {
+    this.cut = true;
+    GS.setFlag('ch10_mars_arrived');
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(360, 0.004);
+    await this.dlg.say(...DIALOGUE.ch10_mars_arrival);
+    AUDIO.playMusic(this.mapDef.music);
+    this.cut = false;
+  }
+
+  /** CHOICE 3 (the FINALE axis) — on the approach to the Hush: it SPEAKS, the STRINGS
+   *  player gives the choice back to Mia, then SILENCE vs FORGIVE is set. The FORGIVE path
+   *  is viability-gated (callers + Open-Hand warmth, src/engine/ending.ts): too cold, and
+   *  the Answer fails into a forced Silence — a tragic, intentional beat. */
+  private async theFinaleChoiceScene(): Promise<void> {
+    if (GS.flag('ch10_song_decided') === true) return; // self-gate (decided once)
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.hush_speaks);
+    if (GS.flag('axis_trust_strings') === true) await this.dlg.say(...DIALOGUE.choice_ch10_mia_gate);
+    this.cut = false;
+    await this.runChoice('ch10_song'); // sets axis_finale_silence | axis_finale_forgive
+    if (GS.flag('axis_finale_forgive') === true && !forgiveViable(endingContext())) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.the_answer_failed);
+      GS.setFlag('axis_finale_forgive', false);
+      GS.setFlag('axis_finale_silence', true); // the Answer slips — Silence is the only way left
+      this.cut = false;
+    }
+  }
+
+  /** §A6 BOSS 10 / FINALE — THE HUSH (the bespoke 3-movement fight: THE STATIC → the
+   *  un-touchable QUIET → REACHED at 12%, won without a kill). The choice made on the
+   *  approach frames the resolution — SILENCE → THE CALLING, FORGIVE → THE ANSWER — then
+   *  the canon close: Ember 10, the name-confirm / Homesong / walk home, and the composed
+   *  ending over the credits. The end of the road. */
+  private async theHushBossScene(): Promise<void> {
+    if (GS.flag('ch10_song_decided') !== true) await this.theFinaleChoiceScene(); // defensive
+    this.cut = true;
+    AUDIO.sfx('thud');
+    this.cameras.main.shake(700, 0.011);
+    await this.wait(560);
+    const outcome = await this.startBattle(['the_hush'], 'none', [], { boss: true });
+    if (outcome !== 'victory') return;
+    this.cut = true;
+    GS.setFlag('the_hush_defeated');
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(900, 248, 232, 160);
+    // THE RESOLUTION — by CHOICE 3 (both END the Hush; canon honored)
+    if (GS.flag('axis_finale_forgive') === true) await this.dlg.say(...DIALOGUE.the_answer);
+    else await this.dlg.say(...DIALOGUE.the_calling);
+    // HEARTLIGHT 10 — the Homesong is complete; Ember 10 lands
+    GS.setFlag('ember10');
+    GS.data.embers = 10;
+    const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
+    AUDIO.sfx('ember');
+    this.sparkleBurst(ember.x, ember.y, 14);
+    this.tweens.add({ targets: ember, y: this.player.y - s(30), x: this.player.x, duration: 1300, ease: 'sine.inout' });
+    AUDIO.playMusic('heartlight');
+    await this.wait(1400);
+    this.sparkleBurst(this.player.x, this.player.y - s(30), 16);
+    ember.destroy();
+    this.cameras.main.flash(300, 248, 232, 160);
+    // the canon close — the name-confirm, the full Homesong, the walk home (sacred, shared)
+    await this.dlg.say(...DIALOGUE.hush_namesong);
+    GS.setFlag('ch10_complete'); // the tenth Ember — the game's last chapter button
+    AUDIO.jingle('victory', 2600, null);
+    this.cut = false;
+    // THE COMPOSED ENDING — the epilogue cards play over the walk home (§A6 / ADR-128)
+    await this.playEnding();
   }
 
   /* ──────────── CHAPTER 4 — the four §A10 quest beats (the Ch.3 pattern) ──────────── */

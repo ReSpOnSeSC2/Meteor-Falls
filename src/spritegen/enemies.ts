@@ -1242,6 +1242,20 @@ const CH3_ENEMY_FACE: Record<string, string> = {
 };
 
 export const ENEMY_BATTLE_ART: Record<string, EnemyBattleArt> = {
+  // §A6 Ch.10 — THE LAST MILE roster (frost / magma / Mars + 2 minibosses + THE HUSH
+  // finale). SPINE PLACEHOLDER: each REUSES an existing authored battler so the chapter
+  // ships fully authored-clean (ART-PASS: author the dedicated battle_<id> trio + repoint
+  // here and in enemies.ts). The gray-box `draw` is only the boot fallback (ADR-109).
+  frost_wisp: { sprite: 'battle_bog_cotton_wisp', draw: drawTitanicTick },
+  icehorn_caribou: { sprite: 'battle_frost_hare', draw: drawTitanicTick },
+  cinder_imp: { sprite: 'battle_dust_devil_charm', draw: drawTitanicTick },
+  ash_crab: { sprite: 'battle_cobble_mite', draw: drawTitanicTick },
+  silent_drifter: { sprite: 'battle_hushed_skua', draw: drawTitanicTick },
+  static_wraith: { sprite: 'battle_hollow_jackal', draw: drawTitanicTick },
+  frost_sentinel: { sprite: 'battle_frost_jotun_elder', draw: drawTitanicTick },
+  tiki_magma_golem: { sprite: 'battle_boiler_golem', draw: drawTitanicTick },
+  the_hush: { sprite: 'battle_hush_sentinel', draw: drawTitanicTick },
+
   cranky_mailbox: { sprite: 'battle_cranky_mailbox', draw: drawCrankyMailbox },
   runaway_lawnmower: { sprite: 'battle_runaway_lawnmower', draw: drawRunawayLawnmower },
   coily_cicada: { sprite: 'battle_coily_cicada', draw: drawCoilyCicada },
@@ -1433,6 +1447,8 @@ export const FORM_ART: Record<string, EnemyBattleArt> = {
   // comes off and the sobbing Cleveland actor is revealed. Authored PNG on disk
   // (battle_count_hoaxula_unmasked.png), wired in authored.ts; the gray-box draw is the boot fallback.
   count_hoaxula_unmasked: { sprite: 'battle_count_hoaxula_unmasked', draw: drawTitanicTick },
+  // (THE HUSH's QUIET form shares the base sprite — spriteSuffix '' — so the un-touchable
+  // Quiet is a behavior swap, not a re-texture; no FORM_ART row is needed for it.)
 };
 
 /** the wear-tier texture key battle swaps to (tier 0 = the base sprite) */

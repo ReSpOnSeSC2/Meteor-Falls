@@ -216,4 +216,31 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_valea_greet',
     farewell: 'shop_valea_bye',
   },
+  // §A8 Ch.10 — the AURORA STATION supply shelf (Alaska): cold-weather food, fur, and
+  // the tools you need to cross the ice field.
+  aurora_provisioner: {
+    id: 'aurora_provisioner',
+    name: 'THE AURORA SUPPLY SHELF',
+    keeperNpc: 'as_provisioner',
+    stock: [
+      'akutaq', 'salmon_jerky', 'reindeer_stew', 'aurora_cocoa', 'spruce_tip_tea',
+      'hand_warmer', 'aurora_fur_hood', 'insulated_suit',
+      'flare_gun', 'bear_spray',
+    ],
+    greet: 'shop_aurora_greet',
+    farewell: 'shop_aurora_bye',
+  },
+  // §A8 Ch.10 — the MAUNA LANI market stall (Hawaii): island food and warm-weather gear
+  // for the last stop before the rocket.
+  mauna_vendor: {
+    id: 'mauna_vendor',
+    name: 'THE MAUNA LANI MARKET',
+    keeperNpc: 'ml_vendor',
+    stock: [
+      'poke_bowl', 'kalua_pork', 'spam_musubi', 'malasada', 'kona_coffee',
+      'coconut_water', 'aloe_gel', 'lauhala_hat', 'heat_shield_vest', 'aloha_shirt',
+    ],
+    greet: 'shop_mauna_greet',
+    farewell: 'shop_mauna_bye',
+  },
 };

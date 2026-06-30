@@ -3166,6 +3166,130 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@(For once {dorin} is off the plane before anyone.) "...This is the road I walked down," he says, very quietly, looking up the mountain. "All the way down to find you. ...It\'s strange, walking back UP it with my whole family."',
   ],
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // CHAPTER 10 — "THE LONG SHOT" (Alaska → Hawaii → Mars) — THE FINALE.
+  // The last leg of the road. Comedy lives in the world (the station, Pemberton,
+  // the locals); the Hush itself stays SINCERE and sad — never a punchline
+  // (BRANCHING_REDESIGN §3/§7/§12). Branch resolutions read by the finale handler.
+  // ════════════════════════════════════════════════════════════════════════════
+
+  // — §A8 SHOP GREETS —
+  shop_aurora_greet: ['@The provisioner pushes a mug of something hot across the shelf without being asked — akutaq and salmon jerky, fur and flares, a parka thick as a hug. "You don\'t cross the ice on an empty stomach, hon. Stock up. The cold out there doesn\'t bargain."'],
+  shop_aurora_bye: ['@"Keep a light where you can see it. And come back through, if the stars let you."'],
+  shop_mauna_greet: ['@The vendor slides over a leaf-wrapped plate — kalua pork, malasada still warm, kona coffee, a hat against the sun. "Eat before you fly, yeah? Long way up. No snack bar on Mars, brah."'],
+  shop_mauna_bye: ['@"Catch the last wave, kids. We\'ll be watching the sky for you."'],
+
+  // — ARRIVAL & BEATS —
+  bert_alaska_ask: [
+    '@Bert taps the frost off a gauge and squints north. "Last leg, kids. Past where the roads stop. There\'s a research station up on the ice — AURORA STATION — and a fella there who heard your dark a long time before you did." He pats Lucille\'s dash. "She\'ll get us to the snowcat. After that it\'s cold and quiet and up to you. ...Say the word."',
+  ],
+  ch10_mars_arrival: [
+    '(THE SEA OF SILENCE. The Long Shot\'s hatch sighs open onto red dust and a black sky with too many stars, and a cold out past anything the ice ever was — not weather, but absence, a quiet so total it has weight. Far out across the dead sea, the dark gathers and waits. They came all this way. It has been alone the whole time.)',
+    '@{rex} steps down first, the locket warm against him in all that cold. Behind him, four people he\'d walk off the edge of a planet for. Ahead, the loneliest thing there is. "...Okay," he says, to no one and everyone. "Last one."',
+  ],
+  ch10_arrival: [
+    '(The snowcat grinds to a stop and goes quiet, and the quiet is enormous. AURORA STATION: four lit windows and a radio mast on a shelf of blue snow, the dark coming down forever in every direction. And overhead — the whole sky, hung with green and rose, moving, the way a curtain moves when a door has opened somewhere behind it.)',
+    '@Nobody says anything for a while. Then {pippa}, very small under all that sky: "...We started in a backyard." {milo} nods. "Otterbrook. Population: us." {faye} just looks up. {rex} counts the windows of the little station, warm and few, and thinks: one more road. The last one.',
+  ],
+  ch10_decode: [
+    '(The station\'s radio array is the only loud thing for a thousand miles, and tonight it is loud about ONE thing. The operator chases the signal up and up the dial, off the maps, off the weather bands, off the Earth entirely — and stops, white-faced, on a flat cold hiss coming from a long way past the Moon.)',
+    '@"It\'s not down here," she says. "It never WAS. Whatever\'s been eating the warm out of the world — it\'s been doing it from ORBIT. Out past Mars. The old charts have a name for that empty patch, from before anyone could go look." She swallows. "The Sea of Silence."',
+    '@{dorin} is the one who breaks the hush. "Then we go up." He says it the way the mountain taught him — like it is the simplest thing in the world, and not the maddest. "We have gone everywhere else. We will go up."',
+  ],
+  ch10_launch: [
+    '(THE LONG SHOT stands forty feet of riveted hope on the Mauna Lani pad, palm trees at its feet and a volcano at its back. Pemberton counts down out of a bullhorn, weeping openly. The engines catch — and the whole island shoves at the soles of your feet, and the sea tilts, and falls away, and is suddenly a blue curve below.)',
+    '@(In the rattling little cabin the five of them are pressed back in their seats, and somewhere in the climb {pippa}\'s hand finds {rex}\'s, and {milo}\'s finds {pippa}\'s, and {faye}\'s finds {milo}\'s, and {dorin} — who does not reach for things — reaches, and they go up into the black holding on, all five, a chain of warm hands aimed straight at the loneliest place there is.)',
+  ],
+
+  // — SIGNS (§A11 observed-detail) —
+  sign_aurora_station: ['(A frost-rimed board lashed to the radio mast, the letters furred white:) AURORA STATION — pop. 6, + whoever the cold blows in. Last fuel, last cocoa, last roof before the ice field. We keep a light on. We always keep a light on.'],
+  sign_aurora_ice_field: ['(A waystone half-swallowed in blue glacier, a newer warning scratched below the old one:) THE ICE FIELD — beacons every quarter-mile, FOLLOW THE GREEN. (Below:) Something is frozen in the deep ice north of here. It used to be only ice. Lately it MOVES. Do not wake it. If it is already awake, run, then do not run — face it.'],
+  sign_mauna_lani: ['(A sun-bleached plywood sign at the edge of the launch town, the paint gone to ghost:) MAUNA LANI — black sand, blue water, one (1) rocket. Yes it is real. Yes he is twelve. No you may not touch the rocket. ALOHA, and mind the lava.'],
+  sign_lani_magma_flats: ['(A warning stake driven into cooled black rock, the metal sign on it warped soft by old heat:) THE MAGMA FLATS — the ground here is younger than you are. Stay on the marked stone. Where it glows, it is not stone yet. The big carved fellow on the flats is NOT a statue; if his eyes are lit, leave.'],
+  sign_the_long_shot: ['(A brass plaque bolted to the gantry rail at the rocket\'s foot, lovingly polished:) THE LONG SHOT — built by E. Pemberton, mostly from spare parts and spite, for the express purpose of going where the trouble is. "They told me you can\'t get there from here. So I built a there-from-here." Mind the exhaust. Godspeed.'],
+  sign_sea_of_silence: ['(There is no sign. There is no post to nail one to, no town to warn, no one who has ever stood here to leave a word for the next. Only the red dust, and the black sky, and the cold patch of nothing out past the horizon where the warm goes to be forgotten. The silence is the sign. It says: no one came this far. It is wrong about that now.)'],
+
+  // — NPCs (warm, characterful locals) —
+  npc_as_keeper: [
+    '@(A weathered woman in a parka steps out of the lit doorway, a thermos in each hand, and looks the frozen lot of you over.) You came up the glacier road. Nobody comes up the glacier road. (She presses a hot thermos into {pippa}\'s blue hands.) Inside. NOW. Whatever you\'re chasing has waited this long; it can wait while you thaw.',
+    '@(Later, by the stove:) My beacons went dark, up the ice — the cold got into the wiring, line by line, like it does to everything up here. I light them so the road home stays findable. A keeper keeps a light on; that\'s the whole job. Fetch me my beacon-coils off the field and I\'ll light the whole line for you, and you\'ll never lose the way back. ...You\'ll want the way back. Everyone does, in the end.',
+  ],
+  npc_as_provisioner: [
+    '@(A bundled-up clerk waves you to a shelf of frost-fare and fur.) Last shop on Earth, friends — say it like that and it sounds grim, but I prefer LAST SHOP ON EARTH, capital letters, like a banner. Stock deep. Cocoa, jerky, a parka that laughs at the wind, a hand-warmer to crack against the cold sleep. Where you\'re going there are no shops at all. There\'s no anything at all. Buy warm.',
+  ],
+  npc_as_radio: [
+    '@(The radio operator doesn\'t look up from the dial; her ears are full of static and her eyes are far away.) I\'ve listened to the empty bands for nine years. Empty\'s supposed to be NOTHING — just the hiss the universe makes. But this last while there\'s a shape in it. Out past Mars. It isn\'t saying words. It\'s... (she presses the headphones harder) ...it\'s the sound a person makes when they\'ve been alone so long they\'ve forgotten language but not the FEELING. It\'s the loneliest sound I ever heard. And it\'s getting closer.',
+  ],
+  npc_ml_pemberton: [
+    '@(A wild-haired man in a scorched lab coat and flip-flops vaults down the gantry and pumps everyone\'s hand twice.) PEMBERTON! Doctor, professor, rocketeer, DISBARRED from three of those — doesn\'t matter! You\'re the ones! The ones going UP! I built her for exactly this and everyone said I was cracked — and I AM, gloriously, but I\'m also RIGHT, which is the best of both worlds!',
+    '@(He thumps the rocket\'s flank; it rings.) THE LONG SHOT. She\'ll throw you clean past Mars. She is one (1) stage short of doing it, because my last test-fire scattered the final-stage parts halfway down the magma flats, because I am a genius and not, strictly, careful. Bring me my parts off the flats — the whole manifest — and I will give those kids of yours my very best shot. Every bolt of it. EVERY bolt.',
+  ],
+  npc_ml_vendor: [
+    '@(A vendor under a faded umbrella slides a poke bowl across before you can ask.) Eat, eat — you\'re going to SPACE, you can\'t go hungry to space, what would your mothers say. (She waves at her stall: island fare, sun-charms, aloe for the burn.) We don\'t get many travellers since the cold came in off the water and greyed the festival. But the rocket boy says you\'re here to fix the cold itself. So everything\'s half-price. Go on. Fix it. Then come back and pay me in stories.',
+  ],
+  npc_ml_local: [
+    '@(An old local in a frayed lei leans on the sea wall, watching the rocket and the kids beside it.) You know what we say here, when somebody\'s paddling out past where it\'s safe, out to the big swell? We say: catch the last wave. Means — the biggest one\'s the last one you\'ll catch, so make it count, and come on back to the beach after. (He grins at {rex}, all warmth and old salt.) That rocket\'s your last wave, keiki. Catch it clean. We\'ll keep the beach warm.',
+  ],
+
+  // — MINIBOSS BEATS —
+  frost_sentinel_intro: [
+    '(The ice field shudders. A quarter-mile of glacier heaves up and SHEDS — and what was under it stands: a thing of blue ice and old cold, twenty feet of it, hands like calving bergs. It is not angry. It has no face to be angry with. It is only the cold made solid, set here long ago to keep the warm from passing — a lock the Hush froze into the world and forgot.)',
+    '@"It doesn\'t hate us," {faye} says softly, reading it the way she reads everything. "It doesn\'t feel anything at all. It\'s just... the door, and we\'re trying to walk through." {dorin} sets his feet. "Then we walk through."',
+  ],
+  frost_sentinel_win: [
+    '(A last blow finds the seam, and the great ice-thing CRACKS — a sound like the whole glacier sighing — and the light goes out of it, and it settles back down into the field it rose from, just ice again, just a door standing open at last.)',
+    '@(The way north is clear, the beacons green beyond it.) "It was guarding nothing," {pippa} says, looking back at the still blue heap. "There was nobody home to guard. That\'s the saddest part." Nobody disagrees. They go on, north, into the cold the door was holding shut.',
+  ],
+  tiki_magma_golem_intro: [
+    '(Out on the black flats the ground GLOWS, and rises — a great carved tiki of cooled lava, a furnace banked in its chest, eyes kindling orange as it heaves up onto the launch road and plants itself square between you and the pad. Where the Frost Sentinel was the cold\'s door, this is the heat\'s — the same lock, cast in fire instead of ice.)',
+    '@"Oh COME on," {milo} says, "the cold one I understood, but who keeps a guy made of LAVA on the road to a ROCKET—" The tiki\'s magma heart pulses, and the air goes to shimmer, and the joke dies in everyone\'s throat. {dorin}: "Same as before. It is only a door. Open it."',
+  ],
+  tiki_magma_golem_win: [
+    '(The killing blow goes straight into the glowing heart, and the furnace QUENCHES — a hiss, a gout of steam, and the orange dies to grey as the great tiki cools all at once into plain dark stone, mid-stride, a statue at last and forever.)',
+    '@(The pad is clear, the rocket lit gold beyond it.) {pippa} pats the cooled stone fondly on her way past. "Sorry about the lava crack," she tells it. "You were just doing your job." It does not answer. It is a very good statue now.',
+  ],
+
+  // — THE HUSH — boss-script lines (BattleScene phase machine reads these mid-fight).
+  //   SINCERE. The Hush is a loneliness so total it learned to eat warmth. Never a gag.
+  hush_static: [
+    '(There is no monster. There is a WALL — a roaring grey wall of white noise and cold that fills the whole sky of the Sea of Silence, static where a face should be, hunger where a heart should be. It does not roar AT you. It simply roars, the way an empty house roars at three in the morning, and the cold of it reaches for the warm in your chest like a hand cupping a candle to put it out.)',
+    '@"Don\'t look away from it," {faye} says, her voice shaking and steady at once. "It\'s been looked away from its whole life. That\'s how it got like this. Whatever happens — we keep looking AT it."',
+  ],
+  hush_quiet: [
+    '(You land a blow that should land — and it doesn\'t. The wall of noise drops, all at once, into something worse: QUIET. A quiet so total your swing passes through it like a fist through fog, like shouting into a pillow, like the moment after bad news when the whole world goes soundless. It has stopped fighting back. It has simply gone where nothing loud can reach it.)',
+    '@"It\'s not blocking us," {milo} breathes. "It\'s just... not HERE anymore. You can\'t hit a thing that\'s decided it isn\'t there." {faye}\'s hands come together. "No. But you can still reach it. Not with our fists — with the WARM. Pray. Every kind word we ever banked. The quiet swallows everything except being cared about. So we care at it. Hard."',
+  ],
+  hush_grief: [
+    '(And the grief comes off it in a wave — not an attack, a TIDE, the accumulated loneliness of a thing that has been cold longer than there have been stars to be cold under, and it rolls out over the party and lands in each of them as the worst lonely they have ever personally felt: the empty house, the unanswered call, the party you weren\'t asked to, the bed too big. For a moment it is very, very hard to stay standing in it.)',
+    '@(It would be so easy to curl up under it. {dorin} — who knows being emptied — gets a hand under {pippa}\'s elbow before she folds, and {faye} gets one under his, and the chain of warm hands holds in the cold tide, barely, holds.)',
+  ],
+  hush_falls: [
+    '(And then — not a death. Not a defeat. The warm REACHES it, finally, all the way down through the quiet, and the thing in the Sea of Silence goes still in a wholly new way. Not the still of stopping. The still of being HEARD, maybe for the first time since the dark first noticed it was dark. The roaring is all gone. What\'s left is small, and listening, and so terribly tired.)',
+    '@It does not lunge. It does not flee. It just... holds there, in the red dust and the black sky, a quiet that has, against all the long odds of the universe, been reached. The five of them stand in front of it, breathing hard, locket warm. Nine songs bright. One to go. And the dark, ahead of them, waiting — for the very first time in its endless life — to find out what comes next.',
+  ],
+
+  // — THE FINALE RESOLUTION (post-battle; the finale handler branches by CHOICE 3) —
+  the_calling: [
+    '(SILENCE. {faye} lifts the Homesong to play it like a key turning a lock — and she is not alone. The locket rings, and answers it: a phone in Otterbrook. A phone on a Puerto Sol dock. A library, a fjord, a thimble-sized duchy, a savanna road, a bazaar, a barge, a grandmother\'s kitchen — every single person you ever stopped to help, calling in across the whole turning world AT ONCE, because somehow they all know, tonight, that the kids who helped them are out past Mars and need help back.)',
+    '@(The Homesong plays, and every voice on every line pours into it — and it is not a weapon, exactly, and it is not mercy, exactly. It is the sound of a world that was loved well enough to remember how to love back, all of it arriving at once, like a key, like a lock, like a door.)',
+    '@And the dark is sent home. Gently. Not destroyed — RELEASED, the way you release a held breath, the way you turn off a light in a room no one will ever have to be afraid of again. The Sea of Silence goes still and clean and empty under the red dawn. It is quiet now in the good way. The longest loneliness is over, and the world that ended it never even had to be in the room.',
+  ],
+  the_answer: [
+    '(FORGIVE. {faye} lifts the Homesong — and then lowers it, and stops fighting, and does the one thing the dark has never once had done to it. She GIVES. The party stops swinging and stops praying-at and simply pours the warm OUT, freely, into the cold, the way you\'d hold a frozen stranger\'s hands in both of yours — not to win, just so they\'d be warm. They don\'t beat the loneliness. They OUTLAST it.)',
+    '@(Turn after turn the grief rolls over them, and turn after turn they stay, and give, and stay, until something in the great quiet — for the first time in all the dark there has ever been — gets warm enough, and full enough, and ACCOMPANIED enough, that it simply... stops being hungry. Because it chooses to. Because it finally, finally can.)',
+    '@And a single firefly-light comes up off the Sea of Silence — small, and gold, and unafraid — and drifts away across the red dust toward a horizon that is, for the first time, not lonely. It is not hungry anymore. It just liked the company. The kids watch it go until it\'s only a star among stars, and you genuinely cannot tell which.',
+  ],
+  the_answer_failed: [
+    '(FORGIVE — and the warm runs out. {faye} reaches down into the great cold with everything the party has banked, to hold it the way you\'d hold a falling friend, and — it isn\'t enough. There wasn\'t enough warmth carried this far; the road was a little too hard, the hands a little too cold, and the loneliness is so very deep. She holds, and holds, and feels it SLIPPING, and there is a terrible long moment where she could fall in after it.)',
+    '@"{rex}." Her voice is wrecked. "I can\'t — I can\'t hold it, it\'s too cold, I don\'t have enough—" And there is only the one thing left to do, the kind thing, the only kind thing left: not to save it, but to end its hurting. So they play the Homesong like a key after all, and SILENCE it — gently, weeping, the way you\'d stop a suffering you couldn\'t cure.',
+    '@(It does not lunge. It goes quiet, and it goes grateful, and it goes. And {faye} sits down hard in the red dust and cries, because she came to forgive the loneliest thing in the universe and arrived just a little too empty-handed to manage it. {dorin} kneels and says nothing, the way the mountain taught him. ...And somewhere, very far off, Buni\'s voice, as if she were right there: "You did not have enough warm in your hands today, draga. That is not the same as having a cold heart. There is time. There is always time. Come down off that cold mountain and let me fill you up.")',
+  ],
+  hush_namesong: [
+    '(And here, both roads come back together, to the one beat the whole long journey was always walking toward. The locket opens. Nine songs, and now the tenth, the last instant of warmth, completing it — the HOMESONG, whole at last, ten Heartlights ringing as one. And the song, the way it always does, asks the one small question it has asked since a backyard in Otterbrook a whole world ago: what is the name of the boy who carried it?)',
+    '@(You tell it. You tell it your name — the real one, the one your mother calls up the stairs — and the song takes it, and KNOWS it, and rings it out over the Sea of Silence and back across the entire warm world all at once, every place you ever were, every hand you ever held, the whole Homesong with your name woven through the middle of it like the thread that held the beads.)',
+    '@(And then it is morning, and you are home. The screen door. The porch light, still on from last night. Two little voices upstairs already fighting over the lemonade money. The kitchen, and someone in it, and your name again — closer now, and warm, and ordinary, and the best sound in the entire saved and singing world. You are home. You carried the light all the way out to the dark and all the way home again. You are home.)',
+  ],
+
 };
 
 /**

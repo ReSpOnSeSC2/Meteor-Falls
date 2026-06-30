@@ -639,5 +639,53 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'heal', power: 1900 },
       },
     }),
+
+    /* ---- §A10 Ch.10 (Alaska) — LIGHTS OF AURORA: the Station Keeper's beacon line went
+     * dark when the cold leaned in. Re-light the aurora-beacons so the snowcat road home
+     * stays lit for the ones who come after. Giver placed at AURORA STATION. A map-light
+     * data quest (the brushes_of_mt_shu / bunis_table precedent); banks a warm finale
+     * CALLER — the keeper who keeps a light on for travellers (§A6). ---- */
+    Q({
+      id: 'lights_of_aurora',
+      name: 'Lights of Aurora',
+      chapter: 10,
+      giver: 'as_keeper',
+      startFlag: 'q_aurora',
+      objectives: [
+        { id: 'gather', text: 'Six of the Keeper\'s aurora-beacons went dark up the glacier when the cold got into the wiring. Gather their generator-coils back in off the ice field.', flag: 'q_aurora_gather' },
+        { id: 'relight', text: 'Carry the coils back and re-light the beacon line, so the snowcat road home stays lit for whoever comes down it after you.', flag: 'q_aurora_relit' },
+      ],
+      rewardItem: 'aurora_cocoa',
+      doneFlag: 'q_aurora_done',
+      caller: {
+        name: 'The Station Keeper',
+        quote: 'The whole line is lit again — green all the way down the glacier, like the lights came indoors. A keeper keeps ONE thing, child: a light on for whoever\'s still out in the cold. Let me keep one on for you, all the way out to Mars.',
+        effect: { kind: 'heal', power: 2000 },
+      },
+    }),
+
+    /* ---- §A10 Ch.10 (Hawaii) — THE LAST WAVE: Pemberton's rocket is one stage short, its
+     * parts scattered down the lava flats by the last test-fire. Round up the manifest and
+     * give The Long Shot its final stage — his best shot, and the kids', off the Mauna Lani
+     * pad. Giver placed at MAUNA LANI. Map-light data quest; banks a damage finale CALLER
+     * (the rocketeer firing the whole launch at the dark) (§A6). ---- */
+    Q({
+      id: 'the_last_wave',
+      name: 'The Last Wave',
+      chapter: 10,
+      giver: 'ml_pemberton',
+      startFlag: 'q_last_wave',
+      objectives: [
+        { id: 'gather', text: "The Long Shot is one stage short — Pemberton's final-stage parts blew clear down the magma flats in the last test-fire. Round up every line item on his manifest.", flag: 'q_last_wave_gather' },
+        { id: 'fit', text: 'Haul the parts back to the gantry and watch Pemberton bolt the last stage on, muttering the whole time, hands perfectly steady.', flag: 'q_last_wave_fit' },
+      ],
+      rewardItem: 'rocket_manifest',
+      doneFlag: 'q_last_wave_done',
+      caller: {
+        name: 'Pemberton',
+        quote: "She's whole! Every bolt, every stage, the WHOLE Long Shot! Listen — I built one good rocket in my life and I aimed it at the cold for YOU. When the dark closes in, you say the word and I light the whole launch off in its face. FOR THE KIDS!",
+        effect: { kind: 'damage', power: 2200 },
+      },
+    }),
   ].map((q) => [q.id, q]),
 );

@@ -82,4 +82,11 @@ describe('S15g M4 — the scaffolded drafts are REAL (buildable + forge-backed)'
       expect(FORGED_ROSTERS[m.chapter].length).toBeGreaterThan(0);
     });
   }
+  // THE LONG SHOT landed — all ten §A6 chapters are SHIPPED, so there is no unlanded
+  // draft left to scaffold. The suite still needs a test, and this IS the milestone.
+  if (unlanded.length === 0) {
+    it('all ten chapters are SHIPPED — the §A6 trail is complete (no drafts left to scaffold)', () => {
+      expect(all.every((m) => m.status === 'shipped')).toBe(true);
+    });
+  }
 });

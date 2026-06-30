@@ -2788,6 +2788,172 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       boss: true,
       mind_immune: true,
     }),
+
+    /* §A6 Ch.10 — THE LAST MILE. Four biomes ring the finale: the Aurora Station
+     * ice field (Alaska/frost), the Mauna Lani lava flats (Hawaii/magma), and the
+     * Sea of Silence (Mars), all converging on THE HUSH. Combat numbers sit in the
+     * Ch.10 low-thousands band (BALANCE_CH4-10_SPEC); money still dwarfs it, and
+     * every boss HP stays under the Ch.10 Fortune target ($3B). */
+
+    /* — Alaska / Aurora Station ice field — */
+    E({
+      id: 'frost_wisp',
+      name: 'Frost Wisp',
+      article: 'The',
+      hp: 18000, offense: 122, defense: 52, speed: 58, level: 50, exp: 2700, cash: 980,
+      weakness: ['fire'],
+      moves: [
+        { name: 'killing chill', kind: 'attack', mult: 1.1, text: '{e} curled close and breathed, and the warmth went out of {t} like a snuffed candle.', weight: 5 },
+        { name: 'snuff the warmth', kind: 'status', status: 'asleep', text: '{e} wrapped {t} in a soft, drowsy cold, and {t}’s eyelids grew heavy as new snow.', weight: 3 },
+        { name: 'drift away', kind: 'taunt', text: '{e} thinned to a wisp of breath and drifted just out of reach, daring {t} to follow into the white.', weight: 2 },
+      ],
+      deathLine: 'The Frost Wisp unspooled into a last thread of vapor and was gone, and the air where it hung felt almost warm.',
+      sprite: 'battle_bog_cotton_wisp', mini: 'mini_bog_cotton_wisp', // ART-PASS: author battle_frost_wisp + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.CYAN, RAMP.BLUE],
+    }),
+    E({
+      id: 'icehorn_caribou',
+      name: 'Icehorn Caribou',
+      article: 'The',
+      hp: 25000, offense: 138, defense: 60, speed: 44, level: 51, exp: 3100, cash: 1150,
+      weakness: ['fire'],
+      moves: [
+        { name: 'antler charge', kind: 'strong', mult: 1.6, text: '{e} lowered a rack of black ice and thundered across the floe, goring {t} on the run!', weight: 4 },
+        { name: 'tundra trample', kind: 'attack', mult: 1.2, text: '{e} wheeled and brought a thousand pounds of frozen hoof down on {t}.', weight: 4 },
+        { name: 'frost bellow', kind: 'taunt', text: '{e} threw back its head and bellowed a cloud of frost that hung glittering between it and {t}.', weight: 2 },
+      ],
+      deathLine: 'The Icehorn Caribou folded onto the ice with a groan, its black antlers ringing once like struck glass before it lay still.',
+      sprite: 'battle_frost_hare', mini: 'mini_frost_hare', // ART-PASS: author battle_icehorn_caribou + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.CYAN, RAMP.PAPER],
+    }),
+
+    /* — Hawaii / Mauna Lani lava flats — */
+    E({
+      id: 'cinder_imp',
+      name: 'Cinder Imp',
+      article: 'The',
+      hp: 19000, offense: 128, defense: 50, speed: 60, level: 50, exp: 2800, cash: 1020,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'ember fling', kind: 'status', status: 'sunburn', text: '{e} cackled and flicked a fistful of live embers that stuck to {t} and kept on burning!', weight: 4 },
+        { name: 'spark skitter', kind: 'attack', mult: 1.1, text: '{e} darted across the glassy basalt in a shower of sparks and raked {t} in passing.', weight: 4 },
+        { name: 'dance on the coals', kind: 'taunt', text: '{e} did a gleeful little jig on the red-hot rock, grinning at {t} through the heat-shimmer.', weight: 2 },
+      ],
+      deathLine: 'The Cinder Imp’s grin sputtered, its last sparks scattering across the lava flat like dying fireflies.',
+      sprite: 'battle_dust_devil_charm', mini: 'mini_dust_devil_charm', // ART-PASS: author battle_cinder_imp + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.RED, RAMP.ORANGE],
+    }),
+    E({
+      id: 'ash_crab',
+      name: 'Ash Crab',
+      article: 'The',
+      hp: 26000, offense: 134, defense: 64, speed: 36, level: 51, exp: 3200, cash: 1180,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'obsidian claw', kind: 'strong', mult: 1.5, text: '{e} reared up out of the lava tube and brought a claw of black volcanic glass down on {t}!', weight: 4 },
+        { name: 'sidelong scuttle', kind: 'attack', mult: 1.2, text: '{e} scuttled in low and hard, clacking its molten-cracked shell against {t}.', weight: 4 },
+        { name: 'shell up', kind: 'taunt', text: '{e} tucked into its smoking obsidian shell and sat there glowing, immovable, watching {t}.', weight: 2 },
+      ],
+      deathLine: 'The Ash Crab’s obsidian shell split with a sharp crack and crumbled to warm black gravel.',
+      sprite: 'battle_cobble_mite', mini: 'mini_cobble_mite', // ART-PASS: author battle_ash_crab + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.RED, RAMP.EARTH],
+    }),
+
+    /* — Mars / Sea of Silence — */
+    E({
+      id: 'silent_drifter',
+      name: 'Silent Drifter',
+      article: 'The',
+      hp: 22000, offense: 130, defense: 54, speed: 50, level: 52, exp: 3000, cash: 1100,
+      weakness: ['holy'],
+      moves: [
+        { name: 'drink the sound', kind: 'drain', mult: 1.2, text: '{e} pressed its hollow against {t} and drew the warmth and the noise out together, swelling as {t} dimmed.', weight: 4 },
+        { name: 'press the quiet', kind: 'status', status: 'hushed', text: '{e} laid a weightless emptiness over {t}, and {t}’s voice came out as nothing at all.', weight: 3 },
+        { name: 'drift on the dead sea', kind: 'taunt', text: '{e} bobbed once on the silent red waste and turned its empty face toward {t}, waiting.', weight: 2 },
+      ],
+      deathLine: 'The Silent Drifter sighed itself inside-out and sank without a ripple into the dust of the dead sea.',
+      sprite: 'battle_hushed_skua', mini: 'mini_hushed_skua', // ART-PASS: author battle_silent_drifter + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.PURPLE, RAMP.INK],
+    }),
+    E({
+      id: 'static_wraith',
+      name: 'Static Wraith',
+      article: 'The',
+      hp: 27000, offense: 140, defense: 58, speed: 52, level: 52, exp: 3400, cash: 1280,
+      weakness: ['volt'],
+      moves: [
+        { name: 'dead-channel howl', kind: 'strong', mult: 1.5, text: '{e} opened a mouthful of dead-channel roar and washed {t} in a wall of grinding static!', weight: 4 },
+        { name: 'lost-signal lash', kind: 'attack', mult: 1.2, text: '{e} lashed out with a ribbon of snapped antenna-wire and crackling noise that bit into {t}.', weight: 4 },
+        { name: 'scramble', kind: 'status', status: 'paralyzed', text: '{e} flooded {t} with a wash of garbled signal, and {t}’s nerves seized mid-motion.', weight: 2 },
+      ],
+      deathLine: 'The Static Wraith dissolved into a last burst of white noise, then a flat, ringing silence.',
+      sprite: 'battle_hollow_jackal', mini: 'mini_hollow_jackal', // ART-PASS: author battle_static_wraith + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.NIGHT, RAMP.PURPLE],
+    }),
+
+    /* — MINIBOSS A: the Aurora ice golem (Alaska) — */
+    E({
+      id: 'frost_sentinel',
+      name: 'Frost Sentinel',
+      article: 'The',
+      hp: 50000, offense: 150, defense: 70, speed: 40, level: 52, exp: 9000, cash: 4000,
+      weakness: ['fire'],
+      moves: [
+        { name: 'storm slam', kind: 'strong', mult: 1.7, text: '{e} raised two fists of carved glacier and brought the whole Aurora down on {t} in a blizzard of shards!', weight: 4 },
+        { name: 'glacier fist', kind: 'attack', mult: 1.3, text: '{e} swung a slow, mountainous arm and clubbed {t} with a ton of blue ice.', weight: 4 },
+        { name: 'flash freeze', kind: 'status', status: 'paralyzed', text: '{e} exhaled a sheet of killing cold, and a rime of frost locked {t}’s joints stiff.', weight: 3 },
+      ],
+      deathLine: 'A long fracture raced up through the Frost Sentinel, the Aurora-light winking out along the seams, and it cracked apart and went still — just glacier again.',
+      sprite: 'battle_frost_jotun_elder', mini: 'mini_frost_jotun_elder', // ART-PASS: author battle_frost_sentinel + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.CYAN, RAMP.BLUE],
+      boss: true,
+      mind_immune: true,
+    }),
+
+    /* — MINIBOSS B: the Mauna Lani tiki golem (Hawaii) — */
+    E({
+      id: 'tiki_magma_golem',
+      name: 'Tiki Magma Golem',
+      article: 'The',
+      hp: 50000, offense: 152, defense: 72, speed: 38, level: 52, exp: 9000, cash: 4000,
+      weakness: ['freeze'],
+      moves: [
+        { name: 'magma slam', kind: 'strong', mult: 1.7, text: '{e} hauled back a fist running with molten rock and drove it into {t} in a gout of sparks and steam!', weight: 4 },
+        { name: 'basalt smash', kind: 'attack', mult: 1.3, text: '{e} brought its heavy carved brow down on {t} with the weight of the whole mountain.', weight: 4 },
+        { name: 'magma vent', kind: 'status', status: 'sunburn', text: '{e} cracked open along its seams and breathed lava-heat over {t}, searing skin that kept on smoldering.', weight: 3 },
+      ],
+      deathLine: 'The Tiki Magma Golem’s core dimmed from white to red to nothing, its lava veins crusting black as it cooled, at last, back into silent stone.',
+      sprite: 'battle_boiler_golem', mini: 'mini_amber_hoard_troll', // ART-PASS: author battle_tiki_magma_golem + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.RED, RAMP.ORANGE],
+      boss: true,
+      mind_immune: true,
+    }),
+
+    /* §A6 BOSS 10 / FINALE — THE HUSH (150000 HP, validator-pinned EXACTLY). The
+     * loneliness at the end of everything: a vast quiet that learned to eat warmth.
+     * It does not strike so much as PRESS — muting voices, washing cold grief over
+     * the party, and (its worst move) simply going still and waiting. It has NO
+     * elemental weakness (empty array — bespoke); it gives no exp and no cash,
+     * because the Hush is never killed, only ANSWERED. mind_immune like every boss.
+     * Money > combat: 150000 HP sits far under the Ch.10 Fortune target ($3B). */
+    E({
+      id: 'the_hush',
+      name: 'The Hush',
+      article: 'The',
+      hp: 150000, offense: 145, defense: 66, speed: 56, level: 52, exp: 0, cash: 0,
+      weakness: [],
+      moves: [
+        { name: 'a held silence', kind: 'status', status: 'hushed', text: '{e} laid its quiet over {t} like snowfall, and every word {t} reached for simply wasn’t there.', weight: 4 },
+        { name: 'wave of grief', kind: 'strong', mult: 1.6, text: '{e} let out a slow, cold swell of everything anyone ever lost, and it broke over {t} and pulled the heart down with it.', weight: 4 },
+        { name: 'the long emptiness', kind: 'drain', mult: 1.3, text: '{e} opened the enormous nothing at its center, and the warmth drifted out of {t} and into the dark to keep it company.', weight: 3 },
+        { name: 'it simply waits', kind: 'taunt', text: '{e} goes very, very still, the way a house gets after everyone has gone, and it waits — and the waiting alone is almost too much to bear.', weight: 2 },
+      ],
+      deathLine: 'The Hush did not fall. It only grew quiet at last, the cold ebbing out of the air, and for one long held breath it seemed to reach back — and then, gently, it let go.',
+      sprite: 'battle_hush_sentinel', mini: 'mini_hushed_skua', // ART-PASS: author battle_the_hush + repoint (Ch.10 placeholder reuse)
+      bg: [RAMP.INK, RAMP.PURPLE],
+      boss: true,
+      mind_immune: true,
+    }),
   ].map((e) => [e.id, e]),
 );
 

@@ -18,6 +18,7 @@ import { buildChapter6Maps } from './maps_ch6';
 import { buildChapter7Maps } from './maps_ch7';
 import { buildChapter8Maps } from './maps_ch8';
 import { buildChapter9Maps } from './maps_ch9';
+import { buildChapter10Maps } from './maps_ch10';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
 import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
@@ -3214,6 +3215,10 @@ export const MAPS: Record<string, MapDef> = {
   // CHAPTER 9 Romania — "The Count of Valea Stelelor" (Valea Stelelor / the Old Road /
   // Castle Hoaxula / Stone Brow Monastery). Carries the COMPASSION axis (CHOICE 2).
   ...buildChapter9Maps(),
+  // CHAPTER 10 — "The Long Shot" (Aurora Station / the Aurora Ice Field / Mauna Lani /
+  // the Lani Magma Flats / the Sea of Silence). THE FINALE — carries the FINALE axis
+  // (CHOICE 3) and the bespoke Hush fight; the composed ending plays over the walk home.
+  ...buildChapter10Maps(),
   otterbrook: otterbrookMap,
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,
