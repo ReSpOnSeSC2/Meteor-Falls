@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { generateAllTextures } from '../spritegen';
-import { applyAuthoredBattleArt, applyAuthoredHeroArt, applyAuthoredMinigameArt, applyAuthoredWorldArt, preloadAuthoredArt } from '../spritegen/authored';
+import { applyAuthoredAngelArt, applyAuthoredBattleArt, applyAuthoredHeroArt, applyAuthoredMinigameArt, applyAuthoredWorldArt, preloadAuthoredArt } from '../spritegen/authored';
 import { preloadCutscenePanels } from '../engine/cutscene';
 import { s } from '../spritegen/scale';
 
@@ -31,6 +31,10 @@ export class BootScene extends Phaser.Scene {
     // Applying first means addSheet's exists-guard keeps the authored texture and
     // the animations bind to its live frames; nothing is removed afterward.
     applyAuthoredHeroArt(this);
+    // §A4.7 mourning angels: same ordering rule as the hero sheets — land the
+    // authored 140×140 winged-hero textures BEFORE generateAllTextures so the
+    // procedural angel draw is skipped and the `<key>-float` anims bind here.
+    applyAuthoredAngelArt(this);
     generateAllTextures(this);
     applyAuthoredBattleArt(this);
     applyAuthoredMinigameArt(this);

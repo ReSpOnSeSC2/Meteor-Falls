@@ -103,6 +103,23 @@ const HERO_PORTRAIT_ART = [
   { id: 'dorin', url: new URL('../../assets/art/busts/dorin_bust_32.png', import.meta.url).href },
 ] as const;
 
+// §A4.7 mourning angels — AUTHORED full-size winged heroes (ChatGPT pixel sprites),
+// 2 wing-beat frames per cell. These OVERRIDE the procedural generateAngelFrames
+// specials. Applied BEFORE generateAllTextures (the hero-art pattern, see BootScene):
+// addSheet's exists-guard then skips the procedural draw and the `<key>-float` anims
+// bind to these live frames. The guest fallback is keyed plain `angel`; each hero's
+// fallen form is `angel_<heroId>` (rex/faye/milo/pippa/dorin). Source PNGs are loaded
+// under `<key>_src` and sliced into the runtime key by applyAuthoredAngelArt.
+const ANGEL_FRAME = 140; // each frame cell is ANGEL_FRAME×ANGEL_FRAME (2 cols × 1 row)
+const ANGEL_ART = [
+  { key: 'angel_rex', url: new URL('../../assets/art/characters/angels/angel_rex_2f.png', import.meta.url).href },
+  { key: 'angel_faye', url: new URL('../../assets/art/characters/angels/angel_faye_2f.png', import.meta.url).href },
+  { key: 'angel_milo', url: new URL('../../assets/art/characters/angels/angel_milo_2f.png', import.meta.url).href },
+  { key: 'angel_pippa', url: new URL('../../assets/art/characters/angels/angel_pippa_2f.png', import.meta.url).href },
+  { key: 'angel_dorin', url: new URL('../../assets/art/characters/angels/angel_dorin_2f.png', import.meta.url).href },
+  { key: 'angel', url: new URL('../../assets/art/characters/angels/angel_guest_2f.png', import.meta.url).href },
+] as const;
+
 const FRAMING_SCREEN_ART = [
   { key: 'boot_splash', url: new URL('../../assets/art/screens/boot_splash.png', import.meta.url).href },
   { key: 'title_art', url: new URL('../../assets/art/screens/title_bg.png', import.meta.url).href },
@@ -453,6 +470,26 @@ const ROMANIA_TILE_ART = {
   names: ['romania_ground', 'romania_path', 'romania_wall'],
 };
 
+// Ch.10 region tile strips (Alaska / Hawaii / Mars) — partial overrides like China/Romania
+// (3 cells × 64px: col 0 = ground, col 1 = path, col 2 = wall, each mapping onto an appended
+// ch10 TILESET name). Render ONLY on the Ch.10 maps (the render-time name-remaps AURORA/LANI/
+// MARS_TILE_SKIN in OverworldScene.buildTiles); every other map is untouched.
+const AURORA_TILE_ART = {
+  key: 'authored_aurora_tiles16',
+  url: new URL('../../assets/art/world/Aurora_tiles_16.png', import.meta.url).href,
+  names: ['aurora_ground', 'aurora_path', 'aurora_wall'],
+};
+const LANI_TILE_ART = {
+  key: 'authored_lani_tiles16',
+  url: new URL('../../assets/art/world/Lani_tiles_16.png', import.meta.url).href,
+  names: ['lani_ground', 'lani_path', 'lani_wall'],
+};
+const MARS_TILE_ART = {
+  key: 'authored_mars_tiles16',
+  url: new URL('../../assets/art/world/Mars_tiles_16.png', import.meta.url).href,
+  names: ['mars_ground', 'mars_path', 'mars_wall'],
+};
+
 const WORLD_PROP_KEYS = [
   'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
   'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'meteor_rock_hickory_hill', 'sawhorse', 'ember',
@@ -490,6 +527,16 @@ const WORLD_PROP_KEYS = [
   'hedgerow_leaf_wall', 'hedgerow_thorn_arch', 'ducal_crown_gate', 'matchbox_podium',
   // Ch.5 Minimus — decorative Grand-Duchy feature props (sliced from Minimus_tiles_16.png cells)
   'minimus_crown', 'minimus_banner', 'minimus_teacup', 'minimus_thimble',
+  // ADR-132 — biome EDGE FEATURES: buildEdgeFeatures rings each outdoor map's border
+  // with these instead of the one-size-fits-all treeline (matched per biome).
+  'edge_ice_spire', 'edge_ice_spruce', 'edge_ice_drift',
+  'edge_desert_dune', 'edge_desert_cactus', 'edge_desert_rock',
+  'edge_bamboo_a', 'edge_bamboo_b', 'edge_bamboo_c',
+  'edge_basalt_a', 'edge_basalt_b',
+  'edge_mars_a', 'edge_mars_b',
+  'edge_jungle_a', 'edge_jungle_b', 'edge_jungle_c',
+  'edge_spore_a', 'edge_spore_b',
+  'edge_rock_a', 'edge_rock_b',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -745,6 +792,28 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   minimus_banner: { w: 22, h: 22 },
   minimus_teacup: { w: 18, h: 18 },
   minimus_thimble: { w: 16, h: 16 },
+  // ADR-132 — biome edge features (native map units; aspect from the sliced PNGs).
+  // Anchored a touch taller than the Ohio oaks (24×34) so a biome border reads as a wall.
+  edge_ice_spire: { w: 30, h: 38 },
+  edge_ice_spruce: { w: 28, h: 38 },
+  edge_ice_drift: { w: 36, h: 24 },
+  edge_desert_dune: { w: 44, h: 22 },
+  edge_desert_cactus: { w: 23, h: 40 },
+  edge_desert_rock: { w: 26, h: 40 },
+  edge_bamboo_a: { w: 20, h: 42 },
+  edge_bamboo_b: { w: 33, h: 40 },
+  edge_bamboo_c: { w: 33, h: 34 },
+  edge_basalt_a: { w: 28, h: 38 },
+  edge_basalt_b: { w: 31, h: 36 },
+  edge_mars_a: { w: 33, h: 30 },
+  edge_mars_b: { w: 37, h: 32 },
+  edge_jungle_a: { w: 33, h: 34 },
+  edge_jungle_b: { w: 25, h: 42 },
+  edge_jungle_c: { w: 29, h: 32 },
+  edge_spore_a: { w: 26, h: 38 },
+  edge_spore_b: { w: 29, h: 34 },
+  edge_rock_a: { w: 34, h: 30 },
+  edge_rock_b: { w: 31, h: 34 },
 } as const satisfies Record<string, { w: number; h: number }>;
 
 /** Footprint width in TILES for the generated catalog + colossi, mirrored from
@@ -1705,6 +1774,7 @@ function drawAuthoredTileStrip(ctx: CanvasRenderingContext2D, tileArt: SourceIma
 
 export function preloadAuthoredArt(scene: Phaser.Scene): void {
   FRAMING_SCREEN_ART.forEach((art) => scene.load.image(art.key, art.url));
+  ANGEL_ART.forEach((art) => scene.load.image(`${art.key}_src`, art.url));
   HERO_ART.forEach((art) => {
     scene.load.image(art.characterKey, art.characterUrl);
     scene.load.image(art.bustKey, art.bustUrl);
@@ -1724,12 +1794,29 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   scene.load.image(MINIMUS_TILE_ART.key, MINIMUS_TILE_ART.url);
   scene.load.image(CHINA_TILE_ART.key, CHINA_TILE_ART.url);
   scene.load.image(ROMANIA_TILE_ART.key, ROMANIA_TILE_ART.url);
+  scene.load.image(AURORA_TILE_ART.key, AURORA_TILE_ART.url);
+  scene.load.image(LANI_TILE_ART.key, LANI_TILE_ART.url);
+  scene.load.image(MARS_TILE_ART.key, MARS_TILE_ART.url);
   WORLD_PROP_ART.forEach((art) => scene.load.image(`authored_world_${art.key}`, art.url));
   AUTHORED_VEHICLE_SOURCES.forEach((art) => scene.load.image(art.authoredKey, art.url));
   BATTLE_BACKGROUND_ART.forEach((art) => scene.load.image(art.key, art.url));
   ENEMY_BATTLE_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
   ENEMY_MINI_ART.forEach((art) => scene.load.image(`authored_enemy_${art.key}`, art.url));
   ENEMY_OVERWORLD_ART.forEach((art) => scene.load.image(art.authoredKey, art.url));
+}
+
+/**
+ * §A4.7 — swap the procedural mourning-angel specials for the AUTHORED full-size
+ * winged-hero sheets. MUST run BEFORE generateAllTextures (like applyAuthoredHeroArt):
+ * once these textures exist, addSheet('angel'/'angel_<id>') is skipped by its
+ * exists-guard and the `<key>-float` anims created in generateAllTextures bind to
+ * these 140×140 frames. Missing sources are skipped (procedural fallback survives).
+ */
+export function applyAuthoredAngelArt(scene: Phaser.Scene): void {
+  ANGEL_ART.forEach((art) => {
+    const src = sourceImage(scene, `${art.key}_src`);
+    if (src) replaceTextureSheet(scene, art.key, makeImageCanvas(src), ANGEL_FRAME, ANGEL_FRAME, 2, 2);
+  });
 }
 
 export function applyAuthoredHeroArt(scene: Phaser.Scene): void {
@@ -1815,6 +1902,9 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   const minimusTileArt = sourceImage(scene, MINIMUS_TILE_ART.key);
   const chinaTileArt = sourceImage(scene, CHINA_TILE_ART.key);
   const romaniaTileArt = sourceImage(scene, ROMANIA_TILE_ART.key);
+  const auroraTileArt = sourceImage(scene, AURORA_TILE_ART.key);
+  const laniTileArt = sourceImage(scene, LANI_TILE_ART.key);
+  const marsTileArt = sourceImage(scene, MARS_TILE_ART.key);
   const baseTiles = sourceImage(scene, 'tiles');
   if (!baseTiles) return;
 
@@ -1834,6 +1924,9 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   if (minimusTileArt) drawAuthoredTileStrip(ctx, minimusTileArt, MINIMUS_TILE_ART.names);
   if (chinaTileArt) drawAuthoredTileStrip(ctx, chinaTileArt, CHINA_TILE_ART.names);
   if (romaniaTileArt) drawAuthoredTileStrip(ctx, romaniaTileArt, ROMANIA_TILE_ART.names);
+  if (auroraTileArt) drawAuthoredTileStrip(ctx, auroraTileArt, AURORA_TILE_ART.names);
+  if (laniTileArt) drawAuthoredTileStrip(ctx, laniTileArt, LANI_TILE_ART.names);
+  if (marsTileArt) drawAuthoredTileStrip(ctx, marsTileArt, MARS_TILE_ART.names);
 
   replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);
 }
@@ -1881,6 +1974,7 @@ export function applyAuthoredBattleArt(scene: Phaser.Scene): void {
 }
 
 export function applyAuthoredArt(scene: Phaser.Scene): void {
+  applyAuthoredAngelArt(scene);
   applyAuthoredHeroArt(scene);
   applyAuthoredBattleArt(scene);
   applyAuthoredMinigameArt(scene);

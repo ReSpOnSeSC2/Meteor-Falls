@@ -323,6 +323,182 @@ const ROMANIA_TILE_SKIN: Readonly<Record<string, string>> = {
   brick: 'romania_wall', // the village border / cliffs (`B`) → castle stone (SOLID)
   bush: 'romania_wall', // any solid bush (`b`) → a wall section (SOLID)
 };
+/** Ch.10 ALASKA (Aurora Station + the ice field) tile reskin — snow-over-ice ground, a plowed
+ *  snow lane, and glacial ice-block walls. Same render-time name-remap + solidity-preserving
+ *  contract as the China/Romania skins; applied ONLY to the two Aurora maps. */
+const AURORA_SKIN_MAPS: ReadonlySet<string> = new Set([
+  'aurora_station',
+  'aurora_ice_field',
+]);
+const AURORA_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'aurora_ground', // snow-packed station yard / wind-scoured field (`.`)
+  grass_b: 'aurora_ground', // decorative grass (`,`)
+  grass_tuft: 'aurora_ground', // decorative grass (`~`)
+  office_floor: 'aurora_ground', // interior way-gaps (`o`) blend into the snow
+  road: 'aurora_path', // any street (`R`) → plowed snow lane
+  sidewalk: 'aurora_path', // the station lanes / the ice-field road (`=`) → plowed snow
+  road_dash: 'aurora_path', // the centreline (`D`) — a snow lane needs no lane dash
+  office_wall: 'aurora_wall', // interior walls (`O`) → glacial ice block (SOLID)
+  brick: 'aurora_wall', // the station border / ice cliffs (`B`) → ice block (SOLID)
+  bush: 'aurora_wall', // any solid bush (`b`) → an ice block (SOLID)
+};
+/** Ch.10 HAWAII (Mauna Lani + the magma flats) tile reskin — black volcanic sand ground, a
+ *  pale ash-gravel lane, and basalt-with-magma-seam walls. Same contract; the two Lani maps. */
+const LANI_SKIN_MAPS: ReadonlySet<string> = new Set([
+  'mauna_lani',
+  'lani_magma_flats',
+]);
+const LANI_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'lani_ground', // warm black-sand town ground / cooled lava flats (`.`)
+  grass_b: 'lani_ground', // decorative grass (`,`)
+  grass_tuft: 'lani_ground', // decorative grass (`~`)
+  office_floor: 'lani_ground', // interior way-gaps (`o`) blend into the black sand
+  road: 'lani_path', // any street (`R`) → pale volcanic gravel lane
+  sidewalk: 'lani_path', // the pad road / the flats track (`=`) → ash gravel
+  road_dash: 'lani_path', // the centreline (`D`) — a volcanic lane needs no lane dash
+  office_wall: 'lani_wall', // interior walls (`O`) → basalt rock (SOLID)
+  brick: 'lani_wall', // the town border / lava cliffs (`B`) → basalt rock (SOLID)
+  bush: 'lani_wall', // any solid bush (`b`) → a basalt block (SOLID)
+};
+/** Ch.10 MARS (the Sea of Silence) tile reskin — red regolith ground, a compacted dust track,
+ *  and Martian rock walls/husk-columns. Same contract; the finale arena map only. */
+const MARS_SKIN_MAPS: ReadonlySet<string> = new Set([
+  'sea_of_silence',
+]);
+const MARS_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'mars_ground', // the dead, still floor of the Sea (`.`)
+  grass_b: 'mars_ground', // decorative grass (`,`)
+  grass_tuft: 'mars_ground', // decorative grass (`~`)
+  office_floor: 'mars_ground', // the way-in from the launch (`o`) blends into the regolith
+  road: 'mars_path', // any street (`R`) → compacted regolith track
+  sidewalk: 'mars_path', // any avenue (`=`) → compacted regolith track
+  road_dash: 'mars_path', // the centreline (`D`) — a dust track needs no lane dash
+  office_wall: 'mars_wall', // the husk-columns + arena borders (`O`) → Martian rock (SOLID)
+  brick: 'mars_wall', // any border (`B`) → Martian rock (SOLID)
+  bush: 'mars_wall', // any solid bush (`b`) → a rock block (SOLID)
+};
+
+/* ------------------------------------------------------------------ */
+/* THE EDGE BIOME SYSTEM (buildEdgeFeatures, ADR-132) — the old "treeline" ringed
+ * EVERY outdoor map's border with the same three Ohio oaks, so a desert pyramid,
+ * a glacier field, the lava flats, and the Sea of Silence all trailed off into
+ * incongruous forest. Now each map declares a BIOME, and its border is ringed with
+ * a terrain feature that matches: conifers in Norway/Romania, palms on tropical
+ * coasts, baobabs on the savanna, privet in the duchy, ice + spruce in the Arctic,
+ * dunes + cacti in the desert, bamboo in China, basalt on the lava flats, red rock
+ * on Mars. The out-of-bounds VOID is tinted to the biome too, so a small map fades
+ * into sand / ice / rust instead of forest-green. Purely DECORATIVE — out-of-bounds
+ * is already impassable, so (exactly like the old treeline) this adds no solids and
+ * the reachability validator sees nothing. */
+type EdgeBiome =
+  | 'temperate' | 'mountain_pine' | 'tropical' | 'savanna' | 'hedge'
+  | 'jungle' | 'desert' | 'ice' | 'volcanic' | 'mars' | 'bamboo'
+  | 'spore' | 'cave' | 'none';
+
+interface EdgeFeatureDef {
+  /** the AUTHORED prop keys to ring with — used once ALL their textures load */
+  keys: readonly string[];
+  /** existing-prop stand-ins (with fallbackTint) used until the bespoke art lands;
+   *  lets the system ship before every biome's PNG is authored, then auto-upgrade */
+  fallback?: readonly string[];
+  /** tint applied to the fallback stand-ins (frosts spruce, rusts rock, …) */
+  fallbackTint?: number;
+  /** tint applied to the real keys (rarely needed — bespoke art is self-colored) */
+  tint?: number;
+  /** size multiplier so a hedge / ice cliff / basalt wall reads denser, wall-like */
+  scaleMul?: number;
+  /** out-of-bounds void color so a small map fades into the biome, not the forest */
+  voidColor: number;
+}
+
+/** the per-biome edge recipe. `keys` are the bespoke authored props (filled in as the
+ *  ChatGPT→PNG art lands); `fallback` keeps every map looking right in the meantime. */
+const EDGE_BIOME: Record<EdgeBiome, EdgeFeatureDef> = {
+  // Ohio / England temperate — the original look, byte-for-byte (oaks, forest void)
+  temperate: { keys: ['tree', 'tree_b', 'tree_c'], voidColor: colorOf(px(RAMP.FOREST, 0)) },
+  // Norway fjords + Romanian mountains — dark authored conifers
+  mountain_pine: {
+    keys: ['prop_pine_whisperwood', 'prop_pine_whisperwood_b', 'prop_pine_whisperwood_c'],
+    voidColor: 0x16301f,
+  },
+  // tropical coasts — Puerto Sol, the Costa, Chandrapore, Mauna Lani — authored palms
+  tropical: { keys: ['palm_a', 'palm_b', 'palm_c', 'palm_d'], voidColor: 0x123f33 },
+  // African savanna — the authored baobab, a touch larger so it crowns the horizon
+  savanna: { keys: ['baobab_shade'], scaleMul: 1.08, voidColor: 0x7c6630 },
+  // the Grand Duchy of Minimus — clipped privet, scaled up to read as a maze wall
+  hedge: { keys: ['hedgerow_leaf_wall', 'hedgerow_thorn_arch'], scaleMul: 1.35, voidColor: 0x223c1d },
+  // ── gap biomes: bespoke art to be authored; fallbacks keep them right until then ──
+  jungle: {
+    keys: ['edge_jungle_a', 'edge_jungle_b', 'edge_jungle_c'],
+    fallback: ['palm_a', 'palm_b', 'palm_c'], fallbackTint: 0x9ad07f, voidColor: 0x0d2f18,
+  },
+  desert: {
+    keys: ['edge_desert_dune', 'edge_desert_cactus', 'edge_desert_rock'],
+    fallback: ['prop_resonance_stones'], fallbackTint: 0xd8b878, scaleMul: 1.05, voidColor: 0xb08a4e,
+  },
+  ice: {
+    keys: ['edge_ice_spire', 'edge_ice_spruce', 'edge_ice_drift'],
+    fallback: ['prop_pine_whisperwood', 'prop_pine_whisperwood_b'], fallbackTint: 0xcfe6ff, voidColor: 0x9db4cc,
+  },
+  volcanic: {
+    keys: ['edge_basalt_a', 'edge_basalt_b'],
+    fallback: ['prop_resonance_stones'], fallbackTint: 0x52454c, scaleMul: 1.05, voidColor: 0x2a2228,
+  },
+  mars: {
+    keys: ['edge_mars_a', 'edge_mars_b'],
+    fallback: ['prop_resonance_stones'], fallbackTint: 0xb0593a, scaleMul: 1.05, voidColor: 0x5e2a1c,
+  },
+  bamboo: {
+    keys: ['edge_bamboo_a', 'edge_bamboo_b', 'edge_bamboo_c'],
+    fallback: ['prop_pine_whisperwood', 'prop_pine_whisperwood_b'], fallbackTint: 0xbfe08a, voidColor: 0x294e2c,
+  },
+  spore: {
+    keys: ['edge_spore_a', 'edge_spore_b'],
+    fallback: ['tree', 'tree_b'], fallbackTint: 0xc59cf0, voidColor: 0x342050,
+  },
+  cave: {
+    keys: ['edge_rock_a', 'edge_rock_b'],
+    fallback: ['prop_resonance_stones'], fallbackTint: 0x9aa0ac, scaleMul: 1.05, voidColor: 0x2c2a32,
+  },
+  // organic interiors (inside the sleeping giant): no border feature at all
+  none: { keys: [], voidColor: 0x101018 },
+};
+
+/** explicit biome per map id, for the unskinned maps + the per-map exceptions a tile
+ *  skin can't express (Mauna Lani town is tropical palms, but its magma flats are
+ *  basalt — both share the LANI skin). Anything not listed falls through to the tile
+ *  skin's default, then to 'temperate'. */
+const MAP_BIOME: Readonly<Record<string, EdgeBiome>> = {
+  // Ch.2 — South America: jungle, the desert pyramid, tropical coast
+  jungle_1: 'jungle', jungle_2: 'jungle', grotto: 'cave',
+  puerto_sol: 'tropical', costa_estrella: 'tropical',
+  pyramid_ante: 'desert', pyramid_apex: 'desert',
+  // Ch.4 — Norway fjords (authored Whisperwood pines)
+  kvisthavn: 'mountain_pine', bootstep_moor: 'mountain_pine', lilleby: 'mountain_pine',
+  spine_hand: 'none', spine_shoulder: 'none', spine_ear: 'none',
+  // Ch.6 — Africa: savanna + the desert ruins
+  zanzibel: 'savanna', savanna_run: 'savanna',
+  laughing_ruins: 'desert', sphinx_chin: 'desert',
+  // Ch.7 — India tropical
+  chandrapore: 'tropical', monsoon_road: 'tropical', night_train: 'tropical',
+  // Ch.8 — China: the spore forest keeps its own mushroom look (not the bamboo skin)
+  spore_forest: 'spore',
+  // Ch.10 — the finale's two LANI maps split: tropical town vs. basalt flats
+  lani_magma_flats: 'volcanic',
+};
+
+/** resolve a map's edge biome: explicit override → tile-skin default → temperate. */
+function resolveEdgeBiome(id: string): EdgeBiome {
+  if (MAP_BIOME[id]) return MAP_BIOME[id];
+  if (AURORA_SKIN_MAPS.has(id)) return 'ice';
+  if (MARS_SKIN_MAPS.has(id)) return 'mars';
+  if (LANI_SKIN_MAPS.has(id)) return 'tropical'; // town default; flats overridden above
+  if (CHINA_SKIN_MAPS.has(id)) return 'bamboo';
+  if (ROMANIA_SKIN_MAPS.has(id)) return 'mountain_pine';
+  if (MINIMUS_SKIN_MAPS.has(id)) return 'hedge';
+  return 'temperate';
+}
+
 /** §A11 full-Gulliver: the Minimus NATIVES (citizens, props, facades) render at this scale on
  *  the Ch.5 maps so the colossi party visibly TOWERS over the tabletop duchy — the same idea as
  *  MINIMUS_TRAFFIC_SCALE for the dainty cars. The PARTY (player + followers) is NEVER scaled. */
@@ -479,7 +655,7 @@ export class OverworldScene extends Phaser.Scene {
 
     this.buildTiles();
     this.buildProps();
-    this.buildEdgeTreeline();
+    this.buildEdgeFeatures();
     this.buildNpcs();
     this.buildPlayer();
     this.buildRoamers();
@@ -606,6 +782,9 @@ export class OverworldScene extends Phaser.Scene {
     const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
     const chinaSkin = CHINA_SKIN_MAPS.has(this.mapDef.id);
     const romaniaSkin = ROMANIA_SKIN_MAPS.has(this.mapDef.id);
+    const auroraSkin = AURORA_SKIN_MAPS.has(this.mapDef.id);
+    const laniSkin = LANI_SKIN_MAPS.has(this.mapDef.id);
+    const marsSkin = MARS_SKIN_MAPS.has(this.mapDef.id);
     const data: number[][] = [];
     this.solidTiles = [];
     for (let y = 0; y < h; y++) {
@@ -650,6 +829,18 @@ export class OverworldScene extends Phaser.Scene {
             // as mountain-meadow grass / packed-dirt road / mossy castle stone. Same solidity
             // as the base it replaces, so collision below is unchanged.
             name = ROMANIA_TILE_SKIN[name];
+          } else if (auroraSkin && AURORA_TILE_SKIN[name]) {
+            // Ch.10 ALASKA — the Aurora reskin (Aurora maps only): snow-over-ice ground / plowed
+            // snow lane / glacial ice-block wall. Same solidity as the base, collision unchanged.
+            name = AURORA_TILE_SKIN[name];
+          } else if (laniSkin && LANI_TILE_SKIN[name]) {
+            // Ch.10 HAWAII — the Mauna Lani reskin (Lani maps only): black volcanic sand / pale
+            // ash-gravel lane / basalt-magma wall. Same solidity as the base, collision unchanged.
+            name = LANI_TILE_SKIN[name];
+          } else if (marsSkin && MARS_TILE_SKIN[name]) {
+            // Ch.10 MARS — the Sea of Silence reskin (finale map only): red regolith / compacted
+            // dust track / Martian rock wall. Same solidity as the base, collision unchanged.
+            name = MARS_TILE_SKIN[name];
           } else if (name === 'sidewalk') {
             if (isRoad(x, y + 1)) name = 'sidewalk_curb';
             else if (isRoad(x + 1, y)) name = 'sidewalk_curb_e';
@@ -680,31 +871,33 @@ export class OverworldScene extends Phaser.Scene {
     if (this.mapDef.interior) {
       this.cameras.main.setBounds(bx, by, Math.max(mw, vw), Math.max(mh, vh));
     } else {
-      // THE OUTDOOR EDGE RULE (see buildEdgeTreeline): paint the void forest-green
-      // and widen the bounds a couple tiles past every edge, so the camera reveals
-      // the border treeline + a forest backdrop instead of bare ground trailing off
-      // into the black margin. Small maps (smaller than the viewport) showed the
-      // void directly; large maps clamp to their edge — the buffer lets both show
-      // a treed boundary.
+      // THE OUTDOOR EDGE RULE (see buildEdgeFeatures): paint the void in the BIOME's
+      // color and widen the bounds a couple tiles past every edge, so the camera
+      // reveals the border feature + a matching backdrop instead of bare ground
+      // trailing into the black margin. Small maps (smaller than the viewport) showed
+      // the void directly; large maps clamp to their edge — the buffer lets both show
+      // a finished boundary (sand fading into sand, ice into ice, not forest-green).
       const M = s(40);
       this.cameras.main.setBounds(bx - M, by - M, Math.max(mw, vw) + 2 * M, Math.max(mh, vh) + 2 * M);
-      this.cameras.main.setBackgroundColor(colorOf(px(RAMP.FOREST, 0)));
+      this.cameras.main.setBackgroundColor(EDGE_BIOME[resolveEdgeBiome(this.mapDef.id)].voidColor);
     }
   }
 
   /**
-   * THE TREELINE (the "you never see the void" rule). Every OUTDOOR map's edge is
-   * ringed with trees just OUTSIDE the playable grid, so a boundary reads as a wall
-   * of forest rather than bare ground trailing into the black margin — and the ring
-   * doubles as free doodads so maps feel less sparse. Edges that hold a TRANSITION
-   * (a door zone touching the boundary) are left OPEN, so an open gap still means
-   * "you can leave here". Purely DECORATIVE: out-of-bounds tiles are already
-   * impassable (the move check blocks tx/ty < 0 and >= size), so there are no new
-   * solids and nothing the reachability validator sees. Trees sit at a low uniform
-   * depth — behind gameplay, above the ground — so the depth-800 night veil tints
-   * them with everything else. Deterministic per map id: same map, same forest.
+   * THE EDGE FEATURES (the "you never see the void" rule, ADR-132). Every OUTDOOR
+   * map's edge is ringed with a BIOME-appropriate terrain feature just OUTSIDE the
+   * playable grid, so a boundary reads as a wall of forest / ice / dune / bamboo /
+   * basalt / red rock rather than bare ground trailing into the black margin — and
+   * the ring doubles as free doodads so maps feel less sparse. The feature + the
+   * out-of-bounds void color come from EDGE_BIOME[resolveEdgeBiome(id)]. Edges that
+   * hold a TRANSITION (a door zone touching the boundary) are left OPEN, so an open
+   * gap still means "you can leave here". Purely DECORATIVE: out-of-bounds tiles are
+   * already impassable (the move check blocks tx/ty < 0 and >= size), so there are no
+   * new solids and nothing the reachability validator sees. Features sit at a low
+   * uniform depth — behind gameplay, above the ground — so the depth-800 night veil
+   * tints them with everything else. Deterministic per map id: same map, same border.
    */
-  private buildEdgeTreeline(): void {
+  private buildEdgeFeatures(): void {
     if (this.mapDef.interior) return; // rooms are walled; their void is intentional
     const h = this.solidTiles.length;
     const w = h > 0 ? this.solidTiles[0].length : 0;
@@ -736,19 +929,32 @@ export class OverworldScene extends Phaser.Scene {
       if (d.x + d.w >= w - 1) for (let y = d.y - pad; y <= d.y + d.h + pad; y++) openRight.add(y);
     }
 
-    const KEYS = ['tree', 'tree_b', 'tree_c'] as const;
+    // pick the biome's edge feature: the bespoke AUTHORED keys once they ALL load,
+    // else the existing-prop stand-ins (tinted) so every map looks right today and
+    // auto-upgrades the moment the real PNG is wired into authored.ts.
+    const biome = resolveEdgeBiome(this.mapDef.id);
+    const def = EDGE_BIOME[biome];
+    const useReal = def.keys.length > 0 && def.keys.every((k) => this.textures.exists(k));
+    const KEYS = useReal ? def.keys : (def.fallback ?? def.keys);
+    if (KEYS.length === 0) return; // the 'none' biome (e.g. inside the giant): no border
+    const tint = useReal ? def.tint : def.fallbackTint;
+    const mul = def.scaleMul ?? 1;
     const W = w * TILE_PX;
     const H = h * TILE_PX;
     const jit = (): number => (rnd() - 0.5) * s(10);
     const plant = (cx: number, cy: number): void => {
       const key = KEYS[Math.floor(rnd() * KEYS.length)];
-      const sz = AUTHORED_WORLD_PROP_DISPLAY_SIZE[key];
-      const sc = 0.85 + rnd() * 0.3; // a little size variety so the line isn't a comb
-      this.add
+      const variety = (0.85 + rnd() * 0.3) * mul; // size variety (× biome wall factor) so the line isn't a comb
+      const img = this.add
         .image(cx, cy, key)
         .setOrigin(0.5, 1)
-        .setDisplaySize(s(sz.w) * sc, s(sz.h) * sc)
         .setDepth(1); // behind gameplay, above ground; under the depth-800 night veil
+      // sized props (trees, hedges, the new edge_* art) carry display dims; legacy
+      // props (palms, baobab) go through THE WORLD RESIZE RULE like buildProps does.
+      const sz = AUTHORED_WORLD_PROP_DISPLAY_SIZE[key as AuthoredWorldPropKey];
+      if (sz) img.setDisplaySize(s(sz.w) * variety, s(sz.h) * variety);
+      else img.setScale(worldSpriteScale(key, img.width, img.height) * variety);
+      if (tint !== undefined) img.setTint(tint);
     };
 
     // top + bottom rows — canopy fills the margin above / below the grid

@@ -928,6 +928,23 @@ TILESET.push({ name: 'romania_ground', solid: false, make: () => grassBase(1, 5)
 TILESET.push({ name: 'romania_path', solid: false, make: sidewalkTile });
 TILESET.push({ name: 'romania_wall', solid: true, make: officeWall });
 
+// Ch.10 region tiles (Alaska / Hawaii / Mars) — same partial-override contract as the China /
+// Romania sets above: the authored {Aurora,Lani,Mars}_tiles_16.png strips supply the real look at
+// runtime (wired in spritegen/authored.ts), applied ONLY to the Ch.10 maps via the render-time
+// name-remaps AURORA/LANI/MARS_TILE_SKIN in OverworldScene.buildTiles. make() = boot FALLBACK only
+// (REUSED painters, spritegen stays FROZEN), each carrying the SAME solidity as the base tile it
+// stands in for (ground/path walkable, wall solid like office_wall). Appended at the tail so no
+// existing index shifts; tools/sync-ch10-tiles.ts grows the otterbrook strip matching columns.
+TILESET.push({ name: 'aurora_ground', solid: false, make: () => grassBase(1, 5) });
+TILESET.push({ name: 'aurora_path', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'aurora_wall', solid: true, make: officeWall });
+TILESET.push({ name: 'lani_ground', solid: false, make: () => grassBase(1, 5) });
+TILESET.push({ name: 'lani_path', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'lani_wall', solid: true, make: officeWall });
+TILESET.push({ name: 'mars_ground', solid: false, make: () => grassBase(1, 5) });
+TILESET.push({ name: 'mars_path', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'mars_wall', solid: true, make: officeWall });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

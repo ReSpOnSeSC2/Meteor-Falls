@@ -3350,6 +3350,11 @@ const MAP_AREA: Record<string, string> = {
   // CH.5 Minimus — the capital wears the heraldic duchy hand (§A11; banner reads
   // MINIMUS MAJOR). The road/maze/crown carry no settlement glyph (like the moor/spine).
   minimus_major: 'minimus',
+  // CH.10 The Long Shot — the two settlements wear their region glyph banners (AURORA STATION
+  // in the frost script, MAUNA LANI in the tiki script). The ice field / magma flats / Sea of
+  // Silence carry no settlement glyph (like the moor/spine), matching the tile-skin precedent.
+  aurora_station: 'aurora',
+  mauna_lani: 'mauna_lani',
 };
 for (const [id, area] of Object.entries(MAP_AREA)) if (MAPS[id]) MAPS[id].area = area;
 
