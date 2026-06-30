@@ -310,6 +310,13 @@ const CH9: Cutscene[] = [
 
 const CH10: Cutscene[] = [
   {
+    // the §A5 next-leg montage — Bert's hop north + the snowcat run onto the ice to
+    // AURORA STATION (the panels no-op cleanly until their PNGs land)
+    id: 'ch10_journey',
+    chapter: 'ch10',
+    beats: panels('snowcat_run_to_aurora_station', 'aurora_station_decodes_mars'),
+  },
+  {
     id: 'ch10_finale',
     chapter: 'ch10',
     beats: panels(

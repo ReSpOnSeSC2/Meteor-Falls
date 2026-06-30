@@ -394,6 +394,111 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
     ],
   }),
 
+  // §A6 / ADR-130 — THE FROST SENTINEL (Ch.10 Alaska miniboss, promoted from the
+  // elementalGolem draft): a glacial war-construct guarding the Aurora ice road. Its
+  // FROST SHELL is physical-immune — gadgets and bats clang off the ice — until Mia's
+  // FIRE CRACKS it (crackedBy), after which everyone can land for a beat. Every 3rd turn
+  // it slams a paralyzing cold across the party. 50,000 HP (MINIBOSS_HP); a gauntlet
+  // GATE on the way to the launch, not the boss. The intro/win lines play in the scene.
+  frost_sentinel: B({
+    boss: 'frost_sentinel',
+    initialForm: 'frost',
+    forms: [
+      { id: 'frost', name: 'FROST SHELL', spriteSuffix: '', physicalImmune: true, crackedBy: 'fire', healedBy: 'freeze' },
+    ],
+    phases: [
+      {
+        id: 'slam',
+        trigger: { kind: 'turnCount', n: 3, every: 3 },
+        once: false,
+        actions: [{ kind: 'partyStatus', status: 'paralyzed', turns: 1 }],
+      },
+    ],
+  }),
+
+  // §A6 / ADR-130 — THE TIKI MAGMA GOLEM (Ch.10 Hawaii miniboss, promoted from the
+  // elementalGolem draft): a carved volcanic-stone tiki with a magma heart barring the
+  // Mauna Lani launch road. Mirror of the Sentinel: its MAGMA CORE is physical-immune
+  // until Mia's FREEZE quenches the shell (crackedBy), and every 3rd turn it washes the
+  // party in sunburn heat. 50,000 HP; the second gauntlet GATE.
+  tiki_magma_golem: B({
+    boss: 'tiki_magma_golem',
+    initialForm: 'magma',
+    forms: [
+      { id: 'magma', name: 'MAGMA CORE', spriteSuffix: '', physicalImmune: true, crackedBy: 'freeze', healedBy: 'fire' },
+    ],
+    phases: [
+      {
+        id: 'slam',
+        trigger: { kind: 'turnCount', n: 3, every: 3 },
+        once: false,
+        actions: [{ kind: 'partyStatus', status: 'sunburn', turns: 2 }],
+      },
+    ],
+  }),
+
+  // §A6 / ADR-126–130 — THE HUSH (Ch.10 finale, Mars / the Sea of Silence): the bespoke
+  // 150,000-HP finale shell (like the Tick, not one of the ten templates), run as a
+  // three-movement fight. Movement 1 "THE STATIC" — a normal damage race. Movement 2
+  // "THE QUIET" (at 50% HP) — the Hush stops fighting back and goes UN-touchably quiet:
+  // the QUIET form is physicalImmune, so swings and gadgets clang into the silence — but
+  // WARMTH still reaches it (Vibe and PRAY are never immune; the IRON path's STOLEN LIGHT
+  // routes as Vibe to chip it here, BattleScene). HP keeps falling to warmth, so there is
+  // no soft-lock. Every third turn the grief rolls out across the party (hushed). At 12%
+  // the Hush is REACHED, not killed (endBattleMercy — win without a kill); the SILENCE vs
+  // FORGIVE resolution (THE CALLING / THE ANSWER), the name-confirm, the Homesong, and the
+  // walk home are driven by OverworldScene.theHushBossScene + the composed ending. The
+  // Hush is never reduced to nothing (a hp<=0 clamp rides it in BattleScene). Weakness []
+  // (no element answers loneliness); mind_immune rides the EnemyDef. 150,000 « the $3B
+  // Ch.10 Fortune target — money still owns the big numbers.
+  the_hush: B({
+    boss: 'the_hush',
+    initialForm: 'static',
+    forms: [
+      { id: 'static', name: 'THE STATIC', spriteSuffix: '' },
+      // the QUIET shares the base sprite (suffix '') — the un-touchable hush is a behavior
+      // swap (physicalImmune), not a re-texture; warmth (Vibe/PRAY) still reaches it
+      { id: 'quiet', name: 'THE QUIET', spriteSuffix: '', physicalImmune: true },
+    ],
+    phases: [
+      {
+        // Movement 1 opens — a wall of white noise and cold
+        id: 'static_open',
+        trigger: { kind: 'turnCount', n: 1 },
+        actions: [{ kind: 'scriptLine', line: 'hush_static' }],
+      },
+      {
+        // Movement 2 at 50% — it goes un-touchably QUIET (physical clangs; warmth reaches)
+        id: 'quiet',
+        trigger: { kind: 'hpBelow', frac: 0.5 },
+        actions: [
+          { kind: 'setForm', form: 'quiet' },
+          { kind: 'scriptLine', line: 'hush_quiet' },
+          { kind: 'partyStatus', status: 'hushed', turns: 2 },
+        ],
+      },
+      {
+        // the grief rolls out across the party, again and again, through the Quiet
+        id: 'grief',
+        trigger: { kind: 'turnCount', n: 4, every: 3 },
+        once: false,
+        actions: [
+          { kind: 'scriptLine', line: 'hush_grief' },
+          { kind: 'partyStatus', status: 'hushed', turns: 2 },
+        ],
+      },
+      {
+        // at 12% the Hush is REACHED — the fight ends without a kill; the scene takes over
+        id: 'falls',
+        trigger: { kind: 'hpBelow', frac: 0.12 },
+        actions: [
+          { kind: 'scriptLine', line: 'hush_falls' },
+          { kind: 'endBattleMercy' },
+        ],
+      },
+    ],
+  }),
+
   // §A6 / ADR-121 — THE HUSH SENTINEL, the first-night Mars war-construct. This is
   // the "cannot-win-alone / repel" set-piece expressed as DATA: super-Glint
   // (glintSupernova, BattleScene) carries the damage while the script runs to a

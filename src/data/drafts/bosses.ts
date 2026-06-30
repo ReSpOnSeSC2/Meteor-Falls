@@ -18,9 +18,6 @@
  * Date.now()/Math.random() (Prime Law 2).
  */
 import type { BossScriptDef } from '../../schemas';
-import {
-  elementalGolem,
-} from '../../levelkit/forge/bosses';
 
 export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
   /* Ch.3 — HEADMASTER MAINFRAME: PROMOTED (ADR-099). Now a live boss in
@@ -57,20 +54,12 @@ export const DRAFT_BOSS_SCRIPTS: Record<string, BossScriptDef> = {
    * template, with the §A11 dialogue ids rewritten from `*_draft`) — no longer a draft
    * (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 
-  /* Ch.10 minibosses — the WRONG element heals the golem (crackedBy is the key) */
-  frost_sentinel: elementalGolem('frost_sentinel', {
-    form: { id: 'frost', name: 'FROST SHELL', spriteSuffix: '' },
-    weakTo: 'fire', // fire melts it
-    healedBy: 'freeze', // frost feeds it
-    slam: { every: 3, line: 'frost_slam_draft' },
-  }),
-
-  tiki_magma_golem: elementalGolem('tiki_magma_golem', {
-    form: { id: 'magma', name: 'MAGMA CORE', spriteSuffix: '' },
-    weakTo: 'freeze', // cold quenches it
-    healedBy: 'fire', // fire stokes it
-    slam: { every: 3, line: 'tiki_slam_draft' },
-  }),
+  /* Ch.10 minibosses — THE FROST SENTINEL + THE TIKI MAGMA GOLEM: PROMOTED (the Long
+   * Shot / Ch.10 landing). Now live bosses in src/data/bosses.ts (BOSS_SCRIPTS) driving
+   * shipped §A7 enemies at 50,000 HP each (the elementalGolem gimmick: the right element
+   * CRACKS the physical-immune shell). With these two promoted, every §A6 boss has shipped;
+   * THE HUSH is the bespoke finale (data/bosses.ts), never a forge draft — no draft remains
+   * (Prime Law 1: a draft may not duplicate a shipped script or enemy). */
 };
 
 /** the unshipped bosses the forge instantiates, pinned (the COUNT is law — ten
@@ -84,6 +73,6 @@ export const DRAFT_BOSS_IDS = [
   // 'cobra_raja' — PROMOTED to a live boss at the Ch.7 Chandrapore landing
   // 'paper_dragon' — PROMOTED to a live boss at the Ch.8 Lotus Harbor / Mt. Shu landing
   // 'count_hoaxula' — PROMOTED to a live boss at the Ch.9 Valea Stelelor landing
-  'frost_sentinel',
-  'tiki_magma_golem',
+  // 'frost_sentinel' — PROMOTED to a live boss at the Ch.10 Long Shot landing
+  // 'tiki_magma_golem' — PROMOTED to a live boss at the Ch.10 Long Shot landing
 ] as const;

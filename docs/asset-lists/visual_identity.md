@@ -2,8 +2,8 @@
 
 Authored means the runtime key resolves through `src/spritegen/authored.ts` and a committed `assets/art/...` file. Legacy means a procedural mini, generated draw function, borrowed generic character sheet, or orphaned authored file remains in the identity path.
 
-- Enemies: 135
-- Fully authored identities: 135
+- Enemies: 144
+- Fully authored identities: 144
 - Legacy identities: 0
 - Orphan authored battle images: 0
 - Orphan authored overworld sheets: 0
@@ -148,6 +148,15 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | animated_armor | castle_hoaxula | battle_animated_armor | mini:mini_animated_armor | authored | - |
 | wolf_of_the_old_road | old_road | battle_wolf_of_the_old_road | mini:mini_wolf_of_the_old_road | authored | - |
 | count_hoaxula | - | battle_count_hoaxula | mini:mini_count_hoaxula | authored | - |
+| frost_wisp | aurora_ice_field | battle_bog_cotton_wisp | mini:mini_bog_cotton_wisp | authored | - |
+| icehorn_caribou | aurora_ice_field | battle_frost_hare | mini:mini_frost_hare | authored | - |
+| cinder_imp | lani_magma_flats | battle_dust_devil_charm | mini:mini_dust_devil_charm | authored | - |
+| ash_crab | lani_magma_flats | battle_cobble_mite | mini:mini_cobble_mite | authored | - |
+| silent_drifter | sea_of_silence | battle_hushed_skua | mini:mini_hushed_skua | authored | - |
+| static_wraith | sea_of_silence | battle_hollow_jackal | mini:mini_hollow_jackal | authored | - |
+| frost_sentinel | - | battle_frost_jotun_elder | mini:mini_frost_jotun_elder | authored | - |
+| tiki_magma_golem | - | battle_boiler_golem | mini:mini_amber_hoard_troll | authored | - |
+| the_hush | - | battle_hush_sentinel | mini:mini_hushed_skua | authored | - |
 
 ## Procedural Overworld Roamer Queue (retire these)
 

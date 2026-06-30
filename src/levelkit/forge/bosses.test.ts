@@ -294,9 +294,9 @@ describe('S15g M3c — the drafts parse, pin, and cannot masquerade', () => {
     }
   });
 
-  it('the COUNT is law — two minibosses (Ch.3 Mainframe + Ch.4 Whisperwig + Ch.5 Whiskerzilla + Ch.6 Sphinx + Ch.7 Cobra Raja + Ch.8 Paper Dragon + Ch.9 Count Hoaxula promoted)', () => {
+  it('the COUNT is law — no drafts remain (every §A6 boss + both Ch.10 minibosses promoted; THE HUSH is the bespoke finale)', () => {
     expect(Object.keys(DRAFT_BOSS_SCRIPTS).sort()).toEqual([...DRAFT_BOSS_IDS].sort());
-    expect(DRAFT_BOSS_IDS.length).toBe(2);
+    expect(DRAFT_BOSS_IDS.length).toBe(0);
   });
 
   it('no draft collides with a shipped boss script or a shipped §A7 enemy', () => {
@@ -308,6 +308,6 @@ describe('S15g M3c — the drafts parse, pin, and cannot masquerade', () => {
 
   it('is byte-stable, twice + hash-pinned (a refactor that shifts one field fails here)', () => {
     expect(JSON.stringify(DRAFT_BOSS_SCRIPTS)).toBe(JSON.stringify(DRAFT_BOSS_SCRIPTS));
-    expect(fnv(DRAFT_BOSS_SCRIPTS)).toBe('cc3c70b0'); // (chapter sessions promote these one at a time; Ch.3 Mainframe + Ch.4 Whisperwig + Ch.5 Whiskerzilla + Ch.6 Sphinx + Ch.7 Cobra Raja + Ch.8 Paper Dragon + Ch.9 Count Hoaxula promoted)
+    expect(fnv(DRAFT_BOSS_SCRIPTS)).toBe('5465b825'); // empty: every §A6 boss + both Ch.10 minibosses promoted to BOSS_SCRIPTS; THE HUSH is the bespoke finale (the forge holds no draft now)
   });
 });
