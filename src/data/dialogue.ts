@@ -3392,6 +3392,19 @@ export const BATTLE_TEXT = {
   party_status_paralyzed: "Everyone's nerves seized at once! (PARALYZED)",
   party_status_sunburn: 'The whole party caught the glare at once! (SUNBURN)',
   party_status_hushed: 'Every voice went flat at once. (HUSHED)',
+  // §A6 Ch.10 / ADR-130 §7 — THE HUSH finale, the live mechanics the phase prose frames:
+  //   party_grief  = the GRIEF tide landing as HP (the partyDamage AoE, every 3rd turn).
+  //   calling_pulse= THE CALLING (SILENCE): every soul you helped phones in, warmth that
+  //                  reaches THROUGH the Quiet (routed as Vibe); more callers = faster fall.
+  //   warmth_give / warmth_full = THE ANSWER (FORGIVE): you stop swinging and POUR the warm
+  //                  out; the meter fills on Vibe/Pray and, brimful, the loneliness is reached.
+  //   boss_heals_element = the §A6 golem inversion: the WRONG element FEEDS it (healedBy).
+  party_grief: 'The lonely tide rolled over the whole party — and it HURT.',
+  calling_pulse: 'Another voice answers the call — warmth pours in across the dark!',
+  warmth_give: 'You pour the warm OUT — freely, into the cold. It REACHES.',
+  warmth_full: 'The great quiet is full, and accompanied, and warm at last. It is reached.',
+  warmth_appear: "Don't fight it. ANSWER it. Pour everything warm you carried — and OUTLAST the cold.",
+  boss_heals_element: "Wrong element! It DRANK that — and it's the wrong direction!",
   feast_revive: "The Feast Basket's warmth answers! Nobody stays down at THIS table!",
   spy_report: '{e} — about {t} HP left.',
   spy_weak: 'Weak point, circled twice: {t}.',

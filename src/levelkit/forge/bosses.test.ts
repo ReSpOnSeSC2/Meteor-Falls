@@ -37,6 +37,7 @@ function recorder(): { fx: PhaseEffects; log: string[] } {
     returnStolen: () => void log.push('return'),
     endBattleMercy: () => void log.push('mercy'),
     partyStatus: (s, t) => void log.push(`status:${s}:${t}`),
+    partyDamage: (a) => void log.push(`damage:${a}`),
     awaken: (id) => void log.push(`awaken:${id}`),
   };
   return { fx, log };

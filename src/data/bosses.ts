@@ -478,12 +478,16 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
         ],
       },
       {
-        // the grief rolls out across the party, again and again, through the Quiet
+        // the grief rolls out across the party, again and again, through the Quiet —
+        // a TIDE that lands as real HP (partyDamage, ~25% of a finale hero's bar, healable)
+        // AND flattens every voice (hushed). The "survive while you reach it" pressure of
+        // the QUIET movement: the FORGIVE meter (BattleScene warmth) races this clock.
         id: 'grief',
         trigger: { kind: 'turnCount', n: 4, every: 3 },
         once: false,
         actions: [
           { kind: 'scriptLine', line: 'hush_grief' },
+          { kind: 'partyDamage', amount: 120 },
           { kind: 'partyStatus', status: 'hushed', turns: 2 },
         ],
       },
