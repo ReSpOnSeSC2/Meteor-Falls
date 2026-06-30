@@ -19,8 +19,15 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // rises to match so the solo-Jay TTK stays in the fair window (verify.ts boss check).
     A({ id: 'vibe_surge_a', name: 'Vibe Surge Alpha', kind: 'vibe', pp: 6, power: 38, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_a' }),
     A({ id: 'vibe_surge_b', name: 'Vibe Surge Beta', kind: 'vibe', pp: 18, power: 55, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_b' }),
-    A({ id: 'vibe_surge_g', name: 'Vibe Surge Gamma', kind: 'vibe', pp: 38, power: 1100, target: 'enemies', element: 'none', text: '{user} let the old light ROAR!', fx: 'surge_g' }),
-    A({ id: 'vibe_surge_o', name: 'Vibe Surge Omega', kind: 'vibe', pp: 64, power: 6846, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
+    // ADR-133 (curve re-eval): Surge γ/Ω RE-DERIVED + earned EARLIER. The old
+    // γ(pw1100,L31)/Ω(pw6846,L47) left Surge β as Jay's best nuke for FOUR chapters
+    // (Ch.3–6) — a dead menu pick (PP for swing-equivalent damage, the exact ADR-131
+    // anti-pattern). γ now lands at L26 (Ch.5) and Ω at L35 (Ch.7), each re-derived on
+    // the band curve (power = bandTarget ÷ (1+Vibe/60)) so his signature nuke tracks
+    // every chapter without a dead zone or an out-of-band spike. Σ (L52, the_whole_sky)
+    // keeps the finale magnitude. Ladder stays monotonic (power+pp) for verify.test.
+    A({ id: 'vibe_surge_g', name: 'Vibe Surge Gamma', kind: 'vibe', pp: 26, power: 360, target: 'enemies', element: 'none', text: '{user} let the old light ROAR!', fx: 'surge_g' }),
+    A({ id: 'vibe_surge_o', name: 'Vibe Surge Omega', kind: 'vibe', pp: 44, power: 1250, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
     A({ id: 'lifeup_a', name: 'Lifeup Alpha', kind: 'vibe', pp: 5, power: 12, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
     A({ id: 'lifeup_b', name: 'Lifeup Beta', kind: 'vibe', pp: 11, power: 116, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
     A({ id: 'lifeup_g', name: 'Lifeup Gamma', kind: 'vibe', pp: 24, power: 1464, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole chorus!', fx: 'lifeup' }),
@@ -154,12 +161,20 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // a defensive/offensive choice. He joins late (Ch.9) nearly complete — a
     // master, not a student — so his unlocks cluster high. Voice: formal, calm,
     // faintly baffled by the modern world; his battle lines read like sutras.
-    A({ id: 'vibe_comet_a', name: 'Vibe Comet Alpha', kind: 'vibe', pp: 20, power: 1070, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_a' }),
-    A({ id: 'vibe_comet_b', name: 'Vibe Comet Beta', kind: 'vibe', pp: 30, power: 2140, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_b' }),
-    A({ id: 'vibe_comet_g', name: 'Vibe Comet Gamma', kind: 'vibe', pp: 44, power: 3280, target: 'enemies', element: 'none', text: 'The mountain answers. The sky falls.', fx: 'comet_g' }),
+    // ADR-133 (curve re-eval): Comet RE-DERIVED for Dorin's REAL join (ADR-125 — he
+    // joins L26 / Ch.5-end and travels Ch.6→10, NOT the old Ch.9 join the §1d ceiling
+    // numbers were computed for). The old powers (α1070…Ω6497) made him ~×4 over-band
+    // the moment he joined (Comet β alone = ~4,170 AoE at L26). Re-derived on the band
+    // curve at his real earn-levels (α on-join L26→Ch.6, β L33→Ch.7, γ L40→Ch.8,
+    // Ω L46 awakening→Ch.9-10) so he joins a CAPABLE master who tracks the curve, never
+    // a content-trivialiser. Ladder climbs by tier (430<900<2000<3400) AND by earn-level
+    // now (γ L40 < Ω L46 — the old γ-after-Ω inversion is gone).
+    A({ id: 'vibe_comet_a', name: 'Vibe Comet Alpha', kind: 'vibe', pp: 20, power: 430, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_a' }),
+    A({ id: 'vibe_comet_b', name: 'Vibe Comet Beta', kind: 'vibe', pp: 30, power: 900, target: 'enemies', element: 'none', text: '{user} called down the cold stars!', fx: 'comet_b' }),
+    A({ id: 'vibe_comet_g', name: 'Vibe Comet Gamma', kind: 'vibe', pp: 44, power: 2000, target: 'enemies', element: 'none', text: 'The mountain answers. The sky falls.', fx: 'comet_g' }),
     // Comet Ω is the single awakening now (trial_of_the_mute_mountain, §6) — the
     // mastery earned at the Trial that lets him join. NOT a level unlock.
-    A({ id: 'vibe_comet_o', name: 'Vibe Comet Omega', kind: 'vibe', pp: 60, power: 6497, target: 'enemies', element: 'none', text: 'The sky opened. The stars remembered.', fx: 'comet_o' }),
+    A({ id: 'vibe_comet_o', name: 'Vibe Comet Omega', kind: 'vibe', pp: 60, power: 3400, target: 'enemies', element: 'none', text: 'The sky opened. The stars remembered.', fx: 'comet_o' }),
     A({ id: 'mirror', name: 'Mirror', kind: 'vibe', pp: 4, power: 0, target: 'self', element: 'none', status: 'mirror', text: '{user} became perfectly still water.', fx: 'mirror_snap' }),
     // party Mirror — overlaps Jay's Power Shield on purpose but lands FASTER
     // (Dorin acts first). The 'mirror' status is already party-capable through
@@ -210,6 +225,45 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'the_minutes', name: 'The Minutes', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'focus', text: '{user} took the minutes mid-disaster — and corrected the record.', fx: 'the_minutes' }),
   ].map((a) => [a.id, a]),
 );
+
+/* ---------------- ability families (ADR-133 — the grouped battle menu) ----------------
+ * The in-battle Vibe/Gadgets/Tactics menus MESH a whole ladder (Vibe Fire α…Σ) into ONE
+ * box, so a late-game Mia browses ~9 family rows instead of ~25 flat rungs. A family is an
+ * ability's display name minus its α/β/γ/Ω/Σ tier word; a non-laddered ability is its own
+ * one-rung family (the menu casts it directly, no submenu). Pure — unit-testable, no UI. */
+const TIER_SUFFIX = /\s+(Alpha|Beta|Gamma|Omega|Sigma)$/;
+
+/** the family an ability belongs to — its name without the trailing tier word. */
+export function abilityFamily(name: string): string {
+  return name.replace(TIER_SUFFIX, '');
+}
+
+export interface AbilityGroup {
+  family: string;
+  /** the family's rung ids, sorted by PP (α→Σ within a ladder) */
+  ids: string[];
+}
+
+/** group an ORDERED ability-id list into families, preserving first-seen family order so
+ *  the menu's top level reads stable; each family's rungs sort by PP (the ladder order). */
+export function groupAbilityFamilies(ids: string[]): AbilityGroup[] {
+  const order: string[] = [];
+  const byFamily = new Map<string, string[]>();
+  for (const id of ids) {
+    const ab = ABILITIES[id];
+    if (!ab) continue;
+    const fam = abilityFamily(ab.name);
+    if (!byFamily.has(fam)) {
+      byFamily.set(fam, []);
+      order.push(fam);
+    }
+    byFamily.get(fam)!.push(id);
+  }
+  return order.map((family) => ({
+    family,
+    ids: byFamily.get(family)!.slice().sort((a, b) => ABILITIES[a].pp - ABILITIES[b].pp),
+  }));
+}
 
 /* ---------------- PRAY — §A3 canon table ---------------- */
 

@@ -145,19 +145,22 @@ export function heroDamagePerRound(
 
 /** §A3 join points — who is in the party when each chapter's BOSS is fought.
  *  Jay is SOLO for the Tick (Hickory Hill crater, before the bus to Brickton);
- *  Mia joins Ch.1's close; Milo Ch.3; Pippa AFTER Whiskerzilla (so she is in
- *  from Ch.6); Dorin joins late in Ch.9, so this counts him only from Ch.10.
- *  Conservative: it never over-counts the party for a boss. */
+ *  Mia joins Ch.1's close; Milo Ch.3; Pippa AFTER Whiskerzilla (so she is in from
+ *  Ch.6). ADR-125/133: Dorin joins MID-journey too — L26 at Ch.5-end (Minimus,
+ *  OverworldScene.ts) and travels through Ch.10 — so he is counted from Ch.6, not
+ *  the old Ch.9/10 assumption. Including him from Ch.6 is what resolves the former
+ *  Ch.9 conservative TTK flag (the model used to omit the powerhouse). Conservative:
+ *  it never over-counts the party for a boss. */
 export const BOSS_PARTY: Record<number, HeroId[]> = {
   1: ['rex'],
   2: ['rex', 'faye'],
   3: ['rex', 'faye', 'milo'],
   4: ['rex', 'faye', 'milo'],
   5: ['rex', 'faye', 'milo'],
-  6: ['rex', 'faye', 'milo', 'pippa'],
-  7: ['rex', 'faye', 'milo', 'pippa'],
-  8: ['rex', 'faye', 'milo', 'pippa'],
-  9: ['rex', 'faye', 'milo', 'pippa'],
+  6: ['rex', 'faye', 'milo', 'pippa', 'dorin'],
+  7: ['rex', 'faye', 'milo', 'pippa', 'dorin'],
+  8: ['rex', 'faye', 'milo', 'pippa', 'dorin'],
+  9: ['rex', 'faye', 'milo', 'pippa', 'dorin'],
   10: ['rex', 'faye', 'milo', 'pippa', 'dorin'],
 };
 
