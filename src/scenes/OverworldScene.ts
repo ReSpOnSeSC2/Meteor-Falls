@@ -386,7 +386,7 @@ export class OverworldScene extends Phaser.Scene {
   private static DOOR_REENTRY_MS = 900;
   private player!: Phaser.GameObjects.Sprite;
   private facing: Facing = 'down';
-  private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean }> = [];
+  private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean; flit: boolean }> = [];
   /** ADR-097: a pooled contact shadow per walking actor (grounding = 3D read) */
   private shadows: Phaser.GameObjects.Image[] = [];
   private trail: Array<{ x: number; y: number; f: Facing }> = [];
@@ -1139,6 +1139,11 @@ export class OverworldScene extends Phaser.Scene {
   private buildFollowers(): void {
     for (const h of GS.data.party.slice(1)) this.addFollower(h.id, h.down);
     if (GS.data.guest === 'chad') this.addFollower('chad');
+    // ADR-121: between the crater repel and the porch zapper, the dimmed Glint
+    // flits home at the back of the party. Re-added on every leg of the walk so
+    // his authored star-icon survives the door transitions down the hill; the
+    // window closes itself the instant the zapper sets zapper_done.
+    if (GS.flag('sentinel_repelled') && !GS.flag('zapper_done')) this.addFollower('glint', false, true);
   }
 
   private rebuildFollowers(): void {
@@ -1147,15 +1152,18 @@ export class OverworldScene extends Phaser.Scene {
     this.buildFollowers();
   }
 
-  private addFollower(id: string, angel = false): void {
+  private addFollower(id: string, angel = false, flit = false): void {
     // S7c: a fallen hero mourns as THEMSELF — angel_<id> when the variant
     // exists, the plain guest angel otherwise (visual only, §A4.7)
     const angelKey = this.textures.exists(`angel_${id}`) ? `angel_${id}` : 'angel';
-    const spr = this.add.sprite(this.player.x, this.player.y + s(2), angel ? angelKey : id, 0);
+    // ADR-121: a FLIT follower (Glint) keeps his OWN texture and hovers via his
+    // flit cycle — he never borrows the angel sheet and never walks the conga.
+    const spr = this.add.sprite(this.player.x, this.player.y + s(2), flit ? id : angel ? angelKey : id, 0);
     spr.setOrigin(0.5, 1);
     if (angel) spr.play(`${angelKey}-float`);
+    else if (flit) spr.play(`${id}-flit`);
     else spr.setFrame(standFrame('down'));
-    this.followers.push({ spr, id, angel });
+    this.followers.push({ spr, id, angel, flit });
   }
 
   private removeFollower(id: string): void {
@@ -1371,7 +1379,7 @@ export class OverworldScene extends Phaser.Scene {
       i++;
     };
     place(this.player.x, this.player.y, wHero);
-    for (const f of this.followers) if (!f.angel) place(f.spr.x, f.spr.y, wHero);
+    for (const f of this.followers) if (!f.angel && !f.flit) place(f.spr.x, f.spr.y, wHero);
     for (const n of this.npcs) place(n.spr.x, n.spr.y, n.def.dog ? wDog : wHero);
     for (const r of this.roamers) if (!r.dead) place(r.spr.x, r.spr.y, r.walker ? wHero : wMini);
     for (const p of this.patrols) if (!p.dead) place(p.spr.x, p.spr.y, wHero);
@@ -1585,6 +1593,14 @@ export class OverworldScene extends Phaser.Scene {
         // angels float instead of walk (Prompt 5 / §A4.7) — 4px lift, 1.5px bob
         f.spr.x = crumb.x;
         f.spr.y = crumb.y - s(4) + Math.sin(this.time.now / 280 + i * 2) * s(1.5);
+        f.spr.setDepth(crumb.y);
+        return;
+      }
+      if (f.flit) {
+        // ADR-121: Glint is a mote of light — he HOVERS the conga home, a higher
+        // lift and quicker bob than a mourning angel, his flit cycle always running.
+        f.spr.x = crumb.x;
+        f.spr.y = crumb.y - s(10) + Math.sin(this.time.now / 220 + i * 2) * s(2);
         f.spr.setDepth(crumb.y);
         return;
       }
@@ -4302,6 +4318,23 @@ export class OverworldScene extends Phaser.Scene {
       await this.dlg.say(...DIALOGUE.payphone_far);
       this.cut = false;
     }
+    // ADR-131: the first daylight after Glint's porch is the HUSH-DARK. create() has
+    // already rebuilt the world cold + hazed (buildNight on this.hushDark), so the
+    // player is LOOKING at the wrong-coloured morning; this one-time note NAMES it —
+    // a drained STATE to break (kill the Heart-Oak Tick), not a render glitch. Fires
+    // on the first Hush-dark map entered (Otterbrook or the hill) and never again; the
+    // haze itself lifts when tick_defeated breaks the real dawn (tick_after).
+    if (
+      CH1_STORY_NIGHT_MAPS.has(this.mapDef.id) &&
+      GS.flag('zapper_done') &&
+      !GS.flag('tick_defeated') &&
+      !GS.flag('hush_dark_noticed')
+    ) {
+      GS.setFlag('hush_dark_noticed');
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.dawn_hush_dark);
+      this.cut = false;
+    }
   }
 
   private async runTrigger(id: string): Promise<void> {
@@ -6733,6 +6766,11 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('sentinel_husk_left');
     this.cut = true;
     await this.dlg.say(...DIALOGUE.sentinel_after);
+    // ADR-121: the dimmed Glint doesn't just point the way home — he TAGS ALONG.
+    // His authored star-icon flits in at the back of the conga now and follows
+    // across the whole walk down (buildFollowers re-adds him on each leg while
+    // sentinel_repelled && !zapper_done) until the porch zapper claims him.
+    this.addFollower('glint', false, true);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }
@@ -6774,8 +6812,21 @@ export class OverworldScene extends Phaser.Scene {
   private async porchScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('zapper_done');
-    const glint = this.add.sprite(this.player.x + s(40), this.player.y - s(40), 'glint');
-    glint.play('glint-flit').setDepth(9999);
+    // ADR-121: the dimmed Glint who flitted home with us IS the one the zapper
+    // takes — lift his trailing sprite OUT of the follower line so the death beat
+    // is continuous with the follow, not a fresh pop-in. (zapper_done was just set,
+    // so the next buildFollowers won't re-add him.) Fall back to a spawn if he
+    // somehow isn't trailing — e.g. the porch reached out of band.
+    const trailing = this.followers.find((f) => f.id === 'glint');
+    let glint: Phaser.GameObjects.Sprite;
+    if (trailing) {
+      this.followers = this.followers.filter((f) => f.id !== 'glint');
+      glint = trailing.spr;
+    } else {
+      glint = this.add.sprite(this.player.x + s(40), this.player.y - s(40), 'glint');
+    }
+    glint.setDepth(9999);
+    if (glint.anims.currentAnim?.key !== 'glint-flit' || !glint.anims.isPlaying) glint.play('glint-flit');
     await this.tweenTo(glint, this.player.x + s(12), this.player.y - s(18), 800);
     await this.dlg.say(DIALOGUE.porch_zapper[0], DIALOGUE.porch_zapper[1]);
     // the zapper claims another hero

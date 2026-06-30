@@ -801,6 +801,9 @@ export class BattleScene extends Phaser.Scene {
     if ([
       'silent_drifter', 'static_wraith', 'the_hush',
     ].includes(enemyId)) return 'sea_of_silence';
+    // ADR-118 rework — Constable Borden books you in the station HOLDING CELL, so
+    // his fight wears the authored cell backdrop, not the open night street.
+    if (enemyId === 'borden') return 'otter_station';
     return 'otterbrook';
   }
 

@@ -70,11 +70,17 @@ describe('the Vibe ability ladders climb (§A3/ADR-035)', () => {
     }
   });
 
-  it('the signature lines LEAP at α→β (the awakening promise, ≈2.6×)', () => {
+  it('the signature lines LEAP at α→β (the awakening promise)', () => {
+    // ADR-131: Surge α was strengthened into a real early nuke (power 20→38) so it
+    // clearly out-damages a bat swing through Ch.1–2 — which intentionally GENTLES
+    // its α→β leap (β is still a clear single-hit upgrade for 3× the PP, just not the
+    // old ~2.6×; α now carries the solo-Jay opener on its own). Mia's Fire keeps the
+    // big awakening jump — her α stays a small opener, so β is the leap there.
+    const MIN_LEAP: Record<string, number> = { 'Vibe Surge': 1.4, 'Vibe Fire': 2.4 };
     for (const base of ['Vibe Surge', 'Vibe Fire']) {
       const rungs = ladder(base);
       const leap = rungs[1].power / rungs[0].power;
-      expect(leap, `${base} α→β`).toBeGreaterThanOrEqual(2.4);
+      expect(leap, `${base} α→β`).toBeGreaterThanOrEqual(MIN_LEAP[base]);
       expect(leap).toBeLessThanOrEqual(2.9);
     }
   });

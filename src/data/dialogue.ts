@@ -859,6 +859,18 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '* Glint left behind a single warm spark.',
     '* {rex} got GLINT\'S SPARK. (He will not be using it for a while. It is a friend.)',
   ],
+  // ADR-131: the first daylight after the porch is the HUSH-DARK — dawn breaks but
+  // the stolen Vibe doesn't come back with it, so the whole drained area wears a cold
+  // haze. This note (fired ONCE on arrival, OverworldScene.onEnterCutscenes) tells the
+  // player the washed-out palette is a STATE to break (kill the Heart-Oak Tick), not a
+  // render glitch — it lifts at tick_after.
+  dawn_hush_dark: [
+    'Morning comes to Otterbrook — and it comes in WRONG.',
+    'The sun is up where it should be, but the whole town sits under a thin, cold HAZE that was not there yesterday. The greens have gone gray-blue, the shadows a wrong shade of nothing.',
+    'It is not smoke. It is not fog. The light itself feels SKIMMED — as if something crept in on the meteor and is quietly drinking the warmth right out of the air.',
+    '(You remember what Glint told you: the Hush feeds on the warmth between people. This washed-out morning is what a whole town looks like with half of that gone.)',
+    '* This is NOT how Otterbrook is meant to look. Find what is draining it dry, and the real morning comes back.',
+  ],
   phone_dad: [
     '@RING... RING...',
     "@Hey, champ. Heard the sky fell on the hill behind the house. Your mother says you handled it. 'Course you did.",

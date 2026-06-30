@@ -51,19 +51,22 @@ Using `AWAKENING_LEVEL` + `heroes.ts` unlock levels mapped to chapter:
 
 | id | tier | band | earn L | Vibe used | new `power` | new `pp` | resulting player-facing |
 |---|---|---|---|---|---|---|---|
-| `vibe_surge_a` | α | Ch1 | L1 | 6 → 17 | **20** *(was 55)* | **6** *(was 10)* | dmg **22→26** *(see note)* |
+| `vibe_surge_a` | α | Ch1 | L1 | 6 → 17 | **38** *(was 20; ADR-131)* | **6** *(was 10)* | dmg **42→49** *(see note)* |
 | `vibe_surge_b` | β | Ch3 | L18 | 37 | **55** *(was 143)* | **18** *(was 22)* | dmg **89** |
 | `lifeup_a` (heal) | α | Ch1 | L1 | 6 → 17 | **12** *(was 45)* | **5** | heal **13→15** |
 
-**Surge α note (deliberate):** the Bible α-dmg band is 8–14, but Surge α is
-Jay's *signature burst* and his ONLY damaging option for the entire solo Ch.1
-(no weapon assumed, base off climbs 2→15 by L7). At **power 20** it reads
-**22 (L1, Vibe 6) → 26 (L7, Vibe 17)** — i.e. it tracks his bat instead of
-6×-ing it (the bug was α=55 → ~64 one-shotting 30-HP trash). If a strict
-single-digit-early α is preferred, **power 9** gives **10→12** but then Surge α
-is strictly worse than swinging the bat by L4 and the menu pick is dead; **20 is
-the recommended value** and is what the boss-TTK math below assumes. The β:α
-ratio is held near EB's ~2.6× (55/20 = 2.75).
+**Surge α note (ADR-131 — REVISED):** the original power-20 tuning made Surge α
+merely *track* the bat — by L5+ a free SMAAASH swing matched or beat the 6-PP
+signature nuke, so the menu pick was effectively dead (a playtest "this does not
+make sense"). Surge α is now **power 38**, reading **42 (L1, Vibe 6) → 49 (L7,
+Vibe 17)** — a real nuke that clearly out-damages a swing (~1.5×) through its
+L1–17 window, before Surge β takes over at L18. The old "don't one-shot 30-HP
+trash" worry is moot post-ADR-111 (Ch.1 trash is 12–14 HP — even power 20 already
+one-shot it), and the nuke stays a *limited* resource (6 PP × ~2 casts at L1 →
+fall back to the slow-burn bat). The β:α power ratio is now ~1.45× (55/38): a
+strengthened α intentionally **gentles** the α→β awakening leap (β is still a
+clear single-hit upgrade for 3× the PP). The Tick's HP rises 100→**200** so the
+solo-Jay TTK stays a fair ~5 with the bigger nuke (see the boss-TTK table below).
 
 ### 1b. Mia (`faye`)
 
@@ -122,36 +125,31 @@ rounds, then `ttk = ceil(HP / partyDPR)`. Powers used = the new §1 values.
 
 | Boss | id | level | party | partyDPR (new) | **new HP** | TTK | window 4–10? |
 |---|---|---|---|---|---|---|---|
-| Titanic Tick | `titanic_tick` | 7 | Jay solo | ~26 | **60 → see flag** | **3** | ✗ (too fast) |
-| Idol of the Gilded Grin | `gilded_grin` | 13 | Jay+Mia | ~87 | **300** | **4** | ✓ |
-| Headmaster Mainframe | `headmaster_mainframe` | 18 | Jay+Mia+Milo | ~184 | **750** | **5** | ✓ |
+| Titanic Tick | `titanic_tick` | 8 | Jay solo | ~40 | **200** *(ADR-131; was 100)* | **5** | ✓ |
+| Idol of the Gilded Grin | `gilded_grin` | 13 | Jay+Mia | ~94 | **300** | **4** | ✓ |
+| Headmaster Mainframe | `headmaster_mainframe` | 18 | Jay+Mia+Milo | ~192 | **750** | **4** | ✓ |
 
 DPR breakdown:
-- **Grin L13:** Jay ~48 (Surge α pw20, mp 50), Mia ~39 (Freeze α pw12 ×1.5 weak)
-  = **87**. 300/87 = **4 turns.** ✓
+- **Tick L8 (ADR-131):** solo Jay ~40 — with Surge α at **pw38** the nuke (~50)
+  now beats his swing (~34), so the amortized DPR rises ~30→40 and the HP rises
+  100→**200** to hold TTK at **5**. (β doesn't exist yet — α is the whole kit.)
+- **Grin L13:** Jay ~55 (Surge α **pw38**, nuke ~56 ≳ swing ~50), Mia ~39 (Freeze α
+  pw12 ×1.5 weak) = **94**. 300/94 = **4 turns.** ✓ (HP pin holds — Jay's nuke and
+  swing are close at L13, so the α buff barely moves the Grin.)
 - **Mainframe L18:** Jay ~67 (Surge β pw55), Mia ~52 (Fire β pw18 ×1.5),
   Milo ~65 (Big Bottle Rocket 60) = **184**. 750/184 = **5 turns.** ✓
   *(Note: `verify.ts` applies the generic ×1.5 weakness, not the `weakMul:2`
   cooling-fan override, so the real geared fight is faster — the model is a
   floor. The 750 pin holds comfortably.)*
 
-### ⚠ FLAG — Titanic Tick 60 HP conflicts with the verify TTK floor
+### ✓ RESOLVED — Titanic Tick HP (was a 60-HP TTK-floor conflict)
 
-At **L7, solo Jay's base-stat physical swing is already ~26** (off has grown
-2→15; `max(1,15·2−7)=23`, +SMAAASH → ~26), so **any** HP ≤ ~78 dies in ≤3 turns
-in the conservative model — Surge α's power is irrelevant to the floor. **60 HP
-→ TTK 3**, below the 4-turn fairness floor.
-
-Two ways to resolve, coordinator's call:
-1. **Honor the pin (60).** Acceptable *if* the latch/sever mechanic (the boss
-   re-latches and a sever costs Jay a turn) is counted — that drains ~1–2 turns
-   the headless model ignores, pushing the felt fight to ~4–5 turns. The §A6/
-   `enemies.ts` comment already cites "fair ~5–8 turns" on this basis. **This is
-   the recommended choice** and matches the BALANCE_REVAMP table ("Tick ~60").
-2. **Pin 80** (the in-model fair floor: 80/26 = ceil = 4 turns, +15% would be
-   max 69 so 80 is *outside* the ±15% band of 60 — call it an explicit override,
-   not a tolerance nudge). Use only if the balance-sim must show ≥4 with the
-   latch ignored.
+This flag is closed. The Tick was relocated to the Heart Oak and bumped 60→**100**
+(ADR-121), then 100→**200** (ADR-131) to absorb Surge α's nuke buff. At L8 solo
+Jay's DPR is ~40 (Surge α pw38), so 200/40 = **TTK 5** — comfortably inside the
+4–10 window, no latch/sever hand-waving needed. Pinned in all six places (the §A7
+`canon` table, `BOSS_HP`, `CHAPTER_MANIFESTS`, `enemies.ts`, and the `forge`/
+`state` test fixtures), same commit.
 
 **Recommendation: land 60** and rely on the latch turns, but the sim WILL print
 TTK 3 — note it in the commit so it isn't read as a regression.

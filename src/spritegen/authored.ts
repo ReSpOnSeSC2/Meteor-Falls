@@ -523,6 +523,15 @@ const REGION_FACADE_KEYS = [
   'bldg_valea_painted_house', 'bldg_valea_church', 'bldg_valea_inn',
   'bldg_valea_shop', 'bldg_valea_cottage', 'bldg_valea_barn',
   'bldg_valea_mill', 'bldg_valea_hall',
+  // Ch.10 Alaska — Aurora Station (authored cold-outpost facades; AREA_SKINS.aurora)
+  'bldg_aurora_warehouse', 'bldg_aurora_command', 'bldg_aurora_comms_hall',
+  'bldg_aurora_bank', 'bldg_aurora_habitat', 'bldg_aurora_garage',
+  // Ch.10 Hawaii — Mauna Lani (authored resort facades; AREA_SKINS.mauna_lani)
+  'bldg_mauna_lani_surf_shop', 'bldg_mauna_lani_cafe', 'bldg_mauna_lani_market',
+  'bldg_mauna_lani_beach_hotel', 'bldg_mauna_lani_launch_office', 'bldg_mauna_lani_tiki_bar',
+  // Ch.10 Mars — the Sea of Silence (authored ruined-outpost facades; AREA_SKINS.mars)
+  'bldg_mars_neon_husk', 'bldg_mars_dead_theater', 'bldg_mars_dept_ruin',
+  'bldg_mars_comms_relay', 'bldg_mars_habitat_ruin',
 ] as const;
 
 const WORLD_FACADE_KEYS = Array.from(new Set([
@@ -630,7 +639,7 @@ const WORLD_PROP_ART = [
   })),
 ];
 
-const BATTLE_BACKGROUND_ART = ['otterbrook', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace', 'spore_forest', 'castle_hoaxula', 'aurora', 'mauna_lani', 'sea_of_silence'].map((area) => ({
+const BATTLE_BACKGROUND_ART = ['otterbrook', 'otter_station', 'brickton', 'jungle', 'england', 'school', 'sleepers_spine', 'fjord', 'the_hedgerow', 'laughing_ruins', 'cobra_palace', 'spore_forest', 'castle_hoaxula', 'aurora', 'mauna_lani', 'sea_of_silence'].map((area) => ({
   area,
   key: `authored_battle_bg_${area}`,
   url: new URL(`../../assets/art/backgrounds/${area}.png`, import.meta.url).href,

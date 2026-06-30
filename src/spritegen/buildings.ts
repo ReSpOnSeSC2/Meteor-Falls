@@ -164,6 +164,28 @@ export const VALEA_FACADES: readonly string[] = [
   'bldg_valea_mill', 'bldg_valea_hall',
 ];
 
+// CH.10 ALASKA — AURORA STATION: authored cold-outpost facades (steel warehouse,
+// command office, civic comms hall, frozen bank, crew habitat dome, rover garage).
+export const AURORA_FACADES: readonly string[] = [
+  'bldg_aurora_warehouse', 'bldg_aurora_command', 'bldg_aurora_comms_hall',
+  'bldg_aurora_bank', 'bldg_aurora_habitat', 'bldg_aurora_garage',
+];
+
+// CH.10 HAWAII — MAUNA LANI: authored lush launch-pad-resort facades (surf shop,
+// beach cafe, open market, beach hotel, spaceport launch office, tiki bar).
+export const MAUNA_LANI_FACADES: readonly string[] = [
+  'bldg_mauna_lani_surf_shop', 'bldg_mauna_lani_cafe', 'bldg_mauna_lani_market',
+  'bldg_mauna_lani_beach_hotel', 'bldg_mauna_lani_launch_office', 'bldg_mauna_lani_tiki_bar',
+];
+
+// CH.10 MARS — THE SEA OF SILENCE: authored ruined-outpost facades (a dead-neon
+// husk, a shuttered theater, a department-store ruin, a sealed comms relay, a
+// collapsed habitat dome) — the NIGHT needle colossus stays as the lone landmark.
+export const MARS_FACADES: readonly string[] = [
+  'bldg_mars_neon_husk', 'bldg_mars_dead_theater', 'bldg_mars_dept_ruin',
+  'bldg_mars_comms_relay', 'bldg_mars_habitat_ruin',
+];
+
 /**
  * AREA_SKINS — the per-area building rosters (the "each area feels fresh" law).
  * Every named level area draws ONLY from its own slice: a distinct family mix +
@@ -263,17 +285,14 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
   // CH.10 ALASKA — AURORA STATION: a cold utilitarian outpost, claustrophobic. Steel
   // warehouses, an office block, a civic comms hall, a bank window — cyan/blue/paper/
   // night, frozen and functional.
-  aurora: skinsFor(['warehouse', 'office', 'civic', 'bank'], [RAMP.CYAN, RAMP.BLUE, RAMP.PAPER, RAMP.NIGHT]),
+  aurora: AURORA_FACADES,
   // CH.10 HAWAII — MAUNA LANI: a launch-pad resort that reads claustrophobic (true to
   // life — §B4). Lush shops/cafes, a market, a beach hotel — grass/cyan/gold/orange.
-  mauna_lani: skinsFor(['shop', 'cafe', 'market', 'hotel'], [RAMP.GRASS, RAMP.CYAN, RAMP.GOLD, RAMP.ORANGE]),
+  mauna_lani: MAUNA_LANI_FACADES,
   // CH.10 MARS — THE SEA OF SILENCE: dread, alien, sparse. Neon husks, a dead theater
   // marquee, a department ruin + the lone NIGHT needle colossus — night/purple/magenta,
   // the music thinning as you pass.
-  mars: [
-    ...skinsFor(['neon', 'theater', 'deptstore'], [RAMP.NIGHT, RAMP.PURPLE, RAMP.MAGENTA]),
-    'bldg_colossus_needle',
-  ],
+  mars: [...MARS_FACADES, 'bldg_colossus_needle'],
 };
 
 /**
@@ -297,7 +316,8 @@ export const CANON_AREAS: readonly string[] = [
 export const BESPOKE_AREA_FACADES: readonly string[] = [
   'mansion_a', 'mansion_b', 'mansion_c', 'golf_gatehouse',
   ...KVISTHAVN_FACADES, ...LILLEBY_FACADES, ...MINIMUS_FACADES, ...ZANZIBEL_FACADES,
-  ...LOTUS_HARBOR_FACADES, ...VALEA_FACADES,
+  ...LOTUS_HARBOR_FACADES, ...VALEA_FACADES, ...AURORA_FACADES, ...MAUNA_LANI_FACADES,
+  ...MARS_FACADES,
 ];
 
 /**

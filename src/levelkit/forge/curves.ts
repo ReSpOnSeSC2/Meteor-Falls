@@ -54,7 +54,9 @@ export const BOSS_HP: Record<number, number> = {
   // lowered early-game output (Jay L1 basic = 1–2). The ladder still climbs.
   // ADR-121 (balance): 60→100 — the Tick now fights LATER (the Heart Oak) vs a
   // stronger solo Jay, so BOSS 1 is a real scrap.
-  1: 100,
+  // ADR-131 (balance): 100→200 — Surge α became a real nuke (power 20→38), lifting
+  // solo Jay's DPR ~30→40; HP rises so the BOSS-1 TTK stays a fair ~5 (verify.ts).
+  1: 200,
   2: 300,
   3: 750,
   4: 1800,

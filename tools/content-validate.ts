@@ -1251,7 +1251,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     rogue_icecream_truck: 30,
     tick_nymph: 28,
     the_suit: 32,
-    titanic_tick: 100,
+    titanic_tick: 200, // ADR-131: 100→200 absorbs Surge α's nuke buff (TTK stays ~5)
     // ADR-121 — THE HUSH SENTINEL: the first-night Mars set-piece you REPEL (scripted
     // endBattleMercy), not a money-axis boss. Full-power set-piece HP (it can't be
     // killed before the repel); NOT a CHAPTER_MANIFESTS boss, so it never hits the

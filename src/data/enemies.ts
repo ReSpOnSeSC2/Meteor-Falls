@@ -1274,7 +1274,9 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // Pond Park) so it's fought by a stronger solo Jay (Surge α awakened, a few
       // levels of town trash behind him). Bumped 60→100 HP + offense 11→13 so it's a
       // real BOSS scrap, not a 2-turn pop. Stays on the canon ladder (BOSS_HP[1]).
-      hp: 100,
+      // ADR-131 (balance): 100→200 to absorb Surge α's nuke buff (power 20→38) and
+      // hold the solo-Jay TTK at a fair ~5 — synced with BOSS_HP[1] + the manifest.
+      hp: 200,
       offense: 13,
       defense: 7,
       speed: 6,

@@ -15,9 +15,12 @@ import {
 } from './authored';
 import {
   AREA_SKINS,
+  AURORA_FACADES,
   KVISTHAVN_FACADES,
   LILLEBY_FACADES,
   LOTUS_HARBOR_FACADES,
+  MARS_FACADES,
+  MAUNA_LANI_FACADES,
   MINIMUS_FACADES,
   VALEA_FACADES,
   ZANZIBEL_FACADES,
@@ -179,6 +182,9 @@ describe('authored world asset wiring', () => {
     expect(AREA_SKINS.zanzibel).toEqual(ZANZIBEL_FACADES);
     expect(AREA_SKINS.lotus_harbor).toEqual(LOTUS_HARBOR_FACADES);
     expect(AREA_SKINS.valea).toEqual(VALEA_FACADES);
+    expect(AREA_SKINS.aurora).toEqual(AURORA_FACADES);
+    expect(AREA_SKINS.mauna_lani).toEqual(MAUNA_LANI_FACADES);
+    expect(AREA_SKINS.mars).toEqual([...MARS_FACADES, 'bldg_colossus_needle']);
     expect(AREA_SKINS.lilleby).toEqual([...LILLEBY_FACADES, 'bldg_tower_arms']);
   });
 });

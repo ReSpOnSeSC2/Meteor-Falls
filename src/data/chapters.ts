@@ -41,7 +41,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
       name: 'The Department of Smiles',
       maps: ['dos_f1', 'dos_f2', 'dos_f3'],
     },
-    boss: { id: 'titanic_tick', name: 'The Titanic Tick', hp: 100, template: 'bespoke' },
+    boss: { id: 'titanic_tick', name: 'The Titanic Tick', hp: 200, template: 'bespoke' },
     settlements: [
       { id: 'otterbrook', kind: 'town' },
       { id: 'brickton', kind: 'city' },

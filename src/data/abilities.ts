@@ -12,7 +12,12 @@ const A = (a: AbilityDef): AbilityDef => a;
 export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
   [
     // ---- Jay: Vibe Surge line (signature nuke), support
-    A({ id: 'vibe_surge_a', name: 'Vibe Surge Alpha', kind: 'vibe', pp: 6, power: 20, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_a' }),
+    // ADR-131: Surge α power 20→38. The old value was tuned to merely "track the bat"
+    // (BALANCE_CH1-3_SPEC §1b), so by L5+ a free SMAAASH swing matched or beat the
+    // 6-PP signature nuke and the menu pick was dead. 38 makes it a real nuke (~1.5× a
+    // swing through its L1–17 window, before Surge β takes over at L18); the Tick's HP
+    // rises to match so the solo-Jay TTK stays in the fair window (verify.ts boss check).
+    A({ id: 'vibe_surge_a', name: 'Vibe Surge Alpha', kind: 'vibe', pp: 6, power: 38, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_a' }),
     A({ id: 'vibe_surge_b', name: 'Vibe Surge Beta', kind: 'vibe', pp: 18, power: 55, target: 'enemy', element: 'none', text: '{user} let the old light surge!', fx: 'surge_b' }),
     A({ id: 'vibe_surge_g', name: 'Vibe Surge Gamma', kind: 'vibe', pp: 38, power: 1100, target: 'enemies', element: 'none', text: '{user} let the old light ROAR!', fx: 'surge_g' }),
     A({ id: 'vibe_surge_o', name: 'Vibe Surge Omega', kind: 'vibe', pp: 64, power: 6846, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
