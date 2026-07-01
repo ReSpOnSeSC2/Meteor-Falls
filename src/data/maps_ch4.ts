@@ -177,7 +177,7 @@ function buildBootstepMoor(): MapDef {
     phones: [],
     doors: [
       { x: 0, y: 8, w: 1, h: 2, to: 'kvisthavn', tx: 34 * 16, ty: 12 * 16, facing: 'left', indicator: 'none' },
-      { x: W - 1, y: 8, w: 1, h: 2, to: 'lilleby', tx: 16, ty: 11 * 16, facing: 'right', indicator: 'none' },
+      { x: W - 1, y: 8, w: 1, h: 2, to: 'lilleby', tx: 1 * 16 + 8, ty: 11 * 16 + 12, facing: 'right', indicator: 'none' }, // land tile interior: body box clears the (0,10) border edge (no clamp rescue)
       { x: 15, y: H - 1, w: 2, h: 1, to: 'spine_hand', tx: 12 * 16, ty: 12 * 16, facing: 'up', indicator: 'none' },
     ],
     spawners: [
@@ -390,7 +390,7 @@ function buildSpineShoulder(): MapDef {
     signs: [{ x: 9, y: 8, dialogue: 'sign_spine_meltfall' }],
     phones: [],
     doors: [
-      { x: 11, y: H - 1, w: 2, h: 1, to: 'spine_hand', tx: 11 * 16, ty: 1 * 16, facing: 'down', indicator: 'none' },
+      { x: 11, y: H - 1, w: 2, h: 1, to: 'spine_hand', tx: 11 * 16 + 8, ty: 1 * 16 + 12, facing: 'down', indicator: 'none' }, // land tile interior: body box clears the (10,0) border corner (no clamp rescue)
       { x: 11, y: 0, w: 2, h: 1, to: 'spine_ear', tx: 11 * 16, ty: 13 * 16, facing: 'up', indicator: 'none' },
     ],
     spawners: [

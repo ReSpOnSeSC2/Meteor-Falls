@@ -290,7 +290,7 @@ function buildMtShuTemple(): MapDef {
     signs: [{ x: 9, y: 12, dialogue: 'sign_mt_shu_temple' }],
     phones: [],
     doors: [
-      { x: 9, y: H - 1, w: 2, h: 1, to: 'spore_forest', tx: 9 * 16, ty: 1 * 16, facing: 'down', indicator: 'none' },
+      { x: 9, y: H - 1, w: 2, h: 1, to: 'spore_forest', tx: 9 * 16 + 8, ty: 1 * 16 + 12, facing: 'down', indicator: 'none' }, // land tile interior: body box clears the (8,0) border corner (no clamp rescue)
     ],
     spawners: [],
     triggers: [
