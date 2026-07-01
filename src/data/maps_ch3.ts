@@ -141,7 +141,7 @@ function buildFoggybottom(): MapDef {
     atms: [{ x: 26, y: 14 }],
     doors: [
       { x: 10, y: 22, w: 2, h: 1, to: 'biplane_interior', tx: 11 * 16, ty: 8 * 16, facing: 'down', indicator: 'none' }, // board Lucille (the water steps)
-      { x: W - 1, y: 11, w: 1, h: 2, to: 'foggy_moor', tx: 16, ty: 9 * 16, facing: 'right', indicator: 'none' },
+      { x: W - 1, y: 11, w: 1, h: 2, to: 'foggy_moor', tx: 1 * 16 + 8, ty: 9 * 16 + 12, facing: 'right', indicator: 'none' }, // land tile interior: body box clears the (0,9) border edge (no clamp rescue)
     ],
     spawners: [
       // §A7 town oddities (kept off the high street + away from the doors/phone)

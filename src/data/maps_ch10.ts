@@ -243,7 +243,7 @@ function buildMaunaLani(): MapDef {
     atms: [{ x: 24, y: 10 }],
     doors: [
       { x: 0, y: 17, w: 1, h: 2, to: 'aurora_ice_field', tx: 34 * 16, ty: 7 * 16, facing: 'left', indicator: 'none' },
-      { x: W - 1, y: 11, w: 1, h: 2, to: 'lani_magma_flats', tx: 1 * 16, ty: 7 * 16, facing: 'right', indicator: 'none' },
+      { x: W - 1, y: 11, w: 1, h: 2, to: 'lani_magma_flats', tx: 1 * 16 + 8, ty: 7 * 16 + 12, facing: 'right', indicator: 'none' }, // land tile interior: body box clears the (0,6) border corner — aurora-twin (no clamp rescue)
     ],
     spawners: [],
     triggers: [],
