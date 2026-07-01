@@ -253,8 +253,9 @@ Dorin joins Ch.9 (canon, after the Trial of the Mute Mountain) — and the **Iro
 in that same chapter directly implicates him (he, of all people, knows being emptied).
 
 - **OPEN_HAND** → Dorin at full power; his Vibe Comet Ω available all finale.
-- **IRON** → Dorin **withholds Comet Ω** (flag-locked) entering Mars; a [NEW] redemption
-  beat can restore it. On **IRON + STRINGS + low warmth**, he **leaves before the Sea of
+- **IRON** → Dorin **withholds Comet Ω** (flag-locked) for the rest of the run — a
+  permanent, balance-validated cost of THE IRON (the OPEN_HAND branch is the one that
+  keeps it; there is no mid-run restore). On **IRON + STRINGS + low warmth**, he **leaves before the Sea of
   Silence** (`dorin_left`), and the player fights the Hush without him.
 
 ### 4.3 Balance consequence (real, bounded)

@@ -1683,8 +1683,9 @@ export class BattleScene extends Phaser.Scene {
       // α/β (status 'puppet') drop off the list until you move on (will OR time)
       if (a.status === 'puppet' && puppetLocked()) return false;
       // S21 (ADR-130): the IRON path can make Dorin WITHHOLD his awakened ultimate
-      // (Comet Ω) entering Mars — it drops off his Vibe list until the redemption
-      // beat clears the flag. Mirrors the Puppet-lock; here it is a moral debt.
+      // (Comet Ω) for the rest of the run — it drops off his Vibe list as the IRON
+      // path's permanent cost (OPEN_HAND/MERCY is the branch that never withholds).
+      // Mirrors the Puppet-lock; here it is a lasting moral debt, not a temporary one.
       if (isWithheldAbility(h.hero.id, a.id)) return false;
       return true;
     });
@@ -2275,12 +2276,19 @@ export class BattleScene extends Phaser.Scene {
         await this.print(BATTLE_TEXT.gold_crack);
       }
       await this.damageEnemy(t, dmg, weak, undefined, ab.kind === 'gadget' ? 'physical' : 'vibe', true);
-      // ADR-134 — Milo's siege DEEPENS a break: a hit that lands inside the ×2 window
-      // extends it a turn, so his lane in the loop is prolonging the burst, not just
-      // adding to it (the flat-tool crew earns its keep in the break economy).
+      // ADR-134 — Milo's siege DEEPENS a break: a hit inside the ×2 window REFRESHES it
+      // to its full duration (his flat-tool lane earns its keep in the break economy).
+      // FIX: refresh, never unbounded-extend — a free 0-PP gadget must not out-pace the
+      // boss's once-per-round decrement and perma-stunlock it. For a boss the window is
+      // already full while broken (BREAK_TURNS_BOSS=1), so this no-ops on bosses and the
+      // "a boss can never be perma-stunlocked" invariant holds; trash (2) can be topped
+      // back up when partly elapsed.
       if (t.alive && ab.deepensBreak && t.broken > 0) {
-        t.broken += 1;
-        this.fx.popup(t.spr.x, t.spr.y - t.spr.displayHeight / 2 - s(6), 'BREAK+', RAMP.GOLD);
+        const refreshed = breakTurns(t.def.boss ?? false);
+        if (refreshed > t.broken) {
+          t.broken = refreshed;
+          this.fx.popup(t.spr.x, t.spr.y - t.spr.displayHeight / 2 - s(6), 'BREAK+', RAMP.GOLD);
+        }
       }
       // S-Mia: the on-hit enemy statuses ride the damage (the switch above let
       // these fall through). burn = Fire's DoT (γ+); frozen = Freeze's skip-lock,
@@ -2966,6 +2974,14 @@ export class BattleScene extends Phaser.Scene {
         } else {
           e.asleep--;
           await this.print(this.fill(BATTLE_TEXT.enemy_asleep, '', e));
+          // ADR-134 — sleeping the boss COLLAPSES a telegraphed wind-up (the design
+          // answer to "make me lose my nerve first"; freeze is boss-capped, so sleep is
+          // the operative control). Mirror the BREAK-branch cancel below — without this
+          // the charge merely POSTPONES and still lands the turn the boss wakes.
+          if (e.def.boss && this.phase && this.phase.pendingWindup) {
+            this.phase.clearWindup();
+            await this.windupCancel(e);
+          }
           continue;
         }
       }

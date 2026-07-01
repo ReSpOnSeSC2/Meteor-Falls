@@ -14,6 +14,7 @@ import Phaser from 'phaser';
 import { makeWindow, DEPTH_UI } from './windows';
 import { colorOf, RAMP, px } from '../palette';
 import { ITEMS, itemKindLabel, itemEffectLine } from '../data/items';
+import { vars } from './text';
 import { s } from '../spritegen/scale';
 
 export interface ItemInfoPanel {
@@ -59,7 +60,10 @@ export function makeItemInfo(scene: Phaser.Scene): ItemInfoPanel {
       }
       nameT.setText(item.name);
       effT.setText(`${itemKindLabel(item)}    ${itemEffectLine(item)}`);
-      flavT.setText(item.text);
+      // item.text is a vars()-render string (same as the say()/shop path + the
+      // content-validate token sweep); resolve {rex}… here so the help panel doesn't
+      // leak literal tokens (e.g. the starting Corn Dog's "{rex}'s one true love").
+      flavT.setText(vars(item.text));
     },
     destroy: (): void => {
       win.destroy();
