@@ -49,6 +49,11 @@ const SEV: Record<DoorFinding['issue'][number], string> = {
   landsSolid: 'STUCK',
   farFromReturn: 'WRONG-EDGE',
   noReturn: 'one-way',
+  // ADR-135: label staged for the body-box tier. This audit still calls doorAudit
+  // WITHOUT { bodyBox: true }, so no 'bodyBlocked' finding is produced yet — the
+  // gate wiring (enable the tier + waive the 2 generated city-unit doorsteps) lands
+  // separately. Present only so the Record stays exhaustive over the widened union.
+  bodyBlocked: 'BODY-BLOCK',
 };
 
 function arrow(f: DoorFinding): string {
