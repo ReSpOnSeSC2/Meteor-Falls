@@ -55,7 +55,7 @@ import { ensureLinksArt } from '../spritegen';
 import { ensureGolfBehindArt, freeGolfBehindArt } from '../spritegen/authored';
 import { ITEMS } from '../data/items';
 import { makeRng, type Rng } from '../hoops/sim';
-import { Dialogue, everyFrame, makeWindow, makeBox, vars, DEPTH_UI } from '../ui/windows';
+import { Dialogue, everyFrame, makeWindow, makeBox, vars, glyphify, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
 import { s, ART_SCALE } from '../spritegen/scale';
 import { projectHole, projectPoint, type HoleProjection, type FitBox } from '../links/dioramas';
@@ -1351,7 +1351,7 @@ export class LinksScene extends Phaser.Scene {
    *  literal scales inside (the cross-function px contract) */
   private panelText(x: number, y: number, text: string, size: number, tint: number): Phaser.GameObjects.BitmapText {
     const t = this.add
-      .bitmapText(x, y, 'retro', text, size)
+      .bitmapText(x, y, 'retro', glyphify(text), size)
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2)

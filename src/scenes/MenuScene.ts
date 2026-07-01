@@ -35,7 +35,7 @@ import { journalQuests, currentObjective, objectiveDone, callerEarned } from '..
 import { heroOffense, heroDefense, heroLuck, heroSpeed, heroGuts, heroVibe, heroResist, vibeHeal } from '../battle/formulas';
 import { INPUT, type BindingProfile, type Btn } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { Dialogue, makeWindow, makeCashBox, everyFrame, vars, DEPTH_UI } from '../ui/windows';
+import { Dialogue, makeWindow, makeCashBox, everyFrame, vars, glyphify, DEPTH_UI } from '../ui/windows';
 import { LOCKET_MAX_EMBERS, WINDOW_FLAVORS } from '../spritegen/ui';
 // S4: the list widget + "Offense up by N!" confirm are shared with the shops
 import { pick, confirmEquip, DIM, type PickOpts } from '../ui/pick';
@@ -388,7 +388,7 @@ export class MenuScene extends Phaser.Scene {
     // ty + indent arrive already runtime-scaled from the call sites below
     const line = (ty: number, s: string, tint?: number, indent = 0): void => {
       const t = this.add
-        .bitmapText(x + pad + indent, y + ty, 'retro', s, fs)
+        .bitmapText(x + pad + indent, y + ty, 'retro', glyphify(s), fs)
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
       if (tint !== undefined) t.setTint(tint);

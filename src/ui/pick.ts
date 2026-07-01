@@ -17,6 +17,7 @@ import { equipDelta, equipDefenseDelta, equipLuckDelta, equipArmsDelta } from '.
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, everyFrame, DEPTH_UI } from './windows';
+import { glyphify } from './text';
 import { colorOf, RAMP, px } from '../palette';
 import { paginate, ROW_H } from './paginate';
 import { s } from '../spritegen/scale';
@@ -93,7 +94,7 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
     made.push(makeWindow(scene, x, y, Math.max(tw, s(60)), s(20)));
     made.push(
       scene.add
-        .bitmapText(x + s(10), y + s(6), 'retro', opts.title, s(6))
+        .bitmapText(x + s(10), y + s(6), 'retro', glyphify(opts.title), s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.GOLD, 3))),
@@ -169,7 +170,7 @@ export function pick(scene: Phaser.Scene, opts: PickOpts): Promise<number> {
         );
       }
       const t = scene.add
-        .bitmapText(cx + s(18) + iconPad, cy, 'retro', options[i], s(6))
+        .bitmapText(cx + s(18) + iconPad, cy, 'retro', glyphify(options[i]), s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1);
       if (opts.disabled?.has(i)) t.setTint(DIM);

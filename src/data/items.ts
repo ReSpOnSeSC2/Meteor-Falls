@@ -451,7 +451,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       heal: 18,
       usableInBattle: true,
       price: 6,
-      text: "{rex}'s one true love. Recovers about 30 HP.",
+      text: "Rex's one true love. Recovers about 30 HP.",
     }),
     I({
       id: 'pbj',
@@ -855,7 +855,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       cures: ['homesick'],
       usableInBattle: true,
       price: 24,
-      text: "Side A: \"Did you eat?\" Side B: more of that. Cures Homesickness when {rex} plays it back.",
+      text: "Side A: \"Did you eat?\" Side B: more of that. Cures Homesickness when Rex plays it back.",
     }),
     I({
       id: 'second_wind',
@@ -3395,7 +3395,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       ppHeal: 20,
       usableInBattle: true,
       price: 15,
-      text: 'A coil of sandalwood smoke; breathe the curl of it and the mind unclenches one finger at a time. Restores about 20 PP (§A8).',
+      text: 'A coil of sandalwood smoke; breathe the curl of it and the mind unclenches one finger at a time. Restores about 20 PP.',
     }),
     // — cures for the SPORE FOREST (§A4.8): the standalone Mushroomize status is
     //   deferred, so the Spore Puffer's "mushroomize stand-in" is dealt as the
@@ -3627,7 +3627,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       wielder: 'rex',
       usableInBattle: false,
       price: 0,
-      text: 'A heavy brass castle candelabra Count Hoaxula swung in his big theatrical scene. The flames gutter when {rex} winds up. It is, regrettably, very good at hitting things.',
+      text: 'A heavy brass castle candelabra Count Hoaxula swung in his big theatrical scene. The flames gutter when Rex winds up. It is, regrettably, very good at hitting things.',
     }),
     // — armor: the §A8 HAT LADDER rung (the căciulă fur cap) + the velvet/harvest/
     //   monastery bodies (the ch9 candlelit-castle palette) —
@@ -3797,7 +3797,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       ppHeal: 26,
       usableInBattle: true,
       price: 20,
-      text: 'A mountain-herb tisane the Stone Brow monks pick, dry, and pour in a silence that does half the work. Restores about 26 PP (§A8). No two cups taste the same; nobody minds.',
+      text: 'A mountain-herb tisane the Stone Brow monks pick, dry, and pour in a silence that does half the work. Restores about 26 PP. No two cups taste the same; nobody minds.',
     }),
     I({
       id: 'linden_tea',
@@ -3992,7 +3992,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       resists: [{ element: 'holy', pct: 25 }],
       usableInBattle: false,
       price: 340,
-      text: 'A small tin medal of the valley\'s patron saint, pressed by a pilgrim long ago. It steadies the bearer against light that means to harm. Luck +9. (+25% holy resist — the last of the §A8 four.)',
+      text: 'A small tin medal of the valley\'s patron saint, pressed by a pilgrim long ago. It steadies the bearer against light that means to harm. Luck +9. (+25% holy resist — the last of the four.)',
     }),
     I({
       id: 'trial_keepsake',
@@ -4079,7 +4079,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       resists: [{ element: 'freeze', pct: 20 }],
       usableInBattle: false,
       price: 480,
-      text: 'A deep parka hood ringed in wolverine fur, the one fur that won\'t frost over from your own breath. The §A8 hat ladder, in earnest now. Defense +30, +20% freeze resist.',
+      text: 'A deep parka hood ringed in wolverine fur, the one fur that won\'t frost over from your own breath. The hat ladder, in earnest now. Defense +30, +20% freeze resist.',
     }),
     I({
       id: 'insulated_suit',
@@ -4089,7 +4089,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       resists: [{ element: 'freeze', pct: 30 }],
       usableInBattle: false,
       price: 620,
-      text: 'The station chief\'s reward for getting the generators lit while the Frost Wraiths hunted: a full thermal suit rated for the worst night Alaska has. Defense +50, +30% freeze resist (§A10 #19).',
+      text: 'The station chief\'s reward for getting the generators lit while the Frost Wraiths hunted: a full thermal suit rated for the worst night Alaska has. Defense +50, +30% freeze resist.',
     }),
     I({
       id: 'sealskin_parka',
@@ -4108,7 +4108,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       heal: 88,
       usableInBattle: true,
       price: 18,
-      text: 'Whipped berry-and-fat "ice cream," beaten light by hand in the cold and dotted with crowberries — the real thing, made where the snow is (§A8, §A11.7). ~88 HP, and it doesn\'t melt out here.',
+      text: 'Whipped berry-and-fat "ice cream," beaten light by hand in the cold and dotted with crowberries — the real thing, made where the snow is. ~88 HP, and it doesn\'t melt out here.',
     }),
     I({
       id: 'salmon_jerky',
@@ -4263,7 +4263,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       wielder: 'rex',
       usableInBattle: false,
       price: 0,
-      text: 'A legendary big-wave board lost decades ago and found wedged in the lava tube on the volcano approach. {rex} cannot surf. {rex} swings it like a colossal bat and it WORKS, which is somehow worse. Offense +58, Luck +6. The funniest weapon he will ever hold.',
+      text: 'A legendary big-wave board lost decades ago and found wedged in the lava tube on the volcano approach. Rex cannot surf. Rex swings it like a colossal bat and it WORKS, which is somehow worse. Offense +58, Luck +6. The funniest weapon he will ever hold.',
     }),
     I({
       id: 'pembertons_raygun',
@@ -4283,7 +4283,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       defense: 28,
       usableInBattle: false,
       price: 460,
-      text: 'A hat woven from dried hala leaves by hands that have woven ten thousand, the brim wide enough to nap under. The §A8 hat ladder, gone tropical. Defense +28.',
+      text: 'A hat woven from dried hala leaves by hands that have woven ten thousand, the brim wide enough to nap under. The hat ladder, gone tropical. Defense +28.',
     }),
     I({
       id: 'heat_shield_vest',
@@ -4311,7 +4311,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       heal: 92,
       usableInBattle: true,
       price: 18,
-      text: 'Cubes of ruby ahi tuna over warm rice with seaweed, sweet onion, and a slick of shoyu and sesame (§A8). ~92 HP. The fish was swimming this morning; the gull outside knows.',
+      text: 'Cubes of ruby ahi tuna over warm rice with seaweed, sweet onion, and a slick of shoyu and sesame. ~92 HP. The fish was swimming this morning; the gull outside knows.',
     }),
     I({
       id: 'kalua_pork',
@@ -4452,7 +4452,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       kind: 'key',
       usableInBattle: false,
       price: 0,
-      text: "Professor Pemberton's parts list for The Long Shot, every line item in his cramped hand, half of them crossed out and re-sourced. Ferry these to Mauna Lani and the rocket can fly (§A8).",
+      text: "Professor Pemberton's parts list for The Long Shot, every line item in his cramped hand, half of them crossed out and re-sourced. Ferry these to Mauna Lani and the rocket can fly.",
     }),
     I({
       id: 'launch_pad_pass',
@@ -4517,7 +4517,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       wielder: 'rex',
       usableInBattle: false,
       price: 0,
-      text: 'A plain ash bat that turned up in the Sea of Silence, where nothing should be. It is the only bat {rex} ever needed and the last one he will find. There is no joy in Mudville — but there is one more swing left. Offense +74, Guts +6.',
+      text: 'A plain ash bat that turned up in the Sea of Silence, where nothing should be. It is the only bat Rex ever needed and the last one he will find. There is no joy in Mudville — but there is one more swing left. Offense +74, Guts +6.',
     }),
     I({
       id: 'comet_bead',
@@ -4556,7 +4556,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       heal: 70,
       usableInBattle: true,
       price: 16,
-      text: 'A chalky brick of astronaut ice cream from the Mars vending machine, the same one they sold at the science museum gift shop back home (§A8). ~70 HP. It tastes like 1995, which helps.',
+      text: 'A chalky brick of astronaut ice cream from the Mars vending machine, the same one they sold at the science museum gift shop back home. ~70 HP. It tastes like 1995, which helps.',
     }),
     I({
       id: 'freeze_dried_stroganoff',

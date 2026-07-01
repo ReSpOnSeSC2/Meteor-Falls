@@ -11,11 +11,11 @@ import { GS } from '../engine/state';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
 import { s } from '../spritegen/scale';
-import { vars, money } from './text';
+import { vars, money, glyphify } from './text';
 import { FlairLine, hasFlair } from './flairline';
 import { paginate, pageOf, ROW_H } from './paginate';
 
-export { vars } from './text';
+export { vars, glyphify } from './text';
 
 // Dialogue/HUD must paint above ALL world sprites. World depth is y-based
 // (a prop's depth = its bottom edge in px = up to mapHeight*16 + sprite height),
@@ -505,7 +505,7 @@ export function toast(scene: Phaser.Scene, message: string): void {
   const w = message.length * s(6) + s(24);
   const win = makeWindow(scene, (W - w) / 2, s(10), w, s(24));
   const tx = scene.add
-    .bitmapText((W - w) / 2 + s(12), s(18), 'retro', message, s(6))
+    .bitmapText((W - w) / 2 + s(12), s(18), 'retro', glyphify(message), s(6))
     .setScrollFactor(0)
     .setDepth(DEPTH_UI + 1);
   scene.tweens.add({
