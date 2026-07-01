@@ -3045,8 +3045,17 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
   const isSolidChar = (ch: string): boolean =>
     ch === ':' || ch === 'r' ? false : solidByName.get(CHAR_LEGEND[ch] ?? 'grass_a') === true;
   const DOOR_WAIVERS = new Set(['pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_4', 'dos_f3']);
-  const findings = doorAudit(MAPS, isSolidChar);
+  // ADR-135 body-box tier (opt-in): the 2 GENERATED city-unit doorsteps whose 40x36
+  // player body box clips the door-mouth wall. Their landing TILE is walkable; only
+  // the box pokes a neighbour, which the runtime clampSpawnToWalkable nudges. Their
+  // shared citylife.ts stepTx/stepTy coords serve ~100 units, so they're left to the
+  // clamp BY DESIGN (PR #84). Report-only here — NEVER a hard fail (the pyramids fall
+  // under DOOR_WAIVERS by from+to; these two are keyed on f.from).
+  const BODY_WAIVERS = new Set(['minimus_major_unit_0', 'brickton_unit_8']);
+  const findings = doorAudit(MAPS, isSolidChar, { bodyBox: true });
   let oneWay = 0;
+  let bodyBlockedReal = 0;
+  let bodyBlockedWaived = 0;
   for (const f of findings) {
     const waived = DOOR_WAIVERS.has(f.from) || DOOR_WAIVERS.has(f.to);
     const hard = f.issue.filter((i) => i === 'landsSolid' || i === 'farFromReturn');
@@ -3057,10 +3066,26 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
       );
     }
     if (f.issue.includes('noReturn')) oneWay += 1;
+    // body-box tier (ADR-135): report-only — deliberately NOT folded into `hard`, so
+    // it never fails the gate (clampSpawnToWalkable nudges every body-blocked spawn).
+    // A non-waived count > 0 = a fresh mis-aimed authored door for a human to re-aim.
+    if (f.issue.includes('bodyBlocked')) {
+      // Body-tier waiver keys on f.from ONLY — matching tools/door-audit.ts so both
+      // gates bucket the SAME finding identically. Deliberately NOT the hard tier's
+      // from-OR-to `waived`: a future body-block on a NORMAL source map that merely
+      // TARGETS a bespoke map stays counted (the strict, safe direction for the gate).
+      if (DOOR_WAIVERS.has(f.from) || BODY_WAIVERS.has(f.from)) bodyBlockedWaived += 1;
+      else bodyBlockedReal += 1;
+    }
   }
   console.log(
-    `  door-audit (ADR-102): swept ${Object.keys(MAPS).length} maps — ${findings.length} flag(s), ${oneWay} one-way (reported), ${DOOR_WAIVERS.size} bespoke waived`,
+    `  door-audit (ADR-102): swept ${Object.keys(MAPS).length} maps — ${findings.length} flag(s), ${oneWay} one-way (reported), ${DOOR_WAIVERS.size} bespoke waived, ${bodyBlockedReal} body-blocked (${bodyBlockedWaived} waived; ADR-135, clamp-rescued, report-only)`,
   );
+  if (bodyBlockedReal > 0) {
+    console.log(
+      `  ! door-audit body-box (ADR-135): ${bodyBlockedReal} NON-WAIVED body-blocked door(s) — walkable landing whose player body box clips a wall (clampSpawnToWalkable nudges it). Re-aim tx,ty at the tile interior, or add a reasoned waiver.`,
+    );
+  }
 }
 
 /* ====== 3a″. ENCOUNTER PRESSURE — the HARD subset (S15g M2, ADR-045) ======

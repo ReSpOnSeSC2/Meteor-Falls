@@ -45,14 +45,25 @@ const isSolidChar = (ch: string): boolean =>
  */
 const WAIVED = new Set<string>(['pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_4', 'pyramid_ante', 'pyramid_apex', 'dos_f3']);
 
+/**
+ * BODY_WAIVED (ADR-135) — the two GENERATED city-unit doorsteps whose body box
+ * pokes the door-mouth wall. Their landing tile is walkable; only the 40×36 body
+ * box clips a neighbour, which the runtime clampSpawnToWalkable nudges. Their
+ * coords come from citylife.ts's shared stepTx/stepTy formula serving ~100 units,
+ * so they're left to the clamp BY DESIGN (PR #84) — nudging the formula to fix
+ * these 2 edge cases would perturb every other unit. Waived (keyed on f.from) for
+ * the body-box tally only; their landsSolid/farFromReturn gating is unaffected.
+ */
+const BODY_WAIVED = new Set<string>(['minimus_major_unit_0', 'brickton_unit_8']);
+
 const SEV: Record<DoorFinding['issue'][number], string> = {
   landsSolid: 'STUCK',
   farFromReturn: 'WRONG-EDGE',
   noReturn: 'one-way',
-  // ADR-135: label staged for the body-box tier. This audit still calls doorAudit
-  // WITHOUT { bodyBox: true }, so no 'bodyBlocked' finding is produced yet — the
-  // gate wiring (enable the tier + waive the 2 generated city-unit doorsteps) lands
-  // separately. Present only so the Record stays exhaustive over the widened union.
+  // ADR-135: the body-box tier (opt-in below) — a walkable landing whose 40×36
+  // player body box pokes a solid/OOB NEIGHBOUR, so the runtime clampSpawnToWalkable
+  // must nudge the spawn. Reported (never fatal — the clamp rescues it); the 4 known
+  // hits are all waived (frozen pyramid rotors + the 2 generated city-unit doorsteps).
   bodyBlocked: 'BODY-BLOCK',
 };
 
@@ -61,7 +72,7 @@ function arrow(f: DoorFinding): string {
   return `${k} ${f.from} → ${f.to}  @px(${f.tx},${f.ty}) tile(${f.lx},${f.ly}) char '${f.char || 'OOB'}'`;
 }
 
-const findings = doorAudit(MAPS, isSolidChar);
+const findings = doorAudit(MAPS, isSolidChar, { bodyBox: true });
 
 // group by source map for a readable, scannable report
 const byMap = new Map<string, DoorFinding[]>();
@@ -83,6 +94,11 @@ let realNoReturn = 0;
 let waivedFindings = 0;
 let waivedStuck = 0;
 let waivedWrongEdge = 0;
+// ADR-135 body-box tier — tallied ORTHOGONALLY to the map-level waived/real split:
+// the pyramid hits sit on WAIVED maps, but the 2 city-unit doorsteps sit on
+// non-waived maps (so they print in the real section) yet must count as waived.
+let realBodyBlocked = 0;
+let waivedBodyBlocked = 0;
 
 // stable, readable order: real maps first (alpha), then the waived bespoke set
 const order = [...byMap.keys()].sort((a, b) => {
@@ -97,9 +113,18 @@ for (const mapId of order) {
   console.log('');
   console.log(`── ${mapId}${waived ? '   [WAIVED bespoke — frozen §A6 dungeon, shown only]' : ''} ──`);
   for (const f of list) {
+    const bodyWaived = WAIVED.has(f.from) || BODY_WAIVED.has(f.from);
     const tags = f.issue.map((i) => SEV[i]).join('+');
-    console.log(`  [${tags}] ${arrow(f)}`);
+    const annot = f.issue.includes('bodyBlocked') && !WAIVED.has(mapId) && BODY_WAIVED.has(f.from)
+      ? '   [body-box waived — generated city-unit doorstep, clamp-rescued]'
+      : '';
+    console.log(`  [${tags}] ${arrow(f)}${annot}`);
     for (const d of f.detail) console.log(`        · ${d}`);
+    // body-box tier is tallied per-finding (orthogonal to the map-level waived flag)
+    if (f.issue.includes('bodyBlocked')) {
+      if (bodyWaived) waivedBodyBlocked += 1;
+      else realBodyBlocked += 1;
+    }
     if (waived) {
       waivedFindings += 1;
       if (f.issue.includes('landsSolid')) waivedStuck += 1;
@@ -117,15 +142,23 @@ console.log('===================================================================
 console.log('  SUMMARY');
 console.log(`    REAL maps:   ${realStuck} stuck-landing · ${realWrongEdge} wrong-edge · ${realNoReturn} one-way`);
 console.log(`    WAIVED maps: ${waivedFindings} finding(s) (${waivedStuck} stuck · ${waivedWrongEdge} wrong-edge) — frozen bespoke, not gated`);
+console.log(`    BODY-BOX:    ${realBodyBlocked} non-waived, ${waivedBodyBlocked} waived (frozen pyramid rotors + generated city-unit doorsteps) [ADR-135, clamp-rescued, report-only]`);
 console.log('========================================================================');
 
 // the GATE: a REAL (non-waived) stuck-landing or wrong-edge door is a genuine
 // playability break. one-way doors are reported but never fail (intentional
 // one-way transitions exist — cutscene flights, the rocket pad, etc.).
+// The body-box tier (ADR-135) is REPORT-ONLY: the runtime clampSpawnToWalkable
+// nudges every body-blocked spawn, so it never soft-locks. But a NEW non-waived
+// body-block (a fresh mis-aimed authored door) surfaces here for a human to catch.
+// To make it strict later, add `+ realBodyBlocked` to `fatal` below (one line).
 const fatal = realStuck + realWrongEdge;
+if (realBodyBlocked > 0) {
+  console.log(`! door-audit: ${realBodyBlocked} NON-WAIVED body-blocked door(s) — a walkable landing whose player body box clips a wall (clampSpawnToWalkable will nudge it). Re-aim tx,ty at the tile interior, or add a reasoned waiver.`);
+}
 if (fatal > 0) {
   console.log(`✗ door-audit: ${fatal} REAL playability break(s) — ${realStuck} stuck + ${realWrongEdge} wrong-edge. Fix the map data (or waive with a reason).`);
   process.exit(1);
 } else {
-  console.log('✓ door-audit: no REAL stuck-landing or wrong-edge doors. (waived bespoke + one-way doors listed above.)');
+  console.log('✓ door-audit: no REAL stuck-landing or wrong-edge doors. (waived bespoke + one-way + body-box listed above.)');
 }
