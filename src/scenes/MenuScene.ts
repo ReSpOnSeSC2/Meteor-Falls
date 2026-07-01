@@ -305,6 +305,21 @@ export class MenuScene extends Phaser.Scene {
       await this.dlg.say(`${target.name} took the ${item.name}. ${boostStatLabel(item.boost.stat)} went up by ${item.boost.amount} — for keeps!`);
       return;
     }
+    // Mom's Voice Tape (§A4.8): homesickness is the one curable state that
+    // PERSISTS in the overworld — Rex-only, held as the rex_homesick save flag.
+    // Clear it from the field menu (battle cures it via the BattleScene loop).
+    if (item.kind === 'cure' && item.cures?.includes('homesick')) {
+      if (GS.flag('rex_homesick') !== true) {
+        await this.dlg.say(`The ${item.name} hums softly. Nobody's homesick right now.`);
+        return;
+      }
+      if (consumesOnUse(item)) GS.removeItem(itemId, hero.id);
+      GS.setFlag('rex_homesick', false);
+      AUDIO.sfx('heal');
+      const rex = GS.data.party.find((h) => h.id === 'rex');
+      await this.dlg.say(`${rex?.name ?? 'Rex'} played the ${item.name} back. The knot in his chest loosened — the homesickness lifts.`);
+      return;
+    }
     await this.dlg.say(item.text);
   }
 

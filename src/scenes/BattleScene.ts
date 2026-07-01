@@ -133,6 +133,7 @@ import {
   heroSpeed,
   heroGuts,
   heroLuck,
+  heroVibe as heroVibeStat,
   contractHomesick,
   homesickSkips,
   cryingMisses,
@@ -1644,7 +1645,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private heroVibeS(h: HeroUnit): number {
-    return Math.round(h.hero.stats.vibe * this.sunny);
+    // S17 (§A4.5): route through the heroVibe formula so worn Vibe gear
+    // (equipVibe — the Riddle Ring) and Brain-Food-Lunch tonics (boostOf)
+    // actually reach spell damage/healing, not just the raw base stat. Every
+    // sibling seam (heroGutsS/heroDefenseS/heroSpeedS/heroLuckS) already does.
+    return Math.round(heroVibeStat(h.hero) * this.sunny);
   }
 
   /** S-Mia LUCKY STAR ('lucky') reads here as +Luck — the steeled temp-boost
@@ -2546,6 +2551,10 @@ export class BattleScene extends Phaser.Scene {
         } else if (item.status === 'asleep') {
           t.asleep = 2;
           await this.print(this.fill('{e} drifted off mid-thought!', name, t));
+        } else if (item.status === 'paralyzed') {
+          // §A10: the Paper Tiger / EMP Grenade seize the whole room
+          t.paralyzed = 3;
+          await this.print(this.fill('{e} seized up, joints locking!', name, t));
         }
       }
       return true;
@@ -2575,6 +2584,17 @@ export class BattleScene extends Phaser.Scene {
         }
         if (c === 'asleep' && t.status.asleep > 0) {
           t.status.asleep = 0;
+          had = true;
+        }
+        // §A4.8: the Honey Lozenge / Static Filter clear HUSHED
+        if (c === 'hushed' && t.status.hushed > 0) {
+          t.status.hushed = 0;
+          had = true;
+        }
+        // Mom's Voice Tape: homesickness is Rex-only and lives as a save flag
+        // (not a status field), so cure it here too — the tape works mid-battle
+        if (c === 'homesick' && t.hero.id === 'rex' && GS.flag('rex_homesick') === true) {
+          GS.setFlag('rex_homesick', false);
           had = true;
         }
       }

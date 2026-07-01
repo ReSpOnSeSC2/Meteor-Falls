@@ -2483,6 +2483,12 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private handleDefeat(): void {
+    // Freeze the overworld under the game-over overlay. Without this, update()
+    // keeps running for the ~900ms until scene.restart, so a held movement key
+    // could walk the leader into a door — whose own restart would win the race
+    // and wake the party on the wrong map. scene.restart rebuilds the scene, so
+    // leaving cut=true here is safe (the fresh instance starts with cut=false).
+    this.cut = true;
     // §A4.7: half the cash ON HAND — banked money is safe (the S4 ATM's point)
     GS.data.cashOnHand = Math.floor(GS.data.cashOnHand / 2);
     // S14 (Bible Prompt 25): ADR-014's interim revive-all RETIRES. The
