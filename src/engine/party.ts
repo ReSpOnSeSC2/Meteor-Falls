@@ -34,7 +34,10 @@ export function rejoinHero(id: HeroId, level: number): void {
   GS.data.party.push(makeHeroState(id, level, GS.data.heroNames[id]));
 }
 
-/** the IRON path locks Dorin's Vibe Comet Ω until a redemption beat clears it */
+/** the IRON path locks Dorin's Vibe Comet Ω for the rest of the run — an intended,
+ *  balance-validated cost (verify.ts iron_* variants keep the finale winnable with it
+ *  withheld). There is no mid-run restore; the OPEN_HAND/MERCY branch at ch9_count is the
+ *  alternative that never withholds. Passing on=false only undoes a not-yet-committed set. */
 export function withholdUltimate(id: HeroId, on = true): void {
   GS.setFlag(`${id}_withholds`, on);
 }
@@ -51,7 +54,8 @@ export function awakenedAbilityIds(id: HeroId): Set<string> {
 /**
  * S21 (ADR-130): the BATTLE side of the withhold. While a hero `isWithholding`,
  * their awakened ultimate drops off the Vibe menu — the IRON-path Dorin can't
- * call Comet Ω entering Mars until the redemption beat clears the flag. The pure
+ * call Comet Ω for the rest of the run (its permanent cost; OPEN_HAND/MERCY at
+ * ch9_count is the branch that never withholds). The pure
  * mirror of `puppetLocked()` (echo.ts): an engine predicate the scene asks per
  * ability, so the rule lives in one tested place (party.test.ts).
  */

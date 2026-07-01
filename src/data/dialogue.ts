@@ -3098,8 +3098,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // — the §A5 next leg: Bert offers the Romania flight (bertAirBeat, ch8→ch9) —
   bert_romania_ask: [
-    '@Uncle Bert folds the locket shut, gentle. "This one\'s close to Dorin\'s, son. VALEA STELELOR — Valley of the Stars, up in the old mountains. They\'ve got a vampire, the wire says, scaring a whole valley off its own fields. Locket\'s warm as a stove about it. Number nine."',
-    '@"It\'s where Dorin walked down FROM, you know — the monastery up the brow. Reckon he\'d like to see his Buni." He winks at {dorin}. "Say the word and we fly."',
+    '@Uncle Bert folds the locket shut, gentle. "This one\'s close to {dorin}\'s, son. VALEA STELELOR — Valley of the Stars, up in the old mountains. They\'ve got a vampire, the wire says, scaring a whole valley off its own fields. Locket\'s warm as a stove about it. Number nine."',
+    '@"It\'s where {dorin} walked down FROM, you know — the monastery up the brow. Reckon he\'d like to see his Buni." He winks at {dorin}. "Say the word and we fly."',
   ],
 
   // — Valea Stelelor signs —

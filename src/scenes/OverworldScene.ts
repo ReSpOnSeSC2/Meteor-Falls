@@ -4397,6 +4397,16 @@ export class OverworldScene extends Phaser.Scene {
         this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
         return;
       }
+      // Lucille's cabin: remember the boarding frontier, and route the hatch back there
+      // (not to Ch.3 foggybottom) when a Ch.4+ party declines the flight and walks out.
+      if (d.to === 'biplane_interior') this.rememberLucilleOrigin();
+      if (this.mapDef.id === 'biplane_interior' && d.to === 'foggybottom') {
+        const back = this.lucilleReturnDoor();
+        if (back) {
+          this.goThroughDoor(back.to, back.tx, back.ty, 'up');
+          return;
+        }
+      }
       // S11b: a real door swings OPEN before it admits you
       if ((d.indicator ?? (this.mapDef.interior ? 'mat' : 'none')) === 'door') {
         this.goThroughInteriorDoor(d);
@@ -4500,6 +4510,33 @@ export class OverworldScene extends Phaser.Scene {
       this.transitioning = false; // hand off to the standard whoosh path
       this.goThroughDoor(d.to, d.tx, d.ty, d.facing);
     });
+  }
+
+  /** Ch.4+ frontiers all board Lucille from a doorstep, but the cabin's static hatch is
+   *  wired to Ch.3 foggybottom — so a late-game party that boards and then declines the
+   *  flight would be dumped into old England. Remember the boarding frontier (a numeric
+   *  flag, so no save-schema change) and route the hatch back to its own doorstep. Index
+   *  0 (foggybottom / unset) keeps the original Ch.3 hatch untouched. */
+  private static readonly LUCILLE_ORIGINS = [
+    'foggybottom', 'kvisthavn', 'minimus_major', 'zanzibel',
+    'chandrapore', 'lotus_harbor', 'valea_stelelor', 'aurora_station',
+  ];
+
+  private rememberLucilleOrigin(): void {
+    const idx = OverworldScene.LUCILLE_ORIGINS.indexOf(this.mapDef.id);
+    GS.setFlag('lucille_from', idx > 0 ? idx : 0);
+  }
+
+  /** the cabin hatch's real destination: the frontier the party boarded from (its own
+   *  boarding doorstep, read from map data so it can't drift), or null to keep the
+   *  original Ch.3 foggybottom hatch (the first flight / never-boarded default). */
+  private lucilleReturnDoor(): { to: string; tx: number; ty: number } | null {
+    const raw = GS.flag('lucille_from');
+    const idx = typeof raw === 'number' ? raw : 0;
+    const origin = OverworldScene.LUCILLE_ORIGINS[idx];
+    if (!origin || origin === 'foggybottom') return null; // Ch.3 flight → original hatch
+    const board = MAPS[origin]?.doors.find((dr) => dr.to === 'biplane_interior');
+    return board ? { to: origin, tx: board.x * 16, ty: board.y * 16 } : null;
   }
 
   /** small heel-dust puff while running (S7 juice) */
@@ -5051,6 +5088,7 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     AUDIO.stopMusic();
+    GS.setFlag('lucille_from', 0); // the Ch.3 flight always hatches onto the Foggybottom quay
     // into Lucille's cabin near Bert; walking down fires ch3_arrival, then the hatch
     // drops you on the Foggybottom quay (the boat_interior precedent)
     this.goThroughDoor('biplane_interior', 11 * 16, 3 * 16, 'down');
