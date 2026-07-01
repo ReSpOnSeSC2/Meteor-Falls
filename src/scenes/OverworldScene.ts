@@ -509,6 +509,23 @@ function resolveEdgeBiome(id: string): EdgeBiome {
  *  the Ch.5 maps so the colossi party visibly TOWERS over the tabletop duchy — the same idea as
  *  MINIMUS_TRAFFIC_SCALE for the dainty cars. The PARTY (player + followers) is NEVER scaled. */
 const MINIMUS_NATIVE_SCALE = 0.5;
+/** §A6 full-Gulliver — the GIANT half, the exact mirror of Minimus: the LILLEBY natives (its
+ *  towering citizens, its giant furniture, and its colossal facades) render at this scale so the
+ *  human-sized party visibly walks UNDER the doors and among the giants' feet — "everything here
+ *  is normal-sized," says the Mayor. As with Minimus the PARTY (player + followers) is NEVER
+ *  scaled; facade collision is rebuilt scale-true while props/NPCs keep the small native foot-box,
+ *  so the party weaves between a giant's legs instead of being walled out by a colossal block. */
+const LILLEBY_GIANT_MAPS: ReadonlySet<string> = new Set(['lilleby']);
+const LILLEBY_GIANT_SCALE = 2.3;
+/** the per-map NATIVE render scale for a settlement's own townsfolk / props / facades: Minimus
+ *  SHRINKS its tabletop duchy, Lilleby SWELLS its giants, everywhere else stays 1:1. One source of
+ *  truth so buildProps + buildNpcs (and the facade collision rebuild) all agree on the same factor.
+ *  The FOOT re-anchor + collision math below is factor-agnostic — it serves shrink AND grow alike. */
+function mapNativeScale(id: string): number {
+  if (MINIMUS_SKIN_MAPS.has(id)) return MINIMUS_NATIVE_SCALE;
+  if (LILLEBY_GIANT_MAPS.has(id)) return LILLEBY_GIANT_SCALE;
+  return 1;
+}
 /** dog roamers author into a 16² frame (half a human's 24×32); render them a
  *  touch larger so a beagle reads as a real dog beside the cast, not a speck. */
 const DOG_DISPLAY_SCALE = 1.5;
@@ -626,6 +643,9 @@ export class OverworldScene extends Phaser.Scene {
    *  cars read as little matchbox runabouts, not person-dwarfing sedans. Set per-map in
    *  buildTraffic; defaults to the standard scale everywhere else. */
   private static MINIMUS_TRAFFIC_SCALE = 0.5;
+  /** §A6 — LILLEBY runs GIANT traffic: the colossi drive colossal trucks, so a car rumbling down
+   *  the Great Way dwarfs even the giants on foot (the mirror of Minimus's matchbox runabouts). */
+  private static LILLEBY_TRAFFIC_SCALE = 2.8;
   private trafficScale = OverworldScene.TRAFFIC_SCALE;
 
   constructor() {
@@ -999,11 +1019,16 @@ export class OverworldScene extends Phaser.Scene {
       // ADR-051 collision/door is texture-coupled, so the shrink + foot re-anchor here is mirrored
       // (scale-aware) into facadeSolids/facadeDoorBox below so collision stays the building drawn.
       const isFacadeSprite = sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite);
-      const minimusNative = MINIMUS_SKIN_MAPS.has(this.mapDef.id) && !AUTHORED_VEHICLE_PROP_KEYS.has(sprite);
-      const nativeFacade = minimusNative && isFacadeSprite; // a building of the tiny duchy
-      const nativeProp = minimusNative && !isFacadeSprite; // a prop/curio of the tiny duchy
+      // §A11 full-Gulliver, BOTH halves: Minimus shrinks its duchy, Lilleby swells its giants.
+      // mapNativeScale is 0.5 / LILLEBY_GIANT_SCALE / 1 per map; cars are excluded (they carry
+      // their own per-map trafficScale). The SAME foot-re-anchor + collision rebuild below serves
+      // shrink AND grow — the foot stays planted while the body scales up or down around it.
+      const nativeScale = mapNativeScale(this.mapDef.id);
+      const scalesNatives = nativeScale !== 1 && !AUTHORED_VEHICLE_PROP_KEYS.has(sprite);
+      const nativeFacade = scalesNatives && isFacadeSprite; // a building of the duchy / a colossus of the giants' town
+      const nativeProp = scalesNatives && !isFacadeSprite; // a prop/curio of that town
       const native = nativeProp || nativeFacade;
-      const nps = native ? MINIMUS_NATIVE_SCALE : 1;
+      const nps = native ? nativeScale : 1;
       // Sized props carry NATIVE map dims → scale at read. Everything else goes
       // through THE WORLD RESIZE RULE (worldSpriteScale): facades land at their
       // footprint and legacy ×1 art is lifted to runtime res, so homes/props are
@@ -1012,14 +1037,15 @@ export class OverworldScene extends Phaser.Scene {
         img.setDisplaySize(s(displaySize.w) * nps, s(displaySize.h) * nps);
       } else {
         let sc = worldSpriteScale(sprite, img.width, img.height);
-        if (native) sc *= MINIMUS_NATIVE_SCALE;
+        if (native) sc *= nativeScale;
         if (sc !== 1) img.setScale(sc);
       }
-      // origin is top-left, so a shrunk native object is re-planted by its FOOT + x-centre
+      // origin is top-left, so a re-scaled native object is re-planted by its FOOT + x-centre
+      // (works for a shrunk duchy prop AND a swollen giant alike — nps is the map's native factor)
       if (native) {
         const sw = img.displayWidth, sh = img.displayHeight;
-        img.x = p.x * TILE_PX + (sw / MINIMUS_NATIVE_SCALE - sw) / 2;
-        img.y = p.y * TILE_PX + (sh / MINIMUS_NATIVE_SCALE - sh);
+        img.x = p.x * TILE_PX + (sw / nps - sw) / 2;
+        img.y = p.y * TILE_PX + (sh / nps - sh);
       }
       img.setDepth(img.y + img.displayHeight);
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
@@ -1039,7 +1065,7 @@ export class OverworldScene extends Phaser.Scene {
         // §A11 full-Gulliver: a NATIVE Minimus facade was scaled + foot-re-anchored above, so
         // rebuild its collision from the SHRUNK, re-anchored rect (img.x/img.y + displayW/H) with
         // the native eave/door constants scaled by the same factor — footprint = building drawn.
-        const fScale = nativeFacade ? MINIMUS_NATIVE_SCALE : 1;
+        const fScale = nativeFacade ? nativeScale : 1;
         for (const sr of this.facadeSolids(p, img.x, img.y, img.displayWidth, img.displayHeight, fScale))
           this.solids.push(sr);
         if (p.door) {
@@ -1263,8 +1289,12 @@ export class OverworldScene extends Phaser.Scene {
       // a beagle reads as a distant speck beside the cast. Lift it so it sits at
       // a believable dog scale next to the kids (origin is feet, so it stays planted).
       if (def.dog) spr.setScale(DOG_DISPLAY_SCALE);
-      // §A11 full-Gulliver — Minimus NATIVES shrink so the colossi party towers (heroes unscaled)
-      else if (MINIMUS_SKIN_MAPS.has(this.mapDef.id)) spr.setScale(MINIMUS_NATIVE_SCALE);
+      // §A11 full-Gulliver — a town's NATIVES scale to its native factor so the party reads at the
+      // right size beside them: Minimus's duchy shrinks, Lilleby's giants tower (heroes unscaled).
+      else {
+        const nsc = mapNativeScale(this.mapDef.id);
+        if (nsc !== 1) spr.setScale(nsc);
+      }
       spr.setDepth(y);
       // ADR-124 — FREE-ROAMING TOWNSFOLK: NPCs wander a small radius by default;
       // only clerks (a `shop`), explicitly pinned NPCs (wander:false / stationary),
@@ -1274,8 +1304,12 @@ export class OverworldScene extends Phaser.Scene {
         (def.wander !== false && !def.shop && !def.stationary && !def.dog && !this.mapDef.interior);
       this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000, wanders });
       // a wanderer is non-blocking (no stale "ghost" solid left where it spawned);
-      // a pinned NPC keeps its small collision box.
-      if (!wanders) this.solids.push({ x: x - s(6), y: y - s(10), w: s(12), h: s(10) });
+      // a pinned NPC keeps its small collision box — EXCEPT in a §A6 GIANT town, where the tiny
+      // party must weave freely among the colossi. A giant's foot-box (or a giant prop beside it)
+      // would otherwise wall the tiny player in → soft-lock. NPCs stay proximity-interactable
+      // (talkTo probes the sprite, not a solid), so making them passable costs nothing.
+      if (!wanders && !LILLEBY_GIANT_MAPS.has(this.mapDef.id))
+        this.solids.push({ x: x - s(6), y: y - s(10), w: s(12), h: s(10) });
     }
   }
 
@@ -1629,10 +1663,13 @@ export class OverworldScene extends Phaser.Scene {
     this.trafficSprites.clear();
     this.trafficRects = [];
     this.trafficAccumMs = 0;
-    // §A11 PKG-12 — Minimus runs dainty matchbox-scale traffic (the miniature duchy)
+    // §A11 PKG-12 — Minimus runs dainty matchbox traffic (the miniature duchy); §A6 Lilleby runs
+    // GIANT traffic (the colossi's trucks); everywhere else is the standard person-dwarfing sedan.
     this.trafficScale = MINIMUS_SKIN_MAPS.has(this.mapDef.id)
       ? OverworldScene.MINIMUS_TRAFFIC_SCALE
-      : OverworldScene.TRAFFIC_SCALE;
+      : LILLEBY_GIANT_MAPS.has(this.mapDef.id)
+        ? OverworldScene.LILLEBY_TRAFFIC_SCALE
+        : OverworldScene.TRAFFIC_SCALE;
     if (this.mapDef.interior || !this.mapDef.settlement) return;
     // collect the drivable cells (road / dashed centerline / crosswalk)
     const grid = this.mapDef.grid;
@@ -1908,7 +1945,10 @@ export class OverworldScene extends Phaser.Scene {
     // Opt-in: only the player's tryMove ('player') and a wanderer's own step (its
     // NpcObj) pass `actor` — roamers/patrols pass nothing and keep the old
     // prop-only check. The moving actor is excluded so it never hits its own box.
-    if (actor !== undefined) {
+    // §A6 GIANT towns opt OUT of actor↔actor solidity: the tiny party and the colossi pass
+    // through one another, so a giant (pinned or wandering) can never wedge the tiny player
+    // against a prop (soft-lock). Interaction stays proximity-based, so nothing is lost.
+    if (actor !== undefined && !LILLEBY_GIANT_MAPS.has(this.mapDef.id)) {
       for (const n of this.npcs) {
         if (!n.wanders || n === actor) continue;
         if (hit({ x: n.spr.x - s(6), y: n.spr.y - s(10), w: s(12), h: s(10) })) return true;
