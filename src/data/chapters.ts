@@ -176,7 +176,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     band: 'ch6',
     travel: 'biplane', // Lucille again (she has no business making it)
     dungeon: {
-      name: 'The Laughing Ruins → the Sphinx’s chin',
+      name: 'The Laughing Ruins → the Sphinx\'s chin',
       // the dead carved city (the BRANCH's home — Held Breath + Choice 1) → the
       // Sphinx's chin (the §A6 boss + Resonance Site)
       maps: ['laughing_ruins', 'sphinx_chin'],

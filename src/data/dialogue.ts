@@ -2559,7 +2559,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "(The Sleeper's snore, rolling up through a hundred feet of mountain.)",
     "(A charge gathering in the floor, in her shoes, in her teeth.)",
     "(She doesn't decide to. Her hand comes up on its own, full of borrowed thunder, and the whole canal lights blue-white.)",
-    '* {faye} awakened VIBE VOLT α — the thunder-snore, hers to throw now.',
+    '* {faye} awakened VIBE VOLT ALPHA — the thunder-snore, hers to throw now.',
   ],
 
   // — KVISTHAVN NPCs (one obsession each, §A11) —

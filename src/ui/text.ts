@@ -16,13 +16,45 @@ import { EMOJI_GLYPH } from '../spritegen/font';
 const EMOJI_ENTRIES = Object.entries(EMOJI_GLYPH);
 const VARIATION_SELECTORS = /[︎️]/g;
 
+/**
+ * The 5×7 bitmap font (src/spritegen/font.ts) only draws ASCII 32–126 plus a fixed
+ * symbol set (▼▲◄►←→▶★♥…—•). Authored text carries characters it can't address —
+ * authentic international names (Choripán, Rømmegrøt, Jötun, señor, mămăligă),
+ * smart punctuation pasted from ChatGPT (' ' " " –), and a couple of stray symbols
+ * (↑ ↓ ·) — all of which would render as GAPS. foldToFont() maps them to renderable
+ * equivalents at DRAW TIME so the authored source keeps its correct spelling while
+ * the screen shows a clean ASCII/known-glyph fallback. Chosen over extending the
+ * (frozen) font: non-destructive, one place, covers future cases by construction.
+ */
+const FONT_FOLD: Record<string, string> = {
+  // non-decomposable Latin letters (NFD can't strip these)
+  ø: 'o', Ø: 'O', æ: 'ae', Æ: 'AE', œ: 'oe', Œ: 'OE', ß: 'ss',
+  đ: 'd', Đ: 'D', ð: 'd', Ð: 'D', þ: 'th', Þ: 'Th', ł: 'l', Ł: 'L', ı: 'i',
+  // smart punctuation → straight ASCII
+  '‘': "'", '’': "'", '‚': ',', '“': '"', '”': '"',
+  '–': '-', '−': '-', ' ': ' ', '«': '"', '»': '"',
+  // stray symbols → the font's existing sibling glyphs
+  '↑': '▲', '↓': '▼', '·': '•',
+};
+const FONT_FOLD_RE = new RegExp(`[${Object.keys(FONT_FOLD).join('')}]`, 'g');
+
+export function foldToFont(text: string): string {
+  if (!text) return text;
+  // strip combining diacritics off decomposable letters (á â ñ ö ā ă ș í ó …),
+  // then map the leftovers the font still can't draw.
+  const stripped = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return FONT_FOLD_RE.test(stripped) ? stripped.replace(FONT_FOLD_RE, (c) => FONT_FOLD[c] ?? c) : stripped;
+}
+
 export function glyphify(text: string): string {
   if (!text) return text;
   let out = text.replace(VARIATION_SELECTORS, '');
   for (const [emoji, glyph] of EMOJI_ENTRIES) {
     if (out.includes(emoji)) out = out.replaceAll(emoji, glyph);
   }
-  return out;
+  // fold font-unrenderable characters LAST — after emoji became PUA glyphs, which
+  // NFD/the map leave untouched (idempotent alongside re-runs of glyphify).
+  return foldToFont(out);
 }
 
 /**

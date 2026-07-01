@@ -2944,7 +2944,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       absorbs: ['freeze'],
       moves: [
         { name: 'killing chill', kind: 'attack', mult: 1.1, text: '{e} curled close and breathed, and the warmth went out of {t} like a snuffed candle.', weight: 5 },
-        { name: 'snuff the warmth', kind: 'status', status: 'asleep', text: '{e} wrapped {t} in a soft, drowsy cold, and {t}’s eyelids grew heavy as new snow.', weight: 3 },
+        { name: 'snuff the warmth', kind: 'status', status: 'asleep', text: '{e} wrapped {t} in a soft, drowsy cold, and {t}\'s eyelids grew heavy as new snow.', weight: 3 },
         { name: 'drift away', kind: 'taunt', text: '{e} thinned to a wisp of breath and drifted just out of reach, daring {t} to follow into the white.', weight: 2 },
       ],
       deathLine: 'The Frost Wisp unspooled into a last thread of vapor and was gone, and the air where it hung felt almost warm.',
@@ -2981,7 +2981,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'spark skitter', kind: 'attack', mult: 1.1, text: '{e} darted across the glassy basalt in a shower of sparks and raked {t} in passing.', weight: 4 },
         { name: 'dance on the coals', kind: 'taunt', text: '{e} did a gleeful little jig on the red-hot rock, grinning at {t} through the heat-shimmer.', weight: 2 },
       ],
-      deathLine: 'The Cinder Imp’s grin sputtered, its last sparks scattering across the lava flat like dying fireflies.',
+      deathLine: 'The Cinder Imp\'s grin sputtered, its last sparks scattering across the lava flat like dying fireflies.',
       sprite: 'battle_cinder_imp', mini: 'mini_cinder_imp', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.RED, RAMP.ORANGE],
     }),
@@ -2997,7 +2997,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'sidelong scuttle', kind: 'attack', mult: 1.2, text: '{e} scuttled in low and hard, clacking its molten-cracked shell against {t}.', weight: 4 },
         { name: 'shell up', kind: 'taunt', text: '{e} tucked into its smoking obsidian shell and sat there glowing, immovable, watching {t}.', weight: 2 },
       ],
-      deathLine: 'The Ash Crab’s obsidian shell split with a sharp crack and crumbled to warm black gravel.',
+      deathLine: 'The Ash Crab\'s obsidian shell split with a sharp crack and crumbled to warm black gravel.',
       sprite: 'battle_ash_crab', mini: 'mini_ash_crab', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.RED, RAMP.EARTH],
     }),
@@ -3012,7 +3012,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       resists: ['freeze'],
       moves: [
         { name: 'drink the sound', kind: 'drain', mult: 1.2, text: '{e} pressed its hollow against {t} and drew the warmth and the noise out together, swelling as {t} dimmed.', weight: 4 },
-        { name: 'press the quiet', kind: 'status', status: 'hushed', text: '{e} laid a weightless emptiness over {t}, and {t}’s voice came out as nothing at all.', weight: 3 },
+        { name: 'press the quiet', kind: 'status', status: 'hushed', text: '{e} laid a weightless emptiness over {t}, and {t}\'s voice came out as nothing at all.', weight: 3 },
         { name: 'drift on the dead sea', kind: 'taunt', text: '{e} bobbed once on the silent red waste and turned its empty face toward {t}, waiting.', weight: 2 },
       ],
       deathLine: 'The Silent Drifter sighed itself inside-out and sank without a ripple into the dust of the dead sea.',
@@ -3029,7 +3029,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       moves: [
         { name: 'dead-channel howl', kind: 'strong', mult: 1.5, text: '{e} opened a mouthful of dead-channel roar and washed {t} in a wall of grinding static!', weight: 4 },
         { name: 'lost-signal lash', kind: 'attack', mult: 1.2, text: '{e} lashed out with a ribbon of snapped antenna-wire and crackling noise that bit into {t}.', weight: 4 },
-        { name: 'scramble', kind: 'status', status: 'paralyzed', text: '{e} flooded {t} with a wash of garbled signal, and {t}’s nerves seized mid-motion.', weight: 2 },
+        { name: 'scramble', kind: 'status', status: 'paralyzed', text: '{e} flooded {t} with a wash of garbled signal, and {t}\'s nerves seized mid-motion.', weight: 2 },
       ],
       deathLine: 'The Static Wraith dissolved into a last burst of white noise, then a flat, ringing silence.',
       sprite: 'battle_static_wraith', mini: 'mini_static_wraith', // authored Ch.10 battler + derived roamer mini
@@ -3046,7 +3046,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       moves: [
         { name: 'storm slam', kind: 'strong', mult: 1.7, text: '{e} raised two fists of carved glacier and brought the whole Aurora down on {t} in a blizzard of shards!', weight: 4 },
         { name: 'glacier fist', kind: 'attack', mult: 1.3, text: '{e} swung a slow, mountainous arm and clubbed {t} with a ton of blue ice.', weight: 4 },
-        { name: 'flash freeze', kind: 'status', status: 'paralyzed', text: '{e} exhaled a sheet of killing cold, and a rime of frost locked {t}’s joints stiff.', weight: 3 },
+        { name: 'flash freeze', kind: 'status', status: 'paralyzed', text: '{e} exhaled a sheet of killing cold, and a rime of frost locked {t}\'s joints stiff.', weight: 3 },
       ],
       deathLine: 'A long fracture raced up through the Frost Sentinel, the Aurora-light winking out along the seams, and it cracked apart and went still — just glacier again.',
       sprite: 'battle_frost_sentinel', mini: 'mini_frost_sentinel', // authored Ch.10 battler + derived roamer mini
@@ -3067,7 +3067,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'basalt smash', kind: 'attack', mult: 1.3, text: '{e} brought its heavy carved brow down on {t} with the weight of the whole mountain.', weight: 4 },
         { name: 'magma vent', kind: 'status', status: 'sunburn', text: '{e} cracked open along its seams and breathed lava-heat over {t}, searing skin that kept on smoldering.', weight: 3 },
       ],
-      deathLine: 'The Tiki Magma Golem’s core dimmed from white to red to nothing, its lava veins crusting black as it cooled, at last, back into silent stone.',
+      deathLine: 'The Tiki Magma Golem\'s core dimmed from white to red to nothing, its lava veins crusting black as it cooled, at last, back into silent stone.',
       sprite: 'battle_tiki_magma_golem', mini: 'mini_tiki_magma_golem', // authored Ch.10 battler + derived roamer mini
       bg: [RAMP.RED, RAMP.ORANGE],
       boss: true,
@@ -3088,7 +3088,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       hp: 150000, offense: 145, defense: 66, speed: 56, level: 52, exp: 0, cash: 0,
       weakness: [],
       moves: [
-        { name: 'a held silence', kind: 'status', status: 'hushed', text: '{e} laid its quiet over {t} like snowfall, and every word {t} reached for simply wasn’t there.', weight: 4 },
+        { name: 'a held silence', kind: 'status', status: 'hushed', text: '{e} laid its quiet over {t} like snowfall, and every word {t} reached for simply wasn\'t there.', weight: 4 },
         { name: 'wave of grief', kind: 'strong', mult: 1.6, text: '{e} let out a slow, cold swell of everything anyone ever lost, and it broke over {t} and pulled the heart down with it.', weight: 4 },
         { name: 'the long emptiness', kind: 'drain', mult: 1.3, text: '{e} opened the enormous nothing at its center, and the warmth drifted out of {t} and into the dark to keep it company.', weight: 3 },
         { name: 'it simply waits', kind: 'taunt', text: '{e} goes very, very still, the way a house gets after everyone has gone, and it waits — and the waiting alone is almost too much to bear.', weight: 2 },

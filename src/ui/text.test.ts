@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { vars, glyphify } from './text';
+import { vars, glyphify, foldToFont } from './text';
 import { GS, newGameData } from '../engine/state';
 import { DIALOGUE } from '../data/dialogue';
 import { EMOJI_GLYPH, FONT_CHARS } from '../spritegen/font';
@@ -102,5 +102,55 @@ describe('dialogue text variables (Prompt 6 + 21)', () => {
     expect(vars('{faye} loves {favoritefood}', other)).toBe('Wilma loves waffles');
     // the one-arg form still reads the live game
     expect(vars("{rex}'S HOUSE")).toBe("Jay'S HOUSE");
+  });
+});
+
+// The 5×7 font only draws ASCII + a fixed symbol set. foldToFont() maps authored
+// international spellings and stray punctuation down to renderable glyphs at draw
+// time so nothing ships as a gap, while the source keeps its correct spelling.
+describe('foldToFont — render-time fallback for font-unrenderable characters', () => {
+  it('folds accented international names to their ASCII base', () => {
+    expect(foldToFont('Choripán')).toBe('Choripan');
+    expect(foldToFont('Rømmegrøt')).toBe('Rommegrot');
+    expect(foldToFont('Fårikål')).toBe('Farikal');
+    expect(foldToFont('Junior Jötun')).toBe('Junior Jotun');
+    expect(foldToFont('señor')).toBe('senor');
+    expect(foldToFont('mămăligă')).toBe('mamaliga');
+    expect(foldToFont('Brânză de Burduf')).toBe('Branza de Burduf');
+    expect(foldToFont('Papanași')).toBe('Papanasi');
+    expect(foldToFont('kāṣāya')).toBe('kasaya');
+    expect(foldToFont('EL MALECÓN')).toBe('EL MALECON');
+  });
+
+  it('folds smart punctuation and stray symbols to renderable glyphs', () => {
+    expect(foldToFont('wasn’t')).toBe("wasn't");
+    expect(foldToFont('“hi”')).toBe('"hi"');
+    expect(foldToFont('a – b')).toBe('a - b');
+    expect(foldToFont('↑ THE ROAD')).toBe('▲ THE ROAD');
+    expect(foldToFont('A · B · C')).toBe('A • B • C');
+  });
+
+  it('leaves ASCII and already-supported glyphs untouched', () => {
+    expect(foldToFont('Hi Jay.')).toBe('Hi Jay.');
+    // em-dash, ellipsis, and bullet ARE in the font — must survive the fold
+    expect(foldToFont('one — two … three • four')).toBe('one — two … three • four');
+  });
+
+  it('every folded character is one the font can actually draw (no gaps ship)', () => {
+    const samples = [
+      'Choripán', 'Rømmegrøt', 'Junior Jötun', 'señor', 'mămăligă', 'kāṣāya',
+      'wasn’t', '↑ THE ROAD', 'A · B', 'EL MALECÓN', 'Tomás', 'Vegvísir',
+    ];
+    for (const s of samples) {
+      for (const ch of foldToFont(s)) {
+        const code = ch.codePointAt(0) ?? 0;
+        if (code < 32 || code > 126) expect(FONT_CHARS).toContain(ch);
+      }
+    }
+  });
+
+  it('is applied through glyphify() (and therefore vars() and battle print)', () => {
+    expect(glyphify('Choripán')).toBe('Choripan');
+    expect(vars('@Go warm, niño.')).toBe('•Go warm, nino.');
   });
 });

@@ -78,7 +78,7 @@ import {
 } from '../data/hoops';
 import { ITEMS } from '../data/items';
 import { ensureAthleteArt } from '../spritegen';
-import { Dialogue, everyFrame, makeWindow, vars, DEPTH_UI } from '../ui/windows';
+import { Dialogue, everyFrame, makeWindow, vars, glyphify, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
 import type { HoopsCheckpoint } from '../schemas';
 
@@ -304,7 +304,7 @@ export class HoopsScene extends Phaser.Scene {
    *  helper scales them (and its own maxWidth) to runtime — one seam, not 30. */
   private panelText(x: number, y: number, text: string, size: number, tint: number, origin = 0.5): Phaser.GameObjects.BitmapText {
     const t = this.add
-      .bitmapText(s(x), s(y), 'retro', text, s(size))
+      .bitmapText(s(x), s(y), 'retro', glyphify(text), s(size))
       .setOrigin(origin, 0)
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 2)

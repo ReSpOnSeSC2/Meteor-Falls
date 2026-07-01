@@ -1254,9 +1254,9 @@ export class BattleScene extends Phaser.Scene {
     // phase actions (§A6 Ch.4 — built now, the Sphinx consumes it later)
     const riddle = this.phase?.def.riddle;
     if (riddle && this.phase) {
-      for (const page of DIALOGUE[riddle.intro] ?? []) await this.print(vars(page));
+      for (const page of DIALOGUE[riddle.intro] ?? []) await this.printWait(vars(page));
       const r = pickRiddle(riddle.pool, Math.floor(Math.random() * riddle.pool.length));
-      await this.print(r.q);
+      await this.printWait(r.q);
       const pick = await this.dlg.ask(r.options);
       await this.phase.onRiddleAnswered(pick === r.correct);
       if (this.ended) return;
@@ -2824,7 +2824,7 @@ export class BattleScene extends Phaser.Scene {
   private async chadFlees(): Promise<void> {
     if (!this.chad) return;
     this.chad.fled = true;
-    for (const line of DIALOGUE.chad_flee) await this.print(line);
+    for (const line of DIALOGUE.chad_flee) await this.printWait(vars(line));
     this.chad.box?.destroy();
     this.chad.texts.forEach((t) => t.destroy());
     this.chadOdo?.destroy();
