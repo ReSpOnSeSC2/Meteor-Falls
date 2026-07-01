@@ -370,7 +370,7 @@ export interface DoorFinding {
   /** the destination tile char under the landing ('' if out of bounds) */
   char: string;
   /** the failure modes (a door can trip more than one) */
-  issue: Array<'landsSolid' | 'noReturn' | 'farFromReturn'>;
+  issue: Array<'landsSolid' | 'noReturn' | 'farFromReturn' | 'bodyBlocked'>;
   /** human line per issue, in order */
   detail: string[];
 }
@@ -422,6 +422,33 @@ function zoneCenterPx(d: MapDef['doors'][number]): { cx: number; cy: number } {
 }
 
 /**
+ * THE PLAYER BODY BOX (ADR-135), expressed in map-DATA tile coordinates. A door
+ * places the player's FEET at the landing pixel (d.tx,d.ty); the engine's
+ * collision box is (in NATIVE px) bx = feet.x − 5, by = feet.y − 9, w = 10, h = 9
+ * — see OverworldScene.clampSpawnToWalkable's `fits()`. Because every native px
+ * cancels against TILE_PX (= 16 × ART_SCALE) in that floor-divide, the TILE SPAN
+ * the box covers is scale-free and derivable from the raw d.tx/d.ty here — no
+ * Phaser, no ART_SCALE.
+ *
+ * The catch this encodes: feet land at the tile's TOP edge (a door aims ty at a
+ * row's top, ty = row*16), so `by = ty − 9` always sits ~9px UP into the row
+ * ABOVE the landing tile, and the ±5px width can reach the side/corner tiles. So
+ * the box ALWAYS overlaps ≥1 neighbour of the landing tile — a "2-tall door
+ * mouth": land on a walkable floor tile whose upper (or corner) neighbour is a
+ * solid border and the body still clips the wall (the Aurora ice-field entry
+ * soft-lock class). Returns the INCLUSIVE tile range [x0..x1]×[y0..y1] the engine
+ * samples — the far edge is inclusive to match `fits()`'s floor((bx+bw)/TILE_PX).
+ */
+export function playerBodyBoxTiles(tx: number, ty: number): { x0: number; x1: number; y0: number; y1: number } {
+  return {
+    x0: Math.floor((tx - 5) / TILE),
+    x1: Math.floor((tx + 5) / TILE),
+    y0: Math.floor((ty - 9) / TILE),
+    y1: Math.floor(ty / TILE),
+  };
+}
+
+/**
  * THE DOOR AUDIT — structured findings for every BROKEN transition across all
  * maps (clean doors produce nothing). For each door (zone + prop) on each map:
  *
@@ -430,6 +457,14 @@ function zoneCenterPx(d: MapDef['doors'][number]): { cx: number; cy: number } {
  *   noReturn       — the destination map has NO door (zone or prop) whose `to`
  *                    points back to this map → one-way trip (reported, lower
  *                    severity: not every door must be reciprocal).
+ *   bodyBlocked    — (opt-in, opts.bodyBox) the landing TILE is walkable, but the
+ *                    40×36 player body box (feet at the tile TOP) pokes into a
+ *                    solid/OOB NEIGHBOUR, so the runtime clampSpawnToWalkable has
+ *                    to NUDGE the spawn — the "2-tall door mouth" trap the single-
+ *                    tile landsSolid check structurally cannot see. Non-breaking
+ *                    warning tier (the nudge rescues it); mirrors OverworldScene's
+ *                    `fits()` in TILE space (see playerBodyBoxTiles). Default OFF
+ *                    so existing callers are unchanged.
  *   farFromReturn  — the landing pixel sits > FAR_FROM_RETURN_PX from where you
  *                    would STAND to use the NEAREST reciprocal return-door (its
  *                    interior doorCell) on the destination → you arrive at the
@@ -445,7 +480,11 @@ function zoneCenterPx(d: MapDef['doors'][number]): { cx: number; cy: number } {
  * Pure: the caller supplies `isSolid` (the engine's tile solidity) and the full
  * `maps` record so destinations + their return-doors resolve.
  */
-export function doorAudit(maps: Record<string, MapDef>, isSolid: IsSolid): DoorFinding[] {
+export function doorAudit(
+  maps: Record<string, MapDef>,
+  isSolid: IsSolid,
+  opts?: { bodyBox?: boolean },
+): DoorFinding[] {
   const findings: DoorFinding[] = [];
   // pre-index, per map, the zone doors that point back OUT to a given source —
   // these are the candidate "return doors" a landing should arrive beside.
@@ -481,6 +520,33 @@ export function doorAudit(maps: Record<string, MapDef>, isSolid: IsSolid): DoorF
       } else if (isSolid(char)) {
         issue.push('landsSolid');
         detail.push(`lands on SOLID tile '${char}' @${lx},${ly} of ${d.to} — player spawns stuck`);
+      }
+
+      // (a2) BODY-BLOCKED (opt-in) — the landing TILE is walkable, but the 40×36
+      // player body box (feet at the tile top) overlaps a solid/OOB NEIGHBOUR, so
+      // the runtime clampSpawnToWalkable must NUDGE the spawn. The single-tile
+      // landsSolid check above can never see this; it's a warning tier, not a hard
+      // fault (the nudge rescues it), but a door aimed at the tile interior lands
+      // clean and needs no rescue. Mirrors OverworldScene's `fits()` in TILE space.
+      if (opts?.bodyBox && inBounds && !isSolid(char)) {
+        const box = playerBodyBoxTiles(d.tx, d.ty);
+        const blockers: string[] = [];
+        for (let by = box.y0; by <= box.y1; by++) {
+          for (let bx = box.x0; bx <= box.x1; bx++) {
+            if (bx === lx && by === ly) continue; // the landing tile itself is walkable (checked above)
+            if (by < 0 || bx < 0 || by >= target.grid.length || bx >= target.grid[0].length) {
+              blockers.push(`(${bx},${by})=OOB`);
+            } else if (isSolid(target.grid[by][bx])) {
+              blockers.push(`(${bx},${by})='${target.grid[by][bx]}'`);
+            }
+          }
+        }
+        if (blockers.length > 0) {
+          issue.push('bodyBlocked');
+          detail.push(
+            `walkable landing @${lx},${ly} of ${d.to}, but the player body box overlaps solid/OOB tile(s) ${blockers.join(', ')} — spawn body-blocked (clampSpawnToWalkable nudges it)`,
+          );
+        }
       }
 
       // (b1) one-way: nothing on the destination comes back here

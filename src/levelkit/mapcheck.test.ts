@@ -14,7 +14,7 @@
  *   faredge  — its return-door sits at the far edge  (farFromReturn).
  */
 import { describe, it, expect } from 'vitest';
-import { doorAudit, FAR_FROM_RETURN_PX, type DoorFinding } from './mapcheck';
+import { doorAudit, playerBodyBoxTiles, FAR_FROM_RETURN_PX, type DoorFinding } from './mapcheck';
 import type { MapDef } from '../schemas';
 
 /** synthetic solidity: '#' is the only wall (keeps the proof self-contained) */
@@ -169,5 +169,60 @@ describe('doorAudit', () => {
     const fs = doorAudit(stairMaps, isSolid);
     // a clean two-way stair pair on floor → zero findings (no far, no no-return)
     expect(fs).toEqual([]);
+  });
+});
+
+/**
+ * THE BODY-BOX TIER (ADR-135) — the single-tile landsSolid check is blind to the
+ * 40×36 player body box, which (feet at the tile TOP) reaches ~9px UP into the row
+ * above the landing tile. A door aimed at a walkable floor tile whose upper (or
+ * corner) neighbour is a solid border lands the player CLIPPING the wall — the
+ * runtime clampSpawnToWalkable must nudge it (the Aurora ice-field entry class).
+ * This tier makes that STATICALLY visible, but only when opted in (opts.bodyBox),
+ * so every existing caller is unchanged. See playerBodyBoxTiles for the geometry.
+ */
+describe('doorAudit — body box (ADR-135, opt-in)', () => {
+  // src's door lands at dst tile (1,1). WALLED's row 0 is a solid '#' border, so a
+  // landing with FEET AT THE TILE TOP (ty=16) puts the body box up into that wall;
+  // aim the same door at the tile INTERIOR (ty=28) and the box stays on the floor.
+  // dst returns to src cleanly (return-door beside the landing) so ONLY the body-box
+  // tier can ever fire on src→dst — never landsSolid/noReturn/farFromReturn.
+  function bodyMaps(landTy: number): Record<string, MapDef> {
+    const src = map('src', WALLED, [{ x: 2, y: 2, w: 1, h: 1, to: 'dst', tx: 24, ty: landTy, facing: 'up' }]);
+    const dst = map('dst', WALLED, [{ x: 1, y: 1, w: 1, h: 1, to: 'src', tx: 40, ty: 40, facing: 'down' }]);
+    return { src, dst };
+  }
+  const edge = (fs: DoorFinding[]): DoorFinding | undefined => fs.find((f) => f.from === 'src' && f.to === 'dst');
+
+  it('is OFF by default: a body-blocked door produces NO finding without opts.bodyBox', () => {
+    // feet at the tile top → box pokes into the wall, but the tier is dormant
+    expect(edge(doorAudit(bodyMaps(16), isSolid))).toBeUndefined();
+  });
+
+  it('flags a walkable landing whose body box pokes into the solid row above (bodyBlocked)', () => {
+    const f = edge(doorAudit(bodyMaps(16), isSolid, { bodyBox: true }));
+    expect(f).toBeDefined();
+    // the tier is ISOLATED — the landing TILE is walkable, so this is NOT landsSolid,
+    // and the round-trip is clean, so it is exactly and only bodyBlocked
+    expect(f!.issue).toEqual(['bodyBlocked']);
+    expect(f!.char).toBe('.'); // landing tile itself is floor
+    expect(f!.detail.join(' ')).toMatch(/body box overlaps solid\/OOB/);
+    expect(f!.detail.join(' ')).toMatch(/\(1,0\)='#'/); // names the offending upper-neighbour wall
+  });
+
+  it('a door aimed at the tile INTERIOR lands clean — no bodyBlocked even with the tier on', () => {
+    // ty=28 drops the feet lower into the tile so the whole box stays on the floor
+    // (this is exactly the +12 interior nudge the 8 hand-authored doors got)
+    expect(edge(doorAudit(bodyMaps(28), isSolid, { bodyBox: true }))).toBeUndefined();
+  });
+
+  it('playerBodyBoxTiles: feet at the tile TOP reach one row UP; interior stays put', () => {
+    // feet-at-top (24,16): box spans col 1, rows 0..1 — row 0 is the neighbour up
+    expect(playerBodyBoxTiles(24, 16)).toEqual({ x0: 1, x1: 1, y0: 0, y1: 1 });
+    // interior (24,28): box stays in row 1, col 1 — no reach into a neighbour
+    expect(playerBodyBoxTiles(24, 28)).toEqual({ x0: 1, x1: 1, y0: 1, y1: 1 });
+    // a WIDTH poke (the real minimus_major_unit_0 coord px(80,117)): the ±5px width
+    // spreads cols 4..5, and feet-at-mid reaches rows 6..7 — a side/corner neighbour
+    expect(playerBodyBoxTiles(80, 117)).toEqual({ x0: 4, x1: 5, y0: 6, y1: 7 });
   });
 });
