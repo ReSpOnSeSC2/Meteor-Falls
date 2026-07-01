@@ -3397,22 +3397,24 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       price: 15,
       text: 'A coil of sandalwood smoke; breathe the curl of it and the mind unclenches one finger at a time. Restores about 20 PP (§A8).',
     }),
-    // — cures: the Mushroomize tier debuts here (§A4.8) — a consumable spore
-    //   antidote AND the SCROLL OF CALM (§A10 #17, REUSABLE; binding deferred) —
+    // — cures for the SPORE FOREST (§A4.8): the standalone Mushroomize status is
+    //   deferred, so the Spore Puffer's "mushroomize stand-in" is dealt as the
+    //   existing asleep/crying spore-daze (see enemies.ts spore_puffer) — a
+    //   consumable spore antidote AND the SCROLL OF CALM (§A10 #17, REUSABLE) —
     I({
       id: 'spore_antidote',
       name: 'Spore Antidote',
       kind: 'cure',
-      cures: ['mushroomize'],
+      cures: ['asleep', 'crying'],
       usableInBattle: true,
       price: 40,
-      text: 'A bitter doctor-grade draught that un-scrambles a head full of Spore Forest. The controls settle; the colours behave. Cures Mushroomize.',
+      text: 'A bitter doctor-grade draught that un-scrambles a head full of Spore Forest. The controls settle; the colours behave. Clears the spore-daze.',
     }),
     I({
       id: 'scroll_of_calm',
       name: 'Scroll of Calm',
       kind: 'cure',
-      cures: ['mushroomize'],
+      cures: ['asleep', 'crying'],
       reusable: true,
       usableInBattle: true,
       price: 0,

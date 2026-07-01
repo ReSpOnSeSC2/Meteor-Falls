@@ -265,6 +265,30 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
+// ITEM EFFECTS RESOLVE: every status an item CURES or INFLICTS must have a
+// matching arm in the runtime dispatch, or the item is silently consumed for
+// nothing (the "dead item" class). `cures` is an unconstrained string[] in the
+// schema, so nothing else catches a cure aimed at a status the code can't
+// apply. These pins MIRROR the switch arms in BattleScene.useItem (the cure
+// loop + the battle-'status' block) and the homesick branch in
+// MenuScene.useItem — when a new curable/inflictable status ships, extend BOTH
+// the code arm AND the pin here together. ('down' is the revive line, handled
+// separately in both scenes.)
+{
+  const HANDLED_CURES = new Set(['down', 'sunburn', 'crying', 'paralyzed', 'asleep', 'hushed', 'homesick']);
+  const HANDLED_BATTLE_STATUS = new Set(['crying', 'asleep', 'paralyzed']);
+  for (const item of Object.values(ITEMS)) {
+    for (const c of item.cures ?? []) {
+      if (!HANDLED_CURES.has(c)) {
+        fail('item-effect', `cure item '${item.id}' lists cures '${c}', but no dispatch arm applies it (BattleScene cure loop / MenuScene) — add the code arm AND extend HANDLED_CURES`);
+      }
+    }
+    if (item.kind === 'battle' && item.status && !HANDLED_BATTLE_STATUS.has(item.status)) {
+      fail('item-effect', `battle item '${item.id}' inflicts status '${item.status}', but the battle-'status' block has no arm for it — add the code arm AND extend HANDLED_BATTLE_STATUS`);
+    }
+  }
+}
+
 // S11b — EVERY FAMILY GETS A STAGE ANIM: the STAGE_ANIM map beside the
 // registry, checked both directions. A registry family with no stage row
 // fails naming the family; a stage row no registry entry uses is a dead

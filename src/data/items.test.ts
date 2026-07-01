@@ -230,12 +230,16 @@ describe('S17 M20 (ADR-065) — THE FAR-WORLD CATALOG pours Ch.6/7/8', () => {
   it('the Spice Box + Scroll of Calm ship per the three M20 DECISIONS (data-only)', () => {
     // #15 Spice Box: a KEY with the "cooked foods heal +50%" flavor, NOT wired
     expect(ITEMS.spice_box.kind).toBe('key');
-    // #17 Scroll of Calm: a Mushroomize cure, canonically REUSABLE (the cure-path
-    // binding that RESPECTS reusable is deferred — like M19's reusable Defibrillator)
-    expect(ITEMS.scroll_of_calm.cures).toContain('mushroomize');
+    // #17 Scroll of Calm: cures the Spore Forest's spore-daze — the standalone
+    // Mushroomize status is deferred, so these cure the asleep/crying stand-in
+    // the Spore Puffer actually inflicts (a real dispatch arm; see the
+    // content-validate item-effect gate). Canonically REUSABLE.
+    expect(ITEMS.scroll_of_calm.cures).toEqual(['asleep', 'crying']);
     expect(ITEMS.scroll_of_calm.reusable).toBe(true);
-    // the Mushroomize status (§A4.8) debuts here — a consumable cure tier too
-    expect(ITEMS.spore_antidote.cures).toContain('mushroomize');
+    // a consumable antidote ships the same spore-daze cure tier (§A4.8)
+    expect(ITEMS.spore_antidote.cures).toEqual(['asleep', 'crying']);
+    // the unmodeled Mushroomize status is referenced by no item
+    expect(ITEMS.scroll_of_calm.cures).not.toContain('mushroomize');
   });
 
   it('the M20 tonics permanently raise their stat, filling the §A4.12 Defense slot', () => {
