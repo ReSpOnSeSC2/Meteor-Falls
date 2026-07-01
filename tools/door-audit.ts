@@ -11,6 +11,9 @@
  *                    edge / "come in from the wrong way".
  *   noReturn       — the destination has no door back here (one-way; reported
  *                    at lower severity, never fails the build).
+ *   bodyBlocked    — the landing TILE is walkable but the 40×36 player body box
+ *                    clips a solid/OOB neighbour (the 2-tall door-mouth trap);
+ *                    STRICT since ADR-136 — a non-waived hit fails the build.
  *
  * The math is the pure `doorAudit` in src/levelkit/mapcheck.ts (vitest-pinned).
  * This file mirrors tools/content-validate.ts: it imports MAPS + the SAME
@@ -18,7 +21,7 @@
  * `isSolid` predicate, calls doorAudit, prints a report GROUPED BY MAP, marks
  * WAIVED bespoke maps (the frozen pyramid rooms + dos_f3 — their static grids
  * lie: the rotor turns / the holding room carves at runtime), and EXITS
- * NON-ZERO if any REAL (non-waived) landsSolid or farFromReturn survives.
+ * NON-ZERO if any REAL (non-waived) landsSolid, farFromReturn, or bodyBlocked survives.
  */
 import { CHAR_LEGEND, MAPS } from '../src/data/maps';
 import { TILESET } from '../src/spritegen/tiles';
@@ -44,9 +47,16 @@ const isSolidChar = (ch: string): boolean =>
  * Findings here are SHOWN but never fail the build (the project lead owns them).
  */
 const WAIVED = new Set<string>(['pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_4', 'pyramid_ante', 'pyramid_apex', 'dos_f3']);
+// NB (divergence, deliberate + inert): this set NAMES pyramid_ante/pyramid_apex; content-
+// validate's DOOR_WAIVERS OMITS them. INERT today — ante/apex currently produce NO door
+// findings at all, so the omission changes nothing. Latent difference should that change:
+// a future finding ORIGINATING at ante/apex is waived here (door-audit waives on the SOURCE
+// map only — WAIVED.has(f.from), below), but content-validate (from-OR-to) would waive it
+// only if it TARGETS a waived pyramid_1..4. Kept in sync by comment, not by membership
+// (touching the hard-tier waiver set is riskier than the inert nit warrants).
 
 /**
- * BODY_WAIVED (ADR-135) — the two GENERATED city-unit doorsteps whose body box
+ * BODY_WAIVED (ADR-135/136) — the two GENERATED city-unit doorsteps whose body box
  * pokes the door-mouth wall. Their landing tile is walkable; only the 40×36 body
  * box clips a neighbour, which the runtime clampSpawnToWalkable nudges. Their
  * coords come from citylife.ts's shared stepTx/stepTy formula serving ~100 units,
@@ -60,9 +70,9 @@ const SEV: Record<DoorFinding['issue'][number], string> = {
   landsSolid: 'STUCK',
   farFromReturn: 'WRONG-EDGE',
   noReturn: 'one-way',
-  // ADR-135: the body-box tier (opt-in below) — a walkable landing whose 40×36
+  // ADR-135/136: the body-box tier (opt-in below) — a walkable landing whose 40×36
   // player body box pokes a solid/OOB NEIGHBOUR, so the runtime clampSpawnToWalkable
-  // must nudge the spawn. Reported (never fatal — the clamp rescues it); the 4 known
+  // must nudge the spawn. Now STRICT (ADR-136): a NON-waived hit is FATAL; the 4 known
   // hits are all waived (frozen pyramid rotors + the 2 generated city-unit doorsteps).
   bodyBlocked: 'BODY-BLOCK',
 };
@@ -142,23 +152,24 @@ console.log('===================================================================
 console.log('  SUMMARY');
 console.log(`    REAL maps:   ${realStuck} stuck-landing · ${realWrongEdge} wrong-edge · ${realNoReturn} one-way`);
 console.log(`    WAIVED maps: ${waivedFindings} finding(s) (${waivedStuck} stuck · ${waivedWrongEdge} wrong-edge) — frozen bespoke, not gated`);
-console.log(`    BODY-BOX:    ${realBodyBlocked} non-waived, ${waivedBodyBlocked} waived (frozen pyramid rotors + generated city-unit doorsteps) [ADR-135, clamp-rescued, report-only]`);
+console.log(`    BODY-BOX:    ${realBodyBlocked} non-waived, ${waivedBodyBlocked} waived (frozen pyramid rotors + generated city-unit doorsteps) [ADR-136, clamp-rescued, STRICT — non-waived = fatal]`);
 console.log('========================================================================');
 
 // the GATE: a REAL (non-waived) stuck-landing or wrong-edge door is a genuine
 // playability break. one-way doors are reported but never fail (intentional
 // one-way transitions exist — cutscene flights, the rocket pad, etc.).
-// The body-box tier (ADR-135) is REPORT-ONLY: the runtime clampSpawnToWalkable
-// nudges every body-blocked spawn, so it never soft-locks. But a NEW non-waived
-// body-block (a fresh mis-aimed authored door) surfaces here for a human to catch.
-// To make it strict later, add `+ realBodyBlocked` to `fatal` below (one line).
-const fatal = realStuck + realWrongEdge;
+// The body-box tier is now STRICT (ADR-136, amending ADR-135's report-only): a
+// NON-waived body-block is FATAL below. The runtime clampSpawnToWalkable would
+// still nudge every body-blocked spawn (so it never soft-locks at play time), but
+// we fail the BUILD to force the author to re-aim the door at the source rather
+// than lean on the clamp. All 4 known hits are waived, so this stays green today.
+const fatal = realStuck + realWrongEdge + realBodyBlocked; // ADR-136: body-box now STRICT (non-waived = fatal)
 if (realBodyBlocked > 0) {
-  console.log(`! door-audit: ${realBodyBlocked} NON-WAIVED body-blocked door(s) — a walkable landing whose player body box clips a wall (clampSpawnToWalkable will nudge it). Re-aim tx,ty at the tile interior, or add a reasoned waiver.`);
+  console.log(`! door-audit body-box (ADR-136, STRICT): ${realBodyBlocked} NON-WAIVED body-blocked door(s) — a walkable landing whose player body box clips a wall (clampSpawnToWalkable would nudge it at runtime, but the gate now FAILS to force a fix). Re-aim tx,ty at the tile interior, or add a reasoned waiver.`);
 }
 if (fatal > 0) {
-  console.log(`✗ door-audit: ${fatal} REAL playability break(s) — ${realStuck} stuck + ${realWrongEdge} wrong-edge. Fix the map data (or waive with a reason).`);
+  console.log(`✗ door-audit: ${fatal} REAL playability break(s) — ${realStuck} stuck + ${realWrongEdge} wrong-edge + ${realBodyBlocked} body-blocked. Fix the map data (or waive with a reason).`);
   process.exit(1);
 } else {
-  console.log('✓ door-audit: no REAL stuck-landing or wrong-edge doors. (waived bespoke + one-way + body-box listed above.)');
+  console.log('✓ door-audit: no REAL stuck-landing, wrong-edge, or body-blocked doors. (waived bespoke + one-way + waived body-box listed above.)');
 }
