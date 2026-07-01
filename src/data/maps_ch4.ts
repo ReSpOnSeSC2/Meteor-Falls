@@ -214,39 +214,103 @@ function buildBootstepMoor(): MapDef {
  * Halvor's sweetheart of forty years lives here now, enormous and waiting
  * (unsent_letter delivery). A giant house-cat naps in a sunbeam the size of a
  * court (the §A7 Whiskerzilla seed). The warehouse keeps the dear goods. Picnic
- * #3 of 3 — the last rest before the Spine. */
+ * #3 of 3 — the last rest before the Spine.
+ *
+ * §A6 FULL-GULLIVER (the GIANT half, mirror of Ch.5 Minimus): the town's NATIVES —
+ * citizens, furniture, and the fog-stone facades themselves — render at the giant
+ * scale (LILLEBY_GIANT_SCALE in OverworldScene) so the party is DWARFED. The map is
+ * authored to feel that scope: a dense skyline of colossal facades that crane off the
+ * top of the screen backs the north (buildDistrict + `mega:true` so bldg_tower_arms
+ * finally rises), and below it a GRAND FLAGSTONE SQUARE holds giant everyday things —
+ * a fountain the size of a pond, a market of table-tall stalls, a well you'd fall
+ * into, a picnic table the party climbs onto — with the tiny cast threading between
+ * their feet. Everything walkable is grass/flagstone (reachability is grid-based); the
+ * only solids are the wall, the facades, and a few landmark props, so nothing is ever
+ * sealed off. */
 function buildLilleby(): MapDef {
-  const W = 32;
-  const H = 22;
+  const W = 50;
+  const H = 32;
   const g = new Grid(W, H, '.');
+  // wildflower + tuft turf, so the giants' commons reads as a lived-in meadow-town,
+  // never bare grass (walkable chars only — no random solid bushes on the walkways)
+  g.sprinkle(410404, ' ,~,~fF', 0.1);
+
+  // the drystone town wall — giants stack it high (B = solid); the west gate opens to the moor
   g.rect(0, 0, W, 2, 'B');
   g.rect(0, 0, 1, H, 'B');
   g.rect(W - 1, 0, 1, H, 'B');
   g.rect(0, H - 1, W, 1, 'B');
-  // the GREAT WAY — a broad ribbon street the colossi are allowed to walk
-  g.rect(2, 11, W - 4, 3, '=');
-  g.rect(14, 11, 3, 9, '=');
   g.set(0, 11, '=');
-  g.set(0, 12, '='); // W mouth → bootstep_moor
-  // the giants' district (oversized facades dress the north)
-  const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
-  const row = buildDistrict(g, { x: 2, y: 2, w: 28, h: 8 }, new Streams(410402), {
-    layout: 'grid',
-    style: 'fog-stone',
-    catalog: AREA_SKINS.lilleby,
-    streetRows: [9],
-    maxStories: 3,
-    sprinkle: true,
-    occupied,
-  });
-  // a great table on the southern square (where the human-sized picnic is laid)
+  g.set(0, 12, '='); // W gate → bootstep_moor (the door lands ~tile 1,11)
+
+  // ── THE GREAT SQUARE ────────────────────────────────────────────────────────
+  // A grand flagstone commons the colossi promenade — no drivable cells (giants walk
+  // it on foot). Grass islands are carved back in for the town's gardens. Everything
+  // here is walkable; only the wall, the facades, and a few landmark props are solid.
+  g.rect(1, 11, W - 2, 3, '='); // the upper promenade, under the giants' doorsteps
+  g.rect(2, 14, W - 4, 12, '='); // the Great Square — a broad flagstone commons, y14-25
+  g.rect(1, 11, 6, 15, '='); // the west entry sweeps the gate down into the square
+  // garden islands in the flagstone (walkable turf the giants keep their beds on)
+  g.rect(23, 16, 5, 4, '.'); // the central green — the great fountain stands on it
+  g.rect(8, 21, 3, 3, '.'); // west garden bed
+  g.rect(39, 21, 3, 3, '.'); // east garden bed
+  g.rect(22, 15, 7, 1, 'F'); // gold flowers ringing the fountain green
+  // a low clipped hedge fringes the far corners (solid — kept clear of every walkway)
+  g.rect(2, 28, 2, 2, 'b');
+  g.rect(W - 4, 28, 2, 2, 'b');
+  g.rect(2, 4, 1, 4, 'b');
+  g.rect(W - 3, 4, 1, 4, 'b');
+
+  const FOUNTAIN_SOLID = { ox: 6, oy: 24, w: 28, h: 12 } as const;
+  const WELL_SOLID = { ox: 4, oy: 20, w: 16, h: 10 } as const;
+  const STALL_SOLID = { ox: 6, oy: 20, w: 28, h: 12 } as const;
+  const CRATE_SOLID = { ox: 3, oy: 8, w: 14, h: 9 } as const;
+  const TABLE_SOLID = { ox: 0, oy: 8, w: 30, h: 10 } as const;
+
   const props: PropDef[] = [
-    ...row.props,
-    { sprite: 'meteor_rock', x: 6, y: 16, solid: ROCK_SOLID }, // a doorstep the size of a car
-    { sprite: 'prop_pine_whisperwood', x: 29, y: 16, solid: PINE_SOLID },
-    { sprite: 'desk', x: 20, y: 16, solid: { ox: 0, oy: 8, w: 30, h: 10 } }, // the great table (q_picnic)
-    { sprite: 'picnic', x: 9, y: 17, solid: PICNIC_SOLID }, // §A4.5 picnic #3 of 3
-    { sprite: 'payphone', x: 24, y: 10.2, solid: PHONE_SOLID },
+    // ── THE GIANTS' SKYLINE ──────────────────────────────────────────────────
+    // Colossal fog-stone facades line the north, hand-placed + spaced for their giant
+    // footprint (they render ~9 tiles wide) so the row reads as a packed cityscape and
+    // never a sealed wall — the promenade runs in front of their feet. The engine swells
+    // each ×the giant scale, so they crane off the top of the screen: you tip your head
+    // back at the doors. bldg_tower_arms is the landmark COLOSSUS, foot-anchored high
+    // (y ≈ 0.6) so it rises clean out of view — the "you walk under the giants" payoff.
+    { sprite: 'bldg_lilleby_giant_inn', x: 4, y: 8 },
+    { sprite: 'bldg_lilleby_runic_bank', x: 13, y: 8 },
+    { sprite: 'bldg_tower_arms', x: 22, y: 4 }, // the mega colossus — foots at the skyline (y11), rises off-screen
+    { sprite: 'bldg_lilleby_warehouse', x: 33, y: 8 }, // the shop (the keeper stands at its foot)
+    { sprite: 'bldg_lilleby_tiny_house', x: 42, y: 8 }, // the "tiny" house — still four storeys to you
+    // THE GREAT FOUNTAIN — the pond-sized heart of the square (party wades its shadow)
+    { sprite: 'fountain', x: 24, y: 15, solid: FOUNTAIN_SOLID },
+    // a pair of car-sized doorstep boulders flanking the west gate
+    { sprite: 'meteor_rock', x: 3, y: 22, solid: ROCK_SOLID },
+    { sprite: 'meteor_rock', x: 7, y: 12, solid: ROCK_SOLID },
+    // THE MARKET (SW) — table-tall stalls, a fall-in well, and crates by the warehouse
+    { sprite: 'market_stall_a', x: 5, y: 22, solid: STALL_SOLID },
+    { sprite: 'market_stall_b', x: 10, y: 24, solid: STALL_SOLID },
+    { sprite: 'well', x: 15, y: 21, solid: WELL_SOLID },
+    { sprite: 'crate', x: 8, y: 25, solid: CRATE_SOLID },
+    { sprite: 'crate_bananas', x: 17, y: 23, solid: CRATE_SOLID },
+    // THE PICNIC LAWN (SE) — the great table the party climbs onto (q_picnic) + a stall
+    { sprite: 'desk', x: 36, y: 20, solid: TABLE_SOLID }, // the great table (q_picnic set)
+    { sprite: 'picnic', x: 41, y: 22, solid: PICNIC_SOLID }, // §A4.5 picnic #3 of 3
+    { sprite: 'market_stall_c', x: 44, y: 24, solid: STALL_SOLID },
+    { sprite: 'bench', x: 20, y: 17 },
+    { sprite: 'bench', x: 31, y: 17 },
+    // gardens — Whisperwood pines + planters the giants tend, framing the square
+    { sprite: 'prop_pine_whisperwood', x: 2, y: 25, solid: PINE_SOLID },
+    { sprite: 'prop_pine_whisperwood_b', x: 46, y: 25, solid: PINE_SOLID },
+    { sprite: 'prop_pine_whisperwood_c', x: 46, y: 14, solid: PINE_SOLID },
+    { sprite: 'prop_pine_whisperwood', x: 2, y: 14, solid: PINE_SOLID },
+    { sprite: 'planter', x: 9, y: 21 },
+    { sprite: 'planter', x: 40, y: 21 },
+    { sprite: 'plant_pot', x: 29, y: 19 },
+    { sprite: 'plant_pot', x: 22, y: 19 },
+    // giants' street furniture — the payphone booth + a news box + a trail marker at the gate
+    { sprite: 'payphone', x: 9, y: 15, solid: PHONE_SOLID },
+    { sprite: 'news_box', x: 13, y: 15 },
+    { sprite: 'atm', x: 11, y: 15 },
+    { sprite: 'prop_trail_marker', x: 4, y: 16 },
   ];
 
   return {
@@ -258,34 +322,34 @@ function buildLilleby(): MapDef {
     props,
     npcs: [
       // the Mayor — the picnic giver (one obsession: everything here is NORMAL-SIZED)
-      { id: 'll_mayor', sprite: 'mayor_of_lilleby', x: 16, y: 13, facing: 'down', dialogue: 'npc_ll_mayor', stationary: true, emote: 'happy' },
+      { id: 'll_mayor', sprite: 'mayor_of_lilleby', x: 26, y: 21, facing: 'down', dialogue: 'npc_ll_mayor', stationary: true, emote: 'happy' },
       // the warehouse keeper (one obsession: kneeling to ring up very small customers)
-      { id: 'll_keeper', sprite: 'canteen_keeper', x: 8, y: 9, facing: 'down', dialogue: 'npc_ll_keeper', shop: 'lilleby_warehouse' },
+      { id: 'll_keeper', sprite: 'canteen_keeper', x: 12, y: 23, facing: 'down', dialogue: 'npc_ll_keeper', shop: 'lilleby_warehouse' },
       // Halvor's sweetheart, forty years on (unsent_letter delivery target)
-      { id: 'll_sweetheart', sprite: 'fjord_nurse', x: 27, y: 13, facing: 'down', dialogue: 'npc_ll_sweetheart', stationary: true, idle: true },
+      { id: 'll_sweetheart', sprite: 'fjord_nurse', x: 38, y: 18, facing: 'down', dialogue: 'npc_ll_sweetheart', stationary: true, idle: true },
       // a giant child (one obsession: the little people are SO well-behaved)
-      { id: 'll_child', sprite: 'lilleby_giant_child', x: 12, y: 18, facing: 'down', dialogue: 'npc_ll_child', wander: true },
+      { id: 'll_child', sprite: 'lilleby_giant_child', x: 20, y: 24, facing: 'down', dialogue: 'npc_ll_child', wander: true },
       // the undertaker (one obsession: nobody here has died; he is very bored)
-      { id: 'll_undertaker', sprite: 'lilleby_undertaker', x: 22, y: 18, facing: 'down', dialogue: 'npc_ll_undertaker', wander: true, emote: 'sleep' },
+      { id: 'll_undertaker', sprite: 'lilleby_undertaker', x: 33, y: 24, facing: 'down', dialogue: 'npc_ll_undertaker', wander: true, emote: 'sleep' },
     ],
     signs: [
-      { x: 3, y: 10, dialogue: 'sign_lilleby' },
-      { x: 18, y: 15, dialogue: 'sign_great_table' },
+      { x: 3, y: 14, dialogue: 'sign_lilleby' }, // "WELCOME TO LILLEBY. Everything here is normal-sized."
+      { x: 34, y: 19, dialogue: 'sign_great_table' },
     ],
-    phones: [{ x: 24, y: 10 }],
-    atms: [{ x: 26, y: 10 }],
+    phones: [{ x: 9, y: 16 }],
+    atms: [{ x: 11, y: 16 }],
     doors: [
       { x: 0, y: 11, w: 1, h: 2, to: 'bootstep_moor', tx: 32 * 16, ty: 8 * 16, facing: 'left', indicator: 'none' },
     ],
     spawners: [
       // the giants' domestic things, swelled by the hum: the napping house-cat, the
       // lost mitten, and the §A7 Runaway Knitting Needles clacking around the south end
-      { enemies: ['giant_house_cat', 'lost_mitten', 'knitting_needles'], count: 1, rect: { x: 25, y: 18, w: 5, h: 2 } },
+      { enemies: ['giant_house_cat', 'lost_mitten', 'knitting_needles'], count: 1, rect: { x: 42, y: 22, w: 5, h: 3 } },
     ],
     triggers: [
       // §A10 "The Giant's Picnic" — gather the slice + the berry, then lay the table
-      { id: 'q_picnic_brunost', rect: { x: 6, y: 9, w: 4, h: 2 }, once: false },
-      { id: 'q_picnic_set', rect: { x: 19, y: 17, w: 4, h: 2 }, once: false },
+      { id: 'q_picnic_brunost', rect: { x: 9, y: 23, w: 4, h: 2 }, once: false }, // at the market (the brunost wheel)
+      { id: 'q_picnic_set', rect: { x: 35, y: 20, w: 4, h: 2 }, once: false }, // at the great table
     ],
   };
 }
