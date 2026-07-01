@@ -1451,6 +1451,72 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
+// ── ADR-134 — ELEMENTAL IDENTITY (the "colour" of every foe). Three gates, all
+//    both-directions where it matters, so combat stays a READ (the right element),
+//    never a spam (the biggest number):
+//      A. every enemy sits in exactly one chapter roster (drift-log discipline);
+//      B. the DIFFER rule — a foe's resist/absorb never overlaps its own weakness
+//         (a colour you both fear and shrug off is not a read);
+//      C. the SPREAD rule — no single castable element (fire/freeze/volt/holy) is
+//         the weakness of >60% of a chapter's NON-boss roster, so Mia must rotate.
+{
+  // The §A7 chapter rosters, lifted from the canon{} block above. Kept explicit
+  // (like canon{}) so the both-directions check keeps them honest: add an enemy →
+  // add it here, or the gate fails. Bosses/set-pieces are tagged for the SPREAD
+  // denominator (their weaknesses are bespoke, not part of the grind rotation).
+  const CHAPTER_ROSTER: Record<number, string[]> = {
+    1: ['cranky_mailbox','runaway_lawnmower','coily_cicada','blazer_smiler','pigeon_gang','hill_slug_deluxe','borden','sprinkler_sentry','recycling_raccoon','skeeter_swarm','unionized_gnome','mandatory_memo','motivational_poster','quota_clock','expired_meter','showroom_mannequin','good_investment','rogue_icecream_truck','tick_nymph','the_suit','titanic_tick','hush_sentinel'],
+    2: ['pickpocket_parrot','gilded_beetle','cursed_souvenir','step_mask','banana_bunch','jungle_jitterbug','brass_market_mimic','bronze_mask_guardian','cackling_mask','confetti_cannon','postage_stampede','gilded_grin'],
+    3: ['prefect_drone','possessed_textbook','fog_hound','tea_poltergeist','cricket_eleven','greenhouse_creeper','pillar_box','brolly_bat','moor_sheep','soot_imp','detention_desk','schedule_bell','foggy_locker','tea_trolley','telephone_box','overdue_tome','roman_sentry','head_prefect','boiler_golem','the_invigilator','headmaster_mainframe'],
+    4: ['colossal_gnat','knitting_needles','thunder_snail','dog_sized_berry','hushed_gull','junior_jotun','moor_midge_cloud','boulder_lichen','frost_hare','bog_cotton_wisp','earwax_golem','dream_leech','snore_gust','giant_house_cat','lost_mitten','amber_hoard_troll','aurora_moth','hushed_skua','frost_jotun_elder','bridge_berry','the_whisperwig'],
+    5: ['tin_parade','duelist_pip','crumb_cannoneer','powderwig_wasp','windup_wyrmlet','dust_bunny','whistle_guard','census_pigeon','toll_clerk','cobble_mite','hedge_sprite','topiary_knight','bramble_tangle','lapel_pin_mob','town_crier','snuffbox_beetle','tax_assessor','halberd_column','bell_ringer_acolyte','grand_parade','whiskerzilla','flat_bell'],
+    6: ['caravan_hyena_pack','baobab_root_snare','laughing_dust_pot','sphinx_paw_shadow','hollow_jackal','dust_devil_charm','salt_flat_lurker','thornbush_bomber','ribbon_serpent','canteen_mirage','trade_salt_heap','mirage_vendor','griot_string_snare','town_gossip_troll','punchline_head','echoing_riddle','laughing_sphinx_riddle','rare_riddle_ring','sunbaked_idol','fastest_man_echo','laughing_sphinx'],
+    7: ['rickshaw_swarm','spice_djinn','temple_macaque','naga_sentry','cobra_raja'],
+    8: ['paper_lantern_wisp','spore_puffer','origami_warrior','porcelain_warlord','paper_dragon'],
+    9: ['haystack_mimic','ribcage_rattler','moss_strigoi','animated_armor','wolf_of_the_old_road','count_hoaxula'],
+    10: ['frost_wisp','icehorn_caribou','cinder_imp','ash_crab','silent_drifter','static_wraith','frost_sentinel','tiki_magma_golem','the_hush'],
+  };
+  const CASTABLE = ['fire', 'freeze', 'volt', 'holy'] as const;
+
+  // A — both directions: every roster id is a real enemy; every enemy is rostered once.
+  const seen = new Set<string>();
+  for (const [ch, roster] of Object.entries(CHAPTER_ROSTER)) {
+    for (const id of roster) {
+      if (!ENEMIES[id]) fail('color', `Ch.${ch} roster names '${id}', which is not a real enemy`);
+      if (seen.has(id)) fail('color', `'${id}' appears in more than one chapter roster`);
+      seen.add(id);
+    }
+  }
+  for (const id of Object.keys(ENEMIES)) {
+    if (!seen.has(id)) fail('color', `'${id}' is in no chapter roster — extend CHAPTER_ROSTER (ADR-134), never ad-hoc`);
+  }
+
+  // B — the DIFFER rule: resist/absorb must not overlap the foe's own weakness
+  //     (and absorb, which supersedes, must not double up with a resist).
+  for (const e of Object.values(ENEMIES)) {
+    const w = new Set(e.weakness);
+    for (const r of e.resists ?? []) if (w.has(r)) fail('color', `'${e.id}' both fears AND resists '${r}' — pick one (ADR-134 differ rule)`);
+    for (const a of e.absorbs ?? []) {
+      if (w.has(a)) fail('color', `'${e.id}' both fears AND absorbs '${a}' — an absorb heals, it can't also be a weakness`);
+      if ((e.resists ?? []).includes(a)) fail('color', `'${e.id}' both resists AND absorbs '${a}' — absorb already supersedes`);
+    }
+  }
+
+  // C — the SPREAD rule: no castable element answers >60% of a chapter's NON-boss
+  //     roster (so the player rotates Mia's elements chapter-to-chapter, not spams one).
+  for (const [ch, roster] of Object.entries(CHAPTER_ROSTER)) {
+    const grind = roster.filter((id) => ENEMIES[id] && ENEMIES[id].boss !== true);
+    if (grind.length === 0) continue;
+    for (const el of CASTABLE) {
+      const cnt = grind.filter((id) => ENEMIES[id].weakness.includes(el)).length;
+      const pct = cnt / grind.length;
+      if (pct > 0.6) {
+        fail('color', `Ch.${ch}: '${el}' is the weakness of ${cnt}/${grind.length} (${(pct * 100).toFixed(0)}%) of the roster — >60%, one element trivialises the chapter (ADR-134)`);
+      }
+    }
+  }
+}
+
 /* ===================== S18 M24 — THE GREAT VERIFICATION (ADR-094) =====================
  * The cross-checks the existing gates DON'T make: the four deferred debts pinned
  * both directions (loot / reusable / resist / the boss curve), plus the §A4

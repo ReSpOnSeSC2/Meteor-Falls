@@ -374,6 +374,20 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
         ],
       },
       {
+        // ADR-134 — the reference boss TELEGRAPH (the reusable wind-up hook, adopted
+        // as a data beat): every 3rd turn the Count throws his cape wide and COMMANDS
+        // THE NIGHT — a wind-up you can READ. The bat-swarm blow lands his NEXT turn
+        // (a heavy party-wide hit + a blinding swirl) and near-wipes a squishy party
+        // UNLESS they answer THAT turn: BREAK him (fire is his weakness — chip his
+        // composure to 0 and the charge COLLAPSES), freeze/sleep him, or WARD/SHIELD
+        // the blow (mitigateIncoming still bites it). Jay's ward suite + the Break
+        // system become necessary ON CUE — exactly the §4.5 telegraph intent.
+        id: 'command_windup',
+        trigger: { kind: 'turnCount', n: 3, every: 3 },
+        once: false,
+        actions: [{ kind: 'windup', line: 'hoaxula_command', amount: 800, status: 'crying', turns: 1 }],
+      },
+      {
         // under 50% HP — the cape comes off and the man from Cleveland is underneath
         id: 'unmask',
         trigger: { kind: 'hpBelow', frac: 0.5 },

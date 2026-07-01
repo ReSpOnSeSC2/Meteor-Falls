@@ -401,3 +401,45 @@ describe('the OTHER canon triggers (synthetic defs shaped like their chapters)',
     expect(pickRiddle(pool, -1).q).toBe('What waits?'); // negatives wrap too
   });
 });
+
+describe('ADR-134 — the boss WIND-UP telegraph (the reusable hook)', () => {
+  const windScript: BossScriptDef = {
+    boss: 'count_hoaxula',
+    phases: [
+      {
+        id: 'wind',
+        trigger: { kind: 'turnCount', n: 2, every: 3 },
+        once: false,
+        actions: [{ kind: 'windup', line: 'idol_grin_wider', amount: 100, status: 'crying', turns: 1 }],
+      },
+    ],
+  };
+
+  it('arms on the telegraph turn, becomes DUE the next turn, and clears', async () => {
+    const { fx, log } = recorder();
+    const r = new PhaseRunner(windScript, fx);
+    await r.onBossTurnStart(); // turn 1 — nothing armed
+    expect(r.dueWindup()).toBeNull();
+    await r.onBossTurnStart(); // turn 2 — the wind-up ARMS + prints its telegraph
+    expect(log).toContain('line:idol_grin_wider');
+    expect(r.pendingWindup).not.toBeNull();
+    expect(r.dueWindup()).toBeNull(); // armed THIS turn — the party still gets a turn to answer
+    await r.onBossTurnStart(); // turn 3 — now DUE (the scene lands it, or a BREAK cancels)
+    const due = r.dueWindup();
+    expect(due?.amount).toBe(100);
+    expect(due?.status).toBe('crying');
+    r.clearWindup();
+    expect(r.dueWindup()).toBeNull();
+  });
+
+  it('the real Count Hoaxula script carries a break-cancellable wind-up (the reference boss)', async () => {
+    const { fx } = recorder();
+    const r = new PhaseRunner(BOSS_SCRIPTS.count_hoaxula, fx);
+    await r.onBossTurnStart(); // 1
+    await r.onBossTurnStart(); // 2 — steals a hero's gear
+    await r.onBossTurnStart(); // 3 — COMMAND THE NIGHT winds up (telegraph)
+    expect(r.pendingWindup?.line).toBe('hoaxula_command');
+    await r.onBossTurnStart(); // 4 — the bat-swarm blow is now DUE
+    expect(r.dueWindup()?.amount).toBe(800);
+  });
+});

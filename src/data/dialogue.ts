@@ -3141,6 +3141,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   hoaxula_theatrical: ['@(A figure sweeps down the great stair in a swirl of crimson cape, fangs flashing, eyes blazing with cold stolen light.) "FOOLISH MORTALS! You DARE enter the castle of COUNT HOAXULA?! I shall drink your— your very— " (the Vibe crackles, very real, off his fingertips) "—oh, this part\'s REAL, I should mention. Terribly sorry. DOOOOM!"'],
   hoaxula_steal: ['@(He flourishes his cape, and when it settles something of yours has vanished into it.) "A magician never reveals — ah, a VAMPIRE never reveals his secrets! That bauble is collateral. Theatrical collateral! You\'ll get it back if you survive the SHOW!"'],
   hoaxula_unmask: ['(You land a blow that knocks the cape wide — and the stolen Vibe stutters, and the whole grand act sags like a tent with the pole pulled out.)'],
+  // ADR-134 — the reference boss WIND-UP telegraph: read it, then answer it (BREAK / freeze / ward).
+  hoaxula_command: ['@(He throws both arms wide and the shadows in the rafters START TO MOVE — a thousand wings gathering.) "Behold the finale! On my next breath I COMMAND THE NIGHT — and it will answer ALL AT ONCE. Unless, of course… you can make me lose my nerve first."'],
   hoaxula_unmasked: ['@(The accent comes apart into flat, exhausted Ohio.) "...okay. OKAY. You wanna know the truth? The truth is the castle went under in \'19, and a guy in a gray suit offered me a — a BATTERY, he called it, to keep the lights on, and I didn\'t ASK what was in it—" (the Vibe lashes out, wild now, grief-shaped, catching everyone) "—and now I can\'t put it DOWN!"'],
 
   // — the boss-trigger approach + the win (OverworldScene countHoaxulaBossScene) —
@@ -3425,6 +3427,15 @@ export const BATTLE_TEXT = {
   spy_report: '{e} — about {t} HP left.',
   spy_weak: 'Weak point, circled twice: {t}.',
   spy_no_weak: 'Notes: sturdy, rude, no obvious weak point.',
+  // ADR-134 — the fuller colour read (Milo's Spy/Scope): what it shrugs off, what it DRINKS.
+  spy_resist: 'Shrugs off: {t} (barely a scratch).',
+  spy_absorb: 'DRINKS {t} — do NOT feed it that.',
+  // ADR-134 — the BREAK beat: composure hit zero, and the ×2 burst window opens.
+  enemy_break: "{e}'s composure SHATTERED — BREAK! (it's wide open!)",
+  enemy_broken_skip: '{e} is reeling — too rattled to pull itself together!',
+  // ADR-134 — a telegraphed WIND-UP resolves (or the party BROKE it in time).
+  windup_lands: "{e} unleashes the attack it wound up — brace!!",
+  windup_cancel: "{e} was mid-wind-up when it BROKE — the charged attack COLLAPSES!",
   magnet_sip: '{user} sipped {t} PP right out of the air!',
   // S-Mia ("Ability Expansion"): her new statuses each print when they LAND,
   // ACT, and WEAR OFF (the §A11.5 second person, kind and a little wry).

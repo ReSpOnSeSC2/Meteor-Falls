@@ -27,7 +27,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 1,
       exp: 8,
       cash: 4,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'letter spit', kind: 'attack', mult: 1, text: '{e} spat a fistful of first-class insults!', weight: 5 },
         { name: 'flag slap', kind: 'attack', mult: 1.2, text: '{e} slapped with its little red flag!', weight: 3 },
@@ -50,6 +51,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 14,
       cash: 8,
       weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'mow', kind: 'attack', mult: 1, text: '{e} mowed right over everything!', weight: 5 },
         { name: 'rev up', kind: 'strong', mult: 1.6, text: '{e} revved up WAY past the recommended RPM!', weight: 3 },
@@ -72,6 +74,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 10,
       cash: 5,
       weakness: ['fire', 'insect'],
+      resists: ['volt'],
       moves: [
         { name: 'dive', kind: 'attack', mult: 1, text: '{e} dive-bombed with a horrible BZZZZT!', weight: 5 },
         { name: 'sun drone', kind: 'status', status: 'sunburn', text: '{e} droned the song of an endless August! {t} got Sunburned!', weight: 3 },
@@ -99,7 +102,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 6,
       exp: 24,
       cash: 18,
-      weakness: [],
+      weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'handshake', kind: 'attack', mult: 1, text: '{e} delivered an aggressively firm handshake!', weight: 4 },
         { name: 'synergy', kind: 'status', status: 'productive', text: '{e} said "Have a PRODUCTIVE day!" {t} felt their weekend drain away!', weight: 4 },
@@ -124,7 +128,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 4,
       exp: 18,
       cash: 11,
-      weakness: [],
+      weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'flurry', kind: 'attack', mult: 1, text: '{e} attacked in a flurry of gray feathers!', weight: 5 },
         { name: 'snack heist', kind: 'steal', text: '{e} made off with {t}\'s snack! The nerve!', weight: 3 },
@@ -149,6 +154,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 22,
       cash: 9,
       weakness: ['salt', 'fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'body press', kind: 'strong', mult: 1.4, text: '{e} performed a deluxe body press!', weight: 4 },
         { name: 'slime', kind: 'attack', mult: 0.8, text: '{e} lobbed premium slime!', weight: 4 },
@@ -181,7 +187,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 6,
       exp: 40,
       cash: 30,
-      weakness: [],
+      weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'cite subsection', kind: 'attack', mult: 1.2, text: '{e} cited Otterbrook Municipal Code 7-B, subsection (ii)!', weight: 5 },
         { name: 'write a ticket', kind: 'strong', mult: 1.7, text: '{e} wrote {t} up for "loitering with intent to be twelve"!', weight: 4 },
@@ -208,7 +215,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Sprinkler Sentry',
       article: 'The',
       hp: 18, offense: 3, defense: 4, speed: 7, level: 2, exp: 11, cash: 6,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'tick-tick-tick', kind: 'taunt', text: '{e} swept its head the other way, winding up.', weight: 2 },
         { name: 'oscillating spray', kind: 'strong', mult: 1.3, text: '{e} caught the whole party on the backswing!', weight: 3 },
@@ -224,7 +232,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Recycling Raccoon',
       article: 'The',
       hp: 16, offense: 4, defense: 3, speed: 11, level: 3, exp: 13, cash: 8,
-      weakness: [],
+      weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'rummage', kind: 'attack', mult: 1, text: "{e} went through {t} like last week's mail!", weight: 5 },
         { name: 'deposit grab', kind: 'stealcash', text: "{e} cashed in {t}'s nickels at the redemption center!", weight: 3 },
@@ -242,6 +251,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 14, offense: 3, defense: 1, speed: 12, level: 3, exp: 12, cash: 5,
       weakness: ['fire', 'insect'],
+      resists: ['volt'],
       moves: [
         { name: 'whine', kind: 'taunt', text: '{e} whined in that pitch only the back of your neck can hear.', weight: 2 },
         { name: 'bite, bite, bite', kind: 'attack', mult: 1, text: '{e} got {t} in eleven places at once!', weight: 5 },
@@ -258,7 +268,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Garden Gnome, Unionized',
       article: 'The',
       hp: 22, offense: 4, defense: 6, speed: 3, level: 4, exp: 16, cash: 9,
-      weakness: [],
+      weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'tiny pickaxe', kind: 'attack', mult: 1.1, text: '{e} swung its little pickaxe with full benefits!', weight: 4 },
         { name: 'hold the line', kind: 'shield', text: '{e} braced behind its beard. It is not going anywhere.', weight: 2 },
@@ -278,6 +289,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 16, offense: 4, defense: 2, speed: 8, level: 5, exp: 18, cash: 10,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'paper cut', kind: 'attack', mult: 1, text: '{e} sliced {t} on the dotted line!', weight: 5 },
         { name: 're: re: re:', kind: 'status', status: 'productive', text: "{e} CC'd {t} on everything! {t}'s weekend started leaking away!", weight: 3 },
@@ -295,6 +307,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 20, offense: 4, defense: 4, speed: 5, level: 5, exp: 19, cash: 11,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'HANG IN THERE', kind: 'status', status: 'asleep', text: '{e} encouraged {t} so relentlessly that {t} dozed off in self-defense!', weight: 3 },
         { name: 'forced eye contact', kind: 'attack', mult: 1.1, text: '{e} believed in {t}. It hurt.', weight: 4 },
@@ -311,6 +324,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 24, offense: 5, defense: 5, speed: 6, level: 6, exp: 22, cash: 13,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'deadline', kind: 'attack', mult: 1, text: '{e} reminded {t} that time was, in fact, up!', weight: 4 },
         { name: 'overtime', kind: 'strong', mult: 1.4, text: '{e} made itself stay late and hit twice as hard!', weight: 3 },
@@ -328,7 +342,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Expired Parking Meter',
       article: 'The',
       hp: 18, offense: 3, defense: 5, speed: 4, level: 4, exp: 15, cash: 7,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'VIOLATION', kind: 'stealcash', text: '{e} wrote {t} a ticket and helped itself to the fine!', weight: 3 },
         { name: 'coin-slot jam', kind: 'attack', mult: 1.1, text: "{e} ate {t}'s quarter AND {t}'s patience!", weight: 4 },
@@ -344,7 +359,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Showroom Mannequin',
       article: 'The',
       hp: 20, offense: 4, defense: 4, speed: 6, level: 5, exp: 17, cash: 10,
-      weakness: [],
+      weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'runway strut', kind: 'attack', mult: 1, text: '{e} strutted straight through {t}!', weight: 4 },
         { name: 'accessorize', kind: 'steal', text: "{e} decided {t}'s hat completed the look, and took it!", weight: 3 },
@@ -363,7 +379,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'The Good Investment',
       article: '',
       hp: 26, offense: 3, defense: 4, speed: 13, level: 5, exp: 30, cash: 95,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'fetch', kind: 'attack', mult: 1, text: '{e} brought back the stick and also bowled over {t}!', weight: 4 },
         { name: 'puppy eyes', kind: 'taunt', text: '{e} looked up at {t}. {t} hesitated. Everyone always hesitates.', weight: 3 },
@@ -380,6 +397,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 30, offense: 4, defense: 6, speed: 5, level: 6, exp: 28, cash: 75,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'off-key jingle', kind: 'status', status: 'asleep', text: '{e} played a lullaby with three wrong notes! {t} nodded off!', weight: 3 },
         { name: 'brain freeze', kind: 'status', status: 'paralyzed', text: '{e} served {t} a cone too fast! {t} seized up, clutching their head!', weight: 3 },
@@ -399,6 +417,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 28, offense: 5, defense: 4, speed: 8, level: 6, exp: 24, cash: 14,
       weakness: ['fire', 'salt', 'insect'],
+      resists: ['volt'],
       moves: [
         { name: 'latch on', kind: 'strong', mult: 1.3, text: '{e} sank in and would not let go of {t}!', weight: 4 },
         { name: 'sip', kind: 'attack', mult: 1, text: "{e} took a little of {t}'s warmth for the road.", weight: 3 },
@@ -415,7 +434,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'The Suit',
       article: '',
       hp: 32, offense: 6, defense: 5, speed: 6, level: 7, exp: 26, cash: 16,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['volt'],
       moves: [
         { name: 'exit interview', kind: 'strong', mult: 1.2, text: '{e} walked {t} through their shortcomings, item by item!', weight: 4 },
         { name: 'silence the room', kind: 'status', status: 'hushed', text: "{e} smiled, and the warmth went out of {t}'s voice!", weight: 3 },
@@ -443,7 +463,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 9,
       exp: 38,
       cash: 22,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'peck', kind: 'attack', mult: 1, text: '{e} pecked with professional disinterest!', weight: 4 },
         { name: 'pocket dive', kind: 'stealcash', text: "{e} went through {t}'s pockets IN BROAD DAYLIGHT!", weight: 4 },
@@ -466,6 +487,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 46,
       cash: 30,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'horn toss', kind: 'attack', mult: 1.1, text: '{e} flipped {t} an entire opinion with its horn!', weight: 4 },
         { name: 'gild up', kind: 'gild', text: '{e} polished itself into SOLID GOLD! Swings just slide off!', weight: 3 },
@@ -490,6 +512,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 52,
       cash: 26,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'tiny wail', kind: 'status', status: 'crying', text: '{e} wailed about the gift shop! {t} welled right up!', weight: 4 },
         { name: 'shelf lunge', kind: 'attack', mult: 1, text: '{e} lunged like a price tag in the wind!', weight: 4 },
@@ -514,6 +537,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 60,
       cash: 32,
       weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'stone slap', kind: 'attack', mult: 1.1, text: '{e} slapped with five hundred years of patience!', weight: 4 },
         { name: 'mask of calm', kind: 'shield', text: '{e} composed its face into a SHIELD of perfect calm!', weight: 3 },
@@ -536,6 +560,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 9,
       cash: 5,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'overripe lob', kind: 'attack', mult: 1, text: '{e} lobbed its most overripe member!', weight: 5 },
         { name: 'union chant', kind: 'taunt', text: '{e} chanted about fair ripening conditions.', weight: 3 },
@@ -558,6 +583,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 70,
       cash: 36,
       weakness: ['insect', 'freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'jitter sting', kind: 'status', status: 'paralyzed', text: '{e} stung in 7/8 time! {t} went stiff as a flagpole!', weight: 3 },
         { name: 'blur strike', kind: 'attack', mult: 1.2, text: '{e} struck from somewhere in the percussion section!', weight: 4 },
@@ -585,6 +611,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 56,
       cash: 34,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'lid chomp', kind: 'attack', mult: 1.1, text: '{e} snapped its lid shut on {t}!', weight: 4 },
         { name: 'snatch', kind: 'steal', text: "{e} swallowed something of {t}'s and burped!", weight: 3 },
@@ -609,6 +636,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 66,
       cash: 30,
       weakness: ['salt'],
+      resists: ['fire'],
       moves: [
         { name: 'spear thrust', kind: 'attack', mult: 1.1, text: '{e} thrust its spear with temple discipline!', weight: 4 },
         { name: 'raise aegis', kind: 'shield', text: '{e} set its round shield — blows just chimed off!', weight: 3 },
@@ -631,6 +659,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 60,
       cash: 28,
       weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'sunray scorn', kind: 'status', status: 'sunburn', text: '{e} turned its sun-rays on {t} — what a roast!', weight: 3 },
         { name: 'cackle', kind: 'taunt', text: '{e} laughed at a joke only it could hear.', weight: 3 },
@@ -654,6 +683,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 60,
       cash: 30,
       weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'confetti blast', kind: 'strong', mult: 1.6, text: '{e} went off in a deafening cloud of paper!', weight: 4 },
         { name: 'roman candle', kind: 'attack', mult: 1.2, text: '{e} lobbed a stinging little firework!', weight: 4 },
@@ -676,6 +706,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 68,
       cash: 32,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'first-class charge', kind: 'strong', mult: 1.6, text: '{e} stampeded through at first-class speed!', weight: 4 },
         { name: 'hoof frank', kind: 'attack', mult: 1.1, text: '{e} stamped {t} like an overdue parcel!', weight: 4 },
@@ -710,6 +741,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 82,
       cash: 44,
       weakness: ['volt', 'freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'demerit', kind: 'status', status: 'productive', text: '{e} issued {t} a demerit and a meaningful look.', weight: 4 },
         { name: 'corridor sweep', kind: 'attack', mult: 1.1, text: '{e} swept the corridor — and {t} — with one clipboard arc!', weight: 4 },
@@ -735,6 +767,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 72,
       cash: 40,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'pop quiz', kind: 'status', status: 'hushed', text: '{e} sprang a surprise quiz! {t} went blank — and the answer would not come!', weight: 4 },
         { name: 'spine snap', kind: 'attack', mult: 1.1, text: '{e} snapped shut on {t} like a trap with a bibliography!', weight: 4 },
@@ -760,6 +793,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 88,
       cash: 46,
       weakness: ['volt', 'fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'fog lunge', kind: 'attack', mult: 1.2, text: '{e} was already mid-leap by the time it left the fog!', weight: 5 },
         { name: 'damp howl', kind: 'status', status: 'crying', text: "{e} howled cold and wet. {t}'s eyes stung shut!", weight: 3 },
@@ -784,6 +818,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 68,
       cash: 38,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'scalding pour', kind: 'attack', mult: 1.1, element: 'fire', text: '{e} poured a cup three degrees past hospitable over {t}!', weight: 4 },
         { name: 'warm the pot', kind: 'shield', text: '{e} wrapped itself in a cosy and refused to cool down!', weight: 3 },
@@ -807,7 +842,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 15,
       exp: 12,
       cash: 7,
-      weakness: [],
+      weakness: ['fire', 'insect'],
+      resists: ['volt'],
       moves: [
         { name: 'over', kind: 'attack', mult: 0.9, text: '{e} bowled a full over at {t} — six deliveries, no mercy!', weight: 5 },
         { name: 'appeal', kind: 'taunt', text: '{e} went up as one: "HOWZAT?!" The umpire was, alarmingly, also them.', weight: 3 },
@@ -832,6 +868,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 100,
       cash: 52,
       weakness: ['fire', 'freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'thorn whip', kind: 'attack', mult: 1.2, text: '{e} lashed {t} with a runner that has read about sunlight, not kindness!', weight: 4 },
         { name: 'entangle', kind: 'status', status: 'paralyzed', text: '{e} wound {t} up in rocket-wreck vines! {t} could not move!', weight: 3 },
@@ -856,7 +893,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 14,
       exp: 64,
       cash: 40,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'frank', kind: 'attack', mult: 1.1, text: '{e} stamped {t} FIRST CLASS, FACE FORWARD!', weight: 4 },
         { name: 'eat the post', kind: 'steal', text: '{e} swallowed something of {t}\'s for "safekeeping." It is now Royal Mail property.', weight: 3 },
@@ -881,6 +919,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 62,
       cash: 34,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'gust flap', kind: 'attack', mult: 1, text: '{e} flapped wrong-way-out and clouted {t} across the high street!', weight: 5 },
         { name: 'downpour', kind: 'status', status: 'crying', text: '{e} dumped a held downpour on {t}! Rain first, then tears!', weight: 3 },
@@ -904,7 +943,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 15,
       exp: 74,
       cash: 38,
-      weakness: [],
+      weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'will not budge', kind: 'taunt', text: '{e} planted all four feet in the lane and simply would not.', weight: 3 },
         { name: 'headbutt', kind: 'strong', mult: 1.5, text: '{e} reversed up and delivered the entire Pennines to {t}!', weight: 4 },
@@ -929,6 +969,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 60,
       cash: 33,
       weakness: ['freeze', 'volt'],
+      resists: ['fire'],
       moves: [
         { name: 'soot puff', kind: 'status', status: 'crying', text: "{e} puffed a lungful of chimney soot into {t}'s eyes!", weight: 4 },
         { name: 'cinder nip', kind: 'attack', mult: 1.1, element: 'fire', text: '{e} nipped {t} with a fistful of still-warm cinders!', weight: 4 },
@@ -954,6 +995,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 96,
       cash: 50,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'lid clamp', kind: 'status', status: 'paralyzed', text: "{e} clamped its lid on {t}'s sleeve! DETENTION — {t} was held fast!", weight: 3 },
         { name: 'inkwell fling', kind: 'attack', mult: 1.1, text: '{e} flung a century of crusted inkwells at {t}!', weight: 4 },
@@ -978,6 +1020,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 80,
       cash: 44,
       weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'period change', kind: 'attack', mult: 1.2, element: 'volt', text: "{e} rang the period bell straight through {t}'s teeth!", weight: 4 },
         { name: 'fire drill', kind: 'status', status: 'paralyzed', text: '{e} rang a drill so official that {t} froze in the corridor!', weight: 3 },
@@ -1002,6 +1045,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 98,
       cash: 50,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'confiscate', kind: 'steal', text: '{e} clanged open and confiscated something of {t}\'s "pending inspection."', weight: 3 },
         { name: 'door slam', kind: 'attack', mult: 1.2, text: '{e} slammed its door on {t} with institutional finality!', weight: 4 },
@@ -1030,6 +1074,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 82,
       cash: 44,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'scald', kind: 'attack', mult: 1.2, element: 'fire', text: '{e} slopped urn-tea over {t} at exactly serving temperature!', weight: 4 },
         { name: 'third biscuit', kind: 'taunt', text: '{e} offered {t} a third biscuit. Somehow, it was a threat.', weight: 3 },
@@ -1054,6 +1099,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 84,
       cash: 46,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'dial tone', kind: 'status', status: 'hushed', text: '{e} held out a receiver of pure dial tone. {t} listened — and lost the words!', weight: 3 },
         { name: 'door swing', kind: 'attack', mult: 1.2, text: '{e} swung its heavy red door into {t} with a clunk like a verdict!', weight: 4 },
@@ -1079,6 +1125,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 130,
       cash: 60,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'accrued fine', kind: 'strong', mult: 1.6, text: '{e} read {t} the fine — three centuries, compounding. It HURT.', weight: 4 },
         { name: 'shush', kind: 'status', status: 'hushed', text: '{e} shushed {t} with the whole weight of a silent library!', weight: 3 },
@@ -1102,7 +1149,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 18,
       exp: 140,
       cash: 72,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'pilum throw', kind: 'attack', mult: 1.3, text: '{e} hurled a ghost-iron pilum nineteen centuries across the moor at {t}!', weight: 4 },
         { name: 'testudo', kind: 'shield', text: '{e} locked into a one-man tortoise. Shields, all round!', weight: 3 },
@@ -1128,6 +1176,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 120,
       cash: 62,
       weakness: ['volt', 'freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'detention squad', kind: 'taunt', text: '{e} raised two fingers for backup. The corridor felt suddenly fuller.', weight: 3 },
         { name: 'merit beating', kind: 'strong', mult: 1.6, text: '{e} awarded {t} negative merits — physically!', weight: 4 },
@@ -1156,6 +1205,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 130,
       cash: 60,
       weakness: ['freeze'],
+      absorbs: ['fire'],
       moves: [
         { name: 'flue blast', kind: 'attack', mult: 1.3, element: 'fire', text: '{e} vented a flue-blast of superheated fog over {t}!', weight: 4 },
         { name: 'pressure build', kind: 'strong', mult: 1.7, text: '{e} let the gauge climb into the red — and BURST over {t}!', weight: 3 },
@@ -1183,7 +1233,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       level: 19,
       exp: 150,
       cash: 66,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'eyes front', kind: 'attack', mult: 1.3, text: '{e} was suddenly much closer. It does that when you look away.', weight: 4 },
         { name: 'no talking', kind: 'status', status: 'hushed', text: '{e} pressed one finger to where its lips should be. {t} dared not speak!', weight: 3 },
@@ -1214,6 +1265,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 1400,
       cash: 600,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'golden gaze', kind: 'attack', mult: 1, text: '{e} looked at {t} with both empty eyes. The warmth dimmed!', weight: 4 },
         { name: 'gilded fist', kind: 'strong', mult: 1.5, text: '{e} swung a fist worth more than the village!', weight: 3 },
@@ -1248,6 +1300,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 2000,
       cash: 800,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'reprimand', kind: 'attack', mult: 1.1, text: '{e} printed {t} a formal reprimand at 600 d.p.i. It stung more than paper has any right to.', weight: 4 },
         { name: 'optimise', kind: 'strong', mult: 1.6, text: '{e} ran {t} through an efficiency review. The findings were brutal and double-spaced.', weight: 3 },
@@ -1284,6 +1337,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 320,
       cash: 150,
       weakness: ['fire', 'salt', 'insect'],
+      resists: ['freeze'],
       moves: [
         { name: 'latch', kind: 'latch', text: '{e} LATCHED ONTO {t}!! Get it off! GET IT OFF!!', weight: 4 },
         { name: 'drain', kind: 'drain', mult: 1, text: '{e} drank deep. {t} felt the warmth leave!', weight: 4 },
@@ -1327,6 +1381,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       exp: 240,
       cash: 0,
       weakness: [],
+      resists: ['freeze'],
       moves: [
         { name: 'cold rake', kind: 'attack', mult: 1.1, text: '{e} swept a segmented limb in a slow, cold arc!', weight: 4 },
         { name: 'hush pulse', kind: 'strong', mult: 1.5, text: '{e} pulsed Hush-blue light. The warmth bent away from {t}!', weight: 3 },
@@ -1354,7 +1409,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Colossal Gnat',
       article: 'The',
       hp: 205, offense: 24, defense: 8, speed: 22, level: 19, exp: 95, cash: 48,
-      weakness: ['fire'],
+      weakness: ['fire', 'insect'],
+      resists: ['volt'],
       moves: [
         { name: 'whine', kind: 'attack', mult: 1, text: '{e} whined past {t}\'s ear at the exact worst pitch!', weight: 5 },
         { name: 'eye dive', kind: 'status', status: 'crying', text: '{e} dove straight for {t}\'s eyes!', weight: 3 },
@@ -1370,7 +1426,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Runaway Knitting Needles',
       article: 'The',
       hp: 305, offense: 28, defense: 14, speed: 16, level: 20, exp: 130, cash: 60,
-      weakness: ['fire', 'volt'],
+      weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'purl two', kind: 'attack', mult: 1, text: '{e} jabbed at {t} — knit one, purl {t}!', weight: 5 },
         { name: 'drop a stitch', kind: 'status', status: 'paralyzed', text: '{e} laced {t} up tight in a half-finished sleeve!', weight: 3 },
@@ -1388,6 +1445,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // slow on the field, hits like weather in the fight (§A7 Ch.4)
       hp: 370, offense: 34, defense: 20, speed: 5, level: 21, exp: 175, cash: 78,
       weakness: ['salt'],
+      resists: ['volt'],
       moves: [
         { name: 'slow roll', kind: 'attack', mult: 1.1, text: '{e} rolled over {t} with the patience of geology!', weight: 4 },
         { name: 'thunderhead', kind: 'strong', mult: 1.7, text: '{e} pulled a whole storm out of its shell and dropped it on {t}!', weight: 3 },
@@ -1406,6 +1464,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // poses as a roadside pickup; heals itself if you let the fight drag (§A7)
       hp: 285, offense: 22, defense: 12, speed: 10, level: 20, exp: 150, cash: 70,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'play dead', kind: 'taunt', text: '{e} sat very still, pretending to be lunch.', weight: 2 },
         { name: 'sun-ripen', kind: 'mend', text: '{e} drank a little sun and plumped back up!', weight: 3 },
@@ -1422,7 +1481,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Hushed Gull, Enormous',
       article: 'The',
       hp: 335, offense: 26, defense: 12, speed: 18, level: 21, exp: 160, cash: 72,
-      weakness: ['salt'],
+      weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'dive', kind: 'attack', mult: 1.1, text: '{e} folded its wings and dropped on {t} like a thrown anchor!', weight: 4 },
         { name: 'snatch', kind: 'steal', text: '{e} snatched a snack right out of {t}\'s hands!', weight: 3 },
@@ -1441,6 +1501,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a baby frost-giant; grabs a hero and won't let go (§A7 "grabs a hero")
       hp: 405, offense: 32, defense: 22, speed: 8, level: 22, exp: 190, cash: 80,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'big grab', kind: 'status', status: 'paralyzed', text: '{e} closed one enormous cold fist around {t}!', weight: 3 },
         { name: 'boulder drop', kind: 'strong', mult: 1.7, text: '{e} dropped a boulder it had been using as a marble on {t}!', weight: 3 },
@@ -1459,7 +1520,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Moor-Midge Cloud',
       article: 'The',
       hp: 180, offense: 16, defense: 6, speed: 20, level: 19, exp: 70, cash: 35,
-      weakness: ['fire'],
+      weakness: ['volt', 'insect'],
+      resists: ['fire'],
       moves: [
         { name: 'cloud up', kind: 'attack', mult: 1, text: '{e} swallowed {t} whole in a haze of tiny wings!', weight: 5 },
         { name: 'in your eyes', kind: 'status', status: 'crying', text: '{e} got everywhere a midge can get!', weight: 3 },
@@ -1475,6 +1537,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 380, offense: 24, defense: 26, speed: 4, level: 21, exp: 160, cash: 70,
       weakness: ['salt'],
+      resists: ['freeze'],
       moves: [
         { name: 'shrug loose', kind: 'attack', mult: 1.1, text: '{e} shrugged a few tons of itself onto {t}!', weight: 4 },
         { name: 'great roll', kind: 'strong', mult: 1.7, text: '{e} got rolling, and rolling is hard to argue with!', weight: 3 },
@@ -1491,6 +1554,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 275, offense: 30, defense: 12, speed: 24, level: 20, exp: 130, cash: 60,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'thumper kick', kind: 'strong', mult: 1.6, text: '{e} kicked with both hind legs and sent {t} skidding!', weight: 4 },
         { name: 'bound', kind: 'attack', mult: 1.1, text: '{e} bounded clean over {t} and clipped them coming down!', weight: 4 },
@@ -1507,6 +1571,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a weather-sized nuisance that drifts across paths like a moving wall (§A7)
       hp: 240, offense: 18, defense: 10, speed: 14, level: 19, exp: 110, cash: 55,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'drift across', kind: 'attack', mult: 1, text: '{e} drifted across {t}, soft and smothering!', weight: 4 },
         { name: 'lullaby fluff', kind: 'status', status: 'asleep', text: '{e} settled over {t} like the world\'s most boring blanket!', weight: 3 },
@@ -1524,6 +1589,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 375, offense: 30, defense: 24, speed: 7, level: 21, exp: 175, cash: 75,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'amber fist', kind: 'strong', mult: 1.6, text: '{e} swung a fist of warm gold amber at {t}!', weight: 4 },
         { name: 'seal the canal', kind: 'status', status: 'hushed', text: '{e} packed {t}\'s ears with wax — the world went muffled and small!', weight: 3 },
@@ -1540,7 +1606,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Dream-Leech',
       article: 'The',
       hp: 250, offense: 24, defense: 12, speed: 16, level: 20, exp: 150, cash: 70,
-      weakness: ['salt'],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'sip a dream', kind: 'drain', mult: 1, text: '{e} sipped a warm dream straight out of {t}!', weight: 4 },
         { name: 'nightmare nip', kind: 'attack', mult: 1.2, text: '{e} nipped {t} with a mouthful of bad dreams!', weight: 3 },
@@ -1557,6 +1624,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 225, offense: 22, defense: 10, speed: 20, level: 20, exp: 140, cash: 65,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'gust', kind: 'attack', mult: 1.1, text: '{e} blasted {t} with one warm sleeping breath!', weight: 4 },
         { name: 'the big exhale', kind: 'strong', mult: 1.6, text: '{e} wound up the Sleeper\'s biggest snore yet and let it OUT!', weight: 3 },
@@ -1576,7 +1644,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       // ordinary to them, a kaiju to you — a quiet seed for Ch.5's Whiskerzilla
       hp: 355, offense: 28, defense: 16, speed: 16, level: 21, exp: 165, cash: 72,
-      weakness: ['salt'],
+      weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'idle swat', kind: 'attack', mult: 1.1, text: '{e} swatted {t} the way you\'d swat a fly — idly, devastatingly!', weight: 4 },
         { name: 'pounce', kind: 'strong', mult: 1.7, text: '{e} POUNCED, and the floor became the ceiling for {t}!', weight: 3 },
@@ -1593,6 +1662,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 275, offense: 22, defense: 14, speed: 12, level: 20, exp: 130, cash: 60,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'flop', kind: 'attack', mult: 1.1, text: '{e} flopped onto {t} with a damp woollen WHUMP!', weight: 4 },
         { name: 'grab for a hand', kind: 'status', status: 'paralyzed', text: '{e} swallowed {t} up to the elbow, looking for a hand to hold!', weight: 3 },
@@ -1611,6 +1681,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 290, offense: 24, defense: 16, speed: 12, level: 21, exp: 210, cash: 85,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'clutch the hoard', kind: 'taunt', text: '{e} pulled its amber close and glared at {t}.', weight: 3 },
         { name: 'amber chuck', kind: 'strong', mult: 1.7, text: '{e} hurled a fist-sized lump of fossil sunshine at {t}!', weight: 3 },
@@ -1626,7 +1697,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Aurora Moth',
       article: 'The',
       hp: 250, offense: 22, defense: 12, speed: 26, level: 21, exp: 200, cash: 84,
-      weakness: ['salt'],
+      weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'blinding wings', kind: 'status', status: 'crying', text: '{e} beat wings of cold green light right in {t}\'s face!', weight: 3 },
         { name: 'wing dust', kind: 'attack', mult: 1.2, text: '{e} shook a shimmer of dust over {t}!', weight: 3 },
@@ -1644,7 +1716,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Hushed Skua',
       article: 'The',
       hp: 345, offense: 30, defense: 14, speed: 20, level: 22, exp: 185, cash: 82,
-      weakness: ['salt'],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'strafe', kind: 'strong', mult: 1.6, text: '{e} came in low and fast and raked {t}!', weight: 4 },
         { name: 'snatch', kind: 'steal', text: '{e} robbed {t} mid-dive, just to prove the gull could!', weight: 3 },
@@ -1662,6 +1735,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 440, offense: 34, defense: 24, speed: 9, level: 22, exp: 200, cash: 86,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'two-handed grab', kind: 'status', status: 'paralyzed', text: '{e} caught {t} up in both hands like a doll!', weight: 3 },
         { name: 'avalanche', kind: 'strong', mult: 1.8, text: '{e} brought a whole hillside of snow down on {t}!', weight: 3 },
@@ -1682,6 +1756,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a wall with a stem: it blocks the gorge bridge until fought or rolled aside
       hp: 450, offense: 18, defense: 24, speed: 4, level: 22, exp: 220, cash: 80,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'block the way', kind: 'taunt', text: '{e} settled deeper into the bridge mouth. It was not moving.', weight: 3 },
         { name: 'great roll', kind: 'strong', mult: 1.7, text: '{e} tipped forward and rolled the length of the planks at {t}!', weight: 3 },
@@ -1706,6 +1781,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1800, offense: 36, defense: 18, speed: 12, level: 22, exp: 2400, cash: 900,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'whisper', kind: 'status', status: 'hushed', text: '{e} whispered something into {t}\'s ear that took the words right out of their mouth.', weight: 3 },
         { name: 'probe', kind: 'attack', mult: 1.1, text: '{e} pressed deeper into the canal. {t} shuddered to the bone!', weight: 4 },
@@ -1737,6 +1813,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a column of a dozen wind-up tin soldiers that march, halt, and fire as ONE
       hp: 500, offense: 28, defense: 14, speed: 18, level: 23, exp: 130, cash: 28,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'present arms', kind: 'taunt', text: '{e} snapped into a square and presented a hedge of matchstick bayonets.', weight: 2 },
         { name: 'volley', kind: 'strong', mult: 1.5, text: '{e} fired a single, perfectly-drilled volley at {t}!', weight: 3 },
@@ -1753,7 +1830,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       // minuscule and FORMAL — salutes, ripostes, demands satisfaction in writing
       hp: 560, offense: 34, defense: 12, speed: 28, level: 24, exp: 160, cash: 40,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'en garde', kind: 'taunt', text: '{e} saluted with a pin-sized rapier and raised an immaculate guard.', weight: 2 },
         { name: 'riposte', kind: 'strong', mult: 1.6, text: '{e} turned {t}\'s own clumsy swing into a flashing counter!', weight: 3 },
@@ -1771,6 +1849,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // loads the rations you DROPPED and fires them right back at you
       hp: 640, offense: 30, defense: 16, speed: 14, level: 24, exp: 170, cash: 36,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'load the crumb', kind: 'taunt', text: '{e} rammed a biscuit-crumb down the barrel and sighted along it.', weight: 2 },
         { name: 'return fire', kind: 'strong', mult: 1.5, text: '{e} fired {t}\'s own rations back at full muzzle velocity!', weight: 3 },
@@ -1788,6 +1867,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a courtier-wasp in a powdered wig; its minuet drone lulls you to sleep
       hp: 570, offense: 29, defense: 13, speed: 24, level: 24, exp: 165, cash: 38,
       weakness: ['insect'],
+      resists: ['volt'],
       moves: [
         { name: 'courtly drone', kind: 'status', status: 'asleep', text: '{e} hummed a soporific minuet, and {t}\'s eyelids grew very heavy...', weight: 3 },
         { name: 'wig powder', kind: 'status', status: 'crying', text: '{e} shook its wig and gave {t} a faceful of scented powder!', weight: 2 },
@@ -1805,6 +1885,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a clockwork dragon-toy that overwinds its own key, then lets the spring GO
       hp: 605, offense: 27, defense: 15, speed: 26, level: 25, exp: 175, cash: 42,
       weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'wind up', kind: 'taunt', text: '{e} cranked its own key one menacing notch tighter.', weight: 2 },
         { name: 'unwind', kind: 'strong', mult: 1.7, text: '{e} let the whole overwound spring go at {t} at once!', weight: 3 },
@@ -1821,6 +1902,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a fuzzy under-the-throne dust ball that SPLITS into two indignant halves
       hp: 525, offense: 25, defense: 10, speed: 20, level: 23, exp: 140, cash: 26,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'split', kind: 'taunt', text: '{e} divided into two smaller, equally indignant bunnies.', weight: 2 },
         { name: 'lint lash', kind: 'attack', mult: 1.1, text: '{e} lashed {t} with a whip of compacted lint!', weight: 4 },
@@ -1838,7 +1920,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       // thumb-high constable; halts you "by the book" and blows for a second
       hp: 640, offense: 28, defense: 18, speed: 16, level: 23, exp: 145, cash: 30,
-      weakness: [],
+      weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'by the book', kind: 'taunt', text: '{e} read {t} the relevant bylaw and blew a shrill whistle for backup.', weight: 3 },
         { name: 'matchstick baton', kind: 'attack', mult: 1.2, text: '{e} rapped {t} smartly across the shin with a matchstick truncheon!', weight: 4 },
@@ -1855,6 +1938,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // parade-balloon-huge to them, an ordinary pigeon to you; steals snacks
       hp: 545, offense: 26, defense: 12, speed: 27, level: 23, exp: 135, cash: 28,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'shoelace peck', kind: 'attack', mult: 1, text: '{e} pecked furiously at {t}\'s enormous shoelaces!', weight: 4 },
         { name: 'crumb snatch', kind: 'steal', text: '{e} made off with one of {t}\'s snacks in its beak!', weight: 2 },
@@ -1870,7 +1954,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       // spends a turn "taking a vote" on your fine, then garnishes your wallet
       hp: 580, offense: 27, defense: 16, speed: 15, level: 24, exp: 155, cash: 34,
-      weakness: [],
+      weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'take a vote', kind: 'taunt', text: '{e} convened a one-clerk committee to deliberate {t}\'s penalty.', weight: 3 },
         { name: 'levy a fine', kind: 'stealcash', text: '{e} assessed {t} an immediate and very official toll!', weight: 3 },
@@ -1888,6 +1973,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // hides between cobbles where big feet WHIFF — Pippa's Pinpoint Mark fixes it
       hp: 400, offense: 30, defense: 8, speed: 26, level: 23, exp: 150, cash: 32,
       weakness: ['insect'],
+      resists: ['fire'],
       moves: [
         { name: 'cobble dive', kind: 'taunt', text: '{e} dropped into the gap between two stones; {t}\'s great swing whiffed clean over it.', weight: 3 },
         { name: 'ankle nip', kind: 'attack', mult: 1.2, text: '{e} darted out and nipped {t} at the ankle before vanishing again!', weight: 4 },
@@ -1906,6 +1992,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // leaf-clad duelist; ambushes from the maze shadows, then melts back in
       hp: 685, offense: 33, defense: 16, speed: 24, level: 25, exp: 190, cash: 44,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'ambush', kind: 'strong', mult: 1.6, text: '{e} dropped out of the hedge wall onto {t} from nowhere!', weight: 3 },
         { name: 'leaf-blade', kind: 'attack', mult: 1.2, text: '{e} slashed {t} with a blade honed from a single privet leaf!', weight: 4 },
@@ -1922,6 +2009,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // clipped-shrub guardian; hits like a greatsword, slow as a growing season
       hp: 910, offense: 38, defense: 24, speed: 8, level: 26, exp: 230, cash: 56,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'pruned blade', kind: 'strong', mult: 1.8, text: '{e} brought a greatsword of clipped leaves down on {t}!', weight: 3 },
         { name: 'hedge slam', kind: 'attack', mult: 1.2, text: '{e} slammed its whole leafy bulk into {t}!', weight: 3 },
@@ -1939,6 +2027,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // thorn vines that root and entangle a colossus's feet
       hp: 730, offense: 30, defense: 18, speed: 12, level: 25, exp: 195, cash: 46,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'entangle', kind: 'status', status: 'paralyzed', text: '{e} whipped thorn vines around {t}\'s feet and cinched them tight!', weight: 3 },
         { name: 'thorn lash', kind: 'attack', mult: 1.2, text: '{e} raked {t} with a fistful of bramble!', weight: 4 },
@@ -1956,7 +2045,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       // citizens who mistake you for civic furniture and CLIMB you (comes 2–3)
       hp: 425, offense: 24, defense: 10, speed: 22, level: 23, exp: 125, cash: 24,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'climb aboard', kind: 'attack', mult: 1, text: '{e} scaled {t}\'s trouser-leg like a civic monument!', weight: 4 },
         { name: 'plant a flag', kind: 'taunt', text: '{e} planted a tiny flag on {t}\'s shoulder, claiming it for the duchy.', weight: 2 },
@@ -1972,7 +2062,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       // reads proclamations that BUFF its allies ("By order of the Duchess…")
       hp: 640, offense: 26, defense: 16, speed: 14, level: 24, exp: 175, cash: 40,
-      weakness: [],
+      weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'proclamation', kind: 'mend', text: '{e} cried "BY ORDER OF THE DUCHESS, ALL RANKS SHALL RALLY!" and its allies took heart!', weight: 3 },
         { name: 'ring the bell', kind: 'taunt', text: '{e} rang a brass handbell — deafening, at this scale.', weight: 2 },
@@ -1991,6 +2082,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a jeweled beetle worth a fortune; folds gold (physical-immune) and bolts
       hp: 660, offense: 28, defense: 20, speed: 26, level: 25, exp: 240, cash: 100,
       weakness: ['insect'],
+      resists: ['freeze'],
       moves: [
         { name: 'gild over', kind: 'gild', text: '{e} folded shut into a jeweled snuffbox — hard gold, and slick to a bat!', weight: 3 },
         { name: 'skitter', kind: 'taunt', text: '{e} feinted toward the gutter, threatening to flee with all that treasure.', weight: 3 },
@@ -2007,7 +2099,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       // appears to "assess" your colossal net worth, then flees with the ledger
       hp: 705, offense: 30, defense: 18, speed: 25, level: 25, exp: 245, cash: 98,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'assess', kind: 'taunt', text: '{e} appraised {t}\'s colossal net worth aloud, audibly salivating.', weight: 3 },
         { name: 'on-the-spot levy', kind: 'stealcash', text: '{e} issued {t} an on-the-spot assessment and pocketed the difference!', weight: 3 },
@@ -2027,6 +2120,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a wall of tiny pikes that PUNISHES non-Defend (rhymes with the boss POUNCE)
       hp: 955, offense: 36, defense: 22, speed: 10, level: 26, exp: 250, cash: 58,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'present pikes', kind: 'taunt', text: '{e} levelled a hedge of matchstick halberds at {t}. (DEFEND, or be run through.)', weight: 3 },
         { name: 'pike charge', kind: 'strong', mult: 1.8, text: '{e} advanced as one bristling wall and ran {t} through!', weight: 3 },
@@ -2043,6 +2137,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // rings a peal granting allies EVASION — telegraphs the boss's Flat Bell
       hp: 820, offense: 30, defense: 18, speed: 16, level: 26, exp: 235, cash: 52,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'warning peal', kind: 'shield', text: '{e} rang a bright warning peal; the toll wrapped its allies in a hard-to-hit shimmer!', weight: 3 },
         { name: 'clapper swing', kind: 'attack', mult: 1.3, text: '{e} swung the clapper into {t} like a wrecking ball!', weight: 4 },
@@ -2061,7 +2156,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       // a whole procession that TAKES A VOTE each turn to decide its move
       hp: 1000, offense: 34, defense: 20, speed: 18, level: 26, exp: 260, cash: 60,
-      weakness: [],
+      weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'take a vote', kind: 'taunt', text: '{e} halted the entire procession to ballot its next move. (It carried, narrowly.)', weight: 3 },
         { name: 'confetti barrage', kind: 'status', status: 'crying', text: '{e} buried {t} under a regulation quantity of festival confetti!', weight: 2 },
@@ -2089,6 +2185,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 4000, offense: 40, defense: 20, speed: 18, level: 26, exp: 3200, cash: 1200,
       weakness: [],
+      resists: ['fire'],
       moves: [
         { name: 'idle swat', kind: 'attack', mult: 1.2, text: '{e} swatted lazily at {t}, and a swat is, at this scale, a calamity.', weight: 4 },
         { name: 'POUNCE', kind: 'strong', mult: 1.9, text: '{e} POUNCED, and for one terrible moment the whole sky was paw!', weight: 3 },
@@ -2109,6 +2206,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // break it → the cat purrs and every move is telegraphed (bosses.ts summon)
       hp: 150, offense: 18, defense: 12, speed: 30, level: 26, exp: 0, cash: 0,
       weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'ring out', kind: 'taunt', text: '{e} pealed a long flat note, and while it rang Whiskerzilla blurred at the edges.', weight: 3 },
         { name: 'discordant clang', kind: 'attack', mult: 1, text: '{e} clanged a sour, off-key note that rattled {t} to the teeth!', weight: 3 },
@@ -2131,6 +2229,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1375, offense: 36, defense: 16, speed: 30, level: 28, exp: 260, cash: 48,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'pack lunge', kind: 'attack', mult: 1.2, text: '{e} broke from the dust on three sides at once and lunged at {t}!', weight: 5 },
         { name: 'cackling snap', kind: 'attack', mult: 1, text: '{e} snapped, laughing, and the laugh was the worst part.', weight: 3 },
@@ -2146,7 +2245,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Baobab Root Snare',
       article: 'The',
       hp: 2200, offense: 38, defense: 26, speed: 14, level: 29, exp: 320, cash: 52,
-      weakness: ['salt'],
+      weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'root grab', kind: 'attack', mult: 1.1, text: '{e} surged a knuckle of root up under {t} and dragged.', weight: 4 },
         { name: 'constrict', kind: 'strong', mult: 1.7, text: '{e} wound tight and SQUEEZED — the whole tree leaning into it.', weight: 3 },
@@ -2163,6 +2263,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 900, offense: 24, defense: 17, speed: 22, level: 28, exp: 276, cash: 54,
       weakness: ['freeze', 'salt'],
+      resists: ['fire'],
       moves: [
         { name: 'catching cackle', kind: 'status', status: 'crying', text: '{e} let out a cackle so catching that {t} could not stop laughing — and laughing, and laughing.', weight: 3 },
         { name: 'dust puff', kind: 'attack', mult: 1, text: '{e} coughed a gritty puff of centuries into {t}\'s eyes.', weight: 4 },
@@ -2177,7 +2278,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Sphinx Paw Shadow',
       article: 'The',
       hp: 1175, offense: 35, defense: 15, speed: 33, level: 30, exp: 250, cash: 60,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'pounce from the frieze', kind: 'strong', mult: 1.6, text: '{e} peeled off a carved wall and POUNCED on {t} before the eye could follow.', weight: 4 },
         { name: 'shadow swipe', kind: 'attack', mult: 1.1, text: '{e} raked {t} with a paw that was mostly dark.', weight: 4 },
@@ -2201,6 +2303,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1050, offense: 34, defense: 14, speed: 34, level: 28, exp: 250, cash: 50,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'scavenge lunge', kind: 'attack', mult: 1.2, text: '{e} darted from the long grass and tore at {t}!', weight: 5 },
         { name: 'hamstring snap', kind: 'strong', mult: 1.5, text: '{e} snapped at the back of {t}\'s knee and YANKED.', weight: 3 },
@@ -2217,6 +2320,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 980, offense: 30, defense: 12, speed: 36, level: 28, exp: 248, cash: 46,
       weakness: ['salt'],
+      resists: ['volt'],
       moves: [
         { name: 'grit spiral', kind: 'attack', mult: 1.1, text: '{e} spun a column of grit straight through {t}.', weight: 4 },
         { name: 'grit in the eyes', kind: 'status', status: 'crying', text: '{e} flung sand into {t}\'s eyes until they streamed.', weight: 3 },
@@ -2231,7 +2335,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Salt-Flat Lurker',
       article: 'The',
       hp: 1500, offense: 37, defense: 24, speed: 12, level: 29, exp: 300, cash: 54,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'crust burst', kind: 'strong', mult: 1.6, text: '{e} erupted from the salt crust right under {t}!', weight: 4 },
         { name: 'brine spit', kind: 'attack', mult: 1.1, text: '{e} spat a stinging gout of brine over {t}.', weight: 4 },
@@ -2248,6 +2353,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1100, offense: 33, defense: 18, speed: 24, level: 28, exp: 262, cash: 48,
       weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'burr volley', kind: 'attack', mult: 1.1, text: '{e} flung a fistful of barbed burrs that stuck fast in {t}.', weight: 5 },
         { name: 'thorn mortar', kind: 'strong', mult: 1.6, text: '{e} arced a heavy seed-pod high and dropped it on {t}.', weight: 3 },
@@ -2263,6 +2369,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1020, offense: 35, defense: 13, speed: 35, level: 29, exp: 258, cash: 52,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'ribbon strike', kind: 'attack', mult: 1.2, text: '{e} unspooled across the sand and struck {t} faster than the eye.', weight: 5 },
         { name: 'coil snap', kind: 'strong', mult: 1.5, text: '{e} cinched {t} in a bright coil and snapped it tight.', weight: 3 },
@@ -2278,6 +2385,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 940, offense: 28, defense: 16, speed: 30, level: 28, exp: 252, cash: 50,
       weakness: ['salt'],
+      resists: ['fire'],
       moves: [
         { name: 'false oasis', kind: 'status', status: 'asleep', text: '{e} showed {t} cool water and shade until {t} drowsed toward it.', weight: 3 },
         { name: 'heat ripple', kind: 'attack', mult: 1.1, text: '{e} rippled, and the air itself scalded {t}.', weight: 4 },
@@ -2292,7 +2400,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Trade-Salt Heap',
       article: 'The',
       hp: 1620, offense: 36, defense: 28, speed: 10, level: 29, exp: 310, cash: 64,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'cargo slump', kind: 'attack', mult: 1.1, text: '{e} toppled a hundredweight of caravan salt onto {t}.', weight: 4 },
         { name: 'abrasive grind', kind: 'strong', mult: 1.6, text: '{e} ground {t} between two pressed slabs of salt.', weight: 3 },
@@ -2309,6 +2418,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1180, offense: 32, defense: 20, speed: 26, level: 29, exp: 280, cash: 60,
       weakness: ['salt'],
+      resists: ['freeze'],
       moves: [
         { name: 'phantom wares', kind: 'taunt', text: '{e} spread a blanket of shimmering goods that vanished when {t} reached for them.', weight: 3 },
         { name: 'short-change slap', kind: 'attack', mult: 1.1, text: '{e} counted {t}\'s change wrong and slapped down the difference.', weight: 4 },
@@ -2326,6 +2436,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1240, offense: 34, defense: 19, speed: 28, level: 30, exp: 290, cash: 56,
       weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'snaring riff', kind: 'status', status: 'paralyzed', text: '{e} played a phrase that wound around {t} and held the limbs still.', weight: 3 },
         { name: 'kora lash', kind: 'attack', mult: 1.2, text: '{e} struck {t} with twenty-one taut strings at once.', weight: 4 },
@@ -2342,6 +2453,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1060, offense: 30, defense: 21, speed: 23, level: 28, exp: 256, cash: 52,
       weakness: ['salt'],
+      resists: ['freeze'],
       moves: [
         { name: 'cutting whisper', kind: 'attack', mult: 1.1, text: '{e} leaned close and said the one true thing {t} did not want said aloud.', weight: 4 },
         { name: 'public shaming', kind: 'status', status: 'crying', text: '{e} announced {t}\'s business to the whole market until {t} wept.', weight: 3 },
@@ -2356,7 +2468,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Punchline Head',
       article: 'The',
       hp: 1320, offense: 35, defense: 22, speed: 20, level: 30, exp: 300, cash: 54,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'groaner', kind: 'status', status: 'crying', text: '{e} delivered a pun so terrible that {t} could not stop the tears.', weight: 3 },
         { name: 'stone-faced jab', kind: 'attack', mult: 1.2, text: '{e} headbutted {t} without changing expression.', weight: 4 },
@@ -2373,6 +2486,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1140, offense: 33, defense: 18, speed: 27, level: 29, exp: 276, cash: 50,
       weakness: ['freeze'],
+      resists: ['volt'],
       moves: [
         { name: 'riddle me', kind: 'status', status: 'paralyzed', text: '{e} asked a question with no answer, and {t} froze trying to find one.', weight: 3 },
         { name: 'echo slap', kind: 'attack', mult: 1.1, text: '{e} threw {t}\'s own last word back, hard.', weight: 4 },
@@ -2387,7 +2501,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Riddle-Shade',
       article: 'The',
       hp: 1700, offense: 38, defense: 25, speed: 22, level: 31, exp: 330, cash: 58,
-      weakness: [],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'lesser riddle', kind: 'status', status: 'crying', text: '{e} posed a riddle in the Sphinx\'s borrowed voice and laughed when {t} faltered.', weight: 3 },
         { name: 'shade paw', kind: 'attack', mult: 1.2, text: '{e} swept a half-real paw across {t}.', weight: 4 },
@@ -2403,7 +2518,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Riddle Ring',
       article: 'The',
       hp: 1300, offense: 36, defense: 30, speed: 30, level: 30, exp: 480, cash: 140,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'golden glint', kind: 'taunt', text: '{e} caught the light and dared {t} to come and take it.', weight: 3 },
         { name: 'binding clause', kind: 'status', status: 'paralyzed', text: '{e} snapped shut around {t}\'s wrist and would not let go.', weight: 3 },
@@ -2420,6 +2536,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 1900, offense: 38, defense: 27, speed: 14, level: 31, exp: 326, cash: 56,
       weakness: ['freeze'],
+      absorbs: ['fire'],
       moves: [
         { name: 'kiln glare', kind: 'status', status: 'sunburn', text: '{e} turned its baked face on {t}, and the heat raised blisters.', weight: 3 },
         { name: 'idol slam', kind: 'attack', mult: 1.2, text: '{e} brought a sun-hot fist down on {t}.', weight: 4 },
@@ -2435,7 +2552,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'The Fastest Man, Echoing',
       article: 'The',
       hp: 1450, offense: 38, defense: 18, speed: 40, level: 31, exp: 360, cash: 62,
-      weakness: [],
+      weakness: ['volt'],
+      resists: ['freeze'],
       moves: [
         { name: '1961 dash', kind: 'strong', mult: 1.7, text: '{e} crossed the whole ruin between heartbeats and struck {t} from nowhere.', weight: 4 },
         { name: 'photo finish', kind: 'attack', mult: 1.2, text: '{e} clipped {t} at a speed that should have torn the air.', weight: 4 },
@@ -2460,6 +2578,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 9000, offense: 46, defense: 24, speed: 20, level: 31, exp: 5600, cash: 2200,
       weakness: [],
+      resists: ['fire'],
       moves: [
         { name: 'paw swat', kind: 'attack', mult: 1.2, text: '{e} swatted {t} off the dais with the back of one carved paw.', weight: 4 },
         { name: 'riddling laugh', kind: 'status', status: 'crying', text: '{e} laughed a laugh that got INTO {t} — and {t} could not stop.', weight: 3 },
@@ -2486,6 +2605,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 3000, offense: 52, defense: 22, speed: 36, level: 32, exp: 520, cash: 95,
       weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'three-wheel cutoff', kind: 'attack', mult: 1.2, text: '{e} swung in from three lanes at once and boxed {t} against the kerb!', weight: 5 },
         { name: 'horn barrage', kind: 'taunt', text: '{e} leaned on every horn it had until {t} could not hear itself think.', weight: 2 },
@@ -2502,6 +2622,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 2000, offense: 44, defense: 24, speed: 26, level: 31, exp: 540, cash: 108,
       weakness: ['freeze', 'salt'],
+      absorbs: ['fire'],
       moves: [
         { name: 'chilli cloud', kind: 'status', status: 'crying', text: '{e} burst into a cloud of red chilli and {t} could only weep and cough.', weight: 3 },
         { name: 'cardamom puff', kind: 'attack', mult: 1, text: '{e} coughed a stinging puff of the whole bazaar into {t}\'s eyes.', weight: 4 },
@@ -2517,7 +2638,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Temple Macaque',
       article: 'The',
       hp: 2400, offense: 50, defense: 22, speed: 40, level: 33, exp: 500, cash: 120,
-      weakness: [],
+      weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'rooftop pounce', kind: 'strong', mult: 1.6, text: '{e} dropped off a parapet and POUNCED on {t} before the eye could follow.', weight: 4 },
         { name: 'snatch-and-run', kind: 'attack', mult: 1.1, text: '{e} cuffed {t} and made off with something shiny.', weight: 4 },
@@ -2534,6 +2656,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 5000, offense: 54, defense: 36, speed: 18, level: 34, exp: 640, cash: 104,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'coil and bar', kind: 'attack', mult: 1.1, text: '{e} threw a stone coil across the way and barred {t}\'s path.', weight: 4 },
         { name: 'crushing wind', kind: 'strong', mult: 1.7, text: '{e} wound tight around {t} and SQUEEZED — the carving groaning.', weight: 3 },
@@ -2557,6 +2680,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 20000, offense: 62, defense: 34, speed: 28, level: 35, exp: 12400, cash: 5200,
       weakness: [],
+      resists: ['fire'],
       moves: [
         { name: 'crown lunge', kind: 'attack', mult: 1.2, text: '{e} struck down off the crown at {t} with the whole throne behind it.', weight: 4 },
         { name: 'paralyzing gaze', kind: 'status', status: 'paralyzed', text: '{e} fixed {t} with a flat golden eye and {t} could not move.', weight: 3 },
@@ -2585,7 +2709,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Paper Lantern Wisp',
       article: 'The',
       hp: 5500, offense: 60, defense: 26, speed: 38, level: 36, exp: 760, cash: 150,
-      weakness: ['fire'],
+      weakness: ['freeze'],
+      absorbs: ['fire'],
       moves: [
         { name: 'lantern swing', kind: 'attack', mult: 1.1, text: '{e} swung in low off its string and clouted {t} with its burning paper sides.', weight: 5 },
         { name: 'ember spit', kind: 'strong', mult: 1.6, text: '{e} coughed a gout of candle-flame and scattering sparks over {t}!', weight: 3 },
@@ -2602,6 +2727,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 6500, offense: 58, defense: 30, speed: 24, level: 37, exp: 820, cash: 165,
       weakness: ['fire', 'salt'],
+      resists: ['volt'],
       moves: [
         { name: 'spore cloud', kind: 'status', status: 'asleep', text: '{e} breathed out a sweet drift of spores, and {t}\'s eyelids went heavy as the colours swam.', weight: 3 },
         { name: 'cap slam', kind: 'attack', mult: 1.1, text: '{e} reared on its stem and slammed its whole soft cap down onto {t}.', weight: 4 },
@@ -2618,6 +2744,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 8000, offense: 66, defense: 38, speed: 30, level: 38, exp: 900, cash: 175,
       weakness: ['fire', 'volt'],
+      resists: ['freeze'],
       moves: [
         { name: 'crease strike', kind: 'attack', mult: 1.2, text: '{e} snapped a razor-creased edge across {t} — a papercut the length of an arm.', weight: 4 },
         { name: 'refold', kind: 'mend', text: '{e} folded itself back along its old creases and smoothed every dent away.', weight: 2 },
@@ -2634,6 +2761,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 11000, offense: 72, defense: 44, speed: 22, level: 40, exp: 1150, cash: 420,
       weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'lacquer smash', kind: 'strong', mult: 1.7, text: '{e} brought a glazed fist down on {t} with the weight of two dynasties.', weight: 3 },
         { name: 'glaze guard', kind: 'shield', text: '{e} drew a hard cobalt glaze over itself and braced behind it.', weight: 2 },
@@ -2659,6 +2787,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 45000, offense: 80, defense: 42, speed: 34, level: 40, exp: 24000, cash: 9000,
       weakness: [],
+      resists: ['volt'],
       moves: [
         { name: 'tail sweep', kind: 'attack', mult: 1.2, text: '{e} whipped its long folded tail the length of the hall and swept {t} off their feet.', weight: 4 },
         { name: 'paper storm', kind: 'strong', mult: 1.7, text: '{e} shed a blizzard of razor scales that swirled and sliced at {t}!', weight: 3 },
@@ -2690,6 +2819,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 12000, offense: 90, defense: 42, speed: 34, level: 42, exp: 1500, cash: 520,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'pitchfork jab', kind: 'attack', mult: 1.1, text: '{e} stabbed up out of the straw with a rusted pitchfork and caught {t} clean.', weight: 5 },
         { name: 'hay burst', kind: 'strong', mult: 1.6, text: '{e} exploded in a smothering cloud of chaff and field-dust that buried {t}!', weight: 3 },
@@ -2706,6 +2836,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 15000, offense: 96, defense: 44, speed: 48, level: 43, exp: 1700, cash: 600,
       weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'bone rattle', kind: 'attack', mult: 1.1, text: '{e} clattered the length of its own ribs like a xylophone of teeth and rapped {t} across the knuckles.', weight: 4 },
         { name: 'rib fling', kind: 'strong', mult: 1.6, text: '{e} snapped a rib loose and hurled it spinning into {t} — then grew it back, grinning.', weight: 3 },
@@ -2721,7 +2852,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Moss Strigoi',
       article: 'The',
       hp: 17000, offense: 98, defense: 46, speed: 30, level: 43, exp: 1800, cash: 660,
-      weakness: ['fire', 'holy'],
+      weakness: ['fire'],
+      resists: ['volt'],
       moves: [
         { name: 'cold grip', kind: 'attack', mult: 1.1, text: '{e} laid a grave-cold, moss-furred hand on {t} and squeezed the warmth right out.', weight: 4 },
         { name: 'life sip', kind: 'drain', mult: 1.3, text: '{e} breathed in slow over {t} and drank the living heat, greener and gladder for it.', weight: 3 },
@@ -2738,6 +2870,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 20000, offense: 106, defense: 60, speed: 24, level: 44, exp: 2000, cash: 740,
       weakness: ['volt'],
+      resists: ['fire'],
       moves: [
         { name: 'halberd sweep', kind: 'strong', mult: 1.7, text: '{e} brought its great rusted halberd around in a screaming iron arc across {t}!', weight: 3 },
         { name: 'visor slam', kind: 'attack', mult: 1.2, text: '{e} clanged its empty visor down into {t} with the weight of a whole suit of plate.', weight: 4 },
@@ -2753,7 +2886,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Wolf of the Old Road',
       article: 'The',
       hp: 24000, offense: 116, defense: 50, speed: 54, level: 45, exp: 2300, cash: 880,
-      weakness: ['holy', 'fire'],
+      weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'lunge', kind: 'attack', mult: 1.2, text: '{e} came off the dark verge in one long low lunge and bowled {t} into the road-dust.', weight: 4 },
         { name: 'throat tear', kind: 'strong', mult: 1.8, text: '{e} closed its jaws and worried at {t} with a snarl out of a much older story.', weight: 3 },
@@ -2780,6 +2914,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 95000, offense: 132, defense: 62, speed: 40, level: 46, exp: 44000, cash: 30000,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'theatrical curse', kind: 'strong', mult: 1.7, text: '{e} flung up its cape and intoned a DOOM in cod-Latin — and the fake spell hit {t} with very real, very stolen Vibe!', weight: 4 },
         { name: 'bat swarm', kind: 'attack', mult: 1.2, text: '{e} loosed a clattering swarm of cardboard-and-wire bats that battered {t} all the same.', weight: 4 },
@@ -2806,6 +2941,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 18000, offense: 122, defense: 52, speed: 58, level: 50, exp: 2700, cash: 980,
       weakness: ['fire'],
+      absorbs: ['freeze'],
       moves: [
         { name: 'killing chill', kind: 'attack', mult: 1.1, text: '{e} curled close and breathed, and the warmth went out of {t} like a snuffed candle.', weight: 5 },
         { name: 'snuff the warmth', kind: 'status', status: 'asleep', text: '{e} wrapped {t} in a soft, drowsy cold, and {t}’s eyelids grew heavy as new snow.', weight: 3 },
@@ -2821,6 +2957,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 25000, offense: 138, defense: 60, speed: 44, level: 51, exp: 3100, cash: 1150,
       weakness: ['fire'],
+      resists: ['freeze'],
       moves: [
         { name: 'antler charge', kind: 'strong', mult: 1.6, text: '{e} lowered a rack of black ice and thundered across the floe, goring {t} on the run!', weight: 4 },
         { name: 'tundra trample', kind: 'attack', mult: 1.2, text: '{e} wheeled and brought a thousand pounds of frozen hoof down on {t}.', weight: 4 },
@@ -2838,6 +2975,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 19000, offense: 128, defense: 50, speed: 60, level: 50, exp: 2800, cash: 1020,
       weakness: ['freeze'],
+      absorbs: ['fire'],
       moves: [
         { name: 'ember fling', kind: 'status', status: 'sunburn', text: '{e} cackled and flicked a fistful of live embers that stuck to {t} and kept on burning!', weight: 4 },
         { name: 'spark skitter', kind: 'attack', mult: 1.1, text: '{e} darted across the glassy basalt in a shower of sparks and raked {t} in passing.', weight: 4 },
@@ -2853,6 +2991,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 26000, offense: 134, defense: 64, speed: 36, level: 51, exp: 3200, cash: 1180,
       weakness: ['freeze'],
+      resists: ['fire'],
       moves: [
         { name: 'obsidian claw', kind: 'strong', mult: 1.5, text: '{e} reared up out of the lava tube and brought a claw of black volcanic glass down on {t}!', weight: 4 },
         { name: 'sidelong scuttle', kind: 'attack', mult: 1.2, text: '{e} scuttled in low and hard, clacking its molten-cracked shell against {t}.', weight: 4 },
@@ -2870,6 +3009,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       article: 'The',
       hp: 22000, offense: 130, defense: 54, speed: 50, level: 52, exp: 3000, cash: 1100,
       weakness: ['holy'],
+      resists: ['freeze'],
       moves: [
         { name: 'drink the sound', kind: 'drain', mult: 1.2, text: '{e} pressed its hollow against {t} and drew the warmth and the noise out together, swelling as {t} dimmed.', weight: 4 },
         { name: 'press the quiet', kind: 'status', status: 'hushed', text: '{e} laid a weightless emptiness over {t}, and {t}’s voice came out as nothing at all.', weight: 3 },
@@ -2884,7 +3024,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       name: 'Static Wraith',
       article: 'The',
       hp: 27000, offense: 140, defense: 58, speed: 52, level: 52, exp: 3400, cash: 1280,
-      weakness: ['volt'],
+      weakness: ['holy'],
+      absorbs: ['volt'],
       moves: [
         { name: 'dead-channel howl', kind: 'strong', mult: 1.5, text: '{e} opened a mouthful of dead-channel roar and washed {t} in a wall of grinding static!', weight: 4 },
         { name: 'lost-signal lash', kind: 'attack', mult: 1.2, text: '{e} lashed out with a ribbon of snapped antenna-wire and crackling noise that bit into {t}.', weight: 4 },

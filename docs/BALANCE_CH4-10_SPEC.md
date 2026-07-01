@@ -98,32 +98,39 @@ the test gates is **unchanged** (still 2.75). See §1g.
 
 ### 1b. Mia (`faye`) — Fire / Freeze / Volt / Starsong γ+ (and Volt α/β, Freeze β, Starsong β)
 
-| id | tier | band | earn L | Vibe | new `power` | new `pp` | resulting (raw / ×1.5 weak) |
-|---|---|---|---|---|---|---|---|
-| `vibe_fire_g` | γ | Ch6 | L29 | 70 | **508** *(was 202)* | **28** | dmg **1101** / 1652 |
-| `vibe_fire_o` | Ω | Ch9 | L44 | 103 | **3239** *(was 298)* | **49** | dmg **8799** / 13199 |
-| `vibe_fire_x` | Σ | Ch9 | L46 | 107 | **4311** *(was 430)* | **78** | dmg **11999** / 17999 |
-| `vibe_freeze_b` | β | Ch5 | L24 | 59 | **72** *(was 114)* | **15** | dmg **143** / 215 |
-| `vibe_freeze_g` | γ | Ch7 | L32 | 76 | **971** *(was 187)* | **30** | dmg **2201** / 3302 |
-| `vibe_freeze_o` | Ω | Ch9 | L46 | 107 | **3162** *(was 286)* | **52** | dmg **8801** / 13202 |
-| `vibe_freeze_x` | Σ | Ch10 | L52 | 120 | **8000** *(was 405)* | **80** | dmg **24000** / 36000 |
-| `vibe_volt_a` | α | Ch4 | L20 | 50 | **49** *(was 58)* | **9** | dmg **90** / 135 |
-| `vibe_volt_b` | β | Ch5 | L26 | 63 | **228** *(keep)* | **19** *(keep)* | dmg **467** / 701 |
-| `vibe_volt_g` | γ | Ch8 | L40 | 94 | **1714** *(was 209)* | **36** | dmg **4399** / 6599 |
-| `vibe_volt_o` | Ω | Ch10 | L47 | 109 | **6036** *(was 300)* | **55** | dmg **17001** / 25502 |
-| `vibe_volt_x` | Σ | Ch10 | L52 | 120 | **8000** *(was 420)* | **82** | dmg **24000** / 36000 |
-| `starsong_b` | β | Ch6 | L30 | 72 | **500** *(was 132)* | **17** | dmg **1100** (holy) |
-| `starsong_g` | γ | Ch8 | L38 | 89 | **1772** *(was 210)* | **30** | dmg **4400** (holy) |
-| `starsong_o` | Ω | Ch10 | L48 | 111 | **5965** *(was 300)* | **50** | dmg **17000** (holy) |
-| `starsong_x` | Σ | Ch10 | L52 | 120 | **8000** *(was 440)* | **84** | dmg **24000** (holy) |
-| `heartmend_a` (heal) | — | Ch5 | L27 | 65 | **199** *(was 160)* | **12** *(keep)* | heal **361** |
+**⚠ γ/Ω/Σ AMENDED BY ADR-134 (same-tier PARITY).** The four elements now share ONE power
+per γ/Ω/Σ tier so the element multiplier — widened to ×1.8 weak / ×0.4 resist — is the only
+differentiator (see `docs/COMBAT_DEPTH_SPEC.md` §1b). **Fire sits ~13% under** parity (its
+`burn` DoT makes it up). α/β are untouched (leap-gated openers). The `×1.8 weak` column
+reflects the new `WEAK_MUL`.
 
-Ladder powers (monotonic ✓): Fire **10→18→508→3239→4311**; Freeze **12→72→971→3162→8000**
-(NB Freeze β drops 114→72 to keep it inside the new Ch5 band and below γ — the old 114
-was an OLD-HP artifact); Volt **49→228→1714→6036→8000**; Starsong **10→500→1772→5965→8000**.
-Volt α drops 58→49 to seat α at the Ch4 player-facing band (~90) and stay below β. Mia's
-elemental edge (×1.5 weakness) is what keeps her the party's DPR engine — the raw numbers
-above already land her in-band; a weak target pushes her ahead, by design.
+| id | tier | band | earn L | Vibe | new `power` | new `pp` | resulting (raw / ×1.8 weak) |
+|---|---|---|---|---|---|---|---|
+| `vibe_fire_g` | γ | Ch6 | L29 | 70 | **1542** *(ADR-134, Fire −13%)* | **28** | dmg **3341** / 6014 (+burn) |
+| `vibe_fire_o` | Ω | Ch9 | L44 | 103 | **5251** *(ADR-134, Fire −13%)* | **49** | dmg **14267** / 25681 (+burn) |
+| `vibe_fire_x` | Σ | Ch9 | L46 | 107 | **6960** *(ADR-134, Fire −13%)* | **78** | dmg **19370** / 34866 (+burn) |
+| `vibe_freeze_b` | β | Ch5 | L24 | 59 | **72** *(unchanged α/β)* | **15** | dmg **143** / 258 |
+| `vibe_freeze_g` | γ | Ch7 | L32 | 76 | **1772** *(ADR-134 parity)* | **30** | dmg **4017** / 7231 |
+| `vibe_freeze_o` | Ω | Ch9 | L46 | 107 | **6036** *(ADR-134 parity)* | **52** | dmg **16798** / 30237 |
+| `vibe_freeze_x` | Σ | Ch10 | L52 | 120 | **8000** *(parity, unchanged)* | **80** | dmg **24000** / 43200 |
+| `vibe_volt_a` | α | Ch4 | L20 | 50 | **49** *(unchanged α/β)* | **9** | dmg **90** / 162 |
+| `vibe_volt_b` | β | Ch5 | L26 | 63 | **228** *(unchanged α/β)* | **19** | dmg **467** / 841 |
+| `vibe_volt_g` | γ | Ch8 | L40 | 94 | **1772** *(ADR-134 parity)* | **36** | dmg **4548** / 8187 |
+| `vibe_volt_o` | Ω | Ch10 | L47 | 109 | **6036** *(parity, unchanged)* | **55** | dmg **17003** / 30606 |
+| `vibe_volt_x` | Σ | Ch10 | L52 | 120 | **8000** *(parity, unchanged)* | **82** | dmg **24000** / 43200 |
+| `starsong_b` | β | Ch6 | L30 | 72 | **500** *(unchanged α/β)* | **17** | dmg **1100** (holy) |
+| `starsong_g` | γ | Ch8 | L38 | 89 | **1772** *(parity, unchanged)* | **30** | dmg **4400** (holy) |
+| `starsong_o` | Ω | Ch10 | L48 | 111 | **6036** *(ADR-134 parity)* | **50** | dmg **17203** (holy) |
+| `starsong_x` | Σ | Ch10 | L52 | 120 | **8000** *(parity, unchanged)* | **84** | dmg **24000** (holy) |
+| `heartmend_a` (heal) | — | Ch5 | L27 | 65 | **199** *(unchanged)* | **12** | heal **361** |
+
+Ladder powers (monotonic ✓, ADR-134 parity on γ/Ω/Σ): Fire **10→26→1542→5251→6960** (−13%,
+DoT-discounted); Freeze **12→72→1772→6036→8000**; Volt **49→228→1772→6036→8000**; Starsong
+**10→500→1772→6036→8000**. Freeze=Volt=Starsong now share one power per γ/Ω/Σ tier — the
+×4.5 element swing (×1.8…×0.4) is the ONLY differentiator, so Mia picks by the foe's COLOUR,
+not by which raw number is biggest. Her elemental edge (now ×1.8 weakness) keeps her the
+party's DPR engine on the right target; the wrong colour is halved or absorbed. The finale
+(empty weakness set → max raw power) is unchanged (Σ trio still 8000).
 
 ### 1c. Milo (`milo`) — gadgets, flat `power`, no Vibe, 0 PP
 

@@ -101,7 +101,7 @@ import { BattleFx, type FxTarget } from '../battle/fx';
 import { BustView } from '../battle/bust';
 import { StageView } from '../battle/stage';
 import { itemFxKey, stagePoseOf, impactKeyOf, FX_REGISTRY } from '../battle/fxRegistry';
-import { PhaseRunner, pickRiddle, type DamageClass } from '../battle/phases';
+import { PhaseRunner, pickRiddle, type DamageClass, type WindupSpec } from '../battle/phases';
 import { battlerSheetKey, bustSheetKey, type BattlerLook, type WearTier } from '../spritegen/battlers';
 import { ensureBattleArt } from '../spritegen';
 import { authoredBattleBackdropKey } from '../spritegen/authored';
@@ -169,6 +169,13 @@ import {
   moraleHeal,
   resistIncoming,
   rollDrops,
+  absorbHeal,
+  composureChip,
+  applyBreak,
+  defaultComposure,
+  nextComposureMax,
+  breakTurns,
+  DEFAULT_BOSS_BREAK_RESIST,
 } from '../battle/formulas';
 import { Dialogue, makeWindow, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
 import { glyphify } from '../ui/text';
@@ -230,6 +237,16 @@ interface EnemyUnit {
   /** Pippa STERN DECREE: 'rattled' — the no-magic Offense-down. The foe's hits
    *  deal ×0.8 and it has a small chance to be too cowed to act. */
   rattled: number;
+  /** ADR-134: Milo's Spy/Scope has REVEALED this foe's colour (weak/resist/absorb).
+   *  Once known it persists for the fight — the info panel shows the read. */
+  scouted: boolean;
+  /** ADR-134 (Break): the stagger meter. `composure` chips toward 0 on weakness /
+   *  control hits; at 0 the foe BREAKS — `broken` counts its own skipped turns,
+   *  during which every hit it takes is ×BREAK_MUL. On expiry the meter refills to
+   *  a higher `composureMax` (escalating breaks). composureMax 0 = unbreakable. */
+  composure: number;
+  composureMax: number;
+  broken: number;
 }
 
 /** §A4.8 hero-side conditions — turns remaining (0 = clear) */
@@ -431,6 +448,9 @@ export class BattleScene extends Phaser.Scene {
   /** Pippa BELLWETHER — a party-wide 'morale' charge (until consumed): the next
    *  PRAY carries one tier better and the next party heal is amplified. */
   private morale = false;
+  /** ADR-134 — one shared Graphics for every enemy's COMPOSURE meter (redrawn each
+   *  frame so the slim bar tracks the sprite's idle bob). Lazily created. */
+  private composureG: Phaser.GameObjects.Graphics | null = null;
 
   constructor() {
     super('battle');
@@ -603,6 +623,10 @@ export class BattleScene extends Phaser.Scene {
         marked: 0,
         paralyzed: 0,
         rattled: 0,
+        scouted: false,
+        composure: def.composure ?? defaultComposure(def.level),
+        composureMax: def.composure ?? defaultComposure(def.level),
+        broken: 0,
       });
     }
     await this.print(`${def.article} ${def.name}${n > 1 ? ` and ${n - 1} more` : ''} answered the call!`);
@@ -876,6 +900,10 @@ export class BattleScene extends Phaser.Scene {
         marked: 0,
         paralyzed: 0,
         rattled: 0,
+        scouted: false,
+        composure: def.composure ?? defaultComposure(def.level),
+        composureMax: def.composure ?? defaultComposure(def.level),
+        broken: 0,
       });
     });
   }
@@ -1518,7 +1546,7 @@ export class BattleScene extends Phaser.Scene {
       const dmg = physicalDamage(this.heroOffense(h), target.def.defense, Math.random);
       await Promise.all([strikeDone, this.fx.play('impact_physical', { targets: [this.foeTarget(target)] })]);
       await announce;
-      await this.damageEnemy(target, dmg);
+      await this.damageEnemy(target, dmg, false, undefined, 'physical', true);
       await this.stageReturn(h);
       return;
     }
@@ -1538,7 +1566,7 @@ export class BattleScene extends Phaser.Scene {
         : `${this.fill(BATTLE_TEXT.bash, name)} ${BATTLE_TEXT.smaaash} ${total} damage!`,
       'smash',
     );
-    await this.damageEnemy(target, total, false, line);
+    await this.damageEnemy(target, total, false, line, 'physical', true);
     await this.stageReturn(h);
   }
 
@@ -1978,6 +2006,7 @@ export class BattleScene extends Phaser.Scene {
           }
           e.asleep = 2 + (Math.random() < 0.5 ? 1 : 0);
           await this.print(this.fill('{e} drifted off mid-thought!', name, e));
+          await this.chipControl(e); // ADR-134 — sleep is control; it chips composure
         }
         return true;
       }
@@ -2006,6 +2035,7 @@ export class BattleScene extends Phaser.Scene {
         for (const e of foeTargets) {
           e.hushed = turns;
           await this.print(this.fill('{e} forgot every word it knew!', name, e));
+          await this.chipControl(e); // ADR-134 — hush is control; it chips composure
         }
         return true;
       }
@@ -2034,7 +2064,7 @@ export class BattleScene extends Phaser.Scene {
           if (!e.alive) continue;
           ppGain += magnetSiphon(Math.random);
           const before = e.hp;
-          await this.damageEnemy(e, lifedrainDamage(aoe, this.heroVibeS(h), Math.random), false, undefined, 'vibe');
+          await this.damageEnemy(e, lifedrainDamage(aoe, this.heroVibeS(h), Math.random), false, undefined, 'vibe', true);
           hpDrained += Math.max(0, before - e.hp);
         }
         if (ppGain > 0) h.odoPp.heal(ppGain);
@@ -2077,16 +2107,9 @@ export class BattleScene extends Phaser.Scene {
         await this.fx.play(ab.fx, { caster: ctx.caster, targets: foeTargets.map((e) => this.foeTarget(e)) });
         for (const e of foeTargets) {
           if (!e.alive) continue;
-          // Milo's SCOPE is Spy++: it REVEALS the foe's stats (the spy report)
+          // Milo's SCOPE is Spy++: it REVEALS the foe's colour (the spy report)
           // AND marks it — a force-multiplier that pairs the read with the tag.
-          if (ab.id === 'scope') {
-            await this.print(this.fill(BATTLE_TEXT.spy_report, name, e, String(e.hp)));
-            await this.print(
-              e.def.weakness.length > 0
-                ? this.fill(BATTLE_TEXT.spy_weak, name, e, e.def.weakness.join(', '))
-                : this.fill(BATTLE_TEXT.spy_no_weak, name, e),
-            );
-          }
+          if (ab.id === 'scope') await this.revealColor(name, e);
           e.marked = MARKED_TURNS;
           await this.print(this.fill(BATTLE_TEXT.marked_on, name, e));
         }
@@ -2166,16 +2189,11 @@ export class BattleScene extends Phaser.Scene {
       }
     }
 
-    // ---- Spy: the revealed-stats stamp (§A3 — HP + weakness)
+    // ---- Spy: the revealed-stats stamp (§A3 — HP + the full ADR-134 colour)
     if (ab.id === 'spy') {
       const e = foeTargets[0];
       await this.fx.play(ab.fx, ctx);
-      await this.print(this.fill(BATTLE_TEXT.spy_report, name, e, String(e.hp)));
-      if (e.def.weakness.length > 0) {
-        await this.print(this.fill(BATTLE_TEXT.spy_weak, name, e, e.def.weakness.join(', ')));
-      } else {
-        await this.print(this.fill(BATTLE_TEXT.spy_no_weak, name, e));
-      }
+      await this.revealColor(name, e);
       return true;
     }
 
@@ -2191,10 +2209,13 @@ export class BattleScene extends Phaser.Scene {
       const weak = ab.element !== 'none' && ab.element !== 'physical' && t.def.weakness.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy');
       const resist = ab.element !== 'none' && ab.element !== 'physical' && (t.def.resists?.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy') ?? false);
       // gadgets are machines: flat power, no Vibe scaling, defense pierced
+      // ADR-134 — Milo's siege carries a %-max-HP rider so his flat tech SCALES late
+      // (a 2% bite off a 95k boss is 1,900 that 360 flat could never be) — never dead weight.
+      const pctBonus = ab.pctMaxHp ? Math.floor(t.def.hp * ab.pctMaxHp) : 0;
       const raw =
-        ab.kind === 'gadget'
+        (ab.kind === 'gadget'
           ? gadgetDamage(ab.power, Math.random)
-          : vibeDamage(ab.power, this.heroVibeS(h), Math.random);
+          : vibeDamage(ab.power, this.heroVibeS(h), Math.random)) + pctBonus;
       const dmg = ab.kind === 'gadget' ? applyWeakness(raw, weak) : applyElement(raw, { weak, resist, holy, weakMul: t.def.weakMul });
       // Vibe Fire burns the Tick's latch away (§A6 Boss 1) — and so does
       // the OLD LIGHT (S12b/ADR-035, §A6 amended): the crater awakening is
@@ -2225,13 +2246,37 @@ export class BattleScene extends Phaser.Scene {
         await this.print(BATTLE_TEXT.boss_heals_element);
         continue;
       }
+      // ADR-134 — a SIGNATURE foe that ABSORBS this element (EnemyDef.absorbs): the
+      // same "wrong element FEEDS it" punish as the golem forms above, but for a
+      // regular enemy. The hit deals 0 and HEALS it ~half the would-be (absorbHeal);
+      // no crack, no on-hit status. The differ rule guarantees `absorbs` never
+      // overlaps `weakness`, so this can't fire on a resisted/weak hit.
+      if (
+        ab.element !== 'none' &&
+        ab.element !== 'physical' &&
+        (t.def.absorbs?.includes(ab.element as 'fire' | 'freeze' | 'volt' | 'holy') ?? false)
+      ) {
+        const before = t.hp;
+        t.hp = Math.min(t.def.hp, t.hp + absorbHeal(raw));
+        this.fx.popup(t.spr.x, t.spr.y - t.spr.displayHeight / 2 - s(2), `+${t.hp - before}`, RAMP.GRASS);
+        AUDIO.sfx('heal');
+        await this.print(BATTLE_TEXT.boss_heals_element);
+        continue;
+      }
       // S14: the element may CRACK a scripted form — Vibe Freeze finds the
       // seams in SOLID GOLD, and bats land while it's brittle (§A6 Ch.2;
       // the fight teaches it the turn Mia awakens it)
       if (t.def.boss && this.phase && ab.element !== 'none' && this.phase.crackBy(ab.element)) {
         await this.print(BATTLE_TEXT.gold_crack);
       }
-      await this.damageEnemy(t, dmg, weak, undefined, ab.kind === 'gadget' ? 'physical' : 'vibe');
+      await this.damageEnemy(t, dmg, weak, undefined, ab.kind === 'gadget' ? 'physical' : 'vibe', true);
+      // ADR-134 — Milo's siege DEEPENS a break: a hit that lands inside the ×2 window
+      // extends it a turn, so his lane in the loop is prolonging the burst, not just
+      // adding to it (the flat-tool crew earns its keep in the break economy).
+      if (t.alive && ab.deepensBreak && t.broken > 0) {
+        t.broken += 1;
+        this.fx.popup(t.spr.x, t.spr.y - t.spr.displayHeight / 2 - s(6), 'BREAK+', RAMP.GOLD);
+      }
       // S-Mia: the on-hit enemy statuses ride the damage (the switch above let
       // these fall through). burn = Fire's DoT (γ+); frozen = Freeze's skip-lock,
       // boss-capped via mindImmune; paralyzed = Volt's disruption, boss-capped too.
@@ -2242,6 +2287,24 @@ export class BattleScene extends Phaser.Scene {
       // however the cast resolved, the caster walks back to their card
       if (onStage) await this.stageReturn(h);
     }
+  }
+
+  /** ADR-134 — Milo's scout stamp: HP + the foe's full COLOUR (weakness / what it
+   *  RESISTS / what it ABSORBS). Once revealed it persists (e.scouted) so the info
+   *  panel shows the read for the rest of the fight — scouting is a real first-turn
+   *  decision, not a wasted turn. Shared by Spy and Scope (Spy++). */
+  private async revealColor(name: string, e: EnemyUnit): Promise<void> {
+    await this.print(this.fill(BATTLE_TEXT.spy_report, name, e, String(e.hp)));
+    await this.print(
+      e.def.weakness.length > 0
+        ? this.fill(BATTLE_TEXT.spy_weak, name, e, e.def.weakness.join(', '))
+        : this.fill(BATTLE_TEXT.spy_no_weak, name, e),
+    );
+    if (e.def.resists && e.def.resists.length > 0)
+      await this.print(this.fill(BATTLE_TEXT.spy_resist, name, e, e.def.resists.join(', ')));
+    if (e.def.absorbs && e.def.absorbs.length > 0)
+      await this.print(this.fill(BATTLE_TEXT.spy_absorb, name, e, e.def.absorbs.join(', ')));
+    e.scouted = true;
   }
 
   /** S-Mia: the on-hit enemy statuses a DAMAGE spell rides (the switch let these
@@ -2259,6 +2322,7 @@ export class BattleScene extends Phaser.Scene {
       } else if (frozenLands(tier, Math.random)) {
         e.frozen = 1;
         await this.print(this.fill(BATTLE_TEXT.frozen_on, h.hero.name, e));
+        await this.chipControl(e); // ADR-134 — a landed control status chips composure
       } else {
         await this.print(this.fill(BATTLE_TEXT.frozen_shrug, h.hero.name, e));
       }
@@ -2268,8 +2332,18 @@ export class BattleScene extends Phaser.Scene {
       } else {
         e.paralyzed = 3;
         await this.print(this.fill(BATTLE_TEXT.enemy_paralyzed_on, h.hero.name, e));
+        await this.chipControl(e); // ADR-134 — a landed control status chips composure
       }
     }
+  }
+
+  /** ADR-134 — a LANDED control status (freeze / paralyze / sleep / hush) chips a
+   *  medium slice of composure, +50% if the foe is marked/exposed. This is Milo &
+   *  Pippa's break-enabler lane: their control + mark accelerates the break the
+   *  damage-dealers then cash in. Separate call so it isn't double-counted with the
+   *  damage-hit chip in damageEnemy. */
+  private async chipControl(e: EnemyUnit): Promise<void> {
+    await this.chipComposure(e, { control: true, focused: e.marked > 0 || e.exposed > 0 });
   }
 
   /* ---------------- Pray (§A3 — six distinct events) ---------------- */
@@ -2311,7 +2385,7 @@ export class BattleScene extends Phaser.Scene {
           x.odoPp.heal(x.hero.maxPp);
           void this.fx.play('heal_glow', { targets: [this.cardTarget(x)] });
         });
-        for (const e of aliveE) await this.damageEnemy(e, 120 + Math.floor(Math.random() * 40), false, undefined, 'pray');
+        for (const e of aliveE) await this.damageEnemy(e, 120 + Math.floor(Math.random() * 40), false, undefined, 'pray', true);
         break;
       }
       case 'wonderful': {
@@ -2322,7 +2396,7 @@ export class BattleScene extends Phaser.Scene {
           AUDIO.sfx('heal');
         } else {
           await this.fx.play('pray_wonderful', { caster: at(), targets: aliveE.map((e) => this.foeTarget(e)) });
-          for (const e of aliveE) await this.damageEnemy(e, 60 + Math.floor(Math.random() * 30), false, undefined, 'pray');
+          for (const e of aliveE) await this.damageEnemy(e, 60 + Math.floor(Math.random() * 30), false, undefined, 'pray', true);
         }
         break;
       }
@@ -2550,7 +2624,7 @@ export class BattleScene extends Phaser.Scene {
       // §A6 Ch.10 — STOLEN LIGHT is stolen VIBE: route it as 'vibe' damage so it reaches
       // THE HUSH even through its physical-immune QUIET movement (the IRON path's finale edge).
       const itemDmgClass = item.id === 'stolen_light' ? 'vibe' : 'physical';
-      await this.damageEnemy(target, applyWeakness(item.power, weak), weak, undefined, itemDmgClass);
+      await this.damageEnemy(target, applyWeakness(item.power, weak), weak, undefined, itemDmgClass, true);
       if (onStage) await this.stageReturn(h);
       return true;
     }
@@ -2572,7 +2646,14 @@ export class BattleScene extends Phaser.Scene {
    * Grin's whole fight), and the Ch.2 street mechanics ride the same gate:
    * the Beetle's gold form shrugs physical, the Step-Mask's Shield halves it.
    */
-  private async damageEnemy(e: EnemyUnit, dmg: number, weak = false, line?: string, cls: DamageClass = 'physical'): Promise<void> {
+  private async damageEnemy(
+    e: EnemyUnit,
+    dmg: number,
+    weak = false,
+    line?: string,
+    cls: DamageClass = 'physical',
+    chip = false, // ADR-134: a hero ATTACK chips composure (bash/vibe/gadget/item); DoT/reflect don't
+  ): Promise<void> {
     // §A6 Ch.10 — THE ANSWER (FORGIVE): in the QUIET the Hush is past hurting — warmth, not
     // wounds. The FIRST warmth-class hit raises the meter (right after the hush_quiet read
     // tells you to reach it with the warm), and every Vibe/Pray/Stolen Light after POURS in
@@ -2606,6 +2687,10 @@ export class BattleScene extends Phaser.Scene {
     // reads it (bash, vibe, pray, the burn tick) — the OUTGOING mirror of Jay's
     // ward, applied here PARALLEL to mitigateIncoming, never inside it.
     dmg = applyFocus(dmg, { exposed: e.exposed > 0, marked: e.marked > 0 });
+    // ADR-134 — a BROKEN foe takes ×BREAK_MUL: the setup→break→BURST payoff. Applied
+    // AFTER element (castAbility) and focus (just above) at this ONE seam, so the ×2
+    // stacks cleanly with every other multiplier and every damage path shares it.
+    dmg = applyBreak(dmg, e.broken > 0);
     e.hp = Math.max(0, e.hp - dmg);
     // ADR-121: the Hush Sentinel is REPELLED, never killed. While Glint blazes a
     // boss can't be reduced past 1 HP, so a player+Glint burst can't pre-empt the
@@ -2646,9 +2731,64 @@ export class BattleScene extends Phaser.Scene {
         await this.phase.onAllSummonsDead();
       }
     } else {
+      // ADR-134 — the hero's action chips this foe's COMPOSURE; at 0 it BREAKS. A
+      // weakness hit chips big, a marked/exposed foe +50% (Milo/Pippa's payoff); the
+      // control chip rides applyOnHitStatus separately so it isn't double-counted.
+      if (chip) await this.chipComposure(e, { weak, neutral: !weak, focused: e.marked > 0 || e.exposed > 0 });
       if (e.def.boss && this.phase) await this.phase.onHpFrac(e.hp / e.def.hp);
       if (e.def.boss && e.hp < 120 && this.chad && !this.chad.fled) {
         await this.chadFlees();
+      }
+    }
+  }
+
+  /** ADR-134 — strip COMPOSURE off a foe and, at 0, BREAK it (a skipped beat + a ×2
+   *  window). Fully DETERMINISTIC (no rng) so the replay bot stays exact without a
+   *  seeded scene rng. A boss's breakResist (default DEFAULT_BOSS_BREAK_RESIST) makes
+   *  its break EARNED — real setup, never a one-hit stunlock. */
+  private async chipComposure(
+    e: EnemyUnit,
+    o: { weak?: boolean; neutral?: boolean; control?: boolean; focused?: boolean },
+  ): Promise<void> {
+    if (!e.alive || e.composureMax <= 0 || e.broken > 0) return; // unbreakable / already broken / dead
+    const breakResist = e.def.breakResist ?? (e.def.boss ? DEFAULT_BOSS_BREAK_RESIST : 0);
+    e.composure = Math.max(0, e.composure - composureChip(e.composureMax, { ...o, breakResist }));
+    if (e.composure > 0) return;
+    // BREAK! — the burst window opens. A flash + shake + a floating BREAK! reuse the
+    // existing FX primitives (no new art); the meter's BROKEN state draws in updateEnemyUi.
+    e.broken = breakTurns(e.def.boss ?? false);
+    this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(6), 'BREAK!', RAMP.GOLD);
+    this.cameras.main.flash(140, 255, 240, 190);
+    this.cameras.main.shake(160, 0.006);
+    AUDIO.sfx('hit');
+    await this.print(this.fill(BATTLE_TEXT.enemy_break, '', e));
+  }
+
+  /** ADR-134 — draw a slim COMPOSURE meter under every break-capable enemy (hidden
+   *  for the unbreakable). It DEPLETES in cyan as the foe is chipped; on BREAK it
+   *  goes full HOT GOLD for the ×2 window. A scouted foe gets a small weakness pip
+   *  to the left so the read persists. One shared Graphics, redrawn each frame so it
+   *  tracks the sprite's idle bob. Reuses existing draw primitives — no new art. */
+  private drawComposureBars(): void {
+    if (!this.composureG) this.composureG = this.add.graphics().setDepth(DEPTH_UI + 1);
+    const g = this.composureG;
+    g.clear();
+    for (const e of this.enemies) {
+      if (!e.alive || e.composureMax <= 0) continue; // unbreakable foes show no meter
+      const w = Math.max(s(24), Math.min(e.spr.displayWidth * 0.85, s(84)));
+      const h = s(3);
+      const x = e.spr.x - w / 2;
+      const y = e.spr.y + e.spr.displayHeight / 2 + s(4);
+      g.fillStyle(colorOf(px(RAMP.NIGHT, 0)), 0.85).fillRect(x - s(1), y - s(1), w + s(2), h + s(2)); // track
+      if (e.broken > 0) {
+        g.fillStyle(colorOf(px(RAMP.GOLD, 3))).fillRect(x, y, w, h); // BROKEN — the ×2 window
+      } else {
+        const frac = Math.max(0, Math.min(1, e.composure / e.composureMax));
+        g.fillStyle(colorOf(px(RAMP.CYAN, 2))).fillRect(x, y, Math.max(s(1), w * frac), h); // poise left
+      }
+      // a scouted foe keeps its read: a tiny pip glows if it has an exploitable weakness
+      if (e.scouted && e.def.weakness.length > 0) {
+        g.fillStyle(colorOf(px(RAMP.GOLD, 2))).fillRect(x - s(5), y - s(1), s(3), h + s(2));
       }
     }
   }
@@ -2825,12 +2965,78 @@ export class BattleScene extends Phaser.Scene {
         // It can drive the Hush to the 12% 'falls' phase (endBattleMercy), so bail if it ends.
         await this.callingPulse(e);
         if (this.ended) return;
+        // ADR-134 — a WIND-UP telegraphed a PRIOR turn resolves NOW. BREAK cancels it
+        // (the Tier-2 payoff — reading the tell and staggering the boss collapses the
+        // charge); otherwise it LANDS, and Jay's WARD/SHIELD still soften a damage
+        // wind-up (mitigateIncoming). Either way the wind-up IS the boss's action.
+        const wind = this.phase.dueWindup();
+        if (wind) {
+          this.phase.clearWindup();
+          if (e.broken > 0) {
+            await this.windupCancel(e); // the coiled strike collapses as it reels
+            e.broken--;
+            if (e.broken === 0) {
+              e.composureMax = nextComposureMax(e.composureMax);
+              e.composure = e.composureMax;
+            }
+            continue;
+          }
+          await this.windupLand(e, wind);
+          if (this.ended) return;
+          continue; // the wind-up was the boss's whole turn
+        }
+      }
+      // ADR-134 — a BROKEN foe loses its beat (its ×2 window). Placed AFTER the boss
+      // phase machine above, so scripted phases/telegraphs STILL FIRE (a broken Hush
+      // runs its phases; only the ordinary action is skipped — the "break the wind-up
+      // to cancel it" read). The break then EXPIRES and the meter refills HIGHER
+      // (escalating breaks), so a boss can never be perma-stunlocked.
+      if (e.broken > 0) {
+        e.broken--;
+        if (e.broken === 0) {
+          e.composureMax = nextComposureMax(e.composureMax);
+          e.composure = e.composureMax;
+        }
+        await this.print(this.fill(BATTLE_TEXT.enemy_broken_skip, '', e));
+        continue;
       }
       for (let act = 0; act < acts && !this.ended && e.alive; act++) {
         await this.enemyAct(e);
       }
       if (this.ended) return;
     }
+  }
+
+  /** ADR-134 — a telegraphed WIND-UP LANDS: the boss unloads the attack it charged
+   *  last turn. Damage routes through mitigateIncoming so Jay's WARD/SHIELD (and the
+   *  brace/reflect suite) still soften it — "ward the class" is a real answer; a
+   *  status rides along. This fires only when the party did NOT break/freeze the boss. */
+  private async windupLand(e: EnemyUnit, wind: WindupSpec): Promise<void> {
+    await this.print(this.fill(BATTLE_TEXT.windup_lands, '', e));
+    if (wind.amount) {
+      await this.fx.play('impact_physical', { targets: this.aliveHeroes().map((h) => this.cardTarget(h)) });
+      for (const h of this.aliveHeroes()) {
+        const st = h.status;
+        const mit = mitigateIncoming(wind.amount, 'physical', {
+          shield: st.shield > 0,
+          ward: st.ward > 0,
+          reflect: st.reflect > 0,
+          mirror: st.mirror > 0,
+          steeled: st.steeled > 0,
+        });
+        this.applyHeroDamage(h, mit.taken);
+      }
+    }
+    if (wind.status) {
+      for (const h of this.aliveHeroes()) h.status[wind.status] = wind.turns ?? 1;
+    }
+  }
+
+  /** ADR-134 — the party ANSWERED the tell (a BREAK): the charged attack COLLAPSES.
+   *  The reward for reading the telegraph and staggering the boss in time. */
+  private async windupCancel(e: EnemyUnit): Promise<void> {
+    this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(6), 'FIZZLE', RAMP.CYAN);
+    await this.print(this.fill(BATTLE_TEXT.windup_cancel, '', e));
   }
 
   private async enemyAct(e: EnemyUnit): Promise<void> {
@@ -3411,6 +3617,7 @@ export class BattleScene extends Phaser.Scene {
         e.spr.setTexture(wearSpriteKey(base, tier));
       }
     }
+    this.drawComposureBars();
     let anyRoll = false;
     let anyMortal = false;
     for (const { d, o } of this.odoDisplays) {

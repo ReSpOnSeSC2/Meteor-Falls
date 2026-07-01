@@ -59,8 +59,8 @@ describe('battle formulas', () => {
     expect(strong).toBe(base * 2);
   });
 
-  it('weakness multiplies 1.5x', () => {
-    expect(applyWeakness(100, true)).toBe(150);
+  it('weakness multiplies by WEAK_MUL (1.8, ADR-134)', () => {
+    expect(applyWeakness(100, true)).toBe(180);
     expect(applyWeakness(100, false)).toBe(100);
   });
 
@@ -565,19 +565,22 @@ describe('DORIN — "The Monk\'s Full Path" (ability expansion)', () => {
 /* ================= S-Mia ("Ability Expansion") ================= */
 
 describe("Mia's elemental edge (the OUTGOING weak/resist multiplier)", () => {
-  it('weakness ×1.5, resist ×0.5, neither ×1, never below 1', () => {
-    expect(F.elementMultiplier({ weak: true })).toBe(1.5);
-    expect(F.elementMultiplier({ resist: true })).toBe(0.5);
+  it('weakness ×1.8, resist ×0.4, neither ×1, never below 1 (ADR-134 widened the swing)', () => {
+    expect(F.elementMultiplier({ weak: true })).toBe(1.8);
+    expect(F.elementMultiplier({ resist: true })).toBe(0.4);
     expect(F.elementMultiplier({})).toBe(1);
-    expect(F.applyElement(100, { weak: true })).toBe(150);
-    expect(F.applyElement(100, { resist: true })).toBe(50);
+    expect(F.applyElement(100, { weak: true })).toBe(180);
+    expect(F.applyElement(100, { resist: true })).toBe(40);
     expect(F.applyElement(100, {})).toBe(100);
     expect(F.applyElement(1, { resist: true })).toBe(1); // ≥1 floor
+    // the constants are the tuning lever — pin them so a drift is caught
+    expect(F.WEAK_MUL).toBe(1.8);
+    expect(F.RESIST_MUL).toBe(0.4);
   });
 
-  it('ADR-099 — a per-enemy weakMul override DOUBLES (the §A6 Mainframe cooling fan); default stays 1.5', () => {
+  it('ADR-099 — a per-enemy weakMul override DOUBLES (the §A6 Mainframe cooling fan); default stays WEAK_MUL', () => {
     expect(F.elementMultiplier({ weak: true, weakMul: 2 })).toBe(2); // the Mainframe's ×2
-    expect(F.elementMultiplier({ weak: true })).toBe(1.5); // every other foe
+    expect(F.elementMultiplier({ weak: true })).toBe(1.8); // every other foe
     expect(F.applyElement(100, { weak: true, weakMul: 2 })).toBe(200);
     expect(F.applyElement(100, { weakMul: 2 })).toBe(100); // ignored unless the hit is weak
   });
@@ -586,9 +589,18 @@ describe("Mia's elemental edge (the OUTGOING weak/resist multiplier)", () => {
     expect(F.elementMultiplier({ resist: true, holy: true })).toBe(F.HOLY_PIERCE_MUL);
     expect(F.elementMultiplier({ resist: true, holy: true })).toBeGreaterThan(F.RESIST_MUL);
     // a weakness still wins outright, even a "resisted" holy reads as weak
-    expect(F.elementMultiplier({ weak: true, resist: true, holy: true })).toBe(1.5);
+    expect(F.elementMultiplier({ weak: true, resist: true, holy: true })).toBe(1.8);
     // distinct seam from the incoming ward: applyElement never touches mitigateIncoming
     expect(F.applyElement(200, { resist: true, holy: true })).toBe(150);
+  });
+
+  it('ADR-134 — an ABSORBED element deals 0 and HEALS the foe ~half the would-be hit', () => {
+    expect(F.elementMultiplier({ absorb: true })).toBe(0);
+    expect(F.elementMultiplier({ weak: true, absorb: true })).toBe(0); // absorb wins outright
+    expect(F.applyElement(100, { absorb: true })).toBe(0); // a true zero — no ≥1 floor when absorbed
+    expect(F.ABSORB_HEAL_FRAC).toBe(0.5);
+    expect(F.absorbHeal(100)).toBe(50); // heals half the would-be damage
+    expect(F.absorbHeal(1)).toBe(1); // ≥1 floor on the heal
   });
 });
 
@@ -602,6 +614,65 @@ describe("Mia's focus-fire amplifier (exposed × marked)", () => {
     const both = F.applyFocus(100, { exposed: true, marked: true });
     expect(both).toBeGreaterThan(F.applyFocus(100, { exposed: true }));
     expect(both).toBe(Math.round(100 * 1.3 * 1.25));
+  });
+});
+
+describe('the BREAK system (ADR-134) — composure chip, the ×2 window, the loop', () => {
+  it('a weakness hit chips ~34%, control ~25%, a neutral hit ~8%; sources ADD', () => {
+    const M = 100;
+    expect(F.composureChip(M, { weak: true })).toBe(34);
+    expect(F.composureChip(M, { neutral: true })).toBe(8);
+    expect(F.composureChip(M, { control: true })).toBe(25);
+    // a weakness hit that ALSO lands control chips both (0.34 + 0.25)
+    expect(F.composureChip(M, { weak: true, control: true })).toBe(59);
+    // a neutral hit does NOT also add the weak chip
+    expect(F.composureChip(M, { neutral: true, control: true })).toBe(33);
+  });
+
+  it('a MARKED/EXPOSED foe takes +50% chip — Milo/Pippa are the break-enablers', () => {
+    const M = 100;
+    expect(F.composureChip(M, { weak: true, focused: true })).toBe(51); // 34 × 1.5
+    expect(F.composureChip(M, { weak: true, focused: true })).toBeGreaterThan(F.composureChip(M, { weak: true }));
+    expect(F.COMPOSURE_FOCUS_BONUS).toBe(0.5);
+  });
+
+  it("a boss's breakResist scales the whole chip down (setup, never trivial)", () => {
+    const M = 100;
+    expect(F.composureChip(M, { weak: true, breakResist: 0.4 })).toBe(Math.round(34 * 0.6));
+    expect(F.composureChip(M, { weak: true, breakResist: 1 })).toBe(0); // a fully break-proof foe
+    expect(F.composureChip(M, { weak: true, breakResist: 0 })).toBe(34);
+  });
+
+  it('NEVER breaks in ONE action: the single biggest chip is still under the full meter', () => {
+    const M = 100;
+    const biggest = F.composureChip(M, { weak: true, control: true, focused: true }); // (0.34+0.25)×1.5
+    expect(biggest).toBe(89);
+    expect(biggest).toBeLessThan(M); // one action can never zero the meter
+  });
+
+  it('breaks in 2–3 optimal actions: three plain weakness hits fell the meter, two do not', () => {
+    const M = F.defaultComposure(20); // a mid foe
+    const chip = F.composureChip(M, { weak: true });
+    expect(chip * 2).toBeLessThan(M); // two weakness hits: not yet
+    expect(chip * 3).toBeGreaterThanOrEqual(M); // three: BREAK
+    // a marked party breaks it faster (in two) — the reward for setting up
+    const fchip = F.composureChip(M, { weak: true, focused: true });
+    expect(fchip * 2).toBeGreaterThanOrEqual(M);
+  });
+
+  it('the BREAK window is ×2 on all damage; a non-broken foe is untouched', () => {
+    expect(F.BREAK_MUL).toBe(2);
+    expect(F.applyBreak(100, true)).toBe(200);
+    expect(F.applyBreak(100, false)).toBe(100);
+    expect(F.applyBreak(1, true)).toBe(2);
+  });
+
+  it('a broken boss loses ONE beat, trash loses two; the meter refills HIGHER (escalating)', () => {
+    expect(F.breakTurns(true)).toBe(1);
+    expect(F.breakTurns(false)).toBe(2);
+    expect(F.nextComposureMax(100)).toBe(120); // ×1.2 — the next break is harder
+    expect(F.nextComposureMax(100)).toBeGreaterThan(100);
+    expect(F.defaultComposure(52)).toBeGreaterThan(F.defaultComposure(1)); // scales with level
   });
 });
 
@@ -778,7 +849,7 @@ describe('MILO — gadgets (NO Vibe, NO PP: competence, not the old light)', () 
     expect(ab.target).toBe('enemies');
     expect(ab.status).toBe('paralyzed');
     // the EMP's volt finds a volt-weakness through the gadget path (applyWeakness)
-    expect(applyWeakness(gadgetDamage(70, () => 0.5), true)).toBe(Math.round(70 * 1.5));
+    expect(applyWeakness(gadgetDamage(70, () => 0.5), true)).toBe(Math.round(70 * 1.8));
     expect(applyWeakness(gadgetDamage(70, () => 0.5), false)).toBe(70);
   });
 

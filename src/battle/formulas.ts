@@ -238,45 +238,64 @@ export function vibeHeal(power: number, vibe: number, rng: Rng): number {
   return Math.max(1, Math.round(power * (1 + vibe / 80) * (0.95 + rng() * 0.1)));
 }
 
-/** elemental weakness ×1.5 (the original single-sided multiplier — still the
- *  item/gadget path; Mia's five-element kit reads the fuller applyElement) */
+/** elemental weakness (the original single-sided multiplier — still the
+ *  item/gadget path; Mia's five-element kit reads the fuller applyElement).
+ *  Tracks WEAK_MUL so the gadget path and the caster path scale together. */
 export function applyWeakness(dmg: number, weak: boolean): number {
-  return weak ? Math.round(dmg * 1.5) : dmg;
+  return weak ? Math.round(dmg * WEAK_MUL) : dmg;
 }
 
 /* ---- MIA'S ELEMENTAL EDGE (the OUTGOING hero→enemy multiplier) ----
  * The five-element kit's whole point: the right element MULTIPLIES the hit. This
  * is the OUTGOING seam at damageEnemy — distinct from mitigateIncoming (the
- * enemy→hero ward seam); the two never conflate. ~×1.5 on a weakness, ~×0.5 on a
+ * enemy→hero ward seam); the two never conflate. ~×1.8 on a weakness, ~×0.4 on a
  * resist, always ≥1. HOLY pierces a slice of resistance (the Embers' light is
  * the Hush's bane): a resisted holy hit still lands at ~×0.75, and a holy-weak
- * foe takes the full weakness. Pure + rng-free so the replay bot stays exact. */
-export const WEAK_MUL = 1.5;
-export const RESIST_MUL = 0.5;
+ * foe takes the full weakness. ADR-134 widened the swing (weak 1.5→1.8, resist
+ * 0.5→0.4) so the RIGHT element — not the biggest number — decides the pick.
+ * A signature foe may ABSORB an element: that hit deals 0 and HEALS the foe for
+ * ~half the would-be damage (absorbHeal), the inverse of a weakness. Pure +
+ * rng-free so the replay bot stays exact. */
+export const WEAK_MUL = 1.8;
+export const RESIST_MUL = 0.4;
 export const HOLY_PIERCE_MUL = 0.75;
+/** an ABSORBED hit heals the foe for this fraction of the would-be damage (min 1) */
+export const ABSORB_HEAL_FRAC = 0.5;
 
 export interface ElementHit {
   weak?: boolean;
   resist?: boolean;
   /** the hit is `holy` (Starsong / Pray) — pierces a slice of resistance */
   holy?: boolean;
-  /** ADR-099: a per-enemy override for the WEAKNESS multiplier (default WEAK_MUL=1.5).
+  /** the foe ABSORBS this element (bosses.ts golem `healedBy`, or EnemyDef.absorbs):
+   *  the hit deals 0; the caller heals the foe by absorbHeal(base). Wins outright. */
+  absorb?: boolean;
+  /** ADR-099: a per-enemy override for the WEAKNESS multiplier (default WEAK_MUL).
    *  §A6 Ch.3 says "Vibe Freeze DOUBLES damage" on the Headmaster Mainframe's cooling-fan
    *  weak point — so that boss carries `weakMul: 2` and a freeze hit literally doubles,
-   *  while every other foe keeps the generic ×1.5. Ignored unless the hit is `weak`. */
+   *  while every other foe keeps the generic multiplier. Ignored unless the hit is `weak`. */
   weakMul?: number;
 }
 
-/** the weak/resist/holy multiplier on one hero→enemy hit */
-export function elementMultiplier({ weak = false, resist = false, holy = false, weakMul }: ElementHit): number {
+/** the weak/resist/holy multiplier on one hero→enemy hit (0 when absorbed) */
+export function elementMultiplier({ weak = false, resist = false, holy = false, absorb = false, weakMul }: ElementHit): number {
+  if (absorb) return 0; // the wrong element entirely — no damage (the caller heals the foe)
   if (weak) return weakMul ?? WEAK_MUL; // a weakness wins outright, even a "resisted" holy
   if (resist) return holy ? HOLY_PIERCE_MUL : RESIST_MUL; // holy pierces half the resist
   return 1;
 }
 
-/** apply the element multiplier to a hit, never below 1 */
+/** apply the element multiplier to a hit. An absorbed hit deals exactly 0;
+ *  every other hit is floored at 1. */
 export function applyElement(dmg: number, hit: ElementHit): number {
+  if (hit.absorb) return 0;
   return Math.max(1, Math.round(dmg * elementMultiplier(hit)));
+}
+
+/** the HP a foe recovers when it absorbs an element: ~half the would-be
+ *  (pre-absorb) damage, never below 1. The inverse of a weakness spike. */
+export function absorbHeal(wouldBeDmg: number): number {
+  return Math.max(1, Math.round(wouldBeDmg * ABSORB_HEAL_FRAC));
 }
 
 /* ---- the EXPOSED amplifier (Hush Hex) — the OUTGOING mirror of Jay's ward ----
@@ -298,6 +317,78 @@ export function focusMultiplier(opts: { exposed?: boolean; marked?: boolean }): 
 /** apply the focus amplifier to a hit, never below 1 */
 export function applyFocus(dmg: number, opts: { exposed?: boolean; marked?: boolean }): number {
   return Math.max(1, Math.round(dmg * focusMultiplier(opts)));
+}
+
+/* ---- THE BREAK SYSTEM (ADR-134) — the Composure/stagger loop ----
+ * Hitting a WEAKNESS or landing CONTROL chips a foe's COMPOSURE; at 0 it BREAKS
+ * (skips a beat, takes ×BREAK_MUL for a window). This makes setup→break→burst the
+ * optimal rhythm — the flat-tool crew (Milo/Pippa) become the premier break-enablers
+ * (their MARK gives every hit +50% chip), and the huge late nukes become an EARNED
+ * burst in the ×2 window instead of the default spam. All DETERMINISTIC (no rng):
+ * the chip is a fixed fraction of the meter, the break is a threshold, the skip is
+ * flat — so the replay bot stays exact WITHOUT threading a seeded rng through the
+ * live scene. `applyBreak` is the THIRD outgoing amplifier, applied AFTER element
+ * and focus at the one damage seam (damageEnemy), so ×2 stacks cleanly and legibly. */
+export const BREAK_MUL = 2.0; // all damage to a BROKEN foe (after element+focus)
+/** chip as a FRACTION of the composure meter (so break-COUNT is fraction-driven,
+ *  independent of the meter's display size — see composureChip). */
+export const COMPOSURE_CHIP_WEAK = 0.34; // a weakness hit — the big stagger source
+export const COMPOSURE_CHIP_CONTROL = 0.25; // a LANDED control status (freeze/paralyze/sleep/hush)
+export const COMPOSURE_CHIP_OFF = 0.08; // a neutral/off-element/resisted hit — a nudge
+export const COMPOSURE_FOCUS_BONUS = 0.5; // a MARKED or EXPOSED foe takes +50% chip (Milo/Pippa shine)
+export const BREAK_TURNS_BOSS = 1; // a broken boss loses ONE beat (a reward window, never a stunlock)
+export const BREAK_TURNS_TRASH = 2; // a broken trash/elite loses two
+export const BREAK_ESCALATE = 1.2; // each break refills to a HIGHER max — repeats are earned, not free
+export const DEFAULT_BOSS_BREAK_RESIST = 0.4; // a boss's poise wall: incoming chip ×(1−this)
+
+export interface ChipOpts {
+  /** the hit found a WEAKNESS (the big chip) */
+  weak?: boolean;
+  /** a CONTROL status just LANDED on this hit (freeze/paralyze/sleep/hush) */
+  control?: boolean;
+  /** a plain damaging hit that is NOT a weakness (neutral/off/resisted) — the small chip */
+  neutral?: boolean;
+  /** the foe is MARKED or EXPOSED — +50% chip (the focus-fire × break combo) */
+  focused?: boolean;
+  /** the foe's chip RESISTANCE in [0,1] (bosses) — scales the whole chip down */
+  breakResist?: number;
+}
+
+/** how much COMPOSURE one action strips, as an integer off the `max` meter. Pure,
+ *  rng-free. Sources ADD (a weak hit that also lands control chips both); the
+ *  focus bonus and the boss's breakResist scale the total. */
+export function composureChip(max: number, o: ChipOpts): number {
+  let frac = 0;
+  if (o.weak) frac += COMPOSURE_CHIP_WEAK;
+  else if (o.neutral) frac += COMPOSURE_CHIP_OFF;
+  if (o.control) frac += COMPOSURE_CHIP_CONTROL;
+  if (o.focused) frac *= 1 + COMPOSURE_FOCUS_BONUS;
+  frac *= 1 - Math.min(1, Math.max(0, o.breakResist ?? 0));
+  return Math.max(0, Math.round(max * frac));
+}
+
+/** the BREAK payoff: all damage to a broken foe is ×BREAK_MUL (applied AFTER
+ *  element + focus at the damage seam). A no-op when the foe isn't broken. */
+export function applyBreak(dmg: number, broken: boolean): number {
+  return broken ? Math.max(1, Math.round(dmg * BREAK_MUL)) : dmg;
+}
+
+/** a blanket COMPOSURE meter for a foe with no explicit `composure` — a cosmetic
+ *  level-scaled poise number (bigger foes read as sturdier). The break-COUNT is
+ *  set by the chip FRACTIONS + breakResist, not by this value. */
+export function defaultComposure(level: number): number {
+  return Math.round(40 + level * 4);
+}
+
+/** on break-expiry the meter REFILLS to a higher max — escalating breaks keep a
+ *  boss from being perma-broken (each stagger is earned afresh, and harder). */
+export function nextComposureMax(max: number): number {
+  return Math.round(max * BREAK_ESCALATE);
+}
+
+/** how many of the foe's own turns a break lasts (its ×2 burst window). */
+export function breakTurns(boss: boolean): number {
+  return boss ? BREAK_TURNS_BOSS : BREAK_TURNS_TRASH;
 }
 
 /* ---- BURN (Fire γ+) — Fire's "stack damage over time" identity vs Freeze's

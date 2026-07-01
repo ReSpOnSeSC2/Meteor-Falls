@@ -17,6 +17,9 @@ import {
   ladder,
   bossCheck,
   allBossChecks,
+  allReadVsSpam,
+  allBreakEconomy,
+  breakLoopDpr,
   BOSS_PARTY,
   finaleHushChecks,
   FINALE_HUSH_HP,
@@ -27,6 +30,7 @@ import { ABILITIES } from '../data/abilities';
 import { AWAKENINGS } from '../data/awakenings';
 import { ENEMIES } from '../data/enemies';
 import { CHAPTER_MANIFESTS } from '../data/chapters';
+import { WEAK_MUL, RESIST_MUL, HOLY_PIERCE_MUL } from './formulas';
 import type { HeroId } from '../schemas';
 
 const HEROES: HeroId[] = ['rex', 'faye', 'milo', 'pippa', 'dorin'];
@@ -95,12 +99,29 @@ describe('expected-damage helpers read the formulas correctly', () => {
     expect(e).toBeLessThan(smash);
   });
 
-  it('a matching boss weakness multiplies a Vibe cast ×1.5', () => {
-    const fireA = ABILITIES.vibe_fire_a;
-    const plain = expectedAbilityDamage(fireA, 40, new Set());
-    const weak = expectedAbilityDamage(fireA, 40, new Set(['fire']));
+  it('a matching boss weakness multiplies a Vibe cast ×WEAK_MUL (1.8, ADR-134)', () => {
+    // a big-power ability so integer rounding doesn't skew the ratio
+    const fireX = ABILITIES.vibe_fire_x;
+    const plain = expectedAbilityDamage(fireX, 40, new Set());
+    const weak = expectedAbilityDamage(fireX, 40, new Set(['fire']));
     expect(weak).toBeGreaterThan(plain);
-    expect(weak / plain).toBeCloseTo(1.5, 1);
+    expect(weak / plain).toBeCloseTo(WEAK_MUL, 1);
+    expect(WEAK_MUL).toBe(1.8);
+  });
+
+  it('the WRONG element is ~×0.4 (holy still pierces to ×0.75), an ABSORBED element deals 0 (ADR-134)', () => {
+    const freezeX = ABILITIES.vibe_freeze_x; // element: freeze
+    const plain = expectedAbilityDamage(freezeX, 40, new Set());
+    const resisted = expectedAbilityDamage(freezeX, 40, new Set(), new Set(['freeze']));
+    const absorbed = expectedAbilityDamage(freezeX, 40, new Set(), new Set(), new Set(['freeze']));
+    expect(resisted / plain).toBeCloseTo(RESIST_MUL, 1); // ×0.4, a real reason to rotate off
+    expect(RESIST_MUL).toBe(0.4);
+    expect(absorbed).toBe(0); // absorbing an element is worse than useless — it heals the foe
+    // holy's identity: it pierces a slice of the resist, landing ~×0.75 not ×0.4
+    const starX = ABILITIES.starsong_x; // element: holy
+    const starPlain = expectedAbilityDamage(starX, 40, new Set());
+    const starResist = expectedAbilityDamage(starX, 40, new Set(), new Set(['holy']));
+    expect(starResist / starPlain).toBeCloseTo(HOLY_PIERCE_MUL, 1);
   });
 
   it('heals and pure-status casts deal no damage', () => {
@@ -115,6 +136,111 @@ describe('expected-damage helpers read the formulas correctly', () => {
     // by L52 his bar is deep enough that Σ is on the table
     const ids = abilitiesByLevel('rex', 52).map((a) => a.id);
     expect(ids).toContain('vibe_surge_x');
+  });
+});
+
+describe('ADR-134 elemental identity: same-tier parity, and the RIGHT element beats the biggest', () => {
+  // Mia's four damaging elements, by tier (γ/Ω/Σ — the "nuke" tiers where the old
+  // "biggest number wins" bug lived; α/β stay leap-gated openers).
+  const TIER = {
+    γ: { fire: 'vibe_fire_g', freeze: 'vibe_freeze_g', volt: 'vibe_volt_g', star: 'starsong_g' },
+    Ω: { fire: 'vibe_fire_o', freeze: 'vibe_freeze_o', volt: 'vibe_volt_o', star: 'starsong_o' },
+    Σ: { fire: 'vibe_fire_x', freeze: 'vibe_freeze_x', volt: 'vibe_volt_x', star: 'starsong_x' },
+  } as const;
+  const pw = (id: string): number => ABILITIES[id].power;
+
+  it('Freeze = Volt = Starsong at every nuke tier — so the element multiplier, not the number, decides the pick', () => {
+    for (const t of ['γ', 'Ω', 'Σ'] as const) {
+      const { freeze, volt, star } = TIER[t];
+      expect(pw(freeze), `${t} freeze/volt parity`).toBe(pw(volt));
+      expect(pw(volt), `${t} volt/starsong parity`).toBe(pw(star));
+    }
+  });
+
+  it('Fire sits 10–15% under parity on direct power — it makes the difference up in burn DoT (its identity)', () => {
+    for (const t of ['γ', 'Ω', 'Σ'] as const) {
+      const ceiling = pw(TIER[t].freeze);
+      const ratio = pw(TIER[t].fire) / ceiling;
+      expect(ratio, `Fire ${t} vs parity`).toBeGreaterThanOrEqual(0.83);
+      expect(ratio, `Fire ${t} vs parity`).toBeLessThanOrEqual(0.9);
+    }
+  });
+
+  it('the RIGHT element beats spam: hitting a weakness out-damages the biggest neutral nuke when that element is resisted', () => {
+    // Mia at L52. Against a freeze-weak foe she picks Freeze Σ (×1.8); against a
+    // freeze-RESISTING foe her best nuke is a NEUTRAL element (no bonus). The read wins.
+    const onWeakness = heroBestNuke('faye', 52, new Set(['freeze']));
+    const offElement = heroBestNuke('faye', 52, new Set(), new Set(), new Set(['freeze']));
+    expect(onWeakness, 'on-weakness nuke').toBeTruthy();
+    expect(offElement, 'off-element nuke').toBeTruthy();
+    expect(onWeakness!.dmg).toBeGreaterThan(offElement!.dmg);
+    // and the pick actually ROTATES onto the weak element rather than the biggest raw nuke
+    expect(onWeakness!.ability.element).toBe('freeze');
+  });
+
+  it('no same-tier nuke is strictly dominant: at parity, no non-Fire element out-powers another', () => {
+    for (const t of ['γ', 'Ω', 'Σ'] as const) {
+      const powers = [TIER[t].freeze, TIER[t].volt, TIER[t].star].map(pw);
+      expect(Math.max(...powers)).toBe(Math.min(...powers)); // all equal → none dominant
+    }
+  });
+});
+
+describe('ADR-134 the Break loop: PLAYING THE READ beats SPAMMING the biggest number', () => {
+  const checks = allReadVsSpam();
+
+  it('breakLoopDpr is an uplift over the base DPR (the ×2 window pays), bigger for trash', () => {
+    expect(breakLoopDpr(1000, true)).toBeGreaterThan(1000); // even a break-resistant boss gains
+    expect(breakLoopDpr(1000, false)).toBeGreaterThan(breakLoopDpr(1000, true)); // trash breaks faster
+  });
+
+  it('every boss falls at LEAST as fast to a party that plays the read as one that spams', () => {
+    for (const c of checks) {
+      expect(c.readDpr, `${c.name} read≥spam DPR`).toBeGreaterThanOrEqual(c.spamDpr);
+      expect(c.readTtk, `${c.name} read≤spam TTK`).toBeLessThanOrEqual(c.spamTtk);
+    }
+  });
+
+  it('across the whole suite the read is STRICTLY faster — the right action beats the biggest', () => {
+    const readTtk = checks.reduce((a, c) => a + c.readTtk, 0);
+    const spamTtk = checks.reduce((a, c) => a + c.spamTtk, 0);
+    const readDpr = checks.reduce((a, c) => a + c.readDpr, 0);
+    const spamDpr = checks.reduce((a, c) => a + c.spamDpr, 0);
+    expect(readTtk).toBeLessThan(spamTtk); // clears the game in fewer rounds
+    expect(readDpr).toBeGreaterThan(spamDpr); // and out-damages it every step
+  });
+
+  it('the model covers all ten bosses and some carry an exploitable weakness (the read has teeth)', () => {
+    expect(checks.length).toBe(10);
+    expect(checks.some((c) => c.weakness.length > 0)).toBe(true);
+  });
+});
+
+describe('ADR-134 Milo & Pippa are not dead weight late (the flat-tool crew earns its keep)', () => {
+  const ledger = allBreakEconomy();
+
+  it("Milo's siege SCALES with the boss — it climbs from hundreds early to thousands at the Hush", () => {
+    const early = ledger.find((r) => r.chapter === 1)!;
+    const late = ledger.find((r) => r.chapter === 10)!;
+    expect(late.siege).toBeGreaterThan(early.siege * 5); // no longer a flat 360 against a 150k boss
+    expect(late.siege).toBeGreaterThan(3000); // 360 + 2% of 150k = 3,360
+    // and it climbs monotonically with boss HP (the %-max-HP bite tracks the fight)
+    for (let i = 1; i < ledger.length; i++) expect(ledger[i].siege).toBeGreaterThanOrEqual(ledger[i - 1].siege);
+  });
+
+  it("Milo's control + Pippa's mark ACCELERATE the break — fewer actions to stagger the boss", () => {
+    for (const r of ledger) {
+      expect(r.actionsHelped, `Ch.${r.chapter} helped<plain`).toBeLessThan(r.actionsPlain);
+    }
+    // it roughly halves the setup (a 3-action break becomes ~2) — a material acceleration
+    const totalPlain = ledger.reduce((a, r) => a + r.actionsPlain, 0);
+    const totalHelped = ledger.reduce((a, r) => a + r.actionsHelped, 0);
+    expect(totalHelped).toBeLessThanOrEqual(totalPlain * 0.7);
+  });
+
+  it("Milo's siege carries a %-max-HP rider AND deepens a break (the two-part flat-tool fix)", () => {
+    expect(ABILITIES.siege_rocket.pctMaxHp).toBe(0.02);
+    expect(ABILITIES.siege_rocket.deepensBreak).toBe(true);
   });
 });
 

@@ -85,6 +85,15 @@ export const AbilityDefSchema = z.strictObject({
   target: TargetModeSchema,
   element: ElementSchema,
   status: z.string().min(1).optional(),
+  /** ADR-134 — a % of the TARGET's max HP added to the hit (the armor-piercing
+   *  "siege" component). Milo's top gadget is FLAT power, which goes limp against
+   *  a 95k boss; a small %-max-HP rider lets his tech SCALE into the late game so
+   *  he is never dead weight. Read at the outgoing damage seam; 0<pct<1. */
+  pctMaxHp: z.number().gt(0).lt(1).optional(),
+  /** ADR-134 — when this hit lands on a BROKEN foe, it DEEPENS the break (extends
+   *  the ×2 window by a turn). Milo's siege drives the stagger deeper — his lane
+   *  in the setup→break→burst loop, beyond raw damage. */
+  deepensBreak: z.boolean().optional(),
   text: z.string().min(1),
   /** S11: REQUIRED battle-effect key into battle/fxRegistry.ts — every
    *  ability gets a face. The validator checks the registry both directions. */
@@ -174,10 +183,16 @@ export const EnemyDefSchema = z.strictObject({
   cash: z.number().int().min(0),
   weakness: z.array(z.enum(['fire', 'freeze', 'volt', 'insect', 'salt', 'holy'])),
   /** S-Mia ("The Girl Who Prays"): the OUTGOING resist seam — elements that hit
-   *  this foe for ~×0.5 (Mia's applyElement reads it; `holy` PIERCES a slice, so
-   *  the Embers' light still lands ~×0.75 on a holy-resistant foe). Optional, so
-   *  every shipped enemy parses byte-identical — none resist anything today. */
+   *  this foe for ~×0.4 (RESIST_MUL; Mia's applyElement reads it; `holy` PIERCES a
+   *  slice, so the Embers' light still lands ~×0.75 on a holy-resistant foe).
+   *  ADR-134 lights this up: a foe's resist must differ from its weakness so the
+   *  right element is a real read. Optional; an uncoloured foe parses byte-identical. */
   resists: z.array(z.enum(['fire', 'freeze', 'volt', 'holy'])).optional(),
+  /** ADR-134: a handful of SIGNATURE foes ABSORB an element — that hit deals 0 and
+   *  HEALS the foe (~½ the would-be damage, absorbHeal), the inverse of a weakness.
+   *  Reuses the golem `healedBy` idea (bosses.ts) as a plain EnemyDef field; wired at
+   *  the single outgoing damage seam. Must not overlap the foe's own weakness. */
+  absorbs: z.array(z.enum(['fire', 'freeze', 'volt', 'holy'])).optional(),
   /** §A7: every enemy has 2–4 moves… */
   moves: z.array(EnemyMoveSchema).min(2).max(4),
   /** …and one flavor death line */
@@ -200,10 +215,19 @@ export const EnemyDefSchema = z.strictObject({
    *  "I win" on a boss (§A3 amended; the build prompt §4). Elites instead
    *  ROLL a level-scaled resist; only the truly immune carry this flag. */
   mind_immune: z.boolean().optional(),
-  /** ADR-099: a per-enemy WEAKNESS multiplier override (default 1.5 = WEAK_MUL). §A6
-   *  Ch.3: the Headmaster Mainframe's cooling-fan weak point makes Vibe Freeze "double"
-   *  (×2) literally — only this foe carries it; everything else keeps the generic ×1.5. */
+  /** ADR-099: a per-enemy WEAKNESS multiplier override (default = WEAK_MUL, 1.8 as of
+   *  ADR-134). §A6 Ch.3: the Headmaster Mainframe's cooling-fan weak point makes Vibe
+   *  Freeze "double" (×2) literally — only this foe carries it; everything else keeps
+   *  the generic multiplier. */
   weakMul: z.number().min(1).optional(),
+  /** ADR-134 (Break): the foe's COMPOSURE — the stagger meter's max. Hitting a
+   *  weakness / landing control chips it; at 0 the foe BREAKS (skips a beat, takes
+   *  ×2 for a window). Set on elites + bosses; omit (or 0) = unbreakable (no meter). */
+  composure: z.number().int().positive().optional(),
+  /** ADR-134 (Break): a boss's chip RESISTANCE in [0,1] — incoming composure chip is
+   *  scaled by (1 − breakResist), so a well-defended boss needs real setup and a break
+   *  is a earned reward window, never a stunlock. Mirrors the mind_immune philosophy. */
+  breakResist: z.number().min(0).max(1).optional(),
 });
 export type EnemyDef = z.infer<typeof EnemyDefSchema>;
 
@@ -1065,6 +1089,18 @@ export const PhaseActionSchema = z.discriminatedUnion('kind', [
    *  damage mirror of partyStatus (which only inflicts a condition). The scene loops
    *  aliveHeroes and draws `amount` real HP from each — the loneliness lands as a wound. */
   z.strictObject({ kind: z.literal('partyDamage'), amount: z.number().int().positive() }),
+  /** ADR-134 — a TELEGRAPHED wind-up: this turn the boss ANNOUNCES a big attack
+   *  (`line`, a printWait telegraph); it LANDS the boss's NEXT turn (`amount` party
+   *  damage, ward/shield-mitigable, and/or a `status`) UNLESS the party answers —
+   *  BREAK the boss (or freeze/sleep it) and the wind-up COLLAPSES. The reusable
+   *  boss-telegraph hook: a data beat, not bespoke code. */
+  z.strictObject({
+    kind: z.literal('windup'),
+    line: z.string().min(1),
+    amount: z.number().int().positive().optional(),
+    status: z.enum(['crying', 'asleep', 'paralyzed', 'sunburn', 'hushed']).optional(),
+    turns: z.number().int().min(1).optional(),
+  }),
 ]);
 export type PhaseAction = z.infer<typeof PhaseActionSchema>;
 

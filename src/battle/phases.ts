@@ -49,6 +49,15 @@ export interface PhaseEffects {
   awaken(awakening: string): Promise<void> | void;
 }
 
+/** ADR-134 — a telegraphed wind-up in flight: what LANDS next turn if the party
+ *  doesn't BREAK (or freeze/sleep) the boss first. Mirrors the `windup` PhaseAction. */
+export interface WindupSpec {
+  line: string;
+  amount?: number;
+  status?: 'crying' | 'asleep' | 'paralyzed' | 'sunburn' | 'hushed';
+  turns?: number;
+}
+
 /** prayTierAtLeast ranking — backfire is the floor, miraculous the ceiling */
 const TIER_RANK: Record<PrayTier, number> = {
   backfire: 0,
@@ -96,6 +105,10 @@ export class PhaseRunner {
   mercy = false;
   /** equipment the boss is holding hostage (Hoaxula) — returned on win */
   stolen: Array<{ heroId: string; itemId: string }> = [];
+  /** ADR-134 — a TELEGRAPHED attack armed this turn, due to LAND next turn (the
+   *  scene resolves it via dueWindup, or the party cancels it by BREAKing the boss). */
+  pendingWindup: WindupSpec | null = null;
+  private windupArmedTurn = -2;
   private bossTurns = 0;
   private fired = new Set<string>();
   private everSummoned = false;
@@ -331,10 +344,29 @@ export class PhaseRunner {
       case 'partyDamage':
         await this.fx.partyDamage(a.amount);
         return;
+      case 'windup':
+        // ADR-134 — ARM the telegraph this turn; the scene RESOLVES it next turn
+        // (dueWindup) unless the party breaks/controls the boss first. The `line`
+        // is the printWait warning (HOLD to read) — the same scriptLine channel.
+        this.pendingWindup = { line: a.line, amount: a.amount, status: a.status, turns: a.turns };
+        this.windupArmedTurn = this.bossTurns;
+        await this.fx.scriptLine(a.line);
+        return;
       case 'awaken':
         await this.fx.awaken(a.awakening);
         return;
     }
+  }
+
+  /** ADR-134 — a wind-up armed a PRIOR turn and now due to resolve (the scene lands
+   *  or cancels it). null while it's still the turn it was telegraphed. */
+  dueWindup(): WindupSpec | null {
+    return this.pendingWindup && this.bossTurns > this.windupArmedTurn ? this.pendingWindup : null;
+  }
+
+  /** the wind-up resolved (landed or was cancelled) — clear it. */
+  clearWindup(): void {
+    this.pendingWindup = null;
   }
 }
 

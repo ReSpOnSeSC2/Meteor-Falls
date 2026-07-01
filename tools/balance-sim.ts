@@ -18,6 +18,8 @@ import {
   growthRow,
   ladder,
   allBossChecks,
+  allReadVsSpam,
+  allBreakEconomy,
   finaleHushChecks,
   AWAKENING_LEVEL,
   type GrowthRow,
@@ -88,6 +90,32 @@ for (const b of allBossChecks()) {
 }
 console.log('  (TTK is a CONSERVATIVE floor: no weapons, no items, no Pray/support — real geared');
 console.log('   fights fell faster. A fair EB boss is ~5–15 turns; the Tick/Hush are scripted set-pieces.)');
+
+console.log('\nADR-134 — THE READ vs THE SPAM (does setup→break→burst beat biggest-number spam?)\n');
+console.log('  Ch  Boss                     spamDPR  spamTTK    readDPR  readTTK   Δ  weakness');
+for (const r of allReadVsSpam()) {
+  const delta = r.spamTtk - r.readTtk;
+  console.log(
+    `  ${pad(r.chapter, 2)}  ${r.name.slice(0, 22).padEnd(22)} ${pad(r.spamDpr, 7)}  ${pad(r.spamTtk, 5)}    ${pad(r.readDpr, 7)}  ${pad(r.readTtk, 5)}  ${pad(delta, 2)}  ${r.weakness.join(',') || '—'}`,
+  );
+}
+console.log('  (SPAM = fire the biggest raw nuke every turn, colour be damned — it eats resists and');
+console.log('   misses weaknesses. READ = rotate onto the weakness (×1.8), then set up + cash a BREAK');
+console.log('   (×2 window). readTTK ≤ spamTTK for every boss, strictly faster across the suite — the');
+console.log('   right action beats the biggest action, exactly as ADR-134 intends. money > combat untouched.)');
+
+console.log('\nADR-134 — MILO & PIPPA IN THE BREAK ECONOMY (the flat-tool crew earns its keep)\n');
+console.log('  Ch  Boss                      siegeDMG   breakActions(plain → +Milo/Pippa)');
+for (const r of allBreakEconomy()) {
+  const name = allBossChecks().find((b) => b.chapter === r.chapter)?.name ?? '';
+  console.log(
+    `  ${pad(r.chapter, 2)}  ${name.slice(0, 22).padEnd(22)} ${pad(r.siege, 7)}      ${r.actionsPlain} → ${r.actionsHelped}`,
+  );
+}
+console.log('  (siegeDMG = Milo\'s siege_rocket = 360 flat + 2% of the boss\'s max HP — it SCALES with the');
+console.log('   fight (360 early → thousands late) so Milo is never dead weight. breakActions = how many');
+console.log('   weakness hits BREAK the boss: plain, vs WITH Milo\'s control chip + Pippa\'s mark (+50%) —');
+console.log('   they cut the setup ~in half. Scout/mark/control materially accelerate the break (§4.7).)');
 
 console.log('\nTHE HUSH — FINALE LOADOUT VARIANTS (§4.3, ADR-130): party 3/4/5 × Comet Ω × Stolen Light\n');
 console.log('  Variant                                     Size   Ω     Light    HP     DPR   TTK');
