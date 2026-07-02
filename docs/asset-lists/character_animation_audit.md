@@ -8,10 +8,10 @@ This checks the authored 46-frame character sheets against the runtime frame con
 - Registered characters: 97
 - Unregistered character sheets on disk: 0
 - Path overrides: 0
-- Characters with issues: 58
+- Characters with issues: 57
 - Errors: 0
-- Warnings: 260
-- Review hints: 104
+- Warnings: 255
+- Review hints: 82
 
 Interactive playback page: [character_animation_audit.html](character_animation_audit.html)
 
@@ -231,31 +231,6 @@ Common presets:
 - WARN run up-right: run pair is nearly frozen (0.003)
 - WARN run up-left: run pair is nearly frozen (0.003)
 
-### fernLady (fernLady)
-- REVIEW frame 3: walk down looks closer to upright than down
-- REVIEW frame 5: walk left looks closer to up than left
-- REVIEW frame 6: walk left looks closer to right than left
-- REVIEW frame 7: walk left looks closer to right than left
-- REVIEW frame 11: walk right looks closer to downright than right
-- REVIEW frame 16: run down looks closer to downright than down
-- REVIEW frame 17: run down looks closer to downright than down
-- REVIEW frame 18: run left looks closer to up than left
-- REVIEW frame 19: run left looks closer to up than left
-- REVIEW frame 20: run right looks closer to upleft than right
-- REVIEW frame 21: run right looks closer to downleft than right
-- REVIEW frame 22: run up looks closer to downleft than up
-- REVIEW frame 23: run up looks closer to downleft than up
-- REVIEW frame 36: run down-right looks closer to down than downright
-- REVIEW frame 37: run down-right looks closer to right than downright
-- REVIEW frame 38: run down-left looks closer to upleft than downleft
-- REVIEW frame 39: run down-left looks closer to left than downleft
-- REVIEW frame 41: run up-right looks closer to right than upright
-- WARN walk left: stand frames 0/2 are not stable (0.103)
-- WARN walk right: stand frames 0/2 are not stable (0.082)
-- WARN run up-right: run pair is nearly frozen (0.008)
-- REVIEW left/right: standing pair is not mirror-compatible (0.198)
-- REVIEW up diagonals: standing pair is not mirror-compatible (0.221)
-
 ### fjord_nurse (fjord_nurse)
 - WARN walk down: step frames 1/3 are nearly frozen (0.002)
 - WARN walk left: step frames 1/3 are nearly frozen (0.006)
@@ -283,14 +258,10 @@ Common presets:
 - WARN run right: run pair is nearly frozen (0.009)
 
 ### lh_calligrapher (lh_calligrapher)
-- REVIEW frame 3: walk down looks closer to right than down
-- REVIEW frame 15: walk up looks closer to right than up
-- REVIEW frame 17: run down looks closer to right than down
-- REVIEW frame 23: run up looks closer to right than up
-- WARN walk left: step frames 1/3 are nearly frozen (0.006)
-- WARN walk right: step frames 1/3 are nearly frozen (0.006)
-- WARN run left: run pair is nearly frozen (0.006)
-- WARN run right: run pair is nearly frozen (0.006)
+- REVIEW frame 3: walk down looks closer to downleft than down
+- REVIEW frame 17: run down looks closer to downleft than down
+- WARN walk up: step frames 1/3 are nearly frozen (0.006)
+- WARN run up: run pair is nearly frozen (0.006)
 - WARN walk down-right: diagonal step pair is nearly frozen (0.006)
 - WARN walk down-left: diagonal step pair is nearly frozen (0.006)
 - WARN walk up-right: diagonal step pair is nearly frozen (0.006)
@@ -584,7 +555,7 @@ Common presets:
 | docPuerto | docPuerto | npc | 5 |
 | docValle | docValle | npc | 8 |
 | drugClerk | drugClerk | npc | 4 |
-| fernLady | fernLady | npc | 23 |
+| fernLady | fernLady | npc | 0 |
 | fjord_nurse | fjord_nurse | npc | 10 |
 | glint | glint | npc | 0 |
 | grand_duchess_millimetta | grand_duchess_millimetta | npc | 6 |
@@ -592,7 +563,7 @@ Common presets:
 | kvisthavn_fisher | kvisthavn_fisher | npc | 4 |
 | kvisthavn_shopkeeper | kvisthavn_shopkeeper | npc | 0 |
 | laughing_ruins_guide | laughing_ruins_guide | npc | 0 |
-| lh_calligrapher | lh_calligrapher | npc | 16 |
+| lh_calligrapher | lh_calligrapher | npc | 12 |
 | lh_harbor_master | lh_harbor_master | npc | 4 |
 | lh_lantern_girl | lh_lantern_girl | npc | 4 |
 | lh_tea_monk | lh_tea_monk | npc | 10 |

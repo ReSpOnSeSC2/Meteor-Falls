@@ -29,7 +29,15 @@ The user hits session usage limits quickly. Two audit fleets already rate-limite
 
 ## 2. WHAT REMAINS — prioritized work orders
 
-### 2.1 Wire the Norway + Africa tile skins (BIGGEST WIN, code-only)
+> **STATUS 2026-07-02 (phase-2 session):** §2.1 DONE + live-verified (5 maps screenshot).
+> §2.2 items 1–4 DONE (fernLady whole sheet, grayCommuter UP, lh_harbor_master UP,
+> lh_calligrapher LEFT+UP — all synced runtime+master, anim:audit hints 104→82); item 5
+> (optional quality tier) still open. §2.3 court re-compose + rim nudges DONE + live-verified
+> (crosshair-on-ring proof); master cell regens still open. §2.4 Valle doors DONE (LANDMARK
+> routing + re-measured door.ox, shop entry walked live), pagoda padded 160→232; npc_bert +
+> balance follow-ups remain owner-call. Gates green (tsc/validate/1290 tests/balance/audits).
+
+### 2.1 Wire the Norway + Africa tile skins (BIGGEST WIN, code-only) — ✅ DONE 2026-07-02
 `assets/art/world/Norway_tiles_16.png` and `Africa_tiles_16.png` are fully authored (same Jun-15 batch as the wired Minimus strip) but **completely unwired** — Ch.4 (kvisthavn, lilleby, bootstep_moor) and Ch.6 (zanzibel, savanna_run, laughing_ruins) render generic base tiles.
 
 Workflow (copy the CHINA template exactly — grep `CHINA_TILE` in `src/spritegen/authored.ts` and `CHINA_TILE_SKIN`/`TILE_SKIN` in `src/scenes/OverworldScene.ts` ~lines 274-375):

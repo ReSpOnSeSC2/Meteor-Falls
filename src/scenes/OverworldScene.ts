@@ -286,6 +286,77 @@ const MINIMUS_TILE_SKIN: Readonly<Record<string, string>> = {
   grass_b: 'minimus_turf', // decorative grass (`,`) → velvet lawn
   grass_tuft: 'minimus_turf', // decorative grass (`~`) → velvet lawn
 };
+/** Ch.4 NORWAY (Kvisthavn / Bootstep Moor / Lilleby) tile reskin — the fjord hamlet, the
+ *  snowy moor, and the giants' town wear pebbled snow ground, a grey cobbled quay-lane,
+ *  sheer rock-cliff walls, and open fjord water (the authored Norway_tiles_16.png strip).
+ *  Each Norway tile carries the SAME solidity as the base it replaces (water stays solid
+ *  like sea_a), so the remap is purely cosmetic — collision/BFS read the unchanged grid.
+ *  The Sleeper's Spine dungeon keeps its own interior look. */
+const NORWAY_SKIN_MAPS: ReadonlySet<string> = new Set([
+  'kvisthavn',
+  'bootstep_moor',
+  'lilleby',
+]);
+const NORWAY_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'norway_ground', // hamlet green / moor floor (`.`) → pebbled snow
+  grass_b: 'norway_ground', // decorative grass (`,`)
+  grass_tuft: 'norway_ground', // decorative grass (`~`)
+  office_floor: 'norway_ground', // outdoor way-gaps (`o`) blend into the snow
+  road: 'norway_path', // any street (`R`) → grey cobblestone
+  sidewalk: 'norway_path', // the quay lane / moor track (`=`) → cobblestone
+  road_dash: 'norway_path', // the centreline (`D`) — a fjord lane needs no dash
+  office_wall: 'norway_wall', // outdoor walls (`O`) → rock cliff (SOLID)
+  brick: 'norway_wall', // the cliff borders (`B`) → rock cliff (SOLID)
+  bush: 'norway_wall', // any solid bush (`b`) → a rock outcrop (SOLID)
+  sea_a: 'norway_water', // the fjord (`e`) → open fjord water (SOLID; foam lip `E` stays)
+};
+/** Ch.6 AFRICA tile reskins — the Africa_tiles_16.png strip authors THREE sub-biomes, so
+ *  each Ch.6 outdoor map gets its own map-scoped skin (the Ch.10 Aurora/Lani/Mars precedent):
+ *  Zanzibel = ochre-sand spice port, the Savanna Run = sun-bleached grassland with a cracked
+ *  dust track, the Laughing Ruins = cracked dry earth walled in carved laughing stone. Each
+ *  tile carries the SAME solidity as the base it replaces, so the remaps are purely cosmetic. */
+const ZANZIBEL_SKIN_MAPS: ReadonlySet<string> = new Set(['zanzibel']);
+const ZANZIBEL_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'africa_sand', // the port ground (`.`) → ochre sand
+  grass_b: 'africa_sand', // decorative grass (`,`)
+  grass_tuft: 'africa_sand', // decorative grass (`~`)
+  office_floor: 'africa_sand', // way-gaps (`o`) blend into the sand
+  road: 'africa_path', // the Quayside Run / bazaar road (`R`) → sandstone flags
+  sidewalk: 'africa_path', // any avenue (`=`) → sandstone flags
+  road_dash: 'africa_path', // the centreline (`D`) — a bazaar street needs no dash
+  office_wall: 'africa_wall', // outdoor walls (`O`) → adobe (SOLID)
+  brick: 'africa_wall', // the town border (`B`) → adobe (SOLID)
+  bush: 'africa_wall', // any solid bush (`b`) → an adobe section (SOLID)
+  sea_a: 'africa_water', // the harbor (`e`) → teal water (SOLID; foam lip `E` stays)
+};
+const SAVANNA_SKIN_MAPS: ReadonlySet<string> = new Set(['savanna_run']);
+const SAVANNA_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'africa_grass', // sun-bleached grass (`.`) → savanna grassland
+  grass_b: 'africa_grass', // decorative grass (`,`)
+  grass_tuft: 'africa_grass', // decorative grass (`~`)
+  office_floor: 'africa_grass', // way-gaps (`o`) blend into the grass
+  road: 'africa_earth', // any street (`R`) → cracked dry earth
+  sidewalk: 'africa_earth', // THE RUN's broad dust track (`=`) → cracked dry earth
+  road_dash: 'africa_earth', // the centreline (`D`) — a caravan track needs no dash
+  office_wall: 'africa_wall', // outcrops (`O`) → adobe/dried-mud rock (SOLID)
+  brick: 'africa_wall', // the run borders (`B`) → adobe (SOLID)
+  sea_a: 'africa_water', // the watering hole (`e`) → teal water (SOLID)
+  // NOTE: `bush` stays the base green bush — scrub reads right on savanna grass.
+};
+const RUINS_SKIN_MAPS: ReadonlySet<string> = new Set(['laughing_ruins']);
+const RUINS_TILE_SKIN: Readonly<Record<string, string>> = {
+  grass_a: 'africa_earth', // the ruin floor (`.`) → cracked dry earth
+  grass_b: 'africa_earth', // decorative grass (`,`)
+  grass_tuft: 'africa_earth', // decorative grass (`~`)
+  office_floor: 'africa_earth', // way-gaps (`o`) blend into the earth
+  road: 'africa_path', // processional ways (`R`) → sandstone flags
+  sidewalk: 'africa_path', // any avenue (`=`) → sandstone flags
+  road_dash: 'africa_path', // the centreline (`D`) — a ruin path needs no dash
+  office_wall: 'africa_ruin_wall', // the ruin walls (`O`) → carved laughing stone (SOLID)
+  brick: 'africa_ruin_wall', // the borders (`B`) → carved laughing stone (SOLID)
+  bush: 'africa_ruin_wall', // any solid bush (`b`) → a carved block (SOLID)
+  sea_a: 'africa_water', // any pool (`e`) → teal water (SOLID)
+};
 /** PKG-15 §1 — the Ch.8 CHINA (Lotus Harbor) tile reskin. Same render-time name-remap as
  *  MINIMUS_TILE_SKIN: the shared grid chars render as the authored China_tiles_16.png cells
  *  on the Ch.8 settlement/route/temple maps ONLY (the spore_forest dungeon keeps its own
@@ -807,6 +878,10 @@ export class OverworldScene extends Phaser.Scene {
     // PKG-12 §A11 — render the Ch.5 maps with the Minimus tile skin (cosmetic remap;
     // collision-preserving — see MINIMUS_TILE_SKIN). Other maps are untouched.
     const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
+    const norwaySkin = NORWAY_SKIN_MAPS.has(this.mapDef.id);
+    const zanzibelSkin = ZANZIBEL_SKIN_MAPS.has(this.mapDef.id);
+    const savannaSkin = SAVANNA_SKIN_MAPS.has(this.mapDef.id);
+    const ruinsSkin = RUINS_SKIN_MAPS.has(this.mapDef.id);
     const chinaSkin = CHINA_SKIN_MAPS.has(this.mapDef.id);
     const romaniaSkin = ROMANIA_SKIN_MAPS.has(this.mapDef.id);
     const auroraSkin = AURORA_SKIN_MAPS.has(this.mapDef.id);
@@ -846,6 +921,23 @@ export class OverworldScene extends Phaser.Scene {
             // chars render as privet turf / hedge wall / cobble. The Minimus tile carries
             // the SAME solidity as the base it replaces, so collision below is unchanged.
             name = MINIMUS_TILE_SKIN[name];
+          } else if (norwaySkin && NORWAY_TILE_SKIN[name]) {
+            // Ch.4 — the Kvisthavn fjord reskin (Ch.4 outdoor maps only): pebbled snow /
+            // cobbled quay-lane / rock cliff / fjord water. Same solidity as the base it
+            // replaces, so collision below is unchanged.
+            name = NORWAY_TILE_SKIN[name];
+          } else if (zanzibelSkin && ZANZIBEL_TILE_SKIN[name]) {
+            // Ch.6 — the Zanzibel spice-port reskin: ochre sand / sandstone flags / adobe
+            // walls / teal harbor. Same solidity as the base, collision unchanged.
+            name = ZANZIBEL_TILE_SKIN[name];
+          } else if (savannaSkin && SAVANNA_TILE_SKIN[name]) {
+            // Ch.6 — the Savanna Run reskin: sun-bleached grassland / cracked dust track.
+            // Same solidity as the base, collision unchanged.
+            name = SAVANNA_TILE_SKIN[name];
+          } else if (ruinsSkin && RUINS_TILE_SKIN[name]) {
+            // Ch.6 — the Laughing Ruins reskin: cracked dry earth / carved laughing-stone
+            // walls. Same solidity as the base, collision unchanged.
+            name = RUINS_TILE_SKIN[name];
           } else if (chinaSkin && CHINA_TILE_SKIN[name]) {
             // PKG-15 §1 — the Lotus Harbor reskin (Ch.8 maps only): the shared grid chars
             // render as jade river-dust ground / stone flagstone / temple masonry. Same

@@ -68,7 +68,7 @@ export interface LinksLaunch {
 type Stage = 'card' | 'play' | 'score' | 'tally';
 /** side-on golfer poses: the swing cycle (address → top → impact → finish) plus
  *  the hole-out reactions (pump A/B fist-pump win, slump A/B dejected loss) */
-type BehindPose = 'address' | 'top' | 'impact' | 'finish' | 'putt' | 'pumpA' | 'pumpB' | 'slumpA' | 'slumpB';
+type BehindPose = 'address' | 'top' | 'impact' | 'finish' | 'putt' | 'puttBack' | 'puttThrough' | 'pumpA' | 'pumpB' | 'slumpA' | 'slumpB';
 
 export class LinksScene extends Phaser.Scene {
   private cfg!: LinksLaunch;
@@ -129,6 +129,10 @@ export class LinksScene extends Phaser.Scene {
   private topCam = { fx: 0.5, fy: 0.5, zoom: 1 };
   private topCamT = { fx: 0.5, fy: 0.5, zoom: 1 };
   private lastCamAt = 0;
+  /** the CURRENT behind-backdrop shot context (tee/approach/bunker/putt) —
+   *  behindXY maps depth against where that painting composes its green */
+  private behindBgType: 'tee' | 'approach' | 'bunker' | 'putt' | '' = '';
+  private courseCrisp = false;
   private vKey?: Phaser.Input.Keyboard.Key;
   /** behind-POV: the authored down-the-fairway backdrop, the back-view golfer,
    *  and the diorama demoted to a corner minimap */
@@ -159,6 +163,10 @@ export class LinksScene extends Phaser.Scene {
     impact: { key: 'links_golfer_back_impact', scale: 1.07, fx: 0.15, dx: 0 },
     finish: { key: 'links_golfer_back_finish', scale: 1.16, fx: 0, dx: 0 },
     putt: { key: 'links_golfer_back_putt', scale: 1.0, fx: 0, dx: 22 },
+    // the authored putting STROKE (2026-07): backswing while the power needle
+    // rises, through-swing as the accuracy needle falls + right after impact
+    puttBack: { key: 'links_golfer_back_putt_back', scale: 1.0, fx: 0, dx: 22 },
+    puttThrough: { key: 'links_golfer_back_putt_through', scale: 1.0, fx: 0, dx: 22 },
     // hole-out reactions (two frames each, alternated for a small idle loop).
     // pumpB raises a fist overhead so its crop is taller → biggest scale-up.
     pumpA: { key: 'links_golfer_back_pump_a', scale: 1.07, fx: 0, dx: 0 },
@@ -403,6 +411,7 @@ export class LinksScene extends Phaser.Scene {
     // until they arrive — never leave it pointing at a texture we just freed.
     this.behindBg.setTexture('links_fairway');
     this.behindBgKey = 'links_fairway';
+    this.behindBgType = ''; // re-read on the first behind frame of the new hole
     ensureGolfBehindArt(this, hole.id, this.prevBehindHoleId);
     this.prevBehindHoleId = hole.id;
     this.settleHoldUntil = 0;
@@ -839,6 +848,14 @@ export class LinksScene extends Phaser.Scene {
     this.bannerUntil = this.elapsed + ms;
   }
 
+  /** Resolve a pose, falling back to the static putt/address art if a pose's
+   *  texture isn't resident (missing PNG never blanks the golfer). */
+  private poseFor(name: BehindPose): { key: string; scale: number; fx: number; dx: number } {
+    const pose = this.BEHIND_POSES[name];
+    if (this.textures.exists(pose.key)) return pose;
+    return this.BEHIND_POSES[name === 'puttBack' || name === 'puttThrough' ? 'putt' : 'address'];
+  }
+
   /** Pick the side-on swing pose for the current phase (both views use it).
    *  Address holds through aim; the club winds up to the top across the power
    *  tap; impact flashes for a beat at the strike, then the finish holds through
@@ -848,18 +865,19 @@ export class LinksScene extends Phaser.Scene {
     const putt = sim.swingMode() === 'putt';
     // hold the finish through the post-shot landing beat (the sim is already back
     // at 'aim', but the golfer should be watching the ball, not re-addressing)
-    if (this.inSettleHold()) return putt ? 'putt' : 'finish';
+    if (this.inSettleHold()) return putt ? 'puttThrough' : 'finish';
     switch (sim.phase) {
       case 'aim':
         return putt ? 'putt' : 'address';
       case 'power':
-        return putt ? 'putt' : sim.meterT < 0.5 ? 'address' : 'top';
+        return putt ? 'puttBack' : sim.meterT < 0.5 ? 'address' : 'top';
       case 'acc':
-        return putt ? 'putt' : 'top';
+        // the falling needle IS the through-swing: back → strikes through the ball
+        return putt ? (sim.meterT > GOLF.ACC_CENTER + 0.2 ? 'puttBack' : 'puttThrough') : 'top';
       case 'flight':
         return this.elapsed - this.lastStrikeAt < 130 ? 'impact' : 'finish';
       case 'roll':
-        return putt ? 'putt' : 'finish';
+        return putt ? 'puttThrough' : 'finish';
       case 'holed':
         // win (≤ par) → fist-pump, else dejected slump; two frames alternate for
         // a small idle loop (pump quicker than the slow slump), mirroring the old
@@ -1028,7 +1046,9 @@ export class LinksScene extends Phaser.Scene {
       const p0 = projectPoint(this.baseProj, s(hole.pin.x), s(hole.pin.y));
       const span = Math.hypot(b0.x - p0.x, b0.y - p0.y);
       const want = 0.44 * Math.min(this.scale.width, this.scale.height);
-      const zoom = Math.max(1, Math.min(2.6, want / Math.max(s(15), span)));
+      // cap 2.2: past that the small diorama smears and its 2-anchor art fit
+      // visibly drifts from the sim grid (the labels are sim-true, the paint isn't)
+      const zoom = Math.max(1, Math.min(2.2, want / Math.max(s(15), span)));
       this.topCamT = { fx: (bf.fx + pf.fx) / 2, fy: (bf.fy + pf.fy) / 2, zoom };
     }
     const k = 1 - Math.exp(-Math.max(0, dtMs) / 240); // ~0.24s glide
@@ -1041,6 +1061,12 @@ export class LinksScene extends Phaser.Scene {
       // is the CAMERA subject itself — transform it to the camera every frame)
       this.course.setScale(this.proj.fit);
       this.course.setPosition(this.proj.dx + this.proj.dw / 2, this.proj.dy + this.proj.dh / 2);
+      // zoomed in, LINEAR smears the small diorama — swap to crisp pixels (on-brand)
+      const wantCrisp = this.topCam.zoom > 1.25;
+      if (wantCrisp !== this.courseCrisp) {
+        this.courseCrisp = wantCrisp;
+        this.course.texture.setFilter(wantCrisp ? Phaser.Textures.FilterMode.NEAREST : Phaser.Textures.FilterMode.LINEAR);
+      }
     }
   }
 
@@ -1071,7 +1097,7 @@ export class LinksScene extends Phaser.Scene {
     // behind view uses), sized small for the aerial course and facing down-the-
     // line. The body stays a constant size as the club swings up (pose.scale);
     // fx re-centres the crop (mirrored with facing).
-    const pose = this.BEHIND_POSES[this.swingPose()];
+    const pose = this.poseFor(this.swingPose());
     const gtex = this.textures.get(pose.key).getSourceImage() as { width: number; height: number };
     this.golfer.setTexture(pose.key);
     this.golfer.setScale((this.topGolferH * pose.scale) / Math.max(1, gtex.height));
@@ -1255,16 +1281,18 @@ export class LinksScene extends Phaser.Scene {
     const sim = this.sim;
     const isPutt = sim.mode === 'putt' || (sim.phase === 'aim' && sim.swingMode() === 'putt');
     if (!isPutt) return 0;
-    if (sim.phase === 'power') return -7 * Math.max(0, Math.min(1, sim.meterT)); // backswing
+    // the authored putt_back/putt_through frames carry the stroke now — this
+    // nudge is a soft in-between so the pose swap doesn't read as a pop
+    if (sim.phase === 'power') return -2 * Math.max(0, Math.min(1, sim.meterT)); // backswing
     if (sim.phase === 'acc') {
       const through = Math.max(0, Math.min(1, (GOLF.POWER_CAP - sim.meterT) / GOLF.POWER_CAP));
       // swing through from the backswing depth actually reached (sim.power is the
       // captured tap) — the sim snaps meterT to POWER_CAP at the acc handoff, so
-      // an unscaled -7 would pop a soft putt to the full backswing for one frame
-      return -7 * Math.min(1, sim.power) * (1 - through) + 4 * through; // back → through the ball
+      // an unscaled nudge would pop a soft putt to the full backswing for one frame
+      return -2 * Math.min(1, sim.power) * (1 - through) + 2 * through; // back → through the ball
     }
     const since = this.elapsed - this.lastStrikeAt;
-    if ((sim.phase === 'roll' || sim.phase === 'flight') && since < 260) return 4 * (1 - since / 260); // follow-through
+    if ((sim.phase === 'roll' || sim.phase === 'flight') && since < 260) return 2 * (1 - since / 260); // follow-through
     return 0;
   }
 
@@ -1339,12 +1367,29 @@ export class LinksScene extends Phaser.Scene {
     this.drawLandingReticle(g, to.x, to.y, landTint);
   }
 
+  /** The screen fraction where the CURRENT behind backdrop paints its green:
+   *  long tee shots compose the green near the horizon; approach/bunker frame
+   *  it mid-field; the putt paintings fill the lower frame with it. */
+  private greenDepthFrac(): number {
+    switch (this.behindBgType) {
+      case 'tee': return 0.30;
+      case 'approach': return 0.40;
+      case 'bunker': return 0.40;
+      case 'putt': return 0.47;
+      default: return 0.42;
+    }
+  }
+
   /** Project a sim-space ground point into the behind-the-player perspective. */
   private behindXY(simX: number, simY: number, settled = false): { x: number; y: number; along: number; scale: number } {
     const W = this.scale.width;
     const H = this.scale.height;
     const cx = W / 2;
-    const greenY = H * 0.45; // the green/flag sits ~45% down the backdrop
+    // WHERE THE PAINTED GREEN SITS varies by backdrop composition: the long tee
+    // paintings put it near the horizon, the putt paintings fill the frame with
+    // it. A global 45% mis-placed the aim reticle whole terraces away from the
+    // painted green on long holes — read the depth per the CURRENT backdrop type.
+    const greenY = H * this.greenDepthFrac();
     // the address anchor = the golfer's CLUB HEAD (so the ball sits just over the
     // top of the club at address). Derived from the FIXED address-pose footprint
     // (base position + captured display size), NOT the live sprite — so the ball
@@ -1397,7 +1442,7 @@ export class LinksScene extends Phaser.Scene {
     //    the feet planted when the club throws the crop off-centre.
     this.golfer.setVisible(false);
     this.behindGolfer.setVisible(true);
-    const pose = this.BEHIND_POSES[this.swingPose()];
+    const pose = this.poseFor(this.swingPose());
     const ptex = this.textures.get(pose.key).getSourceImage() as { width: number; height: number };
     this.behindGolfer.setTexture(pose.key);
     this.behindGolfer.setScale((this.behindAddrH / Math.max(1, ptex.height)) * pose.scale);
@@ -1494,6 +1539,7 @@ export class LinksScene extends Phaser.Scene {
     const hole = this.holes[this.holeIdx];
     const sim = this.sim;
     const type = sim.swingMode() === 'putt' ? 'putt' : sim.lie() === 'S' ? 'bunker' : sim.ydsToPin() <= 40 ? 'approach' : 'tee';
+    this.behindBgType = type; // behindXY reads the painted-green depth off this
     const key =
       [`links_${hole.id}_${type}`, `links_${hole.id}_tee`, 'links_fairway'].find((k) => this.textures.exists(k)) || 'links_fairway';
     if (key === this.behindBgKey) return;

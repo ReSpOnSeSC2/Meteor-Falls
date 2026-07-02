@@ -237,14 +237,18 @@ export class HoopsScene extends Phaser.Scene {
     // second, misaligned basket); it is no longer wired over cage_court (authored.ts).
     this.courtSide = this.add.image(0, 0, 'cage_court').setOrigin(0, 0).setDepth(0);
     this.courtBehind = this.add.image(0, 0, 'cage_court_behind').setOrigin(0, 0).setDepth(0).setScrollFactor(0).setVisible(false);
-    // hoop posts: PAD + rim are runtime px; the ±20px reach offset scales too
-    this.hoopL = this.add.sprite(PAD + COURT_RT.RIM_L_X - s(20), PAD + COURT_RT.RIM_Y, 'hoop_side', 0).setOrigin(0, HOOP_RIM_ANCHOR).setDepth(50);
+    // hoop posts: PAD + rim are runtime px. The authored hoop_side frame's ring
+    // CENTER sits s(24) in from the frame's left edge (orange-pixel centroid
+    // cx=96.3 of the 180px frame; mirrored under flipX it lands s(21) from the
+    // left edge, 180-96.3=83.7) — offset each post so the painted ring lands on
+    // the sim rim x (COURT.RIM_L_X / RIM_R_X). Replaces the ±s(20)/−s(30) nudges
+    // tuned for the old procedural side-profile drawing.
+    this.hoopL = this.add.sprite(PAD + COURT_RT.RIM_L_X - s(24), PAD + COURT_RT.RIM_Y, 'hoop_side', 0).setOrigin(0, HOOP_RIM_ANCHOR).setDepth(50);
     this.hoopR = this.add
-      .sprite(PAD + COURT_RT.RIM_R_X + s(20), PAD + COURT_RT.RIM_Y, 'hoop_side', 0)
+      .sprite(PAD + COURT_RT.RIM_R_X - s(21), PAD + COURT_RT.RIM_Y, 'hoop_side', 0)
       .setOrigin(0, HOOP_RIM_ANCHOR)
       .setFlipX(true)
       .setDepth(50);
-    this.hoopR.x -= s(30); // flipped sprite re-anchors: rim reaches back inboard (px)
     // the BEHIND board sits in behindMap's native screen space (athletes.ts is
     // frozen) — scale its placement to the runtime frame at the consumption site
     this.boardBehind = this.add.image(s(BEHIND.CX), s(BEHIND.HORIZON) + s(4), 'backboard').setOrigin(0.5, 1).setDepth(6).setScrollFactor(0).setVisible(false);

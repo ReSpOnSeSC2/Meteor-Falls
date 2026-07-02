@@ -340,4 +340,11 @@ export const BESPOKE_AREA_FACADES: readonly string[] = [
 export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
   'clubhouse_grand', 'golf_gatehouse', 'mansion_a', 'mansion_b', 'mansion_c',
   'house_chad', 'house_a', 'house_b',
+  // The Valle Dorado set joined the hi-res promotion (2026-07) — the new art is
+  // wider than the old hand-tuned data solids (e.g. valle_shop draws 102 native
+  // px over a 82px solid), so route them through the same texture-derived
+  // rebuild. The three enterable ones keep working: the entrance box derives
+  // from door.ox against the DRAWN body (maps_ch2.ts carries door.ox re-measured
+  // for the hi-res art).
+  'valle_shop', 'valle_clinic', 'valle_chapel', 'valle_house', 'valle_house_b',
 ]);
