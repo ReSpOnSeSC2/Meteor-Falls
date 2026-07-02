@@ -53,7 +53,8 @@ import {
 } from '../src/spritegen/combatIcons';
 import { FONT_CHARS, drawTextInto } from '../src/spritegen/font';
 import { Pixmap } from '../src/spritegen/pixmap';
-import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES } from '../src/spritegen/buildings';
+import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES, GENERATED_BUILDINGS } from '../src/spritegen/buildings';
+import { AUTHORED_FACADE_KEYS } from '../src/spritegen/authored';
 import { GLYPH_SCRIPT, SCRIPT_CATALOG, areaGlyphRun } from '../src/spritegen/glyphforge';
 import { GLYPH_TOKENS, FLAIR_BY_ELEMENT, FLAIR_BY_RESULT, glyphRegistryNames, flairGlyph } from '../src/spritegen/flair';
 import { REGION_RAMPS } from '../src/spritegen/iconforge';
@@ -453,6 +454,36 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (!canon.has(area)) {
       fail('area-skins', `AREA_SKINS has an orphan slice '${area}' — add it to CANON_AREAS or retire the roster`);
     }
+  }
+}
+
+// 2026-07-02 — THE HI-RES FACADE LAW ("no facade may ship in the boot sprite
+// style"): every GENERATED-catalog facade a shipped map actually PLACES must be
+// AUTHORED hi-res (in AUTHORED_FACADE_KEYS, i.e. carrying a real PNG under
+// assets/art/world/facades/ and not gated by LOW_RES_FACADE_KEYS). The catalog's
+// unplaced keys legitimately stay on the frozen procedural boot fallback — this
+// gate fires the moment a map first places one, forcing it through the citygen
+// promotion pipeline: tools/facade-audit.ts (worklist) → ChatGPT row-strip →
+// tools/slice-facade-row.js → tools/fit-facade-aspect.cjs → HI_RES_GEN_FACADES
+// (spritegen/authored.ts).
+{
+  const authored = new Set(AUTHORED_FACADE_KEYS);
+  const generated = new Set(GENERATED_BUILDINGS.map((b) => b.name));
+  const offenders = new Map<string, string[]>();
+  for (const [id, m] of Object.entries(MAPS)) {
+    for (const p of m.props) {
+      if (generated.has(p.sprite) && !authored.has(p.sprite)) {
+        const maps = offenders.get(p.sprite) ?? [];
+        if (!maps.includes(id)) maps.push(id);
+        offenders.set(p.sprite, maps);
+      }
+    }
+  }
+  for (const [sprite, maps] of offenders) {
+    fail(
+      'hi-res-facades',
+      `map(s) ${maps.join(', ')} place generated facade '${sprite}' which still renders the FROZEN procedural painter — author it hi-res through the citygen pipeline (facade-audit → strip → slice-facade-row → fit-facade-aspect → HI_RES_GEN_FACADES)`,
+    );
   }
 }
 
