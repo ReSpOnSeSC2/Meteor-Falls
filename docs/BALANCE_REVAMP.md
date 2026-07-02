@@ -54,6 +54,11 @@ current values so intra-ladder shape is kept:
    full-restore shows **"FULL"** not 9999.
 5. **Hero growth** (`heroes.ts`): HP curve widened so survivability tracks the
    damage ramp (heroes ~30 HP Ch1 → ~tens of thousands Ch10).
+   **⚠️ NOT LANDED — superseded.** The shipped hero HP curve tops out ~435–625
+   at L52 (see `npm run balance`, hero growth table) and enemy offense was tuned
+   to it. Do NOT derive heal/enemy-offense magnitudes from this row; target the
+   shipped ~600-HP endgame heroes (the 2026-07 heal-axis retune in
+   `abilities.ts` is the reference).
 6. **Callers/quests** (`quests.ts`): finale caller power to the Ch10 band (the
    finale is endgame), not the current 400.
 

@@ -6,16 +6,15 @@
  * Phaser-free sim underneath (src/links/sim.ts — same seed + same tape =
  * same card; vitest proves it headlessly, hole by hole).
  *
- * THE TABLE VIEW: ¾ overhead course (per-hole texture: terrain + slope
- * arrows + cup, painted by spritegen/golfers.ts — the ground IS the rules),
- * the ball-cam riding every flight (draw/fade visible, splash/sand bursts
- * per ADR-020). THE SWING PANE: a fixed close-up window where the LARGE
- * golfer sheet (cut from the S12 sport-sheet contract, the player's own
- * hero) addresses, coils with the power tick, strikes, follows through,
- * fist-pumps, and slumps the universal sad putter slump. Meters live in the
- * pane: power bounces (let it die = cancel), accuracy falls into the
- * shrinking perfect window (push/pull curve the flight); putt and chip run
- * the power tap alone.
+ * THE TABLE VIEW: ¾ overhead course (authored per-hole diorama mapped by a
+ * render-only similarity transform in src/links/dioramas.ts — the sim stays
+ * in tile-grid space), the ball-cam riding every flight (draw/fade visible,
+ * splash/sand bursts per ADR-020). THE BEHIND VIEW (V/Y): a full-screen
+ * down-the-fairway POV per shot context (lazy-loaded h<N>_{tee,approach,
+ * bunker,putt} backdrops via ensureGolfBehindArt) with the authored back-pose
+ * golfer sprites. The 2-TAP meter rides the bottom bar in both views: power
+ * sweeps up (let it die = cancel), then accuracy falls into the window
+ * centered at 0.5 — EVERY mode takes the second tap, putts included.
  *
  * FORMATS: STROKE PLAY — eighteen holes, EXP forever by the card (strokeExp) +
  * one seeded clubhouse drop. MATCH PLAY (the Invitational) — three holes
@@ -38,7 +37,7 @@ import { ABILITIES } from '../data/abilities';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
 import { GolfSim, GOLF, SIM_DT, windOf, windPutts, type GolfInput, type GolfEvent } from '../links/sim';
-import { CLUBS, LIES, YD, HOLES, COURSE_PAR, yards, dist, type HoleDef } from '../links/course';
+import { CLUBS, LIES, YD, HOLES, COURSE_PAR, yards, dist, terrainAt, type HoleDef, type Terrain } from '../links/course';
 import {
   GOLFERS,
   LINKS_TEXT,
@@ -58,7 +57,7 @@ import { makeRng, type Rng } from '../hoops/sim';
 import { Dialogue, everyFrame, makeWindow, makeBox, vars, glyphify, DEPTH_UI } from '../ui/windows';
 import { colorOf, RAMP, px } from '../palette';
 import { s, ART_SCALE } from '../spritegen/scale';
-import { projectHole, projectPoint, type HoleProjection, type FitBox } from '../links/dioramas';
+import { projectHole, projectHoleCam, projectPoint, type HoleProjection, type FitBox } from '../links/dioramas';
 
 export interface LinksLaunch {
   kind: 'stroke' | 'match';
@@ -100,6 +99,7 @@ export class LinksScene extends Phaser.Scene {
   /** the predicted perfect-hit trajectory arc + flowing dots + landing reticle
    *  (full/chip shots); the putt keeps the simple aimLine/aimDot */
   private aimArc!: Phaser.GameObjects.Graphics;
+  private aimLabel!: Phaser.GameObjects.BitmapText;
   private burst!: Phaser.GameObjects.Sprite;
   /** a fading shot-tracer streak drawn BEHIND the in-flight ball (both views) so
    *  its full rise-and-fall to the ground reads on the static backdrop */
@@ -118,6 +118,17 @@ export class LinksScene extends Phaser.Scene {
   private readonly golferScale = 0.92;
   /** TOP = immersive overhead course; BEHIND = over-the-shoulder POV (toggle V) */
   private viewMode: 'top' | 'behind' = 'top';
+  /** THE TOP-VIEW CAMERA: the whole-hole cover projection is only the BASE —
+   *  per frame the view recentres on the current shot (ball↔pin midpoint) and
+   *  zooms by remaining distance (a putt fills the screen with the green),
+   *  glides between targets, and follows the ball through flight. baseProj
+   *  stays the zoom-1 whole-hole map used for image-fraction math. */
+  private baseProj!: HoleProjection;
+  private courseImgW = 0;
+  private courseImgH = 0;
+  private topCam = { fx: 0.5, fy: 0.5, zoom: 1 };
+  private topCamT = { fx: 0.5, fy: 0.5, zoom: 1 };
+  private lastCamAt = 0;
   private vKey?: Phaser.Input.Keyboard.Key;
   /** behind-POV: the authored down-the-fairway backdrop, the back-view golfer,
    *  and the diorama demoted to a corner minimap */
@@ -273,6 +284,8 @@ export class LinksScene extends Phaser.Scene {
     this.aimLine = this.add.rectangle(0, 0, s(2), s(3), gold).setOrigin(0, 0.5).setScrollFactor(0).setDepth(22).setAlpha(0.9).setVisible(false);
     this.aimDot = this.add.circle(0, 0, s(3.5), gold, 0).setStrokeStyle(s(1.5), gold, 0.95).setScrollFactor(0).setDepth(22).setVisible(false);
     this.aimArc = this.add.graphics().setScrollFactor(0).setDepth(23).setVisible(false);
+    // the terrain word riding under the landing reticle (GREEN / SAND / ROUGH…)
+    this.aimLabel = this.add.bitmapText(0, 0, 'retro', '', s(6)).setOrigin(0.5, 0).setScrollFactor(0).setDepth(24).setVisible(false);
     // the golfer plays the shot ON the course; the ball sits at the front foot
     this.golfer = this.add.sprite(0, 0, this.golferKey, 0).setOrigin(0.5, 1).setScale(this.golferScale).setScrollFactor(0).setDepth(32);
     this.tracer = this.add.graphics().setScrollFactor(0).setDepth(33).setVisible(false);
@@ -308,7 +321,7 @@ export class LinksScene extends Phaser.Scene {
       .setMaxWidth(W - s(108))
       .setTint(colorOf(px(RAMP.MAGENTA, 2)));
 
-    // ---- the 3-tap meter: a slim gauge in the bottom-left corner. No window —
+    // ---- the 2-tap meter: a slim gauge in the bottom-left corner. No window —
     // the golfer is out on the course now, not boxed in a pane. The club name
     // rides just above it. ----
     this.panelObjs = [];
@@ -404,7 +417,16 @@ export class LinksScene extends Phaser.Scene {
     this.course.setTexture(key);
     this.course.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
     const src = this.textures.get(key).getSourceImage() as { width: number; height: number };
-    this.proj = projectHole(hole, src.width, src.height, this.dioBox());
+    this.courseImgW = src.width;
+    this.courseImgH = src.height;
+    this.baseProj = projectHole(hole, src.width, src.height, this.dioBox());
+    this.proj = this.baseProj;
+    // the camera opens on the whole hole (tee↔cup midpoint, no zoom), snapped
+    const tf = this.imageFrac(s(hole.tee.x), s(hole.tee.y));
+    const pf = this.imageFrac(s(hole.pin.x), s(hole.pin.y));
+    this.topCam = { fx: (tf.fx + pf.fx) / 2, fy: (tf.fy + pf.fy) / 2, zoom: 1 };
+    this.topCamT = { ...this.topCam };
+    this.lastCamAt = this.elapsed;
     // the corner minimap (behind view): the same art, letterbox-fit small
     const mmBox: FitBox = { x: s(8), y: s(26), w: s(66), h: s(48) };
     this.projMini = projectHole(hole, src.width, src.height, mmBox, false);
@@ -744,7 +766,7 @@ export class LinksScene extends Phaser.Scene {
     this.clearPanel();
     // the round is over — clear the course actors so they don't peek past the
     // full-screen scorecard
-    [this.golfer, this.ballSpr, this.shadow, this.tracer, this.aimLine, this.aimDot, this.aimArc, this.meterChassis, this.meterDyn, this.meterPhase].forEach((o) => o.setVisible(false));
+    [this.golfer, this.ballSpr, this.shadow, this.tracer, this.aimLine, this.aimDot, this.aimArc, this.aimLabel, this.meterChassis, this.meterDyn, this.meterPhase].forEach((o) => o.setVisible(false));
     this.flightTrail.length = 0;
     const gold = colorOf(px(RAMP.GOLD, 3));
     const paper = colorOf(px(RAMP.PAPER, 2));
@@ -808,12 +830,12 @@ export class LinksScene extends Phaser.Scene {
   /* ================= render ================= */
 
   private say(text: string, ms = 2400): void {
-    this.ticker.setText(text);
+    this.ticker.setText(glyphify(text)); // fold to the 5×7 font (caddy lines carry 'ñ')
     this.tickerUntil = this.elapsed + ms;
   }
 
   private showBanner(text: string, ms: number): void {
-    this.banner.setText(text);
+    this.banner.setText(glyphify(text));
     this.bannerUntil = this.elapsed + ms;
   }
 
@@ -854,7 +876,10 @@ export class LinksScene extends Phaser.Scene {
     // runtime-px tile space; projectPoint() maps that onto the displayed
     // illustration. Ball height (z) lifts the sprite by z×(the map scale).
     const sim = this.sim;
-    // the actors (ball/golfer/aim) render per VIEW; the HUD below is shared
+    // the CAMERA first (it rebuilds this.proj), then the actors per VIEW
+    const camDt = Math.min(this.elapsed - this.lastCamAt, 100);
+    this.lastCamAt = this.elapsed;
+    this.updateTopCamera(camDt);
     if (this.viewMode === 'behind') this.renderBehindActors();
     else this.renderTopActors();
     // ---- HUD ribbon: HOLE·PAR (left) · STROKE (centre) · yards (right) ----
@@ -913,12 +938,20 @@ export class LinksScene extends Phaser.Scene {
       const rf = (f: number): number => left + Math.max(0, Math.min(1, f)) * mw; // rail-fraction → x (clamped to the track)
       const md = this.meterDyn;
       md.clear();
-      this.meterPhase.setText(acc ? 'ACCURACY' : 'POWER').setTint(colorOf(px(acc ? RAMP.GRASS : RAMP.GOLD, 3)));
+      // live yardage rides the phase word so "how hard" reads in numbers too
+      this.meterPhase.setText(acc ? 'ACCURACY' : `POWER ${this.previewYds()}y`).setTint(colorOf(px(acc ? RAMP.GRASS : RAMP.GOLD, 3)));
       // POWER sweet-spot band [1/cap .. 1] at the far right; dims in the acc phase
       md.fillStyle(colorOf(px(RAMP.GOLD, 2)), acc ? 0.16 : 0.42);
       md.fillRect(rf(1 / cap), cy - th / 2, rf(1) - rf(1 / cap), th);
       md.fillStyle(colorOf(px(RAMP.GOLD, 3)), acc ? 0.4 : 0.9);
       md.fillRect(rf(1) - s(1), cy - th / 2 - s(2), s(1), th + s(4)); // MAX hairline at f=1
+      // the CADDY CARET: the power that lands a pure shot pin-high (putt: dies at
+      // the cup) — tap 1 when the needle meets the caret and distance is solved
+      const sug = this.suggestedPower();
+      const sgx = rf(sug / cap);
+      md.fillStyle(colorOf(px(RAMP.MAGENTA, 2)), acc ? 0.35 : 0.95);
+      md.fillTriangle(sgx, cy - th / 2 - s(1), sgx - s(2.5), cy - th / 2 - s(6), sgx + s(2.5), cy - th / 2 - s(6));
+      md.fillRect(sgx - s(0.5), cy - th / 2, s(1), th);
       // the FILL: live to the needle (power) / frozen at captured power (acc, dimmed)
       const fillF = (acc ? sim.power : Math.max(0, sim.meterT)) / cap;
       md.fillStyle(colorOf(px(RAMP.GRASS, 2)), acc ? 0.4 : 1);
@@ -964,6 +997,53 @@ export class LinksScene extends Phaser.Scene {
 
   /* ================= the two views ================= */
 
+  /** A sim-space point as a fraction of the hole ILLUSTRATION (via the zoom-1
+   *  base projection) — the camera's coordinate system. */
+  private imageFrac(x: number, y: number): { fx: number; fy: number } {
+    const p0 = projectPoint(this.baseProj, x, y);
+    return { fx: (p0.x - this.baseProj.dx) / this.baseProj.dw, fy: (p0.y - this.baseProj.dy) / this.baseProj.dh };
+  }
+
+  /** Retarget + glide the top-view camera, rebuild this.proj from it, and keep
+   *  the course illustration transform in sync (top view only). */
+  private updateTopCamera(dtMs: number): void {
+    const sim = this.sim;
+    const hole = this.holes[this.holeIdx];
+    const bf = this.imageFrac(sim.ball.x, sim.ball.y);
+    const pf = this.imageFrac(s(hole.pin.x), s(hole.pin.y));
+    if (this.stage !== 'play') {
+      // the hole card frames the whole hole (the tee walk-up read)
+      const tf = this.imageFrac(s(hole.tee.x), s(hole.tee.y));
+      this.topCamT = { fx: (tf.fx + pf.fx) / 2, fy: (tf.fy + pf.fy) / 2, zoom: 1 };
+    } else if (this.inSettleHold()) {
+      // hold on the landing — watch the ball settle before reframing
+      this.topCamT = { fx: bf.fx, fy: bf.fy, zoom: this.topCamT.zoom };
+    } else if (sim.phase === 'flight' || sim.phase === 'roll') {
+      // follow the ball (a light pull toward the pin keeps the target on)
+      this.topCamT = { fx: bf.fx * 0.75 + pf.fx * 0.25, fy: bf.fy * 0.75 + pf.fy * 0.25, zoom: this.topCamT.zoom };
+    } else {
+      // at rest: frame THIS shot — ball↔pin centred, zoomed so the pair spans
+      // ~44% of the screen (a putt reads as a green close-up, a drive as the hole)
+      const b0 = projectPoint(this.baseProj, sim.ball.x, sim.ball.y);
+      const p0 = projectPoint(this.baseProj, s(hole.pin.x), s(hole.pin.y));
+      const span = Math.hypot(b0.x - p0.x, b0.y - p0.y);
+      const want = 0.44 * Math.min(this.scale.width, this.scale.height);
+      const zoom = Math.max(1, Math.min(2.6, want / Math.max(s(15), span)));
+      this.topCamT = { fx: (bf.fx + pf.fx) / 2, fy: (bf.fy + pf.fy) / 2, zoom };
+    }
+    const k = 1 - Math.exp(-Math.max(0, dtMs) / 240); // ~0.24s glide
+    this.topCam.fx += (this.topCamT.fx - this.topCam.fx) * k;
+    this.topCam.fy += (this.topCamT.fy - this.topCam.fy) * k;
+    this.topCam.zoom += (this.topCamT.zoom - this.topCam.zoom) * k;
+    this.proj = projectHoleCam(hole, this.courseImgW, this.courseImgH, this.dioBox(), this.topCam, this.topCam.zoom);
+    if (this.viewMode === 'top') {
+      // (the course image doubles as the behind-view minimap, so in top view it
+      // is the CAMERA subject itself — transform it to the camera every frame)
+      this.course.setScale(this.proj.fit);
+      this.course.setPosition(this.proj.dx + this.proj.dw / 2, this.proj.dy + this.proj.dh / 2);
+    }
+  }
+
   /** TOP view: ball/golfer/aim positioned on the screen-filling diorama. */
   private renderTopActors(): void {
     const sim = this.sim;
@@ -997,22 +1077,32 @@ export class LinksScene extends Phaser.Scene {
     this.golfer.setScale((this.topGolferH * pose.scale) / Math.max(1, gtex.height));
     this.golfer.setFlipX(face < 0);
     const recenter = pose.fx * this.golfer.displayWidth * face;
-    this.golfer.setPosition(gpos.x - s(16) * face + recenter, gpos.y + s(3));
+    this.golfer.setPosition(gpos.x - s(16) * face + recenter + s(this.puttSwingDx()) * face, gpos.y + s(3));
     this.golfer.setVisible(true);
-    const show = sim.phase === 'aim' && this.stage === 'play' && !this.inSettleHold();
-    const fp = show ? this.predictFlight() : null;
+    // the aimer lives through aim → power → acc so the landing is SEEN to track
+    // the meter (you charge until the reticle reaches your target, then commit)
+    const show = (sim.phase === 'aim' || sim.phase === 'power' || sim.phase === 'acc') && this.stage === 'play' && !this.inSettleHold();
+    const pw = this.previewPower();
+    const fp = show ? this.predictFlight(pw) : null;
     this.aimArc.setVisible(show);
     this.aimLine.setVisible(false);
     this.aimDot.setVisible(false);
     if (fp) {
-      // full/chip: the predicted perfect-hit arc, projected onto the diorama (z lifts by the map scale)
-      this.drawAimArc(fp.map((q) => { const sp = projectPoint(p, q.x, q.y); return { x: sp.x, y: sp.y - q.z * p.scale * 1.35 }; }));
+      // full/chip: the perfect-hit carry arc for the CURRENT power, onto the diorama (z lifts by the map scale)
+      const land = fp[fp.length - 1];
+      const terr = this.landTerrain(land.x, land.y);
+      const scr = projectPoint(p, land.x, land.y);
+      this.drawAimArc(fp.map((q) => { const sp = projectPoint(p, q.x, q.y); return { x: sp.x, y: sp.y - q.z * p.scale * 1.35 }; }), LinksScene.RETICLE_TINT[terr]);
+      this.updateAimLabel(terr, scr.x, scr.y);
     } else if (show) {
-      // putt: a straight aim ARROW toward where it's pointed (reach ~ to the cup)
-      const hole = this.holes[this.holeIdx];
-      const reach = Math.min(Math.hypot(s(hole.pin.x) - sim.ball.x, s(hole.pin.y) - sim.ball.y), s(160));
-      const tip = projectPoint(p, sim.ball.x + Math.cos(sim.aim) * reach, sim.ball.y + Math.sin(sim.aim) * reach);
-      this.drawAimArrow(ground, tip);
+      // putt: aim shows the line to the cup; power/acc slides the reticle to where THIS power stops
+      const stop = this.puttAimTarget(pw);
+      const terr = this.landTerrain(stop.x, stop.y);
+      const scr = projectPoint(p, stop.x, stop.y);
+      this.drawAimArrow(ground, scr, LinksScene.RETICLE_TINT[terr]);
+      this.updateAimLabel(terr, scr.x, scr.y);
+    } else {
+      this.aimLabel.setVisible(false);
     }
   }
 
@@ -1020,13 +1110,14 @@ export class LinksScene extends Phaser.Scene {
    *  sampled sim-space points with height, mirroring sim.launch()+flight (wind
    *  included). RENDER-ONLY — the deterministic sim is never touched. Returns
    *  null for putts (a ground roll, not an arc). */
-  private predictFlight(): { x: number; y: number; z: number }[] | null {
+  private predictFlight(power = 1): { x: number; y: number; z: number }[] | null {
     const sim = this.sim;
     const mode = sim.swingMode();
     if (mode === 'putt') return null;
     const club = CLUBS[sim.clubIdx];
     const carryYd = mode === 'chip' ? GOLF.CHIP_CARRY_YD : club.carry;
-    const carryPx = Math.max(s(8), carryYd * YD * LIES[sim.lie()].carry); // power = 1
+    const pw = Math.max(0.05, Math.min(1, power));
+    const carryPx = Math.max(s(8), carryYd * YD * pw * LIES[sim.lie()].carry); // carry scales with the chosen power (mirrors launch())
     const dirX = Math.cos(sim.aim);
     const dirY = Math.sin(sim.aim); // acc = 0 → launches straight down the aim
     const flightT1 = mode === 'chip' ? GOLF.CHIP_MS : GOLF.FLIGHT_BASE_MS + (carryPx / ART_SCALE) * GOLF.FLIGHT_PER_PX;
@@ -1051,10 +1142,136 @@ export class LinksScene extends Phaser.Scene {
     return pts;
   }
 
+  /** the landing reticle speaks TERRAIN (the "looked on the green, ended off"
+   *  fix): ring + word tinted by what the predicted landing spot actually is */
+  private static readonly RETICLE_TINT: Record<Terrain, number> = {
+    G: 0x58e070, T: 0xf8d848, F: 0xf8d848, R: 0xe08838, S: 0xf0d090, W: 0x50b8f8, C: 0xb8b8c0,
+  };
+  private static readonly TERRAIN_WORD: Record<Terrain, string> = {
+    G: 'GREEN', T: '', F: '', R: 'ROUGH', S: 'SAND', W: 'WATER', C: 'ROCKS',
+  };
+
+  /** terrain under a sim-space (runtime px) point — the ÷ART_SCALE bridge */
+  private landTerrain(x: number, y: number): Terrain {
+    return terrainAt(this.sim.grid, x / ART_SCALE, y / ART_SCALE);
+  }
+
+  /** the caddy's line: the power that puts a PURE shot pin-high (putt: rolls to
+   *  the cup; chip/full: carry = distance), drawn as a caret on the meter */
+  private suggestedPower(): number {
+    const sim = this.sim;
+    const hole = this.holes[this.holeIdx];
+    const d = dist(sim.ball.x, sim.ball.y, s(hole.pin.x), s(hole.pin.y));
+    const mode = sim.swingMode();
+    if (mode === 'putt') return Math.max(0.05, Math.min(GOLF.POWER_CAP, Math.sqrt(2 * GOLF.FRICTION_G * d) / GOLF.PUTT_V));
+    const carryYd = mode === 'chip' ? GOLF.CHIP_CARRY_YD : CLUBS[sim.clubIdx].carry;
+    return Math.max(0.05, Math.min(GOLF.POWER_CAP, d / YD / (carryYd * LIES[sim.lie()].carry)));
+  }
+
+  /** live meter read: how far the CURRENT needle power sends the ball (yards) */
+  private previewYds(): number {
+    const sim = this.sim;
+    const p = Math.max(0.05, Math.min(1, sim.phase === 'acc' ? sim.power : sim.meterT));
+    if (sim.swingMode() === 'putt') {
+      const v = GOLF.PUTT_V * p;
+      return Math.round((v * v) / (2 * GOLF.FRICTION_G) / YD);
+    }
+    const carryYd = sim.swingMode() === 'chip' ? GOLF.CHIP_CARRY_YD : CLUBS[sim.clubIdx].carry;
+    return Math.round(carryYd * p * LIES[sim.lie()].carry);
+  }
+
+  /** the terrain word riding under the landing reticle (GREEN/SAND/ROUGH/…) */
+  private updateAimLabel(terr: Terrain, sx: number, sy: number): void {
+    const word = this.sim.swingMode() === 'putt' && terr === 'G' ? '' : LinksScene.TERRAIN_WORD[terr];
+    if (!word) {
+      this.aimLabel.setVisible(false);
+      return;
+    }
+    const c = this.clampToScene({ x: sx, y: sy });
+    this.aimLabel.setText(word).setTint(LinksScene.RETICLE_TINT[terr]).setPosition(c.x, c.y + s(11)).setVisible(true);
+  }
+
+  /** The power the aimer should preview: full at rest (a max-carry reference so
+   *  you can pick club + line), the LIVE rising needle while charging, then the
+   *  captured power while timing accuracy — so the landing tracks the meter and
+   *  you can SEE how far a given power sends the ball before you commit. */
+  private previewPower(): number {
+    const sim = this.sim;
+    if (sim.phase === 'power') return Math.max(0.05, Math.min(1, sim.meterT));
+    if (sim.phase === 'acc') return Math.max(0.05, Math.min(1, sim.power));
+    return 1;
+  }
+
+  /** Where a putt struck at `power` (pure, flat green) rolls to a stop, in sim
+   *  space: d = v²/(2·frictionG), v = PUTT_V·power — accurate to the roll model.
+   *  The break (the slope arrows) is the read the preview leaves to the player. */
+  private puttStopPoint(power: number): { x: number; y: number } {
+    const sim = this.sim;
+    const v = GOLF.PUTT_V * Math.max(0.05, Math.min(1, power));
+    const d = (v * v) / (2 * GOLF.FRICTION_G);
+    return { x: sim.ball.x + Math.cos(sim.aim) * d, y: sim.ball.y + Math.sin(sim.aim) * d };
+  }
+
+  /** The putt aimer's target (sim space): during AIM a direction line toward the
+   *  cup (capped to a readable length so it doesn't sprint off the green); during
+   *  power/acc the power-scaled STOP point so the reticle shows how far it rolls. */
+  private puttAimTarget(power: number): { x: number; y: number } {
+    const sim = this.sim;
+    if (sim.phase !== 'aim') return this.puttStopPoint(power);
+    const hole = this.holes[this.holeIdx];
+    const reach = Math.min(Math.hypot(s(hole.pin.x) - sim.ball.x, s(hole.pin.y) - sim.ball.y), s(160));
+    return { x: sim.ball.x + Math.cos(sim.aim) * reach, y: sim.ball.y + Math.sin(sim.aim) * reach };
+  }
+
+  /** Clamp a screen point into the visible frame (small margin) so the landing
+   *  reticle stays on-screen even when a full-power preview overshoots the view. */
+  private clampToScene(pt: { x: number; y: number }): { x: number; y: number } {
+    const m = s(12);
+    return { x: Math.max(m, Math.min(this.scale.width - m, pt.x)), y: Math.max(m, Math.min(this.scale.height - m, pt.y)) };
+  }
+
+  /** The landing/stop marker: a flattened ring (reads as sitting ON the ground,
+   *  not a floating dot) with a short stem + centre pip, clamped on-screen. This
+   *  is the "a perfect shot lands HERE, on the turf" target the aimer promises. */
+  private drawLandingReticle(g: Phaser.GameObjects.Graphics, x: number, y: number, tint?: number): void {
+    const col = tint ?? colorOf(px(RAMP.GOLD, 3));
+    const c = this.clampToScene({ x, y });
+    const pulse = 1 + 0.16 * Math.sin(this.elapsed / 240);
+    g.lineStyle(s(1), colorOf(px(RAMP.INK, 2)), 0.4); // a dark casing so the ring reads on grass
+    g.strokeEllipse(c.x, c.y, s(12) * pulse, s(6) * pulse);
+    g.lineStyle(s(1.6), col, 0.95);
+    g.strokeEllipse(c.x, c.y, s(11) * pulse, s(5.5) * pulse);
+    g.lineStyle(s(1), col, 0.5);
+    g.strokeEllipse(c.x, c.y, s(18) * pulse, s(9) * pulse);
+    g.fillStyle(col, 0.95);
+    g.fillRect(c.x - s(0.75), c.y - s(8), s(1.5), s(8)); // a pin standing on the spot → planted, not floating
+    g.fillCircle(c.x, c.y, s(1.6));
+  }
+
+  /** The putter-stroke nudge (design px, pre-s): the club draws back as the power
+   *  needle rises, swings through as it falls, then a short follow-through — so a
+   *  putt visibly STROKES instead of the ball just leaving a frozen stance. */
+  private puttSwingDx(): number {
+    const sim = this.sim;
+    const isPutt = sim.mode === 'putt' || (sim.phase === 'aim' && sim.swingMode() === 'putt');
+    if (!isPutt) return 0;
+    if (sim.phase === 'power') return -7 * Math.max(0, Math.min(1, sim.meterT)); // backswing
+    if (sim.phase === 'acc') {
+      const through = Math.max(0, Math.min(1, (GOLF.POWER_CAP - sim.meterT) / GOLF.POWER_CAP));
+      // swing through from the backswing depth actually reached (sim.power is the
+      // captured tap) — the sim snaps meterT to POWER_CAP at the acc handoff, so
+      // an unscaled -7 would pop a soft putt to the full backswing for one frame
+      return -7 * Math.min(1, sim.power) * (1 - through) + 4 * through; // back → through the ball
+    }
+    const since = this.elapsed - this.lastStrikeAt;
+    if ((sim.phase === 'roll' || sim.phase === 'flight') && since < 260) return 4 * (1 - since / 260); // follow-through
+    return 0;
+  }
+
   /** Draw the trajectory arc + flowing dots + a pulsing landing reticle through a
    *  set of already-projected SCREEN points (the per-view projection is applied
    *  by the caller). The dots march toward the target for a live, readable aim. */
-  private drawAimArc(pts: { x: number; y: number }[]): void {
+  private drawAimArc(pts: { x: number; y: number }[], landTint?: number): void {
     const g = this.aimArc;
     g.clear();
     if (pts.length < 2) return;
@@ -1093,38 +1310,33 @@ export class LinksScene extends Phaser.Scene {
       const p = at(f);
       g.fillCircle(p.x, p.y, s(1.3) + s(0.9) * Math.sin(f * Math.PI)); // swells mid-flight
     }
-    // 3) the landing reticle — a pulsing target ring at the predicted carry end
+    // 3) the landing reticle — a ground-planted target ring at the predicted
+    //    carry end (clamped on-screen so it's always the visible "lands here")
     const land = pts[pts.length - 1];
-    const pulse = 1 + 0.16 * Math.sin(this.elapsed / 240);
-    g.lineStyle(s(1.6), gold, 0.95);
-    g.strokeCircle(land.x, land.y, s(4) * pulse);
-    g.lineStyle(s(1), gold, 0.55);
-    g.strokeCircle(land.x, land.y, s(7) * pulse);
+    this.drawLandingReticle(g, land.x, land.y, landTint);
   }
 
-  /** Draw a straight aim ARROW (shaft + arrowhead) from `from` to `to` on the
-   *  aimArc graphics — the putt aimer (a roll has no arc). */
-  private drawAimArrow(from: { x: number; y: number }, to: { x: number; y: number }): void {
+  /** Draw the putt aimer: a shaft from the ball to the predicted STOP point, capped
+   *  by the ground-planted landing reticle (a roll has no arc). The stop point is
+   *  the caller's power-scaled prediction, so the reticle shows exactly how far
+   *  THIS power rolls — the missing "how hard do I hit it" read. */
+  private drawAimArrow(from: { x: number; y: number }, to: { x: number; y: number }, landTint?: number): void {
     const g = this.aimArc;
     g.clear();
     const gold = colorOf(px(RAMP.GOLD, 3));
-    const ang = Math.atan2(to.y - from.y, to.x - from.x);
-    const head = s(8);
-    const aw = s(4.5);
-    // the shaft (stop short so the head caps it cleanly)
-    g.lineStyle(s(2.4), gold, 0.92);
+    const c = this.clampToScene(to);
+    // a dark casing under a gold core so the line reads on the green
+    g.lineStyle(s(3), colorOf(px(RAMP.INK, 2)), 0.3);
     g.beginPath();
     g.moveTo(from.x, from.y);
-    g.lineTo(to.x - Math.cos(ang) * head * 0.6, to.y - Math.sin(ang) * head * 0.6);
+    g.lineTo(c.x, c.y);
     g.strokePath();
-    // the solid arrowhead at the tip
-    g.fillStyle(gold, 0.95);
+    g.lineStyle(s(2.2), gold, 0.9);
     g.beginPath();
-    g.moveTo(to.x, to.y);
-    g.lineTo(to.x - Math.cos(ang) * head + Math.cos(ang + Math.PI / 2) * aw, to.y - Math.sin(ang) * head + Math.sin(ang + Math.PI / 2) * aw);
-    g.lineTo(to.x - Math.cos(ang) * head + Math.cos(ang - Math.PI / 2) * aw, to.y - Math.sin(ang) * head + Math.sin(ang - Math.PI / 2) * aw);
-    g.closePath();
-    g.fillPath();
+    g.moveTo(from.x, from.y);
+    g.lineTo(c.x, c.y);
+    g.strokePath();
+    this.drawLandingReticle(g, to.x, to.y, landTint);
   }
 
   /** Project a sim-space ground point into the behind-the-player perspective. */
@@ -1189,7 +1401,7 @@ export class LinksScene extends Phaser.Scene {
     const ptex = this.textures.get(pose.key).getSourceImage() as { width: number; height: number };
     this.behindGolfer.setTexture(pose.key);
     this.behindGolfer.setScale((this.behindAddrH / Math.max(1, ptex.height)) * pose.scale);
-    this.behindGolfer.setPosition(this.scale.width / 2 - s(21) + pose.fx * this.behindGolfer.displayWidth + s(pose.dx), H * 0.88);
+    this.behindGolfer.setPosition(this.scale.width / 2 - s(21) + pose.fx * this.behindGolfer.displayWidth + s(pose.dx) + s(this.puttSwingDx()), H * 0.88);
     // 2) ball + shadow — a real golf ball reads SMALL at the player's feet;
     //    behindXY anchors address just over the top of the club head.
     const atRest = sim.phase === 'aim' || sim.phase === 'holed';
@@ -1216,21 +1428,29 @@ export class LinksScene extends Phaser.Scene {
     this.shadow.setAlpha(0.34 * (1 - 0.55 * hFrac));
     // a fading tracer streak so the eye follows the whole rise-and-fall
     this.updateFlightTrail(sim.phase === 'flight' && live, g.x, ballY, this.ballSpr.displayWidth * 0.5);
-    // aim reticle: where the shot is pointed, out on the fairway
-    const show = sim.phase === 'aim' && this.stage === 'play' && !this.inSettleHold();
-    const fp = show ? this.predictFlight() : null;
+    // aim reticle: where the shot lands, tracking the live meter through aim→power→acc
+    const show = (sim.phase === 'aim' || sim.phase === 'power' || sim.phase === 'acc') && this.stage === 'play' && !this.inSettleHold();
+    const pw = this.previewPower();
+    const fp = show ? this.predictFlight(pw) : null;
     this.aimArc.setVisible(show);
     this.aimLine.setVisible(false);
     this.aimDot.setVisible(false);
     if (fp) {
-      // full/chip: the perfect-hit arc in the over-the-shoulder perspective (z lifts as the ball climbs)
-      this.drawAimArc(fp.map((q) => { const b = this.behindXY(q.x, q.y); return { x: b.x, y: Math.max(s(6), b.y - q.z * 1.6 * (1 - 0.15 * b.along)) }; }));
+      // full/chip: the perfect-hit carry arc for the CURRENT power (z lifts as the ball climbs)
+      const land = fp[fp.length - 1];
+      const terr = this.landTerrain(land.x, land.y);
+      const scr = this.behindXY(land.x, land.y);
+      this.drawAimArc(fp.map((q) => { const b = this.behindXY(q.x, q.y); return { x: b.x, y: Math.max(s(6), b.y - q.z * 1.6 * (1 - 0.15 * b.along)) }; }), LinksScene.RETICLE_TINT[terr]);
+      this.updateAimLabel(terr, scr.x, scr.y);
     } else if (show) {
-      // putt: a straight aim ARROW from the ball toward the cup direction
-      const hole = this.holes[this.holeIdx];
-      const reach = Math.min(Math.hypot(s(hole.pin.x) - sim.ball.x, s(hole.pin.y) - sim.ball.y), s(160));
-      const tip = this.behindXY(sim.ball.x + Math.cos(sim.aim) * reach, sim.ball.y + Math.sin(sim.aim) * reach);
-      this.drawAimArrow({ x: g.x, y: g.y }, { x: tip.x, y: tip.y });
+      // putt: aim shows the line to the cup; power/acc slides the reticle to where THIS power stops
+      const stop = this.puttAimTarget(pw);
+      const terr = this.landTerrain(stop.x, stop.y);
+      const tip = this.behindXY(stop.x, stop.y);
+      this.drawAimArrow({ x: g.x, y: g.y }, { x: tip.x, y: tip.y }, LinksScene.RETICLE_TINT[terr]);
+      this.updateAimLabel(terr, tip.x, tip.y);
+    } else {
+      this.aimLabel.setVisible(false);
     }
     // the corner-minimap dot
     const mb = projectPoint(this.projMini, sim.ball.x, sim.ball.y);
@@ -1275,7 +1495,7 @@ export class LinksScene extends Phaser.Scene {
     const sim = this.sim;
     const type = sim.swingMode() === 'putt' ? 'putt' : sim.lie() === 'S' ? 'bunker' : sim.ydsToPin() <= 40 ? 'approach' : 'tee';
     const key =
-      [`links_${hole.id}_${type}`, `links_${hole.id}_tee`, `links_${hole.id}_behind`, 'links_fairway'].find((k) => this.textures.exists(k)) || 'links_fairway';
+      [`links_${hole.id}_${type}`, `links_${hole.id}_tee`, 'links_fairway'].find((k) => this.textures.exists(k)) || 'links_fairway';
     if (key === this.behindBgKey) return;
     this.behindBgKey = key;
     const W = this.scale.width;

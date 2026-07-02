@@ -627,7 +627,7 @@ export class MenuScene extends Phaser.Scene {
     const lines: Array<{ s: string; tint?: number }> = [];
     if (q.status === 'done') {
       lines.push({ s: 'Done. Handled. Legendary.', tint: colorOf(px(RAMP.GOLD, 2)) });
-      lines.push({ s: `${q.def.caller.name} owes you a phone call.`, tint: DIM });
+      lines.push({ s: glyphify(`${q.def.caller.name} owes you a phone call.`), tint: DIM });
     } else {
       const now = currentObjective(q.def);
       for (const o of q.def.objectives) {
@@ -639,7 +639,7 @@ export class MenuScene extends Phaser.Scene {
     const h = s(46) + lines.length * s(16);
     this.pageObjs.push(makeWindow(this, x, y, w, h));
     const title = this.add
-      .bitmapText(x + s(12), y + s(10), 'retro', q.def.name.toUpperCase(), s(6))
+      .bitmapText(x + s(12), y + s(10), 'retro', glyphify(q.def.name.toUpperCase()), s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1)
       .setTint(colorOf(px(RAMP.GOLD, 3)));

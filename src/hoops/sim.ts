@@ -196,7 +196,7 @@ export type Ball = HeldBall | ShotFlight | PassFlight | FreeBall;
 export type AnkleTier = 'stun' | 'trip' | 'fall';
 
 export type SimEvent =
-  | { kind: 'score'; team: 0 | 1; pts: 1 | 2; by: number; dist: number; x: number; y: number; green: boolean }
+  | { kind: 'score'; team: 0 | 1; pts: 1 | 2; by: number; dist: number; x: number; y: number; green: boolean; dunk: boolean }
   | { kind: 'sfx'; name: string }
   | { kind: 'banner'; text: string; ms: number }
   | { kind: 'permit'; text: string }
@@ -1837,7 +1837,7 @@ export class HoopsSim {
   private scoreBasket(team: 0 | 1, pts: 1 | 2, at: Vec, green: boolean, dunk: boolean, by: number, distPx: number): void {
     if (team === 0) this.scoreUs += pts;
     else this.scoreThem += pts;
-    this.emit({ kind: 'score', team, pts, by, dist: distPx, x: at.x, y: at.y, green });
+    this.emit({ kind: 'score', team, pts, by, dist: distPx, x: at.x, y: at.y, green, dunk });
     this.emit({ kind: 'sfx', name: dunk ? 'dunk' : 'swish' });
     if (this.format === '3v3' && pickupGameOver(this.scoreUs, this.scoreThem)) {
       this.finishGame();

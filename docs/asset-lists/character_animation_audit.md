@@ -8,10 +8,10 @@ This checks the authored 46-frame character sheets against the runtime frame con
 - Registered characters: 97
 - Unregistered character sheets on disk: 0
 - Path overrides: 0
-- Characters with issues: 61
+- Characters with issues: 58
 - Errors: 0
-- Warnings: 249
-- Review hints: 238
+- Warnings: 260
+- Review hints: 104
 
 Interactive playback page: [character_animation_audit.html](character_animation_audit.html)
 
@@ -93,15 +93,12 @@ Common presets:
 - WARN walk left: step frames 1/3 are nearly frozen (0.005)
 
 ### ana (ana)
-- REVIEW frame 15: walk up looks closer to left than up
-- REVIEW frame 16: run down looks closer to upright than down
-- REVIEW frame 17: run down looks closer to upright than down
-- REVIEW frame 18: run left looks closer to up than left
+- REVIEW frame 18: run left looks closer to upright than left
 - REVIEW frame 19: run left looks closer to upright than left
-- REVIEW frame 20: run right looks closer to upright than right
-- REVIEW frame 21: run right looks closer to up than right
-- REVIEW frame 40: run up-right looks closer to down than upright
-- WARN walk up: stand frames 0/2 are not stable (0.082)
+- REVIEW frame 20: run right looks closer to left than right
+- REVIEW frame 21: run right looks closer to left than right
+- REVIEW frame 40: run up-right looks closer to downleft than upright
+- REVIEW frame 41: run up-right looks closer to downleft than upright
 
 ### arcadeOwner (arcadeOwner)
 - WARN walk down: step frames 1/3 are nearly frozen (0.008)
@@ -113,8 +110,6 @@ Common presets:
 ### as_keeper (as_keeper)
 - WARN walk left: step frames 1/3 are nearly frozen (0.000)
 - WARN walk right: step frames 1/3 are nearly frozen (0.000)
-- WARN run left: run pair is nearly frozen (0.000)
-- WARN run right: run pair is nearly frozen (0.000)
 
 ### as_provisioner (as_provisioner)
 - WARN walk left: step frames 1/3 are nearly frozen (0.000)
@@ -132,10 +127,6 @@ Common presets:
 - WARN walk up: step frames 1/3 are nearly frozen (0.010)
 - WARN run up: run pair is nearly frozen (0.010)
 
-### bell_choir_child (bell_choir_child)
-- WARN walk up: step frames 1/3 are nearly frozen (0.006)
-- WARN run up: run pair is nearly frozen (0.006)
-
 ### bootstep_shepherd (bootstep_shepherd)
 - WARN walk down: step frames 1/3 are nearly frozen (0.006)
 - WARN walk left: step frames 1/3 are nearly frozen (0.008)
@@ -145,30 +136,12 @@ Common presets:
 - WARN run right: run pair is nearly frozen (0.008)
 
 ### busDriver (busDriver)
-- REVIEW frame 5: walk left looks closer to right than left
-- REVIEW frame 6: walk left looks closer to right than left
-- REVIEW frame 7: walk left looks closer to right than left
-- REVIEW frame 11: walk right looks closer to upright than right
-- REVIEW frame 15: walk up looks closer to downleft than up
-- REVIEW frame 16: run down looks closer to up than down
-- REVIEW frame 17: run down looks closer to up than down
-- REVIEW frame 18: run left looks closer to up than left
-- REVIEW frame 19: run left looks closer to up than left
-- REVIEW frame 20: run right looks closer to up than right
-- REVIEW frame 21: run right looks closer to up than right
-- REVIEW frame 22: run up looks closer to downright than up
-- REVIEW frame 23: run up looks closer to downright than up
-- REVIEW frame 25: walk down-right looks closer to downleft than downright
-- REVIEW frame 26: walk down-right looks closer to downleft than downright
-- REVIEW frame 36: run down-right looks closer to upleft than downright
-- REVIEW frame 37: run down-right looks closer to upleft than downright
-- REVIEW frame 38: run down-left looks closer to upleft than downleft
-- REVIEW frame 39: run down-left looks closer to upleft than downleft
-- REVIEW frame 40: run up-right looks closer to upleft than upright
-- REVIEW frame 41: run up-right looks closer to upleft than upright
-- WARN walk left: stand frames 0/2 are not stable (0.117)
-- WARN run up: run pair is nearly frozen (0.010)
-- WARN run down-right: run pair is nearly frozen (0.007)
+- REVIEW frame 7: walk left looks closer to downleft than left
+- REVIEW frame 11: walk right looks closer to downright than right
+- REVIEW frame 36: run down-right looks closer to down than downright
+- REVIEW frame 37: run down-right looks closer to down than downright
+- REVIEW frame 38: run down-left looks closer to down than downleft
+- REVIEW frame 39: run down-left looks closer to down than downleft
 
 ### caddy (caddy)
 - WARN walk left: step frames 1/3 are nearly frozen (0.003)
@@ -218,29 +191,16 @@ Common presets:
 - WARN run down-left: run pair is nearly frozen (0.007)
 
 ### deliKeeper (deliKeeper)
-- REVIEW frame 6: walk left looks closer to right than left
 - REVIEW frame 7: walk left looks closer to right than left
-- REVIEW frame 10: walk right looks closer to up than right
-- REVIEW frame 11: walk right looks closer to up than right
-- REVIEW frame 16: run down looks closer to downright than down
-- REVIEW frame 17: run down looks closer to up than down
-- REVIEW frame 18: run left looks closer to up than left
-- REVIEW frame 19: run left looks closer to downright than left
-- REVIEW frame 20: run right looks closer to downleft than right
+- REVIEW frame 11: walk right looks closer to left than right
+- REVIEW frame 19: run left looks closer to downleft than left
 - REVIEW frame 21: run right looks closer to downright than right
-- REVIEW frame 22: run up looks closer to downleft than up
-- REVIEW frame 23: run up looks closer to downleft than up
-- REVIEW frame 26: walk down-right looks closer to downleft than downright
-- REVIEW frame 34: walk up-left looks closer to down than upleft
-- REVIEW frame 35: walk up-left looks closer to upright than upleft
-- REVIEW frame 36: run down-right looks closer to upright than downright
+- REVIEW frame 26: walk down-right looks closer to right than downright
+- REVIEW frame 29: walk down-left looks closer to left than downleft
+- REVIEW frame 36: run down-right looks closer to down than downright
 - REVIEW frame 37: run down-right looks closer to down than downright
-- REVIEW frame 38: run down-left looks closer to upright than downleft
-- REVIEW frame 39: run down-left looks closer to upleft than downleft
-- REVIEW frame 42: run up-left looks closer to right than upleft
-- REVIEW frame 43: run up-left looks closer to right than upleft
-- WARN walk left: stand frames 0/2 are not stable (0.113)
-- WARN walk right: stand frames 0/2 are not stable (0.111)
+- REVIEW frame 38: run down-left looks closer to down than downleft
+- REVIEW frame 39: run down-left looks closer to down than downleft
 
 ### docBrickton (docBrickton)
 - WARN walk up-right: diagonal step pair is nearly frozen (0.006)
@@ -276,59 +236,37 @@ Common presets:
 - REVIEW frame 5: walk left looks closer to up than left
 - REVIEW frame 6: walk left looks closer to right than left
 - REVIEW frame 7: walk left looks closer to right than left
-- REVIEW frame 11: walk right looks closer to up than right
-- REVIEW frame 16: run down looks closer to up than down
-- REVIEW frame 17: run down looks closer to up than down
+- REVIEW frame 11: walk right looks closer to downright than right
+- REVIEW frame 16: run down looks closer to downright than down
+- REVIEW frame 17: run down looks closer to downright than down
 - REVIEW frame 18: run left looks closer to up than left
 - REVIEW frame 19: run left looks closer to up than left
 - REVIEW frame 20: run right looks closer to upleft than right
 - REVIEW frame 21: run right looks closer to downleft than right
-- REVIEW frame 22: run up looks closer to downright than up
-- REVIEW frame 23: run up looks closer to downright than up
-- REVIEW frame 39: run down-left looks closer to upleft than downleft
-- REVIEW frame 40: run up-right looks closer to down than upright
+- REVIEW frame 22: run up looks closer to downleft than up
+- REVIEW frame 23: run up looks closer to downleft than up
+- REVIEW frame 36: run down-right looks closer to down than downright
+- REVIEW frame 37: run down-right looks closer to right than downright
+- REVIEW frame 38: run down-left looks closer to upleft than downleft
+- REVIEW frame 39: run down-left looks closer to left than downleft
 - REVIEW frame 41: run up-right looks closer to right than upright
-- REVIEW frame 43: run up-left looks closer to left than upleft
 - WARN walk left: stand frames 0/2 are not stable (0.103)
 - WARN walk right: stand frames 0/2 are not stable (0.082)
-- WARN run down-right: run pair is nearly frozen (0.008)
+- WARN run up-right: run pair is nearly frozen (0.008)
 - REVIEW left/right: standing pair is not mirror-compatible (0.198)
 - REVIEW up diagonals: standing pair is not mirror-compatible (0.221)
 
 ### fjord_nurse (fjord_nurse)
-- REVIEW frame 1: walk down looks closer to upleft than down
-- REVIEW frame 2: walk down looks closer to downleft than down
-- REVIEW frame 3: walk down looks closer to downleft than down
-- REVIEW frame 6: walk left looks closer to upright than left
-- REVIEW frame 9: walk right looks closer to upleft than right
-- REVIEW frame 10: walk right looks closer to downleft than right
-- REVIEW frame 11: walk right looks closer to downleft than right
-- REVIEW frame 14: walk up looks closer to upright than up
-- REVIEW frame 17: run down looks closer to upleft than down
-- REVIEW frame 18: run left looks closer to downleft than left
-- REVIEW frame 19: run left looks closer to downleft than left
-- REVIEW frame 22: run up looks closer to upright than up
-- REVIEW frame 25: walk down-right looks closer to upleft than downright
-- REVIEW frame 26: walk down-right looks closer to downleft than downright
-- REVIEW frame 28: walk down-left looks closer to down than downleft
-- REVIEW frame 29: walk down-left looks closer to down than downleft
-- REVIEW frame 32: walk up-right looks closer to down than upright
-- REVIEW frame 38: run down-left looks closer to upright than downleft
-- REVIEW frame 39: run down-left looks closer to upright than downleft
-- REVIEW frame 40: run up-right looks closer to down than upright
-- REVIEW frame 41: run up-right looks closer to upleft than upright
-- WARN walk down: stand frames 0/2 are not stable (0.147)
-- WARN walk left: stand frames 0/2 are not stable (0.077)
-- WARN walk right: stand frames 0/2 are not stable (0.147)
-- WARN walk up: stand frames 0/2 are not stable (0.077)
-
-### glint (glint)
-- REVIEW frame 11: walk right looks closer to up than right
-- REVIEW frame 15: walk up looks closer to downright than up
-- REVIEW frame 22: run up looks closer to upright than up
-- REVIEW frame 23: run up looks closer to left than up
-- REVIEW frame 36: run down-right looks closer to upleft than downright
-- REVIEW frame 37: run down-right looks closer to right than downright
+- WARN walk down: step frames 1/3 are nearly frozen (0.002)
+- WARN walk left: step frames 1/3 are nearly frozen (0.006)
+- WARN walk right: step frames 1/3 are nearly frozen (0.006)
+- WARN run down: run pair is nearly frozen (0.002)
+- WARN run left: run pair is nearly frozen (0.006)
+- WARN run right: run pair is nearly frozen (0.006)
+- WARN walk down-right: diagonal step pair is nearly frozen (0.003)
+- WARN walk down-left: diagonal step pair is nearly frozen (0.003)
+- WARN run down-right: run pair is nearly frozen (0.003)
+- WARN run down-left: run pair is nearly frozen (0.003)
 
 ### grand_duchess_millimetta (grand_duchess_millimetta)
 - WARN walk down: step frames 1/3 are nearly frozen (0.010)
@@ -431,30 +369,12 @@ Common presets:
 - WARN run up-left: run pair is nearly frozen (0.008)
 
 ### mrsPemmel (mrsPemmel)
-- REVIEW frame 5: walk left looks closer to down than left
-- REVIEW frame 6: walk left looks closer to down than left
-- REVIEW frame 7: walk left looks closer to down than left
-- REVIEW frame 11: walk right looks closer to up than right
-- REVIEW frame 15: walk up looks closer to downright than up
-- REVIEW frame 16: run down looks closer to up than down
-- REVIEW frame 17: run down looks closer to up than down
-- REVIEW frame 18: run left looks closer to up than left
-- REVIEW frame 19: run left looks closer to up than left
-- REVIEW frame 20: run right looks closer to up than right
-- REVIEW frame 21: run right looks closer to up than right
-- REVIEW frame 22: run up looks closer to downright than up
-- REVIEW frame 23: run up looks closer to downright than up
-- REVIEW frame 26: walk down-right looks closer to downleft than downright
-- REVIEW frame 28: walk down-left looks closer to upright than downleft
-- REVIEW frame 32: walk up-right looks closer to downleft than upright
-- REVIEW frame 36: run down-right looks closer to upleft than downright
-- REVIEW frame 37: run down-right looks closer to upleft than downright
-- REVIEW frame 38: run down-left looks closer to upleft than downleft
-- REVIEW frame 39: run down-left looks closer to upleft than downleft
-- REVIEW frame 40: run up-right looks closer to upleft than upright
-- REVIEW frame 41: run up-right looks closer to upleft than upright
+- REVIEW frame 7: walk left looks closer to right than left
+- REVIEW frame 11: walk right looks closer to left than right
+- WARN walk up: step frames 1/3 are nearly frozen (0.008)
+- WARN run up: run pair is nearly frozen (0.008)
+- WARN walk up-right: diagonal step pair is nearly frozen (0.008)
 - WARN walk up-left: diagonal step pair is nearly frozen (0.008)
-- WARN run down-right: run pair is nearly frozen (0.007)
 - WARN run up-right: run pair is nearly frozen (0.008)
 - WARN run up-left: run pair is nearly frozen (0.004)
 
@@ -469,6 +389,12 @@ Common presets:
 - REVIEW frame 3: walk down looks closer to up than down
 - REVIEW frame 15: walk up looks closer to down than up
 - REVIEW down diagonals: standing pair is not mirror-compatible (0.183)
+
+### nurse (nurse)
+- WARN walk left: step frames 1/3 are nearly frozen (0.006)
+- WARN walk right: step frames 1/3 are nearly frozen (0.006)
+- WARN run left: run pair is nearly frozen (0.006)
+- WARN run right: run pair is nearly frozen (0.006)
 
 ### oldTimer (oldTimer)
 - WARN walk left: step frames 1/3 are nearly frozen (0.006)
@@ -487,146 +413,91 @@ Common presets:
 - WARN run down-left: run pair is nearly frozen (0.006)
 
 ### pigeonKid (pigeonKid)
-- REVIEW frame 1: walk down looks closer to left than down
-- REVIEW frame 2: walk down looks closer to left than down
-- REVIEW frame 5: walk left looks closer to down than left
-- REVIEW frame 6: walk left looks closer to down than left
-- REVIEW frame 7: walk left looks closer to right than left
-- REVIEW frame 10: walk right looks closer to left than right
-- REVIEW frame 15: walk up looks closer to downleft than up
-- REVIEW frame 16: run down looks closer to up than down
-- REVIEW frame 17: run down looks closer to up than down
-- REVIEW frame 18: run left looks closer to up than left
-- REVIEW frame 19: run left looks closer to up than left
-- REVIEW frame 20: run right looks closer to up than right
-- REVIEW frame 21: run right looks closer to up than right
-- REVIEW frame 36: run down-right looks closer to upleft than downright
-- REVIEW frame 37: run down-right looks closer to upleft than downright
-- REVIEW frame 38: run down-left looks closer to upleft than downleft
-- REVIEW frame 39: run down-left looks closer to upleft than downleft
-- REVIEW frame 40: run up-right looks closer to upleft than upright
-- REVIEW frame 41: run up-right looks closer to upleft than upright
-- WARN walk down: stand frames 0/2 are not stable (0.073)
-- WARN walk left: stand frames 0/2 are not stable (0.082)
-- WARN walk right: stand frames 0/2 are not stable (0.101)
-- WARN walk up-left: diagonal step pair is nearly frozen (0.004)
-- WARN run down-right: run pair is nearly frozen (0.005)
+- WARN walk up-right: diagonal step pair is nearly frozen (0.009)
+- WARN walk up-left: diagonal step pair is nearly frozen (0.009)
+- WARN run up-right: run pair is nearly frozen (0.009)
+- WARN run up-left: run pair is nearly frozen (0.009)
 
 ### priestOtter (priestOtter)
+- REVIEW frame 21: run right looks closer to left than right
 - WARN walk down-right: diagonal step pair is nearly frozen (0.008)
 - WARN walk down-left: diagonal step pair is nearly frozen (0.008)
-- WARN run down-right: run pair is nearly frozen (0.008)
-- WARN run down-left: run pair is nearly frozen (0.008)
 
 ### quarterMan (quarterMan)
-- REVIEW frame 2: walk down looks closer to left than down
-- REVIEW frame 3: walk down looks closer to downright than down
-- REVIEW frame 5: walk left looks closer to down than left
-- REVIEW frame 6: walk left looks closer to right than left
 - REVIEW frame 7: walk left looks closer to right than left
-- REVIEW frame 16: run down looks closer to up than down
-- REVIEW frame 17: run down looks closer to up than down
-- REVIEW frame 18: run left looks closer to up than left
-- REVIEW frame 19: run left looks closer to right than left
-- REVIEW frame 21: run right looks closer to up than right
-- REVIEW frame 26: walk down-right looks closer to left than downright
-- REVIEW frame 28: walk down-left looks closer to left than downleft
+- REVIEW frame 11: walk right looks closer to left than right
+- REVIEW frame 13: walk up looks closer to upright than up
+- REVIEW frame 23: run up looks closer to upright than up
 - WARN walk down: stand frames 0/2 are not stable (0.115)
-- WARN walk left: stand frames 0/2 are not stable (0.120)
 
 ### royal_census_taker (royal_census_taker)
 - WARN walk down: step frames 1/3 are nearly frozen (0.009)
 - WARN run down: run pair is nearly frozen (0.009)
 
 ### senora (senora)
-- REVIEW frame 15: walk up looks closer to downleft than up
-- REVIEW frame 16: run down looks closer to up than down
-- REVIEW frame 18: run left looks closer to up than left
-- REVIEW frame 20: run right looks closer to up than right
-- REVIEW frame 21: run right looks closer to up than right
-- REVIEW frame 23: run up looks closer to upright than up
-- REVIEW frame 36: run down-right looks closer to upleft than downright
-- REVIEW frame 37: run down-right looks closer to upleft than downright
-- REVIEW frame 38: run down-left looks closer to upleft than downleft
-- REVIEW frame 39: run down-left looks closer to upleft than downleft
-- REVIEW frame 40: run up-right looks closer to upleft than upright
-- REVIEW frame 41: run up-right looks closer to upleft than upright
+- REVIEW frame 7: walk left looks closer to right than left
+- REVIEW frame 11: walk right looks closer to left than right
+- WARN walk up: step frames 1/3 are nearly frozen (0.006)
+- WARN run up: run pair is nearly frozen (0.006)
+- WARN walk up-right: diagonal step pair is nearly frozen (0.006)
 - WARN walk up-left: diagonal step pair is nearly frozen (0.006)
-- WARN run down-right: run pair is nearly frozen (0.005)
-- WARN run down-left: run pair is nearly frozen (0.004)
 - WARN run up-left: run pair is nearly frozen (0.003)
 
-### spool_engineer (spool_engineer)
-- REVIEW frame 3: walk down looks closer to downright than down
-- REVIEW frame 15: walk up looks closer to downleft than up
-- REVIEW frame 17: run down looks closer to downright than down
-- REVIEW frame 23: run up looks closer to downleft than up
+### smilerB (smilerB)
+- REVIEW frame 20: run right looks closer to left than right
+- REVIEW frame 21: run right looks closer to left than right
 
 ### teacup_innkeeper (teacup_innkeeper)
-- REVIEW frame 3: walk down looks closer to downright than down
-- REVIEW frame 17: run down looks closer to downright than down
+- WARN walk down: step frames 1/3 are nearly frozen (0.000)
 - WARN walk left: step frames 1/3 are nearly frozen (0.006)
 - WARN walk right: step frames 1/3 are nearly frozen (0.006)
+- WARN walk up: step frames 1/3 are nearly frozen (0.000)
+- WARN run down: run pair is nearly frozen (0.000)
 - WARN run left: run pair is nearly frozen (0.006)
 - WARN run right: run pair is nearly frozen (0.006)
-
-### tiny_postmaster (tiny_postmaster)
-- REVIEW frame 3: walk down looks closer to downright than down
-- REVIEW frame 17: run down looks closer to downright than down
+- WARN run up: run pair is nearly frozen (0.000)
 
 ### vs_buni (vs_buni)
-- REVIEW frame 16: run down looks closer to right than down
-- REVIEW frame 17: run down looks closer to left than down
-- REVIEW frame 36: run down-right looks closer to right than downright
-- REVIEW frame 37: run down-right looks closer to right than downright
-- REVIEW frame 38: run down-left looks closer to left than downleft
-- REVIEW frame 39: run down-left looks closer to left than downleft
 - WARN walk down: step frames 1/3 are nearly frozen (0.010)
 - WARN walk left: step frames 1/3 are nearly frozen (0.010)
 - WARN walk right: step frames 1/3 are nearly frozen (0.010)
-- WARN run left: run pair is nearly frozen (0.008)
-- WARN run right: run pair is nearly frozen (0.008)
+- WARN run down: run pair is nearly frozen (0.010)
+- WARN run left: run pair is nearly frozen (0.010)
+- WARN run right: run pair is nearly frozen (0.010)
 - WARN walk down-right: diagonal step pair is nearly frozen (0.010)
 - WARN walk down-left: diagonal step pair is nearly frozen (0.010)
-- WARN run up-right: run pair is nearly frozen (0.003)
-- WARN run up-left: run pair is nearly frozen (0.003)
-
-### vs_kid (vs_kid)
-- WARN run left: run pair is nearly frozen (0.008)
-- WARN run right: run pair is nearly frozen (0.008)
-- WARN run up-right: run pair is nearly frozen (0.003)
-- WARN run up-left: run pair is nearly frozen (0.003)
+- WARN run down-right: run pair is nearly frozen (0.010)
+- WARN run down-left: run pair is nearly frozen (0.010)
 
 ### vs_provisioner (vs_provisioner)
-- REVIEW frame 16: run down looks closer to right than down
-- REVIEW frame 17: run down looks closer to left than down
-- REVIEW frame 22: run up looks closer to right than up
-- REVIEW frame 23: run up looks closer to left than up
-- REVIEW frame 36: run down-right looks closer to right than downright
-- REVIEW frame 37: run down-right looks closer to right than downright
-- REVIEW frame 38: run down-left looks closer to left than downleft
-- REVIEW frame 39: run down-left looks closer to left than downleft
-- REVIEW frame 40: run up-right looks closer to right than upright
-- REVIEW frame 41: run up-right looks closer to right than upright
-- REVIEW frame 42: run up-left looks closer to left than upleft
-- REVIEW frame 43: run up-left looks closer to left than upleft
 - WARN walk down: step frames 1/3 are nearly frozen (0.009)
-- WARN run left: run pair is nearly frozen (0.008)
-- WARN run right: run pair is nearly frozen (0.008)
+- WARN run down: run pair is nearly frozen (0.009)
 - WARN walk down-right: diagonal step pair is nearly frozen (0.009)
 - WARN walk down-left: diagonal step pair is nearly frozen (0.009)
-- WARN run up-right: run pair is nearly frozen (0.003)
-- WARN run up-left: run pair is nearly frozen (0.003)
+- WARN run down-right: run pair is nearly frozen (0.009)
+- WARN run down-left: run pair is nearly frozen (0.009)
 
 ### vs_shepherd (vs_shepherd)
+- WARN walk down: step frames 1/3 are nearly frozen (0.000)
 - WARN walk left: step frames 1/3 are nearly frozen (0.006)
 - WARN walk right: step frames 1/3 are nearly frozen (0.006)
-- WARN run left: run pair is nearly frozen (0.008)
-- WARN run right: run pair is nearly frozen (0.008)
-- WARN run up-right: run pair is nearly frozen (0.003)
-- WARN run up-left: run pair is nearly frozen (0.003)
+- WARN walk up: step frames 1/3 are nearly frozen (0.000)
+- WARN run down: run pair is nearly frozen (0.000)
+- WARN run left: run pair is nearly frozen (0.006)
+- WARN run right: run pair is nearly frozen (0.006)
+- WARN run up: run pair is nearly frozen (0.000)
+- WARN walk down-right: diagonal step pair is nearly frozen (0.000)
+- WARN walk down-left: diagonal step pair is nearly frozen (0.000)
+- WARN walk up-right: diagonal step pair is nearly frozen (0.000)
+- WARN walk up-left: diagonal step pair is nearly frozen (0.000)
+- WARN run down-right: run pair is nearly frozen (0.000)
+- WARN run down-left: run pair is nearly frozen (0.000)
+- WARN run up-right: run pair is nearly frozen (0.000)
+- WARN run up-left: run pair is nearly frozen (0.000)
 
 ### whistle_guard_npc (whistle_guard_npc)
+- WARN walk down: step frames 1/3 are nearly frozen (0.007)
+- WARN run down: run pair is nearly frozen (0.007)
 - WARN walk down-right: diagonal step pair is nearly frozen (0.002)
 - WARN walk down-left: diagonal step pair is nearly frozen (0.002)
 - WARN walk up-right: diagonal step pair is nearly frozen (0.004)
@@ -647,7 +518,7 @@ Common presets:
 - WARN run down-left: run pair is nearly frozen (0.008)
 
 ### wokeA (wokeA)
-- REVIEW frame 3: walk down looks closer to downleft than down
+- REVIEW frame 3: walk down looks closer to downright than down
 
 ### wokeB (wokeB)
 - WARN walk down-right: diagonal step pair is nearly frozen (0.009)
@@ -688,16 +559,16 @@ Common presets:
 | milo | milo | hero | 0 |
 | pippa | pippa | hero | 3 |
 | rex | jay | hero | 7 |
-| ana | ana | npc | 9 |
+| ana | ana | npc | 6 |
 | arcadeOwner | arcadeOwner | npc | 5 |
-| as_keeper | as_keeper | npc | 4 |
+| as_keeper | as_keeper | npc | 2 |
 | as_provisioner | as_provisioner | npc | 4 |
 | as_radio | as_radio | npc | 4 |
 | aurora_busker | aurora_busker | npc | 0 |
 | baobab_healer | baobab_healer | npc | 2 |
-| bell_choir_child | bell_choir_child | npc | 2 |
+| bell_choir_child | bell_choir_child | npc | 0 |
 | bootstep_shepherd | bootstep_shepherd | npc | 6 |
-| busDriver | busDriver | npc | 24 |
+| busDriver | busDriver | npc | 6 |
 | caddy | caddy | npc | 8 |
 | canteen_keeper | canteen_keeper | npc | 0 |
 | captain | captain | npc | 1 |
@@ -707,15 +578,15 @@ Common presets:
 | cp_stationmaster | cp_stationmaster | npc | 8 |
 | cp_usher | cp_usher | npc | 0 |
 | curator | curator | npc | 0 |
-| deliKeeper | deliKeeper | npc | 23 |
+| deliKeeper | deliKeeper | npc | 10 |
 | docBrickton | docBrickton | npc | 4 |
 | dockworker | dockworker | npc | 0 |
 | docPuerto | docPuerto | npc | 5 |
 | docValle | docValle | npc | 8 |
 | drugClerk | drugClerk | npc | 4 |
-| fernLady | fernLady | npc | 22 |
-| fjord_nurse | fjord_nurse | npc | 25 |
-| glint | glint | npc | 6 |
+| fernLady | fernLady | npc | 23 |
+| fjord_nurse | fjord_nurse | npc | 10 |
+| glint | glint | npc | 0 |
 | grand_duchess_millimetta | grand_duchess_millimetta | npc | 6 |
 | grayCommuter | grayCommuter | npc | 0 |
 | kvisthavn_fisher | kvisthavn_fisher | npc | 4 |
@@ -738,7 +609,7 @@ Common presets:
 | mom | mom | npc | 0 |
 | mr_click | mr_click | npc | 0 |
 | mrPlummer | mrPlummer | npc | 4 |
-| mrsPemmel | mrsPemmel | npc | 26 |
+| mrsPemmel | mrsPemmel | npc | 8 |
 | npc_bert | npc_bert | npc | 0 |
 | npc_borden | npc_borden | npc | 1 |
 | npc_clerk | npc_clerk | npc | 0 |
@@ -746,32 +617,32 @@ Common presets:
 | npc_hodgkin | npc_hodgkin | npc | 0 |
 | npc_realtor | npc_realtor | npc | 2 |
 | npc_waitress | npc_waitress | npc | 3 |
-| nurse | nurse | npc | 0 |
+| nurse | nurse | npc | 4 |
 | oldTimer | oldTimer | npc | 8 |
 | pajamaKid | pajamaKid | npc | 4 |
 | permit | permit | npc | 0 |
-| pigeonKid | pigeonKid | npc | 24 |
-| priestOtter | priestOtter | npc | 4 |
+| pigeonKid | pigeonKid | npc | 4 |
+| priestOtter | priestOtter | npc | 3 |
 | priestValle | priestValle | npc | 0 |
-| quarterMan | quarterMan | npc | 14 |
+| quarterMan | quarterMan | npc | 5 |
 | royal_census_taker | royal_census_taker | npc | 2 |
-| senora | senora | npc | 16 |
+| senora | senora | npc | 7 |
 | sidewalkCritic | sidewalkCritic | npc | 0 |
 | sigrid_spectacles | sigrid_spectacles | npc | 0 |
 | sleepwalker_miner | sleepwalker_miner | npc | 0 |
 | smiler | smiler | npc | 0 |
-| smilerB | smilerB | npc | 0 |
-| spool_engineer | spool_engineer | npc | 4 |
-| teacup_innkeeper | teacup_innkeeper | npc | 6 |
-| tiny_postmaster | tiny_postmaster | npc | 2 |
+| smilerB | smilerB | npc | 2 |
+| spool_engineer | spool_engineer | npc | 0 |
+| teacup_innkeeper | teacup_innkeeper | npc | 8 |
+| tiny_postmaster | tiny_postmaster | npc | 0 |
 | tomas | tomas | npc | 0 |
 | uncleBert | uncleBert | npc | 0 |
 | vivi | vivi | npc | 0 |
-| vs_buni | vs_buni | npc | 15 |
-| vs_kid | vs_kid | npc | 4 |
-| vs_provisioner | vs_provisioner | npc | 19 |
-| vs_shepherd | vs_shepherd | npc | 6 |
-| whistle_guard_npc | whistle_guard_npc | npc | 8 |
+| vs_buni | vs_buni | npc | 10 |
+| vs_kid | vs_kid | npc | 0 |
+| vs_provisioner | vs_provisioner | npc | 6 |
+| vs_shepherd | vs_shepherd | npc | 16 |
+| whistle_guard_npc | whistle_guard_npc | npc | 10 |
 | wisherA | wisherA | npc | 0 |
 | wisherB | wisherB | npc | 8 |
 | wisherC | wisherC | npc | 0 |
