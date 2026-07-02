@@ -122,6 +122,7 @@ import { Dialogue, makeWindow, toast, vars, everyFrame, DEPTH_UI, overscanRect }
 import { askAmount } from '../ui/amount';
 import { money } from '../ui/text';
 import { TrafficSim, cellKey } from '../engine/traffic';
+import { entersNewBody } from '../engine/movecollide';
 import { DEALERSHIP } from '../data/dealership';
 import { FLEET_CRAFT } from '../data/fleet';
 import { VEHICLE_SPECS } from '../spritegen/vehicles';
@@ -1907,16 +1908,22 @@ export class OverworldScene extends Phaser.Scene {
     });
   }
 
-  /** axis-separated movement with solid tiles + prop rects (slide on collide) */
+  /** axis-separated movement (slide on collide). A wall or prop always stops the
+   *  player; a car or wandering NPC only stops them when the step would enter it
+   *  FRESH — a body they already overlap never blocks, so they can always walk back
+   *  out instead of being trapped inside it (ADR-137 soft-lock fix). */
   private tryMove(x: number, y: number, dx: number, dy: number, second = false): number {
     const nx = x + dx;
     const ny = y + dy;
     const box = { x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) };
-    if (this.collides(box, 'player')) return second ? y : x;
+    const cur = { x: x - s(5), y: y - s(9), w: s(10), h: s(9) };
+    if (this.collidesStatic(box) || this.entersNewDynamicBody(box, cur)) return second ? y : x;
     return second ? ny : nx;
   }
 
-  private collides(box: Rect, actor?: 'player' | NpcObj): boolean {
+  /** Static, always-solid geometry: solid tiles + prop/facade rects. Unlike the
+   *  dynamic bodies below, these never move, so overlap always means "blocked". */
+  private collidesStatic(box: Rect): boolean {
     const x0 = Math.floor(box.x / TILE_PX);
     const y0 = Math.floor(box.y / TILE_PX);
     const x1 = Math.floor((box.x + box.w) / TILE_PX);
@@ -1934,10 +1941,35 @@ export class OverworldScene extends Phaser.Scene {
         }
       }
     }
-    // props + ambient cars (S18 M26): full-body AABB overlap
-    const hit = (s: Rect): boolean =>
-      box.x < s.x + s.w && box.x + box.w > s.x && box.y < s.y + s.h && box.y + box.h > s.y;
-    if (this.solids.some(hit) || this.trafficRects.some(hit)) return true;
+    const hit = (r: Rect): boolean =>
+      box.x < r.x + r.w && box.x + box.w > r.x && box.y < r.y + r.h && box.y + box.h > r.y;
+    return this.solids.some(hit);
+  }
+
+  /** Dynamic bodies the PLAYER must not phase into: ambient cars (whose rects run
+   *  bigger than a tile) + wandering townsfolk (ADR-131). Delegates to entersNewBody
+   *  so a body the player is ALREADY overlapping never blocks the step — the ADR-137
+   *  escape hatch that stops a car/NPC pinning the player in place. §A6 GIANT towns
+   *  opt out of player↔NPC solidity (the tiny party passes through the colossi), to
+   *  match collides(); the giant TRUCKS still count, so the hatch is what frees the
+   *  tiny player from a truck's oversized rect. */
+  private entersNewDynamicBody(box: Rect, cur: Rect): boolean {
+    if (entersNewBody(box, cur, this.trafficRects)) return true;
+    if (LILLEBY_GIANT_MAPS.has(this.mapDef.id)) return false;
+    const npcBodies: Rect[] = [];
+    for (const n of this.npcs) {
+      if (!n.wanders) continue;
+      npcBodies.push({ x: n.spr.x - s(6), y: n.spr.y - s(10), w: s(12), h: s(10) });
+    }
+    return entersNewBody(box, cur, npcBodies);
+  }
+
+  private collides(box: Rect, actor?: 'player' | NpcObj): boolean {
+    if (this.collidesStatic(box)) return true;
+    // ambient cars (S18 M26): full-body AABB overlap
+    const hit = (r: Rect): boolean =>
+      box.x < r.x + r.w && box.x + box.w > r.x && box.y < r.y + r.h && box.y + box.h > r.y;
+    if (this.trafficRects.some(hit)) return true;
     // ADR-131: the player and WANDERING townsfolk are SOLID to each other (and to
     // other wanderers) — the kid bumps people instead of walking through them. A
     // wanderer can't be a static `solids` rect (it would leave a "ghost" where it

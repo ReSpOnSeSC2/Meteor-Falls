@@ -22,8 +22,12 @@ import type { EchoAnchorDef, EchoState } from '../schemas';
 /** the Breath bank Jay's Locket can hold (the Breath meter caps here) */
 export const MAX_BREATHS = 3;
 
-/** callers ≥ this + the fully-virtuous path + few rewinds ⇒ the golden ending */
-export const GOLDEN_CALLER_THRESHOLD = 45;
+/** callers ≥ this + the fully-virtuous path + few rewinds ⇒ the golden ending.
+ *  PIN NOTE: the live caller supply is 18 (17 wired Ch.1-4 quests + 1 choice) —
+ *  the old pin of 45 assumed the Ch.5-10 quest set was wired (it ships data-only),
+ *  which made the Long Shot ending mathematically unreachable. 15-of-18 = a
+ *  near-full ledger. Re-derive when the Ch.5-10 quests wire in. */
+export const GOLDEN_CALLER_THRESHOLD = 15;
 /** rewinds ≤ this keeps the golden "Long Shot" ending reachable */
 export const GOLDEN_REWIND_CAP = 2;
 
@@ -31,8 +35,9 @@ export const GOLDEN_REWIND_CAP = 2;
  *  WARM enough: the OPEN_HAND compassion choice, OR a caller ledger at least this
  *  full. Below it — too Iron with too few callers — the attempt is offered but FAILS
  *  into a forced Silence (the intended tragic beat). Set well under the golden bar:
- *  mercy OR a rallied community each qualify on their own. */
-export const FORGIVE_CALLER_FLOOR = 24;
+ *  mercy OR a rallied community each qualify on their own. (12-of-18 attainable
+ *  callers — the old 24 exceeded the live supply and dead-coded this leg.) */
+export const FORGIVE_CALLER_FLOOR = 12;
 
 /** a new game / pre-v16 save: a full bank, no snapshots, no rewinds yet */
 export function freshEchoes(): EchoState {

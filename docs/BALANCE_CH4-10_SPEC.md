@@ -114,7 +114,7 @@ reflects the new `WEAK_MUL`.
 | `vibe_freeze_o` | Ω | Ch9 | L46 | 107 | **6036** *(ADR-134 parity)* | **52** | dmg **16798** / 30237 |
 | `vibe_freeze_x` | Σ | Ch10 | L52 | 120 | **8000** *(parity, unchanged)* | **80** | dmg **24000** / 43200 |
 | `vibe_volt_a` | α | Ch4 | L20 | 50 | **49** *(unchanged α/β)* | **9** | dmg **90** / 162 |
-| `vibe_volt_b` | β | Ch5 | L26 | 63 | **228** *(unchanged α/β)* | **19** | dmg **467** / 841 |
+| `vibe_volt_b` | β | Ch5 | L26 | 63 | **128** *(shipped; keeps the canonical ~2.6 α→β leap — an earlier draft said 228)* | **19** | dmg **262** / 472 |
 | `vibe_volt_g` | γ | Ch8 | L40 | 94 | **1772** *(ADR-134 parity)* | **36** | dmg **4548** / 8187 |
 | `vibe_volt_o` | Ω | Ch10 | L47 | 109 | **6036** *(parity, unchanged)* | **55** | dmg **17003** / 30606 |
 | `vibe_volt_x` | Σ | Ch10 | L52 | 120 | **8000** *(parity, unchanged)* | **82** | dmg **24000** / 43200 |
@@ -125,7 +125,7 @@ reflects the new `WEAK_MUL`.
 | `heartmend_a` (heal) | — | Ch5 | L27 | 65 | **199** *(unchanged)* | **12** | heal **361** |
 
 Ladder powers (monotonic ✓, ADR-134 parity on γ/Ω/Σ): Fire **10→26→1542→5251→6960** (−13%,
-DoT-discounted); Freeze **12→72→1772→6036→8000**; Volt **49→228→1772→6036→8000**; Starsong
+DoT-discounted); Freeze **12→72→1772→6036→8000**; Volt **49→128→1772→6036→8000**; Starsong
 **10→500→1772→6036→8000**. Freeze=Volt=Starsong now share one power per γ/Ω/Σ tier — the
 ×4.5 element swing (×1.8…×0.4) is the ONLY differentiator, so Mia picks by the foe's COLOUR,
 not by which raw number is biggest. Her elemental edge (now ×1.8 weakness) keeps her the
@@ -283,7 +283,7 @@ physical. **Unlanded bosses have NO `ENEMIES[id]` entry → `bossWeakness` retur
 - Jay: best affordable nuke = Surge γ (pw1100, V67 → dmg 2695, pp38 ≤ maxPp126). casts =
   126÷38 = 3, so 3 nuke rounds + 5 phys rounds (phys ≈ off73·2−def35 SMAAASH-weighted ≈ 113):
   (3·2695 + 5·113)/8 = **954**.
-- Mia: best = Volt β (pw228, V83 → dmg 543) capped only by pp19; Freeze γ (pw971, V83 →
+- Mia: best = Volt β (pw128, V83 → dmg 305) capped only by pp19; Freeze γ (pw971, V83 →
   dmg 2314, pp30 ≤ maxPp169) wins. casts 169÷30 = 5 → (5·2314 + 3·~75)/8 = **1482**.
 - Milo: Siege Rocket 360 (0 PP, sustains all 8 rounds) = **360**.
 - Pippa: pure physical (no `power>0` nuke) ≈ **81**.

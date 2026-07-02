@@ -213,6 +213,7 @@ const HERO_ARCH: Record<string, HoopsArchetype> = {
   faye: 'sniper',
   milo: 'rusher',
   dorin: 'post',
+  pippa: 'hawk',
 };
 
 export function heroAthlete(h: HeroState): AthleteDef {

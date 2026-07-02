@@ -140,6 +140,8 @@ export class HoopsScene extends Phaser.Scene {
   private hoopR!: Phaser.GameObjects.Sprite;
   private boardBehind!: Phaser.GameObjects.Image;
   private netT = 9999;
+  /** last clamped frame dt (ms) — render-side clocks (net ripple) advance by real time */
+  private frameDt = 16.7;
   private cursor!: Phaser.GameObjects.Rectangle;
 
   // HUD
@@ -376,6 +378,7 @@ export class HoopsScene extends Phaser.Scene {
 
   override update(_t: number, dtMs: number): void {
     const dt = Math.min(dtMs, 50);
+    this.frameDt = dt;
     this.elapsed += dt;
     if (this.asking) return;
 
@@ -615,7 +618,7 @@ export class HoopsScene extends Phaser.Scene {
         const tag = e.pts === 2 ? `${HOOPS_TEXT.deepMake} +2` : `${HOOPS_TEXT.inMake} +1`;
         this.popup(e.x, e.y, tag, e.team === 0 ? RAMP.GOLD : RAMP.MAGENTA);
         this.scoreFlashUntil = this.elapsed + 700;
-        const pool = e.green ? HOOPS_TEXT.permitGreen : HOOPS_TEXT.permitScore;
+        const pool = e.green ? HOOPS_TEXT.permitGreen : e.dunk ? HOOPS_TEXT.permitDunk : HOOPS_TEXT.permitScore;
         if (!this.cfg.tutorial) this.say(this.pickVoice(pool));
         break;
       }
@@ -693,6 +696,7 @@ export class HoopsScene extends Phaser.Scene {
       case 'callsForIt': {
         const w = this.sim.athletes[e.who];
         this.popupAt(w, 'BALL!', RAMP.CYAN);
+        if (!this.cfg.tutorial) this.say(HOOPS_TEXT.callsForIt.replace('{name}', w.def.name), 1400);
         break;
       }
       case 'banner':
@@ -705,6 +709,15 @@ export class HoopsScene extends Phaser.Scene {
         void this.quarterBreak(e.quarter);
         break;
       case 'gameEnd':
+        // the horn gets a voice: street games close with the cage line
+        if (!this.cfg.tutorial) {
+          this.say(
+            this.sim.format === '3v3'
+              ? (e.us > e.them ? HOOPS_TEXT.pickup_win : HOOPS_TEXT.pickup_loss)
+              : HOOPS_TEXT.permitHorn,
+            2600,
+          );
+        }
         void this.tally(e.us, e.them);
         break;
     }
@@ -906,12 +919,16 @@ export class HoopsScene extends Phaser.Scene {
       case 'gather':
         return F.gather;
       case 'rise':
-        // release → the FOLLOW-THROUGH holds (livelier S12c read)
-        return a.stateT < 130 ? F.rise : a.stateT < 280 ? F.release : F.follow;
+        // release HOLDS through the descent — the authored sheets' follow cell
+        // (37) is basketball-only art on several bases, so the shooter's body
+        // vanished mid-shot; hold release until the masters regen fills 37
+        return a.stateT < 130 ? F.rise : F.release;
       case 'layup':
         return a.stateT < 220 ? F.layupA : F.layupB;
       case 'dunk': {
-        const pair = a.dunkStyle === 0 ? [F.dunkAa, F.dunkAb] : a.dunkStyle === 1 ? [F.dunkBa, F.dunkBb] : [F.dunkCa, F.dunkCb];
+        // style C's authored cells (17/18) are half-scale on every base sheet —
+        // ride the B pair for style 2 until the masters regen
+        const pair = a.dunkStyle === 0 ? [F.dunkAa, F.dunkAb] : [F.dunkBa, F.dunkBb];
         return a.stateT < 300 ? pair[0] : pair[1];
       }
       case 'block':
@@ -933,8 +950,9 @@ export class HoopsScene extends Phaser.Scene {
       case 'celebrate':
         return slow === 0 ? F.cheerA : F.cheerB;
       default:
-        // landing recovery: knees soft for a beat after a leap comes down
-        if (a.leapCd > BLOCK_TIMING.LAND_CD_MS - 140) return F.land;
+        // landing recovery: the authored land cell (38) is basketball-only art,
+        // so the beat rides idleA until the masters regen fills 38
+        if (a.leapCd > BLOCK_TIMING.LAND_CD_MS - 140) return F.idleA;
         if (hasBall) return a.moving ? (phase === 0 ? F.runA : F.runB) : slow === 0 ? F.idleA : F.idleB;
         if (defending && a.moving && !a.turbo) return phase === 0 ? F.slideA : F.slideB;
         if (a.moving) return phase === 0 ? F.offA : F.offB;
@@ -1026,9 +1044,10 @@ export class HoopsScene extends Phaser.Scene {
     this.ballShadow.setScrollFactor(behind ? 0 : 1);
     // alpha fades with height: 0.004 is alpha-per-NATIVE-px, so take bz native
     this.ballShadow.setAlpha(Math.max(0.2, 0.5 - (bz / ART_SCALE) * 0.004));
-    // net ripple
-    this.netT += 16.7;
-    const netFrame = this.netT < 90 ? 1 : this.netT < 220 ? 2 : 0;
+    // net ripple — real-time advance; the authored sheet's frame 2 is netless
+    // with a mispositioned rim, so the cycle settles straight from 1 to 0
+    this.netT += this.frameDt;
+    const netFrame = this.netT < 220 ? 1 : 0;
     this.hoopL.setFrame(netFrame);
     this.hoopR.setFrame(netFrame);
     // the controlled-athlete pip — floats 38px over the head

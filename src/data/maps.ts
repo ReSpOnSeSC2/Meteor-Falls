@@ -501,7 +501,7 @@ export function growOtterbrook(): MapDef {
     { id: 'bus_waiter2', sprite: 'senora', x: 46, y: 25, facing: 'up' as const, dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle' as const, ifFlag: 'zapper_done' },
     // S22 (ADR-115): the tycoon TEASERS on the civic lane — you can SEE the home +
     // car you'll someday afford. Both open at daybreak (zapper_done).
-    { id: 'realtor_otter', sprite: 'senora', x: 24, y: 43, facing: 'up' as const, dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
+    { id: 'realtor_otter', sprite: 'npc_realtor', x: 24, y: 43, facing: 'up' as const, dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
     { id: 'car_dealer_otter', sprite: 'quarterMan', x: 22, y: 43, facing: 'up' as const, dialogue: 'npc_car_dealer', idle: true, emote: 'happy' as const, ifFlag: 'zapper_done' },
     // S22 (ADR-118 rework): Constable Borden works the "hill vandalism" frame-up
     // out of the new STATION HOUSE by daybreak. He RUNS you down on sight (no need
@@ -2345,7 +2345,7 @@ function buildBusDepotInt(streetExit: { tx: number; ty: number }): MapDef {
     npcs: [
       {
         id: 'depot_clerk',
-        sprite: 'quarterMan',
+        sprite: 'npc_depot_clerk',
         x: 5,
         y: 2,
         facing: 'down',
@@ -2446,7 +2446,7 @@ function buildHardwareInt(streetExit: { tx: number; ty: number }): MapDef {
       { sprite: 'atm', x: 10, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
     ],
     npcs: [
-      { id: 'hodgkin', sprite: 'drugClerk', x: 6, y: 2, facing: 'down', dialogue: 'npc_hodgkin', idle: true },
+      { id: 'hodgkin', sprite: 'npc_hodgkin', x: 6, y: 2, facing: 'down', dialogue: 'npc_hodgkin', idle: true },
     ],
     signs: [{ x: 9, y: 1, dialogue: 'sign_hardware' }],
     phones: [{ x: 2, y: 7 }],
@@ -2481,7 +2481,7 @@ function buildDinerInt(streetExit: { tx: number; ty: number }): MapDef {
       { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
     ],
     npcs: [
-      { id: 'diner_waitress', sprite: 'mom', x: 6, y: 2, facing: 'down', dialogue: 'npc_waitress', idle: true },
+      { id: 'diner_waitress', sprite: 'npc_waitress', x: 6, y: 2, facing: 'down', dialogue: 'npc_waitress', idle: true },
     ],
     signs: [{ x: 9, y: 1, dialogue: 'sign_diner' }],
     phones: [{ x: 2, y: 7 }],

@@ -17,7 +17,13 @@ export interface StatBlock {
   cash: number;
 }
 
-/** the per-level baseline, fitted to the shipped §A7 Ch.1–2 rows */
+/** the per-level baseline, fitted to the shipped §A7 Ch.1–2 rows.
+ *
+ *  ⚠️ FROZEN pre-ADR-122: this curve predates the wide-JRPG rescale — a draft
+ *  it produces for Ch.3+ lands 20–40× UNDER the shipped BALANCE_REVAMP bands
+ *  (e.g. L38 → hp 284 vs the shipped Ch.8 5,500–11,000). Do NOT promote a
+ *  forge draft for Ch.3–10 from these numbers; tune to the band tables in
+ *  docs/BALANCE_REVAMP.md (as amended by ADR-131/133/134) instead. */
 export function statAtLevel(level: number): StatBlock {
   const L = Math.max(1, level);
   return {

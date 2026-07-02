@@ -752,11 +752,16 @@ export class BattleScene extends Phaser.Scene {
 
   private backdropArea(enemyId: string): string {
     if ([
-      'blazer_smiler',
+      // + the Ch.3 Brickton street/DOS-tower adoptees (they fell to 'otterbrook')
+      'blazer_smiler', 'expired_meter', 'rogue_icecream_truck', 'showroom_mannequin',
+      'mandatory_memo', 'motivational_poster', 'quota_clock', 'the_suit',
     ].includes(enemyId)) return 'brickton';
     if ([
       'pickpocket_parrot', 'gilded_beetle', 'cursed_souvenir', 'step_mask',
       'banana_bunch', 'jungle_jitterbug', 'gilded_grin',
+      // + the Ch.2 jungle/pyramid adoptees
+      'brass_market_mimic', 'bronze_mask_guardian', 'cackling_mask',
+      'confetti_cannon', 'postage_stampede',
     ].includes(enemyId)) return 'jungle';
     if ([
       'prefect_drone', 'possessed_textbook', 'fog_hound', 'greenhouse_creeper',
@@ -798,6 +803,11 @@ export class BattleScene extends Phaser.Scene {
     if ([
       'caravan_hyena_pack', 'baobab_root_snare', 'laughing_dust_pot', 'sphinx_paw_shadow',
       'laughing_sphinx',
+      // + the Ch.6 savanna/ruins adoptees (they fell to 'otterbrook')
+      'hollow_jackal', 'dust_devil_charm', 'salt_flat_lurker', 'thornbush_bomber',
+      'ribbon_serpent', 'canteen_mirage', 'trade_salt_heap', 'mirage_vendor',
+      'griot_string_snare', 'town_gossip_troll', 'punchline_head', 'echoing_riddle',
+      'laughing_sphinx_riddle', 'rare_riddle_ring', 'sunbaked_idol', 'fastest_man_echo',
     ].includes(enemyId)) return 'laughing_ruins';
     // CH.7 India — the bazaar port of Chandrapore, the monsoon road, the night
     // train, and the Cobra Raja's usurped throne all fight under the one authored

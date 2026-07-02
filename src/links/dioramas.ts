@@ -148,3 +148,47 @@ export function projectPoint(p: HoleProjection, x: number, y: number): { x: numb
   const dy = y - p.sty;
   return { x: p.dtx + p.a * dx - p.b * dy, y: p.dty + p.b * dx + p.a * dy };
 }
+
+/**
+ * THE TOP-VIEW CAMERA (the "camera doesn't change" fix): projectHole framed the
+ * whole hole once, statically — late-hole shots rendered at the screen edge and
+ * putts were unreadably small. This variant lays the SAME illustration into the
+ * box at `zoom`× the cover fit, centred on `focus` (a point in image FRACTIONS,
+ * 0..1), clamped so the oversized image always covers the box. The similarity
+ * solve is identical to projectHole, so every projectPoint caller just works.
+ */
+export function projectHoleCam(
+  hole: HoleDef,
+  imgW: number,
+  imgH: number,
+  box: FitBox,
+  focus: { fx: number; fy: number },
+  zoom: number,
+): HoleProjection {
+  const an = anchorsFor(hole.id);
+  const fit = Math.max(box.w / imgW, box.h / imgH) * Math.max(1, zoom);
+  const dw = imgW * fit;
+  const dh = imgH * fit;
+  // centre the focus point in the box, clamped so the image still fully covers
+  let dx = box.x + box.w / 2 - focus.fx * dw;
+  let dy = box.y + box.h / 2 - focus.fy * dh;
+  dx = Math.min(box.x, Math.max(box.x + box.w - dw, dx));
+  dy = Math.min(box.y, Math.max(box.y + box.h - dh, dy));
+
+  const stx = s(hole.tee.x);
+  const sty = s(hole.tee.y);
+  const spx = s(hole.pin.x);
+  const spy = s(hole.pin.y);
+  const dtx = dx + an.tee.x * dw;
+  const dty = dy + an.tee.y * dh;
+  const dpx = dx + an.cup.x * dw;
+  const dpy = dy + an.cup.y * dh;
+  const vx = spx - stx;
+  const vy = spy - sty;
+  const wx = dpx - dtx;
+  const wy = dpy - dty;
+  const denom = vx * vx + vy * vy || 1;
+  const a = (wx * vx + wy * vy) / denom;
+  const b = (wy * vx - wx * vy) / denom;
+  return { dx, dy, dw, dh, fit, a, b, stx, sty, dtx, dty, scale: Math.hypot(a, b) };
+}

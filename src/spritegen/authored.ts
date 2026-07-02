@@ -126,7 +126,8 @@ const FRAMING_SCREEN_ART = [
   { key: 'logo', url: new URL('../../assets/art/screens/title_logo.png', import.meta.url).href },
   { key: 'name_entry_bg', url: new URL('../../assets/art/screens/name_entry_bg.png', import.meta.url).href },
   { key: 'save_slots_bg', url: new URL('../../assets/art/screens/save_slots_bg.png', import.meta.url).href },
-  { key: 'links_bg', url: new URL('../../assets/art/screens/links_bg.png', import.meta.url).href },
+  // (links_bg retired to dormant/ — LinksScene builds its backdrop from the sky
+  // gradient + the per-hole dioramas; no code ever drew the key)
   { key: 'game_over', url: new URL('../../assets/art/screens/game_over.png', import.meta.url).href },
 ] as const;
 
@@ -141,6 +142,14 @@ const AUTHORED_MINIGAME_ATHLETES = [
   // pippa: a magenta recolour of the authored faye sheet (female, matches her)
   { id: 'pippa', key: 'authored_athlete_pippa', url: new URL('../../assets/art/minigames/hoops/athlete_pippa_runtime.png', import.meta.url).href },
   { id: 'opponent', key: 'authored_athlete_opponent', url: new URL('../../assets/art/minigames/hoops/athlete_opponent_runtime.png', import.meta.url).href },
+  // walk-on bench (WALK_ONS in data/hoops.ts): kit recolours of the rex sheet —
+  // they fill the player five in under-strength matches, so without these rows
+  // they rendered as procedural 32×40 sprites next to hi-res heroes
+  { id: 'chad', key: 'authored_athlete_chad', url: new URL('../../assets/art/minigames/hoops/athlete_chad_runtime.png', import.meta.url).href },
+  { id: 'pajamaKid', key: 'authored_athlete_pajamaKid', url: new URL('../../assets/art/minigames/hoops/athlete_pajamaKid_runtime.png', import.meta.url).href },
+  { id: 'pigeonKid', key: 'authored_athlete_pigeonKid', url: new URL('../../assets/art/minigames/hoops/athlete_pigeonKid_runtime.png', import.meta.url).href },
+  { id: 'quarterMan', key: 'authored_athlete_quarterMan', url: new URL('../../assets/art/minigames/hoops/athlete_quarterMan_runtime.png', import.meta.url).href },
+  { id: 'sidewalkCritic', key: 'authored_athlete_sidewalkCritic', url: new URL('../../assets/art/minigames/hoops/athlete_sidewalkCritic_runtime.png', import.meta.url).href },
 ] as const;
 
 const AUTHORED_MINIGAME_GOLFERS = [
@@ -674,8 +683,15 @@ const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
   // Otterbrook facades (house_rex/chad/a/b, drugstore, arcade, chapel) re-promoted to
   // authored hi-res — sliced from otterbrook-facades-transparent.png into
   // assets/art/world/facades/ (tools/slice-otterbrook-facades.js).
-  'clubhouse', 'clubhouse_grand', 'golf_gatehouse', 'mansion_a', 'mansion_b', 'mansion_c',
-  'valle_house', 'valle_house_b', 'valle_shop', 'valle_clinic', 'valle_chapel',
+  //
+  // The golf-estate (clubhouse_grand, golf_gatehouse, mansion_a/b/c) and Valle Dorado
+  // (valle_shop, valle_clinic, valle_chapel, valle_house, valle_house_b) facades are now
+  // authored hi-res too — ChatGPT single-row strips keyed + sliced from
+  // golf-facades-source.png / valle-facades-source.png (tools/slice-facade-row.js).
+  //
+  // 'clubhouse' (singular) has NO map placement (costa_estrella's clifftop clubhouse was
+  // removed in ADR-059), so it never renders — it stays on the procedural fallback.
+  'clubhouse',
   ...GENERATED_BUILDINGS.map((building) => building.name), // bldg_gen_* + colossi
 ]);
 

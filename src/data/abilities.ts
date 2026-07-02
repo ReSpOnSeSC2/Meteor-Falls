@@ -30,7 +30,10 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     A({ id: 'vibe_surge_o', name: 'Vibe Surge Omega', kind: 'vibe', pp: 44, power: 1250, target: 'enemies', element: 'none', text: 'The hill, the town, the sky — all of it surged through {user}!', fx: 'surge_o' }),
     A({ id: 'lifeup_a', name: 'Lifeup Alpha', kind: 'vibe', pp: 5, power: 12, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
     A({ id: 'lifeup_b', name: 'Lifeup Beta', kind: 'vibe', pp: 11, power: 116, heal: true, target: 'ally', element: 'none', text: '{user} hummed a warm note!', fx: 'lifeup' }),
-    A({ id: 'lifeup_g', name: 'Lifeup Gamma', kind: 'vibe', pp: 24, power: 1464, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole chorus!', fx: 'lifeup' }),
+    // heal tiers are tuned to the SHIPPED hero-HP curve (L38 ~330-460, L52 435-625
+    // — the BALANCE_REVAMP §5 "tens of thousands" widening never landed): gamma
+    // spreads a near-full single heal party-wide at its earn level, omega caps it
+    A({ id: 'lifeup_g', name: 'Lifeup Gamma', kind: 'vibe', pp: 24, power: 250, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole chorus!', fx: 'lifeup' }),
     A({ id: 'hypno_a', name: 'Hypno Alpha', kind: 'vibe', pp: 6, power: 0, target: 'enemy', element: 'none', status: 'asleep', text: '{user} hummed a lullaby!', fx: 'hypno' }),
     A({ id: 'shield_a', name: 'Shield Alpha', kind: 'vibe', pp: 6, power: 0, target: 'ally', element: 'none', status: 'shield', text: '{user} raised a shimmer in the air!', fx: 'shield_snap' }),
     A({ id: 'shield_s', name: 'Shield Sigma', kind: 'vibe', pp: 18, power: 0, target: 'allies', element: 'none', status: 'shield', text: '{user} raised a wall of shimmer!', fx: 'shield_snap' }),
@@ -69,7 +72,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // Pillar D — Lifeup Ω (Jay can main-heal so Mia is free to nuke) + Resolve
     // ('steeled': +Guts → crit and a 1-HP mortal-blow survive, a proactive
     // don't-die button the party otherwise lacks).
-    A({ id: 'lifeup_o', name: 'Lifeup Omega', kind: 'vibe', pp: 40, power: 2683, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole sky bright!', fx: 'lifeup' }),
+    A({ id: 'lifeup_o', name: 'Lifeup Omega', kind: 'vibe', pp: 40, power: 350, heal: true, target: 'allies', element: 'none', text: '{user} hummed the whole sky bright!', fx: 'lifeup' }),
     A({ id: 'resolve_a', name: 'Resolve', kind: 'vibe', pp: 10, power: 0, target: 'ally', element: 'none', status: 'steeled', text: '{user} caught their eye: stand. STAND.', fx: 'brace_snap' }),
 
     // Pillar E — the two "full double" extras (trim-first, §3): a stronger
@@ -203,7 +206,7 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // mechanics wire in when she joins); the faces reuse existing fx families.
     A({ id: 'pinpoint_mark', name: 'Pinpoint Mark', kind: 'physical', pp: 0, power: 0, target: 'enemy', element: 'none', status: 'marked', text: "{user} marked the shot — now the party can't miss it!", fx: 'pinpoint_mark' }),
     A({ id: 'royal_rally', name: 'Royal Rally', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'rally', text: '{user} called the rally — the party stands quick and lucky!', fx: 'royal_rally' }),
-    A({ id: 'pocket_patch', name: 'Pocket Patch', kind: 'physical', pp: 0, power: 360, heal: true, target: 'ally', element: 'none', status: 'cure', text: '{user} patched an ally up — needle, thread, and a clean bandage!', fx: 'pocket_patch' }),
+    A({ id: 'pocket_patch', name: 'Pocket Patch', kind: 'physical', pp: 0, power: 110, heal: true, target: 'ally', element: 'none', status: 'cure', text: '{user} patched an ally up — needle, thread, and a clean bandage!', fx: 'pocket_patch' }),
     A({ id: 'scale_step', name: 'Scale Step', kind: 'physical', pp: 0, power: 0, target: 'self', element: 'none', status: 'evasion', text: '{user} stepped to thimble-scale — and left a decoy standing!', fx: 'scale_step' }),
     A({ id: 'big_little_focus', name: 'Big-Little Focus', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'focus', text: '{user} and the party found the big-little focus!', fx: 'big_little_focus' }),
     A({ id: 'bellwether', name: 'Bellwether', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'morale', text: '{user} rang the bellwether — the next prayer will carry!', fx: 'bellwether' }),
@@ -219,7 +222,11 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(
     // read like the minutes of a meeting ("Noted. Marked. Proceed.").
     A({ id: 'volley_mark', name: 'Volley Mark', kind: 'physical', pp: 0, power: 0, target: 'enemies', element: 'none', status: 'marked', text: '{user} marked the whole row. "Noted. Marked. Proceed."', fx: 'volley_mark' }),
     A({ id: 'diplomatic_immunity', name: 'Diplomatic Immunity', kind: 'physical', pp: 0, power: 0, target: 'ally', element: 'none', status: 'guarded', text: '{user} stepped in front. "I will be taking that one."', fx: 'diplomatic_immunity' }),
-    A({ id: 'field_dressing', name: 'Field Dressing', kind: 'physical', pp: 0, power: 700, heal: true, target: 'allies', element: 'none', status: 'cure', text: '{user} worked the line — needle, thread, and a stern word.', fx: 'field_dressing' }),
+    // 0-PP field medicine is FREE every turn, so it stays a top-up, not a full
+    // reset: ~110 single / ~180 party against ~210-310 hero HP at earn keeps
+    // enemy pressure meaningful through the back half (was 360/700 — tuned
+    // against the never-landed §5 HP widening, i.e. infinite free full heals)
+    A({ id: 'field_dressing', name: 'Field Dressing', kind: 'physical', pp: 0, power: 180, heal: true, target: 'allies', element: 'none', status: 'cure', text: '{user} worked the line — needle, thread, and a stern word.', fx: 'field_dressing' }),
     A({ id: 'stern_decree', name: 'Stern Decree', kind: 'physical', pp: 0, power: 0, target: 'enemies', element: 'none', status: 'rattled', text: '{user} read them the decree. The room went small and sorry.', fx: 'stern_decree' }),
     A({ id: 'standing_ovation', name: 'Standing Ovation', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'rally', text: '{user} called the house to its feet — GO!', fx: 'standing_ovation' }),
     A({ id: 'the_minutes', name: 'The Minutes', kind: 'physical', pp: 0, power: 0, target: 'allies', element: 'none', status: 'focus', text: '{user} took the minutes mid-disaster — and corrected the record.', fx: 'the_minutes' }),
