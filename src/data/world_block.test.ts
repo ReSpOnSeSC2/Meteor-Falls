@@ -29,9 +29,16 @@ function coreRegionMatches(grown: MapDef, core: MapDef): void {
 const propsModuloDoors = (props: MapDef['props']): string =>
   JSON.stringify(props, (k, v) => (k === 'door' ? undefined : v));
 
-/** the grown map's arrays START with the core's, unchanged (top-left anchored) */
+/** the grown map's arrays START with the core's, unchanged (top-left anchored).
+ *  Props are byte-identical MODULO door LANDINGS (tx/ty): the assembly re-aim
+ *  pass (maps.ts, growInterior's "other half") rewrites a landing when its door
+ *  targets a grown ROOMY interior. Mouth geometry (ox/oy/w/h), target, sprite +
+ *  position stay frozen; landing snugness is owned by the door-audit
+ *  farFromReturn gate (FAR_FROM_RETURN_PX), a live check stronger than a byte pin. */
 function corePrefixUnchanged(grown: MapDef, core: MapDef): void {
-  expect(JSON.stringify(grown.props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
+  const moduloLandings = (props: MapDef['props']): string =>
+    JSON.stringify(props, (k, v) => (k === 'tx' || k === 'ty' ? 0 : v));
+  expect(moduloLandings(grown.props.slice(0, core.props.length))).toBe(moduloLandings(core.props));
   expect(JSON.stringify(grown.npcs.slice(0, core.npcs.length))).toBe(JSON.stringify(core.npcs));
   expect(JSON.stringify(grown.signs.slice(0, core.signs.length))).toBe(JSON.stringify(core.signs));
   expect(JSON.stringify(grown.spawners.slice(0, core.spawners.length))).toBe(JSON.stringify(core.spawners));

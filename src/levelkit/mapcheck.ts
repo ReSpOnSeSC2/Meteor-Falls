@@ -338,19 +338,24 @@ const TILE = 16;
  * px a landing may sit from where you'd STAND to use the reciprocal return door
  * (its interior doorCell) before it reads as the WRONG edge / wrong way in.
  *
- * The playtest spec's first estimate was "~24px ≈ 1.5 tiles", but swept across
- * the 113 canon maps that is essentially the by-design FLOOR: a normal building
+ * The playtest spec's first estimate was "~24px ≈ 1.5 tiles"; a normal building
  * entrance / screen seam lands you one tile inside the threshold, which is
- * already ~25px from the return door's cell (the feet-origin offset). At 24px
- * the flag fires on ~87 doors, 86 of them correct. The measured distribution is
- * sharply bimodal — a dense by-design cluster at 25–58px and a clean GAP up to
- * the genuine wrong-edge band at ≥142px (a door that drops you on the opposite
- * side of the map / a different screen entirely: jungle_2→valle_dorado 584px,
- * wintermoor inter-floor 184–376px, valle_dorado→pyramid_ante 192px). 64px
- * (≈4 tiles) sits in that empty gap: above every by-design seam, below every
- * real wrong-edge. Tune here if the maps move — the gap is the truth, not 64.
+ * already ~25px from the return door's cell (the feet-origin offset) — so 24px
+ * is under the by-design floor. The gate first shipped at 64px, but that
+ * tolerated a "lands 2–4 tiles into the room" band the player reads as spawning
+ * mid-floor (the growInterior rooms all drifted there when their mats rode down;
+ * fixed 2026-07-02 by the maps.ts assembly re-aim pass + hand re-aims). The
+ * re-measured distribution (tools/door-landing-survey.ts): a dense snug cluster
+ * at 8–32px, exactly TWO deliberate 34px hand-tunes (procession_way→
+ * minimus_major lands ON the street per its comment; spine_hand→bootstep_moor
+ * lands directly above the moor's south gate — its doorCell falls back oddly),
+ * then NOTHING until the historic wrong-edge band at ≥142px (jungle_2→
+ * valle_dorado 584px, wintermoor inter-floor 184–376px, valle_dorado→
+ * pyramid_ante 192px — all long fixed). 40px sits in the empty gap: above the
+ * snug cluster + both hand-tunes, far below any real wrong-edge. Tune here if
+ * the maps move — the gap is the truth, not 40.
  */
-export const FAR_FROM_RETURN_PX = 64;
+export const FAR_FROM_RETURN_PX = 40;
 
 /** one transition's verdict. `lx,ly` are the destination LANDING tile;
  *  `char` is the destination tile char there ('' = out of bounds). */

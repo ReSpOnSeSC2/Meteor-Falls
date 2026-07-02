@@ -270,7 +270,7 @@ function buildWintermoorGrounds(): MapDef {
     phones: [],
     doors: [
       { x: 14, y: H - 1, w: 2, h: 1, to: 'foggy_moor', tx: 24 * 16, ty: 1 * 16, facing: 'down', indicator: 'none' },
-      { x: 14, y: 1, w: 2, h: 1, to: 'wintermoor_f1', tx: 13 * 16, ty: 13 * 16, facing: 'up', indicator: 'door' }, // up the steps into the school
+      { x: 14, y: 1, w: 2, h: 1, to: 'wintermoor_f1', tx: 14 * 16 + 8, ty: 14 * 16 + 12, facing: 'up', indicator: 'door' }, // up the steps into the school — land one tile inside f1's grounds door (zone y:15)
     ],
     spawners: [
       { enemies: ['prefect_drone', 'schedule_bell'], count: 2, rect: { x: 4, y: 16, w: 8, h: 4 } },

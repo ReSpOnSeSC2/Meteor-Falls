@@ -863,6 +863,13 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   edge_spore_b: { w: 29, h: 34 },
   edge_rock_a: { w: 34, h: 30 },
   edge_rock_b: { w: 31, h: 34 },
+  // valle_chapel's hi-res PNG (326×581 = ~9 tiles tall) draws twice the height of
+  // every other Valle building from its y=20 placement, running its porch/door into
+  // the map's south treeline (row 28) — unreachable. Anchor it to village scale
+  // (100 native tall ≈ 6.25 tiles, aspect kept): the drawn foot lands on open grass
+  // at row ~26 and the ADR-051 landmark door box lands with it (door.ox in
+  // maps_ch2.ts is measured against THIS displayed size).
+  valle_chapel: { w: 56, h: 100 },
 } as const satisfies Record<string, { w: number; h: number }>;
 
 /** Footprint width in TILES for the generated catalog + colossi, mirrored from

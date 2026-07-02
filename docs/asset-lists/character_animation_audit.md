@@ -8,9 +8,9 @@ This checks the authored 46-frame character sheets against the runtime frame con
 - Registered characters: 97
 - Unregistered character sheets on disk: 0
 - Path overrides: 0
-- Characters with issues: 57
+- Characters with issues: 59
 - Errors: 0
-- Warnings: 255
+- Warnings: 263
 - Review hints: 82
 
 Interactive playback page: [character_animation_audit.html](character_animation_audit.html)
@@ -478,6 +478,12 @@ Common presets:
 - WARN run up-right: run pair is nearly frozen (0.004)
 - WARN run up-left: run pair is nearly frozen (0.004)
 
+### wisherA (wisherA)
+- WARN walk down: step frames 1/3 are nearly frozen (0.007)
+- WARN walk up: step frames 1/3 are nearly frozen (0.008)
+- WARN run down: run pair is nearly frozen (0.007)
+- WARN run up: run pair is nearly frozen (0.008)
+
 ### wisherB (wisherB)
 - WARN walk left: step frames 1/3 are nearly frozen (0.004)
 - WARN walk right: step frames 1/3 are nearly frozen (0.004)
@@ -487,6 +493,12 @@ Common presets:
 - WARN walk down-left: diagonal step pair is nearly frozen (0.008)
 - WARN run down-right: run pair is nearly frozen (0.008)
 - WARN run down-left: run pair is nearly frozen (0.008)
+
+### wisherC (wisherC)
+- WARN walk left: step frames 1/3 are nearly frozen (0.005)
+- WARN walk right: step frames 1/3 are nearly frozen (0.005)
+- WARN run left: run pair is nearly frozen (0.005)
+- WARN run right: run pair is nearly frozen (0.005)
 
 ### wokeA (wokeA)
 - REVIEW frame 3: walk down looks closer to downright than down
@@ -614,9 +626,9 @@ Common presets:
 | vs_provisioner | vs_provisioner | npc | 6 |
 | vs_shepherd | vs_shepherd | npc | 16 |
 | whistle_guard_npc | whistle_guard_npc | npc | 10 |
-| wisherA | wisherA | npc | 0 |
+| wisherA | wisherA | npc | 4 |
 | wisherB | wisherB | npc | 8 |
-| wisherC | wisherC | npc | 0 |
+| wisherC | wisherC | npc | 4 |
 | wokeA | wokeA | npc | 1 |
 | wokeB | wokeB | npc | 8 |
 | wokeC | wokeC | npc | 0 |

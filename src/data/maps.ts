@@ -107,31 +107,85 @@ export const CHAR_LEGEND: Record<string, string> = {
 /* ------------------- OTTERBROOK ------------------- */
 
 /** THE FROZEN 1995 CORE — byte-identical forever (the byte-identical test
- *  proves growOtterbrook copies it unchanged into the top-left). */
+ *  proves growOtterbrook copies it unchanged into the top-left).
+ *
+ *  RE-LAYOUT (docs/CITY_DESIGN_LANGUAGE.md, "Two lanes and a green"): a
+ *  gravel-era town, so every street stays ':' (no R/D/X — those read as a
+ *  paved city, which Otterbrook 1995 isn't). Six quarters, tangent to each
+ *  other so crossing town reads as a transition, not a re-skin:
+ *    ELM ROW (N residential, y1-7) — Elm Ln + 4 staggered houses + yards.
+ *    DOWNTOWN (y8-14) — the drugstore fronts Cross Ln behind a paved apron.
+ *    FOUR-CORNERS (y15-18) — Main St × Cross Ln, a small paved pocket.
+ *    THE GREEN (SW, y19-30) — hedge-ringed loop, picnic, arcade at its west
+ *      mouth, Pemmel + Biscuit on the loop.
+ *    BUS CORNER (SE, fixed cluster) — the lemonade stand's neighbour block.
+ *    BACKYARDS (SE, y19-30) — two fenced garden plots behind the chapel.
+ *  Main St runs the full spine (x19-21, 3-wide) so every quarter fronts it. */
 export function buildOtterbrook(): MapDef {
   const g = new Grid(42, 32);
   g.sprinkle(7, ',~,~ff F', 0.06);
-  // main street (vertical) + cross lane
-  g.rect(20, 1, 2, 30, ':');
-  g.rect(4, 16, 34, 2, ':');
-  // spurs to the buildings
-  g.rect(7, 8, 1, 8, ':');
-  g.rect(13, 8, 1, 8, ':');
-  g.rect(27, 8, 1, 8, ':');
-  g.rect(33, 8, 1, 8, ':');
-  g.rect(8, 18, 1, 4, ':');
-  g.rect(33, 18, 1, 4, ':');
-  g.rect(26, 13, 2, 3, ':');
-  // park hedges (S10: the north run stops short of the STARPORT's doorstep —
-  // tiles 7-8 are the arcade door's landing now that the facade is real)
-  g.rect(3, 22, 4, 1, 'b');
-  g.rect(3, 28, 6, 1, 'b');
-  g.rect(13, 23, 1, 3, 'b');
-  // fences by the lemonade corner
-  g.rect(10, 12, 6, 1, '-');
-  // flower beds near chapel
+
+  // ---- SKELETON: Main St (3-wide spine) + Elm Ln + Cross Ln + the Green loop
+  // + a service lane + the four-corners paved pocket. All ':' — pre-asphalt.
+  g.rect(19, 1, 3, 30, ':'); // Main St, full spine
+  g.rect(4, 7, 34, 1, ':'); // Elm Ln — the north quiet lane (replaces the 4 long spurs)
+  g.rect(2, 16, 39, 2, ':'); // Cross Ln
+  // Elm Ln driveway stubs, one per north house, up to its yard gate (y6). house_rex's
+  // own stub is skipped — its porch TRIGGER (6,6,4,2) already keeps that ground open.
+  g.rect(12, 6, 1, 1, ':'); // house_chad's gate stub
+  g.rect(26, 6, 1, 1, ':'); // house_a's gate stub
+  g.rect(33, 6, 1, 1, ':'); // house_b's gate stub
+  // service lane: behind the drugstore down to the bus corner
+  g.rect(27, 12, 1, 4, ':');
+  g.rect(24, 15, 4, 1, ':');
+  // the Green's inner ring loop (SW)
+  g.rect(4, 21, 12, 1, ':');
+  g.rect(4, 21, 1, 9, ':');
+  g.rect(4, 29, 12, 1, ':');
+  g.rect(15, 21, 1, 9, ':');
+  g.rect(9, 25, 5, 1, ':'); // a cross-brace so the loop reads as a park path, not a moat
+  // the four-corners paved pocket (flanks the Main St × Cross Ln crossing)
+  g.rect(16, 15, 3, 1, '=');
+  g.rect(16, 18, 3, 1, '=');
+  g.rect(22, 15, 3, 1, '=');
+  g.rect(22, 18, 3, 1, '=');
+  // the drugstore's doorstep apron
+  g.rect(23, 15, 3, 1, '=');
+
+  // ---- ELM ROW yards: fence run at y6 (gate gap at each driveway stub) +
+  // one tree between each pair of lots + a flower bed per lot. house_rex's
+  // frontage (x6-9) is left OPEN, not fenced — the porch trigger (6,6,4,2)
+  // and the S6 porch-cinematic pan (px128,128 = tile 8,8) must stay clear.
+  g.rect(4, 6, 2, 1, '-'); g.rect(10, 6, 2, 1, '-'); // flanks of house_rex's open frontage
+  g.rect(13, 6, 6, 1, '-'); // house_chad's fence, gap at x12
+  // Main St (x19-21) breaks the run; resume east of it for house_a (25,2) — gap at x26
+  g.rect(22, 6, 4, 1, '-'); g.rect(27, 6, 4, 1, '-');
+  g.rect(31, 6, 1, 1, '-'); g.rect(34, 6, 3, 1, '-'); // house_b's fence, gap at x33
+  g.set(23, 5, 'F'); g.set(31, 5, 'f'); // yard flower beds (house_a's, house_b's)
+
+  // ---- DOWNTOWN: nothing extra painted (drugstore facade below carries its
+  // own footprint); the strip's texture comes from the apron + service lane.
+
+  // ---- CHAPEL YARD: a fence run along its street-facing edge (y15, north of
+  // the chapel's own footprint which starts ~tile 17.9), gapped at its path
+  // (door center ~x32-33, per its door.ox).
+  g.rect(30, 15, 2, 1, '-'); g.rect(35, 15, 4, 1, '-'); // gap at x32-34 (the chapel's path)
+
+  // ---- THE GREEN: hedge border broken by ≥3-wide entrances N (onto Cross Ln)
+  // and E (onto Main St), never a sealed ring. The N run also stops short of
+  // the STARPORT's doorstep (S10 precedent) — cols 7-8 are the arcade door's
+  // landing (door zone y21-22) now that the facade is real.
+  g.rect(4, 20, 3, 1, 'b'); g.rect(11, 20, 4, 1, 'b'); // N edge, gap at x7-10 (arcade doorstep + Cross Ln)
+  g.rect(16, 22, 1, 2, 'b'); g.rect(16, 27, 1, 3, 'b'); // E edge, 3-wide gap at y24-26 (onto Main St)
+  g.rect(3, 30, 13, 1, 'b'); // S edge (town's south treeline picks up the rest)
+  // flower beds near the chapel path (kept close to its door, S14 legacy spot)
   g.rect(30, 24, 3, 1, 'f');
   g.rect(36, 24, 3, 1, 'F');
+  // BACKYARDS: two fenced garden plots behind the chapel (SE quadrant), each
+  // rim broken on its access side so the plot is never sealed.
+  g.rect(29, 27, 5, 1, '-'); g.rect(29, 28, 1, 2, '-'); g.rect(33, 28, 1, 2, '-'); // plot A: N+W+E rim, S open
+  g.rect(36, 20, 4, 1, '-'); g.rect(36, 21, 1, 3, '-'); // plot B: N+W rim, S+E open
+  g.set(30, 28, 'f'); g.set(32, 29, 'F'); g.set(37, 21, 'f'); g.set(38, 22, 'F');
 
   const treeLine: Array<[number, number]> = [];
   for (let x = 0; x < 42; x += 2) {
@@ -142,11 +196,17 @@ export function buildOtterbrook(): MapDef {
     treeLine.push([0, y]);
     treeLine.push([40, y]);
   }
-  // park cluster
-  treeLine.push([5, 24], [10, 26], [4, 26], [11, 23]);
+  // Elm Row: one tree between each pair of lots (M2 rhythm)
+  treeLine.push([8, 4], [21, 3], [30, 4]);
+  // the Green: a 4-tree cluster around the picnic
+  treeLine.push([5, 22], [14, 22], [5, 28], [14, 28]);
+  // backyards: a tree by each garden plot
+  treeLine.push([28, 26], [40, 19]);
+  // chapel yard: 1-2 trees flanking its fenced frontage
+  treeLine.push([29, 18], [36, 18]);
   // inner greens (S7e: "more trees") — verified clear of the porch trigger,
   // bus corner, lemonade stand, phone, doorsteps, and spawner save-spots
-  treeLine.push([3, 12], [37, 18], [18, 11], [24, 19]);
+  treeLine.push([37, 8], [18, 11], [24, 12]);
 
   return {
     id: 'otterbrook',
@@ -184,13 +244,17 @@ export function buildOtterbrook(): MapDef {
         // collision floor so the doorstep is walkable.
         door: { ox: 22, oy: 52, w: 14, h: 28, to: 'rex_home', tx: 104, ty: 124 },
       },
-      { sprite: 'house_chad', x: 11, y: 2, solid: { ox: 0, oy: 20, w: 66, h: 34 } },
+      // Elm Row: staggered setbacks (M2) — rex(5,2) fixed, the rest step
+      // forward/back a tile so the row doesn't read as one baseline.
+      { sprite: 'house_chad', x: 11, y: 3, solid: { ox: 0, oy: 20, w: 66, h: 34 } },
       { sprite: 'house_a', x: 25, y: 2, solid: { ox: 0, oy: 20, w: 50, h: 34 } },
-      { sprite: 'house_b', x: 31, y: 2, solid: { ox: 0, oy: 20, w: 50, h: 34 } },
+      { sprite: 'house_b', x: 32, y: 3, solid: { ox: 0, oy: 20, w: 50, h: 34 } },
       {
+        // downtown strip: the drugstore drops onto Cross Ln behind its own
+        // paved apron (was y8, a mid-field orphan; now it anchors the strip)
         sprite: 'drugstore',
         x: 24,
-        y: 8,
+        y: 11,
         solid: { ox: 0, oy: 20, w: 82, h: 56 },
         // S4: a real door now (zone reaches below the collision floor, ADR-011)
         door: { ox: 33, oy: 64, w: 16, h: 28, to: 'drugstore_int', tx: 112, ty: 118 },
@@ -215,7 +279,9 @@ export function buildOtterbrook(): MapDef {
       { sprite: 'lemonade', x: 14, y: 10, solid: { ox: 0, oy: 10, w: 36, h: 18 }, ifFlag: 'zapper_done' },
       { sprite: 'picnic', x: 6, y: 25, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
       { sprite: 'bus_sign', x: 23, y: 25, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
-      { sprite: 'phone_table', x: 28, y: 14, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
+      // moved off the relocated drugstore's footprint (was x28,y14 — now inside
+      // its solid rect) to the service lane's shoulder, still just behind the store
+      { sprite: 'phone_table', x: 30, y: 13, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
       { sprite: 'bug_zapper', x: 16, y: 4, solid: { ox: 4, oy: 18, w: 6, h: 8 } },
       // S9 §A10 #1: the sniff trail's first clue — paw prints at the
       // trailhead, visible only mid-trail (walkable marking, no solid)
@@ -250,7 +316,7 @@ export function buildOtterbrook(): MapDef {
       { id: 'vivi', sprite: 'vivi', x: 15, y: 11, facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done' },
       // S15c: the town reacts to the night, then to the morning after it
       { id: 'old_timer', sprite: 'oldTimer', x: 35, y: 22, facing: 'down', dialogue: 'npc_oldtimer', dialogueDay: 'npc_oldtimer_day', wander: true },
-      { id: 'pajama_kid', sprite: 'pajamaKid', x: 24, y: 19, facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true },
+      { id: 'pajama_kid', sprite: 'pajamaKid', x: 23, y: 20, facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true }, // wanders near the bus corner
     ],
     signs: [
       { x: 18, y: 27, dialogue: 'sign_welcome' },
@@ -259,16 +325,17 @@ export function buildOtterbrook(): MapDef {
       // S9 §A10 #1: sniff clue 1 (under the paw prints, same gates)
       { x: 19, y: 2, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
     ],
-    phones: [{ x: 28, y: 14 }],
+    phones: [{ x: 30, y: 13 }],
     doors: [
       // ADR-042: town's north edge now climbs HILL ROAD before the trail
       { x: 18, y: 0, w: 6, h: 1, to: 'hill_road', tx: 236, ty: 506, facing: 'up' },
     ],
     spawners: [
       {
+        // backyards zone, between the two fenced garden plots (open ground)
         enemies: ['cranky_mailbox', 'sprinkler_sentry'],
         count: 1,
-        rect: { x: 29, y: 19, w: 8, h: 4 },
+        rect: { x: 29, y: 23, w: 8, h: 4 },
         ifFlag: 'meteor_fell',
       },
       {
@@ -368,9 +435,13 @@ export function growOtterbrook(): MapDef {
   //    to the gateway. Both start OUTSIDE the core (row 32 / col 42); the one-tile
   //    of core grass between (row 31 / cols 38-41) is already walkable, so the
   //    new ground joins the old without touching a single frozen cell.
-  g.rect(20, 32, 2, 11, ':'); // main street → the civic spine (rows 32-42)
+  g.rect(19, 32, 3, 11, ':'); // main street (now 3-wide, matching the core) → the civic spine (rows 32-42)
   g.rect(42, 16, 28, 2, ':'); // cross lane → MEADOW MILE gateway (cols 42-69, the east edge)
   g.rect(4, 42, 23, 2, ':'); // the civic lane fronting City Hall + the Green
+  // Main St south extension: f/F flanking accents (M6), flush outside the
+  // 3-wide path (x18 / x22); all four sit above y40 so the forecourt paint
+  // (below) never overwrites one.
+  g.set(18, 34, 'f'); g.set(22, 36, 'F'); g.set(18, 39, 'F'); g.set(22, 38, 'f');
 
   // 4) LANDMARK — CITY HALL: a real civic facade opening into a hand-authored
   //    interior. Wears the bldg_civic skin — a government/civic building — instead
@@ -391,12 +462,23 @@ export function growOtterbrook(): MapDef {
   });
   g.rect(13, 41, 6, 1, '='); // the station's front step meets the civic lane
 
+  // 4c) THE TOWN-SQUARE FORECOURT (M4 anchors): a paved court where Main St
+  //     (x19-21) meets the Civic Ln, east of the Station House — the ground
+  //     the realtor/car-dealer/Borden row (y43) stands in front of.
+  g.rect(20, 40, 6, 2, '=');
+  g.set(19, 41, '='); // nudges the paved edge flush with Main St's east column
+
   // 5) LANDMARK — THE CIVIC GREEN: an irregular park, corners nibbled so it
   //    never reads as a rectangle (§B4 negative space). Hedge fragments, not a
   //    wall; the interior stays open grass.
   for (const [hx, hw] of [[14, 4], [20, 5], [25, 2]] as const) g.rect(hx, 45, hw, 1, 'b');
   for (const [hx, hy] of [[14, 47], [14, 50], [26, 48], [26, 51]] as const) g.set(hx, hy, 'b');
   g.rect(15, 53, 4, 1, 'b');
+  // an EAST exit stub (2-wide) toward the south district's own lane, through the
+  // gap between the two single hedge cells (26,48)/(26,51) — stops at x27, one
+  // tile shy of the south district's region (x28) so its generated footprint is
+  // never touched; the district's organic layout is reachable from its own edge.
+  g.rect(26, 49, 2, 2, ':');
   g.rect(22, 53, 3, 1, 'b');
   g.set(17, 48, 'f'); g.set(23, 49, 'F'); g.set(19, 51, 'f');
 
@@ -406,6 +488,10 @@ export function growOtterbrook(): MapDef {
   g.rect(53, 22, 6, 4, 'e');
   g.rect(53, 21, 6, 1, 'E'); g.rect(53, 26, 6, 1, 'E');
   g.set(52, 23, 'E'); g.set(52, 24, 'E'); g.set(59, 23, 'E'); g.set(59, 24, 'E');
+  // a ':' loop path rings the pond, connecting its two picnics + the hubcap
+  // spot so the park reads as one place, not three disconnected props
+  g.rect(50, 20, 1, 10, ':'); g.rect(50, 29, 14, 1, ':'); g.rect(63, 20, 1, 10, ':');
+  g.rect(50, 20, 14, 1, ':');
 
   // 7) LANDMARK — THE TRANSIT DEPOT (S22, ADR-114): the old bus SIGN becomes a
   //    real building fronting the cross lane (the road EAST, toward Brickton), in
@@ -446,6 +532,9 @@ export function growOtterbrook(): MapDef {
     busDepot,
     downtownEntry,
     { sprite: 'bench', x: 51, y: 21, solid: { ox: 1, oy: 6, w: 20, h: 6 } }, // the boarding-curb bench
+    // the depot forecourt's own step-dressing (M5), off the door's own column
+    { sprite: 'news_box', x: 45, y: 24, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+    { sprite: 'trash_can', x: 49.5, y: 24, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'sign', x: 48, y: 32, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // "→ DOWNTOWN"
     ...south.props,
     ...east.props,
@@ -458,6 +547,13 @@ export function growOtterbrook(): MapDef {
     { sprite: 'sign', x: 12, y: 41, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // City Hall plaque
     station,
     { sprite: 'sign', x: 19, y: 41, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // STATION plaque
+    // THE TOWN-SQUARE FORECOURT (M4): 2 benches on the paved court's north edge,
+    // facing south over the realtor/car-dealer/Borden row (y43) — clear of the
+    // civic lane itself (y42-43 stays an open walk corridor)
+    { sprite: 'bench', x: 20, y: 40, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    { sprite: 'bench', x: 24, y: 40, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    // Main St south extension: 2 staggered trees (M2 rhythm) beside the flanking beds
+    ...treesAt([[17, 35], [23, 38]]),
     // the Civic Green's dressing
     { sprite: 'bench', x: 19, y: 49, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
     { sprite: 'sign', x: 16, y: 46, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
@@ -471,6 +567,10 @@ export function growOtterbrook(): MapDef {
     // burrows in here and drains Otterbrook's Vibe (the Hush-dark); the heart_oak
     // trigger spawns BOSS 1 in daytime until tick_defeated. Reuses the big tree art.
     { sprite: 'tree_c', x: 55, y: 19, solid: OAK },
+    // EAST-GATE road dressing (M5 cadence): phone poles along the gateway
+    // corridor's shoulder (y15, ~8 tiles apart) — visual only, the y16-17
+    // corridor itself stays untouched.
+    ...[44.875, 52.875, 60.875].map((x) => ({ sprite: 'phone_pole', x, y: 15.375 })),
     // the gateway marker (the road east; the live door is wired in Movement 2)
     { sprite: 'sign', x: 66, y: 15, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
     // S15i Task 0 — THE DAYBREAK GATE: until the opening ends (zapper_done), the
@@ -1244,7 +1344,9 @@ function buildWhisperwoodRise(): MapDef {
     phones: [],
     doors: [
       { x: 13, y: 19, w: 3, h: 1, to: 'hickory_trail', tx: 232, ty: 36, facing: 'down' },
-      { x: 13, y: 0, w: 3, h: 1, to: 'hickory_hill', tx: 232, ty: 660, facing: 'up' },
+      // land one tile inside the hill's south seam (its return door at y:45) —
+      // ty:660 dropped you four tiles up the slope, mid-screen
+      { x: 13, y: 0, w: 3, h: 1, to: 'hickory_hill', tx: 248, ty: 716, facing: 'up' },
     ],
     spawners: [
       { enemies: ['coily_cicada', 'hill_slug_deluxe', 'skeeter_swarm'], count: 2, rect: { x: 8, y: 4, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
@@ -1346,10 +1448,10 @@ function buildRexHall(): MapDef {
     doors: [
       // S11b: doorways through the wall are DOORS (user law) — they swing
       // open before they admit you; mats stay legal only at bottom edges
+      // NB: these tx/ty are the PRE-GROW rooms' numbers — the rooms are in
+      // ROOMY_INTERIORS, so the assembly re-aim pass (below the growInterior
+      // loop) rewrites each landing to one tile inside the grown room's mat.
       { x: 2, y: 2, w: 2, h: 1, to: 'rex_bedroom', tx: 56, ty: 96, facing: 'up', indicator: 'door' },
-      // land the player ON the welcome mat (the rooms' door zone sits at tile
-      // y:7); ty:100 dropped them a tile high, mid-room. (doorCooldown covers the
-      // spawn so standing on the mat doesn't bounce them straight back out.)
       { x: 7, y: 2, w: 2, h: 1, to: 'ana_room', tx: 72, ty: 112, facing: 'up', indicator: 'door' },
       { x: 12, y: 2, w: 2, h: 1, to: 'vivi_room', tx: 72, ty: 112, facing: 'up', indicator: 'door' },
       { x: 15, y: 4, w: 1, h: 2, to: 'rex_home', tx: 200, ty: 132, facing: 'down', indicator: 'stairs' },
@@ -2974,8 +3076,8 @@ const longWalk = buildLongWalk();
   const cage = bricktonMap.doors.find((d) => d.to === 'the_cage');
   if (cage) {
     cage.to = 'cage_park';
-    cage.tx = 192; // tile 12 — the park's central path, just inside the city entrance
-    cage.ty = 272; // tile 17 — south of the courts, on the cutscene's welcome rect
+    cage.tx = 200; // tile 12 — one tile inside the park's south gate (its brickton
+    cage.ty = 332; // door at y:21); the welcome rect (y:16-18) still fires on the walk north
   }
 }
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
@@ -3327,6 +3429,46 @@ const ROOMY_INTERIORS: readonly string[] = [
   'valle_shop_int', 'clinic_valle_int', 'chapel_valle_int',
 ];
 for (const id of ROOMY_INTERIORS) if (MAPS[id]) MAPS[id] = growInterior(MAPS[id], 16, 11);
+
+/* THE OTHER HALF OF THE DECREE — growInterior rides a room's bottom exit mat
+ * down to the grown floor edge, but every INBOUND landing was authored against
+ * the SMALL room, so it still aims at the old threshold row — dropping the
+ * player mid-floor ("I enter my sister's room and appear in the middle of it").
+ * Re-aim every door/prop-door landing that targets a grown room at the room's
+ * OWN return door: mouth center-x, feet ONE TILE INSIDE the threshold — the
+ * same interior cell the door-audit measures snugness against (mapcheck
+ * doorCell). The inline tx/ty literals on source maps remain as the pre-grow
+ * numbers; this pass is the single authority for grown-room entries. */
+{
+  const roomy = new Set<string>(ROOMY_INTERIORS);
+  const reAim = (d: { to: string; tx: number; ty: number }, from: string): void => {
+    const room = MAPS[d.to];
+    const back = room?.doors.find((rd) => rd.to === from);
+    if (!room || !back || back.indicator === 'stairs' || back.indicator === 'elevator') return;
+    const cx = Math.floor(back.x + back.w / 2);
+    const cy = Math.floor(back.y + back.h / 2);
+    const dir: Record<string, [number, number]> = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] };
+    const [dx, dy] = dir[back.facing] ?? [0, 0];
+    if (dx === 0 && dy === 0) return;
+    // step off the zone, then past the wall BAND if the zone sits IN it (an
+    // 'up' door hangs in the 2-row top wall; its mouth is the first floor row
+    // below) — the same grid[0][0] wall-char read growInterior itself uses.
+    const wall = room.grid[0][0];
+    let ix = cx + dx;
+    let iy = cy + dy;
+    for (let hops = 0; hops < 3 && iy >= 0 && ix >= 0 && iy < room.grid.length && ix < room.grid[0].length && room.grid[iy][ix] === wall; hops++) {
+      ix += dx;
+      iy += dy;
+    }
+    if (iy < 0 || ix < 0 || iy >= room.grid.length || ix >= room.grid[0].length || room.grid[iy][ix] === wall) return; // keep the authored landing
+    d.tx = ix * 16 + 8; // tile interior (ADR-136): the body box fits the one cell
+    d.ty = iy * 16 + 12;
+  };
+  for (const [id, m] of Object.entries(MAPS)) {
+    for (const d of m.doors) if (roomy.has(d.to)) reAim(d, id);
+    for (const p of m.props) if (p.door && roomy.has(p.door.to)) reAim(p.door, id);
+  }
+}
 
 // S18 M22 (ADR-092) — THE GLYPH LAW wired into the LIVE Americas settlement
 // overworlds: each declares its canon §A5/§A6 area so the entry banner wears that

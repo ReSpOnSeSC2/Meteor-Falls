@@ -2071,6 +2071,67 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(They\'ve swapped out the sign four times now. Each new one still claims it\'s an idol.)',
   ],
 
+  /* ---------------- THE GRAN HOTEL SOL (2026-07-02 — the grand suite) ---------------- */
+  npc_gh_clerk: [
+    '@Welcome to the GRAN HOTEL SOL, founded 1898. Rooms by the night, by the week, or — one gentleman upstairs — by the lifetime.',
+    '@The left elevator goes to the guest floor. The right one goes straight to the penthouse. It\'s older than me and it has opinions, so stand in the middle.',
+  ],
+  npc_gh_bellhop: [
+    '@I\'ve carried one suitcase since 1898. The gentleman in the penthouse never checked out, so technically I\'m still mid-errand.',
+    '@It\'s good work. You learn to love a job you\'re never allowed to finish.',
+  ],
+  npc_gh_lounger: [
+    '@Oh, I\'m not a guest. I just like sitting where the ceiling fans work and the benches don\'t wobble.',
+    '@The clerk knows. The clerk has always known. That\'s what GRAND means, kid.',
+  ],
+  gh_registry: ['GUEST REGISTRY — today: 3. This week: 3. Since 1898: 88,141. (The ink looks proud of every single one.)'],
+  gh_plaque: ['GRAN HOTEL SOL — EST. 1898. "A bed for every tide." Marble imported, humility local.'],
+  npc_gh_maid: [
+    '@Room 3 wants extra towels. Room 4 wants quiet. Room 7 wants it to be 1898 again.',
+    '@I can do towels.',
+  ],
+  gh_hall_sign: ['FLOOR 4 — ROOMS 3 & 4. Rooms 5 through 12 exist on floors we are still looking for.'],
+  gh_ice: [
+    'ICE MACHINE — out of ice since the meteor. The machine says it is "processing."',
+    '(It hums a little tune. Please be patient with it.)',
+  ],
+  npc_gh_salesman: [
+    '@Lucky charms, friend! Two hundred samples in that trunk, every one guaranteed lucky-adjacent.',
+    '@The mercado won\'t stock me. Says charms only work if you believe. Well, I believe in VOLUME.',
+  ],
+  gh_room_a_window: ['The window looks over the malecón. A parrot is casing the banana crates again.'],
+  gh_samples: ['THE SAMPLE TRUNK — two hundred lucky charms. It rattles faintly, like optimism.'],
+  npc_gh_honeymoon: [
+    '@We booked the honeymoon suite in COSTA ESTRELLA. This is not Costa Estrella.',
+    '@My husband says the harbor view is "basically the same ocean." We are working through it.',
+  ],
+  gh_room_b_view: ['The brochure said "sea view." The sea agrees to be viewed, barely.'],
+  gh_room_b_luggage: ['Seven suitcases for a two-night stay. One is labeled JUST SHOES.'],
+  npc_gh_dorado: [
+    '@They call me Sr. Casi. In 1898 I nearly traded this whole harbor away for a mountain of gold.',
+    '@The mountain turned out to be pyrite. Fool\'s gold. The hotel let me keep the penthouse, and the nugget, and the lesson.',
+    '@Look at it if you like. It\'s the most honest thing I own — it never once pretended harder than I wanted it to.',
+  ],
+  gh_pyrite: [
+    'SR. CASI\'S NUGGET — pyrite, 14 kilos. The plaque reads: "ALMOST."',
+    '(A second, smaller plaque: "The Museum of Almost-Gold keeps asking. It belongs HERE.")',
+  ],
+  gh_pent_window: [
+    'The whole harbor fits in one window up here. Boats like toys, cranes like herons.',
+    '(Somewhere down there is the fortune Sr. Casi never traded away. It\'s still working. It\'s still real.)',
+  ],
+  /* ---------------- CLINICA DEL SOL — the observation ward ---------------- */
+  npc_cw_ps_patient: [
+    '@A jungle bug bit me, so I bit it back. The doctor says we\'re BOTH under observation now.',
+  ],
+  npc_cw_ps_kid: [
+    '@I ate a red berry off the jungle path. It was delicious. That\'s the whole story, but they keep asking for more details.',
+  ],
+  cw_ps_chart: [
+    'OBSERVATION CHART — Bed 1: bites (mutual). Bed 2: berries (unrepentant). Bed 3: reserved for whoever\'s next off the jungle path.',
+  ],
+  cw_ps_quiet: ['QUIET HOURS: whenever the doctor is thinking. The doctor is always thinking.'],
+
   /* ---------------- §A10 #6 — Museum of Almost-Gold ---------------- */
   q_museum_ask: [
     '@You there. You\'ve got the look of someone brave enough to march right into a pyramid.',
@@ -2266,6 +2327,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@We pray for the silent ones every day. Lately those prayers feel like they\'re working again, like someone good is finally listening.',
   ],
   chapel_valle_wall: ['VALLE CHAPEL — candles are free. Ask us for matches. Hope comes with the visit.'],
+  /* ---------------- CLINICA VALLE — the reposo ward (2026-07-02) ---------------- */
+  npc_cw_valle_patient: [
+    '@Mountain sickness, they tell me. But I was fine until I napped in the pyramid\'s shadow.',
+    '@The stones HUM, niño. Ask anyone horizontal — we\'ve all heard it.',
+  ],
+  cw_valle_chart: ['CHART — Bed 1: "the hum." Prescription: soup, sunshine, distance from the pyramid. Refills: unlimited.'],
+  cw_valle_window: ['The window faces the pyramid. The curtain stays CLOSED. Doctor\'s orders, curtain\'s preference.'],
 
   /* ---------------- the hospitals + the Otterbrook chapel (Prompt 25) ---------------- */
   npc_doc_brickton: [
@@ -2294,6 +2362,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   hospital_mushroom_note: [
     'NOTICE: If you\'ve turned into a mushroom, only a DOCTOR can fix it. It\'s the rule.',
     '(Scribbled below: "no, the church can\'t cure it. yes, we already asked them.")',
+  ],
+  // 2026-07-02 — FLOOR 3: records & long-stay (the elevator bank finally reaches it)
+  hps_f3_sign: ['FLOOR 3 — RECORDS & LONG-STAY. Quiet, please: the paperwork is sleeping.'],
+  hps_records_sign: [
+    'METEOR NIGHT — 41 admissions, 41 discharges, 1 folder that will not close.',
+    '(It\'s filed under W, for "what.")',
+  ],
+  npc_hps_records: [
+    '@Records! Every scraped knee in Brickton ends up in my cabinets. The meteor gave me a whole drawer.',
+    '@Those smiling men gave me a whole CABINET — and not one of their forms has a real name on it. Not one.',
+    '@If it isn\'t filed, it didn\'t happen. That\'s not policy, kid. That\'s physics.',
+  ],
+  npc_hps_longstay: [
+    '@Broken leg, 1962. It healed. I stayed. The nurses water my plant and my knee predicts the weather better than the radio.',
+    '@Rain on Tuesday. You heard it here.',
+  ],
+  npc_hps_float: [
+    '@I float — second floor, third floor, wherever the call button rings.',
+    '@The elevator and I are colleagues now. It holds the door for me. It holds GRUDGES for the stairs.',
   ],
   hospital_broke: ['@Sorry friend, you can\'t afford it. Healing takes either money or a miracle, and the only one I\'ve got for sale is the kind that costs money.'],
   hospital_cured: ['@All cleaned up, cured, and back on your feet. Try to stay healthy for a week, okay? Do it for me.'],
