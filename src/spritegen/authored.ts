@@ -707,10 +707,26 @@ const AUTHORED_VEHICLE_SOURCES = AUTHORED_VEHICLE_ART.map((key) => ({
  * longer load these: the PNGs are parked in `dormant/low-res-facades/`, so the keys
  * fall back to the FROZEN procedural drawHouse/drawCityBuilding base, which registers
  * at native and upscales ×ART_SCALE at the seam — a CRISP ×4 texture at the correct
- * size (better than upscaling the ×1 PNG). The generated catalog + colossi are
- * procedural by nature, so they all live here too. To re-promote one: author a
+ * size (better than upscaling the ×1 PNG). To re-promote one: author a
  * high-res PNG into assets/art/world/facades/ and remove its key from this set.
  */
+
+/** the 26 generated-catalog facades promoted to AUTHORED hi-res (2026-07-02) —
+ *  every catalog key a shipped map actually places, per tools/facade-audit.ts */
+const HI_RES_GEN_FACADES: ReadonlySet<string> = new Set<string>([
+  'bldg_colossus_spire',
+  'bldg_gen_bank_paper_2', 'bldg_gen_brownstone_earth_3',
+  'bldg_gen_cafe_orange_1', 'bldg_gen_cafe_red_2',
+  'bldg_gen_civic_cyan_3', 'bldg_gen_civic_paper_2', 'bldg_gen_civic_paper_3',
+  'bldg_gen_deptstore_blue_3', 'bldg_gen_deptstore_purple_3',
+  'bldg_gen_market_gold_1', 'bldg_gen_market_orange_2',
+  'bldg_gen_neon_magenta_2', 'bldg_gen_neon_magenta_3', 'bldg_gen_neon_night_2',
+  'bldg_gen_neon_night_3', 'bldg_gen_neon_purple_2', 'bldg_gen_neon_purple_3',
+  'bldg_gen_shop_gold_2', 'bldg_gen_shop_grass_1', 'bldg_gen_shop_orange_2',
+  'bldg_gen_shop_red_1', 'bldg_gen_shop_red_2',
+  'bldg_gen_theater_blue_3', 'bldg_gen_theater_magenta_3', 'bldg_gen_theater_purple_3',
+]);
+
 const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
   // Otterbrook facades (house_rex/chad/a/b, drugstore, arcade, chapel) re-promoted to
   // authored hi-res — sliced from otterbrook-facades-transparent.png into
@@ -724,7 +740,19 @@ const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
   // 'clubhouse' (singular) has NO map placement (costa_estrella's clifftop clubhouse was
   // removed in ADR-059), so it never renders — it stays on the procedural fallback.
   'clubhouse',
-  ...GENERATED_BUILDINGS.map((building) => building.name), // bldg_gen_* + colossi
+  // 2026-07-02 — THE CITYGEN HI-RES PROMOTION: every generated-catalog facade that
+  // actually RENDERS on a shipped map (tools/facade-audit.ts proves the set: the
+  // Otterbrook/Cage-Park shops + cafes + brownstone, the Brickton neon row /
+  // theaters / department stores / bank, the colonial civic + market halls, and
+  // THE SPIRE colossus) is now AUTHORED hi-res — ChatGPT row-strips sliced by
+  // tools/slice-facade-row.js and aspect-pinned to the procedural canvas
+  // (wallTiles*16+2 × 44+u*16) by tools/fit-facade-aspect.cjs, so the width-anchor
+  // (GEN_FACADE_FOOTPRINT_W) lands each at its exact old footprint. Masters:
+  // assets/art/masters/world/citygen-*-source.png. The keys below stay procedural
+  // ONLY because no shipped map places them; a map that first uses one must
+  // promote it through the same pipeline (re-run facade-audit; the content-validate
+  // 'hi-res-facades' law fails the build until it is).
+  ...GENERATED_BUILDINGS.map((building) => building.name).filter((name) => !HI_RES_GEN_FACADES.has(name)),
 ]);
 
 /** facades loaded as AUTHORED art — the hand-authored ×4 hi-res set only */
