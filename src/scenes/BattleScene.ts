@@ -172,6 +172,7 @@ import {
   rollDrops,
   absorbHeal,
   composureChip,
+  COMPOSURE_CHIP_WEAK,
   applyBreak,
   defaultComposure,
   nextComposureMax,
@@ -449,9 +450,6 @@ export class BattleScene extends Phaser.Scene {
   /** Pippa BELLWETHER — a party-wide 'morale' charge (until consumed): the next
    *  PRAY carries one tier better and the next party heal is amplified. */
   private morale = false;
-  /** ADR-134 — one shared Graphics for every enemy's COMPOSURE meter (redrawn each
-   *  frame so the slim bar tracks the sprite's idle bob). Lazily created. */
-  private composureG: Phaser.GameObjects.Graphics | null = null;
 
   constructor() {
     super('battle');
@@ -2790,45 +2788,26 @@ export class BattleScene extends Phaser.Scene {
   ): Promise<void> {
     if (!e.alive || e.composureMax <= 0 || e.broken > 0) return; // unbreakable / already broken / dead
     const breakResist = e.def.breakResist ?? (e.def.boss ? DEFAULT_BOSS_BREAK_RESIST : 0);
-    e.composure = Math.max(0, e.composure - composureChip(e.composureMax, { ...o, breakResist }));
-    if (e.composure > 0) return;
+    const prev = e.composure;
+    e.composure = Math.max(0, prev - composureChip(e.composureMax, { ...o, breakResist }));
+    if (e.composure > 0) {
+      // the dialogue box IS the break meter (no on-sprite gauge): telegraph the wear
+      // exactly once — on the hit that carries the foe into near-break range, within one
+      // weakness hit (COMPOSURE_CHIP_WEAK) of shattering — so the player knows to press.
+      const band = e.composureMax * COMPOSURE_CHIP_WEAK;
+      if (prev > band && e.composure <= band) {
+        await this.print(this.fill(BATTLE_TEXT.enemy_composure_low, '', e));
+      }
+      return;
+    }
     // BREAK! — the burst window opens. A flash + shake + a floating BREAK! reuse the
-    // existing FX primitives (no new art); the meter's BROKEN state draws in updateEnemyUi.
+    // existing FX primitives (no new art); the beat is narrated in the dialogue box.
     e.broken = breakTurns(e.def.boss ?? false);
     this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(6), 'BREAK!', RAMP.GOLD);
     this.cameras.main.flash(140, 255, 240, 190);
     this.cameras.main.shake(160, 0.006);
     AUDIO.sfx('hit');
     await this.print(this.fill(BATTLE_TEXT.enemy_break, '', e));
-  }
-
-  /** ADR-134 — draw a slim COMPOSURE meter under every break-capable enemy (hidden
-   *  for the unbreakable). It DEPLETES in cyan as the foe is chipped; on BREAK it
-   *  goes full HOT GOLD for the ×2 window. A scouted foe gets a small weakness pip
-   *  to the left so the read persists. One shared Graphics, redrawn each frame so it
-   *  tracks the sprite's idle bob. Reuses existing draw primitives — no new art. */
-  private drawComposureBars(): void {
-    if (!this.composureG) this.composureG = this.add.graphics().setDepth(DEPTH_UI + 1);
-    const g = this.composureG;
-    g.clear();
-    for (const e of this.enemies) {
-      if (!e.alive || e.composureMax <= 0) continue; // unbreakable foes show no meter
-      const w = Math.max(s(24), Math.min(e.spr.displayWidth * 0.85, s(84)));
-      const h = s(3);
-      const x = e.spr.x - w / 2;
-      const y = e.spr.y + e.spr.displayHeight / 2 + s(4);
-      g.fillStyle(colorOf(px(RAMP.NIGHT, 0)), 0.85).fillRect(x - s(1), y - s(1), w + s(2), h + s(2)); // track
-      if (e.broken > 0) {
-        g.fillStyle(colorOf(px(RAMP.GOLD, 3))).fillRect(x, y, w, h); // BROKEN — the ×2 window
-      } else {
-        const frac = Math.max(0, Math.min(1, e.composure / e.composureMax));
-        g.fillStyle(colorOf(px(RAMP.CYAN, 2))).fillRect(x, y, Math.max(s(1), w * frac), h); // poise left
-      }
-      // a scouted foe keeps its read: a tiny pip glows if it has an exploitable weakness
-      if (e.scouted && e.def.weakness.length > 0) {
-        g.fillStyle(colorOf(px(RAMP.GOLD, 2))).fillRect(x - s(5), y - s(1), s(3), h + s(2));
-      }
-    }
   }
 
   private async chadFlees(): Promise<void> {
@@ -3663,7 +3642,6 @@ export class BattleScene extends Phaser.Scene {
         e.spr.setTexture(wearSpriteKey(base, tier));
       }
     }
-    this.drawComposureBars();
     let anyRoll = false;
     let anyMortal = false;
     for (const { d, o } of this.odoDisplays) {

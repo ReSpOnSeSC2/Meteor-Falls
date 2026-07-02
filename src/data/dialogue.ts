@@ -3520,6 +3520,10 @@ export const BATTLE_TEXT = {
   // ADR-134 — the BREAK beat: composure hit zero, and the ×2 burst window opens.
   enemy_break: "{e}'s composure SHATTERED — BREAK! (it's wide open!)",
   enemy_broken_skip: '{e} is reeling — too rattled to pull itself together!',
+  // ADR-134 — the wearing-down TELEGRAPH (the dialogue box IS the break meter, no
+  //   on-sprite gauge): fires once per poise cycle, on the hit that carries a foe into
+  //   near-break range — within one weakness hit of shattering — so the player presses.
+  enemy_composure_low: "{e}'s composure is starting to crack — one more solid hit!",
   // ADR-134 — a telegraphed WIND-UP resolves (or the party BROKE it in time).
   windup_lands: "{e} unleashes the attack it wound up — brace!!",
   windup_cancel: "{e} was mid-wind-up when it BROKE — the charged attack COLLAPSES!",
