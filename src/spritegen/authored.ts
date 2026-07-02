@@ -218,6 +218,10 @@ const AUTHORED_GOLF_SUPPORT_ART = [
   { key: 'links_golfer_back_impact', file: 'golfer_back_impact' },
   { key: 'links_golfer_back_finish', file: 'golfer_back_finish' },
   { key: 'links_golfer_back_putt', file: 'golfer_back_putt' },
+  // the putting STROKE frames (2026-07): backswing + follow-through around the
+  // static putt address — LinksScene.swingPose animates power/acc/roll with them
+  { key: 'links_golfer_back_putt_back', file: 'golfer_back_putt_back' },
+  { key: 'links_golfer_back_putt_through', file: 'golfer_back_putt_through' },
   { key: 'links_golfer_back_pump_a', file: 'golfer_back_pump_a' },
   { key: 'links_golfer_back_pump_b', file: 'golfer_back_pump_b' },
   { key: 'links_golfer_back_slump_a', file: 'golfer_back_slump_a' },
@@ -456,6 +460,34 @@ const MINIMUS_TILE_ART = {
   key: 'authored_minimus_tiles16',
   url: new URL('../../assets/art/world/Minimus_tiles_16.png', import.meta.url).href,
   names: ['', '', '', '', 'minimus_cobble', '', 'minimus_turf', 'minimus_hedge', '', '', '', '', '', '', '', ''],
+};
+
+// Ch.4 NORWAY (Kvisthavn fjord) region tile strip (16 cells × 64px). A PARTIAL override like
+// Minimus: col 0 = pebbled snow ground → norway_ground, col 2 = grey cobble quay-lane →
+// norway_path, col 3 = open fjord water → norway_water, col 7 = sheer rock cliff → norway_wall.
+// The decorative cells (packed-ice lane, shore lip, pines, birches, spires, rocky snow, giant
+// footprint, frozen pond, boardwalk, dark masonry, rune door, aurora) stay unused until a
+// grid-char pass places them. These render ONLY on the Ch.4 outdoor maps (the render-time
+// name-remap NORWAY_TILE_SKIN in OverworldScene.buildTiles); every other map is untouched.
+const NORWAY_TILE_ART = {
+  key: 'authored_norway_tiles16',
+  url: new URL('../../assets/art/world/Norway_tiles_16.png', import.meta.url).href,
+  names: ['norway_ground', '', 'norway_path', 'norway_water', '', '', '', 'norway_wall', '', '', '', '', '', '', '', ''],
+};
+
+// Ch.6 AFRICA (Zanzibel / the savanna / the Laughing Ruins) region tile strip (16 cells × 64px).
+// A PARTIAL override authoring THREE sub-biome grounds: col 1 = ochre sand → africa_sand,
+// col 4 = teal harbor water → africa_water, col 7 = adobe wall → africa_wall, col 9 = sandstone
+// flagstones → africa_path, col 10 = carved laughing-stone blocks → africa_ruin_wall, col 12 =
+// sun-bleached savanna grass → africa_grass, col 14 = pebble-lined dust track → africa_earth
+// (cell indexes verified against the live strip via .shots/africa_cells.png — the tail order is
+// smiley/kilim/grass/roots/track/sphinx). Decorative cells (market awning, indigo drape, dock
+// planks, shore lip, mosaic, rosette, kilim, baobab roots, sphinx) stay unused. These render
+// ONLY on the Ch.6 outdoor maps (ZANZIBEL/SAVANNA/RUINS_TILE_SKIN in OverworldScene.buildTiles).
+const AFRICA_TILE_ART = {
+  key: 'authored_africa_tiles16',
+  url: new URL('../../assets/art/world/Africa_tiles_16.png', import.meta.url).href,
+  names: ['', 'africa_sand', '', '', 'africa_water', '', '', 'africa_wall', '', 'africa_path', 'africa_ruin_wall', '', 'africa_grass', '', 'africa_earth', ''],
 };
 
 // PKG-15 §1 — the Ch.8 CHINA (Lotus Harbor) region tile strip (3 cells × 64px). A PARTIAL
@@ -1809,6 +1841,8 @@ export function preloadAuthoredArt(scene: Phaser.Scene): void {
   scene.load.image(WORLD_TILE_ART.key, WORLD_TILE_ART.url);
   scene.load.image(HICKORY_DIRT_TILE_ART.key, HICKORY_DIRT_TILE_ART.url);
   scene.load.image(MINIMUS_TILE_ART.key, MINIMUS_TILE_ART.url);
+  scene.load.image(NORWAY_TILE_ART.key, NORWAY_TILE_ART.url);
+  scene.load.image(AFRICA_TILE_ART.key, AFRICA_TILE_ART.url);
   scene.load.image(CHINA_TILE_ART.key, CHINA_TILE_ART.url);
   scene.load.image(ROMANIA_TILE_ART.key, ROMANIA_TILE_ART.url);
   scene.load.image(AURORA_TILE_ART.key, AURORA_TILE_ART.url);
@@ -1917,6 +1951,8 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   const tileArt = sourceImage(scene, WORLD_TILE_ART.key);
   const hickoryTileArt = sourceImage(scene, HICKORY_DIRT_TILE_ART.key);
   const minimusTileArt = sourceImage(scene, MINIMUS_TILE_ART.key);
+  const norwayTileArt = sourceImage(scene, NORWAY_TILE_ART.key);
+  const africaTileArt = sourceImage(scene, AFRICA_TILE_ART.key);
   const chinaTileArt = sourceImage(scene, CHINA_TILE_ART.key);
   const romaniaTileArt = sourceImage(scene, ROMANIA_TILE_ART.key);
   const auroraTileArt = sourceImage(scene, AURORA_TILE_ART.key);
@@ -1939,6 +1975,8 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   if (tileArt) drawAuthoredTileStrip(ctx, tileArt, WORLD_TILE_ART.names);
   if (hickoryTileArt) drawAuthoredTileStrip(ctx, hickoryTileArt, HICKORY_DIRT_TILE_ART.names);
   if (minimusTileArt) drawAuthoredTileStrip(ctx, minimusTileArt, MINIMUS_TILE_ART.names);
+  if (norwayTileArt) drawAuthoredTileStrip(ctx, norwayTileArt, NORWAY_TILE_ART.names);
+  if (africaTileArt) drawAuthoredTileStrip(ctx, africaTileArt, AFRICA_TILE_ART.names);
   if (chinaTileArt) drawAuthoredTileStrip(ctx, chinaTileArt, CHINA_TILE_ART.names);
   if (romaniaTileArt) drawAuthoredTileStrip(ctx, romaniaTileArt, ROMANIA_TILE_ART.names);
   if (auroraTileArt) drawAuthoredTileStrip(ctx, auroraTileArt, AURORA_TILE_ART.names);

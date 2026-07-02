@@ -945,6 +945,31 @@ TILESET.push({ name: 'mars_ground', solid: false, make: () => grassBase(1, 5) })
 TILESET.push({ name: 'mars_path', solid: false, make: sidewalkTile });
 TILESET.push({ name: 'mars_wall', solid: true, make: officeWall });
 
+// Ch.4 NORWAY (Kvisthavn / Bootstep Moor / Lilleby) region tiles — same partial-override
+// contract as the sets above: the authored Norway_tiles_16.png strip supplies the real look
+// at runtime (wired in spritegen/authored.ts), applied ONLY to the Ch.4 outdoor maps via the
+// render-time name-remap NORWAY_TILE_SKIN in OverworldScene.buildTiles. make() = boot FALLBACK
+// only (REUSED painters, spritegen stays FROZEN), each carrying the SAME solidity as the base
+// tile it stands in for (snow ground / cobble lane walkable; cliff wall + fjord water solid
+// like office_wall / sea_a). Appended at the tail so no existing index shifts;
+// tools/sync-ch4-ch6-tiles.ts grows the otterbrook strip matching columns.
+TILESET.push({ name: 'norway_ground', solid: false, make: () => grassBase(1, 5) });
+TILESET.push({ name: 'norway_path', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'norway_wall', solid: true, make: officeWall });
+TILESET.push({ name: 'norway_water', solid: true, make: () => seaTile(1) });
+
+// Ch.6 AFRICA (Zanzibel / Savanna Run / Laughing Ruins) region tiles — same contract. The
+// authored Africa_tiles_16.png strip authors THREE sub-biome grounds (ochre-sand port,
+// savanna grassland, cracked-earth ruins), so Ch.6 carries three map-scoped skins
+// (ZANZIBEL/SAVANNA/RUINS_TILE_SKIN in OverworldScene.buildTiles) sharing these tiles.
+TILESET.push({ name: 'africa_sand', solid: false, make: () => sandTile(3) });
+TILESET.push({ name: 'africa_path', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'africa_wall', solid: true, make: pyramidWall });
+TILESET.push({ name: 'africa_water', solid: true, make: () => seaTile(1) });
+TILESET.push({ name: 'africa_earth', solid: false, make: () => sandTile(3) });
+TILESET.push({ name: 'africa_ruin_wall', solid: true, make: pyramidWall });
+TILESET.push({ name: 'africa_grass', solid: false, make: () => grassBase(1, 5) });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

@@ -5,7 +5,19 @@
  * into the INBOUNDS rect; the COURT_PAD margin is filled with the court's own
  * border colour (a dark asphalt apron). Output replaces `cage_court`.
  *
- *   node tools/compose-hoops-court.js <src.png> <out.png>
+ *   node tools/compose-hoops-court.js <src.png> <out.png> [--crop=x,y,w,h]
+ *
+ * --crop=x,y,w,h  the source's PAINTED BOUNDARY rectangle (outer line centers).
+ *   The source is composed so that rect lands exactly on the engine INBOUNDS
+ *   rect (sim sidelines/3-pt geometry line up with the painted lines), and the
+ *   SAME transform extends over the COURT_PAD margin, so the source's own
+ *   apron/cage ring fills the pad (clamp-sampled at the source edges) instead
+ *   of a flat fill. Without --crop the legacy fit (full frame -> inbounds,
+ *   flat-filled pad) is used.
+ *   The 2026-07 re-compose measured the weathered painted boundary of
+ *   masters/pkg10/hoops_side_court_src.png at --crop=122,105,1455,722
+ *   (center-outward scan for the first row/col whose low-saturation
+ *   brightness>125 run crosses >40-55% of the frame).
  *
  * Geometry mirrors src/spritegen/athletes.ts (COURT_PAD=34, drawCageCourt size)
  * and src/hoops/court.ts (COURT.W=672, COURT.H=368) at ART_SCALE=4.
@@ -13,9 +25,15 @@
 import fs from 'node:fs';
 import { PNG } from 'pngjs';
 
-const [, , src, out] = process.argv;
+const [, , src, out, ...flags] = process.argv;
 if (!src || !out) {
-  console.error('usage: node tools/compose-hoops-court.js <src.png> <out.png>');
+  console.error('usage: node tools/compose-hoops-court.js <src.png> <out.png> [--crop=x,y,w,h]');
+  process.exit(1);
+}
+const cropFlag = flags.find((f) => f.startsWith('--crop='));
+const crop = cropFlag ? cropFlag.slice(7).split(',').map(Number) : null;
+if (crop && (crop.length !== 4 || crop.some((n) => !Number.isFinite(n)) || crop[2] <= 0 || crop[3] <= 0)) {
+  console.error(`bad --crop '${cropFlag}' — expected --crop=x,y,w,h`);
   process.exit(1);
 }
 
@@ -46,13 +64,24 @@ for (let p = 0; p < TW * TH; p++) {
   o.data[p * 4] = mr; o.data[p * 4 + 1] = mg; o.data[p * 4 + 2] = mb; o.data[p * 4 + 3] = 255;
 }
 
-// area-average resize the authored court into the inbounds rect
-const sx = s.width / IW;
-const sy = s.height / IH;
-for (let y = 0; y < IH; y++) {
-  for (let x = 0; x < IW; x++) {
-    const x0 = Math.floor(x * sx), x1 = Math.min(s.width, Math.floor((x + 1) * sx) + 1);
-    const y0 = Math.floor(y * sy), y1 = Math.min(s.height, Math.floor((y + 1) * sy) + 1);
+// the source rect that must land on the inbounds rect (painted lines with --crop,
+// the full frame without), and the dest region the transform is sampled over
+const [cx0, cy0, cw, ch] = crop ?? [0, 0, s.width, s.height];
+const sx = cw / IW;
+const sy = ch / IH;
+// with --crop, extend the same transform across the WHOLE texture so the pad
+// shows the source's own apron/cage ring; legacy mode paints inbounds only
+const dx0 = crop ? -IX : 0;
+const dy0 = crop ? -IY : 0;
+const dx1 = crop ? TW - IX : IW;
+const dy1 = crop ? TH - IY : IH;
+for (let y = dy0; y < dy1; y++) {
+  for (let x = dx0; x < dx1; x++) {
+    let x0 = Math.floor(cx0 + x * sx), x1 = Math.floor(cx0 + (x + 1) * sx) + 1;
+    let y0 = Math.floor(cy0 + y * sy), y1 = Math.floor(cy0 + (y + 1) * sy) + 1;
+    // clamp-sample at the source edges (keeps at least a 1px box)
+    x0 = Math.max(0, Math.min(s.width - 1, x0)); x1 = Math.max(x0 + 1, Math.min(s.width, x1));
+    y0 = Math.max(0, Math.min(s.height - 1, y0)); y1 = Math.max(y0 + 1, Math.min(s.height, y1));
     let r = 0, g = 0, b = 0, n = 0;
     for (let yy = y0; yy < y1; yy++) {
       for (let xx = x0; xx < x1; xx++) {
@@ -66,4 +95,5 @@ for (let y = 0; y < IH; y++) {
 }
 
 fs.writeFileSync(out, PNG.sync.write(o));
-console.log(`wrote ${out}  ${TW}x${TH}  (court fit into ${IW}x${IH} at ${IX},${IY}; margin #${mr.toString(16)}${mg.toString(16)}${mb.toString(16)}; from ${s.width}x${s.height})`);
+const mode = crop ? `crop ${cw}x${ch}@${cx0},${cy0} -> inbounds` : 'full frame -> inbounds';
+console.log(`wrote ${out}  ${TW}x${TH}  (${mode} ${IW}x${IH} at ${IX},${IY}; margin #${mr.toString(16)}${mg.toString(16)}${mb.toString(16)}; from ${s.width}x${s.height})`);

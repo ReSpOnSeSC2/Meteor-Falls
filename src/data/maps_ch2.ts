@@ -1034,10 +1034,14 @@ export function buildValleDorado(): MapDef {
       ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
       // the shrine — the village's whole problem, on a plinth
       { sprite: 'idol_shrine', x: 23.5, y: 12.2, solid: { ox: 6, oy: 28, w: 28, h: 14 } },
-      // homes + the civic three (shop, clinic, chapel — Prompt 25's pair)
-      { sprite: 'valle_shop', x: 19, y: 4, solid: { ox: 0, oy: 20, w: 82, h: 46 }, door: { ox: 33, oy: 56, w: 16, h: 30, to: 'valle_shop_int', tx: 88, ty: 118 } },
-      { sprite: 'valle_clinic', x: 30, y: 12, solid: { ox: 0, oy: 20, w: 66, h: 46 }, door: { ox: 17, oy: 56, w: 16, h: 30, to: 'clinic_valle_int', tx: 88, ty: 118 } },
-      { sprite: 'valle_chapel', x: 8, y: 20, solid: { ox: 0, oy: 30, w: 50, h: 56 }, door: { ox: 17, oy: 78, w: 16, h: 30, to: 'chapel_valle_int', tx: 88, ty: 134 } },
+      // homes + the civic three (shop, clinic, chapel — Prompt 25's pair).
+      // These five are LANDMARK_FACADE_SPRITES (2026-07 hi-res promotion): collision
+      // rebuilds from the DRAWN footprint at runtime (the data solids stay as the boot
+      // fallback), and door.ox is re-measured against the hi-res art — the shop's blue
+      // door sits right of the awning, the clinic's mid-body, the chapel's arch center.
+      { sprite: 'valle_shop', x: 19, y: 4, solid: { ox: 0, oy: 20, w: 82, h: 46 }, door: { ox: 72, oy: 56, w: 16, h: 30, to: 'valle_shop_int', tx: 88, ty: 118 } },
+      { sprite: 'valle_clinic', x: 30, y: 12, solid: { ox: 0, oy: 20, w: 66, h: 46 }, door: { ox: 36, oy: 56, w: 16, h: 30, to: 'clinic_valle_int', tx: 88, ty: 118 } },
+      { sprite: 'valle_chapel', x: 8, y: 20, solid: { ox: 0, oy: 30, w: 50, h: 56 }, door: { ox: 27, oy: 78, w: 16, h: 30, to: 'chapel_valle_int', tx: 88, ty: 134 } },
       { sprite: 'valle_house', x: 2, y: 22, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
       { sprite: 'valle_house_b', x: 33, y: 19, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
       // §A4.5: the village table (Ch.2's third before the dungeon)
