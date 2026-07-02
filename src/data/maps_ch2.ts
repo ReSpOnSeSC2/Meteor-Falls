@@ -23,6 +23,7 @@
  */
 import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
+import { facadeDims } from '../levelkit/kit';
 // S15i Task 4 (ADR-057) — PUERTO SOL grows: the forge lays the new DOCK DISTRICT
 // as buildDistrict + placeNook stitched onto the frozen 1898 core (the bones);
 // the soul (NPCs, the cutscene, the present) stays hand-authored.
@@ -477,6 +478,22 @@ export function growPuertoSol(): MapDef {
     ...treesAt([[68, 30], [88, 30], [120, 30]]),
   ];
 
+  // THE GRAN HOTEL OPENS (2026-07-02, the "buildings should feel complete" decree)
+  // — the waterfront's AUTHORED mega facade gets a real front door into the
+  // hand-authored grand suite (lobby → elevator bank → guest floor → penthouse).
+  // Grafted HERE, pre-occupy: occupyCity doors only DOORLESS facades, so the
+  // landmark keeps its hand wiring. Offsets are occupy's own centered-arch math;
+  // the landing sits one tile inside the lobby's exit mat (the snug-entry law).
+  const granHotel = props.find((p) => p.sprite === 'bldg_ps_gran_hotel');
+  if (granHotel) {
+    const dims = facadeDims('bldg_ps_gran_hotel');
+    granHotel.door = {
+      ox: Math.round((dims.w * 16) / 2) - 8,
+      oy: cityBuildingHeight(dims.u) - 14,
+      w: 16, h: 18, to: 'hotel_ps_lobby', tx: 168, ty: 172,
+    };
+  }
+
   const npcs: NpcDef[] = [
     ...core.npcs,
     // §A11 — one obsession each, all new to the dock district
@@ -585,7 +602,43 @@ export function buildClinicPsInt(streetExit: { tx: number; ty: number }): MapDef
     phones: [],
     doors: [
       { x: 5, y: 8, w: 2, h: 1, to: 'puerto_sol', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      // 2026-07-02 (the "every clinic is more than one room" decree): the back
+      // OBSERVATION WARD through a real door in the wall band. The ward's return
+      // landing is re-aimed by the maps.ts ROOMY pass (this room grows to 16×11).
+      { x: 9, y: 2, w: 2, h: 1, to: 'clinic_ps_ward', tx: 88, ty: 108, facing: 'up', indicator: 'door' },
     ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** CLINICA DEL SOL — the back ward: whoever the jungle path sent over today */
+export function buildClinicPsWard(): MapDef {
+  const g = new Grid(10, 8, 'w');
+  g.rect(0, 0, 10, 2, 'W');
+  return {
+    id: 'clinic_ps_ward',
+    name: 'CLINICA — OBSERVACIÓN',
+    music: 'puerto',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'cot', x: 1, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 4, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 7, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'plant_pot', x: 8, y: 5.4, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'poster_smile', x: 4, y: 0.55 },
+    ],
+    npcs: [
+      { id: 'cw_ps_patient', sprite: 'dockworker', x: 2, y: 4, facing: 'up', dialogue: 'npc_cw_ps_patient', idle: true },
+      { id: 'cw_ps_kid', sprite: 'pigeonKid', x: 5, y: 4, facing: 'up', dialogue: 'npc_cw_ps_kid', idle: true, emote: 'happy' },
+    ],
+    signs: [
+      { x: 2, y: 1, dialogue: 'cw_ps_chart' },
+      { x: 8, y: 1, dialogue: 'cw_ps_quiet' },
+    ],
+    phones: [],
+    doors: [{ x: 4, y: 7, w: 2, h: 1, to: 'clinic_ps_int', tx: 168, ty: 60, facing: 'down', indicator: 'mat' }],
     spawners: [],
     triggers: [],
   };
@@ -658,6 +711,191 @@ export function buildMuseumInt(streetExit: { tx: number; ty: number }): MapDef {
   };
 }
 
+/* ============== THE GRAN HOTEL SOL (2026-07-02 — the grand suite) ==============
+ * The waterfront's authored mega facade finally opens: a real 1898 grand dame
+ * with a working ELEVATOR BANK — the west car to the guest floor (two rooms),
+ * the east car express to the penthouse, where Sr. Casi keeps the pyrite nugget
+ * he almost traded the harbor for (the Museo del Casi-Oro's older brother, and
+ * a Fortune-Arc parable: worth is a strange arithmetic). */
+
+export function buildHotelPsLobby(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(20, 12, 'w');
+  g.rect(0, 0, 20, 2, 'W');
+  g.rect(8, 4, 4, 7, 'r'); // the grand runner, desk to door
+  return {
+    id: 'hotel_ps_lobby',
+    name: 'GRAN HOTEL SOL',
+    music: 'puerto',
+    interior: true,
+    grid: g.out(),
+    props: [
+      // the front desk (west) + the lounge (east)
+      { sprite: 'counter', x: 3, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'bench', x: 14, y: 5, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 14, y: 7, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'floor_lamp', x: 12.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'floor_lamp', x: 17.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'bookshelf', x: 16, y: 0 }, // the reading nook nobody reads
+      { sprite: 'plant_pot', x: 1, y: 8, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 17, y: 8, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 13, y: 2.4, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [
+      { id: 'gh_clerk', sprite: 'senora', x: 4, y: 2, facing: 'down', dialogue: 'npc_gh_clerk' },
+      { id: 'gh_bellhop', sprite: 'dockworker', x: 8, y: 6, facing: 'down', dialogue: 'npc_gh_bellhop', emote: 'think' },
+      { id: 'gh_lounger', sprite: 'oldTimer', x: 15, y: 6, facing: 'left', dialogue: 'npc_gh_lounger', idle: true },
+    ],
+    signs: [
+      { x: 3, y: 1, dialogue: 'gh_registry' },
+      { x: 10, y: 1, dialogue: 'gh_plaque' },
+    ],
+    phones: [{ x: 2, y: 9 }], // the courtesy phone — a rest before the jungle
+    doors: [
+      { x: 9, y: 11, w: 2, h: 1, to: 'puerto_sol', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      // THE ELEVATOR BANK — west car: the guest floor; east car: the penthouse
+      { x: 4, y: 2, w: 2, h: 1, to: 'hotel_ps_hall', tx: 56, ty: 60, facing: 'down', indicator: 'elevator' },
+      { x: 14, y: 2, w: 2, h: 1, to: 'hotel_ps_pent', tx: 56, ty: 60, facing: 'down', indicator: 'elevator' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** floor 4 — the guest corridor: two doors that open, several that only exist
+ *  on the registry, an ice machine in mourning, and the maid mid-rounds */
+export function buildHotelPsHall(): MapDef {
+  const g = new Grid(18, 9, 'w');
+  g.rect(0, 0, 18, 2, 'W');
+  g.rect(2, 4, 14, 2, 'r'); // the corridor runner
+  return {
+    id: 'hotel_ps_hall',
+    name: 'GRAN HOTEL — FLOOR 4',
+    music: 'puerto',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'floor_lamp', x: 6.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'floor_lamp', x: 10.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'plant_pot', x: 16, y: 6, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'water_cooler', x: 16, y: 2.2, solid: { ox: 1, oy: 10, w: 10, h: 11 } }, // the "ice machine"
+    ],
+    npcs: [
+      { id: 'gh_maid', sprite: 'fernLady', x: 9, y: 6, facing: 'down', dialogue: 'npc_gh_maid' },
+    ],
+    signs: [
+      { x: 1, y: 1, dialogue: 'gh_hall_sign' },
+      { x: 16, y: 1, dialogue: 'gh_ice' },
+    ],
+    phones: [],
+    doors: [
+      { x: 2, y: 2, w: 2, h: 1, to: 'hotel_ps_lobby', tx: 88, ty: 60, facing: 'down', indicator: 'elevator' },
+      { x: 7, y: 2, w: 2, h: 1, to: 'hotel_ps_room_a', tx: 88, ty: 108, facing: 'up', indicator: 'door' },
+      { x: 12, y: 2, w: 2, h: 1, to: 'hotel_ps_room_b', tx: 88, ty: 108, facing: 'up', indicator: 'door' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** ROOM 3 — the charm salesman and his two hundred samples */
+export function buildHotelPsRoomA(): MapDef {
+  const g = new Grid(10, 8, 'w');
+  g.rect(0, 0, 10, 2, 'W');
+  return {
+    id: 'hotel_ps_room_a',
+    name: 'ROOM 3',
+    music: 'puerto',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'desk', x: 6, y: 1.55, solid: { ox: 1, oy: 4, w: 24, h: 13 } },
+      { sprite: 'crate', x: 7, y: 4.6, solid: { ox: 1, oy: 8, w: 18, h: 9 } }, // the sample trunk
+      { sprite: 'plant_pot', x: 1, y: 5.4, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [
+      { id: 'gh_salesman', sprite: 'tomas', x: 4, y: 4, facing: 'down', dialogue: 'npc_gh_salesman', emote: 'happy' },
+    ],
+    signs: [
+      { x: 4, y: 1, dialogue: 'gh_room_a_window' },
+      { x: 7, y: 5, dialogue: 'gh_samples' },
+    ],
+    phones: [],
+    doors: [{ x: 4, y: 7, w: 2, h: 1, to: 'hotel_ps_hall', tx: 136, ty: 60, facing: 'down', indicator: 'mat' }],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** ROOM 4 — the honeymooners who booked Costa Estrella */
+export function buildHotelPsRoomB(): MapDef {
+  const g = new Grid(10, 8, 'w');
+  g.rect(0, 0, 10, 2, 'W');
+  return {
+    id: 'hotel_ps_room_b',
+    name: 'ROOM 4',
+    music: 'puerto',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'bed', x: 6, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'tv', x: 3.6, y: 0.6 },
+      { sprite: 'crate', x: 8, y: 4.9, solid: { ox: 1, oy: 8, w: 18, h: 9 } }, // one of seven suitcases
+    ],
+    npcs: [
+      { id: 'gh_honeymoon', sprite: 'wokeB', x: 4, y: 5, facing: 'down', dialogue: 'npc_gh_honeymoon' },
+    ],
+    signs: [
+      { x: 2, y: 1, dialogue: 'gh_room_b_view' },
+      { x: 8, y: 6, dialogue: 'gh_room_b_luggage' },
+    ],
+    phones: [],
+    doors: [{ x: 4, y: 7, w: 2, h: 1, to: 'hotel_ps_hall', tx: 216, ty: 60, facing: 'down', indicator: 'mat' }],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** THE PENTHOUSE — Sr. Casi, the nugget, and the harbor he never traded */
+export function buildHotelPsPent(): MapDef {
+  const g = new Grid(16, 10, 'w');
+  g.rect(0, 0, 16, 2, 'W');
+  g.rect(3, 4, 10, 4, 'r'); // the grand carpet
+  return {
+    id: 'hotel_ps_pent',
+    name: 'THE PENTHOUSE',
+    music: 'puerto',
+    interior: true,
+    grid: g.out(),
+    props: [
+      // the pyrite nugget, displayed like the museum wishes it could
+      { sprite: 'pedestal_0', x: 7, y: 2.2, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
+      { sprite: 'bookshelf', x: 2, y: 0 },
+      { sprite: 'bookshelf', x: 4, y: 0 },
+      { sprite: 'bed', x: 13, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'floor_lamp', x: 5.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'floor_lamp', x: 10.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'plant_pot', x: 1, y: 6, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 14, y: 6.4, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [
+      { id: 'gh_dorado', sprite: 'oldTimer', x: 9, y: 5, facing: 'down', dialogue: 'npc_gh_dorado', emote: 'think' },
+    ],
+    signs: [
+      { x: 7, y: 3, dialogue: 'gh_pyrite' },
+      { x: 12, y: 1, dialogue: 'gh_pent_window' },
+    ],
+    phones: [],
+    doors: [
+      { x: 2, y: 2, w: 2, h: 1, to: 'hotel_ps_lobby', tx: 248, ty: 60, facing: 'down', indicator: 'elevator' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
 /* ================= Ch.1 retrofits' interiors (Prompt 25) ================= */
 
 /** BRICKTON GENERAL — the ADR-028 landmark-large hospital, finally open */
@@ -678,7 +916,8 @@ export function buildHospitalInt(streetExit: { tx: number; ty: number }): MapDef
       { sprite: 'cot', x: 13, y: 5.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
       { sprite: 'water_cooler', x: 1, y: 2.2, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
       { sprite: 'plant_pot', x: 18, y: 8, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      { sprite: 'poster_chart', x: 9, y: 0.55 },
+      // (moved off x:9 — the elevator bank's doors now hang there in the wall band)
+      { sprite: 'poster_chart', x: 2, y: 0.55 },
     ],
     npcs: [
       { id: 'doc_brickton', sprite: 'docBrickton', x: 5, y: 2, facing: 'down', dialogue: 'npc_doc_brickton' },
@@ -693,6 +932,11 @@ export function buildHospitalInt(streetExit: { tx: number; ty: number }): MapDef
       // S22 (ADR-117): stairs up to the WARD floor — the front desk (revive) stays
       // on the ground floor; the patients (and the quiet) live upstairs.
       { x: 17, y: 2, w: 1, h: 1, to: 'hospital_f2', tx: 272, ty: 60, facing: 'down', indicator: 'stairs' },
+      // THE ELEVATOR BANK (2026-07-02, the "real hospital" decree): two cars mid-
+      // lobby — the WEST car serves the ward, the EAST car runs express to floor 3
+      // (records + long-stay). Each lands one row below the destination's own car.
+      { x: 9, y: 2, w: 2, h: 1, to: 'hospital_f2', tx: 264, ty: 60, facing: 'down', indicator: 'elevator' },
+      { x: 11, y: 2, w: 2, h: 1, to: 'hospital_f3', tx: 200, ty: 60, facing: 'down', indicator: 'elevator' },
     ],
     spawners: [],
     triggers: [],
@@ -735,6 +979,54 @@ export function buildHospitalF2(): MapDef {
     phones: [],
     doors: [
       { x: 17, y: 2, w: 1, h: 1, to: 'hospital_int', tx: 272, ty: 60, facing: 'down', indicator: 'stairs' },
+      // the WEST elevator car back down to the lobby (lands beside its bank)
+      { x: 15, y: 2, w: 2, h: 1, to: 'hospital_int', tx: 168, ty: 60, facing: 'down', indicator: 'elevator' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** BRICKTON GENERAL — floor 3 (2026-07-02): RECORDS & LONG-STAY. The quiet top
+ *  floor the elevator bank finally reaches — the records room that filed the
+ *  whole meteor night (and one cabinet of smiling men's paperwork), two
+ *  long-stay cots, a floating nurse, and a phone for the visiting hours. */
+export function buildHospitalF3(): MapDef {
+  const g = new Grid(20, 12, 'o');
+  g.rect(0, 0, 20, 2, 'O');
+  return {
+    id: 'hospital_f3',
+    name: 'BRICKTON GENERAL — RECORDS',
+    music: 'brickton',
+    interior: true,
+    grid: g.out(),
+    props: [
+      // the records stacks — a paper canyon
+      { sprite: 'shelf', x: 2, y: 3, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 5, y: 3, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf', x: 2, y: 6, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 5, y: 6, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'desk', x: 8, y: 2.2, solid: { ox: 1, oy: 4, w: 24, h: 13 } },
+      // the long-stay corner — two cots by the east windows
+      { sprite: 'cot', x: 15, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 15, y: 6.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'water_cooler', x: 18, y: 2.2, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
+      { sprite: 'plant_pot', x: 18, y: 8, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'poster_chart', x: 14, y: 0.55 },
+    ],
+    npcs: [
+      { id: 'hps_records', sprite: 'curator', x: 9, y: 4, facing: 'down', dialogue: 'npc_hps_records' },
+      { id: 'hps_longstay', sprite: 'quarterMan', x: 16, y: 4, facing: 'up', dialogue: 'npc_hps_longstay', idle: true, emote: 'think' },
+      { id: 'hps_float', sprite: 'docBrickton', x: 13, y: 8, facing: 'down', dialogue: 'npc_hps_float' },
+    ],
+    signs: [
+      { x: 3, y: 1, dialogue: 'hps_f3_sign' },
+      { x: 3, y: 4, dialogue: 'hps_records_sign' },
+    ],
+    phones: [{ x: 18, y: 10 }],
+    doors: [
+      // the EAST express car back down to the lobby (lands beside its bank)
+      { x: 11, y: 2, w: 2, h: 1, to: 'hospital_int', tx: 200, ty: 60, facing: 'down', indicator: 'elevator' },
     ],
     spawners: [],
     triggers: [],
@@ -1041,7 +1333,9 @@ export function buildValleDorado(): MapDef {
       // door sits right of the awning, the clinic's mid-body, the chapel's arch center.
       { sprite: 'valle_shop', x: 19, y: 4, solid: { ox: 0, oy: 20, w: 82, h: 46 }, door: { ox: 72, oy: 56, w: 16, h: 30, to: 'valle_shop_int', tx: 88, ty: 118 } },
       { sprite: 'valle_clinic', x: 30, y: 12, solid: { ox: 0, oy: 20, w: 66, h: 46 }, door: { ox: 36, oy: 56, w: 16, h: 30, to: 'clinic_valle_int', tx: 88, ty: 118 } },
-      { sprite: 'valle_chapel', x: 8, y: 20, solid: { ox: 0, oy: 30, w: 50, h: 56 }, door: { ox: 27, oy: 78, w: 16, h: 30, to: 'chapel_valle_int', tx: 88, ty: 134 } },
+      // (chapel: door.ox measured against its AUTHORED_WORLD_PROP_DISPLAY_SIZE 56×100 —
+      // the raw 326×581 PNG ran the porch into the south treeline; see authored.ts)
+      { sprite: 'valle_chapel', x: 8, y: 20, solid: { ox: 0, oy: 30, w: 50, h: 56 }, door: { ox: 16, oy: 78, w: 16, h: 30, to: 'chapel_valle_int', tx: 88, ty: 134 } },
       { sprite: 'valle_house', x: 2, y: 22, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
       { sprite: 'valle_house_b', x: 33, y: 19, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
       // §A4.5: the village table (Ch.2's third before the dungeon)
@@ -1375,7 +1669,40 @@ export function buildClinicValleInt(streetExit: { tx: number; ty: number }): Map
     phones: [],
     doors: [
       { x: 4, y: 8, w: 2, h: 1, to: 'valle_dorado', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      // 2026-07-02: the back REPOSO ward (see clinic_ps_int — the same decree;
+      // the ward's return landing is re-aimed by the maps.ts ROOMY pass)
+      { x: 8, y: 2, w: 2, h: 1, to: 'clinic_valle_ward', tx: 88, ty: 108, facing: 'up', indicator: 'door' },
     ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** CLINICA VALLE — the back ward: rest, soup, and a window that faces the
+ *  pyramid (curtain closed, doctor's orders) */
+export function buildClinicValleWard(): MapDef {
+  const g = new Grid(10, 8, 'w');
+  g.rect(0, 0, 10, 2, 'W');
+  return {
+    id: 'clinic_valle_ward',
+    name: 'CLINICA — REPOSO',
+    music: 'valle',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'cot', x: 1, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'cot', x: 6, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 } },
+      { sprite: 'plant_pot', x: 8, y: 5.4, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [
+      { id: 'cw_valle_patient', sprite: 'senora', x: 2, y: 4, facing: 'up', dialogue: 'npc_cw_valle_patient', idle: true, emote: 'think' },
+    ],
+    signs: [
+      { x: 2, y: 1, dialogue: 'cw_valle_chart' },
+      { x: 6, y: 1, dialogue: 'cw_valle_window' },
+    ],
+    phones: [],
+    doors: [{ x: 4, y: 7, w: 2, h: 1, to: 'clinic_valle_int', tx: 152, ty: 60, facing: 'down', indicator: 'mat' }],
     spawners: [],
     triggers: [],
   };
@@ -1433,24 +1760,35 @@ export function buildChapter2Maps(steps: {
   const valleShopStep = doorstepOf(valle, 'valle_shop_int') ?? { tx: 344, ty: 130 };
   const valleClinicStep = doorstepOf(valle, 'clinic_valle_int') ?? { tx: 500, ty: 258 };
   const valleChapelStep = doorstepOf(valle, 'chapel_valle_int') ?? { tx: 154, ty: 430 };
+  // 2026-07-02: the GRAN HOTEL's doorstep derives from the door grafted onto the
+  // authored mega facade in growPuertoSol (the clinic/mercado doorstepOf pattern)
+  const hotelStep = doorstepOf(puerto, 'hotel_ps_lobby') ?? { tx: 1448, ty: 392 };
   const rooms = buildPyramidRooms();
   return {
     brickton_docks: buildBricktonDocks(),
     boat_interior: buildBoatInterior(),
     hospital_int: buildHospitalInt(steps.hospitalStep),
     hospital_f2: buildHospitalF2(),
+    hospital_f3: buildHospitalF3(),
     chapel_int: buildChapelInt(steps.chapelStep),
     puerto_sol: puerto,
     mercado_int: buildMercadoInt(mercadoStep),
     clinic_ps_int: buildClinicPsInt(clinicStep),
+    clinic_ps_ward: buildClinicPsWard(),
     deli_int: buildDeliInt(deliStep),
     museum_int: buildMuseumInt(museumStep),
+    hotel_ps_lobby: buildHotelPsLobby(hotelStep),
+    hotel_ps_hall: buildHotelPsHall(),
+    hotel_ps_room_a: buildHotelPsRoomA(),
+    hotel_ps_room_b: buildHotelPsRoomB(),
+    hotel_ps_pent: buildHotelPsPent(),
     jungle_1: buildJungle1(),
     jungle_2: buildJungle2(),
     grotto: buildGrotto(),
     valle_dorado: valle,
     valle_shop_int: buildValleShopInt(valleShopStep),
     clinic_valle_int: buildClinicValleInt(valleClinicStep),
+    clinic_valle_ward: buildClinicValleWard(),
     chapel_valle_int: buildChapelValleInt(valleChapelStep),
     pyramid_ante: buildPyramidAnte(),
     pyramid_1: rooms[0],

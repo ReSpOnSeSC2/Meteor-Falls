@@ -36,6 +36,28 @@ The user hits session usage limits quickly. Two audit fleets already rate-limite
 > (crosshair-on-ring proof); master cell regens still open. §2.4 Valle doors DONE (LANDMARK
 > routing + re-measured door.ox, shop entry walked live), pagoda padded 160→232; npc_bert +
 > balance follow-ups remain owner-call. Gates green (tsc/validate/1290 tests/balance/audits).
+>
+> **STATUS 2026-07-02 night (user playtest reports):** both fixed.
+> 1. **"Wishers have no legs" (Valle shrine plaza)** — wisherA + wisherC sheets were WAIST-UP
+>    BUSTS on disk (an old regen came out half-body; the slicer's h=108 normalization stretched
+>    the busts to full frame height, so bbox audits look normal). Both sheets fully REGENERATED
+>    (5 facings each, ChatGPT reference-paste with the bust recipe: "reference is WAIST-UP —
+>    draw the COMPLETE FULL BODY head to feet, invent plausible legs/shoes"; wisherA keeps his
+>    praying hands, wisherC his straw hat + backpack). Synced runtime+master, review montages
+>    verified. **DETECTION for this bug class:** bbox height ≠ proof of feet — a stretched bust
+>    fills the frame. `node tools/extract-char-frames.js <sheet> <out> 0 4 8 12` and LOOK.
+> 2. **"Chapel unreachable" (valle_chapel)** — the hi-res PNG (326×581 ≈ 9 tiles tall) placed
+>    at y=20 ran its porch/door INTO the map's south treeline (row 28), and the landmark door
+>    box (anchored at the drawn foot) landed in the trees. Fixed with a village-scale
+>    AUTHORED_WORLD_PROP_DISPLAY_SIZE entry (valle_chapel: 56×100 native ≈ 6.25 tiles; the
+>    landmark solid/door rebuild uses displayWidth/Height so everything follows) + door.ox
+>    re-measured for the displayed size (27→16). Door-audit green. Moving the chapel up
+>    instead would have walled off the east-gate lane (rows 19-20) — don't.
+>    **Rule of thumb:** when a promoted hi-res facade dwarfs its neighbors or its foot crosses
+>    the map border art, cap it with a display-size entry and re-measure door.ox against the
+>    DISPLAYED width — the drawn-footprint solids + door box scale with it for free.
+> Live double-check for the owner (~30s, both in valle_dorado): the three plaza wishers stand
+> full-bodied; the chapel renders casa-scaled with its mat on open grass — walk in.
 
 ### 2.1 Wire the Norway + Africa tile skins (BIGGEST WIN, code-only) — ✅ DONE 2026-07-02
 `assets/art/world/Norway_tiles_16.png` and `Africa_tiles_16.png` are fully authored (same Jun-15 batch as the wired Minimus strip) but **completely unwired** — Ch.4 (kvisthavn, lilleby, bootstep_moor) and Ch.6 (zanzibel, savanna_run, laughing_ruins) render generic base tiles.

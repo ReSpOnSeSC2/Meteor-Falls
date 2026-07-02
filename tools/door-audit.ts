@@ -6,9 +6,9 @@
  * and reports the two ways a transition betrays the player:
  *   landsSolid     — the destination landing tile is solid or out of bounds
  *                    → the player spawns STUCK in a wall / off the grid.
- *   farFromReturn  — the landing is far (> ~24px) from the reciprocal
- *                    return-door on the destination → you arrive at the WRONG
- *                    edge / "come in from the wrong way".
+ *   farFromReturn  — the landing is far (> FAR_FROM_RETURN_PX = 40, ~2.5 tiles)
+ *                    from the reciprocal return-door on the destination → you
+ *                    arrive at the wrong edge / deep mid-room (ADR-138 snug-entry).
  *   noReturn       — the destination has no door back here (one-way; reported
  *                    at lower severity, never fails the build).
  *   bodyBlocked    — the landing TILE is walkable but the 40×36 player body box
