@@ -23,7 +23,7 @@ export { cityViolations, cityMetrics } from './metrics';
 export type { CityLike, CityMetrics } from './metrics';
 export { pressureReport, pressureHardFlags, bandVerdict, BAND_TARGET, PRESSURE_LIMITS } from './pressure';
 export type { PressureReport, PressureLike } from './pressure';
-export { dungeonFlags, mapQualityFlags, softLockFailures, floorIsTree } from './mapcheck';
+export { dungeonFlags, mapQualityFlags, softLockFailures, floorIsTree, levelJoinFor } from './mapcheck';
 
 import type { Recipe, DraftMapDef } from '../schemas';
 import { buildCity, buildTown, buildVillage } from './settlements';

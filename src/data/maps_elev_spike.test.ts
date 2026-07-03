@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { MAPS } from './maps';
-import { pathExists } from '../levelkit/mapcheck';
+import { pathExists, components, levelJoinFor } from '../levelkit/mapcheck';
 
 const m = MAPS.elev_spike;
 const grid: string[] = m?.grid ?? [];
@@ -99,5 +99,58 @@ describe('elev_spike — the elevation engine spike guard (P2)', () => {
     for (let y = 0; y < grid.length; y++) if (grid[y][col] === 'T') lastStairY = y;
     expect(lastStairY).toBeGreaterThan(-1);
     expect(levelAt(col, lastStairY)).toBe(0);
+  });
+
+  it('P3 cross-level collision: a ground (level-0) body enters a level-1 tile ONLY on a stair', () => {
+    // The pure mirror of OverworldScene.collidesStatic's runtime rule (guarded by
+    // maxLevel>0): to a mover on terrace `playerLevel`, a tile is level-solid when
+    // its terrace differs AND it is not a 'T' stair. Proven for a level-0 player:
+    // every level-1 tile blocks EXCEPT the stair; every level-0 tile is free.
+    const levelSolidTo = (playerLevel: number, x: number, y: number): boolean =>
+      levelAt(x, y) !== playerLevel && grid[y][x] !== 'T';
+    let upperTiles = 0;
+    let stairExemptions = 0;
+    for (let y = 0; y < grid.length; y++) {
+      for (let x = 0; x < grid[y].length; x++) {
+        if (levelAt(x, y) === 1) {
+          upperTiles++;
+          const isStair = grid[y][x] === 'T';
+          // a level-0 player is blocked from every upper tile UNLESS it's a stair
+          expect(levelSolidTo(0, x, y), `upper tile (${x},${y}) block`).toBe(!isStair);
+          if (isStair) stairExemptions++;
+        } else {
+          // the level rule never blocks a level-0 mover on a level-0 tile
+          expect(levelSolidTo(0, x, y), `ground tile (${x},${y}) free`).toBe(false);
+        }
+      }
+    }
+    expect(upperTiles).toBeGreaterThan(0); // there IS an upper terrace to be walled off
+    expect(stairExemptions).toBeGreaterThan(0); // and the stair is the sole exemption
+    // symmetric: a level-1 player is blocked from stepping DOWN onto a bare ground
+    // tile (a ledge drop) — only the stair descends
+    let groundBlockedFromAbove = 0;
+    for (let y = 0; y < grid.length; y++)
+      for (let x = 0; x < grid[y].length; x++)
+        if (levelAt(x, y) === 0 && grid[y][x] !== 'T' && levelSolidTo(1, x, y)) groundBlockedFromAbove++;
+    expect(groundBlockedFromAbove).toBeGreaterThan(0);
+  });
+
+  it('P3 reachability: terrace ↔ ground is one world through the stair; a same-level join orphans it', () => {
+    // What THIS map can prove: under the real join the terrace + ground are one
+    // reachable world, and a hand-rolled SAME-LEVEL-ONLY join orphans the terrace —
+    // i.e. the terraces ARE a genuine two-level seam that something must bridge.
+    // NOTE it does NOT prove levelJoinFor's level logic in isolation: elev_spike's
+    // stair is a real WALKABLE gap in the 'K' face, so here levelJoinFor === FLAT_JOIN
+    // (the K wall does the separating, the gap does the joining). The predicate's own
+    // block-a-bare-seam / bridge-via-stair semantics are guarded on synthetic grids in
+    // src/levelkit/levelkit.test.ts ("levelJoinFor gates cross-level reachability").
+    const join = levelJoinFor(m!);
+    const c = components(grid, isSolid, join);
+    expect(c.comp[14][11]).toBe(c.mainId); // ground (the dev-warp spawn column)
+    expect(c.comp[2][11]).toBe(c.mainId); // upper terrace — one world with the ground
+    const sameLevelOnly = (ax: number, ay: number, bx: number, by: number): boolean =>
+      levelAt(ax, ay) === levelAt(bx, by);
+    const orphaned = components(grid, isSolid, sameLevelOnly);
+    expect(orphaned.comp[2][11]).not.toBe(orphaned.mainId); // a real two-level seam exists here
   });
 });

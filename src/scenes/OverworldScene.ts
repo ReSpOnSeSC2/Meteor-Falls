@@ -2178,6 +2178,20 @@ export class OverworldScene extends Phaser.Scene {
     const y0 = Math.floor(box.y / TILE_PX);
     const x1 = Math.floor((box.x + box.w) / TILE_PX);
     const y1 = Math.floor((box.y + box.h) / TILE_PX);
+    // WORLD-OVERHAUL P3 (opt-in elevation): cross-level collision. On a terraced
+    // map, a tile on a DIFFERENT terrace than the PLAYER is SOLID — you can't step
+    // onto another level except across a 'T' stair (the sole bridge; consistent with
+    // levelJoinFor's reachability flood on any no-invisible-ledge map). Guarded by
+    // maxLevel>0 so every FLAT map (all ~201 shipped) is byte-identical: the whole
+    // level branch is skipped and only the original solidTiles/solids test runs.
+    // Safe against the 40×36 body box straddling two rows while climbing: playerLevel
+    // flips the instant the feet reach the 'T' row, before the box top can poke the
+    // next terrace at the ≤23px/frame cap (RUN·dt_max=460·0.05). Keyed on the PLAYER's
+    // terrace: today only the player collision-tests on an elevated map (elev_spike
+    // has no wandering NPCs/roamers/patrols, and followers don't test collision), so
+    // the shared collides()/collidesStatic path is player-correct + inert for others.
+    // Per-mover terraces come with the first elevated map that carries NPCs (P5+).
+    const levelAware = this.maxLevel > 0;
     for (let ty = y0; ty <= y1; ty++) {
       for (let tx = x0; tx <= x1; tx++) {
         if (
@@ -2186,6 +2200,13 @@ export class OverworldScene extends Phaser.Scene {
           ty >= this.solidTiles.length ||
           tx >= this.solidTiles[0].length ||
           this.solidTiles[ty][tx]
+        ) {
+          return true;
+        }
+        if (
+          levelAware &&
+          this.levelGrid[ty][tx] !== this.playerLevel &&
+          this.mapDef.grid[ty][tx] !== 'T'
         ) {
           return true;
         }
