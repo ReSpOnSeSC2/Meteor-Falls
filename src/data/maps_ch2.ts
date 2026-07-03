@@ -159,6 +159,26 @@ export const PUERTO_SOL_PIER_SPAWN = { x: 416, y: 484 } as const;
 /** the north gate up the cliff road — COSTA_DOOR_FOR_PUERTO_SOL aims here */
 export const PUERTO_SOL_NORTH_GATE = { tx: 104, ty: 30 } as const;
 
+/**
+ * RE-LAYOUT (docs/CITY_DESIGN_LANGUAGE.md, "Malecón + zócalo"): a colonial port
+ * town, six quarters tangent to each other:
+ *   ZÓCALO (plaza, x30-45/y12-18) — the town's room: a re-centered fountain,
+ *     benches facing it, the picnic + sign + nina gathered around.
+ *   NORTH ROW (mercado/clinic/pension, x2-20) — commercial trio with TWO
+ *     callejón alcoves cut into the gaps (crate/trash_can dead-ends).
+ *   THE MUSEUM (x22-27) — pulled off the trio so its door centers on the
+ *     x24-26 avenue: looking down the avenue from street A, the museum's
+ *     door is dead ahead (M4 landmark axis).
+ *   CASA QUARTER (west of the avenue, y10-20, x1-23) — a residential pocket:
+ *     staggered casas/pension_b behind courtyard fence runs with flower beds.
+ *   MARKET LANE (y23.4, south of street B) — 3 stalls tightened with crates
+ *     between them, the stallman working the middle.
+ *   THE MALECÓN ROOT (dock band, y26-29) — palms on a waterfront rhythm, the
+ *     pier's crates, the fisher reading the tide.
+ * Streets gain X crosswalks at both avenue×street junctions (M1: "every
+ * intersection"), storm drains at curb corners, and a seeded wear pass
+ * ('1' cracks / '2' patches) the CORE's own stream — never shared outward.
+ */
 export function buildPuertoSol(): MapDef {
   const rng = seededRng(1898);
   const jit = (n: number): number => Math.floor(rng() * n);
@@ -180,8 +200,15 @@ export function buildPuertoSol(): MapDef {
     if (x % 4 < 2 && !skipA.has(x)) g.set(x, 9, 'D');
     if ((x + 2) % 4 < 2 && !skipA.has(x)) g.set(x, 21, 'D');
   }
-  g.rect(16, 8, 2, 3, 'X');
-  g.rect(33, 20, 2, 3, 'X');
+  // M1: crosswalks at BOTH avenue×street junctions (was missing — the
+  // avenue met each street with no X, M1's "every intersection" rule).
+  g.rect(24, 8, 3, 2, 'X');
+  g.rect(24, 20, 3, 2, 'X');
+  // M6: storm drains at the four avenue×street curb corners — walkable wear,
+  // clear of the crosswalks and every door landing.
+  for (const [dx, dy] of [[23, 7], [27, 7], [23, 22], [27, 22]] as const) {
+    g.set(dx, dy, '3');
+  }
   // THE PLAZA — pavers around the fountain, corners nibbled by the seed
   g.rect(30, 12, 16, 7, 'p');
   g.rect(30, 12, 1 + jit(3), 1, '=');
@@ -192,8 +219,6 @@ export function buildPuertoSol(): MapDef {
   g.rect(0, 31, 52, 3, 'e');
   // the pier pushes south into the water
   g.rect(23, 30, 6, 3, 'd');
-  // market lane fuzz west of the avenue
-  g.sprinkle(1898, ',~f', 0.05);
 
   /* ---- buildings: north faces of both streets (two block faces) ---- */
   interface Bldg {
@@ -202,18 +227,35 @@ export function buildPuertoSol(): MapDef {
     u: 1 | 2 | 3;
     x: number;
   }
+  // NORTH ROW: mercado -> callejón -> clinic -> callejón -> pension, then the
+  // MUSEUM pulled clear of the trio so its door centers on the avenue
+  // (x24-26, center 25); casa/casa_b close the row east of it (M2 rhythm).
   const north: Bldg[] = [
     { sprite: 'bldg_ps_mercado', w: 5, u: 1, x: 2 + jit(2) },
-    { sprite: 'bldg_ps_clinic', w: 5, u: 1, x: 10 + jit(2) },
-    { sprite: 'bldg_ps_pension', w: 5, u: 2, x: 18 + jit(2) },
-    { sprite: 'bldg_ps_museum', w: 6, u: 2, x: 29 + jit(2) },
-    { sprite: 'bldg_ps_casa', w: 4, u: 2, x: 39 + jit(2) },
-    { sprite: 'bldg_ps_casa_b', w: 4, u: 1, x: 46 - jit(2) },
+    { sprite: 'bldg_ps_clinic', w: 5, u: 1, x: 9 + jit(2) },
+    { sprite: 'bldg_ps_pension', w: 5, u: 2, x: 16 + jit(2) },
+    { sprite: 'bldg_ps_museum', w: 6, u: 2, x: 22 },
+    { sprite: 'bldg_ps_casa', w: 4, u: 2, x: 31 + jit(3) },
+    { sprite: 'bldg_ps_casa_b', w: 4, u: 1, x: 44 - jit(3) },
   ];
   for (let i = 1; i < north.length; i++) {
-    const min = north[i - 1].x + north[i - 1].w + 1;
+    // the callejón gaps (mercado|clinic, clinic|pension) need ≥2 clear tiles
+    // (the body-box rail); every other seam keeps the old 1-tile minimum. The
+    // trio's anchors (2/9/16) are tuned so even worst-case jit(2) still lands
+    // the museum's door within 1 tile of the avenue center (verified below).
+    const isCallejon = i === 1 || i === 2;
+    const min = north[i - 1].x + north[i - 1].w + (isCallejon ? 2 : 1);
     if (north[i].x < min) north[i].x = min;
   }
+  // THE CALLEJÓN POCKETS — derived from the RESOLVED gaps above (never a
+  // guessed literal): each alcove spans from the west building's east edge
+  // to the east building's west edge, floor y1-7 (brick wall to street A).
+  // Sidewalk floor keeps them walkable; a crate/trash_can (props, below)
+  // gives each a dead-end back-of-house read.
+  const alley1X = north[0].x + north[0].w; // mercado|clinic gap
+  const alley2X = north[1].x + north[1].w; // clinic|pension gap
+  g.rect(alley1X, 1, north[1].x - alley1X, 7, '=');
+  g.rect(alley2X, 1, north[2].x - alley2X, 7, '=');
   const south: Bldg[] = [
     { sprite: 'bldg_ps_deli', w: 4, u: 1, x: 4 + jit(3) },
     { sprite: 'bldg_ps_cantina', w: 5, u: 1, x: 12 + jit(2) },
@@ -255,29 +297,54 @@ export function buildPuertoSol(): MapDef {
   south.forEach((b) => place(b, 320)); // faces street B
 
   /* ---- street life off the SAME stream, in order ---- */
-  const stalls: PropDef[] = [];
-  const stallRamps = [4, 7, 11]; // RED, GOLD, CYAN ramp indices vary per stall
-  for (let i = 0; i < 3; i++) {
-    stalls.push({
-      sprite: `market_stall_${['a', 'b', 'c'][i]}`,
-      x: 31 + i * 5 + jit(2),
-      y: 23.4,
-      solid: { ox: 1, oy: 14, w: 38, h: 14 },
-    });
-  }
-  void stallRamps;
-  const palms: Array<[number, number]> = [];
-  for (const [tx, ty] of [
-    [3, 12],
-    [9, 14],
-    [20, 13],
-    [47, 12],
+  // MARKET LANE — the 3 stalls tightened (1-2 tile rhythm) with a crate
+  // between each pair; the stallman works the middle stall (npcs, below).
+  const stalls: PropDef[] = [
+    { sprite: 'market_stall_a', x: 30, y: 23.4, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
+    { sprite: 'market_stall_b', x: 34 + jit(2), y: 23.4, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
+    { sprite: 'market_stall_c', x: 39 + jit(2), y: 23.4, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
+  ];
+  const marketCrates: PropDef[] = [
+    { sprite: 'crate', x: 32.8, y: 24, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    { sprite: 'crate_bananas', x: 37.4, y: 24, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+  ];
+  // CASA QUARTER — a small fenced courtyard in the open ground west of the
+  // avenue (between the two streets, y11-19), the Otterbrook "backyard plot"
+  // idiom: a rim broken on its access side (never sealed), flower beds inside.
+  g.rect(2, 11, 6, 1, '-');
+  g.rect(2, 12, 1, 3, '-');
+  g.rect(7, 12, 1, 3, '-'); // N+W+E rim; S (y15) stays open onto the quarter
+  g.set(3, 12, 'F');
+  g.set(5, 13, 'f');
+  // THE MALECÓN ROOT — palms re-anchored to a waterfront rhythm along the
+  // dock band (y≈26), plus one casa-quarter street tree (clear of the new
+  // courtyard fence) and two flanking the market lane; the old mid-plaza
+  // candidate is dropped (the zócalo is furnished by its own bench/picnic
+  // now, not a stray palm).
+  const palmCandidates: Array<[number, number]> = [
+    [10, 13],
+    [9, 26],
+    [16, 26],
+    [42, 26],
+    [48, 26],
     [3, 24],
     [20, 24],
-    [48, 24],
-    [38, 11],
-  ] as const) {
-    if (rng() < 0.8) palms.push([tx, ty]);
+  ];
+  const palms: Array<[number, number]> = [];
+  for (const xy of palmCandidates) {
+    if (rng() < 0.8) palms.push(xy);
+  }
+
+  // M6 WEAR PASS — cracks on sidewalk, patches on road, run LAST (off the
+  // same 1898 stream) so it reads the fully-resolved grid without shifting
+  // any earlier jitter. Guarded to '=' / 'R' only; never touches a door
+  // landing (the gate/pier rects are 'B'/':'/'d', untouched by this sweep).
+  for (let y = 1; y < 33; y++) {
+    for (let x = 1; x < 51; x++) {
+      const ch = g.rows[y][x];
+      if (ch === '=' && rng() < 0.035) g.set(x, y, '1');
+      else if (ch === 'R' && rng() < 0.03) g.set(x, y, '2');
+    }
   }
 
   return {
@@ -290,29 +357,41 @@ export function buildPuertoSol(): MapDef {
       ...palms.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
       ...bldgProps,
       ...stalls,
-      { sprite: 'fountain', x: 36, y: 13.4, solid: { ox: 3, oy: 22, w: 34, h: 14 } },
+      ...marketCrates,
+      // THE ZÓCALO — the fountain re-centered on the room (30..45,12..18),
+      // a bench pair facing it, the picnic + sign + nina gathered around.
+      { sprite: 'fountain', x: 36, y: 13.6, solid: { ox: 3, oy: 22, w: 34, h: 14 } },
+      { sprite: 'bench', x: 32, y: 17, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 40, y: 17, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
       // the pier: the boat home + its board
       { sprite: 'banana_boat', x: 21, y: 29.2, solid: { ox: 4, oy: 22, w: 120, h: 20 } },
       { sprite: 'gangplank', x: 25.2, y: 28.4 },
       { sprite: 'departure_board', x: 30, y: 25.4, solid: { ox: 2, oy: 20, w: 22, h: 8 } },
+      // pier-root crates (the working-port read, clear of the gangplank lane)
       { sprite: 'crate_bananas', x: 4, y: 27.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
       { sprite: 'crate', x: 6.4, y: 28.1, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
       { sprite: 'payphone', x: 28, y: 24, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
       // §A4.5: the plaza picnic table (one of Ch.2's three, before the jungle)
       { sprite: 'picnic', x: 42, y: 14.6, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-      { sprite: 'bench', x: 33, y: 17, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'trash_can', x: 2, y: 12, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      // CALLEJÓN POCKETS — a crate in one alcove, a trash can in the other
+      // (dead-end texture; the sidewalk floor keeps them 2-wide + walkable).
+      // Centered in each derived alley (never a guessed literal).
+      { sprite: 'crate', x: alley1X + (north[1].x - alley1X - 1) / 2, y: 3, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'trash_can', x: alley2X + (north[2].x - alley2X - 1) / 2, y: 3, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      // CASA QUARTER — the courtyard's own trash can, tucked at its open
+      // (south) mouth rather than stranded mid-field.
+      { sprite: 'trash_can', x: 4, y: 15, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     ],
     npcs: [
-      { id: 'ps_fisher', sprite: 'dockworker', x: 10, y: 25, facing: 'down', dialogue: 'npc_ps_fisher', wander: true, emote: 'think' }, // Wave 2 (#4): reading the sea's moods
-      { id: 'ps_nina', sprite: 'wokeB', x: 38, y: 16, facing: 'down', dialogue: 'npc_ps_nina', wander: true },
-      { id: 'ps_stallman', sprite: 'tomas', x: 33, y: 25, facing: 'down', dialogue: 'npc_ps_stall', unlessFlag: 'q_llama', idle: true, emote: 'happy' }, // Wave 2 (#4): a cheerful market vendor
-      { id: 'ps_porter', sprite: 'captain', x: 18, y: 12, facing: 'down', dialogue: 'npc_ps_porter', wander: true },
+      { id: 'ps_fisher', sprite: 'dockworker', x: 8, y: 26, facing: 'down', dialogue: 'npc_ps_fisher', wander: true, emote: 'think' }, // Wave 2 (#4): reading the sea's moods, on the malecón root now
+      { id: 'ps_nina', sprite: 'wokeB', x: 34, y: 16, facing: 'down', dialogue: 'npc_ps_nina', wander: true }, // the zócalo, by the fountain
+      { id: 'ps_stallman', sprite: 'tomas', x: 34, y: 25, facing: 'down', dialogue: 'npc_ps_stall', unlessFlag: 'q_llama', idle: true, emote: 'happy' }, // Wave 2 (#4): the middle market stall
+      { id: 'ps_porter', sprite: 'captain', x: 20, y: 12, facing: 'down', dialogue: 'npc_ps_porter', wander: true }, // the casa quarter, near the avenue
     ],
     signs: [
       { x: 6, y: 1, dialogue: 'sign_costa_road' },
       { x: 30, y: 26, dialogue: 'sign_departures_home' },
-      { x: 37, y: 18, dialogue: 'sign_plaza' },
+      { x: 36, y: 18, dialogue: 'sign_plaza' },
       { x: 49, y: 21, dialogue: 'sign_jungle_gate' },
     ],
     phones: [{ x: 28, y: 24 }],
@@ -426,6 +505,15 @@ export function growPuertoSol(): MapDef {
   // 5) piers fingering into the harbor (scenery off the malecón — the working-port read)
   g.rect(60, 31, 3, 6, 'd');
   g.rect(108, 31, 3, 7, 'd');
+  // NOTE (blueprint deviation, M6): "wear stream over the plaza-floor 'p' and
+  // dock 'd' lines" is skipped — the engine's only wear glyphs ('1' crack /
+  // '2' patch) are baked SIDEWALK/ROAD textures (sidewalkCrack() draws its
+  // own base, never an overlay), so painting them onto 'p'/'d' would render
+  // a wrong-material sidewalk crack floating on plaza pavers or dock planks.
+  // M6 itself is base-char-guarded ("guarded to the right base char"), so the
+  // correct read is: no matching glyph exists for this surface, don't force
+  // one. The crate clusters + harbor bench below carry the "lived-in
+  // waterfront" texture for the grown zone instead.
 
   const treesAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
     xy.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: PS_OAK }));
@@ -464,12 +552,26 @@ export function growPuertoSol(): MapDef {
     { sprite: 'crate', x: 74.3, y: 28.1, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
     { sprite: 'crate', x: 104, y: 27.4, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
     { sprite: 'crate_bananas', x: 106.3, y: 28.3, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    // crate clusters at EACH pier finger's root (blueprint: "the working-port
+    // read" — cargo waiting right where the finger meets the malecón). Pier
+    // 1's literal root (60,31) is the market nook's own footprint (stalls +
+    // gift + seeded hedge rim), so its cluster sits just east of the nook
+    // instead of inside it (still reads as "at the finger," never crowds the
+    // nook's own furniture or risks a seeded hedge tile). Pier 2's root is
+    // open ground — its cluster lands at the literal target.
+    { sprite: 'crate', x: 67.5, y: 30, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    { sprite: 'crate_bananas', x: 68, y: 28.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    { sprite: 'crate_bananas', x: 107, y: 30, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    { sprite: 'crate', x: 111.4, y: 30, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
     // the market nook's stalls (open-air, around the present)
     { sprite: 'market_stall_a', x: 56, y: 29, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
     { sprite: 'market_stall_b', x: 62, y: 29, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
     // §A4.5: a dockside picnic rest before the jungle's pressure (the 2nd PS table)
     { sprite: 'picnic', x: 98, y: 28.6, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
     { sprite: 'payphone', x: 92, y: 27, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+    // a bench facing the harbor (blueprint: "1 bench facing the harbor"),
+    // part of the same dockside rest cluster as the picnic/payphone
+    { sprite: 'bench', x: 94, y: 30, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
     // signage
     { sprite: 'sign', x: 54, y: 25, solid: SIGN_SOLID }, // the malecón / dock district
     { sprite: 'sign', x: 66, y: 30, solid: SIGN_SOLID }, // the market nook
@@ -1246,6 +1348,51 @@ export function buildValleDorado(): MapDef {
   g.rect(4, 5, 1, 4, '|');
   g.rect(12, 5, 1, 4, '|');
   g.set(8, 9, '.'); // the gate gap
+  // ADDITIVE village-texture pass (docs/CITY_DESIGN_LANGUAGE.md): a Mercado
+  // forecourt at the shop, a well apron off the west lane, yard/garden fences
+  // at the two homes, flower beds at the civic doors + plaza corners, and a
+  // proper east gateway lane so the jungle door reads as an arrival, not a
+  // gap in the treeline. Every tile is hand-placed (no RNG) and re-checked
+  // against the fixed points (NPCs/llamas/gifts/doors) above.
+  // the Mercado forecourt lane (south of the shop, north of the top lane)
+  g.rect(29, 18, 10, 2, ':'); // east gateway lane: plaza SE -> jungle door mouth
+  g.rect(17, 27, 2, 2, ':'); // south pyramid spur extension -> the door mouth
+  g.rect(11, 17, 3, 2, 'p'); // well apron, north side of the west lane
+  // House-A yard fence with a gate gap (shifted to y27 — y26 clips valle_house's
+  // own solid footprint, which reaches down to tile row 26)
+  g.rect(2, 27, 7, 1, '-');
+  g.set(5, 27, '.');
+  // House-B side garden fence, along the house's west flank, with a gap
+  g.rect(32, 21, 1, 4, '|');
+  g.set(32, 22, '.');
+  // flower beds — chapel door flanks (east flanks shifted x11->x12: x11 grazes
+  // the chapel's own solid, which reaches to tile column 11)
+  g.set(7, 24, 'F');
+  g.set(7, 25, 'F');
+  g.set(12, 24, 'F');
+  g.set(12, 25, 'F');
+  // plaza corners
+  g.set(20, 14, 'F');
+  g.set(28, 14, 'F');
+  g.set(20, 19, 'F');
+  // shop forecourt corners
+  g.set(19, 9, 'F');
+  g.set(29, 9, 'F');
+  // scattered flower pairs along the lanes (west lane + the new east lane)
+  g.set(4, 18, 'f');
+  g.set(9, 18, 'f');
+  g.set(14, 21, 'f');
+  // east-lane pair: x31 shifted to x32 — x31,y17 is the doc_valle_out fixed
+  // NPC tile, never painted under a named fixed point
+  g.set(32, 17, 'f');
+  g.set(35, 17, 'f');
+  // llama-pen tufts (interior only, clear of every pen-llama spot)
+  g.set(5, 6, ',');
+  g.set(7, 7, ',');
+  g.set(10, 5, ',');
+  g.set(11, 8, ',');
+  g.set(6, 7, '~');
+  g.set(9, 6, '~');
   // edge trees
   const trees: Array<[number, number]> = [];
   for (let x = 0; x < 40; x += 2) {
@@ -1346,6 +1493,58 @@ export function buildValleDorado(): MapDef {
       // offering bowl once the Grin falls — the shrine stops eating wishes and
       // leaves one behind. Open plaza paver below the idol; clear of the woke trio.
       ...giftBox('gift_wish_token', 24, 16, { ifFlag: 'grin_defeated' }).props,
+      // ADDITIVE village-texture pass — furniture per district (all hand-placed,
+      // solid boxes matched to this file's own market_stall_a/pedestal_*/crate/
+      // trash_can conventions; see the grid-paint block above for the district
+      // skeleton). The Mercado forecourt (shop's south side, off its own solid
+      // footprint which reaches tile row 8): a stall either side, crates, a bin.
+      { sprite: 'crate', x: 17, y: 8, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'market_stall_a', x: 26, y: 8, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
+      { sprite: 'market_stall_b', x: 17, y: 9, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
+      { sprite: 'crate_bananas', x: 27, y: 9, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'trash_can', x: 21, y: 10, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      // shrine plaza dressing: benches facing the idol, pedestals flanking the
+      // approach from the north, planters at the pavers' west/east shoulders
+      { sprite: 'bench', x: 21, y: 15, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 26, y: 18, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'pedestal_0', x: 22, y: 13, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
+      { sprite: 'pedestal_1', x: 26, y: 13, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
+      { sprite: 'planter', x: 20, y: 15, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+      { sprite: 'planter', x: 28, y: 15, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+      // the well, centerpiece of its apron off the west lane (clear of the
+      // loose llama at 13,16 — the apron sits one row south of it)
+      { sprite: 'well', x: 12, y: 17, solid: { ox: 4, oy: 20, w: 16, h: 10 } },
+      // chapel green: a bench + a picnic blanket on the grass, plant pots
+      // either side of the door corridor
+      { sprite: 'bench', x: 15, y: 22, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'picnic_blanket', x: 14, y: 24, solid: { ox: 1, oy: 10, w: 20, h: 12 } },
+      { sprite: 'plant_pot', x: 6, y: 21, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 11, y: 21, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      // the pen quarter: crates outside its south fence corners + one crate
+      // tucked in the pen's SE interior (clear of every pen-llama spot)
+      { sprite: 'crate', x: 4, y: 10, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'crate', x: 12, y: 10, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'crate', x: 11, y: 6, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      // the east gateway: a tree pair framing the lane, a crate at the mouth,
+      // and the jungle edge-dressing set back off the border-tree ring (which
+      // already occupies x38,y16 and x38,y22 — shifted to y17/y23, still
+      // framing the mouth, both odd rows so the tree loop's even-row stride
+      // never lands on them)
+      { sprite: treeSprite(30, 17, true), x: 30, y: 17, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
+      { sprite: treeSprite(30, 21, true), x: 30, y: 21, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
+      { sprite: 'crate', x: 37, y: 21, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      // decorative only (no solid): a solid box here would reach into the
+      // door's y18-20 mouth rows at this tight column — pure dressing instead,
+      // matching this codebase's edge/marker-prop convention (e.g. ch6/7's
+      // prop_trail_marker, the bare `well` in ch6/7/8/9/10)
+      { sprite: 'edge_jungle_a', x: 38, y: 17 },
+      { sprite: 'edge_jungle_b', x: 38, y: 23 },
+      // south spur framing, just outside the 3-wide door mouth (x17-19 stays clear)
+      { sprite: 'pedestal_2', x: 16, y: 27, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
+      { sprite: 'pedestal_3', x: 19, y: 27, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
+      // back-lot corner (SE), clear of the loose llama at 35,25
+      { sprite: 'trash_can', x: 37, y: 24, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+      { sprite: 'crate', x: 36, y: 25, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
     ],
     npcs,
     signs: [

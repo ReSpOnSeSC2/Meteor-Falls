@@ -210,6 +210,10 @@ export const EnemyDefSchema = z.strictObject({
   /** psychedelic battle-bg palette ramps [a, b] */
   bg: z.tuple([z.number(), z.number()]),
   boss: z.boolean().optional(),
+  /** 2026-07-02: post-fit display multiplier for foes whose PRESENCE should
+   *  exceed the seat cap (a runaway TRUCK reads truck-sized; fitEnemySprite
+   *  otherwise only ever downsizes). Keep ≤1.6 so a crowded row still reads. */
+  battleScale: z.number().positive().max(2).optional(),
   /** S16: Jay's MIND WARP ('puppet') cannot grip this foe — bosses are
    *  mind_immune by design so control stays a crowd/tempo tool, never an
    *  "I win" on a boss (§A3 amended; the build prompt §4). Elites instead

@@ -67,13 +67,16 @@ describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays orga
     corePrefixUnchanged(MAPS.otterbrook, buildOtterbrook());
   });
 
-  it('grew about 3× and stays inside the XL envelope (≤4000 tiles)', () => {
+  it('grew to the Eagleland regional envelope (≤12500 tiles)', () => {
+    // 2026-07-02 user directive: the town is REGIONAL now — zone clearings
+    // separated by forest belts (126×96 = 12096 cells). Envelope raised from
+    // the old 4000/260 XL pins in the same change, per the envelope rail.
     const core = buildOtterbrook();
     const coreTiles = core.grid[0].length * core.grid.length;
     const grownTiles = MAPS.otterbrook.grid[0].length * MAPS.otterbrook.grid.length;
     expect(grownTiles / coreTiles).toBeGreaterThan(2.5);
-    expect(grownTiles).toBeLessThanOrEqual(4000);
-    expect(MAPS.otterbrook.props.length).toBeLessThanOrEqual(260);
+    expect(grownTiles).toBeLessThanOrEqual(12500);
+    expect(MAPS.otterbrook.props.length).toBeLessThanOrEqual(400);
   });
 
   it('stays a TOWN (organic, never bumped to city) and keeps its landmarks', () => {
@@ -85,7 +88,9 @@ describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays orga
     // the bus corner + lemonade stand + chapel door survived byte-identical
     expect(MAPS.otterbrook.props.some((p) => p.sprite === 'lemonade')).toBe(true);
     expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'chapel_int')).toBe(true);
-    expect(MAPS.otterbrook.triggers.some((t) => t.id === 'bus_stop')).toBe(true);
+    // (the old center bus_stop trigger retired 2026-07-02 — the depot IS the stop;
+    // the Under-Oak burrow door is the new heart_oak route)
+    expect(MAPS.otterbrook.doors.some((d) => d.to === 'oak_roots')).toBe(true);
     // ADR-056 (§B4): the woods nook earns a hidden present beside its rest
     expect(MAPS.otterbrook.props.some((p) => p.sprite === 'gift_box')).toBe(true);
     expect(MAPS.otterbrook.signs.some((s) => s.dialogue === 'otter_woods_gift')).toBe(true);
@@ -93,7 +98,7 @@ describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays orga
 
   it('S17 M18 Part B (ADR-063): the PORCH SET coffee can + the Spare Hubcap are placed live', () => {
     const ob = MAPS.otterbrook;
-    for (const [flag, x, y] of [['porch_can', 22, 47], ['gift_hubcap', 63, 23]] as const) {
+    for (const [flag, x, y] of [['porch_can', 24, 72], ['gift_hubcap', 109, 44]] as const) {
       expect(ob.props.some((p) => p.sprite === 'gift_box' && Math.round(p.x) === x && Math.round(p.y) === y), flag).toBe(true);
       const prompt = ob.signs.find((s) => s.dialogue === flag);
       expect(prompt?.unlessFlag, flag).toBe(flag);

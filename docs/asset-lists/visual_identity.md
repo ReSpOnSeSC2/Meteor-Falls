@@ -15,14 +15,14 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 |---|---|---|---|---|---|
 | cranky_mailbox | otterbrook, meadow_mile, hill_road, brickton | battle_cranky_mailbox | ow_enemy_cranky_mailbox | authored | - |
 | runaway_lawnmower | otterbrook, meadow_far, hickory_trail | battle_runaway_lawnmower | ow_enemy_runaway_lawnmower | authored | - |
-| coily_cicada | meadow_mile, meadow_woods, hill_road, hickory_trail, whisperwood_rise, hickory_hill | battle_coily_cicada | ow_enemy_coily_cicada | authored | - |
+| coily_cicada | meadow_mile, meadow_woods, hill_road, hickory_trail, whisperwood_rise, hickory_hill, oak_roots, oak_hollow | battle_coily_cicada | ow_enemy_coily_cicada | authored | - |
 | blazer_smiler | meadow_overpass, brickton, dos_f1, dos_f2, dos_f3 | battle_blazer_smiler | ow_enemy_blazer_smiler | authored | - |
 | pigeon_gang | otterbrook, meadow_far, meadow_overpass, brickton | battle_pigeon_gang | ow_enemy_pigeon_gang | authored | - |
-| hill_slug_deluxe | meadow_woods, hill_road, hickory_trail, whisperwood_rise, hickory_hill | battle_hill_slug | ow_enemy_hill_slug_deluxe | authored | - |
+| hill_slug_deluxe | meadow_woods, hill_road, hickory_trail, whisperwood_rise, hickory_hill, oak_roots | battle_hill_slug | ow_enemy_hill_slug_deluxe | authored | - |
 | borden | - | battle_constable_borden | ow_enemy_borden | authored | - |
 | sprinkler_sentry | otterbrook | battle_sprinkler_sentry | ow_enemy_sprinkler_sentry | authored | - |
 | recycling_raccoon | otterbrook, meadow_woods | battle_recycling_raccoon | ow_enemy_recycling_raccoon | authored | - |
-| skeeter_swarm | otterbrook, meadow_far, hill_road, whisperwood_rise | battle_skeeter_swarm | mini:mini_skeeter_swarm | authored | - |
+| skeeter_swarm | otterbrook, meadow_far, hill_road, whisperwood_rise, oak_roots, oak_hollow | battle_skeeter_swarm | mini:mini_skeeter_swarm | authored | - |
 | unionized_gnome | otterbrook, hill_road | battle_unionized_gnome | ow_enemy_unionized_gnome | authored | - |
 | mandatory_memo | dos_f2 | battle_mandatory_memo | ow_enemy_mandatory_memo | authored | - |
 | motivational_poster | dos_f2 | battle_motivational_poster | ow_enemy_motivational_poster | authored | - |
@@ -31,7 +31,7 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | showroom_mannequin | brickton | battle_showroom_mannequin | ow_enemy_showroom_mannequin | authored | - |
 | good_investment | otterbrook, meadow_overpass | battle_good_investment | ow_enemy_good_investment | authored | - |
 | rogue_icecream_truck | brickton | battle_rogue_icecream_truck | ow_enemy_rogue_icecream_truck | authored | - |
-| tick_nymph | hickory_hill | battle_tick_nymph | ow_enemy_tick_nymph | authored | - |
+| tick_nymph | hickory_hill, oak_roots | battle_tick_nymph | ow_enemy_tick_nymph | authored | - |
 | the_suit | dos_f2 | battle_the_suit | ow_enemy_the_suit | authored | - |
 | pickpocket_parrot | puerto_sol, jungle_1 | battle_pickpocket_parrot | ow_enemy_pickpocket_parrot | authored | - |
 | gilded_beetle | jungle_2, pyramid_ante, pyramid_4 | battle_gilded_beetle | ow_enemy_gilded_beetle | authored | - |

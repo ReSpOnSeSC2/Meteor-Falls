@@ -1,29 +1,52 @@
 # Settlement Design Language — making towns read like real places
 
-Guides the re-layout of outdoor settlement maps (`src/data/maps*.ts`). Layout only —
-art, dialogue, quests, and the balance curve are untouched. First applied to
-Otterbrook / Brickton / Puerto Sol; later chapters follow the same language.
+Guides the re-layout of outdoor settlement maps (`src/data/maps*.ts`). Dialogue,
+quests, and the balance curve are untouched. Existing art is untouched too — but a
+layout MAY grow its area's building/prop palette with NEW types when the place needs
+them to feel full and alive; new art is always AUTHORED via the ChatGPT pipeline
+(never procedural — see `SETTLEMENT_REDESIGN_HANDOFF.md` § GROWING THE PALETTE).
+First applied to Otterbrook / Brickton / Puerto Sol; later chapters follow the same
+language.
 
 **The symptom this fixes:** ruler-straight streets, every building on one shared
 baseline, no districts, no alleys, no mid-block life. Settlements read as "a row of
 sprites," not a place someone lives.
+
+## 0. The bar (user directive, 2026-07-02 — supersedes "re-layout")
+
+Every settlement pass is a **FULL SCRAP-AND-REBUILD**, not a dress-up of the shipped
+layout. The user's standard: *"full map redesigns … more creative, detailed, feel like
+EarthBound in a very distinct way, with the linear-but-open-world feel and vibrant
+alive cities."* Concretely:
+- Redesign from a blank grid around a **place identity** (Otterbrook = the brook it's
+  named for + otter civic pride; every town gets one hook expressed in layout + props).
+- Keep CONTENT (ids/dialogue/flags/quest anchors) and the blueprint's FIXED-POINT
+  table (external warps, test-pinned tiles, cutscene ground) — everything else moves.
+- A timid diff is a defect: if the before/after renders look like siblings, redo it.
+- "Linear but open": one legible story spine through the map, with off-spine pockets
+  (secrets, parks, back lanes) that reward wandering.
+- In-between route maps (the walking legs between settlements) are IN SCOPE for the
+  same treatment as their settlements come up — no more bare snake-paths on grass.
+- Each finished map gets a bootable preview for a user walkthrough checkpoint.
 
 ## 1. Hard rails (violating any of these fails tests or gameplay)
 
 | Rail | Rule |
 |---|---|
 | Determinism | All jitter via `seededRng(seed)` streams local to the builder. Never `Math.random`, never `Date`. Two builds must be byte-identical (`world_block.test.ts` proves it). |
-| Frozen-core law | Shipped maps are `growX()` wrapping `buildX()` top-left. Edit **core and grow together, in one pass**. Growth paints ONLY outside the core rect (`x ≥ CW \|\| y ≥ CH`) and **appends** to arrays — the core's props/npcs/signs/doors/spawners stay a byte-identical *prefix* of the grown arrays (tests compare relationally, so a coherent core+grow rewrite stays green). |
+| Frozen-core law | Shipped maps are `growX()` wrapping `buildX()` top-left. Edit **core and grow together, in one pass**. Growth paints ONLY outside the core rect (`x ≥ CW \|\| y ≥ CH`) and **appends** to arrays — the core's props/npcs/signs/doors/spawners stay a byte-identical *prefix* of the grown arrays. This is a STRUCTURAL law (how the two functions relate), **not** a creative one — tests compare relationally, so a coherent full core+grow rewrite stays green. It must never be read as "preserve the old layout" (§0). |
 | Envelopes | world_block pins per-map caps — Otterbrook: grown/core tiles > 2.5×, ≤ 4000 tiles, ≤ 260 props. Brickton: > 3.5×, ≤ 12000 tiles, ≤ 320 props. Puerto Sol: > 2.5×, ≤ 12000 tiles, **≤ 120 props**. Count props before adding furniture; budget is part of the design. |
 | Test-pinned coords | Some content is pinned at exact tiles by tests or external warps (each map's blueprint lists them). Those tiles keep their content AND stay walkable. Everything else may move. |
 | ADR-012 city minima | `settlement:'city'` maps: ≥ 2 horizontal street bands (rows ≥ 40% R/D/X), bands separated by built-up rows, ≥ 1 column with ≥ 12 vertical street cells, ≥ 2 distinct building face-bands. Run `cityViolations` mentally while sketching. |
-| Door law | Building doors sit on flat frontage with a clear landing; map-edge doors need a walkable mouth. Landings are **computed** (`doorstepOf`, `trailRowAt`), never hardcoded, and return-doors must land ≤ 64px from the walk-back spot. Check with `npx tsx tools/door-audit.ts`. |
+| Door law | Building doors sit on flat frontage with a clear landing; map-edge doors need a walkable mouth. Landings are **computed** (`doorstepOf`, `trailRowAt`), never hardcoded, and return-doors must land snug to the walk-back spot (ADR-138
+tightened the farFromReturn gate to 40px). Check with `npx tsx tools/door-audit.ts`. |
 | Reachability | Every NPC, sign, phone, ATM, picnic, spawner rect, and trigger must be BFS-reachable from the main walkable region. No prop may seal a quest path. |
 | Body box | The player is ~40×36px. Any corridor the player must pass: ≥ 3 tiles wide, 4+ preferred. Alleys that are scenery-only may be 2. Never a 1-wide mandatory path. |
 | Solid chars | Before repainting, read the engine's solid-tile set (grep `isSolid` in src/). Water `e`, walls `B`/`W`/`O`/`J`/`Z`, hedges `b`, fences `-` `\|` block; streets/sidewalk/plaza/dock/park chars walk. |
 | RNG streams | Builders use isolated numbered streams (e.g. 1995, 2077…). Keep streams isolated; reflowing a stream inside one builder is fine (the whole layout changes), but never share streams across builders. |
 | Post-passes | `occupyCity` (tenancy/knock signs), door re-aim fixups, and traffic run AFTER the builder — don't duplicate their work; don't break their inputs (doorless `bldg_*` facades are what occupyCity feeds on). |
 | Picnic law | §A4.5 rest tables stay ≥ 3 per chapter, placed before dungeons/pressure zones. |
+| Palette | Place only facade/prop keys whose art is ALREADY authored (the `hi-res-facades` validate law fails the build on a procedural generated facade). Draw from the area's own `AREA_SKINS` roster (`src/spritegen/buildings.ts`) — never another area's (validator-pinned both ways). If the design wants a type that isn't authored yet, STOP and report it as a palette gap — authoring happens upstream (handoff § GROWING THE PALETTE), never inside an implementation pass. |
 
 ## 2. Tile vocabulary (grid chars that matter outdoors)
 

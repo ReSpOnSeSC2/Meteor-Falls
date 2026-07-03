@@ -927,7 +927,9 @@ export class BattleScene extends Phaser.Scene {
     const maxW = Math.min(seatCap, slotMaxW);
     const maxH = def.boss ? s(104) : s(92);
     const scale = Math.min(1, maxW / spr.width, maxH / spr.height);
-    spr.setScale(scale);
+    // battleScale (2026-07-02): a deliberate post-fit boost for foes whose
+    // presence should bully the seat cap (the ice-cream truck is a TRUCK).
+    spr.setScale(scale * (def.battleScale ?? 1));
   }
 
   private buildParty(): void {
