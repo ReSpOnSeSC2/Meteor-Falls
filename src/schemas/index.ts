@@ -623,6 +623,19 @@ export const ReflectZoneSchema = z.strictObject({
 });
 export type ReflectZone = z.infer<typeof ReflectZoneSchema>;
 
+/** WORLD-OVERHAUL (Ch3+): OPT-IN true multi-level elevation (Onett/Zelda walk-behind).
+ *  A parallel per-tile LEVEL plane the same W×H as `grid`: one digit-string row per grid
+ *  row where '0' (also '.' or ' ') = ground and '1'..'9' are stacked terraces. Movement
+ *  changes level ONLY on a stairs ('T') tile; a level seam between two levels must be
+ *  walled by a cliff_face ('K') or joined by a stair (the "no invisible ledge" law,
+ *  enforced in tools/content-validate.ts). When this field is ABSENT — every one of the
+ *  ~90 shipped maps — the whole map is flat level 0 and every render/collision/BFS path
+ *  is byte-identical to today. See docs/WILDERNESS_DESIGN_LANGUAGE.md § Elevation. */
+export const ElevationSchema = z.strictObject({
+  level: z.array(z.string().min(1)).min(1),
+});
+export type Elevation = z.infer<typeof ElevationSchema>;
+
 export const MapDefSchema = z.strictObject({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -653,6 +666,8 @@ export const MapDefSchema = z.strictObject({
    *  value must be a CANON_AREAS key (validated in tools/content-validate.ts). */
   area: z.string().min(1).optional(),
   grid: z.array(z.string().min(1)).min(1),
+  /** OPT-IN elevation plane (see ElevationSchema). Absent ⇒ the map is flat. */
+  elevation: ElevationSchema.optional(),
   props: z.array(PropDefSchema),
   npcs: z.array(NpcDefSchema),
   signs: z.array(SignDefSchema),
