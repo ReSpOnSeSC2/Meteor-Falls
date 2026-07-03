@@ -103,6 +103,11 @@ export const CHAR_LEGEND: Record<string, string> = {
   K: 'cliff_face', // solid terrace wall — paint 1-2 rows tall below the upper level
   '^': 'cliff_lip', // walkable grass-over-rock trim on the upper terrace's edge row
   T: 'stairs', // walkable concrete steps connecting terrace levels
+  // WORLD-OVERHAUL (Ch3+) — the HEDGE-WALL autotile belt (solid). buildTiles special-
+  // cases 'H' to pick hedge_<mask> by 4-neighbour connectivity; this legend entry is the
+  // solidity + boot fallback (isSolidChar('H') = hedge_15 is solid). See tiles.ts HEDGE_BASE.
+  H: 'hedge_15', // solid winding-corridor hedge wall (16-mask; rendered per-neighbour)
+  V: 'bramble_15', // solid winding-corridor bramble wall (16-mask; the hedge's thornier sibling)
 };
 
 // treeSprite lives in mapkit.ts (S14 extraction — byte-identical)
@@ -4280,6 +4285,66 @@ const golfMaps = {
   golf_clubhouse: buildGolfClubhouse(golfClubhouseStep),
 };
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * elev_spike — WORLD-OVERHAUL ELEVATION SPIKE (dev-only; window.mfWarp('elev_spike'))
+ *
+ * The FIRST map to opt into the true multi-level engine (World Overhaul P2). A
+ * single 2-row cliff separates a LOWER ground (level 0, south) from an UPPER
+ * terrace (level 1, north), joined by ONE 3-wide stair. Purpose: prove the
+ * walk-behind overlay (a level-0 player who walks up to the cliff passes BEHIND
+ * its face) + the player-level scalar (climbing the stair lifts you onto the
+ * terrace). Reached ONLY by the dev warp — NOT wired into any shipped map — and
+ * allowlisted in src/data/elevation.test.ts. Base tiles are the placeholder
+ * in-plane cliff kit ('K'/'^'/'T'); the authored LAYERED cliff art is P4. See
+ * docs/WILDERNESS_DESIGN_LANGUAGE.md § Elevation.
+ * ──────────────────────────────────────────────────────────────────────── */
+const ELEV_SPIKE_W = 24;
+const ELEV_SPIKE_H = 18;
+function buildElevSpike(): MapDef {
+  const g = new Grid(ELEV_SPIKE_W, ELEV_SPIKE_H); // fill '.' grass
+  // the cliff band: '^' lip (row 6) over a 2-row 'K' face (rows 7-8), with one
+  // 3-wide 'T' stair cut through it (cols 10-12) joining terrace ↔ ground.
+  g.rect(0, 6, ELEV_SPIKE_W, 1, '^');
+  g.rect(0, 7, ELEV_SPIKE_W, 2, 'K');
+  g.rect(10, 6, 3, 3, 'T'); // stair: row 6 (top, on the terrace) + rows 7-8 (through the face)
+  const grid = g.out();
+  // the parallel LEVEL plane, GENERATED from the grid so dimensions match exactly
+  // (elevation.test.ts asserts this). Rows 0-6 = terrace + lip (level 1); the K
+  // face rows 7-8 stay level 1 (they ARE the upper terrace's front wall, so the
+  // overlay lifts them); the stair cells below the lip drop to level 0 so stepping
+  // DOWN the stair lowers you; rows 9+ = ground (level 0).
+  const level = grid.map((rowStr, y) =>
+    rowStr
+      .split('')
+      .map((ch) => {
+        if (y <= 6) return '1';
+        if (y <= 8) return ch === 'T' ? '0' : '1';
+        return '0';
+      })
+      .join(''),
+  );
+  return {
+    id: 'elev_spike',
+    name: 'ELEVATION SPIKE',
+    music: 'hill',
+    grid,
+    elevation: { level },
+    props: [
+      // depth cues: trees on the upper terrace (north) + on the ground (south)
+      { sprite: treeSprite(3, 2, true), x: 3, y: 2, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
+      { sprite: treeSprite(20, 2, true), x: 20, y: 2, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
+      { sprite: treeSprite(4, 15, true), x: 4, y: 15, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
+      { sprite: treeSprite(19, 15, true), x: 19, y: 15, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
+    ],
+    npcs: [],
+    signs: [],
+    phones: [],
+    doors: [],
+    spawners: [],
+    triggers: [],
+  };
+}
+
 export const MAPS: Record<string, MapDef> = {
   ...buildChapter2Maps({ chapelStep: chapelDoorstep, hospitalStep: hospitalDoorstep }),
   // S18 (ADR-095) — CHAPTER 3 England (Half 1: maps + encounters + shops; the
@@ -4347,6 +4412,8 @@ export const MAPS: Record<string, MapDef> = {
   costa_estrella: buildCostaEstrella(),
   ...golfMaps, // S15i Task 6 (ADR-059) — the golf resort + clubhouse (computed doorsteps)
   bus_interior: buildBusInterior(),
+  // WORLD-OVERHAUL P2 — the opt-in elevation spike (dev-only, window.mfWarp)
+  elev_spike: buildElevSpike(),
 };
 
 // the user's decree — the cramped single-room interiors fill the screen now

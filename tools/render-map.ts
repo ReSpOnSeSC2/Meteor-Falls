@@ -250,6 +250,11 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     ids: ['foggybottom', 'foggy_moor', 'wintermoor_grounds', 'the_old_stones'],
     cellW: 560, cellH: 460,
   },
+  elev: {
+    title: 'WORLD OVERHAUL - ELEVATION ENGINE SPIKE (P2)',
+    ids: ['elev_spike'],
+    cellW: 560, cellH: 460,
+  },
 };
 
 const set = SETS[arg];

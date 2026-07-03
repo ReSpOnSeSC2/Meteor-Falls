@@ -986,6 +986,25 @@ TILESET.push({ name: 'stairs', solid: false, make: sidewalkTile });
 // tools/apply-eb-tile-kit.ts (eb-grounds-fix sheet, cell 7).
 TILESET.push({ name: 'root_wall', solid: true, make: officeWall });
 
+// WORLD-OVERHAUL (Ch3+) universal terrain kit — the HEDGE-WALL autotile (16-mask).
+// A SOLID winding-corridor belt wall (docs/WILDERNESS_DESIGN_LANGUAGE.md § belts): 16
+// tiles indexed by the 4-neighbour hedge mask (bits 1=N 2=E 4=S 8=W, matching
+// OverworldScene.buildTiles's 'H' branch). A lit rim faces every OPEN edge; adjacent
+// hedge cells meet seamlessly. Authored via ChatGPT (assets/art/masters/world/
+// hedge-wall-source.png), composited + installed into otterbrook_tiles_16.png by
+// tools/apply-hedge-kit.ts (make() = boot FALLBACK only; spritegen stays FROZEN).
+export const HEDGE_BASE = TILESET.length;
+for (let hm = 0; hm < 16; hm++) TILESET.push({ name: `hedge_${hm}`, solid: true, make: bush });
+
+// WORLD-OVERHAUL (Ch3+) — the BRAMBLE-WALL autotile (16-mask), the hedge's thornier,
+// wilder sibling (darker briar for shadowed routes; docs/WILDERNESS_DESIGN_LANGUAGE.md
+// § belts). Same mask contract (bits 1=N 2=E 4=S 8=W, OverworldScene.buildTiles's 'V'
+// branch); a lit rim faces every OPEN edge. Authored via ChatGPT (assets/art/masters/
+// world/bramble-wall-source.png), composited + installed by tools/apply-bramble-kit.ts
+// (make() = boot FALLBACK only; spritegen stays FROZEN). Placed by the 'V' grid char.
+export const BRAMBLE_BASE = TILESET.length;
+for (let bm = 0; bm < 16; bm++) TILESET.push({ name: `bramble_${bm}`, solid: true, make: bush });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);
