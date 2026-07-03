@@ -168,6 +168,8 @@ interface Roamer {
   think: number;
   home: Rect;
   dead: boolean;
+  /** WO P5: this roamer's own terrace (per-mover cross-level collision). */
+  level: number;
 }
 
 type PatrolState = 'patrol' | 'alert' | 'chase' | 'return';
@@ -199,6 +201,8 @@ interface PatrolObj {
   facing: Facing;
   dead: boolean;
   bang: Phaser.GameObjects.BitmapText | null;
+  /** WO P5: this patrol's own terrace (per-mover cross-level collision). */
+  level: number;
 }
 
 interface NpcObj {
@@ -212,6 +216,8 @@ interface NpcObj {
   /** ADR-124: free-roams a small radius (outdoor townsfolk) vs holds position
    *  (shop/clinic/clerk + interiors + explicit wander:false/stationary). */
   wanders: boolean;
+  /** WO P5: this NPC's own terrace (per-mover cross-level collision). */
+  level: number;
 }
 
 type AuthoredWorldPropKey = keyof typeof AUTHORED_WORLD_PROP_DISPLAY_SIZE;
@@ -1117,6 +1123,17 @@ export class OverworldScene extends Phaser.Scene {
     return this.maxLevel > 0 ? this.levelAtPx(px, py) * this.levelDepthBias : 0;
   }
 
+  /** WORLD-OVERHAUL P5 (per-mover terraces): a mover's terrace changes ONLY on a
+   *  stairs ('T') tile — the same rule the player uses (update()). Flat maps
+   *  (maxLevel 0) return the level unchanged, so every mover stays level 0 and the
+   *  cross-level collision branch is inert ⇒ every flat map is byte-identical. */
+  private levelAfterStep(cur: number, px: number, py: number): number {
+    if (this.maxLevel <= 0) return cur;
+    const tx = Math.floor(px / TILE_PX);
+    const ty = Math.floor(py / TILE_PX);
+    return this.mapDef.grid[ty]?.[tx] === 'T' ? (this.levelGrid[ty]?.[tx] ?? cur) : cur;
+  }
+
   /** WORLD-OVERHAUL P2/P4 (opt-in elevation): the WALK-BEHIND band. For a terraced
    *  map, re-emit each upper terrace's SOLID FRONT WALL ('K' cliff cells) as depth-
    *  sorted occluder images at each cell's OWN base-y, so a player on a LOWER level who
@@ -1560,7 +1577,7 @@ export class OverworldScene extends Phaser.Scene {
       const wanders =
         def.wander === true ||
         (def.wander !== false && !def.shop && !def.stationary && !def.dog && !this.mapDef.interior);
-      this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000, wanders });
+      this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000, wanders, level: this.levelAtPx(x, y) });
       // a wanderer is non-blocking (no stale "ghost" solid left where it spawned);
       // a pinned NPC keeps its small collision box — EXCEPT in a §A6 GIANT town, where the tiny
       // party must weave freely among the colossi. A giant's foot-box (or a giant prop beside it)
@@ -1726,6 +1743,7 @@ export class OverworldScene extends Phaser.Scene {
           think: 0,
           home: { x: sp.rect.x * TILE_PX, y: sp.rect.y * TILE_PX, w: sp.rect.w * TILE_PX, h: sp.rect.h * TILE_PX },
           dead: false,
+          level: this.levelAtPx(x, y),
         });
       }
     }
@@ -1754,6 +1772,7 @@ export class OverworldScene extends Phaser.Scene {
         facing: 'down',
         dead: false,
         bang: null,
+        level: this.levelAtPx(spr.x, spr.y),
       });
     }
   }
@@ -2247,24 +2266,25 @@ export class OverworldScene extends Phaser.Scene {
 
   /** Static, always-solid geometry: solid tiles + prop/facade rects. Unlike the
    *  dynamic bodies below, these never move, so overlap always means "blocked". */
-  private collidesStatic(box: Rect): boolean {
+  private collidesStatic(box: Rect, level = this.playerLevel): boolean {
     const x0 = Math.floor(box.x / TILE_PX);
     const y0 = Math.floor(box.y / TILE_PX);
     const x1 = Math.floor((box.x + box.w) / TILE_PX);
     const y1 = Math.floor((box.y + box.h) / TILE_PX);
-    // WORLD-OVERHAUL P3 (opt-in elevation): cross-level collision. On a terraced
-    // map, a tile on a DIFFERENT terrace than the PLAYER is SOLID — you can't step
-    // onto another level except across a 'T' stair (the sole bridge; consistent with
+    // WORLD-OVERHAUL P3/P5 (opt-in elevation): cross-level collision. On a terraced
+    // map, a tile on a DIFFERENT terrace than the MOVER is SOLID — you can't step onto
+    // another level except across a 'T' stair (the sole bridge; consistent with
     // levelJoinFor's reachability flood on any no-invisible-ledge map). Guarded by
-    // maxLevel>0 so every FLAT map (all ~201 shipped) is byte-identical: the whole
-    // level branch is skipped and only the original solidTiles/solids test runs.
-    // Safe against the 40×36 body box straddling two rows while climbing: playerLevel
-    // flips the instant the feet reach the 'T' row, before the box top can poke the
-    // next terrace at the ≤23px/frame cap (RUN·dt_max=460·0.05). Keyed on the PLAYER's
-    // terrace: today only the player collision-tests on an elevated map (elev_spike
-    // has no wandering NPCs/roamers/patrols, and followers don't test collision), so
-    // the shared collides()/collidesStatic path is player-correct + inert for others.
-    // Per-mover terraces come with the first elevated map that carries NPCs (P5+).
+    // maxLevel>0 so every FLAT map (all shipped but foggybottom/otterbrook) is
+    // byte-identical: the whole level branch is skipped and only the original
+    // solidTiles/solids test runs. Safe against the 40×36 body box straddling two rows
+    // while climbing: the mover's level flips the instant its feet reach the 'T' row,
+    // before the box top can poke the next terrace at the ≤23px/frame cap
+    // (RUN·dt_max=460·0.05). `level` defaults to the PLAYER's terrace (the player path
+    // is byte-unchanged); P5 threads each mover's OWN terrace (NpcObj/Roamer/PatrolObj
+    // `.level`, seeded at spawn + flipped on 'T' via levelAfterStep) so an L0 townsfolk
+    // no longer freezes/clips when the PLAYER climbs — the fix that lets a LIVING town
+    // (wanderers/traffic/roamers) be elevated at all.
     const levelAware = this.maxLevel > 0;
     for (let ty = y0; ty <= y1; ty++) {
       for (let tx = x0; tx <= x1; tx++) {
@@ -2279,7 +2299,7 @@ export class OverworldScene extends Phaser.Scene {
         }
         if (
           levelAware &&
-          this.levelGrid[ty][tx] !== this.playerLevel &&
+          this.levelGrid[ty][tx] !== level &&
           this.mapDef.grid[ty][tx] !== 'T'
         ) {
           return true;
@@ -2309,8 +2329,8 @@ export class OverworldScene extends Phaser.Scene {
     return entersNewBody(box, cur, npcBodies);
   }
 
-  private collides(box: Rect, actor?: 'player' | NpcObj): boolean {
-    if (this.collidesStatic(box)) return true;
+  private collides(box: Rect, actor?: 'player' | NpcObj, level = this.playerLevel): boolean {
+    if (this.collidesStatic(box, level)) return true;
     // ambient cars (S18 M26): full-body AABB overlap
     const hit = (r: Rect): boolean =>
       box.x < r.x + r.w && box.x + box.w > r.x && box.y < r.y + r.h && box.y + box.h > r.y;
@@ -2357,12 +2377,13 @@ export class OverworldScene extends Phaser.Scene {
       if (n.vx !== 0 || n.vy !== 0) {
         const nx = n.spr.x + n.vx * dt;
         const ny = n.spr.y + n.vy * dt;
-        if (Math.abs(nx - n.baseX) > s(28) || Math.abs(ny - n.baseY) > s(24) || this.collides({ x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) }, n)) {
+        if (Math.abs(nx - n.baseX) > s(28) || Math.abs(ny - n.baseY) > s(24) || this.collides({ x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) }, n, n.level)) {
           n.vx = 0;
           n.vy = 0;
         } else {
           n.spr.x = nx;
           n.spr.y = ny;
+          n.level = this.levelAfterStep(n.level, nx, ny);
           n.spr.setDepth(ny + this.levelLift(nx, ny));
           const f: Facing = facing8(n.vx, n.vy, 'down');
           if (!n.def.dog) {
@@ -2413,10 +2434,11 @@ export class OverworldScene extends Phaser.Scene {
         ny = Phaser.Math.Clamp(ny, r.home.y, r.home.y + r.home.h);
       }
       let moved = false;
-      if (!this.collides({ x: nx - s(5), y: ny - s(8), w: s(10), h: s(8) })) {
+      if (!this.collides({ x: nx - s(5), y: ny - s(8), w: s(10), h: s(8) }, undefined, r.level)) {
         moved = Math.abs(nx - r.spr.x) + Math.abs(ny - r.spr.y) > s(0.1);
         r.spr.x = nx;
         r.spr.y = ny;
+        r.level = this.levelAfterStep(r.level, nx, ny);
         r.spr.setDepth(ny + this.levelLift(nx, ny));
       } else {
         r.vx = -r.vx;
@@ -2495,8 +2517,8 @@ export class OverworldScene extends Phaser.Scene {
         const dy = this.player.y - p.spr.y;
         const d = Math.hypot(dx, dy);
         const step = PATROL_CHASE * dt;
-        const nx = this.patrolMove(p.spr.x, p.spr.y, (dx / d) * step, 0, false);
-        const ny = this.patrolMove(nx, p.spr.y, 0, (dy / d) * step, true);
+        const nx = this.patrolMove(p.spr.x, p.spr.y, (dx / d) * step, 0, false, p.level);
+        const ny = this.patrolMove(nx, p.spr.y, 0, (dy / d) * step, true, p.level);
         p.spr.x = nx;
         p.spr.y = ny;
         p.facing = facing8(dx, dy, p.facing); // ADR-096: 8-way chase read
@@ -2516,6 +2538,7 @@ export class OverworldScene extends Phaser.Scene {
           return;
         }
       }
+      p.level = this.levelAfterStep(p.level, p.spr.x, p.spr.y);
       p.spr.setDepth(p.spr.y + this.levelLift(p.spr.x, p.spr.y));
     }
   }
@@ -2536,11 +2559,11 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /** axis-separated chase movement so Smilers slide along cubicle walls */
-  private patrolMove(x: number, y: number, dx: number, dy: number, second: boolean): number {
+  private patrolMove(x: number, y: number, dx: number, dy: number, second: boolean, level = this.playerLevel): number {
     const nx = x + dx;
     const ny = y + dy;
     const box = { x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) };
-    if (this.collides(box)) return second ? y : x;
+    if (this.collides(box, undefined, level)) return second ? y : x;
     return second ? ny : nx;
   }
 
@@ -3158,10 +3181,11 @@ export class OverworldScene extends Phaser.Scene {
     }
     // chase — the patrols' axis-separated slide so he doesn't stick on a corner
     const step = BORDEN_CHASE * dt;
-    const nx = this.patrolMove(n.spr.x, n.spr.y, (dx / d) * step, 0, false);
-    const ny = this.patrolMove(nx, n.spr.y, 0, (dy / d) * step, true);
+    const nx = this.patrolMove(n.spr.x, n.spr.y, (dx / d) * step, 0, false, n.level);
+    const ny = this.patrolMove(nx, n.spr.y, 0, (dy / d) * step, true, n.level);
     n.spr.x = nx;
     n.spr.y = ny;
+    n.level = this.levelAfterStep(n.level, nx, ny);
     n.spr.setDepth(ny);
     const f = facing8(dx, dy, n.def.facing);
     const gait = this.anims.exists(`${n.def.sprite}-run-${f}`) ? 'run' : 'walk';
