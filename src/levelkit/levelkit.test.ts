@@ -16,7 +16,7 @@ import { MapDefSchema, DraftMapDefSchema } from '../schemas';
 import type { CityRecipe, MapDef } from '../schemas';
 import { SAMPLE_RECIPES } from './samples';
 import { generate, buildCity, cityViolations } from './index';
-import { components, mapQualityFlags } from './mapcheck';
+import { components, mapQualityFlags, levelJoinFor } from './mapcheck';
 import { CHAR_LEGEND } from '../data/maps';
 import { TILESET } from '../spritegen/tiles';
 
@@ -143,6 +143,51 @@ describe('S15g — the map-quality library catches orphans (Prime Law 4)', () =>
     const route = generate(SAMPLE_RECIPES.meadow_mile) as unknown as MapDef;
     expect(mapQualityFlags(city, isSolid, {})).toEqual([]);
     expect(mapQualityFlags(route, isSolid, {})).toEqual([]);
+  });
+});
+
+describe('WORLD-OVERHAUL P3 — levelJoinFor gates cross-level reachability (the elevation seam)', () => {
+  const open = (): boolean => false; // nothing solid — the join alone separates levels
+  // A synthetic 4x4 with a BARE cross-level seam (rows 0-1 level 1 over rows 2-3
+  // level 0, ALL walkable, NO 'K' wall between them). This is the case elev_spike
+  // deliberately cannot exercise (its stair is a real walkable GAP in the K face,
+  // so there levelJoinFor === FLAT_JOIN): here only levelJoinFor's level logic can
+  // keep the terraces apart, so this is the guard that a revert to FLAT_JOIN fails.
+  const grid = ['....', '....', '....', '....'];
+  const bareSeam = { grid, elevation: { level: ['1111', '1111', '0000', '0000'] } };
+
+  it('a BARE level seam splits into two components under levelJoinFor (but ONE under a flat join)', () => {
+    const split = components(grid, open, levelJoinFor(bareSeam));
+    expect(split.comp[0][0]).not.toBe(split.comp[3][0]); // upper (L1) ≠ lower (L0): the seam holds
+    // the exact P3 revert — level-blind join — would flood all 16 cells as one world
+    const flat = components(grid, open); // default FLAT_JOIN
+    expect(flat.comp[0][0]).toBe(flat.comp[3][0]);
+    expect(flat.mainId).toBeGreaterThanOrEqual(0);
+  });
+
+  it('a single-cell stair bridges the seam (the OR-either-endpoint exemption is load-bearing)', () => {
+    // put one 'T' at col 0 spanning the seam: (0,1) stays L1, (0,2) drops to L0.
+    // A lower-ground cell steps ONTO the stairhead — the runtime always allows that,
+    // so the reachability join must too (why the exemption is OR, not target-only).
+    const withStair = {
+      grid: ['....', 'T...', 'T...', '....'],
+      elevation: { level: ['1111', '1111', '0000', '0000'] },
+    };
+    const joined = components(withStair.grid, open, levelJoinFor(withStair));
+    expect(joined.comp[0][0]).toBe(joined.comp[3][0]); // terrace ↔ ground, bridged by the stair column
+    // and with the stair sealed back to plain ground the seam re-separates
+    const sealed = { grid: ['....', '....', '....', '....'], elevation: withStair.elevation };
+    const resplit = components(sealed.grid, open, levelJoinFor(sealed));
+    expect(resplit.comp[0][0]).not.toBe(resplit.comp[3][0]);
+  });
+
+  it('a flat map (no elevation) yields FLAT_JOIN — reachability is byte-identical', () => {
+    // the opt-in guarantee at the predicate level: no elevation ⇒ the SAME function
+    // the ~201 shipped maps already flood through.
+    const flatMap = { grid: ['....', '....'] };
+    const join = levelJoinFor(flatMap);
+    expect(join(0, 0, 0, 1)).toBe(true);
+    expect(join(9, 9, 9, 8)).toBe(true); // always joins, position-independent
   });
 });
 

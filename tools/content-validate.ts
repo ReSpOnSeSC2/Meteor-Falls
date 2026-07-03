@@ -141,7 +141,7 @@ import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue'
 import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
 import { TEXT_VARS } from '../src/ui/text';
 import { tileIndexByName, TILESET } from '../src/spritegen/tiles';
-import { doorAudit, mapQualityFlags } from '../src/levelkit/mapcheck';
+import { doorAudit, mapQualityFlags, levelJoinFor } from '../src/levelkit/mapcheck';
 import { pressureReport, pressureHardFlags } from '../src/levelkit/pressure';
 // S15g 3b — THE SPRITE FORGE: the part catalog, the composer, the recorded picks
 import { composeEnemy, CATALOG, ROLE_POOLS, CHAPTER_REGION } from '../src/spritegen/parts';
@@ -3066,7 +3066,10 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
 
   let clean = 0;
   for (const m of Object.values(MAPS)) {
-    const flags = mapQualityFlags(m, isSolidChar, MAPS);
+    // WORLD-OVERHAUL P3: thread the map's elevation join so an elevated map's
+    // reachability proves the upper terrace is reachable ONLY via the stair.
+    // levelJoinFor returns FLAT_JOIN for every flat map ⇒ output byte-identical.
+    const flags = mapQualityFlags(m, isSolidChar, MAPS, levelJoinFor(m));
     if (REACH_WAIVERS[m.id]) {
       // a live waiver must still be needed — else retire it (both directions)
       if (flags.length === 0) fail('mapquality', `'${m.id}' reachability waiver is UNUSED now — retire it from the table`);

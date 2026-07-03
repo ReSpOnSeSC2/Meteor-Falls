@@ -106,11 +106,43 @@ before the next:
     `const L=game.scene.getScene('boot').load; L.maxParallelDownloads=64; const p=setInterval(()=>{ if(!L.list.size&&!L.inflight.size){clearInterval(p);return;} L.checkLoadQueue(); },150);`
     then pump `game.loop.step(t+=16)` to run boot→title, `GS.reset()`, `game.scene.start('overworld',{mapId:'elev_spike',x:736,y:960})`, pump again, screenshot. A FOREGROUND
     user tab boots normally with no pump.
-- **P3 — Cross-level collision + reachability.** `collidesStatic` (`:2038`): a tile with
-  `levelGrid[ty][tx] !== playerLevel` is solid unless it's a T stair. Door landings set the
-  player's level from the destination tile. `mapcheck` proves the upper terrace is reachable
-  ONLY via the stair (no orphan). **Gate: `elev_spike` guard test + door-audit; 90 flat maps
-  byte-identical.**
+- **P3 — Cross-level collision + reachability.** ✅ DONE (S3, 2026-07-03). Completes P0–P3 — the
+  de-risk milestone. `collidesStatic` (`OverworldScene.ts:2176`) gained the cross-level rule,
+  guarded by `if (this.maxLevel > 0)` so every FLAT map is byte-identical: a sampled tile whose
+  `levelGrid[ty][tx] !== this.playerLevel` is SOLID unless its grid char is `'T'` (the stair
+  exemption). Proven soft-lock-safe against the 40×36 body box straddling two rows: `playerLevel`
+  flips the instant the feet reach a `'T'` row, before the box top can poke the next terrace at
+  the ≤23px/frame cap (`RUN·dt_max` = 115·ART_SCALE·0.05). **Player-scoped** (keyed on
+  `this.playerLevel`): today only the player collision-tests on an elevated map — `elev_spike` has
+  no wandering NPCs/roamers/patrols and followers don't test collision — so the shared
+  `collides()`/`collidesStatic()` path is player-correct + inert for others. **Per-mover terraces
+  are deferred to the first elevated map that carries NPCs (P5+).** Door/spawn landings already set
+  the terrace: `buildPlayer` (`:1564`) seeds `playerLevel = levelAtPx(spawn)`, so a door restart
+  arrives on the right level (no code change needed — verified). Reachability wire:
+  `levelJoinFor(m)` (`mapcheck.ts:44`, exported) returns `FLAT_JOIN` for flat maps and otherwise
+  joins two 4-adjacent cells iff same terrace-level OR either endpoint is a `'T'` stair;
+  `mapQualityFlags` gained an optional `join` param (default `FLAT_JOIN`) threaded into
+  `components`/`reachable`, and `content-validate.ts` (`:3072`) passes `levelJoinFor(m)` per map.
+  The OR-either-endpoint exemption is the **undirected** model of the directed runtime rule — it is
+  the more robust choice (a lower cell can step ONTO a single-cell stairhead, which the runtime
+  always allows); the two AGREE on any no-invisible-ledge map, diverging only where a `'T'` abuts a
+  bare different-level non-`'T'` cell (a law violation the per-map guard catches). **`doorAudit`
+  needs NO join** — it is purely geometric (landing-solidity + return-distance), runs no
+  reachability flood, so there is nothing for a `LevelJoin` to plug into (this is exactly why its
+  stdout stays byte-identical). Tests: `maps_elev_spike.test.ts` +2 (the collision predicate mirror
+  + the terrace-is-one-world-via-the-stair proof) and `levelkit.test.ts` +3 (a **synthetic**
+  block-a-bare-seam / bridge-via-stair guard — the real catch for a `levelJoinFor`→`FLAT_JOIN`
+  revert, which `elev_spike` alone cannot catch because its stair is a walkable GAP so there
+  `levelJoinFor ≡ FLAT_JOIN`). **Gates (all green):** tsc 0 · door-audit + content-validate stdout
+  **BYTE-IDENTICAL** to the S3 baseline (diff empty across all 202 maps) · full vitest 1331/1331 ·
+  `render-map elev` clean · build 0. **Adversarial review** (8-agent workflow): 1 confirmed
+  (test-validity — the weak reachability test above; FIXED with the synthetic guard), 3 refuted (the
+  `levelJoinFor` OR-vs-target divergence — inert, comment corrected; no global elevation law — P4/P5
+  hardening; door-audit not join-threaded — mechanically N/A). **Live-verify deliberately skipped:**
+  on `elev_spike` the solid `K` wall already blocks the observable "walk off the terrace mid-face"
+  case (unchanged since P2's verified walk-behind), so the P3 rule adds nothing new to SEE there —
+  it is a general backstop for future partial-wall terraces, proven by the tests + the byte-identical
+  diff + the frame math.
 - **P4 — Cliff art kit (see art ledger).** Author the LAYERED cliff set (overhang band +
   `cliff_face_top/mid/base` + `stair_top/mid/base` + corners/caps). Different from the
   in-plane fake. **Gate: visual review.**
@@ -170,7 +202,7 @@ fixed-point table/palette plan) → Step 2.5 palette (ChatGPT batch, user approv
 implement (ONE sonnet agent/map; read the binding doc first) → Step 4 gate + render/boot
 review → Step 5 close (full suite + build, update THIS doc, leave unstaged).
 
-## CURRENT STATUS (Session 2, 2026-07-03)
+## CURRENT STATUS (Session 3, 2026-07-03)
 
 **LANDED S1 (all gates green):** Ch3 fixed-point guard (`maps_ch3.test.ts`, 29 tests), the P0
 freeze tripwire (`elevation.test.ts`), the P0.5 `ElevationSchema` seam (`schemas/index.ts`), the
@@ -206,34 +238,54 @@ three framework docs.
 - **STILL REMAINING (flat strips):** road-junction, path→grass transition, foliage-fade
   (`docs/WORLD_OVERHAUL_HANDOFF.md` art ledger) — same tile-tail + neighbour-mask recipe.
 
-**NOT YET STARTED:** elevation **P3** (cross-level collision + reachability — the next engine
-step), P4 cliff art, P5 foggybottom; **Track B remaining flat strips** (road-junction, path→grass
-transition, foliage-fade — hedge + bramble DONE); any map rebuild; `PICKUPS` extraction; back-room
-generator; KaraokeScene.
+**LANDED S3 — ELEVATION ENGINE P3 (Track A), all gates green, UNSTAGED:** cross-level collision +
+reachability (completes P0–P3, the de-risk milestone). Files: `src/scenes/OverworldScene.ts` (the
+`collidesStatic` level rule), `src/levelkit/mapcheck.ts` (`levelJoinFor` + `mapQualityFlags` join
+param), `src/levelkit/index.ts` (export), `tools/content-validate.ts` (per-map join wire),
+`src/data/maps_elev_spike.test.ts` (+2), `src/levelkit/levelkit.test.ts` (+3 synthetic `levelJoinFor`
+guard). Full detail + guardrail proofs + the adversarial-review outcome (1 confirmed→fixed, 3
+refuted) are in the **P3 phase entry** above. door-audit + content-validate stdout diffed EMPTY vs
+the S3 baseline across all 202 maps; full vitest 1331/1331; tsc + build 0. No shipped map opted into
+elevation (`elev_spike` remains the sole allowlisted map).
 
-## NEXT SESSION (S3) — recommended kickoff
+**NOT YET STARTED:** elevation **P4** (the LAYERED cliff art kit — overhang band +
+`cliff_face_top/mid/base` + `stair_top/mid/base` + corners/caps; slice layout must match the overlay
+renderer), **P5** foggybottom terrace-aware (its own guard + allowlist entry); **Track B remaining
+flat strips** (road-junction, path→grass transition, foliage-fade — hedge + bramble DONE; needs the
+interactive ChatGPT author+approve loop); a **global content-validate elevation law** (enforce
+no-invisible-ledge + no >1-level jump across ALL elevated maps, not just per-map guards — P3 review
+hardening); **per-mover terraces** in `collides()` (when the first elevated map carries
+NPCs/roamers/patrols); any map rebuild; `PICKUPS` extraction; back-room generator; KaraokeScene.
 
-Step 0 recon first (`git status`; confirm no sibling edits to `OverworldScene.ts`/`tiles.ts`/
-`maps.ts`/`schemas`/`mapcheck.ts`). Then pick up either/both:
+## NEXT SESSION (S4) — recommended kickoff
 
-1. **Elevation P3 — cross-level collision + reachability (Track A cont.).** Now that the render
-   walk-behind is proven, make levels COLLIDE: in `collidesStatic` (`OverworldScene.ts`), a tile
-   whose `levelGrid[ty][tx] !== this.playerLevel` is solid UNLESS it's a `T` stair. Wire the
-   `mapcheck` `LevelJoin` (already seamed in P1) from real maps so `content-validate` proves the
-   upper terrace is reachable ONLY via the stair (no orphan). Door landings set `playerLevel`
-   from the destination tile. **Gate: `elev_spike` guard + door-audit; 201 flat maps byte-
-   identical (the `LevelJoin` must stay `FLAT_JOIN` for every flat map).** On `elev_spike` today
-   the `K` wall already blocks cross-level walking, so P3 is the GENERAL rule + the validator wire.
-2. **Track B — remaining flat terrain strips.** HEDGE-wall (`'H'`) + BRAMBLE-wall (`'V'`) autotiles
-   both LANDED this session (see above). Remaining, same recipe (ChatGPT author on magenta → clone
+Step 0 recon first (`git status`; `gh pr view` for the S3 PR; confirm no sibling edits to
+`OverworldScene.ts`/`tiles.ts`/`maps.ts`/`schemas`/`mapcheck.ts`; re-capture the door-audit +
+content-validate baselines). P0–P3 are DONE, so S4 opens the **Ch3 pilot art + the first real
+terraced map**:
+
+1. **Elevation P4 — the layered cliff art kit (Track A).** Author (ChatGPT → PNG, user approves)
+   the LAYERED cliff set: overhang band, `cliff_face_top/mid/base`, `stair_top/mid/base`, plus
+   corners/caps — DIFFERENT from the in-plane placeholder `K`/`^`/`T` kit `elev_spike` uses. The
+   slice layout must match `buildElevationOverlay` (`OverworldScene.ts:1123`), which today re-emits
+   the single `K` face tile at its own base-y; P4 re-emits a multi-band face. Decide the per-band
+   overlay depth as you author. **Gate: visual review + `elev_spike` re-render; flat maps still
+   byte-identical.**
+2. **Elevation P5 — foggybottom terrace-aware.** The first SHIPPED map to opt in. Either rebuild
+   flat-first then add the `elevation` plane, or author terrace-aware in one pass. Needs its own
+   `maps_foggybottom.test.ts` guard (mirror `maps_elev_spike.test.ts`: two-terrace, sole-stair-join,
+   no-invisible-ledge, monotonic descent, the P3 collision-predicate mirror) + an `ELEVATED_ALLOWLIST`
+   entry in `elevation.test.ts` in the SAME change. Consider landing the global elevation law (above)
+   first so foggybottom's seams are machine-checked, not just guard-checked.
+3. **Track B — remaining flat terrain strips** (road-junction, path→grass, foliage-fade). Same recipe
+   as the S2 hedge/bramble: ChatGPT author on magenta → SHOW the render for approval → clone
    `apply-hedge-kit.ts` → `<NAME>_BASE` + 16 tiles + a FREE grid char (taken: `H`,`V`) + `CHAR_LEGEND`
-   entry + `buildTiles` mask branch → maze proof): road-junction (turn/T/cross), path→grass
-   transition band, foliage-fade (sapling/shrub/tall-grass). None BLOCK P3.
-   - **Reuse recipe for the ChatGPT harvest** (this session, works): the generated `<img>` src is
-     a same-origin signed `estuary/content` URL — fetch it IN-PAGE (`await fetch(img.src)` where
-     `img.naturalWidth` is large), `URL.createObjectURL` → `<a download>` → move from Downloads.
-     A plain `?id=...` fetch 404s (needs the signed `p`/`ts`). Do NOT return the URL from the JS
-     tool (it blocks query-string data).
+   entry + `buildTiles` mask branch → maze proof. None block P4/P5. NOTE: needs the interactive
+   ChatGPT author+approve loop, so it fits an interactive session.
+   - **ChatGPT harvest recipe** (works): the generated `<img>` src is a same-origin signed
+     `estuary/content` URL — fetch it IN-PAGE (`await fetch(img.src)` where `img.naturalWidth` is
+     large), `URL.createObjectURL` → `<a download>` → move from Downloads. A plain `?id=...` fetch
+     404s (needs the signed `p`/`ts`). Do NOT return the URL from the JS tool (it blocks query-string data).
 
-The dev-preview boot workaround (loader unstick + loop pump) is documented under P2 above —
-reuse it for any future live elevation preview from the automation browser.
+The dev-preview boot workaround (loader unstick + loop pump) is documented under P2 above — reuse it
+for any live elevation preview (especially once P4/P5 give something new to SEE) from the automation browser.

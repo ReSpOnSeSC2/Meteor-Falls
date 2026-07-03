@@ -29,6 +29,41 @@ export type IsSolid = (ch: string) => boolean;
 export type LevelJoin = (ax: number, ay: number, bx: number, by: number) => boolean;
 const FLAT_JOIN: LevelJoin = () => true;
 
+/**
+ * WORLD-OVERHAUL P3 — build the elevation `LevelJoin` for one map from its opt-in
+ * level plane. A FLAT map (no `elevation`) gets `FLAT_JOIN` verbatim, so every
+ * existing caller (all ~201 shipped maps) stays byte-identical. An ELEVATED map
+ * joins two 4-adjacent walkable cells only when they share a terrace level OR one
+ * of them is a `'T'` stair — the sole cross-level bridge (the "no invisible ledge"
+ * law, docs/WILDERNESS_DESIGN_LANGUAGE.md § Elevation). content-validate floods
+ * reachability through it so an upper terrace is orphaned unless the stair reaches
+ * it. The predicate reads the SAME digit encoding buildLevelGrid uses ('1'..'9' =
+ * terraces, everything else = ground 0).
+ *
+ * RELATION to the runtime collidesStatic rule (they must AGREE on where the player
+ * can go): this is the UNDIRECTED reachability model of that DIRECTED rule. The
+ * runtime blocks a step ONTO a tile whose level ≠ playerLevel unless that TARGET is
+ * a 'T'; here the edge is symmetric, so we exempt an edge when EITHER endpoint is a
+ * 'T'. That OR (not "target-only") is deliberate — it is what lets a lower-ground
+ * cell connect to a single-cell stairhead (you step ONTO the 'T' from the ground,
+ * which the runtime always allows). The two agree on every map that obeys the
+ * no-invisible-ledge law (a stair's non-descent sides are same-level or walled by
+ * 'K'); they diverge ONLY where a 'T' abuts a bare different-level non-'T' cell — a
+ * law violation the per-map guard test is there to catch (a global content-validate
+ * elevation law is P4/P5 hardening; see docs/WORLD_OVERHAUL_HANDOFF.md).
+ */
+export function levelJoinFor(m: Pick<MapDef, 'grid' | 'elevation'>): LevelJoin {
+  const plane = m.elevation?.level;
+  if (!plane) return FLAT_JOIN; // flat map ⇒ every step joins ⇒ byte-identical
+  const levelAt = (x: number, y: number): number => {
+    const ch = plane[y]?.[x];
+    return ch && ch >= '1' && ch <= '9' ? ch.charCodeAt(0) - 48 : 0;
+  };
+  const isStair = (x: number, y: number): boolean => m.grid[y]?.[x] === 'T';
+  return (ax, ay, bx, by) =>
+    levelAt(ax, ay) === levelAt(bx, by) || isStair(ax, ay) || isStair(bx, by);
+}
+
 export interface Components {
   comp: number[][];
   /** id of the largest walkable component (the reachable "world") */
@@ -272,10 +307,13 @@ export function dungeonFlags(m: DungeonLike, isSolid: IsSolid, opts?: { entry?: 
  * Every playability flag for one map (empty = clean). The validator fixes or
  * WAIVES each. `maps` resolves door targets for the landing-walkable check.
  */
-export function mapQualityFlags(m: MapDef, isSolid: IsSolid, maps: Record<string, MapDef>): string[] {
-  const c = components(m.grid, isSolid);
+export function mapQualityFlags(m: MapDef, isSolid: IsSolid, maps: Record<string, MapDef>, join: LevelJoin = FLAT_JOIN): string[] {
+  // WORLD-OVERHAUL P3: the reachability flood consults the map's elevation join
+  // (default FLAT_JOIN ⇒ flat maps are byte-identical). An elevated map's upper
+  // terrace only counts as reachable when the stair actually reaches it.
+  const c = components(m.grid, isSolid, join);
   const flags: string[] = [];
-  const at = (x: number, y: number): boolean => reachable(c, Math.round(x), Math.round(y));
+  const at = (x: number, y: number): boolean => reachable(c, Math.round(x), Math.round(y), join);
 
   for (const n of m.npcs) {
     if (!at(n.x, n.y)) flags.push(`npc '${n.id}' is orphaned @${Math.round(n.x)},${Math.round(n.y)}`);
