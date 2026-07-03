@@ -4289,36 +4289,39 @@ const golfMaps = {
  * elev_spike — WORLD-OVERHAUL ELEVATION SPIKE (dev-only; window.mfWarp('elev_spike'))
  *
  * The FIRST map to opt into the true multi-level engine (World Overhaul P2). A
- * single 2-row cliff separates a LOWER ground (level 0, south) from an UPPER
- * terrace (level 1, north), joined by ONE 3-wide stair. Purpose: prove the
- * walk-behind overlay (a level-0 player who walks up to the cliff passes BEHIND
- * its face) + the player-level scalar (climbing the stair lifts you onto the
- * terrace). Reached ONLY by the dev warp — NOT wired into any shipped map — and
- * allowlisted in src/data/elevation.test.ts. Base tiles are the placeholder
- * in-plane cliff kit ('K'/'^'/'T'); the authored LAYERED cliff art is P4. See
- * docs/WILDERNESS_DESIGN_LANGUAGE.md § Elevation.
+ * 3-row cliff separates a LOWER ground (level 0, south) from an UPPER terrace
+ * (level 1, north), joined by ONE 3-wide stair. Purpose: prove the walk-behind
+ * overlay (a level-0 player who walks up to the cliff passes BEHIND its face) +
+ * the player-level scalar (climbing the stair lifts you onto the terrace) + (P4)
+ * the LAYERED CLIFF KIT — the 3-row face exercises all three bands (cliff_top /
+ * cliff_mid / cliff_base). Reached ONLY by the dev warp — NOT wired into any
+ * shipped map — and allowlisted in src/data/elevation.test.ts. The grid still
+ * uses 'K'/'^'/'T'; the authored layered art is applied by buildElevationOverlay.
+ * See docs/WILDERNESS_DESIGN_LANGUAGE.md § Elevation.
  * ──────────────────────────────────────────────────────────────────────── */
 const ELEV_SPIKE_W = 24;
 const ELEV_SPIKE_H = 18;
 function buildElevSpike(): MapDef {
   const g = new Grid(ELEV_SPIKE_W, ELEV_SPIKE_H); // fill '.' grass
-  // the cliff band: '^' lip (row 6) over a 2-row 'K' face (rows 7-8), with one
-  // 3-wide 'T' stair cut through it (cols 10-12) joining terrace ↔ ground.
+  // the cliff band: '^' lip (row 6) over a 3-row 'K' face (rows 7-9) — three rows so the
+  // P4 LAYERED CLIFF KIT shows all three bands (top row = grassy overhang, row 8 = MID
+  // strata, base row = scree). One 3-wide 'T' stair cut through it (cols 10-12) joins
+  // terrace ↔ ground.
   g.rect(0, 6, ELEV_SPIKE_W, 1, '^');
-  g.rect(0, 7, ELEV_SPIKE_W, 2, 'K');
-  g.rect(10, 6, 3, 3, 'T'); // stair: row 6 (top, on the terrace) + rows 7-8 (through the face)
+  g.rect(0, 7, ELEV_SPIKE_W, 3, 'K');
+  g.rect(10, 6, 3, 4, 'T'); // stair: row 6 (top, on the terrace) + rows 7-9 (through the face)
   const grid = g.out();
   // the parallel LEVEL plane, GENERATED from the grid so dimensions match exactly
   // (elevation.test.ts asserts this). Rows 0-6 = terrace + lip (level 1); the K
-  // face rows 7-8 stay level 1 (they ARE the upper terrace's front wall, so the
+  // face rows 7-9 stay level 1 (they ARE the upper terrace's front wall, so the
   // overlay lifts them); the stair cells below the lip drop to level 0 so stepping
-  // DOWN the stair lowers you; rows 9+ = ground (level 0).
+  // DOWN the stair lowers you; rows 10+ = ground (level 0).
   const level = grid.map((rowStr, y) =>
     rowStr
       .split('')
       .map((ch) => {
         if (y <= 6) return '1';
-        if (y <= 8) return ch === 'T' ? '0' : '1';
+        if (y <= 9) return ch === 'T' ? '0' : '1';
         return '0';
       })
       .join(''),

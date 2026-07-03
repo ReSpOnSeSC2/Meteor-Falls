@@ -49,8 +49,8 @@ const FLAT_JOIN: LevelJoin = () => true;
  * which the runtime always allows). The two agree on every map that obeys the
  * no-invisible-ledge law (a stair's non-descent sides are same-level or walled by
  * 'K'); they diverge ONLY where a 'T' abuts a bare different-level non-'T' cell — a
- * law violation the per-map guard test is there to catch (a global content-validate
- * elevation law is P4/P5 hardening; see docs/WORLD_OVERHAUL_HANDOFF.md).
+ * law violation the per-map guard test AND the global `elevationLawViolations` gate
+ * below both catch (the gate machine-checks it across every opt-in map at validate).
  */
 export function levelJoinFor(m: Pick<MapDef, 'grid' | 'elevation'>): LevelJoin {
   const plane = m.elevation?.level;
@@ -62,6 +62,71 @@ export function levelJoinFor(m: Pick<MapDef, 'grid' | 'elevation'>): LevelJoin {
   const isStair = (x: number, y: number): boolean => m.grid[y]?.[x] === 'T';
   return (ax, ay, bx, by) =>
     levelAt(ax, ay) === levelAt(bx, by) || isStair(ax, ay) || isStair(bx, by);
+}
+
+/**
+ * WORLD-OVERHAUL P3 hardening — the GLOBAL elevation law, machine-checked across
+ * EVERY opt-in map at validate (not only the per-map `maps_*.test.ts` guards). Two
+ * invariants from docs/WILDERNESS_DESIGN_LANGUAGE.md § Elevation, plus a structural
+ * dims guard:
+ *
+ *   (1) NO INVISIBLE LEDGE — two 4-adjacent WALKABLE cells at different terrace
+ *       levels MUST have a 'T' stair at one endpoint. Otherwise the ground LOOKS
+ *       continuous (both walkable, no visible 'K' cliff face between them) yet the
+ *       runtime cross-level rule (`collidesStatic`, P3) silently blocks the step —
+ *       a wall the player cannot see. The only legal cross-level neighbours are the
+ *       stair, or a solid 'K' face (which fails the walkable test, so the block is
+ *       VISIBLE). This is the undirected sibling of that runtime rule (see
+ *       `levelJoinFor` above): the gate is where an authoring slip becomes a red X.
+ *   (2) NO >1-LEVEL JUMP — a straddling walkable pair differs by exactly one terrace,
+ *       so a step never teleports two levels (mirrors elev_spike's monotonic-descent
+ *       guard, review F3).
+ *   (S) DIMS — the level plane must cover the grid exactly. ElevationSchema only
+ *       checks non-empty rows, and `levelJoinFor`/`buildLevelGrid` read a missing
+ *       cell as ground 0, so a short plane row would silently erase a terrace.
+ *
+ * PURE + FLAT-SAFE: a map with no `elevation` plane returns [] with no allocation,
+ * so content-validate stays byte-identical on every flat map (the opt-in default-
+ * flat contract). `isSolid` is the SAME tile-solidity content-validate feeds the
+ * reachability gate, so "walkable" here means exactly what the player can stand on.
+ * Returns human-readable violation strings; [] ⇒ the map obeys the law.
+ */
+export function elevationLawViolations(m: Pick<MapDef, 'grid' | 'elevation'>, isSolid: IsSolid): string[] {
+  const plane = m.elevation?.level;
+  if (!plane) return []; // flat map ⇒ no law to check ⇒ byte-identical
+  const grid = m.grid;
+  // whole-plane height mismatch: the per-cell scan below would read off the end as
+  // ground 0 and invent false seams, so report the shape and stop.
+  if (plane.length !== grid.length) return [`elevation plane is ${plane.length} rows but the grid is ${grid.length}`];
+  const levelAt = (x: number, y: number): number => {
+    const ch = plane[y]?.[x];
+    return ch && ch >= '1' && ch <= '9' ? ch.charCodeAt(0) - 48 : 0;
+  };
+  const out: string[] = [];
+  for (let y = 0; y < grid.length; y++) {
+    if (plane[y].length !== grid[y].length) {
+      // a short row would read its tail as ground 0 — flag it and skip its scan
+      out.push(`elevation plane row ${y} is ${plane[y].length} cols but the grid row is ${grid[y].length}`);
+      continue;
+    }
+    for (let x = 0; x < grid[y].length; x++) {
+      if (isSolid(grid[y][x])) continue; // the visible 'K' face may wall two levels
+      for (const [dx, dy] of [[1, 0], [0, 1]] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (ny >= grid.length || nx >= grid[ny].length) continue;
+        if (isSolid(grid[ny][nx])) continue;
+        const a = levelAt(x, y);
+        const b = levelAt(nx, ny);
+        if (a === b) continue;
+        if (grid[y][x] !== 'T' && grid[ny][nx] !== 'T')
+          out.push(`invisible ledge: walkable (${x},${y})=lvl${a} abuts (${nx},${ny})=lvl${b} with no stair`);
+        else if (Math.abs(a - b) !== 1)
+          out.push(`>1-level jump: (${x},${y})=lvl${a} → (${nx},${ny})=lvl${b} across a stair`);
+      }
+    }
+  }
+  return out;
 }
 
 export interface Components {

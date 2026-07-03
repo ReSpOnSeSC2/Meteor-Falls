@@ -141,7 +141,7 @@ import { BATTLE_FILL_TOKENS, BATTLE_TEXT, DIALOGUE } from '../src/data/dialogue'
 import { NEW_GAME_ENTRIES, gridCharset } from '../src/data/newgame';
 import { TEXT_VARS } from '../src/ui/text';
 import { tileIndexByName, TILESET } from '../src/spritegen/tiles';
-import { doorAudit, mapQualityFlags, levelJoinFor } from '../src/levelkit/mapcheck';
+import { doorAudit, mapQualityFlags, levelJoinFor, elevationLawViolations } from '../src/levelkit/mapcheck';
 import { pressureReport, pressureHardFlags } from '../src/levelkit/pressure';
 // S15g 3b — THE SPRITE FORGE: the part catalog, the composer, the recorded picks
 import { composeEnemy, CATALOG, ROLE_POOLS, CHAPTER_REGION } from '../src/spritegen/parts';
@@ -3086,6 +3086,27 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
   // the table is VISIBLE in every run (silent grandfathering is drift)
   console.log(`  map-quality (S15g): ${clean}/${Object.keys(MAPS).length} canon maps clear reachability + door-landing; ${Object.keys(REACH_WAIVERS).length} waived —`);
   for (const [id, why] of Object.entries(REACH_WAIVERS)) console.log(`    ⚠ ${id}: ${why}`);
+}
+
+/* ===== 3a″. THE GLOBAL ELEVATION LAW (World-Overhaul P3 hardening) =====
+ * Machine-checks the no-invisible-ledge + no->1-level-jump invariants across
+ * EVERY map that opts into an elevation plane, so the law holds for all elevated
+ * maps (foggybottom and beyond), not only the ones with a bespoke maps_*.test.ts.
+ * SILENT BY DESIGN: `elevationLawViolations` returns [] for a flat map (no plane),
+ * and elev_spike — the sole shipped elevated map — obeys the law, so this block
+ * emits NO stdout when clean, keeping content-validate byte-identical on every flat
+ * map (the opt-in default-flat contract). Its correctness is pinned on synthetic
+ * grids in src/levelkit/levelkit.test.ts; there are no waivers — a violation is a
+ * hard fail, full stop (an invisible ledge is never "by design"). */
+{
+  const solidByName = new Map(TILESET.map((t) => [t.name, t.solid]));
+  const isSolidChar = (ch: string): boolean =>
+    ch === ':' || ch === 'r' ? false : solidByName.get(CHAR_LEGEND[ch] ?? 'grass_a') === true;
+  for (const m of Object.values(MAPS)) {
+    for (const v of elevationLawViolations(m, isSolidChar)) {
+      fail('elevation', `${m.id}: ${v} (docs/WILDERNESS_DESIGN_LANGUAGE.md § Elevation)`);
+    }
+  }
 }
 
 /* ====== 3a‴. DOOR-LANDING AUDIT — wrong-edge / stuck transitions (ADR-102) ======

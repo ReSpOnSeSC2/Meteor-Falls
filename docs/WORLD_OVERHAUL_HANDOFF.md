@@ -143,12 +143,37 @@ before the next:
   case (unchanged since P2's verified walk-behind), so the P3 rule adds nothing new to SEE there —
   it is a general backstop for future partial-wall terraces, proven by the tests + the byte-identical
   diff + the frame math.
-- **P4 — Cliff art kit (see art ledger).** Author the LAYERED cliff set (overhang band +
-  `cliff_face_top/mid/base` + `stair_top/mid/base` + corners/caps). Different from the
-  in-plane fake. **Gate: visual review.**
+- **P4 — Cliff art kit (multi-band FACE done; corners/stairs deferred).** ✅ CORE DONE (S4,
+  2026-07-03). The LAYERED CLIFF KIT's face bands are authored + wired: `cliff_top` (grassy
+  overhang baked into the top pixels), `cliff_mid_a`/`cliff_mid_b` (rock strata, hashed per
+  cell for organic variety), `cliff_base` (scree + ground shadow). Authored via ChatGPT
+  (`assets/art/masters/world/cliff-kit-source.png`, 2×2 magenta strip, **user-approved**),
+  installed by `tools/apply-cliff-kit.ts` (hedge-kit clone; `.pre-cliff.bak.png` first; strip
+  grown to `TILESET.length*64`; cols 167–170; `CLIFF_KIT_BASE` + 4 `solid` tiles in
+  `tiles.ts`). `buildElevationOverlay` (`OverworldScene.ts`) now selects a band per K-cell by a
+  **vertical K-run scan** (top row = overhang, base row = scree, else mid_a/b) — each emitted at
+  its OWN base-y `(y+1)·TILE_PX`, so banding is a pure TEXTURE choice, **orthogonal to depth**
+  (no level·BIAS, no per-band delta ⇒ the P2 walk-behind is preserved by construction). The
+  `tileData` field (the old single-K re-emit's only reader) was removed. Overlay-only +
+  `maxLevel>0`-guarded ⇒ **flat maps byte-identical** (proven: door-audit + validate diffed EMPTY
+  vs the S4 baseline). Design was adversarially reviewed by 2 sonnet critics (the intended Fable 5
+  design agent hit usage limits; findings implemented faithfully — depth-orthogonality, baked
+  overhang, no-lip-emission, K-run banding). Gates: tsc 0 · full vitest 1339/1339 (elev_spike
+  guard +1 P4 band test) · render-map elev · build 0.
+  - **DEFERRED (documented, honest):** corners/caps + `stair_top/mid/base`. Corners need 2D
+    shape detection (false-positives at the stair gap, `{top,mid,base}×{left,right}` cap table);
+    stair bands are a DIFFERENT code path (base-tilemap, not an overlay occluder — "stairs are
+    never occluded"). Neither blocks the face payoff; both are a fast-follow (a second small strip
+    + a `buildTiles` T-run branch). Do them when a shipped map's cliffs actually END mid-map or
+    show prominent stairs (foggybottom may want caps).
+  - **NOT LIVE-VERIFIED YET:** the running multi-band walk-behind. Blast radius is ZERO for
+    shipped content (flat maps byte-identical; `elev_spike` is dev-warp-only), so it shipped on
+    the gates. Live-verify on `window.mfWarp('elev_spike')` (3-row face now exercises top/mid/base)
+    with the P2 loader-pump recipe is the first S5 checklist item.
 - **P5 — foggybottom terrace-aware.** First real content map to opt in (its own guard test +
-  allowlist entry). Comes after the flat foggybottom rebuild OR is authored terrace-aware in
-  one pass — decide at S-foggybottom time.
+  allowlist entry). Now that the global elevation law (below) machine-checks seams and the P4 face
+  kit renders, foggybottom can be authored terrace-aware in one pass. This is the pilot for the
+  S5 "every map reimagined from scratch" bar (see NEXT SESSION).
 
 Effort: ~2–2.5 focused weeks to a terraced foggybottom; **P0–P3 (~1 week) is the de-risking
 milestone.** Risk concentrates in the depth/occlusion band, the hot-path collision change,
@@ -201,6 +226,26 @@ quote coords verbatim + fixed points) → Step 2 blueprint (main model; district
 fixed-point table/palette plan) → Step 2.5 palette (ChatGPT batch, user approves) → Step 3
 implement (ONE sonnet agent/map; read the binding doc first) → Step 4 gate + render/boot
 review → Step 5 close (full suite + build, update THIS doc, leave unstaged).
+
+## CURRENT STATUS (Session 4, 2026-07-03)
+
+**LANDED S4 (all gates green, pushed to main):**
+- **C — the GLOBAL elevation law.** `elevationLawViolations(m, isSolid)` (`src/levelkit/mapcheck.ts`,
+  exported via `index.ts`) machine-checks no-invisible-ledge + no->1-level-jump + plane-dims across
+  EVERY opt-in map; wired as a SILENT fail-only gate in `content-validate.ts` (returns `[]` on flat
+  maps ⇒ byte-identical stdout). 7 synthetic vitest pins + an elev_spike-passes-law assertion; bite-
+  proven end-to-end (clean on real elev_spike; 21 violations on a dissolved-face ledge; catches a
+  malformed plane). foggybottom's seams are now auto-checked, not just guard-checked.
+- **A — the P4 LAYERED CLIFF KIT (face bands).** See the P4 phase entry above. Authored + wired +
+  gated; corners/stairs deferred (documented); live-verify pending (dev-only, zero shipped-map blast
+  radius). elev_spike rebuilt to a 3-row face to exercise top/mid/base.
+- Gates for the S4 commit: tsc 0 · full vitest 1339/1339 · door-audit + content-validate BYTE-
+  IDENTICAL to the S4 baseline · render-map elev · build 0. `elev_spike` remains the sole allowlisted
+  elevated map. Files: `src/levelkit/mapcheck.ts`, `src/levelkit/index.ts`, `tools/content-validate.ts`,
+  `src/levelkit/levelkit.test.ts`, `src/data/maps_elev_spike.test.ts`, `src/spritegen/tiles.ts`,
+  `src/scenes/OverworldScene.ts`, `src/data/maps.ts`, `tools/apply-cliff-kit.ts` (new),
+  `assets/art/world/otterbrook_tiles_16.png` (grown strip), `assets/art/masters/world/cliff-kit-source.png`
+  (new master), `output/{maps_elev,cliff_proof}.png`.
 
 ## CURRENT STATUS (Session 3, 2026-07-03)
 
@@ -257,35 +302,135 @@ no-invisible-ledge + no >1-level jump across ALL elevated maps, not just per-map
 hardening); **per-mover terraces** in `collides()` (when the first elevated map carries
 NPCs/roamers/patrols); any map rebuild; `PICKUPS` extraction; back-room generator; KaraokeScene.
 
-## NEXT SESSION (S4) — recommended kickoff
+## NEXT SESSION (S5) — THE ANTI-FORMULA OVERWORLD REBUILD (user directive, 2026-07-03)
 
-Step 0 recon first (`git status`; `gh pr view` for the S3 PR; confirm no sibling edits to
-`OverworldScene.ts`/`tiles.ts`/`maps.ts`/`schemas`/`mapcheck.ts`; re-capture the door-audit +
-content-validate baselines). P0–P3 are DONE, so S4 opens the **Ch3 pilot art + the first real
-terraced map**:
+> Paste the block below into a fresh Claude Code session in `C:\Meteor Falls` (after this whole doc).
+> It is the canonical S5 kickoff. The engine is DONE through P4; S5 is where the WORLD gets rebuilt to
+> the bar. The user's exact words: *"every aspect of every map needs to be extremely creative and
+> polished and thoroughly thought out the same way EarthBound was. It needs to be interesting and fun
+> to walk around each map area and always feel fresh and new and completely novel when moving from one
+> area to the next. Not mechanical or formulaic — polished and thoroughly planned and thought out with
+> a distinct feel every step of the way."*
 
-1. **Elevation P4 — the layered cliff art kit (Track A).** Author (ChatGPT → PNG, user approves)
-   the LAYERED cliff set: overhang band, `cliff_face_top/mid/base`, `stair_top/mid/base`, plus
-   corners/caps — DIFFERENT from the in-plane placeholder `K`/`^`/`T` kit `elev_spike` uses. The
-   slice layout must match `buildElevationOverlay` (`OverworldScene.ts:1123`), which today re-emits
-   the single `K` face tile at its own base-y; P4 re-emits a multi-band face. Decide the per-band
-   overlay depth as you author. **Gate: visual review + `elev_spike` re-render; flat maps still
-   byte-identical.**
-2. **Elevation P5 — foggybottom terrace-aware.** The first SHIPPED map to opt in. Either rebuild
-   flat-first then add the `elevation` plane, or author terrace-aware in one pass. Needs its own
-   `maps_foggybottom.test.ts` guard (mirror `maps_elev_spike.test.ts`: two-terrace, sole-stair-join,
-   no-invisible-ledge, monotonic descent, the P3 collision-predicate mirror) + an `ELEVATED_ALLOWLIST`
-   entry in `elevation.test.ts` in the SAME change. Consider landing the global elevation law (above)
-   first so foggybottom's seams are machine-checked, not just guard-checked.
-3. **Track B — remaining flat terrain strips** (road-junction, path→grass, foliage-fade). Same recipe
-   as the S2 hedge/bramble: ChatGPT author on magenta → SHOW the render for approval → clone
-   `apply-hedge-kit.ts` → `<NAME>_BASE` + 16 tiles + a FREE grid char (taken: `H`,`V`) + `CHAR_LEGEND`
-   entry + `buildTiles` mask branch → maze proof. None block P4/P5. NOTE: needs the interactive
-   ChatGPT author+approve loop, so it fits an interactive session.
-   - **ChatGPT harvest recipe** (works): the generated `<img>` src is a same-origin signed
-     `estuary/content` URL — fetch it IN-PAGE (`await fetch(img.src)` where `img.naturalWidth` is
-     large), `URL.createObjectURL` → `<a download>` → move from Downloads. A plain `?id=...` fetch
-     404s (needs the signed `p`/`ts`). Do NOT return the URL from the JS tool (it blocks query-string data).
+### THE PRIME LAW OF S5 — NO FORMULA (read this first, it overrides convenience)
 
-The dev-preview boot workaround (loader unstick + loop pump) is documented under P2 above — reuse it
-for any live elevation preview (especially once P4/P5 give something new to SEE) from the automation browser.
+The single biggest failure mode of AI-built maps is FORMULA: every area silently converges on the same
+skeleton (forest belt → winding corridor → clearing with an anchor → nature pass) and the world starts
+to feel like one map re-tinted. **That is the thing we are actively destroying.** Every map area must:
+
+- **Have a SIGNATURE** — one central spatial idea / gimmick / mood that NO other area in the game uses.
+  (Examples, do not reuse verbatim — invent per map: a boardwalk zig-zagging over a sphagnum bog; a
+  terraced orchard you descend switchback by switchback; a birch maze where sightlines are blocked by
+  white trunks not hedges; a dry creekbed you walk IN, below the banks; a meadow bisected by a single
+  impossibly-long fallen log you balance across; a fog hollow navigated shrine-to-shrine by lantern
+  light; a hillside of grazing terraces with a runaway cart hazard; a flooded path where stepping
+  stones are the only floor.) The signature is chosen FIRST, before any tile is placed.
+- **Feel DISTINCT EVERY STEP** — not just distinct from the next map, but internally varied: no two
+  screens of the same map should read as "more of the same corridor." Each region within a map gets a
+  micro-identity (a change in palette, elevation, prop vocabulary, sightline, or rhythm).
+- **Reward WALKING** — branches, dead-ends with a payoff, scenic pockets, secrets, framed vistas,
+  set-pieces, surprising transitions. Walking through is the game; make it fun, not a commute.
+- **Earn its transitions** — moving from one area to the next should feel like arriving somewhere NEW
+  (a reveal, a biome flip, a change of scale/light/sound), never like scrolling the same field.
+
+Enforce this with a **DIVERSITY LEDGER** (a running list, kept in this doc or a sibling `.md`): every
+signature, gimmick, mood, set-piece, layout trick, palette, and prop-combo you use gets logged, and a
+**diversity critic** (an agent) checks each new map against the ledger and REJECTS repeats. Novelty is a
+gate, not an aspiration.
+
+### PROCESS — dismantle & rebuild each map FROM SCRATCH (concept-first)
+
+We are rebuilding the overworld from the ground up AGAIN, map by map, to this bar. For EACH map:
+
+1. **CONCEPT (Fable 5 agent — this is the creative core).** Before touching the builder, a Fable 5
+   agent invents the map's SIGNATURE + a beat-by-beat walk-through (what you see/feel at each step,
+   the branches, the secret, the vista, the transition in and out), checked against the DIVERSITY
+   LEDGER. Output: a short, vivid design brief + a fixed-point table (external warps, test-pinned
+   coords, cutscene grounds that must survive the rebuild). *If Fable 5 is out of usage credits
+   (it was in S4 — see the note), fall back to Opus main-loop or Sonnet for the concept; do NOT
+   block. Log the fallback.*
+2. **BLUEPRINT (Fable 5 or main-loop).** Turn the concept into a spatial plan: districts/regions with
+   their micro-identities, the spine + branches, elevation plane (use the P4 cliff kit + terraces as a
+   creativity tool now that they render), the palette-growth needs (any NEW authored tile/prop the
+   signature requires — author via ChatGPT, user approves, BEFORE the implementer runs).
+3. **PALETTE (ChatGPT, user approves).** Author any new terrain strips / props the signature needs
+   (magenta → PNG → clone `apply-hedge-kit.ts`/`apply-cliff-kit.ts` → TILESET tail → `buildTiles`
+   branch → proof). SHOW the render for approval before wiring. (Recipes below.)
+4. **IMPLEMENT (one Sonnet agent per map).** Rebuild the builder in-place per the binding docs: belts
+   first (solid), THEN winding connectors, THEN clearings/anchors/branches/pockets/secrets/set-pieces,
+   THEN the elevation plane, THEN the seeded nature/wear pass, THEN the tree-guard filter LAST.
+   Recompute paired door landings on BOTH sides together; re-author any pinned rect the new layout moved.
+5. **GATE + REVIEW.** Per-change gate order (below). Then an ADVERSARIAL diversity+quality review
+   (agent panel): does it clear the Prime Law (signature present, distinct-every-step, fun to walk,
+   earned transitions)? Does it repeat anything in the ledger? Live-verify the walk (loader-pump
+   recipe). Fix, re-review, then log the map's signature into the ledger.
+
+### THE FIRST S5 TARGETS (in order)
+
+0. **Recon** (`git fetch`; `git status`; confirm this branch is on latest main; re-capture the door-
+   audit + content-validate baselines; mtimes on the hot files). The S4 work (C + P4 face kit) is on
+   main.
+1. **P4 close-out (small, do first):** LIVE-VERIFY the multi-band walk-behind on
+   `window.mfWarp('elev_spike')` (the 3-row face now shows top/mid/base) with the P2 loader-pump
+   recipe. If the depth/selection reads correctly, P4 face is fully done. THEN (optional, if a target
+   map needs it) author the deferred **corners/caps + `stair_top/mid/base`** as a second small strip.
+2. **P5 — foggybottom, the PILOT reimagined map.** The first map rebuilt to the full S5 bar AND the
+   first shipped elevated map. Give it a real SIGNATURE (it's "foggybottom" — lean into fog + a sunken
+   terraced hollow; navigate by landmarks; the P4 cliffs make the terraces real). Author terrace-aware
+   in one pass. Add `maps_foggybottom.test.ts` (mirror `maps_elev_spike.test.ts`: two-terrace, sole-
+   stair-join, no-invisible-ledge, monotonic descent, P3 collision mirror, + it passes
+   `elevationLawViolations`) + an `ELEVATED_ALLOWLIST` entry in `elevation.test.ts` in the SAME change.
+   HEADS-UP: foggybottom has a generator hash-pin (`levelkit.test.ts` HASH_PINS `foggybottom`) — if the
+   rebuild changes its generator output, re-pin. door-audit/validate will now DIFFER for foggybottom
+   ONLY (the deliberate opt-in); every OTHER map stays byte-identical.
+3. **Then chapter-by-chapter (Ch3 pilot first),** each map through the concept-first process above,
+   each logged in the diversity ledger, until the whole Ch3+ overworld is rebuilt to the bar. Weave in
+   the Track B flat strips (road-junction, path→grass, foliage-fade) as maps need them.
+
+### GUARDRAILS (unchanged, immovable — re-check every slice)
+
+- **NO FORMULA** (the Prime Law above) is now a GATE: the diversity critic must pass.
+- Elevation stays OPT-IN / default-flat: every FLAT map byte-identical (door-audit + validate stdout
+  diff empty — EXCEPT the map you deliberately elevate). The global `elevationLawViolations` gate now
+  machine-checks every elevated map's seams.
+- Art is AUTHORED (ChatGPT → PNG), never procedural. `src/spritegen/` FROZEN. New tiles APPEND at the
+  TILESET tail via a grow-and-write installer (`findIndex`, `.bak` first, never re-pack).
+- Balance is CANON: boss HP < money target; TTK 4–10. Terraced dungeons with bespoke enemies/rewards
+  go ON the curve, update the canon pin, `npm run balance`.
+- Determinism: seeded RNG only, no `Math.random`/`Date` in shipped paths.
+- Gate order per change: `npx tsc --noEmit` → `npx tsx tools/door-audit.ts` → `npm run validate` →
+  targeted vitest → `npx tsx tools/render-map.ts <set>` → `npm run balance` (only if combat changed).
+  Full `npx vitest run` + `npm run build` once at close.
+- Git: user drives commits normally, BUT when they say "push to main" (as in S4), commit the gated-
+  green work (leave `.pre-*.bak.png` UNTRACKED) and `git push origin HEAD:main`.
+
+### AGENT USAGE (per user directive + [[agent-cost-discipline]])
+
+- **Fable 5 for the CREATIVE / complex-judgment work**: the per-map CONCEPT + signature, the blueprint,
+  the diversity-critic + adversarial-review synthesis. **REALITY CHECK: Fable 5 ran OUT OF USAGE CREDITS
+  mid-S4** — if a Fable 5 agent errors with "out of usage credits," fall back to Opus main-loop (highest
+  judgment available) or Sonnet, and keep moving. Do NOT stall the session waiting on Fable.
+- haiku/sonnet for mechanical work (extract, tile installers, test scaffolding, one implementer/map).
+- main-loop for small localized edits.
+
+### RECIPES & GOTCHAS (reuse — they save hours)
+
+- **ChatGPT harvest** (works): the generated `<img>` src is a same-origin signed `estuary/content`
+  URL — fetch it IN-PAGE (`await fetch(img.src)` where `img.naturalWidth` is large) → `blob` →
+  `URL.createObjectURL` → `<a download>` → move from `~/Downloads`. Do NOT return the URL (or any
+  query-string data) from the JS tool — it blocks. The ChatGPT SEND button: set the composer via
+  `#prompt-textarea` (`execCommand('insertText')`), then click `button[data-testid="send-button"]`
+  via `.click()` (a pixel-click on the arrow can miss). The automation tab is `visibilityState:hidden`
+  ⇒ throttled: screenshots hit the 30s CDP ceiling during image paint; detect completion via JS
+  (`img.naturalWidth>400`) instead, and be patient (gen ~60–90s).
+- **Installer**: a 2×2 (or NxM) magenta strip slices with the hedge `spans()` (`>60px` is the min
+  CELL width, NOT gutter width — a ~22px gutter between ~570px cells is fine). Opaque tiles (cliff)
+  force alpha 255 + exclude magenta from the colour average + a small INSET to skip gutter bleed;
+  autotile masks composite a rim (hedge/bramble).
+- **Dev-preview boot** (P2, for live-verify): the automation tab is background-throttled → Phaser's
+  1303-asset loader stalls; force-pump `boot.load.checkLoadQueue()` on a `setInterval`, then
+  `game.loop.step(t+=16)` to run boot→title, `GS.reset()`, `game.scene.start('overworld',{mapId,x,y})`,
+  pump again, screenshot. A FOREGROUND user tab boots normally.
+
+*(Superseded S4 kickoff removed; its work — P4 face + the global elevation law — landed. The dev-preview
+boot workaround + the P2/P3 phase entries above remain the reference for any live elevation preview.)*

@@ -657,7 +657,6 @@ export class OverworldScene extends Phaser.Scene {
   /** the computed tile-index grid (parallel to solidTiles/levelGrid), retained so
    *  the elevation overlay can re-emit a terrace's face tiles as depth-sorted
    *  images. Rebuilt every buildTiles; empty until then. */
-  private tileData: number[][] = [];
   /** the terrace the PLAYER stands on (0 = ground). Non-zero only on an elevated
    *  map; changes solely when the player steps onto a stairs ('T') tile. */
   private playerLevel = 0;
@@ -1038,7 +1037,6 @@ export class OverworldScene extends Phaser.Scene {
       data.push(row);
       this.solidTiles.push(srow);
     }
-    this.tileData = data;
     this.buildLevelGrid(h, w);
     // the 'tiles' texture is upscaled to TILE_PX-sized tiles at the boot seam,
     // so the map's tile size is TILE_PX (16 at ×1) — all tile↔px math uses it.
@@ -1111,33 +1109,50 @@ export class OverworldScene extends Phaser.Scene {
     return this.maxLevel > 0 ? this.levelAtPx(px, py) * this.levelDepthBias : 0;
   }
 
-  /** WORLD-OVERHAUL P2 (opt-in elevation): the WALK-BEHIND band. For a terraced
-   *  map, re-emit each upper terrace's SOLID FRONT WALL ('K' cliff_face) as depth-
-   *  sorted images LIFTED by level·BIAS, so a player on a LOWER level who walks up
-   *  to the cliff passes BEHIND its face (Onett/Zelda), while a player who climbs
-   *  the stair (playerLevel rises) emerges on top. The base tilemap already drew
-   *  these cells flat at depth 0; this overlay is the occluder on top. Only the
-   *  SOLID face is re-emitted — the walkable '^' lip must NOT be (review F2: a lip
+  /** WORLD-OVERHAUL P2/P4 (opt-in elevation): the WALK-BEHIND band. For a terraced
+   *  map, re-emit each upper terrace's SOLID FRONT WALL ('K' cliff cells) as depth-
+   *  sorted occluder images at each cell's OWN base-y, so a player on a LOWER level who
+   *  walks up to the cliff passes BEHIND its face (Onett/Zelda), while a player who
+   *  climbs the stair (playerLevel rises) emerges on top. The base tilemap already drew
+   *  these cells flat at depth 0; this overlay is the occluder on top. P4 upgrades the
+   *  single flat 'cliff_face' re-emit to the LAYERED CLIFF KIT — a per-K-run band
+   *  (cliff_top / cliff_mid_a·b / cliff_base) so a tall face reads as layered rock. Only
+   *  the SOLID face is re-emitted — the walkable '^' lip must NOT be (review F2: a lip
    *  overlay would occlude a same-level player standing on it). No-op on flat maps
-   *  (maxLevel 0) — never emits. */
+   *  (maxLevel 0) — never emits, so every flat map is byte-identical. */
   private buildElevationOverlay(): void {
     if (this.maxLevel <= 0) return;
     const grid = this.mapDef.grid;
+    // P4 LAYERED CLIFF KIT — pick the band tile by the cell's position in its vertical
+    // K-run: the run's TOP row (nothing solid-cliff above) is the grassy overhang
+    // (cliff_top), its BASE row (nothing K below) meets the ground (cliff_base), and every
+    // row between is rock strata (cliff_mid_a/b, hashed per cell for organic, non-repeating
+    // variety). Falls back to the flat 'cliff_face' look if the kit isn't installed (boot
+    // fallback make()). The band is a TEXTURE choice only — see the depth note below.
+    const iTop = tileIndexByName('cliff_top');
+    const iMidA = tileIndexByName('cliff_mid_a');
+    const iMidB = tileIndexByName('cliff_mid_b');
+    const iBase = tileIndexByName('cliff_base');
     for (let y = 0; y < this.levelGrid.length; y++) {
       const row = this.levelGrid[y];
       for (let x = 0; x < row.length; x++) {
-        const lvl = row[x];
-        if (lvl <= 0) continue;
-        const ch = grid[y]?.[x];
-        if (ch !== 'K') continue; // only the SOLID cliff face is re-emitted as a y-sorted image
-        // Depth = the face's own BASE-Y (NOT level·BIAS). This lifts the face out of the flat
-        // depth-0 tilemap so it y-sorts with the world: a LOWER-ground character standing at
-        // the base (feet south of the face, so a higher base-y) sorts IN FRONT and stays fully
-        // visible — the correct "stand in front of the cliff wall" read (Onett). The earlier
-        // level·BIAS drew the face over the character, swallowing their torso ("blending into
-        // the cliff" — user report 2026-07-03). Player/movers keep their own level lift.
+        if (row[x] <= 0) continue;
+        if (grid[y]?.[x] !== 'K') continue; // only the SOLID cliff face is re-emitted (never the '^' lip — review F2)
+        const topOfRun = grid[y - 1]?.[x] !== 'K'; // nothing solid-cliff above ⇒ grassy overhang band
+        const baseOfRun = grid[y + 1]?.[x] !== 'K'; // nothing cliff below ⇒ meets the ground (scree band)
+        // deterministic per-cell mid variety (no Math.random; int32-coerced hash)
+        const midVary = (((x * 73856093) ^ (y * 19349663)) & 1) === 1;
+        const frame = topOfRun ? iTop : baseOfRun ? iBase : midVary ? iMidB : iMidA;
+        // DEPTH is the cell's OWN base-y (NOT level·BIAS), unchanged from P2: a LOWER-ground
+        // character standing at the base (feet south of the face, so a higher base-y) sorts
+        // IN FRONT and stays fully visible — the "stand in front of the cliff wall" read
+        // (Onett). level·BIAS here drew the face over the character, swallowing their torso
+        // ("blending into the cliff" — user report 2026-07-03). Banding is a pure texture
+        // choice, ORTHOGONAL to depth: each row emits at its own (y+1)·TILE_PX, so a 3-row
+        // face y-sorts as three stacked occluders with no manual delta. Player/movers keep
+        // their own level lift.
         this.add
-          .image(x * TILE_PX, y * TILE_PX, 'tiles', this.tileData[y][x])
+          .image(x * TILE_PX, y * TILE_PX, 'tiles', frame)
           .setOrigin(0, 0)
           .setDepth((y + 1) * TILE_PX);
       }

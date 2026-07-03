@@ -1005,6 +1005,22 @@ for (let hm = 0; hm < 16; hm++) TILESET.push({ name: `hedge_${hm}`, solid: true,
 export const BRAMBLE_BASE = TILESET.length;
 for (let bm = 0; bm < 16; bm++) TILESET.push({ name: `bramble_${bm}`, solid: true, make: bush });
 
+// WORLD-OVERHAUL (Ch3+) — the P4 LAYERED CLIFF KIT (true-elevation walk-behind, docs/
+// WILDERNESS_DESIGN_LANGUAGE.md § Elevation). Four 64px BANDS of one continuous stone
+// cliff face; OverworldScene.buildElevationOverlay picks one per K-cell by its position
+// in the vertical K-run — cliff_top (grassy overhang, under the lip) / cliff_mid_a|b
+// (rock strata, hashed for organic variety) / cliff_base (scree + ground shadow). These
+// are OVERLAY-ONLY: drawn atop the base 'cliff_face' occluder ONLY when a map opts into
+// elevation (maxLevel>0), so there is NO grid char and NO CHAR_LEGEND entry and every
+// flat map stays byte-identical. Authored via ChatGPT (assets/art/masters/world/
+// cliff-kit-source.png), installed by tools/apply-cliff-kit.ts (make() = boot FALLBACK
+// only — reuses pyramidWall like cliff_face; spritegen stays FROZEN).
+export const CLIFF_KIT_BASE = TILESET.length;
+TILESET.push({ name: 'cliff_top', solid: true, make: pyramidWall }); // top band: grassy overhang + rock
+TILESET.push({ name: 'cliff_mid_a', solid: true, make: pyramidWall }); // mid band variant A: rock strata
+TILESET.push({ name: 'cliff_base', solid: true, make: pyramidWall }); // base band: rock + scree + ground shadow
+TILESET.push({ name: 'cliff_mid_b', solid: true, make: pyramidWall }); // mid band variant B: rock strata
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

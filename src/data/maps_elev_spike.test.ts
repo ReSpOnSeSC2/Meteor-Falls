@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { MAPS } from './maps';
-import { pathExists, components, levelJoinFor } from '../levelkit/mapcheck';
+import { pathExists, components, levelJoinFor, elevationLawViolations } from '../levelkit/mapcheck';
 
 const m = MAPS.elev_spike;
 const grid: string[] = m?.grid ?? [];
@@ -72,6 +72,13 @@ describe('elev_spike — the elevation engine spike guard (P2)', () => {
         }
       }
     }
+  });
+
+  it('passes the GLOBAL elevation law (the content-validate gate finds nothing on the real map)', () => {
+    // the machine-gate content-validate now runs over EVERY opt-in map. elev_spike's
+    // real tile solidity agrees with this map-local `isSolid` (K=cliff_face solid;
+    // T=stairs, ^=cliff_lip both walkable), so this mirrors what the shipped gate sees.
+    expect(elevationLawViolations(m!, isSolid)).toEqual([]);
   });
 
   it('the stair descends monotonically and lands the player back on the ground (level 0)', () => {
@@ -152,5 +159,26 @@ describe('elev_spike — the elevation engine spike guard (P2)', () => {
       levelAt(ax, ay) === levelAt(bx, by);
     const orphaned = components(grid, isSolid, sameLevelOnly);
     expect(orphaned.comp[2][11]).not.toBe(orphaned.mainId); // a real two-level seam exists here
+  });
+
+  it('P4 layered kit: the 3-row face exercises all three bands — top, MID, and base', () => {
+    // Mirror OverworldScene.buildElevationOverlay's per-K-run band classifier: a K cell
+    // is TOP when nothing solid-cliff is above, BASE when nothing K is below, else MID.
+    // The 3-row face (rows 7-9) MUST produce at least one of each so the P4 overlay draws
+    // cliff_top + cliff_mid_a/b + cliff_base — a 2-row face never yields a MID (review F8).
+    let top = 0, mid = 0, base = 0;
+    for (let y = 0; y < grid.length; y++) {
+      for (let x = 0; x < grid[y].length; x++) {
+        if (grid[y][x] !== 'K') continue;
+        const above = grid[y - 1]?.[x] === 'K';
+        const below = grid[y + 1]?.[x] === 'K';
+        if (!above) top++;
+        else if (!below) base++;
+        else mid++;
+      }
+    }
+    expect(top, 'no cliff_top band').toBeGreaterThan(0);
+    expect(mid, 'no cliff_mid band — the face is <3 rows').toBeGreaterThan(0);
+    expect(base, 'no cliff_base band').toBeGreaterThan(0);
   });
 });

@@ -16,7 +16,7 @@ import { MapDefSchema, DraftMapDefSchema } from '../schemas';
 import type { CityRecipe, MapDef } from '../schemas';
 import { SAMPLE_RECIPES } from './samples';
 import { generate, buildCity, cityViolations } from './index';
-import { components, mapQualityFlags, levelJoinFor } from './mapcheck';
+import { components, mapQualityFlags, levelJoinFor, elevationLawViolations } from './mapcheck';
 import { CHAR_LEGEND } from '../data/maps';
 import { TILESET } from '../spritegen/tiles';
 
@@ -188,6 +188,61 @@ describe('WORLD-OVERHAUL P3 — levelJoinFor gates cross-level reachability (the
     const join = levelJoinFor(flatMap);
     expect(join(0, 0, 0, 1)).toBe(true);
     expect(join(9, 9, 9, 8)).toBe(true); // always joins, position-independent
+  });
+});
+
+describe('WORLD-OVERHAUL P3 hardening — elevationLawViolations (the global no-invisible-ledge law)', () => {
+  const solid = (ch: string): boolean => ch === 'K'; // the cliff face is the only wall
+
+  it('a flat map (no elevation) is byte-identical: zero violations, no allocation path', () => {
+    // the opt-in default-flat contract at the function level — this is why the
+    // content-validate gate emits nothing on the ~201 shipped flat maps.
+    expect(elevationLawViolations({ grid: ['....', '....', '....'] }, solid)).toEqual([]);
+  });
+
+  it('a legal two-terrace map (K wall + a single stair, 1-level steps) passes', () => {
+    // upper terrace (lvl 1) over ground (lvl 0), separated by a solid 'K' wall and
+    // joined ONLY by the centre 'T' stair, which steps down exactly one level.
+    const legal = {
+      grid: ['.T.', 'KTK', '.T.'],
+      elevation: { level: ['111', '010', '000'] },
+    };
+    expect(elevationLawViolations(legal, solid)).toEqual([]);
+  });
+
+  it('a solid K face may wall two levels with NO stair — the block is VISIBLE, so it is legal', () => {
+    // the defining exemption: where a 'K' cliff separates the terraces, no stair is
+    // required (you cannot walk onto K, so there is no invisible ledge to cross).
+    const walled = { grid: ['.', 'K', '.'], elevation: { level: ['1', '1', '0'] } };
+    expect(elevationLawViolations(walled, solid)).toEqual([]);
+  });
+
+  it('a BARE cross-level seam (two walkable levels, no stair, no wall) is an invisible ledge', () => {
+    // the exact bug the law exists to catch: the ground LOOKS continuous but the P3
+    // runtime rule silently walls it. elev_spike alone cannot exercise this (its
+    // stair is a walkable GAP in a K face), so this synthetic grid is the guard.
+    const bare = { grid: ['...', '...'], elevation: { level: ['111', '000'] } };
+    const v = elevationLawViolations(bare, solid);
+    expect(v.length).toBeGreaterThan(0);
+    expect(v.some((s) => s.includes('invisible ledge'))).toBe(true);
+  });
+
+  it('a stair that steps two levels at once is a >1-level jump', () => {
+    // a 1-wide stair column dropping lvl 2 → lvl 0 in a single tile: both cells are
+    // 'T' (so it is NOT an invisible ledge) but the magnitude is illegal.
+    const leap = { grid: ['T', 'T'], elevation: { level: ['2', '0'] } };
+    const v = elevationLawViolations(leap, solid);
+    expect(v.some((s) => s.includes('>1-level jump'))).toBe(true);
+  });
+
+  it('a malformed plane (short by a row / short by a column) is reported, never silently read as ground', () => {
+    // ElevationSchema only checks non-empty rows; levelJoinFor/buildLevelGrid read a
+    // missing cell as ground 0, so a truncated plane would erase a terrace. The law
+    // is the machine-check for that (elevation.test.ts only guards the allowlist).
+    const shortRows = { grid: ['..', '..'], elevation: { level: ['11'] } };
+    expect(elevationLawViolations(shortRows, solid).some((s) => s.includes('rows'))).toBe(true);
+    const shortCols = { grid: ['...', '...'], elevation: { level: ['11', '111'] } };
+    expect(elevationLawViolations(shortCols, solid).some((s) => s.includes('cols'))).toBe(true);
   });
 });
 
