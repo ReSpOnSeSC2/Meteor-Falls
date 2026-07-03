@@ -259,6 +259,11 @@ const CH1_STORY_NIGHT_MAPS: ReadonlySet<string> = new Set([
   'hickory_trail',
   'whisperwood_rise',
   'hickory_hill',
+  // the UNDER-OAK (ADR-121 rework) rides the same clock: pitch-hushed until the
+  // Tick dies, then the post-victory rebuild lets the real light down the roots
+  'oak_roots',
+  'oak_hollow',
+  'oak_heart',
 ]);
 /** PKG-12 §A11 — the GRAND DUCHY OF MINIMUS tile reskin. The engine has ONE global
  *  TILESET (no per-area swap), so buildTiles remaps the shared grid-char tile NAMES to
@@ -292,6 +297,11 @@ const MINIMUS_TILE_SKIN: Readonly<Record<string, string>> = {
  *  Each Norway tile carries the SAME solidity as the base it replaces (water stays solid
  *  like sea_a), so the remap is purely cosmetic — collision/BFS read the unchanged grid.
  *  The Sleeper's Spine dungeon keeps its own interior look. */
+/** the UNDER-OAK (ADR-121 rework): the dungeon's rock reskins to root-tangle */
+const UNDEROAK_SKIN_MAPS: ReadonlySet<string> = new Set(['oak_roots', 'oak_hollow', 'oak_heart']);
+const UNDEROAK_TILE_SKIN: Readonly<Record<string, string>> = {
+  cliff_face: 'root_wall', // the carved 'K' walls → packed earth + woody roots
+};
 const NORWAY_SKIN_MAPS: ReadonlySet<string> = new Set([
   'kvisthavn',
   'bootstep_moor',
@@ -878,6 +888,7 @@ export class OverworldScene extends Phaser.Scene {
     // PKG-12 §A11 — render the Ch.5 maps with the Minimus tile skin (cosmetic remap;
     // collision-preserving — see MINIMUS_TILE_SKIN). Other maps are untouched.
     const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
+    const underoakSkin = UNDEROAK_SKIN_MAPS.has(this.mapDef.id);
     const norwaySkin = NORWAY_SKIN_MAPS.has(this.mapDef.id);
     const zanzibelSkin = ZANZIBEL_SKIN_MAPS.has(this.mapDef.id);
     const savannaSkin = SAVANNA_SKIN_MAPS.has(this.mapDef.id);
@@ -916,6 +927,10 @@ export class OverworldScene extends Phaser.Scene {
             // §A4.11 — the frozen foam-lip crossing reads as a blue-white ice
             // bridge (mirrors the collision carve below; same cells, same flag)
             name = 'melt_ice';
+          } else if (underoakSkin && UNDEROAK_TILE_SKIN[name]) {
+            // ADR-121 rework — the Under-Oak's walls read as root-tangle, not
+            // hillside rock. Same solidity as the cliff base; collision unchanged.
+            name = UNDEROAK_TILE_SKIN[name];
           } else if (minimusSkin && MINIMUS_TILE_SKIN[name]) {
             // PKG-12 §A11 — the Grand Duchy reskin (Ch.5 maps only): the shared grid
             // chars render as privet turf / hedge wall / cobble. The Minimus tile carries
@@ -1488,13 +1503,18 @@ export class OverworldScene extends Phaser.Scene {
   /** the conga line: every party member behind the leader (Prompt 5), down
    *  heroes as floating haloed angels (§A4.7), then any guest at the back */
   private buildFollowers(): void {
-    for (const h of GS.data.party.slice(1)) this.addFollower(h.id, h.down);
+    // §A4.7 + 2026-07-02 user rule: the LIVING walk the conga first, in party
+    // order; the FALLEN drift at the BACK as haloed angels (party order among
+    // themselves) until the hospital brings them home to their slot.
+    const rest = GS.data.party.slice(1);
+    for (const h of rest.filter((h) => !h.down)) this.addFollower(h.id, false);
+    for (const h of rest.filter((h) => h.down)) this.addFollower(h.id, true);
     if (GS.data.guest === 'chad') this.addFollower('chad');
     // ADR-121: between the crater repel and the porch zapper, the dimmed Glint
     // flits home at the back of the party. Re-added on every leg of the walk so
     // his authored star-icon survives the door transitions down the hill; the
     // window closes itself the instant the zapper sets zapper_done.
-    if (GS.flag('sentinel_repelled') && !GS.flag('zapper_done')) this.addFollower('glint', false, true);
+    if (GS.flag('sentinel_repelled') && !GS.flag('zapper_hit')) this.addFollower('glint', false, true);
   }
 
   private rebuildFollowers(): void {
@@ -2366,10 +2386,18 @@ export class OverworldScene extends Phaser.Scene {
     if (outcome === 'victory') {
       p.dead = true;
       p.spr.destroy();
-      // S2: floor-3 victories count toward the PRODUCTIVITY LOCK's quota
+      // S2: floor-3 victories count toward the PRODUCTIVITY LOCK's quota.
+      // The pip ceremony belongs to the dos_f3 trio alone — every other
+      // counted patrol (ADR-119's runaway mower) just sets its flag.
       if (p.def.countFlag && !GS.flag(p.def.countFlag)) {
         GS.setFlag(p.def.countFlag);
-        await this.quotaBeat();
+        if (this.quotaFlags().includes(p.def.countFlag)) {
+          await this.quotaBeat();
+        } else if (p.def.countFlag === 'q_mower_caught') {
+          // ADR-119: on-the-spot confirmation — the TRAIL KEY waits at Hodgkin's counter
+          AUDIO.sfx('confirm');
+          toast(this, 'The runaway mower sputters out! (Hodgkin will want to hear it)');
+        }
       }
     } else if (outcome === 'ran') {
       this.patrolGiveUp(p);
@@ -2692,6 +2720,11 @@ export class OverworldScene extends Phaser.Scene {
     // of lockedLines: the STARPORT opened, but its mail slot still works)
     for (const p of this.mapDef.props) {
       if (!MAIL_DOORS[p.sprite] || !p.solid) continue;
+      // the route's five stops are the ORIGINALS — Elm Row's three houses (the
+      // bluff, y<10) + the chapel + the arcade. house_* sprites are reused all
+      // over the region now (Hill Road, Maple Ct, the Hollow); those are not
+      // mail stops and must not eat the knock.
+      if (p.sprite.startsWith('house_') && (this.mapDef.id !== 'otterbrook' || p.y >= 10)) continue;
       // solid.* are NATIVE data; the ±4/8 pad is px → all scaled at read
       const r = {
         x: p.x * TILE_PX + s(p.solid.ox) - s(4),
@@ -2785,6 +2818,12 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     if (n.def.id === 'mom') {
+      // the night Glint died: she sends you to bed, and sleep brings the morning
+      if (GS.flag('zapper_hit') && !GS.flag('zapper_done')) {
+        await this.dlg.say(...DIALOGUE.npc_mom_sleep);
+        await this.sleepToMorning();
+        return;
+      }
       if (!GS.flag('mom_gear')) {
         await this.dlg.say(...DIALOGUE.npc_mom_pre);
         GS.addItem('salt_shaker');
@@ -4175,6 +4214,7 @@ export class OverworldScene extends Phaser.Scene {
         meadow_gift_woods: 'basket_basic',
         meadow_gift_far: 'salt_shaker',
         otter_woods_gift: 'star_cola',
+        oak_cache: 'star_cola', // the Under-Oak's mossy cooler (ADR-121 rework)
         // S15i Task 4 (ADR-057): the grown Puerto Sol dock district's cached present
         ps_dock_gift: 'aloe_leaf',
         // S15i Task 6 (ADR-059): the Cage Park's bench-left basket + the Links cooler
@@ -4794,7 +4834,7 @@ export class OverworldScene extends Phaser.Scene {
         if (!GS.flag('sentinel_repelled')) await this.craterScene();
         break;
       case 'porch':
-        if (GS.flag('sentinel_repelled') && !GS.flag('zapper_done')) await this.porchScene();
+        if (GS.flag('sentinel_repelled') && !GS.flag('zapper_hit')) await this.porchScene();
         break;
       // ADR-121: the Titanic Tick has burrowed into the Heart Oak in Pond Park and
       // is draining the town's Vibe (the Hush-dark). Daytime-only, once the town has
@@ -4802,15 +4842,9 @@ export class OverworldScene extends Phaser.Scene {
       case 'heart_oak':
         if (GS.flag('zapper_done') && !GS.flag('tick_defeated')) await this.heartOakScene();
         break;
-      case 'bus_stop':
-        // S22 (ADR-114): the old center stop is retired to a ONE-TIME redirect —
-        // the 6:15 boards at the new Transit Depot (east, by the pond) now. The
-        // trigger is frozen-core, so we just point the player there once.
-        if (GS.flag('zapper_done') && !GS.flag('bus_depot_known')) {
-          await this.dlg.say(...DIALOGUE.bus_stop_moved);
-          GS.setFlag('bus_depot_known');
-        }
-        break;
+      // (the old center bus_stop redirect retired for good — the Transit Depot
+      // sits ON the drag now, two storefronts from the old corner; the trigger
+      // and its signage are gone from the map data too)
       case 'depot_board':
         // ADR-121: the 6:15 stays dark while the Tick feeds — the Hush-dark has the
         // town too quiet to run a bus. Killing the Tick floods the Vibe back, the
@@ -7258,10 +7292,14 @@ export class OverworldScene extends Phaser.Scene {
 
   private async porchScene(): Promise<void> {
     this.cut = true;
-    GS.setFlag('zapper_done');
+    // 2026-07-02 story re-gate (user direction): the zapper claiming Glint does
+    // NOT snap dawn on. It sets `zapper_hit`; Mom sends you to BED, and sleep
+    // (talkTo mom → sleepToMorning) is what sets `zapper_done` — so you wake
+    // into the wrong-colored HAZE morning instead of teleporting into it.
+    GS.setFlag('zapper_hit');
     // ADR-121: the dimmed Glint who flitted home with us IS the one the zapper
     // takes — lift his trailing sprite OUT of the follower line so the death beat
-    // is continuous with the follow, not a fresh pop-in. (zapper_done was just set,
+    // is continuous with the follow, not a fresh pop-in. (zapper_hit was just set,
     // so the next buildFollowers won't re-add him.) Fall back to a spawn if he
     // somehow isn't trailing — e.g. the porch reached out of band.
     const trailing = this.followers.find((f) => f.id === 'glint');
@@ -7296,11 +7334,23 @@ export class OverworldScene extends Phaser.Scene {
     // THE LAST SPARK (ADR-035): what settles into Jay stays — healing born
     // of grief, played absolutely straight (§A11.2)
     await this.awakeningBeat('last_spark');
+    // it stays NIGHT. The porch light hums; the town sleeps on. Mom first,
+    // then bed — sleepToMorning() (via talkTo) is the only road to dawn.
+    await this.dlg.say(...DIALOGUE.porch_after_zapper);
     this.cut = false;
-    // S15i Task 0 — DAYBREAK: dawn has broken (zapper_done is set). Rebuild the
-    // town from data so the world OPENS now (§B4 daybreak law): the night gate
-    // east retires, the treeline NPCs swap to their day lines, the sky lightens.
-    this.fadeRestart();
+  }
+
+  /** the bridge to the wrong-colored morning: Mom sends you up, the screen
+   *  goes soft, and you wake in your room with `zapper_done` set — the town
+   *  outside now wears the Hush-dark HAZE (dawn_hush_dark fires on arrival). */
+  private async sleepToMorning(): Promise<void> {
+    this.cut = true;
+    this.cameras.main.fadeOut(700, 0, 0, 0);
+    await this.wait(750);
+    GS.setFlag('zapper_done');
+    AUDIO.sfx('heal');
+    // wake in the kid's own bed, morning light already re-derived from flags
+    this.scene.start('overworld', { mapId: 'rex_bedroom', x: 3 * TILE_PX + 8, y: 5 * TILE_PX });
   }
 
   /* ---------------- S2: Mia, the Manager, and Mom's call (§A6 Ch.1 end) ---------------- */

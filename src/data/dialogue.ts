@@ -727,6 +727,24 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@My uncle painted the very tip. He waved at a plane. The plane waved back, he SWEARS.',
     "@You want to reach the docks, go around it. You can't go through. People have tried.",
   ],
+  // THE SPIRE — LOBBY (the colossus opens exactly one room; the canon above holds)
+  npc_spire_concierge: [
+    '@Welcome to the Spire. You are standing in the part of it you are allowed to stand in.',
+    '@The lobby is public. The other floors are residents only. No, I may not say how many floors there are.',
+    '@Have I been to the top? Sir. I have a FAMILY.',
+  ],
+  npc_spire_lounger: [
+    '@I sit in this lobby every day so people assume I live upstairs.',
+    '@Twelve years. I have never once seen anybody come DOWN those elevators. Makes you think.',
+  ],
+  spire_directory: [
+    'SPIRE DIRECTORY — LOBBY: you are here. FLOORS 2 AND UP: residents only.',
+    '(Under OBSERVATION DECK someone has taped a small card. The card says NO.)',
+  ],
+  spire_elevator: [
+    'ELEVATOR — RESIDENTS ONLY. Out of service since the Starfall.',
+    '(The repair slip is dated forty years ago. Under "estimated completion" it says: soon.)',
+  ],
 
   /* ---------------- doors that aren't doors yet ---------------- */
   locked_chapel: [
@@ -869,7 +887,50 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'The sun is up where it should be, but the whole town sits under a thin, cold HAZE that was not there yesterday. The greens have gone gray-blue, the shadows a wrong shade of nothing.',
     'It is not smoke. It is not fog. The light itself feels SKIMMED — as if something crept in on the meteor and is quietly drinking the warmth right out of the air.',
     '(You remember what Glint told you: the Hush feeds on the warmth between people. This washed-out morning is what a whole town looks like with half of that gone.)',
-    '* This is NOT how Otterbrook is meant to look. Find what is draining it dry, and the real morning comes back.',
+    '* This is NOT how Otterbrook is meant to look. The haze runs THICKEST out east, past downtown — POND PARK, where the great HEART OAK stands. Whatever is drinking the town dry is under that tree. Start there.',
+  ],
+  // The zapper takes Glint at 2 AM — dawn does NOT snap on. You carry it inside
+  // first: Mom is still up, and sleep is the bridge to the wrong-colored morning.
+  porch_after_zapper: [
+    '(The porch light hums back to its ordinary blue. The yard is very quiet.)',
+    "* ...You should go inside. Mom's light is still on. Tell her you're okay — and then sleep. Nothing else tonight.",
+  ],
+  npc_mom_sleep: [
+    "@...There you are. I heard the zapper go off and I have been standing here NOT panicking, which is a thing mothers can simply do.",
+    '@Whatever happened up on that hill — and whatever just happened on my porch — it will still be true in the morning. And you will be taller for having slept.',
+    '@Bed. Now. I love you. I will make the loud kind of breakfast.',
+    '(She steers you up the stairs with one hand and turns off lights with the other.)',
+  ],
+  sleep_wake_hush: [
+    '(You sleep like a dropped anchor.)',
+    '(...morning?)',
+  ],
+  // the Under-Oak (ADR-121 rework): the burrow at the Heart Oak's roots — the
+  // directed route to BOSS 1 (no more touching a tree and being ambushed).
+  sign_oak_burrow: [
+    'Something has torn a BURROW clean through the Heart Oak\'s roots. The earth around it is scorched in a spiral, and the haze pours OUT of it like breath.',
+    '* It is exactly big enough to walk into. It is exactly the kind of thing you should not walk into. The haze is coming from down there.',
+  ],
+  oak_roots_enter: [
+    '(The roots close over the sky. The air down here tastes like a battery.)',
+  ],
+  oak_cache: [
+    'Somebody wedged a cooler between two roots. Ages ago, by the moss on it.',
+    '* Found a STAR COLA, still miraculously cold. (The Under-Oak keeps its own weather.)',
+  ],
+  oak_cache_done: ['(The cooler sits empty. The moss is reclaiming it at a respectable pace.)'],
+  // 2026-07-02 — the bounce-trail to THE CAGE (the hoops court kept getting lost)
+  sign_to_cage_plaza: [
+    'CITY REC NOTICE: pickup runs DAILY at THE CAGE.',
+    '* North side — through the chain-link gate past the lots. Follow the bounce. Bring your own excuses.',
+  ],
+  sign_to_cage_gate: [
+    'THE CAGE ‹— through this gate, across the park.',
+    '* You can already hear it: one ball, ten opinions.',
+  ],
+  npc_hoops_kid: [
+    '@You hear that? THUNK. THUNK. That\'s the sound of me getting BUCKETS.',
+    '@Court\'s through the gate, past the park. First game to eleven. Losers run the fence.',
   ],
   phone_dad: [
     '@RING... RING...',
@@ -1086,6 +1147,29 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@Highway's open again — heard it from the milk truck before I heard it official.",
     '@Board out at the curb whenever you like. Tell Brickton the Depot says hello, then immediately regrets it.',
   ],
+  // the depot crowd (2026-07-02 — the "bustling" rebuild of bus_depot_int)
+  npc_depot_board: [
+    '@The board says the 6:15 is "ON TIME." It has said that every day for six years. The board and I have an understanding.',
+  ],
+  npc_depot_commuter_a: [
+    '@I take the 6:15 every day. Same seat, same window, same cloud shaped like a dog. Today the cloud is a BIGGER dog. Big day.',
+  ],
+  npc_depot_traveler: [
+    "@Three transfers to reach my sister's: a bus, another bus, then a man with a canoe who owes me a favor. Travel is really about who owes you favors, dear.",
+  ],
+  npc_depot_napper: [
+    '@...five more minutes... the bus is always five more minutes... so I am always five more minutes...',
+    '(He is either very wise or very asleep. Possibly the bench is doing his thinking for him.)',
+  ],
+  npc_depot_commuter_b: [
+    "@If you run for it you'll miss it. If you stroll you'll miss it. The trick is to already be sitting down when the 6:15 decides to appear.",
+  ],
+  npc_depot_kid: [
+    "@I'm not LOST. I'm WAITING. There's a difference, and the lady at the window keeps mixing them up.",
+  ],
+  npc_depot_vendor: [
+    '@Gum, magazines, little bags of the world\'s saltiest peanuts. Everything a body needs to outlast a bus that is, and I quote the board, "ON TIME."',
+  ],
   npc_bus_waiter1: [
     '@Every morning, same bench, same bus. I find it deeply reassuring and mildly upsetting.',
   ],
@@ -1129,6 +1213,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   sign_hardware: ["HODGKIN'S HARDWARE — If we don't have it, you didn't need it. (We have it.)"],
   sign_diner: ['THE SUNNY SIDE — Breakfast all day. Lunch also all day. It is always a meal here.'],
+  diner_jukebox: [
+    'THE JUKEBOX — 5¢ a play. It knows four songs and it will play the sad one.',
+    '(A handwritten label over slot B-7 reads: "DO NOT. We mean it. — Mgmt")',
+  ],
   sign_barber: ["VINE ST. BARBER — Back in 5. (The sign has said this since 1987.)"],
   // S22 (ADR-120) — THE OTTERBROOK CLINIC (front desk revive + exam room)
   sign_clinic: ['OTTERBROOK CLINIC — Walk-ins welcome. Faint-ins carried. Open since the meteor "for obvious reasons."'],
@@ -1203,11 +1291,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_borden_quiet: [
     "@...Good. Quiet and cooperative. I'll note that. The book likes a cooperative detainee.",
-    '(He walks you the three blocks to the station, narrating municipal codes the whole way. You count seven.)',
+    "(He marches you the entire forty feet across the forecourt, narrating municipal codes the whole way. He calls it 'escorting you downtown.' You are already downtown.)",
   ],
   npc_borden_protest: [
     "@Save it for your statement, son. You'll get a statement. There's a FORM. There's always a form.",
-    '(He walks you the three blocks to the station anyway, unmoved, reciting municipal codes. You count seven.)',
+    "(He marches you the forty feet to the station door anyway, unmoved, reciting municipal codes. It somehow takes four minutes.)",
   ],
   npc_borden_holding: [
     '(The cell is the size of a closet. Borden gets out the paperwork, licks his pencil, and goes to write up a kid for vandalizing a hill with a meteor.)',

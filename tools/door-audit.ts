@@ -63,8 +63,15 @@ const WAIVED = new Set<string>(['pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_
  * so they're left to the clamp BY DESIGN (PR #84) — nudging the formula to fix
  * these 2 edge cases would perturb every other unit. Waived (keyed on f.from) for
  * the body-box tally only; their landsSolid/farFromReturn gating is unaffected.
+ *
+ * NOTE the Brickton pin renumbered 8 -> 7 (2026-07-02): grafting a hand-door onto
+ * the Starfall Spire colossus (spire_lobby) removed that facade from occupyCity's
+ * pool (the `!p.door` filter protects the landmark), which shortened `facades`,
+ * changed the seeded lock permutation, and shifted this exact doorstep — VERIFIED
+ * identical: px(768,473) tile(48,29), the same '|' door-mouth neighbour — from
+ * unit_8 to unit_7. Same physical facade, one fewer enterable facade ahead of it.
  */
-const BODY_WAIVED = new Set<string>(['minimus_major_unit_0', 'brickton_unit_8']);
+const BODY_WAIVED = new Set<string>(['minimus_major_unit_0', 'brickton_unit_7']);
 
 const SEV: Record<DoorFinding['issue'][number], string> = {
   landsSolid: 'STUCK',

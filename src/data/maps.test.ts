@@ -154,7 +154,11 @@ describe('S1 canon — the Department & the 6:15', () => {
 
   it('the 6:15 connects Otterbrook and Brickton', () => {
     expect(MAPS.bus_interior).toBeDefined();
-    expect(MAPS.otterbrook.triggers.some((t) => t.id === 'bus_stop')).toBe(true);
+    // 2026-07-02: the old center bus_stop trigger is retired — Otterbrook
+    // boards INSIDE the Transit Depot (its door on the drag + the depot_board
+    // trigger in the waiting room). Brickton's curb stop is unchanged.
+    expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'bus_depot_int')).toBe(true);
+    expect(MAPS.bus_depot_int.triggers.some((t) => t.id === 'depot_board')).toBe(true);
     expect(MAPS.brickton.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(true);
   });
 });
@@ -191,7 +195,8 @@ describe('S4 canon — shops open, the bank grows an ATM (Prompt 20, ADR-016)', 
       const keeper = m.npcs.find((n) => n.shop !== undefined);
       expect(keeper, `${id} keeper`).toBeDefined();
       expect(m.props.filter((p) => p.sprite === 'counter').length).toBeGreaterThanOrEqual(2);
-      expect(m.props.some((p) => p.sprite.startsWith('shelf'))).toBe(true);
+      // browsable stock: classic shelves OR the 2026-07-02 venue-pass aisles
+      expect(m.props.some((p) => p.sprite.startsWith('shelf') || p.sprite === 'mart_aisle')).toBe(true);
       expect(m.interior).toBe(true);
     }
   });

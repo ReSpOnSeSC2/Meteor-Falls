@@ -1,7 +1,14 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   base: './',
+  test: {
+    // Agent worktrees checked out under .claude/worktrees/ carry full repo copies;
+    // without this exclude vitest globs their test files too and cross-fails them
+    // against the main tree's assets (seen 2026-07-02). node_modules/dist mirror
+    // vitest's defaults, which this override would otherwise replace.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.claude/**', '**/dormant/**'],
+  },
   build: {
     target: 'es2020',
     chunkSizeWarningLimit: 1600,

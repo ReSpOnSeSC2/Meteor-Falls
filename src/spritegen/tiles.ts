@@ -970,6 +970,22 @@ TILESET.push({ name: 'africa_earth', solid: false, make: () => sandTile(3) });
 TILESET.push({ name: 'africa_ruin_wall', solid: true, make: pyramidWall });
 TILESET.push({ name: 'africa_grass', solid: false, make: () => grassBase(1, 5) });
 
+// EB GROUND KIT (2026-07-02 baseline overhaul) — terracing tiles for the Onett-style
+// town construction (cliff faces between terrace levels, grassy lip trim on the upper
+// edge, concrete stairs connecting levels). Same contract as every set above: authored
+// columns in otterbrook_tiles_16.png supply the real look (grown by
+// tools/apply-eb-tile-kit.ts); make() = boot FALLBACK only (REUSED painters, spritegen
+// stays FROZEN). cliff_face is solid like a wall; the lip + stairs are walkable.
+// Grid chars: 'K' = cliff_face, '^' = cliff_lip, 'T' = stairs (CHAR_LEGEND, maps.ts).
+TILESET.push({ name: 'cliff_face', solid: true, make: pyramidWall });
+TILESET.push({ name: 'cliff_lip', solid: false, make: () => grassBase(1, 5) });
+TILESET.push({ name: 'stairs', solid: false, make: sidewalkTile });
+// the UNDER-OAK's root-tangle wall (ADR-121 rework): the dungeon's K cells
+// reskin to this by name (UNDEROAK_TILE_SKIN in OverworldScene.buildTiles) —
+// same solidity as the cliff it stands in for. Authored column via
+// tools/apply-eb-tile-kit.ts (eb-grounds-fix sheet, cell 7).
+TILESET.push({ name: 'root_wall', solid: true, make: officeWall });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

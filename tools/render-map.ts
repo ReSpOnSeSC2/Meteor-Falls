@@ -237,7 +237,17 @@ mkdirSync('output', { recursive: true });
 const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH: number }> = {
   ch1: {
     title: 'METEOR FALLS - CHAPTER 1: THE NIGHT IT FELL (USA)',
-    ids: ['otterbrook','hill_road','hickory_trail','whisperwood_rise','hickory_hill','meadow_mile','meadow_woods','meadow_far','meadow_overpass','brickton','cage_park','dos_f1','dos_f2','dos_f3'],
+    ids: ['otterbrook','hill_road','hickory_trail','whisperwood_rise','hickory_hill','oak_roots','oak_hollow','oak_heart','meadow_mile','meadow_woods','meadow_far','meadow_overpass','brickton','cage_park','dos_f1','dos_f2','dos_f3'],
+    cellW: 560, cellH: 460,
+  },
+  ch2: {
+    title: 'METEOR FALLS - CHAPTER 2: THE MELTING GRIN (PUERTO SOL)',
+    ids: ['puerto_sol', 'valle_dorado', 'costa_estrella', 'brickton_docks'],
+    cellW: 560, cellH: 460,
+  },
+  ch3: {
+    title: 'METEOR FALLS - CHAPTER 3: A VERY FOGGY TERM (ENGLAND)',
+    ids: ['foggybottom', 'foggy_moor', 'wintermoor_grounds', 'the_old_stones'],
     cellW: 560, cellH: 460,
   },
 };

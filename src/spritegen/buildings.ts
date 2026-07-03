@@ -347,4 +347,16 @@ export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
   // from door.ox against the DRAWN body (maps_ch2.ts carries door.ox re-measured
   // for the hi-res art).
   'valle_shop', 'valle_clinic', 'valle_chapel', 'valle_house', 'valle_house_b',
+  // The Otterbrook hi-res storefronts (chapel/drugstore/arcade) outgrew their old
+  // ×1-era data solids — the drawn art is 30–100px wider/taller than s(solid), so
+  // their lower body + flanks were walk-through. Route them through the same
+  // texture-derived collision + entrance rebuild (their door.ox was re-measured to
+  // the drawn, centred door — mirrors the valle_* enterable set above).
+  'chapel', 'drugstore', 'arcade',
+  // The authored 'facade_busdepot' art (the BUS DEPOT marquee facade) is finally
+  // placed on the Otterbrook depot (was the generic bldg_brickmore) — route it
+  // through texture-true collision + entrance like the other authored storefronts.
+  // (facade_busdepot_open is a runtime door-open swap, never a placed prop, so it
+  // stays out of this set — the no-orphan test enforces that.)
+  'facade_busdepot',
 ]);

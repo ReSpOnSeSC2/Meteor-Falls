@@ -406,6 +406,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       deathLine: 'The Rogue Ice-Cream Truck coasted to a stop, finally out of jingle.',
       drops: [{ item: 'diet_star_cola', chance: 0.3 }],
       sprite: 'battle_rogue_icecream_truck', mini: 'mini_runaway_lawnmower',
+      battleScale: 1.5, // 2026-07-02: it is a TRUCK — it should loom over the seat cap
       bg: [RAMP.CYAN, RAMP.MAGENTA],
     }),
 
@@ -1274,7 +1275,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Idol stopped grinning. The whole valley remembered how to breathe.',
       sprite: 'battle_gilded_grin',
-      mini: 'mini_mask',
+      mini: 'mini_gilded_grin', // derived from the battler (was borrowing the procedural mask mini)
       bg: [RAMP.GOLD, RAMP.NIGHT],
       boss: true,
     }),
@@ -1309,7 +1310,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Headmaster Mainframe logged off for the last time. The fog, very slowly, began to forget how.',
       sprite: 'battle_headmaster_mainframe',
-      mini: 'mini_ch3_lurker_3',
+      mini: 'mini_headmaster_mainframe', // derived from the battler (was borrowing a ch3 lurker mini)
       bg: [RAMP.CYAN, RAMP.NIGHT],
       boss: true,
       mind_immune: true,
@@ -1346,7 +1347,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Titanic Tick popped like a water balloon. Gross. GROSS.',
       sprite: 'battle_titanic_tick',
-      mini: 'mini_hill_slug',
+      mini: 'mini_titanic_tick', // derived from the battler (was borrowing the hill-slug mini)
       bg: [RAMP.MAGENTA, RAMP.NIGHT],
       boss: true,
     }),
@@ -1389,7 +1390,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Hush Sentinel folded its limbs, dimmed, and sank back into the crater. Not dead. Waiting.',
       sprite: 'battle_hush_sentinel',
-      mini: 'mini_hill_slug',
+      mini: 'mini_hush_sentinel', // derived from the battler (was borrowing the hill-slug mini)
       bg: [RAMP.NIGHT, RAMP.PURPLE],
       boss: true,
     }),
@@ -1789,7 +1790,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'burrow', kind: 'taunt', text: '{e} dug deeper, out of reach, and the whispering went on.', weight: 2 },
       ],
       deathLine: 'The Whisperwig let go of the ear at last. In the new quiet, the Sleeper\'s breathing was the only sound — slow, even, and finally at peace.',
-      sprite: 'battle_the_whisperwig', mini: 'mini_souvenir',
+      sprite: 'battle_the_whisperwig', mini: 'mini_the_whisperwig', // derived from the battler (was borrowing the souvenir mini)
       bg: [RAMP.NIGHT, RAMP.PURPLE],
       boss: true,
       mind_immune: true,
@@ -2193,7 +2194,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'tail-wiggle', kind: 'taunt', text: '{e}\'s tail began to wiggle. Something enormous was about to happen.', weight: 2 },
       ],
       deathLine: 'Whiskerzilla was not defeated — nothing so rude. It simply lost interest, yawned hugely, and the Duchess knighted it where it lay.',
-      sprite: 'battle_whiskerzilla', mini: 'mini_hill_slug',
+      sprite: 'battle_whiskerzilla', mini: 'mini_whiskerzilla', // derived from the battler (was borrowing the hill-slug mini)
       bg: [RAMP.GOLD, RAMP.ORANGE],
       boss: true,
       mind_immune: true,
@@ -2212,7 +2213,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'discordant clang', kind: 'attack', mult: 1, text: '{e} clanged a sour, off-key note that rattled {t} to the teeth!', weight: 3 },
       ],
       deathLine: 'The Flat Bell cracked clean through and fell silent. Into the gap where its ringing had been crept a low, enormous purr.',
-      sprite: 'battle_flat_bell', mini: 'mini_souvenir',
+      sprite: 'battle_flat_bell', mini: 'mini_flat_bell', // derived from the battler (was borrowing the souvenir mini)
       bg: [RAMP.GOLD, RAMP.CYAN],
       mind_immune: true,
     }),

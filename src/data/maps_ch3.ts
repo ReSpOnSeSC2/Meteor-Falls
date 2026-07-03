@@ -18,12 +18,32 @@
  */
 import { Grid, treeSprite } from './mapkit';
 import { buildDistrict, Streams } from '../levelkit';
+import { placeFacade } from '../levelkit/kit';
 import { AREA_SKINS } from '../spritegen/buildings';
 import type { MapDef, PropDef } from '../schemas';
 
 const PICNIC_SOLID = { ox: 2, oy: 8, w: 32, h: 14 } as const;
 const PHONE_SOLID = { ox: 1, oy: 10, w: 14, h: 16 } as const;
 const TREE_SOLID = { ox: 7, oy: 22, w: 12, h: 10 } as const;
+// generic street-furniture solids (canon boxes, matching maps.ts/maps_ch2.ts/kit.ts SOLID)
+const CRATE_SOLID = { ox: 1, oy: 8, w: 18, h: 9 } as const;
+const BENCH_SOLID = { ox: 1, oy: 6, w: 20, h: 6 } as const;
+const STALL_SOLID = { ox: 1, oy: 14, w: 38, h: 14 } as const;
+const NEWS_BOX_SOLID = { ox: 2, oy: 10, w: 10, h: 7 } as const;
+const TRASH_CAN_SOLID = { ox: 2, oy: 10, w: 10, h: 7 } as const;
+const DUMPSTER_SOLID = { ox: 1, oy: 8, w: 20, h: 9 } as const;
+const PLANTER_SOLID = { ox: 1, oy: 6, w: 20, h: 9 } as const;
+const PLANT_POT_SOLID = { ox: 3, oy: 14, w: 8, h: 7 } as const;
+// Foggybottom prop-strip solids (base-anchored: the tall/thin sheet keeps its full
+// AUTHORED_WORLD_PROP_DISPLAY_SIZE sprite, but only the base footprint collides —
+// same convention as sign/phone_pole/well, so a post/lamp never blocks more than
+// its foot). fb_pub_sign / fb_window_box / fb_rope_coil are flat/wall-mounted
+// dressing (no solid), matching gangplank/doormat/poster_* precedent.
+const FB_POSTBOX_SOLID = { ox: 1, oy: 20, w: 10, h: 7 } as const;
+const FB_MARKET_CROSS_SOLID = { ox: 6, oy: 34, w: 17, h: 14 } as const;
+const FB_GAS_LAMP_SOLID = { ox: 6, oy: 52, w: 4, h: 7 } as const;
+const FB_BARREL_SOLID = { ox: 1, oy: 17, w: 16, h: 8 } as const;
+const FB_CRAB_POT_SOLID = { ox: 1, oy: 19, w: 16, h: 8 } as const;
 
 /** the open tile FOGGYBOTTOM sets you down on when Lucille lands (the quay) */
 export const FOGGYBOTTOM_LANDING = { x: 20, y: 19 } as const;
@@ -82,37 +102,219 @@ function buildFoggybottom(): MapDef {
   g.rect(W - 1, 0, 1, H - 4, 'B');
   g.rect(0, H - 3, W, 1, 'E'); // foam at the river's lip
   g.rect(0, H - 2, W, 2, 'e'); // the river
-  // THE HIGH STREET — a cobbled sidewalk spine, open + obviously connected
+
+  // ─── SKELETON (docs/CITY_DESIGN_LANGUAGE.md M1/M3): six districts, tangent to
+  // each other, so crossing town reads as a transition — D1 TERRACES (the stone
+  // town, two lanes), D2 HIGH STREET (the civic spine + the LANDMARK axis), D3
+  // MARKET GREEN (a loop-path plaza), D4 QUAY (the working waterfront), D5
+  // LUCILLE MOORING (the biplane's water steps), D6 SE BACK-LOTS (a weedy pocket).
+
+  // D1 TERRACES (y2-9) — a new upper cobble lane fronting the north wall, the
+  // existing back lane at y9 fronting it from the south, two scenery snickets
+  // connecting them (M1 side streets + M7 flow).
+  g.rect(2, 5, 36, 2, '='); // the upper lane (rows 5-6)
+  g.rect(2, 9, W - 4, 1, '='); // the back lane (unchanged from the frozen core)
+  g.rect(12, 5, 2, 4, ':'); // snicket 1 (x12-13, y5-8) — dead-ends at the back lane
+  g.rect(26, 5, 2, 4, ':'); // snicket 2 (x26-27, y5-8) — a barrel+crate pocket below
+
+  // THE HIGH STREET — a cobbled sidewalk spine, open + obviously connected. D2's
+  // aprons flank the existing y13-15 street (M1 avenue: apron both sides).
   g.rect(2, 13, W - 4, 3, '='); // the high street itself
   g.rect(18, 13, 3, 9, '='); // the quay lane down to the water steps
-  g.rect(2, 9, W - 4, 1, '='); // a back lane fronting the north terraces
-  // the open MARKET GREEN, west end (where the picnic + a present sit)
-  g.rect(2, 17, 12, 4, '.');
+  g.rect(2, 12, W - 4, 1, '='); // D2 north apron
+  g.rect(2, 16, W - 4, 1, '='); // D2 south apron
+  // '3' storm drains at junction corners (walkable wear, M1/M6)
+  g.set(17, 12, '3');
+  g.set(21, 12, '3');
+  g.set(3, 16, '3');
+  g.set(33, 16, '3');
+
+  // D3 MARKET GREEN (x2-13, y17-22) — a loop-path ring around the picnic +
+  // market cross, a hedge with a >=3-wide gap (M6 hedge rule).
+  g.rect(2, 17, 12, 4, '.'); // green interior (frozen core rect, restated)
+  g.rect(2, 17, 12, 1, ':'); // ring: north edge
+  g.rect(2, 21, 12, 1, ':'); // ring: south edge
+  g.rect(2, 17, 1, 5, ':'); // ring: west edge
+  g.rect(13, 17, 1, 5, ':'); // ring: east edge
+  g.rect(3, 22, 3, 1, 'b'); // hedge x3-5
+  g.rect(9, 22, 4, 1, 'b'); // hedge x9-12 (gap x6-8, 3-wide, per the hard rail)
+
+  // D4 QUAY (x14-27, y21-24) — a dock band; the quay lane already reaches y21,
+  // foam/river (rows 25-27) stay untouched.
+  g.rect(14, 22, 14, 3, 'd'); // dock planking, y22-24
+
+  // D5 LUCILLE MOORING (x8-13, y21-24) — the approach from the hedge gap down
+  // to the biplane door mouth.
+  g.rect(8, 21, 5, 2, ':'); // approach lane, y21-22 (mouth stays clear below)
+
+  // D6 SE BACK-LOTS (x28-38, y17-24) — weeds + a fence-stub dead-end pocket
+  // (>=3-wide entry from the west).
+  g.rect(28, 17, 10, 7, '~'); // weed patch base
+  g.rect(36, 20, 3, 1, '-'); // fence stub (the pocket's north edge)
+
   // gate gap E → the fog road (foggy_moor): a break in the wall ON the open spine
   // (kept clear of the north terrace district so the door stays reachable)
   g.set(W - 1, 11, '.');
   g.set(W - 1, 12, '.');
-  // THE STONE TOWN — damp brownstone/bank/civic/cafe terraces to the north,
-  // drawn from Foggybottom's own M25 skin (cool paper/earth/blue masonry).
-  const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
-  const terraces = buildDistrict(g, { x: 2, y: 2, w: 36, h: 7 }, new Streams(310301), {
-    layout: 'organic',
-    style: 'fog-stone',
-    catalog: AREA_SKINS.foggybottom,
-    lanes: 3,
-    maxStories: 3,
-    sprinkle: true,
-    occupied,
-  });
+
+  // ─── M6 WEAR + NATURE PASS — seeded off the frozen 310301 stream (local to
+  // this builder only), run LAST so it reads the fully-resolved grid.
+  const S = new Streams(310301);
+  const wear = S.use('wearPass');
+  for (let y = 1; y < H - 3; y++) {
+    for (let x = 1; x < W - 1; x++) {
+      const ch = g.rows[y][x];
+      if (ch === '=' && wear() < 0.04) g.set(x, y, '1');
+      else if ((ch === '.' || ch === '~') && wear() < 0.06) g.set(x, y, wear() < 0.5 ? ',' : '~');
+    }
+  }
+  // flower beds beside civic fronts (M6) — the chemist's + the post office's
+  // frontage (clear of the phone tile at (24,12) and the ATM at (26,14)),
+  // plus a few in the west stretch where the boy plays (vibrancy pass)
+  g.set(13, 12, 'f');
+  g.set(29, 12, 'f');
+  g.set(30, 12, 'f');
+  g.set(4, 10, 'f');
+  g.set(9, 10, 'f');
+  g.set(11, 11, 'f');
+
+  // ─── BLOCKS/BUILDINGS — D1 TERRACES: a single staggered terrace row, fronting
+  // the upper lane (Band A) or the back lane (Band B) in alternation, so no two
+  // buildings ever share a column (M2 rhythm: mixed setback, attached runs).
+  const bottomA = 5 * 16 - 4; // fronts the upper lane
+  const bottomB = 9 * 16 - 4; // fronts the back lane
+
+  // D2 HIGH STREET — north face (solid bottom lands one row above the y12
+  // apron), south face (solid top lands exactly at y17, clear of the y16 apron
+  // and the y13-15 street above it). Derived from facadeSolid's own math
+  // (kit.ts: solid = {oy:10, h:cityBuildingHeight(u)-22}), not eyeballed:
+  //   northBottomPx = 12*16-4 (solid bottom lands at tile y11, one row shy of
+  //     the apron at y12, for ANY story count — the -12 in facadeSolid's oy+h
+  //     cancels H, so a single bottomPx clears every facade uniformly).
+  //   southBottomPx(u) = (17 - 10/16)*16 + cityBuildingHeight(u) (solid TOP
+  //     lands at tile y17 exactly, clear of the y16 apron above it).
+  const bottomNorth = 12 * 16 - 4;
+  const southBottom = (u: number): number => (17 - 10 / 16) * 16 + (44 + u * 16);
 
   const props: PropDef[] = [
-    ...terraces.props,
-    // the chemist's shopfront (the keeper stands inside the door on the street)
+    // ── D1 TERRACES (6 facades; A=upper-lane front, B=back-lane front) ──
+    placeFacade('bldg_gen_cafe_blue_1', 3, bottomA, 4, 1), // A1
+    placeFacade('bldg_gen_brownstone_earth_3', 7.53, bottomB, 4, 3), // B1 (snicket-safe gap)
+    placeFacade('bldg_gen_cafe_blue_2', 14, bottomA, 4, 2), // A2
+    placeFacade('bldg_gen_civic_paper_2', 18.52, bottomA, 6, 2), // A3
+    placeFacade('bldg_gen_cafe_blue_1', 28, bottomA, 4, 1), // A4
+    placeFacade('bldg_gen_civic_cyan_2', 32.52, bottomA, 6, 2), // A5
+
+    // ── D2 HIGH STREET north face (the chemist's front, the LANDMARK crowning
+    // the quay-lane sightline, the bank/ATM front, the post office) ──
+    placeFacade('bldg_gen_brownstone_earth_3', 12.2, bottomNorth, 4, 3), // the chemist's front
+    placeFacade('bldg_gen_civic_cyan_3', 16.43, bottomNorth, 6, 3), // THE LANDMARK
+    placeFacade('bldg_gen_bank_paper_2', 22.65, bottomNorth, 6, 2), // the bank (ATM out front)
+    placeFacade('bldg_gen_civic_paper_3', 28.88, bottomNorth, 6, 3), // the post office
+
+    // ── D2 HIGH STREET south face (the quay-corner anchor, a riverside anchor
+    // near "The Kettle") ──
+    placeFacade('bldg_gen_brownstone_earth_4', 13.8, southBottom(4), 4, 4), // quay-corner anchor
+    placeFacade('bldg_gen_bank_paper_3', 21.2, southBottom(3), 7, 3), // south anchor
+
+    // ── trees (frozen core, unchanged) ──
     { sprite: treeSprite(3, 11), x: 3, y: 11, solid: TREE_SOLID },
     { sprite: treeSprite(36, 11), x: 36, y: 11, solid: TREE_SOLID },
-    // the market green (§A4.5 picnic #1 of 3, before the dungeon)
+    // extra green-corner trees (M6)
+    { sprite: treeSprite(2, 17), x: 2, y: 16, solid: TREE_SOLID },
+    { sprite: treeSprite(13, 21), x: 11.6, y: 19.4, solid: TREE_SOLID },
+
+    // ── the market green (§A4.5 picnic #1 of 3, before the dungeon) ──
     { sprite: 'picnic', x: 5, y: 18, solid: PICNIC_SOLID },
     { sprite: 'payphone', x: 24, y: 12.2, solid: PHONE_SOLID },
+
+    // ── D1 dressing: window boxes under the facade windows (row rhythm), gas
+    // lamps, postboxes, plant pots at the snicket mouths ──
+    { sprite: 'fb_window_box', x: 3.2, y: 3.4 },
+    { sprite: 'fb_window_box', x: 5.4, y: 3.4 },
+    { sprite: 'fb_window_box', x: 8.6, y: 5.6 },
+    { sprite: 'fb_window_box', x: 14.2, y: 2.4 },
+    { sprite: 'fb_window_box', x: 19.2, y: 2.6 },
+    { sprite: 'fb_window_box', x: 28.2, y: 3.4 },
+    { sprite: 'fb_window_box', x: 32.7, y: 2.4 },
+    { sprite: 'fb_window_box', x: 34.5, y: 2.6 },
+    { sprite: 'fb_gas_lamp', x: 11.6, y: 2.8, solid: FB_GAS_LAMP_SOLID }, // clear of the chemist's front behind it
+    { sprite: 'fb_gas_lamp', x: 25.4, y: 3.0, solid: FB_GAS_LAMP_SOLID }, // clear of the bank behind it
+    { sprite: 'fb_gas_lamp', x: 1.3, y: 8.2, solid: FB_GAS_LAMP_SOLID },
+    { sprite: 'fb_postbox', x: 30.6, y: 9.8, solid: FB_POSTBOX_SOLID }, // by the post office's north apron
+    { sprite: 'fb_postbox', x: 24.9, y: 3.2, solid: FB_POSTBOX_SOLID }, // Band A mid, on the upper lane's edge
+    { sprite: 'plant_pot', x: 11.75, y: 3.6, solid: PLANT_POT_SOLID }, // snicket-1 mouth
+    { sprite: 'plant_pot', x: 25.5, y: 3.6, solid: PLANT_POT_SOLID }, // snicket-2 mouth
+    // snicket-2 pocket (M7): a barrel+crate tucked at the snicket's upper-lane mouth
+    // (its south end is the bank's frontage now, so the pocket sits at the north end instead)
+    { sprite: 'fb_barrel', x: 26.3, y: 5.4, solid: FB_BARREL_SOLID },
+    { sprite: 'crate', x: 27.2, y: 5.3, solid: CRATE_SOLID },
+
+    // ── D2 street dressing: gas lamps on the aprons, postboxes, news boxes by
+    // the cafes, trash cans at doors ──
+    { sprite: 'fb_gas_lamp', x: 7, y: 12.2, solid: FB_GAS_LAMP_SOLID },
+    { sprite: 'fb_gas_lamp', x: 20.5, y: 11.2, solid: FB_GAS_LAMP_SOLID },
+    { sprite: 'fb_gas_lamp', x: 19, y: 12.5, solid: FB_GAS_LAMP_SOLID }, // the quay-lane mouth, clear of the south anchor
+    { sprite: 'fb_postbox', x: 20.3, y: 16.3, solid: FB_POSTBOX_SOLID }, // clear of the south anchor's footprint
+    { sprite: 'news_box', x: 9.5, y: 16.4, solid: NEWS_BOX_SOLID },
+    { sprite: 'news_box', x: 19.3, y: 20.6, solid: NEWS_BOX_SOLID }, // clear of the south anchor
+    { sprite: 'trash_can', x: 12.5, y: 16.4, solid: TRASH_CAN_SOLID },
+    { sprite: 'trash_can', x: 30, y: 16.4, solid: TRASH_CAN_SOLID },
+    { sprite: 'trash_can', x: 33.5, y: 11.4, solid: TRASH_CAN_SOLID },
+
+    // ── WEST STRETCH (the boy's play corner + the green's north edge) ──
+    { sprite: 'fb_gas_lamp', x: 2.2, y: 10.6, solid: FB_GAS_LAMP_SOLID }, // the street's west end
+    { sprite: 'planter', x: 3.4, y: 16.5, solid: PLANTER_SOLID }, // flanking the green's north mouth (west)
+    { sprite: 'planter', x: 7.7, y: 16.5, solid: PLANTER_SOLID }, // flanking the green's north mouth (east)
+    { sprite: 'trash_can', x: 5, y: 9.7, solid: TRASH_CAN_SOLID }, // by the town sign
+    { sprite: 'crate', x: 10.8, y: 10.2, solid: CRATE_SOLID }, // the play corner's clutter
+
+    // ── HIGH STREET EAST (the post office forecourt + the fog-gate framing) ──
+    { sprite: 'planter', x: 29, y: 11.1, solid: PLANTER_SOLID }, // post office front, west of the door
+    { sprite: 'planter', x: 33.9, y: 11.0, solid: PLANTER_SOLID }, // post office front, east of the door
+    { sprite: 'news_box', x: 35, y: 13.4, solid: NEWS_BOX_SOLID }, // the street's east end
+    { sprite: 'fb_gas_lamp', x: 35, y: 12.6, solid: FB_GAS_LAMP_SOLID }, // frames the fog-gate road (clear of the x36-38 zone AND the spawner)
+
+    // ── D3 MARKET GREEN: the cross centerpiece, two stalls, benches facing it,
+    // crates, the picnic untouched ──
+    { sprite: 'fb_market_cross', x: 7, y: 19, solid: FB_MARKET_CROSS_SOLID },
+    { sprite: 'market_stall_a', x: 7.5, y: 17, solid: STALL_SOLID },
+    { sprite: 'market_stall_b', x: 10, y: 17, solid: STALL_SOLID },
+    { sprite: 'bench', x: 5, y: 20.3, solid: BENCH_SOLID },
+    { sprite: 'bench', x: 9, y: 20.3, solid: BENCH_SOLID },
+    { sprite: 'crate', x: 2.2, y: 20.5, solid: CRATE_SOLID },
+    { sprite: 'crate', x: 11.5, y: 19.6, solid: CRATE_SOLID },
+    { sprite: 'fb_barrel', x: 11.6, y: 18, solid: FB_BARREL_SOLID },
+
+    // ── D4 QUAY: the fish stall, crab pots, rope coils, crates, a barrel, a
+    // river bench, gas lamps ──
+    { sprite: 'market_stall_c', x: 22, y: 21, solid: STALL_SOLID },
+    { sprite: 'fb_crab_pot', x: 15, y: 22, solid: FB_CRAB_POT_SOLID },
+    { sprite: 'fb_crab_pot', x: 16, y: 22.8, solid: FB_CRAB_POT_SOLID },
+    { sprite: 'fb_crab_pot', x: 26, y: 21.8, solid: FB_CRAB_POT_SOLID },
+    { sprite: 'fb_rope_coil', x: 24, y: 22.5 },
+    { sprite: 'crate', x: 25, y: 21, solid: CRATE_SOLID },
+    { sprite: 'crate', x: 26.2, y: 23, solid: CRATE_SOLID },
+    { sprite: 'fb_barrel', x: 17, y: 22, solid: FB_BARREL_SOLID },
+    { sprite: 'bench', x: 19.5, y: 19.8, solid: BENCH_SOLID }, // facing the river, clear of the south anchor
+    { sprite: 'fb_gas_lamp', x: 18, y: 21, solid: FB_GAS_LAMP_SOLID },
+    { sprite: 'fb_gas_lamp', x: 23, y: 21, solid: FB_GAS_LAMP_SOLID },
+
+    // ── D5 LUCILLE MOORING: a rope coil at the hedge-gap approach, a barrel
+    // clear of the door mouth and its column ──
+    { sprite: 'fb_rope_coil', x: 8, y: 22 },
+    { sprite: 'fb_barrel', x: 12.6, y: 21.5, solid: FB_BARREL_SOLID }, // clear of the quay-corner anchor behind it
+
+    // ── D6 SE BACK-LOTS: a dumpster + crates + barrels crowding the dead-end
+    // pocket, spawner left open ──
+    { sprite: 'dumpster', x: 36, y: 20, solid: DUMPSTER_SOLID },
+    { sprite: 'crate', x: 37, y: 21, solid: CRATE_SOLID },
+    { sprite: 'fb_barrel', x: 35, y: 22, solid: FB_BARREL_SOLID },
+    { sprite: 'fb_barrel', x: 36.2, y: 21.9, solid: FB_BARREL_SOLID },
+    { sprite: 'crate', x: 34.9, y: 20.9, solid: CRATE_SOLID },
+
+    // ── "The Kettle" pub sign, beside the south-face riverside anchor ──
+    { sprite: 'fb_pub_sign', x: 20.5, y: 15.9 },
   ];
 
   return {

@@ -558,6 +558,15 @@ const WORLD_PROP_KEYS = [
   'puerto_sign', 'puerto_trash_can',
   'prop_pine_whisperwood', 'prop_pine_whisperwood_b', 'prop_pine_whisperwood_c',
   'prop_trail_marker', 'prop_guardrail', 'prop_culvert',
+  // Otterbrook full-rebuild Americana set (2 ChatGPT magenta strips → slice-prop-strip)
+  'otter_statue', 'gazebo', 'footbridge_rail', 'cattails', 'mailbox', 'doghouse',
+  'tree_swing', 'clothesline', 'kiddie_pool', 'swing_set', 'seesaw', 'flagpole',
+  // the UNDER-OAK set (ADR-121 rework — eb-grounds-fix sheet cells)
+  'burrow_mouth', 'root_knot', 'glow_shroom', 'glow_shroom_b', 'root_curtain',
+  // the VENUE set (2026-07-02 — eb-venue-props sheet): unit-archetype scenes
+  'town_clock', 'karaoke_stage', 'karaoke_booth', 'neon_note', 'noodle_counter',
+  'noodle_stools', 'menu_board', 'steamer_stack', 'video_shelf', 'poster_stand',
+  'tv_stack', 'mart_aisle', 'freezer_case', 'checkout_lane', 'lobby_desk', 'potted_palm',
   'prop_pegboard_wall', 'prop_tool_shelf', 'prop_lockbox_counter',
   'prop_counter_stools', 'prop_booth', 'prop_pie_case', 'prop_jukebox',
   'prop_ticket_window', 'prop_waiting_bench', 'prop_schedule_board',
@@ -578,6 +587,10 @@ const WORLD_PROP_KEYS = [
   'edge_jungle_a', 'edge_jungle_b', 'edge_jungle_c',
   'edge_spore_a', 'edge_spore_b',
   'edge_rock_a', 'edge_rock_b',
+  // Foggybottom (2026-07-02) — street dressing sliced from
+  // foggybottom-props-source.png (tools/slice-prop-strip.cjs, magenta strip).
+  'fb_postbox', 'fb_pub_sign', 'fb_market_cross', 'fb_gas_lamp',
+  'fb_barrel', 'fb_window_box', 'fb_crab_pot', 'fb_rope_coil',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -725,6 +738,10 @@ const HI_RES_GEN_FACADES: ReadonlySet<string> = new Set<string>([
   'bldg_gen_shop_gold_2', 'bldg_gen_shop_grass_1', 'bldg_gen_shop_orange_2',
   'bldg_gen_shop_red_1', 'bldg_gen_shop_red_2',
   'bldg_gen_theater_blue_3', 'bldg_gen_theater_magenta_3', 'bldg_gen_theater_purple_3',
+  // Foggybottom (2026-07-02) — ChatGPT row-strip citygen-foggybottom-source.png,
+  // sliced by tools/slice-facade-row.js + aspect-pinned by tools/fit-facade-aspect.cjs.
+  'bldg_gen_cafe_blue_1', 'bldg_gen_cafe_blue_2', 'bldg_gen_brownstone_earth_4',
+  'bldg_gen_civic_cyan_2', 'bldg_gen_bank_paper_3',
 ]);
 
 const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
@@ -834,6 +851,42 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   bookshelf: { w: 33, h: 30 },
   floor_lamp: { w: 14, h: 30 },
   paw_prints: { w: 18, h: 12 },
+  // Otterbrook full-rebuild Americana set — aspect-true to the strip slices
+  otter_statue: { w: 16, h: 34 },
+  gazebo: { w: 39, h: 56 },
+  footbridge_rail: { w: 44, h: 29 },
+  cattails: { w: 14, h: 22 },
+  mailbox: { w: 10, h: 21 },
+  doghouse: { w: 22, h: 22 },
+  tree_swing: { w: 30, h: 34 },
+  clothesline: { w: 46, h: 32 },
+  kiddie_pool: { w: 28, h: 16 },
+  swing_set: { w: 34, h: 32 },
+  seesaw: { w: 35, h: 21 },
+  flagpole: { w: 17, h: 40 },
+  // the Under-Oak set — aspect-true to the sheet cells
+  burrow_mouth: { w: 40, h: 29 },
+  root_knot: { w: 26, h: 21 },
+  glow_shroom: { w: 22, h: 19 },
+  glow_shroom_b: { w: 13, h: 20 },
+  root_curtain: { w: 33, h: 30 },
+  // the venue set — aspect-true to the sheet cells
+  town_clock: { w: 19, h: 32 },
+  karaoke_stage: { w: 42, h: 38 },
+  karaoke_booth: { w: 34, h: 26 },
+  neon_note: { w: 20, h: 22 },
+  noodle_counter: { w: 40, h: 35 },
+  noodle_stools: { w: 28, h: 23 },
+  menu_board: { w: 16, h: 24 },
+  steamer_stack: { w: 20, h: 21 },
+  video_shelf: { w: 32, h: 31 },
+  poster_stand: { w: 16, h: 20 },
+  tv_stack: { w: 24, h: 22 },
+  mart_aisle: { w: 38, h: 35 },
+  freezer_case: { w: 30, h: 27 },
+  checkout_lane: { w: 32, h: 30 },
+  lobby_desk: { w: 34, h: 26 },
+  potted_palm: { w: 20, h: 21 },
   prop_pine_whisperwood: { w: 32, h: 48 },
   prop_pine_whisperwood_b: { w: 32, h: 48 },
   prop_pine_whisperwood_c: { w: 32, h: 48 },
@@ -898,6 +951,19 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   // at row ~26 and the ADR-051 landmark door box lands with it (door.ox in
   // maps_ch2.ts is measured against THIS displayed size).
   valle_chapel: { w: 56, h: 100 },
+  // Foggybottom (2026-07-02) — street dressing sliced from
+  // foggybottom-props-source.png (tools/slice-prop-strip.cjs); each anchor keeps
+  // the sliced PNG's native aspect at a height chosen by class: postbox ≈
+  // trash_can/hydrant, pub_sign/gas_lamp ≈ sign/phone_pole (tall post), market_cross
+  // ≈ a small stepped monument, barrel/crab_pot ≈ crate, window_box/rope_coil small+flat.
+  fb_postbox: { w: 12, h: 28 },
+  fb_pub_sign: { w: 30, h: 52 },
+  fb_market_cross: { w: 29, h: 52 },
+  fb_gas_lamp: { w: 16, h: 60 },
+  fb_barrel: { w: 18, h: 26 },
+  fb_window_box: { w: 16, h: 14 },
+  fb_crab_pot: { w: 18, h: 28 },
+  fb_rope_coil: { w: 19, h: 16 },
 } as const satisfies Record<string, { w: number; h: number }>;
 
 /** Footprint width in TILES for the generated catalog + colossi, mirrored from
@@ -1569,6 +1635,15 @@ const ENEMY_MINI_ART = [
   { key: 'mini_frost_sentinel', url: new URL('../../assets/art/enemies/mini_frost_sentinel.png', import.meta.url).href },
   { key: 'mini_tiki_magma_golem', url: new URL('../../assets/art/enemies/mini_tiki_magma_golem.png', import.meta.url).href },
   { key: 'mini_the_hush', url: new URL('../../assets/art/enemies/mini_the_hush.png', import.meta.url).href },
+  // Ch.2-5 boss/set-piece stragglers — the last borrowed minis (tools/mini-borrow-audit.ts),
+  // each derived from its own battler so the overworld body matches the fight.
+  { key: 'mini_gilded_grin', url: new URL('../../assets/art/enemies/mini_gilded_grin.png', import.meta.url).href },
+  { key: 'mini_headmaster_mainframe', url: new URL('../../assets/art/enemies/mini_headmaster_mainframe.png', import.meta.url).href },
+  { key: 'mini_titanic_tick', url: new URL('../../assets/art/enemies/mini_titanic_tick.png', import.meta.url).href },
+  { key: 'mini_hush_sentinel', url: new URL('../../assets/art/enemies/mini_hush_sentinel.png', import.meta.url).href },
+  { key: 'mini_the_whisperwig', url: new URL('../../assets/art/enemies/mini_the_whisperwig.png', import.meta.url).href },
+  { key: 'mini_whiskerzilla', url: new URL('../../assets/art/enemies/mini_whiskerzilla.png', import.meta.url).href },
+  { key: 'mini_flat_bell', url: new URL('../../assets/art/enemies/mini_flat_bell.png', import.meta.url).href },
 ];
 
 export const AUTHORED_ENEMY_BATTLE_ART_KEYS = ENEMY_BATTLE_ART.map((art) => art.key);

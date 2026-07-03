@@ -3114,7 +3114,12 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
   // clamp BY DESIGN (PR #84). These 2 are WAIVED here (keyed on f.from) so they never fail;
   // but per ADR-136 the body-box tier IS strict — a NON-waived body-block is a HARD FAIL
   // below (the pyramids are also waived, via DOOR_WAIVERS from+to).
-  const BODY_WAIVERS = new Set(['minimus_major_unit_0', 'brickton_unit_8']);
+  // Brickton pin renumbered 8 -> 7 (2026-07-02): the Starfall Spire hand-door
+  // (spire_lobby) pulled that colossus out of occupyCity's pool, reshuffling the
+  // seeded lock permutation and shifting this exact doorstep (px 768,473 / tile
+  // 48,29, same '|' door-mouth neighbour) from unit_8 to unit_7. See the matching
+  // note in tools/door-audit.ts's BODY_WAIVED.
+  const BODY_WAIVERS = new Set(['minimus_major_unit_0', 'brickton_unit_7']);
   const findings = doorAudit(MAPS, isSolidChar, { bodyBox: true });
   let oneWay = 0;
   let bodyBlockedReal = 0;

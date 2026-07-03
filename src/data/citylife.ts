@@ -41,7 +41,7 @@ const SEALED_FACADE_SPRITES: ReadonlySet<string> = new Set(['bldg_bank']);
 
 /* ----------------------------- tenancy ----------------------------- */
 
-type Furnish = 'home' | 'shop' | 'cafe' | 'office' | 'clinic';
+type Furnish = 'home' | 'shop' | 'cafe' | 'office' | 'clinic' | 'music' | 'noodles' | 'video';
 
 interface Archetype {
   weight: number;
@@ -84,6 +84,25 @@ const ARCHETYPES: readonly Archetype[] = [
     sprites: ['nurse', 'deliKeeper'],
     pool: KEEPER_IDS,
   },
+  // 2026-07-02 venue pass — the signboards that promised a scene now HAVE one
+  {
+    weight: 7, furnish: 'music', npc: [1, 2],
+    names: ['JAZZ KARAOKE PALACE', 'THE VELVET NOTE', 'SING-ALONG LOUNGE', 'OPEN MIC HALL'],
+    sprites: ['grayCommuter', 'sidewalkCritic', 'quarterMan'],
+    pool: RESIDENT_IDS,
+  },
+  {
+    weight: 7, furnish: 'noodles', npc: [1, 2],
+    names: ['NOODLE HOUSE', 'MIDNIGHT RAMEN', 'THE BROTH BAR', 'SLURP CITY'],
+    sprites: ['deliKeeper', 'martClerk'],
+    pool: KEEPER_IDS,
+  },
+  {
+    weight: 6, furnish: 'video', npc: [1, 1],
+    names: ['VIDEO RENTALS', 'TAPE TOWN', 'BE KIND REWIND', 'LATE FEE VIDEO'],
+    sprites: ['pajamaKid', 'sidewalkCritic'],
+    pool: KEEPER_IDS,
+  },
 ] as const;
 
 function pickArchetype(rnd: () => number): Archetype {
@@ -111,20 +130,52 @@ interface UnitArgs {
 }
 
 function furniture(furnish: Furnish, W: number, H: number): PropDef[] {
-  // only REGISTERED prop textures: counter, shelf, bench, bookshelf (NOT 'rug' —
-  // rug exists as an edge-aware floor TILE only; the room's 'r' entrance tiles
-  // already supply the rug visual, a prop 'rug' would be a missing texture)
   const counter = (x: number, y: number): PropDef => ({ sprite: 'counter', x, y, solid: { ox: 0, oy: 4, w: 30, h: 14 } });
-  const shelf = (x: number, y: number): PropDef => ({ sprite: 'shelf', x, y, solid: { ox: 0, oy: 12, w: 32, h: 12 } });
   const bench = (x: number, y: number): PropDef => ({ sprite: 'bench', x, y, solid: { ox: 1, oy: 6, w: 20, h: 6 } });
   const bookshelf = (x: number, y: number): PropDef => ({ sprite: 'bookshelf', x, y, solid: { ox: 0, oy: 12, w: 32, h: 12 } });
+  const p = (sprite: string, x: number, y: number, solid?: PropDef['solid']): PropDef => ({ sprite, x, y, ...(solid ? { solid } : {}) });
+  // 2026-07-02 (user direction): units read as their SIGNBOARD promises —
+  // authored venue sets (eb-venue-props sheet) per archetype, not four
+  // recycled counters with a fancy name over the door.
   switch (furnish) {
     case 'shop':
-      return [counter(2, 3), counter(4, 3), shelf(W - 4, 2), shelf(W - 6, 2)];
+      return [
+        p('checkout_lane', 2, H - 4, { ox: 1, oy: 10, w: 40, h: 12 }),
+        p('mart_aisle', Math.round(W / 2) - 1, 3, { ox: 0, oy: 12, w: 52, h: 12 }),
+        p('mart_aisle', Math.round(W / 2) - 1, 5.4, { ox: 0, oy: 12, w: 52, h: 12 }),
+        p('freezer_case', W - 4, 2, { ox: 1, oy: 12, w: 34, h: 12 }),
+      ];
     case 'cafe':
-      return [counter(2, 3), counter(4, 3), counter(6, 3), bench(W - 5, H - 4)];
+      return [
+        counter(2, 3), counter(4, 3),
+        p('menu_board', 6.2, 1.9),
+        p('noodle_stools', 2.6, 4.6, { ox: 2, oy: 8, w: 26, h: 8 }),
+        bench(W - 5, H - 4),
+      ];
+    case 'music':
+      return [
+        p('karaoke_stage', Math.round(W / 2) - 2, 2, { ox: 2, oy: 26, w: 56, h: 14 }),
+        p('neon_note', 2.2, 1.8),
+        p('karaoke_booth', 2, H - 5, { ox: 1, oy: 12, w: 40, h: 12 }),
+        p('karaoke_booth', W - 5, H - 5, { ox: 1, oy: 12, w: 40, h: 12 }),
+      ];
+    case 'noodles':
+      return [
+        p('noodle_counter', Math.round(W / 2) - 2, 2.4, { ox: 0, oy: 14, w: 56, h: 12 }),
+        p('noodle_stools', Math.round(W / 2) - 1.6, 4.7, { ox: 2, oy: 8, w: 26, h: 8 }),
+        p('menu_board', 2.2, 1.9),
+        p('steamer_stack', W - 3.4, 2.2, { ox: 2, oy: 12, w: 18, h: 10 }),
+      ];
+    case 'video':
+      return [
+        p('video_shelf', 2, 2.4, { ox: 0, oy: 12, w: 44, h: 12 }),
+        p('video_shelf', 2, 5, { ox: 0, oy: 12, w: 44, h: 12 }),
+        p('tv_stack', W - 3.6, 2, { ox: 1, oy: 14, w: 22, h: 10 }),
+        p('poster_stand', W - 4, H - 5, { ox: 2, oy: 12, w: 16, h: 8 }),
+        counter(2, H - 4),
+      ];
     case 'office':
-      return [counter(Math.round(W / 2) - 2, 3), counter(Math.round(W / 2), 3), bookshelf(2, 2)];
+      return [counter(Math.round(W / 2) - 2, 3), counter(Math.round(W / 2), 3), bookshelf(2, 2), p('potted_palm', W - 3, H - 4, { ox: 3, oy: 12, w: 10, h: 8 })];
     case 'clinic':
       return [counter(2, 3), bench(4, H - 4), bench(W - 6, H - 4)];
     case 'home':
@@ -240,6 +291,41 @@ function dressStreets(map: MapDef, rnd: () => number): void {
 
 /* ------------------------------- the pass ------------------------------- */
 
+/** measured door-center fraction of each authored gen facade's width (see the
+ *  occupyCity note) — generated from the PNGs, clamped 0.25..0.75 */
+const DOOR_FRAC: Record<string, number> = {
+  bldg_gen_bank_paper_2: 0.414,
+  bldg_gen_bank_paper_3: 0.43,
+  bldg_gen_brownstone_earth_3: 0.44, // hand-corrected (stoop shadow fooled the scan)
+  bldg_gen_brownstone_earth_4: 0.579,
+  bldg_gen_cafe_blue_1: 0.25,
+  bldg_gen_cafe_blue_2: 0.366,
+  bldg_gen_cafe_orange_1: 0.635,
+  bldg_gen_cafe_red_2: 0.403,
+  bldg_gen_civic_cyan_2: 0.428,
+  bldg_gen_civic_cyan_3: 0.413,
+  bldg_gen_civic_paper_2: 0.405,
+  bldg_gen_civic_paper_3: 0.423,
+  bldg_gen_deptstore_blue_3: 0.539,
+  bldg_gen_deptstore_purple_3: 0.441,
+  bldg_gen_market_gold_1: 0.432,
+  bldg_gen_market_orange_2: 0.424,
+  bldg_gen_neon_magenta_2: 0.412,
+  bldg_gen_neon_magenta_3: 0.342,
+  bldg_gen_neon_night_2: 0.585,
+  bldg_gen_neon_night_3: 0.25,
+  bldg_gen_neon_purple_2: 0.415,
+  bldg_gen_neon_purple_3: 0.34,
+  bldg_gen_shop_gold_2: 0.453,
+  bldg_gen_shop_grass_1: 0.495,
+  bldg_gen_shop_orange_2: 0.42,
+  bldg_gen_shop_red_1: 0.381,
+  bldg_gen_shop_red_2: 0.387,
+  bldg_gen_theater_blue_3: 0.34,
+  bldg_gen_theater_magenta_3: 0.346,
+  bldg_gen_theater_purple_3: 0.726,
+};
+
 export interface OccupyOpts {
   /** the §A5/§A6 area (for the seed + future per-region flavor) */
   area: string;
@@ -278,7 +364,13 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
   facades.forEach((p, idx) => {
     const { w, u } = facadeDims(p.sprite);
     const Hpx = cityBuildingHeight(u);
-    const ox = Math.round((w * 16) / 2) - 8;
+    // 2026-07-02 (user bug report): the grafted door/mat used the FOOTPRINT
+    // center, but the hi-res art's drawn door is rarely centered — mats sat
+    // beside doors. DOOR_FRAC is measured from the authored PNGs (darkest
+    // bottom-strip run; brownstone_earth_3 hand-corrected for its stoop
+    // shadow). Unmeasured keys fall back to center.
+    const frac = DOOR_FRAC[p.sprite] ?? 0.5;
+    const ox = Math.round(w * 16 * frac) - 8;
     const oy = Hpx - 14;
     if (locked.has(idx)) {
       // LOCKED — a knock-knock sign at the would-be door tile (read facing up)
