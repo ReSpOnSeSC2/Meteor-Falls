@@ -16,6 +16,19 @@ import type { MapDef } from '../schemas';
 
 export type IsSolid = (ch: string) => boolean;
 
+/**
+ * WORLD-OVERHAUL (Ch3+) — the OPT-IN elevation seam. A predicate the flood/BFS
+ * consult to decide whether a step from tile (ax,ay) to a 4-neighbour (bx,by)
+ * CROSSES between two connected cells, or is blocked by an elevation seam (two
+ * terraces that join ONLY at a stair). The caller closes over the map's level
+ * plane. The DEFAULT is flat — `FLAT_JOIN` always joins — so every existing
+ * caller (all of content-validate + door-audit today) stays byte-identical; the
+ * real level plane is threaded only by elevation-aware maps (World Overhaul P3).
+ * See docs/WILDERNESS_DESIGN_LANGUAGE.md § Elevation.
+ */
+export type LevelJoin = (ax: number, ay: number, bx: number, by: number) => boolean;
+const FLAT_JOIN: LevelJoin = () => true;
+
 export interface Components {
   comp: number[][];
   /** id of the largest walkable component (the reachable "world") */
@@ -23,7 +36,7 @@ export interface Components {
 }
 
 /** flood every walkable tile into connected components (4-neighbour) */
-export function components(grid: readonly string[], isSolid: IsSolid): Components {
+export function components(grid: readonly string[], isSolid: IsSolid, join: LevelJoin = FLAT_JOIN): Components {
   const h = grid.length;
   const w = grid[0].length;
   const comp = Array.from({ length: h }, () => Array.from({ length: w }, () => -1));
@@ -44,7 +57,7 @@ export function components(grid: readonly string[], isSolid: IsSolid): Component
           const nx = cx + dx;
           const ny = cy + dy;
           if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-          if (comp[ny][nx] !== -1 || isSolid(grid[ny][nx])) continue;
+          if (comp[ny][nx] !== -1 || isSolid(grid[ny][nx]) || !join(cx, cy, nx, ny)) continue;
           comp[ny][nx] = id;
           stack.push([nx, ny]);
         }
@@ -59,14 +72,14 @@ export function components(grid: readonly string[], isSolid: IsSolid): Component
 }
 
 /** is (tx,ty) — or a 4-neighbour you'd interact from — in the main world? */
-export function reachable(c: Components, tx: number, ty: number): boolean {
+export function reachable(c: Components, tx: number, ty: number, join: LevelJoin = FLAT_JOIN): boolean {
   const h = c.comp.length;
   const w = c.comp[0].length;
   for (const [dx, dy] of [[0, 0], [0, 1], [0, -1], [1, 0], [-1, 0]] as const) {
     const nx = tx + dx;
     const ny = ty + dy;
     if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-    if (c.comp[ny][nx] === c.mainId) return true;
+    if (c.comp[ny][nx] === c.mainId && join(tx, ty, nx, ny)) return true;
   }
   return false;
 }
@@ -83,7 +96,7 @@ export function reachable(c: Components, tx: number, ty: number): boolean {
 export type Cell = readonly [number, number];
 
 /** BFS distances from a seed cell over the walkable floor; unreachable = -1 */
-export function bfsField(grid: readonly string[], isSolid: IsSolid, from: Cell): number[][] {
+export function bfsField(grid: readonly string[], isSolid: IsSolid, from: Cell, join: LevelJoin = FLAT_JOIN): number[][] {
   const h = grid.length;
   const w = grid[0].length;
   const dist = Array.from({ length: h }, () => Array.from({ length: w }, () => -1));
@@ -98,7 +111,7 @@ export function bfsField(grid: readonly string[], isSolid: IsSolid, from: Cell):
       const nx = cx + dx;
       const ny = cy + dy;
       if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-      if (dist[ny][nx] !== -1 || isSolid(grid[ny][nx])) continue;
+      if (dist[ny][nx] !== -1 || isSolid(grid[ny][nx]) || !join(cx, cy, nx, ny)) continue;
       dist[ny][nx] = dist[cy][cx] + 1;
       queue.push([nx, ny]);
     }

@@ -127,7 +127,7 @@ import { DEALERSHIP } from '../data/dealership';
 import { FLEET_CRAFT } from '../data/fleet';
 import { VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
-import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE } from '../spritegen/tiles';
+import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE, HEDGE_BASE, BRAMBLE_BASE } from '../spritegen/tiles';
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
 import { AUTHORED_VEHICLE_ART_KEYS, AUTHORED_WORLD_PROP_DISPLAY_SIZE, DIRECTIONAL_VEHICLE_KEYS, worldSpriteScale } from '../spritegen/authored';
 import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
@@ -649,6 +649,23 @@ const MAIL_FLAGS = Object.values(MAIL_DOORS).map((d) => d.flag);
 export class OverworldScene extends Phaser.Scene {
   private mapDef!: MapDef;
   private solidTiles: boolean[][] = [];
+  /** WORLD-OVERHAUL (Ch3+): the parallel per-tile LEVEL plane, built beside
+   *  solidTiles in buildTiles. '0' = ground, '1'..'9' = stacked terraces. ALL-ZERO
+   *  for every shipped (flat) map — none declares `elevation` — so the elevated
+   *  render/collision branches (P2+) stay inert and every path is byte-identical. */
+  private levelGrid: number[][] = [];
+  /** the computed tile-index grid (parallel to solidTiles/levelGrid), retained so
+   *  the elevation overlay can re-emit a terrace's face tiles as depth-sorted
+   *  images. Rebuilt every buildTiles; empty until then. */
+  private tileData: number[][] = [];
+  /** the terrace the PLAYER stands on (0 = ground). Non-zero only on an elevated
+   *  map; changes solely when the player steps onto a stairs ('T') tile. */
+  private playerLevel = 0;
+  /** highest terrace on the current map (0 = flat). */
+  private maxLevel = 0;
+  /** per-level depth lift (≈ one map-height of px) that sorts each terrace above
+   *  the one below; 0 on flat maps, so player/overlay/veil depth is byte-identical. */
+  private levelDepthBias = 0;
   private solids: Rect[] = [];
   /** ADR-051: texture-true entrance zones for facade props whose drawn sprite
    *  disagrees with the map data's placement `u` — checkDoors prefers these */
@@ -762,6 +779,7 @@ export class OverworldScene extends Phaser.Scene {
     this.dlg = new Dialogue(this);
 
     this.buildTiles();
+    this.buildElevationOverlay();
     this.buildProps();
     this.buildEdgeFeatures();
     this.buildNpcs();
@@ -773,6 +791,13 @@ export class OverworldScene extends Phaser.Scene {
     // rects over the world (ADR-051 verification); inert in production builds
     if (import.meta.env.DEV) {
       (window as unknown as { mfSolids?: (on?: boolean) => string }).mfSolids = (on = true) => this.debugSolids(on);
+      // WORLD-OVERHAUL dev warp: mfWarp('elev_spike') drops you on the ground below
+      // the cliff (TILE coords, feet-origin). The elevation spike's only entrance.
+      (window as unknown as { mfWarp?: (id: string, tx?: number, ty?: number) => void }).mfWarp = (
+        id: string,
+        tx = 11,
+        ty = 14,
+      ) => this.scene.restart({ mapId: id, x: (tx + 0.5) * TILE_PX, y: (ty + 1) * TILE_PX });
     }
     // ADR-052 QOL: on every arrival, lock doors briefly so the door you came
     // through can't instantly fire again (the hotel<->overworld ping-pong) and
@@ -872,6 +897,12 @@ export class OverworldScene extends Phaser.Scene {
       x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === ':';
     const isRug = (x: number, y: number): boolean =>
       x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === 'r';
+    // WORLD-OVERHAUL (Ch3+): the HEDGE-WALL autotile — 'H' cells pick hedge_<mask> by
+    // 4-neighbour connectivity (a lit rim faces every OPEN edge; seamless where hedges meet).
+    const isHedge = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === 'H';
+    const isBramble = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === 'V';
     // S7 (ADR-019): roads carve curbs into adjacent sidewalk, office walls
     // sprout fluorescent panels — render-time variants, deterministic, and
     // identical in solidity to their base tiles.
@@ -921,6 +952,23 @@ export class OverworldScene extends Phaser.Scene {
           if (!isRug(x, y + 1)) mask |= 4;
           if (!isRug(x - 1, y)) mask |= 8;
           idx = RUG_BASE + mask;
+        } else if (ch === 'H') {
+          // hedge mask: a bit is SET where the neighbour is ALSO hedge (they merge, no
+          // rim); CLEAR edges face open ground and carry the lit rim (tools/apply-hedge-kit).
+          let mask = 0;
+          if (isHedge(x, y - 1)) mask |= 1;
+          if (isHedge(x + 1, y)) mask |= 2;
+          if (isHedge(x, y + 1)) mask |= 4;
+          if (isHedge(x - 1, y)) mask |= 8;
+          idx = HEDGE_BASE + mask;
+        } else if (ch === 'V') {
+          // bramble mask (same contract as hedge): SET where the neighbour is bramble.
+          let mask = 0;
+          if (isBramble(x, y - 1)) mask |= 1;
+          if (isBramble(x + 1, y)) mask |= 2;
+          if (isBramble(x, y + 1)) mask |= 4;
+          if (isBramble(x - 1, y)) mask |= 8;
+          idx = BRAMBLE_BASE + mask;
         } else {
           let name = CHAR_LEGEND[ch] ?? 'grass_a';
           if (meltCrossingOpen && ch === 'E') {
@@ -990,6 +1038,8 @@ export class OverworldScene extends Phaser.Scene {
       data.push(row);
       this.solidTiles.push(srow);
     }
+    this.tileData = data;
+    this.buildLevelGrid(h, w);
     // the 'tiles' texture is upscaled to TILE_PX-sized tiles at the boot seam,
     // so the map's tile size is TILE_PX (16 at ×1) — all tile↔px math uses it.
     const map = this.make.tilemap({ data, tileWidth: TILE_PX, tileHeight: TILE_PX });
@@ -1014,6 +1064,83 @@ export class OverworldScene extends Phaser.Scene {
       const M = s(40);
       this.cameras.main.setBounds(bx - M, by - M, Math.max(mw, vw) + 2 * M, Math.max(mh, vh) + 2 * M);
       this.cameras.main.setBackgroundColor(EDGE_BIOME[resolveEdgeBiome(this.mapDef.id)].voidColor);
+    }
+  }
+
+  /** WORLD-OVERHAUL P1 (opt-in elevation): build the parallel LEVEL plane beside
+   *  solidTiles. Reads the map's optional `elevation.level` digit-rows ('0'/'.'/' '
+   *  = ground, '1'..'9' = terraces); ABSENT ⇒ all-zero (flat), so every shipped map
+   *  is untouched and the P2+ elevated branches never fire. W×H matches the render
+   *  grid exactly (elevation.test.ts asserts the plane matches the grid's dims). */
+  private buildLevelGrid(h: number, w: number): void {
+    const plane = this.mapDef.elevation?.level;
+    this.levelGrid = [];
+    let maxLevel = 0;
+    for (let y = 0; y < h; y++) {
+      const src = plane ? plane[y] : undefined;
+      const row: number[] = new Array(w);
+      for (let x = 0; x < w; x++) {
+        const ch = src ? src[x] : undefined;
+        const lvl = ch && ch >= '1' && ch <= '9' ? ch.charCodeAt(0) - 48 : 0;
+        row[x] = lvl;
+        if (lvl > maxLevel) maxLevel = lvl;
+      }
+      this.levelGrid.push(row);
+    }
+    this.maxLevel = maxLevel;
+    // one terrace of depth = a full map-height of px, so every level-N object
+    // sorts cleanly above every level-(N-1) object (BIAS ≈ mapH·TILE_PX). 0 on a
+    // flat map ⇒ playerLevel/maxLevel are 0 and every depth path is unchanged.
+    this.levelDepthBias = maxLevel > 0 ? h * TILE_PX : 0;
+  }
+
+  /** the terrace level under a PIXEL position (0 = ground / off-map / flat map). */
+  private levelAtPx(px: number, py: number): number {
+    const tx = Math.floor(px / TILE_PX);
+    const ty = Math.floor(py / TILE_PX);
+    return this.levelGrid[ty]?.[tx] ?? 0;
+  }
+
+  /** the depth LIFT for a world object standing at a PIXEL position, keyed on its
+   *  own terrace (0 on flat maps ⇒ every base-y depth sort is byte-identical).
+   *  Elevated maps add level·BIAS so a prop/NPC/follower/vehicle on an upper terrace
+   *  sorts WITH the player on that terrace — and stays BEHIND the cliff from a lower
+   *  one (WO P2, review F1: without this ONLY the player + cliff were lifted, so a
+   *  level-1 player wrongly drew in front of same-terrace props/followers). */
+  private levelLift(px: number, py: number): number {
+    return this.maxLevel > 0 ? this.levelAtPx(px, py) * this.levelDepthBias : 0;
+  }
+
+  /** WORLD-OVERHAUL P2 (opt-in elevation): the WALK-BEHIND band. For a terraced
+   *  map, re-emit each upper terrace's SOLID FRONT WALL ('K' cliff_face) as depth-
+   *  sorted images LIFTED by level·BIAS, so a player on a LOWER level who walks up
+   *  to the cliff passes BEHIND its face (Onett/Zelda), while a player who climbs
+   *  the stair (playerLevel rises) emerges on top. The base tilemap already drew
+   *  these cells flat at depth 0; this overlay is the occluder on top. Only the
+   *  SOLID face is re-emitted — the walkable '^' lip must NOT be (review F2: a lip
+   *  overlay would occlude a same-level player standing on it). No-op on flat maps
+   *  (maxLevel 0) — never emits. */
+  private buildElevationOverlay(): void {
+    if (this.maxLevel <= 0) return;
+    const grid = this.mapDef.grid;
+    for (let y = 0; y < this.levelGrid.length; y++) {
+      const row = this.levelGrid[y];
+      for (let x = 0; x < row.length; x++) {
+        const lvl = row[x];
+        if (lvl <= 0) continue;
+        const ch = grid[y]?.[x];
+        if (ch !== 'K') continue; // only the SOLID cliff face is re-emitted as a y-sorted image
+        // Depth = the face's own BASE-Y (NOT level·BIAS). This lifts the face out of the flat
+        // depth-0 tilemap so it y-sorts with the world: a LOWER-ground character standing at
+        // the base (feet south of the face, so a higher base-y) sorts IN FRONT and stays fully
+        // visible — the correct "stand in front of the cliff wall" read (Onett). The earlier
+        // level·BIAS drew the face over the character, swallowing their torso ("blending into
+        // the cliff" — user report 2026-07-03). Player/movers keep their own level lift.
+        this.add
+          .image(x * TILE_PX, y * TILE_PX, 'tiles', this.tileData[y][x])
+          .setOrigin(0, 0)
+          .setDepth((y + 1) * TILE_PX);
+      }
     }
   }
 
@@ -1155,7 +1282,7 @@ export class OverworldScene extends Phaser.Scene {
         img.x = p.x * TILE_PX + (sw / nps - sw) / 2;
         img.y = p.y * TILE_PX + (sh / nps - sh);
       }
-      img.setDepth(img.y + img.displayHeight);
+      img.setDepth(img.y + img.displayHeight + this.levelLift(img.x, img.y));
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
         // places a facade at a story count `u`; the forge/grown grammar often
@@ -1403,7 +1530,7 @@ export class OverworldScene extends Phaser.Scene {
         const nsc = mapNativeScale(this.mapDef.id);
         if (nsc !== 1) spr.setScale(nsc);
       }
-      spr.setDepth(y);
+      spr.setDepth(y + this.levelLift(spr.x, y));
       // ADR-124 — FREE-ROAMING TOWNSFOLK: NPCs wander a small radius by default;
       // only clerks (a `shop`), explicitly pinned NPCs (wander:false / stationary),
       // dogs, and INDOOR NPCs (shops/clinics/hotels/homes) hold position.
@@ -1432,7 +1559,10 @@ export class OverworldScene extends Phaser.Scene {
     // S15c: depth was only assigned in update(), which the cut lock skips —
     // a map entered INTO a cutscene (the 6:15) left the hero at depth 0,
     // so the seat back swallowed his head. Y-sort from frame one.
-    this.player.setDepth(this.player.y);
+    // WORLD-OVERHAUL P2: seed the player's terrace from the spawn tile (doors set
+    // it directly in P3); flat maps read 0, so depth is exactly this.player.y.
+    this.playerLevel = this.levelAtPx(this.player.x, this.player.y);
+    this.player.setDepth(this.player.y + this.playerLevel * this.levelDepthBias);
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.buildFollowers();
   }
@@ -1561,7 +1691,7 @@ export class OverworldScene extends Phaser.Scene {
         const frame = def.overworld ? enemyOverworldFrame('down') : def.walker ? standFrame('down') : 0;
         const spr = this.add.sprite(x, y, texture, frame);
         spr.setOrigin(0.5, 1);
-        spr.setDepth(y);
+        spr.setDepth(y + this.levelLift(spr.x, y));
         this.roamers.push({
           spr,
           enemyId,
@@ -1588,7 +1718,7 @@ export class OverworldScene extends Phaser.Scene {
       const [tx, ty] = def.route[0];
       const spr = this.add.sprite(tx * TILE_PX + TILE_PX / 2, ty * TILE_PX + s(22), overworld ?? walker, overworld ? enemyOverworldFrame('down') : standFrame('down'));
       spr.setOrigin(0.5, 1);
-      spr.setDepth(spr.y);
+      spr.setDepth(spr.y + this.levelLift(spr.x, spr.y));
       this.patrols.push({
         spr,
         def,
@@ -1618,7 +1748,7 @@ export class OverworldScene extends Phaser.Scene {
     // ~row 12 lit at night (the "not all images adhere to night mode" bug). Park it
     // just past the tallest possible world depth (map height + a sprite's worth of
     // margin); the fireflies then lift above it to still shine on top.
-    const nightDepth = this.solidTiles.length * TILE_PX + s(300);
+    const nightDepth = this.solidTiles.length * TILE_PX + this.maxLevel * this.levelDepthBias + s(300);
     // ADR-121: the Hush-dark is a COLDER, shallower veil than 2 AM — a wrong, sick
     // daylight rather than true night (so it still reads as "daytime, but the warmth
     // got eaten"), with cold flickering streetlights instead of warm fireflies.
@@ -1833,7 +1963,7 @@ export class OverworldScene extends Phaser.Scene {
     const dim = this.trafficDims.get(tex) ?? { w: s(32), h: s(18) };
     const spr = this.add.sprite(v.x * TILE_PX + TILE_PX / 2, v.y * TILE_PX + TILE_PX / 2, tex, 0).setOrigin(0.5, 0.6);
     spr.setDisplaySize(dim.w * this.trafficScale, dim.h * this.trafficScale);
-    spr.setDepth(v.y * TILE_PX + TILE_PX / 2);
+    spr.setDepth(v.y * TILE_PX + TILE_PX / 2 + this.levelLift(spr.x, spr.y));
     this.trafficSprites.set(v.id, spr);
     return spr;
   }
@@ -1962,7 +2092,15 @@ export class OverworldScene extends Phaser.Scene {
         this.player.setFrame(standFrame(this.facing));
       }
     }
-    this.player.setDepth(this.player.y);
+    // WORLD-OVERHAUL P2: the player's terrace changes ONLY on a stairs ('T') tile,
+    // whose level cell carries the terrace being stepped onto. Flat maps have an
+    // all-zero levelGrid and no 'T', so playerLevel stays 0 and depth is unchanged.
+    if (this.maxLevel > 0) {
+      const ftx = Math.floor(this.player.x / TILE_PX);
+      const fty = Math.floor(this.player.y / TILE_PX);
+      if (this.mapDef.grid[fty]?.[ftx] === 'T') this.playerLevel = this.levelGrid[fty][ftx];
+    }
+    this.player.setDepth(this.player.y + this.playerLevel * this.levelDepthBias);
     this.followers.forEach((f, i) => {
       const crumb = this.trail[(i + 1) * 27]; // 27 crumbs back at s(1) spacing = the same (i+1)*108px conga gap as the old *9 at s(3)
       if (!crumb) return;
@@ -1970,7 +2108,7 @@ export class OverworldScene extends Phaser.Scene {
         // angels float instead of walk (Prompt 5 / §A4.7) — 4px lift, 1.5px bob
         f.spr.x = crumb.x;
         f.spr.y = crumb.y - s(4) + Math.sin(this.time.now / 280 + i * 2) * s(1.5);
-        f.spr.setDepth(crumb.y);
+        f.spr.setDepth(crumb.y + this.levelLift(crumb.x, crumb.y));
         return;
       }
       if (f.flit) {
@@ -1978,7 +2116,7 @@ export class OverworldScene extends Phaser.Scene {
         // lift and quicker bob than a mourning angel, his flit cycle always running.
         f.spr.x = crumb.x;
         f.spr.y = crumb.y - s(10) + Math.sin(this.time.now / 220 + i * 2) * s(2);
-        f.spr.setDepth(crumb.y);
+        f.spr.setDepth(crumb.y + this.levelLift(crumb.x, crumb.y));
         return;
       }
       // ADR-024: EASE toward the crumb each frame instead of HARD-SNAPPING. The trail
@@ -1996,7 +2134,7 @@ export class OverworldScene extends Phaser.Scene {
         f.spr.x += fdx * k;
         f.spr.y += fdy * k;
       }
-      f.spr.setDepth(f.spr.y);
+      f.spr.setDepth(f.spr.y + this.levelLift(f.spr.x, f.spr.y));
       // each follower WALKS while it's still closing on its crumb and stands once
       // settled — a per-member motion check works now that they move every frame (not
       // in hops). The LEADER's run flag still picks the gait. crumb.f = its facing.
@@ -2130,7 +2268,7 @@ export class OverworldScene extends Phaser.Scene {
         } else {
           n.spr.x = nx;
           n.spr.y = ny;
-          n.spr.setDepth(ny);
+          n.spr.setDepth(ny + this.levelLift(nx, ny));
           const f: Facing = facing8(n.vx, n.vy, 'down');
           if (!n.def.dog) {
             const anim = `${n.def.sprite}-walk-${f}`;
@@ -2184,7 +2322,7 @@ export class OverworldScene extends Phaser.Scene {
         moved = Math.abs(nx - r.spr.x) + Math.abs(ny - r.spr.y) > s(0.1);
         r.spr.x = nx;
         r.spr.y = ny;
-        r.spr.setDepth(ny);
+        r.spr.setDepth(ny + this.levelLift(nx, ny));
       } else {
         r.vx = -r.vx;
         r.vy = -r.vy;
@@ -2283,7 +2421,7 @@ export class OverworldScene extends Phaser.Scene {
           return;
         }
       }
-      p.spr.setDepth(p.spr.y);
+      p.spr.setDepth(p.spr.y + this.levelLift(p.spr.x, p.spr.y));
     }
   }
 

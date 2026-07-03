@@ -74,19 +74,38 @@ before the next:
 - **P0.5 — Schema seam.** ✅ DONE. `ElevationSchema = { level: string[] }` optional on
   `MapDefSchema` (`src/schemas/index.ts`). A parallel per-tile level plane ('0'=ground,
   '1'..'9' terraces), same W×H as `grid`. Absent ⇒ flat. tsc + full suite green.
-- **P1 — No-op plumbing.** Parse `elevation` into `this.levelGrid: number[][]` in
-  `buildTiles` (`OverworldScene.ts:855`) alongside `solidTiles` (all-zero when absent). Add an
-  OPTIONAL trailing `level?: number[][]` / `sameLevel` predicate to `mapcheck`
-  `components`/`bfsField`/`reachable` (`src/levelkit/mapcheck.ts`) defaulting to flat. Thread
-  nothing from real maps. **Gate: diff `door-audit` + `content-validate` stdout before/after —
-  must be empty for all 90 maps.**
-- **P2 — The spike map + walk-behind.** Author `elev_spike` (dev-only door), two levels + a K
-  face + one T stair. Wire the `buildTiles` elevated branch: the base layer as today, then the
-  **overlay band** (re-emit the upper terrace's lip/face tiles as depth-sorted images at
-  `depth = y + level*LEVEL_DEPTH_BIAS`, `BIAS ≈ mapH*TILE_PX`), and the player "current level"
-  scalar (changes ONLY on a T tile). Keep `LEVEL_DEPTH_BIAS*maxLevel` below `nightDepth`
-  (`OverworldScene.ts:1621` — raise the veil by the same term). Add `elev_spike` to the
-  freeze allowlist. **Gate: live preview — walk behind the lip, climb the stair.**
+- **P1 — No-op plumbing.** ✅ DONE (S2, 2026-07-03). `buildTiles` now builds
+  `this.levelGrid: number[][]` beside `solidTiles` via `buildLevelGrid(h,w)` (all-zero when
+  `elevation` is absent; also computes `this.maxLevel` + `this.levelDepthBias`). `mapcheck`
+  (`src/levelkit/mapcheck.ts`) gained an optional trailing `LevelJoin` predicate on
+  `components`/`reachable`/`bfsField`, default `FLAT_JOIN` (always joins) — no real caller
+  passes it. **PROVEN byte-identical:** captured `door-audit` + `content-validate` stdout
+  before the edit, re-ran after → `diff` empty for all 201 maps (DOOR_IDENTICAL /
+  VALIDATE_IDENTICAL). tsc 0.
+- **P2 — The spike map + walk-behind.** ✅ DONE (S2, 2026-07-03). **LIVE-VERIFIED walk-behind
+  + stair climb** (screenshots this session). `elev_spike` authored (`maps.ts` `buildElevSpike`;
+  24×18, upper terrace level 1 over a 2-row `K` face, one 3-wide `T` stair; **dev-only via
+  `window.mfWarp('elev_spike')`** — no shipped map touched). `buildElevationOverlay()` re-emits
+  the **solid `K` face only** as depth-sorted images at `depth = (y+1)*TILE_PX` — its own BASE-Y,
+  NO level·BIAS (2026-07-03 fix: the BIAS drew the face OVER a lower-ground character at the base,
+  swallowing their torso — "blending into the cliff"; base-y sorting makes the character stand
+  correctly IN FRONT of the wall, Onett-style). The `levelDepthBias` (`= maxLevel>0 ? mapH*TILE_PX
+  : 0`, 0 on flat maps) still lifts the PLAYER/movers so an upper-terrace actor sorts above the
+  terrace. `nightDepth` raised by `maxLevel*BIAS`. Player-level scalar (`this.playerLevel`) changes ONLY on a `T` tile; seeded
+  at spawn from `levelAtPx`. `elev_spike` on the freeze allowlist + a structural guard test
+  (`maps_elev_spike.test.ts`, 5 tests: sole-join, ±1 seams, monotonic stair descent). Live
+  values matched design exactly: `maxLevel 1`, `BIAS 1152`, player depth 636 (ground, occluded)
+  vs cliff-face 1728; terrace depth 1492. **Adversarial review (8-agent workflow) found 3, all
+  fixed:** (F1) props/NPCs/roamers/patrols/followers/vehicles also get the `levelLift(px,py)`
+  lift (0 on flat maps ⇒ byte-identical) so terrace actors sort right; (F2) overlay drops the
+  walkable `^` lip (only the solid face occludes); (F3) guard test hardened (±1 magnitude +
+  monotonic descent). tsc 0; door-audit/validate byte-identical to P1 except the map count
+  `201→202`; render-map `elev` set added.
+  - **NOTE (dev preview boot):** the automation browser tab is background-throttled, so Phaser's
+    1303-asset loader stalls (`inflight:0`). Unstick it from the console:
+    `const L=game.scene.getScene('boot').load; L.maxParallelDownloads=64; const p=setInterval(()=>{ if(!L.list.size&&!L.inflight.size){clearInterval(p);return;} L.checkLoadQueue(); },150);`
+    then pump `game.loop.step(t+=16)` to run boot→title, `GS.reset()`, `game.scene.start('overworld',{mapId:'elev_spike',x:736,y:960})`, pump again, screenshot. A FOREGROUND
+    user tab boots normally with no pump.
 - **P3 — Cross-level collision + reachability.** `collidesStatic` (`:2038`): a tile with
   `levelGrid[ty][tx] !== playerLevel` is solid unless it's a T stair. Door landings set the
   player's level from the destination tile. `mapcheck` proves the upper terrace is reachable
@@ -110,8 +129,8 @@ notes are in this session's transcript (elevation-engine-spike).
 
 | Strip | Contents | Pipeline | Elevation-coupled? |
 |---|---|---|---|
-| hedge-wall | straights/corners/T/cross/caps (16-mask) | tile-tail + buildTiles neighbor-mask | NO (flat) |
-| bramble-wall | same mask family, thorny | tile-tail + neighbor-mask | NO |
+| hedge-wall ✅ DONE (S2) | 16-mask autotile, `hedge_0..15` @ TILESET tail (HEDGE_BASE); `'H'` grid char; `tools/apply-hedge-kit.ts` (interior base + lit rim on open edges, round post for isolated) | tile-tail + buildTiles neighbor-mask | NO (flat) |
+| bramble-wall ✅ DONE (S2) | 16-mask autotile, `bramble_0..15` @ TILESET tail (BRAMBLE_BASE); `'V'` grid char; `tools/apply-bramble-kit.ts` (hedge clone, thornier/darker briar) | tile-tail + buildTiles neighbor-mask | NO (flat) |
 | road-junction | turn/T/cross/dashed-corner | tile-tail (+ isRoad mask) | NO |
 | path→grass transition | soft dither band + apron | augments the 32 path masks | NO |
 | foliage-fade | sapling/shrub/tall-grass fade | tile-tail walkable | NO |
@@ -151,27 +170,70 @@ fixed-point table/palette plan) → Step 2.5 palette (ChatGPT batch, user approv
 implement (ONE sonnet agent/map; read the binding doc first) → Step 4 gate + render/boot
 review → Step 5 close (full suite + build, update THIS doc, leave unstaged).
 
-## CURRENT STATUS (Session 1, 2026-07-03)
+## CURRENT STATUS (Session 2, 2026-07-03)
 
-**LANDED (all gates green: tsc 0, targeted vitest green):**
-- `src/data/maps_ch3.test.ts` — Ch3 fixed-point guard (29 tests): Lucille arrival door,
-  picnic law, all story/PSI/quest trigger ids, reflective Tyne, inter-map door targets.
-- `src/data/elevation.test.ts` — the P0 freeze tripwire (allowlist empty).
-- `src/schemas/index.ts` — the optional `ElevationSchema` seam (P0.5).
-- The three framework docs (this file + WILDERNESS + INTERIOR design languages).
+**LANDED S1 (all gates green):** Ch3 fixed-point guard (`maps_ch3.test.ts`, 29 tests), the P0
+freeze tripwire (`elevation.test.ts`), the P0.5 `ElevationSchema` seam (`schemas/index.ts`), the
+three framework docs.
 
-**NOT YET STARTED:** elevation P1+ (engine), any art authoring, any map rebuild, the
-`PICKUPS` extraction, the back-room generator, KaraokeScene. All work UNSTAGED for the user.
+**LANDED S2 — ELEVATION ENGINE P1 + P2 (Track A), all gates green, UNSTAGED:**
+- **P1 no-op plumbing** — `mapcheck` `LevelJoin` seam + `OverworldScene` `levelGrid`/`maxLevel`/
+  `levelDepthBias` fields + `buildLevelGrid`. PROVEN byte-identical (door-audit + validate diffs
+  empty across all 201 maps).
+- **P2 spike + walk-behind** — `elev_spike` map (dev-only `window.mfWarp`), `buildElevationOverlay`
+  (solid-face occluder band), player-level scalar, `nightDepth` raise, `levelLift` on all movers,
+  `maps_elev_spike.test.ts` guard (5 tests), freeze allowlist entry, `render-map elev` set.
+  **LIVE-VERIFIED**: walk-behind + stair climb screenshots; live values matched design.
+- **Adversarial review** (8-agent workflow): 3 confirmed findings, all fixed (F1 mover depth
+  lift, F2 lip-not-occluder, F3 test hardening). Files touched: `src/levelkit/mapcheck.ts`,
+  `src/scenes/OverworldScene.ts`, `src/data/maps.ts`, `src/data/elevation.test.ts`,
+  `src/data/maps_elev_spike.test.ts` (new), `tools/render-map.ts`, this doc.
 
-## NEXT SESSION (S2) — recommended kickoff
+**LANDED S2 — TERRAIN ART: the HEDGE-WALL + BRAMBLE-WALL autotiles (Track B, batch 1), UNSTAGED:**
+- Authored via ChatGPT (`assets/art/masters/world/hedge-wall-source.png`, user-approved),
+  installed by `tools/apply-hedge-kit.ts` into `otterbrook_tiles_16.png` at the `hedge_0..15`
+  tail columns (`.pre-hedge.bak.png` written first; strip grown to `TILESET.length*64` — the
+  authored_assets pin; existing columns byte-preserved). `HEDGE_BASE` + 16 `solid` tiles in
+  `tiles.ts`; `CHAR_LEGEND['H']='hedge_15'` (solidity + fallback); a `buildTiles` `'H'`
+  neighbour-mask painter (a lit rim faces every OPEN edge, seamless where hedges meet). Gates:
+  tsc 0; door-audit + validate **byte-identical to the P2 baseline** (no shipped map uses `'H'`
+  yet); autotiling proven by `output/hedge_proof.png` (a hedge maze assembled from the 16 tiles).
+- **BRAMBLE-WALL** (Track B batch 1 part 2) — DONE, the hedge pipeline cloned: ChatGPT master
+  (`bramble-wall-source.png`, thornier/darker briar) → `tools/apply-bramble-kit.ts` → `bramble_0..15`
+  @ tail (`BRAMBLE_BASE`), `'V'` grid char, `buildTiles` `'V'` mask branch, `CHAR_LEGEND['V']=
+  'bramble_15'`. `.pre-bramble.bak.png` first; byte-identical to the P2 baseline; maze proof in
+  `output/bramble_proof.png`.
+- **STILL REMAINING (flat strips):** road-junction, path→grass transition, foliage-fade
+  (`docs/WORLD_OVERHAUL_HANDOFF.md` art ledger) — same tile-tail + neighbour-mask recipe.
 
-Two parallel tracks (pick per the user's appetite that session):
-1. **Elevation engine P1→P2** — the no-op plumbing + the `elev_spike` map + the overlay
-   renderer, ending in a live walk-behind preview for user sign-off. (Foundational.)
-2. **Flat terrain art batch 1** — author the hedge + bramble corridor strips (elevation-
-   independent) via ChatGPT (user approves), install at the TILESET tail, add the buildTiles
-   neighbor-mask, prove with a render. (Unblocks every overworld.)
+**NOT YET STARTED:** elevation **P3** (cross-level collision + reachability — the next engine
+step), P4 cliff art, P5 foggybottom; **Track B remaining flat strips** (road-junction, path→grass
+transition, foliage-fade — hedge + bramble DONE); any map rebuild; `PICKUPS` extraction; back-room
+generator; KaraokeScene.
 
-Do Step 0 recon first (`git status`; confirm no sibling edits to `OverworldScene.ts`/
-`tiles.ts`/`schemas`). Then run the P1 diff-gate (door-audit + content-validate stdout must be
-byte-identical for all 90 maps) before touching the spike.
+## NEXT SESSION (S3) — recommended kickoff
+
+Step 0 recon first (`git status`; confirm no sibling edits to `OverworldScene.ts`/`tiles.ts`/
+`maps.ts`/`schemas`/`mapcheck.ts`). Then pick up either/both:
+
+1. **Elevation P3 — cross-level collision + reachability (Track A cont.).** Now that the render
+   walk-behind is proven, make levels COLLIDE: in `collidesStatic` (`OverworldScene.ts`), a tile
+   whose `levelGrid[ty][tx] !== this.playerLevel` is solid UNLESS it's a `T` stair. Wire the
+   `mapcheck` `LevelJoin` (already seamed in P1) from real maps so `content-validate` proves the
+   upper terrace is reachable ONLY via the stair (no orphan). Door landings set `playerLevel`
+   from the destination tile. **Gate: `elev_spike` guard + door-audit; 201 flat maps byte-
+   identical (the `LevelJoin` must stay `FLAT_JOIN` for every flat map).** On `elev_spike` today
+   the `K` wall already blocks cross-level walking, so P3 is the GENERAL rule + the validator wire.
+2. **Track B — remaining flat terrain strips.** HEDGE-wall (`'H'`) + BRAMBLE-wall (`'V'`) autotiles
+   both LANDED this session (see above). Remaining, same recipe (ChatGPT author on magenta → clone
+   `apply-hedge-kit.ts` → `<NAME>_BASE` + 16 tiles + a FREE grid char (taken: `H`,`V`) + `CHAR_LEGEND`
+   entry + `buildTiles` mask branch → maze proof): road-junction (turn/T/cross), path→grass
+   transition band, foliage-fade (sapling/shrub/tall-grass). None BLOCK P3.
+   - **Reuse recipe for the ChatGPT harvest** (this session, works): the generated `<img>` src is
+     a same-origin signed `estuary/content` URL — fetch it IN-PAGE (`await fetch(img.src)` where
+     `img.naturalWidth` is large), `URL.createObjectURL` → `<a download>` → move from Downloads.
+     A plain `?id=...` fetch 404s (needs the signed `p`/`ts`). Do NOT return the URL from the JS
+     tool (it blocks query-string data).
+
+The dev-preview boot workaround (loader unstick + loop pump) is documented under P2 above —
+reuse it for any future live elevation preview from the automation browser.

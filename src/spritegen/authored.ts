@@ -836,7 +836,7 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   // prop's ground line + y-sort depth) with art-true widths. See
   // tools/slice-otterbrook-world.js.
   tree: { w: 24, h: 34 },
-  tree_b: { w: 25, h: 34 },
+  tree_b: { w: 33, h: 34 }, // 2026-07-03: re-authored full-canopy tree (ChatGPT→magenta→chroma-key); the old 300×408 had its top clipped by bg removal. 984×999 source, aspect 0.985 ⇒ w33 at h34
   tree_c: { w: 29, h: 34 },
   pine: { w: 25, h: 34 },
   sign: { w: 25, h: 18 },
