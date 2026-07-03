@@ -4564,13 +4564,26 @@ for (const [id, a] of Object.entries(MAP_AUDIO)) {
   if (a.muffle !== undefined) m.muffle = a.muffle;
 }
 
+// ─── WORLD-OVERHAUL S5 — MAP ATMOSPHERE (opt-in fog veil, #P5) ───────────────
+// A per-map atmospheric render layer (OverworldScene.buildFog): a pale veil whose
+// density scales with the player's terrace. Central + post-assembly like MAP_AUDIO
+// so the fog stays OPT-IN and every OTHER map is byte-identical (only the elevated
+// foggybottom sets it). See schemas/index.ts MapDefSchema.atmosphere + elevation.test.
+const MAP_ATMOSPHERE: Record<string, 'fog'> = {
+  foggybottom: 'fog', // the machine-fog ceiling that sinks with you as you descend the terraces
+};
+for (const [id, atmosphere] of Object.entries(MAP_ATMOSPHERE)) {
+  const m = MAPS[id];
+  if (m) m.atmosphere = atmosphere;
+}
+
 // ─── Wave 2 (ADR-108) — REFLECTIVE SURFACES (#6) ────────────────────────────
 // Tile rects (in tiles) over the maps' water; OverworldScene mirrors nearby actors
 // below each surface line (Wave 3). Central + post-assembly like MAP_AUDIO; the
 // content-validate `reflect` gate proves every rect is in-bounds AND overlaps a
 // reflective (sea) tile, so a grid edit that moves the water fails the build here.
 const MAP_REFLECT: Record<string, ReflectZone[]> = {
-  foggybottom: [{ x: 0, y: 25, w: 40, h: 3, within: 4 }], // the river Tyne along the south lip
+  foggybottom: [{ x: 0, y: 49, w: 60, h: 3, within: 4 }], // the river Tyne along the S lip (S5 rebuild: 60×52, sea rows 49-51)
   otterbrook: [{ x: 99, y: 43, w: 6, h: 4, within: 3 }], // the Pond Park water feature (Eagleland re-seat)
   golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
   puerto_sol: [{ x: 0, y: 30, w: 52, h: 4, within: 4 }], // the working seafront

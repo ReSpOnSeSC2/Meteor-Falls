@@ -668,6 +668,12 @@ export const MapDefSchema = z.strictObject({
   grid: z.array(z.string().min(1)).min(1),
   /** OPT-IN elevation plane (see ElevationSchema). Absent ⇒ the map is flat. */
   elevation: ElevationSchema.optional(),
+  /** WORLD-OVERHAUL S5 (Ch3+): OPT-IN atmospheric render layer. 'fog' draws a pale,
+   *  level-scaled veil (buildFog, OverworldScene) whose density THICKENS on lower
+   *  terraces — the foggybottom "fog ceiling that sinks with you" signature. Absent ⇒
+   *  no veil, byte-identical to today (only foggybottom opts in, bound post-assembly
+   *  by id in maps.ts's MAP_ATMOSPHERE, mirroring MAP_AUDIO). */
+  atmosphere: z.enum(['fog']).optional(),
   props: z.array(PropDefSchema),
   npcs: z.array(NpcDefSchema),
   signs: z.array(SignDefSchema),

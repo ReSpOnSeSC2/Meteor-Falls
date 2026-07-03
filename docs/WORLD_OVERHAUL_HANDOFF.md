@@ -166,14 +166,41 @@ before the next:
     never occluded"). Neither blocks the face payoff; both are a fast-follow (a second small strip
     + a `buildTiles` T-run branch). Do them when a shipped map's cliffs actually END mid-map or
     show prominent stairs (foggybottom may want caps).
-  - **NOT LIVE-VERIFIED YET:** the running multi-band walk-behind. Blast radius is ZERO for
-    shipped content (flat maps byte-identical; `elev_spike` is dev-warp-only), so it shipped on
-    the gates. Live-verify on `window.mfWarp('elev_spike')` (3-row face now exercises top/mid/base)
-    with the P2 loader-pump recipe is the first S5 checklist item.
-- **P5 — foggybottom terrace-aware.** First real content map to opt in (its own guard test +
-  allowlist entry). Now that the global elevation law (below) machine-checks seams and the P4 face
-  kit renders, foggybottom can be authored terrace-aware in one pass. This is the pilot for the
-  S5 "every map reimagined from scratch" bar (see NEXT SESSION).
+  - **LIVE-VERIFIED (S5, 2026-07-03):** the running multi-band walk-behind. Via the P2 loader-pump
+    recipe on `window.mfWarp('elev_spike')` (Chrome MCP, dev tab): the 3-row face renders all three
+    P4 bands DISTINCTLY (grassy `cliff_top` overhang → hashed `cliff_mid_a/b` masonry strata →
+    `cliff_base` scree), the `T` stair is drawn un-occluded cutting the face, and depth-sorting is
+    correct in all three states — ground player at the cliff FOOT draws IN FRONT of the wall (feet
+    depth 704 > base-row depth 640, not swallowed), terrace player is LIFTED (depth 1408 = y256 +
+    1·BIAS1152) so it sorts above the terrace, and `playerLevel` flips 0↔1 exactly on the stair.
+    Screenshots in this session's transcript. **P4 face is fully DONE** (corners/caps + dedicated
+    stair-band tiles remain the documented fast-follow, only if a shipped map's cliffs END mid-map
+    or show prominent stairs).
+- **P5 — foggybottom terrace-aware.** ✅ DONE (S5, 2026-07-03). The FIRST shipped elevated map +
+  the S5 anti-formula pilot. **SIGNATURE: a four-terrace sea-cliff you descend into a sinking
+  fog-ceiling** — RIM GARDENS (L3, sunlit) → HIGH STREET (L2, grey canyon) → MARKET SHELF (L1) →
+  DROWNED QUAY (L0, fog-soup), 60×52, three stairs STAGGERED W/C/E so the descent doglegs. New
+  engine: an opt-in `atmosphere:'fog'` veil (`buildFog`, cloned from `buildNight`) whose alpha
+  scales with `playerLevel` (0.14 rim → 0.62 quay; NORMAL blend, cool slate 0xaeb9c4, re-tweens on
+  each stair via `updateFogForLevel`) — the "fog ceiling that sinks with you." The bespoke fog
+  wisps/haloes/fog-horn/Roman-drain + per-mover terraces + facade-density are the honest FAST-FOLLOW
+  (NPCs are `idle`, spawner pinned to the flat L1 interior, since per-mover terrace collision is
+  still deferred). `maps_foggybottom.test.ts` (10 tests, mirrors elev_spike + generalised to 4
+  terraces + passes `elevationLawViolations`) + `ELEVATED_ALLOWLIST` entry, same change. All fixed
+  points preserved (Lucille landing moved to the quay + `FOGGYBOTTOM_LANDING` synced; foggy_moor
+  paired door re-aimed to the rim gate; `MAP_REFLECT` moved to the new Tyne rows; the 3 q_sender
+  triggers one-per-terrace; the chemist shop; one picnic; settlement/area/ambience by id). The Kettle
+  is a bespoke front+back pub interior (taproom keeper + snug lore-regular). Gates: tsc 0 · door-audit
+  (no real/non-waived) · validate (byte-identical for EVERY other map; foggybottom's occupyCity unit
+  count dropped 202→197 maps as the terraced town carries fewer catalog facades, +2 Kettle) · full
+  vitest 1349/1349 · build 0. **LIVE-VERIFIED** (Chrome MCP, loader-pump): the four terraces render,
+  the fog visibly thickens rim→quay, walk-behind cliffs at every terrace foot, staggered stairs, and
+  the hi-res occupyCity buildings (ARCHIVE/FLATS) all read. Files: `src/schemas/index.ts`
+  (`atmosphere` seam), `src/scenes/OverworldScene.ts` (`buildFog`/`fogAlphaForLevel`/`updateFogForLevel`
+  + the T-tile hook), `src/data/maps_ch3.ts` (rebuilt `buildFoggybottom` + `buildKettleTaproom/Snug` +
+  `FOGGYBOTTOM_LANDING` + foggy_moor return door), `src/data/maps.ts` (`MAP_ATMOSPHERE` + `MAP_REFLECT`),
+  `src/data/dialogue.ts` (4 Kettle lines), `src/data/elevation.test.ts`, `src/data/maps_foggybottom.test.ts`
+  (new), `docs/DIVERSITY_LEDGER.md` (new — the NO-FORMULA gate ledger).
 
 Effort: ~2–2.5 focused weeks to a terraced foggybottom; **P0–P3 (~1 week) is the de-risking
 milestone.** Risk concentrates in the depth/occlusion band, the hot-path collision change,
@@ -226,6 +253,35 @@ quote coords verbatim + fixed points) → Step 2 blueprint (main model; district
 fixed-point table/palette plan) → Step 2.5 palette (ChatGPT batch, user approves) → Step 3
 implement (ONE sonnet agent/map; read the binding doc first) → Step 4 gate + render/boot
 review → Step 5 close (full suite + build, update THIS doc, leave unstaged).
+
+## CURRENT STATUS (Session 5, 2026-07-03) — THE PILOT SHIPPED
+
+**LANDED S5 (all gates green, UNSTAGED — user drives the commit):**
+- **Target 0 (recon):** on latest main (`fd8ca10f`); door-audit + validate baselines captured. Confirmed
+  the `foggybottom` levelkit HASH_PIN is DECOUPLED (it pins a `SAMPLE_RECIPES` draft, not `buildFoggybottom`
+  — no re-pin needed) and `maps_ch3.test.ts` is the semantic rebuild guard (contracts pinned, no coords).
+- **Target 1 (P4 close-out):** LIVE-VERIFIED the multi-band walk-behind on `elev_spike` (all three bands
+  distinct, stair un-occluded, depth-sorting correct in all states). P4 face is fully DONE. See the P4 entry.
+- **Target 2 (P5 foggybottom PILOT):** ✅ SHIPPED — the first anti-formula rebuild AND the first shipped
+  elevated map. Signature = the four-terrace fog-cliff descent + the opt-in `atmosphere:'fog'` level-scaled
+  veil. Full detail in the **P5 phase entry** above. Diversity ledger seeded (`docs/DIVERSITY_LEDGER.md`),
+  foggybottom logged as signature #1. The user's three art-direction decisions this session (AskUserQuestion):
+  engine fog-tint (not bespoke overlay), ship structure first (bespoke props = fast-follow), The Kettle a full
+  front+back interior — all delivered.
+- Gates: tsc 0 · door-audit (no real/non-waived) · validate (every non-foggybottom map BYTE-IDENTICAL) · full
+  vitest 1349/1349 · build 0 · render-map + live-verify. Files listed in the P5 entry.
+
+**NEXT (S6): the foggybottom FAST-FOLLOWS, then the next Ch3 maps.**
+1. **foggybottom polish (optional, art-gated):** bespoke ChatGPT art — drifting fog-wisp props, landmark HALO
+   glows (market cross / gas lamps / pub sign, drawn ABOVE `fogDepth`), a fog-horn post, and the Roman
+   drain-arch that turns the SW-quay nook into the real walk-behind + machine-fog-source SECRET. Then the
+   deferred P4 corners/caps + stair-band strip if a live cliff-end reads raw. Each needs a user-approved batch.
+2. **per-mover terrace collision** — the engine gap the S5 pilot side-stepped with idle NPCs. Do it when a
+   map needs cross-terrace ROAMERS/wanderers; unblocks living elevated towns.
+3. **The next Ch3 maps** (foggy_moor → wintermoor_grounds → the_old_stones → the Wintermoor dungeon), each
+   through the concept→blueprint→(palette)→implement→gate→review→ledger process. The foggybottom builder is now
+   the reference pattern for an elevated settlement (grid bands + generated level plane + staggered stairs +
+   fixed-point recomputes). Non-elevated maps can be delegated to one Sonnet implementer per map.
 
 ## CURRENT STATUS (Session 4, 2026-07-03)
 

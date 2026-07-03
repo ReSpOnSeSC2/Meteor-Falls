@@ -660,6 +660,13 @@ export class OverworldScene extends Phaser.Scene {
   /** the terrace the PLAYER stands on (0 = ground). Non-zero only on an elevated
    *  map; changes solely when the player steps onto a stairs ('T') tile. */
   private playerLevel = 0;
+  /** WORLD-OVERHAUL S5 fog atmosphere (opt-in, foggybottom): the pale level-scaled
+   *  veil, its parked depth, and the terrace its density is currently tuned to (so the
+   *  per-frame level check only re-tweens on an actual change). null / -1 unless the
+   *  map declares atmosphere:'fog'. */
+  private fogVeil: Phaser.GameObjects.Rectangle | null = null;
+  private fogDepth = 0;
+  private fogShownLevel = -1;
   /** highest terrace on the current map (0 = flat). */
   private maxLevel = 0;
   /** per-level depth lift (≈ one map-height of px) that sorts each terrace above
@@ -823,6 +830,7 @@ export class OverworldScene extends Phaser.Scene {
     this.isNight = night; // S15c: NPC dialogueDay variants read this
     this.hushDark = hushDark;
     if (night) this.buildNight();
+    this.buildFog(); // WORLD-OVERHAUL S5: opt-in level-scaled atmosphere veil (foggybottom); no-op unless atmosphere:'fog'
     if (this.opPhase() === 0) this.showBanner(night); // no map-name/"2 A.M." banner during the opening cinematic
 
     // 'starfall' runs UNBROKEN across every opening phase (playMusic is idempotent,
@@ -1799,6 +1807,56 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
+  /** WORLD-OVERHAUL S5 — the opt-in FOG atmosphere (foggybottom's signature). A pale,
+   *  cold grey-blue veil (a scrollFactor-0 overscan rect, the buildNight machinery) whose
+   *  density is keyed to the PLAYER's terrace: a thin haze high on the rim, a thick soup
+   *  down on the quay — "the fog ceiling that sinks with you." NORMAL alpha blend (not the
+   *  night MULTIPLY): it lightens + desaturates toward grey, reading as damp haze rather
+   *  than darkness. Parked JUST BELOW the night veil's depth so a (rare) night+fog map
+   *  still darkens on top; future landmark HALO props draw at fogDepth+delta so their glow
+   *  reads THROUGH the veil (the firefly precedent). No-op unless atmosphere:'fog', so every
+   *  other map is byte-identical. */
+  private buildFog(): void {
+    if (this.mapDef.atmosphere !== 'fog') return;
+    const r = overscanRect(this.scale.width, this.scale.height);
+    // just under nightDepth (which is +s(300)) so night's MULTIPLY sits above fog if both run
+    this.fogDepth = this.solidTiles.length * TILE_PX + this.maxLevel * this.levelDepthBias + s(280);
+    const veil = this.add
+      .rectangle(
+        r.x - this.scale.width,
+        r.y - this.scale.height,
+        r.w + this.scale.width * 2,
+        r.h + this.scale.height * 2,
+        0xaeb9c4, // cool slate-grey — Northumbrian machine-fog (tuned live: reads as haze, not a dead filter)
+      )
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(this.fogDepth)
+      .setAlpha(this.fogAlphaForLevel(this.playerLevel));
+    this.fogVeil = veil;
+    this.fogShownLevel = this.playerLevel;
+  }
+
+  /** the veil's target alpha for a terrace: thinnest at the top level, thickest at the
+   *  ground (0). Linear in (maxLevel − level) so each stair DOWN visibly thickens the fog. */
+  private fogAlphaForLevel(level: number): number {
+    if (this.maxLevel <= 0) return 0.34;
+    return 0.14 + (this.maxLevel - level) * (0.48 / this.maxLevel); // rim ~0.14 (thin veil) → quay ~0.62 (soup)
+  }
+
+  /** re-tune the fog density when the player changes terrace (called each frame from the
+   *  'T'-tile transition; only actually tweens on a real level change). */
+  private updateFogForLevel(): void {
+    if (!this.fogVeil || this.playerLevel === this.fogShownLevel) return;
+    this.fogShownLevel = this.playerLevel;
+    this.tweens.add({
+      targets: this.fogVeil,
+      alpha: this.fogAlphaForLevel(this.playerLevel),
+      duration: 450,
+      ease: 'Sine.easeInOut',
+    });
+  }
+
   private showBanner(night = false): void {
     // banner names are all-caps; resolved {rex} et al. get uppercased to match
     const name = vars(this.mapDef.name).toUpperCase();
@@ -2114,6 +2172,7 @@ export class OverworldScene extends Phaser.Scene {
       const ftx = Math.floor(this.player.x / TILE_PX);
       const fty = Math.floor(this.player.y / TILE_PX);
       if (this.mapDef.grid[fty]?.[ftx] === 'T') this.playerLevel = this.levelGrid[fty][ftx];
+      this.updateFogForLevel(); // S5: thicken/thin the fog veil as the terrace changes
     }
     this.player.setDepth(this.player.y + this.playerLevel * this.levelDepthBias);
     this.followers.forEach((f, i) => {
