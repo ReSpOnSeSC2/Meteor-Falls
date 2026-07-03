@@ -20,7 +20,7 @@ import { ElevationSchema } from '../schemas';
  *  engine spike (`elev_spike`) lands; grows one deliberate id at a time thereafter. */
 const ELEVATED_ALLOWLIST = new Set<string>([
   'elev_spike', // World Overhaul S2/P2 — the engine spike (dev-only, window.mfWarp)
-  // 'foggybottom',  // added when the Ch3 pilot goes terrace-aware
+  'foggybottom', // World Overhaul S5/P5 — the Ch3 pilot: the four-terrace fog-cliff descent
 ]);
 
 describe('elevation — the opt-in freeze (shipped maps stay flat until deliberately elevated)', () => {

@@ -58,6 +58,23 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sign_quay: [
     'THE DOCK — the steps down to the water are slippery. The river is even colder than it looks, and it already looks freezing.',
   ],
+  // — THE KETTLE (the high-street pub: taproom keeper + snug regular; §A11 obsessions) —
+  npc_kettle_keeper: [
+    "@Welcome to The Kettle. I don't serve ale before noon and I don't serve fog at all, though the Lord knows it gets in.",
+    "@Every mug in this town's got a ring of grey round the rim by evening. The fog SETTLES in your tea, see. I wipe 'em twice. Some folk say I fuss. Some folk drink cloudy tea, and I do not associate with them.",
+    '@Old Nan\'s in the back if you want the town\'s history. Fair warning: she\'ll give you ALL of it.',
+  ],
+  npc_kettle_regular: [
+    "@Sit down, love. You came off the moor, didn't you? You've got the look — like the town swallowed you whole and you're only just realising how far DOWN you walked.",
+    '@The fog\'s not weather. Weather comes and goes. This just... rises. Thickest at the bottom, by the water. My grandad said it comes up the OLD ROMAN DRAINS — the ones that run all the way up to that school on the moor.',
+    "@They built something up there that BREATHES it out, and it rolls downhill and pools in the low places, same as any cold thing does. That's why the quay's drowned and the rim stays bright. Machines don't tire, so the fog never lifts. Somebody ought to go up and switch it off. Somebody young. Somebody like you, maybe.",
+  ],
+  sign_kettle: [
+    'THE KETTLE — est. before the fog, and spiteful about it. NO MUDDY BOOTS. NO TALK OF THE SCHOOL. TEA SERVED PROPERLY OR NOT AT ALL.',
+  ],
+  sign_kettle_hearth: [
+    '(A framed, fading photograph over the hearth: FOGGYBOTTOM, before. The same stone terraces — but you can see the river at the bottom, clear as glass, and the whole town at a single glance.)',
+  ],
   // the chemist's shop surface (no flair here — §A11.9 menu/shop discipline)
   shop_fb_chemist_greet: ["@Boothe's Pharmacy and Teas. Take your pick. Most of what I sell will fix you, not hurt you."],
   shop_fb_chemist_bye: ['@Watch out for the fog. And let your tea sit long enough before you drink it, please.'],
