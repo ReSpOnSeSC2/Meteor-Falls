@@ -59,7 +59,7 @@ describe('the slot family (3 slots + rolling backup)', () => {
     GS.saveTo(2);
 
     GS.reset();
-    GS.data.map = 'hickory_hill';
+    GS.data.map = 'otterbrook';
     GS.data.cashOnHand = 33;
     GS.saveTo(3);
 
@@ -252,7 +252,7 @@ describe('defeat respawn targeting (§A4.7 — one function S11 reuses)', () => 
     GS.saveTo(2);
     GS.reset();
     expect(GS.continueFrom(2)).toBe('ok');
-    GS.data.map = 'hickory_hill'; // wandered off without saving
+    GS.data.map = 'brickton'; // wandered off without saving
     expect(GS.respawnPoint().mapId).toBe('otterbrook');
   });
 });

@@ -1,0 +1,9 @@
+# Third-party (EarthBound / Nintendo) reference SCREENSHOTS are kept LOCAL only —
+# they are copyrighted and must not be redistributed on the remote. The tracked
+# CATALOG.md descriptions + the .url resource links preserve the reference value
+# for future work. If you deliberately want a raster committed, force-add it:
+#   git add -f assets/art/masters/reference/<file>
+*.png
+*.jpg
+*.jpeg
+*.webp

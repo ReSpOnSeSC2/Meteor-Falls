@@ -591,6 +591,19 @@ const WORLD_PROP_KEYS = [
   // foggybottom-props-source.png (tools/slice-prop-strip.cjs, magenta strip).
   'fb_postbox', 'fb_pub_sign', 'fb_market_cross', 'fb_gas_lamp',
   'fb_barrel', 'fb_window_box', 'fb_crab_pot', 'fb_rope_coil',
+  // Otterbrooke interiors (2026-07-03) — shop-fixtures strip (Batch B), sliced from
+  // masters/world/otterbrook-shopfix-source.png (tools/slice-prop-strip.cjs).
+  'prop_soda_fountain', 'prop_pastry_case', 'prop_brick_oven', 'prop_flour_bins', 'prop_mixing_station',
+  'prop_burger_counter', 'prop_flat_grill', 'prop_deep_fryer', 'prop_range_hood', 'prop_pharmacy_rack',
+  // domestic strip (Batch D)
+  'fridge', 'dining_table', 'mailboxes', 'rocking_chair', 'trophy_shelf',
+  // bank + civic strip (Batch C)
+  'prop_teller_grille', 'prop_velvet_rope', 'prop_rate_board', 'prop_vault_door', 'prop_deposit_boxes',
+  'prop_gold_stack', 'civic_directory_board', 'ballot_box', 'council_podium',
+  // police + medical strip (Batch C)
+  'wanted_board', 'gun_rack', 'cell_bars', 'evidence_locker', 'privacy_curtain', 'iv_stand',
+  // workshop strip (Batch A)
+  'prop_rocket_fuselage', 'prop_workbench', 'prop_blueprint_table', 'prop_parts_bin',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -610,6 +623,11 @@ const BASE_FACADE_KEYS = [
   // ADR-118 rework — the Otterbrook STATION HOUSE (the little brick P.D. Borden
   // marches you into). Authored hi-res facade; sizes like bldg_civic next door.
   'facade_otter_station',
+  // Otterbrooke rebuild (2026-07-03) — authored on-model shop facades sliced from the
+  // locked town-map (masters/world/otterbrook-shops-source.png). drugstore/arcade/bldg_bank
+  // were overwritten with the new on-model art; bakery + burger are new keys.
+  'bldg_ob_bakery', 'bldg_ob_burger', 'bldg_ob_city_hall', 'bldg_ob_clinic',
+  'bldg_ob_house_green', 'bldg_ob_workshop', 'bldg_ob_house_c', 'bldg_ob_cottage', 'bldg_ob_apt_green',
 ] as const;
 
 const REGION_FACADE_KEYS = [
@@ -893,6 +911,45 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   prop_trail_marker: { w: 24, h: 32 },
   prop_guardrail: { w: 56, h: 22 },
   prop_culvert: { w: 40, h: 32 },
+  // Otterbrooke interiors — shop fixtures (Batch B, 2026-07-03; sizes aspect-matched to the sliced art)
+  prop_soda_fountain: { w: 20, h: 22 },
+  prop_pastry_case: { w: 20, h: 22 },
+  prop_brick_oven: { w: 18, h: 26 },
+  prop_flour_bins: { w: 24, h: 18 },
+  prop_mixing_station: { w: 18, h: 20 },
+  prop_burger_counter: { w: 20, h: 22 },
+  prop_flat_grill: { w: 21, h: 18 },
+  prop_deep_fryer: { w: 18, h: 22 },
+  prop_range_hood: { w: 14, h: 16 },
+  prop_pharmacy_rack: { w: 18, h: 26 },
+  // domestic (Batch D; aspect-matched)
+  fridge: { w: 19, h: 30 },
+  dining_table: { w: 36, h: 20 },
+  mailboxes: { w: 21, h: 20 },
+  rocking_chair: { w: 16, h: 20 },
+  trophy_shelf: { w: 21, h: 20 },
+  // bank + civic (Batch C; aspect-matched)
+  prop_teller_grille: { w: 21, h: 24 },
+  prop_velvet_rope: { w: 13, h: 18 },
+  prop_rate_board: { w: 15, h: 18 },
+  prop_vault_door: { w: 34, h: 36 },
+  prop_deposit_boxes: { w: 28, h: 26 },
+  prop_gold_stack: { w: 22, h: 16 },
+  civic_directory_board: { w: 14, h: 18 },
+  ballot_box: { w: 13, h: 18 },
+  council_podium: { w: 16, h: 22 },
+  // police + medical (Batch C; aspect-matched)
+  wanted_board: { w: 21, h: 20 },
+  gun_rack: { w: 14, h: 22 },
+  cell_bars: { w: 21, h: 28 },
+  evidence_locker: { w: 26, h: 26 },
+  privacy_curtain: { w: 20, h: 24 },
+  iv_stand: { w: 11, h: 26 },
+  // workshop (Batch A; aspect-matched — centerpiece is a whimsical inventor's contraption)
+  prop_rocket_fuselage: { w: 34, h: 40 },
+  prop_workbench: { w: 28, h: 22 },
+  prop_blueprint_table: { w: 24, h: 22 },
+  prop_parts_bin: { w: 19, h: 18 },
   prop_pegboard_wall: { w: 46, h: 30 },
   prop_tool_shelf: { w: 36, h: 30 },
   prop_lockbox_counter: { w: 46, h: 24 },

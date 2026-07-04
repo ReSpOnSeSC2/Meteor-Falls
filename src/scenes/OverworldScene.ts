@@ -260,11 +260,7 @@ const OTTER_CELL = { tx: 200, ty: 56 } as const;
  *  hill_road and hickory_hill — keep new connective maps in sync here. (The
  *  meadow long-walk to Brickton is a POST-dawn daytime route and stays off.) */
 const CH1_STORY_NIGHT_MAPS: ReadonlySet<string> = new Set([
-  'otterbrook',
-  'hill_road',
-  'hickory_trail',
-  'whisperwood_rise',
-  'hickory_hill',
+  'otterbrook', // the town + the whole hill + the crater are ONE elevated map now (S5)
   // the UNDER-OAK (ADR-121 rework) rides the same clock: pitch-hushed until the
   // Tick dies, then the post-victory rebuild lets the real light down the roots
   'oak_roots',
@@ -5034,9 +5030,10 @@ export class OverworldScene extends Phaser.Scene {
     // Ch.1 opening — a 4-phase cinematic across hickory_hill → otterbrook →
     // hickory_hill → rex_bedroom (engine/opening.ts), each re-entered after a cut.
     switch (this.opPhase()) {
+      // the opening is ONE continuous cinematic on otterbrook now (the crater is on this
+      // elevated map): phase 1 runs meteor-fall → house pan → hill climb INLINE, then cuts
+      // to rex_bedroom for the wake (phase 4). No more map-hopping between beats.
       case 1: this.openingRequested = false; await this.playOpeningCinema(); return;
-      case 2: await this.openingHouseOverview(); return;
-      case 3: await this.openingHillClimb(); return;
       case 4: await this.introScene(); return;
     }
     if (this.registry.get('defeated') === true) {
@@ -6791,8 +6788,8 @@ export class OverworldScene extends Phaser.Scene {
     );
     landed.forEach((o) => o.setVisible(false));
     const prop = landed[0];
-    const impactX = prop ? prop.x + prop.displayWidth / 2 : 15 * TILE_PX;
-    const impactY = prop ? prop.y + prop.displayHeight / 2 : 6 * TILE_PX;
+    const impactX = prop ? prop.x + prop.displayWidth / 2 : 72 * TILE_PX;
+    const impactY = prop ? prop.y + prop.displayHeight / 2 : 7 * TILE_PX;
     // the night tint now covers at any zoom, so the opening sits WIDER
     cam.setZoom(0.8);
     cam.centerOn(impactX, impactY);
@@ -6846,9 +6843,10 @@ export class OverworldScene extends Phaser.Scene {
     // 4) the painted impact card (held long)
     await showCard(this, 'hickory_hill', { chapter: 'ch1', caption: 'It comes down behind Hickory Hill, and the whole town feels it land.', ms: 3800 });
 
-    // hand off to the OVERVIEW (phase 2): cut to town and open on {rex}'s house.
+    // hand off to the OVERVIEW (phase 2) INLINE — same elevated map (no cut). The crater,
+    // {rex}'s house, and the climb all live here now.
     GS.setFlag('op_fell');
-    this.cinematicCut('otterbrook', 128, 128);
+    await this.openingHouseOverview();
   }
 
   /** Opening phase 2 (Otterbrook): the overview opens on {rex}'s house, holds, then
@@ -6862,8 +6860,8 @@ export class OverworldScene extends Phaser.Scene {
       (o): o is Phaser.GameObjects.Image =>
         o instanceof Phaser.GameObjects.Image && o.texture.key === 'house_rex',
     );
-    const houseX = house ? house.x + house.displayWidth / 2 : 6 * TILE_PX;
-    const houseY = house ? house.y + house.displayHeight / 2 : 3 * TILE_PX;
+    const houseX = house ? house.x + house.displayWidth / 2 : 15 * TILE_PX;
+    const houseY = house ? house.y + house.displayHeight / 2 : 49 * TILE_PX;
     cam.setZoom(0.9); // open on the house + its street (wide), not jammed in close
     cam.centerOn(houseX, houseY);
     if (this.entryBlackout) {
@@ -6875,11 +6873,11 @@ export class OverworldScene extends Phaser.Scene {
     // establish on the sleeping house, with a line so the player knows whose it is
     await showCaption(this, "Down one of these streets, a kid named {rex} is fast asleep — same as the whole town.", { ms: 2800 });
     // then drift up toward the hill road, narrating what's waiting up there
-    cam.pan(13 * TILE_PX, 0, 4200, 'Sine.easeInOut'); // a slow drift up toward the hill road
+    cam.pan(20 * TILE_PX, 0, 4200, 'Sine.easeInOut'); // a slow drift up toward the hill road (the north trail gate)
     await showCaption(this, "But something came down on the hill tonight, and it's still glowing up there.", { ms: 3400 });
     await this.wait(400);
     GS.setFlag('op_house');
-    this.cinematicCut('hickory_hill', 232, 660); // the south trail spawn
+    await this.openingHillClimb(); // INLINE — the climb is up THIS map's terraces now
   }
 
   /** Opening phase 3 (Hickory Hill): the overview climbs the hill — the trail up
@@ -6893,11 +6891,10 @@ export class OverworldScene extends Phaser.Scene {
       (o): o is Phaser.GameObjects.Image =>
         o instanceof Phaser.GameObjects.Image && o.texture.key === 'meteor_rock_hickory_hill',
     );
-    const craterX = landed ? landed.x + landed.displayWidth / 2 : 15 * TILE_PX;
-    const craterY = landed ? landed.y + landed.displayHeight / 2 : 6 * TILE_PX;
-    const mapH = this.mapDef.grid.length * TILE_PX;
+    const craterX = landed ? landed.x + landed.displayWidth / 2 : 72 * TILE_PX;
+    const craterY = landed ? landed.y + landed.displayHeight / 2 : 7 * TILE_PX;
     cam.setZoom(0.78); // wide — the whole hill reads as a climb
-    cam.centerOn(craterX, mapH - s(40)); // start at the foot of the hill (the trail up)
+    cam.centerOn(craterX, 71 * TILE_PX); // start at the town/hill foot (L0 top, base row 65) and pan UP
     if (this.entryBlackout) {
       const b = this.entryBlackout;
       this.entryBlackout = undefined;
@@ -7711,7 +7708,7 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     if (dest === 'brickton') this.goThroughDoor('brickton', BRICKTON_BUS_SPAWN.x, BRICKTON_BUS_SPAWN.y, 'up');
-    else this.goThroughDoor('otterbrook', 376, 442, 'up');
+    else this.goThroughDoor('otterbrook', 992, 768, 'up'); // S5 rebuild: the bus depot doorstep on Main St (tile ~62,48)
   }
 
   /* ---------------- THE ORIENTATION GATE (S15h, ADR-049) ---------------- */

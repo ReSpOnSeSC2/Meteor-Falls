@@ -1021,6 +1021,20 @@ TILESET.push({ name: 'cliff_mid_a', solid: true, make: pyramidWall }); // mid ba
 TILESET.push({ name: 'cliff_base', solid: true, make: pyramidWall }); // base band: rock + scree + ground shadow
 TILESET.push({ name: 'cliff_mid_b', solid: true, make: pyramidWall }); // mid band variant B: rock strata
 
+// Otterbrooke INTERIOR TILE SKINS (2026-07-04) — per-building-type floor+wall recolors, AUTHORED
+// (assets/art/masters/world/otterbrook-tileskins-source.png → tools/apply-tileskin-kit.ts, surgical
+// tail write). make() = boot FALLBACK only (REUSED painters, spritegen FROZEN). Interiors opt in by
+// remapping their 'w'/'W' grid chars to these (a per-map TILE_SKIN, mirror UNDEROAK_TILE_SKIN).
+export const TILE_SKIN_BASE = TILESET.length;
+TILESET.push({ name: 'tile_pharmacy_floor', solid: false, make: floorWood });
+TILESET.push({ name: 'tile_pharmacy_wall', solid: true, make: wallInterior });
+TILESET.push({ name: 'tile_civic_floor', solid: false, make: floorWood });
+TILESET.push({ name: 'tile_civic_wall', solid: true, make: wallInterior });
+TILESET.push({ name: 'tile_kitchen_floor', solid: false, make: floorWood });
+TILESET.push({ name: 'tile_kitchen_wall', solid: true, make: wallInterior });
+TILESET.push({ name: 'tile_concrete_floor', solid: false, make: officeFloor });
+TILESET.push({ name: 'tile_concrete_wall', solid: true, make: officeWall });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

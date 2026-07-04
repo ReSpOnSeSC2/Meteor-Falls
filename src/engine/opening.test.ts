@@ -9,34 +9,35 @@ const F = (over: Partial<OpeningFlags> = {}): OpeningFlags => ({
 });
 
 describe('openingPhase', () => {
-  it('walks the four phases across the maps in order', () => {
-    // phase 1: new game lands on hickory_hill with opening requested
-    expect(openingPhase('hickory_hill', F(), true)).toBe(1);
-    // phase 2: after the fall, on otterbrook
-    expect(openingPhase('otterbrook', F({ op_fell: true }), false)).toBe(2);
-    // phase 3: after the house, back on hickory_hill
-    expect(openingPhase('hickory_hill', F({ op_fell: true, op_house: true }), false)).toBe(3);
-    // phase 4: after the climb, in the bedroom
+  it('phase 1 is the whole on-map cinematic (meteor-fall → house pan → climb) on otterbrook', () => {
+    // new game lands on otterbrook — the crater is on this one elevated map now
+    expect(openingPhase('otterbrook', F(), true)).toBe(1);
+  });
+
+  it('phase 4 is the bedroom wake, after the phase-1 sequence set op_house', () => {
     expect(openingPhase('rex_bedroom', F({ op_fell: true, op_house: true }), false)).toBe(4);
+  });
+
+  it('phases 2 & 3 are folded INTO phase 1 (run inline, never separately dispatched)', () => {
+    // the mid-sequence otterbrook states never re-dispatch (the whole thing runs in phase 1)
+    expect(openingPhase('otterbrook', F({ op_fell: true }), false)).toBe(0);
+    expect(openingPhase('otterbrook', F({ op_fell: true, op_house: true }), false)).toBe(0);
+  });
+
+  it('phase 1 needs openingRequested + !op_fell (re-entering otterbrook never re-fires the fall)', () => {
+    expect(openingPhase('otterbrook', F(), false)).toBe(0); // no opening flag
+    expect(openingPhase('otterbrook', F({ op_fell: true }), true)).toBe(0); // already fell
   });
 
   it('never re-triggers once the intro is done', () => {
     const done = F({ intro_done: true, op_fell: true, op_house: true });
-    for (const m of ['hickory_hill', 'otterbrook', 'rex_bedroom']) {
+    for (const m of ['otterbrook', 'rex_bedroom', 'brickton']) {
       expect(openingPhase(m, done, true)).toBe(0);
     }
   });
 
-  it('phase 1 needs openingRequested — re-entering the hill mid-cinematic does not re-fire the fall', () => {
-    // back on hickory_hill for the climb (op_fell + op_house): phase 3, not 1
-    expect(openingPhase('hickory_hill', F({ op_fell: true, op_house: true }), false)).toBe(3);
-    // hickory_hill with op_fell but NOT op_house and no opening flag → nothing (not 1)
-    expect(openingPhase('hickory_hill', F({ op_fell: true }), false)).toBe(0);
-  });
-
   it('does nothing on unrelated maps / states', () => {
     expect(openingPhase('brickton', F({ op_fell: true }), false)).toBe(0);
-    expect(openingPhase('otterbrook', F(), false)).toBe(0); // before the fall
     expect(openingPhase('rex_bedroom', F(), false)).toBe(0); // before the house beat
   });
 });

@@ -2863,7 +2863,6 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
     meadow_woods: 1,
     meadow_far: 1,
     meadow_overpass: 1,
-    hickory_hill: 1,
     brickton: 1,
     dos_f2: 1,
     // S15i Task 4 (ADR-057): the grown port adds a 2nd rest — a dockside picnic on

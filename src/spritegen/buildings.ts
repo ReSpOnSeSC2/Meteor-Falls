@@ -353,6 +353,12 @@ export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
   // texture-derived collision + entrance rebuild (their door.ox was re-measured to
   // the drawn, centred door — mirrors the valle_* enterable set above).
   'chapel', 'drugstore', 'arcade',
+  // World Overhaul S5 — the POLICE facade (facade_otter_station) is re-authored
+  // hi-res and hand-placed on the rebuilt town; its drawn body is wider than the
+  // old placeFacade data solid, so route it through texture-true collision + the
+  // entrance rebuild (its door.ox is centred against the drawn front, like the
+  // other authored storefronts above).
+  'facade_otter_station',
   // The authored 'facade_busdepot' art (the BUS DEPOT marquee facade) is finally
   // placed on the Otterbrook depot (was the generic bldg_brickmore) — route it
   // through texture-true collision + entrance like the other authored storefronts.

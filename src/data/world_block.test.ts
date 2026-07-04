@@ -10,7 +10,7 @@
  * core fails HERE, loudly. (cityViolations at the larger size lives in maps.test.)
  */
 import { describe, expect, it } from 'vitest';
-import { buildOtterbrook, growOtterbrook, buildBrickton, growBrickton, OTTERBROOK_EAST_GATE, MAPS } from './maps';
+import { buildBrickton, growBrickton, OTTERBROOK_EAST_GATE, MAPS } from './maps';
 import { buildPuertoSol, growPuertoSol, PUERTO_SOL_JUNGLE_RETURN } from './maps_ch2';
 import { cityViolations } from '../levelkit/metrics';
 import type { MapDef } from './maps';
@@ -28,111 +28,6 @@ function coreRegionMatches(grown: MapDef, core: MapDef): void {
  *  position/sprite/solid stay byte-identical while doors are free to appear. */
 const propsModuloDoors = (props: MapDef['props']): string =>
   JSON.stringify(props, (k, v) => (k === 'door' ? undefined : v));
-
-/** the grown map's arrays START with the core's, unchanged (top-left anchored).
- *  Props are byte-identical MODULO door LANDINGS (tx/ty): the assembly re-aim
- *  pass (maps.ts, growInterior's "other half") rewrites a landing when its door
- *  targets a grown ROOMY interior. Mouth geometry (ox/oy/w/h), target, sprite +
- *  position stay frozen; landing snugness is owned by the door-audit
- *  farFromReturn gate (FAR_FROM_RETURN_PX), a live check stronger than a byte pin. */
-function corePrefixUnchanged(grown: MapDef, core: MapDef): void {
-  const moduloLandings = (props: MapDef['props']): string =>
-    JSON.stringify(props, (k, v) => (k === 'tx' || k === 'ty' ? 0 : v));
-  expect(moduloLandings(grown.props.slice(0, core.props.length))).toBe(moduloLandings(core.props));
-  expect(JSON.stringify(grown.npcs.slice(0, core.npcs.length))).toBe(JSON.stringify(core.npcs));
-  expect(JSON.stringify(grown.signs.slice(0, core.signs.length))).toBe(JSON.stringify(core.signs));
-  expect(JSON.stringify(grown.spawners.slice(0, core.spawners.length))).toBe(JSON.stringify(core.spawners));
-  // the core's doors stay FIRST + unchanged; growth only appends (e.g. the east gate)
-  expect(JSON.stringify(grown.doors.slice(0, core.doors.length))).toBe(JSON.stringify(core.doors));
-  // triggers + phones spread straight through from the core (growth adds none here)
-  expect(JSON.stringify(grown.triggers)).toBe(JSON.stringify(core.triggers));
-  expect(JSON.stringify(grown.phones)).toBe(JSON.stringify(core.phones));
-}
-
-describe('OTTERBROOK — the 1995 core is frozen (≈3× growth, town stays organic)', () => {
-  it('two grown builds are byte-identical: grid, props, npc positions', () => {
-    const a = growOtterbrook();
-    const b = growOtterbrook();
-    expect(a.grid.join('|')).toBe(b.grid.join('|'));
-    expect(JSON.stringify(a.props)).toBe(JSON.stringify(b.props));
-    expect(JSON.stringify(a.npcs)).toBe(JSON.stringify(b.npcs));
-  });
-
-  it('the live MAPS entry matches a fresh build (no later stream disturbed it)', () => {
-    expect(MAPS.otterbrook.grid.join('|')).toBe(growOtterbrook().grid.join('|'));
-  });
-
-  it('the frozen 1995 core sits byte-identical in the top-left', () => {
-    coreRegionMatches(MAPS.otterbrook, buildOtterbrook());
-    corePrefixUnchanged(MAPS.otterbrook, buildOtterbrook());
-  });
-
-  it('grew to the Eagleland regional envelope (≤12500 tiles)', () => {
-    // 2026-07-02 user directive: the town is REGIONAL now — zone clearings
-    // separated by forest belts (126×96 = 12096 cells). Envelope raised from
-    // the old 4000/260 XL pins in the same change, per the envelope rail.
-    const core = buildOtterbrook();
-    const coreTiles = core.grid[0].length * core.grid.length;
-    const grownTiles = MAPS.otterbrook.grid[0].length * MAPS.otterbrook.grid.length;
-    expect(grownTiles / coreTiles).toBeGreaterThan(2.5);
-    expect(grownTiles).toBeLessThanOrEqual(12500);
-    expect(MAPS.otterbrook.props.length).toBeLessThanOrEqual(400);
-  });
-
-  it('stays a TOWN (organic, never bumped to city) and keeps its landmarks', () => {
-    expect(MAPS.otterbrook.settlement).toBe('town');
-    // CITY HALL opens into the hand-authored civic interior
-    expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'otterbrook_cityhall')).toBe(true);
-    expect(MAPS.otterbrook_cityhall).toBeDefined();
-    expect(MAPS.otterbrook_cityhall.doors.some((d) => d.to === 'otterbrook')).toBe(true);
-    // the bus corner + lemonade stand + chapel door survived byte-identical
-    expect(MAPS.otterbrook.props.some((p) => p.sprite === 'lemonade')).toBe(true);
-    expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'chapel_int')).toBe(true);
-    // (the old center bus_stop trigger retired 2026-07-02 — the depot IS the stop;
-    // the Under-Oak burrow door is the new heart_oak route)
-    expect(MAPS.otterbrook.doors.some((d) => d.to === 'oak_roots')).toBe(true);
-    // ADR-056 (§B4): the woods nook earns a hidden present beside its rest
-    expect(MAPS.otterbrook.props.some((p) => p.sprite === 'gift_box')).toBe(true);
-    expect(MAPS.otterbrook.signs.some((s) => s.dialogue === 'otter_woods_gift')).toBe(true);
-  });
-
-  it('S17 M18 Part B (ADR-063): the PORCH SET coffee can + the Spare Hubcap are placed live', () => {
-    const ob = MAPS.otterbrook;
-    for (const [flag, x, y] of [['porch_can', 24, 72], ['gift_hubcap', 109, 44]] as const) {
-      expect(ob.props.some((p) => p.sprite === 'gift_box' && Math.round(p.x) === x && Math.round(p.y) === y), flag).toBe(true);
-      const prompt = ob.signs.find((s) => s.dialogue === flag);
-      expect(prompt?.unlessFlag, flag).toBe(flag);
-      expect(ob.signs.some((s) => s.dialogue === `${flag}_done` && s.ifFlag === flag), `${flag}_done`).toBe(true);
-      // APPEND-ONLY: the frozen 1995 core carries neither grant (byte-identical above)
-      expect(buildOtterbrook().signs.some((s) => s.dialogue === flag)).toBe(false);
-    }
-  });
-
-  it('S17 M18 Part B (ADR-063): OTTERBROOK DRUG grew a deli lunch counter (§A4.5)', () => {
-    const deli = MAPS.drugstore_int.npcs.find((n) => n.id === 'deli_otter');
-    expect(deli?.dialogue).toBe('npc_deli_otter');
-    // the §A4.5 picnic rests Ch.1 ships (town + pond park + dungeon) clear ≈3
-    const tables = ['otterbrook', 'brickton'].reduce((n, id) => n + MAPS[id].props.filter((p) => p.sprite === 'picnic').length, 0);
-    expect(tables).toBeGreaterThanOrEqual(3);
-  });
-
-  it('the daybreak gate seals the road east until tick_defeated (daybreak §B4 + the Hush-dark, ADR-121)', () => {
-    const ob = MAPS.otterbrook;
-    // the foot connector east still exists (kept for Movement 2)...
-    expect(ob.doors.some((d) => d.to === 'meadow_mile')).toBe(true);
-    // ...but a barricade guards it. ADR-121: it stays up through the sleeping night
-    // AND the Hush-dark, retiring only when the Heart-Oak Tick dies (real dawn) —
-    // tick_defeated is the single key out (the door is gated in checkDoors too).
-    expect(ob.props.find((p) => p.sprite === 'sawhorse')?.unlessFlag).toBe('tick_defeated');
-    expect(ob.signs.some((s) => s.dialogue === 'sign_meadow_gate_closed' && s.unlessFlag === 'zapper_done')).toBe(true);
-    // the treeline gawker + the gate walker swap night→day on the daybreak flip
-    const gawker = ob.npcs.find((n) => n.id === 'treeline_gawker');
-    expect(gawker?.dialogue && gawker?.dialogueDay).toBeTruthy();
-    expect(ob.npcs.find((n) => n.id === 'gate_walker')?.dialogueDay).toBeTruthy();
-    // APPEND-ONLY: the frozen 1995 core carries none of the gate (byte-identical above)
-    expect(buildOtterbrook().props.some((p) => p.sprite === 'sawhorse')).toBe(false);
-  });
-});
 
 describe('THE LONG WALK — the multi-screen foot journey (Movement 3, ADR-056)', () => {
   const LEGS = ['meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'] as const;
