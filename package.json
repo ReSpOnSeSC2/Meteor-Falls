@@ -9,6 +9,7 @@
     "build": "tsc --noEmit && npm run validate && vite build",
     "preview": "vite preview --host",
     "validate": "vite-node tools/content-validate.ts",
+    "mapeditor:gen": "vite-node tools/mapeditor/gen-manifest.ts",
     "visuals:audit": "vite-node tools/visual-identity-audit.ts",
     "visuals:audit:strict": "vite-node tools/visual-identity-audit.ts --strict",
     "enemies:frames": "vite-node tools/enemy-frame-audit.ts",

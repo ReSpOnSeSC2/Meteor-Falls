@@ -38,9 +38,38 @@ family for tile-strip writes.
 **PHASE 1 STATUS: all shared-strip biome ground kits DONE (base + 7 biome sets). Remaining: Brickton's
 own strip + interior tile skins.** All gated green (tsc/strip-pin/build).
 
-## PHASE 2 — PROPS (pending)
-Trees/foliage, fences, lamps, benches, hydrants, mailboxes, cars/traffic, signs, market stalls,
-furniture — oblique re-authors of the AUTHORED_WORLD_PROP_DISPLAY_SIZE / WORLD_PROP_KEYS sets.
+## PHASE 2 — PROPS (in progress)
+Oblique re-authors of the WORLD_PROP_KEYS art (`assets/art/world/props/<key>.png`) — chunky EB pixel,
+front-left light. Each batch = ONE ChatGPT magenta-strip (`Create an image … row of N objects on flat
+#FF00FF …`, harvested via the same `<a download>` recipe as the ground kits) → `tools/slice-prop-strip.cjs
+<raw> <outPrefix> --expect=N --target=240` (magenta key → per-figure content-tight transparent PNGs) →
+overwrite the runtime PNG + save the raw as `assets/art/masters/world/props-*-oblique-source.png` →
+re-anchor `AUTHORED_WORLD_PROP_DISPLAY_SIZE` (keep the dominant footprint dim, set the other to the new
+slice aspect so `setDisplaySize` never stretches) → gate → live-verify. Since the keys are already wired,
+a prop re-author is art + display-size only (no maps.ts edits — collision is the existing solid box).
+
+- [x] **Batch 1 — street furniture** (`props-street-oblique-source.png`): `bench` (was a flat side-
+      elevation → true 3/4), `hydrant`, `mailbox`, `trash_can`, `news_box`, `parking_meter`. Live-verified
+      in Otterbrooke (bench/hydrant) + Brickton (meter/news_box). Bench display grew 13→19 tall (3/4 depth).
+- [x] **Batch 2 — trees/foliage** (`props-trees-oblique-source.png`): `tree`/`tree_b`/`tree_c` (3 chunky
+      broadleaf canopies) + `pine` (conifer), all h34-anchored. Live-verified beside the oblique clinic —
+      trees now MATCH the facades (the old soft/painterly trees were the worst style clash).
+- [x] **ENGINE — tucked contact shadow for grounded props** (`OBLIQUE_SHADOW_PROP_KEYS` in `authored.ts`,
+      drawn in OverworldScene's prop loop, mirrors the otterbrook-facade `mob_shadow` + ADR-097 actor
+      shadows): a soft front-left pool under each re-authored prop, OUTDOOR maps only, allow-listed to the
+      oblique redraws. **TREES ARE DELIBERATELY EXCLUDED** — forest-fill maps place THOUSANDS (Otterbrooke
+      alone ≈ 3.3k), so a per-tree shadow image is a needless object-count cost and hides under neighbours;
+      their canopy reads grounded on its own. Only sparse standalone props earn a shadow.
+- [ ] **Batch 3 — signs / planters / street dressing**: `sign`, `bus_sign`, `planter`, `dumpster`,
+      `phone_pole`, `payphone`, `atm`, `fountain`, `well`, market stalls, the `puerto_*`/`fb_*` variants…
+- [ ] **Traffic / vehicles** — the `AUTHORED_VEHICLE_ART` set (already 3-frame directional for road cars);
+      re-skin oblique EB. Heavier (per-vehicle front+back).
+- [ ] **Furniture** (interior props) — oblique to match interior tile skins (pairs with Phase 1 interiors).
+
+GOTCHA — **bench solid box stays `{ ox:1, oy:6, w:20, h:6 }`** even though the sprite grew to h19. Bumping
+`oy` to plant collision at the taller base drifts `src/levelkit/kit.ts`'s `BENCH_SOLID` → 14 hash-pin
+failures across `levelkit.test.ts` + `dungeons.test.ts` (the generator re-pins). Not worth it for a
+decorative prop; `oy:6` still fully blocks passage (the taller bench just reads as walk-behind).
 
 ## PHASE 3 — CHARACTERS (pending)
 The 46-frame walk sheets (heroes + NPCs) re-authored oblique/8-dir where needed (heavier: ref-paste
