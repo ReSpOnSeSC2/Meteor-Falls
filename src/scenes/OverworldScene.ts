@@ -129,7 +129,7 @@ import { VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE, HEDGE_BASE, BRAMBLE_BASE } from '../spritegen/tiles';
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
-import { AUTHORED_VEHICLE_ART_KEYS, AUTHORED_WORLD_PROP_DISPLAY_SIZE, DIRECTIONAL_VEHICLE_KEYS, worldSpriteScale } from '../spritegen/authored';
+import { AUTHORED_VEHICLE_ART_KEYS, AUTHORED_WORLD_PROP_DISPLAY_SIZE, DIRECTIONAL_VEHICLE_KEYS, OBLIQUE_SHADOW_PROP_KEYS, worldSpriteScale } from '../spritegen/authored';
 import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
 import {
   instantWinGroup,
@@ -1413,6 +1413,20 @@ export class OverworldScene extends Phaser.Scene {
           .setDisplaySize(shW, shW * 0.15) // a low, feathered pool tucked UNDER the foot (not a slab beside it)
           .setAlpha(0.2)
           .setDepth(img.y + img.displayHeight - s(15) + this.levelLift(img.x, img.y));
+      }
+      // PHASE 2 (oblique overhaul): the re-authored 3/4 props sit on flat ground, so — like the
+      // facades above and the ADR-097 actor shadows — plant each with a soft contact-shadow pool
+      // tucked UNDER its foot and nudged toward the light-away (lower-right) side. OUTDOOR maps
+      // only (interiors have their own floor); allow-listed to props already redrawn oblique so
+      // an un-restyled flat prop never gets a mismatched shadow.
+      if (!this.mapDef.interior && OBLIQUE_SHADOW_PROP_KEYS.has(sprite)) {
+        const shW = img.displayWidth * 0.66;
+        this.add
+          .image(img.x + img.displayWidth / 2 + s(1), img.y + img.displayHeight - s(2), 'mob_shadow')
+          .setOrigin(0.5, 0.55)
+          .setDisplaySize(shW, Math.max(s(3), shW * 0.22)) // a low feathered pool, not a slab beside it
+          .setAlpha(0.24)
+          .setDepth(img.y + img.displayHeight - s(3) + this.levelLift(img.x, img.y));
       }
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data

@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meteor Falls — Map Editor</title>
+<style>
+  :root{
+    --bg:#12131a; --panel:#1b1d28; --panel2:#232636; --line:#33374d; --ink:#e7e9f3;
+    --dim:#9aa0bd; --accent:#ffcf4a; --accent2:#5cc8ff; --solid:#ff5470; --good:#7ee081;
+    --door:#5cc8ff; --spawn:#ff7a5c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font:13px/1.4 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+  button,input,select,textarea{font:inherit;color:inherit}
+  #app{display:grid;grid-template-columns:270px 1fr 240px;grid-template-rows:auto 1fr auto;height:100vh}
+  header{grid-column:1/4;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+  header h1{font-size:14px;margin:0 12px 0 0;letter-spacing:.5px;color:var(--accent)}
+  header .grp{display:flex;gap:6px;align-items:center;padding:0 8px;border-left:1px solid var(--line)}
+  header label{color:var(--dim);font-size:11px}
+  header input[type=text],header input[type=number]{background:var(--panel2);border:1px solid var(--line);
+    border-radius:6px;padding:4px 6px}
+  header input#mName{width:130px} header input#mId{width:100px}
+  header input.dim{width:48px}
+  .btn{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+  .btn:hover{border-color:var(--accent2)}
+  .btn.primary{background:var(--accent);color:#20160a;border-color:var(--accent);font-weight:600}
+  .tool{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:8px;padding:6px 9px;cursor:pointer;min-width:52px}
+  .tool .ico{font-size:16px} .tool .lbl{font-size:10px;color:var(--dim)}
+  .tool.active{border-color:var(--accent);background:#2c2a1c} .tool.active .lbl{color:var(--accent)}
+  aside{background:var(--panel);overflow:hidden;display:flex;flex-direction:column;min-height:0}
+  aside.left{border-right:1px solid var(--line)} aside.right{border-left:1px solid var(--line)}
+  .tabs{display:flex;border-bottom:1px solid var(--line)}
+  .tab{flex:1;text-align:center;padding:8px 4px;cursor:pointer;color:var(--dim);font-size:12px}
+  .tab.active{color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+  .paneWrap{flex:1;overflow:auto;min-height:0}
+  .pane{display:none;padding:8px} .pane.active{display:block}
+  .search{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+    padding:6px 8px;margin-bottom:8px}
+  .grpTitle{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);
+    margin:10px 2px 4px}
+  .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .sw{position:relative;aspect-ratio:1;border:1px solid var(--line);border-radius:6px;overflow:hidden;
+    cursor:pointer;background:#0d0e14;display:flex;align-items:center;justify-content:center}
+  .sw canvas,.sw img{width:100%;height:100%;image-rendering:pixelated;object-fit:contain}
+  .sw.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+  .sw .code{position:absolute;left:2px;top:1px;font-size:9px;background:#000a;padding:0 3px;border-radius:3px}
+  .sw .solidDot{position:absolute;right:3px;bottom:3px;width:7px;height:7px;border-radius:50%;background:var(--solid)}
+  .sw .nm{position:absolute;left:0;right:0;bottom:0;font-size:8px;background:#000b;color:#cfd3ea;
+    padding:1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .propGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .propGrid .sw{aspect-ratio:1}
+  .propGrid .sw img{padding:4px}
+  main{position:relative;overflow:hidden;background:#0b0c12}
+  #cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  .right h3{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin:12px 10px 6px}
+  .insp{padding:0 10px} .insp .row{display:flex;gap:6px;align-items:center;margin:5px 0}
+  .insp .row label{width:70px;color:var(--dim);font-size:11px}
+  .insp input,.insp select{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);
+    border-radius:5px;padding:4px 6px}
+  .insp .hint{color:var(--dim);font-size:11px;padding:4px 0}
+  .layers{overflow:auto} .layer{display:flex;justify-content:space-between;align-items:center;
+    padding:4px 10px;border-bottom:1px solid #262a3d;cursor:pointer;font-size:12px}
+  .layer:hover{background:var(--panel2)} .layer.sel{background:#2c2a1c;color:var(--accent)}
+  .layer .del{color:var(--solid);cursor:pointer;padding:0 4px}
+  footer{grid-column:1/4;display:flex;gap:16px;align-items:center;padding:5px 12px;background:var(--panel);
+    border-top:1px solid var(--line);color:var(--dim);font-size:11px}
+  .modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:50}
+  .modal.on{display:flex}
+  .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:min(760px,92vw);
+    max-height:88vh;display:flex;flex-direction:column;padding:14px}
+  .modal h2{margin:0 0 8px;font-size:15px;color:var(--accent)}
+  .modal textarea{flex:1;min-height:340px;background:#0c0d13;border:1px solid var(--line);border-radius:8px;
+    color:#cfe3c9;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:10px;white-space:pre;overflow:auto}
+  .modal .foot{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+  .chk{display:flex;align-items:center;gap:5px;color:var(--dim);font-size:11px;cursor:pointer}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--good);color:#0c1a0c;
+    padding:8px 16px;border-radius:20px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:60}
+  .toast.on{opacity:1}
+  #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);
+    color:var(--dim);z-index:80;flex-direction:column;gap:10px}
+</style>
+</head>
+<body>
+<div id="loading"><div style="font-size:18px;color:var(--accent)">Meteor Falls — Map Editor</div><div id="loadmsg">loading game assets…</div></div>
+<div id="app" style="visibility:hidden">
+  <header>
+    <h1>🗺️ Map Editor</h1>
+    <div class="grp" style="border:none">
+      <div class="tool active" data-tool="paint"><span class="ico">🖌️</span><span class="lbl">Paint</span></div>
+      <div class="tool" data-tool="erase"><span class="ico">🧽</span><span class="lbl">Erase</span></div>
+      <div class="tool" data-tool="place"><span class="ico">🌳</span><span class="lbl">Place</span></div>
+      <div class="tool" data-tool="select"><span class="ico">➤</span><span class="lbl">Select</span></div>
+      <div class="tool" data-tool="door"><span class="ico">🚪</span><span class="lbl">Door</span></div>
+      <div class="tool" data-tool="spawn"><span class="ico">👾</span><span class="lbl">Spawn</span></div>
+      <div class="tool" data-tool="sign"><span class="ico">📖</span><span class="lbl">Sign</span></div>
+      <div class="tool" data-tool="pan"><span class="ico">✋</span><span class="lbl">Pan</span></div>
+    </div>
+    <div class="grp">
+      <label>Name</label><input type="text" id="mName" value="MY MAP" />
+      <label>id</label><input type="text" id="mId" value="my_map" />
+      <label>W</label><input type="number" class="dim" id="mW" value="30" min="4" max="400" />
+      <label>H</label><input type="number" class="dim" id="mH" value="20" min="4" max="400" />
+      <button class="btn" id="resize">Resize</button>
+    </div>
+    <div class="grp">
+      <label class="chk"><input type="checkbox" id="tGrid" checked/> grid</label>
+      <label class="chk"><input type="checkbox" id="tSolid"/> solids</label>
+      <label class="chk"><input type="checkbox" id="tLevels"/> levels</label>
+    </div>
+    <div class="grp">
+      <label>Skin</label>
+      <select id="regionSel" style="background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 6px;max-width:150px"><option value="">Base (Otterbrook)</option></select>
+    </div>
+    <div class="grp">
+      <button class="btn" id="newMap">🆕 New</button>
+      <button class="btn" id="save">💾 Save</button>
+      <button class="btn" id="load">Load</button>
+      <button class="btn primary" id="export">⬇ Export</button>
+    </div>
+  </header>
+
+  <aside class="left">
+    <div class="tabs">
+      <div class="tab active" data-tab="tiles">Tiles</div>
+      <div class="tab" data-tab="props">Props</div>
+      <div class="tab" data-tab="build">Build</div>
+      <div class="tab" data-tab="npcs">NPCs</div>
+      <div class="tab" data-tab="elevate">Elev</div>
+    </div>
+    <div class="paneWrap">
+      <div class="pane active" id="pane-tiles"></div>
+      <div class="pane" id="pane-props"><input class="search" id="propSearch" placeholder="search props…"/><div class="propGrid" id="propGrid"></div></div>
+      <div class="pane" id="pane-build"><input class="search" id="buildSearch" placeholder="search buildings…"/><div class="propGrid" id="buildGrid"></div></div>
+      <div class="pane" id="pane-npcs"><input class="search" id="npcSearch" placeholder="search NPCs…"/><div class="propGrid" id="npcGrid"></div></div>
+      <div class="pane" id="pane-elevate"></div>
+    </div>
+  </aside>
+
+  <main><canvas id="cv"></canvas></main>
+
+  <aside class="right">
+    <h3>Inspector</h3>
+    <div class="insp" id="inspector"><div class="hint">Select a placed object, door, or spawner to edit it.</div></div>
+    <h3>Objects</h3>
+    <div class="layers" id="layers" style="flex:1"></div>
+  </aside>
+
+  <footer>
+    <span id="statTool">Tool: paint</span>
+    <span id="statSel">Tile: grass (.)</span>
+    <span id="statXY">—</span>
+    <span id="statCount">0 props · 0 doors · 0 spawns</span>
+    <span style="margin-left:auto">wheel = zoom · Pan tool or middle-drag = pan · Del = delete selected</span>
+  </footer>
+</div>
+
+<div class="modal" id="exportModal"><div class="box">
+  <h2>Export map</h2>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="btn active" id="fmtTs">TypeScript (MapDef)</button>
+    <button class="btn" id="fmtJson">JSON (re-import)</button>
+    <span class="hint" style="margin-left:auto">Paste the TS into <code>src/data/maps.ts</code>, register it in <code>MAPS</code>, then <code>npm run validate</code>.</span>
+  </div>
+  <textarea id="exportText" spellcheck="false"></textarea>
+  <div class="foot">
+    <button class="btn" id="importBtn">⬆ Import JSON from box</button>
+    <button class="btn" id="copyBtn">📋 Copy</button>
+    <button class="btn" id="closeModal">Close</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const toast=(m)=>{const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1400);};
+
+// ---------- load manifest + atlas ----------
+let M, atlas;
+const imgCache=new Map();
+function loadImg(url){ if(imgCache.has(url))return imgCache.get(url);
+  const im=new Image(); im.src=url; im.onload=()=>requestRender(); imgCache.set(url,im); return im; }
+
+const state={
+  tool:'paint',
+  map:{ id:'my_map', name:'MY MAP', w:30, h:20, grid:[], level:[], props:[], npcs:[], signs:[], doors:[], spawners:[] },
+  tileChar:'.',            // selected paint char
+  propKey:null, propIsFacade:false,
+  placeMode:'prop',        // 'prop' | 'npc' — what the Place tool drops
+  npcKey:null,             // selected NPC id
+  view:{ ox:40, oy:40, zoom:1 },
+  sel:null,               // {kind:'prop'|'door'|'spawn', i}
+  drag:null,
+  gridOn:true, solidOn:false, levelsOn:false,
+  region:null,            // selected region skin object (or null = base)
+  paintLevel:1,           // which terrace the Elevate tool paints
+};
+const LEVEL_TINT=['transparent','rgba(90,200,255,.30)','rgba(180,120,255,.32)','rgba(255,180,90,.34)','rgba(120,255,160,.34)'];
+const TILE_BASE=26; // px per tile at zoom 1
+const legendByChar=new Map();
+
+function newGrid(w,h,fill='.'){ return Array.from({length:h},()=>Array.from({length:w},()=>fill)); }
+
+async function boot(){
+  M=await (await fetch('manifest.json')).json();
+  M.legend.forEach(l=>legendByChar.set(l.char,l));
+  atlas=await new Promise((res)=>{const i=new Image();i.onload=()=>res(i);i.src=M.atlas;});
+  state.map.grid=newGrid(state.map.w,state.map.h);
+  state.map.level=newGrid(state.map.w,state.map.h,'0');
+  buildTilePalette(); buildPropPalette(); buildFacadePalette(); buildNpcPalette(); buildElevatePane();
+  wireUI();
+  const saved=localStorage.getItem('mf_mapeditor_autosave'); // silent restore if present
+  if(saved){try{loadMapObj(JSON.parse(saved));}catch{}}
+  $('#loading').style.display='none'; $('#app').style.visibility='visible';
+  resizeCanvas(); requestRender();
+}
+
+// ---------- palettes ----------
+function tileThumb(idx){ // returns a canvas of atlas cell idx
+  const c=document.createElement('canvas'); c.width=c.height=32; const x=c.getContext('2d');
+  x.imageSmoothingEnabled=false;
+  if(idx>=0) x.drawImage(atlas, idx*M.tilePx,0,M.tilePx,M.tilePx, 0,0,32,32);
+  else{ x.fillStyle='#444'; x.fillRect(0,0,32,32); }
+  return c;
+}
+// draw a legend tile through the ACTIVE region skin (falls back to the base atlas)
+function drawSwatchTile(x,size,l){ x.clearRect(0,0,size,size); x.imageSmoothingEnabled=false;
+  const r=state.region;
+  if(r&&l&&r.skin[l.name]!=null){ const ra=loadImg(r.atlas); if(ra.complete&&ra.naturalWidth){ x.drawImage(ra,r.skin[l.name]*M.tilePx,0,M.tilePx,M.tilePx,0,0,size,size); return; } }
+  if(l&&l.index>=0) x.drawImage(atlas,l.index*M.tilePx,0,M.tilePx,M.tilePx,0,0,size,size); else{ x.fillStyle='#444'; x.fillRect(0,0,size,size); } }
+function reskinPalette(){ $$('#pane-tiles .sw').forEach(sw=>{ if(sw._cv&&sw._legend) drawSwatchTile(sw._cv.getContext('2d'),32,sw._legend); }); }
+function buildTilePalette(){
+  const pane=$('#pane-tiles'); const order=['ground','paving','wall','water','interior','special','other'];
+  const byG={}; M.legend.forEach(l=>(byG[l.group]??=[]).push(l));
+  order.forEach(g=>{ if(!byG[g])return;
+    const t=document.createElement('div'); t.className='grpTitle'; t.textContent=g; pane.appendChild(t);
+    const wrap=document.createElement('div'); wrap.className='swatches';
+    byG[g].forEach(l=>{
+      const sw=document.createElement('div'); sw.className='sw'; sw.dataset.char=l.char; sw.title=l.name;
+      const c=document.createElement('canvas'); c.width=c.height=32; sw._cv=c; sw._legend=l; drawSwatchTile(c.getContext('2d'),32,l); sw.appendChild(c);
+      sw.insertAdjacentHTML('beforeend',`<span class="code">${l.char===' '?'·':escapeHtml(l.char)}</span>`+
+        (l.solid?'<span class="solidDot" title="solid"></span>':'')+`<span class="nm">${l.name}</span>`);
+      sw.onclick=()=>{ state.tileChar=l.char; state.tool='paint'; setTool('paint');
+        $$('#pane-tiles .sw').forEach(e=>e.classList.remove('sel')); sw.classList.add('sel');
+        $('#statSel').textContent=`Tile: ${l.name} (${l.char})`; };
+      if(l.char==='.') sw.classList.add('sel');
+      wrap.appendChild(sw);
+    });
+    pane.appendChild(wrap);
+  });
+}
+function makePropSwatch(p,isFacade){
+  const sw=document.createElement('div'); sw.className='sw'; sw.title=p.key;
+  const im=document.createElement('img'); im.loading='lazy'; im.src=p.url; sw.appendChild(im);
+  sw.insertAdjacentHTML('beforeend',`<span class="nm">${p.key}</span>`);
+  sw.onclick=()=>{ state.propKey=p.key; state.propIsFacade=isFacade; state.placeMode='prop'; setTool('place');
+    $$('.propGrid .sw').forEach(e=>e.classList.remove('sel')); sw.classList.add('sel');
+    $('#statSel').textContent=`Place: ${p.key}`; };
+  return sw;
+}
+function buildPropPalette(){ const g=$('#propGrid'); M.props.forEach(p=>g.appendChild(makePropSwatch(p,false)));
+  $('#propSearch').oninput=e=>filterGrid(g,e.target.value); }
+function buildFacadePalette(){ const g=$('#buildGrid'); M.facades.forEach(p=>g.appendChild(makePropSwatch(p,true)));
+  $('#buildSearch').oninput=e=>filterGrid(g,e.target.value); }
+function buildNpcPalette(){ const g=$('#npcGrid'); const cf=M.charFrame||{cols:4,rows:12};
+  (M.npcs||[]).forEach(n=>{ const sw=document.createElement('div'); sw.className='sw'; sw.title=n.id;
+    const d=document.createElement('div'); // show frame 0 (top-left of the cols×rows sheet)
+    d.style.cssText=`width:100%;height:100%;background-image:url('${n.url}');background-size:${cf.cols*100}% ${cf.rows*100}%;background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated`;
+    sw.appendChild(d); sw.insertAdjacentHTML('beforeend',`<span class="nm">${n.id}</span>`);
+    sw.onclick=()=>{ state.npcKey=n.id; state.placeMode='npc'; setTool('place');
+      $$('.propGrid .sw').forEach(e=>e.classList.remove('sel')); sw.classList.add('sel'); $('#statSel').textContent=`Place NPC: ${n.id}`; };
+    g.appendChild(sw); });
+  $('#npcSearch').oninput=e=>filterGrid(g,e.target.value); }
+const npcMeta=(id)=>(M.npcs||[]).find(n=>n.id===id);
+function filterGrid(g,q){ q=q.toLowerCase(); $$('.sw',g).forEach(sw=>sw.style.display=sw.title.includes(q)?'':'none'); }
+const escapeHtml=(s)=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// ---------- lookups ----------
+const propMeta=(key)=>M.props.find(p=>p.key===key)||M.facades.find(p=>p.key===key);
+const isFacadeKey=(key)=>M.facades.some(p=>p.key===key);
+function propUrl(key){ const m=propMeta(key); return m?m.url:''; }
+// prop on-map size in TILES. props use display w/h (native units, drawn at w*artScale px); facades default 4 tiles tall.
+function propTiles(pl){
+  const m=propMeta(pl.sprite);
+  if(isFacadeKey(pl.sprite)){ const asp=m?m.aspect:1; const h=pl.scale||4; return {w:h*asp,h}; }
+  const w=(m?m.w:20)*M.artScale/M.tilePx, h=(m?m.h:24)*M.artScale/M.tilePx; return {w,h};
+}
+// auto base-footprint solid box (native units) for a solid prop
+function autoSolid(key){ const m=propMeta(key); const w=m?.w??20,h=m?.h??24;
+  return {ox:Math.round(w*0.12),oy:Math.round(h*0.5),w:Math.max(2,Math.round(w*0.76)),h:Math.max(2,Math.round(h*0.45))}; }
+
+// ---------- canvas ----------
+const cv=$('#cv'), ctx=cv.getContext('2d');
+function resizeCanvas(){ const r=cv.getBoundingClientRect(); cv.width=r.width*devicePixelRatio; cv.height=r.height*devicePixelRatio;
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); requestRender(); }
+addEventListener('resize',resizeCanvas);
+const TS=()=>TILE_BASE*state.view.zoom;
+const toScreen=(tx,ty)=>[state.view.ox+tx*TS(), state.view.oy+ty*TS()];
+const toTile=(mx,my)=>[(mx-state.view.ox)/TS(), (my-state.view.oy)/TS()];
+
+let renderQueued=false;
+function requestRender(){ if(renderQueued)return; renderQueued=true; requestAnimationFrame(render); }
+function render(){ renderQueued=false;
+  const W=cv.width/devicePixelRatio, H=cv.height/devicePixelRatio, ts=TS(), m=state.map;
+  ctx.clearRect(0,0,W,H); ctx.imageSmoothingEnabled=false;
+  const [tx0,ty0]=toTile(0,0), [tx1,ty1]=toTile(W,H);
+  const cx0=Math.max(0,Math.floor(tx0)), cy0=Math.max(0,Math.floor(ty0));
+  const cx1=Math.min(m.w-1,Math.ceil(tx1)), cy1=Math.min(m.h-1,Math.ceil(ty1));
+  // tiles
+  const ra=state.region?loadImg(state.region.atlas):null;
+  for(let y=cy0;y<=cy1;y++)for(let x=cx0;x<=cx1;x++){
+    const ch=m.grid[y][x]; const l=legendByChar.get(ch); const [sx,sy]=toScreen(x,y);
+    let done=false;
+    if(state.region&&l&&state.region.skin[l.name]!=null&&ra&&ra.complete&&ra.naturalWidth){
+      ctx.drawImage(ra,state.region.skin[l.name]*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; }
+    if(!done){ if(l&&l.index>=0) ctx.drawImage(atlas,l.index*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1);
+      else{ ctx.fillStyle='#2c7d3a'; ctx.fillRect(sx,sy,ts,ts); } }
+    if(state.solidOn&&l&&l.solid){ ctx.fillStyle='rgba(255,84,112,.38)'; ctx.fillRect(sx,sy,ts,ts); }
+    if(state.levelsOn){ const lv=+((m.level[y]&&m.level[y][x])||'0'); if(lv>0){ ctx.fillStyle=LEVEL_TINT[Math.min(lv,LEVEL_TINT.length-1)]; ctx.fillRect(sx,sy,ts,ts);
+      ctx.fillStyle='rgba(255,255,255,.75)'; ctx.font=`bold ${Math.round(ts*0.42)}px system-ui`; ctx.fillText(String(lv),sx+ts*0.34,sy+ts*0.64); } }
+  }
+  if(state.levelsOn) drawLedgeWarnings(cx0,cy0,cx1,cy1,ts);
+  // grid lines
+  if(state.gridOn){ ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.lineWidth=1; ctx.beginPath();
+    for(let x=cx0;x<=cx1+1;x++){const [sx,sy]=toScreen(x,cy0);ctx.moveTo(Math.round(sx)+.5,toScreen(0,cy0)[1]);ctx.lineTo(Math.round(sx)+.5,toScreen(0,cy1+1)[1]);}
+    for(let y=cy0;y<=cy1+1;y++){const [sx,sy]=toScreen(cx0,y);ctx.moveTo(toScreen(cx0,0)[0],Math.round(sy)+.5);ctx.lineTo(toScreen(cx1+1,0)[0],Math.round(sy)+.5);}
+    ctx.stroke(); }
+  // map border
+  { const [bx,by]=toScreen(0,0); ctx.strokeStyle='rgba(255,207,74,.5)'; ctx.lineWidth=2; ctx.strokeRect(bx,by,m.w*ts,m.h*ts); }
+  // props (depth sort by foot y)
+  const props=m.props.map((p,i)=>({p,i})).sort((a,b)=>(a.p.y+propTiles(a.p).h)-(b.p.y+propTiles(b.p).h));
+  for(const {p,i} of props){ const [sx,sy]=toScreen(p.x,p.y); const t=propTiles(p);
+    const im=loadImg(propUrl(p.sprite)); const pw=t.w*ts, ph=t.h*ts;
+    if(im.complete&&im.naturalWidth) ctx.drawImage(im,sx,sy,pw,ph);
+    else{ ctx.fillStyle='#666'; ctx.fillRect(sx,sy,pw,ph); }
+    if(state.sel&&state.sel.kind==='prop'&&state.sel.i===i){
+      ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx,sy,pw,ph);
+      if(p.solid){ const m2=propMeta(p.sprite); const sc=ts*M.artScale/M.tilePx;
+        ctx.strokeStyle='rgba(255,84,112,.9)'; ctx.strokeRect(sx+p.solid.ox*sc,sy+p.solid.oy*sc,p.solid.w*sc,p.solid.h*sc); }
+    }
+  }
+  // NPCs (frame 0 of the 46-frame sheet, feet on the tile)
+  m.npcs.forEach((npc,i)=>drawNpc(npc,i,ts));
+  // signs
+  m.signs.forEach((sg,i)=>{ const [sx,sy]=toScreen(sg.x,sg.y); ctx.textAlign='center';
+    if(state.sel&&state.sel.kind==='sign'&&state.sel.i===i){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx-ts*0.45,sy-ts*0.45,ts*0.9,ts*0.9); }
+    ctx.font=`${Math.round(ts*0.8)}px system-ui`; ctx.fillText('📖',sx,sy+ts*0.28); ctx.textAlign='left'; });
+  // doors + spawns
+  m.doors.forEach((d,i)=>drawZone(d,i,'door'));
+  m.spawners.forEach((s,i)=>drawZone(s,i,'spawn'));
+  // hover ghost
+  drawHover();
+}
+function drawZone(z,i,kind){ const ts=TS(); const [sx,sy]=toScreen(z.x??z.rect.x, z.y??z.rect.y);
+  const w=(z.w??z.rect.w)*ts, h=(z.h??z.rect.h)*ts; const col=kind==='door'?'var(--door)':'var(--spawn)';
+  ctx.fillStyle=kind==='door'?'rgba(92,200,255,.22)':'rgba(255,122,92,.22)';
+  ctx.fillRect(sx,sy,w,h);
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue(kind==='door'?'--door':'--spawn');
+  ctx.lineWidth=(state.sel&&state.sel.kind===kind&&state.sel.i===i)?3:1.5; ctx.strokeRect(sx,sy,w,h);
+  ctx.fillStyle='#fff'; ctx.font='11px system-ui';
+  ctx.fillText(kind==='door'?('→ '+(z.to||'?')):((z.enemies||[]).join(',')||'enemies?'),sx+3,sy+13);
+}
+function drawNpc(npc,i,ts){ const cf=M.charFrame||{cols:4,rows:12}; const meta=npcMeta(npc.sprite); const im=meta?loadImg(meta.url):null;
+  const w=ts*1.0, h=ts*1.35; const [fx,fy]=toScreen(npc.x+0.5,npc.y+1); const left=fx-w/2, top=fy-h;
+  if(im&&im.complete&&im.naturalWidth){ const fw=im.naturalWidth/cf.cols, fh=im.naturalHeight/cf.rows; ctx.drawImage(im,0,0,fw,fh,left,top,w,h); }
+  else{ ctx.fillStyle='#b97'; ctx.fillRect(left,top,w,h); }
+  if(state.sel&&state.sel.kind==='npc'&&state.sel.i===i){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(left,top,w,h); } }
+let hoverTile=null;
+function drawHover(){ if(!hoverTile)return; const ts=TS(); const [sx,sy]=toScreen(Math.floor(hoverTile[0]),Math.floor(hoverTile[1]));
+  if((state.tool==='place'&&state.placeMode==='npc')||state.tool==='sign'){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx,sy,ts,ts);
+  } else if(state.tool==='place'&&state.propKey){ const t=propTiles({sprite:state.propKey,scale:4}); const im=loadImg(propUrl(state.propKey));
+    ctx.globalAlpha=.55; if(im.complete&&im.naturalWidth)ctx.drawImage(im,sx,sy,t.w*ts,t.h*ts); ctx.globalAlpha=1;
+    ctx.strokeStyle='var(--accent)'; ctx.strokeRect(sx,sy,t.w*ts,t.h*ts);
+  } else if(state.tool==='paint'||state.tool==='erase'||state.tool==='elevate'){
+    ctx.strokeStyle=state.tool==='erase'?'var(--solid)':'var(--accent)'; ctx.lineWidth=2; ctx.strokeRect(sx,sy,ts,ts);
+  }
+}
+
+// ---------- interaction ----------
+let painting=false, panning=false, panStart=null, zoneStart=null;
+cv.addEventListener('mousedown',e=>{ const r=cv.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top; const [tx,ty]=toTile(mx,my);
+  const cx=Math.floor(tx),cy=Math.floor(ty);
+  if(e.button===1||state.tool==='pan'){ panning=true; panStart=[mx,my,state.view.ox,state.view.oy]; return; }
+  if(state.tool==='paint'){ painting=true; setCell(cx,cy,state.tileChar); }
+  else if(state.tool==='erase'){ painting=true; setCell(cx,cy,'.'); }
+  else if(state.tool==='elevate'){ painting=true; setLevel(cx,cy,String(state.paintLevel)); }
+  else if(state.tool==='place'){ if(state.placeMode==='npc'&&state.npcKey) placeNpc(state.npcKey,cx,cy); else if(state.propKey) placeProp(state.propKey,cx,cy); }
+  else if(state.tool==='sign'){ state.map.signs.push({x:cx+0.5,y:cy+0.5,dialogue:'placeholder'}); state.sel={kind:'sign',i:state.map.signs.length-1}; refreshInspector();refreshLayers();requestRender();scheduleAutosave(); }
+  else if(state.tool==='select'){ selectAt(tx,ty); if(state.sel&&(state.sel.kind==='prop'||state.sel.kind==='npc')){ const a=state.sel.kind==='prop'?state.map.props[state.sel.i]:state.map.npcs[state.sel.i]; state.drag={sx:mx,sy:my,ox:a.x,oy:a.y,kind:state.sel.kind}; } }
+  else if(state.tool==='door'||state.tool==='spawn'){ zoneStart=[cx,cy]; }
+});
+addEventListener('mousemove',e=>{ const r=cv.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top;
+  if(mx<0||my<0||mx>r.width||my>r.height){ hoverTile=null; } else { const [tx,ty]=toTile(mx,my); hoverTile=[tx,ty];
+    $('#statXY').textContent=`x ${Math.floor(tx)}, y ${Math.floor(ty)}`; }
+  if(panning&&panStart){ state.view.ox=panStart[2]+(mx-panStart[0]); state.view.oy=panStart[3]+(my-panStart[1]); requestRender(); return; }
+  if(painting){ const [tx,ty]=toTile(mx,my); const cx=Math.floor(tx),cy=Math.floor(ty);
+    if(state.tool==='elevate') setLevel(cx,cy,String(state.paintLevel)); else setCell(cx,cy,state.tool==='erase'?'.':state.tileChar); }
+  else if(state.drag&&state.sel){ const a=state.drag.kind==='npc'?state.map.npcs[state.sel.i]:state.map.props[state.sel.i];
+    if(a){ a.x=Math.round((state.drag.ox+(mx-state.drag.sx)/TS())*2)/2; a.y=Math.round((state.drag.oy+(my-state.drag.sy)/TS())*2)/2;
+      refreshInspector(); requestRender(); } }
+  else requestRender();
+});
+addEventListener('mouseup',e=>{ painting=false; panning=false; state.drag=null;
+  if(zoneStart){ const [tx,ty]=toTile(e.clientX-cv.getBoundingClientRect().left,e.clientY-cv.getBoundingClientRect().top);
+    const x0=Math.min(zoneStart[0],Math.floor(tx)),y0=Math.min(zoneStart[1],Math.floor(ty));
+    const w=Math.abs(Math.floor(tx)-zoneStart[0])+1,h=Math.abs(Math.floor(ty)-zoneStart[1])+1;
+    if(state.tool==='door'){ state.map.doors.push({x:x0,y:y0,w,h,to:'',tx:0,ty:0,facing:'down',indicator:'mat'}); state.sel={kind:'door',i:state.map.doors.length-1}; }
+    else{ state.map.spawners.push({enemies:[],count:2,rect:{x:x0,y:y0,w,h}}); state.sel={kind:'spawn',i:state.map.spawners.length-1}; }
+    zoneStart=null; refreshInspector(); refreshLayers(); requestRender(); }
+});
+cv.addEventListener('wheel',e=>{ e.preventDefault(); const r=cv.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top; const [tx,ty]=toTile(mx,my);
+  const f=e.deltaY<0?1.12:1/1.12; state.view.zoom=Math.max(.3,Math.min(4,state.view.zoom*f));
+  const [nsx,nsy]=toScreen(tx,ty); state.view.ox+=mx-nsx; state.view.oy+=my-nsy; requestRender(); },{passive:false});
+
+function setCell(x,y,ch){ const m=state.map; if(x<0||y<0||x>=m.w||y>=m.h)return; if(m.grid[y][x]===ch)return;
+  m.grid[y][x]=ch; requestRender(); scheduleAutosave(); }
+function setLevel(x,y,d){ const m=state.map; if(x<0||y<0||x>=m.w||y>=m.h||!m.level[y])return; if(m.level[y][x]===d)return;
+  m.level[y][x]=d; requestRender(); scheduleAutosave(); }
+const lvlAt=(x,y)=>+((state.map.level[y]&&state.map.level[y][x])||'0');
+const isSolidCell=(x,y)=>{ const l=legendByChar.get(state.map.grid[y]&&state.map.grid[y][x]); return !!(l&&l.solid); };
+// the game's "no invisible ledge" law: two adjacent WALKABLE cells of different level must meet
+// at a stair ('T') and step only one level. Draw a red edge on any seam that breaks it.
+function drawLedgeWarnings(cx0,cy0,cx1,cy1,ts){ const m=state.map; ctx.lineWidth=Math.max(2,ts*0.14);
+  for(let y=cy0;y<=cy1&&y<m.h;y++)for(let x=cx0;x<=cx1&&x<m.w;x++){ if(isSolidCell(x,y))continue;
+    for(const [dx,dy] of [[1,0],[0,1]]){ const nx=x+dx,ny=y+dy; if(nx>=m.w||ny>=m.h)continue; if(isSolidCell(nx,ny))continue;
+      const a=lvlAt(x,y),b=lvlAt(nx,ny); if(a===b)continue;
+      const isStair=m.grid[y][x]==='T'||m.grid[ny][nx]==='T';
+      if(isStair&&Math.abs(a-b)===1)continue; // legal one-step stair join
+      ctx.strokeStyle='rgba(255,50,70,.95)'; ctx.beginPath();
+      if(dx===1){ const [ex,ey]=toScreen(nx,y); ctx.moveTo(ex,ey); ctx.lineTo(ex,ey+ts); }
+      else { const [ex,ey]=toScreen(x,ny); ctx.moveTo(ex,ey); ctx.lineTo(ex+ts,ey); }
+      ctx.stroke(); } } }
+function ledgeCount(){ const m=state.map; let n=0;
+  for(let y=0;y<m.h;y++)for(let x=0;x<m.w;x++){ if(isSolidCell(x,y))continue;
+    for(const [dx,dy] of [[1,0],[0,1]]){ const nx=x+dx,ny=y+dy; if(nx>=m.w||ny>=m.h||isSolidCell(nx,ny))continue;
+      const a=lvlAt(x,y),b=lvlAt(nx,ny); if(a===b)continue;
+      const isStair=m.grid[y][x]==='T'||m.grid[ny][nx]==='T'; if(!(isStair&&Math.abs(a-b)===1))n++; } } return n; }
+function buildElevatePane(){ const pane=$('#pane-elevate');
+  pane.innerHTML=`<div class="hint" style="padding:2px 2px 8px">Build terraces: pick a <b>level</b> and paint the raised area, wall its edge with a <b>cliff (K)</b>, and cut a <b>stairway (T)</b> to climb it. Turn on the <b>levels</b> overlay (top bar) — heights tint by colour and illegal edges glow red.</div>`;
+  const t1=document.createElement('div'); t1.className='grpTitle'; t1.textContent='terrace level — paint the plane'; pane.appendChild(t1);
+  const lw=document.createElement('div'); lw.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px';
+  ['0','1','2','3','4'].forEach(n=>{ const b=document.createElement('button'); b.className='btn'+(n==='1'?' primary':''); b.textContent=n==='0'?'Ground 0':'Level '+n;
+    b.onclick=()=>{ state.paintLevel=+n; setTool('elevate'); state.levelsOn=true; $('#tLevels').checked=true;
+      [...lw.children].forEach(c=>c.classList.remove('primary')); b.classList.add('primary'); $('#statSel').textContent='Elevate: level '+n; requestRender(); };
+    lw.appendChild(b); });
+  pane.appendChild(lw);
+  const t2=document.createElement('div'); t2.className='grpTitle'; t2.textContent='cliff tiles — paint onto the map'; pane.appendChild(t2);
+  const cw=document.createElement('div'); cw.className='swatches';
+  [['K','cliff wall'],['^','cliff lip'],['T','stairs']].forEach(([ch,label])=>{ const l=legendByChar.get(ch); if(!l)return;
+    const sw=document.createElement('div'); sw.className='sw'; sw.title=label; sw.appendChild(tileThumb(l.index));
+    sw.insertAdjacentHTML('beforeend',`<span class="code">${ch}</span><span class="nm">${label}</span>`);
+    sw.onclick=()=>{ state.tileChar=ch; setTool('paint'); $$('#pane-elevate .sw').forEach(e=>e.classList.remove('sel')); sw.classList.add('sel'); $('#statSel').textContent=`Tile: ${label} (${ch})`; };
+    cw.appendChild(sw); });
+  pane.appendChild(cw);
+  const chk=document.createElement('button'); chk.className='btn'; chk.style.marginTop='10px'; chk.textContent='✓ Check ledges';
+  chk.onclick=()=>{ state.levelsOn=true; $('#tLevels').checked=true; const n=ledgeCount(); requestRender(); toast(n?`${n} illegal edge${n>1?'s':''} (red)`:'All terrace edges legal ✓'); };
+  pane.appendChild(chk);
+}
+function placeProp(key,x,y){ const solid=isFacadeKey(key)?undefined:(propMeta(key).solidDefault?autoSolid(key):undefined);
+  const pl={sprite:key,x,y}; if(solid)pl.solid=solid; if(isFacadeKey(key))pl.scale=4;
+  state.map.props.push(pl); state.sel={kind:'prop',i:state.map.props.length-1};
+  refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
+function placeNpc(sprite,x,y){ let n=1; const ids=new Set(state.map.npcs.map(o=>o.id)); while(ids.has(sprite+'_'+n))n++;
+  state.map.npcs.push({id:sprite+'_'+n,sprite,x,y,facing:'down',dialogue:'placeholder'});
+  state.sel={kind:'npc',i:state.map.npcs.length-1}; refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
+function selectAt(tx,ty){ const m=state.map;
+  for(let i=m.signs.length-1;i>=0;i--){ const s=m.signs[i]; if(Math.abs(tx-s.x)<0.6&&Math.abs(ty-s.y)<0.6){ state.sel={kind:'sign',i}; refreshInspector();refreshLayers();requestRender();return; } }
+  for(let i=m.npcs.length-1;i>=0;i--){ const p=m.npcs[i]; if(tx>=p.x&&tx<=p.x+1&&ty>=p.y-0.4&&ty<=p.y+1){ state.sel={kind:'npc',i}; refreshInspector();refreshLayers();requestRender();return; } }
+  for(let i=m.props.length-1;i>=0;i--){ const p=m.props[i]; const t=propTiles(p);
+    if(tx>=p.x&&tx<=p.x+t.w&&ty>=p.y&&ty<=p.y+t.h){ state.sel={kind:'prop',i}; refreshInspector();refreshLayers();requestRender();return; } }
+  for(let i=m.doors.length-1;i>=0;i--){ const d=m.doors[i]; if(tx>=d.x&&tx<=d.x+d.w&&ty>=d.y&&ty<=d.y+d.h){ state.sel={kind:'door',i}; refreshInspector();refreshLayers();requestRender();return; } }
+  for(let i=m.spawners.length-1;i>=0;i--){ const s=m.spawners[i].rect; if(tx>=s.x&&tx<=s.x+s.w&&ty>=s.y&&ty<=s.y+s.h){ state.sel={kind:'spawn',i}; refreshInspector();refreshLayers();requestRender();return; } }
+  state.sel=null; refreshInspector(); refreshLayers(); requestRender();
+}
+addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if((e.key==='Delete'||e.key==='Backspace')&&state.sel){ deleteSel(); }
+  const k=e.key.toLowerCase(); const map={b:'paint',e:'erase',p:'place',v:'select',d:'door',s:'spawn',h:'pan'};
+  if(map[k]){ setTool(map[k]); } });
+function deleteSel(){ if(!state.sel)return; const {kind,i}=state.sel;
+  if(kind==='prop')state.map.props.splice(i,1); if(kind==='door')state.map.doors.splice(i,1); if(kind==='spawn')state.map.spawners.splice(i,1);
+  if(kind==='npc')state.map.npcs.splice(i,1); if(kind==='sign')state.map.signs.splice(i,1);
+  state.sel=null; refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
+
+// ---------- inspector + layers ----------
+function refreshInspector(){ const el=$('#inspector'); const s=state.sel;
+  if(!s){ el.innerHTML='<div class="hint">Select a placed object, door, or spawner to edit it.</div>'; return; }
+  if(s.kind==='prop'){ const p=state.map.props[s.i]; const fac=isFacadeKey(p.sprite);
+    el.innerHTML=`<div class="row"><label>sprite</label><input value="${p.sprite}" disabled></div>
+    <div class="row"><label>x (tile)</label><input type="number" step="0.5" id="ip_x" value="${p.x}"></div>
+    <div class="row"><label>y (tile)</label><input type="number" step="0.5" id="ip_y" value="${p.y}"></div>`+
+    (fac?`<div class="row"><label>size (tiles)</label><input type="number" step="0.5" id="ip_sc" value="${p.scale||4}"></div>
+      <div class="hint">Buildings collide as their drawn footprint in-game (auto).</div>`
+     :`<div class="row"><label class="chk"><input type="checkbox" id="ip_solid" ${p.solid?'checked':''}> solid (blocks walking)</label></div>`)+
+    `<div class="row"><button class="btn" id="ip_del">🗑 Delete</button></div>`;
+    $('#ip_x').oninput=e=>{p.x=+e.target.value;requestRender();scheduleAutosave();};
+    $('#ip_y').oninput=e=>{p.y=+e.target.value;requestRender();scheduleAutosave();};
+    if(fac)$('#ip_sc').oninput=e=>{p.scale=+e.target.value;requestRender();scheduleAutosave();};
+    else $('#ip_solid').onchange=e=>{ p.solid=e.target.checked?autoSolid(p.sprite):undefined; requestRender();scheduleAutosave(); };
+    $('#ip_del').onclick=deleteSel;
+  } else if(s.kind==='door'){ const d=state.map.doors[s.i];
+    el.innerHTML=`<div class="hint">Door zone → warps the player to another map.</div>
+    <div class="row"><label>to (map id)</label><input id="d_to" value="${d.to}"></div>
+    <div class="row"><label>target x*64</label><input type="number" id="d_tx" value="${d.tx}"></div>
+    <div class="row"><label>target y*64</label><input type="number" id="d_ty" value="${d.ty}"></div>
+    <div class="row"><label>facing</label><select id="d_face">${['down','up','left','right'].map(f=>`<option ${d.facing===f?'selected':''}>${f}</option>`).join('')}</select></div>
+    <div class="row"><label>indicator</label><select id="d_ind">${['mat','stairs','elevator','door','none'].map(f=>`<option ${d.indicator===f?'selected':''}>${f}</option>`).join('')}</select></div>
+    <div class="row"><button class="btn" id="d_del">🗑 Delete</button></div>`;
+    $('#d_to').oninput=e=>{d.to=e.target.value;requestRender();scheduleAutosave();};
+    $('#d_tx').oninput=e=>{d.tx=+e.target.value;scheduleAutosave();};
+    $('#d_ty').oninput=e=>{d.ty=+e.target.value;scheduleAutosave();};
+    $('#d_face').onchange=e=>{d.facing=e.target.value;scheduleAutosave();};
+    $('#d_ind').onchange=e=>{d.indicator=e.target.value;scheduleAutosave();};
+    $('#d_del').onclick=deleteSel;
+  } else if(s.kind==='npc'){ const npc=state.map.npcs[s.i];
+    const opts=(M.npcs||[]).map(n=>`<option ${npc.sprite===n.id?'selected':''}>${n.id}</option>`).join('');
+    el.innerHTML=`<div class="hint">A townsperson. <b>dialogue</b> is a script id from src/data/dialogue.ts.</div>
+    <div class="row"><label>id</label><input id="n_id" value="${npc.id}"></div>
+    <div class="row"><label>sprite</label><select id="n_sp">${opts}</select></div>
+    <div class="row"><label>x,y</label><input type="number" step="0.5" id="n_x" value="${npc.x}" style="max-width:58px"><input type="number" step="0.5" id="n_y" value="${npc.y}" style="max-width:58px"></div>
+    <div class="row"><label>facing</label><select id="n_face">${['down','up','left','right'].map(f=>`<option ${npc.facing===f?'selected':''}>${f}</option>`).join('')}</select></div>
+    <div class="row"><label>dialogue</label><input id="n_dlg" value="${npc.dialogue}"></div>
+    <div class="row"><label>shop (opt)</label><input id="n_shop" value="${npc.shop||''}"></div>
+    <div class="row"><button class="btn" id="n_del">🗑 Delete</button></div>`;
+    $('#n_id').oninput=e=>{npc.id=e.target.value;refreshLayers();scheduleAutosave();};
+    $('#n_sp').onchange=e=>{npc.sprite=e.target.value;requestRender();scheduleAutosave();};
+    $('#n_x').oninput=e=>{npc.x=+e.target.value;requestRender();scheduleAutosave();};
+    $('#n_y').oninput=e=>{npc.y=+e.target.value;requestRender();scheduleAutosave();};
+    $('#n_face').onchange=e=>{npc.facing=e.target.value;scheduleAutosave();};
+    $('#n_dlg').oninput=e=>{npc.dialogue=e.target.value;scheduleAutosave();};
+    $('#n_shop').oninput=e=>{const v=e.target.value.trim(); if(v)npc.shop=v; else delete npc.shop; scheduleAutosave();};
+    $('#n_del').onclick=deleteSel;
+  } else if(s.kind==='sign'){ const sg=state.map.signs[s.i];
+    el.innerHTML=`<div class="hint">A readable sign. <b>dialogue</b> is a script id from src/data/dialogue.ts. (Place a <i>sign</i> prop too if you want a visible post.)</div>
+    <div class="row"><label>dialogue</label><input id="sg_dlg" value="${sg.dialogue}"></div>
+    <div class="row"><button class="btn" id="sg_del">🗑 Delete</button></div>`;
+    $('#sg_dlg').oninput=e=>{sg.dialogue=e.target.value;scheduleAutosave();};
+    $('#sg_del').onclick=deleteSel;
+  } else { const s2=state.map.spawners[s.i];
+    el.innerHTML=`<div class="hint">Enemy spawn zone (random encounters in this rect).</div>
+    <div class="row"><label>enemies</label><input id="s_en" value="${(s2.enemies||[]).join(', ')}" placeholder="id1, id2"></div>
+    <div class="row"><label>count</label><input type="number" id="s_ct" value="${s2.count}"></div>
+    <div class="row"><button class="btn" id="s_del">🗑 Delete</button></div>`;
+    $('#s_en').oninput=e=>{s2.enemies=e.target.value.split(',').map(x=>x.trim()).filter(Boolean);requestRender();scheduleAutosave();};
+    $('#s_ct').oninput=e=>{s2.count=+e.target.value;scheduleAutosave();};
+    $('#s_del').onclick=deleteSel;
+  }
+}
+function refreshLayers(){ const el=$('#layers'); const m=state.map; let h='';
+  m.props.forEach((p,i)=>h+=`<div class="layer ${sel('prop',i)}" data-k="prop" data-i="${i}"><span>🌳 ${p.sprite} (${p.x},${p.y})</span><span class="del" data-k="prop" data-i="${i}">✕</span></div>`);
+  m.npcs.forEach((p,i)=>h+=`<div class="layer ${sel('npc',i)}" data-k="npc" data-i="${i}"><span>🧍 ${p.id} (${p.x},${p.y})</span><span class="del" data-k="npc" data-i="${i}">✕</span></div>`);
+  m.signs.forEach((s,i)=>h+=`<div class="layer ${sel('sign',i)}" data-k="sign" data-i="${i}"><span>📖 sign (${s.x},${s.y})</span><span class="del" data-k="sign" data-i="${i}">✕</span></div>`);
+  m.doors.forEach((d,i)=>h+=`<div class="layer ${sel('door',i)}" data-k="door" data-i="${i}"><span>🚪 → ${d.to||'?'}</span><span class="del" data-k="door" data-i="${i}">✕</span></div>`);
+  m.spawners.forEach((s,i)=>h+=`<div class="layer ${sel('spawn',i)}" data-k="spawn" data-i="${i}"><span>👾 ${(s.enemies||[]).join(',')||'?'} ×${s.count}</span><span class="del" data-k="spawn" data-i="${i}">✕</span></div>`);
+  el.innerHTML=h||'<div class="hint" style="padding:8px 10px">No objects yet. Place props/NPCs, or use Door / Spawn / Sign.</div>';
+  $$('.layer',el).forEach(l=>l.onclick=e=>{ if(e.target.classList.contains('del')){ const k=e.target.dataset.k,i=+e.target.dataset.i;
+      state.sel={kind:k,i}; deleteSel(); return; } state.sel={kind:l.dataset.k,i:+l.dataset.i}; refreshInspector();refreshLayers();requestRender(); });
+  $('#statCount').textContent=`${m.props.length} props · ${m.npcs.length} NPCs · ${m.doors.length} doors · ${m.spawners.length} spawns`;
+}
+const sel=(k,i)=>state.sel&&state.sel.kind===k&&state.sel.i===i?'sel':'';
+
+// ---------- tools + top UI ----------
+function setTool(t){ state.tool=t; $$('.tool').forEach(e=>e.classList.toggle('active',e.dataset.tool===t));
+  $('#statTool').textContent='Tool: '+t; cv.style.cursor=t==='pan'?'grab':(t==='select'?'default':'crosshair'); requestRender(); }
+function wireUI(){
+  $$('.tool').forEach(e=>e.onclick=()=>setTool(e.dataset.tool));
+  $$('.tab').forEach(t=>t.onclick=()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+    $$('.pane').forEach(p=>p.classList.remove('active')); $('#pane-'+t.dataset.tab).classList.add('active'); });
+  $('#tGrid').onchange=e=>{state.gridOn=e.target.checked;requestRender();};
+  $('#tSolid').onchange=e=>{state.solidOn=e.target.checked;requestRender();};
+  $('#tLevels').onchange=e=>{state.levelsOn=e.target.checked;requestRender();};
+  const rs=$('#regionSel'); (M.regions||[]).forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.label;rs.appendChild(o);});
+  rs.onchange=e=>{ state.region=(M.regions||[]).find(r=>r.id===e.target.value)||null;
+    if(state.region){ const ra=loadImg(state.region.atlas); if(!ra.complete) ra.addEventListener('load',()=>{reskinPalette();requestRender();},{once:true}); }
+    reskinPalette(); requestRender(); };
+  $('#mName').oninput=e=>{state.map.name=e.target.value;scheduleAutosave();};
+  $('#mId').oninput=e=>{state.map.id=e.target.value;scheduleAutosave();};
+  $('#resize').onclick=doResize;
+  $('#newMap').onclick=()=>{ if(!confirm('Start a new blank map? (Save first if you want to keep this one.)'))return;
+    const w=Math.max(4,+$('#mW').value||30), h=Math.max(4,+$('#mH').value||20);
+    loadMapObj({id:'my_map',name:'MY MAP',w,h,grid:newGrid(w,h),props:[],doors:[],spawners:[]}); toast('New map'); };
+  $('#save').onclick=()=>{localStorage.setItem('mf_mapeditor_save',JSON.stringify(serialize()));toast('Saved');};
+  $('#load').onclick=()=>{const s=localStorage.getItem('mf_mapeditor_save'); if(s){loadMapObj(JSON.parse(s));toast('Loaded');}else toast('No save');};
+  $('#export').onclick=openExport;
+  $('#closeModal').onclick=()=>$('#exportModal').classList.remove('on');
+  $('#copyBtn').onclick=()=>{navigator.clipboard.writeText($('#exportText').value);toast('Copied');};
+  $('#fmtTs').onclick=()=>{setFmt('ts');}; $('#fmtJson').onclick=()=>{setFmt('json');};
+  $('#importBtn').onclick=()=>{ try{ loadMapObj(JSON.parse($('#exportText').value)); $('#exportModal').classList.remove('on'); toast('Imported'); }catch{ toast('Not valid JSON'); } };
+}
+function doResize(){ const w=Math.max(4,Math.min(400,+$('#mW').value)), h=Math.max(4,Math.min(400,+$('#mH').value));
+  const ng=newGrid(w,h), nl=newGrid(w,h,'0'); const m=state.map;
+  for(let y=0;y<Math.min(h,m.h);y++)for(let x=0;x<Math.min(w,m.w);x++){ ng[y][x]=m.grid[y][x]; nl[y][x]=(m.level[y]&&m.level[y][x])||'0'; }
+  m.w=w;m.h=h;m.grid=ng;m.level=nl; requestRender(); scheduleAutosave(); }
+
+// ---------- serialize / export ----------
+function serialize(){ return JSON.parse(JSON.stringify(state.map)); }
+function loadMapObj(o){ const grid=o.grid.map(r=>Array.isArray(r)?r.slice():r.split(''));
+  const level=(o.level&&o.level.length)?o.level.map(r=>Array.isArray(r)?r.slice():r.split('')):newGrid(o.w,o.h,'0');
+  state.map={id:o.id||'my_map',name:o.name||'MY MAP',w:o.w,h:o.h,grid,level,
+    props:o.props||[],npcs:o.npcs||[],signs:o.signs||[],doors:o.doors||[],spawners:o.spawners||[]};
+  $('#mName').value=state.map.name;$('#mId').value=state.map.id;$('#mW').value=state.map.w;$('#mH').value=state.map.h;
+  state.sel=null; refreshInspector(); refreshLayers(); fitView(); requestRender(); }
+function fitView(){ const r=cv.getBoundingClientRect(); state.view.zoom=Math.max(.3,Math.min(2,Math.min(r.width/(state.map.w*TILE_BASE),r.height/(state.map.h*TILE_BASE))*.95));
+  state.view.ox=(r.width-state.map.w*TS())/2; state.view.oy=(r.height-state.map.h*TS())/2; }
+let autosaveT; function scheduleAutosave(){ clearTimeout(autosaveT); autosaveT=setTimeout(()=>localStorage.setItem('mf_mapeditor_autosave',JSON.stringify(serialize())),600); }
+
+let exportFmt='ts';
+function setFmt(f){ exportFmt=f; $('#fmtTs').classList.toggle('primary',f==='ts'); $('#fmtJson').classList.toggle('primary',f==='json');
+  $('#exportText').value=f==='ts'?toTS():JSON.stringify(serialize(),null,2); }
+function openExport(){ $('#exportModal').classList.add('on'); setFmt('ts'); }
+function gridRows(){ return state.map.grid.map(r=>r.join('')); }
+function toTS(){ const m=state.map; const q=s=>`'${String(s).replace(/'/g,"\\'")}'`;
+  const propLine=p=>{ let s=`    { sprite: ${q(p.sprite)}, x: ${p.x}, y: ${p.y}`;
+    if(p.solid)s+=`, solid: { ox: ${p.solid.ox}, oy: ${p.solid.oy}, w: ${p.solid.w}, h: ${p.solid.h} }`; s+=' },'; return s; };
+  const doorLine=d=>`    { x: ${d.x}, y: ${d.y}, w: ${d.w}, h: ${d.h}, to: ${q(d.to)}, tx: ${d.tx}, ty: ${d.ty}, facing: ${q(d.facing)}, indicator: ${q(d.indicator)} },`;
+  const spawnLine=s=>`    { enemies: [${(s.enemies||[]).map(q).join(', ')}], count: ${s.count}, rect: { x: ${s.rect.x}, y: ${s.rect.y}, w: ${s.rect.w}, h: ${s.rect.h} } },`;
+  const npcLine=n=>{ let s=`    { id: ${q(n.id)}, sprite: ${q(n.sprite)}, x: ${n.x}, y: ${n.y}, facing: ${q(n.facing)}, dialogue: ${q(n.dialogue)}`; if(n.shop)s+=`, shop: ${q(n.shop)}`; s+=' },'; return s; };
+  const signLine=g=>`    { x: ${g.x}, y: ${g.y}, dialogue: ${q(g.dialogue)} },`;
+  const varName=(m.id||'my_map').replace(/[^a-zA-Z0-9]+(.)/g,(_,c)=>c.toUpperCase())+'Map';
+  const block=(items,fn)=>items.length?`[\n${items.map(fn).join('\n')}\n  ]`:'[]';
+  const levelRows=m.level.map(r=>r.join(''));
+  const hasElev=levelRows.some(r=>/[1-9]/.test(r));
+  const elevBlock=hasElev?`  elevation: {\n    level: [\n${levelRows.map(r=>'      '+q(r)+',').join('\n')}\n    ],\n  },\n`:'';
+  const regionNote=state.region?`// REGION SKIN: to render this map in the ${state.region.label} tileset, ALSO add ${q(m.id)}\n//   to ${state.region.mapsSet} in src/scenes/OverworldScene.ts.\n`:'';
+  return regionNote+`// ── generated by the Map Editor ── paste into src/data/maps.ts (or a chapter file),\n`+
+`// then register it:  in the MAPS object add   ${q(m.id)}: ${varName},   and run \`npm run validate\`.\n`+
+`export const ${varName}: MapDef = {\n`+
+`  id: ${q(m.id)},\n  name: ${q(m.name)},\n  music: null,\n`+
+`  grid: [\n${gridRows().map(r=>'    '+q(r)+',').join('\n')}\n  ],\n`+
+elevBlock+
+`  props: ${block(m.props,propLine)},\n`+
+`  npcs: ${block(m.npcs,npcLine)},\n`+
+`  signs: ${block(m.signs,signLine)},\n  phones: [],\n`+
+`  doors: ${block(m.doors,doorLine)},\n`+
+`  spawners: ${block(m.spawners,spawnLine)},\n  triggers: [],\n};\n`;
+}
+
+boot().catch(e=>{ $('#loadmsg').textContent='Failed: '+e.message+' — make sure you opened this through the dev server (npm run dev).'; });
+</script>
+</body>
+</html>

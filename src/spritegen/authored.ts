@@ -531,6 +531,21 @@ const MARS_TILE_ART = {
   names: ['mars_ground', 'mars_path', 'mars_wall'],
 };
 
+/** The authored REGION tile strips, keyed by region. Each overrides certain base tiles on its
+ *  chapter's maps via the render-time `*_TILE_SKIN` remaps in OverworldScene. Exported so the
+ *  visual map editor (tools/mapeditor) can PREVIEW a map in any region's skin: `url` is the
+ *  64px-cell atlas and `names[i]` is the region tile drawn at cell i (''=cell unused). */
+export const REGION_TILE_STRIPS = {
+  minimus: MINIMUS_TILE_ART,
+  norway: NORWAY_TILE_ART,
+  africa: AFRICA_TILE_ART,
+  china: CHINA_TILE_ART,
+  romania: ROMANIA_TILE_ART,
+  aurora: AURORA_TILE_ART,
+  lani: LANI_TILE_ART,
+  mars: MARS_TILE_ART,
+} as const;
+
 const WORLD_PROP_KEYS = [
   'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
   'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'meteor_rock_hickory_hill', 'sawhorse', 'ember',
@@ -668,6 +683,26 @@ const WORLD_FACADE_KEYS = Array.from(new Set([
 
 export const AUTHORED_WORLD_PROP_KEYS = WORLD_PROP_KEYS;
 export const AUTHORED_WORLD_FACADE_KEYS = WORLD_FACADE_KEYS;
+
+/**
+ * PHASE 2 (oblique overhaul) — props re-authored in the EarthBound 3/4 OBLIQUE style
+ * (chunky pixel, front-left light). The overworld plants each of these on an OUTDOOR
+ * map with a soft front-left contact-shadow pool tucked under its foot — mirrors the
+ * otterbrook facade grounding + the ADR-097 actor shadows — so the grounded oblique
+ * objects sit ON the ground instead of floating above the tile. Grows batch by batch
+ * as more of WORLD_PROP_KEYS is re-authored; a prop is added here only once its art is
+ * the oblique redraw (so un-restyled flat props never get a mismatched shadow).
+ */
+export const OBLIQUE_SHADOW_PROP_KEYS: ReadonlySet<string> = new Set<string>([
+  // Batch 1 — street furniture (props-street-oblique-source.png). Isolated ground
+  // objects on open sidewalks — a contact pool grounds them and reads clearly.
+  'bench', 'hydrant', 'mailbox', 'trash_can', 'news_box', 'parking_meter',
+  // NB: trees (tree/tree_b/tree_c/pine) are DELIBERATELY excluded. They still got the
+  // oblique art redraw, but forest-fill maps place THOUSANDS of them (Otterbrooke alone
+  // has ~3.3k), so a per-tree shadow image is a needless object-count cost and the shade
+  // just hides under the neighbouring canopies anyway. Their chunky canopy reads grounded
+  // on its own. Only sparse, standalone props earn an engine shadow.
+]);
 
 export const AUTHORED_VEHICLE_ART = [
   'banana_boat',
@@ -819,16 +854,16 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   counter: { w: 30, h: 18 },
   payphone: { w: 16, h: 28 },
   dumpster: { w: 22, h: 18 },
-  bench: { w: 22, h: 13 },
+  bench: { w: 22, h: 19 },
   hydrant: { w: 10, h: 14 },
   planter: { w: 22, h: 16 },
   elevator: { w: 40, h: 48 },
   ember: { w: 12, h: 12 },
   meteor_rock_hickory_hill: { w: 96, h: 94 }, // authored segmented meteor sphere — a ~6-tile crater centerpiece (aspect-matched to the 300x293 art)
   phone_pole: { w: 136, h: 48 },
-  trash_can: { w: 14, h: 18 },
-  parking_meter: { w: 10, h: 22 },
-  news_box: { w: 16, h: 20 },
+  trash_can: { w: 13, h: 18 },
+  parking_meter: { w: 9, h: 22 },
+  news_box: { w: 14, h: 20 },
   atm: { w: 16, h: 26 },
   water_cooler: { w: 12, h: 22 },
   copier: { w: 24, h: 18 },
@@ -854,10 +889,12 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   // slices are hi-res; these sizes anchor on the old native HEIGHT (keeps each
   // prop's ground line + y-sort depth) with art-true widths. See
   // tools/slice-otterbrook-world.js.
-  tree: { w: 24, h: 34 },
-  tree_b: { w: 33, h: 34 }, // 2026-07-03: re-authored full-canopy tree (ChatGPT→magenta→chroma-key); the old 300×408 had its top clipped by bg removal. 984×999 source, aspect 0.985 ⇒ w33 at h34
+  // Phase 2 oblique overhaul (props-trees-oblique-source.png): 4 chunky EarthBound
+  // canopies with front-left light, re-anchored to h34 at each slice's true aspect.
+  tree: { w: 22, h: 34 },
+  tree_b: { w: 31, h: 34 }, // the big billowing broadleaf (widest canopy)
   tree_c: { w: 29, h: 34 },
-  pine: { w: 25, h: 34 },
+  pine: { w: 24, h: 34 },
   sign: { w: 25, h: 18 },
   picnic: { w: 30, h: 26 },
   picnic_blanket: { w: 22, h: 24 },
@@ -875,7 +912,7 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   gazebo: { w: 39, h: 56 },
   footbridge_rail: { w: 44, h: 29 },
   cattails: { w: 14, h: 22 },
-  mailbox: { w: 10, h: 21 },
+  mailbox: { w: 13, h: 21 },
   doghouse: { w: 22, h: 22 },
   tree_swing: { w: 30, h: 34 },
   clothesline: { w: 46, h: 32 },
