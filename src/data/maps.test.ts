@@ -157,7 +157,7 @@ describe('S1 canon — the Department & the 6:15', () => {
     // 2026-07-02: the old center bus_stop trigger is retired — Otterbrook
     // boards INSIDE the Transit Depot (its door on the drag + the depot_board
     // trigger in the waiting room). Brickton's curb stop is unchanged.
-    expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'bus_depot_int')).toBe(true);
+    expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'bus_depot_int') || MAPS.otterbrook.doors.some((d) => d.to === 'bus_depot_int')).toBe(true);
     expect(MAPS.bus_depot_int.triggers.some((t) => t.id === 'depot_board')).toBe(true);
     expect(MAPS.brickton.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(true);
   });
@@ -165,11 +165,11 @@ describe('S1 canon — the Department & the 6:15', () => {
 
 describe('S4 canon — shops open, the bank grows an ATM (Prompt 20, ADR-016)', () => {
   it('the drugstore and STARMART are real doors now', () => {
-    expect(MAPS.otterbrook.props.some((p) => p.sprite === 'drugstore' && p.door?.to === 'drugstore_int')).toBe(true);
+    expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'drugstore_int') || MAPS.otterbrook.doors.some((d) => d.to === 'drugstore_int')).toBe(true);
     expect(MAPS.brickton.props.some((p) => p.sprite === 'bldg_starmart' && p.door?.to === 'starmart_int')).toBe(true);
   });
 
-  it('shop exits derive their doorsteps from the (jittered) facades — computed, never hardcoded', () => {
+  it('shop exits derive their doorsteps from the placed entry points -- computed, never hardcoded', () => {
     const cases: Array<{ street: string; interior: string }> = [
       { street: 'otterbrook', interior: 'drugstore_int' },
       { street: 'brickton', interior: 'starmart_int' },
@@ -177,15 +177,24 @@ describe('S4 canon — shops open, the bank grows an ATM (Prompt 20, ADR-016)', 
     for (const c of cases) {
       const prop = MAPS[c.street].props.find((p) => p.door?.to === c.interior);
       const d = prop?.door;
-      expect(prop && d, `${c.street} facade -> ${c.interior}`).toBeTruthy();
-      if (!prop || !d) continue;
+      const zone = MAPS[c.street].doors.find((z) => z.to === c.interior);
+      expect((prop && d) || zone, `${c.street} entry -> ${c.interior}`).toBeTruthy();
       const exit = MAPS[c.interior].doors.find((z) => z.to === c.street);
       expect(exit, `${c.interior} exit`).toBeDefined();
-      expect(exit?.tx).toBe(prop.x * 16 + d.ox + d.w / 2);
-      expect(exit?.ty).toBe(prop.y * 16 + d.oy + d.h + 5);
-      // ADR-011: the facade's door zone reaches below its collision floor
-      const floor = prop.y * 16 + (prop.solid?.oy ?? 0) + (prop.solid?.h ?? 0);
-      expect(prop.y * 16 + d.oy + d.h, `${c.street} door zone under the floor`).toBeGreaterThan(floor);
+      if (prop && d) {
+        expect(exit?.tx).toBe(prop.x * 16 + d.ox + d.w / 2);
+        expect(exit?.ty).toBe(prop.y * 16 + d.oy + d.h + 5);
+        // ADR-011: data-solid facades keep their door zone below the authored collision floor.
+        // Otterbrooke's landmark facades are texture-refit at runtime, so their live opening is
+        // audited by content-validate/door-audit instead of this static data-solid comparison.
+        if (c.street !== 'otterbrook') {
+          const floor = prop.y * 16 + (prop.solid?.oy ?? 0) + (prop.solid?.h ?? 0);
+          expect(prop.y * 16 + d.oy + d.h, `${c.street} door zone under the floor`).toBeGreaterThan(floor);
+        }
+      } else {
+        expect(exit?.tx).toBe((zone!.x + zone!.w / 2) * 16);
+        expect(exit?.ty).toBe((zone!.y + zone!.h / 2) * 16);
+      }
     }
   });
 

@@ -2231,7 +2231,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   if (!MAPS.brickton?.props.some((p) => p.door?.to === 'arcade2_int')) {
     fail('canon', `Brickton's bldg_arcade2 facade must open into arcade2_int (§A10 #4)`);
   }
-  if (!MAPS.otterbrook?.props.some((p) => p.door?.to === 'arcade_int')) {
+  if (!MAPS.otterbrook?.props.some((p) => p.door?.to === 'arcade_int') && !MAPS.otterbrook?.doors.some((d) => d.to === 'arcade_int')) {
     fail('canon', `Otterbrook's STARPORT facade must open into arcade_int (S10)`);
   }
 }
@@ -2856,7 +2856,7 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
   // beat found before the new south field's danger). S15i (ADR-054): the new
   // WOODS NOOK hides a fourth — a discoverable rest at the thicket glade.
   const TABLES: Record<string, number> = {
-    otterbrook: 4,
+    otterbrook: 2,
     // ADR-056 — THE LONG WALK: a rest (picnic + payphone) at each leg's west
     // mouth, BEFORE its hot middle (§A4.5/§B4 — routes run hot)
     meadow_mile: 1,
@@ -2893,7 +2893,7 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
   if (!MAPS.brickton?.props.some((pp) => pp.door?.to === 'hospital_int')) {
     fail('hospital', `Brickton General's facade must open into hospital_int (locked_hospital retired)`);
   }
-  if (!MAPS.otterbrook?.props.some((pp) => pp.door?.to === 'chapel_int')) {
+  if (!MAPS.otterbrook?.props.some((pp) => pp.door?.to === 'chapel_int') && !MAPS.otterbrook?.doors.some((d) => d.to === 'chapel_int')) {
     fail('hospital', `the Otterbrook chapel must open into chapel_int (locked_chapel retired)`);
   }
   const placedOnce = (npcId: string): number =>

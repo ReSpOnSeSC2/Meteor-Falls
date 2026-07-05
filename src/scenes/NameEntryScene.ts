@@ -215,7 +215,7 @@ export class NameEntryScene extends Phaser.Scene {
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       // the opening cinematic stages on the live otterbrook map — the meteor crater is
       // the crest of this one elevated map now; it ends by sending {rex} to rex_bedroom.
-      this.scene.start('overworld', { mapId: 'otterbrook', x: 1920, y: 640, opening: true });
+      this.scene.start('overworld', { mapId: 'otterbrook', x: 75 * s(16), y: 13 * s(16), opening: true });
     });
   }
 }

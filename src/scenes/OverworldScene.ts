@@ -304,6 +304,16 @@ const UNDEROAK_SKIN_MAPS: ReadonlySet<string> = new Set(['oak_roots', 'oak_hollo
 const UNDEROAK_TILE_SKIN: Readonly<Record<string, string>> = {
   cliff_face: 'root_wall', // the carved 'K' walls → packed earth + woody roots
 };
+/** OTTERBROOKE (2026-07-04): the hill's deep-woods 'b' render as the AUTHORED dense
+ *  top-down tree canopy (tools/apply-canopy-tile.ts) — same solidity as bush, so
+ *  collision/BFS are unchanged; the town has no 'b' cells so only the hill woods change. */
+const OTTERBROOK_SKIN_MAPS: ReadonlySet<string> = new Set(['otterbrook']);
+const OTTERBROOK_TILE_SKIN: Readonly<Record<string, string>> = {
+  bush: 'tree_canopy',
+  // Ground now comes from the GAME-WIDE oblique BASE kit (apply-base-ground overwrote grass_a/
+  // road/sidewalk/crosswalk/etc. in the strip), so Otterbrooke shares it with every map — no
+  // per-map ground remap needed. The ':' dirt paths are fixed at the strip level too.
+};
 const NORWAY_SKIN_MAPS: ReadonlySet<string> = new Set([
   'kvisthavn',
   'bootstep_moor',
@@ -662,6 +672,11 @@ export class OverworldScene extends Phaser.Scene {
   /** the terrace the PLAYER stands on (0 = ground). Non-zero only on an elevated
    *  map; changes solely when the player steps onto a stairs ('T') tile. */
   private playerLevel = 0;
+  /** WORLD-OVERHAUL: opt-in PARALLAX sky — a screen-fixed starfield behind the map that
+   *  drifts at a fraction of the camera scroll, so an elevated map (the Otterbrooke
+   *  plateau) reads as floating in night sky. Only the void margin shows it (the opaque
+   *  tilemap covers the rest). null unless the map opts in (buildParallaxSky). */
+  private parallaxSky?: Phaser.GameObjects.TileSprite;
   /** WORLD-OVERHAUL S5 fog atmosphere (opt-in, foggybottom): the pale level-scaled
    *  veil, its parked depth, and the terrace its density is currently tuned to (so the
    *  per-frame level check only re-tweens on an actual change). null / -1 unless the
@@ -721,6 +736,7 @@ export class OverworldScene extends Phaser.Scene {
   private stepTimer = 0;
   private fireflies: Phaser.GameObjects.Image[] = [];
   private openingRequested = false;
+  private devFullMapPreview = false;
   /** §A4: the overworld VITALS quick-glance (the EB "check HP fast" beat) —
    *  the same party strip the menu draws, popped on a button with no full menu */
   private vitalsGlance: VitalsBar | null = null;
@@ -759,10 +775,11 @@ export class OverworldScene extends Phaser.Scene {
     super('overworld');
   }
 
-  init(data: { mapId?: string; x?: number; y?: number; facing?: Facing; opening?: boolean }): void {
+  init(data: { mapId?: string; x?: number; y?: number; facing?: Facing; opening?: boolean; devFullMap?: boolean }): void {
     const id = data.mapId ?? GS.data.map;
     this.mapDef = MAPS[id] ?? MAPS.otterbrook;
     this.openingRequested = data.opening === true;
+    this.devFullMapPreview = data.devFullMap === true;
     GS.data.map = this.mapDef.id;
     if (data.x !== undefined) GS.data.x = data.x;
     if (data.y !== undefined) GS.data.y = data.y;
@@ -787,6 +804,7 @@ export class OverworldScene extends Phaser.Scene {
     this.dlg = new Dialogue(this);
 
     this.buildTiles();
+    this.buildParallaxSky();
     this.buildElevationOverlay();
     this.buildProps();
     this.buildEdgeFeatures();
@@ -833,7 +851,7 @@ export class OverworldScene extends Phaser.Scene {
     this.hushDark = hushDark;
     if (night) this.buildNight();
     this.buildFog(); // WORLD-OVERHAUL S5: opt-in level-scaled atmosphere veil (foggybottom); no-op unless atmosphere:'fog'
-    if (this.opPhase() === 0) this.showBanner(night); // no map-name/"2 A.M." banner during the opening cinematic
+    if (!this.devFullMapPreview && this.opPhase() === 0) this.showBanner(night); // no map-name/"2 A.M." banner during the opening cinematic
 
     // 'starfall' runs UNBROKEN across every opening phase (playMusic is idempotent,
     // so the per-map restarts don't restart it); room music resumes at the wake.
@@ -857,7 +875,31 @@ export class OverworldScene extends Phaser.Scene {
           .setOrigin(0).setScrollFactor(0).setDepth(80_000)
       : undefined;
 
+    if (this.devFullMapPreview) this.frameDevFullMapPreview();
     void this.onEnterCutscenes();
+  }
+
+  private frameDevFullMapPreview(): void {
+    if (!import.meta.env.DEV) return;
+    const w = this.mapDef.grid[0]?.length ?? 0;
+    const h = this.mapDef.grid.length;
+    if (w === 0 || h === 0) return;
+    const worldW = w * TILE_PX;
+    const worldH = h * TILE_PX;
+    const margin = s(16);
+    const zoom = Math.min(this.scale.width / (worldW + margin * 2), this.scale.height / (worldH + margin * 2));
+    const cam = this.cameras.main;
+    cam.stopFollow();
+    cam.setZoom(zoom);
+    cam.centerOn(worldW / 2, worldH / 2);
+    this.time.delayedCall(700, () => {
+      this.game.renderer.snapshot((img) => {
+        void fetch('http://localhost:5179/shot', {
+          method: 'POST',
+          body: JSON.stringify({ name: 'otterbrooke_full_map_ingame', dataUrl: (img as HTMLImageElement).src }),
+        }).catch(() => undefined);
+      });
+    });
   }
 
   /** §A4: pop / drop the EB "check HP fast" glance — the SAME party strip the
@@ -929,6 +971,7 @@ export class OverworldScene extends Phaser.Scene {
     // collision-preserving — see MINIMUS_TILE_SKIN). Other maps are untouched.
     const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
     const underoakSkin = UNDEROAK_SKIN_MAPS.has(this.mapDef.id);
+    const otterbrookSkin = OTTERBROOK_SKIN_MAPS.has(this.mapDef.id);
     const norwaySkin = NORWAY_SKIN_MAPS.has(this.mapDef.id);
     const zanzibelSkin = ZANZIBEL_SKIN_MAPS.has(this.mapDef.id);
     const savannaSkin = SAVANNA_SKIN_MAPS.has(this.mapDef.id);
@@ -988,6 +1031,9 @@ export class OverworldScene extends Phaser.Scene {
             // ADR-121 rework — the Under-Oak's walls read as root-tangle, not
             // hillside rock. Same solidity as the cliff base; collision unchanged.
             name = UNDEROAK_TILE_SKIN[name];
+          } else if (otterbrookSkin && OTTERBROOK_TILE_SKIN[name]) {
+            // Otterbrooke hill woods: 'b'/bush → the authored dense tree canopy.
+            name = OTTERBROOK_TILE_SKIN[name];
           } else if (minimusSkin && MINIMUS_TILE_SKIN[name]) {
             // PKG-12 §A11 — the Grand Duchy reskin (Ch.5 maps only): the shared grid
             // chars render as privet turf / hedge wall / cobble. The Minimus tile carries
@@ -1071,7 +1117,11 @@ export class OverworldScene extends Phaser.Scene {
       // a finished boundary (sand fading into sand, ice into ice, not forest-green).
       const M = s(40);
       this.cameras.main.setBounds(bx - M, by - M, Math.max(mw, vw) + 2 * M, Math.max(mh, vh) + 2 * M);
-      this.cameras.main.setBackgroundColor(EDGE_BIOME[resolveEdgeBiome(this.mapDef.id)].voidColor);
+      // the elevated plateau floats in NIGHT SKY (the concept's void beyond the mesa); the
+      // parallax starfield draws over this base. Other maps keep their biome void.
+      this.cameras.main.setBackgroundColor(
+        this.mapDef.id === 'otterbrook' ? 0x161233 : EDGE_BIOME[resolveEdgeBiome(this.mapDef.id)].voidColor,
+      );
     }
   }
 
@@ -1128,6 +1178,38 @@ export class OverworldScene extends Phaser.Scene {
     const tx = Math.floor(px / TILE_PX);
     const ty = Math.floor(py / TILE_PX);
     return this.mapDef.grid[ty]?.[tx] === 'T' ? (this.levelGrid[ty]?.[tx] ?? cur) : cur;
+  }
+
+  /** WORLD-OVERHAUL: build the opt-in PARALLAX starfield (Otterbrooke plateau). A
+   *  deterministic star texture (scene backdrop, NOT a spritegen tile — spritegen stays
+   *  frozen) tiled screen-fixed at depth −5, drifted in update() at a fraction of the
+   *  camera scroll. Shows only through the void margin around the map, selling "the town
+   *  sits on a high mesa in the night sky." No-op unless the map opts in. */
+  private buildParallaxSky(): void {
+    if (this.mapDef.id !== 'otterbrook') return;
+    const key = 'ob_starfield';
+    if (!this.textures.exists(key)) {
+      const S = 256;
+      const gfx = this.make.graphics({ x: 0, y: 0 }, false);
+      let seed = 20260705; // fixed seed → identical starfield every boot (no Math.random)
+      const rnd = (): number => {
+        seed = (Math.imul(seed, 1103515245) + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      };
+      for (let i = 0; i < 110; i++) {
+        const x = Math.floor(rnd() * S), y = Math.floor(rnd() * S);
+        const big = rnd() < 0.14;
+        gfx.fillStyle(big ? 0xfff4d0 : 0xdfe6ff, 0.35 + rnd() * 0.6);
+        gfx.fillCircle(x, y, big ? 2 : 1);
+      }
+      gfx.generateTexture(key, S, S);
+      gfx.destroy();
+    }
+    this.parallaxSky = this.add
+      .tileSprite(0, 0, this.scale.width, this.scale.height, key)
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(-5);
   }
 
   /** WORLD-OVERHAUL P2/P4 (opt-in elevation): the WALK-BEHIND band. For a terraced
@@ -1196,6 +1278,7 @@ export class OverworldScene extends Phaser.Scene {
    */
   private buildEdgeFeatures(): void {
     if (this.mapDef.interior) return; // rooms are walled; their void is intentional
+    if (this.mapDef.id === 'otterbrook') return;
     const h = this.solidTiles.length;
     const w = h > 0 ? this.solidTiles[0].length : 0;
     if (w < 2 || h < 2) return;
@@ -1319,6 +1402,18 @@ export class OverworldScene extends Phaser.Scene {
         img.y = p.y * TILE_PX + (sh / nps - sh);
       }
       img.setDepth(img.y + img.displayHeight + this.levelLift(img.x, img.y));
+      // OBLIQUE-FACADE GROUNDING (Otterbrooke): the 3/4 buildings sit on a flat ground, so
+      // a soft contact shadow at the base plants them (mirrors ADR-097's actor shadows). Drawn
+      // just UNDER the building + offset toward the light-away side (light from upper-left).
+      if (this.mapDef.id === 'otterbrook' && isFacadeSprite) {
+        const shW = img.displayWidth * 0.7;
+        this.add
+          .image(img.x + img.displayWidth / 2, img.y + img.displayHeight - s(9), 'mob_shadow')
+          .setOrigin(0.5, 0.55)
+          .setDisplaySize(shW, shW * 0.15) // a low, feathered pool tucked UNDER the foot (not a slab beside it)
+          .setAlpha(0.2)
+          .setDepth(img.y + img.displayHeight - s(15) + this.levelLift(img.x, img.y));
+      }
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
         // places a facade at a story count `u`; the forge/grown grammar often
@@ -1911,6 +2006,12 @@ export class OverworldScene extends Phaser.Scene {
     // both live at the bottom, so never let them overlap
     if (this.vitalsGlance?.visible && this.dlg.busy) this.hideVitals();
     const dt = Math.min(dtMs, 50) / 1000;
+    if (this.parallaxSky) {
+      // drift the starfield at a fraction of the camera scroll → depth parallax
+      const cam = this.cameras.main;
+      this.parallaxSky.tilePositionX = cam.scrollX * 0.35;
+      this.parallaxSky.tilePositionY = cam.scrollY * 0.35;
+    }
     if (this.doorCooldown > 0) this.doorCooldown = Math.max(0, this.doorCooldown - dtMs);
     if (!this.cut && !this.dlg.busy && !this.transitioning) {
       this.updatePlayer(dt);
@@ -2976,7 +3077,7 @@ export class OverworldScene extends Phaser.Scene {
       // bluff, y<10) + the chapel + the arcade. house_* sprites are reused all
       // over the region now (Hill Road, Maple Ct, the Hollow); those are not
       // mail stops and must not eat the knock.
-      if (p.sprite.startsWith('house_') && (this.mapDef.id !== 'otterbrook' || p.y >= 10)) continue;
+      if (p.sprite.startsWith('house_') && this.mapDef.id !== 'otterbrook') continue;
       // solid.* are NATIVE data; the ±4/8 pad is px → all scaled at read
       const r = {
         x: p.x * TILE_PX + s(p.solid.ox) - s(4),
@@ -6788,8 +6889,8 @@ export class OverworldScene extends Phaser.Scene {
     );
     landed.forEach((o) => o.setVisible(false));
     const prop = landed[0];
-    const impactX = prop ? prop.x + prop.displayWidth / 2 : 72 * TILE_PX;
-    const impactY = prop ? prop.y + prop.displayHeight / 2 : 7 * TILE_PX;
+    const impactX = prop ? prop.x + prop.displayWidth / 2 : 76 * TILE_PX;
+    const impactY = prop ? prop.y + prop.displayHeight / 2 : 8 * TILE_PX;
     // the night tint now covers at any zoom, so the opening sits WIDER
     cam.setZoom(0.8);
     cam.centerOn(impactX, impactY);
@@ -6860,8 +6961,8 @@ export class OverworldScene extends Phaser.Scene {
       (o): o is Phaser.GameObjects.Image =>
         o instanceof Phaser.GameObjects.Image && o.texture.key === 'house_rex',
     );
-    const houseX = house ? house.x + house.displayWidth / 2 : 15 * TILE_PX;
-    const houseY = house ? house.y + house.displayHeight / 2 : 49 * TILE_PX;
+    const houseX = house ? house.x + house.displayWidth / 2 : 47 * TILE_PX;
+    const houseY = house ? house.y + house.displayHeight / 2 : 37 * TILE_PX;
     cam.setZoom(0.9); // open on the house + its street (wide), not jammed in close
     cam.centerOn(houseX, houseY);
     if (this.entryBlackout) {
@@ -6873,7 +6974,7 @@ export class OverworldScene extends Phaser.Scene {
     // establish on the sleeping house, with a line so the player knows whose it is
     await showCaption(this, "Down one of these streets, a kid named {rex} is fast asleep — same as the whole town.", { ms: 2800 });
     // then drift up toward the hill road, narrating what's waiting up there
-    cam.pan(20 * TILE_PX, 0, 4200, 'Sine.easeInOut'); // a slow drift up toward the hill road (the north trail gate)
+    cam.pan(70 * TILE_PX, 18 * TILE_PX, 4200, 'Sine.easeInOut'); // drift up the hill toward the crater trail + glow
     await showCaption(this, "But something came down on the hill tonight, and it's still glowing up there.", { ms: 3400 });
     await this.wait(400);
     GS.setFlag('op_house');
@@ -6891,10 +6992,10 @@ export class OverworldScene extends Phaser.Scene {
       (o): o is Phaser.GameObjects.Image =>
         o instanceof Phaser.GameObjects.Image && o.texture.key === 'meteor_rock_hickory_hill',
     );
-    const craterX = landed ? landed.x + landed.displayWidth / 2 : 72 * TILE_PX;
-    const craterY = landed ? landed.y + landed.displayHeight / 2 : 7 * TILE_PX;
+    const craterX = landed ? landed.x + landed.displayWidth / 2 : 76 * TILE_PX;
+    const craterY = landed ? landed.y + landed.displayHeight / 2 : 8 * TILE_PX;
     cam.setZoom(0.78); // wide — the whole hill reads as a climb
-    cam.centerOn(craterX, 71 * TILE_PX); // start at the town/hill foot (L0 top, base row 65) and pan UP
+    cam.centerOn(64 * TILE_PX, 45 * TILE_PX); // start near the town-to-hill foot and climb up to the crater
     if (this.entryBlackout) {
       const b = this.entryBlackout;
       this.entryBlackout = undefined;
@@ -7437,7 +7538,7 @@ export class OverworldScene extends Phaser.Scene {
     if (!GS.flag('met_glint')) {
       GS.setFlag('met_glint');
       await this.dlg.say(...DIALOGUE.crater_approach);
-      const glint = this.add.sprite(15.5 * TILE_PX, 6.5 * TILE_PX, 'glint');
+      const glint = this.add.sprite(76 * TILE_PX, 12 * TILE_PX, 'glint');
       glint.play('glint-flit').setDepth(9999);
       const glow = this.add.circle(glint.x, glint.y, s(10), colorOf(px(RAMP.GOLD, 3)), 0.25).setDepth(9998);
       this.tweens.add({ targets: [glint, glow], y: `-=${s(6)}`, duration: 900, yoyo: true, repeat: -1 });
@@ -7462,7 +7563,7 @@ export class OverworldScene extends Phaser.Scene {
       // supernova then blazes up from this same spot.
       const sentinelLeft = this.player.x - sentinel.width / 2;
       const glintRestX = sentinelLeft - glint.displayWidth / 2 - s(12);
-      const glintRestY = 6.5 * TILE_PX;
+      const glintRestY = 12 * TILE_PX;
       this.tweens.add({ targets: [glint, glow], x: glintRestX, duration: 650, ease: 'sine.inOut' });
       await this.dlg.say(...DIALOGUE.sentinel_warning);
       // ADR-121: Glint goes SUPERNOVA at the rally — the little flit blazes up into
@@ -7708,7 +7809,7 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     if (dest === 'brickton') this.goThroughDoor('brickton', BRICKTON_BUS_SPAWN.x, BRICKTON_BUS_SPAWN.y, 'up');
-    else this.goThroughDoor('otterbrook', 992, 768, 'up'); // S5 rebuild: the bus depot doorstep on Main St (tile ~62,48)
+    else this.goThroughDoor('otterbrook', 56 * 16, 90 * 16, 'up'); // the town's central plaza (concept coords)
   }
 
   /* ---------------- THE ORIENTATION GATE (S15h, ADR-049) ---------------- */

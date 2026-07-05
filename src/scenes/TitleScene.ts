@@ -6,6 +6,7 @@ import { Dialogue } from '../ui/windows';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
 import { s, TILE_PX } from '../spritegen/scale';
+import { OTTERBROOK_DEV_PREVIEW_SPAWN } from '../data/maps';
 
 export class TitleScene extends Phaser.Scene {
   private pressText: Phaser.GameObjects.BitmapText | null = null;
@@ -19,6 +20,28 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     this.menuOpen = false;
     this.started = false;
+    if (import.meta.env.DEV) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('devMap') === 'otterbrook') {
+        GS.reset();
+        GS.setFlag('intro_done');
+        GS.setFlag('op_fell');
+        GS.setFlag('op_house');
+        GS.setFlag('zapper_done');
+        GS.setFlag('tick_defeated');
+        GS.setFlag('chad_joined');
+        this.started = true;
+        AUDIO.stopMusic();
+        this.scene.start('overworld', {
+          mapId: 'otterbrook',
+          x: OTTERBROOK_DEV_PREVIEW_SPAWN.x * TILE_PX + TILE_PX / 2,
+          y: OTTERBROOK_DEV_PREVIEW_SPAWN.y * TILE_PX,
+          facing: 'down',
+          devFullMap: params.get('devFullMap') === '1',
+        });
+        return;
+      }
+    }
     const W = this.scale.width;
     this.add.image(0, 0, 'title_art').setOrigin(0, 0).setDisplaySize(this.scale.width, this.scale.height);
     const logo = this.add.image(W / 2, s(58), 'logo').setScale(0.78);
@@ -74,6 +97,7 @@ export class TitleScene extends Phaser.Scene {
       : ['New Game', 'Sprite Lab'];
     // S13: the resort is COMPLETE AND STANDALONE ahead of Prompt 28 (the
     // Sprite Lab precedent) — dev builds reach it from the title
+    if (import.meta.env.DEV) options.push('Otterbrooke (dev)');
     if (import.meta.env.DEV) options.push('Costa Estrella (dev)');
     // S15g: the LEVELKIT LAB walks generated drafts live (dev-only, the
     // Sprite Lab precedent — never a player flow)
@@ -87,6 +111,22 @@ export class TitleScene extends Phaser.Scene {
       // S6: the slot scene owns loading now (title theme keeps playing under it)
       this.started = true;
       this.scene.start('saveslots');
+    } else if (choice === 'Otterbrooke (dev)') {
+      GS.reset();
+      GS.setFlag('intro_done');
+      GS.setFlag('op_fell');
+      GS.setFlag('op_house');
+      GS.setFlag('zapper_done');
+      GS.setFlag('tick_defeated');
+      GS.setFlag('chad_joined');
+      this.started = true;
+      AUDIO.stopMusic();
+      this.scene.start('overworld', {
+        mapId: 'otterbrook',
+        x: OTTERBROOK_DEV_PREVIEW_SPAWN.x * TILE_PX + TILE_PX / 2,
+        y: OTTERBROOK_DEV_PREVIEW_SPAWN.y * TILE_PX,
+        facing: 'down',
+      });
     } else if (choice === 'Costa Estrella (dev)') {
       // a fresh dev party at the resort gate (never a saved game's state)
       GS.reset();

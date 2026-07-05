@@ -1020,6 +1020,10 @@ TILESET.push({ name: 'cliff_top', solid: true, make: pyramidWall }); // top band
 TILESET.push({ name: 'cliff_mid_a', solid: true, make: pyramidWall }); // mid band variant A: rock strata
 TILESET.push({ name: 'cliff_base', solid: true, make: pyramidWall }); // base band: rock + scree + ground shadow
 TILESET.push({ name: 'cliff_mid_b', solid: true, make: pyramidWall }); // mid band variant B: rock strata
+// Otterbrooke WOODS CANOPY — a dense top-down treetop tile (authored via ChatGPT →
+// tools/apply-canopy-tile.ts writes it into the strip tail). Same solidity as 'bush'
+// (its per-map skin base); OTTERBROOK_TILE_SKIN remaps bush→tree_canopy on the hill only.
+TILESET.push({ name: 'tree_canopy', solid: true, make: bush });
 
 // Otterbrooke INTERIOR TILE SKINS (2026-07-04) — per-building-type floor+wall recolors, AUTHORED
 // (assets/art/masters/world/otterbrook-tileskins-source.png → tools/apply-tileskin-kit.ts, surgical
@@ -1034,6 +1038,20 @@ TILESET.push({ name: 'tile_kitchen_floor', solid: false, make: floorWood });
 TILESET.push({ name: 'tile_kitchen_wall', solid: true, make: wallInterior });
 TILESET.push({ name: 'tile_concrete_floor', solid: false, make: officeFloor });
 TILESET.push({ name: 'tile_concrete_wall', solid: true, make: officeWall });
+
+// OBLIQUE GROUND KIT (Otterbrooke, 2026-07-05) — authored 3/4 EarthBound ground tiles
+// (assets/art/masters/world/otterbrook-oblique-ground-source.png → tools/apply-oblique-ground.ts).
+// make() = boot FALLBACK only (reuse the flat painters, spritegen FROZEN). OTTERBROOK_TILE_SKIN
+// remaps the town's grass/road/sidewalk/crosswalk to these; the apply script ALSO overwrites the
+// ':' PATH tiles with the kit's smooth dirt (retiring the old corduroy path base).
+export const OB_GROUND_BASE = TILESET.length;
+TILESET.push({ name: 'ob_grass', solid: false, make: () => grassBase(1, 5) });
+TILESET.push({ name: 'ob_road', solid: false, make: roadBase });
+TILESET.push({ name: 'ob_road_dash', solid: false, make: roadDash });
+TILESET.push({ name: 'ob_sidewalk', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'ob_crosswalk', solid: false, make: crosswalk });
+TILESET.push({ name: 'ob_dirt', solid: false, make: () => pathTile(0, 0) });
+TILESET.push({ name: 'ob_plaza', solid: false, make: sidewalkTile });
 
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
