@@ -75,6 +75,11 @@ export class Grid {
 export function doorstepOf(map: MapDef, to: string): { tx: number; ty: number } | null {
   const prop = map.props.find((p) => p.door?.to === to);
   const d = prop?.door;
-  if (!prop || !d) return null;
-  return { tx: prop.x * 16 + d.ox + d.w / 2, ty: prop.y * 16 + d.oy + d.h + 5 };
+  if (prop && d) return { tx: prop.x * 16 + d.ox + d.w / 2, ty: prop.y * 16 + d.oy + d.h + 5 };
+
+  const zone = map.doors.find((door) => door.to === to);
+  if (!zone) return null;
+  const cx = (zone.x + zone.w / 2) * 16;
+  const cy = (zone.y + zone.h / 2) * 16;
+  return { tx: cx, ty: cy };
 }

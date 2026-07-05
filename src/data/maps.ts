@@ -128,240 +128,319 @@ function windV(g: Grid, x0Centers: number[], yTop: number, w: number, ch: string
   }
 }
 
+function roadV(g: Grid, xCenters: number[], yTop: number, w = 4): void {
+  const half = Math.floor(w / 2);
+  for (let i = 0; i < xCenters.length; i++) {
+    const y = yTop + i;
+    const next = xCenters[Math.min(i + 1, xCenters.length - 1)];
+    const lo = Math.min(xCenters[i], next) - half;
+    const hi = Math.max(xCenters[i], next) + (w - 1 - half);
+    g.rect(lo - 1, y, 1, 1, '=');
+    g.rect(hi + 1, y, 1, 1, '=');
+    g.rect(lo, y, hi - lo + 1, 1, 'R');
+    if (i % 4 < 2) g.set(Math.round((lo + hi) / 2), y, 'D');
+  }
+}
+
+function roadH(g: Grid, yCenters: number[], xLeft: number, h = 4): void {
+  const half = Math.floor(h / 2);
+  for (let i = 0; i < yCenters.length; i++) {
+    const x = xLeft + i;
+    const next = yCenters[Math.min(i + 1, yCenters.length - 1)];
+    const lo = Math.min(yCenters[i], next) - half;
+    const hi = Math.max(yCenters[i], next) + (h - 1 - half);
+    g.rect(x, lo - 1, 1, 1, '=');
+    g.rect(x, hi + 1, 1, 1, '=');
+    g.rect(x, lo, 1, hi - lo + 1, 'R');
+    if (i % 6 < 3) g.set(x, Math.round((lo + hi) / 2), 'D');
+  }
+}
+
 /* ------------------------------------------------------------------ */
 
 /* ------------------- OTTERBROOK ------------------- */
 
 /** the town's base row within the tall elevated map: the L0 town occupies rows
- *  [TB, TB+townH); the hill (L1/L2/L3 terraces + crater) sits above it (rows 0..TB). */
-export const OTTERBROOK_TOWN_BASE = 65;
+ *  [TB, TB+townH); the wooded plateau (crater + cave + Jay/Chad shelf) sits above
+ *  it (rows 0..TB). Concept-locked proportion: hill ~40% / city ~60% (the town base
+ *  sits at concept row 66 of the 112×168 map — the image's cliff/town boundary, with
+ *  the city a touch bigger than the top per the user's direction). */
+export const OTTERBROOK_TOWN_BASE = 66;
 
 /** the grown town's east gateway tile — MEADOW MILE (Movement 2) leaves from here.
- *  Its y is the town's east-road row PLUS the town base offset (the town shifted
- *  DOWN when the hill was added above). MEADOW MILE's return door + the world_block
- *  LONG WALK test both read this const, so the two sides never drift (ADR-012). */
-export const OTTERBROOK_EAST_GATE = { x: 124, y: 50 + OTTERBROOK_TOWN_BASE } as const;
+ *  Its y is the town's east-road row PLUS the town base offset (the town sits BELOW
+ *  the plateau). MEADOW MILE's return door + the LONG WALK test both read this const,
+ *  so the two sides never drift (ADR-012). Row 46 = the OTTERBROOKE-sign highway exit. */
+export const OTTERBROOK_EAST_GATE = { x: 111, y: 46 + OTTERBROOK_TOWN_BASE } as const;
+export const OTTERBROOK_TOWN_PREVIEW_SPAWN = { x: 56, y: OTTERBROOK_TOWN_BASE + 34 } as const;
+export const OTTERBROOK_DEV_PREVIEW_SPAWN = { x: 54, y: OTTERBROOK_TOWN_BASE + 20 } as const;
 
 /** the solid for the standard tree */
 const OAK: { ox: number; oy: number; w: number; h: number } = { ox: 7, oy: 22, w: 12, h: 10 };
+const PICNIC_SOLID: { ox: number; oy: number; w: number; h: number } = { ox: 2, oy: 8, w: 32, h: 14 };
+const SIGN_SOLID: { ox: number; oy: number; w: number; h: number } = { ox: 3, oy: 10, w: 10, h: 7 };
+
+const OTTERBROOK_LANDMARK_DIMS: Record<string, readonly [number, number]> = {
+  house_rex: [375, 384], // OBLIQUE
+  house_chad: [386, 384], // OBLIQUE
+  house_a: [457, 384], // OBLIQUE
+  house_b: [396, 384], // OBLIQUE
+  drugstore: [389, 384], // OBLIQUE (3/4) facade — front + right side (EarthBound-style)
+  arcade: [399, 384], // OBLIQUE facade
+  chapel: [258, 384], // OBLIQUE facade
+  facade_busdepot: [717, 384], // OBLIQUE
+  facade_otter_station: [372, 384], // OBLIQUE
+  facade_hardware: [576, 384], // OBLIQUE
+  facade_fillshop: [488, 384], // OBLIQUE
+  bldg_brickmore: [271, 384], // OBLIQUE
+  bldg_bank: [391, 384], // OBLIQUE
+  bldg_apartments: [285, 384], // OBLIQUE
+  bldg_ob_apt_green: [270, 384], // OBLIQUE
+  bldg_ob_bakery: [369, 384], // OBLIQUE
+  bldg_ob_burger: [347, 384], // OBLIQUE
+  bldg_ob_city_hall: [395, 384], // OBLIQUE
+  bldg_ob_clinic: [420, 384], // OBLIQUE
+  bldg_ob_cottage: [618, 384], // OBLIQUE
+  bldg_ob_house_c: [348, 384], // OBLIQUE
+  bldg_ob_house_green: [400, 384], // OBLIQUE
+  bldg_ob_workshop: [386, 384], // OBLIQUE
+};
+
+// x = CENTRE col, y = BOTTOM row (the homes front the SOUTH-RES street; doors open south)
+const OTTERBROOK_HOME_SPECS = [
+  { id: 'otter_home_sodd', name: 'SODD HOUSE', sprite: 'house_a', x: 46, y: 74 },
+  { id: 'otter_home_birch', name: 'BIRCH HOUSE', sprite: 'house_b', x: 64, y: 74 },
+  { id: 'otter_home_pond', name: 'POND HOUSE', sprite: 'bldg_ob_cottage', x: 32, y: 74 },
+] as const;
+
+function otterLandmark(
+  sprite: string,
+  x: number,
+  y: number,
+  door?: { to: string; tx: number; ty: number },
+): PropDef {
+  const [tw, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
+  const p: PropDef = {
+    sprite,
+    x,
+    y,
+    solid: { ox: 0, oy: 10, w: Math.max(48, Math.round(tw / 4)), h: Math.max(48, Math.round(th / 4) - 10) },
+  };
+  if (door) {
+    const w = 16;
+    p.door = { ox: Math.round(tw / 8 - w / 2), oy: Math.round(th / 4) - 22, w, h: 20, to: door.to, tx: door.tx, ty: door.ty };
+  }
+  return p;
+}
+
+function otterLandmarkBottom(
+  sprite: string,
+  x: number,
+  bottomTile: number,
+  door?: { to: string; tx: number; ty: number },
+): PropDef {
+  const [, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
+  return otterLandmark(sprite, x, bottomTile - th / 64, door);
+}
+
+/** place a facade CENTERED horizontally on tile `cx`, its base at row `bottomTile`.
+ *  (Facades render at texW/64 tiles wide, so top-left x = cx − halfWidthTiles.) Used
+ *  by the concept-faithful layout, where each building's *centre* is read off the grid. */
+function otterCentered(
+  sprite: string,
+  cx: number,
+  bottomTile: number,
+  door?: { to: string; tx: number; ty: number },
+): PropDef {
+  const [tw] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
+  return otterLandmarkBottom(sprite, cx - tw / 128, bottomTile, door);
+}
 
 /**
- * OTTERBROOKE TOWN (L0) — the flat downtown at the BASE of the elevated map.
- * Authored at y0 here; growOtterbrook copies it into the lower band of the tall
- * map (offset by OTTERBROOK_TOWN_BASE) and builds the wooded hill + crater above.
- * The upper neighbourhood (Jay/Chad), the woods, and the boss descent all live on
- * the HILL now (growOtterbrook), NOT here — this is purely the town: civic quarter,
- * Main St, the market plaza, the residential grid, Pond Park, and the east gate.
+ * OTTERBROOKE TOWN (L0) — the downtown at the BASE of the elevated map, authored at
+ * y0 here (town-relative rows); growOtterbrook copies it into the lower band of the
+ * tall 112×168 map at offset OTTERBROOK_TOWN_BASE (=66) and builds the wooded plateau
+ * above. LAYOUT IS CONCEPT-FAITHFUL (2026-07-04, user directive "match the image
+ * precisely"): every element sits at (concept-col, concept-row − 66) read off the
+ * tile-gridded reference — civic core (City Hall + fountain + Hospital + Drugstore),
+ * the shop drag (BURGER/store/BANK/BAKERY/ARCADE/clinic/POLICE), residential blocks,
+ * Pond Park (SW), the two FOR-SALE lots, and the OTTERBROOKE-OH highway sign (E).
  */
 function buildOtterbrookTown(): MapDef {
-  const W = 126;
-  const H = 112;
+  const W = 112;
+  const H = 102; // concept rows 66..168
   const g = new Grid(W, H, '.');
   g.sprinkle(7, ',~,~ff F', 0.05);
 
-  // ===== STREET GRID (an Onett downtown reads as a grid) =====
-  const hStreet = (yr: number, x0: number, x1: number): void => {
-    g.rect(x0, yr - 1, x1 - x0, 1, '=');
-    g.rect(x0, yr, x1 - x0, 2, 'R');
-    g.rect(x0 + 2, yr, x1 - x0 - 4, 1, 'D');
-    g.rect(x0, yr + 2, x1 - x0, 1, '=');
+  // wooded frame (edges); the plateau's front cliff joins along the top in growOtterbrook
+  g.rect(0, 0, 6, H, 'b');
+  g.rect(W - 6, 0, 6, H, 'b');
+  g.rect(0, H - 3, W, 3, 'b'); // thin bottom border — the concept has houses almost to the edge
+
+  // ---- POND PARK (SW): duck pond + foam lip, a grassy clearing around it (terrain) ----
+  g.rect(2, 70, 18, 14, 'e');
+  g.rect(2, 69, 18, 1, 'E');
+  g.rect(2, 84, 18, 1, 'E');
+  g.rect(1, 70, 1, 14, 'E');
+  g.rect(20, 70, 1, 14, 'E');
+  g.rect(22, 64, 16, 22, '.'); // the lawn beside the pond (playground/gazebo)
+
+  const props: PropDef[] = [];
+  const occupied = new Set<number>();
+  const idx = (x: number, y: number): number => y * W + x;
+  /** decorative tree (NO solid — reachability is read off the grid, so these never block). */
+  const dtree = (x: number, y: number): void => {
+    if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) return;
+    props.push({ sprite: treeSprite(Math.round(x), Math.round(y)), x, y });
   };
-  const vStreet = (xr: number, y0: number, y1: number): void => {
-    g.rect(xr - 1, y0, 1, y1 - y0, '=');
-    g.rect(xr, y0, 2, y1 - y0, 'R');
-    g.rect(xr + 2, y0, 1, y1 - y0, '=');
+  const markFootprint = (sprite: string, cx: number, bottom: number): void => {
+    const [tw, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
+    const wT = Math.ceil(tw / 64), hT = Math.ceil(th / 64);
+    for (let yy = bottom - hT; yy <= bottom; yy++)
+      for (let xx = Math.floor(cx - wT / 2) - 1; xx <= Math.ceil(cx + wT / 2) + 1; xx++) occupied.add(idx(xx, yy));
   };
-  const CIVIC_AVE = 38, MAIN_ST = 49, OAK_ST = 66, MAPLE_ST = 82, ELM_ST = 96;
-  hStreet(CIVIC_AVE, 34, 92);
-  hStreet(MAIN_ST, 8, 118);
-  hStreet(OAK_ST, 8, 116);
-  hStreet(MAPLE_ST, 8, 116);
-  hStreet(ELM_ST, 26, 116);
-  const WEST_AVE = 22, CENTER_AVE = 54, EAST_AVE = 86, PARK_AVE = 104;
-  vStreet(WEST_AVE, 24, 98);
-  vStreet(CENTER_AVE, 24, 98);
-  vStreet(EAST_AVE, 36, 98);
-  vStreet(PARK_AVE, 44, 98);
-  for (const xr of [WEST_AVE, CENTER_AVE, EAST_AVE]) {
-    for (const yr of [CIVIC_AVE, MAIN_ST, OAK_ST, MAPLE_ST]) {
-      g.rect(xr, yr - 1, 2, 1, 'X');
-      g.rect(xr, yr + 2, 2, 1, 'X');
-      g.set(xr - 1, yr, '3');
+  const wOf = (s: string): number => Math.ceil((OTTERBROOK_LANDMARK_DIMS[s]?.[0] ?? 320) / 64);
+  /** place ONE building fronting the street to its south (its door opens onto the sidewalk). */
+  const build = (s: string, cx: number, bottom: number, door?: { to: string; tx: number; ty: number }): void => {
+    props.push(otterCentered(s, cx, bottom, door));
+    markFootprint(s, cx, bottom);
+  };
+  /** a shoulder-to-shoulder ROW of storefronts, auto-spaced left→right by facade width. */
+  const row = (
+    bottom: number,
+    startCol: number,
+    gap: number,
+    items: Array<{ s: string; door?: { to: string; tx: number; ty: number } }>,
+  ): void => {
+    let cx = startCol;
+    for (const it of items) {
+      const w = wOf(it.s);
+      build(it.s, Math.round(cx + w / 2), bottom, it.door);
+      cx += w + gap;
+    }
+  };
+
+  // ===== STRAIGHT STREET GRID (Onett-style) — E-W "streets" + a central N-S avenue.
+  // roadH/roadV lay light '=' curb-sidewalks flanking the 'R' asphalt with a 'D' centre
+  // dash. Buildings then sit FLUSH one tile above a street's north sidewalk, so every
+  // front door opens straight onto the pavement (no more marooned-in-lawn islands). =====
+  const line = (n: number, v: number): number[] => Array.from({ length: n }, () => v);
+  roadH(g, line(96, 20), 8, 4); // NORTH-RES street
+  roadH(g, line(96, 38), 8, 4); // CIVIC street
+  roadH(g, line(96, 56), 8, 4); // MAIN street (downtown)
+  roadH(g, line(82, 78), 22, 4); // SOUTH-RES street (starts east of Pond Park)
+  roadV(g, line(60, 56), 16, 4); // central avenue (N-RES → S-RES)
+  g.rect(101, 38, 3, 10, 'R'); // east link: CIVIC street → the highway gate
+  g.rect(96, 45, W - 96, 3, 'R'); g.rect(96, 44, W - 96, 1, '='); g.rect(96, 48, W - 96, 1, '='); // east highway exit
+  g.rect(25, 0, 3, 17, ':'); g.rect(55, 0, 3, 17, ':'); // the hill trails drop in and meet the N-RES street
+
+  // ===== BUILDINGS — each zone fronts the street to its south (base one tile above the
+  // north sidewalk), so every door opens onto the pavement. =====
+  // DOWNTOWN — the shop strip on MAIN ST, in two blocks split by the central avenue
+  row(52, 8, 1, [
+    { s: 'facade_busdepot', door: { to: 'bus_depot_int', tx: 120, ty: 128 } },
+    { s: 'bldg_brickmore', door: { to: 'downtown_otterbrook', tx: 208, ty: 224 } },
+    { s: 'bldg_ob_burger', door: { to: 'burger_int', tx: 96, ty: 118 } },
+    { s: 'facade_hardware' },
+    { s: 'bldg_bank', door: { to: 'bank_int', tx: 96, ty: 118 } },
+  ]);
+  row(52, 60, 1, [
+    { s: 'bldg_ob_bakery', door: { to: 'bakery_int', tx: 96, ty: 118 } },
+    { s: 'drugstore', door: { to: 'drugstore_int', tx: 112, ty: 118 } },
+    { s: 'arcade', door: { to: 'arcade_int', tx: 80, ty: 102 } },
+    { s: 'facade_fillshop' },
+  ]);
+  // CIVIC ROW — City Hall (centre, fountain plaza in front), apartments, hospital, police
+  build('bldg_apartments', 14, 34); // apartment block
+  build('bldg_ob_city_hall', 44, 34, { to: 'otterbrook_cityhall', tx: 120, ty: 128 });
+  build('bldg_ob_clinic', 70, 34); // HOSPITAL (red cross)
+  build('bldg_ob_apt_green', 84, 34);
+  build('facade_otter_station', 98, 34, { to: 'otter_station', tx: 120, ty: 128 }); // POLICE
+  // NORTH-RES ROW — the generic houses (cols 26 & 56 stay clear for the hill trails)
+  build('house_a', 14, 16);
+  build('house_b', 40, 16);
+  build('bldg_ob_house_c', 68, 16);
+  build('bldg_ob_house_green', 84, 16);
+  // SOUTH-RES ROW — the named/visitable homes (interiors) + the chapel landmark (east)
+  for (const h of OTTERBROOK_HOME_SPECS) {
+    build(h.sprite, h.x, h.y, { to: h.id, tx: 7 * 16 + 8, ty: 8 * 16 });
+  }
+  build('chapel', 88, 74, { to: 'chapel_int', tx: 88, ty: 150 });
+
+  // roads/sidewalks yield to buildings: erase any paved tile that fell under a footprint
+  for (const key of occupied) {
+    const x = key % W, y = (key - x) / W;
+    const c = g.rows[y]?.[x];
+    if (c === 'R' || c === '=' || c === 'D') g.set(x, y, '.');
+  }
+
+  // fountain plaza apron in front of City Hall (paved, after the streets)
+  g.rect(38, 35, 14, 3, '=');
+  g.rect(41, 36, 8, 2, '.');
+
+  props.push(
+    // ---- PLAZA / PARK / SIGN DRESSING ----
+    { sprite: 'otter_statue', x: 44, y: 36.5, solid: { ox: 35, oy: 60, w: 20, h: 10 } }, // fountain (City Hall plaza)
+    { sprite: 'bench', x: 40, y: 37, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    { sprite: 'bench', x: 47, y: 37, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    { sprite: 'phone_table', x: 44, y: 38, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
+    { sprite: 'sign', x: 103, y: 44, solid: SIGN_SOLID }, // OTTERBROOKE, OH highway sign (E)
+    { sprite: 'sign', x: 44, y: 32, solid: SIGN_SOLID }, // City Hall marker
+    { sprite: 'sign', x: 9, y: 50, solid: SIGN_SOLID }, // to-downtown marker (west)
+    { sprite: 'picnic', x: 30, y: 78, solid: PICNIC_SOLID },
+    { sprite: 'gazebo', x: 30, y: 72, solid: { ox: 4, oy: 34, w: 48, h: 18 } },
+    { sprite: 'swing_set', x: 26, y: 66, solid: { ox: 2, oy: 20, w: 60, h: 8 } },
+    { sprite: 'tree_c', x: 11, y: 74, solid: OAK }, // the big pond oak
+    { sprite: 'hydrant', x: 33.5, y: 54.5, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
+    { sprite: 'hydrant', x: 66.5, y: 54.5, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
+  );
+
+  // ---- STREET TREES: a tidy, sparse verge along the sidewalks (NOT a forest). Decorative
+  // (no solid) so they never strand a door — walkability is the grid alone. ----
+  for (let y = 3; y < H - 4; y++) {
+    for (let x = 7; x < W - 6; x++) {
+      if (g.rows[y][x] !== '.') continue;
+      if (occupied.has(idx(x, y))) continue; // don't bury a facade
+      let nearWalk = false;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        if (g.rows[y + dy]?.[x + dx] === '=') { nearWalk = true; break; }
+      }
+      const hsh = ((x * 2654435761) ^ (y * 40503)) >>> 0;
+      if (nearWalk) {
+        if (hsh % 8 === 0) dtree(x, y); // verge trees along the curb
+      } else if (hsh % 19 === 0) {
+        dtree(x, y); // very sparse back-lot greenery
+      }
     }
   }
 
-  // ===== CIVIC PLAZA (fountain forecourt in front of City Hall + the Hospital) =====
-  g.rect(40, 34, 30, 4, 'p');
-  g.set(40, 34, '='); g.set(69, 34, '=');
-  g.set(52, 33, 'f'); g.set(57, 33, 'F');
-
-  // ===== MARKET PLAZA (pedestrian strip south of Main St; shops face DOWN into it) =====
-  g.rect(12, 58, 56, 3, 'p');
-  g.rect(30, 52, 2, 6, 'X');
-  g.rect(12, 61, 56, 1, '=');
-  g.rect(84, 60, 30, 2, 'p');
-  g.rect(96, 52, 2, 8, '=');
-
-  // ===== POND PARK (SW) — the Heart Oak (healed landmark), duck pond, gazebo, playground =====
-  g.rect(6, 88, 30, 22, '.');
-  g.rect(10, 98, 10, 6, 'e');
-  g.rect(10, 97, 10, 1, 'E'); g.rect(10, 104, 10, 1, 'E');
-  g.set(9, 99, 'E'); g.set(9, 102, 'E'); g.set(20, 99, 'E'); g.set(20, 102, 'E');
-  g.set(9, 100, 'E'); g.set(9, 101, 'E'); g.set(20, 100, 'E'); g.set(20, 101, 'E');
-  g.rect(8, 94, 24, 1, ':'); g.rect(8, 106, 24, 1, ':');
-  g.rect(8, 94, 1, 13, ':'); g.rect(31, 94, 1, 13, ':');
-  g.set(13, 90, 'f'); g.set(16, 90, 'F');
-  g.rect(21, 88, 2, 8, ':'); // park tie-up to the residential grid
-
-  // ===== EAST GATE ROAD (Main St runs east to the town line → Meadow Mile) =====
-  g.rect(112, 49, 14, 2, 'R');
-  g.rect(112, 48, 14, 1, '='); g.rect(112, 51, 14, 1, '=');
-
-  // ===== FACADES =====
-  const DIM: Record<string, readonly [number, number]> = {
-    house_rex: [464, 466], house_chad: [458, 466], bldg_ob_city_hall: [614, 597],
-    bldg_ob_clinic: [593, 483], facade_otter_station: [476, 480], drugstore: [311, 333],
-    bldg_bank: [307, 336], bldg_ob_bakery: [301, 335], bldg_ob_burger: [298, 356],
-    arcade: [323, 328], chapel: [304, 389], facade_busdepot: [520, 250],
-    bldg_brickmore: [350, 541], house_a: [415, 337], house_b: [409, 373],
-    bldg_ob_house_c: [342, 355], bldg_ob_house_green: [356, 349], bldg_ob_cottage: [497, 271],
-    bldg_apartments: [409, 537], bldg_ob_apt_green: [466, 638], bldg_ob_workshop: [427, 447],
-  };
-  const authored = (sprite: string, x: number, y: number, door?: { to: string; tx: number; ty: number }): PropDef => {
-    const [tw, th] = DIM[sprite];
-    const p: PropDef = { sprite, x, y };
-    if (door) {
-      const w = 16;
-      p.door = { ox: Math.round(tw / 8 - w / 2), oy: Math.round(th / 4) - 22, w, h: 20, to: door.to, tx: door.tx, ty: door.ty };
-    }
-    return p;
-  };
-
-  const facades: PropDef[] = [
-    authored('bldg_ob_city_hall', 44, 27, { to: 'otterbrook_cityhall', tx: 120, ty: 128 }),
-    { sprite: 'bldg_ob_clinic', x: 62, y: 28 }, // HOSPITAL (decorative shell)
-    authored('drugstore', 46, 42, { to: 'drugstore_int', tx: 112, ty: 118 }),
-    authored('facade_busdepot', 58, 44, { to: 'bus_depot_int', tx: 120, ty: 128 }),
-    authored('bldg_brickmore', 72, 39, { to: 'downtown_otterbrook', tx: 208, ty: 224 }),
-    authored('bldg_ob_burger', 14, 52, { to: 'burger_int', tx: 96, ty: 118 }),
-    authored('bldg_bank', 26, 52, { to: 'bank_int', tx: 96, ty: 118 }),
-    authored('bldg_ob_bakery', 38, 52, { to: 'bakery_int', tx: 96, ty: 118 }),
-    authored('arcade', 50, 52, { to: 'arcade_int', tx: 80, ty: 102 }),
-    authored('chapel', 88, 53, { to: 'chapel_int', tx: 88, ty: 150 }),
-    authored('facade_otter_station', 100, 52, { to: 'otter_station', tx: 120, ty: 128 }),
-    // residential fabric (decorative)
-    { sprite: 'house_a', x: 10, y: 60 }, { sprite: 'house_b', x: 40, y: 69 },
-    { sprite: 'bldg_ob_house_c', x: 58, y: 69 }, { sprite: 'bldg_ob_house_green', x: 70, y: 69 },
-    { sprite: 'house_a', x: 10, y: 85 }, { sprite: 'house_b', x: 24, y: 85 },
-    { sprite: 'bldg_ob_cottage', x: 40, y: 86 }, { sprite: 'bldg_ob_house_c', x: 58, y: 85 },
-    { sprite: 'house_chad', x: 70, y: 85 }, { sprite: 'house_a', x: 92, y: 69 },
-    { sprite: 'house_b', x: 92, y: 85 }, { sprite: 'bldg_ob_house_green', x: 108, y: 69 },
-    { sprite: 'bldg_ob_house_c', x: 108, y: 85 },
-    { sprite: 'bldg_apartments', x: 94, y: 36 }, { sprite: 'bldg_ob_apt_green', x: 108, y: 36 },
-    { sprite: 'bldg_ob_cottage', x: 10, y: 100 }, // FOR-SALE cottage by the pond
-  ];
-
-  // ===== TREES + YARDS =====
-  const treeAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
-    xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
-  const rankTrees: PropDef[] = [];
-  const rank = (x0: number, y0: number, dx: number, dy: number, n: number): void => {
-    for (let i = 0; i < n; i++) rankTrees.push({ sprite: treeSprite(x0 + dx * i, y0 + dy * i), x: x0 + dx * i, y: y0 + dy * i, solid: OAK });
-  };
-  rank(2, 40, 0, 4, 12); // west town-edge treeline
-  rank(120, 60, 0, 4, 10); // east town-edge treeline
-  const yardTrees = treeAt([
-    [12, 64], [36, 64], [64, 64], [88, 64],
-    [12, 90], [18, 88], [28, 92], [30, 105],
-  ]);
-
-  // ===== PROPS =====
-  const hubcap = walkPresent('gift_hubcap', 112, 60); // the east-edge hubcap present
-
-  const propsRaw: PropDef[] = [
-    ...facades,
-    ...yardTrees,
-    ...rankTrees,
-    // civic forecourt
-    { sprite: 'otter_statue', x: 53.7, y: 34.2, solid: { ox: 35, oy: 60, w: 20, h: 10 } },
-    { sprite: 'bench', x: 50.4, y: 35.7, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-    { sprite: 'bench', x: 56.6, y: 35.7, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-    { sprite: 'planter', x: 49.3, y: 34.1, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-    { sprite: 'planter', x: 58.2, y: 34.1, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-    { sprite: 'flagpole', x: 45.5, y: 36.3, solid: { ox: 6, oy: 6, w: 6, h: 6 } },
-    // Main St furniture + SAVE payphone
-    { sprite: 'phone_table', x: 56, y: 47.9, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
-    { sprite: 'news_box', x: 46.2, y: 48, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
-    { sprite: 'parking_meter', x: 64.4, y: 48.05, solid: { ox: 3, oy: 14, w: 4, h: 6 } },
-    { sprite: 'parking_meter', x: 66.4, y: 48.05, solid: { ox: 3, oy: 14, w: 4, h: 6 } },
-    { sprite: 'hydrant', x: 41.4, y: 48, solid: { ox: 2, oy: 8, w: 6, h: 5 } },
-    { sprite: 'hydrant', x: 98.5, y: 51.5, solid: { ox: 2, oy: 8, w: 6, h: 5 } },
-    ...[59.875, 78.875, 108.875].map((x) => ({ sprite: 'phone_pole', x, y: 47.375 })),
-    // market plaza dressing
-    { sprite: 'bench', x: 20, y: 59.6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-    { sprite: 'bench', x: 44, y: 59.6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-    { sprite: 'trash_can', x: 33.4, y: 59.6, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
-    // mail route doormats (town stops; the two neighbourhood stops moved to the L1 hill terrace)
-    { sprite: 'doormat', x: 11.6, y: 66.4, ifFlag: 'q_mail', unlessFlag: 'q_mail_birch' },
-    { sprite: 'doormat', x: 89.4, y: 60.2, ifFlag: 'q_mail', unlessFlag: 'q_mail_chapel' },
-    { sprite: 'doormat', x: 51.4, y: 58.2, ifFlag: 'q_mail', unlessFlag: 'q_mail_arcade' },
-    // POND PARK — the Heart Oak (healed landmark; no burrow now — the boss moved to the hill cave)
-    { sprite: 'tree_c', x: 13, y: 90, solid: OAK },
-    { sprite: 'swing_set', x: 24.4, y: 96.9, solid: { ox: 2, oy: 20, w: 60, h: 8 } },
-    { sprite: 'seesaw', x: 27.5, y: 99.6, solid: { ox: 2, oy: 8, w: 40, h: 6 } },
-    { sprite: 'picnic', x: 24, y: 102.2, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-    { sprite: 'picnic', x: 9, y: 90.4, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-    { sprite: 'picnic', x: 30, y: 96, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-    { sprite: 'gazebo', x: 26, y: 90.7, solid: { ox: 4, oy: 34, w: 48, h: 18 } },
-    ...[[11.3, 96.6], [18.6, 96.4], [11.2, 103.4], [18.7, 103.5]].map(([x, y]) => ({ sprite: 'cattails', x, y })),
-    ...treeAt([[8, 100], [31, 96], [31, 104]]),
-    { sprite: 'planter', x: 30, y: 86.3, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-    { sprite: 'planter', x: 33, y: 86.3, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-    // east gate cluster
-    ...[112.875, 118.875].map((x) => ({ sprite: 'phone_pole', x, y: 48.375 })),
-    { sprite: 'sawhorse', x: 121, y: 50, solid: { ox: 0, oy: 2, w: 36, h: 26 }, unlessFlag: 'tick_defeated' },
-    { sprite: 'sign', x: 116, y: 48, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // OTTERBROOKE, OH
-    { sprite: 'sign', x: 44, y: 33, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // City Hall plaque
-    { sprite: 'sign', x: 88, y: 60, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // chapel
-    { sprite: 'sign', x: 8, y: 94, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // Pond Park
-    { sprite: 'sign', x: 56, y: 54, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // welcome (four-corners)
-    ...hubcap.props,
-  ];
-
-  const ON_PATH = new Set([':', 'R', 'D', 'X', '=', 'p', 'P', '3', 'e', 'E', 'T', '^', 'K']);
-  const TREE_SPRITE = /^(tree|tree_b|tree_c|pine|bush)$/;
-  const props: PropDef[] = propsRaw.filter(
-    (p) => !(TREE_SPRITE.test(p.sprite) && ON_PATH.has(g.rows[Math.round(p.y)]?.[Math.round(p.x)] ?? '.')),
-  );
-
   const npcs: NpcDef[] = [
-    { id: 'mrs_pemmel', sprite: 'mrsPemmel', x: 15, y: 61, facing: 'down', dialogue: 'npc_pemmel' },
-    { id: 'biscuit', sprite: 'dog', x: 29, y: 100, facing: 'left', dialogue: 'npc_biscuit', dog: true, unlessFlag: 'zapper_done' },
-    { id: 'biscuit_home', sprite: 'dog', x: 29, y: 100, facing: 'left', dialogue: 'npc_biscuit_collar', dog: true, ifFlag: 'q_biscuit_done' },
-    { id: 'mr_plummer', sprite: 'mrPlummer', x: 60, y: 47, facing: 'down', dialogue: 'npc_plummer', wander: true }, // wanders Main St
-    { id: 'old_timer', sprite: 'oldTimer', x: 31, y: 87, facing: 'down', dialogue: 'npc_oldtimer', dialogueDay: 'npc_oldtimer_day', wander: true },
-    { id: 'pajama_kid', sprite: 'pajamaKid', x: 60, y: 47, facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true },
-    { id: 'green_keeper', sprite: 'fernLady', x: 20, y: 92, facing: 'down', dialogue: 'npc_green_keeper', wander: true },
-    { id: 'pond_angler', sprite: 'quarterMan', x: 22, y: 100, facing: 'left', dialogue: 'npc_pond_angler', idle: true, emote: 'think' },
-    { id: 'south_neighbor', sprite: 'senora', x: 48, y: 73, facing: 'down', dialogue: 'npc_south_neighbor', wander: true },
-    { id: 'gate_walker', sprite: 'grayCommuter', x: 111, y: 50, facing: 'right', dialogue: 'npc_gate_walker', dialogueDay: 'npc_gate_walker_day', wander: true },
-    { id: 'bus_waiter1', sprite: 'grayCommuter', x: 60, y: 48, facing: 'left', dialogue: 'npc_bus_waiter1', idle: true, emote: 'think', ifFlag: 'zapper_done' },
-    { id: 'bus_waiter2', sprite: 'senora', x: 63, y: 48, facing: 'up', dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle', ifFlag: 'zapper_done' },
-    { id: 'realtor_otter', sprite: 'npc_realtor', x: 64, y: 39, facing: 'up', dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
-    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 66, y: 39, facing: 'up', dialogue: 'npc_car_dealer', idle: true, emote: 'happy', ifFlag: 'zapper_done' },
-    { id: 'constable_borden', sprite: 'npc_borden', x: 103, y: 60, facing: 'up', dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise', ifFlag: 'zapper_done', unlessFlag: 'borden_marching' },
+    { id: 'mrs_pemmel', sprite: 'mrsPemmel', x: 68, y: 53, facing: 'down', dialogue: 'npc_pemmel' }, // by the drugstore
+    { id: 'biscuit', sprite: 'dog', x: 26, y: 76, facing: 'left', dialogue: 'npc_biscuit', dog: true, unlessFlag: 'zapper_done' },
+    { id: 'biscuit_home', sprite: 'dog', x: 26, y: 76, facing: 'left', dialogue: 'npc_biscuit_collar', dog: true, ifFlag: 'q_biscuit_done' },
+    { id: 'mr_plummer', sprite: 'mrPlummer', x: 44, y: 40, facing: 'down', dialogue: 'npc_plummer', wander: true }, // City Hall plaza
+    { id: 'old_timer', sprite: 'oldTimer', x: 32, y: 76, facing: 'down', dialogue: 'npc_oldtimer', dialogueDay: 'npc_oldtimer_day', wander: true },
+    { id: 'pajama_kid', sprite: 'pajamaKid', x: 40, y: 22, facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true },
+    { id: 'green_keeper', sprite: 'fernLady', x: 28, y: 73, facing: 'down', dialogue: 'npc_green_keeper', wander: true },
+    { id: 'pond_angler', sprite: 'quarterMan', x: 22, y: 76, facing: 'left', dialogue: 'npc_pond_angler', idle: true, emote: 'think' },
+    { id: 'south_neighbor', sprite: 'senora', x: 60, y: 76, facing: 'down', dialogue: 'npc_south_neighbor', wander: true },
+    { id: 'gate_walker', sprite: 'grayCommuter', x: 100, y: 46, facing: 'right', dialogue: 'npc_gate_walker', dialogueDay: 'npc_gate_walker_day', wander: true },
+    { id: 'bus_waiter1', sprite: 'grayCommuter', x: 12, y: 53, facing: 'right', dialogue: 'npc_bus_waiter1', idle: true, emote: 'think', ifFlag: 'zapper_done' }, // bus depot
+    { id: 'bus_waiter2', sprite: 'senora', x: 16, y: 53, facing: 'up', dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle', ifFlag: 'zapper_done' },
+    { id: 'realtor_otter', sprite: 'npc_realtor', x: 46, y: 76, facing: 'down', dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
+    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 48, y: 40, facing: 'up', dialogue: 'npc_car_dealer', idle: true, emote: 'happy', ifFlag: 'zapper_done' },
+    { id: 'constable_borden', sprite: 'npc_borden', x: 98, y: 35, facing: 'up', dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise', ifFlag: 'zapper_done', unlessFlag: 'borden_marching' }, // police
   ];
 
   const signs: SignDef[] = [
-    { x: 56, y: 54, dialogue: 'sign_welcome' },
-    { x: 88, y: 60, dialogue: 'sign_chapel' },
-    { x: 44, y: 33, dialogue: 'sign_otter_hall' },
-    { x: 30, y: 86, dialogue: 'sign_civic_green' },
-    { x: 8, y: 94, dialogue: 'sign_pond_park' },
-    { x: 116, y: 48, dialogue: 'sign_meadow_gate' },
-    { x: 118, y: 51, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
-    { x: 72, y: 47, dialogue: 'sign_to_downtown' },
-    ...hubcap.signs,
+    { x: 44, y: 39, dialogue: 'sign_welcome' },
+    { x: 88, y: 76, dialogue: 'sign_chapel' },
+    { x: 44, y: 32, dialogue: 'sign_otter_hall' },
+    { x: 30, y: 73, dialogue: 'sign_civic_green' },
+    { x: 24, y: 74, dialogue: 'sign_pond_park' },
+    { x: 103, y: 44, dialogue: 'sign_meadow_gate' },
+    { x: 102, y: 47, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
+    { x: 9, y: 50, dialogue: 'sign_to_downtown' },
   ];
 
   return {
@@ -373,13 +452,13 @@ function buildOtterbrookTown(): MapDef {
     props,
     npcs,
     signs,
-    phones: [{ x: 56, y: 48 }],
+    phones: [{ x: 44, y: 38 }],
     doors: [],
     spawners: [
-      { enemies: ['cranky_mailbox', 'sprinkler_sentry'], count: 1, rect: { x: 62, y: 72, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['runaway_lawnmower', 'recycling_raccoon', 'unionized_gnome'], count: 1, rect: { x: 12, y: 72, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['pigeon_gang', 'good_investment'], count: 1, rect: { x: 70, y: 46, w: 6, h: 2 }, ifFlag: 'meteor_fell' },
-      { enemies: ['cranky_mailbox', 'skeeter_swarm'], count: 1, rect: { x: 92, y: 100, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['cranky_mailbox', 'sprinkler_sentry'], count: 1, rect: { x: 60, y: 44, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['runaway_lawnmower', 'recycling_raccoon', 'unionized_gnome'], count: 1, rect: { x: 30, y: 60, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['pigeon_gang', 'good_investment'], count: 1, rect: { x: 70, y: 60, w: 6, h: 2 }, ifFlag: 'meteor_fell' },
+      { enemies: ['cranky_mailbox', 'skeeter_swarm'], count: 1, rect: { x: 60, y: 84, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
     ],
     triggers: [],
   };
@@ -404,10 +483,204 @@ function buildOtterbrookTown(): MapDef {
  *   L0 TOWN (rows 65+)    — the town (buildOtterbrookTown), offset down.
  *
  * The 4 old climb maps (hill_road/hickory_trail/whisperwood_rise/hickory_hill) are
- * RETIRED, their content re-homed here. The Under-Oak/Pond-Park burrow is GONE.
+ * RETIRED, their content re-homed here. The Under-Oak has a lower-town return
+ * beside the rebuilt streets so cave saves do not strand the camera on the crest.
  * ELEVATED_ALLOWLIST + maps_otterbrook.test.ts guard the elevation plane.
  */
 export function growOtterbrook(): MapDef {
+  const town = buildOtterbrookTown();
+  const TB = OTTERBROOK_TOWN_BASE;
+  const TW = town.grid[0].length;
+  const TH = town.grid.length;
+  const W = TW;
+  const H = TB + TH;
+  const g = new Grid(W, H, 'b');
+
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) g.set(x, TB + y, town.grid[y][x]);
+
+  // The wooded PLATEAU fills rows 0..TB with dense woods ('b'); the only clearings are
+  // CARVED — the crater bowl + cave nook + cottage/shed pockets on the UPPER plateau, the
+  // Jay/Chad TERRACE on the mid shelf, and the two winding dirt paths threading to town.
+  // Concept-faithful positions (read off the tile-gridded reference).
+  g.rect(0, 0, W, TB, 'b');
+
+  // --- UPPER-PLATEAU clearings ---
+  g.rect(28, 3, 6, 10, '.');   // cave-mouth shelf (top-LEFT) — NARROW, so the shed gate can't be bypassed
+  g.rect(69, 30, 15, 10, '.'); // green-cottage clearing (upper-RIGHT) — moved DOWN (more climb to the crater)
+  g.rect(27, 26, 8, 14, '.');  // shed clearing (LEFT) — the choke the shed + locked gate guard
+  // --- MID SHELF: the Jay/Chad terrace clearing (rows 49-60, between the two paths) ---
+  g.rect(42, 48, 30, 13, '.');
+
+  // top-RIGHT: the round scorched CRATER bowl set into the woods, with a thin grass rim
+  const crater = { x: 72, y: 11, rx: 22, ry: 9 };
+  for (let yy = crater.y - crater.ry - 1; yy <= crater.y + crater.ry + 1; yy++) {
+    for (let xx = crater.x - crater.rx - 1; xx <= crater.x + crater.rx + 1; xx++) {
+      const dx = (xx - crater.x) / crater.rx;
+      const dy = (yy - crater.y) / crater.ry;
+      const d = dx * dx + dy * dy;
+      if (d <= 1) g.set(xx, yy, 's');
+      else if (d <= 1.4 && g.rows[yy]?.[xx] === 'b') g.set(xx, yy, '.');
+    }
+  }
+  for (const [ex, ey] of [[56, 6], [88, 6], [58, 16], [90, 15], [64, 3], [92, 10]] as const) g.set(ex, ey, 'S');
+  g.rect(52, 19, 14, 5, '.'); // the police muster clearing on the crater's lower rim (right path)
+  g.rect(57, 33, 15, 4, ':'); // spur linking the right path to the (lowered) green-cottage clearing
+
+  const paintTrail = (points: ReadonlyArray<readonly [number, number]>, width = 4): void => {
+    const half = Math.floor(width / 2);
+    const stamp = (cx: number, cy: number): void => {
+      g.rect(Math.round(cx) - half, Math.round(cy) - half, width, width, ':');
+    };
+    for (let i = 0; i < points.length - 1; i++) {
+      const [ax, ay] = points[i];
+      const [bx, by] = points[i + 1];
+      const steps = Math.max(Math.abs(bx - ax), Math.abs(by - ay)) * 2;
+      for (let s = 0; s <= steps; s++) {
+        const t = steps === 0 ? 0 : s / steps;
+        stamp(ax + (bx - ax) * t, ay + (by - ay) * t);
+      }
+    }
+  };
+
+  // RIGHT path: the crater/police watch → down BETWEEN Jay & Chad → town (via the E stairs)
+  paintTrail([
+    [58, 21], [57, 29], [59, 37], [56, 44], [55, 51], [56, 57], [56, 64], [56, 67],
+  ]);
+  // the WINDING CLIMB from the police watch UP through the crater rim to the meteor (a
+  // longer, more serpentine walk — the meteor sits farther up the hill than the cottage)
+  paintTrail([
+    [58, 20], [62, 17], [56, 14], [61, 11], [66, 9], [69, 6],
+  ], 3);
+  // LEFT path: the cave mouth → down past the shed → town (via the W stairs)
+  paintTrail([
+    [30, 11], [30, 18], [30, 26], [30, 34], [28, 40], [26, 44], [27, 52], [26, 60], [26, 67],
+  ]);
+
+  // --- ELEVATION seams (foggybottom engine): plateau (L2) → shelf (L1) → town (L0);
+  // T-stairs sit on BOTH paths so the descent stays walkable. ---
+  g.rect(0, 45, W, 1, '^'); g.rect(0, 46, W, 3, 'K'); // seam A: upper plateau → mid shelf
+  g.rect(24, 45, 6, 4, 'T'); g.rect(53, 45, 6, 4, 'T');
+  g.rect(0, 61, W, 1, '^'); g.rect(0, 62, W, 4, 'K'); // seam B: mid shelf → town
+  g.rect(23, 61, 6, 5, 'T'); g.rect(53, 61, 6, 5, 'T');
+
+  const treeAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
+    xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
+  // DENSE canopy: the wooded slope is a SEA of overlapping tree crowns (the concept's
+  // read). Every wooded 'b' cell is already SOLID, so these crowns are DECORATIVE (no
+  // added body) — collision + BFS come from the grid. Sub-tile jitter + the 3-way
+  // treeSprite variety keep the mass organic; ~80% coverage with ~2-tile crowns closes
+  // the gaps. Paths/clearings ('.'/':'/'s') are skipped, so the dirt trails read clean.
+  const canopyTrees: PropDef[] = [];
+  for (let cy = 1; cy < TB; cy++) {
+    for (let cx = 5; cx < W - 5; cx++) {
+      if (g.rows[cy]?.[cx] !== 'b') continue;
+      const h = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
+      if (h % 5 === 0) continue; // ~20% gaps → dense but not a solid wall of green
+      const jx = (((h >> 3) % 5) - 2) * 0.18;
+      const jy = (((h >> 6) % 5) - 2) * 0.18;
+      canopyTrees.push({ sprite: treeSprite(cx, cy), x: cx + jx, y: cy + jy });
+    }
+  }
+
+  const hillProps: PropDef[] = [
+    ...canopyTrees,
+    { sprite: 'meteor_rock_hickory_hill', x: 66, y: 3, solid: { ox: 16, oy: 46, w: 64, h: 38 } }, // pushed farther UP the hill
+    { sprite: 'sentinel_husk', x: 62, y: 2, solid: { ox: 4, oy: 60, w: 152, h: 40 }, ifFlag: 'sentinel_repelled' },
+    { sprite: 'burrow_mouth', x: 29, y: 1 }, // the CAVE mouth (top-LEFT) → Titanic Tick
+    otterCentered('bldg_ob_workshop', 31, 39, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }), // the SHED — guards the cave
+    // the LOCKED SHED GATE: the cave is reachable ONLY past the shed (needs the trail key
+    // from the hodgkin_mower chain). It walls the narrow cave choke until has_trail_key.
+    { sprite: 'sawhorse', x: 28, y: 24, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
+    { sprite: 'sawhorse', x: 30, y: 24, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
+    otterCentered('bldg_ob_cottage', 76, 37), // the green cottage (upper-RIGHT) — the old man's house, moved DOWN
+    otterLandmark('house_rex', 46, 49, { to: 'rex_home', tx: 104, ty: 124 }), // JAY's house (purple)
+    otterLandmark('house_chad', 58, 49, { to: 'chad_home', tx: 7 * 16 + 8, ty: 8 * 16 }), // CHAD's house (blue)
+    { sprite: 'bug_zapper', x: 53, y: 51, solid: { ox: 4, oy: 18, w: 6, h: 8 } },
+    { sprite: 'sign', x: 60, y: 23, solid: SIGN_SOLID, ifFlag: 'meteor_fell' }, // crater guard marker
+    { sprite: 'sign', x: 34, y: 33, solid: SIGN_SOLID }, // shed marker
+    { sprite: 'sign', x: 64, y: 44, solid: SIGN_SOLID }, // woods marker
+    { sprite: 'picnic', x: 64, y: 53, solid: PICNIC_SOLID },
+    { sprite: 'bench', x: 68, y: 55, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    ...treeAt([[8, 8], [10, 24], [100, 8], [102, 24], [8, 40], [100, 40]]),
+  ];
+
+  const hillNpcs: NpcDef[] = [
+    { id: 'ana', sprite: 'ana', x: 46, y: 51, facing: 'down', dialogue: 'npc_ana', ifFlag: 'zapper_done' },
+    { id: 'vivi', sprite: 'vivi', x: 49, y: 51, facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done' },
+    { id: 'treeline_gawker', sprite: 'pigeonKid', x: 66, y: 51, facing: 'up', dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' },
+    { id: 'woods_birder', sprite: 'oldTimer', x: 72, y: 36, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' },
+    { id: 'biscuit_road', sprite: 'dog', x: 29, y: 40, facing: 'up', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
+    { id: 'biscuit_road_after', sprite: 'dog', x: 29, y: 40, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
+    { id: 'crater_cop_a', sprite: 'npc_borden', x: 55, y: 21, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
+    { id: 'crater_cop_b', sprite: 'npc_borden', x: 58, y: 21, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
+    { id: 'crater_cop_c', sprite: 'npc_borden', x: 61, y: 21, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
+  ];
+
+  const hillSigns: SignDef[] = [
+    { x: 34, y: 33, dialogue: 'locked_house' },
+    { x: 32, y: 31, dialogue: 'trail_shed' },
+    { x: 40, y: 44, dialogue: 'sign_whisperwood_rise' },
+    { x: 36, y: 44, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
+    { x: 29, y: 40, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+    { x: 64, y: 44, dialogue: 'sign_otter_woods' },
+    { x: 30, y: 13, dialogue: 'sign_hill' },
+    { x: 60, y: 23, dialogue: 'sign_crater_guard', ifFlag: 'meteor_fell' },
+    { x: 64, y: 12, dialogue: 'sign_sentinel_husk', ifFlag: 'sentinel_repelled' },
+  ];
+
+  const grid = g.out();
+  // Elevation plane: L2 upper plateau (rows 0-45) → L1 mid shelf (rows 49-60) → L0 town
+  // (rows 66+); the K-face seams at rows 46-48 and 62-65 with T-stairs stepping one level.
+  const level = grid.map((rowStr, y) =>
+    rowStr
+      .split('')
+      .map((ch) => {
+        if (y <= 45) return '2'; // upper plateau (crater/cave/cottage/shed) + its lip
+        if (y <= 48) return ch === 'T' ? '1' : '2'; // seam A face: stairs drop to the shelf
+        if (y <= 61) return '1'; // mid shelf (Jay/Chad terrace) + its lip
+        if (y <= 65) return ch === 'T' ? '0' : '1'; // seam B face: stairs drop to town
+        return '0'; // the town
+      })
+      .join(''),
+  );
+
+  const offY = <T extends { y: number }>(o: T): T => ({ ...o, y: o.y + TB });
+  const offRect = <T extends { rect: { x: number; y: number; w: number; h: number } }>(o: T): T =>
+    ({ ...o, rect: { ...o.rect, y: o.rect.y + TB } });
+
+  return {
+    id: 'otterbrook',
+    name: 'OTTERBROOK, OHIO',
+    music: 'otterbrook',
+    settlement: 'town',
+    grid,
+    elevation: { level },
+    props: [...hillProps, ...town.props.map(offY)],
+    npcs: [...hillNpcs, ...town.npcs.map(offY)],
+    signs: [...hillSigns, ...town.signs.map(offY)],
+    phones: town.phones.map(offY),
+    doors: [
+      { x: W - 1, y: OTTERBROOK_EAST_GATE.y, w: 1, h: 2, to: 'meadow_mile', tx: 24, ty: 128, facing: 'right', indicator: 'none' },
+      // the hilltop CAVE mouth (top-left) → the Titanic Tick dungeon (reached ONLY past the shed gate)
+      { x: 28, y: 9, w: 3, h: 1, to: 'oak_roots', tx: 14 * 16 + 8, ty: 38 * 16, facing: 'up', indicator: 'none' },
+      ...town.doors.map(offY),
+    ],
+    spawners: [
+      ...town.spawners.map(offRect),
+      { enemies: ['runaway_lawnmower'], count: 1, rect: { x: 52, y: 51, w: 4, h: 1 }, ifFlag: 'q_mail', unlessFlag: 'q_mail_sodd' },
+      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 58, y: 24, w: 8, h: 14 }, ifFlag: 'meteor_fell' },
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 26, y: 30, w: 34, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 26, y: 14, w: 10, h: 12 }, ifFlag: 'meteor_fell' },
+    ],
+    triggers: [
+      { id: 'porch', rect: { x: 46, y: 56, w: 6, h: 2 }, once: true },
+      { id: 'crater', rect: { x: 58, y: 1, w: 24, h: 12 }, once: true },
+    ],
+    patrols: [{ id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[30, 42], [60, 42]], countFlag: 'q_mower_caught' }],
+  };
+}
+
+export function growOtterbrookLegacy(): MapDef {
   const town = buildOtterbrookTown();
   const TB = OTTERBROOK_TOWN_BASE; // 65
   const TW = town.grid[0].length; // 126
@@ -420,87 +693,127 @@ export function growOtterbrook(): MapDef {
   // 1) copy the flat town into the LOWER band (rows TB..)
   for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) g.set(x, TB + y, town.grid[y][x]);
 
-  // 2) THE WOODED HILL (rows 0..TB) — dense bramble masses wall the terraces; the
-  //    winding trail cut is the only way up. Border woods on every edge.
-  g.rect(0, 0, W, 2, 'b'); // the crest's north tree-wall
-  g.rect(0, 0, 6, TB, 'b'); g.rect(120, 0, 6, TB, 'b'); // west + east woods edges
+  // 2) THE WOODED HILL (rows 0..TB) — TWO WIDE, STRAIGHT trails climb to the crest,
+  //    each aligned to a town avenue so the route reads at a glance: the LEFT trail
+  //    (x22 / WEST_AVE) up to the CAVE, the RIGHT trail (x54 / CENTER_AVE) up past the
+  //    houses to the CRATER, with the meteor as the beacon. Deep woods (b) wall the
+  //    rest; the aligned T-stairs are the only way up, so "up the trail" always reads
+  //    as "toward the crash". (Concept-locked rebuild 2026-07-04: the old thin, winding
+  //    trails + the 50-tile left-to-right crest traverse are gone.)
+  const LT = 22, RT = 54; // the two trail spines (left→cave, right→crater), each on a town avenue
+  g.rect(0, 0, W, 3, 'b'); // the crest's north tree-wall
+  g.rect(0, 0, 8, TB, 'b'); g.rect(118, 0, 8, TB, 'b'); // west + east woods edges
 
-  // ─── L3 CREST (rows 2-20): the scorched crater bowl (right) + the cave (left) ───
-  g.rect(58, 4, 30, 13, 's'); // the crater bowl (scorched ground, walkable)
-  g.set(64, 6, 'S'); g.set(78, 8, 'S'); g.set(70, 13, 'S'); g.set(60, 11, 'S'); // ember flecks
-  // walkable crest turf + the two trailheads down to the L3→L2 stairs
-  g.rect(10, 3, 62, 16, '.'); // clear the crest turf (over the bowl's west + the cave shelf)
-  g.rect(58, 4, 30, 13, 's'); // re-lay the bowl over the cleared turf
-  g.rect(14, 4, 4, 15, ':'); // the CAVE trail (left) down to the west stair
-  g.rect(66, 8, 4, 11, ':'); // the CRATER trail (right) down to the east stair
-  g.rect(16, 18, 54, 2, ':'); // the crest cross-path linking both trailheads
+  // ─── L3 CREST (rows 3-19): the round CRATER bowl (right) + the CAVE shelf (left) ───
+  g.rect(8, 3, 108, 17, '.'); // clear the crest turf
+  const CBX = 72, CBY = 11, CBRX = 18, CBRY = 8; // the crater bowl, centered on the meteor
+  for (let yy = CBY - CBRY; yy <= CBY + CBRY; yy++)
+    for (let xx = CBX - CBRX; xx <= CBX + CBRX; xx++) {
+      const ndx = (xx - CBX) / CBRX, ndy = (yy - CBY) / CBRY;
+      if (ndx * ndx + ndy * ndy <= 1) g.set(xx, yy, 's'); // one filled, round scorched bowl
+    }
+  for (const [ex, ey] of [[64, 7], [80, 8], [70, 15], [62, 12], [82, 13], [76, 6], [66, 16]] as const) g.set(ex, ey, 'S'); // ember flecks
+  g.rect(10, 3, 12, 9, '.'); // the CAVE shelf (left) around the mouth at (14,3)
+  // crest approaches: LEFT stair-top → up + left to the cave; RIGHT stair-top → up into the bowl
+  g.rect(LT - 1, 8, 4, 12, ':'); g.rect(14, 8, 11, 2, ':'); g.rect(14, 4, 3, 6, ':');
+  g.rect(RT - 1, 12, 4, 8, ':');
 
-  // ─── SEAM L3→L2 (lip 20 · K 21-22 · stairs W x22 / E x66) ───
+  // ─── SEAM L3→L2 (lip 20 · K 21-22 · stairs LEFT x22 / RIGHT x54) ───
+  // stairs are 4 WIDE and bracket the trail spine (LT-1..LT+2) so a player hugging
+  // an edge can't clip the K wall — forgiving climbs (ADR: ~40px box vs openings).
   g.rect(0, 20, W, 1, '^'); g.rect(0, 21, W, 2, 'K');
-  g.rect(22, 20, 3, 3, 'T'); g.rect(66, 20, 3, 3, 'T');
+  g.rect(LT - 1, 20, 4, 3, 'T'); g.rect(RT - 1, 20, 4, 3, 'T');
 
-  // ─── L2 CLIMB (rows 23-41): winding trails through dense woods ───
-  g.rect(6, 23, 114, 19, '.'); // clear the L2 band turf (inside the border woods)
-  // bramble masses framing the trails (leave the two trail corridors + Pemberton's yard open)
-  g.rect(30, 24, 30, 4, 'b'); g.rect(28, 30, 24, 3, 'b'); g.rect(74, 26, 22, 5, 'b');
-  g.rect(8, 34, 10, 4, 'b'); g.rect(96, 34, 18, 4, 'b'); g.rect(58, 36, 20, 3, 'b');
-  windV(g, [22, 22, 21, 20, 20, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22], 23, 4, ':'); // WEST trail (from the crater stair down)
-  windV(g, [66, 65, 64, 62, 60, 58, 56, 54, 53, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52], 23, 4, ':'); // EAST trail bending to the L2→L1 east stair
-  g.rect(20, 40, 36, 2, ':'); // a connector so both trails reach both L2→L1 stairs
+  // ─── L2 CLIMB (rows 23-41): the two wide trails; deep woods wall the rest ───
+  g.rect(8, 23, 110, 19, 'b'); // the L2 band = deep woods...
+  // ...cut by TWO WINDING paths (reference-faithful): LEFT winds up toward the cave, RIGHT toward
+  // the crater; each starts + ends near its stair column (x22 / x54) but bulges through the woods.
+  windV(g, [20, 19, 17, 16, 15, 15, 16, 18, 20, 21, 20, 18, 16, 15, 16, 18, 20, 21, 21], 23, 5, ':');
+  windV(g, [52, 53, 55, 56, 57, 57, 56, 54, 52, 51, 52, 54, 56, 57, 56, 54, 52, 52, 53], 23, 5, ':');
+  g.rect(12, 24, 8, 6, '.'); // Pemberton's fenced yard pocket (west, off the left trail)
+  g.rect(57, 24, 10, 6, '.'); // the present + overlook pocket (east, off the right trail)
+  g.rect(LT + 3, 30, RT - LT - 3, 2, ':'); // ONE mid-climb cross-link (the Biscuit breadcrumbs)
 
-  // ─── SEAM L2→L1 (lip 42 · K 43-44 · stairs W x22 / E x52) ───
+  // ─── SEAM L2→L1 (lip 42 · K 43-44 · stairs LEFT x22 / RIGHT x54) ───
   g.rect(0, 42, W, 1, '^'); g.rect(0, 43, W, 2, 'K');
-  g.rect(22, 42, 3, 3, 'T'); g.rect(52, 42, 3, 3, 'T');
+  g.rect(LT - 1, 42, 4, 3, 'T'); g.rect(RT - 1, 42, 4, 3, 'T');
 
-  // ─── L1 TERRACE (rows 45-61): Jay's + Chad's houses on the shelf above town ───
-  g.rect(6, 45, 114, 17, '.'); // clear the terrace turf
-  g.rect(8, 55, 46, 2, ':'); // the neighbourhood lane (ties the houses to both L1 stairs)
-  g.rect(22, 45, 2, 11, ':'); g.rect(52, 45, 2, 17, ':'); // spurs up to the L2 stairs + down to the L0 stairs
-  g.rect(22, 57, 2, 5, ':');
-  // fenced front yards (gap at each drive)
-  g.rect(11, 52, 6, 1, '-'); g.rect(23, 52, 6, 1, '-');
+  // ─── L1 TERRACE (rows 45-61): Jay's + Chad's houses + a wide lane to both trails ───
+  g.rect(6, 45, 112, 17, '.'); // clear the terrace turf
+  g.rect(8, 54, 48, 3, ':'); // the neighbourhood LANE (wide) — the houses out to the crater-trail spur
+  g.rect(LT, 45, 2, 17, ':'); g.rect(RT, 45, 2, 17, ':'); // the two spurs (stair → lane → stair)
+  g.rect(11, 52, 6, 1, '-'); g.rect(25, 52, 6, 1, '-'); // fenced front yards (gap at each drive)
 
-  // ─── SEAM L1→L0 (lip 62 · K 63-64 · stairs W x22 / E x52) — down into town ───
+  // ─── SEAM L1→L0 (lip 62 · K 63-64 · stairs LEFT x22 / RIGHT x54) — down into town ───
   g.rect(0, 62, W, 1, '^'); g.rect(0, 63, W, 2, 'K');
-  g.rect(22, 62, 3, 3, 'T'); g.rect(52, 62, 3, 3, 'T');
-  // connect the L0 stairs down to the town's avenues (WEST_AVE x22 / CENTER_AVE x54 start at map-y TB+24)
-  g.rect(22, 65, 2, TB + 24 - 65, ':'); g.rect(53, 65, 2, TB + 24 - 65, ':');
+  g.rect(LT - 1, 62, 4, 3, 'T'); g.rect(RT - 1, 62, 4, 3, 'T');
+  // connect the L0 stairs down to the town avenues (WEST_AVE x22 / CENTER_AVE x54 start at map-y TB+24)
+  g.rect(LT - 1, 65, 4, TB + 24 - 65, ':'); g.rect(RT - 1, 65, 4, TB + 24 - 65, ':');
 
   // ═══ HILL PROPS ═══
   const treeAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
     xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
 
   // presents re-homed to the hill (the woods glade + the porch coffee-can)
-  const woodsGift = walkPresent('otter_woods_gift', 104, 26); // an L2 east pocket by the overlook
+  const woodsGift = walkPresent('otter_woods_gift', 64, 25); // an L2 east pocket by the overlook
   const porchCan = walkPresent('porch_can', 40, 50); // the L1 terrace, by Jay's
 
+  // DENSE WOODS CANOPY — tall tree props rising from the 'b' bush understory so the climb
+  // reads as the reference's WOODED slope, not sparse grass. Deterministic hash-scatter
+  // over the deep-woods tiles ONLY (the trail/pocket ':' cells carry no 'b', so the paths
+  // stay clear); the trees are already-solid woods, so this is purely a visual canopy.
+  // (A truly SOLID canopy needs an authored 'b' tree-canopy TILE — Track-B follow-up.)
+  const canopyTrees: PropDef[] = [];
+  const nearXY = (x: number, y: number, cx: number, cy: number, r: number): boolean =>
+    (x - cx) * (x - cx) + (y - cy) * (y - cy) < r * r;
+  for (let cy = 3; cy < TB; cy++) {
+    for (let cx = 8; cx < W - 8; cx++) {
+      const t = g.rows[cy]?.[cx];
+      const woods = t === 'b'; // deep woods → DENSE canopy
+      const turf = t === '.'; // open turf → SPARSE trees that FRAME the clearings
+      if (!woods && !turf) continue; // never on the ':' trails, the 's' crater, houses, etc.
+      if (nearXY(cx, cy, 72, 11, 21)) continue; // keep the CRATER bowl a clearing
+      if (nearXY(cx, cy, 14, 5, 10)) continue; // keep the CAVE shelf a clearing
+      if (cy >= 44 && cy <= 60 && cx >= 8 && cx <= 42) continue; // keep the Jay/Chad house yards a clearing
+      const h = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
+      if (!(woods ? h % 7 === 0 : h % 20 === 0)) continue; // ~1/7 of woods, ~1/20 of turf
+      canopyTrees.push({ sprite: treeSprite(cx, cy), x: cx, y: cy, solid: OAK });
+    }
+  }
+
   const hillProps: PropDef[] = [
-    // ── L3 CRATER — the frozen set-piece trio + the cave mouth + ejecta ──
-    { sprite: 'meteor_rock_hickory_hill', x: 72, y: 7, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
+    ...canopyTrees,
+    // ── L3 CRATER — the meteor + the dormant Hush-Sentinel husk + the cave mouth ──
+    // (the ROUND scorched bowl is painted into the grid; the ugly gray 'crate' ejecta
+    // are gone — the bowl + ember ring read as the crash now, and the Track-B crater
+    // art — round bowl + segmented meteor sphere — swaps in over these keys.)
+    { sprite: 'meteor_rock_hickory_hill', x: 72, y: 7, solid: { ox: 16, oy: 46, w: 64, h: 38 } }, // authored segmented sphere (~6 tiles) — solid covers its lower half (walk behind the top)
     { sprite: 'sentinel_husk', x: 69.5, y: 6, solid: { ox: 4, oy: 60, w: 152, h: 40 }, ifFlag: 'sentinel_repelled' },
     { sprite: 'burrow_mouth', x: 14.3, y: 2.3 }, // the CAVE mouth (gray-box; fresh cave art later)
-    ...treeAt([[10, 6], [12, 14], [54, 5], [90, 6], [56, 15], [92, 15]]), // crest rim trees
-    { sprite: 'crate', x: 62, y: 5, solid: { ox: 2, oy: 6, w: 12, h: 8 } }, // ejecta boulders
-    { sprite: 'crate', x: 84, y: 14, solid: { ox: 2, oy: 6, w: 12, h: 8 } },
-    // ── L2 CLIMB — Pemberton, the shed, presents, rests, the overlook, breadcrumbs ──
+    ...treeAt([[10, 5], [11, 12], [56, 6], [88, 6], [57, 16], [89, 15]]), // trees framing the bowl rim + cave shelf
+    { sprite: 'sign', x: 57, y: 19, solid: { ox: 3, oy: 10, w: 10, h: 7 }, ifFlag: 'meteor_fell' }, // DO NOT ENTER — below the crater, by the police
+    { sprite: 'bldg_ob_house_green', x: 60, y: 23 }, // the green cottage ~3/4 up the right (crater) path (reference: a fenced house near the crash)
+    // ── L2 CLIMB — Pemberton (west pocket), rest+overlook+present (east pocket), breadcrumbs ──
     // PEMBERTON's fenced DON'T ENTER house — decorative shell (blocked; the enterable
     // workshop_int + the full Pemberton beat are a later slice, §5).
-    { sprite: 'bldg_ob_workshop', x: 10, y: 25 },
-    { sprite: 'sawhorse', x: 13, y: 31, solid: { ox: 0, oy: 2, w: 36, h: 26 } }, // the DON'T-ENTER block across the yard
-    { sprite: 'sign', x: 16, y: 32, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // "DON'T ENTER"
-    { sprite: 'sign', x: 28, y: 40, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // Hodgkin's trail shed
-    { sprite: 'sign', x: 88, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // whisperwood threshold
-    { sprite: 'picnic', x: 78, y: 34, solid: { ox: 2, oy: 8, w: 32, h: 14 } }, // §A4.5 rest on the climb
-    { sprite: 'bench', x: 96, y: 24, solid: { ox: 1, oy: 6, w: 20, h: 6 } }, // the overlook (look back at town)
-    ...treeAt([[64, 26], [40, 32], [100, 30], [18, 38], [86, 38]]),
-    { sprite: 'paw_prints', x: 22, y: 30, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' }, // breadcrumb (L2)
-    { sprite: 'paw_prints', x: 60, y: 34, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' }, // breadcrumb (L2)
+    { sprite: 'bldg_ob_workshop', x: 12, y: 24 },
+    { sprite: 'sawhorse', x: 17, y: 28, solid: { ox: 0, oy: 2, w: 36, h: 26 } }, // the DON'T-ENTER block, facing the left trail
+    { sprite: 'sign', x: 18, y: 29, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // "DON'T ENTER"
+    { sprite: 'sign', x: 16, y: 26, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // Hodgkin's trail shed (Pemberton pocket, off the winding left path)
+    { sprite: 'sign', x: 58, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // whisperwood threshold (east pocket)
+    { sprite: 'picnic', x: 60, y: 26, solid: { ox: 2, oy: 8, w: 32, h: 14 } }, // §A4.5 rest before the crater push
+    { sprite: 'bench', x: 63, y: 28, solid: { ox: 1, oy: 6, w: 20, h: 6 } }, // the overlook (look back at town)
+    ...treeAt([[30, 26], [46, 26], [16, 37], [50, 38], [64, 38]]),
+    { sprite: 'paw_prints', x: 22, y: 32, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' }, // breadcrumb (left trail)
+    { sprite: 'paw_prints', x: 40, y: 30, ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' }, // breadcrumb (cross-link)
     ...woodsGift.props,
     // ── L1 TERRACE — Jay + Chad + the yards + the sniff-trail head ──
     {
       sprite: 'house_rex', x: 12, y: 46,
       solid: { ox: 0, oy: 20, w: 79, h: 34 },
-      door: { ox: 22, oy: 52, w: 14, h: 28, to: 'rex_home', tx: 104, ty: 124 },
+      // ox 44 centers the enter-zone on the PAINTED door (texW 464 → door ≈ tile 15.2),
+      // matching the reciprocal rex_home exit (tx 243); ox 22 sat ~1.4 tiles left of it.
+      door: { ox: 44, oy: 52, w: 14, h: 28, to: 'rex_home', tx: 104, ty: 124 },
     },
     { sprite: 'house_chad', x: 24, y: 46 },
     { sprite: 'doghouse', x: 19, y: 53.5, solid: { ox: 2, oy: 14, w: 20, h: 10 } },
@@ -522,24 +835,30 @@ export function growOtterbrook(): MapDef {
     // the twins set the stand up by morning; the night versions sleep in ana/vivi_room
     { id: 'ana', sprite: 'ana', x: 35, y: 58, facing: 'down', dialogue: 'npc_ana', ifFlag: 'zapper_done' },
     { id: 'vivi', sprite: 'vivi', x: 37, y: 58, facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done' },
-    // the treeline gawker — at 2 AM he points up the hill and won't go himself
-    { id: 'treeline_gawker', sprite: 'pigeonKid', x: 24, y: 44, facing: 'up', dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' },
-    // the birdwatcher up in the L2 woods
-    { id: 'woods_birder', sprite: 'oldTimer', x: 96, y: 26, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' },
-    // Biscuit points up the hill (pre-Tick) / at you (post-Tick) — on the L2 climb
-    { id: 'biscuit_road', sprite: 'dog', x: 60, y: 32, facing: 'up', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
-    { id: 'biscuit_road_after', sprite: 'dog', x: 60, y: 32, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
+    // the treeline gawker — at 2 AM he points up the hill toward the crater trail
+    { id: 'treeline_gawker', sprite: 'pigeonKid', x: 44, y: 48, facing: 'up', dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' },
+    // the birdwatcher at the L2 east-pocket overlook
+    { id: 'woods_birder', sprite: 'oldTimer', x: 64, y: 28, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' },
+    // Biscuit points up the hill (pre-Tick) / at you (post-Tick) — on the L2 cross-link
+    { id: 'biscuit_road', sprite: 'dog', x: 40, y: 30, facing: 'up', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
+    { id: 'biscuit_road_after', sprite: 'dog', x: 40, y: 30, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
+    // THE CRATER GUARD (reference: 3 police below the meteor + a DO NOT ENTER sign) — they
+    // arrive to cordon the crash once the meteor has fallen; gaps let the crater beat still fire.
+    { id: 'crater_cop_a', sprite: 'npc_borden', x: 54, y: 18, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
+    { id: 'crater_cop_b', sprite: 'npc_borden', x: 57, y: 18, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
+    { id: 'crater_cop_c', sprite: 'npc_borden', x: 60, y: 18, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
   ];
 
   // ═══ HILL SIGNS ═══
   const hillSigns: SignDef[] = [
-    { x: 16, y: 32, dialogue: 'locked_house' }, // Pemberton's DON'T ENTER (reuse the locked-house gag; bespoke npc_pemberton = §5)
-    { x: 28, y: 40, dialogue: 'trail_shed' }, // Hodgkin's locked supply shed
-    { x: 88, y: 25, dialogue: 'sign_whisperwood_rise' }, // the last of the trees before the crown
+    { x: 18, y: 29, dialogue: 'locked_house' }, // Pemberton's DON'T ENTER (reuse the locked-house gag; bespoke npc_pemberton = §5)
+    { x: 16, y: 26, dialogue: 'trail_shed' }, // Hodgkin's locked supply shed (by the shed, off the winding left path)
+    { x: 58, y: 25, dialogue: 'sign_whisperwood_rise' }, // the last of the trees before the crown
     { x: 22, y: 58, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' }, // sniff-trail head
-    { x: 60, y: 34, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' }, // "doubled back toward the drugstore"
-    { x: 96, y: 24, dialogue: 'sign_otter_woods' }, // the look-back overlook (reuse the woods sign)
+    { x: 40, y: 30, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' }, // "doubled back toward the drugstore"
+    { x: 63, y: 28, dialogue: 'sign_otter_woods' }, // the look-back overlook (reuse the woods sign)
     { x: 13, y: 6, dialogue: 'sign_hill' }, // the crest marker
+    { x: 57, y: 19, dialogue: 'sign_crater_guard', ifFlag: 'meteor_fell' }, // DO NOT ENTER (the crater police line)
     { x: 71, y: 8, dialogue: 'sign_sentinel_husk', ifFlag: 'sentinel_repelled' },
     ...woodsGift.signs,
     ...porchCan.signs,
@@ -594,10 +913,10 @@ export function growOtterbrook(): MapDef {
       ...town.spawners.map(offRect),
       // Mr. Sodd's Runaway Lawnmower guards his letter (a mail stop, now on the L1 terrace)
       { enemies: ['runaway_lawnmower'], count: 1, rect: { x: 25, y: 54, w: 3, h: 1 }, ifFlag: 'q_mail', unlessFlag: 'q_mail_sodd' },
-      // the wooded-climb fights (gated on the meteor night)
-      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 60, y: 28, w: 16, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 70, y: 34, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 24, y: 24, w: 14, h: 4 }, ifFlag: 'meteor_fell' },
+      // the wooded-climb fights (gated on the meteor night) — spread along the two trails + the cross-link
+      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 52, y: 24, w: 5, h: 14 }, ifFlag: 'meteor_fell' }, // right trail
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 26, y: 30, w: 22, h: 2 }, ifFlag: 'meteor_fell' }, // cross-link
+      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 20, y: 24, w: 5, h: 14 }, ifFlag: 'meteor_fell' }, // left trail
     ],
     triggers: [
       // the opening porch beat (L1)
@@ -606,8 +925,8 @@ export function growOtterbrook(): MapDef {
       { id: 'crater', rect: { x: 66, y: 9, w: 8, h: 3 }, once: true },
     ],
     patrols: [
-      // Hodgkin's runaway mower on the L2 climb (catching it sets q_mower_caught → has_trail_key)
-      { id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[24, 40], [40, 40]], countFlag: 'q_mower_caught' },
+      // Hodgkin's runaway mower on the L2 cross-link (catching it sets q_mower_caught → has_trail_key)
+      { id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[26, 31], [50, 31]], countFlag: 'q_mower_caught' },
     ],
   };
 }
@@ -1071,12 +1390,17 @@ function buildOakRoots(): MapDef {
 
   return {
     id: 'oak_roots',
-    name: 'THE UNDER-OAK — ROOTS',
+    name: 'HICKORY HILL CAVE',
     music: 'hill',
     grid: g.out(),
     props: [
       { sprite: 'root_curtain', x: 12.5, y: 1.2 }, // rootlets over the north throat
       { sprite: 'root_curtain', x: 12.6, y: 33.2 }, // ...and the entry throat
+      // guide-lights flanking the ONWARD (north) throat — so the dark descent reads as
+      // a route, not a dead-end (the player's eye follows the glow deeper into the hill)
+      { sprite: 'glow_shroom_b', x: 10.6, y: 3.4 },
+      { sprite: 'glow_shroom_b', x: 14.4, y: 3.4 },
+      { sprite: 'ember', x: 12.4, y: 2.4 },
       { sprite: 'root_knot', x: 6.5, y: 20.3, solid: { ox: 2, oy: 10, w: 20, h: 9 } },
       { sprite: 'root_knot', x: 19.4, y: 10.6, solid: { ox: 2, oy: 10, w: 20, h: 9 } },
       { sprite: 'glow_shroom', x: 10.6, y: 27.6 },
@@ -1093,9 +1417,19 @@ function buildOakRoots(): MapDef {
     signs: [{ x: 12, y: 35, dialogue: 'oak_roots_enter' }],
     phones: [],
     doors: [
-      // back out the burrow mouth — land on the Pond Park knoll just below the
-      // Under-Oak door (S5 rebuild: the burrow moved to the SW park @ tile 12,89)
-      { x: 12, y: 39, w: 4, h: 1, to: 'otterbrook', tx: 232, ty: 96, facing: 'down', indicator: 'none' },
+      // Surface return lands just below the hilltop CAVE mouth (top-left of the plateau),
+      // on the left path — the cave is the top-left set-piece in the concept layout.
+      {
+        x: 12,
+        y: 39,
+        w: 4,
+        h: 1,
+        to: 'otterbrook',
+        tx: 29 * 16 + 8,
+        ty: 11 * 16,
+        facing: 'down',
+        indicator: 'none',
+      },
       { x: 12, y: 0, w: 3, h: 1, to: 'oak_hollow', tx: 11 * 16 + 8, ty: 19 * 16, facing: 'up', indicator: 'none' },
     ],
     spawners: [
@@ -1125,7 +1459,7 @@ function buildOakHollow(): MapDef {
   const cache = walkPresent('oak_cache', 18, 6);
   return {
     id: 'oak_hollow',
-    name: 'THE UNDER-OAK — HOLLOW',
+    name: 'THE CAVE — HOLLOW',
     music: 'hill',
     grid: g.out(),
     props: [
@@ -1168,7 +1502,7 @@ function buildOakHeart(): MapDef {
 
   return {
     id: 'oak_heart',
-    name: 'THE UNDER-OAK — HEART',
+    name: 'THE CAVE — THE HEART',
     music: 'hill',
     grid: g.out(),
     props: [
@@ -1206,7 +1540,7 @@ function buildOakHeart(): MapDef {
 
 /* ------------------- INTERIORS ------------------- */
 
-function buildRexHome(): MapDef {
+function buildRexHome(streetExit: { tx: number; ty: number }): MapDef {
   const g = new Grid(14, 10, 'w');
   g.rect(0, 0, 14, 2, 'W');
   g.rect(4, 4, 3, 2, 'r');
@@ -1232,13 +1566,74 @@ function buildRexHome(): MapDef {
     signs: [],
     phones: [{ x: 1, y: 2 }],
     doors: [
-      // tx 109 centers the player on the DRAWN door (~world x436); the old 120 put
-      // them ~45px right of it, over the window side. ty lands just south of the
-      // doorstep zone (the door re-arm guard also blocks any exit-bounce now).
-      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: 221, ty: 821, facing: 'down', indicator: 'mat' },
+      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
       // S9b: the stairs land on the upstairs hall (three bedrooms up there now)
       { x: 12, y: 9, w: 2, h: 1, to: 'rex_hall', tx: 228, ty: 80, facing: 'left', indicator: 'stairs' },
     ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildOtterHome(id: string, name: string, streetExit: { tx: number; ty: number }, seed: number): MapDef {
+  const g = new Grid(16, 11, 'w');
+  g.rect(0, 0, 16, 2, 'W');
+  g.rect(6, 7, 3, 2, 'r');
+  const leftBed = seed % 2 === 0;
+  return {
+    id,
+    name,
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'sofa', x: 3, y: 5, solid: { ox: 0, oy: 4, w: 34, h: 14 } },
+      { sprite: 'bookshelf', x: 11.5, y: 0 },
+      { sprite: 'counter', x: 9, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'stove', x: 12, y: 0.5 },
+      { sprite: 'tv', x: 2.4, y: 0.6 },
+      { sprite: 'plant_pot', x: 13, y: 8, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'bed', x: leftBed ? 1 : 12, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+    ],
+    npcs: [
+      {
+        id: `${id}_resident`,
+        sprite: ['grayCommuter', 'pajamaKid', 'fernLady', 'oldTimer'][seed % 4],
+        x: 7,
+        y: 5,
+        facing: 'down',
+        dialogue: `cl_resident_${seed % 14}`,
+      },
+    ],
+    signs: [],
+    phones: seed === 0 ? [{ x: 1, y: 2 }] : [],
+    doors: [{ x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildWorkshopInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(18, 11, 'o');
+  g.rect(0, 0, 18, 2, 'O');
+  g.rect(2, 7, 4, 2, 'r');
+  return {
+    id: 'workshop_int',
+    name: "PEMBERTON'S WORKSHOP",
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'desk', x: 8, y: 3, solid: { ox: 0, oy: 8, w: 20, h: 12 } },
+      { sprite: 'shelf_b', x: 2, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 13, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'counter', x: 10, y: 7, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'floor_lamp', x: 15, y: 7.4, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+    ],
+    npcs: [],
+    signs: [{ x: 8, y: 3, dialogue: 'trail_shed' }],
+    phones: [],
+    doors: [{ x: 8, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
     spawners: [],
     triggers: [],
   };
@@ -3191,6 +3586,15 @@ function buildBusInterior(): MapDef {
 
 const otterbrookMap = growOtterbrook();
 const bricktonMap = growBrickton();
+const rexDoorstep = doorstepOf(otterbrookMap, 'rex_home') ?? { tx: 46 * 16, ty: 41 * 16 };
+const chadDoorstep = doorstepOf(otterbrookMap, 'chad_home') ?? { tx: 60 * 16, ty: 41 * 16 };
+const workshopDoorstep = doorstepOf(otterbrookMap, 'workshop_int') ?? { tx: 24 * 16, ty: 31 * 16 };
+const otterHomeSteps = Object.fromEntries(
+  OTTERBROOK_HOME_SPECS.map((h) => [h.id, doorstepOf(otterbrookMap, h.id) ?? { tx: h.x * 16 + 32, ty: (h.y + OTTERBROOK_TOWN_BASE + 6) * 16 }]),
+) as Record<(typeof OTTERBROOK_HOME_SPECS)[number]['id'], { tx: number; ty: number }>;
+const otterHomeMaps = Object.fromEntries(
+  OTTERBROOK_HOME_SPECS.map((h, i) => [h.id, buildOtterHome(h.id, h.name, otterHomeSteps[h.id], i)]),
+) as Record<(typeof OTTERBROOK_HOME_SPECS)[number]['id'], MapDef>;
 // THE LONG WALK (ADR-056) — the four foot legs, with computed inter-leg doors.
 const longWalk = buildLongWalk();
 // Brickton's foot exit now lands on the OVERPASS (its city-adjacent leg), a few
@@ -3598,11 +4002,14 @@ export const MAPS: Record<string, MapDef> = {
   oak_roots: buildOakRoots(),
   oak_hollow: buildOakHollow(),
   oak_heart: buildOakHeart(),
-  rex_home: buildRexHome(),
+  rex_home: buildRexHome(rexDoorstep),
   rex_bedroom: buildBedroom(),
   rex_hall: buildRexHall(),
   ana_room: buildAnaRoom(),
   vivi_room: buildViviRoom(),
+  chad_home: buildOtterHome('chad_home', 'PICKLE HOUSE', chadDoorstep, 4),
+  workshop_int: buildWorkshopInt(workshopDoorstep),
+  ...otterHomeMaps,
   brickton: bricktonMap,
   dos_f1: buildDosF1(deptDoorstep),
   dos_f2: buildDosF2(),
@@ -3798,7 +4205,7 @@ for (const [id, atmosphere] of Object.entries(MAP_ATMOSPHERE)) {
 // reflective (sea) tile, so a grid edit that moves the water fails the build here.
 const MAP_REFLECT: Record<string, ReflectZone[]> = {
   foggybottom: [{ x: 0, y: 49, w: 60, h: 3, within: 4 }], // the river Tyne along the S lip (S5 rebuild: 60×52, sea rows 49-51)
-  otterbrook: [{ x: 10, y: 163, w: 10, h: 6, within: 3 }], // Pond Park (elevated rebuild: pond shifted down by the town base offset 65)
+  otterbrook: [{ x: 2, y: 136, w: 18, h: 14, within: 3 }], // Pond Park (SW), concept rows 136-150
   golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
   puerto_sol: [{ x: 0, y: 30, w: 52, h: 4, within: 4 }], // the working seafront
   // CH.4 Norway — the fjord, the moor gorge, and the Sleeper's meltwater fall

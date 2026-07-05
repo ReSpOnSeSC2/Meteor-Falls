@@ -557,7 +557,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   meadow_gate_hushdark: [
     'The road east is still barricaded — and past it, the highway just... fogs out into gray.',
     "It's the wrong kind of fog. Cold, and quiet, and it gets quieter the longer you look at it.",
-    "Nobody's leaving Otterbrook while the town feels like this. Something's draining the warmth right out of it — and it's coming from Pond Park.",
+    "Nobody's leaving Otterbrook while the town feels like this. Something's draining the warmth right out of it — and it's coming from up on the hill.",
   ],
 
   /* ---------------- S15i Task 1 — THE WOODS NOOK (the grown SW thicket) ---------------- */
@@ -841,10 +841,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(The husk sits half-sunk in the crater, dead metal gone the color of old blood. The eye is a black hole now.)',
     "(It's cooling, but it isn't rusting. Whatever it's made of, it's just... waiting. You decide not to touch it.)",
   ],
-  // ADR-121 — BOSS 1 relocated: the Tick in the Heart Oak (Pond Park), draining town
+  // ADR-121 — BOSS 1: the Tick in the hilltop meteor cave (Hickory Hill), draining town
   heart_oak_approach: [
-    'The great Heart Oak in Pond Park is wrong. The bark has gone gray, the leaves hang colorless, and a low sick hum comes off it in waves.',
-    'A split runs up the trunk — and deep inside, wedged into the living heart of the tree, something eight-legged turns to look at you. It has been DRINKING the town.',
+    'The deepest chamber of the cave is wrong. The stone sweats a gray frost, and a low sick hum comes off the crater-mound in waves.',
+    'Wedged into the meteor at the heart of the hill, something eight-legged turns to look at you. It has been DRINKING the town warm.',
     "(No Glint this time. Just you, the old light he left behind, and a Salt Shaker in your bag. Make it let go.)",
   ],
   tick_after: [
@@ -904,7 +904,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'The sun is up where it should be, but the whole town sits under a thin, cold HAZE that was not there yesterday. The greens have gone gray-blue, the shadows a wrong shade of nothing.',
     'It is not smoke. It is not fog. The light itself feels SKIMMED — as if something crept in on the meteor and is quietly drinking the warmth right out of the air.',
     '(You remember what Glint told you: the Hush feeds on the warmth between people. This washed-out morning is what a whole town looks like with half of that gone.)',
-    '* This is NOT how Otterbrook is meant to look. The haze runs THICKEST out east, past downtown — POND PARK, where the great HEART OAK stands. Whatever is drinking the town dry is under that tree. Start there.',
+    '* This is NOT how Otterbrook is meant to look. The haze runs THICKEST UP THE HILL — up past the houses and the winding trail, toward the ridge where the meteor came down. Something tore a CAVE into the hillside up there, and the cold pours out of it. Start there.',
   ],
   // The zapper takes Glint at 2 AM — dawn does NOT snap on. You carry it inside
   // first: Mom is still up, and sleep is the bridge to the wrong-colored morning.
@@ -922,18 +922,27 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(You sleep like a dropped anchor.)',
     '(...morning?)',
   ],
-  // the Under-Oak (ADR-121 rework): the burrow at the Heart Oak's roots — the
+  // the hilltop cave (ADR-121 rework): the meteor tore a cave into Hickory Hill — the
   // directed route to BOSS 1 (no more touching a tree and being ambushed).
   sign_oak_burrow: [
-    'Something has torn a BURROW clean through the Heart Oak\'s roots. The earth around it is scorched in a spiral, and the haze pours OUT of it like breath.',
-    '* It is exactly big enough to walk into. It is exactly the kind of thing you should not walk into. The haze is coming from down there.',
+    'The meteor punched a CAVE clean into the hillside. The rock around the mouth is scorched in a spiral, and the haze pours OUT of it like breath.',
+    '* It is exactly big enough to walk into. It is exactly the kind of thing you should not walk into. The cold is coming from down there.',
   ],
   oak_roots_enter: [
-    '(The roots close over the sky. The air down here tastes like a battery.)',
+    '(The cave mouth closes over the sky. The air down here tastes like a battery.)',
+  ],
+  // the crater guard-line (reference: 3 police below the meteor + a DO NOT ENTER sign)
+  sign_crater_guard: [
+    'A hand-lettered board, staked into the scorched dirt: "POLICE LINE — DO NOT CROSS."',
+    '* Three officers stand between you and the crater. "Nothing to see, kid. The rock is still hot. Go on home." (You are not getting past them.)',
+  ],
+  npc_crater_police: [
+    '@Nope. Turn around, kid. Nobody goes up to the crater till the county says so.',
+    '@Whatever came down last night, it is still smoking. Off you go.',
   ],
   oak_cache: [
-    'Somebody wedged a cooler between two roots. Ages ago, by the moss on it.',
-    '* Found a STAR COLA, still miraculously cold. (The Under-Oak keeps its own weather.)',
+    'Somebody wedged a cooler into a cleft in the rock. Ages ago, by the moss on it.',
+    '* Found a STAR COLA, still miraculously cold. (The cave keeps its own weather.)',
   ],
   oak_cache_done: ['(The cooler sits empty. The moss is reclaiming it at a respectable pace.)'],
   // 2026-07-02 — the bounce-trail to THE CAGE (the hoops court kept getting lost)
@@ -1140,8 +1149,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // Brickton once ON FOOT (the meteor closed the highway; the bus follows it back).
   bus_closed_detour: [
     'The 6:15 is dark. A card is taped inside the depot window:',
-    '"NO SERVICE. Driver says she can\'t see the road past Pond Park anymore. Says the whole town\'s gone gray and cold. — Otterbrook Transit (both of us)."',
-    "(The bus won't run while the town feels like this. Whatever's draining Otterbrook is curled up in the Heart Oak in Pond Park. Pull it out, and the warmth — and the road — come back.)",
+    '"NO SERVICE. Driver says she can\'t see the road past the town line anymore. Says the whole town\'s gone gray and cold. — Otterbrook Transit (both of us)."',
+    "(The bus won't run while the town feels like this. Whatever's draining Otterbrook is holed up in the cave on Hickory Hill. Root it out, and the warmth — and the road — come back.)",
   ],
   // S22 (ADR-114) — THE DEPOT: the bus stop becomes a real building
   sign_bus_moved: [

@@ -824,6 +824,7 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   planter: { w: 22, h: 16 },
   elevator: { w: 40, h: 48 },
   ember: { w: 12, h: 12 },
+  meteor_rock_hickory_hill: { w: 96, h: 94 }, // authored segmented meteor sphere — a ~6-tile crater centerpiece (aspect-matched to the 300x293 art)
   phone_pole: { w: 136, h: 48 },
   trash_can: { w: 14, h: 18 },
   parking_meter: { w: 10, h: 22 },
