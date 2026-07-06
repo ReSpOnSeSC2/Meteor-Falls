@@ -3,10 +3,32 @@
   "tilePx": 64,
   "artScale": 4,
   "atlas": "/assets/art/world/otterbrook_tiles_16.png",
-  "atlasCells": 187,
+  "atlasCells": 188,
   "charFrame": {
     "cols": 4,
     "rows": 12
+  },
+  "autotiles": {
+    "path": {
+      "base": 53,
+      "variants": 2,
+      "connectWhenSame": false
+    },
+    "rug": {
+      "base": 85,
+      "variants": 1,
+      "connectWhenSame": false
+    },
+    "hedge": {
+      "base": 135,
+      "variants": 1,
+      "connectWhenSame": true
+    },
+    "bramble": {
+      "base": 151,
+      "variants": 1,
+      "connectWhenSame": true
+    }
   },
   "legend": [
     {
@@ -119,7 +141,8 @@
       "name": "rug",
       "index": 12,
       "solid": false,
-      "group": "interior"
+      "group": "interior",
+      "autotile": "rug"
     },
     {
       "char": "=",
@@ -139,6 +162,13 @@
       "char": "D",
       "name": "road_dash",
       "index": 15,
+      "solid": false,
+      "group": "paving"
+    },
+    {
+      "char": "_",
+      "name": "road_dash_h",
+      "index": 187,
       "solid": false,
       "group": "paving"
     },
@@ -378,14 +408,24 @@
       "name": "hedge_15",
       "index": 150,
       "solid": true,
-      "group": "wall"
+      "group": "wall",
+      "autotile": "hedge"
     },
     {
       "char": "V",
       "name": "bramble_15",
       "index": 166,
       "solid": true,
-      "group": "wall"
+      "group": "wall",
+      "autotile": "bramble"
+    },
+    {
+      "char": ":",
+      "name": "dirt_path",
+      "index": 53,
+      "solid": false,
+      "group": "paving",
+      "autotile": "path"
     }
   ],
   "props": [

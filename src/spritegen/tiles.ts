@@ -1053,6 +1053,13 @@ TILESET.push({ name: 'ob_crosswalk', solid: false, make: crosswalk });
 TILESET.push({ name: 'ob_dirt', solid: false, make: () => pathTile(0, 0) });
 TILESET.push({ name: 'ob_plaza', solid: false, make: sidewalkTile });
 
+// HORIZONTAL centre-line road cell (2026-07-05). `road_dash` (D) draws a VERTICAL yellow
+// line for N–S roads; on an E–W road its dashes point across the lane. This LEFT-TO-RIGHT
+// dash serves horizontal roads (roadH places it). Authored cell appended to the tail of
+// otterbrook_tiles_16.png (the vertical road_dash rotated 90°); make() is the boot fallback
+// only — roadDash already paints a horizontal dash, so it is reused.
+TILESET.push({ name: 'road_dash_h', solid: false, make: roadDash });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);
