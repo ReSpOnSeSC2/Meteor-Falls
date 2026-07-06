@@ -112,6 +112,12 @@
       <label class="chk"><input type="checkbox" id="tLevels"/> levels</label>
     </div>
     <div class="grp">
+      <label>Brush</label>
+      <button class="btn brush primary" data-brush="1" title="1 tile wide">1</button>
+      <button class="btn brush" data-brush="2" title="3 tiles wide (paint a wide winding trail)">3</button>
+      <button class="btn brush" data-brush="3" title="5 tiles wide (paint a wide winding trail)">5</button>
+    </div>
+    <div class="grp">
       <label>Skin</label>
       <select id="regionSel" style="background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 6px;max-width:150px"><option value="">Base (Otterbrook)</option></select>
     </div>
@@ -198,6 +204,7 @@ const state={
   gridOn:true, solidOn:false, levelsOn:false,
   region:null,            // selected region skin object (or null = base)
   paintLevel:1,           // which terrace the Elevate tool paints
+  brush:1,                // paint/erase brush width: 1→1 tile, 2→3 wide, 3→5 wide (disc)
 };
 const LEVEL_TINT=['transparent','rgba(90,200,255,.30)','rgba(180,120,255,.32)','rgba(255,180,90,.34)','rgba(120,255,160,.34)'];
 const TILE_BASE=26; // px per tile at zoom 1
@@ -293,6 +300,16 @@ function propTiles(pl){
 function autoSolid(key){ const m=propMeta(key); const w=m?.w??20,h=m?.h??24;
   return {ox:Math.round(w*0.12),oy:Math.round(h*0.5),w:Math.max(2,Math.round(w*0.76)),h:Math.max(2,Math.round(h*0.45))}; }
 
+// ---------- autotiles (':' path, 'r' rug, 'H' hedge, 'V' bramble) ----------
+// Mirror OverworldScene.buildTiles EXACTLY: a cell picks base + ((x+y)%variants)*16 + mask,
+// where each mask bit (1=N 2=E 4=S 8=W) is SET per the tile's connectWhenSame rule —
+// path/rug set a bit where the neighbour is NOT the same char; hedge/bramble where it IS.
+function sameChar(x,y,ch){ const m=state.map; return x>=0&&y>=0&&x<m.w&&y<m.h&&m.grid[y][x]===ch; }
+function autotileCell(x,y,ch,kind){ const a=(M.autotiles||{})[kind]; if(!a) return legendByChar.get(ch)?.index??-1;
+  const on=(nx,ny)=> a.connectWhenSame ? sameChar(nx,ny,ch) : !sameChar(nx,ny,ch);
+  let mask=0; if(on(x,y-1))mask|=1; if(on(x+1,y))mask|=2; if(on(x,y+1))mask|=4; if(on(x-1,y))mask|=8;
+  return a.base + ((x+y)%a.variants)*16 + mask; }
+
 // ---------- canvas ----------
 const cv=$('#cv'), ctx=cv.getContext('2d');
 function resizeCanvas(){ const r=cv.getBoundingClientRect(); cv.width=r.width*devicePixelRatio; cv.height=r.height*devicePixelRatio;
@@ -315,7 +332,10 @@ function render(){ renderQueued=false;
   for(let y=cy0;y<=cy1;y++)for(let x=cx0;x<=cx1;x++){
     const ch=m.grid[y][x]; const l=legendByChar.get(ch); const [sx,sy]=toScreen(x,y);
     let done=false;
-    if(state.region&&l&&state.region.skin[l.name]!=null&&ra&&ra.complete&&ra.naturalWidth){
+    // autotiles (path/rug/hedge/bramble) mask off their neighbours — never region-skinned
+    if(l&&l.autotile){ const ci=autotileCell(x,y,ch,l.autotile);
+      if(ci>=0){ ctx.drawImage(atlas,ci*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; } }
+    if(!done&&state.region&&l&&state.region.skin[l.name]!=null&&ra&&ra.complete&&ra.naturalWidth){
       ctx.drawImage(ra,state.region.skin[l.name]*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; }
     if(!done){ if(l&&l.index>=0) ctx.drawImage(atlas,l.index*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1);
       else{ ctx.fillStyle='#2c7d3a'; ctx.fillRect(sx,sy,ts,ts); } }
@@ -376,7 +396,10 @@ function drawHover(){ if(!hoverTile)return; const ts=TS(); const [sx,sy]=toScree
     ctx.globalAlpha=.55; if(im.complete&&im.naturalWidth)ctx.drawImage(im,sx,sy,t.w*ts,t.h*ts); ctx.globalAlpha=1;
     ctx.strokeStyle='var(--accent)'; ctx.strokeRect(sx,sy,t.w*ts,t.h*ts);
   } else if(state.tool==='paint'||state.tool==='erase'||state.tool==='elevate'){
-    ctx.strokeStyle=state.tool==='erase'?'var(--solid)':'var(--accent)'; ctx.lineWidth=2; ctx.strokeRect(sx,sy,ts,ts);
+    ctx.strokeStyle=state.tool==='erase'?'var(--solid)':'var(--accent)'; ctx.lineWidth=2;
+    const bx=Math.floor(hoverTile[0]),by=Math.floor(hoverTile[1]);
+    const offs=state.tool==='elevate'?[[0,0]]:brushOffsets();
+    for(const [dx,dy] of offs){ const [gx,gy]=toScreen(bx+dx,by+dy); ctx.strokeRect(gx,gy,ts,ts); }
   }
 }
 
@@ -385,8 +408,8 @@ let painting=false, panning=false, panStart=null, zoneStart=null;
 cv.addEventListener('mousedown',e=>{ const r=cv.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top; const [tx,ty]=toTile(mx,my);
   const cx=Math.floor(tx),cy=Math.floor(ty);
   if(e.button===1||state.tool==='pan'){ panning=true; panStart=[mx,my,state.view.ox,state.view.oy]; return; }
-  if(state.tool==='paint'){ painting=true; setCell(cx,cy,state.tileChar); }
-  else if(state.tool==='erase'){ painting=true; setCell(cx,cy,'.'); }
+  if(state.tool==='paint'){ painting=true; stamp(cx,cy,state.tileChar); }
+  else if(state.tool==='erase'){ painting=true; stamp(cx,cy,'.'); }
   else if(state.tool==='elevate'){ painting=true; setLevel(cx,cy,String(state.paintLevel)); }
   else if(state.tool==='place'){ if(state.placeMode==='npc'&&state.npcKey) placeNpc(state.npcKey,cx,cy); else if(state.propKey) placeProp(state.propKey,cx,cy); }
   else if(state.tool==='sign'){ state.map.signs.push({x:cx+0.5,y:cy+0.5,dialogue:'placeholder'}); state.sel={kind:'sign',i:state.map.signs.length-1}; refreshInspector();refreshLayers();requestRender();scheduleAutosave(); }
@@ -398,7 +421,7 @@ addEventListener('mousemove',e=>{ const r=cv.getBoundingClientRect(); const mx=e
     $('#statXY').textContent=`x ${Math.floor(tx)}, y ${Math.floor(ty)}`; }
   if(panning&&panStart){ state.view.ox=panStart[2]+(mx-panStart[0]); state.view.oy=panStart[3]+(my-panStart[1]); requestRender(); return; }
   if(painting){ const [tx,ty]=toTile(mx,my); const cx=Math.floor(tx),cy=Math.floor(ty);
-    if(state.tool==='elevate') setLevel(cx,cy,String(state.paintLevel)); else setCell(cx,cy,state.tool==='erase'?'.':state.tileChar); }
+    if(state.tool==='elevate') setLevel(cx,cy,String(state.paintLevel)); else stamp(cx,cy,state.tool==='erase'?'.':state.tileChar); }
   else if(state.drag&&state.sel){ const a=state.drag.kind==='npc'?state.map.npcs[state.sel.i]:state.map.props[state.sel.i];
     if(a){ a.x=Math.round((state.drag.ox+(mx-state.drag.sx)/TS())*2)/2; a.y=Math.round((state.drag.oy+(my-state.drag.sy)/TS())*2)/2;
       refreshInspector(); requestRender(); } }
@@ -418,6 +441,13 @@ cv.addEventListener('wheel',e=>{ e.preventDefault(); const r=cv.getBoundingClien
 
 function setCell(x,y,ch){ const m=state.map; if(x<0||y<0||x>=m.w||y>=m.h)return; if(m.grid[y][x]===ch)return;
   m.grid[y][x]=ch; requestRender(); scheduleAutosave(); }
+// brush footprint (a filled disc): size 1→1 cell, 2→3-wide, 3→5-wide. Paint/erase stamps
+// this around the cursor so a smooth drag lays a wide, gradually-turning trail (EB-style).
+function brushOffsets(){ const r=state.brush-1; const t=(r+0.5)*(r+0.5); const out=[];
+  for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++) if(dx*dx+dy*dy<=t) out.push([dx,dy]); return out; }
+function stamp(cx,cy,ch){ for(const [dx,dy] of brushOffsets()) setCell(cx+dx,cy+dy,ch); }
+function setBrush(n){ state.brush=Math.max(1,Math.min(3,n));
+  $$('.brush').forEach(b=>b.classList.toggle('primary',+b.dataset.brush===state.brush)); requestRender(); }
 function setLevel(x,y,d){ const m=state.map; if(x<0||y<0||x>=m.w||y>=m.h||!m.level[y])return; if(m.level[y][x]===d)return;
   m.level[y][x]=d; requestRender(); scheduleAutosave(); }
 const lvlAt=(x,y)=>+((state.map.level[y]&&state.map.level[y][x])||'0');
@@ -478,6 +508,8 @@ function selectAt(tx,ty){ const m=state.map;
 }
 addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
   if((e.key==='Delete'||e.key==='Backspace')&&state.sel){ deleteSel(); }
+  if(e.key==='['){ setBrush(state.brush-1); return; }
+  if(e.key===']'){ setBrush(state.brush+1); return; }
   const k=e.key.toLowerCase(); const map={b:'paint',e:'erase',p:'place',v:'select',d:'door',s:'spawn',h:'pan'};
   if(map[k]){ setTool(map[k]); } });
 function deleteSel(){ if(!state.sel)return; const {kind,i}=state.sel;
@@ -572,6 +604,7 @@ function wireUI(){
   $('#tGrid').onchange=e=>{state.gridOn=e.target.checked;requestRender();};
   $('#tSolid').onchange=e=>{state.solidOn=e.target.checked;requestRender();};
   $('#tLevels').onchange=e=>{state.levelsOn=e.target.checked;requestRender();};
+  $$('.brush').forEach(b=>b.onclick=()=>setBrush(+b.dataset.brush));
   const rs=$('#regionSel'); (M.regions||[]).forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.label;rs.appendChild(o);});
   rs.onchange=e=>{ state.region=(M.regions||[]).find(r=>r.id===e.target.value)||null;
     if(state.region){ const ra=loadImg(state.region.atlas); if(!ra.complete) ra.addEventListener('load',()=>{reskinPalette();requestRender();},{once:true}); }

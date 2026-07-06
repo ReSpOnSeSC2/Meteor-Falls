@@ -14,7 +14,7 @@
 import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TILESET } from '../../src/spritegen/tiles';
+import { TILESET, PATH_BASE, PATH_VARIANTS, RUG_BASE, HEDGE_BASE, BRAMBLE_BASE } from '../../src/spritegen/tiles';
 import { CHAR_LEGEND } from '../../src/data/maps';
 import {
   AUTHORED_WORLD_PROP_KEYS,
@@ -53,14 +53,32 @@ const legendGroup = (name: string, solid: boolean): string => {
   return 'other';
 };
 
+// ---- AUTOTILES: ':' (dirt path), 'r' (rug), 'H' (hedge), 'V' (bramble) are NOT plain
+// CHAR_LEGEND cells — OverworldScene.buildTiles computes a 4-neighbour mask and picks
+// BASE + ((x+y)%variants)*16 + mask. `connectWhenSame` encodes the mask convention:
+// path/rug set a bit where the neighbour is NOT the same char (they cap their edges);
+// hedge/bramble set it where the neighbour IS (they merge, rim faces open ground).
+// Bits: 1=N 2=E 4=S 8=W. The editor mirrors this exactly so the preview autotiles.
+const autotiles = {
+  path: { base: PATH_BASE, variants: PATH_VARIANTS, connectWhenSame: false },
+  rug: { base: RUG_BASE, variants: 1, connectWhenSame: false },
+  hedge: { base: HEDGE_BASE, variants: 1, connectWhenSame: true },
+  bramble: { base: BRAMBLE_BASE, variants: 1, connectWhenSame: true },
+};
+const AUTOTILE_CHAR: Record<string, keyof typeof autotiles> = { ':': 'path', r: 'rug', H: 'hedge', V: 'bramble' };
+
 const legend = Object.entries(CHAR_LEGEND)
   // ' ' is just a duplicate "plain grass" alias for '.', drop it from the palette
   .filter(([ch]) => ch !== ' ')
   .map(([char, name]) => {
     const index = tileIndexByName.get(name) ?? -1;
     const solid = solidByName.get(name) ?? false;
-    return { char, name, index, solid, group: legendGroup(name, solid) };
+    return { char, name, index, solid, group: legendGroup(name, solid), autotile: AUTOTILE_CHAR[char] };
   });
+// ':' isn't in CHAR_LEGEND at all (the engine special-cases it BEFORE the legend lookup,
+// content-validate.ts allows it, and isSolidChar treats it as walkable). Add it here so
+// the editor can paint dirt trails. index PATH_BASE = the mask-0 cell (clean dirt fill).
+legend.push({ char: ':', name: 'dirt_path', index: PATH_BASE, solid: false, group: 'paving', autotile: 'path' });
 
 // ---- props: on-map display size (native units; the map draws them at w*4 x h*4 px) ----
 const DISPLAY = AUTHORED_WORLD_PROP_DISPLAY_SIZE as Record<string, { w: number; h: number }>;
@@ -167,6 +185,7 @@ const manifest = {
   atlas: '/assets/art/world/otterbrook_tiles_16.png',
   atlasCells: TILESET.length,
   charFrame: { cols: 4, rows: 12 }, // 46-frame sheet grid; frame 0 = front stand
+  autotiles, // ':' path, 'r' rug, 'H' hedge, 'V' bramble — 16-mask cells (see above)
   legend,
   props,
   facades,

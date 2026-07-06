@@ -59,7 +59,8 @@ export const CHAR_LEGEND: Record<string, string> = {
   r: 'rug',
   '=': 'sidewalk',
   R: 'road',
-  D: 'road_dash',
+  D: 'road_dash', // vertical yellow centre line (N–S roads)
+  '_': 'road_dash_h', // horizontal yellow centre line (E–W roads; roadH places it)
   X: 'crosswalk',
   P: 'parking',
   B: 'brick',
@@ -152,7 +153,7 @@ function roadH(g: Grid, yCenters: number[], xLeft: number, h = 4): void {
     g.rect(x, lo - 1, 1, 1, '=');
     g.rect(x, hi + 1, 1, 1, '=');
     g.rect(x, lo, 1, hi - lo + 1, 'R');
-    if (i % 6 < 3) g.set(x, Math.round((lo + hi) / 2), 'D');
+    if (i % 6 < 3) g.set(x, Math.round((lo + hi) / 2), '_'); // E–W lane → horizontal dash
   }
 }
 
