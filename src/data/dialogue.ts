@@ -565,6 +565,32 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'OTTERBROOK WOODS — a footpath, a few birds, one good picnic table.',
     '(Someone scratched below: "best napping in three counties.")',
   ],
+  // 2026-07-08 — THE LONG CLIMB: the crater trail switchbacks the whole hill now,
+  // and OLD MAN FIBBINS holds the middle switchback like Onett's finest liar.
+  sign_crater_trail: [
+    'CRATER TRAIL — the meteor is UP. Keep walking. No, keep walking.',
+  ],
+  sign_crater_trail_2: [
+    'STILL THE CRATER TRAIL. You are closer than the sign before this one and farther than the sign after it. — Otterbrook Parks Dept.',
+  ],
+  sign_fibbins_dig: [
+    'KEEP OUT. MY hole. I dug it, I named it, I will be buried in it (schedule permitting). — E. FIBBINS',
+  ],
+  npc_fibbins: [
+    "@That rock up there? It called my NAME the night it landed. 'FIBBINS,' it said. Loud. Ask anybody — well, ask me.",
+    "@Been digging ever since. A hole this good doesn't happen by accident. It happens by SHOVEL.",
+    '@You headed up to the crater? Tell it I said hello. It KNOWS me.',
+  ],
+  npc_fibbins_day: [
+    "@Morning's the best digging. The dirt's still sleepy — offers no opinion whatsoever.",
+    "@The police won't let me dig AT the crater, so the crater can watch me dig HERE. We keep each other honest.",
+  ],
+  fibbins_jars: [
+    'Gravel jars, floor to ceiling, each labeled in shaky marker: "TUESDAY — whispered." "THURSDAY — hummed." "FRIDAY — said nothing (rude)."',
+  ],
+  fibbins_map: [
+    "A hand-drawn map of the hill, holes marked with X's. All seventeen X's are in his own yard.",
+  ],
   npc_woods_birder: [
     "@Shh. Twelve years I've waited for a cardinal to land on THAT branch. Twelve.",
     '@There IS a picnic table back in the trees. I put it there. For the birds. Fine, for me.',
@@ -1221,6 +1247,35 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   agency_bought: [
     'You sign the crayon box. The agent hands you a DEED and a single doorknob "to get you started."',
     '@Welcome home, neighbor. Try not to put a meteor through it.',
+  ],
+  // 2026-07-08 — THE MAPLE STREET BLOCK: 27 Maple is a real lot now (sign, fence,
+  // left-hand door), the agency has a storefront, and the Fixer festers next door.
+  sign_realty: [
+    'OTTERBROOK REALTY — "Find your place." Window listings: 27 MAPLE ($1,200, cozy), 29 MAPLE (the Fixer, $800, brave), and a third card that just says "ASK."',
+  ],
+  realty_listings: [
+    'THE BOARD OF DREAMS. Homes in eleven countries, sorted by how impossible they are. 27 Maple is the only one with a pin you can reach.',
+  ],
+  sign_maple_st: [
+    'MAPLE ST — the quiet end. Speed limit: a brisk walk.',
+  ],
+  sign_27_maple: [
+    'FOR SALE — 27 MAPLE. Cozy! One previous owner. Inquire at OTTERBROOK REALTY, Main St. (The beagle is not included. The beagle disagrees.)',
+  ],
+  sign_27_maple_sold: [
+    "SOLD — 27 MAPLE. Somebody's home now. (It's you. It's your home.)",
+  ],
+  sign_29_maple: [
+    '29 MAPLE — "THE FIXER." Needs love. And a floor. And the previous floor removed. Priced to move: $800 and a firm handshake.',
+  ],
+  maple27_note: [
+    'A note, taped where a doorknob should be: "Dear next person — the knobs were mine. The echo comes with the house. So does Waffles. —M."',
+  ],
+  npc_maple_beagle: [
+    '@Boof. (Waffles has lived here through two owners and one meteor. Waffles is staying.)',
+  ],
+  npc_maple_gawker: [
+    '@I look at this house every day on my walk. Cozy, right? Somebody with twelve hundred dollars should DO something about it.',
   ],
   npc_car_dealer: [
     "@BERT'S AUTO — where the test drive is a feeling and the prices are a different feeling.",

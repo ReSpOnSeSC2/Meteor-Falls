@@ -27,7 +27,7 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
   it('is a real tile-and-prop town, not a zero-prop backdrop', () => {
     expect(ob.settlement).toBe('town');
     expect(ob.grid[0].length).toBe(112);
-    expect(ob.grid.length).toBe(168);
+    expect(ob.grid.length).toBe(66 + 160); // hill (66) + town grown southward to 160 for the long approach
     expect(ob.props.length).toBeGreaterThan(40);
     expect(ob.props.filter((p) => p.sprite.startsWith('bldg_gen_'))).toEqual([]);
     for (const sprite of [
@@ -42,9 +42,17 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       'drugstore',
       'arcade',
       'chapel',
+      'house_maple', // 27 MAPLE — the for-sale house (flag-gated door pair)
+      'facade_realty', // OTTERBROOK REALTY
+      'facade_autolot', // Bert's used cars
     ]) {
       expect(ob.props.some((p) => p.sprite === sprite), sprite).toBe(true);
     }
+    // 27 Maple is the flag-gated pair: doorless until owned, doored after
+    const m27 = ob.props.filter((p) => p.sprite === 'house_maple');
+    expect(m27).toHaveLength(2);
+    expect(m27.find((p) => p.unlessFlag === 'owned_27_maple')?.door).toBeUndefined();
+    expect(m27.find((p) => p.ifFlag === 'owned_27_maple')?.door?.to).toBe('maple27_int');
   });
 
   it('keeps one elevated map with the meadow gate and hill cave wired', () => {
@@ -79,10 +87,18 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
 
   it('matches the reference hill grammar: two winding paths (right→crater, left→cave)', () => {
     const onTrail = (x: number, y: number): boolean => [':', 'T'].includes(ob.grid[y][x]);
+    // the LONG CLIMB (2026-07-08): three full-width switchbacks + the scree zig-zag —
+    // one pin per leg, so a reroute that drops a switchback fails loudly
     for (const [x, y] of [
-      [57, 29],
-      [56, 44],
-      [55, 51],
+      [70, 42], // Leg 1 — east along the treeline
+      [86, 40], // the east elbow
+      [50, 35], // Leg 2 — west past Old Man Fibbins' door
+      [44, 31], // the west elbow
+      [54, 28], // Leg 3 — east to the police muster
+      [46, 18], // scree zig-zag
+      [42, 12], // scree zig-zag
+      [54, 6], // the crater rim approach
+      [55, 51], // the terrace walk
       [56, 57],
     ]) {
       expect(onTrail(x, y), `right (crater) path @${x},${y}`).toBe(true);
@@ -111,6 +127,9 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       'arcade_int',
       'chapel_int',
       'otter_station',
+      'realty_int', // the agency office (agencyBeat's realtor works here now)
+      'oldman_int', // Fibbins' cottage on the crater trail
+      'maple27_int', // 27 Maple (flag-gated door — the def still carries it)
     ]) {
       expect(hasEntry(id), `otterbrook -> ${id}`).toBe(true);
       expect(MAPS[id], `${id} exists`).toBeDefined();

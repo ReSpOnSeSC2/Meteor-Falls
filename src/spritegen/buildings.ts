@@ -365,4 +365,10 @@ export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
   // (facade_busdepot_open is a runtime door-open swap, never a placed prop, so it
   // stays out of this set — the no-orphan test enforces that.)
   'facade_busdepot',
+  // 2026-07-08 Maple St block — OTTERBROOK REALTY (enterable office), BERT'S USED
+  // CARS (door-less lot), the Main St gas pumps + hardware store (door-less, but
+  // their drawn bodies outgrow the data solids like every authored storefront),
+  // and 27 MAPLE (house_maple — the for-sale house's flag-gated door): all routed
+  // through texture-derived collision + the entrance rebuild.
+  'facade_realty', 'facade_autolot', 'facade_fillshop', 'facade_hardware', 'house_maple',
 ]);
