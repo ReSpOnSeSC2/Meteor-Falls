@@ -457,6 +457,15 @@ export const PropDefSchema = z.strictObject({
   x: z.number(),
   y: z.number(),
   solid: SolidRectSchema.optional(),
+  /** per-instance SIZE multiplier (default 1). A single number scales uniformly; `{x,y}` scales width
+   *  and height independently (a building made only wider / only taller). Grows from the drawn TOP-LEFT
+   *  (its lot corner); for facades the texture-derived collision + door box scale with it per-axis
+   *  (ADR-051 stays coupled), so a resized building still collides as what's on screen. Absent ⇒ 1. */
+  scale: z.union([z.number().positive(), z.strictObject({ x: z.number().positive(), y: z.number().positive() })]).optional(),
+  /** orient a NON-facade prop in 90° steps (0/90/180/270, clockwise) — rotates the drawn sprite AND
+   *  its data solid around the prop's footprint, so a fence / path / directional decor piece can face
+   *  any of the four directions. Absent ⇒ 0 (upright). Facades keep their texture-directional collision. */
+  rot: z.union([z.literal(90), z.literal(180), z.literal(270)]).optional(),
   /** door rectangle in px (relative to prop) that transitions maps */
   door: z
     .strictObject({
@@ -509,6 +518,11 @@ export const NpcDefSchema = z.strictObject({
   emote: EmoteIdSchema.optional(),
   /** special rendering: dog uses its own anim set */
   dog: z.boolean().optional(),
+  /** per-instance SIZE multiplier (default 1) — a uniform number, or `{x,y}` for width/height independently
+   *  (a giant townsperson / a tiny one). Composes on top of the map's native/dog scale; the sprite AND the
+   *  pinned foot-collision box scale from the FEET (origin 0.5,1) so a resized NPC stays planted. Mirrors
+   *  PropDef.scale; set from the map editor's resize handles. Absent ⇒ 1. */
+  scale: z.union([z.number().positive(), z.strictObject({ x: z.number().positive(), y: z.number().positive() })]).optional(),
   /** flag gates: only present when ifFlag is truthy / unlessFlag is falsy */
   ifFlag: z.string().min(1).optional(),
   unlessFlag: z.string().min(1).optional(),

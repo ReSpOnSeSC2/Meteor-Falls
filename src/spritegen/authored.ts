@@ -576,6 +576,10 @@ const WORLD_PROP_KEYS = [
   // Otterbrook full-rebuild Americana set (2 ChatGPT magenta strips → slice-prop-strip)
   'otter_statue', 'gazebo', 'footbridge_rail', 'cattails', 'mailbox', 'doghouse',
   'tree_swing', 'clothesline', 'kiddie_pool', 'swing_set', 'seesaw', 'flagpole',
+  // transparent white-picket yard fencing (2026-07-07 ChatGPT magenta strip → slice-prop-strip)
+  'picket_fence', 'picket_fence_side', 'picket_post', 'picket_fence_corner',
+  // oblique 3/4 ground-height RISER faces (2026-07-07) — raised edges w/ visible front face (EB Onett curb/wall look)
+  'riser_brick', 'riser_brick_corner', 'riser_curb', 'riser_curb_corner',
   // the UNDER-OAK set (ADR-121 rework — eb-grounds-fix sheet cells)
   'burrow_mouth', 'root_knot', 'glow_shroom', 'glow_shroom_b', 'root_curtain',
   // the VENUE set (2026-07-02 — eb-venue-props sheet): unit-archetype scenes
@@ -848,6 +852,16 @@ const BATTLE_BACKGROUND_ART = ['otterbrook', 'otter_station', 'brickton', 'jungl
 export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   gift_box: { w: 14, h: 14 },
   gift_box_open: { w: 16, h: 14 },
+  // white-picket yard fencing (16 native units = 1 tile) — segments tile along a yard edge
+  picket_fence: { w: 32, h: 13 }, // horizontal front run (~2 tiles wide)
+  picket_fence_side: { w: 24, h: 29 }, // oblique receding side run
+  picket_post: { w: 12, h: 27 }, // single post (corners / gate posts)
+  picket_fence_corner: { w: 32, h: 22 }, // horizontal→corner→receding combo
+  // oblique ground-height riser faces (raised edge = visible top + front face)
+  riser_brick: { w: 40, h: 14 }, // low brick retaining wall run
+  riser_brick_corner: { w: 22, h: 20 }, // brick wall outer corner
+  riser_curb: { w: 40, h: 13 }, // concrete curb riser run
+  riser_curb_corner: { w: 22, h: 18 }, // concrete curb outer corner
   crate: { w: 20, h: 18 },
   crate_bananas: { w: 20, h: 18 },
   cot: { w: 20, h: 24 },

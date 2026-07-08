@@ -15,7 +15,7 @@ import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TILESET, PATH_BASE, PATH_VARIANTS, RUG_BASE, HEDGE_BASE, BRAMBLE_BASE } from '../../src/spritegen/tiles';
-import { CHAR_LEGEND } from '../../src/data/maps';
+import { CHAR_LEGEND, MAPS } from '../../src/data/maps';
 import {
   AUTHORED_WORLD_PROP_KEYS,
   AUTHORED_WORLD_PROP_DISPLAY_SIZE,
@@ -23,6 +23,11 @@ import {
   REGION_TILE_STRIPS,
   NPC_CHARACTER_ART,
 } from '../../src/spritegen/authored';
+import { CANON_AREAS } from '../../src/spritegen/buildings';
+import { AMBIENCE_IDS, SettlementSchema, DoorIndicatorSchema, FacingSchema } from '../../src/schemas';
+import { DIALOGUE } from '../../src/data/dialogue';
+import { CITYLIFE_DIALOGUE } from '../../src/data/citylife_text';
+import { BRANCH_DIALOGUE } from '../../src/data/branch_text';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
@@ -95,7 +100,7 @@ const propGroup = (key: string): string => {
   return 'other';
 };
 
-const props = (AUTHORED_WORLD_PROP_KEYS as readonly string[])
+const authoredProps = (AUTHORED_WORLD_PROP_KEYS as readonly string[])
   .map((key) => {
     const rel = `assets/art/world/props/${key}.png`;
     if (!existsSync(asset(rel))) return null;
@@ -117,13 +122,30 @@ const props = (AUTHORED_WORLD_PROP_KEYS as readonly string[])
   })
   .filter(Boolean);
 
+// Runtime sprites that are valid map props but live outside assets/art/world/props.
+const runtimeProps = [
+  { key: 'vehicle_clunker', rel: 'assets/art/vehicles/vehicle_clunker.png', w: 38, h: 16, group: 'street' },
+]
+  .map((p) => existsSync(asset(p.rel))
+    ? { key: p.key, w: p.w, h: p.h, url: `/${p.rel}`, group: p.group, solidDefault: true }
+    : null)
+  .filter(Boolean);
+
+const props = [...authoredProps, ...runtimeProps];
+
 // ---- facades: placed as a prop sprite; runtime derives collision from the texture ----
 const facades = (AUTHORED_FACADE_KEYS as readonly string[])
   .map((key) => {
     const rel = `assets/art/world/facades/${key}.png`;
     if (!existsSync(asset(rel))) return null;
     const d = pngDims(asset(rel));
-    return { key, url: `/${rel}`, aspect: d ? +(d.w / d.h).toFixed(3) : 1 };
+    // NATURAL on-map footprint in TILES — how the engine sizes a facade at scale 1: an
+    // AUTHORED_WORLD_PROP_DISPLAY_SIZE entry renders at w*ART_SCALE px = w/16 tiles; otherwise the
+    // texture lands at texW/64 tiles (memory: "Facade render=texW/64"). PropDef.scale multiplies this.
+    const disp = DISPLAY[key];
+    const wt = disp ? disp.w / 16 : d ? d.w / 64 : 4;
+    const ht = disp ? disp.h / 16 : d ? d.h / 64 : 4;
+    return { key, url: `/${rel}`, aspect: d ? +(d.w / d.h).toFixed(3) : 1, w: +wt.toFixed(3), h: +ht.toFixed(3) };
   })
   .filter(Boolean);
 
@@ -170,13 +192,79 @@ const regions = REGION_SKINS.map((r) => {
 
 // ---- NPCs: the authored townsfolk 46-frame sheets (4 cols × 12 rows of 96×128 frames;
 // frame 0 = the front-facing stand the editor crops for its thumbnail + placement). ----
-const npcs = (NPC_CHARACTER_ART as readonly { id: string; url: string }[])
+const authoredNpcs = (NPC_CHARACTER_ART as readonly { id: string; url: string }[])
   .map((n) => {
     const rel = `assets/art/characters/${n.url.split(/[\\/]/).pop()}`;
     if (!existsSync(asset(rel))) return null;
     return { id: n.id, url: `/${rel}` };
   })
   .filter(Boolean);
+
+const runtimeNpcs = [
+  {
+    id: 'dog',
+    rel: 'assets/art/characters/biscuit_dog_4frame.png',
+    cols: 4,
+    rows: 1,
+    wTiles: 1.5,
+    hTiles: 1.5,
+  },
+]
+  .map((n) => existsSync(asset(n.rel))
+    ? { id: n.id, url: `/${n.rel}`, cols: n.cols, rows: n.rows, wTiles: n.wTiles, hTiles: n.hTiles }
+    : null)
+  .filter(Boolean);
+
+const npcs = [...authoredNpcs, ...runtimeNpcs];
+
+// ---- SETTINGS + VALIDATION vocab: drive the ⚙ Map-Settings dropdowns and the in-editor
+// "Check map" from the SAME sources the engine/validator use, so an authored map exports
+// a complete, valid MapDef (music/area/ambience/settlement/… are all optional MapDef fields).
+//   · music   — MIRRORED from the TRACKS registry in src/engine/audio.ts (that module pulls
+//               in Web-Audio at import, so it can't be imported here — like the REGION_SKINS
+//               mirror above. Keep in sync with audio.ts; the game's own list is authoritative).
+//   · areas    — CANON_AREAS (spritegen/buildings.ts): the §A5/§A6 banner ids for MapDef.area.
+//   · ambience — AMBIENCE_IDS (schemas): the ambient-bed vocabulary for MapDef.ambience.
+//   · settlements/indicators/facings — the schema enums (single source of truth).
+//   · dialogueIds — every DIALOGUE/CITYLIFE/BRANCH script id: the editor warns when an NPC or
+//               sign points at one that doesn't exist. · mapIds — every shipped MAPS id: warns
+//               when a door.to targets a map that isn't real (the map being edited is exempt).
+const MUSIC_IDS = [
+  'title', 'otterbrook', 'hill', 'home', 'battle', 'boss', 'victory', 'levelup',
+  'brickton', 'department', 'arcade', 'cage', 'bus', 'boat', 'puerto', 'jungle',
+  'valle', 'pyramid', 'starfall', 'heartlight', 'homesong',
+];
+const dialogueIds = [
+  ...new Set([...Object.keys(DIALOGUE), ...Object.keys(CITYLIFE_DIALOGUE), ...Object.keys(BRANCH_DIALOGUE)]),
+].sort();
+const mapIds = Object.keys(MAPS).sort();
+// ---- TRIGGERS: a trigger zone in a map only DOES something if OverworldScene.runTrigger(id) has a
+// `case '<id>'`. Extract those handled ids straight from the scene SOURCE (read as text — the scene
+// imports Phaser so it can't be imported here), plus every trigger id already used across the maps,
+// so the editor can autocomplete ids and WARN when a trigger has no handler (it'd silently do nothing).
+const triggerIds = [...new Set(Object.values(MAPS).flatMap((m) => (m.triggers ?? []).map((t) => t.id)))].sort();
+const triggerHandlers: string[] = (() => {
+  try {
+    const src = readFileSync(asset('src/scenes/OverworldScene.ts'), 'utf8');
+    const start = src.indexOf('private async runTrigger');
+    if (start < 0) return [];
+    const end = src.indexOf('\n  private ', start + 20); // next class method at 2-space indent
+    const body = src.slice(start, end > start ? end : start + 8000);
+    return [...new Set([...body.matchAll(/case '([\w]+)'/g)].map((m) => m[1]))].sort();
+  } catch {
+    return [];
+  }
+})();
+const settings = {
+  music: MUSIC_IDS,
+  areas: [...CANON_AREAS].sort(),
+  ambience: [...AMBIENCE_IDS],
+  settlements: SettlementSchema.options,
+  indicators: DoorIndicatorSchema.options,
+  facings: FacingSchema.options,
+  muffles: [0, 1, 2],
+  atmospheres: ['fog'], // MapDefSchema.atmosphere = z.enum(['fog'])
+};
 
 const manifest = {
   generatedNote: 'AUTO-GENERATED by tools/mapeditor/gen-manifest.ts from TILESET / CHAR_LEGEND / authored props + region strips + NPC sheets. Do not edit by hand.',
@@ -186,14 +274,41 @@ const manifest = {
   atlasCells: TILESET.length,
   charFrame: { cols: 4, rows: 12 }, // 46-frame sheet grid; frame 0 = front stand
   autotiles, // ':' path, 'r' rug, 'H' hedge, 'V' bramble — 16-mask cells (see above)
+  // directional sidewalk-curb cells: the engine (OverworldScene.buildTiles) swaps a road-adjacent
+  // '=' to the curb variant whose vertical face points at the road. The editor mirrors this so the
+  // 3D curb shows in the preview (road below→s, east→e, west→w; otherwise the flat base).
+  sidewalkCurb: {
+    base: tileIndexByName.get('sidewalk') ?? -1,
+    s: tileIndexByName.get('sidewalk_curb') ?? -1,
+    e: tileIndexByName.get('sidewalk_curb_e') ?? -1,
+    w: tileIndexByName.get('sidewalk_curb_w') ?? -1,
+  },
   legend,
   props,
   facades,
   regions,
   npcs,
+  settings, // ⚙ Map-Settings dropdown vocab (music/area/ambience/settlement/indicator/…)
+  dialogueIds, // known DIALOGUE/CITYLIFE/BRANCH script ids (Check-map warns on unknown)
+  mapIds, // known MAPS ids (Check-map warns when a door targets a non-existent map)
+  triggerIds, // trigger ids already used across the maps (editor autocomplete)
+  triggerHandlers, // trigger ids that OverworldScene.runTrigger() actually handles (Check warns otherwise)
 };
 
 writeFileSync(resolve(HERE, 'manifest.json'), JSON.stringify(manifest, null, 2));
+
+// ---- maps.json: the FULL data of every shipped map, so the editor's 📂 Open picker can
+// pull up any real map and edit it (then re-export). Emitted compact + as a SEPARATE file
+// (it's large) that the editor lazy-fetches only when the picker is first opened — boot
+// stays fast. Each value is a real MapDef; the editor's loadMapObj already ingests them
+// (grid string-rows, elevation plane, optional settings all round-trip).
+const mapsOut: Record<string, { name: string; def: unknown }> = {};
+for (const id of mapIds) mapsOut[id] = { name: MAPS[id]?.name ?? id, def: MAPS[id] };
+writeFileSync(resolve(HERE, 'maps.json'), JSON.stringify(mapsOut));
+
 console.log(
-  `manifest.json written: ${legend.length} tiles, ${props.length} props, ${facades.length} facades, ${regions.length} regions, ${npcs.length} NPCs (atlas ${TILESET.length} cells).`,
+  `manifest.json written: ${legend.length} tiles, ${props.length} props, ${facades.length} facades, ${regions.length} regions, ${npcs.length} NPCs, ` +
+    `${settings.music.length} tracks, ${settings.areas.length} areas, ${dialogueIds.length} dialogue ids, ${mapIds.length} map ids (atlas ${TILESET.length} cells).`,
 );
+console.log(`maps.json written: ${mapIds.length} full map defs (editor 📂 Open picker).`);
+console.log(`triggers: ${triggerHandlers.length} handled in runTrigger, ${triggerIds.length} used across maps.`);

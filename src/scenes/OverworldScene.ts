@@ -1401,6 +1401,16 @@ export class OverworldScene extends Phaser.Scene {
         img.x = p.x * TILE_PX + (sw / nps - sw) / 2;
         img.y = p.y * TILE_PX + (sh / nps - sh);
       }
+      // per-instance SIZE (PropDef.scale) — TOP-LEFT anchored: the building grows down/right from its
+      // lot corner (p.x*TILE, p.y*TILE), matching the editor's WYSIWYG box exactly. A single number
+      // scales uniformly; {x,y} scales width/height independently (only-wider / only-taller). Composes
+      // with the map native scale above; the facade collision + door box below multiply by the SAME
+      // per-axis factors so ADR-051 stays coupled (collision is rebuilt from the scaled img).
+      const rawSc = p.scale;
+      const propSX = typeof rawSc === 'number' ? rawSc : rawSc && rawSc.x > 0 ? rawSc.x : 1;
+      const propSY = typeof rawSc === 'number' ? rawSc : rawSc && rawSc.y > 0 ? rawSc.y : 1;
+      if (propSX !== 1 || propSY !== 1) img.setDisplaySize(img.displayWidth * propSX, img.displayHeight * propSY);
+      const rot = p.rot ?? 0; // 90/180/270 CW — applied to non-facade props (visual + data solid) below
       img.setDepth(img.y + img.displayHeight + this.levelLift(img.x, img.y));
       // OBLIQUE-FACADE GROUNDING (Otterbrooke): the 3/4 buildings sit on a flat ground, so
       // a soft contact shadow at the base plants them (mirrors ADR-097's actor shadows). Drawn
@@ -1445,32 +1455,48 @@ export class OverworldScene extends Phaser.Scene {
         // §A11 full-Gulliver: a NATIVE Minimus facade was scaled + foot-re-anchored above, so
         // rebuild its collision from the SHRUNK, re-anchored rect (img.x/img.y + displayW/H) with
         // the native eave/door constants scaled by the same factor — footprint = building drawn.
-        const fScale = nativeFacade ? nativeScale : 1;
-        for (const sr of this.facadeSolids(p, img.x, img.y, img.displayWidth, img.displayHeight, fScale))
+        const nf = nativeFacade ? nativeScale : 1;
+        const fSX = nf * propSX, fSY = nf * propSY; // per-axis facade scale (width vs height)
+        for (const sr of this.facadeSolids(p, img.x, img.y, img.displayWidth, img.displayHeight, fSX, fSY))
           this.solids.push(sr);
         if (p.door) {
           // img.* are runtime (placed) px; door.ox/w/h are NATIVE data → s() × the facade scale.
           // The entrance zone uses the SAME widened opening as facadeSolids (MIN_DOOR_GAP) so the
-          // door the player can step through and the door that fires are one and the same.
-          const natW = s(p.door.w) * fScale;
+          // door the player can step through and the door that fires are one and the same. Horizontal
+          // door metrics scale by fSX, vertical (height, foot offset) by fSY.
+          const natW = s(p.door.w) * fSX;
           const gap = Math.max(natW, s(OverworldScene.MIN_DOOR_GAP));
-          const cx = img.x + s(p.door.ox) * fScale + natW / 2;
+          const cx = img.x + s(p.door.ox) * fSX + natW / 2;
           this.facadeDoorBox.set(p, {
             x: cx - gap / 2,
-            y: img.y + img.displayHeight - s(14) * fScale,
+            y: img.y + img.displayHeight - s(14) * fSY,
             w: gap,
-            h: s(p.door.h) * fScale,
+            h: s(p.door.h) * fSY,
           });
         }
         if (!nativeFacade) this.auditFacade(p, sprite, img.displayHeight);
       } else if (p.solid) {
-        // solid.* are NATIVE map data → scale at the read site
-        this.solids.push({
-          x: p.x * TILE_PX + s(p.solid.ox),
-          y: p.y * TILE_PX + s(p.solid.oy),
-          w: s(p.solid.w),
-          h: s(p.solid.h),
-        });
+        // solid.* are NATIVE map data → scale at the read site. A rotated prop rotates its solid too,
+        // about its footprint (fw×fh = the UPRIGHT display size — the visual is rotated below to match).
+        // per-instance PropDef.scale grows the solid from the SAME top-left corner as the visual (ADR-051
+        // parity with facades): offsets + size scale per-axis so a resized prop collides as what's drawn.
+        const fw = img.displayWidth, fh = img.displayHeight;
+        let rx = s(p.solid.ox) * propSX, ry = s(p.solid.oy) * propSY, rw = s(p.solid.w) * propSX, rh = s(p.solid.h) * propSY;
+        if (rot === 90) [rx, ry, rw, rh] = [fh - ry - rh, rx, rh, rw];
+        else if (rot === 180) [rx, ry] = [fw - rx - rw, fh - ry - rh];
+        else if (rot === 270) [rx, ry, rw, rh] = [ry, fw - rx - rw, rh, rw];
+        this.solids.push({ x: img.x + rx, y: img.y + ry, w: rw, h: rh });
+      }
+      // orient the sprite (90° steps, non-facades only): rotate about the footprint CENTRE, keeping the
+      // rotated bounding box's top-left at the prop's lot corner (img.x,img.y) — matches the editor + the
+      // rotated solid above. Depth re-derived from the rotated foot.
+      if (rot && !isFacadeSprite) {
+        const fw = img.displayWidth, fh = img.displayHeight;
+        const bw = rot === 90 || rot === 270 ? fh : fw;
+        const bh = rot === 90 || rot === 270 ? fw : fh;
+        const ax = img.x, ay = img.y;
+        img.setOrigin(0.5, 0.5).setPosition(ax + bw / 2, ay + bh / 2).setAngle(rot);
+        img.setDepth(ay + bh + this.levelLift(ax, ay));
       }
     }
     if (this.facadeDrift.length && import.meta.env.DEV) {
@@ -1542,24 +1568,24 @@ export class OverworldScene extends Phaser.Scene {
   // ~40px player box (tryMove s(10)). Keep the OPENING at least this wide (native px → s(12)=48px)
   // so a duchy door the player can step through stays passable (the Big-Little gate admits them).
   private static MIN_DOOR_GAP = 12;
-  private facadeSolids(p: PropDef, leftPx: number, topPx: number, wPx: number, hPx: number, scale = 1): Rect[] {
-    // leftPx/topPx = the facade's DRAWN top-left (the placement origin at full scale, or the
-    // foot-re-anchored origin when a Minimus facade is shrunk); wPx/hPx = its DRAWN size. The
-    // native FACADE_CAP/DOOR_OPENING and p.door.* are × `scale` (1, or MINIMUS_NATIVE_SCALE for a
-    // shrunk facade) so the footprint stays texture-true to the building actually on screen.
+  private facadeSolids(p: PropDef, leftPx: number, topPx: number, wPx: number, hPx: number, sx = 1, sy = sx): Rect[] {
+    // leftPx/topPx = the facade's DRAWN top-left; wPx/hPx = its DRAWN size (already non-uniformly
+    // scaled by the caller). The native FACADE_CAP/DOOR_OPENING and p.door.* are × the facade scale
+    // (1, MINIMUS_NATIVE_SCALE, or a per-instance PropDef.scale) so the footprint stays texture-true
+    // to the building on screen — horizontal metrics use sx, vertical ones sy.
     const left = leftPx;
-    const top = topPx + s(OverworldScene.FACADE_CAP) * scale;
+    const top = topPx + s(OverworldScene.FACADE_CAP) * sy;
     const right = leftPx + wPx;
     const foot = topPx + hPx;
     if (!p.door) return [{ x: left, y: top, w: wPx, h: foot - top }];
     // The opening is widened to MIN_DOOR_GAP (≥ the player box) centred on the DRAWN door, so a
     // shrunk duchy doorway stays passable; full-scale doors keep s(door.w) (max(64,48)=64, no-op).
-    const natW = s(p.door.w) * scale;
-    const cx = left + s(p.door.ox) * scale + natW / 2;
+    const natW = s(p.door.w) * sx;
+    const cx = left + s(p.door.ox) * sx + natW / 2;
     const gap = Math.max(natW, s(OverworldScene.MIN_DOOR_GAP));
     const dL = cx - gap / 2;
     const dR = cx + gap / 2;
-    const doorTop = foot - s(OverworldScene.DOOR_OPENING) * scale;
+    const doorTop = foot - s(OverworldScene.DOOR_OPENING) * sy;
     const out: Rect[] = [];
     if (dL > left) out.push({ x: left, y: top, w: dL - left, h: foot - top }); // wall left of the door
     if (right > dR) out.push({ x: dR, y: top, w: right - dR, h: foot - top }); // wall right of the door
@@ -1675,6 +1701,12 @@ export class OverworldScene extends Phaser.Scene {
         const nsc = mapNativeScale(this.mapDef.id);
         if (nsc !== 1) spr.setScale(nsc);
       }
+      // per-instance SIZE (NpcDef.scale, set from the map editor) — a giant or tiny townsperson.
+      // Composes on top of the dog/native base scale above; origin is the FEET, so it stays planted.
+      const rawNsc = def.scale;
+      const nscX = typeof rawNsc === 'number' ? rawNsc : rawNsc && rawNsc.x > 0 ? rawNsc.x : 1;
+      const nscY = typeof rawNsc === 'number' ? rawNsc : rawNsc && rawNsc.y > 0 ? rawNsc.y : 1;
+      if (nscX !== 1 || nscY !== 1) spr.setScale(spr.scaleX * nscX, spr.scaleY * nscY);
       spr.setDepth(y + this.levelLift(spr.x, y));
       // ADR-124 — FREE-ROAMING TOWNSFOLK: NPCs wander a small radius by default;
       // only clerks (a `shop`), explicitly pinned NPCs (wander:false / stationary),
@@ -1689,7 +1721,7 @@ export class OverworldScene extends Phaser.Scene {
       // would otherwise wall the tiny player in → soft-lock. NPCs stay proximity-interactable
       // (talkTo probes the sprite, not a solid), so making them passable costs nothing.
       if (!wanders && !LILLEBY_GIANT_MAPS.has(this.mapDef.id))
-        this.solids.push({ x: x - s(6), y: y - s(10), w: s(12), h: s(10) });
+        this.solids.push({ x: x - s(6) * nscX, y: y - s(10) * nscY, w: s(12) * nscX, h: s(10) * nscY });
     }
   }
 

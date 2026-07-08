@@ -26,14 +26,30 @@ That's it. Your work **auto-saves** in the browser, and **💾 Save / Load** kee
 
 | Tool | Key | What it does |
 |------|-----|--------------|
-| 🖌️ **Paint** | `B` | Pick a tile in the left palette, then click/drag on the map to paint it. |
-| 🧽 **Erase** | `E` | Paint plain grass back over anything. |
+| 🖌️ **Paint** | `B` | Pick a tile in the left palette, then click/drag on the map to paint it. **Shift-drag = fill a rectangle.** |
+| 🪣 **Fill** | `F` | Bucket-fill the contiguous same-tile region under the cursor with the selected tile. |
+| 🧽 **Erase** | `E` | Paint plain grass back over anything. (Shift-drag = erase a rectangle.) |
 | 🌳 **Place** | `P` | Pick a Prop or Building, then click the map to drop it. |
-| ➤ **Select** | `V` | Click a placed object to select it — edit or drag it, `Del` to remove. |
+| ➤ **Select** | `V` | Click a placed object, **or drag a box over several**, to select — then drag or arrow-key them to move together, `Ctrl+D` duplicate, `Del` remove. |
 | 🚪 **Door** | `D` | Drag a rectangle → a doorway that warps to another map (set the target in the Inspector). |
 | 👾 **Spawn** | `S` | Drag a rectangle → an enemy encounter zone (list enemy ids + count in the Inspector). |
 | 📖 **Sign** | | Click → a readable sign point (set its `dialogue` script id in the Inspector). |
+| ⚡ **Trigger** | `T` | Drag a rectangle → an event zone (give it an `id`; toggle `once`). |
+| ☎️ **Phone** | | Click → a save point. |
+| 🏧 **ATM** | | Click → an ATM (withdraw/deposit) point. |
+| 🥾 **Patrol** | | Click to drop patrol waypoints in order (a sight-line enemy walks the route); `Esc` finishes. Set the `enemy` id in the Inspector. |
+| 🪞 **Reflect** | | Drag a rectangle over water → a reflection zone. |
 | ✋ **Pan** | `H` | Drag to move the view. (Or middle-mouse-drag anytime. **Mouse wheel = zoom.**) |
+
+**Edit anywhere:** `Ctrl+Z` undo · `Ctrl+Y` / `Ctrl+Shift+Z` redo (a whole brush stroke or drag is one step) · `Ctrl+D` duplicate — or use the **↶ Undo / ↷ Redo** toolbar buttons. Select an object and nudge it with the **arrow keys** (`Shift`+arrow = half-tile). Each tool button shows its shortcut key; the **? Help** button lists them all.
+
+**Move a group:** with the **Select** tool, drag a box across the map to grab every object inside it (props, NPCs, doors, spawns…), then **drag or arrow-key** them to move as one, `Ctrl+D` to duplicate the group, or `Del` to remove it.
+
+**Rotate a prop:** select a prop and press **`R`** (or the **⟳** button in the Inspector) to rotate it 90° — face a fence, path, or directional decoration any of the four ways. Its in-game collision rotates with it. (Buildings resize with their handles instead of rotating.)
+
+**View:** mouse wheel zooms, or use the **− / + / ⤢ Fit** buttons (the % readout is live). The **Brush** control (`1 / 3 / 5 / 7`, or `[` `]`) sets paint width for wide winding trails and fast plaza fills.
+
+**Flag gates:** NPCs, signs, and spawners have optional `ifFlag` / `unlessFlag` fields in the Inspector — set `ifFlag` to make the object appear only after a story flag is set, or `unlessFlag` to hide it once a flag is set (how quest-gated content works). NPCs also carry `dialogueDay` (a script spoken in daytime) and `stationary` (opt out of free-roam). Leave them blank for normal content.
 
 **Left panel tabs:** **Tiles** · **Props** · **Build**ings · **NPCs** (townsfolk — pick one, then
 **Place** it; edit its id / sprite / facing / dialogue / shop in the Inspector) · **Elev**ation.
@@ -56,11 +72,34 @@ your walls).
    `H`eight in tiles, then **Resize**.
 2. **Paint the ground** — grass is already down. Paint roads, sidewalks, dirt, water, walls.
    Roads live under the **Tiles → paving** group (`R` road, `D` dashed centre, `=` sidewalk).
-3. **Place props & buildings** — switch to **Place**, pick from Props/Buildings, click to drop.
-   Selected objects show a size/solid box in the Inspector; drag them with the **Select** tool.
+3. **Place props & buildings** — switch to **Place**, pick from Props/Buildings, click to drop
+   (or **drag to lay a line** of props — tree lines, forests). Selected objects show a size/solid
+   box in the Inspector; drag them with the **Select** tool. A selected **building** shows a **corner
+   resize handle** — drag it to size the building live (or type a **size ×** in the Inspector); as
+   large or small as you like, and its in-game collision scales with it.
 4. **Add doors & spawns** — draw a **Door** rectangle at an edge and set its `to` (the map id
    it leads to) + target tile; draw **Spawn** zones and list enemy ids.
 5. **Export** — click **⬇ Export**, **📋 Copy** the TypeScript.
+
+---
+
+## ⚙ Map settings
+
+Click **⚙ Settings** for the map-wide fields (all optional — only the ones you change are written on export):
+
+- **music** — the background track (from the game's `TRACKS`; leave empty for `null` / silence).
+- **night** — dark night tint. **interior** — mark it an indoor map (muffles music, no weather).
+- **settlement** — `city` / `town` / `village` (a `city` must additionally pass the ADR-012 city rules).
+- **area** — the `CANON_AREAS` banner id that draws the region glyph script under the place name.
+- **ambience** — an ambient sound bed layered under the music (rain, wind, waves, birds, cave…).
+- **muffle** — override the music-muffle level (0 open · 1 veil · 2 deep). **atmosphere** — `fog` for the foggybottom sinking-fog veil.
+
+## ✓ Check map
+
+Click **✓ Check** for a quick pre-flight (the same checks `npm run validate` runs, plus editor-only ones):
+unreachable NPCs / signs / phones / ATMs / triggers, doors that open onto or land on a wall, doors pointing at a
+map that doesn't exist, dialogue ids that aren't in `dialogue.ts`, empty spawner/patrol ids, reflection zones that
+miss the water, and illegal elevation ledges. Fix the ❌ errors before pasting into the game; ⚠️ warnings are advisory.
 
 ---
 

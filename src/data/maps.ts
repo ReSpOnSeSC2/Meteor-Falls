@@ -209,9 +209,9 @@ const OTTERBROOK_LANDMARK_DIMS: Record<string, readonly [number, number]> = {
 
 // x = CENTRE col, y = BOTTOM row (the homes front the SOUTH-RES street; doors open south)
 const OTTERBROOK_HOME_SPECS = [
-  { id: 'otter_home_sodd', name: 'SODD HOUSE', sprite: 'house_a', x: 46, y: 74 },
-  { id: 'otter_home_birch', name: 'BIRCH HOUSE', sprite: 'house_b', x: 64, y: 74 },
-  { id: 'otter_home_pond', name: 'POND HOUSE', sprite: 'bldg_ob_cottage', x: 32, y: 74 },
+  { id: 'otter_home_sodd', name: 'SODD HOUSE', sprite: 'house_a', x: 44, y: 80 },
+  { id: 'otter_home_birch', name: 'BIRCH HOUSE', sprite: 'house_b', x: 56, y: 80 },
+  { id: 'otter_home_pond', name: 'POND HOUSE', sprite: 'bldg_ob_cottage', x: 32, y: 80 },
 ] as const;
 
 function otterLandmark(
@@ -488,8 +488,360 @@ function buildOtterbrookTown(): MapDef {
  * beside the rebuilt streets so cave saves do not strand the camera on the crest.
  * ELEVATED_ALLOWLIST + maps_otterbrook.test.ts guard the elevation plane.
  */
+function buildOtterbrookTownReplica(): MapDef {
+  const W = 112;
+  const H = 102;
+  const g = new Grid(W, H, '.');
+  const props: PropDef[] = [];
+  const occupied = new Set<number>();
+  const idx = (x: number, y: number): number => y * W + x;
+  const grassLike = (x: number, y: number): boolean => ' .,~fF'.includes(g.rows[y]?.[x] ?? '#');
+
+  g.sprinkle(7, ',~,~ff F', 0.05);
+  g.rect(0, 0, 6, H, 'b');
+  g.rect(W - 6, 0, 6, H, 'b');
+  g.rect(0, H - 3, W, 3, 'b');
+
+  const dtree = (x: number, y: number): void => {
+    if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) return;
+    props.push({ sprite: treeSprite(Math.round(x), Math.round(y)), x, y });
+  };
+  const markFootprint = (sprite: string, cx: number, bottom: number): void => {
+    const [tw, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
+    const wT = Math.ceil(tw / 64);
+    const hT = Math.ceil(th / 64);
+    const x0 = Math.max(0, Math.floor(cx - wT / 2) - 1);
+    const x1 = Math.min(W - 1, Math.ceil(cx + wT / 2) + 1);
+    const y0 = Math.max(0, bottom - hT - 1);
+    const y1 = Math.min(H - 1, bottom + 1);
+    for (let yy = y0; yy <= y1; yy++) for (let xx = x0; xx <= x1; xx++) occupied.add(idx(xx, yy));
+  };
+  const wOf = (s: string): number => Math.ceil((OTTERBROOK_LANDMARK_DIMS[s]?.[0] ?? 320) / 64);
+  const yarded: Array<{ cx: number; bottom: number; w: number }> = [];
+  const build = (s: string, cx: number, bottom: number, door?: { to: string; tx: number; ty: number }): void => {
+    props.push(otterCentered(s, cx, bottom, door));
+    markFootprint(s, cx, bottom);
+    if (/^(house_|bldg_ob_house|bldg_ob_cottage)/.test(s)) yarded.push({ cx, bottom, w: wOf(s) + 7 });
+  };
+  const waved = (len: number, base: number, amp: number, phase: number): number[] =>
+    Array.from({ length: len }, (_v, i) =>
+      base + Math.round(Math.sin((i + phase) / 9) * amp + Math.sin((i + phase) / 23)),
+    );
+  const hRoad = (base: number, x: number, len: number, amp: number, phase: number): void => roadH(g, waved(len, base, amp, phase), x, 4);
+  const vRoad = (base: number, y: number, len: number, amp: number, phase: number): void => roadV(g, waved(len, base, amp, phase), y, 4);
+  const yardFence = ({ cx, bottom, w }: { cx: number; bottom: number; w: number }): void => {
+    const y = bottom + 1;
+    const left = Math.max(1, Math.round(cx - w / 2));
+    const right = Math.min(W - 2, Math.round(cx + w / 2));
+    const gateL = Math.round(cx - 1);
+    const gateR = Math.round(cx + 1);
+    for (let x = left; x <= right; x++) {
+      if (x >= gateL && x <= gateR) continue;
+      if (grassLike(x, y)) g.set(x, y, '-');
+    }
+    const sideBottom = Math.min(H - 4, y + 5);
+    for (const x of [left, right]) for (let yy = y + 1; yy <= sideBottom; yy++) if (grassLike(x, yy)) g.set(x, yy, '|');
+    const backY = Math.max(1, bottom - 7);
+    for (let x = left + 1; x <= right - 1; x++) if (grassLike(x, backY)) g.set(x, backY, '-');
+  };
+  const at = (x: number, y: number): string => g.rows[y]?.[x] ?? '#';
+  const keyOf = (x: number, y: number): number => y * W + x;
+  const xyOf = (key: number): [number, number] => [key % W, Math.floor(key / W)];
+  const inBounds = (x: number, y: number): boolean => x >= 0 && y >= 0 && x < W && y < H;
+  const roadChar = (c: string): boolean => c === 'R' || c === 'D' || c === '_';
+  const streetChar = (c: string): boolean => roadChar(c) || c === '=' || c === ':' || c === 'X';
+  const pathBlocker = (x: number, y: number): boolean => {
+    if (!inBounds(x, y)) return true;
+    if (occupied.has(idx(x, y))) return true;
+    return 'beE|-KHBJVZCY'.includes(at(x, y));
+  };
+  const roadComponents = (): number[][] => {
+    const seen = new Set<number>();
+    const comps: number[][] = [];
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const start = keyOf(x, y);
+        if (!roadChar(at(x, y)) || seen.has(start)) continue;
+        const q = [start];
+        const comp: number[] = [];
+        seen.add(start);
+        for (let i = 0; i < q.length; i++) {
+          const key = q[i];
+          comp.push(key);
+          const [cx, cy] = xyOf(key);
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+            const nx = cx + dx;
+            const ny = cy + dy;
+            const nk = keyOf(nx, ny);
+            if (!inBounds(nx, ny) || seen.has(nk) || !roadChar(at(nx, ny))) continue;
+            seen.add(nk);
+            q.push(nk);
+          }
+        }
+        comps.push(comp);
+      }
+    }
+    return comps.sort((a, b) => b.length - a.length);
+  };
+  const findPath = (starts: number[], goal: (key: number) => boolean, allow: (x: number, y: number, key: number) => boolean): number[] => {
+    const q = starts.filter((key) => {
+      const [x, y] = xyOf(key);
+      return inBounds(x, y);
+    });
+    const prev = new Map<number, number>();
+    for (const key of q) prev.set(key, -1);
+    for (let i = 0; i < q.length; i++) {
+      const key = q[i];
+      if (goal(key)) {
+        const out: number[] = [];
+        for (let k = key; k >= 0; k = prev.get(k) ?? -1) out.push(k);
+        return out.reverse();
+      }
+      const [cx, cy] = xyOf(key);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const nx = cx + dx;
+        const ny = cy + dy;
+        const nk = keyOf(nx, ny);
+        if (prev.has(nk) || !allow(nx, ny, nk)) continue;
+        prev.set(nk, key);
+        q.push(nk);
+      }
+    }
+    return [];
+  };
+  const paintRoadCell = (x: number, y: number): void => {
+    if (pathBlocker(x, y)) return;
+    g.set(x, y, 'R');
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (!pathBlocker(nx, ny) && grassLike(nx, ny)) g.set(nx, ny, '=');
+    }
+  };
+  const connectRoadFragments = (): void => {
+    let comps = roadComponents();
+    if (comps.length <= 1) return;
+    const connected = new Set(comps[0]);
+    for (const comp of comps.slice(1)) {
+      if (comp.length < 4) continue;
+      const path = findPath(
+        comp,
+        (key) => connected.has(key),
+        (x, y, key) => connected.has(key) || roadChar(at(x, y)) || !pathBlocker(x, y),
+      );
+      for (const key of path) {
+        const [x, y] = xyOf(key);
+        paintRoadCell(x, y);
+        connected.add(key);
+      }
+      for (const key of comp) connected.add(key);
+    }
+    comps = roadComponents();
+    if (comps.length > 1) {
+      // One more pass catches any fragments whose shortest route used road painted earlier.
+      const merged = new Set(comps[0]);
+      for (const comp of comps.slice(1)) {
+        const path = findPath(comp, (key) => merged.has(key), (x, y, key) => merged.has(key) || roadChar(at(x, y)) || !pathBlocker(x, y));
+        for (const key of path) {
+          const [x, y] = xyOf(key);
+          paintRoadCell(x, y);
+          merged.add(key);
+        }
+        for (const key of comp) merged.add(key);
+      }
+    }
+  };
+  const routeDoorWalks = (): void => {
+    for (const { cx, bottom } of yarded) {
+      const sx = Math.max(1, Math.min(W - 2, Math.round(cx)));
+      const sy = Math.max(1, Math.min(H - 2, bottom + 1));
+      const start = keyOf(sx, sy);
+      const path = findPath(
+        [start],
+        (key) => {
+          if (key === start) return false;
+          const [x, y] = xyOf(key);
+          return streetChar(at(x, y));
+        },
+        (x, y, key) => key === start || streetChar(at(x, y)) || !pathBlocker(x, y),
+      );
+      for (const key of path) {
+        const [x, y] = xyOf(key);
+        if (!roadChar(at(x, y))) g.set(x, y, bottom >= 78 || sx < 38 ? ':' : '=');
+      }
+    }
+  };
+
+  build('house_a', 31, 11);
+  build('house_b', 41, 11);
+  build('facade_busdepot', 12, 20, { to: 'bus_depot_int', tx: 120, ty: 128 });
+  build('bldg_apartments', 26, 20);
+  build('bldg_ob_city_hall', 53, 20, { to: 'otterbrook_cityhall', tx: 120, ty: 128 });
+  build('bldg_ob_clinic', 78, 20);
+  build('bldg_brickmore', 91, 20, { to: 'downtown_otterbrook', tx: 208, ty: 224 });
+  build('bldg_ob_apt_green', 102, 20);
+  build('bldg_ob_house_c', 20, 34);
+  build('bldg_ob_house_green', 31, 34);
+  build('bldg_ob_house_c', 44, 34);
+  build('drugstore', 64, 34, { to: 'drugstore_int', tx: 112, ty: 118 });
+  build('bldg_ob_cottage', 78, 34);
+  build('bldg_ob_apt_green', 94, 34);
+  build('house_a', 14, 50);
+  build('bldg_ob_burger', 25, 50, { to: 'burger_int', tx: 96, ty: 118 });
+  build('facade_hardware', 37, 50);
+  build('bldg_bank', 48, 50, { to: 'bank_int', tx: 96, ty: 118 });
+  build('bldg_ob_bakery', 58, 50, { to: 'bakery_int', tx: 96, ty: 118 });
+  build('arcade', 69, 50, { to: 'arcade_int', tx: 80, ty: 102 });
+  build('facade_fillshop', 80, 50);
+  build('facade_otter_station', 94, 50, { to: 'otter_station', tx: 120, ty: 128 });
+  build('house_b', 30, 64);
+  build('bldg_ob_house_c', 42, 64);
+  build('house_a', 56, 64);
+  build('bldg_ob_house_green', 68, 64);
+  build('bldg_ob_cottage', 80, 64);
+  build('house_b', 92, 64);
+  for (const h of OTTERBROOK_HOME_SPECS) build(h.sprite, h.x, h.y, { to: h.id, tx: 7 * 16 + 8, ty: 8 * 16 });
+  build('bldg_ob_house_c', 68, 80);
+  build('bldg_ob_house_green', 82, 80);
+  build('chapel', 94, 80, { to: 'chapel_int', tx: 88, ty: 150 });
+  build('house_a', 14, 96);
+  build('house_b', 48, 96);
+  build('house_a', 60, 96);
+  build('bldg_ob_house_green', 72, 96);
+  build('bldg_ob_house_c', 84, 96);
+
+  hRoad(16, 8, 96, 1, 0);
+  hRoad(25, 8, 96, 1, 5);
+  hRoad(39, 8, 96, 1, 11);
+  hRoad(55, 6, 100, 1, 17);
+  hRoad(70, 20, 84, 1, 23);
+  hRoad(86, 22, 82, 1, 29);
+  vRoad(17, 12, 52, 1, 3);
+  vRoad(35, 18, 80, 1, 7);
+  vRoad(49, 28, 70, 1, 13);
+  vRoad(62, 20, 78, 1, 19);
+  vRoad(77, 28, 70, 1, 25);
+  vRoad(92, 22, 50, 1, 31);
+  g.rect(25, 0, 4, 17, ':');
+  g.rect(54, 0, 4, 17, ':');
+  g.rect(100, 44, W - 100, 1, '=');
+  g.rect(100, 45, W - 100, 3, 'R');
+  g.rect(100, 48, W - 100, 1, '=');
+
+  for (const key of occupied) {
+    const x = key % W;
+    const y = (key - x) / W;
+    const c = g.rows[y]?.[x];
+    if (c === 'R' || c === '=' || c === 'D' || c === '_') g.set(x, y, '.');
+  }
+
+  g.rect(45, 21, 16, 5, '=');
+  g.rect(50, 23, 7, 2, '.');
+  g.rect(2, 66, 18, 16, 'e');
+  g.rect(2, 65, 18, 1, 'E');
+  g.rect(2, 82, 18, 1, 'E');
+  g.rect(1, 66, 1, 16, 'E');
+  g.rect(20, 66, 1, 16, 'E');
+  g.rect(22, 64, 16, 22, '.');
+  connectRoadFragments();
+  routeDoorWalks();
+  for (const y of yarded) yardFence(y);
+
+  props.push(
+    { sprite: 'otter_statue', x: 52, y: 22.5, solid: { ox: 35, oy: 60, w: 20, h: 10 } },
+    { sprite: 'bench', x: 48, y: 24, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    { sprite: 'bench', x: 56, y: 24, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    { sprite: 'phone_table', x: 53, y: 25, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
+    { sprite: 'sign', x: 103, y: 44, solid: SIGN_SOLID },
+    { sprite: 'sign', x: 53, y: 21, solid: SIGN_SOLID },
+    { sprite: 'sign', x: 10, y: 50, solid: SIGN_SOLID },
+    { sprite: 'sign', x: 11, y: 92, solid: SIGN_SOLID },
+    { sprite: 'picnic', x: 30, y: 78, solid: PICNIC_SOLID },
+    { sprite: 'gazebo', x: 30, y: 72, solid: { ox: 4, oy: 34, w: 48, h: 18 } },
+    { sprite: 'swing_set', x: 26, y: 66, solid: { ox: 2, oy: 20, w: 60, h: 8 } },
+    { sprite: 'tree_c', x: 11, y: 70, solid: OAK },
+    { sprite: 'footbridge_rail', x: 17, y: 77 },
+    { sprite: 'hydrant', x: 33.5, y: 54.5, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
+    { sprite: 'hydrant', x: 66.5, y: 54.5, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
+    { sprite: 'mailbox', x: 42.5, y: 81.5, solid: { ox: 4, oy: 12, w: 8, h: 6 } },
+    { sprite: 'mailbox', x: 54.5, y: 81.5, solid: { ox: 4, oy: 12, w: 8, h: 6 } },
+    { sprite: 'vehicle_clunker', x: 31, y: 56 },
+    { sprite: 'vehicle_clunker', x: 61, y: 69 },
+    { sprite: 'vehicle_clunker', x: 88, y: 55 },
+  );
+
+  for (let y = 3; y < H - 4; y++) {
+    for (let x = 7; x < W - 6; x++) {
+      if (g.rows[y][x] !== '.') continue;
+      if (occupied.has(idx(x, y))) continue;
+      let nearWalk = false;
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          if ('=RD_:'.includes(g.rows[y + dy]?.[x + dx] ?? '#')) nearWalk = true;
+        }
+      }
+      const hsh = ((x * 2654435761) ^ (y * 40503)) >>> 0;
+      if (nearWalk) {
+        if (hsh % 7 === 0) dtree(x, y);
+      } else if (hsh % 19 === 0) {
+        dtree(x, y);
+      }
+    }
+  }
+
+  const npcs: NpcDef[] = [
+    { id: 'mrs_pemmel', sprite: 'mrsPemmel', x: 64, y: 37, facing: 'down', dialogue: 'npc_pemmel' },
+    { id: 'biscuit', sprite: 'dog', x: 26, y: 76, facing: 'left', dialogue: 'npc_biscuit', dog: true, unlessFlag: 'zapper_done' },
+    { id: 'biscuit_home', sprite: 'dog', x: 26, y: 76, facing: 'left', dialogue: 'npc_biscuit_collar', dog: true, ifFlag: 'q_biscuit_done' },
+    { id: 'mr_plummer', sprite: 'mrPlummer', x: 53, y: 26, facing: 'down', dialogue: 'npc_plummer', wander: true },
+    { id: 'old_timer', sprite: 'oldTimer', x: 32, y: 76, facing: 'down', dialogue: 'npc_oldtimer', dialogueDay: 'npc_oldtimer_day', wander: true },
+    { id: 'pajama_kid', sprite: 'pajamaKid', x: 40, y: 18, facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true },
+    { id: 'green_keeper', sprite: 'fernLady', x: 28, y: 73, facing: 'down', dialogue: 'npc_green_keeper', wander: true },
+    { id: 'pond_angler', sprite: 'quarterMan', x: 21, y: 76, facing: 'left', dialogue: 'npc_pond_angler', idle: true, emote: 'think' },
+    { id: 'south_neighbor', sprite: 'senora', x: 60, y: 82, facing: 'down', dialogue: 'npc_south_neighbor', wander: true },
+    { id: 'gate_walker', sprite: 'grayCommuter', x: 100, y: 46, facing: 'right', dialogue: 'npc_gate_walker', dialogueDay: 'npc_gate_walker_day', wander: true },
+    { id: 'bus_waiter1', sprite: 'grayCommuter', x: 13, y: 24, facing: 'right', dialogue: 'npc_bus_waiter1', idle: true, emote: 'think', ifFlag: 'zapper_done' },
+    { id: 'bus_waiter2', sprite: 'senora', x: 16, y: 24, facing: 'up', dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle', ifFlag: 'zapper_done' },
+    { id: 'realtor_otter', sprite: 'npc_realtor', x: 15, y: 55, facing: 'down', dialogue: 'npc_realtor', idle: true, ifFlag: 'zapper_done' },
+    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 48, y: 26, facing: 'up', dialogue: 'npc_car_dealer', idle: true, emote: 'happy', ifFlag: 'zapper_done' },
+    { id: 'constable_borden', sprite: 'npc_borden', x: 94, y: 54, facing: 'up', dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise', ifFlag: 'zapper_done', unlessFlag: 'borden_marching' },
+  ];
+
+  const signs: SignDef[] = [
+    { x: 53, y: 25, dialogue: 'sign_welcome' },
+    { x: 94, y: 82, dialogue: 'sign_chapel' },
+    { x: 53, y: 21, dialogue: 'sign_otter_hall' },
+    { x: 30, y: 73, dialogue: 'sign_civic_green' },
+    { x: 24, y: 74, dialogue: 'sign_pond_park' },
+    { x: 103, y: 44, dialogue: 'sign_meadow_gate' },
+    { x: 102, y: 47, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
+    { x: 10, y: 50, dialogue: 'sign_to_downtown' },
+  ];
+
+  return {
+    id: 'otterbrook',
+    name: 'OTTERBROOK, OHIO',
+    music: 'otterbrook',
+    settlement: 'town',
+    grid: g.out(),
+    props,
+    npcs,
+    signs,
+    phones: [{ x: 53, y: 25 }],
+    doors: [],
+    spawners: [
+      { enemies: ['cranky_mailbox', 'sprinkler_sentry'], count: 1, rect: { x: 60, y: 44, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['runaway_lawnmower', 'recycling_raccoon', 'unionized_gnome'], count: 1, rect: { x: 30, y: 60, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['pigeon_gang', 'good_investment'], count: 1, rect: { x: 70, y: 60, w: 6, h: 2 }, ifFlag: 'meteor_fell' },
+      { enemies: ['cranky_mailbox', 'skeeter_swarm'], count: 1, rect: { x: 60, y: 84, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
+    ],
+    triggers: [],
+  };
+}
+
 export function growOtterbrook(): MapDef {
-  const town = buildOtterbrookTown();
+  const town = buildOtterbrookTownReplica();
   const TB = OTTERBROOK_TOWN_BASE;
   const TW = town.grid[0].length;
   const TH = town.grid.length;
@@ -547,6 +899,12 @@ export function growOtterbrook(): MapDef {
   paintTrail([
     [58, 21], [57, 29], [59, 37], [56, 44], [55, 51], [56, 57], [56, 64], [56, 67],
   ]);
+  paintTrail([[49, 56], [52, 56], [55, 55]], 3);
+  paintTrail([[61, 56], [58, 56], [55, 55]], 3);
+  // Upper-right cottage doorstep: a visible dirt spur and fenced yard, like the reference.
+  paintTrail([[76, 38], [72, 37], [67, 36], [62, 35], [58, 35]], 3);
+  g.rect(70, 39, 5, 1, '-'); g.rect(78, 39, 5, 1, '-');
+  g.rect(69, 33, 1, 6, '|'); g.rect(83, 33, 1, 6, '|');
   // the WINDING CLIMB from the police watch UP through the crater rim to the meteor (a
   // longer, more serpentine walk — the meteor sits farther up the hill than the cottage)
   paintTrail([
@@ -609,7 +967,7 @@ export function growOtterbrook(): MapDef {
     { id: 'ana', sprite: 'ana', x: 46, y: 51, facing: 'down', dialogue: 'npc_ana', ifFlag: 'zapper_done' },
     { id: 'vivi', sprite: 'vivi', x: 49, y: 51, facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done' },
     { id: 'treeline_gawker', sprite: 'pigeonKid', x: 66, y: 51, facing: 'up', dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' },
-    { id: 'woods_birder', sprite: 'oldTimer', x: 72, y: 36, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' },
+    { id: 'woods_birder', sprite: 'oldTimer', x: 66, y: 36, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' },
     { id: 'biscuit_road', sprite: 'dog', x: 29, y: 40, facing: 'up', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
     { id: 'biscuit_road_after', sprite: 'dog', x: 29, y: 40, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
     { id: 'crater_cop_a', sprite: 'npc_borden', x: 55, y: 21, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
@@ -3585,7 +3943,28 @@ function buildBusInterior(): MapDef {
 
 // doorstepOf lives in mapkit.ts (S14 extraction — byte-identical)
 
-const otterbrookMap = growOtterbrook();
+/** Post-build decorative pass — EarthBound-style oblique BRICK RETAINING WALLS (the
+ *  risers authored 2026-07-07: top surface + visible front face) framing the Pond Park's
+ *  north shore. PROPS ONLY, no `solid` field, so collision/reachability is byte-unchanged
+ *  (mirrors the living-city pass; growOtterbrook() itself stays pinned for the byte-identical
+ *  build test). Each piece is gated on a grass tile so it can never cover water/paths. */
+function addOtterbrookRisers(map: MapDef): MapDef {
+  const grid = map.grid;
+  const at = (x: number, y: number): string =>
+    y >= 0 && y < grid.length && x >= 0 && x < grid[0].length ? grid[y][x] : '#';
+  const onGrass = (x: number, y: number): boolean => ' .,~fF'.includes(at(Math.round(x), Math.round(y)));
+  const risers: MapDef['props'] = [];
+  const put = (sprite: string, x: number, y: number): void => {
+    if (onGrass(x, y)) risers.push({ sprite, x, y });
+  };
+  // brick retaining wall along the Pond Park's north shore (pond foam begins at y131)
+  put('riser_brick_corner', 6, 130);
+  for (const x of [8, 10.5, 13, 15.5]) put('riser_brick', x, 130.6);
+  put('riser_brick_corner', 17.5, 130);
+  return { ...map, props: [...map.props, ...risers] };
+}
+
+const otterbrookMap = addOtterbrookRisers(growOtterbrook());
 const bricktonMap = growBrickton();
 const rexDoorstep = doorstepOf(otterbrookMap, 'rex_home') ?? { tx: 46 * 16, ty: 41 * 16 };
 const chadDoorstep = doorstepOf(otterbrookMap, 'chad_home') ?? { tx: 60 * 16, ty: 41 * 16 };
@@ -4206,7 +4585,7 @@ for (const [id, atmosphere] of Object.entries(MAP_ATMOSPHERE)) {
 // reflective (sea) tile, so a grid edit that moves the water fails the build here.
 const MAP_REFLECT: Record<string, ReflectZone[]> = {
   foggybottom: [{ x: 0, y: 49, w: 60, h: 3, within: 4 }], // the river Tyne along the S lip (S5 rebuild: 60×52, sea rows 49-51)
-  otterbrook: [{ x: 2, y: 136, w: 18, h: 14, within: 3 }], // Pond Park (SW), concept rows 136-150
+  otterbrook: [{ x: 2, y: 132, w: 18, h: 16, within: 3 }], // Pond Park (SW), concept rows 132-148
   golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
   puerto_sol: [{ x: 0, y: 30, w: 52, h: 4, within: 4 }], // the working seafront
   // CH.4 Norway — the fjord, the moor gorge, and the Sleeper's meltwater fall

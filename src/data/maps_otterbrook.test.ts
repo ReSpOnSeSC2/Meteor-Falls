@@ -129,8 +129,46 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     for (const p of generatedHomes) expect(MAPS[p.door!.to]?.doors.some((d) => d.to === 'otterbrook')).toBe(true);
   });
 
+  it('connects the town road grid and gives every house a gated walk to its door', () => {
+    const roadChars = new Set(['R', 'D', '_']);
+    const seen = new Set<string>();
+    const roadComponents: number[] = [];
+    for (let y = 0; y < ob.grid.length; y++) {
+      for (let x = 0; x < ob.grid[y].length; x++) {
+        const start = `${x},${y}`;
+        if (!roadChars.has(ob.grid[y][x]) || seen.has(start)) continue;
+        const q: Array<[number, number]> = [[x, y]];
+        seen.add(start);
+        for (let i = 0; i < q.length; i++) {
+          const [cx, cy] = q[i];
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+            const nx = cx + dx;
+            const ny = cy + dy;
+            const key = `${nx},${ny}`;
+            if (nx < 0 || ny < 0 || ny >= ob.grid.length || nx >= ob.grid[ny].length) continue;
+            if (!roadChars.has(ob.grid[ny][nx]) || seen.has(key)) continue;
+            seen.add(key);
+            q.push([nx, ny]);
+          }
+        }
+        roadComponents.push(q.length);
+      }
+    }
+    expect(roadComponents).toHaveLength(1);
+
+    const frontageChars = new Set(['=', ':', 'R', 'D', '_', 'X']);
+    const houses = ob.props.filter((p) => /^(house_|bldg_ob_house|bldg_ob_cottage)/.test(p.sprite));
+    expect(houses.length).toBeGreaterThanOrEqual(15);
+    for (const p of houses) {
+      const cx = Math.round(p.x + (p.solid?.w ?? 96) / 32);
+      const bottom = Math.round(p.y + 6);
+      expect(frontageChars.has(ob.grid[bottom + 1]?.[cx]), `${p.sprite} @${cx},${bottom + 1} has a doorstep walk`).toBe(true);
+    }
+    expect([...ob.grid.join('')].filter((c) => c === '-' || c === '|').length).toBeGreaterThan(90);
+  });
+
   it('keeps Pond Park, save points, and the restored rest spots', () => {
-    expect(ob.reflect?.some((z) => z.x === 2 && z.y === 136 && z.w === 18 && z.h === 14)).toBe(true);
+    expect(ob.reflect?.some((z) => z.x === 2 && z.y === 132 && z.w === 18 && z.h === 16)).toBe(true);
     expect(ob.phones.length).toBeGreaterThanOrEqual(1);
     expect(ob.props.filter((p) => p.sprite === 'picnic')).toHaveLength(2);
     for (const id of ['bank_int', 'bakery_int', 'burger_int']) {

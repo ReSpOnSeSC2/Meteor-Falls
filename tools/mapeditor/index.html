@@ -27,6 +27,7 @@
   .btn{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
   .btn:hover{border-color:var(--accent2)}
   .btn.primary{background:var(--accent);color:#20160a;border-color:var(--accent);font-weight:600}
+  .btn:disabled{opacity:.4;cursor:default;border-color:var(--line)}
   .tool{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--panel2);
     border:1px solid var(--line);border-radius:8px;padding:6px 9px;cursor:pointer;min-width:52px}
   .tool .ico{font-size:16px} .tool .lbl{font-size:10px;color:var(--dim)}
@@ -65,6 +66,7 @@
   .layers{overflow:auto} .layer{display:flex;justify-content:space-between;align-items:center;
     padding:4px 10px;border-bottom:1px solid #262a3d;cursor:pointer;font-size:12px}
   .layer:hover{background:var(--panel2)} .layer.sel{background:#2c2a1c;color:var(--accent)}
+  .layer.multi{box-shadow:inset 3px 0 0 var(--accent2);background:#16283a}
   .layer .del{color:var(--solid);cursor:pointer;padding:0 4px}
   footer{grid-column:1/4;display:flex;gap:16px;align-items:center;padding:5px 12px;background:var(--panel);
     border-top:1px solid var(--line);color:var(--dim);font-size:11px}
@@ -82,6 +84,24 @@
   .toast.on{opacity:1}
   #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);
     color:var(--dim);z-index:80;flex-direction:column;gap:10px}
+  .issue{padding:5px 9px;border-radius:6px;margin:4px 0;border-left:3px solid}
+  .issue.err{background:#2a1420;border-color:var(--solid);color:#ffd0da}
+  .issue.warn{background:#2a2414;border-color:var(--accent);color:#ffe9b0}
+  .issue.ok{background:#14261a;border-color:var(--good);color:#c8f0cf}
+  #settingsForm .row label{width:88px}
+  .tool{position:relative}
+  .tool .kbd{position:absolute;top:2px;right:3px;font-size:8px;line-height:1;color:var(--dim);background:#0007;padding:1px 3px;border-radius:3px}
+  .tool.active .kbd{color:var(--accent)}
+  .help-tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .help-tbl td{padding:3px 8px;border-bottom:1px solid #262a3d;vertical-align:top}
+  .help-tbl td:first-child{color:var(--accent);white-space:nowrap;width:1%}
+  .help-h{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin:12px 2px 4px}
+  kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--ink)}
+  #zoomPct{min-width:42px;text-align:center;color:var(--dim);font-variant-numeric:tabular-nums}
+  .openItem{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:6px 9px;border-radius:6px;cursor:pointer;border-bottom:1px solid #262a3d}
+  .openItem:hover{background:var(--panel2)}
+  .openItem .oid{color:var(--accent);font-family:ui-monospace,Consolas,monospace;font-size:12px}
+  .openItem .onm{color:var(--dim);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -91,6 +111,7 @@
     <h1>🗺️ Map Editor</h1>
     <div class="grp" style="border:none">
       <div class="tool active" data-tool="paint"><span class="ico">🖌️</span><span class="lbl">Paint</span></div>
+      <div class="tool" data-tool="fill"><span class="ico">🪣</span><span class="lbl">Fill</span></div>
       <div class="tool" data-tool="erase"><span class="ico">🧽</span><span class="lbl">Erase</span></div>
       <div class="tool" data-tool="place"><span class="ico">🌳</span><span class="lbl">Place</span></div>
       <div class="tool" data-tool="select"><span class="ico">➤</span><span class="lbl">Select</span></div>
@@ -98,6 +119,13 @@
       <div class="tool" data-tool="spawn"><span class="ico">👾</span><span class="lbl">Spawn</span></div>
       <div class="tool" data-tool="sign"><span class="ico">📖</span><span class="lbl">Sign</span></div>
       <div class="tool" data-tool="pan"><span class="ico">✋</span><span class="lbl">Pan</span></div>
+    </div>
+    <div class="grp">
+      <div class="tool" data-tool="trigger" title="Event zone (drag a rectangle)"><span class="ico">⚡</span><span class="lbl">Trigger</span></div>
+      <div class="tool" data-tool="phone" title="Save point (click)"><span class="ico">☎️</span><span class="lbl">Phone</span></div>
+      <div class="tool" data-tool="atm" title="ATM point (click)"><span class="ico">🏧</span><span class="lbl">ATM</span></div>
+      <div class="tool" data-tool="patrol" title="Sight-line patrol — click to add waypoints, Esc to finish"><span class="ico">🥾</span><span class="lbl">Patrol</span></div>
+      <div class="tool" data-tool="reflect" title="Water reflection zone (drag a rectangle over water)"><span class="ico">🪞</span><span class="lbl">Reflect</span></div>
     </div>
     <div class="grp">
       <label>Name</label><input type="text" id="mName" value="MY MAP" />
@@ -116,13 +144,28 @@
       <button class="btn brush primary" data-brush="1" title="1 tile wide">1</button>
       <button class="btn brush" data-brush="2" title="3 tiles wide (paint a wide winding trail)">3</button>
       <button class="btn brush" data-brush="3" title="5 tiles wide (paint a wide winding trail)">5</button>
+      <button class="btn brush" data-brush="4" title="7 tiles wide (fill plazas fast)">7</button>
+    </div>
+    <div class="grp">
+      <button class="btn" id="zoomOut" title="Zoom out">−</button>
+      <span id="zoomPct" title="Mouse wheel also zooms">100%</span>
+      <button class="btn" id="zoomIn" title="Zoom in">+</button>
+      <button class="btn" id="fitBtn" title="Fit the whole map in view">⤢ Fit</button>
+    </div>
+    <div class="grp">
+      <button class="btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+      <button class="btn" id="redoBtn" title="Redo (Ctrl+Y)" disabled>↷ Redo</button>
     </div>
     <div class="grp">
       <label>Skin</label>
       <select id="regionSel" style="background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 6px;max-width:150px"><option value="">Base (Otterbrook)</option></select>
     </div>
     <div class="grp">
+      <button class="btn" id="helpBtn" title="Tools & keyboard shortcuts (?)">? Help</button>
+      <button class="btn" id="settingsBtn" title="Map settings — music, area, ambience, settlement…">⚙ Settings</button>
+      <button class="btn" id="checkBtn" title="Validate reachability, doors, dialogue ids…">✓ Check</button>
       <button class="btn" id="newMap">🆕 New</button>
+      <button class="btn" id="openMap" title="Open one of the game's existing maps to edit">📂 Open</button>
       <button class="btn" id="save">💾 Save</button>
       <button class="btn" id="load">Load</button>
       <button class="btn primary" id="export">⬇ Export</button>
@@ -160,7 +203,8 @@
     <span id="statSel">Tile: grass (.)</span>
     <span id="statXY">—</span>
     <span id="statCount">0 props · 0 doors · 0 spawns</span>
-    <span style="margin-left:auto">wheel = zoom · Pan tool or middle-drag = pan · Del = delete selected</span>
+    <span id="saveStatus" style="margin-left:auto;color:var(--good)">saved ✓</span>
+    <span style="color:var(--dim);padding-left:14px">wheel = zoom · middle-drag = pan · ? Help</span>
   </footer>
 </div>
 
@@ -179,6 +223,63 @@
   </div>
 </div></div>
 
+<div class="modal" id="settingsModal"><div class="box" style="width:min(460px,92vw)">
+  <h2>⚙ Map settings</h2>
+  <div class="insp" id="settingsForm" style="padding:0"></div>
+  <div class="foot"><button class="btn primary" id="settingsClose">Done</button></div>
+</div></div>
+
+<div class="modal" id="checkModal"><div class="box" style="width:min(620px,92vw)">
+  <h2>✓ Check map</h2>
+  <div id="checkResults" style="flex:1;overflow:auto;font-size:12px;line-height:1.6"></div>
+  <div class="foot"><button class="btn" id="checkRerun">↻ Re-run</button><button class="btn primary" id="checkClose">Close</button></div>
+</div></div>
+
+<div class="modal" id="helpModal"><div class="box" style="width:min(680px,92vw)">
+  <h2>? Tools & shortcuts</h2>
+  <div style="flex:1;overflow:auto">
+    <div class="help-h">Tools</div>
+    <table class="help-tbl"><tbody>
+      <tr><td><kbd>B</kbd></td><td>🖌️ <b>Paint</b> — pick a tile, click/drag to paint. <b>Shift-drag</b> = fill a rectangle.</td></tr>
+      <tr><td><kbd>F</kbd></td><td>🪣 <b>Fill</b> — flood-fill the contiguous same-tile region.</td></tr>
+      <tr><td><kbd>E</kbd></td><td>🧽 <b>Erase</b> — paint grass back (Shift-drag = rectangle).</td></tr>
+      <tr><td><kbd>P</kbd></td><td>🌳 <b>Place</b> — click to drop the selected prop / building / NPC; <b>drag to lay a line</b> of props (tree lines, forests).</td></tr>
+      <tr><td><kbd>V</kbd></td><td>➤ <b>Select</b> — click an object, or <b>drag a box</b> over several; then drag or arrow-key them to move, <kbd>Ctrl+D</kbd> duplicate, <kbd>Del</kbd> remove.</td></tr>
+      <tr><td><kbd>D</kbd></td><td>🚪 <b>Door</b> — drag a zone that warps to another map.</td></tr>
+      <tr><td><kbd>S</kbd></td><td>👾 <b>Spawn</b> — drag an enemy-encounter zone.</td></tr>
+      <tr><td><kbd>T</kbd></td><td>⚡ <b>Trigger</b> — drag an event zone (id + once).</td></tr>
+      <tr><td>—</td><td>📖 Sign · ☎️ Phone · 🏧 ATM — click a point. 🥾 Patrol — click waypoints (<kbd>Esc</kbd> finishes). 🪞 Reflect — drag over water.</td></tr>
+      <tr><td><kbd>H</kbd></td><td>✋ <b>Pan</b> — drag to move the view (or middle-mouse-drag anytime).</td></tr>
+    </tbody></table>
+    <div class="help-h">Keyboard</div>
+    <table class="help-tbl"><tbody>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td><td>Undo (a whole stroke/drag is one step).</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd></td><td>Redo.</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>Duplicate the selected object (offset 1 tile).</td></tr>
+      <tr><td><kbd>R</kbd></td><td>Rotate the selected prop 90° (face any of 4 directions). Buildings resize instead of rotate.</td></tr>
+      <tr><td>drag ▪</td><td>Drag a selected object's <b>edge / corner handles</b> to resize it — works on buildings, props (unrotated) and NPCs. In-game size &amp; collision scale with it; set exact ×'s in the inspector.</td></tr>
+      <tr><td><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></td><td>Nudge the selection 1 tile (<kbd>Shift</kbd> = ½ tile).</td></tr>
+      <tr><td><kbd>[</kbd> / <kbd>]</kbd></td><td>Smaller / larger paint brush.</td></tr>
+      <tr><td><kbd>Del</kbd> / <kbd>Backspace</kbd></td><td>Delete the selected object.</td></tr>
+      <tr><td>Wheel</td><td>Zoom (or use − / + / ⤢ Fit in the toolbar).</td></tr>
+    </tbody></table>
+    <div class="help-h">Workflow</div>
+    <div style="font-size:12px;line-height:1.6;padding:2px 4px;color:var(--dim)">
+      Paint the ground → place props/buildings/NPCs → add doors &amp; spawns → set <b>⚙ Settings</b> (music, area…) →
+      run <b>✓ Check</b> → <b>⬇ Export</b> the TypeScript and paste it into <code>src/data/maps.ts</code>. Work auto-saves in the browser.
+    </div>
+  </div>
+  <div class="foot"><button class="btn primary" id="helpClose">Got it</button></div>
+</div></div>
+
+<div class="modal" id="openModal"><div class="box" style="width:min(560px,92vw)">
+  <h2>📂 Open a game map</h2>
+  <input class="search" id="openSearch" placeholder="search all maps…" style="margin-bottom:6px"/>
+  <div id="openList" style="flex:1;overflow:auto;min-height:220px"></div>
+  <div class="hint" style="padding:6px 2px 0">Opens a copy — edit it and <b>⬇ Export</b> for the updated TypeScript to paste back into <code>src/data/maps.ts</code>. <b>💾 Save</b> your current map first if you don't want to lose it.</div>
+  <div class="foot"><button class="btn" id="openClose">Cancel</button></div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -191,20 +292,31 @@ const imgCache=new Map();
 function loadImg(url){ if(imgCache.has(url))return imgCache.get(url);
   const im=new Image(); im.src=url; im.onload=()=>requestRender(); imgCache.set(url,im); return im; }
 
+// the optional MapDef settings the ⚙ panel edits. '' / false / null = "unset" (omitted on export).
+function blankSettings(){ return { music:null, night:false, interior:false, settlement:'', area:'', ambience:'', muffle:'', atmosphere:'' }; }
+function blankMap(w,h){ return { id:'my_map', name:'MY MAP', w, h, grid:newGrid(w,h), level:newGrid(w,h,'0'),
+  props:[], npcs:[], signs:[], phones:[], atms:[], doors:[], spawners:[], triggers:[], patrols:[], reflect:[],
+  ...blankSettings() }; }
 const state={
   tool:'paint',
-  map:{ id:'my_map', name:'MY MAP', w:30, h:20, grid:[], level:[], props:[], npcs:[], signs:[], doors:[], spawners:[] },
+  map:blankMap(30,20),
   tileChar:'.',            // selected paint char
   propKey:null, propIsFacade:false,
   placeMode:'prop',        // 'prop' | 'npc' — what the Place tool drops
   npcKey:null,             // selected NPC id
   view:{ ox:40, oy:40, zoom:1 },
-  sel:null,               // {kind:'prop'|'door'|'spawn', i}
+  sel:null,               // {kind:'prop'|'door'|'spawn'|'npc'|'sign'|'phone'|'atm'|'trigger'|'patrol'|'reflect', i}
   drag:null,
   gridOn:true, solidOn:false, levelsOn:false,
   region:null,            // selected region skin object (or null = base)
   paintLevel:1,           // which terrace the Elevate tool paints
   brush:1,                // paint/erase brush width: 1→1 tile, 2→3 wide, 3→5 wide (disc)
+  patrolEdit:null,        // index of the patrol currently having waypoints clicked in (or null)
+  rectPaint:null,         // {x0,y0,x1,y1,ch} while Shift-dragging a filled rectangle
+  multi:[],               // marquee/group selection: array of {kind,i} (state.sel = the inspector's primary)
+  marquee:null,           // {x0,y0,x1,y1} in tiles while box-selecting with the Select tool
+  placeStroke:null,       // {sprite,x,y,n,spacing} while DRAGGING the Place tool to lay a line of props
+  resize:null,            // {o,mode:'tl'|'feet',fw,fh,axis,undone} while dragging a prop/building/npc resize-handle
 };
 const LEVEL_TINT=['transparent','rgba(90,200,255,.30)','rgba(180,120,255,.32)','rgba(255,180,90,.34)','rgba(120,255,160,.34)'];
 const TILE_BASE=26; // px per tile at zoom 1
@@ -215,9 +327,10 @@ function newGrid(w,h,fill='.'){ return Array.from({length:h},()=>Array.from({len
 async function boot(){
   M=await (await fetch('manifest.json')).json();
   M.legend.forEach(l=>legendByChar.set(l.char,l));
+  // O(1) prop/facade lookups (was Array.find/some per prop per render — 3k-prop maps re-scanned the palette every frame)
+  M._propMeta=new Map(); (M.facades||[]).forEach(p=>M._propMeta.set(p.key,p)); (M.props||[]).forEach(p=>M._propMeta.set(p.key,p));
+  M._facadeKeys=new Set((M.facades||[]).map(p=>p.key));
   atlas=await new Promise((res)=>{const i=new Image();i.onload=()=>res(i);i.src=M.atlas;});
-  state.map.grid=newGrid(state.map.w,state.map.h);
-  state.map.level=newGrid(state.map.w,state.map.h,'0');
   buildTilePalette(); buildPropPalette(); buildFacadePalette(); buildNpcPalette(); buildElevatePane();
   wireUI();
   const saved=localStorage.getItem('mf_mapeditor_autosave'); // silent restore if present
@@ -273,8 +386,9 @@ function buildPropPalette(){ const g=$('#propGrid'); M.props.forEach(p=>g.append
   $('#propSearch').oninput=e=>filterGrid(g,e.target.value); }
 function buildFacadePalette(){ const g=$('#buildGrid'); M.facades.forEach(p=>g.appendChild(makePropSwatch(p,true)));
   $('#buildSearch').oninput=e=>filterGrid(g,e.target.value); }
-function buildNpcPalette(){ const g=$('#npcGrid'); const cf=M.charFrame||{cols:4,rows:12};
+function buildNpcPalette(){ const g=$('#npcGrid');
   (M.npcs||[]).forEach(n=>{ const sw=document.createElement('div'); sw.className='sw'; sw.title=n.id;
+    const cf=npcSheet(n);
     const d=document.createElement('div'); // show frame 0 (top-left of the cols×rows sheet)
     d.style.cssText=`width:100%;height:100%;background-image:url('${n.url}');background-size:${cf.cols*100}% ${cf.rows*100}%;background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated`;
     sw.appendChild(d); sw.insertAdjacentHTML('beforeend',`<span class="nm">${n.id}</span>`);
@@ -283,19 +397,29 @@ function buildNpcPalette(){ const g=$('#npcGrid'); const cf=M.charFrame||{cols:4
     g.appendChild(sw); });
   $('#npcSearch').oninput=e=>filterGrid(g,e.target.value); }
 const npcMeta=(id)=>(M.npcs||[]).find(n=>n.id===id);
+const npcSheet=(meta)=>({cols:meta?.cols||M.charFrame?.cols||4,rows:meta?.rows||M.charFrame?.rows||12,wTiles:meta?.wTiles||1,hTiles:meta?.hTiles||1.35});
 function filterGrid(g,q){ q=q.toLowerCase(); $$('.sw',g).forEach(sw=>sw.style.display=sw.title.includes(q)?'':'none'); }
 const escapeHtml=(s)=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
 // ---------- lookups ----------
-const propMeta=(key)=>M.props.find(p=>p.key===key)||M.facades.find(p=>p.key===key);
-const isFacadeKey=(key)=>M.facades.some(p=>p.key===key);
+const propMeta=(key)=>M._propMeta&&M._propMeta.get(key);
+const isFacadeKey=(key)=>!!(M._facadeKeys&&M._facadeKeys.has(key));
 function propUrl(key){ const m=propMeta(key); return m?m.url:''; }
 // prop on-map size in TILES. props use display w/h (native units, drawn at w*artScale px); facades default 4 tiles tall.
-function propTiles(pl){
-  const m=propMeta(pl.sprite);
-  if(isFacadeKey(pl.sprite)){ const asp=m?m.aspect:1; const h=pl.scale||4; return {w:h*asp,h}; }
-  const w=(m?m.w:20)*M.artScale/M.tilePx, h=(m?m.h:24)*M.artScale/M.tilePx; return {w,h};
-}
+// PropDef.scale is a uniform number OR {x,y} for non-uniform (only-wider / only-taller)
+// PropDef.scale / NpcDef.scale — the per-instance SIZE multiplier (uniform number OR {x,y}) the engine
+// honours for EVERY prop, facade AND npc. 1 = the sprite's natural size.
+function propScale(pl){ const s=pl.scale; if(typeof s==='number'&&s>0)return {x:s,y:s}; if(s&&s.x>0&&s.y>0)return {x:s.x,y:s.y}; return {x:1,y:1}; }
+function setPropScale(pl,sx,sy){ sx=Math.max(0.2,Math.round(sx*20)/20); sy=Math.max(0.2,Math.round(sy*20)/20);
+  if(sx===1&&sy===1)delete pl.scale; else if(sx===sy)pl.scale=sx; else pl.scale={x:sx,y:sy}; }
+// natural (scale-1) on-map size in TILES: facades carry a manifest tile footprint; props draw at w*artScale px.
+function naturalTiles(pl){ const m=propMeta(pl.sprite);
+  if(isFacadeKey(pl.sprite)) return {w:(m&&m.w?m.w:4), h:(m&&m.h?m.h:4)};
+  return {w:(m?m.w:20)*M.artScale/M.tilePx, h:(m?m.h:24)*M.artScale/M.tilePx}; }
+// on-map size in TILES = natural footprint × PropDef.scale (per-axis). Applies to facades AND props.
+function propTiles(pl){ const n=naturalTiles(pl), sc=propScale(pl); return {w:n.w*sc.x, h:n.h*sc.y}; }
+// on-map bounding box in tiles, accounting for a 90°/270° rotation (swaps width/height)
+function propBox(pl){ const t=propTiles(pl); const r=pl.rot||0; return (r===90||r===270)?{w:t.h,h:t.w}:{w:t.w,h:t.h}; }
 // auto base-footprint solid box (native units) for a solid prop
 function autoSolid(key){ const m=propMeta(key); const w=m?.w??20,h=m?.h??24;
   return {ox:Math.round(w*0.12),oy:Math.round(h*0.5),w:Math.max(2,Math.round(w*0.76)),h:Math.max(2,Math.round(h*0.45))}; }
@@ -320,7 +444,8 @@ const toScreen=(tx,ty)=>[state.view.ox+tx*TS(), state.view.oy+ty*TS()];
 const toTile=(mx,my)=>[(mx-state.view.ox)/TS(), (my-state.view.oy)/TS()];
 
 let renderQueued=false;
-function requestRender(){ if(renderQueued)return; renderQueued=true; requestAnimationFrame(render); }
+function requestRender(){ const zp=$('#zoomPct'); if(zp)zp.textContent=Math.round(state.view.zoom*100)+'%'; // synchronous — not rAF-gated
+  if(renderQueued)return; renderQueued=true; requestAnimationFrame(render); }
 function render(){ renderQueued=false;
   const W=cv.width/devicePixelRatio, H=cv.height/devicePixelRatio, ts=TS(), m=state.map;
   ctx.clearRect(0,0,W,H); ctx.imageSmoothingEnabled=false;
@@ -337,6 +462,12 @@ function render(){ renderQueued=false;
       if(ci>=0){ ctx.drawImage(atlas,ci*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; } }
     if(!done&&state.region&&l&&state.region.skin[l.name]!=null&&ra&&ra.complete&&ra.naturalWidth){
       ctx.drawImage(ra,state.region.skin[l.name]*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; }
+    // directional sidewalk curb (mirror OverworldScene.buildTiles): a road-adjacent '=' shows the
+    // curb variant whose raised vertical face points at the road (below→s · east→e · west→w).
+    if(!done&&!state.region&&ch==='='&&M.sidewalkCurb){ const sc=M.sidewalkCurb;
+      const road=(xx,yy)=>{ const r=m.grid[yy]&&m.grid[yy][xx]; return !!(r&&'RDX23P'.includes(r)); };
+      let ci=road(x,y+1)?sc.s:road(x+1,y)?sc.e:road(x-1,y)?sc.w:-1;
+      if(ci>=0){ ctx.drawImage(atlas,ci*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; } }
     if(!done){ if(l&&l.index>=0) ctx.drawImage(atlas,l.index*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1);
       else{ ctx.fillStyle='#2c7d3a'; ctx.fillRect(sx,sy,ts,ts); } }
     if(state.solidOn&&l&&l.solid){ ctx.fillStyle='rgba(255,84,112,.38)'; ctx.fillRect(sx,sy,ts,ts); }
@@ -352,15 +483,21 @@ function render(){ renderQueued=false;
   // map border
   { const [bx,by]=toScreen(0,0); ctx.strokeStyle='rgba(255,207,74,.5)'; ctx.lineWidth=2; ctx.strokeRect(bx,by,m.w*ts,m.h*ts); }
   // props (depth sort by foot y)
-  const props=m.props.map((p,i)=>({p,i})).sort((a,b)=>(a.p.y+propTiles(a.p).h)-(b.p.y+propTiles(b.p).h));
-  for(const {p,i} of props){ const [sx,sy]=toScreen(p.x,p.y); const t=propTiles(p);
-    const im=loadImg(propUrl(p.sprite)); const pw=t.w*ts, ph=t.h*ts;
-    if(im.complete&&im.naturalWidth) ctx.drawImage(im,sx,sy,pw,ph);
-    else{ ctx.fillStyle='#666'; ctx.fillRect(sx,sy,pw,ph); }
-    if(state.sel&&state.sel.kind==='prop'&&state.sel.i===i){
-      ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx,sy,pw,ph);
+  const props=m.props.map((p,i)=>({p,i})).sort((a,b)=>(a.p.y+propBox(a.p).h)-(b.p.y+propBox(b.p).h));
+  for(const {p,i} of props){ const [sx,sy]=toScreen(p.x,p.y); const t=propTiles(p); const box=propBox(p);
+    const im=loadImg(propUrl(p.sprite)); const pw=t.w*ts, ph=t.h*ts, bw=box.w*ts, bh=box.h*ts; const rot=p.rot||0;
+    if(im.complete&&im.naturalWidth){
+      if(rot){ ctx.save(); ctx.translate(sx+bw/2,sy+bh/2); ctx.rotate(rot*Math.PI/180); ctx.drawImage(im,-pw/2,-ph/2,pw,ph); ctx.restore(); }
+      else ctx.drawImage(im,sx,sy,pw,ph);
+    } else { ctx.fillStyle='#666'; ctx.fillRect(sx,sy,bw,bh); }
+    if(state.sel&&state.sel.kind==='prop'&&state.sel.i===i&&state.multi.length<=1){
+      ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx,sy,bw,bh);
       if(p.solid){ const m2=propMeta(p.sprite); const sc=ts*M.artScale/M.tilePx;
         ctx.strokeStyle='rgba(255,84,112,.9)'; ctx.strokeRect(sx+p.solid.ox*sc,sy+p.solid.oy*sc,p.solid.w*sc,p.solid.h*sc); }
+      if(!rot){ // resize handles (any unrotated prop/building) — right edge = wider, bottom edge = taller, corner = both
+        ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.strokeStyle='#12131a'; ctx.lineWidth=1.5;
+        const H=(hx,hy)=>{ ctx.fillRect(hx-6,hy-6,12,12); ctx.strokeRect(hx-6,hy-6,12,12); };
+        H(sx+pw,sy+ph); H(sx+pw,sy+ph/2); H(sx+pw/2,sy+ph); }
     }
   }
   // NPCs (frame 0 of the 46-frame sheet, feet on the tile)
@@ -372,9 +509,48 @@ function render(){ renderQueued=false;
   // doors + spawns
   m.doors.forEach((d,i)=>drawZone(d,i,'door'));
   m.spawners.forEach((s,i)=>drawZone(s,i,'spawn'));
+  // triggers (event zones) + reflect (water mirrors)
+  (m.triggers||[]).forEach((t,i)=>drawTagRect(t.rect,state.sel&&state.sel.kind==='trigger'&&state.sel.i===i,'rgba(180,120,255,.20)','#b478ff','⚡ '+(t.id||'trigger')+(t.once?' (once)':'')));
+  (m.reflect||[]).forEach((r,i)=>drawTagRect(r,state.sel&&state.sel.kind==='reflect'&&state.sel.i===i,'rgba(92,200,255,.16)','#5cc8ff','🪞 reflect'));
+  // phones (save) + atms
+  (m.phones||[]).forEach((p,i)=>drawPoint(p,i,'phone','☎️'));
+  (m.atms||[]).forEach((p,i)=>drawPoint(p,i,'atm','🏧'));
+  // patrols (waypoint route)
+  (m.patrols||[]).forEach((pt,i)=>drawPatrol(pt,i));
+  // filled-rectangle preview (Shift-drag on Paint/Erase)
+  if(state.rectPaint) drawRectPaintGhost();
+  // marquee box-select + group-selection highlight
+  if(state.multi.length>1) drawMultiHighlights();
+  if(state.marquee) drawMarquee();
   // hover ghost
   drawHover();
 }
+function drawTagRect(rect,isSel,fill,stroke,label){ const ts=TS(); const [sx,sy]=toScreen(rect.x,rect.y); const w=rect.w*ts,h=rect.h*ts;
+  ctx.fillStyle=fill; ctx.fillRect(sx,sy,w,h); ctx.strokeStyle=stroke; ctx.lineWidth=isSel?3:1.5; ctx.strokeRect(sx,sy,w,h);
+  ctx.fillStyle='#fff'; ctx.font='11px system-ui'; ctx.fillText(label,sx+3,sy+13); }
+function drawPoint(p,i,kind,glyph){ const ts=TS(); const [sx,sy]=toScreen(p.x,p.y);
+  if(state.sel&&state.sel.kind===kind&&state.sel.i===i){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx-ts*0.45,sy-ts*0.45,ts*0.9,ts*0.9); }
+  ctx.textAlign='center'; ctx.font=`${Math.round(ts*0.7)}px system-ui`; ctx.fillText(glyph,sx,sy+ts*0.25); ctx.textAlign='left'; }
+function drawPatrol(pt,i){ const ts=TS(); const r=pt.route||[]; if(!r.length)return;
+  const sel=state.sel&&state.sel.kind==='patrol'&&state.sel.i===i; const editing=state.patrolEdit===i;
+  ctx.strokeStyle=editing?'#ffcf4a':(sel?'#ff7a5c':'rgba(255,122,92,.75)'); ctx.lineWidth=sel||editing?3:2;
+  ctx.beginPath(); r.forEach(([x,y],k)=>{ const [sx,sy]=toScreen(x,y); k?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy); }); ctx.stroke();
+  r.forEach(([x,y],k)=>{ const [sx,sy]=toScreen(x,y); ctx.fillStyle=k===0?'#ffcf4a':'#ff7a5c';
+    ctx.beginPath(); ctx.arc(sx,sy,Math.max(3.5,ts*0.15),0,7); ctx.fill();
+    ctx.fillStyle='#12131a'; ctx.font=`bold ${Math.max(8,Math.round(ts*0.3))}px system-ui`; ctx.textAlign='center'; ctx.fillText(String(k+1),sx,sy+Math.max(3,ts*0.11)); });
+  ctx.textAlign='left'; const [hx,hy]=toScreen(r[0][0],r[0][1]); ctx.fillStyle='#fff'; ctx.font='11px system-ui'; ctx.fillText('🥾 '+(pt.enemy||'enemy?'),hx+8,hy-6); }
+function drawRectPaintGhost(){ const rp=state.rectPaint; const ts=TS();
+  const x0=Math.min(rp.x0,rp.x1),y0=Math.min(rp.y0,rp.y1),x1=Math.max(rp.x0,rp.x1),y1=Math.max(rp.y0,rp.y1);
+  ctx.save();
+  if(rp.level!=null){ // Elevate Shift-drag → preview the terrace tint (+ number) over the whole rectangle
+    const lv=+rp.level||0; ctx.globalAlpha=.6; ctx.fillStyle=lv>0?LEVEL_TINT[Math.min(lv,LEVEL_TINT.length-1)]:'rgba(120,120,120,.55)';
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){ const [gx,gy]=toScreen(x,y); ctx.fillRect(gx,gy,ts+1,ts+1); }
+    ctx.globalAlpha=1; ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font=`bold ${Math.round(ts*0.42)}px system-ui`;
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){ const [gx,gy]=toScreen(x,y); ctx.fillText(String(lv),gx+ts*0.34,gy+ts*0.64); }
+  } else { const l=legendByChar.get(rp.ch); ctx.globalAlpha=.55;
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){ const [gx,gy]=toScreen(x,y);
+      if(l&&l.index>=0) ctx.drawImage(atlas,l.index*M.tilePx,0,M.tilePx,M.tilePx,gx,gy,ts+1,ts+1); else{ ctx.fillStyle='#2c7d3a'; ctx.fillRect(gx,gy,ts,ts);} } }
+  ctx.restore(); const [sx,sy]=toScreen(x0,y0); ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx,sy,(x1-x0+1)*ts,(y1-y0+1)*ts); }
 function drawZone(z,i,kind){ const ts=TS(); const [sx,sy]=toScreen(z.x??z.rect.x, z.y??z.rect.y);
   const w=(z.w??z.rect.w)*ts, h=(z.h??z.rect.h)*ts; const col=kind==='door'?'var(--door)':'var(--spawn)';
   ctx.fillStyle=kind==='door'?'rgba(92,200,255,.22)':'rgba(255,122,92,.22)';
@@ -384,21 +560,29 @@ function drawZone(z,i,kind){ const ts=TS(); const [sx,sy]=toScreen(z.x??z.rect.x
   ctx.fillStyle='#fff'; ctx.font='11px system-ui';
   ctx.fillText(kind==='door'?('→ '+(z.to||'?')):((z.enemies||[]).join(',')||'enemies?'),sx+3,sy+13);
 }
-function drawNpc(npc,i,ts){ const cf=M.charFrame||{cols:4,rows:12}; const meta=npcMeta(npc.sprite); const im=meta?loadImg(meta.url):null;
-  const w=ts*1.0, h=ts*1.35; const [fx,fy]=toScreen(npc.x+0.5,npc.y+1); const left=fx-w/2, top=fy-h;
+// an NPC's on-map box in TILES (feet-anchored, grows UP): natural sheet footprint × NpcDef.scale
+function npcBox(npc){ const cf=npcSheet(npcMeta(npc.sprite)); const sc=propScale(npc); const w=cf.wTiles*sc.x, h=cf.hTiles*sc.y;
+  return {w,h, left:npc.x+0.5-w/2, top:npc.y+1-h, feetX:npc.x+0.5, feetY:npc.y+1, natW:cf.wTiles, natH:cf.hTiles}; }
+function drawNpc(npc,i,ts){ const meta=npcMeta(npc.sprite); const cf=npcSheet(meta); const im=meta?loadImg(meta.url):null;
+  const b=npcBox(npc); const w=ts*b.w, h=ts*b.h; const [fx,fy]=toScreen(npc.x+0.5,npc.y+1); const left=fx-w/2, top=fy-h;
   if(im&&im.complete&&im.naturalWidth){ const fw=im.naturalWidth/cf.cols, fh=im.naturalHeight/cf.rows; ctx.drawImage(im,0,0,fw,fh,left,top,w,h); }
   else{ ctx.fillStyle='#b97'; ctx.fillRect(left,top,w,h); }
-  if(state.sel&&state.sel.kind==='npc'&&state.sel.i===i){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(left,top,w,h); } }
-let hoverTile=null;
-function drawHover(){ if(!hoverTile)return; const ts=TS(); const [sx,sy]=toScreen(Math.floor(hoverTile[0]),Math.floor(hoverTile[1]));
-  if((state.tool==='place'&&state.placeMode==='npc')||state.tool==='sign'){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx,sy,ts,ts);
-  } else if(state.tool==='place'&&state.propKey){ const t=propTiles({sprite:state.propKey,scale:4}); const im=loadImg(propUrl(state.propKey));
+  if(state.sel&&state.sel.kind==='npc'&&state.sel.i===i&&state.multi.length<=1){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(left,top,w,h);
+    // resize handles — right edge = wider, TOP edge = taller (NPC grows up from its feet), top-right corner = both
+    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.strokeStyle='#12131a'; ctx.lineWidth=1.5;
+    const H=(hx,hy)=>{ ctx.fillRect(hx-6,hy-6,12,12); ctx.strokeRect(hx-6,hy-6,12,12); };
+    H(left+w,top); H(left+w,top+h/2); H(left+w/2,top); } }
+let hoverTile=null, prevHoverF=[NaN,NaN];
+const ONE_TILE_HOVER=['place','sign','fill','phone','atm','trigger','patrol','reflect'];
+function drawHover(){ if(!hoverTile||state.rectPaint)return; const ts=TS(); const [sx,sy]=toScreen(Math.floor(hoverTile[0]),Math.floor(hoverTile[1]));
+  if(state.tool==='place'&&state.placeMode!=='npc'&&state.propKey){ const t=propTiles({sprite:state.propKey}); const im=loadImg(propUrl(state.propKey));
     ctx.globalAlpha=.55; if(im.complete&&im.naturalWidth)ctx.drawImage(im,sx,sy,t.w*ts,t.h*ts); ctx.globalAlpha=1;
     ctx.strokeStyle='var(--accent)'; ctx.strokeRect(sx,sy,t.w*ts,t.h*ts);
+  } else if(ONE_TILE_HOVER.includes(state.tool)){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=2; ctx.strokeRect(sx,sy,ts,ts);
   } else if(state.tool==='paint'||state.tool==='erase'||state.tool==='elevate'){
     ctx.strokeStyle=state.tool==='erase'?'var(--solid)':'var(--accent)'; ctx.lineWidth=2;
     const bx=Math.floor(hoverTile[0]),by=Math.floor(hoverTile[1]);
-    const offs=state.tool==='elevate'?[[0,0]]:brushOffsets();
+    const offs=brushOffsets(); // elevate honours the brush too, so its hover shows the same disc
     for(const [dx,dy] of offs){ const [gx,gy]=toScreen(bx+dx,by+dy); ctx.strokeRect(gx,gy,ts,ts); }
   }
 }
@@ -406,38 +590,100 @@ function drawHover(){ if(!hoverTile)return; const ts=TS(); const [sx,sy]=toScree
 // ---------- interaction ----------
 let painting=false, panning=false, panStart=null, zoneStart=null;
 cv.addEventListener('mousedown',e=>{ const r=cv.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top; const [tx,ty]=toTile(mx,my);
-  const cx=Math.floor(tx),cy=Math.floor(ty);
-  if(e.button===1||state.tool==='pan'){ panning=true; panStart=[mx,my,state.view.ox,state.view.oy]; return; }
-  if(state.tool==='paint'){ painting=true; stamp(cx,cy,state.tileChar); }
-  else if(state.tool==='erase'){ painting=true; stamp(cx,cy,'.'); }
-  else if(state.tool==='elevate'){ painting=true; setLevel(cx,cy,String(state.paintLevel)); }
-  else if(state.tool==='place'){ if(state.placeMode==='npc'&&state.npcKey) placeNpc(state.npcKey,cx,cy); else if(state.propKey) placeProp(state.propKey,cx,cy); }
-  else if(state.tool==='sign'){ state.map.signs.push({x:cx+0.5,y:cy+0.5,dialogue:'placeholder'}); state.sel={kind:'sign',i:state.map.signs.length-1}; refreshInspector();refreshLayers();requestRender();scheduleAutosave(); }
-  else if(state.tool==='select'){ selectAt(tx,ty); if(state.sel&&(state.sel.kind==='prop'||state.sel.kind==='npc')){ const a=state.sel.kind==='prop'?state.map.props[state.sel.i]:state.map.npcs[state.sel.i]; state.drag={sx:mx,sy:my,ox:a.x,oy:a.y,kind:state.sel.kind}; } }
-  else if(state.tool==='door'||state.tool==='spawn'){ zoneStart=[cx,cy]; }
+  const cx=Math.floor(tx),cy=Math.floor(ty); const t=state.tool;
+  if(e.button===1||t==='pan'){ panning=true; panStart=[mx,my,state.view.ox,state.view.oy]; return; }
+  if(t==='paint'||t==='erase'){ const ch=t==='erase'?'.':state.tileChar;
+    if(e.shiftKey){ state.rectPaint={x0:cx,y0:cy,x1:cx,y1:cy,ch}; requestRender(); return; }
+    pushUndo(); painting=true; stamp(cx,cy,ch); return; }
+  if(t==='fill'){ pushUndo(); floodFill(cx,cy,state.tileChar); return; }
+  if(t==='elevate'){ if(e.shiftKey){ state.rectPaint={x0:cx,y0:cy,x1:cx,y1:cy,level:String(state.paintLevel)}; requestRender(); return; } // Shift-drag = fill a rectangle
+    pushUndo(); painting=true; stampLevel(cx,cy); return; }
+  if(t==='place'){ if(cx<0||cy<0||cx>=state.map.w||cy>=state.map.h)return; // don't drop objects off-grid (margin clicks floor to -1)
+    if(state.placeMode==='npc'){ if(!state.npcKey){ toast('Pick an NPC from the left panel first'); return; } pushUndo(); placeNpc(state.npcKey,cx,cy); }
+    else { if(!state.propKey){ toast('Pick a prop/building from the left panel first'); return; } pushUndo(); placeProp(state.propKey,cx,cy);
+      state.placeStroke={sprite:state.propKey,x:cx,y:cy,n:1,spacing:Math.max(1,Math.round(propTiles({sprite:state.propKey}).w))}; } return; }
+  if(t==='sign'){ pushUndo(); state.map.signs.push({x:cx+0.5,y:cy+0.5,dialogue:'placeholder'}); state.sel={kind:'sign',i:state.map.signs.length-1}; refreshInspector();refreshLayers();requestRender();scheduleAutosave(); return; }
+  if(t==='phone'||t==='atm'){ pushUndo(); const arr=t==='phone'?state.map.phones:(state.map.atms||(state.map.atms=[])); arr.push({x:cx+0.5,y:cy+0.5}); state.sel={kind:t,i:arr.length-1}; refreshInspector();refreshLayers();requestRender();scheduleAutosave(); return; }
+  if(t==='patrol'){ pushUndo();
+    if(state.patrolEdit==null){ state.map.patrols.push({id:'patrol_'+(state.map.patrols.length+1),enemy:'',route:[[cx+0.5,cy+0.5]]}); state.patrolEdit=state.map.patrols.length-1; state.sel={kind:'patrol',i:state.patrolEdit}; }
+    else { state.map.patrols[state.patrolEdit].route.push([cx+0.5,cy+0.5]); }
+    refreshInspector();refreshLayers();requestRender();scheduleAutosave(); return; }
+  if(t==='select'){
+    // grab a selected object's resize handle → drag to size it (corner = both, right = wider, bottom/top = taller).
+    // Works on buildings, props (unrotated) AND npcs; props/facades anchor at the top-left, npcs at the feet.
+    if(state.sel&&state.multi.length<=1){ const near=(hx,hy)=>Math.abs(tx-hx)<0.7&&Math.abs(ty-hy)<0.7;
+      if(state.sel.kind==='prop'){ const sp=state.map.props[state.sel.i];
+        if(sp&&!sp.rot){ const bt=propTiles(sp), nat=naturalTiles(sp);
+          const axis=near(sp.x+bt.w,sp.y+bt.h)?'both':near(sp.x+bt.w,sp.y+bt.h/2)?'x':near(sp.x+bt.w/2,sp.y+bt.h)?'y':null;
+          if(axis){ state.resize={o:sp,mode:'tl',fw:nat.w,fh:nat.h,axis,undone:false}; return; } } }
+      else if(state.sel.kind==='npc'){ const np=state.map.npcs[state.sel.i]; const b=npcBox(np);
+        const axis=near(b.left+b.w,b.top)?'both':near(b.left+b.w,b.top+b.h/2)?'x':near(b.left+b.w/2,b.top)?'y':null;
+        if(axis){ state.resize={o:np,mode:'feet',fw:b.natW,fh:b.natH,axis,undone:false}; return; } } }
+    const hit=hitTest(tx,ty);
+    if(hit){ const inGroup=state.multi.length>1&&state.multi.some(r=>r.kind===hit.kind&&r.i===hit.i);
+      if(!inGroup){ state.sel=hit; state.multi=[hit]; refreshInspector(); refreshLayers(); }
+      // drag the whole selection together: snapshot each member's position
+      state.drag={sx:mx,sy:my,undone:false,hasReflect:state.multi.some(r=>r.kind==='reflect'),movers:state.multi.map(r=>{const o=objByRef(r);return o?captureMove(r.kind,o):null;}).filter(Boolean)};
+      requestRender();
+    } else { state.marquee={x0:tx,y0:ty,x1:tx,y1:ty}; state.sel=null; state.multi=[]; refreshInspector(); }
+    return; }
+  if(t==='door'||t==='spawn'||t==='trigger'||t==='reflect'){ zoneStart=[cx,cy,t]; return; }
 });
 addEventListener('mousemove',e=>{ const r=cv.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top;
   if(mx<0||my<0||mx>r.width||my>r.height){ hoverTile=null; } else { const [tx,ty]=toTile(mx,my); hoverTile=[tx,ty];
     $('#statXY').textContent=`x ${Math.floor(tx)}, y ${Math.floor(ty)}`; }
   if(panning&&panStart){ state.view.ox=panStart[2]+(mx-panStart[0]); state.view.oy=panStart[3]+(my-panStart[1]); requestRender(); return; }
+  if(state.rectPaint){ const [tx,ty]=toTile(mx,my); state.rectPaint.x1=Math.floor(tx); state.rectPaint.y1=Math.floor(ty); requestRender(); return; }
+  if(state.marquee){ const [tx,ty]=toTile(mx,my); state.marquee.x1=tx; state.marquee.y1=ty; requestRender(); return; }
+  if(state.placeStroke){ const [tx,ty]=toTile(mx,my); const cx=Math.floor(tx),cy=Math.floor(ty); const ps=state.placeStroke; // drag the Place tool = lay a spaced line of props
+    if(cx>=0&&cy>=0&&cx<state.map.w&&cy<state.map.h&&Math.max(Math.abs(cx-ps.x),Math.abs(cy-ps.y))>=ps.spacing){ dropProp(ps.sprite,cx,cy); ps.x=cx; ps.y=cy; ps.n++; } return; }
+  if(state.resize){ const [tx,ty]=toTile(mx,my); const rz=state.resize; if(!rz.undone){ pushUndo(); rz.undone=true; } // drag an edge/corner = size the prop/building/npc
+    const cur=propScale(rz.o); let sx=cur.x, sy=cur.y;
+    if(rz.mode==='feet'){ const feetX=rz.o.x+0.5, feetY=rz.o.y+1; // NPCs grow UP from the feet, centred on x
+      if(rz.axis==='x'||rz.axis==='both') sx=Math.abs(tx-feetX)/(rz.fw/2);
+      if(rz.axis==='y'||rz.axis==='both') sy=(feetY-ty)/rz.fh;
+    } else { // props/facades grow DOWN-RIGHT from the top-left lot corner
+      if(rz.axis==='x'||rz.axis==='both') sx=(tx-rz.o.x)/rz.fw;
+      if(rz.axis==='y'||rz.axis==='both') sy=(ty-rz.o.y)/rz.fh;
+    }
+    if(rz.axis==='both') sy=sx; // corner = uniform (width-driven)
+    setPropScale(rz.o,sx,sy); refreshInspector(); requestRender(); return; }
   if(painting){ const [tx,ty]=toTile(mx,my); const cx=Math.floor(tx),cy=Math.floor(ty);
-    if(state.tool==='elevate') setLevel(cx,cy,String(state.paintLevel)); else stamp(cx,cy,state.tool==='erase'?'.':state.tileChar); }
-  else if(state.drag&&state.sel){ const a=state.drag.kind==='npc'?state.map.npcs[state.sel.i]:state.map.props[state.sel.i];
-    if(a){ a.x=Math.round((state.drag.ox+(mx-state.drag.sx)/TS())*2)/2; a.y=Math.round((state.drag.oy+(my-state.drag.sy)/TS())*2)/2;
-      refreshInspector(); requestRender(); } }
-  else requestRender();
+    if(state.tool==='elevate') stampLevel(cx,cy); else stamp(cx,cy,state.tool==='erase'?'.':state.tileChar); }
+  else if(state.drag&&state.drag.movers){ if(!state.drag.undone){ pushUndo(); state.drag.undone=true; } // move the whole selection by the snapped delta
+    const u=state.drag.hasReflect?1:0.5; // whole-tile snap when a reflect (int-only) is in the group, else half-tile
+    const dx=Math.round((mx-state.drag.sx)/TS()/u)*u, dy=Math.round((my-state.drag.sy)/TS()/u)*u;
+    state.drag.movers.forEach(mv=>mv(dx,dy)); refreshInspector(); requestRender(); }
+  else { // bare hover: only re-render when the floored tile actually changes (the ghost + statXY snap to tiles)
+    const f = hoverTile?[Math.floor(hoverTile[0]),Math.floor(hoverTile[1])]:[NaN,NaN];
+    if(f[0]!==prevHoverF[0]||f[1]!==prevHoverF[1]){ prevHoverF=f; requestRender(); } }
 });
-addEventListener('mouseup',e=>{ painting=false; panning=false; state.drag=null;
-  if(zoneStart){ const [tx,ty]=toTile(e.clientX-cv.getBoundingClientRect().left,e.clientY-cv.getBoundingClientRect().top);
+addEventListener('mouseup',e=>{ const wasDrag=state.drag&&state.drag.undone; painting=false; panning=false; state.drag=null;
+  if(wasDrag){ refreshLayers(); scheduleAutosave(); } // a completed object drag: refresh the panel's coords
+  if(state.resize){ state.resize=null; refreshLayers(); scheduleAutosave(); return; } // finished a building resize
+  if(state.placeStroke){ const ps=state.placeStroke; state.placeStroke=null; if(ps.n>1){ state.sel={kind:'prop',i:state.map.props.length-1}; refreshInspector(); refreshLayers(); scheduleAutosave(); toast(`Placed ${ps.n} ${ps.sprite}`); } return; }
+  const r=cv.getBoundingClientRect(); const [tx,ty]=toTile(e.clientX-r.left,e.clientY-r.top);
+  if(state.rectPaint){ const rp=state.rectPaint; state.rectPaint=null; pushUndo();
+    if(rp.level!=null) fillLevelRect(rp.x0,rp.y0,Math.floor(tx),Math.floor(ty),rp.level); else fillRect(rp.x0,rp.y0,Math.floor(tx),Math.floor(ty),rp.ch);
+    requestRender(); return; }
+  if(state.marquee){ const mq=state.marquee; state.marquee=null; selectInMarquee(mq); requestRender(); return; }
+  if(zoneStart){ const kind=zoneStart[2];
     const x0=Math.min(zoneStart[0],Math.floor(tx)),y0=Math.min(zoneStart[1],Math.floor(ty));
     const w=Math.abs(Math.floor(tx)-zoneStart[0])+1,h=Math.abs(Math.floor(ty)-zoneStart[1])+1;
-    if(state.tool==='door'){ state.map.doors.push({x:x0,y:y0,w,h,to:'',tx:0,ty:0,facing:'down',indicator:'mat'}); state.sel={kind:'door',i:state.map.doors.length-1}; }
-    else{ state.map.spawners.push({enemies:[],count:2,rect:{x:x0,y:y0,w,h}}); state.sel={kind:'spawn',i:state.map.spawners.length-1}; }
-    zoneStart=null; refreshInspector(); refreshLayers(); requestRender(); }
+    zoneStart=null; pushUndo();
+    if(kind==='door'){ state.map.doors.push({x:x0,y:y0,w,h,to:'',tx:0,ty:0,facing:'down',indicator:'mat'}); state.sel={kind:'door',i:state.map.doors.length-1}; }
+    else if(kind==='spawn'){ state.map.spawners.push({enemies:[],count:2,rect:{x:x0,y:y0,w,h}}); state.sel={kind:'spawn',i:state.map.spawners.length-1}; }
+    else if(kind==='trigger'){ state.map.triggers.push({id:'trigger_'+(state.map.triggers.length+1),rect:{x:x0,y:y0,w,h},once:true}); state.sel={kind:'trigger',i:state.map.triggers.length-1}; }
+    else if(kind==='reflect'){ const rx=Math.max(0,x0),ry=Math.max(0,y0); // ReflectZoneSchema needs int ≥0, in-bounds
+      state.map.reflect.push({x:rx,y:ry,w:Math.min(w,state.map.w-rx),h:Math.min(h,state.map.h-ry)}); state.sel={kind:'reflect',i:state.map.reflect.length-1}; }
+    refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
 });
 cv.addEventListener('wheel',e=>{ e.preventDefault(); const r=cv.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top; const [tx,ty]=toTile(mx,my);
   const f=e.deltaY<0?1.12:1/1.12; state.view.zoom=Math.max(.3,Math.min(4,state.view.zoom*f));
   const [nsx,nsy]=toScreen(tx,ty); state.view.ox+=mx-nsx; state.view.oy+=my-nsy; requestRender(); },{passive:false});
+// zoom around the viewport CENTRE (the −/+ toolbar buttons)
+function zoomBy(f){ const r=cv.getBoundingClientRect(); const mx=r.width/2,my=r.height/2; const [tx,ty]=toTile(mx,my);
+  state.view.zoom=Math.max(.3,Math.min(4,state.view.zoom*f)); const [nsx,nsy]=toScreen(tx,ty); state.view.ox+=mx-nsx; state.view.oy+=my-nsy; requestRender(); }
 
 function setCell(x,y,ch){ const m=state.map; if(x<0||y<0||x>=m.w||y>=m.h)return; if(m.grid[y][x]===ch)return;
   m.grid[y][x]=ch; requestRender(); scheduleAutosave(); }
@@ -446,10 +692,35 @@ function setCell(x,y,ch){ const m=state.map; if(x<0||y<0||x>=m.w||y>=m.h)return;
 function brushOffsets(){ const r=state.brush-1; const t=(r+0.5)*(r+0.5); const out=[];
   for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++) if(dx*dx+dy*dy<=t) out.push([dx,dy]); return out; }
 function stamp(cx,cy,ch){ for(const [dx,dy] of brushOffsets()) setCell(cx+dx,cy+dy,ch); }
-function setBrush(n){ state.brush=Math.max(1,Math.min(3,n));
+function setBrush(n){ state.brush=Math.max(1,Math.min(4,n));
   $$('.brush').forEach(b=>b.classList.toggle('primary',+b.dataset.brush===state.brush)); requestRender(); }
+
+// ---------- undo / redo (one snapshot per stroke or discrete action; brush drags coalesce) ----------
+const undoStack=[], redoStack=[]; const UNDO_CAP=50;
+function pushUndo(){ undoStack.push(structuredClone(state.map)); if(undoStack.length>UNDO_CAP)undoStack.shift(); redoStack.length=0; updateUndoButtons(); }
+function undo(){ if(!undoStack.length){toast('Nothing to undo');return;} redoStack.push(structuredClone(state.map)); state.map=undoStack.pop(); afterHistory(); toast('Undo'); }
+function redo(){ if(!redoStack.length){toast('Nothing to redo');return;} undoStack.push(structuredClone(state.map)); state.map=redoStack.pop(); afterHistory(); toast('Redo'); }
+function afterHistory(){ state.sel=null; state.multi=[]; state.marquee=null; state.patrolEdit=null; state.rectPaint=null;
+  state.drag=null; painting=false; zoneStart=null; // abort any in-flight pointer gesture (undo/redo mid-drag)
+  $('#mName').value=state.map.name; $('#mId').value=state.map.id; $('#mW').value=state.map.w; $('#mH').value=state.map.h;
+  if($('#settingsModal').classList.contains('on')) buildSettingsForm(); updateUndoButtons();
+  refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
+
+// ---------- fill (bucket) + filled-rectangle tile tools ----------
+function floodFill(cx,cy,ch){ const m=state.map; if(cx<0||cy<0||cx>=m.w||cy>=m.h)return; const from=m.grid[cy][cx]; if(from===ch)return;
+  const stack=[[cx,cy]]; while(stack.length){ const [x,y]=stack.pop(); if(x<0||y<0||x>=m.w||y>=m.h||m.grid[y][x]!==from)continue;
+    m.grid[y][x]=ch; stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]); } requestRender(); scheduleAutosave(); }
+function fillRect(x0,y0,x1,y1,ch){ const m=state.map; const ax=Math.max(0,Math.min(x0,x1)),ay=Math.max(0,Math.min(y0,y1));
+  const bx=Math.min(m.w-1,Math.max(x0,x1)),by=Math.min(m.h-1,Math.max(y0,y1));
+  for(let y=ay;y<=by;y++)for(let x=ax;x<=bx;x++)m.grid[y][x]=ch; requestRender(); scheduleAutosave(); }
 function setLevel(x,y,d){ const m=state.map; if(x<0||y<0||x>=m.w||y>=m.h||!m.level[y])return; if(m.level[y][x]===d)return;
   m.level[y][x]=d; requestRender(); scheduleAutosave(); }
+// stamp the current paintLevel under the BRUSH disc (elevate honours brush size, like paint/erase)
+function stampLevel(cx,cy){ for(const [dx,dy] of brushOffsets()) setLevel(cx+dx,cy+dy,String(state.paintLevel)); }
+// flood a whole RECTANGLE with one level (Shift-drag on the Elevate tool → cover a large area fast)
+function fillLevelRect(x0,y0,x1,y1,d){ const m=state.map; const ax=Math.max(0,Math.min(x0,x1)),ay=Math.max(0,Math.min(y0,y1));
+  const bx=Math.min(m.w-1,Math.max(x0,x1)),by=Math.min(m.h-1,Math.max(y0,y1));
+  for(let y=ay;y<=by;y++){ if(!m.level[y])continue; for(let x=ax;x<=bx;x++)m.level[y][x]=d; } requestRender(); scheduleAutosave(); }
 const lvlAt=(x,y)=>+((state.map.level[y]&&state.map.level[y][x])||'0');
 const isSolidCell=(x,y)=>{ const l=legendByChar.get(state.map.grid[y]&&state.map.grid[y][x]); return !!(l&&l.solid); };
 // the game's "no invisible ledge" law: two adjacent WALKABLE cells of different level must meet
@@ -470,7 +741,7 @@ function ledgeCount(){ const m=state.map; let n=0;
       const a=lvlAt(x,y),b=lvlAt(nx,ny); if(a===b)continue;
       const isStair=m.grid[y][x]==='T'||m.grid[ny][nx]==='T'; if(!(isStair&&Math.abs(a-b)===1))n++; } } return n; }
 function buildElevatePane(){ const pane=$('#pane-elevate');
-  pane.innerHTML=`<div class="hint" style="padding:2px 2px 8px">Build terraces: pick a <b>level</b> and paint the raised area, wall its edge with a <b>cliff (K)</b>, and cut a <b>stairway (T)</b> to climb it. Turn on the <b>levels</b> overlay (top bar) — heights tint by colour and illegal edges glow red.</div>`;
+  pane.innerHTML=`<div class="hint" style="padding:2px 2px 8px">Build terraces: pick a <b>level</b> and paint the raised area — use a bigger <b>brush</b> (top bar) or <b>Shift-drag a rectangle</b> to fill a large area fast — then wall its edge with a <b>cliff (K)</b> and cut a <b>stairway (T)</b> to climb it. The height overlay (tint + numbers) shows while Elevate is active and <b>auto-hides when you switch tools</b>; the <b>levels</b> checkbox (top bar) toggles it manually.</div>`;
   const t1=document.createElement('div'); t1.className='grpTitle'; t1.textContent='terrace level — paint the plane'; pane.appendChild(t1);
   const lw=document.createElement('div'); lw.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px';
   ['0','1','2','3','4'].forEach(n=>{ const b=document.createElement('button'); b.className='btn'+(n==='1'?' primary':''); b.textContent=n==='0'?'Ground 0':'Level '+n;
@@ -490,54 +761,153 @@ function buildElevatePane(){ const pane=$('#pane-elevate');
   chk.onclick=()=>{ state.levelsOn=true; $('#tLevels').checked=true; const n=ledgeCount(); requestRender(); toast(n?`${n} illegal edge${n>1?'s':''} (red)`:'All terrace edges legal ✓'); };
   pane.appendChild(chk);
 }
-function placeProp(key,x,y){ const solid=isFacadeKey(key)?undefined:(propMeta(key).solidDefault?autoSolid(key):undefined);
-  const pl={sprite:key,x,y}; if(solid)pl.solid=solid; if(isFacadeKey(key))pl.scale=4;
-  state.map.props.push(pl); state.sel={kind:'prop',i:state.map.props.length-1};
+function propObj(key,x,y){ const solid=isFacadeKey(key)?undefined:(propMeta(key)?.solidDefault?autoSolid(key):undefined);
+  const pl={sprite:key,x,y}; if(solid)pl.solid=solid; return pl; } // facades default to natural size (scale 1×, no field)
+function placeProp(key,x,y){ state.map.props.push(propObj(key,x,y)); state.sel={kind:'prop',i:state.map.props.length-1};
   refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
+// lightweight drop for a Place-tool DRAG (line/forest of props) — no per-drop select/refresh (done once on mouseup)
+function dropProp(key,x,y){ state.map.props.push(propObj(key,x,y)); requestRender(); }
 function placeNpc(sprite,x,y){ let n=1; const ids=new Set(state.map.npcs.map(o=>o.id)); while(ids.has(sprite+'_'+n))n++;
   state.map.npcs.push({id:sprite+'_'+n,sprite,x,y,facing:'down',dialogue:'placeholder'});
   state.sel={kind:'npc',i:state.map.npcs.length-1}; refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
-function selectAt(tx,ty){ const m=state.map;
-  for(let i=m.signs.length-1;i>=0;i--){ const s=m.signs[i]; if(Math.abs(tx-s.x)<0.6&&Math.abs(ty-s.y)<0.6){ state.sel={kind:'sign',i}; refreshInspector();refreshLayers();requestRender();return; } }
-  for(let i=m.npcs.length-1;i>=0;i--){ const p=m.npcs[i]; if(tx>=p.x&&tx<=p.x+1&&ty>=p.y-0.4&&ty<=p.y+1){ state.sel={kind:'npc',i}; refreshInspector();refreshLayers();requestRender();return; } }
-  for(let i=m.props.length-1;i>=0;i--){ const p=m.props[i]; const t=propTiles(p);
-    if(tx>=p.x&&tx<=p.x+t.w&&ty>=p.y&&ty<=p.y+t.h){ state.sel={kind:'prop',i}; refreshInspector();refreshLayers();requestRender();return; } }
-  for(let i=m.doors.length-1;i>=0;i--){ const d=m.doors[i]; if(tx>=d.x&&tx<=d.x+d.w&&ty>=d.y&&ty<=d.y+d.h){ state.sel={kind:'door',i}; refreshInspector();refreshLayers();requestRender();return; } }
-  for(let i=m.spawners.length-1;i>=0;i--){ const s=m.spawners[i].rect; if(tx>=s.x&&tx<=s.x+s.w&&ty>=s.y&&ty<=s.y+s.h){ state.sel={kind:'spawn',i}; refreshInspector();refreshLayers();requestRender();return; } }
-  state.sel=null; refreshInspector(); refreshLayers(); requestRender();
-}
-addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
-  if((e.key==='Delete'||e.key==='Backspace')&&state.sel){ deleteSel(); }
+function selectAt(tx,ty){ const hit=hitTest(tx,ty); if(hit){ state.sel=hit; state.multi=[hit]; } else { state.sel=null; state.multi=[]; }
+  refreshInspector(); refreshLayers(); requestRender(); }
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ const md=document.querySelector('.modal.on'); if(md){ md.classList.remove('on'); e.preventDefault(); return; } }
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if(document.querySelector('.modal.on'))return; // a modal is open — don't mutate the hidden map behind it
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); return; }
+  if(ctrl&&e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); return; }
+  if(ctrl&&e.key.toLowerCase()==='d'){ e.preventDefault(); duplicateSel(); return; }
+  if(ctrl)return; // leave other Ctrl combos (copy/reload/…) to the browser
+  if(e.key==='Escape'){ let did=false; if(state.patrolEdit!=null){ state.patrolEdit=null; did=true; toast('Patrol finished'); } if(state.rectPaint){ state.rectPaint=null; did=true; } if(did)requestRender(); return; }
+  if((e.key==='Delete'||e.key==='Backspace')&&state.sel){ deleteSel(); return; }
+  if(e.key.startsWith('Arrow')&&state.sel){ e.preventDefault(); nudgeSel(e.key,e.shiftKey?0.5:1); return; }
   if(e.key==='['){ setBrush(state.brush-1); return; }
   if(e.key===']'){ setBrush(state.brush+1); return; }
-  const k=e.key.toLowerCase(); const map={b:'paint',e:'erase',p:'place',v:'select',d:'door',s:'spawn',h:'pan'};
-  if(map[k]){ setTool(map[k]); } });
-function deleteSel(){ if(!state.sel)return; const {kind,i}=state.sel;
-  if(kind==='prop')state.map.props.splice(i,1); if(kind==='door')state.map.doors.splice(i,1); if(kind==='spawn')state.map.spawners.splice(i,1);
-  if(kind==='npc')state.map.npcs.splice(i,1); if(kind==='sign')state.map.signs.splice(i,1);
-  state.sel=null; refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
+  if((e.key==='r'||e.key==='R')&&state.sel&&state.sel.kind==='prop'){ rotateSel(); return; } // rotate the selected prop 90°
+  const k=e.key.toLowerCase(); const map={b:'paint',f:'fill',e:'erase',p:'place',v:'select',d:'door',s:'spawn',t:'trigger',h:'pan'};
+  if(map[k]){ pickTool(map[k]); } });
+function selRefs(){ return state.multi.length?state.multi:(state.sel?[state.sel]:[]); }
+function nudgeSel(key,d){ const refs=selRefs(); if(!refs.length)return;
+  if(d<1&&refs.some(r=>r.kind==='reflect'))d=1; // reflect is int-only → whole-tile step keeps a mixed group aligned
+  const dx=key==='ArrowLeft'?-d:key==='ArrowRight'?d:0, dy=key==='ArrowUp'?-d:key==='ArrowDown'?d:0;
+  pushUndo(); refs.forEach(ref=>shiftObj(ref.kind,objByRef(ref),dx,dy));
+  refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
+function rotateSel(){ if(!state.sel||state.sel.kind!=='prop')return; const p=state.map.props[state.sel.i];
+  if(!p)return; if(isFacadeKey(p.sprite)){ toast("Buildings don't rotate — use the size handles"); return; }
+  pushUndo(); const r=((p.rot||0)+90)%360; if(r===0)delete p.rot; else p.rot=r;
+  refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); toast('Rotated → '+(p.rot||0)+'°'); }
+function selObj(){ const s=state.sel; if(!s)return null; const m=state.map;
+  const arr={prop:m.props,npc:m.npcs,sign:m.signs,phone:m.phones,atm:m.atms,door:m.doors,spawn:m.spawners,trigger:m.triggers,patrol:m.patrols,reflect:m.reflect}[s.kind];
+  return arr?arr[s.i]:null; }
+const KIND_ARR=m=>({prop:m.props,npc:m.npcs,sign:m.signs,phone:m.phones,atm:m.atms,door:m.doors,spawn:m.spawners,trigger:m.triggers,patrol:m.patrols,reflect:m.reflect});
+const objByRef=(ref)=>ref?KIND_ARR(state.map)[ref.kind]?.[ref.i]:null;
+// the object's footprint box [x,y,w,h] in tiles (for marquee overlap-testing — a box over the drawn body selects it)
+function objFootprint(kind,o){ if(kind==='spawn'||kind==='trigger')return [o.rect.x,o.rect.y,o.rect.w,o.rect.h];
+  if(kind==='door'||kind==='reflect')return [o.x,o.y,o.w,o.h]; if(kind==='prop'){ const t=propBox(o); return [o.x,o.y,t.w,t.h]; }
+  if(kind==='npc'){ const b=npcBox(o); return [b.left,b.top,b.w,b.h]; } return [o.x-0.6,o.y-0.6,1.2,1.2]; } // sign/phone/atm points
+// shift ONE object by (dx,dy) tiles, matching each kind's coordinate shape (arrow-nudge / group move)
+function shiftObj(kind,o,dx,dy){ if(!o)return;
+  if(kind==='spawn'||kind==='trigger'){ o.rect.x+=dx; o.rect.y+=dy; }
+  else if(kind==='patrol'){ o.route=o.route.map(([x,y])=>[x+dx,y+dy]); }
+  else if(kind==='reflect'){ o.x=Math.max(0,Math.round(o.x+dx)); o.y=Math.max(0,Math.round(o.y+dy)); }
+  else { o.x+=dx; o.y+=dy; } }
+// snapshot an object's position and return an absolute setter apply(dx,dy) (drag: no rounding drift)
+function captureMove(kind,o){
+  if(kind==='spawn'||kind==='trigger'){ const ox=o.rect.x,oy=o.rect.y; return (dx,dy)=>{ o.rect.x=ox+dx; o.rect.y=oy+dy; }; }
+  if(kind==='patrol'){ const r=o.route.map(p=>[...p]); return (dx,dy)=>{ o.route=r.map(([x,y])=>[x+dx,y+dy]); }; }
+  const ox=o.x,oy=o.y, cl=kind==='reflect'; return (dx,dy)=>{ o.x=cl?Math.max(0,Math.round(ox+dx)):ox+dx; o.y=cl?Math.max(0,Math.round(oy+dy)):oy+dy; }; } // reflect stays int≥0 (matches shiftObj)
+// pure hit-test: the TOPMOST object under (tx,ty), or null (no side effects)
+function hitTest(tx,ty){ const m=state.map;
+  const nearPt=(s)=>Math.abs(tx-s.x)<0.6&&Math.abs(ty-s.y)<0.6, inRect=(s)=>tx>=s.x&&tx<=s.x+s.w&&ty>=s.y&&ty<=s.y+s.h;
+  for(let i=m.signs.length-1;i>=0;i--) if(nearPt(m.signs[i])) return {kind:'sign',i};
+  for(let i=(m.phones||[]).length-1;i>=0;i--) if(nearPt(m.phones[i])) return {kind:'phone',i};
+  for(let i=(m.atms||[]).length-1;i>=0;i--) if(nearPt(m.atms[i])) return {kind:'atm',i};
+  for(let i=(m.patrols||[]).length-1;i>=0;i--) if((m.patrols[i].route||[]).some(([x,y])=>Math.abs(tx-x)<0.5&&Math.abs(ty-y)<0.5)) return {kind:'patrol',i};
+  for(let i=m.npcs.length-1;i>=0;i--){ const b=npcBox(m.npcs[i]); if(tx>=b.left&&tx<=b.left+b.w&&ty>=b.top&&ty<=b.feetY) return {kind:'npc',i}; }
+  for(let i=m.props.length-1;i>=0;i--){ const p=m.props[i]; const b=propBox(p); if(tx>=p.x&&tx<=p.x+b.w&&ty>=p.y&&ty<=p.y+b.h) return {kind:'prop',i}; }
+  for(let i=m.doors.length-1;i>=0;i--) if(inRect(m.doors[i])) return {kind:'door',i};
+  for(let i=m.spawners.length-1;i>=0;i--) if(inRect(m.spawners[i].rect)) return {kind:'spawn',i};
+  for(let i=(m.triggers||[]).length-1;i>=0;i--) if(inRect(m.triggers[i].rect)) return {kind:'trigger',i};
+  for(let i=(m.reflect||[]).length-1;i>=0;i--) if(inRect(m.reflect[i])) return {kind:'reflect',i};
+  return null; }
+// finalize a marquee drag → select every object whose anchor falls inside the box
+function selectInMarquee(mq){ const x0=Math.min(mq.x0,mq.x1),y0=Math.min(mq.y0,mq.y1),x1=Math.max(mq.x0,mq.x1),y1=Math.max(mq.y0,mq.y1);
+  if((x1-x0)<0.3&&(y1-y0)<0.3){ state.sel=null; state.multi=[]; refreshInspector();refreshLayers(); return; } // a click, not a box → clear
+  const m=state.map, hits=[]; const overlaps=(b)=>b[0]<x1&&b[0]+b[2]>x0&&b[1]<y1&&b[1]+b[3]>y0;
+  const scan=(kind,arr)=>arr&&arr.forEach((o,i)=>{ if(kind==='patrol'){ if((o.route||[]).some(([px,py])=>px>=x0&&px<=x1&&py>=y0&&py<=y1)) hits.push({kind,i}); }
+    else if(overlaps(objFootprint(kind,o))) hits.push({kind,i}); });
+  scan('prop',m.props);scan('npc',m.npcs);scan('sign',m.signs);scan('phone',m.phones);scan('atm',m.atms);scan('door',m.doors);scan('spawn',m.spawners);scan('trigger',m.triggers);scan('patrol',m.patrols);scan('reflect',m.reflect);
+  state.multi=hits; state.sel=hits[0]||null; refreshInspector(); refreshLayers();
+  toast(hits.length?`Selected ${hits.length} object${hits.length>1?'s':''} — drag or arrow-keys to move`:'Nothing in the box'); }
+// group delete (indices spliced high→low per array so they don't shift)
+function deleteMulti(){ if(!state.multi.length)return; pushUndo(); const m=state.map, byKind={};
+  state.multi.forEach(r=>(byKind[r.kind]??=[]).push(r.i));
+  for(const kind in byKind){ const arr=KIND_ARR(m)[kind]; byKind[kind].sort((a,b)=>b-a).forEach(i=>arr.splice(i,1)); }
+  if(state.patrolEdit!=null){ const rm=byKind['patrol']||[]; if(rm.includes(state.patrolEdit))state.patrolEdit=null; else state.patrolEdit-=rm.filter(i=>i<state.patrolEdit).length; } // don't cancel an unrelated in-progress patrol
+  state.multi=[]; state.sel=null; refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
+// screen box for a selected object (dashed group-highlight)
+function objScreenBox(ref){ const o=objByRef(ref); if(!o)return null; const ts=TS();
+  if(ref.kind==='spawn'||ref.kind==='trigger'){ const [sx,sy]=toScreen(o.rect.x,o.rect.y); return [sx,sy,o.rect.w*ts,o.rect.h*ts]; }
+  if(ref.kind==='reflect'||ref.kind==='door'){ const [sx,sy]=toScreen(o.x,o.y); return [sx,sy,o.w*ts,o.h*ts]; }
+  if(ref.kind==='patrol'){ const p=o.route&&o.route[0]; if(!p)return null; const [sx,sy]=toScreen(p[0]-0.5,p[1]-0.5); return [sx,sy,ts,ts]; }
+  if(ref.kind==='prop'){ const t=propTiles(o); const [sx,sy]=toScreen(o.x,o.y); return [sx,sy,t.w*ts,t.h*ts]; }
+  if(ref.kind==='npc'){ const b=npcBox(o); const [sx,sy]=toScreen(b.left,b.top); return [sx,sy,b.w*ts,b.h*ts]; }
+  const [sx,sy]=toScreen(o.x,o.y); return [sx-ts*0.5,sy-ts,ts,ts]; } // sign/phone/atm ≈ 1 tile at the feet
+function drawMultiHighlights(){ ctx.save(); ctx.strokeStyle='#5cc8ff'; ctx.lineWidth=2; ctx.setLineDash([5,3]);
+  state.multi.forEach(ref=>{ const b=objScreenBox(ref); if(b)ctx.strokeRect(b[0],b[1],b[2],b[3]); }); ctx.restore(); }
+function drawMarquee(){ const mq=state.marquee; const [sx,sy]=toScreen(Math.min(mq.x0,mq.x1),Math.min(mq.y0,mq.y1));
+  const w=Math.abs(mq.x1-mq.x0)*TS(), h=Math.abs(mq.y1-mq.y0)*TS(); ctx.save(); ctx.fillStyle='rgba(92,200,255,.12)'; ctx.fillRect(sx,sy,w,h);
+  ctx.strokeStyle='#5cc8ff'; ctx.lineWidth=1.5; ctx.setLineDash([5,4]); ctx.strokeRect(sx,sy,w,h); ctx.restore(); }
+function updateUndoButtons(){ const u=$('#undoBtn'),r=$('#redoBtn'); if(u)u.disabled=!undoStack.length; if(r)r.disabled=!redoStack.length; }
+function duplicateSel(){ const refs=selRefs(); if(!refs.length)return; pushUndo(); const m=state.map, newRefs=[];
+  refs.forEach(ref=>{ const arr=KIND_ARR(m)[ref.kind]; const src=arr&&arr[ref.i]; if(!src)return;
+    const copy=structuredClone(src); shiftObj(ref.kind,copy,1,1); // nudge the copy off the original
+    if(copy.id!=null){ const taken=new Set(arr.map(o=>o.id)); let id=copy.id,n=2; while(taken.has(id)){ id=copy.id.replace(/_\d+$/,'')+'_'+n; n++; } copy.id=id; }
+    arr.push(copy); newRefs.push({kind:ref.kind,i:arr.length-1}); });
+  state.multi=newRefs; state.sel=newRefs[0]||null;
+  refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); toast(`Duplicated ${newRefs.length} object${newRefs.length!==1?'s':''}`); }
+function deleteSel(){ if(state.multi.length>1){ deleteMulti(); return; } if(!state.sel)return; const {kind,i}=state.sel; const m=state.map; pushUndo();
+  ({prop:m.props,npc:m.npcs,sign:m.signs,phone:m.phones,atm:m.atms,door:m.doors,spawn:m.spawners,trigger:m.triggers,reflect:m.reflect,patrol:m.patrols})[kind]?.splice(i,1);
+  if(kind==='patrol'&&state.patrolEdit!=null){ if(state.patrolEdit===i)state.patrolEdit=null; else if(state.patrolEdit>i)state.patrolEdit--; }
+  state.sel=null; state.multi=[]; refreshInspector(); refreshLayers(); requestRender(); scheduleAutosave(); }
 
 // ---------- inspector + layers ----------
-function refreshInspector(){ const el=$('#inspector'); const s=state.sel;
-  if(!s){ el.innerHTML='<div class="hint">Select a placed object, door, or spawner to edit it.</div>'; return; }
+function refreshInspector(){ const el=$('#inspector');
+  if(state.multi.length>1){ el.innerHTML=`<div class="hint"><b>${state.multi.length} objects selected.</b><br>Drag them, or use the arrow keys, to move together. <kbd>Ctrl+D</kbd> duplicates · <kbd>Del</kbd> deletes.</div>
+    <div class="row"><button class="btn" id="m_dup">⧉ Duplicate</button><button class="btn" id="m_del">🗑 Delete ${state.multi.length}</button></div>`;
+    $('#m_dup').onclick=duplicateSel; $('#m_del').onclick=deleteSel; return; }
+  const s=state.sel;
+  if(!s){ el.innerHTML='<div class="hint">Select a placed object to edit it — or drag a box with the Select (➤) tool to grab several and move them together.</div>'; return; }
   if(s.kind==='prop'){ const p=state.map.props[s.i]; const fac=isFacadeKey(p.sprite);
     el.innerHTML=`<div class="row"><label>sprite</label><input value="${p.sprite}" disabled></div>
     <div class="row"><label>x (tile)</label><input type="number" step="0.5" id="ip_x" value="${p.x}"></div>
-    <div class="row"><label>y (tile)</label><input type="number" step="0.5" id="ip_y" value="${p.y}"></div>`+
-    (fac?`<div class="row"><label>size (tiles)</label><input type="number" step="0.5" id="ip_sc" value="${p.scale||4}"></div>
-      <div class="hint">Buildings collide as their drawn footprint in-game (auto).</div>`
-     :`<div class="row"><label class="chk"><input type="checkbox" id="ip_solid" ${p.solid?'checked':''}> solid (blocks walking)</label></div>`)+
-    `<div class="row"><button class="btn" id="ip_del">🗑 Delete</button></div>`;
+    <div class="row"><label>y (tile)</label><input type="number" step="0.5" id="ip_y" value="${p.y}"></div>
+    <div class="row"><label>width ×</label><input type="number" step="0.1" min="0.1" id="ip_sx" value="${propScale(p).x}"></div>
+    <div class="row"><label>height ×</label><input type="number" step="0.1" min="0.1" id="ip_sy" value="${propScale(p).y}"></div>
+    <div class="hint">Resize — width &amp; height independently (only wider / only taller), or drag the <b>edge / corner handles</b> on the map${p.rot?' (set rotate back to 0° to use the handles)':''}. In-game size &amp; collision scale with it. 1 = natural.</div>`+
+    (fac?``
+     :`<div class="row"><label class="chk"><input type="checkbox" id="ip_solid" ${p.solid?'checked':''}> solid (blocks walking)</label></div>
+       <div class="row"><label>rotate</label><button class="btn" id="ip_rot">⟳ ${p.rot||0}° (press R)</button></div>`)+
+    `<div class="row"><label>ifFlag</label><input id="ip_iff" value="${p.ifFlag||''}" placeholder="(opt) only if flag set"></div>
+    <div class="row"><label>unlessFlag</label><input id="ip_unf" value="${p.unlessFlag||''}" placeholder="(opt) hide once flag set"></div>
+    <div class="row"><button class="btn" id="ip_del">🗑 Delete</button></div>`;
     $('#ip_x').oninput=e=>{p.x=+e.target.value;requestRender();scheduleAutosave();};
     $('#ip_y').oninput=e=>{p.y=+e.target.value;requestRender();scheduleAutosave();};
-    if(fac)$('#ip_sc').oninput=e=>{p.scale=+e.target.value;requestRender();scheduleAutosave();};
-    else $('#ip_solid').onchange=e=>{ p.solid=e.target.checked?autoSolid(p.sprite):undefined; requestRender();scheduleAutosave(); };
+    $('#ip_sx').oninput=e=>{ const sc=propScale(p); setPropScale(p,+e.target.value||1,sc.y); requestRender();refreshLayers();scheduleAutosave(); };
+    $('#ip_sy').oninput=e=>{ const sc=propScale(p); setPropScale(p,sc.x,+e.target.value||1); requestRender();refreshLayers();scheduleAutosave(); };
+    if(!fac)$('#ip_solid').onchange=e=>{ p.solid=e.target.checked?autoSolid(p.sprite):undefined; requestRender();scheduleAutosave(); };
+    if(!fac)$('#ip_rot').onclick=rotateSel;
+    $('#ip_iff').oninput=e=>{const v=e.target.value.trim(); if(v)p.ifFlag=v; else delete p.ifFlag; scheduleAutosave();};
+    $('#ip_unf').oninput=e=>{const v=e.target.value.trim(); if(v)p.unlessFlag=v; else delete p.unlessFlag; scheduleAutosave();};
     $('#ip_del').onclick=deleteSel;
   } else if(s.kind==='door'){ const d=state.map.doors[s.i];
-    el.innerHTML=`<div class="hint">Door zone → warps the player to another map.</div>
+    el.innerHTML=`<div class="hint">Door zone → warps the player to another map. <b>target x/y are native pixels = tile × 16</b> (tile 6 → 96); the player lands on tile ⌊x/16⌋,⌊y/16⌋.</div>
     <div class="row"><label>to (map id)</label><input id="d_to" value="${d.to}"></div>
-    <div class="row"><label>target x*64</label><input type="number" id="d_tx" value="${d.tx}"></div>
-    <div class="row"><label>target y*64</label><input type="number" id="d_ty" value="${d.ty}"></div>
+    <div class="row"><label>target x (px)</label><input type="number" id="d_tx" value="${d.tx}"></div>
+    <div class="row"><label>target y (px)</label><input type="number" id="d_ty" value="${d.ty}"></div>
     <div class="row"><label>facing</label><select id="d_face">${['down','up','left','right'].map(f=>`<option ${d.facing===f?'selected':''}>${f}</option>`).join('')}</select></div>
     <div class="row"><label>indicator</label><select id="d_ind">${['mat','stairs','elevator','door','none'].map(f=>`<option ${d.indicator===f?'selected':''}>${f}</option>`).join('')}</select></div>
     <div class="row"><button class="btn" id="d_del">🗑 Delete</button></div>`;
@@ -554,53 +924,147 @@ function refreshInspector(){ const el=$('#inspector'); const s=state.sel;
     <div class="row"><label>sprite</label><select id="n_sp">${opts}</select></div>
     <div class="row"><label>x,y</label><input type="number" step="0.5" id="n_x" value="${npc.x}" style="max-width:58px"><input type="number" step="0.5" id="n_y" value="${npc.y}" style="max-width:58px"></div>
     <div class="row"><label>facing</label><select id="n_face">${['down','up','left','right'].map(f=>`<option ${npc.facing===f?'selected':''}>${f}</option>`).join('')}</select></div>
+    <div class="row"><label>size ×</label><input type="number" step="0.1" min="0.2" id="n_sc" value="${propScale(npc).x}"></div>
+    <div class="hint">Resize the NPC (giant or tiny), or drag its <b>edge / corner handles</b> on the map — it scales from the feet, so it stays planted. 1 = natural.</div>
     <div class="row"><label>dialogue</label><input id="n_dlg" value="${npc.dialogue}"></div>
+    <div class="row"><label>dialogueDay</label><input id="n_dlgd" value="${npc.dialogueDay||''}" placeholder="(opt) daytime script"></div>
+    <div class="row"><label class="chk"><input type="checkbox" id="n_stat" ${npc.stationary?'checked':''}> stationary (don't roam)</label></div>
     <div class="row"><label>shop (opt)</label><input id="n_shop" value="${npc.shop||''}"></div>
+    <div class="row"><label>ifFlag</label><input id="n_iff" value="${npc.ifFlag||''}" placeholder="(opt) only if flag set"></div>
+    <div class="row"><label>unlessFlag</label><input id="n_unf" value="${npc.unlessFlag||''}" placeholder="(opt) hide once flag set"></div>
     <div class="row"><button class="btn" id="n_del">🗑 Delete</button></div>`;
     $('#n_id').oninput=e=>{npc.id=e.target.value;refreshLayers();scheduleAutosave();};
     $('#n_sp').onchange=e=>{npc.sprite=e.target.value;requestRender();scheduleAutosave();};
     $('#n_x').oninput=e=>{npc.x=+e.target.value;requestRender();scheduleAutosave();};
     $('#n_y').oninput=e=>{npc.y=+e.target.value;requestRender();scheduleAutosave();};
     $('#n_face').onchange=e=>{npc.facing=e.target.value;scheduleAutosave();};
+    $('#n_sc').oninput=e=>{ const v=+e.target.value||1; setPropScale(npc,v,v); requestRender();refreshLayers();scheduleAutosave(); };
     $('#n_dlg').oninput=e=>{npc.dialogue=e.target.value;scheduleAutosave();};
+    $('#n_dlgd').oninput=e=>{const v=e.target.value.trim(); if(v)npc.dialogueDay=v; else delete npc.dialogueDay; scheduleAutosave();};
+    $('#n_stat').onchange=e=>{ if(e.target.checked)npc.stationary=true; else delete npc.stationary; scheduleAutosave();};
     $('#n_shop').oninput=e=>{const v=e.target.value.trim(); if(v)npc.shop=v; else delete npc.shop; scheduleAutosave();};
+    $('#n_iff').oninput=e=>{const v=e.target.value.trim(); if(v)npc.ifFlag=v; else delete npc.ifFlag; scheduleAutosave();};
+    $('#n_unf').oninput=e=>{const v=e.target.value.trim(); if(v)npc.unlessFlag=v; else delete npc.unlessFlag; scheduleAutosave();};
     $('#n_del').onclick=deleteSel;
   } else if(s.kind==='sign'){ const sg=state.map.signs[s.i];
     el.innerHTML=`<div class="hint">A readable sign. <b>dialogue</b> is a script id from src/data/dialogue.ts. (Place a <i>sign</i> prop too if you want a visible post.)</div>
     <div class="row"><label>dialogue</label><input id="sg_dlg" value="${sg.dialogue}"></div>
+    <div class="row"><label>ifFlag</label><input id="sg_iff" value="${sg.ifFlag||''}" placeholder="(opt) only if flag set"></div>
+    <div class="row"><label>unlessFlag</label><input id="sg_unf" value="${sg.unlessFlag||''}" placeholder="(opt) hide once flag set"></div>
     <div class="row"><button class="btn" id="sg_del">🗑 Delete</button></div>`;
     $('#sg_dlg').oninput=e=>{sg.dialogue=e.target.value;scheduleAutosave();};
+    $('#sg_iff').oninput=e=>{const v=e.target.value.trim(); if(v)sg.ifFlag=v; else delete sg.ifFlag; scheduleAutosave();};
+    $('#sg_unf').oninput=e=>{const v=e.target.value.trim(); if(v)sg.unlessFlag=v; else delete sg.unlessFlag; scheduleAutosave();};
     $('#sg_del').onclick=deleteSel;
-  } else { const s2=state.map.spawners[s.i];
+  } else if(s.kind==='spawn'){ const s2=state.map.spawners[s.i];
     el.innerHTML=`<div class="hint">Enemy spawn zone (random encounters in this rect).</div>
     <div class="row"><label>enemies</label><input id="s_en" value="${(s2.enemies||[]).join(', ')}" placeholder="id1, id2"></div>
-    <div class="row"><label>count</label><input type="number" id="s_ct" value="${s2.count}"></div>
+    <div class="row"><label>count</label><input type="number" min="1" step="1" id="s_ct" value="${s2.count}"></div>
+    <div class="row"><label>ifFlag</label><input id="s_iff" value="${s2.ifFlag||''}" placeholder="(opt) only spawn if flag set"></div>
+    <div class="row"><label>unlessFlag</label><input id="s_unf" value="${s2.unlessFlag||''}" placeholder="(opt) stop once flag set"></div>
     <div class="row"><button class="btn" id="s_del">🗑 Delete</button></div>`;
     $('#s_en').oninput=e=>{s2.enemies=e.target.value.split(',').map(x=>x.trim()).filter(Boolean);requestRender();scheduleAutosave();};
-    $('#s_ct').oninput=e=>{s2.count=+e.target.value;scheduleAutosave();};
+    $('#s_ct').oninput=e=>{s2.count=Math.max(1,Math.round(+e.target.value)||1);scheduleAutosave();};
+    $('#s_iff').oninput=e=>{const v=e.target.value.trim(); if(v)s2.ifFlag=v; else delete s2.ifFlag; scheduleAutosave();};
+    $('#s_unf').oninput=e=>{const v=e.target.value.trim(); if(v)s2.unlessFlag=v; else delete s2.unlessFlag; scheduleAutosave();};
     $('#s_del').onclick=deleteSel;
+  } else if(s.kind==='phone'||s.kind==='atm'){ const p=selObj();
+    el.innerHTML=`<div class="hint">${s.kind==='phone'?'A phone SAVE point.':'An ATM — withdraw / deposit (Prompt 20).'} The player interacts from an adjacent tile.</div>
+    <div class="row"><label>x,y</label><input type="number" step="0.5" id="pt_x" value="${p.x}" style="max-width:64px"><input type="number" step="0.5" id="pt_y" value="${p.y}" style="max-width:64px"></div>
+    <div class="row"><button class="btn" id="pt_del">🗑 Delete</button></div>`;
+    $('#pt_x').oninput=e=>{p.x=+e.target.value;requestRender();scheduleAutosave();};
+    $('#pt_y').oninput=e=>{p.y=+e.target.value;requestRender();scheduleAutosave();};
+    $('#pt_del').onclick=deleteSel;
+  } else if(s.kind==='trigger'){ const t=state.map.triggers[s.i];
+    const ids=[...new Set([...(M.triggerHandlers||[]),...(M.triggerIds||[])])].sort();
+    const badge=(h)=>h?['ok','✅ this id is handled in runTrigger()']:['warn','⚠️ no runTrigger case yet — the zone fires nothing until you add one'];
+    const [bc,bt]=badge((M.triggerHandlers||[]).includes(t.id));
+    el.innerHTML=`<div class="hint">Event zone. <b>What it does is defined in CODE</b> — a <code>case '…'</code> in <code>runTrigger()</code> (src/scenes/OverworldScene.ts) keyed on this id. The editor just places the zone.</div>
+    <div class="row"><label>id</label><input id="tg_id" list="triggerList" value="${escapeHtml(t.id)}" placeholder="e.g. porch"></div>
+    <datalist id="triggerList">${ids.map(h=>`<option value="${escapeHtml(h)}">`).join('')}</datalist>
+    <div class="row"><span class="issue ${bc}" id="tg_badge" style="margin:0;flex:1">${bt}</span></div>
+    <div class="row"><label class="chk"><input type="checkbox" id="tg_once" ${t.once?'checked':''}> once (fires a single time)</label></div>
+    <div class="row"><label>rect</label><span class="hint">${t.rect.x},${t.rect.y} · ${t.rect.w}×${t.rect.h} (Select + arrows nudge)</span></div>
+    <div class="row"><button class="btn" id="tg_del">🗑 Delete</button></div>`;
+    $('#tg_id').oninput=e=>{ t.id=e.target.value; const [c,tx]=badge((M.triggerHandlers||[]).includes(t.id)); const b=$('#tg_badge'); if(b){b.className='issue '+c;b.textContent=tx;} refreshLayers();requestRender();scheduleAutosave(); };
+    $('#tg_once').onchange=e=>{t.once=e.target.checked;requestRender();scheduleAutosave();};
+    $('#tg_del').onclick=deleteSel;
+  } else if(s.kind==='reflect'){ const rf=state.map.reflect[s.i];
+    el.innerHTML=`<div class="hint">Water reflection zone. It must overlap a sea tile — the game mirrors nearby actors below the top edge.</div>
+    <div class="row"><label>rect</label><span class="hint">${rf.x},${rf.y} · ${rf.w}×${rf.h}</span></div>
+    <div class="row"><label>within</label><input type="number" id="rf_within" value="${rf.within??''}" placeholder="3 (default)"></div>
+    <div class="row"><button class="btn" id="rf_del">🗑 Delete</button></div>`;
+    $('#rf_within').oninput=e=>{const v=e.target.value.trim(); if(v)rf.within=Math.max(1,Math.round(+v)); else delete rf.within; scheduleAutosave();};
+    $('#rf_del').onclick=deleteSel;
+  } else if(s.kind==='patrol'){ const p=state.map.patrols[s.i]; const editing=state.patrolEdit===s.i;
+    el.innerHTML=`<div class="hint">Sight-line patrol — walks its route; spotting the player gives chase. <b>enemy</b> is an ENEMIES id.</div>
+    <div class="row"><label>id</label><input id="pa_id" value="${p.id}"></div>
+    <div class="row"><label>enemy</label><input id="pa_en" value="${p.enemy}" placeholder="enemy id"></div>
+    <div class="row"><label>sight</label><input type="number" id="pa_sight" value="${p.sight??''}" placeholder="5 (default)"></div>
+    <div class="row"><label>countFlag</label><input id="pa_cf" value="${p.countFlag||''}" placeholder="(optional)"></div>
+    <div class="row"><label>route</label><span class="hint">${p.route.length} waypoint${p.route.length!==1?'s':''}</span></div>
+    <div class="row"><button class="btn ${editing?'primary':''}" id="pa_edit">${editing?'✓ Finish route':'✎ Add waypoints'}</button><button class="btn" id="pa_clear">⟲ Clear</button></div>
+    <div class="row"><button class="btn" id="pa_del">🗑 Delete</button></div>`;
+    $('#pa_id').oninput=e=>{p.id=e.target.value;refreshLayers();scheduleAutosave();};
+    $('#pa_en').oninput=e=>{p.enemy=e.target.value;requestRender();scheduleAutosave();};
+    $('#pa_sight').oninput=e=>{const v=e.target.value.trim(); if(v)p.sight=Math.max(1,+v); else delete p.sight; scheduleAutosave();};
+    $('#pa_cf').oninput=e=>{const v=e.target.value.trim(); if(v)p.countFlag=v; else delete p.countFlag; scheduleAutosave();};
+    $('#pa_edit').onclick=()=>{ if(state.patrolEdit===s.i)state.patrolEdit=null; else{ state.patrolEdit=s.i; setTool('patrol'); } refreshInspector();requestRender(); };
+    $('#pa_clear').onclick=()=>{ pushUndo(); p.route=p.route.slice(0,1); requestRender();refreshInspector();scheduleAutosave(); };
+    $('#pa_del').onclick=deleteSel;
   }
 }
 function refreshLayers(){ const el=$('#layers'); const m=state.map; let h='';
-  m.props.forEach((p,i)=>h+=`<div class="layer ${sel('prop',i)}" data-k="prop" data-i="${i}"><span>🌳 ${p.sprite} (${p.x},${p.y})</span><span class="del" data-k="prop" data-i="${i}">✕</span></div>`);
-  m.npcs.forEach((p,i)=>h+=`<div class="layer ${sel('npc',i)}" data-k="npc" data-i="${i}"><span>🧍 ${p.id} (${p.x},${p.y})</span><span class="del" data-k="npc" data-i="${i}">✕</span></div>`);
-  m.signs.forEach((s,i)=>h+=`<div class="layer ${sel('sign',i)}" data-k="sign" data-i="${i}"><span>📖 sign (${s.x},${s.y})</span><span class="del" data-k="sign" data-i="${i}">✕</span></div>`);
-  m.doors.forEach((d,i)=>h+=`<div class="layer ${sel('door',i)}" data-k="door" data-i="${i}"><span>🚪 → ${d.to||'?'}</span><span class="del" data-k="door" data-i="${i}">✕</span></div>`);
-  m.spawners.forEach((s,i)=>h+=`<div class="layer ${sel('spawn',i)}" data-k="spawn" data-i="${i}"><span>👾 ${(s.enemies||[]).join(',')||'?'} ×${s.count}</span><span class="del" data-k="spawn" data-i="${i}">✕</span></div>`);
-  el.innerHTML=h||'<div class="hint" style="padding:8px 10px">No objects yet. Place props/NPCs, or use Door / Spawn / Sign.</div>';
+  const inMulti=(k,i)=>state.multi.length>1&&state.multi.some(r=>r.kind===k&&r.i===i);
+  const row=(k,i,label)=>`<div class="layer ${sel(k,i)} ${inMulti(k,i)?'multi':''}" data-k="${k}" data-i="${i}"><span>${label}</span><span class="del" data-k="${k}" data-i="${i}">✕</span></div>`;
+  m.props.forEach((p,i)=>h+=row('prop',i,`🌳 ${p.sprite} (${p.x},${p.y})`));
+  m.npcs.forEach((p,i)=>h+=row('npc',i,`🧍 ${p.id} (${p.x},${p.y})`));
+  m.signs.forEach((s,i)=>h+=row('sign',i,`📖 sign (${s.x},${s.y})`));
+  (m.phones||[]).forEach((s,i)=>h+=row('phone',i,`☎️ phone (${s.x},${s.y})`));
+  (m.atms||[]).forEach((s,i)=>h+=row('atm',i,`🏧 atm (${s.x},${s.y})`));
+  m.doors.forEach((d,i)=>h+=row('door',i,`🚪 → ${d.to||'?'}`));
+  m.spawners.forEach((s,i)=>h+=row('spawn',i,`👾 ${(s.enemies||[]).join(',')||'?'} ×${s.count}`));
+  (m.triggers||[]).forEach((t,i)=>h+=row('trigger',i,`⚡ ${t.id}`));
+  (m.patrols||[]).forEach((p,i)=>h+=row('patrol',i,`🥾 ${p.id} (${(p.route||[]).length}pt)`));
+  (m.reflect||[]).forEach((r,i)=>h+=row('reflect',i,`🪞 reflect (${r.x},${r.y})`));
+  el.innerHTML=h||'<div class="hint" style="padding:8px 10px">No objects yet. Place props/NPCs, or use Door / Spawn / Sign / Trigger / Phone…</div>';
   $$('.layer',el).forEach(l=>l.onclick=e=>{ if(e.target.classList.contains('del')){ const k=e.target.dataset.k,i=+e.target.dataset.i;
-      state.sel={kind:k,i}; deleteSel(); return; } state.sel={kind:l.dataset.k,i:+l.dataset.i}; refreshInspector();refreshLayers();requestRender(); });
-  $('#statCount').textContent=`${m.props.length} props · ${m.npcs.length} NPCs · ${m.doors.length} doors · ${m.spawners.length} spawns`;
+      state.sel={kind:k,i}; state.multi=[state.sel]; deleteSel(); return; } state.sel={kind:l.dataset.k,i:+l.dataset.i}; state.multi=[state.sel]; refreshInspector();refreshLayers();requestRender(); });
+  const parts=[`${m.props.length} props`,`${m.npcs.length} NPCs`,`${m.doors.length} doors`,`${m.spawners.length} spawns`];
+  if((m.triggers||[]).length)parts.push(`${m.triggers.length} triggers`);
+  if((m.phones||[]).length)parts.push(`${m.phones.length} phones`);
+  if((m.atms||[]).length)parts.push(`${m.atms.length} atms`);
+  if((m.patrols||[]).length)parts.push(`${m.patrols.length} patrols`);
+  if((m.reflect||[]).length)parts.push(`${m.reflect.length} reflect`);
+  $('#statCount').textContent=parts.join(' · ');
 }
 const sel=(k,i)=>state.sel&&state.sel.kind===k&&state.sel.i===i?'sel':'';
 
 // ---------- tools + top UI ----------
-function setTool(t){ state.tool=t; $$('.tool').forEach(e=>e.classList.toggle('active',e.dataset.tool===t));
-  $('#statTool').textContent='Tool: '+t; cv.style.cursor=t==='pan'?'grab':(t==='select'?'default':'crosshair'); requestRender(); }
+function activateTab(name){ $$('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));
+  $$('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+name)); }
+function setTool(t){ if(t!=='patrol')state.patrolEdit=null;
+  // the terrace-height overlay (numbers + tint) is a build-time aid: SHOW it while the Elevate tool is
+  // active, and auto-HIDE it the moment you switch to any other tool ("done using them"). The top-bar
+  // "levels" checkbox stays a manual override. (state.tool is still the OLD tool here → detect the exit.)
+  if(t==='elevate') state.levelsOn=true; else if(state.tool==='elevate') state.levelsOn=false;
+  const lc=$('#tLevels'); if(lc)lc.checked=state.levelsOn;
+  state.tool=t; $$('.tool').forEach(e=>e.classList.toggle('active',e.dataset.tool===t));
+  $('#statTool').textContent='Tool: '+t; cv.style.cursor=t==='pan'?'grab':(t==='select'?'default':'crosshair'); syncStatSel(); requestRender(); }
+// switch tool AND sync the left palette to it — for the TOOLBAR + KEYBOARD entry points only.
+// (Palette-swatch clicks call setTool directly: they're already on the right tab, e.g. picking a
+//  cliff tile on the Elevate tab must NOT jump the palette back to Tiles.)
+function pickTool(t){ setTool(t);
+  if(t==='paint'||t==='fill'||t==='erase') activateTab('tiles');
+  else if(t==='place') activateTab(state.placeMode==='npc'?'npcs':(state.propIsFacade?'build':'props')); }
+function syncStatSel(){ const t=state.tool, el=$('#statSel'); if(!el)return;
+  if(t==='paint'||t==='fill'){ const l=legendByChar.get(state.tileChar); el.textContent=`Tile: ${l?l.name:state.tileChar} (${state.tileChar})`; }
+  else if(t==='erase') el.textContent='Erase → grass';
+  else if(t==='place') el.textContent = state.placeMode==='npc' ? (state.npcKey?`Place NPC: ${state.npcKey}`:'Place NPC: (pick one at left)') : (state.propKey?`Place: ${state.propKey}`:'Place: (pick a prop/building at left)');
+  else el.textContent='—'; }
 function wireUI(){
-  $$('.tool').forEach(e=>e.onclick=()=>setTool(e.dataset.tool));
-  $$('.tab').forEach(t=>t.onclick=()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
-    $$('.pane').forEach(p=>p.classList.remove('active')); $('#pane-'+t.dataset.tab).classList.add('active'); });
+  $$('.tool').forEach(e=>e.onclick=()=>pickTool(e.dataset.tool));
+  $$('.tab').forEach(t=>t.onclick=()=>activateTab(t.dataset.tab));
   $('#tGrid').onchange=e=>{state.gridOn=e.target.checked;requestRender();};
   $('#tSolid').onchange=e=>{state.solidOn=e.target.checked;requestRender();};
   $('#tLevels').onchange=e=>{state.levelsOn=e.target.checked;requestRender();};
@@ -614,62 +1078,243 @@ function wireUI(){
   $('#resize').onclick=doResize;
   $('#newMap').onclick=()=>{ if(!confirm('Start a new blank map? (Save first if you want to keep this one.)'))return;
     const w=Math.max(4,+$('#mW').value||30), h=Math.max(4,+$('#mH').value||20);
-    loadMapObj({id:'my_map',name:'MY MAP',w,h,grid:newGrid(w,h),props:[],doors:[],spawners:[]}); toast('New map'); };
-  $('#save').onclick=()=>{localStorage.setItem('mf_mapeditor_save',JSON.stringify(serialize()));toast('Saved');};
-  $('#load').onclick=()=>{const s=localStorage.getItem('mf_mapeditor_save'); if(s){loadMapObj(JSON.parse(s));toast('Loaded');}else toast('No save');};
+    undoStack.length=0; redoStack.length=0; loadMapObj(blankMap(w,h)); toast('New map'); };
+  $('#save').onclick=()=>{ const prev=localStorage.getItem('mf_mapeditor_save');
+    if(prev){ try{ const p=JSON.parse(prev); if(p.id&&p.id!==state.map.id&&!confirm(`Overwrite the saved map "${p.name||p.id}" with "${state.map.name}"?`))return; }catch{} }
+    try{ localStorage.setItem('mf_mapeditor_save',JSON.stringify(serialize())); toast('Saved “'+state.map.name+'”'); }
+    catch{ toast('⚠ Save failed — map too large for browser storage; use ⬇ Export.'); } };
+  $('#load').onclick=()=>{ const s=localStorage.getItem('mf_mapeditor_save'); if(!s){ toast('No save'); return; }
+    if(!confirm('Replace the current map with your last Save? (💾 Save this one first to keep it.)'))return;
+    const o=JSON.parse(s); loadMapObj(o); toast('Loaded “'+(o.name||o.id||'')+'”'); };
+  $('#settingsBtn').onclick=openSettings; $('#settingsClose').onclick=()=>$('#settingsModal').classList.remove('on');
+  $('#checkBtn').onclick=openCheck; $('#checkClose').onclick=()=>$('#checkModal').classList.remove('on'); $('#checkRerun').onclick=openCheck;
+  $('#helpBtn').onclick=()=>$('#helpModal').classList.add('on'); $('#helpClose').onclick=()=>$('#helpModal').classList.remove('on');
+  $('#openMap').onclick=openMapPicker; $('#openClose').onclick=()=>$('#openModal').classList.remove('on'); $('#openSearch').oninput=e=>renderOpenList(e.target.value);
+  $('#zoomOut').onclick=()=>zoomBy(1/1.2); $('#zoomIn').onclick=()=>zoomBy(1.2); $('#fitBtn').onclick=()=>{ fitView(); requestRender(); };
+  $('#undoBtn').onclick=undo; $('#redoBtn').onclick=redo; updateUndoButtons();
+  // stamp each tool button with its keyboard-shortcut badge (discoverability)
+  const TOOL_KEYS={paint:'B',fill:'F',erase:'E',place:'P',select:'V',door:'D',spawn:'S',trigger:'T',pan:'H'};
+  $$('.tool').forEach(t=>{ const k=TOOL_KEYS[t.dataset.tool]; if(k) t.insertAdjacentHTML('beforeend',`<span class="kbd">${k}</span>`); });
+  // inspector edits are their own undo step: snapshot the pre-edit map once per field focus. The
+  // capture-phase listener runs BEFORE the field's own oninput (which mutates state.map), so pushUndo
+  // records the pre-edit state; inspDirty coalesces a whole field's typing into one undo entry.
+  let inspDirty=false;
+  $('#inspector').addEventListener('focusin',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') inspDirty=false; });
+  const inspCommit=e=>{ if(!inspDirty&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')){ inspDirty=true; pushUndo(); } };
+  $('#inspector').addEventListener('input',inspCommit,true); $('#inspector').addEventListener('change',inspCommit,true);
   $('#export').onclick=openExport;
   $('#closeModal').onclick=()=>$('#exportModal').classList.remove('on');
-  $('#copyBtn').onclick=()=>{navigator.clipboard.writeText($('#exportText').value);toast('Copied');};
+  $('#copyBtn').onclick=()=>{ const el=$('#exportText'); navigator.clipboard.writeText(el.value).then(()=>toast('Copied')).catch(()=>{ el.focus(); el.select(); toast('Copy failed — text selected, press Ctrl+C'); }); };
   $('#fmtTs').onclick=()=>{setFmt('ts');}; $('#fmtJson').onclick=()=>{setFmt('json');};
-  $('#importBtn').onclick=()=>{ try{ loadMapObj(JSON.parse($('#exportText').value)); $('#exportModal').classList.remove('on'); toast('Imported'); }catch{ toast('Not valid JSON'); } };
+  $('#importBtn').onclick=()=>{ let o; try{ o=JSON.parse($('#exportText').value); }catch{ toast('Not valid JSON'); return; }
+    if(!confirm('Replace the current map with the imported data?'))return;
+    loadMapObj(o); $('#exportModal').classList.remove('on'); toast('Imported'); };
 }
-function doResize(){ const w=Math.max(4,Math.min(400,+$('#mW').value)), h=Math.max(4,Math.min(400,+$('#mH').value));
-  const ng=newGrid(w,h), nl=newGrid(w,h,'0'); const m=state.map;
+function allObjects(){ const m=state.map; return [...m.props,...m.npcs,...m.signs,...(m.phones||[]),...(m.atms||[]),...m.doors,
+  ...m.spawners.map(s=>s.rect),...(m.triggers||[]).map(t=>t.rect),...(m.reflect||[])]; }
+function doResize(){ const w=Math.max(4,Math.min(400,+$('#mW').value)), h=Math.max(4,Math.min(400,+$('#mH').value)); const m=state.map;
+  if(w<m.w||h<m.h){ // shrinking crops terrain/elevation + can orphan objects — confirm the loss (it stays undoable)
+    const off=allObjects().filter(o=>o.x>=w||o.y>=h).length;
+    if(!confirm(`Shrink to ${w}×${h}? This crops any tiles/elevation outside the new size${off?` and leaves ${off} object(s) off-grid`:''}.`)){ $('#mW').value=m.w; $('#mH').value=m.h; return; } }
+  pushUndo();
+  const ng=newGrid(w,h), nl=newGrid(w,h,'0');
   for(let y=0;y<Math.min(h,m.h);y++)for(let x=0;x<Math.min(w,m.w);x++){ ng[y][x]=m.grid[y][x]; nl[y][x]=(m.level[y]&&m.level[y][x])||'0'; }
   m.w=w;m.h=h;m.grid=ng;m.level=nl; requestRender(); scheduleAutosave(); }
 
 // ---------- serialize / export ----------
 function serialize(){ return JSON.parse(JSON.stringify(state.map)); }
-function loadMapObj(o){ const grid=o.grid.map(r=>Array.isArray(r)?r.slice():r.split(''));
-  const level=(o.level&&o.level.length)?o.level.map(r=>Array.isArray(r)?r.slice():r.split('')):newGrid(o.w,o.h,'0');
-  state.map={id:o.id||'my_map',name:o.name||'MY MAP',w:o.w,h:o.h,grid,level,
-    props:o.props||[],npcs:o.npcs||[],signs:o.signs||[],doors:o.doors||[],spawners:o.spawners||[]};
-  $('#mName').value=state.map.name;$('#mId').value=state.map.id;$('#mW').value=state.map.w;$('#mH').value=state.map.h;
-  state.sel=null; refreshInspector(); refreshLayers(); fitView(); requestRender(); }
+function loadMapObj(o){ // derive W/H from the grid when a raw MapDef (no top-level w/h) is imported
+  const rows=Array.isArray(o.grid)?o.grid:[];
+  const gw=rows.length?(Array.isArray(rows[0])?rows[0].length:String(rows[0]).length):0, gh=rows.length;
+  const w=o.w??gw, h=o.h??gh; const b=blankMap(w,h); // start from full defaults (all arrays + settings)
+  if(rows.length) b.grid=rows.map(r=>Array.isArray(r)?r.slice():r.split(''));
+  if(o.level&&o.level.length) b.level=o.level.map(r=>Array.isArray(r)?r.slice():r.split(''));
+  else if(o.elevation&&o.elevation.level&&o.elevation.level.length) b.level=o.elevation.level.map(r=>r.split('')); // raw MapDef import
+  b.id=o.id||'my_map'; b.name=o.name||'MY MAP'; b.w=w; b.h=h;
+  for(const k of ['props','npcs','signs','phones','atms','doors','spawners','triggers','patrols','reflect']) if(Array.isArray(o[k])) b[k]=o[k];
+  for(const k of ['music','night','interior','settlement','area','ambience','muffle','atmosphere']) if(k in o&&o[k]!=null) b[k]=o[k];
+  state.map=b; undoStack.length=0; redoStack.length=0; updateUndoButtons(); // a freshly loaded map starts with clean undo history
+  $('#mName').value=b.name;$('#mId').value=b.id;$('#mW').value=b.w;$('#mH').value=b.h;
+  state.sel=null; state.multi=[]; state.marquee=null; state.patrolEdit=null; refreshInspector(); refreshLayers(); fitView(); requestRender(); scheduleAutosave(); }
 function fitView(){ const r=cv.getBoundingClientRect(); state.view.zoom=Math.max(.3,Math.min(2,Math.min(r.width/(state.map.w*TILE_BASE),r.height/(state.map.h*TILE_BASE))*.95));
   state.view.ox=(r.width-state.map.w*TS())/2; state.view.oy=(r.height-state.map.h*TS())/2; }
-let autosaveT; function scheduleAutosave(){ clearTimeout(autosaveT); autosaveT=setTimeout(()=>localStorage.setItem('mf_mapeditor_autosave',JSON.stringify(serialize())),600); }
+function setSaveStatus(s,warn){ const el=$('#saveStatus'); if(el){ el.textContent=s; el.style.color=warn?'var(--solid)':'var(--good)'; } }
+let autosaveT; function scheduleAutosave(){ clearTimeout(autosaveT); setSaveStatus('saving…');
+  autosaveT=setTimeout(()=>{ try{ localStorage.setItem('mf_mapeditor_autosave',JSON.stringify(serialize())); setSaveStatus('saved ✓'); }
+    catch{ setSaveStatus('⚠ too large',true); toast('⚠ Autosave failed — map too large for browser storage; use ⬇ Export to save.'); } },600); }
 
 let exportFmt='ts';
 function setFmt(f){ exportFmt=f; $('#fmtTs').classList.toggle('primary',f==='ts'); $('#fmtJson').classList.toggle('primary',f==='json');
   $('#exportText').value=f==='ts'?toTS():JSON.stringify(serialize(),null,2); }
-function openExport(){ $('#exportModal').classList.add('on'); setFmt('ts'); }
+function openExport(){ $('#exportModal').classList.add('on'); setFmt('ts');
+  const errs=checkMap().filter(r=>r.lvl==='err').length; if(errs) toast(`⚠ ${errs} problem${errs>1?'s':''} — run ✓ Check before pasting`); }
 function gridRows(){ return state.map.grid.map(r=>r.join('')); }
-function toTS(){ const m=state.map; const q=s=>`'${String(s).replace(/'/g,"\\'")}'`;
+function toTS(){ const m=state.map;
+  // TS single-quoted string literal — escape backslash FIRST, then quote + newlines (so a
+  // stray '\' or a pasted multi-line value can't corrupt data or break the emitted file).
+  const q=s=>`'${String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,'\\r')}'`;
   const propLine=p=>{ let s=`    { sprite: ${q(p.sprite)}, x: ${p.x}, y: ${p.y}`;
-    if(p.solid)s+=`, solid: { ox: ${p.solid.ox}, oy: ${p.solid.oy}, w: ${p.solid.w}, h: ${p.solid.h} }`; s+=' },'; return s; };
-  const doorLine=d=>`    { x: ${d.x}, y: ${d.y}, w: ${d.w}, h: ${d.h}, to: ${q(d.to)}, tx: ${d.tx}, ty: ${d.ty}, facing: ${q(d.facing)}, indicator: ${q(d.indicator)} },`;
-  const spawnLine=s=>`    { enemies: [${(s.enemies||[]).map(q).join(', ')}], count: ${s.count}, rect: { x: ${s.rect.x}, y: ${s.rect.y}, w: ${s.rect.w}, h: ${s.rect.h} } },`;
-  const npcLine=n=>{ let s=`    { id: ${q(n.id)}, sprite: ${q(n.sprite)}, x: ${n.x}, y: ${n.y}, facing: ${q(n.facing)}, dialogue: ${q(n.dialogue)}`; if(n.shop)s+=`, shop: ${q(n.shop)}`; s+=' },'; return s; };
-  const signLine=g=>`    { x: ${g.x}, y: ${g.y}, dialogue: ${q(g.dialogue)} },`;
+    if(p.solid)s+=`, solid: { ox: ${p.solid.ox}, oy: ${p.solid.oy}, w: ${p.solid.w}, h: ${p.solid.h} }`;
+    if(p.scale){ if(typeof p.scale==='number'){ if(p.scale!==1)s+=`, scale: ${p.scale}`; } else if(p.scale.x!=null)s+=`, scale: { x: ${p.scale.x}, y: ${p.scale.y} }`; }
+    if(p.rot)s+=`, rot: ${p.rot}`;
+    if(p.ifFlag)s+=`, ifFlag: ${q(p.ifFlag)}`; if(p.unlessFlag)s+=`, unlessFlag: ${q(p.unlessFlag)}`; s+=' },'; return s; };
+  const doorLine=d=>{ let s=`    { x: ${d.x}, y: ${d.y}, w: ${d.w}, h: ${d.h}, to: ${q(d.to)}, tx: ${d.tx}, ty: ${d.ty}, facing: ${q(d.facing)}`;
+    if(d.indicator)s+=`, indicator: ${q(d.indicator)}`; s+=' },'; return s; };
+  const spawnLine=s=>{ let out=`    { enemies: [${(s.enemies||[]).map(q).join(', ')}], count: ${s.count}, rect: { x: ${s.rect.x}, y: ${s.rect.y}, w: ${s.rect.w}, h: ${s.rect.h} }`;
+    if(s.ifFlag)out+=`, ifFlag: ${q(s.ifFlag)}`; if(s.unlessFlag)out+=`, unlessFlag: ${q(s.unlessFlag)}`; out+=' },'; return out; };
+  const npcLine=n=>{ let s=`    { id: ${q(n.id)}, sprite: ${q(n.sprite)}, x: ${n.x}, y: ${n.y}, facing: ${q(n.facing)}, dialogue: ${q(n.dialogue)}`;
+    if(n.dialogueDay)s+=`, dialogueDay: ${q(n.dialogueDay)}`; if(n.stationary)s+=`, stationary: true`;
+    if(n.shop)s+=`, shop: ${q(n.shop)}`; if(n.ifFlag)s+=`, ifFlag: ${q(n.ifFlag)}`; if(n.unlessFlag)s+=`, unlessFlag: ${q(n.unlessFlag)}`; s+=' },'; return s; };
+  const signLine=g=>{ let s=`    { x: ${g.x}, y: ${g.y}, dialogue: ${q(g.dialogue)}`;
+    if(g.ifFlag)s+=`, ifFlag: ${q(g.ifFlag)}`; if(g.unlessFlag)s+=`, unlessFlag: ${q(g.unlessFlag)}`; s+=' },'; return s; };
+  const ptLine=p=>`    { x: ${p.x}, y: ${p.y} },`;
+  const trigLine=t=>`    { id: ${q(t.id)}, rect: { x: ${t.rect.x}, y: ${t.rect.y}, w: ${t.rect.w}, h: ${t.rect.h} }, once: ${!!t.once} },`;
+  const reflLine=r=>`    { x: ${r.x}, y: ${r.y}, w: ${r.w}, h: ${r.h}${r.within!=null?`, within: ${r.within}`:''} },`;
+  const patrolLine=p=>{ let s=`    { id: ${q(p.id)}, enemy: ${q(p.enemy)}, route: [${(p.route||[]).map(([x,y])=>`[${x}, ${y}]`).join(', ')}]`;
+    if(p.sight!=null)s+=`, sight: ${p.sight}`; if(p.countFlag)s+=`, countFlag: ${q(p.countFlag)}`; s+=' },'; return s; };
   const varName=(m.id||'my_map').replace(/[^a-zA-Z0-9]+(.)/g,(_,c)=>c.toUpperCase())+'Map';
-  const block=(items,fn)=>items.length?`[\n${items.map(fn).join('\n')}\n  ]`:'[]';
+  const block=(items,fn)=>items&&items.length?`[\n${items.map(fn).join('\n')}\n  ]`:'[]';
   const levelRows=m.level.map(r=>r.join(''));
   const hasElev=levelRows.some(r=>/[1-9]/.test(r));
   const elevBlock=hasElev?`  elevation: {\n    level: [\n${levelRows.map(r=>'      '+q(r)+',').join('\n')}\n    ],\n  },\n`:'';
+  // optional MapDef fields — emitted only when set (schema order: after name, before grid)
+  let opt='';
+  opt+=`  music: ${m.music?q(m.music):'null'},\n`; // required + nullable
+  if(m.night) opt+=`  night: true,\n`;
+  if(m.interior) opt+=`  interior: true,\n`;
+  if(m.ambience) opt+=`  ambience: ${q(m.ambience)},\n`;
+  if(m.muffle===0||m.muffle===1||m.muffle===2) opt+=`  muffle: ${m.muffle},\n`;
+  if((m.reflect||[]).length) opt+=`  reflect: ${block(m.reflect,reflLine)},\n`;
+  if(m.settlement) opt+=`  settlement: ${q(m.settlement)},\n`;
+  if(m.area) opt+=`  area: ${q(m.area)},\n`;
+  const atmoBlock=m.atmosphere?`  atmosphere: ${q(m.atmosphere)},\n`:'';
+  const atmsBlock=(m.atms||[]).length?`  atms: ${block(m.atms,ptLine)},\n`:'';
+  const patrolBlock=(m.patrols||[]).length?`  patrols: ${block(m.patrols,patrolLine)},\n`:'';
   const regionNote=state.region?`// REGION SKIN: to render this map in the ${state.region.label} tileset, ALSO add ${q(m.id)}\n//   to ${state.region.mapsSet} in src/scenes/OverworldScene.ts.\n`:'';
   return regionNote+`// ── generated by the Map Editor ── paste into src/data/maps.ts (or a chapter file),\n`+
 `// then register it:  in the MAPS object add   ${q(m.id)}: ${varName},   and run \`npm run validate\`.\n`+
 `export const ${varName}: MapDef = {\n`+
-`  id: ${q(m.id)},\n  name: ${q(m.name)},\n  music: null,\n`+
+`  id: ${q(m.id)},\n  name: ${q(m.name)},\n`+
+opt+
 `  grid: [\n${gridRows().map(r=>'    '+q(r)+',').join('\n')}\n  ],\n`+
-elevBlock+
+elevBlock+atmoBlock+
 `  props: ${block(m.props,propLine)},\n`+
 `  npcs: ${block(m.npcs,npcLine)},\n`+
-`  signs: ${block(m.signs,signLine)},\n  phones: [],\n`+
+`  signs: ${block(m.signs,signLine)},\n`+
+`  phones: ${block(m.phones,ptLine)},\n`+
+atmsBlock+
 `  doors: ${block(m.doors,doorLine)},\n`+
-`  spawners: ${block(m.spawners,spawnLine)},\n  triggers: [],\n};\n`;
+`  spawners: ${block(m.spawners,spawnLine)},\n`+
+`  triggers: ${block(m.triggers,trigLine)},\n`+
+patrolBlock+
+`};\n`;
 }
+
+// ---------- ⚙ Map settings (optional MapDef fields) ----------
+function optSel(id,label,cur,opts,noneLabel){ return `<div class="row"><label>${label}</label><select id="${id}"><option value="">${noneLabel}</option>`+
+  opts.map(o=>`<option value="${o}" ${String(cur)===String(o)?'selected':''}>${o}</option>`).join('')+`</select></div>`; }
+function buildSettingsForm(){ const m=state.map; const s=M.settings||{}; const el=$('#settingsForm');
+  el.innerHTML=
+    `<div class="row"><label>music</label><select id="set_music"><option value="">(none / null)</option>`+
+      (s.music||[]).map(o=>`<option ${m.music===o?'selected':''}>${o}</option>`).join('')+`</select></div>`+
+    `<div class="row"><label class="chk"><input type="checkbox" id="set_night" ${m.night?'checked':''}> night (dark tint)</label></div>`+
+    `<div class="row"><label class="chk"><input type="checkbox" id="set_interior" ${m.interior?'checked':''}> interior (indoor)</label></div>`+
+    optSel('set_settlement','settlement',m.settlement,s.settlements||[],'(none)')+
+    optSel('set_area','area',m.area,s.areas||[],'(none)')+
+    optSel('set_ambience','ambience',m.ambience,s.ambience||[],'(none)')+
+    `<div class="row"><label>muffle</label><select id="set_muffle"><option value="">(default)</option>`+
+      (s.muffles||[0,1,2]).map(o=>`<option value="${o}" ${String(m.muffle)===String(o)?'selected':''}>${o} — ${['open','veil','deep'][o]}</option>`).join('')+`</select></div>`+
+    optSel('set_atmosphere','atmosphere',m.atmosphere,s.atmospheres||['fog'],'(none)')+
+    `<div class="hint" style="padding:6px 2px 0">All optional — only non-default fields are written on export. <b>city</b> maps must pass ADR-012.</div>`;
+  $('#set_music').onchange=e=>{ m.music=e.target.value||null; scheduleAutosave(); };
+  $('#set_night').onchange=e=>{ m.night=e.target.checked; scheduleAutosave(); requestRender(); };
+  $('#set_interior').onchange=e=>{ m.interior=e.target.checked; scheduleAutosave(); };
+  $('#set_settlement').onchange=e=>{ m.settlement=e.target.value; scheduleAutosave(); };
+  $('#set_area').onchange=e=>{ m.area=e.target.value; scheduleAutosave(); };
+  $('#set_ambience').onchange=e=>{ m.ambience=e.target.value; scheduleAutosave(); };
+  $('#set_muffle').onchange=e=>{ m.muffle=e.target.value===''?'':+e.target.value; scheduleAutosave(); };
+  $('#set_atmosphere').onchange=e=>{ m.atmosphere=e.target.value; scheduleAutosave(); };
+}
+function openSettings(){ buildSettingsForm(); $('#settingsModal').classList.add('on'); }
+
+// ---------- ✓ Check map (engine-free, mirrors src/levelkit/mapcheck.ts + editor-only checks) ----------
+function checkSolid(ch){ const l=legendByChar.get(ch); return !!(l&&l.solid); }
+function computeComponents(grid){ const h=grid.length,w=grid[0].length; const comp=Array.from({length:h},()=>Array(w).fill(-1)); let next=0,mainId=-1,best=-1;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){ if(comp[y][x]!==-1||checkSolid(grid[y][x]))continue; const id=next++; let n=0; const st=[[x,y]]; comp[y][x]=id;
+    while(st.length){ const [cx,cy]=st.pop(); n++; for(const [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]){ const nx=cx+dx,ny=cy+dy; if(nx<0||ny<0||nx>=w||ny>=h)continue; if(comp[ny][nx]!==-1||checkSolid(grid[ny][nx]))continue; comp[ny][nx]=id; st.push([nx,ny]); } }
+    if(n>best){best=n;mainId=id;} }
+  return {comp,mainId}; }
+function reachAt(c,tx,ty){ if(c.mainId<0)return false; const h=c.comp.length,w=c.comp[0].length; tx=Math.round(tx);ty=Math.round(ty);
+  for(const [dx,dy] of [[0,0],[0,1],[0,-1],[1,0],[-1,0]]){ const nx=tx+dx,ny=ty+dy; if(nx<0||ny<0||nx>=w||ny>=h)continue; if(c.comp[ny][nx]===c.mainId)return true; } return false; }
+function doorCellCheck(grid,d){ const cx=Math.floor(d.x+d.w/2),cy=Math.floor(d.y+d.h/2);
+  const back={up:[cx,cy+1],down:[cx,cy-1],left:[cx+1,cy],right:[cx-1,cy]}[d.facing]||[cx,cy]; const [bx,by]=back;
+  if(by>=0&&bx>=0&&by<grid.length&&bx<grid[0].length&&!checkSolid(grid[by][bx]))return [bx,by];
+  for(let rad=0;rad<=2;rad++)for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++){ if(Math.max(Math.abs(dx),Math.abs(dy))!==rad)continue; const x=cx+dx,y=cy+dy; if(x<0||y<0||y>=grid.length||x>=grid[0].length)continue; if(!checkSolid(grid[y][x]))return [x,y]; }
+  return null; }
+function checkMap(){ const m=state.map; const grid=m.grid; const out=[]; const add=(lvl,msg)=>out.push({lvl,msg});
+  if(!m.id||!/^[a-z0-9_]+$/.test(m.id)) add('warn',`id '${m.id}' should be lowercase letters/digits/underscores (e.g. willow_creek).`);
+  if(!m.name||!m.name.trim()) add('err','map has no name.');
+  if(!Array.isArray(grid)||!grid.length||!grid[0]||!grid[0].length){ add('err','the map grid is empty or malformed — nothing to check.'); return out; }
+  const c=computeComponents(grid);
+  if(c.mainId<0){ add('err','the map has no walkable floor at all (everything is solid).'); return out; }
+  m.npcs.forEach(n=>{ if(!reachAt(c,n.x,n.y)) add('err',`NPC '${n.id}' @${Math.round(n.x)},${Math.round(n.y)} is walled off (unreachable).`); });
+  m.signs.forEach((s,i)=>{ if(!reachAt(c,s.x,s.y)) add('err',`sign #${i} @${s.x},${s.y} is unreachable.`); });
+  (m.phones||[]).forEach((p,i)=>{ if(!reachAt(c,p.x,p.y)) add('err',`phone #${i} @${p.x},${p.y} is unreachable.`); });
+  (m.atms||[]).forEach((p,i)=>{ if(!reachAt(c,p.x,p.y)) add('err',`ATM #${i} @${p.x},${p.y} is unreachable.`); });
+  (m.props||[]).forEach(p=>{ if(p.sprite==='picnic'&&!reachAt(c,p.x,p.y)) add('warn',`picnic table @${p.x},${p.y} is orphaned (a rest point behind a wall — npm run validate flags it).`); });
+  // sprite-key sanity: an unknown prop/NPC sprite draws as a gray box / blank and may fail validate
+  const propKeys=new Set([...(M.props||[]),...(M.facades||[])].map(p=>p.key));
+  m.props.forEach((p,i)=>{ if(!propKeys.has(p.sprite)) add('warn',`prop #${i} sprite '${p.sprite}' isn't in the editor's manifest — it draws as a gray box (npm run validate may reject it).`); });
+  const npcKeys=new Set((M.npcs||[]).map(n=>n.id));
+  m.npcs.forEach(n=>{ if(!npcKeys.has(n.sprite)) add('warn',`NPC '${n.id}' sprite '${n.sprite}' isn't a known character sheet — it renders blank.`); });
+  const handledT=new Set(M.triggerHandlers||[]);
+  (m.triggers||[]).forEach(t=>{ let ok=false; for(let y=t.rect.y;y<t.rect.y+t.rect.h&&!ok;y++)for(let x=t.rect.x;x<t.rect.x+t.rect.w&&!ok;x++) if(reachAt(c,x,y))ok=true; if(!ok) add('err',`trigger '${t.id}' is unreachable.`);
+    if(handledT.size&&!handledT.has(t.id)) add('warn',`trigger '${t.id}' has no case in runTrigger() (OverworldScene.ts) — it fires nothing until you add one.`); });
+  (m.patrols||[]).forEach(p=>{ (p.route||[]).forEach(([x,y],k)=>{ if(!reachAt(c,x,y)) add('warn',`patrol '${p.id}' waypoint ${k+1} @${x},${y} is on/behind a wall.`); }); if(!p.enemy) add('err',`patrol '${p.id}' has no enemy id.`); });
+  const known=new Set(M.mapIds||[]);
+  if(!m.doors.length) add('warn','no doors — a map needs at least one way in (a door back to a connected map), or npm run validate flags it.');
+  m.doors.forEach((d,i)=>{
+    if(!d.to) add('err',`door #${i} has no target map id (set "to" in the inspector).`);
+    else if(!known.has(d.to)&&d.to!==m.id) add('warn',`door #${i} → '${d.to}' — no such map in the game yet (fine if it's another new map).`);
+    const cell=doorCellCheck(grid,d); if(!cell) add('err',`door #${i} opens onto a wall (no walkable tile just inside).`);
+    else if(!reachAt(c,cell[0],cell[1])) add('err',`door #${i}'s inside landing is walled off from the rest of the map.`);
+    if(d.to===m.id){ const lx=Math.floor(d.tx/16),ly=Math.floor(d.ty/16); const inB=ly>=0&&ly<grid.length&&lx>=0&&lx<grid[0].length;
+      if(!inB) add('err',`door #${i} lands OUT OF BOUNDS @${lx},${ly} (grid ${grid[0].length}×${grid.length}) — player spawns stuck.`); else if(checkSolid(grid[ly][lx])) add('err',`door #${i} lands on a solid tile @${lx},${ly}.`); }
+  });
+  const dset=new Set(M.dialogueIds||[]);
+  const chkDlg=(id,who)=>{ if(!id||id==='placeholder') add('warn',`${who} still has placeholder dialogue.`); else if(dset.size&&!dset.has(id)) add('warn',`${who} dialogue '${id}' isn't a known script id (add it to dialogue.ts).`); };
+  m.npcs.forEach(n=>chkDlg(n.dialogue,`NPC '${n.id}'`));
+  m.signs.forEach((s,i)=>chkDlg(s.dialogue,`sign #${i}`));
+  m.spawners.forEach((s,i)=>{ if(!(s.enemies||[]).length) add('err',`spawner #${i} has no enemies listed.`); if(!(Number.isInteger(s.count)&&s.count>=1)) add('err',`spawner #${i} count must be a whole number ≥1.`); });
+  const gw=grid[0].length, gh=grid.length;
+  (m.reflect||[]).forEach((r,i)=>{ if(r.x<0||r.y<0||r.x+r.w>gw||r.y+r.h>gh){ add('err',`reflect zone #${i} spills past the grid — npm run validate hard-fails.`); return; }
+    let water=false; for(let y=r.y;y<r.y+r.h&&!water;y++)for(let x=r.x;x<r.x+r.w&&!water;x++){ const l=legendByChar.get(grid[y]&&grid[y][x]); if(l&&/sea|water|foam/.test(l.name))water=true; }
+    if(!water) add('err',`reflect zone #${i} doesn't overlap any water tile (npm run validate requires it).`); });
+  const led=ledgeCount(); if(led) add('err',`${led} illegal elevation edge${led>1?'s':''} — open the Elevate tab → “Check ledges” to see them in red.`);
+  if(m.settlement==='city') add('warn',`settlement 'city' must pass ADR-012 city rules (multi-street grid + connector). Verify with npm run validate.`);
+  if(!out.length) add('ok','No problems found — looks good! (Still run npm run validate after pasting into the game.)');
+  return out;
+}
+// ---------- 📂 Open a shipped game map (lazy-fetch maps.json on first use) ----------
+let LOADED_MAPS=null;
+async function openMapPicker(){ $('#openModal').classList.add('on');
+  if(!LOADED_MAPS){ $('#openList').innerHTML='<div class="hint" style="padding:10px">loading maps…</div>';
+    try{ LOADED_MAPS=await (await fetch('maps.json')).json(); }
+    catch{ $('#openList').innerHTML='<div class="issue err">Could not load maps.json — run <code>npm run mapeditor:gen</code>.</div>'; return; } }
+  $('#openSearch').value=''; renderOpenList(''); $('#openSearch').focus(); }
+function renderOpenList(q){ q=q.toLowerCase().trim(); const el=$('#openList');
+  const ids=Object.keys(LOADED_MAPS).sort().filter(id=>!q||id.toLowerCase().includes(q)||String(LOADED_MAPS[id].name||'').toLowerCase().includes(q));
+  el.innerHTML=ids.length?ids.map(id=>`<div class="openItem" data-id="${escapeHtml(id)}"><span class="oid">${escapeHtml(id)}</span><span class="onm">${escapeHtml(LOADED_MAPS[id].name||'')}</span></div>`).join('')
+    :'<div class="hint" style="padding:10px">no map matches that search</div>';
+  $$('.openItem',el).forEach(it=>it.onclick=()=>openMapById(it.dataset.id)); }
+function openMapById(id){ const entry=LOADED_MAPS&&LOADED_MAPS[id]; if(!entry)return;
+  loadMapObj(structuredClone(entry.def)); $('#openModal').classList.remove('on'); toast('Opened '+id); }
+
+function openCheck(){ const res=checkMap(); const icon={err:'❌',warn:'⚠️',ok:'✅'};
+  const errs=res.filter(r=>r.lvl==='err').length, warns=res.filter(r=>r.lvl==='warn').length;
+  const head=`<div style="margin-bottom:6px;color:var(--dim)">${errs} error${errs!==1?'s':''} · ${warns} warning${warns!==1?'s':''}</div>`;
+  $('#checkResults').innerHTML=head+res.map(r=>`<div class="issue ${r.lvl}">${icon[r.lvl]||''} ${escapeHtml(r.msg)}</div>`).join('');
+  $('#checkModal').classList.add('on'); }
 
 boot().catch(e=>{ $('#loadmsg').textContent='Failed: '+e.message+' — make sure you opened this through the dev server (npm run dev).'; });
 </script>
