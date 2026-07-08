@@ -3379,8 +3379,8 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
     const outcome = await this.startBattle(['borden'], 'none', [], {});
     const back = this.mapDef.doors[0];
-    const backTx = back?.tx ?? 248;
-    const backTy = back?.ty ?? 680;
+    const backTx = back?.tx ?? 64 * 16 + 8; // the station's Civic St doorstep (S9 grid)
+    const backTy = back?.ty ?? 94 * 16;
     if (outcome !== 'victory') {
       GS.setFlag('borden_marching', false);
       if (outcome === 'ran') this.goThroughDoor('otterbrook', backTx, backTy, 'down');
@@ -6935,8 +6935,8 @@ export class OverworldScene extends Phaser.Scene {
     );
     landed.forEach((o) => o.setVisible(false));
     const prop = landed[0];
-    const impactX = prop ? prop.x + prop.displayWidth / 2 : 76 * TILE_PX;
-    const impactY = prop ? prop.y + prop.displayHeight / 2 : 8 * TILE_PX;
+    const impactX = prop ? prop.x + prop.displayWidth / 2 : 69 * TILE_PX;
+    const impactY = prop ? prop.y + prop.displayHeight / 2 : 6 * TILE_PX;
     // the night tint now covers at any zoom, so the opening sits WIDER
     cam.setZoom(0.8);
     cam.centerOn(impactX, impactY);
@@ -7007,8 +7007,8 @@ export class OverworldScene extends Phaser.Scene {
       (o): o is Phaser.GameObjects.Image =>
         o instanceof Phaser.GameObjects.Image && o.texture.key === 'house_rex',
     );
-    const houseX = house ? house.x + house.displayWidth / 2 : 47 * TILE_PX;
-    const houseY = house ? house.y + house.displayHeight / 2 : 37 * TILE_PX;
+    const houseX = house ? house.x + house.displayWidth / 2 : 49 * TILE_PX;
+    const houseY = house ? house.y + house.displayHeight / 2 : 52 * TILE_PX;
     cam.setZoom(0.9); // open on the house + its street (wide), not jammed in close
     cam.centerOn(houseX, houseY);
     if (this.entryBlackout) {
@@ -7019,8 +7019,10 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.sfx('rumble');
     // establish on the sleeping house, with a line so the player knows whose it is
     await showCaption(this, "Down one of these streets, a kid named {rex} is fast asleep — same as the whole town.", { ms: 2800 });
-    // then drift up toward the hill road, narrating what's waiting up there
-    cam.pan(70 * TILE_PX, 18 * TILE_PX, 4200, 'Sine.easeInOut'); // drift up the hill toward the crater trail + glow
+    // then drift up toward the hill road, narrating what's waiting up there —
+    // the S9 LONG CLIMB leaves the terrace at the x56 stair, so the drift ends
+    // on the trail foot (the climb phase picks up the camera right there)
+    cam.pan(56 * TILE_PX, 44 * TILE_PX, 4200, 'Sine.easeInOut'); // drift to the crater trail's foot
     await showCaption(this, "But something came down on the hill tonight, and it's still glowing up there.", { ms: 3400 });
     await this.wait(400);
     GS.setFlag('op_house');
@@ -7038,10 +7040,10 @@ export class OverworldScene extends Phaser.Scene {
       (o): o is Phaser.GameObjects.Image =>
         o instanceof Phaser.GameObjects.Image && o.texture.key === 'meteor_rock_hickory_hill',
     );
-    const craterX = landed ? landed.x + landed.displayWidth / 2 : 76 * TILE_PX;
-    const craterY = landed ? landed.y + landed.displayHeight / 2 : 8 * TILE_PX;
+    const craterX = landed ? landed.x + landed.displayWidth / 2 : 69 * TILE_PX;
+    const craterY = landed ? landed.y + landed.displayHeight / 2 : 6 * TILE_PX;
     cam.setZoom(0.78); // wide — the whole hill reads as a climb
-    cam.centerOn(64 * TILE_PX, 45 * TILE_PX); // start near the town-to-hill foot and climb up to the crater
+    cam.centerOn(56 * TILE_PX, 46 * TILE_PX); // start at the stair foot of the LONG CLIMB (where the overview left us)
     if (this.entryBlackout) {
       const b = this.entryBlackout;
       this.entryBlackout = undefined;
@@ -7715,9 +7717,12 @@ export class OverworldScene extends Phaser.Scene {
     if (glint.anims.currentAnim?.key !== 'glint-flit' || !glint.anims.isPlaying) glint.play('glint-flit');
     await this.tweenTo(glint, this.player.x + s(12), this.player.y - s(18), 800);
     await this.dlg.say(DIALOGUE.porch_zapper[0], DIALOGUE.porch_zapper[1]);
-    // the zapper claims another hero
-    const zapX = 17 * TILE_PX;
-    const zapY = 5.5 * TILE_PX;
+    // the zapper claims another hero — anchor on the REAL bug_zapper prop (Jay's
+    // porch, the elevated terrace) instead of the pre-rebuild literal, so Glint
+    // flies into the lamp and not across the map
+    const zapProp = this.mapDef.props.find((p) => p.sprite === 'bug_zapper');
+    const zapX = ((zapProp?.x ?? 53) + 0.5) * TILE_PX;
+    const zapY = ((zapProp?.y ?? 51) + 0.3) * TILE_PX;
     this.tweens.add({ targets: glint, x: zapX, y: zapY, duration: 700, ease: 'sine.in' });
     await this.wait(700);
     AUDIO.sfx('zapper');
@@ -7855,7 +7860,9 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     if (dest === 'brickton') this.goThroughDoor('brickton', BRICKTON_BUS_SPAWN.x, BRICKTON_BUS_SPAWN.y, 'up');
-    else this.goThroughDoor('otterbrook', 56 * 16, 90 * 16, 'up'); // the town's central plaza (concept coords)
+    // home = the kerb outside OTTERBROOK TRANSIT (Civic St, cx29 — the S9 street grid),
+    // not the old concept plaza; the depot's own doorstep row so you step off at the door
+    else this.goThroughDoor('otterbrook', 29 * 16 + 8, 94 * 16 + 8, 'down');
   }
 
   /* ---------------- THE ORIENTATION GATE (S15h, ADR-049) ---------------- */
