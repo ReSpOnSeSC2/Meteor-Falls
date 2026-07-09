@@ -484,18 +484,24 @@ function buildOtterbrookTown(): MapDef {
  * directive 2026-07-04: the whole concept is ONE continuous map — walk from the
  * town UP through terraces to the crater with NO map transition; keep NOTHING of
  * the old layout). The flat town (buildOtterbrookTown) is copied into the LOWER
- * band (L0); the wooded hill is authored ABOVE it as three terraces joined by
- * K-cliff / T-stair seams (the foggybottom elevation engine, descending L3→L0):
+ * band (L0); the wooded hill is authored ABOVE it, joined by K-cliff / T-stair
+ * seams (the foggybottom elevation engine). 2026-07-08 (top-right quarter detail
+ * pass): the RIGHT climb is a true WINDING UPHILL — four stacked terraces, one
+ * switchback leg each, descending L5→L2; the LEFT (cave) corridor stays on the
+ * L2 base:
  *
- *   L3 CREST (rows 0-20)  — the meteor CRATER (right: meteor_rock + the dormant
- *                           Hush-Sentinel husk + the craterScene set-piece) and
- *                           the CAVE mouth (left → the Titanic Tick's dungeon).
- *   L2 CLIMB (rows 23-42) — the winding wooded trail, PEMBERTON's fenced
- *                           "DON'T ENTER" workshop, healing presents, the Biscuit
- *                           breadcrumbs, Hodgkin's mower + shed, the climb fights.
- *   L1 TERRACE (rows 45-62)— Jay's (house_rex, the opening) + Chad's houses, the
- *                           porch beat, the lemonade twins, the sniff-trail head.
- *   L0 TOWN (rows 65+)    — the town (buildOtterbrookTown), offset down.
+ *   L5 CREST (rows 0-15)   — the meteor CRATER (meteor_rock + the dormant
+ *                            Hush-Sentinel husk + the craterScene set-piece),
+ *                            reached by the scree zig-zag off flight D.
+ *   L4 POLICE BENCH (19-23)— Leg 3 + the muster cordoning flight D's foot.
+ *   L3 FIBBINS BENCH (27-33)— Leg 2 past Old Man Fibbins' cottage + dig pen,
+ *                            with the HAIRPIN REST (picnic + present, on the
+ *                            road at the cliff base) at flight C's bend.
+ *   L2 BASE (rows 37-44)   — Leg 1 along the low treeline, the mower connector
+ *                            lane, the shed choke + CAVE shelf (left, all L2).
+ *   L1 TERRACE (rows 49-60)— Jay's (house_rex, the opening) + Chad's houses, the
+ *                            porch beat, the lemonade twins, the sniff-trail head.
+ *   L0 TOWN (rows 66+)     — the town (buildOtterbrookTown), offset down.
  *
  * The 4 old climb maps (hill_road/hickory_trail/whisperwood_rise/hickory_hill) are
  * RETIRED, their content re-homed here. The Under-Oak has a lower-town return
@@ -1103,24 +1109,32 @@ export function growOtterbrook(): MapDef {
 
   for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) g.set(x, TB + y, town.grid[y][x]);
 
-  // The wooded PLATEAU fills rows 0..TB with dense woods ('b'); the only clearings are
-  // CARVED — the crater bowl + cave nook + cottage/shed pockets on the UPPER plateau, the
-  // Jay/Chad TERRACE on the mid shelf, and the two winding dirt paths threading to town.
-  // Concept-faithful positions (read off the tile-gridded reference).
+  // The wooded PLATEAU fills rows 0..TB with dense woods ('b'); the only clearings
+  // are CARVED — the crater bowl, the cave nook, the cottage/shed pockets, the
+  // Jay/Chad TERRACE on the mid shelf, and the dirt trails threading to town.
+  // 2026-07-08 (top-right quarter detail pass): the RIGHT climb is a real WINDING
+  // UPHILL now — four terraces stacked inside the plateau (L2 base → L3 Fibbins
+  // bench → L4 police bench → L5 crater crest), each switchback leg one cliff-and-
+  // stair flight above the last, EarthBound-Onett style. The LEFT (cave) corridor,
+  // shed choke, and cave shelf stay on the L2 base; solid woods ('b') separate the
+  // two zones everywhere except the shared row-42 connector lane.
   g.rect(0, 0, W, TB, 'b');
 
-  // --- UPPER-PLATEAU clearings ---
+  // --- carved clearings ---
   g.rect(28, 3, 6, 10, '.');   // cave-mouth shelf (top-LEFT) — NARROW, so the shed gate can't be bypassed
-  g.rect(68, 27, 18, 11, '.'); // FIBBINS' homestead (upper-RIGHT): cottage + dig. Bottom stops at row 37
-  // so a woods row seals it from Leg 1 below — the ONLY way through is the trail past his door.
   g.rect(27, 26, 8, 14, '.');  // shed clearing (LEFT) — the choke the shed + locked gate guard
-  // --- MID SHELF: the Jay/Chad terrace clearing (rows 49-60, between the two paths) ---
-  g.rect(42, 48, 30, 13, '.');
+  g.rect(42, 48, 30, 13, '.'); // MID SHELF: the Jay/Chad terrace clearing (rows 49-60)
+  g.rect(64, 27, 26, 7, '.');  // L3 — FIBBINS' BENCH: cottage + dig pen + flight B's top landing
+  g.rect(46, 27, 6, 3, '.');   // L3 — the HAIRPIN REST at flight C's bend: picnic + the present sit
+  // against the cliff base ON the road (EB's hill gift box), passed as the road turns upstairs
+  g.rect(42, 19, 19, 5, '.');  // L4 — the POLICE BENCH: the muster at the last flight's foot
+  g.rect(84, 37, 7, 4, '.');   // L2 — the stair-foot landing where Leg 1 meets the first flight
 
-  // top-RIGHT: the round scorched CRATER bowl set into the woods, with a thin grass rim
-  const crater = { x: 72, y: 11, rx: 22, ry: 9 };
-  for (let yy = crater.y - crater.ry - 1; yy <= crater.y + crater.ry + 1; yy++) {
-    for (let xx = crater.x - crater.rx - 1; xx <= crater.x + crater.rx + 1; xx++) {
+  // top-RIGHT: the round scorched CRATER bowl set into the crest, thin grass rim.
+  // Rows clamp at 15 so the bowl never bleeds into the crest's lip/face band below.
+  const crater = { x: 72, y: 9, rx: 22, ry: 7 };
+  for (let yy = 1; yy <= 15; yy++) {
+    for (let xx = crater.x - crater.rx - 2; xx <= crater.x + crater.rx + 2; xx++) {
       const dx = (xx - crater.x) / crater.rx;
       const dy = (yy - crater.y) / crater.ry;
       const d = dx * dx + dy * dy;
@@ -1128,9 +1142,12 @@ export function growOtterbrook(): MapDef {
       else if (d <= 1.4 && g.rows[yy]?.[xx] === 'b') g.set(xx, yy, '.');
     }
   }
-  for (const [ex, ey] of [[56, 6], [88, 6], [58, 16], [90, 15], [64, 3], [92, 10]] as const) g.set(ex, ey, 'S');
-  g.rect(52, 19, 7, 5, '.'); // the police muster on the crater's lower rim — stops at x58 so the bowl's
-  // scorch apron (x62+) stays TWO woods columns away: the scree zig-zag is the only way up.
+  for (const [ex, ey] of [[56, 6], [88, 6], [64, 3], [92, 10], [58, 15], [86, 15]] as const) g.set(ex, ey, 'S');
+  // WOODS PLUG — the bowl's WEST flank (ring + a bite of scorch) goes back to
+  // forest, so the scree zig-zag (painted over it below) is the ONLY way from the
+  // flight-D landing into the bowl — no strolling the rim ring around the climb.
+  g.rect(44, 8, 14, 8, 'b');
+  g.rect(44, 13, 6, 3, '.'); // L5 — the stair-top landing (carved after the plug)
 
   const paintTrail = (points: ReadonlyArray<readonly [number, number]>, width = 4): void => {
     const half = Math.floor(width / 2);
@@ -1148,51 +1165,71 @@ export function growOtterbrook(): MapDef {
     }
   };
 
-  // RIGHT path (2026-07-08 — THE LONG CLIMB): EarthBound-Onett distance to the
-  // meteorite. From the terrace stairs the trail SWITCHBACKS the full width of the
-  // plateau three times — east along the treeline, back west past Old Man Fibbins'
-  // door, east again to the police muster — before the final zig-zag up the scree
-  // to the crater rim. Roughly 3× the old walk; every leg threads carved woods, so
-  // the forest itself walls the road.
-  paintTrail([[56, 45], [56, 42]]); // off the stairs
-  paintTrail([[56, 42], [86, 42]]); // LEG 1 — east along the low treeline
-  paintTrail([[86, 42], [86, 37]]); // the elbow up the east edge
-  paintTrail([[86, 37], [84, 37], [73, 37], [66, 35], [56, 35], [44, 35]]); // LEG 2 — west, PAST THE OLD MAN'S DOOR
-  paintTrail([[44, 35], [44, 28]]); // the elbow up the west side
-  paintTrail([[44, 28], [58, 28]]); // LEG 3 — east to the police muster
-  paintTrail([[58, 28], [56, 22]], 3); // into the muster clearing
-  // the SCREE ZIG-ZAG — police watch → crater rim (the last, steepest stretch)
-  paintTrail([
-    [58, 20], [46, 18], [50, 15], [42, 12], [48, 9], [54, 6],
-  ], 3);
+  // THE WINDING CLIMB (2026-07-08): the S9 LONG CLIMB, terraced. Every switchback
+  // leg now lives one level up from the last; trails are painted FIRST and the
+  // lip/face bands + stair flights stamp over any spill, so every seam stays
+  // law-clean (elevationLawViolations). Leg 1 weaves along the low treeline east
+  // to flight B; Leg 2 crosses back west past Old Man Fibbins' door to flight C;
+  // Leg 3 runs east into the police muster below flight D; the scree zig-zag
+  // takes the crest into the bowl's west apron.
+  paintTrail([[56, 45], [56, 42]]); // off the terrace stairs
+  // the CONNECTOR LANE — the cave trail to Leg 1 along row 42 (Hodgkin's runaway
+  // mower patrols this straightaway; both ends sit BELOW the locked gates, so
+  // neither the shed choke nor the crater is bypassed)
+  paintTrail([[25, 42], [62, 42]], 3);
+  paintTrail([[58, 42], [64, 41], [70, 43], [76, 41], [82, 43], [86, 41], [87, 39]]); // LEG 1 (L2) — weaves east to flight B's foot
+  paintTrail([[87, 32], [80, 32], [74, 31], [68, 32], [62, 30], [54, 31], [48, 30], [44, 29]]); // LEG 2 (L3) — west, PAST THE OLD MAN'S DOOR
+  paintTrail([[44, 22], [50, 20], [56, 22], [59, 21]], 3); // LEG 3 (L4) — east into the muster
+  paintTrail([[46, 14], [43, 12], [48, 10], [43, 8], [49, 6], [53, 6]], 3); // the SCREE ZIG-ZAG (L5) — punches through the plug into the bowl's west apron
   // the terrace approaches (Jay & Chad's porches join the trail between the houses)
   paintTrail([[49, 56], [52, 56], [55, 55]], 3);
   paintTrail([[61, 56], [58, 56], [55, 55]], 3);
   paintTrail([[56, 49], [55, 51], [56, 57], [56, 64], [56, 67]]); // stair foot → terrace → town stairs
-  // the SHED CONNECTOR — links the cave trail to Leg 1 along row 42 (Hodgkin's
-  // runaway mower patrols this straightaway; both ends sit BELOW the locked gates,
-  // so neither the shed choke nor the crater is bypassed)
-  paintTrail([[30, 42], [56, 42]], 3);
   // LEFT path: the cave mouth → down past the shed → town (via the W stairs)
   paintTrail([
     [30, 11], [30, 18], [30, 26], [30, 34], [28, 40], [26, 44], [27, 52], [26, 60], [26, 67],
   ]);
 
   // ── OLD MAN FIBBINS' DIG (the "old man section", à la Onett's hillside liar):
-  // a fenced pen NE of his cottage with the hole he's been widening since the
-  // night the meteor "called his name". Pit + dirt apron carved into the grid;
-  // the pen gate opens south, toward his front trail. ──
-  g.rect(81, 28, 5, 5, ':'); // the dirt apron
-  g.rect(82, 29, 2, 2, 's'); // the hole itself (scorched-bare earth)
+  // a fenced pen east of his cottage with the hole he's been widening since the
+  // night the meteor "called his name". Pit + dirt apron carved into the bench;
+  // the pen gate opens south onto his front trail (painted AFTER the trails so
+  // the fence seals any spill). ──
+  g.rect(81, 28, 4, 3, ':'); // the dirt apron
+  g.rect(82, 28, 2, 2, 's'); // the hole itself (scorched-bare earth)
   g.rect(80, 27, 6, 1, '-');
-  for (const fy of [28, 29, 30, 31]) { g.set(80, fy, '|'); g.set(85, fy, '|'); }
-  for (const fx of [80, 81, 84, 85]) g.set(fx, 32, '-'); // gate at x82-83
+  for (const fy of [28, 29, 30] as const) { g.set(80, fy, '|'); g.set(85, fy, '|'); }
+  for (const fx of [80, 81, 84, 85] as const) g.set(fx, 31, '-'); // gate at x82-83
   // little sign nooks so the trail markers never sit under canopy or on the path
-  for (const [nx, ny] of [[59, 43], [41, 29]] as const) g.set(nx, ny, '.');
+  for (const [nx, ny] of [[59, 43], [41, 28]] as const) g.set(nx, ny, '.');
+  // meadow dressing — flowers + tufts in the carved pockets (hand-set, deterministic)
+  for (const [fx, fy] of [[52, 27], [51, 29], [78, 27], [66, 28], [89, 28]] as const) g.set(fx, fy, 'f');
+  for (const [ux, uy] of [[53, 28], [65, 32], [44, 19], [58, 19], [44, 13]] as const) g.set(ux, uy, '~');
 
-  // --- ELEVATION seams (foggybottom engine): plateau (L2) → shelf (L1) → town (L0);
-  // T-stairs sit on BOTH paths so the descent stays walkable. ---
-  g.rect(0, 45, W, 1, '^'); g.rect(0, 46, W, 3, 'K'); // seam A: upper plateau → mid shelf
+  // --- ELEVATION seams. HILL FLIGHTS (the RIGHT climb zone, x 40-99): each seam
+  // is a walkable '^' lip row over a 2-row solid 'K' face, crossed by ONE 4-wide
+  // 'T' flight where the trail climbs — painted LAST so the bands seal any trail
+  // spill (the flights then re-open their columns). The bands are STAGGERED —
+  // one jog each, in fixture-free x-ranges — so the cliff lines STEP like Onett's
+  // hillside (the EB reference) instead of ruling straight across the zone. The
+  // level plane below reads the SAME row functions, so the plane can never drift
+  // from the paint. TOWN seams (full width, both paths staired) are unchanged. ---
+  const crestSeamRow = (x: number): number => (x >= 61 ? 18 : 16); // L5 → L4 (steps DOWN east of the muster)
+  const musterSeamRow = (x: number): number => (x >= 61 ? 22 : 24); // L4 → L3 (steps UP behind the cottage)
+  const benchSeamRow = (x: number): number => (x >= 53 && x <= 66 ? 36 : 34); // L3 → L2 (dips between rest + cottage)
+  for (let sx = 40; sx <= 99; sx++) {
+    for (const sr of [crestSeamRow(sx), musterSeamRow(sx), benchSeamRow(sx)]) {
+      g.set(sx, sr, '^');
+      g.set(sx, sr + 1, 'K');
+      g.set(sx, sr + 2, 'K');
+    }
+  }
+  g.rect(46, 16, 4, 3, 'T'); // flight D — the last stairs (the police watch its foot)
+  g.rect(42, 24, 4, 3, 'T'); // flight C — the west elbow's stairs (the hairpin rest at its bend)
+  g.rect(86, 34, 4, 3, 'T'); // flight B — the east elbow's stairs
+  g.rect(68, 34, 6, 1, ':'); // Fibbins' worn DOOR APRON — bares the lip trim at his stoop (the
+  // cottage sits flush on the bench's edge, so its frontage walk is the cliff lip itself)
+  g.rect(0, 45, W, 1, '^'); g.rect(0, 46, W, 3, 'K'); // seam A: plateau base → mid shelf
   g.rect(24, 45, 6, 4, 'T'); g.rect(53, 45, 6, 4, 'T');
   g.rect(0, 61, W, 1, '^'); g.rect(0, 62, W, 4, 'K'); // seam B: mid shelf → town
   g.rect(23, 61, 6, 5, 'T'); g.rect(53, 61, 6, 5, 'T');
@@ -1216,6 +1253,13 @@ export function growOtterbrook(): MapDef {
     }
   }
 
+  // the walked-past PRESENT — `otter_woods_gift` (the cold Star Cola by the picnic
+  // table; OverworldScene's loot table + dialogue already exist) re-homed to the
+  // HAIRPIN REST at flight C's bend, sitting against the cliff base right ON the
+  // road (the EB Onett reference: the hill's gift box at a cliff-foot bend) — the
+  // S9 rebuild had orphaned its old glade spot.
+  const overlookGift = walkPresent('otter_woods_gift', 50, 27);
+
   const hillProps: PropDef[] = [
     ...canopyTrees,
     { sprite: 'meteor_rock_hickory_hill', x: 66, y: 3, solid: { ox: 16, oy: 46, w: 64, h: 38 } }, // pushed farther UP the hill
@@ -1226,19 +1270,23 @@ export function growOtterbrook(): MapDef {
     // from the hodgkin_mower chain). It walls the narrow cave choke until has_trail_key.
     { sprite: 'sawhorse', x: 28, y: 24, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
     { sprite: 'sawhorse', x: 30, y: 24, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
-    // OLD MAN FIBBINS' cottage — the crater trail runs right past his LEFT-hand
-    // front door (the art's drawn door, frac ≈ .21), Lier-X-Agerate style
+    // OLD MAN FIBBINS' cottage — on his own bench now (L3); the crater trail runs
+    // right past his LEFT-hand front door (the art's drawn door, frac ≈ .21),
+    // Lier-X-Agerate style, along the row-33 front walk under the facade.
     {
-      ...otterCentered('bldg_ob_cottage', 76, 37),
+      ...otterCentered('bldg_ob_cottage', 72, 33),
       door: { ox: Math.round((618 / 4) * 0.21) - 8, oy: 96 - 22, w: 16, h: 20, to: 'oldman_int', tx: 7 * 16 + 8, ty: 8 * 16 },
     },
-    { sprite: 'sign', x: 81, y: 32.5, solid: SIGN_SOLID }, // the dig-pen notice
+    { sprite: 'sign', x: 79, y: 30.4, solid: SIGN_SOLID }, // the dig-pen notice (the cottage–pen alley)
+    // the HAIRPIN REST — picnic + present at flight C's bend, under the muster cliff (§A4.5/§B4)
+    { sprite: 'picnic', x: 46, y: 27, solid: PICNIC_SOLID },
+    ...overlookGift.props,
     { sprite: 'sign', x: 59, y: 42.4, solid: SIGN_SOLID }, // trail marker (Leg 1)
-    { sprite: 'sign', x: 41, y: 28.4, solid: SIGN_SOLID }, // trail marker (Leg 3 elbow)
+    { sprite: 'sign', x: 41, y: 27.4, solid: SIGN_SOLID }, // trail marker (flight C's foot)
     otterLandmark('house_rex', 46, 49, { to: 'rex_home', tx: 104, ty: 124 }), // JAY's house (purple)
     otterLandmark('house_chad', 58, 49, { to: 'chad_home', tx: 7 * 16 + 8, ty: 8 * 16 }), // CHAD's house (blue)
     { sprite: 'bug_zapper', x: 53, y: 51, solid: { ox: 4, oy: 18, w: 6, h: 8 } },
-    { sprite: 'sign', x: 55, y: 23, solid: SIGN_SOLID, ifFlag: 'meteor_fell' }, // crater guard marker
+    { sprite: 'sign', x: 53, y: 20, solid: SIGN_SOLID, ifFlag: 'meteor_fell' }, // crater guard marker (flight D's foot)
     { sprite: 'sign', x: 34, y: 33, solid: SIGN_SOLID }, // shed marker
     { sprite: 'sign', x: 64, y: 44, solid: SIGN_SOLID }, // woods marker
     { sprite: 'picnic', x: 64, y: 53, solid: PICNIC_SOLID },
@@ -1250,14 +1298,16 @@ export function growOtterbrook(): MapDef {
     { id: 'ana', sprite: 'ana', x: 46, y: 51, facing: 'down', dialogue: 'npc_ana', ifFlag: 'zapper_done' },
     { id: 'vivi', sprite: 'vivi', x: 49, y: 51, facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done' },
     { id: 'treeline_gawker', sprite: 'pigeonKid', x: 66, y: 51, facing: 'up', dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' },
-    { id: 'woods_birder', sprite: 'oldTimer', x: 70, y: 34, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' },
-    // OLD MAN FIBBINS — stands at his pen gate, staring into the hole
-    { id: 'old_fibbins', sprite: 'oldTimer', x: 83, y: 33, facing: 'up', dialogue: 'npc_fibbins', dialogueDay: 'npc_fibbins_day', idle: true, emote: 'think' },
+    { id: 'woods_birder', sprite: 'oldTimer', x: 65, y: 28, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' }, // on the Fibbins bench, above Leg 2
+    // OLD MAN FIBBINS — at his pen gate, staring into the hole
+    { id: 'old_fibbins', sprite: 'oldTimer', x: 83, y: 32, facing: 'up', dialogue: 'npc_fibbins', dialogueDay: 'npc_fibbins_day', idle: true, emote: 'think' },
     { id: 'biscuit_road', sprite: 'dog', x: 29, y: 40, facing: 'up', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
     { id: 'biscuit_road_after', sprite: 'dog', x: 29, y: 40, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
-    { id: 'crater_cop_a', sprite: 'npc_borden', x: 53, y: 21, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
-    { id: 'crater_cop_b', sprite: 'npc_borden', x: 55, y: 21, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
-    { id: 'crater_cop_c', sprite: 'npc_borden', x: 57, y: 21, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
+    // THE CRATER GUARD — three cops cordon flight D's foot once the meteor is down;
+    // the gaps between them let the crater beat still fire.
+    { id: 'crater_cop_a', sprite: 'npc_borden', x: 45, y: 19, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
+    { id: 'crater_cop_b', sprite: 'npc_borden', x: 48, y: 20, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
+    { id: 'crater_cop_c', sprite: 'npc_borden', x: 51, y: 19, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
   ];
 
   const hillSigns: SignDef[] = [
@@ -1268,21 +1318,41 @@ export function growOtterbrook(): MapDef {
     { x: 29, y: 40, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
     { x: 64, y: 44, dialogue: 'sign_otter_woods' },
     { x: 30, y: 13, dialogue: 'sign_hill' },
-    { x: 55, y: 23, dialogue: 'sign_crater_guard', ifFlag: 'meteor_fell' },
+    { x: 53, y: 20, dialogue: 'sign_crater_guard', ifFlag: 'meteor_fell' },
     { x: 64, y: 12, dialogue: 'sign_sentinel_husk', ifFlag: 'sentinel_repelled' },
     { x: 59, y: 43, dialogue: 'sign_crater_trail' },
-    { x: 41, y: 29, dialogue: 'sign_crater_trail_2' },
-    { x: 81, y: 33, dialogue: 'sign_fibbins_dig' },
+    { x: 41, y: 28, dialogue: 'sign_crater_trail_2' },
+    { x: 79, y: 31, dialogue: 'sign_fibbins_dig' },
+    ...overlookGift.signs,
   ];
 
   const grid = g.out();
-  // Elevation plane: L2 upper plateau (rows 0-45) → L1 mid shelf (rows 49-60) → L0 town
-  // (rows 66+); the K-face seams at rows 46-48 and 62-65 with T-stairs stepping one level.
+  // Elevation plane: the RIGHT climb zone (x 40-99) stacks L5 crest → L4 police
+  // bench → L3 Fibbins bench → L2 base, reading the SAME staggered seam-row
+  // functions the paint used; everywhere else keeps the original three levels
+  // (L2 plateau → L1 shelf → L0 town). Convention (mirrors seam A): the lip row
+  // + a flight's TOP 'T' row take the UPPER level; the face-row 'T's take the
+  // LOWER — levelAfterStep flips a mover exactly one terrace per flight
+  // (collidesStatic P3/P5).
   const level = grid.map((rowStr, y) =>
     rowStr
       .split('')
-      .map((ch) => {
-        if (y <= 45) return '2'; // upper plateau (crater/cave/cottage/shed) + its lip
+      .map((ch, x) => {
+        if (y <= 45) {
+          if (x >= 40 && x <= 99) {
+            const d = crestSeamRow(x);
+            const c = musterSeamRow(x);
+            const b = benchSeamRow(x);
+            if (y <= d) return '5'; // crest + its lip (and flight D's top step)
+            if (y <= d + 2) return ch === 'T' ? '4' : '5'; // crest seam face
+            if (y <= c) return '4'; // police bench + lip (and flight C's top step)
+            if (y <= c + 2) return ch === 'T' ? '3' : '4'; // muster seam face
+            if (y <= b) return '3'; // Fibbins bench + lip (and flight B's top step)
+            if (y <= b + 2) return ch === 'T' ? '2' : '3'; // bench seam face
+            return '2'; // the base (Leg 1 + the connector lane)
+          }
+          return '2'; // LEFT zone: cave corridor/shed/cave shelf stay on the base
+        }
         if (y <= 48) return ch === 'T' ? '1' : '2'; // seam A face: stairs drop to the shelf
         if (y <= 61) return '1'; // mid shelf (Jay/Chad terrace) + its lip
         if (y <= 65) return ch === 'T' ? '0' : '1'; // seam B face: stairs drop to town
@@ -1316,16 +1386,18 @@ export function growOtterbrook(): MapDef {
     spawners: [
       ...town.spawners.map(offRect),
       { enemies: ['runaway_lawnmower'], count: 1, rect: { x: 52, y: 51, w: 4, h: 1 }, ifFlag: 'q_mail', unlessFlag: 'q_mail_sodd' },
-      // the LONG CLIMB's encounter bands, one per switchback leg
-      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 60, y: 40, w: 24, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 46, y: 33, w: 26, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 44, y: 26, w: 16, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['tick_nymph', 'skeeter_swarm'], count: 2, rect: { x: 42, y: 8, w: 16, h: 11 }, ifFlag: 'meteor_fell' },
-      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 26, y: 14, w: 10, h: 12 }, ifFlag: 'meteor_fell' },
+      // the WINDING CLIMB's encounter bands, one per terrace leg
+      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 58, y: 38, w: 26, h: 6 }, ifFlag: 'meteor_fell' }, // Leg 1 (L2)
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 44, y: 27, w: 32, h: 5 }, ifFlag: 'meteor_fell' }, // Leg 2 (L3)
+      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 42, y: 19, w: 16, h: 4 }, ifFlag: 'meteor_fell' }, // Leg 3 (L4)
+      { enemies: ['tick_nymph', 'skeeter_swarm'], count: 2, rect: { x: 41, y: 5, w: 12, h: 10 }, ifFlag: 'meteor_fell' }, // the scree zig-zag (L5)
+      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 26, y: 14, w: 10, h: 12 }, ifFlag: 'meteor_fell' }, // the left (cave) trail
     ],
     triggers: [
       { id: 'porch', rect: { x: 46, y: 56, w: 6, h: 2 }, once: true },
-      { id: 'crater', rect: { x: 58, y: 1, w: 24, h: 12 }, once: true },
+      // the crater set-piece — the scree apron now hands over to the bowl from the
+      // WEST; x62 keeps the beat from firing way out on the rim ring
+      { id: 'crater', rect: { x: 62, y: 1, w: 20, h: 12 }, once: true },
     ],
     patrols: [{ id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[30, 42], [60, 42]], countFlag: 'q_mower_caught' }],
   };

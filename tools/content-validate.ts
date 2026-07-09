@@ -2855,8 +2855,10 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
   // S15h (ADR-049): grown Otterbrook adds two POND PARK rests (the §A4.5
   // beat found before the new south field's danger). S15i (ADR-054): the new
   // WOODS NOOK hides a fourth — a discoverable rest at the thicket glade.
+  // 2026-07-08 (terraced climb): the HAIRPIN REST at flight C's bend is the
+  // third table — the §A4.5 rest before the climb's hot upper legs, by the present.
   const TABLES: Record<string, number> = {
-    otterbrook: 2,
+    otterbrook: 3,
     // ADR-056 — THE LONG WALK: a rest (picnic + payphone) at each leg's west
     // mouth, BEFORE its hot middle (§A4.5/§B4 — routes run hot)
     meadow_mile: 1,
