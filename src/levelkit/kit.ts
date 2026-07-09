@@ -159,6 +159,7 @@ const SHIPPED_DIMS: Record<string, { w: number; u: number }> = {
   bldg_ob_bakery: { w: 5, u: 1 }, bldg_ob_burger: { w: 5, u: 1 }, bldg_ob_city_hall: { w: 10, u: 7 },
   bldg_ob_clinic: { w: 9, u: 5 }, bldg_ob_house_green: { w: 6, u: 3 }, bldg_ob_workshop: { w: 7, u: 4 },
   bldg_ob_house_c: { w: 5, u: 3 }, bldg_ob_cottage: { w: 8, u: 1 }, bldg_ob_apt_green: { w: 7, u: 7 },
+  bldg_ob_hotel: { w: 7, u: 7 },
   // S15i MEGA-buildings (tops off-screen)
   bldg_tower_glass: { w: 6, u: 12 }, bldg_tower_arms: { w: 6, u: 12 }, bldg_tower_corp: { w: 7, u: 13 },
 };

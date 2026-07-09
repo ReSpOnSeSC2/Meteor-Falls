@@ -181,7 +181,21 @@ function furniture(furnish: Furnish, W: number, H: number): PropDef[] {
       return [counter(2, 3), bench(4, H - 4), bench(W - 6, H - 4)];
     case 'home':
     default:
-      return [bench(3, 3), bookshelf(W - 3, 2)];
+      // A residence must read as a LIFE, not two props in an empty rectangle.
+      // Keep the door aisle and NPC scatter clear, but furnish distinct sleeping,
+      // eating, kitchen, and sitting zones using the authored Otterbrooke domestic
+      // kit. This benefits every generated apartment while making the first town's
+      // ten residential units feel intentionally inhabited.
+      return [
+        p('bed', 1.2, 2, { ox: 1, oy: 6, w: 18, h: 22 }),
+        p('dresser', 4.2, 1.2, { ox: 2, oy: 8, w: 26, h: 14 }),
+        p('tv', Math.max(6, W - 5), 0.6),
+        bookshelf(W - 3, 2),
+        p('dining_table', Math.round(W / 2) - 1, Math.max(4.5, Math.round(H / 2) - 1), { ox: 2, oy: 12, w: 30, h: 18 }),
+        p('rocking_chair', 2, H - 4.2, { ox: 2, oy: 12, w: 14, h: 10 }),
+        p('fridge', W - 2.5, H - 4.4, { ox: 2, oy: 14, w: 14, h: 18 }),
+        p('floor_lamp', W - 5, H - 4.4, { ox: 6, oy: 26, w: 6, h: 3 }),
+      ];
   }
 }
 

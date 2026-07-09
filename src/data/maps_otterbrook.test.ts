@@ -41,6 +41,7 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       'bldg_ob_house_c',
       'bldg_ob_cottage',
       'bldg_ob_workshop',
+      'bldg_ob_hotel',
       'drugstore',
       'arcade',
       'chapel',
@@ -149,6 +150,7 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       'realty_int', // the agency office (agencyBeat's realtor works here now)
       'oldman_int', // Fibbins' cottage on the crater trail
       'maple27_int', // 27 Maple (flag-gated door — the def still carries it)
+      'otter_hotel_lobby',
     ]) {
       expect(hasEntry(id), `otterbrook -> ${id}`).toBe(true);
       expect(MAPS[id], `${id} exists`).toBeDefined();
@@ -157,6 +159,7 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     expect(ob.props.find((p) => p.sprite === 'bldg_ob_clinic')?.door?.to).toBe('otter_clinic_int');
     expect(ob.props.find((p) => p.sprite === 'facade_hardware')?.door?.to).toBe('hardware_int');
     expect(ob.props.find((p) => p.sprite === 'facade_fillshop' && p.door)?.door?.to).toBe('diner_int');
+    expect(ob.props.find((p) => p.sprite === 'bldg_ob_hotel')?.door?.to).toBe('otter_hotel_lobby');
   });
 
   it('keeps named houses accessible and ordinary facades inhabited', () => {
@@ -167,7 +170,14 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     }
     const generatedHomes = ob.props.filter((p) => p.door?.to.startsWith('otterbrook_unit_'));
     expect(generatedHomes.length).toBeGreaterThanOrEqual(5);
-    for (const p of generatedHomes) expect(MAPS[p.door!.to]?.doors.some((d) => d.to === 'otterbrook')).toBe(true);
+    for (const p of generatedHomes) {
+      const home = MAPS[p.door!.to];
+      expect(home?.doors.some((d) => d.to === 'otterbrook')).toBe(true);
+      for (const sprite of ['bed', 'dining_table', 'fridge']) {
+        expect(home?.props.some((prop) => prop.sprite === sprite), `${p.door!.to}: ${sprite}`).toBe(true);
+      }
+      expect(home?.props.length, `${p.door!.to} furnished`).toBeGreaterThanOrEqual(8);
+    }
   });
 
   it('connects the town road grid and gives every house a gated walk to its door', () => {
@@ -243,6 +253,51 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     }
     expect(MAPS.arcade_int.phones.length).toBeGreaterThan(0);
     expect(MAPS.otter_station.phones.length).toBeGreaterThan(0);
+  });
+
+  it('ships a complete multi-room hotel instead of a facade-only shell', () => {
+    const lobby = MAPS.otter_hotel_lobby;
+    const hall = MAPS.otter_hotel_hall;
+    const roomIds = ['otter_hotel_room_201', 'otter_hotel_room_202', 'otter_hotel_room_203'];
+
+    expect(lobby.name).toBe('OTTERBROOKE HOTEL');
+    expect(lobby.npcs.some((n) => n.id === 'otter_hotel_clerk')).toBe(true);
+    expect(lobby.phones.length).toBeGreaterThan(0);
+    expect(lobby.doors.some((d) => d.to === 'otterbrook')).toBe(true);
+    expect(lobby.doors.some((d) => d.to === 'otter_hotel_hall' && d.indicator === 'stairs')).toBe(true);
+    expect(hall.doors.filter((d) => roomIds.includes(d.to)).map((d) => d.to).sort()).toEqual(roomIds);
+
+    for (const id of roomIds) {
+      const room = MAPS[id];
+      expect(room, id).toBeDefined();
+      expect(room.interior, id).toBe(true);
+      expect(room.doors.some((d) => d.to === 'otter_hotel_hall'), `${id} returns to hall`).toBe(true);
+      expect(room.props.some((p) => p.sprite === 'bed'), `${id} has a bed`).toBe(true);
+    }
+    expect(MAPS.otter_hotel_room_201.props.filter((p) => p.sprite === 'bed')).toHaveLength(2);
+    expect(MAPS.otter_hotel_room_202.npcs.some((n) => n.id === 'hotel_room_202_guest')).toBe(true);
+    expect(MAPS.otter_hotel_room_203.npcs.some((n) => n.id === 'hotel_room_203_guest')).toBe(true);
+  });
+
+  it('gives the remaining public buildings real staff-side rooms', () => {
+    const annexes: Record<string, { back: string; props: string[] }> = {
+      bank_int: { back: 'bank_vault', props: ['prop_vault_door', 'prop_deposit_boxes', 'prop_gold_stack'] },
+      hardware_int: { back: 'hardware_stockroom', props: ['prop_workbench', 'prop_parts_bin', 'sawhorse'] },
+      diner_int: { back: 'diner_kitchen', props: ['fridge', 'prop_flat_grill', 'prop_deep_fryer'] },
+      drugstore_int: { back: 'drugstore_pharmacy', props: ['prop_pharmacy_rack', 'prop_workbench', 'privacy_curtain'] },
+      arcade_int: { back: 'arcade_service', props: ['cab_a', 'tv_stack', 'prop_parts_bin'] },
+    };
+
+    for (const [frontId, { back, props }] of Object.entries(annexes)) {
+      const front = MAPS[frontId];
+      const room = MAPS[back];
+      expect(front.doors.some((d) => d.to === back && d.indicator === 'door'), `${frontId} -> ${back}`).toBe(true);
+      expect(room, back).toBeDefined();
+      expect(room.doors.some((d) => d.to === frontId), `${back} -> ${frontId}`).toBe(true);
+      expect(room.npcs.length, `${back} staff/story NPC`).toBeGreaterThan(0);
+      expect(room.signs.length, `${back} environmental reads`).toBeGreaterThanOrEqual(2);
+      for (const sprite of props) expect(room.props.some((p) => p.sprite === sprite), `${back}: ${sprite}`).toBe(true);
+    }
   });
 
   it('keeps the story cave off the optional Trail Key and within a production object budget', () => {
