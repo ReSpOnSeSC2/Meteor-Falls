@@ -198,7 +198,10 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       const bottom = Math.round(p.y + 6);
       expect(frontageChars.has(ob.grid[bottom + 1]?.[cx]), `${p.sprite} @${cx},${bottom + 1} has a doorstep walk`).toBe(true);
     }
-    expect([...ob.grid.join('')].filter((c) => c === '-' || c === '|').length).toBeGreaterThan(90);
+    // fences are PROPS now (propifyFences, 2026-07-09): the grid carries no legacy fence
+    // tiles, and the yards/pen/park edges are laid in sectional picket pieces instead
+    expect([...ob.grid.join('')].filter((c) => c === '-' || c === '|')).toHaveLength(0);
+    expect(ob.props.filter((p) => p.sprite.startsWith('picket_')).length).toBeGreaterThan(50);
   });
 
   it('keeps Pond Park, save points, and the restored rest spots', () => {

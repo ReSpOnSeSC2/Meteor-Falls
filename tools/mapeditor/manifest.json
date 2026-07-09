@@ -473,7 +473,8 @@
       "h": 18,
       "url": "/assets/art/world/props/sign.png",
       "group": "street",
-      "solidDefault": true
+      "solidDefault": true,
+      "tags": "wooden sign post notice board"
     },
     {
       "key": "picnic",
@@ -560,8 +561,9 @@
       "w": 31,
       "h": 24,
       "url": "/assets/art/world/props/sawhorse.png",
-      "group": "other",
-      "solidDefault": true
+      "group": "street",
+      "solidDefault": true,
+      "tags": "do not enter barricade roadblock road work construction blocked"
     },
     {
       "key": "ember",
@@ -1401,7 +1403,8 @@
       "h": 22,
       "url": "/assets/art/world/props/prop_guardrail.png",
       "group": "other",
-      "solidDefault": true
+      "solidDefault": true,
+      "tags": "road guard rail barrier"
     },
     {
       "key": "prop_culvert",
@@ -1508,36 +1511,121 @@
       "solidDefault": true
     },
     {
-      "key": "picket_fence",
+      "key": "picket_h",
       "w": 32,
-      "h": 13,
-      "url": "/assets/art/world/props/picket_fence.png",
-      "group": "other",
-      "solidDefault": true
+      "h": 23.2,
+      "url": "/assets/art/world/props/picket_h.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence horizontal run section yard"
     },
     {
-      "key": "picket_fence_side",
-      "w": 24,
-      "h": 29,
-      "url": "/assets/art/world/props/picket_fence_side.png",
-      "group": "other",
-      "solidDefault": true
+      "key": "picket_h1",
+      "w": 16,
+      "h": 23.2,
+      "url": "/assets/art/world/props/picket_h1.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence horizontal short run section yard"
+    },
+    {
+      "key": "picket_cap_w",
+      "w": 16,
+      "h": 23.2,
+      "url": "/assets/art/world/props/picket_cap_w.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence run end post west gate edge yard"
+    },
+    {
+      "key": "picket_cap_e",
+      "w": 16.2,
+      "h": 23.2,
+      "url": "/assets/art/world/props/picket_cap_e.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence run end post east gate edge yard"
     },
     {
       "key": "picket_post",
-      "w": 12,
-      "h": 27,
+      "w": 7,
+      "h": 15,
       "url": "/assets/art/world/props/picket_post.png",
-      "group": "other",
-      "solidDefault": true
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence post yard"
     },
     {
-      "key": "picket_fence_corner",
-      "w": 32,
+      "key": "picket_gate",
+      "w": 20,
+      "h": 18,
+      "url": "/assets/art/world/props/picket_gate.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence gate open yard"
+    },
+    {
+      "key": "picket_corner_w",
+      "w": 36.3,
+      "h": 45.2,
+      "url": "/assets/art/world/props/picket_corner_w.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence corner turn joint west angled climb yard"
+    },
+    {
+      "key": "picket_side_ne",
+      "w": 35.9,
+      "h": 42.2,
+      "url": "/assets/art/world/props/picket_side_ne.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence diagonal side climb northeast angled yard"
+    },
+    {
+      "key": "picket_side_ne2",
+      "w": 37.7,
+      "h": 42.2,
+      "url": "/assets/art/world/props/picket_side_ne2.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence diagonal side climb northeast angled yard variant"
+    },
+    {
+      "key": "picket_corner_e_nw",
+      "w": 36.3,
+      "h": 45.2,
+      "url": "/assets/art/world/props/picket_corner_e_nw.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence corner turn joint east northwest mirror yard"
+    },
+    {
+      "key": "picket_side_nw",
+      "w": 35.9,
+      "h": 42.2,
+      "url": "/assets/art/world/props/picket_side_nw.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence diagonal side climb northwest angled mirror yard"
+    },
+    {
+      "key": "picket_side_nw2",
+      "w": 37.7,
+      "h": 42.2,
+      "url": "/assets/art/world/props/picket_side_nw2.png",
+      "group": "yard",
+      "solidDefault": true,
+      "tags": "white picket fence diagonal side climb northwest angled mirror yard variant"
+    },
+    {
+      "key": "sign_do_not_enter",
+      "w": 11,
       "h": 22,
-      "url": "/assets/art/world/props/picket_fence_corner.png",
-      "group": "other",
-      "solidDefault": true
+      "url": "/assets/art/world/props/sign_do_not_enter.png",
+      "group": "street",
+      "solidDefault": true,
+      "tags": "do not enter street sign red circle barricade blocked"
     },
     {
       "key": "riser_brick",

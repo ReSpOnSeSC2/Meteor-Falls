@@ -580,8 +580,20 @@ const WORLD_PROP_KEYS = [
   // Otterbrook full-rebuild Americana set (2 ChatGPT magenta strips → slice-prop-strip)
   'otter_statue', 'gazebo', 'footbridge_rail', 'cattails', 'mailbox', 'doghouse',
   'tree_swing', 'clothesline', 'kiddie_pool', 'swing_set', 'seesaw', 'flagpole',
-  // transparent white-picket yard fencing (2026-07-07 ChatGPT magenta strip → slice-prop-strip)
-  'picket_fence', 'picket_fence_side', 'picket_post', 'picket_fence_corner',
+  // transparent white-picket yard fencing KIT (2026-07-09) — every piece CUT FROM ONE
+  // ChatGPT master drawing (masters/world/otterbrook-picket-master-fence.png: a complete
+  // connected fence — run + corner turns + 45°-ish '/' climbs) so styles can't drift and
+  // adjacent pieces literally continue each other's pixels (tmp cutter → per-gap windows).
+  // Grammar (user-locked: EB never draws a vertical fence; N-S lines lean like the
+  // buildings' oblique): picket_h/_h1 = continuous run windows (2 pickets per tile);
+  // _cap_w/_e = run ends WITH the terminal post (gate edges); _corner_w/_e = the 2-cell
+  // turn joints (post + run + climb base rising behind); _side_ne/_ne2 = the whole rising
+  // climbs w/ top post (paired to their corners); _nw twins = programmatic mirrors for the
+  // opposite lean (editor use). propifyFences (maps.ts) lays them over '-'/'|' paints.
+  'picket_h', 'picket_h1', 'picket_cap_w', 'picket_cap_e', 'picket_post', 'picket_gate',
+  'picket_corner_w', 'picket_side_ne', 'picket_side_ne2',
+  'picket_corner_e_nw', 'picket_side_nw', 'picket_side_nw2',
+  'sign_do_not_enter',
   // oblique 3/4 ground-height RISER faces (2026-07-07) — raised edges w/ visible front face (EB Onett curb/wall look)
   'riser_brick', 'riser_brick_corner', 'riser_curb', 'riser_curb_corner',
   // the UNDER-OAK set (ADR-121 rework — eb-grounds-fix sheet cells)
@@ -862,11 +874,21 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   gift_box_open: { w: 16, h: 14 },
   // Boss 1's broken body (battle_titanic_tick_w2 reused) — ~3 tiles, aspect-matched to 286×235
   tick_husk: { w: 48, h: 39 },
-  // white-picket yard fencing (16 native units = 1 tile) — segments tile along a yard edge
-  picket_fence: { w: 32, h: 13 }, // horizontal front run (~2 tiles wide)
-  picket_fence_side: { w: 24, h: 29 }, // oblique receding side run
-  picket_post: { w: 12, h: 27 }, // single post (corners / gate posts)
-  picket_fence_corner: { w: 32, h: 22 }, // horizontal→corner→receding combo
+  // white-picket yard fencing KIT (16 native = 1 tile; s = 16/138 — one master drawing,
+  // 2 pickets per tile). propifyFences (maps.ts) mirrors these numbers in its placement math.
+  picket_h: { w: 32, h: 23.2 }, // 2-tile continuous run window (4 pickets, gap-phase edges)
+  picket_h1: { w: 16, h: 23.2 }, // 1-tile window (2 pickets, same phase — mixes seamlessly)
+  picket_cap_w: { w: 16, h: 23.2 }, // run WEST end: terminal post at the cell's west edge
+  picket_cap_e: { w: 16.2, h: 23.2 }, // run EAST end: terminal post at the cell's east edge
+  picket_corner_w: { w: 36.3, h: 45.2 }, // 2-cell WEST turn joint: post + run + '/' climb behind
+  picket_side_ne: { w: 35.9, h: 42.2 }, // the '/' climb + top post — pairs picket_corner_w
+  picket_side_ne2: { w: 37.7, h: 42.2 }, // the '/' climb that TUCKS BEHIND a cap_e post (east turns)
+  picket_corner_e_nw: { w: 36.3, h: 45.2 }, // mirrored joint/climbs for the opposite lean ('\')
+  picket_side_nw: { w: 35.9, h: 42.2 },
+  picket_side_nw2: { w: 37.7, h: 42.2 },
+  picket_post: { w: 7, h: 15 }, // junction / stray-cell post
+  picket_gate: { w: 20, h: 18 }, // open gateway unit (two posts + swung leaf) — editor dressing
+  sign_do_not_enter: { w: 11, h: 22 }, // the red-ring street sign (roadblocks, sealed lanes)
   // oblique ground-height riser faces (raised edge = visible top + front face)
   riser_brick: { w: 40, h: 14 }, // low brick retaining wall run
   riser_brick_corner: { w: 22, h: 20 }, // brick wall outer corner

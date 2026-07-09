@@ -1102,6 +1102,172 @@ function buildOtterbrookTownReplica(): MapDef {
   };
 }
 
+/** Fences are PROPS, not tiles (2026-07-09 playtest fix). The tilemap is single-layer, so a
+ *  fence TILE carries a baked ground square that boxes every run in flat green; the authored
+ *  picket KIT renders transparent over the real ground and depth-sorts (the player's feet
+ *  disappear behind a run they stand north of, like EarthBound).
+ *
+ *  Scans the finished grid for the legacy '-'/'|' paints, returns those cells to grass, and
+ *  lays sectional props: 2-tile + 1-tile sections along horizontal runs (their end posts are
+ *  baked flush, so abutting sections read as one continuous fence) and a post wherever a run
+ *  branches or stands alone.
+ *
+ *  N-S FENCES ARE DIAGONAL (user-locked 2026-07-09, per the EB Onett reference: EarthBound
+ *  never draws a straight vertical fence — its north-south lines are angled staircases, and
+ *  EVERY staircase leans the SAME way: '/', matching the buildings' up-right depth axis).
+ *
+ *  The connected grammar (user 2026-07-09: front and side must ATTACH):
+ *    · where a horizontal run turns into a diagonal, the turn cell renders the authored
+ *      CORNER piece (picket_corner_w / _e: post + H rails one side + '/' rails behind),
+ *      so the front and the rising side read as one continuous fence;
+ *    · '/' chain cells may sit directly above row cells — that IS the parallelogram look
+ *      (the side rises behind the front row, exactly like EB's leaning yards);
+ *    · straight '|' columns are RE-SHAPED, not rendered: each fenced end becomes corner →
+ *      one '/' step → terminal post (rising NE), and the column's middle returns to grass —
+ *      EB yards read as leaning open frames, not sealed boxes;
+ *    · a '/' chain's unanchored END cell (one diagonal neighbour) terminates in a post.
+ *  Piece geometry mirrors the AUTHORED_WORLD_PROP_DISPLAY_SIZE entries (picket_h 32×13,
+ *  picket_diag_ne 16-wide steps, post 7×15). Deterministic: the byte-identical build test
+ *  covers it. */
+function propifyFences(g: Grid): PropDef[] {
+  const H = g.rows.length;
+  const W = g.rows[0].length;
+  const key = (x: number, y: number): number => y * W + x;
+  const raw = (x: number, y: number): boolean => {
+    const c = g.rows[y]?.[x];
+    return c === '-' || c === '|';
+  };
+  // Overlapping yard paints stack fence cells two rows deep in places (as TILES the pile
+  // read as one chunky fence; as props it becomes a post swarm). Collapse every pile onto
+  // its SOUTHERNMOST row: drop a cell whose south neighbour is fence AND itself runs
+  // horizontally. A pure vertical column has no horizontal neighbours, so real columns —
+  // and the corner cells above them — survive untouched.
+  const rawH = (x: number, y: number): boolean => raw(x, y) && (raw(x - 1, y) || raw(x + 1, y));
+  const eff = new Set<number>();
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      if (raw(x, y) && !(rawH(x, y + 1) && (raw(x - 1, y) || raw(x + 1, y))))
+        eff.add(key(x, y)); // piles run sideways — a '|' column bottom above a row survives
+  const inEff = (x: number, y: number): boolean => x >= 0 && y >= 0 && x < W && y < H && eff.has(key(x, y));
+
+  // ---- straight '|' columns mark WHERE A SIDE RISES: each fenced end (the H cell the
+  // column touches) becomes the 2-cell CORNER JOINT + its whole rising '/' SIDE piece —
+  // both cut from the same master drawing, so the turn is literally the drawn connection.
+  // The column's own cells return to grass (EB yards are leaning open frames). ----
+  const cornerW = new Set<number>(); // joint at a run's WEST end (H continues east)
+  const cornerE = new Set<number>(); // joint at a run's EAST end (H continues west)
+  const consumed = new Set<number>(); // run cells covered by a 2-cell corner piece
+  const columns: Array<{ x: number; y0: number; y1: number }> = [];
+  const pureV = (x: number, y: number): boolean =>
+    inEff(x, y) && !inEff(x - 1, y) && !inEff(x + 1, y) && (inEff(x, y - 1) || inEff(x, y + 1));
+  for (let x = 0; x < W; x++) {
+    for (let y = 0; y < H; y++) {
+      if (!pureV(x, y) || pureV(x, y - 1)) continue;
+      let y1 = y;
+      while (pureV(x, y1 + 1)) y1++;
+      columns.push({ x, y0: y, y1 });
+      y = y1;
+    }
+  }
+  const strays: Array<[number, number]> = [];
+  for (const { x, y0, y1 } of columns) {
+    const anchors: number[] = [];
+    if (inEff(x, y0 - 1)) anchors.push(y0 - 1);
+    if (inEff(x, y1 + 1)) anchors.push(y1 + 1);
+    for (let yy = y0; yy <= y1; yy++) eff.delete(key(x, yy));
+    if (!anchors.length) strays.push([x, y0]);
+    for (const ay of anchors) {
+      if (inEff(x + 1, ay)) {
+        // WEST turn: the drawn 2-cell joint piece (post + run + climb base behind)
+        cornerW.add(key(x, ay));
+        consumed.add(key(x + 1, ay)); // the joint art spans this run cell too
+      } else {
+        // EAST turn: no special piece — the run ends in its normal cap_e post and the
+        // climb tucks behind it (its left rail stubs hide inside the post's body)
+        cornerE.add(key(x, ay));
+      }
+    }
+  }
+  // east-turn anchors stay ORDINARY run cells (they take the natural cap_e post);
+  // only the drawn west joints leave the run grammar
+  const isCorner = (x: number, y: number): boolean => cornerW.has(key(x, y));
+
+  // ---- classify what remains: H runs (minus west joints + their consumed cells) + posts ----
+  const axisH = new Set<number>();
+  const posts: Array<[number, number]> = [...strays];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (!inEff(x, y) || isCorner(x, y) || consumed.has(key(x, y))) continue;
+      if (inEff(x - 1, y) || inEff(x + 1, y)) axisH.add(key(x, y));
+      else posts.push([x, y]);
+    }
+  }
+  // every original fence cell returns to grass (props render over the real ground)
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (raw(x, y)) g.set(x, y, '.');
+
+  const props: PropDef[] = [];
+  // posts: 7×15 art centred in its cell, base on the cell floor; solid = the lower square
+  for (const [x, y] of posts)
+    props.push({ sprite: 'picket_post', x: x + 0.28, y: y + 0.0625, solid: { ox: 0.5, oy: 7, w: 6, h: 8 } });
+  // corner joints + their rising sides. All pieces share the master drawing's scale
+  // (s = 16/138): the run base sits ~1.4 native below the cell floor, the corner art is
+  // 46.4 tall, and each side piece is placed at the drawing's own offset from its corner
+  // (art +269/-170 and +276/-170 → native +31.2/-19.7 and +32/-19.7), so the climb
+  // continues the joint pixel-for-pixel. Side solids over-cover their diagonal band a
+  // little (the wedge they block is yard interior / pen wall — EB collision is chunky too).
+  // every piece is cut to the SAME art base line (fence base + 2px), so one placement rule
+  // aligns all rails: prop.y = cell + (18 - dispH)/16. Corners: dispH 45.2 → -1.7; sides sit
+  // at the drawing-true offset (-19.7 native) above their corner.
+  for (const k of cornerW) {
+    const x = k % W, y = Math.floor(k / W);
+    props.push({ sprite: 'picket_corner_w', x: x - 0.269, y: y - 1.7, solid: { ox: 4.3, oy: 32, w: 30, h: 9 } });
+    props.push({ sprite: 'picket_side_ne', x: x + 1.68, y: y - 2.931, solid: { ox: 2, oy: 16, w: 32, h: 22 } });
+  }
+  // east turns: the climb tucks behind the run's own cap_e post — its left rail stubs land
+  // inside the post's body, and its first picket plants just NE of it
+  for (const k of cornerE) {
+    const x = k % W, y = Math.floor(k / W);
+    props.push({ sprite: 'picket_side_ne2', x: x + 0.75, y: y - 1.825, solid: { ox: 3, oy: 14, w: 32, h: 22 } });
+  }
+  // horizontal runs: continuous gap-phase windows — caps (with the terminal post) at any
+  // end that faces open ground (gate edges); plain windows beside corner joints, whose art
+  // already covers the adjacent cell. The run base sits ~1.4 native below the cell floor.
+  const RUN_Y = 2 - 23.2 + 16; // prop y-offset in native: base at cell bottom + 2
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (!axisH.has(key(x, y)) || axisH.has(key(x - 1, y))) continue;
+      let len = 1;
+      while (axisH.has(key(x + len, y))) len++;
+      const westJoined = isCorner(x - 1, y) || consumed.has(key(x - 1, y));
+      const eastJoined = isCorner(x + len, y) || consumed.has(key(x + len, y));
+      let cx = x;
+      let rem = len;
+      if (!westJoined && rem >= 2) {
+        props.push({ sprite: 'picket_cap_w', x: cx, y: y + RUN_Y / 16, solid: { ox: 0, oy: 12, w: 16, h: 8 } });
+        cx += 1;
+        rem -= 1;
+      }
+      const capEast = !eastJoined && rem >= 2;
+      const fillEnd = capEast ? rem - 1 : rem;
+      for (let f = fillEnd; f > 0; ) {
+        if (f >= 2) {
+          props.push({ sprite: 'picket_h', x: cx, y: y + RUN_Y / 16, solid: { ox: 0, oy: 12, w: 32, h: 8 } });
+          cx += 2;
+          f -= 2;
+        } else {
+          props.push({ sprite: 'picket_h1', x: cx, y: y + RUN_Y / 16, solid: { ox: 0, oy: 12, w: 16, h: 8 } });
+          cx += 1;
+          f -= 1;
+        }
+      }
+      if (capEast)
+        props.push({ sprite: 'picket_cap_e', x: cx, y: y + RUN_Y / 16, solid: { ox: 0, oy: 12, w: 16, h: 8 } });
+      x += len - 1;
+    }
+  }
+  return props;
+}
+
 export function growOtterbrook(): MapDef {
   const town = buildOtterbrookTownReplica();
   const TB = OTTERBROOK_TOWN_BASE;
@@ -1205,13 +1371,18 @@ export function growOtterbrook(): MapDef {
   // the fence seals any spill). ──
   g.rect(81, 28, 4, 3, ':'); // the dirt apron
   g.rect(82, 28, 2, 2, 's'); // the hole itself (scorched-bare earth)
-  g.rect(80, 27, 6, 1, '-');
-  for (const fy of [28, 29, 30] as const) { g.set(80, fy, '|'); g.set(85, fy, '|'); }
-  for (const fx of [80, 81, 84, 85] as const) g.set(fx, 31, '-'); // gate at x82-83
+  // the pen is a leaning PARALLELOGRAM (EB grammar, user 2026-07-09 — EarthBound never
+  // runs a fence straight north-south, every climb leans the same '/' as the buildings'
+  // oblique, and the front ATTACHES to the sides through the authored corner joints): the
+  // south row carries the gate; the '|' markers above each row end tell propifyFences to
+  // raise the corner joint + whole rising side there — the west side climbing BEHIND the
+  // row (the parallelogram read), the east past the woods corner; the woods close the back.
+  for (const fx of [78, 79, 80, 81, 84, 85, 86, 87] as const) g.set(fx, 30, '-'); // south row — gate at x82-83
+  for (const fy of [28, 29] as const) { g.set(78, fy, '|'); g.set(87, fy, '|'); } // side markers
   // little sign nooks so the trail markers never sit under canopy or on the path
   for (const [nx, ny] of [[59, 43], [41, 28], [24, 40]] as const) g.set(nx, ny, '.');
   // meadow dressing — flowers + tufts in the carved pockets (hand-set, deterministic)
-  for (const [fx, fy] of [[52, 27], [51, 29], [78, 27], [66, 28], [89, 28]] as const) g.set(fx, fy, 'f');
+  for (const [fx, fy] of [[52, 27], [51, 29], [78, 27], [66, 28], [87, 27]] as const) g.set(fx, fy, 'f');
   for (const [ux, uy] of [[53, 28], [65, 32], [44, 19], [58, 19], [44, 13]] as const) g.set(ux, uy, '~');
 
   // --- ELEVATION seams. HILL FLIGHTS (the RIGHT climb zone, x 40-99): each seam
@@ -1299,7 +1470,7 @@ export function growOtterbrook(): MapDef {
       ...otterCentered('bldg_ob_cottage', 72, 33),
       door: { ox: Math.round((618 / 4) * 0.21) - 8, oy: 96 - 22, w: 16, h: 20, to: 'oldman_int', tx: 7 * 16 + 8, ty: 8 * 16 },
     },
-    { sprite: 'sign', x: 79, y: 30.4, solid: SIGN_SOLID }, // the dig-pen notice (the cottage–pen alley)
+    { sprite: 'sign', x: 76, y: 30.4, solid: SIGN_SOLID }, // the dig-pen notice (west of the pen's flank)
     // the HAIRPIN REST — picnic + present at flight C's bend, under the muster cliff (§A4.5/§B4)
     { sprite: 'picnic', x: 46, y: 27, solid: PICNIC_SOLID },
     ...overlookGift.props,
@@ -1346,9 +1517,14 @@ export function growOtterbrook(): MapDef {
     { x: 64, y: 12, dialogue: 'sign_sentinel_husk', ifFlag: 'sentinel_repelled' },
     { x: 59, y: 43, dialogue: 'sign_crater_trail' },
     { x: 41, y: 28, dialogue: 'sign_crater_trail_2' },
-    { x: 79, y: 31, dialogue: 'sign_fibbins_dig' },
+    { x: 76, y: 31, dialogue: 'sign_fibbins_dig' },
     ...overlookGift.signs,
   ];
+
+  // the fence-tile → picket-prop conversion runs LAST, after every paint (town copy,
+  // yards, the dig pen) and after the canopy pass read the grid — so the woods keep
+  // today's crowns and the fence lines become transparent sectional props.
+  const fenceProps = propifyFences(g);
 
   const grid = g.out();
   // Elevation plane: the RIGHT climb zone (x 40-99) stacks L5 crest → L4 police
@@ -1396,7 +1572,7 @@ export function growOtterbrook(): MapDef {
     settlement: 'town',
     grid,
     elevation: { level },
-    props: [...hillProps, ...town.props.map(offY)],
+    props: [...hillProps, ...fenceProps, ...town.props.map(offY)],
     npcs: [...hillNpcs, ...town.npcs.map(offY)],
     signs: [...hillSigns, ...town.signs.map(offY)],
     phones: town.phones.map(offY),

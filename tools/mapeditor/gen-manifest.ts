@@ -94,10 +94,34 @@ const FLAT = new Set([
 ]);
 const propGroup = (key: string): string => {
   if (/^(tree|pine|palm|prop_pine|baobab|cattails|glow_shroom|root_)/.test(key)) return 'nature';
-  if (/(bench|hydrant|mailbox|trash|news_box|parking_meter|sign|planter|dumpster|payphone|phone_pole|atm|fountain|well|flagpole|bus_sign|market_stall|fb_|puerto_)/.test(key)) return 'street';
+  if (/(bench|hydrant|mailbox|trash|news_box|parking_meter|sign|planter|dumpster|payphone|phone_pole|atm|fountain|well|flagpole|bus_sign|market_stall|fb_|puerto_|sawhorse)/.test(key)) return 'street';
   if (/(bed|sofa|desk|counter|dresser|^tv$|stove|bookshelf|floor_lamp|fridge|dining|shelf|cot|rocking|table|vending|jukebox|booth|freezer|checkout|aisle)/.test(key)) return 'furniture';
-  if (/(gazebo|swing|seesaw|kiddie|doghouse|clothesline|footbridge|statue|karaoke|stage)/.test(key)) return 'yard';
+  if (/(gazebo|swing|seesaw|kiddie|doghouse|clothesline|footbridge|statue|karaoke|stage|picket)/.test(key)) return 'yard';
   return 'other';
+};
+
+// searchable ALIASES for props whose key doesn't say what they are — the palette search
+// matches key + tags (index.html folds tags into the swatch title). The sawhorse IS the
+// game's "do not enter" barricade; nobody types "sawhorse" looking for it.
+const PROP_TAGS: Record<string, string> = {
+  sawhorse: 'do not enter barricade roadblock road work construction blocked',
+  sign_do_not_enter: 'do not enter street sign red circle barricade blocked',
+  sign: 'wooden sign post notice board',
+  picket_h: 'white picket fence horizontal run section yard',
+  picket_h1: 'white picket fence horizontal short run section yard',
+  picket_cap_w: 'white picket fence run end post west gate edge yard',
+  picket_cap_e: 'white picket fence run end post east gate edge yard',
+  picket_corner_w: 'white picket fence corner turn joint west angled climb yard',
+  picket_corner_e: 'white picket fence corner turn joint east angled climb yard',
+  picket_side_ne: 'white picket fence diagonal side climb northeast angled yard',
+  picket_side_ne2: 'white picket fence diagonal side climb northeast angled yard variant',
+  picket_corner_w_nw: 'white picket fence corner turn joint west northwest mirror yard',
+  picket_corner_e_nw: 'white picket fence corner turn joint east northwest mirror yard',
+  picket_side_nw: 'white picket fence diagonal side climb northwest angled mirror yard',
+  picket_side_nw2: 'white picket fence diagonal side climb northwest angled mirror yard variant',
+  picket_gate: 'white picket fence gate open yard',
+  picket_post: 'white picket fence post yard',
+  prop_guardrail: 'road guard rail barrier',
 };
 
 const authoredProps = (AUTHORED_WORLD_PROP_KEYS as readonly string[])
@@ -118,6 +142,7 @@ const authoredProps = (AUTHORED_WORLD_PROP_KEYS as readonly string[])
       url: `/${rel}`,
       group: propGroup(key),
       solidDefault: !FLAT.has(key),
+      tags: PROP_TAGS[key], // searchable alias words (undefined → omitted from the JSON)
     };
   })
   .filter(Boolean);

@@ -384,7 +384,9 @@ function buildTilePalette(){
   });
 }
 function makePropSwatch(p,isFacade){
-  const sw=document.createElement('div'); sw.className='sw'; sw.title=p.key;
+  // the title carries the manifest's alias tags too, so the search box (filterGrid
+  // matches the title) finds e.g. the sawhorse under "do not enter" / "barricade"
+  const sw=document.createElement('div'); sw.className='sw'; sw.title=p.tags?`${p.key} — ${p.tags}`:p.key;
   const im=document.createElement('img'); im.loading='lazy'; im.src=p.url; sw.appendChild(im);
   sw.insertAdjacentHTML('beforeend',`<span class="nm">${p.key}</span>`);
   sw.onclick=()=>{ state.propKey=p.key; state.propIsFacade=isFacade; state.placeMode='prop'; setTool('place');
