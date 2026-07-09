@@ -254,6 +254,18 @@
   },
   {
    "x": 9,
+   "y": 11,
+   "dialogue": "cave_gift_roots",
+   "unlessFlag": "cave_gift_roots"
+  },
+  {
+   "x": 9,
+   "y": 11,
+   "dialogue": "cave_gift_roots_done",
+   "ifFlag": "cave_gift_roots"
+  },
+  {
+   "x": 9,
    "y": 12,
    "dialogue": "cave_gift_roots",
    "unlessFlag": "cave_gift_roots"

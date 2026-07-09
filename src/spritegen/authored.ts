@@ -553,6 +553,10 @@ const WORLD_PROP_KEYS = [
   // powered-down husk it leaves as an Otterbrook landmark (wakes again, Ch.10) +
   // the super-Glint radiant flare for the "goes supernova" rally beat.
   'hush_sentinel', 'sentinel_husk', 'glint_radiant',
+  // Boss 1's broken body in oak_heart (2026-07-09) — the authored battler's WEAR-2
+  // frame reused as a world prop (tick_husk.png = a copy of battle_titanic_tick_w2.png;
+  // the enemy master stays the source of truth)
+  'tick_husk',
   'lemonade', 'bus_sign', 'doormat', 'stairs', 'door_int', 'door_int_open', 'payphone',
   'dumpster', 'bench', 'hydrant', 'planter', 'elevator', 'water_cooler', 'copier',
   'plant_pot', 'holding_door', 'holding_door_1', 'holding_door_2', 'holding_door_3',
@@ -856,6 +860,8 @@ const BATTLE_BACKGROUND_ART = ['otterbrook', 'otter_station', 'brickton', 'jungl
 export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   gift_box: { w: 14, h: 14 },
   gift_box_open: { w: 16, h: 14 },
+  // Boss 1's broken body (battle_titanic_tick_w2 reused) — ~3 tiles, aspect-matched to 286×235
+  tick_husk: { w: 48, h: 39 },
   // white-picket yard fencing (16 native units = 1 tile) — segments tile along a yard edge
   picket_fence: { w: 32, h: 13 }, // horizontal front run (~2 tiles wide)
   picket_fence_side: { w: 24, h: 29 }, // oblique receding side run

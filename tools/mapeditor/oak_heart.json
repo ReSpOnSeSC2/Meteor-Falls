@@ -81,6 +81,18 @@
    }
   },
   {
+   "sprite": "tick_husk",
+   "x": 14.5,
+   "y": 5,
+   "solid": {
+    "ox": 4,
+    "oy": 26,
+    "w": 40,
+    "h": 12
+   },
+   "ifFlag": "tick_defeated"
+  },
+  {
    "sprite": "tree_c",
    "x": 6,
    "y": 3.6,
@@ -161,7 +173,20 @@
   }
  ],
  "npcs": [],
- "signs": [],
+ "signs": [
+  {
+   "x": 15,
+   "y": 6,
+   "dialogue": "sign_tick_husk",
+   "ifFlag": "tick_defeated"
+  },
+  {
+   "x": 15,
+   "y": 7,
+   "dialogue": "sign_tick_husk",
+   "ifFlag": "tick_defeated"
+  }
+ ],
  "phones": [],
  "doors": [
   {

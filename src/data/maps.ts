@@ -1249,10 +1249,24 @@ export function growOtterbrook(): MapDef {
   // added body) — collision + BFS come from the grid. Sub-tile jitter + the 3-way
   // treeSprite variety keep the mass organic; ~80% coverage with ~2-tile crowns closes
   // the gaps. Paths/clearings ('.'/':'/'s') are skipped, so the dirt trails read clean.
+  // 2026-07-09 playtest fix: no crown where its FOLIAGE would cover a walk — the
+  // art rises ~2 tiles UP from its base and spills ~½ tile sideways, so a crown
+  // with walkable ground to its NORTH (any diagonal) or EAST/WEST swallows whoever
+  // passes ("only Jay's cap poking out of a tree"). South-side contact is SAFE:
+  // the crown's base y-sorts behind anyone standing below it, so south edges keep
+  // their crowns and the woods stay a dense sea. Skipped cells still render as
+  // leaves via the 'b' canopy tile skin.
+  const WALKABLE_HILL = new Set(['.', ',', '~', 'f', 'F', ':', 's', 'S', 'T', '^']);
+  const crownOverhangsWalk = (x: number, y: number): boolean => {
+    for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0]] as const)
+      if (WALKABLE_HILL.has(g.rows[y + dy]?.[x + dx] ?? '')) return true;
+    return false;
+  };
   const canopyTrees: PropDef[] = [];
   for (let cy = 1; cy < TB; cy++) {
     for (let cx = 5; cx < W - 5; cx++) {
       if (g.rows[cy]?.[cx] !== 'b') continue;
+      if (crownOverhangsWalk(cx, cy)) continue;
       const h = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
       if (h % 5 === 0) continue; // ~20% gaps → dense but not a solid wall of green
       const jx = (((h >> 3) % 5) - 2) * 0.18;
@@ -1828,6 +1842,12 @@ function walkPresent(flag: string, x: number, y: number): { props: PropDef[]; si
       { sprite: 'gift_box_open', x, y, solid: WALK_GIFT_SOLID, ifFlag: flag },
     ],
     signs: [
+      // the interaction lives on the BOX TILE **and** the tile below it: facing the
+      // box from any side opens it (EB behaviour). With only the y+1 entry, pressing
+      // A while facing the box itself did nothing — the "present doesn't open"
+      // 2026-07-09 playtest report.
+      { x, y, dialogue: flag, unlessFlag: flag },
+      { x, y, dialogue: `${flag}_done`, ifFlag: flag },
       { x, y: y + 1, dialogue: flag, unlessFlag: flag },
       { x, y: y + 1, dialogue: `${flag}_done`, ifFlag: flag },
     ],

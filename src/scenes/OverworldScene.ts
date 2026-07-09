@@ -1842,6 +1842,11 @@ export class OverworldScene extends Phaser.Scene {
     // flit cycle — he never borrows the angel sheet and never walks the conga.
     const spr = this.add.sprite(this.player.x, this.player.y + s(2), flit ? id : angel ? angelKey : id, 0);
     spr.setOrigin(0.5, 1);
+    // seed the y-sort NOW: the conga update only assigns depth once the player has
+    // laid ~27 breadcrumbs, so until then a fresh follower sat at depth 0 and drew
+    // BEHIND every facade (the "Chad hidden behind the house on the porch" report,
+    // 2026-07-09 playtest — every door exit reproduced it)
+    spr.setDepth(spr.y + this.levelLift(spr.x, spr.y));
     if (angel) spr.play(`${angelKey}-float`);
     else if (flit) spr.play(`${id}-flit`);
     else spr.setFrame(standFrame('down'));
