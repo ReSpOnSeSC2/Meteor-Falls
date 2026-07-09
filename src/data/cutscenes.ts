@@ -104,7 +104,7 @@ const CH1: Cutscene[] = [
         sfx: 'meteor_far',
         motion: { fromScale: 1.04, toScale: 1.17, panY: -6, ease: 'quad.in' },
         captions: [
-          'Otterbrook, Ohio. Summer, 1995.',
+          'Otterbrooke, Ohio. Summer, 1995.',
           '2:11 AM — everyone asleep but the crickets, one porch light, and a dog with opinions about the sky.',
           'One of the stars is getting bigger. Stars are not supposed to do that.',
         ],

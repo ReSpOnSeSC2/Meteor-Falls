@@ -6,7 +6,7 @@
  * facade doors, NPCs, signs, elevation, and generated residential interiors.
  */
 import { describe, expect, it } from 'vitest';
-import { growOtterbrook, OTTERBROOK_EAST_GATE, MAPS } from './maps';
+import { growOtterbrook, OTTERBROOK_EAST_GATE, OTTERBROOK_TOWN_HEIGHT, MAPS } from './maps';
 
 describe('OTTERBROOKE -- playable reference rebuild', () => {
   const ob = MAPS.otterbrook;
@@ -26,8 +26,10 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
 
   it('is a real tile-and-prop town, not a zero-prop backdrop', () => {
     expect(ob.settlement).toBe('town');
+    expect(ob.name).toBe('OTTERBROOKE, OH');
     expect(ob.grid[0].length).toBe(112);
-    expect(ob.grid.length).toBe(66 + 160); // hill (66) + town grown southward to 160 for the long approach
+    expect(ob.grid.length).toBe(66 + OTTERBROOK_TOWN_HEIGHT);
+    expect(OTTERBROOK_TOWN_HEIGHT).toBe(132); // compact one-block south approach
     expect(ob.props.length).toBeGreaterThan(40);
     expect(ob.props.filter((p) => p.sprite.startsWith('bldg_gen_'))).toEqual([]);
     for (const sprite of [
@@ -135,7 +137,9 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       'otterbrook_cityhall',
       'drugstore_int',
       'bus_depot_int',
-      'downtown_otterbrook',
+      'hardware_int',
+      'diner_int',
+      'otter_clinic_int',
       'burger_int',
       'bank_int',
       'bakery_int',
@@ -150,6 +154,9 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       expect(MAPS[id], `${id} exists`).toBeDefined();
       expect(MAPS[id].doors.some((d) => d.to === 'otterbrook'), `${id} -> otterbrook`).toBe(true);
     }
+    expect(ob.props.find((p) => p.sprite === 'bldg_ob_clinic')?.door?.to).toBe('otter_clinic_int');
+    expect(ob.props.find((p) => p.sprite === 'facade_hardware')?.door?.to).toBe('hardware_int');
+    expect(ob.props.find((p) => p.sprite === 'facade_fillshop' && p.door)?.door?.to).toBe('diner_int');
   });
 
   it('keeps named houses accessible and ordinary facades inhabited', () => {
@@ -220,5 +227,29 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       expect(m.phones.length, `${id} save phone`).toBeGreaterThanOrEqual(1);
       expect(m.doors.some((d) => d.to === 'otterbrook'), `${id} exit`).toBe(true);
     }
+  });
+
+  it('ships purposeful first-town venues instead of three identical stubs', () => {
+    const venueProps: Record<string, string[]> = {
+      bank_int: ['prop_teller_grille', 'prop_velvet_rope', 'prop_deposit_boxes'],
+      bakery_int: ['prop_pastry_case', 'prop_brick_oven', 'prop_mixing_station'],
+      burger_int: ['prop_burger_counter', 'prop_flat_grill', 'prop_deep_fryer'],
+      workshop_int: ['prop_rocket_fuselage', 'prop_blueprint_table', 'prop_workbench'],
+    };
+    for (const [id, sprites] of Object.entries(venueProps)) {
+      const m = MAPS[id];
+      for (const sprite of sprites) expect(m.props.some((p) => p.sprite === sprite), `${id}: ${sprite}`).toBe(true);
+      expect(m.npcs.length, `${id} has a person, not an empty shell`).toBeGreaterThan(0);
+    }
+    expect(MAPS.arcade_int.phones.length).toBeGreaterThan(0);
+    expect(MAPS.otter_station.phones.length).toBeGreaterThan(0);
+  });
+
+  it('keeps the story cave off the optional Trail Key and within a production object budget', () => {
+    expect(ob.props.some((p) => p.sprite === 'sawhorse' && p.unlessFlag === 'has_trail_key')).toBe(false);
+    expect(ob.props.some((p) => p.sprite === 'sawhorse' && p.unlessFlag === 'zapper_done')).toBe(true);
+    expect(ob.props.length).toBeLessThan(1100); // was 3,214 before sparse canopy accents
+    expect(ob.props.filter((p) => ['tree', 'tree_b', 'tree_c'].includes(p.sprite)).length).toBeLessThan(600);
+    expect(ob.npcs.filter((n) => n.ifFlag === 'tick_defeated').length).toBeGreaterThanOrEqual(8);
   });
 });

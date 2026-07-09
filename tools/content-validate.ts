@@ -1751,13 +1751,15 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
 }
 
-// §A8/ADR-016 — exactly the two Ch.1 shops, with their canon shelves
+// §A8/ADR-016 — Ch.1 shops, with their canon shelves
 // (S9 extended both per §A10 #3: the twins' sugar + city-lemon supplies)
 {
   // M18 (ADR-063): the Americas pour stocks the new priced consumables / gear
   // into the right counters (valuables, key items, and the price-0 SET charms
   // are loot/quest goods, never shelf stock).
   const canon: Record<string, string[]> = {
+    bakery: ['apple_pie_slice', 'pbj', 'lemonade'],
+    burger: ['grilled_cheese', 'corn_dog', 'star_cola'],
     drugstore: [
       'tball_bat', 'corn_dog', 'pbj', 'salt_shaker', 'sugar_bag',
       'grilled_cheese', 'apple_pie_slice', 'bug_juice', 'moms_voice_tape',
@@ -1782,7 +1784,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner', 'aurora_provisioner', 'mauna_vendor']);
+  const KNOWN_SHOPS = new Set(['bakery', 'burger', 'drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner', 'aurora_provisioner', 'mauna_vendor']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }

@@ -72,7 +72,15 @@ export type LivingLike = Pick<MapDef, 'id' | 'props' | 'signs'>;
 
 export function livingCityViolations(m: LivingLike): string[] {
   const out: string[] = [];
-  const facades = m.props.filter((p) => p.sprite.startsWith('bldg_') && p.solid);
+  // Flag-swapped open/closed states are one physical building, not two dead
+  // facades. Collapse identical placements and prefer the doored state.
+  const placed = new Map<string, LivingLike['props'][number]>();
+  for (const p of m.props.filter((p) => p.sprite.startsWith('bldg_') && p.solid)) {
+    const key = `${p.sprite}:${p.x}:${p.y}`;
+    const prior = placed.get(key);
+    if (!prior || (!prior.door && p.door)) placed.set(key, p);
+  }
+  const facades = [...placed.values()];
   if (facades.length < 8) return out; // villages / hand-built strips: not swept
   const enterable = facades.filter((p) => p.door).length;
   const pct = enterable / facades.length;

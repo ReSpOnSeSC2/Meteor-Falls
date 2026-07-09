@@ -171,7 +171,7 @@ function roadH(g: Grid, yCenters: number[], xLeft: number, h = 4): void {
 export const OTTERBROOK_TOWN_BASE = 66;
 /** the L0 town's height in tiles — grown SOUTHWARD (from the old 102) so there's a real walk
  *  down through town to the chapter road at the very bottom, EarthBound-Onett style. */
-export const OTTERBROOK_TOWN_HEIGHT = 160;
+export const OTTERBROOK_TOWN_HEIGHT = 132;
 
 /** the grown town's CHAPTER gateway tile — MEADOW MILE (Movement 2) now leaves off the town's
  *  SOUTH edge (matching Onett's south road to Twoson), not the right side. Its x is the south
@@ -461,7 +461,7 @@ function buildOtterbrookTown(): MapDef {
 
   return {
     id: 'otterbrook',
-    name: 'OTTERBROOK, OHIO',
+    name: 'OTTERBROOKE, OH',
     music: 'otterbrook',
     settlement: 'town',
     grid: g.out(),
@@ -542,8 +542,20 @@ function buildOtterbrookTownReplica(): MapDef {
   };
   const wOf = (s: string): number => Math.ceil((OTTERBROOK_LANDMARK_DIMS[s]?.[0] ?? 320) / 64);
   const yarded: Array<{ cx: number; bottom: number; w: number }> = [];
-  const build = (s: string, cx: number, bottom: number, door?: { to: string; tx: number; ty: number }): void => {
-    props.push(otterCentered(s, cx, bottom, door));
+  const build = (
+    s: string,
+    cx: number,
+    bottom: number,
+    door?: { to: string; tx: number; ty: number },
+    openFlag?: string,
+  ): void => {
+    const facade = otterCentered(s, cx, bottom, door);
+    if (door && openFlag) {
+      props.push({ ...otterCentered(s, cx, bottom), unlessFlag: openFlag });
+      props.push({ ...facade, ifFlag: openFlag });
+    } else {
+      props.push(facade);
+    }
     markFootprint(s, cx, bottom);
     if (/^(house_|bldg_ob_house|bldg_ob_cottage)/.test(s)) yarded.push({ cx, bottom, w: wOf(s) + 7 });
   };
@@ -804,8 +816,8 @@ function buildOtterbrookTownReplica(): MapDef {
   build('facade_busdepot', 29, 27, { to: 'bus_depot_int', tx: 120, ty: 128 });
   build('bldg_ob_city_hall', 46, 27, { to: 'otterbrook_cityhall', tx: 120, ty: 128 });
   build('facade_otter_station', 64, 27, { to: 'otter_station', tx: 120, ty: 128 });
-  build('bldg_ob_clinic', 76, 27);
-  build('bldg_brickmore', 88, 27, { to: 'downtown_otterbrook', tx: 208, ty: 224 });
+  build('bldg_ob_clinic', 76, 27, { to: 'otter_clinic_int', tx: 120, ty: 128 });
+  build('bldg_brickmore', 88, 27);
   build('bldg_ob_apt_green', 100, 27);
   // ORCHARD ST (row 46) — residential
   home('bldg_ob_house_green', 12, 40);
@@ -819,13 +831,13 @@ function buildOtterbrookTownReplica(): MapDef {
   home('house_a', 99, 40);
   // MAIN ST (row 61) — the downtown drag, gas pump to used-car lot, shops flush on
   // the pavement with a metered parking lane out front
-  build('facade_fillshop', 12, 57);
-  build('bldg_ob_burger', 25, 57, { to: 'burger_int', tx: 96, ty: 118 });
-  build('bldg_bank', 32, 57, { to: 'bank_int', tx: 96, ty: 118 });
-  build('facade_hardware', 45, 57);
-  build('bldg_ob_bakery', 61, 57, { to: 'bakery_int', tx: 96, ty: 118 });
+  build('facade_fillshop', 12, 57, { to: 'diner_int', tx: 120, ty: 128 }, 'tick_defeated');
+  build('bldg_ob_burger', 25, 57, { to: 'burger_int', tx: 96, ty: 118 }, 'tick_defeated');
+  build('bldg_bank', 32, 57, { to: 'bank_int', tx: 96, ty: 118 }, 'tick_defeated');
+  build('facade_hardware', 45, 57, { to: 'hardware_int', tx: 120, ty: 128 });
+  build('bldg_ob_bakery', 61, 57, { to: 'bakery_int', tx: 96, ty: 118 }, 'tick_defeated');
   build('drugstore', 68, 57, { to: 'drugstore_int', tx: 112, ty: 118 });
-  build('arcade', 80, 57, { to: 'arcade_int', tx: 80, ty: 102 });
+  build('arcade', 80, 57, { to: 'arcade_int', tx: 80, ty: 102 }, 'tick_defeated');
   // POND ST (row 76) — residential east of the park
   home('house_b', 48, 70);
   home('bldg_ob_house_green', 63, 70);
@@ -843,10 +855,10 @@ function buildOtterbrookTownReplica(): MapDef {
   home('house_a', 66, 100);
   home('bldg_ob_house_green', 87, 100);
   drive(92, 97);
-  // SOUTH APPROACH (rows 128/148) — the last homes on the long walk to the gate
+  // SOUTH APPROACH — one memorable final block, then the chapter road. The old
+  // second cross-street added twenty empty rows and made the first town feel like
+  // a planning grid rather than a compact SNES caricature.
   home('bldg_ob_house_green', 66, 122);
-  home('house_b', 66, 142);
-  drive(71, 139);
 
   // ── 27 MAPLE (ADR-115 made real) — the Onett for-sale house. The lot is real
   // from hour one: FOR-SALE sign, fenced yard, the art's LEFT-hand door. The DOOR
@@ -878,14 +890,17 @@ function buildOtterbrookTownReplica(): MapDef {
   // real street addresses (authored citygen facades, scaled to shoulder height
   // beside the 384px drag). The agency door opens into the office where the agent
   // now works; Bert holds court on his lot out front of the bunting.
-  props.push({
+  const realtyFacade: PropDef = {
     sprite: 'facade_realty',
     x: 87 - ((300 / 64) * 1.25) / 2,
     y: 57 - (227 / 64) * 1.25,
     scale: 1.25,
     solid: { ox: 0, oy: 10, w: 75, h: 47 },
     door: { ox: Math.round(75 * 0.72) - 8, oy: Math.round(227 / 4) - 22, w: 16, h: 22, to: 'realty_int', tx: 6 * 16 + 8, ty: 7 * 16 },
-  });
+  };
+  const { door: _realtyDoor, ...closedRealtyFacade } = realtyFacade;
+  props.push({ ...closedRealtyFacade, unlessFlag: 'tick_defeated' });
+  props.push({ ...realtyFacade, ifFlag: 'tick_defeated' });
   markRect(83, 50, 91, 58);
   props.push({
     sprite: 'facade_autolot',
@@ -910,8 +925,7 @@ function buildOtterbrookTownReplica(): MapDef {
   hRoad(76, 43, 52); // POND ST (starts at Mill Ave, east of the park lawn)
   hRoad(91, 18, 77); // SOUTH RES ST (hammerhead turnaround under the pond, W)
   hRoad(106, 12, 68); // MAPLE ST (west cul-de-sac → School Ave)
-  hRoad(128, 50, 27); // FIRST CROSS (south approach) — east lane off the spine
-  hRoad(148, 50, 27); // SECOND CROSS (south approach)
+  hRoad(128, 50, 27); // SOUTH CROSS — east lane off the spine
   vRoad(20, 13, 50); // WEST END AVE (North Res → Main; the pond owns the west below)
   vRoad(92, 13, 81); // EASTBROOK AVE (North Res → South Res)
   vRoad(42, 58, 51); // MILL AVE (Main → Maple, clear of the park lawn)
@@ -927,15 +941,11 @@ function buildOtterbrookTownReplica(): MapDef {
   g.rect(15, 87, 3, 1, '=');
   g.rect(15, 93, 3, 1, '=');
   g.rect(15, 88, 3, 5, 'R');
-  // matching turnarounds where the two south cross-lanes end past their last homes
+  // matching turnaround where the south cross-lane ends past its last home
   g.rect(80, 126, 1, 5, '=');
   g.rect(77, 125, 3, 1, '=');
   g.rect(77, 131, 3, 1, '=');
   g.rect(77, 126, 3, 5, 'R');
-  g.rect(80, 146, 1, 5, '=');
-  g.rect(77, 145, 3, 1, '=');
-  g.rect(77, 151, 3, 1, '=');
-  g.rect(77, 146, 3, 5, 'R');
 
   for (const key of occupied) {
     const x = key % W;
@@ -985,7 +995,7 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'bench', x: 65.5, y: 37.2, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
     { sprite: 'phone_table', x: 63, y: 38.2, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
     // signposts (each backed by a SignDef below)
-    { sprite: 'sign', x: 52, y: 152, solid: SIGN_SOLID }, // the chapter-road marker on the south approach
+    { sprite: 'sign', x: 52, y: H - 8, solid: SIGN_SOLID }, // the chapter-road marker on the south approach
     { sprite: 'sign', x: 60, y: 33.6, solid: SIGN_SOLID }, // City Hall / welcome, on the plaza
     { sprite: 'sign', x: 10, y: 57.5, solid: SIGN_SOLID }, // Main St west marker
     { sprite: 'sign', x: 12, y: 102.5, solid: SIGN_SOLID }, // MAPLE ST
@@ -995,13 +1005,20 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'sawhorse', x: 27.5, y: 97.6, solid: { ox: 0, oy: 6, w: 64, h: 22 } }, // the Fixer's renovation never started
     { sprite: 'sign', x: 52.4, y: 12.4, solid: SIGN_SOLID }, // WELCOME — where the trail becomes Main Ave
     { sprite: 'sign', x: 88.2, y: 85.4, solid: SIGN_SOLID }, // chapel marker
-    { sprite: 'sign', x: 56.2, y: 153.4, solid: SIGN_SOLID, unlessFlag: 'zapper_done' }, // the closed-gate notice
+    { sprite: 'sign', x: 56.2, y: H - 6.6, solid: SIGN_SOLID, unlessFlag: 'tick_defeated' }, // the closed-gate notice
     // POND PARK (footprint unchanged)
     { sprite: 'picnic', x: 30, y: 78, solid: PICNIC_SOLID },
     { sprite: 'gazebo', x: 30, y: 72, solid: { ox: 4, oy: 34, w: 48, h: 18 } },
     { sprite: 'swing_set', x: 26, y: 66, solid: { ox: 2, oy: 20, w: 60, h: 8 } },
+    { sprite: 'seesaw', x: 34, y: 67.5, solid: { ox: 2, oy: 12, w: 34, h: 7 } },
+    { sprite: 'picnic_blanket', x: 33, y: 81 },
+    { sprite: 'cattails', x: 3, y: 68 },
+    { sprite: 'cattails', x: 4, y: 79 },
+    { sprite: 'cattails', x: 18, y: 68 },
+    { sprite: 'cattails', x: 18, y: 80 },
     { sprite: 'tree_c', x: 11, y: 70, solid: OAK },
     { sprite: 'footbridge_rail', x: 17, y: 77 },
+    { sprite: 'flagpole', x: 68, y: 34, solid: { ox: 5, oy: 28, w: 6, h: 7 } },
     // MAIN ST street furniture: hydrants, meters along the parking lane, bins
     { sprite: 'hydrant', x: 33.5, y: 57.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
     { sprite: 'hydrant', x: 66.5, y: 57.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
@@ -1009,12 +1026,24 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'trash_can', x: 26.5, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'trash_can', x: 64.2, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'news_box', x: 70.5, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+    { sprite: 'planter', x: 57.8, y: 57.4, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+    { sprite: 'planter', x: 82.5, y: 57.4, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
     { sprite: 'bench', x: 25.5, y: 27.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } }, // the bus-stop benches
     { sprite: 'bench', x: 31, y: 27.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
     // residential mailboxes on the kerb
     { sprite: 'mailbox', x: 43.5, y: 86.4, solid: { ox: 4, oy: 12, w: 8, h: 6 } },
     { sprite: 'mailbox', x: 65.5, y: 86.4, solid: { ox: 4, oy: 12, w: 8, h: 6 } },
     { sprite: 'mailbox', x: 41.5, y: 101.4, solid: { ox: 4, oy: 12, w: 8, h: 6 } },
+    { sprite: 'mailbox', x: 78.5, y: 71.4, solid: { ox: 4, oy: 12, w: 8, h: 6 } },
+    // Small domestic stories make each block readable at a glance: laundry,
+    // a dog run, a pool, and the swing that belongs to the same family every day.
+    { sprite: 'clothesline', x: 94, y: 39.2 },
+    { sprite: 'doghouse', x: 35, y: 83.2, solid: { ox: 2, oy: 14, w: 18, h: 9 } },
+    { sprite: 'kiddie_pool', x: 84, y: 68.2 },
+    { sprite: 'tree_swing', x: 46, y: 68.5 },
+    { sprite: 'phone_pole', x: 18, y: 29.2 },
+    { sprite: 'phone_pole', x: 94, y: 44.2 },
+    { sprite: 'phone_pole', x: 40, y: 89.2 },
     // cars parked ON the new driveways
     { sprite: 'vehicle_clunker', x: 38.7, y: 6.5 },
     { sprite: 'vehicle_clunker', x: 49.7, y: 36.5 },
@@ -1056,13 +1085,21 @@ function buildOtterbrookTownReplica(): MapDef {
     { id: 'green_keeper', sprite: 'fernLady', x: 28, y: 73, facing: 'down', dialogue: 'npc_green_keeper', wander: true },
     { id: 'pond_angler', sprite: 'quarterMan', x: 21, y: 76, facing: 'left', dialogue: 'npc_pond_angler', idle: true, emote: 'think' },
     { id: 'south_neighbor', sprite: 'senora', x: 60, y: 82, facing: 'down', dialogue: 'npc_south_neighbor', wander: true },
-    { id: 'gate_walker', sprite: 'grayCommuter', x: 54, y: 153, facing: 'down', dialogue: 'npc_gate_walker', dialogueDay: 'npc_gate_walker_day', wander: true },
-    { id: 'bus_waiter1', sprite: 'grayCommuter', x: 26, y: 28, facing: 'right', dialogue: 'npc_bus_waiter1', idle: true, emote: 'think', ifFlag: 'zapper_done' }, // depot benches
-    { id: 'bus_waiter2', sprite: 'senora', x: 30, y: 28, facing: 'up', dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle', ifFlag: 'zapper_done' },
+    { id: 'gate_walker', sprite: 'grayCommuter', x: 54, y: H - 7, facing: 'down', dialogue: 'npc_gate_walker', dialogueDay: 'npc_gate_walker_day', wander: true },
+    { id: 'bus_waiter1', sprite: 'grayCommuter', x: 26, y: 28, facing: 'right', dialogue: 'npc_bus_waiter1', idle: true, emote: 'think', ifFlag: 'tick_defeated' }, // depot benches
+    { id: 'bus_waiter2', sprite: 'senora', x: 30, y: 28, facing: 'up', dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle', ifFlag: 'tick_defeated' },
     // the AGENT now works inside OTTERBROOK REALTY (realty_int) — see buildRealtyInt
-    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 98, y: 58, facing: 'down', dialogue: 'npc_car_dealer', idle: true, emote: 'happy', ifFlag: 'zapper_done' }, // Bert, on his lot
-    { id: 'maple_gawker', sprite: 'senora', x: 18, y: 103, facing: 'up', dialogue: 'npc_maple_gawker', idle: true, emote: 'think', ifFlag: 'zapper_done', unlessFlag: 'owned_27_maple' },
-    { id: 'constable_borden', sprite: 'npc_borden', x: 66, y: 28, facing: 'up', dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise', ifFlag: 'zapper_done', unlessFlag: 'borden_marching' }, // the station house
+    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 98, y: 58, facing: 'down', dialogue: 'npc_car_dealer', idle: true, emote: 'happy', ifFlag: 'tick_defeated' }, // Bert, on his lot
+    { id: 'maple_gawker', sprite: 'senora', x: 18, y: 103, facing: 'up', dialogue: 'npc_maple_gawker', idle: true, emote: 'think', ifFlag: 'tick_defeated', unlessFlag: 'owned_27_maple' },
+    { id: 'constable_borden', sprite: 'npc_borden', x: 66, y: 28, facing: 'up', dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise', ifFlag: 'tick_defeated', unlessFlag: 'borden_marching' }, // the station house
+    // Restored-day bustle: these people are the reward for giving the town its
+    // color back, not background noise during the Hush crisis.
+    { id: 'civic_secretary', sprite: 'grayCommuter', x: 58, y: 37, facing: 'right', dialogue: 'npc_civic_secretary', wander: true, ifFlag: 'tick_defeated' },
+    { id: 'bakery_regular', sprite: 'senora', x: 61, y: 59, facing: 'up', dialogue: 'npc_bakery_regular', idle: true, emote: 'happy', ifFlag: 'tick_defeated' },
+    { id: 'arcade_regular', sprite: 'pigeonKid', x: 79, y: 59, facing: 'up', dialogue: 'npc_arcade_regular', idle: true, emote: 'happy', ifFlag: 'tick_defeated' },
+    { id: 'pond_grandma', sprite: 'fernLady', x: 35, y: 80, facing: 'left', dialogue: 'npc_pond_grandma', wander: true, ifFlag: 'tick_defeated' },
+    { id: 'maple_biker', sprite: 'pajamaKid', x: 37, y: 103, facing: 'right', dialogue: 'npc_maple_biker', wander: true, ifFlag: 'tick_defeated' },
+    { id: 'south_gardener', sprite: 'mrPlummer', x: 69, y: 124, facing: 'left', dialogue: 'npc_south_gardener', wander: true, ifFlag: 'tick_defeated' },
   ];
 
   const signs: SignDef[] = [
@@ -1071,8 +1108,8 @@ function buildOtterbrookTownReplica(): MapDef {
     { x: 60, y: 34, dialogue: 'sign_otter_hall' },
     { x: 30, y: 73, dialogue: 'sign_civic_green' },
     { x: 24, y: 74, dialogue: 'sign_pond_park' },
-    { x: 52, y: 152, dialogue: 'sign_meadow_gate' },
-    { x: 56, y: 154, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
+    { x: 52, y: H - 8, dialogue: 'sign_meadow_gate' },
+    { x: 56, y: H - 6, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'tick_defeated' },
     { x: 10, y: 58, dialogue: 'sign_to_downtown' },
     { x: 12, y: 103, dialogue: 'sign_maple_st' },
     { x: 13, y: 100, dialogue: 'sign_27_maple', unlessFlag: 'owned_27_maple' },
@@ -1083,7 +1120,7 @@ function buildOtterbrookTownReplica(): MapDef {
 
   return {
     id: 'otterbrook',
-    name: 'OTTERBROOK, OHIO',
+    name: 'OTTERBROOKE, OH',
     music: 'otterbrook',
     settlement: 'town',
     grid: g.out(),
@@ -1418,8 +1455,9 @@ export function growOtterbrook(): MapDef {
   // DENSE canopy: the wooded slope is a SEA of overlapping tree crowns (the concept's
   // read). Every wooded 'b' cell is already SOLID, so these crowns are DECORATIVE (no
   // added body) — collision + BFS come from the grid. Sub-tile jitter + the 3-way
-  // treeSprite variety keep the mass organic; ~80% coverage with ~2-tile crowns closes
-  // the gaps. Paths/clearings ('.'/':'/'s') are skipped, so the dirt trails read clean.
+  // treeSprite variety keep the mass organic. The solid `b` tile already renders the
+  // authored dense-canopy skin, so these are sparse silhouette accents rather than
+  // thousands of duplicate display objects. Paths/clearings stay clean.
   // 2026-07-09 playtest fix: no crown where its FOLIAGE would cover a walk — the
   // art rises ~2 tiles UP from its base and spills ~½ tile sideways, so a crown
   // with walkable ground to its NORTH (any diagonal) or EAST/WEST swallows whoever
@@ -1439,7 +1477,7 @@ export function growOtterbrook(): MapDef {
       if (g.rows[cy]?.[cx] !== 'b') continue;
       if (crownOverhangsWalk(cx, cy)) continue;
       const h = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
-      if (h % 5 === 0) continue; // ~20% gaps → dense but not a solid wall of green
+      if (h % 17 !== 0) continue; // ~6% accents; the canopy tile supplies the mass
       const jx = (((h >> 3) % 5) - 2) * 0.18;
       const jy = (((h >> 6) % 5) - 2) * 0.18;
       canopyTrees.push({ sprite: treeSprite(cx, cy), x: cx + jx, y: cy + jy });
@@ -1458,11 +1496,12 @@ export function growOtterbrook(): MapDef {
     { sprite: 'meteor_rock_hickory_hill', x: 66, y: 3, solid: { ox: 16, oy: 46, w: 64, h: 38 } }, // pushed farther UP the hill
     { sprite: 'sentinel_husk', x: 62, y: 2, solid: { ox: 4, oy: 60, w: 152, h: 40 }, ifFlag: 'sentinel_repelled' },
     { sprite: 'burrow_mouth', x: 7, y: 1 }, // the CAVE mouth (top-left CORNER) → Titanic Tick
-    otterCentered('bldg_ob_workshop', 12, 31, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }), // the SHED — planted ACROSS the corridor, blocking the way to the cave
-    // the LOCKED SHED GATE: sawhorses seal BOTH walk-arounds beside the shed (needs
-    // the trail key from the hodgkin_mower chain). With the key the flanks open.
-    { sprite: 'sawhorse', x: 5, y: 28, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
-    { sprite: 'sawhorse', x: 14.5, y: 28, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
+    otterCentered('bldg_ob_workshop', 12, 31, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }), // Pemberton's workshop — the cave path passes around both flanks
+    // The cave is a story destination, never an optional side-quest reward. A
+    // pre-dawn works barrier prevents the empty dungeon from being entered early;
+    // it retires after Mom sends Jay to sleep. Hodgkin's Trail Key now opens only
+    // his optional supply cache (the sign beside the workshop).
+    { sprite: 'sawhorse', x: 5.2, y: 10.2, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'zapper_done' },
     // OLD MAN FIBBINS' cottage — on his own bench now (L3); the crater trail runs
     // right past his LEFT-hand front door (the art's drawn door, frac ≈ .21),
     // Lier-X-Agerate style, along the row-33 front walk under the facade.
@@ -1497,7 +1536,7 @@ export function growOtterbrook(): MapDef {
     // OLD MAN FIBBINS — at his pen gate, staring into the hole
     { id: 'old_fibbins', sprite: 'oldTimer', x: 83, y: 32, facing: 'up', dialogue: 'npc_fibbins', dialogueDay: 'npc_fibbins_day', idle: true, emote: 'think' },
     { id: 'biscuit_road', sprite: 'dog', x: 14, y: 39, facing: 'up', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
-    { id: 'biscuit_road_after', sprite: 'dog', x: 14, y: 39, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
+    { id: 'biscuit_road_after', sprite: 'dog', x: 14, y: 39, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated' },
     // THE CRATER GUARD — three cops cordon flight D's foot once the meteor is down;
     // the gaps between them let the crater beat still fire.
     { id: 'crater_cop_a', sprite: 'npc_borden', x: 45, y: 19, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
@@ -1506,8 +1545,9 @@ export function growOtterbrook(): MapDef {
   ];
 
   const hillSigns: SignDef[] = [
-    { x: 16, y: 31, dialogue: 'locked_house' },
+    { x: 16, y: 31, dialogue: 'sign_pemberton_workshop' },
     { x: 10, y: 34, dialogue: 'trail_shed' },
+    { x: 5, y: 13, dialogue: 'cave_closed_before_dawn', unlessFlag: 'zapper_done' },
     { x: 24, y: 40, dialogue: 'sign_whisperwood_rise' },
     { x: 21, y: 43, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
     { x: 14, y: 39, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
@@ -1567,7 +1607,7 @@ export function growOtterbrook(): MapDef {
 
   return {
     id: 'otterbrook',
-    name: 'OTTERBROOK, OHIO',
+    name: 'OTTERBROOKE, OH',
     music: 'otterbrook',
     settlement: 'town',
     grid,
@@ -1585,14 +1625,14 @@ export function growOtterbrook(): MapDef {
       ...town.doors.map(offY),
     ],
     spawners: [
-      ...town.spawners.map(offRect),
+      ...town.spawners.map((sp) => ({ ...offRect(sp), unlessFlag: sp.unlessFlag ?? 'glint_walk_home' })),
       { enemies: ['runaway_lawnmower'], count: 1, rect: { x: 52, y: 51, w: 4, h: 1 }, ifFlag: 'q_mail', unlessFlag: 'q_mail_sodd' },
       // the WINDING CLIMB's encounter bands, one per terrace leg
-      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 58, y: 38, w: 26, h: 6 }, ifFlag: 'meteor_fell' }, // Leg 1 (L2)
-      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 44, y: 27, w: 32, h: 5 }, ifFlag: 'meteor_fell' }, // Leg 2 (L3)
-      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 42, y: 19, w: 16, h: 4 }, ifFlag: 'meteor_fell' }, // Leg 3 (L4)
-      { enemies: ['tick_nymph', 'skeeter_swarm'], count: 2, rect: { x: 41, y: 5, w: 12, h: 10 }, ifFlag: 'meteor_fell' }, // the scree zig-zag (L5)
-      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 5, y: 12, w: 7, h: 12 }, ifFlag: 'meteor_fell' }, // the west (cave) corridor
+      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 58, y: 38, w: 26, h: 6 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // Leg 1 (L2)
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 54, y: 29, w: 22, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // Leg 2 (L3), clear of the hairpin picnic
+      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 42, y: 19, w: 16, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // Leg 3 (L4)
+      { enemies: ['tick_nymph', 'skeeter_swarm'], count: 2, rect: { x: 41, y: 5, w: 12, h: 10 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // the scree zig-zag (L5)
+      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 5, y: 12, w: 7, h: 12 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // the west (cave) corridor
     ],
     triggers: [
       { id: 'porch', rect: { x: 46, y: 56, w: 6, h: 2 }, once: true },
@@ -1817,7 +1857,7 @@ export function growOtterbrookLegacy(): MapDef {
 
   return {
     id: 'otterbrook',
-    name: 'OTTERBROOK, OHIO',
+    name: 'OTTERBROOKE, OH',
     music: 'otterbrook',
     settlement: 'town',
     grid,
@@ -1875,7 +1915,7 @@ function buildOtterbrookCityHallInt(streetExit: { tx: number; ty: number }): Map
   g.rect(11, 5, 4, 1, 'r');
   return {
     id: 'otterbrook_cityhall',
-    name: 'OTTERBROOK CITY HALL',
+    name: 'OTTERBROOKE CITY HALL',
     music: 'otterbrook',
     interior: true,
     grid: g.out(),
@@ -1943,7 +1983,7 @@ function buildOtterStationInt(streetExit: { tx: number; ty: number }): MapDef {
   g.rect(17, 8, 7, 1, 'W'); g.set(20, 8, 'w'); // office/records split, doorway at 20,8
   return {
     id: 'otter_station',
-    name: 'OTTERBROOK STATION',
+    name: 'OTTERBROOKE STATION',
     music: 'otterbrook',
     interior: true,
     grid: g.out(),
@@ -1965,13 +2005,14 @@ function buildOtterStationInt(streetExit: { tx: number; ty: number }): MapDef {
       { sprite: 'shelf_b', x: 21, y: 9.4, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
       { sprite: 'crate', x: 18, y: 13.2, solid: { ox: 1, oy: 8, w: 18, h: 10 } },
       { sprite: 'crate', x: 19.6, y: 13.5, solid: { ox: 1, oy: 8, w: 18, h: 10 } },
+      { sprite: 'payphone', x: 1, y: 14, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
     ],
     npcs: [
       // Borden books you in the cell — present only while he's marched you in
       { id: 'borden_cell', sprite: 'npc_borden', x: 14, y: 3, facing: 'down', dialogue: 'npc_borden_holding', ifFlag: 'borden_marching', unlessFlag: 'borden_cleared' },
     ],
     signs: [{ x: 4, y: 1, dialogue: 'sign_station_wall' }],
-    phones: [],
+    phones: [{ x: 1, y: 14 }],
     doors: [
       { x: 11, y: 15, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],
@@ -2397,15 +2438,22 @@ function buildWorkshopInt(streetExit: { tx: number; ty: number }): MapDef {
     interior: true,
     grid: g.out(),
     props: [
-      { sprite: 'desk', x: 8, y: 3, solid: { ox: 0, oy: 8, w: 20, h: 12 } },
-      { sprite: 'shelf_b', x: 2, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
-      { sprite: 'shelf_b', x: 13, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
-      { sprite: 'counter', x: 10, y: 7, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'prop_rocket_fuselage', x: 13.2, y: 1.7, solid: { ox: 4, oy: 24, w: 26, h: 14 } },
+      { sprite: 'prop_workbench', x: 2, y: 2.6, solid: { ox: 1, oy: 12, w: 26, h: 10 } },
+      { sprite: 'prop_blueprint_table', x: 7.2, y: 5.4, solid: { ox: 1, oy: 12, w: 24, h: 10 } },
+      { sprite: 'prop_parts_bin', x: 1.4, y: 7.1, solid: { ox: 1, oy: 10, w: 18, h: 9 } },
+      { sprite: 'shelf_b', x: 5, y: 1.8, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
       { sprite: 'floor_lamp', x: 15, y: 7.4, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'payphone', x: 1, y: 9, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
     ],
-    npcs: [],
-    signs: [{ x: 8, y: 3, dialogue: 'trail_shed' }],
-    phones: [],
+    npcs: [
+      { id: 'pemberton', sprite: 'ml_pemberton', x: 10, y: 4, facing: 'down', dialogue: 'npc_pemberton_ch1', idle: true, emote: 'think' },
+    ],
+    signs: [
+      { x: 8, y: 6, dialogue: 'pemberton_blueprints' },
+      { x: 14, y: 3, dialogue: 'pemberton_rocket' },
+    ],
+    phones: [{ x: 1, y: 9 }],
     doors: [{ x: 8, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
     spawners: [],
     triggers: [],
@@ -2448,7 +2496,7 @@ function buildRealtyInt(streetExit: { tx: number; ty: number }): MapDef {
   g.rect(6, 5, 2, 2, 'r');
   return {
     id: 'realty_int',
-    name: 'OTTERBROOK REALTY',
+    name: 'OTTERBROOKE REALTY',
     music: 'otterbrook',
     interior: true,
     grid: g.out(),
@@ -2951,7 +2999,7 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
   g.rect(0, 0, 13, 2, 'W');
   return {
     id: 'drugstore_int',
-    name: 'OTTERBROOK DRUG',
+    name: 'OTTERBROOKE DRUG',
     music: 'otterbrook',
     interior: true,
     grid: g.out(),
@@ -3015,42 +3063,75 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
   };
 }
 
-/**
- * SHOP STUB (World Overhaul S5, Ch.1) — a minimal enterable shell for the newly
- * authored Otterbrooke storefronts (BANK / BAKERY / BURGER). Furniture + a SAVE
- * payphone + an ATM + the street exit, so the facade doors have real, savable
- * targets in the town-assembly slice. The bespoke multi-room dress + keepers +
- * the bank's fortune-arc / bakery / burger mechanics land in the interiors slice
- * (docs/OTTERBROOK_INTERIOR_MANIFEST.md §2.2-2.4). Grows to 16×11 via ROOMY_INTERIORS.
- */
-function buildShopStub(id: string, name: string, streetExit: { tx: number; ty: number }): MapDef {
-  const g = new Grid(13, 9, 'w');
-  g.rect(0, 0, 13, 2, 'W');
+/** Purpose-built Ch.1 venues. These use the authored Otterbrooke fixture kit
+ * that previously shipped unused while all three businesses shared one stub. */
+function buildBankInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(16, 11, 'o');
+  g.rect(0, 0, 16, 2, 'O');
+  g.rect(7, 7, 2, 2, 'r');
   return {
-    id,
-    name,
-    music: 'otterbrook',
-    interior: true,
-    grid: g.out(),
+    id: 'bank_int', name: 'OTTERBROOKE SAVINGS & LOAN', music: 'otterbrook', interior: true, grid: g.out(),
     props: [
-      { sprite: 'shelf', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
-      { sprite: 'shelf_b', x: 10, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
-      { sprite: 'counter', x: 4, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
-      { sprite: 'counter', x: 6, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
-      { sprite: 'shelf', x: 1, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
-      { sprite: 'cola_fridge', x: 7.4, y: 0.25 },
-      { sprite: 'payphone', x: 2, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
-      { sprite: 'atm', x: 10, y: 7, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
+      { sprite: 'prop_teller_grille', x: 4, y: 2.2, solid: { ox: 1, oy: 12, w: 20, h: 12 } },
+      { sprite: 'prop_teller_grille', x: 7, y: 2.2, solid: { ox: 1, oy: 12, w: 20, h: 12 } },
+      { sprite: 'prop_rate_board', x: 1.2, y: 0.4 },
+      { sprite: 'prop_deposit_boxes', x: 11.5, y: 1.4, solid: { ox: 2, oy: 16, w: 24, h: 10 } },
+      { sprite: 'prop_velvet_rope', x: 4, y: 6, solid: { ox: 2, oy: 12, w: 10, h: 6 } },
+      { sprite: 'prop_velvet_rope', x: 10, y: 6, solid: { ox: 2, oy: 12, w: 10, h: 6 } },
+      { sprite: 'atm', x: 1, y: 9, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
+      { sprite: 'payphone', x: 14, y: 9, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
     ],
-    npcs: [],
-    signs: [],
-    phones: [{ x: 2, y: 7 }],
-    atms: [{ x: 10, y: 7 }],
-    doors: [
-      { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    npcs: [{ id: 'bank_teller', sprite: 'quarterMan', x: 7, y: 3, facing: 'down', dialogue: 'npc_bank_teller', idle: true }],
+    signs: [{ x: 1, y: 2, dialogue: 'bank_rate_board' }, { x: 12, y: 3, dialogue: 'bank_boxes' }],
+    phones: [{ x: 14, y: 9 }], atms: [{ x: 1, y: 9 }],
+    doors: [{ x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
+    spawners: [], triggers: [],
+  };
+}
+
+function buildBakeryInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(16, 11, 'w');
+  g.rect(0, 0, 16, 2, 'W');
+  g.rect(7, 7, 2, 2, 'r');
+  return {
+    id: 'bakery_int', name: 'OTTERBROOKE BAKERY', music: 'home', interior: true, grid: g.out(),
+    props: [
+      { sprite: 'prop_pastry_case', x: 3, y: 3, solid: { ox: 1, oy: 12, w: 20, h: 10 } },
+      { sprite: 'prop_pastry_case', x: 6, y: 3, solid: { ox: 1, oy: 12, w: 20, h: 10 } },
+      { sprite: 'prop_brick_oven', x: 12.4, y: 1.4, solid: { ox: 2, oy: 16, w: 16, h: 10 } },
+      { sprite: 'prop_flour_bins', x: 1.2, y: 6.2, solid: { ox: 1, oy: 10, w: 22, h: 8 } },
+      { sprite: 'prop_mixing_station', x: 11, y: 6.2, solid: { ox: 1, oy: 10, w: 18, h: 8 } },
+      { sprite: 'payphone', x: 14, y: 9, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
     ],
-    spawners: [],
-    triggers: [],
+    npcs: [{ id: 'bakery_keeper', sprite: 'fernLady', x: 5, y: 2, facing: 'down', dialogue: 'npc_bakery_keeper', shop: 'bakery', idle: true }],
+    signs: [{ x: 4, y: 4, dialogue: 'bakery_case' }, { x: 12, y: 3, dialogue: 'bakery_oven' }],
+    phones: [{ x: 14, y: 9 }], atms: [],
+    doors: [{ x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
+    spawners: [], triggers: [],
+  };
+}
+
+function buildBurgerInt(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(16, 11, 'o');
+  g.rect(0, 0, 16, 2, 'O');
+  g.rect(7, 7, 2, 2, 'r');
+  return {
+    id: 'burger_int', name: 'THE OTTER BURGER', music: 'otterbrook', interior: true, grid: g.out(),
+    props: [
+      { sprite: 'prop_burger_counter', x: 3, y: 3, solid: { ox: 1, oy: 12, w: 20, h: 10 } },
+      { sprite: 'prop_burger_counter', x: 6, y: 3, solid: { ox: 1, oy: 12, w: 20, h: 10 } },
+      { sprite: 'prop_flat_grill', x: 11.5, y: 2.2, solid: { ox: 1, oy: 10, w: 20, h: 8 } },
+      { sprite: 'prop_deep_fryer', x: 13.5, y: 2.2, solid: { ox: 1, oy: 12, w: 16, h: 9 } },
+      { sprite: 'prop_range_hood', x: 12.2, y: 0.3 },
+      { sprite: 'prop_booth', x: 2, y: 6.2, solid: { ox: 1, oy: 10, w: 32, h: 18 } },
+      { sprite: 'prop_booth', x: 10, y: 6.2, solid: { ox: 1, oy: 10, w: 32, h: 18 } },
+      { sprite: 'payphone', x: 14, y: 9, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+    ],
+    npcs: [{ id: 'burger_keeper', sprite: 'deliKeeper', x: 5, y: 2, facing: 'down', dialogue: 'npc_burger_keeper', shop: 'burger', idle: true }],
+    signs: [{ x: 12, y: 3, dialogue: 'burger_grill' }, { x: 3, y: 7, dialogue: 'burger_booth' }],
+    phones: [{ x: 14, y: 9 }], atms: [],
+    doors: [{ x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
+    spawners: [], triggers: [],
   };
 }
 
@@ -3074,7 +3155,7 @@ function buildBusDepotInt(streetExit: { tx: number; ty: number }): MapDef {
   g.rect(13, 2, 1, 4, 'W'); // hall / newsstand partition (open below y6)
   return {
     id: 'bus_depot_int',
-    name: 'OTTERBROOK TRANSIT',
+    name: 'OTTERBROOKE TRANSIT',
     music: 'otterbrook',
     interior: true,
     grid: g.out(),
@@ -3105,13 +3186,13 @@ function buildBusDepotInt(streetExit: { tx: number; ty: number }): MapDef {
     npcs: [
       // the clerk keeps her window (existing dialogue); the crowd is new
       { id: 'depot_clerk', sprite: 'npc_depot_clerk', x: 4, y: 2, facing: 'down', dialogue: 'npc_depot_clerk', dialogueDay: 'npc_depot_clerk_day', idle: true },
-      { id: 'depot_board_reader', sprite: 'quarterMan', x: 9, y: 3, facing: 'up', dialogue: 'npc_depot_board', idle: true, emote: 'think' },
-      { id: 'depot_commuter_a', sprite: 'grayCommuter', x: 7, y: 7, facing: 'up', dialogue: 'npc_depot_commuter_a', idle: true, emote: 'think' },
-      { id: 'depot_traveler', sprite: 'senora', x: 11, y: 7, facing: 'left', dialogue: 'npc_depot_traveler', idle: true },
-      { id: 'depot_napper', sprite: 'oldTimer', x: 7, y: 9, facing: 'up', dialogue: 'npc_depot_napper', idle: true },
-      { id: 'depot_commuter_b', sprite: 'grayCommuter', x: 11, y: 9, facing: 'up', dialogue: 'npc_depot_commuter_b', wander: true },
-      { id: 'depot_kid', sprite: 'pigeonKid', x: 16, y: 6, facing: 'up', dialogue: 'npc_depot_kid', wander: true },
-      { id: 'depot_vendor', sprite: 'fernLady', x: 15, y: 2, facing: 'down', dialogue: 'npc_depot_vendor', idle: true },
+      { id: 'depot_board_reader', sprite: 'quarterMan', x: 9, y: 3, facing: 'up', dialogue: 'npc_depot_board', idle: true, emote: 'think', ifFlag: 'tick_defeated' },
+      { id: 'depot_commuter_a', sprite: 'grayCommuter', x: 7, y: 7, facing: 'up', dialogue: 'npc_depot_commuter_a', idle: true, emote: 'think', ifFlag: 'tick_defeated' },
+      { id: 'depot_traveler', sprite: 'senora', x: 11, y: 7, facing: 'left', dialogue: 'npc_depot_traveler', idle: true, ifFlag: 'tick_defeated' },
+      { id: 'depot_napper', sprite: 'oldTimer', x: 7, y: 9, facing: 'up', dialogue: 'npc_depot_napper', idle: true, ifFlag: 'tick_defeated' },
+      { id: 'depot_commuter_b', sprite: 'grayCommuter', x: 11, y: 9, facing: 'up', dialogue: 'npc_depot_commuter_b', wander: true, ifFlag: 'tick_defeated' },
+      { id: 'depot_kid', sprite: 'pigeonKid', x: 16, y: 6, facing: 'up', dialogue: 'npc_depot_kid', wander: true, ifFlag: 'tick_defeated' },
+      { id: 'depot_vendor', sprite: 'fernLady', x: 15, y: 2, facing: 'down', dialogue: 'npc_depot_vendor', idle: true, ifFlag: 'tick_defeated' },
     ],
     signs: [{ x: 9, y: 1, dialogue: 'sign_bus_depot' }],
     phones: [{ x: 1, y: 11 }],
@@ -3153,7 +3234,7 @@ function buildDowntownOtterbrook(entryStreetExit: { tx: number; ty: number }): M
 
   return {
     id: 'downtown_otterbrook',
-    name: 'DOWNTOWN OTTERBROOK',
+    name: 'DOWNTOWN OTTERBROOKE',
     music: 'otterbrook',
     grid: g.out(),
     props: [
@@ -3210,7 +3291,7 @@ function buildHardwareInt(streetExit: { tx: number; ty: number }): MapDef {
     phones: [{ x: 2, y: 7 }],
     atms: [{ x: 10, y: 7 }],
     doors: [
-      { x: 6, y: 8, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],
     spawners: [],
     triggers: [],
@@ -3252,7 +3333,7 @@ function buildDinerInt(streetExit: { tx: number; ty: number }): MapDef {
     phones: [{ x: 2, y: 7 }],
     atms: [],
     doors: [
-      { x: 6, y: 8, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],
     spawners: [],
     triggers: [],
@@ -3268,7 +3349,7 @@ function buildOtterClinicInt(streetExit: { tx: number; ty: number }): MapDef {
   g.rect(0, 0, 14, 2, 'W');
   return {
     id: 'otter_clinic_int',
-    name: 'OTTERBROOK CLINIC',
+    name: 'OTTERBROOKE CLINIC',
     music: 'home',
     interior: true,
     grid: g.out(),
@@ -3285,7 +3366,7 @@ function buildOtterClinicInt(streetExit: { tx: number; ty: number }): MapDef {
     signs: [{ x: 8, y: 1, dialogue: 'clinic_wall' }],
     phones: [{ x: 12, y: 7 }],
     doors: [
-      { x: 6, y: 9, w: 2, h: 1, to: 'downtown_otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 6, y: 9, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
       // the back door to the EXAM ROOM (a second enterable room)
       { x: 11, y: 2, w: 1, h: 1, to: 'otter_clinic_exam', tx: 48, ty: 64, facing: 'down', indicator: 'door' },
     ],
@@ -3301,7 +3382,7 @@ function buildOtterClinicExam(): MapDef {
   g.rect(0, 0, 12, 2, 'W');
   return {
     id: 'otter_clinic_exam',
-    name: 'OTTERBROOK CLINIC — EXAM',
+    name: 'OTTERBROOKE CLINIC — EXAM',
     music: 'home',
     interior: true,
     grid: g.out(),
@@ -3407,6 +3488,7 @@ function buildArcadeInt(streetExit: { tx: number; ty: number }): MapDef {
       { sprite: 'cab_a', x: 8, y: 0.7, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
       { sprite: 'cola_fridge', x: 9.4, y: 0.25 },
       { sprite: 'counter', x: 1, y: 5, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'payphone', x: 9, y: 6, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
     ],
     npcs: [],
     signs: [
@@ -3417,7 +3499,7 @@ function buildArcadeInt(streetExit: { tx: number; ty: number }): MapDef {
       { x: 8, y: 1, dialogue: 'cab_retired' },
       { x: 2, y: 5, dialogue: 'arcade_counter_note' },
     ],
-    phones: [],
+    phones: [{ x: 9, y: 6 }],
     doors: [
       { x: 4, y: 7, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],
@@ -3766,11 +3848,14 @@ const otterStationDoorstep = doorstepOf(otterbrookMap, 'otter_station') ?? { tx:
 const busDepotDoorstep = doorstepOf(otterbrookMap, 'bus_depot_int') ?? { tx: 760, ty: 392 };
 // S22 (ADR-116) — DOWNTOWN: the entry doorstep on the grown town, then the street
 // screen, then its two shop interiors (doorsteps computed off the street map).
-const downtownStep = doorstepOf(otterbrookMap, 'downtown_otterbrook') ?? { tx: 728, ty: 544 };
+const downtownStep = doorstepOf(otterbrookMap, 'downtown_otterbrook') ?? {
+  tx: 55 * 16 + 8,
+  ty: (OTTERBROOK_TOWN_BASE + 62) * 16 + 12,
+};
 const downtownMap = buildDowntownOtterbrook(downtownStep);
-const hardwareStep = doorstepOf(downtownMap, 'hardware_int') ?? { tx: 96, ty: 150 };
-const dinerStep = doorstepOf(downtownMap, 'diner_int') ?? { tx: 224, ty: 150 };
-const otterClinicStep = doorstepOf(downtownMap, 'otter_clinic_int') ?? { tx: 352, ty: 150 };
+const hardwareStep = doorstepOf(otterbrookMap, 'hardware_int') ?? { tx: 45 * 16, ty: (58 + OTTERBROOK_TOWN_BASE) * 16 };
+const dinerStep = doorstepOf(otterbrookMap, 'diner_int') ?? { tx: 12 * 16, ty: (58 + OTTERBROOK_TOWN_BASE) * 16 };
+const otterClinicStep = doorstepOf(otterbrookMap, 'otter_clinic_int') ?? { tx: 76 * 16, ty: (28 + OTTERBROOK_TOWN_BASE) * 16 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
 // THE STARFALL SPIRE moved to VALLE DORADO (stage 4, the big city — 2026-07-08);
@@ -4170,9 +4255,9 @@ export const MAPS: Record<string, MapDef> = {
   otter_clinic_int: buildOtterClinicInt(otterClinicStep),
   otter_clinic_exam: buildOtterClinicExam(),
   drugstore_int: buildDrugstoreInt(drugDoorstep),
-  bank_int: buildShopStub('bank_int', 'OTTERBROOK SAVINGS & LOAN', bankStep),
-  bakery_int: buildShopStub('bakery_int', 'OTTERBROOK BAKERY', bakeryStep),
-  burger_int: buildShopStub('burger_int', 'THE OTTER BURGER', burgerStep),
+  bank_int: buildBankInt(bankStep),
+  bakery_int: buildBakeryInt(bakeryStep),
+  burger_int: buildBurgerInt(burgerStep),
   starmart_int: buildStarmartInt(martDoorstep),
   arcade_int: buildArcadeInt(arcadeDoorstep),
   arcade2_int: buildArcade2Int(arcade2Doorstep),
