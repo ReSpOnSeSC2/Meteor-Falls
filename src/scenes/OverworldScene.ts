@@ -245,6 +245,9 @@ const PURSUE = 85 * ART_SCALE;
 const FOLLOW_EASE = 30;
 const PATROL_WALK = 38 * ART_SCALE;
 const PATROL_CHASE = 92 * ART_SCALE;
+/** The first-town hotel's fixed room rate. Cheap enough to teach the service,
+ * expensive enough that Mom's free care and the hospital economy still matter. */
+const OTTERBROOKE_HOTEL_RATE = 35;
 /** ADR-118 rework — Constable Borden's run-you-down speed: brisker than your
  *  WALK, slower than your RUN, so a sprint can still shake him (the cop fight
  *  stays optional). Bespoke chase: OverworldScene.bordenChase. */
@@ -3552,6 +3555,9 @@ export class OverworldScene extends Phaser.Scene {
         // S14 (Prompt 25): pay-to-revive angels + the cure-all desk
         await this.hospitalBeat(n);
         return true;
+      case 'otter_hotel_clerk':
+        await this.otterHotelBeat();
+        return true;
       case 'priest_otter':
       case 'priest_valle':
         // S14 (Prompt 25): the free 50 HP party prayer, §A11.4 warm
@@ -3992,6 +3998,56 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /* ---------------- S14: hospitals, chapels & the deli (Prompts 23/25) ---------------- */
+
+  /**
+   * OTTERBROOKE HOTEL — the town's EarthBound-style paid rest. During the meteor
+   * emergency and Hush-morning the building remains explorable but the clerk will
+   * not sell a room; once the Tick breaks, $35 restores HP/PP for every conscious
+   * hero and wakes the party inside Room 201. Fallen heroes remain hospital work.
+   */
+  private async otterHotelBeat(): Promise<void> {
+    if (!GS.flag('zapper_done')) {
+      await this.dlg.say(...DIALOGUE.npc_otter_hotel_clerk_night);
+      return;
+    }
+    if (!GS.flag('tick_defeated')) {
+      await this.dlg.say(...DIALOGUE.npc_otter_hotel_clerk_hush);
+      return;
+    }
+
+    await this.dlg.say(...DIALOGUE.npc_otter_hotel_clerk);
+    const pick = await this.dlg.ask([
+      `Stay in Room 201 ($${OTTERBROOKE_HOTEL_RATE})`,
+      'Just looking around',
+    ], { cancelIndex: 1 });
+    if (pick !== 0) return;
+    if (GS.data.cashOnHand < OTTERBROOKE_HOTEL_RATE) {
+      await this.dlg.say(...DIALOGUE.hotel_broke);
+      return;
+    }
+
+    GS.data.cashOnHand -= OTTERBROOKE_HOTEL_RATE;
+    await this.dlg.say(...DIALOGUE.hotel_checkin);
+    const firstStay = !GS.flag('otter_hotel_stayed');
+    GS.setFlag('otter_hotel_stayed');
+    GS.setFlag('otter_hotel_wake_pending');
+    if (firstStay) GS.setFlag('otter_hotel_dream_pending');
+    for (const h of GS.data.party) {
+      if (h.down) continue;
+      h.hp = h.maxHp;
+      h.pp = h.maxPp;
+    }
+
+    this.cut = true;
+    this.cameras.main.fadeOut(700, 0, 0, 0);
+    await this.wait(750);
+    this.scene.start('overworld', {
+      mapId: 'otter_hotel_room_201',
+      x: s(6 * 16 + 8),
+      y: s(7 * 16 + 12),
+      facing: 'up',
+    });
+  }
 
   /**
    * §A4.7 — the hospital desk: revive angels for cash (price scales by the
@@ -5224,6 +5280,23 @@ export class OverworldScene extends Phaser.Scene {
     }
     if (this.mapDef.id === 'boat_interior') {
       await this.boatCutscene();
+      return;
+    }
+    // The hotel's paid sleep resolves on the actual guest-room map rather than
+    // fading back to the front desk. The first stay carries one quiet, optional
+    // Mars-signal dream; later stays retain the concise wake-and-restore beat.
+    if (this.mapDef.id === 'otter_hotel_room_201' && GS.flag('otter_hotel_wake_pending')) {
+      GS.setFlag('otter_hotel_wake_pending', false);
+      this.cut = true;
+      if (GS.flag('otter_hotel_dream_pending')) {
+        GS.setFlag('otter_hotel_dream_pending', false);
+        AUDIO.sfx('phone');
+        await this.dlg.say(...DIALOGUE.hotel_first_dream);
+      }
+      AUDIO.sfx('heal');
+      this.sparkleBurst(this.player.x, this.player.y - s(14), 10);
+      await this.dlg.say(...DIALOGUE.hotel_wake);
+      this.cut = false;
       return;
     }
     // ADR-118 rework — booked: you arrive INSIDE the station cell mid-march, and

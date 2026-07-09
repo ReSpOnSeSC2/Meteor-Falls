@@ -663,6 +663,10 @@ const BASE_FACADE_KEYS = [
   // were overwritten with the new on-model art; bakery + burger are new keys.
   'bldg_ob_bakery', 'bldg_ob_burger', 'bldg_ob_city_hall', 'bldg_ob_clinic',
   'bldg_ob_house_green', 'bldg_ob_workshop', 'bldg_ob_house_c', 'bldg_ob_cottage', 'bldg_ob_apt_green',
+  // Otterbrooke Hotel — a dedicated four-storey oblique facade with a readable
+  // HOTEL marquee. It replaces the anonymous east-civic apartment shell and
+  // opens into the town's multi-map lodging interior.
+  'bldg_ob_hotel',
   // 27 MAPLE (2026-07-08) — the FOR-SALE house: the bldg_ob_house_c art duplicated
   // under a non-'bldg_' key (assets copy, same PNG) so occupyCity never grafts a
   // generated unit onto the pre-purchase, doorless lot. See maps.ts § 27 MAPLE.
@@ -2294,4 +2298,3 @@ export function applyAuthoredWorldArt(scene: Phaser.Scene): void {
   applyAuthoredWorldProps(scene);
   applyAuthoredVehicleArt(scene);
 }
-

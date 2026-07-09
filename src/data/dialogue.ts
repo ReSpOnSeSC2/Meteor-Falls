@@ -1130,8 +1130,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Nobody has ever reached the bonus round, "AUDIT". The flyer claims it has a second joystick.)',
   ],
   arcade_gap: [
-    '(A cabinet-shaped patch of extremely clean carpet.)',
-    'A note, taped to the wall: "THE BIG GAME MOVED TO THE SEQUEL. Like everybody. — MGMT"',
+    '(A cabinet-shaped patch of extremely clean carpet leads to the service-room door.)',
+    'A note, taped above the knob: "THE BIG GAME MOVED TO THE SEQUEL. Its spare parts did not. — MGMT"',
   ],
   cab_retired: [
     'CHAMP CHIMP — RETIRED. UNDEFEATED.',
@@ -1345,6 +1345,97 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'THE JUKEBOX — 5¢ a play. It knows four songs and it will play the sad one.',
     '(A handwritten label over slot B-7 reads: "DO NOT. We mean it. — Mgmt")',
   ],
+  // THE OTTERBROOKE HOTEL — one lobby, one guest corridor, three real rooms,
+  // and a paid rest that protects the hospital's revive economy.
+  npc_otter_hotel_clerk: [
+    '@Welcome to the OTTERBROOKE HOTEL. Twenty rooms, nineteen keys, and one key we keep around because it looks responsible.',
+    '@Room 201 is $35 for the night. Clean sheets, hot water, and a radiator that performs one song in D-flat.',
+  ],
+  npc_otter_hotel_clerk_night: [
+    '@Welcome to the hotel. If you came for a room, the meteor beat you to it. Every amateur astronomer in three counties is upstairs pretending not to snore.',
+    '@You can wait in the lobby or look around. Just do not wake Room 203. He was nervous before the sky exploded.',
+  ],
+  npc_otter_hotel_clerk_hush: [
+    '@I rang every room at seven. Nobody answered. Then three guests came downstairs asleep and sat in the lobby.',
+    '@No new check-ins until this blue quiet lifts. I will not sell a night to somebody when morning is acting this suspicious.',
+  ],
+  hotel_broke: [
+    '@Room 201 costs $35, and your wallet appears to be traveling lighter than you are.',
+    '@The lobby chairs are free. Less comfortable, but financially impeccable.',
+  ],
+  hotel_checkin: [
+    '@Room 201. Top of the stairs, first door on the left. The key sticks unless you compliment it.',
+    '@Sleep well. If the radiator whispers your name, that is pipes. Almost certainly pipes.',
+  ],
+  hotel_first_dream: [
+    '(You dream of a telephone ringing under a red sky.)',
+    '(When you answer, no one speaks. Far away, something breathes through a sea of static — slow, lonely, and listening.)',
+    '(Then a small warm light answers from somewhere inside your shirt, and the line goes quiet.)',
+  ],
+  hotel_wake: [
+    '* Morning arrives one radiator knock at a time.',
+    '* Everyone who was still standing feels completely rested. (HP and PP are restored.)',
+  ],
+  hotel_key_cubbies: [
+    'ROOM KEYS — 201, 202, 203... 218, 219, and a hook labeled 20?.',
+    '(The question mark has its own brass tag.)',
+  ],
+  hotel_trophy_case: [
+    'OTTERBROOKE HOSPITALITY AWARD, 1986.',
+    '(The hotel awarded it to itself. The handwriting is refreshingly honest.)',
+  ],
+  hotel_registry: [
+    'GUEST REGISTRY — names, hometowns, and one entire page signed simply “THE BAND.”',
+    '(They checked out in 1974. The room still smells faintly like cymbals.)',
+  ],
+  npc_hotel_lobby_sleeper: [
+    '@The guest is standing perfectly still with their eyes closed.',
+    '(A room key dangles from one hand. It is labeled 20?.)',
+  ],
+  npc_hotel_lobby_guest: [
+    '@I stay here whenever my house feels too familiar. A hotel room knows nothing about you, and that can be restful.',
+    '@Room 202 knows a little too much, though. Thin walls.',
+  ],
+  npc_hotel_housekeeper: [
+    '@Three rooms open, seventeen rooms implied. That is the Otterbrooke way: enough building to make the story believable.',
+    '@I put fresh towels in 201. The folded swan came out looking like Ohio. I left it.',
+  ],
+  npc_hotel_hall_sleeper: [
+    '@A pajama-clad guest is asleep on their feet.',
+    '(They whisper “five more minutes” to a fire extinguisher.)',
+  ],
+  hotel_floor_directory: [
+    'SECOND FLOOR — 201: DOUBLE, 202: DOUBLE, 203: SINGLE. 204–220: THIS WAY, THEORETICALLY.',
+  ],
+  hotel_ice_machine: [
+    'ICE MACHINE — one cube per minute.',
+    '(A handwritten note adds: “Two if encouraged.”)',
+  ],
+  hotel_room_201_bed: [
+    'The sheets are tucked so tightly the mattress appears to be holding its breath.',
+  ],
+  hotel_room_201_tv: [
+    'The television gets weather, wrestling, and a channel showing one bright dot over a field of red snow.',
+    '(The dot vanishes when you change the volume.)',
+  ],
+  npc_hotel_room_202_guest: [
+    '@I packed for one night and brought six bags. The sixth bag contains smaller bags, for emergencies.',
+    '@After that meteor, I feel extremely vindicated.',
+  ],
+  hotel_room_202_luggage: [
+    'A suitcase labeled NECESSARY HATS.',
+    '(It is too round to contain hats and too polite to investigate.)',
+  ],
+  npc_hotel_room_203_guest: [
+    '@I repair radios. Since the meteor hit, every set in this room finds the same empty frequency.',
+    '@It is not silence. Silence does not lean closer when you lean closer.',
+  ],
+  hotel_room_203_notes: [
+    'A legal pad covered in numbers, arrows, and the words SIGNAL COMES FROM UP.',
+  ],
+  hotel_room_203_case: [
+    'A case of radio parts. Every tuning needle points southeast, even the loose ones.',
+  ],
   sign_barber: ["VINE ST. BARBER — Back in 5. (The sign has said this since 1987.)"],
   // S22 (ADR-120) — THE OTTERBROOK CLINIC (front desk revive + exam room)
   sign_clinic: ['OTTERBROOKE CLINIC — Walk-ins welcome. Faint-ins carried. Open since the meteor "for obvious reasons."'],
@@ -1436,6 +1527,18 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   bank_boxes: [
     'Rows of brass deposit boxes. Number 412 has a tiny paw sticker and no keyhole.',
   ],
+  npc_bank_vault_guard: [
+    '@Vault guard. Part-time. I guard the money from robbers and the robbers from compound interest.',
+    '@That gold-looking stack? Promotional paperweights. The real money is numbers in a room less interesting than this one.',
+  ],
+  bank_vault_boxes: [
+    'Hundreds of safe-deposit doors, each with two keyholes and at least one secret somebody stopped worrying about.',
+    '(Box 201 contains a hotel spoon. The paperwork is immaculate.)',
+  ],
+  bank_vault_gold: [
+    'A magnificent stack of gold bars stamped DISPLAY ONLY.',
+    '(One bar is chocolate. This is either security genius or somebody’s lunch.)',
+  ],
   npc_bakery_keeper: [
     '@Every pie cools for exactly eleven minutes. Ten is reckless. Twelve is surrender.',
   ],
@@ -1485,6 +1588,49 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_waitress: [
     '@Sit anywhere, hon, the floor\'s clean-ish. Coffee\'s on the house if you don\'t tell my boss it was.',
     "@You look like a kid who had a rough night. Sit and eat something — everything's easier on a full stomach. Trust me. I'm a waitress, not a doctor, but still.",
+  ],
+  npc_hardware_apprentice: [
+    '@Hodgkin says every screw has a purpose. He keeps the purposeless ones in the coffee tin.',
+    '@I am sorting washers by emotional resilience. These are the brave ones.',
+  ],
+  hardware_parts_bins: [
+    'Drawers labeled BOLTS, NUTS, SPRINGS, and THINGS FOUND IN OTHER MACHINES.',
+  ],
+  hardware_sawhorse: [
+    'A repaired sawhorse with fresh orange paint.',
+    '(A tag reads: “TRAIL MODEL — retired from active obstruction.”)',
+  ],
+  npc_diner_cook: [
+    '@The front says breakfast all day. Back here it is all breakfast at once.',
+    '@Tell the waitress the pie needs three more minutes. If she says two, she is testing your character.',
+  ],
+  diner_order_rail: [
+    'ORDER RAIL — eggs, toast, pie, pie, pie, and one ticket reading JUST COFFEE, BRAVE.',
+  ],
+  diner_pie_corner: [
+    'Three pies cool beside sacks of flour. One is labeled EMERGENCY PIE.',
+    '(Every diner has one. Few admit it.)',
+  ],
+  npc_pharmacy_tech: [
+    '@Front room sells bandages. Back room explains why you should have bought them before climbing a meteor hill.',
+    '@Nothing here cures blue static in the eyes. That is not medicine-sized trouble.',
+  ],
+  pharmacy_rack: [
+    'Tiny bottles in strict alphabetical order, except the vitamins, which have formed their own neighborhood.',
+  ],
+  pharmacy_ledger: [
+    'The prescription ledger records coughs, rashes, and one recurring diagnosis: HILL-RELATED DECISION MAKING.',
+  ],
+  npc_starport_tech: [
+    '@Every machine has one screw left over after repair. Put enough leftovers together and you get management.',
+    '@The LEGEND cabinet went to Twoton. I kept its old starboard. Sometimes it still adds a point by itself.',
+  ],
+  arcade_service_cabinets: [
+    'Two cabinet shells wait with their backs open, wires arranged like colorful spaghetti that lost an argument.',
+  ],
+  arcade_service_log: [
+    'SERVICE LOG — SLUG HUNTER: sticky forever. LAWN LORD: threatening. TAX KID: under audit.',
+    'ARCADE LEGEND: transferred to STARPORT II. Residual high score activity: unresolved.',
   ],
   // S22 (ADR-118) — THE COP FIGHT: Constable Borden, framed by Chad, by-the-book
   npc_borden_accuse: [

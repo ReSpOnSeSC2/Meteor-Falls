@@ -211,6 +211,7 @@ const OTTERBROOK_LANDMARK_DIMS: Record<string, readonly [number, number]> = {
   bldg_ob_house_c: [348, 384], // OBLIQUE
   bldg_ob_house_green: [400, 384], // OBLIQUE
   bldg_ob_workshop: [386, 384], // OBLIQUE
+  bldg_ob_hotel: [269, 384], // OBLIQUE — OTTERBROOKE HOTEL
   // 27 MAPLE — the FOR-SALE house (ADR-115 made real). A duplicate of the
   // bldg_ob_house_c art under a NON-'bldg_' key: its drawn door sits on the LEFT
   // third (frac ≈ .33), and the prefix keeps occupyCity from grafting a generated
@@ -818,7 +819,7 @@ function buildOtterbrookTownReplica(): MapDef {
   build('facade_otter_station', 64, 27, { to: 'otter_station', tx: 120, ty: 128 });
   build('bldg_ob_clinic', 76, 27, { to: 'otter_clinic_int', tx: 120, ty: 128 });
   build('bldg_brickmore', 88, 27);
-  build('bldg_ob_apt_green', 100, 27);
+  build('bldg_ob_hotel', 100, 27, { to: 'otter_hotel_lobby', tx: 9 * 16 + 8, ty: 10 * 16 + 12 });
   // ORCHARD ST (row 46) — residential
   home('bldg_ob_house_green', 12, 40);
   home('house_a', 27, 40);
@@ -3057,6 +3058,7 @@ function buildDrugstoreInt(streetExit: { tx: number; ty: number }): MapDef {
     atms: [{ x: 10, y: 7 }],
     doors: [
       { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 8, y: 2, w: 1, h: 1, to: 'drugstore_pharmacy', tx: 8 * 16 + 8, ty: 9 * 16 + 12, facing: 'up', indicator: 'door' },
     ],
     spawners: [],
     triggers: [],
@@ -3084,7 +3086,10 @@ function buildBankInt(streetExit: { tx: number; ty: number }): MapDef {
     npcs: [{ id: 'bank_teller', sprite: 'quarterMan', x: 7, y: 3, facing: 'down', dialogue: 'npc_bank_teller', idle: true }],
     signs: [{ x: 1, y: 2, dialogue: 'bank_rate_board' }, { x: 12, y: 3, dialogue: 'bank_boxes' }],
     phones: [{ x: 14, y: 9 }], atms: [{ x: 1, y: 9 }],
-    doors: [{ x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
+    doors: [
+      { x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 13, y: 2, w: 1, h: 1, to: 'bank_vault', tx: 7 * 16 + 8, ty: 8 * 16 + 12, facing: 'up', indicator: 'door' },
+    ],
     spawners: [], triggers: [],
   };
 }
@@ -3133,6 +3138,340 @@ function buildBurgerInt(streetExit: { tx: number; ty: number }): MapDef {
     doors: [{ x: 7, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
     spawners: [], triggers: [],
   };
+}
+
+/* ----------------------- THE OTTERBROOKE HOTEL -----------------------
+ * A compact Mother-style lodging stack: street -> staffed lobby -> one real
+ * guest-floor corridor -> three enterable rooms. The first room is the party's
+ * paid wake-up destination; the other two turn the building into a small piece
+ * of town storytelling instead of a heal menu wearing a facade. */
+
+function buildOtterHotelLobby(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(18, 12, 'w');
+  g.rect(0, 0, 18, 2, 'W');
+  g.rect(8, 4, 2, 7, 'r');
+  return {
+    id: 'otter_hotel_lobby',
+    name: 'OTTERBROOKE HOTEL',
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      // CHECK-IN DESK + old brass key cubbies
+      { sprite: 'counter', x: 3, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'mailboxes', x: 1.2, y: 0.7 },
+      // A small-town lobby: mismatched seating, plant, lamp, local trophy case.
+      { sprite: 'bench', x: 12, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'rocking_chair', x: 15, y: 6.2, solid: { ox: 2, oy: 12, w: 14, h: 10 } },
+      { sprite: 'floor_lamp', x: 14.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'plant_pot', x: 16, y: 8.5, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'trophy_shelf', x: 10.5, y: 0.6 },
+      { sprite: 'payphone', x: 16, y: 10, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+    ],
+    npcs: [
+      { id: 'otter_hotel_clerk', sprite: 'npc_clerk', x: 4, y: 2, facing: 'down', dialogue: 'npc_otter_hotel_clerk', idle: true },
+      { id: 'hotel_lobby_sleeper', sprite: 'grayCommuter', x: 12, y: 7, facing: 'up', dialogue: 'npc_hotel_lobby_sleeper', idle: true, emote: 'sleep', ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
+      { id: 'hotel_lobby_guest', sprite: 'oldTimer', x: 13, y: 7, facing: 'left', dialogue: 'npc_hotel_lobby_guest', idle: true, ifFlag: 'tick_defeated' },
+    ],
+    signs: [
+      { x: 1, y: 1, dialogue: 'hotel_key_cubbies' },
+      { x: 10, y: 1, dialogue: 'hotel_trophy_case' },
+      { x: 8, y: 3, dialogue: 'hotel_registry' },
+    ],
+    phones: [{ x: 16, y: 10 }],
+    atms: [],
+    doors: [
+      { x: 8, y: 11, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 14, y: 2, w: 2, h: 1, to: 'otter_hotel_hall', tx: 11 * 16 + 8, ty: 8 * 16 + 12, facing: 'up', indicator: 'stairs' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildOtterHotelHall(): MapDef {
+  const g = new Grid(22, 10, 'w');
+  g.rect(0, 0, 22, 2, 'W');
+  g.rect(2, 4, 18, 2, 'r');
+  return {
+    id: 'otter_hotel_hall',
+    name: 'OTTERBROOKE HOTEL — FLOOR 2',
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'floor_lamp', x: 6.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'floor_lamp', x: 12.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'water_cooler', x: 20, y: 2.2, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
+      { sprite: 'plant_pot', x: 1, y: 6.5, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [
+      { id: 'hotel_housekeeper', sprite: 'fernLady', x: 13, y: 7, facing: 'left', dialogue: 'npc_hotel_housekeeper', idle: true, ifFlag: 'tick_defeated' },
+      { id: 'hotel_hall_sleeper', sprite: 'pajamaKid', x: 18, y: 7, facing: 'down', dialogue: 'npc_hotel_hall_sleeper', idle: true, emote: 'sleep', ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
+    ],
+    signs: [
+      { x: 1, y: 1, dialogue: 'hotel_floor_directory' },
+      { x: 20, y: 2, dialogue: 'hotel_ice_machine' },
+    ],
+    phones: [],
+    atms: [],
+    doors: [
+      { x: 10, y: 9, w: 2, h: 1, to: 'otter_hotel_lobby', tx: 15 * 16 + 8, ty: 3 * 16 + 12, facing: 'down', indicator: 'stairs' },
+      { x: 3, y: 2, w: 2, h: 1, to: 'otter_hotel_room_201', tx: 6 * 16 + 8, ty: 7 * 16 + 12, facing: 'up', indicator: 'door' },
+      { x: 9, y: 2, w: 2, h: 1, to: 'otter_hotel_room_202', tx: 6 * 16 + 8, ty: 7 * 16 + 12, facing: 'up', indicator: 'door' },
+      { x: 15, y: 2, w: 2, h: 1, to: 'otter_hotel_room_203', tx: 6 * 16 + 8, ty: 7 * 16 + 12, facing: 'up', indicator: 'door' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function hotelRoomBase(id: string, name: string, hallTx: number, props: PropDef[], npcs: NpcDef[], signs: SignDef[]): MapDef {
+  const g = new Grid(12, 9, 'w');
+  g.rect(0, 0, 12, 2, 'W');
+  return {
+    id,
+    name,
+    music: 'home',
+    interior: true,
+    grid: g.out(),
+    props,
+    npcs,
+    signs,
+    phones: [],
+    atms: [],
+    doors: [{ x: 5, y: 8, w: 2, h: 1, to: 'otter_hotel_hall', tx: hallTx, ty: 3 * 16 + 12, facing: 'down', indicator: 'mat' }],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildOtterHotelRoom201(): MapDef {
+  return hotelRoomBase(
+    'otter_hotel_room_201',
+    'OTTERBROOKE HOTEL — ROOM 201',
+    4 * 16 + 8,
+    [
+      { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'bed', x: 8, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'dresser', x: 4.6, y: 1.1, solid: { ox: 2, oy: 8, w: 26, h: 14 } },
+      { sprite: 'tv', x: 5.2, y: 0.5 },
+      { sprite: 'floor_lamp', x: 10.3, y: 5.2, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+    ],
+    [],
+    [
+      { x: 2, y: 3, dialogue: 'hotel_room_201_bed' },
+      { x: 6, y: 1, dialogue: 'hotel_room_201_tv' },
+    ],
+  );
+}
+
+function buildOtterHotelRoom202(): MapDef {
+  return hotelRoomBase(
+    'otter_hotel_room_202',
+    'OTTERBROOKE HOTEL — ROOM 202',
+    10 * 16 + 8,
+    [
+      { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'bed', x: 8, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'dresser', x: 4.8, y: 1.1, solid: { ox: 2, oy: 8, w: 26, h: 14 } },
+      { sprite: 'crate', x: 9, y: 5.5, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'rocking_chair', x: 1.5, y: 5.4, solid: { ox: 2, oy: 12, w: 14, h: 10 } },
+    ],
+    [{ id: 'hotel_room_202_guest', sprite: 'senora', x: 6, y: 5, facing: 'down', dialogue: 'npc_hotel_room_202_guest', idle: true }],
+    [{ x: 9, y: 6, dialogue: 'hotel_room_202_luggage' }],
+  );
+}
+
+function buildOtterHotelRoom203(): MapDef {
+  return hotelRoomBase(
+    'otter_hotel_room_203',
+    'OTTERBROOKE HOTEL — ROOM 203',
+    16 * 16 + 8,
+    [
+      { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'desk', x: 6, y: 1.6, solid: { ox: 1, oy: 4, w: 24, h: 13 } },
+      { sprite: 'bookshelf', x: 9, y: 0 },
+      { sprite: 'crate', x: 8.5, y: 5.3, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'floor_lamp', x: 4.2, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+    ],
+    [{ id: 'hotel_room_203_guest', sprite: 'grayCommuter', x: 5, y: 5, facing: 'right', dialogue: 'npc_hotel_room_203_guest', idle: true, emote: 'think' }],
+    [
+      { x: 7, y: 2, dialogue: 'hotel_room_203_notes' },
+      { x: 9, y: 6, dialogue: 'hotel_room_203_case' },
+    ],
+  );
+}
+
+/** Small public buildings get a real staff-side room rather than ending at a
+ * painted counter. Each room keeps a clear center aisle and returns through the
+ * exact front-room door that led into it. */
+function otterServiceRoom(
+  id: string,
+  name: string,
+  music: string,
+  frontId: string,
+  frontTx: number,
+  frontTy: number,
+  props: PropDef[],
+  npcs: NpcDef[],
+  signs: SignDef[],
+  floor = 'w',
+  wall = 'W',
+  W = 16,
+  H = 11,
+): MapDef {
+  const g = new Grid(W, H, floor);
+  g.rect(0, 0, W, 2, wall);
+  const gap = Math.round(W / 2) - 1;
+  g.rect(gap, H - 4, 2, 2, floor === 'a' ? '*' : 'r');
+  return {
+    id,
+    name,
+    music,
+    interior: true,
+    grid: g.out(),
+    props,
+    npcs,
+    signs,
+    phones: [],
+    atms: [],
+    doors: [{ x: gap, y: H - 1, w: 2, h: 1, to: frontId, tx: frontTx, ty: frontTy, facing: 'down', indicator: 'mat' }],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+function buildBankVault(): MapDef {
+  return otterServiceRoom(
+    'bank_vault',
+    'OTTERBROOKE S&L — VAULT',
+    'otterbrook',
+    'bank_int',
+    13 * 16 + 8,
+    3 * 16 + 12,
+    [
+      { sprite: 'prop_vault_door', x: 5.4, y: 0.5, solid: { ox: 2, oy: 18, w: 24, h: 10 } },
+      { sprite: 'prop_deposit_boxes', x: 1.2, y: 2.2, solid: { ox: 2, oy: 16, w: 24, h: 10 } },
+      { sprite: 'prop_deposit_boxes', x: 10, y: 2.2, solid: { ox: 2, oy: 16, w: 24, h: 10 } },
+      { sprite: 'prop_gold_stack', x: 6, y: 5, solid: { ox: 2, oy: 12, w: 24, h: 10 } },
+      { sprite: 'prop_velvet_rope', x: 4, y: 7, solid: { ox: 2, oy: 12, w: 10, h: 6 } },
+      { sprite: 'prop_velvet_rope', x: 9, y: 7, solid: { ox: 2, oy: 12, w: 10, h: 6 } },
+    ],
+    [{ id: 'bank_vault_guard', sprite: 'oldTimer', x: 11, y: 6, facing: 'left', dialogue: 'npc_bank_vault_guard', idle: true }],
+    [
+      { x: 2, y: 3, dialogue: 'bank_vault_boxes' },
+      { x: 7, y: 6, dialogue: 'bank_vault_gold' },
+    ],
+    'o',
+    'O',
+    14,
+    10,
+  );
+}
+
+function buildHardwareStockroom(): MapDef {
+  return otterServiceRoom(
+    'hardware_stockroom',
+    "HODGKIN'S — STOCKROOM",
+    'otterbrook',
+    'hardware_int',
+    8 * 16 + 8,
+    3 * 16 + 12,
+    [
+      { sprite: 'prop_workbench', x: 5, y: 2.2, solid: { ox: 1, oy: 12, w: 30, h: 12 } },
+      { sprite: 'prop_parts_bin', x: 10, y: 2, solid: { ox: 1, oy: 14, w: 24, h: 10 } },
+      { sprite: 'shelf', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 13, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'crate', x: 2, y: 6.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'crate', x: 12, y: 6.6, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'sawhorse', x: 7, y: 6.4, solid: { ox: 0, oy: 6, w: 64, h: 22 } },
+    ],
+    [{ id: 'hardware_apprentice', sprite: 'pajamaKid', x: 5, y: 7, facing: 'right', dialogue: 'npc_hardware_apprentice', idle: true }],
+    [
+      { x: 10, y: 3, dialogue: 'hardware_parts_bins' },
+      { x: 7, y: 7, dialogue: 'hardware_sawhorse' },
+    ],
+  );
+}
+
+function buildDinerKitchen(): MapDef {
+  return otterServiceRoom(
+    'diner_kitchen',
+    'THE SUNNY SIDE — KITCHEN',
+    'otterbrook',
+    'diner_int',
+    9 * 16 + 8,
+    3 * 16 + 12,
+    [
+      { sprite: 'fridge', x: 1.2, y: 2, solid: { ox: 2, oy: 14, w: 14, h: 18 } },
+      { sprite: 'prop_flat_grill', x: 4, y: 2.4, solid: { ox: 1, oy: 10, w: 20, h: 8 } },
+      { sprite: 'prop_deep_fryer', x: 7, y: 2.4, solid: { ox: 1, oy: 12, w: 16, h: 9 } },
+      { sprite: 'prop_range_hood', x: 5.2, y: 0.3 },
+      { sprite: 'prop_mixing_station', x: 11, y: 2.2, solid: { ox: 1, oy: 10, w: 18, h: 8 } },
+      { sprite: 'prop_flour_bins', x: 13.2, y: 6.2, solid: { ox: 1, oy: 10, w: 22, h: 8 } },
+      { sprite: 'counter', x: 4, y: 6, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 6, y: 6, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+    ],
+    [{ id: 'diner_cook', sprite: 'deliKeeper', x: 8, y: 5, facing: 'left', dialogue: 'npc_diner_cook', idle: true }],
+    [
+      { x: 5, y: 3, dialogue: 'diner_order_rail' },
+      { x: 13, y: 7, dialogue: 'diner_pie_corner' },
+    ],
+  );
+}
+
+function buildDrugstorePharmacy(): MapDef {
+  return otterServiceRoom(
+    'drugstore_pharmacy',
+    'OTTERBROOKE DRUG — PHARMACY',
+    'otterbrook',
+    'drugstore_int',
+    8 * 16 + 8,
+    3 * 16 + 12,
+    [
+      { sprite: 'prop_pharmacy_rack', x: 1.5, y: 2, solid: { ox: 1, oy: 14, w: 26, h: 10 } },
+      { sprite: 'prop_pharmacy_rack', x: 10.5, y: 2, solid: { ox: 1, oy: 14, w: 26, h: 10 } },
+      { sprite: 'shelf_b', x: 13, y: 5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'fridge', x: 1.2, y: 6, solid: { ox: 2, oy: 14, w: 14, h: 18 } },
+      { sprite: 'prop_workbench', x: 5, y: 5.5, solid: { ox: 1, oy: 12, w: 30, h: 12 } },
+      { sprite: 'privacy_curtain', x: 10, y: 6, solid: { ox: 1, oy: 14, w: 24, h: 8 } },
+      { sprite: 'poster_chart', x: 7, y: 0.5 },
+    ],
+    [{ id: 'pharmacy_tech', sprite: 'nurse', x: 8, y: 4, facing: 'down', dialogue: 'npc_pharmacy_tech', idle: true }],
+    [
+      { x: 2, y: 3, dialogue: 'pharmacy_rack' },
+      { x: 6, y: 6, dialogue: 'pharmacy_ledger' },
+    ],
+  );
+}
+
+function buildArcadeService(): MapDef {
+  return otterServiceRoom(
+    'arcade_service',
+    'STARPORT — SERVICE ROOM',
+    'arcade',
+    'arcade_int',
+    6 * 16 + 8,
+    3 * 16 + 12,
+    [
+      { sprite: 'cab_a', x: 1, y: 2, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'cab_b', x: 3, y: 2, solid: { ox: 0, oy: 18, w: 18, h: 10 } },
+      { sprite: 'tv_stack', x: 12, y: 2, solid: { ox: 1, oy: 14, w: 22, h: 10 } },
+      { sprite: 'desk', x: 6, y: 2, solid: { ox: 1, oy: 4, w: 24, h: 13 } },
+      { sprite: 'prop_parts_bin', x: 10, y: 5.5, solid: { ox: 1, oy: 14, w: 24, h: 10 } },
+      { sprite: 'crate', x: 2, y: 6, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'crate', x: 12, y: 7, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+    ],
+    [{ id: 'starport_tech', sprite: 'sidewalkCritic', x: 7, y: 6, facing: 'right', dialogue: 'npc_starport_tech', idle: true, emote: 'think' }],
+    [
+      { x: 2, y: 3, dialogue: 'arcade_service_cabinets' },
+      { x: 10, y: 6, dialogue: 'arcade_service_log' },
+    ],
+    'a',
+    'A',
+  );
 }
 
 /**
@@ -3292,6 +3631,7 @@ function buildHardwareInt(streetExit: { tx: number; ty: number }): MapDef {
     atms: [{ x: 10, y: 7 }],
     doors: [
       { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 8, y: 2, w: 1, h: 1, to: 'hardware_stockroom', tx: 8 * 16 + 8, ty: 9 * 16 + 12, facing: 'up', indicator: 'door' },
     ],
     spawners: [],
     triggers: [],
@@ -3334,6 +3674,7 @@ function buildDinerInt(streetExit: { tx: number; ty: number }): MapDef {
     atms: [],
     doors: [
       { x: 6, y: 8, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 9, y: 2, w: 1, h: 1, to: 'diner_kitchen', tx: 8 * 16 + 8, ty: 9 * 16 + 12, facing: 'up', indicator: 'door' },
     ],
     spawners: [],
     triggers: [],
@@ -3502,6 +3843,7 @@ function buildArcadeInt(streetExit: { tx: number; ty: number }): MapDef {
     phones: [{ x: 9, y: 6 }],
     doors: [
       { x: 4, y: 7, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      { x: 6, y: 2, w: 1, h: 1, to: 'arcade_service', tx: 8 * 16 + 8, ty: 9 * 16 + 12, facing: 'up', indicator: 'door' },
     ],
     spawners: [],
     triggers: [],
@@ -3868,6 +4210,10 @@ const arcade2Doorstep = doorstepOf(bricktonMap, 'arcade2_int') ?? { tx: 345, ty:
 const bankStep = doorstepOf(otterbrookMap, 'bank_int') ?? { tx: 96, ty: 150 };
 const bakeryStep = doorstepOf(otterbrookMap, 'bakery_int') ?? { tx: 96, ty: 150 };
 const burgerStep = doorstepOf(otterbrookMap, 'burger_int') ?? { tx: 96, ty: 150 };
+const otterHotelStep = doorstepOf(otterbrookMap, 'otter_hotel_lobby') ?? {
+  tx: 100 * 16,
+  ty: (OTTERBROOK_TOWN_BASE + 28) * 16,
+};
 
 /* ------------- COSTA ESTRELLA (S13 — the clifftop resort) ------------- */
 
@@ -4251,15 +4597,25 @@ export const MAPS: Record<string, MapDef> = {
   bus_depot_int: buildBusDepotInt(busDepotDoorstep),
   downtown_otterbrook: downtownMap,
   hardware_int: buildHardwareInt(hardwareStep),
+  hardware_stockroom: buildHardwareStockroom(),
   diner_int: buildDinerInt(dinerStep),
+  diner_kitchen: buildDinerKitchen(),
   otter_clinic_int: buildOtterClinicInt(otterClinicStep),
   otter_clinic_exam: buildOtterClinicExam(),
   drugstore_int: buildDrugstoreInt(drugDoorstep),
+  drugstore_pharmacy: buildDrugstorePharmacy(),
   bank_int: buildBankInt(bankStep),
+  bank_vault: buildBankVault(),
   bakery_int: buildBakeryInt(bakeryStep),
   burger_int: buildBurgerInt(burgerStep),
+  otter_hotel_lobby: buildOtterHotelLobby(otterHotelStep),
+  otter_hotel_hall: buildOtterHotelHall(),
+  otter_hotel_room_201: buildOtterHotelRoom201(),
+  otter_hotel_room_202: buildOtterHotelRoom202(),
+  otter_hotel_room_203: buildOtterHotelRoom203(),
   starmart_int: buildStarmartInt(martDoorstep),
   arcade_int: buildArcadeInt(arcadeDoorstep),
+  arcade_service: buildArcadeService(),
   arcade2_int: buildArcade2Int(arcade2Doorstep),
   the_cage: buildTheCage(),
   cage_park: buildCagePark(), // S15i Task 6 (ADR-059) — the walk-through approach

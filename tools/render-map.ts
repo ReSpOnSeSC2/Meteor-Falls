@@ -240,6 +240,23 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     ids: ['otterbrook','oak_roots','oak_hollow','oak_heart','meadow_mile','meadow_woods','meadow_far','meadow_overpass','brickton','cage_park','dos_f1','dos_f2','dos_f3'],
     cellW: 560, cellH: 460,
   },
+  hotel: {
+    title: 'OTTERBROOKE HOTEL - LOBBY, GUEST FLOOR, AND ROOMS',
+    ids: ['otter_hotel_lobby', 'otter_hotel_hall', 'otter_hotel_room_201', 'otter_hotel_room_202', 'otter_hotel_room_203'],
+    cellW: 560, cellH: 420,
+  },
+  otter_interiors: {
+    title: 'OTTERBROOKE - PUBLIC INTERIOR FRONT AND BACK ROOMS',
+    ids: [
+      'bank_int', 'bank_vault',
+      'hardware_int', 'hardware_stockroom',
+      'diner_int', 'diner_kitchen',
+      'drugstore_int', 'drugstore_pharmacy',
+      'arcade_int', 'arcade_service',
+      'otter_clinic_int', 'otter_clinic_exam',
+    ],
+    cellW: 560, cellH: 380,
+  },
   ch2: {
     title: 'METEOR FALLS - CHAPTER 2: THE MELTING GRIN (PUERTO SOL)',
     ids: ['puerto_sol', 'valle_dorado', 'costa_estrella', 'brickton_docks'],
