@@ -497,8 +497,11 @@ function buildOtterbrookTown(): MapDef {
  *   L3 FIBBINS BENCH (27-33)— Leg 2 past Old Man Fibbins' cottage + dig pen,
  *                            with the HAIRPIN REST (picnic + present, on the
  *                            road at the cliff base) at flight C's bend.
- *   L2 BASE (rows 37-44)   — Leg 1 along the low treeline, the mower connector
- *                            lane, the shed choke + CAVE shelf (left, all L2).
+ *   L2 BASE (rows 37-44)   — Leg 1 along the low treeline. The CAVE corridor
+ *                            (mower lane, key-gated shed, top-left-corner cave
+ *                            shelf, all L2) is a SEPARATE far-west section —
+ *                            the x28-39 band stays solid woods the full hill
+ *                            height, detaching it from the climb (2026-07-09).
  *   L1 TERRACE (rows 49-60)— Jay's (house_rex, the opening) + Chad's houses, the
  *                            porch beat, the lemonade twins, the sniff-trail head.
  *   L0 TOWN (rows 66+)     — the town (buildOtterbrookTown), offset down.
@@ -1115,14 +1118,18 @@ export function growOtterbrook(): MapDef {
   // 2026-07-08 (top-right quarter detail pass): the RIGHT climb is a real WINDING
   // UPHILL now — four terraces stacked inside the plateau (L2 base → L3 Fibbins
   // bench → L4 police bench → L5 crater crest), each switchback leg one cliff-and-
-  // stair flight above the last, EarthBound-Onett style. The LEFT (cave) corridor,
-  // shed choke, and cave shelf stay on the L2 base; solid woods ('b') separate the
-  // two zones everywhere except the shared row-42 connector lane.
+  // stair flight above the last, EarthBound-Onett style. 2026-07-09 (user, per the
+  // EB reference): the CAVE/SHED corridor is its OWN far-west section, hugging the
+  // top-left corner, DETACHED from the meteorite hike — the x28-39 band stays
+  // solid dense woods the full hill height, so the corridor is neither visible nor
+  // walkable from Jay's terrace or the climb. Its only mouth is the west town
+  // stairs, and the SHED (key-gated flanks) blocks its path to the cave.
   g.rect(0, 0, W, TB, 'b');
 
   // --- carved clearings ---
-  g.rect(28, 3, 6, 10, '.');   // cave-mouth shelf (top-LEFT) — NARROW, so the shed gate can't be bypassed
-  g.rect(27, 26, 8, 14, '.');  // shed clearing (LEFT) — the choke the shed + locked gate guard
+  g.rect(4, 2, 8, 9, '.');    // cave-mouth shelf — hard against the TOP-LEFT corner (the Giant-Step pocket)
+  g.rect(6, 24, 12, 12, '.'); // shed pocket (far WEST): the workshop BLOCKS the path through it; sawhorse
+  // key-gates seal the walk-arounds on both flanks until has_trail_key
   g.rect(42, 48, 30, 13, '.'); // MID SHELF: the Jay/Chad terrace clearing (rows 49-60)
   g.rect(64, 27, 26, 7, '.');  // L3 — FIBBINS' BENCH: cottage + dig pen + flight B's top landing
   g.rect(46, 27, 6, 3, '.');   // L3 — the HAIRPIN REST at flight C's bend: picnic + the present sit
@@ -1173,10 +1180,6 @@ export function growOtterbrook(): MapDef {
   // Leg 3 runs east into the police muster below flight D; the scree zig-zag
   // takes the crest into the bowl's west apron.
   paintTrail([[56, 45], [56, 42]]); // off the terrace stairs
-  // the CONNECTOR LANE — the cave trail to Leg 1 along row 42 (Hodgkin's runaway
-  // mower patrols this straightaway; both ends sit BELOW the locked gates, so
-  // neither the shed choke nor the crater is bypassed)
-  paintTrail([[25, 42], [62, 42]], 3);
   paintTrail([[58, 42], [64, 41], [70, 43], [76, 41], [82, 43], [86, 41], [87, 39]]); // LEG 1 (L2) — weaves east to flight B's foot
   paintTrail([[87, 32], [80, 32], [74, 31], [68, 32], [62, 30], [54, 31], [48, 30], [44, 29]]); // LEG 2 (L3) — west, PAST THE OLD MAN'S DOOR
   paintTrail([[44, 22], [50, 20], [56, 22], [59, 21]], 3); // LEG 3 (L4) — east into the muster
@@ -1185,10 +1188,14 @@ export function growOtterbrook(): MapDef {
   paintTrail([[49, 56], [52, 56], [55, 55]], 3);
   paintTrail([[61, 56], [58, 56], [55, 55]], 3);
   paintTrail([[56, 49], [55, 51], [56, 57], [56, 64], [56, 67]]); // stair foot → terrace → town stairs
-  // LEFT path: the cave mouth → down past the shed → town (via the W stairs)
-  paintTrail([
-    [30, 11], [30, 18], [30, 26], [30, 34], [28, 40], [26, 44], [27, 52], [26, 60], [26, 67],
-  ]);
+  // LEFT (cave) corridor — fully west of the x28-39 treeline, DETACHED from the
+  // climb. Town's west stairs → the mower lane (dead-ends at x27; 26 columns of
+  // solid woods to the climb's stub) → the shed pocket (the shed blocks the path;
+  // key-gated flanks) → the top-left cave shelf.
+  paintTrail([[14, 42], [26, 42]], 3); // the WEST LANE — Hodgkin's mower runway
+  paintTrail([[11, 33], [13, 38], [14, 41]]); // pocket → lane
+  paintTrail([[7, 10], [7, 15], [8, 19], [10, 23]]); // cave shelf → pocket (past the gates)
+  paintTrail([[26, 42], [26, 44], [27, 52], [26, 60], [26, 67]]); // lane → W stairs → town
 
   // ── OLD MAN FIBBINS' DIG (the "old man section", à la Onett's hillside liar):
   // a fenced pen east of his cottage with the hole he's been widening since the
@@ -1201,7 +1208,7 @@ export function growOtterbrook(): MapDef {
   for (const fy of [28, 29, 30] as const) { g.set(80, fy, '|'); g.set(85, fy, '|'); }
   for (const fx of [80, 81, 84, 85] as const) g.set(fx, 31, '-'); // gate at x82-83
   // little sign nooks so the trail markers never sit under canopy or on the path
-  for (const [nx, ny] of [[59, 43], [41, 28]] as const) g.set(nx, ny, '.');
+  for (const [nx, ny] of [[59, 43], [41, 28], [24, 40]] as const) g.set(nx, ny, '.');
   // meadow dressing — flowers + tufts in the carved pockets (hand-set, deterministic)
   for (const [fx, fy] of [[52, 27], [51, 29], [78, 27], [66, 28], [89, 28]] as const) g.set(fx, fy, 'f');
   for (const [ux, uy] of [[53, 28], [65, 32], [44, 19], [58, 19], [44, 13]] as const) g.set(ux, uy, '~');
@@ -1264,12 +1271,12 @@ export function growOtterbrook(): MapDef {
     ...canopyTrees,
     { sprite: 'meteor_rock_hickory_hill', x: 66, y: 3, solid: { ox: 16, oy: 46, w: 64, h: 38 } }, // pushed farther UP the hill
     { sprite: 'sentinel_husk', x: 62, y: 2, solid: { ox: 4, oy: 60, w: 152, h: 40 }, ifFlag: 'sentinel_repelled' },
-    { sprite: 'burrow_mouth', x: 29, y: 1 }, // the CAVE mouth (top-LEFT) → Titanic Tick
-    otterCentered('bldg_ob_workshop', 31, 39, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }), // the SHED — guards the cave
-    // the LOCKED SHED GATE: the cave is reachable ONLY past the shed (needs the trail key
-    // from the hodgkin_mower chain). It walls the narrow cave choke until has_trail_key.
-    { sprite: 'sawhorse', x: 28, y: 24, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
-    { sprite: 'sawhorse', x: 30, y: 24, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
+    { sprite: 'burrow_mouth', x: 7, y: 1 }, // the CAVE mouth (top-left CORNER) → Titanic Tick
+    otterCentered('bldg_ob_workshop', 12, 31, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }), // the SHED — planted ACROSS the corridor, blocking the way to the cave
+    // the LOCKED SHED GATE: sawhorses seal BOTH walk-arounds beside the shed (needs
+    // the trail key from the hodgkin_mower chain). With the key the flanks open.
+    { sprite: 'sawhorse', x: 5, y: 28, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
+    { sprite: 'sawhorse', x: 14.5, y: 28, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'has_trail_key' },
     // OLD MAN FIBBINS' cottage — on his own bench now (L3); the crater trail runs
     // right past his LEFT-hand front door (the art's drawn door, frac ≈ .21),
     // Lier-X-Agerate style, along the row-33 front walk under the facade.
@@ -1287,22 +1294,24 @@ export function growOtterbrook(): MapDef {
     otterLandmark('house_chad', 58, 49, { to: 'chad_home', tx: 7 * 16 + 8, ty: 8 * 16 }), // CHAD's house (blue)
     { sprite: 'bug_zapper', x: 53, y: 51, solid: { ox: 4, oy: 18, w: 6, h: 8 } },
     { sprite: 'sign', x: 53, y: 20, solid: SIGN_SOLID, ifFlag: 'meteor_fell' }, // crater guard marker (flight D's foot)
-    { sprite: 'sign', x: 34, y: 33, solid: SIGN_SOLID }, // shed marker
+    { sprite: 'sign', x: 16, y: 30.4, solid: SIGN_SOLID }, // shed marker (beside the east flank gate)
     { sprite: 'sign', x: 64, y: 44, solid: SIGN_SOLID }, // woods marker
     { sprite: 'picnic', x: 64, y: 53, solid: PICNIC_SOLID },
     { sprite: 'bench', x: 68, y: 55, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-    ...treeAt([[8, 8], [10, 24], [100, 8], [102, 24], [8, 40], [100, 40]]),
+    ...treeAt([[32, 8], [34, 24], [100, 8], [102, 24], [32, 40], [100, 40]]),
   ];
 
   const hillNpcs: NpcDef[] = [
     { id: 'ana', sprite: 'ana', x: 46, y: 51, facing: 'down', dialogue: 'npc_ana', ifFlag: 'zapper_done' },
     { id: 'vivi', sprite: 'vivi', x: 49, y: 51, facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done' },
     { id: 'treeline_gawker', sprite: 'pigeonKid', x: 66, y: 51, facing: 'up', dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' },
-    { id: 'woods_birder', sprite: 'oldTimer', x: 65, y: 28, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' }, // on the Fibbins bench, above Leg 2
+    // the birder wears the CRITIC's art, not oldTimer's — Fibbins is THE old man of
+    // this hill (two identical gramps 18 tiles apart read as a copy-paste bug)
+    { id: 'woods_birder', sprite: 'sidewalkCritic', x: 65, y: 28, facing: 'down', dialogue: 'npc_woods_birder', idle: true, emote: 'happy' }, // on the Fibbins bench, above Leg 2
     // OLD MAN FIBBINS — at his pen gate, staring into the hole
     { id: 'old_fibbins', sprite: 'oldTimer', x: 83, y: 32, facing: 'up', dialogue: 'npc_fibbins', dialogueDay: 'npc_fibbins_day', idle: true, emote: 'think' },
-    { id: 'biscuit_road', sprite: 'dog', x: 29, y: 40, facing: 'up', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
-    { id: 'biscuit_road_after', sprite: 'dog', x: 29, y: 40, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
+    { id: 'biscuit_road', sprite: 'dog', x: 14, y: 39, facing: 'up', dialogue: 'npc_biscuit_road', dog: true, unlessFlag: 'tick_defeated' },
+    { id: 'biscuit_road_after', sprite: 'dog', x: 14, y: 39, facing: 'down', dialogue: 'npc_biscuit_road_after', dog: true, ifFlag: 'tick_defeated', unlessFlag: 'zapper_done' },
     // THE CRATER GUARD — three cops cordon flight D's foot once the meteor is down;
     // the gaps between them let the crater beat still fire.
     { id: 'crater_cop_a', sprite: 'npc_borden', x: 45, y: 19, facing: 'up', dialogue: 'npc_crater_police', idle: true, ifFlag: 'meteor_fell' },
@@ -1311,13 +1320,13 @@ export function growOtterbrook(): MapDef {
   ];
 
   const hillSigns: SignDef[] = [
-    { x: 34, y: 33, dialogue: 'locked_house' },
-    { x: 32, y: 31, dialogue: 'trail_shed' },
-    { x: 40, y: 44, dialogue: 'sign_whisperwood_rise' },
-    { x: 36, y: 44, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
-    { x: 29, y: 40, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+    { x: 16, y: 31, dialogue: 'locked_house' },
+    { x: 10, y: 34, dialogue: 'trail_shed' },
+    { x: 24, y: 40, dialogue: 'sign_whisperwood_rise' },
+    { x: 21, y: 43, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
+    { x: 14, y: 39, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
     { x: 64, y: 44, dialogue: 'sign_otter_woods' },
-    { x: 30, y: 13, dialogue: 'sign_hill' },
+    { x: 5, y: 13, dialogue: 'sign_hill' },
     { x: 53, y: 20, dialogue: 'sign_crater_guard', ifFlag: 'meteor_fell' },
     { x: 64, y: 12, dialogue: 'sign_sentinel_husk', ifFlag: 'sentinel_repelled' },
     { x: 59, y: 43, dialogue: 'sign_crater_trail' },
@@ -1379,8 +1388,9 @@ export function growOtterbrook(): MapDef {
     doors: [
       // CHAPTER GATE — the south road off the BOTTOM edge → Meadow Mile (Onett's road to Twoson).
       { x: OTTERBROOK_EAST_GATE.x, y: OTTERBROOK_EAST_GATE.y, w: 2, h: 2, to: 'meadow_mile', tx: 24, ty: 128, facing: 'down', indicator: 'none' },
-      // the hilltop CAVE mouth (top-left) → the Titanic Tick dungeon (reached ONLY past the shed gate)
-      { x: 28, y: 9, w: 3, h: 1, to: 'oak_roots', tx: 14 * 16 + 8, ty: 38 * 16, facing: 'up', indicator: 'none' },
+      // the hilltop CAVE mouth (the top-left CORNER) → the Titanic Tick dungeon (reached ONLY past the shed
+      // gate). Lands one row ABOVE the cave's exit pad (row 38), so entering never spawns on the way out.
+      { x: 6, y: 9, w: 3, h: 1, to: 'oak_roots', tx: 14 * 16 + 8, ty: 37 * 16, facing: 'up', indicator: 'none' },
       ...town.doors.map(offY),
     ],
     spawners: [
@@ -1391,7 +1401,7 @@ export function growOtterbrook(): MapDef {
       { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 44, y: 27, w: 32, h: 5 }, ifFlag: 'meteor_fell' }, // Leg 2 (L3)
       { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 42, y: 19, w: 16, h: 4 }, ifFlag: 'meteor_fell' }, // Leg 3 (L4)
       { enemies: ['tick_nymph', 'skeeter_swarm'], count: 2, rect: { x: 41, y: 5, w: 12, h: 10 }, ifFlag: 'meteor_fell' }, // the scree zig-zag (L5)
-      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 26, y: 14, w: 10, h: 12 }, ifFlag: 'meteor_fell' }, // the left (cave) trail
+      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 5, y: 12, w: 7, h: 12 }, ifFlag: 'meteor_fell' }, // the west (cave) corridor
     ],
     triggers: [
       { id: 'porch', rect: { x: 46, y: 56, w: 6, h: 2 }, once: true },
@@ -1399,7 +1409,7 @@ export function growOtterbrook(): MapDef {
       // WEST; x62 keeps the beat from firing way out on the rim ring
       { id: 'crater', rect: { x: 62, y: 1, w: 20, h: 12 }, once: true },
     ],
-    patrols: [{ id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[30, 42], [60, 42]], countFlag: 'q_mower_caught' }],
+    patrols: [{ id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[15, 42], [25, 42]], countFlag: 'q_mower_caught' }],
   };
 }
 
@@ -2140,15 +2150,18 @@ function buildOakRoots(): MapDef {
     signs: [{ x: 12, y: 35, dialogue: 'oak_roots_enter' }],
     phones: [],
     doors: [
-      // Surface return lands just below the hilltop CAVE mouth (top-left of the plateau),
-      // on the left path — the cave is the top-left set-piece in the concept layout.
+      // Surface return lands just below the hilltop CAVE mouth (the plateau's
+      // top-left CORNER), on the west corridor — the cave is its own sealed
+      // section, detached from the meteorite climb (user, 2026-07-09). The pad
+      // sits on row 38 — the throat's LAST WALKABLE row (row 39 is solid wall;
+      // the old row-39 pad could never be stepped on, so the exit was dead).
       {
         x: 12,
-        y: 39,
+        y: 38,
         w: 4,
         h: 1,
         to: 'otterbrook',
-        tx: 29 * 16 + 8,
+        tx: 7 * 16 + 8,
         ty: 11 * 16,
         facing: 'down',
         indicator: 'none',

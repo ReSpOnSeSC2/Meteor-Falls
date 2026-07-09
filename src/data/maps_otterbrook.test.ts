@@ -65,9 +65,11 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     const caveEntries = ob.doors.filter((d) => d.to === 'oak_roots');
     expect(caveEntries).toHaveLength(1);
     expect(caveEntries[0].tx).toBe(14 * 16 + 8);
-    expect(caveEntries[0].ty).toBe(38 * 16);
+    // lands one row above the cave's row-38 exit pad (row 39 is solid wall — the
+    // old pad there was unreachable, so leaving the cave on foot was impossible)
+    expect(caveEntries[0].ty).toBe(37 * 16);
     const rootsExit = MAPS.oak_roots.doors.find((d) => d.to === 'otterbrook');
-    expect(rootsExit?.tx).toBe(29 * 16 + 8); // surface return lands below the cave mouth
+    expect(rootsExit?.tx).toBe(7 * 16 + 8); // surface return lands below the top-left-corner cave mouth
     expect(rootsExit?.ty).toBe(11 * 16);
     expect(hasEntry('rex_home')).toBe(true);
   });
@@ -108,12 +110,21 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       expect(onTrail(x, y), `right (crater) path @${x},${y}`).toBe(true);
     }
     for (const [x, y] of [
-      [30, 12],
-      [28, 36],
+      [7, 12], // the corridor below the top-left-corner cave shelf
+      [11, 33], // the shed pocket's south walk
+      [20, 42], // the mower lane
       [26, 44],
       [26, 60],
     ]) {
       expect(onTrail(x, y), `left (cave) path @${x},${y}`).toBe(true);
+    }
+    // the SEALING TREELINE (user 2026-07-09): the x28-39 band stays solid woods the
+    // full hill height, so the cave/shed corridor is detached from the climb — a
+    // reconnecting trail or carve here fails loudly
+    for (const y of [4, 12, 20, 28, 36, 44]) {
+      for (let x = 28; x <= 39; x++) {
+        expect(ob.grid[y][x], `treeline breach @${x},${y}`).toBe('b');
+      }
     }
   });
 
