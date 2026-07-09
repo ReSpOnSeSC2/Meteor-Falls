@@ -147,6 +147,7 @@ import { s, ART_SCALE, TILE_PX } from '../spritegen/scale';
 import { showCard, showCaption, playStagedScene } from '../engine/cutsceneStage';
 import { ch1FirstHeartlight } from '../data/cutscenes_staged';
 import { openingPhase, type OpeningPhase } from '../engine/opening';
+import { chapter1BannerTag, chapter1Phase } from '../engine/ch1Story';
 
 interface Rect {
   x: number;
@@ -261,6 +262,7 @@ const OTTER_CELL = { tx: 200, ty: 56 } as const;
  *  meadow long-walk to Brickton is a POST-dawn daytime route and stays off.) */
 const CH1_STORY_NIGHT_MAPS: ReadonlySet<string> = new Set([
   'otterbrook', // the town + the whole hill + the crater are ONE elevated map now (S5)
+  'downtown_otterbrook', // legacy pocket/dev saves still share the same sky state
   // the UNDER-OAK (ADR-121 rework) rides the same clock: pitch-hushed until the
   // Tick dies, then the post-victory rebuild lets the real light down the roots
   'oak_roots',
@@ -839,7 +841,8 @@ export class OverworldScene extends Phaser.Scene {
     // story clock instead of carrying a permanent night flag (S9b — the
     // "why is it sometimes dark" fix). MapDef.night remains for places that
     // are genuinely always dark.
-    const storyNight = !GS.flag('zapper_done') && CH1_STORY_NIGHT_MAPS.has(this.mapDef.id);
+    const ch1Phase = chapter1Phase((id) => !!GS.flag(id));
+    const storyNight = ch1Phase === 'meteor-night' && CH1_STORY_NIGHT_MAPS.has(this.mapDef.id);
     // ADR-121: after the meteor night ends but before the Heart-Oak Tick is killed,
     // the Hush-dark blights Otterbrook in broad daylight. It reads as cold/sick
     // "night" (buildNight branches on this.hushDark), and the town stays locked
@@ -849,13 +852,21 @@ export class OverworldScene extends Phaser.Scene {
     // the lit hill abutting the blighted town, a day/night SEAM that read as a
     // colour bug (the very seam CH1_STORY_NIGHT_MAPS exists to prevent). The blight
     // is the whole drained area now, so there's no jarring hill→town colour jump.
-    const hushDark = !!GS.flag('zapper_done') && !GS.flag('tick_defeated') && CH1_STORY_NIGHT_MAPS.has(this.mapDef.id);
+    const hushDark = ch1Phase === 'hush-morning' && CH1_STORY_NIGHT_MAPS.has(this.mapDef.id);
     const night = this.mapDef.night === true || storyNight || hushDark;
-    this.isNight = night; // S15c: NPC dialogueDay variants read this
+    // Hush-morning is visually cold, but it is daylight: NPCs use their day lines.
+    this.isNight = this.mapDef.night === true || storyNight;
     this.hushDark = hushDark;
     if (night) this.buildNight();
     this.buildFog(); // WORLD-OVERHAUL S5: opt-in level-scaled atmosphere veil (foggybottom); no-op unless atmosphere:'fog'
-    if (!this.devFullMapPreview && this.opPhase() === 0) this.showBanner(night); // no map-name/"2 A.M." banner during the opening cinematic
+    if (!this.devFullMapPreview && this.opPhase() === 0) {
+      const tag = CH1_STORY_NIGHT_MAPS.has(this.mapDef.id)
+        ? chapter1BannerTag(ch1Phase)
+        : this.mapDef.night
+          ? 'NIGHT'
+          : undefined;
+      this.showBanner(tag);
+    } // no map-name banner during the opening cinematic
 
     // 'starfall' runs UNBROKEN across every opening phase (playMusic is idempotent,
     // so the per-map restarts don't restart it); room music resumes at the wake.
@@ -1939,7 +1950,7 @@ export class OverworldScene extends Phaser.Scene {
     const nightDepth = this.solidTiles.length * TILE_PX + this.maxLevel * this.levelDepthBias + s(300);
     // ADR-121: the Hush-dark is a COLDER, shallower veil than 2 AM — a wrong, sick
     // daylight rather than true night (so it still reads as "daytime, but the warmth
-    // got eaten"), with cold flickering streetlights instead of warm fireflies.
+    // got eaten"). Lighting remains world-authored; no random screen-space pixels.
     const veilColor = this.hushDark ? px(RAMP.CYAN, 1) : px(RAMP.NIGHT, 1);
     const veilAlpha = this.hushDark ? 0.5 : 0.62;
     const o = this.add
@@ -1951,25 +1962,9 @@ export class OverworldScene extends Phaser.Scene {
     o.setBlendMode(Phaser.BlendModes.MULTIPLY);
     // (The warm per-doorstep "porch light" glow pools were removed at the user's
     // request — they read as unnecessary spotlights over the doors. The night
-    // tint above and the fireflies below are the remaining 2AM ambiance.)
-    const flickerColor = this.hushDark ? px(RAMP.CYAN, 3) : px(RAMP.GOLD, 3);
-    for (let i = 0; i < 9; i++) {
-      const f = this.add
-        .image(Math.random() * this.scale.width, Math.random() * this.scale.height, 'pixel')
-        .setScrollFactor(0)
-        .setDepth(nightDepth + 10)
-        .setTint(colorOf(flickerColor))
-        .setAlpha(0);
-      this.tweens.add({
-        targets: f,
-        alpha: { from: 0, to: 0.9 },
-        duration: 900 + Math.random() * 900,
-        yoyo: true,
-        repeat: -1,
-        delay: Math.random() * 2000,
-      });
-      this.fireflies.push(f);
-    }
+    // tint above is the remaining 2 A.M. ambiance. The old nine random,
+    // screen-fixed "fireflies" floated across buildings and UI and made the
+    // scene look unfinished, so they are deliberately gone.
   }
 
   /** WORLD-OVERHAUL S5 — the opt-in FOG atmosphere (foggybottom's signature). A pale,
@@ -2022,28 +2017,28 @@ export class OverworldScene extends Phaser.Scene {
     });
   }
 
-  private showBanner(night = false): void {
+  private showBanner(tag?: string): void {
     // banner names are all-caps; resolved {rex} et al. get uppercased to match
     const name = vars(this.mapDef.name).toUpperCase();
     // (ADR-092 decorative GLYPH banner removed at the user's request — the entry
     // card shows just the place name, plus the time tag at night.)
     // retro glyph advance is 6px native; window pad/size are layout px → s()
-    const w = Math.max(name.length * s(6) + s(24), night ? s(76) : 0);
-    const h = night ? s(36) : s(24);
+    const w = Math.max(name.length * s(6) + s(24), tag ? (tag.length + 4) * s(6) : 0);
+    const h = tag ? s(36) : s(24);
     const win = makeWindow(this, s(8), s(8), w, h);
     const tx = this.add
       .bitmapText(s(20), s(16), 'retro', name, s(6))
       .setScrollFactor(0)
       .setDepth(DEPTH_UI + 1);
     const fading: Phaser.GameObjects.GameObject[] = [win, tx];
-    if (night) {
+    if (tag) {
       // S9b: the dark overlay gets a label — no guessing what the haze means
-      const tag = this.add
-        .bitmapText(s(20), s(27), 'retro', '2 A.M.', s(6))
+      const tagText = this.add
+        .bitmapText(s(20), s(27), 'retro', tag, s(6))
         .setScrollFactor(0)
         .setDepth(DEPTH_UI + 1)
         .setTint(colorOf(px(RAMP.CYAN, 2)));
-      fading.push(tag);
+      fading.push(tagText);
     }
     this.tweens.add({
       targets: fading,
@@ -3127,6 +3122,8 @@ export class OverworldScene extends Phaser.Scene {
     // facades deliver whether or not their door is real (S10 hoisted this out
     // of lockedLines: the STARPORT opened, but its mail slot still works)
     for (const p of this.mapDef.props) {
+      if (p.ifFlag && !GS.flag(p.ifFlag)) continue;
+      if (p.unlessFlag && GS.flag(p.unlessFlag)) continue;
       if (!MAIL_DOORS[p.sprite] || !p.solid) continue;
       // the route's five stops are the ORIGINALS — Elm Row's three houses (the
       // bluff, y<10) + the chapel + the arcade. house_* sprites are reused all
@@ -3163,8 +3160,16 @@ export class OverworldScene extends Phaser.Scene {
       holding_door: 'holding_door_line',
       office_door: 'manager_door',
     };
+    const hushClosed = new Set([
+      'facade_fillshop', 'bldg_ob_burger', 'bldg_bank', 'bldg_ob_bakery', 'arcade', 'facade_realty',
+    ]);
     for (const p of this.mapDef.props) {
-      const lineId = lockedLines[p.sprite];
+      if (p.ifFlag && !GS.flag(p.ifFlag)) continue;
+      if (p.unlessFlag && GS.flag(p.unlessFlag)) continue;
+      const phaseClosed = this.mapDef.id === 'otterbrook' && hushClosed.has(p.sprite) && !GS.flag('tick_defeated');
+      const lineId = phaseClosed
+        ? (GS.flag('zapper_done') ? 'shop_closed_hush' : 'shop_closed_night')
+        : lockedLines[p.sprite];
       if (!lineId || !p.solid) continue;
       // solid.* are NATIVE data; the ±4/8 pad is px → all scaled at read
       const r = {
@@ -3289,7 +3294,7 @@ export class OverworldScene extends Phaser.Scene {
   private bordenChase(dt: number): void {
     if (this.cut || this.dlg.busy || this.transitioning || this.bordenEngaged) return;
     if (this.mapDef.id !== 'otterbrook') return;
-    if (!GS.flag('zapper_done') || GS.flag('borden_cleared') || GS.flag('borden_marching')) return;
+    if (!GS.flag('tick_defeated') || GS.flag('borden_cleared') || GS.flag('borden_marching')) return;
     const n = this.npcs.find((o) => o.def.id === 'constable_borden');
     if (!n) return;
     const dx = this.player.x - n.spr.x;
@@ -3425,6 +3430,24 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.npc_hodgkin_ask);
   }
 
+  /** Pemberton makes the cave route legible and seeds the endgame Long Shot
+   * without turning an unrelated side-quest key into a main-path requirement. */
+  private async pembertonBeat(): Promise<void> {
+    if (!GS.flag('zapper_done')) {
+      await this.dlg.say(...DIALOGUE.npc_pemberton_night);
+      return;
+    }
+    if (!GS.flag('tick_defeated')) {
+      await this.dlg.say(...DIALOGUE.npc_pemberton_hush);
+      if (!GS.flag('met_pemberton')) {
+        GS.setFlag('met_pemberton');
+        toast(this, 'CLUE: Follow the west trail past Pemberton’s workshop.');
+      }
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.npc_pemberton_after);
+  }
+
   /** the current chapter, read off the Ember ledger (0 embers ⇒ Ch.1) */
   private chapterNow(): number {
     let n = 0;
@@ -3483,8 +3506,13 @@ export class OverworldScene extends Phaser.Scene {
   private async questTalk(n: NpcObj): Promise<boolean> {
     switch (n.def.id) {
       case 'mrs_pemmel':
-        // her §A10 ask opens at dawn — Biscuit holds the park until then
-        if (!GS.flag('zapper_done')) return false;
+        // The crisis gets one concise beat; the full side quest opens only when
+        // restoring the town has actually restored ordinary life.
+        if (GS.flag('zapper_done') && !GS.flag('tick_defeated')) {
+          await this.dlg.say(...DIALOGUE.npc_pemmel_hush);
+          return true;
+        }
+        if (!GS.flag('tick_defeated')) return false;
         await this.pemmelBeat();
         return true;
       case 'mr_plummer':
@@ -3496,7 +3524,11 @@ export class OverworldScene extends Phaser.Scene {
         // the meteor night the twins are home in their rooms — fall through to
         // their authored night dialogue (ana_room_night / vivi_room_night) rather
         // than launching the quest. Mirrors mrs_pemmel's zapper_done gate above.
-        if (!GS.flag('zapper_done')) return false;
+        if (GS.flag('zapper_done') && !GS.flag('tick_defeated')) {
+          await this.dlg.say(...DIALOGUE.npc_twins_hush);
+          return true;
+        }
+        if (!GS.flag('tick_defeated')) return false;
         await this.twinsBeat();
         return true;
       case 'biscuit_drug':
@@ -3543,6 +3575,15 @@ export class OverworldScene extends Phaser.Scene {
         // S22 (ADR-119): the Trail Key interlock (catch his runaway mower)
         await this.hardwareBeat();
         return true;
+      case 'pemberton':
+        await this.pembertonBeat();
+        return true;
+      case 'depot_clerk':
+        if (GS.flag('zapper_done') && !GS.flag('tick_defeated')) {
+          await this.dlg.say(...DIALOGUE.npc_depot_clerk_hush);
+          return true;
+        }
+        return false;
       case 'deli_keeper':
       case 'deli_otter':
         // S14 (Prompt 23): the deli crafts Family (and one day Feast) Baskets.
@@ -4971,6 +5012,14 @@ export class OverworldScene extends Phaser.Scene {
         this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
         return;
       }
+      if (this.mapDef.id === 'rex_home' && d.to === 'otterbrook' && !GS.flag('mom_gear')) {
+        this.cut = true;
+        AUDIO.sfx('cancel');
+        await this.dlg.say(...DIALOGUE.mom_before_hill);
+        this.cut = false;
+        this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
+        return;
+      }
       // Lucille's cabin: remember the boarding frontier, and route the hatch back there
       // (not to Ch.3 foggybottom) when a Ch.4+ party declines the flight and walks out.
       if (d.to === 'biplane_interior') this.rememberLucilleOrigin();
@@ -5260,7 +5309,8 @@ export class OverworldScene extends Phaser.Scene {
         // town too quiet to run a bus. Killing the Tick floods the Vibe back, the
         // roads clear, and the highway (and the 6:15) reopen. tick_defeated is the
         // single key out of Otterbrook.
-        if (GS.flag('tick_defeated')) await this.busAsk('brickton');
+        if (GS.flag('tick_defeated') && !GS.flag('brickton_foot_first')) await this.dlg.say(...DIALOGUE.bus_foot_first);
+        else if (GS.flag('tick_defeated')) await this.busAsk('brickton');
         else await this.dlg.say(...DIALOGUE.bus_closed_detour);
         break;
       case 'bus_stop_brickton':
@@ -6953,7 +7003,7 @@ export class OverworldScene extends Phaser.Scene {
     cam.centerOn(impactX, impactY);
 
     // 1) establishing still — the wrong star (held long)
-    await showCard(this, 'meteor_2am', { chapter: 'ch1', caption: 'Otterbrook, Ohio. Summer, 1995.', ms: 3800 });
+    await showCard(this, 'meteor_2am', { chapter: 'ch1', caption: 'Otterbrooke, Ohio. Summer, 1995.', ms: 3800 });
 
     // reveal the live night hill behind the card (fade the no-flash entry blackout)
     if (this.entryBlackout) {
@@ -6966,7 +7016,7 @@ export class OverworldScene extends Phaser.Scene {
     await this.wait(700);
     cam.zoomTo(0.95, 4400, 'Sine.easeInOut');
     // narrate the fall so the silent overworld beat reads as story, not screensaver
-    void showCaption(this, 'A wrong star falls over Otterbrook — too low, too bright, and coming down fast.', { ms: 3000 });
+    void showCaption(this, 'A wrong star falls over Otterbrooke — too low, too bright, and coming down fast.', { ms: 3000 });
     const shadow = this.add
       .image(impactX, impactY, 'mob_shadow')
       .setOrigin(0.5, 0.5).setAlpha(0).setScale(0.5).setDepth(impactY - 1);
@@ -7199,7 +7249,7 @@ export class OverworldScene extends Phaser.Scene {
     const blackIn = addTo(fx, this.add.rectangle(0, 0, W, H, 0x06060e).setOrigin(0));
     await waitTween({ targets: blackIn, alpha: 0, duration: 1100, ease: 'sine.out' });
     blackIn.destroy();
-    await say('Otterbrook, Ohio. Summer, 1995.');
+    await say('Otterbrooke, Ohio. Summer, 1995.');
     await say('2:11 AM. The whole town is asleep — except the crickets, one porch light, and a dog barking up at the sky.');
 
     /* ---- PHASE 2: the wrong star ---- */
@@ -7371,7 +7421,7 @@ export class OverworldScene extends Phaser.Scene {
           addTo(world, this.add.circle(wrect.x, wrect.y, 9, 0xf8e8a0, 0.1));
         }),
       );
-    await say('One by one, porch lights flick on across Otterbrook. The dog was right to bark.');
+    await say('One by one, porch lights flick on across Otterbrooke. The dog was right to bark.');
 
     /* ---- PHASE 7: pan east to the one window that matters ---- */
     const pan = waitTween({ targets: world, x: -392, duration: 3800, ease: 'Sine.easeInOut' });
@@ -7668,6 +7718,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.data.guest = null;
     this.removeFollower('chad');
     GS.setFlag('sentinel_repelled');
+    GS.setFlag('glint_walk_home');
     // it leaves a husk in the crater that the town learns to walk around (and that
     // wakes again, far later — the Ch.10 callback hangs off sentinel_husk_left)
     GS.setFlag('sentinel_husk_left');
@@ -7723,6 +7774,7 @@ export class OverworldScene extends Phaser.Scene {
     // (talkTo mom → sleepToMorning) is what sets `zapper_done` — so you wake
     // into the wrong-colored HAZE morning instead of teleporting into it.
     GS.setFlag('zapper_hit');
+    GS.setFlag('glint_walk_home', false);
     // ADR-121: the dimmed Glint who flitted home with us IS the one the zapper
     // takes — lift his trailing sprite OUT of the follower line so the death beat
     // is continuous with the follow, not a fresh pop-in. (zapper_hit was just set,
@@ -7823,7 +7875,7 @@ export class OverworldScene extends Phaser.Scene {
     mgr.setDepth(mgr.y);
     await this.dlg.say(...DIALOGUE.manager_intro.slice(1));
     await this.dlg.say(...DIALOGUE.manager_faye_q);
-    const outcome = await this.startBattle(['blazer_smiler', 'blazer_smiler'], 'none', [], {
+    const outcome = await this.startBattle(['the_suit', 'blazer_smiler'], 'none', [], {
       boss: true,
       prayTutorial: true,
     });
@@ -7855,6 +7907,9 @@ export class OverworldScene extends Phaser.Scene {
       AUDIO.sfx('heal');
       await this.dlg.say(...DIALOGUE.mom_cure_beat);
     }
+    // Mia finally sings back Heartlight #1. This awakening existed but was never
+    // called, leaving STARSONG Alpha dead and the chapter ending one beat early.
+    await this.awakeningBeat('the_first_heartlight');
     GS.setFlag('ch1_complete');
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.faye_after_call);
@@ -7867,7 +7922,7 @@ export class OverworldScene extends Phaser.Scene {
   private async busAsk(dest: 'brickton' | 'otterbrook'): Promise<void> {
     this.cut = true;
     await this.dlg.say(...(dest === 'brickton' ? DIALOGUE.bus_ask_brickton : DIALOGUE.bus_ask_home));
-    const label = dest === 'brickton' ? 'Board the 6:15 to Twoton' : 'Ride back to Otterbrook';
+    const label = dest === 'brickton' ? 'Board the 6:15 to Twoton' : 'Ride back to Otterbrooke';
     const pick = await this.dlg.ask([label, 'Stay'], { cancelIndex: 1 });
     if (pick !== 0) {
       this.cut = false;

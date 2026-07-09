@@ -723,12 +723,21 @@ export class BattleScene extends Phaser.Scene {
     const first = ENEMIES[this.cfg.enemyIds[0]];
     const backdropKey = authoredBattleBackdropKey(this.cfg.backdrop ?? this.cfg.area ?? this.backdropArea(first.id));
     if (backdropKey && this.textures.exists(backdropKey)) {
+      const chapterOnePsychedelic = [
+        'authored_battle_bg_otterbrook',
+        'authored_battle_bg_otter_station',
+        'authored_battle_bg_brickton',
+      ].includes(backdropKey);
       this.add
         .image(0, 0, backdropKey)
         .setOrigin(0)
         .setScrollFactor(0)
-        .setDisplaySize(this.scale.width, this.scale.height);
-      return;
+        .setDisplaySize(this.scale.width, this.scale.height)
+        .setAlpha(chapterOnePsychedelic ? 0.28 : 1);
+      // EarthBound's animated abstract battle field is a defining part of its
+      // visual rhythm. Keep later authored panoramas intact, but let Ch.1's
+      // location painting sit beneath the existing plasma instead of disabling it.
+      if (!chapterOnePsychedelic) return;
     }
     const [ra, rb] = first.bg;
     if (this.game.renderer.type === Phaser.WEBGL) {

@@ -432,6 +432,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@I'm proud of you. I don't need to know the details to know that.",
   ],
   npc_mom: ['@Dinner is {favoritefood}. Dinner is always {favoritefood}. I know my audience.'],
+  mom_before_hill: [
+    "Mom is still in the kitchen. Leaving without telling her would turn a meteor emergency into a mom emergency.",
+    '* Talk to Mom before heading outside.',
+  ],
   // ADR-042: the full reset, said only when she actually fixed something
   npc_mom_heal: [
     "* Mom's once-over: hair, face, both elbows. Everything checks out. (HP and PP are all the way back.)",
@@ -439,7 +443,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- signs (they editorialize) ---------------- */
   sign_welcome: [
-    'WELCOME TO OTTERBROOK — pop. 412 and one very good dog. {g:paw}',
+    'WELCOME TO OTTERBROOKE, OH — pop. 412 and one very good dog. {g:paw}',
     '(Someone has written "THE DOG COUNTS DOUBLE" underneath. The town agrees.)',
   ],
   sign_hill: [
@@ -447,7 +451,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(The hill is not aware of this rule. The hill does what it wants.)',
   ],
   sign_chapel: [
-    'OTTERBROOK CHAPEL — All welcome. Yes, even you, Gary.',
+    'OTTERBROOKE CHAPEL — All welcome. Yes, even you, Gary.',
   ],
   sign_trail: [
     'TRAIL COURTESY: pack out what you pack in. The slugs have unionized.',
@@ -477,12 +481,33 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@We just moved out to the new south blocks. You can see SKY back here. Too much sky, if you ask me.',
     '@In the old part of town, everybody already knew your dog. Out here I had to introduce mine TWICE.',
   ],
+  npc_civic_secretary: [
+    '@The fountain started splashing again the exact second the color came back.',
+    '@The Mayor has filed a motion congratulating the fountain. It passed unanimously.',
+  ],
+  npc_bakery_regular: [
+    '@The first warm pie after a cold morning is not breakfast. It is municipal recovery.',
+  ],
+  npc_arcade_regular: [
+    '@STARPORT was dark all morning. Then every cabinet woke up and asked for a quarter at once.',
+    '@I have never felt so needed.',
+  ],
+  npc_pond_grandma: [
+    '@There. Hear the swings squeak and the pond slap the bank? That is what a town sounds like when it is breathing.',
+  ],
+  npc_maple_biker: [
+    '@I can ride from Maple Street to Main without touching grass. I only touch grass for dramatic turns.',
+  ],
+  npc_south_gardener: [
+    '@These marigolds went blue before breakfast. Look at them now — loud as trumpets.',
+    '@Flowers are not subtle after a scare. People should try that.',
+  ],
   npc_gate_walker: [
     '@Some folks ride the 6:15 to Twoton. I WALK it. Meadow Mile, then the overpass. Builds character.',
     "@Mind the proctors at the city line — they check your visitor badge. Mine's laminated.",
   ],
   npc_mayor_otter: [
-    '@Mayor of Otterbrook, twenty-two years running. Ran unopposed. Ran anyway.',
+    '@Mayor of Otterbrooke, twenty-two years running. Ran unopposed. Ran anyway.',
     '@We finally built City Hall! Before this I governed from a booth at the diner. Terrible acoustics.',
     '@New town law: the good dog on the WELCOME sign counts as half a person. So the sign now reads: population 412 and a half.',
   ],
@@ -491,7 +516,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@Mostly it's lost-and-found. Mostly Biscuit's tennis balls. We keep a whole DRAWER.",
   ],
   sign_otter_hall: [
-    'OTTERBROOK CITY HALL — built this year, at long last.',
+    'OTTERBROOKE CITY HALL — built this year, at long last.',
     '(The cornerstone went in a little crooked. The Mayor calls it "rustic.")',
   ],
   sign_civic_green: [
@@ -540,29 +565,29 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   sign_roadblock: [
     'ROAD WORK AHEAD. Reason: meteor. (Yes, really.)',
-    'Find another way around. — Otterbrook Public Works',
+    'Find another way around. — Otterbrooke Public Works',
   ],
   // the sealed east line at night — read at the barricade itself
   sign_meadow_gate_closed: [
-    'GATE CLOSED — Otterbrook rolls up the sidewalks at night.',
+    'GATE CLOSED — Otterbrooke rolls up the sidewalks when the road goes cold.',
     '(A note is clipped on: "Road opens at sunup. Get some sleep, kiddo.")',
   ],
   // shown when you walk into the shut gate before dawn (the door-bump reason)
   meadow_gate_asleep: [
     'The road east is gated shut for the night.',
-    'Otterbrook is fast asleep — porch lights, crickets, and one dog who knows something.',
+    'Otterbrooke is fast asleep — porch lights, crickets, and one dog who knows something.',
     'Whatever fell on the hill will keep until morning. Better head back.',
   ],
   // ADR-121: the road stays fogged through the Hush-dark, until the Tick is killed
   meadow_gate_hushdark: [
     'The road east is still barricaded — and past it, the highway just... fogs out into gray.',
     "It's the wrong kind of fog. Cold, and quiet, and it gets quieter the longer you look at it.",
-    "Nobody's leaving Otterbrook while the town feels like this. Something's draining the warmth right out of it — and it's coming from up on the hill.",
+    "Nobody's leaving Otterbrooke while the town feels like this. Something's draining the warmth right out of it — and it's coming from up on the hill.",
   ],
 
   /* ---------------- S15i Task 1 — THE WOODS NOOK (the grown SW thicket) ---------------- */
   sign_otter_woods: [
-    'OTTERBROOK WOODS — a footpath, a few birds, one good picnic table.',
+    'OTTERBROOKE WOODS — a footpath, a few birds, one good picnic table.',
     '(Someone scratched below: "best napping in three counties.")',
   ],
   // 2026-07-08 — THE LONG CLIMB: the crater trail switchbacks the whole hill now,
@@ -571,7 +596,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'CRATER TRAIL — the meteor is UP. Keep walking. No, keep walking.',
   ],
   sign_crater_trail_2: [
-    'STILL THE CRATER TRAIL. You are closer than the sign before this one and farther than the sign after it. — Otterbrook Parks Dept.',
+    'STILL THE CRATER TRAIL. You are closer than the sign before this one and farther than the sign after it. — Otterbrooke Parks Dept.',
   ],
   sign_fibbins_dig: [
     'KEEP OUT. MY hole. I dug it, I named it, I will be buried in it (schedule permitting). — E. FIBBINS',
@@ -879,11 +904,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   tick_after: [
     "(The Tick is gone, and the warmth it hoarded comes roaring back — into the oak, the pond, the streetlights, the whole gray town all at once.)",
-    'The Hush-dark breaks like a fever. Color floods back. Somewhere east, a bus engine turns over for the first time in days, and the road out of Otterbrook clears in the rising light.',
+    'The Hush-dark breaks like a fever. Color floods back. Down in town, a bus engine coughs awake, and the road out of Otterbrooke clears in the rising light.',
     "@(Real morning. Finally.) Okay. Twoton. The girl who prays. Let's go find her.",
   ],
   chad_flee: [
-    '@NOPE. Nope nope nope. I just remembered I\'m allergic to bug juice!',
+    '@NOPE. Nope nope nope. That thing has a LICENSE PLATE from MARS!',
     "@This is a strategic retreat! Tell everyone I fought GREAT!",
     '* Chad fled to go tell your mom you broke curfew. (Betrayal #1.)',
   ],
@@ -930,11 +955,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // player the washed-out palette is a STATE to break (kill the Heart-Oak Tick), not a
   // render glitch — it lifts at tick_after.
   dawn_hush_dark: [
-    'Morning comes to Otterbrook — and it comes in WRONG.',
+    'Morning comes to Otterbrooke — and it comes in WRONG.',
     'The sun is up where it should be, but the whole town sits under a thin, cold HAZE that was not there yesterday. The greens have gone gray-blue, the shadows a wrong shade of nothing.',
     'It is not smoke. It is not fog. The light itself feels SKIMMED — as if something crept in on the meteor and is quietly drinking the warmth right out of the air.',
     '(You remember what Glint told you: the Hush feeds on the warmth between people. This washed-out morning is what a whole town looks like with half of that gone.)',
-    '* This is NOT how Otterbrook is meant to look. The haze runs THICKEST UP THE HILL — up past the houses and the winding trail, toward the ridge where the meteor came down. Something tore a CAVE into the hillside up there, and the cold pours out of it. Start there.',
+    '* This is not fog and it is not still night. The cold is strongest up Hickory Hill. Pemberton keeps the workshop beside the west trail; he watches that ridge with homemade instruments. Start there, then follow the cold to the cave.',
   ],
   // The zapper takes Glint at 2 AM — dawn does NOT snap on. You carry it inside
   // first: Mom is still up, and sleep is the bridge to the wrong-colored morning.
@@ -1216,6 +1241,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@Highway's open again — heard it from the milk truck before I heard it official.",
     '@Board out at the curb whenever you like. Tell Twoton the Depot says hello, then immediately regrets it.',
   ],
+  npc_depot_clerk_hush: [
+    '@No tickets yet, honey. The road disappears into that blue haze before the county line.',
+    '@I sent the crowd home. If you can make the hill warm again, I can make this depot noisy again.',
+  ],
   // the depot crowd (2026-07-02 — the "bustling" rebuild of bus_depot_int)
   npc_depot_board: [
     '@The board says the 6:15 is "ON TIME." It has said that every day for six years. The board and I have an understanding.',
@@ -1304,10 +1333,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   // S22 (ADR-116) — DOWNTOWN OTTERBROOK (Main & Vine): the little commercial row
   sign_to_downtown: [
-    'DOWNTOWN OTTERBROOK → "Main & Vine," just past the depot. Hardware, hot lunch, the works.',
+    'MAIN STREET — diner, burger, bank, hardware, bakery, drugstore, STARPORT.',
+    '(Everything Otterbrooke needs, arranged in the order it thought of it.)',
   ],
   sign_downtown: [
-    'DOWNTOWN OTTERBROOK — "Main & Vine." Hardware, hot lunch, and a haircut you did not ask for.',
+    'DOWNTOWN OTTERBROOKE — "Main & Vine." Hardware, hot lunch, and a haircut you did not ask for.',
   ],
   sign_hardware: ["HODGKIN'S HARDWARE — If we don't have it, you didn't need it. (We have it.)"],
   sign_diner: ['THE SUNNY SIDE — Breakfast all day. Lunch also all day. It is always a meal here.'],
@@ -1317,9 +1347,9 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   sign_barber: ["VINE ST. BARBER — Back in 5. (The sign has said this since 1987.)"],
   // S22 (ADR-120) — THE OTTERBROOK CLINIC (front desk revive + exam room)
-  sign_clinic: ['OTTERBROOK CLINIC — Walk-ins welcome. Faint-ins carried. Open since the meteor "for obvious reasons."'],
+  sign_clinic: ['OTTERBROOKE CLINIC — Walk-ins welcome. Faint-ins carried. Open since the meteor "for obvious reasons."'],
   clinic_wall: [
-    'OTTERBROOK CLINIC — front desk for the unconscious, back room for the merely unwell.',
+    'OTTERBROOKE CLINIC — front desk for the unconscious, back room for the merely unwell.',
     '(A flyer: "GOT A STRANGE BLUE FOG IN YOUR HEAD? We can\'t fix that here — it comes from the thing up on the hill. Go see a priest.")',
   ],
   npc_doc_otter: [
@@ -1348,6 +1378,37 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_hodgkin_after: [
     '@Get into the shed yet? Tell me the granola bar found a good home. I need closure.',
   ],
+  sign_pemberton_workshop: [
+    "M. L. PEMBERTON — RADIOS, ROCKETS, REPAIRS. If it hums, bring it in. If it whispers, knock first.",
+  ],
+  cave_closed_before_dawn: [
+    'PUBLIC WORKS — CAVE APPROACH CLOSED UNTIL DAYLIGHT.',
+    '(Fresh scorch marks have burned the bottom half of the notice away. Whatever is beyond it can wait until morning.)',
+  ],
+  npc_pemberton_ch1: [
+    '@Pemberton. I repair radios and build things the neighbors prefer not to name.',
+  ],
+  npc_pemberton_night: [
+    '@That impact rang every receiver in here at once. AM, FM, weather band — even the toaster answered.',
+    '@The west trail is unstable in the dark. Go home, kid. Strange signals are still strange after breakfast.',
+  ],
+  npc_pemberton_hush: [
+    '@Good. You can see the blue in the daylight too. That rules out my eyes and puts the problem back in the sky.',
+    '@My needle keeps pulling toward the new cave above this workshop. Not the crater — UNDER it. Something down there is drinking every warm frequency in town.',
+    '@Follow the west path around the building. If the receiver starts singing, you are going the right way. If it starts speaking clearly, run faster.',
+  ],
+  npc_pemberton_after: [
+    '@The receiver is quiet again. Real quiet. Thank you.',
+    '@Keep that Star Locket safe. Someday somebody may need to build a machine big enough to follow where it points.',
+  ],
+  pemberton_blueprints: [
+    'BLUEPRINT: LONG SHOT — a pencil rocket crossing a distance the paper was not wide enough to hold.',
+    '(The engine section is labeled: “later, when the kid comes back.”)',
+  ],
+  pemberton_rocket: [
+    'Half a rocket fuselage, half a grain silo, entirely too large for the door it came through.',
+    '(A brass plate reads LONG SHOT — TEST ARTICLE 0.)',
+  ],
   // the sign's registry entry (signBeat intercepts and picks the live variant)
   trail_shed: [
     'A weather-beaten TOOL SHED tucked off the switchback. A heavy padlock holds it shut.',
@@ -1363,13 +1424,71 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   trail_shed_empty: [
     "The shed's bare now but for the rope and the judging flashlight. You already took the good stuff.",
   ],
+
+  npc_bank_teller: [
+    '@Welcome to Otterbrooke Savings & Loan. We keep money safe, except from arithmetic.',
+    '@Dad handles your account by phone. The ATM handles everything he forgot to mention.',
+  ],
+  bank_rate_board: [
+    'TODAY\'S INTEREST RATE: INTERESTING.',
+    '(Below it: “Ask about our long-term plan. It is waiting.”)',
+  ],
+  bank_boxes: [
+    'Rows of brass deposit boxes. Number 412 has a tiny paw sticker and no keyhole.',
+  ],
+  npc_bakery_keeper: [
+    '@Every pie cools for exactly eleven minutes. Ten is reckless. Twelve is surrender.',
+  ],
+  bakery_case: [
+    'The pastry case is warm enough to fog the glass. One pie has a handwritten ribbon: MOST IMPROVED.',
+  ],
+  bakery_oven: [
+    'The brick oven ticks as it cools, like a very patient clock that measures only pie.',
+  ],
+  npc_burger_keeper: [
+    '@Welcome to the Otter Burger. The grill has seniority, so technically I work for it.',
+  ],
+  burger_grill: [
+    'The flat-top hisses. A grease-pencil note says: “FLIP ONCE. FEELINGS TWICE.”',
+  ],
+  burger_booth: [
+    'Initials cover the booth. Somebody carved GLINT very small, then circled it like a star.',
+  ],
+  shop_bakery_greet: [
+    '@Fresh this morning — the real morning, thank goodness. Point at anything that looks brave.',
+  ],
+  shop_bakery_bye: ['@Eleven minutes. Remember that and you can bake anything.'],
+  shop_burger_greet: [
+    '@Counter is open. The grill says you look hungry, and the grill is rarely wrong.',
+  ],
+  shop_burger_bye: ['@Come back before the grill starts asking about you.'],
+  shop_closed_night: [
+    'CLOSED. A little cardboard moon hangs in the window.',
+    '(Even the sign looks sleepy.)',
+  ],
+  shop_closed_hush: [
+    'CLOSED WHILE THE LIGHT IS WRONG.',
+    '(Someone is inside, but every lamp has gone the same thin blue. The note points up Hickory Hill.)',
+  ],
+  npc_pemmel_hush: [
+    '@Biscuit keeps pointing up the hill, but even he will not bark. Fix the cold first, sweetheart. Then we find him properly.',
+  ],
+  npc_twins_hush: [
+    '@We made lemonade. It turned gray in the pitcher.',
+    '@We are calling this batch “NOT FOR SALE.” Please make morning work again.',
+  ],
+  bus_foot_first: [
+    'The 6:15 is running again, but the driver has not reopened the city route yet.',
+    '@Road inspector says somebody has to walk Meadow Mile once and prove the highway is really there. Congratulations, kid — you look extremely inspectorial.',
+    '* Follow Main Avenue south. After you reach the city on foot, the bus will run both ways.',
+  ],
   npc_waitress: [
     '@Sit anywhere, hon, the floor\'s clean-ish. Coffee\'s on the house if you don\'t tell my boss it was.',
     "@You look like a kid who had a rough night. Sit and eat something — everything's easier on a full stomach. Trust me. I'm a waitress, not a doctor, but still.",
   ],
   // S22 (ADR-118) — THE COP FIGHT: Constable Borden, framed by Chad, by-the-book
   npc_borden_accuse: [
-    '@HOLD it right there, citizen. Constable Borden, Otterbrook P.D. (sole officer, acting chief, crossing guard).',
+    '@HOLD it right there, citizen. Constable Borden, Otterbrooke P.D. (sole officer, acting chief, crossing guard).',
     '@Got a report — young Chad Pickle, very upset — says YOU went and "vandalized the whole hill" last night. Crater-sized vandalism. His words.',
     '@That is a Code 7-B if I ever saw one. And I have seen exactly one. Care to explain yourself?',
   ],
@@ -1413,7 +1532,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Road\'s yours, kid. Try not to vandalize any more celestial bodies. (That was a joke. Mostly.)',
   ],
   sign_station_wall: [
-    'A brass plaque, polished daily: OTTERBROOK POLICE DEPARTMENT.',
+    'A brass plaque, polished daily: OTTERBROOKE POLICE DEPARTMENT.',
     'Below it, hand-lettered on an index card: "To Protect. To Serve. To File In Triplicate." One (1) cell. One (1) chair. One (1) good pencil.',
   ],
   npc_busdriver: [
@@ -1485,9 +1604,9 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'Nobody is calling. Somehow, it still feels answered.',
     '@Hear that? (The quarter man smiles without showing teeth, a coin walking across his knuckles.)',
     '@Area code 216. B flat. Warm as toast left in the sun. Best sound this whole gray city makes.',
-    'You lift the Locket to the receiver. The dial tone leans in, curious, and folds itself into the first Heartlight.',
+    'You lift the Locket to the receiver. The dial tone leans in, curious, and wakes the first Heartlight already resting there.',
     'For a moment the corner smells like your kitchen at home. Then a bus exhales, and it is just a corner again.',
-    '* You caught a WARM DIAL TONE. (The Homesong gains its first warm note.)',
+    '* You caught a WARM DIAL TONE. (Heartlight #1 answers with a warmer echo.)',
   ],
   brickton_goal_gate_none: [
     'The Department doors slide open one inch, inspect your face, and slide shut.',
@@ -1878,7 +1997,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   faye_after_call: [
     "@...Three plates. (She says it like a word she's checking for cracks. It holds.)",
-    '@Okay. Your mom wins. Let\'s go catch the 6:15.',
+    '@Okay. Your mom wins. When we are done here, we go home together.',
   ],
   ch1_card: [
     'The night it fell is officially over. Whatever this is now, it has a morning in it.',
@@ -2572,7 +2691,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Welcome, welcome. We left the chapel\'s light on all through that scary night when the meteor came.',
     '@Stay as long as you want. The benches are old, but you\'re always welcome here, every single day.',
   ],
-  chapel_wall: ['OTTERBROOK CHAPEL — service is Sunday. Our doors are always open. Yes, even for you, Gary.'],
+  chapel_wall: ['OTTERBROOKE CHAPEL — service is Sunday. Our doors are always open. Yes, even for you, Gary.'],
   chapel_prayer: [
     'All of you sit quietly together for a moment. This is the good kind of quiet — the kind that makes you feel better, not worse.',
     '* Everyone feels a little healed.',
@@ -2679,8 +2798,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   /* ---- MIA ("Ability Expansion"): her three iconic late awakenings. Kind and
      steel-spined; she hears the Embers sing, made literal (§A3, §A11.2). ---- */
   awake_the_first_heartlight: [
-    'The Resonance Site goes still and quiet. Somewhere under the floor, an Ember is humming a note so faint and tiny it almost sounds sorry to be heard.',
-    '{faye} kneels and listens the way she prays — all the way down.',
+    'The payphone goes still. Inside the Star Locket, the first Heartlight hums a note so faint and tiny it almost sounds sorry to be heard.',
+    '{faye} cups the Locket in both hands and listens the way she prays — all the way down.',
     '@...Oh, you poor thing. You\'ve been trying to be heard this whole time.',
     'She hums it back to it. Just once. Just the same small note, returned.',
     '(The darkness in the room pulled back. There\'s one kind of light the dark can\'t swallow, and she just learned how to sing it out.)',

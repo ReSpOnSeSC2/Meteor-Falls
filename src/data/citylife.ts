@@ -338,7 +338,9 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
   const rnd = mulberry32(opts.seed >>> 0);
   const interiors: Record<string, MapDef> = {};
   // DOORLESS catalog facades only — occupyCity never overrides a hand-authored door.
-  const facades = map.props.filter((p) => p.sprite.startsWith('bldg_') && p.solid && !p.door);
+  const facades = map.props.filter(
+    (p) => p.sprite.startsWith('bldg_') && p.solid && !p.door && !p.ifFlag && !p.unlessFlag,
+  );
   // THE LAW IS GUARANTEED, NOT GAMBLED. Lock a fixed ~10% COUNT, never a per-facade
   // coin flip: an independent Bernoulli lock can, on an unlucky seed, roll >25% of a
   // small city's facades shut and push it under the 75% Living-City Law — which is
@@ -382,7 +384,13 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
       return;
     }
     // ENTERABLE — a door into a footprint-sized interior
-    const arch = pickArchetype(rnd);
+    // Otterbrooke's named residential art must stay residential. The generic
+    // lottery previously turned a green family house into an open-mic hall and
+    // the apartments into a general store, which made the first town feel fake.
+    const forcedHome =
+      map.id === 'otterbrook' &&
+      (/^(house_|bldg_ob_house|bldg_ob_cottage)/.test(p.sprite) || p.sprite === 'bldg_apartments' || p.sprite === 'bldg_ob_apt_green' || p.sprite === 'bldg_brickmore');
+    const arch = forcedHome ? ARCHETYPES.find((a) => a.furnish === 'home')! : pickArchetype(rnd);
     const iw = clamp(Math.round(w * 2.2) + 2, 9, 30);
     const ih = clamp(7 + Math.min(u, 5) * 2, 8, 18);
     const id = `${map.id}_unit_${unit++}`;

@@ -10,9 +10,25 @@ import type { ShopDef } from '../schemas';
 export type { ShopDef } from '../schemas';
 
 export const SHOPS: Record<string, ShopDef> = {
+  bakery: {
+    id: 'bakery',
+    name: 'OTTERBROOKE BAKERY',
+    keeperNpc: 'bakery_keeper',
+    stock: ['apple_pie_slice', 'pbj', 'lemonade'],
+    greet: 'shop_bakery_greet',
+    farewell: 'shop_bakery_bye',
+  },
+  burger: {
+    id: 'burger',
+    name: 'THE OTTER BURGER',
+    keeperNpc: 'burger_keeper',
+    stock: ['grilled_cheese', 'corn_dog', 'star_cola'],
+    greet: 'shop_burger_greet',
+    farewell: 'shop_burger_bye',
+  },
   drugstore: {
     id: 'drugstore',
-    name: 'OTTERBROOK DRUG',
+    name: 'OTTERBROOKE DRUG',
     keeperNpc: 'drug_clerk',
     // sugar_bag: §A10 #3's first supply (S9) — expires never, per the keeper
     // M18 (ADR-063): the Americas pour — pharmacy food/cures, the revival floor
