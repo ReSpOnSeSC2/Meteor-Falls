@@ -576,10 +576,14 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sign_fibbins_dig: [
     'KEEP OUT. MY hole. I dug it, I named it, I will be buried in it (schedule permitting). — E. FIBBINS',
   ],
+  // NIGHT variant = THE night (the meteor came down an hour ago; the 2 AM climb
+  // walks past him mid-dig). The old retrospective "the night it landed / been
+  // digging ever since" read wrong ON that night (2026-07-09 playtest) — that
+  // longer-view voice lives in the DAY lines now.
   npc_fibbins: [
-    "@That rock up there? It called my NAME the night it landed. 'FIBBINS,' it said. Loud. Ask anybody — well, ask me.",
-    "@Been digging ever since. A hole this good doesn't happen by accident. It happens by SHOVEL.",
-    '@You headed up to the crater? Tell it I said hello. It KNOWS me.',
+    "@Hear that come down? COURSE you did. Whole hill jumped. And right before it hit — it called my NAME. 'FIBBINS,' it said. Loud. You can ask anybody — well, ask me.",
+    "@So I got the shovel. Can't sleep after a thing like that. A hole this good doesn't happen by accident. It happens by SHOVEL.",
+    "@You two are headed UP there? Now? At night? ...Tell it I said hello. It KNOWS me.",
   ],
   npc_fibbins_day: [
     "@Morning's the best digging. The dirt's still sleepy — offers no opinion whatsoever.",
@@ -966,6 +970,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'Wedged on the high ledge, where the glow-shrooms keep it cave-cool: a corn dog, still wrapped.',
   ],
   cave_gift_roots_done: ['(The wrapper is folded neatly under a pebble. Whoever climbed up here had manners.)'],
+  sign_tick_husk: [
+    '(The Titanic Tick, on its back beside the mound it guarded. One leg still points at the ceiling, formally.)',
+    '* It is not getting up. The hum is gone. The cave sounds like a cave again.',
+  ],
   // the crater guard-line (reference: 3 police below the meteor + a DO NOT ENTER sign)
   sign_crater_guard: [
     'A hand-lettered board, staked into the scorched dirt: "POLICE LINE — DO NOT CROSS."',

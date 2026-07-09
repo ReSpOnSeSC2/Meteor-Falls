@@ -155,6 +155,8 @@ export const oakRootsMap: MapDef = {
   signs: [
     { x: 15, y: 47, dialogue: 'oak_roots_enter' },
     { x: 18, y: 31, dialogue: 'sign_cave_shelf' },
+    { x: 9, y: 11, dialogue: 'cave_gift_roots', unlessFlag: 'cave_gift_roots' },
+    { x: 9, y: 11, dialogue: 'cave_gift_roots_done', ifFlag: 'cave_gift_roots' },
     { x: 9, y: 12, dialogue: 'cave_gift_roots', unlessFlag: 'cave_gift_roots' },
     { x: 9, y: 12, dialogue: 'cave_gift_roots_done', ifFlag: 'cave_gift_roots' },
   ],
@@ -253,6 +255,8 @@ export const oakHollowMap: MapDef = {
   ],
   npcs: [],
   signs: [
+    { x: 22, y: 4, dialogue: 'oak_cache', unlessFlag: 'oak_cache' },
+    { x: 22, y: 4, dialogue: 'oak_cache_done', ifFlag: 'oak_cache' },
     { x: 22, y: 5, dialogue: 'oak_cache', unlessFlag: 'oak_cache' },
     { x: 22, y: 5, dialogue: 'oak_cache_done', ifFlag: 'oak_cache' },
   ],
@@ -341,6 +345,7 @@ export const oakHeartMap: MapDef = {
   },
   props: [
     { sprite: 'meteor_rock', x: 11, y: 5, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
+    { sprite: 'tick_husk', x: 14.5, y: 5, solid: { ox: 4, oy: 26, w: 40, h: 12 }, ifFlag: 'tick_defeated' },
     { sprite: 'tree_c', x: 6, y: 3.6, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
     { sprite: 'tree_c', x: 18.5, y: 3.4, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
     { sprite: 'root_curtain', x: 12.3, y: 2.2 },
@@ -354,7 +359,10 @@ export const oakHeartMap: MapDef = {
     { sprite: 'ember', x: 19.6, y: 9.6 },
   ],
   npcs: [],
-  signs: [],
+  signs: [
+    { x: 15, y: 6, dialogue: 'sign_tick_husk', ifFlag: 'tick_defeated' },
+    { x: 15, y: 7, dialogue: 'sign_tick_husk', ifFlag: 'tick_defeated' },
+  ],
   phones: [],
   doors: [
     { x: 12, y: 29, w: 3, h: 1, to: 'oak_hollow', tx: 232, ty: 32, facing: 'down', indicator: 'none' },

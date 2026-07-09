@@ -596,6 +596,14 @@
       "solidDefault": true
     },
     {
+      "key": "tick_husk",
+      "w": 48,
+      "h": 39,
+      "url": "/assets/art/world/props/tick_husk.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
       "key": "lemonade",
       "w": 29,
       "h": 24,
@@ -5147,6 +5155,7 @@
     "sign_stone_brow_monastery",
     "sign_the_hedgerow",
     "sign_the_long_shot",
+    "sign_tick_husk",
     "sign_to_cage_gate",
     "sign_to_cage_plaza",
     "sign_to_docks",

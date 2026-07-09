@@ -163,6 +163,18 @@
  "signs": [
   {
    "x": 22,
+   "y": 4,
+   "dialogue": "oak_cache",
+   "unlessFlag": "oak_cache"
+  },
+  {
+   "x": 22,
+   "y": 4,
+   "dialogue": "oak_cache_done",
+   "ifFlag": "oak_cache"
+  },
+  {
+   "x": 22,
    "y": 5,
    "dialogue": "oak_cache",
    "unlessFlag": "oak_cache"
