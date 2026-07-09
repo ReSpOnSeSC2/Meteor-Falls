@@ -22,6 +22,11 @@ const ELEVATED_ALLOWLIST = new Set<string>([
   'elev_spike', // World Overhaul S2/P2 — the engine spike (dev-only, window.mfWarp)
   'foggybottom', // World Overhaul S5/P5 — the Ch3 pilot: the four-terrace fog-cliff descent
   'otterbrook', // World Overhaul S5 — Ch.1: the town + wooded hill + crater as ONE elevated map (L3→L0)
+  // the HICKORY HILL CAVE (2026-07-09, Giant-Step rebuild via the map editor):
+  // three elevated floors, guarded by maps_oakcave.test.ts
+  'oak_roots',
+  'oak_hollow',
+  'oak_heart',
 ]);
 
 describe('elevation — the opt-in freeze (shipped maps stay flat until deliberately elevated)', () => {

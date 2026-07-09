@@ -64,22 +64,25 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     // exactly ONE cave entry now — the hilltop mouth (top-left); the lower-town burrow is retired
     const caveEntries = ob.doors.filter((d) => d.to === 'oak_roots');
     expect(caveEntries).toHaveLength(1);
-    expect(caveEntries[0].tx).toBe(14 * 16 + 8);
-    expect(caveEntries[0].ty).toBe(38 * 16);
+    // lands in the Giant-Step rebuild's mouth chamber, two rows above and beside
+    // the exit pad (never ON the way out — the old cave shipped an unwalkable pad)
+    expect(caveEntries[0].tx).toBe(16 * 16 + 8);
+    expect(caveEntries[0].ty).toBe(46 * 16);
     const rootsExit = MAPS.oak_roots.doors.find((d) => d.to === 'otterbrook');
-    expect(rootsExit?.tx).toBe(29 * 16 + 8); // surface return lands below the cave mouth
+    expect(rootsExit?.tx).toBe(7 * 16 + 8); // surface return lands below the top-left-corner cave mouth
     expect(rootsExit?.ty).toBe(11 * 16);
     expect(hasEntry('rex_home')).toBe(true);
   });
 
-  it('declares a well-formed 3-level elevation plane (plateau -> shelf -> town)', () => {
+  it('declares a well-formed 6-level elevation plane (crest -> benches -> base -> shelf -> town)', () => {
     expect(ob.elevation, 'otterbrook must declare elevation').toBeDefined();
     const level = ob.elevation!.level;
     expect(level.length).toBe(ob.grid.length);
     for (let y = 0; y < ob.grid.length; y++) expect(level[y].length).toBe(ob.grid[y].length);
     const flat = level.join('');
-    for (const lv of ['0', '1', '2']) expect(flat.includes(lv), `level ${lv}`).toBe(true);
-    expect(level[0].includes('2')).toBe(true); // the crater plateau is the top level
+    // L5 crater crest / L4 police bench / L3 Fibbins bench / L2 base / L1 shelf / L0 town
+    for (const lv of ['0', '1', '2', '3', '4', '5']) expect(flat.includes(lv), `level ${lv}`).toBe(true);
+    expect(level[0].includes('5')).toBe(true); // the crater crest is the top level
     expect(level[ob.grid.length - 1].split('').every((c) => c === '0')).toBe(true);
     expect(ob.grid.join('').includes('K')).toBe(true);
     expect(ob.grid.join('').includes('T')).toBe(true);
@@ -87,29 +90,41 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
 
   it('matches the reference hill grammar: two winding paths (right→crater, left→cave)', () => {
     const onTrail = (x: number, y: number): boolean => [':', 'T'].includes(ob.grid[y][x]);
-    // the LONG CLIMB (2026-07-08): three full-width switchbacks + the scree zig-zag —
-    // one pin per leg, so a reroute that drops a switchback fails loudly
+    // the WINDING CLIMB (2026-07-08, terraced): three switchback legs, each one
+    // terrace up via a 'T' flight, then the scree zig-zag to the bowl — one pin
+    // per leg AND per flight, so a reroute that drops a step fails loudly
     for (const [x, y] of [
-      [70, 42], // Leg 1 — east along the treeline
-      [86, 40], // the east elbow
-      [50, 35], // Leg 2 — west past Old Man Fibbins' door
-      [44, 31], // the west elbow
-      [54, 28], // Leg 3 — east to the police muster
-      [46, 18], // scree zig-zag
-      [42, 12], // scree zig-zag
-      [54, 6], // the crater rim approach
+      [64, 41], // Leg 1 (L2) — weaving east along the low treeline
+      [87, 35], // flight B — the east stairs
+      [74, 31], // Leg 2 (L3) — west past Old Man Fibbins' door
+      [44, 25], // flight C — the west stairs
+      [50, 20], // Leg 3 (L4) — east into the police muster
+      [47, 17], // flight D — the last stairs (the cordon's foot)
+      [43, 12], // scree zig-zag (L5)
+      [48, 10], // scree zig-zag (L5)
+      [53, 6], // the bowl's west-apron entry
+      [48, 28], // the hairpin rest at flight C's bend (picnic + present ON the road)
       [55, 51], // the terrace walk
       [56, 57],
     ]) {
       expect(onTrail(x, y), `right (crater) path @${x},${y}`).toBe(true);
     }
     for (const [x, y] of [
-      [30, 12],
-      [28, 36],
+      [7, 12], // the corridor below the top-left-corner cave shelf
+      [11, 33], // the shed pocket's south walk
+      [20, 42], // the mower lane
       [26, 44],
       [26, 60],
     ]) {
       expect(onTrail(x, y), `left (cave) path @${x},${y}`).toBe(true);
+    }
+    // the SEALING TREELINE (user 2026-07-09): the x28-39 band stays solid woods the
+    // full hill height, so the cave/shed corridor is detached from the climb — a
+    // reconnecting trail or carve here fails loudly
+    for (const y of [4, 12, 20, 28, 36, 44]) {
+      for (let x = 28; x <= 39; x++) {
+        expect(ob.grid[y][x], `treeline breach @${x},${y}`).toBe('b');
+      }
     }
   });
 
@@ -189,7 +204,12 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
   it('keeps Pond Park, save points, and the restored rest spots', () => {
     expect(ob.reflect?.some((z) => z.x === 2 && z.y === 132 && z.w === 18 && z.h === 16)).toBe(true);
     expect(ob.phones.length).toBeGreaterThanOrEqual(1);
-    expect(ob.props.filter((p) => p.sprite === 'picnic')).toHaveLength(2);
+    // town green + terrace + the climb's HAIRPIN REST (picnic beside the present)
+    expect(ob.props.filter((p) => p.sprite === 'picnic')).toHaveLength(3);
+    // the re-homed hill present (otter_woods_gift — Star Cola) is placed + gated
+    expect(ob.props.some((p) => p.sprite === 'gift_box' && p.unlessFlag === 'otter_woods_gift')).toBe(true);
+    expect(ob.props.some((p) => p.sprite === 'gift_box_open' && p.ifFlag === 'otter_woods_gift')).toBe(true);
+    expect(ob.signs.some((s) => s.dialogue === 'otter_woods_gift')).toBe(true);
     for (const id of ['bank_int', 'bakery_int', 'burger_int']) {
       const m = MAPS[id];
       expect(m, id).toBeDefined();

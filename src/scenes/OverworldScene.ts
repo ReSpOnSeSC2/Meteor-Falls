@@ -4618,7 +4618,8 @@ export class OverworldScene extends Phaser.Scene {
         meadow_gift_woods: 'basket_basic',
         meadow_gift_far: 'salt_shaker',
         otter_woods_gift: 'star_cola',
-        oak_cache: 'star_cola', // the Under-Oak's mossy cooler (ADR-121 rework)
+        oak_cache: 'star_cola', // the cave hollow's mossy cooler (ADR-121 rework; on the overlook ledge now)
+        cave_gift_roots: 'corn_dog', // the Giant-Step rebuild's high-ledge prize (oak_roots L2)
         // S15i Task 4 (ADR-057): the grown Puerto Sol dock district's cached present
         ps_dock_gift: 'aloe_leaf',
         // S15i Task 6 (ADR-059): the Cage Park's bench-left basket + the Links cooler

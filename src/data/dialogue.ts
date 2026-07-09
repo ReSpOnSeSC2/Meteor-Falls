@@ -957,6 +957,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   oak_roots_enter: [
     '(The cave mouth closes over the sky. The air down here tastes like a battery.)',
   ],
+  // the Giant-Step rebuild (2026-07-09): the great shelf's flight + the ledge present
+  sign_cave_shelf: [
+    'Somebody chiseled steps into the rock and then, lower down, an arrow pointing up them.',
+    '* Under the arrow: "IT GETS WORSE." Encouraging.',
+  ],
+  cave_gift_roots: [
+    'Wedged on the high ledge, where the glow-shrooms keep it cave-cool: a corn dog, still wrapped.',
+  ],
+  cave_gift_roots_done: ['(The wrapper is folded neatly under a pebble. Whoever climbed up here had manners.)'],
   // the crater guard-line (reference: 3 police below the meteor + a DO NOT ENTER sign)
   sign_crater_guard: [
     'A hand-lettered board, staked into the scorched dirt: "POLICE LINE — DO NOT CROSS."',
