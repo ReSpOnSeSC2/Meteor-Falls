@@ -268,8 +268,11 @@ describe('S2 canon — the PRODUCTIVITY LOCK, Mia, and the chapter button (§A6,
     expect(f3.triggers.some((t) => t.id === 'faye_meet')).toBe(true);
     expect(f3.triggers.some((t) => t.id === 'manager_block')).toBe(true);
     expect(MAPS.brickton.triggers.some((t) => t.id === 'payphone_ring')).toBe(true);
-    // Mom calls the canon payphone at brickton tile (14,26)
-    expect(MAPS.brickton.phones).toContainEqual({ x: 14, y: 26 });
+    // Mom calls the canon payphone at Twoton's bus corner (16,66) — and the ring
+    // trigger's rect actually covers it, so the beat fires where the phone stands
+    expect(MAPS.brickton.phones).toContainEqual({ x: 16, y: 66 });
+    const ring = MAPS.brickton.triggers.find((t) => t.id === 'payphone_ring');
+    expect(ring && 16 >= ring.rect.x && 16 < ring.rect.x + ring.rect.w && 66 >= ring.rect.y && 66 < ring.rect.y + ring.rect.h).toBe(true);
   });
 });
 

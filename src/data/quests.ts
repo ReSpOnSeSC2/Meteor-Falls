@@ -71,7 +71,7 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
       startFlag: 'q_lemonade',
       objectives: [
         { id: 'sugar', text: 'Sugar from OTTERBROOK DRUG. The recipe is one word long.', flag: 'q_lem_sugar' },
-        { id: 'lemons', text: 'City lemons from STARMART in Brickton. Fancier. Lemonier.', flag: 'q_lem_lemons' },
+        { id: 'lemons', text: 'City lemons from STARMART in Twoton. Fancier. Lemonier.', flag: 'q_lem_lemons' },
         { id: 'water', text: 'Spring water from Hickory Hill. The jug believes in you.', flag: 'q_lem_water' },
         { id: 'pour', text: 'Bring it all to the stand. Witness glass one.', flag: 'q_lem_poured' },
       ],
@@ -83,7 +83,7 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
       },
     }),
 
-    /* ---- §A10 #4 — beat the Brickton arcade high score (replayable) ----
+    /* ---- §A10 #4 — beat the Twoton arcade high score (replayable) ----
      * The score to beat is the Manager's "MGR" row (canon since the
      * locked_arcade2 attract gag; S2 gave MGR a face). The quest completes
      * ONCE; the ARCADE LEGEND cabinet stays endlessly replayable from any

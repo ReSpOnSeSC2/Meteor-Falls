@@ -87,12 +87,27 @@ Each MF region steals the *complete stylization grammar* of its EB equivalent (t
 family, foliage, palette, signature gimmick, route rhythm). Full table + motifs in
 `analysis-mf-to-earthbound-mapping` (scratchpad). Summary + the leverage-optimized order:
 
+**USER LOCK (2026-07-08): the first FOUR towns the player visits mirror EarthBound's
+first four, in order — Onett / Twoson / Threed / Fourside — in SNES EB style and feel.**
+Town 2 was RENAMED **Brickton → TWOTON** (internal id stays `brickton` for saves/flags)
+and its LAYOUT rebuilt to the Twoson grammar the same day (the user's Twoson map ref):
+the roads draw a big "2" (top bar → 45° diagonal → the drag), Burglin-Park market in
+the bowl, hospital/shops/theater-corner on the drag, river + bridge → docks east, pond
+park, skyline corner (towers + Spire) on High St. **Built IN THE MAP EDITOR** — the map
+is the editor document `tools/mapeditor/twoton.json` ⇄ `src/data/maps_twoton.ts` (the
+editor's TS export); dynamic wiring (named doors, occupy, overpass re-aim) stays in
+maps.ts. This supersedes the frozen-core pair (buildBrickton/growBrickton, retired).
+Twoton's EB TILE-ART kit (Eagleland grass/path/river/trees) is still to be authored —
+the rebuild is the Track-A layout; the town renders in the existing tileset until then.
+
 | Order | MF region | → EB equivalent | Establishes / reuses |
 |---|---|---|---|
 | 1 | **Otterbrook/USA** (Ch1) | **Onett** *(LOCKED, pilot)* | Establishes the **universal 47-blob geometry** + Americana ground kit + Giant-Step boss |
-| 2 | **Brickton** (Ch1) | **Twoson** (+Fourside downtown) | Same Eagleland palette; cheap 2nd-town win; cool skins exist |
+| 2 | **TWOTON** (ex-Brickton, Ch1) | **Twoson** *(LOCKED; layout SHIPPED 2026-07-08)* | Same Eagleland palette; the "2" road grammar + market park done; EB tile kit pending |
 | 3 | **Foggybottom/Wintermoor** (Ch3) | **Winters** | Fog-terrace pilot shipped; **locks Winters grammar** (reused Ch4, Ch10a) |
-| 4 | **Puerto Sol/Valle** (Ch2) | **Summers** (coast) + **Scaraba/Pyramid** (dungeon) | **Two reusable kits** (coast → Ch10b; desert → Ch6) |
+| 4 | **Puerto Sol** (Ch2, town #3) | **Threed** *(USER LOCK — layout SHIPPED 2026-07-08)* + **Scaraba/Pyramid** (dungeon) | Spine + gate arches, slanted parallelogram blocks, catedral plaza, EL CAMPO VIEJO graveyard; EB tile kit pending |
+| 4a | **Las Dunas** (ex-jungle_1/2, the 3→4 crossing) | **Dusty Dunes Desert** *(layout SHIPPED 2026-07-08)* | South road band + dunes + rock fringes + oases + waystation + the east bridge; rides the Zanzibel ochre skin until its own kit |
+| 4b | **Valle Dorado** (Ch2, town #4) | **Fourside** *(USER LOCK — layout SHIPPED 2026-07-08; village → CITY)* | Diamond boulevards + river seawall + the relocated Starfall Spire/towers + THE GOLDEN MINUTE clock plaza + the old quarter |
 | 5 | **Kvisthavn/Lilleby** (Ch4) | **Winters** + scale-gag (Saturn Valley tone) | Reuses Winters; giant-scale layer built |
 | 6 | **Minimus** (Ch5) | **Dalaam** (jewel-box scale) | Reuses hedge autotile; **locks Dalaam grammar** (reused Ch8) |
 | 7 | **Zanzibel** (Ch6) | **Scaraba/Dusty Dunes** | Reuses Pyramid/desert kit; cleanest 1:1 |
@@ -148,7 +163,15 @@ Per region:
 
 - **DONE:** the analysis (this doc). Otterbrook cliff LOOK approved (rounded nine-slice + organic-curve
   sheets, ChatGPT). Per-mover terrace collision engine (S-1, gated green). foggybottom fog-terrace pilot
-  shipped (the Winters grammar seed).
+  shipped (the Winters grammar seed). **TOWNS 1–4 LAYOUTS ALL SHIPPED (2026-07-08), every one an
+  editor-authored document: TWOTON=Twoson (renamed, then DE-CITIFIED — its spire/towers/neon/clock
+  moved out), PUERTO SOL=Threed, LAS DUNAS=Dusty Dunes (the 3→4 crossing, ex-jungle legs, ochre
+  skin), VALLE DORADO=Fourside (village→CITY; inherited the Starfall Spire + towers + THE GOLDEN
+  MINUTE beat). Gates green; EB tile kits per region are the remaining art batches. Track-B art
+  list: Eagleland grass/path/river kit (Twoton), gloom-port kit + tombstone props (Puerto Sol),
+  desert road/dune kit (Las Dunas), gold-deco facades (Valle) — plus the four Ch.2 cutscene PANELS
+  that still depict the old jungle/village looks (banana_boat_to_puerto_sol, puerto_sol_arrival,
+  llama_jungle_paths, valle_dorado_wishers) and the baked BRICKTON lettering (hospital sign, Bugle box).**
 - **KEY PIVOT:** the approved cliff LOOK stays, but the production art is (re)authored as **continuous
   47-blob reference-blocks** for seamlessness (the nine-slice/curve sheets were the look study).
 - **NEXT (Otterbrook/Onett, map #1 — establishes the universal geometry):** author the full Onett EB

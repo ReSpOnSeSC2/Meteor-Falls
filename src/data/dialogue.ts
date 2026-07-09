@@ -159,7 +159,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
    * for-a-dad ache, the trust recoil, the boss's quiet) play straight; flair is rare.
    * Fired by OverworldScene's Ch.3 scene methods. */
 
-  // — THE FLIGHT IN (Uncle Bert's "Lucille": Brickton docks → Foggybottom) —
+  // — THE FLIGHT IN (Uncle Bert's "Lucille": Twoton docks → Foggybottom) —
   bert_flight_ask: [
     "@There you are. Valley saved, boat tied up, and that look in your eye like you've got one more ocean left in you.",
     "@Lucille's fuelled and pointed at England — past the weather, into worse. A town called FOGGYBOTTOM-ON-TYNE. Say the word and I'll get her wheels up.",
@@ -478,7 +478,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@In the old part of town, everybody already knew your dog. Out here I had to introduce mine TWICE.',
   ],
   npc_gate_walker: [
-    '@Some folks ride the 6:15 to Brickton. I WALK it. Meadow Mile, then the overpass. Builds character.',
+    '@Some folks ride the 6:15 to Twoton. I WALK it. Meadow Mile, then the overpass. Builds character.',
     "@Mind the proctors at the city line — they check your visitor badge. Mine's laminated.",
   ],
   npc_mayor_otter: [
@@ -503,7 +503,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Beneath, in marker: "Excellent for thinking. Bring a sandwich.")',
   ],
   sign_meadow_gate: [
-    'MEADOW MILE → BRICKTON CITY — on foot, past the overpass.',
+    'MEADOW MILE → TWOTON CITY — on foot, past the overpass.',
     '(An arrow points east. Someone added: "...or take the bus, coward.")',
   ],
   sign_hall_wall: [
@@ -518,7 +518,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
    * Plain and clear — kids read this — EarthBound-flavored, never a riddle. */
   // the gate walker's morning line (dialogueDay): the line's open, mind the road
   npc_gate_walker_day: [
-    '@The line to Brickton is OPEN again — sun came up, so the proctors clocked in.',
+    '@The line to Twoton is OPEN again — sun came up, so the proctors clocked in.',
     "@Careful on Meadow Mile, though. Something fell in the road overnight. The town crew's out there now.",
   ],
   // the treeline gawker — won't go look at 2 AM, full of opinions by daylight
@@ -606,11 +606,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Mile marker 0 has been doodled into a smiley face. Of course it has.)',
   ],
   meadow_mile_sign_1: [
-    'BRICKTON CITY LIMITS AHEAD — mind the overpass.',
+    'TWOTON CITY LIMITS AHEAD — mind the overpass.',
     '(Hand-painted underneath: "The city is bigger than you. Be polite about it.")',
   ],
   sign_overpass_gate: [
-    'BRICKTON VISITOR ORIENTATION — all newcomers processed at the line.',
+    'TWOTON VISITOR ORIENTATION — all newcomers processed at the line.',
     '(Smaller: "Have your badge ready. Or your smile. Preferably both.")',
   ],
   npc_proctor: [
@@ -618,14 +618,14 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Orientation is MANDATORY. It\'s also FUN. Around here, you\'re not given a choice about either one.',
   ],
   npc_road_traveler: [
-    '@Walking to Brickton, huh? Brave. The bus has a roof, you know.',
+    '@Walking to Twoton, huh? Brave. The bus has a roof, you know.',
     "@Watch out for the smiling guards at the overpass. They're way too happy to see you — and that's the part that should worry you.",
   ],
   // S15i Task 5 (clarity): plainly STOPPED + TESTED for a badge, and the
   // "exercises" are a fight — no guessing what the gate wants (kids read this)
   orient_intro: [
     'A blazer-smiler steps into the road and blocks it, clipboard glowing.',
-    '@HALT, new visitor! Nobody walks into Brickton without a VISITOR BADGE.',
+    '@HALT, new visitor! Nobody walks into Twoton without a VISITOR BADGE.',
     '@Orientation is MANDATORY. Three quick... exercises. Pass them and the badge is yours.',
     '@Exercise one: ENTHUSIASM! (He raises his fists. The "exercise" is a fight. Of course it is.)',
   ],
@@ -638,7 +638,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '* You got the VISITOR BADGE! The city line is open — you can walk in any time now.',
   ],
   orient_arrival: [
-    'You cross the overpass into Brickton. The city does not look up.',
+    'You cross the overpass into Twoton. The city does not look up.',
     '(Somewhere ahead, a clock is seven minutes fast. On purpose.)',
   ],
 
@@ -667,7 +667,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Pencilled below: "the air gets warm and electric about here. that\'s the city.")',
   ],
   npc_far_walker: [
-    '@My big sister WALKED to Brickton once. Took her all day. She came back different.',
+    '@My big sister WALKED to Twoton once. Took her all day. She came back different.',
     '@Different GOOD! She high-fives strangers now. The city does that, she says.',
   ],
   meadow_gift_far: [
@@ -677,13 +677,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   meadow_gift_far_done: ['(The post is bare now, but the warning stands. Salt beats ticks. Remember it.)'],
   // LEG 4 — THE OVERPASS
   meadow_overpass_sign_0: [
-    'THE OVERPASS — Brickton city limits. Watch your step, and mind the proctors.',
+    'THE OVERPASS — Twoton city limits. Watch your step, and mind the proctors.',
     '(Down in the concrete, in chalk: "almost there, kid.")',
   ],
   // the "you can see the city now" reveal (a cutscene, once) — foreshadows Mia
   city_reveal: [
     'The path lifts onto the overpass — and there it is, laid out below you.',
-    'BRICKTON. Towers, smoke, and one tall new spire catching the last of the sun.',
+    'TWOTON. Brick rooftops, market smoke, and the river flashing gold where the drag crosses it.',
     'Somewhere down in all of that is a girl who can hear things sing. You two have not met yet.',
     '(You can not hear the city from up here. Not yet. But you will.)',
   ],
@@ -718,7 +718,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   walkers_register_after: ['(Your name is in the Register now, beside Hal\'s. The long way is still walked. Good.)'],
   walkers_register_full: ['(Pell holds the charm out, but your hands are full. "It\'ll keep," he says. "Come back lighter.")'],
 
-  /* ---------------- S15h — BRICKTON SPRAWLS (the new districts) ---------------- */
+  /* ---------------- S15h — TWOTON SPRAWLS (the new districts) ---------------- */
   npc_maple_resident: [
     '@Welcome to MAPLE HEIGHTS. No maples. No heights. The brick is real, though.',
     '@My apartment has a VIEW. Of another apartment. With a view of mine. We wave.',
@@ -744,11 +744,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(An arrow points back toward downtown. The arrow has been dunked on.)',
   ],
   sign_south_gate: [
-    'BRICKTON CITY LINE — visitors, mind the overpass.',
+    'TWOTON CITY LINE — visitors, mind the overpass.',
     '(Below: "Meadow Mile, that way. Bring water. Bring a smile. They check.")',
   ],
   sign_new_docks: [
-    'BRICKTON DOCKS → keep east, to the water.',
+    'TWOTON DOCKS → keep east, to the water.',
     '(The old "TO DOCKS" sign downtown still points here. Not wrong, just optimistic.)',
   ],
 
@@ -762,13 +762,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@You look up, the building just keeps going. At some point you stop looking up and start working. That is the city.',
   ],
   sign_spire: [
-    'THE STARFALL SPIRE — tallest thing in Brickton. Observation deck: closed (forever).',
+    'THE STARFALL SPIRE — tallest thing in Valle Dorado. Observation deck: closed (forever).',
     '(Smaller: "It is a 20-minute walk AROUND the base. We timed it. Bring a friend.")',
   ],
   npc_spire_gazer: [
     '@That\'s the Starfall Spire. It\'s so tall the very top disappears straight up into the clouds.',
     '@My uncle painted the very tip. He waved at a plane. The plane waved back, he SWEARS.',
-    "@You want to reach the docks, go around it. You can't go through. People have tried.",
+    "@You want to reach the pyramid road, go around it. You can't go through. People have tried.",
   ],
   // THE SPIRE — LOBBY (the colossus opens exactly one room; the canon above holds)
   npc_spire_concierge: [
@@ -876,7 +876,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   tick_after: [
     "(The Tick is gone, and the warmth it hoarded comes roaring back — into the oak, the pond, the streetlights, the whole gray town all at once.)",
     'The Hush-dark breaks like a fever. Color floods back. Somewhere east, a bus engine turns over for the first time in days, and the road out of Otterbrook clears in the rising light.',
-    "@(Real morning. Finally.) Okay. Brickton. The girl who prays. Let's go find her.",
+    "@(Real morning. Finally.) Okay. Twoton. The girl who prays. Let's go find her.",
   ],
   chad_flee: [
     '@NOPE. Nope nope nope. I just remembered I\'m allergic to bug juice!',
@@ -913,7 +913,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   porch_zapper: [
     '@...so: the Embers sing, the locket saves them, and once you\'ve got all ten, you go UP. Way up. All the way to Mars. There\'s a rocket. You\'ll love it.',
-    '@One more thing. The most important thing. Find the girl in Brickton. The one who hears the Embers. Tell the girl who prays—',
+    '@One more thing. The most important thing. Find the girl in Twoton. The one who hears the Embers. Tell the girl who prays—',
     'BZZT.',
     "(The Pickles' bug zapper claims another hero.)",
     '@...tell her... the song already knows her name...',
@@ -1099,7 +1099,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'MGMT IS AT THE SEQUEL. Take a token, leave a token.',
     '(The cup holds one token and a strong honor system.)',
   ],
-  // Brickton: STARPORT II, "The Sequel to the Arcade" — quest #4's venue
+  // Twoton: STARPORT II, "The Sequel to the Arcade" — quest #4's venue
   cab_grandma: [
     'GRANDMA RAMPAGE — she has had ENOUGH.',
     '(The high score is held by an actual grandma. Sal rated her: first place, all-time, category GRANDMAS.)',
@@ -1167,12 +1167,12 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- the 6:15 bus ---------------- */
   bus_ask_brickton: [
-    'The 6:15 to BRICKTON CITY is somehow always about to leave.',
+    'The 6:15 to TWOTON CITY is somehow always about to leave.',
     '(Mom prepaid your fare. She also packed a snack. You already ate the snack.)',
   ],
   bus_ask_home: ['The 6:15 also goes back to OTTERBROOK. Buses are like that.'],
   // S22 (ADR-113) — THE BUS WAITS: the depot is shuttered until you've reached
-  // Brickton once ON FOOT (the meteor closed the highway; the bus follows it back).
+  // Twoton once ON FOOT (the meteor closed the highway; the bus follows it back).
   bus_closed_detour: [
     'The 6:15 is dark. A card is taped inside the depot window:',
     '"NO SERVICE. Driver says she can\'t see the road past the town line anymore. Says the whole town\'s gone gray and cold. — Otterbrook Transit (both of us)."',
@@ -1188,7 +1188,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'The 6:15 boards at the TRANSIT DEPOT now — east of here, past the pond.',
   ],
   sign_bus_depot: [
-    'OTTERBROOK TRANSIT DEPOT — est. 1952. Routes: BRICKTON (the 6:15).',
+    'OTTERBROOK TRANSIT DEPOT — est. 1952. Routes: TWOTON (the 6:15).',
     '(A chalkboard below: "DELAYS: meteor. SAFE TRAVELS: always. LOST MITTENS: bin by the door.")',
   ],
   npc_depot_clerk: [
@@ -1197,7 +1197,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_depot_clerk_day: [
     "@Highway's open again — heard it from the milk truck before I heard it official.",
-    '@Board out at the curb whenever you like. Tell Brickton the Depot says hello, then immediately regrets it.',
+    '@Board out at the curb whenever you like. Tell Twoton the Depot says hello, then immediately regrets it.',
   ],
   // the depot crowd (2026-07-02 — the "bustling" rebuild of bus_depot_int)
   npc_depot_board: [
@@ -1413,25 +1413,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   bus_narration: [
     'The hill shrinks. The town shrinks.',
     'Cornfields smear into guardrails. Guardrails become billboards. Billboards begin making promises nobody asked them to keep.',
-    'A sign for BRICKTON CITY rises out of the morning haze, brick by brick, like the world decided to get taller.',
+    'A sign for TWOTON CITY rises out of the morning haze, brick by brick, like the world decided to get taller.',
     'It turns out the world was hiding a whole CITY behind the corn.',
   ],
 
-  /* ---------------- Brickton City ---------------- */
+  /* ---------------- Twoton City ---------------- */
   brickton_arrival: [
     'The bus sighs open on a block that smells like hot pavement, coffee, and a little bit of lightning.',
-    'Brickton does not wake up gently. It clatters, it honks, and somebody sells you a bagel through a locked door and calls it good business.',
+    'Twoton does not wake up gently. It clatters, it honks, and somebody sells you a bagel through a locked door and calls it good business.',
     'Across the street, blue blazers move in a line toward the Department of Smiles.',
     'Their smiles are all the same size.',
     '(The Star Locket hums once, low and worried. Somewhere above you, a girl you have not met yet hums back.)',
     'Find the Department. Find the girl who prays.',
   ],
   sign_brickton: [
-    'WELCOME TO BRICKTON CITY — pop. lots.',
+    'WELCOME TO TWOTON CITY — pop. lots.',
     '(Someone has written "OTTERBROOK FITS IN OUR PARKING LOT" underneath. Rude. Accurate.)',
   ],
   sign_brickton_clock: [
-    'BRICKTON CIVIC CLOCK — sponsored by people who are late.',
+    'VALLE DORADO CIVIC CLOCK — sponsored by people who are late.',
     '(It is seven minutes fast and extremely confident.)',
   ],
   sign_market_row: [
@@ -1447,18 +1447,18 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '"Unauthorized sadness should be reported to your nearest enthusiastic adult."',
     '(The notice has no phone number. It assumes enthusiasm will find you.)',
   ],
-  // S15h — THE BRICKTON MINUTE, rebuilt as a real beat (same gate flag): the
+  // S15h — THE TWOTON MINUTE, rebuilt as a real beat (same gate flag): the
   // clock strikes, the city reacts in unison, the clock lady reads you the city,
   // and the Star Locket takes one impossible tick. (Paced by the scene's camera.)
   brickton_goal_clock: [
     'High over the plaza, the civic clock clicks SEVEN wrong minutes at once.',
-    'Every blue blazer on the block turns toward it, smiles, and turns back — a row of appliances on the same timer.',
-    '@That is Brickton time, honey. (The clock lady taps the glass without looking up.)',
+    'Every gilded window on the block flashes toward it and back — a whole skyline checking its wrist.',
+    '@That is Valle Dorado time, querido. (The clock lady taps the glass without looking up.)',
     '@It runs seven minutes fast, on purpose. A city this big likes to feel a few minutes ahead of bad news.',
     "@Most folks never notice. You did. That is a city kind of noticing.",
     'You hold up the Star Locket. It takes one impossible tick off the clock — a minute that never happened — and keeps it warm.',
     'The clock shows the right time for exactly one second, looks embarrassed, and goes back to being wrong.',
-    '* You borrowed a BRICKTON MINUTE. (The first Heartlight hums in the Locket.)',
+    '* You borrowed a GOLDEN MINUTE. (A Heartlight hums in the Locket.)',
   ],
   // S15h — THE WARM DIAL TONE, rebuilt as a real beat (same gate flag): the
   // payphone rings with no caller, the quarter man names the note, and the dial
@@ -1474,27 +1474,17 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   brickton_goal_gate_none: [
     'The Department doors slide open one inch, inspect your face, and slide shut.',
-    'A tiny speaker says: "NO APPOINTMENT ON FILE. COME BACK ONCE YOU\'VE LEARNED TWO THINGS ABOUT THIS CITY."',
-    '(The Star Locket tugs two ways — toward the big civic clock, and toward the payphone on the corner. Go look at both.)',
-  ],
-  brickton_goal_gate_clock: [
-    'The Department doors accept your warm dial tone, then refuse your bad timing.',
-    '"PLEASE CONSULT BRICKTON TIME BEFORE ENTERING."',
-    '(The Star Locket ticks toward the civic clock.)',
-  ],
-  brickton_goal_gate_dial: [
-    'The Department doors accept your borrowed minute, then ask for a phone number.',
-    '"EVERY PRODUCTIVE VISITOR MUST BE REACHABLE."',
-    '(The Star Locket hums toward the payphone corner.)',
+    'A tiny speaker says: "NO APPOINTMENT ON FILE. EVERY PRODUCTIVE VISITOR MUST BE REACHABLE."',
+    '(The Star Locket hums toward the payphone on the bus corner. Go listen to it.)',
   ],
   brickton_goal_gate_ready: [
-    'The borrowed minute ticks. The warm dial tone hums.',
+    'The warm dial tone hums in your pocket like a small kept promise.',
     'For one second, the Department doors forget how to say no.',
     'They open wide enough for two kids, one bat, and one very serious question.',
   ],
   // S12: the FUTURE SITE finally arrived, and it's a basketball cage
   sign_lot: [
-    'FUTURE SITE OF MORE BRICKTON. — and underneath, in fresh paint:',
+    'FUTURE SITE OF MORE TWOTON. — and underneath, in fresh paint:',
     'THE FUTURE GOT HERE. IT IS A BASKETBALL COURT. — MGMT (of the future)',
     '(The weeds were right to be confident. They got bleachers.)',
   ],
@@ -1525,7 +1515,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   cage_park_gift_done: ['(The bench is bare now. Eat first, ball after. Words to live by.)'],
   // the first-arrival beat (a cutscene, once) — the park opens up before the cage
   cage_park_reveal: [
-    'The Brickton sidewalk gives way to grass, a mural, a couple of benches — a whole park you never knew was here.',
+    'The Twoton sidewalk gives way to grass, a mural, a couple of benches — a whole park you never knew was here.',
     'Up at the top, past the chain-link, a ball is bouncing. Steady. Patient. Somebody is always there.',
     'It is the most ALIVE sound this whole gray city has made. Bounce. Bounce. A door, propped open, into something warmer.',
     'THE CAGE is just up through the gate. You can feel it from here.',
@@ -1651,11 +1641,11 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Champion AGAIN. I am running out of superlatives. I am not running out of putts: you are two ahead of everyone, forever.',
   ],
   cage_board: [
-    'THE BRICKTON CLASSIC — 32 teams of five, single elimination, one chalk leaderboard.',
+    'THE TWOTON CLASSIC — 32 teams of five, single elimination, one chalk leaderboard.',
     '(The handwriting is immaculate. The seeding is "impartial." The nephews are fifth.)',
   ],
   npc_nurse: [
-    '@Brickton General, walk-ins welcome. The clipboard knows if you are sick. I just hold the clipboard.',
+    '@Twoton General, walk-ins welcome. The clipboard knows if you are sick. I just hold the clipboard.',
     '@...It says you are fine. It says you are EXTREMELY twelve.',
   ],
   npc_clock_lady: [
@@ -1673,7 +1663,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_bus_boy: [
     '@I rode the 6:15 once and saw a cow look into the city like it owed him money.',
-    '@The cow was right. Brickton owes EVERYBODY money.',
+    '@The cow was right. Twoton owes EVERYBODY money.',
   ],
   npc_plaza_mime: [
     '@...',
@@ -1698,12 +1688,12 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Three and a half stars. The half is for the hydrant. Great hydrant.',
   ],
   locked_bagels: [
-    'BRICKTON BAGELS is closed. A note on the door: "BACK IN 5."',
+    'TWOTON BAGELS is closed. A note on the door: "BACK IN 5."',
     '(The note has been there since 1991. The 5 was never defined.)',
     'Through the glass, a single bagel rotates in a display case, undefeated.',
   ],
   locked_hospital: [
-    'BRICKTON GENERAL. The waiting room is standing-room-only, and most of those standing are pigeons.',
+    'TWOTON GENERAL. The waiting room is standing-room-only, and most of those standing are pigeons.',
     'A nurse mouths through the glass: "Come back when something is BROKEN, sweetie."',
   ],
   locked_brickmore: [
@@ -1714,7 +1704,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'A cardboard standee for a space movie has been turned to face the wall. It knows too much.',
   ],
   locked_bank: [
-    'OTTERBROOK SAVINGS & LOAN, Brickton branch. Closed.',
+    'OTTERBROOK SAVINGS & LOAN, Twoton branch. Closed.',
     '(Inside, the vault is sleeping. Banks sleep standing up, like horses.)',
   ],
   locked_diner: [
@@ -1949,13 +1939,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   q_lemonade_ask: [
     '@Customer! Vivi, a customer with LEGS!',
     "@We're expanding. Lemonade is about to be bigger than {coolthing}. No offense to {coolthing}.",
-    '@But the empire is OUT of everything! We need three things: sugar from the drugstore, fancy CITY lemons from the STARMART over in Brickton, and spring water from Hickory Hill.',
+    '@But the empire is OUT of everything! We need three things: sugar from the drugstore, fancy CITY lemons from the STARMART over in Twoton, and spring water from Hickory Hill.',
     '@Take the official jug. It has a flag on it. That makes it official.',
     "@And don't tell Mom we're charging you. Family discount is full price. That's business, {rex}.",
     '* Got THE JUG! (There is a tiny hand-drawn flag on it.)',
   ],
   q_lemonade_active: [
-    '@The empire still needs three things: sugar from the drugstore, CITY lemons from the STARMART in Brickton, and spring water — take the jug up Hickory Hill and fill it. Then haul it all back to us.',
+    '@The empire still needs three things: sugar from the drugstore, CITY lemons from the STARMART in Twoton, and spring water — take the jug up Hickory Hill and fill it. Then haul it all back to us.',
   ],
   lem_take_sugar: [
     '@SUGAR! Vivi, log it! (Vivi licks a pencil and writes a number with too many zeroes in it.)',
@@ -2026,7 +2016,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   /* the Hush — and the thing it left in the idol — is never funny.    */
   /* ================================================================ */
 
-  /* ---------------- the Brickton docks + the crossing ---------------- */
+  /* ---------------- the Twoton docks + the crossing ---------------- */
   sign_to_docks: ['EAST: THE DOCKS.', '(Someone scribbled under it: "SMELL THAT? That\'s the smell of business." The arrow points right at the fish market.)'],
   sign_departures: [
     'DEPARTURES TO PUERTO SOL: the boat leaves once the bananas are loaded. Not before.',
@@ -2042,7 +2032,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@You've still got stuff left to do in this town, champ. I can always tell when someone's not finished yet.",
   ],
   boat_ask_out: ['@Heading south to Puerto Sol! I\'m hauling bananas, and I\'ll take you heroes along for free.'],
-  boat_ask_home: ['@Heading north, back home to Brickton! Funny thing: bananas and people both seem happier when they\'re going home.'],
+  boat_ask_home: ['@Heading north, back home to Twoton! Funny thing: bananas and people both seem happier when they\'re going home.'],
   npc_dock_kid: [
     '@I counted nine hundred bananas going onto that boat.',
     '@Nobody told me to count them. I just did it for fun. That\'s the part that worries my mom.',
@@ -2083,7 +2073,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(PUERTO SOL. Population: enough folks to fill it. Bananas: way too many to count.)',
   ],
   sign_departures_home: [
-    'DEPARTURES TO BRICKTON: catch this boat home whenever you\'re ready to leave.',
+    'DEPARTURES TO TWOTON: catch this boat home whenever you\'re ready to leave.',
     '(The boat always runs both directions, every day. Somebody underlined the word "always." Twice.)',
   ],
   sign_plaza: [
@@ -2095,8 +2085,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(The road up the cliff is steep and tiring. But the view gets better every step, like a reward for the climb.)',
   ],
   sign_jungle_gate: [
-    'EAST: THE JUNGLE → VALLE DORADO.',
-    '(Underneath, in smaller letters: "No services past this point. You\'re on your own out there.")',
+    'EAST: LAS DUNAS DESERT → VALLE DORADO.',
+    '(Underneath, in smaller letters: "No services past this point. Bring water. You\'re on your own out there.")',
   ],
   npc_ps_fisher: [
     '@I\'ve tied 900 different knots in my life, and I\'ve got a favorite ranking for every single one.',
@@ -2140,7 +2130,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'DOCKSIDE MARKET — everything here came off a boat. All legal! ...Mostly. Just ask the seller.',
   ],
   sign_ps_jungle_east: [
-    'EAST: THE JUNGLE → VALLE DORADO. Last shade and a cold drink before the green.',
+    'EAST: LAS DUNAS DESERT → VALLE DORADO. Last shade and a cold drink before the sand.',
     '(Underneath, in smaller letters: "Still no services out there. Last chance to rest up.")',
   ],
   // the flag-gated waterfront beat (a cutscene, once) — the harbor + the road east
@@ -2148,7 +2138,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'East of the square, the town keeps going and going. There\'s a whole busy dockfront here that you couldn\'t even see from the pier.',
     'Cranes swing boxes of all kinds of stuff overhead. A church tower stands so tall you have to tip your head back to see the top.',
     '@{faye} looks around. "This place is way bigger than the map said. Funny how towns keep growing when no one\'s keeping track."',
-    'Past the last warehouse, the road curves east into the trees. That\'s the jungle. Valle Dorado is somewhere on the other side of it.',
+    'Past the last warehouse, the road runs east into a wall of orange heat. That\'s Las Dunas. Valle Dorado is somewhere on the other side of all that sand.',
   ],
   ps_dock_gift: [
     'Tucked behind the market stalls: a small box with a bow tied on it, fast and a little crooked.',
@@ -2319,15 +2309,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- the jungle path + the grotto ---------------- */
   sign_jungle1: [
-    'TRAIL MANNERS: step aside for llamas, for ants, and for anything that happens to be dancing.',
-    '(The jungle put up this sign on its own, somehow. Best not to find out what happens if you ignore it.)',
+    'ROAD MANNERS: step aside for llamas, for lizards, and for anything that happens to be dancing.',
+    '(The desert put up this sign on its own, somehow. Best not to find out what happens if you ignore it.)',
   ],
   sign_jungle2: [
     'VALLE DORADO: STRAIGHT AHEAD. THE PYRAMID: ALSO STRAIGHT AHEAD, SADLY.',
     '(Someone crossed out the word "sadly" and then wrote it again, even bigger.)',
   ],
   sign_grotto: ['(A cool breeze drifts out of the rocks. Inside, the dark smells like old stone and, somehow, good luck.)'],
-  grotto_chest_1: ['A basket someone hid here and never returned for. Lucky for you, the jungle kept it dry.'],
+  grotto_chest_1: ['A basket someone hid here and never returned for. Lucky for you, the desert kept it dry.'],
   grotto_chest_2: ['Someone\'s just-in-case alfajor cookie. Still sealed up tight. It\'s yours now.'],
   grotto_chest_3: [
     'At the bottom of the box: a small, warm spark of light, glowing steady like a porch lamp left on for you.',
@@ -2404,12 +2394,16 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- VALLE DORADO (§A6 — the village that wished) ---------------- */
   valle_arrival: [
-    'The valley opens up below you. The whole place is dead silent, like everyone is holding their breath at once.',
-    'You see llama pens and bright painted doors. There\'s also a little shrine, and it\'s shining way too much for an old stone thing.',
-    'It looks like the friendliest town you\'ve ever seen. The problem is nobody here is saying a single word.',
+    'The valley opens up past the bridge — and it is FULL of city. Gold towers on gold boulevards, stacked up like the sun learned masonry.',
+    'Down in the middle of all of it sits the old shrine, and it\'s shining way too much for an old stone thing.',
+    'It looks like the richest city you\'ve ever seen. The problem is that nobody in it is saying a single word.',
   ],
-  sign_valle: ['VALLE DORADO — pop. 61 warm souls.', '(Someone crossed out the 61 and wrote a new count below it: "58 warm. 3 waiting." Three people are no longer counted as awake.)'],
+  sign_valle: ['VALLE DORADO — pop. 20,000 golden souls.', '(Someone crossed out the count and wrote below it: "19,997 warm. 3 waiting." Three people are no longer counted as awake.)'],
   sign_pen: ['THE PEN: six llamas live here. (How many are actually in the pen right now? Go ask Tomas. And bring some patience.)'],
+  sign_valle_gate: [
+    'SOUTH GATE — THE PYRAMID ROAD.',
+    '(Nobody carved "welcome" over this one. The gold stops exactly at the wall.)',
+  ],
   sign_shrine: [
     'THE SHRINE OF THE GIVING SMILE — leave a wish, take a blessing.',
     '(People left tiny gifts here — a mitten, a marble. The idol on the shrine is shining bright and brand new, and that\'s a bad sign.)',
@@ -2506,10 +2500,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- the hospitals + the Otterbrook chapel (Prompt 25) ---------------- */
   npc_doc_brickton: [
-    '@Brickton General Hospital is finally open. I\'ve seen some wild stuff lately, kid — I can barely keep up.',
+    '@Twoton General Hospital is finally open. I\'ve seen some wild stuff lately, kid — I can barely keep up.',
     '@We can wake people up, cure them, all of it. The patients even float right over to the front desk on their own — makes my job easy.',
   ],
-  hospital_wall: ['BRICKTON GENERAL — IF YOU CAN READ THIS SIGN, YOUR EYES ARE FINE. GO TO THE NEXT WINDOW.'],
+  hospital_wall: ['TWOTON GENERAL — IF YOU CAN READ THIS SIGN, YOUR EYES ARE FINE. GO TO THE NEXT WINDOW.'],
   // S22 (ADR-117) — the WARD floor upstairs
   hospital_f2_sign: [
     'PATIENT WARD — QUIET PLEASE. Visit anytime. You leave when the doctor says you can.',
@@ -2539,7 +2533,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(It\'s filed under W, for "what.")',
   ],
   npc_hps_records: [
-    '@Records! Every scraped knee in Brickton ends up in my cabinets. The meteor gave me a whole drawer.',
+    '@Records! Every scraped knee in Twoton ends up in my cabinets. The meteor gave me a whole drawer.',
     '@Those smiling men gave me a whole CABINET — and not one of their forms has a real name on it. Not one.',
     '@If it isn\'t filed, it didn\'t happen. That\'s not policy, kid. That\'s physics.',
   ],
@@ -2708,7 +2702,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ch2_card: [
     'The valley gets to keep the good things: its corn, its evening sunlight, its wool, and its laughter.',
     'The Locket hums with both Embers now. Eight more Embers are still out there sleeping, somewhere far to the east.',
-    "* (The boat home leaves whenever you're ready. Bert's waiting at the Brickton docks, happy to take you.)",
+    "* (The boat home leaves whenever you're ready. Bert's waiting at the Twoton docks, happy to take you.)",
   ],
 
   /* ---------------- THE ARMY ON OUR TAIL (S19 M40, §A6) ----------------

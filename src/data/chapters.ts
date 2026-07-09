@@ -67,7 +67,9 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     boss: { id: 'gilded_grin', name: 'Idol of the Gilded Grin', hp: 300, template: 'formSwap' },
     settlements: [
       { id: 'puerto_sol', kind: 'city' },
-      { id: 'valle_dorado', kind: 'village' },
+      // 2026-07-08: promoted village → CITY (stage 4 = the big golden city; the
+      // Fourside rebuild — towers, boulevards, the Golden Minute clock plaza)
+      { id: 'valle_dorado', kind: 'city' },
     ],
     maps: ['brickton_docks', 'puerto_sol', 'jungle_1', 'jungle_2', 'valle_dorado'],
     quests: ['llama_drama', 'museum_gold', 'the_quiet_crate'],

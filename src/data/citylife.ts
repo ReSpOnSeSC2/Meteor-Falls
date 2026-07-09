@@ -1,7 +1,8 @@
 /**
  * occupyCity — THE LIVING-CITY PASS (S18, the "no dead buildings" law).
  *
- * The city generators (buildDistrict / growBrickton / buildPuertoSol) emit
+ * The city generators (buildDistrict / buildPuertoSol — and the editor-authored
+ * Twoton document, maps_twoton.ts) emit
  * DECORATIVE facades by default — doorless boxes. That is why the grown cities
  * felt dead. occupyCity is the default-on fixup that gives those facades a
  * PURPOSE: ~90% get a real door into a generated interior sized to the building's

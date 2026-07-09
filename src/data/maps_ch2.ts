@@ -21,15 +21,16 @@
  *   1 → 1 → 2 → 1 (rooms start at rotations 0/2/3/2; room 3 exits EAST,
  *   room 4 is entered from the west into its south lobby — one press bridges up).
  */
-import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
+import { Grid, doorstepOf } from './mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
 import { facadeDims } from '../levelkit/kit';
-// S15i Task 4 (ADR-057) — PUERTO SOL grows: the forge lays the new DOCK DISTRICT
-// as buildDistrict + placeNook stitched onto the frozen 1898 core (the bones);
-// the soul (NPCs, the cutscene, the present) stays hand-authored.
-import { buildDistrict, placeNook, Streams } from '../levelkit';
-import { AREA_SKINS } from '../spritegen/buildings';
-import type { MapDef, NpcDef, PropDef, SignDef } from '../schemas';
+// 2026-07-08 — the stage 3/4 rebuilds: Puerto Sol (Threed), Las Dunas (Dusty
+// Dunes), Valle Dorado (Fourside) are EDITOR-AUTHORED documents now; the old
+// frozen-core/grow builders are retired (the Twoton precedent).
+import { puertoSolMap } from './maps_puerto_sol';
+import { dunasWestMap, dunasEastMap } from './maps_dunas';
+import { valleDoradoMap } from './maps_valle_dorado';
+import type { MapDef, PropDef, SignDef } from '../schemas';
 
 /** S17 M18 Part B (ADR-063): a one-grant gift box + its sign — the maps.ts
  *  `walkPresent` pattern, inlined for Ch.2 (where the grotto chests + the dock
@@ -77,7 +78,7 @@ export function buildBricktonDocks(): MapDef {
   g.rect(0, 9, 1, 5, 'B');
   return {
     id: 'brickton_docks',
-    name: 'BRICKTON DOCKS',
+    name: 'TWOTON DOCKS',
     music: 'puerto',
     grid: g.out(),
     props: [
@@ -105,11 +106,10 @@ export function buildBricktonDocks(): MapDef {
     ],
     phones: [{ x: 4, y: 4 }],
     doors: [
-      // back through the gap onto Brickton's street B. The LIVE city is the GROWN
-      // 144×76 map, whose docks gap sits at the far-EAST edge (x≈143, street B
-      // rows 21–23) — land just inside it (tile 142,22). The old 856,360 pointed
-      // at the frozen CORE's middle gap, dumping you in mid-downtown (ADR-054 growth).
-      { x: 0, y: 6, w: 1, h: 3, to: 'brickton', tx: 2280, ty: 360, facing: 'left' },
+      // back through the east gate onto TWOTON's drag, just west of the river
+      // bridge (the Twoson rebuild's docks road; BRICKTON_DOCKS_RETURN in maps.ts
+      // pins the same px — world_block.test keeps the two sides from drifting).
+      { x: 0, y: 6, w: 1, h: 3, to: 'brickton', tx: 1944, ty: 1008, facing: 'left' },
     ],
     spawners: [],
     triggers: [
@@ -155,9 +155,9 @@ export function buildBoatInterior(): MapDef {
 /* ================= PUERTO SOL — the §A5 Ch.2 port CITY (seed 1898) ================= */
 
 /** where the boat lands you — OverworldScene's crossing flow reads this */
-export const PUERTO_SOL_PIER_SPAWN = { x: 416, y: 484 } as const;
+export const PUERTO_SOL_PIER_SPAWN = { x: 416, y: 996 } as const;
 /** the north gate up the cliff road — COSTA_DOOR_FOR_PUERTO_SOL aims here */
-export const PUERTO_SOL_NORTH_GATE = { tx: 104, ty: 30 } as const;
+export const PUERTO_SOL_NORTH_GATE = { tx: 120, ty: 32 } as const;
 
 /**
  * RE-LAYOUT (docs/CITY_DESIGN_LANGUAGE.md, "Malecón + zócalo"): a colonial port
@@ -179,473 +179,61 @@ export const PUERTO_SOL_NORTH_GATE = { tx: 104, ty: 30 } as const;
  * intersection"), storm drains at curb corners, and a seeded wear pass
  * ('1' cracks / '2' patches) the CORE's own stream — never shared outward.
  */
-export function buildPuertoSol(): MapDef {
-  const rng = seededRng(1898);
-  const jit = (n: number): number => Math.floor(rng() * n);
+/* ================= PUERTO SOL — the THREED rebuild (2026-07-08) ================= */
 
-  const g = new Grid(52, 34, '=');
-  // bounds: cliffs north (brick spine reads as the old sea wall), sea south
-  g.rect(0, 0, 52, 1, 'B');
-  g.rect(0, 0, 1, 28, 'B');
-  g.rect(51, 0, 1, 28, 'B');
-  // the north gate gap — the cliff road to COSTA ESTRELLA (S13's one line)
-  g.rect(5, 0, 3, 1, ':');
-  // two E-W streets + the avenue that stitches them (ADR-012 minimums)
-  g.rect(1, 8, 50, 3, 'R');
-  g.rect(1, 20, 50, 3, 'R');
-  g.rect(24, 8, 3, 15, 'R');
-  // dashed centerlines, phase-shifted, broken at the avenue
-  const skipA = new Set([24, 25, 26, 27]);
-  for (let x = 1; x < 51; x++) {
-    if (x % 4 < 2 && !skipA.has(x)) g.set(x, 9, 'D');
-    if ((x + 2) % 4 < 2 && !skipA.has(x)) g.set(x, 21, 'D');
-  }
-  // M1: crosswalks at BOTH avenue×street junctions (was missing — the
-  // avenue met each street with no X, M1's "every intersection" rule).
-  g.rect(24, 8, 3, 2, 'X');
-  g.rect(24, 20, 3, 2, 'X');
-  // M6: storm drains at the four avenue×street curb corners — walkable wear,
-  // clear of the crosswalks and every door landing.
-  for (const [dx, dy] of [[23, 7], [27, 7], [23, 22], [27, 22]] as const) {
-    g.set(dx, dy, '3');
-  }
-  // THE PLAZA — pavers around the fountain, corners nibbled by the seed
-  g.rect(30, 12, 16, 7, 'p');
-  g.rect(30, 12, 1 + jit(3), 1, '=');
-  g.rect(44 - jit(2), 18, 3, 1, '=');
-  // the port district: dock band + the surf + open sea
-  g.rect(1, 27, 50, 3, 'd');
-  g.rect(0, 30, 52, 1, 'E');
-  g.rect(0, 31, 52, 3, 'e');
-  // the pier pushes south into the water
-  g.rect(23, 30, 6, 3, 'd');
-
-  /* ---- buildings: north faces of both streets (two block faces) ---- */
-  interface Bldg {
-    sprite: string;
-    w: number;
-    u: 1 | 2 | 3;
-    x: number;
-  }
-  // NORTH ROW: mercado -> callejón -> clinic -> callejón -> pension, then the
-  // MUSEUM pulled clear of the trio so its door centers on the avenue
-  // (x24-26, center 25); casa/casa_b close the row east of it (M2 rhythm).
-  const north: Bldg[] = [
-    { sprite: 'bldg_ps_mercado', w: 5, u: 1, x: 2 + jit(2) },
-    { sprite: 'bldg_ps_clinic', w: 5, u: 1, x: 9 + jit(2) },
-    { sprite: 'bldg_ps_pension', w: 5, u: 2, x: 16 + jit(2) },
-    { sprite: 'bldg_ps_museum', w: 6, u: 2, x: 22 },
-    { sprite: 'bldg_ps_casa', w: 4, u: 2, x: 31 + jit(3) },
-    { sprite: 'bldg_ps_casa_b', w: 4, u: 1, x: 44 - jit(3) },
-  ];
-  for (let i = 1; i < north.length; i++) {
-    // the callejón gaps (mercado|clinic, clinic|pension) need ≥2 clear tiles
-    // (the body-box rail); every other seam keeps the old 1-tile minimum. The
-    // trio's anchors (2/9/16) are tuned so even worst-case jit(2) still lands
-    // the museum's door within 1 tile of the avenue center (verified below).
-    const isCallejon = i === 1 || i === 2;
-    const min = north[i - 1].x + north[i - 1].w + (isCallejon ? 2 : 1);
-    if (north[i].x < min) north[i].x = min;
-  }
-  // THE CALLEJÓN POCKETS — derived from the RESOLVED gaps above (never a
-  // guessed literal): each alcove spans from the west building's east edge
-  // to the east building's west edge, floor y1-7 (brick wall to street A).
-  // Sidewalk floor keeps them walkable; a crate/trash_can (props, below)
-  // gives each a dead-end back-of-house read.
-  const alley1X = north[0].x + north[0].w; // mercado|clinic gap
-  const alley2X = north[1].x + north[1].w; // clinic|pension gap
-  g.rect(alley1X, 1, north[1].x - alley1X, 7, '=');
-  g.rect(alley2X, 1, north[2].x - alley2X, 7, '=');
-  const south: Bldg[] = [
-    { sprite: 'bldg_ps_deli', w: 4, u: 1, x: 4 + jit(3) },
-    { sprite: 'bldg_ps_cantina', w: 5, u: 1, x: 12 + jit(2) },
-    { sprite: 'bldg_ps_casa_c', w: 4, u: 1, x: 34 + jit(3) },
-    { sprite: 'bldg_ps_pension_b', w: 5, u: 2, x: 42 + jit(2) },
-  ];
-  for (let i = 1; i < south.length; i++) {
-    const min = south[i - 1].x + south[i - 1].w + 1;
-    if (south[i].x < min) south[i].x = min;
-  }
-  const bldgProps: PropDef[] = [];
-  const place = (b: Bldg, bottomPx: number): PropDef => {
-    const H = cityBuildingHeight(b.u);
-    const prop: PropDef = {
-      sprite: b.sprite,
-      x: b.x,
-      y: (bottomPx - H) / 16,
-      // solid covers the FACADE to the doorstep — oy:10 (was 26) so a hero can't
-      // walk straight ACROSS the upper floors (the walk-through-buildings bug);
-      // bottom stays H-12 so the door zone is reachable (matches brickton).
-      solid: { ox: 0, oy: 10, w: b.w * 16 + 2, h: H - 22 },
-    };
-    if (b.sprite === 'bldg_ps_mercado') {
-      prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'mercado_int', tx: 96, ty: 118 };
-    }
-    if (b.sprite === 'bldg_ps_clinic') {
-      prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'clinic_ps_int', tx: 88, ty: 118 };
-    }
-    if (b.sprite === 'bldg_ps_museum') {
-      prop.door = { ox: 33, oy: H - 14, w: 26, h: 18, to: 'museum_int', tx: 120, ty: 150 };
-    }
-    if (b.sprite === 'bldg_ps_deli') {
-      prop.door = { ox: 17, oy: H - 14, w: 16, h: 18, to: 'deli_int', tx: 88, ty: 118 };
-    }
-    bldgProps.push(prop);
-    return prop;
-  };
-  north.forEach((b) => place(b, 128)); // faces street A
-  south.forEach((b) => place(b, 320)); // faces street B
-
-  /* ---- street life off the SAME stream, in order ---- */
-  // MARKET LANE — the 3 stalls tightened (1-2 tile rhythm) with a crate
-  // between each pair; the stallman works the middle stall (npcs, below).
-  const stalls: PropDef[] = [
-    { sprite: 'market_stall_a', x: 30, y: 23.4, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
-    { sprite: 'market_stall_b', x: 34 + jit(2), y: 23.4, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
-    { sprite: 'market_stall_c', x: 39 + jit(2), y: 23.4, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
-  ];
-  const marketCrates: PropDef[] = [
-    { sprite: 'crate', x: 32.8, y: 24, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    { sprite: 'crate_bananas', x: 37.4, y: 24, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-  ];
-  // CASA QUARTER — a small fenced courtyard in the open ground west of the
-  // avenue (between the two streets, y11-19), the Otterbrook "backyard plot"
-  // idiom: a rim broken on its access side (never sealed), flower beds inside.
-  g.rect(2, 11, 6, 1, '-');
-  g.rect(2, 12, 1, 3, '-');
-  g.rect(7, 12, 1, 3, '-'); // N+W+E rim; S (y15) stays open onto the quarter
-  g.set(3, 12, 'F');
-  g.set(5, 13, 'f');
-  // THE MALECÓN ROOT — palms re-anchored to a waterfront rhythm along the
-  // dock band (y≈26), plus one casa-quarter street tree (clear of the new
-  // courtyard fence) and two flanking the market lane; the old mid-plaza
-  // candidate is dropped (the zócalo is furnished by its own bench/picnic
-  // now, not a stray palm).
-  const palmCandidates: Array<[number, number]> = [
-    [10, 13],
-    [9, 26],
-    [16, 26],
-    [42, 26],
-    [48, 26],
-    [3, 24],
-    [20, 24],
-  ];
-  const palms: Array<[number, number]> = [];
-  for (const xy of palmCandidates) {
-    if (rng() < 0.8) palms.push(xy);
-  }
-
-  // M6 WEAR PASS — cracks on sidewalk, patches on road, run LAST (off the
-  // same 1898 stream) so it reads the fully-resolved grid without shifting
-  // any earlier jitter. Guarded to '=' / 'R' only; never touches a door
-  // landing (the gate/pier rects are 'B'/':'/'d', untouched by this sweep).
-  for (let y = 1; y < 33; y++) {
-    for (let x = 1; x < 51; x++) {
-      const ch = g.rows[y][x];
-      if (ch === '=' && rng() < 0.035) g.set(x, y, '1');
-      else if (ch === 'R' && rng() < 0.03) g.set(x, y, '2');
-    }
-  }
-
-  return {
-    id: 'puerto_sol',
-    name: 'PUERTO SOL',
-    music: 'puerto',
-    settlement: 'city',
-    grid: g.out(),
-    props: [
-      ...palms.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
-      ...bldgProps,
-      ...stalls,
-      ...marketCrates,
-      // THE ZÓCALO — the fountain re-centered on the room (30..45,12..18),
-      // a bench pair facing it, the picnic + sign + nina gathered around.
-      { sprite: 'fountain', x: 36, y: 13.6, solid: { ox: 3, oy: 22, w: 34, h: 14 } },
-      { sprite: 'bench', x: 32, y: 17, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'bench', x: 40, y: 17, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      // the pier: the boat home + its board
-      { sprite: 'banana_boat', x: 21, y: 29.2, solid: { ox: 4, oy: 22, w: 120, h: 20 } },
-      { sprite: 'gangplank', x: 25.2, y: 28.4 },
-      { sprite: 'departure_board', x: 30, y: 25.4, solid: { ox: 2, oy: 20, w: 22, h: 8 } },
-      // pier-root crates (the working-port read, clear of the gangplank lane)
-      { sprite: 'crate_bananas', x: 4, y: 27.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'crate', x: 6.4, y: 28.1, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'payphone', x: 28, y: 24, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
-      // §A4.5: the plaza picnic table (one of Ch.2's three, before the jungle)
-      { sprite: 'picnic', x: 42, y: 14.6, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-      // CALLEJÓN POCKETS — a crate in one alcove, a trash can in the other
-      // (dead-end texture; the sidewalk floor keeps them 2-wide + walkable).
-      // Centered in each derived alley (never a guessed literal).
-      { sprite: 'crate', x: alley1X + (north[1].x - alley1X - 1) / 2, y: 3, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'trash_can', x: alley2X + (north[2].x - alley2X - 1) / 2, y: 3, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
-      // CASA QUARTER — the courtyard's own trash can, tucked at its open
-      // (south) mouth rather than stranded mid-field.
-      { sprite: 'trash_can', x: 4, y: 15, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
-    ],
-    npcs: [
-      { id: 'ps_fisher', sprite: 'dockworker', x: 8, y: 26, facing: 'down', dialogue: 'npc_ps_fisher', wander: true, emote: 'think' }, // Wave 2 (#4): reading the sea's moods, on the malecón root now
-      { id: 'ps_nina', sprite: 'wokeB', x: 34, y: 16, facing: 'down', dialogue: 'npc_ps_nina', wander: true }, // the zócalo, by the fountain
-      { id: 'ps_stallman', sprite: 'tomas', x: 34, y: 25, facing: 'down', dialogue: 'npc_ps_stall', unlessFlag: 'q_llama', idle: true, emote: 'happy' }, // Wave 2 (#4): the middle market stall
-      { id: 'ps_porter', sprite: 'captain', x: 20, y: 12, facing: 'down', dialogue: 'npc_ps_porter', wander: true }, // the casa quarter, near the avenue
-    ],
-    signs: [
-      { x: 6, y: 1, dialogue: 'sign_costa_road' },
-      { x: 30, y: 26, dialogue: 'sign_departures_home' },
-      { x: 36, y: 18, dialogue: 'sign_plaza' },
-      { x: 49, y: 21, dialogue: 'sign_jungle_gate' },
-    ],
-    phones: [{ x: 28, y: 24 }],
-    doors: [
-      // the cliff road north — COSTA ESTRELLA LINKS (the S13 one-line wire)
-      { x: 5, y: 0, w: 3, h: 1, to: 'costa_estrella', tx: 216, ty: 232, facing: 'up' },
-      // east gate into the jungle
-      { x: 51, y: 20, w: 1, h: 3, to: 'jungle_1', tx: 24, ty: 264, facing: 'right' },
-    ],
-    spawners: [],
-    triggers: [
-      // the pier gangplank: ride the boat home (zero missables)
-      { id: 'board_boat_return', rect: { x: 25, y: 28, w: 2, h: 2 }, once: false },
-      // first step off the boat: the §A11 arrival beat
-      { id: 'puerto_arrival', rect: { x: 23, y: 26, w: 6, h: 2 }, once: true },
-    ],
-  };
-}
-
-/* ------------- PUERTO SOL GROWS — THE DOCK DISTRICT (S15i Task 4, ADR-057) ------------- *
- * The user's scale decree, the World-Block law's fourth application: the §A5 port
- * should feel like a working CITY, not one plaza. The frozen 1898 core is COPIED
- * byte-for-byte into the top-left of a 128×44 grid (≈3.2×); every growth write lands
- * strictly OUTSIDE the 52×34 core (x≥52 || y≥34), so not one core cell can move.
- *
- * THE GOTCHA (why this isn't a Brickton clone): the core is WALLED north/east/west
- * with only the SOUTH (dock/sea) open — you cannot grow east through the frozen wall.
- * So the new region wraps the core's SOUTHEAST, joined to it through the dock band's
- * eastern seam (col 51 rows 28-29 = walkable '='). And because cityViolations counts
- * a "street" row as one exceeding 40% of the GROWN width (~50 cells at W=128), the
- * core's ~50-cell streets STOP COUNTING — so the grown city's ADR-012 sweep is carried
- * by NEW full-region streets in the dock district (the core's facades still feed
- * faceBands at bands 2 & 5). The jungle gate relocates to the new far-east edge.
+/**
+ * The port is the EDITOR-AUTHORED document now (src/data/maps_puerto_sol.ts ⇄
+ * tools/mapeditor/puerto_sol.json) — Threed grammar per the user's towns 1–4
+ * lock: one E-W spine with gate arches both ends, two slanted shopping
+ * diagonals making parallelogram blocks, the catedral plaza at the heart,
+ * EL CAMPO VIEJO walled graveyard NW, and the working quay + banana boat along
+ * the south water. buildPuertoSol (the 1898 frozen core) + growPuertoSol are
+ * RETIRED (the Twoton precedent). This wrapper grafts only the five NAMED
+ * interior doors — art-anchored px rects the editor can't express, so an
+ * editor re-export can never drop them; occupyCity doors the rest at the
+ * registry, and the corridor landings are cross-aimed in the Valle block.
  */
-/** the grown port's east jungle gate row (street 2 center) + width — the jungle's
- *  return door lands just inside it (computed, never a baked jittered coord). */
-const PUERTO_SOL_W = 128;
-const PUERTO_SOL_EAST_GATE_ROW = 25;
-/** where jungle_1's west door drops you back — the lane just inside the new east
- *  gate (W-2, the street-2 row). buildJungle1 reads this (the doorstepOf analog). */
-export const PUERTO_SOL_JUNGLE_RETURN = {
-  tx: (PUERTO_SOL_W - 2) * 16,
-  ty: PUERTO_SOL_EAST_GATE_ROW * 16,
-} as const;
-
-const PS_OAK = { ox: 7, oy: 22, w: 12, h: 10 } as const;
-
-export function growPuertoSol(): MapDef {
-  const core = buildPuertoSol();
-  const CW = core.grid[0].length; // 52
-  const CH = core.grid.length; // 34
-  const W = PUERTO_SOL_W; // 128
-  const H = 44;
-  const g = new Grid(W, H, '=');
-  // 1) the frozen 1898 core, verbatim, in the top-left
-  for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) g.set(x, y, core.grid[y][x]);
-
-  // 2) the GROWN region's edges (the gotcha: cliff N, wall E, sea S) — only OUTSIDE
-  //    the core, so the frozen cells never move.
-  g.rect(CW, 0, W - CW, 1, 'B'); // north cliff, east of the core
-  g.rect(W - 1, 0, 1, H, 'B'); // new east wall
-  g.rect(0, CH, 1, H - CH, 'B'); // west cliff, below the core
-  // the colonial-plaza floor the dock district stands on (pavers, not gray walk)
-  g.rect(CW, 1, W - CW, 25, 'p');
-  // THE MALECÓN — the new waterfront promenade (dock), continuing the core's dock
-  // band EAST. THE SEAM: it meets the core dock at col 51→52, rows 28-29.
-  g.rect(CW, 26, W - CW, 6, 'd'); // malecón, cols 52-127, rows 26-31
-  // THE HARBOR — sea south of the malecón + below the core (the core keeps its own
-  // 1898 sea; the new water is cols 52+ rows 32+, and cols 1-51 rows 34+)
-  g.rect(CW, 32, W - CW, 1, 'E'); // foam lip along the malecón
-  g.rect(CW, 33, W - CW, H - 33, 'e'); // open harbor SE
-  g.rect(1, CH, CW - 1, H - CH, 'e'); // harbor below the core (cols 1-51)
-
-  // 3) THE DOCK DISTRICT — TWO wide carrying streets (rows 6 + 24, each >40% of the
-  //    grown width so the ADR-012 sweep counts them) joined by an avenue (col 90),
-  //    then the forge lays the bones in PUERTO SOL's OWN colonial skins. The wide
-  //    grid is NON-mega (its facades back onto the streets, ≤3 tall, never crossing a
-  //    lane); the MEGAS rise from a dedicated tall POCKET between the streets — the
-  //    cathedral / grand hotel / customs house, tops off-screen (the Brickton
-  //    downtownHigh precedent — megas need 14 clear rows, so they get their own band,
-  //    common here because the waterfront has the room Brickton's tight core lacked).
-  //    ADR-053: ONE shared footprint list across every district + the hand-placed lots.
-  const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
-  // (B FIRST) the MEGA POCKETS — two grand bands FLANKING the avenue (cols 54-86 west,
-  //    96-123 east), so the towers rise on both sides while the avenue (col 90) stays a
-  //    clear canyon between them. They claim their tall footprints before the storefront
-  //    row pass fills the gaps; backing onto street 2 (row 24), rising clear of street 1
-  //    (rows 6-8). Megas are COMMON here — a grand colonial waterfront, not a sparse one.
-  const megaWest = buildDistrict(g, { x: 54, y: 9, w: 32, h: 16 }, new Streams(189803), {
-    layout: 'grid', style: 'bazaar-port', catalog: AREA_SKINS.puerto_sol,
-    streetRows: [24], maxStories: 3, mega: true, occupied,
-  });
-  const megaEast = buildDistrict(g, { x: 96, y: 9, w: 28, h: 16 }, new Streams(189804), {
-    layout: 'grid', style: 'bazaar-port', catalog: AREA_SKINS.puerto_sol,
-    streetRows: [24], maxStories: 3, mega: true, occupied,
-  });
-  // (A) the WIDE storefront grid — carries BOTH streets + the avenue spine (col 90,
-  //    rows 1-25, meeting the malecón at row 26 — one line from the streets down to
-  //    the waterfront and the seam). NON-mega: low colonial faces + dock warehouses.
-  const district = buildDistrict(g, { x: CW, y: 1, w: W - CW - 1, h: 25 }, new Streams(189801), {
-    layout: 'grid', style: 'bazaar-port', catalog: AREA_SKINS.puerto_sol,
-    streetRows: [6, 24], avenueCols: [90], maxStories: 3, occupied,
-  });
-
-  // 4) THE MARKET NOOK (§B4) — a dockside market courtyard on the malecón's west,
-  //    its open left/right edges onto the waterfront (a fully-ringed lot would seal
-  //    itself; 'courtyard' only hedges top/bottom — the memory gotcha). The hidden
-  //    present hides among its stalls.
-  const nook = placeNook(g, { x: 54, y: 26, w: 13, h: 5 }, new Streams(189802), 'courtyard');
-
-  // 5) piers fingering into the harbor (scenery off the malecón — the working-port read)
-  g.rect(60, 31, 3, 6, 'd');
-  g.rect(108, 31, 3, 7, 'd');
-  // NOTE (blueprint deviation, M6): "wear stream over the plaza-floor 'p' and
-  // dock 'd' lines" is skipped — the engine's only wear glyphs ('1' crack /
-  // '2' patch) are baked SIDEWALK/ROAD textures (sidewalkCrack() draws its
-  // own base, never an overlay), so painting them onto 'p'/'d' would render
-  // a wrong-material sidewalk crack floating on plaza pavers or dock planks.
-  // M6 itself is base-char-guarded ("guarded to the right base char"), so the
-  // correct read is: no matching glyph exists for this surface, don't force
-  // one. The crate clusters + harbor bench below carry the "lived-in
-  // waterfront" texture for the grown zone instead.
-
-  const treesAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
-    xy.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: PS_OAK }));
-
-  // 6) the present (the S9b gift-box pattern), cached among the market stalls. Trees
-  //    are not laid over it; the malecón around it is open dock, so it stays reachable.
-  const giftX = 58;
-  const giftY = 28;
-  const present: PropDef[] = [
-    { sprite: 'gift_box', x: giftX, y: giftY, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'ps_dock_gift' },
-    { sprite: 'gift_box_open', x: giftX, y: giftY, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'ps_dock_gift' },
-  ];
-
-  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
-  // S17 M18 Part B (ADR-063): two Americas grants on the grown malecón —
-  //  • THE MERCADO SET, a charm for each hero, cached at the market quay (open
-  //    'd' dock east of the nook stalls).
-  //  • a Gold Doubloon wedged dockside, far east on the promenade.
-  // Both on open waterfront tiles, clear of crates/stalls/palms; the sub-tile
-  // box solid seals no lane (BFS re-proven in the maps_ch2 tests).
-  const mercadoStall = giftBox('mercado_stall', 70, 27);
-  const doubloon = giftBox('gift_doubloon', 114, 28);
-  const props: PropDef[] = [
-    ...core.props,
-    ...megaWest.props,
-    ...megaEast.props,
-    ...district.props,
-    ...nook.props,
-    ...present,
-    ...mercadoStall.props,
-    ...doubloon.props,
-    // the relocated DEPARTURE BOARD — the freight/onward schedule, dockside
-    { sprite: 'departure_board', x: 82, y: 27.4, solid: { ox: 2, oy: 20, w: 22, h: 8 } },
-    // dock clutter — cargo waiting on the quay (off the walking lane)
-    { sprite: 'crate_bananas', x: 72, y: 27.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    { sprite: 'crate', x: 74.3, y: 28.1, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    { sprite: 'crate', x: 104, y: 27.4, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    { sprite: 'crate_bananas', x: 106.3, y: 28.3, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    // crate clusters at EACH pier finger's root (blueprint: "the working-port
-    // read" — cargo waiting right where the finger meets the malecón). Pier
-    // 1's literal root (60,31) is the market nook's own footprint (stalls +
-    // gift + seeded hedge rim), so its cluster sits just east of the nook
-    // instead of inside it (still reads as "at the finger," never crowds the
-    // nook's own furniture or risks a seeded hedge tile). Pier 2's root is
-    // open ground — its cluster lands at the literal target.
-    { sprite: 'crate', x: 67.5, y: 30, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    { sprite: 'crate_bananas', x: 68, y: 28.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    { sprite: 'crate_bananas', x: 107, y: 30, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    { sprite: 'crate', x: 111.4, y: 30, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    // the market nook's stalls (open-air, around the present)
-    { sprite: 'market_stall_a', x: 56, y: 29, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
-    { sprite: 'market_stall_b', x: 62, y: 29, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
-    // §A4.5: a dockside picnic rest before the jungle's pressure (the 2nd PS table)
-    { sprite: 'picnic', x: 98, y: 28.6, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-    { sprite: 'payphone', x: 92, y: 27, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
-    // a bench facing the harbor (blueprint: "1 bench facing the harbor"),
-    // part of the same dockside rest cluster as the picnic/payphone
-    { sprite: 'bench', x: 94, y: 30, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-    // signage
-    { sprite: 'sign', x: 54, y: 25, solid: SIGN_SOLID }, // the malecón / dock district
-    { sprite: 'sign', x: 66, y: 30, solid: SIGN_SOLID }, // the market nook
-    { sprite: 'sign', x: 124, y: 23, solid: SIGN_SOLID }, // EAST → the jungle (relocated gate)
-    // palms on the new waterfront (isolated on open dock — you walk around them)
-    ...treesAt([[68, 30], [88, 30], [120, 30]]),
-  ];
-
-  // THE GRAN HOTEL OPENS (2026-07-02, the "buildings should feel complete" decree)
-  // — the waterfront's AUTHORED mega facade gets a real front door into the
-  // hand-authored grand suite (lobby → elevator bank → guest floor → penthouse).
-  // Grafted HERE, pre-occupy: occupyCity doors only DOORLESS facades, so the
-  // landmark keeps its hand wiring. Offsets are occupy's own centered-arch math;
-  // the landing sits one tile inside the lobby's exit mat (the snug-entry law).
-  const granHotel = props.find((p) => p.sprite === 'bldg_ps_gran_hotel');
-  if (granHotel) {
-    const dims = facadeDims('bldg_ps_gran_hotel');
-    granHotel.door = {
-      ox: Math.round((dims.w * 16) / 2) - 8,
-      oy: cityBuildingHeight(dims.u) - 14,
-      w: 16, h: 18, to: 'hotel_ps_lobby', tx: 168, ty: 172,
-    };
+const PS_NAMED_DOORS: Record<
+  string,
+  { ox: number | 'center'; w: number; to: string; tx: number; ty: number }
+> = {
+  bldg_ps_mercado: { ox: 33, w: 16, to: 'mercado_int', tx: 96, ty: 118 },
+  bldg_ps_clinic: { ox: 33, w: 16, to: 'clinic_ps_int', tx: 88, ty: 118 },
+  bldg_ps_museum: { ox: 33, w: 26, to: 'museum_int', tx: 120, ty: 150 },
+  bldg_ps_deli: { ox: 17, w: 16, to: 'deli_int', tx: 88, ty: 118 },
+  bldg_ps_gran_hotel: { ox: 'center', w: 16, to: 'hotel_ps_lobby', tx: 168, ty: 172 },
+};
+function makePuertoSol(): MapDef {
+  const m = puertoSolMap;
+  for (const p of m.props) {
+    const spec = PS_NAMED_DOORS[p.sprite];
+    if (!spec || p.door) continue;
+    const dims = facadeDims(p.sprite);
+    const H = cityBuildingHeight(dims.u);
+    const ox = spec.ox === 'center' ? Math.round((dims.w * 16) / 2) - 8 : spec.ox;
+    p.door = { ox, oy: H - 14, w: spec.w, h: 18, to: spec.to, tx: spec.tx, ty: spec.ty };
   }
-
-  const npcs: NpcDef[] = [
-    ...core.npcs,
-    // §A11 — one obsession each, all new to the dock district
-    { id: 'ps_crane', sprite: 'dockworker', x: 90, y: 25, facing: 'down', dialogue: 'npc_ps_crane', wander: true },
-    { id: 'ps_tally', sprite: 'captain', x: 100, y: 25, facing: 'down', dialogue: 'npc_ps_tally' },
-    { id: 'ps_board', sprite: 'tomas', x: 84, y: 26, facing: 'down', dialogue: 'npc_ps_board' },
-    { id: 'ps_market', sprite: 'mercadoKeeper', x: 60, y: 28, facing: 'down', dialogue: 'npc_ps_market', wander: true },
-  ];
-
-  const signs: SignDef[] = [
-    ...core.signs,
-    { x: 54, y: 25, dialogue: 'sign_ps_malecon' },
-    { x: 66, y: 30, dialogue: 'sign_ps_market' },
-    { x: 124, y: 23, dialogue: 'sign_ps_jungle_east' },
-    // the present: a sign while sealed, a flavor line once opened (gated)
-    { x: giftX, y: giftY + 1, dialogue: 'ps_dock_gift', unlessFlag: 'ps_dock_gift' },
-    { x: giftX, y: giftY + 1, dialogue: 'ps_dock_gift_done', ifFlag: 'ps_dock_gift' },
-    ...mercadoStall.signs, // ADR-063 Part B: THE MERCADO SET
-    ...doubloon.signs, // ADR-063 Part B: the dockside Gold Doubloon
-  ];
-
-  // the jungle gate RELOCATES to the new far-east edge (the port moved out with the
-  // city). Its target (jungle_1's west mouth) is unchanged; only its position moves.
-  const keptDoors = core.doors.filter((d) => d.to !== 'jungle_1');
-
-  return {
-    ...core,
-    grid: g.out(),
-    props,
-    npcs,
-    signs,
-    doors: [
-      ...keptDoors, // the COSTA north gate stays byte-identical; the jungle gate relocates ↓
-      { x: W - 1, y: PUERTO_SOL_EAST_GATE_ROW - 1, w: 1, h: 3, to: 'jungle_1', tx: 24, ty: 264, facing: 'right' },
-    ],
-    triggers: [
-      ...core.triggers, // board_boat_return + puerto_arrival stay first + unchanged
-      // the flag-gated waterfront beat — a warm look over the working harbor on first
-      // reaching the malecón (fires once; the cut/dlg/camera pattern in OverworldScene)
-      { id: 'puerto_malecon', rect: { x: 52, y: 27, w: 3, h: 4 }, once: true },
-    ],
-    spawners: [
-      ...core.spawners,
-      // the dock district runs a gentle Ch.2 band, clear of the gateway + the rests
-      { enemies: ['pickpocket_parrot', 'brass_market_mimic'], count: 1, rect: { x: 96, y: 18, w: 14, h: 4 } },
-    ],
-  };
+  return m;
 }
+/** the LIVE port (grafted once at module load — every consumer sees the doors) */
+export const puertoSol = makePuertoSol();
 
-/* ================= PUERTO SOL interiors ================= */
+/** land 2 tiles inside a map's EDGE door zone, centered on it — the computed-landing
+ *  law (ADR-012): corridor doors aim at these, never at baked px. */
+function edgeLanding(map: MapDef, to: string): { tx: number; ty: number } {
+  const d = map.doors.find((dd) => dd.to === to);
+  if (!d) return { tx: 40, ty: 40 };
+  const W = map.grid[0].length;
+  const H = map.grid.length;
+  const cx = d.x + (d.w - 1) / 2;
+  const cy = d.y + (d.h - 1) / 2;
+  if (d.x === 0) return { tx: 2 * 16 + 8, ty: Math.round(cy) * 16 };
+  if (d.x >= W - 1) return { tx: (W - 3) * 16 + 8, ty: Math.round(cy) * 16 };
+  if (d.y === 0) return { tx: Math.round(cx) * 16 + 8, ty: 2 * 16 + 8 };
+  return { tx: Math.round(cx) * 16 + 8, ty: (H - 3) * 16 + 8 };
+}
+/** the desert road's return landing — just inside the port's EAST gate, on the spine */
+export const PUERTO_SOL_JUNGLE_RETURN = edgeLanding(puertoSol, 'jungle_1');
 
 export function buildMercadoInt(streetExit: { tx: number; ty: number }): MapDef {
   const g = new Grid(13, 9, 'w');
@@ -1006,7 +594,7 @@ export function buildHospitalInt(streetExit: { tx: number; ty: number }): MapDef
   g.rect(0, 0, 20, 2, 'O');
   return {
     id: 'hospital_int',
-    name: 'BRICKTON GENERAL',
+    name: 'TWOTON GENERAL',
     music: 'brickton',
     interior: true,
     grid: g.out(),
@@ -1054,7 +642,7 @@ export function buildHospitalF2(): MapDef {
   g.rect(0, 0, 20, 2, 'O');
   return {
     id: 'hospital_f2',
-    name: 'BRICKTON GENERAL — WARD',
+    name: 'TWOTON GENERAL — WARD',
     music: 'brickton',
     interior: true,
     grid: g.out(),
@@ -1098,7 +686,7 @@ export function buildHospitalF3(): MapDef {
   g.rect(0, 0, 20, 2, 'O');
   return {
     id: 'hospital_f3',
-    name: 'BRICKTON GENERAL — RECORDS',
+    name: 'TWOTON GENERAL — RECORDS',
     music: 'brickton',
     interior: true,
     grid: g.out(),
@@ -1173,124 +761,12 @@ export function buildChapelInt(streetExit: { tx: number; ty: number }): MapDef {
 /** `psReturn` is where the west door drops you back on PUERTO SOL — the lane just
  *  inside the grown port's relocated jungle gate (the doorstepOf analog, ADR-057).
  *  Defaults to the grown landing; the frozen core's old spot is gone with the gate. */
-export function buildJungle1(psReturn: { tx: number; ty: number } = PUERTO_SOL_JUNGLE_RETURN): MapDef {
-  const g = new Grid(30, 36, 'j');
-  // dense walls shape a winding south-north climb
-  g.rect(0, 0, 30, 1, 'J');
-  g.rect(0, 35, 30, 1, 'J');
-  g.rect(0, 1, 1, 34, 'J');
-  g.rect(29, 1, 1, 34, 'J');
-  g.set(0, 16, 'j'); // west mouth (from Puerto Sol)
-  g.rect(0, 15, 1, 3, 'j');
-  g.rect(28, 6, 2, 3, 'j'); // east mouth (to jungle_2)
-  // undergrowth ribs (broken mid-run, rule 4)
-  g.rect(5, 5, 12, 1, 'J');
-  g.rect(20, 5, 6, 1, 'J');
-  g.rect(3, 11, 8, 1, 'J');
-  g.rect(14, 11, 12, 1, 'J');
-  g.rect(6, 17, 14, 1, 'J');
-  g.rect(23, 17, 4, 1, 'J');
-  g.rect(3, 23, 10, 1, 'J');
-  g.rect(16, 23, 10, 1, 'J');
-  g.rect(8, 29, 16, 1, 'J');
-  g.sprinkle(31, ',~f', 0.04);
-  const trees: Array<[number, number]> = [
-    [3, 3],
-    [14, 7],
-    [24, 9],
-    [7, 14],
-    [19, 19],
-    [4, 26],
-    [22, 26],
-    [12, 32],
-  ];
-  return {
-    id: 'jungle_1',
-    name: 'JUNGLE PATH',
-    music: 'jungle',
-    grid: g.out(),
-    props: [
-      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
-      { sprite: 'sign', x: 2, y: 14, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-    ],
-    npcs: [],
-    signs: [{ x: 2, y: 15, dialogue: 'sign_jungle1' }],
-    phones: [],
-    doors: [
-      { x: 0, y: 15, w: 1, h: 3, to: 'puerto_sol', tx: psReturn.tx, ty: psReturn.ty, facing: 'left' },
-      { x: 28, y: 6, w: 2, h: 3, to: 'jungle_2', tx: 40, ty: 200, facing: 'right' },
-    ],
-    spawners: [
-      { enemies: ['pickpocket_parrot', 'banana_bunch', 'postage_stampede'], count: 3, rect: { x: 4, y: 6, w: 22, h: 4 } },
-      { enemies: ['jungle_jitterbug', 'pickpocket_parrot', 'confetti_cannon'], count: 2, rect: { x: 4, y: 18, w: 20, h: 4 } },
-      { enemies: ['banana_bunch'], count: 2, rect: { x: 5, y: 24, w: 18, h: 4 } },
-    ],
-    triggers: [],
-  };
-}
-
-export function buildJungle2(): MapDef {
-  const g = new Grid(38, 28, 'j');
-  g.rect(0, 0, 38, 1, 'J');
-  g.rect(0, 27, 38, 1, 'J');
-  g.rect(0, 1, 1, 26, 'J');
-  g.rect(37, 1, 1, 26, 'J');
-  g.rect(0, 11, 1, 3, 'j'); // west mouth (from jungle_1)
-  g.rect(37, 18, 1, 3, 'j'); // east mouth (to Valle Dorado)
-  // the river of undergrowth the path bends around
-  g.rect(8, 5, 1, 14, 'J');
-  g.rect(16, 9, 1, 16, 'J');
-  g.rect(24, 3, 1, 14, 'J');
-  g.rect(30, 12, 1, 12, 'J');
-  g.rect(9, 5, 10, 1, 'J');
-  g.rect(25, 3, 8, 1, 'J');
-  g.sprinkle(32, ',~f', 0.04);
-  return {
-    id: 'jungle_2',
-    name: 'DEEP JUNGLE',
-    music: 'jungle',
-    grid: g.out(),
-    props: [
-      ...([
-        [4, 3],
-        [12, 21],
-        [20, 4],
-        [28, 20],
-        [34, 6],
-        [5, 22],
-      ] as const).map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
-      // §A4.5: the deep-jungle table (Ch.2's second — strategy before the village)
-      { sprite: 'picnic', x: 33, y: 21.4, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-      { sprite: 'sign', x: 19, y: 24, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      // S17 M18 Part B (ADR-063): an Emerald the deep jungle was keeping (valuable),
-      // wedged in the bark by the table's open pocket (BFS-reachable, near the rest)
-      ...giftBox('gift_emerald', 35, 22).props,
-    ],
-    npcs: [],
-    signs: [
-      { x: 19, y: 25, dialogue: 'sign_jungle2' },
-      // the grotto mouth — easy to walk past, the §A11 sign doesn't help
-      { x: 10, y: 2, dialogue: 'sign_grotto' },
-      ...giftBox('gift_emerald', 35, 22).signs,
-    ],
-    phones: [],
-    doors: [
-      { x: 0, y: 11, w: 1, h: 3, to: 'jungle_1', tx: 440, ty: 120, facing: 'left' },
-      // ADR-102: land just INSIDE valle's east gate (its return door), facing in —
-      // was dropping the player on valle's far WEST edge, 584px across the village.
-      { x: 37, y: 18, w: 1, h: 3, to: 'valle_dorado', tx: 616, ty: 312, facing: 'left' },
-      // the optional grotto, tucked behind the north ribs
-      { x: 11, y: 1, w: 2, h: 1, to: 'grotto', tx: 104, ty: 152, facing: 'up' },
-    ],
-    spawners: [
-      { enemies: ['cursed_souvenir', 'jungle_jitterbug'], count: 3, rect: { x: 2, y: 14, w: 12, h: 6 } },
-      { enemies: ['gilded_beetle', 'banana_bunch'], count: 3, rect: { x: 18, y: 6, w: 10, h: 8 } },
-      { enemies: ['jungle_jitterbug'], count: 1, rect: { x: 26, y: 16, w: 8, h: 6 } },
-    ],
-    triggers: [],
-  };
-}
-
+/* ================= LAS DUNAS — the DUSTY DUNES crossing (2026-07-08) ================= */
+// buildJungle1/buildJungle2 are RETIRED — the desert legs are the editor-authored
+// documents (src/data/maps_dunas.ts ⇄ tools/mapeditor/jungle_1.json + jungle_2.json);
+// the internal ids stay jungle_1/jungle_2 for save-compat, the display names read
+// LAS DUNAS DESERT / DEEP DUNAS. Corridor landings are cross-aimed in the Valle
+// Dorado block below; the grotto keeps its baked landing (grotto is unchanged).
 /** the optional grotto — a chest run (the S9b gift-box pattern, three deep) */
 export function buildGrotto(): MapDef {
   const g = new Grid(14, 11, 'Y');
@@ -1331,246 +807,59 @@ export function buildGrotto(): MapDef {
 
 /* ================= VALLE DORADO (the village, §A6) ================= */
 
-export function buildValleDorado(): MapDef {
-  const g = new Grid(40, 30, '.');
-  g.sprinkle(33, ',~,~ff', 0.07);
-  // paths: the east gate lane, the shrine plaza, the pen spur
-  g.rect(1, 19, 16, 2, ':');
-  g.rect(16, 10, 2, 11, ':');
-  g.rect(16, 10, 14, 2, ':');
-  g.rect(28, 4, 2, 8, ':');
-  g.rect(17, 21, 2, 6, ':');
-  // the shrine plaza — pavers around the idol
-  g.rect(20, 14, 9, 6, 'p');
-  // THE LLAMA PEN: fences with a gate gap south
-  g.rect(4, 4, 9, 1, '-');
-  g.rect(4, 9, 9, 1, '-');
-  g.rect(4, 5, 1, 4, '|');
-  g.rect(12, 5, 1, 4, '|');
-  g.set(8, 9, '.'); // the gate gap
-  // ADDITIVE village-texture pass (docs/CITY_DESIGN_LANGUAGE.md): a Mercado
-  // forecourt at the shop, a well apron off the west lane, yard/garden fences
-  // at the two homes, flower beds at the civic doors + plaza corners, and a
-  // proper east gateway lane so the jungle door reads as an arrival, not a
-  // gap in the treeline. Every tile is hand-placed (no RNG) and re-checked
-  // against the fixed points (NPCs/llamas/gifts/doors) above.
-  // the Mercado forecourt lane (south of the shop, north of the top lane)
-  g.rect(29, 18, 10, 2, ':'); // east gateway lane: plaza SE -> jungle door mouth
-  g.rect(17, 27, 2, 2, ':'); // south pyramid spur extension -> the door mouth
-  g.rect(11, 17, 3, 2, 'p'); // well apron, north side of the west lane
-  // House-A yard fence with a gate gap (shifted to y27 — y26 clips valle_house's
-  // own solid footprint, which reaches down to tile row 26)
-  g.rect(2, 27, 7, 1, '-');
-  g.set(5, 27, '.');
-  // House-B side garden fence, along the house's west flank, with a gap
-  g.rect(32, 21, 1, 4, '|');
-  g.set(32, 22, '.');
-  // flower beds — chapel door flanks (east flanks shifted x11->x12: x11 grazes
-  // the chapel's own solid, which reaches to tile column 11)
-  g.set(7, 24, 'F');
-  g.set(7, 25, 'F');
-  g.set(12, 24, 'F');
-  g.set(12, 25, 'F');
-  // plaza corners
-  g.set(20, 14, 'F');
-  g.set(28, 14, 'F');
-  g.set(20, 19, 'F');
-  // shop forecourt corners
-  g.set(19, 9, 'F');
-  g.set(29, 9, 'F');
-  // scattered flower pairs along the lanes (west lane + the new east lane)
-  g.set(4, 18, 'f');
-  g.set(9, 18, 'f');
-  g.set(14, 21, 'f');
-  // east-lane pair: x31 shifted to x32 — x31,y17 is the doc_valle_out fixed
-  // NPC tile, never painted under a named fixed point
-  g.set(32, 17, 'f');
-  g.set(35, 17, 'f');
-  // llama-pen tufts (interior only, clear of every pen-llama spot)
-  g.set(5, 6, ',');
-  g.set(7, 7, ',');
-  g.set(10, 5, ',');
-  g.set(11, 8, ',');
-  g.set(6, 7, '~');
-  g.set(9, 6, '~');
-  // edge trees
-  const trees: Array<[number, number]> = [];
-  for (let x = 0; x < 40; x += 2) {
-    trees.push([x, 0]);
-    if (x < 16 || x > 21) trees.push([x, 28]);
-  }
-  for (let y = 2; y < 28; y += 2) {
-    trees.push([0, y]);
-    if (y < 18 || y > 22) trees.push([38, y]);
-  }
-  trees.push([24, 8], [33, 22], [7, 24], [31, 3]);
+/* ================= VALLE DORADO — the FOURSIDE rebuild (2026-07-08) ================= */
 
-  const npcs: NpcDef[] = [
-    { id: 'tomas', sprite: 'tomas', x: 9, y: 11, facing: 'down', dialogue: 'npc_tomas' },
-    { id: 'senora', sprite: 'senora', x: 19, y: 18, facing: 'down', dialogue: 'npc_senora', wander: true },
-    { id: 'valle_kid', sprite: 'wokeB', x: 26, y: 21, facing: 'left', dialogue: 'npc_valle_kid', wander: true },
-    { id: 'doc_valle_out', sprite: 'docValle', x: 31, y: 17, facing: 'down', dialogue: 'npc_doc_valle_out', ifFlag: 'grin_defeated' },
-    // THE WISHERS (§A6): gray and mute at the shrine until the Grin falls,
-    // then the same three people with their color back (flag-gated variants)
-    { id: 'wisher_a', sprite: 'wisherA', x: 22, y: 16, facing: 'up', dialogue: 'npc_wisher_a', unlessFlag: 'grin_defeated' },
-    { id: 'wisher_b', sprite: 'wisherB', x: 25, y: 17, facing: 'up', dialogue: 'npc_wisher_b', unlessFlag: 'grin_defeated' },
-    { id: 'wisher_c', sprite: 'wisherC', x: 27, y: 15, facing: 'up', dialogue: 'npc_wisher_c', unlessFlag: 'grin_defeated' },
-    { id: 'woke_a', sprite: 'wokeA', x: 22, y: 16, facing: 'down', dialogue: 'npc_woke_a', ifFlag: 'grin_defeated' },
-    { id: 'woke_b', sprite: 'wokeB', x: 25, y: 17, facing: 'down', dialogue: 'npc_woke_b', ifFlag: 'grin_defeated' },
-    { id: 'woke_c', sprite: 'wokeC', x: 27, y: 15, facing: 'down', dialogue: 'npc_woke_c', ifFlag: 'grin_defeated' },
-  ];
-  // §A10 #5: the six escaped llamas — each stands somewhere inconvenient
-  // until herded (its flag), then stands IN the pen (the herded twin).
-  // Llama 4 is the impostor: cornering it starts the §A7 beetle fight.
-  const LLAMA_SPOTS: Array<[number, number]> = [
-    [33, 6],
-    [3, 14],
-    [35, 25],
-    [22, 25],
-    [13, 16],
-    [30, 9],
-  ];
-  const PEN_SPOTS: Array<[number, number]> = [
-    [6, 6],
-    [8, 5],
-    [10, 7],
-    [6, 8],
-    [11, 5],
-    [9, 7],
-  ];
-  LLAMA_SPOTS.forEach(([x, y], i) => {
-    const n = i + 1;
-    npcs.push({
-      id: `llama_${n}`,
-      sprite: 'llama',
-      x,
-      y,
-      facing: x > 20 ? 'left' : 'right',
-      dialogue: `npc_llama_${n}`,
-      dog: true,
-      ifFlag: 'q_llama',
-      unlessFlag: `q_llama_${n}`,
-    });
-    npcs.push({
-      id: `llama_pen_${n}`,
-      sprite: 'llama',
-      x: PEN_SPOTS[i][0],
-      y: PEN_SPOTS[i][1],
-      facing: 'left',
-      dialogue: 'npc_llama_penned',
-      dog: true,
-      ifFlag: `q_llama_${n}`,
-    });
-  });
-
-  return {
-    id: 'valle_dorado',
-    name: 'VALLE DORADO',
-    music: 'valle',
-    settlement: 'village',
-    grid: g.out(),
-    props: [
-      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y, true), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
-      // the shrine — the village's whole problem, on a plinth
-      { sprite: 'idol_shrine', x: 23.5, y: 12.2, solid: { ox: 6, oy: 28, w: 28, h: 14 } },
-      // homes + the civic three (shop, clinic, chapel — Prompt 25's pair).
-      // These five are LANDMARK_FACADE_SPRITES (2026-07 hi-res promotion): collision
-      // rebuilds from the DRAWN footprint at runtime (the data solids stay as the boot
-      // fallback), and door.ox is re-measured against the hi-res art — the shop's blue
-      // door sits right of the awning, the clinic's mid-body, the chapel's arch center.
-      { sprite: 'valle_shop', x: 19, y: 4, solid: { ox: 0, oy: 20, w: 82, h: 46 }, door: { ox: 72, oy: 56, w: 16, h: 30, to: 'valle_shop_int', tx: 88, ty: 118 } },
-      { sprite: 'valle_clinic', x: 30, y: 12, solid: { ox: 0, oy: 20, w: 66, h: 46 }, door: { ox: 36, oy: 56, w: 16, h: 30, to: 'clinic_valle_int', tx: 88, ty: 118 } },
-      // (chapel: door.ox measured against its AUTHORED_WORLD_PROP_DISPLAY_SIZE 56×100 —
-      // the raw 326×581 PNG ran the porch into the south treeline; see authored.ts)
-      { sprite: 'valle_chapel', x: 8, y: 20, solid: { ox: 0, oy: 30, w: 50, h: 56 }, door: { ox: 16, oy: 78, w: 16, h: 30, to: 'chapel_valle_int', tx: 88, ty: 134 } },
-      { sprite: 'valle_house', x: 2, y: 22, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
-      { sprite: 'valle_house_b', x: 33, y: 19, solid: { ox: 0, oy: 20, w: 50, h: 46 } },
-      // §A4.5: the village table (Ch.2's third before the dungeon)
-      { sprite: 'picnic', x: 19, y: 23.4, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-      { sprite: 'phone_table', x: 14, y: 12, solid: { ox: 1, oy: 8, w: 14, h: 9 } },
-      { sprite: 'sign', x: 3, y: 18, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      // S17 M18 Part B (ADR-063): the Wish Token (§A5 key) appears in the idol's
-      // offering bowl once the Grin falls — the shrine stops eating wishes and
-      // leaves one behind. Open plaza paver below the idol; clear of the woke trio.
-      ...giftBox('gift_wish_token', 24, 16, { ifFlag: 'grin_defeated' }).props,
-      // ADDITIVE village-texture pass — furniture per district (all hand-placed,
-      // solid boxes matched to this file's own market_stall_a/pedestal_*/crate/
-      // trash_can conventions; see the grid-paint block above for the district
-      // skeleton). The Mercado forecourt (shop's south side, off its own solid
-      // footprint which reaches tile row 8): a stall either side, crates, a bin.
-      { sprite: 'crate', x: 17, y: 8, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'market_stall_a', x: 26, y: 8, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
-      { sprite: 'market_stall_b', x: 17, y: 9, solid: { ox: 1, oy: 14, w: 38, h: 14 } },
-      { sprite: 'crate_bananas', x: 27, y: 9, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'trash_can', x: 21, y: 10, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
-      // shrine plaza dressing: benches facing the idol, pedestals flanking the
-      // approach from the north, planters at the pavers' west/east shoulders
-      { sprite: 'bench', x: 21, y: 15, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'bench', x: 26, y: 18, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'pedestal_0', x: 22, y: 13, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
-      { sprite: 'pedestal_1', x: 26, y: 13, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
-      { sprite: 'planter', x: 20, y: 15, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-      { sprite: 'planter', x: 28, y: 15, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-      // the well, centerpiece of its apron off the west lane (clear of the
-      // loose llama at 13,16 — the apron sits one row south of it)
-      { sprite: 'well', x: 12, y: 17, solid: { ox: 4, oy: 20, w: 16, h: 10 } },
-      // chapel green: a bench + a picnic blanket on the grass, plant pots
-      // either side of the door corridor
-      { sprite: 'bench', x: 15, y: 22, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'picnic_blanket', x: 14, y: 24, solid: { ox: 1, oy: 10, w: 20, h: 12 } },
-      { sprite: 'plant_pot', x: 6, y: 21, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      { sprite: 'plant_pot', x: 11, y: 21, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      // the pen quarter: crates outside its south fence corners + one crate
-      // tucked in the pen's SE interior (clear of every pen-llama spot)
-      { sprite: 'crate', x: 4, y: 10, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'crate', x: 12, y: 10, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'crate', x: 11, y: 6, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      // the east gateway: a tree pair framing the lane, a crate at the mouth,
-      // and the jungle edge-dressing set back off the border-tree ring (which
-      // already occupies x38,y16 and x38,y22 — shifted to y17/y23, still
-      // framing the mouth, both odd rows so the tree loop's even-row stride
-      // never lands on them)
-      { sprite: treeSprite(30, 17, true), x: 30, y: 17, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
-      { sprite: treeSprite(30, 21, true), x: 30, y: 21, solid: { ox: 7, oy: 22, w: 12, h: 10 } },
-      { sprite: 'crate', x: 37, y: 21, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      // decorative only (no solid): a solid box here would reach into the
-      // door's y18-20 mouth rows at this tight column — pure dressing instead,
-      // matching this codebase's edge/marker-prop convention (e.g. ch6/7's
-      // prop_trail_marker, the bare `well` in ch6/7/8/9/10)
-      { sprite: 'edge_jungle_a', x: 38, y: 17 },
-      { sprite: 'edge_jungle_b', x: 38, y: 23 },
-      // south spur framing, just outside the 3-wide door mouth (x17-19 stays clear)
-      { sprite: 'pedestal_2', x: 16, y: 27, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
-      { sprite: 'pedestal_3', x: 19, y: 27, solid: { ox: 3, oy: 18, w: 16, h: 10 } },
-      // back-lot corner (SE), clear of the loose llama at 35,25
-      { sprite: 'trash_can', x: 37, y: 24, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
-      { sprite: 'crate', x: 36, y: 25, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    ],
-    npcs,
-    signs: [
-      { x: 3, y: 19, dialogue: 'sign_valle' },
-      { x: 24, y: 19, dialogue: 'sign_shrine', unlessFlag: 'grin_defeated' },
-      { x: 24, y: 19, dialogue: 'sign_shrine_after', ifFlag: 'grin_defeated' },
-      { x: 8, y: 10, dialogue: 'sign_pen' },
-      ...giftBox('gift_wish_token', 24, 16, { ifFlag: 'grin_defeated' }).signs,
-    ],
-    phones: [{ x: 14, y: 12 }],
-    doors: [
-      { x: 39, y: 18, w: 1, h: 3, to: 'jungle_2', tx: 576, ty: 312, facing: 'right' },
-      // the mountain stair to the pyramid's antechamber — ADR-102: land at the
-      // SOUTH doorstep (the valle return door, bottom of the approach) facing UP
-      // toward the gate, not at the top edge (the "enters from the wrong way" bug).
-      { x: 17, y: 29, w: 3, h: 1, to: 'pyramid_ante', tx: 168, ty: 232, facing: 'up' },
-    ],
-    spawners: [],
-    triggers: [
-      { id: 'valle_arrival', rect: { x: 36, y: 18, w: 3, h: 3 }, once: true },
-    ],
-  };
+/**
+ * Stage 4 is THE BIG GOLDEN CITY now (user directive 2026-07-08): the
+ * editor-authored Fourside grammar (src/data/maps_valle_dorado.ts ⇄
+ * tools/mapeditor/valle_dorado.json) — diamond boulevards behind a river
+ * seawall, the relocated STARFALL SPIRE + the three towers, the clock plaza
+ * where THE GOLDEN MINUTE now fires, and the old quarter the city grew around
+ * (shrine + pedestals + wishers/woke + the llama pen, flags verbatim).
+ * buildValleDorado (the jungle village) is RETIRED; settlement kind
+ * 'village' → 'city' in chapters.ts. The graft table carries the named doors
+ * the editor cannot express: the three hi-res landmark doors verbatim from the
+ * old builder, plus the spire lobby inherited from old Brickton.
+ */
+const VALLE_NAMED_DOORS: Record<
+  string,
+  { ox: number; oy: number; w: number; h: number; to: string; tx: number; ty: number }
+> = {
+  valle_shop: { ox: 72, oy: 56, w: 16, h: 30, to: 'valle_shop_int', tx: 88, ty: 118 },
+  valle_clinic: { ox: 36, oy: 56, w: 16, h: 30, to: 'clinic_valle_int', tx: 88, ty: 118 },
+  valle_chapel: { ox: 16, oy: 78, w: 16, h: 30, to: 'chapel_valle_int', tx: 88, ty: 134 },
+  bldg_colossus_spire: { ox: 104, oy: 510, w: 16, h: 18, to: 'spire_lobby', tx: 152, ty: 156 },
+};
+function makeValleDorado(): MapDef {
+  const m = valleDoradoMap;
+  for (const p of m.props) {
+    const spec = VALLE_NAMED_DOORS[p.sprite];
+    if (spec && !p.door) {
+      p.door = { ox: spec.ox, oy: spec.oy, w: spec.w, h: spec.h, to: spec.to, tx: spec.tx, ty: spec.ty };
+    }
+  }
+  return m;
 }
+/** the LIVE golden city (grafted once at module load — every consumer sees the doors) */
+export const valleDorado = makeValleDorado();
 
-/* ================= THE STEP-PYRAMID (rotating floors, §A6) ================= */
-
+// ── the stage-3→4 corridor: cross-aim every door landing off the LIVE documents
+// (each door lands 2 tiles inside its RECIPROCAL door's edge — computed, never baked) ──
+{
+  const aim = (map: MapDef, to: string, landing: { tx: number; ty: number }): void => {
+    const d = map.doors.find((dd) => dd.to === to);
+    if (d) {
+      d.tx = landing.tx;
+      d.ty = landing.ty;
+    }
+  };
+  aim(puertoSol, 'jungle_1', edgeLanding(dunasWestMap, 'puerto_sol'));
+  aim(dunasWestMap, 'puerto_sol', PUERTO_SOL_JUNGLE_RETURN);
+  aim(dunasWestMap, 'jungle_2', edgeLanding(dunasEastMap, 'jungle_1'));
+  aim(dunasEastMap, 'jungle_1', edgeLanding(dunasWestMap, 'jungle_2'));
+  aim(dunasEastMap, 'valle_dorado', edgeLanding(valleDorado, 'jungle_2'));
+  aim(valleDorado, 'jungle_2', edgeLanding(dunasEastMap, 'valle_dorado'));
+}
 /** rotor geometry shared by builder, scene, and tests */
 export const PYR_ROTOR = { x: 4, y: 4, size: 7 } as const;
 /** authored initial rotations per room (presses add to these, % 4) */
@@ -1717,7 +1006,9 @@ export function buildPyramidAnte(): MapDef {
       ...giftBox('gift_fools_idol', 16, 4).signs,
     ],
     phones: [{ x: 16, y: 12 }],
-    doors: [{ x: 9, y: 15, w: 3, h: 1, to: 'valle_dorado', tx: 288, ty: 456, facing: 'down' }],
+    // Fourside rebuild 2026-07-08: land just inside the golden city's SOUTH gate
+    // (placeholder px — buildChapter2Maps re-aims this via edgeLanding, ADR-012)
+    doors: [{ x: 9, y: 15, w: 3, h: 1, to: 'valle_dorado', tx: 728, ty: 1360, facing: 'down' }],
     spawners: [
       { enemies: ['step_mask', 'gilded_beetle', 'bronze_mask_guardian'], count: 2, rect: { x: 3, y: 5, w: 6, h: 5 } },
     ],
@@ -1947,11 +1238,11 @@ export function buildChapter2Maps(steps: {
   /** Brickton General's jittered doorstep (derived in maps.ts, ADR-012) */
   hospitalStep: { tx: number; ty: number };
 }): Record<string, MapDef> {
-  // S15i Task 4 (ADR-057): the live port is the GROWN city now; the frozen 1898
-  // core sits byte-identical in its top-left (proven in world_block.test). The
-  // interior doorsteps still derive from the core's facade doors (doorstepOf).
-  const puerto = growPuertoSol();
-  const valle = buildValleDorado();
+  // 2026-07-08: the live port + golden city are the EDITOR-AUTHORED documents
+  // (grafted + cross-aimed at module load above). The interior doorsteps still
+  // derive from the live facade doors (doorstepOf — the computed-coords law).
+  const puerto = puertoSol;
+  const valle = valleDorado;
   const mercadoStep = doorstepOf(puerto, 'mercado_int') ?? { tx: 96, ty: 130 };
   const clinicStep = doorstepOf(puerto, 'clinic_ps_int') ?? { tx: 224, ty: 130 };
   const deliStep = doorstepOf(puerto, 'deli_int') ?? { tx: 96, ty: 322 };
@@ -1963,6 +1254,17 @@ export function buildChapter2Maps(steps: {
   // authored mega facade in growPuertoSol (the clinic/mercado doorstepOf pattern)
   const hotelStep = doorstepOf(puerto, 'hotel_ps_lobby') ?? { tx: 1448, ty: 392 };
   const rooms = buildPyramidRooms();
+  const ante = buildPyramidAnte();
+  {
+    // the ante's return lands just inside Valle's SOUTH gate — computed off the
+    // live document's door zone like every other stage-3/4 landing (ADR-012)
+    const d = ante.doors.find((dd) => dd.to === 'valle_dorado');
+    const l = edgeLanding(valleDorado, 'pyramid_ante');
+    if (d) {
+      d.tx = l.tx;
+      d.ty = l.ty;
+    }
+  }
   return {
     brickton_docks: buildBricktonDocks(),
     boat_interior: buildBoatInterior(),
@@ -1981,15 +1283,15 @@ export function buildChapter2Maps(steps: {
     hotel_ps_room_a: buildHotelPsRoomA(),
     hotel_ps_room_b: buildHotelPsRoomB(),
     hotel_ps_pent: buildHotelPsPent(),
-    jungle_1: buildJungle1(),
-    jungle_2: buildJungle2(),
+    jungle_1: dunasWestMap,
+    jungle_2: dunasEastMap,
     grotto: buildGrotto(),
     valle_dorado: valle,
     valle_shop_int: buildValleShopInt(valleShopStep),
     clinic_valle_int: buildClinicValleInt(valleClinicStep),
     clinic_valle_ward: buildClinicValleWard(),
     chapel_valle_int: buildChapelValleInt(valleChapelStep),
-    pyramid_ante: buildPyramidAnte(),
+    pyramid_ante: ante,
     pyramid_1: rooms[0],
     pyramid_2: rooms[1],
     pyramid_3: rooms[2],

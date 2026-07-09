@@ -10,24 +10,10 @@
  * core fails HERE, loudly. (cityViolations at the larger size lives in maps.test.)
  */
 import { describe, expect, it } from 'vitest';
-import { buildBrickton, growBrickton, OTTERBROOK_EAST_GATE, MAPS } from './maps';
-import { buildPuertoSol, growPuertoSol, PUERTO_SOL_JUNGLE_RETURN } from './maps_ch2';
-import { cityViolations } from '../levelkit/metrics';
+import { BRICKTON_BUS_SPAWN, BRICKTON_FOOT_SPAWN, BRICKTON_DOCKS_RETURN, OTTERBROOK_EAST_GATE, MAPS } from './maps';
+import { PUERTO_SOL_JUNGLE_RETURN, PUERTO_SOL_PIER_SPAWN } from './maps_ch2';
+import { cityViolations, livingCityViolations } from '../levelkit/metrics';
 import type { MapDef } from './maps';
-
-/** the grown map's top-left CW×CH region equals the core grid, char-for-char */
-function coreRegionMatches(grown: MapDef, core: MapDef): void {
-  const cw = core.grid[0].length;
-  for (let y = 0; y < core.grid.length; y++) {
-    expect(grown.grid[y].slice(0, cw), `core row ${y}`).toBe(core.grid[y]);
-  }
-}
-
-/** occupy (the Living-City tenancy pass, ADR-098) may GRAFT a door onto a canon facade
- *  but must never move, drop, or relabel one. The props proof drops the door field, so
- *  position/sprite/solid stay byte-identical while doors are free to appear. */
-const propsModuloDoors = (props: MapDef['props']): string =>
-  JSON.stringify(props, (k, v) => (k === 'door' ? undefined : v));
 
 describe('THE LONG WALK — the multi-screen foot journey (Movement 3, ADR-056)', () => {
   const LEGS = ['meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'] as const;
@@ -107,150 +93,214 @@ describe('THE LONG WALK — the multi-screen foot journey (Movement 3, ADR-056)'
   });
 });
 
-describe('BRICKTON — the 2077 core is frozen (≈4× sprawl, stays a city)', () => {
-  it('two grown builds are byte-identical: grid, props, npc positions', () => {
-    const a = growBrickton();
-    const b = growBrickton();
-    expect(a.grid.join('|')).toBe(b.grid.join('|'));
-    expect(JSON.stringify(a.props)).toBe(JSON.stringify(b.props));
-    expect(JSON.stringify(a.npcs)).toBe(JSON.stringify(b.npcs));
-  });
+describe('TWOTON — the editor-authored Twoson rebuild (map id brickton, 2026-07-08)', () => {
+  // The frozen-core pair (buildBrickton 1995 / growBrickton 2077) is RETIRED — the
+  // map is now the map-editor DOCUMENT (src/data/maps_twoton.ts ⇄ tools/mapeditor/
+  // twoton.json), so these pins assert the LIVE invariants every system depends on,
+  // not a generator's byte stream. (The Otterbrook S3 precedent, applied to town #2.)
 
-  it('the live MAPS entry matches a fresh build (no later stream disturbed it)', () => {
-    expect(MAPS.brickton.grid.join('|')).toBe(growBrickton().grid.join('|'));
-  });
-
-  it('the frozen 2077 core GRID sits byte-identical in the top-left', () => {
-    coreRegionMatches(MAPS.brickton, buildBrickton());
-  });
-
-  it('every 2077 core prop/npc/sign/trigger keeps its coordinates', () => {
-    const core = buildBrickton();
-    const grown = MAPS.brickton;
-    // GROWTH keeps the core byte-identical (pre-occupy); occupy then only grafts doors (ADR-098).
-    expect(JSON.stringify(growBrickton().props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
-    expect(propsModuloDoors(grown.props.slice(0, core.props.length))).toBe(propsModuloDoors(core.props));
-    expect(JSON.stringify(grown.npcs.slice(0, core.npcs.length))).toBe(JSON.stringify(core.npcs));
-    expect(JSON.stringify(grown.signs.slice(0, core.signs.length))).toBe(JSON.stringify(core.signs));
-    expect(JSON.stringify(grown.triggers)).toBe(JSON.stringify(core.triggers)); // the two stories' flags + payphone ring, untouched
-  });
-
-  it('the door changes are the relocated docks + the re-routed cage (post-build fixups)', () => {
-    const core = buildBrickton();
-    const grown = MAPS.brickton;
-    // S15i Task 6 (ADR-059): the FROZEN core literal still reads → the_cage; only the
-    // LIVE map's door target is rewritten through the new CAGE PARK (the foot-door pattern)
-    expect(core.doors.some((d) => d.to === 'the_cage')).toBe(true);
-    expect(grown.doors.some((d) => d.to === 'the_cage')).toBe(false);
-    expect(grown.doors.some((d) => d.to === 'cage_park')).toBe(true); // re-routed through the park
-    expect(MAPS.cage_park.doors.some((d) => d.to === 'the_cage')).toBe(true); // the park leads in
-    expect(grown.doors.some((d) => d.to === 'brickton_docks')).toBe(true); // relocated, still wired
-    // ADR-056: the foot return now lands on the OVERPASS (the city-adjacent leg),
-    // not the town-edge meadow — the long walk reads correctly in both directions
-    expect(grown.doors.some((d) => d.to === 'meadow_overpass')).toBe(true);
-    expect(grown.doors.some((d) => d.to === 'meadow_mile')).toBe(false);
-  });
-
-  it('stays a CITY and clears the ADR-012 sweep AT the 4× size', () => {
-    expect(MAPS.brickton.settlement).toBe('city');
-    expect(cityViolations(MAPS.brickton)).toEqual([]);
-  });
-
-  it('grew about 4× and holds the raised XL envelope (≤12000 tiles, ≤320 props)', () => {
-    const core = buildBrickton();
-    const coreTiles = core.grid[0].length * core.grid.length;
-    const grownTiles = MAPS.brickton.grid[0].length * MAPS.brickton.grid.length;
-    expect(grownTiles / coreTiles).toBeGreaterThan(3.5);
-    expect(grownTiles).toBeLessThanOrEqual(12000);
-    expect(MAPS.brickton.props.length).toBeLessThanOrEqual(320);
-  });
-
-  it('the Cage, the dept, the bus stop, and the two stories survived byte-identical', () => {
+  it('is the editor document, registered live (name, size, settlement)', () => {
     const b = MAPS.brickton;
-    expect(b.props.some((p) => p.sprite === 'cage_gate')).toBe(true); // the S12 court reads from the street
-    expect(b.props.some((p) => p.door?.to === 'dos_f1')).toBe(true); // the Department
-    expect(b.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(true);
-    expect(b.triggers.some((t) => t.id === 'brickton_clock_goal')).toBe(true); // THE BRICKTON MINUTE flag
-    expect(b.triggers.some((t) => t.id === 'brickton_dial_goal')).toBe(true); // THE WARM DIAL TONE flag
+    expect(b.name).toBe('TWOTON');
+    expect(b.settlement).toBe('city');
+    expect(b.grid[0].length).toBe(124);
+    expect(b.grid.length).toBe(96);
+  });
+
+  it('clears the ADR-012 city sweep AND the Living-City Law at full size', () => {
+    expect(cityViolations(MAPS.brickton)).toEqual([]);
+    expect(livingCityViolations(MAPS.brickton)).toEqual([]);
+  });
+
+  it('keeps every fixed connection: the overpass, the docks, the Cage', () => {
+    const b = MAPS.brickton;
+    // the long-walk foot gate is re-aimed off the LIVE overpass trail (computed, never baked)
+    const foot = b.doors.find((d) => d.to === 'meadow_overpass');
+    expect(foot).toBeDefined();
+    expect(foot?.tx).toBe((MAPS.meadow_overpass.grid[0].length - 5) * 16 + 8);
+    expect(b.doors.some((d) => d.to === 'meadow_mile')).toBe(false); // ADR-056 holds
+    expect(b.doors.some((d) => d.to === 'brickton_docks')).toBe(true);
+    expect(b.doors.some((d) => d.to === 'cage_park')).toBe(true);
+    expect(MAPS.cage_park.doors.some((d) => d.to === 'the_cage')).toBe(true); // the park still leads in
+    // the docks' return door lands just inside the east gate, ON the drag (walkable road)
+    const back = MAPS.brickton_docks.doors.find((d) => d.to === 'brickton');
+    expect(back?.tx).toBe(BRICKTON_DOCKS_RETURN.tx);
+    expect(back?.ty).toBe(BRICKTON_DOCKS_RETURN.ty);
+    const ch = b.grid[BRICKTON_DOCKS_RETURN.ty >> 4][BRICKTON_DOCKS_RETURN.tx >> 4];
+    expect('RD_XP123'.includes(ch), `docks return tile '${ch}'`).toBe(true);
+  });
+
+  it('the four NAMED interiors keep their grafted facade doors (makeTwoton)', () => {
+    // (spire_lobby moved to Valle Dorado with the Starfall Spire — stage 4)
+    const doors = MAPS.brickton.props.filter((p) => p.door).map((p) => p.door?.to);
+    for (const to of ['dos_f1', 'starmart_int', 'hospital_int', 'arcade2_int']) {
+      expect(doors, to).toContain(to);
+    }
+  });
+
+  it('the dial story + the bus + the payphone ring keep their trigger ids', () => {
+    // (the CLOCK story — THE MINUTE — moved to Valle Dorado, stage 4: see below)
+    const ids = MAPS.brickton.triggers.map((t) => t.id);
+    for (const id of ['bus_stop_brickton', 'brickton_dial_goal', 'payphone_ring']) {
+      expect(ids, id).toContain(id);
+    }
+    expect(MAPS.brickton.props.some((p) => p.sprite === 'cage_gate')).toBe(true);
+  });
+
+  it('the bus + foot spawns land on open street', () => {
+    const b = MAPS.brickton;
+    const walkable = (px: { x: number; y: number }): boolean =>
+      'RD_XP123=:'.includes(b.grid[px.y >> 4][px.x >> 4]);
+    expect(walkable(BRICKTON_BUS_SPAWN)).toBe(true);
+    expect(walkable(BRICKTON_FOOT_SPAWN)).toBe(true);
+  });
+
+  it('holds the XL envelope and occupy gave the catalog facades purpose', () => {
+    const b = MAPS.brickton;
+    expect(b.grid[0].length * b.grid.length).toBeLessThanOrEqual(12000);
+    expect(b.props.length).toBeLessThanOrEqual(700); // the EB tree-lined read costs props; still far under Otterbrook's ~3.4k
+    // tenancy ran: at least one doorless catalog facade became a brickton_unit_*
+    expect(b.props.some((p) => p.door?.to.startsWith('brickton_unit_'))).toBe(true);
   });
 });
 
-describe('PUERTO SOL — the 1898 core is frozen (≈3× dock-district growth, stays a city)', () => {
-  it('two grown builds are byte-identical: grid, props, npc positions', () => {
-    const a = growPuertoSol();
-    const b = growPuertoSol();
-    expect(a.grid.join('|')).toBe(b.grid.join('|'));
-    expect(JSON.stringify(a.props)).toBe(JSON.stringify(b.props));
-    expect(JSON.stringify(a.npcs)).toBe(JSON.stringify(b.npcs));
+describe('PUERTO SOL — the editor-authored Threed rebuild (2026-07-08)', () => {
+  // buildPuertoSol (1898 frozen core) + growPuertoSol are RETIRED — the port is
+  // the map-editor DOCUMENT (maps_puerto_sol.ts ⇄ tools/mapeditor/puerto_sol.json),
+  // so these pins assert the LIVE invariants every system depends on.
+
+  it('is the editor document, registered live (name, size, settlement)', () => {
+    const p = MAPS.puerto_sol;
+    expect(p.name).toBe('PUERTO SOL');
+    expect(p.settlement).toBe('city');
+    expect(p.grid[0].length).toBe(100);
+    expect(p.grid.length).toBe(72);
   });
 
-  it('the live MAPS entry matches a fresh build (no later stream disturbed it)', () => {
-    expect(MAPS.puerto_sol.grid.join('|')).toBe(growPuertoSol().grid.join('|'));
-  });
-
-  it('the frozen 1898 core GRID sits byte-identical in the top-left', () => {
-    coreRegionMatches(MAPS.puerto_sol, buildPuertoSol());
-  });
-
-  it('every 1898 core prop/npc/sign keeps its coordinates; triggers stay a prefix', () => {
-    const core = buildPuertoSol();
-    const grown = MAPS.puerto_sol;
-    // GROWTH keeps the core byte-identical (pre-occupy); occupy then only grafts doors (ADR-098).
-    expect(JSON.stringify(growPuertoSol().props.slice(0, core.props.length))).toBe(JSON.stringify(core.props));
-    expect(propsModuloDoors(grown.props.slice(0, core.props.length))).toBe(propsModuloDoors(core.props));
-    expect(JSON.stringify(grown.npcs.slice(0, core.npcs.length))).toBe(JSON.stringify(core.npcs));
-    expect(JSON.stringify(grown.signs.slice(0, core.signs.length))).toBe(JSON.stringify(core.signs));
-    // the boat round-trip triggers stay FIRST + unchanged; the malecón beat appends
-    expect(JSON.stringify(grown.triggers.slice(0, core.triggers.length))).toBe(JSON.stringify(core.triggers));
-    expect(grown.triggers.some((t) => t.id === 'puerto_malecon')).toBe(true);
-  });
-
-  it('the only door change is the relocated jungle gate; the COSTA gate is byte-identical', () => {
-    const core = buildPuertoSol();
-    const grown = MAPS.puerto_sol;
-    const coreCosta = core.doors.find((d) => d.to === 'costa_estrella');
-    const grownCosta = grown.doors.find((d) => d.to === 'costa_estrella');
-    expect(JSON.stringify(grownCosta)).toBe(JSON.stringify(coreCosta)); // the north gate untouched
-    // the jungle gate relocated to the new FAR-EAST edge (the port moved out with the city)
-    const jungle = grown.doors.find((d) => d.to === 'jungle_1');
-    expect(jungle?.x).toBe(grown.grid[0].length - 1);
-    // and jungle_1's RETURN door lands just inside it (computed, not a baked coord)
-    expect(MAPS.jungle_1.doors.find((d) => d.to === 'puerto_sol')?.tx).toBe(PUERTO_SOL_JUNGLE_RETURN.tx);
-    expect(MAPS.jungle_1.doors.find((d) => d.to === 'puerto_sol')?.ty).toBe(PUERTO_SOL_JUNGLE_RETURN.ty);
-  });
-
-  it('stays a CITY and clears the ADR-012 sweep AT the bigger size', () => {
-    expect(MAPS.puerto_sol.settlement).toBe('city');
+  it('clears the ADR-012 city sweep AND the Living-City Law', () => {
     expect(cityViolations(MAPS.puerto_sol)).toEqual([]);
+    expect(livingCityViolations(MAPS.puerto_sol)).toEqual([]);
   });
 
-  it('grew about 3× and holds the XL envelope (≤12000 tiles, ≤120 props)', () => {
-    const core = buildPuertoSol();
-    const coreTiles = core.grid[0].length * core.grid.length;
-    const grownTiles = MAPS.puerto_sol.grid[0].length * MAPS.puerto_sol.grid.length;
-    expect(grownTiles / coreTiles).toBeGreaterThan(2.5);
-    expect(grownTiles).toBeLessThanOrEqual(12000);
-    expect(MAPS.puerto_sol.props.length).toBeLessThanOrEqual(120);
-  });
-
-  it('the dock district EARNS its size (§B4): megas, a 2nd rest, a present, a beat', () => {
-    const ps = MAPS.puerto_sol;
-    // the colonial MEGAS stand (the mega pass placed them — common here)
-    expect(ps.props.some((p) => p.sprite === 'bldg_ps_catedral' || p.sprite === 'bldg_ps_aduana' || p.sprite === 'bldg_ps_gran_hotel')).toBe(true);
-    // a 2nd §A4.5 rest on the malecón (the core's plaza table is the first)
-    expect(ps.props.filter((p) => p.sprite === 'picnic').length).toBe(2);
-    // a hidden present + its sign (the gift-box pattern)
-    expect(ps.props.some((p) => p.sprite === 'gift_box')).toBe(true);
-    expect(ps.signs.some((s) => s.dialogue === 'ps_dock_gift')).toBe(true);
-    // S17 M18 Part B (ADR-063): the MERCADO SET cache + the dockside doubloon, appended
-    for (const [flag, x, y] of [['mercado_stall', 70, 27], ['gift_doubloon', 114, 28]] as const) {
-      expect(ps.props.some((p) => p.sprite === 'gift_box' && Math.round(p.x) === x && Math.round(p.y) === y), flag).toBe(true);
-      expect(ps.signs.some((s) => s.dialogue === flag && s.unlessFlag === flag), flag).toBe(true);
-      expect(buildPuertoSol().signs.some((s) => s.dialogue === flag)).toBe(false); // append-only
+  it('the five NAMED interiors keep their grafted facade doors (makePuertoSol)', () => {
+    const doors = MAPS.puerto_sol.props.filter((p) => p.door).map((p) => p.door?.to);
+    for (const to of ['mercado_int', 'clinic_ps_int', 'museum_int', 'deli_int', 'hotel_ps_lobby']) {
+      expect(doors, to).toContain(to);
     }
-    // the boat + departure board + costa wiring all survived (Ch.2 must still run)
-    expect(ps.props.some((p) => p.sprite === 'banana_boat')).toBe(true);
-    expect(ps.props.some((p) => p.sprite === 'departure_board')).toBe(true);
-    expect(ps.triggers.some((t) => t.id === 'board_boat_return')).toBe(true);
+  });
+
+  it('the boat round-trip + the arrival + the malecón beats survive on the quay', () => {
+    const p = MAPS.puerto_sol;
+    expect(p.props.some((pr) => pr.sprite === 'banana_boat')).toBe(true);
+    expect(p.props.some((pr) => pr.sprite === 'departure_board')).toBe(true);
+    for (const id of ['board_boat_return', 'puerto_arrival', 'puerto_malecon']) {
+      expect(p.triggers.map((t) => t.id), id).toContain(id);
+    }
+    // the pier spawn (the boat drops you here) is a walkable quay tile
+    const ch = p.grid[PUERTO_SOL_PIER_SPAWN.y >> 4][PUERTO_SOL_PIER_SPAWN.x >> 4];
+    expect('d=Rp:D_X123'.includes(ch), `pier tile '${ch}'`).toBe(true);
+  });
+
+  it('the three §A8 gift caches keep their flag pairs', () => {
+    const p = MAPS.puerto_sol;
+    for (const flag of ['ps_dock_gift', 'mercado_stall', 'gift_doubloon']) {
+      expect(p.props.some((pr) => pr.sprite === 'gift_box' && pr.unlessFlag === flag), flag).toBe(true);
+      expect(p.signs.some((s) => s.dialogue === flag && s.unlessFlag === flag), flag).toBe(true);
+    }
+    expect(p.props.filter((pr) => pr.sprite === 'picnic').length).toBe(2); // the §A4.5 pair holds
+  });
+
+  it('the corridor gates are wired both ways with COMPUTED landings', () => {
+    const p = MAPS.puerto_sol;
+    expect(p.doors.some((d) => d.to === 'costa_estrella')).toBe(true);
+    const east = p.doors.find((d) => d.to === 'jungle_1');
+    expect(east).toBeDefined();
+    // the desert road's return lands just inside the port's east gate, on road
+    const back = MAPS.jungle_1.doors.find((d) => d.to === 'puerto_sol');
+    expect(back?.tx).toBe(PUERTO_SOL_JUNGLE_RETURN.tx);
+    expect(back?.ty).toBe(PUERTO_SOL_JUNGLE_RETURN.ty);
+    const ch = p.grid[PUERTO_SOL_JUNGLE_RETURN.ty >> 4][PUERTO_SOL_JUNGLE_RETURN.tx >> 4];
+    expect('R=D_XP123:'.includes(ch), `return tile '${ch}'`).toBe(true);
+  });
+});
+
+describe('LAS DUNAS — the Dusty Dunes crossing (jungle_1/jungle_2, 2026-07-08)', () => {
+  it('the legs are the desert now, chained both ways on walkable landings', () => {
+    const w = MAPS.jungle_1;
+    const e = MAPS.jungle_2;
+    expect(w.name).toBe('LAS DUNAS DESERT');
+    expect(e.name).toBe('DEEP DUNAS');
+    const walkable = (m: typeof w, tx: number, ty: number): boolean =>
+      !'beEKW|-'.includes(m.grid[ty >> 4][tx >> 4]);
+    for (const [m, to] of [
+      [w, 'jungle_2'],
+      [e, 'jungle_1'],
+      [e, 'valle_dorado'],
+    ] as const) {
+      const d = m.doors.find((dd) => dd.to === to);
+      expect(d, `${m.id}→${to}`).toBeDefined();
+      const target = MAPS[to];
+      expect(d && walkable(target, d.tx, d.ty), `${m.id}→${to} landing`).toBe(true);
+    }
+  });
+
+  it('the grotto + the emerald rest survive in the deep desert', () => {
+    const e = MAPS.jungle_2;
+    expect(e.doors.some((d) => d.to === 'grotto')).toBe(true);
+    expect(e.props.some((p) => p.sprite === 'gift_box' && p.unlessFlag === 'gift_emerald')).toBe(true);
+    expect(e.props.some((p) => p.sprite === 'picnic')).toBe(true);
+    // desert dressing actually shipped (cacti + rocks + an oasis pool)
+    expect(e.props.some((p) => p.sprite === 'edge_desert_cactus')).toBe(true);
+    expect(e.grid.some((row) => row.includes('e'))).toBe(true);
+  });
+});
+
+describe('VALLE DORADO — the Fourside golden city (stage 4, 2026-07-08)', () => {
+  it('is a CITY now and clears the ADR-012 sweep + the Living-City Law', () => {
+    const v = MAPS.valle_dorado;
+    expect(v.settlement).toBe('city');
+    expect(cityViolations(v)).toEqual([]);
+    expect(livingCityViolations(v)).toEqual([]);
+  });
+
+  it('inherited the skyline: the Starfall Spire (lobby door) + the three towers', () => {
+    const v = MAPS.valle_dorado;
+    expect(v.props.some((p) => p.sprite === 'bldg_colossus_spire' && p.door?.to === 'spire_lobby')).toBe(true);
+    for (const t of ['bldg_tower_arms', 'bldg_tower_glass', 'bldg_tower_corp']) {
+      expect(v.props.some((p) => p.sprite === t), t).toBe(true);
+    }
+  });
+
+  it('THE GOLDEN MINUTE lives here now: clock prop + clock lady + the goal trigger', () => {
+    const v = MAPS.valle_dorado;
+    expect(v.props.some((p) => p.sprite === 'town_clock')).toBe(true);
+    expect(v.npcs.some((n) => n.id === 'clock_lady')).toBe(true);
+    const trig = v.triggers.find((t) => t.id === 'brickton_clock_goal');
+    expect(trig).toBeDefined();
+    // the trigger rect covers the clock so the beat fires at the plaza
+    const clock = v.props.find((p) => p.sprite === 'town_clock');
+    expect(
+      trig && clock && clock.x >= trig.rect.x - 1 && clock.x <= trig.rect.x + trig.rect.w + 1,
+    ).toBe(true);
+    // and Twoton no longer carries it (the beat MOVED, not copied)
+    expect(MAPS.brickton.triggers.some((t) => t.id === 'brickton_clock_goal')).toBe(false);
+    expect(MAPS.brickton.props.some((p) => p.sprite === 'town_clock')).toBe(false);
+  });
+
+  it('the old quarter keeps its named doors + the shrine + the pyramid gate', () => {
+    const v = MAPS.valle_dorado;
+    const doors = v.props.filter((p) => p.door).map((p) => p.door?.to);
+    for (const to of ['valle_shop_int', 'clinic_valle_int', 'chapel_valle_int']) {
+      expect(doors, to).toContain(to);
+    }
+    expect(v.props.some((p) => p.sprite === 'idol_shrine')).toBe(true);
+    expect(v.doors.some((d) => d.to === 'pyramid_ante')).toBe(true);
+    expect(v.doors.some((d) => d.to === 'jungle_2')).toBe(true);
+    expect(v.triggers.some((t) => t.id === 'valle_arrival')).toBe(true);
+    // the pyramid's RETURN lands on a walkable Valle tile just inside the south gate
+    const back = MAPS.pyramid_ante.doors.find((d) => d.to === 'valle_dorado');
+    expect(back).toBeDefined();
+    const ch = back ? v.grid[back.ty >> 4][back.tx >> 4] : '#';
+    expect('R=D_XP123:p'.includes(ch), `pyramid return tile '${ch}'`).toBe(true);
   });
 });

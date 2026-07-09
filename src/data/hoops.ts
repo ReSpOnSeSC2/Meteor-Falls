@@ -97,7 +97,7 @@ export const WALK_ONS: Record<string, WalkOnDef> = Object.fromEntries(
       id: 'pigeon_kid',
       name: 'Crumbs',
       sprite: 'pigeonKid',
-      line: 'Boxes out like the rebound is the last crumb in Brickton.',
+      line: 'Boxes out like the rebound is the last crumb in Twoton.',
       rating: { spd: 41, sht: 44, dnk: 26, dfn: 40 },
       archetype: 'balanced',
     }),
@@ -503,7 +503,7 @@ export const HOOPS_TEXT = {
   tallyExp: '{name} gained {exp} EXP.',
   tallyLevel: '{name} jumped to level {n}!',
   tallyDrop: 'The bench passes you: {item}.',
-  tallyTitle: 'BRICKTON CLASSIC CHAMPIONS: {playername} AND THE FIVE.',
+  tallyTitle: 'TWOTON CLASSIC CHAMPIONS: {playername} AND THE FIVE.',
   tallyRepeat: 'CHAMPIONS AGAIN. THE POT: ${cash}, STREET TERMS.',
   /* S12c: PERMIT'S SCHOOL — the cage tutorial (skippable; flag cage_tutored).
    * One flat key per lesson; the scene advances each on the deed, not the
@@ -520,7 +520,7 @@ export const HOOPS_TEXT = {
   tutDone: "SCHOOL'S OUT. THE CAGE KNOWS YOUR NAME NOW.",
   tutSkip: 'B: SKIP THE LESSONS',
   /* the chalk board */
-  boardTitle: 'THE BRICKTON CLASSIC — 32 FIVES, ONE CHALK LINE',
+  boardTitle: 'THE TWOTON CLASSIC — 32 FIVES, ONE CHALK LINE',
   boardRound: ['ROUND OF 32', 'ROUND OF 16', 'QUARTERFINALS', 'SEMIFINALS', 'THE FINAL'] as const,
   boardYou: 'YOUR FIVE',
   boardNext: 'NEXT: {team}',

@@ -11,7 +11,7 @@
  * and the third fade-restarts the floor with the room carved open. Walk in
  * through the gap (tiles 20-21, row 6) for the join; the exit column (24,
  * rows 3-4) runs the Manager fight — pick Mia's PRAY with Down,Down,KeyZ on
- * her command row. Mom's call: payphone at brickton (14,26), A to answer.
+ * her command row. Mom's call: the payphone at Twoton's bus corner (16,66), A to answer.
  * Bots beware: holdKey is eaten while dlg.busy — drain pages with key() first.
  * S3: Enter (START) opens the EB command menu — it's a separate scene over a
  * paused world; the drive-it recipe lives in MenuScene's header.
@@ -337,7 +337,9 @@ const NORWAY_TILE_SKIN: Readonly<Record<string, string>> = {
  *  Zanzibel = ochre-sand spice port, the Savanna Run = sun-bleached grassland with a cracked
  *  dust track, the Laughing Ruins = cracked dry earth walled in carved laughing stone. Each
  *  tile carries the SAME solidity as the base it replaces, so the remaps are purely cosmetic. */
-const ZANZIBEL_SKIN_MAPS: ReadonlySet<string> = new Set(['zanzibel']);
+// + the Ch.2 LAS DUNAS crossing (Dusty Dunes rebuild 2026-07-08): the desert legs
+// paint sand/rock/oasis directly and borrow the ochre skin for their grass/bush/road
+const ZANZIBEL_SKIN_MAPS: ReadonlySet<string> = new Set(['zanzibel', 'jungle_1', 'jungle_2']);
 const ZANZIBEL_TILE_SKIN: Readonly<Record<string, string>> = {
   grass_a: 'africa_sand', // the port ground (`.`) → ochre sand
   grass_b: 'africa_sand', // decorative grass (`,`)
@@ -569,9 +571,11 @@ const EDGE_BIOME: Record<EdgeBiome, EdgeFeatureDef> = {
  *  basalt — both share the LANI skin). Anything not listed falls through to the tile
  *  skin's default, then to 'temperate'. */
 const MAP_BIOME: Readonly<Record<string, EdgeBiome>> = {
-  // Ch.2 — South America: jungle, the desert pyramid, tropical coast
-  jungle_1: 'jungle', jungle_2: 'jungle', grotto: 'cave',
+  // Ch.2 — South America: LAS DUNAS desert crossing (Dusty Dunes rebuild,
+  // 2026-07-08), the desert pyramid, tropical coast
+  jungle_1: 'desert', jungle_2: 'desert', grotto: 'cave',
   puerto_sol: 'tropical', costa_estrella: 'tropical',
+  valle_dorado: 'tropical', // the golden city rises where the river meets the dunes
   pyramid_ante: 'desert', pyramid_apex: 'desert',
   // Ch.4 — Norway fjords (authored Whisperwood pines)
   kvisthavn: 'mountain_pine', bootstep_moor: 'mountain_pine', lilleby: 'mountain_pine',
@@ -4202,7 +4206,7 @@ export class OverworldScene extends Phaser.Scene {
       ? `Pick up the Classic game (Q${h.match.quarter})`
       : h.bracket
         ? `Play the Classic: ${HOOPS_TEXT.boardRound[h.bracket.round]}`
-        : 'Register for the Brickton Classic';
+        : 'Register for the Twoton Classic';
     const pick = await this.dlg.ask(['Run 3v3 pickup (first to 21)', classicRow, 'Never mind'], { cancelIndex: 2 });
     if (pick === 0) {
       const seed = pickupSeed(h.played);
@@ -5017,11 +5021,12 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
+  /** The Department's appointment gate — DIAL-ONLY since the Minute moved to
+   *  Valle Dorado (stage 4, the big city; user directive 2026-07-08). One story
+   *  in Twoton now: THE WARM DIAL TONE at the bus-corner payphone. */
   private async bricktonDepartmentGate(): Promise<boolean> {
     if (this.mapDef.id !== 'brickton' || GS.flag('faye_joined')) return false;
-    const clock = !!GS.flag('brickton_clock_goal');
-    const dial = !!GS.flag('brickton_dial_goal');
-    if (clock && dial) {
+    if (GS.flag('brickton_dial_goal')) {
       if (!GS.flag('brickton_goals_ready')) {
         this.cut = true;
         AUDIO.sfx('confirm');
@@ -5033,9 +5038,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.cut = true;
     AUDIO.sfx('cursor');
-    if (!clock && !dial) await this.dlg.say(...DIALOGUE.brickton_goal_gate_none);
-    else if (!clock) await this.dlg.say(...DIALOGUE.brickton_goal_gate_clock);
-    else await this.dlg.say(...DIALOGUE.brickton_goal_gate_dial);
+    await this.dlg.say(...DIALOGUE.brickton_goal_gate_none);
     this.cut = false;
     return true;
   }
@@ -5285,7 +5288,9 @@ export class OverworldScene extends Phaser.Scene {
         if (!GS.flag('city_reveal_done')) await this.cityRevealScene();
         break;
       case 'brickton_clock_goal':
-        if (!GS.flag('faye_joined') && !GS.flag('brickton_clock_goal')) await this.bricktonClockGoalScene();
+        // THE GOLDEN MINUTE — lives on Valle Dorado's clock plaza now (stage 4,
+        // the big city; user directive 2026-07-08). Fires once, any chapter.
+        if (!GS.flag('brickton_clock_goal')) await this.bricktonClockGoalScene();
         break;
       case 'brickton_dial_goal':
         if (!GS.flag('faye_joined') && !GS.flag('brickton_dial_goal')) await this.bricktonDialGoalScene();
@@ -5513,7 +5518,7 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     await this.dlg.say(...(from === 'docks' ? DIALOGUE.boat_ask_out : DIALOGUE.boat_ask_home));
-    const label = from === 'docks' ? 'Board for PUERTO SOL' : 'Ride home to Brickton';
+    const label = from === 'docks' ? 'Board for PUERTO SOL' : 'Ride home to Twoton';
     const pick = await this.dlg.ask([label, 'Stay ashore'], { cancelIndex: 1 });
     if (pick !== 0) {
       this.cut = false;
@@ -7445,25 +7450,33 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /**
-   * THE BRICKTON MINUTE (S15h) — a real beat on the same gate flag (was a
-   * walk-on-a-rect toast). The clock strikes seven wrong minutes, the block of
-   * blazers turns in unison, the CLOCK LADY (the NPC already standing there)
-   * reads you the city, and the Star Locket takes one impossible tick. Paced by
-   * the camera so each line lands, then the Heartlight jingle closes it.
+   * THE GOLDEN MINUTE (was THE BRICKTON MINUTE, S15h) — relocated to VALLE
+   * DORADO's clock plaza (stage 4, the big city; user directive 2026-07-08).
+   * The clock strikes seven wrong minutes, the gilded skyline checks its wrist,
+   * the CLOCK LADY reads you the city, and the Star Locket takes one impossible
+   * tick. The clock + the lady are FOUND ON THE LIVE MAP (never baked coords —
+   * the old scene panned at hardcoded tiles and went stale on the first rebuild).
    */
   private async bricktonClockGoalScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('brickton_clock_goal');
+    const clockProp = this.mapDef.props.find((p) => p.sprite === 'town_clock');
+    const lady = this.mapDef.npcs.find((n) => n.id === 'clock_lady');
+    // degrade gracefully but LOUDLY — the beat depends on map content that lives
+    // in an editor document now (a rename there would otherwise fail silently)
+    if (!clockProp || !lady) console.warn(`GOLDEN MINUTE: missing ${!clockProp ? 'town_clock prop' : ''} ${!lady ? 'clock_lady npc' : ''} on ${this.mapDef.id}`);
+    const cx = (clockProp ? clockProp.x + 0.7 : this.player.x / TILE_PX) * TILE_PX;
+    const cy = (clockProp ? clockProp.y + 0.4 : this.player.y / TILE_PX) * TILE_PX;
     // the clock, high over the plaza
-    this.cameras.main.pan(62 * TILE_PX, 13 * TILE_PX, 900, 'Sine.easeInOut', true);
+    this.cameras.main.pan(cx, cy, 900, 'Sine.easeInOut', true);
     await this.wait(400);
     AUDIO.sfx('thud'); // it strikes
-    this.sparkleBurst(62 * TILE_PX + TILE_PX / 2, 13 * TILE_PX + s(6), 10);
-    await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(0, 2)); // the strike + the block turning
+    this.sparkleBurst(cx + TILE_PX / 2, cy + s(6), 10);
+    await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(0, 2)); // the strike + the skyline turning
     // the clock lady, leaning on the plaza rail, explains
-    this.cameras.main.pan(63 * TILE_PX, 15 * TILE_PX, 650, 'Sine.easeInOut', true);
+    if (lady) this.cameras.main.pan(lady.x * TILE_PX, lady.y * TILE_PX, 650, 'Sine.easeInOut', true);
     AUDIO.sfx('cursor');
-    await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(2, 5)); // "@That is Brickton time…"
+    await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(2, 5)); // "@That is Valle Dorado time…"
     // back to the hero — the Locket takes the tick
     this.cameras.main.pan(this.player.x, this.player.y, 650, 'Sine.easeInOut', true);
     await this.wait(200);
@@ -7471,7 +7484,7 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.sfx('ember');
     await this.dlg.say(...DIALOGUE.brickton_goal_clock.slice(5)); // the locket keeps it warm + the button
     AUDIO.jingle('victory', 1600, this.mapDef.music);
-    toast(this, 'GOAL: BRICKTON MINUTE');
+    toast(this, 'GOAL: GOLDEN MINUTE');
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.cut = false;
   }
@@ -7485,13 +7498,17 @@ export class OverworldScene extends Phaser.Scene {
   private async bricktonDialGoalScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('brickton_dial_goal');
-    // the payphone on the bus-stop corner
-    this.cameras.main.pan(14 * TILE_PX, 26 * TILE_PX, 800, 'Sine.easeInOut', true);
+    // the payphone on the bus-stop corner — FOUND on the live map (never baked
+    // coords; the Twoton rebuild moved it and the old (14,26) pan went stale)
+    const phone = this.mapDef.phones[0];
+    const px = (phone ? phone.x : this.player.x / TILE_PX) * TILE_PX;
+    const py = (phone ? phone.y : this.player.y / TILE_PX) * TILE_PX;
+    this.cameras.main.pan(px, py, 800, 'Sine.easeInOut', true);
     AUDIO.sfx('phone');
     await this.wait(420);
     await this.dlg.say(...DIALOGUE.brickton_goal_dial.slice(0, 4)); // the ring + the quarter man names the note
     // the hero lifts the Locket to the receiver
-    this.sparkleBurst(14 * TILE_PX + TILE_PX / 2, 26 * TILE_PX, 10);
+    this.sparkleBurst(px + TILE_PX / 2, py, 10);
     AUDIO.sfx('ember');
     await this.dlg.say(...DIALOGUE.brickton_goal_dial.slice(4)); // it folds in + the smell of home + the gain
     AUDIO.jingle('victory', 1600, this.mapDef.music);
@@ -7844,7 +7861,7 @@ export class OverworldScene extends Phaser.Scene {
   private async busAsk(dest: 'brickton' | 'otterbrook'): Promise<void> {
     this.cut = true;
     await this.dlg.say(...(dest === 'brickton' ? DIALOGUE.bus_ask_brickton : DIALOGUE.bus_ask_home));
-    const label = dest === 'brickton' ? 'Board the 6:15 to Brickton' : 'Ride back to Otterbrook';
+    const label = dest === 'brickton' ? 'Board the 6:15 to Twoton' : 'Ride back to Otterbrook';
     const pick = await this.dlg.ask([label, 'Stay'], { cancelIndex: 1 });
     if (pick !== 0) {
       this.cut = false;

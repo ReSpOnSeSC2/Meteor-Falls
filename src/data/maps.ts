@@ -8,9 +8,10 @@
  *   o office floor   O office wall   c cubicle partition   k cubicle desk
  *   y day sky   u bus floor   U bus wall
  */
+import { Grid, treeSprite, doorstepOf } from './mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
-import { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
-import { buildChapter2Maps } from './maps_ch2';
+import { twotonMap } from './maps_twoton';
+import { buildChapter2Maps, valleDorado, PUERTO_SOL_NORTH_GATE } from './maps_ch2';
 import { buildChapter3Maps } from './maps_ch3';
 import { buildChapter4Maps } from './maps_ch4';
 import { buildChapter5Maps } from './maps_ch5';
@@ -21,7 +22,7 @@ import { buildChapter9Maps } from './maps_ch9';
 import { buildChapter10Maps } from './maps_ch10';
 // S15h (ADR-049) — THE WORLD BLOCK: the forge lays the new growth as a DISTRICT
 // stitched onto each frozen core (the bones); the soul stays hand-authored.
-import { buildDistrict, buildRoute, buildWoods, Streams } from '../levelkit';
+import { buildRoute, buildWoods, Streams } from '../levelkit';
 import { placeFacade, facadeDims } from '../levelkit/kit';
 import { occupyCity } from './citylife';
 import { AREA_SKINS } from '../spritegen/buildings';
@@ -2513,793 +2514,52 @@ function buildViviRoom(): MapDef {
   };
 }
 
-/* ------------------- BRICKTON CITY (S1, organic layout per ADR-012) ------------------- */
+/* ------------------- TWOTON (map id 'brickton') — the Twoson rebuild ------------------- */
 
-/** where the bus drops you — OverworldScene's bus flow reads this */
-export const BRICKTON_BUS_SPAWN = { x: 88, y: 476 } as const;
+/** where the bus drops you — OverworldScene's bus flow reads this (the bus corner on the drag) */
+export const BRICKTON_BUS_SPAWN = { x: 14 * 16 + 8, y: 63 * 16 } as const;
 
-/** where MEADOW MILE drops you on foot (S15h) — the grown city's SOUTH GATEWAY,
- *  in the new district (the orientation gate reads this). Computed for the 144×76
- *  grown grid; the bus still lands inside the old downtown (BRICKTON_BUS_SPAWN). */
-export const BRICKTON_FOOT_SPAWN = { x: 30 * 16 + 8, y: 71 * 16 } as const;
+/** where the LONG WALK drops you on foot — just inside the west road mouth off the overpass */
+export const BRICKTON_FOOT_SPAWN = { x: 4 * 16 + 8, y: 14 * 16 } as const;
 
-/**
- * BRICKTON CITY — "Break the stripes" re-layout (docs/CITY_DESIGN_LANGUAGE.md).
- * Skeleton unchanged (streets A/B/Market, the two avenues) — every FIXED
- * POINT (bus corner, payphone cluster, clock plaza trigger, the cage lot)
- * sits at its exact tile, still walkable. What changes is the TEXTURE inside
- * the blocks: curb parking lanes read as real streets, two formal alleys
- * break the north row's unbroken baseline, the midtown reads as three
- * quarters (transit/lots, row-house strip, park-as-a-room), the clock plaza
- * gets benches that face the clock, and the south market lot becomes an
- * actual market. All irregularity still comes from one fixed seed (1995 —
- * the summer it fell) so the city is sporadic to the eye but identical on
- * every boot.
- */
-/** THE FROZEN 2077 CORE — byte-identical forever (the byte-identical test
- *  proves growBrickton copies its grid + props unchanged into the top-left;
- *  only the docks EXIT door relocates to the grown city's new edge). */
-export function buildBrickton(): MapDef {
-  const rng = seededRng(1995);
-  const jit = (n: number): number => Math.floor(rng() * n);
-
-  const g = new Grid(72, 38, '=');
-  // bounds + the brick spine the north row backs onto
-  g.rect(0, 0, 72, 1, 'B');
-  g.rect(0, 0, 1, 38, 'B');
-  g.rect(71, 0, 1, 38, 'B');
-  g.rect(0, 37, 72, 1, 'B');
-  g.rect(1, 1, 70, 5, 'B');
-  // three streets + two avenues: Brickton is a real city block now, not a strip
-  g.rect(1, 8, 70, 3, 'R');
-  g.rect(1, 21, 70, 3, 'R');
-  g.rect(25, 31, 46, 3, 'R');
-  g.rect(25, 8, 3, 26, 'R');
-  g.rect(58, 21, 3, 13, 'R');
-  // dashed centerlines, phase-shifted per street, broken at the avenue + crossings
-  const skipA = new Set([17, 18, 23, 24, 25, 26, 27]);
-  const skipB = new Set([25, 26, 27, 28, 29]);
-  for (let x = 1; x < 71; x++) {
-    if (x % 4 < 2 && !skipA.has(x)) g.set(x, 9, 'D');
-    if ((x + 2) % 4 < 2 && !skipB.has(x)) g.set(x, 22, 'D');
-    if ((x + 1) % 4 < 2 && x >= 25 && x < 71 && ![58, 59, 60].includes(x)) g.set(x, 32, 'D');
-  }
-  // crosswalks: by the hospital, and flanking the avenue at each street
-  g.rect(17, 8, 2, 3, 'X');
-  g.rect(23, 8, 2, 3, 'X');
-  g.rect(28, 21, 2, 3, 'X');
-  g.rect(57, 21, 2, 3, 'X');
-  g.rect(25, 30, 3, 2, 'X');
-  g.rect(58, 30, 3, 2, 'X');
-
-  // M1 — PARKED LANES: 1-wide curb segments on the outer lane of streets A/B
-  // (never the centerline row, never a crosswalk/avenue-mouth/alley-mouth
-  // column), so the avenue reads as "cars actually park here" without
-  // touching traffic width. Plain g.set calls — consumes NO rng (ADR-016),
-  // so the 1995 stream below stays exactly the sequence it always drew.
-  const paveSkipA = (x: number): boolean => (x >= 16 && x <= 28) || (x >= 55 && x <= 61);
-  for (const [x0, len] of [[3, 10], [30, 6], [43, 10], [62, 6]] as const) {
-    for (let x = x0; x < x0 + len; x++) if (!paveSkipA(x)) g.set(x, 8, 'P'); // street A north curb
-  }
-  const paveSkipB = (x: number): boolean => (x >= 25 && x <= 30) || (x >= 55 && x <= 61);
-  for (const [x0, len] of [[3, 10], [31, 8], [46, 6], [62, 6]] as const) {
-    for (let x = x0; x < x0 + len; x++) if (!paveSkipB(x)) g.set(x, 23, 'P'); // street B south curb
-  }
-
-  // west mid-block: the parking lot (always emptier than it should be)
-  g.rect(2, 13, 8, 5, 'P');
-  // M3 midtown CENTER — a service pocket behind the row-house strip (x11-24):
-  // a 1-tall dressing strip just off street B's sidewalk, north of the curb
-  g.rect(11, 19, 13, 1, '=');
-  // east mid-block: THE PARK becomes a ROOM (M3 park/green quarter) — an
-  // inner ':' loop around the fountain-picnic, corners nibbled so the plaza
-  // never reads as a rectangle
-  g.rect(41, 13, 13, 6, '.');
-  g.rect(41, 13, 1 + jit(3), 1, '=');
-  g.rect(53 - jit(3), 13, 3, 1, '=');
-  g.rect(41, 18, 2 + jit(3), 1, '=');
-  g.rect(52 - jit(2), 18, 3, 1, '=');
-  g.rect(43, 14, 9, 1, ':'); g.rect(43, 17, 9, 1, ':'); // the loop's N/S legs
-  g.rect(43, 14, 1, 4, ':'); g.rect(51, 14, 1, 4, ':'); // the loop's E/W legs
-  // east plaza: THE CLOCK PLAZA — a coherent '=' room (M3 civic quarter);
-  // public notices, too much sidewalk, and now a bench-lined court
-  g.rect(58, 12, 11, 7, '.');
-  g.rect(61, 14, 5, 3, '=');
-  g.rect(66, 16, 3, 2, '=');
-  g.rect(60, 15, 8, 1, '='); // the court apron the benches sit on
-  // south market lot: buses, deliveries, and pigeons with committees — now
-  // THE MARKET ROW (M3 market quarter): stalls crowd the walkway
-  g.rect(3, 28, 9, 5, 'P');
-  g.rect(34, 25, 11, 4, '=');
-  // S14: the EAST GAP — street B runs out the wall to the DOCKS (a plain
-  // g.set pair consumes NO rng; every seeded stream stays byte-identical)
-  g.rect(71, 21, 1, 3, 'R');
-  // SE vacant lot behind its fence — S12: the fence gains a GATE (one tile
-  // swapped walkable; a plain g.set consumes NO rng, so the 1995 stream and
-  // the whole jittered layout stay byte-identical, ADR-016's rule). The
-  // FUTURE SITE finally arrived, and it's a basketball cage.
-  g.rect(47, 26, 7, 1, '-');
-  g.set(50, 26, '=');
-  g.rect(47, 27, 1, 3, '|');
-  g.rect(53, 27, 1, 3, '|');
-  g.rect(48, 27, 5, 3, '.');
-  // M2 — two formal ALLEYS in the north row (hospital→dept, video→diner):
-  // rows 6-7 are already plain sidewalk (the default '=' fill, untouched by
-  // any street/plaza paint above), so the alley reads through its WIDENED
-  // gap + dumpster/crate dressing (below) — the same "bare" alley precedent
-  // as the original starmart-brickmore gap. Neither avenue reaches this far
-  // north (avenue-1/2 both start at row 8, the street itself), so the only
-  // clearance that matters here is each alley's own building footprint —
-  // guaranteed by the north-row spacing loop above (alley2X/alley3X, below).
-  // hedge fragments along the south edge — broken, like real municipal hedges
-  let hx = 18;
-  while (hx < 68) {
-    const len = 2 + jit(3);
-    if (rng() < 0.75) g.rect(hx, 35, len, 1, 'b');
-    hx += len + 1 + jit(3);
-  }
-  // M3 park quarter — hedge fragments at the room's corners (gaps ≥3-wide,
-  // so the loop's own entrances at N/S/E/W stay clear)
-  g.set(41, 13, 'b'); g.set(53, 13, 'b');
-  g.set(41, 18, 'b'); g.set(53, 18, 'b');
-  g.sprinkle(95, ',~ff F', 0.16); // grass fuzz in the park + the lot
-
-  /* ---- buildings: three clusters, jittered, height-varied, staggered ---- */
-  interface Bldg {
-    sprite: string;
-    w: number;
-    u: 1 | 2 | 3;
-    x: number;
-    /** M2 setback stagger — a small ± tile nudge to the row's shared baseline */
-    setback?: number;
-  }
-  const north: Bldg[] = [
-    { sprite: 'bldg_starmart', w: 5, u: 1, x: 2 + jit(2) },
-    { sprite: 'bldg_brickmore', w: 5, u: 3, x: 9 + jit(2), setback: -1 },
-    { sprite: 'bldg_hospital', w: 7, u: 2, x: 16 + jit(2) },
-    { sprite: 'bldg_dept', w: 8, u: 2, x: 29 + jit(2), setback: 1 },
-    { sprite: 'bldg_bank', w: 6, u: 2, x: 41 + jit(2) },
-    { sprite: 'bldg_video', w: 4, u: 1, x: 51 + jit(2), setback: -1 },
-    { sprite: 'bldg_diner', w: 4, u: 1, x: 58 + jit(2) },
-  ];
-  for (let i = 1; i < north.length; i++) {
-    // M2: the hospital→dept and video→diner junctions (i===3, i===6) each
-    // reserve a 2-wide ALLEY on top of the usual 1-tile min gap, so the carved
-    // slot below (rows 6-7) never clips either building's true solid footprint
-    const alleySlot = i === 3 || i === 6 ? 2 : 0;
-    const min = north[i - 1].x + north[i - 1].w + 1 + alleySlot;
-    if (north[i].x < min) north[i].x = min;
-  }
-  // the true right edge of a placed facade, in TILE units — matches
-  // facadeSolid's own w*16+2 formula (kit.ts), so the alley slot below is
-  // derived from where the building's collision ACTUALLY ends, never a guess
-  const rightEdge = (b: Bldg): number => b.x + b.w + 2 / 16;
-  const alley2X = Math.ceil(rightEdge(north[2])); // hospital's true edge → alley starts clear of it
-  const alley3X = Math.ceil(rightEdge(north[5])); // video's true edge → alley starts clear of it
-  const midWest: Bldg[] = [
-    { sprite: 'bldg_bagels', w: 4, u: 1, x: 11 + jit(2) },
-    { sprite: 'bldg_arcade2', w: 5, u: 1, x: 16 + jit(3) },
-  ];
-  if (midWest[1].x < midWest[0].x + midWest[0].w) midWest[1].x = midWest[0].x + midWest[0].w; // touching = rowhouse
-  if (midWest[1].x + midWest[1].w > 24) midWest[1].x = 24 - midWest[1].w; // stay west of the avenue
-  const midEast: Bldg[] = [
-    { sprite: 'bldg_diner', w: 4, u: 1, x: 29 + jit(2) },
-    { sprite: 'bldg_video', w: 4, u: 1, x: 35 + jit(2) },
-  ];
-  if (midEast[1].x < midEast[0].x + midEast[0].w) midEast[1].x = midEast[0].x + midEast[0].w;
-  const south: Bldg[] = [
-    { sprite: 'bldg_bagels', w: 4, u: 1, x: 30 + jit(2) },
-    { sprite: 'bldg_brickmore', w: 5, u: 2, x: 37 + jit(2), setback: -1 },
-    { sprite: 'bldg_diner', w: 4, u: 1, x: 46 + jit(2) },
-    { sprite: 'bldg_video', w: 4, u: 1, x: 53 + jit(2), setback: 1 },
-    { sprite: 'bldg_bank', w: 6, u: 2, x: 61 + jit(2) },
-  ];
-  for (let i = 1; i < south.length; i++) {
-    const min = south[i - 1].x + south[i - 1].w + 1;
-    if (south[i].x < min) south[i].x = min;
-  }
-
-  const bldgProps: PropDef[] = [];
-  const place = (b: Bldg, bottomPx: number): PropDef => {
-    const H = cityBuildingHeight(b.u);
-    const bpx = bottomPx + (b.setback ?? 0) * 16;
-    const prop: PropDef = {
-      sprite: b.sprite,
-      x: b.x,
-      y: (bpx - H) / 16,
-      // the solid covers the FACADE down to the doorstep — oy:10 (was 26) so a
-      // player can't walk horizontally ACROSS the upper floors (the "walk
-      // through buildings at some angles" bug); the bottom stays at H-12 so the
-      // door zone below it is still reachable, and depth-sort occludes a hero
-      // pressed against the back, so there's no head-above-roof to see.
-      solid: { ox: 0, oy: 10, w: b.w * 16 + 2, h: H - 22 },
-    };
-    if (b.sprite === 'bldg_dept') {
-      prop.door = { ox: 44, oy: H - 14, w: 26, h: 18, to: 'dos_f1', tx: 208, ty: 234 };
-    }
-    // S4: STARMART opens for business (the zone reaches below the collision
-    // floor, ADR-011; the return doorstep is derived from this jittered prop)
-    if (b.sprite === 'bldg_starmart') {
-      prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'starmart_int', tx: 144, ty: 150 };
-    }
-    // S10: STARPORT II opens (§A10 #4's venue) — same doorAt-2 facade rect as
-    // STARMART; assigning a door consumes NO rng, so the 1995 stream and the
-    // whole jittered layout stay byte-identical (ADR-016's rule)
-    if (b.sprite === 'bldg_arcade2') {
-      prop.door = { ox: 33, oy: H - 14, w: 16, h: 18, to: 'arcade2_int', tx: 128, ty: 134 };
-    }
-    // S14 (Prompt 25): BRICKTON GENERAL opens — the dept's doubleDoor rect
-    if (b.sprite === 'bldg_hospital') {
-      prop.door = { ox: 44, oy: H - 14, w: 26, h: 18, to: 'hospital_int', tx: 152, ty: 166 };
-    }
-    bldgProps.push(prop);
-    return prop;
-  };
-  north.forEach((b) => place(b, 112)); // doors open onto street A's sidewalk
-  [...midWest, ...midEast].forEach((b) => place(b, 304)); // doors face street B
-  south.forEach((b) => place(b, 464)); // doors face the new market street
-
-  /* ---- scattered street life ---- */
-  const trees: Array<[number, number]> = [[33, 13]]; // lone back-alley tree
-  for (const [tx, ty] of [[42, 13], [49, 14], [43, 17], [51, 16], [46, 13]] as const) {
-    if (rng() < 0.75) trees.push([tx, ty]);
-  }
-  for (const [tx, ty] of [[19, 27], [31, 28], [39, 27], [44, 28], [12, 28]] as const) {
-    if (rng() < 0.6) trees.push([tx, ty]);
-  }
-  for (const [tx, ty] of [[63, 14], [67, 17], [36, 26], [41, 27], [8, 30], [65, 35]] as const) {
-    if (rng() < 0.68) trees.push([tx, ty]);
-  }
-
-  const FURN_SOLID: Record<string, { ox: number; oy: number; w: number; h: number }> = {
-    bench: { ox: 1, oy: 6, w: 20, h: 6 },
-    hydrant: { ox: 2, oy: 8, w: 6, h: 5 },
-    planter: { ox: 1, oy: 6, w: 20, h: 9 },
-  };
-  const furniture: PropDef[] = [];
-  for (let fx = 18; fx <= 44; fx += 4 + jit(3)) {
-    if (rng() < 0.45) continue;
-    const sprite = (['bench', 'hydrant', 'planter'] as const)[jit(3)];
-    furniture.push({ sprite, x: fx, y: 26, solid: FURN_SOLID[sprite] });
-  }
-  // the CENTER quarter's clutter, purposeful now (the service-pocket strip
-  // at row 19) — but never in front of a door
-  const doorCols = new Set(
-    [...midWest, ...midEast].flatMap((b) => {
-      const d = b.x + (b.sprite === 'bldg_arcade2' || b.sprite === 'bldg_video' ? 2 : 1);
-      return [d - 1, d, d + 1];
-    }),
-  );
-  for (const fx of [13, 22, 31, 40]) {
-    if (rng() < 0.55 || doorCols.has(fx)) continue;
-    const sprite = (['hydrant', 'planter'] as const)[jit(2)];
-    furniture.push({ sprite, x: fx, y: 19, solid: FURN_SOLID[sprite] });
-  }
-  for (const fx of [30, 35, 44, 51, 57, 66]) {
-    if (rng() < 0.35) continue;
-    const sprite = (['bench', 'hydrant', 'planter'] as const)[jit(3)];
-    furniture.push({ sprite, x: fx, y: 29, solid: FURN_SOLID[sprite] });
-  }
-
-  // alley dumpsters: the original starmart-brickmore gap + the two NEW
-  // formal alleys (hospital-dept, video-diner; alley2X/alley3X computed
-  // above, right after the north row's spacing) — a crate keeps each company
-  const alleyX = north[0].x + north[0].w + 0.1;
-  const picnicX = 44 + jit(2);
-
-  /* ---- S7 street wear + 90s furniture (ADR-019) ----
-   * A SEPARATE seeded stream: the 1995 rng above is fully consumed before
-   * this point, so the original jittered layout stays byte-identical
-   * (ADR-016's rule). Everything here is either walkable tile wear or a
-   * prop placed with clearance checks against doors/phones/triggers. */
-  const rng2 = seededRng(2077);
-  const jit2 = (n: number): number => Math.floor(rng2() * n);
-  // sidewalk cracks — pure tile swaps, nothing moves
-  for (let y = 6; y < 37; y++) {
-    for (let x = 1; x < 71; x++) {
-      if (g.rows[y][x] === '=' && rng2() < 0.045) g.set(x, y, '1');
-    }
-  }
-  // tar patches on plain road cells
-  for (const [py, x0] of [
-    [9, 4],
-    [10, 30],
-    [22, 12],
-    [23, 44],
-    [32, 34],
-    [32, 62],
-  ] as const) {
-    const x = x0 + jit2(8);
-    if (g.rows[py][x] === 'R') g.set(x, py, '2');
-  }
-  // storm drains against each curb, clear of crosswalks
-  for (const x of [5 + jit2(3), 20, 33 + jit2(3), 47]) {
-    if (g.rows[8][x] === 'R') g.set(x, 8, '3');
-  }
-  for (const x of [9 + jit2(3), 36 + jit2(3), 51]) {
-    if (g.rows[21][x] === 'R') g.set(x, 21, '3');
-  }
-  for (const x of [31 + jit2(3), 49 + jit2(3), 64]) {
-    if (g.rows[31][x] === 'R') g.set(x, 31, '3');
-  }
-  // M6 — a '3' storm drain at each new P-lane's curb corner (both ends)
-  for (const x of [3, 12, 30, 35, 43, 52, 62, 67]) {
-    if (g.rows[8][x] === 'P') g.set(x, 8, '3');
-  }
-  for (const x of [3, 12, 31, 38, 46, 51, 62, 67]) {
-    if (g.rows[23][x] === 'P') g.set(x, 23, '3');
-  }
-
-  // telephone poles: bases on the mid-block strip and the south sidewalk so
-  // the sagging spans cross each street. Visual only — no solid (S6 rule).
-  const poles: PropDef[] = [];
-  for (const cx of [6, 14, 22, 30, 38, 46]) {
-    if (cx === 22 || cx === 30) continue; // keep the avenue mouth clear
-    poles.push({ sprite: 'phone_pole', x: cx - 4.125, y: 9.125 });
-  }
-  for (const cx of [10, 18, 34, 42, 50]) {
-    poles.push({ sprite: 'phone_pole', x: cx - 4.125, y: 22.125 });
-  }
-  for (const cx of [32, 44, 56, 68]) {
-    poles.push({ sprite: 'phone_pole', x: cx - 4.125, y: 32.125 });
-  }
-
-  // parking meters + newspaper boxes on sidewalk B, never at a door column
-  // and never on a column the S1 furniture already took
-  const occupied = new Set(furniture.map((f) => `${f.x},${f.y}`));
-  const meters: PropDef[] = [];
-  for (const mx of [12, 21, 30, 39, 48, 57, 66]) {
-    if (doorCols.has(mx) || occupied.has(`${mx},19`)) continue;
-    if (rng2() < 0.3) continue;
-    meters.push({ sprite: 'parking_meter', x: mx + 0.3, y: 18.6, solid: { ox: 3, oy: 14, w: 4, h: 6 } });
-  }
-  meters.push({ sprite: 'news_box', x: 2.5, y: 25.4, solid: { ox: 2, oy: 12, w: 12, h: 7 } });
-  const nbx = midEast[1].x + 5;
-  if (!doorCols.has(nbx)) {
-    meters.push({ sprite: 'news_box', x: nbx, y: 18.7, solid: { ox: 2, oy: 12, w: 12, h: 7 } });
-  }
-  meters.push({ sprite: 'news_box', x: 61.5, y: 28.8, solid: { ox: 2, oy: 12, w: 12, h: 7 } });
-  // trash cans in the north alley gaps (between building solids, row 6) — the
-  // two FORMAL alleys (≥1.9 wide) always dress; the smaller incidental gaps roll
-  for (let i = 1; i < north.length; i++) {
-    const gapStart = north[i - 1].x + north[i - 1].w + 0.2;
-    const gapEnd = north[i].x;
-    if (gapEnd - gapStart < 1.2) continue;
-    if (gapEnd - gapStart < 1.9 && rng2() < 0.4) continue;
-    meters.push({ sprite: 'trash_can', x: gapStart, y: 5.9, solid: { ox: 2, oy: 10, w: 10, h: 7 } });
-  }
-
-  /* ---- street trees (S7e, user direction: "more trees in the cities") ----
-   * EB's Twoson lines its blocks with trees. Same discipline as everything
-   * above: rng2 stream (1995 layout untouched), standard tree solid, and
-   * clearance from the avenue mouth, poles, doors, the payphone/bus corner,
-   * and whatever the jittered furniture already claimed. */
-  const streetTrees: Array<[number, number]> = [];
-  const usedCols = new Set<number>();
-  for (const f of [...furniture, ...meters]) {
-    const fx = Math.round(f.x);
-    usedCols.add(fx - 1).add(fx).add(fx + 1);
-  }
-  // mid-block strip between the parking lot and street B (bases on row ~12)
-  for (const tx of [10, 18, 22, 30, 34, 42, 50, 62, 68]) {
-    if (tx >= 24 && tx <= 28) continue; // avenue mouth
-    if (rng2() < 0.2) continue;
-    streetTrees.push([tx, 11]);
-  }
-  // south sidewalk, east of the bus/payphone corner (bases on row ~26)
-  for (const tx of [20, 23, 29, 33, 37, 41, 45, 52, 63, 68]) {
-    if (tx >= 24 && tx <= 28) continue; // avenue
-    if (usedCols.has(tx)) continue; // S1 furniture got there first
-    if (Math.abs(tx - 49) <= 1) continue; // the realtor's sign
-    if (rng2() < 0.3) continue;
-    streetTrees.push([tx, 24.4]);
-  }
-  // a couple more for the park, clear of the picnic table
-  for (const [tx, ty] of [
-    [47, 15],
-    [41, 16],
-    [52, 13],
-    [63, 15],
-    [67, 13],
-  ] as const) {
-    if (ty >= 14 && ty <= 16 && Math.abs(tx - picnicX) < 3) continue;
-    if (rng2() < 0.4) continue;
-    streetTrees.push([tx, ty]);
-  }
-
-  const hospital = north[2];
-  const dept = north[3];
-  // S4: the SAVINGS & LOAN stays locked, but its facade gains the ATM —
-  // placed off the jittered bank, never hardcoded (ADR-012). Two tiles right
-  // of its (locked) door, base on the sidewalk, screen against the wall.
-  const bank = north[4];
-  const atmX = bank.x + 4;
-
-  // S13: the COSTA ESTRELLA travel poster — the tease (ADR-037). A FRESH rng
-  // stream opened after every standing one (the ADR-016 rule, third
-  // application: 1995 + 2077 stay byte-identical), jittering the poster
-  // board into the bus-stop corner where travel ads live. Visual-only —
-  // no solid near the payphone (the S7 discipline).
-  const rng3 = seededRng(2095);
-  const posterX = 11 + Math.floor(rng3() * 2);
-
-  // THE MARKET (south lot, x34-45): three stalls crowding the walkway + a
-  // couple of crates, replacing the empty grass lot the sign already pointed
-  // at. Continues the SAME third stream (2095) — fully consumed above by one
-  // draw, so this is just its next bytes, same discipline as every cluster.
-  const marketStalls: PropDef[] = (['a', 'b', 'c'] as const).map((letter, i) => ({
-    sprite: `market_stall_${letter}`,
-    x: 35 + i * 3 + Math.floor(rng3() * 2),
-    y: 26.4,
-    solid: { ox: 1, oy: 14, w: 38, h: 14 },
-  }));
-  const marketCrates: PropDef[] = [
-    { sprite: 'crate', x: 34.4, y: 27.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-    { sprite: 'crate', x: 43.6, y: 27.4, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-  ];
-
-  return {
-    id: 'brickton',
-    name: 'BRICKTON CITY',
-    music: 'brickton',
-    settlement: 'city',
-    grid: g.out(),
-    props: [
-      ...trees.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
-      ...streetTrees.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 } })),
-      ...poles,
-      ...bldgProps,
-      { sprite: 'dumpster', x: alleyX, y: 5.4, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
-      { sprite: 'dumpster', x: alley2X, y: 5.4, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
-      { sprite: 'crate', x: alley2X + 0.1, y: 6.6, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'dumpster', x: alley3X, y: 5.4, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
-      { sprite: 'crate', x: alley3X + 0.1, y: 6.6, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'dumpster', x: 2, y: 11.9, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
-      { sprite: 'dumpster', x: 6, y: 27.2, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
-      { sprite: 'dumpster', x: 63, y: 24.6, solid: { ox: 1, oy: 8, w: 20, h: 9 } },
-      { sprite: 'atm', x: atmX, y: 5.5, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
-      // bus stop corner
-      { sprite: 'bus_sign', x: 7, y: 26, solid: { ox: 4, oy: 18, w: 6, h: 6 } },
-      { sprite: 'bench', x: 4, y: 27, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'sign', x: 10, y: 27, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      { sprite: 'payphone', x: 14, y: 26, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
-      // THE PARK-AS-A-ROOM: the fountain-picnic centerpiece + 2 benches facing it
-      { sprite: 'picnic', x: picnicX, y: 15, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-      { sprite: 'bench', x: picnicX - 2, y: 16.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'bench', x: picnicX + 3, y: 16.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      // THE CLOCK PLAZA: 2 benches facing the clock cluster + a news box
-      { sprite: 'bench', x: 61, y: 16, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'bench', x: 64, y: 16, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'news_box', x: 67, y: 15.4, solid: { ox: 2, oy: 12, w: 12, h: 7 } },
-      // THE MARKET: stalls + crates crowding the walkway
-      ...marketStalls,
-      ...marketCrates,
-      // the lot's realtor sign, on the sidewalk where you can actually read it
-      { sprite: 'sign', x: 49, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      // S14: the docks sign by the east gap (static placement, no rng)
-      { sprite: 'sign', x: 68, y: 24, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      { sprite: 'sign', x: 62, y: 14, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      { sprite: 'sign', x: 35, y: 25, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      { sprite: 'sign', x: 61, y: 28, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      { sprite: 'sign', x: dept.x + 2, y: 5.6, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      // S12: the gate in the lot's fence — THE CAGE is open (no solid; the
-      // door zone under it carries you through, chain hanging unlatched)
-      { sprite: 'cage_gate', x: 50, y: 25.1 },
-      // 2026-07-02 (user: "can't find the basketball section"): the CLOCK the
-      // plaza always talked about, plus a BOUNCE-TRAIL to The Cage — a
-      // backboard teaser at the gate + signs that literally point the way.
-      { sprite: 'town_clock', x: 62.2, y: 12.85, solid: { ox: 5, oy: 26, w: 9, h: 6 } },
-      { sprite: 'backboard', x: 48.4, y: 24.2, solid: { ox: 2, oy: 20, w: 10, h: 6 } },
-      // S13: the Costa Estrella travel poster (the tease — visual-only)
-      { sprite: 'poster_links', x: posterX, y: 25.4 },
-      ...furniture,
-      ...meters,
-    ],
-    npcs: [
-      { id: 'nurse', sprite: 'nurse', x: hospital.x + 3, y: 6, facing: 'down', dialogue: 'npc_nurse' },
-      { id: 'gray_commuter', sprite: 'grayCommuter', x: dept.x + 5, y: 6, facing: 'up', dialogue: 'npc_commuter' },
-      { id: 'quarter_man', sprite: 'quarterMan', x: 15, y: 27, facing: 'left', dialogue: 'npc_quarter' },
-      { id: 'pigeon_kid', sprite: 'pigeonKid', x: 44, y: 17, facing: 'down', dialogue: 'npc_pigeonkid' },
-      { id: 'sidewalk_critic', sprite: 'sidewalkCritic', x: 20, y: 19, facing: 'down', dialogue: 'npc_critic', wander: true },
-      { id: 'clock_lady', sprite: 'oldTimer', x: 63, y: 15, facing: 'down', dialogue: 'npc_clock_lady' },
-      // the hoops kid dribbling at the gate — a walking arrow to The Cage
-      { id: 'hoops_kid', sprite: 'pajamaKid', x: 49, y: 27, facing: 'up', dialogue: 'npc_hoops_kid', wander: true },
-      { id: 'bagel_scout', sprite: 'pajamaKid', x: 34, y: 29, facing: 'up', dialogue: 'npc_bagel_scout', wander: true },
-      { id: 'blue_watcher', sprite: 'grayCommuter', x: dept.x + 9, y: 7, facing: 'left', dialogue: 'npc_blue_watcher' },
-      { id: 'bus_boy', sprite: 'pigeonKid', x: 7, y: 30, facing: 'right', dialogue: 'npc_bus_boy', wander: true },
-      { id: 'plaza_mime', sprite: 'smilerB', x: 67, y: 17, facing: 'left', dialogue: 'npc_plaza_mime' },
-    ],
-    signs: [
-      { x: 10, y: 27, dialogue: 'sign_brickton' },
-      { x: 49, y: 25, dialogue: 'sign_lot' },
-      // S14: the docks pointer at the east gap
-      { x: 68, y: 24, dialogue: 'sign_to_docks' },
-      { x: 62, y: 14, dialogue: 'sign_brickton_clock' },
-      // the bounce-trail: plaza → the north gate → THE CAGE
-      { x: 60, y: 14, dialogue: 'sign_to_cage_plaza' },
-      { x: 48, y: 26, dialogue: 'sign_to_cage_gate' },
-      { x: 35, y: 25, dialogue: 'sign_market_row' },
-      { x: 61, y: 28, dialogue: 'sign_overpass' },
-      { x: dept.x + 2, y: 6, dialogue: 'sign_blue_notice' },
-      // S13: the travel poster reads (coords follow the jittered board)
-      { x: posterX, y: 26, dialogue: 'sign_links_poster' },
-    ],
-    phones: [{ x: 14, y: 26 }],
-    atms: [{ x: atmX, y: 5.5 }],
-    doors: [
-      // S12: through the gate into THE CAGE (the lot's grid coords are
-      // fixed — the gate tile was carved without touching the rng streams)
-      { x: 50, y: 26, w: 1, h: 1, to: 'the_cage', tx: 320, ty: 60, facing: 'down' },
-      // S14: east along street B to the BRICKTON DOCKS (§A5 Ch.2's gate)
-      { x: 71, y: 21, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
-    ],
-    spawners: [
-      { enemies: ['blazer_smiler', 'showroom_mannequin'], count: 1, rect: { x: 28, y: 6, w: 12, h: 2 } },
-      { enemies: ['blazer_smiler'], count: 1, rect: { x: 11, y: 19, w: 13, h: 2 } },
-      { enemies: ['pigeon_gang', 'rogue_icecream_truck'], count: 1, rect: { x: 2, y: 13, w: 8, h: 5 } },
-      { enemies: ['pigeon_gang'], count: 1, rect: { x: 41, y: 13, w: 12, h: 6 } },
-      { enemies: ['blazer_smiler'], count: 1, rect: { x: 56, y: 12, w: 13, h: 7 } },
-      { enemies: ['pigeon_gang'], count: 1, rect: { x: 3, y: 28, w: 9, h: 5 } },
-      { enemies: ['cranky_mailbox', 'expired_meter'], count: 1, rect: { x: 30, y: 25, w: 16, h: 4 } },
-    ],
-    triggers: [
-      { id: 'bus_stop_brickton', rect: { x: 4, y: 26, w: 4, h: 3 }, once: false },
-      { id: 'brickton_clock_goal', rect: { x: 60, y: 13, w: 8, h: 5 }, once: false },
-      { id: 'brickton_dial_goal', rect: { x: 13, y: 28, w: 5, h: 2 }, once: false },
-      // S2: Mom calls the payphone (14,26) once the Department falls
-      { id: 'payphone_ring', rect: { x: 12, y: 25, w: 6, h: 4 }, once: false },
-    ],
-  };
-}
-
-/* ------------- BRICKTON SPRAWLS (S15h, ADR-049) ------------- */
+/** where the docks' return door lands — just inside the east gate, on the bridge road
+ *  (maps_ch2's buildBricktonDocks bakes these px; world_block.test asserts they stay walkable) */
+export const BRICKTON_DOCKS_RETURN = { tx: 121 * 16 + 8, ty: 63 * 16 } as const;
 
 /**
- * BRICKTON ~4× (2736 → 10944 tiles, 144×76). The frozen 2077 core is COPIED
- * byte-for-byte into the top-left — every tile, every prop, the Cage, the dept,
- * the bus stop, the clock + dial flags, UNCHANGED. The forge's CITY grammar lays
- * new walled districts in the L around it (an east band + the south band), all
- * connected to downtown through the core's ONE existing opening: street B's east
- * gap (col 71, rows 21-23, already road). The single deliberate exception to
- * "byte-for-byte": the docks EXIT door relocates from that gap to the grown
- * city's NEW east edge — the port moved out with the city — so street B can flow
- * east into the sprawl instead of dead-ending at the old wall. Brickton stays a
- * `city` and clears the ADR-012 sweep AT 144×76 (the maps.test sweep runs on it).
+ * TWOTON — the Ch.1 city, rebuilt 2026-07-08 to the EarthBound TWOSON grammar
+ * (towns 1–4 = Onett/Twoson/Threed/Fourside; docs/EARTHBOUND_STYLIZATION_OVERHAUL.md §3).
+ * The MAP ITSELF is the EDITOR-AUTHORED document — src/data/maps_twoton.ts is the
+ * editor's TS export of tools/mapeditor/twoton.json; edit it IN THE MAP EDITOR
+ * (npm run dev → /tools/mapeditor/), not by regenerating code. The old frozen-core
+ * pair (buildBrickton 1995 / growBrickton 2077 sprawl) is RETIRED — the Otterbrook
+ * S3 precedent, applied to town #2.
+ *
+ * This wrapper grafts only what the editor cannot express, so a re-export can
+ * never drop it: the five NAMED interior doors, art-anchored px rects per facade
+ * (ox measured off the drawn door; oy = cityBuildingHeight(u) − 14). Everything
+ * else is registry-standard: occupyCity grafts the tenancy units + knock signs
+ * onto the doorless catalog facades, and the meadow_overpass landing is re-aimed
+ * off the live overpass trail below (the computed-coords law, ADR-012).
  */
-export function growBrickton(): MapDef {
-  const core = buildBrickton();
-  const CW = core.grid[0].length; // 72
-  const CH = core.grid.length; // 38
-  const W = 144;
-  const H = 76;
-  const g = new Grid(W, H, '=');
-  // 1) the frozen 2077 core, verbatim, in the top-left (grid byte-identical)
-  for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) g.set(x, y, core.grid[y][x]);
-
-  // 2) the GROWN city's outer brick walls (only in the new region — never over
-  //    the core). The old downtown's east + south walls become interior walls.
-  g.rect(CW, 0, W - CW, 1, 'B'); // north edge, east of the core
-  g.rect(W - 1, 0, 1, H, 'B'); // new east edge
-  g.rect(0, CH, 1, H - CH, 'B'); // west edge, below the core
-  g.rect(0, H - 1, W, 1, 'B'); // new south edge
-
-  // 3) STREET B runs EAST out the old gap (col 71, rows 21-23 = 'R' in the core)
-  //    across the new east band to the relocated docks at the far edge. A south
-  //    AVENUE drops from it; two E-W streets cross the new districts (the grid
-  //    law extended — the core already clears the sweep, this only adds to it).
-  g.rect(CW, 21, W - CW, 3, 'R'); // street B east extension (reopens the far-edge docks gap)
-  g.rect(100, 24, 3, H - 25, 'R'); // the south connector avenue (drops off street B)
-  g.rect(1, 50, W - 2, 3, 'R'); // SOUTH STREET — spans the sprawl
-  g.rect(1, 63, W - 2, 3, 'R'); // MAPLE STREET — the brick rows back onto it
-  g.rect(29, 53, 3, H - 53, 'R'); // the SOUTH GATEWAY road, down to the city line
-
-  // 4) crosswalks where the avenue meets the new streets, dashed centerlines
-  for (const sy of [50, 63]) {
-    g.rect(98, sy, 2, 3, 'X');
-    g.rect(103, sy, 2, 3, 'X');
-    for (let x = 2; x < W - 2; x++) if (x % 4 < 2 && (x < 98 || x > 104)) g.set(x, sy + 1, 'D');
-  }
-
-  // 5) NEGATIVE SPACE (§B4): an irregular plaza-park east of the avenue, corners
-  //    nibbled so it never reads as a rectangle; a parking lot west of it.
-  g.rect(108, 30, 16, 10, '.');
-  g.rect(108, 30, 3 + (CW % 4), 1, '=');
-  g.rect(120, 39, 4, 1, '=');
-  // the plaza-park becomes a ROOM too (M3/M4): a ':' inner loop around its
-  // centerpiece, so it reads the same "park you walk a lap of" language as
-  // the core's own park quarter
-  g.rect(111, 32, 10, 1, ':'); g.rect(111, 37, 10, 1, ':'); // loop N/S legs
-  g.rect(111, 32, 1, 6, ':'); g.rect(120, 32, 1, 6, ':'); // loop E/W legs
-  g.rect(74, 56, 9, 6, 'P');
-  // grass fuzz on the new park cells ONLY — a region-bounded sprinkle that skips
-  // the frozen core (the core HAS '.' park cells; the global Grid.sprinkle would
-  // corrupt them, so we guard x≥CW || y≥CH explicitly)
-  const fuzz = seededRng(2077144);
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      if (x < CW && y < CH) continue; // never touch the 2077 core
-      if (g.rows[y][x] === '.' && fuzz() < 0.08) g.set(x, y, ',~ff F'[Math.floor(fuzz() * 6)]);
-    }
-  }
-  // M6 — the wear pass extended into the grown streets/sidewalks: a FRESH
-  // named stream (2077145, adjacent to the fuzz seed above but isolated), so
-  // it can never disturb the fuzz sequence or anything upstream. Region-
-  // guarded exactly like the fuzz pass — the frozen core never sees it.
-  const wear = seededRng(2077145);
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      if (x < CW && y < CH) continue; // never touch the 2077 core
-      const ch = g.rows[y][x];
-      if (ch === '=' && wear() < 0.04) g.set(x, y, '1');
-      else if (ch === 'R' && wear() < 0.02) g.set(x, y, '2');
-    }
-  }
-
-  // 6) THE FORGE lays the blocks — now in BRICKTON's OWN cool skins (ADR-050):
-  //    glass offices / hotels / neon / theaters + the COMMON mega-towers (their
-  //    tops run off the screen). Drawn art stays a hand job (ADR-020); the skins
-  //    are the deterministic catalog, sliced per-area so Brickton ≠ Otterbrook.
-  // ADR-053: shared footprint list so the spacing law spans every district.
-  const bkOccupied: Array<{ x: number; y: number; w: number; h: number }> = [];
-  const skin = AREA_SKINS.brickton;
-  const eastNorth = buildDistrict(g, { x: 74, y: 2, w: 66, h: 17 }, new Streams(207701), {
-    layout: 'grid', style: 'americana', catalog: skin, streetRows: [9], avenueCols: [120], maxStories: 3, occupied: bkOccupied,
-  });
-  // THE HIGH-RISE DOWNTOWN (ADR-054): a tall open block west of the avenue where
-  // the MEGA PASS stands the u12–13 towers — mega-buildings are COMMON here, their
-  // tops climbing off the top of the screen, shorter glass storefronts in the gaps.
-  const downtownHigh = buildDistrict(g, { x: 74, y: 24, w: 26, h: 25 }, new Streams(207704), {
-    layout: 'grid', style: 'americana', catalog: skin, streetRows: [47], maxStories: 9, mega: true, occupied: bkOccupied,
-  });
-  // eastSouth narrowed to col 124 so the far-east blocks clear for the colossus
-  const eastSouth = buildDistrict(g, { x: 104, y: 41, w: 21, h: 8 }, new Streams(207702), {
-    layout: 'grid', style: 'americana', catalog: skin, streetRows: [44], maxStories: 3, occupied: bkOccupied,
-  });
-  const southWest = buildDistrict(g, { x: 2, y: 38, w: 70, h: 10 }, new Streams(207703), {
-    layout: 'grid', style: 'americana', catalog: skin, streetRows: [44], avenueCols: [40], maxStories: 3, occupied: bkOccupied,
-  });
-
-  // 7) MAPLE HEIGHTS — a hand-built brick row backing onto Maple Street (the
-  //    named residential block the growth advertises), + the catalog storefronts.
-  // M2: the 5 houses restagger to an uneven rhythm (was a flat +7 baseline) —
-  // same count, same sprite, just less of a ruler-straight row. Each front
-  // yard gets a fence run with a gate gap (the door's own column stays clear)
-  // and a tree fills the wider gaps between houses (M2's "one tree per lot pair").
-  const mapleXs = [6, 14, 21, 29, 36];
-  const mapleProps: PropDef[] = [];
-  const mapleTrees: PropDef[] = [];
-  for (let i = 0; i < mapleXs.length; i++) {
-    const mx = mapleXs[i];
-    mapleProps.push(placeFacade('bldg_brickmore', mx, 62 * 16 - 4, 5, 2));
-    // yard fence along the house's own frontage — row 62 (the doorstep's
-    // landing sits at ~y60.4-61.75, so row 62 is the first fully-clear row
-    // south of it, one row shy of Maple Street at row 63), gapped at the
-    // door's center column (a 5-wide facade's door sits mid-span, mx+2..+3)
-    g.rect(mx, 62, 2, 1, '-');
-    g.rect(mx + 3, 62, 2, 1, '-');
-    if (i < mapleXs.length - 1) {
-      const gapStart = mx + 5;
-      const gapEnd = mapleXs[i + 1];
-      if (gapEnd - gapStart >= 2) {
-        const tx = gapStart + Math.floor((gapEnd - gapStart) / 2);
-        mapleTrees.push({ sprite: treeSprite(tx, 60), x: tx, y: 60, solid: { ox: 7, oy: 22, w: 12, h: 10 } });
-      }
-    }
-  }
-
-  // THE COLOSSUS LANDMARK (§B4): STARFALL SPIRE — a sky-tower whose footprint
-  // spans a slice of the far-east blocks; you ROUND it on foot (lanes at col 125
-  // west + cols 141–142 east). It backs onto Maple Street and climbs off-screen.
-  // Hand-placed beyond the narrowed eastSouth so nothing it shadows is required.
-  // Its centered gilt doors open into the bespoke LOBBY (lobby access ONLY — the
-  // sign-canon holds: nobody goes up). Grafted here, pre-occupy, so occupyCity's
-  // `!p.door` filter never hands the landmark a generic unit room.
-  const spire = placeFacade('bldg_colossus_spire', 126, 63 * 16 - 4, 14, 30, { to: 'spire_lobby', tx: 152, ty: 156 });
-  // the spire's own FORECOURT (M4 anchor): a paved apron at its base, west of
-  // its footprint (clear of the lanes at col125/141-142), 2 planters + a
-  // bench for spire_gazer to actually stand on
-  const spireForecourt: PropDef[] = [
-    { sprite: 'planter', x: 120.5, y: 57, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-    { sprite: 'planter', x: 120.5, y: 59, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-    { sprite: 'bench', x: 122.5, y: 58, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-  ];
-  g.rect(120, 56, 5, 5, '='); // the apron itself, in front of the spire
-
-  // THE PLAZA-PARK (§5 above) gets its centerpiece: 3 trees + 2 benches
-  // facing inward, on the ':' loop's inner grass — the same "room with a
-  // reason to enter" language as the core's park quarter
-  const plazaTrees: PropDef[] = [[113, 34], [118, 35], [115, 36]].map(([x, y]) => ({
-    sprite: treeSprite(x, y), x, y, solid: { ox: 7, oy: 22, w: 12, h: 10 },
-  }));
-  const plazaBenches: PropDef[] = [
-    { sprite: 'bench', x: 114, y: 33.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-    { sprite: 'bench', x: 117, y: 36.5, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-  ];
-
-  // THE PARKING LOT (§5 above, x74-82/y56-61) gets a meter row along its
-  // north curb, same canon parking_meter solid the core uses
-  const lotMeters: PropDef[] = [76, 78, 80].map((x) => ({
-    sprite: 'parking_meter', x: x + 0.3, y: 55.6, solid: { ox: 3, oy: 14, w: 4, h: 6 },
-  }));
-
-  // HYDRANTS at the south-street corners (M5 cadence: "hydrant near each
-  // downtown corner") — South Street × the avenue, and × the gateway road
-  const hydrants: PropDef[] = [
-    { sprite: 'hydrant', x: 97, y: 49, solid: { ox: 2, oy: 8, w: 6, h: 5 } },
-    { sprite: 'hydrant', x: 105, y: 49, solid: { ox: 2, oy: 8, w: 6, h: 5 } },
-    { sprite: 'hydrant', x: 28, y: 52, solid: { ox: 2, oy: 8, w: 6, h: 5 } },
-    { sprite: 'hydrant', x: 32, y: 52, solid: { ox: 2, oy: 8, w: 6, h: 5 } },
-  ];
-
-  const SIGN_SOLID = { ox: 3, oy: 10, w: 10, h: 7 };
-  const props: PropDef[] = [
-    ...core.props,
-    ...eastNorth.props,
-    ...downtownHigh.props,
-    ...eastSouth.props,
-    ...southWest.props,
-    ...mapleProps,
-    ...mapleTrees,
-    spire,
-    ...spireForecourt,
-    ...plazaTrees,
-    ...plazaBenches,
-    ...lotMeters,
-    ...hydrants,
-    { sprite: 'sign', x: 8, y: 60, solid: SIGN_SOLID }, // MAPLE HEIGHTS marker
-    { sprite: 'sign', x: 47, y: 48, solid: SIGN_SOLID }, // the Cage block, read from the new street
-    { sprite: 'sign', x: 31, y: 70, solid: SIGN_SOLID }, // the south gateway / city line
-    { sprite: 'sign', x: 138, y: 24, solid: SIGN_SOLID }, // to the relocated docks
-    { sprite: 'sign', x: 124, y: 56, solid: SIGN_SOLID }, // the Starfall Spire plaza
-    { sprite: 'sign', x: 86, y: 49, solid: SIGN_SOLID }, // the high-rise downtown
-    // a rest point before the new south field's pressure (§A4.5) — a payphone,
-    // NOT a picnic (the picnic-count pin holds: Brickton keeps exactly one)
-    { sprite: 'payphone', x: 33, y: 67, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
-  ];
-
-  const npcs = [
-    ...core.npcs,
-    { id: 'maple_resident', sprite: 'fernLady', x: 12, y: 60, facing: 'down' as const, dialogue: 'npc_maple_resident', wander: true },
-    { id: 'south_vendor', sprite: 'quarterMan', x: 60, y: 49, facing: 'down' as const, dialogue: 'npc_south_vendor' },
-    { id: 'new_commuter', sprite: 'grayCommuter', x: 110, y: 22, facing: 'right' as const, dialogue: 'npc_new_commuter', wander: true },
-    { id: 'dockward', sprite: 'sidewalkCritic', x: 132, y: 22, facing: 'right' as const, dialogue: 'npc_dockward' },
-    // S15i (ADR-054): the high-rise downtown + the colossus each get a voice (§A11)
-    { id: 'spire_gazer', sprite: 'sidewalkCritic', x: 123, y: 57, facing: 'right' as const, dialogue: 'npc_spire_gazer' },
-    { id: 'downtown_suit', sprite: 'grayCommuter', x: 86, y: 48, facing: 'up' as const, dialogue: 'npc_downtown_suit', wander: true },
-  ];
-
-  const keptDoors = core.doors.filter((d) => d.to !== 'brickton_docks');
-  return {
-    ...core,
-    grid: g.out(),
-    props,
-    npcs,
-    signs: [
-      ...core.signs,
-      { x: 8, y: 60, dialogue: 'sign_maple_heights' },
-      { x: 47, y: 48, dialogue: 'sign_cage_block' },
-      { x: 31, y: 70, dialogue: 'sign_south_gate' },
-      { x: 138, y: 24, dialogue: 'sign_new_docks' },
-      { x: 124, y: 56, dialogue: 'sign_spire' },
-      { x: 86, y: 49, dialogue: 'sign_downtown_high' },
-      ...eastNorth.signs,
-      ...downtownHigh.signs,
-      ...eastSouth.signs,
-      ...southWest.signs,
-    ],
-    phones: [...core.phones, { x: 33, y: 67 }],
-    doors: [
-      ...keptDoors, // the_cage gate stays byte-identical; the old docks-gap door is relocated ↓
-      { x: W - 1, y: 21, w: 1, h: 3, to: 'brickton_docks', tx: 28, ty: 120, facing: 'right' },
-      { x: 29, y: H - 1, w: 3, h: 1, to: 'meadow_mile', tx: 544, ty: 128, facing: 'down', indicator: 'none' },
-    ],
-    spawners: [
-      ...core.spawners,
-      // the new districts run a city band too (clear of the gateway + fixtures)
-      { enemies: ['blazer_smiler'], count: 1, rect: { x: 108, y: 32, w: 14, h: 6 } },
-      { enemies: ['pigeon_gang', 'expired_meter'], count: 1, rect: { x: 10, y: 40, w: 20, h: 6 } },
-    ],
+function makeTwoton(): MapDef {
+  const m = twotonMap;
+  // oy derives from the facade's registry height (cityBuildingHeight(u) − 14, the
+  // makePuertoSol pattern) so a future kit.ts height change can't detach the doors.
+  const NAMED_DOORS: Record<string, { ox: number; w: number; to: string; tx: number; ty: number }> = {
+    bldg_dept: { ox: 44, w: 26, to: 'dos_f1', tx: 208, ty: 234 }, // THE DEPARTMENT OF SMILES
+    bldg_starmart: { ox: 33, w: 16, to: 'starmart_int', tx: 152, ty: 156 },
+    bldg_hospital: { ox: 44, w: 26, to: 'hospital_int', tx: 152, ty: 166 }, // TWOTON GENERAL
+    bldg_arcade2: { ox: 33, w: 16, to: 'arcade2_int', tx: 136, ty: 156 }, // STARPORT II
   };
+  for (const p of m.props) {
+    const d = NAMED_DOORS[p.sprite];
+    if (d && !p.door) {
+      const oy = cityBuildingHeight(facadeDims(p.sprite).u) - 14;
+      p.door = { ox: d.ox, oy, w: d.w, h: 18, to: d.to, tx: d.tx, ty: d.ty };
+    }
+  }
+  return m;
 }
 
 /* ------------------- THE DEPARTMENT OF SMILES ------------------- */
@@ -3522,7 +2782,7 @@ function buildSpireLobby(streetExit: { tx: number; ty: number }): MapDef {
   return {
     id: 'spire_lobby',
     name: 'THE SPIRE — LOBBY',
-    music: 'brickton',
+    music: 'valle', // the Spire stands in Valle Dorado now (stage 4, 2026-07-08)
     interior: true,
     grid: g.out(),
     props: [
@@ -3548,7 +2808,9 @@ function buildSpireLobby(streetExit: { tx: number; ty: number }): MapDef {
     ],
     phones: [],
     doors: [
-      { x: 8, y: 10, w: 2, h: 1, to: 'brickton', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+      // the Spire stands in VALLE DORADO now (stage 4, 2026-07-08) — the lobby
+      // doors open back onto the golden city's High St, at the grafted doorstep
+      { x: 8, y: 10, w: 2, h: 1, to: 'valle_dorado', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
     ],
     spawners: [],
     triggers: [],
@@ -4275,7 +3537,8 @@ function buildCagePark(): MapDef {
       // north through the chain-link gate INTO THE CAGE
       { x: 11, y: 0, w: 3, h: 1, to: 'the_cage', tx: 320, ty: 60, facing: 'up' },
       // south back onto the Brickton sidewalk (the cage-gate area)
-      { x: 11, y: H - 1, w: 3, h: 1, to: 'brickton', tx: 808, ty: 402, facing: 'down' },
+      // Twoton rebuild 2026-07-08: land on the gate's doorstep (just above it, facing down)
+      { x: 11, y: H - 1, w: 3, h: 1, to: 'brickton', tx: 1592, ty: 1144, facing: 'down' },
     ],
     spawners: [],
     triggers: [
@@ -4346,7 +3609,7 @@ function addOtterbrookRisers(map: MapDef): MapDef {
 }
 
 const otterbrookMap = addOtterbrookRisers(growOtterbrook());
-const bricktonMap = growBrickton();
+const bricktonMap = makeTwoton();
 const rexDoorstep = doorstepOf(otterbrookMap, 'rex_home') ?? { tx: 46 * 16, ty: 41 * 16 };
 const chadDoorstep = doorstepOf(otterbrookMap, 'chad_home') ?? { tx: 60 * 16, ty: 41 * 16 };
 const workshopDoorstep = doorstepOf(otterbrookMap, 'workshop_int') ?? { tx: 24 * 16, ty: 31 * 16 };
@@ -4361,33 +3624,19 @@ const otterHomeMaps = Object.fromEntries(
 ) as Record<(typeof OTTERBROOK_HOME_SPECS)[number]['id'], MapDef>;
 // THE LONG WALK (ADR-056) — the four foot legs, with computed inter-leg doors.
 const longWalk = buildLongWalk();
-// Brickton's foot exit now lands on the OVERPASS (its city-adjacent leg), a few
-// tiles WEST of the orientation gate so arriving never bounces you back through
-// it — computed off the overpass's real trail (ADR-012), facing home (west). The
-// frozen 2077 core is untouched: only this one appended door's target is rewritten.
+// Twoton's foot exit (the west road mouth) lands on the OVERPASS a few tiles
+// WEST of the orientation gate, so arriving never bounces you back through it —
+// computed off the overpass's real trail (ADR-012), facing home (west). The
+// editor document carries a placeholder landing; only the live map's is aimed.
 {
   const op = longWalk.meadow_overpass;
   const opX = op.grid[0].length - 5;
   const opY = trailRowAt(op.grid, opX);
-  const foot = bricktonMap.doors.find((d) => d.to === 'meadow_mile');
+  const foot = bricktonMap.doors.find((d) => d.to === 'meadow_overpass');
   if (foot) {
-    foot.to = 'meadow_overpass';
     foot.tx = opX * 16 + 8;
     foot.ty = opY * 16;
     foot.facing = 'left';
-  }
-}
-// S15i Task 6 (ADR-059): THE CAGE gate now opens THROUGH the new CAGE PARK (the
-// user's "give the cage a real park in front" decree). A post-build fixup on the
-// live map — exactly like the foot door above — so the frozen 2077 core's literal
-// door stays byte-identical (it still reads → the_cage); only MAPS.brickton's door
-// target is rewritten, landing you on the park's south path before the courts.
-{
-  const cage = bricktonMap.doors.find((d) => d.to === 'the_cage');
-  if (cage) {
-    cage.to = 'cage_park';
-    cage.tx = 200; // tile 12 — one tile inside the park's south gate (its brickton
-    cage.ty = 332; // door at y:21); the welcome rect (y:16-18) still fires on the walk north
   }
 }
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
@@ -4402,7 +3651,9 @@ const dinerStep = doorstepOf(downtownMap, 'diner_int') ?? { tx: 224, ty: 150 };
 const otterClinicStep = doorstepOf(downtownMap, 'otter_clinic_int') ?? { tx: 352, ty: 150 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
-const spireStep = doorstepOf(bricktonMap, 'spire_lobby') ?? { tx: 2128, ty: 1013 };
+// THE STARFALL SPIRE moved to VALLE DORADO (stage 4, the big city — 2026-07-08);
+// its lobby doorstep now derives from the golden city's grafted facade door.
+const spireStep = doorstepOf(valleDorado, 'spire_lobby') ?? { tx: 264, ty: 856 };
 const drugDoorstep = doorstepOf(otterbrookMap, 'drugstore_int') ?? { tx: 425, ty: 225 };
 const arcadeDoorstep = doorstepOf(otterbrookMap, 'arcade_int') ?? { tx: 121, ty: 369 };
 const arcade2Doorstep = doorstepOf(bricktonMap, 'arcade2_int') ?? { tx: 345, ty: 313 };
@@ -4420,7 +3671,12 @@ const burgerStep = doorstepOf(otterbrookMap, 'burger_int') ?? { tx: 96, ty: 150 
  * south path, tile ~13,15). It is NOT placed today: door targets must
  * exist (the validator's law), and Puerto Sol doesn't yet.
  */
-export const COSTA_DOOR_FOR_PUERTO_SOL = { x: 12, y: 15, w: 3, h: 1, to: 'puerto_sol', tx: 104, ty: 30, facing: 'down' } as const;
+export const COSTA_DOOR_FOR_PUERTO_SOL = {
+  x: 12, y: 15, w: 3, h: 1, to: 'puerto_sol',
+  // land at the port's NORTH GATE — the one exported const both sides read (ADR-012)
+  tx: PUERTO_SOL_NORTH_GATE.tx, ty: PUERTO_SOL_NORTH_GATE.ty,
+  facing: 'down',
+} as const;
 
 /** the resort grounds: clubhouse, the caddy at the first tee, the plaque.
  *  Dev-reachable standalone (the Sprite Lab precedent) until Prompt 28. */
@@ -4975,7 +4231,7 @@ const MAP_REFLECT: Record<string, ReflectZone[]> = {
   foggybottom: [{ x: 0, y: 49, w: 60, h: 3, within: 4 }], // the river Tyne along the S lip (S5 rebuild: 60×52, sea rows 49-51)
   otterbrook: [{ x: 2, y: 132, w: 18, h: 16, within: 3 }], // Pond Park (SW), concept rows 132-148
   golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
-  puerto_sol: [{ x: 0, y: 30, w: 52, h: 4, within: 4 }], // the working seafront
+  puerto_sol: [{ x: 0, y: 66, w: 100, h: 6, within: 6 }], // the working seafront (Threed rebuild: sea rows 66-71)
   // CH.4 Norway — the fjord, the moor gorge, and the Sleeper's meltwater fall
   kvisthavn: [{ x: 0, y: 22, w: 36, h: 2, within: 4 }], // the fjord along the south lip
   bootstep_moor: [{ x: 22, y: 1, w: 2, h: 7, within: 3 }], // the gorge water

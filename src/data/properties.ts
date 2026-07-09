@@ -48,7 +48,7 @@ export const PROPERTIES: Record<string, PropertyDef> = Object.fromEntries(
       blurb: 'Cozy! One previous owner. She took the doorknobs. Comes with a beagle who thinks he comes with it.',
     }),
     P({
-      id: 'brickton_walkup', band: 'ch1', name: 'The Brickton Walk-Up', area: 'brickton', kind: 'rental',
+      id: 'brickton_walkup', band: 'ch1', name: 'The Twoton Walk-Up', area: 'brickton', kind: 'rental',
       basePrice: 2600, rent: 120, deed: 'deed_brickton_walkup', storageTier: 1,
       blurb: 'Cozy! Third-floor, no lift, great light if you stand on the radiator. Tenants pay on time, mostly.',
     }),

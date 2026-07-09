@@ -6,8 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  buildPuertoSol,
-  growPuertoSol,
+  puertoSol,
   buildPyramidRooms,
   rotateRect,
   PYR_ROTOR,
@@ -117,20 +116,12 @@ describe('the pyramid solve — the documented bot line is the real solution', (
   }
 });
 
-describe('PUERTO SOL — the 1898 stream is frozen (the 1995 rule, 4th application)', () => {
-  it('the FROZEN CORE builds byte-identical twice: grid, props, npc positions', () => {
-    const a = buildPuertoSol();
-    const b = buildPuertoSol();
-    expect(a.grid.join('|')).toBe(b.grid.join('|'));
-    expect(JSON.stringify(a.props)).toBe(JSON.stringify(b.props));
-    expect(JSON.stringify(a.npcs)).toBe(JSON.stringify(b.npcs));
-  });
-
-  it('the live MAPS entry is the GROWN dock-district city now (ADR-057)', () => {
-    // the byte-identical-CORE proof (the 1898 core sits in the top-left) lives in
-    // world_block.test.ts; here we only assert the live map is the grown build.
-    expect(MAPS.puerto_sol.grid.join('|')).toBe(growPuertoSol().grid.join('|'));
-    expect(MAPS.puerto_sol.grid[0].length).toBeGreaterThan(buildPuertoSol().grid[0].length);
+describe('PUERTO SOL — the editor-authored Threed rebuild is the live map (2026-07-08)', () => {
+  it('the live MAPS entry IS the grafted editor document (one instance, no drift)', () => {
+    // buildPuertoSol (1898 core) + growPuertoSol are retired; the document +
+    // its named-door grafts register as-is (the deeper pins live in world_block).
+    expect(MAPS.puerto_sol).toBe(puertoSol);
+    expect(MAPS.puerto_sol.name).toBe('PUERTO SOL');
   });
 });
 
@@ -187,15 +178,16 @@ describe('S17 M18 Part B (ADR-063) — the Americas placed LIVE in Ch.2', () => 
     expect(prompt, `${mapId} prompt sign ${flag}`).toBeTruthy();
     expect(prompt?.unlessFlag).toBe(flag);
     expect(flavor?.ifFlag).toBe(flag);
-    expect(prompt?.x).toBe(x);
-    expect(prompt?.y).toBe(y + 1);
+    // the editor-authored docs place boxes/signs on half-tiles — compare rounded
+    expect(Math.round(prompt?.x ?? -1)).toBe(x);
+    expect(Math.round(prompt?.y ?? -1)).toBe(y + 1);
     // the sign tile is open ground AND reachable — the box seals no lane
     expect(reachable(m.grid, entry, [x, y + 1]), `${mapId} ${flag} reachable`).toBe(true);
   }
 
-  it('the MERCADO SET + the dockside doubloon live on the grown malecón', () => {
-    assertGift('puerto_sol', 'mercado_stall', 70, 27, [25, 28]); // a malecón dock tile
-    assertGift('puerto_sol', 'gift_doubloon', 114, 28, [25, 28]);
+  it('the MERCADO SET + the dockside doubloon live on the Threed-rebuild quay', () => {
+    assertGift('puerto_sol', 'mercado_stall', 59, 63, [26, 62]); // a quay tile by the stalls
+    assertGift('puerto_sol', 'gift_doubloon', 90, 62, [26, 62]);
   });
 
   it('the banana-boat passage ticket waits on the Brickton pier', () => {
@@ -206,12 +198,12 @@ describe('S17 M18 Part B (ADR-063) — the Americas placed LIVE in Ch.2', () => 
     assertGift('pyramid_ante', 'gift_fools_idol', 16, 4, [10, 14]); // just inside the south door
   });
 
-  it('the Emerald is wedged deep in the jungle, by the rest', () => {
-    assertGift('jungle_2', 'gift_emerald', 35, 22, [1, 12]); // the west mouth
+  it('the Emerald is wedged deep in the dunes, by the rest before the bridge', () => {
+    assertGift('jungle_2', 'gift_emerald', 37, 23, [1, 20]); // the west mouth, on the road
   });
 
   it("the Wish Token appears in the idol's bowl once the Grin falls", () => {
-    assertGift('valle_dorado', 'gift_wish_token', 24, 16, [17, 15], 'grin_defeated');
+    assertGift('valle_dorado', 'gift_wish_token', 49, 44, [2, 44], 'grin_defeated'); // the park diamond, in from the bridge
   });
 
   it('the SET caches hold all five hero-tagged charms (the §A8 signature sets)', () => {
