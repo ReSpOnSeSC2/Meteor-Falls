@@ -284,7 +284,7 @@
 
 <script type="module">
 const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const toast=(m)=>{const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1400);};
+let toastT; const toast=(m,ms=1400)=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);};
 
 // ---------- load manifest + atlas ----------
 let M, atlas;
@@ -325,7 +325,7 @@ const legendByChar=new Map();
 function newGrid(w,h,fill='.'){ return Array.from({length:h},()=>Array.from({length:w},()=>fill)); }
 
 async function boot(){
-  M=await (await fetch('manifest.json')).json();
+  M=await (await fetch('manifest.json?v='+Date.now())).json(); // cache-busted — a stale manifest hides new tiles/props/maps
   M.legend.forEach(l=>legendByChar.set(l.char,l));
   // O(1) prop/facade lookups (was Array.find/some per prop per render — 3k-prop maps re-scanned the palette every frame)
   M._propMeta=new Map(); (M.facades||[]).forEach(p=>M._propMeta.set(p.key,p)); (M.props||[]).forEach(p=>M._propMeta.set(p.key,p));
@@ -333,11 +333,21 @@ async function boot(){
   atlas=await new Promise((res)=>{const i=new Image();i.onload=()=>res(i);i.src=M.atlas;});
   buildTilePalette(); buildPropPalette(); buildFacadePalette(); buildNpcPalette(); buildElevatePane();
   wireUI();
-  const saved=localStorage.getItem('mf_mapeditor_autosave'); // silent restore if present
-  if(saved){try{loadMapObj(JSON.parse(saved));}catch{}}
+  // restore the working copy if present — LOUDLY. The old silent restore made a
+  // days-old autosave of a shipped map look like "the game map never updated";
+  // say what was restored, how old it is, and where the current shipped def lives.
+  const saved=localStorage.getItem('mf_mapeditor_autosave');
+  if(saved){try{
+    const o=JSON.parse(saved); loadMapObj(o);
+    const age=o.savedAt?agoLabel(o.savedAt):'';
+    const shipped=(M.mapIds||[]).includes(state.map.id);
+    toast(`Restored your working copy of “${state.map.name||state.map.id}”${age?` (${age})`:''}${shipped?' — 📂 Open loads the CURRENT shipped map':''}`,shipped?6500:3500);
+  }catch{}}
   $('#loading').style.display='none'; $('#app').style.visibility='visible';
   resizeCanvas(); requestRender();
 }
+function agoLabel(t){ const m=Math.max(1,Math.round((Date.now()-t)/60000));
+  if(m<60)return`saved ${m} min ago`; const h=Math.round(m/60); if(h<48)return`saved ${h} h ago`; return`saved ${Math.round(h/24)} days ago`; }
 
 // ---------- palettes ----------
 function tileThumb(idx){ // returns a canvas of atlas cell idx
@@ -1081,7 +1091,7 @@ function wireUI(){
     undoStack.length=0; redoStack.length=0; loadMapObj(blankMap(w,h)); toast('New map'); };
   $('#save').onclick=()=>{ const prev=localStorage.getItem('mf_mapeditor_save');
     if(prev){ try{ const p=JSON.parse(prev); if(p.id&&p.id!==state.map.id&&!confirm(`Overwrite the saved map "${p.name||p.id}" with "${state.map.name}"?`))return; }catch{} }
-    try{ localStorage.setItem('mf_mapeditor_save',JSON.stringify(serialize())); toast('Saved “'+state.map.name+'”'); }
+    try{ localStorage.setItem('mf_mapeditor_save',JSON.stringify({...serialize(),savedAt:Date.now()})); toast('Saved “'+state.map.name+'”'); }
     catch{ toast('⚠ Save failed — map too large for browser storage; use ⬇ Export.'); } };
   $('#load').onclick=()=>{ const s=localStorage.getItem('mf_mapeditor_save'); if(!s){ toast('No save'); return; }
     if(!confirm('Replace the current map with your last Save? (💾 Save this one first to keep it.)'))return;
@@ -1140,7 +1150,7 @@ function fitView(){ const r=cv.getBoundingClientRect(); state.view.zoom=Math.max
   state.view.ox=(r.width-state.map.w*TS())/2; state.view.oy=(r.height-state.map.h*TS())/2; }
 function setSaveStatus(s,warn){ const el=$('#saveStatus'); if(el){ el.textContent=s; el.style.color=warn?'var(--solid)':'var(--good)'; } }
 let autosaveT; function scheduleAutosave(){ clearTimeout(autosaveT); setSaveStatus('saving…');
-  autosaveT=setTimeout(()=>{ try{ localStorage.setItem('mf_mapeditor_autosave',JSON.stringify(serialize())); setSaveStatus('saved ✓'); }
+  autosaveT=setTimeout(()=>{ try{ localStorage.setItem('mf_mapeditor_autosave',JSON.stringify({...serialize(),savedAt:Date.now()})); setSaveStatus('saved ✓'); }
     catch{ setSaveStatus('⚠ too large',true); toast('⚠ Autosave failed — map too large for browser storage; use ⬇ Export to save.'); } },600); }
 
 let exportFmt='ts';
@@ -1299,7 +1309,7 @@ function checkMap(){ const m=state.map; const grid=m.grid; const out=[]; const a
 let LOADED_MAPS=null;
 async function openMapPicker(){ $('#openModal').classList.add('on');
   if(!LOADED_MAPS){ $('#openList').innerHTML='<div class="hint" style="padding:10px">loading maps…</div>';
-    try{ LOADED_MAPS=await (await fetch('maps.json')).json(); }
+    try{ LOADED_MAPS=await (await fetch('maps.json?v='+Date.now())).json(); } // cache-busted — always the CURRENT shipped defs
     catch{ $('#openList').innerHTML='<div class="issue err">Could not load maps.json — run <code>npm run mapeditor:gen</code>.</div>'; return; } }
   $('#openSearch').value=''; renderOpenList(''); $('#openSearch').focus(); }
 function renderOpenList(q){ q=q.toLowerCase().trim(); const el=$('#openList');
