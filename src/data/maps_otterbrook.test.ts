@@ -64,10 +64,10 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     // exactly ONE cave entry now — the hilltop mouth (top-left); the lower-town burrow is retired
     const caveEntries = ob.doors.filter((d) => d.to === 'oak_roots');
     expect(caveEntries).toHaveLength(1);
-    expect(caveEntries[0].tx).toBe(14 * 16 + 8);
-    // lands one row above the cave's row-38 exit pad (row 39 is solid wall — the
-    // old pad there was unreachable, so leaving the cave on foot was impossible)
-    expect(caveEntries[0].ty).toBe(37 * 16);
+    // lands in the Giant-Step rebuild's mouth chamber, two rows above and beside
+    // the exit pad (never ON the way out — the old cave shipped an unwalkable pad)
+    expect(caveEntries[0].tx).toBe(16 * 16 + 8);
+    expect(caveEntries[0].ty).toBe(46 * 16);
     const rootsExit = MAPS.oak_roots.doors.find((d) => d.to === 'otterbrook');
     expect(rootsExit?.tx).toBe(7 * 16 + 8); // surface return lands below the top-left-corner cave mouth
     expect(rootsExit?.ty).toBe(11 * 16);

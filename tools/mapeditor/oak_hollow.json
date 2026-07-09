@@ -1,0 +1,225 @@
+{
+ "id": "oak_hollow",
+ "name": "THE CAVE — HOLLOW",
+ "w": 30,
+ "h": 26,
+ "music": "hill",
+ "grid": [
+  "KKKKKKKKKKKKK:::KKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKK:::KKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKK:::KKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKK:::KKKKssssssKKKK",
+  "KKKKKKKKKKKKK:::KKKKsSssssKKKK",
+  "KKKKKKKKKKsssssssssKssssssKKKK",
+  "KKKKKKKKsssssssssssK^^TTT^^KKK",
+  "KKKKKKSssssssssssssKKKTTTKKKKK",
+  "KKKKKsssEEEEEEEssssKKKTTTKKKKK",
+  "KKKKKssEeeeeeeeEsssssssssKKKKK",
+  "KKKKsssEeeeeeeeEssssssssssKKKK",
+  "KKKKsssEeeeeeeeEssssssssssKKKK",
+  "KKKKsssEeeeeeeeEsssssssSssKKKK",
+  "KKKKsssEeeeeeeeEssssssssssKKKK",
+  "KKKKsSssEEEEEEEsssssssssssKKKK",
+  "KKKKKssssssssssssssssssssKKKKK",
+  "KKKKKssssssssssssssSsssssKKKKK",
+  "KKKKKKssssssssssssssssssKKKKKK",
+  "KKKKKKKKssssssssssssssKKKKKKKK",
+  "KKKKKKKKKKssssssssssKKKKKKKKKK",
+  "KKKKKKKKKKKKK:::KKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKK:::KKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKK:::KKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKK:::KKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKK:::KKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK"
+ ],
+ "level": [
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000011111110000",
+  "000000000000000000011111110000",
+  "000000000000000000011111110000",
+  "000000000000000000011111110000",
+  "000000000000000000011111111000",
+  "000000000000000000011100011000",
+  "000000000000000000011100011000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000",
+  "000000000000000000000000000000"
+ ],
+ "props": [
+  {
+   "sprite": "root_curtain",
+   "x": 13.6,
+   "y": 0.4
+  },
+  {
+   "sprite": "picnic",
+   "x": 18,
+   "y": 10.4,
+   "solid": {
+    "ox": 2,
+    "oy": 8,
+    "w": 32,
+    "h": 14
+   }
+  },
+  {
+   "sprite": "payphone",
+   "x": 21.5,
+   "y": 9.6,
+   "solid": {
+    "ox": 1,
+    "oy": 10,
+    "w": 14,
+    "h": 16
+   }
+  },
+  {
+   "sprite": "root_knot",
+   "x": 16.6,
+   "y": 16.2,
+   "solid": {
+    "ox": 2,
+    "oy": 10,
+    "w": 20,
+    "h": 9
+   }
+  },
+  {
+   "sprite": "glow_shroom",
+   "x": 6.2,
+   "y": 8.2
+  },
+  {
+   "sprite": "glow_shroom_b",
+   "x": 16.5,
+   "y": 15
+  },
+  {
+   "sprite": "glow_shroom",
+   "x": 12.4,
+   "y": 16.8
+  },
+  {
+   "sprite": "glow_shroom_b",
+   "x": 24.5,
+   "y": 7.5
+  },
+  {
+   "sprite": "ember",
+   "x": 6.4,
+   "y": 6.4
+  },
+  {
+   "sprite": "ember",
+   "x": 18.5,
+   "y": 15.5
+  },
+  {
+   "sprite": "ember",
+   "x": 12.3,
+   "y": 5.6
+  },
+  {
+   "sprite": "gift_box",
+   "x": 22,
+   "y": 4,
+   "solid": {
+    "ox": 1,
+    "oy": 7,
+    "w": 12,
+    "h": 6
+   },
+   "unlessFlag": "oak_cache"
+  },
+  {
+   "sprite": "gift_box_open",
+   "x": 22,
+   "y": 4,
+   "solid": {
+    "ox": 1,
+    "oy": 7,
+    "w": 12,
+    "h": 6
+   },
+   "ifFlag": "oak_cache"
+  }
+ ],
+ "npcs": [],
+ "signs": [
+  {
+   "x": 22,
+   "y": 5,
+   "dialogue": "oak_cache",
+   "unlessFlag": "oak_cache"
+  },
+  {
+   "x": 22,
+   "y": 5,
+   "dialogue": "oak_cache_done",
+   "ifFlag": "oak_cache"
+  }
+ ],
+ "phones": [
+  {
+   "x": 21,
+   "y": 11
+  }
+ ],
+ "doors": [
+  {
+   "x": 13,
+   "y": 24,
+   "w": 3,
+   "h": 1,
+   "to": "oak_roots",
+   "tx": 408,
+   "ty": 32,
+   "facing": "down",
+   "indicator": "none"
+  },
+  {
+   "x": 13,
+   "y": 0,
+   "w": 3,
+   "h": 1,
+   "to": "oak_heart",
+   "tx": 216,
+   "ty": 416,
+   "facing": "up",
+   "indicator": "none"
+  }
+ ],
+ "spawners": [
+  {
+   "enemies": [
+    "skeeter_swarm",
+    "coily_cicada"
+   ],
+   "count": 1,
+   "rect": {
+    "x": 5,
+    "y": 16,
+    "w": 5,
+    "h": 3
+   },
+   "ifFlag": "zapper_done",
+   "unlessFlag": "tick_defeated"
+  }
+ ],
+ "triggers": []
+}

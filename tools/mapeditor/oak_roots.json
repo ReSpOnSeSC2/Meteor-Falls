@@ -1,0 +1,358 @@
+{
+ "id": "oak_roots",
+ "name": "HICKORY HILL CAVE",
+ "w": 36,
+ "h": 52,
+ "music": "hill",
+ "grid": [
+  "KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK",
+  "KKKKKKKKKKKKKKsssssssss:::::KKKKKKKK",
+  "KKKKKKKKKKKKKKsssssssss:::::KKKKKKKK",
+  "KKKKKKsssssssKssssssss:::::KKKKKKKKK",
+  "KKKKKKsssssssKsssssss:::::SsKKKKKKKK",
+  "KKKKKKsSsssssKsssss::::::ssssKKKKKKK",
+  "KKKKKKsssssssKsss:::::::ssssssKKKKKK",
+  "KKKKKKsssssssKs::::::::sssssssKKKKKK",
+  "KKKKKK^^TTT^^K:::::::ssssssssssKKKKK",
+  "KKKKKKKKTTTKKK:::::ssssssssssssKKKKK",
+  "KKKKKKKKTTTKKK::::sssssssssssssKKKKK",
+  "KKKKKKssssS::::::ssssssssssssssKKKKK",
+  "KKKKKKsssss:::::sssssssSsssssssKKKKK",
+  "KKKKKKKssss:::::::ssssssssssssKKKKKK",
+  "KKKKKKKsssss::::::::ssssssssssKKKKKK",
+  "KKKKKKKKssssss:::::::ssssssssKKKKKKK",
+  "KKKKKKKKKsssssss::::::ssssssKKKKKKKK",
+  "KKKKKKKKKKsssssSs::::::ssssKKKKKKKKK",
+  "KKKKKKKKKKKKssssss:::::ssKKKKKKKKKKK",
+  "KKKKKK^^^^^^^^^^^^^^TTTT^^^^^^^KKKKK",
+  "KKKKKKKKKKKKKKKKKKKKTTTTKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKTTTTKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKK:::KKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKsssssss:::KKKKKKKKKKKKK",
+  "KKKKKKKKKKssssssssss:::ssKKKKsKKKKKK",
+  "KKKKKKKsKsssssssssss:::sssKsssssKKKK",
+  "KKKKKsssssssssssssss:::sssssSssssKKK",
+  "KKKKssssSssssssssss::::ssssssssssKKK",
+  "KKKKssssssssssssss:::::ssssssssssKKK",
+  "KKKKsssssssssssss::::::ssssssssssKKK",
+  "KKKKKsssssssssss::::::sssssssssssKKK",
+  "KKKKKKKssssssss::::::sssssssssssKKKK",
+  "KKKKKKKKsssss:::::::sssssssKKsKKKKKK",
+  "KKKKKKKKKsss::::::ssssssssKKKKKKKKKK",
+  "KKKKKKKKKKss:::::ssssssssKKKKKKKKKKK",
+  "KKKKKKKKKKKK::::ssssSsKKKKKKKKKKKKKK",
+  "KKKKKKKKKKKK:::::ssssssKKKKKKKKKKKKK",
+  "KKKKKKKKKKssS:::::sssssssKKKKKKKKKKK",
+  "KKKKKKKKKKssss::::sssssssKKKKKKKKKKK",
+  "KKKKKKKKKsssss:::::sssssssKKKKKKKKKK",
+  "KKKKKKKKKKsssss::::ssssssKKKKKKKKKKK",
+  "KKKKKKKKKKsssss::::ssssssKKKKKKKKKKK",
+  "KKKKKKKKKKKKssss:::ssssKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKKsssssssKKKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK"
+ ],
+ "level": [
+  "000000000000000000000000111100000000",
+  "000000000000000000000000111100000000",
+  "000000000000000000000000111100000000",
+  "000000000000000000000000111100000000",
+  "000000000000000000000000111100000000",
+  "000000000000000000000000111100000000",
+  "000000000000000000000000111100000000",
+  "000000000000000000000000111100000000",
+  "000000000000001111111111111100000000",
+  "000000222222221111111111111100000000",
+  "000000222222221111111111111000000000",
+  "000000222222221111111111111100000000",
+  "000000222222221111111111111110000000",
+  "000000222222221111111111111111000000",
+  "000000222222221111111111111111000000",
+  "000000222222221111111111111111100000",
+  "000000221112221111111111111111100000",
+  "000000221112221111111111111111100000",
+  "000000111111111111111111111111100000",
+  "000000111111111111111111111111100000",
+  "000000011111111111111111111111000000",
+  "000000011111111111111111111111000000",
+  "000000001111111111111111111110000000",
+  "000000000111111111111111111100000000",
+  "000000000011111111111111111000000000",
+  "000000000000111111111111100000000000",
+  "000000111111111111111111111111100000",
+  "000000111111111111110000111111100000",
+  "000000111111111111110000111111100000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000",
+  "000000000000000000000000000000000000"
+ ],
+ "props": [
+  {
+   "sprite": "root_curtain",
+   "x": 25.1,
+   "y": 1.2
+  },
+  {
+   "sprite": "root_curtain",
+   "x": 16.6,
+   "y": 43.2
+  },
+  {
+   "sprite": "glow_shroom_b",
+   "x": 23.6,
+   "y": 3.4
+  },
+  {
+   "sprite": "glow_shroom_b",
+   "x": 27.4,
+   "y": 3.6
+  },
+  {
+   "sprite": "ember",
+   "x": 25.4,
+   "y": 2.4
+  },
+  {
+   "sprite": "glow_shroom",
+   "x": 18.6,
+   "y": 28.4
+  },
+  {
+   "sprite": "glow_shroom_b",
+   "x": 24.4,
+   "y": 28.6
+  },
+  {
+   "sprite": "glow_shroom",
+   "x": 7.4,
+   "y": 17.6
+  },
+  {
+   "sprite": "glow_shroom_b",
+   "x": 11.5,
+   "y": 13.5
+  },
+  {
+   "sprite": "root_knot",
+   "x": 9.5,
+   "y": 36.3,
+   "solid": {
+    "ox": 2,
+    "oy": 10,
+    "w": 20,
+    "h": 9
+   }
+  },
+  {
+   "sprite": "root_knot",
+   "x": 26.4,
+   "y": 13.6,
+   "solid": {
+    "ox": 2,
+    "oy": 10,
+    "w": 20,
+    "h": 9
+   }
+  },
+  {
+   "sprite": "glow_shroom",
+   "x": 12.6,
+   "y": 40.6
+  },
+  {
+   "sprite": "glow_shroom_b",
+   "x": 21.4,
+   "y": 35.5
+  },
+  {
+   "sprite": "ember",
+   "x": 16.4,
+   "y": 45.4
+  },
+  {
+   "sprite": "ember",
+   "x": 13.5,
+   "y": 38.5
+  },
+  {
+   "sprite": "ember",
+   "x": 21.5,
+   "y": 31.4
+  },
+  {
+   "sprite": "ember",
+   "x": 15.6,
+   "y": 21.3
+  },
+  {
+   "sprite": "ember",
+   "x": 24.4,
+   "y": 9.4
+  },
+  {
+   "sprite": "gift_box",
+   "x": 9,
+   "y": 11,
+   "solid": {
+    "ox": 1,
+    "oy": 7,
+    "w": 12,
+    "h": 6
+   },
+   "unlessFlag": "cave_gift_roots"
+  },
+  {
+   "sprite": "gift_box_open",
+   "x": 9,
+   "y": 11,
+   "solid": {
+    "ox": 1,
+    "oy": 7,
+    "w": 12,
+    "h": 6
+   },
+   "ifFlag": "cave_gift_roots"
+  }
+ ],
+ "npcs": [],
+ "signs": [
+  {
+   "x": 15,
+   "y": 47,
+   "dialogue": "oak_roots_enter"
+  },
+  {
+   "x": 18,
+   "y": 31,
+   "dialogue": "sign_cave_shelf"
+  },
+  {
+   "x": 9,
+   "y": 12,
+   "dialogue": "cave_gift_roots",
+   "unlessFlag": "cave_gift_roots"
+  },
+  {
+   "x": 9,
+   "y": 12,
+   "dialogue": "cave_gift_roots_done",
+   "ifFlag": "cave_gift_roots"
+  }
+ ],
+ "phones": [],
+ "doors": [
+  {
+   "x": 15,
+   "y": 48,
+   "w": 4,
+   "h": 1,
+   "to": "otterbrook",
+   "tx": 120,
+   "ty": 176,
+   "facing": "down",
+   "indicator": "none"
+  },
+  {
+   "x": 24,
+   "y": 0,
+   "w": 3,
+   "h": 1,
+   "to": "oak_hollow",
+   "tx": 232,
+   "ty": 352,
+   "facing": "up",
+   "indicator": "none"
+  }
+ ],
+ "spawners": [
+  {
+   "enemies": [
+    "tick_nymph",
+    "coily_cicada"
+   ],
+   "count": 2,
+   "rect": {
+    "x": 5,
+    "y": 33,
+    "w": 5,
+    "h": 4
+   },
+   "ifFlag": "zapper_done",
+   "unlessFlag": "tick_defeated"
+  },
+  {
+   "enemies": [
+    "skeeter_swarm",
+    "tick_nymph"
+   ],
+   "count": 2,
+   "rect": {
+    "x": 26,
+    "y": 32,
+    "w": 6,
+    "h": 5
+   },
+   "ifFlag": "zapper_done",
+   "unlessFlag": "tick_defeated"
+  },
+  {
+   "enemies": [
+    "hill_slug_deluxe",
+    "coily_cicada"
+   ],
+   "count": 2,
+   "rect": {
+    "x": 14,
+    "y": 14,
+    "w": 9,
+    "h": 5
+   },
+   "ifFlag": "zapper_done",
+   "unlessFlag": "tick_defeated"
+  }
+ ],
+ "triggers": [],
+ "patrols": [
+  {
+   "id": "roots_sentry",
+   "enemy": "coily_cicada",
+   "route": [
+    [
+     11,
+     36
+    ],
+    [
+     24,
+     36
+    ]
+   ],
+   "sight": 4
+  }
+ ]
+}

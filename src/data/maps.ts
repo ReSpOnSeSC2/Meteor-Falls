@@ -11,6 +11,7 @@
 import { Grid, treeSprite, doorstepOf } from './mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
 import { twotonMap } from './maps_twoton';
+import { oakRootsMap, oakHollowMap, oakHeartMap } from './maps_oakcave';
 import { buildChapter2Maps, valleDorado, PUERTO_SOL_NORTH_GATE } from './maps_ch2';
 import { buildChapter3Maps } from './maps_ch3';
 import { buildChapter4Maps } from './maps_ch4';
@@ -1389,8 +1390,8 @@ export function growOtterbrook(): MapDef {
       // CHAPTER GATE — the south road off the BOTTOM edge → Meadow Mile (Onett's road to Twoson).
       { x: OTTERBROOK_EAST_GATE.x, y: OTTERBROOK_EAST_GATE.y, w: 2, h: 2, to: 'meadow_mile', tx: 24, ty: 128, facing: 'down', indicator: 'none' },
       // the hilltop CAVE mouth (the top-left CORNER) → the Titanic Tick dungeon (reached ONLY past the shed
-      // gate). Lands one row ABOVE the cave's exit pad (row 38), so entering never spawns on the way out.
-      { x: 6, y: 9, w: 3, h: 1, to: 'oak_roots', tx: 14 * 16 + 8, ty: 37 * 16, facing: 'up', indicator: 'none' },
+      // gate). Lands in the mouth chamber two rows ABOVE the exit pad (row 48), never ON the way out.
+      { x: 6, y: 9, w: 3, h: 1, to: 'oak_roots', tx: 16 * 16 + 8, ty: 46 * 16, facing: 'up', indicator: 'none' },
       ...town.doors.map(offY),
     ],
     spawners: [
@@ -2104,172 +2105,12 @@ function buildLongWalk(): { meadow_mile: MapDef; meadow_woods: MapDef; meadow_fa
  * the mouth, and heart_oak_approach at the bottom. */
 
 /** the root tunnel — enter from the burrow (bottom), wind and climb-down north */
-function buildOakRoots(): MapDef {
-  const g = new Grid(28, 40, 'K');
-  // the entry throat — a scorched mouth chamber where the surface light dies
-  for (const [y, x0, x1] of [[33, 10, 16], [34, 9, 17], [35, 9, 18], [36, 10, 17], [37, 11, 16], [38, 12, 15]] as const) {
-    g.rect(x0, y, x1 - x0 + 1, 1, 's');
-  }
-  // the winding descent (center-table, never a ruler) up-map toward the hollow
-  windV(g, [13, 13, 12, 11, 10, 10, 11, 13, 15, 17, 18, 18, 17, 15, 13, 11, 9, 8, 8, 9, 11, 13, 14, 14, 13, 12, 11, 11, 12, 13, 13], 2, 3, ':');
-  // two side galleries the tunnel brushes past (fights live here)
-  for (const [y, x0, x1] of [[19, 4, 9], [20, 3, 10], [21, 3, 10], [22, 4, 9], [23, 5, 8]] as const) g.rect(x0, y, x1 - x0 + 1, 1, 's');
-  g.rect(9, 21, 3, 1, 's'); // gallery throat west
-  for (const [y, x0, x1] of [[9, 18, 23], [10, 17, 24], [11, 17, 24], [12, 18, 23]] as const) g.rect(x0, y, x1 - x0 + 1, 1, 's');
-  g.rect(16, 10, 3, 1, 's'); // gallery throat east
-  // ember veins glowing in the cut walls
-  for (const [ex, ey] of [[12, 30], [15, 26], [17, 21], [10, 16], [8, 12], [14, 7], [12, 4], [6, 21], [21, 10]] as const) g.set(ex, ey, 'S');
-  g.rect(12, 0, 3, 3, ':'); // the north throat up to the hollow
-
-  return {
-    id: 'oak_roots',
-    name: 'HICKORY HILL CAVE',
-    music: 'hill',
-    grid: g.out(),
-    props: [
-      { sprite: 'root_curtain', x: 12.5, y: 1.2 }, // rootlets over the north throat
-      { sprite: 'root_curtain', x: 12.6, y: 33.2 }, // ...and the entry throat
-      // guide-lights flanking the ONWARD (north) throat — so the dark descent reads as
-      // a route, not a dead-end (the player's eye follows the glow deeper into the hill)
-      { sprite: 'glow_shroom_b', x: 10.6, y: 3.4 },
-      { sprite: 'glow_shroom_b', x: 14.4, y: 3.4 },
-      { sprite: 'ember', x: 12.4, y: 2.4 },
-      { sprite: 'root_knot', x: 6.5, y: 20.3, solid: { ox: 2, oy: 10, w: 20, h: 9 } },
-      { sprite: 'root_knot', x: 19.4, y: 10.6, solid: { ox: 2, oy: 10, w: 20, h: 9 } },
-      { sprite: 'glow_shroom', x: 10.6, y: 27.6 },
-      { sprite: 'glow_shroom', x: 9.3, y: 9.6 },
-      { sprite: 'glow_shroom_b', x: 16.4, y: 16.5 },
-      { sprite: 'ember', x: 12.4, y: 31.4 },
-      { sprite: 'ember', x: 17.6, y: 22.4 },
-      { sprite: 'ember', x: 8.4, y: 13.5 },
-      { sprite: 'ember', x: 14.5, y: 5.5 },
-      { sprite: 'ember', x: 6.5, y: 22.3 },
-      { sprite: 'ember', x: 21.4, y: 11.3 },
-    ],
-    npcs: [],
-    signs: [{ x: 12, y: 35, dialogue: 'oak_roots_enter' }],
-    phones: [],
-    doors: [
-      // Surface return lands just below the hilltop CAVE mouth (the plateau's
-      // top-left CORNER), on the west corridor — the cave is its own sealed
-      // section, detached from the meteorite climb (user, 2026-07-09). The pad
-      // sits on row 38 — the throat's LAST WALKABLE row (row 39 is solid wall;
-      // the old row-39 pad could never be stepped on, so the exit was dead).
-      {
-        x: 12,
-        y: 38,
-        w: 4,
-        h: 1,
-        to: 'otterbrook',
-        tx: 7 * 16 + 8,
-        ty: 11 * 16,
-        facing: 'down',
-        indicator: 'none',
-      },
-      { x: 12, y: 0, w: 3, h: 1, to: 'oak_hollow', tx: 11 * 16 + 8, ty: 19 * 16, facing: 'up', indicator: 'none' },
-    ],
-    spawners: [
-      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 4, y: 19, w: 6, h: 4 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
-      { enemies: ['skeeter_swarm', 'tick_nymph'], count: 2, rect: { x: 17, y: 9, w: 7, h: 4 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
-      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 1, rect: { x: 10, y: 24, w: 6, h: 4 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
-    ],
-    triggers: [],
-  };
-}
-
-/** the breather hollow — an underground pool, a rest, and somebody's old cooler */
-function buildOakHollow(): MapDef {
-  const g = new Grid(26, 22, 'K');
-  // the hall — a rounded root-vault
-  for (const [y, x0, x1] of [[4, 8, 17], [5, 6, 19], [6, 5, 20], [7, 4, 21], [8, 4, 21], [9, 4, 21], [10, 4, 21], [11, 4, 21], [12, 5, 20], [13, 5, 20], [14, 6, 19], [15, 7, 18], [16, 9, 16]] as const) {
-    g.rect(x0, y, x1 - x0 + 1, 1, 's');
-  }
-  // the still pool (solid water, foam lip) the roots drink from
-  g.rect(9, 8, 5, 3, 'e');
-  g.rect(9, 7, 5, 1, 'E'); g.rect(9, 11, 5, 1, 'E');
-  g.set(8, 8, 'E'); g.set(8, 10, 'E'); g.set(14, 8, 'E'); g.set(14, 10, 'E');
-  for (const [ex, ey] of [[6, 6], [19, 7], [5, 13], [18, 14]] as const) g.set(ex, ey, 'S');
-  g.rect(11, 17, 3, 5, ':'); // south throat, down to the roots
-  g.rect(11, 0, 3, 4, ':'); // north throat, up to the heart
-
-  const cache = walkPresent('oak_cache', 18, 6);
-  return {
-    id: 'oak_hollow',
-    name: 'THE CAVE — HOLLOW',
-    music: 'hill',
-    grid: g.out(),
-    props: [
-      ...cache.props,
-      // a rest before the heart (§A4.5 — placed BEFORE the pressure)
-      { sprite: 'picnic', x: 5.6, y: 12.4, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-      { sprite: 'root_curtain', x: 11.6, y: 0.4 },
-      { sprite: 'root_knot', x: 16.6, y: 12.2, solid: { ox: 2, oy: 10, w: 20, h: 9 } },
-      { sprite: 'glow_shroom', x: 6.2, y: 7.2 },
-      { sprite: 'glow_shroom_b', x: 16.5, y: 15 },
-      { sprite: 'glow_shroom', x: 12.4, y: 13.8 },
-      { sprite: 'ember', x: 6.4, y: 6.4 },
-      { sprite: 'ember', x: 18.5, y: 13.5 },
-      { sprite: 'ember', x: 12.3, y: 4.6 },
-    ],
-    npcs: [],
-    signs: [...cache.signs],
-    phones: [],
-    doors: [
-      { x: 11, y: 21, w: 3, h: 1, to: 'oak_roots', tx: 12 * 16 + 8, ty: 2 * 16, facing: 'down', indicator: 'none' },
-      { x: 11, y: 0, w: 3, h: 1, to: 'oak_heart', tx: 10 * 16 + 8, ty: 20 * 16, facing: 'up', indicator: 'none' },
-    ],
-    spawners: [
-      { enemies: ['skeeter_swarm', 'coily_cicada'], count: 1, rect: { x: 15, y: 9, w: 5, h: 4 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
-    ],
-    triggers: [],
-  };
-}
-
-/** the heart chamber — the Tick's feeding mound and the heart_oak trigger */
-function buildOakHeart(): MapDef {
-  const g = new Grid(22, 24, 'K');
-  // the chamber — widest at its middle, narrowing toward the throat
-  for (const [y, x0, x1] of [[3, 8, 13], [4, 6, 15], [5, 4, 17], [6, 3, 18], [7, 3, 18], [8, 3, 18], [9, 3, 18], [10, 3, 18], [11, 4, 17], [12, 4, 17], [13, 5, 16], [14, 6, 15], [15, 7, 14], [16, 8, 13]] as const) {
-    g.rect(x0, y, x1 - x0 + 1, 1, 's');
-  }
-  // the ember ring around the mound — the Tick's heat signature
-  for (const [ex, ey] of [[8, 5], [13, 5], [6, 8], [15, 8], [7, 11], [14, 11], [10, 13], [11, 13]] as const) g.set(ex, ey, 'S');
-  windV(g, [10, 10, 11, 11, 10, 10, 10], 17, 3, ':'); // the approach throat
-
-  return {
-    id: 'oak_heart',
-    name: 'THE CAVE — THE HEART',
-    music: 'hill',
-    grid: g.out(),
-    props: [
-      // the feeding mound the Tick is buried under (the boss fires from the
-      // heart_oak trigger in front of it — same scene, same re-arm rules)
-      { sprite: 'meteor_rock', x: 9, y: 6, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
-      { sprite: 'tree_c', x: 5, y: 3.6, solid: OAK }, // great root columns
-      { sprite: 'tree_c', x: 14.5, y: 3.4, solid: OAK },
-      { sprite: 'root_curtain', x: 9.8, y: 2.2 }, // the heartwood hangs over the mound
-      { sprite: 'root_knot', x: 4.4, y: 12.6, solid: { ox: 2, oy: 10, w: 20, h: 9 } },
-      { sprite: 'root_knot', x: 15.6, y: 12.8, solid: { ox: 2, oy: 10, w: 20, h: 9 } },
-      { sprite: 'glow_shroom', x: 4.6, y: 8.6 },
-      { sprite: 'glow_shroom_b', x: 16.4, y: 8.4 },
-      { sprite: 'ember', x: 8.5, y: 5.6 },
-      { sprite: 'ember', x: 13.4, y: 5.4 },
-      { sprite: 'ember', x: 6.6, y: 11.4 },
-      { sprite: 'ember', x: 14.6, y: 11.6 },
-    ],
-    npcs: [],
-    signs: [],
-    phones: [],
-    doors: [{ x: 9, y: 23, w: 3, h: 1, to: 'oak_hollow', tx: 12 * 16, ty: 2 * 16, facing: 'down', indicator: 'none' }],
-    spawners: [],
-    triggers: [
-      // ADR-121: BOSS 1 — the same heartOakScene, now at the bottom of a real
-      // route instead of on a surface tree. Gated in OverworldScene.runTrigger
-      // (zapper_done && !tick_defeated); re-arms on re-entry after a flee/loss.
-      { id: 'heart_oak', rect: { x: 8, y: 8, w: 6, h: 3 }, once: false },
-    ],
-  };
-}
+/* THE HICKORY HILL CAVE (oak_roots / oak_hollow / oak_heart) — rebuilt 2026-07-09
+ * to the EarthBound GIANT STEP grammar via the MAP EDITOR PIPELINE: the literals
+ * live in src/data/maps_oakcave.ts (generated from tools/mapeditor/oak_*.json —
+ * edit THERE, not here). Three elevated floors: the DESCENT (great shelf + the
+ * L2 present ledge), the BREATHER (pool + picnic + save payphone + the cache
+ * overlook), and the ARENA (the Tick's raised root dais, heart_oak trigger). */
 
 /* (the 4 old climb maps — hill_road/hickory_trail/whisperwood_rise/hickory_hill —
  * were dissolved into the elevated Otterbrook map; World Overhaul S5, 2026-07-04.) */
@@ -4104,9 +3945,9 @@ export const MAPS: Record<string, MapDef> = {
   // THE LONG WALK — the four foot legs (Otterbrook → woods → far meadow → overpass)
   ...longWalk,
   // THE UNDER-OAK (ADR-121 rework) — the directed BOSS 1 descent
-  oak_roots: buildOakRoots(),
-  oak_hollow: buildOakHollow(),
-  oak_heart: buildOakHeart(),
+  oak_roots: oakRootsMap,
+  oak_hollow: oakHollowMap,
+  oak_heart: oakHeartMap,
   rex_home: buildRexHome(rexDoorstep),
   rex_bedroom: buildBedroom(),
   rex_hall: buildRexHall(),
@@ -4315,6 +4156,7 @@ for (const [id, atmosphere] of Object.entries(MAP_ATMOSPHERE)) {
 const MAP_REFLECT: Record<string, ReflectZone[]> = {
   foggybottom: [{ x: 0, y: 49, w: 60, h: 3, within: 4 }], // the river Tyne along the S lip (S5 rebuild: 60×52, sea rows 49-51)
   otterbrook: [{ x: 2, y: 132, w: 18, h: 16, within: 3 }], // Pond Park (SW), concept rows 132-148
+  oak_hollow: [{ x: 8, y: 9, w: 7, h: 5, within: 3 }], // the cave's still pool (Giant-Step rebuild)
   golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
   puerto_sol: [{ x: 0, y: 66, w: 100, h: 6, within: 6 }], // the working seafront (Threed rebuild: sea rows 66-71)
   // CH.4 Norway — the fjord, the moor gorge, and the Sleeper's meltwater fall
