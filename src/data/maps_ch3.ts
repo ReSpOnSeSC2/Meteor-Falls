@@ -507,7 +507,6 @@ function buildWintermoorGrounds(): MapDef {
     props: [
       ...west.props,
       ...east.props,
-      { sprite: 'doormat', x: 14, y: 1.4 }, // the school's front steps (the door is the drive's top)
       { sprite: treeSprite(5, 14), x: 5, y: 14, solid: TREE_SOLID },
       { sprite: 'picnic', x: 22, y: 16, solid: PICNIC_SOLID }, // §A4.5 picnic #3 of 3 (the last rest before the dungeon)
     ],
@@ -774,7 +773,7 @@ function buildWintermoorDorm(): MapDef {
     // §A6 stealth-lite: prefects patrol sight cones; a catch is a FIGHT, not a fail
     // (the DOS PRODUCTIVITY LOCK precedent — countFlags gate the wing open later)
     patrols: [
-      { id: 'dorm_a', enemy: 'prefect_drone', route: [[3, 7], [22, 7]], sight: 5 },
+      { id: 'dorm_a', enemy: 'prefect_drone', route: [[3, 1], [22, 1]], sight: 5 },
       { id: 'dorm_b', enemy: 'prefect_drone', route: [[22, 11], [3, 11]], sight: 5 },
     ],
     // §A10 #7 (Overdue) — book 3, the first edition, under a dormitory cot

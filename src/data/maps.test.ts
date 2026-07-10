@@ -21,6 +21,20 @@ import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
 
 const maps = Object.values(MAPS);
 
+describe('outdoor entrance presentation', () => {
+  it('never authors generic welcome mats outdoors', () => {
+    const offenders = maps
+      .filter((map) => !map.interior)
+      .flatMap((map) =>
+        map.props
+          .filter((prop) => prop.sprite === 'doormat')
+          .map((prop) => `${map.id}@${prop.x},${prop.y}`),
+      );
+
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe('S1 canon (GAME_BIBLE §A6/§A7/§A4.5, prompt S1)', () => {
   it('Brickton has 4+ NPCs, payphone, and Smilers + Pigeon Gang on the streets', () => {
     const b = MAPS.brickton;
@@ -154,12 +168,13 @@ describe('S1 canon — the Department & the 6:15', () => {
 
   it('the 6:15 connects Otterbrook and Brickton', () => {
     expect(MAPS.bus_interior).toBeDefined();
-    // 2026-07-02: the old center bus_stop trigger is retired — Otterbrook
-    // boards INSIDE the Transit Depot (its door on the drag + the depot_board
-    // trigger in the waiting room). Brickton's curb stop is unchanged.
+    // Both towns now board inside real stations. Keeping the return trigger off
+    // Twoton's street prevents an immediate second prompt after leaving the depot.
     expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'bus_depot_int') || MAPS.otterbrook.doors.some((d) => d.to === 'bus_depot_int')).toBe(true);
     expect(MAPS.bus_depot_int.triggers.some((t) => t.id === 'depot_board')).toBe(true);
-    expect(MAPS.brickton.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(true);
+    expect(MAPS.brickton.props.some((p) => p.door?.to === 'twoton_bus_station')).toBe(true);
+    expect(MAPS.twoton_bus_station.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(true);
+    expect(MAPS.brickton.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(false);
   });
 });
 
@@ -231,10 +246,10 @@ describe('S2 canon — the PRODUCTIVITY LOCK, Mia, and the chapter button (§A6,
 
   it('the sealed holding room is solid wall; the carve opens floor + a doorway', () => {
     const { x, y, w, h } = HOLDING_ROOM;
-    // sealed: every cell of the block is office wall
+    // sealed: every cell of the block is the Department's blue wall skin
     for (let j = y; j < y + h; j++) {
       for (let i = x; i < x + w; i++) {
-        expect(f3.grid[j][i], `sealed (${i},${j})`).toBe('O');
+        expect(f3.grid[j][i], `sealed (${i},${j})`).toBe('L');
       }
     }
     const carved = carveHoldingRoom(f3.grid);
@@ -244,13 +259,13 @@ describe('S2 canon — the PRODUCTIVITY LOCK, Mia, and the chapter button (§A6,
         expect(carved[j][i], `carved interior (${i},${j})`).toBe('o');
       }
     }
-    expect(carved[y][x]).toBe('O');
-    expect(carved[y + h - 1][x]).toBe('O');
+    expect(carved[y][x]).toBe('L');
+    expect(carved[y + h - 1][x]).toBe('L');
     for (let i = HOLDING_DOOR_GAP.x; i < HOLDING_DOOR_GAP.x + HOLDING_DOOR_GAP.w; i++) {
       expect(carved[y + h - 1][i], `doorway gap (${i})`).toBe('o');
     }
     // the original MapDef grid was not mutated (ADR-012 determinism)
-    expect(f3.grid[y + 1][x + 1]).toBe('O');
+    expect(f3.grid[y + 1][x + 1]).toBe('L');
   });
 
   it('Mia waits inside, gated on the open room and gone once joined', () => {
@@ -268,11 +283,11 @@ describe('S2 canon — the PRODUCTIVITY LOCK, Mia, and the chapter button (§A6,
     expect(f3.triggers.some((t) => t.id === 'faye_meet')).toBe(true);
     expect(f3.triggers.some((t) => t.id === 'manager_block')).toBe(true);
     expect(MAPS.brickton.triggers.some((t) => t.id === 'payphone_ring')).toBe(true);
-    // Mom calls the canon payphone at Twoton's bus corner (16,66) — and the ring
+    // Mom calls the canon payphone at Twoton's bus corner (58,19) — and the ring
     // trigger's rect actually covers it, so the beat fires where the phone stands
-    expect(MAPS.brickton.phones).toContainEqual({ x: 16, y: 66 });
+    expect(MAPS.brickton.phones).toContainEqual({ x: 58, y: 19 });
     const ring = MAPS.brickton.triggers.find((t) => t.id === 'payphone_ring');
-    expect(ring && 16 >= ring.rect.x && 16 < ring.rect.x + ring.rect.w && 66 >= ring.rect.y && 66 < ring.rect.y + ring.rect.h).toBe(true);
+    expect(ring && 58 >= ring.rect.x && 58 < ring.rect.x + ring.rect.w && 19 >= ring.rect.y && 19 < ring.rect.y + ring.rect.h).toBe(true);
   });
 });
 

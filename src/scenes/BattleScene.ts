@@ -178,7 +178,15 @@ import {
   nextComposureMax,
   breakTurns,
   DEFAULT_BOSS_BREAK_RESIST,
+  enemyDrainDamage,
+  enemyDrainHeal,
+  prayGoodHeal,
+  prayWonderfulDamage,
+  prayMiraculousDamage,
+  prayBackfireDamage,
 } from '../battle/formulas';
+import { initiativePlan, type InitiativeActor } from '../battle/initiative';
+import { eligibleEnemyMoves } from '../battle/enemyAi';
 import { Dialogue, makeWindow, everyFrame, DEPTH_UI, vars, textSpeedMul } from '../ui/windows';
 import { glyphify } from '../ui/text';
 import { FlairLine, hasFlair } from '../ui/flairline';
@@ -321,6 +329,10 @@ interface HeroUnit {
   /** wear tier currently on the card (keyed on the DISPLAYED drum value) */
   wear: WearTier;
 }
+
+type TurnActor =
+  | { kind: 'hero'; unit: HeroUnit }
+  | { kind: 'enemy'; unit: EnemyUnit };
 
 class OdoDisplay {
   private strips: Phaser.GameObjects.Image[] = [];
@@ -1281,23 +1293,18 @@ export class BattleScene extends Phaser.Scene {
       if (this.ended) return;
     }
 
-    if (this.cfg.advantage === 'enemy') await this.enemyPhase();
+    // Advantage grants exactly one side-only opening phase. Every ordinary
+    // round after that interleaves both sides by their live Speed.
+    const opening = initiativePlan(this.initiativeActors(), this.cfg.advantage);
+    await this.runInitiativeActors(opening.preemptive);
+    if (this.ended) return;
 
     while (!this.ended) {
-      // ----- player commands
-      for (const h of this.heroes) {
-        if (this.ended) break;
-        if (h.odoHp.dead || h.hero.down) continue;
-        h.defending = false;
-        const acted = await this.heroTurn(h);
-        if (!acted) break; // ran away
-      }
+      const round = initiativePlan(this.initiativeActors(), 'none');
+      await this.runInitiativeActors(round.normal);
       if (this.ended) return;
       // ----- chad "helps"
       await this.chadPhase();
-      if (this.ended) return;
-      // ----- enemies
-      await this.enemyPhase();
       if (this.ended) return;
       // ----- glint assist
       if (this.cfg.glintAssist) await this.glintPhase();
@@ -1305,6 +1312,46 @@ export class BattleScene extends Phaser.Scene {
       // ----- end-of-round status ticks
       await this.statusPhase();
       if (this.ended) return;
+    }
+  }
+
+  /** Snapshot the actors that can act now. Hero Speed is read live so temporary
+   * Flowing/Rally buffs affect the very next round without mutating base stats. */
+  private initiativeActors(): InitiativeActor<TurnActor>[] {
+    return [
+      ...this.heroes
+        .filter((h) => !h.odoHp.dead && !h.hero.down)
+        .map((h): InitiativeActor<TurnActor> => ({
+          side: 'player',
+          speed: this.heroSpeedS(h),
+          value: { kind: 'hero', unit: h },
+        })),
+      ...this.enemies
+        .filter((e) => e.alive)
+        .map((e): InitiativeActor<TurnActor> => ({
+          side: 'enemy',
+          speed: e.def.speed,
+          value: { kind: 'enemy', unit: e },
+        })),
+    ];
+  }
+
+  private async runInitiativeActors(actors: readonly InitiativeActor<TurnActor>[]): Promise<void> {
+    for (const actor of actors) {
+      if (this.ended) return;
+      if (actor.value.kind === 'hero') {
+        const h = actor.value.unit;
+        if (h.odoHp.dead || h.hero.down) continue;
+        // Defend lasts until this hero's next command, including attacks from
+        // faster enemies at the start of the following round.
+        h.defending = false;
+        const acted = await this.heroTurn(h);
+        if (!acted) return; // successful run
+      } else {
+        const e = actor.value.unit;
+        if (!e.alive) continue;
+        await this.enemyPhase([e]);
+      }
     }
   }
 
@@ -2417,7 +2464,9 @@ export class BattleScene extends Phaser.Scene {
           x.odoPp.heal(x.hero.maxPp);
           void this.fx.play('heal_glow', { targets: [this.cardTarget(x)] });
         });
-        for (const e of aliveE) await this.damageEnemy(e, 120 + Math.floor(Math.random() * 40), false, undefined, 'pray', true);
+        for (const e of aliveE) {
+          await this.damageEnemy(e, prayMiraculousDamage(h.hero.level, Math.random), false, undefined, 'pray', true);
+        }
         break;
       }
       case 'wonderful': {
@@ -2428,13 +2477,15 @@ export class BattleScene extends Phaser.Scene {
           AUDIO.sfx('heal');
         } else {
           await this.fx.play('pray_wonderful', { caster: at(), targets: aliveE.map((e) => this.foeTarget(e)) });
-          for (const e of aliveE) await this.damageEnemy(e, 60 + Math.floor(Math.random() * 30), false, undefined, 'pray', true);
+          for (const e of aliveE) {
+            await this.damageEnemy(e, prayWonderfulDamage(h.hero.level, Math.random), false, undefined, 'pray', true);
+          }
         }
         break;
       }
       case 'good': {
         await this.fx.play('pray_good', { caster: at(), targets: standing.map((x) => this.cardTarget(x)) });
-        standing.forEach((x) => this.healHero(x, 30));
+        standing.forEach((x) => this.healHero(x, prayGoodHeal(h.hero.level)));
         AUDIO.sfx('heal');
         break;
       }
@@ -2465,7 +2516,7 @@ export class BattleScene extends Phaser.Scene {
         // flare picks its own victim
         await this.fx.play('pray_backfire', { caster: at(), targets: standing.map((x) => this.cardTarget(x)) });
         if (Math.random() < 0.5) {
-          standing.forEach((x) => x.odoHp.damage(6));
+          standing.forEach((x) => x.odoHp.damage(prayBackfireDamage(x.hero.maxHp)));
           await this.print('Everyone saw spots for a second!');
         } else {
           const v = standing[Math.floor(Math.random() * standing.length)];
@@ -2938,8 +2989,8 @@ export class BattleScene extends Phaser.Scene {
 
   /* ---------------- enemy phase ---------------- */
 
-  private async enemyPhase(): Promise<void> {
-    for (const e of this.enemies.slice()) {
+  private async enemyPhase(units: readonly EnemyUnit[] = this.enemies.slice()): Promise<void> {
+    for (const e of units) {
       if (!e.alive || this.ended) continue;
       // S16 MIND WARP: a PUPPETED foe acts on the PARTY's side this round —
       // it turns its own moves on its own allies (the borrowed voice). The
@@ -3081,8 +3132,9 @@ export class BattleScene extends Phaser.Scene {
       const targets = this.aliveHeroes();
       if (targets.length === 0) return;
       const latchedHero = this.heroes.find((h) => h.latched && !h.odoHp.dead);
+      const latchDrivenDrain = move.kind === 'drain' && e.def.moves.some((candidate) => candidate.kind === 'latch');
       const target =
-        move.kind === 'drain' && latchedHero ? latchedHero : targets[Math.floor(Math.random() * targets.length)];
+        latchDrivenDrain && latchedHero ? latchedHero : targets[Math.floor(Math.random() * targets.length)];
       // enemy lunge — cosmetic
       this.tweens.add({ targets: e.spr, y: e.spr.y + s(5), duration: 90, yoyo: true });
       await this.print(this.fill(move.text, '', e, target.hero.name));
@@ -3194,18 +3246,34 @@ export class BattleScene extends Phaser.Scene {
           break;
         }
         case 'drain': {
-          if (!latchedHero) {
-            await this.print('...but found nothing to hold onto!');
+          // Titanic Tick's authored latch remains its fixed, scary 10-15 drain.
+          if (latchDrivenDrain && latchedHero) {
+            const dmg = 10 + Math.floor(Math.random() * 6);
+            this.applyHeroDamage(latchedHero, dmg);
+            const sup = enemyDrainHeal(dmg);
+            e.hp = Math.min(e.def.hp, e.hp + sup);
+            this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `+${sup}`, RAMP.GRASS);
+            AUDIO.sfx('fx_latch');
+            await this.print(BATTLE_TEXT.latch_drain);
+            await this.print(`${latchedHero.hero.name} lost ${dmg} HP!`);
             break;
           }
-          const dmg = 10 + Math.floor(Math.random() * 6);
-          this.applyHeroDamage(latchedHero, dmg);
-          const sup = Math.floor(dmg / 2);
+
+          // Every other drain is a real physical action. Previously these moves
+          // always printed "found nothing" because they had no latch mechanic.
+          let dmg = enemyDrainDamage(e.def.offense, this.heroDefenseS(target), move.mult ?? 1, Math.random);
+          if (e.rattled > 0) dmg = rattledDamage(dmg);
+          if (target.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+          const before = target.odoHp.target;
+          this.applyHeroDamage(target, dmg);
+          const dealt = Math.max(0, before - target.odoHp.target);
+          const sup = enemyDrainHeal(dealt);
           e.hp = Math.min(e.def.hp, e.hp + sup);
-          this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `+${sup}`, RAMP.GRASS);
-          AUDIO.sfx('fx_latch');
-          await this.print(BATTLE_TEXT.latch_drain);
-          await this.print(`${latchedHero.hero.name} lost ${dmg} HP!`);
+          if (sup > 0) {
+            this.fx.popup(e.spr.x, e.spr.y - e.spr.displayHeight / 2 - s(2), `+${sup}`, RAMP.GRASS);
+          }
+          AUDIO.sfx('heal');
+          await this.print(`${target.hero.name} lost ${dealt} HP! ${e.def.name} recovered ${sup} HP!`);
           break;
         }
         case 'status': {
@@ -3325,12 +3393,7 @@ export class BattleScene extends Phaser.Scene {
 
   private pickMove(e: EnemyUnit): EnemyMove {
     const latchedAlready = this.heroes.some((h) => h.latched);
-    let moves = e.def.moves.filter((m) => !(m.kind === 'latch' && latchedAlready));
-    // HUSHED enemies lose their special vocabulary — plain swings only
-    if (e.hushed > 0) {
-      const plain = moves.filter((m) => m.kind === 'attack' || m.kind === 'taunt');
-      if (plain.length > 0) moves = plain;
-    }
+    const moves = eligibleEnemyMoves(e.def.moves, latchedAlready, e.hushed > 0);
     const total = moves.reduce((a, m) => a + m.weight, 0);
     let r = Math.random() * total;
     for (const m of moves) {

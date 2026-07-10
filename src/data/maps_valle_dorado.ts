@@ -395,7 +395,7 @@ export const valleDoradoMap: MapDef = {
     { id: 'woke_c', sprite: 'wokeC', x: 52, y: 43, facing: 'down', dialogue: 'npc_woke_c', ifFlag: 'grin_defeated' },
     { id: 'clock_lady', sprite: 'oldTimer', x: 62, y: 34, facing: 'up', dialogue: 'npc_clock_lady' },
     { id: 'spire_gazer', sprite: 'sidewalkCritic', x: 16, y: 56, facing: 'up', dialogue: 'npc_spire_gazer' },
-    { id: 'downtown_suit', sprite: 'grayCommuter', x: 84, y: 51, facing: 'up', dialogue: 'npc_downtown_suit' },
+    { id: 'downtown_suit', sprite: 'grayCommuter', x: 82, y: 51, facing: 'up', dialogue: 'npc_downtown_suit' },
     { id: 'llama_1', sprite: 'llama', x: 46, y: 48, facing: 'right', dialogue: 'npc_llama_1', ifFlag: 'q_llama', unlessFlag: 'q_llama_1' },
     { id: 'llama_pen_1', sprite: 'llama', x: 22, y: 77, facing: 'left', dialogue: 'npc_llama_penned', ifFlag: 'q_llama_1' },
     { id: 'llama_2', sprite: 'llama', x: 61, y: 32, facing: 'left', dialogue: 'npc_llama_2', ifFlag: 'q_llama', unlessFlag: 'q_llama_2' },
@@ -403,11 +403,11 @@ export const valleDoradoMap: MapDef = {
     { id: 'llama_3', sprite: 'llama', x: 26, y: 45, facing: 'right', dialogue: 'npc_llama_3', ifFlag: 'q_llama', unlessFlag: 'q_llama_3' },
     { id: 'llama_pen_3', sprite: 'llama', x: 28, y: 77, facing: 'left', dialogue: 'npc_llama_penned', ifFlag: 'q_llama_3' },
     { id: 'llama_4', sprite: 'llama', x: 76, y: 58, facing: 'left', dialogue: 'npc_llama_4', ifFlag: 'q_llama', unlessFlag: 'q_llama_4' },
-    { id: 'llama_pen_4', sprite: 'llama', x: 22, y: 79, facing: 'left', dialogue: 'npc_llama_penned', ifFlag: 'q_llama_4' },
+    { id: 'llama_pen_4', sprite: 'llama', x: 22, y: 78, facing: 'left', dialogue: 'npc_llama_penned', ifFlag: 'q_llama_4' },
     { id: 'llama_5', sprite: 'llama', x: 7, y: 25, facing: 'right', dialogue: 'npc_llama_5', ifFlag: 'q_llama', unlessFlag: 'q_llama_5' },
     { id: 'llama_pen_5', sprite: 'llama', x: 25, y: 79, facing: 'left', dialogue: 'npc_llama_penned', ifFlag: 'q_llama_5' },
     { id: 'llama_6', sprite: 'llama', x: 55, y: 80, facing: 'left', dialogue: 'npc_llama_6', ifFlag: 'q_llama', unlessFlag: 'q_llama_6' },
-    { id: 'llama_pen_6', sprite: 'llama', x: 28, y: 79, facing: 'left', dialogue: 'npc_llama_penned', ifFlag: 'q_llama_6' },
+    { id: 'llama_pen_6', sprite: 'llama', x: 28, y: 78, facing: 'left', dialogue: 'npc_llama_penned', ifFlag: 'q_llama_6' },
   ],
   signs: [
     { x: 2, y: 44, dialogue: 'sign_valle' },
@@ -433,7 +433,9 @@ export const valleDoradoMap: MapDef = {
     { enemies: ['pickpocket_parrot', 'gilded_beetle'], count: 1, rect: { x: 76, y: 71, w: 10, h: 2 } },
   ],
   triggers: [
-    { id: 'valle_arrival', rect: { x: 1, y: 42, w: 3, h: 4 }, once: true },
+    // Two-phase zone: first arrival before Grin, then Chapter 2 recovery afterward.
+    // Each phase persists its own flag in the handler, so the zone must stay re-enterable.
+    { id: 'valle_arrival', rect: { x: 1, y: 42, w: 3, h: 4 }, once: false },
     { id: 'brickton_clock_goal', rect: { x: 59, y: 29, w: 9, h: 6 }, once: false },
   ],
 };

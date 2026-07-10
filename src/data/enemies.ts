@@ -95,8 +95,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'blazer_smiler',
       name: 'Blazer Smiler',
       article: 'The',
-      hp: 26,
-      offense: 4,
+      hp: 50,
+      offense: 8,
       defense: 6,
       speed: 7,
       level: 6,
@@ -287,7 +287,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'mandatory_memo',
       name: 'Mandatory Memo',
       article: 'The',
-      hp: 16, offense: 4, defense: 2, speed: 8, level: 5, exp: 18, cash: 10,
+      hp: 40, offense: 7, defense: 2, speed: 8, level: 5, exp: 18, cash: 10,
       weakness: ['fire'],
       resists: ['freeze'],
       moves: [
@@ -305,7 +305,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'motivational_poster',
       name: 'Motivational Poster',
       article: 'The',
-      hp: 20, offense: 4, defense: 4, speed: 5, level: 5, exp: 19, cash: 11,
+      hp: 46, offense: 7, defense: 4, speed: 5, level: 5, exp: 19, cash: 11,
       weakness: ['fire'],
       resists: ['volt'],
       moves: [
@@ -322,7 +322,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'quota_clock',
       name: 'Quota Clock',
       article: 'The',
-      hp: 24, offense: 5, defense: 5, speed: 6, level: 6, exp: 22, cash: 13,
+      hp: 56, offense: 9, defense: 5, speed: 6, level: 6, exp: 22, cash: 13,
       weakness: ['volt'],
       resists: ['freeze'],
       moves: [
@@ -434,7 +434,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'the_suit',
       name: 'The Suit',
       article: '',
-      hp: 32, offense: 6, defense: 5, speed: 6, level: 7, exp: 26, cash: 16,
+      hp: 80, offense: 10, defense: 5, speed: 6, level: 7, exp: 26, cash: 16,
       weakness: ['holy'],
       resists: ['volt'],
       moves: [
@@ -448,17 +448,17 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
     }),
 
     /* ================= §A7 CHAPTER 2 — South America (S14) =================
-     * Target level 13; EXP/cash on the §A9 curve between Ch.1's street pay
-     * and Boss 2's purse. Every quirk §A7 names is a real mechanic:
+     * Tuned for the natural L8-9 story party with chapter weapons and armor;
+     * EXP/cash remain on the §A9 curve between Ch.1 and Boss 2. Every quirk:
      * the Parrot's pending-cash theft, the Beetle's gold form, the
-     * Souvenir's Crying, the Step-Mask's Shield, the Bunch's 5×22 union,
+     * Souvenir's Crying, the Step-Mask's Shield, the Bunch's 5×36 union,
      * the Jitterbug's Paralyze. */
     E({
       id: 'pickpocket_parrot',
       name: 'Pickpocket Parrot',
       article: 'The',
-      hp: 70,
-      offense: 14,
+      hp: 150,
+      offense: 19,
       defense: 6,
       speed: 16,
       level: 9,
@@ -480,8 +480,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'gilded_beetle',
       name: 'Gilded Beetle',
       article: 'The',
-      hp: 85,
-      offense: 15,
+      hp: 180,
+      offense: 20,
       defense: 12,
       speed: 8,
       level: 10,
@@ -505,8 +505,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'cursed_souvenir',
       name: 'Cursed Souvenir',
       article: 'The',
-      hp: 78,
-      offense: 16,
+      hp: 150,
+      offense: 21,
       defense: 8,
       speed: 7,
       level: 11,
@@ -530,8 +530,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'step_mask',
       name: 'Step-Mask',
       article: 'The',
-      hp: 80,
-      offense: 17,
+      hp: 175,
+      offense: 22,
       defense: 10,
       speed: 9,
       level: 12,
@@ -553,8 +553,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'banana_bunch',
       name: 'Banana Bunch United',
       article: 'The',
-      hp: 22,
-      offense: 12,
+      hp: 36,
+      offense: 17,
       defense: 3,
       speed: 11,
       level: 9,
@@ -576,8 +576,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'jungle_jitterbug',
       name: 'Jungle Jitterbug',
       article: 'The',
-      hp: 80,
-      offense: 19,
+      hp: 155,
+      offense: 24,
       defense: 9,
       speed: 18,
       level: 13,
@@ -597,15 +597,15 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       bg: [RAMP.FOREST, RAMP.MAGENTA],
     }),
     /* §A7 Ch.2 EXPANSION — five adopted South-America battlers (orphaned ChatGPT
-     * art, now wired) lift the roster 6 → 11. On the Ch.2 band (hp 74-88, level
-     * 11-13; EXP/cash on the §A9 curve). Each quirk is a real mechanic and the
+     * art, now wired) lift the roster 6 → 11. On the Ch.2 pressure band (HP
+     * 145-190, level 11-13; EXP/cash on the §A9 curve). Each quirk is real and the
      * five spread a fresh weakness apiece (volt / salt / holy / freeze / fire). */
     E({
       id: 'brass_market_mimic',
       name: 'Brass Market Mimic',
       article: 'The',
-      hp: 86,
-      offense: 16,
+      hp: 180,
+      offense: 21,
       defense: 13,
       speed: 6,
       level: 11,
@@ -629,8 +629,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'bronze_mask_guardian',
       name: 'Bronze Mask Guardian',
       article: 'The',
-      hp: 88,
-      offense: 17,
+      hp: 190,
+      offense: 22,
       defense: 14,
       speed: 8,
       level: 13,
@@ -652,8 +652,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'cackling_mask',
       name: 'Cackling Mask',
       article: 'The',
-      hp: 76,
-      offense: 18,
+      hp: 150,
+      offense: 23,
       defense: 7,
       speed: 14,
       level: 12,
@@ -676,8 +676,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'confetti_cannon',
       name: 'Confetti Cannon',
       article: 'The',
-      hp: 74,
-      offense: 19,
+      hp: 145,
+      offense: 24,
       defense: 5,
       speed: 12,
       level: 12,
@@ -699,8 +699,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'postage_stampede',
       name: 'Postage Stampede',
       article: 'The',
-      hp: 82,
-      offense: 18,
+      hp: 155,
+      offense: 23,
       defense: 8,
       speed: 19,
       level: 13,
@@ -1362,8 +1362,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
     // manifest boss, so it sidesteps the boss-curve / monetary-vision checks. HP is
     // a small legible floor (ADR-122) the scripted repel always pre-empts. You don't
     // LOOT a repelled piece of Mars (cash 0), but surviving it is a real boss-grade
-    // beat — so it pays boss EXP (240, just under the Heart-Oak Tick's 320; the old
-    // exp:0 made the climactic first fight hand out a single point, which felt broken).
+    // beat, but 80 EXP deliberately stops a fresh Jay just below level 4. The
+    // unlosable scene still grants two levels without erasing Chapter 1's curve.
     E({
       id: 'hush_sentinel',
       name: 'HUSH SENTINEL',
@@ -1379,7 +1379,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       defense: 18,
       speed: 16,
       level: 7,
-      exp: 240,
+      exp: 80,
       cash: 0,
       weakness: [],
       resists: ['freeze'],

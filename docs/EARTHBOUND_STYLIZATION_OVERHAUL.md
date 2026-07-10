@@ -90,10 +90,13 @@ family, foliage, palette, signature gimmick, route rhythm). Full table + motifs 
 **USER LOCK (2026-07-08): the first FOUR towns the player visits mirror EarthBound's
 first four, in order — Onett / Twoson / Threed / Fourside — in SNES EB style and feel.**
 Town 2 was RENAMED **Brickton → TWOTON** (internal id stays `brickton` for saves/flags)
-and its LAYOUT rebuilt to the Twoson grammar the same day (the user's Twoson map ref):
-the roads draw a big "2" (top bar → 45° diagonal → the drag), Burglin-Park market in
-the bowl, hospital/shops/theater-corner on the drag, river + bridge → docks east, pond
-park, skyline corner (towers + Spire) on High St. **Built IN THE MAP EDITOR** — the map
+and its LAYOUT rebuilt again on 2026-07-10 around the user's Twoson map ref: the Long
+Walk now enters from the **north**, a diagonal boulevard joins two compact service
+streets, the open market occupies a canal-ringed park, the east river bridge reads as
+the sole docks route, and thick continuous treelines hide/close the map's inaccessible
+space. The 104×84 town now has purposeful hotel, bus-station, theater, community/
+preschool, hospital, market, arcade, and Department interiors instead of anonymous
+facade filler. **Built IN THE MAP EDITOR** — the map
 is the editor document `tools/mapeditor/twoton.json` ⇄ `src/data/maps_twoton.ts` (the
 editor's TS export); dynamic wiring (named doors, occupy, overpass re-aim) stays in
 maps.ts. This supersedes the frozen-core pair (buildBrickton/growBrickton, retired).
@@ -103,7 +106,7 @@ the rebuild is the Track-A layout; the town renders in the existing tileset unti
 | Order | MF region | → EB equivalent | Establishes / reuses |
 |---|---|---|---|
 | 1 | **Otterbrook/USA** (Ch1) | **Onett** *(LOCKED, pilot)* | Establishes the **universal 47-blob geometry** + Americana ground kit + Giant-Step boss |
-| 2 | **TWOTON** (ex-Brickton, Ch1) | **Twoson** *(LOCKED; layout SHIPPED 2026-07-08)* | Same Eagleland palette; the "2" road grammar + market park done; EB tile kit pending |
+| 2 | **TWOTON** (ex-Brickton, Ch1) | **Twoson** *(LOCKED; production rebuild 2026-07-10)* | North arrival + diagonal road grammar, canal market, forest walls, civic/service interiors; EB tile kit pending |
 | 3 | **Foggybottom/Wintermoor** (Ch3) | **Winters** | Fog-terrace pilot shipped; **locks Winters grammar** (reused Ch4, Ch10a) |
 | 4 | **Puerto Sol** (Ch2, town #3) | **Threed** *(USER LOCK — layout SHIPPED 2026-07-08)* + **Scaraba/Pyramid** (dungeon) | Spine + gate arches, slanted parallelogram blocks, catedral plaza, EL CAMPO VIEJO graveyard; EB tile kit pending |
 | 4a | **Las Dunas** (ex-jungle_1/2, the 3→4 crossing) | **Dusty Dunes Desert** *(layout SHIPPED 2026-07-08)* | South road band + dunes + rock fringes + oases + waystation + the east bridge; rides the Zanzibel ochre skin until its own kit |

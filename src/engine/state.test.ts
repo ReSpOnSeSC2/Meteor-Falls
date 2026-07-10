@@ -322,7 +322,7 @@ describe('content validation (interim validator, ADR-005)', () => {
     expect(ENEMIES.cranky_mailbox.hp).toBe(12);
     expect(ENEMIES.runaway_lawnmower.hp).toBe(16);
     expect(ENEMIES.coily_cicada.hp).toBe(14);
-    expect(ENEMIES.blazer_smiler.hp).toBe(26);
+    expect(ENEMIES.blazer_smiler.hp).toBe(50);
     expect(ENEMIES.pigeon_gang.hp).toBe(20);
     expect(ENEMIES.hill_slug_deluxe.hp).toBe(28);
     // ADR-121 (balance): BOSS 1 relocated LATER (Heart Oak) vs a stronger solo Jay,

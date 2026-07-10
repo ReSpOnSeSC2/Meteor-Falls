@@ -130,7 +130,7 @@ import { GOLF_FRAME, GOLF_FRAME_COUNT } from '../src/spritegen/golfers';
 import { COSTA_DOOR_FOR_PUERTO_SOL } from '../src/data/maps';
 import { GolferDefSchema, LinksHoleSchema, ClubDefSchema } from '../src/schemas';
 import { AwakeningDefSchema, TeamDefSchema, WalkOnDefSchema } from '../src/schemas';
-import { CHAR_LEGEND, MAPS } from '../src/data/maps';
+import { CHAR_LEGEND, MAPS, carveHoldingRoom } from '../src/data/maps';
 import {
   ENEMY_OVERWORLD_FRAME,
   ENEMY_OVERWORLD_SHEET_ID_SET,
@@ -1042,7 +1042,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
 
 // S11b — THE DOOR LAW (user: "any entry way needs a door, not just a mat"):
 // inside interiors, a facing-'up' door zone goes THROUGH a wall and must be
-// tagged 'door' (mats alone stay legal only for bottom-edge exits; stairs
+// tagged 'door' or 'hole' (mats alone stay legal only for bottom-edge exits; stairs
 // and elevators remain their own things). The default indicator in an
 // interior is 'mat', so an untagged north door fails too.
 {
@@ -1050,8 +1050,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     if (!m.interior) continue;
     m.doors.forEach((d, i) => {
       const kind = d.indicator ?? 'mat';
-      if (d.facing === 'up' && kind === 'mat') {
-        fail('doors', `${m.id} door[${i}] → ${d.to} faces 'up' through a wall but is tagged '${d.indicator ?? 'mat (default)'}' — tag it 'door'`);
+      const hiddenNonEdgePassage = kind === 'none' && d.y > 0;
+      if (d.facing === 'up' && (kind === 'mat' || hiddenNonEdgePassage)) {
+        fail('doors', `${m.id} door[${i}] → ${d.to} faces 'up' through a wall but is tagged '${d.indicator ?? 'mat (default)'}' — tag it 'door' or 'hole'`);
       }
     });
   }
@@ -1286,7 +1287,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     cranky_mailbox: 12,
     runaway_lawnmower: 16,
     coily_cicada: 14,
-    blazer_smiler: 26,
+    blazer_smiler: 50,
     pigeon_gang: 20,
     hill_slug_deluxe: 28,
     borden: 70, // S22 (ADR-118) — the Ch.1 set-piece cop fight (optional town beat)
@@ -1297,35 +1298,35 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
     recycling_raccoon: 16,
     skeeter_swarm: 14,
     unionized_gnome: 22,
-    mandatory_memo: 16,
-    motivational_poster: 20,
-    quota_clock: 24,
+    mandatory_memo: 40,
+    motivational_poster: 46,
+    quota_clock: 56,
     expired_meter: 18,
     showroom_mannequin: 20,
     good_investment: 26,
     rogue_icecream_truck: 30,
     tick_nymph: 28,
-    the_suit: 32,
+    the_suit: 80,
     titanic_tick: 200, // ADR-131: 100→200 absorbs Surge α's nuke buff (TTK stays ~5)
     // ADR-121 — THE HUSH SENTINEL: the first-night Mars set-piece you REPEL (scripted
     // endBattleMercy), not a money-axis boss. Full-power set-piece HP (it can't be
     // killed before the repel); NOT a CHAPTER_MANIFESTS boss, so it never hits the
     // boss-curve / monetary checks.
     hush_sentinel: 240,
-    // Chapter 2 (S14) — §A7's South America six; banana_bunch is 22 EACH
-    // (the union attacks 5×22, §A7's group notation)
-    pickpocket_parrot: 70,
-    gilded_beetle: 85,
-    cursed_souvenir: 78,
-    step_mask: 80,
-    banana_bunch: 22,
-    jungle_jitterbug: 80,
+    // Chapter 2 (S14) — §A7's South America six; banana_bunch is 36 EACH
+    // (the union attacks 5×36, §A7's group notation)
+    pickpocket_parrot: 150,
+    gilded_beetle: 180,
+    cursed_souvenir: 150,
+    step_mask: 175,
+    banana_bunch: 36,
+    jungle_jitterbug: 155,
     // §A7 Ch.2 expansion — five adopted South-America battlers (6 → 11), on band
-    brass_market_mimic: 86,
-    bronze_mask_guardian: 88,
-    cackling_mask: 76,
-    confetti_cannon: 74,
-    postage_stampede: 82,
+    brass_market_mimic: 180,
+    bronze_mask_guardian: 190,
+    cackling_mask: 150,
+    confetti_cannon: 145,
+    postage_stampede: 155,
     gilded_grin: 300,
     // Chapter 3 (ADR-095) — §A7 England: the seed six + the Enemy Flow Law mix
     // (4 road/field · 3 dungeon · 2 social · 2 rare · 2 late-pressure · 1 set-piece).
@@ -1480,6 +1481,35 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   for (const id of Object.keys(ENEMIES)) {
     if (!(id in canon)) fail('canon', `'${id}' is not in the §A7 Ch.1–2 + Boss manifest — extend the manifest with its chapter, never ad-hoc`);
+  }
+  // Early-game pressure pins: these values are paired with the live equipment
+  // curve and Speed initiative. Pin offense as well as HP so an art/map pass
+  // cannot silently restore the old one-damage encounters.
+  const earlyOffense: Record<string, number> = {
+    blazer_smiler: 8,
+    mandatory_memo: 7,
+    motivational_poster: 7,
+    quota_clock: 9,
+    the_suit: 10,
+    pickpocket_parrot: 19,
+    gilded_beetle: 20,
+    cursed_souvenir: 21,
+    step_mask: 22,
+    banana_bunch: 17,
+    jungle_jitterbug: 24,
+    brass_market_mimic: 21,
+    bronze_mask_guardian: 22,
+    cackling_mask: 23,
+    confetti_cannon: 24,
+    postage_stampede: 23,
+  };
+  for (const [id, offense] of Object.entries(earlyOffense)) {
+    if (ENEMIES[id]?.offense !== offense) {
+      fail('canon', `'${id}' Offense is early-balance canon ${offense}, got ${ENEMIES[id]?.offense ?? 'missing'}`);
+    }
+  }
+  if (ENEMIES.hush_sentinel?.exp !== 80) {
+    fail('canon', `hush_sentinel EXP is early-progression canon 80, got ${ENEMIES.hush_sentinel?.exp ?? 'missing'}`);
   }
   for (const bossId of ['titanic_tick', 'gilded_grin', 'headmaster_mainframe']) {
     if (ENEMIES[bossId] && ENEMIES[bossId].boss !== true) {
@@ -1749,6 +1779,15 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   if (flags.length !== 3 || new Set(flags).size !== 3) {
     fail('canon', `the PRODUCTIVITY LOCK needs three distinct dos_f3 countFlags, got [${flags.join(', ')}]`);
   }
+  const packs = patrols.map((p) => [p.enemy, ...(p.support ?? [])].join('+'));
+  const expectedPacks = [
+    'blazer_smiler+mandatory_memo',
+    'blazer_smiler+motivational_poster',
+    'blazer_smiler+quota_clock',
+  ];
+  if (packs.join(',') !== expectedPacks.join(',')) {
+    fail('canon', `the PRODUCTIVITY LOCK patrol packs must be [${expectedPacks.join(', ')}], got [${packs.join(', ')}]`);
+  }
 }
 
 // §A8/ADR-016 — Ch.1 shops, with their canon shelves
@@ -1760,6 +1799,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   const canon: Record<string, string[]> = {
     bakery: ['apple_pie_slice', 'pbj', 'lemonade'],
     burger: ['grilled_cheese', 'corn_dog', 'star_cola'],
+    twoton_pizza: ['pizza_slice', 'grilled_cheese', 'star_cola', 'diet_star_cola'],
     drugstore: [
       'tball_bat', 'corn_dog', 'pbj', 'salt_shaker', 'sugar_bag',
       'grilled_cheese', 'apple_pie_slice', 'bug_juice', 'moms_voice_tape',
@@ -1784,7 +1824,7 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
   // four are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['bakery', 'burger', 'drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner', 'aurora_provisioner', 'mauna_vendor']);
+  const KNOWN_SHOPS = new Set(['bakery', 'burger', 'twoton_pizza', 'drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner', 'aurora_provisioner', 'mauna_vendor']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }
@@ -3027,6 +3067,9 @@ for (const m of Object.values(MAPS)) {
     const def = ENEMIES[p.enemy];
     if (!def) fail('maps', `${m.id} patrol '${p.id}' → unknown enemy '${p.enemy}'`);
     else if (!(def.walker ?? def.mini)) fail('maps', `${m.id} patrol '${p.id}': enemy '${p.enemy}' has no walker/mini sprite`);
+    for (const id of p.support ?? []) {
+      if (!ENEMIES[id]) fail('maps', `${m.id} patrol '${p.id}' support → unknown enemy '${id}'`);
+    }
   }
 }
 
@@ -3054,8 +3097,7 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
     ch === ':' || ch === 'r' ? false : solidByName.get(CHAR_LEGEND[ch] ?? 'grass_a') === true;
 
   // THE WAIVER TABLE — the only canon maps exempt from the reachability gate,
-  // each a SHIPPED, FROZEN, stateful dungeon whose content opens at runtime
-  // (the static grid BFS cannot model the rotor turn / the sealed-room carve).
+  // each a SHIPPED, FROZEN rotor dungeon whose content opens at runtime.
   // Movement Two adds per-rotation BFS; until then these are reasoned, visible.
   const REACH_WAIVERS: Record<string, string> = {
     pyramid_1: 'mask-switch sign sits past the §A6 rotating floor — static-grid BFS cannot model the rotor state (frozen bespoke)',
@@ -3064,7 +3106,6 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
     // pyramid_4 needs NO reachability waiver: its return-door now lands on the
     // carved channel floor (13,7), not the flank wall, and its west-alcove mask
     // is reachable in the static grid — so the map clears map-quality on its own.
-    dos_f3: 'Mia + her sign are sealed in the holding room until carveHoldingRoom() opens it on holding_open (§A6 — the sealed-room reveal is by design)',
   };
 
   let clean = 0;
@@ -3072,7 +3113,11 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
     // WORLD-OVERHAUL P3: thread the map's elevation join so an elevated map's
     // reachability proves the upper terrace is reachable ONLY via the stair.
     // levelJoinFor returns FLAT_JOIN for every flat map ⇒ output byte-identical.
-    const flags = mapQualityFlags(m, isSolidChar, MAPS, levelJoinFor(m));
+    // DOS floor 3 has one deterministic second state rather than a rotating
+    // topology. Validate its fully opened story phase here; the sealed phase is
+    // separately regression-tested to keep the captive unreachable.
+    const qualityMap = m.id === 'dos_f3' ? { ...m, grid: carveHoldingRoom(m.grid) } : m;
+    const flags = mapQualityFlags(qualityMap, isSolidChar, MAPS, levelJoinFor(qualityMap));
     if (REACH_WAIVERS[m.id]) {
       // a live waiver must still be needed — else retire it (both directions)
       if (flags.length === 0) fail('mapquality', `'${m.id}' reachability waiver is UNUSED now — retire it from the table`);
@@ -3133,7 +3178,7 @@ for (const [ch, name] of Object.entries(CHAR_LEGEND)) {
   // if it TARGETS the waived pyramid_1..4; door-audit (from-only) waives any finding
   // ORIGINATING at ante/apex. Left aligned by comment, not by membership (touching the
   // hard-tier waiver set is riskier than the inert nit warrants).
-  const DOOR_WAIVERS = new Set(['pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_4', 'dos_f3']);
+  const DOOR_WAIVERS = new Set(['pyramid_1', 'pyramid_2', 'pyramid_3', 'pyramid_4']);
   // ADR-135/136 body-box tier (opt-in): the 2 GENERATED city-unit doorsteps whose 40x36
   // player body box clips the door-mouth wall. Their landing TILE is walkable; only
   // the box pokes a neighbour, which the runtime clampSpawnToWalkable nudges. Their

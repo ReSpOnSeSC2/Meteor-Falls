@@ -109,7 +109,7 @@ export function buildBricktonDocks(): MapDef {
       // back through the east gate onto TWOTON's drag, just west of the river
       // bridge (the Twoson rebuild's docks road; BRICKTON_DOCKS_RETURN in maps.ts
       // pins the same px — world_block.test keeps the two sides from drifting).
-      { x: 0, y: 6, w: 1, h: 3, to: 'brickton', tx: 1944, ty: 1008, facing: 'left' },
+      { x: 0, y: 6, w: 1, h: 3, to: 'brickton', tx: 101 * 16 + 8, ty: 56 * 16 + 8, facing: 'left' },
     ],
     spawners: [],
     triggers: [

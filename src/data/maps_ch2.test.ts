@@ -126,6 +126,13 @@ describe('PUERTO SOL — the editor-authored Threed rebuild is the live map (202
 });
 
 describe('the §A6 recovery pairs + the boat round trip (zero missables)', () => {
+  it('authors retryable and two-phase story zones with honest trigger metadata', () => {
+    expect(MAPS.otterbrook.triggers.find((t) => t.id === 'crater')?.once).toBe(false);
+    expect(MAPS.valle_dorado.triggers.find((t) => t.id === 'valle_arrival')?.once).toBe(false);
+    expect(MAPS.puerto_sol.triggers.find((t) => t.id === 'puerto_arrival')?.once).toBe(true);
+    expect(MAPS.pyramid_ante.triggers.find((t) => t.id === 'pyramid_approach')?.once).toBe(true);
+  });
+
   it('every wisher has a woke twin standing in the same spot', () => {
     const valle = MAPS.valle_dorado;
     for (const w of ['a', 'b', 'c']) {

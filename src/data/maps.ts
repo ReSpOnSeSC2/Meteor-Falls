@@ -11,6 +11,7 @@
 import { Grid, treeSprite, doorstepOf } from './mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
 import { twotonMap } from './maps_twoton';
+import { buildTwotonServiceMaps } from './maps_twoton_interiors';
 import { oakRootsMap, oakHollowMap, oakHeartMap } from './maps_oakcave';
 import { buildChapter2Maps, valleDorado, PUERTO_SOL_NORTH_GATE } from './maps_ch2';
 import { buildChapter3Maps } from './maps_ch3';
@@ -70,6 +71,9 @@ export const CHAR_LEGEND: Record<string, string> = {
   O: 'office_wall',
   c: 'cubicle',
   k: 'cubicle_desk',
+  Q: 'smile_floor',
+  L: 'smile_wall',
+  M: 'smile_carpet',
   y: 'sky_day',
   u: 'bus_floor',
   U: 'bus_wall',
@@ -178,7 +182,10 @@ export const OTTERBROOK_TOWN_HEIGHT = 132;
  *  spine's centre; its y is two rows up from the very bottom (a walkable road tile the return
  *  door lands on). MEADOW MILE's return door + the world/long-walk tests read this const, so the
  *  two sides never drift (ADR-012). (Name kept as *_EAST_GATE to avoid churn across those tests.) */
-export const OTTERBROOK_EAST_GATE = { x: 55, y: OTTERBROOK_TOWN_BASE + OTTERBROOK_TOWN_HEIGHT - 2 } as const;
+export const OTTERBROOK_SOUTH_GATE = { x: 55, y: OTTERBROOK_TOWN_BASE + OTTERBROOK_TOWN_HEIGHT - 2 } as const;
+/** Compatibility alias for saves/tests and older callers written before the
+ *  gate moved from the east edge to the south edge. */
+export const OTTERBROOK_EAST_GATE = OTTERBROOK_SOUTH_GATE;
 export const OTTERBROOK_TOWN_PREVIEW_SPAWN = { x: 56, y: OTTERBROOK_TOWN_BASE + 34 } as const;
 export const OTTERBROOK_DEV_PREVIEW_SPAWN = { x: 54, y: OTTERBROOK_TOWN_BASE + 20 } as const;
 
@@ -561,20 +568,23 @@ function buildOtterbrookTownReplica(): MapDef {
     if (/^(house_|bldg_ob_house|bldg_ob_cottage)/.test(s)) yarded.push({ cx, bottom, w: wOf(s) + 7 });
   };
   const line = (n: number, v: number): number[] => Array.from({ length: n }, () => v);
+  const gentleCurve = (n: number, base: number, arc: number): number[] =>
+    Array.from({ length: n }, (_, i) => Math.round(base + Math.sin((i / Math.max(1, n - 1)) * Math.PI) * arc));
   // capture each primary lane's spine so lane markings (dashed centerline + edge sidewalks) can be
   // RE-ASSERTED after the occupied-clearing + connect + door-walk passes strip them (the cause of the
   // "roads have no proper lines" — only ~11% of carriageway kept a centerline before this).
-  // 2026-07-08 street redesign: lanes are STRAIGHT now (line(), not waved()) — the wiggle
-  // read as surveyor error once every block gained curbs, walks, and driveways.
+  // 2026-07-09 polish: formal Civic/Main/the story spine stay straight for navigation;
+  // residential lanes use one-tile deliberate bows. This breaks the subdivision-grid
+  // silhouette without the old every-cell wiggle that read as surveyor error.
   const hRoadSpecs: Array<{ ys: number[]; xLeft: number }> = [];
   const vRoadSpecs: Array<{ xs: number[]; yTop: number }> = [];
-  const hRoad = (base: number, x: number, len: number): void => {
-    const ys = line(len, base);
+  const hRoad = (center: number | number[], x: number, len: number): void => {
+    const ys = typeof center === 'number' ? line(len, center) : center;
     roadH(g, ys, x, 4);
     hRoadSpecs.push({ ys, xLeft: x });
   };
-  const vRoad = (base: number, y: number, len: number): void => {
-    const xs = line(len, base);
+  const vRoad = (center: number | number[], y: number, len: number): void => {
+    const xs = typeof center === 'number' ? line(len, center) : center;
     roadV(g, xs, y, 4);
     vRoadSpecs.push({ xs, yTop: y });
   };
@@ -731,12 +741,12 @@ function buildOtterbrookTownReplica(): MapDef {
   };
   // ── DOORSTEP WALKS + DRIVEWAYS (2026-07-08 polish) ───────────────────────────
   // Every building gets a paved approach: a 3-wide cement walk dropping straight
-  // from its door to the street it fronts, and select homes a 2-wide concrete
-  // driveway (with a parked car authored beside the placement). Painted AFTER the
-  // occupied-clearing pass (which would otherwise erase them) and only over
-  // yard/grass cells, so streets, pond, and park stay untouched.
+  // from its door to the street it fronts, and select homes a narrow asphalt spur
+  // for one parked car. Driveways deliberately cut through the curb cell so they
+  // join the carriageway instead of reading as detached, bright sidewalk slabs.
+  // Both are painted AFTER the occupied-clearing pass (which would erase them).
   const doorWalks: Array<{ col: number; from: number }> = [];
-  const driveways: Array<{ x: number; from: number }> = [];
+  const driveways: Array<{ x: number; from: number; dir: 1 | -1 }> = [];
   const paveDown = (x0: number, w: number, from: number): void => {
     for (let y = from; y < H - 1; y++) {
       let hitStreet = false;
@@ -747,42 +757,54 @@ function buildOtterbrookTownReplica(): MapDef {
       if (hitStreet) return; // merged into the fronting street
     }
   };
+  const paveDriveway = ({ x, from, dir }: { x: number; from: number; dir: 1 | -1 }): void => {
+    // Eight cells is a hard guard against a missing/fronted-on-the-wrong-side
+    // street turning a domestic driveway into a stripe across the whole map.
+    for (let y = from, steps = 0; y > 0 && y < H - 1 && steps < 8; y += dir, steps++) {
+      const c = at(x, y);
+      if (roadChar(c) || c === 'X' || c === 'P' || c === ':') return;
+      if (c === '=' || grassLike(x, y)) g.set(x, y, 'R');
+      else return;
+    }
+  };
   const paintApproaches = (): void => {
     for (const wk of doorWalks) paveDown(wk.col - 1, 3, wk.from);
-    for (const dv of driveways) paveDown(dv.x, 2, dv.from);
+    for (const dv of driveways) paveDriveway(dv);
   };
   // Intersection cleanup: roadV/roadH stamp their edge sidewalks straight through
-  // each other's asphalt, leaving '=' crumbs inside every junction box. A sidewalk
-  // cell with 3+ paved neighbours is inside a junction — fold it into the road.
+  // each other's asphalt. A crossing sidewalk often has only TWO adjacent road
+  // cells (one on each side), so the old 3-neighbour heuristic left bright white
+  // stripes through the carriageway. Fold any sidewalk that bridges road on both
+  // sides back into asphalt, then retain the 3-neighbour corner catch-all.
   const fixJunctions = (): void => {
-    const paved = (x: number, y: number): boolean => 'RD_XP'.includes(at(x, y));
-    for (let y = 1; y < H - 1; y++) {
-      for (let x = 1; x < W - 1; x++) {
-        if (at(x, y) !== '=') continue;
-        let n = 0;
-        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) if (paved(x + dx, y + dy)) n++;
-        if (n >= 3) g.set(x, y, 'R');
+    const paved = (x: number, y: number): boolean => 'RD_XP2'.includes(at(x, y));
+    // Conversion can expose the bridge relationship for the next sidewalk cell
+    // in a two-cell band, so settle to a fixed point instead of depending on scan order.
+    for (let pass = 0; pass < 4; pass++) {
+      let changed = false;
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          if (at(x, y) !== '=') continue;
+          const bridgesHorizontal =
+            [1, 2].some((d) => paved(x - d, y)) && [1, 2].some((d) => paved(x + d, y));
+          const bridgesVertical =
+            [1, 2].some((d) => paved(x, y - d)) && [1, 2].some((d) => paved(x, y + d));
+          let n = 0;
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) if (paved(x + dx, y + dy)) n++;
+          if (bridgesHorizontal || bridgesVertical || n >= 3) {
+            g.set(x, y, 'R');
+            changed = true;
+          }
+        }
       }
+      if (!changed) break;
     }
   };
-  // A light, deterministic wear pass — patched asphalt + the odd cracked slab — so
-  // the fresh grid reads as a lived-in town instead of untouched vector art.
+  // Planned street details only. The former hash-scatter changed otherwise
+  // identical sidewalk/road cells into seemingly random tiles; these storm drains
+  // are deliberate landmarks at major junction curbs instead.
   const weatherStreets = (): void => {
-    for (let y = 1; y < H - 1; y++) {
-      for (let x = 1; x < W - 1; x++) {
-        const h = ((x * 92821) ^ (y * 68917)) >>> 0;
-        const c = at(x, y);
-        if (c === 'R' && h % 47 === 0) {
-          // a patch only where the lane is wide (3+ paved neighbours) — road_patch
-          // is not a road char to the graph, so a patch on a 1-wide thread would
-          // sever the network the one-component law protects
-          let paved = 0;
-          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) if ('RD_XP2'.includes(at(x + dx, y + dy))) paved++;
-          if (paved >= 3) g.set(x, y, '2');
-        } else if (c === '=' && h % 59 === 0) g.set(x, y, '1');
-      }
-    }
-    // storm drains where the big junction curbs meet
+    // Storm drains where the big junction curbs meet.
     for (const [x, y] of [[51, 58], [59, 63], [21, 33], [91, 63], [51, 93], [58, 88]] as const) {
       if (at(x, y) === '=') g.set(x, y, '3');
     }
@@ -790,7 +812,7 @@ function buildOtterbrookTownReplica(): MapDef {
 
   // a home = a fenced yard two lawn rows off its street + a cement walk to the door
   const walk = (col: number, from: number): void => { doorWalks.push({ col: Math.round(col), from }); };
-  const drive = (x: number, from: number): void => { driveways.push({ x, from }); };
+  const drive = (x: number, from: number, dir: 1 | -1 = 1): void => { driveways.push({ x, from, dir }); };
   const home = (s: string, cx: number, bottom: number, door?: { to: string; tx: number; ty: number }): void => {
     build(s, cx, bottom, door);
     walk(cx, bottom + 1);
@@ -808,26 +830,30 @@ function buildOtterbrookTownReplica(): MapDef {
   // NORTH RES ST (row 16) — the hill trails drop in between the lots
   home('house_a', 12, 10);
   home('house_b', 34, 10);
-  drive(39, 7);
+  drive(39, 12);
   home('bldg_ob_house_c', 66, 10);
-  drive(71, 7);
+  drive(71, 12);
   home('bldg_ob_house_green', 80, 10);
   build('bldg_apartments', 100, 12);
   // CIVIC ST (row 31) — depot, city hall (plaza on the corner), police, hospital
   build('facade_busdepot', 29, 27, { to: 'bus_depot_int', tx: 120, ty: 128 });
+  // The hotel belongs to the CITY: its narrow landmark facade fills the central
+  // Civic Street gap between the depot and City Hall, not the remote east fringe
+  // (and never the hill/cave band). doorstepOf() derives the reciprocal lobby exit
+  // from this door, so moving the facade keeps the interior round-trip exact.
+  build('bldg_ob_hotel', 39, 27, { to: 'otter_hotel_lobby', tx: 9 * 16 + 8, ty: 10 * 16 + 12 });
   build('bldg_ob_city_hall', 46, 27, { to: 'otterbrook_cityhall', tx: 120, ty: 128 });
   build('facade_otter_station', 64, 27, { to: 'otter_station', tx: 120, ty: 128 });
   build('bldg_ob_clinic', 76, 27, { to: 'otter_clinic_int', tx: 120, ty: 128 });
   build('bldg_brickmore', 88, 27);
-  build('bldg_ob_hotel', 100, 27, { to: 'otter_hotel_lobby', tx: 9 * 16 + 8, ty: 10 * 16 + 12 });
   // ORCHARD ST (row 46) — residential
   home('bldg_ob_house_green', 12, 40);
   home('house_a', 27, 40);
-  drive(32, 37);
+  drive(32, 40);
   home('bldg_ob_cottage', 44, 40);
-  drive(50, 37);
+  drive(50, 40);
   home('house_b', 66, 40);
-  drive(71, 37);
+  drive(71, 40);
   home('bldg_ob_house_c', 80, 40);
   home('house_a', 99, 40);
   // MAIN ST (row 61) — the downtown drag, gas pump to used-car lot, shops flush on
@@ -842,20 +868,22 @@ function buildOtterbrookTownReplica(): MapDef {
   // POND ST (row 76) — residential east of the park
   home('house_b', 48, 70);
   home('bldg_ob_house_green', 63, 70);
-  drive(68, 67);
+  drive(68, 71);
   home('house_a', 82, 70);
-  drive(87, 67);
+  drive(87, 71);
   home('bldg_ob_house_c', 100, 70);
   // SOUTH RES ST (row 91) — the named/visitable homes + the chapel
   for (const h of OTTERBROOK_HOME_SPECS) home(h.sprite, h.x, h.y, { to: h.id, tx: 7 * 16 + 8, ty: 8 * 16 });
-  drive(69, 82);
+  drive(69, 85);
   build('chapel', 86, 85, { to: 'chapel_int', tx: 88, ty: 150 });
   walk(86, 86);
   // MAPLE ST (row 106) — the FOR-SALE block on the quiet west cul-de-sac
   home('house_b', 35, 100);
   home('house_a', 66, 100);
   home('bldg_ob_house_green', 87, 100);
-  drive(92, 97);
+  // This east-facing lot meets Eastbrook Ave to its NORTH. The old southbound
+  // painter never found a street and laid a two-wide sidewalk to the map border.
+  drive(92, 96, -1);
   // SOUTH APPROACH — one memorable final block, then the chapter road. The old
   // second cross-street added twenty empty rows and made the first town feel like
   // a planning grid rather than a compact SNES caricature.
@@ -877,7 +905,7 @@ function buildOtterbrookTownReplica(): MapDef {
   markFootprint('house_maple', M27.cx, M27.bottom);
   yarded.push({ cx: M27.cx, bottom: M27.bottom, w: wOf('house_maple') + 7 });
   walk(M27.cx - 1, M27.bottom + 1); // the walk meets the drawn door (left third)
-  drive(20, 97);
+  drive(20, 101);
   // 29 MAPLE (the Fixer) — the flip listing next door is an honest MESS: a fenced
   // empty lot, waist-high weeds, a sawhorse, and a sign doing a lot of work.
   markRect(23, 95, 31, 102);
@@ -912,25 +940,25 @@ function buildOtterbrookTownReplica(): MapDef {
   });
   markRect(95, 50, 103, 58);
 
-  // ===== THE STREET GRID — straight, complete, professional. Every lane ends AT
+  // ===== THE STREET NETWORK — readable but not ruler-flat. Every lane ends AT
   // another street (a T-junction), the map gate, or a destination lot — no more
   // stubs wandering into the treeline. The MAIN AVENUE (x55) is the meteorite
   // trail itself continuing down through town to the chapter gate: one readable
   // spine from the crater to Meadow Mile. =====
   g.rect(25, 0, 4, 17, ':'); // W hill trail → North Res St
   g.rect(54, 0, 4, 17, ':'); // E hill trail → the spine's north end
-  hRoad(16, 18, 77); // NORTH RES ST
+  hRoad(gentleCurve(77, 16, 1), 18, 77); // NORTH RES ST — shallow south bow
   hRoad(31, 18, 77); // CIVIC ST
-  hRoad(46, 18, 77); // ORCHARD ST
+  hRoad(gentleCurve(77, 46, -1), 18, 77); // ORCHARD ST — opposing garden bend
   hRoad(61, 8, 96); // MAIN ST — full drag, gas pump (W) to used-car lot (E)
-  hRoad(76, 43, 52); // POND ST (starts at Mill Ave, east of the park lawn)
-  hRoad(91, 18, 77); // SOUTH RES ST (hammerhead turnaround under the pond, W)
-  hRoad(106, 12, 68); // MAPLE ST (west cul-de-sac → School Ave)
+  hRoad(gentleCurve(52, 76, 1), 43, 52); // POND ST curls around the park lawn
+  hRoad(gentleCurve(77, 91, -1), 18, 77); // SOUTH RES ST (hammerhead turnaround under the pond, W)
+  hRoad(gentleCurve(68, 106, 1), 12, 68); // MAPLE ST (west cul-de-sac → School Ave)
   hRoad(128, 50, 27); // SOUTH CROSS — east lane off the spine
-  vRoad(20, 13, 50); // WEST END AVE (North Res → Main; the pond owns the west below)
-  vRoad(92, 13, 81); // EASTBROOK AVE (North Res → South Res)
-  vRoad(42, 58, 51); // MILL AVE (Main → Maple, clear of the park lawn)
-  vRoad(74, 58, 51); // SCHOOL AVE (Main → Maple)
+  vRoad(gentleCurve(50, 20, 1), 13, 50); // WEST END AVE (North Res → Main)
+  vRoad(gentleCurve(81, 92, -1), 13, 81); // EASTBROOK AVE (North Res → South Res)
+  vRoad(gentleCurve(51, 42, -1), 58, 51); // MILL AVE arcs away from Pond Park
+  vRoad(gentleCurve(51, 74, 1), 58, 51); // SCHOOL AVE mirrors Mill
   vRoad(55, 12, H - 12); // THE SPINE — hill trail → Main → chapter gate
   // Maple St's west cul-de-sac bulb (the quiet end by the park — 27 Maple's kerb)
   g.rect(8, 102, 1, 6, '=');
@@ -942,11 +970,13 @@ function buildOtterbrookTownReplica(): MapDef {
   g.rect(15, 87, 3, 1, '=');
   g.rect(15, 93, 3, 1, '=');
   g.rect(15, 88, 3, 5, 'R');
-  // matching turnaround where the south cross-lane ends past its last home
-  g.rect(80, 126, 1, 5, '=');
-  g.rect(77, 125, 3, 1, '=');
-  g.rect(77, 131, 3, 1, '=');
-  g.rect(77, 126, 3, 5, 'R');
+  // matching turnaround where the south cross-lane ends past its last home. Keep
+  // its bottom curb one row INSIDE the map so it cannot punch a second exit through
+  // the forest border beside the chapter gate.
+  g.rect(80, 125, 1, 5, '=');
+  g.rect(77, 124, 3, 1, '=');
+  g.rect(77, 130, 3, 1, '=');
+  g.rect(77, 125, 3, 5, 'R');
 
   for (const key of occupied) {
     const x = key % W;
@@ -986,10 +1016,19 @@ function buildOtterbrookTownReplica(): MapDef {
   // interior stays pure grass (props carry the gazebo/swings/picnic)
   g.rect(22, 64, 16, 22, '.');
   g.rect(21, 64, 2, 2, ':'); // the park entrance footpath off Main's south walk
+  // Restore the north curb as a compact HOTEL FORECOURT after the occupied-lot
+  // clear pass. It stays a single sidewalk row, so Civic Street's carriageway and
+  // the map's road/elevation topology are unchanged.
+  g.rect(35, 28, 8, 1, '=');
   fixJunctions();
   weatherStreets();
 
   props.push(
+    // OTTERBROOKE HOTEL FORECOURT — a planted stoop on central Civic Street.
+    // The facade's own HOTEL marquee does the labeling; extra generic WELCOME
+    // boards/mats were removed so the entrance has one clear visual read.
+    { sprite: 'planter', x: 36.2, y: 27.35, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+    { sprite: 'planter', x: 41.15, y: 27.35, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
     // CITY HALL POCKET PLAZA (spine × Civic corner): fountain, benches, the phone
     { sprite: 'otter_statue', x: 63, y: 34.5, solid: { ox: 35, oy: 60, w: 20, h: 10 } },
     { sprite: 'bench', x: 60, y: 37.2, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
@@ -1020,15 +1059,29 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'tree_c', x: 11, y: 70, solid: OAK },
     { sprite: 'footbridge_rail', x: 17, y: 77 },
     { sprite: 'flagpole', x: 68, y: 34, solid: { ox: 5, oy: 28, w: 6, h: 7 } },
-    // MAIN ST street furniture: hydrants, meters along the parking lane, bins
+    // MAIN ST street furniture: hydrants and meters punctuate the parking lane,
+    // with breathing room kept around each storefront entrance.
     { sprite: 'hydrant', x: 33.5, y: 57.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
     { sprite: 'hydrant', x: 66.5, y: 57.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
-    ...[24, 29, 39, 44, 60, 65, 75, 85].map((mx) => ({ sprite: 'parking_meter', x: mx + 0.2, y: 57.45 })),
-    { sprite: 'trash_can', x: 26.5, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
-    { sprite: 'trash_can', x: 64.2, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
+    ...[24, 29, 39, 44, 75, 85].map((mx) => ({ sprite: 'parking_meter', x: mx + 0.2, y: 57.45 })),
+    { sprite: 'trash_can', x: 36.2, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'news_box', x: 70.5, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'planter', x: 57.8, y: 57.4, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
-    { sprite: 'planter', x: 82.5, y: 57.4, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
+    // HUSH MORNING: the five story-closed storefronts wear visible red-ring
+    // placards at their doors. They retire with the Tick, instead of the state
+    // change being communicated only by invisible enter zones.
+    { sprite: 'sign_do_not_enter', x: 11.65, y: 56.35, solid: { ox: 2, oy: 14, w: 7, h: 8 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
+    { sprite: 'sign_do_not_enter', x: 24.65, y: 56.35, solid: { ox: 2, oy: 14, w: 7, h: 8 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
+    { sprite: 'sign_do_not_enter', x: 31.65, y: 56.35, solid: { ox: 2, oy: 14, w: 7, h: 8 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
+    { sprite: 'sign_do_not_enter', x: 60.65, y: 56.35, solid: { ox: 2, oy: 14, w: 7, h: 8 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
+    { sprite: 'sign_do_not_enter', x: 79.65, y: 56.35, solid: { ox: 2, oy: 14, w: 7, h: 8 }, ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' },
+    // RESTORED DAY: buildDoorMarkers() already supplies one correctly aligned mat
+    // per reopened door. Compact wooden notices replace the blurry menu-board art
+    // and leave the bakery/drugstore curb readable instead of forming a prop wall.
+    { sprite: 'sign', x: 14.1, y: 57.15, scale: 0.64, solid: SIGN_SOLID, ifFlag: 'tick_defeated' },
+    { sprite: 'sign', x: 27.1, y: 57.15, scale: 0.64, solid: SIGN_SOLID, ifFlag: 'tick_defeated' },
+    { sprite: 'sign', x: 63.1, y: 57.15, scale: 0.64, solid: SIGN_SOLID, ifFlag: 'tick_defeated' },
+    { sprite: 'poster_stand', x: 82.1, y: 57.2, ifFlag: 'tick_defeated' },
     { sprite: 'bench', x: 25.5, y: 27.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } }, // the bus-stop benches
     { sprite: 'bench', x: 31, y: 27.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
     // residential mailboxes on the kerb
@@ -1045,12 +1098,13 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'phone_pole', x: 18, y: 29.2 },
     { sprite: 'phone_pole', x: 94, y: 44.2 },
     { sprite: 'phone_pole', x: 40, y: 89.2 },
-    // cars parked ON the new driveways
-    { sprite: 'vehicle_clunker', x: 38.7, y: 6.5 },
-    { sprite: 'vehicle_clunker', x: 49.7, y: 36.5 },
-    { sprite: 'vehicle_clunker', x: 67.7, y: 66.5 },
-    { sprite: 'vehicle_clunker', x: 68.7, y: 81.5 },
-    { sprite: 'vehicle_clunker', x: 91.7, y: 96.5 },
+    // Cars turn into the one-tile residential spurs instead of sitting sideways
+    // across the lawn and footpath.
+    { sprite: 'vehicle_clunker', x: 39, y: 12, rot: 90 },
+    { sprite: 'vehicle_clunker', x: 50, y: 40, rot: 90 },
+    { sprite: 'vehicle_clunker', x: 68, y: 71, rot: 90 },
+    { sprite: 'vehicle_clunker', x: 69, y: 85, rot: 90 },
+    { sprite: 'vehicle_clunker', x: 92, y: 94, rot: 90 },
   );
 
   for (let y = 3; y < H - 4; y++) {
@@ -1105,6 +1159,7 @@ function buildOtterbrookTownReplica(): MapDef {
 
   const signs: SignDef[] = [
     { x: 53, y: 13, dialogue: 'sign_welcome' }, // where the hill trail becomes Main Ave
+    { x: 39, y: 28, dialogue: 'sign_otter_hotel' },
     { x: 88, y: 86, dialogue: 'sign_chapel' },
     { x: 60, y: 34, dialogue: 'sign_otter_hall' },
     { x: 30, y: 73, dialogue: 'sign_civic_green' },
@@ -1117,6 +1172,8 @@ function buildOtterbrookTownReplica(): MapDef {
     { x: 13, y: 100, dialogue: 'sign_27_maple_sold', ifFlag: 'owned_27_maple' },
     { x: 27, y: 100, dialogue: 'sign_29_maple' },
     { x: 84, y: 58, dialogue: 'sign_realty' }, // the agency's window listings
+    ...[12, 25, 32, 61, 80].map((x) => ({ x, y: 57, dialogue: 'shop_closed_hush', ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' })),
+    ...[14, 27, 63, 82].map((x) => ({ x, y: 58, dialogue: 'shop_reopened_board', ifFlag: 'tick_defeated' })),
   ];
 
   return {
@@ -1131,10 +1188,10 @@ function buildOtterbrookTownReplica(): MapDef {
     phones: [{ x: 63, y: 39 }],
     doors: [],
     spawners: [
-      { enemies: ['cranky_mailbox', 'sprinkler_sentry'], count: 1, rect: { x: 60, y: 44, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['runaway_lawnmower', 'recycling_raccoon', 'unionized_gnome'], count: 1, rect: { x: 30, y: 60, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
-      { enemies: ['pigeon_gang', 'good_investment'], count: 1, rect: { x: 70, y: 60, w: 6, h: 2 }, ifFlag: 'meteor_fell' },
-      { enemies: ['cranky_mailbox', 'skeeter_swarm'], count: 1, rect: { x: 60, y: 84, w: 8, h: 4 }, ifFlag: 'meteor_fell' },
+      { enemies: ['cranky_mailbox', 'sprinkler_sentry'], count: 1, rect: { x: 60, y: 44, w: 8, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' },
+      { enemies: ['runaway_lawnmower', 'recycling_raccoon', 'unionized_gnome'], count: 1, rect: { x: 30, y: 60, w: 8, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' },
+      { enemies: ['pigeon_gang', 'good_investment'], count: 1, rect: { x: 70, y: 60, w: 6, h: 2 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' },
+      { enemies: ['cranky_mailbox', 'skeeter_swarm'], count: 1, rect: { x: 60, y: 84, w: 8, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' },
     ],
     triggers: [],
   };
@@ -1333,7 +1390,11 @@ export function growOtterbrook(): MapDef {
 
   // --- carved clearings ---
   g.rect(4, 2, 8, 9, '.');    // cave-mouth shelf — hard against the TOP-LEFT corner (the Giant-Step pocket)
-  g.rect(6, 24, 12, 12, '.'); // shed pocket (far WEST): the workshop BLOCKS the path through it; sawhorse
+  // Far-west gate corridor: exactly six tiles wide, matching the trail shed's
+  // full collision width. Woods touch both side walls, so there is no route around
+  // it; the locked front door and walk-through rear hole are the cave route.
+  g.rect(9, 23, 6, 19, '.');
+  g.rect(18, 34, 10, 9, '.'); // Pemberton's separate workshop pocket off the mower lane
   // key-gates seal the walk-arounds on both flanks until has_trail_key
   g.rect(42, 48, 30, 13, '.'); // MID SHELF: the Jay/Chad terrace clearing (rows 49-60)
   g.rect(64, 27, 26, 7, '.');  // L3 — FIBBINS' BENCH: cottage + dig pen + flight B's top landing
@@ -1402,6 +1463,18 @@ export function growOtterbrook(): MapDef {
   paintTrail([[7, 10], [7, 15], [8, 19], [10, 23]]); // cave shelf → pocket (past the gates)
   paintTrail([[26, 42], [26, 44], [27, 52], [26, 60], [26, 67]]); // lane → W stairs → town
 
+  // Re-seal after trail stamping: dense shoulders funnel the final approach into
+  // the three-cell painted mouth. The old open shelf let the player walk behind
+  // or around the cave art without taking its visible transition.
+  g.rect(4, 2, 3, 8, 'b');
+  g.rect(10, 2, 2, 8, 'b');
+
+  // Re-seal both flanks after trail stamping. The shed fills x9..14; these
+  // woods columns touch its side walls from the rear approach to the front
+  // threshold, guaranteeing that unlocking and crossing the shed is mandatory.
+  g.rect(6, 23, 3, 11, 'b');
+  g.rect(15, 23, 3, 11, 'b');
+
   // ── OLD MAN FIBBINS' DIG (the "old man section", à la Onett's hillside liar):
   // a fenced pen east of his cottage with the hole he's been widening since the
   // night the meteor "called his name". Pit + dirt apron carved into the bench;
@@ -1453,35 +1526,72 @@ export function growOtterbrook(): MapDef {
 
   const treeAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
     xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
-  // DENSE canopy: the wooded slope is a SEA of overlapping tree crowns (the concept's
-  // read). Every wooded 'b' cell is already SOLID, so these crowns are DECORATIVE (no
-  // added body) — collision + BFS come from the grid. Sub-tile jitter + the 3-way
-  // treeSprite variety keep the mass organic. The solid `b` tile already renders the
-  // authored dense-canopy skin, so these are sparse silhouette accents rather than
-  // thousands of duplicate display objects. Paths/clearings stay clean.
-  // 2026-07-09 playtest fix: no crown where its FOLIAGE would cover a walk — the
-  // art rises ~2 tiles UP from its base and spills ~½ tile sideways, so a crown
-  // with walkable ground to its NORTH (any diagonal) or EAST/WEST swallows whoever
-  // passes ("only Jay's cap poking out of a tree"). South-side contact is SAFE:
-  // the crown's base y-sorts behind anyone standing below it, so south edges keep
-  // their crowns and the woods stay a dense sea. Skipped cells still render as
-  // leaves via the 'b' canopy tile skin.
+  // FOREST MASS + FRONT WALLS. Every `b` cell remains the sole collision/BFS source;
+  // art here is decorative. Deep-woods singles break up the canopy tile, while wide
+  // strips compress each exposed SOUTH edge into 8/4-cell props. Their transparent
+  // image bottoms are BASE-ALIGNED to the forest/path seam, so the crowns rise back
+  // into the solid woods and never blanket the walking lane. This restores the large,
+  // continuous EarthBound treelines without reviving the old 3,214-image map.
   const WALKABLE_HILL = new Set(['.', ',', '~', 'f', 'F', ':', 's', 'S', 'T', '^']);
-  const crownOverhangsWalk = (x: number, y: number): boolean => {
-    for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0]] as const)
-      if (WALKABLE_HILL.has(g.rows[y + dy]?.[x + dx] ?? '')) return true;
+  const crownTouchesWalk = (x: number, y: number): boolean => {
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if ((dx !== 0 || dy !== 0) && WALKABLE_HILL.has(g.rows[y + dy]?.[x + dx] ?? '')) return true;
+    }
     return false;
   };
   const canopyTrees: PropDef[] = [];
   for (let cy = 1; cy < TB; cy++) {
     for (let cx = 5; cx < W - 5; cx++) {
       if (g.rows[cy]?.[cx] !== 'b') continue;
-      if (crownOverhangsWalk(cx, cy)) continue;
+      if (crownTouchesWalk(cx, cy)) continue;
       const h = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
       if (h % 17 !== 0) continue; // ~6% accents; the canopy tile supplies the mass
       const jx = (((h >> 3) % 5) - 2) * 0.18;
       const jy = (((h >> 6) % 5) - 2) * 0.18;
       canopyTrees.push({ sprite: treeSprite(cx, cy), x: cx + jx, y: cy + jy });
+    }
+  }
+
+  const forestFronts: PropDef[] = [];
+  const singleTreeSize = {
+    tree: { w: 22, h: 34 }, tree_b: { w: 31, h: 34 }, tree_c: { w: 29, h: 34 },
+  } as const;
+  const addFrontSingle = (x: number, y: number): void => {
+    const sprite = treeSprite(x, y) as keyof typeof singleTreeSize;
+    const size = singleTreeSize[sprite];
+    forestFronts.push({
+      sprite,
+      x: x + 0.5 - size.w / 32, // centre the top-left-anchored art on its forest cell
+      y: y + 1 - size.h / 16, // tree base ends exactly at the forest/path seam
+    });
+  };
+  for (let fy = 0; fy < TB; fy++) {
+    let fx = 0;
+    while (fx < W) {
+      if (g.rows[fy]?.[fx] !== 'b' || !WALKABLE_HILL.has(g.rows[fy + 1]?.[fx] ?? '')) {
+        fx++;
+        continue;
+      }
+      const start = fx;
+      while (fx < W && g.rows[fy]?.[fx] === 'b' && WALKABLE_HILL.has(g.rows[fy + 1]?.[fx] ?? '')) fx++;
+      let cursor = start;
+      let remaining = fx - start;
+      while (remaining >= 8) {
+        forestFronts.push({ sprite: ((cursor + fy) & 1) ? 'treeline_8_b' : 'treeline_8', x: cursor, y: fy - 1.5 });
+        cursor += 8;
+        remaining -= 8;
+      }
+      if (remaining >= 4) {
+        forestFronts.push({ sprite: ((cursor + fy) & 1) ? 'treeline_4_b' : 'treeline_4', x: cursor, y: fy - 1.5 });
+        cursor += 4;
+        remaining -= 4;
+      }
+      if (remaining >= 2) {
+        forestFronts.push({ sprite: ((cursor + fy) & 1) ? 'treeline_2_b' : 'treeline_2', x: cursor, y: fy - 1.5 });
+        cursor += 2;
+        remaining -= 2;
+      }
+      while (remaining-- > 0) addFrontSingle(cursor++, fy);
     }
   }
 
@@ -1493,15 +1603,30 @@ export function growOtterbrook(): MapDef {
   const overlookGift = walkPresent('otter_woods_gift', 50, 27);
 
   const hillProps: PropDef[] = [
+    ...forestFronts,
     ...canopyTrees,
     { sprite: 'meteor_rock_hickory_hill', x: 66, y: 3, solid: { ox: 16, oy: 46, w: 64, h: 38 } }, // pushed farther UP the hill
     { sprite: 'sentinel_husk', x: 62, y: 2, solid: { ox: 4, oy: 60, w: 152, h: 40 }, ifFlag: 'sentinel_repelled' },
     { sprite: 'burrow_mouth', x: 7, y: 1 }, // the CAVE mouth (top-left CORNER) → Titanic Tick
-    otterCentered('bldg_ob_workshop', 12, 31, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }), // Pemberton's workshop — the cave path passes around both flanks
-    // The cave is a story destination, never an optional side-quest reward. A
-    // pre-dawn works barrier prevents the empty dungeon from being entered early;
-    // it retires after Mom sends Jay to sleep. Hodgkin's Trail Key now opens only
-    // his optional supply cache (the sign beside the workshop).
+    // HODGKIN'S TRAIL SHED is the route gate: full-width solid side walls touch
+    // woods, the locked version has no entrance cut, and the keyed version opens
+    // into a real walk-through interior whose rear hole exits above the building.
+    {
+      sprite: 'bldg_ob_trail_shed', x: 9, y: 25,
+      solid: { ox: 0, oy: 0, w: 96, h: 99 },
+      unlessFlag: 'has_trail_key',
+    },
+    {
+      sprite: 'bldg_ob_trail_shed_open', x: 9, y: 25,
+      solid: { ox: 0, oy: 0, w: 96, h: 99 },
+      door: { ox: 40, oy: 77, w: 16, h: 22, to: 'trail_shed_int', tx: 7 * 16 + 8, ty: 9 * 16 + 12 },
+      ifFlag: 'has_trail_key',
+    },
+    // Pemberton is a separate destination in the east service pocket, safely
+    // below the route gate rather than sharing Hodgkin's shed identity.
+    otterCentered('bldg_ob_workshop', 22, 40, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }),
+    // A pre-dawn works barrier prevents the empty dungeon from being entered early;
+    // it retires after Mom sends Jay to sleep.
     { sprite: 'sawhorse', x: 5.2, y: 10.2, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'zapper_done' },
     // OLD MAN FIBBINS' cottage — on his own bench now (L3); the crater trail runs
     // right past his LEFT-hand front door (the art's drawn door, frac ≈ .21),
@@ -1520,7 +1645,10 @@ export function growOtterbrook(): MapDef {
     otterLandmark('house_chad', 58, 49, { to: 'chad_home', tx: 7 * 16 + 8, ty: 8 * 16 }), // CHAD's house (blue)
     { sprite: 'bug_zapper', x: 53, y: 51, solid: { ox: 4, oy: 18, w: 6, h: 8 } },
     { sprite: 'sign', x: 53, y: 20, solid: SIGN_SOLID, ifFlag: 'meteor_fell' }, // crater guard marker (flight D's foot)
-    { sprite: 'sign', x: 16, y: 30.4, solid: SIGN_SOLID }, // shed marker (beside the east flank gate)
+    // Keep the keyed entrance visually obvious and physically generous: the
+    // notice sits beside the door, never in the mandatory walk-through lane.
+    { sprite: 'sign', x: 9.4, y: 31.2, solid: SIGN_SOLID },
+    { sprite: 'sign', x: 27, y: 40.4, solid: SIGN_SOLID },
     { sprite: 'sign', x: 64, y: 44, solid: SIGN_SOLID }, // woods marker
     { sprite: 'picnic', x: 64, y: 53, solid: PICNIC_SOLID },
     { sprite: 'bench', x: 68, y: 55, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
@@ -1546,8 +1674,9 @@ export function growOtterbrook(): MapDef {
   ];
 
   const hillSigns: SignDef[] = [
-    { x: 16, y: 31, dialogue: 'sign_pemberton_workshop' },
-    { x: 10, y: 34, dialogue: 'trail_shed' },
+    { x: 27, y: 41, dialogue: 'sign_pemberton_workshop' },
+    { x: 10, y: 31, dialogue: 'trail_shed_gate_locked', unlessFlag: 'has_trail_key' },
+    { x: 10, y: 31, dialogue: 'trail_shed_gate_open', ifFlag: 'has_trail_key' },
     { x: 5, y: 13, dialogue: 'cave_closed_before_dawn', unlessFlag: 'zapper_done' },
     { x: 24, y: 40, dialogue: 'sign_whisperwood_rise' },
     { x: 21, y: 43, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
@@ -1619,27 +1748,43 @@ export function growOtterbrook(): MapDef {
     phones: town.phones.map(offY),
     doors: [
       // CHAPTER GATE — the south road off the BOTTOM edge → Meadow Mile (Onett's road to Twoson).
-      { x: OTTERBROOK_EAST_GATE.x, y: OTTERBROOK_EAST_GATE.y, w: 2, h: 2, to: 'meadow_mile', tx: 24, ty: 128, facing: 'down', indicator: 'none' },
+      { x: OTTERBROOK_SOUTH_GATE.x, y: OTTERBROOK_SOUTH_GATE.y, w: 2, h: 2, to: 'meadow_mile', tx: 24, ty: 128, facing: 'down', indicator: 'none' },
       // the hilltop CAVE mouth (the top-left CORNER) → the Titanic Tick dungeon (reached ONLY past the shed
       // gate). Lands in the mouth chamber two rows ABOVE the exit pad (row 48), never ON the way out.
-      { x: 6, y: 9, w: 3, h: 1, to: 'oak_roots', tx: 16 * 16 + 8, ty: 46 * 16, facing: 'up', indicator: 'none' },
+      // The zone sits directly under the painted mouth (x7..9, base y≈3), not
+      // eight tiles down the shelf where an invisible doorway used to fire.
+      { x: 7, y: 3, w: 3, h: 1, to: 'oak_roots', tx: 16 * 16 + 8, ty: 46 * 16, facing: 'up', indicator: 'none' },
+      // The shed's rear-wall hole. The surrounding woods make this upper zone
+      // unreachable until the player unlocks the front and crosses the interior.
+      { x: 10, y: 23, w: 4, h: 2, to: 'trail_shed_int', tx: 7 * 16 + 8, ty: 3 * 16, facing: 'down', indicator: 'none' },
+      // Audit/runtime counterpart to the keyed facade entrance. The embedded
+      // prop door cuts the shed collision; this gated zone makes the reciprocal
+      // front landing explicit and remains inactive until Hodgkin awards the key.
+      { x: 11, y: 30, w: 2, h: 2, to: 'trail_shed_int', tx: 7 * 16 + 8, ty: 9 * 16 + 12, facing: 'up', indicator: 'none', ifFlag: 'has_trail_key' },
       ...town.doors.map(offY),
     ],
     spawners: [
-      ...town.spawners.map((sp) => ({ ...offRect(sp), unlessFlag: sp.unlessFlag ?? 'glint_walk_home' })),
+      ...town.spawners.map(offRect),
       { enemies: ['runaway_lawnmower'], count: 1, rect: { x: 52, y: 51, w: 4, h: 1 }, ifFlag: 'q_mail', unlessFlag: 'q_mail_sodd' },
       // the WINDING CLIMB's encounter bands, one per terrace leg
-      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 58, y: 38, w: 26, h: 6 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // Leg 1 (L2)
-      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 54, y: 29, w: 22, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // Leg 2 (L3), clear of the hairpin picnic
-      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 42, y: 19, w: 16, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // Leg 3 (L4)
-      { enemies: ['tick_nymph', 'skeeter_swarm'], count: 2, rect: { x: 41, y: 5, w: 12, h: 10 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // the scree zig-zag (L5)
-      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 5, y: 12, w: 7, h: 12 }, ifFlag: 'meteor_fell', unlessFlag: 'glint_walk_home' }, // the west (cave) corridor
+      { enemies: ['coily_cicada', 'hill_slug_deluxe'], count: 2, rect: { x: 58, y: 38, w: 26, h: 6 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' }, // Leg 1 (L2)
+      { enemies: ['hill_slug_deluxe', 'coily_cicada'], count: 2, rect: { x: 54, y: 29, w: 22, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' }, // Leg 2 (L3), clear of the hairpin picnic
+      { enemies: ['coily_cicada', 'skeeter_swarm'], count: 2, rect: { x: 42, y: 19, w: 16, h: 4 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' }, // Leg 3 (L4)
+      { enemies: ['tick_nymph', 'skeeter_swarm'], count: 2, rect: { x: 41, y: 5, w: 12, h: 10 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' }, // the scree zig-zag (L5)
+      { enemies: ['tick_nymph', 'coily_cicada'], count: 2, rect: { x: 5, y: 12, w: 7, h: 12 }, ifFlag: 'meteor_fell', unlessFlag: 'tick_defeated' }, // the west (cave) corridor
     ],
     triggers: [
       { id: 'porch', rect: { x: 46, y: 56, w: 6, h: 2 }, once: true },
       // the crater set-piece — the scree apron now hands over to the bowl from the
       // WEST; x62 keeps the beat from firing way out on the rim ring
-      { id: 'crater', rect: { x: 62, y: 1, w: 20, h: 12 }, once: true },
+      { id: 'crater', rect: { x: 62, y: 1, w: 20, h: 12 }, once: false },
+      // Microbeats are replayable rectangles because their runtime phase checks
+      // can legitimately no-op on an early crossing. Each handler owns the named
+      // persistent *_seen flag and matching DIALOGUE key.
+      { id: 'ch1_hill_entry_warning', rect: { x: 52, y: 61, w: 8, h: 5 }, once: false },
+      { id: 'ch1_cave_threshold', rect: { x: 4, y: 7, w: 8, h: 5 }, once: false },
+      { id: 'ch1_hush_main_street', rect: { x: 50, y: 123, w: 12, h: 9 }, once: false },
+      { id: 'ch1_restored_town_reveal', rect: { x: 23, y: 59, w: 7, h: 7 }, once: false },
     ],
     patrols: [{ id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[15, 42], [25, 42]], countFlag: 'q_mower_caught' }],
   };
@@ -1789,8 +1934,6 @@ export function growOtterbrookLegacy(): MapDef {
     { sprite: 'bug_zapper', x: 30, y: 52, solid: { ox: 4, oy: 18, w: 6, h: 8 } }, // Chad's porch (the Glint beat)
     { sprite: 'lemonade', x: 36, y: 57.2, solid: { ox: 0, oy: 10, w: 36, h: 18 }, ifFlag: 'zapper_done' },
     { sprite: 'paw_prints', x: 22, y: 58, ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' }, // the sniff-trail HEAD
-    { sprite: 'doormat', x: 13.6, y: 53.5, ifFlag: 'q_mail', unlessFlag: 'q_mail_pickles' },
-    { sprite: 'doormat', x: 25.6, y: 53.5, ifFlag: 'q_mail', unlessFlag: 'q_mail_sodd' },
     ...porchCan.props,
     ...treeAt([[42, 48], [8, 58], [100, 50]]),
   ];
@@ -1887,7 +2030,7 @@ export function growOtterbrookLegacy(): MapDef {
       // the opening porch beat (L1)
       { id: 'porch', rect: { x: 13, y: 54, w: 4, h: 2 }, once: true },
       // the CRATER — the Hush-Sentinel set-piece (L3)
-      { id: 'crater', rect: { x: 66, y: 9, w: 8, h: 3 }, once: true },
+      { id: 'crater', rect: { x: 66, y: 9, w: 8, h: 3 }, once: false },
     ],
     patrols: [
       // Hodgkin's runaway mower on the L2 cross-link (catching it sets q_mower_caught → has_trail_key)
@@ -2029,7 +2172,7 @@ function buildOtterStationInt(streetExit: { tx: number; ty: number }): MapDef {
  * lands on its neighbour's ACTUAL trail entry, read off the draft grid (never a
  * hardcoded jittered coord; the ADR-012 route discipline). The §A7 band escalates
  * Ch.1 → Ch.1.5 as you near Brickton; a rest (payphone + picnic) sits at each leg's
- * WEST mouth, BEFORE its hot middle (§B4). Two cutscene beats are flag-gated (a
+ * NORTH mouth, BEFORE its hot middle (§B4). Two cutscene beats are flag-gated (a
  * roadside vignette in the woods, the "you can see the city now" reveal on the
  * overpass). The METEOR ROADBLOCK stays on its leg (meadow_mile, the Hickory-Hill-
  * adjacent meadow). THE ORIENTATION GATE + the grandfather clause (badge OR bus)
@@ -2048,6 +2191,99 @@ const WALK_GIFT_SOLID = { ox: 1, oy: 7, w: 12, h: 6 } as const;
 function trailRowAt(grid: string[], col: number): number {
   for (let y = 0; y < grid.length - 1; y++) if (grid[y][col] === ':') return y;
   return Math.round(grid.length / 2);
+}
+
+/** The long walk was originally authored west-to-east, even after Otterbrooke's
+ * chapter road moved to its SOUTH edge. Rotate those finished route drafts once,
+ * at assembly, so every hand-placed rest, encounter, present, NPC, and story zone
+ * keeps its relationship to the path while the world now reads NORTH-to-SOUTH.
+ *
+ * Props stay upright (trees, phones, tables, signs); only the sawhorse is truly
+ * directional. Grid glyphs whose art has an axis swap to their perpendicular
+ * counterpart. Embedded facade doors are deliberately unsupported here: this
+ * helper is scoped to the four facade-free Long Walk drafts below. */
+function rotateLongWalkClockwise(map: MapDef): MapDef {
+  const oldH = map.grid.length;
+  const oldW = map.grid[0].length;
+  const rotateChar = (ch: string): string => {
+    if (ch === '-') return '|';
+    if (ch === '|') return '-';
+    if (ch === '_') return 'D';
+    if (ch === 'D') return '_';
+    return ch;
+  };
+  const rotateRows = (rows: string[], chars = false): string[] =>
+    Array.from({ length: oldW }, (_row, newY) =>
+      Array.from({ length: oldH }, (_col, newX) => {
+        const ch = rows[oldH - 1 - newX][newY];
+        return chars ? rotateChar(ch) : ch;
+      }).join(''),
+    );
+  const point = <T extends { x: number; y: number }>(p: T): T => ({
+    ...p,
+    x: oldH - 1 - p.y,
+    y: p.x,
+  });
+  const rect = <T extends { x: number; y: number; w: number; h: number }>(r: T): T => ({
+    ...r,
+    x: oldH - r.y - r.h,
+    y: r.x,
+    w: r.h,
+    h: r.w,
+  });
+  const facing = (f: NpcDef['facing']): NpcDef['facing'] => ({
+    up: 'right',
+    right: 'down',
+    down: 'left',
+    left: 'up',
+  })[f] as NpcDef['facing'];
+
+  return {
+    ...map,
+    grid: rotateRows(map.grid, true),
+    elevation: map.elevation ? { level: rotateRows(map.elevation.level) } : undefined,
+    props: map.props.map((p) => {
+      const moved = point(p);
+      // The meteor is shape-neutral; the barrier across its lane is not.
+      return p.sprite === 'sawhorse' ? { ...moved, rot: 90 as const } : moved;
+    }),
+    npcs: map.npcs.map((n) => ({ ...point(n), facing: facing(n.facing) })),
+    signs: map.signs.map(point),
+    phones: map.phones.map(point),
+    atms: map.atms?.map(point),
+    doors: map.doors.map((d) => ({ ...rect(d), facing: facing(d.facing) })),
+    spawners: map.spawners.map((s) => ({ ...s, rect: rect(s.rect) })),
+    triggers: map.triggers.map((t) => ({ ...t, rect: rect(t.rect) })),
+    patrols: map.patrols?.map((p) => ({
+      ...p,
+      route: p.route.map(([x, y]) => [oldH - 1 - y, x] as [number, number]),
+    })),
+    reflect: map.reflect?.map(rect),
+  };
+}
+
+/** Pixel landing one tile INSIDE an edge door. Read the trail itself rather
+ * than the rectangular door center: a two-tile mouth can straddle the curved
+ * route, while the visible ':' tile is the safe player-feet coordinate. */
+function edgeDoorLanding(map: MapDef, to: string): { tx: number; ty: number } {
+  const d = map.doors.find((door) => door.to === to);
+  if (!d) return { tx: 40, ty: 40 };
+  const W = map.grid[0].length;
+  const H = map.grid.length;
+  const cx = d.x + d.w / 2;
+  const cy = d.y + d.h / 2;
+  if (d.y === 0) return { tx: trailColAt(map.grid, 0) * 16 + 8, ty: 16 };
+  if (d.y + d.h >= H) return { tx: trailColAt(map.grid, H - 1) * 16 + 8, ty: (H - 2) * 16 };
+  if (d.x === 0) return { tx: 16, ty: trailRowAt(map.grid, 0) * 16 + 8 };
+  if (d.x + d.w >= W) return { tx: (W - 2) * 16, ty: trailRowAt(map.grid, W - 1) * 16 + 8 };
+  return { tx: cx * 16, ty: cy * 16 };
+}
+
+/** Trail column on a rotated route row (the north/south analogue of trailRowAt). */
+function trailColAt(grid: string[], row: number): number {
+  const line = grid[row] ?? '';
+  for (let x = 0; x < line.length; x++) if (line[x] === ':') return x;
+  return Math.round(line.length / 2);
 }
 
 /** a hidden present: the closed box + its sign while sealed, the opened box + a
@@ -2084,9 +2320,9 @@ function clearTreesIn(props: PropDef[], box: { x: number; y: number; w: number; 
   });
 }
 
-/** LEG 1 — MEADOW MILE: the meadow just east of town, carrying the Task-0 meteor
- *  roadblock (a Hickory Hill chunk). Otterbrook's east gate lands here; the east
- *  edge is now a plain door onward to the woods. The gentlest §A7 band (near town). */
+/** LEG 1 — MEADOW MILE: authored left-to-right, then quarter-turned at assembly
+ *  into the meadow south of town. It carries the Task-0 meteor roadblock; its
+ *  live south edge continues into the woods. The gentlest §A7 band (near town). */
 function buildMeadowMile(): MapDef {
   const draft = buildRoute({
     kind: 'route', id: 'meadow_mile', seed: 1500, size: [40, 16],
@@ -2131,11 +2367,11 @@ function buildMeadowMile(): MapDef {
     doors: [
       // west → Otterbrook's exported east gate (computed); east → the woods (the
       // coordinator rewrites tx/ty to the woods' real west entry below)
-      { x: 0, y: westY, w: 1, h: 2, to: 'otterbrook', tx: OTTERBROOK_EAST_GATE.x * 16, ty: OTTERBROOK_EAST_GATE.y * 16, facing: 'left', indicator: 'none' },
+      { x: 0, y: westY, w: 1, h: 2, to: 'otterbrook', tx: OTTERBROOK_SOUTH_GATE.x * 16, ty: OTTERBROOK_SOUTH_GATE.y * 16, facing: 'left', indicator: 'none' },
       { x: W - 1, y: eastY, w: 1, h: 2, to: 'meadow_woods', tx: 16, ty: eastY * 16, facing: 'right', indicator: 'none' },
     ],
     spawners: draft.spawners,
-    // S15i Task 3 (ADR-058): THE WALKERS' REGISTER token — a strip just east of Hal
+    // S15i Task 3 (ADR-058): THE WALKERS' REGISTER token — a strip just past Hal
     // (you cross it walking on into the city; fires only while the quest is live)
     triggers: [{ id: 'walk_token', rect: { x: Math.round(W * 0.32), y: 0, w: 2, h: H }, once: false }],
   };
@@ -2247,7 +2483,7 @@ function buildMeadowFar(): MapDef {
 }
 
 /** LEG 4 — THE OVERPASS: the city line. THE ORIENTATION GATE (three proctors +
- *  the east-edge trigger, grandfather clause intact) and the "you can see the city
+ *  the live south-edge trigger, grandfather clause intact) and the "you can see the city
  *  now" reveal live here. The toughest pre-city §A7 band (pigeons + smilers). */
 function buildMeadowOverpass(): MapDef {
   const draft = buildRoute({
@@ -2292,10 +2528,12 @@ function buildMeadowOverpass(): MapDef {
     ],
     spawners: draft.spawners.map((s) => ({ ...s, enemies: ['pigeon_gang', 'blazer_smiler', 'good_investment'] })),
     triggers: [
-      // the "you can see the city now" reveal — on entry from the far meadow (west)
+      // the "you can see the city now" reveal — at the authored west entry;
+      // rotation makes this the live NORTH entry from the far meadow
       { id: 'city_reveal', rect: { x: 1, y: 0, w: 3, h: H }, once: false },
-      // THE ORIENTATION GATE — the east edge IS the city line; the gate runs the
-      // proctor exercises → visitor_badge, or walks you straight in on badge/bus
+      // THE ORIENTATION GATE — the authored east edge becomes the live SOUTH city
+      // line; the gate runs the proctor exercises → visitor_badge, or walks you
+      // straight in on badge/bus
       { id: 'orientation_gate', rect: { x: W - 3, y: 0, w: 3, h: H }, once: false },
     ],
   };
@@ -2305,29 +2543,26 @@ function buildMeadowOverpass(): MapDef {
  *  every door's tx/ty is overwritten to land on the neighbour's REAL trail entry
  *  (read off the draft), never a hardcoded coordinate (the ADR-012 discipline). */
 function buildLongWalk(): { meadow_mile: MapDef; meadow_woods: MapDef; meadow_far: MapDef; meadow_overpass: MapDef } {
-  const meadow_mile = buildMeadowMile();
-  const meadow_woods = buildMeadowWoods();
-  const meadow_far = buildMeadowFar();
-  const meadow_overpass = buildMeadowOverpass();
-
-  // each leg's real west/east entry (the trail row at its first/last column)
-  const entry = (m: MapDef): { W: number; westY: number; eastY: number } => {
-    const W = m.grid[0].length;
-    return { W, westY: trailRowAt(m.grid, 0), eastY: trailRowAt(m.grid, W - 1) };
-  };
-  const e = { mile: entry(meadow_mile), woods: entry(meadow_woods), far: entry(meadow_far), op: entry(meadow_overpass) };
-  // land an EAST→neighbour door at the neighbour's WEST mouth (tile 1); a
-  // WEST→neighbour door at the neighbour's EAST mouth (tile W-2)
+  // Preserve the shipped authored content, but correct its world axis: each old
+  // west mouth becomes NORTH and each old east mouth becomes SOUTH.
+  const meadow_mile = rotateLongWalkClockwise(buildMeadowMile());
+  const meadow_woods = rotateLongWalkClockwise(buildMeadowWoods());
+  const meadow_far = rotateLongWalkClockwise(buildMeadowFar());
+  const meadow_overpass = rotateLongWalkClockwise(buildMeadowOverpass());
+  // Cross-aim each SOUTH door at its neighbour's NORTH landing and vice versa.
   const aim = (m: MapDef, to: string, tx: number, ty: number): void => {
     const d = m.doors.find((x) => x.to === to);
     if (d) { d.tx = tx; d.ty = ty; }
   };
-  aim(meadow_mile, 'meadow_woods', 16, e.woods.westY * 16);
-  aim(meadow_woods, 'meadow_mile', (e.mile.W - 2) * 16, e.mile.eastY * 16);
-  aim(meadow_woods, 'meadow_far', 16, e.far.westY * 16);
-  aim(meadow_far, 'meadow_woods', (e.woods.W - 2) * 16, e.woods.eastY * 16);
-  aim(meadow_far, 'meadow_overpass', 16, e.op.westY * 16);
-  aim(meadow_overpass, 'meadow_far', (e.far.W - 2) * 16, e.far.eastY * 16);
+  const wire = (north: MapDef, south: MapDef): void => {
+    const intoSouth = edgeDoorLanding(south, north.id);
+    const intoNorth = edgeDoorLanding(north, south.id);
+    aim(north, south.id, intoSouth.tx, intoSouth.ty);
+    aim(south, north.id, intoNorth.tx, intoNorth.ty);
+  };
+  wire(meadow_mile, meadow_woods);
+  wire(meadow_woods, meadow_far);
+  wire(meadow_far, meadow_overpass);
   return { meadow_mile, meadow_woods, meadow_far, meadow_overpass };
 }
 
@@ -2456,6 +2691,46 @@ function buildWorkshopInt(streetExit: { tx: number; ty: number }): MapDef {
     ],
     phones: [{ x: 1, y: 9 }],
     doors: [{ x: 8, y: 10, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' }],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** Hodgkin's route-gate shed: the key opens the exterior front door, this room
+ * carries the optional supplies, and a visibly broken rear wall is the only way
+ * through to the upper cave approach. The two exterior landings sit on opposite
+ * sides of the full-width shed collision, so the map cannot be bypassed. */
+function buildTrailShedInt(): MapDef {
+  const g = new Grid(14, 12, 'w');
+  g.rect(0, 0, 14, 2, 'W');
+  g.rect(6, 6, 2, 4, 'r');
+  return {
+    id: 'trail_shed_int',
+    name: "HODGKIN'S TRAIL SHED",
+    music: 'hill',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'shelf_b', x: 1, y: 1.7, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'crate', x: 2.2, y: 5.2, solid: { ox: 1, oy: 8, w: 18, h: 10 } },
+      { sprite: 'crate', x: 3.8, y: 5.7, solid: { ox: 1, oy: 8, w: 18, h: 10 }, unlessFlag: 'shed_looted' },
+      { sprite: 'fb_barrel', x: 10.5, y: 4.8, solid: { ox: 1, oy: 12, w: 16, h: 10 }, unlessFlag: 'shed_looted' },
+      { sprite: 'fb_rope_coil', x: 10.7, y: 7.3 },
+      { sprite: 'floor_lamp', x: 1.2, y: 8.1, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+    ],
+    npcs: [],
+    signs: [
+      { x: 3, y: 6, dialogue: 'trail_shed' },
+      { x: 7, y: 2, dialogue: 'trail_shed_back_hole' },
+    ],
+    phones: [],
+    atms: [],
+    doors: [
+      { x: 6, y: 11, w: 2, h: 1, to: 'otterbrook', tx: 12 * 16 + 8, ty: 32 * 16 + 12, facing: 'down', indicator: 'door' },
+      // Trigger from the first walkable row below the north wall. Row 1 is solid;
+      // placing the zone there made collision win before the rear breach could fire.
+      { x: 6, y: 2, w: 2, h: 1, to: 'otterbrook', tx: 12 * 16 + 8, ty: 24 * 16 + 12, facing: 'up', indicator: 'hole' },
+    ],
     spawners: [],
     triggers: [],
   };
@@ -2687,15 +2962,29 @@ function buildViviRoom(): MapDef {
 
 /* ------------------- TWOTON (map id 'brickton') — the Twoson rebuild ------------------- */
 
-/** where the bus drops you — OverworldScene's bus flow reads this (the bus corner on the drag) */
-export const BRICKTON_BUS_SPAWN = { x: 14 * 16 + 8, y: 63 * 16 } as const;
+/** Where the bus drops you — on the Civic Street curb beside the depot, outside
+ * both the carriageway and the exterior return-bus trigger. */
+export const BRICKTON_BUS_SPAWN = { x: 48 * 16 + 8, y: 18 * 16 + 8 } as const;
 
-/** where the LONG WALK drops you on foot — just inside the west road mouth off the overpass */
-export const BRICKTON_FOOT_SPAWN = { x: 4 * 16 + 8, y: 14 * 16 } as const;
+/** where the LONG WALK drops you on foot — just inside Twoton's north road */
+// This geometry belongs to the editor-authored Twoton document. Keep the
+// runtime spawn paired with that doorway, but do not cut or reshape the city
+// during map assembly.
+const TWOTON_NORTH_GATE = { x: 72, y: 0, w: 5, h: 1 } as const;
+/** The long walk now runs south from Otterbrooke and enters Twoton from its
+ * northern road. Keep this independently exported name for save/runtime callers. */
+export const BRICKTON_FOOT_SPAWN = {
+  x: (TWOTON_NORTH_GATE.x + TWOTON_NORTH_GATE.w / 2) * 16,
+  y: 3 * 16 + 8,
+} as const;
 
 /** where the docks' return door lands — just inside the east gate, on the bridge road
  *  (maps_ch2's buildBricktonDocks bakes these px; world_block.test asserts they stay walkable) */
-export const BRICKTON_DOCKS_RETURN = { tx: 121 * 16 + 8, ty: 63 * 16 } as const;
+export const BRICKTON_DOCKS_RETURN = { tx: 101 * 16 + 8, ty: 56 * 16 + 8 } as const;
+
+/** Department lobby landing, kept in one place so the Twoton facade and the
+ * expanded interior cannot drift apart when either map is edited. */
+export const DOS_F1_STREET_LANDING = { tx: 20 * 16, ty: 24 * 16 + 10 } as const;
 
 /**
  * TWOTON — the Ch.1 city, rebuilt 2026-07-08 to the EarthBound TWOSON grammar
@@ -2707,7 +2996,7 @@ export const BRICKTON_DOCKS_RETURN = { tx: 121 * 16 + 8, ty: 63 * 16 } as const;
  * S3 precedent, applied to town #2.
  *
  * This wrapper grafts only what the editor cannot express, so a re-export can
- * never drop it: the five NAMED interior doors, art-anchored px rects per facade
+ * never drop it: the ten NAMED interior doors, art-anchored px rects per facade
  * (ox measured off the drawn door; oy = cityBuildingHeight(u) − 14). Everything
  * else is registry-standard: occupyCity grafts the tenancy units + knock signs
  * onto the doorless catalog facades, and the meadow_overpass landing is re-aimed
@@ -2717,16 +3006,24 @@ function makeTwoton(): MapDef {
   const m = twotonMap;
   // oy derives from the facade's registry height (cityBuildingHeight(u) − 14, the
   // makePuertoSol pattern) so a future kit.ts height change can't detach the doors.
-  const NAMED_DOORS: Record<string, { ox: number; w: number; to: string; tx: number; ty: number }> = {
-    bldg_dept: { ox: 44, w: 26, to: 'dos_f1', tx: 208, ty: 234 }, // THE DEPARTMENT OF SMILES
+  const NAMED_DOORS: Record<string, { ox: number; oy?: number; w: number; to: string; tx: number; ty: number }> = {
+    bldg_dept: { ox: 26.25, w: 26, to: 'dos_f1', ...DOS_F1_STREET_LANDING }, // THE DEPARTMENT OF SMILES
     bldg_starmart: { ox: 33, w: 16, to: 'starmart_int', tx: 152, ty: 156 },
-    bldg_hospital: { ox: 44, w: 26, to: 'hospital_int', tx: 152, ty: 166 }, // TWOTON GENERAL
-    bldg_arcade2: { ox: 33, w: 16, to: 'arcade2_int', tx: 136, ty: 156 }, // STARPORT II
+    bldg_hospital: { ox: 28.25, w: 26, to: 'hospital_int', tx: 152, ty: 166 }, // TWOTON GENERAL
+    bldg_arcade2: { ox: 29.5, w: 16, to: 'arcade2_int', tx: 136, ty: 156 }, // STARPORT II
+    // Replace anonymous tenancy rolls with purposeful town services. The hotel
+    // uses oblique quarter-scale art, hence its measured texture-space `oy`.
+    bldg_ob_hotel: { ox: 22, oy: 82, w: 16, to: 'twoton_hotel_lobby', tx: 168, ty: 172 },
+    bldg_warehouse: { ox: 50.5, w: 26, to: 'twoton_bus_station', tx: 184, ty: 188 },
+    bldg_theater: { ox: 20, w: 40, to: 'twoton_theater', tx: 200, ty: 236 },
+    bldg_civic: { ox: 27, w: 26, to: 'twoton_community_center', tx: 184, ty: 204 },
+    bldg_gen_shop_grass_1: { ox: 37.5, oy: 52, w: 16, to: 'twoton_bike_shop', tx: 152, ty: 172 },
+    bldg_diner: { ox: 36.5, w: 16, to: 'twoton_pizza', tx: 168, ty: 204 },
   };
   for (const p of m.props) {
     const d = NAMED_DOORS[p.sprite];
     if (d && !p.door) {
-      const oy = cityBuildingHeight(facadeDims(p.sprite).u) - 14;
+      const oy = d.oy ?? cityBuildingHeight(facadeDims(p.sprite).u) - 14;
       p.door = { ox: d.ox, oy, w: d.w, h: 18, to: d.to, tx: d.tx, ty: d.ty };
     }
   }
@@ -2736,119 +3033,157 @@ function makeTwoton(): MapDef {
 /* ------------------- THE DEPARTMENT OF SMILES ------------------- */
 
 function buildDosF1(streetExit: { tx: number; ty: number }): MapDef {
-  const g = new Grid(26, 16, 'o');
-  g.rect(0, 0, 26, 2, 'O');
-  g.rect(0, 0, 1, 16, 'O');
-  g.rect(25, 0, 1, 16, 'O');
-  g.rect(0, 15, 26, 1, 'O');
-  g.set(12, 15, 'o'); // street door gap
-  g.set(13, 15, 'o');
-  // two welcome pods of cubicles
-  g.rect(3, 5, 6, 1, 'c');
-  g.rect(3, 6, 6, 1, 'k');
-  g.rect(3, 9, 6, 1, 'c');
-  g.rect(3, 10, 6, 1, 'k');
-  g.rect(17, 8, 5, 1, 'c');
-  g.rect(17, 9, 5, 1, 'k');
+  const g = new Grid(40, 26, 'Q');
+  g.rect(0, 0, 40, 2, 'L');
+  g.rect(0, 0, 1, 26, 'L');
+  g.rect(39, 0, 1, 26, 'L');
+  g.rect(0, 25, 40, 1, 'L');
+  g.rect(19, 25, 2, 1, 'M'); // real street threshold; no exterior welcome mat
+
+  // Opposing full-width banks turn the lobby into a ceremonial procession:
+  // enter in the middle, pass east, then cross the upper chamber to the west.
+  g.rect(1, 19, 31, 1, 'c');
+  g.rect(1, 20, 31, 1, 'k');
+  g.rect(8, 12, 31, 1, 'c');
+  g.rect(8, 13, 31, 1, 'k');
+  g.rect(19, 21, 2, 4, 'M');
+  g.rect(33, 15, 2, 4, 'M');
+  g.rect(3, 2, 2, 5, 'M');
 
   return {
     id: 'dos_f1',
-    name: 'DEPT. OF SMILES — LOBBY',
+    name: 'DEPT. OF SMILES — WELCOME HALL',
     music: 'department',
     interior: true,
+    ambience: 'machine',
     grid: g.out(),
     props: [
-      { sprite: 'counter', x: 10, y: 4, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
-      { sprite: 'plant_pot', x: 2, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      { sprite: 'plant_pot', x: 19, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      // S7: the lobby sets the tone (§A11) — wall-mounted, no new solids
-      { sprite: 'banner_productive', x: 7, y: 0.55 },
-      { sprite: 'poster_smile', x: 17, y: 0.55 },
+      { sprite: 'counter', x: 23, y: 21, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'plant_pot', x: 2, y: 22, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 36, y: 22, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 2, y: 4, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 36, y: 4, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'water_cooler', x: 37, y: 16, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
+      { sprite: 'banner_productive', x: 15, y: 0.55 },
+      { sprite: 'poster_smile', x: 6, y: 0.55 },
+      { sprite: 'poster_chart', x: 31, y: 0.55 },
     ],
     npcs: [
-      { id: 'receptionist', sprite: 'smilerB', x: 14, y: 5, facing: 'down', dialogue: 'npc_receptionist' },
+      { id: 'receptionist', sprite: 'smilerB', x: 24, y: 23, facing: 'down', dialogue: 'npc_receptionist', stationary: true },
+      { id: 'dos_f1_staff_a', sprite: 'smiler', x: 6, y: 15, facing: 'right', dialogue: 'npc_dos_welcome', stationary: true },
+      { id: 'dos_f1_staff_b', sprite: 'smilerB', x: 13, y: 15, facing: 'down', dialogue: 'npc_dos_doctrine', stationary: true },
+      { id: 'dos_f1_staff_c', sprite: 'smiler', x: 22, y: 15, facing: 'left', dialogue: 'npc_dos_painter', stationary: true },
+      { id: 'dos_f1_staff_d', sprite: 'smilerB', x: 30, y: 15, facing: 'up', dialogue: 'npc_dos_doubter', stationary: true },
+      { id: 'dos_f1_staff_e', sprite: 'smiler', x: 9, y: 6, facing: 'down', dialogue: 'npc_dos_doctrine', stationary: true },
+      { id: 'dos_f1_staff_f', sprite: 'smilerB', x: 27, y: 6, facing: 'left', dialogue: 'npc_dos_welcome', stationary: true },
     ],
     signs: [
-      { x: 8, y: 1, dialogue: 'dos_lobby' },
-      { x: 20, y: 1, dialogue: 'dos_cert' },
+      { x: 6, y: 1, dialogue: 'dos_lobby' },
+      { x: 31, y: 1, dialogue: 'dos_cert' },
     ],
     phones: [],
     doors: [
-      { x: 12, y: 15, w: 2, h: 1, to: 'brickton', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
-      { x: 22, y: 2, w: 2, h: 1, to: 'dos_f2', tx: 368, ty: 60, facing: 'down', indicator: 'elevator' },
+      { x: 19, y: 25, w: 2, h: 1, to: 'brickton', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'none' },
+      { x: 3, y: 2, w: 2, h: 1, to: 'dos_f2', tx: 64, ty: 60, facing: 'down', indicator: 'elevator' },
+      { x: 35, y: 2, w: 2, h: 1, to: 'dos_f3', tx: 400, ty: 60, facing: 'down', indicator: 'elevator', ifFlag: 'manager_defeated' },
     ],
     spawners: [],
     triggers: [],
-    // route stays clear of the entrance — nobody gets jumped on the doormat
-    patrols: [{ id: 'f1a', enemy: 'blazer_smiler', route: [[4, 10.5], [21, 10.5]] }],
+    // Route stays clear of the entrance — nobody gets jumped at the street door.
+    patrols: [{ id: 'f1a', enemy: 'blazer_smiler', route: [[4, 17], [35, 17]] }],
   };
 }
 
 function buildDosF2(): MapDef {
-  const g = new Grid(30, 22, 'o');
-  g.rect(0, 0, 30, 2, 'O');
-  g.rect(0, 0, 1, 22, 'O');
-  g.rect(29, 0, 1, 22, 'O');
-  g.rect(0, 21, 30, 1, 'O');
-  // break room (picnic table inside, per §A4.5 — the table before the climb)
-  g.rect(1, 5, 8, 1, 'O');
-  g.set(4, 5, 'o');
-  g.set(5, 5, 'o');
-  g.rect(8, 2, 1, 4, 'O');
-  // the cubicle maze: three offset bank rows
-  g.rect(3, 8, 11, 1, 'c');
-  g.rect(3, 9, 11, 1, 'k');
-  g.rect(16, 8, 11, 1, 'c');
-  g.rect(16, 9, 11, 1, 'k');
-  g.rect(3, 12, 7, 1, 'c');
-  g.rect(3, 13, 7, 1, 'k');
-  g.rect(12, 12, 15, 1, 'c');
-  g.rect(12, 13, 15, 1, 'k');
-  g.rect(3, 16, 17, 1, 'c');
-  g.rect(3, 17, 17, 1, 'k');
-  g.rect(22, 16, 5, 1, 'c');
-  g.rect(22, 17, 5, 1, 'k');
+  const g = new Grid(48, 32, 'Q');
+  g.rect(0, 0, 48, 2, 'L');
+  g.rect(0, 0, 1, 32, 'L');
+  g.rect(47, 0, 1, 32, 'L');
+  g.rect(0, 31, 48, 1, 'L');
+
+  // The blue congregation maze uses a central spine and opposing banks. The
+  // only cross-floor opening is near the bottom, so the two top-side doors can
+  // no longer be used five steps apart to skip the dungeon.
+  g.rect(23, 2, 2, 27, 'L');
+  g.rect(23, 27, 2, 2, 'Q');
+  g.rect(1, 8, 17, 1, 'c');
+  g.rect(1, 9, 17, 1, 'k');
+  g.rect(7, 15, 16, 1, 'c');
+  g.rect(7, 16, 16, 1, 'k');
+  g.rect(1, 22, 17, 1, 'c');
+  g.rect(1, 23, 17, 1, 'k');
+  g.rect(31, 8, 16, 1, 'c');
+  g.rect(31, 9, 16, 1, 'k');
+  g.rect(25, 15, 16, 1, 'c');
+  g.rect(25, 16, 16, 1, 'k');
+  g.rect(30, 22, 17, 1, 'c');
+  g.rect(30, 23, 17, 1, 'k');
+  g.rect(3, 2, 2, 5, 'M');
+  g.rect(43, 2, 2, 5, 'M');
+  g.rect(23, 27, 2, 2, 'M');
 
   return {
     id: 'dos_f2',
-    name: 'DEPT. OF SMILES — FLOOR 2',
+    name: 'DEPT. OF SMILES — BLUE FLOOR',
     music: 'department',
     interior: true,
+    ambience: 'machine',
     grid: g.out(),
     props: [
-      { sprite: 'picnic', x: 2, y: 2, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
-      { sprite: 'copier', x: 10, y: 2, solid: { ox: 1, oy: 6, w: 22, h: 11 } },
-      { sprite: 'plant_pot', x: 25, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      { sprite: 'water_cooler', x: 27, y: 17, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
-      { sprite: 'plant_pot', x: 1, y: 18, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      // S7 wall decor over the memo spots (§A11 voice lives in the signs)
-      { sprite: 'poster_smile', x: 12, y: 0.55 },
-      { sprite: 'poster_chart', x: 18, y: 0.55 },
+      { sprite: 'picnic', x: 6, y: 3, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
+      { sprite: 'copier', x: 18, y: 4, solid: { ox: 1, oy: 6, w: 22, h: 11 } },
+      { sprite: 'plant_pot', x: 21, y: 5, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 26, y: 27, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'water_cooler', x: 45, y: 27, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
+      { sprite: 'banner_productive', x: 18, y: 0.55 },
+      { sprite: 'poster_smile', x: 7, y: 0.55 },
+      { sprite: 'poster_smile', x: 37, y: 0.55 },
+      { sprite: 'poster_chart', x: 29, y: 0.55 },
+      { sprite: 'gift_box', x: 3, y: 10.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'dos_gift_cola' },
+      { sprite: 'gift_box_open', x: 3, y: 10.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'dos_gift_cola' },
+      { sprite: 'gift_box', x: 43, y: 25.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'dos_gift_lunch' },
+      { sprite: 'gift_box_open', x: 43, y: 25.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'dos_gift_lunch' },
     ],
-    npcs: [],
+    npcs: [
+      { id: 'dos_f2_staff_a', sprite: 'smiler', x: 10, y: 5, facing: 'right', dialogue: 'npc_dos_welcome', stationary: true },
+      { id: 'dos_f2_staff_b', sprite: 'smilerB', x: 19, y: 6, facing: 'down', dialogue: 'npc_dos_doctrine', stationary: true },
+      { id: 'dos_f2_staff_c', sprite: 'smiler', x: 5, y: 11, facing: 'left', dialogue: 'npc_dos_painter', stationary: true },
+      { id: 'dos_f2_staff_d', sprite: 'smilerB', x: 18, y: 18, facing: 'up', dialogue: 'npc_dos_doubter', stationary: true },
+      { id: 'dos_f2_staff_e', sprite: 'smiler', x: 35, y: 5, facing: 'down', dialogue: 'npc_dos_doctrine', stationary: true },
+      { id: 'dos_f2_staff_f', sprite: 'smilerB', x: 43, y: 6, facing: 'left', dialogue: 'npc_dos_welcome', stationary: true },
+      { id: 'dos_f2_staff_g', sprite: 'smiler', x: 34, y: 27, facing: 'right', dialogue: 'npc_dos_painter', stationary: true },
+      { id: 'dos_f2_staff_h', sprite: 'smilerB', x: 43, y: 28, facing: 'up', dialogue: 'npc_dos_doubter', stationary: true },
+    ],
     signs: [
-      { x: 3, y: 1, dialogue: 'dos_breakroom' },
-      { x: 12, y: 1, dialogue: 'dos_memo1' },
-      { x: 18, y: 1, dialogue: 'dos_memo2' },
+      { x: 7, y: 1, dialogue: 'dos_breakroom' },
+      { x: 18, y: 1, dialogue: 'dos_memo1' },
+      { x: 29, y: 1, dialogue: 'dos_memo2' },
+      { x: 3, y: 10, dialogue: 'dos_gift_cola' },
+      { x: 43, y: 25, dialogue: 'dos_gift_lunch' },
     ],
     phones: [],
     doors: [
-      { x: 22, y: 2, w: 2, h: 1, to: 'dos_f1', tx: 368, ty: 60, facing: 'down', indicator: 'elevator' },
-      { x: 27, y: 2, w: 1, h: 1, to: 'dos_f3', tx: 392, ty: 60, facing: 'down', indicator: 'stairs' },
+      { x: 3, y: 2, w: 2, h: 1, to: 'dos_f1', tx: 64, ty: 60, facing: 'down', indicator: 'elevator' },
+      { x: 44, y: 2, w: 1, h: 1, to: 'dos_f3', tx: 632, ty: 60, facing: 'down', indicator: 'stairs' },
     ],
-    spawners: [{ enemies: ['blazer_smiler', 'mandatory_memo', 'motivational_poster', 'quota_clock', 'the_suit'], count: 1, rect: { x: 3, y: 18, w: 24, h: 3 } }],
+    spawners: [
+      { enemies: ['blazer_smiler', 'mandatory_memo', 'motivational_poster', 'quota_clock'], count: 1, rect: { x: 3, y: 25, w: 17, h: 3 } },
+      { enemies: ['blazer_smiler', 'mandatory_memo', 'motivational_poster', 'quota_clock'], count: 1, rect: { x: 27, y: 19, w: 16, h: 3 } },
+    ],
     triggers: [],
     patrols: [
-      { id: 'f2a', enemy: 'blazer_smiler', route: [[4, 10], [25, 10]] },
-      { id: 'f2b', enemy: 'blazer_smiler', route: [[25, 14], [4, 14]] },
+      { id: 'f2a', enemy: 'blazer_smiler', route: [[3, 12], [20, 12]] },
+      { id: 'f2b', enemy: 'blazer_smiler', route: [[3, 19], [20, 19]] },
+      { id: 'f2c', enemy: 'blazer_smiler', route: [[27, 13], [44, 13]] },
     ],
   };
 }
 
-/** the sealed HOLDING ROOM block on floor 3 (S2: x18-23, y2-6) */
-export const HOLDING_ROOM = { x: 18, y: 2, w: 6, h: 5 } as const;
+/** The sealed HOLDING ROOM block on floor 3. Its deliberately gray interior
+ * is only carved into the blue campus after the three quota patrols fall. */
+export const HOLDING_ROOM = { x: 3, y: 2, w: 10, h: 8 } as const;
 /** doorway cells in the room's bottom rim, under the holding_door prop */
-export const HOLDING_DOOR_GAP = { x: 20, w: 2 } as const;
+export const HOLDING_DOOR_GAP = { x: 7, w: 2 } as const;
 
 /**
  * S2: once the PRODUCTIVITY LOCK's quota is met (flag `holding_open`), the
@@ -2868,75 +3203,91 @@ export function carveHoldingRoom(grid: string[]): string[] {
 }
 
 function buildDosF3(): MapDef {
-  const g = new Grid(26, 14, 'o');
-  g.rect(0, 0, 26, 2, 'O');
-  g.rect(0, 0, 1, 14, 'O');
-  g.rect(25, 0, 1, 14, 'O');
-  g.rect(0, 13, 26, 1, 'O');
-  // the sealed HOLDING ROOM (S2 opens it: three Smilers' worth of quota)
-  g.rect(HOLDING_ROOM.x, HOLDING_ROOM.y, HOLDING_ROOM.w, HOLDING_ROOM.h, 'O');
-  // management cubicles (fewer, somehow worse)
-  g.rect(3, 3, 6, 1, 'c');
-  g.rect(3, 4, 6, 1, 'k');
-  g.rect(11, 3, 5, 1, 'c');
-  g.rect(11, 4, 5, 1, 'k');
-  // executive runner
-  g.rect(2, 8, 21, 1, 'r');
-  g.rect(6, 10, 14, 1, 'c');
-  g.rect(6, 11, 14, 1, 'k');
+  const g = new Grid(42, 28, 'Q');
+  g.rect(0, 0, 42, 2, 'L');
+  g.rect(0, 0, 1, 28, 'L');
+  g.rect(41, 0, 1, 28, 'L');
+  g.rect(0, 27, 42, 1, 'L');
+  // Two blue wings joined only at two cross-corridors. The player clears the
+  // right patrols, crosses low for the third quota, then returns to the cell.
+  g.rect(20, 2, 2, 23, 'L');
+  g.rect(20, 7, 2, 2, 'Q');
+  g.rect(20, 20, 2, 2, 'Q');
+  g.rect(HOLDING_ROOM.x, HOLDING_ROOM.y, HOLDING_ROOM.w, HOLDING_ROOM.h, 'L');
+  g.rect(27, 10, 14, 1, 'c');
+  g.rect(27, 11, 14, 1, 'k');
+  g.rect(22, 17, 14, 1, 'c');
+  g.rect(22, 18, 14, 1, 'k');
+  g.rect(10, 11, 10, 1, 'c');
+  g.rect(10, 12, 10, 1, 'k');
+  g.rect(1, 17, 14, 1, 'c');
+  g.rect(1, 18, 14, 1, 'k');
+  g.rect(38, 2, 2, 5, 'M');
+  g.rect(24, 2, 2, 5, 'M');
+  g.rect(20, 7, 2, 2, 'M');
+  g.rect(20, 20, 2, 2, 'M');
 
   return {
     id: 'dos_f3',
-    name: 'DEPT. OF SMILES — FLOOR 3',
+    name: 'DEPT. OF SMILES — COMPLIANCE CHAPEL',
     music: 'department',
     interior: true,
+    ambience: 'machine',
     grid: g.out(),
     props: [
       // scene-interpreted (ADR-014): pips light per quota flag; opens into the panel
-      { sprite: 'holding_door', x: 20.375, y: 5.25, solid: { ox: 0, oy: 14, w: 20, h: 14 } },
-      { sprite: 'office_door', x: 10.5, y: 0.375, solid: { ox: 0, oy: 12, w: 16, h: 14 } },
-      { sprite: 'plant_pot', x: 2, y: 2, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      { sprite: 'plant_pot', x: 23, y: 7, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
-      // S7 wall decor — management believes in you
-      { sprite: 'poster_chart', x: 14, y: 0.55 },
-      { sprite: 'poster_smile', x: 7, y: 0.55 },
+      { sprite: 'holding_door', x: 7.375, y: 8.25, solid: { ox: 0, oy: 14, w: 20, h: 14 } },
+      { sprite: 'office_door', x: 30.5, y: 0.375, solid: { ox: 0, oy: 12, w: 16, h: 14 } },
+      { sprite: 'plant_pot', x: 18, y: 3, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 38, y: 8, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'plant_pot', x: 2, y: 23, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'banner_productive', x: 13, y: 0.55 },
+      { sprite: 'poster_smile', x: 27, y: 0.55 },
+      { sprite: 'poster_chart', x: 35, y: 0.55 },
       // inside the holding room, visible once it opens
-      { sprite: 'cot', x: 19, y: 2.4, solid: { ox: 1, oy: 12, w: 18, h: 10 }, ifFlag: 'holding_open' },
+      { sprite: 'cot', x: 4, y: 3.4, solid: { ox: 1, oy: 12, w: 18, h: 10 }, ifFlag: 'holding_open' },
     ],
     npcs: [
       // §A6: MIA waits in the holding room until she joins (S2)
       {
         id: 'faye',
         sprite: 'faye',
-        x: 21,
-        y: 3,
+        x: 8,
+        y: 5,
         facing: 'down',
         dialogue: 'npc_faye_wait',
         ifFlag: 'holding_open',
         unlessFlag: 'faye_joined',
       },
+      { id: 'dos_f3_acolyte_a', sprite: 'smiler', x: 4, y: 14, facing: 'right', dialogue: 'npc_dos_doctrine', stationary: true, unlessFlag: 'manager_defeated' },
+      { id: 'dos_f3_acolyte_b', sprite: 'smilerB', x: 8, y: 14, facing: 'left', dialogue: 'npc_dos_doubter', stationary: true, unlessFlag: 'manager_defeated' },
+      { id: 'dos_f3_acolyte_c', sprite: 'smiler', x: 26, y: 24, facing: 'up', dialogue: 'npc_dos_painter', stationary: true, unlessFlag: 'manager_defeated' },
+      { id: 'dos_f3_acolyte_d', sprite: 'smilerB', x: 31, y: 24, facing: 'up', dialogue: 'npc_dos_doctrine', stationary: true, unlessFlag: 'manager_defeated' },
+      { id: 'dos_f3_acolyte_e', sprite: 'smiler', x: 36, y: 24, facing: 'up', dialogue: 'npc_dos_welcome', stationary: true, unlessFlag: 'manager_defeated' },
     ],
     signs: [
-      { x: 7, y: 1, dialogue: 'dos_quiet' },
-      { x: 14, y: 1, dialogue: 'dos_memo3' },
+      { x: 16, y: 1, dialogue: 'dos_quiet' },
+      { x: 26, y: 1, dialogue: 'dos_memo3' },
+      { x: 31, y: 1, dialogue: 'manager_door' },
       // the intake clipboard hangs off the cot
-      { x: 19, y: 3, dialogue: 'holding_log' },
+      { x: 5, y: 5, dialogue: 'holding_log' },
     ],
     phones: [],
     doors: [
-      { x: 24, y: 2, w: 1, h: 1, to: 'dos_f2', tx: 440, ty: 60, facing: 'down', indicator: 'stairs' },
+      { x: 39, y: 2, w: 1, h: 1, to: 'dos_f2', tx: 712, ty: 60, facing: 'down', indicator: 'stairs' },
+      { x: 24, y: 2, w: 2, h: 1, to: 'dos_f1', tx: 576, ty: 60, facing: 'down', indicator: 'elevator', ifFlag: 'manager_defeated' },
     ],
     spawners: [],
     triggers: [
       // inside the opened room — Mia's join scene
-      { id: 'faye_meet', rect: { x: 19, y: 3, w: 4, h: 3 }, once: false },
-      // the column below the stairs: the Manager's exit interview
-      { id: 'manager_block', rect: { x: 24, y: 3, w: 1, h: 2 }, once: false },
+      { id: 'faye_meet', rect: { x: 5, y: 4, w: 7, h: 4 }, once: false },
+      // After Mia joins, every return to the stairs crosses the exit interview.
+      { id: 'manager_block', rect: { x: 22, y: 3, w: 19, h: 3 }, once: false },
     ],
     patrols: [
-      { id: 'f3a', enemy: 'blazer_smiler', route: [[3, 6], [16, 6]], countFlag: 'dos_quota_f3a' },
-      { id: 'f3b', enemy: 'blazer_smiler', route: [[23, 8], [2, 8]], countFlag: 'dos_quota_f3b' },
-      { id: 'f3c', enemy: 'blazer_smiler', route: [[2, 11.5], [23, 11.5]], sight: 6, countFlag: 'dos_quota_f3c' },
+      { id: 'f3a', enemy: 'blazer_smiler', support: ['mandatory_memo'], route: [[24, 6], [38, 6]], countFlag: 'dos_quota_f3a' },
+      { id: 'f3b', enemy: 'blazer_smiler', support: ['motivational_poster'], route: [[38, 14], [24, 14]], countFlag: 'dos_quota_f3b' },
+      { id: 'f3c', enemy: 'blazer_smiler', support: ['quota_clock'], route: [[3, 23], [18, 23]], sight: 6, countFlag: 'dos_quota_f3c' },
     ],
   };
 }
@@ -3164,7 +3515,7 @@ function buildOtterHotelLobby(streetExit: { tx: number; ty: number }): MapDef {
       // A small-town lobby: mismatched seating, plant, lamp, local trophy case.
       { sprite: 'bench', x: 12, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
       { sprite: 'rocking_chair', x: 15, y: 6.2, solid: { ox: 2, oy: 12, w: 14, h: 10 } },
-      { sprite: 'floor_lamp', x: 14.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'floor_lamp', x: 11.2, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
       { sprite: 'plant_pot', x: 16, y: 8.5, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
       { sprite: 'trophy_shelf', x: 10.5, y: 0.6 },
       { sprite: 'payphone', x: 16, y: 10, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
@@ -3183,7 +3534,7 @@ function buildOtterHotelLobby(streetExit: { tx: number; ty: number }): MapDef {
     atms: [],
     doors: [
       { x: 8, y: 11, w: 2, h: 1, to: 'otterbrook', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
-      { x: 14, y: 2, w: 2, h: 1, to: 'otter_hotel_hall', tx: 11 * 16 + 8, ty: 8 * 16 + 12, facing: 'up', indicator: 'stairs' },
+      { x: 14, y: 2, w: 2, h: 1, to: 'otter_hotel_hall', tx: 11 * 16 + 8, ty: 8 * 16 + 12, facing: 'up', indicator: 'elevator' },
     ],
     spawners: [],
     triggers: [],
@@ -3201,10 +3552,14 @@ function buildOtterHotelHall(): MapDef {
     interior: true,
     grid: g.out(),
     props: [
+      // Room-door markers already add one mat apiece; do not double-stamp them.
       { sprite: 'floor_lamp', x: 6.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
       { sprite: 'floor_lamp', x: 12.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'floor_lamp', x: 18.4, y: 0.9, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
       { sprite: 'water_cooler', x: 20, y: 2.2, solid: { ox: 1, oy: 10, w: 10, h: 11 } },
       { sprite: 'plant_pot', x: 1, y: 6.5, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+      { sprite: 'bench', x: 5.3, y: 6.35, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'trophy_shelf', x: 8.2, y: 0.6 },
     ],
     npcs: [
       { id: 'hotel_housekeeper', sprite: 'fernLady', x: 13, y: 7, facing: 'left', dialogue: 'npc_hotel_housekeeper', idle: true, ifFlag: 'tick_defeated' },
@@ -3217,7 +3572,7 @@ function buildOtterHotelHall(): MapDef {
     phones: [],
     atms: [],
     doors: [
-      { x: 10, y: 9, w: 2, h: 1, to: 'otter_hotel_lobby', tx: 15 * 16 + 8, ty: 3 * 16 + 12, facing: 'down', indicator: 'stairs' },
+      { x: 10, y: 9, w: 2, h: 1, to: 'otter_hotel_lobby', tx: 15 * 16 + 8, ty: 3 * 16 + 12, facing: 'down', indicator: 'elevator' },
       { x: 3, y: 2, w: 2, h: 1, to: 'otter_hotel_room_201', tx: 6 * 16 + 8, ty: 7 * 16 + 12, facing: 'up', indicator: 'door' },
       { x: 9, y: 2, w: 2, h: 1, to: 'otter_hotel_room_202', tx: 6 * 16 + 8, ty: 7 * 16 + 12, facing: 'up', indicator: 'door' },
       { x: 15, y: 2, w: 2, h: 1, to: 'otter_hotel_room_203', tx: 6 * 16 + 8, ty: 7 * 16 + 12, facing: 'up', indicator: 'door' },
@@ -3428,7 +3783,7 @@ function buildDrugstorePharmacy(): MapDef {
     'OTTERBROOKE DRUG — PHARMACY',
     'otterbrook',
     'drugstore_int',
-    8 * 16 + 8,
+    9 * 16 + 8,
     3 * 16 + 12,
     [
       { sprite: 'prop_pharmacy_rack', x: 1.5, y: 2, solid: { ox: 1, oy: 14, w: 26, h: 10 } },
@@ -4084,7 +4439,7 @@ function buildCagePark(): MapDef {
       { x: 11, y: 0, w: 3, h: 1, to: 'the_cage', tx: 320, ty: 60, facing: 'up' },
       // south back onto the Brickton sidewalk (the cage-gate area)
       // Twoton rebuild 2026-07-08: land on the gate's doorstep (just above it, facing down)
-      { x: 11, y: H - 1, w: 3, h: 1, to: 'brickton', tx: 1592, ty: 1144, facing: 'down' },
+      { x: 11, y: H - 1, w: 3, h: 1, to: 'brickton', tx: 88 * 16, ty: 69 * 16 + 8, facing: 'down' },
     ],
     spawners: [],
     triggers: [
@@ -4170,19 +4525,34 @@ const otterHomeMaps = Object.fromEntries(
 ) as Record<(typeof OTTERBROOK_HOME_SPECS)[number]['id'], MapDef>;
 // THE LONG WALK (ADR-056) — the four foot legs, with computed inter-leg doors.
 const longWalk = buildLongWalk();
-// Twoton's foot exit (the west road mouth) lands on the OVERPASS a few tiles
-// WEST of the orientation gate, so arriving never bounces you back through it —
-// computed off the overpass's real trail (ADR-012), facing home (west). The
-// editor document carries a placeholder landing; only the live map's is aimed.
+// Twoton's north foot exit lands on the OVERPASS a few tiles NORTH of the
+// orientation gate, so returning home never bounces straight back through it.
+// The editor document carries a placeholder landing; only the live map is aimed.
 {
   const op = longWalk.meadow_overpass;
-  const opX = op.grid[0].length - 5;
-  const opY = trailRowAt(op.grid, opX);
+  const mile = longWalk.meadow_mile;
+  const otterGate = otterbrookMap.doors.find((d) => d.to === 'meadow_mile');
+  const mileGate = mile.doors.find((d) => d.to === 'otterbrook');
+  if (otterGate && mileGate) {
+    const intoMile = edgeDoorLanding(mile, 'otterbrook');
+    otterGate.tx = intoMile.tx;
+    otterGate.ty = intoMile.ty;
+    otterGate.facing = 'down';
+    mileGate.tx = OTTERBROOK_SOUTH_GATE.x * 16;
+    mileGate.ty = OTTERBROOK_SOUTH_GATE.y * 16;
+    mileGate.facing = 'up';
+  }
+
+  // Returning from town lands just north of the orientation strip, never in it.
+  // Twoton's editor-authored north door owns its geometry; assembly only aims
+  // that door at the rotated overpass return point.
+  const opY = op.grid.length - 5;
+  const opX = trailColAt(op.grid, opY);
   const foot = bricktonMap.doors.find((d) => d.to === 'meadow_overpass');
   if (foot) {
     foot.tx = opX * 16 + 8;
     foot.ty = opY * 16;
-    foot.facing = 'left';
+    foot.facing = 'up';
   }
 }
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
@@ -4200,6 +4570,18 @@ const dinerStep = doorstepOf(otterbrookMap, 'diner_int') ?? { tx: 12 * 16, ty: (
 const otterClinicStep = doorstepOf(otterbrookMap, 'otter_clinic_int') ?? { tx: 76 * 16, ty: (28 + OTTERBROOK_TOWN_BASE) * 16 };
 const deptDoorstep = doorstepOf(bricktonMap, 'dos_f1') ?? { tx: 489, ty: 121 };
 const martDoorstep = doorstepOf(bricktonMap, 'starmart_int') ?? { tx: 80, ty: 121 };
+// The editor document owns the facades; makeTwoton grafts their stable service
+// doors. Until a facade is present, the fallbacks stay on the known-open bus
+// corner so a partial editor export cannot strand an interior return in woods.
+const twotonServiceFallback = { tx: BRICKTON_BUS_SPAWN.x, ty: BRICKTON_BUS_SPAWN.y };
+const twotonServiceMaps = buildTwotonServiceMaps({
+  hotel: doorstepOf(bricktonMap, 'twoton_hotel_lobby') ?? twotonServiceFallback,
+  bus: doorstepOf(bricktonMap, 'twoton_bus_station') ?? twotonServiceFallback,
+  theater: doorstepOf(bricktonMap, 'twoton_theater') ?? twotonServiceFallback,
+  community: doorstepOf(bricktonMap, 'twoton_community_center') ?? twotonServiceFallback,
+  bike: doorstepOf(bricktonMap, 'twoton_bike_shop') ?? twotonServiceFallback,
+  pizza: doorstepOf(bricktonMap, 'twoton_pizza') ?? twotonServiceFallback,
+});
 // THE STARFALL SPIRE moved to VALLE DORADO (stage 4, the big city — 2026-07-08);
 // its lobby doorstep now derives from the golden city's grafted facade door.
 const spireStep = doorstepOf(valleDorado, 'spire_lobby') ?? { tx: 264, ty: 856 };
@@ -4582,11 +4964,13 @@ export const MAPS: Record<string, MapDef> = {
   vivi_room: buildViviRoom(),
   chad_home: buildOtterHome('chad_home', 'PICKLE HOUSE', chadDoorstep, 4),
   workshop_int: buildWorkshopInt(workshopDoorstep),
+  trail_shed_int: buildTrailShedInt(),
   maple27_int: buildMaple27Int(maple27Step),
   realty_int: buildRealtyInt(realtyStep),
   oldman_int: buildOldmanInt(oldmanStep),
   ...otterHomeMaps,
   brickton: bricktonMap,
+  ...twotonServiceMaps,
   dos_f1: buildDosF1(deptDoorstep),
   dos_f2: buildDosF2(),
   dos_f3: buildDosF3(),
@@ -4671,8 +5055,40 @@ for (const id of ROOMY_INTERIORS) if (MAPS[id]) MAPS[id] = growInterior(MAPS[id]
       iy += dy;
     }
     if (iy < 0 || ix < 0 || iy >= room.grid.length || ix >= room.grid[0].length || room.grid[iy][ix] === wall) return; // keep the authored landing
-    d.tx = ix * 16 + 8; // tile interior (ADR-136): the body box fits the one cell
-    d.ty = iy * 16 + 12;
+    // A target can be tile-clear yet overlap a pinned character's live foot
+    // body (the pharmacy return used to land inside its deli keeper). Prefer
+    // the centerline, then the two lateral cells beside it, using the runtime
+    // 10×9 player and scaled 12×10 NPC footprints in native map pixels.
+    const overlapsNpc = (cx: number, cy: number): boolean => {
+      const player = { x: cx * 16 + 3, y: cy * 16 + 3, w: 10, h: 9 };
+      return room.npcs.some((n) => {
+        const raw = n.scale;
+        const instanceX = typeof raw === 'number' ? raw : raw?.x ?? 1;
+        const instanceY = typeof raw === 'number' ? raw : raw?.y ?? 1;
+        const native = n.dog ? 1.5 : 1;
+        const sx = native * instanceX;
+        const sy = native * instanceY;
+        const npc = {
+          x: n.x * 16 + 8 - 6 * sx,
+          y: n.y * 16 + 22 - 10 * sy,
+          w: 12 * sx,
+          h: 10 * sy,
+        };
+        return player.x < npc.x + npc.w && player.x + player.w > npc.x &&
+          player.y < npc.y + npc.h && player.y + player.h > npc.y;
+      });
+    };
+    const candidates: Array<[number, number]> = [
+      [ix, iy],
+      [ix + dy, iy - dx],
+      [ix - dy, iy + dx],
+    ];
+    const landing = candidates.find(([cx, cy]) =>
+      cy >= 0 && cx >= 0 && cy < room.grid.length && cx < room.grid[0].length &&
+      room.grid[cy][cx] !== wall && !overlapsNpc(cx, cy));
+    if (!landing) return;
+    d.tx = landing[0] * 16 + 8; // tile interior (ADR-136): the body box fits the one cell
+    d.ty = landing[1] * 16 + 12;
   };
   for (const [id, m] of Object.entries(MAPS)) {
     for (const d of m.doors) if (roomy.has(d.to)) reAim(d, id);
@@ -4691,7 +5107,12 @@ const MAP_AREA: Record<string, string> = {
   oak_roots: 'otterbrook',
   oak_hollow: 'otterbrook',
   oak_heart: 'otterbrook',
+  meadow_mile: 'otterbrook',
+  meadow_woods: 'otterbrook',
+  meadow_far: 'otterbrook',
+  meadow_overpass: 'otterbrook',
   brickton: 'brickton',
+  brickton_docks: 'brickton',
   cage_park: 'cage_park',
   puerto_sol: 'puerto_sol',
   // S18 (ADR-095) — CHAPTER 3 England: the stone town wears its M22 `fraktur`
@@ -4727,6 +5148,13 @@ function cityLifeSeed(id: string): number {
   }
   return h >>> 0;
 }
+
+/** Sequential generated-unit ids renumber whenever a named venue claims a
+ * facade. Twoton is under active art-direction, so its generated tenancy uses
+ * a coordinate-stable lot id instead; every other city retains its old ids. */
+export function stableTwotonLotId(p: Pick<PropDef, 'x' | 'y'>): string {
+  return `brickton_lot_${Math.round(p.x * 100)}_${Math.round(p.y * 100)}`;
+}
 // EVERY settlement runs the pass (not a hardcoded list) — so any city, present or
 // future, is alive by default. occupyCity only fills DOORLESS 'bldg_' facades, so
 // hand-authored doors/interiors are untouched; a settlement with no catalog
@@ -4734,7 +5162,11 @@ function cityLifeSeed(id: string): number {
 // merge in aren't re-scanned.
 for (const m of Object.values(MAPS)) {
   if (!m.settlement) continue;
-  Object.assign(MAPS, occupyCity(m, { area: m.area ?? m.id, seed: cityLifeSeed(m.id) }));
+  Object.assign(MAPS, occupyCity(m, {
+    area: m.area ?? m.id,
+    seed: cityLifeSeed(m.id),
+    ...(m.id === 'brickton' ? { unitId: stableTwotonLotId } : {}),
+  }));
 }
 
 // ─── Wave 2 (ADR-108) — MAP AMBIENT AUDIO (#16) ─────────────────────────────

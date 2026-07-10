@@ -275,7 +275,7 @@ export const puertoSolMap: MapDef = {
     { id: 'ps_tally', sprite: 'captain', x: 76, y: 58, facing: 'down', dialogue: 'npc_ps_tally' },
     { id: 'ps_board', sprite: 'tomas', x: 82, y: 57, facing: 'down', dialogue: 'npc_ps_board' },
     { id: 'ps_porter', sprite: 'captain', x: 65, y: 50, facing: 'down', dialogue: 'npc_ps_porter' },
-    { id: 'ps_nina', sprite: 'wokeB', x: 48, y: 37, facing: 'down', dialogue: 'npc_ps_nina' },
+    { id: 'ps_nina', sprite: 'wokeB', x: 50, y: 37, facing: 'down', dialogue: 'npc_ps_nina' },
     { id: 'ps_stallman', sprite: 'tomas', x: 63, y: 62, facing: 'down', dialogue: 'npc_ps_stall', unlessFlag: 'q_llama' },
     { id: 'ps_market', sprite: 'mercadoKeeper', x: 55, y: 39, facing: 'down', dialogue: 'npc_ps_market' },
   ],

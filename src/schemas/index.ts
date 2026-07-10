@@ -543,9 +543,9 @@ export type SignDef = z.infer<typeof SignDefSchema>;
 
 /** visible marker: mat (default in interiors — legal alone only for
  *  bottom-edge exits since S11b), stairs, elevator doors (ADR-011), a real
- *  swinging DOOR mounted in the wall band (S11b — REQUIRED for interior
- *  facing-'up' zones; the validator enforces the law), or none (map edges) */
-export const DoorIndicatorSchema = z.enum(['mat', 'stairs', 'elevator', 'door', 'none']);
+ *  swinging DOOR, a rough walk-through HOLE mounted in the wall band, or none
+ *  (map edges). `door`/`hole` are the legal north-wall passage markers. */
+export const DoorIndicatorSchema = z.enum(['mat', 'stairs', 'elevator', 'door', 'hole', 'none']);
 
 export const DoorZoneSchema = z.strictObject({
   x: z.number(),
@@ -557,6 +557,9 @@ export const DoorZoneSchema = z.strictObject({
   ty: z.number(),
   facing: FacingSchema,
   indicator: DoorIndicatorSchema.optional(),
+  /** Optional story gates for a whole-map door zone (mirrors props/NPCs/signs). */
+  ifFlag: z.string().min(1).optional(),
+  unlessFlag: z.string().min(1).optional(),
 });
 export type DoorZone = z.infer<typeof DoorZoneSchema>;
 
@@ -582,6 +585,8 @@ export type SpawnerDef = z.infer<typeof SpawnerDefSchema>;
 export const TriggerDefSchema = z.strictObject({
   id: z.string().min(1),
   rect: TileRectSchema, // tiles
+  /** Authoring intent only: runtime handlers own their persistent completion
+   * flag because some zones retry after failure or deliberately have two phases. */
   once: z.boolean(),
 });
 export type TriggerDef = z.infer<typeof TriggerDefSchema>;
@@ -594,6 +599,9 @@ export type TriggerDef = z.infer<typeof TriggerDefSchema>;
 export const PatrolDefSchema = z.strictObject({
   id: z.string().min(1),
   enemy: z.string().min(1),
+  /** Optional battle partners that join this patrol on contact. The visible
+   * leader still owns movement, sight, quota, and cleanup. */
+  support: z.array(z.string().min(1)).min(1).optional(),
   /** tile waypoints (fractional allowed for fine corridor placement) */
   route: z.array(z.tuple([z.number(), z.number()])).min(1),
   /** sight-line length in tiles (default 5) */

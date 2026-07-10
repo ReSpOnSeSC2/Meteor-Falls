@@ -543,6 +543,46 @@ function cubicleDesk(): Pixmap {
   return pm;
 }
 
+/** Department of Smiles cult-campus carpet: saturated blue, obsessively clean,
+ * with a faint four-tile weave. It deliberately reads unlike the beige offices
+ * around it while staying within the shared SNES-scale palette. */
+function smileFloor(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.BLUE, 1));
+  for (let y = 0; y < TILE; y += 4) pm.hline(0, y, TILE, px(RAMP.BLUE, 0));
+  for (let x = 2; x < TILE; x += 8) pm.vline(x, 0, TILE, px(RAMP.NIGHT, 3));
+  const rng = mulberry32(146);
+  pm.scatter(rng, 0, 0, TILE, TILE, px(RAMP.CYAN, 1), 4);
+  return pm;
+}
+
+/** The same institution after it has become a chapel: midnight-blue paneling,
+ * white rails, and one gold line that keeps pointing upward. */
+function smileWall(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.BLUE, 0));
+  pm.rect(0, 0, TILE, 4, px(RAMP.NIGHT, 2));
+  pm.hline(0, 4, TILE, px(RAMP.PAPER, 2));
+  pm.hline(0, 5, TILE, px(RAMP.CYAN, 2));
+  pm.vline(7, 6, 7, px(RAMP.BLUE, 2));
+  pm.rect(0, 13, TILE, 3, px(RAMP.NIGHT, 1));
+  pm.hline(0, 13, TILE, px(RAMP.GOLD, 2));
+  return pm;
+}
+
+/** Walkable ceremonial runner. Repeated tiles form the unnervingly cheerful
+ * blue-and-white processional lanes through the enlarged dungeon. */
+function smileCarpet(): Pixmap {
+  const pm = new Pixmap(TILE, TILE);
+  pm.fill(px(RAMP.CYAN, 1));
+  pm.frame(0, 0, TILE, TILE, px(RAMP.PAPER, 2));
+  pm.frame(2, 2, TILE - 4, TILE - 4, px(RAMP.BLUE, 2));
+  pm.set(6, 6, px(RAMP.GOLD, 3));
+  pm.set(9, 6, px(RAMP.GOLD, 3));
+  pm.hline(6, 10, 4, px(RAMP.GOLD, 3));
+  return pm;
+}
+
 /* ---- bus interior ---- */
 
 function skyDay(): Pixmap {
@@ -1059,6 +1099,13 @@ TILESET.push({ name: 'ob_plaza', solid: false, make: sidewalkTile });
 // otterbrook_tiles_16.png (the vertical road_dash rotated 90°); make() is the boot fallback
 // only — roadDash already paints a horizontal dash, so it is reused.
 TILESET.push({ name: 'road_dash_h', solid: false, make: roadDash });
+
+// Department of Smiles production rebuild. Appended at the true tail so every
+// established atlas index remains stable; tools/sync-smile-tiles.ts grows the
+// authored world strip with these exact procedural pixels.
+TILESET.push({ name: 'smile_floor', solid: false, make: smileFloor });
+TILESET.push({ name: 'smile_wall', solid: true, make: smileWall });
+TILESET.push({ name: 'smile_carpet', solid: false, make: smileCarpet });
 
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);

@@ -26,6 +26,14 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_burger_greet',
     farewell: 'shop_burger_bye',
   },
+  twoton_pizza: {
+    id: 'twoton_pizza',
+    name: 'PIE IN THE SKY PIZZA',
+    keeperNpc: 'twoton_pizza_clerk',
+    stock: ['pizza_slice', 'grilled_cheese', 'star_cola', 'diet_star_cola'],
+    greet: 'shop_twoton_pizza_greet',
+    farewell: 'shop_twoton_pizza_bye',
+  },
   drugstore: {
     id: 'drugstore',
     name: 'OTTERBROOKE DRUG',

@@ -345,6 +345,9 @@ export interface OccupyOpts {
   /** the §A5/§A6 area (for the seed + future per-region flavor) */
   area: string;
   seed: number;
+  /** Optional save-stable id for one city's generated units. All callers that
+   * omit it retain the historical sequential `<map>_unit_N` contract. */
+  unitId?: (facade: Pick<PropDef, 'sprite' | 'x' | 'y'>, sequence: number) => string;
 }
 
 /** Fill a built city map with purpose. Mutates `map`; returns its new interiors. */
@@ -407,7 +410,8 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
     const arch = forcedHome ? ARCHETYPES.find((a) => a.furnish === 'home')! : pickArchetype(rnd);
     const iw = clamp(Math.round(w * 2.2) + 2, 9, 30);
     const ih = clamp(7 + Math.min(u, 5) * 2, 8, 18);
-    const id = `${map.id}_unit_${unit++}`;
+    const id = opts.unitId?.(p, unit) ?? `${map.id}_unit_${unit}`;
+    unit++;
     const spawnTx = Math.floor(iw / 2) * 16;
     const spawnTy = (ih - 2) * 16;
     p.door = { ox, oy, w: 16, h: 18, to: id, tx: spawnTx, ty: spawnTy };

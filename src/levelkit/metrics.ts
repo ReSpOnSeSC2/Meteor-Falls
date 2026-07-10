@@ -75,8 +75,13 @@ export function livingCityViolations(m: LivingLike): string[] {
   // Flag-swapped open/closed states are one physical building, not two dead
   // facades. Collapse identical placements and prefer the doored state.
   const placed = new Map<string, LivingLike['props'][number]>();
-  for (const p of m.props.filter((p) => p.sprite.startsWith('bldg_') && p.solid)) {
-    const key = `${p.sprite}:${p.x}:${p.y}`;
+  for (const p of m.props) {
+    if (!p.sprite.startsWith('bldg_') || !p.solid) continue;
+    // Phase art may legitimately change sprite keys (locked/open shed, dark/lit
+    // storefront) while remaining one physical facade. Position + collision
+    // footprint is the identity; prefer whichever state owns the real door.
+    const solid = p.solid;
+    const key = `${p.x}:${p.y}:${solid.ox}:${solid.oy}:${solid.w}:${solid.h}`;
     const prior = placed.get(key);
     if (!prior || (!prior.door && p.door)) placed.set(key, p);
   }

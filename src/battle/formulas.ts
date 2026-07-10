@@ -172,11 +172,40 @@ export function physicalDamage(offense: number, defense: number, rng: Rng): numb
   return Math.max(1, Math.round(base * (0.85 + rng() * 0.3)));
 }
 
+/** Enemy lifedrain uses the ordinary physical curve, then restores half of the
+ * damage actually removed. Kept pure so non-latching drains cannot become
+ * accidental no-op turns again. */
+export function enemyDrainDamage(offense: number, defense: number, mult: number, rng: Rng): number {
+  return physicalDamage(offense * mult, defense, rng);
+}
+
+export function enemyDrainHeal(actualDamage: number): number {
+  return Math.max(0, Math.floor(actualDamage / 2));
+}
+
 /** SMAAASH!! chance — Guts-driven, capped like EB. Mia's LUCKY STAR feeds an
- *  optional Luck term (raises crit/SMAAASH); base callers pass no luck and read
- *  the exact old curve. */
+ * optional Luck term; the gentler early slope keeps combo-crits special while
+ * late-game Guts still reaches the same 20% ceiling. */
 export function smashChance(guts: number, luck = 0): number {
-  return Math.min(0.2, 0.02 + guts / 100 + luck / 300);
+  return Math.min(0.2, 0.02 + guts / 250 + luck / 500);
+}
+
+/** Level-scaled PRAY payloads. The outcome table stays volatile, but its early
+ * AoE no longer erases an entire chapter's regular encounters for zero PP. */
+export function prayGoodHeal(level: number): number {
+  return 12 + Math.round(level * 1.5);
+}
+
+export function prayWonderfulDamage(level: number, rng: Rng): number {
+  return 18 + level + Math.floor(rng() * (10 + level));
+}
+
+export function prayMiraculousDamage(level: number, rng: Rng): number {
+  return 40 + level * 2 + Math.floor(rng() * (20 + level));
+}
+
+export function prayBackfireDamage(maxHp: number): number {
+  return Math.max(1, Math.ceil(maxHp * 0.12));
 }
 
 export function smashDamage(offense: number, defense: number, rng: Rng): number {

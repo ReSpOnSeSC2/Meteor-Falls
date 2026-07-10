@@ -3,6 +3,7 @@ import { GS, makeHeroState, newGameData } from './state';
 import { migrateSave, CURRENT_SAVE_VERSION } from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
+import { s } from '../spritegen/scale';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
 function v1Hero(id: HeroId, level: number, name?: string): Record<string, unknown> {
@@ -548,5 +549,91 @@ describe('save migration registry (S20 M46) — v14 → v15: vehicle ferrying', 
     GS.reset();
     GS.deserialize(json);
     expect(GS.data.carLocation).toEqual({ title_car_sedan: 'usa', title_car_nikolai: 'mars' });
+  });
+});
+
+describe('save migration registry — v16 → v17: Twoton and Long Walk layouts', () => {
+  beforeEach(() => GS.reset());
+
+  const v16At = (map: string, x = 99999, y = 99999): Record<string, unknown> => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 16;
+    d.map = map;
+    d.x = x;
+    d.y = y;
+    d.facing = 'left';
+    d.flags = { visitor_badge: true };
+    return d;
+  };
+
+  it('recovers every re-authored exterior to a safe entrance without losing story state', () => {
+    const expected: Record<string, [number, number]> = {
+      brickton: [48 * 16 + 8, 18 * 16 + 8],
+      meadow_mile: [7 * 16 + 8, 3 * 16 + 12],
+      meadow_woods: [8 * 16 + 8, 3 * 16 + 12],
+      meadow_far: [6 * 16 + 8, 3 * 16 + 12],
+      meadow_overpass: [7 * 16 + 8, 3 * 16 + 12],
+    };
+    for (const [map, [x, y]] of Object.entries(expected)) {
+      const migrated = migrateSave(v16At(map), newGameData());
+      expect(migrated.version, map).toBe(CURRENT_SAVE_VERSION);
+      expect(migrated.map, map).toBe(map);
+      expect([migrated.x, migrated.y, migrated.facing], map).toEqual([s(x), s(y), 'down']);
+      expect(migrated.flags.visitor_badge, map).toBe(true);
+    }
+  });
+
+  it('recovers a retired sequential Twoton tenancy id to the city curb', () => {
+    const migrated = migrateSave(v16At('brickton_unit_27'), newGameData());
+    expect(migrated.map).toBe('brickton');
+    expect([migrated.x, migrated.y, migrated.facing]).toEqual([
+      s(48 * 16 + 8), s(18 * 16 + 8), 'down',
+    ]);
+  });
+
+  it('does not move a save on an unchanged map', () => {
+    const migrated = migrateSave(v16At('otterbrook', 1234, 5678), newGameData());
+    expect([migrated.map, migrated.x, migrated.y, migrated.facing]).toEqual([
+      'otterbrook', 1234, 5678, 'left',
+    ]);
+  });
+});
+
+describe('save migration registry — v17 → v18: Department of Smiles rebuild', () => {
+  beforeEach(() => GS.reset());
+
+  const v17At = (map: string): Record<string, unknown> => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 17;
+    d.map = map;
+    d.x = 99999;
+    d.y = 99999;
+    d.facing = 'left';
+    d.flags = { holding_open: true, faye_joined: true };
+    return d;
+  };
+
+  it('recovers each enlarged Department floor to its canonical entry', () => {
+    const expected: Record<string, [number, number, string]> = {
+      dos_f1: [20 * 16, 24 * 16 + 10, 'up'],
+      dos_f2: [4 * 16, 3 * 16 + 12, 'down'],
+      dos_f3: [39 * 16 + 8, 3 * 16 + 12, 'down'],
+    };
+    for (const [map, [x, y, facing]] of Object.entries(expected)) {
+      const migrated = migrateSave(v17At(map), newGameData());
+      expect(migrated.version, map).toBe(CURRENT_SAVE_VERSION);
+      expect([migrated.map, migrated.x, migrated.y, migrated.facing], map).toEqual([
+        map, s(x), s(y), facing,
+      ]);
+      expect(migrated.flags.faye_joined, map).toBe(true);
+    }
+  });
+
+  it('does not reposition an unchanged map', () => {
+    const raw = v17At('brickton');
+    const migrated = migrateSave(raw, newGameData());
+    expect([migrated.map, migrated.x, migrated.y, migrated.facing]).toEqual([
+      'brickton', 99999, 99999, 'left',
+    ]);
   });
 });

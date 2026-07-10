@@ -168,7 +168,7 @@ const ITEM_BAND: Record<string, ItemBand> = {
   // cures + the revival floor, the first tonic, battle goods, a valuable, the
   // hat-ladder head, the weapon sidegrades, and THE PORCH SET (the coffee-can
   // treasures a kid hoards on a summer porch).
-  grilled_cheese: 'ch1', apple_pie_slice: 'ch1', choco_comet_bar: 'ch1',
+  grilled_cheese: 'ch1', apple_pie_slice: 'ch1', pizza_slice: 'ch1', choco_comet_bar: 'ch1',
   bug_juice: 'ch1', diet_star_cola: 'ch1',
   moms_voice_tape: 'ch1', second_wind: 'ch1', sudden_guts_pill: 'ch1',
   bug_zapper: 'ch1', spare_hubcap: 'ch1', otterbrook_cap: 'ch1',
@@ -818,6 +818,15 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: true,
       price: 12,
       text: "Mom's, allegedly. Still warm, somehow, three towns from home. Recovers about 45 HP.",
+    }),
+    I({
+      id: 'pizza_slice',
+      name: 'Pizza Slice',
+      kind: 'food',
+      heal: 30,
+      usableInBattle: true,
+      price: 15,
+      text: 'A broad triangle of bubbling cheese with one pepperoni placed exactly where the cook says it belongs. Recovers about 30 HP.',
     }),
     I({
       id: 'choco_comet_bar',

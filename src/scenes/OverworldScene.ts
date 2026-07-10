@@ -11,7 +11,7 @@
  * and the third fade-restarts the floor with the room carved open. Walk in
  * through the gap (tiles 20-21, row 6) for the join; the exit column (24,
  * rows 3-4) runs the Manager fight — pick Mia's PRAY with Down,Down,KeyZ on
- * her command row. Mom's call: the payphone at Twoton's bus corner (16,66), A to answer.
+ * her command row. Mom's call: the payphone at Twoton's bus corner (58,19), A to answer.
  * Bots beware: holdKey is eaten while dlg.busy — drain pages with key() first.
  * S3: Enter (START) opens the EB command menu — it's a separate scene over a
  * paused world; the drive-it recipe lives in MenuScene's header.
@@ -89,7 +89,15 @@ import { GS, makeHeroState } from '../engine/state';
 import { completeQuest } from '../engine/quests';
 import { PROPERTIES } from '../data/properties';
 import { buyCost } from '../engine/property';
-import { carById } from '../engine/garage';
+import { buyCar, carById, ownsCar, setActive } from '../engine/garage';
+import {
+  BMX_SPEED_MULTIPLIER,
+  TWOTON_BMX_HOME_CONTINENT,
+  TWOTON_BMX_ID,
+  TWOTON_BMX_TITLE,
+  ridingBmx,
+  toggleBmx,
+} from '../engine/bicycle';
 import { availableAbilities } from '../data/heroes';
 import { PSI_GATES } from '../data/psigates';
 import { canClearGate, bestCastFor } from '../engine/psi';
@@ -122,7 +130,21 @@ import { Dialogue, makeWindow, toast, vars, everyFrame, DEPTH_UI, overscanRect }
 import { askAmount } from '../ui/amount';
 import { money } from '../ui/text';
 import { TrafficSim, cellKey } from '../engine/traffic';
-import { entersNewBody } from '../engine/movecollide';
+import { aabbOverlap, entersNewBody } from '../engine/movecollide';
+import {
+  DOG_DISPLAY_SCALE,
+  MINIMUS_NATIVE_SCALE,
+  NPC_FOOTPRINT,
+  PATROL_FOOTPRINT,
+  PLAYER_FOOTPRINT,
+  ROAMER_FOOTPRINT,
+  characterFeet,
+  characterNativeScale,
+  footRect,
+  npcEffectiveScale,
+  unitVectorOrZero,
+  type Scale2,
+} from '../engine/actor-collision';
 import { DEALERSHIP } from '../data/dealership';
 import { FLEET_CRAFT } from '../data/fleet';
 import { VEHICLE_SPECS } from '../spritegen/vehicles';
@@ -147,7 +169,7 @@ import { s, ART_SCALE, TILE_PX } from '../spritegen/scale';
 import { showCard, showCaption, playStagedScene } from '../engine/cutsceneStage';
 import { ch1FirstHeartlight } from '../data/cutscenes_staged';
 import { openingPhase, type OpeningPhase } from '../engine/opening';
-import { chapter1BannerTag, chapter1Phase } from '../engine/ch1Story';
+import { chapter1BannerTag, chapter1Phase, type Chapter1Phase } from '../engine/ch1Story';
 
 interface Rect {
   x: number;
@@ -219,6 +241,9 @@ interface NpcObj {
   wanders: boolean;
   /** WO P5: this NPC's own terrace (per-mover cross-level collision). */
   level: number;
+  /** Render-composed scale (dog/map-native × per-instance), shared by every
+   * live/static foot-body query so collision stays attached to the sprite. */
+  collisionScale: Scale2;
 }
 
 type AuthoredWorldPropKey = keyof typeof AUTHORED_WORLD_PROP_DISPLAY_SIZE;
@@ -232,10 +257,148 @@ const TRAFFIC_AUTHORED_VEHICLES = [
   { id: 'savanna_caravan_truck', vehicleType: 'truck' },
 ] as const;
 
+/** Otterbrooke's two map ids (the pocket map remains for old saves/dev warps).
+ * Traffic on both follows the Chapter 1 clock instead of behaving like a fully
+ * awake generic settlement through the meteor emergency and Hush morning. */
+const OTTERBROOK_TRAFFIC_MAPS: ReadonlySet<string> = new Set(['otterbrook', 'downtown_otterbrook']);
+/** The deliberately humble 2 A.M. pool: the last bus and one battered local
+ * car read as emergency movement; flashy dealership/fleet traffic waits for day. */
+const OTTERBROOK_METEOR_TRAFFIC: ReadonlySet<string> = new Set(['bus', 'vehicle_clunker']);
+
+/** Static placements reuse ADR-097's directional sheet contract. A vertical
+ * parked vehicle selects the authored front/back view instead of rotating the
+ * side view (which leaves the car looking as though it was tipped on its end). */
+export function staticDirectionalVehicleFrame(rot: number | undefined): 0 | 1 | 2 {
+  return rot === 90 ? 1 : rot === 270 ? 2 : 0;
+}
+
+/** Resolve an authored spawn search rectangle to actual non-solid tile cells.
+ * `blocked` lets the scene fold facade/prop bodies into the same decision while
+ * keeping the rectangle/bounds logic deterministic and independently testable. */
+export function walkableSpawnerCells(
+  rect: Rect,
+  solidTiles: readonly (readonly boolean[])[],
+  blocked: (tx: number, ty: number) => boolean,
+): Array<{ tx: number; ty: number }> {
+  const cells: Array<{ tx: number; ty: number }> = [];
+  const x0 = Math.max(0, Math.floor(rect.x));
+  const y0 = Math.max(0, Math.floor(rect.y));
+  const x1 = Math.min(solidTiles[0]?.length ?? 0, Math.ceil(rect.x + rect.w));
+  const y1 = Math.min(solidTiles.length, Math.ceil(rect.y + rect.h));
+  for (let ty = y0; ty < y1; ty++) {
+    for (let tx = x0; tx < x1; tx++) {
+      if (solidTiles[ty]?.[tx] !== false || blocked(tx, ty)) continue;
+      cells.push({ tx, ty });
+    }
+  }
+  return cells;
+}
+
+export function shouldSuppressOtterbrookMeteorSpawner(
+  mapId: string,
+  ifFlag: string | undefined,
+  flag: (id: string) => boolean,
+): boolean {
+  return mapId === 'otterbrook' && ifFlag === 'meteor_fell' && (flag('glint_walk_home') || flag('tick_defeated'));
+}
+
+/** Before Twoton switched generated tenancy to lot-stable ids, saves could be
+ * parked inside a sequential `brickton_unit_N`. Those ids now mean only "old
+ * save" and are recovered to a known-open Twoton street in init(). */
+export function isLegacyTwotonUnitId(mapId: string): boolean {
+  return /^brickton_unit_\d+$/.test(mapId);
+}
+
+/** Exterior art already contains a readable doorway. A giant generic WELCOME
+ * mat outside every facade obscures that art and is not required for collision
+ * or transitions, so outdoor `mat` indicators resolve to no marker. Purposeful
+ * exterior stairs/elevators/doors/holes remain visible; interiors keep mats. */
+export function visibleDoorIndicator(
+  indicator: DoorZone['indicator'],
+  interior: boolean,
+): NonNullable<DoorZone['indicator']> {
+  const kind = indicator ?? (interior ? 'mat' : 'none');
+  return !interior && kind === 'mat' ? 'none' : kind;
+}
+
+/** Embedded facade doors need no generic outdoor decal: the drawn door is the
+ * affordance. Retain this seam for the rare case of a facade embedded indoors. */
+export function showFacadeDoorMat(interior: boolean): boolean {
+  return interior;
+}
+
+type TriggerPointMap = Pick<MapDef, 'phones' | 'triggers'>;
+
+/** Resolve a phone by the event zone that owns it, so moving or reordering map
+ * fixtures cannot silently redirect a story call to some other public phone. */
+export function phoneForTrigger(map: TriggerPointMap, triggerId: string): MapDef['phones'][number] | undefined {
+  const trigger = map.triggers.find((candidate) => candidate.id === triggerId);
+  if (!trigger) return undefined;
+  return map.phones.find((phone) =>
+    phone.x >= trigger.rect.x &&
+    phone.x < trigger.rect.x + trigger.rect.w &&
+    phone.y >= trigger.rect.y &&
+    phone.y < trigger.rect.y + trigger.rect.h
+  );
+}
+
+export interface Chapter2TriggerState {
+  puertoArrived: boolean;
+  pyramidApproachSeen: boolean;
+  grinDefeated: boolean;
+  valleArrived: boolean;
+  ch2Complete: boolean;
+}
+
+export type Chapter2TriggerAction =
+  | 'puerto-return'
+  | 'puerto-arrival'
+  | 'pyramid-approach'
+  | 'valle-arrival'
+  | 'valle-recovery'
+  | null;
+
+/** Persistent story semantics for the Chapter 2 walk-zones whose authored
+ * `once` bit cannot express retry-until-success or a two-phase arrival. */
+export function chapter2TriggerAction(
+  triggerId: 'board_boat_return' | 'puerto_arrival' | 'pyramid_approach' | 'valle_arrival',
+  state: Chapter2TriggerState,
+): Chapter2TriggerAction {
+  switch (triggerId) {
+    case 'board_boat_return': return state.puertoArrived ? 'puerto-return' : null;
+    case 'puerto_arrival': return state.puertoArrived ? null : 'puerto-arrival';
+    case 'pyramid_approach': return state.pyramidApproachSeen ? null : 'pyramid-approach';
+    case 'valle_arrival':
+      if (!state.grinDefeated && !state.valleArrived) return 'valle-arrival';
+      if (state.grinDefeated && !state.ch2Complete) return 'valle-recovery';
+      return null;
+  }
+}
+
+/** Remove bodies that were already spawned before a story flag changed. */
+export function destroyRoamerSprites(roamers: ReadonlyArray<{ spr: { destroy: () => void } }>): void {
+  for (const roamer of roamers) roamer.spr.destroy();
+}
+
+/** Chapter 1 traffic policy layered over the generic settlement density. */
+export function otterbrookTrafficPolicy(
+  mapId: string,
+  phase: Chapter1Phase | undefined,
+  availableTypes: readonly string[],
+  baseMax: number,
+): { types: string[]; max: number } | null {
+  if (!OTTERBROOK_TRAFFIC_MAPS.has(mapId)) return { types: [...availableTypes], max: baseMax };
+  if (phase === 'hush-morning') return null;
+  if (phase !== 'meteor-night') return { types: [...availableTypes], max: baseMax };
+  const emergencyPool = availableTypes.filter((id) => OTTERBROOK_METEOR_TRAFFIC.has(id));
+  return { types: emergencyPool.length > 0 ? emergencyPool : [...availableTypes], max: Math.min(2, baseMax) };
+}
+
 // px/s movement speeds (ADR-024 dt-scaled) — scaled to runtime space so the
 // felt pace is identical at any ART_SCALE (the world grid scales with them).
 const WALK = 70 * ART_SCALE;
 const RUN = 115 * ART_SCALE;
+const BMX_RIDE = RUN * BMX_SPEED_MULTIPLIER;
 const PURSUE = 85 * ART_SCALE;
 // conga-line smoothing rate (per second): followers EASE toward their breadcrumb each
 // frame instead of hard-snapping to it. The trail only drops a crumb every s(3) of
@@ -248,6 +411,7 @@ const PATROL_CHASE = 92 * ART_SCALE;
 /** The first-town hotel's fixed room rate. Cheap enough to teach the service,
  * expensive enough that Mom's free care and the hospital economy still matter. */
 const OTTERBROOKE_HOTEL_RATE = 35;
+const TWOTON_HOTEL_RATE = 45;
 /** ADR-118 rework — Constable Borden's run-you-down speed: brisker than your
  *  WALK, slower than your RUN, so a sprint can still shake him (the cop fight
  *  stays optional). Bespoke chase: OverworldScene.bordenChase. */
@@ -304,10 +468,34 @@ const MINIMUS_TILE_SKIN: Readonly<Record<string, string>> = {
  *  Each Norway tile carries the SAME solidity as the base it replaces (water stays solid
  *  like sea_a), so the remap is purely cosmetic — collision/BFS read the unchanged grid.
  *  The Sleeper's Spine dungeon keeps its own interior look. */
-/** the UNDER-OAK (ADR-121 rework): the dungeon's rock reskins to root-tangle */
+/** Hickory Hill Cave: cool carved stone replaces the retired root-tangle skin. */
 const UNDEROAK_SKIN_MAPS: ReadonlySet<string> = new Set(['oak_roots', 'oak_hollow', 'oak_heart']);
 const UNDEROAK_TILE_SKIN: Readonly<Record<string, string>> = {
-  cliff_face: 'root_wall', // the carved 'K' walls → packed earth + woody roots
+  cliff_face: 'tile_concrete_wall',
+  scorch: 'tile_concrete_floor',
+  scorch_ember: 'tile_concrete_floor',
+};
+/** Otterbrooke venues already ship authored floor/wall strips; applying them per
+ * room makes the first town's interiors read as distinct places rather than one
+ * generic brown box. */
+const OTTERBROOK_INTERIOR_TILE_SKINS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  drugstore_int: { floor_wood: 'tile_pharmacy_floor', wall_int: 'tile_pharmacy_wall' },
+  otter_clinic_int: { floor_wood: 'tile_pharmacy_floor', wall_int: 'tile_pharmacy_wall' },
+  hospital_int: { floor_wood: 'tile_pharmacy_floor', wall_int: 'tile_pharmacy_wall' },
+  otterbrook_cityhall: { floor_wood: 'tile_civic_floor', wall_int: 'tile_civic_wall' },
+  otter_station: { office_floor: 'tile_civic_floor', office_wall: 'tile_civic_wall' },
+  bank_int: { floor_wood: 'tile_civic_floor', wall_int: 'tile_civic_wall' },
+  otter_hotel_lobby: { floor_wood: 'tile_civic_floor', wall_int: 'tile_civic_wall' },
+  otter_hotel_hall: { floor_wood: 'tile_civic_floor', wall_int: 'tile_civic_wall' },
+  otter_hotel_room_201: { floor_wood: 'tile_civic_floor', wall_int: 'tile_civic_wall' },
+  otter_hotel_room_202: { floor_wood: 'tile_civic_floor', wall_int: 'tile_civic_wall' },
+  otter_hotel_room_203: { floor_wood: 'tile_civic_floor', wall_int: 'tile_civic_wall' },
+  diner_int: { floor_wood: 'tile_kitchen_floor', wall_int: 'tile_kitchen_wall' },
+  burger_int: { floor_wood: 'tile_kitchen_floor', wall_int: 'tile_kitchen_wall' },
+  bakery_int: { floor_wood: 'tile_kitchen_floor', wall_int: 'tile_kitchen_wall' },
+  hardware_int: { floor_wood: 'tile_concrete_floor', wall_int: 'tile_concrete_wall' },
+  bus_depot_int: { floor_wood: 'tile_concrete_floor', wall_int: 'tile_concrete_wall' },
+  arcade_int: { floor_wood: 'tile_concrete_floor', wall_int: 'tile_concrete_wall' },
 };
 /** OTTERBROOKE (2026-07-04): the hill's deep-woods 'b' render as the AUTHORED dense
  *  top-down tree canopy (tools/apply-canopy-tile.ts) — same solidity as bush, so
@@ -611,7 +799,6 @@ function resolveEdgeBiome(id: string): EdgeBiome {
 /** §A11 full-Gulliver: the Minimus NATIVES (citizens, props, facades) render at this scale on
  *  the Ch.5 maps so the colossi party visibly TOWERS over the tabletop duchy — the same idea as
  *  MINIMUS_TRAFFIC_SCALE for the dainty cars. The PARTY (player + followers) is NEVER scaled. */
-const MINIMUS_NATIVE_SCALE = 0.5;
 /** §A6 full-Gulliver — the GIANT half, the exact mirror of Minimus: the LILLEBY natives (its
  *  towering citizens, its giant furniture, and its colossal facades) render at this scale so the
  *  human-sized party visibly walks UNDER the doors and among the giants' feet — "everything here
@@ -619,19 +806,15 @@ const MINIMUS_NATIVE_SCALE = 0.5;
  *  scaled; facade collision is rebuilt scale-true while props/NPCs keep the small native foot-box,
  *  so the party weaves between a giant's legs instead of being walled out by a colossal block. */
 const LILLEBY_GIANT_MAPS: ReadonlySet<string> = new Set(['lilleby']);
-const LILLEBY_GIANT_SCALE = 2.3;
 /** the per-map NATIVE render scale for a settlement's own townsfolk / props / facades: Minimus
  *  SHRINKS its tabletop duchy, Lilleby SWELLS its giants, everywhere else stays 1:1. One source of
  *  truth so buildProps + buildNpcs (and the facade collision rebuild) all agree on the same factor.
  *  The FOOT re-anchor + collision math below is factor-agnostic — it serves shrink AND grow alike. */
 function mapNativeScale(id: string): number {
-  if (MINIMUS_SKIN_MAPS.has(id)) return MINIMUS_NATIVE_SCALE;
-  if (LILLEBY_GIANT_MAPS.has(id)) return LILLEBY_GIANT_SCALE;
-  return 1;
+  return characterNativeScale(id);
 }
 /** dog roamers author into a 16² frame (half a human's 24×32); render them a
  *  touch larger so a beagle reads as a real dog beside the cast, not a speck. */
-const DOG_DISPLAY_SCALE = 1.5;
 /** 8-way unit wander headings (diagonals normalized so they don't speed up,
  *  ADR-096) — module-scoped so an NPC's think-tick reuses it instead of
  *  re-allocating the array each time. */
@@ -715,6 +898,9 @@ export class OverworldScene extends Phaser.Scene {
   private readonly doorsArmed = new Set<object>();
   private static DOOR_REENTRY_MS = 900;
   private player!: Phaser.GameObjects.Sprite;
+  /** The save-backed BMX overlay. It is hidden indoors or when not the active
+   * vehicle; the hero remains the collision/camera body. */
+  private bicycle?: Phaser.GameObjects.Sprite;
   private facing: Facing = 'down';
   private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean; flit: boolean }> = [];
   /** ADR-097: a pooled contact shadow per walking actor (grounding = 3D read) */
@@ -785,14 +971,25 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   init(data: { mapId?: string; x?: number; y?: number; facing?: Facing; opening?: boolean; devFullMap?: boolean }): void {
-    const id = data.mapId ?? GS.data.map;
+    const requestedId = data.mapId ?? GS.data.map;
+    const recoveringLegacyTwotonUnit = isLegacyTwotonUnitId(requestedId);
+    const id = recoveringLegacyTwotonUnit ? 'brickton' : requestedId;
     this.mapDef = MAPS[id] ?? MAPS.otterbrook;
     this.openingRequested = data.opening === true;
     this.devFullMapPreview = data.devFullMap === true;
     GS.data.map = this.mapDef.id;
-    if (data.x !== undefined) GS.data.x = data.x;
-    if (data.y !== undefined) GS.data.y = data.y;
-    if (data.facing) GS.data.facing = data.facing;
+    if (recoveringLegacyTwotonUnit) {
+      // A pre-lot-id save cannot be matched safely to its former facade after a
+      // full city rebuild. Recover to the canonical bus street instead of
+      // silently loading the wrong tenant or falling all the way to Otterbrook.
+      GS.data.x = s(BRICKTON_BUS_SPAWN.x);
+      GS.data.y = s(BRICKTON_BUS_SPAWN.y);
+      GS.data.facing = 'down';
+    } else {
+      if (data.x !== undefined) GS.data.x = data.x;
+      if (data.y !== undefined) GS.data.y = data.y;
+      if (data.facing) GS.data.facing = data.facing;
+    }
   }
 
   create(): void {
@@ -809,6 +1006,7 @@ export class OverworldScene extends Phaser.Scene {
     this.solidsOverlay = undefined;
     this.fireflies = [];
     this.holdingDoorImg = null;
+    this.bicycle = undefined;
     this.insideTriggers.clear();
     this.dlg = new Dialogue(this);
 
@@ -989,6 +1187,7 @@ export class OverworldScene extends Phaser.Scene {
     // collision-preserving — see MINIMUS_TILE_SKIN). Other maps are untouched.
     const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
     const underoakSkin = UNDEROAK_SKIN_MAPS.has(this.mapDef.id);
+    const otterbrookInteriorSkin = OTTERBROOK_INTERIOR_TILE_SKINS[this.mapDef.id];
     const otterbrookSkin = OTTERBROOK_SKIN_MAPS.has(this.mapDef.id);
     const norwaySkin = NORWAY_SKIN_MAPS.has(this.mapDef.id);
     const zanzibelSkin = ZANZIBEL_SKIN_MAPS.has(this.mapDef.id);
@@ -1049,6 +1248,10 @@ export class OverworldScene extends Phaser.Scene {
             // ADR-121 rework — the Under-Oak's walls read as root-tangle, not
             // hillside rock. Same solidity as the cliff base; collision unchanged.
             name = UNDEROAK_TILE_SKIN[name];
+          } else if (otterbrookInteriorSkin?.[name]) {
+            // Venue-specific authored floors/walls keep the first town's rooms
+            // visually distinct without changing their grid or collision.
+            name = otterbrookInteriorSkin[name];
           } else if (otterbrookSkin && OTTERBROOK_TILE_SKIN[name]) {
             // Otterbrooke hill woods: 'b'/bush → the authored dense tree canopy.
             name = OTTERBROOK_TILE_SKIN[name];
@@ -1320,6 +1523,7 @@ export class OverworldScene extends Phaser.Scene {
     const openRight = new Set<number>();
     const pad = 1; // widen the gap a touch so a doorway never feels walled-in
     for (const d of this.mapDef.doors ?? []) {
+      if (!this.activeDoor(d)) continue;
       if (!d.to) continue;
       if (d.y <= 1) for (let x = d.x - pad; x <= d.x + d.w + pad; x++) openTop.add(x);
       if (d.y + d.h >= h - 1) for (let x = d.x - pad; x <= d.x + d.w + pad; x++) openBottom.add(x);
@@ -1383,7 +1587,9 @@ export class OverworldScene extends Phaser.Scene {
           ? 'mask_switch_lit'
           : p.sprite;
       const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, sprite).setOrigin(0, 0);
-      if (AUTHORED_VEHICLE_PROP_KEYS.has(sprite)) img.setFrame(0);
+      const directionalVehicle = DIRECTIONAL_VEHICLE_KEYS.has(sprite);
+      const directionalVehicleFrame = directionalVehicle ? staticDirectionalVehicleFrame(p.rot) : 0;
+      if (AUTHORED_VEHICLE_PROP_KEYS.has(sprite)) img.setFrame(directionalVehicleFrame);
       const displaySize = AUTHORED_WORLD_PROP_DISPLAY_SIZE[sprite as AuthoredWorldPropKey];
       // §A11 full-Gulliver: shrink Minimus-NATIVE objects so the colossi party TOWERS over the
       // tabletop duchy — props/curios AND now the facades themselves (a building is part of the
@@ -1428,7 +1634,12 @@ export class OverworldScene extends Phaser.Scene {
       const propSX = typeof rawSc === 'number' ? rawSc : rawSc && rawSc.x > 0 ? rawSc.x : 1;
       const propSY = typeof rawSc === 'number' ? rawSc : rawSc && rawSc.y > 0 ? rawSc.y : 1;
       if (propSX !== 1 || propSY !== 1) img.setDisplaySize(img.displayWidth * propSX, img.displayHeight * propSY);
-      const rot = p.rot ?? 0; // 90/180/270 CW — applied to non-facade props (visual + data solid) below
+      // Directional vehicles already own front/back art. Swap their footprint for
+      // a vertical placement and keep that authored frame upright; every other prop
+      // continues through the generic geometric rotation path below.
+      const directionalVehicleTurned = directionalVehicle && (p.rot === 90 || p.rot === 270);
+      if (directionalVehicleTurned) img.setDisplaySize(img.displayHeight, img.displayWidth);
+      const rot = directionalVehicleTurned ? 0 : (p.rot ?? 0);
       img.setDepth(img.y + img.displayHeight + this.levelLift(img.x, img.y));
       // OBLIQUE-FACADE GROUNDING (Otterbrooke): the 3/4 buildings sit on a flat ground, so
       // a soft contact shadow at the base plants them (mirrors ADR-097's actor shadows). Drawn
@@ -1643,6 +1854,12 @@ export class OverworldScene extends Phaser.Scene {
     return `collision overlay ON — ${this.solids.length} solids, ${this.facadeDoorBox.size} entrances`;
   }
 
+  private activeDoor(d: DoorZone): boolean {
+    if (d.ifFlag && !GS.flag(d.ifFlag)) return false;
+    if (d.unlessFlag && GS.flag(d.unlessFlag)) return false;
+    return true;
+  }
+
   private buildDoorMarkers(): void {
     this.doorImgs.clear();
     // Door / mat / stairs indicator art is legacy ×1 (~20px); lift it to runtime
@@ -1655,7 +1872,8 @@ export class OverworldScene extends Phaser.Scene {
       return sc !== 1 ? im.setScale(sc) : im;
     };
     for (const d of this.mapDef.doors) {
-      const kind = d.indicator ?? (this.mapDef.interior ? 'mat' : 'none');
+      if (!this.activeDoor(d)) continue;
+      const kind = visibleDoorIndicator(d.indicator, this.mapDef.interior === true);
       if (kind === 'none') continue;
       const cx = (d.x + d.w / 2) * TILE_PX;
       const by = (d.y + d.h) * TILE_PX;
@@ -1664,13 +1882,23 @@ export class OverworldScene extends Phaser.Scene {
         lift(this.add.image(cx, d.y * TILE_PX + s(2), 'elevator').setOrigin(0.5, 1).setDepth(3));
         continue;
       }
+      if (kind === 'hole') {
+        // A rough wall breach is a real passage marker, not a hidden trigger.
+        // Used by Hodgkin's shed so its rear exit visibly continues to the cave.
+        // The trigger itself lives on the walkable floor immediately below the
+        // wall; anchor the art at its top so the image rises across that wall.
+        lift(this.add.image(cx, d.y * TILE_PX, 'trail_shed_hole').setOrigin(0.5, 1).setDepth(3));
+        continue;
+      }
       if (kind === 'door') {
         // S11b: a doorway through a wall is a DOOR, not a mat (user law) —
         // mounted IN the wall band above the zone, swinging open on entry;
-        // the S11 mat stays at its foot
+        // interiors may keep the small foot decal; outdoor doors never do
         const img = lift(this.add.image(cx, d.y * TILE_PX, 'door_int').setOrigin(0.5, 1).setDepth(3));
         this.doorImgs.set(d, img);
-        lift(this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2));
+        if (this.mapDef.interior) {
+          lift(this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2));
+        }
         continue;
       }
       if (kind === 'mat' && d.facing === 'up') {
@@ -1687,9 +1915,15 @@ export class OverworldScene extends Phaser.Scene {
           .setDepth(2),
       ); // floor decal, characters walk over it
     }
-    // building entrances: a mat on the doorstep (at the texture-true zone if the
+    // Exterior facade art already draws its own door. Generic mats were both
+    // redundant and visually enormous at runtime scale; only a rare facade used
+    // inside a room may retain the decal.
+    if (!showFacadeDoorMat(this.mapDef.interior === true)) return;
+    // Interior building entrances: a mat on the doorstep (at the texture-true zone if the
     // facade was re-fitted to its real sprite — ADR-051)
     for (const p of this.mapDef.props) {
+      if (p.ifFlag && !GS.flag(p.ifFlag)) continue;
+      if (p.unlessFlag && GS.flag(p.unlessFlag)) continue;
       if (!p.door) continue;
       const box = this.facadeDoorBox.get(p);
       // prefer the texture-true entrance zone (it tracks a re-fitted / shrunk facade's doorstep);
@@ -1704,8 +1938,7 @@ export class OverworldScene extends Phaser.Scene {
     for (const def of this.mapDef.npcs) {
       if (def.ifFlag && !GS.flag(def.ifFlag)) continue;
       if (def.unlessFlag && GS.flag(def.unlessFlag)) continue;
-      const x = def.x * TILE_PX + TILE_PX / 2;
-      const y = def.y * TILE_PX + s(22);
+      const { x, y } = characterFeet(def.x, def.y, TILE_PX, ART_SCALE);
       // dogs: frames [0,1]=eastbound, [2,3]=westbound (S7c sheet contract)
       const spr = this.add.sprite(x, y, def.sprite, def.dog ? (def.facing === 'left' ? 2 : 0) : standFrame(def.facing));
       spr.setOrigin(0.5, 1);
@@ -1725,6 +1958,7 @@ export class OverworldScene extends Phaser.Scene {
       const nscX = typeof rawNsc === 'number' ? rawNsc : rawNsc && rawNsc.x > 0 ? rawNsc.x : 1;
       const nscY = typeof rawNsc === 'number' ? rawNsc : rawNsc && rawNsc.y > 0 ? rawNsc.y : 1;
       if (nscX !== 1 || nscY !== 1) spr.setScale(spr.scaleX * nscX, spr.scaleY * nscY);
+      const collisionScale = npcEffectiveScale(this.mapDef.id, def.dog === true, def.scale);
       spr.setDepth(y + this.levelLift(spr.x, y));
       // ADR-124 — FREE-ROAMING TOWNSFOLK: NPCs wander a small radius by default;
       // only clerks (a `shop`), explicitly pinned NPCs (wander:false / stationary),
@@ -1732,14 +1966,26 @@ export class OverworldScene extends Phaser.Scene {
       const wanders =
         def.wander === true ||
         (def.wander !== false && !def.shop && !def.stationary && !def.dog && !this.mapDef.interior);
-      this.npcs.push({ spr, def, baseX: x, baseY: y, vx: 0, vy: 0, think: Math.random() * 2000, wanders, level: this.levelAtPx(x, y) });
+      this.npcs.push({
+        spr,
+        def,
+        baseX: x,
+        baseY: y,
+        vx: 0,
+        vy: 0,
+        think: Math.random() * 2000,
+        wanders,
+        level: this.levelAtPx(x, y),
+        collisionScale,
+      });
       // a wanderer is non-blocking (no stale "ghost" solid left where it spawned);
       // a pinned NPC keeps its small collision box — EXCEPT in a §A6 GIANT town, where the tiny
       // party must weave freely among the colossi. A giant's foot-box (or a giant prop beside it)
       // would otherwise wall the tiny player in → soft-lock. NPCs stay proximity-interactable
       // (talkTo probes the sprite, not a solid), so making them passable costs nothing.
-      if (!wanders && !LILLEBY_GIANT_MAPS.has(this.mapDef.id))
-        this.solids.push({ x: x - s(6) * nscX, y: y - s(10) * nscY, w: s(12) * nscX, h: s(10) * nscY });
+      if (!wanders && !LILLEBY_GIANT_MAPS.has(this.mapDef.id)) {
+        this.solids.push(footRect({ x, y }, NPC_FOOTPRINT, collisionScale, ART_SCALE));
+      }
     }
   }
 
@@ -1758,8 +2004,71 @@ export class OverworldScene extends Phaser.Scene {
     // it directly in P3); flat maps read 0, so depth is exactly this.player.y.
     this.playerLevel = this.levelAtPx(this.player.x, this.player.y);
     this.player.setDepth(this.player.y + this.playerLevel * this.levelDepthBias);
+    const bike = VEHICLE_SPECS.bmx;
+    this.bicycle = this.add
+      .sprite(this.player.x, this.player.y, TWOTON_BMX_ID, 0)
+      .setOrigin(0.5, 1)
+      .setDisplaySize(s(bike.w), s(bike.h));
+    this.syncBicycleSprite();
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     this.buildFollowers();
+  }
+
+  private currentBicycleArea(): string {
+    return this.mapDef.area ?? this.mapDef.id;
+  }
+
+  private isRidingBmx(): boolean {
+    return ridingBmx(
+      GS.data.activeVehicle,
+      GS.data.keyItems,
+      GS.data.carLocation,
+      this.currentBicycleArea(),
+      this.mapDef.interior === true,
+    );
+  }
+
+  /** Keep the authored three-view BMX sheet under the rider and facing with the
+   * hero. The hero stays on top, which reads as legs/frame over the bicycle. */
+  private syncBicycleSprite(): void {
+    if (!this.bicycle) return;
+    const riding = this.isRidingBmx();
+    this.bicycle.setVisible(riding);
+    if (!riding) return;
+    const frame = this.facing === 'down' ? 1 : this.facing === 'up' ? 2 : 0;
+    this.bicycle
+      .setPosition(this.player.x, this.player.y + s(1))
+      .setFrame(frame)
+      .setAngle(0)
+      .setFlipX(this.facing.includes('right'))
+      .setDepth(this.player.y + this.playerLevel * this.levelDepthBias - 1);
+  }
+
+  private toggleBicycleRide(): void {
+    const result = toggleBmx(
+      GS.data.activeVehicle,
+      GS.data.keyItems,
+      GS.data.carLocation,
+      this.currentBicycleArea(),
+      this.mapDef.interior === true,
+    );
+    if (result.reason === 'not_owned') return; // X remains free before the bike is earned
+    if (result.reason === 'indoors') {
+      toast(this, 'The BMX stays outside.');
+      return;
+    }
+    if (result.reason === 'not_here') {
+      toast(this, 'Your BMX is parked on another continent.');
+      return;
+    }
+    if (result.reason === 'other_active') {
+      toast(this, 'Park your other ride first.');
+      return;
+    }
+    GS.data.activeVehicle = result.activeVehicle;
+    AUDIO.sfx(result.reason === 'riding' ? 'confirm' : 'cancel');
+    toast(this, result.reason === 'riding' ? 'Riding the RED BMX. Press X to park.' : 'Parked the RED BMX.');
+    this.syncBicycleSprite();
   }
 
   /**
@@ -1882,11 +2191,42 @@ export class OverworldScene extends Phaser.Scene {
     for (const sp of this.mapDef.spawners) {
       if (sp.ifFlag && !GS.flag(sp.ifFlag)) continue;
       if (sp.unlessFlag && GS.flag(sp.unlessFlag)) continue; // S9: guards stand down
+      // The meteor-night wildlife is scene pressure, not a permanent infestation.
+      // It clears for Glint's quiet walk home and stays cleared after the Tick dies,
+      // even if an older map snapshot omitted an explicit unlessFlag.
+      if (shouldSuppressOtterbrookMeteorSpawner(this.mapDef.id, sp.ifFlag, (id) => !!GS.flag(id))) continue;
+
+      // A spawner rectangle is an authoring search area, not permission to drop an
+      // enemy into every covered tile. Resolve it to body-safe cells first so broad
+      // hill rectangles cannot seed roamers inside canopy, cliff faces, facades, or
+      // other static props. Initial player/townsperson bodies are excluded too, so
+      // a random town load never paints an enemy directly over somebody. Sampling
+      // without replacement also prevents spawn stacks.
+      const cells = walkableSpawnerCells(sp.rect, this.solidTiles, (tx, ty) => {
+        const x = (tx + 0.5) * TILE_PX;
+        const y = (ty + 0.5) * TILE_PX;
+        const body = { x: x - s(5), y: y - s(8), w: s(10), h: s(8) };
+        const overlaps = (other: Rect): boolean =>
+          body.x < other.x + other.w && body.x + body.w > other.x &&
+          body.y < other.y + other.h && body.y + body.h > other.y;
+        const npcOccupied = this.npcs.some((npc) => overlaps(this.npcBodyAt(npc)));
+        const playerOccupied = overlaps(this.playerBodyAt(this.player.x, this.player.y));
+        return npcOccupied || playerOccupied || this.collidesStatic(body, this.levelAtPx(x, y));
+      });
+      if (cells.length === 0) {
+        if (import.meta.env.DEV) console.warn(`[spawner] ${this.mapDef.id}: no walkable cells in ${JSON.stringify(sp.rect)}`);
+        continue;
+      }
+
       for (let i = 0; i < sp.count; i++) {
+        if (cells.length === 0) break; // more requested bodies than safe cells: skip gracefully
         const enemyId = sp.enemies[Math.floor(Math.random() * sp.enemies.length)];
         const def = ENEMIES[enemyId];
-        const x = (sp.rect.x + Math.random() * sp.rect.w) * TILE_PX;
-        const y = (sp.rect.y + Math.random() * sp.rect.h) * TILE_PX;
+        const pick = Math.floor(Math.random() * cells.length);
+        const { tx, ty } = cells.splice(pick, 1)[0];
+        const x = (tx + 0.5) * TILE_PX;
+        const y = (ty + 0.5) * TILE_PX;
+        const level = this.levelAtPx(x, y);
         const texture = def.overworld ?? def.walker ?? def.mini;
         const frame = def.overworld ? enemyOverworldFrame('down') : def.walker ? standFrame('down') : 0;
         const spr = this.add.sprite(x, y, texture, frame);
@@ -1903,10 +2243,16 @@ export class OverworldScene extends Phaser.Scene {
           think: 0,
           home: { x: sp.rect.x * TILE_PX, y: sp.rect.y * TILE_PX, w: sp.rect.w * TILE_PX, h: sp.rect.h * TILE_PX },
           dead: false,
-          level: this.levelAtPx(x, y),
+          level,
         });
       }
     }
+  }
+
+  private clearRoamersForQuietWalk(): void {
+    for (const roamer of this.roamers) roamer.dead = true;
+    destroyRoamerSprites(this.roamers);
+    this.roamers = [];
   }
 
   private buildPatrols(): void {
@@ -1917,7 +2263,8 @@ export class OverworldScene extends Phaser.Scene {
       const walker = enemy.walker ?? 'smiler';
       const overworld = enemy.overworld;
       const [tx, ty] = def.route[0];
-      const spr = this.add.sprite(tx * TILE_PX + TILE_PX / 2, ty * TILE_PX + s(22), overworld ?? walker, overworld ? enemyOverworldFrame('down') : standFrame('down'));
+      const feet = characterFeet(tx, ty, TILE_PX, ART_SCALE);
+      const spr = this.add.sprite(feet.x, feet.y, overworld ?? walker, overworld ? enemyOverworldFrame('down') : standFrame('down'));
       spr.setOrigin(0.5, 1);
       spr.setDepth(spr.y + this.levelLift(spr.x, spr.y));
       this.patrols.push({
@@ -2080,6 +2427,7 @@ export class OverworldScene extends Phaser.Scene {
           const released = this.dlg.justReleased(this.time.now);
           if (INPUT.justPressed('A') && !released) void this.interact();
           if (INPUT.justPressed('START') && !released) this.pauseMenu();
+          if (INPUT.justPressed('X') && !released) this.toggleBicycleRide();
           // §A4: the VITALS quick-glance — Y toggles it; B dismisses it
           if (INPUT.justPressed('Y')) this.toggleVitals();
           else if (this.vitalsGlance?.visible && INPUT.justPressed('B')) this.hideVitals();
@@ -2121,7 +2469,7 @@ export class OverworldScene extends Phaser.Scene {
       sh.setVisible(true).setPosition(x, y - lift).setDepth(y - 1).setDisplaySize(w, Math.max(floor, Math.round(w * 0.42)));
       i++;
     };
-    place(this.player.x, this.player.y, wHero);
+    if (!this.isRidingBmx()) place(this.player.x, this.player.y, wHero);
     for (const f of this.followers) if (!f.angel && !f.flit) place(f.spr.x, f.spr.y, wHero);
     for (const n of this.npcs) place(n.spr.x, n.spr.y, n.def.dog ? wDog : wHero);
     for (const r of this.roamers) if (!r.dead) place(r.spr.x, r.spr.y, r.walker ? wHero : wMini);
@@ -2148,6 +2496,12 @@ export class OverworldScene extends Phaser.Scene {
     this.trafficSprites.clear();
     this.trafficRects = [];
     this.trafficAccumMs = 0;
+    const otterbrookPhase = OTTERBROOK_TRAFFIC_MAPS.has(this.mapDef.id)
+      ? chapter1Phase((id) => !!GS.flag(id))
+      : undefined;
+    // Hush morning is the eerie absence between emergencies: no routine cars,
+    // no bus service, and no invisible collision bodies roaming the cold streets.
+    if (otterbrookPhase === 'hush-morning') return;
     // §A11 PKG-12 — Minimus runs dainty matchbox traffic (the miniature duchy); §A6 Lilleby runs
     // GIANT traffic (the colossi's trucks); everywhere else is the standard person-dwarfing sedan.
     this.trafficScale = MINIMUS_SKIN_MAPS.has(this.mapDef.id)
@@ -2193,9 +2547,15 @@ export class OverworldScene extends Phaser.Scene {
       }
     }
     if (this.trafficRoadVeh.length === 0) return;
-    const max = Math.max(3, Math.min(16, Math.floor(roads.size / 40)));
+    const policy = otterbrookTrafficPolicy(
+      this.mapDef.id,
+      otterbrookPhase,
+      this.trafficRoadVeh,
+      Math.max(3, Math.min(16, Math.floor(roads.size / 40))),
+    );
+    if (!policy) return;
     const seed = this.hashId(this.mapDef.id) ^ 0x7a5f;
-    this.traffic = new TrafficSim({ roads, seed, max, types: this.trafficRoadVeh });
+    this.traffic = new TrafficSim({ roads, seed, max: policy.max, types: policy.types });
     this.traffic.spawn();
     for (const v of this.traffic.vehicles) this.spawnTrafficSprite(v);
   }
@@ -2277,8 +2637,9 @@ export class OverworldScene extends Phaser.Scene {
 
   private updatePlayer(dt: number): void {
     const d = INPUT.dir();
-    const running = INPUT.held('B');
-    const sp = running ? RUN : WALK;
+    const biking = this.isRidingBmx();
+    const running = biking || INPUT.held('B');
+    const sp = biking ? BMX_RIDE : running ? RUN : WALK;
     let moved = false;
     if (d.x !== 0 || d.y !== 0) {
       const len = Math.hypot(d.x, d.y);
@@ -2305,11 +2666,11 @@ export class OverworldScene extends Phaser.Scene {
       }
       this.stepTimer -= dt;
       if (this.stepTimer <= 0) {
-        AUDIO.sfx('step');
-        this.stepTimer = running ? 0.18 : 0.28;
+        if (!biking) AUDIO.sfx('step');
+        this.stepTimer = biking ? 0.14 : running ? 0.18 : 0.28;
         // running kicks up dust at the heels (S7 juice, Prompt 39) — d is a unit
         // direction, so d.x*4 is a 4px heel offset; the -2 lifts to the foot
-        if (running) this.dustPuff(this.player.x - d.x * s(4), this.player.y - s(2));
+        if (running && !biking) this.dustPuff(this.player.x - d.x * s(4), this.player.y - s(2));
       }
       // breadcrumb trail for the conga line. A FINE trail (one crumb every s(1) of
       // travel, 3× denser than before) lets each follower's eased target advance ~a
@@ -2344,6 +2705,7 @@ export class OverworldScene extends Phaser.Scene {
       this.updateFogForLevel(); // S5: thicken/thin the fog veil as the terrace changes
     }
     this.player.setDepth(this.player.y + this.playerLevel * this.levelDepthBias);
+    this.syncBicycleSprite();
     this.followers.forEach((f, i) => {
       const crumb = this.trail[(i + 1) * 27]; // 27 crumbs back at s(1) spacing = the same (i+1)*108px conga gap as the old *9 at s(3)
       if (!crumb) return;
@@ -2408,8 +2770,8 @@ export class OverworldScene extends Phaser.Scene {
   private tryMove(x: number, y: number, dx: number, dy: number, second = false): number {
     const nx = x + dx;
     const ny = y + dy;
-    const box = { x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) };
-    const cur = { x: x - s(5), y: y - s(9), w: s(10), h: s(9) };
+    const box = this.playerBodyAt(nx, ny);
+    const cur = this.playerBodyAt(x, y);
     if (this.collidesStatic(box) || this.entersNewDynamicBody(box, cur)) return second ? y : x;
     return second ? ny : nx;
   }
@@ -2471,38 +2833,64 @@ export class OverworldScene extends Phaser.Scene {
   private entersNewDynamicBody(box: Rect, cur: Rect): boolean {
     if (entersNewBody(box, cur, this.trafficRects)) return true;
     if (LILLEBY_GIANT_MAPS.has(this.mapDef.id)) return false;
-    const npcBodies: Rect[] = [];
     for (const n of this.npcs) {
-      if (!n.wanders) continue;
-      npcBodies.push({ x: n.spr.x - s(6), y: n.spr.y - s(10), w: s(12), h: s(10) });
+      if (!n.wanders || n.level !== this.playerLevel) continue;
+      if (this.entersBody(box, cur, this.npcBodyAt(n))) return true;
     }
-    return entersNewBody(box, cur, npcBodies);
+    return false;
   }
 
-  private collides(box: Rect, actor?: 'player' | NpcObj, level = this.playerLevel): boolean {
+  private playerBodyAt(x: number, y: number): Rect {
+    return footRect({ x, y }, PLAYER_FOOTPRINT, { x: 1, y: 1 }, ART_SCALE);
+  }
+
+  private npcBodyAt(npc: NpcObj, x = npc.spr.x, y = npc.spr.y): Rect {
+    return footRect({ x, y }, NPC_FOOTPRINT, npc.collisionScale, ART_SCALE);
+  }
+
+  private roamerBodyAt(roamer: Roamer, x = roamer.spr.x, y = roamer.spr.y): Rect {
+    return footRect({ x, y }, ROAMER_FOOTPRINT, { x: 1, y: 1 }, ART_SCALE);
+  }
+
+  private patrolBodyAt(patrol: PatrolObj, x = patrol.spr.x, y = patrol.spr.y): Rect {
+    return footRect({ x, y }, PATROL_FOOTPRINT, { x: 1, y: 1 }, ART_SCALE);
+  }
+
+  private entersBody(box: Rect, cur: Rect, body: Rect): boolean {
+    return aabbOverlap(box, body) && !aabbOverlap(cur, body);
+  }
+
+  /** Dynamic collision for every non-player mover. Enemies deliberately omit
+   * the player body so reaching the hero still launches a contact battle. */
+  private collidesActor(
+    box: Rect,
+    cur: Rect,
+    kind: 'npc' | 'roamer' | 'patrol',
+    actor: NpcObj | Roamer | PatrolObj,
+    level: number,
+  ): boolean {
     if (this.collidesStatic(box, level)) return true;
-    // ambient cars (S18 M26): full-body AABB overlap
-    const hit = (r: Rect): boolean =>
-      box.x < r.x + r.w && box.x + box.w > r.x && box.y < r.y + r.h && box.y + box.h > r.y;
-    if (this.trafficRects.some(hit)) return true;
-    // ADR-131: the player and WANDERING townsfolk are SOLID to each other (and to
-    // other wanderers) — the kid bumps people instead of walking through them. A
-    // wanderer can't be a static `solids` rect (it would leave a "ghost" where it
-    // spawned, see buildNpcs), so it's tested LIVE at its sprite position here.
-    // Opt-in: only the player's tryMove ('player') and a wanderer's own step (its
-    // NpcObj) pass `actor` — roamers/patrols pass nothing and keep the old
-    // prop-only check. The moving actor is excluded so it never hits its own box.
-    // §A6 GIANT towns opt OUT of actor↔actor solidity: the tiny party and the colossi pass
-    // through one another, so a giant (pinned or wandering) can never wedge the tiny player
-    // against a prop (soft-lock). Interaction stays proximity-based, so nothing is lost.
-    if (actor !== undefined && !LILLEBY_GIANT_MAPS.has(this.mapDef.id)) {
+    if (entersNewBody(box, cur, this.trafficRects)) return true;
+
+    // Lilleby's giant civilians remain intentionally permeable. Enemy separation
+    // still applies, but a colossus can never pin the human-sized party.
+    if (!LILLEBY_GIANT_MAPS.has(this.mapDef.id)) {
       for (const n of this.npcs) {
-        if (!n.wanders || n === actor) continue;
-        if (hit({ x: n.spr.x - s(6), y: n.spr.y - s(10), w: s(12), h: s(10) })) return true;
+        if (!n.wanders || n === actor || n.level !== level) continue;
+        if (this.entersBody(box, cur, this.npcBodyAt(n))) return true;
       }
-      if (actor !== 'player' && this.player && hit({ x: this.player.x - s(5), y: this.player.y - s(9), w: s(10), h: s(9) })) {
-        return true;
+      if (kind === 'npc' && this.player && this.playerLevel === level) {
+        if (this.entersBody(box, cur, this.playerBodyAt(this.player.x, this.player.y))) return true;
       }
+    }
+
+    for (const r of this.roamers) {
+      if (r.dead || r === actor || r.level !== level) continue;
+      if (this.entersBody(box, cur, this.roamerBodyAt(r))) return true;
+    }
+    for (const p of this.patrols) {
+      if (p.dead || p === actor || p.level !== level) continue;
+      if (this.entersBody(box, cur, this.patrolBodyAt(p))) return true;
     }
     return false;
   }
@@ -2527,7 +2915,13 @@ export class OverworldScene extends Phaser.Scene {
       if (n.vx !== 0 || n.vy !== 0) {
         const nx = n.spr.x + n.vx * dt;
         const ny = n.spr.y + n.vy * dt;
-        if (Math.abs(nx - n.baseX) > s(28) || Math.abs(ny - n.baseY) > s(24) || this.collides({ x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) }, n, n.level)) {
+        const body = this.npcBodyAt(n, nx, ny);
+        const curBody = this.npcBodyAt(n);
+        if (
+          Math.abs(nx - n.baseX) > s(28) ||
+          Math.abs(ny - n.baseY) > s(24) ||
+          this.collidesActor(body, curBody, 'npc', n, n.level)
+        ) {
           n.vx = 0;
           n.vy = 0;
         } else {
@@ -2558,14 +2952,19 @@ export class OverworldScene extends Phaser.Scene {
       if (r.dead) continue;
       const def = ENEMIES[r.enemyId];
       const distP = Math.hypot(this.player.x - r.spr.x, this.player.y - r.spr.y);
+      if (distP < s(13) && now > this.battleCooldown) {
+        void this.contactBattle(r);
+        return;
+      }
       const outclassed = avgLvl >= def.level + 6;
       if (outclassed && distP < s(70)) {
         // EB detail: weak enemies flee a strong party (px/s flee speed)
         r.vx = Math.sign(r.spr.x - this.player.x) * s(60);
         r.vy = Math.sign(r.spr.y - this.player.y) * s(60);
       } else if (distP < s(64)) {
-        r.vx = ((this.player.x - r.spr.x) / distP) * PURSUE;
-        r.vy = ((this.player.y - r.spr.y) / distP) * PURSUE;
+        const toward = unitVectorOrZero(this.player.x - r.spr.x, this.player.y - r.spr.y);
+        r.vx = toward.x * PURSUE;
+        r.vy = toward.y * PURSUE;
       } else {
         r.think -= dt * 1000;
         if (r.think <= 0) {
@@ -2584,7 +2983,9 @@ export class OverworldScene extends Phaser.Scene {
         ny = Phaser.Math.Clamp(ny, r.home.y, r.home.y + r.home.h);
       }
       let moved = false;
-      if (!this.collides({ x: nx - s(5), y: ny - s(8), w: s(10), h: s(8) }, undefined, r.level)) {
+      const body = this.roamerBodyAt(r, nx, ny);
+      const curBody = this.roamerBodyAt(r);
+      if (!this.collidesActor(body, curBody, 'roamer', r, r.level)) {
         moved = Math.abs(nx - r.spr.x) + Math.abs(ny - r.spr.y) > s(0.1);
         r.spr.x = nx;
         r.spr.y = ny;
@@ -2611,7 +3012,8 @@ export class OverworldScene extends Phaser.Scene {
           r.spr.setFrame(standFrame(r.facing));
         }
       }
-      if (distP < s(13) && now > this.battleCooldown) {
+      const contactDist = Math.hypot(this.player.x - r.spr.x, this.player.y - r.spr.y);
+      if (contactDist < s(13) && now > this.battleCooldown) {
         void this.contactBattle(r);
         return;
       }
@@ -2626,19 +3028,26 @@ export class OverworldScene extends Phaser.Scene {
       if (p.dead) continue;
       if (p.state === 'patrol' || p.state === 'return') {
         const [wx, wy] = p.def.route[p.wp];
-        const tx = wx * TILE_PX + TILE_PX / 2;
-        const ty = wy * TILE_PX + s(22);
+        const target = characterFeet(wx, wy, TILE_PX, ART_SCALE);
+        const tx = target.x;
+        const ty = target.y;
         const d = Math.hypot(tx - p.spr.x, ty - p.spr.y);
         if (d < s(2)) {
           p.wp = (p.wp + 1) % p.def.route.length;
           p.state = 'patrol';
         } else {
-          const vx = ((tx - p.spr.x) / d) * PATROL_WALK;
-          const vy = ((ty - p.spr.y) / d) * PATROL_WALK;
-          p.spr.x += vx * dt;
-          p.spr.y += vy * dt;
-          p.facing = facing8(vx, vy, p.facing); // ADR-096: 8-way patrol read
-          this.patrolAnim(p, true, 'walk');
+          const toward = unitVectorOrZero(tx - p.spr.x, ty - p.spr.y);
+          const vx = toward.x * PATROL_WALK;
+          const vy = toward.y * PATROL_WALK;
+          const ox = p.spr.x;
+          const oy = p.spr.y;
+          const nx = this.movingActorMove('patrol', p, ox, oy, vx * dt, 0, false, p.level);
+          const ny = this.movingActorMove('patrol', p, nx, oy, 0, vy * dt, true, p.level);
+          p.spr.x = nx;
+          p.spr.y = ny;
+          const moved = nx !== ox || ny !== oy;
+          if (moved) p.facing = facing8(vx, vy, p.facing); // ADR-096: 8-way patrol read
+          this.patrolAnim(p, moved, 'walk');
         }
         if (this.patrolSees(p)) {
           p.state = 'alert';
@@ -2666,9 +3075,14 @@ export class OverworldScene extends Phaser.Scene {
         const dx = this.player.x - p.spr.x;
         const dy = this.player.y - p.spr.y;
         const d = Math.hypot(dx, dy);
+        if (d < s(13) && now > this.battleCooldown) {
+          void this.patrolBattle(p);
+          return;
+        }
+        const toward = unitVectorOrZero(dx, dy);
         const step = PATROL_CHASE * dt;
-        const nx = this.patrolMove(p.spr.x, p.spr.y, (dx / d) * step, 0, false, p.level);
-        const ny = this.patrolMove(nx, p.spr.y, 0, (dy / d) * step, true, p.level);
+        const nx = this.movingActorMove('patrol', p, p.spr.x, p.spr.y, toward.x * step, 0, false, p.level);
+        const ny = this.movingActorMove('patrol', p, nx, p.spr.y, 0, toward.y * step, true, p.level);
         p.spr.x = nx;
         p.spr.y = ny;
         p.facing = facing8(dx, dy, p.facing); // ADR-096: 8-way chase read
@@ -2683,7 +3097,8 @@ export class OverworldScene extends Phaser.Scene {
         } else {
           p.lose = 0;
         }
-        if (d < s(13) && now > this.battleCooldown) {
+        const contactDist = Math.hypot(this.player.x - p.spr.x, this.player.y - p.spr.y);
+        if (contactDist < s(13) && now > this.battleCooldown) {
           void this.patrolBattle(p);
           return;
         }
@@ -2708,12 +3123,27 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  /** axis-separated chase movement so Smilers slide along cubicle walls */
-  private patrolMove(x: number, y: number, dx: number, dy: number, second: boolean, level = this.playerLevel): number {
+  /** Axis-separated live-actor movement. Patrol, return, chase, and special NPC
+   * pursuits all share the same static + dynamic body rules. */
+  private movingActorMove(
+    kind: 'npc' | 'patrol',
+    actor: NpcObj | PatrolObj,
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+    second: boolean,
+    level: number,
+  ): number {
     const nx = x + dx;
     const ny = y + dy;
-    const box = { x: nx - s(5), y: ny - s(9), w: s(10), h: s(9) };
-    if (this.collides(box, undefined, level)) return second ? y : x;
+    const box = kind === 'npc'
+      ? this.npcBodyAt(actor as NpcObj, nx, ny)
+      : this.patrolBodyAt(actor as PatrolObj, nx, ny);
+    const cur = kind === 'npc'
+      ? this.npcBodyAt(actor as NpcObj, x, y)
+      : this.patrolBodyAt(actor as PatrolObj, x, y);
+    if (this.collidesActor(box, cur, kind, actor, level)) return second ? y : x;
     return second ? ny : nx;
   }
 
@@ -2768,7 +3198,8 @@ export class OverworldScene extends Phaser.Scene {
     let best = 0;
     let bestD = Infinity;
     p.def.route.forEach(([wx, wy], i) => {
-      const d = Math.hypot(wx * TILE_PX + TILE_PX / 2 - p.spr.x, wy * TILE_PX + s(22) - p.spr.y);
+      const target = characterFeet(wx, wy, TILE_PX, ART_SCALE);
+      const d = Math.hypot(target.x - p.spr.x, target.y - p.spr.y);
       if (d < bestD) {
         bestD = d;
         best = i;
@@ -2787,8 +3218,9 @@ export class OverworldScene extends Phaser.Scene {
     else if (f.x * toPlayer.x + f.y * toPlayer.y < -0.35) advantage = 'player';
     p.bang?.destroy();
     p.bang = null;
-    // patrols fight solo and own their own dead/give-up cleanup → empty pack
-    const outcome = await this.startBattle([p.def.enemy], advantage, []);
+    // A visible leader can carry authored support. The patrol still owns one
+    // quota/cleanup flag, while its battle gets the full data-defined pack.
+    const outcome = await this.startBattle([p.def.enemy, ...(p.def.support ?? [])], advantage, []);
     if (outcome === 'victory') {
       p.dead = true;
       p.spr.destroy();
@@ -3093,10 +3525,12 @@ export class OverworldScene extends Phaser.Scene {
         return;
       }
     }
+    const momPhone = phoneForTrigger(this.mapDef, 'payphone_ring');
     for (const ph of this.mapDef.phones) {
       if (Math.hypot(ph.x * TILE_PX + TILE_PX / 2 - probeX, ph.y * TILE_PX + TILE_PX / 2 - probeY) < s(18)) {
         // S2: Mom is calling THIS payphone — answering outranks dialing out
-        if (this.mapDef.id === 'brickton' && this.momCallPending()) {
+        const isMomPhone = momPhone?.x === ph.x && momPhone?.y === ph.y;
+        if (this.mapDef.id === 'brickton' && isMomPhone && this.momCallPending()) {
           await this.momPayphoneScene();
           return;
         }
@@ -3160,6 +3594,7 @@ export class OverworldScene extends Phaser.Scene {
       bldg_video: 'locked_video',
       bldg_bank: 'locked_bank',
       bldg_diner: 'locked_diner',
+      bldg_ob_trail_shed: 'trail_shed_gate_locked',
       holding_door: 'holding_door_line',
       office_door: 'manager_door',
     };
@@ -3339,10 +3774,20 @@ export class OverworldScene extends Phaser.Scene {
       n.spr.setFrame(standFrame(n.def.facing));
       return;
     }
+    if (d < s(14)) {
+      this.bordenEngaged = true;
+      this.cut = true;
+      this.bordenBang?.destroy();
+      this.bordenBang = null;
+      n.spr.anims.stop();
+      void this.bordenStreetBeat();
+      return;
+    }
     // chase — the patrols' axis-separated slide so he doesn't stick on a corner
+    const toward = unitVectorOrZero(dx, dy);
     const step = BORDEN_CHASE * dt;
-    const nx = this.patrolMove(n.spr.x, n.spr.y, (dx / d) * step, 0, false, n.level);
-    const ny = this.patrolMove(nx, n.spr.y, 0, (dy / d) * step, true, n.level);
+    const nx = this.movingActorMove('npc', n, n.spr.x, n.spr.y, toward.x * step, 0, false, n.level);
+    const ny = this.movingActorMove('npc', n, nx, n.spr.y, 0, toward.y * step, true, n.level);
     n.spr.x = nx;
     n.spr.y = ny;
     n.level = this.levelAfterStep(n.level, nx, ny);
@@ -3352,7 +3797,7 @@ export class OverworldScene extends Phaser.Scene {
     const anim = `${n.def.sprite}-${gait}-${f}`;
     if (n.spr.anims.currentAnim?.key !== anim || !n.spr.anims.isPlaying) n.spr.anims.play(anim, true);
     trackBang();
-    if (d < s(14)) {
+    if (Math.hypot(this.player.x - n.spr.x, this.player.y - n.spr.y) < s(14)) {
       this.bordenEngaged = true;
       this.cut = true;
       this.bordenBang?.destroy();
@@ -3505,6 +3950,54 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(...DIALOGUE.carlot_browse);
   }
 
+  /** SECOND WIND CYCLES â€” a real, save-safe starter-vehicle purchase. The
+   * garage title is ownership, activeVehicle is ride/park state, and
+   * carLocation keeps the BMX on its continent. */
+  private async twotonBikeBeat(): Promise<void> {
+    const listing = carById(TWOTON_BMX_ID);
+    if (!listing) return;
+
+    if (ownsCar(TWOTON_BMX_ID, GS.data.keyItems)) {
+      // v15 introduced carLocation after titles. Repair an older title once,
+      // without teleporting a bicycle that was deliberately ferried elsewhere.
+      GS.data.carLocation[TWOTON_BMX_TITLE] ??= TWOTON_BMX_HOME_CONTINENT;
+      await this.dlg.say(...DIALOGUE.twoton_bike_owned);
+      const riding = GS.data.activeVehicle === TWOTON_BMX_TITLE;
+      const pick = await this.dlg.ask([riding ? 'Park the red BMX' : 'Ride the red BMX', 'Never mind'], { cancelIndex: 1 });
+      if (pick !== 0) return;
+      if (GS.data.carLocation[TWOTON_BMX_TITLE] !== TWOTON_BMX_HOME_CONTINENT) {
+        await this.dlg.say(...DIALOGUE.twoton_bike_away);
+        return;
+      }
+      if (!riding && GS.data.activeVehicle !== null) {
+        await this.dlg.say('@You already have another ride active. Park it before you pull out the BMX.');
+        return;
+      }
+      GS.data.activeVehicle = riding ? null : setActive(TWOTON_BMX_TITLE, GS.data.keyItems);
+      AUDIO.sfx(riding ? 'cancel' : 'confirm');
+      toast(this, riding ? 'Parked the RED BMX.' : 'RED BMX active. Press X outdoors to ride.');
+      return;
+    }
+
+    await this.dlg.say(...DIALOGUE.npc_twoton_bike_clerk);
+    const pick = await this.dlg.ask([`Buy the red BMX ($${listing.price})`, 'Keep looking'], { cancelIndex: 1 });
+    if (pick !== 0) return;
+    const buy = buyCar(TWOTON_BMX_ID, GS.data.cashOnHand, this.chapterNow(), GS.data.keyItems);
+    if (!buy.ok || !buy.title) {
+      if (buy.reason === 'cant_afford') await this.dlg.say(...DIALOGUE.twoton_bike_broke);
+      return;
+    }
+
+    GS.data.cashOnHand -= buy.cost;
+    GS.data.keyItems.push(buy.title);
+    GS.setFlag(`owned_${TWOTON_BMX_ID}`);
+    GS.data.carLocation[buy.title] = TWOTON_BMX_HOME_CONTINENT;
+    GS.data.activeVehicle = setActive(buy.title, GS.data.keyItems);
+    AUDIO.sfx('confirm');
+    toast(this, 'Got the RED BMX!');
+    await this.dlg.say(...DIALOGUE.twoton_bike_bought);
+  }
+
   /** quest-giver conversations; true = handled, false = fall through */
   private async questTalk(n: NpcObj): Promise<boolean> {
     switch (n.def.id) {
@@ -3557,6 +4050,12 @@ export class OverworldScene extends Phaser.Scene {
         return true;
       case 'otter_hotel_clerk':
         await this.otterHotelBeat();
+        return true;
+      case 'twoton_hotel_clerk':
+        await this.twotonHotelBeat();
+        return true;
+      case 'twoton_bike_clerk':
+        await this.twotonBikeBeat();
         return true;
       case 'priest_otter':
       case 'priest_valle':
@@ -4000,10 +4499,10 @@ export class OverworldScene extends Phaser.Scene {
   /* ---------------- S14: hospitals, chapels & the deli (Prompts 23/25) ---------------- */
 
   /**
-   * OTTERBROOKE HOTEL — the town's EarthBound-style paid rest. During the meteor
-   * emergency and Hush-morning the building remains explorable but the clerk will
-   * not sell a room; once the Tick breaks, $35 restores HP/PP for every conscious
-   * hero and wakes the party inside Room 201. Fallen heroes remain hospital work.
+   * OTTERBROOKE HOTEL — one complimentary Hush-morning refuge, then the regular
+   * $35 service after the Tick. The pre-boss stay makes the hotel useful at the
+   * point of greatest pressure and dreams a caveward hint. Fallen heroes remain
+   * hospital work.
    */
   private async otterHotelBeat(): Promise<void> {
     if (!GS.flag('zapper_done')) {
@@ -4012,26 +4511,37 @@ export class OverworldScene extends Phaser.Scene {
     }
     if (!GS.flag('tick_defeated')) {
       await this.dlg.say(...DIALOGUE.npc_otter_hotel_clerk_hush);
-      return;
-    }
+      if (GS.flag('otter_hotel_hush_stayed')) {
+        await this.dlg.say(...DIALOGUE.hotel_hush_repeat);
+        return;
+      }
+      const hushPick = await this.dlg.ask([
+        'Take emergency Room 201 (free)',
+        'Keep moving toward the hill',
+      ], { cancelIndex: 1 });
+      if (hushPick !== 0) return;
+      GS.setFlag('otter_hotel_hush_stayed');
+      GS.setFlag('otter_hotel_hush_dream_pending');
+      await this.dlg.say(...DIALOGUE.hotel_hush_checkin);
+    } else {
+      await this.dlg.say(...DIALOGUE.npc_otter_hotel_clerk);
+      const pick = await this.dlg.ask([
+        `Stay in Room 201 ($${OTTERBROOKE_HOTEL_RATE})`,
+        'Just looking around',
+      ], { cancelIndex: 1 });
+      if (pick !== 0) return;
+      if (GS.data.cashOnHand < OTTERBROOKE_HOTEL_RATE) {
+        await this.dlg.say(...DIALOGUE.hotel_broke);
+        return;
+      }
 
-    await this.dlg.say(...DIALOGUE.npc_otter_hotel_clerk);
-    const pick = await this.dlg.ask([
-      `Stay in Room 201 ($${OTTERBROOKE_HOTEL_RATE})`,
-      'Just looking around',
-    ], { cancelIndex: 1 });
-    if (pick !== 0) return;
-    if (GS.data.cashOnHand < OTTERBROOKE_HOTEL_RATE) {
-      await this.dlg.say(...DIALOGUE.hotel_broke);
-      return;
+      GS.data.cashOnHand -= OTTERBROOKE_HOTEL_RATE;
+      await this.dlg.say(...DIALOGUE.hotel_checkin);
+      const firstStay = !GS.flag('otter_hotel_stayed');
+      GS.setFlag('otter_hotel_stayed');
+      if (firstStay) GS.setFlag('otter_hotel_dream_pending');
     }
-
-    GS.data.cashOnHand -= OTTERBROOKE_HOTEL_RATE;
-    await this.dlg.say(...DIALOGUE.hotel_checkin);
-    const firstStay = !GS.flag('otter_hotel_stayed');
-    GS.setFlag('otter_hotel_stayed');
     GS.setFlag('otter_hotel_wake_pending');
-    if (firstStay) GS.setFlag('otter_hotel_dream_pending');
     for (const h of GS.data.party) {
       if (h.down) continue;
       h.hp = h.maxHp;
@@ -4049,12 +4559,41 @@ export class OverworldScene extends Phaser.Scene {
     });
   }
 
-  /**
-   * §A4.7 — the hospital desk: revive angels for cash (price scales by the
-   * FALLEN hero's level), cure-all for a flat fee (it clears Homesick too —
-   * for a price Mom would absolutely not approve of). Mushroomize stays
-   * doctors-only when Ch.6 ships it; the sign on the wall already says so.
-   */
+  /** TWOTON HOTEL — a conventional paid rest, separate from Otterbrooke's
+   * one-town Hush dream. Fallen heroes still need a hospital. */
+  private async twotonHotelBeat(): Promise<void> {
+    await this.dlg.say(...DIALOGUE.npc_twoton_hotel_clerk);
+    const pick = await this.dlg.ask([
+      `Stay in Room 202 ($${TWOTON_HOTEL_RATE})`,
+      'Just looking around',
+    ], { cancelIndex: 1 });
+    if (pick !== 0) return;
+    if (GS.data.cashOnHand < TWOTON_HOTEL_RATE) {
+      await this.dlg.say(...DIALOGUE.twoton_hotel_broke);
+      return;
+    }
+
+    GS.data.cashOnHand -= TWOTON_HOTEL_RATE;
+    GS.setFlag('twoton_hotel_wake_pending');
+    for (const h of GS.data.party) {
+      if (h.down) continue;
+      h.hp = h.maxHp;
+      h.pp = h.maxPp;
+    }
+    await this.dlg.say(...DIALOGUE.twoton_hotel_checkin);
+
+    this.cut = true;
+    this.cameras.main.fadeOut(700, 0, 0, 0);
+    await this.wait(750);
+    this.scene.start('overworld', {
+      mapId: 'twoton_hotel_room',
+      x: s(6 * 16 + 8),
+      y: s(7 * 16 + 12),
+      facing: 'up',
+    });
+  }
+
+  /** The hospital desk revives fallen heroes and offers the cure-all service. */
   private async hospitalBeat(n: NpcObj): Promise<void> {
     await this.dlg.say(...DIALOGUE[n.def.dialogue]);
     for (;;) {
@@ -4720,6 +5259,8 @@ export class OverworldScene extends Phaser.Scene {
         meadow_gift_woods: 'basket_basic',
         meadow_gift_far: 'salt_shaker',
         otter_woods_gift: 'star_cola',
+        dos_gift_cola: 'star_cola',
+        dos_gift_lunch: 'grilled_cheese',
         oak_cache: 'star_cola', // the cave hollow's mossy cooler (ADR-121 rework; on the overlook ledge now)
         cave_gift_roots: 'corn_dog', // the Giant-Step rebuild's high-ledge prize (oak_roots L2)
         // S15i Task 4 (ADR-057): the grown Puerto Sol dock district's cached present
@@ -5043,6 +5584,7 @@ export class OverworldScene extends Phaser.Scene {
     // still gives a brief settle; arming is tracked even while it counts down.
     const cooling = this.doorCooldown > 0;
     for (const d of this.mapDef.doors) {
+      if (!this.activeDoor(d)) continue;
       const r = { x: d.x * TILE_PX, y: d.y * TILE_PX, w: d.w * TILE_PX, h: d.h * TILE_PX };
       const inZone =
         this.player.x > r.x &&
@@ -5095,6 +5637,8 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     for (const p of this.mapDef.props) {
+      if (p.ifFlag && !GS.flag(p.ifFlag)) continue;
+      if (p.unlessFlag && GS.flag(p.unlessFlag)) continue;
       if (!p.door) continue;
       // ADR-051: prefer the texture-true entrance zone (a facade re-fitted to its
       // real sprite moves its doorstep with it), else the map data's zone
@@ -5288,19 +5832,32 @@ export class OverworldScene extends Phaser.Scene {
     if (this.mapDef.id === 'otter_hotel_room_201' && GS.flag('otter_hotel_wake_pending')) {
       GS.setFlag('otter_hotel_wake_pending', false);
       this.cut = true;
-      if (GS.flag('otter_hotel_dream_pending')) {
+      if (GS.flag('otter_hotel_hush_dream_pending')) {
+        GS.setFlag('otter_hotel_hush_dream_pending', false);
+        AUDIO.sfx('phone');
+        await this.dlg.say(...DIALOGUE.hotel_hush_dream);
+      } else if (GS.flag('otter_hotel_dream_pending')) {
         GS.setFlag('otter_hotel_dream_pending', false);
         AUDIO.sfx('phone');
         await this.dlg.say(...DIALOGUE.hotel_first_dream);
       }
       AUDIO.sfx('heal');
       this.sparkleBurst(this.player.x, this.player.y - s(14), 10);
-      await this.dlg.say(...DIALOGUE.hotel_wake);
+      await this.dlg.say(...(!GS.flag('tick_defeated') ? DIALOGUE.hotel_hush_wake : DIALOGUE.hotel_wake));
       this.cut = false;
       return;
     }
     // ADR-118 rework — booked: you arrive INSIDE the station cell mid-march, and
     // Borden's holding-cell beat + the cop fight fire here (not a fake fade).
+    if (this.mapDef.id === 'twoton_hotel_room' && GS.flag('twoton_hotel_wake_pending')) {
+      GS.setFlag('twoton_hotel_wake_pending', false);
+      this.cut = true;
+      AUDIO.sfx('heal');
+      this.sparkleBurst(this.player.x, this.player.y - s(14), 10);
+      await this.dlg.say(...DIALOGUE.twoton_hotel_wake);
+      this.cut = false;
+      return;
+    }
     if (this.mapDef.id === 'otter_station' && GS.flag('borden_marching') && !GS.flag('borden_cleared')) {
       await this.bordenCellBeat();
       return;
@@ -5355,6 +5912,16 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
+  private chapter2TriggerState(): Chapter2TriggerState {
+    return {
+      puertoArrived: !!GS.flag('puerto_arrived'),
+      pyramidApproachSeen: !!GS.flag('pyramid_approach_seen'),
+      grinDefeated: !!GS.flag('grin_defeated'),
+      valleArrived: !!GS.flag('valle_arrived'),
+      ch2Complete: !!GS.flag('ch2_complete'),
+    };
+  }
+
   private async runTrigger(id: string): Promise<void> {
     switch (id) {
       case 'wake_up':
@@ -5367,6 +5934,34 @@ export class OverworldScene extends Phaser.Scene {
         break;
       case 'porch':
         if (GS.flag('sentinel_repelled') && !GS.flag('zapper_hit')) await this.porchScene();
+        break;
+      case 'ch1_hill_entry_warning':
+        if (GS.flag('meteor_fell') && !GS.flag('sentinel_repelled') && !GS.flag('ch1_hill_entry_warning_seen')) {
+          GS.setFlag('ch1_hill_entry_warning_seen');
+          AUDIO.sfx('alert');
+          await this.dlg.say(...DIALOGUE.ch1_hill_entry_warning);
+        }
+        break;
+      case 'ch1_cave_threshold':
+        if (GS.flag('zapper_done') && !GS.flag('tick_defeated') && !GS.flag('ch1_cave_threshold_seen')) {
+          GS.setFlag('ch1_cave_threshold_seen');
+          AUDIO.sfx('ember');
+          await this.dlg.say(...DIALOGUE.ch1_cave_threshold);
+        }
+        break;
+      case 'ch1_hush_main_street':
+        if (GS.flag('zapper_done') && !GS.flag('tick_defeated') && !GS.flag('ch1_hush_main_street_seen')) {
+          GS.setFlag('ch1_hush_main_street_seen');
+          await this.dlg.say(...DIALOGUE.ch1_hush_main_street);
+        }
+        break;
+      case 'ch1_restored_town_reveal':
+        if (GS.flag('tick_defeated') && !GS.flag('ch1_restored_town_reveal_seen')) {
+          GS.setFlag('ch1_restored_town_reveal_seen');
+          AUDIO.sfx('heal');
+          this.sparkleBurst(this.player.x, this.player.y - s(14), 12);
+          await this.dlg.say(...DIALOGUE.ch1_restored_town_reveal);
+        }
         break;
       // ADR-121: the Titanic Tick has burrowed into the Heart Oak in Pond Park and
       // is draining the town's Vibe (the Hush-dark). Daytime-only, once the town has
@@ -5465,12 +6060,18 @@ export class OverworldScene extends Phaser.Scene {
         await this.boatAsk('docks');
         break;
       case 'board_boat_return':
-        await this.boatAsk('puerto');
+        if (chapter2TriggerAction('board_boat_return', this.chapter2TriggerState()) === 'puerto-return') {
+          await this.boatAsk('puerto');
+        }
         break;
       case 'puerto_arrival':
-        this.cut = true;
-        await this.dlg.say(...DIALOGUE.puerto_arrival);
-        this.cut = false;
+        if (chapter2TriggerAction('puerto_arrival', this.chapter2TriggerState()) === 'puerto-arrival') {
+          // Commit before dialogue/awaits so a scene interruption cannot replay the beat.
+          GS.setFlag('puerto_arrived');
+          this.cut = true;
+          await this.dlg.say(...DIALOGUE.puerto_arrival);
+          this.cut = false;
+        }
         break;
       // S15i Task 4 (ADR-057): the grown DOCK DISTRICT's flag-gated waterfront beat —
       // a warm look over the working harbor on first crossing into the new malecón
@@ -5485,19 +6086,26 @@ export class OverworldScene extends Phaser.Scene {
       case 'golf_resort_reveal':
         if (!GS.flag('golf_resort_reveal_done')) await this.golfResortScene();
         break;
-      case 'valle_arrival':
-        if (!GS.flag('grin_defeated')) {
+      case 'valle_arrival': {
+        const action = chapter2TriggerAction('valle_arrival', this.chapter2TriggerState());
+        if (action === 'valle-arrival') {
+          // The same zone owns the later recovery, so persist only this first phase.
+          GS.setFlag('valle_arrived');
           this.cut = true;
           await this.dlg.say(...DIALOGUE.valle_arrival);
           this.cut = false;
-        } else if (!GS.flag('ch2_complete')) {
+        } else if (action === 'valle-recovery') {
           await this.valleRecoveryScene();
         }
         break;
+      }
       case 'pyramid_approach':
-        this.cut = true;
-        await this.dlg.say(...DIALOGUE.pyramid_approach);
-        this.cut = false;
+        if (chapter2TriggerAction('pyramid_approach', this.chapter2TriggerState()) === 'pyramid-approach') {
+          GS.setFlag('pyramid_approach_seen');
+          this.cut = true;
+          await this.dlg.say(...DIALOGUE.pyramid_approach);
+          this.cut = false;
+        }
         break;
       case 'apex_grin':
         if (!GS.flag('grin_defeated')) await this.grinScene();
@@ -5629,6 +6237,9 @@ export class OverworldScene extends Phaser.Scene {
       case 'q_picnic_brunost':
       case 'q_picnic_berry':
       case 'q_picnic_set':
+      // the Chapter 5 macro-lens portrait: the trigger id is stable map data,
+      // while the quest objective persists under q_cheese_pose.
+      case 'q_say_cheese':
         await this.questPickup(id);
         break;
       default:
@@ -6921,6 +7532,7 @@ export class OverworldScene extends Phaser.Scene {
     q_picnic_brunost: { flag: 'q_picnic_brunost', dialogue: 'q_picnic_brunost', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
     q_picnic_berry: { flag: 'q_picnic_berry', dialogue: 'q_picnic_berry', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
     q_picnic_set: { flag: 'q_picnic_set', dialogue: 'q_picnic_set', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
+    q_say_cheese: { flag: 'q_cheese_pose', dialogue: 'q_say_cheese', active: 'q_cheese', done: 'q_cheese_done', of: ['q_cheese_pose', 'q_cheese_developed'], giver: 'Mr. Click' },
   };
 
   private async questPickup(id: string): Promise<void> {
@@ -7519,7 +8131,9 @@ export class OverworldScene extends Phaser.Scene {
   private async chadJoinScene(): Promise<void> {
     this.cut = true;
     const chad = this.add.sprite(this.player.x + s(60), this.player.y, 'chad', standFrame('left'));
-    chad.setOrigin(0.5, 1).setDepth(chad.y);
+    // This temporary cutscene actor must sort on the same terrace plane as the
+    // house, player, and the real follower that replaces him after the dialogue.
+    chad.setOrigin(0.5, 1).setDepth(chad.y + this.levelLift(chad.x, chad.y));
     await this.tweenTo(chad, this.player.x + s(18), this.player.y, 900, 'chad');
     await this.dlg.say(...DIALOGUE.chad_join);
     chad.destroy();
@@ -7567,9 +8181,10 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = true;
     GS.setFlag('city_reveal_done');
     await this.wait(220);
-    // a gentle look ahead toward the city (east), paced under the narration, then home
-    const mapW = this.mapDef.grid[0].length * TILE_PX;
-    this.cameras.main.pan(Math.min(this.player.x + s(168), mapW - s(16)), this.player.y - s(16), 2600, 'Sine.easeInOut', true);
+    // The corrected world route runs north-to-south: look DOWN the overpass
+    // toward Twoton, paced under the narration, then return to the player.
+    const mapH = this.mapDef.grid.length * TILE_PX;
+    this.cameras.main.pan(this.player.x, Math.min(this.player.y + s(168), mapH - s(16)), 2600, 'Sine.easeInOut', true);
     await this.dlg.say(...DIALOGUE.city_reveal.slice(0, 2));
     AUDIO.sfx('ember');
     await this.dlg.say(...DIALOGUE.city_reveal.slice(2));
@@ -7629,7 +8244,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('brickton_dial_goal');
     // the payphone on the bus-stop corner — FOUND on the live map (never baked
     // coords; the Twoton rebuild moved it and the old (14,26) pan went stale)
-    const phone = this.mapDef.phones[0];
+    const phone = phoneForTrigger(this.mapDef, 'brickton_dial_goal') ?? this.mapDef.phones[0];
     const px = (phone ? phone.x : this.player.x / TILE_PX) * TILE_PX;
     const py = (phone ? phone.y : this.player.y / TILE_PX) * TILE_PX;
     this.cameras.main.pan(px, py, 800, 'Sine.easeInOut', true);
@@ -7792,6 +8407,10 @@ export class OverworldScene extends Phaser.Scene {
     this.removeFollower('chad');
     GS.setFlag('sentinel_repelled');
     GS.setFlag('glint_walk_home');
+    // This flag changes while the unified Otterbrooke scene is already running;
+    // buildRoamers() cannot retroactively remove its meteor-night population.
+    // Retire those live bodies now so the walk home is actually quiet.
+    this.clearRoamersForQuietWalk();
     // it leaves a husk in the crater that the town learns to walk around (and that
     // wakes again, far later — the Ch.10 callback hangs off sentinel_husk_left)
     GS.setFlag('sentinel_husk_left');
@@ -7961,7 +8580,9 @@ export class OverworldScene extends Phaser.Scene {
     await this.tweenTo(mgr, doorX, doorY + s(8), 1600, 'manager');
     mgr.destroy();
     await this.dlg.say(...DIALOGUE.manager_win);
-    this.cut = false;
+    // Rebuild immediately: the acolytes retire and the earned express elevator
+    // appears on both floors without requiring a manual room transition.
+    this.fadeRestart();
   }
 
   /** Mom is calling the payphone once the Department falls (until answered) */
@@ -8019,7 +8640,7 @@ export class OverworldScene extends Phaser.Scene {
   /* ---------------- THE ORIENTATION GATE (S15h, ADR-049) ---------------- */
 
   /**
-   * MEADOW MILE's city line. The grandfather clause: the visitor badge OR a bus
+   * THE OVERPASS's south city line. The grandfather clause: the visitor badge OR a bus
    * ride (`bus_ride_done`) walks you straight in, so BOTH ways into Brickton
    * lead in. Otherwise three Blazer-Smiler "orientation exercises" (fights) earn
    * the badge — each win sticks (orient_1..3), so a defeat (the engine respawns
@@ -8030,7 +8651,7 @@ export class OverworldScene extends Phaser.Scene {
     if (GS.flag('visitor_badge') || GS.flag('bus_ride_done')) {
       AUDIO.stopMusic();
       GS.setFlag('brickton_foot_first'); // S22 (ADR-113): the foot arrival opens the bus
-      this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'up');
+      this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'down');
       return;
     }
     this.cut = true;
@@ -8054,7 +8675,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('brickton_arrival_done'); // the foot arrival is its own beat — no later bus replay
     GS.setFlag('brickton_foot_first'); // S22 (ADR-113): reaching Brickton on foot reopens the highway + the bus
     AUDIO.stopMusic();
-    this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'up');
+    this.goThroughDoor('brickton', BRICKTON_FOOT_SPAWN.x, BRICKTON_FOOT_SPAWN.y, 'down');
   }
 
   private async busCutscene(): Promise<void> {

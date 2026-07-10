@@ -10,16 +10,21 @@
  *   - facades : every building facade key that has a PNG (placed as a prop sprite).
  *
  * Run:  npx vite-node tools/mapeditor/gen-manifest.ts   (or: npm run mapeditor:gen)
+ * Check without writing: npm run mapeditor:check
  */
 import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PALETTE, T } from '../../src/palette';
+import type { Pixmap } from '../../src/spritegen/pixmap';
+import { drawLinksPoster } from '../../src/spritegen/golfers';
 import { TILESET, PATH_BASE, PATH_VARIANTS, RUG_BASE, HEDGE_BASE, BRAMBLE_BASE } from '../../src/spritegen/tiles';
 import { CHAR_LEGEND, MAPS } from '../../src/data/maps';
 import {
   AUTHORED_WORLD_PROP_KEYS,
   AUTHORED_WORLD_PROP_DISPLAY_SIZE,
   AUTHORED_FACADE_KEYS,
+  DIRECTIONAL_VEHICLE_KEYS,
   REGION_TILE_STRIPS,
   NPC_CHARACTER_ART,
 } from '../../src/spritegen/authored';
@@ -28,9 +33,11 @@ import { AMBIENCE_IDS, SettlementSchema, DoorIndicatorSchema, FacingSchema } fro
 import { DIALOGUE } from '../../src/data/dialogue';
 import { CITYLIFE_DIALOGUE } from '../../src/data/citylife_text';
 import { BRANCH_DIALOGUE } from '../../src/data/branch_text';
+import { encodePng, makeImg } from '../imageio';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
+const CHECK = process.argv.includes('--check');
 const asset = (rel: string): string => resolve(ROOT, rel);
 // PNG width/height live in the IHDR chunk at bytes 16..24 (BE) — no decode needed.
 const pngDims = (p: string): { w: number; h: number } | null => {
@@ -41,6 +48,24 @@ const pngDims = (p: string): { w: number; h: number } | null => {
   } catch {
     return null;
   }
+};
+
+/** Convert one runtime Pixmap into an editor-safe inline PNG. Procedural props
+ * have no file for the browser to fetch, so the manifest carries the exact
+ * palette-indexed pixels that Phaser receives at boot. */
+const pixmapPngDataUrl = (pm: Pixmap): string => {
+  const img = makeImg(pm.w, pm.h);
+  for (let i = 0; i < pm.data.length; i++) {
+    const color = pm.data[i];
+    if (color === T) continue;
+    const rgb = Number.parseInt(PALETTE[color].slice(1), 16);
+    const offset = i * 4;
+    img.data[offset] = (rgb >>> 16) & 0xff;
+    img.data[offset + 1] = (rgb >>> 8) & 0xff;
+    img.data[offset + 2] = rgb & 0xff;
+    img.data[offset + 3] = 0xff;
+  }
+  return `data:image/png;base64,${Buffer.from(encodePng(img)).toString('base64')}`;
 };
 
 // ---- tile atlas: cell i === TILESET[i].name (WORLD_TILE_ART, 64px cells, 1 row) ----
@@ -72,9 +97,18 @@ const autotiles = {
 };
 const AUTOTILE_CHAR: Record<string, keyof typeof autotiles> = { ':': 'path', r: 'rug', H: 'hedge', V: 'bramble' };
 
+// Map-local skins that live in the main atlas rather than a region strip. Runtime
+// remaps Otterbrooke's solid `bush` cells to `tree_canopy`; exposing the same index
+// here keeps the editor's shipped-map preview honest.
+const mapSkins = {
+  otterbrook: { bush: tileIndexByName.get('tree_canopy') ?? -1 },
+};
+
+// Keep every runtime alias in the manifest, including literal space. Generated maps use
+// space as a plain-grass sprinkle character, so dropping it makes otherwise-valid grass
+// cells fall through to the editor's unknown-tile colour. The editor hides this duplicate
+// from the paint palette while retaining it for lookup/rendering.
 const legend = Object.entries(CHAR_LEGEND)
-  // ' ' is just a duplicate "plain grass" alias for '.', drop it from the palette
-  .filter(([ch]) => ch !== ' ')
   .map(([char, name]) => {
     const index = tileIndexByName.get(name) ?? -1;
     const solid = solidByName.get(name) ?? false;
@@ -91,6 +125,7 @@ const DISPLAY = AUTHORED_WORLD_PROP_DISPLAY_SIZE as Record<string, { w: number; 
 const FLAT = new Set([
   'paw_prints', 'doormat', 'ember', 'gift_box', 'gift_box_open', 'postage_stamp_crosswalk',
   'poster_smile', 'poster_chart', 'banner_productive', 'skyline', 'bus_windows',
+  'treeline_2', 'treeline_2_b', 'treeline_4', 'treeline_4_b', 'treeline_8', 'treeline_8_b',
 ]);
 const propGroup = (key: string): string => {
   if (/^(tree|pine|palm|prop_pine|baobab|cattails|glow_shroom|root_)/.test(key)) return 'nature';
@@ -145,34 +180,75 @@ const authoredProps = (AUTHORED_WORLD_PROP_KEYS as readonly string[])
       tags: PROP_TAGS[key], // searchable alias words (undefined → omitted from the JSON)
     };
   })
-  .filter(Boolean);
+  .filter((p): p is NonNullable<typeof p> => p !== null);
 
 // Runtime sprites that are valid map props but live outside assets/art/world/props.
 const runtimeProps = [
   { key: 'vehicle_clunker', rel: 'assets/art/vehicles/vehicle_clunker.png', w: 38, h: 16, group: 'street' },
+  { key: 'kids_bmx', rel: 'assets/art/vehicles/kids_bmx.png', w: 18, h: 16, group: 'street' },
+  { key: 'ten_speed', rel: 'assets/art/vehicles/ten_speed.png', w: 22, h: 16, group: 'street' },
 ]
-  .map((p) => existsSync(asset(p.rel))
-    ? { key: p.key, w: p.w, h: p.h, url: `/${p.rel}`, group: p.group, solidDefault: true }
-    : null)
-  .filter(Boolean);
+  .map((p) => {
+    if (!existsSync(asset(p.rel))) return null;
+    // Directional authored vehicles are horizontal sprite sheets. Static map props use
+    // frame zero at runtime; expose that crop contract so the editor never squeezes all
+    // three directions into one parked-car footprint.
+    const directional = DIRECTIONAL_VEHICLE_KEYS.has(p.key);
+    return {
+      key: p.key,
+      w: p.w,
+      h: p.h,
+      url: `/${p.rel}`,
+      group: p.group,
+      solidDefault: true,
+      ...(directional ? { frames: 3, frame: 0 } : {}),
+    };
+  })
+  .filter((p): p is NonNullable<typeof p> => p !== null);
 
-const props = [...authoredProps, ...runtimeProps];
+// `poster_links` is a runtime-only Pixmap (spritegen/index.ts registers this
+// same drawLinksPoster result). Embed it so the editor renders the travel
+// poster instead of its missing-asset fallback block.
+const linksPoster = drawLinksPoster();
+const proceduralProps = [{
+  key: 'poster_links',
+  w: linksPoster.w,
+  h: linksPoster.h,
+  url: pixmapPngDataUrl(linksPoster),
+  group: propGroup('poster_links'),
+  solidDefault: false,
+}];
+
+// A small number of authored building shells live in world/props because they
+// have phase-swapped art (for example Hodgkin's locked/open trail shed). Runtime
+// still treats every bldg_* key as a facade, so the editor must do the same.
+const propFacades = authoredProps.filter((p) => p.key.startsWith('bldg_'));
+const props = [...authoredProps.filter((p) => !p.key.startsWith('bldg_')), ...runtimeProps, ...proceduralProps];
 
 // ---- facades: placed as a prop sprite; runtime derives collision from the texture ----
-const facades = (AUTHORED_FACADE_KEYS as readonly string[])
-  .map((key) => {
-    const rel = `assets/art/world/facades/${key}.png`;
-    if (!existsSync(asset(rel))) return null;
-    const d = pngDims(asset(rel));
-    // NATURAL on-map footprint in TILES — how the engine sizes a facade at scale 1: an
-    // AUTHORED_WORLD_PROP_DISPLAY_SIZE entry renders at w*ART_SCALE px = w/16 tiles; otherwise the
-    // texture lands at texW/64 tiles (memory: "Facade render=texW/64"). PropDef.scale multiplies this.
-    const disp = DISPLAY[key];
-    const wt = disp ? disp.w / 16 : d ? d.w / 64 : 4;
-    const ht = disp ? disp.h / 16 : d ? d.h / 64 : 4;
-    return { key, url: `/${rel}`, aspect: d ? +(d.w / d.h).toFixed(3) : 1, w: +wt.toFixed(3), h: +ht.toFixed(3) };
-  })
-  .filter(Boolean);
+const facades = [
+  ...(AUTHORED_FACADE_KEYS as readonly string[])
+    .map((key) => {
+      const rel = `assets/art/world/facades/${key}.png`;
+      if (!existsSync(asset(rel))) return null;
+      const d = pngDims(asset(rel));
+      // NATURAL on-map footprint in TILES — how the engine sizes a facade at scale 1: an
+      // AUTHORED_WORLD_PROP_DISPLAY_SIZE entry renders at w*ART_SCALE px = w/16 tiles; otherwise the
+      // texture lands at texW/64 tiles (memory: "Facade render=texW/64"). PropDef.scale multiplies this.
+      const disp = DISPLAY[key];
+      const wt = disp ? disp.w / 16 : d ? d.w / 64 : 4;
+      const ht = disp ? disp.h / 16 : d ? d.h / 64 : 4;
+      return { key, url: `/${rel}`, aspect: d ? +(d.w / d.h).toFixed(3) : 1, w: +wt.toFixed(3), h: +ht.toFixed(3) };
+    })
+    .filter(Boolean),
+  ...propFacades.map((p) => ({
+    key: p.key,
+    url: p.url,
+    aspect: +(p.w / p.h).toFixed(3),
+    w: +(p.w / 16).toFixed(3),
+    h: +(p.h / 16).toFixed(3),
+  })),
+];
 
 // ---- REGION SKINS ----------------------------------------------------------------
 // The base grid is re-skinned per region at RUNTIME (a base tile name → a region tile
@@ -227,8 +303,32 @@ const authoredNpcs = (NPC_CHARACTER_ART as readonly { id: string; url: string }[
 
 const runtimeNpcs = [
   {
+    id: 'faye',
+    rel: 'assets/art/characters/mia_anim_46_4x.png',
+    cols: 4,
+    rows: 12,
+    wTiles: 1.5,
+    hTiles: 2,
+  },
+  {
+    id: 'pippa',
+    rel: 'assets/art/characters/pippa_anim_46_4x.png',
+    cols: 4,
+    rows: 12,
+    wTiles: 1.5,
+    hTiles: 2,
+  },
+  {
     id: 'dog',
     rel: 'assets/art/characters/biscuit_dog_4frame.png',
+    cols: 4,
+    rows: 1,
+    wTiles: 1.5,
+    hTiles: 1.5,
+  },
+  {
+    id: 'llama',
+    rel: 'assets/art/vehicles/llama.png',
     cols: 4,
     rows: 1,
     wTiles: 1.5,
@@ -291,13 +391,26 @@ const settings = {
   atmospheres: ['fog'], // MapDefSchema.atmosphere = z.enum(['fog'])
 };
 
-const manifest = {
+export const manifest = {
   generatedNote: 'AUTO-GENERATED by tools/mapeditor/gen-manifest.ts from TILESET / CHAR_LEGEND / authored props + region strips + NPC sheets. Do not edit by hand.',
   tilePx: 64,
   artScale: 4,
   atlas: '/assets/art/world/otterbrook_tiles_16.png',
   atlasCells: TILESET.length,
-  charFrame: { cols: 4, rows: 12 }, // 46-frame sheet grid; frame 0 = front stand
+  // Runtime character contract: 24×32 native frames, planted at x+8/y+22
+  // inside a 16px authoring tile. The editor reads these values instead of
+  // maintaining a second, approximate actor size/anchor.
+  charFrame: {
+    cols: 4,
+    rows: 12,
+    wTiles: 24 / 16,
+    hTiles: 32 / 16,
+    feetX: 8 / 16,
+    feetY: 22 / 16,
+    npcFoot: { ox: -6 / 16, oy: -10 / 16, w: 12 / 16, h: 10 / 16 },
+    patrolFoot: { ox: -5 / 16, oy: -9 / 16, w: 10 / 16, h: 9 / 16 },
+    dogCollisionScale: 1.5,
+  }, // 46-frame sheet grid; frame 0 = front stand
   autotiles, // ':' path, 'r' rug, 'H' hedge, 'V' bramble — 16-mask cells (see above)
   // directional sidewalk-curb cells: the engine (OverworldScene.buildTiles) swaps a road-adjacent
   // '=' to the curb variant whose vertical face points at the road. The editor mirrors this so the
@@ -309,6 +422,7 @@ const manifest = {
     w: tileIndexByName.get('sidewalk_curb_w') ?? -1,
   },
   legend,
+  mapSkins,
   props,
   facades,
   regions,
@@ -320,8 +434,6 @@ const manifest = {
   triggerHandlers, // trigger ids that OverworldScene.runTrigger() actually handles (Check warns otherwise)
 };
 
-writeFileSync(resolve(HERE, 'manifest.json'), JSON.stringify(manifest, null, 2));
-
 // ---- maps.json: the FULL data of every shipped map, so the editor's 📂 Open picker can
 // pull up any real map and edit it (then re-export). Emitted compact + as a SEPARATE file
 // (it's large) that the editor lazy-fetches only when the picker is first opened — boot
@@ -329,11 +441,48 @@ writeFileSync(resolve(HERE, 'manifest.json'), JSON.stringify(manifest, null, 2))
 // (grid string-rows, elevation plane, optional settings all round-trip).
 const mapsOut: Record<string, { name: string; def: unknown }> = {};
 for (const id of mapIds) mapsOut[id] = { name: MAPS[id]?.name ?? id, def: MAPS[id] };
-writeFileSync(resolve(HERE, 'maps.json'), JSON.stringify(mapsOut));
 
-console.log(
-  `manifest.json written: ${legend.length} tiles, ${props.length} props, ${facades.length} facades, ${regions.length} regions, ${npcs.length} NPCs, ` +
-    `${settings.music.length} tracks, ${settings.areas.length} areas, ${dialogueIds.length} dialogue ids, ${mapIds.length} map ids (atlas ${TILESET.length} cells).`,
-);
-console.log(`maps.json written: ${mapIds.length} full map defs (editor 📂 Open picker).`);
-console.log(`triggers: ${triggerHandlers.length} handled in runTrigger, ${triggerIds.length} used across maps.`);
+// Otterbrooke is procedurally assembled in src/data/maps.ts, unlike the editor-document-led
+// chapter maps. Keep its standalone JSON as an explicitly GENERATED editor snapshot, including
+// post-assembly living-city doors and the current elevation plane. This prevents an old hand
+// export/autosave from masquerading as the shipped map again.
+const otterbrook = MAPS.otterbrook;
+if (!otterbrook) throw new Error('MAPS.otterbrook is missing; cannot build the editor snapshot.');
+const { elevation: otterElevation, ...otterDef } = otterbrook;
+const otterSnapshot = {
+  ...otterDef,
+  w: otterbrook.grid[0]?.length ?? 0,
+  h: otterbrook.grid.length,
+  level: otterElevation?.level ?? otterbrook.grid.map((row) => '0'.repeat(row.length)),
+};
+
+const outputs = [
+  { name: 'manifest.json', path: resolve(HERE, 'manifest.json'), text: JSON.stringify(manifest, null, 2) },
+  { name: 'maps.json', path: resolve(HERE, 'maps.json'), text: JSON.stringify(mapsOut) },
+  { name: 'otterbrook.json', path: resolve(HERE, 'otterbrook.json'), text: JSON.stringify(otterSnapshot) },
+];
+
+// Tests import the in-memory manifest to exercise procedural entries without
+// rewriting checked-in generated snapshots. CLI execution retains the existing
+// write/check behavior.
+if (!process.env.VITEST) {
+  if (CHECK) {
+    const stale = outputs.filter((o) => !existsSync(o.path) || readFileSync(o.path, 'utf8') !== o.text);
+    if (stale.length) {
+      console.error(`map editor generated data is stale: ${stale.map((o) => o.name).join(', ')}`);
+      console.error('Run `npm run mapeditor:gen` and commit the generated files.');
+      process.exitCode = 1;
+    } else {
+      console.log(`✓ map editor generated data current — ${mapIds.length} maps; Otterbrooke ${otterSnapshot.w}×${otterSnapshot.h}`);
+    }
+  } else {
+    for (const o of outputs) writeFileSync(o.path, o.text);
+    console.log(
+      `manifest.json written: ${legend.length} tiles, ${props.length} props, ${facades.length} facades, ${regions.length} regions, ${npcs.length} NPCs, ` +
+        `${settings.music.length} tracks, ${settings.areas.length} areas, ${dialogueIds.length} dialogue ids, ${mapIds.length} map ids (atlas ${TILESET.length} cells).`,
+    );
+    console.log(`maps.json written: ${mapIds.length} full map defs (editor 📂 Open picker).`);
+    console.log(`otterbrook.json written: generated ${otterSnapshot.w}×${otterSnapshot.h} shipped-map snapshot.`);
+    console.log(`triggers: ${triggerHandlers.length} handled in runTrigger, ${triggerIds.length} used across maps.`);
+  }
+}

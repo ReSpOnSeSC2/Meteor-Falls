@@ -528,8 +528,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Beneath, in marker: "Excellent for thinking. Bring a sandwich.")',
   ],
   sign_meadow_gate: [
-    'MEADOW MILE → TWOTON CITY — on foot, past the overpass.',
-    '(An arrow points east. Someone added: "...or take the bus, coward.")',
+    'MEADOW MILE ↓ TWOTON CITY — on foot, past the overpass.',
+    '(An arrow points south. Someone added: "...or take the bus, coward.")',
   ],
   sign_hall_wall: [
     'TOWN NOTICE BOARD — Lost dog: found. Bake sale: eaten.',
@@ -538,7 +538,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   /* ---------------- S15i Task 0 — THE DAYBREAK GATE + METEOR ROADBLOCK ----------------
    * The world past the treeline is sealed until dawn (the daybreak law, §B4):
-   * the east line is a closed gate with a sleeping-town reason, never an
+   * the south line is a closed gate with a sleeping-town reason, never an
    * invisible wall, and at daybreak every NPC out here swaps to its day line.
    * Plain and clear — kids read this — EarthBound-flavored, never a riddle. */
   // the gate walker's morning line (dialogueDay): the line's open, mind the road
@@ -555,7 +555,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_treeline_gawker_day: [
     '@So that was a meteor. A real one. A REAL meteor, behind Hickory Hill.',
     '@The whole town walked out to see the crater this morning. I brought a thermos.',
-    "@Careful if you're headed east — the road's blocked off where a piece of it landed.",
+    "@Careful if you're headed south — the road's blocked off where a piece of it landed.",
   ],
   // the meteor-drop roadblock on Meadow Mile — a town worker waving you around
   npc_roadblock_worker: [
@@ -567,20 +567,20 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'ROAD WORK AHEAD. Reason: meteor. (Yes, really.)',
     'Find another way around. — Otterbrooke Public Works',
   ],
-  // the sealed east line at night — read at the barricade itself
+  // the sealed south line at night — read at the barricade itself
   sign_meadow_gate_closed: [
     'GATE CLOSED — Otterbrooke rolls up the sidewalks when the road goes cold.',
     '(A note is clipped on: "Road opens at sunup. Get some sleep, kiddo.")',
   ],
   // shown when you walk into the shut gate before dawn (the door-bump reason)
   meadow_gate_asleep: [
-    'The road east is gated shut for the night.',
+    'The road south is gated shut for the night.',
     'Otterbrooke is fast asleep — porch lights, crickets, and one dog who knows something.',
     'Whatever fell on the hill will keep until morning. Better head back.',
   ],
   // ADR-121: the road stays fogged through the Hush-dark, until the Tick is killed
   meadow_gate_hushdark: [
-    'The road east is still barricaded — and past it, the highway just... fogs out into gray.',
+    'The road south is still barricaded — and past it, the highway just... fogs out into gray.',
     "It's the wrong kind of fog. Cold, and quiet, and it gets quieter the longer you look at it.",
     "Nobody's leaving Otterbrooke while the town feels like this. Something's draining the warmth right out of it — and it's coming from up on the hill.",
   ],
@@ -674,7 +674,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   /* ---------------- S15i M3 — THE LONG WALK (the foot legs) ---------------- */
   // LEG 1 — MEADOW MILE points the way (clarity: the whole route spelled out)
   sign_to_whisperwood: [
-    'WHISPERWOOD AHEAD → then the far meadow, then the overpass, then the city.',
+    'WHISPERWOOD AHEAD ↓ then the far meadow, then the overpass, then the city.',
     '(A long way on foot. "The bus is RIGHT THERE," adds a smaller, smugger sign.)',
   ],
   // LEG 2 — WHISPERWOOD
@@ -769,12 +769,12 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(A tenant has amended it: "the rent is not fair. the brick is still brick.")',
   ],
   sign_cage_block: [
-    'THE CAGE — full court, two blocks north. Respect the chain.',
-    '(An arrow points back toward downtown. The arrow has been dunked on.)',
+    'THE CAGE — south on CAGE LANE, then east through the chain-link gate.',
+    '(The arrow has been dunked on so many times it now points with confidence.)',
   ],
   sign_south_gate: [
-    'TWOTON CITY LINE — visitors, mind the overpass.',
-    '(Below: "Meadow Mile, that way. Bring water. Bring a smile. They check.")',
+    'TWOTON NORTH GATE — the boulevard runs south to Civic Street and Main.',
+    '(Below: "Meadow Mile north. Bring water. Bring a smile. They check both.")',
   ],
   sign_new_docks: [
     'TWOTON DOCKS → keep east, to the water.',
@@ -857,6 +857,28 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@I'm coming too. Obviously. I'm basically the leader.",
     '@...You go first though. If anything scary happens, scream in a manly way.',
     '* Chad Pickle tagged along! (He immediately stood behind you.)',
+  ],
+  // Four short, save-gated navigation beats. Their overworld trigger ids use
+  // these exact keys; the scene handlers own the corresponding *_seen flags.
+  ch1_hill_entry_warning: [
+    'At the foot of Hickory Hill, the pavement gives up and the crickets do too.',
+    'Above you, the trail bends between black trees toward the orange glow.',
+    '(Home is downhill. Your feet have already voted.)',
+  ],
+  ch1_cave_threshold: [
+    'At the cave mouth, the Star Locket turns cold against your shirt.',
+    'From underground: tick... tick... Each one slower than a clock and much too heavy.',
+    '(The blue quiet is coming from below. There is nowhere else left to look.)',
+  ],
+  ch1_hush_main_street: [
+    'Main Street should smell like coffee, bread, and gasoline. It smells like rain that never arrived.',
+    'Red CLOSED signs stand in the windows. The parking meters wait for cars that are not coming.',
+    'Far above the rooftops, Hickory Hill answers with one dry, enormous tick.',
+  ],
+  ch1_restored_town_reveal: [
+    'At the last hill stair, Otterbrooke opens below you in color.',
+    'Bakery lamps flare gold. A bus coughs twice. Somebody drops a stack of pie tins and laughs instead of swearing.',
+    '(This is what saving a town sounds like when the town has errands.)',
   ],
   crater_approach: [
     'The whole hilltop is humming, like someone just rang a giant bell.',
@@ -1016,10 +1038,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // 2026-07-02 — the bounce-trail to THE CAGE (the hoops court kept getting lost)
   sign_to_cage_plaza: [
     'CITY REC NOTICE: pickup runs DAILY at THE CAGE.',
-    '* North side — through the chain-link gate past the lots. Follow the bounce. Bring your own excuses.',
+    '* South on Cage Lane, east through the chain-link gate. Follow the bounce. Bring your own excuses.',
   ],
   sign_to_cage_gate: [
-    'THE CAGE ‹— through this gate, across the park.',
+    'THE CAGE — through this gate, across the park.',
     '* You can already hear it: one ball, ten opinions.',
   ],
   npc_hoops_kid: [
@@ -1347,6 +1369,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   // THE OTTERBROOKE HOTEL — one lobby, one guest corridor, three real rooms,
   // and a paid rest that protects the hospital's revive economy.
+  sign_otter_hotel: [
+    'OTTERBROOKE HOTEL — ROOMS • HOT WATER • RADIATORS WITH OPINIONS.',
+    '(The brass VACANCY plate has been polished so often it looks nervous.)',
+  ],
   npc_otter_hotel_clerk: [
     '@Welcome to the OTTERBROOKE HOTEL. Twenty rooms, nineteen keys, and one key we keep around because it looks responsible.',
     '@Room 201 is $35 for the night. Clean sheets, hot water, and a radiator that performs one song in D-flat.',
@@ -1357,20 +1383,38 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_otter_hotel_clerk_hush: [
     '@I rang every room at seven. Nobody answered. Then three guests came downstairs asleep and sat in the lobby.',
-    '@No new check-ins until this blue quiet lifts. I will not sell a night to somebody when morning is acting this suspicious.',
+    '@I will not sell a night while morning is acting this suspicious. But Room 201 is empty, and you look like the only person in town who is actually awake.',
+    '@Take it for an hour, on the house. If you dream anything useful, I expect a full report.',
+  ],
+  hotel_hush_repeat: [
+    '@Room 201 already did everything a hotel room can legally do for you today.',
+    '@The hill is still making that sound. I dislike a destination that advertises itself.',
+  ],
+  hotel_hush_checkin: [
+    '@Take the elevator to the second floor. Room 201 is the first door on the left. No charge. The emergency ledger says "WEIRD MORNING," which covers the paperwork.',
+    '@Rest your legs. Then follow whatever in this town is still ticking.',
   ],
   hotel_broke: [
     '@Room 201 costs $35, and your wallet appears to be traveling lighter than you are.',
     '@The lobby chairs are free. Less comfortable, but financially impeccable.',
   ],
   hotel_checkin: [
-    '@Room 201. Top of the stairs, first door on the left. The key sticks unless you compliment it.',
+    '@Room 201. Take the elevator to the second floor; it is the first door on the left. The key sticks unless you compliment it.',
     '@Sleep well. If the radiator whispers your name, that is pipes. Almost certainly pipes.',
   ],
   hotel_first_dream: [
     '(You dream of a telephone ringing under a red sky.)',
     '(When you answer, no one speaks. Far away, something breathes through a sea of static — slow, lonely, and listening.)',
     '(Then a small warm light answers from somewhere inside your shirt, and the line goes quiet.)',
+  ],
+  hotel_hush_dream: [
+    '(You dream that Otterbrooke is a wind-up town and someone has removed the key.)',
+    '(Under Hickory Hill, one enormous gear turns in the dark. Blue crystals light a trail to a black splinter buried in stone.)',
+    '(The Star Locket warms against your chest. The gear misses a tooth. For one second, the whole dream can breathe.)',
+  ],
+  hotel_hush_wake: [
+    '* The radiator knocks three times: up... the... hill.',
+    '* Everyone who was still standing feels completely rested. (HP and PP are restored.)',
   ],
   hotel_wake: [
     '* Morning arrives one radiator knock at a time.',
@@ -1460,14 +1504,14 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_hodgkin_ask: [
     '@Hey— actually, you headed up Hickory Trail? Do me a solid.',
     "@My runaway lawnmower got loose and it's tearing up the trail switchbacks right now. Get up there and shut the dang thing off for me.",
-    "@You do that, the spare TRAIL KEY's yours — opens my supply shed up on the trail. There's good stuff in there. Define 'good.' Don't.",
+    "@You do that, the spare TRAIL KEY's yours — opens my supply shed across the cave trail. There's good stuff in there. Define 'good.' Don't.",
   ],
   npc_hodgkin_reward: [
     '@You caught it! I heard it sputter out from DOWN here. Bless you, kid.',
-    '@Here— the TRAIL KEY. That shed up on the switchbacks is yours to raid. Take the granola bar, it\'s judging me.',
+    '@Here— the TRAIL KEY. The shed across the cave trail is yours to cross. Take the granola bar, it\'s judging me.',
   ],
   npc_hodgkin_after: [
-    '@Get into the shed yet? Tell me the granola bar found a good home. I need closure.',
+    '@Get through the trail shed yet? Tell me the granola bar found a good home. I need closure.',
   ],
   sign_pemberton_workshop: [
     "M. L. PEMBERTON — RADIOS, ROCKETS, REPAIRS. If it hums, bring it in. If it whispers, knock first.",
@@ -1502,18 +1546,30 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   // the sign's registry entry (signBeat intercepts and picks the live variant)
   trail_shed: [
-    'A weather-beaten TOOL SHED tucked off the switchback. A heavy padlock holds it shut.',
+    "Hodgkin's trail supplies are stacked against the wall: rope, crates, one barrel, and his idea of organization.",
+  ],
+  trail_shed_gate_locked: [
+    "HODGKIN'S TRAIL SHED fills the corridor from woods to woods. There is no path around either side.",
+    '(A heavy brass padlock holds the front door. The keyhole is shaped like a tiny lawnmower.)',
+  ],
+  trail_shed_gate_open: [
+    'The TRAIL KEY has opened Hodgkin\'s shed. Its front door stands ajar.',
+    '(Past the crates, pale cave light spills through a ragged hole in the back wall.)',
   ],
   trail_shed_locked: [
-    'A weather-beaten TOOL SHED tucked off the switchback. A heavy padlock holds it shut.',
-    "(Stenciled on the door: \"HODGKIN'S — KEEP OUT — this means YOU, raccoons.\")",
+    'A heavy padlock holds the shed door shut.',
+    "(The sign reads: \"HODGKIN'S TRAIL SUPPLY — KEYED ACCESS — raccoons are not keyholders.\")",
   ],
   trail_shed_open: [
-    'The TRAIL KEY turns. Inside: coils of rope, a dead flashlight, $60 in a coffee can, and one (1) granola bar.',
+    'Behind the crates: a dead flashlight, $60 in a coffee can, and one (1) granola bar.',
     'You pocket the cash and, after a respectful pause, the granola bar.',
   ],
   trail_shed_empty: [
-    "The shed's bare now but for the rope and the judging flashlight. You already took the good stuff.",
+    "The supply corner is bare now but for the rope and the judging flashlight. You already took the good stuff.",
+  ],
+  trail_shed_back_hole: [
+    'Broken planks frame a person-sized hole in the back wall.',
+    '(Cold air moves through it from the cave side. This was not in Hodgkin\'s original building plan.)',
   ],
 
   npc_bank_teller: [
@@ -1572,6 +1628,10 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   shop_closed_hush: [
     'CLOSED WHILE THE LIGHT IS WRONG.',
     '(Someone is inside, but every lamp has gone the same thin blue. The note points up Hickory Hill.)',
+  ],
+  shop_reopened_board: [
+    'MAIN STREET IS OPEN AGAIN. Today\'s special: having a today.',
+    '(The chalk letters get larger near the end, as though the writer got excited.)',
   ],
   npc_pemmel_hush: [
     '@Biscuit keeps pointing up the hill, but even he will not bark. Fix the cold first, sweetheart. Then we find him properly.',
@@ -1700,6 +1760,152 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
 
   /* ---------------- Twoton City ---------------- */
+  npc_twoton_hotel_clerk: [
+    '@Welcome to the TWOTON HOTEL. I can tell how full we are by the sound the elevator makes. Tonight it says: one room, two clean beds, no excuses.',
+    '@Room 202 is $45. The city keeps moving while you sleep. We charge extra for pretending otherwise.',
+  ],
+  twoton_hotel_checkin: [
+    '@Here is the key to 202. The elevator already knows. It is nosy, but dependable.',
+    '* Your party rested at the Twoton Hotel.',
+  ],
+  twoton_hotel_broke: [
+    '@Your wallet is a little too quiet for Room 202. The lobby chairs are free to admire, but not to sleep in. They have a union.',
+  ],
+  twoton_hotel_wake: [
+    'Traffic rolls beneath the window like a faraway river. For once, none of it needs anything from you.',
+    '* Morning found you rested and ready.',
+  ],
+  npc_twoton_hotel_guest: [
+    '@I asked for a room with a view. They gave me a view of the elevator numbers. I have seen every floor, in order, six times.',
+  ],
+  npc_twoton_hotel_housekeeper: [
+    '@A room has four corners. Guests only notice three. I clean the fourth one especially well, out of principle.',
+  ],
+  twoton_hotel_keys: [
+    '(A wall of brass key cubbies. Room 202 is the only empty square. The empty square looks relieved.)',
+  ],
+  twoton_hotel_registry: [
+    '(The registry records arrivals, departures, and one guest who has been "checking out in a minute" since breakfast.)',
+  ],
+  twoton_hotel_directory: [
+    'FLOOR 2 - ROOMS 201-209. ICE: whenever the machine feels emotionally available.',
+  ],
+  twoton_hotel_cooler: [
+    '(The water cooler contains water cold enough to make your teeth remember winter.)',
+  ],
+  twoton_hotel_bed: [
+    '(Two square pillows, two heavy blankets, and a mattress that has made peace with gravity.)',
+  ],
+  twoton_hotel_tv: [
+    '(The television shows tomorrow\'s weather with complete confidence and yesterday\'s date.)',
+  ],
+
+  npc_twoton_station_clerk: [
+    '@Routes are easy. Times are difficult. The 6:15 leaves at 6:15, plus everything that happened before 6:15.',
+    '@Step up to the window when you want Otterbrook. I count departures in seconds and arrivals in apologies.',
+  ],
+  npc_twoton_station_reader: [
+    '@The map says one transfer. My heart says two. My knees say stay on this bench until the argument resolves itself.',
+  ],
+  npc_twoton_station_commuter: [
+    '@Best seat is three rows back, left side. You see the farms without having to discuss them with the farms.',
+  ],
+  npc_twoton_station_vendor: [
+    '@Every newspaper comes folded differently. That is how you know which city it believes in.',
+  ],
+  twoton_station_board: [
+    'DEPARTURES: OTTERBROOK - 6:15. TWOTON - YOU ARE ALREADY HERE. DELAYS - ASK THE WEATHER.',
+  ],
+  twoton_station_window: [
+    '(The ticket window has a polished brass slot and exactly enough room for one fare, one question, or one brave hand.)',
+  ],
+
+  npc_twoton_theater_clerk: [
+    '@Welcome to the ORPHEUM. I keep every ticket stub. A full house sounds impressive, but a full shoebox is proof.',
+    '@The matinee is rehearsing. You can look around if you promise not to applaud before the stagehand cues the dust.',
+  ],
+  npc_twoton_theater_usher: [
+    '@Center aisle is twelve honest steps wide. I measured. A crooked aisle makes a crooked ovation.',
+  ],
+  npc_twoton_stagehand: [
+    '@Light, curtain, dust. In that order. People think actors make a show. Actors arrive after I have already made most of it.',
+  ],
+  twoton_theater_program: [
+    'THE ORPHEUM PRESENTS: "A PERFECTLY NORMAL TUESDAY." The role of Tuesday will be played by Thursday.',
+  ],
+  twoton_theater_stage: [
+    '(From the seats it looks like another world. From here it is paint, rope, warm bulbs, and people trying very hard together.)',
+  ],
+  twoton_theater_tickets: [
+    '(A hand-lettered sign: MATINEE SEATS AVAILABLE. Feelings may be checked at the door, but must be reclaimed afterward.)',
+  ],
+
+  npc_twoton_preschool_teacher: [
+    '@Every child gets the whole box of crayons. If somebody tells them the sky must be blue, I hand them another purple.',
+    '@The city has enough people teaching children how to behave. In this room we practice how to notice.',
+  ],
+  npc_twoton_preschool_child: [
+    '@I drew the city as a big number two. Teacher says roads can be numbers if they want. Mine has teeth, too.',
+  ],
+  npc_twoton_community_volunteer: [
+    '@Forty folding chairs. I know every hinge. When the city needs a meeting, I can make a room appear in under three minutes.',
+  ],
+  twoton_preschool_board: [
+    'TODAY: circles, sharing, and drawing a face that belongs to YOU. Tomorrow: snacks.',
+  ],
+  twoton_community_table: [
+    '(A long table bears the pale rings of a thousand meetings and one birthday cake nobody managed to cut evenly.)',
+  ],
+
+  npc_twoton_bike_clerk: [
+    '@SECOND WIND CYCLES. Every bicycle in here has been tuned until the bell rings in B-flat. The red BMX is the only one still willing to discuss a price.',
+    '@Ninety dollars buys the bike, the title, and my solemn promise that the front wheel is the front one.',
+  ],
+  twoton_bike_broke: [
+    '@You are short of ninety. The bicycle understands. It spent six months with no money at all and only recently became merchandise.',
+  ],
+  twoton_bike_bought: [
+    '@Sold. I put the title in your key-item pocket and enough air in the tires to reach tomorrow.',
+    '* Press X outdoors to ride or park your BMX.',
+  ],
+  twoton_bike_owned: [
+    '@Your red BMX is still yours. A good bicycle remembers its rider. A great bicycle pretends not to remember the curb.',
+  ],
+  twoton_bike_away: [
+    '@Your title is here, but your bicycle is not. It is parked on another continent, which is a very long walk even for a bicycle.',
+  ],
+  npc_twoton_bike_kid: [
+    '@I am deciding between the fast blue one and the red one with pegs. I have been deciding for forty-three minutes. This is called research.',
+  ],
+  twoton_bike_price_card: [
+    'RED BMX - $90. TITLE INCLUDED. TRAINING WHEELS NOT INCLUDED, EVEN EMOTIONALLY.',
+  ],
+  twoton_bike_repair_wall: [
+    '(Every wrench has a painted outline on the pegboard. One tiny outline is labeled: WRENCH CURRENTLY HAVING LUNCH.)',
+  ],
+
+  shop_twoton_pizza_greet: [
+    '@Welcome to PIE IN THE SKY. Slices are hot, the cola is cold, and the cook can hear when somebody folds the crust wrong.',
+  ],
+  shop_twoton_pizza_bye: [
+    '@Come back hungry. The triangle is the strongest shape and lunch is our proof.',
+  ],
+  npc_twoton_pizza_cook: [
+    '@One pepperoni goes exactly off-center. Two looks planned. Dead center looks nervous. Off-center looks like lunch.',
+  ],
+  npc_twoton_pizza_regular: [
+    '@I have sat in this booth every Tuesday since it was a hardware store. The pizza is better. The booth has not taken a position.',
+  ],
+  twoton_pizza_menu: [
+    'PIE IN THE SKY - HOT SLICES, GRILLED CHEESE, STAR COLA. WHOLE PIES AVAILABLE IF YOU CAN EXPLAIN WHERE YOU WILL PUT ONE.',
+  ],
+  twoton_pizza_kitchen: [
+    '(The grill snaps, the fryer sighs, and a row of dough rounds waits beneath a towel like small moons behind a cloud.)',
+  ],
+  twoton_pizza_booth: [
+    '(The tabletop is carved with names, phone numbers, and a surprisingly accurate map of the bus route.)',
+  ],
+
   brickton_arrival: [
     'The bus sighs open on a block that smells like hot pavement, coffee, and a little bit of lightning.',
     'Twoton does not wake up gently. It clatters, it honks, and somebody sells you a bagel through a locked door and calls it good business.',
@@ -1709,20 +1915,20 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'Find the Department. Find the girl who prays.',
   ],
   sign_brickton: [
-    'WELCOME TO TWOTON CITY — pop. lots.',
-    '(Someone has written "OTTERBROOK FITS IN OUR PARKING LOT" underneath. Rude. Accurate.)',
+    'WELCOME TO TWOTON — HOTEL • MARKET • ORPHEUM • RIVER DOCKS.',
+    '(Someone has written "OTTERBROOK FITS IN OUR MARKET" underneath. Rude. Probably profitable.)',
   ],
   sign_brickton_clock: [
     'VALLE DORADO CIVIC CLOCK — sponsored by people who are late.',
     '(It is seven minutes fast and extremely confident.)',
   ],
   sign_market_row: [
-    'EAST MARKET ROW — bagels, videos, diner, mysteries.',
-    '(The mysteries are closed Tuesdays.)',
+    'TWOTON MARKET — two footbridges, five stalls, at least seven opinions about melons.',
+    '(Civic Street is north. Main Street is south. The mysteries are closed Tuesdays.)',
   ],
   sign_overpass: [
-    'UNDERPASS TO THE OLD FREIGHT STEPS.',
-    '(Somebody painted a smile over the arrow. Somebody else painted teeth on the smile.)',
+    'TWOTON CITY LIMITS — north to the Long Walk; south to Civic Street.',
+    '(Somebody painted a smile over the arrow. Somebody else gave it sensible walking shoes.)',
   ],
   sign_blue_notice: [
     'DEPARTMENT OF SMILES PUBLIC NOTICE:',
@@ -2002,6 +2208,22 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@If you hear singing from upstairs, that is a ventilation feature. We are proud of our ventilation.',
     '@Have a PRODUCTIVE day!',
   ],
+  npc_dos_welcome: [
+    '@Blue is the happiest color. That is why they painted over the windows.',
+    '@If you get lost, keep smiling. Eventually every corridor becomes the correct corridor.',
+  ],
+  npc_dos_doctrine: [
+    '@The Manager says a straight line is selfish. A proper employee walks the whole floor.',
+    '@I used to have a lunch break. Now I have a lunch affirmation. It is lighter to carry.',
+  ],
+  npc_dos_doubter: [
+    '@I am smiling because I want to. Please do not ask me twice.',
+    '(Their smile stays in place. Their eyes glance toward the gray door upstairs.)',
+  ],
+  npc_dos_painter: [
+    '@We painted everything blue yesterday. Tomorrow we paint yesterday blue too.',
+    '@Careful by the cubicles. Some of the memos bite when they feel underappreciated.',
+  ],
   dos_lobby: [
     'DEPARTMENT OF SMILES — "Putting the PRODUCT in PRODUCTIVITY since whenever."',
     '(The exclamation point on the wall logo looks tired.)',
@@ -2015,6 +2237,12 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'BREAK ROOM — Breaks are limited to feelings of gratitude.',
     '(Someone has scratched "I MISS SATURDAY" into the paint, then apologized underneath.)',
     'The picnic table has four chairs and zero sandwiches. This is how you know the Hush has been here.',
+  ],
+  dos_gift_cola: [
+    'A present sits in a cubicle labeled EMERGENCY MORALE — OPEN DURING UNAUTHORIZED THIRST.',
+  ],
+  dos_gift_lunch: [
+    'Someone hid a lunch beneath forty-seven copies of the same memo. The sandwich has seniority now.',
   ],
   dos_memo1: [
     'MEMO: Effective today, frowning is a meeting.',

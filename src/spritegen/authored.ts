@@ -547,7 +547,12 @@ export const REGION_TILE_STRIPS = {
 } as const;
 
 const WORLD_PROP_KEYS = [
-  'tree', 'tree_b', 'tree_c', 'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
+  'tree', 'tree_b', 'tree_c',
+  // Wide, transparent Otterbrooke forest-front strips. These reuse the authored
+  // tree set and let the map read as a continuous EB-style wall without planting
+  // thousands of separate display objects.
+  'treeline_2', 'treeline_2_b', 'treeline_4', 'treeline_4_b', 'treeline_8', 'treeline_8_b',
+  'pine', 'sign', 'picnic', 'picnic_blanket', 'phone_table',
   'bed', 'desk', 'sofa', 'counter', 'bug_zapper', 'meteor_rock', 'meteor_rock_hickory_hill', 'sawhorse', 'ember',
   // ADR-121 — the Hush Sentinel overworld set-piece (rises from the crater) + the
   // powered-down husk it leaves as an Otterbrook landmark (wakes again, Ch.10) +
@@ -580,6 +585,7 @@ const WORLD_PROP_KEYS = [
   // Otterbrook full-rebuild Americana set (2 ChatGPT magenta strips → slice-prop-strip)
   'otter_statue', 'gazebo', 'footbridge_rail', 'cattails', 'mailbox', 'doghouse',
   'tree_swing', 'clothesline', 'kiddie_pool', 'swing_set', 'seesaw', 'flagpole',
+  'bldg_ob_trail_shed', 'bldg_ob_trail_shed_open', 'trail_shed_hole',
   // transparent white-picket yard fencing KIT (2026-07-09) — every piece CUT FROM ONE
   // ChatGPT master drawing (masters/world/otterbrook-picket-master-fence.png: a complete
   // connected fence — run + corner turns + 45°-ish '/' climbs) so styles can't drift and
@@ -598,6 +604,9 @@ const WORLD_PROP_KEYS = [
   'riser_brick', 'riser_brick_corner', 'riser_curb', 'riser_curb_corner',
   // the UNDER-OAK set (ADR-121 rework — eb-grounds-fix sheet cells)
   'burrow_mouth', 'root_knot', 'glow_shroom', 'glow_shroom_b', 'root_curtain',
+  // Hickory Hill Cave authored kit (2026-07-09) — one keyed master keeps the
+  // original SNES-era props on a shared palette and light direction.
+  'stalactite', 'stalagmite', 'cave_crystal', 'cave_crystal_b', 'rubble_pile', 'meteor_shard',
   // the VENUE set (2026-07-02 — eb-venue-props sheet): unit-archetype scenes
   'town_clock', 'karaoke_stage', 'karaoke_booth', 'neon_note', 'noodle_counter',
   'noodle_stools', 'menu_board', 'steamer_stack', 'video_shelf', 'poster_stand',
@@ -876,6 +885,12 @@ const BATTLE_BACKGROUND_ART = ['otterbrook', 'otter_station', 'brickton', 'jungl
 export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   gift_box: { w: 14, h: 14 },
   gift_box_open: { w: 16, h: 14 },
+  // Door dressing is authored at 4x resolution; keep its in-world footprint to
+  // a single doorway instead of letting editors infer a billboard-sized mat.
+  doormat: { w: 18, h: 10 },
+  // Parked map cars share the editor's compact SNES-scale footprint. Traffic
+  // sprites set their own directional display size and are unaffected by this.
+  vehicle_clunker: { w: 38, h: 16 },
   // Boss 1's broken body (battle_titanic_tick_w2 reused) — ~3 tiles, aspect-matched to 286×235
   tick_husk: { w: 48, h: 39 },
   // white-picket yard fencing KIT (16 native = 1 tile; s = 16/138 — one master drawing,
@@ -944,6 +959,12 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   tree: { w: 22, h: 34 },
   tree_b: { w: 31, h: 34 }, // the big billowing broadleaf (widest canopy)
   tree_c: { w: 29, h: 34 },
+  treeline_2: { w: 32, h: 40 },
+  treeline_2_b: { w: 32, h: 40 },
+  treeline_4: { w: 64, h: 40 },
+  treeline_4_b: { w: 64, h: 40 },
+  treeline_8: { w: 128, h: 40 },
+  treeline_8_b: { w: 128, h: 40 },
   pine: { w: 24, h: 34 },
   sign: { w: 25, h: 18 },
   picnic: { w: 30, h: 26 },
@@ -970,12 +991,23 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   swing_set: { w: 34, h: 32 },
   seesaw: { w: 35, h: 21 },
   flagpole: { w: 17, h: 40 },
+  bldg_ob_trail_shed: { w: 96, h: 99 },
+  bldg_ob_trail_shed_open: { w: 96, h: 99 },
+  trail_shed_hole: { w: 64, h: 52 },
   // the Under-Oak set — aspect-true to the sheet cells
   burrow_mouth: { w: 40, h: 29 },
   root_knot: { w: 26, h: 21 },
   glow_shroom: { w: 22, h: 19 },
   glow_shroom_b: { w: 13, h: 20 },
   root_curtain: { w: 33, h: 30 },
+  // Hickory Hill Cave kit — larger silhouettes than the retired mushroom/root
+  // placeholders so the meteor dungeon reads clearly at camera scale.
+  stalactite: { w: 46, h: 35 },
+  stalagmite: { w: 30, h: 35 },
+  cave_crystal: { w: 24, h: 27 },
+  cave_crystal_b: { w: 28, h: 31 },
+  rubble_pile: { w: 38, h: 24 },
+  meteor_shard: { w: 30, h: 35 },
   // the venue set — aspect-true to the sheet cells
   town_clock: { w: 19, h: 32 },
   karaoke_stage: { w: 42, h: 38 },

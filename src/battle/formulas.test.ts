@@ -50,7 +50,16 @@ describe('battle formulas', () => {
 
   it('smash chance is guts-driven and capped', () => {
     expect(smashChance(0)).toBeCloseTo(0.02);
+    expect(smashChance(15, 8)).toBeCloseTo(0.096);
+    expect(smashChance(20, 10)).toBeCloseTo(0.12);
     expect(smashChance(1000)).toBe(0.2);
+  });
+
+  it('generic enemy drain uses physical pressure and heals half actual damage', () => {
+    expect(F.enemyDrainDamage(23, 36, 1, () => 0.5)).toBe(10);
+    expect(F.enemyDrainDamage(23, 36, 1.5, () => 0.5)).toBe(33);
+    expect(F.enemyDrainHeal(33)).toBe(16);
+    expect(F.enemyDrainHeal(1)).toBe(0);
   });
 
   it('vibe damage scales with the Vibe stat', () => {
@@ -238,6 +247,20 @@ describe('PRAY — §A3 canon variance table', () => {
     expect(wg.nothing).toBe(22);
     const sum = Object.values(wg).reduce((a, b) => a + b, 0);
     expect(sum).toBe(100);
+  });
+
+  it('scales PRAY payloads by level without chapter-clearing early AoE', () => {
+    expect(F.prayGoodHeal(6)).toBe(21);
+    expect(F.prayGoodHeal(13)).toBe(32);
+    expect(F.prayWonderfulDamage(6, () => 0)).toBe(24);
+    expect(F.prayWonderfulDamage(6, () => 0.999999)).toBe(39);
+    expect(F.prayWonderfulDamage(13, () => 0)).toBe(31);
+    expect(F.prayWonderfulDamage(13, () => 0.999999)).toBe(53);
+    expect(F.prayMiraculousDamage(6, () => 0)).toBe(52);
+    expect(F.prayMiraculousDamage(6, () => 0.999999)).toBe(77);
+    expect(F.prayMiraculousDamage(13, () => 0)).toBe(66);
+    expect(F.prayMiraculousDamage(13, () => 0.999999)).toBe(98);
+    expect(F.prayBackfireDamage(78)).toBe(10);
   });
 });
 
@@ -708,7 +731,7 @@ describe("Mia's new statuses (burn / frozen / lifedrain / lucky)", () => {
   });
 
   it("LUCKY STAR's +Luck feeds the SMAAASH/crit roll (smashChance luck term)", () => {
-    // base curve unchanged when no luck is passed (Guts-only callers)
+    // no-luck callers stay Guts-only; late stats still reach the same cap
     expect(smashChance(0)).toBeCloseTo(0.02);
     expect(smashChance(1000)).toBe(0.2);
     // luck raises the chance, still capped at the EB 0.2 ceiling

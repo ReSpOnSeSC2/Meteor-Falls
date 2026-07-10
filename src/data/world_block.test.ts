@@ -17,25 +17,61 @@ import type { MapDef } from './maps';
 
 describe('THE LONG WALK — the multi-screen foot journey (Movement 3, ADR-056)', () => {
   const LEGS = ['meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'] as const;
-  /** the trail row (':') at a column — the door-landing the legs compute (ADR-012) */
-  const trailRow = (m: MapDef, col: number): number => {
-    for (let y = 0; y < m.grid.length - 1; y++) if (m.grid[y][col] === ':') return y;
-    return Math.round(m.grid.length / 2);
+  /** the trail column (':') at a row — the north/south landing the legs compute (ADR-012) */
+  const trailCol = (m: MapDef, row: number): number => m.grid[row]?.indexOf(':') ?? -1;
+  const walkable = (m: MapDef, tx: number, ty: number): boolean =>
+    !'beEKW|-OBCZJ'.includes(m.grid[ty >> 4]?.[tx >> 4] ?? 'b');
+  const northReachesSouth = (m: MapDef): boolean => {
+    const start: [number, number] = [trailCol(m, 0), 1];
+    const goal = `${trailCol(m, m.grid.length - 1)},${m.grid.length - 2}`;
+    const seen = new Set<string>([`${start[0]},${start[1]}`]);
+    const queue: Array<[number, number]> = [start];
+    while (queue.length) {
+      const [x, y] = queue.shift() as [number, number];
+      if (`${x},${y}` === goal) return true;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        const key = `${nx},${ny}`;
+        if (nx < 0 || ny < 0 || nx >= m.grid[0].length || ny >= m.grid.length || seen.has(key)) continue;
+        if ('beEKW|-OBCZJ'.includes(m.grid[ny][nx])) continue;
+        seen.add(key);
+        queue.push([nx, ny]);
+      }
+    }
+    return false;
   };
 
-  it('all four legs exist, each its own screen', () => {
-    for (const id of LEGS) expect(MAPS[id], id).toBeDefined();
+  it('all four legs are portrait screens running north → south', () => {
+    const heights = [40, 36, 38, 34]; // the old 40/36/38/34-wide routes, rotated clockwise
+    LEGS.forEach((id, i) => {
+      const m = MAPS[id];
+      expect(m, id).toBeDefined();
+      expect(m.grid[0].length, `${id} width`).toBe(16);
+      expect(m.grid.length, `${id} height`).toBe(heights[i]);
+      expect(trailCol(m, 0), `${id} north trail`).toBeGreaterThanOrEqual(0);
+      expect(trailCol(m, m.grid.length - 1), `${id} south trail`).toBeGreaterThanOrEqual(0);
+      expect(northReachesSouth(m), `${id} north → south route`).toBe(true);
+    });
   });
 
-  it('the west end is wired two-way to Otterbrook (the exported east gate)', () => {
-    const east = MAPS.otterbrook.doors.find((d) => d.to === 'meadow_mile');
-    expect(east).toBeDefined();
+  it('Otterbrook exits from its SOUTH edge into Meadow Mile\'s NORTH edge', () => {
+    const south = MAPS.otterbrook.doors.find((d) => d.to === 'meadow_mile');
+    expect(south).toBeDefined();
+    expect(south?.y).toBe(OTTERBROOK_EAST_GATE.y);
+    expect((south?.y ?? -1) + (south?.h ?? 0)).toBe(MAPS.otterbrook.grid.length);
+    expect(south?.facing).toBe('down');
+
     const back = MAPS.meadow_mile.doors.find((d) => d.to === 'otterbrook');
+    expect(back?.y).toBe(0);
+    expect(back?.facing).toBe('up');
     expect(back?.tx).toBe(OTTERBROOK_EAST_GATE.x * 16);
     expect(back?.ty).toBe(OTTERBROOK_EAST_GATE.y * 16);
+    expect(south && walkable(MAPS.meadow_mile, south.tx, south.ty), 'Otterbrook → Meadow Mile landing').toBe(true);
+    expect(back && walkable(MAPS.otterbrook, back.tx, back.ty), 'Meadow Mile → Otterbrook landing').toBe(true);
   });
 
-  it('the legs chain west→east with COMPUTED two-way doors (landing on the neighbour trail)', () => {
+  it('the legs chain north→south with COMPUTED two-way doors on the neighbour trail', () => {
     const chain: ReadonlyArray<readonly [string, string]> = [
       ['meadow_mile', 'meadow_woods'],
       ['meadow_woods', 'meadow_far'],
@@ -46,18 +82,27 @@ describe('THE LONG WALK — the multi-screen foot journey (Movement 3, ADR-056)'
       const back = MAPS[b].doors.find((d) => d.to === a);
       expect(fwd, `${a}→${b}`).toBeDefined();
       expect(back, `${b}→${a}`).toBeDefined();
-      // forward lands at the neighbour's WEST mouth (tile 1) on its real trail row
-      expect(fwd?.tx).toBe(16);
-      expect(fwd?.ty).toBe(trailRow(MAPS[b], 0) * 16);
-      // back lands at the neighbour's EAST mouth (tile W-2) on its real trail row
-      expect(back?.tx).toBe((MAPS[a].grid[0].length - 2) * 16);
-      expect(back?.ty).toBe(trailRow(MAPS[a], MAPS[a].grid[0].length - 1) * 16);
+      expect(fwd?.y).toBe(MAPS[a].grid.length - 1);
+      expect(fwd?.facing).toBe('down');
+      expect(back?.y).toBe(0);
+      expect(back?.facing).toBe('up');
+      // southbound lands one tile inside the neighbour's NORTH mouth.
+      expect(fwd?.tx).toBe(trailCol(MAPS[b], 0) * 16 + 8);
+      expect(fwd?.ty).toBe(16);
+      // northbound lands one tile inside the neighbour's SOUTH mouth.
+      expect(back?.tx).toBe(trailCol(MAPS[a], MAPS[a].grid.length - 1) * 16 + 8);
+      expect(back?.ty).toBe((MAPS[a].grid.length - 2) * 16);
+      expect(fwd && walkable(MAPS[b], fwd.tx, fwd.ty), `${a}→${b} walkable landing`).toBe(true);
+      expect(back && walkable(MAPS[a], back.tx, back.ty), `${b}→${a} walkable landing`).toBe(true);
     }
   });
 
   it('the city line is the OVERPASS now (the gate + proctors moved off meadow_mile)', () => {
-    // the gate is a TRIGGER on the overpass, never a plain east door
-    expect(MAPS.meadow_overpass.triggers.some((t) => t.id === 'orientation_gate')).toBe(true);
+    // the gate is a TRIGGER across the overpass's SOUTH end, never a plain door
+    const gate = MAPS.meadow_overpass.triggers.find((t) => t.id === 'orientation_gate');
+    expect(gate).toBeDefined();
+    expect(gate?.rect.y).toBe(MAPS.meadow_overpass.grid.length - 3);
+    expect(gate?.rect.h).toBe(3);
     expect(MAPS.meadow_overpass.doors.some((d) => d.to === 'brickton')).toBe(false);
     // and it is GONE from meadow_mile (relocated to the city-adjacent leg)
     expect(MAPS.meadow_mile.triggers.some((t) => t.id === 'orientation_gate')).toBe(false);
@@ -83,9 +128,17 @@ describe('THE LONG WALK — the multi-screen foot journey (Movement 3, ADR-056)'
     expect(mm.props.find((p) => p.sprite === 'meteor_rock')?.solid?.oy).toBeGreaterThanOrEqual(16);
   });
 
-  it('carries two flag-gated cutscene beats + hidden presents along the way (§B4)', () => {
-    expect(MAPS.meadow_woods.triggers.some((t) => t.id === 'woods_vignette')).toBe(true);
-    expect(MAPS.meadow_overpass.triggers.some((t) => t.id === 'city_reveal')).toBe(true);
+  it('keeps every story-gate id while rotating the route (§B4 / save compatibility)', () => {
+    expect(MAPS.meadow_mile.triggers.some((t) => t.id === 'walk_token')).toBe(true);
+    expect(MAPS.meadow_woods.triggers.some((t) => t.id === 'walk_token')).toBe(true);
+    expect(MAPS.meadow_far.triggers.some((t) => t.id === 'walk_token')).toBe(true);
+    const vignette = MAPS.meadow_woods.triggers.find((t) => t.id === 'woods_vignette');
+    const reveal = MAPS.meadow_overpass.triggers.find((t) => t.id === 'city_reveal');
+    expect(vignette).toBeDefined();
+    expect(reveal).toBeDefined();
+    // Both formerly-west entry strips rotate into NORTH entry strips.
+    expect(vignette?.rect.y).toBe(1);
+    expect(reveal?.rect.y).toBe(1);
     // a present on the woods glade + one in the far meadow (the gift-box pattern)
     expect(MAPS.meadow_woods.props.some((p) => p.sprite === 'gift_box')).toBe(true);
     expect(MAPS.meadow_far.props.some((p) => p.sprite === 'gift_box')).toBe(true);
@@ -103,8 +156,8 @@ describe('TWOTON — the editor-authored Twoson rebuild (map id brickton, 2026-0
     const b = MAPS.brickton;
     expect(b.name).toBe('TWOTON');
     expect(b.settlement).toBe('city');
-    expect(b.grid[0].length).toBe(124);
-    expect(b.grid.length).toBe(96);
+    expect(b.grid[0].length).toBe(104);
+    expect(b.grid.length).toBe(84);
   });
 
   it('clears the ADR-012 city sweep AND the Living-City Law at full size', () => {
@@ -114,10 +167,18 @@ describe('TWOTON — the editor-authored Twoson rebuild (map id brickton, 2026-0
 
   it('keeps every fixed connection: the overpass, the docks, the Cage', () => {
     const b = MAPS.brickton;
-    // the long-walk foot gate is re-aimed off the LIVE overpass trail (computed, never baked)
+    // The clockwise-rotated Long Walk arrives through Twoton's NORTH edge.
+    // Its return is re-aimed off the live overpass trail, never a baked pixel.
     const foot = b.doors.find((d) => d.to === 'meadow_overpass');
     expect(foot).toBeDefined();
-    expect(foot?.tx).toBe((MAPS.meadow_overpass.grid[0].length - 5) * 16 + 8);
+    expect(foot?.y).toBe(0);
+    expect(foot?.facing).toBe('up');
+    const overpassReturnRow = MAPS.meadow_overpass.grid.length - 5;
+    const overpassReturnCol = MAPS.meadow_overpass.grid[overpassReturnRow].indexOf(':');
+    expect(overpassReturnCol).toBeGreaterThanOrEqual(0);
+    expect(foot?.tx).toBe(overpassReturnCol * 16 + 8);
+    expect(foot?.ty).toBe(overpassReturnRow * 16);
+    expect(foot && !'beEKW|-OBCZJ'.includes(MAPS.meadow_overpass.grid[foot.ty >> 4][foot.tx >> 4])).toBe(true);
     expect(b.doors.some((d) => d.to === 'meadow_mile')).toBe(false); // ADR-056 holds
     expect(b.doors.some((d) => d.to === 'brickton_docks')).toBe(true);
     expect(b.doors.some((d) => d.to === 'cage_park')).toBe(true);
@@ -130,37 +191,139 @@ describe('TWOTON — the editor-authored Twoson rebuild (map id brickton, 2026-0
     expect('RD_XP123'.includes(ch), `docks return tile '${ch}'`).toBe(true);
   });
 
-  it('the four NAMED interiors keep their grafted facade doors (makeTwoton)', () => {
+  it('the ten NAMED interiors keep their grafted facade doors (makeTwoton)', () => {
     // (spire_lobby moved to Valle Dorado with the Starfall Spire — stage 4)
     const doors = MAPS.brickton.props.filter((p) => p.door).map((p) => p.door?.to);
-    for (const to of ['dos_f1', 'starmart_int', 'hospital_int', 'arcade2_int']) {
+    for (const to of [
+      'dos_f1', 'starmart_int', 'hospital_int', 'arcade2_int',
+      'twoton_hotel_lobby', 'twoton_bus_station', 'twoton_theater', 'twoton_community_center',
+      'twoton_bike_shop', 'twoton_pizza',
+    ]) {
       expect(doors, to).toContain(to);
     }
   });
 
-  it('the dial story + the bus + the payphone ring keep their trigger ids', () => {
+  it('uses continuous forest fronts and an active market instead of empty scatter', () => {
+    const b = MAPS.brickton;
+    const fronts = b.props.filter((p) => /^treeline_(2|4|8)(_b)?$/.test(p.sprite));
+    expect(fronts.length).toBeGreaterThanOrEqual(12);
+    expect(b.npcs.filter((n) => n.shop).length).toBeGreaterThanOrEqual(2);
+    expect(b.props.filter((p) => p.sprite.startsWith('market_stall_')).length).toBeGreaterThanOrEqual(5);
+    for (const p of fronts) {
+      const width = Number(/^treeline_(2|4|8)/.exec(p.sprite)?.[1] ?? 0);
+      const forestRow = Math.round(p.y + 1.5);
+      for (let x = Math.floor(p.x); x < Math.floor(p.x) + width; x++) {
+        expect(b.grid[forestRow]?.[x], `${p.sprite} at ${p.x},${p.y} covers non-forest`).toBe('b');
+      }
+    }
+  });
+
+  it('keeps the Cage lot notice outside the transition-only fence', () => {
+    const lot = MAPS.brickton.signs.find((s) => s.dialogue === 'sign_lot');
+    expect(lot).toBeDefined();
+    expect(lot?.x).toBeLessThan(82);
+  });
+
+  it('keeps full landmark-house footprints off the roads and parked cars solid', () => {
+    const b = MAPS.brickton;
+    for (const p of b.props.filter((prop) => prop.sprite === 'house_a' || prop.sprite === 'house_b')) {
+      const width = p.sprite === 'house_a' ? 7.15 : 6.2;
+      for (let y = Math.floor(p.y); y < Math.ceil(p.y + 6); y++) {
+        for (let x = Math.floor(p.x); x < Math.ceil(p.x + width); x++) {
+          expect('RDX'.includes(b.grid[y]?.[x] ?? 'R'), `${p.sprite} overlaps road at ${x},${y}`).toBe(false);
+        }
+      }
+    }
+    const parked = b.props.filter((p) => p.sprite === 'vehicle_clunker');
+    expect(parked.length).toBeGreaterThanOrEqual(2);
+    for (const p of parked) {
+      expect(p.solid, `parked car at ${p.x},${p.y} collision`).toBeDefined();
+      const cx = Math.floor((p.x * 16 + (p.solid?.ox ?? 0)) / 16);
+      const cy = Math.floor((p.y * 16 + (p.solid?.oy ?? 0)) / 16);
+      expect('RDX'.includes(b.grid[cy]?.[cx] ?? ''), `parked car at ${p.x},${p.y} road placement`).toBe(true);
+    }
+  });
+
+  it('starts the bus-corner and market NPCs clear of static props', () => {
+    const b = MAPS.brickton;
+    const overlaps = (a: { x: number; y: number; w: number; h: number }, c: { x: number; y: number; w: number; h: number }): boolean =>
+      a.x < c.x + c.w && a.x + a.w > c.x && a.y < c.y + c.h && a.y + a.h > c.y;
+    for (const id of ['quarter_man', 'new_commuter']) {
+      const npc = b.npcs.find((n) => n.id === id);
+      expect(npc, id).toBeDefined();
+      const body = { x: (npc?.x ?? 0) * 16 - 6, y: (npc?.y ?? 0) * 16 - 10, w: 12, h: 10 };
+      for (const p of b.props.filter((prop) => prop.solid)) {
+        const solid = p.solid!;
+        const propBody = { x: p.x * 16 + solid.ox, y: p.y * 16 + solid.oy, w: solid.w, h: solid.h };
+        expect(overlaps(body, propBody), `${id} overlaps ${p.sprite} at ${p.x},${p.y}`).toBe(false);
+      }
+    }
+  });
+
+  it('gives both hand-drawn landmark houses a porch interaction', () => {
+    const b = MAPS.brickton;
+    const houses = b.props.filter((p) => p.sprite === 'house_a' || p.sprite === 'house_b');
+    expect(houses.length).toBe(2);
+    for (const p of houses) {
+      const width = p.sprite === 'house_a' ? 7.15 : 6.2;
+      const center = p.x + width / 2;
+      expect(
+        b.signs.some((s) => s.dialogue.startsWith('cl_knock_') && Math.abs(s.x - center) <= 1 && Math.abs(s.y - (p.y + 6)) <= 1),
+        `${p.sprite} at ${p.x},${p.y}`,
+      ).toBe(true);
+    }
+  });
+
+  it('keeps street story triggers while the return bus lives only inside its station', () => {
     // (the CLOCK story — THE MINUTE — moved to Valle Dorado, stage 4: see below)
     const ids = MAPS.brickton.triggers.map((t) => t.id);
-    for (const id of ['bus_stop_brickton', 'brickton_dial_goal', 'payphone_ring']) {
+    for (const id of ['brickton_dial_goal', 'payphone_ring']) {
       expect(ids, id).toContain(id);
     }
+    expect(ids).not.toContain('bus_stop_brickton');
+    expect(MAPS.twoton_bus_station.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(true);
     expect(MAPS.brickton.props.some((p) => p.sprite === 'cage_gate')).toBe(true);
   });
 
-  it('the bus + foot spawns land on open street', () => {
+  it('the bus + north-entry foot spawns land safely, and the bus never re-triggers itself', () => {
     const b = MAPS.brickton;
     const walkable = (px: { x: number; y: number }): boolean =>
       'RD_XP123=:'.includes(b.grid[px.y >> 4][px.x >> 4]);
     expect(walkable(BRICKTON_BUS_SPAWN)).toBe(true);
     expect(walkable(BRICKTON_FOOT_SPAWN)).toBe(true);
+    expect(b.grid[BRICKTON_BUS_SPAWN.y >> 4][BRICKTON_BUS_SPAWN.x >> 4]).toBe('=');
+    expect(b.triggers.some((t) => t.id === 'bus_stop_brickton')).toBe(false);
+    const north = b.doors.find((d) => d.to === 'meadow_overpass');
+    expect(north).toBeDefined();
+    expect(BRICKTON_FOOT_SPAWN.y >> 4).toBeGreaterThan(0);
+    expect(BRICKTON_FOOT_SPAWN.y >> 4).toBeLessThanOrEqual(6);
+    expect(BRICKTON_FOOT_SPAWN.x >> 4).toBeGreaterThanOrEqual((north?.x ?? 0) - 2);
+    expect(BRICKTON_FOOT_SPAWN.x >> 4).toBeLessThanOrEqual((north?.x ?? 0) + (north?.w ?? 1) + 1);
+  });
+
+  it('every purpose-built service returns to its own clear sidewalk', () => {
+    const b = MAPS.brickton;
+    for (const id of [
+      'twoton_hotel_lobby', 'twoton_bus_station', 'twoton_theater',
+      'twoton_community_center', 'twoton_bike_shop', 'twoton_pizza',
+    ]) {
+      const room = MAPS[id];
+      const back = room.doors.find((d) => d.to === 'brickton');
+      expect(back, `${id} return door`).toBeDefined();
+      const ch = back ? b.grid[back.ty >> 4]?.[back.tx >> 4] : undefined;
+      expect(ch, `${id} return tile`).toBe('=');
+      expect(b.props.some((p) => p.door?.to === id), `${id} exterior door`).toBe(true);
+    }
   });
 
   it('holds the XL envelope and occupy gave the catalog facades purpose', () => {
     const b = MAPS.brickton;
     expect(b.grid[0].length * b.grid.length).toBeLessThanOrEqual(12000);
     expect(b.props.length).toBeLessThanOrEqual(700); // the EB tree-lined read costs props; still far under Otterbrook's ~3.4k
-    // tenancy ran: at least one doorless catalog facade became a brickton_unit_*
-    expect(b.props.some((p) => p.door?.to.startsWith('brickton_unit_'))).toBe(true);
+    // Twoton uses lot-stable tenancy ids: adding a named venue cannot renumber
+    // every later generated interior in an existing save.
+    expect(b.props.some((p) => p.door?.to.startsWith('brickton_lot_'))).toBe(true);
+    expect(b.props.some((p) => p.door?.to.startsWith('brickton_unit_'))).toBe(false);
   });
 });
 

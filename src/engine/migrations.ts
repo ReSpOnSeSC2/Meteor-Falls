@@ -61,14 +61,25 @@
  * never rewound (the power is v16-new), so a full bank, an empty stack, and zero
  * rewinds is its TRUE history (the v3 empty-ledger stance applied to echoes). The
  * three Axes (choices) ride ADR-015 flags — an unmade choice is just an unset flag.
+ *
+ * v16 → v17 (2026-07 Twoton rebuild): Twoton shrank and the four Long Walk
+ * screens rotated from landscape to portrait. Saves made on those old layouts
+ * are moved to a known-safe entrance on the same route rather than retaining a
+ * now meaningless or out-of-bounds pixel. Retired sequential Twoton tenancy
+ * ids recover to the city curb; story flags and all other state are untouched.
+ *
+ * v17 → v18 (2026-07 Department rebuild): all three Department of Smiles
+ * floors grew and their required route changed. Saves standing on an old floor
+ * recover to that floor's canonical entry, never into a wall or beyond a gate.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import { freshEchoes } from '../data/echoes';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
+import { s } from '../spritegen/scale';
 
-export const CURRENT_SAVE_VERSION = 16;
+export const CURRENT_SAVE_VERSION = 18;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -324,6 +335,51 @@ export const MIGRATIONS: MigrationStep[] = [
       // simply an unset flag, which GS.flag() already reads as `false`.
       if (!isObj(raw.echoes)) raw.echoes = freshEchoes() as unknown as Raw;
       raw.version = 16;
+      return raw;
+    },
+  },
+  {
+    to: 17,
+    migrate(raw) {
+      // These maps were re-authored in a different axis/footprint. Reset only
+      // the player's location; every quest, flag, inventory, and relationship
+      // remains byte-for-byte the save's own history.
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const legacyTwotonUnit = /^brickton_unit_\d+$/.test(map);
+      const recovery: Record<string, { x: number; y: number }> = {
+        brickton: { x: 48 * 16 + 8, y: 18 * 16 + 8 },
+        meadow_mile: { x: 7 * 16 + 8, y: 3 * 16 + 12 },
+        meadow_woods: { x: 8 * 16 + 8, y: 3 * 16 + 12 },
+        meadow_far: { x: 6 * 16 + 8, y: 3 * 16 + 12 },
+        meadow_overpass: { x: 7 * 16 + 8, y: 3 * 16 + 12 },
+      };
+      const target = legacyTwotonUnit ? recovery.brickton : recovery[map];
+      if (target) {
+        if (legacyTwotonUnit) raw.map = 'brickton';
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = 'down';
+      }
+      raw.version = 17;
+      return raw;
+    },
+  },
+  {
+    to: 18,
+    migrate(raw) {
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const recovery: Record<string, { x: number; y: number; facing: 'up' | 'down' }> = {
+        dos_f1: { x: 20 * 16, y: 24 * 16 + 10, facing: 'up' },
+        dos_f2: { x: 4 * 16, y: 3 * 16 + 12, facing: 'down' },
+        dos_f3: { x: 39 * 16 + 8, y: 3 * 16 + 12, facing: 'down' },
+      };
+      const target = recovery[map];
+      if (target) {
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      raw.version = 18;
       return raw;
     },
   },

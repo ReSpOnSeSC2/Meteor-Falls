@@ -9,6 +9,7 @@ import {
   AUTHORED_ENEMY_OVERWORLD_ART_KEYS,
   AUTHORED_VEHICLE_ART_KEYS,
   AUTHORED_WORLD_FACADE_KEYS,
+  AUTHORED_WORLD_PROP_DISPLAY_SIZE,
   AUTHORED_WORLD_PROP_KEYS,
   NPC_CHARACTER_ART,
   OTTERBROOK_NPC_CHARACTER_IDS,
@@ -142,6 +143,27 @@ describe('authored NPC asset wiring', () => {
     }
   });
 
+  it('keeps the mart clerk apron above a readable trouser-and-shoe silhouette', () => {
+    const path = resolve(process.cwd(), 'assets/art/characters/martClerk_anim_46_4x.png');
+    const img = decodePng(readFileSync(path));
+    for (let frame = 0; frame < 46; frame++) {
+      const ox = (frame % 4) * 96;
+      const oy = Math.floor(frame / 4) * 128;
+      let navyTrouserPixels = 0;
+      let darkShoePixels = 0;
+      for (let y = 109; y < 125; y++) {
+        for (let x = 12; x < 85; x++) {
+          const i = ((oy + y) * img.w + ox + x) * 4;
+          const [r, g, b, a] = img.data.subarray(i, i + 4);
+          if (a > 16 && b > g * 1.2 && g > r * 1.3 && b < 170) navyTrouserPixels++;
+          if (y >= 116 && a > 16 && Math.max(r, g, b) < 100) darkShoePixels++;
+        }
+      }
+      expect(navyTrouserPixels, `martClerk frame ${frame} trousers`).toBeGreaterThan(150);
+      expect(darkShoePixels, `martClerk frame ${frame} shoes`).toBeGreaterThan(200);
+    }
+  });
+
   it('pins the live Otterbrook replacement roster, including Chad and Glint', () => {
     expect(OTTERBROOK_NPC_CHARACTER_IDS).toEqual(listedOtterbrookNpcIds());
     expect(OTTERBROOK_NPC_CHARACTER_IDS).toContain('chad');
@@ -167,6 +189,12 @@ describe('authored world asset wiring', () => {
     for (const key of pngBasenames('assets/art/world/props')) {
       expect(registered.has(key), `prop '${key}' is on disk but never preloaded/applied`).toBe(true);
     }
+  });
+
+  it('pins the WELCOME mat to its runtime footprint instead of editor fallback sizing', () => {
+    const display = AUTHORED_WORLD_PROP_DISPLAY_SIZE as Record<string, { w: number; h: number }>;
+    expect(display.doormat).toEqual({ w: 18, h: 10 });
+    expect(display.vehicle_clunker).toEqual({ w: 38, h: 16 });
   });
 
   it('registers every committed vehicle PNG with the authored bridge', () => {

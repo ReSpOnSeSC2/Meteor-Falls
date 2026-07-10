@@ -40,7 +40,7 @@ export interface HeroState {
 }
 
 export interface GameStateData {
-  version: 16;
+  version: 18;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -176,7 +176,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 16,
+    version: 18,
     party: [rex],
     guest: null,
     keyItems: [],

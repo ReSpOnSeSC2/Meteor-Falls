@@ -72,6 +72,11 @@ Replace the oak props with cave-native fixtures. Author one magenta strip, slice
 `WORLD_PROP_KEYS` + `AUTHORED_WORLD_PROP_DISPLAY_SIZE`, then swap the prop keys in the three
 `buildOak*` functions.
 
+**Delivered 2026-07-09:** the six-prop keyed master is
+`assets/art/masters/generated/otterbrook_cave_kit_src.png`; its 3×2 layout is sliced with
+`tools/slice-prop-grid.cjs`. All six runtime PNGs are registered and the complete
+`oak_roots` → `oak_hollow` → `oak_heart` chain now uses them instead of root/mushroom art.
+
 | New key | Replaces | Description (EarthBound-flat, magenta bg) |
 |---|---|---|
 | `stalactite` | `root_curtain` (ceiling) | icicle-like rock spike hanging from the ceiling |

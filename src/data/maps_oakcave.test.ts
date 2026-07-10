@@ -70,4 +70,14 @@ describe('HICKORY HILL CAVE — the Giant-Step rebuild', () => {
       expect(s.unlessFlag).toBe('tick_defeated');
     }
   });
+
+  it('uses the authored meteor-cave kit instead of recycled oak dressing', () => {
+    const allProps = FLOORS.flatMap((id) => MAPS[id].props.map((prop) => prop.sprite));
+    for (const key of ['stalactite', 'stalagmite', 'cave_crystal', 'cave_crystal_b', 'rubble_pile', 'meteor_shard']) {
+      expect(allProps, `${key} appears in the cave chain`).toContain(key);
+    }
+    for (const retired of ['root_curtain', 'root_knot', 'glow_shroom', 'glow_shroom_b', 'tree_c']) {
+      expect(allProps, `${retired} retired from the meteor cave`).not.toContain(retired);
+    }
+  });
 });

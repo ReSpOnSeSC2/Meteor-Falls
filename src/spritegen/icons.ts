@@ -1219,6 +1219,7 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   /* ---- Ch.1 USA — foods / drinks / cures / tonic / battle / valuable ---- */
   grilled_cheese: () => forgeIcon({ subcat: 'sandwich', band: 'ch1', detail: 'bite', seed: 'grilled_cheese' }),
   apple_pie_slice: () => forgeIcon({ subcat: 'wedge', band: 'ch1', detail: 'steam', seed: 'apple_pie_slice' }),
+  pizza_slice: () => forgeIcon({ subcat: 'wedge', band: 'ch1', detail: ['stripe', 'dots'], seed: 'pizza_slice' }),
   choco_comet_bar: () => forgeIcon({ subcat: 'bar', band: 'ch1', detail: 'wrapper', seed: 'choco_comet_bar' }),
   bug_juice: () => forgeIcon({ subcat: 'bottle', band: 'ch1', detail: 'cork', seed: 'bug_juice' }),
   diet_star_cola: () => forgeIcon({ subcat: 'can', band: 'ch1', detail: 'label', seed: 'diet_star_cola' }),

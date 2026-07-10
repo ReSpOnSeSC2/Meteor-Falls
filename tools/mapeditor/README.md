@@ -20,6 +20,15 @@ spawns, then **Export** a ready-to-paste `MapDef`. No hand-typing grid strings.
 
 That's it. Your work **auto-saves** in the browser, and **💾 Save / Load** keeps a named copy.
 
+### Twoton structural source
+
+Twoton's large-scale layout is reproducible: `npm run mapeditor:twoton` rebuilds both
+`tools/mapeditor/twoton.json` and `src/data/maps_twoton.ts` from
+`tools/mapeditor/author-twoton.ts`. Use the visual editor to review or hand-tune the result,
+then fold durable structural edits back into that authoring source so the editor document and
+runtime map cannot drift apart. Run `npm run mapeditor:gen` afterward to refresh the shipped map
+picker.
+
 ---
 
 ## The tools (top bar)
@@ -31,7 +40,7 @@ That's it. Your work **auto-saves** in the browser, and **💾 Save / Load** kee
 | 🧽 **Erase** | `E` | Paint plain grass back over anything. (Shift-drag = erase a rectangle.) |
 | 🌳 **Place** | `P` | Pick a Prop or Building, then click the map to drop it. |
 | ➤ **Select** | `V` | Click a placed object, **or drag a box over several**, to select — then drag or arrow-key them to move together, `Ctrl+D` duplicate, `Del` remove. |
-| 🚪 **Door** | `D` | Drag a rectangle → a doorway that warps to another map (set the target in the Inspector). |
+| 🚪 **Door** | `D` | Drag a rectangle → a map-level doorway that warps to another map. For a building, select its facade and use **Add embedded entrance** so the doorway also cuts the facade collision open. |
 | 👾 **Spawn** | `S` | Drag a rectangle → an enemy encounter zone (list enemy ids + count in the Inspector). |
 | 📖 **Sign** | | Click → a readable sign point (set its `dialogue` script id in the Inspector). |
 | ⚡ **Trigger** | `T` | Drag a rectangle → an event zone (give it an `id`; toggle `once`). |
@@ -49,6 +58,8 @@ That's it. Your work **auto-saves** in the browser, and **💾 Save / Load** kee
 
 **View:** mouse wheel zooms, or use the **− / + / ⤢ Fit** buttons (the % readout is live). The **Brush** control (`1 / 3 / 5 / 7`, or `[` `]`) sets paint width for wide winding trails and fast plaza fills.
 
+**Story phase preview:** the **Phase** selector shows **Initial**, **The Hush**, or **Restored** state using the same `ifFlag` / `unlessFlag` rules as gameplay. Conditional props, NPCs, signs, doors, and encounter zones no longer stack mutually exclusive versions on top of one another; hidden entries remain dimmed in the Objects list for editing.
+
 **Flag gates:** NPCs, signs, and spawners have optional `ifFlag` / `unlessFlag` fields in the Inspector — set `ifFlag` to make the object appear only after a story flag is set, or `unlessFlag` to hide it once a flag is set (how quest-gated content works). NPCs also carry `dialogueDay` (a script spoken in daytime) and `stationary` (opt out of free-roam). Leave them blank for normal content.
 
 **Left panel tabs:** **Tiles** · **Props** · **Build**ings · **NPCs** (townsfolk — pick one, then
@@ -61,8 +72,9 @@ have a search box. A red dot on a tile means it's **solid** (blocks walking).
 **Right panel:** the **Inspector** (edit the selected object) and the **Objects** list
 (everything you've placed — click to select, ✕ to delete).
 
-**Top-right toggles:** `grid` lines, and `solids` (tints every solid tile red so you can see
-your walls).
+**Top-right toggles:** `grid` lines; `solids` (tints every solid tile red); `levels`; and
+`overlays`. Turn **overlays off** for a clean art preview with interaction glyphs, encounter boxes,
+trigger labels, door rectangles, selection handles, and patrol routes hidden.
 
 ---
 
@@ -78,7 +90,9 @@ your walls).
    resize handle** — drag it to size the building live (or type a **size ×** in the Inspector); as
    large or small as you like, and its in-game collision scales with it.
 4. **Add doors & spawns** — draw a **Door** rectangle at an edge and set its `to` (the map id
-   it leads to) + target tile; draw **Spawn** zones and list enemy ids.
+   it leads to) + target tile. For an enterable facade, select the building and add/edit its
+   **embedded entrance** instead; this is the `PropDef.door` that travels with the building and
+   creates a walkable opening through its collision. Draw **Spawn** zones and list enemy ids.
 5. **Export** — click **⬇ Export**, **📋 Copy** the TypeScript.
 
 ---
@@ -99,7 +113,7 @@ Click **⚙ Settings** for the map-wide fields (all optional — only the ones y
 Click **✓ Check** for a quick pre-flight (the same checks `npm run validate` runs, plus editor-only ones):
 unreachable NPCs / signs / phones / ATMs / triggers, doors that open onto or land on a wall, doors pointing at a
 map that doesn't exist, dialogue ids that aren't in `dialogue.ts`, empty spawner/patrol ids, reflection zones that
-miss the water, and illegal elevation ledges. Fix the ❌ errors before pasting into the game; ⚠️ warnings are advisory.
+miss the water, illegal elevation ledges, and grid characters that have no real manifest/atlas render entry. Fix the ❌ errors before pasting into the game; ⚠️ warnings are advisory.
 
 ---
 
@@ -120,7 +134,7 @@ and the game repaints them in that region's art.
 
 Maps can have stacked terraces with real walk-behind cliffs. Open the **Elevate** tab:
 
-1. Pick a **level** (Ground 0, Level 1, 2, 3…) and **paint the raised area** — it tints by height,
+1. Pick a **level** (Ground 0 through Level 9) and **paint the raised area** — it tints by height,
    and the **levels** overlay (top bar) turns on so you can see it.
 2. Wall the terrace's edge with the **cliff (K)** tile, and cut a **stairway (T)** through the
    cliff so the player can climb it. (`^` is an optional grassy cliff-lip trim for the top edge.)
@@ -155,6 +169,10 @@ The reference map is **`elev_spike`**; the full design notes are `docs/WILDERNES
 To edit a map again later, choose **JSON** in the Export dialog, copy it, and paste it back
 into the box with **⬆ Import JSON** next time.
 
+The TypeScript exporter preserves the complete current `MapDef` authoring surface, including
+embedded prop doors and NPC scale/movement/idle/emote/dog fields. JSON remains the editor working
+document format (`w`/`h`/`level`) and is intended for re-import rather than direct schema parsing.
+
 ---
 
 ## Good to know
@@ -167,5 +185,13 @@ into the box with **⬆ Import JSON** next time.
   so you only set position (and an approximate on-map size).
 - **The palette is generated from the real game data.** If someone adds new tiles or props,
   re-run `npm run mapeditor:gen` to refresh `manifest.json`.
+- `npm run mapeditor:gen` also refreshes `maps.json` and the standalone **generated**
+  `otterbrook.json` snapshot from the live `MAPS.otterbrook`. Do not hand-edit that snapshot as a
+  source of truth. `npm run mapeditor:check` is a non-writing drift check, and normal validation/builds
+  run it automatically.
+- If a browser autosave has the same id as a shipped map, startup shows the **current shipped map**
+  and asks explicitly whether to open that version or continue the older working copy. The working
+  copy remains preserved until you choose it or begin editing the current map, so stale editor state
+  can no longer masquerade as unchanged game content.
 - Doors and spawners are optional, but a map with no way in will be flagged by `npm run validate`
   (add at least one Door back to a connected map).

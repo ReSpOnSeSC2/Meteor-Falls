@@ -52,6 +52,13 @@ const SPECS: readonly SheetSpec[] = [
   },
 ];
 
+/** The warehouse's source cell touches artwork from the row below after the
+ * transparent separator. Clip at the depot's last painted row so regenerating
+ * facades cannot reattach that unrelated tower or move the runtime doorway. */
+const OUTPUT_HEIGHT: Readonly<Record<string, number>> = {
+  bldg_warehouse: 303,
+};
+
 function cellBounds(img: Img, cols: number, rows: number, index: number): { x0: number; y0: number; x1: number; y1: number } {
   const col = index % cols;
   const row = Math.floor(index / cols);
@@ -122,6 +129,16 @@ function cropTransparent(img: Img, bounds: ReturnType<typeof cellBounds>, bg: Sh
   return out;
 }
 
+function clipHeight(img: Img, height: number): Img {
+  if (height >= img.h) return img;
+  const out = makeImg(img.w, height);
+  for (let y = 0; y < height; y++) {
+    const start = y * img.w * 4;
+    out.data.set(img.data.subarray(start, start + img.w * 4), start);
+  }
+  return out;
+}
+
 const outDir = process.argv[2] ?? 'assets/art/world/facades';
 mkdirSync(outDir, { recursive: true });
 
@@ -131,7 +148,8 @@ for (const spec of SPECS) {
     if (!name) return;
     const cell = cellBounds(img, spec.cols, spec.rows, index);
     const content = findContent(img, cell, spec.bg ?? 'transparent');
-    const out = cropTransparent(img, content, spec.bg ?? 'transparent');
+    const raw = cropTransparent(img, content, spec.bg ?? 'transparent');
+    const out = clipHeight(raw, OUTPUT_HEIGHT[name] ?? raw.h);
     const outPath = join(outDir, `${name}.png`);
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, encodePng(out));

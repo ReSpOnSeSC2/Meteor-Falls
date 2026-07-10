@@ -6,7 +6,8 @@
  * facade doors, NPCs, signs, elevation, and generated residential interiors.
  */
 import { describe, expect, it } from 'vitest';
-import { growOtterbrook, OTTERBROOK_EAST_GATE, OTTERBROOK_TOWN_HEIGHT, MAPS } from './maps';
+import { growOtterbrook, OTTERBROOK_EAST_GATE, OTTERBROOK_TOWN_BASE, OTTERBROOK_TOWN_HEIGHT, MAPS } from './maps';
+import { DIALOGUE } from './dialogue';
 
 describe('OTTERBROOKE -- playable reference rebuild', () => {
   const ob = MAPS.otterbrook;
@@ -67,14 +68,25 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     // exactly ONE cave entry now — the hilltop mouth (top-left); the lower-town burrow is retired
     const caveEntries = ob.doors.filter((d) => d.to === 'oak_roots');
     expect(caveEntries).toHaveLength(1);
+    expect(caveEntries[0]).toMatchObject({ x: 7, y: 3, w: 3, h: 1 });
+    for (let y = 2; y <= 9; y++) {
+      for (const x of [4, 5, 6, 10, 11]) expect(ob.grid[y][x], `cave shoulder ${x},${y}`).toBe('b');
+      for (const x of [7, 8, 9]) expect(ob.grid[y][x], `cave chute ${x},${y}`).not.toBe('b');
+    }
     // lands in the Giant-Step rebuild's mouth chamber, two rows above and beside
     // the exit pad (never ON the way out — the old cave shipped an unwalkable pad)
     expect(caveEntries[0].tx).toBe(16 * 16 + 8);
     expect(caveEntries[0].ty).toBe(46 * 16);
     const rootsExit = MAPS.oak_roots.doors.find((d) => d.to === 'otterbrook');
     expect(rootsExit?.tx).toBe(7 * 16 + 8); // surface return lands below the top-left-corner cave mouth
-    expect(rootsExit?.ty).toBe(11 * 16);
+    expect(rootsExit?.ty).toBe(5 * 16);
     expect(hasEntry('rex_home')).toBe(true);
+  });
+
+  it('seals the south forest border everywhere except the chapter road', () => {
+    const bottom = ob.grid[ob.grid.length - 1] ?? '';
+    const openings = [...bottom].flatMap((ch, x) => ch === 'b' ? [] : [x]);
+    expect(openings).toEqual([52, 53, 54, 55, 56, 57]);
   });
 
   it('declares a well-formed 6-level elevation plane (crest -> benches -> base -> shelf -> town)', () => {
@@ -162,6 +174,75 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     expect(ob.props.find((p) => p.sprite === 'bldg_ob_hotel')?.door?.to).toBe('otter_hotel_lobby');
   });
 
+  it('declares four replayable, save-gated Chapter 1 navigation beats', () => {
+    const beats = {
+      ch1_hill_entry_warning: { x: 52, y: 61, w: 8, h: 5 },
+      ch1_cave_threshold: { x: 4, y: 7, w: 8, h: 5 },
+      ch1_hush_main_street: { x: 50, y: 123, w: 12, h: 9 },
+      ch1_restored_town_reveal: { x: 23, y: 59, w: 7, h: 7 },
+    } as const;
+
+    for (const [id, rect] of Object.entries(beats)) {
+      expect(ob.triggers.find((t) => t.id === id)).toEqual({ id, rect, once: false });
+      expect(DIALOGUE[id]?.length, `${id} dialogue`).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('makes Hodgkin\'s keyed shed the only walk-through route to the cave', () => {
+    const pemberton = ob.signs.find((s) => s.dialogue === 'sign_pemberton_workshop');
+    expect(pemberton).toMatchObject({ x: 27, y: 41 });
+    expect(ob.signs.some((s) => s.dialogue === 'trail_shed_gate_locked' && s.unlessFlag === 'has_trail_key')).toBe(true);
+    expect(ob.signs.some((s) => s.dialogue === 'trail_shed_gate_open' && s.ifFlag === 'has_trail_key')).toBe(true);
+    expect(ob.props.find((p) => p.sprite === 'sign' && p.y === 31.2)?.x).toBeLessThan(11);
+
+    const locked = ob.props.find((p) => p.sprite === 'bldg_ob_trail_shed');
+    const open = ob.props.find((p) => p.sprite === 'bldg_ob_trail_shed_open');
+    expect(locked).toMatchObject({ x: 9, y: 25, unlessFlag: 'has_trail_key', solid: { w: 96, h: 99 } });
+    expect(locked?.door).toBeUndefined();
+    expect(open).toMatchObject({ x: 9, y: 25, ifFlag: 'has_trail_key', solid: { w: 96, h: 99 } });
+    expect(open?.door?.to).toBe('trail_shed_int');
+
+    // Woods touch both six-tile-wide side walls for the shed's full height.
+    for (let y = 25; y <= 32; y++) {
+      expect(ob.grid[y][8], `sealed west flank @${y}`).toBe('b');
+      expect(ob.grid[y][15], `sealed east flank @${y}`).toBe('b');
+    }
+    expect(ob.doors.some((d) => d.to === 'trail_shed_int' && d.x === 10 && d.y === 23)).toBe(true);
+    expect(ob.doors.some((d) => d.to === 'trail_shed_int' && d.x === 11 && d.y === 30 && d.ifFlag === 'has_trail_key')).toBe(true);
+
+    const inside = MAPS.trail_shed_int;
+    expect(inside).toBeDefined();
+    const rearHole = inside.doors.find((d) => d.to === 'otterbrook' && d.indicator === 'hole');
+    expect(rearHole).toMatchObject({ x: 6, y: 2, w: 2, h: 1, facing: 'up' });
+    expect(inside.grid[2].slice(6, 8)).not.toContain('W');
+    expect(inside.doors.filter((d) => d.to === 'otterbrook')).toHaveLength(2);
+    expect(inside.props.filter((p) => p.sprite === 'crate').length).toBeGreaterThanOrEqual(2);
+    expect(inside.signs.some((s) => s.dialogue === 'trail_shed')).toBe(true);
+  });
+
+  it('visibly swaps Hush closures for restored Main Street dressing', () => {
+    const meteorSpawners = ob.spawners.filter((s) => s.ifFlag === 'meteor_fell');
+    expect(meteorSpawners.length).toBeGreaterThanOrEqual(9);
+    expect(meteorSpawners.every((s) => s.unlessFlag === 'tick_defeated')).toBe(true);
+
+    const hushPlacards = ob.props.filter(
+      (p) => p.sprite === 'sign_do_not_enter' && p.ifFlag === 'zapper_done' && p.unlessFlag === 'tick_defeated',
+    );
+    expect(hushPlacards).toHaveLength(5);
+    expect(ob.signs.filter((s) => s.dialogue === 'shop_closed_hush' && s.ifFlag === 'zapper_done' && s.unlessFlag === 'tick_defeated')).toHaveLength(5);
+
+    // Generated enterable facades already own their threshold art. Explicit
+    // restored-state mats doubled the WELCOME graphic in the editor and runtime.
+    expect(ob.props.filter((p) => p.sprite === 'doormat' && p.ifFlag === 'tick_defeated')).toHaveLength(0);
+    expect(ob.props.filter((p) => p.sprite === 'menu_board' && p.ifFlag === 'tick_defeated')).toHaveLength(0);
+    const reopenedSigns = ob.props.filter(
+      (p) => p.sprite === 'sign' && p.ifFlag === 'tick_defeated' && p.scale === 0.64,
+    );
+    expect(reopenedSigns).toHaveLength(3);
+    expect(ob.props.filter((p) => p.sprite === 'poster_stand' && p.ifFlag === 'tick_defeated')).toHaveLength(1);
+    expect(ob.signs.filter((s) => s.dialogue === 'shop_reopened_board' && s.ifFlag === 'tick_defeated')).toHaveLength(4);
+  });
+
   it('keeps named houses accessible and ordinary facades inhabited', () => {
     for (const id of ['chad_home', 'otter_home_sodd', 'otter_home_birch', 'otter_home_pond', 'workshop_int']) {
       expect(hasEntry(id), `otterbrook -> ${id}`).toBe(true);
@@ -206,6 +287,31 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       }
     }
     expect(roadComponents).toHaveLength(1);
+
+    // No sidewalk strip may bridge straight through a carriageway at a junction.
+    const paved = (x: number, y: number): boolean => 'RD_XP2'.includes(ob.grid[y]?.[x] ?? '#');
+    for (let y = OTTERBROOK_TOWN_BASE; y < ob.grid.length; y++) {
+      for (let x = 2; x < ob.grid[y].length - 2; x++) {
+        if (ob.grid[y][x] !== '=') continue;
+        const bridgesH = [1, 2].some((d) => paved(x - d, y)) && [1, 2].some((d) => paved(x + d, y));
+        const bridgesV = [1, 2].some((d) => paved(x, y - d)) && [1, 2].some((d) => paved(x, y + d));
+        expect(bridgesH || bridgesV, `sidewalk crosses road @${x},${y}`).toBe(false);
+      }
+    }
+    // Street wear is hand-placed now; no hash-scattered road/sidewalk tile swaps.
+    expect(ob.grid.slice(OTTERBROOK_TOWN_BASE).join('')).not.toMatch(/[12]/);
+
+    // A parked car identifies a residential driveway. Each is turned into its
+    // narrow spur and stands on asphalt, never a two-wide bright sidewalk slab.
+    const parkedCars = ob.props.filter((p) => p.sprite === 'vehicle_clunker');
+    expect(parkedCars).toHaveLength(5);
+    for (const car of parkedCars) {
+      const x = Math.round(car.x);
+      const y = Math.round(car.y);
+      expect(car.rot, `parked car @${car.x},${car.y} faces into its driveway`).toBe(90);
+      expect(ob.grid[y]?.[x], `asphalt beneath parked car @${car.x},${car.y}`).toBe('R');
+      expect(ob.grid[y]?.slice(x - 1, x + 2), `one-tile driveway @${car.x},${car.y}`).not.toMatch(/RR|==/);
+    }
 
     const frontageChars = new Set(['=', ':', 'R', 'D', '_', 'X']);
     const houses = ob.props.filter((p) => /^(house_|bldg_ob_house|bldg_ob_cottage)/.test(p.sprite));
@@ -260,12 +366,29 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     const hall = MAPS.otter_hotel_hall;
     const roomIds = ['otter_hotel_room_201', 'otter_hotel_room_202', 'otter_hotel_room_203'];
 
+    const facade = ob.props.find((p) => p.sprite === 'bldg_ob_hotel');
+    expect(facade?.x).toBeGreaterThan(35);
+    expect(facade?.x).toBeLessThan(42);
+    expect(facade?.y).toBeGreaterThan(OTTERBROOK_TOWN_BASE);
+    expect(ob.signs.some((s) => s.dialogue === 'sign_otter_hotel' && s.x === 39 && s.y === OTTERBROOK_TOWN_BASE + 28)).toBe(true);
+    const forecourt = ob.props.filter((p) => p.x >= 35 && p.x <= 43 && p.y >= OTTERBROOK_TOWN_BASE + 27 && p.y <= OTTERBROOK_TOWN_BASE + 29);
+    expect(forecourt.filter((p) => p.sprite === 'planter')).toHaveLength(2);
+    expect(forecourt.some((p) => p.sprite === 'sign')).toBe(false);
+    expect(forecourt.some((p) => p.sprite === 'doormat')).toBe(false);
+
     expect(lobby.name).toBe('OTTERBROOKE HOTEL');
     expect(lobby.npcs.some((n) => n.id === 'otter_hotel_clerk')).toBe(true);
     expect(lobby.phones.length).toBeGreaterThan(0);
-    expect(lobby.doors.some((d) => d.to === 'otterbrook')).toBe(true);
-    expect(lobby.doors.some((d) => d.to === 'otter_hotel_hall' && d.indicator === 'stairs')).toBe(true);
+    const lobbyExit = lobby.doors.find((d) => d.to === 'otterbrook');
+    expect(lobbyExit).toBeDefined();
+    expect(lobbyExit?.tx).toBe(facade!.x * 16 + facade!.door!.ox + facade!.door!.w / 2);
+    expect(lobbyExit?.ty).toBe(facade!.y * 16 + facade!.door!.oy + facade!.door!.h + 5);
+    expect(lobby.doors.some((d) => d.to === 'otter_hotel_hall' && d.indicator === 'elevator')).toBe(true);
+    expect(hall.doors.some((d) => d.to === 'otter_hotel_lobby' && d.indicator === 'elevator')).toBe(true);
+    expect(lobby.props.some((p) => p.sprite === 'floor_lamp' && p.x >= 14 && p.x <= 16)).toBe(false);
     expect(hall.doors.filter((d) => roomIds.includes(d.to)).map((d) => d.to).sort()).toEqual(roomIds);
+    expect(hall.props.filter((p) => p.sprite === 'doormat')).toHaveLength(0);
+    expect(hall.props.filter((p) => p.sprite === 'floor_lamp').length).toBeGreaterThanOrEqual(3);
 
     for (const id of roomIds) {
       const room = MAPS[id];
@@ -300,9 +423,30 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     }
   });
 
-  it('keeps the story cave off the optional Trail Key and within a production object budget', () => {
-    expect(ob.props.some((p) => p.sprite === 'sawhorse' && p.unlessFlag === 'has_trail_key')).toBe(false);
-    expect(ob.props.some((p) => p.sprite === 'sawhorse' && p.unlessFlag === 'zapper_done')).toBe(true);
+  it('restores continuous, base-aligned forest fronts without adding collision props', () => {
+    const walkable = new Set(['.', ',', '~', 'f', 'F', ':', 's', 'S', 'T', '^']);
+    const fronts = ob.props.filter((p) => p.y < OTTERBROOK_TOWN_BASE && /^treeline_(2|4|8)(_b)?$/.test(p.sprite));
+    let coveredCells = 0;
+
+    expect(fronts.length).toBeGreaterThanOrEqual(70);
+    expect(fronts.length).toBeLessThan(100);
+    for (const front of fronts) {
+      expect(front.solid, `${front.sprite} is visual only`).toBeUndefined();
+      const width = Number(front.sprite.match(/^treeline_(\d+)/)?.[1] ?? 0);
+      const forestY = front.y + 1.5;
+      expect(Number.isInteger(front.x), `${front.sprite} starts on a cell`).toBe(true);
+      expect(Number.isInteger(forestY), `${front.sprite} base-aligns to a forest row`).toBe(true);
+      for (let x = front.x; x < front.x + width; x++) {
+        expect(ob.grid[forestY]?.[x], `forest at ${x},${forestY}`).toBe('b');
+        expect(walkable.has(ob.grid[forestY + 1]?.[x] ?? ''), `walk below ${x},${forestY}`).toBe(true);
+        coveredCells++;
+      }
+    }
+    expect(coveredCells).toBeGreaterThanOrEqual(400);
+  });
+
+  it('keeps the pre-dawn cave barrier and a production object budget', () => {
+    expect(ob.props.some((p) => p.sprite === 'sawhorse' && p.x < 10 && p.unlessFlag === 'zapper_done')).toBe(true);
     expect(ob.props.length).toBeLessThan(1100); // was 3,214 before sparse canopy accents
     expect(ob.props.filter((p) => ['tree', 'tree_b', 'tree_c'].includes(p.sprite)).length).toBeLessThan(600);
     expect(ob.npcs.filter((n) => n.ifFlag === 'tick_defeated').length).toBeGreaterThanOrEqual(8);

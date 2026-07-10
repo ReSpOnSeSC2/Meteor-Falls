@@ -15,11 +15,8 @@ Target density band: **1.5–4.5** enemies/screen.
 | bootstep_moor | 612 | 1.75 | 6 | 3.43 | in-band | 64px | 0px | 64px | 0 | 4 |
 | castle_hoaxula | 480 | 1.37 | 5 | 3.65 | in-band | 112px | — | 112px | 0 | 3 |
 | foggy_moor | 512 | 1.46 | 4 | 2.73 | in-band | 96px | 64px | 112px | 0 | 3 |
-| hickory_hill | 1380 | 3.94 | 6 | 1.52 | in-band | 144px | 0px | 160px | 0 | 3 |
-| hickory_trail | 600 | 1.71 | 4 | 2.33 | in-band | 32px | 0px | 48px | 1 | 2 |
-| hill_road | 1020 | 2.91 | 5 | 1.72 | in-band | 128px | — | 144px | 0 | 3 |
-| jungle_1 | 1080 | 3.09 | 7 | 2.27 | in-band | 48px | — | 64px | 0 | 3 |
-| jungle_2 | 1064 | 3.04 | 7 | 2.3 | in-band | 48px | 0px | 64px | 2 | 3 |
+| jungle_1 | 1320 | 3.77 | 7 | 1.86 | in-band | 32px | 32px | 32px | 1 | 3 |
+| jungle_2 | 1288 | 3.68 | 7 | 1.9 | in-band | 80px | 96px | 80px | 1 | 3 |
 | lani_magma_flats | 576 | 1.65 | 4 | 2.43 | in-band | 80px | — | 96px | 0 | 2 |
 | laughing_ruins | 440 | 1.26 | 6 | 4.77 | hot | 80px | — | 96px | 0 | 3 |
 | meadow_far | 608 | 1.74 | 3 | 1.73 | in-band | 176px | 160px | 176px | 1 | 1 |
@@ -28,6 +25,8 @@ Target density band: **1.5–4.5** enemies/screen.
 | meadow_woods | 576 | 1.65 | 2 | 1.22 | cool | 176px | 160px | 160px | 1 | 1 |
 | monsoon_road | 576 | 1.65 | 6 | 3.65 | in-band | 80px | 112px | 96px | 0 | 3 |
 | night_train | 440 | 1.26 | 6 | 4.77 | hot | 80px | — | 96px | 0 | 3 |
+| oak_hollow | 780 | 2.23 | 1 | 0.45 | cool | 160px | 240px | 176px | 0 | 1 |
+| oak_roots | 1872 | 5.35 | 6 | 1.12 | cool | 256px | — | 272px | 0 | 3 |
 | old_road | 576 | 1.65 | 6 | 3.65 | in-band | 80px | 112px | 96px | 0 | 3 |
 | procession_way | 576 | 1.65 | 8 | 4.86 | hot | 80px | 0px | 64px | 0 | 5 |
 | pyramid_ante | 336 | 0.96 | 2 | 2.08 | in-band | 112px | 32px | 128px | 0 | 1 |
@@ -36,7 +35,6 @@ Target density band: **1.5–4.5** enemies/screen.
 | spore_forest | 440 | 1.26 | 5 | 3.98 | in-band | 80px | — | 96px | 0 | 3 |
 | the_hedgerow | 468 | 1.34 | 6 | 4.49 | in-band | 80px | — | 48px | 1 | 4 |
 | the_old_stones | 396 | 1.13 | 1 | 0.88 | cool | 256px | — | 272px | 0 | 1 |
-| whisperwood_rise | 600 | 1.71 | 3 | 1.75 | in-band | 48px | — | 64px | 0 | 2 |
 | wintermoor_grounds | 720 | 2.06 | 5 | 2.43 | in-band | 112px | 32px | 128px | 0 | 2 |
 
 ## DUNGEONS (rising toward the boss — §A9)
@@ -45,7 +43,7 @@ Target density band: **1–4** enemies/screen.
 
 | map | tiles | screens | enemies | density | band | grace | exposure | prox | touches | side |
 | --- | ----: | ------: | ------: | ------: | ---- | ----: | -------: | ---: | ------: | ---: |
-| dos_f2 | 660 | 1.89 | 1 | 0.53 | cool | 272px | 336px | 256px | 0 | 1 |
+| dos_f2 | 1536 | 4.39 | 2 | 0.46 | cool | 672px | 928px | 304px | 1 | 2 |
 | grotto | 154 | 0.44 | 1 | 2.27 | in-band | 48px | — | 64px | 0 | 1 |
 | pyramid_1 ⚠️ | 210 | 0.6 | 1 | 1.67 | in-band | 0px | — | 16px | 1 | 1 |
 | pyramid_2 ⚠️ | 210 | 0.6 | 2 | 3.33 | in-band | 0px | — | 16px | 1 | 1 |
@@ -65,11 +63,12 @@ Target density band: **0–1.2** enemies/screen.
 
 | map | tiles | screens | enemies | density | band | grace | exposure | prox | touches | side |
 | --- | ----: | ------: | ------: | ------: | ---- | ----: | -------: | ---: | ------: | ---: |
-| brickton | 10944 | 31.27 | 9 | 0.29 | in-band | 80px | 0px | 80px | 0 | 9 |
+| brickton | 8736 | 24.96 | 5 | 0.2 | in-band | 320px | 0px | 32px | 0 | 4 |
 | chandrapore | 1040 | 2.97 | 0 | 0 | — | — | — | — | 0 | 0 |
 | lotus_harbor | 1040 | 2.97 | 0 | 0 | — | — | — | — | 0 | 0 |
 | minimus_major | 1040 | 2.97 | 1 | 0.34 | in-band | 208px | 224px | 144px | 0 | 1 |
-| puerto_sol | 5632 | 16.09 | 1 | 0.06 | in-band | 336px | 128px | 352px | 0 | 1 |
+| puerto_sol | 7200 | 20.57 | 1 | 0.05 | in-band | 976px | 272px | 272px | 0 | 1 |
+| valle_dorado | 8448 | 24.14 | 2 | 0.08 | in-band | 656px | 464px | 464px | 0 | 2 |
 | zanzibel | 1040 | 2.97 | 0 | 0 | — | — | — | — | 0 | 0 |
 
 ## TOWNS (cool)
@@ -78,8 +77,8 @@ Target density band: **0–1.6** enemies/screen.
 
 | map | tiles | screens | enemies | density | band | grace | exposure | prox | touches | side |
 | --- | ----: | ------: | ------: | ------: | ---- | ----: | -------: | ---: | ------: | ---: |
-| foggybottom | 1120 | 3.2 | 1 | 0.31 | in-band | 144px | 192px | 128px | 0 | 1 |
-| otterbrook | 3920 | 11.2 | 5 | 0.45 | in-band | 160px | 0px | 96px | 0 | 5 |
+| foggybottom | 3120 | 8.91 | 1 | 0.11 | in-band | 976px | 144px | 144px | 0 | 1 |
+| otterbrook | 22176 | 63.36 | 15 | 0.24 | in-band | 16px | 80px | 32px | 2 | 10 |
 
 ## VILLAGES (cool)
 
@@ -94,7 +93,6 @@ Target density band: **0–1.6** enemies/screen.
 | lilleby | 1600 | 4.57 | 1 | 0.22 | in-band | 816px | 16px | 592px | 0 | 1 |
 | mauna_lani | 816 | 2.33 | 0 | 0 | — | — | — | — | 0 | 0 |
 | valea_stelelor | 864 | 2.47 | 1 | 0.41 | in-band | 128px | 272px | 144px | 0 | 1 |
-| valle_dorado | 1200 | 3.43 | 0 | 0 | — | — | — | — | 0 | 0 |
 
 ## INTERIORS (no ambient pressure)
 
@@ -104,46 +102,27 @@ Target density band: **0–0** enemies/screen.
 | --- | ----: | ------: | ------: | ------: | ---- | ----: | -------: | ---: | ------: | ---: |
 | ana_room | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | arcade_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| arcade_service | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | arcade2_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | aurora_station_unit_0 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
 | aurora_station_unit_1 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
+| bakery_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| bank_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| bank_vault | 140 | 0.4 | 0 | 0 | — | — | — | — | 0 | 0 |
 | biplane_interior | 242 | 0.69 | 0 | 0 | — | — | — | — | 0 | 0 |
 | boat_interior | 240 | 0.69 | 0 | 0 | — | — | — | — | 0 | 0 |
 | brickton_docks | 540 | 1.54 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_0 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_1 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_10 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_11 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_12 | 260 | 0.74 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_13 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_14 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_15 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_16 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_17 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_18 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_19 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_2 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_20 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_21 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_22 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_23 | 260 | 0.74 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_24 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_25 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_26 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_27 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_28 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_29 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_3 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_30 | 510 | 1.46 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_4 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_5 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_6 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_7 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_8 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| brickton_unit_9 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| bus_depot_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| brickton_lot_1500_5025 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
+| brickton_lot_5100_6325 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
+| brickton_lot_5700_725 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
+| brickton_lot_5900_6225 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| brickton_lot_6700_6325 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
+| brickton_lot_7100_5025 | 135 | 0.39 | 0 | 0 | — | — | — | — | 0 | 0 |
+| burger_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| bus_depot_int | 247 | 0.71 | 0 | 0 | — | — | — | — | 0 | 0 |
 | bus_interior | 198 | 0.57 | 0 | 0 | — | — | — | — | 0 | 0 |
 | cage_park | 572 | 1.63 | 0 | 0 | — | — | — | — | 0 | 0 |
+| chad_home | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | chandrapore_unit_0 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
 | chandrapore_unit_1 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
 | chandrapore_unit_2 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
@@ -151,21 +130,36 @@ Target density band: **0–0** enemies/screen.
 | chapel_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | chapel_valle_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | clinic_ps_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| clinic_ps_ward | 80 | 0.23 | 0 | 0 | — | — | — | — | 0 | 0 |
 | clinic_valle_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| clinic_valle_ward | 80 | 0.23 | 0 | 0 | — | — | — | — | 0 | 0 |
 | deli_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | diner_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
-| dos_f1 | 416 | 1.19 | 0 | 0 | — | — | — | — | 0 | 0 |
-| dos_f3 | 364 | 1.04 | 0 | 0 | — | — | — | — | 0 | 0 |
+| diner_kitchen | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| dos_f1 | 1040 | 2.97 | 0 | 0 | — | — | — | — | 0 | 0 |
+| dos_f3 | 1176 | 3.36 | 0 | 0 | — | — | — | — | 0 | 0 |
 | downtown_otterbrook | 448 | 1.28 | 0 | 0 | — | — | — | — | 0 | 0 |
 | drugstore_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| drugstore_pharmacy | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | ducal_crown | 320 | 0.91 | 0 | 0 | — | — | — | — | 0 | 0 |
-| foggybottom_unit_0 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
-| foggybottom_unit_1 | 165 | 0.47 | 0 | 0 | — | — | — | — | 0 | 0 |
+| elev_spike | 432 | 1.23 | 0 | 0 | — | — | — | — | 0 | 0 |
+| foggybottom_unit_0 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| foggybottom_unit_1 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
 | foggybottom_unit_2 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| foggybottom_unit_3 | 165 | 0.47 | 0 | 0 | — | — | — | — | 0 | 0 |
 | golf_clubhouse | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | hardware_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| hardware_stockroom | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | hospital_f2 | 240 | 0.69 | 0 | 0 | — | — | — | — | 0 | 0 |
+| hospital_f3 | 240 | 0.69 | 0 | 0 | — | — | — | — | 0 | 0 |
 | hospital_int | 240 | 0.69 | 0 | 0 | — | — | — | — | 0 | 0 |
+| hotel_ps_hall | 162 | 0.46 | 0 | 0 | — | — | — | — | 0 | 0 |
+| hotel_ps_lobby | 240 | 0.69 | 0 | 0 | — | — | — | — | 0 | 0 |
+| hotel_ps_pent | 160 | 0.46 | 0 | 0 | — | — | — | — | 0 | 0 |
+| hotel_ps_room_a | 80 | 0.23 | 0 | 0 | — | — | — | — | 0 | 0 |
+| hotel_ps_room_b | 80 | 0.23 | 0 | 0 | — | — | — | — | 0 | 0 |
+| kettle_snug | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
+| kettle_taproom | 117 | 0.33 | 0 | 0 | — | — | — | — | 0 | 0 |
 | kvisthavn_unit_0 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
 | kvisthavn_unit_1 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
 | kvisthavn_unit_2 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
@@ -173,6 +167,7 @@ Target density band: **0–0** enemies/screen.
 | lotus_harbor_unit_1 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
 | lotus_harbor_unit_2 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
 | lotus_harbor_unit_3 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
+| maple27_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | mauna_lani_unit_0 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
 | mauna_lani_unit_1 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
 | mauna_lani_unit_2 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
@@ -185,44 +180,80 @@ Target density band: **0–0** enemies/screen.
 | minimus_major_unit_5 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
 | mt_shu_temple | 320 | 0.91 | 0 | 0 | — | — | — | — | 0 | 0 |
 | museum_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| oak_heart | 840 | 2.4 | 0 | 0 | — | — | — | — | 0 | 0 |
+| oldman_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | otter_clinic_exam | 108 | 0.31 | 0 | 0 | — | — | — | — | 0 | 0 |
 | otter_clinic_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
-| otter_station | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
-| otterbrook_cityhall | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
-| otterbrook_unit_0 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
-| otterbrook_unit_1 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
-| otterbrook_unit_2 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
-| otterbrook_unit_3 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
-| otterbrook_unit_4 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_home_birch | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_home_pond | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_home_sodd | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_hotel_hall | 220 | 0.63 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_hotel_lobby | 216 | 0.62 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_hotel_room_201 | 108 | 0.31 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_hotel_room_202 | 108 | 0.31 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_hotel_room_203 | 108 | 0.31 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otter_station | 384 | 1.1 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_cityhall | 416 | 1.19 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_0 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_1 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_2 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_3 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_4 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_5 | 180 | 0.51 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_6 | 169 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_7 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_8 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| otterbrook_unit_9 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
 | palace_throne | 320 | 0.91 | 0 | 0 | — | — | — | — | 0 | 0 |
 | puerto_sol_unit_0 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
 | puerto_sol_unit_1 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_10 | 117 | 0.33 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_11 | 135 | 0.39 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_12 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_13 | 165 | 0.47 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_14 | 165 | 0.47 | 0 | 0 | — | — | — | — | 0 | 0 |
+| puerto_sol_unit_10 | 135 | 0.39 | 0 | 0 | — | — | — | — | 0 | 0 |
+| puerto_sol_unit_11 | 165 | 0.47 | 0 | 0 | — | — | — | — | 0 | 0 |
 | puerto_sol_unit_2 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_3 | 117 | 0.33 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_4 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_5 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_6 | 289 | 0.83 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_7 | 289 | 0.83 | 0 | 0 | — | — | — | — | 0 | 0 |
-| puerto_sol_unit_8 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
+| puerto_sol_unit_3 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
+| puerto_sol_unit_4 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
+| puerto_sol_unit_5 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
+| puerto_sol_unit_6 | 117 | 0.33 | 0 | 0 | — | — | — | — | 0 | 0 |
+| puerto_sol_unit_7 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
+| puerto_sol_unit_8 | 289 | 0.83 | 0 | 0 | — | — | — | — | 0 | 0 |
 | puerto_sol_unit_9 | 289 | 0.83 | 0 | 0 | — | — | — | — | 0 | 0 |
 | pyramid_apex | 247 | 0.71 | 0 | 0 | — | — | — | — | 0 | 0 |
+| realty_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | rex_bedroom | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | rex_hall | 112 | 0.32 | 0 | 0 | — | — | — | — | 0 | 0 |
 | rex_home | 140 | 0.4 | 0 | 0 | — | — | — | — | 0 | 0 |
 | sphinx_chin | 320 | 0.91 | 0 | 0 | — | — | — | — | 0 | 0 |
+| spire_lobby | 198 | 0.57 | 0 | 0 | — | — | — | — | 0 | 0 |
 | starmart_int | 187 | 0.53 | 0 | 0 | — | — | — | — | 0 | 0 |
 | stone_brow_monastery | 320 | 0.91 | 0 | 0 | — | — | — | — | 0 | 0 |
 | the_cage | 1200 | 3.43 | 0 | 0 | — | — | — | — | 0 | 0 |
+| trail_shed_int | 168 | 0.48 | 0 | 0 | — | — | — | — | 0 | 0 |
+| twoton_bike_shop | 216 | 0.62 | 0 | 0 | — | — | — | — | 0 | 0 |
+| twoton_bus_station | 273 | 0.78 | 0 | 0 | — | — | — | — | 0 | 0 |
+| twoton_community_center | 308 | 0.88 | 0 | 0 | — | — | — | — | 0 | 0 |
+| twoton_hotel_hall | 200 | 0.57 | 0 | 0 | — | — | — | — | 0 | 0 |
+| twoton_hotel_lobby | 240 | 0.69 | 0 | 0 | — | — | — | — | 0 | 0 |
+| twoton_hotel_room | 108 | 0.31 | 0 | 0 | — | — | — | — | 0 | 0 |
+| twoton_pizza | 280 | 0.8 | 0 | 0 | — | — | — | — | 0 | 0 |
+| twoton_theater | 384 | 1.1 | 0 | 0 | — | — | — | — | 0 | 0 |
 | valea_stelelor_unit_0 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
 | valea_stelelor_unit_1 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_0 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_1 | 255 | 0.73 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_10 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_11 | 121 | 0.35 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_2 | 289 | 0.83 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_3 | 221 | 0.63 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_4 | 135 | 0.39 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_5 | 195 | 0.56 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_6 | 165 | 0.47 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_7 | 99 | 0.28 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_8 | 143 | 0.41 | 0 | 0 | — | — | — | — | 0 | 0 |
+| valle_dorado_unit_9 | 165 | 0.47 | 0 | 0 | — | — | — | — | 0 | 0 |
 | valle_shop_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | vivi_room | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | wintermoor_dorm | 364 | 1.04 | 0 | 0 | — | — | — | — | 0 | 0 |
+| workshop_int | 198 | 0.57 | 0 | 0 | — | — | — | — | 0 | 0 |
 | zanzibel_unit_0 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
 | zanzibel_unit_1 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
 | zanzibel_unit_2 | 88 | 0.25 | 0 | 0 | — | — | — | — | 0 | 0 |
@@ -231,7 +262,7 @@ Target density band: **0–0** enemies/screen.
 
 ## HARD-rule summary
 
-181/183 canon maps clear the hard pressure rules (grace ≥ 16px, prox ≥ 24px).
+212/214 canon maps clear the hard pressure rules (grace ≥ 16px, prox ≥ 24px).
 
 Maps flagged (each is FIXED or carries a reasoned waiver in `tools/content-validate.ts`):
 
