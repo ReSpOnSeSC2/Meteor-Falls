@@ -63,6 +63,7 @@ import { composeMini } from './parts';
 import type { PartsSpec } from '../schemas';
 import {
   TILESET,
+  TILE_ATLAS_COLS,
   TILE,
   drawTree,
   drawPine,
@@ -537,7 +538,9 @@ export function generateAllTextures(scene: Phaser.Scene): void {
 
   // tileset strip
   if (!scene.textures.exists('tiles')) {
-    addSheet(scene, 'tiles', TILESET.map((t) => t.make()), TILESET.length);
+    // Row-major grid, NOT a single row: a 1-row upload is TILESET.length·64px
+    // wide (>8192) and exceeds MAX_TEXTURE_SIZE on common GPUs → black ground.
+    addSheet(scene, 'tiles', TILESET.map((t) => t.make()), TILE_ATLAS_COLS);
   }
 
   // props

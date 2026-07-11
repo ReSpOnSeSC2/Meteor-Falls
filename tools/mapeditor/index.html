@@ -564,11 +564,20 @@ function render(){ renderQueued=false;
     if(!done&&Number.isInteger(mi)&&mi>=0){ ctx.drawImage(atlas,mi*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; }
     if(!done&&state.region&&l&&state.region.skin[l.name]!=null&&ra&&ra.complete&&ra.naturalWidth){
       ctx.drawImage(ra,state.region.skin[l.name]*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; }
-    // directional sidewalk curb (mirror OverworldScene.buildTiles): a road-adjacent '=' shows the
-    // curb variant whose raised vertical face points at the road (below→s · east→e · west→w).
+    // EB curb kit (mirror OverworldScene.buildTiles): a carriageway-adjacent '=' picks the
+    // 16-mask curb cell (bit 1=N 2=E 4=S 8=W; 'X' crosswalk is NOT carriageway — it gets the
+    // flush curb-cut ramp). Falls back to the legacy s/e/w trio on an older manifest.
     if(!done&&!state.region&&ch==='='&&M.sidewalkCurb){ const sc=M.sidewalkCurb;
-      const road=(xx,yy)=>{ const r=renderGrid[yy]&&renderGrid[yy][xx]; return !!(r&&'RDX23P'.includes(r)); };
-      let ci=road(x,y+1)?sc.s:road(x+1,y)?sc.e:road(x-1,y)?sc.w:-1;
+      let ci=-1;
+      if(Number.isInteger(sc.curbBase)&&sc.curbBase>=0){
+        const car=(xx,yy)=>{ const r=renderGrid[yy]&&renderGrid[yy][xx]; return !!(r&&'RD_23P4'.includes(r)); };
+        const cross=(xx,yy)=>{ const r=renderGrid[yy]&&renderGrid[yy][xx]; return r==='X'; };
+        let mask=0; if(car(x,y-1))mask|=1; if(car(x+1,y))mask|=2; if(car(x,y+1))mask|=4; if(car(x-1,y))mask|=8;
+        ci=mask?sc.curbBase+mask:cross(x,y+1)?sc.cutS:cross(x+1,y)?sc.cutE:cross(x-1,y)?sc.cutW:-1;
+      } else {
+        const road=(xx,yy)=>{ const r=renderGrid[yy]&&renderGrid[yy][xx]; return !!(r&&'RDX23P'.includes(r)); };
+        ci=road(x,y+1)?sc.s:road(x+1,y)?sc.e:road(x-1,y)?sc.w:-1;
+      }
       if(ci>=0){ ctx.drawImage(atlas,ci*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1); done=true; } }
     if(!done){ if(l&&l.index>=0) ctx.drawImage(atlas,l.index*M.tilePx,0,M.tilePx,M.tilePx,sx,sy,ts+1,ts+1);
       else{ ctx.fillStyle='#2c7d3a'; ctx.fillRect(sx,sy,ts,ts); } }

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TILE, TILESET } from './tiles';
+import { TILE, TILESET, TILE_ATLAS_COLS } from './tiles';
 import { GENERATED_BUILDINGS } from './buildings';
 import { SPORT_FRAME_COUNT } from './athletes';
 import { GOLF_FRAME_COUNT } from './golfers';
@@ -648,6 +648,10 @@ const WORLD_PROP_KEYS = [
   'wanted_board', 'gun_rack', 'cell_bars', 'evidence_locker', 'privacy_curtain', 'iv_stand',
   // workshop strip (Batch A)
   'prop_rocket_fuselage', 'prop_workbench', 'prop_blueprint_table', 'prop_parts_bin',
+  // EB INTERSECTION KIT (2026-07-11) — the Onett gooseneck traffic light + the
+  // stop sign (tools/derive-intersection-props.ts, drawn against the banked EB
+  // reference; interim until the Batch-B ChatGPT renders replace the PNGs).
+  'traffic_light', 'stop_sign',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -676,6 +680,12 @@ const BASE_FACADE_KEYS = [
   // HOTEL marquee. It replaces the anonymous east-civic apartment shell and
   // opens into the town's multi-map lodging interior.
   'bldg_ob_hotel',
+  // EB SCALE PASS (2026-07-11) — tall variants DERIVED from the authored
+  // facades by storey-band cloning (tools/derive-tall-facades.ts): EarthBound
+  // downtown buildings run 3-6.5 character-heights, ours were all 3. Interim
+  // anchors until the Batch-A ChatGPT re-authors replace the PNGs
+  // (docs/DOWNTOWN_OTTERBROOKE_REBUILD.md).
+  'facade_hotel_tall', 'facade_apartments_tall',
   // 27 MAPLE (2026-07-08) — the FOR-SALE house: the bldg_ob_house_c art duplicated
   // under a non-'bldg_' key (assets copy, same PNG) so occupyCity never grafts a
   // generated unit onto the pre-purchase, doorless lot. See maps.ts § 27 MAPLE.
@@ -734,6 +744,8 @@ export const OBLIQUE_SHADOW_PROP_KEYS: ReadonlySet<string> = new Set<string>([
   // Batch 1 — street furniture (props-street-oblique-source.png). Isolated ground
   // objects on open sidewalks — a contact pool grounds them and reads clearly.
   'bench', 'hydrant', 'mailbox', 'trash_can', 'news_box', 'parking_meter',
+  // EB intersection kit (2026-07-11) — same isolated-upright rule.
+  'traffic_light', 'stop_sign',
   // NB: trees (tree/tree_b/tree_c/pine) are DELIBERATELY excluded. They still got the
   // oblique art redraw, but forest-fill maps place THOUSANDS of them (Otterbrooke alone
   // has ~3.3k), so a per-tree shadow image is a needless object-count cost and the shade
@@ -908,6 +920,8 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   picket_post: { w: 7, h: 15 }, // junction / stray-cell post
   picket_gate: { w: 20, h: 18 }, // open gateway unit (two posts + swung leaf) — editor dressing
   sign_do_not_enter: { w: 11, h: 22 }, // the red-ring street sign (roadblocks, sealed lanes)
+  traffic_light: { w: 14, h: 48 }, // EB intersection kit — the Onett yellow gooseneck
+  stop_sign: { w: 13, h: 28 }, // EB intersection kit — octagon on a short pole
   // oblique ground-height riser faces (raised edge = visible top + front face)
   riser_brick: { w: 40, h: 14 }, // low brick retaining wall run
   riser_brick_corner: { w: 22, h: 20 }, // brick wall outer corner
@@ -2103,8 +2117,12 @@ function drawAuthoredTileStrip(ctx: CanvasRenderingContext2D, tileArt: SourceIma
   names.forEach((name, authoredIndex) => {
     const tileIndex = TILESET.findIndex((tile) => tile.name === name);
     if (tileIndex < 0) return;
-    ctx.clearRect(tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
-    ctx.drawImage(tileArt, authoredIndex * authoredCell, 0, authoredCell, authoredCell, tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
+    // dest is the row-major TILE_ATLAS_COLS grid (see tiles.ts) — the source
+    // strips stay single-row on disk, only the runtime texture is a grid.
+    const dx = (tileIndex % TILE_ATLAS_COLS) * RT_TILE;
+    const dy = Math.floor(tileIndex / TILE_ATLAS_COLS) * RT_TILE;
+    ctx.clearRect(dx, dy, RT_TILE, RT_TILE);
+    ctx.drawImage(tileArt, authoredIndex * authoredCell, 0, authoredCell, authoredCell, dx, dy, RT_TILE, RT_TILE);
   });
 }
 
@@ -2270,7 +2288,7 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   if (laniTileArt) drawAuthoredTileStrip(ctx, laniTileArt, LANI_TILE_ART.names);
   if (marsTileArt) drawAuthoredTileStrip(ctx, marsTileArt, MARS_TILE_ART.names);
 
-  replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);
+  replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILE_ATLAS_COLS, TILESET.length);
 }
 
 export function applyAuthoredWorldProps(scene: Phaser.Scene): void {
