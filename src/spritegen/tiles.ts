@@ -1135,6 +1135,13 @@ TILESET.push({ name: 'curb_cut_s', solid: false, make: sidewalkTile });
 TILESET.push({ name: 'curb_cut_e', solid: false, make: sidewalkTile });
 TILESET.push({ name: 'curb_cut_w', solid: false, make: sidewalkTile });
 
+// EB INTERSECTION KIT (2026-07-11) — the manhole cover ('4'), a walk-over
+// street decal placed in the carriageway near junctions (EarthBound dresses
+// every crossing with one). Art derives from the recolored road cell via
+// tools/apply-manhole.ts; make() reuses the frozen stormDrain painter as the
+// boot fallback only.
+TILESET.push({ name: 'manhole', solid: false, make: stormDrain });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

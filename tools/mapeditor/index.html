@@ -570,7 +570,7 @@ function render(){ renderQueued=false;
     if(!done&&!state.region&&ch==='='&&M.sidewalkCurb){ const sc=M.sidewalkCurb;
       let ci=-1;
       if(Number.isInteger(sc.curbBase)&&sc.curbBase>=0){
-        const car=(xx,yy)=>{ const r=renderGrid[yy]&&renderGrid[yy][xx]; return !!(r&&'RD_23P'.includes(r)); };
+        const car=(xx,yy)=>{ const r=renderGrid[yy]&&renderGrid[yy][xx]; return !!(r&&'RD_23P4'.includes(r)); };
         const cross=(xx,yy)=>{ const r=renderGrid[yy]&&renderGrid[yy][xx]; return r==='X'; };
         let mask=0; if(car(x,y-1))mask|=1; if(car(x+1,y))mask|=2; if(car(x,y+1))mask|=4; if(car(x-1,y))mask|=8;
         ci=mask?sc.curbBase+mask:cross(x,y+1)?sc.cutS:cross(x+1,y)?sc.cutE:cross(x-1,y)?sc.cutW:-1;

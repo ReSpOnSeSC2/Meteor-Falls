@@ -81,6 +81,7 @@ export const CHAR_LEGEND: Record<string, string> = {
   '1': 'sidewalk_crack',
   '2': 'road_patch',
   '3': 'storm_drain',
+  '4': 'manhole', // EB intersection kit: walk-over cover in the carriageway near junctions
   // S10 STARPORT arcades
   a: 'arcade_floor',
   '*': 'arcade_floor_star',
@@ -857,14 +858,17 @@ function buildOtterbrookTownReplica(): MapDef {
   home('bldg_ob_house_c', 80, 40);
   home('house_a', 99, 40);
   // MAIN ST (row 61) — the downtown drag, gas pump to used-car lot, shops flush on
-  // the pavement with a metered parking lane out front
+  // the pavement with a metered parking lane out front. EB STREET-WALL massing
+  // (2026-07-11): the core storefronts butt into two CONTINUOUS blocks flanking
+  // the spine (gaps ≤ ~1 tile, party-wall style, like Onett's drag) instead of
+  // detached lots — only the gas station keeps its forecourt air at the west end.
   build('facade_fillshop', 12, 57, { to: 'diner_int', tx: 120, ty: 128 }, 'tick_defeated');
-  build('bldg_ob_burger', 25, 57, { to: 'burger_int', tx: 96, ty: 118 }, 'tick_defeated');
-  build('bldg_bank', 32, 57, { to: 'bank_int', tx: 96, ty: 118 }, 'tick_defeated');
-  build('facade_hardware', 45, 57, { to: 'hardware_int', tx: 120, ty: 128 });
+  build('bldg_ob_burger', 33, 57, { to: 'burger_int', tx: 96, ty: 118 }, 'tick_defeated');
+  build('bldg_bank', 39, 57, { to: 'bank_int', tx: 96, ty: 118 }, 'tick_defeated');
+  build('facade_hardware', 47, 57, { to: 'hardware_int', tx: 120, ty: 128 });
   build('bldg_ob_bakery', 61, 57, { to: 'bakery_int', tx: 96, ty: 118 }, 'tick_defeated');
-  build('drugstore', 68, 57, { to: 'drugstore_int', tx: 112, ty: 118 });
-  build('arcade', 80, 57, { to: 'arcade_int', tx: 80, ty: 102 }, 'tick_defeated');
+  build('drugstore', 67, 57, { to: 'drugstore_int', tx: 112, ty: 118 });
+  build('arcade', 74, 57, { to: 'arcade_int', tx: 80, ty: 102 }, 'tick_defeated');
   // POND ST (row 76) — residential east of the park
   home('house_b', 48, 70);
   home('bldg_ob_house_green', 63, 70);
@@ -919,9 +923,12 @@ function buildOtterbrookTownReplica(): MapDef {
   // real street addresses (authored citygen facades, scaled to shoulder height
   // beside the 384px drag). The agency door opens into the office where the agent
   // now works; Bert holds court on his lot out front of the bunting.
+  // EB street-wall massing: the pair slides west to butt against the arcade so
+  // the east block reads as one continuous storefront row (Bert's lot keeps a
+  // touch of air for the bunting/stock out front).
   const realtyFacade: PropDef = {
     sprite: 'facade_realty',
-    x: 87 - ((300 / 64) * 1.25) / 2,
+    x: 81 - ((300 / 64) * 1.25) / 2,
     y: 57 - (227 / 64) * 1.25,
     scale: 1.25,
     solid: { ox: 0, oy: 10, w: 75, h: 47 },
@@ -930,15 +937,15 @@ function buildOtterbrookTownReplica(): MapDef {
   const { door: _realtyDoor, ...closedRealtyFacade } = realtyFacade;
   props.push({ ...closedRealtyFacade, unlessFlag: 'tick_defeated' });
   props.push({ ...realtyFacade, ifFlag: 'tick_defeated' });
-  markRect(83, 50, 91, 58);
+  markRect(77, 50, 85, 58);
   props.push({
     sprite: 'facade_autolot',
-    x: 99 - ((330 / 64) * 1.45) / 2,
+    x: 90 - ((330 / 64) * 1.45) / 2,
     y: 57 - (235 / 64) * 1.45,
     scale: 1.45,
     solid: { ox: 0, oy: 10, w: 83, h: 49 },
   });
-  markRect(95, 50, 103, 58);
+  markRect(86, 50, 94, 58);
 
   // ===== THE STREET NETWORK — readable but not ruler-flat. Every lane ends AT
   // another street (a T-junction), the map gate, or a destination lot — no more
@@ -996,8 +1003,8 @@ function buildOtterbrookTownReplica(): MapDef {
   g.rect(59, 34, 10, 6, '=');
   g.rect(61, 36, 6, 3, '.');
   // metered PARKING LANE along Main St's north kerb, in front of both shop blocks
-  for (let x = 23; x <= 48; x++) if (g.rows[59][x] === 'R') g.set(x, 59, 'P');
-  for (let x = 58; x <= 88; x++) if (g.rows[59][x] === 'R') g.set(x, 59, 'P');
+  for (let x = 29; x <= 51; x++) if (g.rows[59][x] === 'R') g.set(x, 59, 'P');
+  for (let x = 58; x <= 93; x++) if (g.rows[59][x] === 'R') g.set(x, 59, 'P');
   // CROSSWALKS at the spine's big junctions (centre rows/cols only, so the road
   // graph — and the one-component law — stays contiguous through the paint)
   for (const [x, y, w, h] of [
@@ -1032,6 +1039,18 @@ function buildOtterbrookTownReplica(): MapDef {
   for (let x = 39; x <= 96; x++) if (grassLike(x, 64)) g.set(x, 64, '=');
   fixJunctions();
   weatherStreets();
+  // EB INTERSECTION KIT — manhole covers ('4') just off the big junctions, the
+  // way EarthBound dresses every crossing. Walk-over street decals; guarded to
+  // plain 'R' cells so no dash/crosswalk/parking cell (or the lane graph) is
+  // touched, and mid-lane on 4-wide roads so the one-component law holds.
+  for (const [mx, my] of [
+    [48, 60], // Main St, west of the spine junction
+    [63, 62], // Main St, east of the spine junction
+    [54, 45], // the spine between Civic and Main
+    [54, 78], // the spine below Pond St
+  ] as const) {
+    if (at(mx, my) === 'R') g.set(mx, my, '4');
+  }
 
   props.push(
     // OTTERBROOKE HOTEL FORECOURT — a planted stoop on central Civic Street.
@@ -1073,7 +1092,7 @@ function buildOtterbrookTownReplica(): MapDef {
     // with breathing room kept around each storefront entrance.
     { sprite: 'hydrant', x: 33.5, y: 57.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
     { sprite: 'hydrant', x: 66.5, y: 57.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
-    ...[24, 29, 39, 44, 75, 85].map((mx) => ({ sprite: 'parking_meter', x: mx + 0.2, y: 57.45 })),
+    ...[31, 40, 50, 73, 87].map((mx) => ({ sprite: 'parking_meter', x: mx + 0.2, y: 57.45 })),
     { sprite: 'trash_can', x: 36.2, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'news_box', x: 70.5, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'planter', x: 57.8, y: 57.4, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
@@ -1154,14 +1173,14 @@ function buildOtterbrookTownReplica(): MapDef {
     { id: 'bus_waiter1', sprite: 'grayCommuter', x: 26, y: 28, facing: 'right', dialogue: 'npc_bus_waiter1', idle: true, emote: 'think', ifFlag: 'tick_defeated' }, // depot benches
     { id: 'bus_waiter2', sprite: 'senora', x: 30, y: 28, facing: 'up', dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle', ifFlag: 'tick_defeated' },
     // the AGENT now works inside OTTERBROOK REALTY (realty_int) — see buildRealtyInt
-    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 98, y: 58, facing: 'down', dialogue: 'npc_car_dealer', idle: true, emote: 'happy', ifFlag: 'tick_defeated' }, // Bert, on his lot
+    { id: 'car_dealer_otter', sprite: 'quarterMan', x: 90, y: 58, facing: 'down', dialogue: 'npc_car_dealer', idle: true, emote: 'happy', ifFlag: 'tick_defeated' }, // Bert, on his lot
     { id: 'maple_gawker', sprite: 'senora', x: 18, y: 103, facing: 'up', dialogue: 'npc_maple_gawker', idle: true, emote: 'think', ifFlag: 'tick_defeated', unlessFlag: 'owned_27_maple' },
     { id: 'constable_borden', sprite: 'npc_borden', x: 66, y: 28, facing: 'up', dialogue: 'npc_borden_accuse', idle: true, emote: 'surprise', ifFlag: 'tick_defeated', unlessFlag: 'borden_marching' }, // the station house
     // Restored-day bustle: these people are the reward for giving the town its
     // color back, not background noise during the Hush crisis.
     { id: 'civic_secretary', sprite: 'grayCommuter', x: 58, y: 37, facing: 'right', dialogue: 'npc_civic_secretary', wander: true, ifFlag: 'tick_defeated' },
     { id: 'bakery_regular', sprite: 'senora', x: 61, y: 59, facing: 'up', dialogue: 'npc_bakery_regular', idle: true, emote: 'happy', ifFlag: 'tick_defeated' },
-    { id: 'arcade_regular', sprite: 'pigeonKid', x: 79, y: 59, facing: 'up', dialogue: 'npc_arcade_regular', idle: true, emote: 'happy', ifFlag: 'tick_defeated' },
+    { id: 'arcade_regular', sprite: 'pigeonKid', x: 74, y: 59, facing: 'up', dialogue: 'npc_arcade_regular', idle: true, emote: 'happy', ifFlag: 'tick_defeated' },
     { id: 'pond_grandma', sprite: 'fernLady', x: 35, y: 80, facing: 'left', dialogue: 'npc_pond_grandma', wander: true, ifFlag: 'tick_defeated' },
     { id: 'maple_biker', sprite: 'pajamaKid', x: 37, y: 103, facing: 'right', dialogue: 'npc_maple_biker', wander: true, ifFlag: 'tick_defeated' },
     { id: 'south_gardener', sprite: 'mrPlummer', x: 69, y: 124, facing: 'left', dialogue: 'npc_south_gardener', wander: true, ifFlag: 'tick_defeated' },

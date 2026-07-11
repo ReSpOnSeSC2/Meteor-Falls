@@ -1201,7 +1201,7 @@ export class OverworldScene extends Phaser.Scene {
     // while the crosswalk 'X' gets a FLUSH curb-cut ramp — EarthBound drops
     // the curb at every crossing instead of walling it.
     const isCarriage = (x: number, y: number): boolean =>
-      x >= 0 && y >= 0 && x < w && y < h && 'RD_23P'.includes(rows[y][x]);
+      x >= 0 && y >= 0 && x < w && y < h && 'RD_23P4'.includes(rows[y][x]);
     const isCross = (x: number, y: number): boolean =>
       x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === 'X';
     // §A4.11 — the Sleeper's-shoulder meltwater fall: once Vibe Freeze locks it

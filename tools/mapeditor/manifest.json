@@ -3,7 +3,7 @@
   "tilePx": 64,
   "artScale": 4,
   "atlas": "/assets/art/world/otterbrook_tiles_16.png",
-  "atlasCells": 210,
+  "atlasCells": 211,
   "charFrame": {
     "cols": 4,
     "rows": 12,
@@ -78,6 +78,13 @@
       "index": 31,
       "solid": false,
       "group": "paving"
+    },
+    {
+      "char": "4",
+      "name": "manhole",
+      "index": 210,
+      "solid": false,
+      "group": "other"
     },
     {
       "char": ".",
