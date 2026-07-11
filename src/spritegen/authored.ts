@@ -648,6 +648,10 @@ const WORLD_PROP_KEYS = [
   'wanted_board', 'gun_rack', 'cell_bars', 'evidence_locker', 'privacy_curtain', 'iv_stand',
   // workshop strip (Batch A)
   'prop_rocket_fuselage', 'prop_workbench', 'prop_blueprint_table', 'prop_parts_bin',
+  // EB INTERSECTION KIT (2026-07-11) — the Onett gooseneck traffic light + the
+  // stop sign (tools/derive-intersection-props.ts, drawn against the banked EB
+  // reference; interim until the Batch-B ChatGPT renders replace the PNGs).
+  'traffic_light', 'stop_sign',
 ] as const;
 
 const BASE_FACADE_KEYS = [
@@ -740,6 +744,8 @@ export const OBLIQUE_SHADOW_PROP_KEYS: ReadonlySet<string> = new Set<string>([
   // Batch 1 — street furniture (props-street-oblique-source.png). Isolated ground
   // objects on open sidewalks — a contact pool grounds them and reads clearly.
   'bench', 'hydrant', 'mailbox', 'trash_can', 'news_box', 'parking_meter',
+  // EB intersection kit (2026-07-11) — same isolated-upright rule.
+  'traffic_light', 'stop_sign',
   // NB: trees (tree/tree_b/tree_c/pine) are DELIBERATELY excluded. They still got the
   // oblique art redraw, but forest-fill maps place THOUSANDS of them (Otterbrooke alone
   // has ~3.3k), so a per-tree shadow image is a needless object-count cost and the shade
@@ -914,6 +920,8 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   picket_post: { w: 7, h: 15 }, // junction / stray-cell post
   picket_gate: { w: 20, h: 18 }, // open gateway unit (two posts + swung leaf) — editor dressing
   sign_do_not_enter: { w: 11, h: 22 }, // the red-ring street sign (roadblocks, sealed lanes)
+  traffic_light: { w: 14, h: 48 }, // EB intersection kit — the Onett yellow gooseneck
+  stop_sign: { w: 13, h: 28 }, // EB intersection kit — octagon on a short pole
   // oblique ground-height riser faces (raised edge = visible top + front face)
   riser_brick: { w: 40, h: 14 }, // low brick retaining wall run
   riser_brick_corner: { w: 22, h: 20 }, // brick wall outer corner

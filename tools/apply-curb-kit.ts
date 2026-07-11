@@ -51,11 +51,13 @@ for (let y = 0; y < CELL; y++) {
   strip.data.set(old.data.subarray(y * old.w * 4, y * old.w * 4 + old.w * 4), y * W * 4);
 }
 
-// ---- palette (faces from apply-sidewalk-curb; asphalt tone from recolor-asphalt) ----
-const LIP = [255, 253, 238]; // lit front edge at the top of a face
-const FACE_T = [164, 154, 128]; // face, near top (in shade)
-const FACE_B = [110, 102, 82]; // face, bottom
-const FOOT = [64, 58, 46]; // hard contact line where curb meets road
+// ---- palette (EB reference 2026-07-11: the raised edge is a BRIGHT ROUNDED
+// rim over flat cream bands and a thin dark contact line — not a long shaded
+// gradient; asphalt tone from recolor-asphalt) ----
+const LIP = [252, 248, 232]; // the rounded white rim (3px)
+const FACE_T = [214, 204, 172]; // face upper band — flat cream
+const FACE_B = [172, 160, 130]; // face lower band — flat, one step down
+const FOOT = [64, 58, 46]; // the thin dark line where curb meets road
 const N_EDGE = [150, 142, 118]; // the away-facing top lip (shadowed, no face)
 const N_EDGE_DK = [110, 102, 82];
 const RAMP_LINE = [150, 142, 118]; // curb-cut score line
@@ -77,12 +79,13 @@ function put(cell: number, x: number, y: number, rgb: number[]): void {
   strip.data[d + 3] = 255;
 }
 
-/** vertical face shading at depth 0..FACE-1 (0 = lit lip, FACE-1 = road foot) */
+/** vertical face at depth 0..FACE-1 — EB flat BANDS: rounded white rim,
+ *  two flat cream steps, a thin dark contact line (no gradient wash) */
 function facePx(depth: number): number[] {
-  if (depth <= 1) return LIP;
-  if (depth >= FACE - 2) return FOOT;
-  const t = (depth - 2) / Math.max(1, FACE - 5);
-  return [lerp(FACE_T, FACE_B, t, 0), lerp(FACE_T, FACE_B, t, 1), lerp(FACE_T, FACE_B, t, 2)];
+  if (depth <= 2) return LIP; // the rounded bright rim
+  if (depth >= FACE - 2) return FOOT; // the thin dark line at the road
+  if (depth <= 12) return FACE_T; // flat upper band
+  return FACE_B; // flat lower band
 }
 
 function drawCurbCell(cell: number, mask: number): void {

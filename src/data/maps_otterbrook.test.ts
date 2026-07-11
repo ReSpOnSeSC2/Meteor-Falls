@@ -437,7 +437,10 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       expect(Number.isInteger(front.x), `${front.sprite} starts on a cell`).toBe(true);
       expect(Number.isInteger(forestY), `${front.sprite} base-aligns to a forest row`).toBe(true);
       for (let x = front.x; x < front.x + width; x++) {
-        expect(ob.grid[forestY]?.[x], `forest at ${x},${forestY}`).toBe('b');
+        // 'b' solid forest, or '5' the EB horizon band (2026-07-11): the rim
+        // row behind the treeline fronts reads as dithered sky over a distant
+        // ridge — equally solid, drawn behind the canopy sprites.
+        expect(['b', '5'], `forest at ${x},${forestY}`).toContain(ob.grid[forestY]?.[x]);
         expect(walkable.has(ob.grid[forestY + 1]?.[x] ?? ''), `walk below ${x},${forestY}`).toBe(true);
         coveredCells++;
       }
@@ -448,8 +451,9 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
   it('keeps the pre-dawn cave barrier and a production object budget', () => {
     expect(ob.props.some((p) => p.sprite === 'sawhorse' && p.x < 10 && p.unlessFlag === 'zapper_done')).toBe(true);
     // was 3,214 before sparse canopy accents; +3 headroom (2026-07-11) for the
-    // EB downtown BACK RANK (the three tall skyline masses behind Main St)
-    expect(ob.props.length).toBeLessThan(1105);
+    // EB downtown BACK RANK (the three tall skyline masses behind Main St) and
+    // +4 for the intersection kit (2 traffic lights + 2 stop signs)
+    expect(ob.props.length).toBeLessThan(1110);
     expect(ob.props.filter((p) => ['tree', 'tree_b', 'tree_c'].includes(p.sprite)).length).toBeLessThan(600);
     expect(ob.npcs.filter((n) => n.ifFlag === 'tick_defeated').length).toBeGreaterThanOrEqual(8);
   });

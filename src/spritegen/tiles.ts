@@ -1142,6 +1142,13 @@ TILESET.push({ name: 'curb_cut_w', solid: false, make: sidewalkTile });
 // boot fallback only.
 TILESET.push({ name: 'manhole', solid: false, make: stormDrain });
 
+// EB HORIZON BAND (2026-07-11) — 'horizon_ridge' ('5'): checker-dithered sky
+// over a dark ridge silhouette in one solid band tile, for map edges that
+// read as a vista (EarthBound's coastal-cliff sky bands; piloted on the
+// Otterbrooke crater rim). Art via tools/apply-horizon.ts; make() reuses the
+// frozen skyDay painter as the boot fallback only.
+TILESET.push({ name: 'horizon_ridge', solid: true, make: skyDay });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

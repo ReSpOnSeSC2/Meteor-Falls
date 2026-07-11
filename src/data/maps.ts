@@ -82,6 +82,7 @@ export const CHAR_LEGEND: Record<string, string> = {
   '2': 'road_patch',
   '3': 'storm_drain',
   '4': 'manhole', // EB intersection kit: walk-over cover in the carriageway near junctions
+  '5': 'horizon_ridge', // EB horizon band: dithered sky over a ridge silhouette (solid vista edge)
   // S10 STARPORT arcades
   a: 'arcade_floor',
   '*': 'arcade_floor_star',
@@ -886,9 +887,9 @@ function buildOtterbrookTownReplica(): MapDef {
   // the walk-behind read (player occluded on that short stretch) is the
   // EarthBound norm. Collision comes from facadeSolids (texture-true), which
   // narrows but never severs Orchard.
-  props.push(otterCentered('facade_apartments_tall', 36, 54)); // over the burger/bank party line
-  props.push(otterCentered('facade_hotel_tall', 70, 54)); // the tower over drugstore/arcade
-  props.push(otterCentered('facade_apartments_tall', 87, 53)); // brownstone above realty/Bert's lot
+  props.push(otterCentered('facade_apartments_tall', 36, 53)); // over the burger/bank party line
+  props.push(otterCentered('facade_hotel_tall', 70, 53)); // the tower over drugstore/arcade
+  props.push(otterCentered('facade_apartments_tall', 83.5, 53)); // brownstone above the realty row
   // POND ST (row 76) — residential east of the park
   home('house_b', 48, 70);
   home('bldg_ob_house_green', 63, 70);
@@ -1072,6 +1073,37 @@ function buildOtterbrookTownReplica(): MapDef {
     if (at(mx, my) === 'R') g.set(mx, my, '4');
   }
 
+  // ===== EB DOWNTOWN TERRACE (Batch D, 2026-07-11): the block interiors
+  // between Orchard and Main rise ONE level — the back-rank towers stand on a
+  // bluff overlooking the drag, its tan cliff face showing between the
+  // storefronts, with one stair flight down per block (Onett's terraced
+  // downtown). Seam grammar mirrors the hill: '^' lip row (upper, walkable) →
+  // 'K' face row (solid) → town; every walkable E/W/N seam is buffered with
+  // solid treeline 'b' so no invisible ledge exists. growOtterbrook's level
+  // plane raises the same rectangles (rows 49-53 → L1; face row 54: K upper,
+  // 'T' lower — the seam-B stair convention).
+  const walkable = (x: number, y: number): boolean => ' .,~fF:'.includes(at(x, y));
+  for (const t of [
+    // block-interior spans only — clear of West End Ave (~x20), the spine
+    // (x52-57) and Eastbrook Ave (~x91), which all cross these rows
+    { x0: 26, x1: 49 }, // west block interior (behind burger/bank/hardware)
+    { x0: 60, x1: 86 }, // east block interior (behind bakery→the arcade row)
+  ]) {
+    // buffers FIRST (columns + north row), then the lip strictly inside them —
+    // a '^' landing on a buffer cell would leave a walkable L1 edge cell
+    // side-by-side with L0 grass (the invisible-ledge law).
+    for (const y of [49, 50, 51, 52, 53]) {
+      if (walkable(t.x0, y)) g.set(t.x0, y, 'b'); // west buffer column
+      if (walkable(t.x1, y)) g.set(t.x1, y, 'b'); // east buffer column
+    }
+    for (let x = t.x0; x <= t.x1; x++) {
+      if (walkable(x, 49)) g.set(x, 49, 'b'); // north buffer treeline
+      if (x > t.x0 && x < t.x1 && walkable(x, 53)) g.set(x, 53, '^'); // the bluff lip
+      if (walkable(x, 54)) g.set(x, 54, 'K'); // the cliff face
+    }
+  }
+  for (const sx of [28, 77]) for (const sy of [53, 54, 55]) g.set(sx, sy, 'T'); // the flights
+
   props.push(
     // OTTERBROOKE HOTEL FORECOURT — a planted stoop on central Civic Street.
     // The facade's own HOTEL marquee does the labeling; extra generic WELCOME
@@ -1113,6 +1145,12 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'hydrant', x: 33.5, y: 57.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
     { sprite: 'hydrant', x: 66.5, y: 57.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
     ...[31, 40, 50, 73, 87].map((mx) => ({ sprite: 'parking_meter', x: mx + 0.2, y: 57.45 })),
+    // EB INTERSECTION KIT (2026-07-11) — the Onett gooseneck at the two big
+    // spine junctions (Main + Civic) and stop signs on the south approaches.
+    { sprite: 'traffic_light', x: 51.55, y: 54.9, solid: { ox: 4, oy: 44, w: 6, h: 4 } },
+    { sprite: 'traffic_light', x: 51.55, y: 25.4, solid: { ox: 4, oy: 44, w: 6, h: 4 } },
+    { sprite: 'stop_sign', x: 57.35, y: 61.4, solid: { ox: 4, oy: 24, w: 5, h: 4 } },
+    { sprite: 'stop_sign', x: 57.35, y: 91.4, solid: { ox: 4, oy: 24, w: 5, h: 4 } },
     { sprite: 'trash_can', x: 36.2, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'news_box', x: 70.5, y: 57.45, solid: { ox: 2, oy: 10, w: 10, h: 7 } },
     { sprite: 'planter', x: 57.8, y: 57.4, solid: { ox: 1, oy: 6, w: 20, h: 9 } },
@@ -1745,6 +1783,13 @@ export function growOtterbrook(): MapDef {
   // today's crowns and the fence lines become transparent sectional props.
   const fenceProps = propifyFences(g);
 
+  // EB HORIZON BAND (2026-07-11): the plateau's rim row reads as a vista —
+  // checker-dithered sky over a distant treeline ridge ('5', solid like the
+  // forest border it replaces) above the crater hilltop, the EarthBound
+  // coastal-cliff horizon read. Only the outermost pure-forest row changes;
+  // collision and reachability are identical (solid → solid).
+  for (let x = 0; x < g.rows[0].length; x++) if (g.rows[0][x] === 'b') g.set(x, 0, '5');
+
   const grid = g.out();
   // Elevation plane: the RIGHT climb zone (x 40-99) stacks L5 crest → L4 police
   // bench → L3 Fibbins bench → L2 base, reading the SAME staggered seam-row
@@ -1775,6 +1820,13 @@ export function growOtterbrook(): MapDef {
         if (y <= 48) return ch === 'T' ? '1' : '2'; // seam A face: stairs drop to the shelf
         if (y <= 61) return '1'; // mid shelf (Jay/Chad terrace) + its lip
         if (y <= 65) return ch === 'T' ? '0' : '1'; // seam B face: stairs drop to town
+        // EB DOWNTOWN TERRACE (2026-07-11): the two block interiors between
+        // Orchard and Main (town rows 49-53, abs 115-119) sit one level up,
+        // their K face row (town 54, abs 120) following the seam-B convention
+        // (K keeps the upper level, 'T' flight cells take the lower).
+        const onTerraceX = (x >= 26 && x <= 49) || (x >= 60 && x <= 86);
+        if (y >= 115 && y <= 119 && onTerraceX) return '1';
+        if (y === 120 && onTerraceX) return ch === 'T' ? '0' : '1';
         return '0'; // the town
       })
       .join(''),

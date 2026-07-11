@@ -3,7 +3,7 @@
   "tilePx": 64,
   "artScale": 4,
   "atlas": "/assets/art/world/otterbrook_tiles_16.png",
-  "atlasCells": 211,
+  "atlasCells": 212,
   "charFrame": {
     "cols": 4,
     "rows": 12,
@@ -85,6 +85,13 @@
       "index": 210,
       "solid": false,
       "group": "other"
+    },
+    {
+      "char": "5",
+      "name": "horizon_ridge",
+      "index": 211,
+      "solid": true,
+      "group": "wall"
     },
     {
       "char": ".",
@@ -2686,6 +2693,22 @@
       "h": 18,
       "url": "/assets/art/world/props/prop_parts_bin.png",
       "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "traffic_light",
+      "w": 14,
+      "h": 48,
+      "url": "/assets/art/world/props/traffic_light.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "stop_sign",
+      "w": 13,
+      "h": 28,
+      "url": "/assets/art/world/props/stop_sign.png",
+      "group": "street",
       "solidDefault": true
     },
     {

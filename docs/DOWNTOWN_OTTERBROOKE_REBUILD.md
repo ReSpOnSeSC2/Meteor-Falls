@@ -39,6 +39,31 @@ it has the exact tileset/angle style).
 6. **Manhole** — walk-over street tile (char `'4'`, `tools/apply-manhole.ts`),
    placed at the spine junctions.
 
+## SHIPPED IN THE SECOND PASS (2026-07-11, same branch)
+
+7. **EB scale + stacking** — `tools/derive-tall-facades.ts` clones storey
+   bands from the authored facades: `facade_hotel_tall` (269×576, 4.5
+   character-units) + `facade_apartments_tall` (285×544); three tall masses
+   form a BACK RANK behind the drag (y-sort occluded by the storefronts);
+   the bakery steps a row forward over the drugstore's corner.
+8. **EB pavement restyle** — `tools/apply-eb-pavement.ts`: the sidewalk is
+   now EarthBound's FLAT cream slab with sparse '/' ticks (the dense diagonal
+   corduroy hatch is gone); the curb faces re-derived as flat BANDS — bright
+   rounded rim → two cream steps → thin dark contact line (user reference).
+9. **Intersection props (interim art)** — `tools/derive-intersection-props.ts`
+   draws the Onett gooseneck `traffic_light` + `stop_sign` (placed at the
+   spine junctions/approaches). Batch B renders below simply replace the PNGs.
+10. **DOWNTOWN TERRACE (Batch D, shipped)** — the block interiors between
+    Orchard and Main rise one level (`elevation` plane + '^' lip / 'K' face /
+    'T' flights, tree-buffered seams, elevation-law clean); the back-rank
+    towers stand on the bluff overlooking the drag.
+11. **EB horizon band** — `horizon_ridge` tile ('5', `tools/apply-horizon.ts`):
+    night-dithered sky over a moonlit treeline ridge across the crater
+    plateau's rim row (the map's vista edge).
+12. **Police axis** — verified at full resolution: `facade_otter_station` is
+    already on the shared front+right axis (the earlier "wrong axis" read came
+    from a low-res screenshot). No re-author needed.
+
 ## REMAINING ART BATCHES (ChatGPT generation — run from the logged-in
 chatgpt.com browser per `docs/ART_PIPELINE.md`; NOT possible headless)
 
@@ -134,5 +159,9 @@ town at L1, stairs at the crosswalk corners.
 
 ## Order of operations
 
-Batch B (an afternoon) → Batch A bank+hotel (the visible skyline change) →
-rest of Batch A → C with Twoton → D with the Onett kit.
+Batches B and D are SHIPPED with interim/derived art (see above) — their
+ChatGPT prompts remain as upgrade passes that replace PNGs in place. The open
+work: **Batch A** (tall facade re-authors — replaces the derived talls) and
+**Batch C** (the diagonal main-street family — the one item that needs a
+dedicated layout session, since a diagonal drag re-lays the whole downtown:
+shops, promenade, junctions, triggers).
