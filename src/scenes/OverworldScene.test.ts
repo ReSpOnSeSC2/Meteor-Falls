@@ -36,6 +36,24 @@ describe('door-marker presentation', () => {
   });
 });
 
+describe('Glint story staging', () => {
+  it('keeps the crater apparition inside the followed camera instead of at stale map tiles', () => {
+    const player = { x: 62 * 64, y: 8 * 64 };
+    const glint = runtime.glintCraterStagePosition(player.x, player.y);
+
+    expect(glint).toEqual({ x: player.x + 128, y: player.y - 104 });
+    expect(Math.abs(glint.x - player.x) + 48).toBeLessThan(800);
+    expect(glint.y).toBeLessThan(player.y);
+  });
+
+  it('stages Glint above elevated world art but below dialogue', () => {
+    expect(runtime.STORY_STAGE_DEPTH.threat).toBeGreaterThan(80_000);
+    expect(runtime.STORY_STAGE_DEPTH.threat).toBeLessThan(runtime.STORY_STAGE_DEPTH.glow);
+    expect(runtime.STORY_STAGE_DEPTH.glow).toBeLessThan(runtime.STORY_STAGE_DEPTH.actor);
+    expect(runtime.STORY_STAGE_DEPTH.actor).toBeLessThan(90_000);
+  });
+});
+
 describe('walkable overworld spawner cells', () => {
   it('clips to the map and excludes solid tiles and static-body cells', () => {
     const solids = [

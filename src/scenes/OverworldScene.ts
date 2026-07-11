@@ -272,6 +272,21 @@ export function staticDirectionalVehicleFrame(rot: number | undefined): 0 | 1 | 
   return rot === 90 ? 1 : rot === 270 ? 2 : 0;
 }
 
+/** Live story actors must clear every terrace, prop, and atmosphere veil while
+ * remaining beneath dialogue. Fixed world depths (such as 9999) disappear on
+ * elevated maps whose level bias can exceed 60,000. */
+export const STORY_STAGE_DEPTH = {
+  threat: DEPTH_UI - 20,
+  glow: DEPTH_UI - 19,
+  actor: DEPTH_UI - 18,
+} as const;
+
+/** Keep Glint framed beside the followed player throughout the wide crater
+ * trigger. Absolute crater tiles drift whenever the hill layout is rebuilt. */
+export function glintCraterStagePosition(playerX: number, playerY: number): { x: number; y: number } {
+  return { x: playerX + s(32), y: playerY - s(26) };
+}
+
 /** Resolve an authored spawn search rectangle to actual non-solid tile cells.
  * `blocked` lets the scene fold facade/prop bodies into the same decision while
  * keeping the rectangle/bounds logic deterministic and independently testable. */
@@ -8347,9 +8362,12 @@ export class OverworldScene extends Phaser.Scene {
     if (!GS.flag('met_glint')) {
       GS.setFlag('met_glint');
       await this.dlg.say(...DIALOGUE.crater_approach);
-      const glint = this.add.sprite(76 * TILE_PX, 12 * TILE_PX, 'glint');
-      glint.play('glint-flit').setDepth(9999);
-      const glow = this.add.circle(glint.x, glint.y, s(10), colorOf(px(RAMP.GOLD, 3)), 0.25).setDepth(9998);
+      const glintStage = glintCraterStagePosition(this.player.x, this.player.y);
+      const glint = this.add.sprite(glintStage.x, glintStage.y, 'glint');
+      glint.play('glint-flit').setDepth(STORY_STAGE_DEPTH.actor);
+      const glow = this.add
+        .circle(glint.x, glint.y, s(10), colorOf(px(RAMP.GOLD, 3)), 0.25)
+        .setDepth(STORY_STAGE_DEPTH.glow);
       this.tweens.add({ targets: [glint, glow], y: `-=${s(6)}`, duration: 900, yoyo: true, repeat: -1 });
       AUDIO.sfx('ember');
       await this.dlg.say(...DIALOGUE.glint_prophecy);
@@ -8361,7 +8379,7 @@ export class OverworldScene extends Phaser.Scene {
       const sentinel = this.add
         .image(this.player.x, this.player.y - s(24), 'authored_world_hush_sentinel')
         .setOrigin(0.5, 1)
-        .setDepth(9997)
+        .setDepth(STORY_STAGE_DEPTH.threat)
         .setAlpha(0)
         .setScale(0.6);
       this.tweens.add({ targets: sentinel, alpha: 1, scale: 1, duration: 1100, ease: 'back.out' });
@@ -8372,7 +8390,7 @@ export class OverworldScene extends Phaser.Scene {
       // supernova then blazes up from this same spot.
       const sentinelLeft = this.player.x - sentinel.width / 2;
       const glintRestX = sentinelLeft - glint.displayWidth / 2 - s(12);
-      const glintRestY = 12 * TILE_PX;
+      const glintRestY = glintStage.y;
       this.tweens.add({ targets: [glint, glow], x: glintRestX, duration: 650, ease: 'sine.inOut' });
       await this.dlg.say(...DIALOGUE.sentinel_warning);
       // ADR-121: Glint goes SUPERNOVA at the rally — the little flit blazes up into
@@ -8382,7 +8400,7 @@ export class OverworldScene extends Phaser.Scene {
       glow.destroy();
       const radiant = this.add
         .image(glintRestX, glintRestY, 'authored_world_glint_radiant')
-        .setDepth(9999)
+        .setDepth(STORY_STAGE_DEPTH.actor)
         .setScale(0.32)
         .setAlpha(0);
       this.tweens.add({ targets: radiant, alpha: 1, scale: 0.62, duration: 480, ease: 'sine.out' });
@@ -8480,7 +8498,7 @@ export class OverworldScene extends Phaser.Scene {
     } else {
       glint = this.add.sprite(this.player.x + s(40), this.player.y - s(40), 'glint');
     }
-    glint.setDepth(9999);
+    glint.setDepth(STORY_STAGE_DEPTH.actor);
     if (glint.anims.currentAnim?.key !== 'glint-flit' || !glint.anims.isPlaying) glint.play('glint-flit');
     await this.tweenTo(glint, this.player.x + s(12), this.player.y - s(18), 800);
     await this.dlg.say(DIALOGUE.porch_zapper[0], DIALOGUE.porch_zapper[1]);
@@ -8496,7 +8514,11 @@ export class OverworldScene extends Phaser.Scene {
     this.cameras.main.flash(280, 160, 236, 236);
     glint.destroy();
     await this.dlg.say(DIALOGUE.porch_zapper[2], DIALOGUE.porch_zapper[3], DIALOGUE.porch_zapper[4]);
-    const spark = this.add.image(zapX, zapY + s(10), 'pixel').setTint(colorOf(px(RAMP.GOLD, 3))).setScale(3).setDepth(9999);
+    const spark = this.add
+      .image(zapX, zapY + s(10), 'pixel')
+      .setTint(colorOf(px(RAMP.GOLD, 3)))
+      .setScale(3)
+      .setDepth(STORY_STAGE_DEPTH.actor);
     this.tweens.add({ targets: spark, x: this.player.x, y: this.player.y - s(12), duration: 900, ease: 'sine.inout' });
     await this.wait(950);
     this.sparkleBurst(this.player.x, this.player.y - s(12), 10);
