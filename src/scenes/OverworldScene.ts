@@ -1195,9 +1195,15 @@ export class OverworldScene extends Phaser.Scene {
       x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === 'V';
     // S7 (ADR-019): roads carve curbs into adjacent sidewalk, office walls
     // sprout fluorescent panels — render-time variants, deterministic, and
-    // identical in solidity to their base tiles.
-    const isRoad = (x: number, y: number): boolean =>
-      x >= 0 && y >= 0 && x < w && y < h && 'RDX23P'.includes(rows[y][x]);
+    // identical in solidity to their base tiles. The EB curb kit splits the
+    // old road test in two: the CARRIAGEWAY (includes '_', the E–W centre
+    // dash, which the old test missed on curved lanes) raises a curb FACE,
+    // while the crosswalk 'X' gets a FLUSH curb-cut ramp — EarthBound drops
+    // the curb at every crossing instead of walling it.
+    const isCarriage = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < w && y < h && 'RD_23P'.includes(rows[y][x]);
+    const isCross = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < w && y < h && rows[y][x] === 'X';
     // §A4.11 — the Sleeper's-shoulder meltwater fall: once Vibe Freeze locks it
     // (spine_meltfall_frozen), its foam-lip crossing ('E', x11-12) becomes a
     // WALKABLE ice bridge to the ear. Until then 'E' (sea_foam) stays solid.
@@ -1323,9 +1329,17 @@ export class OverworldScene extends Phaser.Scene {
             // dust track / Martian rock wall. Same solidity as the base, collision unchanged.
             name = MARS_TILE_SKIN[name];
           } else if (name === 'sidewalk') {
-            if (isRoad(x, y + 1)) name = 'sidewalk_curb';
-            else if (isRoad(x + 1, y)) name = 'sidewalk_curb_e';
-            else if (isRoad(x - 1, y)) name = 'sidewalk_curb_w';
+            // EB curb autotile (CURB_BASE family): mask bit set where the
+            // carriageway borders the slab → faces + true outer corners.
+            let mask = 0;
+            if (isCarriage(x, y - 1)) mask |= 1;
+            if (isCarriage(x + 1, y)) mask |= 2;
+            if (isCarriage(x, y + 1)) mask |= 4;
+            if (isCarriage(x - 1, y)) mask |= 8;
+            if (mask) name = `curb_${mask}`;
+            else if (isCross(x, y + 1)) name = 'curb_cut_s';
+            else if (isCross(x + 1, y)) name = 'curb_cut_e';
+            else if (isCross(x - 1, y)) name = 'curb_cut_w';
           } else if (name === 'office_wall' && x % 4 === 1) {
             name = 'office_wall_light';
           }

@@ -3,7 +3,7 @@
   "tilePx": 64,
   "artScale": 4,
   "atlas": "/assets/art/world/otterbrook_tiles_16.png",
-  "atlasCells": 191,
+  "atlasCells": 210,
   "charFrame": {
     "cols": 4,
     "rows": 12,
@@ -51,7 +51,11 @@
     "base": 13,
     "s": 27,
     "e": 28,
-    "w": 29
+    "w": 29,
+    "curbBase": 191,
+    "cutS": 207,
+    "cutE": 208,
+    "cutW": 209
   },
   "legend": [
     {

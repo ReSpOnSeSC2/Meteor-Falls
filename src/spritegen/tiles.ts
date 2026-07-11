@@ -14,6 +14,18 @@ import { drawTextInto } from './font';
 
 export const TILE = 16;
 
+/**
+ * Columns of the RUNTIME 'tiles' texture grid. The tileset is a single-row
+ * strip ON DISK (the apply-* and sync-* tools and the size-pin test keep it
+ * that way), but a 1-row runtime upload is TILESET.length·64px wide — already
+ * 12224px, past the 8192 MAX_TEXTURE_SIZE of SwiftShader and many mobile
+ * GPUs, which silently renders the ground layer BLACK. So the boot seam and
+ * applyAuthoredWorldTiles reflow the strip row-major into this many columns
+ * (64·64 = 4096px wide) before upload. Phaser's Tileset derives (col,row)
+ * from the texture's pixel size, so tile indices are unchanged.
+ */
+export const TILE_ATLAS_COLS = 64;
+
 /* ---------------------------------------------------------------- */
 /* Ground tiles                                                       */
 
@@ -1106,6 +1118,22 @@ TILESET.push({ name: 'road_dash_h', solid: false, make: roadDash });
 TILESET.push({ name: 'smile_floor', solid: false, make: smileFloor });
 TILESET.push({ name: 'smile_wall', solid: true, make: smileWall });
 TILESET.push({ name: 'smile_carpet', solid: false, make: smileCarpet });
+
+// EB CURB KIT (2026-07-11) — the sidewalk→street step, promoted from the old
+// 3-way swap (sidewalk_curb/_e/_w, kept above for index stability) to a full
+// 4-neighbour mask family: bit 1=N, 2=E, 4=S, 8=W is SET where a CARRIAGEWAY
+// cell (R D _ 2 3 P — NOT the crosswalk) borders the slab, so outer corners
+// get both faces and the north edge gets its thin shadow lip. Crosswalk-facing
+// edges render the three curb_cut_* FLUSH ramps instead of a face (EarthBound
+// drops the curb at every crossing). Art lives in the authored strip via
+// tools/apply-curb-kit.ts (slab tops are copied from the authored 'sidewalk'
+// cell so the family always matches the base pavement); make() is the frozen
+// flat fallback only.
+export const CURB_BASE = TILESET.length;
+for (let m = 0; m < 16; m++) TILESET.push({ name: `curb_${m}`, solid: false, make: sidewalkTile });
+TILESET.push({ name: 'curb_cut_s', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'curb_cut_e', solid: false, make: sidewalkTile });
+TILESET.push({ name: 'curb_cut_w', solid: false, make: sidewalkTile });
 
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);

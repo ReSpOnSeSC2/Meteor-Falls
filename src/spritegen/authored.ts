@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TILE, TILESET } from './tiles';
+import { TILE, TILESET, TILE_ATLAS_COLS } from './tiles';
 import { GENERATED_BUILDINGS } from './buildings';
 import { SPORT_FRAME_COUNT } from './athletes';
 import { GOLF_FRAME_COUNT } from './golfers';
@@ -2103,8 +2103,12 @@ function drawAuthoredTileStrip(ctx: CanvasRenderingContext2D, tileArt: SourceIma
   names.forEach((name, authoredIndex) => {
     const tileIndex = TILESET.findIndex((tile) => tile.name === name);
     if (tileIndex < 0) return;
-    ctx.clearRect(tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
-    ctx.drawImage(tileArt, authoredIndex * authoredCell, 0, authoredCell, authoredCell, tileIndex * RT_TILE, 0, RT_TILE, RT_TILE);
+    // dest is the row-major TILE_ATLAS_COLS grid (see tiles.ts) — the source
+    // strips stay single-row on disk, only the runtime texture is a grid.
+    const dx = (tileIndex % TILE_ATLAS_COLS) * RT_TILE;
+    const dy = Math.floor(tileIndex / TILE_ATLAS_COLS) * RT_TILE;
+    ctx.clearRect(dx, dy, RT_TILE, RT_TILE);
+    ctx.drawImage(tileArt, authoredIndex * authoredCell, 0, authoredCell, authoredCell, dx, dy, RT_TILE, RT_TILE);
   });
 }
 
@@ -2270,7 +2274,7 @@ export function applyAuthoredWorldTiles(scene: Phaser.Scene): void {
   if (laniTileArt) drawAuthoredTileStrip(ctx, laniTileArt, LANI_TILE_ART.names);
   if (marsTileArt) drawAuthoredTileStrip(ctx, marsTileArt, MARS_TILE_ART.names);
 
-  replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILESET.length, TILESET.length);
+  replaceTextureSheet(scene, 'tiles', canvas, RT_TILE, RT_TILE, TILE_ATLAS_COLS, TILESET.length);
 }
 
 export function applyAuthoredWorldProps(scene: Phaser.Scene): void {

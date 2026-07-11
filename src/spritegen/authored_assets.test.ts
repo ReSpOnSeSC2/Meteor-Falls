@@ -26,7 +26,7 @@ import {
   VALEA_FACADES,
   ZANZIBEL_FACADES,
 } from './buildings';
-import { TILESET } from './tiles';
+import { TILESET, TILE_ATLAS_COLS } from './tiles';
 import { ENEMY_OVERWORLD_SHEET_IDS } from '../data/visuals';
 import { ENEMY_BATTLE_ART, FORM_ART } from './enemies';
 
@@ -175,6 +175,15 @@ describe('authored world asset wiring', () => {
   it('uses the 64px replacement strip for the runtime world tiles', () => {
     const size = pngSize(resolve(process.cwd(), 'assets/art/world/otterbrook_tiles_16.png'));
     expect(size).toEqual({ w: TILESET.length * 64, h: 64 });
+  });
+
+  it('keeps the runtime tiles texture inside the 8192px GPU MAX_TEXTURE_SIZE floor', () => {
+    // The disk strip is one row, but the runtime upload is reflowed to a
+    // TILE_ATLAS_COLS grid — a single row would be TILESET.length·64px wide
+    // and render the ground layer black on 8192-limit GPUs (SwiftShader,
+    // many Android devices). Guard both grid axes.
+    expect(TILE_ATLAS_COLS * 64).toBeLessThanOrEqual(8192);
+    expect(Math.ceil(TILESET.length / TILE_ATLAS_COLS) * 64).toBeLessThanOrEqual(8192);
   });
 
   it('registers every committed facade PNG with the authored bridge', () => {

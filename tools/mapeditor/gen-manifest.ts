@@ -420,6 +420,14 @@ export const manifest = {
     s: tileIndexByName.get('sidewalk_curb') ?? -1,
     e: tileIndexByName.get('sidewalk_curb_e') ?? -1,
     w: tileIndexByName.get('sidewalk_curb_w') ?? -1,
+    // EB curb kit: the 16-mask family (curbBase + mask, bit 1=N 2=E 4=S 8=W set
+    // where the carriageway borders the slab) + the crosswalk curb-cut ramps.
+    // The editor prefers these when present; the legacy trio above stays for
+    // older manifest consumers.
+    curbBase: tileIndexByName.get('curb_0') ?? -1,
+    cutS: tileIndexByName.get('curb_cut_s') ?? -1,
+    cutE: tileIndexByName.get('curb_cut_e') ?? -1,
+    cutW: tileIndexByName.get('curb_cut_w') ?? -1,
   },
   legend,
   mapSkins,

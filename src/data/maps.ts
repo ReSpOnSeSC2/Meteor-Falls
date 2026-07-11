@@ -1020,6 +1020,16 @@ function buildOtterbrookTownReplica(): MapDef {
   // clear pass. It stays a single sidewalk row, so Civic Street's carriageway and
   // the map's road/elevation topology are unchanged.
   g.rect(35, 28, 8, 1, '=');
+  // ===== DOWNTOWN PROMENADE (EB Onett main-street read): the shop drag gets a
+  // TWO-TILE sidewalk. EarthBound's downtown pavement is a broad walkable plane
+  // the storefronts stand ON — a 1-tile ribbon reads as trim, not a sidewalk.
+  // North: the shop FOOT row (57) becomes pavement, so buildings front the walk
+  // and the gaps between facades show paving instead of lawn moats. South: a
+  // second row (64) along the drag — skipping the Pond Park lawn frontage
+  // (x<39), which stays grass like Onett's park side. grassLike-guarded, so the
+  // carriageway/junction topology and the one-component road law are untouched.
+  for (let x = 8; x <= 96; x++) if (grassLike(x, 57)) g.set(x, 57, '=');
+  for (let x = 39; x <= 96; x++) if (grassLike(x, 64)) g.set(x, 64, '=');
   fixJunctions();
   weatherStreets();
 
