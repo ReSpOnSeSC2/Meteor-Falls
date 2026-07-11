@@ -447,7 +447,9 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
 
   it('keeps the pre-dawn cave barrier and a production object budget', () => {
     expect(ob.props.some((p) => p.sprite === 'sawhorse' && p.x < 10 && p.unlessFlag === 'zapper_done')).toBe(true);
-    expect(ob.props.length).toBeLessThan(1100); // was 3,214 before sparse canopy accents
+    // was 3,214 before sparse canopy accents; +3 headroom (2026-07-11) for the
+    // EB downtown BACK RANK (the three tall skyline masses behind Main St)
+    expect(ob.props.length).toBeLessThan(1105);
     expect(ob.props.filter((p) => ['tree', 'tree_b', 'tree_c'].includes(p.sprite)).length).toBeLessThan(600);
     expect(ob.npcs.filter((n) => n.ifFlag === 'tick_defeated').length).toBeGreaterThanOrEqual(8);
   });

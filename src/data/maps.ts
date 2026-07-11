@@ -220,6 +220,11 @@ const OTTERBROOK_LANDMARK_DIMS: Record<string, readonly [number, number]> = {
   bldg_ob_house_green: [400, 384], // OBLIQUE
   bldg_ob_workshop: [386, 384], // OBLIQUE
   bldg_ob_hotel: [269, 384], // OBLIQUE — OTTERBROOKE HOTEL
+  // EB SCALE PASS (2026-07-11) — storey-band-cloned tall derivations
+  // (tools/derive-tall-facades.ts): the downtown skyline anchors. EB downtown
+  // runs 3-6.5 character-heights; 384px was 3 units, these are 4.25-4.5.
+  facade_hotel_tall: [269, 576], // OBLIQUE — the 7-storey hotel tower
+  facade_apartments_tall: [285, 544], // OBLIQUE — 5-storey brownstone block
   // 27 MAPLE — the FOR-SALE house (ADR-115 made real). A duplicate of the
   // bldg_ob_house_c art under a NON-'bldg_' key: its drawn door sits on the LEFT
   // third (frac ≈ .33), and the prefix keeps occupyCity from grafting a generated
@@ -866,9 +871,24 @@ function buildOtterbrookTownReplica(): MapDef {
   build('bldg_ob_burger', 33, 57, { to: 'burger_int', tx: 96, ty: 118 }, 'tick_defeated');
   build('bldg_bank', 39, 57, { to: 'bank_int', tx: 96, ty: 118 }, 'tick_defeated');
   build('facade_hardware', 47, 57, { to: 'hardware_int', tx: 120, ty: 128 });
-  build('bldg_ob_bakery', 61, 57, { to: 'bakery_int', tx: 96, ty: 118 }, 'tick_defeated');
+  // Bakery steps ONE ROW FORWARD (foot 58, on the promenade): its parapet and
+  // party wall y-sort OVER the drugstore's corner — EB's stepped-storefront
+  // stacking, not a flat row of shops sharing one baseline.
+  build('bldg_ob_bakery', 61, 58, { to: 'bakery_int', tx: 96, ty: 118 }, 'tick_defeated');
   build('drugstore', 67, 57, { to: 'drugstore_int', tx: 112, ty: 118 });
   build('arcade', 74, 57, { to: 'arcade_int', tx: 80, ty: 102 }, 'tick_defeated');
+  // EB SCALE + STACKING PASS (2026-07-11): the BACK RANK — tall doorless masses
+  // on the block interior between Orchard and Main, their lower storeys hidden
+  // behind the storefront row (true y-sort layering) and their towers breaking
+  // the skyline above it, the way Onett's hotel looms over the drag. Deliberate
+  // NO markFootprint: the occupied-clear would punch holes in Orchard St's
+  // carriageway; instead the towers simply rise in front of its south edge and
+  // the walk-behind read (player occluded on that short stretch) is the
+  // EarthBound norm. Collision comes from facadeSolids (texture-true), which
+  // narrows but never severs Orchard.
+  props.push(otterCentered('facade_apartments_tall', 36, 54)); // over the burger/bank party line
+  props.push(otterCentered('facade_hotel_tall', 70, 54)); // the tower over drugstore/arcade
+  props.push(otterCentered('facade_apartments_tall', 87, 53)); // brownstone above realty/Bert's lot
   // POND ST (row 76) — residential east of the park
   home('house_b', 48, 70);
   home('bldg_ob_house_green', 63, 70);

@@ -676,6 +676,12 @@ const BASE_FACADE_KEYS = [
   // HOTEL marquee. It replaces the anonymous east-civic apartment shell and
   // opens into the town's multi-map lodging interior.
   'bldg_ob_hotel',
+  // EB SCALE PASS (2026-07-11) — tall variants DERIVED from the authored
+  // facades by storey-band cloning (tools/derive-tall-facades.ts): EarthBound
+  // downtown buildings run 3-6.5 character-heights, ours were all 3. Interim
+  // anchors until the Batch-A ChatGPT re-authors replace the PNGs
+  // (docs/DOWNTOWN_OTTERBROOKE_REBUILD.md).
+  'facade_hotel_tall', 'facade_apartments_tall',
   // 27 MAPLE (2026-07-08) — the FOR-SALE house: the bldg_ob_house_c art duplicated
   // under a non-'bldg_' key (assets copy, same PNG) so occupyCity never grafts a
   // generated unit onto the pre-purchase, doorless lot. See maps.ts § 27 MAPLE.

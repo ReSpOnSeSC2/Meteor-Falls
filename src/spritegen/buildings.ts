@@ -371,4 +371,9 @@ export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
   // and 27 MAPLE (house_maple — the for-sale house's flag-gated door): all routed
   // through texture-derived collision + the entrance rebuild.
   'facade_realty', 'facade_autolot', 'facade_fillshop', 'facade_hardware', 'house_maple',
+  // EB SCALE PASS (2026-07-11) — the downtown BACK-RANK skyline masses (storey-
+  // band-cloned talls, tools/derive-tall-facades.ts). Deliberately NON-'bldg_'
+  // keys: they are doorless scenery volumes and must not be grafted into
+  // occupyCity housing units (the 27-Maple rule).
+  'facade_apartments_tall', 'facade_hotel_tall',
 ]);

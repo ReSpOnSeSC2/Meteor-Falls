@@ -3219,6 +3219,20 @@
       "h": 6
     },
     {
+      "key": "facade_hotel_tall",
+      "url": "/assets/art/world/facades/facade_hotel_tall.png",
+      "aspect": 0.467,
+      "w": 4.203,
+      "h": 9
+    },
+    {
+      "key": "facade_apartments_tall",
+      "url": "/assets/art/world/facades/facade_apartments_tall.png",
+      "aspect": 0.524,
+      "w": 4.453,
+      "h": 8.5
+    },
+    {
       "key": "house_maple",
       "url": "/assets/art/world/facades/house_maple.png",
       "aspect": 0.906,
