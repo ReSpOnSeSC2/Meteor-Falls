@@ -75,7 +75,15 @@ export class Grid {
 export function doorstepOf(map: MapDef, to: string): { tx: number; ty: number } | null {
   const prop = map.props.find((p) => p.door?.to === to);
   const d = prop?.door;
-  if (prop && d) return { tx: prop.x * 16 + d.ox + d.w / 2, ty: prop.y * 16 + d.oy + d.h + 5 };
+  if (prop && d) {
+    // Door offsets are NATIVE units; a per-instance scale (the realty/autolot/
+    // EB-scale-pass facades) multiplies them at render, so the true exterior
+    // doorstep scales too — without this a scaled shop's return exit lands
+    // rows short, inside the facade (caught by the door-audit body box).
+    const sx = typeof prop.scale === 'number' ? prop.scale : prop.scale?.x ?? 1;
+    const sy = typeof prop.scale === 'number' ? prop.scale : prop.scale?.y ?? 1;
+    return { tx: prop.x * 16 + (d.ox + d.w / 2) * sx, ty: prop.y * 16 + (d.oy + d.h) * sy + 5 };
+  }
 
   const zone = map.doors.find((door) => door.to === to);
   if (!zone) return null;

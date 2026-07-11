@@ -249,14 +249,19 @@ function otterLandmark(
   x: number,
   y: number,
   door?: { to: string; tx: number; ty: number },
+  scale = 1,
 ): PropDef {
   const [tw, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
   const p: PropDef = {
     sprite,
     x,
     y,
-    solid: { ox: 0, oy: 10, w: Math.max(48, Math.round(tw / 4)), h: Math.max(48, Math.round(th / 4) - 10) },
+    solid: { ox: 0, oy: 10, w: Math.max(48, Math.round((tw * scale) / 4)), h: Math.max(48, Math.round((th * scale) / 4) - 10) },
   };
+  // EB SCALE PASS (2026-07-11): per-instance scale, the realty/autolot
+  // precedent — the runtime multiplies door offsets and rebuilds facade
+  // collision from displayWidth/Height, so door metrics stay NATIVE here.
+  if (scale !== 1) p.scale = scale;
   if (door) {
     const w = 16;
     p.door = { ox: Math.round(tw / 8 - w / 2), oy: Math.round(th / 4) - 22, w, h: 20, to: door.to, tx: door.tx, ty: door.ty };
@@ -269,22 +274,25 @@ function otterLandmarkBottom(
   x: number,
   bottomTile: number,
   door?: { to: string; tx: number; ty: number },
+  scale = 1,
 ): PropDef {
   const [, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
-  return otterLandmark(sprite, x, bottomTile - th / 64, door);
+  return otterLandmark(sprite, x, bottomTile - (th * scale) / 64, door, scale);
 }
 
 /** place a facade CENTERED horizontally on tile `cx`, its base at row `bottomTile`.
- *  (Facades render at texW/64 tiles wide, so top-left x = cx − halfWidthTiles.) Used
- *  by the concept-faithful layout, where each building's *centre* is read off the grid. */
+ *  (Facades render at texW·scale/64 tiles wide, so top-left x = cx − halfWidthTiles.)
+ *  Used by the concept-faithful layout, where each building's *centre* is read off
+ *  the grid. */
 function otterCentered(
   sprite: string,
   cx: number,
   bottomTile: number,
   door?: { to: string; tx: number; ty: number },
+  scale = 1,
 ): PropDef {
   const [tw] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
-  return otterLandmarkBottom(sprite, cx - tw / 128, bottomTile, door);
+  return otterLandmarkBottom(sprite, cx - (tw * scale) / 128, bottomTile, door, scale);
 }
 
 /**
@@ -545,10 +553,10 @@ function buildOtterbrookTownReplica(): MapDef {
     if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) return;
     props.push({ sprite: treeSprite(Math.round(x), Math.round(y)), x, y });
   };
-  const markFootprint = (sprite: string, cx: number, bottom: number): void => {
+  const markFootprint = (sprite: string, cx: number, bottom: number, scale = 1): void => {
     const [tw, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
-    const wT = Math.ceil(tw / 64);
-    const hT = Math.ceil(th / 64);
+    const wT = Math.ceil((tw * scale) / 64);
+    const hT = Math.ceil((th * scale) / 64);
     const x0 = Math.max(0, Math.floor(cx - wT / 2) - 1);
     const x1 = Math.min(W - 1, Math.ceil(cx + wT / 2) + 1);
     const y0 = Math.max(0, bottom - hT - 1);
@@ -563,15 +571,16 @@ function buildOtterbrookTownReplica(): MapDef {
     bottom: number,
     door?: { to: string; tx: number; ty: number },
     openFlag?: string,
+    scale = 1,
   ): void => {
-    const facade = otterCentered(s, cx, bottom, door);
+    const facade = otterCentered(s, cx, bottom, door, scale);
     if (door && openFlag) {
-      props.push({ ...otterCentered(s, cx, bottom), unlessFlag: openFlag });
+      props.push({ ...otterCentered(s, cx, bottom, undefined, scale), unlessFlag: openFlag });
       props.push({ ...facade, ifFlag: openFlag });
     } else {
       props.push(facade);
     }
-    markFootprint(s, cx, bottom);
+    markFootprint(s, cx, bottom, scale);
     if (/^(house_|bldg_ob_house|bldg_ob_cottage)/.test(s)) yarded.push({ cx, bottom, w: wOf(s) + 7 });
   };
   const line = (n: number, v: number): number[] => Array.from({ length: n }, () => v);
@@ -848,10 +857,21 @@ function buildOtterbrookTownReplica(): MapDef {
   // Civic Street gap between the depot and City Hall, not the remote east fringe
   // (and never the hill/cave band). doorstepOf() derives the reciprocal lobby exit
   // from this door, so moving the facade keeps the interior round-trip exact.
-  build('bldg_ob_hotel', 39, 27, { to: 'otter_hotel_lobby', tx: 9 * 16 + 8, ty: 10 * 16 + 12 });
-  build('bldg_ob_city_hall', 46, 27, { to: 'otterbrook_cityhall', tx: 120, ty: 128 });
+  // EB SCALE PASS (2026-07-11): the hotel is now the 7-STOREY TOWER
+  // (facade_hotel_tall, 4.5 character-units) — Onett's hotel looms over its
+  // town, ours finally does too. Its 9-row image reaches past North Res St,
+  // so the footprint is marked BY HAND from row 20 down (a full markFootprint
+  // would put North Res's carriageway inside the occupied-clear and punch
+  // permanent holes in the asphalt — the G1 trap). The image overlapping the
+  // street above is the normal EB walk-behind read.
+  props.push(otterCentered('facade_hotel_tall', 39, 27, { to: 'otter_hotel_lobby', tx: 9 * 16 + 8, ty: 10 * 16 + 12 }));
+  for (let yy = 20; yy <= 28; yy++) for (let xx = 35; xx <= 43; xx++) occupied.add(idx(xx, yy));
+  // City Hall + clinic grow too, capped at ×1.15: at foot 27 an 8-row-tall
+  // footprint (scale > ~1.16) reaches row 18, where Civic's curved North Res
+  // carriageway peaks — the same G1 trap.
+  build('bldg_ob_city_hall', 46, 27, { to: 'otterbrook_cityhall', tx: 120, ty: 128 }, undefined, 1.15);
   build('facade_otter_station', 64, 27, { to: 'otter_station', tx: 120, ty: 128 });
-  build('bldg_ob_clinic', 76, 27, { to: 'otter_clinic_int', tx: 120, ty: 128 });
+  build('bldg_ob_clinic', 76, 27, { to: 'otter_clinic_int', tx: 120, ty: 128 }, undefined, 1.15);
   build('bldg_brickmore', 88, 27);
   // ORCHARD ST (row 46) — residential
   home('bldg_ob_house_green', 12, 40);
@@ -868,16 +888,22 @@ function buildOtterbrookTownReplica(): MapDef {
   // (2026-07-11): the core storefronts butt into two CONTINUOUS blocks flanking
   // the spine (gaps ≤ ~1 tile, party-wall style, like Onett's drag) instead of
   // detached lots — only the gas station keeps its forecourt air at the west end.
+  // EB SCALE PASS (2026-07-11): the ON-STREET buildings themselves grow to
+  // EB's building-to-character ratios (Onett's smallest storefront is ~3.1
+  // character-units, its anchors 4-6.5). Per-instance scale, the realty/
+  // autolot precedent — doors/collision are texture-true at runtime. The
+  // hardware store and the gas station deliberately stay low (EB's rhythm
+  // keeps one wide low unit per block).
   build('facade_fillshop', 12, 57, { to: 'diner_int', tx: 120, ty: 128 }, 'tick_defeated');
-  build('bldg_ob_burger', 33, 57, { to: 'burger_int', tx: 96, ty: 118 }, 'tick_defeated');
-  build('bldg_bank', 39, 57, { to: 'bank_int', tx: 96, ty: 118 }, 'tick_defeated');
+  build('bldg_ob_burger', 32, 57, { to: 'burger_int', tx: 96, ty: 118 }, 'tick_defeated', 1.1);
+  build('bldg_bank', 40, 57, { to: 'bank_int', tx: 96, ty: 118 }, 'tick_defeated', 1.3);
   build('facade_hardware', 47, 57, { to: 'hardware_int', tx: 120, ty: 128 });
   // Bakery steps ONE ROW FORWARD (foot 58, on the promenade): its parapet and
   // party wall y-sort OVER the drugstore's corner — EB's stepped-storefront
   // stacking, not a flat row of shops sharing one baseline.
-  build('bldg_ob_bakery', 61, 58, { to: 'bakery_int', tx: 96, ty: 118 }, 'tick_defeated');
-  build('drugstore', 67, 57, { to: 'drugstore_int', tx: 112, ty: 118 });
-  build('arcade', 74, 57, { to: 'arcade_int', tx: 80, ty: 102 }, 'tick_defeated');
+  build('bldg_ob_bakery', 61, 58, { to: 'bakery_int', tx: 96, ty: 118 }, 'tick_defeated', 1.15);
+  build('drugstore', 67.5, 57, { to: 'drugstore_int', tx: 112, ty: 118 }, undefined, 1.22);
+  build('arcade', 74.5, 57, { to: 'arcade_int', tx: 80, ty: 102 }, 'tick_defeated', 1.12);
   // EB SCALE + STACKING PASS (2026-07-11): the BACK RANK — tall doorless masses
   // on the block interior between Orchard and Main, their lower storeys hidden
   // behind the storefront row (true y-sort layering) and their towers breaking

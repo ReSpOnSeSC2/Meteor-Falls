@@ -1,5 +1,9 @@
 # DOWNTOWN OTTERBROOKE — the EB street rebuild (spec + prompt pack)
 
+> Rolling these features out to EVERY OTHER map/level: see
+> [`docs/EB_POLISH_ROLLOUT_HANDOFF.md`](EB_POLISH_ROLLOUT_HANDOFF.md) — the
+> game-wide recipe, per-region caveats, and the gotcha list from this pilot.
+
 Goal (user directive 2026-07-11): make downtown read like **EarthBound's Onett
 main street** — building massing/stacking, building-to-character scale, the
 sidewalk→street curb step, street furniture, and the pale-street value
