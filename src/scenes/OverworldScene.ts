@@ -168,7 +168,15 @@ import { colorOf, RAMP, px } from '../palette';
 import { s, ART_SCALE, TILE_PX } from '../spritegen/scale';
 import { showCard, showCaption, playStagedScene } from '../engine/cutsceneStage';
 import { ch1FirstHeartlight } from '../data/cutscenes_staged';
-import { openingPhase, type OpeningPhase } from '../engine/opening';
+import {
+  OPENING_CAMERA,
+  OPENING_CAPTION_HOLDS,
+  OPENING_CAPTIONS,
+  openingPhase,
+  playOpeningCameraLeg,
+  type OpeningPhase,
+} from '../engine/opening';
+import { readableCaptionMs } from '../engine/cutscenePacing';
 import { chapter1BannerTag, chapter1Phase, type Chapter1Phase } from '../engine/ch1Story';
 
 interface Rect {
@@ -7703,7 +7711,11 @@ export class OverworldScene extends Phaser.Scene {
     cam.centerOn(impactX, impactY);
 
     // 1) establishing still — the wrong star (held long)
-    await showCard(this, 'meteor_2am', { chapter: 'ch1', caption: 'Otterbrooke, Ohio. Summer, 1995.', ms: 3800 });
+    await showCard(this, 'meteor_2am', {
+      chapter: 'ch1',
+      caption: OPENING_CAPTIONS.establishing,
+      ms: OPENING_CAPTION_HOLDS.establishing,
+    });
 
     // reveal the live night hill behind the card (fade the no-flash entry blackout)
     if (this.entryBlackout) {
@@ -7714,9 +7726,9 @@ export class OverworldScene extends Phaser.Scene {
 
     // 2) the descent — it falls into the crater while the camera leans IN, slowly
     await this.wait(700);
-    cam.zoomTo(0.95, 4400, 'Sine.easeInOut');
+    cam.zoomTo(0.95, OPENING_CAMERA.meteorFallMs, 'Sine.easeInOut');
     // narrate the fall so the silent overworld beat reads as story, not screensaver
-    void showCaption(this, 'A wrong star falls over Otterbrooke — too low, too bright, and coming down fast.', { ms: 3000 });
+    const fallCaption = showCaption(this, OPENING_CAPTIONS.falling, { ms: OPENING_CAPTION_HOLDS.falling });
     const shadow = this.add
       .image(impactX, impactY, 'mob_shadow')
       .setOrigin(0.5, 0.5).setAlpha(0).setScale(0.5).setDepth(impactY - 1);
@@ -7730,10 +7742,21 @@ export class OverworldScene extends Phaser.Scene {
         this.tweens.add({ targets: p, x: p.x + s(8), y: p.y - s(6), alpha: 0, scale: 0.2, duration: 360, onComplete: () => p.destroy() });
       },
     });
-    this.tweens.add({ targets: shadow, alpha: 0.55, scale: 1.6, duration: 4000 });
-    await new Promise<void>((res) => {
-      this.tweens.add({ targets: meteor, x: impactX, y: impactY, scale: 1, angle: 200, duration: 4000, ease: 'Quad.easeIn', onComplete: () => res() });
+    this.tweens.add({ targets: shadow, alpha: 0.55, scale: 1.6, duration: OPENING_CAMERA.meteorFallMs });
+    const meteorFall = new Promise<void>((res) => {
+      this.tweens.add({
+        targets: meteor,
+        x: impactX,
+        y: impactY,
+        scale: 1,
+        angle: 200,
+        duration: OPENING_CAMERA.meteorFallMs,
+        ease: 'Quad.easeIn',
+        onComplete: () => res(),
+      });
     });
+    // Skipping the caption never skips or overlaps the physical fall.
+    await Promise.all([meteorFall, fallCaption]);
     shed.remove();
 
     // 3) IMPACT — the crater takes it; the static rock becomes the landed meteor
@@ -7748,29 +7771,39 @@ export class OverworldScene extends Phaser.Scene {
     this.tweens.add({ targets: glow, scale: 1.6, fillAlpha: 0.2, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     await this.wait(1500);
 
-    // 4) the painted impact card (held long)
-    await showCard(this, 'hickory_hill', { chapter: 'ch1', caption: 'It comes down behind Hickory Hill, and the whole town feels it land.', ms: 3800 });
-
-    // hand off to the OVERVIEW (phase 2) INLINE — same elevated map (no cut). The crater,
-    // {rex}'s house, and the climb all live here now.
-    GS.setFlag('op_fell');
-    await this.openingHouseOverview();
-  }
-
-  /** Opening phase 2 (Otterbrook): the overview opens on {rex}'s house, holds, then
-   *  pans up toward the road out of town — then cuts to the hill for the climb. */
-  private async openingHouseOverview(): Promise<void> {
-    this.cut = true;
-    const cam = this.cameras.main;
-    cam.stopFollow();
-    this.player.setVisible(false);
+    // 4) the painted impact card. While it fully covers the world, reframe on
+    // the sleeping house so the card dissolves into the next shot without a pop.
     const house = this.children.list.find(
       (o): o is Phaser.GameObjects.Image =>
         o instanceof Phaser.GameObjects.Image && o.texture.key === 'house_rex',
     );
     const houseX = house ? house.x + house.displayWidth / 2 : 49 * TILE_PX;
     const houseY = house ? house.y + house.displayHeight / 2 : 52 * TILE_PX;
-    cam.setZoom(0.9); // open on the house + its street (wide), not jammed in close
+    const frameHouse = (): void => {
+      cam.setZoom(OPENING_CAMERA.houseToTrail.fromZoom);
+      cam.centerOn(houseX, houseY);
+    };
+    await showCard(this, 'hickory_hill', {
+      chapter: 'ch1',
+      caption: OPENING_CAPTIONS.impact,
+      ms: OPENING_CAPTION_HOLDS.impact,
+      onCovered: frameHouse,
+    });
+
+    // hand off to the OVERVIEW (phase 2) INLINE — same elevated map (no cut). The crater,
+    // {rex}'s house, and the climb all live here now.
+    GS.setFlag('op_fell');
+    await this.openingHouseOverview(houseX, houseY);
+  }
+
+  /** Opening phase 2 (Otterbrook): the overview opens on {rex}'s house, holds, then
+   *  begins the uninterrupted camera climb from town to the crater. */
+  private async openingHouseOverview(houseX: number, houseY: number): Promise<void> {
+    this.cut = true;
+    const cam = this.cameras.main;
+    cam.stopFollow();
+    this.player.setVisible(false);
+    cam.setZoom(OPENING_CAMERA.houseToTrail.fromZoom); // same hidden reframe used under the impact card
     cam.centerOn(houseX, houseY);
     if (this.entryBlackout) {
       const b = this.entryBlackout;
@@ -7779,13 +7812,21 @@ export class OverworldScene extends Phaser.Scene {
     }
     AUDIO.sfx('rumble');
     // establish on the sleeping house, with a line so the player knows whose it is
-    await showCaption(this, "Down one of these streets, a kid named {rex} is fast asleep — same as the whole town.", { ms: 2800 });
+    await showCaption(this, OPENING_CAPTIONS.sleepingTown, { ms: OPENING_CAPTION_HOLDS.sleepingTown });
     // then drift up toward the hill road, narrating what's waiting up there —
     // the S9 LONG CLIMB leaves the terrace at the x56 stair, so the drift ends
     // on the trail foot (the climb phase picks up the camera right there)
-    cam.pan(56 * TILE_PX, 44 * TILE_PX, 4200, 'Sine.easeInOut'); // drift to the crater trail's foot
-    await showCaption(this, "But something came down on the hill tonight, and it's still glowing up there.", { ms: 3400 });
-    await this.wait(400);
+    const trailPan = playOpeningCameraLeg(
+      cam,
+      OPENING_CAMERA.trail.tx * TILE_PX,
+      OPENING_CAMERA.trail.ty * TILE_PX,
+      OPENING_CAMERA.houseToTrail.durationMs,
+      OPENING_CAMERA.houseToTrail.toZoom,
+    );
+    await Promise.all([
+      trailPan,
+      showCaption(this, OPENING_CAPTIONS.hillApproach, { ms: OPENING_CAPTION_HOLDS.hillApproach }),
+    ]);
     GS.setFlag('op_house');
     await this.openingHillClimb(); // INLINE — the climb is up THIS map's terraces now
   }
@@ -7803,8 +7844,8 @@ export class OverworldScene extends Phaser.Scene {
     );
     const craterX = landed ? landed.x + landed.displayWidth / 2 : 69 * TILE_PX;
     const craterY = landed ? landed.y + landed.displayHeight / 2 : 6 * TILE_PX;
-    cam.setZoom(0.78); // wide — the whole hill reads as a climb
-    cam.centerOn(56 * TILE_PX, 46 * TILE_PX); // start at the stair foot of the LONG CLIMB (where the overview left us)
+    // Continue from openingHouseOverview's exact endpoint and zoom. This used to
+    // re-center two tiles backward and snap the zoom, visibly restarting the shot.
     if (this.entryBlackout) {
       const b = this.entryBlackout;
       this.entryBlackout = undefined;
@@ -7812,13 +7853,22 @@ export class OverworldScene extends Phaser.Scene {
     }
     const glow = this.add.circle(craterX, craterY, s(22), 0xf8d868, 0.45).setDepth(craterY - 2);
     this.tweens.add({ targets: glow, scale: 1.6, fillAlpha: 0.2, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    await this.wait(700);
     AUDIO.sfx('rumble');
-    cam.pan(craterX, craterY, 6500, 'Sine.easeInOut'); // a slow climb to the crater
-    // two lines pace the climb so the long pan reads as a story beat, not dead air
-    await showCaption(this, "The trail climbs Hickory Hill, toward a light that wasn't there yesterday.", { ms: 2600 });
-    await showCaption(this, 'Whatever fell is still up there — still glowing, still warm.', { ms: 2400 });
-    await this.wait(800);
+    const craterPan = playOpeningCameraLeg(
+      cam,
+      craterX,
+      craterY,
+      OPENING_CAMERA.trailToCrater.durationMs,
+      OPENING_CAMERA.trailToCrater.toZoom,
+    );
+    const hillNarration = (async (): Promise<void> => {
+      await showCaption(this, OPENING_CAPTIONS.trailClimb, { ms: OPENING_CAPTION_HOLDS.trailClimb });
+      await this.wait(OPENING_CAMERA.betweenHillLinesMs);
+      await showCaption(this, OPENING_CAPTIONS.craterGlow, { ms: OPENING_CAPTION_HOLDS.craterGlow });
+    })();
+    // Captions remain skippable; the physical shot always reaches the meteor.
+    await Promise.all([craterPan, hillNarration]);
+    await this.wait(OPENING_CAMERA.craterHoldMs);
     this.cinematicCut('rex_bedroom', 72, 88);
   }
 
@@ -7874,9 +7924,9 @@ export class OverworldScene extends Phaser.Scene {
     );
     const say = async (text: string): Promise<void> => {
       caption.setText(vars(text)).setAlpha(0);
-      this.tweens.add({ targets: caption, alpha: 1, duration: 260 });
+      await waitTween({ targets: caption, alpha: 1, duration: 260 });
       // unhurried: kids read this (user pacing note, ADR-041)
-      await this.wait(Math.max(2600, 1000 + text.length * 55));
+      await this.wait(readableCaptionMs(vars(text)));
       await waitTween({ targets: caption, alpha: 0, duration: 240 });
     };
 

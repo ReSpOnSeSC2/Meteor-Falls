@@ -24,6 +24,7 @@ import { Dialogue, everyFrame, vars } from '../ui/windows';
 import { popEmote, type EmoteHandle, type EmoteId } from './emote';
 import { standFrame, type Facing } from '../spritegen';
 import { cutscenePanelKey } from './cutscene';
+import { readableCaptionMs } from './cutscenePacing';
 
 const STAGE_BASE = 80_000; // > world actors (depth≈y), < DEPTH_UI (90_000)
 const D = {
@@ -68,8 +69,11 @@ export interface StageActor {
 export interface CardOpts {
   chapter?: string; // default 'ch1'
   caption?: string;
-  ms?: number; // hold before auto-advance (skippable). Default ~2600
+  /** Minimum fully-visible hold before auto-advance (skippable). */
+  ms?: number;
   depth?: number;
+  /** Runs once the opaque card can safely hide a live-camera reframe. */
+  onCovered?: () => void;
 }
 
 /** A skippable wait: resolves after `ms`, or early on A/B/START. */
@@ -86,42 +90,53 @@ export function waitSkippable(scene: Phaser.Scene, ms: number): Promise<void> {
   });
 }
 
+function fadeTo(
+  scene: Phaser.Scene,
+  targets: Phaser.GameObjects.GameObject | Phaser.GameObjects.GameObject[],
+  alpha: number,
+  duration: number,
+  delay = 0,
+): Promise<void> {
+  return new Promise((resolve) => {
+    scene.tweens.add({ targets, alpha, duration, delay, onComplete: () => resolve() });
+  });
+}
+
 /**
  * Show a painted panel card full-screen (Ken Burns push-in + optional caption):
  * fade in, hold (skippable), fade out. Standalone so ANY cutscene — a live-map
  * OverworldScene beat or a set-based staged scene — can flash an establishing
  * still without a Director.
  */
-export function showCard(scene: Phaser.Scene, art: string, opts: CardOpts = {}): Promise<void> {
+export async function showCard(scene: Phaser.Scene, art: string, opts: CardOpts = {}): Promise<void> {
   const cam = scene.cameras.main;
   const key = cutscenePanelKey(opts.chapter ?? 'ch1', art);
-  if (!scene.textures.exists(key)) return Promise.resolve();
+  if (!scene.textures.exists(key)) return;
   const depth = opts.depth ?? D.card;
+  const caption = opts.caption ? vars(opts.caption) : undefined;
+  const hold = caption ? readableCaptionMs(caption, opts.ms) : (opts.ms ?? 2600);
   const img = scene.add
     .image(cam.width / 2, cam.height / 2, key)
     .setScrollFactor(0)
     .setDepth(depth)
     .setAlpha(0);
   const cover = Math.max(cam.width / img.width, cam.height / img.height);
-  const hold = opts.ms ?? 2600;
-  // Continuous Ken Burns: a slow diagonal push-in across the WHOLE card (fade-in
-  // + hold), not just a 600ms nudge that then freezes — keeps the still alive.
+  // Continuous Ken Burns across entrance, readable hold, and exit keeps the still alive.
   const panX = s(18);
   const panY = s(11);
   img.setScale(cover * 1.06).setPosition(cam.width / 2 - panX, cam.height / 2 - panY);
-  scene.tweens.add({ targets: img, alpha: 1, duration: 600, ease: 'sine.out' });
   scene.tweens.add({
     targets: img,
     scale: cover * 1.26,
     x: cam.width / 2 + panX,
     y: cam.height / 2 + panY,
-    duration: 600 + hold,
+    duration: 600 + hold + 420,
     ease: 'sine.inOut',
   });
   let text: Phaser.GameObjects.BitmapText | null = null;
-  if (opts.caption) {
+  if (caption) {
     text = scene.add
-      .bitmapText(cam.width / 2, cam.height - s(34), 'retro', opts.caption, s(6))
+      .bitmapText(cam.width / 2, cam.height - s(34), 'retro', caption, s(6))
       .setOrigin(0.5, 0)
       .setCenterAlign()
       .setMaxWidth(cam.width - s(40))
@@ -129,23 +144,16 @@ export function showCard(scene: Phaser.Scene, art: string, opts: CardOpts = {}):
       .setScrollFactor(0)
       .setDepth(depth + 1)
       .setAlpha(0);
-    scene.tweens.add({ targets: text, alpha: 1, duration: 360, delay: 200 });
   }
-  return waitSkippable(scene, hold).then(
-    () =>
-      new Promise<void>((resolve) => {
-        scene.tweens.add({
-          targets: text ? [img, text] : img,
-          alpha: 0,
-          duration: 420,
-          onComplete: () => {
-            img.destroy();
-            text?.destroy();
-            resolve();
-          },
-        });
-      }),
-  );
+  await Promise.all([
+    fadeTo(scene, img, 1, 600),
+    text ? fadeTo(scene, text, 1, 360, 200) : Promise.resolve(),
+  ]);
+  opts.onCovered?.();
+  await waitSkippable(scene, hold);
+  await fadeTo(scene, text ? [img, text] : img, 0, 420);
+  img.destroy();
+  text?.destroy();
 }
 
 /**
@@ -156,12 +164,17 @@ export function showCard(scene: Phaser.Scene, art: string, opts: CardOpts = {}):
  * Tokens ({rex}…) resolve via vars(); a soft shade plate keeps the words legible
  * over bright world tiles. Resolves once it has fully faded out.
  */
-export function showCaption(scene: Phaser.Scene, text: string, opts: { ms?: number; depth?: number } = {}): Promise<void> {
+export async function showCaption(
+  scene: Phaser.Scene,
+  text: string,
+  opts: { ms?: number; depth?: number } = {},
+): Promise<void> {
   const cam = scene.cameras.main;
-  const hold = opts.ms ?? 2600;
+  const resolved = vars(text);
+  const hold = readableCaptionMs(resolved, opts.ms);
   const depth = opts.depth ?? D.cardText;
   const t = scene.add
-    .bitmapText(cam.width / 2, cam.height - s(34), 'retro', vars(text), s(6))
+    .bitmapText(cam.width / 2, cam.height - s(34), 'retro', resolved, s(6))
     .setOrigin(0.5, 0)
     .setCenterAlign()
     .setMaxWidth(cam.width - s(40))
@@ -176,22 +189,11 @@ export function showCaption(scene: Phaser.Scene, text: string, opts: { ms?: numb
     .setScrollFactor(0)
     .setDepth(depth - 1)
     .setAlpha(0);
-  scene.tweens.add({ targets: [t, plate], alpha: 1, duration: 360 });
-  return waitSkippable(scene, hold).then(
-    () =>
-      new Promise<void>((resolve) => {
-        scene.tweens.add({
-          targets: [t, plate],
-          alpha: 0,
-          duration: 420,
-          onComplete: () => {
-            t.destroy();
-            plate.destroy();
-            resolve();
-          },
-        });
-      }),
-  );
+  await fadeTo(scene, [t, plate], 1, 360);
+  await waitSkippable(scene, hold);
+  await fadeTo(scene, [t, plate], 0, 420);
+  t.destroy();
+  plate.destroy();
 }
 
 export interface LetterboxHandle {

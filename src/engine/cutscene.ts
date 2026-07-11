@@ -18,6 +18,7 @@ import { AUDIO } from './audio';
 import { vars } from '../ui/text';
 import { DEPTH_UI, everyFrame } from '../ui/windows';
 import { CUTSCENES, cutscenePanelFilenames, type Cutscene, type CutsceneBeat } from '../data/cutscenes';
+import { captionTimelineMs, readableCaptionMs } from './cutscenePacing';
 
 // Eager URL map of every cutscene panel actually on disk. A registry beat with
 // no matching PNG yet is simply skipped (no 404) until its art lands — so a
@@ -70,14 +71,12 @@ export function cutsceneReady(id: string): boolean {
   return !!def && def.beats.length > 0 && !!panelUrl(def.chapter, def.beats[0].art);
 }
 
-// unhurried, kid-readable pacing (mirrors the ADR-041 opening captions)
-function captionHoldMs(text: string): number {
-  return Math.max(2600, 1000 + text.length * 55);
-}
-
 function beatMotionMs(beat: CutsceneBeat): number {
   const caps = beat.captions ?? [];
-  const capMs = caps.reduce((sum, c) => sum + captionHoldMs(vars(c)), 0);
+  const capMs = caps.reduce(
+    (sum, c) => sum + captionTimelineMs(vars(c), { fadeInMs: 240, fadeOutMs: 200 }),
+    0,
+  );
   return Math.max(2800, capMs) + (beat.hold ?? 0) + 700;
 }
 
@@ -178,23 +177,12 @@ function makeCaptioner(scene: Phaser.Scene, w: number, h: number, depth: number)
     });
 
   return {
-    show(raw: string): Promise<void> {
+    async show(raw: string): Promise<void> {
       const text = vars(raw);
       txt.setText(text);
-      void fade(scrim, 0.34, 240);
-      void fade(txt, 1, 240);
-      return new Promise<void>((resolve) => {
-        let elapsed = 0;
-        const hold = captionHoldMs(text);
-        const off = everyFrame(scene, (dt) => {
-          elapsed += dt;
-          if (elapsed >= hold || INPUT.justPressed('A') || INPUT.justPressed('B') || INPUT.justPressed('START')) {
-            off();
-            void fade(scrim, 0, 200);
-            void fade(txt, 0, 200).then(resolve);
-          }
-        });
-      });
+      await Promise.all([fade(scrim, 0.34, 240), fade(txt, 1, 240)]);
+      await holdMs(scene, readableCaptionMs(text));
+      await Promise.all([fade(scrim, 0, 200), fade(txt, 0, 200)]);
     },
     destroy(): void {
       txt.destroy();
