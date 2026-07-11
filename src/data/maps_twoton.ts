@@ -23,14 +23,14 @@ export const twotonMap: MapDef = {
     "bbbbbb....bbbb,.bbbb..bbbb.,bbbbbb..bb.~..bbbbbbbbbbbbbb..bbbbF.....F.b=RRDRR=bbbbbb..bb..bb........bbbb",
     "bbbbbb......bb..bbbb..bbbb..bbbbbb...f.........~..bbbb....bb..........b=RRRRR=......,.~...bb.......~.bbb",
     "bbbbbb.....F................................,,,............,...........=RRRRR=.......................bbb",
-    "bbbbbbbbbbbb.......................................................,...=RRDRR=...........,...........bbb",
+    "bbbbbbbbbbbb.......................................................,...=RRDR4=...........,...........bbb",
     "bbbbbbbbbb..............~.............,...,........,...f.......f.....~.=RRDRR=........,..............bbb",
     "bbbbbbbbbbb.........................................f.........,........=RRRRR=...........,...........bbb",
     "bbbbbbbbbb..........~......~......................f....................=RRRRR=~..~..........,........bbb",
-    "bbbbbbbbbbbb..............F....,................~...,............~.....=RRDRR=..............f.......bbbb",
+    "bbbbbbbbbbbb============================================================RRDRR=..............f.......bbbb",
     "bbbbbbbbbbb=============================================================RRDRR============...........bbbb",
     "bbbbbbbbbbRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRXRXRXRRRRRRRXRXR=.......,....bbb",
-    "bbbbbbbbbbRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRXRXRRRRRRRXRXRX=............bbb",
+    "bbbbbbbbbbRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR4RRRXRXRRRRR4RXRXRX=............bbb",
     "bbbbbbbbbbRRRR___RRRR___RRRR___RRRR___RRRR___RRRR___RRRR___RRRR___RRRR__XRXRX___RRRRX_XR=..........f.bbb",
     "bbbbbbbbbbRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRXRXRRRRRRRXRXRX=............bbb",
     "bbbbbbbbbbbb============================================================XRXRX=======XRXR=~.......~...bbb",
@@ -50,7 +50,7 @@ export const twotonMap: MapDef = {
     "bbbbbbbbbbbb...EeE..:::.......:.....~...::EeE......~::::.......=RRDRR==............=RDRR=bbbb..EeeeE.bbb",
     "bbbbbbbbbb.....EeE..::........:.........::EeE..f...:::bbbbbbbbbbRRDRR=.....,.......=RDRRbbbbb..EeeeE.bbb",
     "bbbbbbbbbb~....EeE..::........:.........::EEE.....:::bbbbbbbbbbRRRRR==.......~...,.=RRRR=bbbb..EeeeE.bbb",
-    "bbbbbbbbbb.....EeE..::.......,:.........::::::::::::bbbbbbbbbbRRRRR==.....,........=RRRRbbbbb..EeeeE.bbb",
+    "bbbbbbbbbb.....EeE..::.......,:.........::::::::::::bbbbbbbbbbRRRRR==.....,.....:::=RRRRbbbbb..EeeeE.bbb",
     "bbbbbbbbbbb....EeE..::........:.........:::::::::::bbbbbbbbbbbRRDRR=...............=RDRRbbbbb..EeeeEbbbb",
     "bbbbbbbbbbb....EeE..::......~.:.........::::::::::.bbbbbbbbbbRRDRR==...............=RDRRbbbbb..EeeeEbbbb",
     "bbbbbbbbbbb....EeE..::........:.........::EEE....f.bbbbbbbbbbRRRRR=...f.......,....=RRRRbbbbb..EeeeEbbbb",
@@ -68,10 +68,10 @@ export const twotonMap: MapDef = {
     "bbbbbbbbbbbb...........,.....................:::....==RRRRR==......,......~.,......=RRRR=....EeeeeeE,bbb",
     "bbbbbbbbbbb...........,...........~...........::.,..=RRRRR==.......................=RRRR=....EEeeeeE.bbb",
     "bbbbbbbbbbb.....,.........,......~......,.~...:::..==RRDRR=........................=RDRR=......EeeeEbbbb",
-    "bbbbbbbbbbbb...................................::.,=RRDRR==.........,..,...........=RDRR=......EeeeEbbbb",
+    "bbbbbbbbbbbb===================================::=,=RRDRR===========================RDRR=......EeeeEbbbb",
     "bbbbbb.========================================::===XRXRR===========================XRXR=======EEEEEbbbb",
     "bbbbbb~=RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRXRXRRRRRRRRRRRRRRRXRXRXRRRRRRRRRXRXRXRRRRRRRRRRRRRRRR",
-    "bbbbb..=RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRXRXRXRRRRRRRRRRRRRRRXRXRRRRRRRRRRRXRXRRRRRRRRRRRRRRRRR",
+    "bbbbb..=RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR4RXRXRXRRRRRRRRR4RRRRRXRXRRRRR4RRRRRXRXRRRRRRRRRRRRRRRRR",
     "bbbbb..=RRRRRR___RRRR___RRRR___RRRR___RRRR___RRRR__XRXRR___RRRR___RRRX_X_XRRR___RRRX_X_XRRR___RRRR___RRR",
     "bbbbbb.=RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRXRXRXRRRRRRRRRRRRRRRXRXRRRRRRRRRRRXRXRRRRRRRRRRRRRRRRR",
     "bbbbbb.===============================================================RRRR====================EEEEEE=bbb",
@@ -83,10 +83,10 @@ export const twotonMap: MapDef = {
     "bbbbbbbbbbbbbbbbbEEEeeeeeeeeeeeeeeEbbbbbbbbbb...F..F~................=RDRR=.......-.F.......-..EeeeE.bbb",
     "bbbbbbbbbbbbbbbbEeeeeeeeeeeeeeeeeeeEEbbbbbbbb........................=RRRR=.......-........,-..EeeeEbbbb",
     "bbbbbbbbbbbbbbbbEeeeeeeeeeeeeeeeeeeeeEbbbbbbb............,.,.~.......=RRRR=.......-..,.~f...-.,EeeeEbbbb",
-    "bbbbbbbbbbbbbbbEeeeeeeeeeeeeeeeeeeeeeEbbbbbb.,..........f..~f........=RDRR=.......-----,.----,.EeeeE.bbb",
+    "bbbbbbbbbbbbbbbEeeeeeeeeeeeeeeeeeeeeeEbbbbbb.,....====================RDRR========-----,.----,.EeeeE.bbb",
     "bbbbbbbbbbbbbbbEeeeeeeeeeeeeeeeeeeeeeEbbbbb...,..=====================RXRX==================...EeeeE.bbb",
     "bbbbbbbbbbbbbbbEeeeeeeeeeeeeeeeeeeeeEbbbbbb......=RRRRRRRRRRRRRRRRRRRRXRXRRRRRRRRRRRRRRRRRR=...EeeeEbbbb",
-    "bbbbbbbbbbbbbbbbEEeeeeeeeeeeeeeeeeeEbbbbbbb......=RRRRRRRRRRRRRRRRRRRXRXRXRRRRRRRRRRRRRRRRR=...EeeeEbbbb",
+    "bbbbbbbbbbbbbbbbEEeeeeeeeeeeeeeeeeeEbbbbbbb......=RRRRRRRRRRRRRRRRRRRXRXRXRRR4RRRRRRRRRRRRR=...EeeeEbbbb",
     "bbbbbbbbbbbbbbbbbbEEeeeeeeeeeeeeeEEbbbbbbb.......=R_RRRR___RRRR___RRRRX_XRRRR___RRRR___RRRR=,.EeeeeEbbbb",
     "bbbbbbbbbbbbbbbbbbbbEEeEEEEEeeEEEbbbbbbbbb.......=RRRRRRRRRRRRRRRRRRRXRXRXRRRRRRRRRRRRRRRRR=..EeeeeEbbbb",
     "bbbbbbbbbbbbbbbbbbbbbbEbbbbbEEbbbbbbbbbbbbb.~....===========================================~.EeeeeE.bbb",
@@ -103,47 +103,51 @@ export const twotonMap: MapDef = {
   "props": [
     {
       "sprite": "bldg_ob_hotel",
-      "x": 9.898,
-      "y": 7,
+      "x": 9.205,
+      "y": 5.02,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 67,
-        "h": 86
-      }
+        "w": 89,
+        "h": 118
+      },
+      "scale": 1.33
     },
     {
       "sprite": "bldg_hospital",
-      "x": 18,
-      "y": 8.25,
+      "x": 16.758,
+      "y": 6.575,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 114,
-        "h": 54
-      }
+        "w": 117,
+        "h": 88
+      },
+      "scale": 1.4
     },
     {
       "sprite": "bldg_dept",
-      "x": 28,
-      "y": 8.25,
+      "x": 24.305,
+      "y": 6.432,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 130,
-        "h": 54
-      }
+        "w": 109,
+        "h": 89
+      },
+      "scale": 1.42
     },
     {
       "sprite": "bldg_civic",
-      "x": 39,
-      "y": 8.25,
+      "x": 31.388,
+      "y": 7.113,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 98,
-        "h": 54
-      }
+        "w": 90,
+        "h": 94
+      },
+      "scale": 1.15
     },
     {
       "sprite": "bldg_warehouse",
@@ -173,15 +177,21 @@ export const twotonMap: MapDef = {
       "y": 7
     },
     {
+      "sprite": "facade_brickmore_tall",
+      "x": 22.983,
+      "y": 2.609
+    },
+    {
       "sprite": "bldg_starmart",
-      "x": 8,
-      "y": 50.25,
+      "x": 7.996,
+      "y": 48.681,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 82,
-        "h": 38
-      }
+        "w": 119,
+        "h": 80
+      },
+      "scale": 1.45
     },
     {
       "sprite": "bldg_bagels",
@@ -207,47 +217,51 @@ export const twotonMap: MapDef = {
     },
     {
       "sprite": "bldg_arcade2",
-      "x": 29,
-      "y": 50.25,
+      "x": 28.015,
+      "y": 48.857,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 82,
-        "h": 38
-      }
+        "w": 105,
+        "h": 72
+      },
+      "scale": 1.45
     },
     {
       "sprite": "bldg_theater",
-      "x": 36,
-      "y": 49.25,
+      "x": 35.238,
+      "y": 48.284,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 82,
-        "h": 54
-      }
+        "w": 108,
+        "h": 89
+      },
+      "scale": 1.3
     },
     {
       "sprite": "bldg_gen_shop_grass_1",
-      "x": 59,
-      "y": 50.25,
+      "x": 58.508,
+      "y": 48.623,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 66,
-        "h": 38
-      }
+        "w": 109,
+        "h": 89
+      },
+      "scale": 1.18
     },
     {
       "sprite": "bldg_diner",
-      "x": 65,
-      "y": 50.25,
+      "x": 64.077,
+      "y": 49.375,
       "solid": {
         "ox": 0,
         "oy": 10,
-        "w": 66,
-        "h": 38
-      }
+        "w": 119,
+        "h": 66
+      },
+      "scale": 1.35
     },
     {
       "sprite": "bldg_market",
@@ -259,6 +273,21 @@ export const twotonMap: MapDef = {
         "w": 98,
         "h": 38
       }
+    },
+    {
+      "sprite": "facade_brickmore_tall",
+      "x": 18.883,
+      "y": 43.609
+    },
+    {
+      "sprite": "facade_apartments_tall",
+      "x": 30.073,
+      "y": 43.5
+    },
+    {
+      "sprite": "facade_brownstone_tall",
+      "x": 61.227,
+      "y": 44.222
     },
     {
       "sprite": "bldg_brickmore",
@@ -551,6 +580,50 @@ export const twotonMap: MapDef = {
         "oy": 7,
         "w": 34,
         "h": 8
+      }
+    },
+    {
+      "sprite": "traffic_light",
+      "x": 50.05,
+      "y": 51.4,
+      "solid": {
+        "ox": 4,
+        "oy": 44,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "sprite": "traffic_light",
+      "x": 71.3,
+      "y": 10.45,
+      "solid": {
+        "ox": 4,
+        "oy": 44,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "sprite": "stop_sign",
+      "x": 83.1,
+      "y": 52.65,
+      "solid": {
+        "ox": 4,
+        "oy": 24,
+        "w": 5,
+        "h": 4
+      }
+    },
+    {
+      "sprite": "stop_sign",
+      "x": 75.1,
+      "y": 67.65,
+      "solid": {
+        "ox": 4,
+        "oy": 24,
+        "w": 5,
+        "h": 4
       }
     },
     {
@@ -2102,7 +2175,7 @@ export const twotonMap: MapDef = {
     },
     {
       "sprite": "sign",
-      "x": 34,
+      "x": 38,
       "y": 13,
       "solid": {
         "ox": 3,
@@ -2185,8 +2258,8 @@ export const twotonMap: MapDef = {
     {
       "id": "pigeon_kid",
       "sprite": "pigeonKid",
-      "x": 31,
-      "y": 43,
+      "x": 30,
+      "y": 40,
       "facing": "up",
       "dialogue": "npc_pigeonkid"
     },
@@ -2327,7 +2400,7 @@ export const twotonMap: MapDef = {
       "dialogue": "sign_market_row"
     },
     {
-      "x": 34,
+      "x": 38,
       "y": 13,
       "dialogue": "sign_blue_notice"
     },

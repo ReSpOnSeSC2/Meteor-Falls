@@ -33,12 +33,37 @@ Work region-by-region in the EARTHBOUND_STYLIZATION_OVERHAUL §3 order, but
 note the polish kit is INDEPENDENT of the pending EB tile-art batches — you
 can polish a town's streets/massing/terraces before its ground kit lands.
 
-1. **TWOTON (Brickton)** — town #2, editor-authored (`tools/mapeditor/twoton.json`
-   ⇄ `src/data/maps_twoton.ts`). CAVEAT: Brickton has its OWN tile strip
-   (`assets/art/world/brickton-tiles-*`), so check whether its road/sidewalk
-   cells come from the base strip or its own before assuming the asphalt/
-   pavement passes reached it. Its diagonal boulevard is ALSO the pilot for
-   the Batch-C diagonal family — coordinate, don't collide.
+1. **TWOTON (Brickton)** — ✅ **DONE (2026-07-11)**, the first full rollout after
+   the pilot. What landed (all folded into `tools/mapeditor/author-twoton.ts`,
+   the canonical authoring source — run it to regenerate BOTH artifacts):
+   - Streets: brickton renders the BASE strip (the old own-strip caveat was
+     STALE — no runtime `brickton-tiles-*` exists, it's in no `*_SKIN_MAPS`), so
+     asphalt/pavement/curbs applied automatically. Added 7 manholes, 2 traffic
+     lights, 2 stop signs, 2-tile promenades on all three drags (rows 12/53/68),
+     a dirt apron to house_a.
+   - Scale pass: the TEN named-door buildings grew (hotel ×1.33 = 4.0u anchor,
+     hospital ×1.4, dept ×1.42, civic ×1.15, starmart/arcade2 ×1.45,
+     theater ×1.3, bike ×1.18, diner ×1.35; warehouse + market stay ×1.0 as the
+     per-block wide-low rhythm units). **The 7 doorless occupy facades were NOT
+     moved or scaled — `stableTwotonLotId` keys their save-stable unit ids on
+     x/y** (a new per-map constraint this rollout discovered; see G13).
+   - Back rank: `facade_brickmore_tall`/`facade_brownstone_tall` derived from
+     Twoton's own brick vernacular (added to `tools/derive-tall-facades.ts`,
+     registered BASE_FACADE_KEYS + LANDMARK_FACADE_SPRITES); 3 masses behind the
+     Main St blocks + 1 north of the civic block. Feet sit one row BEHIND the
+     promenade so it stays walkable, and park NPCs were checked against parapet
+     lines (a pigeon-watcher read as a roof-walker until moved — sight-check
+     every NPC within ~2 rows above a mass top).
+   - Doors: `makeTwoton` now derives door `oy` from the storefront's APRON row
+     (`oy = (apron·16 + 4 − y·16)/scale − 18`) so doorsteps land mid-sidewalk at
+     ANY scale — bit-identical to the old tuned values at ×1 (G11 applied).
+   - Decisions: NO terrace (Twoson is flat in EB) and NO horizon band (the map
+     is forest-framed on all four edges; treeline-front pins also make edge
+     bands hostile here). Facade contact shadows now include brickton
+     (OverworldScene gate widened). Dev boot: `?devMap=brickton` lands at the
+     bus corner.
+   Its diagonal boulevard is still the pilot for the Batch-C diagonal family —
+   coordinate, don't collide.
 2. **Puerto Sol + Valle Dorado + Las Dunas** (Ch.2 belt) — Puerto Sol and
    Foggybottom use the shared BASE tiles (already recolored); Las Dunas rides
    the Zanzibel ochre skin (needs the per-biome value pass, §3.1).
@@ -248,6 +273,25 @@ roof plane 2-3 tiles deep, party walls, door at the foot.
   footprint clears rows F−H−1..F+1 — cap the scale or hand-mark the footprint
   when that band touches a carriageway (Civic's curved lanes peak a row lower
   than their base row; dump the grid, don't trust the base coordinate).
+- **G13 — occupy facades are POSITION-KEYED (Twoton rollout).** Doorless
+  `bldg_`+solid facades get occupyCity tenancy units whose save-stable ids
+  derive from x/y (`stableTwotonLotId` = `brickton_lot_<x*100>_<y*100>`; other
+  towns may share the pattern). Moving OR scaling one (scale re-anchors x/y)
+  renames its unit — orphaning save flags and any interior the player saved
+  inside. Scale the NAMED-door buildings; leave tenancy facades in place, or
+  add a lot-id migration first.
+- **G14 — mass parapets vs park NPCs.** A back-rank mass's top rows overlap
+  whatever sits 1-2 rows above them in screen space; an NPC standing there
+  reads as ON the roof (depth is foot-based, so the NPC draws over the
+  parapet). After placing masses, screenshot and sight-check every NPC/prop
+  within ~2 rows above each mass top.
+- **G15 — hidden-tab dev boots stall without a pump.** The in-app Browser
+  pane's tab is background-throttled: the Phaser loader only issues its next
+  XHR batch on an update tick, so boot crawls (32 files/pump) and the boot→
+  title delayedCall never fires. Install a `setInterval(() => game.loop.step(
+  performance.now()), 50)` pumper until the overworld scene is status 5, then
+  clear it (it also blocks the pane's own screenshots — use the
+  `tools/shot-server.mjs` + `canvas.toDataURL` POST recipe for captures).
 
 ## 5. Verification loop (use it after every slice)
 

@@ -162,6 +162,28 @@ crosswalk(71, 56);
 crosswalk(85, 56);
 crosswalk(71, 71);
 
+// EB POLISH (2026-07-11) — the downtown promenade: every storefront row gets a
+// TWO-tile walk (the shop foot row is already the derived sidewalk; this adds
+// the second row along each drag). Grass-guarded so carriageways, canals, the
+// park paths, and the Cage fence are untouched; the dirt paths painted later
+// deliberately cut across it like EarthBound's park crossings.
+const grassLike = (x: number, y: number): boolean => ' .,~fF'.includes(at(x, y));
+for (let x = 11; x <= 71; x++) if (grassLike(x, 12)) set(x, 12, '='); // Civic Street
+for (let x = 8; x <= 49; x++) if (grassLike(x, 53)) set(x, 53, '='); // Main Street, west block
+for (let x = 57; x <= 83; x++) if (grassLike(x, 53)) set(x, 53, '='); // Main Street, east block
+for (let x = 50; x <= 82; x++) if (grassLike(x, 68)) set(x, 68, '='); // Maple Row
+
+// EB intersection kit — manhole covers ('4') mid-lane just off the junctions,
+// guarded to plain 'R' so dashes/crosswalks/junction topology never change.
+for (const [mx, my] of [
+  [69, 15], [81, 15], // Civic Street, flanking the boulevard + River Ave crossings
+  [76, 8], // the arrival boulevard
+  [48, 56], [64, 56], [78, 56], // Main Street, between its three crossings (64 not 60 — a clunker parks at 60)
+  [77, 71], // Maple Row
+] as const) {
+  if (at(mx, my) === 'R') set(mx, my, '4');
+}
+
 const groundLike = (x: number, y: number): boolean => ' .,~fF='.includes(at(x, y));
 const path = (points: ReadonlyArray<readonly [number, number]>, width = 2, carveForest = false): void => {
   for (let i = 0; i < points.length - 1; i++) {
@@ -189,6 +211,10 @@ path([[30, 29], [30, 42]], 1);
 path([[39, 60], [39, 64], [37, 68], [38, 73]], 2);
 path([[51, 75], [55, 77]], 2);
 path([[79, 75], [80, 77]], 2);
+// EB POLISH (2026-07-11) — house_a's porch walk: a dirt apron from the porch
+// interaction to the River Avenue sidewalk, so no building sits pathless.
+// (Ends at x82 — x83 is already the avenue's paved verge.)
+path([[80, 35], [82, 35]], 1);
 
 // Fence the Cage lot on Maple Row; the only gap is its actual gate/door.
 rect(82, 64, 11, 1, '-');
@@ -218,14 +244,47 @@ const facade = (sprite: string, x: number, baseRow: number): void => {
   props.push({ sprite, x, y, solid });
   occupied.push({ x0: x - 1, y0: Math.floor(y) - 1, x1: x + w + 1, y1: baseRow + 1 });
 };
-const landmark = (sprite: string, cx: number, baseRow: number, textureW: number, textureH: number): void => {
-  // Authored oblique facades render at quarter resolution; unlike generated
-  // bldg_* art, their source width/story count is not their actual footprint.
-  const x = +(cx - textureW / 128).toFixed(3);
-  const y = +(baseRow - textureH / 64).toFixed(3);
-  const solid = { ox: 0, oy: 10, w: Math.round(textureW / 4), h: Math.round(textureH / 4) - 10 };
-  props.push({ sprite, x, y, solid });
-  occupied.push({ x0: Math.floor(x) - 1, y0: Math.floor(y) - 1, x1: Math.ceil(x + solid.w / 16) + 1, y1: baseRow + 1 });
+// EB POLISH (2026-07-11) — natural PNG dimensions of the hand-authored facades
+// (they render 1:1 at runtime, worldSpriteScale). The scale pass positions off
+// TRUE drawn size, not the legacy catalog dims, so grown buildings stay centered
+// on their lots with their feet planted on the storefront row.
+const PNG_DIMS: Record<string, readonly [number, number]> = {
+  bldg_ob_hotel: [269, 384],
+  bldg_hospital: [333, 280],
+  bldg_dept: [306, 278],
+  bldg_civic: [313, 361],
+  bldg_starmart: [327, 248],
+  bldg_arcade2: [290, 227],
+  bldg_theater: [331, 306],
+  bldg_gen_shop_grass_1: [368, 335],
+  bldg_diner: [353, 224],
+  facade_brickmore_tall: [271, 537],
+  facade_apartments_tall: [285, 544],
+  facade_brownstone_tall: [291, 485],
+};
+/** an EB-ratio storefront: centered on `cx`, image foot planted on `footRow`,
+ *  grown by per-instance `scale` (runtime is TOP-LEFT anchored, so x/y pre-shift
+ *  here; door offsets stay NATIVE — makeTwoton + the runtime multiply them). The
+ *  data solid is pre-scaled for the editor's WYSIWYG box and the dev facade
+ *  audit; live collision is rebuilt texture-true (ADR-051). */
+const storefront = (sprite: string, cx: number, footRow: number, scale = 1): void => {
+  const [tw, th] = PNG_DIMS[sprite];
+  const x = +(cx - (tw * scale) / 128).toFixed(3);
+  const y = +(footRow - (th * scale) / 64).toFixed(3);
+  const p: PropDef = {
+    sprite, x, y,
+    solid: { ox: 0, oy: 10, w: Math.round((tw * scale) / 4), h: Math.round((th * scale) / 4) - 10 },
+  };
+  if (scale !== 1) p.scale = scale;
+  props.push(p);
+  occupied.push({ x0: Math.floor(x) - 1, y0: Math.floor(y) - 1, x1: Math.ceil(cx + (tw * scale) / 128) + 1, y1: Math.ceil(footRow) + 1 });
+};
+/** a doorless BACK-RANK skyline mass (non-'bldg_' key, LANDMARK_FACADE_SPRITES):
+ *  its base hides behind the storefront row; collision is texture-derived, so no
+ *  data solid — exactly the house_a/house_b landmark pattern. */
+const mass = (sprite: string, cx: number, footRow: number): void => {
+  const [tw, th] = PNG_DIMS[sprite];
+  props.push({ sprite, x: +(cx - tw / 128).toFixed(3), y: +(footRow - th / 64).toFixed(3) });
 };
 const house = (sprite: 'house_a' | 'house_b', cx: number, baseRow: number): void => {
   const width = sprite === 'house_a' ? 7.15 : 6.2;
@@ -235,24 +294,44 @@ const house = (sprite: 'house_a' | 'house_b', cx: number, baseRow: number): void
 const inOccupied = (x: number, y: number): boolean => occupied.some((o) => x >= o.x0 && x <= o.x1 && y >= o.y0 && y <= o.y1);
 
 // Civic Street: all essential services are visible within seconds of arriving.
-landmark('bldg_ob_hotel', 12, 13, 269, 384);
-facade('bldg_hospital', 18, 13);
-facade('bldg_dept', 28, 13);
-facade('bldg_civic', 39, 13);
+// EB SCALE PASS (2026-07-11): the enterable buildings grow to EarthBound's
+// building-to-character ratios (EB smallest storefront ≈ 3.1 character-units,
+// anchors 4-6.5; scale cap ×1.45 — above it the art softens). The hotel is the
+// 4.0-unit west anchor; hospital/dept/civic pack into a party-wall civic block;
+// the warehouse deliberately stays ×1.0 (EB's one-wide-low-unit-per-block
+// rhythm, and the bus-corner pins live at its door). The doorless tenancy
+// facades (brickmore/bagels/bank/market/apartments/brownstone) are NOT moved or
+// scaled — their occupyCity lot ids are save-stable keys on x/y.
+storefront('bldg_ob_hotel', 12, 13, 1.33);
+storefront('bldg_hospital', 20.4, 12.7, 1.4);
+storefront('bldg_dept', 27.7, 12.6, 1.42);
+storefront('bldg_civic', 34.2, 13.6, 1.15);
 facade('bldg_warehouse', 47, 13);
 facade('bldg_brickmore', 57, 13);
 house('house_b', 68, 13);
+// North skyline: Twoton's own brick vernacular cloned tall rises behind the
+// hospital/dept party line — its base fully occluded, upper storeys breaking
+// the treeline. Foot row 11 keeps the row-12 promenade walkable.
+mass('facade_brickmore_tall', 25.1, 11);
 
 // Main Street: functional storefront rhythm, a story theater corner, and gaps at
-// every connector. No facade spans or visually buries an intersection.
-facade('bldg_starmart', 8, 54);
+// every connector. No facade spans or visually buries an intersection. Feet are
+// staggered ±0.5 row for EarthBound's parapet rhythm; each named shop keeps its
+// door centered on the drag while growing to EB ratios.
+storefront('bldg_starmart', 11.7, 54.3, 1.45);
 facade('bldg_bagels', 15, 54);
 facade('bldg_bank', 21, 54);
-facade('bldg_arcade2', 29, 54);
-facade('bldg_theater', 36, 54);
-facade('bldg_gen_shop_grass_1', 59, 54);
-facade('bldg_diner', 65, 54);
+storefront('bldg_arcade2', 31.3, 54, 1.45);
+storefront('bldg_theater', 38.6, 54.5, 1.3);
+storefront('bldg_gen_shop_grass_1', 61.9, 54.8, 1.18);
+storefront('bldg_diner', 67.8, 54.1, 1.35);
 facade('bldg_market', 71, 54);
+// Main Street back rank: three derived talls on the block interiors, feet one
+// row behind the promenade (row 53 stays walkable), bases hidden behind the
+// storefront wall except the deliberate one-tile alley slivers.
+mass('facade_brickmore_tall', 21, 52);
+mass('facade_apartments_tall', 32.3, 52);
+mass('facade_brownstone_tall', 63.5, 51.8);
 
 // Maple Row: a short residential coda that points directly toward the Cage.
 facade('bldg_brickmore', 51, 69);
@@ -297,6 +376,14 @@ addProp({ sprite: 'hydrant', x: 18.5, y: 59.1, solid: { ox: 2, oy: 6, w: 6, h: 6
 addProp({ sprite: 'hydrant', x: 77.5, y: 18.4, solid: { ox: 2, oy: 6, w: 6, h: 6 } });
 addProp({ sprite: 'vehicle_clunker', x: 60.5, y: 56.2, solid: { ox: 2, oy: 7, w: 34, h: 8 } });
 addProp({ sprite: 'vehicle_clunker', x: 76.5, y: 56.2, solid: { ox: 2, oy: 7, w: 34, h: 8 } });
+// EB intersection kit — gooseneck lights at the two busiest crossings (Main ×
+// the diagonal boulevard; Civic × the arrival boulevard) and stop signs on the
+// avenue approaches, feet planted on the sidewalk corners (the Otterbrooke
+// PropDef pattern: tall pole, small foot-only solid).
+addProp({ sprite: 'traffic_light', x: 50.05, y: 51.4, solid: { ox: 4, oy: 44, w: 6, h: 4 } });
+addProp({ sprite: 'traffic_light', x: 71.3, y: 10.45, solid: { ox: 4, oy: 44, w: 6, h: 4 } });
+addProp({ sprite: 'stop_sign', x: 83.1, y: 52.65, solid: { ox: 4, oy: 24, w: 5, h: 4 } });
+addProp({ sprite: 'stop_sign', x: 75.1, y: 67.65, solid: { ox: 4, oy: 24, w: 5, h: 4 } });
 
 // Pond promenade, overlook, and Cage threshold.
 addProp({ sprite: 'bench', x: 38.7, y: 64.2, solid: SOLID.bench });
@@ -369,7 +456,9 @@ const signLocations: ReadonlyArray<readonly [number, number, string]> = [
   [90, 69, 'sign_to_cage_gate'],
   [79, 65, 'sign_lot'],
   [41, 36, 'sign_market_row'],
-  [34, 13, 'sign_blue_notice'],
+  // EB scale pass: moved out of the grown civic block's span (was 34,13) into
+  // the civic→warehouse gap so it stays reachable on the promenade.
+  [38, 13, 'sign_blue_notice'],
   [62, 69, 'sign_maple_heights'],
   [76, 60, 'sign_cage_block'],
   [90, 53, 'sign_to_docks'],
@@ -393,13 +482,17 @@ const npcs: NpcDef[] = [
   { id: 'nurse', sprite: 'nurse', x: 22, y: 19, facing: 'up', dialogue: 'npc_nurse', idle: true },
   { id: 'gray_commuter', sprite: 'grayCommuter', x: 49, y: 19, facing: 'up', dialogue: 'npc_commuter' },
   { id: 'quarter_man', sprite: 'quarterMan', x: 61, y: 20, facing: 'left', dialogue: 'npc_quarter' },
-  { id: 'pigeon_kid', sprite: 'pigeonKid', x: 31, y: 43, facing: 'up', dialogue: 'npc_pigeonkid' },
+  // (30,40): three cells up the park path — at (31,43) he stood exactly on the
+  // new back-rank mass's parapet line and read as a roof-walker.
+  { id: 'pigeon_kid', sprite: 'pigeonKid', x: 30, y: 40, facing: 'up', dialogue: 'npc_pigeonkid' },
   { id: 'sidewalk_critic', sprite: 'sidewalkCritic', x: 48, y: 50, facing: 'right', dialogue: 'npc_critic', wander: true },
   { id: 'hoops_kid', sprite: 'pajamaKid', x: 88, y: 70, facing: 'up', dialogue: 'npc_hoops_kid', wander: true },
   { id: 'bagel_scout', sprite: 'pajamaKid', x: 17, y: 54, facing: 'up', dialogue: 'npc_bagel_scout', idle: true },
   { id: 'blue_watcher', sprite: 'grayCommuter', x: 35, y: 19, facing: 'up', dialogue: 'npc_blue_watcher' },
   { id: 'bus_boy', sprite: 'pigeonKid', x: 54, y: 20, facing: 'left', dialogue: 'npc_bus_boy', wander: true },
-  { id: 'plaza_mime', sprite: 'smilerB', x: 42, y: 61, facing: 'left', dialogue: 'npc_plaza_mime' },
+  // y:60 — reconciled to the shipped map + the character_collision.test pin
+  // (the doc had drifted one cell to 61).
+  { id: 'plaza_mime', sprite: 'smilerB', x: 42, y: 60, facing: 'left', dialogue: 'npc_plaza_mime' },
   { id: 'maple_resident', sprite: 'fernLady', x: 64, y: 75, facing: 'up', dialogue: 'npc_maple_resident', wander: true },
   { id: 'south_vendor', sprite: 'quarterMan', x: 26, y: 35, facing: 'down', dialogue: 'npc_south_vendor', shop: 'bakery', stationary: true },
   { id: 'market_vendor_b', sprite: 'martClerk', x: 35, y: 35, facing: 'down', dialogue: 'npc_south_vendor', shop: 'starmart', stationary: true },

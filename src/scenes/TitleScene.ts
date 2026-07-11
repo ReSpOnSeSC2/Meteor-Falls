@@ -6,7 +6,7 @@ import { Dialogue } from '../ui/windows';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
 import { s, TILE_PX } from '../spritegen/scale';
-import { OTTERBROOK_DEV_PREVIEW_SPAWN } from '../data/maps';
+import { BRICKTON_BUS_SPAWN, OTTERBROOK_DEV_PREVIEW_SPAWN } from '../data/maps';
 
 export class TitleScene extends Phaser.Scene {
   private pressText: Phaser.GameObjects.BitmapText | null = null;
@@ -22,7 +22,8 @@ export class TitleScene extends Phaser.Scene {
     this.started = false;
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('devMap') === 'otterbrook') {
+      const devMap = params.get('devMap');
+      if (devMap === 'otterbrook' || devMap === 'brickton') {
         GS.reset();
         GS.setFlag('intro_done');
         GS.setFlag('op_fell');
@@ -32,10 +33,16 @@ export class TitleScene extends Phaser.Scene {
         GS.setFlag('chad_joined');
         this.started = true;
         AUDIO.stopMusic();
+        // EB polish rollout — per-map dev-boot spawns (handoff §5): each entry
+        // lands mid-town with no pending story beat so screenshots are clean.
+        const spawn =
+          devMap === 'brickton'
+            ? { x: BRICKTON_BUS_SPAWN.x / 16, y: BRICKTON_BUS_SPAWN.y / 16 }
+            : OTTERBROOK_DEV_PREVIEW_SPAWN;
         this.scene.start('overworld', {
-          mapId: 'otterbrook',
-          x: OTTERBROOK_DEV_PREVIEW_SPAWN.x * TILE_PX + TILE_PX / 2,
-          y: OTTERBROOK_DEV_PREVIEW_SPAWN.y * TILE_PX,
+          mapId: devMap,
+          x: spawn.x * TILE_PX + TILE_PX / 2,
+          y: spawn.y * TILE_PX,
           facing: 'down',
           devFullMap: params.get('devFullMap') === '1',
         });

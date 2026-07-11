@@ -9,7 +9,6 @@
  *   y day sky   u bus floor   U bus wall
  */
 import { Grid, treeSprite, doorstepOf } from './mapkit';
-import { cityBuildingHeight } from '../spritegen/tiles';
 import { twotonMap } from './maps_twoton';
 import { buildTwotonServiceMaps } from './maps_twoton_interiors';
 import { oakRootsMap, oakHollowMap, oakHeartMap } from './maps_oakcave';
@@ -3124,33 +3123,36 @@ export const DOS_F1_STREET_LANDING = { tx: 20 * 16, ty: 24 * 16 + 10 } as const;
  *
  * This wrapper grafts only what the editor cannot express, so a re-export can
  * never drop it: the ten NAMED interior doors, art-anchored px rects per facade
- * (ox measured off the drawn door; oy = cityBuildingHeight(u) − 14). Everything
- * else is registry-standard: occupyCity grafts the tenancy units + knock signs
- * onto the doorless catalog facades, and the meadow_overpass landing is re-aimed
- * off the live overpass trail below (the computed-coords law, ADR-012).
+ * (ox measured off the drawn door; oy derived from the storefront's APRON row).
+ * Everything else is registry-standard: occupyCity grafts the tenancy units +
+ * knock signs onto the doorless catalog facades, and the meadow_overpass landing
+ * is re-aimed off the live overpass trail below (the computed-coords law, ADR-012).
  */
 function makeTwoton(): MapDef {
   const m = twotonMap;
-  // oy derives from the facade's registry height (cityBuildingHeight(u) − 14, the
-  // makePuertoSol pattern) so a future kit.ts height change can't detach the doors.
-  const NAMED_DOORS: Record<string, { ox: number; oy?: number; w: number; to: string; tx: number; ty: number }> = {
-    bldg_dept: { ox: 26.25, w: 26, to: 'dos_f1', ...DOS_F1_STREET_LANDING }, // THE DEPARTMENT OF SMILES
-    bldg_starmart: { ox: 33, w: 16, to: 'starmart_int', tx: 152, ty: 156 },
-    bldg_hospital: { ox: 28.25, w: 26, to: 'hospital_int', tx: 152, ty: 166 }, // TWOTON GENERAL
-    bldg_arcade2: { ox: 29.5, w: 16, to: 'arcade2_int', tx: 136, ty: 156 }, // STARPORT II
-    // Replace anonymous tenancy rolls with purposeful town services. The hotel
-    // uses oblique quarter-scale art, hence its measured texture-space `oy`.
-    bldg_ob_hotel: { ox: 22, oy: 82, w: 16, to: 'twoton_hotel_lobby', tx: 168, ty: 172 },
-    bldg_warehouse: { ox: 50.5, w: 26, to: 'twoton_bus_station', tx: 184, ty: 188 },
-    bldg_theater: { ox: 20, w: 40, to: 'twoton_theater', tx: 200, ty: 236 },
-    bldg_civic: { ox: 27, w: 26, to: 'twoton_community_center', tx: 184, ty: 204 },
-    bldg_gen_shop_grass_1: { ox: 37.5, oy: 52, w: 16, to: 'twoton_bike_shop', tx: 152, ty: 172 },
-    bldg_diner: { ox: 36.5, w: 16, to: 'twoton_pizza', tx: 168, ty: 204 },
+  // Each named facade fronts a sidewalk APRON row (13 = Civic St, 54 = Main St).
+  // oy is derived so doorstepOf lands mid-apron (apron·16 + 9) at ANY per-instance
+  // scale: doorstep = y·16 + (oy + h)·scale + 5, so oy = (apron·16 + 4 − y·16)/scale
+  // − h. The EB scale pass (2026-07-11) grows these facades with PropDef.scale —
+  // the old cityBuildingHeight(u)−14 oys were tuned to land on exactly this target
+  // at ×1, but overshoot into the carriageway once scaled (G11).
+  const NAMED_DOORS: Record<string, { ox: number; w: number; apron: number; to: string; tx: number; ty: number }> = {
+    bldg_dept: { ox: 26.25, w: 26, apron: 13, to: 'dos_f1', ...DOS_F1_STREET_LANDING }, // THE DEPARTMENT OF SMILES
+    bldg_starmart: { ox: 33, w: 16, apron: 54, to: 'starmart_int', tx: 152, ty: 156 },
+    bldg_hospital: { ox: 28.25, w: 26, apron: 13, to: 'hospital_int', tx: 152, ty: 166 }, // TWOTON GENERAL
+    bldg_arcade2: { ox: 29.5, w: 16, apron: 54, to: 'arcade2_int', tx: 136, ty: 156 }, // STARPORT II
+    bldg_ob_hotel: { ox: 22, w: 16, apron: 13, to: 'twoton_hotel_lobby', tx: 168, ty: 172 },
+    bldg_warehouse: { ox: 50.5, w: 26, apron: 13, to: 'twoton_bus_station', tx: 184, ty: 188 },
+    bldg_theater: { ox: 20, w: 40, apron: 54, to: 'twoton_theater', tx: 200, ty: 236 },
+    bldg_civic: { ox: 27, w: 26, apron: 13, to: 'twoton_community_center', tx: 184, ty: 204 },
+    bldg_gen_shop_grass_1: { ox: 37.5, w: 16, apron: 54, to: 'twoton_bike_shop', tx: 152, ty: 172 },
+    bldg_diner: { ox: 36.5, w: 16, apron: 54, to: 'twoton_pizza', tx: 168, ty: 204 },
   };
   for (const p of m.props) {
     const d = NAMED_DOORS[p.sprite];
     if (d && !p.door) {
-      const oy = d.oy ?? cityBuildingHeight(facadeDims(p.sprite).u) - 14;
+      const sy = typeof p.scale === 'number' ? p.scale : p.scale?.y ?? 1;
+      const oy = (d.apron * 16 + 4 - p.y * 16) / sy - 18;
       p.door = { ox: d.ox, oy, w: d.w, h: 18, to: d.to, tx: d.tx, ty: d.ty };
     }
   }

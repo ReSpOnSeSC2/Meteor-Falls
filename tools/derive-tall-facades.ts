@@ -45,3 +45,7 @@ function cloneBand(srcName: string, outName: string, y0: number, y1: number, cop
 
 cloneBand('bldg_ob_hotel', 'facade_hotel_tall', 160, 224, 3);
 cloneBand('bldg_apartments', 'facade_apartments_tall', 176, 256, 2);
+// TWOTON back rank (EB polish rollout §3.5): Twoton's own brick vernacular so
+// its skyline masses don't read as imported Otterbrooke art.
+cloneBand('bldg_brickmore', 'facade_brickmore_tall', 178, 229, 3); // 271x384 -> 271x537 (4.2u)
+cloneBand('bldg_brownstone', 'facade_brownstone_tall', 86, 159, 2); // 291x339 -> 291x485 (3.8u)

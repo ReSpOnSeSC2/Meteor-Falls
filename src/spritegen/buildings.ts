@@ -376,4 +376,7 @@ export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
   // keys: they are doorless scenery volumes and must not be grafted into
   // occupyCity housing units (the 27-Maple rule).
   'facade_apartments_tall', 'facade_hotel_tall',
+  // EB POLISH ROLLOUT — TWOTON (2026-07-11): the Twoton back rank clones its own
+  // brick vernacular (brickmore/brownstone bands) — same non-'bldg_' scenery rule.
+  'facade_brickmore_tall', 'facade_brownstone_tall',
 ]);
