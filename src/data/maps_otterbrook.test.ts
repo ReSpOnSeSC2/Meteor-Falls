@@ -42,7 +42,7 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       'bldg_ob_house_c',
       'bldg_ob_cottage',
       'bldg_ob_workshop',
-      'bldg_ob_hotel',
+      'facade_hotel_tall', // EB scale pass: the 7-storey hotel tower on Civic
       'drugstore',
       'arcade',
       'chapel',
@@ -171,7 +171,7 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     expect(ob.props.find((p) => p.sprite === 'bldg_ob_clinic')?.door?.to).toBe('otter_clinic_int');
     expect(ob.props.find((p) => p.sprite === 'facade_hardware')?.door?.to).toBe('hardware_int');
     expect(ob.props.find((p) => p.sprite === 'facade_fillshop' && p.door)?.door?.to).toBe('diner_int');
-    expect(ob.props.find((p) => p.sprite === 'bldg_ob_hotel')?.door?.to).toBe('otter_hotel_lobby');
+    expect(ob.props.find((p) => p.sprite === 'facade_hotel_tall')?.door?.to).toBe('otter_hotel_lobby');
   });
 
   it('declares four replayable, save-gated Chapter 1 navigation beats', () => {
@@ -366,7 +366,7 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     const hall = MAPS.otter_hotel_hall;
     const roomIds = ['otter_hotel_room_201', 'otter_hotel_room_202', 'otter_hotel_room_203'];
 
-    const facade = ob.props.find((p) => p.sprite === 'bldg_ob_hotel');
+    const facade = ob.props.find((p) => p.sprite === 'facade_hotel_tall');
     expect(facade?.x).toBeGreaterThan(35);
     expect(facade?.x).toBeLessThan(42);
     expect(facade?.y).toBeGreaterThan(OTTERBROOK_TOWN_BASE);

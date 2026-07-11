@@ -133,6 +133,34 @@ occlude their bases (foot rows chosen so upper storeys break the skyline).
 EB equivalents to mirror: Twoson/Fourside are the tower-heavy ones;
 Threed's masses are gothic; Winters/Dalaam towns stay low (skip the rank).
 
+### 3.5b Enlarging the ON-STREET buildings (the scale pass)
+The back rank fixes the skyline, but the buildings the player walks up to
+must ALSO hit EB ratios (Onett's smallest storefront ≈ 3.1 units, anchors
+4-6.5; a 384px facade is only 3.0). Two production tools, both shipped on
+Otterbrooke — use per building:
+1. **Storey-band cloning** (best; zero pixel distortion) — for facades with a
+   repeating floor: `tools/derive-tall-facades.ts`. Works when a horizontal
+   band contains no unique emblem (signs/crosses/pediments duplicate!). The
+   hotel/apartments cloned cleanly; bank/drugstore/city-hall/clinic did NOT
+   (sign- and emblem-centered compositions).
+2. **Per-instance `scale`** (the realty/autolot precedent) — for everything
+   else: Otterbrooke's landmark helpers (`otterLandmark`/`otterCentered`/
+   `build` in `maps.ts`) now take a `scale` arg that sizes position, solid
+   and footprint; door offsets stay NATIVE (the runtime multiplies them).
+   Shipped spread: bank ×1.3, drugstore ×1.22, clinic/city-hall/bakery ×1.15,
+   arcade ×1.12, burger ×1.1 — and one wide unit per block deliberately stays
+   ×1.0 (EB's rhythm). Keep scales ≤ ~1.45 (the autolot ceiling; above that
+   the art softens visibly).
+3. **The true tower ON the street**: swap a drag/civic anchor for a tall
+   derivation as an ENTERABLE facade (Otterbrooke's Civic hotel →
+   `facade_hotel_tall`, door preserved). If the tall image would put a street
+   inside the footprint rect, mark the footprint BY HAND from below the
+   street (see the Civic hotel block in `buildOtterbrookTownReplica`) — G1.
+Rolling out: each town builder/editor doc needs the same scale plumbing in
+ITS landmark helper (or explicit PropDefs with `scale` + manual door), then
+re-space centers for the grown widths (overlaps of ≤1-2 tiles at party walls
+are the intended stacking, but keep DOORS clear of neighbours).
+
 ### 3.6 Downtown terrace (elevation)
 Per town with a drag. The Otterbrooke pattern (copy it):
 1. In the town grid: pick block-interior rectangles CLEAR OF EVERY CROSSING
@@ -208,6 +236,18 @@ roof plane 2-3 tiles deep, party walls, door at the foot.
 - **G10 — after ANY tiles/legend/map change**, regenerate the editor data
   (`npx vite-node --script tools/mapeditor/gen-manifest.ts`) or
   `mapeditor:check` fails validate.
+- **G11 — scaled facades and return doorsteps.** `doorstepOf` (mapkit) is now
+  scale-aware, but any OTHER helper that derives an exterior landing from
+  door offsets must multiply by `prop.scale` too — the symptom is the
+  door-audit's `bodyBlocked` on the town side (the bank's return landed two
+  rows short, inside the terrace face, until the fix). When a town hardcodes
+  return `tx/ty` instead of deriving, recompute them after any scale change.
+- **G12 — tall images near cross streets.** A scaled/tall building whose
+  IMAGE reaches a street above is fine (walk-behind); its FOOTPRINT reaching
+  the street is not (G1). At foot row F with image height H rows, the
+  footprint clears rows F−H−1..F+1 — cap the scale or hand-mark the footprint
+  when that band touches a carriageway (Civic's curved lanes peak a row lower
+  than their base row; dump the grid, don't trust the base coordinate).
 
 ## 5. Verification loop (use it after every slice)
 
