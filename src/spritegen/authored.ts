@@ -686,6 +686,9 @@ const BASE_FACADE_KEYS = [
   // anchors until the Batch-A ChatGPT re-authors replace the PNGs
   // (docs/DOWNTOWN_OTTERBROOKE_REBUILD.md).
   'facade_hotel_tall', 'facade_apartments_tall',
+  // EB POLISH ROLLOUT — TWOTON (2026-07-11): the town's own brick vernacular
+  // cloned tall (bldg_brickmore / bldg_brownstone bands) for its back rank.
+  'facade_brickmore_tall', 'facade_brownstone_tall',
   // 27 MAPLE (2026-07-08) — the FOR-SALE house: the bldg_ob_house_c art duplicated
   // under a non-'bldg_' key (assets copy, same PNG) so occupyCity never grafts a
   // generated unit onto the pre-purchase, doorless lot. See maps.ts § 27 MAPLE.

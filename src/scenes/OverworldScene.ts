@@ -1678,10 +1678,11 @@ export class OverworldScene extends Phaser.Scene {
       if (directionalVehicleTurned) img.setDisplaySize(img.displayHeight, img.displayWidth);
       const rot = directionalVehicleTurned ? 0 : (p.rot ?? 0);
       img.setDepth(img.y + img.displayHeight + this.levelLift(img.x, img.y));
-      // OBLIQUE-FACADE GROUNDING (Otterbrooke): the 3/4 buildings sit on a flat ground, so
-      // a soft contact shadow at the base plants them (mirrors ADR-097's actor shadows). Drawn
-      // just UNDER the building + offset toward the light-away side (light from upper-left).
-      if (this.mapDef.id === 'otterbrook' && isFacadeSprite) {
+      // OBLIQUE-FACADE GROUNDING (Otterbrooke; Twoton joined in the EB polish
+      // rollout 2026-07-11): the 3/4 buildings sit on a flat ground, so a soft
+      // contact shadow at the base plants them (mirrors ADR-097's actor shadows).
+      // Drawn just UNDER the building + offset toward the light-away side.
+      if ((this.mapDef.id === 'otterbrook' || this.mapDef.id === 'brickton') && isFacadeSprite) {
         const shW = img.displayWidth * 0.7;
         this.add
           .image(img.x + img.displayWidth / 2, img.y + img.displayHeight - s(9), 'mob_shadow')

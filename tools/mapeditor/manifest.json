@@ -3256,6 +3256,20 @@
       "h": 8.5
     },
     {
+      "key": "facade_brickmore_tall",
+      "url": "/assets/art/world/facades/facade_brickmore_tall.png",
+      "aspect": 0.505,
+      "w": 4.234,
+      "h": 8.391
+    },
+    {
+      "key": "facade_brownstone_tall",
+      "url": "/assets/art/world/facades/facade_brownstone_tall.png",
+      "aspect": 0.6,
+      "w": 4.547,
+      "h": 7.578
+    },
+    {
       "key": "house_maple",
       "url": "/assets/art/world/facades/house_maple.png",
       "aspect": 0.906,

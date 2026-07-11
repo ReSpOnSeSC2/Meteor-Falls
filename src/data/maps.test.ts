@@ -197,15 +197,16 @@ describe('S4 canon — shops open, the bank grows an ATM (Prompt 20, ADR-016)', 
       const exit = MAPS[c.interior].doors.find((z) => z.to === c.street);
       expect(exit, `${c.interior} exit`).toBeDefined();
       if (prop && d) {
-        expect(exit?.tx).toBe(prop.x * 16 + d.ox + d.w / 2);
-        expect(exit?.ty).toBe(prop.y * 16 + d.oy + d.h + 5);
-        // ADR-011: data-solid facades keep their door zone below the authored collision floor.
-        // Otterbrooke's landmark facades are texture-refit at runtime, so their live opening is
-        // audited by content-validate/door-audit instead of this static data-solid comparison.
-        if (c.street !== 'otterbrook') {
-          const floor = prop.y * 16 + (prop.solid?.oy ?? 0) + (prop.solid?.h ?? 0);
-          expect(prop.y * 16 + d.oy + d.h, `${c.street} door zone under the floor`).toBeGreaterThan(floor);
-        }
+        // G11 (EB scale pass): door offsets are NATIVE units — a per-instance
+        // PropDef.scale multiplies them, exactly as doorstepOf/the renderer do.
+        const sx = typeof prop.scale === 'number' ? prop.scale : prop.scale?.x ?? 1;
+        const sy = typeof prop.scale === 'number' ? prop.scale : prop.scale?.y ?? 1;
+        expect(exit?.tx).toBe(prop.x * 16 + (d.ox + d.w / 2) * sx);
+        expect(exit?.ty).toBe(prop.y * 16 + (d.oy + d.h) * sy + 5);
+        // ADR-051: both case streets now place texture-refit facades (Otterbrooke
+        // landmarks; Twoton's scaled 'bldg_' storefronts), so the live door opening
+        // is audited by content-validate's door-audit (landsSolid/bodyBlocked)
+        // rather than a static data-solid floor comparison here.
       } else {
         expect(exit?.tx).toBe((zone!.x + zone!.w / 2) * 16);
         expect(exit?.ty).toBe((zone!.y + zone!.h / 2) * 16);
