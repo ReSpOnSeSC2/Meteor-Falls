@@ -173,7 +173,17 @@ import { AUDIO } from '../engine/audio';
 import { Dialogue, makeWindow, toast, vars, everyFrame, DEPTH_UI, overscanRect } from '../ui/windows';
 import { askAmount } from '../ui/amount';
 import { money } from '../ui/text';
-import { TrafficSim, cellKey } from '../engine/traffic';
+import {
+  TrafficSim,
+  cellKey,
+  directionalVehiclePose,
+  isTrafficRoadChar,
+  legacyVehiclePose,
+  normalizedVehicleVector,
+  projectedVehicleBounds,
+  trafficDirFromVector,
+  trafficDirectionVector,
+} from '../engine/traffic';
 import { aabbOverlap, entersNewBody } from '../engine/movecollide';
 import {
   DOG_DISPLAY_SCALE,
@@ -2212,31 +2222,31 @@ export class OverworldScene extends Phaser.Scene {
     const riding = this.isRidingBmx();
     this.bicycle.setVisible(riding);
     if (!riding) return;
-    const frame = this.facing === 'down' ? 1 : this.facing === 'up' ? 2 : 0;
+    const heading = FACING_VEC[this.facing];
+    const pose = directionalVehiclePose(trafficDirFromVector(heading.x, heading.y));
     this.bicycle
       .setPosition(this.player.x, this.player.y + s(1))
-      .setFrame(frame)
-      .setAngle(0)
-      .setFlipX(this.facing.includes('right'))
+      .setFrame(pose.frame)
+      .setAngle(pose.angle)
+      .setFlipX(pose.flipX)
       .setDepth(this.player.y + this.playerLevel * this.levelDepthBias - 1);
-  }
-
-  private vehicleFrameForFacing(facing: Facing): 0 | 1 | 2 {
-    if (facing === 'down' || facing === 'downleft' || facing === 'downright') return 1;
-    if (facing === 'up' || facing === 'upleft' || facing === 'upright') return 2;
-    return 0;
   }
 
   private styleOwnedVehicleSprite(spr: Phaser.GameObjects.Sprite, vehicleType: string, facing: Facing): void {
     const spec = VEHICLE_SPECS[vehicleType];
     if (!spec) return;
     const displayScale = spec.cls === 'bike' ? 1 : spec.cls === 'moto' ? 1.12 : 1.35;
+    const heading = FACING_VEC[facing];
+    const dir = trafficDirFromVector(heading.x, heading.y);
+    const pose = DIRECTIONAL_VEHICLE_KEYS.has(spr.texture.key)
+      ? directionalVehiclePose(dir)
+      : legacyVehiclePose(dir);
     spr
       .setOrigin(0.5, 1)
       .setDisplaySize(s(spec.w) * displayScale, s(spec.h) * displayScale)
-      .setFrame(this.vehicleFrameForFacing(facing))
-      .setAngle(0)
-      .setFlipX(facing.includes('right'));
+      .setFrame(pose.frame)
+      .setAngle(pose.angle)
+      .setFlipX(pose.flipX);
   }
 
   /** Materialize every save-backed vehicle on this outdoor map. A purchased car
@@ -2492,11 +2502,10 @@ export class OverworldScene extends Phaser.Scene {
   private parkedVehicleBody(v: ParkedOwnedVehicle): Rect {
     const car = vehicleByTitle(v.title);
     const spec = car ? VEHICLE_SPECS[car.vehicleType] : undefined;
-    const vertical = !v.facing.includes('left') && !v.facing.includes('right');
     const long = s(spec?.solid.w ?? 24) * 1.2;
     const wide = s(spec?.solid.h ?? 10) * 1.25;
-    const w = vertical ? wide : long;
-    const h = vertical ? long : wide;
+    const heading = FACING_VEC[v.facing];
+    const { w, h } = projectedVehicleBounds(long, wide, heading);
     return { x: v.spr.x - w / 2, y: v.spr.y - h, w, h };
   }
 
@@ -3346,7 +3355,7 @@ export class OverworldScene extends Phaser.Scene {
       const row = grid[y];
       for (let x = 0; x < row.length; x++) {
         const ch = row[x];
-        if (ch === 'R' || ch === 'D' || ch === 'X') roads.add(cellKey(x, y));
+        if (isTrafficRoadChar(ch)) roads.add(cellKey(x, y));
       }
     }
     // A SOLID PROP standing on a road cell (a payphone, ATM, bollard…) is invisible to the
@@ -3430,25 +3439,23 @@ export class OverworldScene extends Phaser.Scene {
       spr.x = cx;
       spr.y = cy;
       spr.setDepth(cy + s(8));
-      // Authored vehicle sheets are four motion frames. Traffic still orients the
-      // side art by direction: dir 0=E, 1=S, 2=W, 3=N.
-      const vertical = v.dir === 1 || v.dir === 3;
+      const heading = trafficDirectionVector(v.dir);
       const dim = this.trafficDims.get(v.type) ?? { w: s(32), h: s(18) };
       // setFrame is cheap (the texture KEY never changes, so it skips the per-call
       // texture-manager lookup setTexture does); the on-screen size is fixed per vehicle
       // at spawn. ADR-097: a DIRECTIONAL sheet is 3 frames [side, front, back] and traffic
-      // SWAPS the frame by travel direction (no skew). A legacy sheet is 4 motion frames of
-      // the side view, oriented by mirror (East) + rotate (the vertical lanes — which skews
-      // a 3/4 sprite; the directional sheet is the real fix).
+      // SWAPS the frame by all eight travel headings (no skew). A legacy sheet is
+      // four motion frames of the side view, mirrored/rotated in 45-degree steps.
       if (DIRECTIONAL_VEHICLE_KEYS.has(v.type)) {
-        // dir 0=E, 1=S, 2=W, 3=N → side(0) for E/W, front(1) driving down, back(2) driving up
-        spr.setFrame(v.dir === 1 ? 1 : v.dir === 3 ? 2 : 0);
-        spr.setAngle(0);
-        spr.setFlipX(v.dir === 0); // E mirrors the front-left side art to front-right
+        const pose = directionalVehiclePose(v.dir);
+        spr.setFrame(pose.frame);
+        spr.setAngle(pose.angle);
+        spr.setFlipX(pose.flipX);
       } else {
+        const pose = legacyVehiclePose(v.dir);
         spr.setFrame(Math.floor((this.time.now / 130 + v.id) % 4));
-        spr.setAngle(v.dir === 1 ? -90 : v.dir === 3 ? 90 : 0); // S → front down, N → front up
-        spr.setFlipX(v.dir === 0); // E → mirror the left-facing art to face right
+        spr.setAngle(pose.angle);
+        spr.setFlipX(pose.flipX);
       }
       // SOLID body rect (px) covering the WHOLE car — ends and sides — sized to
       // the sprite and oriented to travel, inset 4px so brushing past isn't sticky
@@ -3456,8 +3463,9 @@ export class OverworldScene extends Phaser.Scene {
       // inset is native.
       const longPx = dim.w * S;
       const widePx = dim.h * S;
-      const rw = (vertical ? widePx : longPx) - s(4);
-      const rh = (vertical ? longPx : widePx) - s(4);
+      const projected = projectedVehicleBounds(longPx, widePx, heading);
+      const rw = Math.max(s(2), projected.w - s(4));
+      const rh = Math.max(s(2), projected.h - s(4));
       this.trafficRects.push({ x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh });
       const on =
         cx >= cam.scrollX - m &&
@@ -3642,9 +3650,7 @@ export class OverworldScene extends Phaser.Scene {
 
     let movedDistance = 0;
     if (hasInput && this.vehicleSpeed > 0) {
-      const len = Math.hypot(d.x, d.y) || 1;
-      const vx = d.x / len;
-      const vy = d.y / len;
+      const { x: vx, y: vy } = normalizedVehicleVector(d);
       const oldFacing = this.facing;
       const desiredFacing = facingFromVec(vx, vy);
       const oldBody = this.playerBodyAt(this.player.x, this.player.y);
@@ -3795,11 +3801,10 @@ export class OverworldScene extends Phaser.Scene {
     const car = title ? vehicleByTitle(title) : null;
     const spec = car ? VEHICLE_SPECS[car.vehicleType] : undefined;
     if (spec && title !== TWOTON_BMX_TITLE) {
-      const vertical = !this.facing.includes('left') && !this.facing.includes('right');
       const long = s(spec.solid.w) * 1.15;
       const wide = s(spec.solid.h) * 1.2;
-      const w = vertical ? wide : long;
-      const h = vertical ? long : wide;
+      const heading = FACING_VEC[this.facing];
+      const { w, h } = projectedVehicleBounds(long, wide, heading);
       return { x: x - w / 2, y: y - h * 0.72, w, h };
     }
     return footRect({ x, y }, PLAYER_FOOTPRINT, { x: 1, y: 1 }, ART_SCALE);

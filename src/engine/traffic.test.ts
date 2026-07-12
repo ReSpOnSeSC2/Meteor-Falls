@@ -8,7 +8,19 @@
  *   4. DETERMINISM — same seed → identical traffic, byte-for-byte (Prime Law 2).
  */
 import { describe, it, expect } from 'vitest';
-import { TrafficSim, cellKey, type TrafficVehicle } from './traffic';
+import {
+  TRAFFIC_DIR,
+  TrafficSim,
+  cellKey,
+  directionalVehiclePose,
+  isTrafficRoadChar,
+  legacyVehiclePose,
+  normalizedVehicleVector,
+  projectedVehicleBounds,
+  trafficDirFromVector,
+  trafficDirectionVector,
+  type TrafficVehicle,
+} from './traffic';
 
 /** a W×H grid of road cells (a full block of streets — dense, lots of corners) */
 function roadGrid(w: number, h: number): Set<string> {
@@ -22,6 +34,18 @@ function roadFromAscii(rows: string[]): Set<string> {
   const s = new Set<string>();
   rows.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'R') s.add(cellKey(x, y)); }));
   return s;
+}
+
+/** A five-cell-wide southeast boulevard. Every diagonal edge has both road
+ * bridge cells, matching Puerto Sol / Valle Dorado's authored slanted bands. */
+function diagonalRoad(length: number): Set<string> {
+  const roads = new Set<string>();
+  for (let y = 0; y < length; y++) {
+    for (let x = 0; x < length; x++) {
+      if (Math.abs(x - y) <= 2) roads.add(cellKey(x, y));
+    }
+  }
+  return roads;
 }
 
 function snapshot(vs: readonly TrafficVehicle[]): string {
@@ -112,5 +136,100 @@ describe('TrafficSim — determinism (Prime Law 2)', () => {
     sim.spawn();
     expect(sim.vehicles.length).toBeLessThanOrEqual(12);
     expect(sim.vehicles.length).toBeGreaterThan(0);
+  });
+});
+
+describe('TrafficSim — true diagonal roads', () => {
+  it('drives a stable 1:1 diagonal instead of tracing a square loop', () => {
+    const sim = new TrafficSim({ roads: diagonalRoad(30), seed: 404, max: 0, types: ['sedan'] });
+    const car: TrafficVehicle = {
+      id: 1,
+      type: 'sedan',
+      x: 3,
+      y: 3,
+      dir: TRAFFIC_DIR.SE,
+      px: 3,
+      py: 3,
+      paused: false,
+    };
+    sim.vehicles = [car];
+
+    const visited = new Set<string>();
+    for (let step = 0; step < 16; step++) {
+      const before = { x: car.x, y: car.y };
+      sim.step({ x: 100, y: 100 });
+      expect(car.dir).toBe(TRAFFIC_DIR.SE);
+      expect(car.x).toBe(before.x + 1);
+      expect(car.y).toBe(before.y + 1);
+      expect(visited.has(cellKey(car.x, car.y))).toBe(false);
+      visited.add(cellKey(car.x, car.y));
+    }
+  });
+
+  it('does not cut a diagonal corner unless both bridge cells are road and clear', () => {
+    const isolated = new Set([cellKey(1, 1), cellKey(2, 2)]);
+    const noBridges = new TrafficSim({ roads: isolated, seed: 1, max: 0, types: ['sedan'] });
+    noBridges.vehicles = [{ id: 1, type: 'sedan', x: 1, y: 1, dir: TRAFFIC_DIR.SE, px: 1, py: 1, paused: false }];
+    noBridges.step({ x: 99, y: 99 });
+    expect(noBridges.vehicles[0]).toMatchObject({ x: 1, y: 1, paused: true });
+
+    const roads = diagonalRoad(12);
+    const blockedBridge = new TrafficSim({ roads, seed: 2, max: 0, types: ['sedan'] });
+    blockedBridge.vehicles = [{ id: 1, type: 'sedan', x: 4, y: 4, dir: TRAFFIC_DIR.SE, px: 4, py: 4, paused: false }];
+    blockedBridge.step({ x: 99, y: 99 }, new Set([cellKey(5, 4)]));
+    expect(blockedBridge.vehicles[0].x === 5 && blockedBridge.vehicles[0].y === 5).toBe(false);
+
+    const playerOnBridge = new TrafficSim({ roads, seed: 3, max: 0, types: ['sedan'] });
+    playerOnBridge.vehicles = [{ id: 1, type: 'sedan', x: 4, y: 4, dir: TRAFFIC_DIR.SE, px: 4, py: 4, paused: false }];
+    playerOnBridge.step({ x: 4, y: 5 });
+    expect(playerOnBridge.vehicles[0].x === 5 && playerOnBridge.vehicles[0].y === 5).toBe(false);
+  });
+
+  it('takes an ordinary corner instead of hooking backward into a local orbit', () => {
+    const roads = new Set<string>();
+    // A long NE branch shares its first bridge with a short east turn. From a
+    // south heading, NE is a 135-degree hook; east is the sane 90-degree exit.
+    for (let i = 0; i < 9; i++) {
+      roads.add(cellKey(i, -i));
+      roads.add(cellKey(i + 1, -i));
+      roads.add(cellKey(i, -i - 1));
+    }
+    roads.add(cellKey(2, 0));
+    const sim = new TrafficSim({ roads, seed: 14, max: 0, types: ['sedan'] });
+    sim.vehicles = [{ id: 1, type: 'sedan', x: 0, y: 0, dir: TRAFFIC_DIR.S, px: 0, py: 0, paused: false }];
+
+    sim.step({ x: 99, y: 99 });
+    expect(sim.vehicles[0]).toMatchObject({ x: 1, y: 0, dir: TRAFFIC_DIR.E, paused: false });
+  });
+
+  it('keeps the full road alphabet connected, including horizontal dash cells', () => {
+    expect(['R', 'D', '_', 'X'].every((ch) => isTrafficRoadChar(ch))).toBe(true);
+    expect(['=', 'P', ':', undefined].some((ch) => isTrafficRoadChar(ch))).toBe(false);
+  });
+
+  it('provides coherent eight-way art poses and projected collision bounds', () => {
+    const unitDiagonal = normalizedVehicleVector({ x: 1, y: 1 });
+    expect(unitDiagonal.x).toBeCloseTo(Math.SQRT1_2);
+    expect(unitDiagonal.y).toBeCloseTo(Math.SQRT1_2);
+    expect(normalizedVehicleVector({ x: 0, y: 0 })).toEqual({ x: 0, y: 0 });
+    expect([
+      [1, 0], [1, 1], [0, 1], [-1, 1],
+      [-1, 0], [-1, -1], [0, -1], [1, -1],
+    ].map(([x, y]) => trafficDirFromVector(x, y))).toEqual([
+      TRAFFIC_DIR.E, TRAFFIC_DIR.SE, TRAFFIC_DIR.S, TRAFFIC_DIR.SW,
+      TRAFFIC_DIR.W, TRAFFIC_DIR.NW, TRAFFIC_DIR.N, TRAFFIC_DIR.NE,
+    ]);
+    expect(trafficDirectionVector(TRAFFIC_DIR.SE)).toEqual({ x: 1, y: 1 });
+    expect(trafficDirectionVector(TRAFFIC_DIR.NW)).toEqual({ x: -1, y: -1 });
+    expect(directionalVehiclePose(TRAFFIC_DIR.SE)).toEqual({ frame: 1, flipX: true, angle: 0 });
+    expect(directionalVehiclePose(TRAFFIC_DIR.SW)).toEqual({ frame: 1, flipX: false, angle: 0 });
+    expect(directionalVehiclePose(TRAFFIC_DIR.NE)).toEqual({ frame: 2, flipX: true, angle: 0 });
+    expect(legacyVehiclePose(TRAFFIC_DIR.SE)).toEqual({ frame: 0, flipX: true, angle: 45 });
+
+    const diagonal = projectedVehicleBounds(40, 20, trafficDirectionVector(TRAFFIC_DIR.SE));
+    expect(diagonal.w).toBeCloseTo(30 * Math.SQRT2);
+    expect(diagonal.h).toBeCloseTo(30 * Math.SQRT2);
+    expect(projectedVehicleBounds(40, 20, trafficDirectionVector(TRAFFIC_DIR.E))).toEqual({ w: 40, h: 20 });
+    expect(projectedVehicleBounds(40, 20, trafficDirectionVector(TRAFFIC_DIR.S))).toEqual({ w: 20, h: 40 });
   });
 });

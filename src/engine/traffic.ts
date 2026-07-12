@@ -13,13 +13,118 @@
  * When a vehicle can't move safely it YIELDS (pauses) or turns at an
  * intersection; it never forces the unsafe move.
  *
- * The sim is grid-discrete (one road tile per step) and capped at `max` vehicles
- * (the object pool); the renderer culls what's off-screen.
+ * The sim is grid-discrete (one road tile per step, including true diagonal
+ * steps) and capped at `max` vehicles (the object pool); the renderer culls
+ * what's off-screen.
  */
 
-export type Dir = 0 | 1 | 2 | 3; // E, S, W, N
-const DX: readonly number[] = [1, 0, -1, 0];
-const DY: readonly number[] = [0, 1, 0, -1];
+/** Clockwise eight-way headings. Keeping them ordered makes turn-distance and
+ * route preference deterministic: E, SE, S, SW, W, NW, N, NE. */
+export const TRAFFIC_DIR = {
+  E: 0,
+  SE: 1,
+  S: 2,
+  SW: 3,
+  W: 4,
+  NW: 5,
+  N: 6,
+  NE: 7,
+} as const;
+
+export type Dir = (typeof TRAFFIC_DIR)[keyof typeof TRAFFIC_DIR];
+
+const ALL_DIRS: readonly Dir[] = [
+  TRAFFIC_DIR.E,
+  TRAFFIC_DIR.SE,
+  TRAFFIC_DIR.S,
+  TRAFFIC_DIR.SW,
+  TRAFFIC_DIR.W,
+  TRAFFIC_DIR.NW,
+  TRAFFIC_DIR.N,
+  TRAFFIC_DIR.NE,
+];
+const CARDINAL_DIRS: readonly Dir[] = [TRAFFIC_DIR.E, TRAFFIC_DIR.S, TRAFFIC_DIR.W, TRAFFIC_DIR.N];
+const DX: readonly number[] = [1, 1, 0, -1, -1, -1, 0, 1];
+const DY: readonly number[] = [0, 1, 1, 1, 0, -1, -1, -1];
+const ROUTE_LOOKAHEAD = 6;
+
+export interface TrafficVector {
+  x: number;
+  y: number;
+}
+
+export interface VehicleRenderPose {
+  frame: 0 | 1 | 2;
+  flipX: boolean;
+  angle: number;
+}
+
+/** `R` asphalt, both vertical/horizontal dash cells, and crosswalks all belong
+ * to one traffic graph. `_` used to be omitted, punching artificial holes in
+ * otherwise continuous east-west streets. */
+export function isTrafficRoadChar(ch: string | undefined): boolean {
+  return ch === 'R' || ch === 'D' || ch === '_' || ch === 'X';
+}
+
+export function trafficDirectionVector(dir: Dir): TrafficVector {
+  return { x: DX[dir], y: DY[dir] };
+}
+
+/** Constant-speed vehicle intent. Diagonals must not gain √2 speed or acquire
+ * any angular/steering component: a held diagonal remains one straight line. */
+export function normalizedVehicleVector(vector: TrafficVector): TrafficVector {
+  const x = Number.isFinite(vector.x) ? vector.x : 0;
+  const y = Number.isFinite(vector.y) ? vector.y : 0;
+  const length = Math.hypot(x, y);
+  return length > 0 ? { x: x / length, y: y / length } : { x: 0, y: 0 };
+}
+
+/** Convert an input/facing vector to the nearest exact eight-way heading. */
+export function trafficDirFromVector(dx: number, dy: number, fallback: Dir = TRAFFIC_DIR.S): Dir {
+  const x = Math.sign(Number.isFinite(dx) ? dx : 0);
+  const y = Math.sign(Number.isFinite(dy) ? dy : 0);
+  if (x > 0 && y > 0) return TRAFFIC_DIR.SE;
+  if (x < 0 && y > 0) return TRAFFIC_DIR.SW;
+  if (x < 0 && y < 0) return TRAFFIC_DIR.NW;
+  if (x > 0 && y < 0) return TRAFFIC_DIR.NE;
+  if (x > 0) return TRAFFIC_DIR.E;
+  if (x < 0) return TRAFFIC_DIR.W;
+  if (y > 0) return TRAFFIC_DIR.S;
+  if (y < 0) return TRAFFIC_DIR.N;
+  return fallback;
+}
+
+/** Three-view authored cars carry side/front-three-quarter/back-three-quarter
+ * art. The diagonal headings therefore select the matching oblique frame and
+ * mirror it, rather than rotating a car around its centre. */
+export function directionalVehiclePose(dir: Dir): VehicleRenderPose {
+  const { x, y } = trafficDirectionVector(dir);
+  if (y > 0) return { frame: 1, flipX: x > 0, angle: 0 };
+  if (y < 0) return { frame: 2, flipX: x > 0, angle: 0 };
+  return { frame: 0, flipX: x > 0, angle: 0 };
+}
+
+/** One-view legacy vehicles have no oblique frames, so rotate the side art in
+ * 45-degree increments. The source faces west; east is its mirrored form. */
+export function legacyVehiclePose(dir: Dir): VehicleRenderPose {
+  const { x, y } = trafficDirectionVector(dir);
+  if (x > 0) return { frame: 0, flipX: true, angle: y * 45 };
+  if (x < 0) return { frame: 0, flipX: false, angle: -y * 45 };
+  return { frame: 0, flipX: false, angle: y > 0 ? -90 : 90 };
+}
+
+/** Axis-aligned bounds of a long×wide body rotated to `heading`. This is the
+ * exact projected AABB for cardinal and 45-degree headings and is shared by
+ * traffic, driven cars, and parked cars. */
+export function projectedVehicleBounds(long: number, wide: number, heading: TrafficVector): { w: number; h: number } {
+  const unit = normalizedVehicleVector(heading);
+  const x = unit.x === 0 && unit.y === 0 ? 1 : Math.abs(unit.x);
+  const y = Math.abs(unit.y);
+  return {
+    w: x * long + y * wide,
+    h: y * long + x * wide,
+  };
+}
 
 export interface TrafficVehicle {
   id: number;
@@ -35,7 +140,7 @@ export interface TrafficVehicle {
 }
 
 export interface TrafficOpts {
-  /** the drivable cells, as "x,y" keys (road 'R'/'D'/'X' tiles) */
+  /** the drivable cells, as "x,y" keys (road 'R'/'D'/'_'/'X' tiles) */
   roads: ReadonlySet<string>;
   /** deterministic seed (same seed → same traffic, byte-for-byte) */
   seed: number;
@@ -87,7 +192,7 @@ export class TrafficSim {
   /** the player's walkable neighbours that no vehicle sits on (their escape lanes) */
   private freeNeighbours(px: number, py: number, skipId = -1): number {
     let n = 0;
-    for (let d = 0; d < 4; d++) {
+    for (const d of CARDINAL_DIRS) {
       const nx = px + DX[d];
       const ny = py + DY[d];
       if (this.isRoad(nx, ny) && !this.occupied(nx, ny, skipId)) n++;
@@ -95,11 +200,54 @@ export class TrafficSim {
     return n;
   }
 
+  /** Cells swept by a move. Diagonal motion is legal only across a complete
+   * 2×2 road corner: destination + both cardinal bridge cells. Those bridge
+   * cells are also checked for people, parked cars, and other traffic later,
+   * preventing a long sprite from clipping across an occupied corner. */
+  private edgeCells(x: number, y: number, dir: Dir): TrafficVector[] | null {
+    const dx = DX[dir];
+    const dy = DY[dir];
+    const target = { x: x + dx, y: y + dy };
+    if (!this.isRoad(target.x, target.y)) return null;
+    if (dx === 0 || dy === 0) return [target];
+    const bridgeX = { x: x + dx, y };
+    const bridgeY = { x, y: y + dy };
+    if (!this.isRoad(bridgeX.x, bridgeX.y) || !this.isRoad(bridgeY.x, bridgeY.y)) return null;
+    return [target, bridgeX, bridgeY];
+  }
+
   /** the directions a vehicle at (x,y) may travel onto an existing road cell */
   private exits(x: number, y: number): Dir[] {
-    const out: Dir[] = [];
-    for (let d = 0; d < 4; d++) if (this.isRoad(x + DX[d], y + DY[d])) out.push(d as Dir);
-    return out;
+    return ALL_DIRS.filter((dir) => this.edgeCells(x, y, dir) !== null);
+  }
+
+  /** Number of same-heading road edges ahead. On a broad diagonal boulevard,
+   * NE/SW wins this lookahead; on a straight avenue E/W or N/S wins. */
+  private straightRun(x: number, y: number, dir: Dir): number {
+    let cx = x;
+    let cy = y;
+    let run = 0;
+    for (; run < ROUTE_LOOKAHEAD; run++) {
+      if (!this.edgeCells(cx, cy, dir)) break;
+      cx += DX[dir];
+      cy += DY[dir];
+    }
+    return run;
+  }
+
+  private turnDistance(a: Dir, b: Dir): number {
+    const clockwise = (b - a + 8) % 8;
+    return Math.min(clockwise, 8 - clockwise);
+  }
+
+  private spawnDirection(x: number, y: number, exits: readonly Dir[]): Dir {
+    const bestRun = Math.max(...exits.map((dir) => this.straightRun(x, y, dir)));
+    let best = exits.filter((dir) => this.straightRun(x, y, dir) === bestRun);
+    // A fully open intersection has equal continuation in every direction;
+    // prefer a lane cardinal there instead of cutting across the junction.
+    const cardinals = best.filter((dir) => CARDINAL_DIRS.includes(dir));
+    if (cardinals.length > 0) best = cardinals;
+    return best[Math.floor(this.rand() * best.length)];
   }
 
   /** fill the pool up to `max`, deterministically, on free road cells */
@@ -111,7 +259,7 @@ export class TrafficSim {
       if (this.occupied(x, y)) continue;
       const ex = this.exits(x, y);
       if (ex.length === 0) continue;
-      const dir = ex[Math.floor(this.rand() * ex.length)];
+      const dir = this.spawnDirection(x, y, ex);
       const type = this.types[Math.floor(this.rand() * this.types.length)];
       this.vehicles.push({ id: this.nextId++, type, x, y, dir, px: x, py: y, paused: false });
     }
@@ -140,21 +288,22 @@ export class TrafficSim {
     }
   }
 
-  /** pick a safe next cell, preferring straight-ahead, then turns; null = yield */
+  /** Pick a safe next cell. Longest forward continuation wins, then the
+   * smallest heading change. This follows a slanted boulevard instead of
+   * walking its square perimeter; an immediate U-turn remains last resort. */
   private chooseMove(
     v: TrafficVehicle,
     player: { x: number; y: number },
     blocked: ReadonlySet<string>,
   ): { x: number; y: number; dir: Dir } | null {
-    // straight ahead first, then right, left (never an immediate U-turn)
-    const order: Dir[] = [v.dir, ((v.dir + 1) % 4) as Dir, ((v.dir + 3) % 4) as Dir, ((v.dir + 2) % 4) as Dir];
-    for (const d of order) {
-      const nx = v.x + DX[d];
-      const ny = v.y + DY[d];
-      if (!this.isRoad(nx, ny)) continue;
-      if (blocked.has(cellKey(nx, ny))) continue;
-      if (nx === player.x && ny === player.y) continue;       // SAFETY 1: no crush
-      if (this.occupied(nx, ny, v.id)) continue;              // no stacking
+    const options: Array<{ x: number; y: number; dir: Dir; run: number; turn: number }> = [];
+    for (const dir of ALL_DIRS) {
+      const edge = this.edgeCells(v.x, v.y, dir);
+      if (!edge) continue;
+      if (edge.some((cell) => blocked.has(cellKey(cell.x, cell.y)))) continue;
+      if (edge.some((cell) => cell.x === player.x && cell.y === player.y)) continue; // SAFETY 1: no crush/sweep
+      if (edge.some((cell) => this.occupied(cell.x, cell.y, v.id))) continue;          // no stacking/crossing
+      const { x: nx, y: ny } = edge[0];
       // SAFETY 2: if this cell is one of the player's escape lanes, only take it
       // when it is NOT the player's last one (count free neighbours as if we moved).
       const adjToPlayer = Math.abs(nx - player.x) + Math.abs(ny - player.y) === 1;
@@ -163,9 +312,31 @@ export class TrafficSim {
         const free = this.freeNeighboursExcluding(player.x, player.y, v.id, nx, ny, blocked);
         if (free < 1) continue;
       }
-      return { x: nx, y: ny, dir: d };
+      options.push({ x: nx, y: ny, dir, run: this.straightRun(nx, ny, dir), turn: this.turnDistance(v.dir, dir) });
     }
-    return null;
+    if (options.length === 0) return null;
+
+    const reverse = ((v.dir + 4) % 8) as Dir;
+    let candidates = options.some((option) => option.dir !== reverse)
+      ? options.filter((option) => option.dir !== reverse)
+      : options;
+    // Do not trade a sane forward/45° path for a slightly longer 135° hook.
+    // That sharp-hook choice is what made cars orbit six-cell pockets at the
+    // seam between a straight avenue and a diagonal boulevard.
+    const gentle = candidates.filter((option) => option.turn <= 1);
+    if (gentle.length > 0) candidates = gentle;
+    else {
+      const ordinaryTurn = candidates.filter((option) => option.turn <= 2);
+      if (ordinaryTurn.length > 0) candidates = ordinaryTurn;
+    }
+    const bestRun = Math.max(...candidates.map((option) => option.run));
+    candidates = candidates.filter((option) => option.run === bestRun);
+    const smallestTurn = Math.min(...candidates.map((option) => option.turn));
+    candidates = candidates.filter((option) => option.turn === smallestTurn);
+    const pick = candidates.length === 1
+      ? candidates[0]
+      : candidates[Math.floor(this.rand() * candidates.length)];
+    return { x: pick.x, y: pick.y, dir: pick.dir };
   }
 
   /** free escape lanes for the player if a vehicle (skipId) sat on (bx,by) */
@@ -178,7 +349,7 @@ export class TrafficSim {
     blocked: ReadonlySet<string>,
   ): number {
     let n = 0;
-    for (let d = 0; d < 4; d++) {
+    for (const d of CARDINAL_DIRS) {
       const nx = px + DX[d];
       const ny = py + DY[d];
       if (!this.isRoad(nx, ny)) continue;
