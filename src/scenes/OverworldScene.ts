@@ -87,16 +87,55 @@ import { DIALOGUE } from '../data/dialogue';
 import { ITEMS } from '../data/items';
 import { GS, makeHeroState } from '../engine/state';
 import { completeQuest } from '../engine/quests';
-import { PROPERTIES } from '../data/properties';
+import { PROPERTIES, type PropertyDef } from '../data/properties';
 import { buyCost } from '../engine/property';
-import { buyCar, carById, ownsCar, setActive } from '../engine/garage';
+import {
+  CITY_AMENITIES,
+  FORMAL_CITY_IDS,
+  cityHotelRoomId,
+  cityServiceNpcId,
+  cityServiceForNpc,
+  type FormalCityId,
+} from '../data/city_amenities';
+import {
+  buyCar,
+  carById,
+  garageCapacity,
+  garageContents,
+  ownsCar,
+  parkCar,
+  pullCar,
+  setActive,
+} from '../engine/garage';
+import {
+  allocateVehicleDeliverySlot,
+  beginDrivingVehicle,
+  parkDrivingVehicle,
+  vehicleByTitle,
+  vehicleContinent,
+  vehicleServiceableAtArea,
+} from '../engine/vehicle-domain';
+import {
+  canDrive,
+  ignitionLabel,
+  ignitionRequired,
+  startEngine,
+  stopEngine,
+} from '../engine/ignition';
+import {
+  BASE_PRICE_PER_UNIT,
+  consume as consumeFuel,
+  fuelProfile,
+  isEmpty as fuelEmpty,
+  isLow as fuelLow,
+  unitsToFill,
+} from '../engine/fuel';
 import {
   BMX_SPEED_MULTIPLIER,
   TWOTON_BMX_HOME_CONTINENT,
   TWOTON_BMX_ID,
   TWOTON_BMX_TITLE,
   ridingBmx,
-  toggleBmx,
 } from '../engine/bicycle';
 import { availableAbilities } from '../data/heroes';
 import { PSI_GATES } from '../data/psigates';
@@ -117,7 +156,12 @@ import { AWAKENINGS } from '../data/awakenings';
 import { playCutscene } from '../engine/cutscene';
 import { CHOICES, type ChoiceId } from '../data/choices';
 import { recordChoice } from '../engine/choice';
-import { captureEcho, isRewindable, clearPuppetLock } from '../engine/echo';
+import { captureEcho, isRewindable, clearPuppetLock, puppetLocked } from '../engine/echo';
+import {
+  attempt as attemptControl,
+  candidates as controlCandidates,
+  type Caster as ControlCaster,
+} from '../engine/control';
 import { composeEnding, endingContext, forgiveViable } from '../engine/ending';
 import { withholdUltimate, isPresent } from '../engine/party';
 import { LINKS_FLAGS, LINKS_TEXT, SUNDAY_SET, linksSeed } from '../data/links';
@@ -252,6 +296,39 @@ interface NpcObj {
   /** Render-composed scale (dog/map-native × per-instance), shared by every
    * live/static foot-body query so collision stays attached to the sprite. */
   collisionScale: Scale2;
+}
+
+export function vehicleBodyTriggersEdgeDoor(
+  door: Pick<DoorZone, 'x' | 'y' | 'w' | 'h'>,
+  mapWidth: number,
+  mapHeight: number,
+  input: { x: number; y: number },
+  vehicleBody: Rect,
+  doorRect: Rect,
+  targetIsInterior: boolean,
+): boolean {
+  if (targetIsInterior) return false;
+  const outward =
+    (door.x <= 0 && input.x < 0)
+    || (door.x + door.w >= mapWidth && input.x > 0)
+    || (door.y <= 0 && input.y < 0)
+    || (door.y + door.h >= mapHeight && input.y > 0);
+  return outward && aabbOverlap(vehicleBody, doorRect);
+}
+
+interface FieldPuppet {
+  npc: NpcObj;
+  remaining: number;
+  ring: Phaser.GameObjects.Ellipse;
+  tether: Phaser.GameObjects.Graphics;
+  panel: Phaser.GameObjects.GameObject;
+  label: Phaser.GameObjects.BitmapText;
+}
+
+interface ParkedOwnedVehicle {
+  title: string;
+  spr: Phaser.GameObjects.Sprite;
+  facing: Facing;
 }
 
 type AuthoredWorldPropKey = keyof typeof AUTHORED_WORLD_PROP_DISPLAY_SIZE;
@@ -459,6 +536,29 @@ const CH1_STORY_NIGHT_MAPS: ReadonlySet<string> = new Set([
   'oak_hollow',
   'oak_heart',
 ]);
+
+/** Puerto Sol keeps gameplay-facing prop ids (`picnic`, `gift_box`, `payphone`,
+ * etc.) because interaction/validation keys are save-era contracts, while its
+ * runtime art uses the authored regional redraws. This visual alias seam gives
+ * the whole Threed pass one coherent palette without weakening those contracts. */
+const PUERTO_PROP_ART: Readonly<Record<string, string>> = {
+  banana_boat: 'puerto_banana_boat',
+  bench: 'puerto_bench',
+  crate: 'puerto_crate',
+  crate_bananas: 'puerto_crate_bananas',
+  departure_board: 'puerto_departure_board',
+  fountain: 'puerto_fountain',
+  gangplank: 'puerto_gangplank',
+  gift_box: 'puerto_gift_box',
+  gift_box_open: 'puerto_gift_box_open',
+  market_stall_a: 'puerto_market_stall_a',
+  market_stall_b: 'puerto_market_stall_b',
+  market_stall_c: 'puerto_market_stall_c',
+  payphone: 'puerto_payphone',
+  picnic: 'puerto_picnic',
+  sign: 'puerto_sign',
+  trash_can: 'puerto_trash_can',
+};
 /** PKG-12 §A11 — the GRAND DUCHY OF MINIMUS tile reskin. The engine has ONE global
  *  TILESET (no per-area swap), so buildTiles remaps the shared grid-char tile NAMES to
  *  the appended Minimus tiles for these maps ONLY (the authored Minimus_tiles_16.png
@@ -924,6 +1024,24 @@ export class OverworldScene extends Phaser.Scene {
   /** The save-backed BMX overlay. It is hidden indoors or when not the active
    * vehicle; the hero remains the collision/camera body. */
   private bicycle?: Phaser.GameObjects.Sprite;
+  /** Player-owned road vehicles use the same authored three-view sheets as
+   * traffic, but own persistent parking, fuel, collision and a dashboard. */
+  private drivingVehicleSprite?: Phaser.GameObjects.Sprite;
+  private parkedOwnedVehicles: ParkedOwnedVehicle[] = [];
+  private vehicleHud: Array<
+    Phaser.GameObjects.NineSlice | Phaser.GameObjects.Sprite | Phaser.GameObjects.BitmapText
+  > = [];
+  private vehicleHudFuel?: Phaser.GameObjects.Graphics;
+  private vehicleHeadlights?: Phaser.GameObjects.Graphics;
+  private vehicleSpeed = 0;
+  /** Runtime-only by design: a combustion engine starts off when entered, then
+   * stays running across outdoor route restarts until the car is parked. */
+  private vehicleEngineRunning = false;
+  private vehicleFuelWarned = false;
+  private vehicleHudVisible = true;
+  /** Chapter 3's field face of Mind Warp. Jay remains planted while the camera
+   * follows the borrowed civilian; B/Y releases them, or the short timer does. */
+  private fieldPuppet: FieldPuppet | null = null;
   private facing: Facing = 'down';
   private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean; flit: boolean }> = [];
   /** ADR-097: a pooled contact shadow per walking actor (grounding = 3D read) */
@@ -997,6 +1115,7 @@ export class OverworldScene extends Phaser.Scene {
     const requestedId = data.mapId ?? GS.data.map;
     const recoveringLegacyTwotonUnit = isLegacyTwotonUnitId(requestedId);
     const id = recoveringLegacyTwotonUnit ? 'brickton' : requestedId;
+    if (id !== GS.data.map) clearPuppetLock();
     this.mapDef = MAPS[id] ?? MAPS.otterbrook;
     this.openingRequested = data.opening === true;
     this.devFullMapPreview = data.devFullMap === true;
@@ -1030,6 +1149,16 @@ export class OverworldScene extends Phaser.Scene {
     this.fireflies = [];
     this.holdingDoorImg = null;
     this.bicycle = undefined;
+    this.drivingVehicleSprite = undefined;
+    this.parkedOwnedVehicles = [];
+    this.vehicleHud = [];
+    this.vehicleHudFuel = undefined;
+    this.vehicleHeadlights = undefined;
+    this.vehicleSpeed = 0;
+    this.vehicleEngineRunning = false;
+    this.vehicleFuelWarned = false;
+    this.vehicleHudVisible = true;
+    this.fieldPuppet = null;
     this.insideTriggers.clear();
     this.dlg = new Dialogue(this);
 
@@ -1040,6 +1169,7 @@ export class OverworldScene extends Phaser.Scene {
     this.buildEdgeFeatures();
     this.buildNpcs();
     this.buildPlayer();
+    this.buildOwnedVehicles();
     this.buildRoamers();
     this.buildPatrols();
     this.buildTraffic();
@@ -1581,6 +1711,11 @@ export class OverworldScene extends Phaser.Scene {
     const W = w * TILE_PX;
     const H = h * TILE_PX;
     const jit = (): number => (rnd() - 0.5) * s(10);
+    // A coastal boundary made of actual sea/foam already has its authored
+    // horizon. Planting trees or palms just outside those cells made trunks
+    // appear to grow from open water on docks, resorts, and river mouths.
+    const boundaryIsWater = (x: number, y: number): boolean =>
+      'eE'.includes(this.mapDef.grid[y]?.[x] ?? '');
     const plant = (cx: number, cy: number): void => {
       const key = KEYS[Math.floor(rnd() * KEYS.length)];
       const variety = (0.85 + rnd() * 0.3) * mul; // size variety (× biome wall factor) so the line isn't a comb
@@ -1599,14 +1734,14 @@ export class OverworldScene extends Phaser.Scene {
     // top + bottom rows — canopy fills the margin above / below the grid
     for (let x = 0; x < w; x++) {
       const cx = x * TILE_PX + TILE_PX / 2 + jit();
-      if (!openTop.has(x)) plant(cx, s(2) + jit()); // base on the top edge, canopy up
-      if (!openBottom.has(x)) plant(cx, H + s(20) + jit()); // base just below, canopy over the seam
+      if (!openTop.has(x) && !boundaryIsWater(x, 0)) plant(cx, s(2) + jit()); // base on the top edge, canopy up
+      if (!openBottom.has(x) && !boundaryIsWater(x, h - 1)) plant(cx, H + s(20) + jit()); // base just below, canopy over the seam
     }
     // left + right columns — canopy fills the side margins
     for (let y = 0; y < h; y++) {
       const cy = y * TILE_PX + TILE_PX + jit();
-      if (!openLeft.has(y)) plant(-s(10) + jit(), cy);
-      if (!openRight.has(y)) plant(W + s(10) + jit(), cy);
+      if (!openLeft.has(y) && !boundaryIsWater(0, y)) plant(-s(10) + jit(), cy);
+      if (!openRight.has(y) && !boundaryIsWater(w - 1, y)) plant(W + s(10) + jit(), cy);
     }
   }
 
@@ -1619,10 +1754,13 @@ export class OverworldScene extends Phaser.Scene {
         continue;
       }
       // S14: a pressed room's mask hums (texture pick is scene-interpreted)
-      const sprite =
+      const logicalSprite =
         p.sprite === 'mask_switch' && (Number(GS.flag(`pyr_rot_${this.mapDef.id.slice(-1)}`)) || 0) > 0
           ? 'mask_switch_lit'
           : p.sprite;
+      const sprite = this.mapDef.id === 'puerto_sol'
+        ? (PUERTO_PROP_ART[logicalSprite] ?? logicalSprite)
+        : logicalSprite;
       const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, sprite).setOrigin(0, 0);
       const directionalVehicle = DIRECTIONAL_VEHICLE_KEYS.has(sprite);
       const directionalVehicleFrame = directionalVehicle ? staticDirectionalVehicleFrame(p.rot) : 0;
@@ -1682,7 +1820,7 @@ export class OverworldScene extends Phaser.Scene {
       // rollout 2026-07-11): the 3/4 buildings sit on a flat ground, so a soft
       // contact shadow at the base plants them (mirrors ADR-097's actor shadows).
       // Drawn just UNDER the building + offset toward the light-away side.
-      if ((this.mapDef.id === 'otterbrook' || this.mapDef.id === 'brickton') && isFacadeSprite) {
+      if ((this.mapDef.id === 'otterbrook' || this.mapDef.id === 'brickton' || this.mapDef.id === 'puerto_sol') && isFacadeSprite) {
         const shW = img.displayWidth * 0.7;
         this.add
           .image(img.x + img.displayWidth / 2, img.y + img.displayHeight - s(9), 'mob_shadow')
@@ -2057,6 +2195,7 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private isRidingBmx(): boolean {
+    if (GS.data.drivingVehicle !== TWOTON_BMX_TITLE) return false;
     return ridingBmx(
       GS.data.activeVehicle,
       GS.data.keyItems,
@@ -2082,31 +2221,648 @@ export class OverworldScene extends Phaser.Scene {
       .setDepth(this.player.y + this.playerLevel * this.levelDepthBias - 1);
   }
 
-  private toggleBicycleRide(): void {
-    const result = toggleBmx(
-      GS.data.activeVehicle,
-      GS.data.keyItems,
-      GS.data.carLocation,
-      this.currentBicycleArea(),
-      this.mapDef.interior === true,
+  private vehicleFrameForFacing(facing: Facing): 0 | 1 | 2 {
+    if (facing === 'down' || facing === 'downleft' || facing === 'downright') return 1;
+    if (facing === 'up' || facing === 'upleft' || facing === 'upright') return 2;
+    return 0;
+  }
+
+  private styleOwnedVehicleSprite(spr: Phaser.GameObjects.Sprite, vehicleType: string, facing: Facing): void {
+    const spec = VEHICLE_SPECS[vehicleType];
+    if (!spec) return;
+    const displayScale = spec.cls === 'bike' ? 1 : spec.cls === 'moto' ? 1.12 : 1.35;
+    spr
+      .setOrigin(0.5, 1)
+      .setDisplaySize(s(spec.w) * displayScale, s(spec.h) * displayScale)
+      .setFrame(this.vehicleFrameForFacing(facing))
+      .setAngle(0)
+      .setFlipX(facing.includes('right'));
+  }
+
+  /** Materialize every save-backed vehicle on this outdoor map. A purchased car
+   * is therefore a world object with a title and position, never an invisible
+   * menu flag. */
+  private buildOwnedVehicles(): void {
+    const entered = this.normalizeDrivingVehicleState();
+    if (this.mapDef.interior) return;
+    this.buildParkedOwnedVehicles();
+    if (!entered) {
+      this.syncVehicleOccupants();
+      return;
+    }
+    const { title, car } = entered;
+    const profile = fuelProfile(car.vehicleType);
+    const fuel = profile.kind === 'none' ? 1 : (GS.data.fuel[title] ?? profile.tank);
+    this.vehicleEngineRunning = startEngine(car.vehicleType, fuel).ok;
+    if (title === TWOTON_BMX_TITLE) {
+      this.syncBicycleSprite();
+      this.buildVehicleHud();
+      this.syncVehicleOccupants();
+      return;
+    }
+    this.drivingVehicleSprite = this.add.sprite(this.player.x, this.player.y, car.id, 0);
+    this.styleOwnedVehicleSprite(this.drivingVehicleSprite, car.vehicleType, this.facing);
+    this.syncDrivingVehicleSprite();
+    this.buildVehicleHud();
+    this.syncVehicleOccupants();
+  }
+
+  /** Repair stale/migrated drive state before the update loop can hide or freeze
+   * the hero. A valid title cannot simultaneously remain inside a home garage. */
+  private normalizeDrivingVehicleState(): { title: string; car: NonNullable<ReturnType<typeof vehicleByTitle>> } | null {
+    const title = GS.data.drivingVehicle;
+    if (!title) return null;
+    const car = vehicleByTitle(title);
+    if (!car || !GS.data.keyItems.includes(title)) {
+      GS.data.drivingVehicle = null;
+      if (GS.data.activeVehicle === title) GS.data.activeVehicle = null;
+      return null;
+    }
+    for (const [propertyId, titles] of Object.entries(GS.data.garage)) {
+      const kept = titles.filter((candidate) => candidate !== title);
+      if (kept.length > 0) GS.data.garage[propertyId] = kept;
+      else delete GS.data.garage[propertyId];
+    }
+    if (this.mapDef.interior) {
+      const exit = this.nearestOutdoorVehicleExit();
+      if (exit) {
+        GS.data.vehicleParking[title] = {
+          area: exit.to,
+          x: s(exit.tx),
+          y: s(exit.ty) + s(20),
+          facing: exit.facing,
+        };
+        const continent = vehicleContinent(exit.to);
+        if (continent) GS.data.carLocation[title] = continent;
+      }
+      GS.data.drivingVehicle = null;
+      GS.data.activeVehicle = null;
+      return null;
+    }
+    return { title, car };
+  }
+
+  private nearestOutdoorVehicleExit(): DoorZone | undefined {
+    const queue: MapDef[] = [this.mapDef];
+    const visited = new Set<string>();
+    while (queue.length > 0) {
+      const map = queue.shift()!;
+      if (visited.has(map.id)) continue;
+      visited.add(map.id);
+      for (const door of map.doors) {
+        const target = MAPS[door.to];
+        if (!target?.interior) return door;
+        if (!visited.has(target.id)) queue.push(target);
+      }
+    }
+    return undefined;
+  }
+
+  private buildParkedOwnedVehicles(): void {
+    if (this.mapDef.interior) return;
+    for (const [title, parking] of Object.entries(GS.data.vehicleParking)) {
+      if (parking.area !== this.mapDef.id && parking.area !== this.mapDef.area) continue;
+      const car = vehicleByTitle(title);
+      if (!car || !GS.data.keyItems.includes(title)) continue;
+      const spr = this.add.sprite(parking.x, parking.y, car.id, 0);
+      this.styleOwnedVehicleSprite(spr, car.vehicleType, parking.facing);
+      spr.setDepth(parking.y + this.levelLift(parking.x, parking.y));
+      this.parkedOwnedVehicles.push({ title, spr, facing: parking.facing });
+    }
+  }
+
+  private refreshParkedOwnedVehicles(): void {
+    this.parkedOwnedVehicles.forEach((vehicle) => vehicle.spr.destroy());
+    this.parkedOwnedVehicles = [];
+    this.buildParkedOwnedVehicles();
+  }
+
+  private syncVehicleOccupants(): void {
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    const cls = car ? VEHICLE_SPECS[car.vehicleType]?.cls : undefined;
+    const enclosed = !!cls && !['bike', 'moto'].includes(cls);
+    if (this.player) this.player.setVisible(!enclosed);
+    for (const f of this.followers) f.spr.setVisible(!title);
+  }
+
+  private syncDrivingVehicleSprite(): void {
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    const spr = this.drivingVehicleSprite;
+    if (!car || !spr) return;
+    this.styleOwnedVehicleSprite(spr, car.vehicleType, this.facing);
+    spr
+      .setPosition(this.player.x, this.player.y + s(1))
+      .setDepth(this.player.y + this.playerLevel * this.levelDepthBias + 2);
+    this.syncVehicleHeadlights();
+  }
+
+  private destroyVehicleHud(): void {
+    this.vehicleHud.forEach((o) => o.destroy());
+    this.vehicleHud = [];
+    this.vehicleHudFuel?.destroy();
+    this.vehicleHudFuel = undefined;
+    this.vehicleHeadlights?.destroy();
+    this.vehicleHeadlights = undefined;
+  }
+
+  private toggleVehicleDashboard(): void {
+    if (!GS.data.drivingVehicle) return;
+    if (this.vehicleHud.length === 0) {
+      this.buildVehicleHud();
+      toast(this, 'Dashboard opened.');
+      return;
+    }
+    this.vehicleHudVisible = !this.vehicleHudVisible;
+    this.vehicleHud.forEach((o) => o.setVisible(this.vehicleHudVisible));
+    this.vehicleHudFuel?.setVisible(this.vehicleHudVisible);
+    toast(this, this.vehicleHudVisible ? 'Dashboard expanded.' : 'Dashboard tucked away. Y restores it.');
+  }
+
+  private buildVehicleHud(): void {
+    this.destroyVehicleHud();
+    this.vehicleHudVisible = true;
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    if (!car) return;
+    const x = this.scale.width - s(154);
+    const y = this.scale.height - s(54);
+    const panel = makeWindow(this, x, y, s(148), s(48)).setScrollFactor(0).setDepth(DEPTH_UI + 6);
+    const portrait = this.add
+      .sprite(x + s(26), y + s(24), car.id, 0)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 7);
+    this.styleOwnedVehicleSprite(portrait, car.vehicleType, 'right');
+    portrait.setDisplaySize(Math.min(portrait.displayWidth, s(45)), Math.min(portrait.displayHeight, s(26)));
+    const name = this.add
+      .bitmapText(x + s(52), y + s(9), 'retro', car.displayName.toUpperCase().slice(0, 18), s(6))
+      .setScrollFactor(0).setDepth(DEPTH_UI + 7).setTint(colorOf(px(RAMP.GOLD, 3)));
+    const status = this.add
+      .bitmapText(x + s(52), y + s(21), 'retro', '', s(6))
+      .setName('vehicle-status')
+      .setScrollFactor(0).setDepth(DEPTH_UI + 7);
+    const controls = this.add
+      .bitmapText(x + s(52), y + s(35), 'retro', '', s(5))
+      .setName('vehicle-controls')
+      .setScrollFactor(0).setDepth(DEPTH_UI + 7).setTint(colorOf(px(RAMP.PAPER, 1)));
+    this.vehicleHudFuel = this.add.graphics().setScrollFactor(0).setDepth(DEPTH_UI + 7);
+    this.vehicleHud = [panel, portrait, name, status, controls];
+    this.updateVehicleHud();
+  }
+
+  private updateVehicleHud(): void {
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    if (!title || !car || this.vehicleHud.length === 0) return;
+    const spec = VEHICLE_SPECS[car.vehicleType];
+    const profile = fuelProfile(car.vehicleType);
+    const fuel = profile.kind === 'none' ? profile.tank : (GS.data.fuel[title] ?? profile.tank);
+    const mph = Math.round((this.vehicleSpeed / Math.max(1, s(1))) * 0.34);
+    const status = this.vehicleHud.find((o) => o.name === 'vehicle-status') as Phaser.GameObjects.BitmapText | undefined;
+    const keyState = ignitionRequired(car.vehicleType) && !this.vehicleEngineRunning ? 'ENGINE OFF' : null;
+    status?.setText(keyState ?? (profile.kind === 'none' ? `${mph} MPH  ·  HUMAN POWER` : `${mph} MPH  ·  ${profile.kind.toUpperCase()}`));
+    const controls = this.vehicleHud.find((o) => o.name === 'vehicle-controls') as Phaser.GameObjects.BitmapText | undefined;
+    const keyLabel = ignitionLabel(car.vehicleType, this.vehicleEngineRunning);
+    controls?.setText(
+      keyLabel
+        ? `START ${keyLabel} · A HORN · B BRAKE · X PARK`
+        : 'A HORN · B BRAKE · X PARK · Y DASH',
     );
-    if (result.reason === 'not_owned') return; // X remains free before the bike is earned
-    if (result.reason === 'indoors') {
-      toast(this, 'The BMX stays outside.');
+    const x = this.scale.width - s(102);
+    const y = this.scale.height - s(23);
+    const w = s(88);
+    const frac = profile.kind === 'none' || profile.tank <= 0 ? 1 : Phaser.Math.Clamp(fuel / profile.tank, 0, 1);
+    const tint = frac < 0.15 ? colorOf(px(RAMP.RED, 3)) : frac < 0.35 ? colorOf(px(RAMP.GOLD, 3)) : colorOf(px(RAMP.GRASS, 3));
+    this.vehicleHudFuel?.clear().fillStyle(0x100c18, 1).fillRect(x, y, w, s(4)).fillStyle(tint, 1).fillRect(x, y, w * frac, s(4));
+    if (spec && profile.kind !== 'none' && fuelLow(fuel, car.vehicleType) && !this.vehicleFuelWarned) {
+      this.vehicleFuelWarned = true;
+      AUDIO.sfx('alert');
+      toast(this, `${car.displayName.toUpperCase()}: LOW ${profile.kind === 'electric' ? 'CHARGE' : 'FUEL'}!`);
+    }
+  }
+
+  private toggleVehicleIgnition(): void {
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    if (!title || !car || !ignitionRequired(car.vehicleType)) return;
+    if (this.vehicleEngineRunning) {
+      if (this.vehicleSpeed > s(1)) {
+        toast(this, 'Brake to a stop before turning the key off.');
+        return;
+      }
+      stopEngine();
+      this.vehicleEngineRunning = false;
+      AUDIO.sfx('cancel');
+      toast(this, `${car.displayName.toUpperCase()}: ENGINE OFF`);
+      this.updateVehicleHud();
       return;
     }
-    if (result.reason === 'not_here') {
-      toast(this, 'Your BMX is parked on another continent.');
+    const profile = fuelProfile(car.vehicleType);
+    const fuel = GS.data.fuel[title] ?? profile.tank;
+    const started = startEngine(car.vehicleType, fuel);
+    this.vehicleEngineRunning = started.state === 'running';
+    if (started.ok) {
+      AUDIO.sfx('engine_start');
+      toast(this, `${car.displayName.toUpperCase()}: ENGINE RUNNING`);
+    } else {
+      AUDIO.sfx('cancel');
+      toast(this, `The engine only cranks. It needs ${profile.kind === 'electric' ? 'charge' : 'fuel'}.`);
+    }
+    this.updateVehicleHud();
+  }
+
+  private syncVehicleHeadlights(): void {
+    if (!this.drivingVehicleSprite) return;
+    if (!this.vehicleHeadlights) this.vehicleHeadlights = this.add.graphics();
+    const g = this.vehicleHeadlights.clear().setDepth(this.player.depth - 3);
+    if (!this.isNight && !this.hushDark) return;
+    const v = FACING_VEC[this.facing];
+    const x = this.player.x + v.x * s(8);
+    const y = this.player.y - s(7) + v.y * s(5);
+    const sideX = -v.y * s(18);
+    const sideY = v.x * s(18);
+    const farX = x + v.x * s(60);
+    const farY = y + v.y * s(60);
+    g.fillStyle(0xffe7a0, 0.12);
+    g.fillTriangle(x, y, farX + sideX, farY + sideY, farX - sideX, farY - sideY);
+    g.setBlendMode(Phaser.BlendModes.ADD);
+  }
+
+  private parkedVehicleBody(v: ParkedOwnedVehicle): Rect {
+    const car = vehicleByTitle(v.title);
+    const spec = car ? VEHICLE_SPECS[car.vehicleType] : undefined;
+    const vertical = !v.facing.includes('left') && !v.facing.includes('right');
+    const long = s(spec?.solid.w ?? 24) * 1.2;
+    const wide = s(spec?.solid.h ?? 10) * 1.25;
+    const w = vertical ? wide : long;
+    const h = vertical ? long : wide;
+    return { x: v.spr.x - w / 2, y: v.spr.y - h, w, h };
+  }
+
+  private nearestParkedVehicle(probeX: number, probeY: number): ParkedOwnedVehicle | null {
+    let best: ParkedOwnedVehicle | null = null;
+    let dist = Infinity;
+    for (const v of this.parkedOwnedVehicles) {
+      const d = Math.hypot(v.spr.x - probeX, v.spr.y - s(7) - probeY);
+      if (d < s(30) && d < dist) {
+        best = v;
+        dist = d;
+      }
+    }
+    return best;
+  }
+
+  private async enterOwnedVehicle(v: ParkedOwnedVehicle): Promise<void> {
+    const car = vehicleByTitle(v.title);
+    if (!car) return;
+    const spec = VEHICLE_SPECS[car.vehicleType];
+    if (!spec) return;
+    if (spec.seats < GS.data.party.length) {
+      await this.dlg.say(`@The ${car.displayName} seats ${spec.seats}. The party has ${GS.data.party.length} people and no convincing way to fold the extras.`);
       return;
     }
-    if (result.reason === 'other_active') {
-      toast(this, 'Park your other ride first.');
+    const profile = fuelProfile(car.vehicleType);
+    const fuel = profile.kind === 'none' ? 1 : (GS.data.fuel[v.title] ?? profile.tank);
+    const entered = beginDrivingVehicle(GS.data, v.title);
+    if (!entered.ok) {
+      await this.dlg.say(`@${entered.message}`);
       return;
     }
-    GS.data.activeVehicle = result.activeVehicle;
-    AUDIO.sfx(result.reason === 'riding' ? 'confirm' : 'cancel');
-    toast(this, result.reason === 'riding' ? 'Riding the RED BMX. Press X to park.' : 'Parked the RED BMX.');
+    this.facing = v.facing;
+    this.player.setPosition(v.spr.x, v.spr.y);
+    GS.data.x = this.player.x;
+    GS.data.y = this.player.y;
+    GS.data.facing = this.facing;
+    v.spr.destroy();
+    this.parkedOwnedVehicles = this.parkedOwnedVehicles.filter((candidate) => candidate !== v);
+    this.vehicleSpeed = 0;
+    this.vehicleEngineRunning = ignitionRequired(car.vehicleType) ? false : startEngine(car.vehicleType, fuel).ok;
+    this.vehicleFuelWarned = false;
+    if (v.title === TWOTON_BMX_TITLE) {
+      if (!this.bicycle) {
+        const bike = VEHICLE_SPECS.bmx;
+        this.bicycle = this.add
+          .sprite(this.player.x, this.player.y, TWOTON_BMX_ID, 0)
+          .setOrigin(0.5, 1)
+          .setDisplaySize(s(bike.w), s(bike.h));
+      }
+    } else {
+      this.drivingVehicleSprite = this.add.sprite(this.player.x, this.player.y, car.id, 0);
+      this.styleOwnedVehicleSprite(this.drivingVehicleSprite, car.vehicleType, this.facing);
+      this.syncDrivingVehicleSprite();
+    }
+    this.buildVehicleHud();
     this.syncBicycleSprite();
+    this.syncVehicleOccupants();
+    AUDIO.sfx('confirm');
+    toast(
+      this,
+      ignitionRequired(car.vehicleType)
+        ? `${car.displayName.toUpperCase()} — START turns the key · D-pad DRIVE · B BRAKE · X PARK`
+        : `${car.displayName.toUpperCase()} — D-pad DRIVE · B BRAKE · X PARK`,
+    );
+  }
+
+  private safeVehicleExitSpot(x: number, y: number, parkedTitle?: string): { x: number; y: number } {
+    const offsets: ReadonlyArray<readonly [number, number]> = [
+      [0, s(18)], [s(20), 0], [-s(20), 0], [0, -s(18)],
+      [s(18), s(16)], [-s(18), s(16)], [s(18), -s(16)], [-s(18), -s(16)],
+    ];
+    for (const [dx, dy] of offsets) {
+      const nx = x + dx;
+      const ny = y + dy;
+      const body = footRect({ x: nx, y: ny }, PLAYER_FOOTPRINT, { x: 1, y: 1 }, ART_SCALE);
+      if (!this.collidesStatic(body) && !this.vehicleExitOccupied(body, parkedTitle)) return { x: nx, y: ny };
+    }
+    return { x, y };
+  }
+
+  private vehicleExitOccupied(body: Rect, parkedTitle?: string): boolean {
+    if (this.trafficRects.some((rect) => aabbOverlap(body, rect))) return true;
+    if (this.parkedOwnedVehicles.some((vehicle) => vehicle.title !== parkedTitle && aabbOverlap(body, this.parkedVehicleBody(vehicle)))) return true;
+    if (this.npcs.some((npc) => aabbOverlap(body, this.npcBodyAt(npc)))) return true;
+    if (this.roamers.some((roamer) => aabbOverlap(body, this.roamerBodyAt(roamer)))) return true;
+    return this.patrols.some((patrol) => !patrol.dead && aabbOverlap(body, this.patrolBodyAt(patrol)));
+  }
+
+  private parkOwnedVehicle(): void {
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    if (!title || !car || this.mapDef.interior) {
+      if (this.mapDef.interior) toast(this, 'Find an outdoor place to park.');
+      return;
+    }
+    const parking = {
+      area: this.mapDef.id,
+      x: this.player.x,
+      y: this.player.y,
+      facing: this.facing,
+    };
+    const parked = parkDrivingVehicle(GS.data, parking);
+    if (!parked.ok) {
+      toast(this, parked.message);
+      return;
+    }
+    const parkedSprite = this.drivingVehicleSprite ?? this.bicycle;
+    if (parkedSprite) {
+      parkedSprite.setVisible(true).setPosition(parking.x, parking.y);
+      this.styleOwnedVehicleSprite(parkedSprite, car.vehicleType, parking.facing);
+      parkedSprite.setDepth(parking.y + this.levelLift(parking.x, parking.y));
+      this.parkedOwnedVehicles.push({ title, spr: parkedSprite, facing: parking.facing });
+    }
+    if (title === TWOTON_BMX_TITLE) this.bicycle = undefined;
+    else this.drivingVehicleSprite = undefined;
+    const exit = this.safeVehicleExitSpot(parking.x, parking.y, title);
+    this.player.setPosition(exit.x, exit.y).setVisible(true);
+    GS.data.x = exit.x;
+    GS.data.y = exit.y;
+    this.followers.forEach((f) => f.spr.setVisible(true).setPosition(exit.x, exit.y));
+    this.destroyVehicleHud();
+    this.vehicleSpeed = 0;
+    this.vehicleEngineRunning = false;
+    AUDIO.sfx('cancel');
+    toast(this, `Parked the ${car.displayName.toUpperCase()}. A enters it again.`);
+  }
+
+  private toggleOwnedVehicle(): void {
+    if (GS.data.drivingVehicle) {
+      this.parkOwnedVehicle();
+      return;
+    }
+    if (this.parkedOwnedVehicles.length > 0) toast(this, 'Stand beside your vehicle and press A to enter.');
+  }
+
+  /* ---------------- Chapter 3: FIELD PUPPET ---------------- */
+
+  private fieldPuppetCaster(): ControlCaster | null {
+    const jay = GS.data.party.find((h) => h.id === 'rex');
+    if (!jay) return null;
+    return {
+      kind: 'puppet',
+      x: this.player.x,
+      y: this.player.y,
+      pp: jay.pp,
+      range: s(96),
+      cost: 14,
+    };
+  }
+
+  private fieldTargetName(n: NpcObj): string {
+    const service = cityServiceForNpc(n.def.id);
+    if (service) {
+      const city = service.cityId.replace(/_/g, ' ').toUpperCase();
+      const role = service.role.replace(/_/g, ' ').toUpperCase();
+      return `${city} ${role}`;
+    }
+    const id = n.def.id
+      .replace(/^(?:npc|fb|wm|kv|mn|zn|cp|lh|vs|as|ml)_/, '')
+      .replace(/_/g, ' ')
+      .trim();
+    return (id || n.def.sprite).toUpperCase();
+  }
+
+  /** Y after THE FIRST BORROW: the field verbs stay explicit and discoverable.
+   * PUPPET is unavailable for the rest of a map after Held Breath rewinds one. */
+  private async openFieldWheel(): Promise<void> {
+    if (this.cut || this.dlg.busy || this.transitioning || this.fieldPuppet) return;
+    this.hideVitals();
+    this.cut = true;
+    const pick = await this.dlg.ask(['PUPPET · 14 PP', 'VITALS', 'Never mind'], { cancelIndex: 2 });
+    if (pick === 1) this.toggleVitals();
+    else if (pick === 0) await this.pickFieldPuppetTarget();
+    this.cut = false;
+  }
+
+  private async pickFieldPuppetTarget(): Promise<void> {
+    if (puppetLocked()) {
+      await this.dlg.say('@The rewind left a knot in the signal. PUPPET will not answer again on this map.');
+      return;
+    }
+    const caster = this.fieldPuppetCaster();
+    if (!caster) return;
+    const jay = GS.data.party.find((h) => h.id === 'rex');
+    if (!jay || jay.pp < caster.cost) {
+      await this.dlg.say(`@Jay reaches for the thread, but needs ${caster.cost} PP.`);
+      return;
+    }
+
+    const byId = new Map(this.npcs.map((n) => [n.def.id, n]));
+    const targets = controlCandidates(
+      caster,
+      this.npcs.filter((n) => !n.def.dog).map((n) => ({
+        id: n.def.id,
+        kind: 'person' as const,
+        x: n.spr.x,
+        y: n.spr.y,
+        helmet: n.def.mindImmune === true,
+      })),
+    )
+      .map((t) => byId.get(t.id))
+      .filter((n): n is NpcObj => n !== undefined)
+      .sort((a, b) =>
+        Math.hypot(a.spr.x - this.player.x, a.spr.y - this.player.y) -
+        Math.hypot(b.spr.x - this.player.x, b.spr.y - this.player.y),
+      )
+      .slice(0, 7);
+    if (targets.length === 0) {
+      await this.dlg.say('@PUPPET opens like a purple eye—then finds nobody close enough to borrow.');
+      return;
+    }
+
+    const rings = targets.map((n) => {
+      const blocked = n.def.mindImmune === true;
+      const ring = this.add
+        .ellipse(n.spr.x, n.spr.y - s(7), s(22), s(10), blocked ? 0xb04058 : 0x8c48c8, 0.12)
+        .setStrokeStyle(s(1), blocked ? 0xff6078 : 0xd090ff, 0.95)
+        .setDepth(n.spr.depth + 2);
+      this.tweens.add({ targets: ring, scaleX: 1.22, scaleY: 1.22, alpha: 0.42, duration: 460, yoyo: true, repeat: -1 });
+      return ring;
+    });
+    const options = [
+      ...targets.map((n) => `${this.fieldTargetName(n)}${n.def.mindImmune ? ' · NO SIGNAL' : ''}`),
+      'Cancel',
+    ];
+    const picked = await this.dlg.ask(options, { cancelIndex: options.length - 1 });
+    rings.forEach((r) => {
+      this.tweens.killTweensOf(r);
+      r.destroy();
+    });
+    if (picked < 0 || picked >= targets.length) return;
+
+    const n = targets[picked];
+    const result = attemptControl(caster, {
+      id: n.def.id,
+      kind: 'person',
+      x: n.spr.x,
+      y: n.spr.y,
+      helmet: n.def.mindImmune === true,
+    });
+    if (!result.ok) {
+      AUDIO.sfx('cancel');
+      await this.dlg.say(
+        result.reason === 'blocked'
+          ? '@NO SIGNAL. The dead-air lining turns the thought aside with a dry little click.'
+          : '@The thread slips before Jay can hold it.',
+      );
+      return;
+    }
+    jay.pp -= caster.cost;
+    GS.setFlag('field_puppet_used');
+    this.beginFieldPuppet(n);
+  }
+
+  private beginFieldPuppet(npc: NpcObj): void {
+    // A pinned NPC contributed one static foot box at build time. Remove that
+    // exact body while borrowed so their own old footprint cannot imprison them.
+    if (!npc.wanders) {
+      const own = this.npcBodyAt(npc);
+      this.solids = this.solids.filter((r) =>
+        Math.abs(r.x - own.x) > 0.5 || Math.abs(r.y - own.y) > 0.5 ||
+        Math.abs(r.w - own.w) > 0.5 || Math.abs(r.h - own.h) > 0.5,
+      );
+    }
+    npc.vx = 0;
+    npc.vy = 0;
+    this.player.anims.stop();
+    this.followers.forEach((f) => f.spr.anims.stop());
+    const ring = this.add
+      .ellipse(npc.spr.x, npc.spr.y - s(7), s(24), s(11), 0x7c38b0, 0.17)
+      .setStrokeStyle(s(1), 0xe0a0ff, 1)
+      .setDepth(npc.spr.depth + 2);
+    this.tweens.add({ targets: ring, scaleX: 1.18, scaleY: 1.18, alpha: 0.5, duration: 360, yoyo: true, repeat: -1 });
+    const tether = this.add.graphics().setDepth(DEPTH_UI - 80);
+    const panel = makeWindow(this, s(8), s(8), s(244), s(28));
+    panel.setScrollFactor(0).setDepth(DEPTH_UI + 8);
+    const label = this.add
+      .bitmapText(s(18), s(16), 'retro', '', s(6))
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 9)
+      .setTint(0xe8c8ff);
+    this.fieldPuppet = { npc, remaining: 8, ring, tether, panel, label };
+    this.cameras.main.startFollow(npc.spr, true, 0.16, 0.16);
+    AUDIO.sfx('fx_mindwarp');
+    toast(this, 'PUPPET: D-pad BORROW · A ACT/TALK · B/Y RELEASE');
+  }
+
+  private updateFieldPuppet(dt: number): void {
+    const p = this.fieldPuppet;
+    if (!p) return;
+    p.remaining = Math.max(0, p.remaining - dt);
+    const n = p.npc;
+    const d = INPUT.dir();
+    if (d.x !== 0 || d.y !== 0) {
+      const len = Math.hypot(d.x, d.y) || 1;
+      const speed = s(58);
+      const dx = (d.x / len) * speed * dt;
+      const dy = (d.y / len) * speed * dt;
+      const nx = this.movingActorMove('npc', n, n.spr.x, n.spr.y, dx, 0, false, n.level);
+      const ny = this.movingActorMove('npc', n, nx, n.spr.y, 0, dy, true, n.level);
+      n.spr.setPosition(nx, ny).setDepth(ny + this.levelLift(nx, ny));
+      n.level = this.levelAfterStep(n.level, nx, ny);
+      const face = facing8(d.x, d.y, n.def.facing);
+      if (!n.def.dog) {
+        const anim = `${n.def.sprite}-walk-${face}`;
+        if (this.anims.exists(anim)) n.spr.anims.play(anim, true);
+        else n.spr.setFrame(standFrame(face));
+      }
+    } else if (!n.def.dog) {
+      n.spr.anims.stop();
+    }
+    p.ring.setPosition(n.spr.x, n.spr.y - s(7)).setDepth(n.spr.depth + 2);
+    p.tether.clear().lineStyle(s(1), 0xb868e0, 0.7).beginPath();
+    p.tether.moveTo(this.player.x, this.player.y - s(17));
+    p.tether.lineTo(n.spr.x, n.spr.y - s(15));
+    p.tether.strokePath();
+    p.label.setText(`PUPPET ${p.remaining.toFixed(1)}s  ·  A ACT/TALK  ·  B/Y RELEASE`);
+    if (p.remaining <= 0) this.releaseFieldPuppet(true);
+  }
+
+  private async borrowedVoice(): Promise<void> {
+    const p = this.fieldPuppet;
+    if (!p || this.dlg.busy) return;
+    if (await this.borrowedWorldAction()) return;
+    const lines = DIALOGUE[p.npc.def.dialogue];
+    if (lines?.length) await this.dlg.say(...lines);
+    else await this.dlg.say('@The borrowed voice comes out as a whisper Jay does not recognize.');
+  }
+
+  /** A borrowed person can use the same authored sign/switch interaction seam
+   * as Jay. This makes map levers and readable gate controls real field-Puppet
+   * actions without allowing the borrowed body to teleport the whole party. */
+  private async borrowedWorldAction(): Promise<boolean> {
+    const p = this.fieldPuppet;
+    if (!p) return false;
+    const near = this.mapDef.signs
+      .map((sign) => ({ sign, d: Math.hypot(p.npc.spr.x - (sign.x * TILE_PX + TILE_PX / 2), p.npc.spr.y - (sign.y * TILE_PX + TILE_PX / 2)) }))
+      .filter(({ d }) => d <= s(26))
+      .sort((a, b) => a.d - b.d)[0]?.sign;
+    if (!near) return false;
+    if (await this.signBeat(near.dialogue)) return true;
+    const lines = DIALOGUE[near.dialogue];
+    if (lines?.length) await this.dlg.say(...lines);
+    else await this.dlg.say('@The borrowed hand works the control. Somewhere nearby, something answers.');
+    return true;
+  }
+
+  private releaseFieldPuppet(feedback: boolean): void {
+    const p = this.fieldPuppet;
+    if (!p) return;
+    this.fieldPuppet = null;
+    this.tweens.killTweensOf(p.ring);
+    p.ring.destroy();
+    p.tether.destroy();
+    p.panel.destroy();
+    p.label.destroy();
+    p.npc.spr.anims.stop();
+    p.npc.baseX = p.npc.spr.x;
+    p.npc.baseY = p.npc.spr.y;
+    if (!p.npc.wanders) this.solids.push(this.npcBodyAt(p.npc));
+    if (this.player?.active) this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    if (feedback) {
+      AUDIO.sfx('cancel');
+      toast(this, 'The borrowed mind is itself again.');
+    }
   }
 
   /**
@@ -2341,12 +3097,28 @@ export class OverworldScene extends Phaser.Scene {
     // got eaten"). Lighting remains world-authored; no random screen-space pixels.
     const veilColor = this.hushDark ? px(RAMP.CYAN, 1) : px(RAMP.NIGHT, 1);
     const veilAlpha = this.hushDark ? 0.5 : 0.62;
-    const o = this.add
-      .rectangle(r.x - this.scale.width, r.y - this.scale.height, r.w + this.scale.width * 2, r.h + this.scale.height * 2, colorOf(veilColor))
-      .setOrigin(0, 0)
-      .setScrollFactor(0)
-      .setDepth(nightDepth)
-      .setAlpha(veilAlpha);
+    // Full-map QA zooms much farther out than normal play. A screen-fixed veil
+    // cannot cover that entire world no matter how the camera scrolls, so the
+    // dev atlas gets an equivalent world-space sheet; production keeps the
+    // cheaper scroll-fixed overscan rectangle byte-for-byte.
+    const o = this.devFullMapPreview
+      ? this.add
+          .rectangle(
+            -TILE_PX,
+            -TILE_PX,
+            this.mapDef.grid[0].length * TILE_PX + TILE_PX * 2,
+            this.mapDef.grid.length * TILE_PX + TILE_PX * 2,
+            colorOf(veilColor),
+          )
+          .setOrigin(0, 0)
+          .setDepth(nightDepth)
+          .setAlpha(veilAlpha)
+      : this.add
+          .rectangle(r.x - this.scale.width, r.y - this.scale.height, r.w + this.scale.width * 2, r.h + this.scale.height * 2, colorOf(veilColor))
+          .setOrigin(0, 0)
+          .setScrollFactor(0)
+          .setDepth(nightDepth)
+          .setAlpha(veilAlpha);
     o.setBlendMode(Phaser.BlendModes.MULTIPLY);
     // (The warm per-doorstep "porch light" glow pools were removed at the user's
     // request — they read as unnecessary spotlights over the doors. The night
@@ -2463,12 +3235,29 @@ export class OverworldScene extends Phaser.Scene {
           // the A that confirmed a menu row this same frame must not also
           // probe the world (Dialogue.justReleased — the S6 notebook-ask fix)
           const released = this.dlg.justReleased(this.time.now);
-          if (INPUT.justPressed('A') && !released) void this.interact();
-          if (INPUT.justPressed('START') && !released) this.pauseMenu();
-          if (INPUT.justPressed('X') && !released) this.toggleBicycleRide();
-          // §A4: the VITALS quick-glance — Y toggles it; B dismisses it
-          if (INPUT.justPressed('Y')) this.toggleVitals();
-          else if (this.vitalsGlance?.visible && INPUT.justPressed('B')) this.hideVitals();
+          if (this.fieldPuppet) {
+            if (INPUT.justPressed('A') && !released) void this.borrowedVoice();
+            if (INPUT.justPressed('B') || INPUT.justPressed('Y')) this.releaseFieldPuppet(true);
+          } else {
+            if (INPUT.justPressed('A') && !released) {
+              if (GS.data.drivingVehicle) AUDIO.sfx('vehicle_horn');
+              else void this.interact();
+            }
+            if (INPUT.justPressed('START') && !released) {
+              const title = GS.data.drivingVehicle;
+              const car = title ? vehicleByTitle(title) : null;
+              if (car && ignitionRequired(car.vehicleType)) this.toggleVehicleIgnition();
+              else this.pauseMenu();
+            }
+            if (INPUT.justPressed('X') && !released) this.toggleOwnedVehicle();
+            // Once THE FIRST BORROW has happened, Y opens the FIELD wheel.
+            // Vitals stays one row away and keeps its old one-tap behavior before Ch.3.
+            if (INPUT.justPressed('Y')) {
+              if (GS.data.drivingVehicle) this.toggleVehicleDashboard();
+              else if (GS.flag('awake_mindwarp_a')) void this.openFieldWheel();
+              else this.toggleVitals();
+            } else if (this.vitalsGlance?.visible && INPUT.justPressed('B')) this.hideVitals();
+          }
         }
       }
     } else {
@@ -2507,8 +3296,10 @@ export class OverworldScene extends Phaser.Scene {
       sh.setVisible(true).setPosition(x, y - lift).setDepth(y - 1).setDisplaySize(w, Math.max(floor, Math.round(w * 0.42)));
       i++;
     };
-    if (!this.isRidingBmx()) place(this.player.x, this.player.y, wHero);
-    for (const f of this.followers) if (!f.angel && !f.flit) place(f.spr.x, f.spr.y, wHero);
+    if (!GS.data.drivingVehicle) place(this.player.x, this.player.y, wHero);
+    if (!GS.data.drivingVehicle) {
+      for (const f of this.followers) if (!f.angel && !f.flit) place(f.spr.x, f.spr.y, wHero);
+    }
     for (const n of this.npcs) place(n.spr.x, n.spr.y, n.def.dog ? wDog : wHero);
     for (const r of this.roamers) if (!r.dead) place(r.spr.x, r.spr.y, r.walker ? wHero : wMini);
     for (const p of this.patrols) if (!p.dead) place(p.spr.x, p.spr.y, wHero);
@@ -2571,6 +3362,10 @@ export class OverworldScene extends Phaser.Scene {
       const y1 = Math.floor((p.y * 16 + p.solid.oy + p.solid.h - 1) / 16);
       for (let yy = y0; yy <= y1; yy++) for (let xx = x0; xx <= x1; xx++) roads.delete(cellKey(xx, yy));
     }
+    // Owned vehicles are full-size world objects too. Do not seed ambient
+    // traffic underneath a parked car or across the driver's long footprint.
+    const occupiedByOwned = this.ownedVehicleTrafficCells();
+    occupiedByOwned.forEach((cell) => roads.delete(cell));
     if (roads.size < 12) return; // a path-only town (Otterbrook) gets no cars
     // Civilian road fleet from authored PNGs only: the sim type is the texture key.
     if (this.trafficRoadVeh.length === 0) {
@@ -2618,7 +3413,7 @@ export class OverworldScene extends Phaser.Scene {
       this.trafficAccumMs -= step;
       if (this.trafficAccumMs >= step) this.trafficAccumMs = 0; // never spiral after a stall
       const pcell = { x: Math.floor(this.player.x / TILE_PX), y: Math.floor(this.player.y / TILE_PX) };
-      sim.step(pcell);
+      sim.step(pcell, this.ownedVehicleTrafficCells());
     }
     const f = Math.min(1, this.trafficAccumMs / step);
     const cam = this.cameras.main;
@@ -2674,6 +3469,14 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private updatePlayer(dt: number): void {
+    if (this.fieldPuppet) {
+      this.updateFieldPuppet(dt);
+      return;
+    }
+    if (GS.data.drivingVehicle && GS.data.drivingVehicle !== TWOTON_BMX_TITLE) {
+      this.updateDrivingVehicle(dt);
+      return;
+    }
     const d = INPUT.dir();
     const biking = this.isRidingBmx();
     const running = biking || INPUT.held('B');
@@ -2744,6 +3547,10 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.player.setDepth(this.player.y + this.playerLevel * this.levelDepthBias);
     this.syncBicycleSprite();
+    if (biking) {
+      this.vehicleSpeed = moved ? sp : 0;
+      this.updateVehicleHud();
+    }
     this.followers.forEach((f, i) => {
       const crumb = this.trail[(i + 1) * 27]; // 27 crumbs back at s(1) spacing = the same (i+1)*108px conga gap as the old *9 at s(3)
       if (!crumb) return;
@@ -2799,6 +3606,108 @@ export class OverworldScene extends Phaser.Scene {
         }
       }
     });
+  }
+
+  private vehicleMaxSpeed(vehicleType: string): number {
+    const cls = VEHICLE_SPECS[vehicleType]?.cls;
+    const mult = cls === 'moto' ? 2.05 : cls === 'car' ? 1.85 : cls === 'suv' ? 1.65 : cls === 'van' ? 1.55 : cls === 'bus' ? 1.35 : 1.45;
+    return RUN * mult;
+  }
+
+  /** A real owned-car controller: acceleration/braking, full-footprint
+   * collision, distance fuel burn, directional authored frames and dashboard. */
+  private updateDrivingVehicle(dt: number): void {
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    if (!title) return;
+    if (!car || !GS.data.keyItems.includes(title)) {
+      this.normalizeDrivingVehicleState();
+      this.player.setVisible(true);
+      this.followers.forEach((f) => f.spr.setVisible(true));
+      this.destroyVehicleHud();
+      return;
+    }
+    const profile = fuelProfile(car.vehicleType);
+    const currentFuel = profile.kind === 'none' ? 1 : (GS.data.fuel[title] ?? profile.tank);
+    const d = INPUT.dir();
+    const hasInput = d.x !== 0 || d.y !== 0;
+    const braking = INPUT.held('B');
+    const driveReady = canDrive(car.vehicleType, this.vehicleEngineRunning, currentFuel);
+    const target = !driveReady || !hasInput
+      ? 0
+      : this.vehicleMaxSpeed(car.vehicleType) * (braking ? 0.25 : 1);
+    const response = 1 - Math.exp(-(braking ? 12 : target > this.vehicleSpeed ? 5 : 7) * dt);
+    this.vehicleSpeed = Phaser.Math.Linear(this.vehicleSpeed, target, response);
+    if (this.vehicleSpeed < s(0.5)) this.vehicleSpeed = 0;
+
+    let movedDistance = 0;
+    if (hasInput && this.vehicleSpeed > 0) {
+      const len = Math.hypot(d.x, d.y) || 1;
+      const vx = d.x / len;
+      const vy = d.y / len;
+      const oldFacing = this.facing;
+      const desiredFacing = facingFromVec(vx, vy);
+      const oldBody = this.playerBodyAt(this.player.x, this.player.y);
+      this.facing = desiredFacing;
+      const turnedBody = this.playerBodyAt(this.player.x, this.player.y);
+      const turnBlocked = desiredFacing !== oldFacing
+        && (this.collidesStatic(turnedBody) || this.entersNewDynamicBody(turnedBody, oldBody));
+      if (turnBlocked) {
+        this.facing = oldFacing;
+        this.vehicleSpeed *= 0.35;
+        this.syncDrivingVehicleSprite();
+        this.updateVehicleHud();
+        return;
+      }
+      const dx = vx * this.vehicleSpeed * dt;
+      const dy = vy * this.vehicleSpeed * dt;
+      const beforeX = this.player.x;
+      const beforeY = this.player.y;
+      const nx = this.tryMove(this.player.x, this.player.y, dx, 0);
+      const ny = this.tryMove(nx, this.player.y, 0, dy, true);
+      this.player.setPosition(nx, ny);
+      movedDistance = Math.hypot(nx - beforeX, ny - beforeY);
+      if (movedDistance < s(0.1)) {
+        this.vehicleSpeed *= 0.22;
+        this.cameras.main.shake(70, 0.0015);
+      } else {
+        this.playerLevel = this.levelAfterStep(this.playerLevel, nx, ny);
+        GS.data.x = nx;
+        GS.data.y = ny;
+        GS.data.facing = this.facing;
+        if (profile.kind !== 'none') {
+          GS.data.fuel[title] = consumeFuel(currentFuel, car.vehicleType, movedDistance / TILE_PX);
+        }
+        this.stepTimer -= dt;
+        if (this.stepTimer <= 0) {
+          this.stepTimer = 0.16;
+          this.dustPuff(nx - vx * s(12), ny - s(2));
+        }
+      }
+    }
+    this.player.setDepth(this.player.y + this.playerLevel * this.levelDepthBias);
+    this.syncDrivingVehicleSprite();
+    this.updateVehicleHud();
+    if (profile.kind !== 'none' && fuelEmpty(GS.data.fuel[title] ?? 0, car.vehicleType) && movedDistance > 0) {
+      this.vehicleSpeed = 0;
+      if (ignitionRequired(car.vehicleType)) this.vehicleEngineRunning = false;
+      AUDIO.sfx('cancel');
+      toast(this, `${car.displayName.toUpperCase()} sputters empty. Find a station.`);
+    }
+  }
+
+  private ownedVehicleTrafficCells(): Set<string> {
+    const cells = new Set<string>();
+    const addRect = (rect: Rect): void => {
+      const x0 = Math.floor(rect.x / TILE_PX);
+      const y0 = Math.floor(rect.y / TILE_PX);
+      const x1 = Math.floor((rect.x + rect.w - 1) / TILE_PX);
+      const y1 = Math.floor((rect.y + rect.h - 1) / TILE_PX);
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) cells.add(cellKey(x, y));
+    };
+    this.parkedOwnedVehicles.forEach((vehicle) => addRect(this.parkedVehicleBody(vehicle)));
+    if (GS.data.drivingVehicle) addRect(this.playerBodyAt(this.player.x, this.player.y));
+    return cells;
   }
 
   /** axis-separated movement (slide on collide). A wall or prop always stops the
@@ -2870,6 +3779,9 @@ export class OverworldScene extends Phaser.Scene {
    *  tiny player from a truck's oversized rect. */
   private entersNewDynamicBody(box: Rect, cur: Rect): boolean {
     if (entersNewBody(box, cur, this.trafficRects)) return true;
+    for (const vehicle of this.parkedOwnedVehicles) {
+      if (this.entersBody(box, cur, this.parkedVehicleBody(vehicle))) return true;
+    }
     if (LILLEBY_GIANT_MAPS.has(this.mapDef.id)) return false;
     for (const n of this.npcs) {
       if (!n.wanders || n.level !== this.playerLevel) continue;
@@ -2879,6 +3791,17 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private playerBodyAt(x: number, y: number): Rect {
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    const spec = car ? VEHICLE_SPECS[car.vehicleType] : undefined;
+    if (spec && title !== TWOTON_BMX_TITLE) {
+      const vertical = !this.facing.includes('left') && !this.facing.includes('right');
+      const long = s(spec.solid.w) * 1.15;
+      const wide = s(spec.solid.h) * 1.2;
+      const w = vertical ? wide : long;
+      const h = vertical ? long : wide;
+      return { x: x - w / 2, y: y - h * 0.72, w, h };
+    }
     return footRect({ x, y }, PLAYER_FOOTPRINT, { x: 1, y: 1 }, ART_SCALE);
   }
 
@@ -2909,6 +3832,9 @@ export class OverworldScene extends Phaser.Scene {
   ): boolean {
     if (this.collidesStatic(box, level)) return true;
     if (entersNewBody(box, cur, this.trafficRects)) return true;
+    for (const vehicle of this.parkedOwnedVehicles) {
+      if (this.entersBody(box, cur, this.parkedVehicleBody(vehicle))) return true;
+    }
 
     // Lilleby's giant civilians remain intentionally permeable. Enemy separation
     // still applies, but a colossus can never pin the human-sized party.
@@ -2935,6 +3861,7 @@ export class OverworldScene extends Phaser.Scene {
 
   private updateNpcs(dt: number): void {
     for (const n of this.npcs) {
+      if (this.fieldPuppet?.npc === n) continue;
       if (!n.wanders || this.cut || this.dlg.busy) continue;
       n.think -= dt * 1000;
       if (n.think <= 0) {
@@ -2990,12 +3917,12 @@ export class OverworldScene extends Phaser.Scene {
       if (r.dead) continue;
       const def = ENEMIES[r.enemyId];
       const distP = Math.hypot(this.player.x - r.spr.x, this.player.y - r.spr.y);
-      if (distP < s(13) && now > this.battleCooldown) {
+      if (distP < s(13) && now > this.battleCooldown && !GS.data.drivingVehicle) {
         void this.contactBattle(r);
         return;
       }
       const outclassed = avgLvl >= def.level + 6;
-      if (outclassed && distP < s(70)) {
+      if ((outclassed || GS.data.drivingVehicle !== null) && distP < s(90)) {
         // EB detail: weak enemies flee a strong party (px/s flee speed)
         r.vx = Math.sign(r.spr.x - this.player.x) * s(60);
         r.vy = Math.sign(r.spr.y - this.player.y) * s(60);
@@ -3546,6 +4473,12 @@ export class OverworldScene extends Phaser.Scene {
     const probeX = this.player.x + v.x * TILE_PX;
     const probeY = this.player.y - s(6) + v.y * s(14);
 
+    const parkedVehicle = this.nearestParkedVehicle(probeX, probeY);
+    if (parkedVehicle) {
+      await this.enterOwnedVehicle(parkedVehicle);
+      return;
+    }
+
     for (const n of this.npcs) {
       if (Math.hypot(n.spr.x - probeX, Math.abs(n.spr.y - s(6) - probeY)) < s(16)) {
         await this.talkTo(n);
@@ -3941,6 +4874,287 @@ export class OverworldScene extends Phaser.Scene {
     return n + 1;
   }
 
+  private ownsProperty(propertyId: string): boolean {
+    const def = PROPERTIES[propertyId];
+    return !!def && Boolean(GS.flag(`owned_${propertyId}`) || GS.data.keyItems.includes(def.deed));
+  }
+
+  /** The canonical four-service interaction layer shared by every formal city.
+   * The map owns the building and visual identity; this handler owns real money,
+   * deeds, rest, and vehicle-shop launch behavior. */
+  private async cityServiceBeat(n: NpcObj): Promise<boolean> {
+    const binding = cityServiceForNpc(n.def.id);
+    if (!binding) return false;
+    switch (binding.role) {
+      case 'home_host':
+        await this.cityHomeBeat(binding.cityId);
+        return true;
+      case 'realtor':
+        await this.cityAgencyBeat(binding.cityId);
+        return true;
+      case 'dealer':
+        await this.cityDealershipBeat(binding.cityId);
+        return true;
+      case 'hotel_clerk':
+        await this.cityHotelBeat(binding.cityId);
+        return true;
+    }
+  }
+
+  private async cityHomeBeat(cityId: FormalCityId): Promise<void> {
+    const amenity = CITY_AMENITIES[cityId];
+    const def = PROPERTIES[amenity.residential.propertyId];
+    if (!def) return;
+    if (!this.ownsProperty(def.id)) {
+      await this.dlg.say(
+        `@Welcome to the open house for ${def.name}. The lamp works. The floor mostly agrees to be a floor.`,
+        `@The deed is listed at ${amenity.agency.name}. They have a brass key ready and the unnerving confidence of people who know exactly where you sleep.`,
+      );
+      return;
+    }
+    await this.dlg.say(`@Home again. ${def.name} recognizes your footsteps now.`);
+    const pick = await this.dlg.ask(['Rest at home (free)', 'Manage the garage', 'Keep looking around'], { cancelIndex: 2 });
+    if (pick === 0) {
+      this.restorePartyForRest();
+      AUDIO.sfx('heal');
+      this.cameras.main.fadeOut(350, 10, 8, 24);
+      await this.wait(430);
+      this.cameras.main.fadeIn(450, 10, 8, 24);
+      await this.dlg.say('@You wake under your own roof. For once, nobody has added a minibar charge.');
+    } else if (pick === 1) {
+      await this.manageHomeGarage(cityId, def);
+    }
+  }
+
+  private cityDeliveryBase(cityId: FormalCityId): { area: string; x: number; y: number; facing: Facing } {
+    const exit = this.mapDef.doors.find((d) => d.to === cityId);
+    return exit
+      ? { area: cityId, x: s(exit.tx), y: s(exit.ty) + s(24), facing: 'right' }
+      : { area: cityId, x: this.player.x + s(32), y: this.player.y + s(24), facing: 'right' };
+  }
+
+  private async manageHomeGarage(cityId: FormalCityId, property: PropertyDef): Promise<void> {
+    const capacity = garageCapacity(property);
+    const stored = garageContents(GS.data.garage, property.id)
+      .map((title) => ({ title, car: vehicleByTitle(title) }))
+      .filter((row): row is { title: string; car: NonNullable<ReturnType<typeof vehicleByTitle>> } => row.car !== null);
+    const outside = Object.entries(GS.data.vehicleParking)
+      .filter(([, parking]) => parking.area === cityId)
+      .map(([title]) => ({ title, car: vehicleByTitle(title) }))
+      .filter((row): row is { title: string; car: NonNullable<ReturnType<typeof vehicleByTitle>> } => row.car !== null);
+    await this.dlg.say(`@Garage: ${stored.length}/${capacity} bays occupied. Vehicles outside ${CITY_AMENITIES[cityId].residential.listingName} are listed too.`);
+    const options = [
+      ...stored.map(({ car }) => `Deploy ${car.displayName}`),
+      ...outside.map(({ car }) => `Store ${car.displayName}`),
+      'Close garage',
+    ];
+    if (options.length === 1) {
+      await this.dlg.say('@The garage is empty. Buy a vehicle at the local dealer, then bring it home to store it here.');
+      return;
+    }
+    const pick = await this.dlg.ask(options, { cancelIndex: options.length - 1 });
+    if (pick < 0 || pick >= options.length - 1) return;
+    if (pick < stored.length) {
+      const { title, car } = stored[pick];
+      if (!pullCar(GS.data.garage, property.id, title)) return;
+      const parking = allocateVehicleDeliverySlot(GS.data, title, this.cityDeliveryBase(cityId));
+      GS.data.vehicleParking[title] = parking;
+      const continent = vehicleContinent(cityId);
+      if (continent) GS.data.carLocation[title] = continent;
+      AUDIO.sfx('confirm');
+      await this.dlg.say(`@The garage door rattles up. ${car.displayName} is parked outside in a clear delivery bay.`);
+      return;
+    }
+    const row = outside[pick - stored.length];
+    if (!row) return;
+    if (!parkCar(GS.data.garage, property.id, row.title, capacity)) {
+      await this.dlg.say(`@No bay opens for the ${row.car.displayName}. The garage is full.`);
+      return;
+    }
+    delete GS.data.vehicleParking[row.title];
+    if (GS.data.activeVehicle === row.title) GS.data.activeVehicle = null;
+    AUDIO.sfx('confirm');
+    await this.dlg.say(`@The ${row.car.displayName} rolls inside. ${garageContents(GS.data.garage, property.id).length}/${capacity} bays are now occupied.`);
+  }
+
+  private async cityAgencyBeat(cityId: FormalCityId): Promise<void> {
+    const amenity = CITY_AMENITIES[cityId];
+    const def = PROPERTIES[amenity.residential.propertyId];
+    if (!def) return;
+    if (this.ownsProperty(def.id)) {
+      await this.dlg.say(`@${amenity.agency.name}: SOLD. The little red pin on ${def.name} is yours now. We tried to remove it. It came back.`);
+      return;
+    }
+    const price = buyCost(def, this.chapterNow(), 0);
+    await this.dlg.say(`@${amenity.agency.name}. Today's stubborn listing is ${def.name}.`, `@${def.blurb}`);
+    const pick = await this.dlg.ask([`Buy ${def.name} (${money(price)})`, 'Tour the open house first', 'Not today'], { cancelIndex: 2 });
+    if (pick === 1) {
+      const hostId = cityServiceNpcId(cityId, 'home_host');
+      const home = Object.values(MAPS).find((map) => map.npcs.some((npc) => npc.id === hostId));
+      if (!home) {
+        await this.dlg.say(`@The open house is marked outside with a HOUSE FOR SALE sign. Follow ${amenity.residential.listingName} on the city directory.`);
+        return;
+      }
+      const exit = home.doors.find((door) => door.to === cityId) ?? home.doors[0];
+      const x = exit ? exit.x * 16 + 8 : 5 * 16 + 8;
+      const y = exit ? Math.max(16, (exit.y - 1) * 16) : 5 * 16;
+      await this.dlg.say('@The agent circles the open house on your map and hands you the viewing key.');
+      this.goThroughDoor(home.id, x, y, 'up');
+      return;
+    }
+    if (pick !== 0) return;
+    if (GS.data.cashOnHand < price) {
+      await this.dlg.say(`@The key weighs ${money(price)}. You are ${money(price - GS.data.cashOnHand)} light. The house will continue standing there pointedly.`);
+      return;
+    }
+    GS.data.cashOnHand -= price;
+    GS.setFlag(`owned_${def.id}`);
+    if (!GS.data.keyItems.includes(def.deed)) GS.data.keyItems.push(def.deed);
+    GS.data.homeStorage[def.id] ??= [];
+    GS.data.homeLayouts[def.id] ??= [];
+    GS.data.garage[def.id] ??= [];
+    AUDIO.sfx('confirm');
+    this.cameras.main.flash(360, 244, 220, 128);
+    toast(this, `Got the DEED to ${def.name.toUpperCase()}!`);
+    await this.dlg.say('@The agent slides over a key, a deed, and a note from the previous owner that only says: "The attic hums on Tuesdays."');
+  }
+
+  private async cityDealershipBeat(cityId: FormalCityId): Promise<void> {
+    const amenity = CITY_AMENITIES[cityId];
+    await this.dlg.say(
+      `@Welcome to ${amenity.dealership.name}. Every vehicle on this floor is real, titled, fuelled, and much too clean underneath.`,
+    );
+    const pick = await this.dlg.ask(['Browse vehicles', 'Fuel / charge an owned vehicle', 'Leave'], { cancelIndex: 2 });
+    if (pick === 0) this.openVehicleShop(cityId);
+    else if (pick === 1) await this.dealerFuelService(cityId);
+  }
+
+  /** A local dealer is also the fail-safe service bay. Partial fills are real
+   * transactions, so a cash-poor player can always buy enough range to leave. */
+  private async dealerFuelService(area = this.mapDef.id): Promise<void> {
+    const cars = GS.data.keyItems
+      .map((title) => ({ title, car: vehicleByTitle(title) }))
+      .filter((row): row is { title: string; car: NonNullable<ReturnType<typeof vehicleByTitle>> } =>
+        row.car !== null
+        && fuelProfile(row.car.vehicleType).kind !== 'none'
+        && vehicleServiceableAtArea(GS.data, row.title, area),
+      );
+    if (cars.length === 0) {
+      await this.dlg.say('@The service hose goes back to sleep. No powered vehicle you own is on this continent and available for service.');
+      return;
+    }
+    const options = [...cars.map(({ title, car }) => {
+      const profile = fuelProfile(car.vehicleType);
+      const current = GS.data.fuel[title] ?? profile.tank;
+      return `${car.displayName} · ${Math.round((current / profile.tank) * 100)}%`;
+    }), 'Cancel'];
+    const pick = await this.dlg.ask(options, { cancelIndex: options.length - 1 });
+    if (pick < 0 || pick >= cars.length) return;
+    const { title, car } = cars[pick];
+    const profile = fuelProfile(car.vehicleType);
+    const current = GS.data.fuel[title] ?? profile.tank;
+    const needed = unitsToFill(current, car.vehicleType);
+    if (needed <= 0.001) {
+      await this.dlg.say(`@The ${car.displayName} is already full. The nozzle clicks anyway, just to feel involved.`);
+      return;
+    }
+    const perUnit = (BASE_PRICE_PER_UNIT[profile.kind] || 1) * 1.15;
+    const affordable = Math.min(needed, GS.data.cashOnHand / perUnit);
+    const full = affordable >= needed - 0.0001;
+    const units = full ? needed : Math.floor(affordable * 10) / 10;
+    if (units <= 0) {
+      await this.dlg.say('@The pump accepts cash, not optimism. Even one useful splash is out of reach.');
+      return;
+    }
+    const cost = Math.min(GS.data.cashOnHand, Math.ceil(units * perUnit));
+    const fullCost = Math.ceil(needed * perUnit);
+    const confirm = await this.dlg.ask([
+      full ? `Fill it (${money(fullCost)})` : `Buy ${units.toFixed(1)} units (${money(cost)})`,
+      'Cancel',
+    ], { cancelIndex: 1 });
+    if (confirm !== 0) return;
+    GS.data.cashOnHand -= full ? fullCost : cost;
+    GS.data.fuel[title] = Math.min(profile.tank, current + units);
+    AUDIO.sfx('heal');
+    await this.dlg.say(`@The ${car.displayName} takes ${units.toFixed(1)} units of ${profile.kind === 'electric' ? 'charge' : profile.kind}. The gauge climbs for real.`);
+  }
+
+  private restorePartyForRest(): void {
+    for (const h of GS.data.party) {
+      if (h.down) continue;
+      h.hp = h.maxHp;
+      h.pp = h.maxPp;
+    }
+  }
+
+  private async cityHotelBeat(cityId: FormalCityId): Promise<void> {
+    const { hotel } = CITY_AMENITIES[cityId];
+    await this.dlg.say(`@${hotel.name}. Fresh sheets, quiet pipes, and a lobby clock that is seven minutes optimistic.`);
+    const pick = await this.dlg.ask([`Stay the night (${money(hotel.rate)})`, 'See the room', 'Not tonight'], { cancelIndex: 2 });
+    if (pick === 1) {
+      await this.dlg.say('@Here is the viewing key. Management is strangely proud of the blanket corners.');
+      await this.enterCityHotelRoom(cityId, false);
+      return;
+    }
+    if (pick !== 0) return;
+    if (GS.data.cashOnHand < hotel.rate) {
+      await this.dlg.say(`@A room is ${money(hotel.rate)}. The lobby chair is not a room, even if you close both eyes.`);
+      return;
+    }
+    GS.data.cashOnHand -= hotel.rate;
+    this.restorePartyForRest();
+    GS.setFlag(`stayed_${cityId}_hotel`);
+    GS.setFlag(`city_hotel_wake_${cityId}`);
+    await this.dlg.say('@The clerk hands over a real room key. Sleep happens upstairs, not in a convenient lobby fade.');
+    await this.enterCityHotelRoom(cityId, true);
+  }
+
+  private async enterCityHotelRoom(cityId: FormalCityId, wake: boolean): Promise<void> {
+    const hotel = CITY_AMENITIES[cityId].hotel;
+    const roomId = hotel.existing?.roomId ?? cityHotelRoomId(cityId);
+    const room = MAPS[roomId];
+    if (!room) {
+      if (wake) {
+        GS.setFlag(`city_hotel_wake_${cityId}`, false);
+        GS.data.cashOnHand += hotel.rate;
+      }
+      await this.dlg.say('@The room key does not match any door. The clerk refunds the mistake immediately.');
+      return;
+    }
+    const exit = room.doors.find((door) => !MAPS[door.to]?.interior) ?? room.doors[0];
+    const x = exit ? exit.x * 16 + Math.max(8, exit.w * 8) : 5 * 16 + 8;
+    const y = exit ? Math.max(16, (exit.y - 1) * 16) : 5 * 16;
+    this.goThroughDoor(roomId, x, y, 'up');
+  }
+
+  /** Replaced once VehicleShopScene is registered; keeping launch/pause in one
+   * seam avoids every dealer inventing a different ownership transaction. */
+  private openVehicleShop(cityId: FormalCityId): void {
+    this.game.events.once('mf-vehicle-shop-closed', () => {
+      this.refreshParkedOwnedVehicles();
+      this.rebuildFollowers();
+      this.syncVehicleOccupants();
+      this.scene.resume();
+    });
+    const exit = this.mapDef.doors.find((d) => d.to === cityId);
+    const parking = exit
+      ? { area: cityId, x: s(exit.tx), y: s(exit.ty) + s(24), facing: 'right' as const }
+      : {
+          area: this.mapDef.id,
+          x: this.player.x + this.facingVector().x * s(30),
+          y: this.player.y + this.facingVector().y * s(30),
+          facing: this.facing,
+        };
+    this.scene.pause();
+    this.scene.launch('vehicle-shop', {
+      area: CITY_AMENITIES[cityId].cityId,
+      filter: 'all',
+      parking,
+      dealerName: CITY_AMENITIES[cityId].dealership.name,
+      featuredVehicleId: CITY_AMENITIES[cityId].dealership.featuredVehicleId,
+    });
+  }
+
   /**
    * S22 (ADR-115) — OTTERBROOK REALTY: the home-buying TEASER. 27 Maple is for sale
    * from the very first town; the agent shows the price and the dream, but at ~$1k
@@ -3985,7 +5199,24 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(
       `@That cream four-door? The "Comet" sedan — $${price}. Drives like a sofa with ambitions.`,
     );
-    await this.dlg.say(...DIALOGUE.carlot_browse);
+    const pick = await this.dlg.ask(['Browse the real showroom', 'Fuel / charge an owned vehicle', 'Not today'], { cancelIndex: 2 });
+    if (pick === 1) {
+      await this.dealerFuelService('otterbrook');
+      return;
+    }
+    if (pick !== 0) return;
+    const parking = {
+      area: 'otterbrook',
+      x: this.player.x + s(34),
+      y: this.player.y + s(22),
+      facing: 'right' as const,
+    };
+    this.game.events.once('mf-vehicle-shop-closed', () => {
+      this.refreshParkedOwnedVehicles();
+      this.scene.resume();
+    });
+    this.scene.pause();
+    this.scene.launch('vehicle-shop', { area: 'otterbrook', filter: 'all', parking });
   }
 
   /** SECOND WIND CYCLES â€” a real, save-safe starter-vehicle purchase. The
@@ -4000,20 +5231,36 @@ export class OverworldScene extends Phaser.Scene {
       // without teleporting a bicycle that was deliberately ferried elsewhere.
       GS.data.carLocation[TWOTON_BMX_TITLE] ??= TWOTON_BMX_HOME_CONTINENT;
       await this.dlg.say(...DIALOGUE.twoton_bike_owned);
-      const riding = GS.data.activeVehicle === TWOTON_BMX_TITLE;
-      const pick = await this.dlg.ask([riding ? 'Park the red BMX' : 'Ride the red BMX', 'Never mind'], { cancelIndex: 1 });
+      const pick = await this.dlg.ask(['Set the red BMX outside', 'Browse all bicycles', 'Never mind'], { cancelIndex: 2 });
+      if (pick === 1) {
+        const exit = this.mapDef.doors.find((d) => d.to === 'brickton');
+        const parking = exit
+          ? { area: 'brickton', x: s(exit.tx), y: s(exit.ty) + s(18), facing: 'right' as const }
+          : undefined;
+        this.game.events.once('mf-vehicle-shop-closed', () => {
+          this.refreshParkedOwnedVehicles();
+          this.scene.resume();
+        });
+        this.scene.pause();
+        this.scene.launch('vehicle-shop', { area: 'brickton', filter: 'bikes', parking });
+        return;
+      }
       if (pick !== 0) return;
       if (GS.data.carLocation[TWOTON_BMX_TITLE] !== TWOTON_BMX_HOME_CONTINENT) {
         await this.dlg.say(...DIALOGUE.twoton_bike_away);
         return;
       }
-      if (!riding && GS.data.activeVehicle !== null) {
-        await this.dlg.say('@You already have another ride active. Park it before you pull out the BMX.');
-        return;
-      }
-      GS.data.activeVehicle = riding ? null : setActive(TWOTON_BMX_TITLE, GS.data.keyItems);
-      AUDIO.sfx(riding ? 'cancel' : 'confirm');
-      toast(this, riding ? 'Parked the RED BMX.' : 'RED BMX active. Press X outdoors to ride.');
+      const exit = this.mapDef.doors.find((d) => d.to === 'brickton');
+      GS.data.activeVehicle = setActive(TWOTON_BMX_TITLE, GS.data.keyItems);
+      GS.data.drivingVehicle = null;
+      GS.data.vehicleParking[TWOTON_BMX_TITLE] = {
+        area: 'brickton',
+        x: exit ? s(exit.tx) : GS.data.x,
+        y: exit ? s(exit.ty) + s(18) : GS.data.y,
+        facing: 'right',
+      };
+      AUDIO.sfx('confirm');
+      toast(this, 'RED BMX waiting outside. Stand beside it and press A.');
       return;
     }
 
@@ -4031,6 +5278,14 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag(`owned_${TWOTON_BMX_ID}`);
     GS.data.carLocation[buy.title] = TWOTON_BMX_HOME_CONTINENT;
     GS.data.activeVehicle = setActive(buy.title, GS.data.keyItems);
+    GS.data.drivingVehicle = null;
+    const exit = this.mapDef.doors.find((d) => d.to === 'brickton');
+    GS.data.vehicleParking[buy.title] = {
+      area: 'brickton',
+      x: exit ? s(exit.tx) : GS.data.x,
+      y: exit ? s(exit.ty) + s(18) : GS.data.y,
+      facing: 'right',
+    };
     AUDIO.sfx('confirm');
     toast(this, 'Got the RED BMX!');
     await this.dlg.say(...DIALOGUE.twoton_bike_bought);
@@ -4038,6 +5293,7 @@ export class OverworldScene extends Phaser.Scene {
 
   /** quest-giver conversations; true = handled, false = fall through */
   private async questTalk(n: NpcObj): Promise<boolean> {
+    if (await this.cityServiceBeat(n)) return true;
     switch (n.def.id) {
       case 'mrs_pemmel':
         // The crisis gets one concise beat; the full side quest opens only when
@@ -4091,6 +5347,9 @@ export class OverworldScene extends Phaser.Scene {
         return true;
       case 'twoton_hotel_clerk':
         await this.twotonHotelBeat();
+        return true;
+      case 'gh_clerk':
+        await this.cityHotelBeat('puerto_sol');
         return true;
       case 'twoton_bike_clerk':
         await this.twotonBikeBeat();
@@ -5614,6 +6873,25 @@ export class OverworldScene extends Phaser.Scene {
 
   /* ---------------- doors & triggers ---------------- */
 
+  /** Large cars cannot put their centre into a one-tile edge portal without
+   * first pushing their nose out of bounds. Let the real vehicle body meet an
+   * outdoor route door while the driver is steering outward. */
+  private drivingIntoEdgeDoor(d: DoorZone, r: Rect): boolean {
+    if (!GS.data.drivingVehicle || this.vehicleSpeed <= s(0.05) || MAPS[d.to]?.interior) return false;
+    const width = this.mapDef.grid[0]?.length ?? 0;
+    const height = this.mapDef.grid.length;
+    const dir = INPUT.dir();
+    return vehicleBodyTriggersEdgeDoor(
+      d,
+      width,
+      height,
+      dir,
+      this.playerBodyAt(this.player.x, this.player.y),
+      r,
+      MAPS[d.to]?.interior === true,
+    );
+  }
+
   private async checkDoors(): Promise<void> {
     // ADR-052 + the RE-ARM guard: a door fires only once the player has STEPPED OFF
     // its zone since arriving (doorsArmed). This kills the exit-bounce SOFT-LOCK —
@@ -5624,11 +6902,12 @@ export class OverworldScene extends Phaser.Scene {
     for (const d of this.mapDef.doors) {
       if (!this.activeDoor(d)) continue;
       const r = { x: d.x * TILE_PX, y: d.y * TILE_PX, w: d.w * TILE_PX, h: d.h * TILE_PX };
-      const inZone =
+      const inZone = (
         this.player.x > r.x &&
         this.player.x < r.x + r.w &&
         this.player.y - s(4) > r.y &&
-        this.player.y - s(4) < r.y + r.h;
+        this.player.y - s(4) < r.y + r.h
+      ) || this.drivingIntoEdgeDoor(d, r);
       if (!inZone) {
         this.doorsArmed.add(d); // stepped clear → armed for next entry
         continue;
@@ -5653,6 +6932,12 @@ export class OverworldScene extends Phaser.Scene {
         AUDIO.sfx('cancel');
         await this.dlg.say(...DIALOGUE.mom_before_hill);
         this.cut = false;
+        this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
+        return;
+      }
+      if (GS.data.drivingVehicle && MAPS[d.to]?.interior) {
+        AUDIO.sfx('cancel');
+        toast(this, 'Park outside before going indoors. X parks the vehicle.');
         this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
         return;
       }
@@ -5697,6 +6982,12 @@ export class OverworldScene extends Phaser.Scene {
       }
       if (cooling || !this.doorsArmed.has(p)) continue;
       this.doorsArmed.delete(p);
+      if (GS.data.drivingVehicle) {
+        AUDIO.sfx('cancel');
+        toast(this, 'That doorway is people-sized. Press X to park first.');
+        this.doorCooldown = OverworldScene.DOOR_REENTRY_MS;
+        return;
+      }
       if (p.door.to === 'dos_f1' && (await this.bricktonDepartmentGate())) return;
       // §A11 the Big-Little gate — a duchy building is thimble-small; the colossi may step inside
       // only once the Big-Little Lens can fold the party down to duchy scale (else turned away).
@@ -5862,6 +7153,23 @@ export class OverworldScene extends Phaser.Scene {
     }
     if (this.mapDef.id === 'boat_interior') {
       await this.boatCutscene();
+      return;
+    }
+    const cityHotelWake = FORMAL_CITY_IDS.find((cityId) => {
+      const hotel = CITY_AMENITIES[cityId].hotel;
+      const roomId = hotel.existing?.roomId ?? cityHotelRoomId(cityId);
+      return this.mapDef.id === roomId && GS.flag(`city_hotel_wake_${cityId}`);
+    });
+    if (cityHotelWake) {
+      GS.setFlag(`city_hotel_wake_${cityHotelWake}`, false);
+      this.cut = true;
+      AUDIO.sfx('heal');
+      this.sparkleBurst(this.player.x, this.player.y - s(14), 10);
+      await this.dlg.say(
+        `@Morning at ${CITY_AMENITIES[cityHotelWake].hotel.name}. Everyone is restored, and the room is an actual place you can walk back out of.`,
+        '@Somebody folded the receipt into a tiny swan that looks disappointed in you.',
+      );
+      this.cut = false;
       return;
     }
     // The hotel's paid sleep resolves on the actual guest-room map rather than
@@ -6475,7 +7783,7 @@ export class OverworldScene extends Phaser.Scene {
     // THE CLICKER — machine control goes live; cars become the first FLEET_STAGE (§A4.10)
     await this.dlg.say(...DIALOGUE.wm_arrival_clicker);
     GS.setFlag('milo_clicker');
-    GS.setFlag('fleet_road'); // ADR-074 staging marker — road vehicles drivable from here
+    GS.setFlag('fleet_road'); // ADR-074 — unoccupied road machines become Clicker-remote targets here
     // the porter still blocks; there is no slip, and no way round
     await this.dlg.say(...DIALOGUE.wm_arrival_gate);
     // THE FIRST BORROW: Jay awakens VIBE PUPPET / Mind Warp and borrows the porter past

@@ -194,7 +194,7 @@ function buildProcessionWay(): MapDef {
       // MR. CLICK — the macro-lens photographer (the regional "Say Cheese, Minister")
       { id: 'pw_click', sprite: 'mr_click', x: 22, y: 11, facing: 'up', dialogue: 'npc_pw_click', stationary: true, idle: true, emote: 'happy' },
       // a Whistle Guard on point duty (one obsession: keep the colossi ON the Way)
-      { id: 'pw_guard', sprite: 'whistle_guard_npc', x: 15, y: 9, facing: 'down', dialogue: 'npc_pw_guard', wander: true },
+      { id: 'pw_guard', sprite: 'whistle_guard_npc', x: 15, y: 9, facing: 'down', dialogue: 'npc_pw_guard', wander: true, mindImmune: true },
     ],
     signs: [
       { x: 3, y: 6, dialogue: 'sign_procession_way' },

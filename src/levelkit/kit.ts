@@ -16,6 +16,7 @@ import { Grid, treeSprite } from '../data/mapkit';
 import { cityBuildingHeight } from '../spritegen/tiles';
 import {
   GENERATED_BUILDINGS,
+  CITY_SCALE_BUILDINGS,
   KVISTHAVN_FACADES,
   LILLEBY_FACADES,
   MINIMUS_FACADES,
@@ -173,6 +174,7 @@ export const BUILDING_DIMS: Record<string, { w: number; u: number }> = {
   ...SHIPPED_DIMS,
   ...AUTHORED_REGION_FACADE_DIMS,
   ...Object.fromEntries(GENERATED_BUILDINGS.map((b) => [b.name, { w: b.opts.wallTiles, u: b.opts.upperRows }])),
+  ...Object.fromEntries(CITY_SCALE_BUILDINGS.map((b) => [b.name, { w: b.opts.wallTiles, u: b.opts.upperRows }])),
 };
 
 /** a facade's drawn footprint, or a sane fallback for an unlisted sprite */

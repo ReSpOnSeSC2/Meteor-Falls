@@ -1378,6 +1378,22 @@
       "solidDefault": true
     },
     {
+      "key": "puerto_cemetery_gate",
+      "w": 54,
+      "h": 43,
+      "url": "/assets/art/world/props/puerto_cemetery_gate.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_cemetery_lamp",
+      "w": 20,
+      "h": 45,
+      "url": "/assets/art/world/props/puerto_cemetery_lamp.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
       "key": "puerto_crate_bananas",
       "w": 27,
       "h": 24,
@@ -1479,6 +1495,230 @@
       "h": 24,
       "url": "/assets/art/world/props/puerto_trash_can.png",
       "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_crypt",
+      "w": 48,
+      "h": 51,
+      "url": "/assets/art/world/props/puerto_crypt.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_headstone_anchor",
+      "w": 34,
+      "h": 43,
+      "url": "/assets/art/world/props/puerto_headstone_anchor.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_headstone_sun",
+      "w": 36,
+      "h": 40,
+      "url": "/assets/art/world/props/puerto_headstone_sun.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_obelisk",
+      "w": 25,
+      "h": 44,
+      "url": "/assets/art/world/props/puerto_obelisk.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_ticket_kiosk",
+      "w": 48,
+      "h": 55,
+      "url": "/assets/art/world/props/puerto_ticket_kiosk.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_cargo_crane",
+      "w": 58,
+      "h": 64,
+      "url": "/assets/art/world/props/puerto_cargo_crane.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_fish_stall",
+      "w": 44,
+      "h": 42,
+      "url": "/assets/art/world/props/puerto_fish_stall.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_mooring_bollards",
+      "w": 32,
+      "h": 18,
+      "url": "/assets/art/world/props/puerto_mooring_bollards.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_wheelhouse",
+      "w": 56,
+      "h": 54,
+      "url": "/assets/art/world/props/puerto_wheelhouse.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_deck_winch",
+      "w": 36,
+      "h": 30,
+      "url": "/assets/art/world/props/puerto_deck_winch.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_harbor_bell",
+      "w": 51,
+      "h": 46,
+      "url": "/assets/art/world/props/puerto_harbor_bell.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_luggage_cart",
+      "w": 43,
+      "h": 34,
+      "url": "/assets/art/world/props/puerto_luggage_cart.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "grotto_sun_shrine",
+      "w": 60,
+      "h": 72,
+      "url": "/assets/art/world/props/grotto_sun_shrine.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "grotto_stone_arch",
+      "w": 68,
+      "h": 48,
+      "url": "/assets/art/world/props/grotto_stone_arch.png",
+      "group": "other",
+      "solidDefault": false
+    },
+    {
+      "key": "grotto_spring",
+      "w": 48,
+      "h": 33,
+      "url": "/assets/art/world/props/grotto_spring.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "grotto_rope_bridge",
+      "w": 80,
+      "h": 55,
+      "url": "/assets/art/world/props/grotto_rope_bridge.png",
+      "group": "other",
+      "solidDefault": false
+    },
+    {
+      "key": "costa_windsock",
+      "w": 34,
+      "h": 41,
+      "url": "/assets/art/world/props/costa_windsock.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "costa_telescope",
+      "w": 28,
+      "h": 38,
+      "url": "/assets/art/world/props/costa_telescope.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "costa_sun_marker",
+      "w": 40,
+      "h": 35,
+      "url": "/assets/art/world/props/costa_sun_marker.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "costa_flower_urns",
+      "w": 45,
+      "h": 36,
+      "url": "/assets/art/world/props/costa_flower_urns.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_radio_mast",
+      "w": 55,
+      "h": 64,
+      "url": "/assets/art/world/props/puerto_radio_mast.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "puerto_candle_cart",
+      "w": 56,
+      "h": 46,
+      "url": "/assets/art/world/props/puerto_candle_cart.png",
+      "group": "street",
+      "solidDefault": true
+    },
+    {
+      "key": "festival_lantern_span",
+      "w": 72,
+      "h": 64,
+      "url": "/assets/art/world/props/festival_lantern_span.png",
+      "group": "other",
+      "solidDefault": false
+    },
+    {
+      "key": "valle_sun_press",
+      "w": 60,
+      "h": 57,
+      "url": "/assets/art/world/props/valle_sun_press.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "valle_taxi_dispatch",
+      "w": 50,
+      "h": 53,
+      "url": "/assets/art/world/props/valle_taxi_dispatch.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "valle_sundial",
+      "w": 48,
+      "h": 46,
+      "url": "/assets/art/world/props/valle_sundial.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "valle_pottery_kiln",
+      "w": 58,
+      "h": 46,
+      "url": "/assets/art/world/props/valle_pottery_kiln.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "valle_llama_trough",
+      "w": 56,
+      "h": 33,
+      "url": "/assets/art/world/props/valle_llama_trough.png",
+      "group": "other",
       "solidDefault": true
     },
     {
@@ -3926,6 +4166,405 @@
       "aspect": 0.97,
       "w": 6,
       "h": 6.188
+    },
+    {
+      "key": "bldg_cityscale_brickton_ob_hotel",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.518,
+      "w": 7.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_hospital",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.518,
+      "w": 7.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_dept",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.433,
+      "w": 8.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_civic",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_warehouse",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.591,
+      "w": 8.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_brickmore",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_starmart",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_bagels",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_bank",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_arcade2",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_theater",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_gen_shop_grass_1",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAADcCAYAAADEOHfbAAAFmElEQVR42u2dr3MUMRTH7w+oQDMViIoKBOKmwx+AYKoQJxDIygr+BGQFAoGsPFlRiURUIJBIBLKiogKB6MwyuZncpGl+vGySty/JV7zZu21fNvnc203y3Zfd1buz7QTbTqvDF2+m2vb14jxqts/Nt8tHVruOq+fPjqaDg8Pp5Pi0mqmGmo1yfff5+f5WylT7la0UBI6I0A22Te8PRVLt+rGDCEWEGBA1t5RrBEc9fNs9iCUrIWH7CMTItgeh+tH16/Ph7MmpARAOENQrbajwVvyf9Bo2iNs/N0GLVeTl5XXQpPhHQdjDW9dwl1qRq7/3WQ2p6c8WEZufv7J+0dr+0WtEiYhw/RIpDeHwj4IY6RqBXoMCgqId1PxFcyOS6h8FsXRo516jqP5NgPBFIxUExd8LQp8/urJmxc3PZkFmBewyfOXY57n92fzlfJ99vvr/Qr5BECOaU48Y0TD7xDQcIKBHZI0sW5krsI4sJesJbCNL6XqCz586VyKBaEFPqK5HtH6NgB7RW6/BpZB1r0d0BSJHj8gG0YsekVJ/6BHQI6BHYBoOENAjhIwsue5UsQ6oauoBHCPLWH5EVT0i994pV36GeD2CKz8Ds0/oEY3pEVzXmO6lum7yI7j0DPF6RMjXBoH8COgR0CMwDQcI6BFCRpa5Y/37H+ugNZMfkTv7U419uP9UBMSi+RG5Y/1SEdF8fkQJEF3kR7gaf/PlcGcc1wjoEdL0iNyI6CY/IhdEN/kRJUB0kx9h9hAahP6M/AjoEdAjMA0HCOgRGFmK0yOox6+eH7G0HkE9fvX8iKX1iKIR0bIeUeXUaFGPoB4fvcaSKnaTEVFCxe4GRI4e0DyIOfkFNfSI3PwI87j6swYBPQJ6BPQITMMBAnpEp+s1xNz7XHq9BufzLEWv1xDzPEs8PwLPj0CvgYgACIAYZ70G8iOgR0CPwDQcIKBHDJgfwZVfIT4/giu/Qnx+BFd+hfj8CK78CvH5EVz3TtFrICJwagBE0+s1bF8zx8EGAT0CegT0CEzDAQJ6RCeZt62s92B5u2ML6z3Y3uUnfb2H+PyIbvSIVtZ7oNdARODUAIim8yOgR0CPgB6BaThAQI/Ana7kSVM379fI1RO6eb+GlIhoPj+im/dr5M4VSilk0CN6yY/oZpkCQPQCQkp+BNZrQI+AHoFpOEBAj2hwZLl0UrmY/Iil11uIyY/oJSKy9YgeQBTRI5bOpUZ+RAu9xpARARAAsZ39PEis14AeAT0C03CAgB6BkWVTekL1lwi0oidUf79GK3oCS0S0oCcsAkLiXAHv1xhFjxATEQABELL0CLxfA3oE9AhZs09EhAEilv/cozlBPPy7Hc6CIE6OT/dmOrn2u/5nTjk+C/1Paj1d+70gQg3j+E4F4SsndT8ZBLUCpRoOEAwgsk6NXiOi+DUidjCp14jivUYMUIlewxfWOb0bCcTw44jhh9hHrz5Ol98fpvcXdzvTtNQQtPf9GoTaXx2E6zzXNhSIEKAhQKw3V1EbBoT53TaAkApCS3Vz+2IleTn3Gw0195sg9HctnenylKXuzxlH7EHoL7H7CbYpH5+/BmE2XkMxQZj9+madZqbvnPo7xdu5IMxfhALCjghTTFWN+/xhTTL1v6YvQCwBws5ZqAUiVo+5IOz6J4G427zdmS7EzGKZA8K+RvhAhBJFUkCE6h8Foe8Z6oJUIWprp/L4QChfaq9RIyKo9U8CYRey/X22MwqImHGACNWfDMIsRG1TQKT61wARO34QhH6gjSpEbVUhrgfe+EDM9aeCUGmDIRApx49GhOvCktJ9zvEvGRHU45N6jVghsV4j1b9090k5PsuAKtW/25Fl0yDmzj7nzv5Kg8hWsXU+0RxLTfQMJY6qxsUez6bNBjH3+CJTh3IioqvUoRw9IscUiP/dtxX1l1MU+gAAAABJRU5ErkJggg==",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_diner",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_market",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_apartments",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_brickton_brownstone",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_mercado",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_clinic",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_pension",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_museum",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_casa",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_casa_b",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAADcCAYAAADEOHfbAAAFjUlEQVR42u2dr3JUMRTG9xHQTCWiAtnpMzDVlUgkD4FEIBDISiQCyQNUICqRCOQKRAUC0Zkyd4fspNn8Ock5SU6ST5zZbveeJPvds8nN757c7B7+7h9h+8fd7bebx1L79P5t0jjlt7Td82cvDg2+PL/KNveL+t6H/ErrlLbt+2+245w14xuKhFDZ2qJFTAjq+yGEKHmlWmn5rV6PQozQ2JqvT4RY2Y5CbOPo/tftEwuNt+5xIRvB/+Sn4TvA2PaZ27mkGjGKf1QIak9LaYR2/5NRwxXi/vtF1FIN4fq/vPkaNan6SUI83L9jCcHxt7/0lz/3RUJQ6h8mIq7vflSPiGgfoUEIXySoEOL249nBSoXI8a/RR/jqx6gxSkRQrhOaRERvIbgRMZUQKeJVVQhTiTnY7mVNQe5vzA1Xuwy7HON7LM/jWxIRPt+c9p8IsaJ5ecSKlpx9rmIkIcAjwCNwZXkiBPdan3tlyK2f6p8lRAkP4J5Rbv1Uf7IQpTxAKiJK66f6k4Tg8ACJiODUT/Wv3kdQLmSG6CMwagzW63P7qOoR0VsIsYjg8gANQlDan+QROYqGeITdaPfvFFOI+bpClLAM8AjwCPAI8AjwCPAIhTyit7/YTeBWPEBDfkRVHtHbXzQiWvAA9fkRM/YRyI/AqCEQERACQuxPWEKMBWjnEciPAI8AjwCPAI8Aj1gwP4Kb1C52p6t3fgR3vYd4RPTKj+BGBPVuvPr8iFbrPdTnR7Ra74FRY5T8iGkiYioheuZHdBdCS36Eu9bDZgquED4ekcNTwCPAI8AjwCPAI8AjcKdLF4/o7a+GR/T2V8MjRvGfvo8Aj8B6jUl5hCohRl6vMQ2P4OZHgEeAR4BHgEeAR4BH4PkR4/KI3s+PUMMjpJ4WUDs/Y3oeAWap7WkBGDVmm4ZDCAgx13oN8AjwCPAI8AjwCPCIAa8sW623UM8jWq23UM8jWq23UM8jeu+vIZooMkIuNfIjRh41howICAEh5HkEZ38N8AjwCPAI8AjwCPCIBTNve/tjriG9v0YrHtA7vwL7a2APHvAI5EcgLQBCID8CPAI8AjwCPAI8AjxiZR6BuYa2/T61RET3/T65Z1QCrKjgEaPs1wkesQqPUEOxR9mvcwkhWjy/Qj2PyIkI8AjwCPAI8AjwCPAIXFnOtb/GKOs91D/PUlVEjLBf55J9RE4uN54fMRvF5kaE2FKm3md0mv01uP5T7a/BYQrYXwM8AjwCPAI8AjxiwCtL7qRnmudHcHnANM+P6B0R3LvxYnON3kKoyY/gXuvj+RErjBpLRgSEgBD7k2c/+FiAeQYEnh8BHgEesRaPQERYQiAi/guBzjIixOX51dFy/29/Fjo+ZKky7M98bfD9v1gIagWpikPHx0SgHN9NiFyBagrhRooqIWIhLSkE9X0TIUJ9QahBlOMp5aeiQ0Ufkfsbzo0IqZ+q2KgRq7jmTyMVKdRRpkgITLpWnnRBiMqzT99v1dgQd8Nr2zJCcJD8dELEylUtRO7wE0vOKBXCV49veM9JDiEPn5yxONQIWwjf8T6hcjLyXCFFriPMB6n7Aa65Qrj3Dnxnz7514ApzfXGWZbYYJe3vKkQsIrYv9+H1Bcm2Y12BIURrIdycg1pCpNpRKoTb/iwhfl+/OpgpxF6VI9lHuELEEj1yhIi1PymEuW9pCtoK2V7dpUkhIcz9zdxRQyoiqO3PEsIt5PPPNwejCJGyFkLE2k8Wwi5ke80RIte/hhCp+qNCmLO1FXIY2+9+eM9mSIhSf6oQW9piTIic+pMR4etYcobPEn/JiKDWTxo1UoWkRo1cf+nhk1J/kwuqXP9pryyHFkJy9lkylecKITL7zJ0C+xLCOP5GCKqfK0Rp/SpThzgRMVXqUC6PkKp3E+IfqmzceU7HCC0AAAAASUVORK5CYII=",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_deli",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_pension_b",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_casa_c",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAADcCAYAAADEOHfbAAAGQ0lEQVR42u2dLXNUMRSG+wMQaKYCgahAdjr8AASDrkQikYhKJAKBqKysRCD5ARWIykoEsgJRUYHozDLZIZ3s2Xyc5OTj3NxXnNntdk+S+25ucvPkJDl4uDnbwM42B9cfn298dv75Q9Koz9WPix0Lpa3RDp49fbE5f/1kc3L0dsfMhboX5fub+li/0P80mrl+YwdGhFCNsBdMzX4eq0lLqg0sIWI1Ykoh9l6ZbUTQf0Gvj0LMcDGS1x0h1myPQph+9P7y1Y6F+lv6vZAtwX/v1vB9wZr5H21caKb0s6X4R4XgtrShX2JJ/snu8/b3VdRSmUj9734eRy3l//Lie9SC3SetEfRR2ffoHPtFpP7mYh/uPkWFiPm7F/3t/s4rhLdGUCE4v2isIFJ/To3gCHF6fROsEaw2gvMgFSuI1L+GEL6akBRCeo/V9vdd/NXXw63VbiPQa3BuDY6i3MaqxJ9TI2rkDyHQRjDbCDchN0H63lWUPubSwvje+x51fTWCvvfVCPo+t/x7QqzRvDxijZZsI9Zk4BHgEeAR6SfL2s8BUh7R4jkkxDPYT5ax8XwrHiHNn8sz2EKkxvOteIQ0f+4wniUEZzzfskZI8i8WovY9mjuLPnKsgl6Dc2vUusdLq3YL5ukbxieFqNnqj2hjioXwRb6E7m9OJIz0HpfmL24j3IK4vwx935pHhPL11QgfjwixDGPgEeAR4BHgEeAR4BGNeIQ0PqF3fEMzHiGNT+gV39CcR0in5XvFNzTnERqEUMEjpHOPPecuwSN68AjptHyvaf3mPGK1QqCNCPCInPF8iEfQGAfr6xYkxBRiLIPWCPAI8AjwCPAI8AjwiEniI6Q8oud6j6bxEVIe0Wu9R/P4COkwvNd6j+bxEVIhWsx9DomPkI41WrQR4BEj4yOm4RG94hPU84ie8QmqeUSN+AjwCPAI8AjwCPAI8AjER3SNb+jp3zQ+Qsozevk3DwuQ8oxe/l2EkPCMXv7N5z6naSPAI5QMo3v5Qwi0EZn7R9SIj5Cs15DyCOwfAR4BHgEeAR4BHrHA+IjR+0+oiY8Yvf+EmvgIqX+vbSCbx0eM9lcTH7Gkve7QayxhG0c18RGrFQJthNL9LBEfAR4BHgEeAR4BHrHC+IjR53OoiY8YfT6HmviI0edzqImPkP6iUjCjJj5i9H6WiI9AfERZGzO9ENw2avr4iJz1JlPHR+SsNwGPAI8AjwCPAI8Aj8B+lrp4xFLWe0y/n6UaHrGU9R7T71UHHjHbfpa9mKd6IXpRcPVthHT/ClU8QrJ/hPR8DfAI8AjwCPAI8AjwCOwfsdzzNUav91Bzvsbo9R5qzteYZr3G0uc+sV4D8RFKz9eYZr3G6tuIWeIjsF4DPAI8AjwCPAI8YoXna6jhEaPP11DDI0afr6GGR4w+X2Oa/SNw3if2j9AVH6Fm/4jR8RFq9o8YHR+hav+IkfER4BHgEeAR4BHgEeARWK+B9RpYr4H1GlivgfUaWK/RYY+Z4edrjOYRas7XGM0jVJ2vMZJH4HwN8AjwiLo8AjXCESLVd89oXiEe/t6uzoqEODl6+2i5n7v/C30/lCfnc/s3zTOVR7YQsYw5n6fSqSUE17+aELkCjRCCU+OaCxG6BXoJwRGhuhCce7L0Hi79AZo1lrltREyIljUiR4SqvQa39ZbcGjm9T/NeY1XPEXjE/j8MhxCBSeBa5rtvrbXKk2tdhYgJtAohJEhejRCp4WsqAzvEjQncUghu+YNC5HY/e8EZpGsqEcLHFn1c1esr7T63iRf2xaFCuEL4vr/9PxEzF7NJRIgKkZoPoEaFoHMHNl1aYJ8Q5u/T48Msc8UoKf9QIWI1wlzcl3fHLDPfpQJDiN5C0JiDVkKkylEqBC1/lhB/Tt9szSbiRqHUbCOoELFAjxwhYuVPCmHnLW1CJhHzSkNxQkLY+c3cXqNWjeCWP0sImsjlr/db4wiRsh5CxMrPFsJNxLzmCJHr30KIVP5RIezUu0nEvJpEfMEaISFK/blCmLDFmBA5+SdrhK9hyek+S/xr1ghu/qxeI5VIqtfI9a/dfXLy7/JAles/7ZPlooWoOfosGcpLhagy+iyNOCkdQvuG0ubiUqGF1qgQzVbwjDBJjaiC6rRYLo+ola8R4h9/JkZVlx0TkQAAAABJRU5ErkJggg==",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_cantina",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.373,
+      "w": 5.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_catedral",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.327,
+      "w": 6.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_gran_hotel",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.327,
+      "w": 6.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_ps_aduana",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.38,
+      "w": 7.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_gen_market_gold_1",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_puerto_sol_gen_civic_paper_2",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_colossus_spire",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.753,
+      "w": 14.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_tower_arms",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.327,
+      "w": 6.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_tower_glass",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.327,
+      "w": 6.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_tower_corp",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.38,
+      "w": 7.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_gen_bank_paper_3",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.518,
+      "w": 7.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_gen_market_gold_1",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_gen_shop_gold_2",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAADcCAYAAADEOHfbAAAFTklEQVR42u2drXJUMRTH9xEQKGYlogLZqeIBmA5yBQJZ2UdAIBEIRGVlJQLJA6xAIBDICmQFogKxojPLZGeyk6a5yUlOvk7yF2fu3Lub5Oa3Z29y/jcfq19Xuz1st19dnlzvY+zq02XQ7DTb748ttswatnrx7OX+9fN3+7OTc5KpipqVcp0vpVv6rKWp+itbKQixHqErbJu+7vOkHr2BBcLnEaJBUI/UZ0Rsvi2PRxCSbrrE8RGIme0IQrWjN29vp7Mnfw2AcICgPml9mUtJ/6TVsEHc/zj1WuhGXl1/81ov6UkgHu4/ZgHx9d89qyIl01fziM3P36xftHT64DMiBwjXLxFTkRrpk0Bsv6wPNtozAq1GDY+4+7P1mhiP4IKwhRiXMDMNiKXIdDoQ4j2CKnYu3Yik9FWCLtWOI/pEGA4Q0COm61nW1CO4PVNqehKIlnoEtx9CTV/NI1L1hK48oqUe0bVH1NQjuvEItBqdeATl3aqI6HMYqQ4gAAJ6BIIugAAIgIAekdqzrNXX7z7WqBX9dR99cn8RbqzQjUfkCHo4egS3fGr6IAgpXWSMj6jVasAjAAIgAAJ6BIIuRJ8AARDQI8bQI7jNJ/Uldvd6BHd8BXV8hxiPSB1fMZRHcPSMbCBaK0wlnhGuV5ZoNWYJurJ5BEAABEBAj0DQBRAAARDQIxr3LLmD2mvFKlEgSuoBrfUMMojSekBrPYMEooYe0FrPaPKMiBnC3M3ofLQanXjEMG/DAQIgBgQBPQJBF0AABEBAj5hr/Yis8z4lrx+RTY+Qvn7EMOtZdqNHSF8/AnrEaOtZDrN+BNazxHqWWM8SegTWs0QYDhDQI9CzFL6/RrZB6dL318g2X0P6/hpZPULy/hpFQUhaog3zNUZbz5KrZ2TziNYguNHrUCA4egY8AvM1Bh4fUUPPQPQJEAABPaKpHjHUzm0S5lt0Pz4i17tL7PeJ/T6xniX0COymABAAgfUsoUcg+gQIgIAeAT2i/fiG4edr1Cq/+/ERtcrvXo+oVX73Xexa5aPVkDJfoxuPaD06fygQNcY3wCOgR2C+BqJPgAAI6BFYKb3VyN3i61m2Tp9tv8/W8y1qrT9RfD3L1umx3yf0iEFbjS5XQW4BotZqAyJA1Fh/Ah4BPQLzNRB9AgRAQI/AfI1i0af0+RrZ9Agp+2NU8QgJ+2M08Yge98co7hFoNbDC6VirBQwFogs9Ah4BPQJ6BKJPE8Ss5gQRartHNCeIh93ddMYGcXZyfjTzmv0d+7tmmqXv+/K3r1E+KwbCV2HK9VA+lHPKDyAKREyFYsvtEoTvr0StUJcgYv7zlL+G6/8dA2IJdhOPWKr8dM8I33nJVqMZiOH7EdN3sdcXHw6RnpLOlWlaqgs6+nUNQl0vDsL1jNA2FQgfoClAhOQy/RJnChDmuW0A0SsILdWltsVK8nJdNytqXjdB6HMtnen8lMVe5/QjjiD0CeV/bZpK40uvQJiV11BMEGa7vjldR5mZNuX+neJtKgjzF0kBYYqpqnKf35+STH3XTAsQLUDYYxaoIGwLgQjdRyoI+/6jQPzdvDmYzsTsI5TyiNBAkRgQvvsPgtDvO3VGKhN1tDtKSyB0Wg4IjkdQ7z8KhJ3Jze3FwSggYp4xpUD47p8MwsxEHWNAxKYvASJUvheEfvWuMlFHlYnr1fwSiNT0VBBq2KMPREz5QY9wPVhims+U9Dk9glo+qdWgRJC+ViM2fe7mk1J+tQ5VKojhepZiQaRGn6nRX24QbBVbgaAO1Fwa+MlNr0GEBpJps0Gklt/l0CGORww1dIijR3BMgfgPx36gCMAz5FIAAAAASUVORK5CYII=",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_gen_civic_paper_3",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_gen_market_orange_2",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.445,
+      "w": 6.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_gen_cafe_orange_1",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAADcCAYAAADEOHfbAAAFMUlEQVR42u2dLXMbMRCGDQuLO4EFAYWe/IZOsGFgYX9EYUFAQWFgYUFhf4BBQWFhQaBBgUFAQGbckSfyXM4nafW5u9ILNLYv2ft4vHfSvl6tVk+PuwPa7rDa/rw7aGpfP38MtpT9rt68fns0vrq8VtHmF7r02WW39Ddz/aatUglyeoTLM5bAzD1p6W+qQVA/R4PQ9Ep5RsS8nkBohFHy9QWIkdsJhOlHd/fb4drZrQEQCyCoT2/fzrXYn/UacxDv7n54W+hEcu33v9beFrKneEI0iO8P+ywQKfbmYp/2n5JBFPeIze8/WR6Rat/SI7zPCNc3GQMixz4XRIxHBEFIe0Zsv1wcW1OPGKnX8IKgEs39Rmp5BCUWUeERuSCotyYJREj9CYHIsRcFYniPoIqdrhPRZE8Kusw4ICegybVH9AkQAAE9QvzIslX0VytWKTaOaKUH1NIzqPZqPKK2HlIdBDXoqaVnUO2TQNQY4op/RqDXEOIRrXod8SBK9jrqQeToGfAI6BEV9Qju1kLPQPQJEAABPYL1ly7u/AgxsQZ3fkQxPYJbTyjlEdl6RAmP4MyPKKZHSHxGDPnbp5heI1dq486PKJpDxRk95oIQk0PFnR9BPT48AnoEgx7BnR9BOT6iT4AACOgRQ+sRVPvu9Qiqffd6hCiP4NQjioEokejBqUdQ7dFrjDKDp5hHAARAAAT0CARdAAEQAAE9gnm+Bre9mPka3PZi5mtI8Qj2+RoSQIiYr8Ftj/wIafM1uO2L5UdoBwGPKJ0fAY+AHtFf0IX8CIThAAE9QvwvXVrqT0SBkFyPsroeoaUeZXU9gju/oVX9CZZnhMT6E+g1WuVQwSN6BKGhHiU8AvUjFNazRPQJEAABPQIjy1Eqk3HP1xCjR3DP1xCjR3DP12h1fPHzNbp5RkDFFmIvpn4Etz08Qlr9iC48AnoE8iMQfQIEQECPaNt9aqk/UT0/Qkv9ier5EVrqT1TPj+BeX6PKraFxiI36EYg+O60WABAAIRAE9AgEXQABEAABPUKXHlEj81elHlEiz1OEHiGx9j6LHsGdH9GNHtFqdgB6DQRdiD4BAiCgR0CPQPQJEAABPUJXPctu1vtsVU+y+3qW3az32aqeZPf1LLHeJ+pZylrvs2iv0aJ64BAgNNSfgEdAjxhwvU9EnwABENAjxNePaPVrtvjVHVvlN4hf7zM3PwLrfUoDIXFOFtb7xHqfWN0RIAAC630iPwLRp2gQo7ZFEPCIZxDUh0xPrQqIq8tr52fz3jbX/1O2z5sqENTtqYAAYmQQJW8LFhBLF9GtR7i+7eFuDUrvQfWUmO1iQagfRww/xL69efXiN4BpmNr7dgvCbK8OYunePt3jI4HwARoChJXGfG0YEN7fHwFCKIjcMYRLMLUXat5PAdjPx78/v58Kr/Z97PacccQJhP0QkuHnzdi47Kkgpv36Zn0R1aa2Kee/KN6mgph+IykgptKZubjbmzWpmf+dy/gA0RrEPOehFojQeaSCmJ9/FIh/m/fHZncynRVDATG9+CmUEAhfokkMCN/5B0HYk7U7Mjsxr/OpQS4Qru7xrPus5BHU848CMd/Jt78fjo0CIjiybADCd/5kENOdmNcYELH2NUCEju8FYVNrzE7Mq9nJUuqNC0SqPRWEud18IGKOH/SIpQdLTPeZYl/SI6jHJ/UaoZ2Eeo1Y+9LdJ+X4TQZUsfbdjixVg0iNPlOjv9IgslVsuzGlxSZ6+hJHzcVR7eYgUo8vMnUoxyO6Sh3K0SNymgHxH5YnUIMw+HaNAAAAAElFTkSuQmCC",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_gen_brownstone_earth_3",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAADcCAYAAADEOHfbAAAFDUlEQVR42u2dq3IbMRSGDQuLO4EFAYWZPEMnODCwsA9RWBBQUBhYWFDYBwgoKCwsCDQoCCgoyIw78lgeZb2Sji67un3gzNprH1n7+exK+ldHu3n6t91h293m/vvdzmafP773msu/Jdu8evl6f0CX51cnNj3Qufc2P9tntZk6fmUb17+qP7NFgs23tWgRg5C+7wLE3FZqNv9WtkcQPRxMyvYZiJHtCEK1o9uH++Hs5NQAxAwI6ZXWVXgr/ietxhTEm7tvTvNVpLS/JBKCQXz9+5h0ICX8s0fE9c9fSf9oKf+QiHBeI2z/RMiBlPQPiQgviFGuEbQaI0SEZGw0BAipPyB8IPT5o79sOpqvzYJsnRSb77SMuXJcvlMQ09eh9T8BMaLN6hEjGqNPhuGAQI8Yume5SIeqRT1C6i8G0aoeIfXvXo+Q+nONQI+g1eDUAAR6BHoEegR6BMNwQKBHFOlZPv64cJqvIqn+0nuXi3eoVGWfHj8kgUjxT42IbHpELxGRrEeUBpEjIrLoEbOV/3S2t1gQIf7Su9noESVbjTUjopoZM62DICIMEL6MI5EeoStrXuX1gUj1CNP3CMIoe0k9Iiki0CPQIxh9AgIQ6BFl9Ii19IRVepYt6AnDRETxfI1W9ITqxxpr6Qnka7QSEd1MCwAEIPLrEcyPQI9Aj2AYDgj0iMF6lqmjx9L+3PvMPT+il4hInh/RQ0RkmR/BNYJWgxVFugRBROSeH9F6vgbzI9Aj0CMYhgMCPWLAfI2qbvCUzNeoZv2IWiKi+PoRNYCoYv2I1udio0f0Njt/LYWrehBERKCe0H2+RkhEoEegR6BHMAwHBHoE+RpZ/KX1rz5fI9VfWv/qIyJ1dn/WiGg5X2NREGuOHlP1CGn9aTVGyeDJFhGtpykAIheIXvI1QuqPHoEegR7BMBwQ6BHka5AbTkTUHBGpg65uImKt2fVcI9aKiNJ6As/75PkaPF+D9SPQI9AjGIYDAj2CTODOnq+Rmi/RzfM1UvMlUiMi11in+PM+u8nXWOveI/kaI7caTUYEIACRX48o+XwN9Aj0CPQIhuGAQI/gbni5fI3WIyJbvgYRUck/Wk3iSmpFyNdAj+g0TQEQgOhrfgT5GugR6BEMwwGBHjHgepZVrUxWcj1LIqKFterWBMFadeRrEBFF159gqVdAFHjeJ/Mj0CPQI/oZfRIRBggi4gCCi2UmEJfnV9b36rU22/cl+6fWFAjp/lhAgBgZRM7TogiIuYPoNiJs//Zwp4ak9ZBGSsj+akEw6Gq9i3178+LZPQhNS3VBe9+vQaj9i4OYO7eP5/hIIFyAhgBxlPYcNgwI5/1PQFQKIrUPsS94ro0+HKh6bQLQ7/efH15rocSUDEP3p/QjjiD0G9/9gKkpH5u/FITZrl9fnAWZ6RtTf6ucHwPC/EdiQJjSmTq425sLkanvmr6AKAFiuibDUiB89YgFMa1/EIg/12/3pgsxV+mQgDAP3oTiA+FaCCMEhKv+XhC6srogVYjaTpcqsYGwNY8nzedCESGtfxCIaSFffr/bmwSEt2e5AghX/cUgzELUNgREqP8SIHy/7wShb5urQtRWFTI39cYGItZfCkKdbi4QIb/vjYi5C0tI8xnjnzMipL8vajV8hfhajVD/3M2n5PdX6VCF+nfbs2waROzoM3b0lxtEsoqtd8ZYzIOJbRNH1cFJ/aYgYn+/yqlDKRHR1dShFD0ixRSI/68tF92JwBbWAAAAAElFTkSuQmCC",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_valle_dorado_gen_brownstone_earth_4",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_minimus_major_minimus_cathedral",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.112,
+      "w": 4.125,
+      "h": 36.75
+    },
+    {
+      "key": "bldg_cityscale_minimus_major_minimus_petit_market",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.149,
+      "w": 4.125,
+      "h": 27.75
+    },
+    {
+      "key": "bldg_cityscale_minimus_major_minimus_manor",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.149,
+      "w": 4.125,
+      "h": 27.75
+    },
+    {
+      "key": "bldg_cityscale_minimus_major_minimus_thimble_inn",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.149,
+      "w": 4.125,
+      "h": 27.75
+    },
+    {
+      "key": "bldg_cityscale_zanzibel_zanzibel_home",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_zanzibel_zanzibel_indigo_dyer",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_zanzibel_zanzibel_caravanserai",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAEsCAYAAAB33WV2AAAFSklEQVR42u2dLVNcMRSG9ycgqhgkAlG5g+oP6DCVCASykh9RWYGoQK5EVlQiK1YgKioqEZWICkQFgpntZGeyzV7ycXKzySa5jzi97G0+H07uTd5NDrOfN8+rXPb9+uKV5awvxWZXJ4uV1G4+X3ltmF51PKb8fdrs8OB49e7Nxer05CxoqrPLu4XV1P+ZaW3eoE1SVylT/Vc2UxBiPMIHwkx7fTl3Wm3eAAgbCMlV8ozQ6UMgYurNfd2AyFWJGoO+z7Vct0BM2TYg1HtUXW8/PIyyVvNrr1jPIwABiM1bAxAhEG8X3zZ2/uOX9WdfQ57u5xtbfjmy/uzLn1q/NL8IxNe/T0kgXp4+JYFIqV+aP/iMmJJHAEICQmUIma8hqsMh8+VPrV+aH49gaAACEKNBxAgatoa0lJ+1BosuQAACEIDYIYhS7/Fc8xBpfhGIEnpALj1Dmh+PAEQkiFJ6QC49Q5ofj2BoAAIQo0GgRzDFBgQgAAEIQDSpR1T1Bc8+9Yhu9kd05RGAqECP6GZ/BEMDEIDoFwR6BFNsQAACEIAAxCT3R3SjR5Q674FHAKIxPaLUeQ88gqEBCECgR6BHsNYABCAAAQj2R7A/gv0RfOXH/gj2RzA0AAEI9kegR7DWAAQgAAEI9Iia41BVEz9i3/Esq4kf0ZVHAKKDeJbVxI9gaAACEP2CQI9gig0IQAACEIAYBaKVeUD2CVUrekJ2PQKPAESbekJ2PQKPAAQgAIEegR7BWgMQgAAEIDiv0ePf1+hmf0RXHgGIDs5rdPP3NRgagAAE+yPQI1hrNAJiivYKxFSNocEzorHzGt3Esyy1v6H6+BFdeQQgGtrfUH38CIYGIADRLwj0CKbYgAAEIAABCOJHED+C+BEciSZ+BPEjGBqAAAT7I9AjWGsAAhCAAMQk4kd0M6FqZX9D9fEjuvIIQDS0v6H6+BEMDUAAAj0CPYK1BiAAAQhAAIJ9lpzXwCMAwXkNzmswNAABCM5roEew1gAEIIgoQkSRvUYUaSWOVPV6RCvnPfAIQBTWI1o574FHMDQAAQj0CPQIVp+AAAQgAEH8COJHED+CI9HEjyB+BEMDEIDgvAZ6BGsNQAACEIBAj0CPQI9gio0egR6BRwACEIBAj2CKzVoDEIAABCBq0iNayV/9eY1S+fEIQDR2XqNUfjyCoQEIQHBeAz2CtUY6iKkfkj88OP4P4vH3cnK2BUL9oz68PD9OzrZAnJ6cbYFQn7XZ7pn3femHaXaRXt8f3nPdD7VTg1D31h5hFmRrUC33XeBCQF33t0DoZ8S+O2zzkCpBxLj02Pu2dDFDNbadXhCusecq0Jc+BNTXcd9vPPb/XfUmPSNiHnLS9L5yxj47oj3CfGvsytVjP48ZkrGeGATBPGIws2SKbSy6AHHzPHrlV8JszwRtKeU2B8IHaBIgYlSqLCBCy9eSIHy/JBcIafudIGJfP9JwidJQkakgkl+fqrIxheQwFwizbhuIncwjNAhTBveZKuB8fpTFzM5pEGbndadtIKTtN/uRBGL9HcH8aHV9OReZNK1KZ/OIIQiXRwCiNAi9+cIE4Us/BBFKmxuE2f5oEH/O369tuAPF7NywAh8IX1opiJhnhKv9IhB6v7IuSBWirlvfIxb0COlbI6b90SCGhdw+fFxbKRDS121s+6NAmIWoa2kQMRbb/iCI5d1ibaoQdVWF6Hum1QpC2n6RR9geLK7XZ40eIWm/+K0RKqRmEJL2NzWhSgFRfGbpW+4OQYTSVgMixmr0iJ2sPmOXy7WBGLvsT5bqagOxE6lujOXSI/Yh6ysQ/wA4nJiXfAeXBQAAAABJRU5ErkJggg==",
+      "aspect": 0.22,
+      "w": 4.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_chandrapore_zanzibel_caravanserai",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAEsCAYAAAB33WV2AAAFP0lEQVR42u2dIXPbMBTHAweLe4MFBYO5foZdccBA4eA+xOBAwMBg4ODAYOFAwMDg4MBgwUDAwMDuspNvThVVkvUsWZbkH3h148ry869PtvT3k7L6e3h7nNu+bF89sdw+rPbvnx9T24d3b7xmllcXPoUfEltdXlwdt3fPjjfXt8msu9j7ndXU3/SytmjoLaVPLlPXr2ylIEwRET4Qetnt3dppuaIBEDYQKbch94jH8n4QU/hnbk8gcpzMt1Vt1fd56u0ZiCXbCYR6jqrt4et6lNV6fB8VXT8CEIA4PTUAIQGhCtp+9znyYvf5ZJtv362/l3B8EAi1LwbEp9+HqAvJcbzoHtF6RAAiBERI/9zniDrhkJVwPBFB0wAEIEaDkAgaNkdqOp6xBoMuQAACEIBICCL2OR7bD8nVjwkCEaMHxOoZufQQIgIQQhCxekCsnpFLDyEiaBqAAAR6BHoEYw1AAAIQgKhLj2jmBU8t+Q3F6xFNRQQgKspvKF6PoGkAAhDkR6BHMNYABCAAAQhAFNUPaCY/Yu78imb0iGZe+TUDYm49oZn8CJoGIADRLgj0CLrYgAAEIAABiCrna+Q6f/HzNXKdn4gAhBBELXpC7PmJCJoGIAAxGgR6BF1sQAACEIAAxCLnaxSjR9SSX0FEACKzHlFLfgURQdMABCDQI9AjGGsAAhCAAAR6BOtHsH4EU6JZP4L1I2gagAAE60egRzDWAAQgAAEI9Aj0CPQIutjoEegRRAQgAAEI9Ai62Iw1QkAs0Z6AWKrRNLhHLOz7PptZPyLX8UQEICpbPyLX8UQETQMQgGC+BnoEYw1AAAIQgCA/gvUjWD+CKdGsH8H6ETQNQACC9SPQIxhrAAIQgAAEegTzNZivQQoy8zWYr0FEAAIQgECPoIvNWAMQgAAEIKYCUfL3bE3+gqeW7+ucPD+CiABEnd/XOXl+BBEBCEAAAj0CPYKxBiAAwYoirCiSdEWR2r83vJj8iLn1jGLyI5qKCEAUoCc0kx9B0wAEINoFgR7BoAsQgAAEIACxyPyIZB2q2vMjkukRRAQg2sqPSKZHEBGAAAQg0CPQIxhrAAIQgABEU3pEMQty1ZLf0Px8jaIiAhAV5Tc0P1+DpgEIQLCeJXoEYw1AAAIQgGA9yzZf8NSiJzS/nmVREQGIivSE5tezpGkAAhDkR6BHMNaoAMTSJ8lfXlw9gnj4uV+cnYFQP7rw+POwODsDcXN9ewZCfe7Ntk/f7ytvlklRvt9v7nPtH/KzB6H2dRGhV2RzqJT9LnBDQF37z0D094i5L9gWIUWCkIT02P22cpKmKvXTC8LV9lwV+soPAfVduO8/Lv2767xR9wjJTS60vK+esfcOcUToT41UoS79PKZJSiNxEAT9CKNnSRdbG3QB4v87hFLNdk/oLabe6kD4AC0ChFTWTw5iaPiaE4Tvn+QCEeq/E4T4ERS4XGLoUpGxIKIfn50jIyqZwlwg9HPbQCTpR/QgdBncZ6qCzXoaM+X73jfzP28DEeq/fh1RILp3BGtVyTrIQsuqcraIMEG4IgIQuUH0yRc6CF95E8RQ2alB6P6LQfzavOzMzEDRL848gQ+Er2woCMk9wuV/EAj9HWJfidqevUfMGBGhTw2J/2IQZiUff7zuLBeI4PefQv9FIPRK1DY3CNFrP6H/gyD297vOVCVqqyrp9+lWKohQ/4MiwnZjcT0+S4yIEP+DnxpDlZQMIsT/qjpUMSCy9yx9w10TxFDZYkBIrMSISDL6lA6XSwMxdtgfLdWVBiKJVDfGptIj5pD1FYh/IsRML3qSoEAAAAAASUVORK5CYII=",
+      "aspect": 0.22,
+      "w": 4.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_chandrapore_zanzibel_investment_desk",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAADcCAYAAADEOHfbAAAEpklEQVR42u2dq3IbMRSG/QjBGcOAgEJPnqETHFAQGNhHKCgsMCgoNCwsKAwsMCgoDCwoDCgwCCjIjDvaqVxF1uXothfvB87s2l5JZz8fXc7v3fXiy9NuPzX7tn5zZKV1Ll5tvu6Htk8f3gbNPl6deG0fFudnF/vl3bv91eX1YKZOdnu/cZr6zDzWFQ3actpW569soSCMISJCIMxj17crr+W2DwgXiCG3kjFCHx8DkdP+AcQYYKRsVd8OvU7dvgAxZzuAUPOo2t78eMiyqZbXUdGtIwABiMOsAYgYCHOONV/b+z5HplJeBEK9V+LIFMpHx4g5RQQgmDUSpk8iAhCAeAHCPlhSkXbEdE6qA9h91VU2BkJPlbn+H4GYox2BmKsxfZJ9AgIQgBjDEnv3fXWw7celc79l+aoryxI9QDn6vHtfBKKk/Gj0iJOKCEBUGKyUwzFrWZ7Bkq4BiPHrEdrh0L5PjzCP0Sdv76NHoEegR5B0AQIQgECPQI9AjyDXQI9Aj6BrAAI9Aj0CPQI9gqQLEIAABCD6XNC0Ki/1XwSiDz2gVXmp/0QEIBJB9KUHtCov9Z+IoGsAIg2EbsDUDlRh1/6Y79dI8R89Aj0CPYKkCxCAAAS3RI/y+gieH8G94Tw/gsGSrgEInh/B8yPQI9AjmD4BAQhAAGI210dUW1lO/fqIanoEEQEIltgssekajBFyPWLq10cwWDJYokeQdAECEIBAj0CPQI8g1xgniKnfr8FgSdcABHoEegR6BHoESRcgAAEIltjoEegR5BroEQyWdA1AoEegR6BHoEeQdAECEIAAxBge8D3oA8JZR7COoGs01yNO5v81iAhAAKKZHsH/a7COQI8g6QIEIADBI9p4niXPsyQiAMFgSUQAAhA8zxI9Aj0CPYKkCxCAAMQUlthT+YGouR5Rer9HX+WJCEAkgujr/zaHLk9E0DUAkfd/nzX0iCGvj+D/PtEj0CPq5hpzj4jzs4v/IB5/bWdnThDPfx5nZyIQV5fX3tdqX5t9jP1+qB6XmXWU1C9pVwzCrDTWQIlDki+g5H1fm0kR4dumOCRxqgSEq35fuUFBSB0LdY3U+l1dq+oYURqiJRHhguSrv3pE1AQx6TFiLLNGiy+AdUQIBEtsI+kCxNMuO/OLmWu019aqzdTssxcQIUCzAJFy6dBoQcTS11gDOsUNAW4JQuq/F0Tq9GM7YE9NOSBc2qJLV3WVLZ4+VcW5c7HPCQ3CBqZfq8/tz6RX47m6VpV1hHY41REbhP25Cdh01gWiO7HVMslMGDn+9w7CjIRQRKiTW9+uRNbBsCICEH2D0D+K5ICQjBEaRMyPXBC2/0kgft+87sx1BU1LEC6nc0CE/I+CMH971JWorV2JD4QuO1RESP1PAmFX8vnnXWcSECljTCsQIf/FIMxK1DYFRGr5FiBi7QdBbO83nan31La7FOffe6b5QOSWl4JQV8uFQKS0H40I38AinT5zyteMCGn7ollDUklo1kgtX3v6lC7Ze1lQ5YI4uZXlZEHUzD6zUvlCEFWyzxyaOTe0BVWq1dI5wrvMBpHb/uCapdMKIqKKVDcWS9UjarWrQPwFyB3YOL/5aOEAAAAASUVORK5CYII=",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_chandrapore_zanzibel_civic_hall",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAEsCAYAAAB33WV2AAAEi0lEQVR42u3dLXLcQBCG4T2CscvQwCBwy4cwNgjwEXKIwIAFAYE+QkBgYIBBQGAOEGhoEGDgKqfkKm3W8kga/c9oH9C1XpVGar3bPZr5PD+bp8f755ztx+79G+tznc3d99vnOa2Lc18+fXhj1esVDz6GX5vTk/OXG1xeXM1mMRBCzlb9DEVDabG+FM9f2CZEeenIqCtT9XV3s621Lr4sCqIORpM/s4BY6rMaCaF6IVRPFJ9NILr4sQeRAoy+5Ys8b/oe8/kKxDHbHkSZm/d/7npZruXLqHhpRwABxKu3FxBNIN7dftvb9a/fwb+bHMmlfBSIr38fBjmSQ/nWOuKYIgKIGBBFgTZrciSX8iJCagABRG8QXQSNkCM5ldfX0OkCAggggBgRxND3+MPP7d7uPp8F/56yHRF7/ygQQ/SA4kZPDx8HgZjj/iICiI4ghuoBxQ3bbEo9Ivb+IkJqAAFEbxD0CE1sIIAAAgggeoFYuh2QzD94ltYTkhkfISKASEtPSGZ8hIgAAggg6BH0CH0NIIAAAoikxkcsXT6Z8RFLl09mfMSqIgKIFczXSGZ8hNQAAoj1gqBHaGIDAQQQQABBj6BH0CM0sekR9AipAQQQ9Ah6hL4GEEAAAQQ9IqF5o8nrEXPNFxERQGS2nuVc80VEhNQAAgjzNegR+hpAAAEEEPQIegQ9QhObHkGPkBpAAEGPoEfoawABBBBA0COOZsMy+32KCCDs9ykigAACCHoEPUJfYxCIY7Q3II7VpIY6wvoR1o8wE9iUaOtHWD9CagABhPUj6BH6GkAAAQQQK9cjVrWBeg7zLZLXI1YVEUBkNN8ieT1CagABxHpB0CM0sYEAAggggOgFYmg7IJd9x6NADNETltYjRpuvISKAGFdPWFqPGG2+hogAAggg6BH0CH0NIIAAAoik9IjVDDjNRU+YfHyEiAAiTz1h8vERIgIIIICgR9Aj9DWAAMKKIlYUGXVFkdzHWSaznuVqxkeICCDWNV8jmfUspQYQQBgfQY/Q+wQCCCCAAMI+Xfb7FBFA2O/Tfp9SAwgg6BH0CH0NIIAAAgh6BD2CHqGJTY+gR0gNIICgR9Aj9DWAAAIIIOgR9vu036eIAMJ+nyICCCCAsH4EPUJfoyOIY58kf3py/h9E318jZwuCOOb1I4IgLi+u9nZYKHQ8dE6f69RZ1+vXXbPueC2IphvP8T0WROzx0UB0+YXGeHAgGu5XNRFReeAYQLPVEW2/RrZ1RN/avu7YVG+NPpESOq4d0RQRmtgHnS4gHu+T7hOEcry0UfsaIRB1eZUaoKaueZv/2YDoolKNBiKUQ2XB8iKhc6YG0QT/EEQf/0cDEfuaij03SxBdRdKugmwVRAjY4iCKC1xvzyaxw4crQVSjovyeREQUTu9utlEWe25xXigi6tIDiBRBHP5XqmpVEG3nZg+iHN0SA6Lp3FgQSdYRc0REsm+NOUHEvm5XDaKLAQEEEGmCmLJBlRWIJueqINrOTRJE01CbHCKizf9ozbLtvZ0aiK7+R0t1bZY6iN4DRbraVHrEErJ+AeIfsGJtfiEX4ycAAAAASUVORK5CYII=",
+      "aspect": 0.22,
+      "w": 4.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_chandrapore_zanzibel_harbor_customs",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAEsCAYAAAB33WV2AAAE+0lEQVR42u3dr3LcSBDHcT9CQFAqMMDgoMvoniAVGBCQR8hDBAYYHDA0PBgQGBhgEBAQcPDAwUCDAANXOTWpmj1Z1p+RdiXNzH5Ae0dajbb3626t5qeW5uT75e19bvbl4s0jW/ozT96dXt0vbZcf3u1sinNr+Bbt5NmTF/d/Pn1zf376cjELAK4/X+1sblQs4Vv4/sFOAoQ1IqIJYgzGxduzTlvKv01B9MHog7AaiCVfm8eItrWPCWMglvBvB2INGEOvEUJcDrk7tHzo1wcgjtl2IMJ/JLz+/erfWVZq/xgVv88jgABi96sBxBiIm69nO7v+63lne8iRP64+7ez1t38620v2T/U/CcTdzfu9QHz8ebMXiH36p/o/eow4pogAIgVE6DBmQ44Eh8dsyf6p/osIqQHENBDhjbij0I6du9pxR9GR2I7ro8ND7fapblff+OXb7Wbfffx/BOIY7RGIYzWDLqNPIIAA4hAgtj4hyubMcms9IRs9QkQAkZeekI0eISKAAKJTj2hqB+HDu9r0CHoEPcKgCwgggACixhOq1P7V6xGp/UUEEBNBlK5HpPYXEVIDiGkgatEjpvhPj6BH0CMMuoAAAgh6BD2CHmGsQY+gR0gNIOgR9Ah6BD3CoAsIIIAoG4Q7gT0/QkQA4fkRIkJqAOH5Ee7XoEfQIwy6gAACCPURnh/h+RHuDff8CM+PkBpAeH4EPYIeQY8w6AICCCDoEXmcEFWvR+xbn1GNHpFVRABRkJ5QvR4hNYDIDEQuekR0NrSj8+02PYIeQY8w6AICCCDqvF9j64LVbO7X2Pp+j2zu16gqIoBYUQ+o/n4NqQFEZSAOeb9GU1Poa6uPoEfQI8oZa0gNqSE1gFAfoT7CJT8g1Eeoj5AaQKiPoEcYdBl0GXQBAQQQ9Ajza5hfw7Pzza9hfg2pAYT5NcyvQY+gRxh0AQEEEEDkcYGmGj2ilPk5RAQQK+sRpczPISKkBhDb6RFb3q9Bj6BH0CMMuoAAAgj1Eeoj1Ee49qk+Qn2E1ABCfYT6CHoEPcKgCwhPFHGwPJ6DZSk3sFZfH7FWfYWIAKKw+oi16itEhNQAosz6iH2fH0GPcIpNjzAMBwIIINRHqI9QH+Hap/oI9RFSAwj1Eeoj6BH0CIMuIIAAwnyfuU04lv18n9XMryEigChzvs7s5/uUGkBUOr/GIeb7NL8GPYIeYdAFBBBAqI9QH6E+QkQAoT5CRAABhPoI9RH0CHrE3LHGsUfEsycv/gfx47/ro7MHIMKfsHB3++Po7AGI89OXD0CE5WY7Wte6lPVT9zNk++w/vtdcTgLR9WFrrB+CMGc/Q8tVgJjzxUdB9IVQ3xeYmjJT9jMGItXPoeXJqTEEKNWBsfVTjg8pQDdJjdT//JT9VHGMmHpUn3KM6PuMg6WG84jWmaVT7MagC4jL29kjvzWs65ch2j77TQLRl1e5Aep7L8X/YkAER8fs4CC6cih0DMPVuJOubZYGMZS2TRBz/D8YiFRtMHXbIkGkhO0c6wLRDum4vDmI39L62fNFrEuqzxZEsOD0xduzJEvdNmxXVERsAaLr6J8ViObltba1QYxtW3RENKtTUkAMbVs8CBGxAojUn9uqQUwxIIAAIk8QS55QFQVi6GpzG8TYtlmCuP581WmlRMSY/8maZd+OdkWdmYGY6n+yVDdmuYOYJd7OsaX0iC1k/QDiF8KS4HcgqQB0AAAAAElFTkSuQmCC",
+      "aspect": 0.22,
+      "w": 4.125,
+      "h": 18.75
+    },
+    {
+      "key": "bldg_cityscale_lotus_harbor_lotus_harbor_lantern_shop",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAADcCAYAAADEOHfbAAAFzElEQVR42u1dLZMUMRBdiURTSMQJ5Nb9Bur0yZNIfsRKxAkE8iQSgeQHnEAgkQjkCcQKBOKqlspCltlMvruT7sw80Te7e9OdzJuefLzpTjaP+90Bsjts7t89P0jK+7dvkjLT+3x3Lgz12Dx7+uJwe/PkcHlxJSLHC51clO97SC/0vxIx129kY0CQ9gh7wTNPsMBEPImjDqqAiHlEVyCkjrltRMt6nICQBkP6eAbEmuUEhOlH91+2ZxLqb93zQjKC/uzR8J1gxfzPbVxSlRhFPwpEbkubUwnt+rNewwXi5d2nqKQq8vDjPiopfWr5OR5TDMTHX/viisyGwJ4hcS4QNeXbNoINiOuv30Q9orb8Eo+IthGhO5FbkZwBUgoISvmsQFCeUWn9WCNaBMSaeo0oENKtPrV8Po9gbPVrgKCWzwpEsKHrBASlfDIQZ1TY9M64nx2Dvr55etHuZ99Q1+sRkc9B3UDdstuINYqXj1ijJGefa5EsIMBHgI/AyHIGRO6kRZpPoI5Ms4DImc9L8wnUkWk3j2jNJ3TxCCoQPfgEKh9SBURo+CrJJ1DLR68Bjyj0CAABIHbV8/kWfEQp1+CeEyrXLRt8BPgI8BHgI8BHgI9gHFmO/u6TbfZJ5ROk9dn4CCqfIK3P6hEUPkFan90jVt9GoNdQEh/RS199fIQqICTjI8SB0BIfEdN1gQAfAT4CfAT4CPAR4CMWwkdQR6a9RrbN+QjqyLRXvkdzPoJ6RznSHHLq35yP4LijPfgM9W2EnkkXeg2eO8L1jIt7xOhUHYDg5iNK5vPgI8BHgI8AHwE+AnwERpYq8i3UROdL51uoydeQzrdQ5RGS+RZUfTXxEdRYaqo+W+IKeo3O6zfoz+DptH7DEED0WL9Bfb4GR3xE7Hfka4CPAB8BPgJ8BPgI8BHq4iPU8BHS8RFq+IhFeYTkepbqPELq3SUVSORrIF8D+RrI10C+BuIjwEeAjwAfAT4CfATWj5DeX2PR60eU7K+x6PUj1OyvIa2P/TWwvwZ6jbYeASAAxLLyNbC/BvgI8BHgI8BHgI9YSOTtkNH5HJG3i8jXgEc0jMXuCQRbmgKi89Fr7FgjVhbjEaOnMgEIjetHIF8DfAT4CPAR4CPAR2DntiazP/XxEb34APXxEVo8Qjw+ohcfoD4+QnovP8RHYL9PpR4BIACErv0+ER8BPgJ8BPgI8BHgI7CeZfeXwGryNaTjI9TkayzKI0Zez1JNvob0u0/wEVjPspVHDL6eJSsQI69nycZHjL6eJfgI8BHgI8BHgI8AHzHgyHIx8RGj7NfZnI/Q4hHi8REaPEJFfISWHVwRH4H1I7BsAoDA+hGIjwAfAT5iGD4CHjEBIjWaXKJ4gXj8/bA6iQJxeXF1kulvUwP2+/TcqU7u7yn7MQnZD9nxlWuBML+dARG74FhFcy+k1n7KTq39oEek7nxLIGL2VQFR6iGhRyD2aITspx6NkP1cILyPRsqQW3iNR+Q8yyWNXspulkeYPxJtBLWxZAcix4VqgChx0ZrGsrT3ifUaM4/AOAJD7P+TLgDRePbpay+sDPE2vLWsBggKJa8GiNT0NVWAneLWxlNTJbf+QSBKu59ZcIbTNdUA4eMWfbyqV5fafR6NV/bFoUpYIHyAWSDc/+W+pfI9WizjCFvh1PsEV1wg3HcPJUCY79fbMpmCUVN/lUAYMRd3e7PNEnOu6xEAojcQbsxCKyBS9agFwq1/ERA/r18dxRqZRrG0BCIWKFICRKz+SSCscWvIGDFHN5QnBMTpQgO9UWuPyK1/ERCukQ/fXx8lB4iU9AAiVv9sIKZGzLEEiFL9FkCkyo8CYQO+jBFzNEZ8AWEhIGr1c4H4O9IMA1FSftIjfA1LSfdZo8/pEbnlZ/UaKSOpXqNUn7v7zCm/y4CqVH+xI8uhgeCcfdZM5alAsMw+S6fAvoAwir4FIhm+/E9cIGrLVxk6RPGIRYUOlfIRXOUaIP4An+MnJ0Q7qc0AAAAASUVORK5CYII=",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_lotus_harbor_lotus_harbor_tea_house",
+      "url": "data:image/png;base64,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",
+      "aspect": 0.3,
+      "w": 4.125,
+      "h": 13.75
+    },
+    {
+      "key": "bldg_cityscale_lotus_harbor_lotus_harbor_temple",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAEsCAYAAAB33WV2AAAFEklEQVR42u2doZLbMBCGAwsP3xQGHCjM3EMcLijII/QhCgsCCgrzCAWFBwsCCgr7AIUHAwoKbiYdZapUcSR5ZVsX7foDe7ET2Za/202k39Jq8bz/cKhp3zbvLqz2NYfYYvfp9aHEPn98n7VueXfj4X5J5UrrNsYWtzfLw2b96nB/9yCy480+bqPmPgvLxrxB6hHS+ow1d//OFg5CqUfkQIRlN+tV0lrxBGdXBZEKk5eGcAFC+tr3HRGWz4Hw5boQSuszxesJRM2LuDjM7XsY14Jw5hFztxMI9x9xr/vvq0Gm9XjvFcd2BCAAcdbIA0QOxJvt15O9/fEzui2tiLtQbLvm8dL6i0B8+b0fBcK9NwbEmOOl9e/9jpiTRwBCAsId0Ge5ikja9zWPl9YfjyA0AFEGwl/IFXTb/uDYdlgx33vsq3xu299I932/390Oy4yp/wWIOdoFiLkanS56n4AABCCmAKG9QSU9XgRCsx4hPR6PAEQhCO16hPR4PILQAEQZCCt6RFgmdQ70CPQI9Ag6XYAABCBs6hFjrz/pk65r6hFjr29mfERTHgGIBvSIsdc3Mz6C0ABEYyBa0SN8Zd22r3x3m/ER6BHoEXS6AAEIQNjUI7Q0yKrrEVr0DDwCEC+sR2jRM/AIQgMQ19MjQk0htc18DfQI9Ag6XYAABCBsg2j5AU31lqWW8Q3V9Qg8AhA6xzdU1yPwCEAAIqpHlMx3qKFHMD4CPQI9gk4XIAABCPSI1h8QmdcjJssfgUcAwpYeMVn+CDwCEIAwqUeQPwI9Aj2CThcgAAEIvXqEmZnAWtbHaH58hCmPAISi9TGaHx9BaADCaP6IKfQI8kegR6BH0OkCBCAAQf6IlgeMms8fYSafpSmPAISi+Rbm80cQGoAwnM+S+RroEegRtvoahAahQWgAYi56RDPrfZqZr4FHAMKWHtHMep+EBiCMztfQrkcwX4NOF50uOl2AAAQgWF+D9TVYX4Pc+ayvwfoahAYgWF+D9TXQI9Aj6HQBAhCAQI9gvgbzNfAIQDBfA48ABCCYr4EegR6BHkGnCxCAAATra7C+ButrkDuf9TVYX4PQAATrazBfAz0CPYJOFyDIKMKXpcUvS9bXYH0NPAIQrK+BRwACEKyvwfgImtjoEXTDAQEIQDBfg3yW5LMkVx35LMlnSWgAgnyWjI9Aj0CPoNMFCEAAAj3C8JMuLfkom88fYcojAKEoH2Xz+SMIDUAYHR8xhR7B+Aj0CPQIOl2AAAQg0CPIZ0k+SzwCEOSzxCMAAQjyWaJHoEegRwzta8zdI25vlv9BPP3azc6iIJ7/PM3OsiDu7x5OFnsv/Cws092PlU9Z7vwl101dM3V9D8J9fgYid2Ml+303ngOS2++Ci22X1CfpEZpA5F6bAZEKsSEgcq4ee20qNPpucCqPkP7nRR7h/gBieVjkfiEkJ5T8ykwVGkO/C1LnOQuN0CNoR9DEPu90AeLfmMhWLRbj3sacVwQiFVetAUp2zQX1VwOidJjiJCBiMeQOdN1Vf5JYmdogcmEbghhS/8lASLVBaVmVICRuO8RiIFIheXUQR2l9VcdiUn2zIJy5Sm/WK5FJy7pyqjwCEBEQ4eO1rnVB9JVVD8KPTpGAyJXFIwQgYg2jWYGQ/tyaBlFigAAEINoEUbNBpQpE7mlzF0Rf2SZB7B63UdPiEX31F2uWqROdBnU2BqK0/mKprs9aBzFIvB1itfSIa8j6DsRfyLqVZMJp7uUAAAAASUVORK5CYII=",
+      "aspect": 0.22,
+      "w": 4.125,
+      "h": 18.75
     }
   ],
   "regions": [
@@ -4736,6 +5375,38 @@
     "choice_ch9_iron",
     "choice_ch9_open",
     "city_reveal",
+    "citysvc_dealer",
+    "citysvc_home_host",
+    "citysvc_hotel_clerk",
+    "citysvc_realtor",
+    "citysvc_sign_brickton_agency",
+    "citysvc_sign_brickton_dealership",
+    "citysvc_sign_brickton_home",
+    "citysvc_sign_brickton_hotel",
+    "citysvc_sign_chandrapore_agency",
+    "citysvc_sign_chandrapore_dealership",
+    "citysvc_sign_chandrapore_home",
+    "citysvc_sign_chandrapore_hotel",
+    "citysvc_sign_lotus_harbor_agency",
+    "citysvc_sign_lotus_harbor_dealership",
+    "citysvc_sign_lotus_harbor_home",
+    "citysvc_sign_lotus_harbor_hotel",
+    "citysvc_sign_minimus_major_agency",
+    "citysvc_sign_minimus_major_dealership",
+    "citysvc_sign_minimus_major_home",
+    "citysvc_sign_minimus_major_hotel",
+    "citysvc_sign_puerto_sol_agency",
+    "citysvc_sign_puerto_sol_dealership",
+    "citysvc_sign_puerto_sol_home",
+    "citysvc_sign_puerto_sol_hotel",
+    "citysvc_sign_valle_dorado_agency",
+    "citysvc_sign_valle_dorado_dealership",
+    "citysvc_sign_valle_dorado_home",
+    "citysvc_sign_valle_dorado_hotel",
+    "citysvc_sign_zanzibel_agency",
+    "citysvc_sign_zanzibel_dealership",
+    "citysvc_sign_zanzibel_home",
+    "citysvc_sign_zanzibel_hotel",
     "cl_civic_0",
     "cl_civic_1",
     "cl_civic_2",
@@ -4825,6 +5496,7 @@
     "ducal_crown_early",
     "duchy_door_shrink",
     "duchy_door_too_big",
+    "dunas_waystation_menu",
     "echo_bark_mia",
     "echo_bark_milo",
     "echo_bark_pippa",
@@ -4914,10 +5586,12 @@
     "golf_resort_gift",
     "golf_resort_gift_done",
     "golf_resort_reveal",
+    "grotto_bridge",
     "grotto_chest_1",
     "grotto_chest_2",
     "grotto_chest_3",
     "grotto_glyph",
+    "grotto_spring",
     "hall_photos",
     "hall_window",
     "hardware_parts_bins",
@@ -5076,6 +5750,8 @@
     "npc_clinic_patient",
     "npc_clock_lady",
     "npc_commuter",
+    "npc_costa_greenkeeper",
+    "npc_costa_honeymooner",
     "npc_cp_dabbawala",
     "npc_cp_spice_merchant",
     "npc_cp_stationmaster",
@@ -5105,7 +5781,9 @@
     "npc_doc_puerto",
     "npc_doc_valle",
     "npc_doc_valle_out",
+    "npc_dock_fishmonger",
     "npc_dock_kid",
+    "npc_dock_tallyman",
     "npc_dockward",
     "npc_dorm_student",
     "npc_dos_doctrine",
@@ -5113,6 +5791,10 @@
     "npc_dos_painter",
     "npc_dos_welcome",
     "npc_downtown_suit",
+    "npc_dunas_east_cartographer",
+    "npc_dunas_east_pilgrim",
+    "npc_dunas_west_parasol",
+    "npc_dunas_west_surveyor",
     "npc_estate_gardener",
     "npc_estate_member",
     "npc_far_walker",
@@ -5224,11 +5906,17 @@
     "npc_priest_valle",
     "npc_proctor",
     "npc_ps_board",
+    "npc_ps_candle_vendor",
     "npc_ps_crane",
     "npc_ps_fisher",
+    "npc_ps_fishmonger",
+    "npc_ps_gravedigger",
     "npc_ps_market",
+    "npc_ps_mourner",
     "npc_ps_nina",
+    "npc_ps_plaza_musician",
     "npc_ps_porter",
+    "npc_ps_radio_watcher",
     "npc_ps_stall",
     "npc_ps_tally",
     "npc_pw_click",
@@ -5269,7 +5957,13 @@
     "npc_twoton_theater_clerk",
     "npc_twoton_theater_usher",
     "npc_uncle_bert",
+    "npc_valle_dispatcher",
     "npc_valle_kid",
+    "npc_valle_pilgrim",
+    "npc_valle_potter",
+    "npc_valle_printmaker",
+    "npc_valle_relic_vendor",
+    "npc_valle_river_vendor",
     "npc_vivi",
     "npc_vs_buni",
     "npc_vs_kid",
@@ -5484,6 +6178,8 @@
     "shop_closed_night",
     "shop_drug_bye",
     "shop_drug_greet",
+    "shop_dunas_waystation_bye",
+    "shop_dunas_waystation_greet",
     "shop_fb_chemist_bye",
     "shop_fb_chemist_greet",
     "shop_kvisthavn_bye",
@@ -5540,7 +6236,10 @@
     "sign_clinic",
     "sign_clubhouse_wall",
     "sign_costa",
+    "sign_costa_overlook",
+    "sign_costa_practice_green",
     "sign_costa_road",
+    "sign_costa_windsock",
     "sign_crater_guard",
     "sign_crater_trail",
     "sign_crater_trail_2",
@@ -5548,6 +6247,9 @@
     "sign_departures",
     "sign_departures_home",
     "sign_diner",
+    "sign_docks_fish_auction",
+    "sign_docks_harbor_bell",
+    "sign_docks_ticket_kiosk",
     "sign_downtown",
     "sign_downtown_high",
     "sign_drug_wall",
@@ -5591,6 +6293,7 @@
     "sign_meadow_gate",
     "sign_meadow_gate_closed",
     "sign_mercado_wall",
+    "sign_minimus_long_view",
     "sign_minimus_major",
     "sign_monsoon_gate",
     "sign_monsoon_road",
@@ -5615,9 +6318,15 @@
     "sign_pond_park",
     "sign_procession_gate",
     "sign_procession_way",
+    "sign_ps_campo_viejo",
+    "sign_ps_candleworks",
+    "sign_ps_fish_auction",
+    "sign_ps_harbor_bell",
     "sign_ps_jungle_east",
     "sign_ps_malecon",
     "sign_ps_market",
+    "sign_ps_moonwake",
+    "sign_ps_radio",
     "sign_pyramid",
     "sign_quay",
     "sign_quay_bell",
@@ -5652,7 +6361,12 @@
     "sign_valea_green",
     "sign_valea_stelelor",
     "sign_valle",
+    "sign_valle_artisan_yard",
     "sign_valle_gate",
+    "sign_valle_pilgrim_market",
+    "sign_valle_river_decks",
+    "sign_valle_sun_prints",
+    "sign_valle_taxi_court",
     "sign_valle_wall",
     "sign_welcome",
     "sign_whisperwood",
@@ -5787,6 +6501,11 @@
     "chandrapore_unit_3",
     "chapel_int",
     "chapel_valle_int",
+    "citysvc_chandrapore_hotel_room",
+    "citysvc_lotus_harbor_hotel_room",
+    "citysvc_minimus_major_hotel_room",
+    "citysvc_valle_dorado_hotel_room",
+    "citysvc_zanzibel_hotel_room",
     "clinic_ps_int",
     "clinic_ps_ward",
     "clinic_valle_int",
@@ -5802,6 +6521,7 @@
     "drugstore_int",
     "drugstore_pharmacy",
     "ducal_crown",
+    "dunas_waystation",
     "elev_spike",
     "foggy_moor",
     "foggybottom",
@@ -5817,6 +6537,7 @@
     "hospital_f2",
     "hospital_f3",
     "hospital_int",
+    "hotel_ps_guest_room",
     "hotel_ps_hall",
     "hotel_ps_lobby",
     "hotel_ps_pent",

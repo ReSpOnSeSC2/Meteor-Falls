@@ -16,6 +16,9 @@ import { colorOf, RAMP, px } from '../palette';
 import { ITEMS, itemKindLabel, itemEffectLine } from '../data/items';
 import { vars } from './text';
 import { s } from '../spritegen/scale';
+import { vehicleByTitle } from '../engine/vehicle-domain';
+import { VEHICLE_SPECS } from '../spritegen/vehicles';
+import { fuelProfile, rangeTiles } from '../engine/fuel';
 
 export interface ItemInfoPanel {
   /** re-read the panel for an item id (call from pick()'s onHighlight) */
@@ -53,9 +56,18 @@ export function makeItemInfo(scene: Phaser.Scene): ItemInfoPanel {
     render: (itemId: string): void => {
       const item = ITEMS[itemId];
       if (!item) {
-        nameT.setText(itemId);
-        effT.setText('');
-        flavT.setText('');
+        const car = vehicleByTitle(itemId);
+        if (car) {
+          const spec = VEHICLE_SPECS[car.vehicleType];
+          const fuel = fuelProfile(car.vehicleType);
+          nameT.setText(car.displayName);
+          effT.setText(`VEHICLE    ${spec?.seats ?? 0} SEATS    ${fuel.kind === 'none' ? 'HUMAN POWER' : `${fuel.kind.toUpperCase()} · ${rangeTiles(car.vehicleType)} TILE RANGE`}`);
+          flavT.setText(vars(car.note));
+        } else {
+          nameT.setText(itemId);
+          effT.setText('');
+          flavT.setText('');
+        }
         return;
       }
       nameT.setText(item.name);

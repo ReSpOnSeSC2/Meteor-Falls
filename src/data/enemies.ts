@@ -574,7 +574,9 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
     }),
     E({
       id: 'jungle_jitterbug',
-      name: 'Jungle Jitterbug',
+      // Save-safe legacy id; the crossing is Las Dunas now, so every visible
+      // word and battle color follows the desert rather than the retired jungle.
+      name: 'Dunas Jitterbug',
       article: 'The',
       hp: 155,
       offense: 24,
@@ -591,10 +593,10 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'frenzy', kind: 'strong', mult: 1.6, text: '{e} danced the one dance nobody survives unmoved!', weight: 2 },
         { name: 'count in', kind: 'taunt', text: '{e} counted itself in. Five, six, seven, EIGHT—', weight: 1 },
       ],
-      deathLine: 'The Jungle Jitterbug took its final bow. The jungle applauded.',
+      deathLine: 'The Dunas Jitterbug took its final bow. The dunes applauded with one small gust.',
       sprite: 'battle_jungle_jitterbug',
       mini: 'mini_jitterbug',
-      bg: [RAMP.FOREST, RAMP.MAGENTA],
+      bg: [RAMP.EARTH, RAMP.MAGENTA],
     }),
     /* §A7 Ch.2 EXPANSION — five adopted South-America battlers (orphaned ChatGPT
      * art, now wired) lift the roster 6 → 11. On the Ch.2 pressure band (HP

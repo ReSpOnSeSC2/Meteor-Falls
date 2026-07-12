@@ -83,6 +83,19 @@ export const SHOPS: Record<string, ShopDef> = {
     greet: 'shop_mercado_greet',
     farewell: 'shop_mercado_bye',
   },
+  dunas_waystation: {
+    id: 'dunas_waystation',
+    name: 'THE LAST SHADE',
+    keeperNpc: 'dunas_waystation_keeper',
+    // A compact, genuinely useful midpoint shelf: food, water, status cures,
+    // the picnic entry item, and the route's namesake soda.
+    stock: [
+      'alfajor', 'star_cola', 'salt_shaker', 'hanky', 'aloe_leaf',
+      'basket_basic', 'empanada', 'mango', 'mate_gourd', 'jungle_fizz', 'unknot_drops',
+    ],
+    greet: 'shop_dunas_waystation_greet',
+    farewell: 'shop_dunas_waystation_bye',
+  },
   valle_shop: {
     id: 'valle_shop',
     name: 'LANA & MAS',

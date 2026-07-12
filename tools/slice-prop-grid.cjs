@@ -4,7 +4,7 @@
  * that use multiple rows so each object can retain a useful authored size.
  *
  *   node tools/slice-prop-grid.cjs <src.png> <outPrefix> \
- *     [--cols=3] [--rows=2] [--target=256]
+ *     [--cols=3] [--rows=2] [--target=256] [--inset=0]
  */
 const { PNG } = require('pngjs');
 const fs = require('fs');
@@ -23,8 +23,9 @@ if (!srcPath || !outPrefix) {
 const COLS = Number(opt('cols', 3));
 const ROWS = Number(opt('rows', 2));
 const TARGET = Number(opt('target', 256));
-if (!Number.isInteger(COLS) || !Number.isInteger(ROWS) || COLS < 1 || ROWS < 1 || TARGET < 1) {
-  console.error('cols, rows, and target must be positive integers');
+const INSET = Number(opt('inset', 0));
+if (!Number.isInteger(COLS) || !Number.isInteger(ROWS) || !Number.isInteger(INSET) || COLS < 1 || ROWS < 1 || TARGET < 1 || INSET < 0) {
+  console.error('cols, rows, target, and inset must be non-negative integers (sizes positive)');
   process.exit(2);
 }
 
@@ -52,10 +53,13 @@ for (let i = 0; i < data.length; i += 4) {
 const sizes = [];
 for (let row = 0; row < ROWS; row++) {
   for (let col = 0; col < COLS; col++) {
-    const cellX0 = Math.floor((col * width) / COLS);
-    const cellX1 = Math.floor(((col + 1) * width) / COLS) - 1;
-    const cellY0 = Math.floor((row * height) / ROWS);
-    const cellY1 = Math.floor(((row + 1) * height) / ROWS) - 1;
+    // Image generators sometimes draw pale grid rules exactly across nominal
+    // cell boundaries. A small opt-in inset excludes those gutters before
+    // chroma keying without changing the default behavior for existing sheets.
+    const cellX0 = Math.floor((col * width) / COLS) + INSET;
+    const cellX1 = Math.floor(((col + 1) * width) / COLS) - 1 - INSET;
+    const cellY0 = Math.floor((row * height) / ROWS) + INSET;
+    const cellY1 = Math.floor(((row + 1) * height) / ROWS) - 1 - INSET;
     let minX = cellX1;
     let minY = cellY1;
     let maxX = cellX0;

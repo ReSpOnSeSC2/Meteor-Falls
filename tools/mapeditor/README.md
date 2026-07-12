@@ -29,6 +29,30 @@ then fold durable structural edits back into that authoring source so the editor
 runtime map cannot drift apart. Run `npm run mapeditor:gen` afterward to refresh the shipped map
 picker.
 
+### Puerto Sol, Las Dunas, and Valle Dorado structural sources
+
+The third-town rollout uses the same dual-output contract. `npm run mapeditor:puerto`
+regenerates `puerto_sol.json` plus `src/data/maps_puerto_sol.ts`, while
+`npm run mapeditor:dunas` regenerates both `jungle_1.json` / `jungle_2.json` and
+`src/data/maps_dunas.ts`. `npm run mapeditor:valle` runs
+`tools/mapeditor/author-valle-fourside.ts` and regenerates both
+`tools/mapeditor/valle_dorado.json` and `src/data/maps_valle_dorado.ts`.
+
+Review or hand-tune these maps in the visual editor, then fold every durable
+structural change back into the matching `author-*.ts` source and rerun its
+command. The JSON and runtime TS files are paired generated artifacts: never
+hand-edit only one. Read the author command's console output as part of review:
+Puerto reports building/fixture/spawner-clearance warnings; Dunas checks door
+openings, solid props on water and 1.5-tile spawner clearance; Valle reports
+facade/ground collision warnings. Generated output with an unexplained warning
+or issue is not production-ready. Run `npm run mapeditor:gen` afterward to
+refresh the shipped picker/manifest.
+
+`brickton_docks`, `boat_interior`, and `grotto` are direct builders in
+`src/data/maps_ch2.ts`; `costa_estrella` is a direct builder in
+`src/data/maps.ts`. They are part of the same Ch.2 live route, but are not
+rewritten by the three map-editor author commands above.
+
 ---
 
 ## The tools (top bar)

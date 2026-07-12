@@ -64,9 +64,13 @@ can polish a town's streets/massing/terraces before its ground kit lands.
      bus corner.
    Its diagonal boulevard is still the pilot for the Batch-C diagonal family —
    coordinate, don't collide.
-2. **Puerto Sol + Valle Dorado + Las Dunas** (Ch.2 belt) — Puerto Sol and
-   Foggybottom use the shared BASE tiles (already recolored); Las Dunas rides
-   the Zanzibel ochre skin (needs the per-biome value pass, §3.1).
+2. **Puerto Sol + Valle Dorado + Las Dunas** (Ch.2 belt) — ✅ **PRODUCTION
+   REBUILD DONE (2026-07-11)**. Puerto and Valle are now deterministic,
+   dual-output authored maps with composed micro-districts instead of random
+   tree fields; Las Dunas keeps the approved Sunken Compass / Split Horizon
+   desert grammar. The full transition chain (Twoton docks, boat deck, grotto,
+   and Costa Estrella) was rebuilt in the same pass. See the production record
+   below before changing any of these maps.
 3. **Foggybottom/Wintermoor** (Ch.3) — base tiles + the shipped fog-terrace
    pilot; mostly needs massing/props/horizon.
 4. **The skinned regions** (Minimus, Kvisthavn, Zanzibel/Savanna/Ruins, Lotus
@@ -79,6 +83,46 @@ For EVERY town, mirror its EB equivalent (the §3 table in the overhaul doc)
 and attach the banked references in `assets/art/masters/reference/earthbound/`
 to any ChatGPT ask (user directive 2026-07-11: always give ChatGPT the EB
 examples so the style/angles match exactly).
+
+### Ch.2 diversity ledger — rollout lock
+
+These signatures are the no-formula contract for the Puerto Sol → Las Dunas
+slice. Keep the headline idea of each row exclusive even when shared terrain
+or street-polish tools are reused elsewhere.
+
+| Map | Unique signature | Anti-repetition controls |
+|---|---|---|
+| **puerto_sol** | **THE LANTERN PROCESSION** — a moonlit, Threed-like port whose old cemetery lane and two slanted commercial streets visually process toward one warm civic/carnival plaza, then spill downhill to the black-water quay. | Keep it flat and theatrical: no Foggybottom-style tiered fog descent, no Otterbrooke climb, and no Twoton rectilinear drag. Campo Viejo is a quiet navigation landmark, not another combat dungeon; amber lamps, funeral stone, coral stucco, and harbour reflections own the mood. |
+| **jungle_1 / LAS DUNAS WEST** | **THE SUNKEN COMPASS** — the west crossing bends around a half-buried bus and oasis basin, then offers one genuinely enterable malt-shop waystation before the road curls away. | Never restore the old four-row corridor or jungle-tunnel grammar. Use asymmetric doglegs, lee-side pockets, sparse travellers, and ochre stone; the shop must remain a real room/store/save point, never a scenery facade. |
+| **jungle_2 / LAS DUNAS EAST** | **THE SPLIT HORIZON** — the final approach divides around a broken ridge: one branch reveals Valle early while the other dives past the grotto mouth, then both rejoin at the eastern threshold. | The fork-and-reveal belongs to this screen. Do not repeat the Sunken Compass loop, Puerto's converging procession, or a generic enemy hallway; preserve two readable choices, unequal silhouettes, and a single late reunion. |
+
+### Ch.2 production rebuild — what now owns the route
+
+| Map / leg | Production result | Canonical source |
+|---|---|---|
+| **brickton_docks** | 30×18 working harbor: terminal wall, ticket pavilion and waiting pocket; timber departure wharf; cargo-tally machinery; south fish auction; harbor bell; real workers/signs; existing ticket gift, Brickton return and `board_boat` trigger retained. | `buildBricktonDocks`, `src/data/maps_ch2.ts` |
+| **boat_interior** | 24×14 playable night deck with a sky/sea horizon and clean teak silhouette; port cargo bay; passenger benches; starboard wheelhouse and mail stack. Purpose-built bollards, machinery and vessel props replace the generic fence/wear tiles that failed live review. The cinematic center spawn remains deliberately clear. | `buildBoatInterior`, `src/data/maps_ch2.ts` |
+| **puerto_sol** | The Threed street skeleton now opens into authored places: **Moonwake Garden**, **Candleworks Court**, **Midnight Radio Lot**, the festival-lit plaza, the rebuilt Campo Viejo cemetery, and a working quay sequence (bell → ticket office → mooring lane → crane → fish auction → luggage). Reserved-scene masks stop deterministic street trees from repopulating those compositions. | `tools/mapeditor/author-puerto-threed.ts` → `tools/mapeditor/puerto_sol.json` + `src/data/maps_puerto_sol.ts` |
+| **jungle_1 / jungle_2** | Approved Las Dunas West/East maps remain the desert quality bar: Sunken Compass + real malt-shop waystation, then Split Horizon + grotto fork. Internal ids remain unchanged for saves. | `tools/mapeditor/author-dunas.ts` → both editor JSONs + `src/data/maps_dunas.ts` |
+| **grotto** | 28×20 irregular multi-chamber cave with distinct cache, shrine, crystal and spring vaults; real fissure/rope-bridge traversal; authored sun shrine, stone arch and underground spring. All three legacy chest flags and the jungle return are preserved. | `buildGrotto`, `src/data/maps_ch2.ts` |
+| **valle_dorado** | The Fourside boulevard lattice now contains two working river decks, **Sun-Print Bazaar**, **Starfall Civic Apron**, **Taxi + Night-Café Court**, **Pyramid Pilgrim Market**, **Old-Quarter Artisan Yard**, llama-pen care and a festival-lit clock plaza. Reserved-scene masks remove tree noise without altering the skyline, park quest or named interiors. | `tools/mapeditor/author-valle-fourside.ts` → `tools/mapeditor/valle_dorado.json` + `src/data/maps_valle_dorado.ts` |
+| **costa_estrella** | 27×16 moonlit clifftop threshold with surf and cliff lip, first tee/bunker, overlook balcony, caddie shelter, practice green/water garden and winding cart paths. Both live world doors (Puerto and the full Links) remain wired. | `buildCostaEstrella`, `src/data/maps.ts` |
+
+The new landmark art is source-banked under `assets/art/masters/world/` and
+sliced to semantic runtime keys under `assets/art/world/props/`; keep those
+source sheets, registry entries, map placements and generated manifest in the
+same change.
+
+`output/maps_ch2.png` is a **topology-only schematic**, not an art review. It
+flattens the real props to footprint boxes and cannot show sprite silhouettes,
+pixel art, scale, draw order, night tint, lighting, animation, reflections or
+the player's camera composition. Use it to review route order, ground grammar,
+doors, triggers, encounter regions and gross collision density for:
+`brickton_docks → boat_interior → puerto_sol → jungle_1 → dunas_waystation
+→ jungle_2 → grotto → valle_dorado → costa_estrella`. **Live Phaser at the
+actual gameplay zoom is the visual source of truth.** A map does not pass art
+review because its schematic looks dense; boot it, walk it and capture its
+signature scenes in the live renderer.
 
 ## 2. THE BIG CAVEAT — skinned maps bypass the curb kit
 
@@ -276,10 +320,11 @@ roof plane 2-3 tiles deep, party walls, door at the foot.
 - **G13 — occupy facades are POSITION-KEYED (Twoton rollout).** Doorless
   `bldg_`+solid facades get occupyCity tenancy units whose save-stable ids
   derive from x/y (`stableTwotonLotId` = `brickton_lot_<x*100>_<y*100>`; other
-  towns may share the pattern). Moving OR scaling one (scale re-anchors x/y)
+  towns may share the pattern). Moving OR scaling one BEFORE `occupyCity`
   renames its unit — orphaning save flags and any interior the player saved
-  inside. Scale the NAMED-door buildings; leave tenancy facades in place, or
-  add a lot-id migration first.
+  inside. The formal-city scale pass is the safe exception: tenancy runs first,
+  then `promoteFormalCityScale` grows exterior art north from the frozen apron,
+  after the door target/unit id already exists. New passes must keep that order.
 - **G14 — mass parapets vs park NPCs.** A back-rank mass's top rows overlap
   whatever sits 1-2 rows above them in screen space; an NPC standing there
   reads as ON the roof (depth is foot-based, so the NPC draws over the
@@ -292,6 +337,75 @@ roof plane 2-3 tiles deep, party walls, door at the foot.
   performance.now()), 50)` pumper until the overworld scene is status 5, then
   clear it (it also blocks the pane's own screenshots — use the
   `tools/shot-server.mjs` + `canvas.toDataURL` POST recipe for captures).
+- **G16 — Ch.2 generated artifacts are not authoring sources.** Durable
+  edits belong in `author-puerto-threed.ts`, `author-dunas.ts`, or
+  `author-valle-fourside.ts`; run `npm run mapeditor:puerto`,
+  `npm run mapeditor:dunas`, or `npm run mapeditor:valle` to regenerate the
+  paired editor JSON and runtime TS. Do not patch one generated artifact and
+  leave its twin drifting. Puerto reports building overlaps, fixture
+  walkability and spawner clearance; Dunas checks door openings, solid props
+  on water and 1.5-tile spawner clearance; Valle reports facade/ground
+  collision warnings. Treat every warning/issue as an authoring failure to
+  inspect and clear before accepting generated output, even though the scripts
+  print findings rather than exiting nonzero.
+- **G17 — Puerto/Valle `bldg_*` order is a save invariant.** Unlike Twoton's
+  coordinate-stable lot ids, these two cities still receive sequential
+  `<map>_unit_N` tenancy ids from `occupyCity`. Adding, deleting or reordering
+  an eligible `bldg_*` prop can remap existing interiors and also change which
+  facade the seeded lock pass closes. New scenery and background masses must
+  use registered non-`bldg_` aliases. Do not duplicate sprite keys used by the
+  named-door graft tables either: the wrapper is sprite-based and would graft
+  the same destination onto every duplicate. Preserve edge-door rectangles,
+  story-trigger ids/rectangles and conditional gift flag pairs when rebuilding.
+
+- **G18 — formal-city scale is real storeys, not transform stretch.** Every
+  exterior facade in the seven `settlement:'city'` maps is promoted in place to
+  a city/source-specific `bldg_cityscale_*` procedural variant of the same lot
+  width. Ordinary variants are 220 native px (6.875× a 32px hero); landmark
+  variants are 300px (9.375×). `formal_city_scale.test.ts` measures the actual
+  generated Pixmap height after map-native and instance scaling. Minimus is the
+  unavoidable narrative/scale conflict: its citizens and props remain 0.5×
+  Gulliver miniatures, while facade sources use 444/588px needle architecture,
+  yielding 222/294px at runtime (6.94×/9.19×). The placed Royal Long-View Lens
+  and sign make that optical exaggeration explicit. Do not remove the device or
+  silently exempt Minimus; do not make its people normal-sized to solve it.
+
+- **G19 — four services are a formal-city contract, not a route-map stamp.**
+  Every `settlement:'city'` map is registered in `CITY_AMENITIES` and must expose
+  a buyable home/open house, a staffed real-estate agency, a real dealership,
+  and a paid hotel with an unoccupied guest room. Exterior service markers and
+  readable plaques are mandatory; an interior hidden behind contradictory art
+  does not count. Transition routes, wilderness, dungeons, and villages are
+  deliberately exempt. Preserve `citysvc_<city>_<role>` NPC ids and generated
+  unit ids when remassing a city.
+- **G20 — a title is not a drivable car until every save field agrees.** Vehicle
+  transactions go through `engine/vehicle-domain.ts`: cash, title key-item,
+  fuel/charge, continent, garage membership, active/driving state, and exact
+  parking commit together. Delivery uses `allocateVehicleDeliverySlot`; never
+  copy one dealer coordinate onto multiple titles. Home garages use real
+  capacity plus park/pull mutations. Regional dealers only service/sell/trade
+  vehicles on the same continent.
+- **G21 — owned-car controls are one visible contract.** A beside a parked car
+  enters it; D-pad steers/accelerates; B brakes; A sounds the horn; X parks and
+  exits; Y folds/restores the dashboard. Combustion cars enter with the engine
+  off and use START to turn the key; EVs are keyless and BMXes are human power.
+  The dashboard shows the authored three-view model, speed, actual fuel/charge,
+  ignition state, low-resource warning, and the live controls. The full party
+  must fit the authored seat count. Personal titled cars work when bought;
+  Milo's Ch.3 Clicker unlock is for remotely moving unoccupied machines.
+- **G22 — vehicle collision must reach route portals.** A sedan's full body is
+  wider than a one-tile edge door, so outdoor edge transitions trigger when the
+  vehicle body overlaps the portal while steering outward; centre-point-only
+  tests soft-lock the route. Turning checks the NEW orientation before movement.
+  Ambient traffic treats every driven/parked owned-car footprint as blocked, and
+  parking chooses a dynamic-body-safe exit point.
+- **G23 — field PUPPET is taught by THE FIRST BORROW.** It awakens in the
+  Wintermoor arrival scene after Milo joins and the Clicker lesson, when Jay
+  borrows the porter to open the gate (`awake_mindwarp_a`). Y opens the field
+  wheel: spend 14 PP, choose a nearby person, then move for eight seconds; A
+  talks or works a nearby authored sign/switch and B/Y releases. Dogs are not
+  people. `mindImmune:true` produces the red `NO SIGNAL` ring (the Whistle Guard
+  is the shipped proof). Held-Breath rewind locks PUPPET only on the current map.
 
 ## 5. Verification loop (use it after every slice)
 
@@ -319,6 +433,8 @@ roof plane 2-3 tiles deep, party walls, door at the foot.
 - Massing: shops front a ≥2-tile walk in continuous blocks; at least one
   tall anchor breaking the skyline; a back rank where the EB equivalent has
   one; parapet rhythm (mixed foot rows).
+- Formal cities only: visible home-for-sale + agency + dealership + paid hotel;
+  buy/check-in/garage/vehicle-delivery flows use real save data and cash.
 - Depth: a terrace or elevation beat where the EB equivalent has one; horizon
   band on true vista edges.
 - Gates green (incl. ZERO elevation-law lines), editor data regenerated,

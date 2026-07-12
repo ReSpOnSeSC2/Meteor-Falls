@@ -52,6 +52,15 @@ describe('Glint story staging', () => {
     expect(runtime.STORY_STAGE_DEPTH.glow).toBeLessThan(runtime.STORY_STAGE_DEPTH.actor);
     expect(runtime.STORY_STAGE_DEPTH.actor).toBeLessThan(90_000);
   });
+
+  it('lets a long car nose enter an outdoor edge route without requiring its centre in the one-tile portal', () => {
+    const door = { x: 0, y: 4, w: 1, h: 2 };
+    const zone = { x: 0, y: 256, w: 64, h: 128 };
+    const longCar = { x: 0, y: 278, w: 142, h: 58 };
+    expect(runtime.vehicleBodyTriggersEdgeDoor(door, 40, 24, { x: -1, y: 0 }, longCar, zone, false)).toBe(true);
+    expect(runtime.vehicleBodyTriggersEdgeDoor(door, 40, 24, { x: 1, y: 0 }, longCar, zone, false)).toBe(false);
+    expect(runtime.vehicleBodyTriggersEdgeDoor(door, 40, 24, { x: -1, y: 0 }, longCar, zone, true)).toBe(false);
+  });
 });
 
 describe('walkable overworld spawner cells', () => {

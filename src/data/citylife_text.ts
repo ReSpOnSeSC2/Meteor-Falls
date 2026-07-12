@@ -8,8 +8,56 @@
  * pick a line per building, deterministically (seeded). '@' prefixes spoken lines.
  */
 import type { DialogueScript } from '../schemas';
+import { DEALERSHIP } from './dealership';
+import {
+  CITY_AMENITIES,
+  FORMAL_CITY_IDS,
+  cityAmenitySignId,
+  type GeneratedCityAmenityRole,
+} from './city_amenities';
+
+const cityServiceSignCopy = (
+  cityId: (typeof FORMAL_CITY_IDS)[number],
+  role: GeneratedCityAmenityRole,
+): DialogueScript => {
+  const amenity = CITY_AMENITIES[cityId];
+  switch (role) {
+    case 'home':
+      return [
+        `OPEN HOUSE — ${amenity.residential.listingName.toUpperCase()}`,
+        `FOR SALE. Tour inside; ${amenity.agency.name} handles the deed and the alarming amount of small print.`,
+      ];
+    case 'agency':
+      return [
+        amenity.agency.name.toUpperCase(),
+        `REAL ESTATE · DEEDS · HOME SALES. Current listing: ${amenity.residential.listingName}.`,
+      ];
+    case 'dealership': {
+      const featured = DEALERSHIP[amenity.dealership.featuredVehicleId]?.displayName ?? 'road vehicles';
+      return [
+        amenity.dealership.name.toUpperCase(),
+        `VEHICLE SALES · TRADE-INS · FUEL/CHARGE. Featured today: ${featured}. The tires have been complimented already.`,
+      ];
+    }
+    case 'hotel':
+      return [
+        amenity.hotel.name.toUpperCase(),
+        `ROOMS ${amenity.hotel.rate} · PAID REST · FRONT DESK. The sheets are fresh and the lobby clock is confidently wrong.`,
+      ];
+  }
+};
+
+const CITY_SERVICE_SIGN_DIALOGUE: Record<string, DialogueScript> = Object.fromEntries(
+  FORMAL_CITY_IDS.flatMap((cityId) =>
+    (['home', 'agency', 'dealership', 'hotel'] as const).map((role) => [
+      cityAmenitySignId(cityId, role),
+      cityServiceSignCopy(cityId, role),
+    ]),
+  ),
+);
 
 export const CITYLIFE_DIALOGUE: Record<string, DialogueScript> = {
+  ...CITY_SERVICE_SIGN_DIALOGUE,
   /* ---- locked doors: you knock, the town declines, charmingly ---- */
   cl_knock_0: ['You knock politely.', 'A voice inside: "We\'re not home!" ...They are very clearly home.'],
   cl_knock_1: ['You knock. A long pause.', 'A note slides under the door. It reads: "TRY LATER." It is already later.'],
@@ -65,6 +113,29 @@ export const CITYLIFE_DIALOGUE: Record<string, DialogueScript> = {
   /* ---- single-purpose flavor (realty / fuel attendants) ---- */
   cl_realtor_pitch: ['@Looking to BUY? You\'ve got the eyes of a future homeowner.', '@Or allergies. Either way — shall we talk square footage?'],
   cl_gas_greet: ['@Fill \'er up? The pump\'s feeling generous today. Don\'t tell the other pumps.'],
+
+  /* ---- formal-city amenity clerks (stable citysvc_* NPCs) ---- */
+  citysvc_home_host: [
+    '@Welcome to the open house! Please admire the storage, the sunlight, and the heroic optimism of the asking price.',
+    '@The deed is a real deed. The bowl of fruit is not real fruit. We believe in honesty here.',
+  ],
+  citysvc_realtor: [
+    '@I sell homes, dreams, and folders full of very small print.',
+    '@Tell me your budget and I will gasp professionally, then find you something with excellent potential.',
+  ],
+  citysvc_dealer: [
+    '@Every vehicle on this floor has been inspected by me, twice, from several flattering angles.',
+    '@Kick the tires if you must. They are sensitive, so compliment them afterward.',
+  ],
+  citysvc_hotel_clerk: [
+    '@A room, a key, and a fresh start tomorrow morning. The first two cost money. The third is complimentary.',
+    '@Checkout is whenever you wake up feeling heroic. We wrote noon on the form for legal reasons.',
+  ],
+  sign_minimus_long_view: [
+    'THE ROYAL LONG-VIEW LENS',
+    'For the comfort of giant visitors, architecture is magnified UPWARD. Citizens, sandwiches, and municipal pride remain actual size.',
+    'Please do not compare the palace to the sandwich. The palace is sensitive.',
+  ],
 };
 
 /** seeded-selection pools (ids, not text) — citylife.ts picks one per building */

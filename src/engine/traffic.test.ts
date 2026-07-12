@@ -75,6 +75,19 @@ describe('TrafficSim — the safety law (no crush, no corner-trap)', () => {
       expect(sim.playerLanes(px, py)).toBeGreaterThanOrEqual(1);
     }
   });
+
+  it('yields around full owned-vehicle footprint cells', () => {
+    const roads = roadGrid(9, 5);
+    const sim = new TrafficSim({ roads, seed: 818, max: 12, types: ['sedan'] });
+    sim.spawn();
+    const blocked = new Set([cellKey(4, 1), cellKey(4, 2), cellKey(4, 3), cellKey(5, 2)]);
+    for (let step = 0; step < 80; step++) {
+      sim.step({ x: 1, y: 2 }, blocked);
+      for (const vehicle of sim.vehicles) {
+        expect(blocked.has(cellKey(vehicle.x, vehicle.y))).toBe(false);
+      }
+    }
+  });
 });
 
 describe('TrafficSim — determinism (Prime Law 2)', () => {

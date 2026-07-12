@@ -39,8 +39,22 @@ export interface HeroState {
   boosts: Partial<Record<BoostStat, number>>;
 }
 
+/** Serializable world-facing vocabulary shared by the party and parked vehicles. */
+export type SaveFacing = 'down' | 'left' | 'right' | 'up' | 'downright' | 'downleft' | 'upright' | 'upleft';
+
+/** v19: the exact outdoor hand-off point for an owned vehicle that is neither
+ * inside a home garage nor currently being driven. Coordinates are runtime
+ * pixels, matching GameStateData.x/y; `area` is the map/area id a scene launches
+ * the vehicle into. */
+export interface VehicleParkingState {
+  area: string;
+  x: number;
+  y: number;
+  facing: SaveFacing;
+}
+
 export interface GameStateData {
-  version: 18;
+  version: 19;
   party: HeroState[];
   guest: string | null; // e.g. Chad tagging along
   keyItems: string[];
@@ -55,7 +69,7 @@ export interface GameStateData {
   // ADR-096: 8-way facing (cardinals + diagonals). Inlined (not imported from
   // spritegen) so this module stays Phaser-free for headless save tests. Old
   // saves hold a cardinal value — still valid, no migration needed.
-  facing: 'down' | 'left' | 'right' | 'up' | 'downright' | 'downleft' | 'upright' | 'upleft';
+  facing: SaveFacing;
   embers: number;
   favoriteFood: string;
   playerName: string;
@@ -99,6 +113,14 @@ export interface GameStateData {
    *  (jumbo-jet cargo / boat deck / the rocket) moves this. Bought cars start on the
    *  dealership's continent. */
   carLocation: Record<string, string>;
+  /** v19: exact outdoor parking positions, keyed by owned vehicle title. A title
+   * stored in `garage` is removed from this map; an entry is restored when the
+   * vehicle leaves the road. */
+  vehicleParking: Record<string, VehicleParkingState>;
+  /** v19: the title whose runtime vehicle controller currently owns movement.
+   * Kept separate from `activeVehicle` so existing BMX selection/toggle saves
+   * remain byte-compatible while cars gain explicit enter/exit state. */
+  drivingVehicle: string | null;
   /** S21 (v16, ADR-126): THE HELD BREATH — Jay's Locket rewind. The Breath bank,
    *  the snapshot ring (full GS.serialize() blobs taken before a rewindable
    *  choice), and the rewind-debt counter the Trust Thread + golden ending read.
@@ -176,7 +198,7 @@ export function newGameData(): GameStateData {
   rex.bag = ['cracked_bat', 'corn_dog', 'corn_dog'];
   rex.equip = { weapon: 'cracked_bat' };
   return {
-    version: 18,
+    version: 19,
     party: [rex],
     guest: null,
     keyItems: [],
@@ -211,6 +233,8 @@ export function newGameData(): GameStateData {
     activeVehicle: null,
     fuel: {},
     carLocation: {},
+    vehicleParking: {},
+    drivingVehicle: null,
     echoes: freshEchoes(),
   };
 }

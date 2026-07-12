@@ -523,6 +523,10 @@ export const NpcDefSchema = z.strictObject({
    *  pinned foot-collision box scale from the FEET (origin 0.5,1) so a resized NPC stays planted. Mirrors
    *  PropDef.scale; set from the map editor's resize handles. Absent ⇒ 1. */
   scale: z.union([z.number().positive(), z.strictObject({ x: z.number().positive(), y: z.number().positive() })]).optional(),
+  /** Field PUPPET counter: a DEAD-AIR helmet or equivalent shielding makes this
+   * person visible to the targeting ring but returns NO SIGNAL. This is the
+   * overworld face of EnemyDef.mind_immune. */
+  mindImmune: z.boolean().optional(),
   /** flag gates: only present when ifFlag is truthy / unlessFlag is falsy */
   ifFlag: z.string().min(1).optional(),
   unlessFlag: z.string().min(1).optional(),

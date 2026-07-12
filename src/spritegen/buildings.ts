@@ -123,6 +123,286 @@ export const COLOSSI: readonly CatalogEntry[] = [
 /** every generated entry (families + colossi) — index.ts registers them all */
 export const GENERATED_BUILDINGS: readonly CatalogEntry[] = [...CITY_CATALOG, ...COLOSSI];
 
+/* ----------------------- formal-city scale variants ----------------------- */
+
+/**
+ * Production facade scale contract: an ordinary city building is at least 6.7
+ * 32px heroes tall; a landmark is at least 9 heroes tall. These are real,
+ * procedurally-authored storeys with unchanged lot widths — never a y-stretch.
+ *
+ * Minimus keeps its 0.5 Gulliver native scale. Its source variants therefore
+ * carry twice the storeys, producing the same runtime silhouette while citizens,
+ * doors, props, and vehicles remain visibly miniature.
+ */
+export const FORMAL_CITY_HERO_HEIGHT = 32;
+export const FORMAL_CITY_MIN_RATIO = 6.7;
+export const FORMAL_CITY_LANDMARK_MIN_RATIO = 9;
+export const FORMAL_CITY_ORDINARY_ROWS = 11; // H=220 => 6.875 heroes
+export const FORMAL_CITY_LANDMARK_ROWS = 16; // H=300 => 9.375 heroes
+export const MINIMUS_CITY_ORDINARY_ROWS = 25; // H=444 × .5 => 222 => 6.9375 heroes
+export const MINIMUS_CITY_LANDMARK_ROWS = 34; // H=588 × .5 => 294 => 9.1875 heroes
+
+export const FORMAL_CITY_SCALE_IDS = [
+  'brickton',
+  'puerto_sol',
+  'valle_dorado',
+  'minimus_major',
+  'zanzibel',
+  'chandrapore',
+  'lotus_harbor',
+] as const;
+
+export type FormalCityScaleId = (typeof FORMAL_CITY_SCALE_IDS)[number];
+
+/** Every facade source currently placed in the seven formal cities, with its
+ *  declared lot width. Promotion is intentionally closed-world: a newly placed
+ *  facade fails the validator until it receives an authored city-scale variant. */
+export const FORMAL_CITY_FACADE_SOURCE_WIDTHS: Record<FormalCityScaleId, Readonly<Record<string, number>>> = {
+  brickton: {
+    bldg_ob_hotel: 7,
+    bldg_hospital: 7,
+    bldg_dept: 8,
+    bldg_civic: 6,
+    bldg_warehouse: 8,
+    bldg_brickmore: 5,
+    bldg_starmart: 5,
+    bldg_bagels: 4,
+    bldg_bank: 6,
+    bldg_arcade2: 5,
+    bldg_theater: 5,
+    bldg_gen_shop_grass_1: 4,
+    bldg_diner: 4,
+    bldg_market: 6,
+    bldg_apartments: 5,
+    bldg_brownstone: 4,
+  },
+  puerto_sol: {
+    bldg_ps_mercado: 5,
+    bldg_ps_clinic: 5,
+    bldg_ps_pension: 5,
+    bldg_ps_museum: 6,
+    bldg_ps_casa: 4,
+    bldg_ps_casa_b: 4,
+    bldg_ps_deli: 4,
+    bldg_ps_pension_b: 5,
+    bldg_ps_casa_c: 4,
+    bldg_ps_cantina: 5,
+    bldg_ps_catedral: 6,
+    bldg_ps_gran_hotel: 6,
+    bldg_ps_aduana: 7,
+    bldg_gen_market_gold_1: 6,
+    bldg_gen_civic_paper_2: 6,
+  },
+  valle_dorado: {
+    bldg_colossus_spire: 14,
+    bldg_tower_arms: 6,
+    bldg_tower_glass: 6,
+    bldg_tower_corp: 7,
+    bldg_gen_bank_paper_3: 7,
+    bldg_gen_market_gold_1: 6,
+    bldg_gen_shop_gold_2: 4,
+    bldg_gen_civic_paper_3: 6,
+    bldg_gen_market_orange_2: 6,
+    bldg_gen_cafe_orange_1: 4,
+    bldg_gen_brownstone_earth_3: 4,
+    bldg_gen_brownstone_earth_4: 4,
+  },
+  minimus_major: {
+    bldg_minimus_cathedral: 4,
+    bldg_minimus_petit_market: 4,
+    bldg_minimus_manor: 4,
+    bldg_minimus_thimble_inn: 4,
+  },
+  zanzibel: {
+    bldg_zanzibel_home: 4,
+    bldg_zanzibel_indigo_dyer: 4,
+    bldg_zanzibel_caravanserai: 4,
+  },
+  chandrapore: {
+    bldg_zanzibel_caravanserai: 4,
+    bldg_zanzibel_investment_desk: 4,
+    bldg_zanzibel_civic_hall: 4,
+    bldg_zanzibel_harbor_customs: 4,
+  },
+  lotus_harbor: {
+    bldg_lotus_harbor_lantern_shop: 4,
+    bldg_lotus_harbor_tea_house: 4,
+    bldg_lotus_harbor_temple: 4,
+  },
+};
+
+export const FORMAL_CITY_LANDMARK_SOURCES: ReadonlySet<string> = new Set([
+  'bldg_dept',
+  'bldg_ps_catedral',
+  'bldg_ps_gran_hotel',
+  'bldg_ps_aduana',
+  'bldg_colossus_spire',
+  'bldg_tower_arms',
+  'bldg_tower_glass',
+  'bldg_tower_corp',
+  'bldg_minimus_cathedral',
+  'bldg_zanzibel_caravanserai',
+  'bldg_zanzibel_civic_hall',
+  'bldg_zanzibel_harbor_customs',
+  'bldg_lotus_harbor_temple',
+]);
+
+const CITY_SCALE_PALETTE: Record<FormalCityScaleId, readonly number[]> = {
+  brickton: [RAMP.BLUE, RAMP.CYAN, RAMP.PURPLE, RAMP.NIGHT],
+  puerto_sol: [RAMP.GOLD, RAMP.ORANGE, RAMP.PAPER, RAMP.RED],
+  valle_dorado: [RAMP.PAPER, RAMP.GOLD, RAMP.PURPLE, RAMP.CYAN],
+  minimus_major: [RAMP.GOLD, RAMP.RED, RAMP.PAPER],
+  zanzibel: [RAMP.EARTH, RAMP.ORANGE, RAMP.PURPLE, RAMP.GOLD],
+  chandrapore: [RAMP.PAPER, RAMP.PURPLE, RAMP.GOLD, RAMP.CYAN],
+  lotus_harbor: [RAMP.RED, RAMP.GOLD, RAMP.CYAN, RAMP.NIGHT],
+};
+
+const CITY_SCALE_FALLBACK_SIGNS: Record<FormalCityScaleId, readonly string[]> = {
+  brickton: ['TWOTON', 'SECOND WIND', 'UPTOWN', 'CIVIC LOOP'],
+  puerto_sol: ['PUERTO SOL', 'EL FARO', 'PLAZA DEL SOL', 'BUEN VIENTO'],
+  valle_dorado: ['VALLE', 'ESTRELLA', 'AVENIDA', 'GOLDEN HOUR'],
+  minimus_major: ['MAJOR', 'THIMBLE ROW', 'GRANDISH', 'ROYAL SIZE'],
+  zanzibel: ['INDIGO ROW', 'BAOBAB COURT', 'CARAVAN WAY', 'MARKET SONG'],
+  chandrapore: ['MOON GATE', 'MONSOON HOUSE', 'SILVER HILL', 'CHANDRA'],
+  lotus_harbor: ['LOTUS ROW', 'LANTERN WAY', 'JADE QUAY', 'MOON TEA'],
+};
+
+const CITY_SCALE_SOURCE_SIGNS: Readonly<Record<string, string>> = {
+  bldg_ob_hotel: 'TWOTON HOTEL',
+  bldg_hospital: 'TWOTON GENERAL',
+  bldg_dept: 'DEPT OF SMILES',
+  bldg_civic: 'CIVIC HALL',
+  bldg_warehouse: 'BUS DEPOT',
+  bldg_brickmore: 'THE BRICKMORE',
+  bldg_starmart: 'STARMART',
+  bldg_bagels: 'BAGELS',
+  bldg_bank: 'SAVINGS LOAN',
+  bldg_arcade2: 'STARPORT II',
+  bldg_theater: 'ORPHEUM',
+  bldg_diner: 'PIE IN THE SKY',
+  bldg_market: 'MARKET',
+  bldg_apartments: 'THE ARMS',
+  bldg_brownstone: 'FLATS',
+  bldg_ps_mercado: 'MERCADO SOL',
+  bldg_ps_clinic: 'CLINICA',
+  bldg_ps_pension: 'PENSION',
+  bldg_ps_museum: 'MUSEO',
+  bldg_ps_casa: 'CASA DEL SOL',
+  bldg_ps_casa_b: 'CASA AZUL',
+  bldg_ps_deli: 'DELI SOL',
+  bldg_ps_pension_b: 'EL FARO',
+  bldg_ps_casa_c: 'CASA LUZ',
+  bldg_ps_cantina: 'CANTINA',
+  bldg_ps_catedral: 'CATEDRAL',
+  bldg_ps_gran_hotel: 'GRAN HOTEL',
+  bldg_ps_aduana: 'ADUANA',
+  bldg_colossus_spire: 'STARFALL SPIRE',
+  bldg_tower_arms: 'EMBERTON',
+  bldg_tower_glass: 'MERIDIAN',
+  bldg_tower_corp: 'OMNICORP',
+  bldg_minimus_cathedral: 'TALL CHAPEL',
+  bldg_minimus_petit_market: 'PETIT MARKET',
+  bldg_minimus_manor: 'MINIMUS MANOR',
+  bldg_minimus_thimble_inn: 'THIMBLE INN',
+  bldg_zanzibel_home: 'COURTYARD',
+  bldg_zanzibel_indigo_dyer: 'INDIGO DYER',
+  bldg_zanzibel_caravanserai: 'CARAVANSERAI',
+  bldg_zanzibel_investment_desk: 'MOON BANK',
+  bldg_zanzibel_civic_hall: 'CIVIC HALL',
+  bldg_zanzibel_harbor_customs: 'HARBOR GATE',
+  bldg_lotus_harbor_lantern_shop: 'LANTERN SHOP',
+  bldg_lotus_harbor_tea_house: 'MOON TEA',
+  bldg_lotus_harbor_temple: 'LOTUS TEMPLE',
+};
+
+function cityScaleHash(text: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export interface CityScaleCatalogEntry extends CatalogEntry {
+  cityId: FormalCityScaleId;
+  source: string;
+  landmark: boolean;
+}
+
+function cityScaleOpts(cityId: FormalCityScaleId, source: string, width: number, landmark: boolean): CityBuildingOpts {
+  const hash = cityScaleHash(`${cityId}:${source}`);
+  const palettes = CITY_SCALE_PALETTE[cityId];
+  const wall = palettes[hash % palettes.length];
+  const minimus = cityId === 'minimus_major';
+  const upperRows = minimus
+    ? (landmark ? MINIMUS_CITY_LANDMARK_ROWS : MINIMUS_CITY_ORDINARY_ROWS)
+    : (landmark ? FORMAL_CITY_LANDMARK_ROWS : FORMAL_CITY_ORDINARY_ROWS);
+  const market = /market|mercado|deli|cantina/.test(source);
+  const civic = /civic|bank|clinic|hospital|cathedral|catedral|temple|customs/.test(source);
+  const theater = /theater|arcade/.test(source);
+  const residential = /hotel|pension|casa|home|manor|inn|apartments|brownstone|brickmore/.test(source);
+  const overtTower = landmark || /tower|colossus|dept|investment/.test(source) || minimus;
+  const colonial = cityId !== 'brickton' && cityId !== 'valle_dorado' && !minimus;
+  const doubleDoor = landmark || civic || /dept|warehouse/.test(source);
+  const doorAt = Math.max(1, Math.min(width - (doubleDoor ? 2 : 1), Math.floor(width / 2) - (doubleDoor ? 1 : 0)));
+  return {
+    wallTiles: width,
+    upperRows,
+    wall,
+    signText: CITY_SCALE_SOURCE_SIGNS[source]
+      ?? CITY_SCALE_FALLBACK_SIGNS[cityId][hash % CITY_SCALE_FALLBACK_SIGNS[cityId].length],
+    doorAt,
+    doubleDoor,
+    tower: overtTower,
+    balconies: residential || (hash & 1) === 1,
+    marquee: theater,
+    colonnade: market && !overtTower,
+    portico: civic,
+    neon: (cityId === 'brickton' || cityId === 'lotus_harbor') && (theater || (hash & 3) === 0),
+    arch: colonial,
+    ...(!colonial && !civic && !theater && !overtTower ? { awning: palettes[(hash + 1) % palettes.length] } : {}),
+    litSeed: 1200 + (hash % 50000),
+  };
+}
+
+function buildCityScaleCatalog(): CityScaleCatalogEntry[] {
+  const out: CityScaleCatalogEntry[] = [];
+  for (const cityId of FORMAL_CITY_SCALE_IDS) {
+    for (const [source, width] of Object.entries(FORMAL_CITY_FACADE_SOURCE_WIDTHS[cityId])) {
+      const landmark = FORMAL_CITY_LANDMARK_SOURCES.has(source);
+      const stem = source.replace(/^bldg_/, '').replace(/[^a-z0-9_]/g, '_');
+      const opts = cityScaleOpts(cityId, source, width, landmark);
+      out.push({
+        name: `bldg_cityscale_${cityId}_${stem}`,
+        family: 'cityscale',
+        ramp: opts.wall,
+        opts,
+        cityId,
+        source,
+        landmark,
+      });
+    }
+  }
+  return out;
+}
+
+/** Procedural tall art used only by the post-tenancy formal-city promotion. */
+export const CITY_SCALE_BUILDINGS: readonly CityScaleCatalogEntry[] = buildCityScaleCatalog();
+
+const CITY_SCALE_BY_CITY_SOURCE = new Map(
+  CITY_SCALE_BUILDINGS.map((entry) => [`${entry.cityId}:${entry.source}`, entry] as const),
+);
+const CITY_SCALE_BY_VARIANT = new Map(CITY_SCALE_BUILDINGS.map((entry) => [entry.name, entry] as const));
+
+export function cityScaleVariantFor(cityId: FormalCityScaleId, source: string): CityScaleCatalogEntry | undefined {
+  return CITY_SCALE_BY_CITY_SOURCE.get(`${cityId}:${source}`);
+}
+
+export function cityScaleVariantMeta(sprite: string): CityScaleCatalogEntry | undefined {
+  return CITY_SCALE_BY_VARIANT.get(sprite);
+}
+
 /** select catalog sprite names by family (and optionally a ramp filter) */
 export function skinsFor(families: readonly string[], ramps?: readonly number[]): string[] {
   return CITY_CATALOG.filter(

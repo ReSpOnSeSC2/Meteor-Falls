@@ -26,6 +26,7 @@ import { buildChapter10Maps } from './maps_ch10';
 import { buildRoute, buildWoods, Streams } from '../levelkit';
 import { placeFacade, facadeDims } from '../levelkit/kit';
 import { occupyCity } from './citylife';
+import { promoteFormalCityScale } from './formal_city_scale';
 import { AREA_SKINS } from '../spritegen/buildings';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
@@ -4746,55 +4747,93 @@ export const COSTA_DOOR_FOR_PUERTO_SOL = {
  *  Dev-reachable standalone (the Sprite Lab precedent) until Prompt 28. */
 function buildCostaEstrella(): MapDef {
   const g = new Grid(27, 16, '.');
-  // the cliff edge runs the north rim (fences — the surf is past them)
-  g.rect(0, 0, 27, 1, '-');
-  g.rect(0, 1, 1, 14, '|');
-  g.rect(26, 1, 1, 14, '|');
-  // the resort path: gate (south) up to the clubhouse, then west to the tee
-  g.rect(12, 8, 3, 8, ':');
-  g.rect(5, 8, 10, 2, ':');
-  // S15i Task 6 (ADR-059): the tee path runs ON west to a gate in the cliff wall —
-  // the road to THE LINKS proper (the subdivision + course + the real clubhouse)
-  g.rect(1, 8, 5, 2, ':');
-  g.set(0, 8, ':');
-  g.set(0, 9, ':');
-  // hedges square the clubhouse lawn; flowers where the staff insist
-  g.rect(17, 6, 6, 1, 'b');
-  g.rect(17, 12, 6, 1, 'b');
-  g.set(4, 4, 'f');
-  g.set(6, 12, 'F');
-  g.set(21, 4, 'f');
-  g.set(9, 5, 'F');
-  g.sprinkle(20, ',~', 0.12);
+  g.sprinkle(20, ',~,~fF', 0.09);
+
+  // A moonlit CLIFF THRESHOLD instead of a bare lawn: real surf at north,
+  // a scenic lip, two playable golf pockets, and one winding cart path linking
+  // Puerto's south gate to the Links Estates' west gate.
+  g.rect(0, 0, 27, 3, 'e');
+  g.rect(0, 3, 27, 1, 'E');
+  g.rect(0, 4, 27, 1, '^');
+  // First tee + bunker at west; practice green + authored water garden at east.
+  g.rect(2, 5, 8, 6, 'm');
+  g.rect(5, 6, 3, 2, 'n');
+  g.rect(17, 6, 8, 7, 'm');
+  // The overlook plaza breaks the cliff lip with a broad, readable balcony.
+  g.rect(10, 4, 7, 3, 'p');
+
+  const cartPath = (points: Array<[number, number]>, width = 3): void => {
+    const half = Math.floor(width / 2);
+    for (let i = 0; i < points.length - 1; i++) {
+      let [x, y] = points[i];
+      const [tx, ty] = points[i + 1];
+      for (;;) {
+        g.rect(x - half, y - half, width, width, ':');
+        if (x === tx && y === ty) break;
+        if (x !== tx) x += Math.sign(tx - x);
+        if (y !== ty) y += Math.sign(ty - y);
+      }
+    }
+  };
+  cartPath([[0, 8], [4, 8], [7, 9], [10, 11], [13, 14], [13, 15]]);
+  cartPath([[8, 10], [10, 8], [12, 6], [13, 5]], 2);
+  cartPath([[12, 11], [15, 10], [18, 10]], 2);
+
+  // Curved hedge pockets frame, rather than square off, the course. The live
+  // west/south transition mouths are repainted after the border so neither seals.
+  g.rect(0, 4, 1, 12, 'b');
+  g.rect(26, 4, 1, 12, 'b');
+  g.rect(1, 12, 7, 1, 'b');
+  g.rect(17, 5, 8, 1, 'b');
+  g.rect(24, 6, 1, 7, 'b');
+  g.rect(0, 8, 3, 2, ':');
+  g.rect(12, 14, 3, 2, ':');
+  for (const [x, y, ch] of [[3, 5, 'F'], [9, 12, 'f'], [18, 13, 'F'], [25, 13, 'f']] as const) g.set(x, y, ch);
 
   return {
     id: 'costa_estrella',
     name: 'COSTA ESTRELLA LINKS',
     music: 'cage',
     settlement: 'village',
+    night: true,
+    ambience: 'waves',
     grid: g.out(),
     props: [
-      // (removed) the clifftop 'LINKS' clubhouse — it duplicated THE LINKS
-      // building on the very next screen (golf_resort / THE LINKS ESTATES), so
-      // it's gone; the clifftop is just the gate now (ADR-059, the gate door
-      // west to golf_resort still stands in doors[] below)
-      // the first tee's plaque
+      // Four authored micro-scenes: first tee, moonlit overlook, caddie shelter,
+      // and practice-water garden. The real clubhouse remains on golf_resort.
       { sprite: 'sign', x: 5, y: 7, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      // the gate marker — to the subdivision + the clubhouse
       { sprite: 'sign', x: 2, y: 10, solid: { ox: 3, oy: 10, w: 10, h: 7 } },
-      // palms read as the coast's trees (the standard canvas, ADR-019)
-      { sprite: 'tree_b', x: 2, y: 2 },
-      { sprite: 'tree_b', x: 23, y: 13 },
-      { sprite: 'tree', x: 8, y: 13 },
+      { sprite: 'costa_sun_marker', x: 3.8, y: 4.5, solid: { ox: 7, oy: 27, w: 26, h: 8 } },
+      { sprite: 'flagpole', x: 8.2, y: 5.2 },
+      { sprite: 'costa_telescope', x: 12.2, y: 3.9, solid: { ox: 7, oy: 29, w: 14, h: 7 } },
+      { sprite: 'bench', x: 14.3, y: 5.2, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'footbridge_rail', x: 9.6, y: 3.4 },
+      { sprite: 'footbridge_rail', x: 14.4, y: 3.4 },
+      { sprite: 'gazebo', x: 17.2, y: 3.2, solid: { ox: 4, oy: 42, w: 31, h: 10 } },
+      { sprite: 'costa_windsock', x: 22.3, y: 3.7, solid: { ox: 7, oy: 33, w: 18, h: 7 } },
+      { sprite: 'costa_flower_urns', x: 16.8, y: 11.2, solid: { ox: 5, oy: 27, w: 35, h: 8 } },
+      { sprite: 'grotto_spring', x: 20.1, y: 8.5, solid: { ox: 5, oy: 25, w: 38, h: 7 } },
+      { sprite: 'cattails', x: 19.3, y: 10.4 },
+      { sprite: 'cattails', x: 23.1, y: 10.6 },
+      { sprite: 'bench', x: 19, y: 13.1, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'palm_a', x: 1.2, y: 4.5 },
+      { sprite: 'palm_b', x: 8.8, y: 12.2 },
+      { sprite: 'palm_c', x: 16, y: 7.2 },
+      { sprite: 'palm_d', x: 24.5, y: 12.1 },
     ],
     npcs: [
       // S15i Task 6 (ADR-059): FITO the caddy moved INTO the new clubhouse (the
       // round-start is indoors now); a starter greets you at the clifftop gate
       { id: 'links_starter', sprite: 'caddy', x: 4, y: 9, facing: 'left', dialogue: 'npc_links_starter', wander: true },
+      { id: 'costa_greenkeeper', sprite: 'oldTimer', x: 18, y: 12.5, facing: 'up', dialogue: 'npc_costa_greenkeeper', wander: true },
+      { id: 'costa_honeymooner', sprite: 'senora', x: 14, y: 7, facing: 'up', dialogue: 'npc_costa_honeymooner', idle: true, emote: 'happy' },
     ],
     signs: [
       { x: 5, y: 8, dialogue: 'sign_costa' },
       { x: 2, y: 10, dialogue: 'sign_links_gate' },
+      { x: 13, y: 5, dialogue: 'sign_costa_overlook' },
+      { x: 22, y: 5, dialogue: 'sign_costa_windsock' },
+      { x: 20, y: 13, dialogue: 'sign_costa_practice_green' },
     ],
     phones: [],
     atms: [],
@@ -4806,6 +4845,9 @@ function buildCostaEstrella(): MapDef {
     ],
     spawners: [],
     triggers: [],
+    reflect: [
+      { x: 0, y: 0, w: 27, h: 3, within: 4 },
+    ],
   };
 }
 
@@ -5298,6 +5340,11 @@ for (const m of Object.values(MAPS)) {
   }));
 }
 
+// Production-scale exterior pass runs AFTER tenancy so generated unit ids,
+// lock rolls, interiors, and save targets are frozen before facade art grows.
+// It mutates props in place and never reorders Puerto/Valle's authored arrays.
+for (const m of Object.values(MAPS)) promoteFormalCityScale(m);
+
 // ─── Wave 2 (ADR-108) — MAP AMBIENT AUDIO (#16) ─────────────────────────────
 // A per-map ambient BED (engine/ambience.ts) layered under the music, plus an
 // OPTIONAL explicit muffle override (absent → OverworldScene derives the veil from
@@ -5356,7 +5403,7 @@ const MAP_REFLECT: Record<string, ReflectZone[]> = {
   otterbrook: [{ x: 2, y: 132, w: 18, h: 16, within: 3 }], // Pond Park (SW), concept rows 132-148
   oak_hollow: [{ x: 8, y: 9, w: 7, h: 5, within: 3 }], // the cave's still pool (Giant-Step rebuild)
   golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
-  puerto_sol: [{ x: 0, y: 66, w: 100, h: 6, within: 6 }], // the working seafront (Threed rebuild: sea rows 66-71)
+  puerto_sol: [{ x: 0, y: 66, w: 100, h: 5, within: 6 }], // working seafront; row 71 is the solid night-horizon ridge
   // CH.4 Norway — the fjord, the moor gorge, and the Sleeper's meltwater fall
   kvisthavn: [{ x: 0, y: 22, w: 36, h: 2, within: 4 }], // the fjord along the south lip
   bootstep_moor: [{ x: 22, y: 1, w: 2, h: 7, within: 3 }], // the gorge water

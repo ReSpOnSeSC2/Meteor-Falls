@@ -182,7 +182,7 @@ const ITEM_BAND: Record<string, ItemBand> = {
   // the Costa Estrella Invitational's first-title prize (THE SUNDAY SET) is South America
   sunday_visor: 'ch2', sunday_glove: 'ch2', lucky_tee: 'ch2', caddys_marker: 'ch2',
   // S17 M18 (ADR-063) — THE AMERICAS CATALOG, Ch.2 South America pour: Andean
-  // clay/dulce/jungle foods, mate + jungle fizz, the next revival rung, a tonic,
+  // clay/dulce/desert foods, mate + Dunas Fizz, the next revival rung, a tonic,
   // the gold-idol valuables, the chullo/cushma armor, generic arms, the banana-
   // boat keys, and THE MERCADO SET (the Puerto Sol market stalls).
   empanada: 'ch2', ceviche: 'ch2', choripan: 'ch2', tres_leches: 'ch2',
@@ -1002,7 +1002,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       text: 'Cap still on. You kept it because it looked like a tiny monk. Dorin agrees, gravely. Luck +7.',
     }),
     /* ──────────────────── Ch.2 South America — Puerto Sol / Valle Dorado ────── */
-    // — foods (the forge; Andean clay, dulce, jungle) —
+    // — foods (the forge; Andean clay, dulce, Las Dunas) —
     I({
       id: 'empanada',
       name: 'Empanada',
@@ -1087,12 +1087,12 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
     }),
     I({
       id: 'jungle_fizz',
-      name: 'Jungle Fizz',
+      name: 'Dunas Fizz',
       kind: 'pp',
       ppHeal: 14,
       usableInBattle: true,
       price: 9,
-      text: 'A green bottle of something carbonated and faintly leafy. The cap fights you. ~11 PP.',
+      text: 'Prickly-pear soda in a green bottle. The cap opens only after you stop trying. Restores ~14 PP.',
     }),
     // — cures + the next §A4.12 REVIVAL rung (above Second Wind / Glint's Spark) —
     I({
@@ -1139,7 +1139,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       kind: 'valuable',
       usableInBattle: false,
       price: 160,
-      text: 'Green enough to make the jungle jealous. A jeweler in Puerto Sol will weep, then lowball you.',
+      text: 'The one green thing Las Dunas could not bleach. A Puerto Sol jeweler will weep, then lowball you.',
     }),
     I({
       id: 'gold_doubloon',

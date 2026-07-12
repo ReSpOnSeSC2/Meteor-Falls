@@ -14,6 +14,7 @@ import { BRICKTON_BUS_SPAWN, BRICKTON_FOOT_SPAWN, BRICKTON_DOCKS_RETURN, OTTERBR
 import { PUERTO_SOL_JUNGLE_RETURN, PUERTO_SOL_PIER_SPAWN } from './maps_ch2';
 import { cityViolations, livingCityViolations } from '../levelkit/metrics';
 import type { MapDef } from './maps';
+import { formalCityFacadeSource } from './formal_city_scale';
 
 describe('THE LONG WALK — the multi-screen foot journey (Movement 3, ADR-056)', () => {
   const LEGS = ['meadow_mile', 'meadow_woods', 'meadow_far', 'meadow_overpass'] as const;
@@ -416,6 +417,17 @@ describe('LAS DUNAS — the Dusty Dunes crossing (jungle_1/jungle_2, 2026-07-08)
     expect(e.props.some((p) => p.sprite === 'edge_desert_cactus')).toBe(true);
     expect(e.grid.some((row) => row.includes('e'))).toBe(true);
   });
+
+  it('the West Dunas roadside malt shop is a real room, shop, save phone, and return door', () => {
+    const west = MAPS.jungle_1;
+    const facade = west.props.find((p) => p.sprite === 'bldg_gen_cafe_orange_1');
+    expect(facade?.door?.to).toBe('dunas_waystation');
+    const room = MAPS.dunas_waystation;
+    expect(room.interior).toBe(true);
+    expect(room.npcs.some((n) => n.shop === 'dunas_waystation')).toBe(true);
+    expect(room.phones.length).toBe(1);
+    expect(room.doors.some((d) => d.to === 'jungle_1')).toBe(true);
+  });
 });
 
 describe('VALLE DORADO — the Fourside golden city (stage 4, 2026-07-08)', () => {
@@ -428,9 +440,9 @@ describe('VALLE DORADO — the Fourside golden city (stage 4, 2026-07-08)', () =
 
   it('inherited the skyline: the Starfall Spire (lobby door) + the three towers', () => {
     const v = MAPS.valle_dorado;
-    expect(v.props.some((p) => p.sprite === 'bldg_colossus_spire' && p.door?.to === 'spire_lobby')).toBe(true);
+    expect(v.props.some((p) => formalCityFacadeSource(p.sprite) === 'bldg_colossus_spire' && p.door?.to === 'spire_lobby')).toBe(true);
     for (const t of ['bldg_tower_arms', 'bldg_tower_glass', 'bldg_tower_corp']) {
-      expect(v.props.some((p) => p.sprite === t), t).toBe(true);
+      expect(v.props.some((p) => formalCityFacadeSource(p.sprite) === t), t).toBe(true);
     }
   });
 

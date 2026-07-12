@@ -7,6 +7,11 @@ import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
 import { s, TILE_PX } from '../spritegen/scale';
 import { BRICKTON_BUS_SPAWN, OTTERBROOK_DEV_PREVIEW_SPAWN } from '../data/maps';
+import {
+  DUNAS_EAST_DEV_PREVIEW_SPAWN,
+  DUNAS_WEST_DEV_PREVIEW_SPAWN,
+  PUERTO_SOL_DEV_PREVIEW_SPAWN,
+} from '../data/maps_ch2';
 
 export class TitleScene extends Phaser.Scene {
   private pressText: Phaser.GameObjects.BitmapText | null = null;
@@ -23,7 +28,12 @@ export class TitleScene extends Phaser.Scene {
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
       const devMap = params.get('devMap');
-      if (devMap === 'otterbrook' || devMap === 'brickton') {
+      if (
+        devMap === 'otterbrook' || devMap === 'brickton' || devMap === 'puerto_sol' ||
+        devMap === 'jungle_1' || devMap === 'jungle_2' || devMap === 'brickton_docks' ||
+        devMap === 'boat_interior' || devMap === 'grotto' || devMap === 'valle_dorado' ||
+        devMap === 'costa_estrella'
+      ) {
         GS.reset();
         GS.setFlag('intro_done');
         GS.setFlag('op_fell');
@@ -35,10 +45,32 @@ export class TitleScene extends Phaser.Scene {
         AUDIO.stopMusic();
         // EB polish rollout — per-map dev-boot spawns (handoff §5): each entry
         // lands mid-town with no pending story beat so screenshots are clean.
-        const spawn =
+        let spawn =
           devMap === 'brickton'
             ? { x: BRICKTON_BUS_SPAWN.x / 16, y: BRICKTON_BUS_SPAWN.y / 16 }
-            : OTTERBROOK_DEV_PREVIEW_SPAWN;
+            : devMap === 'puerto_sol'
+              ? PUERTO_SOL_DEV_PREVIEW_SPAWN
+              : devMap === 'jungle_1'
+                ? DUNAS_WEST_DEV_PREVIEW_SPAWN
+                : devMap === 'jungle_2'
+                  ? DUNAS_EAST_DEV_PREVIEW_SPAWN
+                  : devMap === 'brickton_docks'
+                    ? { x: 20, y: 8 }
+                    : devMap === 'boat_interior'
+                      ? { x: 11, y: 7 }
+                      : devMap === 'grotto'
+                        ? { x: 14, y: 18 }
+                        : devMap === 'valle_dorado'
+                          ? { x: 49, y: 45 }
+                          : devMap === 'costa_estrella'
+                            ? { x: 13, y: 14 }
+                  : OTTERBROOK_DEV_PREVIEW_SPAWN;
+        // Any rollout map can opt into an exact authored micro-scene without
+        // adding another permanent title-menu entry. Values are tile coords;
+        // invalid/missing values keep the clean map-specific default above.
+        const devX = Number(params.get('devX'));
+        const devY = Number(params.get('devY'));
+        if (Number.isFinite(devX) && Number.isFinite(devY)) spawn = { x: devX, y: devY };
         this.scene.start('overworld', {
           mapId: devMap,
           x: spawn.x * TILE_PX + TILE_PX / 2,

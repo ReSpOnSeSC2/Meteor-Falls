@@ -53,7 +53,15 @@ import {
 } from '../src/spritegen/combatIcons';
 import { FONT_CHARS, drawTextInto } from '../src/spritegen/font';
 import { Pixmap } from '../src/spritegen/pixmap';
-import { AREA_SKINS, CANON_AREAS, BESPOKE_AREA_FACADES, GENERATED_BUILDINGS } from '../src/spritegen/buildings';
+import {
+  AREA_SKINS,
+  CANON_AREAS,
+  BESPOKE_AREA_FACADES,
+  GENERATED_BUILDINGS,
+  FORMAL_CITY_FACADE_SOURCE_WIDTHS,
+  FORMAL_CITY_SCALE_IDS,
+  cityScaleVariantMeta,
+} from '../src/spritegen/buildings';
 import { AUTHORED_FACADE_KEYS } from '../src/spritegen/authored';
 import { GLYPH_SCRIPT, SCRIPT_CATALOG, areaGlyphRun } from '../src/spritegen/glyphforge';
 import { GLYPH_TOKENS, FLAIR_BY_ELEMENT, FLAIR_BY_RESULT, glyphRegistryNames, flairGlyph } from '../src/spritegen/flair';
@@ -64,6 +72,23 @@ import { VEHICLE_CATALOG, VEHICLE_SPECS, usableSeats } from '../src/spritegen/ve
 import { PSI_GATES, GATE_KEY, PSI_DUNGEON_BANDS } from '../src/data/psigates';
 import { abilitiesForKey } from '../src/engine/psi';
 import { PROPERTIES, PROPERTY_KINDS, LIVE_PROPERTIES } from '../src/data/properties';
+import {
+  CITY_AMENITIES,
+  CITY_AMENITY_MARKER_SPRITES,
+  FORMAL_CITY_IDS,
+  cityAmenitySignId,
+  cityHotelRoomId,
+  cityServiceForNpc,
+  cityServiceNpcId,
+  type GeneratedCityAmenityRole,
+} from '../src/data/city_amenities';
+import {
+  MINIMUS_SCALE_DEVICE_DIALOGUE,
+  MINIMUS_SCALE_DEVICE_PROP,
+  formalCityFacadeSource,
+  formalCityFacadeRatio,
+  formalCityFacadeRequiredRatio,
+} from '../src/data/formal_city_scale';
 import { AREA_SKINS as AREA_SKINS_FOR_PROP } from '../src/spritegen/buildings';
 import { FURNITURE, FURNITURE_FUNCTIONS } from '../src/data/furniture';
 import { THREAD_BEATS, THREAD_IDS } from '../src/data/storythreads';
@@ -616,6 +641,186 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   }
   for (const id of LIVE_PROPERTIES) {
     if (!PROPERTIES[id]) fail('property', `LIVE_PROPERTIES names '${id}' which is not a real property`);
+  }
+}
+
+// 2026-07-12 — THE FORMAL-CITY AMENITY CONTRACT. Every `settlement:'city'`
+// exposes a buyable home, agency, dealership, and paid hotel through canonical
+// registry data. Generated services bind by stable `citysvc_*` NPC IDs and claim
+// existing facade targets; hand-authored Brickton/Puerto hotels remain untouched.
+{
+  const formal = [...FORMAL_CITY_IDS].sort();
+  const cityMaps = Object.values(MAPS)
+    .filter((map) => map.settlement === 'city')
+    .map((map) => map.id)
+    .sort();
+  const registered = Object.keys(CITY_AMENITIES).sort();
+  if (formal.join('|') !== cityMaps.join('|')) {
+    fail('city-amenity', `formal city ids [${formal}] do not match settlement:'city' maps [${cityMaps}]`);
+  }
+  if (registered.join('|') !== cityMaps.join('|')) {
+    fail('city-amenity', `registry cities [${registered}] do not match settlement:'city' maps [${cityMaps}]`);
+  }
+
+  const npcMaps = (npcId: string) => Object.values(MAPS).filter((map) => map.npcs.some((npc) => npc.id === npcId));
+  const hasDoorPath = (from: string, to: string): boolean => {
+    const seen = new Set<string>();
+    const queue = [from];
+    while (queue.length) {
+      const id = queue.shift()!;
+      if (id === to) return true;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      for (const door of MAPS[id]?.doors ?? []) if (!seen.has(door.to)) queue.push(door.to);
+    }
+    return false;
+  };
+
+  for (const cityId of FORMAL_CITY_IDS) {
+    const amenity = CITY_AMENITIES[cityId];
+    const city = MAPS[cityId];
+    if (!city) { fail('city-amenity', `city '${cityId}' is missing from MAPS`); continue; }
+
+    const property = PROPERTIES[amenity.residential.propertyId];
+    if (!property) fail('city-amenity', `${cityId} lists missing property '${amenity.residential.propertyId}'`);
+    else {
+      if (property.kind !== 'home') fail('city-amenity', `${cityId} property '${property.id}' is '${property.kind}', not a true home`);
+      if (!LIVE_PROPERTIES.includes(property.id)) fail('city-amenity', `${cityId} property '${property.id}' is not in LIVE_PROPERTIES`);
+    }
+    if (!DEALERSHIP[amenity.dealership.featuredVehicleId]) {
+      fail('city-amenity', `${cityId} dealership features missing vehicle '${amenity.dealership.featuredVehicleId}'`);
+    } else {
+      const firstChapter = Object.values(CHAPTER_MANIFESTS).find((manifest) =>
+        manifest.settlements.some((settlement) => settlement.id === cityId),
+      )?.chapter;
+      const vehicleChapter = Number(DEALERSHIP[amenity.dealership.featuredVehicleId].band.replace('ch', ''));
+      if (!firstChapter || vehicleChapter > firstChapter) {
+        fail('city-amenity', `${cityId} displays '${amenity.dealership.featuredVehicleId}' (Ch.${vehicleChapter}) before its Ch.${firstChapter ?? '?'} first visit`);
+      }
+    }
+    if (amenity.hotel.rate <= 0) fail('city-amenity', `${cityId} hotel has non-positive nightly rate`);
+
+    const facadeTargets = new Set(city.props.flatMap((prop) => (prop.door ? [prop.door.to] : [])));
+    const generatedRoles = ['home_host', 'realtor', 'dealer'] as const;
+    for (const role of generatedRoles) {
+      const npcId = cityServiceNpcId(cityId, role);
+      const hosts = npcMaps(npcId);
+      if (hosts.length !== 1) {
+        fail('city-amenity', `${cityId} service NPC '${npcId}' occurs ${hosts.length} times (expected 1)`);
+        continue;
+      }
+      const binding = cityServiceForNpc(npcId);
+      if (binding?.cityId !== cityId || binding.role !== role) fail('city-amenity', `NPC lookup misbinds '${npcId}'`);
+      if (!facadeTargets.has(hosts[0].id)) {
+        fail('city-amenity', `${cityId} service '${npcId}' lives in '${hosts[0].id}', which is not an existing facade target`);
+      }
+    }
+
+    const dealerMaps = npcMaps(cityServiceNpcId(cityId, 'dealer'));
+    if (dealerMaps.length === 1) {
+      const vehicles = dealerMaps[0].props.filter((prop) =>
+        prop.sprite === amenity.dealership.featuredVehicleId || prop.sprite === 'vehicle_clunker',
+      );
+      if (vehicles.length < 2) fail('city-amenity', `${cityId} dealership lacks two authored vehicle display props`);
+    }
+
+    if (amenity.hotel.existing) {
+      const { lobbyId, roomId, clerkNpcId } = amenity.hotel.existing;
+      if (!MAPS[lobbyId]) fail('city-amenity', `${cityId} existing hotel lobby '${lobbyId}' is missing`);
+      if (!MAPS[roomId]) fail('city-amenity', `${cityId} existing hotel room '${roomId}' is missing`);
+      if (MAPS[lobbyId] && !MAPS[lobbyId].npcs.some((npc) => npc.id === clerkNpcId)) {
+        fail('city-amenity', `${cityId} existing hotel lobby '${lobbyId}' lost clerk '${clerkNpcId}'`);
+      }
+      if (MAPS[lobbyId] && MAPS[roomId] && !hasDoorPath(lobbyId, roomId)) {
+        fail('city-amenity', `${cityId} hotel room '${roomId}' is unreachable from lobby '${lobbyId}'`);
+      }
+      if (MAPS[roomId]?.npcs.length) {
+        fail('city-amenity', `${cityId} paid hotel room '${roomId}' is occupied by NPCs`);
+      }
+    } else {
+      const clerkId = cityServiceNpcId(cityId, 'hotel_clerk');
+      const lobbies = npcMaps(clerkId);
+      const roomId = cityHotelRoomId(cityId);
+      if (lobbies.length !== 1) fail('city-amenity', `${cityId} generated hotel clerk '${clerkId}' occurs ${lobbies.length} times`);
+      if (!MAPS[roomId]) fail('city-amenity', `${cityId} generated hotel room '${roomId}' is missing`);
+      if (lobbies.length === 1) {
+        if (!facadeTargets.has(lobbies[0].id)) fail('city-amenity', `${cityId} hotel lobby '${lobbies[0].id}' is not a claimed facade target`);
+        if (!lobbies[0].doors.some((door) => door.to === roomId)) fail('city-amenity', `${cityId} hotel lobby does not open to '${roomId}'`);
+        if (MAPS[roomId] && !MAPS[roomId].doors.some((door) => door.to === lobbies[0].id)) {
+          fail('city-amenity', `${cityId} hotel room '${roomId}' does not return to lobby '${lobbies[0].id}'`);
+        }
+      }
+    }
+
+    const roles: readonly GeneratedCityAmenityRole[] = ['home', 'agency', 'dealership', 'hotel'];
+    for (const role of roles) {
+      const dialogue = cityAmenitySignId(cityId, role);
+      const signs = city.signs.filter((sign) => sign.dialogue === dialogue);
+      if (signs.length !== 1) {
+        fail('city-amenity', `${cityId} ${role} exterior has ${signs.length} service plaques (expected 1)`);
+        continue;
+      }
+      const sign = signs[0];
+      const marker = city.props.find((prop) =>
+        prop.sprite === CITY_AMENITY_MARKER_SPRITES[role] &&
+        Math.abs(prop.x - sign.x) < 0.01 &&
+        Math.abs(prop.y - (sign.y + 0.35)) < 0.01,
+      );
+      if (!marker) fail('city-amenity', `${cityId} ${role} plaque lacks '${CITY_AMENITY_MARKER_SPRITES[role]}' street marker`);
+      else if (marker.solid) fail('city-amenity', `${cityId} ${role} street marker blocks movement`);
+      if (!DIALOGUE[dialogue]?.length) fail('city-amenity', `${cityId} ${role} plaque has no readable dialogue '${dialogue}'`);
+
+      let targetId: string | undefined;
+      if (role === 'hotel' && amenity.hotel.existing) targetId = amenity.hotel.existing.lobbyId;
+      else {
+        const npcRole = ({ home: 'home_host', agency: 'realtor', dealership: 'dealer', hotel: 'hotel_clerk' } as const)[role];
+        targetId = npcMaps(cityServiceNpcId(cityId, npcRole))[0]?.id;
+      }
+      const facade = city.props.find((prop) => prop.door?.to === targetId);
+      const source = facade ? formalCityFacadeSource(facade.sprite) ?? facade.sprite : '';
+      if (!facade || !amenity.facadeHints[role].some((hint) => source.includes(hint))) {
+        fail('city-amenity', `${cityId} ${role} facade '${source || '<missing>'}' matches none of [${amenity.facadeHints[role]}]`);
+      }
+    }
+  }
+}
+
+// 2026-07-12 — FORMAL-CITY ACTUAL RUNTIME SCALE. This measures the same
+// procedural texture height × native-map scale × PropDef instance scale used by
+// runtime placement. Every facade needs explicit metadata; ordinary buildings
+// are ≥6.7 32px heroes and landmarks ≥9. No anisotropic stretch may fake it.
+{
+  for (const cityId of FORMAL_CITY_SCALE_IDS) {
+    const map = MAPS[cityId];
+    if (!map) { fail('city-scale', `formal city '${cityId}' is missing`); continue; }
+    const facades = map.props.filter((prop) => prop.sprite.startsWith('bldg_'));
+    if (facades.length === 0) fail('city-scale', `${cityId} has no exterior facades`);
+    for (const prop of facades) {
+      const meta = cityScaleVariantMeta(prop.sprite);
+      if (!meta) { fail('city-scale', `${cityId} facade '${prop.sprite}' has no production-scale variant metadata`); continue; }
+      if (meta.cityId !== cityId) fail('city-scale', `${cityId} uses another city's variant '${prop.sprite}' (${meta.cityId})`);
+      const expectedWidth = FORMAL_CITY_FACADE_SOURCE_WIDTHS[cityId][meta.source];
+      if (expectedWidth === undefined) fail('city-scale', `${cityId} variant '${prop.sprite}' has unregistered source '${meta.source}'`);
+      else if (meta.opts.wallTiles !== expectedWidth) fail('city-scale', `${cityId} variant '${prop.sprite}' changed lot width ${expectedWidth} -> ${meta.opts.wallTiles}`);
+      const ratio = formalCityFacadeRatio(cityId, prop);
+      const required = formalCityFacadeRequiredRatio(prop);
+      if (ratio === undefined || required === undefined || ratio + 1e-9 < required) {
+        fail('city-scale', `${cityId} facade '${prop.sprite}' renders ${ratio?.toFixed(3) ?? '?'} hero-heights; requires ${required ?? '?'}x`);
+      }
+      if (prop.scale && typeof prop.scale !== 'number' && prop.scale.x !== prop.scale.y) {
+        fail('city-scale', `${cityId} facade '${prop.sprite}' fakes height with anisotropic scale ${prop.scale.x}×${prop.scale.y}`);
+      }
+      if (prop.door && !MAPS[prop.door.to]) fail('city-scale', `${cityId} promoted facade '${prop.sprite}' has dangling door '${prop.door.to}'`);
+    }
+  }
+  const minimus = MAPS.minimus_major;
+  if (minimus) {
+    if (!minimus.props.some((prop) => prop.sprite === MINIMUS_SCALE_DEVICE_PROP)) {
+      fail('city-scale', `Minimus keeps its Gulliver scale but lacks the Royal Long-View visual device '${MINIMUS_SCALE_DEVICE_PROP}'`);
+    }
+    if (!minimus.signs.some((sign) => sign.dialogue === MINIMUS_SCALE_DEVICE_DIALOGUE)) {
+      fail('city-scale', `Minimus scale conflict is silently exempted — missing readable Long-View explanation`);
+    }
   }
 }
 
@@ -1814,6 +2019,10 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       'empanada', 'ceviche', 'mango', 'arepa', 'chicha_morada', 'mate_gourd', 'jungle_fizz', 'unknot_drops',
       'chullo', 'woven_wristlet',
     ],
+    dunas_waystation: [
+      'alfajor', 'star_cola', 'salt_shaker', 'hanky', 'aloe_leaf',
+      'basket_basic', 'empanada', 'mango', 'mate_gourd', 'jungle_fizz', 'unknot_drops',
+    ],
     valle_shop: [
       'copper_pan', 'alfajor', 'corn_dog', 'star_cola', 'aloe_leaf', 'hanky', 'basket_basic',
       'choripan', 'tres_leches', 'humita', 'guardian_angel_feather', 'speed_demon_soda',
@@ -1822,9 +2031,9 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
   };
   const have = Object.keys(SHOPS);
   // ADR-095: shops grow per chapter (Ch.3 adds Foggybottom's chemist). The Ch.1–2
-  // four are still stock-pinned by the `canon` loop below; new chapters extend this
+  // early-region shelves are still stock-pinned by the `canon` loop below; new chapters extend this
   // allowlist, never ad-hoc (the ADR-017 manifest rule applied to shops).
-  const KNOWN_SHOPS = new Set(['bakery', 'burger', 'twoton_pizza', 'drugstore', 'starmart', 'mercado', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner', 'aurora_provisioner', 'mauna_vendor']);
+  const KNOWN_SHOPS = new Set(['bakery', 'burger', 'twoton_pizza', 'drugstore', 'starmart', 'mercado', 'dunas_waystation', 'valle_shop', 'foggybottom_chemist', 'wintermoor_tuck', 'kvisthavn_supply', 'lilleby_warehouse', 'minimus_provisioner', 'zanzibel_bazaar', 'chandrapore_bazaar', 'lotus_harbor_market', 'valea_provisioner', 'aurora_provisioner', 'mauna_vendor']);
   for (const id of have) {
     if (!KNOWN_SHOPS.has(id)) fail('canon', `shop '${id}' is not in the §A8 shop manifest — add it with its chapter, never ad-hoc`);
   }

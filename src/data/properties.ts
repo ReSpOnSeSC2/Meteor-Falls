@@ -53,6 +53,11 @@ export const PROPERTIES: Record<string, PropertyDef> = Object.fromEntries(
       blurb: 'Cozy! Third-floor, no lift, great light if you stand on the radiator. Tenants pay on time, mostly.',
     }),
     P({
+      id: 'twoton_house', band: 'ch1', name: 'The Civic Lane House', area: 'brickton', kind: 'home',
+      basePrice: 3400, rent: 0, deed: 'deed_twoton_house', storageTier: 1,
+      blurb: 'Cozy! Two bedrooms, one stubborn radiator, and a yard exactly large enough for one heroic tomato plant.',
+    }),
+    P({
       id: 'maple_fixer', band: 'ch1', name: '29 Maple (the Fixer)', area: 'otterbrook', kind: 'flip',
       basePrice: 800, rent: 0, deed: 'deed_maple_fixer', storageTier: 1, rundown: true,
       blurb: 'Cozy — eventually! Needs love. And a floor. And the previous floor removed. Priced to move.',
@@ -70,9 +75,19 @@ export const PROPERTIES: Record<string, PropertyDef> = Object.fromEntries(
       blurb: 'Cozy! Damp counts as cozy here. The radiator knocks out a little tune. Tea included, technically.',
     }),
     P({
+      id: 'valle_dorado_home', band: 'ch3', name: 'Casa de la Estrella', area: 'puerto_sol', kind: 'home',
+      basePrice: 38000, rent: 0, deed: 'deed_valle_dorado_home', storageTier: 2,
+      blurb: 'Cozy AND golden! Sun balcony, mosaic kitchen, and one tiny lift that arrives whenever it feels emotionally ready.',
+    }),
+    P({
       id: 'zanzibel_shop', band: 'ch6', name: 'A Stall on Market Row', area: 'zanzibel', kind: 'shop',
       basePrice: 22000, rent: 900, deed: 'deed_zanzibel_shop', storageTier: 2,
       blurb: 'Cozy AND loud! Best music on the row. Sells itself, honestly. You just stand there and it sells.',
+    }),
+    P({
+      id: 'zanzibel_courtyard', band: 'ch6', name: 'Indigo Courtyard House', area: 'zanzibel', kind: 'home',
+      basePrice: 78000, rent: 0, deed: 'deed_zanzibel_courtyard', storageTier: 2,
+      blurb: 'Cozy! Indigo walls, a cool courtyard, and a baobab root under the pantry that has seniority over everybody.',
     }),
     P({
       id: 'valea_cottage', band: 'ch9', name: "Buni's Spare Cottage", area: 'valea', kind: 'home',
@@ -106,6 +121,11 @@ export const PROPERTIES: Record<string, PropertyDef> = Object.fromEntries(
       blurb: 'Cozy! Red lacquer, a balcony over the water, paper lanterns that the previous owner SWEARS are just paper now.',
     }),
     P({
+      id: 'lotus_townhouse', band: 'ch8', name: 'Lotus Row Townhouse', area: 'lotus_harbor', kind: 'home',
+      basePrice: 210000, rent: 0, deed: 'deed_lotus_townhouse', storageTier: 3,
+      blurb: 'Cozy, vertically! Three narrow floors, a moon gate, and a roof garden where the neon signs do most of the watering.',
+    }),
+    P({
       id: 'aurora_quarters', band: 'ch10', name: 'Aurora Station Quarters', area: 'aurora', kind: 'home',
       basePrice: 600000, rent: 0, deed: 'deed_aurora_quarters', storageTier: 2,
       blurb: 'Cozy — by Alaskan standards, meaning the heater works! Steel walls, aurora out every window, a generator you will name.',
@@ -123,7 +143,18 @@ export const PROPERTIES: Record<string, PropertyDef> = Object.fromEntries(
   ].map((p) => [p.id, p]),
 );
 
-/** the live properties placed this movement (the rest land with their chapters) */
-export const LIVE_PROPERTIES: readonly string[] = ['27_maple', 'brickton_walkup', 'maple_fixer'];
+/** Properties with a live listing location in the current world graph. */
+export const LIVE_PROPERTIES: readonly string[] = [
+  '27_maple',
+  'brickton_walkup',
+  'maple_fixer',
+  'twoton_house',
+  'casa_del_sol',
+  'valle_dorado_home',
+  'minimus_manor',
+  'zanzibel_courtyard',
+  'hillcrest_manor',
+  'lotus_townhouse',
+];
 
 export const PROPERTY_KINDS: readonly PropertyKind[] = ['home', 'shop', 'rental', 'flip'];

@@ -50,6 +50,7 @@ import { CHOICES, type ChoiceId } from '../data/choices';
 import { ECHO_ANCHORS, MAX_BREATHS } from '../data/echoes';
 import { breathsLeft, rewindableAnchors, rewindTo } from '../engine/echo';
 import { recordedOption } from '../engine/choice';
+import { vehicleByTitle } from '../engine/vehicle-domain';
 
 export class MenuScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -334,15 +335,16 @@ export class MenuScene extends Phaser.Scene {
       const sel = await this.pick({
         x: s(96),
         y: s(8),
-        options: keys.map((id) => ITEMS[id]?.name ?? id),
-        icons: keys.map((id) => itemIconKey(id)),
+        options: keys.map((id) => ITEMS[id]?.name ?? vehicleByTitle(id)?.displayName ?? id),
+        icons: keys.map((id) => vehicleByTitle(id)?.id ?? itemIconKey(id)),
         reserveBottom: ITEMINFO_RESERVE,
         title: 'KEY ITEMS',
         onHighlight: (i) => info.render(keys[i]),
       });
       info.destroy();
       if (sel < 0) return;
-      await this.dlg.say(ITEMS[keys[sel]]?.text ?? '...');
+      const title = vehicleByTitle(keys[sel]);
+      await this.dlg.say(ITEMS[keys[sel]]?.text ?? title?.note ?? '...');
     }
   }
 
@@ -883,11 +885,11 @@ export class MenuScene extends Phaser.Scene {
             { b: 'START', does: 'pause' },
           ]
         : [
-            { b: 'A', does: 'confirm-bash-swing' },
-            { b: 'B', does: 'cancel-run' },
-            { b: 'X', does: 'sprint (links)' },
-            { b: 'Y', does: 'spare action' },
-            { b: 'START', does: 'menu-pause' },
+            { b: 'A', does: 'confirm-talk-horn' },
+            { b: 'B', does: 'cancel-run-brake' },
+            { b: 'X', does: 'park-exit / links' },
+            { b: 'Y', does: 'dash-field-vitals' },
+            { b: 'START', does: 'menu-pause / car key' },
           ];
     const keyName = (code: string): string =>
       code

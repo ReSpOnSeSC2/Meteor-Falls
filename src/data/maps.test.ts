@@ -18,6 +18,7 @@ import {
 // run the identical function, so they can never drift.
 import { cityViolations, livingCityViolations } from '../levelkit/metrics';
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
+import { formalCityFacadeSource } from './formal_city_scale';
 
 const maps = Object.values(MAPS);
 
@@ -181,7 +182,7 @@ describe('S1 canon — the Department & the 6:15', () => {
 describe('S4 canon — shops open, the bank grows an ATM (Prompt 20, ADR-016)', () => {
   it('the drugstore and STARMART are real doors now', () => {
     expect(MAPS.otterbrook.props.some((p) => p.door?.to === 'drugstore_int') || MAPS.otterbrook.doors.some((d) => d.to === 'drugstore_int')).toBe(true);
-    expect(MAPS.brickton.props.some((p) => p.sprite === 'bldg_starmart' && p.door?.to === 'starmart_int')).toBe(true);
+    expect(MAPS.brickton.props.some((p) => formalCityFacadeSource(p.sprite) === 'bldg_starmart' && p.door?.to === 'starmart_int')).toBe(true);
   });
 
   it('shop exits derive their doorsteps from the placed entry points -- computed, never hardcoded', () => {
@@ -227,7 +228,7 @@ describe('S4 canon — shops open, the bank grows an ATM (Prompt 20, ADR-016)', 
   });
 
   it('the ATM stands at the jittered SAVINGS & LOAN facade (and the bank stays locked)', () => {
-    const bank = MAPS.brickton.props.find((p) => p.sprite === 'bldg_bank');
+    const bank = MAPS.brickton.props.find((p) => formalCityFacadeSource(p.sprite) === 'bldg_bank');
     expect(bank).toBeDefined();
     const atms = MAPS.brickton.atms ?? [];
     expect(atms.length).toBe(1);
@@ -329,5 +330,11 @@ describe('Wave 2 (ADR-108) — map ambient audio · reflections · NPC ambient l
     for (const m of maps) {
       for (const n of m.npcs) expect(n.dog && n.idle).toBeFalsy();
     }
+  });
+
+  it('ships a visible dead-air-helmet counter for field PUPPET', () => {
+    const guard = MAPS.procession_way.npcs.find((npc) => npc.id === 'pw_guard');
+    expect(guard?.mindImmune).toBe(true);
+    expect(guard?.sprite).toBe('whistle_guard_npc');
   });
 });

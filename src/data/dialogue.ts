@@ -207,8 +207,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   wm_arrival_clicker: [
     '(A second contraption comes out of a deeper pocket — a universal remote bristling with too many aerials.)',
-    "@And THE CLICKER. It controls engines by remote. If a thing has a motor and nobody's sitting in it, I can drive it from right here. {g:gear}",
-    '@Cars, vans, that silly ride-on mower — anything on wheels is ours now. Just not the guards in helmets. Their helmets block the signal on purpose, so my remote can\'t reach them. Some grown-up was really scared of a kid with a remote.',
+    "@And THE CLICKER. It controls engines by remote. You can drive a car you own already; this lets me move an EMPTY machine from right here. {g:gear}",
+    '@Cars, vans, that silly ride-on mower — anything unoccupied on wheels can become a puzzle piece now. Just not hardened machines, and not guards in dead-air helmets. Their lining blocks the signal on purpose.',
   ],
   wm_arrival_gate: [
     '(The porter clears his throat. He has not moved one inch. He is still, very much, the only thing standing in the drive.)',
@@ -2071,6 +2071,24 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Tee times, tee times. I am the STARTER. Without me it is just people hitting rocks at a flag.',
     '@Your time? ...You do not HAVE one. Go on, the course is empty, it always is. But next time, a TIME.',
   ],
+  npc_costa_greenkeeper: [
+    '@The sea salts the west green, the wind trims the east green, and I receive the invoice.',
+    '@That pond used to be a bunker. One ambitious wave changed the course routing and joined the committee.',
+  ],
+  npc_costa_honeymooner: [
+    '@We finally found Costa Estrella. The brochure left out the wind, but the wind has offered to hold our hats.',
+    '@My husband is inside buying golf shoes. Neither of us plays golf. This is apparently how resorts work.',
+  ],
+  sign_costa_overlook: [
+    'MOONWAKE OVERLOOK — Puerto Sol glitters below. Valle Dorado is somewhere beyond the dark line of dunes.',
+    '(The telescope accepts no coins. It claims the view belongs to everybody.)',
+  ],
+  sign_costa_windsock: [
+    'COURSE WIND: theatrical. GUSTS: personal. HATS RECOVERED THIS WEEK: 14.',
+  ],
+  sign_costa_practice_green: [
+    'PRACTICE WATER GARDEN — formerly PRACTICE BUNKER. Please aim away from the koi. The koi remember.',
+  ],
   npc_estate_gardener: [
     '@Forty-one years on this lawn. I know every blade by its first name. That one is Gerald.',
     '@The members think the course mows itself. I let them think it. Gerald and I have an understanding.',
@@ -2547,6 +2565,25 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@I counted nine hundred bananas going onto that boat.',
     '@Nobody told me to count them. I just did it for fun. That\'s the part that worries my mom.',
   ],
+  npc_dock_fishmonger: [
+    '@Morning auction is over. The sardines won. They always travel in a voting bloc.',
+    '@Anything with fewer than a hundred friends gets iced and sent inland. Harbor democracy is rough.',
+  ],
+  npc_dock_tallyman: [
+    '@Crate fourteen says BANANAS. Crate fifteen says ALSO BANANAS. Crate sixteen is being mysterious.',
+    '@I shook it. Bananas. Mystery solved. I will file the paperwork by Thursday.',
+  ],
+  sign_docks_ticket_kiosk: [
+    'TWOTON FERRY TICKETS — HEROES: FREE. BANANAS: FREIGHT RATE. HEROES CARRYING BANANAS: ASK CAPTAIN.',
+    '(The tiny brass shutter snaps open whenever anyone says “Puerto Sol,” then remembers nobody is inside.)',
+  ],
+  sign_docks_fish_auction: [
+    'DAWN FISH AUCTION — bidding starts at six. The fish reserve the right to reject insulting offers.',
+  ],
+  sign_docks_harbor_bell: [
+    'HARBOR BELL — one ring for departure, two for weather, three if the luggage has begun moving by itself.',
+    '(There are chalk marks under THREE.)',
+  ],
   npc_uncle_bert: [
     "@Name's Bert. I fly an old plane named Lucille. Right now she's parked way over in England, waiting for me to come back.",
     '@The weather over the ocean this week? Same as always. Out here, it never really changes.',
@@ -2598,12 +2635,47 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'EAST: LAS DUNAS DESERT → VALLE DORADO.',
     '(Underneath, in smaller letters: "No services past this point. Bring water. You\'re on your own out there.")',
   ],
+  sign_ps_campo_viejo: [
+    'CAMPO VIEJO CEMETERY — visitors welcome until the last bell. Residents may stay overnight.',
+    '(A newer notice underneath reads: "Please stop asking the caretaker which graves are haunted. He ranks them, and it takes all afternoon.")',
+  ],
+  npc_ps_gravedigger: [
+    '@Every evening I light twelve cemetery lamps. Every morning I put out thirteen.',
+    '@I bought a new arithmetic book. It says the problem is not arithmetic.',
+  ],
+  sign_ps_moonwake: [
+    'MOONWAKE GARDEN — sit awhile, say a name, leave the last bench for whoever arrives after you.',
+    '(The flowers all face Campo Viejo instead of the sun.)',
+  ],
+  npc_ps_mourner: [
+    '@My mother hated quiet rooms. So I come here and tell her every bit of harbor gossip I can remember.',
+    '@Some nights the bell answers. I choose to believe she has corrections.',
+  ],
+  sign_ps_candleworks: [
+    'CALLE DE LAS VELAS — candles, paper flowers, wash by the line. Please keep sparks below hat height.',
+  ],
+  npc_ps_candle_vendor: [
+    '@One candle for birthdays, two for promises, three when you need the dark to mind its own business.',
+    '@Campo Viejo buys by the dozen. The radio man buys violet ones. He will not explain why.',
+  ],
+  sign_ps_radio: [
+    'PUERTO SOL MUNICIPAL MIDNIGHT RECEIVER — listening hours: sunset until the signal gets shy.',
+    '(The dial is labeled NORTH, SOUTH, WEATHER, and ELSEWHERE.)',
+  ],
+  npc_ps_radio_watcher: [
+    '@At twelve fourteen, the tower catches a station that broadcasts tomorrow\'s tides in a language nobody speaks.',
+    '@It has never been wrong. It has also never once said goodnight. Poor manners for a miracle.',
+  ],
   npc_ps_fisher: [
     '@I\'ve tied 900 different knots in my life, and I\'ve got a favorite ranking for every single one.',
     '@The bowline knot is my third favorite. Don\'t ask about my number one, though. If I told you, you\'d never want to tie any other knot again.',
   ],
   npc_ps_nina: [
     '@The boats unload bananas here, then load up MORE bananas and leave. I don\'t get it. I think they just like sailing around.',
+  ],
+  npc_ps_plaza_musician: [
+    '@I play one song for the fountain, one for the cemetery, and one for the radio tower in case somebody out there is listening.',
+    '@The fountain requests encores. The cemetery has excellent timing. The tower only asks for the song I have not written yet.',
   ],
   npc_ps_stall: [
     '@My cousin Tomas raises llamas up in Valle Dorado. At least, he used to. I haven\'t heard much lately.',
@@ -2631,6 +2703,16 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_ps_market: [
     '@Fresh off the boats, just for you! A spoon from a sunken ship! A button from a real sea captain\'s coat!',
     '@This one? A map that leads nowhere. But it\'s a very accurate map of nowhere. Never gotten it wrong yet!',
+  ],
+  npc_ps_fishmonger: [
+    '@Red snapper, silver sardine, one very gold fish that has requested museum representation.',
+    '@The curator says it is “gold-ish.” The fish says his lawyer will be in touch.',
+  ],
+  sign_ps_harbor_bell: [
+    'BELL OF THE TWO SHORES — rung for every safe arrival, every late departure, and every crate that comes home empty.',
+  ],
+  sign_ps_fish_auction: [
+    'NIGHT FISH AUCTION — whisper your bid. The moon is asleep and the mackerel are nervous.',
   ],
   sign_ps_malecon: [
     'EL MALECÓN — the busy dockfront. Watch out for the cranes. Watch out for the cats.',
@@ -2695,7 +2777,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   shop_mercado_bye: ['@Don\'t buy more than you can carry, friend! Safe travels!'],
   sign_mercado_wall: ['STORE RULE: weigh it in your hand first. ALWAYS THE HAND FIRST.'],
   npc_doc_puerto: [
-    '@Welcome to Clinica del Sol! My doctor\'s orders are simple: stay in the shade, drink water, and don\'t pick fights with jungle bugs.',
+    '@Welcome to Clinica del Sol! My doctor\'s orders are simple: stay in the shade, drink water, and don\'t pick fights with anything in Las Dunas.',
     '@Nobody ever follows that last order, of course. Sit down. Let me see how bad it is.',
   ],
   clinic_ps_wall: [
@@ -2791,13 +2873,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   /* ---------------- CLINICA DEL SOL — the observation ward ---------------- */
   npc_cw_ps_patient: [
-    '@A jungle bug bit me, so I bit it back. The doctor says we\'re BOTH under observation now.',
+    '@A sand flea bit me, so I bit it back. The doctor says we\'re BOTH under observation now.',
   ],
   npc_cw_ps_kid: [
-    '@I ate a red berry off the jungle path. It was delicious. That\'s the whole story, but they keep asking for more details.',
+    '@I licked a cactus because the pink part looked like candy. It was not candy, but I still think my reasoning was excellent.',
   ],
   cw_ps_chart: [
-    'OBSERVATION CHART — Bed 1: bites (mutual). Bed 2: berries (unrepentant). Bed 3: reserved for whoever\'s next off the jungle path.',
+    'OBSERVATION CHART — Bed 1: bites (mutual). Bed 2: cactus (confident). Bed 3: reserved for whoever\'s next off the Las Dunas road.',
   ],
   cw_ps_quiet: ['QUIET HOURS: whenever the doctor is thinking. The doctor is always thinking.'],
 
@@ -2817,16 +2899,44 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   q_museum_after: ['@My record of fakes is finished, and it\'s beautiful. Still zero real treasures, just the way I like it.'],
 
-  /* ---------------- the jungle path + the grotto ---------------- */
+  /* ---------------- LAS DUNAS + the grotto (legacy dialogue ids stay save-safe) ---------------- */
   sign_jungle1: [
-    'ROAD MANNERS: step aside for llamas, for lizards, and for anything that happens to be dancing.',
-    '(The desert put up this sign on its own, somehow. Best not to find out what happens if you ignore it.)',
+    'LAS DUNAS ROAD NOTICE — SHADE: 18 MILES. SHADE THAT WORKS: 31 MILES.',
+    '(Someone added, "The cactus shade works if you\'re a sandwich.")',
   ],
   sign_jungle2: [
-    'VALLE DORADO: STRAIGHT AHEAD. THE PYRAMID: ALSO STRAIGHT AHEAD, SADLY.',
-    '(Someone crossed out the word "sadly" and then wrote it again, even bigger.)',
+    'VALLE DORADO: EAST. PUERTO SOL: WEST. MIRAGES: WHEREVER THEY PLEASE.',
+    '(The arrow to the pyramid fell off. It is still pointing at the pyramid.)',
   ],
-  sign_grotto: ['(A cool breeze drifts out of the rocks. Inside, the dark smells like old stone and, somehow, good luck.)'],
+  npc_dunas_west_surveyor: [
+    '@My compass points north everywhere except this road. Here it points straight down.',
+    '@I sent it back to the factory. They returned it with a note: "Compass is fine. Road is suspicious."',
+  ],
+  npc_dunas_west_parasol: [
+    '@People laughed when I brought a parasol to a place with no rain.',
+    '@Nobody is laughing now. Mostly because their mouths are full of sand.',
+  ],
+  shop_dunas_waystation_greet: [
+    '@Welcome to THE LAST SHADE! We have cold drinks, hot snacks, and one chair that has never contained sand.',
+    '@The chair is not for sale. Everything else is negotiable except the thermometer. It already drives a hard bargain.',
+  ],
+  shop_dunas_waystation_bye: ['@Fill your canteen before you go. The road charges interest.'],
+  dunas_waystation_menu: [
+    'TODAY: DUNAS FIZZ, ALFAJORES, MATE. TOMORROW: EXACTLY THE SAME, BUT WARMER.',
+    '(A smaller card reads: "Payphone works. Jukebox predicts dust storms.")',
+  ],
+  npc_dunas_east_cartographer: [
+    '@I draw this road exactly where it is every morning. By lunch, the road has moved three feet south.',
+    '@Either Las Dunas is wandering, or my map is. I keep both on a leash now.',
+  ],
+  npc_dunas_east_pilgrim: [
+    '@The pyramid has been the same size for an hour, even though I keep walking toward it.',
+    '@I tried walking backward. It got bigger. I don\'t like that it knows reverse psychology.',
+  ],
+  sign_grotto: [
+    'LAS DUNAS GROTTO — cool air, old stones, absolutely no vending machine.',
+    '(A tiny bell rings somewhere inside. The sign has no bell.)',
+  ],
   grotto_chest_1: ['A basket someone hid here and never returned for. Lucky for you, the desert kept it dry.'],
   grotto_chest_2: ['Someone\'s just-in-case alfajor cookie. Still sealed up tight. It\'s yours now.'],
   grotto_chest_3: [
@@ -2834,6 +2944,14 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(It wants to help one more time.)',
   ],
   grotto_glyph: ['A carved stone slab shows a small sun cupped in two hands. Whoever carved it pushed in deep, like it really mattered.'],
+  grotto_spring: [
+    'The underground spring glows blue enough to paint the ceiling. The water is cold, clear, and utterly still.',
+    '(A single ripple travels toward the sun shrine, although nothing touched the surface.)',
+  ],
+  grotto_bridge: [
+    'Every plank is a different age. Every knot is the same knot, tied by someone who expected to come back.',
+    '(The bridge holds. It complains, but it holds.)',
+  ],
 
   /* ---------------- S17 M18 PART B (ADR-063) — PLACING THE AMERICAS LIVE ----------------
    * The two hero-signature SET caches (a coffee can / a market stall), the
@@ -2868,12 +2986,12 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   gift_fools_idol_done: ['(The spot where it sat stays colder than the ground around it. Sell it if you want, but never make a wish on it.)'],
 
-  // emerald (ch2) — deeper in the jungle
+  // emerald (ch2) — the shaded rest cache in Deep Dunas
   gift_emerald: [
-    'Stuck in a knot of tree bark, glowing green in the one beam of sunlight that reaches down here.',
-    '(An emerald about the size of your thumbnail. The jungle had it tucked away, but it won\'t miss one little gem.)',
+    'Under the picnic table, a gift box sits where the shade is thinnest. The bow is hot enough to make you drop it.',
+    '(Inside: an emerald about the size of your thumbnail, cool as well water. Las Dunas hid one green thing where nobody would think to look.)',
   ],
-  gift_emerald_done: ['(The knot in the bark is empty now. Somewhere up in the trees, a parrot squawks like it\'s filing a complaint.)'],
+  gift_emerald_done: ['(The little gift box is empty. Its ribbon keeps trying to point east, no matter which way the wind blows.)'],
 
   // gold_doubloon (ch2) — dockside
   gift_doubloon: [
@@ -2913,6 +3031,45 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   sign_valle_gate: [
     'SOUTH GATE — THE PYRAMID ROAD.',
     '(Nobody carved "welcome" over this one. The gold stops exactly at the wall.)',
+  ],
+  sign_valle_river_decks: [
+    'RÍO DORADO PROMENADE — upper deck for sunsets, lower deck for freight, both decks for arguments about which sunset was best.',
+  ],
+  npc_valle_river_vendor: [
+    '@River postcards! Every one painted from life, except this sunset. That one was too dramatic to happen naturally.',
+    '@The water used to be the brightest thing here. Then the towers arrived and took it personally.',
+  ],
+  sign_valle_sun_prints: [
+    'SUN-PRINT BAZAAR — portraits while you wait, weather permitting. At night we print from memory.',
+  ],
+  npc_valle_printmaker: [
+    '@The press catches whatever light touches the paper. Lately every portrait comes out with the same little grin in the corner.',
+    '@I cut the corner off. It came back in the next print. Business is excellent. Sleep is not.',
+  ],
+  sign_valle_taxi_court: [
+    'GOLD LINE TAXIS — fares metered in blocks, waiting time, and unsolicited tower opinions.',
+  ],
+  npc_valle_dispatcher: [
+    '@Cab seven to the river. Cab two to the old quarter. Cab four is still circling the clock because the driver likes the song.',
+    '@You need the pyramid gate? Walk. Even the meter refuses that fare.',
+  ],
+  sign_valle_pilgrim_market: [
+    'LAST MARKET BEFORE THE PYRAMID — water, veils, lucky charms, and refunds on luck that fails before the gate.',
+  ],
+  npc_valle_pilgrim: [
+    '@I bought three lucky suns. One points east, one points home, and one keeps pointing at me.',
+    '@The seller called that “premium introspection.” No refunds on premium introspection.',
+  ],
+  npc_valle_relic_vendor: [
+    '@Genuine pyramid-proof water flasks! The flask is genuine. The proof is mostly decorative.',
+    '@If a charm starts smiling back, put it down gently and pretend you were only comparing prices.',
+  ],
+  sign_valle_artisan_yard: [
+    'OLD-QUARTER FIRING YARD — hot kiln, wet clay, curious llamas. Close the kiln before answering philosophical questions.',
+  ],
+  npc_valle_potter: [
+    '@The city likes gold because gold never changes. Clay changes every time you touch it. That is why I trust clay.',
+    '@The llamas trust it too. Mostly as a thing to knock over.',
   ],
   sign_shrine: [
     'THE SHRINE OF THE GIVING SMILE — leave a wish, take a blessing.',
@@ -3609,6 +3766,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   npc_pw_guard: [
     "@Keep to the Way, colossus. By the book. (He consults a book the size of a postage stamp.) Page one: do not step off the Way. Page two: see page one. We Whistle Guards wrote it ourselves, over a weekend. We are very proud of page two.",
+    '(His ceremonial whistle-helm is lined with dead-air foil. Even at this size, it gives off the unmistakable feeling of a locked door.)',
   ],
 
   // — SIGNS (the duchy's foreign-but-readable heraldic hand) —

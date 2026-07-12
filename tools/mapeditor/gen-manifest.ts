@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { PALETTE, T } from '../../src/palette';
 import type { Pixmap } from '../../src/spritegen/pixmap';
 import { drawLinksPoster } from '../../src/spritegen/golfers';
-import { TILESET, PATH_BASE, PATH_VARIANTS, RUG_BASE, HEDGE_BASE, BRAMBLE_BASE } from '../../src/spritegen/tiles';
+import { TILESET, PATH_BASE, PATH_VARIANTS, RUG_BASE, HEDGE_BASE, BRAMBLE_BASE, drawCityBuilding } from '../../src/spritegen/tiles';
 import { CHAR_LEGEND, MAPS } from '../../src/data/maps';
 import {
   AUTHORED_WORLD_PROP_KEYS,
@@ -28,7 +28,7 @@ import {
   REGION_TILE_STRIPS,
   NPC_CHARACTER_ART,
 } from '../../src/spritegen/authored';
-import { CANON_AREAS } from '../../src/spritegen/buildings';
+import { CANON_AREAS, CITY_SCALE_BUILDINGS } from '../../src/spritegen/buildings';
 import { AMBIENCE_IDS, SettlementSchema, DoorIndicatorSchema, FacingSchema } from '../../src/schemas';
 import { DIALOGUE } from '../../src/data/dialogue';
 import { CITYLIFE_DIALOGUE } from '../../src/data/citylife_text';
@@ -126,6 +126,7 @@ const FLAT = new Set([
   'paw_prints', 'doormat', 'ember', 'gift_box', 'gift_box_open', 'postage_stamp_crosswalk',
   'poster_smile', 'poster_chart', 'banner_productive', 'skyline', 'bus_windows',
   'treeline_2', 'treeline_2_b', 'treeline_4', 'treeline_4_b', 'treeline_8', 'treeline_8_b',
+  'grotto_stone_arch', 'grotto_rope_bridge', 'festival_lantern_span',
 ]);
 const propGroup = (key: string): string => {
   if (/^(tree|pine|palm|prop_pine|baobab|cattails|glow_shroom|root_)/.test(key)) return 'nature';
@@ -248,6 +249,16 @@ const facades = [
     w: +(p.w / 16).toFixed(3),
     h: +(p.h / 16).toFixed(3),
   })),
+  ...CITY_SCALE_BUILDINGS.map((building) => {
+    const pm = drawCityBuilding(building.opts);
+    return {
+      key: building.name,
+      url: pixmapPngDataUrl(pm),
+      aspect: +(pm.w / pm.h).toFixed(3),
+      w: +(pm.w / 16).toFixed(3),
+      h: +(pm.h / 16).toFixed(3),
+    };
+  }),
 ];
 
 // ---- REGION SKINS ----------------------------------------------------------------

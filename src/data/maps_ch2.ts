@@ -62,14 +62,25 @@ function giftBox(
 
 export function buildBricktonDocks(): MapDef {
   const g = new Grid(30, 18, '=');
-  // the sea owns the east and the south
+  // THE HARBOR SILHOUETTE: terminal apron at west, a working timber wharf
+  // through the middle, and open water wrapping east + south. The old
+  // functional coordinates remain fixed while the space gains real districts.
   g.rect(20, 0, 10, 18, 'e');
   g.rect(0, 15, 30, 3, 'e');
   g.rect(0, 14, 20, 1, 'E');
   g.rect(19, 0, 1, 15, 'E');
-  // the pier pushes out into it
+  // Main departure wharf + south service finger + fish-auction apron.
   g.rect(8, 6, 16, 5, 'd');
   g.rect(22, 7, 4, 3, 'd');
+  g.rect(10, 10, 8, 5, 'd');
+  g.rect(2, 11, 6, 3, 'p');
+  // Painted terminal parking and deterministic slab wear. The three-tile
+  // gate→wharf procession, ticket cache (14,8), and return spawn (20,8) stay clear.
+  g.rect(1, 2, 7, 3, 'P');
+  for (const [x, y, ch] of [
+    [2, 5, '1'], [5, 10, '1'], [7, 3, '3'], [9, 5, '1'],
+    [13, 12, '1'], [17, 5, '3'], [18, 12, '1'],
+  ] as const) g.set(x, y, ch);
   // brick spine along the north (the city at your back) — the west wall
   // opens at y 6–8, the return door's rows (doors[] below): the gap must
   // stay walkable or the docks seal Brickton off behind the boat
@@ -80,12 +91,31 @@ export function buildBricktonDocks(): MapDef {
     id: 'brickton_docks',
     name: 'TWOTON DOCKS',
     music: 'puerto',
+    ambience: 'waves',
     grid: g.out(),
     props: [
       // THE BANANA BOAT, moored where the §A5 row says it waits
       { sprite: 'banana_boat', x: 21, y: 3.5, solid: { ox: 4, oy: 22, w: 120, h: 24 } },
       { sprite: 'gangplank', x: 22.6, y: 7.6 },
+      // TERMINAL: a real depot wall, ticket pavilion, and sheltered waiting pocket.
+      // The warehouse is deliberately doorless; this route map is the destination.
+      { sprite: 'bldg_warehouse', x: 1, y: 0.25, solid: { ox: 0, oy: 10, w: 130, h: 38 } },
+      { sprite: 'puerto_ticket_kiosk', x: 2.1, y: 8.25, solid: { ox: 4, oy: 44, w: 40, h: 10 } },
+      { sprite: 'bench', x: 2.2, y: 4.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 6, y: 4.4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
       { sprite: 'departure_board', x: 9, y: 4.4, solid: { ox: 2, oy: 20, w: 22, h: 8 } },
+      // CARGO TALLY LANE: machinery and mail form a working loop without
+      // pinching the ticket cache or the captain's boarding zone.
+      { sprite: 'puerto_cargo_crane', x: 9, y: 9.7, solid: { ox: 5, oy: 50, w: 48, h: 12 } },
+      { sprite: 'puerto_luggage_cart', x: 15.3, y: 10.6, solid: { ox: 3, oy: 25, w: 37, h: 8 } },
+      { sprite: 'puerto_mooring_bollards', x: 18, y: 10.9, solid: { ox: 3, oy: 10, w: 26, h: 7 } },
+      { sprite: 'puerto_mooring_bollards', x: 23, y: 9.7, solid: { ox: 3, oy: 10, w: 26, h: 7 } },
+      { sprite: 'fb_rope_coil', x: 17.2, y: 12.6 },
+      { sprite: 'fb_barrel', x: 13.3, y: 12.1, solid: { ox: 2, oy: 18, w: 14, h: 7 } },
+      // SOUTH AUCTION: fresh catch under canvas, crab pots, and a harbor bell.
+      { sprite: 'puerto_fish_stall', x: 3.3, y: 10.7, solid: { ox: 2, oy: 30, w: 40, h: 11 } },
+      { sprite: 'fb_crab_pot', x: 6.5, y: 12.1, solid: { ox: 2, oy: 19, w: 14, h: 7 } },
+      { sprite: 'puerto_harbor_bell', x: 14.7, y: 10.1, solid: { ox: 7, oy: 37, w: 37, h: 10 } },
       { sprite: 'crate', x: 11, y: 8.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
       { sprite: 'crate_bananas', x: 12.3, y: 9.4, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
       { sprite: 'payphone', x: 4, y: 4, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
@@ -97,11 +127,16 @@ export function buildBricktonDocks(): MapDef {
     npcs: [
       { id: 'captain', sprite: 'captain', x: 21, y: 9, facing: 'down', dialogue: 'npc_captain' },
       { id: 'dock_kid', sprite: 'pigeonKid', x: 7, y: 11, facing: 'right', dialogue: 'npc_dock_kid', wander: true },
+      { id: 'dock_fishmonger', sprite: 'mercadoKeeper', x: 5, y: 13, facing: 'up', dialogue: 'npc_dock_fishmonger', idle: true, emote: 'happy' },
+      { id: 'dock_tallyman', sprite: 'dockworker', x: 18, y: 13, facing: 'left', dialogue: 'npc_dock_tallyman', wander: true },
       // the Ch.3 tease (zero map yet): Uncle Bert turns up once the Grin falls
       { id: 'uncle_bert', sprite: 'uncleBert', x: 13, y: 5, facing: 'down', dialogue: 'npc_uncle_bert', ifFlag: 'ch2_complete' },
     ],
     signs: [
       { x: 9, y: 5, dialogue: 'sign_departures' },
+      { x: 3, y: 12, dialogue: 'sign_docks_ticket_kiosk' },
+      { x: 6, y: 13, dialogue: 'sign_docks_fish_auction' },
+      { x: 16, y: 13, dialogue: 'sign_docks_harbor_bell' },
       ...giftBox('gift_boat_ticket', 14, 8).signs,
     ],
     phones: [{ x: 4, y: 4 }],
@@ -116,33 +151,56 @@ export function buildBricktonDocks(): MapDef {
       // standing at the gangplank — the captain's boarding ask (ch1-gated)
       { id: 'board_boat', rect: { x: 22, y: 7, w: 2, h: 3 }, once: false },
     ],
+    reflect: [
+      { x: 26, y: 0, w: 4, h: 18, within: 4 },
+      { x: 0, y: 15, w: 30, h: 3, within: 4 },
+    ],
   };
 }
 
 /* ================= THE CROSSING (the boat's deck — bus-map precedent) ================= */
 
 export function buildBoatInterior(): MapDef {
-  const g = new Grid(24, 10, 'd');
+  const g = new Grid(24, 14, 'd');
   g.rect(0, 0, 24, 3, 'y'); // sky band — the reel scrolls here
   g.rect(0, 3, 24, 1, 'e'); // the horizon
-  g.rect(0, 4, 24, 1, '-'); // the rail
-  g.rect(0, 9, 24, 1, '-'); // stern rail
+  // The map bounds provide the invisible deck rail. Generic '-'/'|' fence tiles
+  // read as a suburban picket fence in this skin, so the vessel silhouette is
+  // carried by the wheelhouse, stack, winch, flag and edge bollards instead.
   return {
     id: 'boat_interior',
     name: 'THE BANANA BOAT',
     music: 'boat',
     interior: true,
+    night: true,
+    ambience: 'waves',
     grid: g.out(),
     props: [
-      { sprite: 'crate_bananas', x: 3, y: 5.4, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'crate', x: 5.6, y: 6.6, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'crate_bananas', x: 18, y: 6, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
-      { sprite: 'crate', x: 16.4, y: 7.2, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      // PORT CARGO: a winch, bananas, rope and crab pots form a compact work bay.
+      { sprite: 'puerto_deck_winch', x: 2, y: 6.8, solid: { ox: 4, oy: 22, w: 28, h: 8 } },
+      { sprite: 'crate_bananas', x: 3, y: 10.1, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'crate', x: 5.1, y: 11.1, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'fb_rope_coil', x: 2.1, y: 11.1 },
+      { sprite: 'fb_crab_pot', x: 5.5, y: 8.4, solid: { ox: 2, oy: 19, w: 14, h: 7 } },
+      { sprite: 'steamer_stack', x: 4.8, y: 4.1 },
+      // PASSENGER POCKET: two benches face the sea without crowding the spawn.
+      { sprite: 'bench', x: 7, y: 10.3, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 13.3, y: 10.3, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'puerto_mooring_bollards', x: 6.1, y: 11.8, solid: { ox: 3, oy: 10, w: 26, h: 7 } },
+      { sprite: 'puerto_mooring_bollards', x: 0.5, y: 4.3, solid: { ox: 3, oy: 10, w: 26, h: 7 } },
+      { sprite: 'puerto_mooring_bollards', x: 21.2, y: 11.9, solid: { ox: 3, oy: 10, w: 26, h: 7 } },
+      // STARBOARD BRIDGE: an actual wheelhouse and mail/cargo stack give the
+      // captain a workplace rather than a blank strip of deck.
+      { sprite: 'puerto_wheelhouse', x: 17.1, y: 4.6, solid: { ox: 5, oy: 42, w: 46, h: 10 } },
+      { sprite: 'puerto_luggage_cart', x: 17.3, y: 9.3, solid: { ox: 3, oy: 25, w: 37, h: 8 } },
+      { sprite: 'crate_bananas', x: 20.3, y: 10.8, solid: { ox: 1, oy: 8, w: 18, h: 9 } },
+      { sprite: 'fb_barrel', x: 21.1, y: 8.1, solid: { ox: 2, oy: 18, w: 14, h: 7 } },
+      { sprite: 'flagpole', x: 22.1, y: 4.1 },
     ],
     npcs: [
-      { id: 'captain_deck', sprite: 'captain', x: 21, y: 6, facing: 'left', dialogue: 'npc_captain_deck' },
+      { id: 'captain_deck', sprite: 'captain', x: 21, y: 9.5, facing: 'left', dialogue: 'npc_captain_deck' },
       // a Valle Dorado señora heading home — the worry rides with you
-      { id: 'boat_senora', sprite: 'senora', x: 9, y: 6, facing: 'up', dialogue: 'npc_boat_senora' },
+      { id: 'boat_senora', sprite: 'senora', x: 9, y: 8.5, facing: 'up', dialogue: 'npc_boat_senora' },
     ],
     signs: [],
     phones: [],
@@ -156,6 +214,11 @@ export function buildBoatInterior(): MapDef {
 
 /** where the boat lands you — OverworldScene's crossing flow reads this */
 export const PUERTO_SOL_PIER_SPAWN = { x: 416, y: 996 } as const;
+/** Clean Chapter-2/Threed rollout preview: the south edge of the catedral plaza. */
+export const PUERTO_SOL_DEV_PREVIEW_SPAWN = { x: 51, y: 43 } as const;
+/** Clean rollout previews, centered on each transition leg's signature bend. */
+export const DUNAS_WEST_DEV_PREVIEW_SPAWN = { x: 22, y: 17 } as const;
+export const DUNAS_EAST_DEV_PREVIEW_SPAWN = { x: 22, y: 21 } as const;
 /** the north gate up the cliff road — COSTA_DOOR_FOR_PUERTO_SOL aims here */
 export const PUERTO_SOL_NORTH_GATE = { tx: 120, ty: 32 } as const;
 
@@ -480,6 +543,9 @@ export function buildHotelPsHall(): MapDef {
     phones: [],
     doors: [
       { x: 2, y: 2, w: 2, h: 1, to: 'hotel_ps_lobby', tx: 88, ty: 60, facing: 'down', indicator: 'elevator' },
+      // Room 5 is the paid player room. Rooms 3/4 remain occupied character
+      // vignettes, so check-in never evicts the salesman or honeymooners.
+      { x: 4, y: 2, w: 2, h: 1, to: 'hotel_ps_guest_room', tx: 104, ty: 124, facing: 'up', indicator: 'door' },
       { x: 7, y: 2, w: 2, h: 1, to: 'hotel_ps_room_a', tx: 88, ty: 108, facing: 'up', indicator: 'door' },
       { x: 12, y: 2, w: 2, h: 1, to: 'hotel_ps_room_b', tx: 88, ty: 108, facing: 'up', indicator: 'door' },
     ],
@@ -767,40 +833,191 @@ export function buildChapelInt(streetExit: { tx: number; ty: number }): MapDef {
 // the internal ids stay jungle_1/jungle_2 for save-compat, the display names read
 // LAS DUNAS DESERT / DEEP DUNAS. Corridor landings are cross-aimed in the Valle
 // Dorado block below; the grotto keeps its baked landing (grotto is unchanged).
-/** the optional grotto — a chest run (the S9b gift-box pattern, three deep) */
-export function buildGrotto(): MapDef {
-  const g = new Grid(14, 11, 'Y');
-  g.rect(0, 0, 14, 2, 'Z');
-  g.rect(0, 0, 1, 11, 'Z');
-  g.rect(13, 0, 1, 11, 'Z');
-  g.rect(0, 10, 14, 1, 'Z');
-  g.rect(5, 10, 3, 1, 'Y'); // the mouth
-  g.rect(4, 4, 2, 3, 'Z'); // a column the dark hides behind
-  g.set(9, 6, 'G');
+/** The roadside facade is a real, save-capable provision stop—not scenery. */
+export function buildDunasWaystation(streetExit: { tx: number; ty: number }): MapDef {
+  const g = new Grid(14, 10, 'w');
+  g.rect(0, 0, 14, 2, 'W');
+  g.rect(4, 5, 6, 2, 'r');
   return {
-    id: 'grotto',
-    name: 'JUNGLE GROTTO',
-    music: 'pyramid',
+    id: 'dunas_waystation',
+    name: 'THE LAST SHADE MALT SHOP',
+    music: 'dunas',
     interior: true,
     grid: g.out(),
     props: [
-      { sprite: 'gift_box', x: 2, y: 2.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'grotto_chest_1' },
-      { sprite: 'gift_box_open', x: 2, y: 2.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'grotto_chest_1' },
-      { sprite: 'gift_box', x: 11, y: 2.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'grotto_chest_2' },
-      { sprite: 'gift_box_open', x: 11, y: 2.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'grotto_chest_2' },
-      { sprite: 'gift_box', x: 7, y: 5.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, unlessFlag: 'grotto_chest_3' },
-      { sprite: 'gift_box_open', x: 7, y: 5.4, solid: { ox: 1, oy: 7, w: 12, h: 6 }, ifFlag: 'grotto_chest_3' },
+      { sprite: 'shelf', x: 1, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'shelf_b', x: 11, y: 2, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+      { sprite: 'counter', x: 5, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'counter', x: 7, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+      { sprite: 'cola_fridge', x: 12.2, y: 0.25 },
+      { sprite: 'bench', x: 3, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'bench', x: 9, y: 6, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+      { sprite: 'payphone', x: 1, y: 8, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
+      { sprite: 'atm', x: 12, y: 8, solid: { ox: 1, oy: 10, w: 14, h: 12 } },
+    ],
+    npcs: [
+      {
+        id: 'dunas_waystation_keeper',
+        sprite: 'mercadoKeeper',
+        x: 6,
+        y: 2,
+        facing: 'down',
+        dialogue: 'shop_dunas_waystation_greet',
+        shop: 'dunas_waystation',
+        idle: true,
+        emote: 'happy',
+      },
+    ],
+    signs: [{ x: 11, y: 1, dialogue: 'dunas_waystation_menu' }],
+    phones: [{ x: 1, y: 8 }],
+    atms: [{ x: 12, y: 8 }],
+    doors: [
+      { x: 6, y: 9, w: 2, h: 1, to: 'jungle_1', tx: streetExit.tx, ty: streetExit.ty, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** ROOM 5 — the dedicated paid guest room. Unlike the two vignette rooms it is
+ * deliberately unoccupied, with a reciprocal hall landing suitable for the
+ * hotel check-in/wake flow. */
+export function buildHotelPsGuestRoom(): MapDef {
+  const g = new Grid(12, 9, 'w');
+  g.rect(0, 0, 12, 2, 'W');
+  g.rect(5, 6, 2, 2, 'r');
+  return {
+    id: 'hotel_ps_guest_room',
+    name: 'GRAN HOTEL SOL — ROOM 5',
+    music: 'puerto',
+    interior: true,
+    grid: g.out(),
+    props: [
+      { sprite: 'bed', x: 1, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'bed', x: 3.5, y: 2, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+      { sprite: 'dresser', x: 8, y: 1.2, solid: { ox: 2, oy: 8, w: 26, h: 14 } },
+      { sprite: 'tv', x: 8.5, y: 0.6 },
+      { sprite: 'rocking_chair', x: 8.8, y: 5.2, solid: { ox: 2, oy: 12, w: 14, h: 10 } },
+      { sprite: 'floor_lamp', x: 7, y: 5, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+      { sprite: 'plant_pot', x: 1, y: 7, solid: { ox: 3, oy: 14, w: 8, h: 7 } },
+    ],
+    npcs: [],
+    signs: [],
+    phones: [],
+    doors: [
+      { x: 5, y: 8, w: 2, h: 1, to: 'hotel_ps_hall', tx: 80, ty: 60, facing: 'down', indicator: 'mat' },
+    ],
+    spawners: [],
+    triggers: [],
+  };
+}
+
+/** the optional grotto — a chest run (the S9b gift-box pattern, three deep) */
+export function buildGrotto(): MapDef {
+  const W = 28;
+  const H = 20;
+  // Share the Under-Oak cave vocabulary: layered rock faces around a dark,
+  // earthen floor. The earlier pyramid slabs made this natural grotto read as
+  // a tiled temple room despite its organic silhouette.
+  const WALL = 'K';
+  const FLOOR = 's';
+  const g = new Grid(W, H, WALL);
+
+  // An organic six-chamber grotto: irregular ellipse carves give every vault
+  // a different silhouette, while hand-routed 3-wide throats prevent diagonal
+  // pinches. Deterministic hash wobble keeps the outline rocky, never random.
+  const caveHash = (x: number, y: number, seed: number): number => {
+    let h = Math.imul(x + seed, 0x45d9f3b) ^ Math.imul(y + 31, 0x119de1f3);
+    h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+    return (h ^ (h >>> 16)) >>> 0;
+  };
+  const chamber = (cx: number, cy: number, rx: number, ry: number, seed: number): void => {
+    for (let y = Math.floor(cy - ry - 1); y <= Math.ceil(cy + ry + 1); y++)
+      for (let x = Math.floor(cx - rx - 1); x <= Math.ceil(cx + rx + 1); x++) {
+        const wobble = ((caveHash(x, y, seed) % 11) - 5) * 0.012;
+        const d = ((x - cx) * (x - cx)) / (rx * rx) + ((y - cy) * (y - cy)) / (ry * ry);
+        if (d <= 1 + wobble) g.set(x, y, FLOOR);
+      }
+  };
+  const tunnel = (points: Array<[number, number]>, width = 3): void => {
+    const half = Math.floor(width / 2);
+    for (let i = 0; i < points.length - 1; i++) {
+      let [x, y] = points[i];
+      const [tx, ty] = points[i + 1];
+      for (;;) {
+        g.rect(x - half, y - half, width, width, FLOOR);
+        if (x === tx && y === ty) break;
+        if (x !== tx) x += Math.sign(tx - x);
+        if (y !== ty) y += Math.sign(ty - y);
+      }
+    }
+  };
+
+  chamber(14, 16, 4.5, 3, 1);  // entry rotunda
+  chamber(14, 11, 6.2, 4, 2);  // central echo chamber
+  chamber(5, 6, 4.2, 4, 3);    // west cache vault
+  chamber(14, 4, 4.6, 3.5, 4); // upper sun shrine
+  chamber(23, 7, 4, 4, 5);     // east crystal vault
+  chamber(22, 14, 4, 3, 6);    // underground spring
+  tunnel([[5, 8], [8, 9], [11, 10]]);
+  tunnel([[14, 6], [14, 9]]);
+  tunnel([[18, 9], [21, 8]]);
+  tunnel([[14, 13], [14, 19]], 4);
+  tunnel([[18, 12], [22, 14]]);
+
+  // A narrow fissure makes the rope bridge a real traversal landmark. Its
+  // middle row stays walkable; the surrounding rock cells own the drop collision.
+  g.rect(18, 11, 4, 3, WALL);
+  g.rect(18, 12, 4, 1, FLOOR);
+  g.rect(17, 11, 2, 3, FLOOR);
+  g.rect(21, 12, 2, 3, FLOOR);
+  // Mouth and carved shrine glyph.
+  g.rect(12, H - 1, 4, 1, FLOOR);
+  g.set(14, 6, 'G');
+  return {
+    id: 'grotto',
+    name: 'LAS DUNAS GROTTO',
+    music: 'pyramid',
+    interior: true,
+    ambience: 'cave',
+    muffle: 2,
+    grid: g.out(),
+    props: [
+      // The shrine is the dungeon's north-star; its narrow base leaves two
+      // side lanes so the chamber never becomes a prop-collision dead end.
+      { sprite: 'grotto_sun_shrine', x: 11.2, y: 0.25, solid: { ox: 8, oy: 60, w: 44, h: 11 } },
+      { sprite: 'grotto_stone_arch', x: 10.1, y: 6.7 },
+      { sprite: 'grotto_rope_bridge', x: 17.5, y: 9.7 },
+      { sprite: 'grotto_spring', x: 20.2, y: 12.4, solid: { ox: 5, oy: 25, w: 38, h: 7 } },
+      // Cave dressing follows each chamber's purpose instead of being scattered.
+      { sprite: 'edge_rock_b', x: 1.4, y: 2.1, solid: { ox: 5, oy: 25, w: 21, h: 7 } },
+      { sprite: 'stalagmite', x: 7.2, y: 4.2, solid: { ox: 5, oy: 24, w: 20, h: 9 } },
+      { sprite: 'cave_crystal', x: 24.8, y: 4.3, solid: { ox: 4, oy: 20, w: 15, h: 7 } },
+      { sprite: 'cave_crystal_b', x: 20.2, y: 7.6, solid: { ox: 5, oy: 23, w: 18, h: 7 } },
+      { sprite: 'cave_crystal', x: 25.1, y: 9.2, solid: { ox: 4, oy: 20, w: 15, h: 7 } },
+      { sprite: 'rubble_pile', x: 2, y: 9.1, solid: { ox: 4, oy: 16, w: 29, h: 7 } },
+      { sprite: 'rubble_pile', x: 9, y: 15.8, solid: { ox: 4, oy: 16, w: 29, h: 7 } },
+      { sprite: 'meteor_shard', x: 17.1, y: 15.3, solid: { ox: 5, oy: 26, w: 20, h: 7 } },
+      // The three legacy flag pairs move into distinct vaults, IDs unchanged.
+      { sprite: 'gift_box', x: 4, y: 5.4, solid: GIFT_SOLID, unlessFlag: 'grotto_chest_1' },
+      { sprite: 'gift_box_open', x: 4, y: 5.4, solid: GIFT_SOLID, ifFlag: 'grotto_chest_1' },
+      { sprite: 'gift_box', x: 23, y: 6.4, solid: GIFT_SOLID, unlessFlag: 'grotto_chest_2' },
+      { sprite: 'gift_box_open', x: 23, y: 6.4, solid: GIFT_SOLID, ifFlag: 'grotto_chest_2' },
+      { sprite: 'gift_box', x: 14, y: 10.4, solid: GIFT_SOLID, unlessFlag: 'grotto_chest_3' },
+      { sprite: 'gift_box_open', x: 14, y: 10.4, solid: GIFT_SOLID, ifFlag: 'grotto_chest_3' },
     ],
     npcs: [],
     signs: [
-      { x: 2, y: 3, dialogue: 'grotto_chest_1', unlessFlag: 'grotto_chest_1' },
-      { x: 11, y: 3, dialogue: 'grotto_chest_2', unlessFlag: 'grotto_chest_2' },
-      { x: 7, y: 6, dialogue: 'grotto_chest_3', unlessFlag: 'grotto_chest_3' },
-      { x: 9, y: 6, dialogue: 'grotto_glyph' },
+      { x: 4, y: 6, dialogue: 'grotto_chest_1', unlessFlag: 'grotto_chest_1' },
+      { x: 23, y: 7, dialogue: 'grotto_chest_2', unlessFlag: 'grotto_chest_2' },
+      { x: 14, y: 11, dialogue: 'grotto_chest_3', unlessFlag: 'grotto_chest_3' },
+      { x: 14, y: 6, dialogue: 'grotto_glyph' },
+      { x: 21, y: 15, dialogue: 'grotto_spring' },
+      { x: 20, y: 12, dialogue: 'grotto_bridge' },
     ],
     phones: [],
-    doors: [{ x: 5, y: 10, w: 3, h: 1, to: 'jungle_2', tx: 192, ty: 40, facing: 'down', indicator: 'mat' }],
-    spawners: [{ enemies: ['cursed_souvenir'], count: 1, rect: { x: 8, y: 7, w: 4, h: 2 } }],
+    doors: [{ x: 12, y: H - 1, w: 4, h: 1, to: 'jungle_2', tx: 192, ty: 40, facing: 'down', indicator: 'mat' }],
+    spawners: [{ enemies: ['cursed_souvenir'], count: 1, rect: { x: 9, y: 12, w: 8, h: 2 } }],
     triggers: [],
   };
 }
@@ -1250,6 +1467,7 @@ export function buildChapter2Maps(steps: {
   const valleShopStep = doorstepOf(valle, 'valle_shop_int') ?? { tx: 344, ty: 130 };
   const valleClinicStep = doorstepOf(valle, 'clinic_valle_int') ?? { tx: 500, ty: 258 };
   const valleChapelStep = doorstepOf(valle, 'chapel_valle_int') ?? { tx: 154, ty: 430 };
+  const waystationStep = doorstepOf(dunasWestMap, 'dunas_waystation') ?? { tx: 496, ty: 288 };
   // 2026-07-02: the GRAN HOTEL's doorstep derives from the door grafted onto the
   // authored mega facade in growPuertoSol (the clinic/mercado doorstepOf pattern)
   const hotelStep = doorstepOf(puerto, 'hotel_ps_lobby') ?? { tx: 1448, ty: 392 };
@@ -1282,8 +1500,10 @@ export function buildChapter2Maps(steps: {
     hotel_ps_hall: buildHotelPsHall(),
     hotel_ps_room_a: buildHotelPsRoomA(),
     hotel_ps_room_b: buildHotelPsRoomB(),
+    hotel_ps_guest_room: buildHotelPsGuestRoom(),
     hotel_ps_pent: buildHotelPsPent(),
     jungle_1: dunasWestMap,
+    dunas_waystation: buildDunasWaystation(waystationStep),
     jungle_2: dunasEastMap,
     grotto: buildGrotto(),
     valle_dorado: valle,

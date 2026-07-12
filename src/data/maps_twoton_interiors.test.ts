@@ -7,6 +7,9 @@ import { ITEMS } from './items';
 import { SHOPS } from './shops';
 import { buyCar } from '../engine/garage';
 import { decodePng } from '../../tools/imageio';
+import { formalCityFacadeSource } from './formal_city_scale';
+import { cityScaleVariantMeta } from '../spritegen/buildings';
+import { cityBuildingHeight } from '../spritegen/tiles';
 
 const IDS = [
   'twoton_hotel_lobby',
@@ -143,27 +146,32 @@ describe('TWOTON purpose-built service interiors', () => {
     }
   });
 
-  it('aligns every named facade opening with its painted doorway', () => {
+  it('aligns every named facade opening with its production-scale doorway', () => {
     const expectedCenters = [
-      ['bldg_ob_hotel', 'twoton_hotel_lobby', 120],
-      ['bldg_hospital', 'hospital_int', 165],
-      ['bldg_dept', 'dos_f1', 157],
-      ['bldg_civic', 'twoton_community_center', 160],
-      ['bldg_warehouse', 'twoton_bus_station', 254],
-      ['bldg_theater', 'twoton_theater', 160],
-      ['bldg_gen_shop_grass_1', 'twoton_bike_shop', 182],
-      ['bldg_diner', 'twoton_pizza', 178],
-      ['bldg_starmart', 'starmart_int', 164],
-      ['bldg_arcade2', 'arcade2_int', 150],
+      ['bldg_ob_hotel', 'twoton_hotel_lobby'],
+      ['bldg_hospital', 'hospital_int'],
+      ['bldg_dept', 'dos_f1'],
+      ['bldg_civic', 'twoton_community_center'],
+      ['bldg_warehouse', 'twoton_bus_station'],
+      ['bldg_theater', 'twoton_theater'],
+      ['bldg_gen_shop_grass_1', 'twoton_bike_shop'],
+      ['bldg_diner', 'twoton_pizza'],
+      ['bldg_starmart', 'starmart_int'],
+      ['bldg_arcade2', 'arcade2_int'],
     ] as const;
 
-    for (const [sprite, target, paintedCenter] of expectedCenters) {
-      const prop = MAPS.brickton.props.find((p) => p.sprite === sprite && p.door?.to === target);
+    for (const [sprite, target] of expectedCenters) {
+      const prop = MAPS.brickton.props.find((p) => formalCityFacadeSource(p.sprite) === sprite && p.door?.to === target);
       expect(prop, `${sprite} facade`).toBeDefined();
       const door = prop?.door;
       expect(door, `${sprite} opening`).toBeDefined();
-      const runtimeCenter = ((door?.ox ?? 0) + (door?.w ?? 0) / 2) * 4;
-      expect(Math.abs(runtimeCenter - paintedCenter), `${sprite} painted-door offset`).toBeLessThanOrEqual(4);
+      const meta = prop ? cityScaleVariantMeta(prop.sprite) : undefined;
+      expect(meta, `${sprite} scale metadata`).toBeDefined();
+      const artW = meta?.opts.doubleDoor ? 22 : 12;
+      const at = meta?.opts.doorAt ?? Math.floor((meta?.opts.wallTiles ?? 2) / 2);
+      const paintedCenter = 1 + at * 16 + Math.floor((16 - artW) / 2) + artW / 2;
+      const runtimeCenter = (door?.ox ?? 0) + (door?.w ?? 0) / 2;
+      expect(Math.abs(runtimeCenter - paintedCenter), `${sprite} procedural-door offset`).toBeLessThanOrEqual(0.01);
     }
   });
 
@@ -179,8 +187,9 @@ describe('TWOTON purpose-built service interiors', () => {
       expect(prop, `${target} facade`).toBeDefined();
       const back = MAPS[target].doors.find((d) => d.to === 'brickton');
       expect(back, `${target} return`).toBeDefined();
-      const image = decodePng(readFileSync(resolve('assets/art/world/facades', `${prop?.sprite}.png`)));
-      const facadeLintelBottom = (prop?.y ?? 0) * 16 + image.h / 4 - 18;
+      const meta = prop ? cityScaleVariantMeta(prop.sprite) : undefined;
+      expect(meta, `${target} scale metadata`).toBeDefined();
+      const facadeLintelBottom = (prop?.y ?? 0) * 16 + cityBuildingHeight(meta?.opts.upperRows ?? 0) - 18;
       expect((back?.ty ?? 0) - 9, `${target} return body`).toBeGreaterThanOrEqual(facadeLintelBottom);
     }
     expect(MAPS.brickton.props.find((p) => p.door?.to === 'twoton_bus_station')?.door?.ty).toBe(188);

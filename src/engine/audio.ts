@@ -396,6 +396,20 @@ const TRACKS: Record<string, Track> = {
       { wave: 'noise', vol: 0.03, notes: ['C5', 'C5', null, 'C5', null, 'C5', 'C5', null, 'C5', null, 'C5', 'C5', null, 'C5', 'C5', null] },
     ],
   },
+  // LAS DUNAS — an off-kilter desert road theme: loping bass, dry reed-like
+  // square lead, and unanswered high notes that feel a little too far away.
+  // Wind remains a separate ambience bed so interiors can muffle cleanly.
+  dunas: {
+    bpm: 88,
+    swing: 0.28,
+    loop: true,
+    channels: [
+      { wave: 'triangle', vol: 0.16, notes: ['E2', null, 'B2', null, 'D3', null, 'A2', null, 'C3', null, 'G2', null, 'B2', null, 'D3', null] },
+      { wave: 'square', vol: 0.045, notes: [null, 'B4', '-', null, 'G4', null, 'E4', '-', null, 'A4', '-', 'G4', null, 'F4', 'E4', null] },
+      { wave: 'sine', vol: 0.065, notes: ['E5', null, null, null, 'D5', '-', null, null, 'B4', null, null, 'C5', '-', null, null, null] },
+      { wave: 'noise', vol: 0.014, notes: ['C5', null, null, 'C5', null, null, null, 'C5', 'C5', null, null, null, 'C5', null, null, null] },
+    ],
+  },
   valle: {
     bpm: 84,
     loop: true,
@@ -706,6 +720,15 @@ class AudioSys {
         break;
       case 'cancel':
         this.tone('square', 392, 262, 0.07, 0.05);
+        break;
+      case 'engine_start':
+        this.noise(0.18, 0.09, 520);
+        this.tone('sawtooth', 72, 128, 0.34, 0.08, 0.05);
+        this.tone('triangle', 110, 84, 0.28, 0.05, 0.18);
+        break;
+      case 'vehicle_horn':
+        this.tone('square', 246, 246, 0.13, 0.07);
+        this.tone('square', 310, 310, 0.13, 0.055, 0.015);
         break;
       case 'swirl':
         this.noise(0.5, 0.1, 2400);

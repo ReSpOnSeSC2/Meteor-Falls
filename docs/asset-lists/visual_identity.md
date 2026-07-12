@@ -13,17 +13,17 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 
 | enemy | map use | battle | field | status | notes |
 |---|---|---|---|---|---|
-| cranky_mailbox | otterbrook, meadow_mile, hill_road, brickton | battle_cranky_mailbox | ow_enemy_cranky_mailbox | authored | - |
-| runaway_lawnmower | otterbrook, meadow_far, hickory_trail | battle_runaway_lawnmower | ow_enemy_runaway_lawnmower | authored | - |
-| coily_cicada | meadow_mile, meadow_woods, hill_road, hickory_trail, whisperwood_rise, hickory_hill, oak_roots, oak_hollow | battle_coily_cicada | ow_enemy_coily_cicada | authored | - |
+| cranky_mailbox | otterbrook, meadow_mile, brickton | battle_cranky_mailbox | ow_enemy_cranky_mailbox | authored | - |
+| runaway_lawnmower | otterbrook, meadow_far | battle_runaway_lawnmower | ow_enemy_runaway_lawnmower | authored | - |
+| coily_cicada | otterbrook, meadow_mile, meadow_woods, oak_roots, oak_hollow | battle_coily_cicada | ow_enemy_coily_cicada | authored | - |
 | blazer_smiler | meadow_overpass, brickton, dos_f1, dos_f2, dos_f3 | battle_blazer_smiler | ow_enemy_blazer_smiler | authored | - |
 | pigeon_gang | otterbrook, meadow_far, meadow_overpass, brickton | battle_pigeon_gang | ow_enemy_pigeon_gang | authored | - |
-| hill_slug_deluxe | meadow_woods, hill_road, hickory_trail, whisperwood_rise, hickory_hill, oak_roots | battle_hill_slug | ow_enemy_hill_slug_deluxe | authored | - |
+| hill_slug_deluxe | otterbrook, meadow_woods, oak_roots | battle_hill_slug | ow_enemy_hill_slug_deluxe | authored | - |
 | borden | - | battle_constable_borden | ow_enemy_borden | authored | - |
 | sprinkler_sentry | otterbrook | battle_sprinkler_sentry | ow_enemy_sprinkler_sentry | authored | - |
 | recycling_raccoon | otterbrook, meadow_woods | battle_recycling_raccoon | ow_enemy_recycling_raccoon | authored | - |
-| skeeter_swarm | otterbrook, meadow_far, hill_road, whisperwood_rise, oak_roots, oak_hollow | battle_skeeter_swarm | mini:mini_skeeter_swarm | authored | - |
-| unionized_gnome | otterbrook, hill_road | battle_unionized_gnome | ow_enemy_unionized_gnome | authored | - |
+| skeeter_swarm | otterbrook, meadow_far, oak_roots, oak_hollow | battle_skeeter_swarm | mini:mini_skeeter_swarm | authored | - |
+| unionized_gnome | otterbrook | battle_unionized_gnome | ow_enemy_unionized_gnome | authored | - |
 | mandatory_memo | dos_f2 | battle_mandatory_memo | ow_enemy_mandatory_memo | authored | - |
 | motivational_poster | dos_f2 | battle_motivational_poster | ow_enemy_motivational_poster | authored | - |
 | quota_clock | dos_f2 | battle_quota_clock | ow_enemy_quota_clock | authored | - |
@@ -31,10 +31,10 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | showroom_mannequin | brickton | battle_showroom_mannequin | ow_enemy_showroom_mannequin | authored | - |
 | good_investment | otterbrook, meadow_overpass | battle_good_investment | ow_enemy_good_investment | authored | - |
 | rogue_icecream_truck | brickton | battle_rogue_icecream_truck | ow_enemy_rogue_icecream_truck | authored | - |
-| tick_nymph | hickory_hill, oak_roots | battle_tick_nymph | ow_enemy_tick_nymph | authored | - |
-| the_suit | dos_f2 | battle_the_suit | ow_enemy_the_suit | authored | - |
-| pickpocket_parrot | puerto_sol, jungle_1 | battle_pickpocket_parrot | ow_enemy_pickpocket_parrot | authored | - |
-| gilded_beetle | jungle_2, pyramid_ante, pyramid_4 | battle_gilded_beetle | ow_enemy_gilded_beetle | authored | - |
+| tick_nymph | otterbrook, oak_roots | battle_tick_nymph | ow_enemy_tick_nymph | authored | - |
+| the_suit | - | battle_the_suit | ow_enemy_the_suit | authored | - |
+| pickpocket_parrot | puerto_sol, jungle_1, valle_dorado | battle_pickpocket_parrot | ow_enemy_pickpocket_parrot | authored | - |
+| gilded_beetle | jungle_2, valle_dorado, pyramid_ante, pyramid_4 | battle_gilded_beetle | ow_enemy_gilded_beetle | authored | - |
 | cursed_souvenir | jungle_2, grotto, pyramid_2 | battle_cursed_souvenir | ow_enemy_cursed_souvenir | authored | - |
 | step_mask | pyramid_ante, pyramid_1, pyramid_2, pyramid_4 | battle_step_mask | ow_enemy_step_mask | authored | - |
 | banana_bunch | jungle_1, jungle_2 | battle_banana_bunch | ow_enemy_banana_bunch | authored | - |
@@ -64,10 +64,10 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | head_prefect | wintermoor_f3 | battle_head_prefect | ow_enemy_head_prefect | authored | - |
 | boiler_golem | wintermoor_boiler | battle_boiler_golem | ow_enemy_boiler_golem | authored | - |
 | the_invigilator | wintermoor_f3 | battle_the_invigilator | ow_enemy_the_invigilator | authored | - |
-| gilded_grin | - | battle_gilded_grin | mini:mini_mask | authored | - |
-| headmaster_mainframe | - | battle_headmaster_mainframe | mini:mini_ch3_lurker_3 | authored | - |
-| titanic_tick | - | battle_titanic_tick | mini:mini_hill_slug | authored | - |
-| hush_sentinel | - | battle_hush_sentinel | mini:mini_hill_slug | authored | - |
+| gilded_grin | - | battle_gilded_grin | mini:mini_gilded_grin | authored | - |
+| headmaster_mainframe | - | battle_headmaster_mainframe | mini:mini_headmaster_mainframe | authored | - |
+| titanic_tick | - | battle_titanic_tick | mini:mini_titanic_tick | authored | - |
+| hush_sentinel | - | battle_hush_sentinel | mini:mini_hush_sentinel | authored | - |
 | colossal_gnat | bootstep_moor | battle_colossal_gnat | mini:mini_colossal_gnat | authored | - |
 | knitting_needles | lilleby | battle_knitting_needles | mini:mini_knitting_needles | authored | - |
 | thunder_snail | bootstep_moor | battle_thunder_snail | mini:mini_thunder_snail | authored | - |
@@ -88,7 +88,7 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | hushed_skua | bootstep_moor | battle_hushed_skua | mini:mini_hushed_skua | authored | - |
 | frost_jotun_elder | spine_shoulder | battle_frost_jotun_elder | mini:mini_frost_jotun_elder | authored | - |
 | bridge_berry | - | battle_giant_berry_blocker | mini:mini_giant_berry_blocker | authored | - |
-| the_whisperwig | - | battle_the_whisperwig | mini:mini_souvenir | authored | - |
+| the_whisperwig | - | battle_the_whisperwig | mini:mini_the_whisperwig | authored | - |
 | tin_parade | procession_way | battle_tin_parade | mini:mini_tin_parade | authored | - |
 | duelist_pip | procession_way | battle_duelist_pip | mini:mini_duelist_pip | authored | - |
 | crumb_cannoneer | procession_way | battle_crumb_cannoneer | mini:mini_crumb_cannoneer | authored | - |
@@ -109,8 +109,8 @@ Authored means the runtime key resolves through `src/spritegen/authored.ts` and 
 | halberd_column | the_hedgerow | battle_halberd_column | mini:mini_halberd_column | authored | - |
 | bell_ringer_acolyte | the_hedgerow | battle_bell_ringer_acolyte | mini:mini_bell_ringer_acolyte | authored | - |
 | grand_parade | procession_way | battle_grand_parade | mini:mini_grand_parade | authored | - |
-| whiskerzilla | - | battle_whiskerzilla | mini:mini_hill_slug | authored | - |
-| flat_bell | - | battle_flat_bell | mini:mini_souvenir | authored | - |
+| whiskerzilla | - | battle_whiskerzilla | mini:mini_whiskerzilla | authored | - |
+| flat_bell | - | battle_flat_bell | mini:mini_flat_bell | authored | - |
 | caravan_hyena_pack | savanna_run | battle_caravan_hyena_pack | mini:mini_caravan_hyena_pack | authored | - |
 | baobab_root_snare | savanna_run | battle_baobab_root_snare | mini:mini_baobab_root_snare | authored | - |
 | laughing_dust_pot | laughing_ruins | battle_laughing_dust_pot | mini:mini_laughing_dust_pot | authored | - |

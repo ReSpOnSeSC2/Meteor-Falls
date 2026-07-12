@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { TILE, TILESET, TILE_ATLAS_COLS } from './tiles';
-import { GENERATED_BUILDINGS } from './buildings';
+import { CITY_SCALE_BUILDINGS, GENERATED_BUILDINGS } from './buildings';
 import { SPORT_FRAME_COUNT } from './athletes';
 import { GOLF_FRAME_COUNT } from './golfers';
 import { ART_SCALE } from './scale';
@@ -576,10 +576,24 @@ const WORLD_PROP_KEYS = [
   'pedestal_3', 'crate', 'crate_bananas', 'gangplank',
   'baobab_shade', 'giant_bootprint_snow', 'palm_a', 'palm_b', 'palm_c', 'palm_d',
   'postage_stamp_crosswalk', 'puerto_banana_boat', 'puerto_bench', 'puerto_crate',
+  'puerto_cemetery_gate', 'puerto_cemetery_lamp',
   'puerto_crate_bananas', 'puerto_departure_board', 'puerto_fountain', 'puerto_gangplank',
   'puerto_gift_box', 'puerto_gift_box_open', 'puerto_market_stall_a',
   'puerto_market_stall_b', 'puerto_market_stall_c', 'puerto_payphone', 'puerto_picnic',
-  'puerto_sign', 'puerto_trash_can',
+  'puerto_sign', 'puerto_trash_can', 'puerto_crypt', 'puerto_headstone_anchor',
+  'puerto_headstone_sun', 'puerto_obelisk',
+  // Ch.2 production-detail kits (2026-07-11): working harbor/ferry machinery,
+  // the Las Dunas sun-grotto + Costa overlook, and authored Puerto/Valle
+  // micro-scenes. Each family comes from one coherent imagegen master so its
+  // palette, projection, light, and pixel density stay matched.
+  'puerto_ticket_kiosk', 'puerto_cargo_crane', 'puerto_fish_stall',
+  'puerto_mooring_bollards', 'puerto_wheelhouse', 'puerto_deck_winch',
+  'puerto_harbor_bell', 'puerto_luggage_cart',
+  'grotto_sun_shrine', 'grotto_stone_arch', 'grotto_spring', 'grotto_rope_bridge',
+  'costa_windsock', 'costa_telescope', 'costa_sun_marker', 'costa_flower_urns',
+  'puerto_radio_mast', 'puerto_candle_cart', 'festival_lantern_span',
+  'valle_sun_press', 'valle_taxi_dispatch', 'valle_sundial',
+  'valle_pottery_kiln', 'valle_llama_trough',
   'prop_pine_whisperwood', 'prop_pine_whisperwood_b', 'prop_pine_whisperwood_c',
   'prop_trail_marker', 'prop_guardrail', 'prop_culvert',
   // Otterbrook full-rebuild Americana set (2 ChatGPT magenta strips → slice-prop-strip)
@@ -729,6 +743,7 @@ const WORLD_FACADE_KEYS = Array.from(new Set([
   ...BASE_FACADE_KEYS,
   ...REGION_FACADE_KEYS,
   ...GENERATED_BUILDINGS.map((building) => building.name),
+  ...CITY_SCALE_BUILDINGS.map((building) => building.name),
 ]));
 
 export const AUTHORED_WORLD_PROP_KEYS = WORLD_PROP_KEYS;
@@ -749,6 +764,10 @@ export const OBLIQUE_SHADOW_PROP_KEYS: ReadonlySet<string> = new Set<string>([
   'bench', 'hydrant', 'mailbox', 'trash_can', 'news_box', 'parking_meter',
   // EB intersection kit (2026-07-11) — same isolated-upright rule.
   'traffic_light', 'stop_sign',
+  // Puerto Sol / Campo Viejo — sparse, authored oblique furniture and memorials.
+  'puerto_bench', 'puerto_payphone', 'puerto_sign', 'puerto_trash_can',
+  'puerto_cemetery_lamp', 'puerto_crypt', 'puerto_headstone_anchor',
+  'puerto_headstone_sun', 'puerto_obelisk',
   // NB: trees (tree/tree_b/tree_c/pine) are DELIBERATELY excluded. They still got the
   // oblique art redraw, but forest-fill maps place THOUSANDS of them (Otterbrooke alone
   // has ~3.3k), so a per-tree shadow image is a needless object-count cost and the shade
@@ -875,6 +894,10 @@ const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
   // promote it through the same pipeline (re-run facade-audit; the content-validate
   // 'hi-res-facades' law fails the build until it is).
   ...GENERATED_BUILDINGS.map((building) => building.name).filter((name) => !HI_RES_GEN_FACADES.has(name)),
+  // These are deliberately procedural production assets: each one adds real
+  // authored storey bands at its source lot width, which lets the runtime scale
+  // validator prove exact 6.7×/9× hero ratios. There is no low-res PNG to load.
+  ...CITY_SCALE_BUILDINGS.map((building) => building.name),
 ]);
 
 /** facades loaded as AUTHORED art — the hand-authored ×4 hi-res set only */
@@ -967,6 +990,45 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   pedestal_3: { w: 22, h: 30 },
   plant_pot: { w: 14, h: 22 },
   puerto_bench: { w: 22, h: 13 },
+  // Puerto Sol's Campo Viejo cemetery kit. The keyed sources are high-resolution;
+  // these aspect-true footprints keep markers at roughly 2-3 world tiles tall,
+  // with the crypt and gate reading as small architectural landmarks.
+  puerto_headstone_sun: { w: 36, h: 40 },
+  puerto_headstone_anchor: { w: 34, h: 43 },
+  puerto_obelisk: { w: 25, h: 44 },
+  puerto_crypt: { w: 48, h: 51 },
+  puerto_cemetery_gate: { w: 54, h: 43 },
+  puerto_cemetery_lamp: { w: 20, h: 45 },
+  // Working harbor + ferry deck. These are content-tight true-alpha slices;
+  // sizes preserve each source's aspect while keeping the largest landmarks
+  // in the 3-4 tile silhouette range at runtime.
+  puerto_ticket_kiosk: { w: 48, h: 55 },
+  puerto_cargo_crane: { w: 58, h: 64 },
+  puerto_fish_stall: { w: 44, h: 42 },
+  puerto_mooring_bollards: { w: 32, h: 18 },
+  puerto_wheelhouse: { w: 56, h: 54 },
+  puerto_deck_winch: { w: 36, h: 30 },
+  puerto_harbor_bell: { w: 51, h: 46 },
+  puerto_luggage_cart: { w: 43, h: 34 },
+  // Ancient Dunas route + moonlit Costa threshold. The arch and bridge use
+  // grid-authored collision at placement time so their openings remain real.
+  grotto_sun_shrine: { w: 60, h: 72 },
+  grotto_stone_arch: { w: 68, h: 48 },
+  grotto_spring: { w: 48, h: 33 },
+  grotto_rope_bridge: { w: 80, h: 55 },
+  costa_windsock: { w: 34, h: 41 },
+  costa_telescope: { w: 28, h: 38 },
+  costa_sun_marker: { w: 40, h: 35 },
+  costa_flower_urns: { w: 45, h: 36 },
+  // Night-city and golden-city narrative set pieces.
+  puerto_radio_mast: { w: 55, h: 64 },
+  puerto_candle_cart: { w: 56, h: 46 },
+  festival_lantern_span: { w: 72, h: 64 },
+  valle_sun_press: { w: 60, h: 57 },
+  valle_taxi_dispatch: { w: 50, h: 53 },
+  valle_sundial: { w: 48, h: 46 },
+  valle_pottery_kiln: { w: 58, h: 46 },
+  valle_llama_trough: { w: 56, h: 33 },
   // Otterbrook hi-res furniture/flora (sliced from otterbrook-world master). The
   // slices are hi-res; these sizes anchor on the old native HEIGHT (keeps each
   // prop's ground line + y-sort depth) with art-true widths. See
@@ -1164,7 +1226,7 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
  *  each entry's drawCityBuilding registration (wallTiles). Hand-authored facades
  *  are not listed — they fall to the resolution heuristic in worldSpriteScale. */
 const GEN_FACADE_FOOTPRINT_W: Record<string, number> = Object.fromEntries(
-  GENERATED_BUILDINGS.map((b) => [b.name, b.opts.wallTiles]),
+  [...GENERATED_BUILDINGS, ...CITY_SCALE_BUILDINGS].map((b) => [b.name, b.opts.wallTiles]),
 );
 const WORLD_FACADE_KEY_SET: ReadonlySet<string> = new Set(WORLD_FACADE_KEYS);
 

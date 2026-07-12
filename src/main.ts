@@ -7,6 +7,7 @@ import { OverworldScene } from './scenes/OverworldScene';
 import { BattleScene } from './scenes/BattleScene';
 import { MenuScene } from './scenes/MenuScene';
 import { ShopScene } from './scenes/ShopScene';
+import { VehicleShopScene } from './scenes/VehicleShopScene';
 import { ArcadeScene } from './scenes/ArcadeScene';
 import { HoopsScene } from './scenes/HoopsScene';
 import { LinksScene } from './scenes/LinksScene';
@@ -45,7 +46,7 @@ const game = tool === 'jay-animator' ? null : new Phaser.Game({
   input: {
     activePointers: 4,
   },
-  scene: [BootScene, TitleScene, NameEntryScene, SaveSlotsScene, OverworldScene, BattleScene, MenuScene, ShopScene, ArcadeScene, HoopsScene, LinksScene, SpriteLabScene, LevelkitLabScene, UIScene],
+  scene: [BootScene, TitleScene, NameEntryScene, SaveSlotsScene, OverworldScene, BattleScene, MenuScene, ShopScene, VehicleShopScene, ArcadeScene, HoopsScene, LinksScene, SpriteLabScene, LevelkitLabScene, UIScene],
 });
 
 if (tool === 'jay-animator') {

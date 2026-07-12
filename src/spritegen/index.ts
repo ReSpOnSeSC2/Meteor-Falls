@@ -131,7 +131,7 @@ import {
   drawBleachers,
   drawChalkBoard,
 } from './tiles';
-import { GENERATED_BUILDINGS } from './buildings';
+import { CITY_SCALE_BUILDINGS, GENERATED_BUILDINGS } from './buildings';
 import { ITEM_ICON, itemIconKey } from './icons';
 import { ABILITY_ICON, BATTLE_FX_ICON, STATUS_ICON, abilityIconKey, battleFxIconKey, statusIconKey } from './combatIcons';
 import {
@@ -738,6 +738,10 @@ export function generateAllTextures(scene: Phaser.Scene): void {
   // families + the COLOSSI, sliced per-area by AREA_SKINS so each level reads
   // fresh. The forge (Movement Two) draws each area's growth from its own slice.
   for (const b of GENERATED_BUILDINGS) addPixmap(scene, b.name, drawCityBuilding(b.opts));
+  // Formal-city production scale variants: real added storeys at the original
+  // lot width. These remain procedural intentionally so every promoted facade
+  // has exact, validator-measurable runtime dimensions and door geometry.
+  for (const b of CITY_SCALE_BUILDINGS) addPixmap(scene, b.name, drawCityBuilding(b.opts));
 
   // buildings — deep oblique roofs, gablets, AC, awnings (ADR-019/020)
   addPixmap(scene, 'house_rex', drawHouse({ wallTiles: 4, wallRows: 2, roof: RAMP.RED, chimney: true, ac: true, litSeed: 5 }));

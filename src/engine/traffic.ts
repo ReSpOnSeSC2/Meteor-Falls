@@ -122,13 +122,13 @@ export class TrafficSim {
    * SAFETY LAW: a vehicle never enters the player's cell and never takes the
    * player's last free lane. Vehicles also never stack (one per cell).
    */
-  step(player: { x: number; y: number }): void {
+  step(player: { x: number; y: number }, blocked: ReadonlySet<string> = new Set()): void {
     // process in a stable order so the sim is deterministic
     const order = [...this.vehicles].sort((a, b) => a.id - b.id);
     for (const v of order) {
       v.px = v.x;
       v.py = v.y;
-      const move = this.chooseMove(v, player);
+      const move = this.chooseMove(v, player, blocked);
       if (move === null) {
         v.paused = true;
         continue;
@@ -144,6 +144,7 @@ export class TrafficSim {
   private chooseMove(
     v: TrafficVehicle,
     player: { x: number; y: number },
+    blocked: ReadonlySet<string>,
   ): { x: number; y: number; dir: Dir } | null {
     // straight ahead first, then right, left (never an immediate U-turn)
     const order: Dir[] = [v.dir, ((v.dir + 1) % 4) as Dir, ((v.dir + 3) % 4) as Dir, ((v.dir + 2) % 4) as Dir];
@@ -151,6 +152,7 @@ export class TrafficSim {
       const nx = v.x + DX[d];
       const ny = v.y + DY[d];
       if (!this.isRoad(nx, ny)) continue;
+      if (blocked.has(cellKey(nx, ny))) continue;
       if (nx === player.x && ny === player.y) continue;       // SAFETY 1: no crush
       if (this.occupied(nx, ny, v.id)) continue;              // no stacking
       // SAFETY 2: if this cell is one of the player's escape lanes, only take it
@@ -158,7 +160,7 @@ export class TrafficSim {
       const adjToPlayer = Math.abs(nx - player.x) + Math.abs(ny - player.y) === 1;
       if (adjToPlayer) {
         // simulate: would the player still have a free neighbour after we sit on (nx,ny)?
-        const free = this.freeNeighboursExcluding(player.x, player.y, v.id, nx, ny);
+        const free = this.freeNeighboursExcluding(player.x, player.y, v.id, nx, ny, blocked);
         if (free < 1) continue;
       }
       return { x: nx, y: ny, dir: d };
@@ -173,12 +175,14 @@ export class TrafficSim {
     skipId: number,
     bx: number,
     by: number,
+    blocked: ReadonlySet<string>,
   ): number {
     let n = 0;
     for (let d = 0; d < 4; d++) {
       const nx = px + DX[d];
       const ny = py + DY[d];
       if (!this.isRoad(nx, ny)) continue;
+      if (blocked.has(cellKey(nx, ny))) continue;
       if (nx === bx && ny === by) continue;                 // the cell we'd occupy
       if (this.occupied(nx, ny, skipId)) continue;
       n++;

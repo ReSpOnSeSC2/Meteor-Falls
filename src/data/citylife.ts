@@ -20,6 +20,16 @@ import type { MapDef, PropDef, NpcDef, SignDef } from '../schemas';
 import { facadeDims } from '../levelkit/kit';
 import { cityBuildingHeight } from '../spritegen/tiles';
 import { KNOCK_IDS, RESIDENT_IDS, KEEPER_IDS, CIVIC_IDS } from './citylife_text';
+import {
+  CITY_AMENITIES,
+  CITY_AMENITY_MARKER_SPRITES,
+  cityAmenitySignId,
+  cityHotelRoomId,
+  cityServiceNpcId,
+  type CityAmenityDef,
+  type FormalCityId,
+  type GeneratedCityAmenityRole,
+} from './city_amenities';
 
 /* ----------------------------- determinism ----------------------------- */
 
@@ -274,6 +284,239 @@ function buildUnitInterior(a: UnitArgs): MapDef {
   };
 }
 
+/* ----------------------- formal-city amenity layer ----------------------- */
+
+interface CityAmenityInteriorArgs {
+  id: string;
+  role: GeneratedCityAmenityRole;
+  cityId: FormalCityId;
+  amenity: CityAmenityDef;
+  w: number;
+  h: number;
+  exitTo: string;
+  stepTx: number;
+  stepTy: number;
+}
+
+function amenityShell(W: number, H: number, wall = 'W', floor = 'w'): string[] {
+  const rows: string[][] = [];
+  for (let y = 0; y < H; y++) {
+    const row: string[] = [];
+    for (let x = 0; x < W; x++) {
+      row.push(x === 0 || x === W - 1 || y === 0 || y === H - 1 ? wall : floor);
+    }
+    rows.push(row);
+  }
+  const gap = Math.round(W / 2) - 1;
+  rows[H - 1][gap] = floor;
+  rows[H - 1][gap + 1] = floor;
+  rows[H - 2][gap] = 'r';
+  rows[H - 2][gap + 1] = 'r';
+  rows[H - 3][gap] = 'r';
+  rows[H - 3][gap + 1] = 'r';
+  return rows.map((row) => row.join(''));
+}
+
+function amenityExitDoor(a: CityAmenityInteriorArgs) {
+  const gap = Math.round(a.w / 2) - 1;
+  return {
+    x: gap,
+    y: a.h - 1,
+    w: 2,
+    h: 1,
+    to: a.exitTo,
+    tx: a.stepTx,
+    ty: a.stepTy,
+    facing: 'down' as const,
+    indicator: 'mat' as const,
+  };
+}
+
+/**
+ * Replaces the generic tenant behind a claimed facade while retaining that
+ * facade's existing `<city>_unit_N` (or Twoton lot) map/door ID. The service
+ * NPC IDs are deliberately coordinate-independent: runtime handlers bind via
+ * CITY_SERVICE_NPC_LOOKUP and the city registry.
+ */
+function buildCityAmenityInterior(a: CityAmenityInteriorArgs): { main: MapDef; room?: MapDef } {
+  const W = a.w;
+  const H = a.h;
+  const gap = Math.round(W / 2) - 1;
+  const p = (
+    sprite: string,
+    x: number,
+    y: number,
+    extra: Pick<PropDef, 'solid' | 'scale' | 'rot'> = {},
+  ): PropDef => ({ sprite, x, y, ...extra });
+
+  let name: string;
+  let grid = amenityShell(W, H);
+  let props: PropDef[];
+  let npc: NpcDef;
+
+  switch (a.role) {
+    case 'home':
+      name = `OPEN HOUSE — ${a.amenity.residential.listingName.toUpperCase()}`;
+      props = [
+        p('bed', 1.2, 1.8, { solid: { ox: 1, oy: 6, w: 18, h: 22 } }),
+        p('dresser', 4.1, 1.2, { solid: { ox: 2, oy: 8, w: 26, h: 14 } }),
+        p('bookshelf', W - 3.2, 1.5, { solid: { ox: 0, oy: 12, w: 32, h: 12 } }),
+        p('dining_table', Math.max(3, gap - 2), Math.max(4.2, H / 2 - 1), { solid: { ox: 2, oy: 12, w: 30, h: 18 } }),
+        p('rocking_chair', 1.8, H - 4.3, { solid: { ox: 2, oy: 12, w: 14, h: 10 } }),
+        p('fridge', W - 2.5, H - 4.5, { solid: { ox: 2, oy: 14, w: 14, h: 18 } }),
+        p('floor_lamp', W - 4.5, H - 4.3, { solid: { ox: 6, oy: 26, w: 6, h: 3 } }),
+        p('plant_pot', Math.max(2, gap + 2), 1.5),
+      ];
+      npc = {
+        id: cityServiceNpcId(a.cityId, 'home_host'),
+        sprite: 'fernLady',
+        x: W - 3,
+        y: Math.max(3, H - 4),
+        facing: 'down',
+        dialogue: 'citysvc_home_host',
+      };
+      break;
+
+    case 'agency':
+      name = a.amenity.agency.name.toUpperCase();
+      props = [
+        p('desk', Math.max(2, gap - 2), 3, { solid: { ox: 0, oy: 8, w: 40, h: 10 } }),
+        p('prop_rate_board', W - 4, 1.5),
+        p('bookshelf', 1.3, 1.5, { solid: { ox: 0, oy: 12, w: 32, h: 12 } }),
+        p('bench', 2, H - 4, { solid: { ox: 1, oy: 6, w: 20, h: 6 } }),
+        p('bench', W - 5, H - 4, { solid: { ox: 1, oy: 6, w: 20, h: 6 } }),
+        p('potted_palm', W - 2.2, H - 4.3, { solid: { ox: 3, oy: 12, w: 10, h: 8 } }),
+        p('poster_chart', Math.max(2, gap + 1), 0.6),
+      ];
+      npc = {
+        id: cityServiceNpcId(a.cityId, 'realtor'),
+        sprite: 'npc_realtor',
+        x: gap,
+        y: 4,
+        facing: 'down',
+        dialogue: 'citysvc_realtor',
+      };
+      break;
+
+    case 'dealership': {
+      name = a.amenity.dealership.name.toUpperCase();
+      // Paved floor + a bright road stripe makes this read as an open-air motor
+      // court even though it is a weatherproof interior map.
+      const rows = amenityShell(W, H, 'O', 'p').map((row) => row.split(''));
+      const stripeY = Math.max(2, Math.min(H - 4, Math.round(H / 2)));
+      for (let x = 1; x < W - 1; x++) rows[stripeY][x] = x % 2 === 0 ? '=' : 'p';
+      grid = rows.map((row) => row.join(''));
+      props = [
+        p(a.amenity.dealership.featuredVehicleId, 1.5, 2.2, { scale: 0.62, solid: { ox: 3, oy: 8, w: 30, h: 8 } }),
+        p('vehicle_clunker', Math.max(5.5, W - 4.8), Math.max(3.8, H - 4.6), { scale: 0.62, rot: 90, solid: { ox: 3, oy: 8, w: 30, h: 8 } }),
+        p('prop_rate_board', W - 3.3, 1.2),
+        p('desk', Math.max(2, gap - 1), 1.5, { solid: { ox: 0, oy: 8, w: 30, h: 10 } }),
+        p('parking_meter', 1.5, H - 3.8),
+        p('flagpole', W - 2.2, H - 4.6),
+        p('parking_meter', Math.max(2, gap - 3), H - 3.5),
+        p('parking_meter', Math.min(W - 3, gap + 3), H - 3.5),
+      ];
+      npc = {
+        id: cityServiceNpcId(a.cityId, 'dealer'),
+        sprite: 'quarterMan',
+        x: Math.max(2, W - 3),
+        y: Math.max(3, H - 4),
+        facing: 'down',
+        dialogue: 'citysvc_dealer',
+      };
+      break;
+    }
+
+    case 'hotel':
+      name = `${a.amenity.hotel.name.toUpperCase()} — LOBBY`;
+      props = [
+        p('counter', 2, 3, { solid: { ox: 0, oy: 4, w: 40, h: 14 } }),
+        p('counter', 4, 3, { solid: { ox: 0, oy: 4, w: 40, h: 14 } }),
+        p('prop_rate_board', 2.2, 1.4),
+        p('mailboxes', Math.max(5, W - 4), 1.4),
+        p('bench', 2, H - 4, { solid: { ox: 1, oy: 6, w: 20, h: 6 } }),
+        p('bench', W - 5, H - 4, { solid: { ox: 1, oy: 6, w: 20, h: 6 } }),
+        p('potted_palm', W - 2.3, 2, { solid: { ox: 3, oy: 12, w: 10, h: 8 } }),
+        p('floor_lamp', W - 3.7, H - 4.3, { solid: { ox: 6, oy: 26, w: 6, h: 3 } }),
+        p('payphone', W - 2, H - 3.4, { solid: { ox: 1, oy: 10, w: 14, h: 16 } }),
+      ];
+      npc = {
+        id: cityServiceNpcId(a.cityId, 'hotel_clerk'),
+        sprite: 'npc_clerk',
+        x: 3,
+        y: 4,
+        facing: 'down',
+        dialogue: 'citysvc_hotel_clerk',
+      };
+      break;
+  }
+
+  const main: MapDef = {
+    id: a.id,
+    name,
+    music: null,
+    interior: true,
+    grid,
+    props,
+    npcs: [npc],
+    signs: [],
+    phones: a.role === 'hotel' ? [{ x: W - 2, y: H - 3 }] : [],
+    doors: [amenityExitDoor(a)],
+    spawners: [],
+    triggers: [],
+  };
+
+  if (a.role !== 'hotel') return { main };
+
+  const roomId = cityHotelRoomId(a.cityId);
+  const roomW = 12;
+  const roomH = 9;
+  const roomGap = Math.round(roomW / 2) - 1;
+  main.doors.push({
+    x: W - 3,
+    y: 1,
+    w: 1,
+    h: 1,
+    to: roomId,
+    tx: roomGap * 16,
+    ty: (roomH - 2) * 16,
+    facing: 'up',
+    indicator: 'door',
+  });
+  const room: MapDef = {
+    id: roomId,
+    name: `${a.amenity.hotel.name.toUpperCase()} — ROOM`,
+    music: null,
+    interior: true,
+    grid: amenityShell(roomW, roomH),
+    props: [
+      p('bed', 1.3, 2, { solid: { ox: 1, oy: 6, w: 18, h: 22 } }),
+      p('dresser', 4.3, 1.4, { solid: { ox: 2, oy: 8, w: 26, h: 14 } }),
+      p('tv', 8.8, 0.7),
+      p('rocking_chair', 2.2, 5.3, { solid: { ox: 2, oy: 12, w: 14, h: 10 } }),
+      p('floor_lamp', 9.2, 4.8, { solid: { ox: 6, oy: 26, w: 6, h: 3 } }),
+      p('phone_table', 8.1, 2.8, { solid: { ox: 1, oy: 8, w: 14, h: 9 } }),
+    ],
+    npcs: [],
+    signs: [],
+    phones: [],
+    doors: [{
+      x: roomGap,
+      y: roomH - 1,
+      w: 2,
+      h: 1,
+      to: a.id,
+      tx: (W - 3) * 16,
+      ty: 2 * 16,
+      facing: 'down',
+      indicator: 'mat',
+    }],
+    spawners: [],
+    triggers: [],
+  };
+  return { main, room };
+}
+
 /* ----------------------------- street dressing ----------------------------- */
 
 /** sparse, prop-only flavor on wide blank pavement (never seals a lane — props
@@ -350,6 +593,71 @@ export interface OccupyOpts {
   unitId?: (facade: Pick<PropDef, 'sprite' | 'x' | 'y'>, sequence: number) => string;
 }
 
+/** Choose service facades by semantic source-name hints while consuming the
+ * same unlocked facade set. No prop is moved or replaced and every generated
+ * unit id continues to be assigned by the historical facade walk below. */
+function amenityFacadeClaims(
+  facades: readonly PropDef[],
+  unlocked: readonly number[],
+  amenity: CityAmenityDef,
+  roles: readonly GeneratedCityAmenityRole[],
+): Map<number, GeneratedCityAmenityRole> {
+  const available = new Set(unlocked);
+  const claims = new Map<number, GeneratedCityAmenityRole>();
+  for (const role of roles) {
+    let chosen: number | undefined;
+    for (const hint of amenity.facadeHints[role]) {
+      chosen = unlocked.find((idx) => available.has(idx) && facades[idx].sprite.includes(hint));
+      if (chosen !== undefined) break;
+    }
+    chosen ??= unlocked.find((idx) => available.has(idx));
+    if (chosen === undefined) continue;
+    available.delete(chosen);
+    claims.set(chosen, role);
+  }
+  return claims;
+}
+
+function facadeDoorstep(prop: PropDef): { x: number; y: number } | null {
+  if (!prop.door) return null;
+  const sx = typeof prop.scale === 'number' ? prop.scale : prop.scale?.x ?? 1;
+  const sy = typeof prop.scale === 'number' ? prop.scale : prop.scale?.y ?? 1;
+  return {
+    x: prop.x * 16 + (prop.door.ox + prop.door.w / 2) * sx,
+    y: prop.y * 16 + (prop.door.oy + prop.door.h) * sy + 5,
+  };
+}
+
+/** A collision-free silhouette plus an interactable, city-specific plaque. It
+ * sits beside—not on—the door and is appended after all authored props, so the
+ * building order, collision, door target, and save-stable unit id never move. */
+function addAmenityExteriorMarker(
+  map: MapDef,
+  cityId: FormalCityId,
+  role: GeneratedCityAmenityRole,
+  doorstep: { x: number; y: number },
+): void {
+  const dialogue = cityAmenitySignId(cityId, role);
+  if (map.signs.some((sign) => sign.dialogue === dialogue)) return;
+  const doorX = Math.floor(doorstep.x / 16);
+  const doorY = Math.floor(doorstep.y / 16);
+  const candidates: ReadonlyArray<readonly [number, number]> = [
+    [doorX - 2, doorY], [doorX + 1, doorY],
+    [doorX - 3, doorY], [doorX + 2, doorY],
+    [doorX - 2, doorY + 1], [doorX + 1, doorY + 1],
+  ];
+  const width = map.grid[0]?.length ?? 0;
+  const height = map.grid.length;
+  const occupied = (x: number, y: number): boolean =>
+    map.props.some((prop) => Math.abs(prop.x - x) < 0.8 && Math.abs(prop.y - (y + 0.35)) < 0.8) ||
+    map.signs.some((sign) => Math.abs(sign.x - x) < 0.8 && Math.abs(sign.y - y) < 0.8);
+  const [x, y] = candidates.find(([cx, cy]) =>
+    cx >= 1 && cy >= 1 && cx < width - 1 && cy < height - 1 && !occupied(cx, cy),
+  ) ?? [Math.max(1, Math.min(width - 2, doorX - 2)), Math.max(1, Math.min(height - 2, doorY))];
+  map.props.push({ sprite: CITY_AMENITY_MARKER_SPRITES[role], x, y: y + 0.35 });
+  map.signs.push({ x, y, dialogue });
+}
+
 /** Fill a built city map with purpose. Mutates `map`; returns its new interiors. */
 export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef> {
   const rnd = mulberry32(opts.seed >>> 0);
@@ -379,6 +687,19 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
   const sealed = order.filter(isSealed);
   const open = order.filter((i) => !isSealed(i));
   const locked = new Set<number>([...sealed, ...open.slice(0, Math.max(0, lockCount - sealed.length))]);
+
+  // Formal-city services CLAIM existing generated units; they never add or
+  // reorder facade props. We select the first unlocked facade indices in map
+  // order so the assignment is stable even if the lock shuffle changes. The two
+  // cities with hand-authored hotels only need three claimed services.
+  const amenity = (CITY_AMENITIES as Partial<Record<string, CityAmenityDef>>)[map.id];
+  const amenityRoles: GeneratedCityAmenityRole[] = amenity
+    ? ['home', 'agency', 'dealership', ...(amenity.hotel.existing ? [] : ['hotel' as const])]
+    : [];
+  const unlockedInMapOrder = facades.map((_p, idx) => idx).filter((idx) => !locked.has(idx));
+  const amenityRoleByFacade = amenity
+    ? amenityFacadeClaims(facades, unlockedInMapOrder, amenity, amenityRoles)
+    : new Map<number, GeneratedCityAmenityRole>();
 
   let unit = 0;
   facades.forEach((p, idx) => {
@@ -418,8 +739,35 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
     const stepTx = p.x * 16 + ox + 8;
     const stepTy = p.y * 16 + oy + 23; // door.h (18) + 5, matches doorstepOf
     const name = arch.names[Math.floor(rnd() * arch.names.length)];
-    interiors[id] = buildUnitInterior({ id, name, w: iw, h: ih, exitTo: map.id, stepTx, stepTy, arch, rnd });
+    // Always build the generic tenant first, even for a claimed amenity, to
+    // consume the historical RNG sequence. That keeps all later unit furnishing
+    // and occupants byte-stable while replacing only the selected unit's data.
+    const generic = buildUnitInterior({ id, name, w: iw, h: ih, exitTo: map.id, stepTx, stepTy, arch, rnd });
+    const amenityRole = amenityRoleByFacade.get(idx);
+    if (!amenity || !amenityRole) {
+      interiors[id] = generic;
+      return;
+    }
+    const built = buildCityAmenityInterior({
+      id,
+      role: amenityRole,
+      cityId: amenity.cityId,
+      amenity,
+      w: iw,
+      h: ih,
+      exitTo: map.id,
+      stepTx,
+      stepTy,
+    });
+    interiors[id] = built.main;
+    if (built.room) interiors[built.room.id] = built.room;
+    addAmenityExteriorMarker(map, amenity.cityId, amenityRole, { x: stepTx, y: stepTy });
   });
+  if (amenity?.hotel.existing) {
+    const hotelFacade = map.props.find((prop) => prop.door?.to === amenity.hotel.existing!.lobbyId);
+    const doorstep = hotelFacade ? facadeDoorstep(hotelFacade) : null;
+    if (doorstep) addAmenityExteriorMarker(map, amenity.cityId, 'hotel', doorstep);
+  }
   dressStreets(map, rnd);
   return interiors;
 }

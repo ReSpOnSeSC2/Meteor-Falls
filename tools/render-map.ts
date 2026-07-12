@@ -258,13 +258,24 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     cellW: 560, cellH: 380,
   },
   ch2: {
-    title: 'METEOR FALLS - CHAPTER 2: THE MELTING GRIN (PUERTO SOL)',
-    ids: ['puerto_sol', 'valle_dorado', 'costa_estrella', 'brickton_docks'],
+    title: 'METEOR FALLS - CHAPTER 2: THE MELTING GRIN (PUERTO SOL + LAS DUNAS)',
+    // Route order is intentional: the sheet audits every playable handoff from
+    // the Brickton pier through Puerto Sol and both desert legs before Valle.
+    ids: [
+      'brickton_docks', 'boat_interior', 'puerto_sol',
+      'jungle_1', 'dunas_waystation', 'jungle_2', 'grotto',
+      'valle_dorado', 'costa_estrella',
+    ],
     cellW: 560, cellH: 460,
   },
   ch3: {
     title: 'METEOR FALLS - CHAPTER 3: A VERY FOGGY TERM (ENGLAND)',
     ids: ['foggybottom', 'foggy_moor', 'wintermoor_grounds', 'the_old_stones'],
+    cellW: 560, cellH: 460,
+  },
+  formal_cities: {
+    title: 'FORMAL CITIES - PRODUCTION FACADE SCALE QA',
+    ids: ['brickton', 'puerto_sol', 'valle_dorado', 'minimus_major', 'zanzibel', 'chandrapore', 'lotus_harbor'],
     cellW: 560, cellH: 460,
   },
   elev: {

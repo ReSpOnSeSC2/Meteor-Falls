@@ -637,3 +637,91 @@ describe('save migration registry — v17 → v18: Department of Smiles rebuild'
     ]);
   });
 });
+
+describe('save migration registry -- v18 to v19: owned vehicle runtime', () => {
+  beforeEach(() => GS.reset());
+
+  it('backfills exact parking and carries a mounted legacy BMX into driving state', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 18;
+    d.keyItems = ['title_car_bmx'];
+    d.activeVehicle = 'title_car_bmx';
+    delete d.vehicleParking;
+    delete d.drivingVehicle;
+
+    GS.deserialize(JSON.stringify(d));
+
+    expect(GS.data.version).toBe(CURRENT_SAVE_VERSION);
+    expect(GS.data.vehicleParking).toEqual({});
+    expect(GS.data.drivingVehicle).toBe('title_car_bmx');
+    expect(GS.data.activeVehicle).toBe('title_car_bmx');
+  });
+
+  it('removes a migrated driving title from its legacy garage and parking records', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 18;
+    d.keyItems = ['title_car_sedan', 'title_car_ev'];
+    d.activeVehicle = 'title_car_sedan';
+    d.garage = {
+      '27_maple': ['title_car_sedan', 'title_car_ev'],
+      hillcrest_manor: ['title_car_sedan'],
+    };
+    d.vehicleParking = {
+      title_car_sedan: { area: 'otterbrook', x: 100, y: 200, facing: 'right' },
+    };
+    delete d.drivingVehicle;
+
+    GS.deserialize(JSON.stringify(d));
+
+    expect(GS.data.drivingVehicle).toBe('title_car_sedan');
+    expect(GS.data.activeVehicle).toBe('title_car_sedan');
+    expect(GS.data.garage).toEqual({ '27_maple': ['title_car_ev'] });
+    expect(GS.data.vehicleParking.title_car_sedan).toBeUndefined();
+  });
+
+  it.each([
+    ['a known but unowned title', 'title_car_sedan'],
+    ['an unknown stale title', 'title_car_missing'],
+  ])('does not migrate %s into the driving controller', (_label, title) => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 18;
+    d.keyItems = [];
+    d.activeVehicle = title;
+    delete d.drivingVehicle;
+
+    GS.deserialize(JSON.stringify(d));
+
+    expect(GS.data.drivingVehicle).toBeNull();
+    expect(GS.data.activeVehicle).toBeNull();
+  });
+
+  it('ignores an invalid prerelease driving string and falls back to a valid owned active title', () => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 18;
+    d.keyItems = ['title_car_bmx'];
+    d.activeVehicle = 'title_car_bmx';
+    d.drivingVehicle = 'title_car_missing';
+
+    GS.deserialize(JSON.stringify(d));
+
+    expect(GS.data.drivingVehicle).toBe('title_car_bmx');
+    expect(GS.data.activeVehicle).toBe('title_car_bmx');
+  });
+
+  it('parking positions and the entered vehicle round-trip byte-stable', () => {
+    GS.data.keyItems.push('title_car_sedan');
+    GS.data.vehicleParking.title_car_sedan = {
+      area: 'otterbrook', x: 144, y: 288, facing: 'left',
+    };
+    GS.data.drivingVehicle = 'title_car_sedan';
+    const json = GS.serialize();
+
+    GS.reset();
+    GS.deserialize(json);
+
+    expect(GS.data.vehicleParking.title_car_sedan).toEqual({
+      area: 'otterbrook', x: 144, y: 288, facing: 'left',
+    });
+    expect(GS.data.drivingVehicle).toBe('title_car_sedan');
+  });
+});

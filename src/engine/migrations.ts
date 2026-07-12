@@ -71,15 +71,24 @@
  * v17 → v18 (2026-07 Department rebuild): all three Department of Smiles
  * floors grew and their required route changed. Saves standing on an old floor
  * recover to that floor's canonical entry, never into a wall or beyond a gate.
+ *
+ * v18 to v19: OWNED VEHICLE RUNTIME -- exact outdoor parking positions and the
+ * currently entered/driving title become save data. Old builds had no generic
+ * spawned parked-car body, so an empty parking map is their true history. A
+ * valid legacy `activeVehicle` was an actually mounted BMX/ride, so it seeds
+ * `drivingVehicle` while `activeVehicle` is preserved byte-for-byte.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
+import { DEALERSHIP } from '../data/dealership';
 import { freshEchoes } from '../data/echoes';
 import type { GameStateData } from './state';
 import type { HoopsState } from '../schemas';
 import { s } from '../spritegen/scale';
 
-export const CURRENT_SAVE_VERSION = 18;
+export const CURRENT_SAVE_VERSION = 19;
+
+const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -380,6 +389,50 @@ export const MIGRATIONS: MigrationStep[] = [
         raw.facing = target.facing;
       }
       raw.version = 18;
+      return raw;
+    },
+  },
+  {
+    to: 19,
+    migrate(raw) {
+      // Pre-v19 cars had continent-level location only; there is no honest map
+      // coordinate to invent. The first garage/dealer deployment writes one.
+      const vehicleParking = isObj(raw.vehicleParking) ? raw.vehicleParking : {};
+      raw.vehicleParking = vehicleParking;
+
+      const owned = new Set(
+        (Array.isArray(raw.keyItems) ? raw.keyItems : []).filter(
+          (item): item is string => typeof item === 'string',
+        ),
+      );
+      const validOwnedTitle = (title: unknown): title is string =>
+        typeof title === 'string' && KNOWN_VEHICLE_TITLES.has(title) && owned.has(title);
+      // A short-lived prerelease v19 build wrote `drivingVehicle` before the
+      // version bump. Prefer that valid title, otherwise lift the legacy active
+      // ride. Never turn a stale/unowned string into an invisible controller.
+      const drivingTitle = validOwnedTitle(raw.drivingVehicle)
+        ? raw.drivingVehicle
+        : validOwnedTitle(raw.activeVehicle)
+          ? raw.activeVehicle
+          : null;
+      raw.drivingVehicle = drivingTitle;
+      if (drivingTitle) {
+        raw.activeVehicle = drivingTitle;
+        delete vehicleParking[drivingTitle];
+        if (isObj(raw.garage)) {
+          for (const [propertyId, value] of Object.entries(raw.garage)) {
+            if (!Array.isArray(value)) continue;
+            const kept = value.filter((title) => title !== drivingTitle);
+            if (kept.length > 0) raw.garage[propertyId] = kept;
+            else delete raw.garage[propertyId];
+          }
+        }
+      } else if (typeof raw.activeVehicle === 'string' && !validOwnedTitle(raw.activeVehicle)) {
+        // Preserve a legitimate null, but actively repair a stale title so the
+        // active/preferred marker cannot resurrect invalid runtime state later.
+        raw.activeVehicle = null;
+      }
+      raw.version = 19;
       return raw;
     },
   },
