@@ -76,17 +76,23 @@ function visibleInPhase(
   return (!def.ifFlag || flags.has(def.ifFlag)) && (!def.unlessFlag || !flags.has(def.unlessFlag));
 }
 
-function propSolid(prop: PropDef): Rect | null {
-  if (!prop.solid) return null;
+function propSolids(prop: PropDef): Rect[] {
+  const authored = prop.solidParts ?? (prop.solid ? [prop.solid] : []);
   const rawScale = prop.scale;
   const sx = typeof rawScale === 'number' ? rawScale : rawScale?.x ?? 1;
   const sy = typeof rawScale === 'number' ? rawScale : rawScale?.y ?? 1;
-  return {
-    x: prop.x * 16 + prop.solid.ox * sx,
-    y: prop.y * 16 + prop.solid.oy * sy,
-    w: prop.solid.w * sx,
-    h: prop.solid.h * sy,
-  };
+  const displayW = (prop.sprite === 'ch3_viaduct_arch' ? 72 : prop.sprite === 'ch3_trilithon' ? 72 : 16) * sx;
+  const displayH = (prop.sprite === 'ch3_viaduct_arch' ? 134 : prop.sprite === 'ch3_trilithon' ? 116 : 16) * sy;
+  return authored.map((part) => {
+    let x = part.ox * sx;
+    let y = part.oy * sy;
+    let w = part.w * sx;
+    let h = part.h * sy;
+    if (prop.rot === 90) [x, y, w, h] = [displayH - y - h, x, h, w];
+    else if (prop.rot === 180) [x, y] = [displayW - x - w, displayH - y - h];
+    else if (prop.rot === 270) [x, y, w, h] = [y, displayW - x - w, h, w];
+    return { x: prop.x * 16 + x, y: prop.y * 16 + y, w, h };
+  });
 }
 
 function npcBody(npc: NpcDef, mapId: string): Rect {
@@ -112,8 +118,7 @@ function staticSolids(map: MapDef, grid: string[], flags: ReadonlySet<string>): 
     .filter((prop) => visibleInPhase(prop, flags))
     // buildHoldingDoor deliberately drops its solid once the quota opens it.
     .filter((prop) => !(prop.sprite === 'holding_door' && flags.has('holding_open')))
-    .map(propSolid)
-    .filter((rect): rect is Rect => rect !== null);
+    .flatMap(propSolids);
   const pinnedNpcs = map.npcs
     .filter((npc) => visibleInPhase(npc, flags))
     .filter((npc) => npc.stationary === true || npc.wander !== true)
@@ -293,8 +298,7 @@ describe('Department of Smiles production rebuild', () => {
           ...map.props
             .filter((prop) => visibleInPhase(prop, flags))
             .filter((prop) => !(prop.sprite === 'holding_door' && flags.has('holding_open')))
-            .map(propSolid)
-            .filter((rect): rect is Rect => rect !== null),
+            .flatMap(propSolids),
         ];
         expect(
           environment.some((solid) => overlaps(ownBody, solid)),
@@ -315,7 +319,7 @@ describe('Department of Smiles production rebuild', () => {
   });
 
   it('keeps every full patrol leg clear at the runtime foot-box offset', () => {
-    for (const map of [f1, f2, f3]) {
+    for (const map of [f1, f2, f3, MAPS.wintermoor_dorm]) {
       const flags = new Set<string>();
       const solids = staticSolids(map, map.grid, flags);
       for (const patrol of map.patrols ?? []) {

@@ -14,13 +14,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ...CITYLIFE_DIALOGUE,
   // S21 (ADR-126/127/128) — the three Axes, the Held Breath rewind, the ending cards
   ...BRANCH_DIALOGUE,
-  /* ═══════════════ CHAPTER 3 — ENGLAND (S18, ADR-095, Half 1) ═══════════════
+  /* ═══════════════ CHAPTER 3 — ENGLAND (S18, ADR-095, shipped world) ═══════════════
    * §A11 voice: damp-Tyne stone + institution-fear, one obsession per soul,
    * sincerity never the joke. The machine-fog is the chapter's dread — kept
    * plain, never funny. Flair is rare (≤1 warm glyph, only where earned) and
    * never on the shop's buy/sell surface (§A11.9 discipline). The story beats
    * (Milo's join, the Borrow, the boss) land in the story half. */
-  // — LUCILLE, the flight in (the §A6 arrival cutscene stages here later) —
+  // — LUCILLE, the flight in (the live §A6 arrival cutscene stages here) —
   npc_bert_air: [
     "@Watch where you step! The floor is woven cane, and this plane is named Lucille. I talk about her like she's a person, so say hi.",
     '@This old plane flew us across the whole sea on one working spark plug and pure stubbornness. Don\'t thank me. Thank her.',
@@ -46,6 +46,18 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_fb_boy: [
     '@The fog tastes of pennies now. It never used to taste of anything at all.',
     "@Me mam says don't lick the fog. But how's she know it's pennies, if she's never licked it?",
+  ],
+  npc_fb_fishmonger_after: [
+    '@Look at that — ripples. Proper little untidy ones, arguing with the quay. The Tyne remembers how to be a river.',
+  ],
+  npc_fb_boy_after: [
+    '@The fog tastes like rain now. I checked once. Mam says once was still one time too many.',
+  ],
+  npc_moor_rambler_after: [
+    '@You can see the academy from three bends away now. I preferred proving the path was public; apparently you proved the sky was too.',
+  ],
+  npc_wm_student_after: [
+    '@The schedule says Tuesday. Just Tuesday! It turns out Tuesday was waiting behind the fog this whole time.',
   ],
   sign_foggybottom: [
     'FOGGYBOTTOM-ON-TYNE. Most towns pair up with a sister town. Nobody picked us, because of the fog.',
@@ -114,7 +126,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     'THE CRICKET PRACTICE FIELD — by order of the schedule, practice now NEVER stops.',
     '(Eleven little caps sit in a row on the bench, one for each kid on the team. None of them is allowed to stop playing.)',
   ],
-  // — THE OLD STONES (the Resonance Site; the locket scene lands in the story half) —
+  // — THE OLD STONES (the live Resonance Site and Heartlight locket scene) —
   sign_old_stones: [
     'THE OLD STONES — older than the school, older than the fog, older than asking why.',
     '(Stand in the middle and they hum, very faintly. Something in your pocket hums back.)',
@@ -150,7 +162,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(The fog is MADE here and pumped out over the moor. Freeze the line solid and you could cross.)',
   ],
 
-  /* ═══════════ CHAPTER 3 — ENGLAND: THE STORY BEATS (S18, ADR-099, Half 2) ═══════════
+  /* ═══════════ CHAPTER 3 — ENGLAND: THE STORY BEATS (S18, ADR-099, shipped story) ═══════════
    * The soul half: the flight in, Milo's greenhouse crash + JOIN (the party becomes
    * three, the control system goes live), THE FIRST BORROW (Jay puppets the porter;
    * the Trust Thread opens — that beat lives in awake_the_first_borrow), the machine-fog
@@ -229,7 +241,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '({milo} throttles it down to a mutter. Outside, very slightly, the moor remembers it has a horizon.)',
   ],
 
-  // — FLOOR 3: THE HEADMASTER MAINFRAME (the boss; §A6 1,600 HP) —
+  // — FLOOR 3: THE HEADMASTER MAINFRAME (the boss; live canon 750 HP) —
   mainframe_door: [
     "(The exam hall is empty, with every desk in a perfect row. At the far end is the Headmaster's door — and it's WARM. You can feel the heat from here, like standing next to a running engine.)",
     '@That\'s not an office. ({milo}, quiet. His Clicker has started screeching static, and he holds it like it bit him.) That\'s a room full of computers with a Headmaster sign on the door.',

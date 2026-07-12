@@ -88,8 +88,8 @@ export const BOSS_SCRIPTS: Record<string, BossScriptDef> = {
     ],
   }),
 
-  // BOSS 3 — §A6 Ch.3: HEADMASTER MAINFRAME (1,600 HP), promoted from the forge
-  // 'summoner' draft (ADR-046) at the landing. It summons two PREFECT DRONES on the
+  // BOSS 3 — §A6 Ch.3: HEADMASTER MAINFRAME (750 HP), the live summoner
+  // script promoted from ADR-046. It summons two PREFECT DRONES on the
   // first turn and a fresh pair the instant both are down, FOREVER (bothSummonsDead,
   // repeatable). Milo's SPY reveals the cooling-fan weak point and Vibe FREEZE DOUBLES
   // the hit — that rides the live enemy's data, not the script: weakness ['freeze'] +

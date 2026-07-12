@@ -49,6 +49,20 @@ export interface Caster {
   cost: number;
 }
 
+/** Story state required before Milo's field Clicker belongs on the ability
+ * wheel. Keeping this check pure prevents map/debug entry from granting it
+ * before Milo joins or before his greenhouse tutorial completes. */
+export interface ClickerProgress {
+  partyIds: readonly string[];
+  flags: Readonly<Record<string, boolean | undefined>>;
+}
+
+export function clickerUnlocked(progress: ClickerProgress): boolean {
+  return progress.partyIds.includes('milo')
+    && progress.flags.milo_clicker === true
+    && progress.flags.fleet_road === true;
+}
+
 export type ControlReason =
   | 'ok' | 'no_pp' | 'out_of_range' | 'blocked' | 'wrong_kind' | 'occupied';
 

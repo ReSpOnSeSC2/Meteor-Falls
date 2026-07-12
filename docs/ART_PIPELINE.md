@@ -227,3 +227,44 @@ retired into `dormant/`.
 
 See also: [`/CLAUDE.md`](../CLAUDE.md), [`DECISIONS.md`](DECISIONS.md) (ADR-109),
 [`IMAGE_ASSET_MANIFEST.md`](IMAGE_ASSET_MANIFEST.md).
+
+## Chapter 3 world-prop bank (production example, 2026-07-12)
+
+Chapter 3 is the canonical example for adding **bespoke landmarks and set
+pieces without extending the frozen procedural generator or moving tile
+indices**. Two original, retained magenta-key source banks live at:
+
+- `assets/art/masters/world/ch3-outdoor-landmarks-source.png`
+- `assets/art/masters/world/ch3-machinery-stones-source.png`
+
+They slice with `tools/slice-prop-strip.cjs` into sixteen transparent runtime
+PNGs under `assets/art/world/props/`:
+
+`ch3_viaduct_arch`, `ch3_roman_culvert`, `ch3_greenhouse_wreck`,
+`ch3_cricket_pavilion`, `ch3_school_gate`, `ch3_porter_lodge`,
+`ch3_telegraph_pole`, `ch3_lucille_cockpit`, `ch3_lucille_window`,
+`ch3_cargo_net`, `ch3_fog_engine`, `ch3_valve_manifold`, `ch3_menhir`,
+`ch3_trilithon`, `ch3_spring`, and `ch3_academy_main`.
+
+The reproducibility contract is:
+
+1. Keep the source banks; runtime slices are derivatives, not the only copy.
+2. Key magenta to alpha and inspect every slice for transparent corners,
+   fringe contamination, accidental clipping, and a grounded foot/base.
+3. Register every semantic key in `WORLD_PROP_ART` and its native display
+   dimensions in `AUTHORED_WORLD_PROP_DISPLAY_SIZE` (`authored.ts`). Do not
+   resize a runtime PNG independently of that entry: depth, collision and map
+   composition were reviewed against the registered dimensions.
+4. Author collision beside each placement in `maps_ch3.ts`. The PNG's opaque
+   silhouette is not a collision source; ordinary bases use `solid`, while the
+   viaduct and trilithons use map-editor-supported `solidParts` for separate
+   pillars so their transparent openings remain genuinely walkable. Windows,
+   machinery, stones, and the academy block require different intentional footprints.
+5. Run strict visual audit, content validation, the Chapter 3 map tests, a
+   schematic `render-map` pass, and live screenshots. Source-bank cleanliness
+   alone does not prove scale, depth, walk-behind, or interaction readability.
+
+The two banks contain original shipped art and no bundled third-party
+reference image. The exact source/runtime inventory is also recorded in
+`IMAGE_ASSET_MANIFEST.md`; keep both documents in sync if a prop is added,
+renamed, or retired.

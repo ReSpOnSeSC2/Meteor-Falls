@@ -12,8 +12,10 @@ describe('shipped character collision placements', () => {
     expect(MAPS.valle_dorado.npcs.find((n) => n.id === 'llama_pen_6')).toMatchObject({ x: 28, y: 78 });
   });
 
-  it('routes the upper dorm patrol through the clear top corridor', () => {
-    expect(MAPS.wintermoor_dorm.patrols?.find((p) => p.id === 'dorm_a')?.route).toEqual([[3, 1], [22, 1]]);
+  it('routes the outer dorm patrol through the authored laundry-wall opening', () => {
+    expect(MAPS.wintermoor_dorm.patrols?.find((p) => p.id === 'dorm_a')?.route).toEqual([
+      [5, 12], [58, 12], [58, 32], [5, 32],
+    ]);
   });
 
   it('returns from the pharmacy beside, not inside, the deli keeper', () => {

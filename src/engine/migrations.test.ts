@@ -1,9 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GS, makeHeroState, newGameData } from './state';
-import { migrateSave, CURRENT_SAVE_VERSION } from './migrations';
+import {
+  migrateSave,
+  CURRENT_SAVE_VERSION,
+  CHAPTER3_LAYOUT_RECOVERY,
+  CHAPTER3_PARKING_RECOVERY,
+} from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
 import { s } from '../spritegen/scale';
+import { buildChapter3Maps } from '../data/maps_ch3';
+import { vehicleParkingSlotsOverlap } from './vehicle-domain';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
 function v1Hero(id: HeroId, level: number, name?: string): Record<string, unknown> {
@@ -723,5 +730,163 @@ describe('save migration registry -- v18 to v19: owned vehicle runtime', () => {
       area: 'otterbrook', x: 144, y: 288, facing: 'left',
     });
     expect(GS.data.drivingVehicle).toBe('title_car_sedan');
+  });
+});
+
+describe('save migration registry -- v19 to v20: Chapter 3 production layouts', () => {
+  const expected = {
+    biplane_interior: { tile: [19, 19], facing: 'down' },
+    foggybottom: { tile: [20, 44], facing: 'up' },
+    kettle_taproom: { tile: [12, 14], facing: 'up' },
+    kettle_snug: { tile: [14, 17], facing: 'up' },
+    foggy_moor: { tile: [3, 73], facing: 'right' },
+    wintermoor_grounds: { tile: [36, 55], facing: 'up' },
+    the_old_stones: { tile: [32, 2], facing: 'down' },
+    wintermoor_f1: { tile: [32, 39], facing: 'up' },
+    wintermoor_f2: { tile: [63, 3], facing: 'down' },
+    wintermoor_f3: { tile: [5, 3], facing: 'down' },
+    wintermoor_dorm: { tile: [36, 2], facing: 'down' },
+    wintermoor_boiler: { tile: [34, 39], facing: 'up' },
+  } as const;
+
+  const v19At = (map: string): Record<string, unknown> => {
+    const d = newGameData() as unknown as Record<string, unknown>;
+    d.version = 19;
+    d.map = map;
+    d.x = 99999;
+    d.y = -77;
+    d.facing = 'left';
+    d.flags = {
+      ch3_arrived: true,
+      milo_joined: true,
+      mainframe_defeated: false,
+      propertyPriceWalk: 3,
+    };
+    d.keyItems = ['star_locket', 'title_car_bmx', 'title_car_sedan'];
+    d.cashOnHand = 314;
+    d.banked = 2718;
+    d.homeStorage = { foggybottom_flat: ['corn_dog'] };
+    d.garage = { foggybottom_flat: ['title_car_bmx'] };
+    d.fuel = { title_car_sedan: 17 };
+    d.carLocation = { title_car_sedan: 'england' };
+    d.vehicleParking = {
+      title_car_sedan: { area: 'foggybottom', x: 400, y: 800, facing: 'upright' },
+    };
+    d.activeVehicle = null;
+    d.drivingVehicle = null;
+    return d;
+  };
+
+  it('pins exactly the twelve stable Chapter 3 map ids to in-bounds walkable tiles', () => {
+    expect(Object.keys(CHAPTER3_LAYOUT_RECOVERY)).toEqual(Object.keys(expected));
+    const maps = buildChapter3Maps();
+    const walkable = new Set([
+      '.', ',', '~', 'f', 'F', ':', '^', 'T', 'w', 'r', 'o', 'M',
+      '=', 'R', 'D', '_', 'X', 'P', 'd',
+    ]);
+
+    for (const [mapId, target] of Object.entries(expected)) {
+      const map = maps[mapId];
+      const [tx, ty] = target.tile;
+      expect(map, mapId).toBeDefined();
+      expect(tx, mapId).toBeGreaterThanOrEqual(0);
+      expect(ty, mapId).toBeGreaterThanOrEqual(0);
+      expect(tx, mapId).toBeLessThan(map.grid[0].length);
+      expect(ty, mapId).toBeLessThan(map.grid.length);
+      expect(walkable.has(map.grid[ty][tx]), `${mapId} tile '${map.grid[ty][tx]}'`).toBe(true);
+      expect(CHAPTER3_LAYOUT_RECOVERY[mapId as keyof typeof expected]).toEqual({
+        x: tx * 16 + 8,
+        y: ty * 16 + 12,
+        facing: target.facing,
+      });
+    }
+  });
+
+  it.each(Object.entries(expected))(
+    'recovers %s without changing flags, party, inventory, ownership, fuel, or map id',
+    (mapId, target) => {
+      const raw = v19At(mapId);
+      const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+      wanted.version = 20;
+      wanted.x = s(target.tile[0] * 16 + 8);
+      wanted.y = s(target.tile[1] * 16 + 12);
+      wanted.facing = target.facing;
+      wanted.vehicleParking = {
+        title_car_sedan: { area: 'foggybottom', x: s(88), y: s(349), facing: 'right' },
+      };
+
+      const migrated = migrateSave(raw, newGameData());
+
+      // Exact serialized equality proves player staging plus the one affected
+      // world-facing parking record are the complete mutation surface.
+      expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
+    },
+  );
+
+  it('rehomes every rebuilt-map parking record deterministically without stacking', () => {
+    const raw = v19At('otterbrook');
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'wintermoor_grounds', x: s(15 * 16), y: s(22 * 16), facing: 'right' },
+      title_car_ev: { area: 'wintermoor_grounds', x: s(15 * 16), y: s(22 * 16), facing: 'left' },
+      title_car_bmx: { area: 'otterbrook', x: 144, y: 288, facing: 'left' },
+    };
+
+    const migrated = migrateSave(raw, newGameData());
+    const base = CHAPTER3_PARKING_RECOVERY.wintermoor_grounds;
+    expect(migrated.vehicleParking.title_car_ev).toEqual({
+      area: 'wintermoor_grounds', x: s(base.x), y: s(base.y), facing: base.facing,
+    });
+    expect(migrated.vehicleParking.title_car_bmx).toEqual({ area: 'otterbrook', x: 144, y: 288, facing: 'left' });
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_sedan', migrated.vehicleParking.title_car_sedan,
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+    )).toBe(false);
+  });
+
+  it('changes an unaffected map save byte-for-byte only at the version value', () => {
+    const raw = v19At('otterbrook');
+    raw.x = 1234;
+    raw.y = 5678;
+    raw.facing = 'downleft';
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'otterbrook', x: 400, y: 800, facing: 'upright' },
+    };
+    const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    wanted.version = 20;
+
+    const migrated = migrateSave(raw, newGameData());
+
+    expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
+  });
+
+  it('does not treat prototype names as Chapter 3 recovery map ids', () => {
+    const raw = v19At('constructor');
+    raw.x = 1234;
+    raw.y = 5678;
+    raw.facing = 'downleft';
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
+    };
+    const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    wanted.version = 20;
+
+    const migrated = migrateSave(raw, newGameData());
+
+    expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
+  });
+
+  it('preserves malformed Chapter 3 parking records byte-for-byte', () => {
+    const raw = v19At('otterbrook');
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'foggybottom', note: 'missing coordinates and facing' },
+      title_car_ev: { area: 'wintermoor_grounds', x: Number.POSITIVE_INFINITY, y: 800, facing: 'up' },
+      title_car_bmx: { area: 'the_old_stones', x: 400, y: 800, facing: 'sideways' },
+    };
+    const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    wanted.version = 20;
+
+    const migrated = migrateSave(raw, newGameData());
+
+    expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
   });
 });

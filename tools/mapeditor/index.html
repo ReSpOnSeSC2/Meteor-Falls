@@ -607,8 +607,9 @@ function render(){ renderQueued=false;
       ctx.strokeStyle='rgba(255,84,112,.9)';
       if(isFacadeKey(p.sprite)){
         for(const r of facadeSolidRects(p)){ const [rx,ry]=toScreen(r.x,r.y); ctx.strokeRect(rx,ry,r.w*ts,r.h*ts); }
-      } else if(p.solid){ const sc=ts*M.artScale/M.tilePx;
-        ctx.strokeRect(sx+p.solid.ox*sc,sy+p.solid.oy*sc,p.solid.w*sc,p.solid.h*sc); }
+      } else {
+        for(const r of checkPropSolids(p)){ const [rx,ry]=toScreen(r.x,r.y); ctx.strokeRect(rx,ry,r.w*ts,r.h*ts); }
+      }
       if(!rot){ // resize handles (any unrotated prop/building) — right edge = wider, bottom edge = taller, corner = both
         ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.strokeStyle='#12131a'; ctx.lineWidth=1.5;
         const H=(hx,hy)=>{ ctx.fillRect(hx-6,hy-6,12,12); ctx.strokeRect(hx-6,hy-6,12,12); };
@@ -1033,7 +1034,10 @@ function refreshInspector(){ const el=$('#inspector');
     <div class="row"><label>height ×</label><input type="number" step="0.1" min="0.1" id="ip_sy" value="${propScale(p).y}"></div>
     <div class="hint">Resize — width &amp; height independently (only wider / only taller), or drag the <b>edge / corner handles</b> on the map${p.rot?' (set rotate back to 0° to use the handles)':''}. In-game size &amp; collision scale with it. 1 = natural.</div>`+
     (fac?``
-     :`<div class="row"><label class="chk"><input type="checkbox" id="ip_solid" ${p.solid?'checked':''}> solid (blocks walking)</label></div>
+     :p.solidParts?.length
+       ?`<div class="hint"><b>compound solid:</b> ${p.solidParts.length} source-authored parts preserve a visible opening. Parts round-trip through JSON/TS export; edit them in the canonical map builder.</div>
+       <div class="row"><label>rotate</label><button class="btn" id="ip_rot">⟳ ${p.rot||0}° (press R)</button></div>`
+       :`<div class="row"><label class="chk"><input type="checkbox" id="ip_solid" ${p.solid?'checked':''}> solid (blocks walking)</label></div>
        <div class="row"><label>rotate</label><button class="btn" id="ip_rot">⟳ ${p.rot||0}° (press R)</button></div>`)+
     `<div class="row"><label>ifFlag</label><input id="ip_iff" value="${p.ifFlag||''}" placeholder="(opt) only if flag set"></div>
     <div class="row"><label>unlessFlag</label><input id="ip_unf" value="${p.unlessFlag||''}" placeholder="(opt) hide once flag set"></div>
@@ -1043,7 +1047,7 @@ function refreshInspector(){ const el=$('#inspector');
     $('#ip_y').oninput=e=>{p.y=+e.target.value;requestRender();scheduleAutosave();};
     $('#ip_sx').oninput=e=>{ const sc=propScale(p); setPropScale(p,+e.target.value||1,sc.y); requestRender();refreshLayers();scheduleAutosave(); };
     $('#ip_sy').oninput=e=>{ const sc=propScale(p); setPropScale(p,sc.x,+e.target.value||1); requestRender();refreshLayers();scheduleAutosave(); };
-    if(!fac)$('#ip_solid').onchange=e=>{ p.solid=e.target.checked?autoSolid(p.sprite):undefined; requestRender();scheduleAutosave(); };
+    if(!fac&&!p.solidParts?.length)$('#ip_solid').onchange=e=>{ p.solid=e.target.checked?autoSolid(p.sprite):undefined; requestRender();scheduleAutosave(); };
     if(!fac)$('#ip_rot').onclick=rotateSel;
     $('#ip_iff').oninput=e=>{const v=e.target.value.trim(); if(v)p.ifFlag=v; else delete p.ifFlag; scheduleAutosave();};
     $('#ip_unf').oninput=e=>{const v=e.target.value.trim(); if(v)p.unlessFlag=v; else delete p.unlessFlag; scheduleAutosave();};
@@ -1331,6 +1335,7 @@ function toTS(){ const m=state.map;
   const scaleText=v=>typeof v==='number'?String(v):`{ x: ${v.x}, y: ${v.y} }`;
   const propLine=p=>{ let s=`    { sprite: ${q(p.sprite)}, x: ${p.x}, y: ${p.y}`;
     if(p.solid)s+=`, solid: { ox: ${p.solid.ox}, oy: ${p.solid.oy}, w: ${p.solid.w}, h: ${p.solid.h} }`;
+    if(p.solidParts?.length)s+=`, solidParts: [${p.solidParts.map(r=>`{ ox: ${r.ox}, oy: ${r.oy}, w: ${r.w}, h: ${r.h} }`).join(', ')}]`;
     if(p.scale!=null)s+=`, scale: ${scaleText(p.scale)}`;
     if(p.rot)s+=`, rot: ${p.rot}`;
     if(p.door)s+=`, door: { ox: ${p.door.ox}, oy: ${p.door.oy}, w: ${p.door.w}, h: ${p.door.h}, to: ${q(p.door.to)}, tx: ${p.door.tx}, ty: ${p.door.ty} }`;
@@ -1443,8 +1448,12 @@ function checkPhaseGrid(m){
 const rectOverlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 function solidCellUnder(rect,grid){ const x0=Math.floor(rect.x),y0=Math.floor(rect.y),x1=Math.ceil(rect.x+rect.w)-1,y1=Math.ceil(rect.y+rect.h)-1;
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(y<0||x<0||y>=grid.length||x>=grid[0].length||checkSolid(grid[y][x]))return [x,y]; return null; }
-function checkPropSolids(p){ if(!phaseVisible(p))return []; if(isFacadeKey(p.sprite))return facadeSolidRects(p); if(!p.solid||p.rot)return [];
-  const sc=propScale(p); return [{x:p.x+p.solid.ox/16*sc.x,y:p.y+p.solid.oy/16*sc.y,w:p.solid.w/16*sc.x,h:p.solid.h/16*sc.y}]; }
+function checkPropSolids(p){ if(!phaseVisible(p))return []; if(isFacadeKey(p.sprite))return facadeSolidRects(p);
+  const parts=p.solidParts?.length?p.solidParts:(p.solid?[p.solid]:[]); if(!parts.length)return [];
+  const sc=propScale(p), natural=naturalTiles(p), fw=natural.w*sc.x, fh=natural.h*sc.y, rot=p.rot||0;
+  return parts.map(part=>{ let x=part.ox/16*sc.x,y=part.oy/16*sc.y,w=part.w/16*sc.x,h=part.h/16*sc.y;
+    if(rot===90)[x,y,w,h]=[fh-y-h,x,h,w]; else if(rot===180)[x,y]=[fw-x-w,fh-y-h]; else if(rot===270)[x,y,w,h]=[y,fw-x-w,h,w];
+    return{x:p.x+x,y:p.y+y,w,h}; }); }
 function npcWanders(n,m){ return n.wander===true||(n.wander!==false&&!n.shop&&!n.stationary&&!n.dog&&!m.interior); }
 function patrolRouteCollision(p,grid,m){ const r=p.route||[]; if(!r.length)return 'has no waypoints'; const props=(m.props||[]).flatMap(checkPropSolids);
   const segs=r.length===1?1:r.length; for(let i=0;i<segs;i++){ const a=r[i],b=r[(i+1)%r.length]; const steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])*8));

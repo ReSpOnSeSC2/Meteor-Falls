@@ -170,20 +170,98 @@ const CH2: Cutscene[] = [
   },
 ];
 
-const CH3: Cutscene[] = [
-  {
-    id: 'ch3_journey',
-    chapter: 'ch3',
-    beats: panels(
-      'lucille_to_wintermoor',
-      'milo_greenhouse_crash',
-      'porter_first_borrow',
-      'old_stones_resonance',
-      'wintermoor_machine_fog',
-      'headmaster_mainframe',
-      'heartlight_3_machine_fog_lifts',
-    ),
+const CH3_BEATS = {
+  flight: {
+    art: 'lucille_to_wintermoor',
+    sfx: 'engine_start',
+    motion: { fromScale: 1.03, toScale: 1.15, panX: -14, panY: 4, ms: 10500, ease: 'sine.inOut' },
+    captions: [
+      'Lucille noses east into weather that has forgotten how to end.',
+      'Below the wing: slate roofs, a black river, and moorland vanishing shelf by shelf into fog.',
+      'Bert calls it a landing. The map calls it the whole of Foggybottom-on-Tyne.',
+    ],
+    hold: 350,
   },
+  milo: {
+    art: 'milo_greenhouse_crash',
+    sfx: 'meteor_crash',
+    flash: 120,
+    shake: [700, 0.012] as [number, number],
+    motion: { fromScale: 1.02, toScale: 1.14, panX: 10, panY: -5, ms: 9200, ease: 'quad.out' },
+    captions: [
+      'The porter raises one finger. Somewhere beyond him, an engine answers with several bad ideas.',
+      'Glass, ivy, and a homemade rocket arrive at Wintermoor in the same instant.',
+      'The boy who climbs out introduces himself as Milo. He is already trying to repair the crater.',
+    ],
+  },
+  borrow: {
+    art: 'porter_first_borrow',
+    sfx: 'fx_mindwarp',
+    motion: { fromScale: 1.12, toScale: 1.04, panX: -9, ms: 9000, ease: 'sine.inOut' },
+    captions: [
+      "Jay reaches for the porter's anger and finds a door behind it.",
+      'For one impossible moment, another pair of shoes remembers how to move.',
+      'The gate opens. The feeling does not leave with the porter.',
+    ],
+  },
+  stones: {
+    art: 'old_stones_resonance',
+    sfx: 'ember',
+    flash: 180,
+    motion: { fromScale: 1.08, toScale: 1.17, panY: -10, ms: 9800, ease: 'sine.inOut' },
+    captions: [
+      'The Old Stones stand in a landscape much larger than their ring.',
+      'Every wall, spring, and fallen marker points toward the same buried note.',
+      'The third Heartlight is close. Something mechanical is pressing down on its song.',
+    ],
+  },
+  fog: {
+    art: 'wintermoor_machine_fog',
+    sfx: 'rumble',
+    motion: { fromScale: 1.04, toScale: 1.16, panX: 12, panY: 5, ms: 9000, ease: 'quad.in' },
+    captions: [
+      'The fog is not weather. Pipes under Wintermoor have been teaching the valley to hold its breath.',
+      'Each pulse begins beneath the school and rolls downhill toward the Tyne.',
+    ],
+  },
+  mainframe: {
+    art: 'headmaster_mainframe',
+    music: 'boss',
+    sfx: 'alert',
+    shake: [500, 0.01] as [number, number],
+    motion: { fromScale: 1.03, toScale: 1.13, panY: 8, ms: 8200, ease: 'quad.in' },
+    captions: [
+      'The Headmaster is all timetable, brass, and borrowed thunder.',
+      'Behind him, the Mainframe counts every breath in the valley and calls the total discipline.',
+    ],
+  },
+  heartlight: {
+    art: 'heartlight_3_machine_fog_lifts',
+    music: 'heartlight',
+    sfx: 'ember',
+    flash: 260,
+    motion: { fromScale: 1.14, toScale: 1.02, panY: -8, ms: 10500, ease: 'sine.inOut' },
+    captions: [
+      'The Mainframe stops. The valley exhales.',
+      'Fog loosens from the terraces, the school windows find the dawn, and the Tyne turns silver.',
+      'In the quiet under the Old Stones, the third Heartlight answers.',
+    ],
+    hold: 600,
+  },
+} satisfies Record<string, CutsceneBeat>;
+
+const CH3: Cutscene[] = [
+  // The full reel remains available to the cutscene gallery and asset audit.
+  // Story code plays the single-beat ids below at their actual moments so the
+  // flight cannot spoil Milo, the Mainframe, or the Heartlight.
+  { id: 'ch3_journey', chapter: 'ch3', beats: Object.values(CH3_BEATS) },
+  { id: 'ch3_flight', chapter: 'ch3', beats: [CH3_BEATS.flight] },
+  { id: 'ch3_milo_join', chapter: 'ch3', beats: [CH3_BEATS.milo] },
+  { id: 'ch3_first_borrow', chapter: 'ch3', beats: [CH3_BEATS.borrow] },
+  { id: 'ch3_stones', chapter: 'ch3', beats: [CH3_BEATS.stones] },
+  { id: 'ch3_fog_reveal', chapter: 'ch3', beats: [CH3_BEATS.fog] },
+  { id: 'ch3_mainframe', chapter: 'ch3', beats: [CH3_BEATS.mainframe] },
+  { id: 'ch3_heartlight', chapter: 'ch3', beats: [CH3_BEATS.heartlight] },
 ];
 
 const CH4: Cutscene[] = [

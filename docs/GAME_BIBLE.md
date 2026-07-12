@@ -548,7 +548,7 @@ Banana boat to **Puerto Sol**. The mountain village **Valle Dorado** worships a 
 
 **Milo joins**, crash-landing his homemade rocket into his own school's greenhouse. Wintermoor Academy's mainframe — installed to "optimize student happiness" — has been Hushed and runs the school like a factory; the fog outside is *machine-generated*. Stealth-lite dorm sneaking, library side quests, tea that restores PP.
 
-**Resonance Site:** The Old Stones (a pocket Stonehenge). **BOSS 3 — HEADMASTER MAINFRAME** (1,600 HP / summons two Prefect Drones each time both are down; Milo's Spy reveals its cooling fan weak point — Vibe Freeze doubles damage).
+**Resonance Site:** The Old Stones (an original standing-stone landscape). **BOSS 3 — HEADMASTER MAINFRAME** (750 HP / summons two Prefect Drones each time both are down; Milo's Spy reveals its cooling fan weak point — Vibe Freeze doubles damage).
 
 > *(Amended 2026-06-14 per Appendix rule 6, ADR-099: **Ch.3 is LANDED** — the §A6
 > Old-World track's first fully-shipped chapter. Milo joins at the greenhouse crash

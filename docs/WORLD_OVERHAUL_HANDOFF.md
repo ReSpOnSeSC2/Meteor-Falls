@@ -349,7 +349,8 @@ refuted) are in the **P3 phase entry** above. door-audit + content-validate stdo
 the S3 baseline across all 202 maps; full vitest 1331/1331; tsc + build 0. No shipped map opted into
 elevation (`elev_spike` remains the sole allowlisted map).
 
-**NOT YET STARTED:** elevation **P4** (the LAYERED cliff art kit — overhang band +
+**HISTORICAL S3 QUEUE (completed or superseded by the later status sections):**
+elevation **P4** (the LAYERED cliff art kit — overhang band +
 `cliff_face_top/mid/base` + `stair_top/mid/base` + corners/caps; slice layout must match the overlay
 renderer), **P5** foggybottom terrace-aware (its own guard + allowlist entry); **Track B remaining
 flat strips** (road-junction, path→grass transition, foliage-fade — hedge + bramble DONE; needs the
@@ -490,3 +491,100 @@ We are rebuilding the overworld from the ground up AGAIN, map by map, to this ba
 
 *(Superseded S4 kickoff removed; its work — P4 face + the global elevation law — landed. The dev-preview
 boot workaround + the P2/P3 phase entries above remain the reference for any live elevation preview.)*
+
+## CURRENT STATUS (Chapter 3 production close, 2026-07-12) — PILOT COMPLETE
+
+This section supersedes the Session 3–5 “not yet started / fast-follows / next
+Ch3 maps” queue language. Chapter 3 is no longer the next world-overhaul target: its complete
+twelve-map route, live chapter systems, authored landmark kit, compatibility
+migration, and regression surface are implemented.
+
+### Shipped map contract
+
+The exact save-facing roster is `biplane_interior`, `foggybottom`,
+`kettle_taproom`, `kettle_snug`, `foggy_moor`, `wintermoor_grounds`,
+`the_old_stones`, `wintermoor_f1`, `wintermoor_f2`, `wintermoor_f3`,
+`wintermoor_dorm`, and `wintermoor_boiler`.
+
+- **Lucille** is a storm cabin rather than a transition box: cockpit, animated
+  windows/lightning, cargo net, seating, and vibration/rattle sell the flight.
+- **Foggybottom** retains the four descending terraces and sinking-fog
+  identity, but now supports stable town services, a buyable flat, agency,
+  bank, dealership/motor works, and petrol. **The Kettle** extends that service
+  loop with paid lodging and a real guest room. The first four town facade
+  slots are save- and service-facing.
+- **Foggy Moor** is the 126×96 regional walk: a winding dry-stone-wall route,
+  branches, secret/reward pockets, picnic/quest anchors, telegraph sequence,
+  viaduct, and Roman culvert. **Wintermoor Grounds** stages the gate/porter,
+  greenhouse wreck, academy/quad, cricket edge, service approach, and Clicker
+  lesson. **The Old Stones** are a concentric landscape with authored menhirs,
+  trilithon and spring, including a restored post-boss state.
+- **The school** has five substantial dungeon maps: great hall/library/tuck
+  shop, classroom/fog-pipe floor, exam hall plus raised Mainframe arena, a
+  cover-rich patrol dorm, and the boiler/fog plant. The boiler's exact
+  `WINTERMOOR_COOLANT_CROSSING` is the sole Freeze-opened crossing; machine and
+  blocker art phase with the same flags as collision.
+
+### Live systems and story
+
+- The seven Chapter 3 beats are wired where they occur: flight, Milo join,
+  first borrow, Old Stones, machine-fog reveal, Mainframe, and Heartlight. The
+  Headmaster Mainframe is canonically **750 HP**; this supersedes historical
+  1,600-HP planning text.
+- Field PUPPET is a real 14-PP, eight-second overworld control state with target
+  eligibility, mind-immunity, range UI, interaction, release/timeout and body
+  restoration. Milo's Clicker is a separate story-gated system for authored,
+  unoccupied machines; it owns the grounds practice cart and the boiler valve
+  tug and never serializes transient machine position.
+- Chapter maps now consume actual rain, wind, and machine ambience beds. Fog
+  density follows the player's Foggybottom terrace before victory, falls to
+  24% of that density after victory, and the Old Stones/enemy/NPC state reacts
+  to `mainframe_defeated`.
+- Foggy town amenities use real cash/property/fuel/vehicle state. The showroom
+  exposes price, class, seats, resource/range, party fit, ownership, delivery
+  pad and shortfall; the driving HUD reports party fit and exact parking map.
+- `?devMap=<one-of-the-12>&devState=arrival|joined|coolant|postBoss|complete`
+  is the supported survey seam. Default spawn derives from a valid inbound
+  door; explicit `devX`/`devY` only override when actually supplied.
+
+### Art and compatibility
+
+Two original source banks are retained under `assets/art/masters/world/`:
+`ch3-outdoor-landmarks-source.png` and `ch3-machinery-stones-source.png`. They
+slice to sixteen alpha-clean runtime props registered in `authored.ts`:
+`ch3_viaduct_arch`, `ch3_roman_culvert`, `ch3_greenhouse_wreck`,
+`ch3_cricket_pavilion`, `ch3_school_gate`, `ch3_porter_lodge`,
+`ch3_telegraph_pole`, `ch3_lucille_cockpit`, `ch3_lucille_window`,
+`ch3_cargo_net`, `ch3_fog_engine`, `ch3_valve_manifold`, `ch3_menhir`,
+`ch3_trilithon`, `ch3_spring`, and `ch3_academy_main`.
+
+Save version **v20** owns deterministic recovery for all twelve rebuilt map
+layouts plus safe rehoming for parked vehicles on the four rebuilt outdoor
+maps. It changes only invalidated Chapter 3 world-location data; ownership,
+fuel, continent, story, party, and economy remain exact, and unaffected saves
+and parking remain byte-stable. Any future movement of route mouths,
+Foggy service slots, the coolant rectangle, or machine ids must update both the
+map contract tests and the migration strategy.
+
+### Gate state, risks, and next phase
+
+Focused suites cover the exact roster/topology, Foggy elevation and fixed
+points, amenities, property/refuel, vehicle domain/showroom, control helpers,
+PUPPET/Clicker lifecycle, cutscenes, audio ambience, post-boss fog, Title dev
+spawns, and v20 migration. The load-bearing files are
+`maps_ch3.test.ts`, `maps_foggybottom.test.ts`, `city_amenities.test.ts`,
+`control.test.ts`, `OverworldScene.test.ts`, `TitleScene.test.ts`,
+`VehicleShopScene.test.ts`, `audio.test.ts`, `cutscenes.test.ts`, and
+`migrations.test.ts`; keep them in the focused command when changing this
+chapter. Keep the normal close sequence authoritative:
+typecheck → strict door audit → content validate → focused tests → Chapter 3
+render → balance → strict visual audit → full tests → build → live browser
+survey. Regenerate and drift-check the map-editor manifest after map metadata
+changes.
+
+Known non-blocking debt is limited to shared/global surfaces: the strict visual
+audit's pre-existing report of 94 unregistered battle PNGs and the broader
+stylization program's still-unfinished universal/per-region 47-blob ground
+families. Neither is a missing Chapter 3 runtime dependency; the sixteen new
+world props are registered and in use. With the close gates green, the next
+world-design slice is Chapter 4—not another Chapter 3 placeholder pass.

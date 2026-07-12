@@ -132,6 +132,58 @@ describe('story trigger ownership and persistence', () => {
   });
 });
 
+describe('Chapter 3 machine-fog aftermath', () => {
+  it('keeps the four-terrace pre-boss gradient and clears most of it after the Mainframe', () => {
+    expect(runtime.chapter3FogAlpha(3, 3, false)).toBeCloseTo(0.14);
+    expect(runtime.chapter3FogAlpha(3, 0, false)).toBeCloseTo(0.62);
+    expect(runtime.chapter3FogAlpha(3, 0, true)).toBeCloseTo(0.1488);
+    expect(runtime.chapter3FogAlpha(0, 0, true)).toBeCloseTo(0.0816);
+  });
+});
+
+describe('Chapter 3 field-control scene contract', () => {
+  it('spends Puppet PP only after a successful borrow', () => {
+    expect(runtime.spendFieldPuppetPp(20, 14, true)).toBe(6);
+    expect(runtime.spendFieldPuppetPp(20, 14, false)).toBe(20);
+    expect(runtime.spendFieldPuppetPp(8, 14, true)).toBe(0);
+  });
+
+  it('excludes dogs, clamps the eight-second timer, and accepts B or Y release', () => {
+    expect(runtime.fieldPuppetNpcEligible({ dog: true })).toBe(false);
+    expect(runtime.fieldPuppetNpcEligible({})).toBe(true);
+    expect(runtime.fieldPuppetTimeRemaining(8, 0.5)).toBe(7.5);
+    expect(runtime.fieldPuppetTimeRemaining(0.1, 1)).toBe(0);
+    expect(runtime.fieldControlReleaseRequested(true, false)).toBe(true);
+    expect(runtime.fieldControlReleaseRequested(false, true)).toBe(true);
+    expect(runtime.fieldControlReleaseRequested(false, false)).toBe(false);
+  });
+
+  it('restores only a still-live pinned target body on release', () => {
+    expect(runtime.shouldRestorePinnedPuppetBody(false, true, true)).toBe(true);
+    expect(runtime.shouldRestorePinnedPuppetBody(true, true, true)).toBe(false);
+    expect(runtime.shouldRestorePinnedPuppetBody(false, false, true)).toBe(false);
+    expect(runtime.shouldRestorePinnedPuppetBody(false, true, false)).toBe(false);
+  });
+
+  it('gates the training and fogworks Clicker actions in story order', () => {
+    const base = { trained: false, coolantFrozen: false, fogworksSolved: false };
+    expect(runtime.chapter3MachineActionResult('wm_clicker_training', base)).toBe('training_complete');
+    expect(runtime.chapter3MachineActionResult('wm_clicker_training', { ...base, trained: true })).toBe('training_already');
+    expect(runtime.chapter3MachineActionResult('wm_fogworks_valve', base)).toBe('coolant_required');
+    expect(runtime.chapter3MachineActionResult('wm_fogworks_valve', { ...base, coolantFrozen: true })).toBe('fogworks_complete');
+    expect(runtime.chapter3MachineActionResult('wm_fogworks_valve', { ...base, coolantFrozen: true, fogworksSolved: true })).toBe('fogworks_already');
+    expect(runtime.chapter3MachineActionResult('not_real', base)).toBe('unknown');
+  });
+
+  it('projects a Clicker machine body into cardinal and diagonal headings', () => {
+    expect(runtime.fieldMachineBodyDimensions(120, 32, 'right')).toEqual({ w: 120, h: 32 });
+    expect(runtime.fieldMachineBodyDimensions(120, 32, 'down')).toEqual({ w: 32, h: 120 });
+    const diagonal = runtime.fieldMachineBodyDimensions(120, 32, 'downright');
+    expect(diagonal.w).toBeCloseTo(76 * Math.SQRT2);
+    expect(diagonal.h).toBeCloseTo(76 * Math.SQRT2);
+  });
+});
+
 describe('Otterbrooke Chapter 1 population policy', () => {
   it('recognizes only the retired sequential Twoton tenancy namespace', () => {
     expect(runtime.isLegacyTwotonUnitId('brickton_unit_0')).toBe(true);

@@ -91,6 +91,7 @@ class FakeOsc {
 }
 class FakeBufferSource {
   buffer: unknown = null;
+  loop = false;
   outs: unknown[] = [];
   connect(n: unknown): unknown {
     this.outs.push(n);
@@ -159,6 +160,9 @@ beforeEach(() => {
   a.ctx = null;
   a.musicVoice = null;
   a.fadingVoice = null;
+  a.ambienceVoice = null;
+  a.intendedAmbience = null;
+  a.intendedAmbienceScale = 1;
   a.intendedName = null;
   a.intendedStems = Infinity;
   a.muted = false;
@@ -237,6 +241,35 @@ describe('the muffle veil (#2)', () => {
     expect(a.musicMuffle.frequency.lastTarget()).toBe(muffleCutoff(0));
     // a ramp, not an instant set
     expect(a.musicMuffle.frequency.ops.some((o: Op) => o.kind === 'linear')).toBe(true);
+  });
+});
+
+describe('map ambient beds (ADR-108 runtime seam)', () => {
+  it('loops filtered ambience through the music bus and retunes it without rebuilding', () => {
+    const a = AUDIO as any;
+    AUDIO.setAmbience('rain');
+    const rain = a.ambienceVoice;
+    expect(rain.id).toBe('rain');
+    expect(rain.source.loop).toBe(true);
+    expect(rain.source.outs).toContain(rain.filter);
+    expect(rain.filter.outs).toContain(rain.gain);
+    expect(rain.gain.outs).toContain(a.musicBus);
+    expect(rain.gain.gain.lastTarget()).toBeCloseTo(0.14);
+
+    AUDIO.setAmbience('rain', 0.25);
+    expect(a.ambienceVoice).toBe(rain);
+    expect(rain.gain.gain.lastTarget()).toBeCloseTo(0.035);
+  });
+
+  it('crossfades beds and can clear the map ambience', () => {
+    const a = AUDIO as any;
+    AUDIO.setAmbience('wind');
+    const wind = a.ambienceVoice;
+    AUDIO.setAmbience('machine');
+    expect(a.ambienceVoice.id).toBe('machine');
+    expect(wind.gain.gain.lastTarget()).toBe(0);
+    AUDIO.setAmbience(null);
+    expect(a.ambienceVoice).toBeNull();
   });
 });
 

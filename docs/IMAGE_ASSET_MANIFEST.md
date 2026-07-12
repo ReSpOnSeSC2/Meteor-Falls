@@ -197,6 +197,18 @@ gate, crate, gangplank, gift box…
 
 - **Naming:** `assets/art/world/props/<name>.png` (see `WORLD_PROP_ART`).
 - **Size:** variable, native object size.
+- **Chapter 3 production kit (2026-07-12):** two original chroma-key source
+  banks, `assets/art/masters/world/ch3-outdoor-landmarks-source.png` and
+  `ch3-machinery-stones-source.png`, slice to 16 registered runtime props:
+  `ch3_viaduct_arch`, `ch3_roman_culvert`, `ch3_greenhouse_wreck`,
+  `ch3_cricket_pavilion`, `ch3_school_gate`, `ch3_porter_lodge`,
+  `ch3_telegraph_pole`, `ch3_lucille_cockpit`, `ch3_lucille_window`,
+  `ch3_cargo_net`, `ch3_fog_engine`, `ch3_valve_manifold`, `ch3_menhir`,
+  `ch3_trilithon`, `ch3_spring`, and `ch3_academy_main`. Semantic keys and
+  native display dimensions are pinned in `src/spritegen/authored.ts`; map
+  solids remain authored beside placement in `src/data/maps_ch3.ts`. The
+  source strips are retained; `tools/slice-prop-strip.cjs` is the reproducible
+  slicer. No reference image or third-party asset ships with the kit.
 
 ## 10. Building facades / landmarks
 
@@ -296,7 +308,7 @@ but with no art. Each unbuilt chapter needs a complete region art set.
 |---:|---|---|---|---|---|
 | 1 | USA — Otterbrook / Brickton | **shipped** | Titanic Tick (450) | otterbrook, brickton | — |
 | 2 | South America — Puerto Sol / Valle Dorado | **shipped** | Idol of the Gilded Grin (980) | puerto_sol, valle_dorado | banana boat |
-| 3 | England — Foggybottom | **shipped** | Headmaster Mainframe (1600) | foggybottom | biplane "Lucille" |
+| 3 | England — Foggybottom / Wintermoor | **shipped** | Headmaster Mainframe (750) | foggybottom | biplane "Lucille" |
 | 4 | Norway — Kvisthavn / Lilleby | **unbuilt** | The Whisperwig (1900) | kvisthavn, lilleby | biplane |
 | 5 | Minimus — Minimus Major | **unbuilt** | Whiskerzilla (2150) | minimus_major | biplane |
 | 6 | Africa — Zanzibel | **unbuilt** | The Laughing Sphinx (2300) | zanzibel | biplane |

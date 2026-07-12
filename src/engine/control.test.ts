@@ -10,6 +10,7 @@ import {
   inRange, controllable, candidates, attempt, canCast,
   canRide, rideOrRemote, unlocksGate, fieldLabel,
   canSelfCreep, selfCreep,
+  clickerUnlocked,
   type Caster, type ControlTarget,
 } from './control';
 
@@ -92,6 +93,20 @@ describe('control — field labels', () => {
   it('Puppet and Clicker read on the wheel', () => {
     expect(fieldLabel('puppet')).toBe('PUPPET');
     expect(fieldLabel('clicker')).toBe('CLICKER');
+  });
+});
+
+describe('control - Clicker story gate', () => {
+  const ready = {
+    partyIds: ['jay', 'mia', 'milo'],
+    flags: { milo_clicker: true, fleet_road: true },
+  };
+
+  it('unlocks only after Milo joins and both tutorial flags are live', () => {
+    expect(clickerUnlocked(ready)).toBe(true);
+    expect(clickerUnlocked({ ...ready, partyIds: ['jay', 'mia'] })).toBe(false);
+    expect(clickerUnlocked({ ...ready, flags: { milo_clicker: false, fleet_road: true } })).toBe(false);
+    expect(clickerUnlocked({ ...ready, flags: { milo_clicker: true } })).toBe(false);
   });
 });
 

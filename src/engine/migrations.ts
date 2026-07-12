@@ -77,18 +77,61 @@
  * spawned parked-car body, so an empty parking map is their true history. A
  * valid legacy `activeVehicle` was an actually mounted BMX/ride, so it seeds
  * `drivingVehicle` while `activeVehicle` is preserved byte-for-byte.
+ *
+ * v19 to v20 (2026-07 Chapter 3 rollout): all twelve Chapter 3 maps were
+ * re-authored at production scale. A save standing on one of the old layouts
+ * recovers to a deliberate, walkable staging tile on that SAME stable map id.
+ * No story, party, inventory, ownership, fuel, or economy state is inferred;
+ * affected outdoor parking coordinates are rehomed onto the rebuilt roads.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
 import { DEALERSHIP } from '../data/dealership';
 import { freshEchoes } from '../data/echoes';
-import type { GameStateData } from './state';
+import type { GameStateData, SaveFacing, VehicleParkingState } from './state';
+import { allocateVehicleDeliverySlot } from './vehicle-domain';
 import type { HoopsState } from '../schemas';
 import { s } from '../spritegen/scale';
 
-export const CURRENT_SAVE_VERSION = 19;
+export const CURRENT_SAVE_VERSION = 20;
 
 const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
+
+/**
+ * Phaser-free Chapter 3 layout recovery coordinates, expressed in the
+ * unscaled 16 px authoring coordinate system used by door targets. Each point
+ * is a clear staging tile immediately inside a stable entrance. The migration
+ * applies `s()` exactly once when it writes runtime save coordinates.
+ */
+export const CHAPTER3_LAYOUT_RECOVERY = {
+  biplane_interior: { x: 19 * 16 + 8, y: 19 * 16 + 12, facing: 'down' },
+  foggybottom: { x: 20 * 16 + 8, y: 44 * 16 + 12, facing: 'up' },
+  kettle_taproom: { x: 12 * 16 + 8, y: 14 * 16 + 12, facing: 'up' },
+  kettle_snug: { x: 14 * 16 + 8, y: 17 * 16 + 12, facing: 'up' },
+  foggy_moor: { x: 3 * 16 + 8, y: 73 * 16 + 12, facing: 'right' },
+  wintermoor_grounds: { x: 36 * 16 + 8, y: 55 * 16 + 12, facing: 'up' },
+  the_old_stones: { x: 32 * 16 + 8, y: 2 * 16 + 12, facing: 'down' },
+  wintermoor_f1: { x: 32 * 16 + 8, y: 39 * 16 + 12, facing: 'up' },
+  wintermoor_f2: { x: 63 * 16 + 8, y: 3 * 16 + 12, facing: 'down' },
+  wintermoor_f3: { x: 5 * 16 + 8, y: 3 * 16 + 12, facing: 'down' },
+  wintermoor_dorm: { x: 36 * 16 + 8, y: 2 * 16 + 12, facing: 'down' },
+  wintermoor_boiler: { x: 34 * 16 + 8, y: 39 * 16 + 12, facing: 'up' },
+} as const satisfies Record<
+  string,
+  { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }
+>;
+
+/** Safe outdoor road/curb bases for v19 cars parked against superseded Ch3
+ * geometry. Native authoring pixels are scaled exactly once during migration. */
+export const CHAPTER3_PARKING_RECOVERY = {
+  foggybottom: { x: 88, y: 349, facing: 'right' },
+  foggy_moor: { x: 3 * 16 + 8, y: 73 * 16 + 12, facing: 'right' },
+  wintermoor_grounds: { x: 36 * 16 + 8, y: 55 * 16 + 12, facing: 'up' },
+  the_old_stones: { x: 32 * 16 + 8, y: 2 * 16 + 12, facing: 'down' },
+} as const satisfies Record<
+  string,
+  { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }
+>;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -99,6 +142,53 @@ export function freshHoops(): HoopsState {
 type Raw = Record<string, unknown>;
 
 const isObj = (v: unknown): v is Raw => typeof v === 'object' && v !== null;
+const hasOwn = (object: object, key: PropertyKey): boolean =>
+  Object.prototype.hasOwnProperty.call(object, key);
+const SAVE_FACINGS = new Set<SaveFacing>([
+  'down', 'left', 'right', 'up', 'downright', 'downleft', 'upright', 'upleft',
+]);
+const isVehicleParkingState = (value: unknown): value is VehicleParkingState =>
+  isObj(value)
+  && typeof value.area === 'string'
+  && typeof value.x === 'number'
+  && Number.isFinite(value.x)
+  && typeof value.y === 'number'
+  && Number.isFinite(value.y)
+  && typeof value.facing === 'string'
+  && SAVE_FACINGS.has(value.facing as SaveFacing);
+
+function recoverChapter3VehicleParking(raw: Raw): void {
+  if (!isObj(raw.vehicleParking)) return;
+  const parking = raw.vehicleParking;
+  const recovered: Record<string, VehicleParkingState> = {};
+
+  // Unaffected valid entries occupy their saved bays while rebuilt-map titles
+  // are allocated in stable title order. Malformed entries remain untouched.
+  for (const [title, value] of Object.entries(parking)) {
+    if (!isVehicleParkingState(value) || hasOwn(CHAPTER3_PARKING_RECOVERY, value.area)) continue;
+    recovered[title] = value;
+  }
+
+  const pending = Object.entries(parking)
+    .filter((entry): entry is [string, Raw] => {
+      const value = entry[1];
+      return isVehicleParkingState(value) && hasOwn(CHAPTER3_PARKING_RECOVERY, value.area);
+    })
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  for (const [title, value] of pending) {
+    const area = value.area as keyof typeof CHAPTER3_PARKING_RECOVERY;
+    const base = CHAPTER3_PARKING_RECOVERY[area];
+    const next = allocateVehicleDeliverySlot(
+      { vehicleParking: recovered },
+      title,
+      { area, x: s(base.x), y: s(base.y), facing: base.facing },
+    );
+    // Mutating values in the original object preserves its key order.
+    parking[title] = next;
+    recovered[title] = next;
+  }
+}
 const strings = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : [];
 
@@ -433,6 +523,26 @@ export const MIGRATIONS: MigrationStep[] = [
         raw.activeVehicle = null;
       }
       raw.version = 19;
+      return raw;
+    },
+  },
+  {
+    to: 20,
+    migrate(raw) {
+      // Every key is a stable Chapter 3 map id. Geometry changed, identity did
+      // not: reset only the player staging point and preserve the rest of the
+      // save as its exact history. Unrelated maps receive only the version bump.
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const target = hasOwn(CHAPTER3_LAYOUT_RECOVERY, map)
+        ? CHAPTER3_LAYOUT_RECOVERY[map as keyof typeof CHAPTER3_LAYOUT_RECOVERY]
+        : undefined;
+      if (target) {
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      recoverChapter3VehicleParking(raw);
+      raw.version = 20;
       return raw;
     },
   },

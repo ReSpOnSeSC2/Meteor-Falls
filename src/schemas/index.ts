@@ -451,12 +451,39 @@ export const SolidRectSchema = z.strictObject({
   h: z.number().positive(),
 });
 
+/** A rectangle in map-tile coordinates. Declared here because remotely controlled
+ * machines can carry a bounded practice/work area in addition to their pixel
+ * collision box. Spawners, triggers, and zones reuse the same shape below. */
+export const TileRectSchema = z.strictObject({
+  x: z.number(),
+  y: z.number(),
+  w: z.number().positive(),
+  h: z.number().positive(),
+});
+
+/** Chapter 3 field-machine contract for Milo's Clicker. The prop remains the
+ * authored visual; this metadata gives it a stable identity, vehicle handling,
+ * and (optionally) a map-tile work envelope it cannot leave. */
+export const FieldMachineDefSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  vehicleType: z.string().min(1),
+  occupied: z.boolean().optional(),
+  shielded: z.boolean().optional(),
+  controlRect: TileRectSchema.optional(),
+});
+export type FieldMachineDef = z.infer<typeof FieldMachineDefSchema>;
+
 export const PropDefSchema = z.strictObject({
   sprite: z.string().min(1),
   /** tile coords of the prop's top-left (fractional allowed — jitter, ADR-012) */
   x: z.number(),
   y: z.number(),
   solid: SolidRectSchema.optional(),
+  /** Compound collision for visibly open silhouettes (arches, trilithons).
+   * Each part uses the same native-pixel, top-left-relative contract as
+   * `solid`. Direct-authored props use either `solid` or `solidParts`. */
+  solidParts: z.array(SolidRectSchema).min(1).optional(),
   /** per-instance SIZE multiplier (default 1). A single number scales uniformly; `{x,y}` scales width
    *  and height independently (a building made only wider / only taller). Grows from the drawn TOP-LEFT
    *  (its lot corner); for facades the texture-derived collision + door box scale with it per-axis
@@ -482,6 +509,8 @@ export const PropDefSchema = z.strictObject({
   ifFlag: z.string().min(1).optional(),
   /** hidden once this flag is truthy (S9: a sniffed paw-print clue retires) */
   unlessFlag: z.string().min(1).optional(),
+  /** An unoccupied machine Milo can remote-pilot with the Clicker. */
+  machine: FieldMachineDefSchema.optional(),
 });
 export type PropDef = z.infer<typeof PropDefSchema>;
 
@@ -542,6 +571,8 @@ export const SignDefSchema = z.strictObject({
   /** S9: flag gates, the NpcDef pattern — quest clues exist only mid-trail */
   ifFlag: z.string().min(1).optional(),
   unlessFlag: z.string().min(1).optional(),
+  /** Stable action id invoked when a Clickered machine reaches this sign. */
+  machineAction: z.string().min(1).optional(),
 });
 export type SignDef = z.infer<typeof SignDefSchema>;
 
@@ -566,13 +597,6 @@ export const DoorZoneSchema = z.strictObject({
   unlessFlag: z.string().min(1).optional(),
 });
 export type DoorZone = z.infer<typeof DoorZoneSchema>;
-
-export const TileRectSchema = z.strictObject({
-  x: z.number(),
-  y: z.number(),
-  w: z.number().positive(),
-  h: z.number().positive(),
-});
 
 export const SpawnerDefSchema = z.strictObject({
   enemies: z.array(z.string().min(1)).min(1), // group rolled per spawn

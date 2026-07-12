@@ -6284,3 +6284,71 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Context:** the user's playtest report: "I enter my sister's room and appear in the middle of the room, not at the door — many maps do this." Root cause: `growInterior` (the "bigger rooms" decree) pads 19 single-room interiors to 16×11 and RIDES their bottom exit mats down to the new floor edge — but every INBOUND landing on other maps still aimed at the OLD threshold row, dropping the player 2–4 tiles into the room. The `farFromReturn` gate never fired because its 64px (4-tile) threshold was tuned to catch wrong-EDGE entries, not sloppy-DEPTH ones. A survey (`tools/door-landing-survey.ts`, kept) measured all 202 reciprocal doors: a snug by-design cluster at 8–32px, then 17 offenders at 29–58px (12 of them the grown-interior class, incl. both sisters' rooms at 43px and rex_bedroom at 58px).
 - **Decision:** three parts. (1) **The re-aim pass** — after the `growInterior` loop, maps.ts rewrites every door/prop-door landing that targets a ROOMY interior to the room's OWN return door: mouth center-x, feet ONE TILE inside the threshold at the tile interior (`ix*16+8, iy*16+12`, ADR-136's box-safe aim), probing past multi-row wall bands via the same `grid[0][0]` wall-char read growInterior itself uses; stairs/elevators keep their by-design off-stairhead landings. The inline tx/ty literals on source maps remain as pre-grow numbers; the pass is the single authority. (2) **Three hand re-aims** for the non-grown offenders (brickton→cage_park 57px, whisperwood_rise→hickory_hill 54px, wintermoor_grounds→wintermoor_f1 34px). The two remaining 34px doors are deliberate (procession_way→minimus_major lands ON the street per its comment; spine_hand→bootstep_moor lands directly above the moor's south gate) and stay. (3) **The gate tightens 64→40px** (`FAR_FROM_RETURN_PX`) — 40 sits in the re-measured empty gap above the snug cluster + both hand-tunes and far below any real wrong-edge, so a future door authored >2.5 tiles from its return cell fails the build. `world_block.test`'s `corePrefixUnchanged` now compares props MODULO door landings (tx/ty zeroed) — mouth geometry, target, sprite + position stay byte-pinned; landing snugness is the door-audit's live check.
 - **Consequences:** every transition in the game lands the player where they'd stand to walk back out — the "you enter right on the other side of the door" read, everywhere, enforced forever. Re-growing a ROOMY room self-heals its inbound landings. Shipped under the same decree: the first GRAND interiors — the GRAN HOTEL SOL opens off Puerto Sol's authored mega facade (lobby with a working two-car ELEVATOR BANK → guest floor with two room interiors → penthouse, Sr. Casi's pyrite parable tying the Museo del Casi-Oro to the Fortune Arc), Brickton General grows an elevator bank + FLOOR 3 (records & long-stay), and both Ch.2 clinics gain real observation wards behind swinging doors — 8 new interiors, all reachable, all snug-gated, zero new art (the facade was already authored; occupyCity leaves hand-doored landmarks alone via its own `!p.door` filter). ☄️
+
+## ADR-139 — CHAPTER 3 PRODUCTION CONTRACT (twelve maps, field control, authored landmarks, save v20)
+
+- **Date:** 2026-07-12
+- **Status:** Accepted and implemented. This ADR supersedes ADR-099's Chapter 3
+  planning state wherever the two disagree, especially the old **1,600 HP**
+  Headmaster Mainframe draft and the placeholder-scale map assumptions. Canon is
+  **750 HP**, matching the live enemy, chapter manifest, balance data, tests,
+  Game Bible, asset manifest, and verification record.
+- **Context:** Chapter 3 previously had the correct story spine and a strong
+  Foggybottom elevation pilot, but production behavior was spread across
+  placeholder maps, draft art, implicit atmosphere metadata, incomplete field
+  control, and old save coordinates. Completing the chapter without an explicit
+  contract would make future world-polish passes likely to rename maps, reorder
+  generated town units, erase machine metadata through the map editor, or load
+  an old save inside rebuilt walls.
+- **Decision — map contract:** Chapter 3 owns exactly twelve save-facing map ids:
+  `biplane_interior`, `foggybottom`, `kettle_taproom`, `kettle_snug`,
+  `foggy_moor`, `wintermoor_grounds`, `the_old_stones`, `wintermoor_f1`,
+  `wintermoor_f2`, `wintermoor_f3`, `wintermoor_dorm`, and
+  `wintermoor_boiler`. `src/data/maps_ch3.ts` is canonical; map-editor
+  `maps.json`/`manifest.json` are generated review artifacts. Foggybottom keeps
+  its four terraces, landing relationship, and first four facade slots; the
+  boiler keeps the exact `WINTERMOOR_COOLANT_CROSSING`; grounds/boiler keep the
+  stable machine ids `wm_clicker_practice_cart` and `wm_fogworks_tug`.
+- **Decision — authored art and world state:** retain the original source banks
+  `ch3-outdoor-landmarks-source.png` and
+  `ch3-machinery-stones-source.png`, and register all sixteen derived world
+  props with explicit display dimensions. Map-authored `solid` rectangles remain
+  the collision authority; visibly open arches use editor-round-tripped
+  `solidParts` so their pillars collide without sealing the opening. Foggybottom density is level-scaled before victory and
+  reduced to 24% afterward; rain/wind/machine ambience is driven through the
+  live audio engine; Old Stones tint/spring, NPC reactions, fog machinery, and
+  hostile spawners phase under the same post-boss flags.
+- **Decision — field control and progression:** First Borrow teaches field
+  PUPPET as a 14-PP, eight-second control state with people-only eligibility,
+  mind immunity, range, interaction, explicit release/timeout, and body
+  restoration. Milo's Clicker is a separate story-gated state requiring Milo,
+  `milo_clicker`, and `fleet_road`; it controls authored unoccupied machines
+  only within `controlRect`, never persists transient machine position, and
+  cannot crush or overlap active world bodies. Freeze changes the coolant
+  crossing's five `K` cells to `T`; Clicker then operates the Fogworks tug.
+- **Decision — story, amenities, and vehicles:** the seven live cutscene beats
+  are flight, Milo join, First Borrow, Old Stones, machine-fog reveal,
+  Mainframe, and Heartlight. Foggybottom is a `town`, not a formal city, but is
+  explicitly amenity-enabled with stable dealer/motor works, open flat, agency,
+  bank, petrol, and Kettle paid room. The Kettle's assembled map preserves the
+  furnished snug and east guest-room partition; lodging spawns/wakes inside the
+  vacant guest room rather than flattening the shared space. Vehicle showroom/HUD feedback must expose
+  price, class, seat/party fit, resource/range, ownership, delivery or parking
+  location, and cash shortfall from real domain state.
+- **Decision — compatibility and gates:** current save version is **20**. The
+  v19→v20 migration deterministically relocates player positions on all twelve
+  rebuilt maps and rehomes saved parked-car coordinates on the four rebuilt
+  outdoor maps. Ownership, fuel, continent, story, party, and economy remain
+  exact; saves and parking outside that geometry remain byte-stable. Contract
+  tests pin the roster, topology/fixed points, elevation/fog,
+  machine schema/actions, PUPPET/Clicker lifecycle, story beats, amenities,
+  vehicles, ambience, post-boss retirement, dev spawns, and migration. Any
+  change to a pinned id/rectangle/unit order/door landing must update the tests
+  and either prove v20 still recovers safely or introduce the next migration.
+- **Consequences:** Chapter 3 is a production chapter, not a pilot queue. The
+  next world-overhaul slice may advance to Chapter 4 once the normal close gate
+  is green. Shared debt remains deliberately separate: the game-wide 47-blob
+  terrain-family rollout and a pre-existing non-failing strict-audit inventory
+  of 94 unregistered battle PNGs. Neither permits replacing registered Chapter
+  3 props with procedural fallback or reopening its layouts without a new
+  concept/fixed-point/migration review. ☄️

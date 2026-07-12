@@ -150,6 +150,7 @@ export const LIVE_PROPERTIES: readonly string[] = [
   'maple_fixer',
   'twoton_house',
   'casa_del_sol',
+  'foggybottom_flat',
   'valle_dorado_home',
   'minimus_manor',
   'zanzibel_courtyard',

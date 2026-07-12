@@ -107,7 +107,7 @@ the rebuild is the Track-A layout; the town renders in the existing tileset unti
 |---|---|---|---|
 | 1 | **Otterbrook/USA** (Ch1) | **Onett** *(LOCKED, pilot)* | Establishes the **universal 47-blob geometry** + Americana ground kit + Giant-Step boss |
 | 2 | **TWOTON** (ex-Brickton, Ch1) | **Twoson** *(LOCKED; production rebuild 2026-07-10)* | North arrival + diagonal road grammar, canal market, forest walls, civic/service interiors; EB tile kit pending |
-| 3 | **Foggybottom/Wintermoor** (Ch3) | **Winters** | Fog-terrace pilot shipped; **locks Winters grammar** (reused Ch4, Ch10a) |
+| 3 | **Foggybottom/Wintermoor** (Ch3) | **Winters** | **Production rollout shipped 2026-07-12:** twelve-map wet-stone/fog/academy route, authored landmark kit, live atmosphere; **locks Winters grammar** (reused Ch4, Ch10a). The shared 47-blob ground-family program remains separate. |
 | 4 | **Puerto Sol** (Ch2, town #3) | **Threed** *(USER LOCK — layout SHIPPED 2026-07-08)* + **Scaraba/Pyramid** (dungeon) | Spine + gate arches, slanted parallelogram blocks, catedral plaza, EL CAMPO VIEJO graveyard; EB tile kit pending |
 | 4a | **Las Dunas** (ex-jungle_1/2, the 3→4 crossing) | **Dusty Dunes Desert** *(layout SHIPPED 2026-07-08)* | South road band + dunes + rock fringes + oases + waystation + the east bridge; rides the Zanzibel ochre skin until its own kit |
 | 4b | **Valle Dorado** (Ch2, town #4) | **Fourside** *(USER LOCK — layout SHIPPED 2026-07-08; village → CITY)* | Diamond boulevards + river seawall + the relocated Starfall Spire/towers + THE GOLDEN MINUTE clock plaza + the old quarter |
@@ -185,3 +185,29 @@ Per region:
 
 _Analyst reports (full detail) in the session scratchpad: analysis-{tile-system-audit, maps-regions-inventory,
 earthbound-tile-vocabulary, mf-to-earthbound-mapping, pipeline-and-seamless-tiling}.md._
+
+### Chapter 3 status amendment (2026-07-12)
+
+The “fog-terrace pilot” wording above is historical. Chapter 3's complete
+spatial and landmark pass now ships across twelve maps: storm-cramped Lucille,
+the four-level Foggybottom descent and two-room Kettle, a 126×96 moor road, the
+staged academy grounds, the Old Stones ring, and five differentiated school
+dungeon maps. Wet slate, warm lamp pockets, dry-stone boundaries, telegraph
+rhythm, institutional room bands, and post-boss clearing are the locked
+**Winters-derived grammar**; future areas may reuse the grammar's vocabulary but
+not these maps' signatures.
+
+Two original source banks add sixteen authored props without changing shared
+tile indices. They cover the viaduct/culvert, academy/grounds landmarks,
+Lucille, machine plant, standing stones, spring, and the academy main block.
+The runtime also supplies the place-specific part of the look: terrace-scaled
+fog, rain/wind/machine ambience, lightning/rattle, coolant and machinery phase
+changes, and lighter post-boss atmosphere.
+
+Scope boundary: this production close does **not** declare the broader 47-blob
+stylization program complete. Chapter 3 is playable and visually authored at
+its current production bar, while universal/per-region ground transitions,
+shore families, cliff corners/caps, and other shared terrain families remain
+game-wide art work. Do not reopen the twelve Chapter 3 layouts merely to make
+progress on those shared strips; land shared art through the frozen-index
+pipeline and re-review Chapter 3 as a consumer.

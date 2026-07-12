@@ -2664,6 +2664,134 @@
       "solidDefault": true
     },
     {
+      "key": "ch3_viaduct_arch",
+      "w": 72,
+      "h": 134,
+      "url": "/assets/art/world/props/ch3_viaduct_arch.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_roman_culvert",
+      "w": 54,
+      "h": 51,
+      "url": "/assets/art/world/props/ch3_roman_culvert.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_greenhouse_wreck",
+      "w": 92,
+      "h": 137,
+      "url": "/assets/art/world/props/ch3_greenhouse_wreck.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_cricket_pavilion",
+      "w": 92,
+      "h": 126,
+      "url": "/assets/art/world/props/ch3_cricket_pavilion.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_school_gate",
+      "w": 110,
+      "h": 139,
+      "url": "/assets/art/world/props/ch3_school_gate.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_porter_lodge",
+      "w": 70,
+      "h": 105,
+      "url": "/assets/art/world/props/ch3_porter_lodge.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_telegraph_pole",
+      "w": 38,
+      "h": 128,
+      "url": "/assets/art/world/props/ch3_telegraph_pole.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_lucille_cockpit",
+      "w": 84,
+      "h": 113,
+      "url": "/assets/art/world/props/ch3_lucille_cockpit.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_lucille_window",
+      "w": 50,
+      "h": 100,
+      "url": "/assets/art/world/props/ch3_lucille_window.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_cargo_net",
+      "w": 70,
+      "h": 95,
+      "url": "/assets/art/world/props/ch3_cargo_net.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_fog_engine",
+      "w": 92,
+      "h": 147,
+      "url": "/assets/art/world/props/ch3_fog_engine.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_valve_manifold",
+      "w": 80,
+      "h": 83,
+      "url": "/assets/art/world/props/ch3_valve_manifold.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_menhir",
+      "w": 40,
+      "h": 111,
+      "url": "/assets/art/world/props/ch3_menhir.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_trilithon",
+      "w": 72,
+      "h": 116,
+      "url": "/assets/art/world/props/ch3_trilithon.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_spring",
+      "w": 48,
+      "h": 61,
+      "url": "/assets/art/world/props/ch3_spring.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "ch3_academy_main",
+      "w": 200,
+      "h": 296,
+      "url": "/assets/art/world/props/ch3_academy_main.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
       "key": "prop_soda_fountain",
       "w": 20,
       "h": 22,
@@ -5800,8 +5928,10 @@
     "npc_far_walker",
     "npc_faye_wait",
     "npc_fb_boy",
+    "npc_fb_boy_after",
     "npc_fb_chemist",
     "npc_fb_fishmonger",
+    "npc_fb_fishmonger_after",
     "npc_fb_post",
     "npc_fernlady",
     "npc_fibbins",
@@ -5877,6 +6007,7 @@
     "npc_mom_pre",
     "npc_mom_sleep",
     "npc_moor_rambler",
+    "npc_moor_rambler_after",
     "npc_moor_walker",
     "npc_new_commuter",
     "npc_nurse",
@@ -5981,6 +6112,7 @@
     "npc_wm_librarian",
     "npc_wm_porter",
     "npc_wm_student",
+    "npc_wm_student_after",
     "npc_wm_tuck",
     "npc_wm_umpire",
     "npc_woke_a",
