@@ -129,3 +129,45 @@ Every area draws ONLY from its own `AREA_SKINS` roster (validator-pinned ⇄ `CA
 - **Facade law:** placing ANY generated facade not in `HI_RES_GEN_FACADES` fails `npm run validate` (`hi-res-facades`). That failure means the palette step was skipped — fix the art, never work around the law.
 
 Start with **Step 0 recon on Valle Dorado** (additive pass — no palette work expected), then proceed down WHAT REMAINS in order. Ask the user only when a genuine scope decision comes up (raising a prop envelope, adding a bespoke landmark, or batching an art-heavy map).
+
+## CHAPTER 3 SETTLEMENT STATUS (2026-07-12) — FOGGYBOTTOM SHIPPED
+
+This amendment supersedes the older `WHAT REMAINS` entry that called
+Foggybottom an art-heavy future relayout. Its four-terrace layout, amenity
+interiors, Kettle lodging, landmark pass, atmosphere, and fixed-point tests are
+now implemented as part of the Chapter 3 production close.
+
+Foggybottom is intentionally a **town**, not one of the seven formal cities, so
+ADR-012's city street-band minima and the global four-service city contract do
+not apply by classification. Chapter 3 nevertheless registers it explicitly in
+the amenity settlement set and ships the useful service surface:
+
+- facade/unit 0: real dealer and motor works, with at least two displays and
+  exact delivery-pad allocation;
+- facade/unit 1: open flat tied to `LIVE_PROPERTIES.foggybottom_flat`;
+- facade/unit 2: staffed property agency;
+- facade/unit 3: bank;
+- town petrol: priced refuel against live fuel/cash state; and
+- Kettle taproom/snug: paid hotel interaction, cash deduction, rest recovery,
+  guest-room warp, and wake-up return.
+
+The ordering and coordinates of those first four exterior `bldg_*` props are
+now save-facing. Do not insert/reorder an eligible facade ahead of them or move
+one without auditing generated unit ids, property ownership, dealer delivery,
+door round-trips, and migration behavior. `foggybottom` stays in
+`AMENITY_SETTLEMENT_IDS`; it must not be added to `FORMAL_CITY_IDS` merely
+because it offers the same practical services.
+
+The palette gap recorded above was addressed with a **landmark/prop kit**, not
+by manufacturing an unnecessary full city-facade family: school gate, porter
+lodge, greenhouse wreck, cricket pavilion, academy block, viaduct, culvert,
+telegraph pole, plus the Lucille/machinery/stones pieces shared across the rest
+of the chapter. This is the right anti-formula outcome—the settlement's massing
+and sinking atmosphere carry its identity while bespoke props terminate views.
+The broader region-ground/47-blob program remains separate shared art work.
+
+Focused amenity, property, refuel, hotel, showroom, vehicle-domain,
+Foggybottom elevation, map-topology, and v20 migration tests protect this
+contract. For any future town edit, also regenerate `tools/mapeditor/maps.json`
+and `manifest.json`, run `npm run mapeditor:check`, and survey all four terraces
+plus the Kettle room transition in the live game.

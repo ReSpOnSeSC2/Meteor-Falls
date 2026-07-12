@@ -26,6 +26,7 @@ import { buildChapter10Maps } from './maps_ch10';
 import { buildRoute, buildWoods, Streams } from '../levelkit';
 import { placeFacade, facadeDims } from '../levelkit/kit';
 import { occupyCity } from './citylife';
+import { SETTLEMENT_AMENITIES, cityServiceNpcId } from './city_amenities';
 import { promoteFormalCityScale } from './formal_city_scale';
 import { AREA_SKINS } from '../spritegen/buildings';
 
@@ -5096,8 +5097,8 @@ function buildElevSpike(): MapDef {
 
 export const MAPS: Record<string, MapDef> = {
   ...buildChapter2Maps({ chapelStep: chapelDoorstep, hospitalStep: hospitalDoorstep }),
-  // S18 (ADR-095) — CHAPTER 3 England (Half 1: maps + encounters + shops; the
-  // manifest stays 'unlanded' until the story/boss half flips it)
+  // S18 (ADR-095/099) — shipped CHAPTER 3 England: all twelve route, Kettle,
+  // academy, boiler, and resonance maps assemble here with the live story/boss.
   ...buildChapter3Maps(),
   // CHAPTER 4 Norway — "The Fjord That Sleeps" (Kvisthavn / Bootstep Moor /
   // Lilleby / the Sleeper's Spine). Lands SHIPPED with its story/boss wiring.
@@ -5287,10 +5288,20 @@ const MAP_AREA: Record<string, string> = {
   cage_park: 'cage_park',
   puerto_sol: 'puerto_sol',
   // S18 (ADR-095) — CHAPTER 3 England: the stone town wears its M22 `fraktur`
-  // glyph banner (§A11.8) over the M25 fog-stone skin. The academy + the moor
-  // maps add their 'wintermoor' rows when they land.
+  // glyph banner (§A11.8) over the M25 fog-stone skin. Academy and moor maps
+  // are pinned to their live `wintermoor` rows below.
+  biplane_interior: 'foggybottom',
   foggybottom: 'foggybottom',
+  kettle_taproom: 'foggybottom',
+  kettle_snug: 'foggybottom',
+  foggy_moor: 'wintermoor',
   wintermoor_grounds: 'wintermoor',
+  the_old_stones: 'wintermoor',
+  wintermoor_f1: 'wintermoor',
+  wintermoor_f2: 'wintermoor',
+  wintermoor_f3: 'wintermoor',
+  wintermoor_dorm: 'wintermoor',
+  wintermoor_boiler: 'wintermoor',
   // CH.4 Norway — the two settlements wear their own M25 skins + glyph banners
   kvisthavn: 'kvisthavn',
   lilleby: 'lilleby',
@@ -5340,6 +5351,139 @@ for (const m of Object.values(MAPS)) {
   }));
 }
 
+/** Foggybottom is intentionally still a town, so it does not participate in
+ * formal-city facade claiming. Its four already-generated high-street units are
+ * instead dressed in place after occupancy: no map is added, renamed, or
+ * reordered and every exterior facade retains its original door target. */
+function customizeFoggybottomAmenities(): void {
+  const amenity = SETTLEMENT_AMENITIES.foggybottom;
+  const dealer = MAPS[amenity.serviceUnits?.dealership ?? ''];
+  const home = MAPS[amenity.serviceUnits?.home ?? ''];
+  const agency = MAPS[amenity.serviceUnits?.agency ?? ''];
+  const bank = MAPS.foggybottom_unit_3;
+  const lobby = MAPS[amenity.hotel.existing?.lobbyId ?? ''];
+  const room = MAPS[amenity.hotel.existing?.roomId ?? ''];
+  if (!dealer || !home || !agency || !bank || !lobby || !room) {
+    throw new Error('Foggybottom amenity roster must reuse units 0-3 and the two existing Kettle maps');
+  }
+
+  const dealerW = dealer.grid[0].length;
+  const dealerH = dealer.grid.length;
+  const paved = dealer.grid.map((row, y) => row.split('').map((tile, x) =>
+    x > 0 && x < dealerW - 1 && y > 0 && y < dealerH - 1 ? 'p' : tile,
+  ));
+  const stripeY = Math.max(2, Math.min(dealerH - 3, Math.round(dealerH / 2)));
+  for (let x = 1; x < dealerW - 1; x++) paved[stripeY][x] = x % 2 === 0 ? '=' : 'p';
+  dealer.grid = paved.map((row) => row.join(''));
+  dealer.name = amenity.dealership.name.toUpperCase();
+  dealer.props = [
+    { sprite: 'city_ev', x: 1.5, y: 2.2, scale: 0.62, solid: { ox: 3, oy: 8, w: 30, h: 8 } },
+    { sprite: 'work_van', x: Math.max(5.5, dealerW - 4.8), y: Math.max(3.8, dealerH - 4.6), scale: 0.62, rot: 90, solid: { ox: 3, oy: 8, w: 30, h: 8 } },
+    { sprite: 'prop_rate_board', x: dealerW - 3.3, y: 1.2 },
+    { sprite: 'desk', x: Math.max(2, Math.round(dealerW / 2) - 2), y: 1.5, solid: { ox: 0, oy: 8, w: 30, h: 10 } },
+    { sprite: 'parking_meter', x: 1.5, y: dealerH - 3.8 },
+    { sprite: 'parking_meter', x: Math.max(2, Math.round(dealerW / 2) - 3), y: dealerH - 3.5 },
+    { sprite: 'parking_meter', x: Math.min(dealerW - 3, Math.round(dealerW / 2) + 3), y: dealerH - 3.5 },
+  ];
+  dealer.npcs = [{
+    id: cityServiceNpcId('foggybottom', 'dealer'),
+    sprite: 'quarterMan',
+    x: Math.max(2, dealerW - 3),
+    y: Math.max(3, dealerH - 4),
+    facing: 'down',
+    dialogue: 'citysvc_dealer',
+  }];
+  dealer.signs = [];
+
+  const homeW = home.grid[0].length;
+  const homeH = home.grid.length;
+  home.name = `OPEN HOUSE — ${amenity.residential.listingName.toUpperCase()}`;
+  home.props = [
+    { sprite: 'bed', x: 1.2, y: 1.8, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+    { sprite: 'dresser', x: 4.1, y: 1.2, solid: { ox: 2, oy: 8, w: 26, h: 14 } },
+    { sprite: 'bookshelf', x: homeW - 3.2, y: 1.5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+    { sprite: 'dining_table', x: Math.max(3, Math.round(homeW / 2) - 3), y: Math.max(4.2, homeH / 2 - 1), solid: { ox: 2, oy: 12, w: 30, h: 18 } },
+    { sprite: 'rocking_chair', x: 1.8, y: homeH - 4.3, solid: { ox: 2, oy: 12, w: 14, h: 10 } },
+    { sprite: 'fridge', x: homeW - 2.5, y: homeH - 4.5, solid: { ox: 2, oy: 14, w: 14, h: 18 } },
+    { sprite: 'floor_lamp', x: homeW - 4.5, y: homeH - 4.3, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+  ];
+  home.npcs = [{
+    id: cityServiceNpcId('foggybottom', 'home_host'),
+    sprite: 'fernLady',
+    x: homeW - 3,
+    y: Math.max(3, homeH - 4),
+    facing: 'down',
+    dialogue: 'citysvc_home_host',
+  }];
+  home.signs = [];
+
+  const agencyW = agency.grid[0].length;
+  const agencyH = agency.grid.length;
+  agency.name = amenity.agency.name.toUpperCase();
+  agency.props = [
+    { sprite: 'desk', x: Math.max(2, Math.round(agencyW / 2) - 3), y: 3, solid: { ox: 0, oy: 8, w: 40, h: 10 } },
+    { sprite: 'prop_rate_board', x: agencyW - 4, y: 1.5 },
+    { sprite: 'bookshelf', x: 1.3, y: 1.5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+    { sprite: 'bench', x: 2, y: agencyH - 4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    { sprite: 'bench', x: agencyW - 5, y: agencyH - 4, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+    { sprite: 'potted_palm', x: agencyW - 2.2, y: agencyH - 4.3, solid: { ox: 3, oy: 12, w: 10, h: 8 } },
+    { sprite: 'poster_chart', x: Math.max(2, Math.round(agencyW / 2)), y: 0.6 },
+  ];
+  agency.npcs = [{
+    id: cityServiceNpcId('foggybottom', 'realtor'),
+    sprite: 'npc_realtor',
+    x: Math.round(agencyW / 2) - 1,
+    y: 4,
+    facing: 'down',
+    dialogue: 'citysvc_realtor',
+  }];
+  agency.signs = [];
+
+  const bankW = bank.grid[0].length;
+  const bankH = bank.grid.length;
+  bank.name = 'TYNE & DISTRICT BANK';
+  bank.props = [
+    { sprite: 'counter', x: 2, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+    { sprite: 'counter', x: 4, y: 3, solid: { ox: 0, oy: 4, w: 30, h: 14 } },
+    { sprite: 'prop_rate_board', x: 2.2, y: 1.3 },
+    { sprite: 'mailboxes', x: bankW - 4, y: 1.4 },
+    { sprite: 'bookshelf', x: bankW - 3.2, y: bankH - 4.5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+    { sprite: 'potted_palm', x: bankW - 2.2, y: 2.2, solid: { ox: 3, oy: 12, w: 10, h: 8 } },
+  ];
+  bank.npcs = [{
+    id: 'foggybottom_bank_teller',
+    sprite: 'npc_clerk',
+    x: 3,
+    y: 4,
+    facing: 'down',
+    dialogue: 'npc_bank_teller',
+  }];
+  bank.signs = [{ x: 2, y: 2, dialogue: 'bank_rate_board' }];
+
+  // The pub front doubles as the hotel lobby. Its lore regular moves out of the
+  // snug so the linked room is a genuinely empty, walkable guest room.
+  const regular = room.npcs.find((npc) => npc.id === 'kettle_regular');
+  lobby.name = `${amenity.hotel.name.toUpperCase()} — LOBBY`;
+  lobby.props = [
+    ...lobby.props,
+    { sprite: 'prop_rate_board', x: 7.8, y: 1.2 },
+    { sprite: 'mailboxes', x: 9.3, y: 1.2 },
+  ];
+  if (regular && !lobby.npcs.some((npc) => npc.id === regular.id)) {
+    lobby.npcs.push({ ...regular, x: 14, y: 6, facing: 'left' });
+  }
+  room.name = `${amenity.hotel.name.toUpperCase()} — SNUG & GUEST ROOM`;
+  // Preserve the authored hearth/snug and its east-room partition. Lodging
+  // augments the vacant room instead of replacing the whole shared map.
+  room.props = [
+    ...room.props,
+    { sprite: 'bed', x: 24, y: 8, solid: { ox: 1, oy: 8, w: 20, h: 22 } },
+  ];
+  room.npcs = [];
+}
+
+customizeFoggybottomAmenities();
+
 // Production-scale exterior pass runs AFTER tenancy so generated unit ids,
 // lock rolls, interiors, and save targets are frozen before facade art grows.
 // It mutates props in place and never reorders Puerto/Valle's authored arrays.
@@ -5353,10 +5497,17 @@ for (const m of Object.values(MAPS)) promoteFormalCityScale(m);
 // every chapter's maps by id. OverworldScene reads both on map load (Wave 3, #2).
 const MAP_AUDIO: Record<string, { ambience?: AmbienceId; muffle?: 0 | 1 | 2 }> = {
   // CH.3 England — machine-made fog hangs wet over the stone town + the open moor
+  biplane_interior: { ambience: 'machine', muffle: 1 }, // Lucille's engine/propeller through patched cabin panels
   foggybottom: { ambience: 'rain' }, // the damp town on the Tyne
+  kettle_taproom: { ambience: 'rain', muffle: 2 },
+  kettle_snug: { ambience: 'rain', muffle: 2 },
   foggy_moor: { ambience: 'wind' }, // the exposed fog road
   the_old_stones: { ambience: 'wind' }, // the Resonance Site, bare to the weather
   wintermoor_grounds: { ambience: 'wind' }, // the academy's windswept grounds
+  wintermoor_f1: { ambience: 'rain', muffle: 2 },
+  wintermoor_f2: { ambience: 'machine', muffle: 1 },
+  wintermoor_f3: { ambience: 'machine', muffle: 2 },
+  wintermoor_dorm: { ambience: 'wind', muffle: 2 },
   wintermoor_boiler: { ambience: 'machine', muffle: 2 }, // the Hushed mainframe's room — deep + humming
   // CH.2 South America — the working seafront + the §A6 pyramid depths
   puerto_sol: { ambience: 'waves' },
@@ -5383,10 +5534,13 @@ for (const [id, a] of Object.entries(MAP_AUDIO)) {
 // ─── WORLD-OVERHAUL S5 — MAP ATMOSPHERE (opt-in fog veil, #P5) ───────────────
 // A per-map atmospheric render layer (OverworldScene.buildFog): a pale veil whose
 // density scales with the player's terrace. Central + post-assembly like MAP_AUDIO
-// so the fog stays OPT-IN and every OTHER map is byte-identical (only the elevated
-// foggybottom sets it). See schemas/index.ts MapDefSchema.atmosphere + elevation.test.
+// so the fog stays opt-in. Chapter 3's four outdoor maps share the machine-fog;
+// OverworldScene reduces it to natural haze after `mainframe_defeated`.
 const MAP_ATMOSPHERE: Record<string, 'fog'> = {
   foggybottom: 'fog', // the machine-fog ceiling that sinks with you as you descend the terraces
+  foggy_moor: 'fog',
+  wintermoor_grounds: 'fog',
+  the_old_stones: 'fog',
 };
 for (const [id, atmosphere] of Object.entries(MAP_ATMOSPHERE)) {
   const m = MAPS[id];

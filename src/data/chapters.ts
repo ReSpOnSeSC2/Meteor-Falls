@@ -76,9 +76,9 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
   },
 
   // ADR-099 — THE FLIP: Ch.3 lands (the §A6 Old-World track's first shipped chapter).
-  // status → 'shipped'; the dungeon site becomes live dungeon.maps; the 5 overworld
-  // maps + all 5 quests fill in; the boss is now a live boss-flagged §A7 enemy at
-  // 1,600 HP with a BOSS_SCRIPTS entry — the validator's live Ch.3 assertions switch
+  // status → 'shipped'; the route owns 5 manifest overworld maps, 5 dungeon maps,
+  // and 2 hand-authored Kettle interiors; all 5 quests fill in; the boss is live at
+  // 750 HP with a BOSS_SCRIPTS entry — the validator's live Ch.3 assertions switch
   // on in the same commit (the draft 'site'/settlement 'style' drop away).
   3: {
     chapter: 3,
@@ -97,8 +97,8 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     },
     boss: { id: 'headmaster_mainframe', name: 'Headmaster Mainframe', hp: 750, template: 'summoner' },
     settlements: [{ id: 'foggybottom', kind: 'town' }],
-    // the 5 overworld maps from buildChapter3Maps(): the arrival cabin, the damp town,
-    // the moor lane, the academy grounds, and the Old Stones (the §A6 Resonance Site)
+    // The manifest's 5 overworld maps: arrival cabin, damp town, moor lane,
+    // academy grounds, and Old Stones. Two Kettle interiors remain amenity-owned.
     maps: ['biplane_interior', 'foggybottom', 'foggy_moor', 'wintermoor_grounds', 'the_old_stones'],
     quests: ['overdue', 'groundskeepers_cuppa', 'return_to_sender', 'penny_fog', 'the_last_over'],
   },

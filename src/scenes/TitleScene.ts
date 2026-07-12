@@ -1,17 +1,97 @@
 ﻿import Phaser from 'phaser';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
-import { GS } from '../engine/state';
+import { GS, makeHeroState } from '../engine/state';
 import { Dialogue } from '../ui/windows';
 import { colorOf } from '../palette';
 import { RAMP, px } from '../palette';
 import { s, TILE_PX } from '../spritegen/scale';
-import { BRICKTON_BUS_SPAWN, OTTERBROOK_DEV_PREVIEW_SPAWN } from '../data/maps';
+import type { Facing } from '../spritegen';
+import { MAPS, BRICKTON_BUS_SPAWN, OTTERBROOK_DEV_PREVIEW_SPAWN } from '../data/maps';
 import {
   DUNAS_EAST_DEV_PREVIEW_SPAWN,
   DUNAS_WEST_DEV_PREVIEW_SPAWN,
   PUERTO_SOL_DEV_PREVIEW_SPAWN,
 } from '../data/maps_ch2';
+
+export const CH3_DEV_MAP_IDS = [
+  'biplane_interior', 'foggybottom', 'kettle_taproom', 'kettle_snug',
+  'foggy_moor', 'wintermoor_grounds', 'the_old_stones',
+  'wintermoor_f1', 'wintermoor_f2', 'wintermoor_f3',
+  'wintermoor_dorm', 'wintermoor_boiler',
+] as const;
+
+const CH3_DEV_MAP_SET: ReadonlySet<string> = new Set(CH3_DEV_MAP_IDS);
+export type Chapter3DevState = 'arrival' | 'joined' | 'coolant' | 'postBoss' | 'complete';
+
+export interface Chapter3DevProfile {
+  state: Chapter3DevState;
+  flags: readonly string[];
+  embers: number;
+  partyLevels: Readonly<Record<'rex' | 'faye' | 'milo', number | null>>;
+}
+
+/** A representative, deterministic Chapter 3 survey save. It includes the
+ * two prior Heartlights and Mia's Freeze; post-join states also carry Jay's
+ * First Borrow and enough real stats/PP to exercise PUPPET. */
+export function chapter3DevProfile(value: string | null): Chapter3DevProfile {
+  const state: Chapter3DevState = value === 'arrival' || value === 'coolant' || value === 'postBoss' || value === 'complete'
+    ? value
+    : 'joined';
+  const flags = [
+    'grin_defeated', 'ch2_complete', 'ch3_arrived',
+    'ember1', 'ember2', 'awake_freeze_a',
+  ];
+  if (state !== 'arrival') {
+    flags.push(
+      'milo_joined', 'repair_taught', 'milo_clicker', 'fleet_road',
+      'awake_mindwarp_a', 'thread_trust_open', 'wm_gate_open',
+    );
+  }
+  if (state === 'coolant' || state === 'postBoss' || state === 'complete') flags.push('wm_coolant_frozen');
+  if (state === 'postBoss' || state === 'complete') flags.push('wm_fogworks_solved', 'mainframe_defeated');
+  if (state === 'complete') flags.push('ember3', 'ch3_complete');
+  return {
+    state,
+    flags,
+    embers: state === 'complete' ? 3 : 2,
+    partyLevels: { rex: 16, faye: 14, milo: state === 'arrival' ? null : 16 },
+  };
+}
+
+const LEGACY_DEV_MAPS: ReadonlySet<string> = new Set([
+  'otterbrook', 'brickton', 'puerto_sol', 'jungle_1', 'jungle_2',
+  'brickton_docks', 'boat_interior', 'grotto', 'valle_dorado', 'costa_estrella',
+]);
+
+export function optionalDevCoordinate(value: string | null): number {
+  return value === null ? Number.NaN : Number(value);
+}
+
+/** Prefer a real inbound door destination, so dev boots stay valid when a map's
+ * dimensions move. Falls back to the map centre; OverworldScene's body-safe
+ * arrival clamp handles any authored prop that occupies that tile. */
+export function chapter3DevSpawn(mapId: string): { x: number; y: number; facing: Facing } {
+  const target = MAPS[mapId];
+  const inBounds = (x: number, y: number): boolean =>
+    !!target && x >= 0 && y >= 0 && x < target.grid[0].length * 16 && y < target.grid.length * 16;
+  for (const map of Object.values(MAPS)) {
+    for (const door of map.doors) {
+      if (door.to === mapId && inBounds(door.tx, door.ty)) {
+        return { x: s(door.tx), y: s(door.ty), facing: door.facing };
+      }
+    }
+    for (const prop of map.props) {
+      if (prop.door?.to === mapId && inBounds(prop.door.tx, prop.door.ty)) {
+        return { x: s(prop.door.tx), y: s(prop.door.ty), facing: 'down' };
+      }
+    }
+  }
+  const map = target;
+  const w = map?.grid[0]?.length ?? 2;
+  const h = map?.grid.length ?? 2;
+  return { x: Math.floor(w / 2) * TILE_PX + TILE_PX / 2, y: Math.floor(h / 2) * TILE_PX + TILE_PX * 0.75, facing: 'down' };
+}
 
 export class TitleScene extends Phaser.Scene {
   private pressText: Phaser.GameObjects.BitmapText | null = null;
@@ -28,12 +108,7 @@ export class TitleScene extends Phaser.Scene {
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
       const devMap = params.get('devMap');
-      if (
-        devMap === 'otterbrook' || devMap === 'brickton' || devMap === 'puerto_sol' ||
-        devMap === 'jungle_1' || devMap === 'jungle_2' || devMap === 'brickton_docks' ||
-        devMap === 'boat_interior' || devMap === 'grotto' || devMap === 'valle_dorado' ||
-        devMap === 'costa_estrella'
-      ) {
+      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap))) {
         GS.reset();
         GS.setFlag('intro_done');
         GS.setFlag('op_fell');
@@ -41,6 +116,22 @@ export class TitleScene extends Phaser.Scene {
         GS.setFlag('zapper_done');
         GS.setFlag('tick_defeated');
         GS.setFlag('chad_joined');
+        const isChapter3 = CH3_DEV_MAP_SET.has(devMap);
+        if (isChapter3) {
+          // Default to a clean post-join/pre-boss survey state. `devState`
+          // exposes the production before/after beats without console surgery:
+          // arrival | joined (default) | coolant | postBoss | complete.
+          const profile = chapter3DevProfile(params.get('devState'));
+          profile.flags.forEach((flag) => GS.setFlag(flag));
+          GS.data.embers = Math.max(profile.embers, GS.data.embers);
+          GS.data.party = [
+            makeHeroState('rex', profile.partyLevels.rex!, GS.data.heroNames.rex),
+            makeHeroState('faye', profile.partyLevels.faye!, GS.data.heroNames.faye),
+          ];
+          if (profile.partyLevels.milo !== null) {
+            GS.data.party.push(makeHeroState('milo', profile.partyLevels.milo, GS.data.heroNames.milo));
+          }
+        }
         this.started = true;
         AUDIO.stopMusic();
         // EB polish rollout — per-map dev-boot spawns (handoff §5): each entry
@@ -65,17 +156,26 @@ export class TitleScene extends Phaser.Scene {
                           : devMap === 'costa_estrella'
                             ? { x: 13, y: 14 }
                   : OTTERBROOK_DEV_PREVIEW_SPAWN;
+        const ch3Spawn = isChapter3 ? chapter3DevSpawn(devMap) : null;
+        let spawnPx = ch3Spawn
+          ? { x: ch3Spawn.x, y: ch3Spawn.y, facing: ch3Spawn.facing }
+          : { x: spawn.x * TILE_PX + TILE_PX / 2, y: spawn.y * TILE_PX, facing: 'down' as Facing };
         // Any rollout map can opt into an exact authored micro-scene without
         // adding another permanent title-menu entry. Values are tile coords;
         // invalid/missing values keep the clean map-specific default above.
-        const devX = Number(params.get('devX'));
-        const devY = Number(params.get('devY'));
-        if (Number.isFinite(devX) && Number.isFinite(devY)) spawn = { x: devX, y: devY };
+        const devXRaw = params.get('devX');
+        const devYRaw = params.get('devY');
+        const devX = optionalDevCoordinate(devXRaw);
+        const devY = optionalDevCoordinate(devYRaw);
+        if (Number.isFinite(devX) && Number.isFinite(devY)) {
+          spawn = { x: devX, y: devY };
+          spawnPx = { x: devX * TILE_PX + TILE_PX / 2, y: devY * TILE_PX, facing: 'down' };
+        }
         this.scene.start('overworld', {
           mapId: devMap,
-          x: spawn.x * TILE_PX + TILE_PX / 2,
-          y: spawn.y * TILE_PX,
-          facing: 'down',
+          x: spawnPx.x,
+          y: spawnPx.y,
+          facing: spawnPx.facing,
           devFullMap: params.get('devFullMap') === '1',
         });
         return;

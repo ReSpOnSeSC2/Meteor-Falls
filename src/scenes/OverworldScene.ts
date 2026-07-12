@@ -82,6 +82,7 @@ import {
   type PropDef,
 } from '../data/maps';
 import { PYR_ROTOR, PYR_INITIAL_ROT, PUERTO_SOL_PIER_SPAWN, rotateRect } from '../data/maps_ch2';
+import { WINTERMOOR_COOLANT_CROSSING } from '../data/maps_ch3';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS } from '../data/items';
@@ -90,13 +91,14 @@ import { completeQuest } from '../engine/quests';
 import { PROPERTIES, type PropertyDef } from '../data/properties';
 import { buyCost } from '../engine/property';
 import {
-  CITY_AMENITIES,
-  FORMAL_CITY_IDS,
+  AMENITY_SETTLEMENT_IDS,
+  SETTLEMENT_AMENITIES,
   cityHotelRoomId,
   cityServiceNpcId,
   cityServiceForNpc,
-  type FormalCityId,
+  type AmenitySettlementId,
 } from '../data/city_amenities';
+import { STATIONS } from '../data/stations';
 import {
   buyCar,
   carById,
@@ -123,13 +125,13 @@ import {
   stopEngine,
 } from '../engine/ignition';
 import {
-  BASE_PRICE_PER_UNIT,
   consume as consumeFuel,
   fuelProfile,
   isEmpty as fuelEmpty,
   isLow as fuelLow,
   unitsToFill,
 } from '../engine/fuel';
+import { canRefuelHere, stationPricePerUnit, stationsInArea } from '../engine/refuel';
 import {
   BMX_SPEED_MULTIPLIER,
   TWOTON_BMX_HOME_CONTINENT,
@@ -160,6 +162,7 @@ import { captureEcho, isRewindable, clearPuppetLock, puppetLocked } from '../eng
 import {
   attempt as attemptControl,
   candidates as controlCandidates,
+  clickerUnlocked,
   type Caster as ControlCaster,
 } from '../engine/control';
 import { composeEnding, endingContext, forgiveViable } from '../engine/ending';
@@ -326,9 +329,87 @@ export function vehicleBodyTriggersEdgeDoor(
   return outward && aabbOverlap(vehicleBody, doorRect);
 }
 
+/** Machine-fog world-state contract. Before the Mainframe falls, flat maps sit
+ * under a .34 veil and Foggybottom thickens from .14 on L3 to .62 on L0. After
+ * the boss, only a thin river/moor haze remains. Exported for scene-level tests. */
+export function chapter3FogAlpha(maxLevel: number, level: number, mainframeDefeated: boolean): number {
+  const preBoss = maxLevel <= 0
+    ? 0.34
+    : 0.14 + (Math.max(0, maxLevel - level) * (0.48 / maxLevel));
+  return mainframeDefeated ? preBoss * 0.24 : preBoss;
+}
+
+export function fieldPuppetNpcEligible(npc: Pick<NpcDef, 'dog'>): boolean {
+  return npc.dog !== true;
+}
+
+export function spendFieldPuppetPp(pp: number, cost: number, success: boolean): number {
+  return success ? Math.max(0, pp - cost) : pp;
+}
+
+export function fieldPuppetTimeRemaining(remaining: number, dt: number): number {
+  return Math.max(0, remaining - Math.max(0, dt));
+}
+
+export function fieldControlReleaseRequested(b: boolean, y: boolean): boolean {
+  return b || y;
+}
+
+/** A Clicker vehicle keeps a long×wide authored body, then projects it into
+ * the current heading exactly like traffic and owned driving. */
+export function fieldMachineBodyDimensions(long: number, wide: number, facing: Facing): { w: number; h: number } {
+  const heading = FACING_VEC[facing];
+  return projectedVehicleBounds(long, wide, heading);
+}
+
+export function shouldRestorePinnedPuppetBody(wanders: boolean, active: boolean, present: boolean): boolean {
+  return !wanders && active && present;
+}
+
+export type Chapter3MachineActionResult =
+  | 'training_complete' | 'training_already'
+  | 'coolant_required' | 'fogworks_complete' | 'fogworks_already'
+  | 'unknown';
+
+export function chapter3MachineActionResult(
+  action: string,
+  flags: { trained: boolean; coolantFrozen: boolean; fogworksSolved: boolean },
+): Chapter3MachineActionResult {
+  if (action === 'wm_clicker_training') return flags.trained ? 'training_already' : 'training_complete';
+  if (action === 'wm_fogworks_valve') {
+    if (!flags.coolantFrozen) return 'coolant_required';
+    return flags.fogworksSolved ? 'fogworks_already' : 'fogworks_complete';
+  }
+  return 'unknown';
+}
+
 interface FieldPuppet {
   npc: NpcObj;
   remaining: number;
+  ring: Phaser.GameObjects.Ellipse;
+  tether: Phaser.GameObjects.Graphics;
+  panel: Phaser.GameObjects.GameObject;
+  label: Phaser.GameObjects.BitmapText;
+}
+
+interface FieldMachine {
+  img: Phaser.GameObjects.Image;
+  prop: PropDef;
+  x: number;
+  y: number;
+  bodyW: number;
+  bodyH: number;
+  bodyLong: number;
+  bodyWide: number;
+  visualDx: number;
+  visualDy: number;
+  facing: Facing;
+  level: number;
+}
+
+interface FieldClicker {
+  machine: FieldMachine;
+  cameraTarget: Phaser.GameObjects.Zone;
   ring: Phaser.GameObjects.Ellipse;
   tether: Phaser.GameObjects.Graphics;
   panel: Phaser.GameObjects.GameObject;
@@ -359,6 +440,20 @@ const OTTERBROOK_TRAFFIC_MAPS: ReadonlySet<string> = new Set(['otterbrook', 'dow
 /** The deliberately humble 2 A.M. pool: the last bus and one battered local
  * car read as emergency movement; flashy dealership/fleet traffic waits for day. */
 const OTTERBROOK_METEOR_TRAFFIC: ReadonlySet<string> = new Set(['bus', 'vehicle_clunker']);
+
+/** One authored reaction per ordinary Ch3 witness after the Mainframe falls.
+ * Quest/service state machines still take priority; this replaces only their
+ * generic ambient line once the machine-fog world state has changed. */
+const CH3_AFTER_MAINFRAME_DIALOGUE: Readonly<Record<string, string>> = {
+  fb_fishmonger: 'npc_fb_fishmonger_after',
+  fb_boy: 'npc_fb_boy_after',
+  moor_rambler: 'npc_moor_rambler_after',
+  wm_student: 'npc_wm_student_after',
+};
+const CH3_MACHINE_FOG_MAPS: ReadonlySet<string> = new Set([
+  'foggybottom', 'foggy_moor', 'wintermoor_grounds', 'the_old_stones',
+  'wintermoor_f2', 'wintermoor_f3', 'wintermoor_boiler',
+]);
 
 /** Static placements reuse ADR-097's directional sheet contract. A vertical
  * parked vehicle selects the authored front/back view instead of rotating the
@@ -1052,6 +1147,10 @@ export class OverworldScene extends Phaser.Scene {
   /** Chapter 3's field face of Mind Warp. Jay remains planted while the camera
    * follows the borrowed civilian; B/Y releases them, or the short timer does. */
   private fieldPuppet: FieldPuppet | null = null;
+  /** Milo's zero-PP field Clicker targets only authored, unoccupied machines.
+   * Machine positions are transient puzzle state; saves keep story flags only. */
+  private fieldMachines: FieldMachine[] = [];
+  private fieldClicker: FieldClicker | null = null;
   private facing: Facing = 'down';
   private followers: Array<{ spr: Phaser.GameObjects.Sprite; id: string; angel: boolean; flit: boolean }> = [];
   /** ADR-097: a pooled contact shadow per walking actor (grounding = 3D read) */
@@ -1169,6 +1268,8 @@ export class OverworldScene extends Phaser.Scene {
     this.vehicleFuelWarned = false;
     this.vehicleHudVisible = true;
     this.fieldPuppet = null;
+    this.fieldMachines = [];
+    this.fieldClicker = null;
     this.insideTriggers.clear();
     this.dlg = new Dialogue(this);
 
@@ -1235,6 +1336,9 @@ export class OverworldScene extends Phaser.Scene {
     // 'starfall' runs UNBROKEN across every opening phase (playMusic is idempotent,
     // so the per-map restarts don't restart it); room music resumes at the wake.
     AUDIO.playMusic(this.opPhase() > 0 ? 'starfall' : this.mapDef.music);
+    const clearedFog = CH3_MACHINE_FOG_MAPS.has(this.mapDef.id) && GS.flag('mainframe_defeated') === true;
+    AUDIO.setAmbience(this.mapDef.ambience, clearedFog ? 0.42 : 1);
+    AUDIO.setMusicMuffle(this.mapDef.muffle ?? (this.mapDef.interior ? 2 : 0));
     this.cameras.main.fadeIn(250, 0, 0, 0);
 
     // §A4: the VITALS quick-glance. The world pausing (battle / menu / shop)
@@ -1275,7 +1379,7 @@ export class OverworldScene extends Phaser.Scene {
       this.game.renderer.snapshot((img) => {
         void fetch('http://localhost:5179/shot', {
           method: 'POST',
-          body: JSON.stringify({ name: 'otterbrooke_full_map_ingame', dataUrl: (img as HTMLImageElement).src }),
+          body: JSON.stringify({ name: `${this.mapDef.id}_full_map_ingame`, dataUrl: (img as HTMLImageElement).src }),
         }).catch(() => undefined);
       });
     });
@@ -1352,6 +1456,13 @@ export class OverworldScene extends Phaser.Scene {
     // unreachable on foot. The shared MapDef grid is untouched — carve per build.
     const meltCrossingOpen =
       this.mapDef.id === 'spine_shoulder' && GS.flag('spine_meltfall_frozen') === true;
+    const wintermoorCoolantOpen =
+      this.mapDef.id === 'wintermoor_boiler' && GS.flag('wm_coolant_frozen') === true;
+    const isWintermoorCoolantCell = (x: number, y: number): boolean =>
+      x >= WINTERMOOR_COOLANT_CROSSING.x &&
+      x < WINTERMOOR_COOLANT_CROSSING.x + WINTERMOOR_COOLANT_CROSSING.w &&
+      y >= WINTERMOOR_COOLANT_CROSSING.y &&
+      y < WINTERMOOR_COOLANT_CROSSING.y + WINTERMOOR_COOLANT_CROSSING.h;
     // PKG-12 §A11 — render the Ch.5 maps with the Minimus tile skin (cosmetic remap;
     // collision-preserving — see MINIMUS_TILE_SKIN). Other maps are untouched.
     const minimusSkin = MINIMUS_SKIN_MAPS.has(this.mapDef.id);
@@ -1412,6 +1523,11 @@ export class OverworldScene extends Phaser.Scene {
           if (meltCrossingOpen && ch === 'E') {
             // §A4.11 — the frozen foam-lip crossing reads as a blue-white ice
             // bridge (mirrors the collision carve below; same cells, same flag)
+            name = 'melt_ice';
+          } else if (wintermoorCoolantOpen && isWintermoorCoolantCell(x, y)) {
+            // Ch.3's coolant main: Freeze turns the marked five-by-three K wall
+            // into a visible blue-white service bridge. The collision carve below
+            // keys off the exact same cells and flag.
             name = 'melt_ice';
           } else if (underoakSkin && UNDEROAK_TILE_SKIN[name]) {
             // ADR-121 rework — the Under-Oak's walls read as root-tangle, not
@@ -1486,7 +1602,11 @@ export class OverworldScene extends Phaser.Scene {
           idx = tileIndexByName(name);
         }
         row.push(idx);
-        srow.push(meltCrossingOpen && ch === 'E' ? false : TILE_SOLID[idx]);
+        srow.push(
+          (meltCrossingOpen && ch === 'E') || (wintermoorCoolantOpen && isWintermoorCoolantCell(x, y))
+            ? false
+            : TILE_SOLID[idx],
+        );
       }
       data.push(row);
       this.solidTiles.push(srow);
@@ -1772,6 +1892,7 @@ export class OverworldScene extends Phaser.Scene {
         ? (PUERTO_PROP_ART[logicalSprite] ?? logicalSprite)
         : logicalSprite;
       const img = this.add.image(p.x * TILE_PX, p.y * TILE_PX, sprite).setOrigin(0, 0);
+      let machineBody: Rect | null = null;
       const directionalVehicle = DIRECTIONAL_VEHICLE_KEYS.has(sprite);
       const directionalVehicleFrame = directionalVehicle ? staticDirectionalVehicleFrame(p.rot) : 0;
       if (AUTHORED_VEHICLE_PROP_KEYS.has(sprite)) img.setFrame(directionalVehicleFrame);
@@ -1890,17 +2011,25 @@ export class OverworldScene extends Phaser.Scene {
           });
         }
         if (!nativeFacade) this.auditFacade(p, sprite, img.displayHeight);
-      } else if (p.solid) {
-        // solid.* are NATIVE map data → scale at the read site. A rotated prop rotates its solid too,
-        // about its footprint (fw×fh = the UPRIGHT display size — the visual is rotated below to match).
-        // per-instance PropDef.scale grows the solid from the SAME top-left corner as the visual (ADR-051
-        // parity with facades): offsets + size scale per-axis so a resized prop collides as what's drawn.
+      } else if (p.solid || p.solidParts?.length) {
+        // solid.* are NATIVE map data → scale at the read site. A rotated prop
+        // rotates every compound part about the same upright footprint. Arches
+        // and trilithons use parts so their visible opening stays walkable.
         const fw = img.displayWidth, fh = img.displayHeight;
-        let rx = s(p.solid.ox) * propSX, ry = s(p.solid.oy) * propSY, rw = s(p.solid.w) * propSX, rh = s(p.solid.h) * propSY;
-        if (rot === 90) [rx, ry, rw, rh] = [fh - ry - rh, rx, rh, rw];
-        else if (rot === 180) [rx, ry] = [fw - rx - rw, fh - ry - rh];
-        else if (rot === 270) [rx, ry, rw, rh] = [ry, fw - rx - rw, rh, rw];
-        this.solids.push({ x: img.x + rx, y: img.y + ry, w: rw, h: rh });
+        const authoredSolids = p.solidParts ?? (p.solid ? [p.solid] : []);
+        for (const authored of authoredSolids) {
+          let rx = s(authored.ox) * propSX;
+          let ry = s(authored.oy) * propSY;
+          let rw = s(authored.w) * propSX;
+          let rh = s(authored.h) * propSY;
+          if (rot === 90) [rx, ry, rw, rh] = [fh - ry - rh, rx, rh, rw];
+          else if (rot === 180) [rx, ry] = [fw - rx - rw, fh - ry - rh];
+          else if (rot === 270) [rx, ry, rw, rh] = [ry, fw - rx - rw, rh, rw];
+          const solid = { x: img.x + rx, y: img.y + ry, w: rw, h: rh };
+          // A Clicker machine has one authored body, but it moves dynamically.
+          if (p.machine) machineBody ??= solid;
+          else this.solids.push(solid);
+        }
       }
       // orient the sprite (90° steps, non-facades only): rotate about the footprint CENTRE, keeping the
       // rotated bounding box's top-left at the prop's lot corner (img.x,img.y) — matches the editor + the
@@ -1912,6 +2041,70 @@ export class OverworldScene extends Phaser.Scene {
         const ax = img.x, ay = img.y;
         img.setOrigin(0.5, 0.5).setPosition(ax + bw / 2, ay + bh / 2).setAngle(rot);
         img.setDepth(ay + bh + this.levelLift(ax, ay));
+      }
+      if (p.machine) {
+        const spec = VEHICLE_SPECS[p.machine.vehicleType];
+        if (!machineBody) {
+          const bounds = img.getBounds();
+          const w = s(spec?.solid.w ?? 18);
+          const h = s(spec?.solid.h ?? 12);
+          machineBody = { x: bounds.centerX - w / 2, y: bounds.bottom - h, w, h };
+        }
+        const x = machineBody.x + machineBody.w / 2;
+        const y = machineBody.y + machineBody.h / 2;
+        const facing: Facing = p.rot === 90 ? 'up' : p.rot === 180 ? 'left' : p.rot === 270 ? 'down' : 'right';
+        const bodyLong = p.solid ? s(p.solid.w) * propSX : spec ? s(spec.solid.w) : machineBody.w;
+        const bodyWide = p.solid ? s(p.solid.h) * propSY : spec ? s(spec.solid.h) : machineBody.h;
+        const body = fieldMachineBodyDimensions(bodyLong, bodyWide, facing);
+        this.fieldMachines.push({
+          img,
+          prop: p,
+          x,
+          y,
+          bodyW: body.w,
+          bodyH: body.h,
+          bodyLong,
+          bodyWide,
+          visualDx: img.x - x,
+          visualDy: img.y - y,
+          facing,
+          level: this.levelAtPx(x, y),
+        });
+      }
+      if (this.mapDef.id === 'biplane_interior') {
+        if (sprite === 'ch3_lucille_window') {
+          // The authored pane already contains the rain/coastline scene; a slow
+          // exposure pulse plus an occasional white lightning tick makes altitude
+          // visibly change without introducing a frame-strip asset contract.
+          this.tweens.add({
+            targets: img,
+            alpha: 0.68,
+            duration: 1450 + Math.round(p.x * 17),
+            yoyo: true,
+            repeat: -1,
+            ease: 'sine.inOut',
+          });
+          this.time.addEvent({
+            delay: 3400 + Math.round(p.x * 43),
+            loop: true,
+            callback: () => {
+              if (!img.active) return;
+              img.setTint(0xe8f4ff);
+              this.time.delayedCall(90, () => img.active && img.clearTint());
+            },
+          });
+        } else if (sprite === 'ch3_lucille_cockpit') {
+          this.tweens.add({ targets: img, y: img.y + s(0.6), duration: 135, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+        } else if (sprite === 'ch3_cargo_net') {
+          this.tweens.add({ targets: img, angle: img.angle + 0.45, duration: 520, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+        }
+      }
+      if (this.mapDef.id === 'the_old_stones' && GS.flag('mainframe_defeated')) {
+        if (sprite === 'ch3_menhir' || sprite === 'ch3_trilithon') img.setTint(0xe4eef2);
+        if (sprite === 'ch3_spring') {
+          img.setTint(0xc8f5ff);
+          this.tweens.add({ targets: img, alpha: 0.72, duration: 780, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+        }
       }
     }
     if (this.facadeDrift.length && import.meta.env.DEV) {
@@ -2396,9 +2589,9 @@ export class OverworldScene extends Phaser.Scene {
     const title = GS.data.drivingVehicle;
     const car = title ? vehicleByTitle(title) : null;
     if (!car) return;
-    const x = this.scale.width - s(154);
+    const x = this.scale.width - s(236);
     const y = this.scale.height - s(54);
-    const panel = makeWindow(this, x, y, s(148), s(48)).setScrollFactor(0).setDepth(DEPTH_UI + 6);
+    const panel = makeWindow(this, x, y, s(230), s(48)).setScrollFactor(0).setDepth(DEPTH_UI + 6);
     const portrait = this.add
       .sprite(x + s(26), y + s(24), car.id, 0)
       .setScrollFactor(0)
@@ -2431,7 +2624,18 @@ export class OverworldScene extends Phaser.Scene {
     const mph = Math.round((this.vehicleSpeed / Math.max(1, s(1))) * 0.34);
     const status = this.vehicleHud.find((o) => o.name === 'vehicle-status') as Phaser.GameObjects.BitmapText | undefined;
     const keyState = ignitionRequired(car.vehicleType) && !this.vehicleEngineRunning ? 'ENGINE OFF' : null;
-    status?.setText(keyState ?? (profile.kind === 'none' ? `${mph} MPH  ·  HUMAN POWER` : `${mph} MPH  ·  ${profile.kind.toUpperCase()}`));
+    const partySize = GS.data.party.length;
+    // Owned vehicles count the driving party member among their advertised
+    // seats. `usableSeats` is the separate borrowed-driver/CLICKER contract.
+    const seats = spec.seats;
+    const fit = seats >= partySize ? `${seats}/${partySize} FIT` : `${seats}/${partySize} REMOTE`;
+    status?.setText(
+      keyState
+        ? `${keyState} · ${fit}`
+        : profile.kind === 'none'
+          ? `${mph} MPH · HUMAN · ${fit}`
+          : `${mph} MPH · ${profile.kind.toUpperCase()} · ${fit}`,
+    );
     const controls = this.vehicleHud.find((o) => o.name === 'vehicle-controls') as Phaser.GameObjects.BitmapText | undefined;
     const keyLabel = ignitionLabel(car.vehicleType, this.vehicleEngineRunning);
     controls?.setText(
@@ -2439,7 +2643,7 @@ export class OverworldScene extends Phaser.Scene {
         ? `START ${keyLabel} · A HORN · B BRAKE · X PARK`
         : 'A HORN · B BRAKE · X PARK · Y DASH',
     );
-    const x = this.scale.width - s(102);
+    const x = this.scale.width - s(184);
     const y = this.scale.height - s(23);
     const w = s(88);
     const frac = profile.kind === 'none' || profile.tank <= 0 ? 1 : Phaser.Math.Clamp(fuel / profile.tank, 0, 1);
@@ -2590,6 +2794,7 @@ export class OverworldScene extends Phaser.Scene {
   private vehicleExitOccupied(body: Rect, parkedTitle?: string): boolean {
     if (this.trafficRects.some((rect) => aabbOverlap(body, rect))) return true;
     if (this.parkedOwnedVehicles.some((vehicle) => vehicle.title !== parkedTitle && aabbOverlap(body, this.parkedVehicleBody(vehicle)))) return true;
+    if (this.fieldMachines.some((machine) => aabbOverlap(body, this.machineBodyAt(machine)))) return true;
     if (this.npcs.some((npc) => aabbOverlap(body, this.npcBodyAt(npc)))) return true;
     if (this.roamers.some((roamer) => aabbOverlap(body, this.roamerBodyAt(roamer)))) return true;
     return this.patrols.some((patrol) => !patrol.dead && aabbOverlap(body, this.patrolBodyAt(patrol)));
@@ -2631,7 +2836,7 @@ export class OverworldScene extends Phaser.Scene {
     this.vehicleSpeed = 0;
     this.vehicleEngineRunning = false;
     AUDIO.sfx('cancel');
-    toast(this, `Parked the ${car.displayName.toUpperCase()}. A enters it again.`);
+    toast(this, `Parked the ${car.displayName.toUpperCase()} at ${this.mapDef.name}. A enters it again.`);
   }
 
   private toggleOwnedVehicle(): void {
@@ -2657,6 +2862,28 @@ export class OverworldScene extends Phaser.Scene {
     };
   }
 
+  private fieldClickerUnlocked(): boolean {
+    return clickerUnlocked({
+      partyIds: GS.data.party.map((h) => h.id),
+      flags: {
+        milo_clicker: GS.flag('milo_clicker') === true,
+        fleet_road: GS.flag('fleet_road') === true,
+      },
+    });
+  }
+
+  private fieldClickerCaster(): ControlCaster | null {
+    if (!this.fieldClickerUnlocked()) return null;
+    return {
+      kind: 'clicker',
+      x: this.player.x,
+      y: this.player.y,
+      pp: 0,
+      range: s(128),
+      cost: 0,
+    };
+  }
+
   private fieldTargetName(n: NpcObj): string {
     const service = cityServiceForNpc(n.def.id);
     if (service) {
@@ -2674,12 +2901,26 @@ export class OverworldScene extends Phaser.Scene {
   /** Y after THE FIRST BORROW: the field verbs stay explicit and discoverable.
    * PUPPET is unavailable for the rest of a map after Held Breath rewinds one. */
   private async openFieldWheel(): Promise<void> {
-    if (this.cut || this.dlg.busy || this.transitioning || this.fieldPuppet) return;
+    if (this.cut || this.dlg.busy || this.transitioning || this.fieldPuppet || this.fieldClicker) return;
     this.hideVitals();
     this.cut = true;
-    const pick = await this.dlg.ask(['PUPPET · 14 PP', 'VITALS', 'Never mind'], { cancelIndex: 2 });
-    if (pick === 1) this.toggleVitals();
-    else if (pick === 0) await this.pickFieldPuppetTarget();
+    const options: string[] = [];
+    const actions: Array<'puppet' | 'clicker' | 'vitals' | 'cancel'> = [];
+    if (GS.flag('awake_mindwarp_a')) {
+      options.push('PUPPET · 14 PP');
+      actions.push('puppet');
+    }
+    if (this.fieldClickerUnlocked()) {
+      options.push('CLICKER · 0 PP');
+      actions.push('clicker');
+    }
+    options.push('VITALS', 'Never mind');
+    actions.push('vitals', 'cancel');
+    const pick = await this.dlg.ask(options, { cancelIndex: options.length - 1 });
+    const action = actions[pick] ?? 'cancel';
+    if (action === 'vitals') this.toggleVitals();
+    else if (action === 'puppet') await this.pickFieldPuppetTarget();
+    else if (action === 'clicker') await this.pickFieldClickerTarget();
     this.cut = false;
   }
 
@@ -2696,10 +2937,15 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
 
+    const range = this.add
+      .ellipse(this.player.x, this.player.y - s(4), caster.range * 2, caster.range * 2, 0x8c48c8, 0.025)
+      .setStrokeStyle(s(1), 0xd090ff, 0.55)
+      .setDepth(this.player.depth - 1);
+
     const byId = new Map(this.npcs.map((n) => [n.def.id, n]));
     const targets = controlCandidates(
       caster,
-      this.npcs.filter((n) => !n.def.dog).map((n) => ({
+      this.npcs.filter((n) => fieldPuppetNpcEligible(n.def)).map((n) => ({
         id: n.def.id,
         kind: 'person' as const,
         x: n.spr.x,
@@ -2715,6 +2961,7 @@ export class OverworldScene extends Phaser.Scene {
       )
       .slice(0, 7);
     if (targets.length === 0) {
+      range.destroy();
       await this.dlg.say('@PUPPET opens like a purple eye—then finds nobody close enough to borrow.');
       return;
     }
@@ -2737,6 +2984,7 @@ export class OverworldScene extends Phaser.Scene {
       this.tweens.killTweensOf(r);
       r.destroy();
     });
+    range.destroy();
     if (picked < 0 || picked >= targets.length) return;
 
     const n = targets[picked];
@@ -2756,9 +3004,287 @@ export class OverworldScene extends Phaser.Scene {
       );
       return;
     }
-    jay.pp -= caster.cost;
+    jay.pp = spendFieldPuppetPp(jay.pp, caster.cost, true);
     GS.setFlag('field_puppet_used');
     this.beginFieldPuppet(n);
+  }
+
+  private fieldMachineName(machine: FieldMachine): string {
+    return machine.prop.machine?.name.toUpperCase() ?? 'MACHINE';
+  }
+
+  private async pickFieldClickerTarget(): Promise<void> {
+    const caster = this.fieldClickerCaster();
+    if (!caster) {
+      await this.dlg.say('@The Clicker has not learned this road yet.');
+      return;
+    }
+    const byId = new Map(
+      this.fieldMachines
+        .filter((machine) => machine.img.active && machine.prop.machine)
+        .map((machine) => [machine.prop.machine!.id, machine]),
+    );
+    const targets = controlCandidates(
+      caster,
+      [...byId.values()].map((machine) => ({
+        id: machine.prop.machine!.id,
+        kind: 'machine' as const,
+        x: machine.x,
+        y: machine.y,
+        occupied: machine.prop.machine!.occupied === true,
+        shielded: machine.prop.machine!.shielded === true,
+        vehicleType: machine.prop.machine!.vehicleType,
+      })),
+    )
+      .map((target) => byId.get(target.id))
+      .filter((machine): machine is FieldMachine => machine !== undefined)
+      .sort((a, b) =>
+        Math.hypot(a.x - this.player.x, a.y - this.player.y) -
+        Math.hypot(b.x - this.player.x, b.y - this.player.y),
+      )
+      .slice(0, 7);
+
+    const range = this.add
+      .ellipse(this.player.x, this.player.y - s(4), caster.range * 2, caster.range * 2, 0x58b8d8, 0.025)
+      .setStrokeStyle(s(1), 0x80e8ff, 0.55)
+      .setDepth(this.player.depth - 1);
+    if (targets.length === 0) {
+      range.destroy();
+      await this.dlg.say('@CLICKER scans the wet air. No unoccupied machine answers inside the blue ring.');
+      return;
+    }
+    const rings = targets.map((machine) => {
+      const blocked = machine.prop.machine!.shielded === true || machine.prop.machine!.occupied === true;
+      const ring = this.add
+        .ellipse(machine.x, machine.y, machine.bodyW + s(12), machine.bodyH + s(10), blocked ? 0xb04058 : 0x208ca8, 0.12)
+        .setStrokeStyle(s(1), blocked ? 0xff6078 : 0x80e8ff, 0.95)
+        .setDepth(machine.img.depth + 2);
+      this.tweens.add({ targets: ring, scaleX: 1.15, scaleY: 1.15, alpha: 0.44, duration: 420, yoyo: true, repeat: -1 });
+      return ring;
+    });
+    const options = [
+      ...targets.map((machine) => {
+        const def = machine.prop.machine!;
+        const suffix = def.occupied ? ' · OCCUPIED' : def.shielded ? ' · NO SIGNAL' : '';
+        return `${this.fieldMachineName(machine)}${suffix}`;
+      }),
+      'Cancel',
+    ];
+    const picked = await this.dlg.ask(options, { cancelIndex: options.length - 1 });
+    rings.forEach((ring) => {
+      this.tweens.killTweensOf(ring);
+      ring.destroy();
+    });
+    range.destroy();
+    if (picked < 0 || picked >= targets.length) return;
+
+    const machine = targets[picked];
+    const def = machine.prop.machine!;
+    const result = attemptControl(caster, {
+      id: def.id,
+      kind: 'machine',
+      x: machine.x,
+      y: machine.y,
+      occupied: def.occupied === true,
+      shielded: def.shielded === true,
+      vehicleType: def.vehicleType,
+    });
+    if (!result.ok) {
+      AUDIO.sfx('cancel');
+      await this.dlg.say(
+        result.reason === 'occupied'
+          ? '@OCCUPIED. The Clicker refuses to argue with a driver.'
+          : result.reason === 'blocked'
+            ? '@NO SIGNAL. Brass shielding folds the ping back into Milo\'s hand.'
+            : '@The machine slips outside the Clicker ring.',
+      );
+      return;
+    }
+    GS.setFlag('field_clicker_used');
+    this.beginFieldClicker(machine);
+  }
+
+  private beginFieldClicker(machine: FieldMachine): void {
+    this.player.anims.stop();
+    this.followers.forEach((f) => f.spr.anims.stop());
+    const ring = this.add
+      .ellipse(machine.x, machine.y, machine.bodyW + s(14), machine.bodyH + s(12), 0x208ca8, 0.16)
+      .setStrokeStyle(s(1), 0x9cf4ff, 1)
+      .setDepth(machine.img.depth + 2);
+    this.tweens.add({ targets: ring, scaleX: 1.12, scaleY: 1.12, alpha: 0.5, duration: 340, yoyo: true, repeat: -1 });
+    const tether = this.add.graphics().setDepth(DEPTH_UI - 80);
+    const cameraTarget = this.add.zone(machine.x, machine.y, 1, 1);
+    const panel = makeWindow(this, s(8), s(8), s(286), s(28));
+    panel.setScrollFactor(0).setDepth(DEPTH_UI + 8);
+    const label = this.add
+      .bitmapText(s(18), s(16), 'retro', '', s(6))
+      .setScrollFactor(0)
+      .setDepth(DEPTH_UI + 9)
+      .setTint(0xb8f5ff);
+    this.fieldClicker = { machine, cameraTarget, ring, tether, panel, label };
+    this.cameras.main.startFollow(cameraTarget, true, 0.16, 0.16);
+    AUDIO.sfx('fx_spy');
+    // The persistent panel owns the controls copy. A toast here shares its
+    // top-row bounds and would render underneath the higher-depth panel.
+  }
+
+  private machineBodyAt(machine: FieldMachine, x = machine.x, y = machine.y): Rect {
+    const body = fieldMachineBodyDimensions(machine.bodyLong, machine.bodyWide, machine.facing);
+    return { x: x - body.w / 2, y: y - body.h / 2, w: body.w, h: body.h };
+  }
+
+  private machineMoveBlocked(machine: FieldMachine, body: Rect, current: Rect): boolean {
+    if (this.collidesStatic(body, machine.level)) return true;
+    const limit = machine.prop.machine?.controlRect;
+    if (limit) {
+      const bounds = {
+        x: limit.x * TILE_PX,
+        y: limit.y * TILE_PX,
+        w: limit.w * TILE_PX,
+        h: limit.h * TILE_PX,
+      };
+      if (
+        body.x < bounds.x || body.y < bounds.y ||
+        body.x + body.w > bounds.x + bounds.w || body.y + body.h > bounds.y + bounds.h
+      ) return true;
+    }
+    const bodies: Rect[] = [
+      ...this.trafficRects,
+      ...this.parkedOwnedVehicles.map((vehicle) => this.parkedVehicleBody(vehicle)),
+      ...this.fieldMachines.filter((other) => other !== machine).map((other) => this.machineBodyAt(other)),
+      ...this.npcs.map((npc) => this.npcBodyAt(npc)),
+      ...this.roamers.filter((roamer) => !roamer.dead).map((roamer) => this.roamerBodyAt(roamer)),
+      ...this.patrols.filter((patrol) => !patrol.dead).map((patrol) => this.patrolBodyAt(patrol)),
+      this.playerBodyAt(this.player.x, this.player.y),
+    ];
+    return entersNewBody(body, current, bodies);
+  }
+
+  private moveFieldMachine(machine: FieldMachine, dx: number, dy: number): void {
+    const current = this.machineBodyAt(machine);
+    const nx = machine.x + dx;
+    const bodyX = this.machineBodyAt(machine, nx, machine.y);
+    if (!this.machineMoveBlocked(machine, bodyX, current)) machine.x = nx;
+    const afterX = this.machineBodyAt(machine);
+    const ny = machine.y + dy;
+    const bodyY = this.machineBodyAt(machine, machine.x, ny);
+    if (!this.machineMoveBlocked(machine, bodyY, afterX)) machine.y = ny;
+    machine.level = this.levelAfterStep(machine.level, machine.x, machine.y);
+  }
+
+  private syncFieldMachineVisual(machine: FieldMachine): void {
+    machine.img.setPosition(machine.x + machine.visualDx, machine.y + machine.visualDy);
+    const vec = FACING_VEC[machine.facing];
+    const dir = trafficDirFromVector(vec.x, vec.y);
+    const pose = DIRECTIONAL_VEHICLE_KEYS.has(machine.prop.sprite)
+      ? directionalVehiclePose(dir)
+      : legacyVehiclePose(dir);
+    const body = fieldMachineBodyDimensions(machine.bodyLong, machine.bodyWide, machine.facing);
+    machine.bodyW = body.w;
+    machine.bodyH = body.h;
+    if (AUTHORED_VEHICLE_PROP_KEYS.has(machine.prop.sprite)) machine.img.setFrame(pose.frame);
+    machine.img.setFlipX(pose.flipX).setAngle(pose.angle);
+    machine.img.setDepth(machine.y + machine.bodyH / 2 + this.levelLift(machine.x, machine.y));
+  }
+
+  private updateFieldClicker(dt: number): void {
+    const active = this.fieldClicker;
+    if (!active) return;
+    const machine = active.machine;
+    if (!machine.img.active || !this.fieldMachines.includes(machine)) {
+      this.releaseFieldClicker(true);
+      return;
+    }
+    const d = INPUT.dir();
+    if (d.x !== 0 || d.y !== 0) {
+      const v = normalizedVehicleVector(d);
+      const speed = s(76);
+      machine.facing = facingFromVec(v.x, v.y);
+      this.moveFieldMachine(machine, v.x * speed * dt, v.y * speed * dt);
+      this.syncFieldMachineVisual(machine);
+    }
+    active.ring
+      .setPosition(machine.x, machine.y)
+      .setDepth(machine.img.depth + 2);
+    active.cameraTarget.setPosition(machine.x, machine.y);
+    active.tether.clear().lineStyle(s(1), 0x58cce8, 0.72).beginPath();
+    active.tether.moveTo(this.player.x, this.player.y - s(17));
+    active.tether.lineTo(machine.x, machine.y - machine.bodyH / 2);
+    active.tether.strokePath();
+    active.label.setText(`CLICKER · ${this.fieldMachineName(machine)} · A WORK · B/Y EXIT`);
+  }
+
+  private async clickeredWorldAction(): Promise<void> {
+    const active = this.fieldClicker;
+    if (!active || this.dlg.busy) return;
+    const machine = active.machine;
+    const nearby = this.mapDef.signs
+      .filter((sign) => {
+        if (!sign.machineAction) return false;
+        if (sign.ifFlag && !GS.flag(sign.ifFlag)) return false;
+        if (sign.unlessFlag && GS.flag(sign.unlessFlag)) return false;
+        return true;
+      })
+      .map((sign) => ({ sign, d: Math.hypot(machine.x - (sign.x + 0.5) * TILE_PX, machine.y - (sign.y + 0.5) * TILE_PX) }))
+      .filter(({ d }) => d <= s(34))
+      .sort((a, b) => a.d - b.d)[0]?.sign;
+    if (!nearby?.machineAction) {
+      AUDIO.sfx('cancel');
+      toast(this, 'No machine control is in reach.');
+      return;
+    }
+    const result = chapter3MachineActionResult(nearby.machineAction, {
+      trained: GS.flag('wm_clicker_trained') === true,
+      coolantFrozen: GS.flag('wm_coolant_frozen') === true,
+      fogworksSolved: GS.flag('wm_fogworks_solved') === true,
+    });
+    if (result === 'training_already') {
+      await this.dlg.say('@The practice bay lamp is green. Milo gives the Clicker one unnecessary extra click.');
+      return;
+    }
+    if (result === 'training_complete') {
+      GS.setFlag('wm_clicker_trained');
+      AUDIO.sfx('confirm');
+      await this.dlg.say('@The driverless grounds cart settles between the painted marks. CLICKER LESSON: PASSED. Milo looks much too relieved.');
+      toast(this, 'CLICKER TRAINING COMPLETE');
+      return;
+    }
+    if (result === 'coolant_required') {
+      AUDIO.sfx('cancel');
+      await this.dlg.say('@The valve kicks the tug backward. The coolant crossing is still live; Mia must freeze the line first.');
+      return;
+    }
+    if (result === 'fogworks_already') {
+      await this.dlg.say('@The routing valve holds at CLEAR. The fog-engine is starved of coolant.');
+      return;
+    }
+    if (result === 'fogworks_complete') {
+      GS.setFlag('wm_fogworks_solved');
+      AUDIO.sfx('rumble');
+      this.cameras.main.shake(560, 0.009);
+      await this.dlg.say('@The little tug leans into the brass wheel. Frozen coolant cracks; a service bridge locks into place; the fog-engine coughs instead of breathing.');
+      this.releaseFieldClicker(false);
+      this.fadeRestart();
+      return;
+    }
+    await this.dlg.say('@The machine reaches the control, but nothing in its mechanism answers.');
+  }
+
+  private releaseFieldClicker(feedback: boolean): void {
+    const active = this.fieldClicker;
+    if (!active) return;
+    this.fieldClicker = null;
+    this.tweens.killTweensOf(active.ring);
+    active.ring.destroy();
+    active.cameraTarget.destroy();
+    active.tether.destroy();
+    active.panel.destroy();
+    active.label.destroy();
+    if (this.player?.active) this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    if (feedback) {
+      AUDIO.sfx('cancel');
+      toast(this, 'The machine rolls quiet.');
+    }
   }
 
   private beginFieldPuppet(npc: NpcObj): void {
@@ -2781,7 +3307,7 @@ export class OverworldScene extends Phaser.Scene {
       .setDepth(npc.spr.depth + 2);
     this.tweens.add({ targets: ring, scaleX: 1.18, scaleY: 1.18, alpha: 0.5, duration: 360, yoyo: true, repeat: -1 });
     const tether = this.add.graphics().setDepth(DEPTH_UI - 80);
-    const panel = makeWindow(this, s(8), s(8), s(244), s(28));
+    const panel = makeWindow(this, s(8), s(8), s(304), s(28));
     panel.setScrollFactor(0).setDepth(DEPTH_UI + 8);
     const label = this.add
       .bitmapText(s(18), s(16), 'retro', '', s(6))
@@ -2791,13 +3317,18 @@ export class OverworldScene extends Phaser.Scene {
     this.fieldPuppet = { npc, remaining: 8, ring, tether, panel, label };
     this.cameras.main.startFollow(npc.spr, true, 0.16, 0.16);
     AUDIO.sfx('fx_mindwarp');
-    toast(this, 'PUPPET: D-pad BORROW · A ACT/TALK · B/Y RELEASE');
+    // The live timer panel is the durable control legend; keep the shared
+    // toast lane clear so it cannot render behind this higher-depth window.
   }
 
   private updateFieldPuppet(dt: number): void {
     const p = this.fieldPuppet;
     if (!p) return;
-    p.remaining = Math.max(0, p.remaining - dt);
+    if (!p.npc.spr.active || !this.npcs.includes(p.npc)) {
+      this.releaseFieldPuppet(true);
+      return;
+    }
+    p.remaining = fieldPuppetTimeRemaining(p.remaining, dt);
     const n = p.npc;
     const d = INPUT.dir();
     if (d.x !== 0 || d.y !== 0) {
@@ -2823,7 +3354,7 @@ export class OverworldScene extends Phaser.Scene {
     p.tether.moveTo(this.player.x, this.player.y - s(17));
     p.tether.lineTo(n.spr.x, n.spr.y - s(15));
     p.tether.strokePath();
-    p.label.setText(`PUPPET ${p.remaining.toFixed(1)}s  ·  A ACT/TALK  ·  B/Y RELEASE`);
+    p.label.setText(`PUPPET · ${this.fieldTargetName(n)} · ${p.remaining.toFixed(1)}s · A ACT · B/Y EXIT`);
     if (p.remaining <= 0) this.releaseFieldPuppet(true);
   }
 
@@ -2866,7 +3397,9 @@ export class OverworldScene extends Phaser.Scene {
     p.npc.spr.anims.stop();
     p.npc.baseX = p.npc.spr.x;
     p.npc.baseY = p.npc.spr.y;
-    if (!p.npc.wanders) this.solids.push(this.npcBodyAt(p.npc));
+    if (shouldRestorePinnedPuppetBody(p.npc.wanders, p.npc.spr.active, this.npcs.includes(p.npc))) {
+      this.solids.push(this.npcBodyAt(p.npc));
+    }
     if (this.player?.active) this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
     if (feedback) {
       AUDIO.sfx('cancel');
@@ -3014,7 +3547,8 @@ export class OverworldScene extends Phaser.Scene {
           body.y < other.y + other.h && body.y + body.h > other.y;
         const npcOccupied = this.npcs.some((npc) => overlaps(this.npcBodyAt(npc)));
         const playerOccupied = overlaps(this.playerBodyAt(this.player.x, this.player.y));
-        return npcOccupied || playerOccupied || this.collidesStatic(body, this.levelAtPx(x, y));
+        const machineOccupied = this.fieldMachines.some((machine) => overlaps(this.machineBodyAt(machine)));
+        return npcOccupied || playerOccupied || machineOccupied || this.collidesStatic(body, this.levelAtPx(x, y));
       });
       if (cells.length === 0) {
         if (import.meta.env.DEV) console.warn(`[spawner] ${this.mapDef.id}: no walkable cells in ${JSON.stringify(sp.rect)}`);
@@ -3148,6 +3682,7 @@ export class OverworldScene extends Phaser.Scene {
   private buildFog(): void {
     if (this.mapDef.atmosphere !== 'fog') return;
     const r = overscanRect(this.scale.width, this.scale.height);
+    const cleared = GS.flag('mainframe_defeated') === true;
     // just under nightDepth (which is +s(300)) so night's MULTIPLY sits above fog if both run
     this.fogDepth = this.solidTiles.length * TILE_PX + this.maxLevel * this.levelDepthBias + s(280);
     const veil = this.add
@@ -3156,7 +3691,7 @@ export class OverworldScene extends Phaser.Scene {
         r.y - this.scale.height,
         r.w + this.scale.width * 2,
         r.h + this.scale.height * 2,
-        0xaeb9c4, // cool slate-grey — Northumbrian machine-fog (tuned live: reads as haze, not a dead filter)
+        cleared ? 0xc8dce0 : 0xaeb9c4,
       )
       .setOrigin(0, 0)
       .setScrollFactor(0)
@@ -3169,8 +3704,7 @@ export class OverworldScene extends Phaser.Scene {
   /** the veil's target alpha for a terrace: thinnest at the top level, thickest at the
    *  ground (0). Linear in (maxLevel − level) so each stair DOWN visibly thickens the fog. */
   private fogAlphaForLevel(level: number): number {
-    if (this.maxLevel <= 0) return 0.34;
-    return 0.14 + (this.maxLevel - level) * (0.48 / this.maxLevel); // rim ~0.14 (thin veil) → quay ~0.62 (soup)
+    return chapter3FogAlpha(this.maxLevel, level, GS.flag('mainframe_defeated') === true);
   }
 
   /** re-tune the fog density when the player changes terrace (called each frame from the
@@ -3246,7 +3780,10 @@ export class OverworldScene extends Phaser.Scene {
           const released = this.dlg.justReleased(this.time.now);
           if (this.fieldPuppet) {
             if (INPUT.justPressed('A') && !released) void this.borrowedVoice();
-            if (INPUT.justPressed('B') || INPUT.justPressed('Y')) this.releaseFieldPuppet(true);
+            if (fieldControlReleaseRequested(INPUT.justPressed('B'), INPUT.justPressed('Y'))) this.releaseFieldPuppet(true);
+          } else if (this.fieldClicker) {
+            if (INPUT.justPressed('A') && !released) void this.clickeredWorldAction();
+            if (fieldControlReleaseRequested(INPUT.justPressed('B'), INPUT.justPressed('Y'))) this.releaseFieldClicker(true);
           } else {
             if (INPUT.justPressed('A') && !released) {
               if (GS.data.drivingVehicle) AUDIO.sfx('vehicle_horn');
@@ -3263,7 +3800,7 @@ export class OverworldScene extends Phaser.Scene {
             // Vitals stays one row away and keeps its old one-tap behavior before Ch.3.
             if (INPUT.justPressed('Y')) {
               if (GS.data.drivingVehicle) this.toggleVehicleDashboard();
-              else if (GS.flag('awake_mindwarp_a')) void this.openFieldWheel();
+              else if (GS.flag('awake_mindwarp_a') || this.fieldClickerUnlocked()) void this.openFieldWheel();
               else this.toggleVitals();
             } else if (this.vitalsGlance?.visible && INPUT.justPressed('B')) this.hideVitals();
           }
@@ -3479,6 +4016,10 @@ export class OverworldScene extends Phaser.Scene {
   private updatePlayer(dt: number): void {
     if (this.fieldPuppet) {
       this.updateFieldPuppet(dt);
+      return;
+    }
+    if (this.fieldClicker) {
+      this.updateFieldClicker(dt);
       return;
     }
     if (GS.data.drivingVehicle && GS.data.drivingVehicle !== TWOTON_BMX_TITLE) {
@@ -3712,6 +4253,7 @@ export class OverworldScene extends Phaser.Scene {
       for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) cells.add(cellKey(x, y));
     };
     this.parkedOwnedVehicles.forEach((vehicle) => addRect(this.parkedVehicleBody(vehicle)));
+    this.fieldMachines.forEach((machine) => addRect(this.machineBodyAt(machine)));
     if (GS.data.drivingVehicle) addRect(this.playerBodyAt(this.player.x, this.player.y));
     return cells;
   }
@@ -3788,6 +4330,9 @@ export class OverworldScene extends Phaser.Scene {
     for (const vehicle of this.parkedOwnedVehicles) {
       if (this.entersBody(box, cur, this.parkedVehicleBody(vehicle))) return true;
     }
+    for (const machine of this.fieldMachines) {
+      if (this.entersBody(box, cur, this.machineBodyAt(machine))) return true;
+    }
     if (LILLEBY_GIANT_MAPS.has(this.mapDef.id)) return false;
     for (const n of this.npcs) {
       if (!n.wanders || n.level !== this.playerLevel) continue;
@@ -3839,6 +4384,9 @@ export class OverworldScene extends Phaser.Scene {
     if (entersNewBody(box, cur, this.trafficRects)) return true;
     for (const vehicle of this.parkedOwnedVehicles) {
       if (this.entersBody(box, cur, this.parkedVehicleBody(vehicle))) return true;
+    }
+    for (const machine of this.fieldMachines) {
+      if (this.entersBody(box, cur, this.machineBodyAt(machine))) return true;
     }
 
     // Lilleby's giant civilians remain intentionally permeable. Enemy separation
@@ -4685,6 +5233,11 @@ export class OverworldScene extends Phaser.Scene {
     }
     // S9: quest givers and quest-state NPCs branch through their machines
     if (await this.questTalk(n)) return;
+    const ch3After = GS.flag('mainframe_defeated') ? CH3_AFTER_MAINFRAME_DIALOGUE[n.def.id] : undefined;
+    if (ch3After) {
+      await this.dlg.say(...DIALOGUE[ch3After]);
+      return;
+    }
     // S15c: daylight swaps in the day variant where one is authored
     await this.dlg.say(...DIALOGUE[(!this.isNight && n.def.dialogueDay) || n.def.dialogue]);
   }
@@ -4884,7 +5437,7 @@ export class OverworldScene extends Phaser.Scene {
     return !!def && Boolean(GS.flag(`owned_${propertyId}`) || GS.data.keyItems.includes(def.deed));
   }
 
-  /** The canonical four-service interaction layer shared by every formal city.
+  /** The canonical four-service interaction layer shared by opted-in settlements.
    * The map owns the building and visual identity; this handler owns real money,
    * deeds, rest, and vehicle-shop launch behavior. */
   private async cityServiceBeat(n: NpcObj): Promise<boolean> {
@@ -4906,8 +5459,8 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  private async cityHomeBeat(cityId: FormalCityId): Promise<void> {
-    const amenity = CITY_AMENITIES[cityId];
+  private async cityHomeBeat(cityId: AmenitySettlementId): Promise<void> {
+    const amenity = SETTLEMENT_AMENITIES[cityId];
     const def = PROPERTIES[amenity.residential.propertyId];
     if (!def) return;
     if (!this.ownsProperty(def.id)) {
@@ -4931,14 +5484,18 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  private cityDeliveryBase(cityId: FormalCityId): { area: string; x: number; y: number; facing: Facing } {
+  private cityDeliveryBase(cityId: AmenitySettlementId): { area: string; x: number; y: number; facing: Facing } {
+    const authored = SETTLEMENT_AMENITIES[cityId].dealership.deliveryBase;
+    if (authored) {
+      return { area: authored.area, x: s(authored.x), y: s(authored.y), facing: authored.facing };
+    }
     const exit = this.mapDef.doors.find((d) => d.to === cityId);
     return exit
       ? { area: cityId, x: s(exit.tx), y: s(exit.ty) + s(24), facing: 'right' }
       : { area: cityId, x: this.player.x + s(32), y: this.player.y + s(24), facing: 'right' };
   }
 
-  private async manageHomeGarage(cityId: FormalCityId, property: PropertyDef): Promise<void> {
+  private async manageHomeGarage(cityId: AmenitySettlementId, property: PropertyDef): Promise<void> {
     const capacity = garageCapacity(property);
     const stored = garageContents(GS.data.garage, property.id)
       .map((title) => ({ title, car: vehicleByTitle(title) }))
@@ -4947,7 +5504,7 @@ export class OverworldScene extends Phaser.Scene {
       .filter(([, parking]) => parking.area === cityId)
       .map(([title]) => ({ title, car: vehicleByTitle(title) }))
       .filter((row): row is { title: string; car: NonNullable<ReturnType<typeof vehicleByTitle>> } => row.car !== null);
-    await this.dlg.say(`@Garage: ${stored.length}/${capacity} bays occupied. Vehicles outside ${CITY_AMENITIES[cityId].residential.listingName} are listed too.`);
+    await this.dlg.say(`@Garage: ${stored.length}/${capacity} bays occupied. Vehicles outside ${SETTLEMENT_AMENITIES[cityId].residential.listingName} are listed too.`);
     const options = [
       ...stored.map(({ car }) => `Deploy ${car.displayName}`),
       ...outside.map(({ car }) => `Store ${car.displayName}`),
@@ -4982,8 +5539,8 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say(`@The ${row.car.displayName} rolls inside. ${garageContents(GS.data.garage, property.id).length}/${capacity} bays are now occupied.`);
   }
 
-  private async cityAgencyBeat(cityId: FormalCityId): Promise<void> {
-    const amenity = CITY_AMENITIES[cityId];
+  private async cityAgencyBeat(cityId: AmenitySettlementId): Promise<void> {
+    const amenity = SETTLEMENT_AMENITIES[cityId];
     const def = PROPERTIES[amenity.residential.propertyId];
     if (!def) return;
     if (this.ownsProperty(def.id)) {
@@ -5024,28 +5581,33 @@ export class OverworldScene extends Phaser.Scene {
     await this.dlg.say('@The agent slides over a key, a deed, and a note from the previous owner that only says: "The attic hums on Tuesdays."');
   }
 
-  private async cityDealershipBeat(cityId: FormalCityId): Promise<void> {
-    const amenity = CITY_AMENITIES[cityId];
+  private async cityDealershipBeat(cityId: AmenitySettlementId): Promise<void> {
+    const amenity = SETTLEMENT_AMENITIES[cityId];
     await this.dlg.say(
       `@Welcome to ${amenity.dealership.name}. Every vehicle on this floor is real, titled, fuelled, and much too clean underneath.`,
     );
     const pick = await this.dlg.ask(['Browse vehicles', 'Fuel / charge an owned vehicle', 'Leave'], { cancelIndex: 2 });
     if (pick === 0) this.openVehicleShop(cityId);
-    else if (pick === 1) await this.dealerFuelService(cityId);
+    else if (pick === 1) await this.dealerFuelService(cityId, amenity.dealership.stationId);
   }
 
   /** A local dealer is also the fail-safe service bay. Partial fills are real
    * transactions, so a cash-poor player can always buy enough range to leave. */
-  private async dealerFuelService(area = this.mapDef.id): Promise<void> {
+  private async dealerFuelService(area = this.mapDef.id, stationId?: string): Promise<void> {
+    const station = stationId ? STATIONS[stationId] : stationsInArea(area)[0];
+    if (!station) {
+      await this.dlg.say('@The service desk checks its supply ledger. No local station is connected to this bay yet, so no money changes hands.');
+      return;
+    }
     const cars = GS.data.keyItems
       .map((title) => ({ title, car: vehicleByTitle(title) }))
       .filter((row): row is { title: string; car: NonNullable<ReturnType<typeof vehicleByTitle>> } =>
         row.car !== null
-        && fuelProfile(row.car.vehicleType).kind !== 'none'
+        && canRefuelHere(station, row.car.vehicleType)
         && vehicleServiceableAtArea(GS.data, row.title, area),
       );
     if (cars.length === 0) {
-      await this.dlg.say('@The service hose goes back to sleep. No powered vehicle you own is on this continent and available for service.');
+      await this.dlg.say(`@The service hose goes back to sleep. ${station.attendant} can only serve locally available vehicles that use fuel sold here.`);
       return;
     }
     const options = [...cars.map(({ title, car }) => {
@@ -5063,7 +5625,7 @@ export class OverworldScene extends Phaser.Scene {
       await this.dlg.say(`@The ${car.displayName} is already full. The nozzle clicks anyway, just to feel involved.`);
       return;
     }
-    const perUnit = (BASE_PRICE_PER_UNIT[profile.kind] || 1) * 1.15;
+    const perUnit = stationPricePerUnit(station, profile.kind);
     const affordable = Math.min(needed, GS.data.cashOnHand / perUnit);
     const full = affordable >= needed - 0.0001;
     const units = full ? needed : Math.floor(affordable * 10) / 10;
@@ -5092,8 +5654,8 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  private async cityHotelBeat(cityId: FormalCityId): Promise<void> {
-    const { hotel } = CITY_AMENITIES[cityId];
+  private async cityHotelBeat(cityId: AmenitySettlementId): Promise<void> {
+    const { hotel } = SETTLEMENT_AMENITIES[cityId];
     await this.dlg.say(`@${hotel.name}. Fresh sheets, quiet pipes, and a lobby clock that is seven minutes optimistic.`);
     const pick = await this.dlg.ask([`Stay the night (${money(hotel.rate)})`, 'See the room', 'Not tonight'], { cancelIndex: 2 });
     if (pick === 1) {
@@ -5114,8 +5676,8 @@ export class OverworldScene extends Phaser.Scene {
     await this.enterCityHotelRoom(cityId, true);
   }
 
-  private async enterCityHotelRoom(cityId: FormalCityId, wake: boolean): Promise<void> {
-    const hotel = CITY_AMENITIES[cityId].hotel;
+  private async enterCityHotelRoom(cityId: AmenitySettlementId, wake: boolean): Promise<void> {
+    const hotel = SETTLEMENT_AMENITIES[cityId].hotel;
     const roomId = hotel.existing?.roomId ?? cityHotelRoomId(cityId);
     const room = MAPS[roomId];
     if (!room) {
@@ -5126,6 +5688,11 @@ export class OverworldScene extends Phaser.Scene {
       await this.dlg.say('@The room key does not match any door. The clerk refunds the mistake immediately.');
       return;
     }
+    const authoredSpawn = hotel.existing?.roomSpawn;
+    if (authoredSpawn) {
+      this.goThroughDoor(roomId, authoredSpawn.x, authoredSpawn.y, authoredSpawn.facing);
+      return;
+    }
     const exit = room.doors.find((door) => !MAPS[door.to]?.interior) ?? room.doors[0];
     const x = exit ? exit.x * 16 + Math.max(8, exit.w * 8) : 5 * 16 + 8;
     const y = exit ? Math.max(16, (exit.y - 1) * 16) : 5 * 16;
@@ -5134,29 +5701,21 @@ export class OverworldScene extends Phaser.Scene {
 
   /** Replaced once VehicleShopScene is registered; keeping launch/pause in one
    * seam avoids every dealer inventing a different ownership transaction. */
-  private openVehicleShop(cityId: FormalCityId): void {
+  private openVehicleShop(cityId: AmenitySettlementId): void {
     this.game.events.once('mf-vehicle-shop-closed', () => {
       this.refreshParkedOwnedVehicles();
       this.rebuildFollowers();
       this.syncVehicleOccupants();
       this.scene.resume();
     });
-    const exit = this.mapDef.doors.find((d) => d.to === cityId);
-    const parking = exit
-      ? { area: cityId, x: s(exit.tx), y: s(exit.ty) + s(24), facing: 'right' as const }
-      : {
-          area: this.mapDef.id,
-          x: this.player.x + this.facingVector().x * s(30),
-          y: this.player.y + this.facingVector().y * s(30),
-          facing: this.facing,
-        };
+    const parking = this.cityDeliveryBase(cityId);
     this.scene.pause();
     this.scene.launch('vehicle-shop', {
-      area: CITY_AMENITIES[cityId].cityId,
+      area: SETTLEMENT_AMENITIES[cityId].cityId,
       filter: 'all',
       parking,
-      dealerName: CITY_AMENITIES[cityId].dealership.name,
-      featuredVehicleId: CITY_AMENITIES[cityId].dealership.featuredVehicleId,
+      dealerName: SETTLEMENT_AMENITIES[cityId].dealership.name,
+      featuredVehicleId: SETTLEMENT_AMENITIES[cityId].dealership.featuredVehicleId,
     });
   }
 
@@ -7160,8 +7719,8 @@ export class OverworldScene extends Phaser.Scene {
       await this.boatCutscene();
       return;
     }
-    const cityHotelWake = FORMAL_CITY_IDS.find((cityId) => {
-      const hotel = CITY_AMENITIES[cityId].hotel;
+    const cityHotelWake = AMENITY_SETTLEMENT_IDS.find((cityId) => {
+      const hotel = SETTLEMENT_AMENITIES[cityId].hotel;
       const roomId = hotel.existing?.roomId ?? cityHotelRoomId(cityId);
       return this.mapDef.id === roomId && GS.flag(`city_hotel_wake_${cityId}`);
     });
@@ -7171,7 +7730,7 @@ export class OverworldScene extends Phaser.Scene {
       AUDIO.sfx('heal');
       this.sparkleBurst(this.player.x, this.player.y - s(14), 10);
       await this.dlg.say(
-        `@Morning at ${CITY_AMENITIES[cityHotelWake].hotel.name}. Everyone is restored, and the room is an actual place you can walk back out of.`,
+        `@Morning at ${SETTLEMENT_AMENITIES[cityHotelWake].hotel.name}. Everyone is restored, and the room is an actual place you can walk back out of.`,
         '@Somebody folded the receipt into a tiny swan that looks disappointed in you.',
       );
       this.cut = false;
@@ -7743,6 +8302,7 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     AUDIO.stopMusic();
+    await playCutscene(this, 'ch3_flight');
     GS.setFlag('lucille_from', 0); // the Ch.3 flight always hatches onto the Foggybottom quay
     // into Lucille's cabin near Bert; walking down fires ch3_arrival, then the hatch
     // drops you on the Foggybottom quay (the boat_interior precedent)
@@ -7769,6 +8329,7 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.sfx('thud');
     this.cameras.main.shake(700, 0.012);
     await this.wait(500);
+    await playCutscene(this, 'ch3_milo_join');
     await this.dlg.say(...DIALOGUE.wm_arrival_crash);
     // Milo emerges and JOINS — the party becomes three (§A3; ~L16, his canon kit)
     await this.dlg.say(...DIALOGUE.wm_arrival_milo);
@@ -7795,6 +8356,7 @@ export class OverworldScene extends Phaser.Scene {
     // the gate. The awakening beat (awake_the_first_borrow) carries the recoil itself —
     // Mia goes still, Mia(faye) takes a half-step back — so the Trust Thread opens here.
     await this.awakeningBeat('the_first_borrow');
+    await playCutscene(this, 'ch3_first_borrow');
     GS.setFlag('thread_trust_open'); // §A6/ADR-072 — the trust thread's first link
     GS.setFlag('wm_gate_open'); // the porter gates out on rebuild (the lodge is clear)
     await this.dlg.say(...DIALOGUE.wm_arrival_after);
@@ -7806,6 +8368,10 @@ export class OverworldScene extends Phaser.Scene {
   private async mainframeBossScene(): Promise<void> {
     this.cut = true;
     await this.dlg.say(...DIALOGUE.mainframe_door);
+    if (!GS.flag('mainframe_intro_seen')) {
+      await playCutscene(this, 'ch3_mainframe');
+      GS.setFlag('mainframe_intro_seen');
+    }
     AUDIO.sfx('thud');
     this.cameras.main.shake(500, 0.01);
     await this.wait(450);
@@ -7830,6 +8396,10 @@ export class OverworldScene extends Phaser.Scene {
   /** §A6 Resonance Site — the Old Stones. Before the boss they only hum shyly; once the
    *  machine-fog lifts they sing, and the locket records HEARTLIGHT 3 (ch3 closes). */
   private async oldStonesScene(): Promise<void> {
+    if (!GS.flag('old_stones_seen')) {
+      await playCutscene(this, 'ch3_stones');
+      GS.setFlag('old_stones_seen');
+    }
     if (!GS.flag('mainframe_defeated')) {
       this.cut = true;
       await this.dlg.say(...DIALOGUE.old_stones_early);
@@ -7848,12 +8418,16 @@ export class OverworldScene extends Phaser.Scene {
     this.sparkleBurst(this.player.x, this.player.y - s(30), 14);
     ember.destroy();
     this.cameras.main.flash(300, 248, 232, 160);
+    await playCutscene(this, 'ch3_heartlight');
     await this.dlg.say(...DIALOGUE.ember3_get);
     GS.setFlag('ch3_complete'); // §A6 — the chapter button (the §A5 gate to Ch.4)
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch3_card);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
+    // Rebuild immediately so the authored ember3 prop and post-resonance
+    // lighting exist in the same visit; the temporary pickup art is gone.
+    this.fadeRestart();
   }
 
   /** §A4.11 PSI gate — freeze the boiler coolant line (taught-first, non-missable,
@@ -7867,6 +8441,10 @@ export class OverworldScene extends Phaser.Scene {
     const gate = PSI_GATES.wintermoor_coolant;
     const known = GS.data.party.flatMap((h) => availableAbilities(h.id, h.level, (f) => GS.flag(f) === true));
     this.cut = true;
+    if (!GS.flag('wm_fog_revealed')) {
+      await playCutscene(this, 'ch3_fog_reveal');
+      GS.setFlag('wm_fog_revealed');
+    }
     await this.dlg.say(...DIALOGUE.sign_wm_coolant);
     if (!canClearGate(gate, known) || bestCastFor(gate, known) === null) {
       await this.dlg.say('(The pipe is already near freezing. To lock it solid you would need to cast FREEZE — and no one here has learned how. Yet.)');
@@ -7889,6 +8467,9 @@ export class OverworldScene extends Phaser.Scene {
     AUDIO.jingle('levelup', 1200, this.mapDef.music);
     toast(this, 'The coolant line is frozen solid.');
     this.cut = false;
+    // The boiler crossing is data-driven at build time; rebuild immediately so
+    // the frozen bridge art and collision replace the live coolant channel.
+    this.fadeRestart();
   }
 
   /* ════════════ CHAPTER 4 — NORWAY ("The Fjord That Sleeps") ════════════ *

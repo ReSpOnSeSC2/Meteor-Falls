@@ -649,6 +649,15 @@ const WORLD_PROP_KEYS = [
   // foggybottom-props-source.png (tools/slice-prop-strip.cjs, magenta strip).
   'fb_postbox', 'fb_pub_sign', 'fb_market_cross', 'fb_gas_lamp',
   'fb_barrel', 'fb_window_box', 'fb_crab_pot', 'fb_rope_coil',
+  // Chapter 3 production landmark kit (2026-07-12) -- original England-region
+  // silhouettes authored as two chroma-key source-bank strips. These replace the
+  // remaining Lucille/Old-Stones/fogworks dev props and give the moor/campus real
+  // navigational anchors without extending the frozen procedural generator.
+  'ch3_viaduct_arch', 'ch3_roman_culvert', 'ch3_greenhouse_wreck',
+  'ch3_cricket_pavilion', 'ch3_school_gate', 'ch3_porter_lodge',
+  'ch3_telegraph_pole', 'ch3_lucille_cockpit', 'ch3_lucille_window',
+  'ch3_cargo_net', 'ch3_fog_engine', 'ch3_valve_manifold',
+  'ch3_menhir', 'ch3_trilithon', 'ch3_spring', 'ch3_academy_main',
   // Otterbrooke interiors (2026-07-03) — shop-fixtures strip (Batch B), sliced from
   // masters/world/otterbrook-shopfix-source.png (tools/slice-prop-strip.cjs).
   'prop_soda_fountain', 'prop_pastry_case', 'prop_brick_oven', 'prop_flour_bins', 'prop_mixing_station',
@@ -1220,6 +1229,26 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   fb_window_box: { w: 16, h: 14 },
   fb_crab_pot: { w: 18, h: 28 },
   fb_rope_coil: { w: 19, h: 16 },
+  // Chapter 3 landmark kit -- native world dimensions. All values preserve the
+  // sliced source aspect; only their in-world scale changes. The academy facade
+  // is deliberately 296 native px high (9.25 hero-heights), while doors and
+  // collision stay human-scaled in the map data.
+  ch3_viaduct_arch: { w: 72, h: 134 },
+  ch3_roman_culvert: { w: 54, h: 51 },
+  ch3_greenhouse_wreck: { w: 92, h: 137 },
+  ch3_cricket_pavilion: { w: 92, h: 126 },
+  ch3_school_gate: { w: 110, h: 139 },
+  ch3_porter_lodge: { w: 70, h: 105 },
+  ch3_telegraph_pole: { w: 38, h: 128 },
+  ch3_lucille_cockpit: { w: 84, h: 113 },
+  ch3_lucille_window: { w: 50, h: 100 },
+  ch3_cargo_net: { w: 70, h: 95 },
+  ch3_fog_engine: { w: 92, h: 147 },
+  ch3_valve_manifold: { w: 80, h: 83 },
+  ch3_menhir: { w: 40, h: 111 },
+  ch3_trilithon: { w: 72, h: 116 },
+  ch3_spring: { w: 48, h: 61 },
+  ch3_academy_main: { w: 200, h: 296 },
 } as const satisfies Record<string, { w: number; h: number }>;
 
 /** Footprint width in TILES for the generated catalog + colossi, mirrored from

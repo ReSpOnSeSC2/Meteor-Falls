@@ -24,6 +24,7 @@ import Phaser from 'phaser';
 import { GS } from '../engine/state';
 import type { VehicleParkingState } from '../engine/state';
 import {
+  allocateVehicleDeliverySlot,
   chooseActiveVehicle,
   currentVehicleChapter,
   purchaseVehicle,
@@ -43,8 +44,12 @@ import { DEPTH_UI, Dialogue, makeCashBox, makeWindow } from '../ui/windows';
 import {
   compactVehicleRange,
   featuredVehicleFirst,
+  vehicleDeliveryPreview,
   vehicleEnergyLabel,
   vehicleListLabel,
+  vehicleOwnershipLabel,
+  vehiclePartyFit,
+  vehiclePurchaseReadiness,
 } from '../ui/vehicle-shop-view';
 
 export { vehicleListLabel } from '../ui/vehicle-shop-view';
@@ -304,6 +309,17 @@ export class VehicleShopScene extends Phaser.Scene {
   }
 
   private async buy(car: VehicleView): Promise<void> {
+    const readiness = vehiclePurchaseReadiness(car, GS.data.cashOnHand);
+    if (!readiness.affordable) {
+      this.clearPreview();
+      AUDIO.sfx('cancel');
+      await this.dlg.say(
+        `@${this.dealerName}: The ${car.name} is ${money(readiness.shortfall)} beyond your cash on hand. No title moves until the whole price is here.`,
+      );
+      return;
+    }
+    if (!(await this.confirmPartyFit(car))) return;
+
     this.clearPreview();
     const confirm = await pick(this, {
       x: s(194),
@@ -330,6 +346,26 @@ export class VehicleShopScene extends Phaser.Scene {
       `* The sales clerk signs the title with a flourish. The ${car.name} is yours.`,
       `@${this.dealerName}: Full tank, honest keys, and all the road you can find. Treat each other kindly.`,
     );
+  }
+
+  /** A smaller ride is still a legitimate title or future garage choice, but
+   * the player must explicitly acknowledge that the current party cannot use
+   * it together. The overworld repeats this seat law when entering the car. */
+  private async confirmPartyFit(car: VehicleView): Promise<boolean> {
+    const fit = vehiclePartyFit(car, GS.data.party.length);
+    if (fit.fits) return true;
+    this.clearPreview();
+    await this.dlg.say(
+      `* The ${car.name} has ${fit.seats} seat${fit.seats === 1 ? '' : 's'} for a party of ${fit.partySize}.`,
+      `* ${fit.overflow} ${fit.overflow === 1 ? 'person has' : 'people have'} nowhere to sit, so the party cannot drive it together.`,
+    );
+    const selected = await pick(this, {
+      x: s(184),
+      y: s(92),
+      options: ['Park It for Later', 'Keep Looking'],
+      title: `${fit.partySize} PARTY / ${fit.seats} SEATS`,
+    });
+    return selected === 0;
   }
 
   private ownedTradeIns(target: VehicleView): VehicleView[] {
@@ -369,6 +405,14 @@ export class VehicleShopScene extends Phaser.Scene {
     if (selected < 0) return false;
     const trade = choices[selected];
     const balance = target.price - trade.sellValue;
+    if (balance > GS.data.cashOnHand) {
+      AUDIO.sfx('cancel');
+      await this.dlg.say(
+        `@${this.dealerName}: The trade helps, but you are still ${money(balance - GS.data.cashOnHand)} short. Both titles and your cash stay put.`,
+      );
+      return false;
+    }
+    if (!(await this.confirmPartyFit(target))) return false;
     const confirm = await pick(this, {
       x: s(174),
       y: s(92),
@@ -465,12 +509,38 @@ export class VehicleShopScene extends Phaser.Scene {
     return copy[reason] ?? `${dealer} I cannot finish that ${action} right now. Your cash and title are untouched.`;
   }
 
+  /** Resolve the exact bay the production allocator would commit if this title
+   * were signed now, including displacement around already parked vehicles. */
+  private deliveryPreview(car: VehicleView): VehicleParkingState {
+    const requested = this.parking ?? {
+      area: this.area,
+      x: GS.data.x,
+      y: GS.data.y,
+      facing: GS.data.facing,
+    };
+    return allocateVehicleDeliverySlot(GS.data, car.title, requested);
+  }
+
+  /** Garage membership wins over stale legacy continent copy; exact outdoor
+   * parking wins next. This makes the owned/sold showroom state inspectable. */
+  private ownedLocationPreview(car: VehicleView): string {
+    if (car.driving) return 'LOCATION ON THE ROAD';
+    const garage = Object.entries(GS.data.garage).find(([, titles]) => titles.includes(car.title));
+    if (garage) return `GARAGE ${garage[0].replace(/_/g, ' ').toUpperCase()}`;
+    const parked = GS.data.vehicleParking[car.title];
+    if (parked) return vehicleDeliveryPreview(parked, 'PARKED');
+    const region = GS.data.carLocation[car.title];
+    if (region) return `REGION ${region.replace(/_/g, ' ').toUpperCase()}  PARKING PENDING`;
+    return 'DELIVERY RECORD PENDING';
+  }
+
   private renderPreview(car: VehicleView): void {
     this.clearPreview();
     const owned = car.owned;
     const active = car.active;
     const spec = VEHICLE_SPECS[car.vehicleType];
-    const location = GS.data.carLocation[car.title];
+    const readiness = vehiclePurchaseReadiness(car, GS.data.cashOnHand);
+    const fit = vehiclePartyFit(car, GS.data.party.length);
 
     const addText = (
       x: number,
@@ -491,8 +561,8 @@ export class VehicleShopScene extends Phaser.Scene {
     };
 
     addText(169, 45, car.name.toUpperCase(), car.id === this.featuredVehicleId ? CYAN : GOLD, 7, 205);
-    const stateLabel = car.driving ? 'ON THE ROAD' : active ? 'PREFERRED' : owned ? 'OWNED' : money(car.price);
-    addText(384, 46, stateLabel, active || car.driving ? GREEN : owned ? CYAN : car.price > GS.data.cashOnHand ? RED : PAPER, 6)
+    const stateLabel = vehicleOwnershipLabel(car);
+    addText(384, 46, stateLabel, active || car.driving ? GREEN : owned ? CYAN : readiness.affordable ? PAPER : RED, 6)
       .setOrigin(1, 0);
     if (car.id === this.featuredVehicleId) {
       addText(384, 58, 'DEALER FEATURE', GOLD, 5).setOrigin(1, 0);
@@ -530,16 +600,17 @@ export class VehicleShopScene extends Phaser.Scene {
       addText(276, 74, 'ART FILE MISSING', RED, 6).setOrigin(0.5, 0);
     }
 
-    addText(169, 106, `SEATS ${car.seats}   ${vehicleEnergyLabel(car)}`, PAPER, 6, 205);
-    addText(169, 119, `RANGE ${compactVehicleRange(car.rangeTiles)}`, CYAN, 6, 205);
-    if (owned) {
-      const place = location ? location.toUpperCase().replace(/_/g, ' ') : 'DELIVERY PENDING';
-      const local = this.vehicleIsAtDealer(car);
-      addText(384, 119, local ? place : `AWAY: ${place}`, local ? PAPER_DIM : RED, 5, 105).setOrigin(1, 0);
-    } else {
-      addText(384, 119, `TRADE ${money(car.sellValue)}`, PAPER_DIM, 5, 105).setOrigin(1, 0);
-    }
-    addText(169, 135, car.note, PAPER_DIM, 6, 207);
+    addText(169, 106, `TYPE ${car.vehicleType.replace(/_/g, ' ').toUpperCase()}`, PAPER, 6, 112);
+    addText(384, 106, `PRICE ${money(car.price)}`, owned || readiness.affordable ? PAPER : RED, 6, 100).setOrigin(1, 0);
+    addText(169, 118, `SEATS ${car.seats}`, PAPER, 6, 80);
+    addText(384, 118, vehicleEnergyLabel(car), CYAN, 6, 116).setOrigin(1, 0);
+    addText(169, 130, fit.label, fit.fits ? GREEN : RED, 5, 112);
+    addText(384, 130, compactVehicleRange(car.rangeTiles), PAPER_DIM, 5, 95).setOrigin(1, 0);
+    const place = owned
+      ? this.ownedLocationPreview(car)
+      : vehicleDeliveryPreview(this.deliveryPreview(car));
+    addText(169, 142, place, owned && !this.vehicleIsAtDealer(car) ? RED : PAPER_DIM, 5, 207);
+    addText(169, 154, car.note, PAPER_DIM, 5, 207);
   }
 
   private renderLeavePreview(): void {

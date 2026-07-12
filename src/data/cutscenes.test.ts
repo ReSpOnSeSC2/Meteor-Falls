@@ -71,6 +71,21 @@ describe('cutscene registry', () => {
     }
   });
 
+  it('times Chapter 3 as seven story-safe single-beat sequences', () => {
+    const ids = [
+      'ch3_flight', 'ch3_milo_join', 'ch3_first_borrow', 'ch3_stones',
+      'ch3_fog_reveal', 'ch3_mainframe', 'ch3_heartlight',
+    ] as const;
+    expect(CUTSCENES.ch3_journey.beats).toHaveLength(ids.length);
+    for (const id of ids) {
+      const cutscene = CUTSCENES[id];
+      expect(cutscene.beats).toHaveLength(1);
+      expect(cutscene.beats[0].captions?.length).toBeGreaterThan(0);
+      expect(cutscene.beats[0].motion?.ms).toBeGreaterThanOrEqual(8000);
+      expect(existsSync(panelPath('ch3', cutscene.beats[0]))).toBe(true);
+    }
+  });
+
   it('prefers runtime-resolution _4x panels over legacy _01 placeholders', () => {
     const preferred4x: string[] = [];
     for (const cs of all) {

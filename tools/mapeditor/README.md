@@ -53,6 +53,35 @@ refresh the shipped picker/manifest.
 `src/data/maps.ts`. They are part of the same Ch.2 live route, but are not
 rewritten by the three map-editor author commands above.
 
+### Chapter 3 production maps (direct-builder source)
+
+All twelve Chapter 3 maps are direct deterministic builders in
+`src/data/maps_ch3.ts`: `biplane_interior`, `foggybottom`, `kettle_taproom`,
+`kettle_snug`, `foggy_moor`, `wintermoor_grounds`, `the_old_stones`,
+`wintermoor_f1`, `wintermoor_f2`, `wintermoor_f3`, `wintermoor_dorm`, and
+`wintermoor_boiler`. Unlike Twoton/Puerto/Dunas/Valle, Chapter 3 has no paired
+`author-*.ts` or per-map editor JSON source. The TypeScript builders are
+canonical.
+
+Run `npm run mapeditor:gen` after any Chapter 3 grid, prop, door, metadata, or
+roster change. It refreshes `manifest.json` and `maps.json`, including all
+twelve maps; commit those generated artifacts with the source change. Run
+`npm run mapeditor:check` to prove there is no drift.
+
+Use the editor picker/import for visual review, not as a blind round-trip
+authoring path. Chapter 3 uses schema fields the current inspector/exporter
+does not expose, notably prop `machine` contracts and sign `machineAction`.
+Exporting and pasting an editor copy can silently discard those fields. If a
+visual edit is useful, transfer the intentional grid/placement change back to
+`maps_ch3.ts`, preserve the machine metadata by hand, regenerate, and re-run
+the map/control tests.
+
+Compatibility pins to preserve while editing include the exact twelve ids;
+Foggybottom's first four service-facade positions/order and four elevation
+terraces; `WINTERMOOR_COOLANT_CROSSING`; `wm_clicker_practice_cart`;
+`wm_fogworks_tug`; reciprocal door targets; and post-boss `unlessFlag`
+spawners. Moving a legacy landing also requires reviewing save migration v20.
+
 ---
 
 ## The tools (top bar)
@@ -193,9 +222,14 @@ The reference map is **`elev_spike`**; the full design notes are `docs/WILDERNES
 To edit a map again later, choose **JSON** in the Export dialog, copy it, and paste it back
 into the box with **⬆ Import JSON** next time.
 
-The TypeScript exporter preserves the complete current `MapDef` authoring surface, including
-embedded prop doors and NPC scale/movement/idle/emote/dog fields. JSON remains the editor working
-document format (`w`/`h`/`level`) and is intended for re-import rather than direct schema parsing.
+The TypeScript exporter preserves the broad editor-supported `MapDef` surface,
+including embedded prop doors, compound `solidParts` collision for visibly open
+arches, and NPC scale/movement/idle/emote/dog fields; it
+does **not** automatically preserve every newer schema extension. Fields absent
+from the inspector/exporter can be dropped on round-trip (Chapter 3's
+`machine`/`machineAction` warning above is the current concrete case). JSON
+remains the editor working document format (`w`/`h`/`level`) and is intended
+for re-import rather than direct schema parsing.
 
 ---
 
@@ -205,6 +239,9 @@ document format (`w`/`h`/`level`) and is intended for re-import rather than dire
   and hangs down/right — exactly how the game draws it. The ghost preview shows where it lands.
 - **Props get an auto collision box** (the red base rectangle) when "solid" is on — a sensible
   default you can leave as-is; toggle it off for flat decorations.
+- **Compound collision round-trips.** A source-authored prop with `solidParts`
+  renders/checks/exports each red rectangle, preserving transparent openings;
+  edit the part coordinates in the canonical map builder.
 - **Buildings need no collision** — the game rebuilds it from the drawn facade automatically,
   so you only set position (and an approximate on-map size).
 - **The palette is generated from the real game data.** If someone adds new tiles or props,

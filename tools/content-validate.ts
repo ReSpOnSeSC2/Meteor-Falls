@@ -3226,6 +3226,8 @@ parseAll('boss-scripts', BossScriptDefSchema as unknown as ZodType, BOSS_SCRIPTS
 
 /* ================= 3a. map cross-references ================= */
 
+const fieldMachineIds = new Set<string>();
+const fieldMachineActions = new Set(['wm_clicker_training', 'wm_fogworks_valve']);
 for (const m of Object.values(MAPS)) {
   // grid rows uniform; every char known to the legend (':' is the auto-edged path)
   const w = m.grid[0]?.length ?? 0;
@@ -3264,6 +3266,30 @@ for (const m of Object.values(MAPS)) {
   }
   for (const s of m.signs) {
     if (!DIALOGUE[s.dialogue]) fail('maps', `${m.id} sign at (${s.x},${s.y}) → unknown dialogue '${s.dialogue}'`);
+    if (s.machineAction && !fieldMachineActions.has(s.machineAction)) {
+      fail('field-control', `${m.id} sign at (${s.x},${s.y}) names unknown machine action '${s.machineAction}'`);
+    }
+    if (s.machineAction && !m.props.some((prop) => prop.machine)) {
+      fail('field-control', `${m.id} action '${s.machineAction}' has no authored machine on the map`);
+    }
+  }
+  for (const p of m.props) {
+    if (p.solid && p.solidParts?.length) {
+      fail('maps', `${m.id} prop '${p.sprite}' must use either solid or solidParts, not both`);
+    }
+    const machine = p.machine;
+    if (!machine) continue;
+    if (fieldMachineIds.has(machine.id)) fail('field-control', `duplicate field machine id '${machine.id}'`);
+    fieldMachineIds.add(machine.id);
+    if (!VEHICLE_SPECS[machine.vehicleType]) {
+      fail('field-control', `${m.id} machine '${machine.id}' uses unknown vehicle type '${machine.vehicleType}'`);
+    }
+    if (!p.solid) fail('field-control', `${m.id} machine '${machine.id}' needs an authored solid body`);
+    if (p.solidParts?.length) fail('field-control', `${m.id} machine '${machine.id}' must use one movable solid body`);
+    const r = machine.controlRect;
+    if (r && (r.x < 0 || r.y < 0 || r.x + r.w > w || r.y + r.h > m.grid.length)) {
+      fail('field-control', `${m.id} machine '${machine.id}' controlRect is outside the ${w}×${m.grid.length} grid`);
+    }
   }
 
   // spawners and patrols must roll existing enemies; patrols need a roamable sprite

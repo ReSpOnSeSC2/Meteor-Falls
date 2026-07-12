@@ -71,8 +71,10 @@ can polish a town's streets/massing/terraces before its ground kit lands.
    desert grammar. The full transition chain (Twoton docks, boat deck, grotto,
    and Costa Estrella) was rebuilt in the same pass. See the production record
    below before changing any of these maps.
-3. **Foggybottom/Wintermoor** (Ch.3) — base tiles + the shipped fog-terrace
-   pilot; mostly needs massing/props/horizon.
+3. **Foggybottom/Wintermoor** (Ch.3) — ✅ **PRODUCTION ROLLOUT DONE
+   (2026-07-12)** across the exact twelve-map route. The fog-terrace pilot is
+   now a complete town/moor/academy/standing-stones chapter with authored
+   landmarks, live ambience and field-control interactions. See §7.
 4. **The skinned regions** (Minimus, Kvisthavn, Zanzibel/Savanna/Ruins, Lotus
    Harbor, Chandrapore?, Valea Stelelor, Aurora, Mauna Lani, Mars) — each
    needs the per-biome street-value pass and the curb-skin decision (§2).
@@ -409,21 +411,26 @@ roof plane 2-3 tiles deep, party walls, door at the foot.
 
 ## 5. Verification loop (use it after every slice)
 
-1. `npx tsc --noEmit`
-2. `npx vite-node tools/content-validate.ts` — read the elevation/door lines,
-   not just the exit code.
-3. `npx vitest run <the map's test file>` fast, full `npx vitest run` before
-   push. 4. `npm run build`.
-5. **Live screenshots** (headless, works in CI containers):
-   `npm run dev`, then Playwright with `--disable-webgl` (Canvas renders
-   instantly; SwiftShader WebGL is slow but valid for the GPU-limit check):
-   load `http://localhost:5173/?devMap=otterbrook` (add equivalent dev-boot
-   params per map in `TitleScene` as needed — the pattern is there), poll
-   until the `overworld` scene is active, teleport via
-   `game.scene.getScene('overworld').player.setPosition(x*64+32, y*64)`,
-   screenshot, compare against the EB reference AND the previous state.
-6. Walk the seams: curbs mate at corners, cuts at crossings, stairs cross
-   levels, walk-behind occludes, doors round-trip.
+1. `npx.cmd tsc --noEmit`.
+2. `npx.cmd tsx tools/door-audit.ts` — a non-waived body-box or snug-entry
+   finding is a release failure.
+3. `npm.cmd run validate` — read the elevation, door, ambience, machine, and
+   map-editor drift lines, not just the exit code.
+4. `npx.cmd vitest run <the map's focused test files>` during iteration; run
+   the complete `npm.cmd test` once at release close.
+5. `npx.cmd tsx tools/render-map.ts <set>` and inspect the schematic. After a
+   map or metadata change, run `npm.cmd run mapeditor:gen`, review the generated
+   diff, then `npm.cmd run mapeditor:check`.
+6. `npm.cmd run balance` and `npm.cmd run visuals:audit:strict`.
+7. `npm.cmd run build`.
+8. **Live browser survey:** `npm.cmd run dev`, load the supported
+   `http://localhost:5173/?devMap=<id>` URL (Chapter 3 also accepts
+   `devState=arrival|joined|coolant|postBoss|complete`), wait for the overworld,
+   and capture the intended areas/states. Compare against the design reference
+   and previous state; inspect console errors.
+9. Walk the seams and interactions: curbs mate at corners, cuts at crossings,
+   stairs cross levels, walk-behind occludes, doors round-trip, atmosphere
+   phases, and authored PUPPET/Clicker actions release safely.
 
 ## 6. Definition of done (per map)
 
@@ -439,3 +446,69 @@ roof plane 2-3 tiles deep, party walls, door at the foot.
   band on true vista edges.
 - Gates green (incl. ZERO elevation-law lines), editor data regenerated,
   live screenshots taken and compared, doc + diversity ledger updated.
+
+## 7. Chapter 3 production rollout — shipped 2026-07-12
+
+This section supersedes the Chapter 3 “mostly needs massing/props/horizon” line
+that earlier rollout sessions inherited. The save-facing roster is now exactly
+`biplane_interior`, `foggybottom`, `kettle_taproom`, `kettle_snug`,
+`foggy_moor`, `wintermoor_grounds`, `the_old_stones`, `wintermoor_f1`,
+`wintermoor_f2`, `wintermoor_f3`, `wintermoor_dorm`, and
+`wintermoor_boiler`. These twelve ids are a compatibility contract; rename,
+deletion, or door-target reordering requires a new migration.
+
+What is live:
+
+- Foggybottom remains the four-level sinking-fog town, now backed by a complete
+  service layer: fixed dealer/motor-works, open flat, agency, bank, petrol,
+  Kettle paid lodging, and a real guest-room wake-up loop. It is deliberately
+  `settlement:'town'`, not an eighth formal city; its amenity registration is an
+  explicit Chapter 3 exception, not a weakening of the seven-city contract.
+- The moor is a 126×96 winding route with branch rewards, picnic/quest anchors,
+  a viaduct, Roman culvert, and telegraph rhythm. The grounds stage the porter
+  gate, wrecked greenhouse, academy frontage, quad, cricket edge, services, and
+  the Clicker practice cart. The Old Stones use a ring-and-spring composition
+  and retire hostile spawners after the Mainframe falls.
+- The academy dungeon is no longer a sequence of placeholder corridors: the
+  great hall/library/tuck-shop floor, classroom/fog-pipe floor, exam hall and
+  raised Mainframe arena, patrol-driven dorm wing, and two-loop boiler plant all
+  have distinct circulation. The coolant barrier is the exact save-facing
+  `WINTERMOOR_COOLANT_CROSSING`; Freeze changes its five cells from blocking
+  `K` to traversable `T` and restarts the scene so art/collision agree.
+- Field PUPPET and Milo's Clicker are real overworld systems. PUPPET spends 14
+  PP, rejects dogs and mind-immune targets, times out safely, and restores the
+  borrowed body. Clicker requires Milo plus `milo_clicker` and `fleet_road`,
+  controls only authored unoccupied machines inside their control rectangles,
+  and ships with `wm_clicker_practice_cart` and `wm_fogworks_tug` interactions.
+- Chapter fog, rain/wind/machine ambience, post-boss thinning and reactions,
+  seven story cutscene beats, vehicle showroom/delivery feedback, and the
+  Headmaster Mainframe at the canon **750 HP** all execute in the live runtime.
+- Two retained source banks produce sixteen registered props: eight exterior/
+  campus landmarks, three Lucille pieces, two additional machine-room pieces,
+  and three stones/spring pieces. (The cargo net is deliberately reused in the
+  machine plant.) The exact keys and native
+  dimensions live in `docs/IMAGE_ASSET_MANIFEST.md` and
+  `src/spritegen/authored.ts`.
+- Save migration **v20** relocates saves from every old Chapter 3 layout to a
+  deterministic walkable point and deterministically rehomes parked vehicles
+  from the four rebuilt outdoor maps. Ownership, fuel, continent, story, party,
+  and economy state remain exact. The
+  twelve-map roster, migration fixtures, elevation/fog rules, machine schemas,
+  PUPPET/Clicker helpers, amenities, vehicle UI, story beats, and post-boss
+  retirements are covered by focused tests.
+
+Release/maintenance risks:
+
+- `src/data/maps_ch3.ts` is the canonical authoring source. Map-editor
+  `maps.json`/`manifest.json` are generated review artifacts; regenerate with
+  `npm run mapeditor:gen` and prove drift-free with `npm run mapeditor:check`.
+- Preserve the first four Foggybottom facade positions/order: their generated
+  unit ids back the dealer, flat, agency, and bank. Preserve both machine ids
+  and the coolant-crossing rectangle; flags and focused tests depend on them.
+- The strict visual audit still reports a pre-existing, non-failing inventory
+  of 94 unregistered battle PNGs. That debt predates this Chapter 3 prop kit and
+  is not evidence that these sixteen world props are unregistered.
+- On this Windows workspace, invoke package binaries through `npx.cmd` when the
+  PowerShell `npx` wrapper is blocked. Close every map/art change with typecheck,
+  door audit, validate, focused tests, map render, balance, strict visual audit,
+  full test, build, and live browser survey.

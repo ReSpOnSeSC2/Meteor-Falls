@@ -270,7 +270,15 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
   },
   ch3: {
     title: 'METEOR FALLS - CHAPTER 3: A VERY FOGGY TERM (ENGLAND)',
-    ids: ['foggybottom', 'foggy_moor', 'wintermoor_grounds', 'the_old_stones'],
+    // Canonical route roster, including Lucille, Kettle rooms, every academy
+    // floor, the dormitory branch, and the boiler works. Keeping the interiors
+    // on this sheet prevents a polished exterior from hiding placeholder rooms.
+    ids: [
+      'biplane_interior', 'foggybottom', 'kettle_taproom', 'kettle_snug',
+      'foggy_moor', 'wintermoor_grounds', 'the_old_stones',
+      'wintermoor_f1', 'wintermoor_f2', 'wintermoor_f3',
+      'wintermoor_dorm', 'wintermoor_boiler',
+    ],
     cellW: 560, cellH: 460,
   },
   formal_cities: {

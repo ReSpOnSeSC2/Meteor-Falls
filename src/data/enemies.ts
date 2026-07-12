@@ -728,9 +728,9 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
      * social · 2 rare · 2 late-pressure · 1 set-piece). Each carries a battle HOOK,
      * an identity DROP that smells of that foe (economy-neutral, §A9), and a
      * place-specific DEATH LINE; the MAP TELL rides each one's encounter placement
-     * + sign in maps_ch3 (§A7). Dev-art reuses the forged Ch.3 faces (ADR-046,
-     * registered at boot); bespoke silhouettes land in the art pass. The boss
-     * (Headmaster Mainframe) stays a forge DRAFT until the manifest flips. ──────── */
+     * + sign in maps_ch3 (§A7). The supporting roster retains its forged regional
+     * faces while Chapter 3's bespoke world landmarks are authored at boot. The
+     * Headmaster Mainframe is the shipped live boss. ───────────────────────────── */
     // ── THE SEED SIX (§A7) ──────────────────────────────────────────────────────
     E({
       id: 'prefect_drone',
@@ -1281,7 +1281,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       bg: [RAMP.GOLD, RAMP.NIGHT],
       boss: true,
     }),
-    // BOSS 3 — §A6 Ch.3: HEADMASTER MAINFRAME (1,600 HP). Institution-as-monster:
+    // BOSS 3 — §A6 Ch.3: HEADMASTER MAINFRAME (750 HP). Institution-as-monster:
     // installed to "optimise student happiness", Hushed, now running the school like
     // a factory and making the fog. It SUMMONS two Prefect Drones each time both are
     // down (the summon machine lives in src/data/bosses.ts over the S14 interpreter);

@@ -5,11 +5,19 @@ import { LIVE_PROPERTIES, PROPERTIES } from './properties';
 import { formalCityFacadeSource } from './formal_city_scale';
 import { CHAPTER_MANIFESTS } from './chapters';
 import { DIALOGUE } from './dialogue';
+import { STATIONS } from './stations';
+import { buildChapter3Maps } from './maps_ch3';
+import { fuelProfile } from '../engine/fuel';
+import { canRefuelHere, stationPricePerUnit } from '../engine/refuel';
+import { newGameData } from '../engine/state';
+import { purchaseVehicle, vehicleParkingSlotsOverlap } from '../engine/vehicle-domain';
 import {
+  AMENITY_SETTLEMENT_IDS,
   CITY_AMENITIES,
   CITY_AMENITY_MARKER_SPRITES,
   CITY_SERVICE_NPC_PREFIX,
   FORMAL_CITY_IDS,
+  SETTLEMENT_AMENITIES,
   cityAmenitySignId,
   cityHotelRoomId,
   cityServiceForNpc,
@@ -86,6 +94,100 @@ describe('formal-city amenity registry', () => {
   it('Puerto Sol and Valle Dorado no longer display locked Chapter-3 stock in Chapter 2', () => {
     expect(CITY_AMENITIES.puerto_sol.dealership.featuredVehicleId).toBe('commuter');
     expect(CITY_AMENITIES.valle_dorado.dealership.featuredVehicleId).toBe('commuter');
+  });
+});
+
+describe('Foggybottom town amenities', () => {
+  const amenity = SETTLEMENT_AMENITIES.foggybottom;
+
+  it('opts the town into amenities without changing the exact formal-city contract', () => {
+    expect(MAPS.foggybottom.settlement).toBe('town');
+    expect(FORMAL_CITY_IDS).not.toContain('foggybottom');
+    expect(AMENITY_SETTLEMENT_IDS).toEqual([...FORMAL_CITY_IDS, 'foggybottom']);
+    expect(Object.keys(CITY_AMENITIES)).toHaveLength(7);
+    expect(Object.keys(SETTLEMENT_AMENITIES).sort()).toEqual([...AMENITY_SETTLEMENT_IDS].sort());
+    expect(amenity.serviceUnits).toEqual({
+      dealership: 'foggybottom_unit_0',
+      home: 'foggybottom_unit_1',
+      agency: 'foggybottom_unit_2',
+    });
+    expect(PROPERTIES.foggybottom_flat).toMatchObject({ area: 'foggybottom', kind: 'home', band: 'ch3' });
+    expect(LIVE_PROPERTIES).toContain('foggybottom_flat');
+  });
+
+  it('retains unit ids and exterior facade order while assigning real services', () => {
+    expect(MAPS.foggybottom.props.filter((prop) => prop.door).map((prop) => prop.door!.to)).toEqual([
+      'foggybottom_unit_0',
+      'foggybottom_unit_1',
+      'kettle_taproom',
+      'foggybottom_unit_2',
+      'foggybottom_unit_3',
+    ]);
+    expect(mapWithNpc(cityServiceNpcId('foggybottom', 'dealer'))?.id).toBe('foggybottom_unit_0');
+    expect(mapWithNpc(cityServiceNpcId('foggybottom', 'home_host'))?.id).toBe('foggybottom_unit_1');
+    expect(mapWithNpc(cityServiceNpcId('foggybottom', 'realtor'))?.id).toBe('foggybottom_unit_2');
+    expect(MAPS.foggybottom_unit_0.name).toBe('TYNE MOTOR WORKS');
+    expect(MAPS.foggybottom_unit_1.name).toContain('NO. 9, FOGGYBOTTOM');
+    expect(MAPS.foggybottom_unit_2.name).toBe('FOGGYBOTTOM KEYS & PROPERTY');
+    expect(MAPS.foggybottom_unit_3).toMatchObject({ id: 'foggybottom_unit_3', name: 'TYNE & DISTRICT BANK' });
+    expect(MAPS.foggybottom_unit_3.npcs.map((npc) => npc.id)).toEqual(['foggybottom_bank_teller']);
+  });
+
+  it('uses two real Chapter-3 display vehicles and station-priced service', () => {
+    const displayIds = MAPS.foggybottom_unit_0.props
+      .map((prop) => prop.sprite)
+      .filter((sprite) => amenity.dealership.displayVehicleIds?.includes(sprite));
+    expect(displayIds).toEqual(['city_ev', 'work_van']);
+    expect(MAPS.foggybottom_unit_0.grid.some((row) => row.includes('='))).toBe(true);
+
+    const station = STATIONS[amenity.dealership.stationId!];
+    expect(station).toMatchObject({ id: 'foggybottom_petrol', area: 'foggybottom', priceMult: 1.2 });
+    for (const vehicleId of ['city_ev', 'work_van']) {
+      const car = DEALERSHIP[vehicleId];
+      const profile = fuelProfile(car.vehicleType);
+      expect(canRefuelHere(station, car.vehicleType), `${vehicleId} can use Nigel's service bay`).toBe(true);
+      expect(stationPricePerUnit(station, profile.kind)).toBeGreaterThan(0);
+    }
+  });
+
+  it('uses the existing Kettle lobby and snug for paid stays without growing the 12-map roster', () => {
+    expect(Object.keys(buildChapter3Maps())).toHaveLength(12);
+    expect(MAPS.kettle_guest_room).toBeUndefined();
+    expect(amenity.hotel.existing).toEqual({
+      lobbyId: 'kettle_taproom',
+      roomId: 'kettle_snug',
+      clerkNpcId: 'kettle_keeper',
+      roomSpawn: { x: 360, y: 172, facing: 'up' },
+    });
+    expect(cityServiceForNpc('kettle_keeper')).toEqual({ cityId: 'foggybottom', role: 'hotel_clerk' });
+    expect(MAPS.kettle_taproom.name).toBe('THE KETTLE — LOBBY');
+    expect(MAPS.kettle_taproom.npcs.some((npc) => npc.id === 'kettle_keeper')).toBe(true);
+    expect(MAPS.kettle_snug.name).toBe('THE KETTLE — SNUG & GUEST ROOM');
+    expect(MAPS.kettle_snug.npcs).toHaveLength(0);
+    expect(MAPS.kettle_snug.props.filter((prop) => prop.sprite === 'bed')).toHaveLength(2);
+    expect(MAPS.kettle_snug.props.filter((prop) => prop.sprite === 'bench')).toHaveLength(4);
+    expect(MAPS.kettle_snug.props.some((prop) => prop.sprite === 'stove')).toBe(true);
+    expect(MAPS.kettle_snug.signs.some((sign) => sign.dialogue === 'sign_kettle_hearth')).toBe(true);
+    expect(amenity.hotel.existing?.roomSpawn).toEqual({ x: 360, y: 172, facing: 'up' });
+    expect(hasDoorPath('kettle_taproom', 'kettle_snug')).toBe(true);
+  });
+
+  it('defines one delivery base and lets the vehicle domain allocate nonstacking bays', () => {
+    const base = amenity.dealership.deliveryBase!;
+    expect(base).toEqual({ area: 'foggybottom', x: 88, y: 349, facing: 'right' });
+    const dealerExit = MAPS.foggybottom_unit_0.doors.find((door) => door.to === 'foggybottom');
+    expect(dealerExit).toMatchObject({ tx: 88, ty: 325 });
+    expect(base.x).toBe(dealerExit!.tx);
+    expect(base.y).toBe(dealerExit!.ty + 24);
+    const data = newGameData();
+    data.cashOnHand = 100_000;
+    expect(purchaseVehicle(data, 'city_ev', { chapter: 3, area: 'foggybottom', parking: base }).ok).toBe(true);
+    expect(purchaseVehicle(data, 'work_van', { chapter: 3, area: 'foggybottom', parking: base }).ok).toBe(true);
+    const ev = data.vehicleParking.title_car_ev;
+    const van = data.vehicleParking.title_car_van;
+    expect(ev).toBeDefined();
+    expect(van).toBeDefined();
+    expect(vehicleParkingSlotsOverlap('title_car_ev', ev, 'title_car_van', van)).toBe(false);
   });
 });
 

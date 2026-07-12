@@ -26,6 +26,8 @@ import {
   muffleCutoff,
   parseBusLevel,
 } from './audiobus';
+import { AMBIENCE } from './ambience';
+import type { AmbienceId } from '../schemas';
 
 type Wave = OscillatorType | 'noise';
 
@@ -58,6 +60,15 @@ interface MusicVoice {
   stems: number;
   held: Record<number, { osc: OscillatorNode; gain: GainNode; base: number } | undefined>;
   live: boolean;
+}
+
+interface AmbienceVoice {
+  id: AmbienceId;
+  source: AudioBufferSourceNode;
+  filter: BiquadFilterNode;
+  gain: GainNode;
+  lfo: OscillatorNode | null;
+  lfoGain: GainNode | null;
 }
 
 const NOTE_OFFSET: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -554,6 +565,11 @@ class AudioSys {
   /** SFX sub-mix → master (bypasses the muffle). */
   private sfxBus: GainNode | null = null;
   private noiseBuf: AudioBuffer | null = null;
+  /** One looping, filtered noise bed under the music. Map data chooses the
+   * semantic bed; this voice makes that previously data-only contract audible. */
+  private ambienceVoice: AmbienceVoice | null = null;
+  private intendedAmbience: AmbienceId | null = null;
+  private intendedAmbienceScale = 1;
   /** the active track and the one crossfading out beneath it (at most one each). */
   private musicVoice: MusicVoice | null = null;
   private fadingVoice: MusicVoice | null = null;
@@ -626,6 +642,7 @@ class AudioSys {
     // So the graph coming up is the one moment that intent can be SOUNDED; without
     // this the opening music never starts. (No-op when nothing was requested.)
     if (this.intendedName) this.applyMusic(this.intendedName, this.intendedStems);
+    if (this.intendedAmbience) this.applyAmbience(this.intendedAmbience, this.intendedAmbienceScale);
   }
 
   /**
@@ -1306,6 +1323,78 @@ class AudioSys {
     if (this.musicVoice) this.disposeVoice(this.musicVoice);
     this.intendedName = null;
     this.intendedStems = Infinity;
+  }
+
+  /** Select the current map's audible ambient bed. The source loops under the
+   * music bus, so player music volume and the indoor muffle veil apply to rain,
+   * wind, waves, and machinery too. Re-selecting a bed only retunes its gain;
+   * changing maps crossfades the old bed out. */
+  setAmbience(id: AmbienceId | null | undefined, scale = 1): void {
+    this.intendedAmbience = id ?? null;
+    this.intendedAmbienceScale = clamp01(scale);
+    if (!this.ctx || !this.musicBus || !this.noiseBuf) return;
+    if (!id) {
+      const old = this.ambienceVoice;
+      this.ambienceVoice = null;
+      if (old) this.disposeAmbienceVoice(old, true);
+      return;
+    }
+    if (this.ambienceVoice?.id === id) {
+      this.rampGain(this.ambienceVoice.gain, AMBIENCE[id].gain * this.intendedAmbienceScale, 420);
+      return;
+    }
+    this.applyAmbience(id, this.intendedAmbienceScale);
+  }
+
+  private applyAmbience(id: AmbienceId, scale: number): void {
+    if (!this.ctx || !this.musicBus || !this.noiseBuf) return;
+    const bed = AMBIENCE[id];
+    const source = this.ctx.createBufferSource();
+    source.buffer = this.noiseBuf;
+    source.loop = true;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = bed.cutoff;
+    filter.Q.value = bed.base === 'white' ? 0.45 : bed.base === 'pink' ? 0.7 : 0.9;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    source.connect(filter).connect(gain).connect(this.musicBus);
+
+    let lfo: OscillatorNode | null = null;
+    let lfoGain: GainNode | null = null;
+    if (bed.sway) {
+      lfo = this.ctx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 1 / bed.sway.rate;
+      lfoGain = this.ctx.createGain();
+      lfoGain.gain.value = bed.sway.depth;
+      lfo.connect(lfoGain).connect(filter.frequency);
+      lfo.start();
+    }
+    const old = this.ambienceVoice;
+    const voice = { id, source, filter, gain, lfo, lfoGain };
+    this.ambienceVoice = voice;
+    source.start();
+    this.rampGain(gain, bed.gain * clamp01(scale), 650);
+    if (old) this.disposeAmbienceVoice(old, true);
+  }
+
+  private disposeAmbienceVoice(voice: AmbienceVoice, fade: boolean): void {
+    const finish = (): void => {
+      try { voice.source.stop(); } catch { /* already stopped */ }
+      try { voice.lfo?.stop(); } catch { /* already stopped */ }
+      try { voice.source.disconnect(); } catch { /* already disconnected */ }
+      try { voice.filter.disconnect(); } catch { /* already disconnected */ }
+      try { voice.gain.disconnect(); } catch { /* already disconnected */ }
+      try { voice.lfo?.disconnect(); } catch { /* already disconnected */ }
+      try { voice.lfoGain?.disconnect(); } catch { /* already disconnected */ }
+    };
+    if (!fade || !this.ctx) {
+      finish();
+      return;
+    }
+    this.rampGain(voice.gain, 0, 500);
+    window.setTimeout(finish, 540);
   }
 
   /**

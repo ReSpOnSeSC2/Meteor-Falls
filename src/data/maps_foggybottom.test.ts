@@ -20,8 +20,12 @@ const grid: string[] = m?.grid ?? [];
 // walkable; every other char resolves via CHAR_LEGEND → TILESET.solid). This is what
 // the global elevationLawViolations gate uses, so the guard proves the same thing.
 const solidByName = new Map(TILESET.map((t) => [t.name, t.solid] as const));
-const isSolid = (ch: string): boolean =>
-  ch === ':' || ch === 'r' ? false : solidByName.get(CHAR_LEGEND[ch] ?? 'grass_a') === true;
+const isSolid = (ch: string): boolean => {
+  if (ch === ':' || ch === 'r') return false;
+  const tile = CHAR_LEGEND[ch];
+  if (!tile) throw new Error(`foggybottom uses unknown/fallback tile '${ch}'`);
+  return solidByName.get(tile) === true;
+};
 
 const levelAt = (x: number, y: number): number => {
   const ch = m?.elevation?.level[y]?.[x];
@@ -39,6 +43,35 @@ const CELLS: Array<[[number, number], number]> = [
   [MKT, 1],
   [QUAY, 0],
 ];
+
+/** Connected stair footprints, derived from the authored grid rather than
+ * frozen coordinates. Sorting west-to-east captures the town's dog-leg. */
+function stairClusters(): Array<Array<[number, number]>> {
+  const unseen = new Set<string>();
+  for (let y = 0; y < grid.length; y++)
+    for (let x = 0; x < grid[y].length; x++) if (grid[y][x] === 'T') unseen.add(`${x},${y}`);
+  const found: Array<Array<[number, number]>> = [];
+  while (unseen.size) {
+    const first = unseen.values().next().value as string;
+    unseen.delete(first);
+    const [sx, sy] = first.split(',').map(Number);
+    const queue: Array<[number, number]> = [[sx, sy]];
+    const cluster: Array<[number, number]> = [];
+    for (let i = 0; i < queue.length; i++) {
+      const [x, y] = queue[i];
+      cluster.push([x, y]);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const key = `${x + dx},${y + dy}`;
+        if (!unseen.delete(key)) continue;
+        queue.push([x + dx, y + dy]);
+      }
+    }
+    found.push(cluster);
+  }
+  return found.sort(
+    (a, b) => a.reduce((sum, [x]) => sum + x, 0) / a.length - b.reduce((sum, [x]) => sum + x, 0) / b.length,
+  );
+}
 
 describe('foggybottom — the S5 pilot: the four-terrace fog-cliff descent (P5)', () => {
   it('is registered, opts into elevation + fog, and its level plane matches the grid dims', () => {
@@ -78,6 +111,22 @@ describe('foggybottom — the S5 pilot: the four-terrace fog-cliff descent (P5)'
     expect(pathExists(sealed, isSolid, QUAY, MKT)).toBe(false);
     expect(pathExists(sealed, isSolid, MKT, HIGH)).toBe(false);
     expect(pathExists(sealed, isSolid, HIGH, RIM)).toBe(false);
+  });
+
+  it('has exactly three legal T joins, staggered west-to-east across adjacent level pairs', () => {
+    const stairs = stairClusters();
+    expect(stairs).toHaveLength(3);
+    expect(stairs.map((cluster) => cluster.length)).toEqual([12, 12, 12]);
+    expect(stairs.map((cluster) => [...new Set(cluster.map(([x, y]) => levelAt(x, y)))].sort())).toEqual([
+      [2, 3],
+      [1, 2],
+      [0, 1],
+    ]);
+    const centres = stairs.map(
+      (cluster) => cluster.reduce((sum, [x]) => sum + x, 0) / cluster.length,
+    );
+    expect(centres[0]).toBeLessThan(centres[1]);
+    expect(centres[1]).toBeLessThan(centres[2]);
   });
 
   it('obeys the no-invisible-ledge law: every walkable level change touches a stair, ±1 only', () => {
