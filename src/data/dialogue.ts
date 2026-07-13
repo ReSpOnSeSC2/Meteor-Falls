@@ -3815,6 +3815,52 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — the "Say Cheese, Minister" pickup (active-quest flavor) —
   q_say_cheese: ["@HOLD it — right there, don't move! (Mr. Click, diving under his black cloth.) Minister {pippa} on the thimble, chin UP; Her Grace's portrait behind; and you colossi in the frame whether you fit or not. Three — two — SAY CHEESE! (FLASH.)"],
 
+  // — CHAPTER 5 §A10 QUESTS: every placed giver has a complete state machine —
+  q_census_ask: [
+    '@One hundred citizens, every one named, and every one currently somewhere else. Count the market ward and the stamp arcade for me? Your view from up there is administratively priceless.',
+  ],
+  q_census_active: ['@Two tallies: the PETIT MARKET and the citizens sheltering beneath the postage stamps. Count names, not hats. We have rather more hats than citizens.'],
+  q_census_market: ['(From above, Petit Market resolves into lanes of moving pinpoints. Pippa calls each name; the Census-Taker below catches every one in a book no bigger than your thumbnail.)'],
+  q_census_stamps: ['(The postage stamps are billboards here. Beneath them, a whole shaded arcade waves up at you and shouts its names in impeccable alphabetical order.)'],
+  q_census_report: ['@Market ward: present. Stamp arcade: present. One hundred citizens, no duplicates, three disputed hats. The Royal Census BALANCES.'],
+  q_census_full: ['@No room for the census quill? Make one careful pocket free. A complete population deserves not to be folded.'],
+  q_census_done_beat: ['* Got the CENSUS QUILL CHARM. Every dot on the map has a name.'],
+  q_census_after: ['@One hundred present and named. I recount them every morning. They have started changing hats to keep it interesting.'],
+
+  q_repairs_ask: ['@Three careful jobs for careful colossi: shim the Procession bridge, prime the thimble-well, and restack the cathedral scaffold. We measured your footsteps. We have notes.'],
+  q_repairs_active: ['@Bridge on the Way, well in the Hundred Works, scaffold by the cathedral. Use one finger where you would ordinarily use a whole idea.'],
+  q_repairs_bridge: ['(You lift the little bridge with two fingertips while a dozen engineers race underneath with shims. It settles level enough to carry a parade — a very small parade.)'],
+  q_repairs_well: ['(One dewdrop fills the thimble-well to its painted line. The Works Pool cheers, then immediately posts a lifeguard.)'],
+  q_repairs_scaffold: ['(Matchstick by matchstick, the cathedral scaffold rises again. The last brace clicks home. Somewhere below, an engineer stamps APPROVED on your shoe.)'],
+  q_repairs_report: ['@Bridge level, well wet, scaffold standing. The Works Pool has voted your hands structurally sound. Unanimously, after amendments.'],
+  q_repairs_full: ['@Your packs are at capacity. Clear one slot and the signet bracer remains yours — properly receipted.'],
+  q_repairs_done_beat: ['* Got the SIGNET BRACER. The Hundred Works stands behind every strike.'],
+  q_repairs_after: ['@All three repairs are holding. The bridge has requested that you continue not stepping on it.'],
+
+  q_lostfound_ask: ['@Two impossible returns: the tower-shield button on the Procession Way, and our spoon singing somewhere in the Hedgerow. Bring both back and we will make the ledger agree with reality.'],
+  q_lostfound_active: ['@One button large enough to have weather, one spoon small enough to become a tuning fork. The labels are clear. The sizes are not.'],
+  q_lostfound_button: ['(The “tower shield” is a coat button. Pippa drafts a receipt identifying it as BUTTON, GIANT, FOUR-HOLE, DIPLOMATIC.)'],
+  q_lostfound_spoon: ['(The tiny spoon hums a low A when you flick it. Pippa wraps it in three forms, two ribbons, and a treaty concerning cutlery.)'],
+  q_lostfound_file: ['@Button returned. Spoon returned. Sign here, here, and — because the Minister insists — here in the box marked CROSS-SCALE INCIDENT RESOLVED.'],
+  q_lostfound_full: ['@The collection cannot be issued into a full bag. The ledger would notice. It notices EVERYTHING.'],
+  q_lostfound_done_beat: ['* Got the GILT THIMBLE COLLECTION. The ledger balances at every size.'],
+  q_lostfound_after: ['@Everything is in its proper drawer. The proper drawers are, for once, the proper size.'],
+
+  q_belfry_ask: ['@The bell choir has been forty days without clappers. They fell beyond the Way, into the Hedgerow. Bring them home and we will ring Minimus back into tune.'],
+  q_belfry_active: ['@Listen in the Hedgerow for metal pretending to be birdsong. The clappers answer one another when the wind is right.'],
+  q_belfry_clappers: ['(A bundle of silver tuning forks hangs in the privet. At Minimus scale they are cathedral clappers. Together they ring one bright, impatient chord.)'],
+  q_belfry_ring: ['@Lowest first. Then the middle bells. Now the high — (The whole capital answers, one tiny peal climbing into the next until the avenue itself seems to shine.)'],
+  q_belfry_done_beat: ['* The BELL CHOIR rings again. The Belfry Keeper joined the caller ledger.'],
+  q_belfry_after: ['@Dawn, dusk, and emergencies of state. The choir has resumed all three shifts.'],
+
+  q_cheese_ask: ['@A ministerial portrait! Pippa on the thimble podium, capital behind her, colossi tastefully out of focus. Stand on my mark along the Way and do try to fit.'],
+  q_cheese_active: ['@My portrait mark is by the pageant benches on the Procession Way. Minister on the thimble, everyone else somewhere the lens can forgive.'],
+  q_cheese_develop: ['@(Mr. Click vanishes beneath the black cloth. There is a flash, a chemical smell, and a very long professional hum.) The plate is developing. Greatness takes time at this scale.'],
+  q_cheese_report: ['@There! Minister Quill, life-size — which in the gallery will be enormous. The expression says TAKEN SERIOUSLY and also PLEASE STOP BLINKING.'],
+  q_cheese_full: ['@No room for the lens charm? Photographic equipment dislikes being sat on. Clear a pocket and I will hold the pose.'],
+  q_cheese_done_beat: ['* Got the LENS CHARM. Mr. Click joined the caller ledger.'],
+  q_cheese_after: ['@The portrait hangs in the royal gallery. We had to extend the gallery. A triumph!'],
+
   /* ════════════════ CHAPTER 6 — THE RUINS THAT LAUGH (Africa) ════════════════ */
 
   // — the §A5 next leg: Bert flies the party south to Zanzibel (ch5_complete gate) —

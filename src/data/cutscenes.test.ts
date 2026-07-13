@@ -100,6 +100,24 @@ describe('cutscene registry', () => {
     }
   });
 
+  it('keeps the Chapter 5 gallery complete while runtime beats avoid spoilers', () => {
+    expect(CUTSCENES.ch5_journey.beats.map((beat) => beat.art)).toEqual([
+      'tabletop_duchy_establishing', 'grand_duchy_travel_in',
+      'minimus_major_tabletop_capital', 'pippa_matchbox_briefing',
+      'big_little_lens_build', 'pippa_joins_party',
+      'whiskerzilla_knighted', 'heartlight_5_bell_choir',
+    ]);
+    expect(CUTSCENES.ch5_flight.beats.map((beat) => beat.art)).toEqual([
+      'tabletop_duchy_establishing', 'grand_duchy_travel_in',
+    ]);
+    expect(CUTSCENES.ch5_arrival.beats.map((beat) => beat.art)).toEqual([
+      'minimus_major_tabletop_capital', 'pippa_matchbox_briefing',
+    ]);
+    for (const id of ['ch5_lens', 'ch5_join', 'ch5_knighted', 'ch5_heartlight'] as const) {
+      expect(CUTSCENES[id].beats).toHaveLength(1);
+    }
+  });
+
   it('prefers runtime-resolution _4x panels over legacy _01 placeholders', () => {
     const preferred4x: string[] = [];
     for (const cs of all) {

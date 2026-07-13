@@ -99,3 +99,46 @@ describe('Chapter 4 dev-map boots', () => {
     expect(spawn.y).toBeLessThan(map.grid.length * 64);
   });
 });
+
+describe('Chapter 5 dev-map boots', () => {
+  it('covers the exact four stable map ids', () => {
+    expect(title.CH5_DEV_MAP_IDS).toEqual([
+      'minimus_major', 'procession_way', 'the_hedgerow', 'ducal_crown',
+    ]);
+  });
+
+  it.each([
+    'arrival', 'city', 'procession', 'hedgerow', 'boss', 'postBoss', 'complete',
+  ] as const)('builds a representative %s profile', (state) => {
+    const profile = title.chapter5DevProfile(state);
+    expect(profile.state).toBe(state);
+    expect(profile.flags).toEqual(expect.arrayContaining([
+      'ember1', 'ember2', 'ember3', 'ember4', 'ch4_complete',
+      'milo_joined', 'awake_freeze_a', 'awake_mindwarp_a', 'awake_volt_a',
+    ]));
+    expect(profile.flags.includes('big_little_lens_built')).toBe(
+      ['procession', 'hedgerow', 'boss', 'postBoss', 'complete'].includes(state),
+    );
+    expect(profile.flags.includes('whiskerzilla_defeated')).toBe(state === 'postBoss' || state === 'complete');
+    expect(profile.party).toEqual(state === 'complete'
+      ? ['rex', 'faye', 'milo', 'pippa', 'dorin']
+      : ['rex', 'faye', 'milo']);
+  });
+
+  it('keeps the two Chapter 5 key items in the non-capacity key ledger', () => {
+    expect(title.chapter5DevProfile('arrival').keyItems).toEqual([]);
+    expect(title.chapter5DevProfile('procession').keyItems).toEqual(['big_little_lens']);
+    expect(title.chapter5DevProfile('complete').keyItems).toEqual(['big_little_lens', 'royal_thimble']);
+  });
+
+  it.each([
+    'minimus_major', 'procession_way', 'the_hedgerow', 'ducal_crown',
+  ])('%s resolves an in-bounds spawn', (id) => {
+    const spawn = title.chapter5DevSpawn(id, 'boss');
+    const map = maps.MAPS[id];
+    expect(spawn.x).toBeGreaterThanOrEqual(0);
+    expect(spawn.y).toBeGreaterThanOrEqual(0);
+    expect(spawn.x).toBeLessThan(map.grid[0].length * 64);
+    expect(spawn.y).toBeLessThan(map.grid.length * 64);
+  });
+});

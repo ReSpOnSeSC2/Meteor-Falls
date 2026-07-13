@@ -84,6 +84,7 @@ import {
 import { PYR_ROTOR, PYR_INITIAL_ROT, PUERTO_SOL_PIER_SPAWN, rotateRect } from '../data/maps_ch2';
 import { WINTERMOOR_COOLANT_CROSSING } from '../data/maps_ch3';
 import { CH4_MAP_IDS, KVISTHAVN_LANDING, SPINE_MELTFALL_CROSSING } from '../data/maps_ch4';
+import { MINIMUS_LANDING } from '../data/maps_ch5';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS, BAG_MAX } from '../data/items';
@@ -6059,6 +6060,22 @@ export class OverworldScene extends Phaser.Scene {
       case 'll_pump_attendant':
         await this.dealerFuelService('lilleby', 'lilleby_giant_pump');
         return true;
+      // ── CHAPTER 5 — MINIMUS: the five §A10 quest givers ──
+      case 'mn_census':
+        await this.censusBeat();
+        return true;
+      case 'mn_engineer':
+        await this.repairsBeat();
+        return true;
+      case 'mn_lostfound':
+        await this.lostFoundBeat();
+        return true;
+      case 'mn_bellkeeper':
+        await this.belfryBeat();
+        return true;
+      case 'pw_click':
+        await this.cheeseBeat();
+        return true;
       default:
         return false;
     }
@@ -8187,6 +8204,14 @@ export class OverworldScene extends Phaser.Scene {
       // the Chapter 5 macro-lens portrait: the trigger id is stable map data,
       // while the quest objective persists under q_cheese_pose.
       case 'q_say_cheese':
+      case 'q_census_market':
+      case 'q_census_stamps':
+      case 'q_repairs_bridge':
+      case 'q_repairs_well':
+      case 'q_repairs_scaffold':
+      case 'q_lostfound_button':
+      case 'q_lostfound_spoon':
+      case 'q_belfry_clappers':
         await this.questPickup(id);
         break;
       default:
@@ -8604,9 +8629,14 @@ export class OverworldScene extends Phaser.Scene {
         return;
       }
       AUDIO.stopMusic();
-      await playCutscene(this, 'ch5_journey'); // the authored panels (no-ops if missing)
+      await playCutscene(this, 'ch5_flight');
       // the hatch drops on the Minimus Major landing square; ch5_arrival fires the beat
-      this.goThroughDoor('minimus_major', 8 * 16, 22 * 16, 'down');
+      this.goThroughDoor(
+        'minimus_major',
+        MINIMUS_LANDING.x * 16 + 8,
+        MINIMUS_LANDING.y * 16 + 12,
+        'down',
+      );
       return;
     }
     if (!GS.flag('ch3_complete') || GS.flag('ch4_arrived')) {
@@ -8808,6 +8838,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('ch5_arrived');
     AUDIO.sfx('thud');
     this.cameras.main.shake(420, 0.006);
+    await playCutscene(this, 'ch5_arrival');
     await this.dlg.say(...DIALOGUE.ch5_arrival);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
@@ -8823,8 +8854,9 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     await this.dlg.say(...DIALOGUE.mn_lens);
+    await playCutscene(this, 'ch5_lens');
     GS.setFlag('big_little_lens_built');
-    GS.addItem('big_little_lens');
+    if (!GS.data.keyItems.includes('big_little_lens')) GS.data.keyItems.push('big_little_lens');
     AUDIO.sfx('confirm');
     AUDIO.jingle('levelup', 1200, this.mapDef.music);
     toast(this, "Milo's Spy became the BIG-LITTLE LENS — party-wide Focus.");
@@ -8889,6 +8921,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('whiskerzilla_defeated');
     AUDIO.sfx('confirm');
     this.cameras.main.flash(420, 248, 232, 160);
+    await playCutscene(this, 'ch5_knighted');
     await this.dlg.say(...DIALOGUE.whiskerzilla_win);
     AUDIO.jingle('victory', 2200, this.mapDef.music);
     this.cut = false;
@@ -8907,6 +8940,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.cut = true;
     // HEARTLIGHT 5 — the Bell Choir (Ember 5)
+    await playCutscene(this, 'ch5_heartlight');
     GS.setFlag('ember5');
     GS.data.embers = 5;
     const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
@@ -8925,6 +8959,7 @@ export class OverworldScene extends Phaser.Scene {
     if (!GS.flag('pippa_joined')) {
       const join = DIALOGUE.pippa_join;
       await this.dlg.say(...join.slice(0, 2)); // the appointment + the Royal Thimble, offered
+      await playCutscene(this, 'ch5_join');
       // §A11 the Royal Thimble beat — Pippa RISES on screen from lapel-pin (Minimus-NATIVE
       // scale) to colossus (travel scale), planted at her feet so she grows UPWARD beside the
       // leader, exactly as the line describes. She hands off to the real follower at scene end.
@@ -8940,7 +8975,7 @@ export class OverworldScene extends Phaser.Scene {
       this.sparkleBurst(pippaRise.x, pippaRise.y - s(18), 12);
       GS.data.party.push(makeHeroState('pippa', 26, GS.data.heroNames.pippa));
       GS.setFlag('pippa_joined');
-      GS.addItem('royal_thimble'); // her scale-anchor key item
+      if (!GS.data.keyItems.includes('royal_thimble')) GS.data.keyItems.push('royal_thimble');
       AUDIO.jingle('levelup', 1600, 'heartlight');
     }
     if (!GS.flag('dorin_joined')) {
@@ -9566,6 +9601,162 @@ export class OverworldScene extends Phaser.Scene {
     this.fadeRestart();
   }
 
+  /* ───────────── CHAPTER 5 — the five §A10 quest beats ───────────── */
+
+  private async censusBeat(): Promise<void> {
+    if (!GS.flag('q_census')) {
+      await this.dlg.say(...DIALOGUE.q_census_ask);
+      GS.setFlag('q_census');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_census_done')) {
+      await this.dlg.say(...DIALOGUE.q_census_after);
+      return;
+    }
+    if (!['q_census_market', 'q_census_stamps'].every((flag) => GS.flag(flag))) {
+      await this.dlg.say(...DIALOGUE.q_census_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_census_report);
+    if (completeQuest('royal_census') === 'hands-full') {
+      await this.dlg.say(...DIALOGUE.q_census_full);
+      return;
+    }
+    GS.setFlag('q_census_reported');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
+    await this.dlg.say(...DIALOGUE.q_census_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  private async repairsBeat(): Promise<void> {
+    if (!GS.flag('q_repairs')) {
+      await this.dlg.say(...DIALOGUE.q_repairs_ask);
+      GS.setFlag('q_repairs');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_repairs_done')) {
+      await this.dlg.say(...DIALOGUE.q_repairs_after);
+      return;
+    }
+    if (!['q_repairs_bridge', 'q_repairs_well', 'q_repairs_scaffold'].every((flag) => GS.flag(flag))) {
+      await this.dlg.say(...DIALOGUE.q_repairs_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_repairs_report);
+    if (completeQuest('civic_repairs') === 'hands-full') {
+      await this.dlg.say(...DIALOGUE.q_repairs_full);
+      return;
+    }
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
+    await this.dlg.say(...DIALOGUE.q_repairs_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  private async lostFoundBeat(): Promise<void> {
+    if (!GS.flag('q_lostfound')) {
+      await this.dlg.say(...DIALOGUE.q_lostfound_ask);
+      GS.setFlag('q_lostfound');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_lostfound_done')) {
+      await this.dlg.say(...DIALOGUE.q_lostfound_after);
+      return;
+    }
+    if (!['q_lostfound_button', 'q_lostfound_spoon'].every((flag) => GS.flag(flag))) {
+      await this.dlg.say(...DIALOGUE.q_lostfound_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_lostfound_file);
+    if (completeQuest('lost_and_found') === 'hands-full') {
+      await this.dlg.say(...DIALOGUE.q_lostfound_full);
+      return;
+    }
+    GS.setFlag('q_lostfound_filed');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 10);
+    await this.dlg.say(...DIALOGUE.q_lostfound_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  private async belfryBeat(): Promise<void> {
+    if (!GS.flag('q_belfry')) {
+      await this.dlg.say(...DIALOGUE.q_belfry_ask);
+      GS.setFlag('q_belfry');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_belfry_done')) {
+      await this.dlg.say(...DIALOGUE.q_belfry_after);
+      return;
+    }
+    if (!GS.flag('q_belfry_clappers')) {
+      await this.dlg.say(...DIALOGUE.q_belfry_active);
+      return;
+    }
+    if (!GS.flag('q_belfry_rung')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.q_belfry_ring);
+      GS.setFlag('q_belfry_rung');
+      AUDIO.sfx('confirm');
+      this.cameras.main.flash(300, 248, 232, 160);
+      this.cut = false;
+      return;
+    }
+    completeQuest('the_silent_belfry');
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE.q_belfry_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  private async cheeseBeat(): Promise<void> {
+    if (!GS.flag('q_cheese')) {
+      await this.dlg.say(...DIALOGUE.q_cheese_ask);
+      GS.setFlag('q_cheese');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_cheese_done')) {
+      await this.dlg.say(...DIALOGUE.q_cheese_after);
+      return;
+    }
+    if (!GS.flag('q_cheese_pose')) {
+      await this.dlg.say(...DIALOGUE.q_cheese_active);
+      return;
+    }
+    if (!GS.flag('q_cheese_developed')) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.q_cheese_develop);
+      GS.setFlag('q_cheese_developed');
+      AUDIO.sfx('confirm');
+      this.cut = false;
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_cheese_report);
+    if (completeQuest('say_cheese_minister') === 'hands-full') {
+      await this.dlg.say(...DIALOGUE.q_cheese_full);
+      return;
+    }
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
+    await this.dlg.say(...DIALOGUE.q_cheese_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
   /** the §A10 Ch.3 "find" pickups — a walk trigger hands the player a quest beat when
    *  its quest is active (the walk_token precedent). No-ops otherwise; non-missable. */
   private static readonly QUEST_PICKUPS: Record<string, { flag: string; dialogue: string; active: string; done: string; of: string[]; giver: string }> = {
@@ -9588,6 +9779,16 @@ export class OverworldScene extends Phaser.Scene {
     q_footprint_1: { flag: 'q_footprint_1', dialogue: 'q_footprint_1', active: 'q_footprints', done: 'q_footprints_done', of: ['q_footprint_1', 'q_footprint_2', 'q_footprint_3'], giver: 'the shepherd' },
     q_footprint_2: { flag: 'q_footprint_2', dialogue: 'q_footprint_2', active: 'q_footprints', done: 'q_footprints_done', of: ['q_footprint_1', 'q_footprint_2', 'q_footprint_3'], giver: 'the shepherd' },
     q_footprint_3: { flag: 'q_footprint_3', dialogue: 'q_footprint_3', active: 'q_footprints', done: 'q_footprints_done', of: ['q_footprint_1', 'q_footprint_2', 'q_footprint_3'], giver: 'the shepherd' },
+    // CH.5 Minimus — two district surveys, three repairs, two scaled returns,
+    // the bell clappers, and Mr. Click's existing portrait trigger.
+    q_census_market: { flag: 'q_census_market', dialogue: 'q_census_market', active: 'q_census', done: 'q_census_done', of: ['q_census_market', 'q_census_stamps'], giver: 'the Census-Taker' },
+    q_census_stamps: { flag: 'q_census_stamps', dialogue: 'q_census_stamps', active: 'q_census', done: 'q_census_done', of: ['q_census_market', 'q_census_stamps'], giver: 'the Census-Taker' },
+    q_repairs_bridge: { flag: 'q_repairs_bridge', dialogue: 'q_repairs_bridge', active: 'q_repairs', done: 'q_repairs_done', of: ['q_repairs_bridge', 'q_repairs_well', 'q_repairs_scaffold'], giver: 'the Engineer' },
+    q_repairs_well: { flag: 'q_repairs_well', dialogue: 'q_repairs_well', active: 'q_repairs', done: 'q_repairs_done', of: ['q_repairs_bridge', 'q_repairs_well', 'q_repairs_scaffold'], giver: 'the Engineer' },
+    q_repairs_scaffold: { flag: 'q_repairs_scaffold', dialogue: 'q_repairs_scaffold', active: 'q_repairs', done: 'q_repairs_done', of: ['q_repairs_bridge', 'q_repairs_well', 'q_repairs_scaffold'], giver: 'the Engineer' },
+    q_lostfound_button: { flag: 'q_lostfound_button', dialogue: 'q_lostfound_button', active: 'q_lostfound', done: 'q_lostfound_done', of: ['q_lostfound_button', 'q_lostfound_spoon'], giver: 'the Lost & Found Clerk' },
+    q_lostfound_spoon: { flag: 'q_lostfound_spoon', dialogue: 'q_lostfound_spoon', active: 'q_lostfound', done: 'q_lostfound_done', of: ['q_lostfound_button', 'q_lostfound_spoon'], giver: 'the Lost & Found Clerk' },
+    q_belfry_clappers: { flag: 'q_belfry_clappers', dialogue: 'q_belfry_clappers', active: 'q_belfry', done: 'q_belfry_done', of: ['q_belfry_clappers'], giver: 'the Belfry Keeper' },
     q_say_cheese: { flag: 'q_cheese_pose', dialogue: 'q_say_cheese', active: 'q_cheese', done: 'q_cheese_done', of: ['q_cheese_pose', 'q_cheese_developed'], giver: 'Mr. Click' },
   };
 

@@ -292,6 +292,15 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     ],
     cellW: 560, cellH: 460,
   },
+  ch5: {
+    title: 'METEOR FALLS - CHAPTER 5: THE GRAND DUCHY OF MINIMUS',
+    ids: [
+      'minimus_major', 'procession_way', 'the_hedgerow', 'ducal_crown',
+      'minimus_major_unit_0', 'minimus_major_unit_1', 'minimus_major_unit_2',
+      'minimus_major_unit_3', 'minimus_major_unit_4', 'minimus_major_unit_5',
+    ],
+    cellW: 560, cellH: 460,
+  },
   formal_cities: {
     title: 'FORMAL CITIES - PRODUCTION FACADE SCALE QA',
     ids: ['brickton', 'puerto_sol', 'valle_dorado', 'minimus_major', 'zanzibel', 'chandrapore', 'lotus_harbor'],

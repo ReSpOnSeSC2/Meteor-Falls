@@ -14,6 +14,7 @@ import {
   PUERTO_SOL_DEV_PREVIEW_SPAWN,
 } from '../data/maps_ch2';
 import { CH4_MAP_IDS, CH4_WORLD } from '../data/maps_ch4';
+import { CH5_MAP_IDS, CH5_WORLD } from '../data/maps_ch5';
 
 export const CH3_DEV_MAP_IDS = [
   'biplane_interior', 'foggybottom', 'kettle_taproom', 'kettle_snug',
@@ -76,6 +77,62 @@ export function chapter4DevSpawn(mapId: string, state: Chapter4DevState): { x: n
     return { x: tile.x * TILE_PX + TILE_PX / 2, y: tile.y * TILE_PX + TILE_PX * 0.75, facing: tile.facing };
   }
   return chapter3DevSpawn(mapId);
+}
+
+export const CH5_DEV_MAP_IDS = CH5_MAP_IDS;
+const CH5_DEV_MAP_SET: ReadonlySet<string> = new Set(CH5_DEV_MAP_IDS);
+export type Chapter5DevState = 'arrival' | 'city' | 'procession' | 'hedgerow' | 'boss' | 'postBoss' | 'complete';
+
+export interface Chapter5DevProfile {
+  state: Chapter5DevState;
+  flags: readonly string[];
+  embers: number;
+  keyItems: readonly string[];
+  party: readonly ('rex' | 'faye' | 'milo' | 'pippa' | 'dorin')[];
+}
+
+export function chapter5DevProfile(value: string | null): Chapter5DevProfile {
+  const valid: readonly Chapter5DevState[] = ['arrival', 'city', 'procession', 'hedgerow', 'boss', 'postBoss', 'complete'];
+  const state: Chapter5DevState = valid.includes(value as Chapter5DevState) ? value as Chapter5DevState : 'city';
+  const flags = [
+    'ember1', 'ember2', 'ember3', 'ember4', 'ch2_complete', 'ch3_arrived', 'ch3_complete',
+    'ch4_arrived', 'ch4_complete', 'milo_joined', 'repair_taught', 'milo_clicker', 'fleet_road',
+    'awake_freeze_a', 'awake_mindwarp_a', 'awake_volt_a', 'thread_trust_open',
+    'mainframe_defeated', 'whisperwig_defeated',
+  ];
+  if (state !== 'arrival') flags.push('ch5_arrived');
+  if (['procession', 'hedgerow', 'boss', 'postBoss', 'complete'].includes(state)) {
+    flags.push('big_little_lens_built');
+  }
+  if (['boss', 'postBoss', 'complete'].includes(state)) flags.push('hedgerow_lens_seen');
+  if (state === 'postBoss' || state === 'complete') flags.push('whiskerzilla_defeated');
+  if (state === 'complete') flags.push('ember5', 'pippa_joined', 'dorin_joined', 'ch5_complete');
+  return {
+    state,
+    flags,
+    embers: state === 'complete' ? 5 : 4,
+    keyItems: [
+      ...(['procession', 'hedgerow', 'boss', 'postBoss', 'complete'].includes(state) ? ['big_little_lens'] : []),
+      ...(state === 'complete' ? ['royal_thimble'] : []),
+    ],
+    party: state === 'complete' ? ['rex', 'faye', 'milo', 'pippa', 'dorin'] : ['rex', 'faye', 'milo'],
+  };
+}
+
+export function chapter5DevSpawn(mapId: string, state: Chapter5DevState): { x: number; y: number; facing: Facing } {
+  const tile = mapId === 'minimus_major'
+    ? { ...CH5_WORLD.minimusMajor.landing, facing: 'down' as const }
+    : mapId === 'procession_way'
+      ? { x: 7, y: 32, facing: 'right' as const }
+      : mapId === 'the_hedgerow'
+        ? { x: 44, y: 69, facing: 'up' as const }
+        : mapId === 'ducal_crown'
+          ? state === 'postBoss' || state === 'complete'
+            ? { x: 26, y: 20, facing: 'up' as const }
+            : { x: 26, y: 37, facing: 'up' as const }
+          : null;
+  if (!tile) return chapter3DevSpawn(mapId);
+  return { x: tile.x * TILE_PX + TILE_PX / 2, y: tile.y * TILE_PX + TILE_PX * 0.75, facing: tile.facing };
 }
 
 /** A representative, deterministic Chapter 3 survey save. It includes the
@@ -155,7 +212,7 @@ export class TitleScene extends Phaser.Scene {
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
       const devMap = params.get('devMap');
-      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap))) {
+      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap))) {
         GS.reset();
         GS.setFlag('intro_done');
         GS.setFlag('op_fell');
@@ -165,6 +222,7 @@ export class TitleScene extends Phaser.Scene {
         GS.setFlag('chad_joined');
         const isChapter3 = CH3_DEV_MAP_SET.has(devMap);
         const isChapter4 = CH4_DEV_MAP_SET.has(devMap);
+        const isChapter5 = CH5_DEV_MAP_SET.has(devMap);
         if (isChapter3) {
           // Default to a clean post-join/pre-boss survey state. `devState`
           // exposes the production before/after beats without console surgery:
@@ -189,6 +247,12 @@ export class TitleScene extends Phaser.Scene {
             makeHeroState('milo', 22, GS.data.heroNames.milo),
           ];
           for (const item of profile.items) GS.addItem(item, 'milo');
+        } else if (isChapter5) {
+          const profile = chapter5DevProfile(params.get('devState'));
+          profile.flags.forEach((flag) => GS.setFlag(flag));
+          GS.data.embers = profile.embers;
+          GS.data.party = profile.party.map((id) => makeHeroState(id, 26, GS.data.heroNames[id]));
+          GS.data.keyItems.push(...profile.keyItems);
         }
         this.started = true;
         AUDIO.stopMusic();
@@ -217,7 +281,9 @@ export class TitleScene extends Phaser.Scene {
         const ch3Spawn = isChapter3 ? chapter3DevSpawn(devMap) : null;
         const ch4Profile = isChapter4 ? chapter4DevProfile(params.get('devState')) : null;
         const ch4Spawn = ch4Profile ? chapter4DevSpawn(devMap, ch4Profile.state) : null;
-        let spawnPx = ch4Spawn ?? (ch3Spawn
+        const ch5Profile = isChapter5 ? chapter5DevProfile(params.get('devState')) : null;
+        const ch5Spawn = ch5Profile ? chapter5DevSpawn(devMap, ch5Profile.state) : null;
+        let spawnPx = ch5Spawn ?? ch4Spawn ?? (ch3Spawn
           ? { x: ch3Spawn.x, y: ch3Spawn.y, facing: ch3Spawn.facing }
           : { x: spawn.x * TILE_PX + TILE_PX / 2, y: spawn.y * TILE_PX, facing: 'down' as Facing });
         // Any rollout map can opt into an exact authored micro-scene without

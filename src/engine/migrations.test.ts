@@ -7,12 +7,15 @@ import {
   CHAPTER3_PARKING_RECOVERY,
   CHAPTER4_LAYOUT_RECOVERY,
   CHAPTER4_PARKING_RECOVERY,
+  CHAPTER5_LAYOUT_RECOVERY,
+  CHAPTER5_PARKING_RECOVERY,
 } from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
 import { s } from '../spritegen/scale';
 import { buildChapter3Maps } from '../data/maps_ch3';
 import { buildChapter4Maps } from '../data/maps_ch4';
+import { buildChapter5Maps } from '../data/maps_ch5';
 import { vehicleParkingSlotsOverlap } from './vehicle-domain';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
@@ -937,7 +940,7 @@ describe('save migration registry -- v20 to v21: Chapter 4 production layouts', 
   it.each(Object.entries(expected))('recovers %s without changing unrelated save state', (mapId, target) => {
     const raw = v20At(mapId);
     const migrated = migrateSave(raw, newGameData());
-    expect(migrated.version).toBe(21);
+    expect(migrated.version).toBe(CURRENT_SAVE_VERSION);
     expect(migrated.map).toBe(mapId);
     expect(migrated.x).toBe(s(target.tile[0] * 16 + 8));
     expect(migrated.y).toBe(s(target.tile[1] * 16 + 12));
@@ -971,7 +974,7 @@ describe('save migration registry -- v20 to v21: Chapter 4 production layouts', 
       prototype: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
     };
     const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
-    wanted.version = 21;
+    wanted.version = CURRENT_SAVE_VERSION;
     wanted.keyItems = [...(wanted.keyItems as string[]), 'halvors_letter'];
     const migrated = migrateSave(raw, newGameData());
     expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
@@ -984,5 +987,116 @@ describe('save migration registry -- v20 to v21: Chapter 4 production layouts', 
     delivered.flags = { q_letter_taken: true, q_letter_delivered: true };
     delivered.keyItems = ['star_locket', 'halvors_letter'];
     expect(migrateSave(delivered, newGameData()).keyItems).toEqual(['star_locket']);
+  });
+});
+
+describe('save migration registry -- v21 to v22: Chapter 5 production layouts', () => {
+  const expected = {
+    minimus_major: { tile: [12, 49], facing: 'down' },
+    procession_way: { tile: [2, 32], facing: 'right' },
+    the_hedgerow: { tile: [44, 69], facing: 'up' },
+    ducal_crown: { tile: [26, 37], facing: 'up' },
+  } as const;
+
+  const v21At = (map: string): Record<string, unknown> => {
+    const raw = newGameData() as unknown as Record<string, unknown>;
+    raw.version = 21;
+    raw.map = map;
+    raw.x = 99999;
+    raw.y = -1;
+    raw.facing = 'left';
+    raw.flags = { ch4_complete: true, ch5_arrived: true };
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'minimus_major', x: 400, y: 800, facing: 'upright' },
+    };
+    return raw;
+  };
+
+  it('pins exactly the four stable Chapter 5 ids to in-bounds walkable recovery tiles', () => {
+    expect(Object.keys(CHAPTER5_LAYOUT_RECOVERY)).toEqual(Object.keys(expected));
+    const maps = buildChapter5Maps();
+    const walkable = new Set(['.', ',', '~', 'f', 'F', ':', 'w', 'r', 'o', '=', 'R', 'D', '_', 'X', 'P', 'd', 'p']);
+    for (const [mapId, target] of Object.entries(expected)) {
+      const [tx, ty] = target.tile;
+      const map = maps[mapId];
+      expect(map, mapId).toBeDefined();
+      expect(walkable.has(map.grid[ty][tx]), `${mapId} tile '${map.grid[ty][tx]}'`).toBe(true);
+      expect(CHAPTER5_LAYOUT_RECOVERY[mapId as keyof typeof expected]).toEqual({
+        x: tx * 16 + 8, y: ty * 16 + 12, facing: target.facing,
+      });
+    }
+  });
+
+  it.each(Object.entries(expected))('recovers %s without changing unrelated save state', (mapId, target) => {
+    const raw = v21At(mapId);
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.version).toBe(CURRENT_SAVE_VERSION);
+    expect(migrated.map).toBe(mapId);
+    expect(migrated.x).toBe(s(target.tile[0] * 16 + 8));
+    expect(migrated.y).toBe(s(target.tile[1] * 16 + 12));
+    expect(migrated.facing).toBe(target.facing);
+    expect(migrated.flags.ch4_complete).toBe(true);
+  });
+
+  it('rehomes multi-vehicle Minimus parking deterministically without stacking', () => {
+    const raw = v21At('minimus_major');
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'procession_way', x: 100, y: 200, facing: 'left' },
+      title_car_ev: { area: 'procession_way', x: 100, y: 200, facing: 'right' },
+      title_car_bmx: { area: 'otterbrook', x: 144, y: 288, facing: 'left' },
+    };
+    const migrated = migrateSave(raw, newGameData());
+    const base = CHAPTER5_PARKING_RECOVERY.procession_way;
+    expect(migrated.vehicleParking.title_car_ev).toEqual({ area: 'procession_way', x: s(base.x), y: s(base.y), facing: base.facing });
+    expect(migrated.vehicleParking.title_car_bmx).toEqual({ area: 'otterbrook', x: 144, y: 288, facing: 'left' });
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_sedan', migrated.vehicleParking.title_car_sedan,
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+    )).toBe(false);
+  });
+
+  it('moves prerelease key items out of a full bag and deduplicates the key ledger', () => {
+    const raw = v21At('otterbrook');
+    raw.flags = { big_little_lens_built: true, pippa_joined: true };
+    raw.keyItems = ['star_locket', 'big_little_lens', 'big_little_lens'];
+    const party = raw.party as Array<Record<string, unknown>>;
+    party[0].bag = [
+      ...Array.from({ length: BAG_MAX - 2 }, () => 'corn_dog'),
+      'big_little_lens', 'royal_thimble',
+    ];
+
+    const migrated = migrateSave(raw, newGameData());
+
+    expect(migrated.party[0].bag).toHaveLength(BAG_MAX - 2);
+    expect(migrated.party.flatMap((hero) => hero.bag)).not.toEqual(expect.arrayContaining(['big_little_lens', 'royal_thimble']));
+    expect(migrated.keyItems.filter((item) => item === 'big_little_lens')).toHaveLength(1);
+    expect(migrated.keyItems.filter((item) => item === 'royal_thimble')).toHaveLength(1);
+  });
+
+  it('backfills earned key items from story flags without inventing unearned ones', () => {
+    const lens = v21At('otterbrook');
+    lens.flags = { big_little_lens_built: true };
+    lens.keyItems = ['star_locket'];
+    expect(migrateSave(lens, newGameData()).keyItems).toEqual(['star_locket', 'big_little_lens']);
+
+    const none = v21At('otterbrook');
+    none.flags = { ch5_arrived: true };
+    none.keyItems = ['star_locket'];
+    expect(migrateSave(none, newGameData()).keyItems).toEqual(['star_locket']);
+  });
+
+  it('preserves malformed and prototype-like records byte-for-byte', () => {
+    const raw = v21At('constructor');
+    raw.x = 1234; raw.y = 5678; raw.facing = 'downleft';
+    raw.keyItems = 'not-an-array';
+    raw.party = [{ id: 'rex', bag: 'also-not-an-array', note: 'keep me' }];
+    raw.vehicleParking = {
+      malformed: { area: 'minimus_major', note: 'missing coordinates' },
+      prototype: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
+    };
+    const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    wanted.version = CURRENT_SAVE_VERSION;
+    const migrated = migrateSave(raw, newGameData());
+    expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
   });
 });

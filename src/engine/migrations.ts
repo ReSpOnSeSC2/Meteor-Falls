@@ -83,6 +83,15 @@
  * recovers to a deliberate, walkable staging tile on that SAME stable map id.
  * No story, party, inventory, ownership, fuel, or economy state is inferred;
  * affected outdoor parking coordinates are rehomed onto the rebuilt roads.
+ *
+ * v20 to v21 (2026-07 Chapter 4 rollout): the six Norway maps recover to
+ * deliberate entrances, outdoor parking is rehomed, and Halvor's carried
+ * letter is normalized into the key-item ledger.
+ *
+ * v21 to v22 (2026-07 Chapter 5 rollout): the four Minimus maps recover to
+ * their new production routes, outdoor capital/Way parking is rehomed, and
+ * the Big-Little Lens plus Royal Thimble move out of ordinary hero bags into
+ * the non-capacity key-item ledger without losing prerelease copies.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
@@ -93,7 +102,7 @@ import { allocateVehicleDeliverySlot } from './vehicle-domain';
 import type { HoopsState } from '../schemas';
 import { s } from '../spritegen/scale';
 
-export const CURRENT_SAVE_VERSION = 21;
+export const CURRENT_SAVE_VERSION = 22;
 
 const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
 
@@ -146,6 +155,18 @@ export const CHAPTER4_PARKING_RECOVERY = {
   kvisthavn: { x: 30 * 16 + 8, y: 34 * 16 + 12, facing: 'right' },
   bootstep_moor: { x: 6 * 16 + 8, y: 39 * 16 + 12, facing: 'right' },
   lilleby: { x: 7 * 16 + 8, y: 29 * 16 + 12, facing: 'right' },
+} as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
+
+export const CHAPTER5_LAYOUT_RECOVERY = {
+  minimus_major: { x: 12 * 16 + 8, y: 49 * 16 + 12, facing: 'down' },
+  procession_way: { x: 2 * 16 + 8, y: 32 * 16 + 12, facing: 'right' },
+  the_hedgerow: { x: 44 * 16 + 8, y: 69 * 16 + 12, facing: 'up' },
+  ducal_crown: { x: 26 * 16 + 8, y: 37 * 16 + 12, facing: 'up' },
+} as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
+
+export const CHAPTER5_PARKING_RECOVERY = {
+  minimus_major: { x: 20 * 16 + 8, y: 44 * 16 + 12, facing: 'right' },
+  procession_way: { x: 7 * 16 + 8, y: 32 * 16 + 12, facing: 'right' },
 } as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
@@ -226,6 +247,53 @@ function recoverChapter4VehicleParking(raw: Raw): void {
     );
     parking[title] = next;
     recovered[title] = next;
+  }
+}
+
+function recoverChapter5VehicleParking(raw: Raw): void {
+  if (!isObj(raw.vehicleParking)) return;
+  const parking = raw.vehicleParking;
+  const recovered: Record<string, VehicleParkingState> = {};
+  for (const [title, value] of Object.entries(parking)) {
+    if (!isVehicleParkingState(value) || hasOwn(CHAPTER5_PARKING_RECOVERY, value.area)) continue;
+    recovered[title] = value;
+  }
+  const pending = Object.entries(parking)
+    .filter((entry): entry is [string, VehicleParkingState] =>
+      isVehicleParkingState(entry[1]) && hasOwn(CHAPTER5_PARKING_RECOVERY, entry[1].area))
+    .sort(([a], [b]) => a.localeCompare(b));
+  for (const [title, value] of pending) {
+    const area = value.area as keyof typeof CHAPTER5_PARKING_RECOVERY;
+    const base = CHAPTER5_PARKING_RECOVERY[area];
+    const next = allocateVehicleDeliverySlot(
+      { vehicleParking: recovered }, title,
+      { area, x: s(base.x), y: s(base.y), facing: base.facing },
+    );
+    parking[title] = next;
+    recovered[title] = next;
+  }
+}
+
+function normalizeChapter5KeyItems(raw: Raw): void {
+  if (!Array.isArray(raw.keyItems)) return;
+  const keyItems = raw.keyItems;
+  const flags = isObj(raw.flags) ? raw.flags : undefined;
+  const party = Array.isArray(raw.party) ? raw.party : [];
+  const specs = [
+    { id: 'big_little_lens', earned: flags?.big_little_lens_built === true },
+    { id: 'royal_thimble', earned: flags?.pippa_joined === true || flags?.ch5_complete === true },
+  ] as const;
+  for (const spec of specs) {
+    let bagCopy = false;
+    for (const hero of party) {
+      if (!isObj(hero) || !Array.isArray(hero.bag)) continue;
+      bagCopy ||= hero.bag.includes(spec.id);
+      hero.bag = hero.bag.filter((item) => item !== spec.id);
+    }
+    const alreadyKey = keyItems.includes(spec.id);
+    const normalized = keyItems.filter((item) => item !== spec.id);
+    keyItems.splice(0, keyItems.length, ...normalized);
+    if (alreadyKey || bagCopy || spec.earned) keyItems.push(spec.id);
   }
 }
 const strings = (v: unknown): string[] =>
@@ -611,6 +679,24 @@ export const MIGRATIONS: MigrationStep[] = [
         }
       }
       raw.version = 21;
+      return raw;
+    },
+  },
+  {
+    to: 22,
+    migrate(raw) {
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const target = hasOwn(CHAPTER5_LAYOUT_RECOVERY, map)
+        ? CHAPTER5_LAYOUT_RECOVERY[map as keyof typeof CHAPTER5_LAYOUT_RECOVERY]
+        : undefined;
+      if (target) {
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      recoverChapter5VehicleParking(raw);
+      normalizeChapter5KeyItems(raw);
+      raw.version = 22;
       return raw;
     },
   },

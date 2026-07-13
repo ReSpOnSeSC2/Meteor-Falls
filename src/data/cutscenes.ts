@@ -287,21 +287,27 @@ const CH4: Cutscene[] = [
   { id: 'ch4_heartlight', chapter: 'ch4', beats: [CH4_BEATS.heartlight] },
 ];
 
+const CH5_BEATS = {
+  establishing: panels('tabletop_duchy_establishing')[0],
+  flight: panels('grand_duchy_travel_in')[0],
+  capital: panels('minimus_major_tabletop_capital')[0],
+  briefing: panels('pippa_matchbox_briefing')[0],
+  lens: panels('big_little_lens_build')[0],
+  join: panels('pippa_joins_party')[0],
+  knighted: panels('whiskerzilla_knighted')[0],
+  heartlight: panels('heartlight_5_bell_choir')[0],
+} satisfies Record<string, CutsceneBeat>;
+
 const CH5: Cutscene[] = [
-  {
-    id: 'ch5_journey',
-    chapter: 'ch5',
-    beats: panels(
-      'tabletop_duchy_establishing',
-      'grand_duchy_travel_in',
-      'minimus_major_tabletop_capital',
-      'big_little_lens_build',
-      'pippa_matchbox_briefing',
-      'pippa_joins_party',
-      'whiskerzilla_knighted',
-      'heartlight_5_bell_choir',
-    ),
-  },
+  // Gallery reel remains complete; runtime uses the contextual ids below so
+  // flying into Minimus cannot spoil the Lens, Whiskerzilla, or Heartlight.
+  { id: 'ch5_journey', chapter: 'ch5', beats: Object.values(CH5_BEATS) },
+  { id: 'ch5_flight', chapter: 'ch5', beats: [CH5_BEATS.establishing, CH5_BEATS.flight] },
+  { id: 'ch5_arrival', chapter: 'ch5', beats: [CH5_BEATS.capital, CH5_BEATS.briefing] },
+  { id: 'ch5_lens', chapter: 'ch5', beats: [CH5_BEATS.lens] },
+  { id: 'ch5_join', chapter: 'ch5', beats: [CH5_BEATS.join] },
+  { id: 'ch5_knighted', chapter: 'ch5', beats: [CH5_BEATS.knighted] },
+  { id: 'ch5_heartlight', chapter: 'ch5', beats: [CH5_BEATS.heartlight] },
 ];
 
 const CH6: Cutscene[] = [
