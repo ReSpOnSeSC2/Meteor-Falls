@@ -178,6 +178,11 @@ import type { LinksLaunch } from './LinksScene';
 import { SLOT_IDS } from '../engine/saves';
 import { INPUT } from '../engine/input';
 import { AUDIO } from '../engine/audio';
+import {
+  WATER_ACCENT_INTERVAL_MS,
+  containsWater,
+  isNearWater,
+} from '../engine/ambientProximity';
 import { Dialogue, makeWindow, toast, vars, everyFrame, DEPTH_UI, overscanRect } from '../ui/windows';
 import { askAmount } from '../ui/amount';
 import { money } from '../ui/text';
@@ -1344,11 +1349,13 @@ export class OverworldScene extends Phaser.Scene {
       this.showBanner(tag);
     } // no map-name banner during the opening cinematic
 
-    // 'starfall' runs UNBROKEN across every opening phase (playMusic is idempotent,
-    // so the per-map restarts don't restart it); room music resumes at the wake.
-    AUDIO.playMusic(this.opPhase() > 0 ? 'starfall' : this.mapDef.music);
+    // Score the fall, then preserve the authored silence after impact and into
+    // the bedroom wake. Room music starts only after the wake narration lands.
+    const entryOpeningPhase = this.opPhase();
+    AUDIO.playMusic(entryOpeningPhase === 1 ? 'starfall' : entryOpeningPhase === 4 ? null : this.mapDef.music);
     const clearedFog = CH3_MACHINE_FOG_MAPS.has(this.mapDef.id) && GS.flag('mainframe_defeated') === true;
     AUDIO.setAmbience(this.mapDef.ambience, clearedFog ? 0.42 : 1);
+    this.scheduleWaterAccents();
     AUDIO.setMusicMuffle(this.mapDef.muffle ?? (this.mapDef.interior ? 2 : 0));
     this.cameras.main.fadeIn(250, 0, 0, 0);
 
@@ -9803,6 +9810,21 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  /** A quiet, spatial replacement for the former map-wide waves/wind loop. */
+  private scheduleWaterAccents(): void {
+    if (this.devFullMapPreview || !containsWater(this.mapDef.grid)) return;
+    this.time.addEvent({
+      delay: WATER_ACCENT_INTERVAL_MS,
+      loop: true,
+      callback: () => {
+        if (this.cut || this.transitioning || this.dlg.busy) return;
+        const tx = Math.floor(this.player.x / TILE_PX);
+        const ty = Math.floor(this.player.y / TILE_PX);
+        if (isNearWater(this.mapDef.grid, tx, ty)) AUDIO.sfx('water_lap');
+      },
+    });
+  }
+
   private async ch6CourierScene(): Promise<void> {
     this.cut = true;
     // Commit before panel/dialogue awaits so an interrupted scene cannot replay.
@@ -10020,6 +10042,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('meteor_fell');
     AUDIO.playMusic(this.mapDef.music); // the opening theme hands off to the room
     this.cut = false;
+    this.game.events.emit('mf-cinematic-closed');
   }
 
   /** Which opening-cinematic phase should run on this map (0 = none). */
@@ -10050,6 +10073,7 @@ export class OverworldScene extends Phaser.Scene {
    */
   private async playOpeningCinema(): Promise<void> {
     this.cut = true;
+    this.game.events.emit('mf-cinematic-open');
     if (!this.textures.exists('meteor_rock_hickory_hill')) {
       await this.openingMeteorCinema();
       this.entryBlackout?.destroy();
@@ -10079,6 +10103,7 @@ export class OverworldScene extends Phaser.Scene {
     cam.centerOn(impactX, impactY);
 
     // 1) establishing still — the wrong star (held long)
+    AUDIO.sfx('meteor_far');
     await showCard(this, 'meteor_2am', {
       chapter: 'ch1',
       caption: OPENING_CAPTIONS.establishing,
@@ -10095,6 +10120,7 @@ export class OverworldScene extends Phaser.Scene {
     // 2) the descent — it falls into the crater while the camera leans IN, slowly
     await this.wait(700);
     cam.zoomTo(0.95, OPENING_CAMERA.meteorFallMs, 'Sine.easeInOut');
+    AUDIO.sfx('meteor_fall');
     // narrate the fall so the silent overworld beat reads as story, not screensaver
     const fallCaption = showCaption(this, OPENING_CAPTIONS.falling, { ms: OPENING_CAPTION_HOLDS.falling });
     const shadow = this.add
@@ -10128,6 +10154,7 @@ export class OverworldScene extends Phaser.Scene {
     shed.remove();
 
     // 3) IMPACT — the crater takes it; the static rock becomes the landed meteor
+    AUDIO.stopMusic();
     AUDIO.sfx('meteor_crash');
     cam.flash(260, 255, 250, 235);
     cam.shake(1500, 0.022);
@@ -10178,7 +10205,7 @@ export class OverworldScene extends Phaser.Scene {
       this.entryBlackout = undefined;
       this.tweens.add({ targets: b, alpha: 0, duration: 600, onComplete: () => b.destroy() });
     }
-    AUDIO.sfx('rumble');
+    AUDIO.sfx('aftershock');
     // establish on the sleeping house, with a line so the player knows whose it is
     await showCaption(this, OPENING_CAPTIONS.sleepingTown, { ms: OPENING_CAPTION_HOLDS.sleepingTown });
     // then drift up toward the hill road, narrating what's waiting up there —
@@ -10221,7 +10248,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     const glow = this.add.circle(craterX, craterY, s(22), 0xf8d868, 0.45).setDepth(craterY - 2);
     this.tweens.add({ targets: glow, scale: 1.6, fillAlpha: 0.2, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    AUDIO.sfx('rumble');
+    AUDIO.sfx('aftershock');
     const craterPan = playOpeningCameraLeg(
       cam,
       craterX,

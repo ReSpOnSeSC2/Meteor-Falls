@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { AMBIENCE, AMBIENCE_BEDS, NOISE_COLORS, ambienceBed } from './ambience';
+import {
+  AMBIENCE,
+  AMBIENCE_BEDS,
+  CONTINUOUS_AMBIENCE_IDS,
+  NOISE_COLORS,
+  ambienceBed,
+  continuousAmbienceId,
+} from './ambience';
 import { EMOTES } from './emote';
 import {
   AMBIENCE_IDS,
@@ -42,6 +49,15 @@ describe('ambience — the bed registry', () => {
   it('AmbienceIdSchema accepts a real bed id and rejects an invented one', () => {
     expect(AmbienceIdSchema.safeParse('rain').success).toBe(true);
     expect(AmbienceIdSchema.safeParse('thunder').success).toBe(false);
+  });
+
+  it('only keeps unmistakable rain and machinery as continuous noise beds', () => {
+    expect(CONTINUOUS_AMBIENCE_IDS).toEqual(['rain', 'machine']);
+    expect(continuousAmbienceId('rain')).toBe('rain');
+    expect(continuousAmbienceId('machine')).toBe('machine');
+    for (const id of ['wind', 'waves', 'river', 'birds', 'crowd', 'cave'] as const) {
+      expect(continuousAmbienceId(id)).toBeNull();
+    }
   });
 });
 

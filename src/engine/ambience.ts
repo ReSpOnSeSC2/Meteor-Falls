@@ -8,16 +8,18 @@
  * playback lands in Wave 3, riding the ADR-100 mixer's music path so the §A4 volume
  * sliders and the muffle veil cover it too).
  *
- * This file is the pure SPEC only — the numbers a synth bed is built from, split out
- * exactly like audiobus.ts so it unit-tests headlessly (audio.ts itself can't run
- * under vitest's node env — it touches window/AudioContext). Each bed is a filtered
- * NOISE source (the existing WebAudio synth's `noise()` primitive) with an optional
- * slow sway on its cutoff for living gusts/wave-sets; Wave 3 wires these onto real
- * nodes. No Phaser, no Date.now/Math.random (Prime Law 2) — deterministic data.
+ * This file is the pure SPEC only — the historical synth definitions and the smaller
+ * set still eligible for continuous playback, split out exactly like audiobus.ts so
+ * the policy unit-tests headlessly. Persistent beds are filtered noise sources with
+ * optional slow cutoff sway. No Phaser, no Date.now/Math.random (Prime Law 2) —
+ * deterministic data.
  *
  * The id union is owned by src/schemas (AMBIENCE_IDS) so map authoring type-checks
  * against it; AMBIENCE is `Record<AmbienceId, …>`, so the compiler pins this registry
  * to EXACTLY those ids, and tools/content-validate.ts pins the two equal both ways.
+ * Only rain and machinery are permitted to loop at runtime. The organic labels remain
+ * useful authored vocabulary, but their old generic noise beds resolve to silence;
+ * water is now a sparse player-proximity accent instead.
  */
 import type { AmbienceId } from '../schemas';
 
@@ -65,6 +67,18 @@ export const AMBIENCE: Record<AmbienceId, AmbienceBed> = {
   birds: { id: 'birds', label: 'Woodland birdsong', base: 'white', cutoff: 6500, gain: 0.09, sway: { depth: 1200, rate: 2.5 } },
   cave: { id: 'cave', label: 'Dripping cave', base: 'brown', cutoff: 600, gain: 0.1 },
 };
+
+/**
+ * Only unmistakable weather and machinery remain as continuous beds. The other
+ * legacy beds are all filtered noise and were perceived as the same permanent
+ * wind wash regardless of their labels. Water now uses a sparse spatial cue;
+ * future birds/crowd/cave accents should likewise be authored as one-shots.
+ */
+export const CONTINUOUS_AMBIENCE_IDS = ['rain', 'machine'] as const satisfies readonly AmbienceId[];
+
+export function continuousAmbienceId(id: AmbienceId | null | undefined): AmbienceId | null {
+  return id === 'rain' || id === 'machine' ? id : null;
+}
 
 /** the bed ids, in registry order — the validator pins this equal to AMBIENCE_IDS. */
 export const AMBIENCE_BEDS = Object.keys(AMBIENCE) as AmbienceId[];

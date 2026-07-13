@@ -33,6 +33,8 @@ export class UIScene extends Phaser.Scene {
   private pointerRoles = new Map<number, 'dpad' | Btn>();
   /** S12c: X/Y exist on the thumb arc DURING HOOPS ONLY (sprint + sauce) */
   private hoopsLive = false;
+  /** Cinematics hide navigation chrome but retain a quiet A skip affordance. */
+  private cinematic = false;
 
   constructor() {
     super('ui');
@@ -65,13 +67,28 @@ export class UIScene extends Phaser.Scene {
     // sources stay live everywhere; only the TOUCH chrome is hoops-scoped
     this.game.events.on('mf-hoops-open', () => {
       this.hoopsLive = true;
-      this.btnX?.setVisible(true);
-      this.btnY?.setVisible(true);
+      this.syncControlVisibility();
     });
     this.game.events.on('mf-hoops-closed', () => {
       this.hoopsLive = false;
-      this.btnX?.setVisible(false);
-      this.btnY?.setVisible(false);
+      this.syncControlVisibility();
+    });
+
+    const enterCinematic = (): void => {
+      this.cinematic = true;
+      INPUT.touchDir.x = 0;
+      INPUT.touchDir.y = 0;
+      this.syncControlVisibility();
+    };
+    const leaveCinematic = (): void => {
+      this.cinematic = false;
+      this.syncControlVisibility();
+    };
+    this.game.events.on('mf-cinematic-open', enterCinematic);
+    this.game.events.on('mf-cinematic-closed', leaveCinematic);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off('mf-cinematic-open', enterCinematic);
+      this.game.events.off('mf-cinematic-closed', leaveCinematic);
     });
 
     if (isTouch) {
@@ -83,8 +100,8 @@ export class UIScene extends Phaser.Scene {
       this.btnStart = this.add.image(0, 0, 'btn_start').setAlpha(0.55);
       this.controls = this.add.container(0, 0, [this.dpad, this.btnA, this.btnB, this.btnX, this.btnY, this.btnStart]);
       this.controls.setDepth(5000);
-      this.controls.setVisible(!INPUT.gamepadConnected);
       this.layoutControls();
+      this.syncControlVisibility();
       // insets shift on rotation/fold; FIT letterboxing shifts on resize
       this.scale.on(Phaser.Scale.Events.RESIZE, () => this.layoutControls());
 
@@ -108,7 +125,7 @@ export class UIScene extends Phaser.Scene {
 
     INPUT.onGamepad((connected, id) => {
       toast(this, connected ? `Controller connected: ${id.slice(0, 24)}` : 'Controller disconnected');
-      this.controls?.setVisible(!connected && isTouch);
+      this.syncControlVisibility();
     });
   }
 
@@ -116,8 +133,18 @@ export class UIScene extends Phaser.Scene {
    *  whenever the OVERWORLD is the live scene (the EB "check HP fast" beat) —
    *  and as the cage's sauce button during HOOPS. X stays hoops-only. */
   override update(): void {
-    this.btnX?.setVisible(this.hoopsLive);
-    this.btnY?.setVisible(this.hoopsLive || this.scene.isActive('overworld'));
+    this.syncControlVisibility();
+  }
+
+  private syncControlVisibility(): void {
+    if (!this.controls) return;
+    this.controls.setVisible(!INPUT.gamepadConnected);
+    this.dpad?.setVisible(!this.cinematic);
+    this.btnA?.setVisible(true).setAlpha(this.cinematic ? 0.3 : 0.6);
+    this.btnB?.setVisible(!this.cinematic);
+    this.btnStart?.setVisible(!this.cinematic);
+    this.btnX?.setVisible(!this.cinematic && this.hoopsLive);
+    this.btnY?.setVisible(!this.cinematic && (this.hoopsLive || this.scene.isActive('overworld')));
   }
 
   /** anchor the cluster to the screen corners, pushed inward by any cutout */
@@ -146,6 +173,17 @@ export class UIScene extends Phaser.Scene {
     const x = p.x;
     const y = p.y;
     const existing = this.pointerRoles.get(p.id);
+    const hit = (c: { x: number; y: number }, r: number): boolean => Math.hypot(x - c.x, y - c.y) < r;
+
+    // During a cinematic the only live touch target is the visible A affordance
+    // (skip/advance). Hidden navigation zones must not keep moving the world.
+    if (this.cinematic) {
+      if (isDown && hit(this.aCenter, s(22))) {
+        this.pointerRoles.set(p.id, 'A');
+        INPUT.pressBtn('A');
+      }
+      return;
+    }
 
     // D-pad: generous capture zone on the left half-bottom
     const dx = x - this.dpadCenter.x;
@@ -166,7 +204,6 @@ export class UIScene extends Phaser.Scene {
     }
     if (!isDown) return;
 
-    const hit = (c: { x: number; y: number }, r: number): boolean => Math.hypot(x - c.x, y - c.y) < r;
     // pressBtn latches the tap (ADR-024) — a sub-frame tap still registers
     if (hit(this.aCenter, s(22))) {
       this.pointerRoles.set(p.id, 'A');

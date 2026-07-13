@@ -25,6 +25,7 @@ import { popEmote, type EmoteHandle, type EmoteId } from './emote';
 import { standFrame, type Facing } from '../spritegen';
 import { cutscenePanelKey } from './cutscene';
 import { readableCaptionMs } from './cutscenePacing';
+import { safeCoverScale } from './cutsceneFraming';
 
 const STAGE_BASE = 80_000; // > world actors (depth≈y), < DEPTH_UI (90_000)
 const D = {
@@ -74,6 +75,15 @@ export interface CardOpts {
   depth?: number;
   /** Runs once the opaque card can safely hide a live-camera reframe. */
   onCovered?: () => void;
+  /** Subtle panel motion in native design pixels. Defaults keep the focal image
+   * stable while preserving a restrained cinematic push. */
+  motion?: {
+    fromScale?: number;
+    toScale?: number;
+    panX?: number;
+    panY?: number;
+    ease?: string;
+  };
 }
 
 /** A skippable wait: resolves after `ms`, or early on A/B/START. */
@@ -115,45 +125,69 @@ export async function showCard(scene: Phaser.Scene, art: string, opts: CardOpts 
   const depth = opts.depth ?? D.card;
   const caption = opts.caption ? vars(opts.caption) : undefined;
   const hold = caption ? readableCaptionMs(caption, opts.ms) : (opts.ms ?? 2600);
+  // scrollFactor(0) cancels camera scroll, but Phaser still applies camera zoom.
+  // Centering all card objects in an inverse-zoom container makes the overlay
+  // genuinely screen-space while the live world camera reframes underneath it.
+  const layer = scene.add.container(cam.width / 2, cam.height / 2).setScrollFactor(0).setDepth(depth);
+  const syncScreenScale = (): void => {
+    layer.setScale(1 / Math.max(0.01, cam.zoom));
+  };
+  syncScreenScale();
+  const stopScreenScale = everyFrame(scene, syncScreenScale);
   const img = scene.add
-    .image(cam.width / 2, cam.height / 2, key)
-    .setScrollFactor(0)
-    .setDepth(depth)
+    .image(0, 0, key)
     .setAlpha(0);
-  const cover = Math.max(cam.width / img.width, cam.height / img.height);
-  // Continuous Ken Burns across entrance, readable hold, and exit keeps the still alive.
-  const panX = s(18);
-  const panY = s(11);
-  img.setScale(cover * 1.06).setPosition(cam.width / 2 - panX, cam.height / 2 - panY);
+  layer.add(img);
+  // A restrained push keeps authored focal points on-screen. The old motion
+  // crossed 36x22 native pixels and began with less overscan than that offset
+  // required, briefly exposing a panel edge on exact 16:9 canvases.
+  const motion = opts.motion ?? {};
+  const panX = s(motion.panX ?? 4);
+  const panY = s(motion.panY ?? 2);
+  const fromScale = safeCoverScale(cam.width, cam.height, img.width, img.height, motion.fromScale ?? 1.025);
+  const toScale = safeCoverScale(cam.width, cam.height, img.width, img.height, motion.toScale ?? 1.08, panX, panY);
+  img.setScale(fromScale).setPosition(0, 0);
   scene.tweens.add({
     targets: img,
-    scale: cover * 1.26,
-    x: cam.width / 2 + panX,
-    y: cam.height / 2 + panY,
+    scale: toScale,
+    x: panX,
+    y: panY,
     duration: 600 + hold + 420,
-    ease: 'sine.inOut',
+    ease: motion.ease ?? 'sine.inOut',
   });
   let text: Phaser.GameObjects.BitmapText | null = null;
+  let plate: Phaser.GameObjects.Rectangle | null = null;
   if (caption) {
     text = scene.add
-      .bitmapText(cam.width / 2, cam.height - s(34), 'retro', caption, s(6))
+      .bitmapText(0, cam.height / 2 - s(34), 'retro', caption, s(6))
       .setOrigin(0.5, 0)
       .setCenterAlign()
       .setMaxWidth(cam.width - s(40))
       .setTint(0xf8f0d0)
-      .setScrollFactor(0)
-      .setDepth(depth + 1)
       .setAlpha(0);
+    plate = scene.add
+      .rectangle(
+        0,
+        text.y + text.height / 2,
+        Math.min(text.width + s(24), cam.width - s(24)),
+        text.height + s(12),
+        0x05060c,
+        0.62,
+      )
+      .setAlpha(0);
+    layer.add([plate, text]);
   }
   await Promise.all([
     fadeTo(scene, img, 1, 600),
+    plate ? fadeTo(scene, plate, 0.62, 360, 200) : Promise.resolve(),
     text ? fadeTo(scene, text, 1, 360, 200) : Promise.resolve(),
   ]);
   opts.onCovered?.();
+  syncScreenScale();
   await waitSkippable(scene, hold);
-  await fadeTo(scene, text ? [img, text] : img, 0, 420);
-  img.destroy();
-  text?.destroy();
+  await fadeTo(scene, text && plate ? [img, plate, text] : img, 0, 420);
+  stopScreenScale();
+  layer.destroy(true);
 }
 
 /**
@@ -173,27 +207,30 @@ export async function showCaption(
   const resolved = vars(text);
   const hold = readableCaptionMs(resolved, opts.ms);
   const depth = opts.depth ?? D.cardText;
+  const layer = scene.add.container(cam.width / 2, cam.height / 2).setScrollFactor(0).setDepth(depth);
+  const syncScreenScale = (): void => {
+    layer.setScale(1 / Math.max(0.01, cam.zoom));
+  };
+  syncScreenScale();
+  const stopScreenScale = everyFrame(scene, syncScreenScale);
   const t = scene.add
-    .bitmapText(cam.width / 2, cam.height - s(34), 'retro', resolved, s(6))
+    .bitmapText(0, cam.height / 2 - s(34), 'retro', resolved, s(6))
     .setOrigin(0.5, 0)
     .setCenterAlign()
     .setMaxWidth(cam.width - s(40))
     .setTint(0xf8f0d0)
-    .setScrollFactor(0)
-    .setDepth(depth)
     .setAlpha(0);
   // a soft dark plate behind the words — the night maps are dark, but a bright
   // moon/firefly tile under the line shouldn't wash it out.
   const plate = scene.add
-    .rectangle(cam.width / 2, t.y + t.height / 2, t.width + s(16), t.height + s(8), 0x000000, 0.5)
-    .setScrollFactor(0)
-    .setDepth(depth - 1)
+    .rectangle(0, t.y + t.height / 2, t.width + s(16), t.height + s(8), 0x000000, 0.5)
     .setAlpha(0);
+  layer.add([plate, t]);
   await fadeTo(scene, [t, plate], 1, 360);
   await waitSkippable(scene, hold);
   await fadeTo(scene, [t, plate], 0, 420);
-  t.destroy();
-  plate.destroy();
+  stopScreenScale();
+  layer.destroy(true);
 }
 
 export interface LetterboxHandle {

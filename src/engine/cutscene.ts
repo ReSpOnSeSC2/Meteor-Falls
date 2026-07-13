@@ -19,6 +19,7 @@ import { vars } from '../ui/text';
 import { DEPTH_UI, everyFrame } from '../ui/windows';
 import { CUTSCENES, cutscenePanelFilenames, type Cutscene, type CutsceneBeat } from '../data/cutscenes';
 import { captionTimelineMs, readableCaptionMs } from './cutscenePacing';
+import { safeCoverScale } from './cutsceneFraming';
 
 // Eager URL map of every cutscene panel actually on disk. A registry beat with
 // no matching PNG yet is simply skipped (no 404) until its art lands — so a
@@ -227,9 +228,10 @@ export async function playCutscene(
       .setDepth(baseDepth)
       .setAlpha(0);
 
-    const cover = Math.max(w / img.width, h / img.height);
     const m = beat.motion ?? {};
-    img.setScale(cover * (m.fromScale ?? 1.06));
+    const panX = s(m.panX ?? 0);
+    const panY = s(m.panY ?? 0);
+    img.setScale(safeCoverScale(w, h, img.width, img.height, m.fromScale ?? 1.06));
     const motionMs = m.ms ?? beatMotionMs(beat);
 
     // cross-fade the new panel up over the previous one
@@ -237,9 +239,9 @@ export async function playCutscene(
     // the Ken Burns drift, spanning the whole beat
     scene.tweens.add({
       targets: img,
-      scale: cover * (m.toScale ?? 1.13),
-      x: w / 2 + s(m.panX ?? 0),
-      y: h / 2 + s(m.panY ?? 0),
+      scale: safeCoverScale(w, h, img.width, img.height, m.toScale ?? 1.13, panX, panY),
+      x: w / 2 + panX,
+      y: h / 2 + panY,
       duration: motionMs,
       ease: m.ease ?? 'sine.inOut',
     });

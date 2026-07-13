@@ -26,7 +26,7 @@ import {
   muffleCutoff,
   parseBusLevel,
 } from './audiobus';
-import { AMBIENCE } from './ambience';
+import { AMBIENCE, continuousAmbienceId } from './ambience';
 import type { AmbienceId } from '../schemas';
 
 type Wave = OscillatorType | 'noise';
@@ -708,7 +708,11 @@ class AudioSys {
     f.type = 'lowpass';
     f.frequency.value = filterFreq;
     const g = this.ctx.createGain();
-    g.gain.setValueAtTime(vol, t);
+    // A short attack removes the full-scale discontinuity that made filtered
+    // noise read as a click/static burst, especially through phone speakers.
+    const attack = Math.min(0.018, dur * 0.2);
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.001, vol), t + attack);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     src.connect(f).connect(g).connect(this.sfxBus);
     src.start(t, Math.random(), dur + 0.05);
@@ -804,36 +808,52 @@ class AudioSys {
         this.tone('sine', 2960, 2960, 0.9, 0.012, 0.4);
         break;
       case 'meteor_fall':
-        // entry scream + a rumble that builds the whole way down (~2.8s,
-        // sized to the descent tween)
-        this.tone('sawtooth', 1350, 70, 2.7, 0.045);
-        this.tone('sine', 2100, 110, 2.7, 0.035, 0.08);
-        this.noise(0.7, 0.025, 700);
-        this.noise(0.8, 0.05, 900, 0.6);
-        this.noise(0.9, 0.085, 1100, 1.3);
-        this.noise(1.1, 0.13, 1500, 1.9);
+        // A six-second tonal descent, matched to OPENING_CAMERA.meteorFallMs.
+        // The former stack of successively louder white-noise bursts sounded
+        // like radio static and ended halfway through the current visual beat.
+        this.tone('triangle', 1350, 70, 6.0, 0.04);
+        this.tone('sine', 2100, 110, 6.0, 0.026, 0.08);
+        this.tone('triangle', 96, 38, 3.2, 0.055, 2.8);
         break;
       case 'sonic_boom':
         // the sky cracks once on the way down
-        this.noise(0.09, 0.16, 5200);
+        this.noise(0.09, 0.1, 5200);
         this.tone('square', 200, 55, 0.22, 0.11);
-        this.noise(0.5, 0.06, 800, 0.08);
+        this.noise(0.5, 0.035, 800, 0.08);
         break;
       case 'meteor_crash':
-        // the ground gets the news: sub thump, long brown roar, two echoes
+        // The ground gets the news: sub thump, restrained filtered body, two
+        // tonal echoes. Low noise levels keep the hit weight without hiss.
         this.tone('triangle', 64, 22, 1.5, 0.24);
         this.tone('sine', 46, 18, 2.0, 0.2, 0.04);
-        this.noise(1.7, 0.22, 380);
-        this.noise(1.1, 0.12, 160, 0.18);
+        this.noise(1.7, 0.09, 380);
+        this.noise(1.1, 0.045, 160, 0.18);
         this.tone('triangle', 50, 24, 0.9, 0.1, 1.15);
-        this.noise(0.9, 0.07, 300, 1.2);
+        this.noise(0.9, 0.03, 300, 1.2);
         this.tone('triangle', 44, 22, 0.8, 0.06, 2.1);
-        this.noise(0.8, 0.04, 260, 2.15);
+        this.noise(0.8, 0.018, 260, 2.15);
         break;
       case 'rumble':
-        // aftershock: the floor remembers
-        this.tone('sine', 38, 30, 1.3, 0.07);
-        this.noise(1.2, 0.05, 240);
+        // General environmental rumble: harmonic low end plus only a trace of
+        // filtered texture, so it survives small speakers without static wash.
+        this.tone('triangle', 72, 44, 1.3, 0.04);
+        this.tone('sine', 38, 30, 1.3, 0.06);
+        this.noise(1.2, 0.012, 220);
+        break;
+      case 'aftershock':
+        // Opening-cinema aftershock: intentionally noise-free. Two detuned low
+        // voices give the camera move weight without a swish/hiss bed.
+        this.tone('triangle', 58, 36, 1.25, 0.052);
+        this.tone('sine', 35, 28, 1.35, 0.05, 0.04);
+        break;
+      case 'water_lap':
+        // A brief shoreline accent, never a bed. The quiet filtered texture has
+        // an attack (via noise()) and is framed by pitched droplets so it reads
+        // as water rather than the old continuous wind/static wash.
+        this.tone('sine', 170, 112, 0.62, 0.022);
+        this.tone('triangle', 255, 148, 0.34, 0.012, 0.08);
+        this.tone('sine', 108, 88, 0.75, 0.01, 0.16);
+        this.noise(0.42, 0.006, 850, 0.04);
         break;
       case 'light_on':
         // one porch light joins the conversation
@@ -1325,25 +1345,26 @@ class AudioSys {
     this.intendedStems = Infinity;
   }
 
-  /** Select the current map's audible ambient bed. The source loops under the
-   * music bus, so player music volume and the indoor muffle veil apply to rain,
-   * wind, waves, and machinery too. Re-selecting a bed only retunes its gain;
-   * changing maps crossfades the old bed out. */
+  /** Select the current map's audible ambient bed. Only distinct rain and
+   * machinery remain continuous; generic filtered-noise beds (including wind)
+   * resolve to silence. Re-selecting a bed only retunes its gain; changing maps
+   * crossfades the old bed out. */
   setAmbience(id: AmbienceId | null | undefined, scale = 1): void {
-    this.intendedAmbience = id ?? null;
+    const activeId = continuousAmbienceId(id);
+    this.intendedAmbience = activeId;
     this.intendedAmbienceScale = clamp01(scale);
     if (!this.ctx || !this.musicBus || !this.noiseBuf) return;
-    if (!id) {
+    if (!activeId) {
       const old = this.ambienceVoice;
       this.ambienceVoice = null;
       if (old) this.disposeAmbienceVoice(old, true);
       return;
     }
-    if (this.ambienceVoice?.id === id) {
-      this.rampGain(this.ambienceVoice.gain, AMBIENCE[id].gain * this.intendedAmbienceScale, 420);
+    if (this.ambienceVoice?.id === activeId) {
+      this.rampGain(this.ambienceVoice.gain, AMBIENCE[activeId].gain * this.intendedAmbienceScale, 420);
       return;
     }
-    this.applyAmbience(id, this.intendedAmbienceScale);
+    this.applyAmbience(activeId, this.intendedAmbienceScale);
   }
 
   private applyAmbience(id: AmbienceId, scale: number): void {

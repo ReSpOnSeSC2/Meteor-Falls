@@ -105,6 +105,8 @@ class FakeCtx {
   currentTime = 0;
   sampleRate = 48000;
   destination = { name: 'destination' };
+  oscillators: FakeOsc[] = [];
+  bufferSources: FakeBufferSource[] = [];
   createGain(): FakeGain {
     return new FakeGain();
   }
@@ -112,10 +114,14 @@ class FakeCtx {
     return new FakeFilter();
   }
   createOscillator(): FakeOsc {
-    return new FakeOsc();
+    const osc = new FakeOsc();
+    this.oscillators.push(osc);
+    return osc;
   }
   createBufferSource(): FakeBufferSource {
-    return new FakeBufferSource();
+    const source = new FakeBufferSource();
+    this.bufferSources.push(source);
+    return source;
   }
   createBuffer(_ch: number, len: number): { getChannelData(): Float32Array } {
     return { getChannelData: () => new Float32Array(len) };
@@ -263,13 +269,26 @@ describe('map ambient beds (ADR-108 runtime seam)', () => {
 
   it('crossfades beds and can clear the map ambience', () => {
     const a = AUDIO as any;
+    AUDIO.setAmbience('rain');
+    const rain = a.ambienceVoice;
     AUDIO.setAmbience('wind');
-    const wind = a.ambienceVoice;
+    expect(a.ambienceVoice).toBeNull();
+    expect(a.intendedAmbience).toBeNull();
+    expect(rain.gain.gain.lastTarget()).toBe(0);
     AUDIO.setAmbience('machine');
     expect(a.ambienceVoice.id).toBe('machine');
-    expect(wind.gain.gain.lastTarget()).toBe(0);
     AUDIO.setAmbience(null);
     expect(a.ambienceVoice).toBeNull();
+  });
+
+  it('does not build permanent noise voices for abstract or water ambience labels', () => {
+    const a = AUDIO as any;
+    const before = ctx.bufferSources.length;
+    for (const id of ['wind', 'waves', 'river', 'birds', 'crowd', 'cave'] as const) {
+      AUDIO.setAmbience(id);
+      expect(a.ambienceVoice).toBeNull();
+    }
+    expect(ctx.bufferSources).toHaveLength(before);
   });
 });
 
@@ -352,5 +371,36 @@ describe('the synth bend (#3 slow-mo hook)', () => {
       const h = held[Number(k)];
       if (h) expect(h.osc.detune.value).toBe(h.base - 60);
     }
+  });
+});
+
+describe('opening-cinema sound design', () => {
+  it('keeps the descent and aftershocks tonal instead of layering white-noise static', () => {
+    const before = ctx.bufferSources.length;
+    AUDIO.sfx('meteor_fall');
+    AUDIO.sfx('aftershock');
+    expect(ctx.bufferSources).toHaveLength(before);
+    expect(ctx.oscillators.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('fades filtered impact texture in from silence instead of hard-starting it', () => {
+    AUDIO.sfx('rumble');
+    const source = ctx.bufferSources[ctx.bufferSources.length - 1];
+    const filter = source?.outs[0] as FakeFilter | undefined;
+    const gain = filter?.outs[0] as FakeGain | undefined;
+    expect(gain?.gain.ops[0]).toEqual({ kind: 'set', value: 0.001 });
+    expect(gain?.gain.ops[1]?.kind).toBe('expo');
+    expect(gain?.gain.ops[1]?.value).toBeGreaterThan(0.001);
+  });
+});
+
+describe('localized environmental accents', () => {
+  it('renders a water lap as one short non-looping texture with tonal detail', () => {
+    const sourcesBefore = ctx.bufferSources.length;
+    const oscillatorsBefore = ctx.oscillators.length;
+    AUDIO.sfx('water_lap');
+    expect(ctx.bufferSources).toHaveLength(sourcesBefore + 1);
+    expect(ctx.bufferSources[ctx.bufferSources.length - 1]?.loop).toBe(false);
+    expect(ctx.oscillators.length - oscillatorsBefore).toBe(3);
   });
 });
