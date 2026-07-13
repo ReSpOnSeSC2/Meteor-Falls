@@ -406,6 +406,27 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
       },
     }),
 
+    Q({
+      id: 'footprint_pointed_home',
+      name: 'The Footprint That Pointed Home',
+      chapter: 4,
+      giver: 'moor_walker',
+      startFlag: 'q_footprints',
+      objectives: [
+        { id: 'near', text: 'Read the broad heel-print above the west wall. Safe grazing tracks turn away from the gorge.', flag: 'q_footprint_1' },
+        { id: 'bog', text: 'Read the print beyond the south bog. Predator tracks cross the wind; Storheim tracks follow it.', flag: 'q_footprint_2' },
+        { id: 'high', text: 'Read the high print where Lilleby comes into view, then choose the homeward line.', flag: 'q_footprint_3' },
+        { id: 'report', text: 'You can tell the safe trail from the hunting trail. Return to the shepherd.', flag: 'q_footprint_reported' },
+      ],
+      rewardItem: 'vegvisir_charm',
+      doneFlag: 'q_footprints_done',
+      caller: {
+        name: 'The Bootstep Shepherd',
+        quote: 'You found the line that brings small things home. If the dark turns every path around, I will stand on the high moor and point the safe way back.',
+        effect: { kind: 'heal', power: 435 },
+      },
+    }),
+
     /* ═══════════════ CHAPTER 5 (Minimus) — the five §A10 quests ═══════════════ *
      * Tiny-but-procedural (§A6/§A11): a census that proves every dot has a name, the
      * colossus-footprint repairs, the cross-scale Lost & Found, the bell choir behind

@@ -465,14 +465,18 @@ const MINIMUS_TILE_ART = {
 // Ch.4 NORWAY (Kvisthavn fjord) region tile strip (16 cells × 64px). A PARTIAL override like
 // Minimus: col 0 = pebbled snow ground → norway_ground, col 2 = grey cobble quay-lane →
 // norway_path, col 3 = open fjord water → norway_water, col 7 = sheer rock cliff → norway_wall.
-// The decorative cells (packed-ice lane, shore lip, pines, birches, spires, rocky snow, giant
-// footprint, frozen pond, boardwalk, dark masonry, rune door, aurora) stay unused until a
-// grid-char pass places them. These render ONLY on the Ch.4 outdoor maps (the render-time
-// name-remap NORWAY_TILE_SKIN in OverworldScene.buildTiles); every other map is untouched.
+// Production Ch.4 consumes the material cells (shore, frozen pond, boardwalk,
+// masonry) while retaining the landmark cells for authored props and future
+// one-off placement. These render only on Norway maps.
 const NORWAY_TILE_ART = {
   key: 'authored_norway_tiles16',
   url: new URL('../../assets/art/world/Norway_tiles_16.png', import.meta.url).href,
-  names: ['norway_ground', '', 'norway_path', 'norway_water', '', '', '', 'norway_wall', '', '', '', '', '', '', '', ''],
+  names: [
+    'norway_ground', '', 'norway_path', 'norway_water',
+    'norway_shore', '', '', 'norway_wall',
+    '', '', 'norway_frozen_pond', '',
+    '', 'norway_masonry', '', '',
+  ],
 };
 
 // Ch.6 AFRICA (Zanzibel / the savanna / the Laughing Ruins) region tile strip (16 cells × 64px).

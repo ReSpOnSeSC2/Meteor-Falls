@@ -3425,10 +3425,28 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "@KVISTHAVN. End of one leg, start of the next. (Bert pats the dashboard.) She made it. Don't tell her how surprised I am.",
     '(The hatch drops onto a stone quay. The air is cold and clean and smells of salt, pine, and woodsmoke — and underneath it, low enough to feel in your teeth more than hear, a long, slow HUM. Like something very large, breathing in its sleep.)',
   ],
+  npc_ll_pump: ['@The Booster Club has connected the normal-sized pump to the normal-sized road fleet. The hose is a fire hose only from where you are standing.'],
   ch4_card: [
-    "Kvisthavn's bell rings out over the water again, and forty years of a letter finally got read aloud.",
+    'One enormous, contented snore rolls from the mountain, across Lilleby, and out over the fjord. Nobody wakes. Everybody breathes.',
     'The Locket hums with FOUR voices now — the deepest one yet, the kind you feel in the floor. Six Embers are still out there.',
     "* (Lucille is fuelled and ready when you are. Bert says the next leg is 'a tabletop kingdom' and won't explain further.)",
+  ],
+  ch4_card_bell: ["Far below, Kvisthavn's restored bell answers the snore once, bright over the water."],
+  ch4_card_letter: ["In Lilleby, a forty-year-old letter rests beside the window that waited for it."],
+  q_footprints_ask: [
+    '@The sheep know the homeward prints. I used to. Then everything grew, and one safe hoof-line became ten frightening roads.',
+    '@Read the three great bootprints — west wall, south bog, high moor. Tell me which line points home, and I can open the old shepherd cut again.',
+  ],
+  q_footprints_active: ['@A safe print follows the wind and turns its heel from the gorge. Three prints will make the rule plain.'],
+  q_footprint_1: ['(The heel is broad and weather-soft. Its toe turns away from the gorge. Someone carrying a flock chose caution here.)'],
+  q_footprint_2: ['(This print follows the wind. Claw-marks cross it at a hungry angle. The difference is suddenly obvious.)'],
+  q_footprint_3: ['(The last bootprint faces Kvisthavn. From its toe, the three safe marks become one homeward sentence across the moor.)'],
+  q_footprints_full: ['@That is it. Heel from the gorge, sole with the wind, toe toward a warm window. You found the road my sheep remembered.'],
+  q_footprints_done_beat: ['(The shepherd rolls the marker stone aside. The old cut makes the return crossing short and quiet.)', '* Got the VEGVISIR CHARM.'],
+  q_footprints_after: ['@The homeward cut stays open. A useful road should not demand that you prove yourself twice.'],
+  trust_norway_release: [
+    '@(The borrowed person steadies themself. Their voice comes back last.) "It costs a memory," they whisper. "Just one little one. I cannot remember my mother humming."',
+    '({faye} hears. She does not accuse Jay. She does not say it is fine. She only goes quiet, and walks a little closer to the person he released.)',
   ],
 
   // — THE SLEEPER'S EAR: BOSS 4 (the Whisperwig) + Heartlight 4 (The Deep Hum) —

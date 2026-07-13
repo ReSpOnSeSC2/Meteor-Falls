@@ -2248,6 +2248,16 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       doneFlag: 'q_picnic_done',
       caller: { name: 'The Mayor of Lilleby', kind: 'heal', power: 425 },
     },
+    footprint_pointed_home: {
+      name: 'The Footprint That Pointed Home',
+      chapter: 4,
+      giver: 'moor_walker',
+      startFlag: 'q_footprints',
+      objectiveFlags: ['q_footprint_1', 'q_footprint_2', 'q_footprint_3', 'q_footprint_reported'],
+      rewardItem: 'vegvisir_charm',
+      doneFlag: 'q_footprints_done',
+      caller: { name: 'The Bootstep Shepherd', kind: 'heal', power: 435 },
+    },
     // ── CHAPTER 5 (Minimus) — §A10 #11 The Royal Census + #12 Civic Repairs + three
     //    Flow-Law regionals (Lost & Found across scale, the Silent Belfry behind
     //    Heartlight 5, the minister's macro-lens portrait). The belfry is caller-only

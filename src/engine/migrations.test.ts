@@ -5,11 +5,14 @@ import {
   CURRENT_SAVE_VERSION,
   CHAPTER3_LAYOUT_RECOVERY,
   CHAPTER3_PARKING_RECOVERY,
+  CHAPTER4_LAYOUT_RECOVERY,
+  CHAPTER4_PARKING_RECOVERY,
 } from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
 import { s } from '../spritegen/scale';
 import { buildChapter3Maps } from '../data/maps_ch3';
+import { buildChapter4Maps } from '../data/maps_ch4';
 import { vehicleParkingSlotsOverlap } from './vehicle-domain';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
@@ -807,7 +810,7 @@ describe('save migration registry -- v19 to v20: Chapter 3 production layouts', 
     (mapId, target) => {
       const raw = v19At(mapId);
       const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
-      wanted.version = 20;
+      wanted.version = CURRENT_SAVE_VERSION;
       wanted.x = s(target.tile[0] * 16 + 8);
       wanted.y = s(target.tile[1] * 16 + 12);
       wanted.facing = target.facing;
@@ -852,7 +855,7 @@ describe('save migration registry -- v19 to v20: Chapter 3 production layouts', 
       title_car_sedan: { area: 'otterbrook', x: 400, y: 800, facing: 'upright' },
     };
     const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
-    wanted.version = 20;
+    wanted.version = CURRENT_SAVE_VERSION;
 
     const migrated = migrateSave(raw, newGameData());
 
@@ -868,7 +871,7 @@ describe('save migration registry -- v19 to v20: Chapter 3 production layouts', 
       title_car_sedan: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
     };
     const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
-    wanted.version = 20;
+    wanted.version = CURRENT_SAVE_VERSION;
 
     const migrated = migrateSave(raw, newGameData());
 
@@ -883,10 +886,103 @@ describe('save migration registry -- v19 to v20: Chapter 3 production layouts', 
       title_car_bmx: { area: 'the_old_stones', x: 400, y: 800, facing: 'sideways' },
     };
     const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
-    wanted.version = 20;
+    wanted.version = CURRENT_SAVE_VERSION;
 
     const migrated = migrateSave(raw, newGameData());
 
     expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
+  });
+});
+
+describe('save migration registry -- v20 to v21: Chapter 4 production layouts', () => {
+  const expected = {
+    kvisthavn: { tile: [18, 38], facing: 'down' },
+    bootstep_moor: { tile: [3, 39], facing: 'right' },
+    lilleby: { tile: [3, 29], facing: 'right' },
+    spine_hand: { tile: [24, 33], facing: 'up' },
+    spine_shoulder: { tile: [28, 37], facing: 'up' },
+    spine_ear: { tile: [26, 37], facing: 'up' },
+  } as const;
+
+  const v20At = (map: string): Record<string, unknown> => {
+    const raw = newGameData() as unknown as Record<string, unknown>;
+    raw.version = 20;
+    raw.map = map;
+    raw.x = 99999;
+    raw.y = -1;
+    raw.facing = 'left';
+    raw.flags = { ch3_complete: true, ch4_arrived: true, q_letter_taken: true };
+    raw.keyItems = ['star_locket', 'title_car_bmx', 'title_car_sedan'];
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'kvisthavn', x: 400, y: 800, facing: 'upright' },
+    };
+    return raw;
+  };
+
+  it('pins exactly the six stable Chapter 4 ids to in-bounds walkable recovery tiles', () => {
+    expect(Object.keys(CHAPTER4_LAYOUT_RECOVERY)).toEqual(Object.keys(expected));
+    const maps = buildChapter4Maps();
+    const walkable = new Set(['.', ',', '~', 'f', 'F', ':', 'w', 'r', 'o', '=', 'R', 'D', '_', 'X', 'P', 'd']);
+    for (const [mapId, target] of Object.entries(expected)) {
+      const [tx, ty] = target.tile;
+      const map = maps[mapId];
+      expect(map, mapId).toBeDefined();
+      expect(walkable.has(map.grid[ty][tx]), `${mapId} tile '${map.grid[ty][tx]}'`).toBe(true);
+      expect(CHAPTER4_LAYOUT_RECOVERY[mapId as keyof typeof expected]).toEqual({
+        x: tx * 16 + 8, y: ty * 16 + 12, facing: target.facing,
+      });
+    }
+  });
+
+  it.each(Object.entries(expected))('recovers %s without changing unrelated save state', (mapId, target) => {
+    const raw = v20At(mapId);
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.version).toBe(21);
+    expect(migrated.map).toBe(mapId);
+    expect(migrated.x).toBe(s(target.tile[0] * 16 + 8));
+    expect(migrated.y).toBe(s(target.tile[1] * 16 + 12));
+    expect(migrated.facing).toBe(target.facing);
+    expect(migrated.flags.ch3_complete).toBe(true);
+    expect(migrated.keyItems).toContain('star_locket');
+  });
+
+  it('rehomes multi-vehicle Norway parking deterministically without stacking', () => {
+    const raw = v20At('kvisthavn');
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'lilleby', x: 100, y: 200, facing: 'left' },
+      title_car_ev: { area: 'lilleby', x: 100, y: 200, facing: 'right' },
+      title_car_bmx: { area: 'otterbrook', x: 144, y: 288, facing: 'left' },
+    };
+    const migrated = migrateSave(raw, newGameData());
+    const base = CHAPTER4_PARKING_RECOVERY.lilleby;
+    expect(migrated.vehicleParking.title_car_ev).toEqual({ area: 'lilleby', x: s(base.x), y: s(base.y), facing: base.facing });
+    expect(migrated.vehicleParking.title_car_bmx).toEqual({ area: 'otterbrook', x: 144, y: 288, facing: 'left' });
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_sedan', migrated.vehicleParking.title_car_sedan,
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+    )).toBe(false);
+  });
+
+  it('preserves malformed and prototype-like parking records byte-for-byte', () => {
+    const raw = v20At('constructor');
+    raw.x = 1234; raw.y = 5678; raw.facing = 'downleft';
+    raw.vehicleParking = {
+      malformed: { area: 'kvisthavn', note: 'missing coordinates' },
+      prototype: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
+    };
+    const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    wanted.version = 21;
+    wanted.keyItems = [...(wanted.keyItems as string[]), 'halvors_letter'];
+    const migrated = migrateSave(raw, newGameData());
+    expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
+  });
+
+  it('backfills the real letter while carried and removes it after delivery', () => {
+    const carried = migrateSave(v20At('otterbrook'), newGameData());
+    expect(carried.keyItems).toContain('halvors_letter');
+    const delivered = v20At('otterbrook');
+    delivered.flags = { q_letter_taken: true, q_letter_delivered: true };
+    delivered.keyItems = ['star_locket', 'halvors_letter'];
+    expect(migrateSave(delivered, newGameData()).keyItems).toEqual(['star_locket']);
   });
 });

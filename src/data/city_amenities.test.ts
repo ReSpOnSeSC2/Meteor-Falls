@@ -103,7 +103,7 @@ describe('Foggybottom town amenities', () => {
   it('opts the town into amenities without changing the exact formal-city contract', () => {
     expect(MAPS.foggybottom.settlement).toBe('town');
     expect(FORMAL_CITY_IDS).not.toContain('foggybottom');
-    expect(AMENITY_SETTLEMENT_IDS).toEqual([...FORMAL_CITY_IDS, 'foggybottom']);
+    expect(AMENITY_SETTLEMENT_IDS).toEqual([...FORMAL_CITY_IDS, 'foggybottom', 'kvisthavn']);
     expect(Object.keys(CITY_AMENITIES)).toHaveLength(7);
     expect(Object.keys(SETTLEMENT_AMENITIES).sort()).toEqual([...AMENITY_SETTLEMENT_IDS].sort());
     expect(amenity.serviceUnits).toEqual({

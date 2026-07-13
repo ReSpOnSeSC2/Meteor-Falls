@@ -1,5 +1,12 @@
 # Cutscene Blueprint — every beat, ch1–ch10
 
+## Chapter 4 contextual runtime contract
+
+`ch4_journey` remains the complete gallery reel. Runtime plays `ch4_flight`,
+`ch4_arrival`, `ch4_moor`, `ch4_lilleby`, `ch4_spine`, `ch4_whisperwig`, and
+`ch4_heartlight` only at their matching world moments. Each is guarded by a
+persistent flag; the flight cannot spoil Lilleby, the Spine, boss, or Ember.
+
 How cutscenes are made now, the per-beat execution plan, and **the stages/sprites
 that still need to be built** for the hybrid versions. Pairs with
 [`PROMPT_WORLD_ANIMATIONS.md` §7](PROMPT_WORLD_ANIMATIONS.md) (the beat list) and

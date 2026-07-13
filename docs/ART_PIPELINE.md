@@ -1,5 +1,12 @@
 # Art pipeline — AUTHORED PNGs (canonical)
 
+## Chapter 4 production reuse note (2026-07-12)
+
+The Norway rebuild required no new bitmap generation. It reused retained
+masters/runtime assets, promoted the authored strip's shore, frozen-pond,
+boardwalk, and masonry cells into live tile names, and used the authored
+Bridge Berry mini as its persistent world prop.
+
 **Status:** Canonical as of 2026-06-14 (ADR-109). Supersedes the procedural-art
 rule of ADR-002 and the hero-art loop of ADR-104 ([ART_LOOP.md](ART_LOOP.md), now
 historical).

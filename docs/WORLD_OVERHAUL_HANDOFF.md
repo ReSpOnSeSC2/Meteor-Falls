@@ -1,5 +1,10 @@
 # WORLD OVERHAUL — Ch3+ program handoff (the master doc)
 
+> **Chapter 4 production close (2026-07-12):** Norway now ships six rebuilt
+> maps, five quests, live amenities, Bridge Berry/meltfall phase geometry,
+> contextual cutscenes, representative dev profiles, and v21 recovery. Its
+> fixed-point contract is ADR-140; future world work proceeds beyond Norway.
+
 Copy this whole file into a fresh Claude Code session in `C:\Meteor Falls` to continue the
 program. It is the canonical, living source of truth; the plan-mode file
 `~/.claude/plans/lively-percolating-sparkle.md` is the original approval artifact and is

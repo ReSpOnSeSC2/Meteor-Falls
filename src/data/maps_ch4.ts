@@ -1,23 +1,12 @@
 /**
- * CHAPTER 4 MAPS: "The Fjord That Sleeps" (Norway). §A5/§A6 — Lucille's North
- * Sea hop sets the party down at KVISTHAVN, a normal-scale fishing hamlet under
- * the cliffs. Past the tree line the LOW Ember's hum has swelled every living
- * thing: BOOTSTEP MOOR (10× wildlife, half of it friendly) and LILLEBY, the
- * giants' town (pop. 41), where the party walks under doors. The dungeon, THE
- * SLEEPER'S SPINE, crosses the sleeping giant Grandfather Storheim hand →
- * shoulder → ear; his terrain IS the map (never a giant sprite). The Resonance
- * Site is the Sleeper's Ear, where BOSS 4 — THE WHISPERWIG burrows.
+ * CHAPTER 4 — THE FJORD THAT SLEEPS.
  *
- * Same ADR-004 code-grid law as every chapter; reachability is GRID-based
- * (mapcheck BFS). Kvisthavn + Lilleby declare their §A5 `area` via MAP_AREA in
- * maps.ts (kvisthavn / lilleby skins, ADR-066) and their ambience bed. Three
- * picnic tables (§A4.5) sit before the dungeon. The §A4.11 PSI gate (freeze the
- * meltwater fall, `spine_meltfall`) lives on the Sleeper's shoulder. Layouts
- * FINAL, dev-art (the authored Kvisthavn/Lilleby facades dress the edges).
+ * These six ids are save-facing. Geometry may evolve only with a migration;
+ * every fixed point below is shared by maps, runtime gates, dev profiles and
+ * migration tests. Builders are deliberately deterministic and use no global
+ * generation state.
  */
 import { Grid, treeSprite } from './mapkit';
-import { buildDistrict, Streams } from '../levelkit';
-import { AREA_SKINS } from '../spritegen/buildings';
 import type { MapDef, PropDef } from '../schemas';
 
 const PICNIC_SOLID = { ox: 2, oy: 8, w: 32, h: 14 } as const;
@@ -25,515 +14,360 @@ const PHONE_SOLID = { ox: 1, oy: 10, w: 14, h: 16 } as const;
 const TREE_SOLID = { ox: 7, oy: 22, w: 12, h: 10 } as const;
 const PINE_SOLID = { ox: 8, oy: 30, w: 16, h: 12 } as const;
 const ROCK_SOLID = { ox: 2, oy: 12, w: 24, h: 12 } as const;
+const CRATE_SOLID = { ox: 3, oy: 8, w: 14, h: 9 } as const;
+const STALL_SOLID = { ox: 6, oy: 20, w: 28, h: 12 } as const;
 
-/** the open tile KVISTHAVN sets you down on when Lucille's North Sea hop lands */
-export const KVISTHAVN_LANDING = { x: 18, y: 8 } as const;
+export const CH4_MAP_IDS = [
+  'kvisthavn', 'bootstep_moor', 'lilleby',
+  'spine_hand', 'spine_shoulder', 'spine_ear',
+] as const;
 
-/* ───────────────────────────── KVISTHAVN ─────────────────────────────────── *
- * A cozy fishing hamlet under the cliffs (normal scale — the calm before the
- * giants). A cobbled lane along the quay, the fjord to the south (reflective),
- * the supply shop (Kvisthavn Kolonial), and townsfolk with one obsession each
- * (§A11): Sigrid and her lost spectacles, Halvor and the letter he never sent,
- * the bellkeeper and the quay bell the Hush muffled. Picnic #1 of 3. The fjord
- * road climbs east onto Bootstep Moor. Lucille lands here (`ch4_arrival`). */
+export const CH4_WORLD = {
+  kvisthavn: {
+    size: { w: 64, h: 48 },
+    landing: { x: 18, y: 38 },
+    lucille: { x: 18, y: 43, w: 3, h: 1 },
+    moorMouth: { x: 63, y: 22, w: 1, h: 4 },
+  },
+  bootstepMoor: {
+    size: { w: 112, h: 80 },
+    kvisthavnMouth: { x: 0, y: 38, w: 1, h: 4 },
+    lillebyMouth: { x: 111, y: 28, w: 1, h: 4 },
+    handMouth: { x: 83, y: 79, w: 4, h: 1 },
+    bridge: { x: 60, y: 36, w: 4, h: 4 },
+  },
+  lilleby: {
+    size: { w: 72, h: 56 },
+    scale: 2.3,
+    moorMouth: { x: 0, y: 28, w: 1, h: 4 },
+  },
+  spineHand: {
+    size: { w: 48, h: 36 },
+    moorMouth: { x: 22, y: 35, w: 4, h: 1 },
+    shoulderMouth: { x: 22, y: 0, w: 4, h: 1 },
+  },
+  spineShoulder: {
+    size: { w: 56, h: 40 },
+    handMouth: { x: 26, y: 39, w: 4, h: 1 },
+    earMouth: { x: 26, y: 0, w: 4, h: 1 },
+    meltfall: { x: 25, y: 18, w: 6, h: 4 },
+  },
+  spineEar: {
+    size: { w: 52, h: 40 },
+    shoulderMouth: { x: 24, y: 39, w: 4, h: 1 },
+    boss: { x: 20, y: 9, w: 12, h: 7 },
+    resonance: { x: 22, y: 18, w: 8, h: 6 },
+  },
+} as const;
+
+/** Backward-compatible name used by arrival code and tests. */
+export const KVISTHAVN_LANDING = CH4_WORLD.kvisthavn.landing;
+export const SPINE_MELTFALL_CROSSING = CH4_WORLD.spineShoulder.meltfall;
+export const BRIDGE_BERRY_CROSSING = CH4_WORLD.bootstepMoor.bridge;
+
+function border(g: Grid, w: number, h: number, tile: string, openings: readonly { x: number; y: number; w: number; h: number }[]): void {
+  g.rect(0, 0, w, 1, tile);
+  g.rect(0, h - 1, w, 1, tile);
+  g.rect(0, 0, 1, h, tile);
+  g.rect(w - 1, 0, 1, h, tile);
+  for (const opening of openings) g.rect(opening.x, opening.y, opening.w, opening.h, opening.y === 0 || opening.y === h - 1 ? ':' : '=');
+}
+
 function buildKvisthavn(): MapDef {
-  const W = 36;
-  const H = 24;
-  const g = new Grid(W, H, '.'); // green/cobble (grass stand-in)
-  // cliffs N + sides; the fjord to the S
-  g.rect(0, 0, W, 2, 'B');
-  g.rect(0, 0, 1, H - 4, 'B');
-  g.rect(W - 1, 0, 1, H - 4, 'B');
-  g.rect(0, H - 3, W, 1, 'E'); // foam at the water's lip
-  g.rect(0, H - 2, W, 2, 'e'); // the fjord
-  // THE QUAY LANE — a cobbled spine, open + obviously connected
-  g.rect(2, 12, W - 4, 3, '=');
-  g.rect(16, 12, 3, 9, '='); // the quay steps down to the water
-  g.rect(2, 8, W - 4, 1, '='); // the back lane under the cliffs
-  // a green where the picnic + the arrival landing sit (west)
-  g.rect(3, 16, 12, 4, '.');
-  // gate gap E → the fjord road (bootstep_moor)
-  g.set(W - 1, 12, '.');
-  g.set(W - 1, 13, '.');
-  // THE HAMLET — Kvisthavn's own M25 skin (boathouse/chapel/cabin/cafe/shop)
-  const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
-  const row = buildDistrict(g, { x: 2, y: 2, w: 32, h: 6 }, new Streams(410401), {
-    layout: 'organic',
-    style: 'fog-stone',
-    catalog: AREA_SKINS.kvisthavn,
-    lanes: 3,
-    maxStories: 2,
-    sprinkle: true,
-    occupied,
-  });
+  const { w: W, h: H } = CH4_WORLD.kvisthavn.size;
+  const g = new Grid(W, H, '.');
+  g.sprinkle(410401, '.,,,~~', 0.08);
+  border(g, W, H, 'B', [CH4_WORLD.kvisthavn.moorMouth]);
 
+  // Black-cliff terraces: each ledge has two staggered stair cuts, not one ruler line.
+  g.rect(1, 7, 62, 3, 'B'); g.rect(8, 7, 5, 3, ':'); g.rect(47, 7, 6, 3, ':');
+  g.rect(1, 18, 62, 2, 'B'); g.rect(17, 18, 5, 2, ':'); g.rect(50, 18, 5, 2, ':');
+  g.rect(3, 10, 56, 5, ':');
+  g.rect(6, 21, 53, 5, '=');
+  g.rect(3, 29, 56, 5, '=');
+  g.rect(7, 35, 45, 6, 'd');
+  g.rect(50, 22, 14, 4, '=');
+
+  // Irregular foam bites and quay fingers make the fjord a working edge.
+  g.rect(0, 42, W, 6, 'e');
+  g.rect(5, 41, 13, 1, 'E'); g.rect(23, 41, 9, 1, 'E'); g.rect(38, 40, 19, 2, 'E');
+  g.rect(9, 40, 3, 5, 'd'); g.rect(18, 39, 4, 6, 'd'); g.rect(29, 40, 3, 5, 'd');
+  g.rect(45, 39, 5, 6, 'd');
+
+  // First four facades are a stable generated-unit contract. maps.ts turns
+  // units 0..3 into the cabin, supply store, agency and motor/fuel desk.
   const props: PropDef[] = [
-    ...row.props,
-    { sprite: treeSprite(3, 10), x: 3, y: 10, solid: TREE_SOLID },
-    { sprite: 'prop_pine_whisperwood', x: 33, y: 9, solid: PINE_SOLID },
-    { sprite: 'picnic', x: 5, y: 17, solid: PICNIC_SOLID }, // §A4.5 picnic #1 of 3
-    { sprite: 'payphone', x: 22, y: 11.2, solid: PHONE_SOLID },
-    { sprite: 'meteor_rock', x: 26, y: 17, solid: ROCK_SOLID }, // a mooring stone on the quay
+    { sprite: 'bldg_kvisthavn_fjord_cabin', x: 5, y: 11, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+    { sprite: 'bldg_kvisthavn_supply_shop', x: 25, y: 21, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+    { sprite: 'bldg_kvisthavn_harbor_cafe', x: 42, y: 21, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+    { sprite: 'bldg_kvisthavn_boathouse', x: 9, y: 29, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+    { sprite: 'bldg_kvisthavn_chapel', x: 49, y: 10, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+    { sprite: 'picnic', x: 37, y: 15, solid: PICNIC_SOLID },
+    { sprite: 'payphone', x: 34, y: 27, solid: PHONE_SOLID },
+    { sprite: treeSprite(3, 10), x: 3, y: 15, solid: TREE_SOLID },
+    { sprite: 'prop_pine_whisperwood', x: 59, y: 15, solid: PINE_SOLID },
+    { sprite: 'meteor_rock', x: 55, y: 36, solid: ROCK_SOLID },
+    // Net racks, loading pockets and smokehouse clutter use the authored harbor kit.
+    { sprite: 'crate', x: 13, y: 36, solid: CRATE_SOLID },
+    { sprite: 'crate', x: 16, y: 36, solid: CRATE_SOLID },
+    { sprite: 'crate_bananas', x: 25, y: 38, solid: CRATE_SOLID },
+    { sprite: 'footbridge_rail', x: 8, y: 39 },
+    { sprite: 'footbridge_rail', x: 39, y: 38 },
+    { sprite: 'prop_trail_marker', x: 57, y: 24 },
   ];
 
   return {
-    id: 'kvisthavn',
-    name: 'KVISTHAVN',
-    music: null,
-    settlement: 'village',
-    grid: g.out(),
-    props,
+    id: 'kvisthavn', name: 'KVISTHAVN', music: null, settlement: 'village',
+    grid: g.out(), props,
     npcs: [
-      // Sigrid — the spectacles giver (one obsession: she must see the fjord)
-      { id: 'kv_sigrid', sprite: 'sigrid_spectacles', x: 7, y: 13, facing: 'down', dialogue: 'npc_kv_sigrid', stationary: true, idle: true, emote: 'think' },
-      // Halvor — the fisher, the unsent-letter giver (one obsession: the one that got away, also literally a person)
-      { id: 'kv_halvor', sprite: 'kvisthavn_fisher', x: 17, y: 18, facing: 'down', dialogue: 'npc_kv_halvor', stationary: true },
-      // the bellkeeper — the silenced-bell giver (one obsession: a town that can be heard)
-      { id: 'kv_bellkeeper', sprite: 'aurora_busker', x: 28, y: 13, facing: 'down', dialogue: 'npc_kv_bellkeeper', stationary: true },
-      // the supply-shop keeper (one obsession: the fish were BIGGER before the hum)
-      { id: 'kv_shopkeeper', sprite: 'kvisthavn_shopkeeper', x: 11, y: 9, facing: 'down', dialogue: 'npc_kv_shopkeeper', shop: 'kvisthavn_supply' },
-      // a kid skipping stones (one obsession: the fjord hums back if you hum first)
-      { id: 'kv_kid', sprite: 'bell_choir_child', x: 14, y: 19, facing: 'down', dialogue: 'npc_kv_kid', wander: true, emote: 'happy' },
+      { id: 'kv_sigrid', sprite: 'sigrid_spectacles', x: 35, y: 31, facing: 'down', dialogue: 'npc_kv_sigrid', stationary: true, idle: true, emote: 'think' },
+      { id: 'kv_halvor', sprite: 'kvisthavn_fisher', x: 23, y: 38, facing: 'down', dialogue: 'npc_kv_halvor', stationary: true },
+      { id: 'kv_bellkeeper', sprite: 'aurora_busker', x: 51, y: 30, facing: 'down', dialogue: 'npc_kv_bellkeeper', stationary: true },
+      { id: 'kv_kid', sprite: 'bell_choir_child', x: 31, y: 38, facing: 'down', dialogue: 'npc_kv_kid', stationary: true, idle: true, emote: 'happy' },
     ],
     signs: [
-      { x: 3, y: 11, dialogue: 'sign_kvisthavn' },
-      { x: 34, y: 11, dialogue: 'sign_fjord_road' },
-      { x: 17, y: 15, dialogue: 'sign_quay_bell' },
+      { x: 8, y: 34, dialogue: 'sign_kvisthavn' },
+      { x: 58, y: 25, dialogue: 'sign_fjord_road' },
+      { x: 52, y: 31, dialogue: 'sign_quay_bell' },
     ],
-    phones: [{ x: 22, y: 11 }],
-    atms: [{ x: 24, y: 11 }],
+    phones: [{ x: 34, y: 27 }], atms: [{ x: 37, y: 27 }],
     doors: [
-      { x: W - 1, y: 12, w: 1, h: 2, to: 'bootstep_moor', tx: 16, ty: 9 * 16, facing: 'right', indicator: 'none' },
-      // board Lucille — she's moored at the quay where the North Sea hop set down,
-      // so once the next leg is earned the cabin Bert can fly the party onward (the
-      // foggybottom water-steps precedent; without this a post-Ch.4 party can't reach
-      // the cabin to fly to Minimus — the frontier needs its own boarding point)
-      { x: 16, y: 20, w: 2, h: 1, to: 'biplane_interior', tx: 11 * 16, ty: 8 * 16, facing: 'down', indicator: 'none' },
+      { ...CH4_WORLD.kvisthavn.moorMouth, to: 'bootstep_moor', tx: 2 * 16 + 8, ty: 39 * 16 + 12, facing: 'right', indicator: 'none' },
+      { ...CH4_WORLD.kvisthavn.lucille, to: 'biplane_interior', tx: 11 * 16, ty: 8 * 16, facing: 'down', indicator: 'none' },
     ],
-    spawners: [
-      // a lone gull works the quay (kept off the lane + away from the doors/phone)
-      { enemies: ['hushed_gull'], count: 1, rect: { x: 4, y: 20, w: 8, h: 1 } },
-    ],
-    // the §A6 arrival beat fires on the green where Lucille sets down (once)
+    spawners: [{ enemies: ['hushed_gull'], count: 1, rect: { x: 35, y: 36, w: 14, h: 4 } }],
     triggers: [
-      { id: 'ch4_arrival', rect: { x: 16, y: 7, w: 5, h: 2 }, once: true },
-      // §A10 "The Silenced Bell" — the clapper rolled off the quay (active-quest only)
-      { id: 'q_bell_clapper', rect: { x: 16, y: 19, w: 3, h: 2 }, once: false },
+      { id: 'ch4_arrival', rect: { x: 15, y: 35, w: 9, h: 5 }, once: true },
+      { id: 'q_bell_clapper', rect: { x: 45, y: 39, w: 5, h: 2 }, once: false },
     ],
-    reflect: [{ x: 0, y: H - 2, w: W, h: 2 }], // the fjord mirrors the quay (ADR-108)
+    reflect: [{ x: 0, y: 42, w: W, h: 6, within: 5 }],
   };
 }
 
-/* ───────────────────────────── BOOTSTEP MOOR ─────────────────────────────── *
- * Open moor where the LOW Ember's hum has swelled the wildlife to 10× (§A6) —
- * the chapter's scale-comedy roamers live here (the Colossal Gnat, the Thunder
- * Snail, the Dog-Sized Berry, the Enormous Frost-Hare, the Junior Jötun). A
- * gorge splits the moor; the BRIDGE BERRY blocks the only crossing until it is
- * fought or rolled aside (the §A7 set-piece). Sigrid's two pond-sized lenses sit
- * out on the bog (q_sigrid). Picnic #2 of 3. Lanes fork to Kvisthavn (W),
- * Lilleby (E), and down the Sleeper's hand into the Spine (S). */
 function buildBootstepMoor(): MapDef {
-  const W = 34;
-  const H = 18;
-  const g = new Grid(W, H, '.'); // open moor turf
-  g.rect(1, 8, W - 2, 2, ':'); // the W↔E moor lane
-  g.rect(15, 9, 2, 8, ':'); // the S fork down the giant's hand → the Spine
-  // drystone walls fringe the moor; the three path-mouths stay open
-  g.rect(0, 0, W, 1, 'B');
-  g.rect(0, H - 1, W, 1, 'B');
-  g.rect(0, 0, 1, H, 'B');
-  g.rect(W - 1, 0, 1, H, 'B');
-  g.set(0, 8, ':');
-  g.set(0, 9, ':'); // W mouth → kvisthavn
-  g.set(W - 1, 8, ':');
-  g.set(W - 1, 9, ':'); // E mouth → lilleby
-  g.set(15, H - 1, ':');
-  g.set(16, H - 1, ':'); // S mouth → the Sleeper's hand
-  // the gorge — a band of water cutting N–S that the bridge berry blocks
-  g.rect(22, 1, 2, 7, 'e');
-  g.rect(22, 10, 2, 7, 'e');
-  g.rect(22, 8, 2, 2, ':'); // the bridge planks (on the lane), berry-blocked
+  const { w: W, h: H } = CH4_WORLD.bootstepMoor.size;
+  const g = new Grid(W, H, '.');
+  g.sprinkle(410402, '.,,~~f', 0.12);
+  border(g, W, H, 'B', [CH4_WORLD.bootstepMoor.kvisthavnMouth, CH4_WORLD.bootstepMoor.lillebyMouth, CH4_WORLD.bootstepMoor.handMouth]);
 
+  // Wind-shaped story spine. Compression at the wall lane releases into a broad bog.
+  g.rect(1, 39, 18, 1, ':'); g.rect(17, 37, 22, 1, ':'); g.rect(36, 34, 24, 1, ':');
+  g.rect(60, 36, 4, 4, '='); g.rect(64, 35, 20, 1, ':'); g.rect(81, 30, 31, 1, ':');
+  g.rect(84, 30, 1, 50, ':');
+  // Optional lens loops, rare pocket, overlook, picnic and a return shortcut.
+  g.rect(12, 19, 1, 20, ':'); g.rect(12, 20, 24, 1, ':'); g.rect(36, 20, 1, 15, ':');
+  g.rect(22, 50, 1, 20, ':'); g.rect(22, 68, 27, 1, ':'); g.rect(49, 49, 1, 20, ':');
+  g.rect(72, 12, 1, 23, ':'); g.rect(72, 12, 21, 1, ':'); g.rect(92, 12, 1, 19, ':');
+
+  // Gorge: continuous, uncrossable water except the one berry-blocked plank span.
+  g.rect(60, 1, 4, 35, 'e'); g.rect(60, 40, 4, 39, 'e');
+  g.rect(59, 1, 1, 34, 'E'); g.rect(64, 1, 1, 34, 'E');
+  g.rect(59, 41, 1, 38, 'E'); g.rect(64, 41, 1, 38, 'E');
+  // Dry-stone courses form rooms and intentional openings instead of a border-only fence.
+  g.rect(3, 27, 31, 2, 'B'); g.rect(12, 27, 5, 2, ':'); g.rect(27, 27, 5, 2, ':');
+  g.rect(5, 54, 42, 2, 'B'); g.rect(19, 54, 7, 2, ':'); g.rect(42, 54, 6, 2, ':');
+  g.rect(69, 21, 34, 2, 'B'); g.rect(72, 21, 5, 2, ':'); g.rect(90, 21, 6, 2, ':');
+
+  const bridge = BRIDGE_BERRY_CROSSING;
   return {
-    id: 'bootstep_moor',
-    name: 'BOOTSTEP MOOR',
-    music: null,
-    grid: g.out(),
+    id: 'bootstep_moor', name: 'BOOTSTEP MOOR', music: null, grid: g.out(),
     props: [
-      { sprite: 'prop_pine_whisperwood', x: 4, y: 3, solid: PINE_SOLID },
-      { sprite: 'prop_pine_whisperwood_b', x: 28, y: 3, solid: PINE_SOLID },
-      { sprite: 'prop_pine_whisperwood_c', x: 30, y: 13, solid: PINE_SOLID },
-      { sprite: 'meteor_rock', x: 8, y: 13, solid: ROCK_SOLID }, // a glacial erratic
-      { sprite: 'prop_trail_marker', x: 17, y: 11 },
-      { sprite: 'picnic', x: 6, y: 5, solid: PICNIC_SOLID }, // §A4.5 picnic #2 of 3
+      { sprite: 'mini_giant_berry_blocker', x: bridge.x, y: bridge.y, scale: 4, solid: { ox: 0, oy: 0, w: 16, h: 15 }, unlessFlag: 'moor_berry_cleared' },
+      { sprite: 'giant_bootprint_snow', x: 13, y: 20 },
+      { sprite: 'giant_bootprint_snow', x: 44, y: 64, rot: 90 },
+      { sprite: 'giant_bootprint_snow', x: 89, y: 11, rot: 180 },
+      { sprite: 'giant_bootprint_snow', x: 77, y: 48, rot: 270 },
+      { sprite: 'picnic', x: 28, y: 65, solid: PICNIC_SOLID },
+      { sprite: 'meteor_rock', x: 5, y: 17, solid: ROCK_SOLID },
+      { sprite: 'meteor_rock', x: 40, y: 44, solid: ROCK_SOLID },
+      { sprite: 'meteor_rock', x: 99, y: 16, solid: ROCK_SOLID },
+      { sprite: 'meteor_rock', x: 47, y: 49, scale: 2, solid: { ox: 0, oy: 0, w: 32, h: 32 }, unlessFlag: 'q_footprints_done' },
+      { sprite: 'prop_pine_whisperwood', x: 6, y: 32, solid: PINE_SOLID },
+      { sprite: 'prop_pine_whisperwood_b', x: 52, y: 25, solid: PINE_SOLID },
+      { sprite: 'prop_pine_whisperwood_c', x: 102, y: 45, solid: PINE_SOLID },
+      { sprite: 'prop_trail_marker', x: 80, y: 35 },
     ],
-    npcs: [
-      { id: 'moor_walker', sprite: 'bootstep_shepherd', x: 12, y: 7, facing: 'down', dialogue: 'npc_moor_walker', wander: true },
-    ],
-    signs: [
-      { x: 10, y: 9, dialogue: 'sign_bootstep_moor' },
-      { x: 21, y: 9, dialogue: 'sign_gorge' },
-    ],
+    npcs: [{ id: 'moor_walker', sprite: 'bootstep_shepherd', x: 18, y: 37, facing: 'down', dialogue: 'npc_moor_walker', stationary: true, idle: true }],
+    signs: [{ x: 7, y: 40, dialogue: 'sign_bootstep_moor' }, { x: 56, y: 37, dialogue: 'sign_gorge' }],
     phones: [],
     doors: [
-      { x: 0, y: 8, w: 1, h: 2, to: 'kvisthavn', tx: 34 * 16, ty: 12 * 16, facing: 'left', indicator: 'none' },
-      { x: W - 1, y: 8, w: 1, h: 2, to: 'lilleby', tx: 1 * 16 + 8, ty: 11 * 16 + 12, facing: 'right', indicator: 'none' }, // land tile interior: body box clears the (0,10) border edge (no clamp rescue)
-      { x: 15, y: H - 1, w: 2, h: 1, to: 'spine_hand', tx: 12 * 16, ty: 12 * 16, facing: 'up', indicator: 'none' },
+      { ...CH4_WORLD.bootstepMoor.kvisthavnMouth, to: 'kvisthavn', tx: 61 * 16 + 8, ty: 23 * 16 + 12, facing: 'left', indicator: 'none' },
+      { ...CH4_WORLD.bootstepMoor.lillebyMouth, to: 'lilleby', tx: 2 * 16 + 8, ty: 29 * 16 + 12, facing: 'right', indicator: 'none' },
+      { ...CH4_WORLD.bootstepMoor.handMouth, to: 'spine_hand', tx: 24 * 16, ty: 33 * 16 + 12, facing: 'up', indicator: 'none' },
     ],
     spawners: [
-      // the airborne nuisances of the near moor — the gnat, the midge-cloud, and the
-      // §A7 Bog-Cotton Wisp that drifts across the path like a slow soft wall
-      { enemies: ['colossal_gnat', 'moor_midge_cloud', 'bog_cotton_wisp'], count: 2, rect: { x: 3, y: 3, w: 8, h: 3 } },
-      // the FAR moor (east of the gorge — reached only once the Bridge Berry is moved),
-      // so its heavies read as later pressure: the snail, the lichen-troll, and the
-      // §A7 late-pressure Hushed Skua wheeling in off the water to rob and silence
-      { enemies: ['thunder_snail', 'boulder_lichen', 'hushed_skua'], count: 1, rect: { x: 25, y: 3, w: 6, h: 3 } },
-      { enemies: ['frost_hare', 'dog_sized_berry'], count: 2, rect: { x: 25, y: 12, w: 7, h: 3 } },
-      // the moor's single RARE slot (count 1): the grab-bruiser shares it with the §A7
-      // two rare / high-value (the Amber-Hoard Troll's treasure + the Aurora Moth's
-      // wealth-wink), so each stays genuinely uncommon — one rare roamer, 1-of-3 per roll
-      { enemies: ['junior_jotun', 'amber_hoard_troll', 'aurora_moth'], count: 1, rect: { x: 9, y: 12, w: 5, h: 3 } },
+      { enemies: ['colossal_gnat', 'moor_midge_cloud', 'bog_cotton_wisp'], count: 2, rect: { x: 23, y: 29, w: 18, h: 8 } },
+      { enemies: ['junior_jotun', 'amber_hoard_troll', 'aurora_moth'], count: 1, rect: { x: 31, y: 57, w: 16, h: 7 } },
+      { enemies: ['thunder_snail', 'boulder_lichen', 'hushed_skua'], count: 2, rect: { x: 70, y: 23, w: 18, h: 8 } },
+      { enemies: ['frost_hare', 'dog_sized_berry'], count: 2, rect: { x: 91, y: 34, w: 15, h: 10 } },
     ],
     triggers: [
-      // §A10 "Sigrid's Spectacles" — the two pond-sized lenses (active-quest only)
-      { id: 'q_sigrid_lens1', rect: { x: 4, y: 13, w: 3, h: 2 }, once: false },
-      { id: 'q_sigrid_lens2', rect: { x: 18, y: 4, w: 3, h: 2 }, once: false },
-      // §A10 "The Giant's Picnic" — one moor berry for the human-sized feast
-      { id: 'q_picnic_berry', rect: { x: 18, y: 13, w: 3, h: 2 }, once: false },
-      // the §A7 set-piece: the Bridge Berry blocks the gorge until it is moved
-      { id: 'moor_bridge_berry', rect: { x: 22, y: 8, w: 2, h: 2 }, once: false },
+      { id: 'ch4_moor_reveal', rect: { x: 18, y: 34, w: 12, h: 8 }, once: true },
+      { id: 'q_sigrid_lens1', rect: { x: 9, y: 17, w: 8, h: 6 }, once: false },
+      { id: 'q_sigrid_lens2', rect: { x: 87, y: 9, w: 9, h: 7 }, once: false },
+      { id: 'q_picnic_berry', rect: { x: 45, y: 47, w: 7, h: 6 }, once: false },
+      { id: 'q_footprint_1', rect: { x: 11, y: 18, w: 7, h: 6 }, once: false },
+      { id: 'q_footprint_2', rect: { x: 42, y: 62, w: 8, h: 7 }, once: false },
+      { id: 'q_footprint_3', rect: { x: 86, y: 9, w: 10, h: 7 }, once: false },
+      { id: 'moor_bridge_berry', rect: bridge, once: false },
     ],
-    reflect: [{ x: 22, y: 1, w: 2, h: 7 }], // the gorge water
+    reflect: [{ x: 60, y: 1, w: 4, h: 78, within: 4 }],
   };
 }
 
-/* ───────────────────────────── LILLEBY ───────────────────────────────────── *
- * The giants' town (pop. 41), where the party walks UNDER the doors and giants
- * kneel to talk ("WELCOME TO LILLEBY. Everything here is normal-sized. — the
- * Booster Club"). The Mayor wants to host a human-sized picnic (q_picnic);
- * Halvor's sweetheart of forty years lives here now, enormous and waiting
- * (unsent_letter delivery). A giant house-cat naps in a sunbeam the size of a
- * court (the §A7 Whiskerzilla seed). The warehouse keeps the dear goods. Picnic
- * #3 of 3 — the last rest before the Spine.
- *
- * §A6 FULL-GULLIVER (the GIANT half, mirror of Ch.5 Minimus): the town's NATIVES —
- * citizens, furniture, and the fog-stone facades themselves — render at the giant
- * scale (LILLEBY_GIANT_SCALE in OverworldScene) so the party is DWARFED. The map is
- * authored to feel that scope: a dense skyline of colossal facades that crane off the
- * top of the screen backs the north (buildDistrict + `mega:true` so bldg_tower_arms
- * finally rises), and below it a GRAND FLAGSTONE SQUARE holds giant everyday things —
- * a fountain the size of a pond, a market of table-tall stalls, a well you'd fall
- * into, a picnic table the party climbs onto — with the tiny cast threading between
- * their feet. Everything walkable is grass/flagstone (reachability is grid-based); the
- * only solids are the wall, the facades, and a few landmark props, so nothing is ever
- * sealed off. */
 function buildLilleby(): MapDef {
-  const W = 50;
-  const H = 32;
+  const { w: W, h: H } = CH4_WORLD.lilleby.size;
   const g = new Grid(W, H, '.');
-  // wildflower + tuft turf, so the giants' commons reads as a lived-in meadow-town,
-  // never bare grass (walkable chars only — no random solid bushes on the walkways)
-  g.sprinkle(410404, ' ,~,~fF', 0.1);
-
-  // the drystone town wall — giants stack it high (B = solid); the west gate opens to the moor
-  g.rect(0, 0, W, 2, 'B');
-  g.rect(0, 0, 1, H, 'B');
-  g.rect(W - 1, 0, 1, H, 'B');
-  g.rect(0, H - 1, W, 1, 'B');
-  g.set(0, 11, '=');
-  g.set(0, 12, '='); // W gate → bootstep_moor (the door lands ~tile 1,11)
-
-  // ── THE GREAT SQUARE ────────────────────────────────────────────────────────
-  // A grand flagstone commons the colossi promenade — no drivable cells (giants walk
-  // it on foot). Grass islands are carved back in for the town's gardens. Everything
-  // here is walkable; only the wall, the facades, and a few landmark props are solid.
-  g.rect(1, 11, W - 2, 3, '='); // the upper promenade, under the giants' doorsteps
-  g.rect(2, 14, W - 4, 12, '='); // the Great Square — a broad flagstone commons, y14-25
-  g.rect(1, 11, 6, 15, '='); // the west entry sweeps the gate down into the square
-  // garden islands in the flagstone (walkable turf the giants keep their beds on)
-  g.rect(23, 16, 5, 4, '.'); // the central green — the great fountain stands on it
-  g.rect(8, 21, 3, 3, '.'); // west garden bed
-  g.rect(39, 21, 3, 3, '.'); // east garden bed
-  g.rect(22, 15, 7, 1, 'F'); // gold flowers ringing the fountain green
-  // a low clipped hedge fringes the far corners (solid — kept clear of every walkway)
-  g.rect(2, 28, 2, 2, 'b');
-  g.rect(W - 4, 28, 2, 2, 'b');
-  g.rect(2, 4, 1, 4, 'b');
-  g.rect(W - 3, 4, 1, 4, 'b');
-
-  const FOUNTAIN_SOLID = { ox: 6, oy: 24, w: 28, h: 12 } as const;
-  const WELL_SOLID = { ox: 4, oy: 20, w: 16, h: 10 } as const;
-  const STALL_SOLID = { ox: 6, oy: 20, w: 28, h: 12 } as const;
-  const CRATE_SOLID = { ox: 3, oy: 8, w: 14, h: 9 } as const;
-  const TABLE_SOLID = { ox: 0, oy: 8, w: 30, h: 10 } as const;
-
-  const props: PropDef[] = [
-    // ── THE GIANTS' SKYLINE ──────────────────────────────────────────────────
-    // Colossal fog-stone facades line the north, hand-placed + spaced for their giant
-    // footprint (they render ~9 tiles wide) so the row reads as a packed cityscape and
-    // never a sealed wall — the promenade runs in front of their feet. The engine swells
-    // each ×the giant scale, so they crane off the top of the screen: you tip your head
-    // back at the doors. bldg_tower_arms is the landmark COLOSSUS, foot-anchored high
-    // (y ≈ 0.6) so it rises clean out of view — the "you walk under the giants" payoff.
-    { sprite: 'bldg_lilleby_giant_inn', x: 4, y: 8 },
-    { sprite: 'bldg_lilleby_runic_bank', x: 13, y: 8 },
-    { sprite: 'bldg_tower_arms', x: 22, y: 4 }, // the mega colossus — foots at the skyline (y11), rises off-screen
-    { sprite: 'bldg_lilleby_warehouse', x: 33, y: 8 }, // the shop (the keeper stands at its foot)
-    { sprite: 'bldg_lilleby_tiny_house', x: 42, y: 8 }, // the "tiny" house — still four storeys to you
-    // THE GREAT FOUNTAIN — the pond-sized heart of the square (party wades its shadow)
-    { sprite: 'fountain', x: 24, y: 15, solid: FOUNTAIN_SOLID },
-    // a pair of car-sized doorstep boulders flanking the west gate
-    { sprite: 'meteor_rock', x: 3, y: 22, solid: ROCK_SOLID },
-    { sprite: 'meteor_rock', x: 7, y: 12, solid: ROCK_SOLID },
-    // THE MARKET (SW) — table-tall stalls, a fall-in well, and crates by the warehouse
-    { sprite: 'market_stall_a', x: 5, y: 22, solid: STALL_SOLID },
-    { sprite: 'market_stall_b', x: 10, y: 24, solid: STALL_SOLID },
-    { sprite: 'well', x: 15, y: 21, solid: WELL_SOLID },
-    { sprite: 'crate', x: 8, y: 25, solid: CRATE_SOLID },
-    { sprite: 'crate_bananas', x: 17, y: 23, solid: CRATE_SOLID },
-    // THE PICNIC LAWN (SE) — the great table the party climbs onto (q_picnic) + a stall
-    { sprite: 'desk', x: 36, y: 20, solid: TABLE_SOLID }, // the great table (q_picnic set)
-    { sprite: 'picnic', x: 41, y: 22, solid: PICNIC_SOLID }, // §A4.5 picnic #3 of 3
-    { sprite: 'market_stall_c', x: 44, y: 24, solid: STALL_SOLID },
-    { sprite: 'bench', x: 20, y: 17 },
-    { sprite: 'bench', x: 31, y: 17 },
-    // gardens — Whisperwood pines + planters the giants tend, framing the square
-    { sprite: 'prop_pine_whisperwood', x: 2, y: 25, solid: PINE_SOLID },
-    { sprite: 'prop_pine_whisperwood_b', x: 46, y: 25, solid: PINE_SOLID },
-    { sprite: 'prop_pine_whisperwood_c', x: 46, y: 14, solid: PINE_SOLID },
-    { sprite: 'prop_pine_whisperwood', x: 2, y: 14, solid: PINE_SOLID },
-    { sprite: 'planter', x: 9, y: 21 },
-    { sprite: 'planter', x: 40, y: 21 },
-    { sprite: 'plant_pot', x: 29, y: 19 },
-    { sprite: 'plant_pot', x: 22, y: 19 },
-    // giants' street furniture — the payphone booth + a news box + a trail marker at the gate
-    { sprite: 'payphone', x: 9, y: 15, solid: PHONE_SOLID },
-    { sprite: 'news_box', x: 13, y: 15 },
-    { sprite: 'atm', x: 11, y: 15 },
-    { sprite: 'prop_trail_marker', x: 4, y: 16 },
-  ];
+  g.sprinkle(410404, '.,,~fF', 0.08);
+  border(g, W, H, 'B', [CH4_WORLD.lilleby.moorMouth]);
+  // West gate → Great Square → market/warehouse, with residential and garden loops.
+  g.rect(1, 28, 20, 4, '=');
+  g.rect(15, 20, 37, 22, 'p');
+  g.rect(46, 24, 25, 6, '=');
+  g.rect(47, 28, 6, 20, '=');
+  g.rect(21, 40, 31, 6, 'p');
+  g.rect(8, 16, 7, 31, ':'); g.rect(8, 14, 24, 6, ':'); g.rect(28, 16, 6, 7, ':');
+  g.rect(55, 12, 6, 13, ':'); g.rect(51, 10, 15, 5, ':');
+  // Immense garden islands keep negative space authored, not empty.
+  g.rect(24, 25, 9, 8, '.'); g.rect(35, 34, 8, 6, '.'); g.rect(55, 34, 11, 12, '.');
+  g.rect(23, 24, 11, 1, 'F'); g.rect(54, 33, 13, 1, 'F');
 
   return {
-    id: 'lilleby',
-    name: 'LILLEBY',
-    music: null,
-    settlement: 'village',
-    grid: g.out(),
-    props,
+    id: 'lilleby', name: 'LILLEBY', music: null, settlement: 'village', grid: g.out(),
+    props: [
+      // Doorless facades are intentional: occupancy creates genuine interiors;
+      // facade collision automatically leaves their visible openings walkable.
+      { sprite: 'bldg_lilleby_giant_inn', x: 7, y: 9, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+      { sprite: 'bldg_lilleby_runic_bank', x: 25, y: 14, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+      { sprite: 'bldg_lilleby_warehouse', x: 48, y: 18, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+      { sprite: 'bldg_lilleby_tiny_house', x: 56, y: 5, solid: { ox: 0, oy: 10, w: 80, h: 90 } },
+      { sprite: 'bldg_tower_arms', x: 35, y: 3, solid: { ox: 0, oy: 10, w: 80, h: 120 } },
+      { sprite: 'fountain', x: 27, y: 25, solid: { ox: 6, oy: 24, w: 28, h: 12 } },
+      { sprite: 'market_stall_a', x: 18, y: 34, solid: STALL_SOLID },
+      { sprite: 'market_stall_b', x: 23, y: 38, solid: STALL_SOLID },
+      { sprite: 'well', x: 31, y: 36, solid: { ox: 4, oy: 20, w: 16, h: 10 } },
+      { sprite: 'desk', x: 57, y: 37, solid: { ox: 0, oy: 8, w: 30, h: 10 }, unlessFlag: 'q_picnic_done' },
+      { sprite: 'dining_table', x: 57, y: 37, solid: { ox: 2, oy: 12, w: 30, h: 18 }, ifFlag: 'q_picnic_done' },
+      { sprite: 'picnic', x: 63, y: 43, solid: PICNIC_SOLID },
+      { sprite: 'payphone', x: 21, y: 24, solid: PHONE_SOLID },
+      { sprite: 'parking_meter', x: 49, y: 32 },
+      { sprite: 'prop_rate_board', x: 51, y: 32 },
+      { sprite: 'crate', x: 45, y: 35, solid: CRATE_SOLID },
+      { sprite: 'crate_bananas', x: 49, y: 37, solid: CRATE_SOLID },
+      { sprite: 'meteor_rock', x: 4, y: 33, solid: ROCK_SOLID },
+      { sprite: 'prop_pine_whisperwood', x: 4, y: 19, solid: PINE_SOLID },
+      { sprite: 'prop_pine_whisperwood_b', x: 67, y: 48, solid: PINE_SOLID },
+    ],
     npcs: [
-      // the Mayor — the picnic giver (one obsession: everything here is NORMAL-SIZED)
-      { id: 'll_mayor', sprite: 'mayor_of_lilleby', x: 26, y: 21, facing: 'down', dialogue: 'npc_ll_mayor', stationary: true, emote: 'happy' },
-      // the warehouse keeper (one obsession: kneeling to ring up very small customers)
-      { id: 'll_keeper', sprite: 'canteen_keeper', x: 12, y: 23, facing: 'down', dialogue: 'npc_ll_keeper', shop: 'lilleby_warehouse' },
-      // Halvor's sweetheart, forty years on (unsent_letter delivery target)
-      { id: 'll_sweetheart', sprite: 'fjord_nurse', x: 38, y: 18, facing: 'down', dialogue: 'npc_ll_sweetheart', stationary: true, idle: true },
-      // a giant child (one obsession: the little people are SO well-behaved)
-      { id: 'll_child', sprite: 'lilleby_giant_child', x: 20, y: 24, facing: 'down', dialogue: 'npc_ll_child', wander: true },
-      // the undertaker (one obsession: nobody here has died; he is very bored)
-      { id: 'll_undertaker', sprite: 'lilleby_undertaker', x: 33, y: 24, facing: 'down', dialogue: 'npc_ll_undertaker', wander: true, emote: 'sleep' },
+      { id: 'll_mayor', sprite: 'mayor_of_lilleby', x: 30, y: 35, facing: 'down', dialogue: 'npc_ll_mayor', stationary: true, emote: 'happy' },
+      { id: 'll_keeper', sprite: 'canteen_keeper', x: 48, y: 33, facing: 'down', dialogue: 'npc_ll_keeper', shop: 'lilleby_warehouse', stationary: true },
+      { id: 'll_sweetheart', sprite: 'fjord_nurse', x: 59, y: 28, facing: 'down', dialogue: 'npc_ll_sweetheart', stationary: true, idle: true },
+      { id: 'll_child', sprite: 'lilleby_giant_child', x: 22, y: 29, facing: 'down', dialogue: 'npc_ll_child', stationary: true, idle: true },
+      { id: 'll_undertaker', sprite: 'lilleby_undertaker', x: 13, y: 43, facing: 'down', dialogue: 'npc_ll_undertaker', stationary: true, idle: true, emote: 'sleep' },
+      { id: 'll_pump_attendant', sprite: 'canteen_keeper', x: 52, y: 33, facing: 'down', dialogue: 'npc_ll_pump', stationary: true },
     ],
-    signs: [
-      { x: 3, y: 14, dialogue: 'sign_lilleby' }, // "WELCOME TO LILLEBY. Everything here is normal-sized."
-      { x: 34, y: 19, dialogue: 'sign_great_table' },
-    ],
-    phones: [{ x: 9, y: 16 }],
-    atms: [{ x: 11, y: 16 }],
-    doors: [
-      { x: 0, y: 11, w: 1, h: 2, to: 'bootstep_moor', tx: 32 * 16, ty: 8 * 16, facing: 'left', indicator: 'none' },
-    ],
-    spawners: [
-      // the giants' domestic things, swelled by the hum: the napping house-cat, the
-      // lost mitten, and the §A7 Runaway Knitting Needles clacking around the south end
-      { enemies: ['giant_house_cat', 'lost_mitten', 'knitting_needles'], count: 1, rect: { x: 42, y: 22, w: 5, h: 3 } },
-    ],
+    signs: [{ x: 4, y: 31, dialogue: 'sign_lilleby' }, { x: 56, y: 40, dialogue: 'sign_great_table' }],
+    phones: [{ x: 21, y: 24 }], atms: [{ x: 23, y: 24 }],
+    doors: [{ ...CH4_WORLD.lilleby.moorMouth, to: 'bootstep_moor', tx: 109 * 16 + 8, ty: 29 * 16 + 12, facing: 'left', indicator: 'none' }],
+    spawners: [{ enemies: ['giant_house_cat', 'lost_mitten', 'knitting_needles'], count: 1, rect: { x: 57, y: 47, w: 10, h: 5 } }],
     triggers: [
-      // §A10 "The Giant's Picnic" — gather the slice + the berry, then lay the table
-      { id: 'q_picnic_brunost', rect: { x: 9, y: 23, w: 4, h: 2 }, once: false }, // at the market (the brunost wheel)
-      { id: 'q_picnic_set', rect: { x: 35, y: 20, w: 4, h: 2 }, once: false }, // at the great table
+      { id: 'ch4_lilleby_reveal', rect: { x: 2, y: 27, w: 12, h: 7 }, once: true },
+      { id: 'q_picnic_brunost', rect: { x: 43, y: 33, w: 8, h: 6 }, once: false },
+      { id: 'q_picnic_set', rect: { x: 55, y: 36, w: 8, h: 6 }, once: false },
     ],
   };
 }
-
-/* ═══════════════════ THE SLEEPER'S SPINE — the dungeon ════════════════════ *
- * Grandfather Storheim, 100×, asleep forty years. The dungeon crosses his body
- * hand → shoulder → ear; his terrain IS the architecture (§A6 — never a giant
- * sprite). Three dungeon specialists make the body fight back (the Earwax Amber
- * Golem, the Dream-Leech, the Snore-Gust). The §A4.11 PSI gate (freeze the
- * meltwater fall off his shoulder, `spine_meltfall`) gates the way to the ear.
- * The Sleeper's Ear is the §A6 Resonance Site, where the WHISPERWIG burrows and
- * Heartlight 4 (The Deep Hum) is recorded. A travel-worn kid in a gi keeps
- * turning up a step ahead (the Dorin cameo, §A3/ADR-125 — never gives his name). */
 
 function buildSpineHand(): MapDef {
-  const W = 24;
-  const H = 14;
-  const g = new Grid(W, H, 'o'); // the giant's warm skin (interior floor stand-in)
-  g.rect(0, 0, W, 1, 'O');
-  g.rect(0, 0, 1, H, 'O');
-  g.rect(W - 1, 0, 1, H, 'O');
-  g.rect(0, H - 1, W, 1, 'O');
-  g.set(11, 0, 'o'); // the way up the arm (N → the shoulder)
-  g.set(12, 0, 'o');
-  g.set(11, H - 1, 'o'); // back out onto the moor (S)
-  g.set(12, H - 1, 'o');
-  // knuckle ridges — soft walls that make the hand a small maze
-  g.rect(5, 4, 1, 6, 'O');
-  g.rect(18, 4, 1, 6, 'O');
+  const { w: W, h: H } = CH4_WORLD.spineHand.size;
+  const g = new Grid(W, H, 'o');
+  border(g, W, H, 'O', [CH4_WORLD.spineHand.moorMouth, CH4_WORLD.spineHand.shoulderMouth]);
+  // Five finger/knuckle terraces; palm creases create a loose loop and shortcut.
+  g.rect(4, 5, 5, 18, 'O'); g.rect(12, 3, 5, 15, 'O'); g.rect(20, 2, 5, 13, 'O');
+  g.rect(28, 4, 5, 15, 'O'); g.rect(36, 7, 5, 17, 'O');
+  g.rect(7, 24, 34, 3, 'O'); g.rect(13, 24, 5, 3, 'o'); g.rect(31, 24, 5, 3, 'o');
+  g.rect(21, 15, 4, 21, 'o'); g.rect(14, 28, 20, 5, 'o');
+  g.rect(22, 0, 4, 7, 'o'); // shoulder landing clears the middle-knuckle wall
+  g.rect(22, 35, 4, 1, 'o');
   return {
-    id: 'spine_hand',
-    name: "THE SLEEPER'S HAND",
-    music: null,
-    interior: true,
-    grid: g.out(),
+    id: 'spine_hand', name: "THE SLEEPER'S HAND", music: null, interior: true, grid: g.out(),
     props: [
-      { sprite: 'meteor_rock', x: 8, y: 6, solid: ROCK_SOLID }, // a fingernail like a cliff
-      { sprite: 'meteor_rock', x: 15, y: 8, solid: ROCK_SOLID },
-      // §A4.11 dressing — coarse giant hair + amber wax pushing up through the warm
-      // skin-floor (non-solid ambient detail; never blocks the small maze)
-      { sprite: 'prop_giant_hair', x: 3, y: 4 },
-      { sprite: 'prop_giant_hair', x: 20, y: 5 },
-      { sprite: 'prop_giant_hair', x: 5, y: 11 },
-      { sprite: 'prop_giant_hair', x: 19, y: 11 },
-      { sprite: 'prop_amber_wax', x: 7, y: 3 },
-      { sprite: 'prop_amber_wax', x: 16, y: 11 },
+      { sprite: 'meteor_rock', x: 5, y: 3, solid: ROCK_SOLID }, { sprite: 'meteor_rock', x: 37, y: 6, solid: ROCK_SOLID },
+      { sprite: 'prop_giant_hair', x: 9, y: 27 }, { sprite: 'prop_giant_hair', x: 38, y: 27 },
+      { sprite: 'prop_giant_hair', x: 3, y: 30 }, { sprite: 'prop_amber_wax', x: 28, y: 29 },
     ],
-    npcs: [
-      // the Dorin cameo — a travel-worn kid in a gi, asleep sitting up, beads in hand
-      { id: 'spine_walker', sprite: 'sleepwalker_miner', x: 12, y: 7, facing: 'down', dialogue: 'npc_spine_walker', emote: 'sleep' },
-    ],
-    signs: [{ x: 11, y: 3, dialogue: 'sign_spine_hand' }],
-    phones: [],
+    npcs: [{ id: 'spine_walker', sprite: 'sleepwalker_miner', x: 34, y: 29, facing: 'left', dialogue: 'npc_spine_walker', stationary: true, idle: true, emote: 'sleep' }],
+    signs: [{ x: 23, y: 31, dialogue: 'sign_spine_hand' }], phones: [],
     doors: [
-      { x: 11, y: H - 1, w: 2, h: 1, to: 'bootstep_moor', tx: 15 * 16, ty: 16 * 16, facing: 'down', indicator: 'none' },
-      { x: 11, y: 0, w: 2, h: 1, to: 'spine_shoulder', tx: 12 * 16, ty: 12 * 16, facing: 'up', indicator: 'none' },
+      { ...CH4_WORLD.spineHand.moorMouth, to: 'bootstep_moor', tx: 85 * 16, ty: 77 * 16 + 12, facing: 'down', indicator: 'none' },
+      { ...CH4_WORLD.spineHand.shoulderMouth, to: 'spine_shoulder', tx: 28 * 16, ty: 37 * 16 + 12, facing: 'up', indicator: 'none' },
     ],
-    spawners: [
-      { enemies: ['dream_leech', 'snore_gust'], count: 2, rect: { x: 7, y: 5, w: 10, h: 4 } },
-    ],
-    triggers: [],
+    spawners: [{ enemies: ['dream_leech', 'snore_gust'], count: 2, rect: { x: 18, y: 18, w: 16, h: 6 } }],
+    triggers: [{ id: 'ch4_spine_reveal', rect: { x: 19, y: 27, w: 10, h: 7 }, once: true }],
   };
 }
 
 function buildSpineShoulder(): MapDef {
-  const W = 24;
-  const H = 14;
+  const { w: W, h: H } = CH4_WORLD.spineShoulder.size;
   const g = new Grid(W, H, 'o');
-  g.rect(0, 0, W, 1, 'O');
-  g.rect(0, 0, 1, H, 'O');
-  g.rect(W - 1, 0, 1, H, 'O');
-  g.rect(0, H - 1, W, 1, 'O');
-  g.set(11, H - 1, 'o'); // down to the hand (S)
-  g.set(12, H - 1, 'o');
-  // THE MELTWATER FALL — a band of water across the shoulder (the §A4.11 gate).
-  // Frozen by Vibe Freeze (Mia learned it Ch.2), it becomes a crossable bridge
-  // to the ear beyond. Until then, the fall blocks the north way.
-  g.rect(1, 5, W - 2, 2, 'e');
-  g.rect(10, 5, 4, 2, 'E'); // the lip the cast freezes (the crossing, 4 wide to clear
-  // the walker's collision box at the door-entry columns x11/x12 — see the
-  // spine_meltfall_frozen carve in OverworldScene.buildTiles)
-  g.set(11, 0, 'o'); // the way up to the ear (N), beyond the fall
-  g.set(12, 0, 'o');
+  border(g, W, H, 'O', [CH4_WORLD.spineShoulder.handMouth, CH4_WORLD.spineShoulder.earMouth]);
+  // Rolling shoulder switchbacks below/above the only meltwater crossing.
+  g.rect(9, 30, 38, 4, 'o'); g.rect(8, 25, 6, 8, 'o'); g.rect(8, 23, 21, 5, 'o');
+  g.rect(27, 21, 4, 6, 'o'); g.rect(27, 14, 20, 5, 'o'); g.rect(43, 8, 5, 10, 'o');
+  g.rect(27, 5, 21, 5, 'o'); g.rect(26, 0, 4, 9, 'o');
+  g.rect(1, 18, W - 2, 4, 'e');
+  g.rect(SPINE_MELTFALL_CROSSING.x, SPINE_MELTFALL_CROSSING.y, SPINE_MELTFALL_CROSSING.w, SPINE_MELTFALL_CROSSING.h, 'E');
+  g.rect(23, 22, 10, 18, 'o'); // casting apron and body-box-safe approach from the hand
+  g.rect(26, 39, 4, 1, 'o');
   return {
-    id: 'spine_shoulder',
-    name: "THE SLEEPER'S SHOULDER",
-    music: null,
-    interior: true,
-    grid: g.out(),
+    id: 'spine_shoulder', name: "THE SLEEPER'S SHOULDER", music: null, interior: true, grid: g.out(),
     props: [
-      { sprite: 'meteor_rock', x: 4, y: 9, solid: ROCK_SOLID },
-      { sprite: 'meteor_rock', x: 17, y: 9, solid: ROCK_SOLID },
-      { sprite: 'prop_trail_marker', x: 12, y: 8 },
-      // §A4.11 dressing — giant hair + amber wax flanking the frozen fall (non-solid;
-      // clear of the crossing/gate rect and the spawner band)
-      { sprite: 'prop_giant_hair', x: 3, y: 3 },
-      { sprite: 'prop_giant_hair', x: 20, y: 3 },
-      { sprite: 'prop_amber_wax', x: 6, y: 11 },
-      { sprite: 'prop_amber_wax', x: 16, y: 11 },
+      { sprite: 'giant_bootprint_snow', x: 38, y: 6 },
+      { sprite: 'meteor_rock', x: 13, y: 25, solid: ROCK_SOLID }, { sprite: 'meteor_rock', x: 42, y: 13, solid: ROCK_SOLID },
+      { sprite: 'prop_giant_hair', x: 5, y: 15 }, { sprite: 'prop_giant_hair', x: 50, y: 23 },
+      { sprite: 'prop_amber_wax', x: 16, y: 32 },
     ],
-    npcs: [],
-    signs: [{ x: 9, y: 8, dialogue: 'sign_spine_meltfall' }],
-    phones: [],
+    npcs: [], signs: [{ x: 23, y: 24, dialogue: 'sign_spine_meltfall' }], phones: [],
     doors: [
-      { x: 11, y: H - 1, w: 2, h: 1, to: 'spine_hand', tx: 11 * 16 + 8, ty: 1 * 16 + 12, facing: 'down', indicator: 'none' }, // land tile interior: body box clears the (10,0) border corner (no clamp rescue)
-      { x: 11, y: 0, w: 2, h: 1, to: 'spine_ear', tx: 11 * 16, ty: 13 * 16, facing: 'up', indicator: 'none' },
+      { ...CH4_WORLD.spineShoulder.handMouth, to: 'spine_hand', tx: 24 * 16, ty: 2 * 16 + 12, facing: 'down', indicator: 'none' },
+      { ...CH4_WORLD.spineShoulder.earMouth, to: 'spine_ear', tx: 26 * 16, ty: 37 * 16 + 12, facing: 'up', indicator: 'none' },
     ],
-    spawners: [
-      // past the frozen meltfall (the §A4.11 gate) the cold deepens — the §A7 late-
-      // pressure Frost-Jötun Elder hauls itself up off the Sleeper's icy shoulder
-      { enemies: ['earwax_golem', 'snore_gust', 'frost_jotun_elder'], count: 2, rect: { x: 4, y: 9, w: 14, h: 3 } },
-    ],
-    // §A4.11 PSI gate — freeze the meltwater fall to a bridge (`spine_meltfall`)
-    triggers: [{ id: 'spine_meltfall', rect: { x: 10, y: 7, w: 4, h: 1 }, once: false }],
-    reflect: [{ x: 1, y: 5, w: W - 2, h: 2 }], // the meltwater
+    spawners: [{ enemies: ['earwax_golem', 'snore_gust', 'frost_jotun_elder'], count: 2, rect: { x: 14, y: 27, w: 25, h: 6 } }],
+    triggers: [{ id: 'spine_meltfall', rect: { x: 23, y: 23, w: 10, h: 4 }, once: false }],
+    reflect: [{ x: 1, y: 18, w: W - 2, h: 4, within: 4 }],
   };
 }
 
 function buildSpineEar(): MapDef {
-  const W = 22;
-  const H = 16;
-  const g = new Grid(W, H, 'o'); // the warm dark of the ear canal
-  g.rect(0, 0, W, 1, 'O');
-  g.rect(0, 0, 1, H, 'O');
-  g.rect(W - 1, 0, 1, H, 'O');
-  g.rect(0, H - 1, W, 1, 'O');
-  g.set(10, H - 1, 'o'); // back down to the shoulder (S)
-  g.set(11, H - 1, 'o');
-  // the canal spirals inward — soft curved walls to the resonance chamber
-  g.rect(4, 4, 14, 1, 'O');
-  g.rect(4, 4, 1, 6, 'O');
-  g.rect(17, 4, 1, 6, 'O');
-  g.set(10, 4, 'o'); // the gap inward
-  g.set(11, 4, 'o');
+  const { w: W, h: H } = CH4_WORLD.spineEar.size;
+  const g = new Grid(W, H, 'o');
+  border(g, W, H, 'O', [CH4_WORLD.spineEar.shoulderMouth]);
+  // Organic square-spiral: broad enough for body boxes, steadily compressed.
+  g.rect(6, 6, 40, 3, 'O'); g.rect(6, 6, 3, 27, 'O'); g.rect(6, 30, 34, 3, 'O');
+  g.rect(37, 13, 3, 20, 'O'); g.rect(14, 13, 26, 3, 'O'); g.rect(14, 13, 3, 12, 'O');
+  g.rect(14, 22, 18, 3, 'O');
+  g.rect(24, 31, 4, 9, 'o');
+  g.rect(23, 6, 6, 3, 'o'); g.rect(37, 20, 3, 6, 'o'); g.rect(25, 22, 7, 3, 'o');
   return {
-    id: 'spine_ear',
-    name: "THE SLEEPER'S EAR",
-    music: null,
-    interior: true,
-    grid: g.out(),
+    id: 'spine_ear', name: "THE SLEEPER'S EAR", music: null, interior: true, grid: g.out(),
     props: [
-      // §A6 dressing — the resonance ring centers the chamber AND cues the §A6 ember
-      // site (was under-read vs Ch.3's old_stones); the amber wax is the real prop now
-      // (the meteor_rocks were standing in for it), giant hair lines the lower canal.
-      // All non-solid: the player must still step the resonance trigger underneath.
-      { sprite: 'prop_resonance_stones', x: 10, y: 8 },
-      { sprite: 'prop_amber_wax', x: 6, y: 7 },
-      { sprite: 'prop_amber_wax', x: 14, y: 7 },
-      { sprite: 'prop_giant_hair', x: 4, y: 12 },
-      { sprite: 'prop_giant_hair', x: 17, y: 12 },
+      { sprite: 'prop_resonance_stones', x: 22, y: 17, ifFlag: 'whisperwig_defeated' },
+      { sprite: 'prop_amber_wax', x: 10, y: 26 }, { sprite: 'prop_amber_wax', x: 40, y: 10 },
+      { sprite: 'prop_giant_hair', x: 19, y: 34 }, { sprite: 'prop_giant_hair', x: 32, y: 28 },
     ],
-    npcs: [],
-    signs: [{ x: 10, y: 11, dialogue: 'sign_sleepers_ear' }],
-    phones: [],
-    doors: [
-      // arrive CENTERED on the 2-wide gap (tile 12, matching spine_hand's tx) so the
-      // walker's collision box clears the x10 wall corner — an off-centre tile-11
-      // arrival jams against the door edge on the backtrack (needs a sideways nudge).
-      { x: 10, y: H - 1, w: 2, h: 1, to: 'spine_shoulder', tx: 12 * 16, ty: 1 * 16, facing: 'down', indicator: 'none' },
-    ],
-    spawners: [
-      { enemies: ['earwax_golem', 'dream_leech'], count: 1, rect: { x: 5, y: 11, w: 5, h: 2 } },
-    ],
+    npcs: [], signs: [{ x: 25, y: 27, dialogue: 'sign_sleepers_ear' }], phones: [],
+    doors: [{ ...CH4_WORLD.spineEar.shoulderMouth, to: 'spine_shoulder', tx: 28 * 16, ty: 2 * 16 + 12, facing: 'down', indicator: 'none' }],
+    spawners: [{ enemies: ['earwax_golem', 'dream_leech'], count: 2, rect: { x: 18, y: 27, w: 15, h: 5 }, unlessFlag: 'whisperwig_defeated' }],
     triggers: [
-      // the §A6 BOSS — the Whisperwig burrows in the canal (the boss room is the ear)
-      { id: 'whisperwig_boss', rect: { x: 9, y: 5, w: 4, h: 2 }, once: false },
-      // the Resonance Site — Heartlight 4 (The Deep Hum) records once the boss falls
-      { id: 'sleepers_ear_resonance', rect: { x: 9, y: 7, w: 4, h: 3 }, once: true },
+      { id: 'whisperwig_boss', rect: CH4_WORLD.spineEar.boss, once: false },
+      { id: 'sleepers_ear_resonance', rect: CH4_WORLD.spineEar.resonance, once: true },
     ],
   };
 }
 
-/**
- * THE CHAPTER 4 MAP SET — Lucille's North Sea hop lands at Kvisthavn; the moor
- * and the giants' town bracket the Sleeper's Spine; the ear holds the §A6 boss
- * and Heartlight 4. Assembled like buildChapter3Maps (a record spread into MAPS).
- */
 export function buildChapter4Maps(): Record<string, MapDef> {
   return {
-    kvisthavn: buildKvisthavn(),
-    bootstep_moor: buildBootstepMoor(),
-    lilleby: buildLilleby(),
-    spine_hand: buildSpineHand(),
-    spine_shoulder: buildSpineShoulder(),
-    spine_ear: buildSpineEar(),
+    kvisthavn: buildKvisthavn(), bootstep_moor: buildBootstepMoor(), lilleby: buildLilleby(),
+    spine_hand: buildSpineHand(), spine_shoulder: buildSpineShoulder(), spine_ear: buildSpineEar(),
   };
 }

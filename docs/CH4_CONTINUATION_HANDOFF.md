@@ -1,5 +1,10 @@
 # CH.4 NORWAY — CONTINUATION HANDOFF (art pass ~90% done)
 
+> **Historical as of 2026-07-12.** Chapter 4 now has its production world,
+> services, contextual story, five quests, dev profiles, and v21 migration.
+> Old test counts and remaining-art claims below are archival; see ADR-140 and
+> `docs/CH4_PRODUCTION_VERIFICATION.md`.
+
 > **You are the next agent. Read this whole file first, then `/CLAUDE.md`,
 > `docs/ART_PIPELINE.md`, `docs/GAME_BIBLE.md` §A6/§A7, and the original
 > `docs/CH4_ART_PASS_HANDOFF.md` (the data-spine context).** The Ch.4 data spine

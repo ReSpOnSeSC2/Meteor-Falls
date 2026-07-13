@@ -309,7 +309,14 @@ but with no art. Each unbuilt chapter needs a complete region art set.
 | 1 | USA — Otterbrook / Brickton | **shipped** | Titanic Tick (450) | otterbrook, brickton | — |
 | 2 | South America — Puerto Sol / Valle Dorado | **shipped** | Idol of the Gilded Grin (980) | puerto_sol, valle_dorado | banana boat |
 | 3 | England — Foggybottom / Wintermoor | **shipped** | Headmaster Mainframe (750) | foggybottom | biplane "Lucille" |
-| 4 | Norway — Kvisthavn / Lilleby | **unbuilt** | The Whisperwig (1900) | kvisthavn, lilleby | biplane |
+| 4 | Norway — Kvisthavn / Lilleby | **production world shipped** | The Whisperwig (1800) | kvisthavn, bootstep_moor, lilleby, spine_hand, spine_shoulder, spine_ear | biplane |
+
+Chapter 4's production rebuild reuses the retained Norway masters, authored
+battlers/minis/NPCs/facades, both battle backdrops, Sleeper props,
+`giant_bootprint_snow`, and the Bridge Berry's derived mini. The Norway strip
+now registers all sixteen cells; live maps consume its ground, path, water,
+wall, shore, frozen-pond, boardwalk, and masonry materials. No procedural or
+placeholder bitmap was introduced.
 | 5 | Minimus — Minimus Major | **unbuilt** | Whiskerzilla (2150) | minimus_major | biplane |
 | 6 | Africa — Zanzibel | **unbuilt** | The Laughing Sphinx (2300) | zanzibel | biplane |
 | 7 | India — Chandrapore | **unbuilt** | Cobra Raja (3200) | chandrapore | night train |

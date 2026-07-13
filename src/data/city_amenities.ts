@@ -21,7 +21,7 @@ export type FormalCityId = (typeof FORMAL_CITY_IDS)[number];
 
 /** Amenity settlements are broader than formal cities. Foggybottom remains a
  * town in the world taxonomy while opting into the same real service domains. */
-export const AMENITY_TOWN_IDS = ['foggybottom'] as const;
+export const AMENITY_TOWN_IDS = ['foggybottom', 'kvisthavn'] as const;
 export const AMENITY_SETTLEMENT_IDS = [...FORMAL_CITY_IDS, ...AMENITY_TOWN_IDS] as const;
 export type AmenitySettlementId = (typeof AMENITY_SETTLEMENT_IDS)[number];
 
@@ -256,6 +256,26 @@ export const FOGGYBOTTOM_AMENITY: CityAmenityDef<'foggybottom'> = {
   },
 };
 
+export const KVISTHAVN_AMENITY: CityAmenityDef<'kvisthavn'> = {
+  cityId: 'kvisthavn',
+  residential: { propertyId: 'fjord_cabin', listingName: 'The Kvisthavn Cabin' },
+  agency: { name: 'Fjord Keys & Cabins' },
+  dealership: {
+    name: 'Kvisthavn Motor & Fyll',
+    featuredVehicleId: 'city_ev',
+    displayVehicleIds: ['city_ev', 'work_van'],
+    stationId: 'kvisthavn_fyll',
+    deliveryBase: { area: 'kvisthavn', x: 30 * 16 + 8, y: 34 * 16 + 12, facing: 'right' },
+  },
+  hotel: { name: 'Harbor Café Rooms', rate: 70 },
+  facadeHints: {
+    home: ['fjord_cabin'], agency: ['harbor_cafe'], dealership: ['boathouse'], hotel: ['chapel'],
+  },
+  serviceUnits: {
+    home: 'kvisthavn_unit_0', agency: 'kvisthavn_unit_2', dealership: 'kvisthavn_unit_3',
+  },
+};
+
 /** Runtime-facing amenity registry. CITY_AMENITIES deliberately remains the
  * exact seven-city contract used by formal-city generation and validation. */
 export const SETTLEMENT_AMENITIES: Readonly<
@@ -263,6 +283,7 @@ export const SETTLEMENT_AMENITIES: Readonly<
 > = {
   ...CITY_AMENITIES,
   foggybottom: FOGGYBOTTOM_AMENITY,
+  kvisthavn: KVISTHAVN_AMENITY,
 };
 
 export interface CityServiceNpcBinding {
