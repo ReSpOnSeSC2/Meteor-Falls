@@ -374,7 +374,17 @@ function readManifest(path: string): Manifest {
 function collectWork(): Array<{ id: string; ops: FixOp[] }> {
   const manifestPath = firstValue('manifest');
   if (manifestPath) {
-    return Object.entries(readManifest(manifestPath).characters).map(([id, ops]) => ({ id, ops }));
+    const work = Object.entries(readManifest(manifestPath).characters).map(([id, ops]) => ({ id, ops }));
+    const requested = [...allValues('char'), ...allValues('character')];
+    if (requested.length === 0) return work;
+
+    const requestedIds = new Set(requested);
+    const selected = work.filter(({ id }) => requestedIds.has(id));
+    const missing = requested.filter((id) => !work.some((entry) => entry.id === id));
+    if (missing.length > 0) {
+      throw new Error(`manifest does not contain requested character(s): ${missing.join(', ')}`);
+    }
+    return selected;
   }
 
   const id = firstValue('char') ?? firstValue('character');
