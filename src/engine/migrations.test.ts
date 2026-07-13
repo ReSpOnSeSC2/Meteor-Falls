@@ -9,6 +9,8 @@ import {
   CHAPTER4_PARKING_RECOVERY,
   CHAPTER5_LAYOUT_RECOVERY,
   CHAPTER5_PARKING_RECOVERY,
+  CHAPTER6_LAYOUT_RECOVERY,
+  CHAPTER6_PARKING_RECOVERY,
 } from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
@@ -16,6 +18,7 @@ import { s } from '../spritegen/scale';
 import { buildChapter3Maps } from '../data/maps_ch3';
 import { buildChapter4Maps } from '../data/maps_ch4';
 import { buildChapter5Maps } from '../data/maps_ch5';
+import { buildChapter6Maps } from '../data/maps_ch6';
 import { vehicleParkingSlotsOverlap } from './vehicle-domain';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
@@ -1098,5 +1101,95 @@ describe('save migration registry -- v21 to v22: Chapter 5 production layouts', 
     wanted.version = CURRENT_SAVE_VERSION;
     const migrated = migrateSave(raw, newGameData());
     expect(JSON.stringify(migrated)).toBe(JSON.stringify(wanted));
+  });
+});
+
+describe('save migration registry -- v22 to v23: Chapter 6 production layouts', () => {
+  const expected = {
+    zanzibel: { tile: [12, 52], facing: 'down' },
+    savanna_run: { tile: [2, 50], facing: 'right' },
+    laughing_ruins: { tile: [40, 85], facing: 'up' },
+    sphinx_chin: { tile: [28, 41], facing: 'up' },
+  } as const;
+
+  const v22At = (map: string): Record<string, unknown> => {
+    const raw = newGameData() as unknown as Record<string, unknown>;
+    raw.version = 22;
+    raw.map = map;
+    raw.x = 99999;
+    raw.y = -1;
+    raw.facing = 'left';
+    raw.flags = {
+      ch5_complete: true,
+      ch6_arrived: true,
+      held_breath_unlocked: true,
+      ch6_string_decided: true,
+      ch6_string_free: true,
+      q_convoy: true,
+      q_convoy_reach: true,
+    };
+    raw.vehicleParking = {};
+    return raw;
+  };
+
+  it('pins exactly the four stable Chapter 6 ids to in-bounds walkable recovery tiles', () => {
+    expect(Object.keys(CHAPTER6_LAYOUT_RECOVERY)).toEqual(Object.keys(expected));
+    const maps = buildChapter6Maps();
+    const walkable = new Set(['.', ',', '~', 'f', 'F', ':', 'w', 'r', 'o', '=', 'R', 'D', '_', 'X', 'P', 'd', 'p']);
+    for (const [mapId, target] of Object.entries(expected)) {
+      const [tx, ty] = target.tile;
+      const map = maps[mapId];
+      expect(map, mapId).toBeDefined();
+      expect(walkable.has(map.grid[ty][tx]), `${mapId} tile '${map.grid[ty][tx]}'`).toBe(true);
+      expect(CHAPTER6_LAYOUT_RECOVERY[mapId as keyof typeof expected]).toEqual({
+        x: tx * 16 + 8, y: ty * 16 + 12, facing: target.facing,
+      });
+    }
+  });
+
+  it.each(Object.entries(expected))('recovers %s while preserving flags exactly', (mapId, target) => {
+    const raw = v22At(mapId);
+    const flagsBefore = JSON.stringify(raw.flags);
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.version).toBe(CURRENT_SAVE_VERSION);
+    expect(migrated.map).toBe(mapId);
+    expect(migrated.x).toBe(s(target.tile[0] * 16 + 8));
+    expect(migrated.y).toBe(s(target.tile[1] * 16 + 12));
+    expect(migrated.facing).toBe(target.facing);
+    expect(JSON.stringify(migrated.flags)).toBe(flagsBefore);
+  });
+
+  it('rehomes multi-vehicle Chapter 6 parking deterministically without stacking', () => {
+    const raw = v22At('zanzibel');
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'zanzibel', x: 100, y: 200, facing: 'left' },
+      title_car_ev: { area: 'zanzibel', x: 100, y: 200, facing: 'right' },
+      title_car_bmx: { area: 'savanna_run', x: 100, y: 200, facing: 'up' },
+      title_car_van: { area: 'otterbrook', x: 144, y: 288, facing: 'left' },
+    };
+    const migrated = migrateSave(raw, newGameData());
+    const city = CHAPTER6_PARKING_RECOVERY.zanzibel;
+    const run = CHAPTER6_PARKING_RECOVERY.savanna_run;
+    expect(migrated.vehicleParking.title_car_ev).toEqual({ area: 'zanzibel', x: s(city.x), y: s(city.y), facing: city.facing });
+    expect(migrated.vehicleParking.title_car_bmx).toEqual({ area: 'savanna_run', x: s(run.x), y: s(run.y), facing: run.facing });
+    expect(migrated.vehicleParking.title_car_van).toEqual({ area: 'otterbrook', x: 144, y: 288, facing: 'left' });
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_sedan', migrated.vehicleParking.title_car_sedan,
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+    )).toBe(false);
+  });
+
+  it('leaves unrelated and prototype-like records byte-for-byte except for version', () => {
+    for (const map of ['otterbrook', 'constructor']) {
+      const raw = v22At(map);
+      raw.x = 1234; raw.y = 5678; raw.facing = 'downleft';
+      raw.vehicleParking = {
+        malformed: { area: 'zanzibel', note: 'missing coordinates' },
+        prototype: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
+      };
+      const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+      wanted.version = CURRENT_SAVE_VERSION;
+      expect(JSON.stringify(migrateSave(raw, newGameData()))).toBe(JSON.stringify(wanted));
+    }
   });
 });

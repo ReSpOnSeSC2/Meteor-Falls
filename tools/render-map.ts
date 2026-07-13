@@ -301,6 +301,16 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     ],
     cellW: 560, cellH: 460,
   },
+  ch6: {
+    title: 'METEOR FALLS - CHAPTER 6: THE RUINS THAT LAUGH (ZANZIBEL)',
+    // The four production exteriors plus every live generated unit. Historical
+    // units 0..4 remain visible while the expanded city tenancy is audited too.
+    ids: [
+      'zanzibel', 'savanna_run', 'laughing_ruins', 'sphinx_chin',
+      ...Array.from({ length: 14 }, (_, index) => `zanzibel_unit_${index}`),
+    ],
+    cellW: 560, cellH: 460,
+  },
   formal_cities: {
     title: 'FORMAL CITIES - PRODUCTION FACADE SCALE QA',
     ids: ['brickton', 'puerto_sol', 'valle_dorado', 'minimus_major', 'zanzibel', 'chandrapore', 'lotus_harbor'],

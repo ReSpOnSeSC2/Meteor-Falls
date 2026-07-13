@@ -5,7 +5,7 @@
  * band, boss, quests, Heartlight/Ember number, and target level.
  *
  * THE S14c RULE (ADR-046): a 'shipped' manifest is asserted AGAINST LIVE content
- * (MAPS/ENEMIES/QUESTS/BOSS_SCRIPTS — Ch.1–2 below); an 'unlanded' one is
+ * (MAPS/ENEMIES/QUESTS/BOSS_SCRIPTS); an 'unlanded' one is
  * asserted against the forge DRAFTS (the forged roster + the draft boss script —
  * Ch.3–10). When a chapter lands, its session flips `status` to 'shipped' and
  * fills in the LIVE maps/quests; the validator's live assertions switch on in
@@ -18,15 +18,14 @@
 import type { ChapterManifest } from '../schemas';
 
 /**
- * All ten chapters, keyed by chapter number as a string ('1'…'10'). Ch.1–3 are
- * SHIPPED (the live manifests, England landed S18/ADR-099); Ch.4–10 are UNLANDED (the forge has the
- * 60% — a banded roster + a draft boss firing its gimmick — the session spends
- * itself on the SOUL at promotion). Boss HP is the §A6 ladder; the bespoke Tick
+ * All ten chapters, keyed by chapter number as a string ('1'…'10'). Every
+ * manifest is now shipped and validator-backed; the forge drafts remain historical
+ * promotion inputs only. Boss HP is the §A6 ladder; the bespoke Tick
  * (Ch.1) and the Hush finale (Ch.10) carry template 'bespoke' (not one of the
  * ten forge templates). Heartlight stem names are recorded where §A6 names them.
  */
 export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
-  /* ============================ SHIPPED (Ch.1–3) ============================ */
+  /* ============================ SHIPPED MANIFESTS ============================ */
 
   1: {
     chapter: 1,

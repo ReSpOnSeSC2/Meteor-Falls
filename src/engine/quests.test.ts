@@ -109,4 +109,31 @@ describe('completeQuest — rewards via the bag flow, callers onto the ledger', 
     expect(frozen.effect).not.toBe(biscuit.caller.effect); // distinct object
     expect(frozen.effect).toEqual(biscuit.caller.effect); // same values
   });
+
+  it('pins both Chapter 6 rewards and caller effects, with idempotent completion', () => {
+    expect(completeQuest('watering_hole_convoy')).toBe('ok');
+    expect(GS.hasItem('savanna_cloak')).toBe(true);
+    expect(GS.data.callers[0]).toMatchObject({
+      quest: 'watering_hole_convoy', effect: { kind: 'heal', power: 460 },
+    });
+    expect(completeQuest('stones_that_speak')).toBe('ok');
+    expect(GS.hasItem('griot_string')).toBe(true);
+    expect(GS.data.callers[1]).toMatchObject({
+      quest: 'stones_that_speak', effect: { kind: 'damage', power: 455 },
+    });
+    expect(completeQuest('watering_hole_convoy')).toBe('already');
+    expect(completeQuest('stones_that_speak')).toBe('already');
+    expect(GS.data.callers).toHaveLength(2);
+  });
+
+  it('keeps a Chapter 6 quest retryable when every bag is full', () => {
+    for (const hero of GS.data.party) while (hero.bag.length < BAG_MAX) hero.bag.push('pbj');
+    expect(completeQuest('stones_that_speak')).toBe('hands-full');
+    expect(GS.flag('q_stones_done')).toBe(false);
+    expect(GS.data.callers).toHaveLength(0);
+    GS.data.party[0].bag.pop();
+    expect(completeQuest('stones_that_speak')).toBe('ok');
+    expect(GS.hasItem('griot_string')).toBe(true);
+    expect(GS.data.callers).toHaveLength(1);
+  });
 });

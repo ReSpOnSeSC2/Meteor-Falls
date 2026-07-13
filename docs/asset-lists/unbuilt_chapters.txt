@@ -1,4 +1,4 @@
-# Unbuilt chapters (Ch.4-10) — art bundles to build
+# Historical chapter art-bundle queue (shipped rows are marked)
 # Source of truth: src/data/chapters.ts (CHAPTER_MANIFESTS), docs/GAME_BIBLE.md
 # Each chapter = tileset + dungeon + settlement facades + ~10-15 NPCs (8-dir)
 #   + 20-enemy roster (x3 wear = 60 imgs) + boss + battle background
@@ -6,7 +6,7 @@
 
 CH4  Norway       boss=the_whisperwig (1900)    towns=kvisthavn, lilleby        travel=biplane     dungeon=sleepers_spine
 CH5  Minimus      boss=whiskerzilla (2150)       towns=minimus_major             travel=biplane     dungeon=the_hedgerow
-CH6  Africa       boss=laughing_sphinx (2300)    towns=zanzibel                  travel=biplane     dungeon=laughing_ruins
+CH6  SHIPPED      boss=laughing_sphinx (9000)    maps=zanzibel,savanna_run,laughing_ruins,sphinx_chin  travel=biplane
 CH7  India        boss=cobra_raja (3200)         towns=chandrapore               travel=night_train dungeon=night_train
 CH8  China        boss=paper_dragon (4100)       towns=lotus_harbor              travel=riverboat   dungeon=spore_forest
 CH9  Romania      boss=count_hoaxula (5300)      towns=valea_stelelor            travel=train       dungeon=castle_hoaxula

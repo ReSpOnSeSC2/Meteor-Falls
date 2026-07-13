@@ -129,13 +129,15 @@ big_little_lens_build, pippa_matchbox_briefing, **pippa_joins_party (→HYBRID, 
 whiskerzilla_knighted, heartlight_5_bell_choir.
 → STILL today; `pippa_joins_party` is the prime hybrid once a Minimus map exists.
 
-### Ch6 — Zanzibel · ❌ NO MAPS (but cast sprites mostly EXIST) → STILL
+### Ch6 — Zanzibel · ✅ PRODUCTION MAPS → CONTEXTUAL RUNTIME PANELS
 caravan_to_zanzibel, savanna_caravan_at_dusk, zanzibel_market,
 courier_teaches_teleport_alpha, laughing_ruins, laughing_sphinx_riddle,
 sphinx_chin_resonance.
-→ STILL today. **Cast already has sprites** (caravan_captain, market_queen,
-courier_mystic, ruins_guide, riddle_stone_elder) — so ch6 is the **best
-hybrid-ready chapter the moment its maps are authored.**
+→ `ch6_journey` retains the full gallery in that exact order. Runtime now plays
+spoiler-safe contextual ids: `ch6_flight`, `ch6_arrival`, `ch6_courier`,
+`ch6_ruins`, `ch6_sphinx`, and `ch6_heartlight`; `ch6_held_breath` remains the
+dedicated rewind awakening. The courier event contextualizes Jay’s established
+level-26 Teleport Alpha without creating a second ability-grant path.
 
 ### Ch7 — Chandrapore · ❌ NO MAPS → STILL
 night_train_to_chandrapore, chandrapore_bazaars, locket_train_heist,

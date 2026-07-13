@@ -1,9 +1,9 @@
 # WORLD OVERHAUL — Ch3+ program handoff (the master doc)
 
-> **Chapter 4 production close (2026-07-12):** Norway now ships six rebuilt
-> maps, five quests, live amenities, Bridge Berry/meltfall phase geometry,
-> contextual cutscenes, representative dev profiles, and v21 recovery. Its
-> fixed-point contract is ADR-140; future world work proceeds beyond Norway.
+> **Chapter 6 production close (2026-07-13):** Zanzibel now ships four rebuilt
+> maps, two complete quests, spoiler-safe contextual cutscenes, stable expanded
+> tenancy, eight representative dev profiles, and v23 recovery. Its fixed-point
+> contract is ADR-141; future world work proceeds to Chapter 7.
 
 Copy this whole file into a fresh Claude Code session in `C:\Meteor Falls` to continue the
 program. It is the canonical, living source of truth; the plan-mode file
@@ -591,5 +591,33 @@ Known non-blocking debt is limited to shared/global surfaces: the strict visual
 audit's pre-existing report of 94 unregistered battle PNGs and the broader
 stylization program's still-unfinished universal/per-region 47-blob ground
 families. Neither is a missing Chapter 3 runtime dependency; the sixteen new
-world props are registered and in use. With the close gates green, the next
-world-design slice is Chapter 4—not another Chapter 3 placeholder pass.
+world props are registered and in use.
+
+## Chapter 6 production close
+
+The Chapter 6 save-facing roster is exactly `zanzibel`, `savanna_run`,
+`laughing_ruins`, and `sphinx_chin`, at 72×56, 104×64, 80×88, and 56×44.
+`CH6_WORLD` owns route mouths, landing, story rectangles, boss/resonance staging,
+developer spawns, and migration reasoning. Zanzibel has sixteen supported source
+facades and fourteen live generated units; the first six source sprites,
+historical locked index 4, units 0–4, service NPC ids, return doors, and established
+unit identities are frozen. New lock index 12 is part of the v23 contract.
+
+Savanna Run is a clearing-chain route with separate watering-hole and escort
+beats. Laughing Ruins forces the Held Breath unlock before the Trust dilemma in
+both geometry and runtime logic; early choice contact is explicitly rejected.
+Every ruin spawner retires under `laughing_sphinx_defeated`. Sphinx’s Chin keeps
+the 9,000-HP boss and Heartlight chamber spatially separate.
+
+The full Chapter 6 gallery remains `ch6_journey`, while runtime uses flight,
+arrival, courier, ruins, Sphinx, and Heartlight subsets plus the Held Breath
+panel. Teleport Alpha remains Jay’s established level-26 ability; the courier is
+a real story tutorial, not a second grant path. Both core quests now award their
+fixed item and Caller, block cleanly on full bags, retry, and complete only once.
+
+Save v23 relocates only invalidated Chapter 6 player/parking geometry and keeps
+flags—including Held Breath, Trust, and quest progress—exact. The supported dev
+seam is `?devMap=<ch6-id>&devState=arrival|city|savanna|ruins|choice|boss|postBoss|complete`.
+All profiles use the five-person level-30 party, five prior Embers, and the Lens
+and Thimble key items without preselecting Trust. Exact evidence lives in
+`docs/CH6_PRODUCTION_VERIFICATION.md`; the next production slice is Chapter 7.

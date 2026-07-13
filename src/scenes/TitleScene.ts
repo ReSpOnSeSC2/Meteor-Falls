@@ -15,6 +15,7 @@ import {
 } from '../data/maps_ch2';
 import { CH4_MAP_IDS, CH4_WORLD } from '../data/maps_ch4';
 import { CH5_MAP_IDS, CH5_WORLD } from '../data/maps_ch5';
+import { CH6_MAP_IDS, CH6_WORLD } from '../data/maps_ch6';
 
 export const CH3_DEV_MAP_IDS = [
   'biplane_interior', 'foggybottom', 'kettle_taproom', 'kettle_snug',
@@ -135,6 +136,66 @@ export function chapter5DevSpawn(mapId: string, state: Chapter5DevState): { x: n
   return { x: tile.x * TILE_PX + TILE_PX / 2, y: tile.y * TILE_PX + TILE_PX * 0.75, facing: tile.facing };
 }
 
+export const CH6_DEV_MAP_IDS = CH6_MAP_IDS;
+const CH6_DEV_MAP_SET: ReadonlySet<string> = new Set(CH6_DEV_MAP_IDS);
+export type Chapter6DevState = 'arrival' | 'city' | 'savanna' | 'ruins' | 'choice' | 'boss' | 'postBoss' | 'complete';
+
+export interface Chapter6DevProfile {
+  state: Chapter6DevState;
+  flags: readonly string[];
+  embers: number;
+  keyItems: readonly ['big_little_lens', 'royal_thimble'];
+  party: readonly ['rex', 'faye', 'milo', 'pippa', 'dorin'];
+  level: 30;
+}
+
+export function chapter6DevProfile(value: string | null): Chapter6DevProfile {
+  const valid: readonly Chapter6DevState[] = ['arrival', 'city', 'savanna', 'ruins', 'choice', 'boss', 'postBoss', 'complete'];
+  const state: Chapter6DevState = valid.includes(value as Chapter6DevState) ? value as Chapter6DevState : 'city';
+  const flags = [
+    'ember1', 'ember2', 'ember3', 'ember4', 'ember5',
+    'ch2_complete', 'ch3_arrived', 'ch3_complete', 'ch4_arrived', 'ch4_complete',
+    'ch5_arrived', 'ch5_complete', 'milo_joined', 'pippa_joined', 'dorin_joined',
+    'repair_taught', 'milo_clicker', 'fleet_road', 'big_little_lens_built',
+    'mainframe_defeated', 'whisperwig_defeated', 'whiskerzilla_defeated',
+    'awake_freeze_a', 'awake_mindwarp_a', 'awake_volt_a', 'thread_trust_open',
+  ];
+  if (state !== 'arrival') flags.push('ch6_arrived');
+  if (['savanna', 'ruins', 'choice', 'boss', 'postBoss', 'complete'].includes(state)) flags.push('ch6_courier_seen');
+  if (['ruins', 'choice', 'boss', 'postBoss', 'complete'].includes(state)) flags.push('ch6_ruins_seen');
+  if (['choice', 'boss', 'postBoss', 'complete'].includes(state)) flags.push('held_breath_unlocked');
+  if (['postBoss', 'complete'].includes(state)) flags.push('ch6_sphinx_seen', 'laughing_sphinx_defeated');
+  if (state === 'complete') flags.push('ch6_heartlight_seen', 'ember6', 'ch6_complete');
+  return {
+    state,
+    flags,
+    embers: state === 'complete' ? 6 : 5,
+    keyItems: ['big_little_lens', 'royal_thimble'],
+    party: ['rex', 'faye', 'milo', 'pippa', 'dorin'],
+    level: 30,
+  };
+}
+
+export function chapter6DevSpawn(mapId: string, state: Chapter6DevState): { x: number; y: number; facing: Facing } {
+  const tile = mapId === 'zanzibel'
+    ? state === 'arrival'
+      ? { ...CH6_WORLD.zanzibel.landing, facing: 'down' as const }
+      : { x: 34, y: 31, facing: 'right' as const }
+    : mapId === 'savanna_run'
+      ? { x: 2, y: 50, facing: 'right' as const }
+      : mapId === 'laughing_ruins'
+        ? state === 'choice' || state === 'boss' || state === 'postBoss' || state === 'complete'
+          ? { x: 50, y: 38, facing: 'up' as const }
+          : { x: 40, y: 78, facing: 'up' as const }
+        : mapId === 'sphinx_chin'
+          ? state === 'postBoss' || state === 'complete'
+            ? { x: 28, y: 16, facing: 'up' as const }
+            : { x: 28, y: 38, facing: 'up' as const }
+          : null;
+  if (!tile) return chapter3DevSpawn(mapId);
+  return { x: tile.x * TILE_PX + TILE_PX / 2, y: tile.y * TILE_PX + TILE_PX * 0.75, facing: tile.facing };
+}
+
 /** A representative, deterministic Chapter 3 survey save. It includes the
  * two prior Heartlights and Mia's Freeze; post-join states also carry Jay's
  * First Borrow and enough real stats/PP to exercise PUPPET. */
@@ -212,7 +273,7 @@ export class TitleScene extends Phaser.Scene {
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
       const devMap = params.get('devMap');
-      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap))) {
+      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap))) {
         GS.reset();
         GS.setFlag('intro_done');
         GS.setFlag('op_fell');
@@ -223,6 +284,7 @@ export class TitleScene extends Phaser.Scene {
         const isChapter3 = CH3_DEV_MAP_SET.has(devMap);
         const isChapter4 = CH4_DEV_MAP_SET.has(devMap);
         const isChapter5 = CH5_DEV_MAP_SET.has(devMap);
+        const isChapter6 = CH6_DEV_MAP_SET.has(devMap);
         if (isChapter3) {
           // Default to a clean post-join/pre-boss survey state. `devState`
           // exposes the production before/after beats without console surgery:
@@ -252,6 +314,12 @@ export class TitleScene extends Phaser.Scene {
           profile.flags.forEach((flag) => GS.setFlag(flag));
           GS.data.embers = profile.embers;
           GS.data.party = profile.party.map((id) => makeHeroState(id, 26, GS.data.heroNames[id]));
+          GS.data.keyItems.push(...profile.keyItems);
+        } else if (isChapter6) {
+          const profile = chapter6DevProfile(params.get('devState'));
+          profile.flags.forEach((flag) => GS.setFlag(flag));
+          GS.data.embers = profile.embers;
+          GS.data.party = profile.party.map((id) => makeHeroState(id, profile.level, GS.data.heroNames[id]));
           GS.data.keyItems.push(...profile.keyItems);
         }
         this.started = true;
@@ -283,7 +351,9 @@ export class TitleScene extends Phaser.Scene {
         const ch4Spawn = ch4Profile ? chapter4DevSpawn(devMap, ch4Profile.state) : null;
         const ch5Profile = isChapter5 ? chapter5DevProfile(params.get('devState')) : null;
         const ch5Spawn = ch5Profile ? chapter5DevSpawn(devMap, ch5Profile.state) : null;
-        let spawnPx = ch5Spawn ?? ch4Spawn ?? (ch3Spawn
+        const ch6Profile = isChapter6 ? chapter6DevProfile(params.get('devState')) : null;
+        const ch6Spawn = ch6Profile ? chapter6DevSpawn(devMap, ch6Profile.state) : null;
+        let spawnPx = ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
           ? { x: ch3Spawn.x, y: ch3Spawn.y, facing: ch3Spawn.facing }
           : { x: spawn.x * TILE_PX + TILE_PX / 2, y: spawn.y * TILE_PX, facing: 'down' as Facing });
         // Any rollout map can opt into an exact authored micro-scene without

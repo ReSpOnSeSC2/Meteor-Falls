@@ -142,3 +142,48 @@ describe('Chapter 5 dev-map boots', () => {
     expect(spawn.y).toBeLessThan(map.grid.length * 64);
   });
 });
+
+describe('Chapter 6 dev-map boots', () => {
+  it('covers the exact four stable map ids', () => {
+    expect(title.CH6_DEV_MAP_IDS).toEqual([
+      'zanzibel', 'savanna_run', 'laughing_ruins', 'sphinx_chin',
+    ]);
+  });
+
+  it.each([
+    'arrival', 'city', 'savanna', 'ruins', 'choice', 'boss', 'postBoss', 'complete',
+  ] as const)('builds a representative %s profile with the normal pre-Chapter 6 party', (state) => {
+    const profile = title.chapter6DevProfile(state);
+    expect(profile.state).toBe(state);
+    expect(profile.party).toEqual(['rex', 'faye', 'milo', 'pippa', 'dorin']);
+    expect(profile.level).toBe(30);
+    expect(profile.keyItems).toEqual(['big_little_lens', 'royal_thimble']);
+    expect(profile.flags).toEqual(expect.arrayContaining([
+      'ember1', 'ember2', 'ember3', 'ember4', 'ember5',
+      'ch5_complete', 'pippa_joined', 'dorin_joined',
+      'awake_freeze_a', 'awake_mindwarp_a', 'awake_volt_a',
+    ]));
+    expect(profile.flags.some((flag) => flag.startsWith('ch6_string_'))).toBe(false);
+  });
+
+  it('orders arrival, Held Breath, boss, and completion flags without preselecting Trust', () => {
+    expect(title.chapter6DevProfile('arrival').flags).not.toContain('ch6_arrived');
+    expect(title.chapter6DevProfile('ruins').flags).not.toContain('held_breath_unlocked');
+    expect(title.chapter6DevProfile('choice').flags).toContain('held_breath_unlocked');
+    expect(title.chapter6DevProfile('boss').flags).not.toContain('laughing_sphinx_defeated');
+    expect(title.chapter6DevProfile('postBoss').flags).toContain('laughing_sphinx_defeated');
+    expect(title.chapter6DevProfile('complete')).toMatchObject({ embers: 6 });
+    expect(title.chapter6DevProfile('complete').flags).toEqual(expect.arrayContaining(['ember6', 'ch6_complete']));
+  });
+
+  it.each([
+    'zanzibel', 'savanna_run', 'laughing_ruins', 'sphinx_chin',
+  ])('%s resolves an in-bounds production spawn', (id) => {
+    const spawn = title.chapter6DevSpawn(id, 'boss');
+    const map = maps.MAPS[id];
+    expect(spawn.x).toBeGreaterThanOrEqual(0);
+    expect(spawn.y).toBeGreaterThanOrEqual(0);
+    expect(spawn.x).toBeLessThan(map.grid[0].length * 64);
+    expect(spawn.y).toBeLessThan(map.grid.length * 64);
+  });
+});

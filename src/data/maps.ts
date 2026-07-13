@@ -5308,6 +5308,9 @@ const MAP_AREA: Record<string, string> = {
   // CH.5 Minimus — the capital wears the heraldic duchy hand (§A11; banner reads
   // MINIMUS MAJOR). The road/maze/crown carry no settlement glyph (like the moor/spine).
   minimus_major: 'minimus',
+  // CH.6 Zanzibel — only the bazaar capital carries the cursive settlement glyph;
+  // the savanna and ruin approach retain plain place banners.
+  zanzibel: 'zanzibel',
   // CH.10 The Long Shot — the two settlements wear their region glyph banners (AURORA STATION
   // in the frost script, MAUNA LANI in the tiki script). The ice field / magma flats / Sea of
   // Silence carry no settlement glyph (like the moor/spine), matching the tile-skin precedent.
@@ -5350,6 +5353,12 @@ for (const m of Object.values(MAPS)) {
     ...(m.id === 'brickton' ? { unitId: stableTwotonLotId } : {}),
   }));
 }
+
+// CH.6 production expansion changes the occupancy RNG horizon from six source
+// facades to sixteen. Keep the one non-service historical storefront identity
+// byte-stable; unit id/NPC/return-door already remain stable by construction.
+if (!MAPS.zanzibel_unit_3) throw new Error('Zanzibel historical unit 3 must survive occupancy');
+MAPS.zanzibel_unit_3.name = 'ODDS & ENDS';
 
 /** Foggybottom is intentionally still a town, so it does not participate in
  * formal-city facade claiming. Its four already-generated high-street units are

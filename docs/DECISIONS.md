@@ -6396,3 +6396,45 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
 - **Consequences:** all future Chapter 4 coordinate changes require a new migration
   review. Exact validation evidence is recorded in
   `docs/CH4_PRODUCTION_VERIFICATION.md`; historical handoff counts are not gates. ☄️
+
+## ADR-141 — CHAPTER 6 PRODUCTION CONTRACT (four Zanzibel maps, stable tenancy, save v23)
+
+- **Date:** 2026-07-13
+- **Status:** Accepted and implemented. This supersedes stale Chapter 6 scaffold
+  and asset-package prose, including “no maps,” “unlanded,” and 2,300-HP claims.
+  Executable canon remains **9,000 HP** at target level 30.
+- **Decision — stable world:** Chapter 6 owns the exact save ids `zanzibel`,
+  `savanna_run`, `laughing_ruins`, and `sphinx_chin`. Their production dimensions
+  are 72×56, 104×64, 80×88, and 56×44. `src/data/maps_ch6.ts` and exported
+  `CH6_WORLD` fixed points are canonical; editor JSON is generated review data.
+  Zanzibel is a three-band, two-loop formal city; Savanna Run is a winding
+  clearing chain; Laughing Ruins is a nonlinear forced-order climb; Sphinx’s Chin
+  separates boss and resonance chambers.
+- **Decision — tenancy compatibility:** Zanzibel has exactly sixteen source
+  facades, using only home, indigo dyer, and caravanserai sources supported by
+  formal promotion. The first six source sprites remain in historical order.
+  Deterministic locks are source indices 4 and 12, producing fourteen live units.
+  Historical units 0–4 retain ids, roles, NPC ids, return doors, and names; the
+  expanded units append without renumbering them.
+- **Decision — story and quests:** `ch6_journey` remains the complete seven-panel
+  gallery. Runtime uses contextual flight, arrival, courier, ruins, Sphinx, and
+  Heartlight cuts plus Held Breath. The Trust dilemma requires Held Breath in
+  geometry and an explicit pure runtime guard. Teleport Alpha remains Jay’s
+  established level-26 row; the courier supplies story context without a second
+  grant. `watering_hole_convoy` and `stones_that_speak` are fully playable,
+  hands-full retry-safe, idempotent, and preserve their fixed rewards/Callers.
+- **Decision — state and QA seams:** save version is **23**. v22→v23 relocates
+  players on exactly the four rebuilt ids and rehomes outdoor Zanzibel/Savanna
+  parking without stacking. It uses own-property membership checks and preserves
+  flags, malformed values, prototype-like records, and unrelated saves. Eight
+  dev profiles cover arrival through completion with the real five-person
+  level-30 party, five prior Embers, and Lens/Thimble key items; no profile
+  preselects the permanent Trust branch.
+- **Decision — art:** the production rollout introduces no new bitmap. It reuses
+  the registered Africa strip, regional skins, authored NPC/enemy/boss/panel
+  assets, supported formal facades, and shared props. `sphinx_chin` joins the
+  ruins tile skin so the whole carved site reads as one authored place.
+- **Consequences:** changes to a pinned Chapter 6 id, route mouth, story rectangle,
+  facade order/count, historical unit, door landing, boss/resonance stage, or
+  recovery bay require a migration and contract-test review. Exact evidence is
+  recorded in `docs/CH6_PRODUCTION_VERIFICATION.md`. ☄️

@@ -92,6 +92,10 @@
  * their new production routes, outdoor capital/Way parking is rehomed, and
  * the Big-Little Lens plus Royal Thimble move out of ordinary hero bags into
  * the non-capacity key-item ledger without losing prerelease copies.
+ *
+ * v22 to v23 (2026-07 Chapter 6 rollout): the four Zanzibel maps recover to
+ * shared production-world anchors and outdoor city/savanna parking is rehomed.
+ * Flags, quest state, inventory, economy, party, and branch choices are untouched.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
@@ -101,8 +105,9 @@ import type { GameStateData, SaveFacing, VehicleParkingState } from './state';
 import { allocateVehicleDeliverySlot } from './vehicle-domain';
 import type { HoopsState } from '../schemas';
 import { s } from '../spritegen/scale';
+import { CH6_WORLD } from '../data/maps_ch6';
 
-export const CURRENT_SAVE_VERSION = 22;
+export const CURRENT_SAVE_VERSION = 23;
 
 const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
 
@@ -167,6 +172,18 @@ export const CHAPTER5_LAYOUT_RECOVERY = {
 export const CHAPTER5_PARKING_RECOVERY = {
   minimus_major: { x: 20 * 16 + 8, y: 44 * 16 + 12, facing: 'right' },
   procession_way: { x: 7 * 16 + 8, y: 32 * 16 + 12, facing: 'right' },
+} as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
+
+export const CHAPTER6_LAYOUT_RECOVERY = {
+  zanzibel: { x: CH6_WORLD.zanzibel.landing.x * 16 + 8, y: CH6_WORLD.zanzibel.landing.y * 16 + 12, facing: 'down' },
+  savanna_run: { x: 2 * 16 + 8, y: 50 * 16 + 12, facing: 'right' },
+  laughing_ruins: { x: 40 * 16 + 8, y: 85 * 16 + 12, facing: 'up' },
+  sphinx_chin: { x: 28 * 16 + 8, y: 41 * 16 + 12, facing: 'up' },
+} as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
+
+export const CHAPTER6_PARKING_RECOVERY = {
+  zanzibel: { x: 23 * 16 + 8, y: 45 * 16 + 12, facing: 'right' },
+  savanna_run: { x: 8 * 16 + 8, y: 50 * 16 + 12, facing: 'right' },
 } as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
@@ -265,6 +282,30 @@ function recoverChapter5VehicleParking(raw: Raw): void {
   for (const [title, value] of pending) {
     const area = value.area as keyof typeof CHAPTER5_PARKING_RECOVERY;
     const base = CHAPTER5_PARKING_RECOVERY[area];
+    const next = allocateVehicleDeliverySlot(
+      { vehicleParking: recovered }, title,
+      { area, x: s(base.x), y: s(base.y), facing: base.facing },
+    );
+    parking[title] = next;
+    recovered[title] = next;
+  }
+}
+
+function recoverChapter6VehicleParking(raw: Raw): void {
+  if (!isObj(raw.vehicleParking)) return;
+  const parking = raw.vehicleParking;
+  const recovered: Record<string, VehicleParkingState> = {};
+  for (const [title, value] of Object.entries(parking)) {
+    if (!isVehicleParkingState(value) || hasOwn(CHAPTER6_PARKING_RECOVERY, value.area)) continue;
+    recovered[title] = value;
+  }
+  const pending = Object.entries(parking)
+    .filter((entry): entry is [string, VehicleParkingState] =>
+      isVehicleParkingState(entry[1]) && hasOwn(CHAPTER6_PARKING_RECOVERY, entry[1].area))
+    .sort(([a], [b]) => a.localeCompare(b));
+  for (const [title, value] of pending) {
+    const area = value.area as keyof typeof CHAPTER6_PARKING_RECOVERY;
+    const base = CHAPTER6_PARKING_RECOVERY[area];
     const next = allocateVehicleDeliverySlot(
       { vehicleParking: recovered }, title,
       { area, x: s(base.x), y: s(base.y), facing: base.facing },
@@ -697,6 +738,23 @@ export const MIGRATIONS: MigrationStep[] = [
       recoverChapter5VehicleParking(raw);
       normalizeChapter5KeyItems(raw);
       raw.version = 22;
+      return raw;
+    },
+  },
+  {
+    to: 23,
+    migrate(raw) {
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const target = hasOwn(CHAPTER6_LAYOUT_RECOVERY, map)
+        ? CHAPTER6_LAYOUT_RECOVERY[map as keyof typeof CHAPTER6_LAYOUT_RECOVERY]
+        : undefined;
+      if (target) {
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      recoverChapter6VehicleParking(raw);
+      raw.version = 23;
       return raw;
     },
   },

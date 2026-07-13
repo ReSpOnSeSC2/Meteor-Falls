@@ -318,13 +318,18 @@ now registers all sixteen cells; live maps consume its ground, path, water,
 wall, shore, frozen-pond, boardwalk, and masonry materials. No procedural or
 placeholder bitmap was introduced.
 | 5 | Minimus — Minimus Major | **unbuilt** | Whiskerzilla (2150) | minimus_major | biplane |
-| 6 | Africa — Zanzibel | **unbuilt** | The Laughing Sphinx (2300) | zanzibel | biplane |
+| 6 | Africa — Zanzibel | **production world shipped** | The Laughing Sphinx (9000) | zanzibel, savanna_run, laughing_ruins, sphinx_chin | biplane |
 | 7 | India — Chandrapore | **unbuilt** | Cobra Raja (3200) | chandrapore | night train |
 | 8 | China — Lotus Harbor | **unbuilt** | The Paper Dragon (4100) | lotus_harbor | riverboat + yak |
 | 9 | Romania — Valea Stelelor | **unbuilt** | Count Hoaxula (5300) | valea_stelelor | Orient Less-Express |
 | 10 | Alaska → Hawaii → Mars | **unbuilt** | **The Hush (6000)** + Frost Sentinel + Tiki Magma Golem | aurora_station, mauna_lani | snowcat → rocket |
 
-### Per-chapter art set (repeat for each of Ch.4–10)
+Chapter 6’s production rollout reuses the registered Africa tile strip, supported
+formal-city facade sources, regional NPCs, full enemy wear/mini set, Laughing
+Sphinx boss, battle background, seven gallery panels, and shared world props.
+No new bitmap was required.
+
+### Per-chapter art set (historical planning checklist)
 
 Each unbuilt chapter needs, at minimum:
 

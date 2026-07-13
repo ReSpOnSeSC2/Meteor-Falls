@@ -310,20 +310,26 @@ const CH5: Cutscene[] = [
   { id: 'ch5_heartlight', chapter: 'ch5', beats: [CH5_BEATS.heartlight] },
 ];
 
+const CH6_BEATS = {
+  caravan: panels('caravan_to_zanzibel')[0],
+  dusk: panels('savanna_caravan_at_dusk')[0],
+  market: panels('zanzibel_market')[0],
+  courier: panels('courier_teaches_teleport_alpha')[0],
+  ruins: panels('laughing_ruins')[0],
+  sphinx: panels('laughing_sphinx_riddle')[0],
+  heartlight: panels('sphinx_chin_resonance')[0],
+} satisfies Record<string, CutsceneBeat>;
+
 const CH6: Cutscene[] = [
-  {
-    id: 'ch6_journey',
-    chapter: 'ch6',
-    beats: panels(
-      'caravan_to_zanzibel',
-      'savanna_caravan_at_dusk',
-      'zanzibel_market',
-      'courier_teaches_teleport_alpha',
-      'laughing_ruins',
-      'laughing_sphinx_riddle',
-      'sphinx_chin_resonance',
-    ),
-  },
+  // Gallery reel remains complete; runtime uses the contextual ids below so
+  // the flight cannot spoil the courier, dungeon, Sphinx, or Heartlight panels.
+  { id: 'ch6_journey', chapter: 'ch6', beats: Object.values(CH6_BEATS) },
+  { id: 'ch6_flight', chapter: 'ch6', beats: [CH6_BEATS.caravan, CH6_BEATS.dusk] },
+  { id: 'ch6_arrival', chapter: 'ch6', beats: [CH6_BEATS.market] },
+  { id: 'ch6_courier', chapter: 'ch6', beats: [CH6_BEATS.courier] },
+  { id: 'ch6_ruins', chapter: 'ch6', beats: [CH6_BEATS.ruins] },
+  { id: 'ch6_sphinx', chapter: 'ch6', beats: [CH6_BEATS.sphinx] },
+  { id: 'ch6_heartlight', chapter: 'ch6', beats: [CH6_BEATS.heartlight] },
   // S21 (ADR-126): THE HELD BREATH unlocks — the Star Locket records the breath
   // around the song. The reverse Ken Burns (a gentle pull-BACK + soft flash) reads
   // as the world inhaling, the moment drawn back. Played from OverworldScene.heldBreathBeat.

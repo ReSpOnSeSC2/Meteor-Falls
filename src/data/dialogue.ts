@@ -3898,6 +3898,48 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Sit. Drink. The well is baobab-sweet and the shade is free, which in Zanzibel makes it the only honest deal in town. You look like people walking toward the ruins. People do that. The well will still be here when you walk back.',
   ],
 
+  // — the courier lesson: Teleport Alpha remains Jay's established level-26
+  // ability; this event gives that row its promised Chapter 6 story context. —
+  ch6_courier_lesson: [
+    '(At the east gate, a courier in indigo runs three impossible steps, vanishes between them, and reappears beside the milepost without disturbing the dust.)',
+    '@"You already know the trick," the courier tells {rex}. "You keep trying to outrun the road. Don’t. Pick the place the road ENDS, then let your feet remember being there."',
+    '({rex} tries. For one breath the gate, the road, and the first baobab become the same point. Then the world snaps back—with {rex} still upright, which feels like progress.)',
+    '@"TELEPORT Alpha," says the courier. "Not a new power. A better promise to the one you have. Start running only after you know where you mean to stop."',
+  ],
+
+  // — §A10: THE WATERING-HOLE CONVOY —
+  q_convoy_ask: [
+    '@The convoy is stranded at the third baobab. Reach the watering hole, then walk them through the hyena stretch until the track opens again. Will you bring my people home?',
+  ],
+  q_convoy_active: ['@Third baobab, where the track bends north. If the drivers are still arguing, good. Arguing people are alive people.'],
+  q_convoy_reach: [
+    '(Canvas wagons huddle around the watering hole. The drivers cheer when they see you; the hyenas on the ridge do not.)',
+    '@"Zanzibel sent the BIG escort! Keep us between you and the track, please. Preferably the part of you without teeth."',
+  ],
+  q_convoy_mid: ['@You found them. Good. Now keep the wagons moving through the open stretch—the hyenas hate a road that looks confident.'],
+  q_convoy_escort: [
+    '(The last wagon clears the hyena grass and its wheels find the hard center of the track. One by one, the drivers relight their bright little convoy lamps.)',
+    '@"We can make the gate from here. Tell the Dockmaster every axle came home—and tell him we were only a LITTLE late."',
+  ],
+  q_convoy_report: ['@All of them? Every axle? ...Good. Let me be loud about THAT for a change. You brought the whole road home.'],
+  q_convoy_full: ['@I have your SAVANNA CLOAK ready, but every bag you own is full. Make room; a Dockmaster does not throw good cloth into the harbor.'],
+  q_convoy_done_beat: ['* Got the SAVANNA CLOAK. The Dockmaster joined the caller ledger.'],
+  q_convoy_after: ['@The convoy is back on schedule, which means it is only ordinarily late. In Zanzibel that counts as punctual.'],
+
+  // — §A10: THE STONES THAT SPEAK —
+  q_stones_ask: [
+    '@In the western echo court, the stones keep repeating half a sentence. Listen until they finish it, then bring the words back to me. Some memories need a living mouth for the last mile.',
+  ],
+  q_stones_active: ['@The western court. Don’t answer the stones. Just let them use the silence after you.'],
+  q_stones_listen: [
+    '(The carved mouths repeat your footsteps, then your breathing, then a voice that has been waiting under both: “WE LAUGHED SO THE DARK WOULD KNOW—”)',
+    '(A second stone answers, one beat late: “—IT HAD NOT MADE US QUIET.” The court exhales. For the first time in centuries, the echo does not begin again.)',
+  ],
+  q_stones_report: ['@Say it exactly. ...“We laughed so the dark would know it had not made us quiet.” Yes. That is the missing end. You carried it clean.'],
+  q_stones_full: ['@The GRIOT STRING belongs with the person who finished that sentence, but your bags are full. The old city waited this long; it can wait while you make room.'],
+  q_stones_done_beat: ['* Got the GRIOT STRING. The Ruins Guide joined the caller ledger.'],
+  q_stones_after: ['@The western court is quiet now. Not empty—quiet. There is a difference, and the stones finally remember it.'],
+
   // — the §A8 Ch.6 shop (the Grand Market shelf) —
   shop_zanzibel_greet: ['@The Market Queen spreads her hands over the whole glorious shelf! Salt, charms, cloth, courage in a cup — all genuine, all today only, all a STEAL. (Everything in Zanzibel is, today only, a steal.)'],
   shop_zanzibel_bye: ['@Pleasure doing business, big friend! Tell them the Market Queen sent you. Tell them LOUDLY. It is good for the brand.'],
@@ -3908,6 +3950,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // — the Laughing Ruins (dungeon) sign —
   sign_laughing_ruins: ['(A fallen lintel, its carved faces all mid-laugh, worn nearly smooth:) HERE THE CITY THAT LAUGHED. It does not say what the joke was. The longer you look at the faces, the less it seems like laughing.'],
+  choice_trust_early: ['(The stair tries to repeat a moment the Star Locket has not learned how to hold. The echo slips away.)', '@Not yet. ({faye}, watching the Locket.) The ruins are trying to teach us something lower down. We listen before we choose.'],
 
   // — the Sphinx's chin sign —
   sign_sphinx_chin: ["(A step worn into a great carved JAW, an inscription along the lip:) ASK, AND BE ASKED. ANSWER TRUE AND PASS. ANSWER FALSE AND— (the rest is lost where the stone has laughed itself away.)"],

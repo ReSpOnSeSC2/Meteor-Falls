@@ -60,14 +60,13 @@ The user hits session usage limits quickly. Two audit fleets already rate-limite
 > full-bodied; the chapel renders casa-scaled with its mat on open grass — walk in.
 
 ### 2.1 Wire the Norway + Africa tile skins (BIGGEST WIN, code-only) — ✅ DONE 2026-07-02
-`assets/art/world/Norway_tiles_16.png` and `Africa_tiles_16.png` are fully authored (same Jun-15 batch as the wired Minimus strip) but **completely unwired** — Ch.4 (kvisthavn, lilleby, bootstep_moor) and Ch.6 (zanzibel, savanna_run, laughing_ruins) render generic base tiles.
+`assets/art/world/Norway_tiles_16.png` and `Africa_tiles_16.png` are fully authored and wired. Chapter 6’s production maps now use the Zanzibel, Savanna, and Ruins remaps, including `sphinx_chin`; this historical task is closed.
 
-Workflow (copy the CHINA template exactly — grep `CHINA_TILE` in `src/spritegen/authored.ts` and `CHINA_TILE_SKIN`/`TILE_SKIN` in `src/scenes/OverworldScene.ts` ~lines 274-375):
-1. Open the two strips (16 cells each, like Minimus). Read ONE image of each strip to decide the cell→tile mapping (ground/path/wall/accent names). Masters `assets/art/masters/world/ch4-norway-tiles-source.png` / `ch6-africa-tiles-source.png` show intent.
-2. Add `NORWAY_TILE_ART` / `AFRICA_TILE_ART` rows in authored.ts (loader + applyAuthoredWorldTiles draw), appending tile names at the TILESET tail per the tile-strip-override recipe (memory: `tile-strip-override-pipeline` — NEVER re-pack via pack-world-tiles; template `tools/sync-melt-ice-tile.ts`).
-3. Add `NORWAY_TILE_SKIN` / `AFRICA_TILE_SKIN` render-time remaps in OverworldScene.buildTiles gated to the Ch.4/Ch.6 map ids (mirror MINIMUS_TILE_SKIN's shape; code-only remap, no map-data edits).
-4. Gates + one screenshot per region on a live pass (see §3.2).
-Main-loop work, no agents. Budget ~1-2h.
+Historical implementation record: both 16-cell strips were mapped against their
+masters; `NORWAY_TILE_ART` / `AFRICA_TILE_ART` and their TILESET tail entries were
+registered; map-scoped Norway, Zanzibel, Savanna, and Ruins remaps were wired in
+`OverworldScene.buildTiles`; static gates and live regional screenshots were
+completed. No work remains in this section.
 
 ### 2.2 Walk-sheet regens still owed (ChatGPT pipeline, browser — near-zero Claude tokens)
 Per `docs/ART_PIPELINE.md` §Character 46-frame walk sheets (reference-paste, chroma-green, 3-pose strips; fetch→blob harvest). Priority order:

@@ -85,6 +85,7 @@ import { PYR_ROTOR, PYR_INITIAL_ROT, PUERTO_SOL_PIER_SPAWN, rotateRect } from '.
 import { WINTERMOOR_COOLANT_CROSSING } from '../data/maps_ch3';
 import { CH4_MAP_IDS, KVISTHAVN_LANDING, SPINE_MELTFALL_CROSSING } from '../data/maps_ch4';
 import { MINIMUS_LANDING } from '../data/maps_ch5';
+import { ZANZIBEL_LANDING } from '../data/maps_ch6';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS, BAG_MAX } from '../data/items';
@@ -145,6 +146,7 @@ import { availableAbilities } from '../data/heroes';
 import { PSI_GATES } from '../data/psigates';
 import { canClearGate, bestCastFor } from '../engine/psi';
 import { bridgeBerryClears } from '../engine/ch4-world';
+import { chapter6ChoiceAction } from '../engine/ch6-world';
 import {
   HOOPS_TEXT,
   TEAMS,
@@ -797,7 +799,7 @@ const SAVANNA_TILE_SKIN: Readonly<Record<string, string>> = {
   sea_a: 'africa_water', // the watering hole (`e`) → teal water (SOLID)
   // NOTE: `bush` stays the base green bush — scrub reads right on savanna grass.
 };
-const RUINS_SKIN_MAPS: ReadonlySet<string> = new Set(['laughing_ruins']);
+const RUINS_SKIN_MAPS: ReadonlySet<string> = new Set(['laughing_ruins', 'sphinx_chin']);
 const RUINS_TILE_SKIN: Readonly<Record<string, string>> = {
   grass_a: 'africa_earth', // the ruin floor (`.`) → cracked dry earth
   grass_b: 'africa_earth', // decorative grass (`,`)
@@ -6076,6 +6078,13 @@ export class OverworldScene extends Phaser.Scene {
       case 'pw_click':
         await this.cheeseBeat();
         return true;
+      // ── CHAPTER 6 — ZANZIBEL: both named core quests are fully playable. ──
+      case 'zn_dockmaster':
+        await this.convoyBeat();
+        return true;
+      case 'zn_guide':
+        await this.stonesBeat();
+        return true;
       default:
         return false;
     }
@@ -7992,7 +8001,19 @@ export class OverworldScene extends Phaser.Scene {
         await this.heldBreathBeat();
         break;
       case 'choice_trust':
-        await this.runChoice('ch6_string');
+        switch (chapter6ChoiceAction({
+          heldBreathUnlocked: GS.flag('held_breath_unlocked') === true,
+          choiceDecided: GS.flag('ch6_string_decided') === true,
+        })) {
+          case 'present-choice':
+            await this.runChoice('ch6_string');
+            break;
+          case 'held-breath-required':
+            await this.dlg.say(...DIALOGUE.choice_trust_early);
+            break;
+          default:
+            break;
+        }
         break;
       case 'choice_compassion':
         // the COMPASSION axis turns on the Count's defeat — gated so the zone past the
@@ -8123,6 +8144,12 @@ export class OverworldScene extends Phaser.Scene {
       case 'ch6_arrival':
         if (!GS.flag('ch6_arrived')) await this.ch6ArrivalScene();
         break;
+      case 'ch6_courier':
+        if (!GS.flag('ch6_courier_seen')) await this.ch6CourierScene();
+        break;
+      case 'ch6_ruins_reveal':
+        await this.ch6ContextBeat('ch6_ruins_seen', 'ch6_ruins');
+        break;
       case 'laughing_sphinx_boss':
         if (!GS.flag('laughing_sphinx_defeated')) await this.laughingSphinxBossScene();
         break;
@@ -8212,6 +8239,11 @@ export class OverworldScene extends Phaser.Scene {
       case 'q_lostfound_button':
       case 'q_lostfound_spoon':
       case 'q_belfry_clappers':
+      // Chapter 6's convoy chain and echo archive. Prerequisites are data-pinned
+      // in QUEST_PICKUPS so the escort cannot fire before the watering hole.
+      case 'q_convoy_reach':
+      case 'q_convoy_escort':
+      case 'q_stones_listen':
         await this.questPickup(id);
         break;
       default:
@@ -8614,9 +8646,14 @@ export class OverworldScene extends Phaser.Scene {
         return;
       }
       AUDIO.stopMusic();
-      await playCutscene(this, 'ch6_journey'); // the authored Africa panels (no-ops if missing)
+      await playCutscene(this, 'ch6_flight');
       // the hatch drops on the Zanzibel quay landing square; ch6_arrival fires the beat
-      this.goThroughDoor('zanzibel', 8 * 16, 22 * 16, 'down');
+      this.goThroughDoor(
+        'zanzibel',
+        ZANZIBEL_LANDING.x * 16 + 8,
+        ZANZIBEL_LANDING.y * 16 + 12,
+        'down',
+      );
       return;
     }
     // the §A5 Minimus leg: once Norway is done, Bert flies the party to MINIMUS (kept
@@ -9003,6 +9040,7 @@ export class OverworldScene extends Phaser.Scene {
   private async ch6ArrivalScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('ch6_arrived');
+    await playCutscene(this, 'ch6_arrival');
     AUDIO.sfx('thud');
     this.cameras.main.shake(380, 0.005);
     await this.dlg.say(...DIALOGUE.ch6_arrival);
@@ -9015,6 +9053,10 @@ export class OverworldScene extends Phaser.Scene {
    *  HP win on its 9000 HP — the wrong-riddle is the rewind-safe sandbox, not a loss. */
   private async laughingSphinxBossScene(): Promise<void> {
     this.cut = true;
+    if (!GS.flag('ch6_sphinx_seen')) {
+      GS.setFlag('ch6_sphinx_seen');
+      await playCutscene(this, 'ch6_sphinx');
+    }
     await this.dlg.say(...DIALOGUE.laughing_sphinx_door);
     AUDIO.sfx('thud');
     this.cameras.main.shake(460, 0.008);
@@ -9043,6 +9085,10 @@ export class OverworldScene extends Phaser.Scene {
     }
     this.cut = true;
     // HEARTLIGHT 6 — the Laughing Chord (Ember 6)
+    if (!GS.flag('ch6_heartlight_seen')) {
+      GS.setFlag('ch6_heartlight_seen');
+      await playCutscene(this, 'ch6_heartlight');
+    }
     GS.setFlag('ember6');
     GS.data.embers = 6;
     const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
@@ -9757,9 +9803,91 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  private async ch6CourierScene(): Promise<void> {
+    this.cut = true;
+    // Commit before panel/dialogue awaits so an interrupted scene cannot replay.
+    GS.setFlag('ch6_courier_seen');
+    await playCutscene(this, 'ch6_courier');
+    await this.dlg.say(...DIALOGUE.ch6_courier_lesson);
+    AUDIO.sfx('confirm');
+    toast(this, 'TELEPORT Alpha — the road ends where you mean to stop.');
+    this.cut = false;
+  }
+
+  private async ch6ContextBeat(flag: string, cutsceneId: string): Promise<void> {
+    if (GS.flag(flag)) return;
+    this.cut = true;
+    GS.setFlag(flag);
+    await playCutscene(this, cutsceneId);
+    this.cut = false;
+  }
+
+  private async convoyBeat(): Promise<void> {
+    if (!GS.flag('q_convoy')) {
+      await this.dlg.say(...DIALOGUE.q_convoy_ask);
+      GS.setFlag('q_convoy');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_convoy_done')) {
+      await this.dlg.say(...DIALOGUE.q_convoy_after);
+      return;
+    }
+    if (!GS.flag('q_convoy_reach')) {
+      await this.dlg.say(...DIALOGUE.q_convoy_active);
+      return;
+    }
+    if (!GS.flag('q_convoy_escort')) {
+      await this.dlg.say(...DIALOGUE.q_convoy_mid);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_convoy_report);
+    if (completeQuest('watering_hole_convoy') === 'hands-full') {
+      await this.dlg.say(...DIALOGUE.q_convoy_full);
+      return;
+    }
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
+    await this.dlg.say(...DIALOGUE.q_convoy_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  private async stonesBeat(): Promise<void> {
+    if (!GS.flag('q_stones')) {
+      await this.dlg.say(...DIALOGUE.q_stones_ask);
+      GS.setFlag('q_stones');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_stones_done')) {
+      await this.dlg.say(...DIALOGUE.q_stones_after);
+      return;
+    }
+    if (!GS.flag('q_stones_listen')) {
+      await this.dlg.say(...DIALOGUE.q_stones_active);
+      return;
+    }
+    if (!GS.flag('q_stones_carry')) {
+      await this.dlg.say(...DIALOGUE.q_stones_report);
+      GS.setFlag('q_stones_carry');
+      AUDIO.sfx('confirm');
+    }
+    if (completeQuest('stones_that_speak') === 'hands-full') {
+      await this.dlg.say(...DIALOGUE.q_stones_full);
+      return;
+    }
+    this.cut = true;
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
+    await this.dlg.say(...DIALOGUE.q_stones_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
   /** the §A10 Ch.3 "find" pickups — a walk trigger hands the player a quest beat when
    *  its quest is active (the walk_token precedent). No-ops otherwise; non-missable. */
-  private static readonly QUEST_PICKUPS: Record<string, { flag: string; dialogue: string; active: string; done: string; of: string[]; giver: string }> = {
+  private static readonly QUEST_PICKUPS: Record<string, { flag: string; dialogue: string; active: string; done: string; of: string[]; giver: string; requires?: string[] }> = {
     q_overdue_b1: { flag: 'q_overdue_b1', dialogue: 'q_overdue_b1', active: 'q_overdue', done: 'q_overdue_done', of: ['q_overdue_b1', 'q_overdue_b2', 'q_overdue_b3'], giver: 'the librarian' },
     q_overdue_b2: { flag: 'q_overdue_b2', dialogue: 'q_overdue_b2', active: 'q_overdue', done: 'q_overdue_done', of: ['q_overdue_b1', 'q_overdue_b2', 'q_overdue_b3'], giver: 'the librarian' },
     q_overdue_b3: { flag: 'q_overdue_b3', dialogue: 'q_overdue_b3', active: 'q_overdue', done: 'q_overdue_done', of: ['q_overdue_b1', 'q_overdue_b2', 'q_overdue_b3'], giver: 'the librarian' },
@@ -9790,11 +9918,17 @@ export class OverworldScene extends Phaser.Scene {
     q_lostfound_spoon: { flag: 'q_lostfound_spoon', dialogue: 'q_lostfound_spoon', active: 'q_lostfound', done: 'q_lostfound_done', of: ['q_lostfound_button', 'q_lostfound_spoon'], giver: 'the Lost & Found Clerk' },
     q_belfry_clappers: { flag: 'q_belfry_clappers', dialogue: 'q_belfry_clappers', active: 'q_belfry', done: 'q_belfry_done', of: ['q_belfry_clappers'], giver: 'the Belfry Keeper' },
     q_say_cheese: { flag: 'q_cheese_pose', dialogue: 'q_say_cheese', active: 'q_cheese', done: 'q_cheese_done', of: ['q_cheese_pose', 'q_cheese_developed'], giver: 'Mr. Click' },
+    // CH.6 Zanzibel — two spatial beats for the convoy, one echo archive for
+    // the speaking stones. Escort explicitly requires reaching the wagons first.
+    q_convoy_reach: { flag: 'q_convoy_reach', dialogue: 'q_convoy_reach', active: 'q_convoy', done: 'q_convoy_done', of: ['q_convoy_reach', 'q_convoy_escort'], giver: 'the Dockmaster' },
+    q_convoy_escort: { flag: 'q_convoy_escort', dialogue: 'q_convoy_escort', active: 'q_convoy', done: 'q_convoy_done', of: ['q_convoy_reach', 'q_convoy_escort'], giver: 'the Dockmaster', requires: ['q_convoy_reach'] },
+    q_stones_listen: { flag: 'q_stones_listen', dialogue: 'q_stones_listen', active: 'q_stones', done: 'q_stones_done', of: ['q_stones_listen', 'q_stones_carry'], giver: 'the Ruins Guide' },
   };
 
   private async questPickup(id: string): Promise<void> {
     const p = OverworldScene.QUEST_PICKUPS[id];
     if (!p || !GS.flag(p.active) || GS.flag(p.done) || GS.flag(p.flag)) return;
+    if (p.requires && !p.requires.every((flag) => GS.flag(flag))) return;
     this.cut = true;
     GS.setFlag(p.flag);
     AUDIO.sfx('ember');

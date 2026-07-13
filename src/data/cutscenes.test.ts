@@ -118,6 +118,21 @@ describe('cutscene registry', () => {
     }
   });
 
+  it('keeps the Chapter 6 gallery complete while runtime beats stay contextual', () => {
+    expect(CUTSCENES.ch6_journey.beats.map((beat) => beat.art)).toEqual([
+      'caravan_to_zanzibel', 'savanna_caravan_at_dusk', 'zanzibel_market',
+      'courier_teaches_teleport_alpha', 'laughing_ruins',
+      'laughing_sphinx_riddle', 'sphinx_chin_resonance',
+    ]);
+    expect(CUTSCENES.ch6_flight.beats.map((beat) => beat.art)).toEqual([
+      'caravan_to_zanzibel', 'savanna_caravan_at_dusk',
+    ]);
+    for (const id of ['ch6_arrival', 'ch6_courier', 'ch6_ruins', 'ch6_sphinx', 'ch6_heartlight'] as const) {
+      expect(CUTSCENES[id].beats).toHaveLength(1);
+    }
+    expect(CUTSCENES.ch6_held_breath.beats).toHaveLength(1);
+  });
+
   it('prefers runtime-resolution _4x panels over legacy _01 placeholders', () => {
     const preferred4x: string[] = [];
     for (const cs of all) {
