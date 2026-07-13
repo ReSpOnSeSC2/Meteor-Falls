@@ -128,6 +128,28 @@ describe('S15g M3c — 4. thresholdHeal (Cobra Raja)', () => {
     for (let t = 1; t <= 3; t++) await r.onBossTurnStart();
     expect(log).toContain('status:paralyzed:2'); // the gaze landed on turn 3
   });
+
+  it('pins the live Cobra Raja at 20,000 HP with one shed and repeated two-turn gazes', async () => {
+    const cobra = ENEMIES.cobra_raja;
+    expect(cobra.hp).toBe(20_000);
+    expect(cobra.level).toBe(35);
+    expect(cobra.moves.map((move) => move.name)).toEqual([
+      'crown lunge', 'paralyzing gaze', 'venom spray', 'royal hiss',
+    ]);
+
+    const { fx, log } = recorder();
+    const runner = new PhaseRunner(BOSS_SCRIPTS.cobra_raja, fx);
+    await runner.onHpFrac(0.4);
+    expect(log).toEqual([]); // hpBelow is deliberately strict
+    await runner.onHpFrac(0.399);
+    await runner.onHpFrac(0.1);
+    expect(log.filter((entry) => entry === 'line:cobra_shed')).toHaveLength(1);
+    expect(log.filter((entry) => entry === 'heal:800')).toHaveLength(1);
+
+    for (let turn = 1; turn <= 9; turn++) await runner.onBossTurnStart();
+    expect(log.filter((entry) => entry === 'line:cobra_gaze')).toHaveLength(3);
+    expect(log.filter((entry) => entry === 'status:paralyzed:2')).toHaveLength(3);
+  });
 });
 
 describe('S15g M3c — 5. riddle (the Laughing Sphinx)', () => {

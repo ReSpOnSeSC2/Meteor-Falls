@@ -90,6 +90,7 @@ import { AWAKENINGS } from '../data/awakenings';
 import { GS, expForLevel, type HeroState } from '../engine/state';
 // S21 (ADR-126): Mia's high-tier PRAY refuels Jay's Held Breath (faith owns the rewind's supply)
 import { breathsLeft, refillBreath, puppetLocked } from '../engine/echo';
+import { locketAvailable } from '../engine/ch7';
 // S21 (ADR-130): the IRON path can WITHHOLD a hero's awakened ultimate (Dorin's Comet Ω)
 import { isWithheldAbility } from '../engine/party';
 import { MAX_BREATHS } from '../data/echoes';
@@ -2449,7 +2450,10 @@ export class BattleScene extends Phaser.Scene {
     await this.print(this.fill(PRAY_TEXT[tier], h.hero.name));
     // S21 (ADR-126): a 'wonderful'/'miraculous' prayer refuels Jay's HELD BREATH — the
     // rewind's supply is faith's to give (only once the Locket has learned, Ch.6+).
-    if ((tier === 'wonderful' || tier === 'miraculous') && GS.flag('held_breath_unlocked') === true && breathsLeft() < MAX_BREATHS) {
+    if ((tier === 'wonderful' || tier === 'miraculous')
+      && GS.flag('held_breath_unlocked') === true
+      && locketAvailable(GS.data)
+      && breathsLeft() < MAX_BREATHS) {
       refillBreath(1);
       await this.print('The light catches in the Locket — a breath, held in reserve.');
     }

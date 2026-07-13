@@ -22,7 +22,10 @@ import {
   clearPuppetLock,
 } from './echo';
 
-beforeEach(() => GS.reset());
+beforeEach(() => {
+  GS.reset();
+  GS.data.keyItems.push('star_locket');
+});
 
 describe('the Held Breath — anchors', () => {
   it('the two non-terminal choices are rewindable; the finale is not', () => {
@@ -73,6 +76,37 @@ describe('the Held Breath — bounded + costed', () => {
   it('the terminal finale captures no echo (renunciation)', () => {
     captureEcho('ch10_song');
     expect(GS.data.echoes.stack).toHaveLength(0);
+  });
+});
+
+describe('the Held Breath — Chapter 7 Locket heist', () => {
+  it('blocks capture, refill, listing, and rewind while the physical Locket is stolen', () => {
+    captureEcho('ch6_string');
+    recordChoice('ch6_string', 'pull');
+    GS.data.echoes.breaths = 1;
+    GS.setFlag('ch7_locket_stolen');
+
+    expect(canRewind('ch6_string')).toBe(false);
+    expect(rewindableAnchors()).toEqual([]);
+    expect(rewindTo('ch6_string')).toBe(false);
+    refillBreath(1);
+    expect(breathsLeft()).toBe(1);
+
+    captureEcho('ch9_count');
+    expect(GS.data.echoes.stack.map((echo) => echo.choice)).toEqual(['ch6_string']);
+  });
+
+  it('restores every Locket mechanic after idempotent recovery', () => {
+    captureEcho('ch6_string');
+    recordChoice('ch6_string', 'pull');
+    GS.setFlag('ch7_locket_stolen');
+    GS.setFlag('ch7_locket_recovered');
+    GS.data.echoes.breaths = 1;
+
+    refillBreath(1);
+    expect(breathsLeft()).toBe(2);
+    expect(canRewind('ch6_string')).toBe(true);
+    expect(rewindTo('ch6_string')).toBe(true);
   });
 });
 

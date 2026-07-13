@@ -199,10 +199,10 @@ export const CITY_AMENITIES: Record<FormalCityId, CityAmenityDef> = {
     dealership: { name: 'Monsoon Motor Gallery', featuredVehicleId: 'drop_top', stationId: 'chandrapore_filling' },
     hotel: { name: 'The Silver Parasol', rate: 105 },
     facadeHints: {
-      home: ['zanzibel_caravanserai'],
-      agency: ['zanzibel_investment_desk'],
-      dealership: ['zanzibel_investment_desk'],
-      hotel: ['zanzibel_harbor_customs'],
+      home: ['chandrapore_hillcrest_manor'],
+      agency: ['chandrapore_moon_gate_realty'],
+      dealership: ['chandrapore_motor_gallery'],
+      hotel: ['chandrapore_silver_parasol'],
     },
   },
   lotus_harbor: {

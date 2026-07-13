@@ -662,6 +662,9 @@ const WORLD_PROP_KEYS = [
   'ch3_telegraph_pole', 'ch3_lucille_cockpit', 'ch3_lucille_window',
   'ch3_cargo_net', 'ch3_fog_engine', 'ch3_valve_manifold',
   'ch3_menhir', 'ch3_trilithon', 'ch3_spring', 'ch3_academy_main',
+  // Chapter 7 -- the distant palace axis that orients Chandrapore from the
+  // station/cinema district. It is skyline scenery, not an enterable facade.
+  'prop_chandrapore_palace_spire',
   // Otterbrooke interiors (2026-07-03) — shop-fixtures strip (Batch B), sliced from
   // masters/world/otterbrook-shopfix-source.png (tools/slice-prop-strip.cjs).
   'prop_soda_fountain', 'prop_pastry_case', 'prop_brick_oven', 'prop_flour_bins', 'prop_mixing_station',
@@ -733,6 +736,16 @@ const REGION_FACADE_KEYS = [
   'bldg_zanzibel_caravanserai', 'bldg_zanzibel_civic_hall', 'bldg_zanzibel_courier_guild',
   'bldg_zanzibel_grand_market', 'bldg_zanzibel_harbor_customs', 'bldg_zanzibel_home',
   'bldg_zanzibel_indigo_dyer', 'bldg_zanzibel_investment_desk', 'bldg_zanzibel_spice_stall',
+  // Ch.7 India -- Chandrapore's authored family. The historical service lots
+  // keep their stable source order while the production city stops borrowing
+  // Zanzibel's silhouettes.
+  'bldg_chandrapore_hillcrest_manor', 'bldg_chandrapore_moon_gate_realty',
+  'bldg_chandrapore_civic_hall', 'bldg_chandrapore_motor_gallery',
+  'bldg_chandrapore_silver_parasol', 'bldg_chandrapore_bazaar_shop_a',
+  'bldg_chandrapore_bazaar_shop_b', 'bldg_chandrapore_market_arcade_a',
+  'bldg_chandrapore_market_arcade_b', 'bldg_chandrapore_apartments_a',
+  'bldg_chandrapore_apartments_b', 'bldg_chandrapore_apartments_c',
+  'bldg_chandrapore_majestic_cinema', 'bldg_chandrapore_station',
   // Ch.8 China — Lotus Harbor (authored temple-town facades; AREA_SKINS.lotus_harbor)
   'bldg_lotus_harbor_grand_market', 'bldg_lotus_harbor_harbor_office', 'bldg_lotus_harbor_lantern_shop',
   'bldg_lotus_harbor_pagoda', 'bldg_lotus_harbor_row_house', 'bldg_lotus_harbor_tea_house',
@@ -881,6 +894,32 @@ const HI_RES_GEN_FACADES: ReadonlySet<string> = new Set<string>([
   'bldg_gen_civic_cyan_2', 'bldg_gen_bank_paper_3',
 ]);
 
+/**
+ * Chapter 7 city-scale facades are authored hi-res PNGs, not the procedural
+ * storey generator used by the other formal cities. Keeping this closed-world
+ * allowlist explicit prevents a future CITY_SCALE_BUILDINGS refactor from
+ * silently routing Chandrapore back through the fallback.
+ */
+export const AUTHORED_CHANDRAPORE_CITY_SCALE_FACADES = [
+  'bldg_cityscale_chandrapore_chandrapore_hillcrest_manor',
+  'bldg_cityscale_chandrapore_chandrapore_moon_gate_realty',
+  'bldg_cityscale_chandrapore_chandrapore_civic_hall',
+  'bldg_cityscale_chandrapore_chandrapore_motor_gallery',
+  'bldg_cityscale_chandrapore_chandrapore_silver_parasol',
+  'bldg_cityscale_chandrapore_chandrapore_bazaar_shop_a',
+  'bldg_cityscale_chandrapore_chandrapore_bazaar_shop_b',
+  'bldg_cityscale_chandrapore_chandrapore_market_arcade_a',
+  'bldg_cityscale_chandrapore_chandrapore_market_arcade_b',
+  'bldg_cityscale_chandrapore_chandrapore_apartments_a',
+  'bldg_cityscale_chandrapore_chandrapore_apartments_b',
+  'bldg_cityscale_chandrapore_chandrapore_apartments_c',
+  'bldg_cityscale_chandrapore_chandrapore_majestic_cinema',
+  'bldg_cityscale_chandrapore_chandrapore_station',
+] as const;
+
+const AUTHORED_CHANDRAPORE_CITY_SCALE_FACADE_SET: ReadonlySet<string> =
+  new Set<string>(AUTHORED_CHANDRAPORE_CITY_SCALE_FACADES);
+
 const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
   // Otterbrook facades (house_rex/chad/a/b, drugstore, arcade, chapel) re-promoted to
   // authored hi-res — sliced from otterbrook-facades-transparent.png into
@@ -910,7 +949,9 @@ const LOW_RES_FACADE_KEYS: ReadonlySet<string> = new Set<string>([
   // These are deliberately procedural production assets: each one adds real
   // authored storey bands at its source lot width, which lets the runtime scale
   // validator prove exact 6.7×/9× hero ratios. There is no low-res PNG to load.
-  ...CITY_SCALE_BUILDINGS.map((building) => building.name),
+  ...CITY_SCALE_BUILDINGS
+    .map((building) => building.name)
+    .filter((name) => !AUTHORED_CHANDRAPORE_CITY_SCALE_FACADE_SET.has(name)),
 ]);
 
 /** facades loaded as AUTHORED art — the hand-authored ×4 hi-res set only */
@@ -942,6 +983,9 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   // Parked map cars share the editor's compact SNES-scale footprint. Traffic
   // sprites set their own directional display size and are unaffected by this.
   vehicle_clunker: { w: 38, h: 16 },
+  // Distant Chandrapore wayfinding silhouette. The committed 288x776 texture
+  // maps exactly to this 72x194 native footprint at ART_SCALE=4.
+  prop_chandrapore_palace_spire: { w: 72, h: 194 },
   // Boss 1's broken body (battle_titanic_tick_w2 reused) — ~3 tiles, aspect-matched to 286×235
   tick_husk: { w: 48, h: 39 },
   // white-picket yard fencing KIT (16 native = 1 tile; s = 16/138 — one master drawing,
@@ -1618,7 +1662,8 @@ const ENEMY_BATTLE_ART = [
   { key: 'battle_laughing_sphinx', url: new URL('../../assets/art/enemies/battle_laughing_sphinx.png', import.meta.url).href },
   { key: 'battle_laughing_sphinx_w1', url: new URL('../../assets/art/enemies/battle_laughing_sphinx_w1.png', import.meta.url).href },
   { key: 'battle_laughing_sphinx_w2', url: new URL('../../assets/art/enemies/battle_laughing_sphinx_w2.png', import.meta.url).href },
-  // Chapter 7 (India) — placeholder clones until the India art pass overwrites the files
+  // Chapter 7 (India) -- focused authored roster. Each base battler and matching
+  // mini has its own silhouette; the wear derivatives retain the stable HP-tier keys.
   { key: 'battle_rickshaw_swarm', url: new URL('../../assets/art/enemies/battle_rickshaw_swarm.png', import.meta.url).href },
   { key: 'battle_rickshaw_swarm_w1', url: new URL('../../assets/art/enemies/battle_rickshaw_swarm_w1.png', import.meta.url).href },
   { key: 'battle_rickshaw_swarm_w2', url: new URL('../../assets/art/enemies/battle_rickshaw_swarm_w2.png', import.meta.url).href },
@@ -1872,7 +1917,7 @@ const ENEMY_MINI_ART = [
   { key: 'mini_laughing_dust_pot', url: new URL('../../assets/art/enemies/mini_laughing_dust_pot.png', import.meta.url).href },
   { key: 'mini_sphinx_paw_shadow', url: new URL('../../assets/art/enemies/mini_sphinx_paw_shadow.png', import.meta.url).href },
   { key: 'mini_laughing_sphinx', url: new URL('../../assets/art/enemies/mini_laughing_sphinx.png', import.meta.url).href },
-  // Ch.7 (India) — the §A7 roamers derived from their battlers (placeholder clones for now)
+  // Ch.7 (India) -- roamers derived from their matching authored battlers.
   { key: 'mini_rickshaw_swarm', url: new URL('../../assets/art/enemies/mini_rickshaw_swarm.png', import.meta.url).href },
   { key: 'mini_spice_djinn', url: new URL('../../assets/art/enemies/mini_spice_djinn.png', import.meta.url).href },
   { key: 'mini_temple_macaque', url: new URL('../../assets/art/enemies/mini_temple_macaque.png', import.meta.url).href },

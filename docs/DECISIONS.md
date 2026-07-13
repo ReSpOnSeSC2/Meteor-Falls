@@ -6438,3 +6438,53 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   facade order/count, historical unit, door landing, boss/resonance stage, or
   recovery bay require a migration and contract-test review. Exact evidence is
   recorded in `docs/CH6_PRODUCTION_VERIFICATION.md`. ☄️
+
+## ADR-142 — CHAPTER 7 PRODUCTION CONTRACT (four India maps, Locket heist, save v24)
+
+- **Date:** 2026-07-13
+- **Status:** Accepted and implemented. This supersedes the Chapter 7 scaffold,
+  “unlanded / no art” PKG-14 text, twenty-enemy expansion request, and every
+  3,200-HP Cobra Raja reference. Executable canon is **20,000 HP** at level 35.
+- **Decision — stable four-map world:** Chapter 7 owns the save-facing ids
+  `chandrapore`, `monsoon_road`, `night_train`, and `palace_throne`, at 120×88,
+  108×68, 48×128, and 88×104. `src/data/maps_ch7.ts` and exported `CH7_WORLD`
+  are canonical for route mouths, landings, quest/story rectangles, recovery,
+  profiles, and migration. Chandrapore is a bazaar/ghat/cinema-station knot;
+  Monsoon Road is a changing relationship to floodwater; Night Train is a
+  car-sequenced heist; the Royal Vivarium separates habitat, boss, and throne.
+- **Decision — travel and tenancy:** Bert and Lucille carry the party only to the
+  western railhead; the overloaded **Tilak Mail** completes the canonical arrival
+  into Chandrapore. Lucille remains the safe backtracking/world link, while the
+  Night Train resolves the chapter's onward story travel and is not a replacement
+  global vehicle. Chandrapore's first five facade sources remain
+  Hillcrest → unit 0, Moon Gate → unit 1, Civic Hall → locked, Motor Gallery →
+  unit 2, Silver Parasol → unit 3. Their four service roles and amenities remain
+  stable; new units append. Fourteen original source/promoted facade pairs replace
+  all Zanzibel borrowing, with an explicit authored city-scale allowlist.
+- **Decision — Locket availability and contextual cinema:** the Star Locket is
+  never destructively removed. `ch7_locket_stolen` makes it unavailable during
+  the train heist; chase and coupling beats precede `ch7_locket_recovered`; palace
+  access requires recovery. Mid-heist saves preserve theft, completed saves
+  normalize to one available Locket. `ch7_journey` remains the seven-panel gallery,
+  while seven contextual cuts prevent travel spoilers.
+- **Decision — five quests:** Chapter 7 has exactly Seven Spices, The Monkey Who
+  Stole Tuesday, The Last Showing, Third-Class Rules, and The River Remembers.
+  Each is flag-driven, retry-safe under full inventory, leaves a local footprint,
+  grants one reward, and appends one Caller. The Ghat Elder deliberately reuses
+  the authored `oldTimer` sheet; no partial NPC asset is introduced.
+- **Decision — boss and progression:** Cobra Raja keeps no elemental weakness,
+  fire resistance, mind immunity, party-wide two-turn Paralysis every third turn,
+  and exactly one 800-HP skin shed at 40%. Palace reveal → Raja reveal → battle →
+  safe post-battle state → throne resonance → `ch7_heartlight_seen` → `ember7` →
+  `ch7_complete`; early resonance cannot consume the later completion trigger.
+- **Decision — compatibility and QA seams:** save version is **24**. v23→v24
+  recovers the four maps and Chandrapore interiors through `CH7_WORLD`, rehomes
+  vehicles to the city bay, preserves party/economy/callers/quests/story, and
+  handles stolen/recovered Locket state without duplication. Nine TitleScene
+  profiles cover arrival through complete. Contract tests pin maps, doors,
+  tenancy, quests, heist order, boss/resonance separation, migration, and profiles;
+  `output/maps_ch7.png` is the production review sheet.
+- **Consequences:** changes to a stable id, fixed point, historical facade position,
+  unit/service role, Locket flag meaning, boss timing, or resonance order require
+  migration and contract-test review. Exact evidence and the authored-art inventory
+  are recorded in `docs/CH7_PRODUCTION_VERIFICATION.md`. ☄️

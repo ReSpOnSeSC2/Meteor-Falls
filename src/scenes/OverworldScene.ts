@@ -86,6 +86,7 @@ import { WINTERMOOR_COOLANT_CROSSING } from '../data/maps_ch3';
 import { CH4_MAP_IDS, KVISTHAVN_LANDING, SPINE_MELTFALL_CROSSING } from '../data/maps_ch4';
 import { MINIMUS_LANDING } from '../data/maps_ch5';
 import { ZANZIBEL_LANDING } from '../data/maps_ch6';
+import { CH7_WORLD } from '../data/maps_ch7';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS, BAG_MAX } from '../data/items';
@@ -164,6 +165,7 @@ import { playCutscene } from '../engine/cutscene';
 import { CHOICES, type ChoiceId } from '../data/choices';
 import { recordChoice } from '../engine/choice';
 import { captureEcho, isRewindable, clearPuppetLock, puppetLocked } from '../engine/echo';
+import { chapter7DoorLanding, locketAvailable, STAR_LOCKET_ID } from '../engine/ch7';
 import {
   attempt as attemptControl,
   candidates as controlCandidates,
@@ -1020,8 +1022,9 @@ const MAP_BIOME: Readonly<Record<string, EdgeBiome>> = {
   // Ch.6 — Africa: savanna + the desert ruins
   zanzibel: 'savanna', savanna_run: 'savanna',
   laughing_ruins: 'desert', sphinx_chin: 'desert',
-  // Ch.7 — India tropical
-  chandrapore: 'tropical', monsoon_road: 'tropical', night_train: 'tropical',
+  // Ch.7 — India: city/road/train read against palms; the enclosed palace
+  // owns its authored interior boundary and must never inherit temperate trees.
+  chandrapore: 'tropical', monsoon_road: 'tropical', night_train: 'tropical', palace_throne: 'none',
   // Ch.8 — China: the spore forest keeps its own mushroom look (not the bamboo skin)
   spore_forest: 'spore',
   // Ch.10 — the finale's two LANI maps split: tropical town vs. basalt flats
@@ -1029,7 +1032,7 @@ const MAP_BIOME: Readonly<Record<string, EdgeBiome>> = {
 };
 
 /** resolve a map's edge biome: explicit override → tile-skin default → temperate. */
-function resolveEdgeBiome(id: string): EdgeBiome {
+export function resolveEdgeBiome(id: string): EdgeBiome {
   if (MAP_BIOME[id]) return MAP_BIOME[id];
   if (AURORA_SKIN_MAPS.has(id)) return 'ice';
   if (MARS_SKIN_MAPS.has(id)) return 'mars';
@@ -1196,6 +1199,9 @@ export class OverworldScene extends Phaser.Scene {
   private battleCooldown = 0;
   private stepTimer = 0;
   private fireflies: Phaser.GameObjects.Image[] = [];
+  /** Decorative out-of-bounds biome sprites. Tracked so a flag-gated edge door
+   *  can open its visual gap in-place without restarting the map. */
+  private edgeFeatures: Phaser.GameObjects.Image[] = [];
   private openingRequested = false;
   private devFullMapPreview = false;
   /** §A4: the overworld VITALS quick-glance (the EB "check HP fast" beat) —
@@ -1272,6 +1278,7 @@ export class OverworldScene extends Phaser.Scene {
     this.facadeDrift = [];
     this.solidsOverlay = undefined;
     this.fireflies = [];
+    this.edgeFeatures = [];
     this.holdingDoorImg = null;
     this.bicycle = undefined;
     this.drivingVehicleSprite = undefined;
@@ -1871,6 +1878,7 @@ export class OverworldScene extends Phaser.Scene {
         .image(cx, cy, key)
         .setOrigin(0.5, 1)
         .setDepth(1); // behind gameplay, above ground; under the depth-800 night veil
+      this.edgeFeatures.push(img);
       // sized props (trees, hedges, the new edge_* art) carry display dims; legacy
       // props (palms, baobab) go through THE WORLD RESIZE RULE like buildProps does.
       const sz = AUTHORED_WORLD_PROP_DISPLAY_SIZE[key as AuthoredWorldPropKey];
@@ -1891,6 +1899,15 @@ export class OverworldScene extends Phaser.Scene {
       if (!openLeft.has(y) && !boundaryIsWater(0, y)) plant(-s(10) + jit(), cy);
       if (!openRight.has(y) && !boundaryIsWater(w - 1, y)) plant(W + s(10) + jit(), cy);
     }
+  }
+
+  /** Re-evaluate boundary-door gaps after story flags change. The plants are
+   *  decorative, so rebuilding only this tracked layer leaves collision, actors,
+   *  camera, and the player's position untouched. */
+  private refreshEdgeFeatures(): void {
+    for (const feature of this.edgeFeatures) feature.destroy();
+    this.edgeFeatures = [];
+    this.buildEdgeFeatures();
   }
 
   private buildProps(): void {
@@ -5217,6 +5234,15 @@ export class OverworldScene extends Phaser.Scene {
       toast(this, `The good leaves. (${got}/3 — then back to the groundskeeper.)`);
     }
     // S4: keepers ARE their shops — talking opens the buy/sell flow
+    // Chapter 7's Spice Merchant remains a fully operational keeper while also
+    // owning Seven Spices. Run the quest beat first; it deliberately returns to
+    // the same shop flow in every state, including decline and hands-full retry.
+    if (n.def.id === 'cp_spice_merchant') {
+      await this.ch7RestoredNpcBeat(n.def.id);
+      await this.spicesBeat();
+      if (n.def.shop) this.openShop(n.def.shop);
+      return;
+    }
     if (n.def.shop) {
       this.openShop(n.def.shop);
       return;
@@ -6091,6 +6117,24 @@ export class OverworldScene extends Phaser.Scene {
         return true;
       case 'zn_guide':
         await this.stonesBeat();
+        return true;
+      // ── CHAPTER 7 — CHANDRAPORE: five regional quests. The Spice Merchant
+      // is handled before generic shop routing in talkTo so his shelves stay live.
+      case 'cp_dabbawala':
+        await this.ch7RestoredNpcBeat(n.def.id);
+        await this.monkeyBeat();
+        return true;
+      case 'cp_stationmaster':
+        await this.ch7RestoredNpcBeat(n.def.id);
+        await this.thirdClassBeat();
+        return true;
+      case 'cp_usher':
+        await this.ch7RestoredNpcBeat(n.def.id);
+        await this.lastShowingBeat();
+        return true;
+      case 'cp_ghat_elder':
+        await this.ch7RestoredNpcBeat(n.def.id);
+        await this.riverBeat();
         return true;
       default:
         return false;
@@ -8167,11 +8211,64 @@ export class OverworldScene extends Phaser.Scene {
       case 'ch7_arrival':
         if (!GS.flag('ch7_arrived')) await this.ch7ArrivalScene();
         break;
+      case 'ch7_bazaar':
+        await this.ch7ContextBeat('ch7_bazaar_seen', 'ch7_bazaar', 'ch7_bazaar_beat');
+        break;
+      case 'ch7_train_in':
+        await this.ch7TrainInScene();
+        break;
+      case 'ch7_heist':
+        await this.ch7HeistScene();
+        break;
+      case 'ch7_train_chase':
+        await this.ch7TrainChaseScene();
+        break;
+      case 'ch7_train_climax':
+        await this.ch7TrainClimaxScene();
+        break;
+      case 'ch7_locket_recovery':
+        await this.ch7LocketRecoveryScene();
+        break;
+      case 'ch7_palace':
+        await this.ch7ContextBeat('ch7_palace_seen', 'ch7_palace', 'ch7_palace_beat');
+        break;
+      case 'ch7_raja':
+        await this.ch7ContextBeat('ch7_raja_seen', 'ch7_raja', 'ch7_raja_beat');
+        break;
       case 'cobra_raja_boss':
         if (!GS.flag('cobra_raja_defeated')) await this.cobraRajaBossScene();
         break;
       case 'palace_throne_resonance':
         if (!GS.flag('ch7_complete')) await this.palaceThroneScene();
+        break;
+      case 'q_spice_find_1':
+      case 'q_spice_find_2':
+      case 'q_spice_find_3':
+      case 'q_spice_find_4':
+      case 'q_spice_find_5':
+      case 'q_spice_find_6':
+      case 'q_spice_find_7':
+        await this.ch7SpiceFind(id);
+        break;
+      case 'q_monkey_chase':
+      case 'q_monkey_corner':
+        await this.ch7MonkeyTrigger(id);
+        break;
+      case 'q_last_showing_projector':
+        await this.ch7ProjectorTrigger();
+        break;
+      case 'ch7_cinema':
+        await this.ch7CinemaTrigger();
+        break;
+      case 'q_third_class_inspection_1':
+      case 'q_third_class_inspection_2':
+      case 'q_third_class_inspection_3':
+        await this.ch7InspectionTrigger(id);
+        break;
+      case 'q_river_clue_1':
+      case 'q_river_clue_2':
+      case 'q_river_clue_3':
+        await this.ch7RiverTrigger(id);
         break;
       /* ---------------- Chapter 8 (§A6 China) ---------------- */
       case 'ch8_arrival':
@@ -8628,19 +8725,21 @@ export class OverworldScene extends Phaser.Scene {
       this.goThroughDoor('lotus_harbor', 8 * 16, 22 * 16, 'down');
       return;
     }
-    // the §A5 Chandrapore leg: once Zanzibel is done, Bert flies the party to CHANDRAPORE
-    // (kept for the backtrack now that Lotus Harbor is the frontier)
+    // the §A5 Chandrapore leg: Bert flies to the western railhead and the crowded
+    // Tilak Mail carries the party into the city (the backtrack remains Lucille-owned).
     if (GS.flag('ch6_complete') && !GS.flag('ch7_arrived')) {
       await this.dlg.say(...DIALOGUE.bert_india_ask);
-      const pick = await this.dlg.ask(['Fly to CHANDRAPORE', 'Not yet'], { cancelIndex: 1 });
+      const pick = await this.dlg.ask(['Catch the train to CHANDRAPORE', 'Not yet'], { cancelIndex: 1 });
       if (pick !== 0) {
         this.cut = false;
         return;
       }
       AUDIO.stopMusic();
-      await playCutscene(this, 'ch7_journey'); // the authored India panels (no-ops if missing)
-      // the hatch drops on the Chandrapore ghat landing square; ch7_arrival fires the beat
-      this.goThroughDoor('chandrapore', 8 * 16, 22 * 16, 'down');
+      // The complete ch7_journey reel is gallery-only: later panels contain the
+      // theft, Raja, Heartlight, and cinema. Contextual triggers reveal them in order.
+      await this.ch7TrainInScene();
+      const landing = chapter7DoorLanding(CH7_WORLD.chandrapore.landing);
+      this.goThroughDoor('chandrapore', landing.x, landing.y, 'down');
       return;
     }
     // the §A5 Zanzibel leg: once Minimus is done, Bert flies the party to ZANZIBEL (kept
@@ -9119,7 +9218,7 @@ export class OverworldScene extends Phaser.Scene {
    * Heartlight 7. Mirrors the Ch.6 shape — a straight chapter, no joins (the party is
    * whole by now), so the throne's resonance just records Ember 7 and opens the next leg. */
 
-  /** the §A6 arrival — Bert sets the party down on the Chandrapore ghats, into the roar */
+  /** the §A6 arrival — the overloaded Tilak Mail reaches Chandrapore's ghats */
   private async ch7ArrivalScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('ch7_arrived');
@@ -9134,15 +9233,31 @@ export class OverworldScene extends Phaser.Scene {
    *  a party-wide paralyzing gaze, and a one-time 40% skin-shed that heals +800). A normal
    *  HP win on its 20000 HP — burn it through the threshold and wake the real king. */
   private async cobraRajaBossScene(): Promise<void> {
+    if (!locketAvailable(GS.data)) {
+      await this.dlg.say(...DIALOGUE.ch7_locket_missing);
+      return;
+    }
+    await this.ch7ContextBeat('ch7_palace_seen', 'ch7_palace', 'ch7_palace_beat');
+    await this.ch7ContextBeat('ch7_raja_seen', 'ch7_raja', 'ch7_raja_beat');
     this.cut = true;
     await this.dlg.say(...DIALOGUE.cobra_raja_door);
     AUDIO.sfx('thud');
     this.cameras.main.shake(460, 0.008);
     await this.wait(420);
     const outcome = await this.startBattle(['cobra_raja'], 'none', [], { boss: true });
-    if (outcome !== 'victory') return;
+    if (outcome !== 'victory') {
+      this.cut = false;
+      return;
+    }
     this.cut = true;
     GS.setFlag('cobra_raja_defeated');
+    const safe = CH7_WORLD.palaceThrone.postBoss;
+    const safeX = safe.x * TILE_PX + TILE_PX / 2;
+    const safeY = safe.y * TILE_PX + TILE_PX * 0.75;
+    this.player.setPosition(safeX, safeY);
+    GS.data.x = safeX;
+    GS.data.y = safeY;
+    GS.data.facing = 'down';
     AUDIO.sfx('confirm');
     this.cameras.main.flash(420, 248, 232, 160);
     await this.dlg.say(...DIALOGUE.cobra_raja_win);
@@ -9161,8 +9276,18 @@ export class OverworldScene extends Phaser.Scene {
       this.cut = false;
       return;
     }
+    if (!locketAvailable(GS.data)) {
+      this.cut = true;
+      await this.dlg.say(...DIALOGUE.ch7_locket_missing);
+      this.cut = false;
+      return;
+    }
     this.cut = true;
     // HEARTLIGHT 7 — the Coiled Raga (Ember 7)
+    if (!GS.flag('ch7_heartlight_seen')) {
+      GS.setFlag('ch7_heartlight_seen');
+      await playCutscene(this, 'ch7_heartlight');
+    }
     GS.setFlag('ember7');
     GS.data.embers = 7;
     const ember = this.add.image(this.player.x, this.player.y - s(44), 'ember').setDepth(9999);
@@ -9810,6 +9935,86 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  private async ch7ContextBeat(flag: string, cutsceneId: string, dialogueId?: string): Promise<void> {
+    if (GS.flag(flag)) return;
+    this.cut = true;
+    GS.setFlag(flag);
+    await playCutscene(this, cutsceneId);
+    if (dialogueId) await this.dlg.say(...DIALOGUE[dialogueId]);
+    this.cut = false;
+  }
+
+  /** One-shot post-boss local reactions. These run before (and never replace)
+   * each NPC's quest state machine, keeping all five regional quests non-missable. */
+  private async ch7RestoredNpcBeat(npcId: string): Promise<void> {
+    if (!GS.flag('cobra_raja_defeated')) return;
+    const dialogueId = `npc_${npcId}_restored`;
+    if (!(dialogueId in DIALOGUE)) return;
+    const seenFlag = `ch7_restored_${npcId}_seen`;
+    if (GS.flag(seenFlag)) return;
+    GS.setFlag(seenFlag);
+    await this.dlg.say(...DIALOGUE[dialogueId]);
+  }
+
+  private async ch7TrainInScene(): Promise<void> {
+    if (GS.flag('ch7_train_seen')) return;
+    this.cut = true;
+    GS.setFlag('ch7_train_seen');
+    if (!GS.data.keyItems.includes('train_ticket')) GS.data.keyItems.push('train_ticket');
+    await playCutscene(this, 'ch7_train_in');
+    await this.dlg.say(...DIALOGUE.ch7_train_in_beat);
+    AUDIO.sfx('confirm');
+    toast(this, 'Got the TRAIN TICKET.');
+    this.cut = false;
+  }
+
+  private async ch7HeistScene(): Promise<void> {
+    if (GS.flag('ch7_heist_seen') || GS.flag('ch7_locket_recovered')) return;
+    // The map's southern threshold makes this spatially unavoidable in normal
+    // play; the runtime guard also repairs imported/dev saves at the station.
+    await this.ch7ContextBeat('ch7_bazaar_seen', 'ch7_bazaar', 'ch7_bazaar_beat');
+    this.cut = true;
+    GS.setFlag('ch7_heist_seen');
+    GS.setFlag('ch7_locket_stolen');
+    GS.setFlag('ch7_locket_recovered', false);
+    this.refreshEdgeFeatures();
+    await playCutscene(this, 'ch7_heist');
+    await this.dlg.say(...DIALOGUE.ch7_heist_beat);
+    AUDIO.sfx('alert');
+    this.cut = false;
+  }
+
+  private async ch7TrainChaseScene(): Promise<void> {
+    if (!GS.flag('ch7_locket_stolen') || GS.flag('ch7_locket_recovered') || GS.flag('ch7_train_chase_seen')) return;
+    this.cut = true;
+    GS.setFlag('ch7_train_chase_seen');
+    await this.dlg.say(...DIALOGUE.ch7_train_chase_beat);
+    this.cut = false;
+  }
+
+  private async ch7TrainClimaxScene(): Promise<void> {
+    if (!GS.flag('ch7_locket_stolen')
+      || GS.flag('ch7_locket_recovered')
+      || !GS.flag('ch7_train_chase_seen')
+      || GS.flag('ch7_train_climax_seen')) return;
+    this.cut = true;
+    GS.setFlag('ch7_train_climax_seen');
+    await this.dlg.say(...DIALOGUE.ch7_train_climax_beat);
+    this.cut = false;
+  }
+
+  private async ch7LocketRecoveryScene(): Promise<void> {
+    if (GS.flag('ch7_locket_recovered') || !GS.flag('ch7_heist_seen')) return;
+    this.cut = true;
+    if (!GS.data.keyItems.includes(STAR_LOCKET_ID)) GS.data.keyItems.push(STAR_LOCKET_ID);
+    GS.setFlag('ch7_locket_stolen', false);
+    GS.setFlag('ch7_locket_recovered');
+    AUDIO.sfx('ember');
+    this.sparkleBurst(this.player.x, this.player.y - s(18), 14);
+    await this.dlg.say(...DIALOGUE.ch7_locket_recovery_beat);
+    this.cut = false;
+  }
+
   /** A quiet, spatial replacement for the former map-wide waves/wind loop. */
   private scheduleWaterAccents(): void {
     if (this.devFullMapPreview || !containsWater(this.mapDef.grid)) return;
@@ -9904,6 +10109,241 @@ export class OverworldScene extends Phaser.Scene {
     this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
     await this.dlg.say(...DIALOGUE.q_stones_done_beat);
     AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+  }
+
+  /* ---------------- Chapter 7 — Chandrapore's five regional quests ---------------- */
+
+  private static readonly CH7_SPICE_FLAGS = [
+    'q_spice_find_1', 'q_spice_find_2', 'q_spice_find_3', 'q_spice_find_4',
+    'q_spice_find_5', 'q_spice_find_6', 'q_spice_find_7',
+  ] as const;
+
+  private static readonly CH7_INSPECTION_FLAGS = [
+    'q_third_class_inspection_1', 'q_third_class_inspection_2', 'q_third_class_inspection_3',
+  ] as const;
+
+  private static readonly CH7_RIVER_FLAGS = [
+    'q_river_clue_1', 'q_river_clue_2', 'q_river_clue_3',
+  ] as const;
+
+  private async offerCh7Quest(
+    dialogue: string,
+    startFlag: string,
+    acceptLabel: string,
+    declineDialogue: string,
+  ): Promise<boolean> {
+    await this.dlg.say(...DIALOGUE[dialogue]);
+    const pick = await this.dlg.ask([acceptLabel, 'Not yet'], { cancelIndex: 1 });
+    if (pick !== 0) {
+      await this.dlg.say(...DIALOGUE[declineDialogue]);
+      return false;
+    }
+    // Commit before any later presentation; a save/restart cannot consume the offer.
+    GS.setFlag(startFlag);
+    AUDIO.sfx('confirm');
+    return true;
+  }
+
+  private async finishCh7Quest(questId: string, fullDialogue: string, doneDialogue: string): Promise<boolean> {
+    if (completeQuest(questId) === 'hands-full') {
+      await this.dlg.say(...DIALOGUE[fullDialogue]);
+      return false;
+    }
+    this.cut = true;
+    AUDIO.sfx('confirm');
+    this.sparkleBurst(this.player.x, this.player.y - s(16), 12);
+    await this.dlg.say(...DIALOGUE[doneDialogue]);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+    return true;
+  }
+
+  private async spicesBeat(): Promise<void> {
+    if (!GS.flag('q_spices')) {
+      await this.offerCh7Quest('q_spices_ask', 'q_spices', 'Take the seven-spice list', 'q_spices_decline');
+      return;
+    }
+    if (GS.flag('q_spices_done')) {
+      await this.dlg.say(...DIALOGUE.q_spices_after);
+      return;
+    }
+    const found = OverworldScene.CH7_SPICE_FLAGS.filter((flag) => GS.flag(flag)).length;
+    if (!GS.flag('q_spices_gather')) {
+      await this.dlg.say(...DIALOGUE[found > 0 ? 'q_spices_partial' : 'q_spices_active']);
+      if (found > 0) toast(this, `${found}/7 spices found.`);
+      return;
+    }
+    if (!GS.flag('q_spices_return')) {
+      GS.setFlag('q_spices_return');
+      await this.dlg.say(...DIALOGUE.q_spices_report);
+    }
+    await this.finishCh7Quest('seven_spices', 'q_spices_full', 'q_spices_done_beat');
+  }
+
+  private async monkeyBeat(): Promise<void> {
+    if (!GS.flag('q_monkey')) {
+      await this.offerCh7Quest('q_monkey_ask', 'q_monkey', 'Chase the Magnate', 'q_monkey_decline');
+      return;
+    }
+    if (GS.flag('q_monkey_done')) {
+      await this.dlg.say(...DIALOGUE.q_monkey_after);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_monkey_active);
+  }
+
+  private async lastShowingBeat(): Promise<void> {
+    if (!GS.flag('q_showing')) {
+      await this.offerCh7Quest('q_showing_ask', 'q_showing', 'Restore the last showing', 'q_showing_decline');
+      return;
+    }
+    if (GS.flag('q_showing_done')) {
+      await this.dlg.say(...DIALOGUE.q_showing_after);
+      return;
+    }
+    if (!GS.flag('q_showing_projector')) {
+      await this.dlg.say(...DIALOGUE.q_showing_active);
+      return;
+    }
+    if (!GS.flag('q_showing_screened')) {
+      await this.dlg.say(...DIALOGUE.q_showing_screen_locked);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_showing_report);
+    await this.finishCh7Quest('the_last_showing', 'q_showing_full', 'q_showing_done_beat');
+  }
+
+  private async thirdClassBeat(): Promise<void> {
+    if (!GS.flag('q_third_class')) {
+      await this.offerCh7Quest('q_third_class_ask', 'q_third_class', 'Take the inspection lamp', 'q_third_class_decline');
+      return;
+    }
+    if (GS.flag('q_third_class_done')) {
+      await this.dlg.say(...DIALOGUE.q_third_class_after);
+      return;
+    }
+    const inspected = OverworldScene.CH7_INSPECTION_FLAGS.filter((flag) => GS.flag(flag)).length;
+    if (!GS.flag('q_third_class_inspected')) {
+      await this.dlg.say(...DIALOGUE[inspected > 0 ? 'q_third_class_partial' : 'q_third_class_active']);
+      if (inspected > 0) toast(this, `${inspected}/3 train checks complete.`);
+      return;
+    }
+    if (!GS.flag('q_third_class_reported')) {
+      GS.setFlag('q_third_class_reported');
+      await this.dlg.say(...DIALOGUE.q_third_class_report);
+    }
+    await this.finishCh7Quest('third_class_rules', 'q_third_class_full', 'q_third_class_done_beat');
+  }
+
+  private async riverBeat(): Promise<void> {
+    if (!GS.flag('q_river')) {
+      await this.offerCh7Quest('q_river_ask', 'q_river', 'Follow the river marks', 'q_river_decline');
+      return;
+    }
+    if (GS.flag('q_river_done')) {
+      await this.dlg.say(...DIALOGUE.q_river_after);
+      return;
+    }
+    const clues = OverworldScene.CH7_RIVER_FLAGS.filter((flag) => GS.flag(flag)).length;
+    if (!GS.flag('q_river_followed')) {
+      await this.dlg.say(...DIALOGUE[clues > 0 ? 'q_river_partial' : 'q_river_active']);
+      if (clues > 0) toast(this, `${clues}/3 river marks followed.`);
+      return;
+    }
+    if (!GS.flag('q_river_returned')) {
+      GS.setFlag('q_river_returned');
+      await this.dlg.say(...DIALOGUE.q_river_report);
+    }
+    await this.finishCh7Quest('the_river_remembers', 'q_river_full', 'q_river_done_beat');
+  }
+
+  private async ch7SpiceFind(id: string): Promise<void> {
+    if (!OverworldScene.CH7_SPICE_FLAGS.includes(id as typeof OverworldScene.CH7_SPICE_FLAGS[number])) return;
+    if (!GS.flag('q_spices') || GS.flag('q_spices_done') || GS.flag(id)) return;
+    this.cut = true;
+    GS.setFlag(id);
+    const found = OverworldScene.CH7_SPICE_FLAGS.filter((flag) => GS.flag(flag)).length;
+    if (found === OverworldScene.CH7_SPICE_FLAGS.length) GS.setFlag('q_spices_gather');
+    AUDIO.sfx('ember');
+    await this.dlg.say(...DIALOGUE[id]);
+    toast(this, found === 7 ? 'All seven spices — return to the Merchant.' : `${found}/7 spices found.`);
+    this.cut = false;
+  }
+
+  private async ch7MonkeyTrigger(id: 'q_monkey_chase' | 'q_monkey_corner'): Promise<void> {
+    if (!GS.flag('q_monkey') || GS.flag('q_monkey_done')) return;
+    if (id === 'q_monkey_chase') {
+      if (GS.flag(id)) return;
+      this.cut = true;
+      GS.setFlag(id);
+      await this.dlg.say(...DIALOGUE.q_monkey_chase_beat);
+      toast(this, 'The Magnate is headed for the cinema roof.');
+      this.cut = false;
+      return;
+    }
+    if (!GS.flag('q_monkey_chase')) {
+      await this.dlg.say(...DIALOGUE.q_monkey_chase_locked);
+      return;
+    }
+    if (!GS.flag('q_monkey_corner')) {
+      this.cut = true;
+      GS.setFlag('q_monkey_corner');
+      await this.dlg.say(...DIALOGUE.q_monkey_corner_beat);
+      this.cut = false;
+    }
+    await this.finishCh7Quest('monkey_who_stole_tuesday', 'q_monkey_full', 'q_monkey_done_beat');
+  }
+
+  private async ch7ProjectorTrigger(): Promise<void> {
+    if (!GS.flag('q_showing') || GS.flag('q_showing_done') || GS.flag('q_showing_projector')) return;
+    this.cut = true;
+    GS.setFlag('q_showing_projector');
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE.q_showing_projector_beat);
+    toast(this, 'The projector is ready. Take your seats.');
+    this.cut = false;
+  }
+
+  private async ch7CinemaTrigger(): Promise<void> {
+    if (!GS.flag('q_showing') || GS.flag('q_showing_done') || GS.flag('q_showing_screened')) return;
+    if (!GS.flag('q_showing_projector')) {
+      await this.dlg.say(...DIALOGUE.q_showing_screen_locked);
+      return;
+    }
+    this.cut = true;
+    // Both commits precede the panel: an interrupted screening remains completed.
+    GS.setFlag('q_showing_screened');
+    GS.setFlag('ch7_cinema_seen');
+    await playCutscene(this, 'ch7_cinema');
+    await this.dlg.say(...DIALOGUE.q_showing_screening);
+    this.cut = false;
+  }
+
+  private async ch7InspectionTrigger(id: string): Promise<void> {
+    if (!OverworldScene.CH7_INSPECTION_FLAGS.includes(id as typeof OverworldScene.CH7_INSPECTION_FLAGS[number])) return;
+    if (!GS.flag('q_third_class') || GS.flag('q_third_class_done') || GS.flag(id)) return;
+    this.cut = true;
+    GS.setFlag(id);
+    const inspected = OverworldScene.CH7_INSPECTION_FLAGS.filter((flag) => GS.flag(flag)).length;
+    if (inspected === OverworldScene.CH7_INSPECTION_FLAGS.length) GS.setFlag('q_third_class_inspected');
+    AUDIO.sfx('confirm');
+    await this.dlg.say(...DIALOGUE[id]);
+    toast(this, inspected === 3 ? 'All checks complete — report to the Stationmaster.' : `${inspected}/3 train checks complete.`);
+    this.cut = false;
+  }
+
+  private async ch7RiverTrigger(id: string): Promise<void> {
+    const index = OverworldScene.CH7_RIVER_FLAGS.indexOf(id as typeof OverworldScene.CH7_RIVER_FLAGS[number]);
+    if (index < 0 || !GS.flag('q_river') || GS.flag('q_river_done') || GS.flag(id)) return;
+    if (index > 0 && !GS.flag(OverworldScene.CH7_RIVER_FLAGS[index - 1])) return;
+    this.cut = true;
+    GS.setFlag(id);
+    const clues = OverworldScene.CH7_RIVER_FLAGS.filter((flag) => GS.flag(flag)).length;
+    if (clues === OverworldScene.CH7_RIVER_FLAGS.length) GS.setFlag('q_river_followed');
+    AUDIO.sfx('water_lap');
+    await this.dlg.say(...DIALOGUE[id]);
+    toast(this, clues === 3 ? 'The brass boat — return to the Ghat Elder.' : `${clues}/3 river marks followed.`);
     this.cut = false;
   }
 

@@ -133,6 +133,28 @@ describe('cutscene registry', () => {
     expect(CUTSCENES.ch6_held_breath.beats).toHaveLength(1);
   });
 
+  it('keeps the Chapter 7 gallery canonical while runtime beats stay contextual', () => {
+    const expected = [
+      'night_train_to_chandrapore',
+      'chandrapore_bazaars',
+      'locket_train_heist',
+      'royal_vivarium_palace',
+      'cobra_raja_reveal',
+      'palace_throne_resonance',
+      'cinema_about_the_party',
+    ];
+    expect(CUTSCENES.ch7_journey.beats.map((beat) => beat.art)).toEqual(expected);
+    expect([
+      'ch7_train_in',
+      'ch7_bazaar',
+      'ch7_heist',
+      'ch7_palace',
+      'ch7_raja',
+      'ch7_heartlight',
+      'ch7_cinema',
+    ].map((id) => CUTSCENES[id].beats.map((beat) => beat.art))).toEqual(expected.map((art) => [art]));
+  });
+
   it('prefers runtime-resolution _4x panels over legacy _01 placeholders', () => {
     const preferred4x: string[] = [];
     for (const cs of all) {

@@ -356,20 +356,27 @@ const CH6: Cutscene[] = [
   },
 ];
 
+const CH7_BEATS = {
+  train: panels('night_train_to_chandrapore')[0],
+  bazaar: panels('chandrapore_bazaars')[0],
+  heist: panels('locket_train_heist')[0],
+  palace: panels('royal_vivarium_palace')[0],
+  raja: panels('cobra_raja_reveal')[0],
+  heartlight: panels('palace_throne_resonance')[0],
+  cinema: panels('cinema_about_the_party')[0],
+} satisfies Record<string, CutsceneBeat>;
+
 const CH7: Cutscene[] = [
-  {
-    id: 'ch7_journey',
-    chapter: 'ch7',
-    beats: panels(
-      'night_train_to_chandrapore',
-      'chandrapore_bazaars',
-      'locket_train_heist',
-      'royal_vivarium_palace',
-      'cobra_raja_reveal',
-      'palace_throne_resonance',
-      'cinema_about_the_party',
-    ),
-  },
+  // Gallery order is canonical. Runtime must use only the contextual entries
+  // below so arrival cannot reveal the heist, Raja, Heartlight, or cinema beat.
+  { id: 'ch7_journey', chapter: 'ch7', beats: Object.values(CH7_BEATS) },
+  { id: 'ch7_train_in', chapter: 'ch7', beats: [CH7_BEATS.train] },
+  { id: 'ch7_bazaar', chapter: 'ch7', beats: [CH7_BEATS.bazaar] },
+  { id: 'ch7_heist', chapter: 'ch7', beats: [CH7_BEATS.heist] },
+  { id: 'ch7_palace', chapter: 'ch7', beats: [CH7_BEATS.palace] },
+  { id: 'ch7_raja', chapter: 'ch7', beats: [CH7_BEATS.raja] },
+  { id: 'ch7_heartlight', chapter: 'ch7', beats: [CH7_BEATS.heartlight] },
+  { id: 'ch7_cinema', chapter: 'ch7', beats: [CH7_BEATS.cinema] },
 ];
 
 const CH8: Cutscene[] = [

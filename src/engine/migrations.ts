@@ -96,6 +96,11 @@
  * v22 to v23 (2026-07 Chapter 6 rollout): the four Zanzibel maps recover to
  * shared production-world anchors and outdoor city/savanna parking is rehomed.
  * Flags, quest state, inventory, economy, party, and branch choices are untouched.
+ *
+ * v23 to v24 (2026-07 Chapter 7 rollout): the four Chandrapore maps and every
+ * generated city unit recover to stable production anchors. Chapter 7 parking
+ * moves to real Chandrapore bays, while completed saves normalize the stolen
+ * Locket back into its recovered state. Mid-heist flags remain exactly mid-heist.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
@@ -106,8 +111,9 @@ import { allocateVehicleDeliverySlot } from './vehicle-domain';
 import type { HoopsState } from '../schemas';
 import { s } from '../spritegen/scale';
 import { CH6_WORLD } from '../data/maps_ch6';
+import { CH7_MAP_IDS, CH7_WORLD } from '../data/maps_ch7';
 
-export const CURRENT_SAVE_VERSION = 23;
+export const CURRENT_SAVE_VERSION = 24;
 
 const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
 
@@ -184,6 +190,41 @@ export const CHAPTER6_LAYOUT_RECOVERY = {
 export const CHAPTER6_PARKING_RECOVERY = {
   zanzibel: { x: 23 * 16 + 8, y: 45 * 16 + 12, facing: 'right' },
   savanna_run: { x: 8 * 16 + 8, y: 50 * 16 + 12, facing: 'right' },
+} as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
+
+const nativeFeet = (
+  point: Readonly<{ x: number; y: number }>,
+  facing: 'up' | 'down' | 'left' | 'right',
+): { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' } => ({
+  x: point.x * 16 + 8,
+  y: point.y * 16 + 12,
+  facing,
+});
+
+/** Every v23 Chapter 7 location has a stable v24 recovery point. Generated
+ * Chandrapore unit ids are part of the save contract too: the original four
+ * keep their identity and the expanded production tenancy is deterministic. */
+export const CHAPTER7_LAYOUT_RECOVERY: Readonly<Record<
+  string,
+  { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }
+>> = {
+  chandrapore: nativeFeet(CH7_WORLD.chandrapore.landing, 'down'),
+  monsoon_road: nativeFeet(CH7_WORLD.monsoonRoad.cityLanding, 'right'),
+  night_train: nativeFeet(CH7_WORLD.nightTrain.roadLanding, 'up'),
+  palace_throne: nativeFeet(CH7_WORLD.palaceThrone.entry, 'up'),
+  ...Object.fromEntries(
+    Array.from({ length: 18 }, (_, index) => [
+      `chandrapore_unit_${index}`,
+      nativeFeet({ x: 5, y: 6 }, 'up'),
+    ]),
+  ),
+};
+
+/** Old Chapter 7 outdoor parking is collected into the rebuilt city's marked
+ * bays. The source-area keys are intentionally separate from the destination. */
+export const CHAPTER7_PARKING_RECOVERY = {
+  chandrapore: nativeFeet(CH7_WORLD.chandrapore.vehicleBay, 'right'),
+  monsoon_road: nativeFeet(CH7_WORLD.chandrapore.vehicleBay, 'right'),
 } as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
@@ -312,6 +353,60 @@ function recoverChapter6VehicleParking(raw: Raw): void {
     );
     parking[title] = next;
     recovered[title] = next;
+  }
+}
+
+function recoverChapter7VehicleParking(raw: Raw): void {
+  if (!isObj(raw.vehicleParking)) return;
+  const parking = raw.vehicleParking;
+  const recovered: Record<string, VehicleParkingState> = {};
+  for (const [title, value] of Object.entries(parking)) {
+    if (!isVehicleParkingState(value) || hasOwn(CHAPTER7_PARKING_RECOVERY, value.area)) continue;
+    recovered[title] = value;
+  }
+  const pending = Object.entries(parking)
+    .filter((entry): entry is [string, VehicleParkingState] =>
+      isVehicleParkingState(entry[1]) && hasOwn(CHAPTER7_PARKING_RECOVERY, entry[1].area))
+    .sort(([a], [b]) => a.localeCompare(b));
+  for (const [title, value] of pending) {
+    const sourceArea = value.area as keyof typeof CHAPTER7_PARKING_RECOVERY;
+    const base = CHAPTER7_PARKING_RECOVERY[sourceArea];
+    const next = allocateVehicleDeliverySlot(
+      { vehicleParking: recovered }, title,
+      { area: 'chandrapore', x: s(base.x), y: s(base.y), facing: base.facing },
+    );
+    parking[title] = next;
+    recovered[title] = next;
+  }
+}
+
+function normalizeChapter7Locket(raw: Raw): void {
+  const flags = isObj(raw.flags) ? raw.flags : undefined;
+  if (!flags) return;
+  const map = typeof raw.map === 'string' ? raw.map : '';
+  const chapter7Map = (CH7_MAP_IDS as readonly string[]).includes(map)
+    || map.startsWith('chandrapore_unit_');
+  const chapter7Progress = chapter7Map
+    || flags.ch7_arrived === true
+    || flags.ch7_locket_stolen === true
+    || flags.ch7_locket_recovered === true
+    || flags.cobra_raja_defeated === true
+    || flags.ch7_complete === true;
+
+  if (chapter7Progress && Array.isArray(raw.keyItems)) {
+    let sawLocket = false;
+    const normalized = raw.keyItems.filter((item) => {
+      if (item !== 'star_locket') return true;
+      if (sawLocket) return false;
+      sawLocket = true;
+      return true;
+    });
+    if (!sawLocket) normalized.push('star_locket');
+    raw.keyItems.splice(0, raw.keyItems.length, ...normalized);
+  }
+  if (flags.ch7_complete === true) {
+    flags.ch7_locket_stolen = false;
+    flags.ch7_locket_recovered = true;
   }
 }
 
@@ -755,6 +850,24 @@ export const MIGRATIONS: MigrationStep[] = [
       }
       recoverChapter6VehicleParking(raw);
       raw.version = 23;
+      return raw;
+    },
+  },
+  {
+    to: 24,
+    migrate(raw) {
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const target = hasOwn(CHAPTER7_LAYOUT_RECOVERY, map)
+        ? CHAPTER7_LAYOUT_RECOVERY[map]
+        : undefined;
+      if (target) {
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      recoverChapter7VehicleParking(raw);
+      normalizeChapter7Locket(raw);
+      raw.version = 24;
       return raw;
     },
   },

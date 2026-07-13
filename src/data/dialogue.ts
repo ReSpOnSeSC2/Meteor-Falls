@@ -3988,18 +3988,58 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — Bert offers the §A5 next leg (bertAirBeat: ch6_complete → CHANDRAPORE) —
   bert_india_ask: [
     "@Heard the locket pick up a new note out over the water, so I followed my ears east. (Bert taps the map, grinning.) CHANDRAPORE. Biggest city any of us'll ever see — bazaars you could lose a week in, river ghats, a picture-house. And somewhere over it, a palace gone wrong.",
-    '@Word on the wind is the old Maharaja got... replaced. By something COLD, up on his own throne. Sounds like locket business to me. Say the word and Lucille will have you there by the dinner rush.',
+    '@Word on the wind is the old Maharaja got... replaced. By something COLD, up on his own throne. Lucille can carry us to the western railhead; the overloaded TILAK MAIL makes the last bright run into Chandrapore. Say the word and we catch it.',
   ],
 
-  // — the §A6 arrival: Bert noses Lucille down at the Chandrapore ghats —
+  // — the §A6 arrival: the overloaded Tilak Mail reaches Chandrapore —
   ch7_arrival: [
-    '(Lucille drops out of a copper sky onto the river steps, and CHANDRAPORE hits all at once — frying ghee, marigolds, river-mud, ten thousand voices, a film song blaring from a tin speaker. The city goes up the hill in front of you in every colour at once, and all of it is MOVING.)',
+    '(The overloaded TILAK MAIL groans into Chandrapore beside the river steps, and the city hits all at once — frying ghee, marigolds, river-mud, ten thousand voices, a film song blaring from a tin speaker. The streets go up the hill in every colour at once, and all of it is MOVING.)',
     '@Okay — okay, I take it back about Zanzibel being loud. ({milo}, turning in a slow circle, overwhelmed and delighted.) THIS is loud. This is the big leagues of loud.',
-    '@A poster the size of a house looks down over the crowd: five painted children and a falling star. THE MELODY OF MEDDLESOME CHILDREN — NOW SHOWING. {pippa} stares up at it. "...That\'s us," she says faintly. "That\'s supposed to be US."',
+    '(A bell rings somewhere inside the bazaar. Seven alleys answer with bicycle bells, brass cups, bargaining voices, and one monkey who appears to be wearing somebody else\'s hat.)',
+  ],
+
+  ch7_bazaar_beat: [
+    '(The Grand Bazaar opens around you like a book that refuses to hold still: spice lanes, cloth balconies, river stairs, and a cinema marquee blinking bravely in daylight.)',
+    '@"This city has too many middles," {milo} says happily. "Whichever way we go, I think we are already in one."',
+  ],
+  ch7_train_in_beat: [
+    '(At the western railhead, the TILAK MAIL waits under storm clouds: third-class carriages, roof ladders, bright carriage lamps, and more passengers than the timetable believed possible.)',
+    '@The Stationmaster presses a punched TRAIN TICKET into {rex}\'s hand. "Not a reward. Not a favor. The palace line needs people willing to bring everybody back."',
+  ],
+  ch7_heist_beat: [
+    '(The lamps go out from the rear carriage forward. Something small races over the roof. Something colder slides through the coupling. A jeweled hand flashes once — and the Star Locket is GONE from {rex}\'s neck.)',
+    '@"Don\'t move!" {faye} catches the empty chain before it falls. From the next car comes one bright, mocking chime. "It wants the song. We get it back before this train reaches the palace."',
+  ],
+  ch7_train_chase_beat: [
+    '(The thief skips across the swaying coupling with the Locket held high. The train bends around the mountain; for one breath every carriage becomes a separate little world.)',
+    '@"Three cars ahead," {pippa} calls from the roof ladder. "And it keeps checking whether we are still together. Let\'s disappoint it."',
+  ],
+  ch7_train_climax_beat: [
+    '(At the last coupling, the thief leaps as the carriages pull apart. {rex} braces across the gap while every hand behind him catches the next wrist in line.)',
+    '@The Locket rings from the head carriage — one clear, defiant note. {faye} grins through the wind. "It remembers us. One more car."',
+  ],
+  ch7_locket_recovery_beat: [
+    '(At the head carriage, the cold shape finds nowhere left to run. It loosens into smoke. The Star Locket drops — warm before it even reaches {rex}\'s hands.)',
+    '@The held note returns all at once. {faye} exhales. "Still ours. Still listening. And now it knows the road to the palace."',
+  ],
+  ch7_palace_beat: [
+    '(The palace is also a vivarium: moonlit glasshouses, empty aviaries, tiled pools, and vines trained around gold cages whose doors all stand open. Nothing living sings.)',
+    '@"He collected beautiful voices," {dorin} says. "Then the Hush taught him to keep them quiet." Somewhere above, a heavy crown shifts on stone.',
+  ],
+  ch7_raja_beat: [
+    '(Beyond the last garden gate, a vast cobra-shadow rises across the throne-room doors. The crown at its center has a man\'s face caught inside it.)',
+    '@{faye} touches the restored Locket. "That is not a snake pretending to be a king. It is the Hush teaching a king how to disappear. We call him back."',
+  ],
+  ch7_locket_missing: [
+    '(The throne reaches for the Star Locket and finds only the empty chain. Its warm note collapses before it can begin. The song cannot be carried while the Locket is still aboard the train.)',
+  ],
+  locket_missing_heist: [
+    '(Your hand finds the empty chain. The Star Locket is somewhere ahead on the Night Train. Heartlights and the Held Breath will return when it does.)',
   ],
 
   // — Chandrapore signs —
   sign_chandrapore: ['(A hand-painted arch over the ghat road, lettered and re-lettered in a dozen scripts:) CHANDRAPORE — Jewel of the River, City of a Thousand Trades. Mind the monkeys. Mind the meter. Mind the cinema queue, it does not move. Welcome, traveller, and welcome your wallet too.'],
+  sign_monsoon_gate_locked: ['(A red station board bars the up-country gate:) MONSOON ROAD CLOSED TO PALACE TRAFFIC. NIGHT-SERVICE PASSENGERS REPORT TO CHANDRAPORE STATION. (Someone has underlined REPORT twice and drawn a very urgent little train.)'],
   sign_monsoon_gate: ['(A weathered marker at the up-country gate, an arrow burned into it:) ↑ THE MONSOON ROAD — to the night-train spur and the PALACE beyond. The road is open. The palace is not. Travellers are advised to go in daylight, in company, and to look UP.'],
   sign_chandrapore_court: ['(A shaded brass bench under a banyan, a plate set into it:) THE BAZAAR COURT — by leave of the (struck out) Maharaja (struck out) the New Throne. All disputes settled here, except the big one, which is settled up the hill.'],
 
@@ -4020,6 +4060,81 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@One ticket? Sit anywhere, the matinee is empty — everyone is too busy LIVING the story to watch it. Three hours, five brave children, one falling star, terrific songs.',
     '@(He squints at you. Then at the poster. Then at you.) ...You know, you do look a bit like— no. No, they were much taller. And they could SING. Lovely try, though.',
   ],
+  npc_cp_ghat_elder: [
+    '@I keep the memorial lamps on the lower steps. The river took one little brass boat three monsoons ago, but every year it leaves the same three bright marks as if trying to tell me where it set the thing down.',
+    '@A river remembers differently from a person. Slower. Wider. If you have patient feet, perhaps you can translate.',
+  ],
+  npc_cp_spice_merchant_restored: ['@The old Maharaja came down for chai at dawn. Paid full price, tipped badly, remembered every apprentice by name. That is how you know a king is himself again.'],
+  npc_cp_dabbawala_restored: ['@The palace kitchens ordered lunch for every keeper who stayed awake through the cold years. The real king wrote the addresses himself. Not one tiffin went astray.'],
+  npc_cp_stationmaster_restored: ['@PALACE SERVICE: RESTORED. The Maharaja rang the departure bell with his own hand, then apologized to the timetable. I may frame the delay notice.'],
+  npc_cp_usher_restored: ['@The Maharaja attended the last showing and laughed at all the wrong scenes. A full house followed him in. Still insists you five are too short to be the stars.'],
+  npc_cp_ghat_elder_restored: ['@The palace lamps are warm on the water again. The king set one beside our little boat and did not ask whose name it carried. He remembered how to be quiet.'],
+
+  // — §A10: SEVEN SPICES —
+  q_spices_ask: ['@Seven tins, seven lanes, seven very embarrassed apprentices. Find my cardamom, cumin, coriander, turmeric, clove, pepper, and star anise before lunch, and the finest SPICE BOX in Chandrapore is yours. Will you take the list?'],
+  q_spices_decline: ['@A wise customer never agrees before smelling the terms. My list will be here — and, regrettably, so will the monkey.'],
+  q_spices_active: ['@The whole bazaar is your shelf. Look where people cook, wash, travel, bargain, watch pictures, hide from crowds, and finally where all seven roads meet.'],
+  q_spices_partial: ['@I can smell progress on you. Also river water, cinema dust, and possibly monkey. Keep following the list; every lane teaches the next one.'],
+  q_spice_find_1: ['(A green cardamom tin waits behind the tea scales. The Merchant\'s first apprentice has labeled it PLEASE PRETEND THIS WAS NOT LOST.)'],
+  q_spice_find_2: ['(Cumin seeds rattle in a paper twist at the ghat edge, perfectly dry beneath an upturned brass cup.)'],
+  q_spice_find_3: ['(A cinema cashier has been using the coriander tin to prop open the ticket window. She surrenders it with professional dignity.)'],
+  q_spice_find_4: ['(Turmeric glows at the back of a blue alley, bright enough to look like a square of captured afternoon.)'],
+  q_spice_find_5: ['(The clove jar is safe beside a tailor\'s kettle. Every coat in the lane now smells faintly festive.)'],
+  q_spice_find_6: ['(A pepper packet rests in a quiet courtyard pocket, guarded by three pigeons who accept your apology but not your explanation.)'],
+  q_spice_find_7: ['(At the bazaar\'s crossing point, a star-anise tin hangs from the direction sign. You only notice it after realizing every earlier lane points here.)'],
+  q_spices_report: ['@All seven! Cardamom through star anise, and not one exchanged for floor sweepings. Put them here; let the bazaar see a list come home complete.'],
+  q_spices_full: ['@The SPICE BOX is yours, but your bags are full. Make room and come straight back. A proper merchant never turns a reward into litter.'],
+  q_spices_done_beat: ['* Got the SPICE BOX. The Spice Merchant joined the caller ledger.'],
+  q_spices_after: ['@Seven spices home, seven apprentices forgiven, and sales mysteriously doubled. Heroism is excellent advertising.'],
+
+  // — §A10: THE MONKEY WHO STOLE TUESDAY —
+  q_monkey_ask: ['@The Monkey Magnate took Tuesday\'s tiffins, the little one\'s hat, and my reputation for never losing either. Chase him across the marked awnings and corner him above the Majestic. Will you run?'],
+  q_monkey_decline: ['@Then do not look up. He interprets eye contact as a contract. I will keep Tuesday warm as long as I can.'],
+  q_monkey_active: ['@Start beneath the red awning. Follow the rattling tiffin cups, not the tail — he owns three false tails and is vain about all of them.'],
+  q_monkey_chase_locked: ['(The final perch is empty. Somewhere behind you, tin cups laugh against one another. The chase must begin at the red awning.)'],
+  q_monkey_chase_beat: ['(The Magnate bounds awning to balcony to laundry line. You stay below, reading his route in falling spoons, startled pigeons, and one triumphant stolen hat.)'],
+  q_monkey_corner_beat: ['(On the cinema roof the Monkey Magnate runs out of city. He returns the tiffin pole, then the hat, then — after a long negotiation — one mango that belonged to nobody involved.)'],
+  q_monkey_full: ['(The Magnate holds out a MONKEY PAW CHARM, sees every bag is full, and closes his fist again. He will wait here, breathing judgmentally, until you make room.)'],
+  q_monkey_done_beat: ['* Got the MONKEY PAW CHARM. The Monkey Magnate joined the caller ledger.'],
+  q_monkey_after: ['@Tuesday arrived on Tuesday. The Magnate has become an unpaid rooftop inspector. Your hat is almost certainly the same hat.'],
+
+  // — §A10: THE LAST SHOWING —
+  q_showing_ask: ['@The last showing has an audience, a reel, and no light. Our projector shutter is stuck in the service lane. Free it, then take your seats. I refuse to let a good ending remain in the tin. Will you help?'],
+  q_showing_decline: ['@The house stays open until somebody believes in endings. I have worked later for worse pictures.'],
+  q_showing_active: ['@Service lane, brass panel, three stubborn levers. The projector likes confidence and a very small amount of respectful kicking.'],
+  q_showing_projector_beat: ['(One lever frees the shutter, one tensions the reel, and the third turns out to ring a bell in the lobby. The projector wakes in a cone of dusty gold.)'],
+  q_showing_screen_locked: ['(The blank screen glows faintly, but the projector coughs behind it. The last showing needs its light restored in the service lane.)'],
+  q_showing_screening: ['(The film is terrible. The film is wonderful. Five painted children save the world with suspiciously good hair and a song none of you remembers singing.)', '@The Usher watches you watch yourselves, then shakes his head. "Uncanny resemblance. But our stars were much taller." The audience applauds anyway.'],
+  q_showing_report: ['@A full house, a working lamp, and not one person asked for their money back. Keep this final CINEMA STUB. Proof that Chandrapore saw your story before it understood who was standing in the aisle.'],
+  q_showing_full: ['@Your CINEMA STUB deserves better than a full bag and the lobby floor. Make room; the last showing can wait through one more intermission.'],
+  q_showing_done_beat: ['* Got the CINEMA STUB. The Majestic Usher joined the caller ledger.'],
+  q_showing_after: ['@You still look remarkably like the cast. Shorter, naturally. Less professionally lit. The resemblance is otherwise astonishing.'],
+
+  // — §A10: THIRD-CLASS RULES —
+  q_third_class_ask: ['@Before anyone climbs aboard, I need three honest inspections: the yard signal, the safe coupling, and the third-car brake wheel. Learn the rules while the train is still polite. Will you take the lamp?'],
+  q_third_class_decline: ['@Optional work, mandatory wisdom. The lamp stays here if you change your mind. Your passage to the palace does not depend on doing my job for me.'],
+  q_third_class_active: ['@Signal in the rail yard. Coupling between cars. Brake wheel in the third. Different faults, same rule: test before trusting.'],
+  q_third_class_inspection_1: ['(The yard signal lens is sound; its counterweight is fouled by a prayer ribbon. You retie the ribbon where it can bless the train without stopping it.)'],
+  q_third_class_inspection_2: ['(The coupling pin is seated, but its safety chain is looped backward. {milo} resets it and makes everyone demonstrate the release twice.)'],
+  q_third_class_inspection_3: ['(The third-car brake wheel turns one notch too far. A wooden stop beneath the bench fixes it without pretending the old carriage is new.)'],
+  q_third_class_partial: ['@Good. A train is a promise made by a thousand small parts. You have not checked all thousand; I only asked for the three most likely to lie.'],
+  q_third_class_report: ['@Signal clear, chain honest, brake held. That is the whole third-class philosophy: crowded, noisy, and everybody arrives because everybody checks the next person\'s latch.'],
+  q_third_class_full: ['@I have a STAR PENDANT for the inspector, but no empty bag to pin it in. Make room and report again; the timetable can survive honesty.'],
+  q_third_class_done_beat: ['* Got the STAR PENDANT. The Stationmaster joined the caller ledger.'],
+  q_third_class_after: ['@The board now reads PALACE SERVICE: DELAYED BY ROYAL EMERGENCY, NOT BY NEGLIGENCE. Best announcement I have made all week.'],
+
+  // — §A10: THE RIVER REMEMBERS —
+  q_river_ask: ['@Follow the white shell mark, the marigold notch, and the step that stays dry at high water. If the river has returned the little brass boat, bring it to the memorial lamp. Will you listen with your feet?'],
+  q_river_decline: ['@The river does not hurry an answer. Neither will I.'],
+  q_river_active: ['@Three marks, always downward: shell, marigold, dry step. Do not take offerings. The boat will be where the clues agree.'],
+  q_river_clue_1: ['(A white shell is set into the upper step. Its open edge points downriver, polished by years of passing hands.)'],
+  q_river_clue_2: ['(A marigold-shaped notch catches one petal from every garland that passes. Beneath it, a narrow stair continues toward the water.)'],
+  q_river_clue_3: ['(The dry step holds a little brass boat, green with three monsoons but unbroken. Inside is one carefully scratched name.)'],
+  q_river_partial: ['@You found part of the sentence. Keep going down. Rivers put their final words closest to the water.'],
+  q_river_report: ['@That is the boat. I will not ask where the river kept it; some kindnesses are spoiled by interrogation. Set it beside the lamp. Let the name face the water.'],
+  q_river_full: ['@The BRASS ELEPHANT is not payment; it is company for the road. Your bags are full, so let it wait beside the lamp until you can carry it carefully.'],
+  q_river_done_beat: ['* Got the BRASS ELEPHANT. The Ghat Elder joined the caller ledger.'],
+  q_river_after: ['@The boat stays by the lamp now. At dusk the whole lower step looks inhabited by stars, and one of them has a name again.'],
 
   // — the §A8 Ch.7 shop (the Grand Bazaar shelf) —
   shop_chandrapore_greet: ['@The Spice Merchant throws open the whole bright shelf! Chai, charms, cloth, courage by the cup, a flute that almost charms snakes — all genuine, all today only, all a STEAL. (Everything in Chandrapore is, today only, a steal.)'],
@@ -4034,6 +4149,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
 
   // — the palace throne sign —
   sign_palace_throne: ['(A line of inlay runs along the throne-room floor, half the gems prised out:) HERE SITS THE LIGHT OF THE RIVER. (Someone has scratched, under it, recently and in a hurry:) it does not feel like light up here anymore. it feels like being WATCHED.'],
+  sign_palace_restored: ['(Fresh gold leaf follows the old broken inlay without hiding it:) HERE SITS THE LIGHT OF THE RIVER. (Below, in the Maharaja\'s own hand:) A throne is only warm when its doors stand open.'],
 
   // — §A6 BOSS 7 — the Cobra Raja (the phase machine reads these) —
   cobra_shed: ['(The Raja shudders once, head to coil, and SHEDS — a whole skin sloughing off the crown in one papery rush. What is underneath is bright, and new, and angrier, and a little less tired than before.)', '@"Ssso. You would unmake a king. Watch, then, how a king UNMAKES himself — and comes back."'],
@@ -4055,7 +4171,6 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // — the §A6 chapter card (ch7_complete) —
   ch7_card: [
     'The palace is warm again, the river throws back the lights of a city that never once stopped moving, and somewhere a very old king is having a very good cup of chai for the first time in years. You go down through the bazaar toward Lucille with a coiled raga in the locket and the growing certainty that the whole song is close enough now to hum.',
-    '* CHAPTER 7 — THE COBRA\'S PALACE — complete. Seven embers carried. Three to go.',
   ],
 
   /* ════════════════════════ CHAPTER 8 — THE PAPER DRAGON (China) ════════════════════════ */

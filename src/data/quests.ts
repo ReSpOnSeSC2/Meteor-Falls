@@ -574,10 +574,9 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         effect: { kind: 'damage', power: 455 },
       },
     }),
-    // ── CHAPTER 7 (India) — §A10 the two named core quests: Seven Spices (the Spice
-    //    Merchant's bazaar-maze hunt) + The Monkey Who Stole Tuesday (the Dabbawala's
-    //    rooftop chase). Each banks a finale CALLER (§A6). Data-valid + givers placed in
-    //    chandrapore (the Ch.5/6 precedent — shipped as data, completability is map-light). ──
+    // ── CHAPTER 7 (India) — five distinct Chandrapore verbs: search, chase,
+    //    perform, inspect, remember. Each leaves a local footprint and banks a
+    //    finale CALLER; runtime beats live in OverworldScene. ──
     Q({
       id: 'seven_spices',
       name: 'Seven Spices',
@@ -612,6 +611,60 @@ export const QUESTS: Record<string, QuestDef> = Object.fromEntries(
         name: 'The Monkey Magnate',
         quote: '(Static. Then — breathing. Hard, ragged, rhythmic breathing, very close to the receiver. There are no words. There never were. It is, somehow, exactly the help you needed.)',
         effect: { kind: 'damage', power: 690 },
+      },
+    }),
+    Q({
+      id: 'the_last_showing',
+      name: 'The Last Showing',
+      chapter: 7,
+      giver: 'cp_usher',
+      startFlag: 'q_showing',
+      objectives: [
+        { id: 'projector', text: "Restore the Majestic's stubborn old projector without disturbing the final reel.", flag: 'q_showing_projector' },
+        { id: 'screened', text: 'Stay for the last showing, then report to the Usher after the house lights rise.', flag: 'q_showing_screened' },
+      ],
+      rewardItem: 'cinema_stub',
+      doneFlag: 'q_showing_done',
+      caller: {
+        name: 'The Majestic Usher',
+        quote: 'House lights down, courage up. If the dark ever forgets what sort of picture this is, I will bring the whole Majestic — projector, orchestra, and stubborn final audience — to remind it.',
+        effect: { kind: 'heal', power: 680 },
+      },
+    }),
+    Q({
+      id: 'third_class_rules',
+      name: 'Third-Class Rules',
+      chapter: 7,
+      giver: 'cp_stationmaster',
+      startFlag: 'q_third_class',
+      objectives: [
+        { id: 'inspected', text: 'Inspect the platform signal, the safe coupling, and the brake wheel before the Tilak Mail climbs.', flag: 'q_third_class_inspected' },
+        { id: 'reported', text: 'Report the three safety faults to the Stationmaster.', flag: 'q_third_class_reported' },
+      ],
+      rewardItem: 'star_pendant',
+      doneFlag: 'q_third_class_done',
+      caller: {
+        name: 'The Stationmaster',
+        quote: 'Third class rule number one: nobody travels alone if I can still wave a lamp. Give the word and every whistle on my line will answer at once.',
+        effect: { kind: 'damage', power: 710 },
+      },
+    }),
+    Q({
+      id: 'the_river_remembers',
+      name: 'The River Remembers',
+      chapter: 7,
+      giver: 'cp_ghat_elder',
+      startFlag: 'q_river',
+      objectives: [
+        { id: 'followed', text: 'Follow the three river marks down the ghats and recover the little brass boat they remember.', flag: 'q_river_followed' },
+        { id: 'returned', text: 'Return the brass boat to the Ghat Elder at the memorial step.', flag: 'q_river_returned' },
+      ],
+      rewardItem: 'brass_elephant',
+      doneFlag: 'q_river_done',
+      caller: {
+        name: 'The Ghat Elder',
+        quote: 'The river remembered a small name for a very long time. It can remember yours too. Call, and we will set a lamp on the water where you need one most.',
+        effect: { kind: 'heal', power: 720 },
       },
     }),
     // ── CHAPTER 8 (China) — §A10 the named core quest: Brushes of Mt. Shu (the

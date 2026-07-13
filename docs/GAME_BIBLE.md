@@ -590,7 +590,7 @@ Port city **Zanzibel** (best market music in the game), caravan escort across th
 
 **Chandrapore**: the game's biggest city — bazaars, river ghats, a cinema playing a movie *about your party* (nobody believes you're them). The Maharaja's palace has been usurped by his royal vivarium. Night-train heist sequence to recover the stolen Locket (story beat: brief item loss, 30 minutes max).
 
-**Resonance Site:** palace throne. **BOSS 7 — COBRA RAJA** (3,200 HP / Paralyzing gaze every 3rd turn — block with Shield Σ or Mia's Magnet; sheds skin once at 40% HP, restoring 800 — burn it down fast through the threshold).
+**Resonance Site:** palace throne. **BOSS 7 — COBRA RAJA** (**20,000 HP**, level 35 / no elemental weakness, fire-resistant, mind-immune / party-wide two-turn Paralyzing Gaze every 3rd turn — block with Shield Σ or Mia's Magnet; sheds skin once at 40% HP, restoring 800 — burn it down fast through the threshold).
 
 ### Chapter 8 — "The Paper Dragon" (China) — target level: 40
 
@@ -877,10 +877,13 @@ The shipped game targets **55 quests**: 50 regional quests (5 per chapter) plus 
 | 14 | **Watering Hole Convoy** (6): escort animals at dusk, 3 ambush waves | Canteen of the Crossing; Caller: caravan master |
 | 15 | **Seven Spices** (7): scavenger hunt through Chandrapore's bazaar maze | Spice Box (cooked foods heal +50%); Caller: spice merchant |
 | 16 | **The Monkey Who Stole Tuesday** (7): chase the Monkey Magnate over rooftops | Your hat back + Monkey Paw Charm (+Luck); Caller: the monkey (breathing only) |
-| 17 | **Brushes of Mt. Shu** (8): retrieve the calligrapher's 3 brushes from the Spore Forest | Scroll of Calm (cures Mushroomize, reusable); Caller: calligrapher |
-| 18 | **Buni's Table** (9): gather 5 ingredients across the valley for the true Feast Basket | **Feast Basket recipe** (craft at any deli) + she calls you "puiul meu"; Caller: **Buni** (her call in the finale heals the full party) |
-| 19 | **Lights of Aurora Station** (10): restore 3 generators while Frost Wraiths hunt | Insulated Suit; Caller: station chief |
-| 20 | **The Last Wave** (10): find the surf legend's lost board inside the volcano approach | Board of Legends (Jay's funniest weapon, sidegrade); Caller: surf legend |
+| 17 | **The Last Showing** (7): repair the Majestic projector and stay for the movie about the party | Cinema Stub; Caller: the Majestic Usher |
+| 18 | **Third-Class Rules** (7): inspect the signal, coupling, and brake wheel before departure | Star Pendant; Caller: the Stationmaster |
+| 19 | **The River Remembers** (7): follow three ghat marks and return a remembered brass boat | Brass Elephant; Caller: the Ghat Elder |
+| 20 | **Brushes of Mt. Shu** (8): retrieve the calligrapher's 3 brushes from the Spore Forest | Scroll of Calm (cures Mushroomize, reusable); Caller: calligrapher |
+| 21 | **Buni's Table** (9): gather 5 ingredients across the valley for the true Feast Basket | **Feast Basket recipe** (craft at any deli) + she calls you "puiul meu"; Caller: **Buni** (her call in the finale heals the full party) |
+| 22 | **Lights of Aurora Station** (10): restore 3 generators while Frost Wraiths hunt | Insulated Suit; Caller: station chief |
+| 23 | **The Last Wave** (10): find the surf legend's lost board inside the volcano approach | Board of Legends (Jay's funniest weapon, sidegrade); Caller: surf legend |
 
 Plus **Mr. Click**, a photographer who ambushes the party for a photo 14 times worldwide ("Say fuzzy pickles— I mean, cheese!") → photo album rolls during the credits. The new world stops add two shots: in Lilleby he shoots from very far away; in Minimus he uses a macro lens.
 

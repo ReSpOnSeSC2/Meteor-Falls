@@ -1,9 +1,10 @@
 # WORLD OVERHAUL — Ch3+ program handoff (the master doc)
 
-> **Chapter 6 production close (2026-07-13):** Zanzibel now ships four rebuilt
-> maps, two complete quests, spoiler-safe contextual cutscenes, stable expanded
-> tenancy, eight representative dev profiles, and v23 recovery. Its fixed-point
-> contract is ADR-141; future world work proceeds to Chapter 7.
+> **Chapter 7 production close (2026-07-13):** India now ships four rebuilt maps,
+> a five-quest regional contract, explicit Locket theft/recovery, contextual
+> cinema, stable Chandrapore tenancy, nine developer profiles, original facade
+> art, and v24 recovery. Its fixed-point contract is ADR-142; future world work
+> proceeds to Chapter 8.
 
 Copy this whole file into a fresh Claude Code session in `C:\Meteor Falls` to continue the
 program. It is the canonical, living source of truth; the plan-mode file
@@ -231,8 +232,8 @@ engine spike (P4) so the slice layout matches the overlay renderer.
 **Per-chapter bespoke needs** (enumerate at each chapter's blueprint): region trees
 (`treeSprite` is region-blind today — only 4 temperate variants; make it region-aware
 additively or place bespoke tree props per map), region facades/props (see the settlement
-handoff's palette ledger — **chandrapore hotel+apartment facades have ZERO authored keys**,
-its own art-heavy session), and venue/interior furniture.
+handoff's palette ledger — Chandrapore's 14-source family and 14 promoted city-scale
+variants shipped in the Chapter 7 art-heavy session), and venue/interior furniture.
 
 ## THINGS-TO-DO ARE ~80% ALREADY BUILT (reuse, don't rebuild)
 
@@ -620,4 +621,32 @@ flags—including Held Breath, Trust, and quest progress—exact. The supported 
 seam is `?devMap=<ch6-id>&devState=arrival|city|savanna|ruins|choice|boss|postBoss|complete`.
 All profiles use the five-person level-30 party, five prior Embers, and the Lens
 and Thimble key items without preselecting Trust. Exact evidence lives in
-`docs/CH6_PRODUCTION_VERIFICATION.md`; the next production slice is Chapter 7.
+`docs/CH6_PRODUCTION_VERIFICATION.md`; Chapter 7 is now also complete.
+
+## Chapter 7 production close
+
+The save-facing roster is exactly `chandrapore`, `monsoon_road`, `night_train`,
+and `palace_throne`, at 120×88, 108×68, 48×128, and 88×104. `CH7_WORLD`
+owns every route mouth, landing, story/quest rectangle, recovery point, vehicle
+bay, profile spawn, and migration target. The four maps deliberately claim four
+different signatures: three-district city knot, diagonal floodwater causeway,
+car-by-car heist, and vivarium habitat loop with separated boss/throne goals.
+
+Chandrapore supports 14 source facades and 18 units without Zanzibel borrowing.
+Historical sources remain Hillcrest → unit 0, Moon Gate → unit 1, Civic Hall →
+locked, Motor Gallery → unit 2, and Silver Parasol → unit 3. The four services
+remain stable and new tenancy appends. Four original image-generation master
+banks feed 14 source PNGs, 14 explicit city-scale PNGs, and the palace-spire
+landmark; `src/spritegen/authored.ts` owns the closed-world authored allowlist.
+
+The Star Locket uses explicit availability state through theft, chase, coupling,
+and recovery; completed saves normalize to one Locket while a valid mid-heist
+save stays stolen. The seven-panel gallery remains intact and runtime uses seven
+contextual cuts. Exactly five quests ship, including all three new cinema,
+station, and ghat stories. Cobra Raja remains exactly 20,000 HP and must precede
+the retry-safe Heartlight 7 trigger.
+
+Save v24 recovers the four maps, generated interiors, parked vehicles, and
+Locket state without inventing story completion. Nine development profiles span
+arrival through complete. Exact art, test, editor, and visual evidence lives in
+`docs/CH7_PRODUCTION_VERIFICATION.md`; the next production slice is Chapter 8.

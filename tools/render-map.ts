@@ -311,6 +311,19 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     ],
     cellW: 560, cellH: 460,
   },
+  ch7: {
+    title: "METEOR FALLS - CHAPTER 7: THE COBRA'S PALACE (INDIA)",
+    // Keep the city tenancy portion data-driven: production promotion can add
+    // supported lots without making this review sheet silently omit interiors.
+    // Numeric sorting preserves the historical unit_0..3 review order.
+    ids: [
+      'chandrapore', 'monsoon_road', 'night_train', 'palace_throne',
+      ...Object.keys(MAPS)
+        .filter((id) => /^chandrapore_unit_\d+$/.test(id))
+        .sort((a, b) => Number(a.slice(a.lastIndexOf('_') + 1)) - Number(b.slice(b.lastIndexOf('_') + 1))),
+    ],
+    cellW: 560, cellH: 460,
+  },
   formal_cities: {
     title: 'FORMAL CITIES - PRODUCTION FACADE SCALE QA',
     ids: ['brickton', 'puerto_sol', 'valle_dorado', 'minimus_major', 'zanzibel', 'chandrapore', 'lotus_harbor'],

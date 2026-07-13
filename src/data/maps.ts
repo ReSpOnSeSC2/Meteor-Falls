@@ -5311,6 +5311,9 @@ const MAP_AREA: Record<string, string> = {
   // CH.6 Zanzibel — only the bazaar capital carries the cursive settlement glyph;
   // the savanna and ruin approach retain plain place banners.
   zanzibel: 'zanzibel',
+  // CH.7 Chandrapore — the capital carries its barscript settlement glyph;
+  // the road, train, and palace retain plain place banners.
+  chandrapore: 'chandrapore',
   // CH.10 The Long Shot — the two settlements wear their region glyph banners (AURORA STATION
   // in the frost script, MAUNA LANI in the tiki script). The ice field / magma flats / Sea of
   // Silence carry no settlement glyph (like the moor/spine), matching the tile-skin precedent.

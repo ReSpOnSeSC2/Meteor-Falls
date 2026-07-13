@@ -2335,9 +2335,8 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       doneFlag: 'q_stones_done',
       caller: { name: 'The Ruins Guide', kind: 'damage', power: 455 },
     },
-    // ── CHAPTER 7 (India) — §A10 the two named core quests (Seven Spices + the Monkey
-    //    Who Stole Tuesday), each banking a finale CALLER. Givers placed in chandrapore.
-    //    Rewards are the pre-built §A8 ch7 items (the Spice Box + the Monkey Paw Charm). ──
+    // ── CHAPTER 7 (India) — five Chandrapore quests, one for each regional verb:
+    //    search, chase, perform, inspect, remember. ──
     seven_spices: {
       name: 'Seven Spices',
       chapter: 7,
@@ -2357,6 +2356,36 @@ for (const [id, script] of Object.entries(DIALOGUE)) {
       rewardItem: 'monkey_paw_charm',
       doneFlag: 'q_monkey_done',
       caller: { name: 'The Monkey Magnate', kind: 'damage', power: 690 },
+    },
+    the_last_showing: {
+      name: 'The Last Showing',
+      chapter: 7,
+      giver: 'cp_usher',
+      startFlag: 'q_showing',
+      objectiveFlags: ['q_showing_projector', 'q_showing_screened'],
+      rewardItem: 'cinema_stub',
+      doneFlag: 'q_showing_done',
+      caller: { name: 'The Majestic Usher', kind: 'heal', power: 680 },
+    },
+    third_class_rules: {
+      name: 'Third-Class Rules',
+      chapter: 7,
+      giver: 'cp_stationmaster',
+      startFlag: 'q_third_class',
+      objectiveFlags: ['q_third_class_inspected', 'q_third_class_reported'],
+      rewardItem: 'star_pendant',
+      doneFlag: 'q_third_class_done',
+      caller: { name: 'The Stationmaster', kind: 'damage', power: 710 },
+    },
+    the_river_remembers: {
+      name: 'The River Remembers',
+      chapter: 7,
+      giver: 'cp_ghat_elder',
+      startFlag: 'q_river',
+      objectiveFlags: ['q_river_followed', 'q_river_returned'],
+      rewardItem: 'brass_elephant',
+      doneFlag: 'q_river_done',
+      caller: { name: 'The Ghat Elder', kind: 'heal', power: 720 },
     },
     // ── CHAPTER 8 (China) — §A10 the named core quest (Brushes of Mt. Shu), banking a
     //    finale CALLER. Giver placed in lotus_harbor. Reward the reusable Scroll of Calm. ──

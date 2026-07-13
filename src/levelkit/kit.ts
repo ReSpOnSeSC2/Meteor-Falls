@@ -21,6 +21,7 @@ import {
   LILLEBY_FACADES,
   MINIMUS_FACADES,
   ZANZIBEL_FACADES,
+  CHANDRAPORE_FACADES,
 } from '../spritegen/buildings';
 import type {
   PropDef,
@@ -166,7 +167,10 @@ const SHIPPED_DIMS: Record<string, { w: number; u: number }> = {
 };
 
 const AUTHORED_REGION_FACADE_DIMS: Record<string, { w: number; u: number }> = Object.fromEntries(
-  [...KVISTHAVN_FACADES, ...LILLEBY_FACADES, ...MINIMUS_FACADES, ...ZANZIBEL_FACADES].map((name) => [name, { w: 4, u: 0 }]),
+  [
+    ...KVISTHAVN_FACADES, ...LILLEBY_FACADES, ...MINIMUS_FACADES,
+    ...ZANZIBEL_FACADES, ...CHANDRAPORE_FACADES,
+  ].map((name) => [name, { w: 4, u: 0 }]),
 );
 
 /** the 100+ generated catalog (+ colossi) contributes its true dims here too */

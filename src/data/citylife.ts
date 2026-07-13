@@ -48,7 +48,20 @@ const clamp = (n: number, lo: number, hi: number): number => Math.max(lo, Math.m
 
 // Canon facades that are doorless ON PURPOSE — a bank fronts an ATM, not a home, so the
 // Living-City pass must leave it sealed (a knock, never an auto-door). See ADR-098.
-const SEALED_FACADE_SPRITES: ReadonlySet<string> = new Set(['bldg_bank']);
+const SEALED_FACADE_SPRITES: ReadonlySet<string> = new Set([
+  'bldg_bank',
+  // Historical Chandrapore source position 2 is the sealed civic frontage.
+  // Keeping it in the lock pool preserves units 0-3 on either side of it.
+  'bldg_chandrapore_civic_hall',
+]);
+
+/** Exterior story landmarks, not anonymous tenant shells. Their authored knock
+ * signs live on the map, so the Living-City law remains explicit without
+ * inventing cinema/station interior map ids outside Chapter 7's fixed roster. */
+const NON_TENANTED_FACADE_SPRITES: ReadonlySet<string> = new Set([
+  'bldg_chandrapore_majestic_cinema',
+  'bldg_chandrapore_station',
+]);
 
 /* ----------------------------- tenancy ----------------------------- */
 
@@ -664,7 +677,8 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
   const interiors: Record<string, MapDef> = {};
   // DOORLESS catalog facades only — occupyCity never overrides a hand-authored door.
   const facades = map.props.filter(
-    (p) => p.sprite.startsWith('bldg_') && p.solid && !p.door && !p.ifFlag && !p.unlessFlag,
+    (p) => p.sprite.startsWith('bldg_') && p.solid && !p.door && !p.ifFlag && !p.unlessFlag
+      && !NON_TENANTED_FACADE_SPRITES.has(p.sprite),
   );
   // THE LAW IS GUARANTEED, NOT GAMBLED. Lock a fixed ~10% COUNT, never a per-facade
   // coin flip: an independent Bernoulli lock can, on an unlucky seed, roll >25% of a

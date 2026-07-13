@@ -11,6 +11,8 @@ import {
   CHAPTER5_PARKING_RECOVERY,
   CHAPTER6_LAYOUT_RECOVERY,
   CHAPTER6_PARKING_RECOVERY,
+  CHAPTER7_LAYOUT_RECOVERY,
+  CHAPTER7_PARKING_RECOVERY,
 } from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
@@ -19,6 +21,8 @@ import { buildChapter3Maps } from '../data/maps_ch3';
 import { buildChapter4Maps } from '../data/maps_ch4';
 import { buildChapter5Maps } from '../data/maps_ch5';
 import { buildChapter6Maps } from '../data/maps_ch6';
+import { buildChapter7Maps } from '../data/maps_ch7';
+import { MAPS } from '../data/maps';
 import { vehicleParkingSlotsOverlap } from './vehicle-domain';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
@@ -1138,7 +1142,7 @@ describe('save migration registry -- v22 to v23: Chapter 6 production layouts', 
     const walkable = new Set(['.', ',', '~', 'f', 'F', ':', 'w', 'r', 'o', '=', 'R', 'D', '_', 'X', 'P', 'd', 'p']);
     for (const [mapId, target] of Object.entries(expected)) {
       const [tx, ty] = target.tile;
-      const map = maps[mapId];
+      const map = maps[mapId as keyof typeof maps];
       expect(map, mapId).toBeDefined();
       expect(walkable.has(map.grid[ty][tx]), `${mapId} tile '${map.grid[ty][tx]}'`).toBe(true);
       expect(CHAPTER6_LAYOUT_RECOVERY[mapId as keyof typeof expected]).toEqual({
@@ -1190,6 +1194,195 @@ describe('save migration registry -- v22 to v23: Chapter 6 production layouts', 
       const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
       wanted.version = CURRENT_SAVE_VERSION;
       expect(JSON.stringify(migrateSave(raw, newGameData()))).toBe(JSON.stringify(wanted));
+    }
+  });
+});
+
+describe('save migration registry -- v23 to v24: Chapter 7 production rollout', () => {
+  const expected = {
+    chandrapore: { tile: [16, 75], facing: 'down' },
+    monsoon_road: { tile: [3, 54], facing: 'right' },
+    night_train: { tile: [24, 124], facing: 'up' },
+    palace_throne: { tile: [44, 100], facing: 'up' },
+  } as const;
+
+  const v23At = (map: string): Record<string, unknown> => {
+    const raw = newGameData() as unknown as Record<string, unknown>;
+    raw.version = 23;
+    raw.map = map;
+    raw.x = 99999;
+    raw.y = -1;
+    raw.facing = 'left';
+    raw.flags = {
+      ch6_complete: true,
+      ch7_arrived: true,
+      q_spices: true,
+      q_spices_gather: true,
+    };
+    raw.callers = ['cp_spice_merchant'];
+    raw.cashOnHand = 7123;
+    raw.banked = 991;
+    raw.vehicleParking = {};
+    return raw;
+  };
+
+  it('pins all four stable maps and all eighteen deterministic Chandrapore units', () => {
+    expect(Object.keys(CHAPTER7_LAYOUT_RECOVERY)).toEqual([
+      ...Object.keys(expected),
+      ...Array.from({ length: 18 }, (_, index) => `chandrapore_unit_${index}`),
+    ]);
+    const maps = buildChapter7Maps();
+    const walkable = new Set(['.', ',', '~', 'f', 'F', ':', 'w', 'r', 'o', '=', 'R', 'D', '_', 'X', 'P', 'd', 'p']);
+    for (const [mapId, target] of Object.entries(expected)) {
+      const [tx, ty] = target.tile;
+      const map = maps[mapId as keyof typeof maps];
+      expect(map, mapId).toBeDefined();
+      expect(walkable.has(map.grid[ty][tx]), `${mapId} tile '${map.grid[ty][tx]}'`).toBe(true);
+      expect(CHAPTER7_LAYOUT_RECOVERY[mapId]).toEqual({
+        x: tx * 16 + 8, y: ty * 16 + 12, facing: target.facing,
+      });
+    }
+    for (let index = 0; index < 18; index += 1) {
+      const id = `chandrapore_unit_${index}`;
+      expect(MAPS[id], id).toBeDefined();
+      expect(CHAPTER7_LAYOUT_RECOVERY[id]).toEqual({ x: 5 * 16 + 8, y: 6 * 16 + 12, facing: 'up' });
+    }
+  });
+
+  it.each(Object.entries(expected))('recovers %s without changing party, quest, caller, or economy state', (mapId, target) => {
+    const raw = v23At(mapId);
+    const partyBefore = JSON.stringify(raw.party);
+    const flagsBefore = JSON.stringify(raw.flags);
+    const callersBefore = JSON.stringify(raw.callers);
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.version).toBe(CURRENT_SAVE_VERSION);
+    expect(migrated.map).toBe(mapId);
+    expect(migrated.x).toBe(s(target.tile[0] * 16 + 8));
+    expect(migrated.y).toBe(s(target.tile[1] * 16 + 12));
+    expect(migrated.facing).toBe(target.facing);
+    expect(JSON.stringify(migrated.party)).toBe(partyBefore);
+    expect(JSON.stringify(migrated.flags)).toBe(flagsBefore);
+    expect(JSON.stringify(migrated.callers)).toBe(callersBefore);
+    expect(migrated.cashOnHand).toBe(7123);
+    expect(migrated.banked).toBe(991);
+  });
+
+  it('recovers historical and new unit ids to their safe interior landing', () => {
+    for (const index of [0, 1, 2, 3, 4, 17]) {
+      const migrated = migrateSave(v23At(`chandrapore_unit_${index}`), newGameData());
+      expect(migrated.map).toBe(`chandrapore_unit_${index}`);
+      expect(migrated.x).toBe(s(5 * 16 + 8));
+      expect(migrated.y).toBe(s(6 * 16 + 12));
+      expect(migrated.facing).toBe('up');
+    }
+  });
+
+  it('rehomes Chapter 7 parking into deterministic nonstacked Chandrapore bays', () => {
+    const raw = v23At('chandrapore');
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'monsoon_road', x: 100, y: 200, facing: 'left' },
+      title_car_ev: { area: 'chandrapore', x: 100, y: 200, facing: 'right' },
+      title_car_bmx: { area: 'chandrapore', x: 100, y: 200, facing: 'up' },
+      title_car_van: { area: 'otterbrook', x: 144, y: 288, facing: 'left' },
+    };
+    const migrated = migrateSave(raw, newGameData());
+    const base = CHAPTER7_PARKING_RECOVERY.chandrapore;
+    expect(migrated.vehicleParking.title_car_bmx).toEqual({
+      area: 'chandrapore', x: s(base.x), y: s(base.y), facing: base.facing,
+    });
+    expect(migrated.vehicleParking.title_car_van).toEqual({ area: 'otterbrook', x: 144, y: 288, facing: 'left' });
+    expect(migrated.vehicleParking.title_car_sedan.area).toBe('chandrapore');
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_bmx', migrated.vehicleParking.title_car_bmx,
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+    )).toBe(false);
+    expect(vehicleParkingSlotsOverlap(
+      'title_car_ev', migrated.vehicleParking.title_car_ev,
+      'title_car_sedan', migrated.vehicleParking.title_car_sedan,
+    )).toBe(false);
+  });
+
+  it('preserves coherent active-driving ownership while recovering other parked vehicles', () => {
+    const raw = v23At('chandrapore');
+    raw.keyItems = ['star_locket', 'title_car_van', 'title_car_sedan'];
+    raw.activeVehicle = 'title_car_van';
+    raw.drivingVehicle = 'title_car_van';
+    raw.carLocation = { title_car_van: 'india', title_car_sedan: 'india' };
+    raw.vehicleParking = {
+      title_car_sedan: { area: 'monsoon_road', x: 100, y: 200, facing: 'left' },
+    };
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.activeVehicle).toBe('title_car_van');
+    expect(migrated.drivingVehicle).toBe('title_car_van');
+    expect(migrated.keyItems).toEqual(['star_locket', 'title_car_van', 'title_car_sedan']);
+    expect(migrated.carLocation).toEqual({ title_car_van: 'india', title_car_sedan: 'india' });
+    expect(migrated.vehicleParking.title_car_van).toBeUndefined();
+    expect(migrated.vehicleParking.title_car_sedan.area).toBe('chandrapore');
+  });
+
+  it('preserves a mid-heist stolen Locket across migration without deleting its physical key item', () => {
+    const raw = v23At('night_train');
+    raw.flags = {
+      ch7_arrived: true,
+      ch7_heist_seen: true,
+      ch7_locket_stolen: true,
+      ch7_locket_recovered: false,
+    };
+    raw.keyItems = ['star_locket'];
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.flags.ch7_locket_stolen).toBe(true);
+    expect(migrated.flags.ch7_locket_recovered).toBe(false);
+    expect(migrated.keyItems.filter((item) => item === 'star_locket')).toHaveLength(1);
+  });
+
+  it('normalizes completed saves to an available, deduplicated Locket', () => {
+    const raw = v23At('palace_throne');
+    raw.flags = { ch7_complete: true, ch7_locket_stolen: true };
+    raw.keyItems = ['star_locket', 'train_ticket', 'star_locket'];
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.flags.ch7_locket_stolen).toBe(false);
+    expect(migrated.flags.ch7_locket_recovered).toBe(true);
+    expect(migrated.keyItems).toEqual(['star_locket', 'train_ticket']);
+  });
+
+  it('restores one permanent Locket for a valid Chapter 7 progress save that lost it', () => {
+    const raw = v23At('night_train');
+    raw.flags = { ch7_arrived: true, ch7_heist_seen: true, ch7_locket_stolen: true };
+    raw.keyItems = ['train_ticket'];
+    const migrated = migrateSave(raw, newGameData());
+    expect(migrated.flags.ch7_locket_stolen).toBe(true);
+    expect(migrated.flags.ch7_locket_recovered).toBeUndefined();
+    expect(migrated.keyItems).toEqual(['train_ticket', 'star_locket']);
+  });
+
+  it('changes an unrelated valid v23 save only at the version value', () => {
+    const raw = v23At('otterbrook');
+    raw.x = 1234; raw.y = 5678; raw.facing = 'downleft';
+    raw.flags = { ch6_complete: true };
+    raw.keyItems = ['big_little_lens'];
+    raw.vehicleParking = {
+      title_car_van: { area: 'otterbrook', x: 400, y: 800, facing: 'upright' },
+    };
+    const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    wanted.version = CURRENT_SAVE_VERSION;
+    expect(migrateSave(raw, newGameData())).toEqual(wanted);
+  });
+
+  it('is deterministic and leaves unrelated/prototype-like records byte-for-byte except version', () => {
+    for (const map of ['otterbrook', 'constructor']) {
+      const raw = v23At(map);
+      raw.x = 1234; raw.y = 5678; raw.facing = 'downleft';
+      raw.keyItems = 'not-an-array';
+      raw.vehicleParking = {
+        malformed: { area: 'chandrapore', note: 'missing coordinates' },
+        prototype: { area: 'constructor', x: 400, y: 800, facing: 'upright' },
+      };
+      const wanted = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+      wanted.version = CURRENT_SAVE_VERSION;
+      const first = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+      const second = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+      expect(JSON.stringify(first)).toBe(JSON.stringify(wanted));
+      expect(JSON.stringify(second)).toBe(JSON.stringify(first));
     }
   });
 });

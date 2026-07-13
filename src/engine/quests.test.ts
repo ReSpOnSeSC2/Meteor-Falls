@@ -15,6 +15,7 @@ import {
   questStatus,
 } from './quests';
 import { BAG_MAX } from '../data/items';
+import { CHAPTER_MANIFESTS } from '../data/chapters';
 
 const biscuit = QUESTS.biscuit_come_home;
 const mail = QUESTS.mail_must_move;
@@ -135,5 +136,55 @@ describe('completeQuest — rewards via the bag flow, callers onto the ledger', 
     expect(completeQuest('stones_that_speak')).toBe('ok');
     expect(GS.hasItem('griot_string')).toBe(true);
     expect(GS.data.callers).toHaveLength(1);
+  });
+
+  it('pins exactly five Chapter 7 quest contracts, rewards, and caller strengths', () => {
+    const ids = [
+      'seven_spices',
+      'monkey_who_stole_tuesday',
+      'the_last_showing',
+      'third_class_rules',
+      'the_river_remembers',
+    ];
+    expect(CHAPTER_MANIFESTS['7'].quests).toEqual(ids);
+    expect(Object.values(QUESTS).filter((quest) => quest.chapter === 7).map((quest) => quest.id)).toEqual(ids);
+
+    for (const id of ids) expect(completeQuest(id)).toBe('ok');
+    expect(ids.map((id) => QUESTS[id].rewardItem)).toEqual([
+      'spice_box', 'monkey_paw_charm', 'cinema_stub', 'star_pendant', 'brass_elephant',
+    ]);
+    expect(GS.data.callers.map(({ quest, name, effect }) => ({ quest, name, effect }))).toEqual([
+      { quest: 'seven_spices', name: 'The Spice Merchant', effect: { kind: 'heal', power: 700 } },
+      { quest: 'monkey_who_stole_tuesday', name: 'The Monkey Magnate', effect: { kind: 'damage', power: 690 } },
+      { quest: 'the_last_showing', name: 'The Majestic Usher', effect: { kind: 'heal', power: 680 } },
+      { quest: 'third_class_rules', name: 'The Stationmaster', effect: { kind: 'damage', power: 710 } },
+      { quest: 'the_river_remembers', name: 'The Ghat Elder', effect: { kind: 'heal', power: 720 } },
+    ]);
+    for (const id of ids) expect(completeQuest(id)).toBe('already');
+    expect(GS.data.callers).toHaveLength(5);
+  });
+
+  it('keeps every Chapter 7 reward and caller retryable when the bag is full', () => {
+    const ids = [
+      'seven_spices',
+      'monkey_who_stole_tuesday',
+      'the_last_showing',
+      'third_class_rules',
+      'the_river_remembers',
+    ];
+    const rex = GS.data.party[0];
+    while (rex.bag.length < BAG_MAX) rex.bag.push('pbj');
+
+    for (const id of ids) {
+      const doneFlag = QUESTS[id].doneFlag;
+      expect(completeQuest(id)).toBe('hands-full');
+      expect(GS.flag(doneFlag)).toBe(false);
+      expect(callerEarned(id)).toBe(false);
+    }
+
+    rex.bag.pop();
+    expect(completeQuest('the_last_showing')).toBe('ok');
+    expect(GS.hasItem('cinema_stub')).toBe(true);
+    expect(callerEarned('the_last_showing')).toBe(true);
   });
 });

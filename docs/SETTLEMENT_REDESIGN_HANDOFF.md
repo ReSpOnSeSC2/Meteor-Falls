@@ -1,5 +1,11 @@
 # AI HANDOFF PROMPT — Settlement Redesign + Vibrancy Program (Meteor Falls)
 
+> **Chapter 7 status (2026-07-13):** Chandrapore now has fourteen original
+> source facades, fourteen authored city-scale variants, eighteen live units,
+> and a palace-spire axis. Historical units 0–3 and the locked Civic Hall
+> position are stable under ADR-142; Zanzibel borrowing and the zero-key art
+> gap are closed.
+
 > **Norway status (2026-07-12):** Kvisthavn and Lilleby are complete production
 > rebuilds under ADR-140. Kvisthavn's first four facade/unit slots are now a
 > save-facing service contract; Lilleby retains sparse 2.3× giant composition.

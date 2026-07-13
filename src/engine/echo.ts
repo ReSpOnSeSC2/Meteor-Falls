@@ -8,6 +8,7 @@ import { GS } from './state';
 import { ECHO_ANCHORS, MAX_BREATHS } from '../data/echoes';
 import { CHOICES, type ChoiceId } from '../data/choices';
 import { clearDownstreamChoiceFlags } from './choice';
+import { locketAvailable } from './ch7';
 
 export function breathsLeft(): number {
   return GS.data.echoes.breaths;
@@ -25,6 +26,7 @@ export function isRewindable(id: ChoiceId): boolean {
 
 /** Mia's high-tier PRAY refuels the Locket (capped at the bank size) */
 export function refillBreath(n = 1): void {
+  if (!locketAvailable(GS.data)) return;
   GS.data.echoes.breaths = Math.min(MAX_BREATHS, GS.data.echoes.breaths + Math.max(0, n));
 }
 
@@ -34,7 +36,7 @@ export function refillBreath(n = 1): void {
  * non-anchored choices.
  */
 export function captureEcho(id: ChoiceId): void {
-  if (!isRewindable(id)) return;
+  if (!locketAvailable(GS.data) || !isRewindable(id)) return;
   const e = GS.data.echoes;
   e.stack = e.stack.filter((s) => s.choice !== id);
   e.stack.push({ choice: id, chapter: CHOICES[id].chapter, json: GS.serialize(), at: GS.data.playtimeSec });
@@ -42,11 +44,12 @@ export function captureEcho(id: ChoiceId): void {
 
 /** can the player rewind to this anchor right now? (a Breath + a snapshot) */
 export function canRewind(id: ChoiceId): boolean {
-  return breathsLeft() > 0 && GS.data.echoes.stack.some((s) => s.choice === id);
+  return locketAvailable(GS.data) && breathsLeft() > 0 && GS.data.echoes.stack.some((s) => s.choice === id);
 }
 
 /** the anchors the player could rewind to, earliest chapter first */
 export function rewindableAnchors(): ChoiceId[] {
+  if (!locketAvailable(GS.data)) return [];
   return [...GS.data.echoes.stack]
     .filter((s) => isRewindable(s.choice as ChoiceId))
     .sort((a, b) => a.chapter - b.chapter)
@@ -59,6 +62,7 @@ export function rewindableAnchors(): ChoiceId[] {
  * downstream choice flag. Returns false (no-op) if out of Breaths or no snapshot.
  */
 export function rewindTo(id: ChoiceId): boolean {
+  if (!locketAvailable(GS.data)) return false;
   const e = GS.data.echoes;
   if (e.breaths <= 0) return false;
   const snap = e.stack.find((s) => s.choice === id);

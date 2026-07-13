@@ -139,10 +139,13 @@ spoiler-safe contextual ids: `ch6_flight`, `ch6_arrival`, `ch6_courier`,
 dedicated rewind awakening. The courier event contextualizes Jay’s established
 level-26 Teleport Alpha without creating a second ability-grant path.
 
-### Ch7 — Chandrapore · ❌ NO MAPS → STILL
+### Ch7 — Chandrapore · ✅ PRODUCTION MAPS → CONTEXTUAL RUNTIME PANELS
 night_train_to_chandrapore, chandrapore_bazaars, locket_train_heist,
 royal_vivarium_palace, cobra_raja_reveal, palace_throne_resonance,
-cinema_about_the_party. → STILL; needs maps + bazaar/palace NPCs + Cobra Raja.
+cinema_about_the_party. → `ch7_journey` retains the full gallery in that order.
+Runtime uses `ch7_train_in`, `ch7_bazaar`, `ch7_heist`, `ch7_palace`,
+`ch7_raja`, `ch7_heartlight`, and `ch7_cinema`, preventing arrival/travel from
+spoiling the heist, Raja, Heartlight, or cinema beats.
 
 ### Ch8 — Lotus Harbor · ❌ NO MAPS → STILL
 riverboat_to_lotus_harbor, lotus_harbor_arrival, spore_forest_scramble,

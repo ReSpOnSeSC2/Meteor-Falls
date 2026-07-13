@@ -1,4 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { DIALOGUE } from '../data/dialogue';
 
 vi.mock('phaser', () => {
   class SceneStub {}
@@ -138,6 +141,37 @@ describe('Chapter 3 machine-fog aftermath', () => {
     expect(runtime.chapter3FogAlpha(3, 0, false)).toBeCloseTo(0.62);
     expect(runtime.chapter3FogAlpha(3, 0, true)).toBeCloseTo(0.1488);
     expect(runtime.chapter3FogAlpha(0, 0, true)).toBeCloseTo(0.0816);
+  });
+});
+
+describe('Chapter 7 edge-biome boundaries', () => {
+  it('keeps the outdoor route tropical and the enclosed palace borderless', () => {
+    expect(runtime.resolveEdgeBiome('chandrapore')).toBe('tropical');
+    expect(runtime.resolveEdgeBiome('monsoon_road')).toBe('tropical');
+    expect(runtime.resolveEdgeBiome('night_train')).toBe('tropical');
+    expect(runtime.resolveEdgeBiome('palace_throne')).toBe('none');
+  });
+
+  it('keeps the complete Chapter 7 gallery out of every runtime cutscene call', () => {
+    const source = readFileSync(fileURLToPath(new URL('./OverworldScene.ts', import.meta.url)), 'utf8');
+    expect(source).not.toMatch(/playCutscene\(this,\s*['"]ch7_journey['"]/);
+    expect(source).toContain('await this.ch7TrainInScene()');
+    expect(source).toContain("await this.ch7ContextBeat('ch7_bazaar_seen', 'ch7_bazaar', 'ch7_bazaar_beat')");
+    expect(source).toContain('GS.data.embers = 7');
+    expect(source).not.toContain('Math.max(7, GS.data.embers)');
+  });
+
+  it('keeps restored-king reactions available without replacing regional quest routing', () => {
+    for (const npcId of ['cp_spice_merchant', 'cp_dabbawala', 'cp_stationmaster', 'cp_usher', 'cp_ghat_elder']) {
+      expect(DIALOGUE[`npc_${npcId}_restored`], npcId).toBeDefined();
+    }
+    const source = readFileSync(fileURLToPath(new URL('./OverworldScene.ts', import.meta.url)), 'utf8');
+    expect(source).toContain('await this.ch7RestoredNpcBeat(n.def.id)');
+    expect(source).toContain('await this.spicesBeat()');
+    expect(source).toContain('await this.monkeyBeat()');
+    expect(source).toContain('await this.thirdClassBeat()');
+    expect(source).toContain('await this.lastShowingBeat()');
+    expect(source).toContain('await this.riverBeat()');
   });
 });
 

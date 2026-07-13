@@ -294,13 +294,13 @@ gilded, hushed, marked, paralyzed, puppet, rattled, shield
 
 ---
 
-## 18. Future & unbuilt content — Chapters 4–10
+## 18. Later-chapter production inventory — Chapters 4–10
 
-This is the part **not present in `assets/art/` at all today.** METEOR FALLS is
+METEOR FALLS is
 a ten-chapter, ten-region world tour chasing the **Ten Embers** to Mars
 (`docs/GAME_BIBLE.md` §A6; `CHAPTER_MANIFESTS` in `src/data/chapters.ts`).
-Chapters 1–3 are `shipped`; **Chapters 4–10 are `unlanded`** — designed in canon
-but with no art. Each unbuilt chapter needs a complete region art set.
+This table mixes shipped production slices with future regions; executable
+chapter status and the per-chapter verification docs are authoritative.
 
 ### The ten chapters
 
@@ -319,7 +319,7 @@ wall, shore, frozen-pond, boardwalk, and masonry materials. No procedural or
 placeholder bitmap was introduced.
 | 5 | Minimus — Minimus Major | **unbuilt** | Whiskerzilla (2150) | minimus_major | biplane |
 | 6 | Africa — Zanzibel | **production world shipped** | The Laughing Sphinx (9000) | zanzibel, savanna_run, laughing_ruins, sphinx_chin | biplane |
-| 7 | India — Chandrapore | **unbuilt** | Cobra Raja (3200) | chandrapore | night train |
+| 7 | India — Chandrapore | **production world shipped** | Cobra Raja (**20000**) | chandrapore, monsoon_road, night_train, palace_throne | biplane + night train |
 | 8 | China — Lotus Harbor | **unbuilt** | The Paper Dragon (4100) | lotus_harbor | riverboat + yak |
 | 9 | Romania — Valea Stelelor | **unbuilt** | Count Hoaxula (5300) | valea_stelelor | Orient Less-Express |
 | 10 | Alaska → Hawaii → Mars | **unbuilt** | **The Hush (6000)** + Frost Sentinel + Tiki Magma Golem | aurora_station, mauna_lani | snowcat → rocket |
@@ -328,6 +328,12 @@ Chapter 6’s production rollout reuses the registered Africa tile strip, suppor
 formal-city facade sources, regional NPCs, full enemy wear/mini set, Laughing
 Sphinx boss, battle background, seven gallery panels, and shared world props.
 No new bitmap was required.
+
+Chapter 7 retains four authored NPC sheets, seven 1600×900 panels, the train,
+Cobra Palace background, Cobra Flute, and the focused enemy/boss package. Its new
+city package adds four source master banks, fourteen 256×192 source facades,
+fourteen explicit 264px-wide city-scale facades, and the palace-spire prop. See
+`docs/asset-packages/PKG-14-ch7-India.md` for the exact inventory.
 
 ### Per-chapter art set (historical planning checklist)
 

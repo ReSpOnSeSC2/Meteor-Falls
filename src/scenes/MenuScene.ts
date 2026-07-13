@@ -51,6 +51,7 @@ import { ECHO_ANCHORS, MAX_BREATHS } from '../data/echoes';
 import { breathsLeft, rewindableAnchors, rewindTo } from '../engine/echo';
 import { recordedOption } from '../engine/choice';
 import { vehicleByTitle } from '../engine/vehicle-domain';
+import { locketAvailable, ownsStarLocket } from '../engine/ch7';
 
 export class MenuScene extends Phaser.Scene {
   private dlg!: Dialogue;
@@ -667,8 +668,12 @@ export class MenuScene extends Phaser.Scene {
   /* ================= LOCKET (§A4.9) ================= */
 
   private async locketPage(): Promise<void> {
-    if (!GS.data.keyItems.includes('star_locket')) {
+    if (!ownsStarLocket(GS.data)) {
       await this.dlg.say('You have a pocket. In it: lint, mostly.');
+      return;
+    }
+    if (!locketAvailable(GS.data)) {
+      await this.dlg.say(...DIALOGUE.locket_missing_heist);
       return;
     }
     const n = Math.max(0, Math.min(LOCKET_MAX_EMBERS, GS.data.embers));

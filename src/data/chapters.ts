@@ -209,7 +209,13 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     // the 2 overworld maps from buildChapter7Maps(): the bazaar city + the monsoon road
     // (the dungeon maps live under dungeon.maps above)
     maps: ['chandrapore', 'monsoon_road'],
-    quests: ['seven_spices', 'monkey_who_stole_tuesday'],
+    quests: [
+      'seven_spices',
+      'monkey_who_stole_tuesday',
+      'the_last_showing',
+      'third_class_rules',
+      'the_river_remembers',
+    ],
   },
 
   8: {

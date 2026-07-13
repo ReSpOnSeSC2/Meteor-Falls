@@ -16,6 +16,7 @@ import {
 import { CH4_MAP_IDS, CH4_WORLD } from '../data/maps_ch4';
 import { CH5_MAP_IDS, CH5_WORLD } from '../data/maps_ch5';
 import { CH6_MAP_IDS, CH6_WORLD } from '../data/maps_ch6';
+import { CH7_MAP_IDS, CH7_WORLD } from '../data/maps_ch7';
 
 export const CH3_DEV_MAP_IDS = [
   'biplane_interior', 'foggybottom', 'kettle_taproom', 'kettle_snug',
@@ -196,6 +197,103 @@ export function chapter6DevSpawn(mapId: string, state: Chapter6DevState): { x: n
   return { x: tile.x * TILE_PX + TILE_PX / 2, y: tile.y * TILE_PX + TILE_PX * 0.75, facing: tile.facing };
 }
 
+export const CH7_DEV_MAP_IDS = CH7_MAP_IDS;
+const CH7_DEV_MAP_SET: ReadonlySet<string> = new Set(CH7_DEV_MAP_IDS);
+export type Chapter7DevState = 'arrival' | 'city' | 'theft' | 'train' | 'recovered' | 'palace' | 'boss' | 'postBoss' | 'complete';
+
+export interface Chapter7DevProfile {
+  state: Chapter7DevState;
+  flags: readonly string[];
+  embers: 6 | 7;
+  keyItems: readonly ['star_locket', 'big_little_lens', 'royal_thimble', 'train_ticket'];
+  party: readonly ['rex', 'faye', 'milo', 'pippa', 'dorin'];
+  level: 35;
+}
+
+/** A coherent Chapter 7 survey save for every production beat. Theft is flag
+ * state, never physical key-item deletion, so save/load and rewind retain the
+ * same Locket object while availability follows the story. */
+export function chapter7DevProfile(value: string | null): Chapter7DevProfile {
+  const valid: readonly Chapter7DevState[] = [
+    'arrival', 'city', 'theft', 'train', 'recovered', 'palace', 'boss', 'postBoss', 'complete',
+  ];
+  const state: Chapter7DevState = valid.includes(value as Chapter7DevState)
+    ? value as Chapter7DevState
+    : 'city';
+  const flags = [
+    'ember1', 'ember2', 'ember3', 'ember4', 'ember5', 'ember6',
+    'ch2_complete', 'ch3_arrived', 'ch3_complete', 'ch4_arrived', 'ch4_complete',
+    'ch5_arrived', 'ch5_complete', 'ch6_arrived', 'ch6_complete',
+    'milo_joined', 'pippa_joined', 'dorin_joined',
+    'repair_taught', 'milo_clicker', 'fleet_road', 'big_little_lens_built',
+    'mainframe_defeated', 'whisperwig_defeated', 'whiskerzilla_defeated',
+    'laughing_sphinx_defeated', 'held_breath_unlocked',
+    'awake_freeze_a', 'awake_mindwarp_a', 'awake_volt_a', 'thread_trust_open',
+  ];
+  // Every Chapter 7 map profile begins after Bert's rail handoff, which grants
+  // the ticket and plays the non-spoiling travel-in panel. `arrival` alone
+  // leaves the city-arrival flag unset so its ghat trigger remains testable.
+  flags.push('ch7_train_seen');
+  if (state !== 'arrival') flags.push('ch7_arrived');
+  if (['theft', 'train', 'recovered', 'palace', 'boss', 'postBoss', 'complete'].includes(state)) {
+    flags.push('ch7_bazaar_seen', 'ch7_heist_seen');
+  }
+  if (state === 'theft' || state === 'train') flags.push('ch7_locket_stolen');
+  if (['recovered', 'palace', 'boss', 'postBoss', 'complete'].includes(state)) flags.push('ch7_locket_recovered');
+  if (['palace', 'boss', 'postBoss', 'complete'].includes(state)) flags.push('ch7_palace_seen');
+  if (['boss', 'postBoss', 'complete'].includes(state)) flags.push('ch7_raja_seen');
+  if (state === 'postBoss' || state === 'complete') flags.push('cobra_raja_defeated');
+  if (state === 'complete') flags.push('ch7_heartlight_seen', 'ember7', 'ch7_complete');
+  return {
+    state,
+    flags,
+    embers: state === 'complete' ? 7 : 6,
+    keyItems: ['star_locket', 'big_little_lens', 'royal_thimble', 'train_ticket'],
+    party: ['rex', 'faye', 'milo', 'pippa', 'dorin'],
+    level: 35,
+  };
+}
+
+export function chapter7DevSpawn(mapId: string, state: Chapter7DevState): { x: number; y: number; facing: Facing } {
+  const rectCenter = (rect: Readonly<{ x: number; y: number; w: number; h: number }>) => ({
+    x: Math.floor(rect.x + rect.w / 2),
+    y: Math.floor(rect.y + rect.h / 2),
+  });
+  const point = mapId === 'chandrapore'
+    ? state === 'arrival' ? CH7_WORLD.chandrapore.landing : CH7_WORLD.chandrapore.bazaarCenter
+    : mapId === 'monsoon_road'
+      ? ['recovered', 'palace', 'boss', 'postBoss', 'complete'].includes(state)
+        ? CH7_WORLD.monsoonRoad.trainLanding
+        : CH7_WORLD.monsoonRoad.cityLanding
+      : mapId === 'night_train'
+        ? state === 'theft'
+          ? rectCenter(CH7_WORLD.nightTrain.theft)
+          : state === 'train'
+            ? rectCenter(CH7_WORLD.nightTrain.chase)
+            : ['recovered', 'palace', 'boss', 'postBoss', 'complete'].includes(state)
+              ? rectCenter(CH7_WORLD.nightTrain.recovery)
+              : CH7_WORLD.nightTrain.roadLanding
+        : mapId === 'palace_throne'
+          ? state === 'postBoss'
+            ? CH7_WORLD.palaceThrone.postBoss
+            : state === 'complete'
+              ? rectCenter(CH7_WORLD.palaceThrone.resonance)
+              : ['palace', 'boss'].includes(state)
+                ? rectCenter(CH7_WORLD.palaceThrone.bossApproach)
+                : CH7_WORLD.palaceThrone.entry
+          : null;
+  if (!point) return chapter3DevSpawn(mapId);
+  return {
+    x: point.x * TILE_PX + TILE_PX / 2,
+    y: point.y * TILE_PX + TILE_PX * 0.75,
+    facing: mapId === 'monsoon_road'
+      ? 'right'
+      : mapId === 'chandrapore' && state === 'arrival'
+        ? 'down'
+        : 'up',
+  };
+}
+
 /** A representative, deterministic Chapter 3 survey save. It includes the
  * two prior Heartlights and Mia's Freeze; post-join states also carry Jay's
  * First Borrow and enough real stats/PP to exercise PUPPET. */
@@ -273,7 +371,7 @@ export class TitleScene extends Phaser.Scene {
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
       const devMap = params.get('devMap');
-      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap))) {
+      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap) || CH7_DEV_MAP_SET.has(devMap))) {
         GS.reset();
         GS.setFlag('intro_done');
         GS.setFlag('op_fell');
@@ -285,6 +383,7 @@ export class TitleScene extends Phaser.Scene {
         const isChapter4 = CH4_DEV_MAP_SET.has(devMap);
         const isChapter5 = CH5_DEV_MAP_SET.has(devMap);
         const isChapter6 = CH6_DEV_MAP_SET.has(devMap);
+        const isChapter7 = CH7_DEV_MAP_SET.has(devMap);
         if (isChapter3) {
           // Default to a clean post-join/pre-boss survey state. `devState`
           // exposes the production before/after beats without console surgery:
@@ -321,6 +420,12 @@ export class TitleScene extends Phaser.Scene {
           GS.data.embers = profile.embers;
           GS.data.party = profile.party.map((id) => makeHeroState(id, profile.level, GS.data.heroNames[id]));
           GS.data.keyItems.push(...profile.keyItems);
+        } else if (isChapter7) {
+          const profile = chapter7DevProfile(params.get('devState'));
+          profile.flags.forEach((flag) => GS.setFlag(flag));
+          GS.data.embers = profile.embers;
+          GS.data.party = profile.party.map((id) => makeHeroState(id, profile.level, GS.data.heroNames[id]));
+          GS.data.keyItems = [...new Set([...GS.data.keyItems, ...profile.keyItems])];
         }
         this.started = true;
         AUDIO.stopMusic();
@@ -353,7 +458,9 @@ export class TitleScene extends Phaser.Scene {
         const ch5Spawn = ch5Profile ? chapter5DevSpawn(devMap, ch5Profile.state) : null;
         const ch6Profile = isChapter6 ? chapter6DevProfile(params.get('devState')) : null;
         const ch6Spawn = ch6Profile ? chapter6DevSpawn(devMap, ch6Profile.state) : null;
-        let spawnPx = ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
+        const ch7Profile = isChapter7 ? chapter7DevProfile(params.get('devState')) : null;
+        const ch7Spawn = ch7Profile ? chapter7DevSpawn(devMap, ch7Profile.state) : null;
+        let spawnPx = ch7Spawn ?? ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
           ? { x: ch3Spawn.x, y: ch3Spawn.y, facing: ch3Spawn.facing }
           : { x: spawn.x * TILE_PX + TILE_PX / 2, y: spawn.y * TILE_PX, facing: 'down' as Facing });
         // Any rollout map can opt into an exact authored micro-scene without

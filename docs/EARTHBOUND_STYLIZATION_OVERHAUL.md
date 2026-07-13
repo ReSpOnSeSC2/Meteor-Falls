@@ -120,15 +120,16 @@ the rebuild is the Track-A layout; the town renders in the existing tileset unti
 | 6 | **Minimus** (Ch5) | **Dalaam** (jewel-box scale) | Reuses hedge autotile; **locks Dalaam grammar** (reused Ch8) |
 | 7 | **Zanzibel** (Ch6) | **Scaraba/Dusty Dunes** | Reuses Pyramid/desert kit; cleanest 1:1 |
 | 8 | **Lotus Harbor** (Ch8) | **Dalaam** (temple) + spore-forest | Reuses Dalaam; +bamboo, +spore layer |
-| 9 | **Chandrapore** (Ch7) | **Fourside** (density) + **Scaraba** (warmth) | **Biggest art lift** (hotel/apartment facades = zero keys) — its own session |
+| 9 | **Chandrapore** (Ch7) | **Fourside** (density) + **Scaraba** (warmth) | **Production layout + art shipped 2026-07-13:** three-district 120×88 city, fourteen original source/promoted facade pairs, Majestic/Station landmarks, and palace-spire axis. Shared 47-blob ground-family polish remains separate. |
 | 10 | **Valea Stelelor** (Ch9) | **Threed** (castle) + Winters/Dalaam (monastery) | Emotional heart; bespoke Threed gothic palette |
 | 11 | **Aurora + Mauna Lani** (Ch10) | **Winters-ice** + **Summers-lava** | Reuses proven grammars + elemental layers |
 | 12 | **Mars/Sea of Silence** (Ch10) | **Cave of the Past + Magicant + Giygas lair** | **Do LAST** — most bespoke + tonally load-bearing |
 
 Route/transition maps get their own EB-between-town treatment (Peaceful Rest Valley, the Winters road,
 Dusty Dunes, the caves) — table in the mapping analysis. **Deviations from strict 1→10:** Ch2 after Ch3
-(so coast+desert kits exist before mid-game), Ch8 before Ch7 (so Chandrapore's huge lift sits alone,
-late). If the user prefers strict chapter order, only cost is authoring Chandrapore's facades earlier.
+(so coast+desert kits exist before mid-game). The previously deferred Chandrapore
+facade lift shipped with the Chapter 7 production rollout; future work proceeds in
+chapter order unless a later palette dependency requires otherwise.
 
 ## 4. THE PER-REGION PIPELINE (~4–6 ChatGPT batches; front-loaded on Otterbrook)
 

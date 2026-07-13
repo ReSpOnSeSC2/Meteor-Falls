@@ -187,3 +187,81 @@ describe('Chapter 6 dev-map boots', () => {
     expect(spawn.y).toBeLessThan(map.grid.length * 64);
   });
 });
+
+describe('Chapter 7 dev-map boots', () => {
+  it('covers the exact four stable production map ids', () => {
+    expect(title.CH7_DEV_MAP_IDS).toEqual([
+      'chandrapore', 'monsoon_road', 'night_train', 'palace_throne',
+    ]);
+  });
+
+  it.each([
+    'arrival', 'city', 'theft', 'train', 'recovered', 'palace', 'boss', 'postBoss', 'complete',
+  ] as const)('builds a coherent five-hero %s profile at the Chapter 7 level band', (state) => {
+    const profile = title.chapter7DevProfile(state);
+    expect(profile.state).toBe(state);
+    expect(profile.party).toEqual(['rex', 'faye', 'milo', 'pippa', 'dorin']);
+    expect(profile.level).toBe(35);
+    expect(profile.keyItems).toEqual(['star_locket', 'big_little_lens', 'royal_thimble', 'train_ticket']);
+    expect(profile.flags).toEqual(expect.arrayContaining([
+      'ember1', 'ember2', 'ember3', 'ember4', 'ember5', 'ember6',
+      'ch6_complete', 'laughing_sphinx_defeated', 'held_breath_unlocked',
+    ]));
+    expect(profile.flags).not.toContain('ch8_arrived');
+  });
+
+  it('models theft as temporary availability flags without deleting the Locket', () => {
+    const theft = title.chapter7DevProfile('theft');
+    expect(theft.keyItems.filter((item) => item === 'star_locket')).toHaveLength(1);
+    expect(theft.flags).toContain('ch7_locket_stolen');
+    expect(theft.flags).not.toContain('ch7_locket_recovered');
+
+    const recovered = title.chapter7DevProfile('recovered');
+    expect(recovered.flags).not.toContain('ch7_locket_stolen');
+    expect(recovered.flags).toContain('ch7_locket_recovered');
+  });
+
+  it('orders city, heist, palace, Raja, post-boss, and completion flags', () => {
+    expect(title.chapter7DevProfile('arrival').flags).toContain('ch7_train_seen');
+    expect(title.chapter7DevProfile('arrival').flags).not.toContain('ch7_arrived');
+    expect(title.chapter7DevProfile('city').flags).toEqual(expect.arrayContaining(['ch7_train_seen', 'ch7_arrived']));
+    expect(title.chapter7DevProfile('train').flags).toEqual(expect.arrayContaining(['ch7_heist_seen', 'ch7_locket_stolen']));
+    expect(title.chapter7DevProfile('palace').flags).toEqual(expect.arrayContaining(['ch7_locket_recovered', 'ch7_palace_seen']));
+    expect(title.chapter7DevProfile('boss').flags).toContain('ch7_raja_seen');
+    expect(title.chapter7DevProfile('boss').flags).not.toContain('cobra_raja_defeated');
+    expect(title.chapter7DevProfile('postBoss').flags).toContain('cobra_raja_defeated');
+    const complete = title.chapter7DevProfile('complete');
+    expect(complete).toMatchObject({ embers: 7 });
+    expect(complete.flags).toEqual(expect.arrayContaining([
+      'cobra_raja_defeated', 'ch7_heartlight_seen', 'ember7', 'ch7_complete',
+    ]));
+  });
+
+  it.each([
+    'chandrapore', 'monsoon_road', 'night_train', 'palace_throne',
+  ])('%s resolves an in-bounds production spawn in every representative phase', (id) => {
+    for (const state of ['arrival', 'theft', 'train', 'recovered', 'boss', 'postBoss', 'complete'] as const) {
+      const spawn = title.chapter7DevSpawn(id, state);
+      const map = maps.MAPS[id];
+      expect(spawn.x, `${id}/${state} x`).toBeGreaterThanOrEqual(0);
+      expect(spawn.y, `${id}/${state} y`).toBeGreaterThanOrEqual(0);
+      expect(spawn.x, `${id}/${state} x`).toBeLessThan(map.grid[0].length * 64);
+      expect(spawn.y, `${id}/${state} y`).toBeLessThan(map.grid.length * 64);
+    }
+  });
+
+  it('pins canonical arrival, heist, recovery, and palace profile spawns and facings', () => {
+    const feet = (x: number, y: number, facing: 'up' | 'down' | 'left' | 'right') => ({
+      x: x * 64 + 32,
+      y: y * 64 + 48,
+      facing,
+    });
+    expect(title.chapter7DevSpawn('chandrapore', 'arrival')).toEqual(feet(16, 75, 'down'));
+    expect(title.chapter7DevSpawn('monsoon_road', 'train')).toEqual(feet(3, 54, 'right'));
+    expect(title.chapter7DevSpawn('night_train', 'train')).toEqual(feet(24, 78, 'up'));
+    expect(title.chapter7DevSpawn('night_train', 'recovered')).toEqual(feet(24, 21, 'up'));
+    expect(title.chapter7DevSpawn('palace_throne', 'boss')).toEqual(feet(44, 41, 'up'));
+    expect(title.chapter7DevSpawn('palace_throne', 'postBoss')).toEqual(feet(44, 37, 'up'));
+    expect(title.chapter7DevSpawn('palace_throne', 'complete')).toEqual(feet(44, 9, 'up'));
+  });
+});

@@ -222,6 +222,7 @@ export const SHOPS: Record<string, ShopDef> = {
     keeperNpc: 'cp_spice_merchant',
     stock: [
       'masala_chai', 'mango_lassi', 'falooda', 'mango_kulfi', 'spiced_bun',
+      'antivenom_vial', 'rosewater_drops', 'clarified_ghee', 'turmeric_draught',
       'jeweled_pagri', 'silk_kurta', 'embroidered_sherwani',
       'cobra_flute', 'trade_salt',
     ],

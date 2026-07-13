@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { decodePng } from '../../tools/imageio';
@@ -7,6 +8,7 @@ import {
   AUTHORED_ENEMY_BATTLE_ART_KEYS,
   AUTHORED_ENEMY_OVERWORLD_ART_IDS,
   AUTHORED_ENEMY_OVERWORLD_ART_KEYS,
+  AUTHORED_CHANDRAPORE_CITY_SCALE_FACADES,
   AUTHORED_VEHICLE_ART_KEYS,
   AUTHORED_WORLD_FACADE_KEYS,
   AUTHORED_WORLD_PROP_DISPLAY_SIZE,
@@ -17,6 +19,7 @@ import {
 import {
   AREA_SKINS,
   AURORA_FACADES,
+  CHANDRAPORE_FACADES,
   KVISTHAVN_FACADES,
   LILLEBY_FACADES,
   LOTUS_HARBOR_FACADES,
@@ -191,6 +194,36 @@ describe('authored world asset wiring', () => {
     for (const key of pngBasenames('assets/art/world/facades')) {
       expect(registered.has(key), `facade '${key}' is on disk but never preloaded/applied`).toBe(true);
     }
+  });
+
+  it('pins Chandrapore to fourteen distinct authored source and city-scale facades', () => {
+    const promoted = CHANDRAPORE_FACADES.map((source) =>
+      `bldg_cityscale_chandrapore_${source.replace(/^bldg_/, '')}`,
+    );
+    expect(AUTHORED_CHANDRAPORE_CITY_SCALE_FACADES).toEqual(promoted);
+
+    const landmarkSources = new Set([
+      'bldg_chandrapore_civic_hall',
+      'bldg_chandrapore_silver_parasol',
+      'bldg_chandrapore_majestic_cinema',
+      'bldg_chandrapore_station',
+    ]);
+    const hashes = new Set<string>();
+    for (let index = 0; index < CHANDRAPORE_FACADES.length; index++) {
+      const source = CHANDRAPORE_FACADES[index];
+      const promotedKey = promoted[index];
+      const sourcePath = resolve(process.cwd(), `assets/art/world/facades/${source}.png`);
+      const promotedPath = resolve(process.cwd(), `assets/art/world/facades/${promotedKey}.png`);
+      expect(pngSize(sourcePath), source).toEqual({ w: 256, h: 192 });
+      expect(pngSize(promotedPath), promotedKey).toEqual({
+        w: 264,
+        h: landmarkSources.has(source) ? 1200 : 880,
+      });
+      hashes.add(createHash('sha256').update(readFileSync(promotedPath)).digest('hex'));
+    }
+    expect(hashes.size).toBe(14);
+    expect(AUTHORED_WORLD_PROP_DISPLAY_SIZE.prop_chandrapore_palace_spire)
+      .toEqual({ w: 72, h: 194 });
   });
 
   it('registers every committed prop PNG with the authored bridge', () => {

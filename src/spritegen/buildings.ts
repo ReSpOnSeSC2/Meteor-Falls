@@ -219,10 +219,20 @@ export const FORMAL_CITY_FACADE_SOURCE_WIDTHS: Record<FormalCityScaleId, Readonl
     bldg_zanzibel_caravanserai: 4,
   },
   chandrapore: {
-    bldg_zanzibel_caravanserai: 4,
-    bldg_zanzibel_investment_desk: 4,
-    bldg_zanzibel_civic_hall: 4,
-    bldg_zanzibel_harbor_customs: 4,
+    bldg_chandrapore_hillcrest_manor: 4,
+    bldg_chandrapore_moon_gate_realty: 4,
+    bldg_chandrapore_civic_hall: 4,
+    bldg_chandrapore_motor_gallery: 4,
+    bldg_chandrapore_silver_parasol: 4,
+    bldg_chandrapore_bazaar_shop_a: 4,
+    bldg_chandrapore_bazaar_shop_b: 4,
+    bldg_chandrapore_market_arcade_a: 4,
+    bldg_chandrapore_market_arcade_b: 4,
+    bldg_chandrapore_apartments_a: 4,
+    bldg_chandrapore_apartments_b: 4,
+    bldg_chandrapore_apartments_c: 4,
+    bldg_chandrapore_majestic_cinema: 4,
+    bldg_chandrapore_station: 4,
   },
   lotus_harbor: {
     bldg_lotus_harbor_lantern_shop: 4,
@@ -244,6 +254,10 @@ export const FORMAL_CITY_LANDMARK_SOURCES: ReadonlySet<string> = new Set([
   'bldg_zanzibel_caravanserai',
   'bldg_zanzibel_civic_hall',
   'bldg_zanzibel_harbor_customs',
+  'bldg_chandrapore_civic_hall',
+  'bldg_chandrapore_silver_parasol',
+  'bldg_chandrapore_majestic_cinema',
+  'bldg_chandrapore_station',
   'bldg_lotus_harbor_temple',
 ]);
 
@@ -310,6 +324,20 @@ const CITY_SCALE_SOURCE_SIGNS: Readonly<Record<string, string>> = {
   bldg_zanzibel_investment_desk: 'MOON BANK',
   bldg_zanzibel_civic_hall: 'CIVIC HALL',
   bldg_zanzibel_harbor_customs: 'HARBOR GATE',
+  bldg_chandrapore_hillcrest_manor: 'HILLCREST',
+  bldg_chandrapore_moon_gate_realty: 'MOON GATE',
+  bldg_chandrapore_civic_hall: 'CIVIC HALL',
+  bldg_chandrapore_motor_gallery: 'MONSOON MOTORS',
+  bldg_chandrapore_silver_parasol: 'SILVER PARASOL',
+  bldg_chandrapore_bazaar_shop_a: 'BAZAAR',
+  bldg_chandrapore_bazaar_shop_b: 'CHANDRA GOODS',
+  bldg_chandrapore_market_arcade_a: 'MOON ARCADE',
+  bldg_chandrapore_market_arcade_b: 'RIVER ARCADE',
+  bldg_chandrapore_apartments_a: 'MONSOON HOUSE',
+  bldg_chandrapore_apartments_b: 'SILVER HILL',
+  bldg_chandrapore_apartments_c: 'GHAT COURT',
+  bldg_chandrapore_majestic_cinema: 'THE MAJESTIC',
+  bldg_chandrapore_station: 'CHANDRAPORE',
   bldg_lotus_harbor_lantern_shop: 'LANTERN SHOP',
   bldg_lotus_harbor_tea_house: 'MOON TEA',
   bldg_lotus_harbor_temple: 'LOTUS TEMPLE',
@@ -432,6 +460,18 @@ export const ZANZIBEL_FACADES: readonly string[] = [
   'bldg_zanzibel_indigo_dyer', 'bldg_zanzibel_investment_desk', 'bldg_zanzibel_spice_stall',
 ];
 
+/** Authored w4/u0 Chandrapore source family. Formal-city promotion grows these
+ * northward after occupancy, preserving the historical street-level footprint. */
+export const CHANDRAPORE_FACADES: readonly string[] = [
+  'bldg_chandrapore_hillcrest_manor', 'bldg_chandrapore_moon_gate_realty',
+  'bldg_chandrapore_civic_hall', 'bldg_chandrapore_motor_gallery',
+  'bldg_chandrapore_silver_parasol', 'bldg_chandrapore_bazaar_shop_a',
+  'bldg_chandrapore_bazaar_shop_b', 'bldg_chandrapore_market_arcade_a',
+  'bldg_chandrapore_market_arcade_b', 'bldg_chandrapore_apartments_a',
+  'bldg_chandrapore_apartments_b', 'bldg_chandrapore_apartments_c',
+  'bldg_chandrapore_majestic_cinema', 'bldg_chandrapore_station',
+];
+
 export const LOTUS_HARBOR_FACADES: readonly string[] = [
   'bldg_lotus_harbor_grand_market', 'bldg_lotus_harbor_harbor_office', 'bldg_lotus_harbor_lantern_shop',
   'bldg_lotus_harbor_pagoda', 'bldg_lotus_harbor_row_house', 'bldg_lotus_harbor_tea_house',
@@ -546,10 +586,7 @@ export const AREA_SKINS: Record<string, readonly string[]> = {
   // (the cinema playing a movie about your party), a department emporium, a grand
   // hotel, neon, market arcades, apartment towers + a palace spire colossus —
   // orange/gold/magenta/red/purple, loud and crowded.
-  chandrapore: [
-    ...skinsFor(['deptstore', 'theater', 'hotel', 'market', 'neon', 'apartments'], [RAMP.ORANGE, RAMP.GOLD, RAMP.MAGENTA, RAMP.RED, RAMP.PURPLE]),
-    'bldg_colossus_spire',
-  ],
+  chandrapore: CHANDRAPORE_FACADES,
 
   // CH.8 CHINA — LOTUS HARBOR: temple-town on the river. Colonnaded markets, porticoed
   // civic temples, a lacquer-red theater, brick row houses, a riverside tea cafe —
