@@ -1,5 +1,10 @@
 # AI HANDOFF PROMPT — Settlement Redesign + Vibrancy Program (Meteor Falls)
 
+> **Norway status (2026-07-12):** Kvisthavn and Lilleby are complete production
+> rebuilds under ADR-140. Kvisthavn's first four facade/unit slots are now a
+> save-facing service contract; Lilleby retains sparse 2.3× giant composition.
+> They are no longer entries in the future-relayout queue.
+
 Copy everything below this line into a fresh Claude Code session in `C:\Meteor Falls` to continue the program.
 
 ---

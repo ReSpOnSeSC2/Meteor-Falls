@@ -83,9 +83,10 @@ import {
 } from '../data/maps';
 import { PYR_ROTOR, PYR_INITIAL_ROT, PUERTO_SOL_PIER_SPAWN, rotateRect } from '../data/maps_ch2';
 import { WINTERMOOR_COOLANT_CROSSING } from '../data/maps_ch3';
+import { CH4_MAP_IDS, KVISTHAVN_LANDING, SPINE_MELTFALL_CROSSING } from '../data/maps_ch4';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
-import { ITEMS } from '../data/items';
+import { ITEMS, BAG_MAX } from '../data/items';
 import { GS, makeHeroState } from '../engine/state';
 import { completeQuest } from '../engine/quests';
 import { PROPERTIES, type PropertyDef } from '../data/properties';
@@ -142,6 +143,7 @@ import {
 import { availableAbilities } from '../data/heroes';
 import { PSI_GATES } from '../data/psigates';
 import { canClearGate, bestCastFor } from '../engine/psi';
+import { bridgeBerryClears } from '../engine/ch4-world';
 import {
   HOOPS_TEXT,
   TEAMS,
@@ -739,6 +741,9 @@ const NORWAY_SKIN_MAPS: ReadonlySet<string> = new Set([
   'kvisthavn',
   'bootstep_moor',
   'lilleby',
+  'spine_hand',
+  'spine_shoulder',
+  'spine_ear',
 ]);
 const NORWAY_TILE_SKIN: Readonly<Record<string, string>> = {
   grass_a: 'norway_ground', // hamlet green / moor floor (`.`) → pebbled snow
@@ -752,6 +757,9 @@ const NORWAY_TILE_SKIN: Readonly<Record<string, string>> = {
   brick: 'norway_wall', // the cliff borders (`B`) → rock cliff (SOLID)
   bush: 'norway_wall', // any solid bush (`b`) → a rock outcrop (SOLID)
   sea_a: 'norway_water', // the fjord (`e`) → open fjord water (SOLID; foam lip `E` stays)
+  sea_foam: 'norway_shore',
+  plaza: 'norway_masonry',
+  melt_ice: 'norway_frozen_pond',
 };
 /** Ch.6 AFRICA tile reskins — the Africa_tiles_16.png strip authors THREE sub-biomes, so
  *  each Ch.6 outdoor map gets its own map-scoped skin (the Ch.10 Aurora/Lani/Mars precedent):
@@ -1523,7 +1531,7 @@ export class OverworldScene extends Phaser.Scene {
           if (meltCrossingOpen && ch === 'E') {
             // §A4.11 — the frozen foam-lip crossing reads as a blue-white ice
             // bridge (mirrors the collision carve below; same cells, same flag)
-            name = 'melt_ice';
+            name = norwaySkin ? 'norway_frozen_pond' : 'melt_ice';
           } else if (wintermoorCoolantOpen && isWintermoorCoolantCell(x, y)) {
             // Ch.3's coolant main: Freeze turns the marked five-by-three K wall
             // into a visible blue-white service bridge. The collision carve below
@@ -3405,6 +3413,17 @@ export class OverworldScene extends Phaser.Scene {
       AUDIO.sfx('cancel');
       toast(this, 'The borrowed mind is itself again.');
     }
+    if (feedback && CH4_MAP_IDS.includes(this.mapDef.id as (typeof CH4_MAP_IDS)[number])) {
+      this.time.delayedCall(80, () => { void this.norwayTrustRelease(); });
+    }
+  }
+
+  private async norwayTrustRelease(): Promise<void> {
+    if (!GS.flag('thread_trust_open') || GS.flag('thread_trust_esc1') || this.dlg.busy || this.cut) return;
+    GS.setFlag('thread_trust_esc1');
+    this.cut = true;
+    await this.dlg.say(...DIALOGUE.trust_norway_release);
+    this.cut = false;
   }
 
   /**
@@ -6028,11 +6047,17 @@ export class OverworldScene extends Phaser.Scene {
       case 'kv_bellkeeper':
         await this.bellBeat();
         return true;
+      case 'moor_walker':
+        await this.footprintsBeat();
+        return true;
       case 'll_sweetheart':
         await this.sweetheartBeat();
         return true;
       case 'll_mayor':
         await this.picnicBeat();
+        return true;
+      case 'll_pump_attendant':
+        await this.dealerFuelService('lilleby', 'lilleby_giant_pump');
         return true;
       default:
         return false;
@@ -8040,6 +8065,15 @@ export class OverworldScene extends Phaser.Scene {
       case 'ch4_arrival':
         if (!GS.flag('ch4_arrived')) await this.ch4ArrivalScene();
         break;
+      case 'ch4_moor_reveal':
+        await this.ch4ContextBeat('ch4_moor_seen', 'ch4_moor');
+        break;
+      case 'ch4_lilleby_reveal':
+        await this.ch4ContextBeat('ch4_lilleby_seen', 'ch4_lilleby');
+        break;
+      case 'ch4_spine_reveal':
+        await this.ch4ContextBeat('ch4_spine_seen', 'ch4_spine');
+        break;
       case 'whisperwig_boss':
         if (!GS.flag('whisperwig_defeated')) await this.whisperwigBossScene();
         break;
@@ -8147,6 +8181,9 @@ export class OverworldScene extends Phaser.Scene {
       case 'q_picnic_brunost':
       case 'q_picnic_berry':
       case 'q_picnic_set':
+      case 'q_footprint_1':
+      case 'q_footprint_2':
+      case 'q_footprint_3':
       // the Chapter 5 macro-lens portrait: the trigger id is stable map data,
       // while the quest objective persists under q_cheese_pose.
       case 'q_say_cheese':
@@ -8585,15 +8622,16 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     AUDIO.stopMusic();
-    await playCutscene(this, 'ch4_journey'); // the authored North Sea panels (no-ops if missing)
+    await playCutscene(this, 'ch4_flight');
     // the hatch drops on the Kvisthavn quay; the ch4_arrival trigger fires the beat
-    this.goThroughDoor('kvisthavn', 18 * 16, 8 * 16, 'down');
+    this.goThroughDoor('kvisthavn', KVISTHAVN_LANDING.x * 16, KVISTHAVN_LANDING.y * 16, 'down');
   }
 
   /** the §A6 arrival: Lucille claws over the North Sea and sets down under the cliffs */
   private async ch4ArrivalScene(): Promise<void> {
     this.cut = true;
     GS.setFlag('ch4_arrived');
+    await playCutscene(this, 'ch4_arrival');
     AUDIO.sfx('thud');
     this.cameras.main.shake(420, 0.007);
     await this.dlg.say(...DIALOGUE.ch4_arrival);
@@ -8601,20 +8639,51 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
-  /** the §A7 set-piece — the Bridge Berry blocks the gorge until fought or rolled
-   *  aside. Optional + retry-safe (the lane is passable either way; this is the gag). */
+  private async ch4ContextBeat(flag: string, cutsceneId: string): Promise<void> {
+    if (GS.flag(flag)) return;
+    this.cut = true;
+    GS.setFlag(flag);
+    await playCutscene(this, cutsceneId);
+    this.cut = false;
+  }
+
+  /** The Bridge Berry owns both the art and physical blocker. Both real outcomes
+   * retire that one prop/collider together; retreat leaves the bridge closed. */
   private async bridgeBerryScene(): Promise<void> {
     this.cut = true;
     await this.dlg.say('(A berry the size of a hay bale has wedged itself across the plank bridge. It is not a metaphor. It is a berry, and it is in the way.)');
-    const outcome = await this.startBattle(['bridge_berry'], 'none', [], {});
-    if (outcome !== 'victory') {
+    const pick = await this.dlg.ask(['Fight the Bridge Berry', 'Roll it aside together', 'Back away'], { cancelIndex: 2 });
+    if (pick === 2) {
       this.cut = false;
       return;
     }
+    let battleWon = false;
+    if (pick === 0) {
+      const outcome = await this.startBattle(['bridge_berry'], 'none', [], {});
+      battleWon = outcome === 'victory';
+      if (!bridgeBerryClears('fight', battleWon)) {
+        this.cut = false;
+        return;
+      }
+      GS.setFlag('moor_berry_fought');
+    } else {
+      await this.dlg.say('({rex}, {faye}, and {milo} put six shoes against the berry. It resists with the quiet dignity of produce, then begins to roll.)');
+      GS.setFlag('moor_berry_rolled');
+    }
+    if (!bridgeBerryClears(pick === 0 ? 'fight' : 'roll', battleWon)) return;
     GS.setFlag('moor_berry_cleared');
     AUDIO.sfx('confirm');
     await this.dlg.say('(The Bridge Berry rolls off the planks and down into the gorge with a long, descending squelch. The way across is clear, if sticky.)');
     this.cut = false;
+    this.fadeRestart();
+  }
+
+  private giveMeltfallReward(): boolean {
+    const carrier = GS.data.party.find((hero) => hero.bag.length < BAG_MAX);
+    if (!carrier) return false;
+    GS.addItem('firecracker_string', carrier.id);
+    GS.setFlag('spine_firecracker_claimed');
+    return true;
   }
 
   /** §A4.11 PSI gate — freeze the meltwater fall off the Sleeper's shoulder to a
@@ -8623,6 +8692,10 @@ export class OverworldScene extends Phaser.Scene {
   private async meltfallGate(): Promise<void> {
     if (GS.flag('spine_meltfall_frozen')) {
       await this.dlg.say('(The meltwater fall stands frozen to a blue-white bridge. The way up the arm is open.)');
+      if (!GS.flag('spine_firecracker_claimed')) {
+        if (this.giveMeltfallReward()) await this.dlg.say('(You free the Firecracker String from the ice. You may want to be LOUD soon.)');
+        else await this.dlg.say('(A Firecracker String glitters safely in the ice. Every bag is full; it will wait here until you make room.)');
+      }
       return;
     }
     const gate = PSI_GATES.spine_meltfall;
@@ -8646,23 +8719,30 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('spine_meltfall_frozen');
     // open the foam-lip crossing in the LIVE collision now (buildTiles re-carves
     // it from the flag on any later re-entry) so the bridge is crossable at once.
-    for (let cy = 5; cy <= 6; cy++) {
-      for (let cx = 10; cx <= 13; cx++) {
+    for (let cy = SPINE_MELTFALL_CROSSING.y; cy < SPINE_MELTFALL_CROSSING.y + SPINE_MELTFALL_CROSSING.h; cy++) {
+      for (let cx = SPINE_MELTFALL_CROSSING.x; cx < SPINE_MELTFALL_CROSSING.x + SPINE_MELTFALL_CROSSING.w; cx++) {
         if (this.solidTiles[cy]) this.solidTiles[cy][cx] = false;
       }
     }
-    await this.dlg.say('(The fall locks solid mid-pour, a staircase of ice up the giant\'s arm. Caught in the frozen spray, a string of firecrackers somebody dropped — you pocket it. You may want to be LOUD soon.)');
-    GS.addItem('firecracker_string'); // NOISE for the Whisperwig ahead (the gate pays it forward)
+    const received = this.giveMeltfallReward();
+    await this.dlg.say(received
+      ? '(The fall locks solid mid-pour, a staircase of ice up the giant\'s arm. Caught in the frozen spray, a Firecracker String — you pocket it. You may want to be LOUD soon.)'
+      : '(The fall locks solid mid-pour, a staircase of ice up the giant\'s arm. A Firecracker String glitters in the ice; your bags are full, so it remains here safely.)');
     AUDIO.sfx('confirm');
     AUDIO.jingle('levelup', 1200, this.mapDef.music);
     toast(this, 'The meltwater fall is frozen to a bridge.');
     this.cut = false;
+    this.fadeRestart();
   }
 
   /** §A6 BOSS 4 — the Whisperwig (the phase machine carries the untargetable-until-
    *  noise gimmick + Mia's Vibe Volt α awakening when it first surfaces). */
   private async whisperwigBossScene(): Promise<void> {
     this.cut = true;
+    if (!GS.flag('ch4_whisperwig_seen')) {
+      GS.setFlag('ch4_whisperwig_seen');
+      await playCutscene(this, 'ch4_whisperwig');
+    }
     await this.dlg.say(...DIALOGUE.whisperwig_door);
     AUDIO.sfx('thud');
     this.cameras.main.shake(460, 0.009);
@@ -8670,6 +8750,10 @@ export class OverworldScene extends Phaser.Scene {
     const outcome = await this.startBattle(['the_whisperwig'], 'none', [], { boss: true });
     if (outcome !== 'victory') return;
     this.cut = true;
+    if (!GS.flag('ch4_heartlight_seen')) {
+      GS.setFlag('ch4_heartlight_seen');
+      await playCutscene(this, 'ch4_heartlight');
+    }
     GS.setFlag('whisperwig_defeated');
     AUDIO.sfx('confirm');
     this.cameras.main.flash(420, 248, 232, 160);
@@ -8704,6 +8788,8 @@ export class OverworldScene extends Phaser.Scene {
     GS.setFlag('ch4_complete'); // §A6 — the chapter button (the §A5 gate to Ch.5)
     AUDIO.jingle('victory', 2200, null);
     await this.dlg.say(...DIALOGUE.ch4_card);
+    if (GS.flag('q_bell_done')) await this.dlg.say(...DIALOGUE.ch4_card_bell);
+    if (GS.flag('q_letter_done')) await this.dlg.say(...DIALOGUE.ch4_card_letter);
     AUDIO.playMusic(this.mapDef.music);
     this.cut = false;
   }
@@ -9335,6 +9421,7 @@ export class OverworldScene extends Phaser.Scene {
       await this.dlg.say(...DIALOGUE.q_letter_ask);
       GS.setFlag('q_letter');
       GS.setFlag('q_letter_taken'); // he hands you the letter as he asks
+      if (!GS.data.keyItems.includes('halvors_letter')) GS.data.keyItems.push('halvors_letter');
       AUDIO.sfx('confirm');
       return;
     }
@@ -9343,6 +9430,9 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     if (!GS.flag('q_letter_delivered')) {
+      if (GS.flag('q_letter_taken') && !GS.data.keyItems.includes('halvors_letter')) {
+        GS.data.keyItems.push('halvors_letter'); // compatibility repair for flag-only prerelease saves
+      }
       await this.dlg.say(...DIALOGUE.q_letter_active);
       return;
     }
@@ -9362,10 +9452,12 @@ export class OverworldScene extends Phaser.Scene {
 
   /** §A10 — the delivery half: read Halvor's letter to his sweetheart in Lilleby */
   private async sweetheartBeat(): Promise<void> {
-    if (GS.flag('q_letter') && !GS.flag('q_letter_delivered')) {
+    if (GS.flag('q_letter') && !GS.flag('q_letter_delivered') && GS.data.keyItems.includes('halvors_letter')) {
       this.cut = true;
       await this.dlg.say(...DIALOGUE.q_letter_deliver);
       GS.setFlag('q_letter_delivered');
+      const letter = GS.data.keyItems.indexOf('halvors_letter');
+      if (letter >= 0) GS.data.keyItems.splice(letter, 1);
       AUDIO.sfx('confirm');
       this.sparkleBurst(this.player.x, this.player.y - s(16), 8);
       await this.dlg.say(...DIALOGUE.q_letter_deliver_done);
@@ -9445,6 +9537,35 @@ export class OverworldScene extends Phaser.Scene {
     this.cut = false;
   }
 
+  private async footprintsBeat(): Promise<void> {
+    if (!GS.flag('q_footprints')) {
+      await this.dlg.say(...DIALOGUE.q_footprints_ask);
+      GS.setFlag('q_footprints');
+      AUDIO.sfx('confirm');
+      return;
+    }
+    if (GS.flag('q_footprints_done')) {
+      await this.dlg.say(...DIALOGUE.q_footprints_after);
+      return;
+    }
+    if (!['q_footprint_1', 'q_footprint_2', 'q_footprint_3'].every((flag) => GS.flag(flag))) {
+      await this.dlg.say(...DIALOGUE.q_footprints_active);
+      return;
+    }
+    await this.dlg.say(...DIALOGUE.q_footprints_full);
+    if (completeQuest('footprint_pointed_home') === 'hands-full') {
+      await this.dlg.say('@Your packs are full. The marker stays where it is until the charm has a safe pocket.');
+      return;
+    }
+    GS.setFlag('q_footprint_reported');
+    this.cut = true;
+    AUDIO.sfx('rumble');
+    await this.dlg.say(...DIALOGUE.q_footprints_done_beat);
+    AUDIO.jingle('victory', 1800, this.mapDef.music);
+    this.cut = false;
+    this.fadeRestart();
+  }
+
   /** the §A10 Ch.3 "find" pickups — a walk trigger hands the player a quest beat when
    *  its quest is active (the walk_token precedent). No-ops otherwise; non-missable. */
   private static readonly QUEST_PICKUPS: Record<string, { flag: string; dialogue: string; active: string; done: string; of: string[]; giver: string }> = {
@@ -9464,6 +9585,9 @@ export class OverworldScene extends Phaser.Scene {
     q_picnic_brunost: { flag: 'q_picnic_brunost', dialogue: 'q_picnic_brunost', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
     q_picnic_berry: { flag: 'q_picnic_berry', dialogue: 'q_picnic_berry', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
     q_picnic_set: { flag: 'q_picnic_set', dialogue: 'q_picnic_set', active: 'q_picnic', done: 'q_picnic_done', of: ['q_picnic_brunost', 'q_picnic_berry', 'q_picnic_set'], giver: 'the Mayor' },
+    q_footprint_1: { flag: 'q_footprint_1', dialogue: 'q_footprint_1', active: 'q_footprints', done: 'q_footprints_done', of: ['q_footprint_1', 'q_footprint_2', 'q_footprint_3'], giver: 'the shepherd' },
+    q_footprint_2: { flag: 'q_footprint_2', dialogue: 'q_footprint_2', active: 'q_footprints', done: 'q_footprints_done', of: ['q_footprint_1', 'q_footprint_2', 'q_footprint_3'], giver: 'the shepherd' },
+    q_footprint_3: { flag: 'q_footprint_3', dialogue: 'q_footprint_3', active: 'q_footprints', done: 'q_footprints_done', of: ['q_footprint_1', 'q_footprint_2', 'q_footprint_3'], giver: 'the shepherd' },
     q_say_cheese: { flag: 'q_cheese_pose', dialogue: 'q_say_cheese', active: 'q_cheese', done: 'q_cheese_done', of: ['q_cheese_pose', 'q_cheese_developed'], giver: 'Mr. Click' },
   };
 

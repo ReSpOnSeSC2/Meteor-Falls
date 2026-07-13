@@ -93,7 +93,7 @@ import { allocateVehicleDeliverySlot } from './vehicle-domain';
 import type { HoopsState } from '../schemas';
 import { s } from '../spritegen/scale';
 
-export const CURRENT_SAVE_VERSION = 20;
+export const CURRENT_SAVE_VERSION = 21;
 
 const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
 
@@ -132,6 +132,21 @@ export const CHAPTER3_PARKING_RECOVERY = {
   string,
   { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }
 >;
+
+export const CHAPTER4_LAYOUT_RECOVERY = {
+  kvisthavn: { x: 18 * 16 + 8, y: 38 * 16 + 12, facing: 'down' },
+  bootstep_moor: { x: 3 * 16 + 8, y: 39 * 16 + 12, facing: 'right' },
+  lilleby: { x: 3 * 16 + 8, y: 29 * 16 + 12, facing: 'right' },
+  spine_hand: { x: 24 * 16 + 8, y: 33 * 16 + 12, facing: 'up' },
+  spine_shoulder: { x: 28 * 16 + 8, y: 37 * 16 + 12, facing: 'up' },
+  spine_ear: { x: 26 * 16 + 8, y: 37 * 16 + 12, facing: 'up' },
+} as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
+
+export const CHAPTER4_PARKING_RECOVERY = {
+  kvisthavn: { x: 30 * 16 + 8, y: 34 * 16 + 12, facing: 'right' },
+  bootstep_moor: { x: 6 * 16 + 8, y: 39 * 16 + 12, facing: 'right' },
+  lilleby: { x: 7 * 16 + 8, y: 29 * 16 + 12, facing: 'right' },
+} as const satisfies Record<string, { x: number; y: number; facing: 'up' | 'down' | 'left' | 'right' }>;
 
 /** the v5 hoops field's clean slate — newGameData and the v4→v5 step share
  *  it (lives here, not state.ts, so the import graph stays acyclic) */
@@ -185,6 +200,30 @@ function recoverChapter3VehicleParking(raw: Raw): void {
       { area, x: s(base.x), y: s(base.y), facing: base.facing },
     );
     // Mutating values in the original object preserves its key order.
+    parking[title] = next;
+    recovered[title] = next;
+  }
+}
+
+function recoverChapter4VehicleParking(raw: Raw): void {
+  if (!isObj(raw.vehicleParking)) return;
+  const parking = raw.vehicleParking;
+  const recovered: Record<string, VehicleParkingState> = {};
+  for (const [title, value] of Object.entries(parking)) {
+    if (!isVehicleParkingState(value) || hasOwn(CHAPTER4_PARKING_RECOVERY, value.area)) continue;
+    recovered[title] = value;
+  }
+  const pending = Object.entries(parking)
+    .filter((entry): entry is [string, VehicleParkingState] =>
+      isVehicleParkingState(entry[1]) && hasOwn(CHAPTER4_PARKING_RECOVERY, entry[1].area))
+    .sort(([a], [b]) => a.localeCompare(b));
+  for (const [title, value] of pending) {
+    const area = value.area as keyof typeof CHAPTER4_PARKING_RECOVERY;
+    const base = CHAPTER4_PARKING_RECOVERY[area];
+    const next = allocateVehicleDeliverySlot(
+      { vehicleParking: recovered }, title,
+      { area, x: s(base.x), y: s(base.y), facing: base.facing },
+    );
     parking[title] = next;
     recovered[title] = next;
   }
@@ -543,6 +582,35 @@ export const MIGRATIONS: MigrationStep[] = [
       }
       recoverChapter3VehicleParking(raw);
       raw.version = 20;
+      return raw;
+    },
+  },
+  {
+    to: 21,
+    migrate(raw) {
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      const target = hasOwn(CHAPTER4_LAYOUT_RECOVERY, map)
+        ? CHAPTER4_LAYOUT_RECOVERY[map as keyof typeof CHAPTER4_LAYOUT_RECOVERY]
+        : undefined;
+      if (target) {
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      recoverChapter4VehicleParking(raw);
+      const flags = isObj(raw.flags) ? raw.flags : undefined;
+      const keyItems = Array.isArray(raw.keyItems) ? raw.keyItems : undefined;
+      if (flags && keyItems) {
+        const letter = keyItems.indexOf('halvors_letter');
+        const shouldCarry = flags.q_letter_taken === true
+          && flags.q_letter_delivered !== true
+          && flags.q_letter_done !== true;
+        if (shouldCarry && letter < 0) keyItems.push('halvors_letter');
+        if (!shouldCarry && letter >= 0 && (flags.q_letter_delivered === true || flags.q_letter_done === true)) {
+          keyItems.splice(letter, 1);
+        }
+      }
+      raw.version = 21;
       return raw;
     },
   },

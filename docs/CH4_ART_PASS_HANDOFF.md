@@ -1,5 +1,9 @@
 # CH.4 NORWAY — ART-PASS HANDOFF PROMPT (for the next agent)
 
+> **Historical as of 2026-07-12.** Norway's tile skin, facades, battlers,
+> minis, NPC sheets, backdrops, and Spine props are live. The production
+> rebuild integrated this authored package without replacement art.
+
 > **Read this whole file before touching anything.** Then read
 > `docs/ART_PIPELINE.md`, `/CLAUDE.md`, and `docs/GAME_BIBLE.md` §A6/§A7 (Ch.4).
 > The Chapter-4 **data spine is already SHIPPED and GREEN** — your job is the

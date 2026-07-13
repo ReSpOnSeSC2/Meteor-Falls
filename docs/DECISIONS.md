@@ -6352,3 +6352,47 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   of 94 unregistered battle PNGs. Neither permits replacing registered Chapter
   3 props with procedural fallback or reopening its layouts without a new
   concept/fixed-point/migration review. ☄️
+
+## ADR-140 — CHAPTER 4 PRODUCTION CONTRACT (six Norway maps, five quests, save v21)
+
+- **Date:** 2026-07-12
+- **Status:** Accepted and implemented. This supersedes stale Chapter 4 handoff
+  prose, especially the 1,900-HP Whisperwig and “unfinished” authored-art claims.
+  Executable canon remains **1,800 HP** at target level 22.
+- **Decision — stable world:** Chapter 4 owns the exact save ids `kvisthavn`,
+  `bootstep_moor`, `lilleby`, `spine_hand`, `spine_shoulder`, and `spine_ear`.
+  Their production dimensions are 64×48, 112×80, 72×56, 48×36, 56×40, and
+  52×40. `src/data/maps_ch4.ts` and its exported `CH4_WORLD` fixed points are
+  canonical; map-editor JSON is generated review data. Lilleby natives remain
+  at 2.3× and Storheim is terrain, never a single giant actor.
+- **Decision — world state:** Bridge Berry is the sole four-tile gorge crossing.
+  Its authored mini and collider share `unlessFlag: moor_berry_cleared`; fighting
+  and rolling are real, retry-safe outcomes. The Shoulder meltfall uses one
+  exported rectangle for grid, live collision, tests and recovery reasoning;
+  Freeze changes the same cells to authored ice and a full inventory leaves the
+  guaranteed Firecracker String safely claimable in the ice. Whisperwig victory
+  retires Ear spawners and exposes the resonance prop/state immediately.
+- **Decision — story and quests:** `ch4_journey` remains a gallery reel while
+  seven contextual runtime cuts prevent flight spoilers. Norway's Trust-thread
+  escalation runs after the first qualifying field-PUPPET release. Ending text
+  never claims optional bell/letter outcomes unless their completion flags exist.
+  No accepted ADR reduced the Game Bible's five-quest law, so **The Footprint
+  That Pointed Home** joins the four existing quests as an observation/navigation
+  quest with a permanent shepherd-cut change and Caller. `halvors_letter` is a
+  real key item between take and delivery; v21 repairs flag-only saves.
+- **Decision — live services and art:** Kvisthavn's first four generated unit ids
+  remain stable and are deliberately reassigned to the purchasable Fjord Cabin,
+  Kolonial, property agency, and motor/fuel desk. Cash, property, storage, sleep,
+  vehicles, fuel, shop stock, phone and ATM all use live state. Lilleby's warehouse
+  and giant pump use their registries. No new bitmap was required: the retained
+  Norway art package is reused, and shore/frozen-pond/boardwalk/masonry cells from
+  the existing strip are now registered and live.
+- **Decision — compatibility and QA seams:** save version is **21**. v20→v21
+  relocates players on all six maps, rehomes parking on Kvisthavn/Bootstep/Lilleby
+  without stacking, uses own-property membership tests, preserves malformed and
+  unrelated records, and reconciles the letter item. Title dev profiles support
+  arrival, bridge, bridgeCleared, lilleby, meltfallClosed, meltfallOpen, boss,
+  postBoss and complete with the real three-person level-22 party.
+- **Consequences:** all future Chapter 4 coordinate changes require a new migration
+  review. Exact validation evidence is recorded in
+  `docs/CH4_PRODUCTION_VERIFICATION.md`; historical handoff counts are not gates. ☄️

@@ -66,3 +66,36 @@ describe('Chapter 3 dev-map boots', () => {
     expect(spawn.y).toBeLessThan(map.grid.length * 64);
   });
 });
+
+describe('Chapter 4 dev-map boots', () => {
+  it('covers the exact six stable map ids', () => {
+    expect(title.CH4_DEV_MAP_IDS).toEqual([
+      'kvisthavn', 'bootstep_moor', 'lilleby', 'spine_hand', 'spine_shoulder', 'spine_ear',
+    ]);
+  });
+
+  it.each([
+    'arrival', 'bridge', 'bridgeCleared', 'lilleby', 'meltfallClosed',
+    'meltfallOpen', 'boss', 'postBoss', 'complete',
+  ] as const)('builds a representative %s profile', (state) => {
+    const profile = title.chapter4DevProfile(state);
+    expect(profile.state).toBe(state);
+    expect(profile.flags).toEqual(expect.arrayContaining([
+      'ember1', 'ember2', 'ember3', 'ch3_complete', 'milo_joined',
+      'awake_freeze_a', 'awake_mindwarp_a', 'thread_trust_open',
+    ]));
+    expect(profile.flags.includes('awake_volt_a')).toBe(state === 'postBoss' || state === 'complete');
+    expect(profile.flags.includes('spine_meltfall_frozen')).toBe(['meltfallOpen', 'boss', 'postBoss', 'complete'].includes(state));
+  });
+
+  it.each([
+    'kvisthavn', 'bootstep_moor', 'lilleby', 'spine_hand', 'spine_shoulder', 'spine_ear',
+  ])('%s resolves an in-bounds spawn', (id) => {
+    const spawn = title.chapter4DevSpawn(id, 'bridge');
+    const map = maps.MAPS[id];
+    expect(spawn.x).toBeGreaterThanOrEqual(0);
+    expect(spawn.y).toBeGreaterThanOrEqual(0);
+    expect(spawn.x).toBeLessThan(map.grid[0].length * 64);
+    expect(spawn.y).toBeLessThan(map.grid.length * 64);
+  });
+});

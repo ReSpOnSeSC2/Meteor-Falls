@@ -86,6 +86,20 @@ describe('cutscene registry', () => {
     }
   });
 
+  it('keeps the Chapter 4 gallery complete while runtime beats stay contextual', () => {
+    expect(CUTSCENES.ch4_journey.beats.map((beat) => beat.art)).toEqual([
+      'fjord_establishing', 'lucille_north_sea_hop', 'kvisthavn_under_cliffs',
+      'bootstep_moor_growth', 'lilleby_giants_kneel', 'sleeper_spine_crossing',
+      'whisperwig_reveal', 'heartlight_4_deep_hum',
+    ]);
+    expect(CUTSCENES.ch4_flight.beats.map((beat) => beat.art)).toEqual([
+      'fjord_establishing', 'lucille_north_sea_hop',
+    ]);
+    for (const id of ['ch4_arrival', 'ch4_moor', 'ch4_lilleby', 'ch4_spine', 'ch4_whisperwig', 'ch4_heartlight'] as const) {
+      expect(CUTSCENES[id].beats).toHaveLength(1);
+    }
+  });
+
   it('prefers runtime-resolution _4x panels over legacy _01 placeholders', () => {
     const preferred4x: string[] = [];
     for (const cs of all) {

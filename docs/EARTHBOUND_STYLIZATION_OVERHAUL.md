@@ -1,5 +1,10 @@
 # EARTHBOUND STYLIZATION OVERHAUL — the game-wide program
 
+> **Norway completed (2026-07-12):** the Chapter 4 slice now uses deliberate
+> 64×48 through 112×80 grids with six different spatial signatures, additional
+> authored Norway-strip materials, giant-scale negative space in Lilleby, and
+> body-as-landscape dungeon geometry. It is no longer a future relayout.
+
 User directive (2026-07-03): **scrap and rebuild EVERY overworld/city/route tileset + map in
 authentic EarthBound (Mother 2) style** — rounded AND jagged organic tiles, believable, polished.
 Each map is rebuilt based on its **EarthBound map equivalent**; the user supplies an EB reference

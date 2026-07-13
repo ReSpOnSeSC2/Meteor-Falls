@@ -133,7 +133,7 @@ export const CHAPTER_MANIFESTS: Record<string, ChapterManifest> = {
     // the 3 overworld maps from buildChapter4Maps(): the fjord hamlet, the 10× moor,
     // and the giants' town (the dungeon maps live under dungeon.maps above)
     maps: ['kvisthavn', 'bootstep_moor', 'lilleby'],
-    quests: ['sigrids_spectacles', 'unsent_letter', 'the_silenced_bell', 'the_giants_picnic'],
+    quests: ['sigrids_spectacles', 'unsent_letter', 'the_silenced_bell', 'the_giants_picnic', 'footprint_pointed_home'],
   },
 
   /* =========================== UNLANDED (Ch.5–10) =========================== */

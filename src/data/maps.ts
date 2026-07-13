@@ -5484,6 +5484,58 @@ function customizeFoggybottomAmenities(): void {
 
 customizeFoggybottomAmenities();
 
+/** Kvisthavn's first four generated units are save-facing. Re-dress those
+ * exact rooms as the live cabin, supply store, agency and motor/fuel desk;
+ * exterior facade order and door targets remain unchanged. */
+function customizeKvisthavnAmenities(): void {
+  const amenity = SETTLEMENT_AMENITIES.kvisthavn;
+  const home = MAPS[amenity.serviceUnits?.home ?? ''];
+  const supply = MAPS.kvisthavn_unit_1;
+  const agency = MAPS[amenity.serviceUnits?.agency ?? ''];
+  const dealer = MAPS[amenity.serviceUnits?.dealership ?? ''];
+  if (!home || !supply || !agency || !dealer) {
+    throw new Error(`Kvisthavn amenity roster requires stable generated units 0-3; found ${Object.keys(MAPS).filter((id) => id.startsWith('kvisthavn_unit_')).join(', ')}`);
+  }
+
+  const furnish = (map: MapDef, name: string, props: PropDef[], npcs: NpcDef[]): void => {
+    map.name = name;
+    map.props = props;
+    map.npcs = npcs;
+    map.signs = [];
+  };
+
+  furnish(home, 'OPEN HOUSE — THE KVISTHAVN CABIN', [
+    { sprite: 'bed', x: 1.2, y: 1.8, solid: { ox: 1, oy: 6, w: 18, h: 22 } },
+    { sprite: 'dresser', x: 4.1, y: 1.2, solid: { ox: 2, oy: 8, w: 26, h: 14 } },
+    { sprite: 'dining_table', x: 3, y: 4.2, solid: { ox: 2, oy: 12, w: 30, h: 18 } },
+    { sprite: 'bookshelf', x: 7.5, y: 1.4, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+    { sprite: 'floor_lamp', x: 7, y: 4, solid: { ox: 6, oy: 26, w: 6, h: 3 } },
+  ], [{ id: cityServiceNpcId('kvisthavn', 'home_host'), sprite: 'fjord_nurse', x: 8, y: 4, facing: 'down', dialogue: 'citysvc_home_host' }]);
+
+  furnish(supply, 'KVISTHAVN KOLONIAL', [
+    { sprite: 'checkout_lane', x: 2, y: 4, solid: { ox: 1, oy: 10, w: 40, h: 12 } },
+    { sprite: 'mart_aisle', x: 5, y: 2.3, solid: { ox: 0, oy: 12, w: 52, h: 12 } },
+    { sprite: 'freezer_case', x: 6.8, y: 4.5, solid: { ox: 1, oy: 12, w: 34, h: 12 } },
+  ], [{ id: 'kv_shopkeeper', sprite: 'kvisthavn_shopkeeper', x: 3, y: 3, facing: 'down', dialogue: 'npc_kv_shopkeeper', shop: 'kvisthavn_supply', stationary: true }]);
+
+  furnish(agency, amenity.agency.name.toUpperCase(), [
+    { sprite: 'desk', x: 3, y: 3, solid: { ox: 0, oy: 8, w: 40, h: 10 } },
+    { sprite: 'prop_rate_board', x: 7, y: 1.4 },
+    { sprite: 'bookshelf', x: 1.3, y: 1.5, solid: { ox: 0, oy: 12, w: 32, h: 12 } },
+    { sprite: 'bench', x: 6, y: 4.5, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
+  ], [{ id: cityServiceNpcId('kvisthavn', 'realtor'), sprite: 'npc_realtor', x: 5, y: 4, facing: 'down', dialogue: 'citysvc_realtor' }]);
+
+  furnish(dealer, amenity.dealership.name.toUpperCase(), [
+    { sprite: 'city_ev', x: 1.5, y: 2.2, scale: 0.62, solid: { ox: 3, oy: 8, w: 30, h: 8 } },
+    { sprite: 'work_van', x: 6, y: 4, scale: 0.62, rot: 90, solid: { ox: 3, oy: 8, w: 30, h: 8 } },
+    { sprite: 'prop_rate_board', x: 7.5, y: 1.2 },
+    { sprite: 'desk', x: 4, y: 1.5, solid: { ox: 0, oy: 8, w: 30, h: 10 } },
+    { sprite: 'parking_meter', x: 2, y: 4.5 },
+  ], [{ id: cityServiceNpcId('kvisthavn', 'dealer'), sprite: 'quarterMan', x: 8, y: 4, facing: 'down', dialogue: 'citysvc_dealer' }]);
+}
+
+customizeKvisthavnAmenities();
+
 // Production-scale exterior pass runs AFTER tenancy so generated unit ids,
 // lock rolls, interiors, and save targets are frozen before facade art grows.
 // It mutates props in place and never reorders Puerto/Valle's authored arrays.
@@ -5559,9 +5611,9 @@ const MAP_REFLECT: Record<string, ReflectZone[]> = {
   golf_resort: [{ x: 23, y: 10, w: 3, h: 3, within: 2 }], // the course's water hazard
   puerto_sol: [{ x: 0, y: 66, w: 100, h: 5, within: 6 }], // working seafront; row 71 is the solid night-horizon ridge
   // CH.4 Norway — the fjord, the moor gorge, and the Sleeper's meltwater fall
-  kvisthavn: [{ x: 0, y: 22, w: 36, h: 2, within: 4 }], // the fjord along the south lip
-  bootstep_moor: [{ x: 22, y: 1, w: 2, h: 7, within: 3 }], // the gorge water
-  spine_shoulder: [{ x: 1, y: 5, w: 22, h: 2, within: 3 }], // the meltwater off the shoulder
+  kvisthavn: [{ x: 0, y: 42, w: 64, h: 6, within: 5 }], // the irregular working fjord edge
+  bootstep_moor: [{ x: 60, y: 1, w: 4, h: 78, within: 4 }], // the continuous gorge
+  spine_shoulder: [{ x: 1, y: 18, w: 54, h: 4, within: 4 }], // the meltwater off the shoulder
 };
 for (const [id, zones] of Object.entries(MAP_REFLECT)) {
   const m = MAPS[id];

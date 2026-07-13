@@ -1,7 +1,6 @@
 /**
- * tools/sync-ch4-ch6-tiles.ts — append (or refresh) the Ch.4 NORWAY + Ch.6 AFRICA region
- * tiles (norway_ground/path/wall/water + africa_sand/path/wall/water/earth/ruin_wall/grass)
- * as the trailing columns of the runtime world-tile strip (assets/art/world/otterbrook_tiles_16.png).
+ * tools/sync-ch4-ch6-tiles.ts — append (or refresh) the Chapter 4 production-only
+ * Norway material tiles as the trailing columns of the runtime world-tile strip.
  *
  * WHY: the otterbrook strip overrides the procedural atlas 1:1 for EVERY TILESET index
  * (WORLD_TILE_ART.names = TILESET.map(name)), so appending tiles to TILESET requires the
@@ -9,9 +8,8 @@
  * w === TILESET.length*64) and (b) misaligns every column. Same SURGICAL contract as
  * tools/sync-china-tiles.ts: keep every existing column byte-for-byte (never re-pack)
  * and (re)write only the trailing N columns from each tile's procedural fallback painter
- * (the boot source of truth). The real Norway/Africa look comes from Norway_tiles_16.png /
- * Africa_tiles_16.png at runtime (partial-override strips wired in spritegen/authored.ts);
- * these fallback columns only show if those PNGs fail to load. Re-runnable/idempotent.
+ * (the boot source of truth). The real Norway look comes from Norway_tiles_16.png at
+ * runtime; these fallback columns only show if that PNG fails to load. Re-runnable/idempotent.
  *
  * Run:  npx vite-node tools/sync-ch4-ch6-tiles.ts
  */
@@ -21,11 +19,7 @@ import { PALETTE, T } from '../src/palette';
 import { decodePng, encodePng, makeImg } from './imageio';
 
 const STRIP = 'assets/art/world/otterbrook_tiles_16.png';
-const NEW_TILES = [
-  'norway_ground', 'norway_path', 'norway_wall', 'norway_water',
-  'africa_sand', 'africa_path', 'africa_wall', 'africa_water',
-  'africa_earth', 'africa_ruin_wall', 'africa_grass',
-] as const;
+const NEW_TILES = ['norway_shore', 'norway_frozen_pond', 'norway_masonry'] as const;
 
 // the Norway/Africa tiles must be the LAST N entries of TILESET, in this order
 const firstNew = TILESET.length - NEW_TILES.length;
@@ -80,4 +74,4 @@ for (let c = 0; c < NEW_TILES.length; c++) {
 }
 
 writeFileSync(STRIP, encodePng(out));
-console.log(`synced ${NEW_TILES.length} Norway/Africa tiles (cols ${keepCols}..${TILESET.length - 1}) -> ${STRIP} (${out.w}x${out.h})`);
+console.log(`synced ${NEW_TILES.length} Norway production tiles (cols ${keepCols}..${TILESET.length - 1}) -> ${STRIP} (${out.w}x${out.h})`);

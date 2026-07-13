@@ -1149,6 +1149,14 @@ TILESET.push({ name: 'manhole', solid: false, make: stormDrain });
 // frozen skyDay painter as the boot fallback only.
 TILESET.push({ name: 'horizon_ridge', solid: true, make: skyDay });
 
+// Chapter 4 production consumes three additional cells from the existing
+// Norway authored strip. They live at the absolute atlas tail so every shipped
+// tile index above remains stable; tools/sync-ch4-ch6-tiles.ts grows the full
+// replacement strip with matching fallback columns.
+TILESET.push({ name: 'norway_shore', solid: true, make: seaFoamTile });
+TILESET.push({ name: 'norway_frozen_pond', solid: false, make: meltIceTile });
+TILESET.push({ name: 'norway_masonry', solid: false, make: () => plazaTile(2) });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

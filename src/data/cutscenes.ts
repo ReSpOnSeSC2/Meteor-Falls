@@ -264,21 +264,27 @@ const CH3: Cutscene[] = [
   { id: 'ch3_heartlight', chapter: 'ch3', beats: [CH3_BEATS.heartlight] },
 ];
 
+const CH4_BEATS = {
+  fjord: panels('fjord_establishing')[0],
+  flight: panels('lucille_north_sea_hop')[0],
+  arrival: panels('kvisthavn_under_cliffs')[0],
+  moor: panels('bootstep_moor_growth')[0],
+  lilleby: panels('lilleby_giants_kneel')[0],
+  spine: panels('sleeper_spine_crossing')[0],
+  boss: panels('whisperwig_reveal')[0],
+  heartlight: panels('heartlight_4_deep_hum')[0],
+} satisfies Record<string, CutsceneBeat>;
+
 const CH4: Cutscene[] = [
-  {
-    id: 'ch4_journey',
-    chapter: 'ch4',
-    beats: panels(
-      'fjord_establishing',
-      'lucille_north_sea_hop',
-      'kvisthavn_under_cliffs',
-      'sleeper_spine_crossing',
-      'bootstep_moor_growth',
-      'whisperwig_reveal',
-      'lilleby_giants_kneel',
-      'heartlight_4_deep_hum',
-    ),
-  },
+  // Gallery reel remains complete; runtime uses the contextual ids below.
+  { id: 'ch4_journey', chapter: 'ch4', beats: Object.values(CH4_BEATS) },
+  { id: 'ch4_flight', chapter: 'ch4', beats: [CH4_BEATS.fjord, CH4_BEATS.flight] },
+  { id: 'ch4_arrival', chapter: 'ch4', beats: [CH4_BEATS.arrival] },
+  { id: 'ch4_moor', chapter: 'ch4', beats: [CH4_BEATS.moor] },
+  { id: 'ch4_lilleby', chapter: 'ch4', beats: [CH4_BEATS.lilleby] },
+  { id: 'ch4_spine', chapter: 'ch4', beats: [CH4_BEATS.spine] },
+  { id: 'ch4_whisperwig', chapter: 'ch4', beats: [CH4_BEATS.boss] },
+  { id: 'ch4_heartlight', chapter: 'ch4', beats: [CH4_BEATS.heartlight] },
 ];
 
 const CH5: Cutscene[] = [

@@ -565,7 +565,14 @@ Banana boat to **Puerto Sol**. The mountain village **Valle Dorado** worships a 
 
 Lucille's North Sea hop lands at **Kvisthavn**, a normal-scale fishing hamlet under the cliffs. Past the tree line the LOW Ember's hum has swelled every living thing for generations: **Bootstep Moor** (10× wildlife, half of it friendly) and **Lilleby**, the giants' town, pop. 41, where the party walks under doors and giants kneel to talk ("WELCOME TO LILLEBY. Everything here is normal-sized. — the Booster Club"). The mountain behind town is a giant: **Grandfather Storheim**, 100×, asleep forty years. The dungeon, **The Sleeper's Spine**, crosses his body hand → shoulder → ear; his terrain is the map, never a giant sprite.
 
-**Resonance Site:** the Sleeper's Ear. **BOSS 4 — THE WHISPERWIG** (1,900 HP / burrows into the ear canal — untargetable — until NOISE forces it out: Vibe Volt or a Firecracker String; every 3rd turn it whispers party-wide Hushed pressure. Mia awakens **VIBE VOLT α** mid-fight, the thunder-snore in her teeth. Heartlight 4 = **The Deep Hum**, the Homesong's bass stem).
+**Resonance Site:** the Sleeper's Ear. **BOSS 4 — THE WHISPERWIG** (1,800 HP / burrows into the ear canal — untargetable — until NOISE forces it out: Vibe Volt, a Firecracker String, or Milo's Bottle Rockets; every 3rd turn it whispers party-wide Hushed pressure. Mia awakens **VIBE VOLT α** mid-fight, the thunder-snore in her teeth. Heartlight 4 = **The Deep Hum**, the Homesong's bass stem).
+
+The production world uses the frozen ids `kvisthavn`, `bootstep_moor`, `lilleby`,
+`spine_hand`, `spine_shoulder`, and `spine_ear` at 64×48, 112×80, 72×56,
+48×36, 56×40, and 52×40. Bridge Berry is the sole physical gorge crossing
+until fought or rolled aside; the Shoulder meltfall is a persistent Freeze gate.
+Norway has five non-missable regional quests; the fifth, **The Footprint That
+Pointed Home**, teaches the safe-track language of the moor and opens a return cut.
 
 ### Chapter 5 — "The Grand Duchy of Minimus" (Minimus) — target level: 26
 

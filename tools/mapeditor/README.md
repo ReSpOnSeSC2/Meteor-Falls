@@ -1,5 +1,13 @@
 # 🗺️ Meteor Falls — Visual Map Editor
 
+## Chapter 4 generated-map contract
+
+`src/data/maps_ch4.ts` owns the six deterministic Norway builders. Preserve
+their exact ids, `CH4_WORLD` fixed points, the first four Kvisthavn facade/unit
+slots, Bridge Berry crossing, meltfall rectangle, boss/resonance zones, and
+v21 recovery coordinates. After any edit run `npm run mapeditor:gen`,
+`npm run mapeditor:check`, and render `tools/render-map.ts ch4`.
+
 A point-and-click editor for building game maps with the **real** Meteor Falls tiles,
 props, and buildings. Paint a grid, drop trees/benches/buildings, mark doors and enemy
 spawns, then **Export** a ready-to-paste `MapDef`. No hand-typing grid strings.

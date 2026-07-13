@@ -1,5 +1,10 @@
 # EB POLISH ROLLOUT — the game-wide handoff (for the next session/AI)
 
+> **Chapter 4 update (2026-07-12):** Kvisthavn, Bootstep Moor, Lilleby, and
+> the three Sleeper maps have completed their production rebuild. Norway's
+> authored material cells, real services, persistent world gates, and staged
+> story beats are now the live contract; see ADR-140.
+
 The `claude/earthbound-art-style-01p1w9` branch (PR #107) built the complete
 **EarthBound street-polish kit** and proved every piece on Otterbrooke. This
 document is the recipe for rolling those features out to EVERY other map and

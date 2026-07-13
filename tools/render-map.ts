@@ -281,6 +281,17 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     ],
     cellW: 560, cellH: 460,
   },
+  ch4: {
+    title: 'METEOR FALLS - CHAPTER 4: THE FJORD THAT SLEEPS (NORWAY)',
+    // Route order keeps the human-scale harbor, scale-reveal moor, giant town,
+    // and all three body-as-landscape dungeon maps visible in one audit sheet.
+    ids: [
+      'kvisthavn', 'bootstep_moor', 'lilleby',
+      'spine_hand', 'spine_shoulder', 'spine_ear',
+      'kvisthavn_unit_0', 'kvisthavn_unit_1', 'kvisthavn_unit_2', 'kvisthavn_unit_3',
+    ],
+    cellW: 560, cellH: 460,
+  },
   formal_cities: {
     title: 'FORMAL CITIES - PRODUCTION FACADE SCALE QA',
     ids: ['brickton', 'puerto_sol', 'valle_dorado', 'minimus_major', 'zanzibel', 'chandrapore', 'lotus_harbor'],
