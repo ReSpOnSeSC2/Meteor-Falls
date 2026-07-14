@@ -3773,8 +3773,8 @@ export class BattleScene extends Phaser.Scene {
       }
     }
     if (totalCash > 0) {
-      GS.data.pendingDeposit += totalCash;
-      await this.print(`(Dad will deposit $${totalCash}. Call him sometime.)`);
+      GS.creditBank(totalCash);
+      await this.print(`(Dad deposited $${totalCash} into your account.)`);
     }
     // §A7 LOOT (S18 M24, ADR-094): each defeated enemy rolls its identity drops
     // into the bag, EarthBound-style — one warm line per item that lands, the

@@ -15,6 +15,8 @@ import {
   AUTHORED_WORLD_PROP_KEYS,
   NPC_CHARACTER_ART,
   OTTERBROOK_NPC_CHARACTER_IDS,
+  VEHICLE_RIDER_HERO_IDS,
+  vehicleHeadTextureKey,
 } from './authored';
 import {
   AREA_SKINS,
@@ -233,10 +235,46 @@ describe('authored world asset wiring', () => {
     }
   });
 
-  it('pins the WELCOME mat to its runtime footprint instead of editor fallback sizing', () => {
+  it('pins compact props and the parked sedan to intentional world footprints', () => {
     const display = AUTHORED_WORLD_PROP_DISPLAY_SIZE as Record<string, { w: number; h: number }>;
     expect(display.doormat).toEqual({ w: 18, h: 10 });
-    expect(display.vehicle_clunker).toEqual({ w: 38, h: 16 });
+    expect(display.vehicle_clunker).toEqual({ w: 64, h: 35 });
+  });
+
+  it('ships distinct generated door pairs and a dedicated Oak Cave material strip', () => {
+    const doors = [
+      'door_hotel', 'door_hotel_open',
+      'door_hardware', 'door_hardware_open',
+      'door_hospital', 'door_hospital_open',
+    ];
+    const hashes = new Set<string>();
+    for (const key of doors) {
+      const file = resolve(process.cwd(), `assets/art/world/props/${key}.png`);
+      expect(pngSize(file), key).toEqual({ w: 80, h: 112 });
+      const image = decodePng(readFileSync(file));
+      let opaque = 0;
+      let transparent = 0;
+      for (let i = 3; i < image.data.length; i += 4) {
+        if (image.data[i] >= 24) opaque++;
+        else transparent++;
+      }
+      expect(opaque, `${key} visible pixels`).toBeGreaterThan(1_000);
+      expect(transparent, `${key} transparent screen`).toBeGreaterThan(200);
+      hashes.add(createHash('sha256').update(readFileSync(file)).digest('hex'));
+    }
+    expect(hashes.size).toBe(doors.length);
+    expect(pngSize(resolve(process.cwd(), 'assets/art/world/OakCave_tiles_16.png')))
+      .toEqual({ w: 128, h: 64 });
+    expect(pngSize(resolve(process.cwd(), 'assets/art/masters/world/ch1-venue-cave-kit-source.png')))
+      .toEqual({ w: 1536, h: 1024 });
+  });
+
+  it('derives a directional in-car head strip for every playable hero', () => {
+    expect(VEHICLE_RIDER_HERO_IDS).toEqual(['rex', 'faye', 'milo', 'pippa', 'dorin']);
+    expect(VEHICLE_RIDER_HERO_IDS.map(vehicleHeadTextureKey)).toEqual([
+      'vehicle_head_rex', 'vehicle_head_faye', 'vehicle_head_milo',
+      'vehicle_head_pippa', 'vehicle_head_dorin',
+    ]);
   });
 
   it('registers every committed vehicle PNG with the authored bridge', () => {

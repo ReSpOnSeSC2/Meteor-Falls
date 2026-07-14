@@ -186,6 +186,22 @@ export function makeHeroState(id: HeroId, level: number, name?: string): HeroSta
 }
 
 /**
+ * A real night's sleep fully refills both combat meters for every standing
+ * party member. Fallen heroes remain hospital work; leaving their zero HP and
+ * `down` state together avoids creating an internally contradictory save.
+ *
+ * Keep this rule in the headless state layer so home beds and every hotel use
+ * one implementation instead of drifting into HP-only restores.
+ */
+export function restorePartyAfterSleep(party: readonly HeroState[]): void {
+  for (const hero of party) {
+    if (hero.down) continue;
+    hero.hp = hero.maxHp;
+    hero.pp = hero.maxPp;
+  }
+}
+
+/**
  * S17 (ADR-061) — §A4.12: apply a TONIC's permanent boost to a hero. Combat
  * stats accumulate in `boosts` (the seams add them; level-up can't wipe them);
  * max HP / max PP raise the stored ceiling AND the current pool by the same
@@ -430,6 +446,24 @@ class GameStateStore {
   }
 
   /* ---------------- the ATM (S4 / Prompt 20) ---------------- */
+
+  /** Credit earned money straight to the card; battle rewards never wait on a phone call. */
+  creditBank(amount: number): number {
+    const a = Math.max(0, Math.floor(amount));
+    this.data.banked += a;
+    return a;
+  }
+
+  /**
+   * Grandfather saves made while battle cash waited in `pendingDeposit`.
+   * The first ATM visit (or Dad call) makes that already-earned money liquid.
+   */
+  settlePendingDeposit(): number {
+    const a = Math.max(0, Math.floor(this.data.pendingDeposit));
+    this.data.pendingDeposit = 0;
+    this.data.banked += a;
+    return a;
+  }
 
   /** move cash card → pocket; clamps to the balance, returns what moved */
   withdraw(amount: number): number {

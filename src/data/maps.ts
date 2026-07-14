@@ -8,7 +8,7 @@
  *   o office floor   O office wall   c cubicle partition   k cubicle desk
  *   y day sky   u bus floor   U bus wall
  */
-import { Grid, treeSprite, doorstepOf } from './mapkit';
+import { Grid, treeSolid, treeSprite, doorstepOf } from './mapkit';
 import { twotonMap } from './maps_twoton';
 import { buildTwotonServiceMaps } from './maps_twoton_interiors';
 import { oakRootsMap, oakHollowMap, oakHeartMap } from './maps_oakcave';
@@ -30,6 +30,7 @@ import { SETTLEMENT_AMENITIES, cityServiceNpcId } from './city_amenities';
 import { promoteFormalCityScale } from './formal_city_scale';
 import { AREA_SKINS } from '../spritegen/buildings';
 import { CH1_GENERATED_OTTERBROOK_UNIT_IDS, CH1_WORLD } from './maps_ch1';
+import { STATIC_CLUNKER_SOLID } from '../engine/vehicle-presentation';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import type { MapDef, PropDef, NpcDef, SignDef, AmbienceId, ReflectZone } from '../schemas';
@@ -193,8 +194,6 @@ export const OTTERBROOK_EAST_GATE = OTTERBROOK_SOUTH_GATE;
 export const OTTERBROOK_TOWN_PREVIEW_SPAWN = { x: 56, y: OTTERBROOK_TOWN_BASE + 34 } as const;
 export const OTTERBROOK_DEV_PREVIEW_SPAWN = { x: 54, y: OTTERBROOK_TOWN_BASE + 20 } as const;
 
-/** the solid for the standard tree */
-const OAK: { ox: number; oy: number; w: number; h: number } = { ox: 7, oy: 22, w: 12, h: 10 };
 const PICNIC_SOLID: { ox: number; oy: number; w: number; h: number } = { ox: 2, oy: 8, w: 32, h: 14 };
 const SIGN_SOLID: { ox: number; oy: number; w: number; h: number } = { ox: 3, oy: 10, w: 10, h: 7 };
 
@@ -391,10 +390,11 @@ function buildOtterbrookTown(): MapDef {
   const props: PropDef[] = [];
   const occupied = new Set<number>();
   const idx = (x: number, y: number): number => y * W + x;
-  /** decorative tree (NO solid — reachability is read off the grid, so these never block). */
+  /** Single tree: canopy is walk-behind; the visible trunk is solid. */
   const dtree = (x: number, y: number): void => {
     if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) return;
-    props.push({ sprite: treeSprite(Math.round(x), Math.round(y)), x, y });
+    const sprite = treeSprite(Math.round(x), Math.round(y));
+    props.push({ sprite, x, y, solid: treeSolid(sprite) });
   };
   const markFootprint = (sprite: string, cx: number, bottom: number): void => {
     const [tw, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
@@ -493,13 +493,12 @@ function buildOtterbrookTown(): MapDef {
     { sprite: 'picnic', x: 30, y: 78, solid: PICNIC_SOLID },
     { sprite: 'gazebo', x: 30, y: 72, solid: { ox: 4, oy: 34, w: 48, h: 18 } },
     { sprite: 'swing_set', x: 26, y: 66, solid: { ox: 2, oy: 20, w: 60, h: 8 } },
-    { sprite: 'tree_c', x: 11, y: 74, solid: OAK }, // the big pond oak
+    { sprite: 'tree_c', x: 11, y: 74, solid: treeSolid('tree_c') }, // the big pond oak
     { sprite: 'hydrant', x: 33.5, y: 54.5, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
     { sprite: 'hydrant', x: 66.5, y: 54.5, solid: { ox: 2, oy: 6, w: 6, h: 6 } },
   );
 
-  // ---- STREET TREES: a tidy, sparse verge along the sidewalks (NOT a forest). Decorative
-  // (no solid) so they never strand a door — walkability is the grid alone. ----
+  // ---- STREET TREES: a tidy, sparse verge along the sidewalks (NOT a forest). ----
   for (let y = 3; y < H - 4; y++) {
     for (let x = 7; x < W - 6; x++) {
       if (g.rows[y][x] !== '.') continue;
@@ -603,6 +602,7 @@ function buildOtterbrookTownReplica(): MapDef {
   const H = OTTERBROOK_TOWN_HEIGHT; // grown southward for the long approach to the south chapter gate
   const g = new Grid(W, H, '.');
   const props: PropDef[] = [];
+  const generatedTrees: PropDef[] = [];
   const occupied = new Set<number>();
   const idx = (x: number, y: number): number => y * W + x;
   const grassLike = (x: number, y: number): boolean => ' .,~fF'.includes(g.rows[y]?.[x] ?? '#');
@@ -614,7 +614,21 @@ function buildOtterbrookTownReplica(): MapDef {
 
   const dtree = (x: number, y: number): void => {
     if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) return;
-    props.push({ sprite: treeSprite(Math.round(x), Math.round(y)), x, y });
+    const sprite = treeSprite(Math.round(x), Math.round(y));
+    const solid = treeSolid(sprite);
+    // Tree coordinates anchor the canopy's top-left, but the trunk lands one to
+    // two cells farther south. Validate the actual trunk cells so a decorative
+    // verge tree cannot put invisible collision on a road, path, pond, or facade.
+    const left = x * 16 + solid.ox;
+    const top = y * 16 + solid.oy;
+    const right = left + solid.w;
+    const bottom = top + solid.h;
+    for (let ty = Math.floor(top / 16); ty <= Math.floor((bottom - 0.001) / 16); ty++) {
+      for (let tx = Math.floor(left / 16); tx <= Math.floor((right - 0.001) / 16); tx++) {
+        if (!grassLike(tx, ty) || occupied.has(idx(tx, ty))) return;
+      }
+    }
+    generatedTrees.push({ sprite, x, y, solid });
   };
   const markFootprint = (sprite: string, cx: number, bottom: number, scale = 1): void => {
     const [tw, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
@@ -820,7 +834,7 @@ function buildOtterbrookTownReplica(): MapDef {
   };
   // ── DOORSTEP WALKS + DRIVEWAYS (2026-07-08 polish) ───────────────────────────
   // Every building gets a paved approach: a 3-wide cement walk dropping straight
-  // from its door to the street it fronts, and select homes a narrow asphalt spur
+  // from its door to the street it fronts, and select homes a two-cell asphalt spur
   // for one parked car. Driveways deliberately cut through the curb cell so they
   // join the carriageway instead of reading as detached, bright sidewalk slabs.
   // Both are painted AFTER the occupied-clearing pass (which would erase them).
@@ -840,10 +854,17 @@ function buildOtterbrookTownReplica(): MapDef {
     // Eight cells is a hard guard against a missing/fronted-on-the-wrong-side
     // street turning a domestic driveway into a stripe across the whole map.
     for (let y = from, steps = 0; y > 0 && y < H - 1 && steps < 8; y += dir, steps++) {
-      const c = at(x, y);
-      if (roadChar(c) || c === 'X' || c === 'P' || c === ':') return;
-      if (c === '=' || grassLike(x, y)) g.set(x, y, 'R');
-      else return;
+      let hitStreet = false;
+      for (let xx = x; xx < x + 2; xx++) {
+        const c = at(xx, y);
+        if (roadChar(c) || c === 'X' || c === 'P' || c === ':') {
+          hitStreet = true;
+          continue;
+        }
+        if (c === '=' || grassLike(xx, y)) g.set(xx, y, 'R');
+        else return;
+      }
+      if (hitStreet) return;
     }
   };
   const paintApproaches = (): void => {
@@ -1237,7 +1258,8 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'cattails', x: 4, y: 79 },
     { sprite: 'cattails', x: 18, y: 68 },
     { sprite: 'cattails', x: 18, y: 80 },
-    { sprite: 'tree_c', x: 11, y: 70, solid: OAK },
+    // Shore oak: plant the roots on the north bank rather than in open water.
+    { sprite: 'tree_c', x: 11, y: 62.5, solid: treeSolid('tree_c') },
     { sprite: 'footbridge_rail', x: 17, y: 77 },
     { sprite: 'flagpole', x: 68, y: 34, solid: { ox: 5, oy: 28, w: 6, h: 7 } },
     // MAIN ST street furniture: hydrants and meters punctuate the parking lane,
@@ -1285,13 +1307,13 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'phone_pole', x: 18, y: 29.2 },
     { sprite: 'phone_pole', x: 94, y: 44.2 },
     { sprite: 'phone_pole', x: 40, y: 89.2 },
-    // Cars turn into the one-tile residential spurs instead of sitting sideways
-    // across the lawn and footpath.
-    { sprite: 'vehicle_clunker', x: 39, y: 12, rot: 90 },
-    { sprite: 'vehicle_clunker', x: 50, y: 40, rot: 90 },
-    { sprite: 'vehicle_clunker', x: 68, y: 71, rot: 90 },
-    { sprite: 'vehicle_clunker', x: 69, y: 85, rot: 90 },
-    { sprite: 'vehicle_clunker', x: 92, y: 94, rot: 90 },
+    // Cars turn into two-cell residential spurs and carry a real lower-body
+    // footprint, so neither Jay nor a wandering neighbour can walk through one.
+    { sprite: 'vehicle_clunker', x: 39, y: 12, rot: 90, solid: STATIC_CLUNKER_SOLID },
+    { sprite: 'vehicle_clunker', x: 50, y: 40, rot: 90, solid: STATIC_CLUNKER_SOLID },
+    { sprite: 'vehicle_clunker', x: 68, y: 71, rot: 90, solid: STATIC_CLUNKER_SOLID },
+    { sprite: 'vehicle_clunker', x: 69, y: 85, rot: 90, solid: STATIC_CLUNKER_SOLID },
+    { sprite: 'vehicle_clunker', x: 92, y: 94, rot: 90, solid: STATIC_CLUNKER_SOLID },
   );
 
   for (let y = 3; y < H - 4; y++) {
@@ -1351,6 +1373,51 @@ function buildOtterbrookTownReplica(): MapDef {
     { id: 'maple_biker', sprite: 'pajamaKid', x: 37, y: 103, facing: 'right', dialogue: 'npc_maple_biker', wander: true, ifFlag: 'tick_defeated' },
     { id: 'south_gardener', sprite: 'mrPlummer', x: 69, y: 124, facing: 'left', dialogue: 'npc_south_gardener', wander: true, ifFlag: 'tick_defeated' },
   ];
+
+  type NativeRect = { x: number; y: number; w: number; h: number };
+  const overlaps = (a: NativeRect, b: NativeRect): boolean =>
+    a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  const scaleOf = (value: PropDef['scale']): { x: number; y: number } =>
+    typeof value === 'number'
+      ? { x: value, y: value }
+      : { x: value?.x ?? 1, y: value?.y ?? 1 };
+  const authoredPropSolids: NativeRect[] = props.flatMap((prop) => {
+    const scale = scaleOf(prop.scale);
+    const parts = prop.solidParts ?? (prop.solid ? [prop.solid] : []);
+    return parts.map((part) => ({
+      x: prop.x * 16 + part.ox * scale.x,
+      y: prop.y * 16 + part.oy * scale.y,
+      w: part.w * scale.x,
+      h: part.h * scale.y,
+    }));
+  });
+  const npcSpawnBodies: NativeRect[] = npcs.map((npc) => {
+    const instance = typeof npc.scale === 'number'
+      ? { x: npc.scale, y: npc.scale }
+      : { x: npc.scale?.x ?? 1, y: npc.scale?.y ?? 1 };
+    const base = npc.dog ? 1.5 : 1;
+    const sx = base * instance.x;
+    const sy = base * instance.y;
+    const feet = { x: npc.x * 16 + 8, y: npc.y * 16 + 22 };
+    return { x: feet.x - 6 * sx, y: feet.y - 10 * sy, w: 12 * sx, h: 10 * sy };
+  });
+  const acceptedTreeTrunks: NativeRect[] = [];
+  for (const tree of generatedTrees) {
+    if (!tree.solid) continue;
+    const trunk = {
+      x: tree.x * 16 + tree.solid.ox,
+      y: tree.y * 16 + tree.solid.oy,
+      w: tree.solid.w,
+      h: tree.solid.h,
+    };
+    if (
+      authoredPropSolids.some((solid) => overlaps(trunk, solid)) ||
+      npcSpawnBodies.some((body) => overlaps(trunk, body)) ||
+      acceptedTreeTrunks.some((solid) => overlaps(trunk, solid))
+    ) continue;
+    props.push(tree);
+    acceptedTreeTrunks.push(trunk);
+  }
 
   const signs: SignDef[] = [
     { x: 53, y: 13, dialogue: 'sign_welcome' }, // where the hill trail becomes Main Ave
@@ -1719,7 +1786,10 @@ export function growOtterbrook(): MapDef {
   g.rect(23, 61, 6, 5, 'T'); g.rect(53, 61, 6, 5, 'T');
 
   const treeAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
-    xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
+    xy.map(([x, y]) => {
+      const sprite = treeSprite(x, y);
+      return { sprite, x, y, solid: treeSolid(sprite) };
+    });
   // FOREST MASS + FRONT WALLS. Every `b` cell remains the sole collision/BFS source;
   // art here is decorative. Deep-woods singles break up the canopy tile, while wide
   // strips compress each exposed SOUTH edge into 8/4-cell props. Their transparent
@@ -1742,7 +1812,21 @@ export function growOtterbrook(): MapDef {
       if (h % 17 !== 0) continue; // ~6% accents; the canopy tile supplies the mass
       const jx = (((h >> 3) % 5) - 2) * 0.18;
       const jy = (((h >> 6) % 5) - 2) * 0.18;
-      canopyTrees.push({ sprite: treeSprite(cx, cy), x: cx + jx, y: cy + jy });
+      const sprite = treeSprite(cx, cy);
+      const x = cx + jx;
+      const y = cy + jy;
+      const trunk = treeSolid(sprite);
+      const left = x * 16 + trunk.ox;
+      const top = y * 16 + trunk.oy;
+      const right = left + trunk.w;
+      const bottom = top + trunk.h;
+      let backedByForest = true;
+      for (let ty = Math.floor(top / 16); ty <= Math.floor((bottom - 0.001) / 16); ty++) {
+        for (let tx = Math.floor(left / 16); tx <= Math.floor((right - 0.001) / 16); tx++) {
+          if (g.rows[ty]?.[tx] !== 'b') backedByForest = false;
+        }
+      }
+      if (backedByForest) canopyTrees.push({ sprite, x, y });
     }
   }
 
@@ -2124,7 +2208,10 @@ export function growOtterbrookLegacy(): MapDef {
 
   // ═══ HILL PROPS ═══
   const treeAt = (xy: ReadonlyArray<readonly [number, number]>): PropDef[] =>
-    xy.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK }));
+    xy.map(([x, y]) => {
+      const sprite = treeSprite(x, y);
+      return { sprite, x, y, solid: treeSolid(sprite) };
+    });
 
   // presents re-homed to the hill (the woods glade + the porch coffee-can)
   const woodsGift = walkPresent('otter_woods_gift', 64, 25); // an L2 east pocket by the overlook
@@ -2149,7 +2236,8 @@ export function growOtterbrookLegacy(): MapDef {
       if (cy >= 44 && cy <= 60 && cx >= 8 && cx <= 42) continue; // keep the Jay/Chad house yards a clearing
       const h = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
       if (!(woods ? h % 7 === 0 : h % 20 === 0)) continue; // ~1/7 of woods, ~1/20 of turf
-      canopyTrees.push({ sprite: treeSprite(cx, cy), x: cx, y: cy, solid: OAK });
+      const sprite = treeSprite(cx, cy);
+      canopyTrees.push({ sprite, x: cx, y: cy, solid: treeSolid(sprite) });
     }
   }
 

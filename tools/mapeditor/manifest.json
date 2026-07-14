@@ -3,7 +3,7 @@
   "tilePx": 64,
   "artScale": 4,
   "atlas": "/assets/art/world/otterbrook_tiles_16.png",
-  "atlasCells": 215,
+  "atlasCells": 217,
   "charFrame": {
     "cols": 4,
     "rows": 12,
@@ -722,6 +722,22 @@
       "solidDefault": true
     },
     {
+      "key": "cave_root_arch",
+      "w": 53,
+      "h": 64,
+      "url": "/assets/art/world/props/cave_root_arch.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "cave_mushroom_cluster",
+      "w": 30,
+      "h": 38,
+      "url": "/assets/art/world/props/cave_mushroom_cluster.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
       "key": "lemonade",
       "w": 29,
       "h": 24,
@@ -766,6 +782,54 @@
       "w": 17,
       "h": 24,
       "url": "/assets/art/world/props/door_int_open.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "door_hotel",
+      "w": 20,
+      "h": 28,
+      "url": "/assets/art/world/props/door_hotel.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "door_hotel_open",
+      "w": 20,
+      "h": 28,
+      "url": "/assets/art/world/props/door_hotel_open.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "door_hardware",
+      "w": 20,
+      "h": 28,
+      "url": "/assets/art/world/props/door_hardware.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "door_hardware_open",
+      "w": 20,
+      "h": 28,
+      "url": "/assets/art/world/props/door_hardware_open.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "door_hospital",
+      "w": 20,
+      "h": 28,
+      "url": "/assets/art/world/props/door_hospital.png",
+      "group": "other",
+      "solidDefault": true
+    },
+    {
+      "key": "door_hospital_open",
+      "w": 20,
+      "h": 28,
+      "url": "/assets/art/world/props/door_hospital_open.png",
       "group": "other",
       "solidDefault": true
     },

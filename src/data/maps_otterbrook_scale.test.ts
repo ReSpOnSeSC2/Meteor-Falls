@@ -8,15 +8,18 @@ import {
   type Rect,
 } from '../engine/actor-collision';
 import { aabbOverlap } from '../engine/movecollide';
+import { groundedVisualDepth } from '../engine/world-depth';
 import {
   CH1_TRAIL_FLAGS,
   CH1_TRAIL_KEY_ITEM_ID,
   chapter1TrailOwnsKey,
 } from '../engine/ch1TrailRoute';
 import type { NpcDef, PropDef, SignDef } from '../schemas';
+import { AUTHORED_WORLD_PROP_DISPLAY_SIZE } from '../spritegen/authored';
 import { TILESET } from '../spritegen/tiles';
-import { CHAR_LEGEND, MAPS, OTTERBROOK_LANDMARK_DIMS } from './maps';
+import { CHAR_LEGEND, MAPS, OTTERBROOK_LANDMARK_DIMS, OTTERBROOK_TOWN_BASE } from './maps';
 import { CH1_WORLD } from './maps_ch1';
+import { doorstepOf, treeSolid, type TreeSprite } from './mapkit';
 
 const map = MAPS.otterbrook;
 const solidByName = new Map(TILESET.map((tile) => [tile.name, tile.solid]));
@@ -65,6 +68,34 @@ function propSolids(prop: PropDef): Rect[] {
     w: part.w * scale.x,
     h: part.h * scale.y,
   }));
+}
+
+const nativeLevelDepthBias = map.grid.length * 16;
+const nativeLevelAt = (x: number, y: number): number =>
+  Number(map.elevation?.level[Math.floor(y / 16)]?.[Math.floor(x / 16)] ?? 0);
+
+function landmarkVisualRect(prop: PropDef): Rect {
+  const dims = OTTERBROOK_LANDMARK_DIMS[prop.sprite];
+  if (!dims) throw new Error(`Missing Otterbrooke landmark dimensions for ${prop.sprite}`);
+  const scale = propScale(prop);
+  return {
+    x: prop.x * 16,
+    y: prop.y * 16,
+    w: (dims[0] / 4) * scale.x,
+    h: (dims[1] / 4) * scale.y,
+  };
+}
+
+function landmarkGroundDepth(prop: PropDef) {
+  const rect = landmarkVisualRect(prop);
+  const scale = propScale(prop);
+  const doorGround = prop.door
+    ? {
+        x: rect.x + prop.door.ox * scale.x + (prop.door.w * scale.x) / 2,
+        y: rect.y + (prop.door.oy + prop.door.h) * scale.y + 5,
+      }
+    : undefined;
+  return groundedVisualDepth(rect, nativeLevelDepthBias, nativeLevelAt, doorGround);
 }
 
 function bodyTouchesTile(body: Rect): boolean {
@@ -202,6 +233,125 @@ describe('Otterbrooke enlarged-facade runtime geometry', () => {
         expect(bodyTouchesTile(body), `${phase.id}: ${prop.sprite} threshold tiles`).toBe(false);
         expect(solids.some((solid) => aabbOverlap(body, solid)), `${phase.id}: ${prop.sprite} threshold body`).toBe(false);
         expect(approach, `${phase.id}: ${prop.sprite} -> ${prop.door!.to}`).toBe(true);
+      }
+    }
+  });
+
+  it('renders Jay in front of the purple house when he leaves rex_home', () => {
+    const house = map.props.find((prop) => prop.sprite === 'house_rex' && prop.door?.to === 'rex_home');
+    const doorstep = doorstepOf(map, 'rex_home');
+    expect(house).toBeDefined();
+    expect(doorstep).not.toBeNull();
+    if (!house || !doorstep) return;
+
+    const rect = landmarkVisualRect(house);
+    const houseGround = landmarkGroundDepth(house);
+    const actorDepth = doorstep.ty + nativeLevelAt(doorstep.tx, doorstep.ty) * nativeLevelDepthBias;
+    const body = footRect({ x: doorstep.tx, y: doorstep.ty }, PLAYER_FOOTPRINT);
+
+    // The enlarged art reaches up onto L2, but its doorway and visual foot are
+    // planted on Jay's L1 terrace. Roof-based sorting made that extra level of
+    // bias cover his whole body; ground-based sorting leaves Jay in front.
+    expect(nativeLevelAt(rect.x, rect.y)).toBe(2);
+    expect(houseGround.level).toBe(1);
+    expect(nativeLevelAt(doorstep.tx, doorstep.ty)).toBe(houseGround.level);
+    expect(actorDepth).toBeGreaterThan(houseGround.depth);
+    expect(bodyTouchesTile(body)).toBe(false);
+    expect(activeSolids(new Set()).some((solid) => aabbOverlap(body, solid))).toBe(false);
+  });
+
+  it('grounds the hillside treeline at its forest foot so the birder draws in front', () => {
+    const birder = map.npcs.find((npc) => npc.id === 'woods_birder');
+    const front = map.props.find((prop) => prop.sprite === 'treeline_8' && prop.x === 64 && prop.y === 24.5);
+    expect(birder).toBeDefined();
+    expect(front).toBeDefined();
+    if (!birder || !front) return;
+
+    const size = AUTHORED_WORLD_PROP_DISPLAY_SIZE.treeline_8;
+    const rect = { x: front.x * 16, y: front.y * 16, w: size.w, h: size.h };
+    const grounded = groundedVisualDepth(rect, nativeLevelDepthBias, nativeLevelAt);
+    const northFeet = characterFeet(birder.x, birder.y);
+    northFeet.y -= 24; // full authored wander radius
+    const actorDepth = northFeet.y + nativeLevelAt(northFeet.x, northFeet.y) * nativeLevelDepthBias;
+    const body = footRect(northFeet, NPC_FOOTPRINT);
+
+    expect(nativeLevelAt(rect.x, rect.y)).toBe(4); // canopy reaches the upper terrace
+    expect(grounded.level).toBe(3); // the forest/path seam it actually stands on
+    expect(nativeLevelAt(northFeet.x, northFeet.y)).toBe(3);
+    expect(actorDepth).toBeGreaterThan(grounded.depth);
+    expect(bodyTouchesTile(body)).toBe(false);
+  });
+
+  it('gives every town tree an art-matched trunk on grass, clear of NPC spawns', () => {
+    const treeSprites = new Set<TreeSprite>(['tree', 'tree_b', 'tree_c', 'pine']);
+    const trees = map.props.filter(
+      (prop) => prop.y >= OTTERBROOK_TOWN_BASE && treeSprites.has(prop.sprite as TreeSprite),
+    );
+    expect(trees.length).toBeGreaterThan(200);
+
+    for (const tree of trees) {
+      const sprite = tree.sprite as TreeSprite;
+      expect(tree.solid, `${sprite} @ ${tree.x},${tree.y}`).toEqual(treeSolid(sprite));
+      const trunk = propSolids(tree)[0];
+      expect(trunk).toBeDefined();
+      if (!trunk) continue;
+      const x0 = Math.floor(trunk.x / 16);
+      const y0 = Math.floor(trunk.y / 16);
+      const x1 = Math.floor((trunk.x + trunk.w - 0.001) / 16);
+      const y1 = Math.floor((trunk.y + trunk.h - 0.001) / 16);
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          expect(' .,~fF', `${sprite} trunk terrain @ ${x},${y}`).toContain(map.grid[y]?.[x]);
+        }
+      }
+      for (const npc of map.npcs) {
+        expect(aabbOverlap(npcBody(npc), trunk), `${npc.id} vs ${sprite} @ ${tree.x},${tree.y}`).toBe(false);
+      }
+    }
+  });
+
+  it('keeps collision-free hill tree art backed by solid forest tiles', () => {
+    const treeSprites = new Set<TreeSprite>(['tree', 'tree_b', 'tree_c', 'pine']);
+    const decorative = map.props.filter(
+      (prop) => prop.y < OTTERBROOK_TOWN_BASE && !prop.solid && treeSprites.has(prop.sprite as TreeSprite),
+    );
+    expect(decorative.length).toBeGreaterThan(50);
+    for (const tree of decorative) {
+      const solid = treeSolid(tree.sprite as TreeSprite);
+      const trunk = {
+        x: tree.x * 16 + solid.ox,
+        y: tree.y * 16 + solid.oy,
+        w: solid.w,
+        h: solid.h,
+      };
+      const x0 = Math.floor(trunk.x / 16);
+      const y0 = Math.floor(trunk.y / 16);
+      const x1 = Math.floor((trunk.x + trunk.w - 0.001) / 16);
+      const y1 = Math.floor((trunk.y + trunk.h - 0.001) / 16);
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          expect(isSolidTile(map.grid[y]?.[x] ?? ''), `${tree.sprite} forest backing @ ${x},${y}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('sorts every active enterable facade from its doorway elevation', () => {
+    for (const phase of phases) {
+      const entrances = map.props.filter(
+        (prop) => visible(prop, phase.flags) && prop.door && prop.sprite in OTTERBROOK_LANDMARK_DIMS,
+      );
+      for (const prop of entrances) {
+        const doorstep = doorstepOf(map, prop.door!.to);
+        expect(doorstep, `${phase.id}: ${prop.sprite} reciprocal doorstep`).not.toBeNull();
+        if (!doorstep) continue;
+        const facadeGround = landmarkGroundDepth(prop);
+        expect(facadeGround.x, `${phase.id}: ${prop.sprite} doorstep X`).toBeCloseTo(doorstep.tx);
+        expect(facadeGround.y, `${phase.id}: ${prop.sprite} doorstep Y`).toBeCloseTo(doorstep.ty);
+        expect(
+          facadeGround.level,
+          `${phase.id}: ${prop.sprite} facade/doorway elevation`,
+        ).toBe(nativeLevelAt(doorstep.tx, doorstep.ty));
       }
     }
   });

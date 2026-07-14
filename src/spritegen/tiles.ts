@@ -1157,6 +1157,12 @@ TILESET.push({ name: 'norway_shore', solid: true, make: seaFoamTile });
 TILESET.push({ name: 'norway_frozen_pond', solid: false, make: meltIceTile });
 TILESET.push({ name: 'norway_masonry', solid: false, make: () => plazaTile(2) });
 
+// Chapter 1's Oak Cave owns a dedicated generated limestone/root material
+// pair. They stay at the tail so tools/sync-oak-cave-tiles.ts can grow the
+// authored strip without touching any established tile column.
+TILESET.push({ name: 'oak_cave_floor', solid: false, make: () => pyramidFloor(0) });
+TILESET.push({ name: 'oak_cave_wall', solid: true, make: officeWall });
+
 export function tileIndexByName(name: string): number {
   const i = TILESET.findIndex((t) => t.name === name);
   if (i < 0) throw new Error(`unknown tile ${name}`);

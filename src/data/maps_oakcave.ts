@@ -16,11 +16,25 @@
  */
 import type { MapDef } from '../schemas';
 
+/**
+ * A cave corridor is carved stone, never an outdoor dirt road.  The old editor
+ * export used `:` for its narrow connectors; that character is globally
+ * auto-tiled as Hickory Hill grass-and-dirt and was the source of the bright
+ * roadside strips visible in the cave.  Normalize those connector cells into
+ * the cave's own walkable stone family while keeping the editor geometry and
+ * save-compatible transition coordinates intact.
+ */
+export function oakCaveRows(rows: readonly string[]): string[] {
+  return rows.map((row) => row.replaceAll(':', 's'));
+}
+
 export const oakRootsMap: MapDef = {
   id: 'oak_roots',
   name: 'HICKORY HILL CAVE',
   music: 'hill',
-  grid: [
+  ambience: 'cave',
+  muffle: 1,
+  grid: oakCaveRows([
     'KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK',
     'KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK',
     'KKKKKKKKKKKKKKKKKKKKKKKK::::KKKKKKKK',
@@ -73,7 +87,7 @@ export const oakRootsMap: MapDef = {
     'KKKKKKKKKKKKssss:::ssssKKKKKKKKKKKKK',
     'KKKKKKKKKKKKKKsssssssKKKKKKKKKKKKKKK',
     'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
-  ],
+  ]),
   elevation: {
     level: [
       '000000000000000000000000111100000000',
@@ -131,6 +145,21 @@ export const oakRootsMap: MapDef = {
     ],
   },
   props: [
+    // Root arches make the descent read as a hollow beneath Hickory Hill rather
+    // than a city basement.  They are visual curtains only; the carved stone
+    // beneath them remains the authoritative collision surface.
+    {
+      sprite: 'cave_root_arch', x: 13.8, y: 44.1,
+      solidParts: [{ ox: 0, oy: 42, w: 12, h: 22 }, { ox: 41, oy: 42, w: 12, h: 22 }],
+    },
+    { sprite: 'root_curtain', x: 14.4, y: 47.4 },
+    { sprite: 'root_curtain', x: 23.2, y: 8.7 },
+    { sprite: 'root_knot', x: 6.2, y: 22.8 },
+    { sprite: 'root_knot', x: 28.1, y: 37.7 },
+    { sprite: 'glow_shroom', x: 13.1, y: 45.5 },
+    { sprite: 'glow_shroom_b', x: 17.4, y: 44.9 },
+    { sprite: 'glow_shroom_b', x: 7.3, y: 20.5 },
+    { sprite: 'glow_shroom', x: 25.8, y: 10.7 },
     { sprite: 'stalactite', x: 24.1, y: 1.1 },
     { sprite: 'stalactite', x: 15.6, y: 43.1 },
     { sprite: 'cave_crystal_b', x: 23.6, y: 3.4 },
@@ -186,7 +215,9 @@ export const oakHollowMap: MapDef = {
   id: 'oak_hollow',
   name: 'THE CAVE — HOLLOW',
   music: 'hill',
-  grid: [
+  ambience: 'cave',
+  muffle: 2,
+  grid: oakCaveRows([
     'KKKKKKKKKKKKK:::KKKKKKKKKKKKKK',
     'KKKKKKKKKKKKK:::KKKKKKKKKKKKKK',
     'KKKKKKKKKKKKK:::KKKKKKKKKKKKKK',
@@ -213,7 +244,7 @@ export const oakHollowMap: MapDef = {
     'KKKKKKKKKKKKK:::KKKKKKKKKKKKKK',
     'KKKKKKKKKKKKK:::KKKKKKKKKKKKKK',
     'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
-  ],
+  ]),
   elevation: {
     level: [
       '000000000000000000000000000000',
@@ -245,6 +276,16 @@ export const oakHollowMap: MapDef = {
     ],
   },
   props: [
+    // The Hollow is the visual breather: roots and mushrooms wrap the still
+    // pool while the picnic/save nook stays clearly readable on dry stone.
+    { sprite: 'cave_mushroom_cluster', x: 5.1, y: 10.7, solid: { ox: 3, oy: 31, w: 24, h: 7 } },
+    { sprite: 'root_curtain', x: 12.2, y: 3.7 },
+    { sprite: 'root_knot', x: 5.1, y: 14.8 },
+    { sprite: 'root_knot', x: 25.2, y: 14.4 },
+    { sprite: 'glow_shroom', x: 6.1, y: 13.7 },
+    { sprite: 'glow_shroom_b', x: 15.4, y: 14.6 },
+    { sprite: 'glow_shroom_b', x: 18.4, y: 7.3 },
+    { sprite: 'glow_shroom', x: 23.9, y: 13.4 },
     { sprite: 'stalactite', x: 12.6, y: 0.3 },
     { sprite: 'picnic', x: 18, y: 10.4, solid: { ox: 2, oy: 8, w: 32, h: 14 } },
     { sprite: 'payphone', x: 21.5, y: 9.6, solid: { ox: 1, oy: 10, w: 14, h: 16 } },
@@ -284,7 +325,9 @@ export const oakHeartMap: MapDef = {
   id: 'oak_heart',
   name: 'THE CAVE — THE HEART',
   music: 'hill',
-  grid: [
+  ambience: 'cave',
+  muffle: 2,
+  grid: oakCaveRows([
     'KKKKKKKKKKKKKKKKKKKKKKKKKKKK',
     'KKKKKKKKKKKKKKKKKKKKKKKKKKKK',
     'KKKKKKKKKKKKKKKKKKKKKKKKKKKK',
@@ -315,7 +358,7 @@ export const oakHeartMap: MapDef = {
     'KKKKKKKKKKKK:::KKKKKKKKKKKKK',
     'KKKKKKKKKKKK:::KKKKKKKKKKKKK',
     'KKKKKKKKKKKK:::KKKKKKKKKKKKK',
-  ],
+  ]),
   elevation: {
     level: [
       '0000000000000000000000000000',
@@ -351,6 +394,20 @@ export const oakHeartMap: MapDef = {
     ],
   },
   props: [
+    // The organic cave gives way to a meteor-struck ritual chamber.  The root
+    // frame points inward at the raised mound, while paired shards/crystals
+    // silhouette the Titanic Tick's actual cave arena.
+    {
+      sprite: 'cave_root_arch', x: 10.2, y: 12.1,
+      solidParts: [{ ox: 0, oy: 42, w: 12, h: 22 }, { ox: 41, oy: 42, w: 12, h: 22 }],
+    },
+    { sprite: 'cave_mushroom_cluster', x: 4.7, y: 17.2, solid: { ox: 3, oy: 31, w: 24, h: 7 } },
+    { sprite: 'root_curtain', x: 4.8, y: 13.3 },
+    { sprite: 'root_curtain', x: 20.2, y: 13.3 },
+    { sprite: 'root_knot', x: 5.1, y: 20.8 },
+    { sprite: 'root_knot', x: 20.8, y: 20.8 },
+    { sprite: 'glow_shroom_b', x: 9.3, y: 18.8 },
+    { sprite: 'glow_shroom', x: 18.1, y: 18.7 },
     { sprite: 'meteor_rock', x: 11, y: 5, solid: { ox: 1, oy: 8, w: 28, h: 14 } },
     { sprite: 'tick_husk', x: 14.5, y: 5, solid: { ox: 4, oy: 26, w: 40, h: 12 }, ifFlag: 'tick_defeated' },
     { sprite: 'meteor_shard', x: 6, y: 3.1, solid: { ox: 9, oy: 24, w: 12, h: 10 } },

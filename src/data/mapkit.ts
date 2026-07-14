@@ -8,17 +8,40 @@
  */
 import type { MapDef } from '../schemas';
 
+export interface TreeTrunkSolid {
+  ox: number;
+  oy: number;
+  w: number;
+  h: number;
+}
+
 /**
- * Deterministic tree variety (ADR-019): same canvas + solid rect for every
- * variant, so the canon positions and collision stay byte-identical while
- * no two neighbors look alike. Pines only where `pines` is allowed.
+ * Native-pixel trunk footprints for the authored 34px-tall tree set. Collision
+ * belongs only to the visible trunk/root mass; the canopy stays walk-behind.
+ * The broadleaf variants no longer share one approximate box because their
+ * re-authored trunks have different widths and horizontal anchors.
  */
-export function treeSprite(x: number, y: number, pines = false): string {
+export const TREE_TRUNK_SOLIDS = {
+  tree: { ox: 6, oy: 27, w: 10, h: 7 },
+  tree_b: { ox: 9, oy: 24, w: 14, h: 10 },
+  tree_c: { ox: 9, oy: 26, w: 11, h: 8 },
+  pine: { ox: 6, oy: 26, w: 12, h: 8 },
+} satisfies Record<string, TreeTrunkSolid>;
+
+export type TreeSprite = keyof typeof TREE_TRUNK_SOLIDS;
+
+/** Deterministic tree variety (ADR-019). Pines appear only when allowed. */
+export function treeSprite(x: number, y: number, pines = false): TreeSprite {
   const h = (x * 73 + y * 151) % 12;
   if (pines && h >= 9) return 'pine';
   if (h % 3 === 1) return 'tree_b';
   if (h % 3 === 2) return 'tree_c';
   return 'tree';
+}
+
+/** Return the art-matched trunk collider for a single-tree sprite. */
+export function treeSolid(sprite: TreeSprite): TreeTrunkSolid {
+  return TREE_TRUNK_SOLIDS[sprite];
 }
 
 /** deterministic rng — map layouts must be identical on every boot

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GS, newGameData, makeHeroState, expForLevel, applyTonic } from './state';
+import { GS, newGameData, makeHeroState, expForLevel, applyTonic, restorePartyAfterSleep } from './state';
 import { ENEMIES } from '../data/enemies';
 import { HEROES, statsAtLevel, maxHpAtLevel, unlockedAbilities, availableAbilities } from '../data/heroes';
 import { ITEMS } from '../data/items';
@@ -175,6 +175,33 @@ describe('hero state', () => {
   });
 });
 
+describe('sleep restoration', () => {
+  it('fully restores HP and PP for every standing party member', () => {
+    const rex = makeHeroState('rex', 8);
+    const faye = makeHeroState('faye', 8);
+    rex.hp = 1;
+    rex.pp = 0;
+    faye.hp = Math.floor(faye.maxHp / 2);
+    faye.pp = 1;
+
+    restorePartyAfterSleep([rex, faye]);
+
+    expect(rex).toMatchObject({ hp: rex.maxHp, pp: rex.maxPp });
+    expect(faye).toMatchObject({ hp: faye.maxHp, pp: faye.maxPp });
+  });
+
+  it('leaves fallen heroes down for hospital recovery', () => {
+    const fallen = makeHeroState('milo', 8);
+    fallen.down = true;
+    fallen.hp = 0;
+    fallen.pp = 2;
+
+    restorePartyAfterSleep([fallen]);
+
+    expect(fallen).toMatchObject({ down: true, hp: 0, pp: 2 });
+  });
+});
+
 describe('S17 (ADR-061) — tonics apply permanently (§A4.12)', () => {
   it('a combat-stat tonic accumulates in boosts, kept apart from stats (level-up safe)', () => {
     const rex = makeHeroState('rex', 5);
@@ -280,6 +307,20 @@ describe('the ATM (S4 / Prompt 20): banked <-> cash on hand', () => {
     expect(GS.deposit(15)).toBe(15);
     expect(GS.data.banked).toBe(115);
     expect(GS.data.cashOnHand).toBe(5);
+  });
+
+  it('credits earned rewards directly to the card without a Dad call', () => {
+    expect(GS.creditBank(37.9)).toBe(37);
+    expect(GS.data.banked).toBe(137);
+    expect(GS.data.pendingDeposit).toBe(0);
+  });
+
+  it('releases legacy queued winnings when the ATM reconciles them', () => {
+    GS.data.pendingDeposit = 42;
+    expect(GS.settlePendingDeposit()).toBe(42);
+    expect(GS.data.banked).toBe(142);
+    expect(GS.data.pendingDeposit).toBe(0);
+    expect(GS.settlePendingDeposit()).toBe(0);
   });
 
   it('clamps to what is actually there', () => {

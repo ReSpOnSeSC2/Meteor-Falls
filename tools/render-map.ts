@@ -306,6 +306,11 @@ const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH:
     ],
     cellW: 560, cellH: 380,
   },
+  oak_cave: {
+    title: 'HEART-OAK CAVE - ROOTS, HOLLOW, AND TITANIC TICK CHAMBER',
+    ids: ['oak_roots', 'oak_hollow', 'oak_heart'],
+    cellW: 720, cellH: 520,
+  },
   ch2: {
     title: 'METEOR FALLS - CHAPTER 2: THE MELTING GRIN (PUERTO SOL + LAS DUNAS)',
     // Route order is intentional: the sheet audits every playable handoff from

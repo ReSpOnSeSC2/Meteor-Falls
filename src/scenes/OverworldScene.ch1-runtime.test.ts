@@ -69,6 +69,10 @@ beforeEach(() => {
 type PrivateCh1Runtime = {
   introScene(this: unknown): Promise<void>;
   runOtterbrookOpening(this: unknown): Promise<void>;
+  sleepToMorning(this: unknown): Promise<void>;
+  restorePartyForRest(this: unknown): void;
+  otterHotelBeat(this: unknown): Promise<void>;
+  twotonHotelBeat(this: unknown): Promise<void>;
   craterScene(this: unknown): Promise<void>;
   porchScene(this: unknown): Promise<void>;
   tickCaveScene(this: unknown): Promise<void>;
@@ -126,6 +130,75 @@ function sayStub(): ReturnType<typeof vi.fn> {
 }
 
 describe('Chapter 1 opening runtime recovery', () => {
+  it('wakes from the real home sleep with the whole standing party at full HP and PP', async () => {
+    const faye = makeHeroState('faye', 6);
+    GS.data.party.push(faye);
+    for (const hero of GS.data.party) {
+      hero.hp = 1;
+      hero.pp = 0;
+    }
+    const start = vi.fn();
+    const scene = {
+      cut: false,
+      cameras: { main: { fadeOut: vi.fn() } },
+      wait: vi.fn(async (): Promise<void> => undefined),
+      scene: { start },
+      restorePartyForRest: ch1Runtime().restorePartyForRest,
+    };
+
+    await ch1Runtime().sleepToMorning.call(scene);
+
+    expect(GS.flag('zapper_done')).toBe(true);
+    expect(GS.data.party).toHaveLength(2);
+    for (const hero of GS.data.party) {
+      expect(hero.hp).toBe(hero.maxHp);
+      expect(hero.pp).toBe(hero.maxPp);
+    }
+    expect(start).toHaveBeenCalledWith('overworld', {
+      mapId: 'rex_bedroom',
+      x: 3 * TILE_PX + 8,
+      y: 5 * TILE_PX,
+    });
+  });
+
+  it('routes both authored hotel stays through the same full HP-and-PP restore', async () => {
+    GS.data.party.push(makeHeroState('faye', 6));
+    GS.data.cashOnHand = 1_000;
+    GS.setFlag('zapper_done');
+    GS.setFlag('tick_defeated');
+    const scene = {
+      cut: false,
+      cameras: { main: { fadeOut: vi.fn() } },
+      wait: vi.fn(async (): Promise<void> => undefined),
+      scene: { start: vi.fn() },
+      dlg: {
+        say: vi.fn(async (): Promise<void> => undefined),
+        ask: vi.fn(async (): Promise<number> => 0),
+      },
+      restorePartyForRest: ch1Runtime().restorePartyForRest,
+    };
+    const drainParty = (): void => {
+      for (const hero of GS.data.party) {
+        hero.hp = 1;
+        hero.pp = 0;
+      }
+    };
+    const expectFullParty = (): void => {
+      for (const hero of GS.data.party) {
+        expect(hero.hp).toBe(hero.maxHp);
+        expect(hero.pp).toBe(hero.maxPp);
+      }
+    };
+
+    drainParty();
+    await ch1Runtime().otterHotelBeat.call(scene);
+    expectFullParty();
+
+    drainParty();
+    await ch1Runtime().twotonHotelBeat.call(scene);
+    expectFullParty();
+  });
+
   it('commits the bedroom wake only after its dialogue and retries an interrupted wake', async () => {
     let failWake = true;
     const say = vi.fn(async (): Promise<void> => {

@@ -92,7 +92,7 @@ import { CH9_WORLD, nativeFeet as ch9NativeFeet } from '../data/maps_ch9';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS, BAG_MAX } from '../data/items';
-import { GS, makeHeroState } from '../engine/state';
+import { GS, makeHeroState, restorePartyAfterSleep } from '../engine/state';
 import { completeQuest } from '../engine/quests';
 import { PROPERTIES, type PropertyDef } from '../data/properties';
 import { buyCost } from '../engine/property';
@@ -138,6 +138,13 @@ import {
   unitsToFill,
 } from '../engine/fuel';
 import { canRefuelHere, stationPricePerUnit, stationsInArea } from '../engine/refuel';
+import { groundedVisualDepth } from '../engine/world-depth';
+import { interiorDoorTexture } from '../engine/door-presentation';
+import {
+  vehicleHeadFrame,
+  vehicleOccupantPose,
+  vehicleRiderFrame,
+} from '../engine/vehicle-presentation';
 import {
   BMX_SPEED_MULTIPLIER,
   TWOTON_BMX_HOME_CONTINENT,
@@ -265,7 +272,7 @@ import { VEHICLE_SPECS } from '../spritegen/vehicles';
 import { makeVitalsBar, type VitalsBar } from '../ui/vitals';
 import { tileIndexByName, PATH_BASE, PATH_VARIANTS, RUG_BASE, HEDGE_BASE, BRAMBLE_BASE } from '../spritegen/tiles';
 import { LANDMARK_FACADE_SPRITES } from '../spritegen/buildings';
-import { AUTHORED_VEHICLE_ART_KEYS, AUTHORED_WORLD_PROP_DISPLAY_SIZE, DIRECTIONAL_VEHICLE_KEYS, OBLIQUE_SHADOW_PROP_KEYS, worldSpriteScale } from '../spritegen/authored';
+import { AUTHORED_VEHICLE_ART_KEYS, AUTHORED_WORLD_PROP_DISPLAY_SIZE, DIRECTIONAL_VEHICLE_KEYS, OBLIQUE_SHADOW_PROP_KEYS, vehicleHeadTextureKey, worldSpriteScale } from '../spritegen/authored';
 import { TILE_SOLID, standFrame, facingFromVec, facing8, FACING_VEC, type Facing } from '../spritegen';
 import {
   instantWinGroup,
@@ -499,6 +506,12 @@ interface ParkedOwnedVehicle {
   facing: Facing;
 }
 
+interface VehicleOccupantSprite {
+  id: string;
+  mode: 'rider' | 'window';
+  spr: Phaser.GameObjects.Sprite;
+}
+
 type AuthoredWorldPropKey = keyof typeof AUTHORED_WORLD_PROP_DISPLAY_SIZE;
 
 const AUTHORED_VEHICLE_PROP_KEYS = new Set<string>(AUTHORED_VEHICLE_ART_KEYS);
@@ -574,6 +587,36 @@ export function walkableSpawnerCells(
     }
   }
   return cells;
+}
+
+/** Exact segment/axis-aligned-rect intersection used by encounter sight lines.
+ * Tile sampling catches walls/elevation; this closes the smaller authored-prop
+ * gaps so a thin stalagmite or facade body cannot be seen through between two
+ * samples. Coordinates are all in runtime world pixels. */
+export function segmentHitsRect(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  rect: Rect,
+): boolean {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  let near = 0;
+  let far = 1;
+  const clip = (start: number, delta: number, min: number, max: number): boolean => {
+    if (delta === 0) return start >= min && start <= max;
+    let a = (min - start) / delta;
+    let b = (max - start) / delta;
+    if (a > b) [a, b] = [b, a];
+    near = Math.max(near, a);
+    far = Math.min(far, b);
+    return near <= far;
+  };
+  return clip(x0, dx, rect.x, rect.x + rect.w)
+    && clip(y0, dy, rect.y, rect.y + rect.h)
+    && far >= 0
+    && near <= 1;
 }
 
 export function shouldSuppressOtterbrookMeteorSpawner(
@@ -773,12 +816,16 @@ const MINIMUS_TILE_SKIN: Readonly<Record<string, string>> = {
  *  Each Norway tile carries the SAME solidity as the base it replaces (water stays solid
  *  like sea_a), so the remap is purely cosmetic — collision/BFS read the unchanged grid.
  *  The Sleeper's Spine dungeon keeps its own interior look. */
-/** Hickory Hill Cave: cool carved stone replaces the retired root-tangle skin. */
+/** Hickory Hill Cave: one subterranean material family for walls, ledges,
+ * stairs, and floor.  In particular, never let the global grassy cliff lip or
+ * outdoor dirt-path autotile leak into the dungeon. */
 const UNDEROAK_SKIN_MAPS: ReadonlySet<string> = new Set(['oak_roots', 'oak_hollow', 'oak_heart']);
-const UNDEROAK_TILE_SKIN: Readonly<Record<string, string>> = {
-  cliff_face: 'tile_concrete_wall',
-  scorch: 'tile_concrete_floor',
-  scorch_ember: 'tile_concrete_floor',
+export const UNDEROAK_TILE_SKIN: Readonly<Record<string, string>> = {
+  cliff_face: 'oak_cave_wall',
+  cliff_lip: 'oak_cave_floor',
+  stairs: 'oak_cave_floor',
+  scorch: 'oak_cave_floor',
+  scorch_ember: 'oak_cave_floor',
 };
 /** Otterbrooke venues already ship authored floor/wall strips; applying them per
  * room makes the first town's interiors read as distinct places rather than one
@@ -1082,6 +1129,9 @@ const EDGE_BIOME: Record<EdgeBiome, EdgeFeatureDef> = {
  *  basalt — both share the LANI skin). Anything not listed falls through to the tile
  *  skin's default, then to 'temperate'. */
 const MAP_BIOME: Readonly<Record<string, EdgeBiome>> = {
+  // Ch.1 â€” the three Hickory Hill floors are enclosed rock, never Ohio
+  // treeline.  This also gives their camera margin the cave's charcoal tone.
+  oak_roots: 'cave', oak_hollow: 'cave', oak_heart: 'cave',
   // Ch.2 — South America: LAS DUNAS desert crossing (Dusty Dunes rebuild,
   // 2026-07-08), the desert pyramid, tropical coast
   jungle_1: 'desert', jungle_2: 'desert', grotto: 'cave',
@@ -1242,6 +1292,9 @@ export class OverworldScene extends Phaser.Scene {
   /** Player-owned road vehicles use the same authored three-view sheets as
    * traffic, but own persistent parking, fuel, collision and a dashboard. */
   private drivingVehicleSprite?: Phaser.GameObjects.Sprite;
+  /** Character-specific rider/head overlays. Open vehicles use the real bent
+   * stride frames; enclosed vehicles use generated directional head strips. */
+  private vehicleOccupants: VehicleOccupantSprite[] = [];
   private parkedOwnedVehicles: ParkedOwnedVehicle[] = [];
   private vehicleHud: Array<
     Phaser.GameObjects.NineSlice | Phaser.GameObjects.Sprite | Phaser.GameObjects.BitmapText
@@ -1373,6 +1426,7 @@ export class OverworldScene extends Phaser.Scene {
     this.holdingDoorImg = null;
     this.bicycle = undefined;
     this.drivingVehicleSprite = undefined;
+    this.vehicleOccupants = [];
     this.parkedOwnedVehicles = [];
     this.vehicleHud = [];
     this.vehicleHudFuel = undefined;
@@ -1878,6 +1932,14 @@ export class OverworldScene extends Phaser.Scene {
     const iMidA = tileIndexByName('cliff_mid_a');
     const iMidB = tileIndexByName('cliff_mid_b');
     const iBase = tileIndexByName('cliff_base');
+    // The generic cliff kit has a grassy top band.  Re-emitting that kit over
+    // Hickory Hill's cave-specific base wall was what produced the blocky
+    // outdoor-cliff patches in the dungeon.  Cave faces repeat the same rooted
+    // stone tile as their base layer, preserving depth occlusion without the
+    // material swap.
+    const underoakFace = UNDEROAK_SKIN_MAPS.has(this.mapDef.id)
+      ? tileIndexByName(UNDEROAK_TILE_SKIN.cliff_face)
+      : null;
     for (let y = 0; y < this.levelGrid.length; y++) {
       const row = this.levelGrid[y];
       for (let x = 0; x < row.length; x++) {
@@ -1887,7 +1949,7 @@ export class OverworldScene extends Phaser.Scene {
         const baseOfRun = grid[y + 1]?.[x] !== 'K'; // nothing cliff below ⇒ meets the ground (scree band)
         // deterministic per-cell mid variety (no Math.random; int32-coerced hash)
         const midVary = (((x * 73856093) ^ (y * 19349663)) & 1) === 1;
-        const frame = topOfRun ? iTop : baseOfRun ? iBase : midVary ? iMidB : iMidA;
+        const frame = underoakFace ?? (topOfRun ? iTop : baseOfRun ? iBase : midVary ? iMidB : iMidA);
         // DEPTH is the cell's OWN base-y (NOT level·BIAS), unchanged from P2: a LOWER-ground
         // character standing at the base (feet south of the face, so a higher base-y) sorts
         // IN FRONT and stays fully visible — the "stand in front of the cliff wall" read
@@ -2074,13 +2136,36 @@ export class OverworldScene extends Phaser.Scene {
       const propSX = typeof rawSc === 'number' ? rawSc : rawSc && rawSc.x > 0 ? rawSc.x : 1;
       const propSY = typeof rawSc === 'number' ? rawSc : rawSc && rawSc.y > 0 ? rawSc.y : 1;
       if (propSX !== 1 || propSY !== 1) img.setDisplaySize(img.displayWidth * propSX, img.displayHeight * propSY);
-      // Directional vehicles already own front/back art. Swap their footprint for
-      // a vertical placement and keep that authored frame upright; every other prop
-      // continues through the generic geometric rotation path below.
+      // Directional sheets are padded to one shared frame size: selecting the
+      // front/back frame changes the view, not the sprite rectangle. The former
+      // width/height swap squeezed the already-padded car a second time and made
+      // a driveway sedan narrower than Jay.
       const directionalVehicleTurned = directionalVehicle && (p.rot === 90 || p.rot === 270);
-      if (directionalVehicleTurned) img.setDisplaySize(img.displayHeight, img.displayWidth);
       const rot = directionalVehicleTurned ? 0 : (p.rot ?? 0);
-      img.setDepth(img.y + img.displayHeight + this.levelLift(img.x, img.y));
+      const facadeNativeScale = nativeFacade ? nativeScale : 1;
+      const facadeSX = facadeNativeScale * propSX;
+      const facadeSY = facadeNativeScale * propSY;
+      // Any tall world prop can cross an elevation seam. Sampling its canopy,
+      // roof, or top-left gives the whole object the wrong terrace bias (a hill
+      // treeline used to paint over the birder standing south of its trunk).
+      // Ground every prop at its visual foot; enterable facades prefer their
+      // authored threshold because 3/4 art may extend below the door.
+      const facadeDoorGround = p.door
+        ? {
+            x: img.x + s(p.door.ox) * facadeSX + (s(p.door.w) * facadeSX) / 2,
+            // Match doorstepOf(): the final five native pixels sit outside the
+            // facade and are intentionally not multiplied by PropDef.scale.
+            y: img.y + s(p.door.oy + p.door.h) * facadeSY + s(5),
+          }
+        : undefined;
+      const propGround = groundedVisualDepth(
+        { x: img.x, y: img.y, w: img.displayWidth, h: img.displayHeight },
+        this.levelDepthBias,
+        (x, y) => this.levelAtPx(x, y),
+        isFacadeSprite ? facadeDoorGround : undefined,
+      );
+      const propLift = propGround.lift;
+      img.setDepth(propGround.depth);
       // OBLIQUE-FACADE GROUNDING (Otterbrooke; Twoton joined in the EB polish
       // rollout 2026-07-11): the 3/4 buildings sit on a flat ground, so a soft
       // contact shadow at the base plants them (mirrors ADR-097's actor shadows).
@@ -2092,7 +2177,7 @@ export class OverworldScene extends Phaser.Scene {
           .setOrigin(0.5, 0.55)
           .setDisplaySize(shW, shW * 0.15) // a low, feathered pool tucked UNDER the foot (not a slab beside it)
           .setAlpha(0.2)
-          .setDepth(img.y + img.displayHeight - s(15) + this.levelLift(img.x, img.y));
+          .setDepth(propGround.depth - s(15));
       }
       // PHASE 2 (oblique overhaul): the re-authored 3/4 props sit on flat ground, so — like the
       // facades above and the ADR-097 actor shadows — plant each with a soft contact-shadow pool
@@ -2106,7 +2191,7 @@ export class OverworldScene extends Phaser.Scene {
           .setOrigin(0.5, 0.55)
           .setDisplaySize(shW, Math.max(s(3), shW * 0.22)) // a low feathered pool, not a slab beside it
           .setAlpha(0.24)
-          .setDepth(img.y + img.displayHeight - s(3) + this.levelLift(img.x, img.y));
+          .setDepth(img.y + img.displayHeight - s(3) + propLift);
       }
       if (sprite.startsWith('bldg_') || LANDMARK_FACADE_SPRITES.has(sprite)) {
         // ADR-051 — A FACADE COLLIDES AS ITS REAL DRAWN FOOTPRINT. The map data
@@ -2125,23 +2210,21 @@ export class OverworldScene extends Phaser.Scene {
         // §A11 full-Gulliver: a NATIVE Minimus facade was scaled + foot-re-anchored above, so
         // rebuild its collision from the SHRUNK, re-anchored rect (img.x/img.y + displayW/H) with
         // the native eave/door constants scaled by the same factor — footprint = building drawn.
-        const nf = nativeFacade ? nativeScale : 1;
-        const fSX = nf * propSX, fSY = nf * propSY; // per-axis facade scale (width vs height)
-        for (const sr of this.facadeSolids(p, img.x, img.y, img.displayWidth, img.displayHeight, fSX, fSY))
+        for (const sr of this.facadeSolids(p, img.x, img.y, img.displayWidth, img.displayHeight, facadeSX, facadeSY))
           this.solids.push(sr);
         if (p.door) {
           // img.* are runtime (placed) px; door.ox/w/h are NATIVE data → s() × the facade scale.
           // The entrance zone uses the SAME widened opening as facadeSolids (MIN_DOOR_GAP) so the
           // door the player can step through and the door that fires are one and the same. Horizontal
           // door metrics scale by fSX, vertical (height, foot offset) by fSY.
-          const natW = s(p.door.w) * fSX;
+          const natW = s(p.door.w) * facadeSX;
           const gap = Math.max(natW, s(OverworldScene.MIN_DOOR_GAP));
-          const cx = img.x + s(p.door.ox) * fSX + natW / 2;
+          const cx = img.x + s(p.door.ox) * facadeSX + natW / 2;
           this.facadeDoorBox.set(p, {
             x: cx - gap / 2,
-            y: img.y + img.displayHeight - s(14) * fSY,
+            y: img.y + img.displayHeight - s(14) * facadeSY,
             w: gap,
-            h: s(p.door.h) * fSY,
+            h: s(p.door.h) * facadeSY,
           });
         }
         if (!nativeFacade) this.auditFacade(p, sprite, img.displayHeight);
@@ -2174,7 +2257,11 @@ export class OverworldScene extends Phaser.Scene {
         const bh = rot === 90 || rot === 270 ? fw : fh;
         const ax = img.x, ay = img.y;
         img.setOrigin(0.5, 0.5).setPosition(ax + bw / 2, ay + bh / 2).setAngle(rot);
-        img.setDepth(ay + bh + this.levelLift(ax, ay));
+        img.setDepth(groundedVisualDepth(
+          { x: ax, y: ay, w: bw, h: bh },
+          this.levelDepthBias,
+          (x, y) => this.levelAtPx(x, y),
+        ).depth);
       }
       if (p.machine) {
         const spec = VEHICLE_SPECS[p.machine.vehicleType];
@@ -2407,7 +2494,12 @@ export class OverworldScene extends Phaser.Scene {
         // S11b: a doorway through a wall is a DOOR, not a mat (user law) —
         // mounted IN the wall band above the zone, swinging open on entry;
         // interiors may keep the small foot decal; outdoor doors never do
-        const img = lift(this.add.image(cx, d.y * TILE_PX, 'door_int').setOrigin(0.5, 1).setDepth(3));
+        const img = lift(
+          this.add
+            .image(cx, d.y * TILE_PX, interiorDoorTexture(this.mapDef.id, d.to))
+            .setOrigin(0.5, 1)
+            .setDepth(3),
+        );
         this.doorImgs.set(d, img);
         if (this.mapDef.interior) {
           lift(this.add.image(cx, d.y * TILE_PX, 'doormat').setOrigin(0.5, 0).setDepth(2));
@@ -2557,6 +2649,7 @@ export class OverworldScene extends Phaser.Scene {
       .setAngle(pose.angle)
       .setFlipX(pose.flipX)
       .setDepth(this.player.y + this.playerLevel * this.levelDepthBias - 1);
+    this.syncVehicleOccupantSprites();
   }
 
   private styleOwnedVehicleSprite(spr: Phaser.GameObjects.Sprite, vehicleType: string, facing: Facing): void {
@@ -2674,13 +2767,76 @@ export class OverworldScene extends Phaser.Scene {
     this.buildParkedOwnedVehicles();
   }
 
+  private destroyVehicleOccupants(): void {
+    this.vehicleOccupants.forEach((occupant) => occupant.spr.destroy());
+    this.vehicleOccupants = [];
+  }
+
+  /** Materialize a character-specific occupant for each seated party member.
+   * The invisible player sprite remains the camera/collision anchor while the
+   * presentation sprites articulate on the vehicle. */
   private syncVehicleOccupants(): void {
     const title = GS.data.drivingVehicle;
     const car = title ? vehicleByTitle(title) : null;
-    const cls = car ? VEHICLE_SPECS[car.vehicleType]?.cls : undefined;
-    const enclosed = !!cls && !['bike', 'moto'].includes(cls);
-    if (this.player) this.player.setVisible(!enclosed);
-    for (const f of this.followers) f.spr.setVisible(!title);
+    const spec = car ? VEHICLE_SPECS[car.vehicleType] : undefined;
+    if (!title || !car || !spec) {
+      this.destroyVehicleOccupants();
+      if (this.player) this.player.setVisible(true);
+      for (const follower of this.followers) follower.spr.setVisible(true);
+      return;
+    }
+
+    // The old open-vehicle path left the ordinary standing actor visible over
+    // the wheels. Every class now owns its rider/occupant presentation.
+    this.player.setVisible(false);
+    for (const follower of this.followers) follower.spr.setVisible(false);
+    const mode: VehicleOccupantSprite['mode'] = ['bike', 'moto'].includes(spec.cls) ? 'rider' : 'window';
+    const seated = GS.data.party.slice(0, Math.max(1, spec.seats)).map((hero) => hero.id);
+    const stale =
+      this.vehicleOccupants.length !== seated.length ||
+      this.vehicleOccupants.some((occupant, i) => occupant.id !== seated[i] || occupant.mode !== mode);
+    if (stale) {
+      this.destroyVehicleOccupants();
+      for (const id of seated) {
+        const preferred = mode === 'window' ? vehicleHeadTextureKey(id) : id;
+        const texture = this.textures.exists(preferred) ? preferred : id;
+        const spr = this.add.sprite(this.player.x, this.player.y, texture, 0);
+        this.vehicleOccupants.push({ id, mode, spr });
+      }
+    }
+    this.syncVehicleOccupantSprites();
+  }
+
+  private syncVehicleOccupantSprites(): void {
+    const title = GS.data.drivingVehicle;
+    const car = title ? vehicleByTitle(title) : null;
+    const spec = car ? VEHICLE_SPECS[car.vehicleType] : undefined;
+    const anchor = title === TWOTON_BMX_TITLE ? this.bicycle : this.drivingVehicleSprite;
+    if (!title || !car || !spec || !anchor || this.vehicleOccupants.length === 0) return;
+    const moving = this.vehicleSpeed > s(0.2);
+    const phase = (moving ? Math.floor(this.time.now / (spec.cls === 'bike' ? 115 : 155)) : 0) % 2 as 0 | 1;
+    const bob = moving ? Math.sin(this.time.now / (spec.cls === 'bike' ? 58 : 82)) * s(spec.cls === 'bike' ? 0.55 : 0.28) : 0;
+    this.vehicleOccupants.forEach((occupant, slot) => {
+      const pose = vehicleOccupantPose(
+        spec.cls,
+        this.facing,
+        slot,
+        this.vehicleOccupants.length,
+        anchor.displayWidth,
+        anchor.displayHeight,
+      );
+      occupant.spr
+        .setVisible(pose.visible)
+        .setScale(pose.scale)
+        .setPosition(anchor.x + pose.dx, anchor.y + pose.dy + bob)
+        .setDepth(anchor.depth + 1 + slot * 0.01)
+        .setAlpha(occupant.mode === 'window' ? 0.88 : 1);
+      if (occupant.mode === 'rider') {
+        occupant.spr.setOrigin(0.5, 1).setFrame(vehicleRiderFrame(this.facing, phase));
+      } else {
+        occupant.spr.setOrigin(0.5, 0.5).setFrame(vehicleHeadFrame(this.facing));
+      }
+    });
   }
 
   private syncDrivingVehicleSprite(): void {
@@ -2692,6 +2848,7 @@ export class OverworldScene extends Phaser.Scene {
     spr
       .setPosition(this.player.x, this.player.y + s(1))
       .setDepth(this.player.y + this.playerLevel * this.levelDepthBias + 2);
+    this.syncVehicleOccupantSprites();
     this.syncVehicleHeadlights();
   }
 
@@ -2966,6 +3123,7 @@ export class OverworldScene extends Phaser.Scene {
     GS.data.x = exit.x;
     GS.data.y = exit.y;
     this.followers.forEach((f) => f.spr.setVisible(true).setPosition(exit.x, exit.y));
+    this.syncVehicleOccupants();
     this.destroyVehicleHud();
     this.vehicleSpeed = 0;
     this.vehicleEngineRunning = false;
@@ -4373,8 +4531,7 @@ export class OverworldScene extends Phaser.Scene {
     if (!title) return;
     if (!car || !GS.data.keyItems.includes(title)) {
       this.normalizeDrivingVehicleState();
-      this.player.setVisible(true);
-      this.followers.forEach((f) => f.spr.setVisible(true));
+      this.syncVehicleOccupants();
       this.destroyVehicleHud();
       return;
     }
@@ -4614,6 +4771,56 @@ export class OverworldScene extends Phaser.Scene {
     return false;
   }
 
+  /** Shared encounter visibility. Regular roamers sense omnidirectionally while
+   * patrols add their facing cone in patrolSees(), but neither may notice a hero
+   * through cave rock, an authored solid, or from another elevation plane. */
+  private encounterLineClear(
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    level: number,
+  ): boolean {
+    const distance = Math.hypot(x1 - x0, y1 - y0);
+    const steps = Math.max(1, Math.ceil(distance / s(8)));
+    const levelAware = this.maxLevel > 0;
+    for (let i = 1; i < steps; i++) {
+      const px = x0 + ((x1 - x0) * i) / steps;
+      const py = y0 + ((y1 - y0) * i) / steps;
+      const tx = Math.floor(px / TILE_PX);
+      const ty = Math.floor(py / TILE_PX);
+      if (
+        ty < 0 ||
+        tx < 0 ||
+        ty >= this.solidTiles.length ||
+        tx >= this.solidTiles[0].length ||
+        this.solidTiles[ty][tx]
+      ) return false;
+      if (
+        levelAware &&
+        this.levelGrid[ty][tx] !== level &&
+        this.mapDef.grid[ty][tx] !== 'T'
+      ) return false;
+    }
+    return !this.solids.some((solid) => segmentHitsRect(x0, y0, x1, y1, solid));
+  }
+
+  private roamerCanEngagePlayer(roamer: Roamer): boolean {
+    return roamer.level === this.playerLevel && this.encounterLineClear(
+      roamer.spr.x,
+      roamer.spr.y - s(8),
+      this.player.x,
+      this.player.y - s(8),
+      roamer.level,
+    );
+  }
+
+  private patrolContactReady(patrol: PatrolObj, now: number): boolean {
+    return patrol.level === this.playerLevel
+      && now > this.battleCooldown
+      && Math.hypot(this.player.x - patrol.spr.x, this.player.y - patrol.spr.y) < s(13);
+  }
+
   private updateNpcs(dt: number): void {
     for (const n of this.npcs) {
       if (this.fieldPuppet?.npc === n) continue;
@@ -4672,16 +4879,19 @@ export class OverworldScene extends Phaser.Scene {
       if (r.dead) continue;
       const def = ENEMIES[r.enemyId];
       const distP = Math.hypot(this.player.x - r.spr.x, this.player.y - r.spr.y);
-      if (distP < s(13) && now > this.battleCooldown && !GS.data.drivingVehicle) {
+      const canEngage = r.level === this.playerLevel
+        && distP < s(90)
+        && this.roamerCanEngagePlayer(r);
+      if (canEngage && distP < s(13) && now > this.battleCooldown && !GS.data.drivingVehicle) {
         void this.contactBattle(r);
         return;
       }
       const outclassed = avgLvl >= def.level + 6;
-      if ((outclassed || GS.data.drivingVehicle !== null) && distP < s(90)) {
+      if (canEngage && (outclassed || GS.data.drivingVehicle !== null)) {
         // EB detail: weak enemies flee a strong party (px/s flee speed)
         r.vx = Math.sign(r.spr.x - this.player.x) * s(60);
         r.vy = Math.sign(r.spr.y - this.player.y) * s(60);
-      } else if (distP < s(64)) {
+      } else if (canEngage && distP < s(64)) {
         const toward = unitVectorOrZero(this.player.x - r.spr.x, this.player.y - r.spr.y);
         r.vx = toward.x * PURSUE;
         r.vy = toward.y * PURSUE;
@@ -4733,7 +4943,12 @@ export class OverworldScene extends Phaser.Scene {
         }
       }
       const contactDist = Math.hypot(this.player.x - r.spr.x, this.player.y - r.spr.y);
-      if (contactDist < s(13) && now > this.battleCooldown) {
+      if (
+        contactDist < s(13)
+        && now > this.battleCooldown
+        && !GS.data.drivingVehicle
+        && this.roamerCanEngagePlayer(r)
+      ) {
         void this.contactBattle(r);
         return;
       }
@@ -4746,6 +4961,13 @@ export class OverworldScene extends Phaser.Scene {
     const now = this.time.now;
     for (const p of this.patrols) {
       if (p.dead) continue;
+      // Patrol bodies deliberately do not block the player: touching one is an
+      // encounter. Check every state so a back-contact starts the intended
+      // green-swirl fight instead of letting the two sprites pass through.
+      if (this.patrolContactReady(p, now)) {
+        void this.patrolBattle(p);
+        return;
+      }
       if (p.state === 'patrol' || p.state === 'return') {
         const [wx, wy] = p.def.route[p.wp];
         const target = characterFeet(wx, wy, TILE_PX, ART_SCALE);
@@ -4795,10 +5017,6 @@ export class OverworldScene extends Phaser.Scene {
         const dx = this.player.x - p.spr.x;
         const dy = this.player.y - p.spr.y;
         const d = Math.hypot(dx, dy);
-        if (d < s(13) && now > this.battleCooldown) {
-          void this.patrolBattle(p);
-          return;
-        }
         const toward = unitVectorOrZero(dx, dy);
         const step = PATROL_CHASE * dt;
         const nx = this.movingActorMove('patrol', p, p.spr.x, p.spr.y, toward.x * step, 0, false, p.level);
@@ -4817,14 +5035,13 @@ export class OverworldScene extends Phaser.Scene {
         } else {
           p.lose = 0;
         }
-        const contactDist = Math.hypot(this.player.x - p.spr.x, this.player.y - p.spr.y);
-        if (contactDist < s(13) && now > this.battleCooldown) {
-          void this.patrolBattle(p);
-          return;
-        }
       }
       p.level = this.levelAfterStep(p.level, p.spr.x, p.spr.y);
       p.spr.setDepth(p.spr.y + this.levelLift(p.spr.x, p.spr.y));
+      if (this.patrolContactReady(p, now)) {
+        void this.patrolBattle(p);
+        return;
+      }
     }
   }
 
@@ -4843,11 +5060,11 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
-  /** Axis-separated live-actor movement. Patrol, return, chase, and special NPC
-   * pursuits all share the same static + dynamic body rules. */
+  /** Axis-separated live-actor movement. Patrol/return/chase, join-window
+   * roamers, and special NPC pursuits share the same body rules. */
   private movingActorMove(
-    kind: 'npc' | 'patrol',
-    actor: NpcObj | PatrolObj,
+    kind: 'npc' | 'roamer' | 'patrol',
+    actor: NpcObj | Roamer | PatrolObj,
     x: number,
     y: number,
     dx: number,
@@ -4857,12 +5074,13 @@ export class OverworldScene extends Phaser.Scene {
   ): number {
     const nx = x + dx;
     const ny = y + dy;
-    const box = kind === 'npc'
-      ? this.npcBodyAt(actor as NpcObj, nx, ny)
-      : this.patrolBodyAt(actor as PatrolObj, nx, ny);
-    const cur = kind === 'npc'
-      ? this.npcBodyAt(actor as NpcObj, x, y)
-      : this.patrolBodyAt(actor as PatrolObj, x, y);
+    const bodyAt = (px: number, py: number): Rect => kind === 'npc'
+      ? this.npcBodyAt(actor as NpcObj, px, py)
+      : kind === 'roamer'
+        ? this.roamerBodyAt(actor as Roamer, px, py)
+        : this.patrolBodyAt(actor as PatrolObj, px, py);
+    const box = bodyAt(nx, ny);
+    const cur = bodyAt(x, y);
     if (this.collidesActor(box, cur, kind, actor, level)) return second ? y : x;
     return second ? ny : nx;
   }
@@ -4875,6 +5093,7 @@ export class OverworldScene extends Phaser.Scene {
 
   /** facing-cone sight check with solid-tile occlusion */
   private patrolSees(p: PatrolObj): boolean {
+    if (p.level !== this.playerLevel) return false;
     const range = (p.def.sight ?? 5) * TILE_PX; // sight in TILES → px
     const f = this.facingVectorOf(p.facing);
     const ex = p.spr.x;
@@ -4885,24 +5104,8 @@ export class OverworldScene extends Phaser.Scene {
     if (along < s(6) || along > range) return false;
     const perp = Math.abs(rx * f.y - ry * f.x);
     if (perp > s(14)) return false;
-    // line of sight: cubicle walls hide you (stealth-lite, caught = battle not fail)
-    const steps = Math.ceil(along / s(8)); // ~one sample per 8px along the ray
-    for (let i = 1; i < steps; i++) {
-      const sx = ex + (rx * i) / steps;
-      const sy = ey + (ry * i) / steps;
-      const txi = Math.floor(sx / TILE_PX);
-      const tyi = Math.floor(sy / TILE_PX);
-      if (
-        tyi < 0 ||
-        txi < 0 ||
-        tyi >= this.solidTiles.length ||
-        txi >= this.solidTiles[0].length ||
-        this.solidTiles[tyi][txi]
-      ) {
-        return false;
-      }
-    }
-    return true;
+    // Cubicle/cave walls, terrace seams, and authored solids all occlude the cone.
+    return this.encounterLineClear(ex, ey, this.player.x, this.player.y - s(8), p.level);
   }
 
   private facingVectorOf(f: Facing): { x: number; y: number } {
@@ -5007,12 +5210,18 @@ export class OverworldScene extends Phaser.Scene {
   /* ---------------- encounters ---------------- */
 
   private async contactBattle(r: Roamer): Promise<void> {
+    if (!this.roamerCanEngagePlayer(r)) return;
     this.battleCooldown = this.time.now + 1500;
     // ADR-106: a contact pulls in the PACK — roamers right on top of you are
     // caught in the same fight. Gather nearest-first, capped to the 5 seats.
     const cx = this.player.x;
     const cy = this.player.y;
-    const live = this.roamers.filter((o) => !o.dead && o !== r);
+    const live = this.roamers.filter((o) =>
+      !o.dead
+      && o !== r
+      && o.level === r.level
+      && this.roamerCanEngagePlayer(o),
+    );
     const packIdx = withinRadius(cx, cy, live.map((o) => ({ x: o.spr.x, y: o.spr.y })), PACK_RADIUS);
     const pack: Roamer[] = [r, ...packIdx.map((i) => live[i])].slice(0, ENCOUNTER_CAP);
     const defs = pack.map((m) => ENEMIES[m.enemyId]);
@@ -5051,7 +5260,7 @@ export class OverworldScene extends Phaser.Scene {
     });
     const share = expShare(exp, GS.aliveParty().length);
     GS.aliveParty().forEach((h) => (h.exp += share));
-    GS.data.pendingDeposit += cash;
+    GS.creditBank(cash);
     toast(
       this,
       pack.length > 1
@@ -5158,26 +5367,43 @@ export class OverworldScene extends Phaser.Scene {
    *  alert ring sprint the player; each that reaches them hops into `pack` and
    *  `enemyIds` (until the 5 seats fill). dt-scaled (ADR-024). Returns a stop fn
    *  the caller fires at launch so no dash outlives the window. */
+  private advanceJoiner(c: Roamer, cx: number, cy: number, dtMs: number): number {
+    const dx = cx - c.spr.x;
+    const dy = cy - c.spr.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance > 0) {
+      // Match the main update loop's 50ms cap and never step beyond the target.
+      // The old direct += dash both tunneled through cave rock and could overshoot
+      // the player after a long frame, then oscillate until the join window ended.
+      const step = Math.min(distance, JOIN_DASH * (Math.min(dtMs, 50) / 1000));
+      const ox = c.spr.x;
+      const oy = c.spr.y;
+      const nx = this.movingActorMove('roamer', c, ox, oy, (dx / distance) * step, 0, false, c.level);
+      const xLevel = this.levelAfterStep(c.level, nx, oy);
+      const ny = this.movingActorMove('roamer', c, nx, oy, 0, (dy / distance) * step, true, xLevel);
+      c.spr.x = nx;
+      c.spr.y = ny;
+      c.level = this.levelAfterStep(xLevel, nx, ny);
+      c.facing = facing8(dx, dy, c.facing);
+    }
+    c.spr.setDepth(c.spr.y + this.levelLift(c.spr.x, c.spr.y));
+    if (c.overworld) c.spr.setFrame(enemyOverworldFrame(c.facing));
+    else if (c.walker) {
+      const anim = `${c.walker}-run-${c.facing}`;
+      if (c.spr.anims.currentAnim?.key !== anim || !c.spr.anims.isPlaying) c.spr.anims.play(anim, true);
+    }
+    return Math.hypot(cx - c.spr.x, cy - c.spr.y);
+  }
+
   private runJoinWindow(pack: Roamer[], enemyIds: string[], joiners: Roamer[]): () => void {
     const cx = this.player.x;
     const cy = this.player.y;
     return everyFrame(this, (dtMs) => {
       if (pack.length >= ENCOUNTER_CAP) return;
-      const dt = dtMs / 1000;
       for (const c of joiners) {
         if (c.dead || pack.includes(c)) continue;
-        const dx = cx - c.spr.x;
-        const dy = cy - c.spr.y;
-        const d = Math.hypot(dx, dy) || 1;
-        c.spr.x += (dx / d) * JOIN_DASH * dt;
-        c.spr.y += (dy / d) * JOIN_DASH * dt;
-        c.spr.setDepth(c.spr.y);
-        if (c.walker) {
-          const f = facing8(dx, dy, 'down'); // ADR-096: 8-way run read
-          const anim = `${c.walker}-run-${f}`;
-          if (c.spr.anims.currentAnim?.key !== anim || !c.spr.anims.isPlaying) c.spr.anims.play(anim, true);
-        }
-        if (d <= JOIN_REACH && pack.length < ENCOUNTER_CAP) {
+        const distance = this.advanceJoiner(c, cx, cy, dtMs);
+        if (distance <= JOIN_REACH && pack.length < ENCOUNTER_CAP) {
           pack.push(c);
           enemyIds.push(c.enemyId);
           AUDIO.sfx('alert');
@@ -5925,11 +6151,7 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   private restorePartyForRest(): void {
-    for (const h of GS.data.party) {
-      if (h.down) continue;
-      h.hp = h.maxHp;
-      h.pp = h.maxPp;
-    }
+    restorePartyAfterSleep(GS.data.party);
   }
 
   private async cityHotelBeat(cityId: AmenitySettlementId): Promise<void> {
@@ -7007,11 +7229,7 @@ export class OverworldScene extends Phaser.Scene {
       if (firstStay) GS.setFlag('otter_hotel_dream_pending');
     }
     GS.setFlag('otter_hotel_wake_pending');
-    for (const h of GS.data.party) {
-      if (h.down) continue;
-      h.hp = h.maxHp;
-      h.pp = h.maxPp;
-    }
+    this.restorePartyForRest();
 
     this.cut = true;
     this.cameras.main.fadeOut(700, 0, 0, 0);
@@ -7040,11 +7258,7 @@ export class OverworldScene extends Phaser.Scene {
 
     GS.data.cashOnHand -= TWOTON_HOTEL_RATE;
     GS.setFlag('twoton_hotel_wake_pending');
-    for (const h of GS.data.party) {
-      if (h.down) continue;
-      h.hp = h.maxHp;
-      h.pp = h.maxPp;
-    }
+    this.restorePartyForRest();
     await this.dlg.say(...DIALOGUE.twoton_hotel_checkin);
 
     this.cut = true;
@@ -7838,14 +8052,14 @@ export class OverworldScene extends Phaser.Scene {
   private async callDad(): Promise<void> {
     const gift = GS.flag('dad_first_deposit') ? 0 : 50;
     GS.setFlag('dad_first_deposit');
-    const deposit = gift + GS.data.pendingDeposit;
+    const legacyPending = GS.settlePendingDeposit();
+    const deposit = gift + legacyPending;
     const pages = [...DIALOGUE.phone_dad];
     pages[2] =
       deposit > 0
         ? `@I put $${deposit} into your account. Don't spend it all on corn dogs. Spend MOST of it on corn dogs.`
         : `@Account's holding steady, champ. Like my love for you. Which is also money, somehow.`;
-    GS.data.banked += deposit;
-    GS.data.pendingDeposit = 0;
+    GS.creditBank(gift);
     await this.dlg.say(...pages);
     GS.data.map = this.mapDef.id;
     if (GS.activeSlot === null) {
@@ -7892,6 +8106,8 @@ export class OverworldScene extends Phaser.Scene {
    *  the dialled amount clamps to the pool. */
   private async atmFlow(): Promise<void> {
     AUDIO.sfx('confirm');
+    // Grandfather rewards queued by older saves before showing the live balance.
+    GS.settlePendingDeposit();
     await this.dlg.say(...DIALOGUE.atm_greet);
     for (;;) {
       await this.dlg.say(`CARD ${money(GS.data.banked)}   CASH ${money(GS.data.cashOnHand)}`);
@@ -8432,7 +8648,7 @@ export class OverworldScene extends Phaser.Scene {
     if (this.transitioning) return;
     this.transitioning = true;
     AUDIO.sfx('door_creak');
-    this.doorImgs.get(d)?.setTexture('door_int_open');
+    this.doorImgs.get(d)?.setTexture(interiorDoorTexture(this.mapDef.id, d.to, true));
     this.time.delayedCall(260, () => {
       this.transitioning = false; // hand off to the standard whoosh path
       this.goThroughDoor(d.to, d.tx, d.ty, d.facing);
@@ -12874,6 +13090,7 @@ export class OverworldScene extends Phaser.Scene {
     this.cameras.main.fadeOut(700, 0, 0, 0);
     await this.wait(750);
     GS.setFlag('zapper_done');
+    this.restorePartyForRest();
     AUDIO.sfx('heal');
     // wake in the kid's own bed, morning light already re-derived from flags
     this.scene.start('overworld', { mapId: 'rex_bedroom', x: 3 * TILE_PX + 8, y: 5 * TILE_PX });

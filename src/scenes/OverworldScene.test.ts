@@ -205,6 +205,24 @@ describe('Chapter 7 edge-biome boundaries', () => {
   });
 });
 
+describe('Hickory Hill cave presentation', () => {
+  it('keeps every cave floor inside the cave biome instead of a forest void', () => {
+    for (const id of ['oak_roots', 'oak_hollow', 'oak_heart']) {
+      expect(runtime.resolveEdgeBiome(id)).toBe('cave');
+    }
+  });
+
+  it('maps the whole elevation material family to rooted stone', () => {
+    expect(runtime.UNDEROAK_TILE_SKIN).toMatchObject({
+      cliff_face: 'oak_cave_wall',
+      cliff_lip: 'oak_cave_floor',
+      stairs: 'oak_cave_floor',
+      scorch: 'oak_cave_floor',
+      scorch_ember: 'oak_cave_floor',
+    });
+  });
+});
+
 describe('Chapter 3 field-control scene contract', () => {
   it('spends Puppet PP only after a successful borrow', () => {
     expect(runtime.spendFieldPuppetPp(20, 14, true)).toBe(6);

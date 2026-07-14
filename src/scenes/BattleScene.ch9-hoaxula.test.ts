@@ -281,6 +281,26 @@ describe('Chapter 9 Count Hoaxula actual BattleScene seams', () => {
     expect(scene.finish).toHaveBeenCalledWith('victory');
   });
 
+  it('posts battle winnings to the ATM account without requiring a Dad call', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const { scene, boss } = sceneHarness();
+    (boss as { def: typeof ENEMIES.count_hoaxula }).def = {
+      ...ENEMIES.count_hoaxula,
+      exp: 0,
+      cash: 73,
+      drops: [],
+    };
+    scene.finish = vi.fn();
+    scene.syncHeroMeters = vi.fn();
+    delete scene.victory;
+
+    await battleRuntime().victory.call(scene);
+
+    expect(GS.data.banked).toBe(73);
+    expect(GS.data.pendingDeposit).toBe(0);
+    expect(scene.print).toHaveBeenCalledWith('(Dad deposited $73 into your account.)');
+  });
+
   it('latches and freezes victory before awaiting the stolen-gear caption', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const { scene, boss, hero, heroUnit } = sceneHarness();

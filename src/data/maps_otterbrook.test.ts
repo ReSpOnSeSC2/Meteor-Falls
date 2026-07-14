@@ -406,8 +406,8 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     // Street wear is hand-placed now; no hash-scattered road/sidewalk tile swaps.
     expect(ob.grid.slice(OTTERBROOK_TOWN_BASE).join('')).not.toMatch(/[12]/);
 
-    // A parked car identifies a residential driveway. Each is turned into its
-    // narrow spur and stands on asphalt, never a two-wide bright sidewalk slab.
+    // A parked car identifies a residential driveway. Each has a two-cell spur
+    // wide enough for the human-scale front view and a real body footprint.
     const parkedCars = ob.props.filter((p) => p.sprite === 'vehicle_clunker');
     expect(parkedCars).toHaveLength(5);
     for (const car of parkedCars) {
@@ -415,7 +415,8 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       const y = Math.round(car.y);
       expect(car.rot, `parked car @${car.x},${car.y} faces into its driveway`).toBe(90);
       expect(ob.grid[y]?.[x], `asphalt beneath parked car @${car.x},${car.y}`).toBe('R');
-      expect(ob.grid[y]?.slice(x - 1, x + 2), `one-tile driveway @${car.x},${car.y}`).not.toMatch(/RR|==/);
+      expect(ob.grid[y]?.slice(x, x + 2), `two-cell driveway @${car.x},${car.y}`).toBe('RR');
+      expect(car.solid, `parked car @${car.x},${car.y} collision`).toEqual({ ox: 16, oy: 9, w: 32, h: 24 });
     }
 
     const frontageChars = new Set(['=', ':', 'R', 'D', '_', 'X']);

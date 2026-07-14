@@ -219,7 +219,7 @@ function runtimeFeet(point: Ch1WorldFeet): Chapter1DevProfile['spawn'] {
 
 const audioFor = (point: Ch1WorldFeet): Pick<Chapter1DevProfile, 'expectedMusic' | 'expectedAmbience'> => {
   if (point.mapId === 'rex_bedroom') return { expectedMusic: null, expectedAmbience: null };
-  if (point.mapId === 'oak_heart') return { expectedMusic: 'hill', expectedAmbience: null };
+  if (point.mapId === 'oak_heart') return { expectedMusic: 'hill', expectedAmbience: 'cave' };
   if (point.mapId.startsWith('meadow_')) return { expectedMusic: 'otterbrook', expectedAmbience: null };
   if (point.mapId === 'bus_interior') return { expectedMusic: 'bus', expectedAmbience: null };
   if (point.mapId === 'brickton') return { expectedMusic: 'brickton', expectedAmbience: 'crowd' };

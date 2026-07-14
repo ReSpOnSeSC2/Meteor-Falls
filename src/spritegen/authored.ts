@@ -4,6 +4,7 @@ import { CITY_SCALE_BUILDINGS, GENERATED_BUILDINGS } from './buildings';
 import { SPORT_FRAME_COUNT } from './athletes';
 import { GOLF_FRAME_COUNT } from './golfers';
 import { ART_SCALE } from './scale';
+import { STATIC_CLUNKER_DISPLAY_SIZE } from '../engine/vehicle-presentation';
 
 // Runtime frame sizes = native authoring size × ART_SCALE. The frozen generators
 // draw at native; authored PNGs are sliced into these (larger) runtime frames, so
@@ -86,6 +87,15 @@ const HERO_ART = [
     battlerUrl: new URL('../../assets/art/battlers/dorin_battler_14_28x36.png', import.meta.url).href,
   },
 ] as const;
+
+/** All five playable heroes receive a generated, directional in-car head strip
+ * from their own authored overworld sheet. This keeps the vehicle presentation
+ * character-specific without maintaining five more near-duplicate PNGs. */
+export const VEHICLE_RIDER_HERO_IDS = HERO_ART.map((art) => art.id);
+
+export function vehicleHeadTextureKey(heroId: string): string {
+  return `vehicle_head_${heroId}`;
+}
 
 type HeroArt = (typeof HERO_ART)[number];
 
@@ -568,8 +578,13 @@ const WORLD_PROP_KEYS = [
   // Boss 1's broken body in oak_heart (2026-07-09) — the authored battler's WEAR-2
   // frame reused as a world prop (tick_husk.png = a copy of battle_titanic_tick_w2.png;
   // the enemy master stays the source of truth)
-  'tick_husk',
-  'lemonade', 'bus_sign', 'doormat', 'stairs', 'door_int', 'door_int_open', 'payphone',
+  'tick_husk', 'cave_root_arch', 'cave_mushroom_cluster',
+  'lemonade', 'bus_sign', 'doormat', 'stairs',
+  'door_int', 'door_int_open',
+  'door_hotel', 'door_hotel_open',
+  'door_hardware', 'door_hardware_open',
+  'door_hospital', 'door_hospital_open',
+  'payphone',
   'dumpster', 'bench', 'hydrant', 'planter', 'elevator', 'water_cooler', 'copier',
   'plant_pot', 'holding_door', 'holding_door_1', 'holding_door_2', 'holding_door_3',
   'quota_panel', 'cot', 'office_door', 'bus_seat', 'bus_windows', 'skyline', 'shelf',
@@ -1002,9 +1017,18 @@ export const AUTHORED_WORLD_PROP_DISPLAY_SIZE = {
   // Door dressing is authored at 4x resolution; keep its in-world footprint to
   // a single doorway instead of letting editors infer a billboard-sized mat.
   doormat: { w: 18, h: 10 },
-  // Parked map cars share the editor's compact SNES-scale footprint. Traffic
-  // sprites set their own directional display size and are unaffected by this.
-  vehicle_clunker: { w: 38, h: 16 },
+  door_hotel: { w: 20, h: 28 },
+  door_hotel_open: { w: 20, h: 28 },
+  door_hardware: { w: 20, h: 28 },
+  door_hardware_open: { w: 20, h: 28 },
+  door_hospital: { w: 20, h: 28 },
+  door_hospital_open: { w: 20, h: 28 },
+  cave_root_arch: { w: 53, h: 64 },
+  cave_mushroom_cluster: { w: 30, h: 38 },
+  // Parked map cars share the driven sedan's human-readable footprint. The
+  // authored sheet is padded for three directional views, so squeezing it into
+  // the former 38x16 thumbnail made the front view narrower than Jay's body.
+  vehicle_clunker: STATIC_CLUNKER_DISPLAY_SIZE,
   // Distant Chandrapore wayfinding silhouette. The committed 288x776 texture
   // maps exactly to this 72x194 native footprint at ART_SCALE=4.
   prop_chandrapore_palace_spire: { w: 72, h: 194 },
@@ -2243,6 +2267,31 @@ function makeCharacterCanvas(src: SourceImage, opts: { mirrorFeet?: boolean } = 
   return canvas;
 }
 
+/** Build an eight-frame transparent head/shoulder strip from the canonical
+ * overworld sheet. The crop is deliberately compact enough to sit inside the
+ * authored car glass; the full character sprite remains available for open
+ * bikes and motorcycles. */
+function makeVehicleHeadCanvas(character: HTMLCanvasElement): HTMLCanvasElement {
+  const frameW = 18 * ART_SCALE;
+  const frameH = 16 * ART_SCALE;
+  const cols = 4;
+  const sourceFrames = [0, 4, 8, 12, 24, 27, 30, 33] as const;
+  const canvas = document.createElement('canvas');
+  canvas.width = cols * frameW;
+  canvas.height = 2 * frameH;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+  ctx.imageSmoothingEnabled = false;
+  sourceFrames.forEach((sourceFrame, i) => {
+    const sx = (sourceFrame % 4) * FRAME_W + 3 * ART_SCALE;
+    const sy = Math.floor(sourceFrame / 4) * FRAME_H;
+    const dx = (i % cols) * frameW;
+    const dy = Math.floor(i / cols) * frameH;
+    ctx.drawImage(character, sx, sy, frameW, frameH, dx, dy, frameW, frameH);
+  });
+  return canvas;
+}
+
 function makeBustCanvas(src: SourceImage): HTMLCanvasElement {
   const cols = 4;
   const rows = Math.ceil(TOTAL_BUST_FRAMES / cols);
@@ -2362,7 +2411,17 @@ export function applyAuthoredHeroArt(scene: Phaser.Scene): void {
     if (character) {
       clearHeroAnimations(scene, art.id);
       const mirrorFeet = (art as { mirrorFeet?: boolean }).mirrorFeet ?? false;
-      replaceTextureSheet(scene, art.id, makeCharacterCanvas(character, { mirrorFeet }), FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
+      const characterCanvas = makeCharacterCanvas(character, { mirrorFeet });
+      replaceTextureSheet(scene, art.id, characterCanvas, FRAME_W, FRAME_H, 4, TOTAL_CHARACTER_FRAMES);
+      replaceTextureSheet(
+        scene,
+        vehicleHeadTextureKey(art.id),
+        makeVehicleHeadCanvas(characterCanvas),
+        18 * ART_SCALE,
+        16 * ART_SCALE,
+        4,
+        8,
+      );
     }
   });
   NPC_CHARACTER_ART.forEach((art) => {
