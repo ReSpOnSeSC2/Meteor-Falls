@@ -1,5 +1,13 @@
 # The Diversity Ledger — the NO-FORMULA gate (World Overhaul S5+)
 
+> **Chapter 1 production supersession (ADR-145, 2026-07-14):** this ledger
+> remains historical evidence for the S5+ world-overhaul program; it is not the
+> Chapter 1 ownership or map-completion ledger. The production blueprint freezes
+> spatial signatures and dimensions for exactly 81 Chapter-1-owned maps plus
+> the pre-completion, Chapter-2-owned `brickton_docks` boundary. Unified
+> Otterbrook supersedes the four climb-map concepts, and orphaned
+> `downtown_otterbrook` is retired rather than counted as a distinct signature.
+
 Running log of every SIGNATURE, gimmick, mood, layout-trick, palette, and set-piece used by a
 **rebuilt** (S5+) map. Part of the World Overhaul program (`docs/WORLD_OVERHAUL_HANDOFF.md`).
 The PRIME LAW of S5 is **NO FORMULA**: every area must have a *unique* signature no other area

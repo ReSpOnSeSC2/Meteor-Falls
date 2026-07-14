@@ -1,5 +1,13 @@
 # BALANCE_CH1–3 SPEC — the exact numbers (ADR-122)
 
+> **Chapter 1 location supersession (ADR-145, 2026-07-14):** the balance
+> values remain independently testable, but the Heart Oak/Pond Park and crater
+> location prose below is dated history. Titanic Tick is reached only through
+> Pemberton -> Hodgkin -> the request-gated mower -> shared Trail Key -> the
+> walk-through shed -> `oak_roots` -> `oak_hollow` -> `oak_heart`, where the
+> 200-HP fight occurs during Hush morning. Preserve the older ADR sequence below
+> as the record of how the number changed; do not use it as current routing.
+>
 > Concrete, apply-ready values for the **shipped Ch.1–3 combat rescale**. This
 > is the data the coordinator lands; it touches NO code logic. Damage formulas
 > in `src/battle/formulas.ts` are **unchanged** — every target below is derived

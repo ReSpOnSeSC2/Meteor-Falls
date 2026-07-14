@@ -878,9 +878,14 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '(Home is downhill. Your feet have already voted.)',
   ],
   ch1_cave_threshold: [
-    'At the cave mouth, the Star Locket turns cold against your shirt.',
+    'The west trail ends at a fresh hole burned into Hickory Hill. The Star Locket turns cold against your shirt.',
     'From underground: tick... tick... Each one slower than a clock and much too heavy.',
-    '(The blue quiet is coming from below. There is nowhere else left to look.)',
+    '(Hodgkin\'s shed is behind you. The blue quiet is below. There is nowhere else left to look.)',
+  ],
+  ch1_trail_shed_crossed: [
+    'You duck through the broken rear wall and come out ABOVE the shed.',
+    'The west trail continues toward a scorched cave mouth. Behind you, the locked shed still blocks the woods from edge to edge.',
+    '(So that was the shortcut: acquire one lawnmower, receive one key, walk through one building. Town planning.)',
   ],
   ch1_hush_main_street: [
     'Main Street should smell like coffee, bread, and gasoline. It smells like rain that never arrived.',
@@ -931,13 +936,13 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     "(It's cooling, but it isn't rusting. Whatever it's made of, it's just... waiting. You decide not to touch it.)",
   ],
   // ADR-121 — BOSS 1: the Tick in the hilltop meteor cave (Hickory Hill), draining town
-  heart_oak_approach: [
-    'The deepest chamber of the cave is wrong. The stone sweats a gray frost, and a low sick hum comes off the crater-mound in waves.',
+  tick_cave_approach: [
+    'The deepest chamber of the cave is wrong. The stone sweats a gray frost, and a low sick hum comes off the meteor mound in waves.',
     'Wedged into the meteor at the heart of the hill, something eight-legged turns to look at you. It has been DRINKING the town warm.',
     "(No Glint this time. Just you, the old light he left behind, and a Salt Shaker in your bag. Make it let go.)",
   ],
   tick_after: [
-    "(The Tick is gone, and the warmth it hoarded comes roaring back — into the oak, the pond, the streetlights, the whole gray town all at once.)",
+    '(The Tick is gone, and the warmth it hoarded comes roaring back through stone and roots, down the hill, and into the whole gray town at once.)',
     'The Hush-dark breaks like a fever. Color floods back. Down in town, a bus engine coughs awake, and the road out of Otterbrooke clears in the rising light.',
     "@(Real morning. Finally.) Okay. Twoton. The girl who prays. Let's go find her.",
   ],
@@ -947,8 +952,8 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '* Chad fled to go tell your mom you broke curfew. (Betrayal #1.)',
   ],
   ember_get: [
-    'The Tick deflates. The hum it stole pours back out of it and into the ground, the trees, the air.',
-    'Something small and warm rises from the crater and settles into the locket like it lives there.',
+    'The Tick deflates. The hum it stole pours back out through the cave stone, the roots, the air.',
+    'Something small and warm rises from the cracked meteor mound and settles into the locket like it lives there.',
     '* The Star Locket recorded the 1st HEARTLIGHT!',
     '(Somewhere inside the locket, one instrument starts to play.)',
   ],
@@ -986,7 +991,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   // ADR-131: the first daylight after the porch is the HUSH-DARK — dawn breaks but
   // the stolen Vibe doesn't come back with it, so the whole drained area wears a cold
   // haze. This note (fired ONCE on arrival, OverworldScene.onEnterCutscenes) tells the
-  // player the washed-out palette is a STATE to break (kill the Heart-Oak Tick), not a
+  // player the washed-out palette is a STATE to break (defeat the cave Tick), not a
   // render glitch — it lifts at tick_after.
   dawn_hush_dark: [
     'Morning comes to Otterbrooke — and it comes in WRONG.',
@@ -1019,6 +1024,21 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   oak_roots_enter: [
     '(The cave mouth closes over the sky. The air down here tastes like a battery.)',
+    'Roots punch through the stone in thick black ropes, all leaning deeper as if listening.',
+    'Far below: TICK. Dust hops off the ledge. Your knees consider filing a complaint.',
+  ],
+  oak_hollow_rest: [
+    'Someone dragged a picnic table into this hollow and scratched three words into it: SIT. BREATHE. THEN BUG.',
+    'You sit. The underground pool keeps time in tiny drips instead of enormous ticks.',
+    '* Your HP and PP came all the way back. The cave may be rude, but this table has manners.',
+  ],
+  oak_hollow_rest_again: [
+    'The table still has manners. You take one steady minute while the pool does the talking.',
+    '* HP and PP restored.',
+  ],
+  tick_cave_retry: [
+    'The Titanic Tick lowers its head. It remembers you. Rude, but efficient.',
+    '(The red stop lever was easier.)',
   ],
   // the Giant-Step rebuild (2026-07-09): the great shelf's flight + the ledge present
   sign_cave_shelf: [
@@ -1026,7 +1046,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '* Under the arrow: "IT GETS WORSE." Encouraging.',
   ],
   cave_gift_roots: [
-    'Wedged on the high ledge, where the glow-shrooms keep it cave-cool: a corn dog, still wrapped.',
+    'Wedged on the high ledge, where the cave air keeps it cool: a corn dog, still wrapped.',
   ],
   cave_gift_roots_done: ['(The wrapper is folded neatly under a pebble. Whoever climbed up here had manners.)'],
   sign_tick_husk: [
@@ -1512,18 +1532,30 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '@Bolts, hose, bug spray, mower parts — that mower of Sodd\'s is loose AGAIN, I can hear it from here.',
     '@You need somethin\' specific, you say the word. I got a whole wall of words.',
   ],
-  // S22 (ADR-119) — THE TRAIL KEY (the soft EarthBound interlock)
+  // The Hush-morning route interlock: Hodgkin's request makes the west trail
+  // readable, and the key is a real key-item that never consumes a bag slot.
+  npc_hodgkin_pemberton: [
+    '@Trail key? I have one. I also have a policy against handing strange keys to kids during strange weather.',
+    "@Go talk to Pemberton at the workshop on the WEST LANE. If his radio needle says the cave is the problem, come back and I'll believe the hardware is involved.",
+    '(This may be the first referral in history from a hardware store to a man whose toaster receives weather reports.)',
+  ],
   npc_hodgkin_ask: [
-    '@Hey— actually, you headed up Hickory Trail? Do me a solid.',
-    "@My runaway lawnmower got loose and it's tearing up the trail switchbacks right now. Get up there and shut the dang thing off for me.",
-    "@You do that, the spare TRAIL KEY's yours — opens my supply shed across the cave trail. There's good stuff in there. Define 'good.' Don't.",
+    '@You headed up the WEST trail? Then we have the same problem, except mine has wheels.',
+    "@My demo mower got loose beside Pemberton's workshop. It's patrolling the lane like it pays taxes. Catch it and hit the red stop lever.",
+    "@Do that, the spare TRAIL KEY is yours. My shed blocks the trail from woods to woods; its back wall recently became a door without asking me.",
+  ],
+  npc_hodgkin_active: [
+    "@Mower's still circling the lane above Pemberton's workshop. Listen for an engine making decisions.",
+    '@Catch it, shut it down, then come back here. The TRAIL KEY is on this ring, being smug.',
   ],
   npc_hodgkin_reward: [
-    '@You caught it! I heard it sputter out from DOWN here. Bless you, kid.',
-    '@Here— the TRAIL KEY. The shed across the cave trail is yours to cross. Take the granola bar, it\'s judging me.',
+    '@You caught it! I heard the engine quit from DOWN here. That is the finest silence hardware can make.',
+    '@Here—the TRAIL KEY. Key items ride on the ring, not in your backpack. Even with full hands, you have room for responsible access.',
+    "@Unlock the shed, cross it, and use the hole in the rear wall. You may also take the Choco-Comet bar. It has outlived two price stickers.",
   ],
   npc_hodgkin_after: [
-    '@Get through the trail shed yet? Tell me the granola bar found a good home. I need closure.',
+    '@The key opens the shed at the west trail choke point. Front door in, meteor-shaped mistake out the back.',
+    '@If the Choco-Comet bar found a good home, do not tell me. I am practicing detachment.',
   ],
   sign_pemberton_workshop: [
     "M. L. PEMBERTON — RADIOS, ROCKETS, REPAIRS. If it hums, bring it in. If it whispers, knock first.",
@@ -1542,7 +1574,23 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   npc_pemberton_hush: [
     '@Good. You can see the blue in the daylight too. That rules out my eyes and puts the problem back in the sky.',
     '@My needle keeps pulling toward the new cave above this workshop. Not the crater — UNDER it. Something down there is drinking every warm frequency in town.',
-    '@Follow the west path around the building. If the receiver starts singing, you are going the right way. If it starts speaking clearly, run faster.',
+    "@The west path dead-ends at Hodgkin's trail shed. Find Hodgkin at the hardware store on Main Street; he owns the only key and, regrettably, a self-propelled problem.",
+  ],
+  npc_pemberton_mower: [
+    "@Hodgkin's mower is looping the lane just west of here. It passes every eleven seconds, which is more punctual than the bus.",
+    '@Stop it, return to Hodgkin, get the key. Shed front door in; broken rear wall out. The cave is above that.',
+  ],
+  npc_pemberton_hodgkin: [
+    '@The engine stopped. Excellent. The receiver can hear itself worry again.',
+    '@Go collect the TRAIL KEY from Hodgkin on Main Street. Do not make me transmit this advice over AM radio.',
+  ],
+  npc_pemberton_key: [
+    "@You have Hodgkin's key. Take the west lane, unlock the shed, and keep walking through it.",
+    '@The rear wall is broken open. Beyond it, the signal drops underground so sharply my needle nearly resigned.',
+  ],
+  npc_pemberton_cave: [
+    '@You found the passage. Good. The next signal is not a signal so much as a very large insect keeping time.',
+    '@The cave goes roots, hollow, then the meteor chamber. Save at the hollow payphone. I am a scientist; I believe in backups.',
   ],
   npc_pemberton_after: [
     '@The receiver is quiet again. Real quiet. Thank you.',
@@ -1562,7 +1610,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   trail_shed_gate_locked: [
     "HODGKIN'S TRAIL SHED fills the corridor from woods to woods. There is no path around either side.",
-    '(A heavy brass padlock holds the front door. The keyhole is shaped like a tiny lawnmower.)',
+    '(A heavy brass padlock holds the front door. A tag says: KEY AT HODGKIN HARDWARE — ask about the runaway mower.)',
   ],
   trail_shed_gate_open: [
     'The TRAIL KEY has opened Hodgkin\'s shed. Its front door stands ajar.',
@@ -1570,11 +1618,15 @@ export const DIALOGUE: Record<string, DialogueScript> = {
   ],
   trail_shed_locked: [
     'A heavy padlock holds the shed door shut.',
-    "(The sign reads: \"HODGKIN'S TRAIL SUPPLY — KEYED ACCESS — raccoons are not keyholders.\")",
+    "(The sign reads: \"KEY AT HODGKIN HARDWARE, MAIN STREET. MOWER ASSISTANCE APPRECIATED. RACCOONS STILL NOT KEYHOLDERS.\")",
   ],
   trail_shed_open: [
-    'Behind the crates: a dead flashlight, $60 in a coffee can, and one (1) granola bar.',
-    'You pocket the cash and, after a respectful pause, the granola bar.',
+    'Behind the crates: a dead flashlight, $60 in a coffee can, and one Choco-Comet bar with an ambitious expiration date.',
+    'You pocket the cash and, after a respectful pause, the chocolate.',
+  ],
+  trail_shed_full: [
+    'The coffee can and Choco-Comet bar are still here, but every usable pocket is full.',
+    '(Make one bag slot and come back. Hodgkin has accidentally operated an honest claim check.)',
   ],
   trail_shed_empty: [
     "The supply corner is bare now but for the rope and the judging flashlight. You already took the good stuff.",
@@ -3345,7 +3397,7 @@ export const DIALOGUE: Record<string, DialogueScript> = {
     '{faye} cups the Locket in both hands and listens the way she prays — all the way down.',
     '@...Oh, you poor thing. You\'ve been trying to be heard this whole time.',
     'She hums it back to it. Just once. Just the same small note, returned.',
-    '(The darkness in the room pulled back. There\'s one kind of light the dark can\'t swallow, and she just learned how to sing it out.)',
+    '(The gray between the buildings pulled back. There\'s one kind of light the dark can\'t swallow, and she just learned how to sing it out.)',
     '@Okay. Okay. I can carry that one. Sing it again — I\'ll learn the rest.',
   ],
   awake_the_match_that_stays_lit: [

@@ -4,7 +4,8 @@
  * elevation): oak_roots = the DESCENT (lower hall + patrolling cicada → the
  * GREAT SHELF (L1) → the L2 PRESENT LEDGE), oak_hollow = the BREATHER (pool +
  * picnic + SAVE payphone + the oak_cache overlook ledge), oak_heart = the ARENA
- * (the ROOT DAIS (L1) with the mound + heart_oak trigger atop a grand flight).
+ * (the STONE-AND-ROOT DAIS (L1) with the meteor mound + stable legacy
+ * heart_oak trigger atop a grand flight).
  * ids/names/music/flags all KEPT (save-compat). ELEVATED_ALLOWLIST carries all
  * three; maps_oakcave.test.ts guards the planes.
  *
@@ -155,7 +156,7 @@ export const oakRootsMap: MapDef = {
   ],
   npcs: [],
   signs: [
-    { x: 15, y: 47, dialogue: 'oak_roots_enter' },
+    { x: 15, y: 47, dialogue: 'oak_roots_enter', unlessFlag: 'ch1_oak_roots_enter_seen' },
     { x: 18, y: 31, dialogue: 'sign_cave_shelf' },
     { x: 9, y: 11, dialogue: 'cave_gift_roots', unlessFlag: 'cave_gift_roots' },
     { x: 9, y: 11, dialogue: 'cave_gift_roots_done', ifFlag: 'cave_gift_roots' },
@@ -174,7 +175,10 @@ export const oakRootsMap: MapDef = {
   ],
   triggers: [],
   patrols: [
-    { id: 'roots_sentry', enemy: 'coily_cicada', route: [[11, 36], [24, 36]], sight: 4 },
+    {
+      id: 'roots_sentry', enemy: 'coily_cicada', route: [[11, 36], [24, 36]], sight: 4,
+      ifFlag: 'zapper_done', unlessFlag: 'tick_defeated',
+    },
   ],
 };
 

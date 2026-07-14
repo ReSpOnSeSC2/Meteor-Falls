@@ -1,6 +1,15 @@
 # Otterbrooke — REFERENCE-FAITHFUL rebuild spec (user-locked 2026-07-04)
 
-*The definitive layout for a from-scratch rebuild of `growOtterbrook`, taken directly from
+> **Historical design input—superseded by ADR-145 (2026-07-14).** The final
+> executable town is unified `otterbrook` (112×198) within an exact 81-map
+> Chapter 1 roster. The four climb ids and orphaned `downtown_otterbrook` are
+> retired through save v27. Titanic Tick remains 200 HP but is staged in the
+> `oak_roots` → `oak_hollow` → `oak_heart` Hickory Hill cave route during Hush morning;
+> the crater belongs to the Hush Sentinel. Use this document only to understand
+> the visual/layout intent that informed the implemented town.
+
+*The definitive layout at this historical milestone for a from-scratch rebuild
+of `growOtterbrook`, taken directly from
 `assets/art/masters/world/otterbrook-CONCEPT-locked.png` + the user's explicit direction.
 Supersedes the S4 elevation-merge layout (which the user rejected: "the entire layout is
 completely wrong… both layout and look"). Build to THIS, not the current map.*

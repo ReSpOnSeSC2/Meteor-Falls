@@ -1887,6 +1887,23 @@ const ENEMY_OVERWORLD_ART = [
 const ENEMY_MINI_ART = [
   { key: 'mini_skeeter_swarm', url: new URL('../../assets/art/enemies/mini_skeeter_swarm.png', import.meta.url).href },
   { key: 'mini_pigeon_gang', url: new URL('../../assets/art/enemies/mini_pigeon_gang.png', import.meta.url).href },
+  // Ch.1 same-identity fallbacks — deterministic 64px derivatives of each
+  // retained authored battler. The authored 8-dir sheet remains first choice;
+  // these keep schema/debug/failure paths from borrowing an unrelated creature.
+  { key: 'mini_blazer_smiler', url: new URL('../../assets/art/enemies/mini_blazer_smiler.png', import.meta.url).href },
+  { key: 'mini_borden', url: new URL('../../assets/art/enemies/mini_borden.png', import.meta.url).href },
+  { key: 'mini_sprinkler_sentry', url: new URL('../../assets/art/enemies/mini_sprinkler_sentry.png', import.meta.url).href },
+  { key: 'mini_recycling_raccoon', url: new URL('../../assets/art/enemies/mini_recycling_raccoon.png', import.meta.url).href },
+  { key: 'mini_unionized_gnome', url: new URL('../../assets/art/enemies/mini_unionized_gnome.png', import.meta.url).href },
+  { key: 'mini_mandatory_memo', url: new URL('../../assets/art/enemies/mini_mandatory_memo.png', import.meta.url).href },
+  { key: 'mini_motivational_poster', url: new URL('../../assets/art/enemies/mini_motivational_poster.png', import.meta.url).href },
+  { key: 'mini_quota_clock', url: new URL('../../assets/art/enemies/mini_quota_clock.png', import.meta.url).href },
+  { key: 'mini_expired_meter', url: new URL('../../assets/art/enemies/mini_expired_meter.png', import.meta.url).href },
+  { key: 'mini_showroom_mannequin', url: new URL('../../assets/art/enemies/mini_showroom_mannequin.png', import.meta.url).href },
+  { key: 'mini_good_investment', url: new URL('../../assets/art/enemies/mini_good_investment.png', import.meta.url).href },
+  { key: 'mini_rogue_icecream_truck', url: new URL('../../assets/art/enemies/mini_rogue_icecream_truck.png', import.meta.url).href },
+  { key: 'mini_tick_nymph', url: new URL('../../assets/art/enemies/mini_tick_nymph.png', import.meta.url).href },
+  { key: 'mini_the_suit', url: new URL('../../assets/art/enemies/mini_the_suit.png', import.meta.url).href },
   // Ch.4 Norway roamers — authored overworld minis (flat-magenta gen → slice-enemy-mini)
   { key: 'mini_colossal_gnat', url: new URL('../../assets/art/enemies/mini_colossal_gnat.png', import.meta.url).href },
   { key: 'mini_frost_hare', url: new URL('../../assets/art/enemies/mini_frost_hare.png', import.meta.url).href },

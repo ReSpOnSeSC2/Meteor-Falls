@@ -664,12 +664,16 @@ export const BESPOKE_AREA_FACADES: readonly string[] = [
  * The door-less Ch.1–2 cottages join here too: their hand-tuned data solids DID
  * drift — the drawn bodies are ~310–350px wide but the solids were ~200–264, so
  * you could walk through the right side. Texture-derived collision matches the
- * drawn footprint on every map. (house_rex is enterable, so it keeps a corrected
- * data solid + door zone instead — routing it here would move its door box/glow.)
+ * drawn footprint on every map. The enterable house_rex now joins this path too:
+ * its Chapter 1 scale pass keeps the foot and centre fixed while the runtime
+ * derives the scaled wall opening and door glow from the same rendered texture.
  */
 export const LANDMARK_FACADE_SPRITES: ReadonlySet<string> = new Set([
   'clubhouse_grand', 'golf_gatehouse', 'mansion_a', 'mansion_b', 'mansion_c',
-  'house_chad', 'house_a', 'house_b',
+  // Jay's enlarged Chapter 1 house now shares the same texture-derived wall /
+  // doorway geometry as every other Otterbrooke home. Its historical data solid
+  // is equivalent at 1x, but would otherwise be multiplied twice at PropDef.scale.
+  'house_rex', 'house_chad', 'house_a', 'house_b',
   // The Valle Dorado set joined the hi-res promotion (2026-07) — the new art is
   // wider than the old hand-tuned data solids (e.g. valle_shop draws 102 native
   // px over a 82px solid), so route them through the same texture-derived

@@ -1,5 +1,14 @@
 # Otterbrook = Onett (Map #1) — Asset Manifest
 
+> **Historical asset-build ledger—superseded by ADR-145 (2026-07-14).** The
+> prompts, batches, and locked concept remain provenance; their unchecked
+> status is not a current gap claim. Production uses unified Otterbrook and the
+> `oak_roots`/`oak_hollow`/`oak_heart` route, not proposed `boss_hill` or a live
+> downtown annex. Titanic Tick is the 200-HP Hush-morning boss in the deepest
+> Hickory Hill cave (`oak_heart`). Current
+> runtime/master registration, native-detail contacts, and automated asset
+> contracts—not the historical queue below—decide whether an asset is complete.
+
 > **The locked concept illustration is the canonical visual target.** File:
 > `otterbrook_USER_locked.png` — "Otterbrooke, OH — town under the stars": rounded
 > brown Onett cliffs framing a wooded meteor-hill (top-left cave mouth, top-right

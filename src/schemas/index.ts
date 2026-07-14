@@ -644,6 +644,10 @@ export const PatrolDefSchema = z.strictObject({
   route: z.array(z.tuple([z.number(), z.number()])).min(1),
   /** sight-line length in tiles (default 5) */
   sight: z.number().positive().optional(),
+  /** Optional phase gates. These mirror props/spawners: a patrol is built only
+   * while its route-specific state is live. */
+  ifFlag: z.string().min(1).optional(),
+  unlessFlag: z.string().min(1).optional(),
   /**
    * S2 PRODUCTIVITY LOCK: a patrolBattle victory sets this flag, and the
    * patrol stays down across map re-entry once it's set (its quota counted).

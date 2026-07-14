@@ -1,5 +1,13 @@
 # WORLD OVERHAUL — Ch3+ program handoff (the master doc)
 
+> **Chapter 1 boundary (ADR-145, 2026-07-14):** this Ch3+ handoff is not a
+> current Chapter 1 plan. Chapter 1's production contract is its 81-map
+> blueprint plus the pre-completion, Chapter-2-owned docks edge. Unified
+> Otterbrook is stable; `downtown_otterbrook` and the four predecessor climb
+> ids are retired through save v27. Do not derive Chapter 1 status, dimensions,
+> profiles, art gaps, or completion evidence from historical program examples
+> below.
+
 > **Chapter 8 production rollout (2026-07-13):** China now has four production
 > maps, a five-quest regional contract, real Mushroomized and Teleport Beta,
 > contextual branch-safe panels, stable Lotus tenancy, thirteen developer

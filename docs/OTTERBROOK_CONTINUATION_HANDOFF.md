@@ -1,5 +1,13 @@
 # HANDOFF — continue building Otterbrooke (Ch.1) from the elevated-map milestone
 
+> **Retired handoff—superseded by ADR-145 (2026-07-14).** Do not paste or
+> execute this old continuation prompt as current work. Its baseline, "DONE,"
+> "REMAINS," gray-box, separate-downtown, and boss-routing claims preserve a
+> historical milestone. Current canon is the exact 81-map Chapter 1 blueprint,
+> unified 112×198 Otterbrook, retired downtown/four climb ids with save-v27
+> recovery, the 200-HP Hickory Hill cave Tick, and the staged Brickton payphone First
+> Heartlight with Mia.
+
 > Paste this whole file into a fresh Claude Code / AI session in `C:\Meteor Falls`. It is a
 > self-contained continuation prompt: mission, exactly what's DONE, what REMAINS (prioritised),
 > the map ARCHITECTURE + technical knowledge you need, the WORKFLOW + recipes + gotchas, and

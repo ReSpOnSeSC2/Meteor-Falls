@@ -8,8 +8,8 @@ import { DIALOGUE } from './dialogue';
 
 /**
  * Ch.1 CLOSE — THE FIRST HEARTLIGHT, as a hybrid: the painted panel establishes
- * the Resonance Site "for a second," then we CUT to live actors — {faye} (Mia)
- * crosses to the Ember, kneels to listen, hums its note back, and the first
+ * the just-silent Brickton payphone, then we CUT to live actors — {faye} (Mia)
+ * crosses to the Star Locket, listens, hums its note back, and the first
  * Heartlight wakes while {rex} watches. Lines are the canon
  * `awake_the_first_heartlight` beat.
  */
@@ -18,19 +18,19 @@ export async function ch1FirstHeartlight(d: Director): Promise<void> {
 
   // 1) establish with the painted still
   await d.card('first_heartlight', {
-    caption: 'The Resonance Site. The night it all begins.',
+    caption: 'The Brickton payphone goes still. The first warm note does not.',
   });
 
-  // 2) cut to the in-engine set + actors
-  d.music('starfall');
-  d.set('chamber');
-  const ember = d.glow(230, 150, { r: 5 });
+  // 2) cut to a daylight street abstraction + the same two live actors
+  d.music('heartlight');
+  d.set('dawn');
+  const locket = d.glow(230, 150, { r: 5 });
   const mia = d.actor('faye', { x: 300, y: 150, facing: 'left', scale: 2 });
   const rex = d.actor('rex', { x: 92, y: 154, facing: 'right', scale: 2 });
   await d.wait(450);
 
-  await d.say(L[0]); // the site holds its breath; the Ember hums an apology
-  await mia.moveTo(252, 1100); // she crosses to the Ember
+  await d.say(L[0]); // the phone goes still; the Locket answers
+  await mia.moveTo(252, 1100); // she crosses to the Locket
   mia.face('left');
   mia.emote('think');
   await d.say(L[1]); // {faye} kneels and listens the way she prays
@@ -42,7 +42,7 @@ export async function ch1FirstHeartlight(d: Director): Promise<void> {
 
   d.flash(420);
   d.shake(440, 0.006);
-  ember.brighten();
+  locket.brighten();
   await d.say(L[4]); // the dark flinched — a light it cannot eat
 
   mia.emote('happy');

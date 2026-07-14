@@ -1,5 +1,19 @@
 # PKG-09 - Existing NPCs + Chapters 1-3 world polish
 
+> **Chapter 1 production amendment (ADR-145, 2026-07-14):** the expanded
+> Chapter 1 enemy base/wear/overworld families are authored; no gray-box or
+> queued-art claim in an older plan overrides runtime registration and strict
+> audit evidence. Borden, the Realtor, and the Waitress now have authored
+> 46-frame, 384x1536 runtime/master sheets with distinct grounded walk poses and
+> fresh native review contacts. Deterministic source/runtime/master/review
+> hashes live in
+> `assets/art/masters/generated/ch1-expanded/npc-walk-atlas-provenance.json`.
+> Rebuild one with `npm run ch1:npc:borden`, `npm run ch1:npc:realtor`, or
+> `npm run ch1:npc:waitress`; rebuild all three with `npm run ch1:npcs:walks`.
+> Waiting-bench and ward-bed acceptance retains clean alpha-edge/compositing
+> evidence. Current contacts are assembled under `output/ch1_asset_contacts/`,
+> including accepted real runtime phase captures.
+
 Bring the already-shipped Ch.1-3 overworld up to authored quality.
 
 ## A. NPC overworld sprites - 42 + Glint special, 46-frame 96x128 runtime / 24x32 native
@@ -36,6 +50,12 @@ pyramid gate, crate, gangplank, gift box. Path `assets/art/world/props/<name>.pn
 Houses (`house_rex`, `house_chad`, `house_a`, `house_b`), drugstore, arcade,
 chapel, `valle_house_b`, the city catalog, and landmark facades
 (`src/spritegen/buildings.ts`). Path `assets/art/world/facades/<name>.png`.
+
+Current Otterbrook composition uses 47 distinct physical facade placements
+after collapsing open/closed state twins. Measured facade height is 3.104
+minimum, 3.844 mean, 3.75 median, and 5.31 maximum Jay-heights; residential
+homes stay in the 3.6-3.9 band. These are live placement measurements, not the
+historical package's approximate count of facade art identities.
 
 ## E. Battle backgrounds - Ch.1-3, about 5
 

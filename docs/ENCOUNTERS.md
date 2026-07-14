@@ -159,7 +159,6 @@ Target density band: **0–0** enemies/screen.
 | diner_kitchen | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | dos_f1 | 1040 | 2.97 | 0 | 0 | — | — | — | — | 0 | 0 |
 | dos_f3 | 1176 | 3.36 | 0 | 0 | — | — | — | — | 0 | 0 |
-| downtown_otterbrook | 448 | 1.28 | 0 | 0 | — | — | — | — | 0 | 0 |
 | drugstore_int | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | drugstore_pharmacy | 176 | 0.5 | 0 | 0 | — | — | — | — | 0 | 0 |
 | ducal_crown | 2080 | 5.94 | 0 | 0 | — | — | — | — | 0 | 0 |
@@ -321,7 +320,7 @@ Target density band: **0–0** enemies/screen.
 
 ## HARD-rule summary
 
-271/273 canon maps clear the hard pressure rules (grace ≥ 16px, prox ≥ 24px).
+270/272 canon maps clear the hard pressure rules (grace ≥ 16px, prox ≥ 24px).
 
 Maps flagged (each is FIXED or carries a reasoned waiver in `tools/content-validate.ts`):
 

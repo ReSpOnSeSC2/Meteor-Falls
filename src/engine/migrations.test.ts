@@ -17,6 +17,7 @@ import {
   CHAPTER8_PARKING_RECOVERY,
   CHAPTER9_LAYOUT_RECOVERY,
   CHAPTER9_PARKING_RECOVERY,
+  CHAPTER1_LAYOUT_RECOVERY,
 } from './migrations';
 import { BAG_MAX } from '../data/items';
 import { HEROES, availableAbilities, type HeroId } from '../data/heroes';
@@ -31,6 +32,7 @@ import { buildChapter9Maps, CH9_MAP_IDS, CH9_WORLD, nativeFeet as chapter9Native
 import { CHAR_LEGEND, MAPS } from '../data/maps';
 import { TILESET } from '../spritegen/tiles';
 import { vehicleParkingSlotsOverlap } from './vehicle-domain';
+import { CH1_RETIRED_MAP_IDS, CH1_WORLD } from '../data/maps_ch1';
 
 /** a hero exactly as v1 saves stored them — no bag, no equip */
 function v1Hero(id: HeroId, level: number, name?: string): Record<string, unknown> {
@@ -1639,7 +1641,7 @@ describe('save migration registry -- v24 to v25: Chapter 8 production rollout', 
 
   it('preserves malformed/current/future echo JSON byte-exact while outer future saves reject', () => {
     const malformed = '{not-json';
-    const current = ' { "version": 26, "custom": true } ';
+    const current = ' { "version": 27, "custom": true } ';
     const future = JSON.stringify({ version: 99, custom: true });
     const raw = v24At('otterbrook');
     raw.echoes = {
@@ -1675,7 +1677,7 @@ describe('save migration registry -- v24 to v25: Chapter 8 production rollout', 
   });
 });
 
-describe('save migration registry -- v25 to v26: Chapter 9 production rollout', () => {
+describe('save migration registry -- v25 forward: Chapter 9 production rollout', () => {
   const v25At = (map: string): Record<string, unknown> => {
     const raw = newGameData() as unknown as Record<string, unknown>;
     raw.version = 25;
@@ -1698,9 +1700,9 @@ describe('save migration registry -- v25 to v26: Chapter 9 production rollout', 
     CH9_WORLD.monastery.migration,
   ] as const;
 
-  it('pins version 26 and every stable Chapter 9 map through CH9_WORLD', () => {
-    expect(CURRENT_SAVE_VERSION).toBe(26);
-    expect(newGameData().version).toBe(26);
+  it('pins the current version and every stable Chapter 9 map through CH9_WORLD', () => {
+    expect(CURRENT_SAVE_VERSION).toBe(27);
+    expect(newGameData().version).toBe(27);
     expect(Object.keys(CHAPTER9_LAYOUT_RECOVERY)).toEqual([...CH9_MAP_IDS]);
     expect(Object.keys(CHAPTER9_PARKING_RECOVERY)).toEqual([...CH9_MAP_IDS]);
 
@@ -1843,9 +1845,9 @@ describe('save migration registry -- v25 to v26: Chapter 9 production rollout', 
     const migrated = migrateSave(outer, newGameData());
     const childAfter = JSON.parse(migrated.echoes.stack[0].json);
     const grandchildAfter = JSON.parse(childAfter.echoes.stack[0].json);
-    expect(migrated.version).toBe(26);
-    expect(childAfter.version).toBe(26);
-    expect(grandchildAfter.version).toBe(26);
+    expect(migrated.version).toBe(CURRENT_SAVE_VERSION);
+    expect(childAfter.version).toBe(CURRENT_SAVE_VERSION);
+    expect(grandchildAfter.version).toBe(CURRENT_SAVE_VERSION);
     expect(childAfter.x).toBe(s(CHAPTER9_LAYOUT_RECOVERY.castle_hoaxula.x));
     expect(grandchildAfter.x).toBe(s(CHAPTER9_LAYOUT_RECOVERY.stone_brow_monastery.x));
     expect(grandchildAfter.flags).toEqual({
@@ -1877,6 +1879,113 @@ describe('save migration registry -- v25 to v26: Chapter 9 production rollout', 
     expect(first.facing).toBe('upright');
     expect(first.flags).toEqual({ custom_story: 9, ember9: false, ch9_complete: false });
     expect(first.vehicleParking).toEqual(raw.vehicleParking);
-    expect(() => migrateSave({ ...newGameData(), version: 27 }, newGameData())).toThrow(/unknown save version/);
+    expect(() => migrateSave({ ...newGameData(), version: CURRENT_SAVE_VERSION + 1 }, newGameData())).toThrow(/unknown save version/);
+  });
+});
+
+describe('save migration registry -- v26 to v27: Chapter 1 retired-map recovery', () => {
+  const v26At = (map: string): Record<string, unknown> => {
+    const raw = newGameData() as unknown as Record<string, unknown>;
+    raw.version = 26;
+    raw.map = map;
+    raw.x = -701;
+    raw.y = 99999;
+    raw.facing = 'left';
+    raw.flags = { custom_ch1_truth: true, tick_defeated: false };
+    raw.callers = [{ id: 'old_friend', name: 'Old Friend', effect: 'heal', power: 77 }];
+    raw.cashOnHand = 4321;
+    raw.customCompatibility = { nested: ['preserve', 27] };
+    return raw;
+  };
+
+  it('pins the exact retired roster to the one phase-safe Otterbrook anchor', () => {
+    expect(CURRENT_SAVE_VERSION).toBe(27);
+    expect(newGameData().version).toBe(27);
+    expect(Object.keys(CHAPTER1_LAYOUT_RECOVERY)).toEqual([...CH1_RETIRED_MAP_IDS]);
+    expect(CH1_WORLD.recovery).toMatchObject({
+      mapId: 'otterbrook',
+      tile: { x: 56, y: 100 },
+      facing: 'down',
+    });
+    for (const retired of CH1_RETIRED_MAP_IDS) {
+      expect(CHAPTER1_LAYOUT_RECOVERY[retired]).toBe(CH1_WORLD.recovery);
+    }
+  });
+
+  it.each(CH1_RETIRED_MAP_IDS)('recovers %s and preserves unrelated state exactly', (retired) => {
+    const raw = v26At(retired);
+    const before = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    const migrated = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+    expect(migrated).toEqual({
+      ...before,
+      version: CURRENT_SAVE_VERSION,
+      map: CH1_WORLD.recovery.mapId,
+      x: s(CH1_WORLD.recovery.x),
+      y: s(CH1_WORLD.recovery.y),
+      facing: CH1_WORLD.recovery.facing,
+    });
+  });
+
+  it('does not move an unrelated v26 save', () => {
+    const raw = v26At('brickton');
+    const before = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    expect(migrateSave(JSON.parse(JSON.stringify(raw)), newGameData())).toEqual({
+      ...before,
+      version: CURRENT_SAVE_VERSION,
+    });
+  });
+
+  it('recovers retired maps recursively through a Held Breath stack', () => {
+    const grandchild = v26At('hickory_hill');
+    grandchild.customDepth = 'grandchild';
+    const child = v26At('hickory_trail');
+    child.echoes = {
+      stack: [{ choice: 'ch6_string', chapter: 6, json: JSON.stringify(grandchild), at: 1 }],
+      breaths: 2,
+      rewindCount: 1,
+    };
+    const outer = v26At('downtown_otterbrook');
+    outer.echoes = {
+      stack: [{ choice: 'ch6_string', chapter: 6, json: JSON.stringify(child), at: 2 }],
+      breaths: 1,
+      rewindCount: 2,
+    };
+
+    const migrated = migrateSave(outer, newGameData());
+    const childAfter = JSON.parse(migrated.echoes.stack[0].json);
+    const grandchildAfter = JSON.parse(childAfter.echoes.stack[0].json);
+    for (const save of [migrated, childAfter, grandchildAfter]) {
+      expect(save.version).toBe(CURRENT_SAVE_VERSION);
+      expect(save.map).toBe(CH1_WORLD.recovery.mapId);
+      expect(save.x).toBe(s(CH1_WORLD.recovery.x));
+      expect(save.y).toBe(s(CH1_WORLD.recovery.y));
+      expect(save.facing).toBe(CH1_WORLD.recovery.facing);
+    }
+    expect(grandchildAfter.customDepth).toBe('grandchild');
+  });
+
+  it('repairs an older nested snapshot inside a current outer save and is idempotent', () => {
+    const child = v26At('whisperwood_rise');
+    const outer = newGameData();
+    outer.echoes.stack = [{
+      choice: 'ch6_string', chapter: 6, json: JSON.stringify(child), at: 9,
+    }];
+    const first = migrateSave(JSON.parse(JSON.stringify(outer)), newGameData());
+    const childAfter = JSON.parse(first.echoes.stack[0].json);
+    expect(childAfter.map).toBe('otterbrook');
+    expect(childAfter.version).toBe(CURRENT_SAVE_VERSION);
+    const again = migrateSave(JSON.parse(JSON.stringify(first)), newGameData());
+    expect(JSON.stringify(again)).toBe(JSON.stringify(first));
+  });
+
+  it('is deterministic and rejects future outer saves', () => {
+    const raw = v26At('hill_road');
+    const first = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+    const repeated = migrateSave(JSON.parse(JSON.stringify(raw)), newGameData());
+    expect(JSON.stringify(repeated)).toBe(JSON.stringify(first));
+    expect(() => migrateSave(
+      { ...newGameData(), version: CURRENT_SAVE_VERSION + 1 },
+      newGameData(),
+    )).toThrow(/unknown save version/);
   });
 });

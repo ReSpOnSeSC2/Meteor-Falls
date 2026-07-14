@@ -34,7 +34,7 @@ describe('HICKORY HILL CAVE — the Giant-Step rebuild', () => {
     expect(MAPS.oak_heart.doors.some((d) => d.to === 'oak_hollow')).toBe(true);
   });
 
-  it('keeps the boss beat: the heart_oak trigger sits ON the raised dais', () => {
+  it('keeps the cave boss beat: the stable heart_oak trigger sits ON the raised meteor dais', () => {
     const heart = MAPS.oak_heart;
     const trig = heart.triggers.find((t) => t.id === 'heart_oak');
     expect(trig).toBeDefined();
@@ -63,7 +63,10 @@ describe('HICKORY HILL CAVE — the Giant-Step rebuild', () => {
 
   it('keeps the lower hall alive: the patrolling cicada + gated fight bands', () => {
     const roots = MAPS.oak_roots;
-    expect(roots.patrols?.some((p) => p.id === 'roots_sentry')).toBe(true);
+    expect(roots.patrols?.find((p) => p.id === 'roots_sentry')).toMatchObject({
+      ifFlag: 'zapper_done',
+      unlessFlag: 'tick_defeated',
+    });
     expect(roots.spawners.length).toBeGreaterThanOrEqual(3);
     for (const s of roots.spawners) {
       expect(s.ifFlag).toBe('zapper_done');

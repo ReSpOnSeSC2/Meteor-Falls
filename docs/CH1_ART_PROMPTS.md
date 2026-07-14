@@ -1,5 +1,17 @@
 # ☄️ Chapter 1 — AI Image-Gen Prompts (Expanded Opener)
 
+> **Production supersession (ADR-145, 2026-07-14):** this file is retained as
+> prompt and provenance history, not as a live gap list or wiring guide. The
+> four former climb maps and `downtown_otterbrook` are retired; the hilltop cave
+> route uses `oak_roots` → `oak_hollow` → `oak_heart`; Titanic Tick is 200 HP
+> and its reveal belongs in the deepest cave arena during Hush morning; First Heartlight
+> follows the Manager and Mom payphone sequence with Jay and Mia. Before this
+> pass, ordinary play directly displayed only the older `meteor_2am_4x` and
+> `hickory_hill_4x` panels—registry membership did not prove live use. The
+> expanded enemy base/wear/overworld art described as queued below has since
+> landed. Use the production blueprint, runtime registry tests, retained
+> masters, and `output/ch1_asset_contacts/` for current status.
+
 **Purpose.** Generate every NEW asset the expanded Chapter 1 needs, in our
 established house style, via the ChatGPT / imagegen → PNG workflow. You generate
 the masters PNG; then slice/downscale into the runtime sheet and wire it in

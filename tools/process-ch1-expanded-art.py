@@ -203,11 +203,23 @@ def facade(name: str, src_name: str, key: str, width: int) -> None:
     save(out, WORLD_FACADES / f"{name}.png")
 
 
+# These accepted outputs have dimensions and cleanup that the broad legacy
+# package processor cannot reproduce. Keep their slots in each source sheet so
+# splitting stays aligned, but rebuild/verify the files only through
+# tools/repair-ch1-raster-assets.ts and its retained accepted masters.
+ACCEPTED_RETAINED_PROP_OUTPUTS = {
+    "prop_waiting_bench",
+    "prop_wardbed",
+}
+
+
 def prop_sheet(sheet_name: str, src_name: str, key: str, specs: list[tuple[str, tuple[int, int]]]) -> None:
     clean = remove_connected_key(load(src_name), key)
     save(clean, MASTER_WORLD / f"{sheet_name}-transparent.png")
     parts = split_spaced(load(src_name), len(specs), key)
     for part, (name, target) in zip(parts, specs):
+        if name in ACCEPTED_RETAINED_PROP_OUTPUTS:
+            continue
         save(contain(part, target, pad=2), WORLD_PROPS / f"{name}.png")
 
 
@@ -235,13 +247,16 @@ def hickory_tiles() -> None:
 
 NPCS = {
     "npc_hodgkin": "npc_hodgkin-8dir-source.png",
-    "npc_waitress": "npc_waitress-8dir-source.png",
-    "npc_borden": "npc_borden-8dir-source.png",
     "npc_clerk": "npc_clerk-8dir-source.png",
     "npc_depot_clerk": "npc_depot_clerk-8dir-source.png",
-    "npc_realtor": "npc_realtor-8dir-source.png",
     "npc_bert": "npc_bert-8dir-source.png",
 }
+
+# Borden, the realtor, and the waitress now have genuinely authored walk cycles
+# (stand / step A / step B for five facings). They are intentionally absent from
+# NPCS: running this broad package processor must never replace those cycles with
+# the old single-pose, nudge-only synthesis. Rebuild them with the named
+# `ch1:npc:*` scripts, which route through assemble-ch1-walk-atlas.ts.
 
 FRAME_W = 96
 FRAME_H = 128

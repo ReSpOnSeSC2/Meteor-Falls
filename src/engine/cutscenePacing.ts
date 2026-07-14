@@ -14,6 +14,20 @@ export const CINEMATIC_TEXT_TIMING = {
   liveFadeOutMs: 420,
 } as const;
 
+/** A held advance deliberately rolls through successive timed captions, but a
+ * tiny guard keeps one stale held frame from erasing a newly faded-in card. */
+export const CINEMATIC_HELD_SKIP_GUARD_MS = 180;
+
+export function timedCaptionComplete(
+  elapsedMs: number,
+  durationMs: number,
+  input: Readonly<{ pressed: boolean; held: boolean }>,
+): boolean {
+  return elapsedMs >= durationMs
+    || input.pressed
+    || (input.held && elapsedMs >= CINEMATIC_HELD_SKIP_GUARD_MS);
+}
+
 export function readableCaptionMs(text: string, minimumMs = 0): number {
   const normalized = text.replace(/\s+/g, ' ').trim();
   const calculated = CINEMATIC_TEXT_TIMING.leadInMs

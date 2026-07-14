@@ -29,6 +29,7 @@ import { occupyCity } from './citylife';
 import { SETTLEMENT_AMENITIES, cityServiceNpcId } from './city_amenities';
 import { promoteFormalCityScale } from './formal_city_scale';
 import { AREA_SKINS } from '../spritegen/buildings';
+import { CH1_GENERATED_OTTERBROOK_UNIT_IDS, CH1_WORLD } from './maps_ch1';
 
 export { Grid, seededRng, treeSprite, doorstepOf } from './mapkit';
 import type { MapDef, PropDef, NpcDef, SignDef, AmbienceId, ReflectZone } from '../schemas';
@@ -197,7 +198,7 @@ const OAK: { ox: number; oy: number; w: number; h: number } = { ox: 7, oy: 22, w
 const PICNIC_SOLID: { ox: number; oy: number; w: number; h: number } = { ox: 2, oy: 8, w: 32, h: 14 };
 const SIGN_SOLID: { ox: number; oy: number; w: number; h: number } = { ox: 3, oy: 10, w: 10, h: 7 };
 
-const OTTERBROOK_LANDMARK_DIMS: Record<string, readonly [number, number]> = {
+export const OTTERBROOK_LANDMARK_DIMS: Readonly<Record<string, readonly [number, number]>> = {
   house_rex: [375, 384], // OBLIQUE
   house_chad: [386, 384], // OBLIQUE
   house_a: [457, 384], // OBLIQUE
@@ -221,6 +222,11 @@ const OTTERBROOK_LANDMARK_DIMS: Record<string, readonly [number, number]> = {
   bldg_ob_house_c: [348, 384], // OBLIQUE
   bldg_ob_house_green: [400, 384], // OBLIQUE
   bldg_ob_workshop: [386, 384], // OBLIQUE
+  // AuthoredWorldPropDisplaySize is 96×99 native px; record its equivalent
+  // runtime dimensions here so the unified Otterbrooke scale audit includes
+  // the key-gated shed alongside the hi-res facade textures.
+  bldg_ob_trail_shed: [384, 396],
+  bldg_ob_trail_shed_open: [384, 396],
   bldg_ob_hotel: [269, 384], // OBLIQUE — OTTERBROOKE HOTEL
   // EB SCALE PASS (2026-07-11) — storey-band-cloned tall derivations
   // (tools/derive-tall-facades.ts): the downtown skyline anchors. EB downtown
@@ -237,6 +243,43 @@ const OTTERBROOK_LANDMARK_DIMS: Record<string, readonly [number, number]> = {
   facade_realty: [300, 227], // OTTERBROOK REAL ESTATE (door frac ≈ .72)
   facade_autolot: [330, 235], // OTTERBROOK USED CARS (Bert's lot)
 };
+
+/**
+ * Otterbrooke's exterior scale contract, expressed as per-instance multipliers
+ * over the authored facade textures. Jay's runtime frame is 128 px tall; most
+ * of the original 384 px facades therefore read as exactly 3.0 Jays, and the
+ * short realty/car-lot art read as only 2.2-2.7. This pass moves ordinary homes
+ * to 3.75 Jays and gives the civic/downtown anchors a 3.6-5.3 Jay silhouette,
+ * while retaining a couple of deliberately low, wide storefronts for rhythm.
+ *
+ * Keep these named bands centralized: placement, footprint clearing, doors,
+ * generated-unit returns, and the scale audit tests all consume the same
+ * PropDef.scale rather than maintaining a second visual-only enlargement.
+ */
+export const OTTERBROOK_BUILDING_SCALE = {
+  hillHome: 1.25,
+  home: 1.25,
+  cottage: 1.20,
+  apartment: 1.30,
+  civicDepot: 1.16,
+  civicTower: 1.18,
+  civicInstitution: 1.32,
+  civicStation: 1.22,
+  civicBrick: 1.25,
+  downtownLow: 1.16,
+  downtownStore: 1.28,
+  downtownBank: 1.40,
+  downtownTall: 1.16,
+  chapel: 1.35,
+  realty: 1.75,
+  autoLot: 1.80,
+} as const;
+
+function otterbrookResidentialScale(sprite: string): number {
+  if (sprite === 'bldg_ob_cottage') return OTTERBROOK_BUILDING_SCALE.cottage;
+  if (sprite === 'bldg_apartments' || sprite === 'bldg_ob_apt_green') return OTTERBROOK_BUILDING_SCALE.apartment;
+  return OTTERBROOK_BUILDING_SCALE.home;
+}
 
 // x = CENTRE col, y = BOTTOM row (the homes front the SOUTH-RES street; doors open south)
 const OTTERBROOK_HOME_SPECS = [
@@ -279,6 +322,26 @@ function otterLandmarkBottom(
 ): PropDef {
   const [, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
   return otterLandmark(sprite, x, bottomTile - (th * scale) / 64, door, scale);
+}
+
+/** Enlarge a legacy top-left placement without moving its ground contact or
+ * horizontal centre. The hill homes predate otterCentered(), so simply adding
+ * PropDef.scale would otherwise grow their walls down across the porch beat. */
+function otterLandmarkAtSameFoot(
+  sprite: string,
+  x: number,
+  y: number,
+  door: { to: string; tx: number; ty: number } | undefined,
+  scale: number,
+): PropDef {
+  const [tw, th] = OTTERBROOK_LANDMARK_DIMS[sprite] ?? [320, 320];
+  return otterLandmark(
+    sprite,
+    x - (tw * (scale - 1)) / 128,
+    y - (th * (scale - 1)) / 64,
+    door,
+    scale,
+  );
 }
 
 /** place a facade CENTERED horizontally on tile `cx`, its base at row `bottomTile`.
@@ -339,7 +402,7 @@ function buildOtterbrookTown(): MapDef {
     for (let yy = bottom - hT; yy <= bottom; yy++)
       for (let xx = Math.floor(cx - wT / 2) - 1; xx <= Math.ceil(cx + wT / 2) + 1; xx++) occupied.add(idx(xx, yy));
   };
-  const wOf = (s: string): number => Math.ceil((OTTERBROOK_LANDMARK_DIMS[s]?.[0] ?? 320) / 64);
+  const wOf = (s: string, scale = 1): number => Math.ceil(((OTTERBROOK_LANDMARK_DIMS[s]?.[0] ?? 320) * scale) / 64);
   /** place ONE building fronting the street to its south (its door opens onto the sidewalk). */
   const build = (s: string, cx: number, bottom: number, door?: { to: string; tx: number; ty: number }): void => {
     props.push(otterCentered(s, cx, bottom, door));
@@ -379,7 +442,7 @@ function buildOtterbrookTown(): MapDef {
   // DOWNTOWN — the shop strip on MAIN ST, in two blocks split by the central avenue
   row(52, 8, 1, [
     { s: 'facade_busdepot', door: { to: 'bus_depot_int', tx: 120, ty: 128 } },
-    { s: 'bldg_brickmore', door: { to: 'downtown_otterbrook', tx: 208, ty: 224 } },
+    { s: 'bldg_brickmore' },
     { s: 'bldg_ob_burger', door: { to: 'burger_int', tx: 96, ty: 118 } },
     { s: 'facade_hardware' },
     { s: 'bldg_bank', door: { to: 'bank_int', tx: 96, ty: 118 } },
@@ -480,7 +543,6 @@ function buildOtterbrookTown(): MapDef {
     { x: 24, y: 74, dialogue: 'sign_pond_park' },
     { x: 103, y: 44, dialogue: 'sign_meadow_gate' },
     { x: 102, y: 47, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'zapper_done' },
-    { x: 9, y: 50, dialogue: 'sign_to_downtown' },
   ];
 
   return {
@@ -564,7 +626,7 @@ function buildOtterbrookTownReplica(): MapDef {
     const y1 = Math.min(H - 1, bottom + 1);
     for (let yy = y0; yy <= y1; yy++) for (let xx = x0; xx <= x1; xx++) occupied.add(idx(xx, yy));
   };
-  const wOf = (s: string): number => Math.ceil((OTTERBROOK_LANDMARK_DIMS[s]?.[0] ?? 320) / 64);
+  const wOf = (s: string, scale = 1): number => Math.ceil(((OTTERBROOK_LANDMARK_DIMS[s]?.[0] ?? 320) * scale) / 64);
   const yarded: Array<{ cx: number; bottom: number; w: number }> = [];
   const build = (
     s: string,
@@ -582,7 +644,7 @@ function buildOtterbrookTownReplica(): MapDef {
       props.push(facade);
     }
     markFootprint(s, cx, bottom, scale);
-    if (/^(house_|bldg_ob_house|bldg_ob_cottage)/.test(s)) yarded.push({ cx, bottom, w: wOf(s) + 7 });
+    if (/^(house_|bldg_ob_house|bldg_ob_cottage)/.test(s)) yarded.push({ cx, bottom, w: wOf(s, scale) + 7 });
   };
   const line = (n: number, v: number): number[] => Array.from({ length: n }, () => v);
   const gentleCurve = (n: number, base: number, arc: number): number[] =>
@@ -831,7 +893,7 @@ function buildOtterbrookTownReplica(): MapDef {
   const walk = (col: number, from: number): void => { doorWalks.push({ col: Math.round(col), from }); };
   const drive = (x: number, from: number, dir: 1 | -1 = 1): void => { driveways.push({ x, from, dir }); };
   const home = (s: string, cx: number, bottom: number, door?: { to: string; tx: number; ty: number }): void => {
-    build(s, cx, bottom, door);
+    build(s, cx, bottom, door, undefined, otterbrookResidentialScale(s));
     walk(cx, bottom + 1);
   };
   const markRect = (x0: number, y0: number, x1: number, y1: number): void => {
@@ -851,9 +913,9 @@ function buildOtterbrookTownReplica(): MapDef {
   home('bldg_ob_house_c', 66, 10);
   drive(71, 12);
   home('bldg_ob_house_green', 80, 10);
-  build('bldg_apartments', 100, 12);
+  build('bldg_apartments', 100, 12, undefined, undefined, OTTERBROOK_BUILDING_SCALE.apartment);
   // CIVIC ST (row 31) — depot, city hall (plaza on the corner), police, hospital
-  build('facade_busdepot', 29, 27, { to: 'bus_depot_int', tx: 120, ty: 128 });
+  build('facade_busdepot', 29, 27, { to: 'bus_depot_int', tx: 120, ty: 128 }, undefined, OTTERBROOK_BUILDING_SCALE.civicDepot);
   // The hotel belongs to the CITY: its narrow landmark facade fills the central
   // Civic Street gap between the depot and City Hall, not the remote east fringe
   // (and never the hill/cave band). doorstepOf() derives the reciprocal lobby exit
@@ -865,15 +927,15 @@ function buildOtterbrookTownReplica(): MapDef {
   // would put North Res's carriageway inside the occupied-clear and punch
   // permanent holes in the asphalt — the G1 trap). The image overlapping the
   // street above is the normal EB walk-behind read.
-  props.push(otterCentered('facade_hotel_tall', 39, 27, { to: 'otter_hotel_lobby', tx: 9 * 16 + 8, ty: 10 * 16 + 12 }));
+  props.push(otterCentered('facade_hotel_tall', 39, 27, { to: 'otter_hotel_lobby', tx: 9 * 16 + 8, ty: 10 * 16 + 12 }, OTTERBROOK_BUILDING_SCALE.civicTower));
   for (let yy = 20; yy <= 28; yy++) for (let xx = 35; xx <= 43; xx++) occupied.add(idx(xx, yy));
-  // City Hall + clinic grow too, capped at ×1.15: at foot 27 an 8-row-tall
-  // footprint (scale > ~1.16) reaches row 18, where Civic's curved North Res
-  // carriageway peaks — the same G1 trap.
-  build('bldg_ob_city_hall', 46, 27, { to: 'otterbrook_cityhall', tx: 120, ty: 128 }, undefined, 1.15);
-  build('facade_otter_station', 64, 27, { to: 'otter_station', tx: 120, ty: 128 });
-  build('bldg_ob_clinic', 76, 27, { to: 'otter_clinic_int', tx: 120, ty: 128 }, undefined, 1.15);
-  build('bldg_brickmore', 88, 27);
+  // City Hall + clinic are the broad four-Jay civic anchors. Their 1.32× crowns
+  // can overlap the distant residential lane visually, while markFootprint still
+  // stops at the Civic lot and preserves the road as a walk-behind strip.
+  build('bldg_ob_city_hall', 46, 27, { to: 'otterbrook_cityhall', tx: 120, ty: 128 }, undefined, OTTERBROOK_BUILDING_SCALE.civicInstitution);
+  build('facade_otter_station', 64, 27, { to: 'otter_station', tx: 120, ty: 128 }, undefined, OTTERBROOK_BUILDING_SCALE.civicStation);
+  build('bldg_ob_clinic', 76, 27, { to: 'otter_clinic_int', tx: 120, ty: 128 }, undefined, OTTERBROOK_BUILDING_SCALE.civicInstitution);
+  build('bldg_brickmore', 88, 27, undefined, undefined, OTTERBROOK_BUILDING_SCALE.civicBrick);
   // ORCHARD ST (row 46) — residential
   home('bldg_ob_house_green', 12, 40);
   home('house_a', 27, 40);
@@ -895,16 +957,16 @@ function buildOtterbrookTownReplica(): MapDef {
   // autolot precedent — doors/collision are texture-true at runtime. The
   // hardware store and the gas station deliberately stay low (EB's rhythm
   // keeps one wide low unit per block).
-  build('facade_fillshop', 12, 57, { to: 'diner_int', tx: 120, ty: 128 }, 'tick_defeated');
-  build('bldg_ob_burger', 32, 57, { to: 'burger_int', tx: 96, ty: 118 }, 'tick_defeated', 1.1);
-  build('bldg_bank', 40, 57, { to: 'bank_int', tx: 96, ty: 118 }, 'tick_defeated', 1.3);
-  build('facade_hardware', 47, 57, { to: 'hardware_int', tx: 120, ty: 128 });
+  build('facade_fillshop', 12, 57, { to: 'diner_int', tx: 120, ty: 128 }, 'tick_defeated', OTTERBROOK_BUILDING_SCALE.downtownLow);
+  build('bldg_ob_burger', 31.5, 57, { to: 'burger_int', tx: 96, ty: 118 }, 'tick_defeated', OTTERBROOK_BUILDING_SCALE.downtownStore);
+  build('bldg_bank', 38.8, 57, { to: 'bank_int', tx: 96, ty: 118 }, 'tick_defeated', OTTERBROOK_BUILDING_SCALE.downtownBank);
+  build('facade_hardware', 48.4, 57, { to: 'hardware_int', tx: 120, ty: 128 }, undefined, OTTERBROOK_BUILDING_SCALE.downtownLow);
   // Bakery steps ONE ROW FORWARD (foot 58, on the promenade): its parapet and
   // party wall y-sort OVER the drugstore's corner — EB's stepped-storefront
   // stacking, not a flat row of shops sharing one baseline.
-  build('bldg_ob_bakery', 61, 58, { to: 'bakery_int', tx: 96, ty: 118 }, 'tick_defeated', 1.15);
-  build('drugstore', 67.5, 57, { to: 'drugstore_int', tx: 112, ty: 118 }, undefined, 1.22);
-  build('arcade', 74.5, 57, { to: 'arcade_int', tx: 80, ty: 102 }, 'tick_defeated', 1.12);
+  build('bldg_ob_bakery', 61, 58, { to: 'bakery_int', tx: 96, ty: 118 }, 'tick_defeated', OTTERBROOK_BUILDING_SCALE.downtownStore);
+  build('drugstore', 67.5, 57, { to: 'drugstore_int', tx: 112, ty: 118 }, undefined, OTTERBROOK_BUILDING_SCALE.downtownStore);
+  build('arcade', 74.5, 57, { to: 'arcade_int', tx: 80, ty: 102 }, 'tick_defeated', OTTERBROOK_BUILDING_SCALE.downtownStore);
   // EB SCALE + STACKING PASS (2026-07-11): the BACK RANK — tall doorless masses
   // on the block interior between Orchard and Main, their lower storeys hidden
   // behind the storefront row (true y-sort layering) and their towers breaking
@@ -914,9 +976,9 @@ function buildOtterbrookTownReplica(): MapDef {
   // the walk-behind read (player occluded on that short stretch) is the
   // EarthBound norm. Collision comes from facadeSolids (texture-true), which
   // narrows but never severs Orchard.
-  props.push(otterCentered('facade_apartments_tall', 36, 53)); // over the burger/bank party line
-  props.push(otterCentered('facade_hotel_tall', 70, 53)); // the tower over drugstore/arcade
-  props.push(otterCentered('facade_apartments_tall', 83.5, 53)); // brownstone above the realty row
+  props.push(otterCentered('facade_apartments_tall', 36, 53, undefined, OTTERBROOK_BUILDING_SCALE.downtownTall)); // over the burger/bank party line
+  props.push(otterCentered('facade_hotel_tall', 70, 53, undefined, OTTERBROOK_BUILDING_SCALE.downtownTall)); // the tower over drugstore/arcade
+  props.push(otterCentered('facade_apartments_tall', 83.5, 53, undefined, OTTERBROOK_BUILDING_SCALE.downtownTall)); // brownstone above the realty row
   // POND ST (row 76) — residential east of the park
   home('house_b', 48, 70);
   home('bldg_ob_house_green', 63, 70);
@@ -927,7 +989,7 @@ function buildOtterbrookTownReplica(): MapDef {
   // SOUTH RES ST (row 91) — the named/visitable homes + the chapel
   for (const h of OTTERBROOK_HOME_SPECS) home(h.sprite, h.x, h.y, { to: h.id, tx: 7 * 16 + 8, ty: 8 * 16 });
   drive(69, 85);
-  build('chapel', 86, 85, { to: 'chapel_int', tx: 88, ty: 150 });
+  build('chapel', 86, 85, { to: 'chapel_int', tx: 88, ty: 150 }, undefined, OTTERBROOK_BUILDING_SCALE.chapel);
   walk(86, 86);
   // MAPLE ST (row 106) — the FOR-SALE block on the quiet west cul-de-sac
   home('house_b', 35, 100);
@@ -947,15 +1009,16 @@ function buildOtterbrookTownReplica(): MapDef {
   // house is locked up tight and the agent's pitch stays honest; after, it's the
   // first thing the player has ever owned with a roof.
   const M27 = { cx: 17, bottom: 100 };
-  const m27 = otterCentered('house_maple', M27.cx, M27.bottom);
+  const mapleScale = OTTERBROOK_BUILDING_SCALE.home;
+  const m27 = otterCentered('house_maple', M27.cx, M27.bottom, undefined, mapleScale);
   props.push({ ...m27, unlessFlag: 'owned_27_maple' });
   props.push({
     ...m27,
     door: { ox: Math.round((348 / 4) * 0.33) - 8, oy: 96 - 22, w: 16, h: 20, to: 'maple27_int', tx: 7 * 16 + 8, ty: 8 * 16 },
     ifFlag: 'owned_27_maple',
   });
-  markFootprint('house_maple', M27.cx, M27.bottom);
-  yarded.push({ cx: M27.cx, bottom: M27.bottom, w: wOf('house_maple') + 7 });
+  markFootprint('house_maple', M27.cx, M27.bottom, mapleScale);
+  yarded.push({ cx: M27.cx, bottom: M27.bottom, w: wOf('house_maple', mapleScale) + 7 });
   walk(M27.cx - 1, M27.bottom + 1); // the walk meets the drawn door (left third)
   drive(20, 101);
   // 29 MAPLE (the Fixer) — the flip listing next door is an honest MESS: a fenced
@@ -968,32 +1031,42 @@ function buildOtterbrookTownReplica(): MapDef {
   for (const [wx, wy, wc] of [[25, 98, '~'], [27, 97, 'f'], [29, 99, '~'], [26, 100, ','], [28, 101, '~'], [30, 97, ',']] as const) g.set(wx, wy, wc);
 
   // ── OTTERBROOK REALTY + BERT'S USED CARS — the ADR-115 tycoon-teaser pair get
-  // real street addresses (authored citygen facades, scaled to shoulder height
-  // beside the 384px drag). The agency door opens into the office where the agent
+  // real street addresses (authored citygen facades, now raised to full
+  // three-Jay storefront height beside the 384px drag). The agency door opens into the office where the agent
   // now works; Bert holds court on his lot out front of the bunting.
   // EB street-wall massing: the pair slides west to butt against the arcade so
   // the east block reads as one continuous storefront row (Bert's lot keeps a
   // touch of air for the bunting/stock out front).
   const realtyFacade: PropDef = {
     sprite: 'facade_realty',
-    x: 81 - ((300 / 64) * 1.25) / 2,
-    y: 57 - (227 / 64) * 1.25,
-    scale: 1.25,
-    solid: { ox: 0, oy: 10, w: 75, h: 47 },
+    x: 81 - ((300 / 64) * OTTERBROOK_BUILDING_SCALE.realty) / 2,
+    y: 57 - (227 / 64) * OTTERBROOK_BUILDING_SCALE.realty,
+    scale: OTTERBROOK_BUILDING_SCALE.realty,
+    solid: {
+      ox: 0,
+      oy: 10,
+      w: Math.round((300 / 4) * OTTERBROOK_BUILDING_SCALE.realty),
+      h: Math.round((227 / 4) * OTTERBROOK_BUILDING_SCALE.realty) - 10,
+    },
     door: { ox: Math.round(75 * 0.72) - 8, oy: Math.round(227 / 4) - 22, w: 16, h: 22, to: 'realty_int', tx: 6 * 16 + 8, ty: 7 * 16 },
   };
   const { door: _realtyDoor, ...closedRealtyFacade } = realtyFacade;
   props.push({ ...closedRealtyFacade, unlessFlag: 'tick_defeated' });
   props.push({ ...realtyFacade, ifFlag: 'tick_defeated' });
-  markRect(77, 50, 85, 58);
+  markRect(76, 50, 86, 58);
   props.push({
     sprite: 'facade_autolot',
-    x: 90 - ((330 / 64) * 1.45) / 2,
-    y: 57 - (235 / 64) * 1.45,
-    scale: 1.45,
-    solid: { ox: 0, oy: 10, w: 83, h: 49 },
+    x: 91 - ((330 / 64) * OTTERBROOK_BUILDING_SCALE.autoLot) / 2,
+    y: 57 - (235 / 64) * OTTERBROOK_BUILDING_SCALE.autoLot,
+    scale: OTTERBROOK_BUILDING_SCALE.autoLot,
+    solid: {
+      ox: 0,
+      oy: 10,
+      w: Math.round((330 / 4) * OTTERBROOK_BUILDING_SCALE.autoLot),
+      h: Math.round((235 / 4) * OTTERBROOK_BUILDING_SCALE.autoLot) - 10,
+    },
   });
-  markRect(86, 50, 94, 58);
+  markRect(86, 50, 96, 58);
 
   // ===== THE STREET NETWORK — readable but not ruler-flat. Every lane ends AT
   // another street (a T-junction), the map gate, or a destination lot — no more
@@ -1056,7 +1129,7 @@ function buildOtterbrookTownReplica(): MapDef {
   // CROSSWALKS at the spine's big junctions (centre rows/cols only, so the road
   // graph — and the one-component law — stays contiguous through the paint)
   for (const [x, y, w, h] of [
-    [50, 60, 2, 2], [59, 60, 2, 2], [54, 56, 3, 2], [54, 64, 3, 2], // Main × spine
+    [49, 60, 3, 2], [59, 60, 2, 2], [54, 56, 3, 2], [54, 64, 3, 2], // Main × spine
     [50, 30, 2, 2], [59, 30, 2, 2], // Civic × spine
     [50, 90, 2, 2], [59, 90, 2, 2], // South Res × spine
   ] as const) {
@@ -1149,7 +1222,7 @@ function buildOtterbrookTownReplica(): MapDef {
     { sprite: 'sign', x: 12, y: 102.5, solid: SIGN_SOLID }, // MAPLE ST
     { sprite: 'sign', x: 13.4, y: 99.6, solid: SIGN_SOLID, unlessFlag: 'owned_27_maple' }, // FOR SALE — 27 Maple (beside the walk, not on it)
     { sprite: 'sign', x: 13.4, y: 99.6, solid: SIGN_SOLID, ifFlag: 'owned_27_maple' }, // SOLD — 27 Maple
-    { sprite: 'sign', x: 27, y: 99.6, solid: SIGN_SOLID }, // 29 Maple, the Fixer
+    { sprite: 'sign', x: 27, y: 100.6, solid: SIGN_SOLID }, // 29 Maple, just inside the open front gate
     { sprite: 'sawhorse', x: 27.5, y: 97.6, solid: { ox: 0, oy: 6, w: 64, h: 22 } }, // the Fixer's renovation never started
     { sprite: 'sign', x: 52.4, y: 12.4, solid: SIGN_SOLID }, // WELCOME — where the trail becomes Main Ave
     { sprite: 'sign', x: 88.2, y: 85.4, solid: SIGN_SOLID }, // chapel marker
@@ -1250,10 +1323,17 @@ function buildOtterbrookTownReplica(): MapDef {
     { id: 'biscuit_home', sprite: 'dog', x: 26, y: 76, facing: 'left', dialogue: 'npc_biscuit_collar', dog: true, ifFlag: 'q_biscuit_done' },
     { id: 'mr_plummer', sprite: 'mrPlummer', x: 61, y: 38, facing: 'down', dialogue: 'npc_plummer', wander: true }, // the plaza
     { id: 'old_timer', sprite: 'oldTimer', x: 32, y: 76, facing: 'down', dialogue: 'npc_oldtimer', dialogueDay: 'npc_oldtimer_day', wander: true },
-    { id: 'pajama_kid', sprite: 'pajamaKid', x: 40, y: 18, facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true },
+    {
+      id: 'pajama_kid', sprite: 'pajamaKid',
+      x: CH1_WORLD.quest.pajamaKid.x,
+      y: CH1_WORLD.quest.pajamaKid.y - OTTERBROOK_TOWN_BASE,
+      facing: 'left', dialogue: 'npc_pajama', dialogueDay: 'npc_pajama_day', wander: true,
+    },
     { id: 'green_keeper', sprite: 'fernLady', x: 28, y: 73, facing: 'down', dialogue: 'npc_green_keeper', wander: true },
     { id: 'pond_angler', sprite: 'quarterMan', x: 21, y: 76, facing: 'left', dialogue: 'npc_pond_angler', idle: true, emote: 'think' },
-    { id: 'south_neighbor', sprite: 'senora', x: 60, y: 82, facing: 'down', dialogue: 'npc_south_neighbor', wander: true },
+    // The enlarged Birch house reaches two tiles farther west; keep its neighbor
+    // on the open lawn instead of spawning under the facade's left wall.
+    { id: 'south_neighbor', sprite: 'senora', x: 58, y: 82, facing: 'down', dialogue: 'npc_south_neighbor', wander: true },
     { id: 'gate_walker', sprite: 'grayCommuter', x: 54, y: H - 7, facing: 'down', dialogue: 'npc_gate_walker', dialogueDay: 'npc_gate_walker_day', wander: true },
     { id: 'bus_waiter1', sprite: 'grayCommuter', x: 26, y: 28, facing: 'right', dialogue: 'npc_bus_waiter1', idle: true, emote: 'think', ifFlag: 'tick_defeated' }, // depot benches
     { id: 'bus_waiter2', sprite: 'senora', x: 30, y: 28, facing: 'up', dialogue: 'npc_bus_waiter2', idle: true, emote: 'idle', ifFlag: 'tick_defeated' },
@@ -1266,7 +1346,8 @@ function buildOtterbrookTownReplica(): MapDef {
     { id: 'civic_secretary', sprite: 'grayCommuter', x: 58, y: 37, facing: 'right', dialogue: 'npc_civic_secretary', wander: true, ifFlag: 'tick_defeated' },
     { id: 'bakery_regular', sprite: 'senora', x: 61, y: 59, facing: 'up', dialogue: 'npc_bakery_regular', idle: true, emote: 'happy', ifFlag: 'tick_defeated' },
     { id: 'arcade_regular', sprite: 'pigeonKid', x: 74, y: 59, facing: 'up', dialogue: 'npc_arcade_regular', idle: true, emote: 'happy', ifFlag: 'tick_defeated' },
-    { id: 'pond_grandma', sprite: 'fernLady', x: 35, y: 80, facing: 'left', dialogue: 'npc_pond_grandma', wander: true, ifFlag: 'tick_defeated' },
+    // The Pond house's wider cottage silhouette owns its old x35 corner now.
+    { id: 'pond_grandma', sprite: 'fernLady', x: 37, y: 80, facing: 'left', dialogue: 'npc_pond_grandma', wander: true, ifFlag: 'tick_defeated' },
     { id: 'maple_biker', sprite: 'pajamaKid', x: 37, y: 103, facing: 'right', dialogue: 'npc_maple_biker', wander: true, ifFlag: 'tick_defeated' },
     { id: 'south_gardener', sprite: 'mrPlummer', x: 69, y: 124, facing: 'left', dialogue: 'npc_south_gardener', wander: true, ifFlag: 'tick_defeated' },
   ];
@@ -1280,11 +1361,10 @@ function buildOtterbrookTownReplica(): MapDef {
     { x: 24, y: 74, dialogue: 'sign_pond_park' },
     { x: 52, y: H - 8, dialogue: 'sign_meadow_gate' },
     { x: 56, y: H - 6, dialogue: 'sign_meadow_gate_closed', unlessFlag: 'tick_defeated' },
-    { x: 10, y: 58, dialogue: 'sign_to_downtown' },
     { x: 12, y: 103, dialogue: 'sign_maple_st' },
     { x: 13, y: 100, dialogue: 'sign_27_maple', unlessFlag: 'owned_27_maple' },
     { x: 13, y: 100, dialogue: 'sign_27_maple_sold', ifFlag: 'owned_27_maple' },
-    { x: 27, y: 100, dialogue: 'sign_29_maple' },
+    { x: 27, y: 101, dialogue: 'sign_29_maple' },
     { x: 84, y: 58, dialogue: 'sign_realty' }, // the agency's window listings
     ...[12, 25, 32, 61, 80].map((x) => ({ x, y: 57, dialogue: 'shop_closed_hush', ifFlag: 'zapper_done', unlessFlag: 'tick_defeated' })),
     ...[14, 27, 63, 82].map((x) => ({ x, y: 58, dialogue: 'shop_reopened_board', ifFlag: 'tick_defeated' })),
@@ -1726,19 +1806,19 @@ export function growOtterbrook(): MapDef {
     // woods, the locked version has no entrance cut, and the keyed version opens
     // into a real walk-through interior whose rear hole exits above the building.
     {
-      sprite: 'bldg_ob_trail_shed', x: 9, y: 25,
+      sprite: 'bldg_ob_trail_shed', x: 8.4, y: 25, scale: 1.2,
       solid: { ox: 0, oy: 0, w: 96, h: 99 },
       unlessFlag: 'has_trail_key',
     },
     {
-      sprite: 'bldg_ob_trail_shed_open', x: 9, y: 25,
+      sprite: 'bldg_ob_trail_shed_open', x: 8.4, y: 25, scale: 1.2,
       solid: { ox: 0, oy: 0, w: 96, h: 99 },
       door: { ox: 40, oy: 77, w: 16, h: 22, to: 'trail_shed_int', tx: 7 * 16 + 8, ty: 9 * 16 + 12 },
       ifFlag: 'has_trail_key',
     },
     // Pemberton is a separate destination in the east service pocket, safely
     // below the route gate rather than sharing Hodgkin's shed identity.
-    otterCentered('bldg_ob_workshop', 22, 40, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }),
+    otterCentered('bldg_ob_workshop', 22, 40, { to: 'workshop_int', tx: 8 * 16 + 8, ty: 8 * 16 }, 1.2),
     // A pre-dawn works barrier prevents the empty dungeon from being entered early;
     // it retires after Mom sends Jay to sleep.
     { sprite: 'sawhorse', x: 5.2, y: 10.2, solid: { ox: 0, oy: 6, w: 64, h: 22 }, unlessFlag: 'zapper_done' },
@@ -1746,7 +1826,7 @@ export function growOtterbrook(): MapDef {
     // right past his LEFT-hand front door (the art's drawn door, frac ≈ .21),
     // Lier-X-Agerate style, along the row-33 front walk under the facade.
     {
-      ...otterCentered('bldg_ob_cottage', 72, 33),
+      ...otterCentered('bldg_ob_cottage', 72, 33, undefined, OTTERBROOK_BUILDING_SCALE.cottage),
       door: { ox: Math.round((618 / 4) * 0.21) - 8, oy: 96 - 22, w: 16, h: 20, to: 'oldman_int', tx: 7 * 16 + 8, ty: 8 * 16 },
     },
     { sprite: 'sign', x: 76, y: 30.4, solid: SIGN_SOLID }, // the dig-pen notice (west of the pen's flank)
@@ -1755,13 +1835,40 @@ export function growOtterbrook(): MapDef {
     ...overlookGift.props,
     { sprite: 'sign', x: 59, y: 42.4, solid: SIGN_SOLID }, // trail marker (Leg 1)
     { sprite: 'sign', x: 41, y: 27.4, solid: SIGN_SOLID }, // trail marker (flight C's foot)
-    otterLandmark('house_rex', 46, 49, { to: 'rex_home', tx: 104, ty: 124 }), // JAY's house (purple)
-    otterLandmark('house_chad', 58, 49, { to: 'chad_home', tx: 7 * 16 + 8, ty: 8 * 16 }), // CHAD's house (blue)
+    otterLandmarkAtSameFoot('house_rex', 46, 49, { to: 'rex_home', tx: 104, ty: 124 }, OTTERBROOK_BUILDING_SCALE.hillHome), // JAY's house (purple)
+    otterLandmarkAtSameFoot('house_chad', 58, 49, { to: 'chad_home', tx: 7 * 16 + 8, ty: 8 * 16 }, OTTERBROOK_BUILDING_SCALE.hillHome), // CHAD's house (blue)
     { sprite: 'bug_zapper', x: 53, y: 51, solid: { ox: 4, oy: 18, w: 6, h: 8 } },
+    {
+      sprite: 'lemonade',
+      x: CH1_WORLD.quest.lemonadeStand.x,
+      y: CH1_WORLD.quest.lemonadeStand.y,
+      solid: { ox: 0, oy: 10, w: 36, h: 18 },
+      ifFlag: 'zapper_done',
+    },
+    {
+      sprite: 'paw_prints',
+      x: CH1_WORLD.quest.biscuitClue1.x,
+      y: CH1_WORLD.quest.biscuitClue1.y,
+      ifFlag: 'q_biscuit',
+      unlessFlag: 'q_biscuit_c1',
+    },
+    {
+      sprite: 'paw_prints',
+      x: CH1_WORLD.quest.biscuitClue2.x,
+      y: CH1_WORLD.quest.biscuitClue2.y,
+      ifFlag: 'q_biscuit_c1',
+      unlessFlag: 'q_biscuit_c2',
+    },
+    {
+      sprite: 'well',
+      x: CH1_WORLD.quest.hillSpring.x,
+      y: CH1_WORLD.quest.hillSpring.y,
+      solid: { ox: 2, oy: 20, w: 20, h: 10 },
+    },
     { sprite: 'sign', x: 53, y: 20, solid: SIGN_SOLID, ifFlag: 'meteor_fell' }, // crater guard marker (flight D's foot)
     // Keep the keyed entrance visually obvious and physically generous: the
     // notice sits beside the door, never in the mandatory walk-through lane.
-    { sprite: 'sign', x: 9.4, y: 31.2, solid: SIGN_SOLID },
+    { sprite: 'sign', x: 9.4, y: 33.2, solid: SIGN_SOLID },
     { sprite: 'sign', x: 27, y: 40.4, solid: SIGN_SOLID },
     { sprite: 'sign', x: 64, y: 44, solid: SIGN_SOLID }, // woods marker
     { sprite: 'picnic', x: 64, y: 53, solid: PICNIC_SOLID },
@@ -1770,8 +1877,16 @@ export function growOtterbrook(): MapDef {
   ];
 
   const hillNpcs: NpcDef[] = [
-    { id: 'ana', sprite: 'ana', x: 46, y: 51, facing: 'down', dialogue: 'npc_ana', ifFlag: 'zapper_done' },
-    { id: 'vivi', sprite: 'vivi', x: 49, y: 51, facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done' },
+    {
+      id: 'ana', sprite: 'ana',
+      x: CH1_WORLD.quest.ana.x, y: CH1_WORLD.quest.ana.y,
+      facing: 'down', dialogue: 'npc_ana', ifFlag: 'zapper_done',
+    },
+    {
+      id: 'vivi', sprite: 'vivi',
+      x: CH1_WORLD.quest.vivi.x, y: CH1_WORLD.quest.vivi.y,
+      facing: 'down', dialogue: 'npc_vivi', ifFlag: 'zapper_done',
+    },
     { id: 'treeline_gawker', sprite: 'pigeonKid', x: 66, y: 51, facing: 'up', dialogue: 'npc_treeline_gawker', dialogueDay: 'npc_treeline_gawker_day', idle: true, emote: 'surprise' },
     // the birder wears the CRITIC's art, not oldTimer's — Fibbins is THE old man of
     // this hill (two identical gramps 18 tiles apart read as a copy-paste bug)
@@ -1789,12 +1904,25 @@ export function growOtterbrook(): MapDef {
 
   const hillSigns: SignDef[] = [
     { x: 27, y: 41, dialogue: 'sign_pemberton_workshop' },
-    { x: 10, y: 31, dialogue: 'trail_shed_gate_locked', unlessFlag: 'has_trail_key' },
-    { x: 10, y: 31, dialogue: 'trail_shed_gate_open', ifFlag: 'has_trail_key' },
+    { x: 10, y: 33, dialogue: 'trail_shed_gate_locked', unlessFlag: 'has_trail_key' },
+    { x: 10, y: 33, dialogue: 'trail_shed_gate_open', ifFlag: 'has_trail_key' },
     { x: 5, y: 13, dialogue: 'cave_closed_before_dawn', unlessFlag: 'zapper_done' },
     { x: 24, y: 40, dialogue: 'sign_whisperwood_rise' },
-    { x: 21, y: 43, dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1' },
-    { x: 14, y: 39, dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2' },
+    {
+      x: CH1_WORLD.quest.biscuitClue1.x,
+      y: CH1_WORLD.quest.biscuitClue1.y,
+      dialogue: 'q_biscuit_clue1', ifFlag: 'q_biscuit', unlessFlag: 'q_biscuit_c1',
+    },
+    {
+      x: CH1_WORLD.quest.biscuitClue2.x,
+      y: CH1_WORLD.quest.biscuitClue2.y,
+      dialogue: 'q_biscuit_clue2', ifFlag: 'q_biscuit_c1', unlessFlag: 'q_biscuit_c2',
+    },
+    {
+      x: CH1_WORLD.quest.hillSpring.x,
+      y: CH1_WORLD.quest.hillSpring.y,
+      dialogue: 'hill_spring',
+    },
     { x: 64, y: 44, dialogue: 'sign_otter_woods' },
     { x: 5, y: 13, dialogue: 'sign_hill' },
     { x: 53, y: 20, dialogue: 'sign_crater_guard', ifFlag: 'meteor_fell' },
@@ -1881,7 +2009,7 @@ export function growOtterbrook(): MapDef {
       // gate). Lands in the mouth chamber two rows ABOVE the exit pad (row 48), never ON the way out.
       // The zone sits directly under the painted mouth (x7..9, base y≈3), not
       // eight tiles down the shelf where an invisible doorway used to fire.
-      { x: 7, y: 3, w: 3, h: 1, to: 'oak_roots', tx: 16 * 16 + 8, ty: 46 * 16, facing: 'up', indicator: 'none' },
+      { x: 7, y: 3, w: 3, h: 1, to: 'oak_roots', tx: 16 * 16 + 8, ty: 46 * 16, facing: 'up', indicator: 'none', ifFlag: 'has_trail_key' },
       // The shed's rear-wall hole. The surrounding woods make this upper zone
       // unreachable until the player unlocks the front and crosses the interior.
       { x: 10, y: 23, w: 4, h: 2, to: 'trail_shed_int', tx: 7 * 16 + 8, ty: 3 * 16, facing: 'down', indicator: 'none' },
@@ -1910,11 +2038,17 @@ export function growOtterbrook(): MapDef {
       // can legitimately no-op on an early crossing. Each handler owns the named
       // persistent *_seen flag and matching DIALOGUE key.
       { id: 'ch1_hill_entry_warning', rect: { x: 52, y: 61, w: 8, h: 5 }, once: false },
+      // Fires on the first step out of the shed's rear breach. Runtime keeps
+      // presentation separate from the crossing fact committed by the door.
+      { id: 'ch1_trail_shed_crossed', rect: { x: 9, y: 23, w: 7, h: 3 }, once: false },
       { id: 'ch1_cave_threshold', rect: { x: 4, y: 7, w: 8, h: 5 }, once: false },
       { id: 'ch1_hush_main_street', rect: { x: 50, y: 123, w: 12, h: 9 }, once: false },
       { id: 'ch1_restored_town_reveal', rect: { x: 23, y: 59, w: 7, h: 7 }, once: false },
     ],
-    patrols: [{ id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[15, 42], [25, 42]], countFlag: 'q_mower_caught' }],
+    patrols: [{
+      id: 'hodgkin_mower', enemy: 'runaway_lawnmower', route: [[15, 42], [25, 42]],
+      ifFlag: 'ch1_trail_key_asked', unlessFlag: 'tick_defeated', countFlag: 'q_mower_caught',
+    }],
   };
 }
 
@@ -2694,16 +2828,15 @@ function buildLongWalk(): { meadow_mile: MapDef; meadow_woods: MapDef; meadow_fa
   return { meadow_mile, meadow_woods, meadow_far, meadow_overpass };
 }
 
-/* ------------------- THE UNDER-OAK (ADR-121 rework, 2026-07-02) -------------------
- * The Titanic Tick is no longer fought by touching a tree. The Heart Oak's
- * roots have torn open into a BURROW in Pond Park, and BOSS 1 waits at the
- * bottom of a directed three-map descent — EarthBound's Giant-Step grammar:
- * a winding root-tunnel with fights, a breather hollow with a rest + a cache,
- * then the heart chamber and the Tick. The set rides CH1_STORY_NIGHT_MAPS'
- * hush clock, so the whole descent is pitch-dark until the boss dies and the
- * post-victory rebuild lets the morning down the roots. Direction is given in
- * dawn_hush_dark (the wake-up note points at Pond Park), sign_oak_burrow at
- * the mouth, and heart_oak_approach at the bottom. */
+/* ------------------- THE HICKORY HILL CAVE (ADR-145 canon) -------------------
+ * The meteor opened a cave in Hickory Hill. BOSS 1 waits on the raised mound
+ * at the end of the directed three-map chain: oak_roots combat descent,
+ * oak_hollow breather/cache, then the oak_heart arena. The set rides
+ * CH1_STORY_NIGHT_MAPS' Hush clock until the Tick falls and real morning
+ * reaches the stone. Direction is given in dawn_hush_dark, sign_oak_burrow at
+ * the hilltop mouth, and tick_cave_approach in the arena. Internal oak_* map
+ * and heart_oak trigger ids remain stable; they do not place the fight at the
+ * outdoor Heart Oak or in Pond Park. */
 
 /** the root tunnel — enter from the burrow (bottom), wind and climb-down north */
 /* THE HICKORY HILL CAVE (oak_roots / oak_hollow / oak_heart) — rebuilt 2026-07-09
@@ -4031,62 +4164,6 @@ function buildBusDepotInt(streetExit: { tx: number; ty: number }): MapDef {
   };
 }
 
-/* ------------------- DOWNTOWN OTTERBROOK (S22, ADR-116) -------------------
- * "Main & Vine" — a small commercial screen reached from the open pocket by the
- * Transit Depot. Two enterable shops (Hodgkin's Hardware + the Sunny Side Diner)
- * plus a flavor barbershop. Full new screen, so no frozen-core conflict; the
- * entrance façade is APPENDED to the grown town (below). Gray-boxed on shipped
- * facade/interior sprites — see docs/CH1_ART_PROMPTS.md (§2/§3) for the art pass.
- */
-function buildDowntownOtterbrook(entryStreetExit: { tx: number; ty: number }): MapDef {
-  const g = new Grid(28, 16);
-  g.sprinkle(229, ',~ f', 0.05);
-  g.rect(2, 9, 24, 2, '='); // the shopfront sidewalk
-  g.rect(12, 10, 3, 6, '='); // the walk down to the way home (south edge)
-
-  const hardware = placeFacade('bldg_brickmore', 3, 8 * 16, 5, 2, { to: 'hardware_int', tx: 120, ty: 128 });
-  const diner = placeFacade('bldg_brickmore', 11, 8 * 16, 5, 2, { to: 'diner_int', tx: 120, ty: 128 });
-  // S22 (ADR-120): the third shopfront is the OTTERBROOK CLINIC — the starting
-  // town finally has a front-desk revive (and a back exam room), small-town scale.
-  const clinic = placeFacade('bldg_brickmore', 19, 8 * 16, 5, 2, { to: 'otter_clinic_int', tx: 120, ty: 128 });
-
-  const treeLine: Array<[number, number]> = [];
-  for (let x = 0; x < 28; x += 2) treeLine.push([x, 15]);
-  for (let y = 1; y < 15; y += 2) {
-    treeLine.push([0, y]);
-    treeLine.push([26, y]);
-  }
-
-  return {
-    id: 'downtown_otterbrook',
-    name: 'DOWNTOWN OTTERBROOKE',
-    music: 'otterbrook',
-    grid: g.out(),
-    props: [
-      ...treeLine.map(([x, y]) => ({ sprite: treeSprite(x, y), x, y, solid: OAK })),
-      hardware,
-      diner,
-      clinic,
-      { sprite: 'bench', x: 16, y: 11, solid: { ox: 1, oy: 6, w: 20, h: 6 } },
-      { sprite: 'sign', x: 9, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the district plaque
-      { sprite: 'sign', x: 24, y: 8, solid: { ox: 3, oy: 10, w: 10, h: 7 } }, // the clinic shingle
-    ],
-    npcs: [
-      { id: 'downtown_loiterer', sprite: 'oldTimer', x: 18, y: 11, facing: 'down', dialogue: 'npc_pajama_day', wander: true, ifFlag: 'zapper_done' },
-    ],
-    signs: [
-      { x: 9, y: 8, dialogue: 'sign_downtown' },
-      { x: 24, y: 8, dialogue: 'sign_clinic' },
-    ],
-    phones: [],
-    doors: [
-      { x: 12, y: 15, w: 3, h: 1, to: 'otterbrook', tx: entryStreetExit.tx, ty: entryStreetExit.ty, facing: 'down', indicator: 'none' },
-    ],
-    spawners: [],
-    triggers: [],
-  };
-}
-
 /** HODGKIN'S HARDWARE interior (S22, ADR-116) — pegboard walls, a lockbox
  *  counter, and Hodgkin himself. The night-chain's key shop (Trail Key) lands
  *  here in a later movement; for now it's a warm, browsable room. */
@@ -4642,6 +4719,10 @@ function addOtterbrookRisers(map: MapDef): MapDef {
 
 const otterbrookMap = addOtterbrookRisers(growOtterbrook());
 const bricktonMap = makeTwoton();
+const pigeonKid = bricktonMap.npcs.find((npc) => npc.id === 'pigeon_kid');
+if (!pigeonKid) throw new Error('Brickton must retain the save-facing pigeon_kid');
+pigeonKid.x = CH1_WORLD.quest.pigeonKid.x;
+pigeonKid.y = CH1_WORLD.quest.pigeonKid.y;
 const rexDoorstep = doorstepOf(otterbrookMap, 'rex_home') ?? { tx: 46 * 16, ty: 41 * 16 };
 const chadDoorstep = doorstepOf(otterbrookMap, 'chad_home') ?? { tx: 60 * 16, ty: 41 * 16 };
 const workshopDoorstep = doorstepOf(otterbrookMap, 'workshop_int') ?? { tx: 24 * 16, ty: 31 * 16 };
@@ -4689,13 +4770,7 @@ const longWalk = buildLongWalk();
 const cityHallDoorstep = doorstepOf(otterbrookMap, 'otterbrook_cityhall') ?? { tx: 104, ty: 672 };
 const otterStationDoorstep = doorstepOf(otterbrookMap, 'otter_station') ?? { tx: 248, ty: 680 };
 const busDepotDoorstep = doorstepOf(otterbrookMap, 'bus_depot_int') ?? { tx: 760, ty: 392 };
-// S22 (ADR-116) — DOWNTOWN: the entry doorstep on the grown town, then the street
-// screen, then its two shop interiors (doorsteps computed off the street map).
-const downtownStep = doorstepOf(otterbrookMap, 'downtown_otterbrook') ?? {
-  tx: 55 * 16 + 8,
-  ty: (OTTERBROOK_TOWN_BASE + 62) * 16 + 12,
-};
-const downtownMap = buildDowntownOtterbrook(downtownStep);
+// Named venue returns derive from their facades on the unified Main Street map.
 const hardwareStep = doorstepOf(otterbrookMap, 'hardware_int') ?? { tx: 45 * 16, ty: (58 + OTTERBROOK_TOWN_BASE) * 16 };
 const dinerStep = doorstepOf(otterbrookMap, 'diner_int') ?? { tx: 12 * 16, ty: (58 + OTTERBROOK_TOWN_BASE) * 16 };
 const otterClinicStep = doorstepOf(otterbrookMap, 'otter_clinic_int') ?? { tx: 76 * 16, ty: (28 + OTTERBROOK_TOWN_BASE) * 16 };
@@ -5151,7 +5226,6 @@ export const MAPS: Record<string, MapDef> = {
   otterbrook_cityhall: buildOtterbrookCityHallInt(cityHallDoorstep),
   otter_station: buildOtterStationInt(otterStationDoorstep),
   bus_depot_int: buildBusDepotInt(busDepotDoorstep),
-  downtown_otterbrook: downtownMap,
   hardware_int: buildHardwareInt(hardwareStep),
   hardware_stockroom: buildHardwareStockroom(),
   diner_int: buildDinerInt(dinerStep),
@@ -5359,6 +5433,17 @@ for (const m of Object.values(MAPS)) {
     ...(m.id === 'brickton' ? { unitId: stableTwotonLotId } : {}),
     ...(m.id === 'lotus_harbor' ? { pinnedUnlockedPrefix: 4 } : {}),
   }));
+}
+
+// Otterbrook's generated unit ids are save-facing map identities. A facade
+// insertion must fail assembly instead of silently renumbering an existing save.
+const assembledOtterbrookUnits = Object.keys(MAPS)
+  .filter((id) => /^otterbrook_unit_\d+$/.test(id))
+  .sort((a, b) => Number(a.slice(a.lastIndexOf('_') + 1)) - Number(b.slice(b.lastIndexOf('_') + 1)));
+if (JSON.stringify(assembledOtterbrookUnits) !== JSON.stringify(CH1_GENERATED_OTTERBROOK_UNIT_IDS)) {
+  throw new Error(
+    `Otterbrook generated-unit identities drifted: expected ${CH1_GENERATED_OTTERBROOK_UNIT_IDS.join(', ')}, got ${assembledOtterbrookUnits.join(', ')}`,
+  );
 }
 
 // Chapter 8 appends a production city behind four save-facing service units.

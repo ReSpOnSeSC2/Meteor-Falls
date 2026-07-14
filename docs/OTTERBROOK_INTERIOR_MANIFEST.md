@@ -1,6 +1,16 @@
 # Otterbrooke, OH — Interior Build Manifest
 
-*Definitive spec for the interiors of every placed building in Otterbrooke. Merges the four group deliverables (SHOPS · CIVIC-SERVICES · RESIDENCES · SPECIAL-AND-FURNITURE) into one buildable plan.*
+> **Historical implementation manifest—superseded by ADR-145 (2026-07-14).**
+> `[NEW]`, upgrade, gray-box, and phase-order labels below record the July build
+> plan, not present-tense gaps. The production blueprint's exact 81-map roster
+> and executable `MAPS` graph are authoritative. `downtown_otterbrook` is
+> retired; hardware, diner, and clinic exterior returns land in unified
+> Otterbrook. The waiting-bench and ward-bed assets require current
+> alpha/compositing evidence rather than this manifest's existence claim.
+
+*Historical definitive spec for the interiors planned at this milestone. Merges
+the four group deliverables (SHOPS · CIVIC-SERVICES · RESIDENCES ·
+SPECIAL-AND-FURNITURE) into one buildable plan.*
 
 ---
 

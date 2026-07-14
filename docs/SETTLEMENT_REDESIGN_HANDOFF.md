@@ -1,5 +1,13 @@
 # AI HANDOFF PROMPT — Settlement Redesign + Vibrancy Program (Meteor Falls)
 
+> **Chapter 1 production status (ADR-145, 2026-07-14):** Otterbrook and
+> Brickton are no longer future rebuild prompts in this handoff. The active
+> Chapter 1 blueprint owns exactly 81 maps, with `brickton_docks` retained as a
+> physically reachable pre-completion Chapter 2 boundary. Orphaned
+> `downtown_otterbrook` and the four dissolved climb ids are retired through
+> save v27. Historical Otterbrook size, downtown-annex, cliff-gray-box, and
+> "what remains" language below is implementation history, not an open queue.
+
 > **Chapter 9 status (ADR-144, 2026-07-14):** Valea Stelelor now has a frozen
 > 80×64 production contract: a warm crescent village around Buni's table, green
 > and well, with the Orient Less-Express rail apron below and Old Road mouth

@@ -112,7 +112,7 @@ Re-flagging them as orphans (or deleting them) would break shipped content:
 
 | id | what it actually is | wired via |
 |---|---|---|
-| `gilded_grin_hollow` | Ch.1 boss **Idol of the Gilded Grin** `formSwap` hollow form (Mia's-awakening beat) | `authored.ts` + `spritegen/enemies.ts` |
+| `gilded_grin_hollow` | Ch.2 boss **Idol of the Gilded Grin** `formSwap` hollow form (Mia's-awakening beat) | `authored.ts` + `spritegen/enemies.ts` |
 | `the_whisperwig_exposed` | Ch.4 boss **The Whisperwig** phase-2 exposed form | `authored.ts` + `spritegen/enemies.ts` |
 | `whiskerzilla_knighted` | Ch.5 **cutscene panel** (not an enemy at all) | `src/data/cutscenes.ts` |
 | `ribcage_rattler` | Ch.9 regular enemy; the adopted gothic reserve identity | `enemies.ts` + `authored.ts` + `spritegen/enemies.ts` + `maps_ch9.ts` |

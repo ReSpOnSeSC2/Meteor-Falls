@@ -736,6 +736,17 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
   facades.forEach((p, idx) => {
     const { w, u } = facadeDims(p.sprite);
     const Hpx = cityBuildingHeight(u);
+    // Otterbrooke's Chapter 1 facade pass enlarges its residential/civic shells
+    // with PropDef.scale. Door metrics remain native (the runtime multiplies
+    // them), so generated knock points and reciprocal unit exits must use the
+    // same scale or they land inside the enlarged wall. Other settlements keep
+    // their historical assembly coordinates byte-identical.
+    const exteriorSX = map.id === 'otterbrook'
+      ? (typeof p.scale === 'number' ? p.scale : p.scale?.x ?? 1)
+      : 1;
+    const exteriorSY = map.id === 'otterbrook'
+      ? (typeof p.scale === 'number' ? p.scale : p.scale?.y ?? 1)
+      : 1;
     // 2026-07-02 (user bug report): the grafted door/mat used the FOOTPRINT
     // center, but the hi-res art's drawn door is rarely centered — mats sat
     // beside doors. DOOR_FRAC is measured from the authored PNGs (darkest
@@ -746,8 +757,8 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
     const oy = Hpx - 14;
     if (locked.has(idx)) {
       // LOCKED — a knock-knock sign at the would-be door tile (read facing up)
-      const sx = Math.floor((p.x * 16 + ox + 8) / 16);
-      const sy = Math.floor((p.y * 16 + oy + 9) / 16);
+      const sx = Math.floor((p.x * 16 + (ox + 8) * exteriorSX) / 16);
+      const sy = Math.floor((p.y * 16 + (oy + 9) * exteriorSY) / 16);
       const sign: SignDef = { x: sx, y: sy, dialogue: KNOCK_IDS[Math.floor(rnd() * KNOCK_IDS.length)] };
       map.signs.push(sign);
       return;
@@ -767,8 +778,8 @@ export function occupyCity(map: MapDef, opts: OccupyOpts): Record<string, MapDef
     const spawnTx = Math.floor(iw / 2) * 16;
     const spawnTy = (ih - 2) * 16;
     p.door = { ox, oy, w: 16, h: 18, to: id, tx: spawnTx, ty: spawnTy };
-    const stepTx = p.x * 16 + ox + 8;
-    const stepTy = p.y * 16 + oy + 23; // door.h (18) + 5, matches doorstepOf
+    const stepTx = p.x * 16 + (ox + 8) * exteriorSX;
+    const stepTy = p.y * 16 + (oy + 18) * exteriorSY + 5; // door.h (18) + 5, matches doorstepOf
     const name = arch.names[Math.floor(rnd() * arch.names.length)];
     // Always build the generic tenant first, even for a claimed amenity, to
     // consume the historical RNG sequence. That keeps all later unit furnishing

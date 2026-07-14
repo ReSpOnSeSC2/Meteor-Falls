@@ -160,7 +160,7 @@ const ITEM_BAND: Record<string, ItemBand> = {
   // ── Ch.1 USA (Otterbrook / Brickton) — the two shipped chapters' home gear
   cracked_bat: 'ch1', tball_bat: 'ch1', hand_me_down_pan: 'ch1',
   corn_dog: 'ch1', pbj: 'ch1', lemonade: 'ch1', salt_shaker: 'ch1',
-  star_cola: 'ch1', glints_spark: 'ch1', star_locket: 'ch1',
+  star_cola: 'ch1', glints_spark: 'ch1', star_locket: 'ch1', trail_key: 'ch1',
   lucky_collar: 'ch1', fresh_stamps: 'ch1', sugar_bag: 'ch1', lemon_crate: 'ch1',
   lemonade_jug: 'ch1', champion_jacket: 'ch1', walkers_charm: 'ch1', basket_basic: 'ch1',
   // the Brickton Classic's first-title prize (THE STARTING FIVE arms) is won in Ch.1
@@ -509,6 +509,14 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
       usableInBattle: false,
       price: 0,
       text: 'It hums when the Embers sing. 1/10th of a Homesong lives inside.',
+    }),
+    I({
+      id: 'trail_key',
+      name: 'Trail Key',
+      kind: 'key',
+      usableInBattle: false,
+      price: 0,
+      text: "Hodgkin's brass shed key. Its tag says WEST TRAIL, then PLEASE RETURN, then FINE, KEEP IT.",
     }),
     /* ---- S9: §A10 #1–3 quest rewards + supplies ---- */
     I({

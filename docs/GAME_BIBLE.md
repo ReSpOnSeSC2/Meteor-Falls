@@ -495,9 +495,29 @@ Mom's cooking. The story launch is unchanged; this makes it a two-way road after
 
 ### Chapter 1 — "The Night It Fell" (USA) — target end level: 8
 
+> **Production amendment (ADR-145, 2026-07-14):** executable Chapter 1 owns
+> exactly 81 playable map ids plus the pre-completion, Chapter-2-owned
+> `brickton_docks` boundary. Unified `otterbrook` replaces the four former
+> climb maps; those ids and orphaned `downtown_otterbrook` recover through
+> deterministic save v27 at tile (56,100). The crater encounter is the
+> 240-HP Hush Sentinel. Titanic Tick is the later 200-HP, level-7 Hickory Hill
+> cave fight during Hush morning. Its mandatory route is Pemberton -> Hodgkin
+> -> the request-gated mower -> shared Trail Key -> walk-through shed ->
+> `oak_roots` -> `oak_hollow` -> `oak_heart` -> Titanic Tick. After the Department
+> Manager, Mom's ringing Brickton payphone starts the Jay-and-Mia First
+> Heartlight sequence; its
+> Heartlight, Ember 1, completion, and chapter card are separately resumable.
+> The production profile matrix has exactly 57 coherent states. Expanded
+> Chapter 1 enemy families are authored; they are no longer queued gray boxes.
+> The 450/150-HP crater-Tick, separate-climb-map, daybreak, and queued-art
+> paragraphs below are preserved as dated history and are not current canon.
+
 Tutorial-by-doing. Meteor crash, Glint's prophecy and death-by-bug-zapper, the neighbor kid **Chad Pickle** (Pokey analog) tags along then betrays you twice before lunch. Jay crosses Hickory Hill, takes the bus to **Brickton City**, and rescues **Mia** from the **Department of Smiles** — a cult of unsettlingly cheerful adults in blue blazers ("Have a PRODUCTIVE day!") who've been Hushed.
 
-**Resonance Site:** Hickory Hill crater. **BOSS 1 — THE TITANIC TICK** (450 HP / latches onto a hero and drains HP each turn until hit with Vibe Fire or a thrown Salt Shaker).
+**Historical pre-production slot:** Hickory Hill crater. **BOSS 1 — THE
+TITANIC TICK** (450 HP / latches onto a hero and drains HP each turn until hit
+with Vibe Fire or a thrown Salt Shaker). ADR-145 supersedes this line with
+the deepest Hickory Hill cave and 200 HP.
 
 > *(Amended 2026-06-11 per Appendix rule 6, ADR-035: the OLD LIGHT severs
 > the latch too — Jay awakens VIBE SURGE α at Glint's prophecy one beat
@@ -1209,7 +1229,7 @@ meteor-falls/
   few props for many tiles, so lean into them. Every grown area EARNS its size with
   CONTENT (a task/quest or two, purposeful NPCs, a hidden reward in a nook, a cutscene
   beat) — new space without new things to do is empty. *(Added 2026-06-13.)*
-- **THE OPENING GATES THE WORLD (the daybreak law).** Ch.1's night section is sealed:
+- **HISTORICAL DAYBREAK LAW (superseded by ADR-145's four phases and unified map ids).** Ch.1's night section is sealed:
   the wider world past the hometown treeline is NOT reachable until the beginning ends
   and it is light out (the `zapper_done` flag flips `storyNight`→day across
   `otterbrook`/`hill_road`/`hickory_hill`). At daybreak the world OPENS, every NPC on
@@ -1705,6 +1725,10 @@ fuel. Show callers earned as tiny phone icons on the journal page.
 > One prompt per chapter. Each follows the same template — shown in full for Chapter 1, then per-chapter deltas. These are the biggest prompts; expect each to be a long Claude Code session. Playtest the chapter fully before moving on.
 
 ### Prompt 27 — Chapter 1: "The Night It Fell"
+
+> **Historical scaffold only:** the prompt below predates ADR-145. Its
+> crater-Tick placement, compact map list, and single close transaction must
+> not be used to reconstruct current Chapter 1; use the production blueprint.
 
 ```
 [Standard Header]

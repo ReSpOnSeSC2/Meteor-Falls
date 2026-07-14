@@ -87,8 +87,8 @@ import { CH4_MAP_IDS, KVISTHAVN_LANDING, SPINE_MELTFALL_CROSSING } from '../data
 import { MINIMUS_LANDING } from '../data/maps_ch5';
 import { ZANZIBEL_LANDING } from '../data/maps_ch6';
 import { CH7_WORLD } from '../data/maps_ch7';
-import { CH8_MAP_IDS, CH8_WORLD } from '../data/maps_ch8';
-import { CH9_MAP_IDS, CH9_WORLD, nativeFeet as ch9NativeFeet } from '../data/maps_ch9';
+import { CH8_WORLD } from '../data/maps_ch8';
+import { CH9_WORLD, nativeFeet as ch9NativeFeet } from '../data/maps_ch9';
 import { ENEMIES, MAX_BATTLE_ENEMIES, type EnemyDef } from '../data/enemies';
 import { DIALOGUE } from '../data/dialogue';
 import { ITEMS, BAG_MAX } from '../data/items';
@@ -291,7 +291,27 @@ import {
   type OpeningPhase,
 } from '../engine/opening';
 import { readableCaptionMs } from '../engine/cutscenePacing';
-import { chapter1BannerTag, chapter1Phase, type Chapter1Phase } from '../engine/ch1Story';
+import {
+  CH1_FAYE_PAN_ID,
+  CH1_GLINT_SPARK_ID,
+  CH1_STAR_LOCKET_ID,
+  CH1_STORY_FLAGS,
+  chapter1BannerTag,
+  chapter1Phase,
+  planCh1CraterStory,
+  planCh1FayeStory,
+  planCh1ManagerStory,
+  planCh1MomStory,
+  planCh1PorchStory,
+  planCh1TickStory,
+  type Chapter1Phase,
+} from '../engine/ch1Story';
+import {
+  CH1_TRAIL_FLAGS,
+  chapter1TrailOwnsKey,
+  chapter1TrailStage,
+  normalizeChapter1TrailKeyItems,
+} from '../engine/ch1TrailRoute';
 
 interface Rect {
   x: number;
@@ -1137,17 +1157,36 @@ const JOIN_DASH = 165 * ART_SCALE;
 const SWIRL_MS = 750;
 const JOIN_WINDOW_MS = 1150;
 
-/** S9 §A10 #2: Mr. Plummer's five doors — facade prop → letter flag + line.
- *  The quest data's objective flags and THIS table must agree; the validator
- *  cross-checks both against the §A10 manifest. */
-const MAIL_DOORS: Record<string, { flag: string; dialogue: string }> = {
-  house_chad: { flag: 'q_mail_pickles', dialogue: 'mail_pickles' },
-  house_a: { flag: 'q_mail_sodd', dialogue: 'mail_sodd' },
-  house_b: { flag: 'q_mail_birch', dialogue: 'mail_birch' },
-  chapel: { flag: 'q_mail_chapel', dialogue: 'mail_chapel' },
-  arcade: { flag: 'q_mail_arcade', dialogue: 'mail_arcade' },
-};
-const MAIL_FLAGS = Object.values(MAIL_DOORS).map((d) => d.flag);
+/** S9 §A10 #2: stable instance identity for Mr. Plummer's five doors.
+ * Sprite keys are deliberately absent: house_a/house_b/arcade are reused by
+ * many unrelated props on the unified map. The authored door destination is
+ * the unique, save-stable identity that survives settlement growth/jitter. */
+export interface Chapter1MailStop {
+  readonly id: 'pickles' | 'sodd' | 'birch' | 'chapel' | 'arcade';
+  readonly mapId: 'otterbrook';
+  readonly doorTo: string;
+  readonly flag: string;
+  readonly dialogue: string;
+}
+
+export const CH1_MAIL_STOPS: readonly Chapter1MailStop[] = Object.freeze([
+  { id: 'pickles', mapId: 'otterbrook', doorTo: 'chad_home', flag: 'q_mail_pickles', dialogue: 'mail_pickles' },
+  { id: 'sodd', mapId: 'otterbrook', doorTo: 'otter_home_sodd', flag: 'q_mail_sodd', dialogue: 'mail_sodd' },
+  { id: 'birch', mapId: 'otterbrook', doorTo: 'otter_home_birch', flag: 'q_mail_birch', dialogue: 'mail_birch' },
+  { id: 'chapel', mapId: 'otterbrook', doorTo: 'chapel_int', flag: 'q_mail_chapel', dialogue: 'mail_chapel' },
+  { id: 'arcade', mapId: 'otterbrook', doorTo: 'arcade_int', flag: 'q_mail_arcade', dialogue: 'mail_arcade' },
+]);
+
+export function chapter1MailStopForProp(
+  mapId: string,
+  prop: Pick<PropDef, 'door'>,
+): Chapter1MailStop | null {
+  const doorTo = prop.door?.to;
+  if (!doorTo) return null;
+  return CH1_MAIL_STOPS.find((stop) => stop.mapId === mapId && stop.doorTo === doorTo) ?? null;
+}
+
+const MAIL_FLAGS = CH1_MAIL_STOPS.map((stop) => stop.flag);
 
 export class OverworldScene extends Phaser.Scene {
   private mapDef!: MapDef;
@@ -1245,7 +1284,7 @@ export class OverworldScene extends Phaser.Scene {
   private cut = false; // cutscene lock
   private entryBlackout?: Phaser.GameObjects.Rectangle; // no world-flash before an entry cutscene
   private isNight = false; // set per-build; dialogueDay variants read it (S15c)
-  // ADR-121: THE HUSH-DARK — the Titanic Tick (in the Heart Oak) drains the town's
+  // ADR-121/145: THE HUSH-DARK — the Titanic Tick in Hickory Hill's cave drains the town's
   // Vibe after daybreak, so a cold diegetic "night" creeps over Otterbrook in the
   // daytime until the Tick dies. Rides the night overlay, but cold (sick) not warm.
   private hushDark = false;
@@ -1256,7 +1295,6 @@ export class OverworldScene extends Phaser.Scene {
   /** Decorative out-of-bounds biome sprites. Tracked so a flag-gated edge door
    *  can open its visual gap in-place without restarting the map. */
   private edgeFeatures: Phaser.GameObjects.Image[] = [];
-  private openingRequested = false;
   private devFullMapPreview = false;
   /** §A4: the overworld VITALS quick-glance (the EB "check HP fast" beat) —
    *  the same party strip the menu draws, popped on a button with no full menu */
@@ -1302,7 +1340,6 @@ export class OverworldScene extends Phaser.Scene {
     const id = recoveringLegacyTwotonUnit ? 'brickton' : requestedId;
     if (id !== GS.data.map) clearPuppetLock();
     this.mapDef = MAPS[id] ?? MAPS.otterbrook;
-    this.openingRequested = data.opening === true;
     this.devFullMapPreview = data.devFullMap === true;
     GS.data.map = this.mapDef.id;
     if (recoveringLegacyTwotonUnit) {
@@ -1350,6 +1387,11 @@ export class OverworldScene extends Phaser.Scene {
     this.insideTriggers.clear();
     this.dlg = new Dialogue(this);
 
+    // Repair old flag-only/item-only route saves before props, doors, and
+    // patrols read their gates. Cave-resident saves are grandfathered so a
+    // pre-route notebook can always backtrack through the newly keyed shed.
+    this.reconcileChapter1TrailKey();
+
     this.buildTiles();
     this.buildParallaxSky();
     this.buildElevationOverlay();
@@ -1385,7 +1427,7 @@ export class OverworldScene extends Phaser.Scene {
     // are genuinely always dark.
     const ch1Phase = chapter1Phase((id) => !!GS.flag(id));
     const storyNight = ch1Phase === 'meteor-night' && CH1_STORY_NIGHT_MAPS.has(this.mapDef.id);
-    // ADR-121: after the meteor night ends but before the Heart-Oak Tick is killed,
+    // ADR-121/145: after the meteor night ends but before the cave Tick is defeated,
     // the Hush-dark blights Otterbrook in broad daylight. It reads as cold/sick
     // "night" (buildNight branches on this.hushDark), and the town stays locked
     // (bus dark, road fogged) until tick_defeated breaks it into real dawn.
@@ -1413,7 +1455,7 @@ export class OverworldScene extends Phaser.Scene {
     // Score the fall, then preserve the authored silence after impact and into
     // the bedroom wake. Room music starts only after the wake narration lands.
     const entryOpeningPhase = this.opPhase();
-    AUDIO.playMusic(entryOpeningPhase === 1 ? 'starfall' : entryOpeningPhase === 4 ? null : this.mapDef.music);
+    AUDIO.playMusic(entryOpeningPhase === 1 ? 'starfall' : entryOpeningPhase > 0 ? null : this.mapDef.music);
     const clearedFog = CH3_MACHINE_FOG_MAPS.has(this.mapDef.id) && GS.flag('mainframe_defeated') === true;
     AUDIO.setAmbience(this.mapDef.ambience, clearedFog ? 0.42 : 1);
     this.scheduleWaterAccents();
@@ -3697,6 +3739,8 @@ export class OverworldScene extends Phaser.Scene {
 
   private buildPatrols(): void {
     for (const def of this.mapDef.patrols ?? []) {
+      if (def.ifFlag && !GS.flag(def.ifFlag)) continue;
+      if (def.unlessFlag && GS.flag(def.unlessFlag)) continue;
       // a counted patrol stays down for good — its quota was met (S2)
       if (def.countFlag && GS.flag(def.countFlag)) continue;
       const enemy = ENEMIES[def.enemy];
@@ -3879,6 +3923,9 @@ export class OverworldScene extends Phaser.Scene {
         void this.checkDoors();
         if (!this.cut && !this.transitioning) {
           this.checkTriggers();
+          // Queue draining begins synchronously and may have opened dialogue or
+          // a battle cutscene. Do not let the same A edge also probe the world.
+          if (this.cut || this.dlg.busy || this.transitioning) return;
           // the A that confirmed a menu row this same frame must not also
           // probe the world (Dialogue.justReleased — the S6 notebook-ask fix)
           const released = this.dlg.justReleased(this.time.now);
@@ -5253,12 +5300,8 @@ export class OverworldScene extends Phaser.Scene {
     for (const p of this.mapDef.props) {
       if (p.ifFlag && !GS.flag(p.ifFlag)) continue;
       if (p.unlessFlag && GS.flag(p.unlessFlag)) continue;
-      if (!MAIL_DOORS[p.sprite] || !p.solid) continue;
-      // the route's five stops are the ORIGINALS — Elm Row's three houses (the
-      // bluff, y<10) + the chapel + the arcade. house_* sprites are reused all
-      // over the region now (Hill Road, Maple Ct, the Hollow); those are not
-      // mail stops and must not eat the knock.
-      if (p.sprite.startsWith('house_') && this.mapDef.id !== 'otterbrook') continue;
+      const mailStop = chapter1MailStopForProp(this.mapDef.id, p);
+      if (!mailStop || !p.solid) continue;
       // solid.* are NATIVE data; the ±4/8 pad is px → all scaled at read
       const r = {
         x: p.x * TILE_PX + s(p.solid.ox) - s(4),
@@ -5267,7 +5310,7 @@ export class OverworldScene extends Phaser.Scene {
         h: s(p.solid.h) + s(8),
       };
       if (probeX > r.x && probeX < r.x + r.w && probeY > r.y && probeY < r.y + r.h) {
-        if (await this.mailDelivery(p.sprite)) {
+        if (await this.mailDelivery(mailStop)) {
           AUDIO.sfx('cursor');
           return;
         }
@@ -5380,6 +5423,10 @@ export class OverworldScene extends Phaser.Scene {
     if (n.def.id === 'mom') {
       // the night Glint died: she sends you to bed, and sleep brings the morning
       if (GS.flag('zapper_hit') && !GS.flag('zapper_done')) {
+        if (this.chapter1PorchPending()) {
+          await this.dlg.say("(Something warm is still waiting on the porch. Finish that goodbye before bed.)");
+          return;
+        }
         await this.dlg.say(...DIALOGUE.npc_mom_sleep);
         await this.sleepToMorning();
         return;
@@ -5571,39 +5618,85 @@ export class OverworldScene extends Phaser.Scene {
     this.goThroughDoor('otterbrook', backTx, backTy, 'down'); // back to the lane, a free kid
   }
 
-  /**
-   * S22 (ADR-119) — HODGKIN'S TRAIL KEY (the soft EarthBound interlock). His demo
-   * mower (a counted patrol on Hickory Trail) breaks loose; shutting it off earns
-   * the TRAIL KEY, which opens his locked supply shed up the trail for a small
-   * reward. Order-independent + optional — never gates the crater (soft gating).
-   */
+  /** Keep the route's compatibility flag and real key item in exact agreement.
+   * Returns ownership after repairing duplicates and cave-resident old saves. */
+  private reconcileChapter1TrailKey(): boolean {
+    const mapId = this.mapDef?.id ?? GS.data.map;
+    const caveResident = mapId === 'oak_roots' || mapId === 'oak_hollow' || mapId === 'oak_heart';
+    const routeResident = caveResident || mapId === 'trail_shed_int';
+    const earned = chapter1TrailOwnsKey((flag) => GS.flag(flag) === true, GS.data.keyItems)
+      || routeResident
+      || GS.flag('tick_defeated') === true;
+    const normalized = normalizeChapter1TrailKeyItems(GS.data.keyItems, earned);
+    if (
+      normalized.length !== GS.data.keyItems.length
+      || normalized.some((item, index) => item !== GS.data.keyItems[index])
+    ) GS.data.keyItems = normalized;
+    if (earned) GS.setFlag(CH1_TRAIL_FLAGS.hasKey);
+    if (caveResident || GS.flag('tick_defeated')) GS.setFlag(CH1_TRAIL_FLAGS.shedCrossed);
+    return earned;
+  }
+
+  /** HODGKIN'S TRAIL KEY — the mandatory, save-backed Hush route interlock. */
   private async hardwareBeat(): Promise<void> {
-    if (GS.flag('has_trail_key')) {
+    if (!GS.flag('zapper_done')) {
+      await this.dlg.say(...DIALOGUE.npc_hodgkin);
+      return;
+    }
+    if (this.reconcileChapter1TrailKey()) {
       await this.dlg.say(...DIALOGUE.npc_hodgkin_after);
       return;
     }
-    if (GS.flag('q_mower_caught')) {
+    // Pemberton is the readable first breadcrumb, not optional flavor. Preserve
+    // old in-progress saves (keyAsked/mowerCaught), but do not let a fresh Hush
+    // state skip straight to Hodgkin's mower request.
+    if (
+      !GS.flag(CH1_TRAIL_FLAGS.metPemberton)
+      && !GS.flag(CH1_TRAIL_FLAGS.keyAsked)
+      && !GS.flag(CH1_TRAIL_FLAGS.mowerCaught)
+    ) {
+      await this.dlg.say(...DIALOGUE.npc_hodgkin_pemberton);
+      return;
+    }
+    if (GS.flag(CH1_TRAIL_FLAGS.mowerCaught)) {
       await this.dlg.say(...DIALOGUE.npc_hodgkin_reward);
-      GS.setFlag('has_trail_key');
+      GS.data.keyItems = normalizeChapter1TrailKeyItems(GS.data.keyItems, true);
+      GS.setFlag(CH1_TRAIL_FLAGS.hasKey);
       AUDIO.sfx('confirm');
-      toast(this, 'Got the TRAIL KEY! (opens the shed up Hickory Trail)');
+      toast(this, 'Got the TRAIL KEY! (KEY ITEM — no bag slot needed.)');
+      return;
+    }
+    if (GS.flag(CH1_TRAIL_FLAGS.keyAsked)) {
+      await this.dlg.say(...DIALOGUE.npc_hodgkin_active);
       return;
     }
     await this.dlg.say(...DIALOGUE.npc_hodgkin_ask);
+    GS.setFlag(CH1_TRAIL_FLAGS.keyAsked);
+    AUDIO.sfx('confirm');
+    toast(this, 'GOAL: Catch Hodgkin’s mower on the west lane above Pemberton’s workshop.');
   }
 
-  /** Pemberton makes the cave route legible and seeds the endgame Long Shot
-   * without turning an unrelated side-quest key into a main-path requirement. */
+  /** Pemberton reports the exact next physical landmark at every route stage. */
   private async pembertonBeat(): Promise<void> {
     if (!GS.flag('zapper_done')) {
       await this.dlg.say(...DIALOGUE.npc_pemberton_night);
       return;
     }
     if (!GS.flag('tick_defeated')) {
-      await this.dlg.say(...DIALOGUE.npc_pemberton_hush);
+      const stage = chapter1TrailStage((flag) => GS.flag(flag) === true, GS.data.keyItems);
+      const lines = stage === 'mower'
+        ? DIALOGUE.npc_pemberton_mower
+        : stage === 'claim-key'
+          ? DIALOGUE.npc_pemberton_hodgkin
+          : stage === 'shed'
+            ? DIALOGUE.npc_pemberton_key
+            : stage === 'cave'
+              ? DIALOGUE.npc_pemberton_cave
+              : DIALOGUE.npc_pemberton_hush;
+      await this.dlg.say(...lines);
       if (!GS.flag('met_pemberton')) {
-        GS.setFlag('met_pemberton');
-        toast(this, 'CLUE: Follow the west trail past Pemberton’s workshop.');
+        GS.setFlag(CH1_TRAIL_FLAGS.metPemberton);
+        toast(this, 'CLUE: Hodgkin Hardware has the key to the west-trail shed.');
       }
       return;
     }
@@ -7361,10 +7454,9 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /** §A10 #2 — a letter lands; the door props are the five stops */
-  private async mailDelivery(propSprite: string): Promise<boolean> {
+  private async mailDelivery(stop: Chapter1MailStop): Promise<boolean> {
     if (!GS.flag('q_mail') || GS.flag('q_mail_done')) return false;
-    const stop = MAIL_DOORS[propSprite];
-    if (!stop || GS.flag(stop.flag)) return false;
+    if (GS.flag(stop.flag)) return false;
     await this.dlg.say(...DIALOGUE[stop.dialogue]);
     GS.setFlag(stop.flag);
     AUDIO.sfx('confirm');
@@ -7508,7 +7600,7 @@ export class OverworldScene extends Phaser.Scene {
     }
     // S22 (ADR-119): Hodgkin's locked trail shed — opens with the Trail Key
     if (dialogueId === 'trail_shed') {
-      if (!GS.flag('has_trail_key')) {
+      if (!this.reconcileChapter1TrailKey()) {
         await this.dlg.say(...DIALOGUE.trail_shed_locked);
         return true;
       }
@@ -7516,11 +7608,17 @@ export class OverworldScene extends Phaser.Scene {
         await this.dlg.say(...DIALOGUE.trail_shed_empty);
         return true;
       }
+      const carrier = GS.data.party.find((hero) => hero.bag.length < BAG_MAX);
+      if (!carrier) {
+        await this.dlg.say(...DIALOGUE.trail_shed_full);
+        return true;
+      }
       await this.dlg.say(...DIALOGUE.trail_shed_open);
-      GS.setFlag('shed_looted');
+      carrier.bag.push('choco_comet_bar');
       GS.data.cashOnHand += 60;
+      GS.setFlag('shed_looted');
       AUDIO.sfx('confirm');
-      toast(this, 'The shed: +$60 (and a granola bar).');
+      toast(this, 'Shed cache: +$60 and a Choco-Comet Bar.');
       return true;
     }
     if (dialogueId === 'hill_spring') {
@@ -8022,6 +8120,10 @@ export class OverworldScene extends Phaser.Scene {
 
   private async picnicFlow(table: PropDef): Promise<void> {
     AUDIO.sfx('cursor');
+    if (this.mapDef.id === 'oak_hollow') {
+      await this.oakHollowRest();
+      return;
+    }
     const basket = this.bestBasket();
     if (!basket) {
       await this.dlg.say(...DIALOGUE.picnic_no_basket);
@@ -8031,6 +8133,29 @@ export class OverworldScene extends Phaser.Scene {
     const pick = await this.dlg.ask([`Spread the ${ITEMS[basket].name}`, 'Not now'], { cancelIndex: 1 });
     if (pick !== 0) return;
     await this.picnicScene(table, basket);
+  }
+
+  /** The cave's breather is a genuine pre-boss sanctuary even when the solo
+   * Chapter 1 loadout has no basket. It deliberately does not revive anyone. */
+  private async oakHollowRest(): Promise<void> {
+    this.cut = true;
+    try {
+      await this.dlg.say(...(
+        GS.flag('ch1_oak_hollow_rest_seen')
+          ? DIALOGUE.oak_hollow_rest_again
+          : DIALOGUE.oak_hollow_rest
+      ));
+      for (const hero of GS.data.party) {
+        if (hero.down) continue;
+        hero.hp = hero.maxHp;
+        hero.pp = hero.maxPp;
+      }
+      GS.setFlag('ch1_oak_hollow_rest_seen');
+      AUDIO.sfx('heal');
+      this.sparkleBurst(this.player.x, this.player.y - s(12), 10);
+    } finally {
+      this.cut = false;
+    }
   }
 
   /**
@@ -8272,6 +8397,14 @@ export class OverworldScene extends Phaser.Scene {
 
   private goThroughDoor(to: string, tx: number, ty: number, facing: Facing): void {
     if (this.transitioning) return;
+    // Crossing the shed's rear breach is the durable proof that Jay used the
+    // mandatory passage. Commit before the fade so reload cannot lose it.
+    if (
+      this.mapDef.id === 'trail_shed_int'
+      && to === 'otterbrook'
+      && ty < 28 * 16
+      && this.reconcileChapter1TrailKey()
+    ) GS.setFlag(CH1_TRAIL_FLAGS.shedCrossed);
     this.transitioning = true;
     clearPuppetLock(); // §2.3: leaving the map ends the Held-Breath Puppet-lock (NOT a rewind-restart, which keeps it)
     // tx/ty are NATIVE door-target pixels (map-data d.tx/d.ty, spawn constants,
@@ -8385,14 +8518,10 @@ export class OverworldScene extends Phaser.Scene {
       // edge-trigger: fire on entry, not every frame while standing in it
       if (this.insideTriggers.has(t.id)) continue;
       this.insideTriggers.add(t.id);
-      if (
-        CH8_MAP_IDS.some((mapId) => mapId === this.mapDef.id)
-        || CH9_MAP_IDS.some((mapId) => mapId === this.mapDef.id)
-      ) {
-        this.queueCh8Trigger(t.id);
-      } else {
-        void this.runTrigger(t.id);
-      }
+      // Every async story rectangle shares one authored-order queue. Chapter 1
+      // has adjacent battle/dialogue zones too; fire-and-forget could launch two
+      // scenes before either one had finished committing its durable frontier.
+      this.queueCh8Trigger(t.id);
     }
   }
 
@@ -8410,6 +8539,12 @@ export class OverworldScene extends Phaser.Scene {
     try {
       for (let id = this.ch8TriggerQueue.shift(); id !== undefined; id = this.ch8TriggerQueue.shift()) {
         await this.runTrigger(id);
+        // A scene restart/door transition invalidates every rectangle captured
+        // from the old map. Never let its queued neighbour start over the fade.
+        if (this.transitioning) {
+          this.ch8TriggerQueue.length = 0;
+          break;
+        }
       }
     } finally {
       this.ch8TriggerRunnerActive = false;
@@ -8502,14 +8637,16 @@ export class OverworldScene extends Phaser.Scene {
       await this.bordenCellBeat();
       return;
     }
-    // Ch.1 opening — a 4-phase cinematic across hickory_hill → otterbrook →
-    // hickory_hill → rex_bedroom (engine/opening.ts), each re-entered after a cut.
-    switch (this.opPhase()) {
-      // the opening is ONE continuous cinematic on otterbrook now (the crater is on this
-      // elevated map): phase 1 runs meteor-fall → house pan → hill climb INLINE, then cuts
-      // to rex_bedroom for the wake (phase 4). No more map-hopping between beats.
-      case 1: this.openingRequested = false; await this.playOpeningCinema(); return;
-      case 4: await this.introScene(); return;
+    // Ch.1 opening — three durable Otterbrooke camera substages, followed by
+    // the bedroom wake (engine/opening.ts). Any partial save resumes in place.
+    const opening = this.opPhase();
+    if (opening >= 1 && opening <= 3) {
+      await this.runOtterbrookOpening();
+      return;
+    }
+    if (opening === 4) {
+      await this.introScene();
+      return;
     }
     if (this.registry.get('defeated') === true) {
       this.registry.set('defeated', false);
@@ -8536,7 +8673,7 @@ export class OverworldScene extends Phaser.Scene {
     // ADR-131: the first daylight after Glint's porch is the HUSH-DARK. create() has
     // already rebuilt the world cold + hazed (buildNight on this.hushDark), so the
     // player is LOOKING at the wrong-coloured morning; this one-time note NAMES it —
-    // a drained STATE to break (kill the Heart-Oak Tick), not a render glitch. Fires
+    // a drained STATE to break (defeat the Tick in Hickory Hill's cave), not a render glitch. Fires
     // on the first Hush-dark map entered (Otterbrook or the hill) and never again; the
     // haze itself lifts when tick_defeated breaks the real dawn (tick_after).
     if (
@@ -8545,10 +8682,26 @@ export class OverworldScene extends Phaser.Scene {
       !GS.flag('tick_defeated') &&
       !GS.flag('hush_dark_noticed')
     ) {
-      GS.setFlag('hush_dark_noticed');
       this.cut = true;
-      await this.dlg.say(...DIALOGUE.dawn_hush_dark);
-      this.cut = false;
+      try {
+        await this.dlg.say(...DIALOGUE.dawn_hush_dark);
+        GS.setFlag('hush_dark_noticed');
+      } finally {
+        this.cut = false;
+      }
+    }
+    if (
+      this.mapDef.id === 'oak_roots'
+      && this.reconcileChapter1TrailKey()
+      && !GS.flag('ch1_oak_roots_enter_seen')
+    ) {
+      this.cut = true;
+      try {
+        await this.dlg.say(...DIALOGUE.oak_roots_enter);
+        GS.setFlag('ch1_oak_roots_enter_seen');
+      } finally {
+        this.cut = false;
+      }
     }
   }
 
@@ -8569,11 +8722,11 @@ export class OverworldScene extends Phaser.Scene {
         break;
       case 'crater':
         // ADR-121: the first-night crater fight is the HUSH SENTINEL (repelled,
-        // not killed). The Tick is no longer here — it relocates to the Heart Oak.
-        if (!GS.flag('sentinel_repelled')) await this.craterScene();
+        // not killed). The Tick is deeper in Hickory Hill's separate cave chain.
+        if (this.chapter1CraterPending()) await this.craterScene();
         break;
       case 'porch':
-        if (GS.flag('sentinel_repelled') && !GS.flag('zapper_hit')) await this.porchScene();
+        if (this.chapter1PorchPending()) await this.porchScene();
         break;
       case 'ch1_hill_entry_warning':
         if (GS.flag('meteor_fell') && !GS.flag('sentinel_repelled') && !GS.flag('ch1_hill_entry_warning_seen')) {
@@ -8583,10 +8736,28 @@ export class OverworldScene extends Phaser.Scene {
         }
         break;
       case 'ch1_cave_threshold':
-        if (GS.flag('zapper_done') && !GS.flag('tick_defeated') && !GS.flag('ch1_cave_threshold_seen')) {
-          GS.setFlag('ch1_cave_threshold_seen');
+        if (
+          GS.flag('zapper_done')
+          && this.reconcileChapter1TrailKey()
+          && GS.flag(CH1_TRAIL_FLAGS.shedCrossed)
+          && !GS.flag('tick_defeated')
+          && !GS.flag('ch1_cave_threshold_seen')
+        ) {
           AUDIO.sfx('ember');
           await this.dlg.say(...DIALOGUE.ch1_cave_threshold);
+          GS.setFlag('ch1_cave_threshold_seen');
+        }
+        break;
+      case 'ch1_trail_shed_crossed':
+        if (
+          GS.flag('zapper_done')
+          && GS.flag(CH1_TRAIL_FLAGS.shedCrossed)
+          && !GS.flag('tick_defeated')
+          && !GS.flag('ch1_trail_shed_crossed_seen')
+        ) {
+          await this.dlg.say(...DIALOGUE.ch1_trail_shed_crossed);
+          GS.setFlag('ch1_trail_shed_crossed_seen');
+          toast(this, 'GOAL: Enter the scorched cave at the top of the west trail.');
         }
         break;
       case 'ch1_hush_main_street':
@@ -8603,11 +8774,17 @@ export class OverworldScene extends Phaser.Scene {
           await this.dlg.say(...DIALOGUE.ch1_restored_town_reveal);
         }
         break;
-      // ADR-121: the Titanic Tick has burrowed into the Heart Oak in Pond Park and
-      // is draining the town's Vibe (the Hush-dark). Daytime-only, once the town has
-      // woken from the meteor night; clears when the Tick dies (real dawn).
+      // `heart_oak` is a stable legacy trigger id, but its live owner is the
+      // raised meteor-mound dais in oak_heart, the final Hickory Hill cave map.
       case 'heart_oak':
-        if (GS.flag('zapper_done') && !GS.flag('tick_defeated')) await this.heartOakScene();
+        if (
+          this.mapDef.id === 'oak_heart'
+          && (
+            GS.flag('tick_defeated')
+            || (this.reconcileChapter1TrailKey() && GS.flag(CH1_TRAIL_FLAGS.shedCrossed))
+          )
+          && this.chapter1TickPending()
+        ) await this.tickCaveScene();
         break;
       // (the old center bus_stop redirect retired for good — the Transit Depot
       // sits ON the drag now, two storefronts from the old corner; the trigger
@@ -8660,10 +8837,16 @@ export class OverworldScene extends Phaser.Scene {
         if (!GS.flag('faye_joined') && !GS.flag('brickton_dial_goal')) await this.bricktonDialGoalScene();
         break;
       case 'faye_meet':
-        if (GS.flag('holding_open') && !GS.flag('faye_joined')) await this.fayeJoinScene();
+        if (this.chapter1FayePending()) await this.fayeJoinScene();
         break;
       case 'manager_block':
-        if (GS.flag('faye_joined') && !GS.flag('manager_defeated')) await this.managerScene();
+        // Corrupt/legacy saves with a terminal join flag but a missing Mia or
+        // pan must repair that transaction before the next boss can begin.
+        if (this.chapter1FayePending()) {
+          await this.fayeJoinScene();
+          break;
+        }
+        if (this.chapter1ManagerPending()) await this.managerScene();
         break;
       case 'payphone_ring':
         if (this.momCallPending()) {
@@ -11540,24 +11723,29 @@ export class OverworldScene extends Phaser.Scene {
   /** Ch.1 opening, phase 4 — the bedroom wake (after the cinematic's last cut). */
   private async introScene(): Promise<void> {
     this.cut = true;
-    GS.setFlag('intro_done');
-    // the bedroom fades in from the create()-placed entry blackout (no world-flash);
-    // the aftershock rumbles as {rex} wakes.
-    const cover = this.entryBlackout ?? this.add
-      .rectangle(0, 0, this.scale.width, this.scale.height, 0x000000)
-      .setOrigin(0)
-      .setScrollFactor(0)
-      .setDepth(DEPTH_UI - 1); // below the dialogue windows
-    this.entryBlackout = undefined;
-    AUDIO.sfx('rumble');
-    this.cameras.main.shake(900, 0.005);
-    this.tweens.add({ targets: cover, alpha: 0, duration: 1200, onComplete: () => cover.destroy() });
-    await this.wait(1300);
-    await this.dlg.say(...DIALOGUE.intro_wake);
-    GS.setFlag('meteor_fell');
-    AUDIO.playMusic(this.mapDef.music); // the opening theme hands off to the room
-    this.cut = false;
-    this.game.events.emit('mf-cinematic-closed');
+    try {
+      // the bedroom fades in from the create()-placed entry blackout (no world-flash);
+      // the aftershock rumbles as {rex} wakes.
+      const cover = this.entryBlackout ?? this.add
+        .rectangle(0, 0, this.scale.width, this.scale.height, 0x000000)
+        .setOrigin(0)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_UI - 1); // below the dialogue windows
+      this.entryBlackout = undefined;
+      AUDIO.sfx('rumble');
+      this.cameras.main.shake(900, 0.005);
+      this.tweens.add({ targets: cover, alpha: 0, duration: 1200, onComplete: () => cover.destroy() });
+      await this.wait(1300);
+      await this.dlg.say(...DIALOGUE.intro_wake);
+      // Wake presentation is the commit boundary: an interrupted line retries
+      // instead of stranding a save that claims the opening is already over.
+      GS.setFlag('meteor_fell');
+      GS.setFlag('intro_done');
+      AUDIO.playMusic(this.mapDef.music); // the opening theme hands off to the room
+    } finally {
+      this.cut = false;
+      this.game.events.emit('mf-cinematic-closed');
+    }
   }
 
   /** Which opening-cinematic phase should run on this map (0 = none). */
@@ -11565,8 +11753,31 @@ export class OverworldScene extends Phaser.Scene {
     return openingPhase(
       this.mapDef.id,
       { intro_done: !!GS.flag('intro_done'), op_fell: !!GS.flag('op_fell'), op_house: !!GS.flag('op_house') },
-      this.openingRequested,
     );
+  }
+
+  /** Run every currently reachable on-map opening stage, re-planning after
+   * each durable flag. A reload can enter at phase 1, 2, or 3. */
+  private async runOtterbrookOpening(): Promise<void> {
+    this.cut = true;
+    this.game.events.emit('mf-cinematic-open');
+    try {
+      while (!this.transitioning) {
+        switch (this.opPhase()) {
+          case 1: await this.playOpeningCinema(); break;
+          case 2: await this.openingHouseOverview(); break;
+          case 3: await this.openingHillClimb(); break;
+          default: return;
+        }
+      }
+    } finally {
+      if (!this.transitioning) {
+        this.cut = false;
+        this.player.setVisible(true);
+        this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+        this.game.events.emit('mf-cinematic-closed');
+      }
+    }
   }
 
   /** A clean cinematic map-cut: fade to black, then restart on `to` (no door
@@ -11588,7 +11799,6 @@ export class OverworldScene extends Phaser.Scene {
    */
   private async playOpeningCinema(): Promise<void> {
     this.cut = true;
-    this.game.events.emit('mf-cinematic-open');
     if (!this.textures.exists('meteor_rock_hickory_hill')) {
       await this.openingMeteorCinema();
       this.entryBlackout?.destroy();
@@ -11700,17 +11910,22 @@ export class OverworldScene extends Phaser.Scene {
       onCovered: frameHouse,
     });
 
-    // hand off to the OVERVIEW (phase 2) INLINE — same elevated map (no cut). The crater,
-    // {rex}'s house, and the climb all live here now.
+    // The runner re-plans into the overview immediately. `op_fell` also makes
+    // that same handoff deterministic after a reload.
     GS.setFlag('op_fell');
-    await this.openingHouseOverview(houseX, houseY);
   }
 
   /** Opening phase 2 (Otterbrook): the overview opens on {rex}'s house, holds, then
    *  begins the uninterrupted camera climb from town to the crater. */
-  private async openingHouseOverview(houseX: number, houseY: number): Promise<void> {
+  private async openingHouseOverview(): Promise<void> {
     this.cut = true;
     const cam = this.cameras.main;
+    const house = this.children.list.find(
+      (o): o is Phaser.GameObjects.Image =>
+        o instanceof Phaser.GameObjects.Image && o.texture.key === 'house_rex',
+    );
+    const houseX = house ? house.x + house.displayWidth / 2 : 49 * TILE_PX;
+    const houseY = house ? house.y + house.displayHeight / 2 : 52 * TILE_PX;
     cam.stopFollow();
     this.player.setVisible(false);
     cam.setZoom(OPENING_CAMERA.houseToTrail.fromZoom); // same hidden reframe used under the impact card
@@ -11738,7 +11953,6 @@ export class OverworldScene extends Phaser.Scene {
       showCaption(this, OPENING_CAPTIONS.hillApproach, { ms: OPENING_CAPTION_HOLDS.hillApproach }),
     ]);
     GS.setFlag('op_house');
-    await this.openingHillClimb(); // INLINE — the climb is up THIS map's terraces now
   }
 
   /** Opening phase 3 (Hickory Hill): the overview climbs the hill — the trail up
@@ -11748,6 +11962,10 @@ export class OverworldScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.stopFollow();
     this.player.setVisible(false);
+    // A live phase-2 handoff is already here; a reloaded phase 3 reconstructs
+    // the same endpoint before beginning the crater push.
+    cam.setZoom(OPENING_CAMERA.trailToCrater.fromZoom);
+    cam.centerOn(OPENING_CAMERA.trail.tx * TILE_PX, OPENING_CAMERA.trail.ty * TILE_PX);
     const landed = this.children.list.find(
       (o): o is Phaser.GameObjects.Image =>
         o instanceof Phaser.GameObjects.Image && o.texture.key === 'meteor_rock_hickory_hill',
@@ -11785,9 +12003,13 @@ export class OverworldScene extends Phaser.Scene {
   /** Hybrid STAGED cutscene — the ch1-close first Heartlight (card → live {faye}/
    *  {rex} acting it out). Public so a story trigger (or QA) can fire it. */
   async playFirstHeartlightStaged(): Promise<void> {
+    const previousCut = this.cut;
     this.cut = true;
-    await playStagedScene(this, ch1FirstHeartlight, { dialogue: this.dlg });
-    this.cut = false;
+    try {
+      await playStagedScene(this, ch1FirstHeartlight, { dialogue: this.dlg });
+    } finally {
+      this.cut = previousCut;
+    }
   }
 
   /**
@@ -12241,14 +12463,18 @@ export class OverworldScene extends Phaser.Scene {
    * pages, the flag, the jingle, the toast. Battle/menu availability reads
    * the flag forever after (data/awakenings.ts). Played straight, §A11.2.
    */
-  private async awakeningBeat(id: string, commitBeforePresentation = false): Promise<void> {
+  private async awakeningBeat(
+    id: string,
+    commitBeforePresentation = false,
+    presentDialogue = true,
+  ): Promise<void> {
     const a = AWAKENINGS[id];
     if (!a || GS.flag(a.flag) === true) return;
     if (commitBeforePresentation) GS.setFlag(a.flag);
     this.cameras.main.flash(420, 248, 232, 160);
     AUDIO.sfx('pray');
     this.sparkleBurst(this.player.x, this.player.y - s(14), 16);
-    await this.dlg.say(...DIALOGUE[a.dialogue]);
+    if (presentDialogue) await this.dlg.say(...DIALOGUE[a.dialogue]);
     if (!commitBeforePresentation) GS.setFlag(a.flag);
     AUDIO.jingle('levelup', 1400, this.mapDef.music);
     toast(this, vars(a.toast));
@@ -12314,10 +12540,83 @@ export class OverworldScene extends Phaser.Scene {
     }
   }
 
+  private chapter1ItemCount(itemId: string): number {
+    return GS.data.party.reduce((count, hero) => count + hero.bag.filter((id) => id === itemId).length, 0);
+  }
+
+  private normalizeChapter1KeyItem(itemId: string): void {
+    GS.data.keyItems = GS.data.keyItems.filter((id) => id !== itemId);
+    GS.data.keyItems.push(itemId);
+  }
+
+  private commitSentinelVictory(): void {
+    GS.data.guest = null;
+    this.removeFollower('chad');
+    GS.setFlag(CH1_STORY_FLAGS.sentinelRepelled);
+    GS.setFlag(CH1_STORY_FLAGS.sentinelHusk);
+    const walkingHome = !GS.flag(CH1_STORY_FLAGS.zapperHit) && !GS.flag(CH1_STORY_FLAGS.zapperDone);
+    GS.setFlag(CH1_STORY_FLAGS.glintWalkHome, walkingHome);
+    this.clearRoamersForQuietWalk();
+  }
+
+  private chapter1CraterPending(): boolean {
+    return planCh1CraterStory(
+      (flag) => GS.flag(flag) === true,
+      GS.data.keyItems.filter((id) => id === CH1_STAR_LOCKET_ID).length,
+    ).status === 'ready';
+  }
+
   private async craterScene(): Promise<void> {
     this.cut = true;
+    let introducedThisRun = false;
+    try {
+      for (;;) {
+        const plan = planCh1CraterStory(
+          (flag) => GS.flag(flag) === true,
+          GS.data.keyItems.filter((id) => id === CH1_STAR_LOCKET_ID).length,
+        );
+        const stage = plan.stage?.id;
+        if (!stage || plan.status !== 'ready') return;
+
+        if (stage === 'meet_glint') {
+          await this.presentCraterGlint();
+          introducedThisRun = true;
+          continue;
+        }
+        if (stage === 'locket') {
+          this.normalizeChapter1KeyItem(CH1_STAR_LOCKET_ID);
+          continue;
+        }
+        if (stage === 'sentinel_battle') {
+          if (!introducedThisRun) await this.dlg.say(...DIALOGUE.sentinel_again);
+          const outcome = await this.startBattle(
+            ['hush_sentinel'],
+            'none',
+            [],
+            { boss: true, glint: true, glintSupernova: true },
+          );
+          if (outcome !== 'victory') return;
+          this.cut = true; // startBattle releases its own encounter lock on return
+          // No await between the battle result and its exact durable state.
+          this.commitSentinelVictory();
+          continue;
+        }
+        if (stage === 'sentinel_victory_repair') {
+          this.commitSentinelVictory();
+          continue;
+        }
+        await this.dlg.say(...DIALOGUE.sentinel_after);
+        if (GS.flag(CH1_STORY_FLAGS.glintWalkHome)) this.addFollower('glint', false, true);
+        AUDIO.playMusic(this.mapDef.music);
+        GS.setFlag(CH1_STORY_FLAGS.sentinelAfterSeen);
+      }
+    } finally {
+      this.cut = false;
+    }
+  }
+
+  private async presentCraterGlint(): Promise<void> {
     if (!GS.flag('met_glint')) {
-      GS.setFlag('met_glint');
       await this.dlg.say(...DIALOGUE.crater_approach);
       const glintStage = glintCraterStagePosition(this.player.x, this.player.y);
       const glint = this.add.sprite(glintStage.x, glintStage.y, 'glint');
@@ -12328,7 +12627,6 @@ export class OverworldScene extends Phaser.Scene {
       this.tweens.add({ targets: [glint, glow], y: `-=${s(6)}`, duration: 900, yoyo: true, repeat: -1 });
       AUDIO.sfx('ember');
       await this.dlg.say(...DIALOGUE.glint_prophecy);
-      GS.data.keyItems.push('star_locket');
       // ADR-121: the crater holds a MACHINE, not a bug — the Hush Sentinel unfolds.
       // (Surge α no longer awakens HERE; it awakens mid-fight, scripted in bosses.ts.)
       // Anchored a fixed offset ABOVE the player (not absolute map tiles) so it's
@@ -12368,55 +12666,84 @@ export class OverworldScene extends Phaser.Scene {
       await this.wait(750);
       radiant.destroy();
       sentinel.destroy();
+      GS.setFlag(CH1_STORY_FLAGS.metGlint);
     } else {
       await this.dlg.say(...DIALOGUE.sentinel_again);
     }
-    // The Sentinel is "cannot win alone": Glint goes SUPERNOVA and carries it, and
-    // the boss script REPELS it (endBattleMercy) on the scripted turn — which the
-    // scene reads as 'victory'. No kill, no Ember (the Tick lives and relocates).
-    const outcome = await this.startBattle(['hush_sentinel'], 'none', [], { boss: true, glint: true, glintSupernova: true });
-    if (outcome !== 'victory') return;
-    // betrayal #1 resolved mid-battle (guest flag already cleared there);
-    // the trail sprite still needs to go
-    GS.data.guest = null;
-    this.removeFollower('chad');
-    GS.setFlag('sentinel_repelled');
-    GS.setFlag('glint_walk_home');
-    // This flag changes while the unified Otterbrooke scene is already running;
-    // buildRoamers() cannot retroactively remove its meteor-night population.
-    // Retire those live bodies now so the walk home is actually quiet.
-    this.clearRoamersForQuietWalk();
-    // it leaves a husk in the crater that the town learns to walk around (and that
-    // wakes again, far later — the Ch.10 callback hangs off sentinel_husk_left)
-    GS.setFlag('sentinel_husk_left');
-    this.cut = true;
-    await this.dlg.say(...DIALOGUE.sentinel_after);
-    // ADR-121: the dimmed Glint doesn't just point the way home — he TAGS ALONG.
-    // His authored star-icon flits in at the back of the conga now and follows
-    // across the whole walk down (buildFollowers re-adds him on each leg while
-    // sentinel_repelled && !zapper_done) until the porch zapper claims him.
-    this.addFollower('glint', false, true);
-    AUDIO.playMusic(this.mapDef.music);
-    this.cut = false;
   }
 
-  // ADR-121 — BOSS 1, relocated. With Glint dead and the town awake, the Titanic
-  // Tick is found burrowed in the Heart Oak in Pond Park, draining Otterbrook's
-  // Vibe (the Hush-dark). Jay fights it SOLO with the already-awakened Surge α + the
+  // ADR-145 — BOSS 1. With Glint dead and the town awake, Jay follows the cold
+  // through oak_roots and oak_hollow to the raised meteor mound in oak_heart.
+  // The Titanic Tick is draining Otterbrook's Vibe from this cave arena. Jay
+  // fights it SOLO with the already-awakened Surge α + the
   // Salt Shaker. Beating it earns Ember 1, floods the Vibe back, and breaks the
   // Hush-dark into real dawn — which opens Brickton (the bus runs).
-  private async heartOakScene(): Promise<void> {
+  private chapter1TickPending(): boolean {
+    return planCh1TickStory((flag) => GS.flag(flag) === true, GS.data.embers).status === 'ready';
+  }
+
+  private async tickCaveScene(): Promise<void> {
     this.cut = true;
-    await this.dlg.say(...DIALOGUE.heart_oak_approach);
-    this.cameras.main.shake(700, 0.015);
-    AUDIO.sfx('thud');
-    await this.wait(600);
-    const outcome = await this.startBattle(['titanic_tick'], 'none', [], { boss: true });
-    if (outcome !== 'victory') return;
-    GS.setFlag('tick_defeated');
-    GS.setFlag('ember1');
-    GS.data.embers = 1;
-    this.cut = true;
+    let progressed = false;
+    let defeatRestartPending = false;
+    try {
+      for (;;) {
+        const plan = planCh1TickStory((flag) => GS.flag(flag) === true, GS.data.embers);
+        const stage = plan.stage?.id;
+        if (!stage || plan.status !== 'ready') {
+          if (plan.status === 'done' && progressed) this.fadeRestart();
+          return;
+        }
+        if (stage === 'tick_battle') {
+          if (!GS.flag('ch1_tick_intro_seen')) {
+            await playCutscene(this, 'ch1_tick');
+            await this.dlg.say(...DIALOGUE.tick_cave_approach);
+            this.cameras.main.shake(700, 0.015);
+            AUDIO.sfx('thud');
+            await this.wait(600);
+            GS.setFlag('ch1_tick_intro_seen');
+          } else {
+            await this.dlg.say(...DIALOGUE.tick_cave_retry);
+          }
+          const outcome = await this.startBattle(['titanic_tick'], 'none', [], { boss: true });
+          if (outcome !== 'victory') {
+            defeatRestartPending = outcome === 'defeat';
+            return;
+          }
+          this.cut = true; // keep the Ember/aftermath transaction non-interactive
+          GS.setFlag(CH1_STORY_FLAGS.tickDefeated);
+          progressed = true;
+          continue;
+        }
+        if (stage === 'ember_commit') {
+          GS.setFlag(CH1_STORY_FLAGS.ember);
+          GS.data.embers = Number.isFinite(GS.data.embers) ? Math.max(GS.data.embers, 1) : 1;
+          progressed = true;
+          continue;
+        }
+        if (stage === 'repair_embers') {
+          GS.data.embers = Number.isFinite(GS.data.embers) ? Math.max(GS.data.embers, 1) : 1;
+          progressed = true;
+          continue;
+        }
+        if (stage === 'ember_presentation') {
+          await this.presentEmberOne();
+          GS.setFlag(CH1_STORY_FLAGS.emberSeen);
+          progressed = true;
+          continue;
+        }
+        await this.dlg.say(...DIALOGUE.tick_after);
+        GS.setFlag(CH1_STORY_FLAGS.tickAfterSeen);
+        progressed = true;
+      }
+    } finally {
+      // handleDefeat owns a delayed restart and freezes the doomed overworld.
+      // Do not reopen movement/doors during that 900 ms race window.
+      if (!defeatRestartPending) this.cut = false;
+    }
+  }
+
+  private async presentEmberOne(): Promise<void> {
     const ember = this.add.image(this.player.x, this.player.y - s(20), 'ember').setDepth(9999).setScale(1);
     AUDIO.sfx('ember');
     this.sparkleBurst(ember.x, ember.y, 12);
@@ -12427,21 +12754,76 @@ export class OverworldScene extends Phaser.Scene {
     ember.destroy();
     this.cameras.main.flash(400, 248, 232, 160);
     await this.dlg.say(...DIALOGUE.ember_get);
-    await this.dlg.say(...DIALOGUE.tick_after);
-    this.cut = false;
-    // real dawn: the Vibe floods back, the Hush-dark lifts, shops/NPCs/the 6:15 wake,
-    // and the road out clears. Rebuild the town from data at the new flag state.
-    this.fadeRestart();
+  }
+
+  private dedupeChapter1PartyItem(itemId: string): void {
+    let kept = false;
+    for (const hero of GS.data.party) {
+      hero.bag = hero.bag.filter((id) => {
+        if (id !== itemId) return true;
+        if (kept) return false;
+        kept = true;
+        return true;
+      });
+    }
+  }
+
+  private chapter1PorchPending(): boolean {
+    return planCh1PorchStory(
+      (flag) => GS.flag(flag) === true,
+      this.chapter1ItemCount(CH1_GLINT_SPARK_ID),
+    ).status === 'ready';
   }
 
   private async porchScene(): Promise<void> {
     this.cut = true;
+    try {
+      for (;;) {
+        const plan = planCh1PorchStory(
+          (flag) => GS.flag(flag) === true,
+          this.chapter1ItemCount(CH1_GLINT_SPARK_ID),
+        );
+        const stage = plan.stage?.id;
+        if (!stage || plan.status !== 'ready') return;
+
+        if (stage === 'zapper') {
+          await this.presentPorchZapper();
+          continue;
+        }
+        if (stage === 'spark') {
+          if (!GS.hasItem(CH1_GLINT_SPARK_ID) && !GS.addItem(CH1_GLINT_SPARK_ID)) {
+            await this.dlg.say(
+              "(Glint's Spark is still warm on the porch, but your bag is full. Make room and come straight back.)",
+            );
+            return;
+          }
+          this.dedupeChapter1PartyItem(CH1_GLINT_SPARK_ID);
+          GS.setFlag(CH1_STORY_FLAGS.sparkClaimed);
+          continue;
+        }
+        if (stage === 'spark_copy') {
+          AUDIO.sfx('ember');
+          await this.dlg.say(DIALOGUE.porch_zapper[5], DIALOGUE.porch_zapper[6]);
+          GS.setFlag(CH1_STORY_FLAGS.sparkSeen);
+          continue;
+        }
+        if (stage === 'awakening') {
+          await this.awakeningBeat('last_spark');
+          continue;
+        }
+        await this.dlg.say(...DIALOGUE.porch_after_zapper);
+        GS.setFlag(CH1_STORY_FLAGS.porchAfterSeen);
+      }
+    } finally {
+      this.cut = false;
+    }
+  }
+
+  private async presentPorchZapper(): Promise<void> {
     // 2026-07-02 story re-gate (user direction): the zapper claiming Glint does
     // NOT snap dawn on. It sets `zapper_hit`; Mom sends you to BED, and sleep
     // (talkTo mom → sleepToMorning) is what sets `zapper_done` — so you wake
     // into the wrong-colored HAZE morning instead of teleporting into it.
-    GS.setFlag('zapper_hit');
-    GS.setFlag('glint_walk_home', false);
     // ADR-121: the dimmed Glint who flitted home with us IS the one the zapper
     // takes — lift his trailing sprite OUT of the follower line so the death beat
     // is continuous with the follow, not a fresh pop-in. (zapper_hit was just set,
@@ -12480,16 +12862,8 @@ export class OverworldScene extends Phaser.Scene {
     await this.wait(950);
     this.sparkleBurst(this.player.x, this.player.y - s(12), 10);
     spark.destroy();
-    GS.addItem('glints_spark');
-    AUDIO.sfx('ember');
-    await this.dlg.say(DIALOGUE.porch_zapper[5], DIALOGUE.porch_zapper[6]);
-    // THE LAST SPARK (ADR-035): what settles into Jay stays — healing born
-    // of grief, played absolutely straight (§A11.2)
-    await this.awakeningBeat('last_spark');
-    // it stays NIGHT. The porch light hums; the town sleeps on. Mom first,
-    // then bed — sleepToMorning() (via talkTo) is the only road to dawn.
-    await this.dlg.say(...DIALOGUE.porch_after_zapper);
-    this.cut = false;
+    GS.setFlag(CH1_STORY_FLAGS.zapperHit);
+    GS.setFlag(CH1_STORY_FLAGS.glintWalkHome, false);
   }
 
   /** the bridge to the wrong-colored morning: Mom sends you up, the screen
@@ -12507,87 +12881,251 @@ export class OverworldScene extends Phaser.Scene {
 
   /* ---------------- S2: Mia, the Manager, and Mom's call (§A6 Ch.1 end) ---------------- */
 
+  private chapter1FayeFacts(): {
+    fayeCount: number;
+    panCount: number;
+    panOnFaye: boolean;
+    panEquipped: boolean;
+  } {
+    const faye = GS.hero('faye');
+    return {
+      fayeCount: GS.data.party.filter((hero) => hero.id === 'faye').length,
+      panCount: this.chapter1ItemCount(CH1_FAYE_PAN_ID),
+      panOnFaye: faye?.bag.includes(CH1_FAYE_PAN_ID) === true,
+      panEquipped: faye?.equip.weapon === CH1_FAYE_PAN_ID,
+    };
+  }
+
+  private chapter1FayePending(): boolean {
+    return planCh1FayeStory(
+      (flag) => GS.flag(flag) === true,
+      this.chapter1FayeFacts(),
+    ).status === 'ready';
+  }
+
+  private reconcileFayeParty(): void {
+    const fayes = GS.data.party.filter((hero) => hero.id === 'faye');
+    if (fayes.length === 0) {
+      GS.data.party.push(makeHeroState('faye', 6, GS.data.heroNames.faye));
+      return;
+    }
+    const keeper = fayes.find((hero) => hero.equip.weapon === CH1_FAYE_PAN_ID)
+      ?? fayes.find((hero) => hero.bag.includes(CH1_FAYE_PAN_ID))
+      ?? fayes[0];
+    GS.data.party = GS.data.party.filter((hero) => hero.id !== 'faye' || hero === keeper);
+  }
+
+  private reconcileFayePan(): boolean {
+    const faye = GS.hero('faye');
+    if (!faye) return false;
+    if (!GS.hasItem(CH1_FAYE_PAN_ID) && !GS.addItem(CH1_FAYE_PAN_ID, 'faye')) return false;
+    const equipped = GS.equipItem('faye', CH1_FAYE_PAN_ID);
+    if (equipped !== 'ok') return false;
+
+    // The story grant is singular. Preserve Mia's equipped copy and remove any
+    // partial-save duplicates from every other bag.
+    for (const hero of GS.data.party) {
+      let keptOnFaye = false;
+      hero.bag = hero.bag.filter((id) => {
+        if (id !== CH1_FAYE_PAN_ID) return true;
+        if (hero === faye && !keptOnFaye) {
+          keptOnFaye = true;
+          return true;
+        }
+        return false;
+      });
+      if (hero !== faye && hero.equip.weapon === CH1_FAYE_PAN_ID) delete hero.equip.weapon;
+    }
+    faye.equip.weapon = CH1_FAYE_PAN_ID;
+    return true;
+  }
+
   /** §A6: meeting Mia in the holding room — she joins at L6 with her canon kit */
   private async fayeJoinScene(): Promise<void> {
     this.cut = true;
-    await this.dlg.say(...DIALOGUE.faye_meet);
-    AUDIO.sfx('ember');
-    AUDIO.playMusic('heartlight');
-    await this.dlg.say(...DIALOGUE.faye_locket);
-    // THE FIRST LISTEN (ADR-035): she touches the Locket and hears
-    // Heartlight #1 — "hears the Embers sing" (§A3), made literal
-    await this.awakeningBeat('first_listen');
-    await this.dlg.say(...DIALOGUE.faye_join);
-    // ADR-013: the Prompt-21 name flows into her battle strip and dialogue
-    GS.data.party.push(makeHeroState('faye', 6, GS.data.heroNames.faye));
-    GS.setFlag('faye_joined');
-    // S3: the pan she took back off the intake shelf is real gear now — hers,
-    // equipped (the migration registry grants it to older faye_joined saves)
-    GS.addItem('hand_me_down_pan', 'faye');
-    GS.equipItem('faye', 'hand_me_down_pan');
-    AUDIO.sfx('confirm');
-    await this.dlg.say(...DIALOGUE.faye_pan_get);
-    AUDIO.jingle('levelup', 1400, null);
-    // rebuild from data: her NPC gates out, the conga picks her up
-    this.fadeRestart();
+    let repairedPayload = false;
+    try {
+      for (;;) {
+        const plan = planCh1FayeStory(
+          (flag) => GS.flag(flag) === true,
+          this.chapter1FayeFacts(),
+        );
+        const stage = plan.stage?.id;
+        if (!stage || plan.status !== 'ready') {
+          // A legacy terminal flag can coexist with a missing/duplicate Mia or
+          // Pan. Rebuild followers/NPC gates after repairing that payload.
+          if (plan.status === 'done' && repairedPayload) this.fadeRestart();
+          return;
+        }
+        if (stage === 'meet') {
+          await this.dlg.say(...DIALOGUE.faye_meet);
+          AUDIO.sfx('ember');
+          AUDIO.playMusic('heartlight');
+          await this.dlg.say(...DIALOGUE.faye_locket);
+          GS.setFlag(CH1_STORY_FLAGS.fayeMetSeen);
+          continue;
+        }
+        if (stage === 'first_listen') {
+          await this.awakeningBeat('first_listen');
+          continue;
+        }
+        if (stage === 'join_copy') {
+          await this.dlg.say(...DIALOGUE.faye_join);
+          GS.setFlag(CH1_STORY_FLAGS.fayeJoinCopySeen);
+          continue;
+        }
+        if (stage === 'party') {
+          this.reconcileFayeParty();
+          repairedPayload = true;
+          continue;
+        }
+        if (stage === 'pan') {
+          if (!this.reconcileFayePan()) {
+            await this.dlg.say(
+              "(Mia has her pan, but no room to carry it. Make space in her bag, then come back to the holding room.)",
+            );
+            return;
+          }
+          repairedPayload = true;
+          continue;
+        }
+        if (stage === 'pan_presentation') {
+          AUDIO.sfx('confirm');
+          await this.dlg.say(...DIALOGUE.faye_pan_get);
+          GS.setFlag(CH1_STORY_FLAGS.fayePanSeen);
+          continue;
+        }
+        AUDIO.jingle('levelup', 1400, null);
+        // Terminal join truth is deliberately last: party + pan + presentation
+        // are already complete if this flag is ever observed.
+        GS.setFlag(CH1_STORY_FLAGS.fayeJoined);
+        this.fadeRestart();
+        return;
+      }
+    } finally {
+      this.cut = false;
+    }
   }
 
   /** the Manager blocks the floor-3 exit: a scripted 2-Smiler fight */
+  private chapter1ManagerPending(): boolean {
+    return planCh1ManagerStory((flag) => GS.flag(flag) === true).status === 'ready';
+  }
+
   private async managerScene(): Promise<void> {
     this.cut = true;
     const office = this.mapDef.props.find((p) => p.sprite === 'office_door');
     const doorX = (office?.x ?? 10.5) * TILE_PX + TILE_PX / 2;
     const doorY = (office?.y ?? 0.375) * TILE_PX + s(26);
-    AUDIO.sfx('cursor');
-    await this.dlg.say(DIALOGUE.manager_intro[0]);
-    const mgr = this.add.sprite(doorX, doorY + s(8), 'manager', standFrame('down'));
-    mgr.setOrigin(0.5, 1).setDepth(mgr.y);
-    await this.tweenTo(mgr, this.player.x - s(24), this.player.y, 2000, 'manager');
-    mgr.setDepth(mgr.y);
-    await this.dlg.say(...DIALOGUE.manager_intro.slice(1));
-    await this.dlg.say(...DIALOGUE.manager_faye_q);
-    const outcome = await this.startBattle(['the_suit', 'blazer_smiler'], 'none', [], {
-      boss: true,
-      prayTutorial: true,
-    });
-    if (outcome !== 'victory') {
-      mgr.destroy(); // defeat path is already restarting the scene
-      return;
+    let mgr: Phaser.GameObjects.Sprite | undefined;
+    try {
+      for (;;) {
+        const plan = planCh1ManagerStory((flag) => GS.flag(flag) === true);
+        const stage = plan.stage?.id;
+        if (!stage || plan.status !== 'ready') return;
+
+        if (stage === 'manager_battle') {
+          AUDIO.sfx('cursor');
+          await this.dlg.say(DIALOGUE.manager_intro[0]);
+          mgr = this.add.sprite(doorX, doorY + s(8), 'manager', standFrame('down'));
+          mgr.setOrigin(0.5, 1).setDepth(mgr.y);
+          await this.tweenTo(mgr, this.player.x - s(24), this.player.y, 2000, 'manager');
+          mgr.setDepth(mgr.y);
+          await this.dlg.say(...DIALOGUE.manager_intro.slice(1));
+          await this.dlg.say(...DIALOGUE.manager_faye_q);
+          const outcome = await this.startBattle(['the_suit', 'blazer_smiler'], 'none', [], {
+            boss: true,
+            prayTutorial: true,
+          });
+          if (outcome !== 'victory') return;
+          this.cut = true;
+          // The boss result is durable before the separately retryable walk-off.
+          GS.setFlag(CH1_STORY_FLAGS.managerDefeated);
+          continue;
+        }
+
+        // On a reload after the win, reconstruct only the little walk-off. The
+        // battle and its intro are never replayed once managerDefeated is true.
+        if (!mgr) {
+          mgr = this.add.sprite(this.player.x - s(24), this.player.y, 'manager', standFrame('down'));
+          mgr.setOrigin(0.5, 1).setDepth(mgr.y);
+        }
+        await this.tweenTo(mgr, doorX, doorY + s(8), 1600, 'manager');
+        mgr.destroy();
+        mgr = undefined;
+        await this.dlg.say(...DIALOGUE.manager_win);
+        GS.setFlag(CH1_STORY_FLAGS.managerWinSeen);
+        // Rebuild immediately: the acolytes retire and the earned express elevator
+        // appears on both floors without requiring a manual room transition.
+        this.fadeRestart();
+        return;
+      }
+    } finally {
+      mgr?.destroy();
+      this.cut = false;
     }
-    this.cut = true;
-    GS.setFlag('manager_defeated');
-    await this.tweenTo(mgr, doorX, doorY + s(8), 1600, 'manager');
-    mgr.destroy();
-    await this.dlg.say(...DIALOGUE.manager_win);
-    // Rebuild immediately: the acolytes retire and the earned express elevator
-    // appears on both floors without requiring a manual room transition.
-    this.fadeRestart();
   }
 
   /** Mom is calling the payphone once the Department falls (until answered) */
   private momCallPending(): boolean {
-    return !!GS.flag('manager_defeated') && !GS.flag('ch1_complete');
+    return planCh1MomStory(
+      (flag) => GS.flag(flag) === true,
+      GS.flag('rex_homesick') === true,
+    ).status === 'ready';
   }
 
   /** first phone tutorialized by Mom calling YOU — and Chapter 1's button */
   private async momPayphoneScene(): Promise<void> {
     this.cut = true;
-    AUDIO.sfx('phone');
-    await this.dlg.say(...DIALOGUE.mom_payphone);
-    // §A4.4: Mom's voice is the cure, whichever direction the call went
-    if (GS.flag('rex_homesick')) {
-      GS.setFlag('rex_homesick', false);
-      AUDIO.sfx('heal');
-      await this.dlg.say(...DIALOGUE.mom_cure_beat);
+    try {
+      for (;;) {
+        const plan = planCh1MomStory(
+          (flag) => GS.flag(flag) === true,
+          GS.flag('rex_homesick') === true,
+        );
+        const stage = plan.stage?.id;
+        if (!stage || plan.status !== 'ready') return;
+
+        if (stage === 'mom_call') {
+          AUDIO.sfx('phone');
+          await playCutscene(this, 'ch1_mom');
+          await this.dlg.say(...DIALOGUE.mom_payphone);
+          GS.setFlag(CH1_STORY_FLAGS.momCallSeen);
+          continue;
+        }
+        if (stage === 'homesick_cure') {
+          AUDIO.sfx('heal');
+          await this.dlg.say(...DIALOGUE.mom_cure_beat);
+          GS.setFlag('rex_homesick', false);
+          continue;
+        }
+        if (stage === 'first_heartlight') {
+          await this.playFirstHeartlightStaged();
+          GS.setFlag(CH1_STORY_FLAGS.firstHeartlightSeen);
+          continue;
+        }
+        if (stage === 'starsong_awakening') {
+          // The staged scene just delivered the authored dialogue. Commit the
+          // matching ability beat with its flash/jingle/toast but no duplicate pages.
+          await this.awakeningBeat('the_first_heartlight', true, false);
+          continue;
+        }
+        if (stage === 'complete') {
+          GS.setFlag(CH1_STORY_FLAGS.complete);
+          AUDIO.jingle('victory', 2200, null);
+          continue;
+        }
+        if (stage === 'faye_after_call') {
+          await this.dlg.say(...DIALOGUE.faye_after_call);
+          GS.setFlag(CH1_STORY_FLAGS.fayeAfterCallSeen);
+          continue;
+        }
+        await this.dlg.say(...DIALOGUE.ch1_card);
+        GS.setFlag(CH1_STORY_FLAGS.cardSeen);
+      }
+    } finally {
+      this.cut = false;
     }
-    // Mia finally sings back Heartlight #1. This awakening existed but was never
-    // called, leaving STARSONG Alpha dead and the chapter ending one beat early.
-    await this.awakeningBeat('the_first_heartlight');
-    GS.setFlag('ch1_complete');
-    AUDIO.jingle('victory', 2200, null);
-    await this.dlg.say(...DIALOGUE.faye_after_call);
-    await this.dlg.say(...DIALOGUE.ch1_card);
-    this.cut = false;
   }
 
   /* ---------------- the 6:15 (bus transition, §A5 Ch.1) ---------------- */

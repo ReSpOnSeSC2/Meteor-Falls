@@ -1,5 +1,17 @@
 # PKG-01 — Opening, title & all cinematics
 
+> **Chapter 1 production amendment (ADR-145, 2026-07-14):** at the pass
+> baseline, only `meteor_2am_4x` and `hickory_hill_4x` were proven in ordinary
+> play; registration and preload were not counted as display. The Titanic Tick
+> reveal follows the mandatory Pemberton -> Hodgkin -> mower -> Trail Key ->
+> shed -> `oak_roots` -> `oak_hollow` -> `oak_heart` -> Titanic Tick route and
+> belongs on the deepest-cave meteor mound, never at the outdoor Heart Oak/Pond Park.
+> First Heartlight follows Mom's Brickton payphone call with Jay and Mia after
+> the Manager. New cave Tick, Mom-call, and First Heartlight runtime panels and
+> retained generated sources now exist, have ordinary-play consumers, and have
+> accepted native and exact-viewport crop contacts. This current evidence
+> supersedes the approximate shot-list wording below.
+
 Everything the player sees on a framing/non-gameplay screen: boot, title,
 name entry, save slots, the Android app icon/splash, and **every cutscene panel
 in the game** (Ch.1–10 story beats + travel set-pieces).
@@ -27,8 +39,8 @@ Story beats are scripted in the scenes; canon shot list lives in
 Path: `assets/art/cutscenes/<chapter>/<beat>_NN.png`.
 
 **Ch.1 (USA) — ~8:** the 2 AM meteor, Otterbrook at night, Hickory Hill,
-Glint's prophecy, the Titanic Tick reveal, the first Heartlight, the bug
-zapper, Mom's payphone call.
+Glint's prophecy, the `oak_heart` cave-arena Titanic Tick reveal, the
+post-Manager Mom-payphone/First Heartlight sequence, and the bug zapper.
 
 **Ch.2–9 — ~7 each:** each chapter's §A6 beats + its travel-in set-piece
 (banana boat, biplane "Lucille", night train, riverboat, Orient Less-Express…).

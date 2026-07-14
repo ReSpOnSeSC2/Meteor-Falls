@@ -1,11 +1,23 @@
-# Chapter 1 — Content Inventory (the durable source of truth)
+# Chapter 1 — Content Inventory (historical pre-unification snapshot)
+
+> **Production supersession (ADR-145, 2026-07-14):** this is a historical
+> pre-unification snapshot, not the current inventory. Chapter 1 now owns
+> exactly 81 playable map ids; `brickton_docks` is a physically reachable
+> pre-completion boundary owned by Chapter 2. `downtown_otterbrook`,
+> `hill_road`, `hickory_trail`, `whisperwood_rise`, and `hickory_hill` are
+> retired and recover through deterministic save-v27 migration to unified
+> Otterbrook tile (56,100). Titanic Tick is 200 HP in the deepest Hickory Hill
+> cave arena (`oak_heart`) during Hush morning, and the expanded enemy
+> battler/wear/overworld art is authored rather
+> than queued gray-box work. The exact roster and dimensions live in
+> [`chapters/ch1/blueprint.md`](chapters/ch1/blueprint.md).
 
 > Why this file exists: Ch.1 gameplay is spread across many system files and is
 > NOT tagged to a chapter in one place, so a surface read undercounts it badly.
 > This is the audited, file-grounded inventory. Keep it current when Ch.1 changes.
 > (Region: USA — Otterbrook → Hickory Hill → Brickton. §A6 Ch.1, target level 8.)
 
-## Maps (35)
+## Historical maps (35 in this snapshot; superseded)
 - **Overworld (13):** `otterbrook`, `downtown_otterbrook`, `hill_road`, `hickory_trail`,
   `whisperwood_rise`, `hickory_hill` (crater / Boss 1), `meadow_mile`, `meadow_woods`,
   `meadow_far`, `meadow_overpass`, `brickton`, `cage_park`, `bus_interior`.
@@ -41,12 +53,16 @@
 ## Town services & set-pieces
 - **Otterbrook Clinic** (front desk revive) + **Brickton General** with a multi-floor **WARD**.
 - **Constable Borden** — optional by-the-book cop fight (rhymes with General Buckle).
-- **Trail Key interlock** — Hodgkin's mower + a soft-gated locked shed on the climb.
+- **Trail Key route interlock** — Pemberton points Jay to Hodgkin; Hodgkin's
+  request spawns the runaway mower; its defeat earns a real shared `trail_key`
+  (no bag slot), and the locked walk-through shed is the only ordinary route to
+  the Hickory Hill cave. The rear breach, cave threshold, and Tick retry state
+  are durable across save/reload.
 - **Transit Depot** (the bus stop became a real building); the 6:15 unlocks after walking
   to Brickton on foot once.
 - Picnic tables, hidden presents along the routes, the first **Mr. Click** photo.
 
-## Enemies — 20 §A7 types (ADR-119) + Borden + Boss 1
+## Enemies — historical ADR-119 inventory
 - **Seed six:** Cranky Mailbox, Runaway Lawnmower, Coily Cicada, Blazer Smiler, Pigeon
   Gang, Hill Slug Deluxe.
 - **Roamers:** Sprinkler Sentry, Recycling Raccoon, Skeeter Swarm, Garden Gnome (Unionized).
@@ -54,9 +70,12 @@
 - **Social/urban:** Expired Parking Meter, Showroom Mannequin.
 - **Rare/high-value:** The Good Investment (golden retriever, big purse), Rogue Ice-Cream Truck.
 - **Late pressure:** Tick Nymph (foreshadows the boss latch), The Suit (inflicts Hushed).
-- **Set-piece:** Constable Borden. **BOSS 1:** The Titanic Tick (150 HP).
-- Art: the 36 originals are battler-complete (W0/W1/W2); the 13 new ones are gray-boxed
-  (39 PNGs queued in `docs/CH1_ART_PROMPTS.md §7`). Minis are procedural.
+- **Set-piece:** Constable Borden. **Historical Boss-1 value:** Titanic Tick
+  (150 HP); ADR-145 supersedes it with the executable 200-HP Hickory Hill cave
+  fight.
+- **Historical art status:** this snapshot queued 39 PNGs and used gray-boxes.
+  Those expanded base/wear/overworld families now exist; current contracts and
+  review evidence supersede this queue description.
 
 ## Cast (Otterbrook 18+ named NPCs)
 Mrs. Pemmel, Biscuit, Mr. Plummer, Ana, Vivi, Old Timer, Pajama Kid, Green Keeper, Pond

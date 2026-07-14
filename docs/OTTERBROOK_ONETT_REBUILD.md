@@ -1,5 +1,16 @@
 # OTTERBROOK — the ONETT rebuild (World Overhaul S5, Ch.1 pilot)
 
+> **Historical rebuild blueprint—superseded by ADR-145 (2026-07-14).** Its
+> design rationale survives, but open milestones and proposed graph changes do
+> not describe current work. Production uses unified `otterbrook` at 112×198,
+> the Hickory Hill cave `oak_roots`/`oak_hollow`/`oak_heart` chain, and an exact 81-map
+> Chapter-1-owned roster plus the pre-completion Chapter 2 docks boundary.
+> `downtown_otterbrook`, `hill_road`, `hickory_trail`, `whisperwood_rise`, and
+> `hickory_hill` are retired with deterministic save-v27 recovery to tile
+> (56,100). Titanic Tick is 200 HP in the deepest cave arena; the crater is the Sentinel set
+> piece. The production blueprint and measured verification supersede every
+> unchecked or gray-box milestone below.
+
 User directive (2026-07-03): rebuild the Chapter-1 world to mirror **EarthBound's ONETT** —
 town at the base, the hero's + Chad's houses on an **elevation above town**, **Hickory Hill's
 mountain flanking the west**, trees all around, **rounded tight winding corridors** up the

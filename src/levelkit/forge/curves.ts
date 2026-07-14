@@ -58,7 +58,7 @@ export const CHAPTER_LEVELS: Record<number, [number, number]> = {
 export const BOSS_HP: Record<number, number> = {
   // S22 (ADR-111) — THE SLOW BURN: Ch.1's bespoke Tick drops 450→150 to match the
   // lowered early-game output (Jay L1 basic = 1–2). The ladder still climbs.
-  // ADR-121 (balance): 60→100 — the Tick now fights LATER (the Heart Oak) vs a
+  // ADR-145 (balance): 60→100 — the Tick now fights LATER (Hickory Hill cave) vs a
   // stronger solo Jay, so BOSS 1 is a real scrap.
   // ADR-131 (balance): 100→200 — Surge α became a real nuke (power 20→38), lifting
   // solo Jay's DPR ~30→40; HP rises so the BOSS-1 TTK stays a fair ~5 (verify.ts).

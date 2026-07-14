@@ -23,10 +23,17 @@ import { CH6_MAP_IDS, CH6_WORLD } from '../data/maps_ch6';
 import { CH7_MAP_IDS, CH7_WORLD } from '../data/maps_ch7';
 import { CH8_MAP_IDS, CH8_WORLD } from '../data/maps_ch8';
 import { CH9_MAP_IDS, CH9_WORLD } from '../data/maps_ch9';
+import { CH1_OWNED_MAP_IDS } from '../data/maps_ch1';
 import { BAG_MAX } from '../data/items';
 import { QUESTS } from '../data/quests';
 import { CHOICES } from '../data/choices';
 import { CH8_CLICKER_CALLER } from '../engine/ch8Story';
+import {
+  CH1_DEV_STATES,
+  chapter1DevBattleConfig,
+  chapter1DevProfile,
+  installChapter1DevProfile,
+} from '../engine/ch1Profiles';
 
 export const CH3_DEV_MAP_IDS = [
   'biplane_interior', 'foggybottom', 'kettle_taproom', 'kettle_snug',
@@ -36,6 +43,7 @@ export const CH3_DEV_MAP_IDS = [
 ] as const;
 
 const CH3_DEV_MAP_SET: ReadonlySet<string> = new Set(CH3_DEV_MAP_IDS);
+const CH1_DEV_MAP_SET: ReadonlySet<string> = new Set(CH1_OWNED_MAP_IDS);
 export type Chapter3DevState = 'arrival' | 'joined' | 'coolant' | 'postBoss' | 'complete';
 
 export interface Chapter3DevProfile {
@@ -872,14 +880,10 @@ export class TitleScene extends Phaser.Scene {
     if (import.meta.env.DEV) {
       const params = new URLSearchParams(window.location.search);
       const devMap = params.get('devMap');
-      if (devMap && (LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap) || CH7_DEV_MAP_SET.has(devMap) || CH8_DEV_MAP_SET.has(devMap) || CH9_DEV_MAP_SET.has(devMap))) {
-        GS.reset();
-        GS.setFlag('intro_done');
-        GS.setFlag('op_fell');
-        GS.setFlag('op_house');
-        GS.setFlag('zapper_done');
-        GS.setFlag('tick_defeated');
-        GS.setFlag('chad_joined');
+      if (devMap && (CH1_DEV_MAP_SET.has(devMap) || LEGACY_DEV_MAPS.has(devMap) || CH3_DEV_MAP_SET.has(devMap) || CH4_DEV_MAP_SET.has(devMap) || CH5_DEV_MAP_SET.has(devMap) || CH6_DEV_MAP_SET.has(devMap) || CH7_DEV_MAP_SET.has(devMap) || CH8_DEV_MAP_SET.has(devMap) || CH9_DEV_MAP_SET.has(devMap))) {
+        const devState = params.get('devState');
+        const namedChapter1State = CH1_DEV_STATES.includes(devState as (typeof CH1_DEV_STATES)[number]);
+        const isChapter1 = CH1_DEV_MAP_SET.has(devMap);
         const isChapter3 = CH3_DEV_MAP_SET.has(devMap);
         const isChapter4 = CH4_DEV_MAP_SET.has(devMap);
         const isChapter5 = CH5_DEV_MAP_SET.has(devMap);
@@ -887,6 +891,20 @@ export class TitleScene extends Phaser.Scene {
         const isChapter7 = CH7_DEV_MAP_SET.has(devMap);
         const isChapter8 = CH8_DEV_MAP_SET.has(devMap);
         const isChapter9 = CH9_DEV_MAP_SET.has(devMap);
+        const ch1Profile = isChapter1 ? chapter1DevProfile(devState) : null;
+        if (ch1Profile) {
+          installChapter1DevProfile(ch1Profile);
+        } else {
+          // The historical map-preview boots stay post-opening. Chapter 1 must
+          // never receive this blanket because it can replay already-earned beats.
+          GS.reset();
+          GS.setFlag('intro_done');
+          GS.setFlag('op_fell');
+          GS.setFlag('op_house');
+          GS.setFlag('zapper_done');
+          GS.setFlag('tick_defeated');
+          GS.setFlag('chad_joined');
+        }
         if (isChapter3) {
           // Default to a clean post-join/pre-boss survey state. `devState`
           // exposes the production before/after beats without console surgery:
@@ -990,9 +1008,15 @@ export class TitleScene extends Phaser.Scene {
         const ch8Spawn = ch8Profile ? chapter8DevSpawn(devMap, ch8Profile.state) : null;
         const ch9Profile = isChapter9 ? chapter9DevProfile(params.get('devState')) : null;
         const ch9Spawn = ch9Profile ? chapter9DevSpawn(devMap, ch9Profile.state) : null;
-        let spawnPx = ch9Spawn ?? ch8Spawn ?? ch7Spawn ?? ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
+        const ch1Spawn = ch1Profile
+          ? namedChapter1State
+            ? ch1Profile.spawn
+            : chapter3DevSpawn(devMap)
+          : null;
+        let spawnPx = ch1Spawn ?? ch9Spawn ?? ch8Spawn ?? ch7Spawn ?? ch6Spawn ?? ch5Spawn ?? ch4Spawn ?? (ch3Spawn
           ? { x: ch3Spawn.x, y: ch3Spawn.y, facing: ch3Spawn.facing }
           : { x: spawn.x * TILE_PX + TILE_PX / 2, y: spawn.y * TILE_PX, facing: 'down' as Facing });
+        const resolvedMapId = ch1Profile && namedChapter1State ? ch1Profile.spawn.mapId : devMap;
         // Any rollout map can opt into an exact authored micro-scene without
         // adding another permanent title-menu entry. Values are tile coords;
         // invalid/missing values keep the clean map-specific default above.
@@ -1005,12 +1029,25 @@ export class TitleScene extends Phaser.Scene {
           spawnPx = { x: devX * TILE_PX + TILE_PX / 2, y: devY * TILE_PX, facing: 'down' };
         }
         const overworldStart = {
-          mapId: devMap,
+          mapId: resolvedMapId,
           x: spawnPx.x,
           y: spawnPx.y,
           facing: spawnPx.facing,
           devFullMap: params.get('devFullMap') === '1',
         };
+        if (ch1Profile) {
+          GS.data.map = resolvedMapId;
+          GS.data.x = spawnPx.x;
+          GS.data.y = spawnPx.y;
+          GS.data.facing = spawnPx.facing;
+          const battleConfig = chapter1DevBattleConfig(ch1Profile);
+          if (battleConfig) {
+            // These are real phase-resumed battles, not overworld approximations.
+            this.game.events.once('mf-battle-end', () => this.game.scene.start('overworld', overworldStart));
+            this.scene.start('battle', battleConfig);
+            return;
+          }
+        }
         if (ch9Profile) {
           GS.data.map = devMap;
           GS.data.x = spawnPx.x;

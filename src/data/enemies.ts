@@ -136,7 +136,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       // a sad can of the break-room drink, warm now (§A7 — smells of the office)
       drops: [{ item: 'diet_star_cola', chance: 0.15 }],
       sprite: 'battle_blazer_smiler',
-      mini: 'mini_pigeon_gang',
+      mini: 'mini_blazer_smiler',
       walker: 'smiler',
       bg: [RAMP.CYAN, RAMP.MAGENTA],
     }),
@@ -220,7 +220,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'Constable Borden sat down hard, blinked twice, and remembered he liked you.',
       sprite: 'battle_constable_borden',
-      mini: 'mini_pigeon_gang',
+      mini: 'mini_borden',
       bg: [RAMP.CYAN, RAMP.BLUE],
     }),
 
@@ -246,7 +246,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'soak', kind: 'status', status: 'crying', text: "{e} got {t} right in the eyes! {t} can't see straight!", weight: 3 },
       ],
       deathLine: 'The Sprinkler Sentry retracted into the lawn, coverage complete.',
-      sprite: 'battle_sprinkler_sentry', mini: 'mini_runaway_lawnmower',
+      sprite: 'battle_sprinkler_sentry', mini: 'mini_sprinkler_sentry',
       bg: [RAMP.GRASS, RAMP.CYAN],
     }),
     E({
@@ -264,7 +264,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Recycling Raccoon waddled off with the five-cent deposit.',
       drops: [{ item: 'corn_dog', chance: 0.2 }],
-      sprite: 'battle_recycling_raccoon', mini: 'mini_pigeon_gang',
+      sprite: 'battle_recycling_raccoon', mini: 'mini_recycling_raccoon',
       bg: [RAMP.NIGHT, RAMP.EARTH],
     }),
     E({
@@ -300,7 +300,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Garden Gnome filed one last grievance and clocked out.',
       drops: [{ item: 'bottle_cap_medallion', chance: 0.08 }],
-      sprite: 'battle_unionized_gnome', mini: 'mini_cranky_mailbox',
+      sprite: 'battle_unionized_gnome', mini: 'mini_unionized_gnome',
       bg: [RAMP.RED, RAMP.FOREST],
     }),
 
@@ -320,7 +320,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: "The Mandatory Memo was filed, at last, under 'No.'",
       drops: [{ item: 'diet_star_cola', chance: 0.15 }],
-      sprite: 'battle_mandatory_memo', mini: 'mini_cranky_mailbox',
+      sprite: 'battle_mandatory_memo', mini: 'mini_mandatory_memo',
       bg: [RAMP.PAPER, RAMP.INK],
     }),
     E({
@@ -337,7 +337,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'live, laugh, languish', kind: 'taunt', text: '{e} reminded everyone that today is a gift. Nobody felt gifted.', weight: 2 },
       ],
       deathLine: 'The Motivational Poster curled at the corners and finally let go.',
-      sprite: 'battle_motivational_poster', mini: 'mini_pigeon_gang',
+      sprite: 'battle_motivational_poster', mini: 'mini_motivational_poster',
       bg: [RAMP.CYAN, RAMP.GOLD],
     }),
     E({
@@ -354,7 +354,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'tick', kind: 'taunt', text: '{e} ticked. Loudly. It wanted you to hear the seconds leave.', weight: 2 },
       ],
       deathLine: 'The Quota Clock finally struck five and stopped dead.',
-      sprite: 'battle_quota_clock', mini: 'mini_runaway_lawnmower',
+      sprite: 'battle_quota_clock', mini: 'mini_quota_clock',
       bg: [RAMP.INK, RAMP.ORANGE],
     }),
 
@@ -373,7 +373,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'flag up', kind: 'taunt', text: '{e} flipped its little red flag. The audacity has a sound.', weight: 2 },
       ],
       deathLine: "The Expired Parking Meter accepted that some things can't be charged.",
-      sprite: 'battle_expired_meter', mini: 'mini_cranky_mailbox',
+      sprite: 'battle_expired_meter', mini: 'mini_expired_meter',
       bg: [RAMP.RED, RAMP.PAPER],
     }),
     E({
@@ -391,7 +391,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Showroom Mannequin returned to the window, deeply unbothered.',
       drops: [{ item: 'foam_finger', chance: 0.1 }],
-      sprite: 'battle_showroom_mannequin', mini: 'mini_pigeon_gang',
+      sprite: 'battle_showroom_mannequin', mini: 'mini_showroom_mannequin',
       bg: [RAMP.MAGENTA, RAMP.PURPLE],
     }),
 
@@ -410,7 +410,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'good-boy bolt', kind: 'taunt', text: '{e} thought, very seriously, about trotting home.', weight: 3 },
       ],
       deathLine: 'The Good Investment trotted home. It was, in every sense, a sound one.',
-      sprite: 'battle_good_investment', mini: 'mini_pigeon_gang',
+      sprite: 'battle_good_investment', mini: 'mini_good_investment',
       bg: [RAMP.GOLD, RAMP.GRASS],
     }),
     E({
@@ -428,7 +428,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Rogue Ice-Cream Truck coasted to a stop, finally out of jingle.',
       drops: [{ item: 'diet_star_cola', chance: 0.3 }],
-      sprite: 'battle_rogue_icecream_truck', mini: 'mini_runaway_lawnmower',
+      sprite: 'battle_rogue_icecream_truck', mini: 'mini_rogue_icecream_truck',
       battleScale: 1.5, // 2026-07-02: it is a TRUCK — it should loom over the seat cap
       bg: [RAMP.CYAN, RAMP.MAGENTA],
     }),
@@ -449,7 +449,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       ],
       deathLine: 'The Tick Nymph let go and skittered off to grow up. Regrettably.',
       drops: [{ item: 'salt_shaker', chance: 0.15 }],
-      sprite: 'battle_tick_nymph', mini: 'mini_coily_cicada',
+      sprite: 'battle_tick_nymph', mini: 'mini_tick_nymph',
       bg: [RAMP.PURPLE, RAMP.RED],
     }),
     E({
@@ -466,7 +466,7 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
         { name: 'straighten tie', kind: 'taunt', text: '{e} straightened a tie that was already straight. The smile never moved.', weight: 2 },
       ],
       deathLine: "The Suit's smile finally reached its eyes. Then both switched off.",
-      sprite: 'battle_the_suit', mini: 'mini_pigeon_gang',
+      sprite: 'battle_the_suit', mini: 'mini_the_suit',
       bg: [RAMP.INK, RAMP.NIGHT],
     }),
 
@@ -1349,8 +1349,8 @@ export const ENEMIES: Record<string, EnemyDef> = Object.fromEntries(
       id: 'titanic_tick',
       name: 'TITANIC TICK',
       article: 'The',
-      // S22 (ADR-111) / ADR-121 (balance): BOSS 1, relocated LATER (the Heart Oak in
-      // Pond Park) so it's fought by a stronger solo Jay (Surge α awakened, a few
+      // S22 (ADR-111) / ADR-145 (balance): BOSS 1 is fought later in Hickory Hill's
+      // cave arena by a stronger solo Jay (Surge α awakened, a few
       // levels of town trash behind him). Bumped 60→100 HP + offense 11→13 so it's a
       // real BOSS scrap, not a 2-turn pop. Stays on the canon ladder (BOSS_HP[1]).
       // ADR-131 (balance): 100→200 to absorb Surge α's nuke buff (power 20→38) and

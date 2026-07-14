@@ -113,6 +113,10 @@
  * apron. Only irreversible `ember9` / `ch9_complete` proof backfills Comet Omega
  * and Heartlight; coordinates never infer Buni, Count, or COMPASSION state. Full
  * supported saves in Held Breath snapshots walk the same deterministic step.
+ *
+ * v26 to v27 (2026-07 Chapter 1 production recovery): the orphaned downtown
+ * pocket and four superseded hill-map ids recover to one phase-safe Otterbrook
+ * anchor. Recursive Held Breath snapshots use the same deterministic step.
  */
 import { ITEMS, BAG_MAX } from '../data/items';
 import { MGR_ROW } from '../data/arcade';
@@ -126,8 +130,13 @@ import { CH6_WORLD } from '../data/maps_ch6';
 import { CH7_MAP_IDS, CH7_WORLD } from '../data/maps_ch7';
 import { CH8_MAP_IDS, CH8_WORLD, LOTUS_HARBOR_UNIT_IDS, nativeFeet as chapter8NativeFeet } from '../data/maps_ch8';
 import { CH9_MAP_IDS, CH9_WORLD, nativeFeet as chapter9NativeFeet } from '../data/maps_ch9';
+import { CH1_RETIRED_MAP_IDS, CH1_WORLD } from '../data/maps_ch1';
 
-export const CURRENT_SAVE_VERSION = 26;
+export const CURRENT_SAVE_VERSION = 27;
+
+export const CHAPTER1_LAYOUT_RECOVERY = Object.freeze(Object.fromEntries(
+  CH1_RETIRED_MAP_IDS.map((mapId) => [mapId, CH1_WORLD.recovery]),
+)) as Readonly<Record<(typeof CH1_RETIRED_MAP_IDS)[number], typeof CH1_WORLD.recovery>>;
 
 const KNOWN_VEHICLE_TITLES = new Set(Object.values(DEALERSHIP).map((car) => car.title));
 
@@ -1101,6 +1110,21 @@ export const MIGRATIONS: MigrationStep[] = [
       recoverChapter9VehicleParking(raw);
       backfillChapter9Completion(raw);
       raw.version = 26;
+      return raw;
+    },
+  },
+  {
+    to: 27,
+    migrate(raw) {
+      const map = typeof raw.map === 'string' ? raw.map : '';
+      if (hasOwn(CHAPTER1_LAYOUT_RECOVERY, map)) {
+        const target = CHAPTER1_LAYOUT_RECOVERY[map as keyof typeof CHAPTER1_LAYOUT_RECOVERY];
+        raw.map = target.mapId;
+        raw.x = s(target.x);
+        raw.y = s(target.y);
+        raw.facing = target.facing;
+      }
+      raw.version = 27;
       return raw;
     },
   },

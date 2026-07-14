@@ -8,7 +8,8 @@
  * output/<name>.png. This is a planning visual only — it does not touch the
  * authored-PNG art pipeline (CLAUDE.md) and never ships in the game.
  */
-import { MAPS, CHAR_LEGEND } from '../src/data/maps';
+import { MAPS, CHAR_LEGEND, OTTERBROOK_LANDMARK_DIMS } from '../src/data/maps';
+import { CH1_BOUNDARY_MAPS, CH1_OWNED_MAP_IDS } from '../src/data/maps_ch1';
 import { makeImg, encodePng, type Img } from './imageio';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
@@ -128,6 +129,11 @@ function charColor(ch: string): RGB {
   return tileColor(name);
 }
 
+function propScale(p: { scale?: number | { x: number; y: number } }): { x: number; y: number } {
+  if (typeof p.scale === 'number') return { x: p.scale, y: p.scale };
+  return { x: p.scale?.x ?? 1, y: p.scale?.y ?? 1 };
+}
+
 /* ---------------- one map cell ---------------- */
 const C_BUILD: RGB = [60, 48, 60];
 const C_DOOR: RGB = [255, 214, 60];
@@ -150,11 +156,29 @@ function renderMap(mapId: string, scale: number): Img {
   }
   // props (buildings = solid footprints; trees = green blobs)
   for (const p of m.props) {
-    if (p.solid) {
-      const fx = Math.round((p.x*TILE + p.solid.ox) / TILE * scale);
-      const fy = Math.round((p.y*TILE + p.solid.oy) / TILE * scale);
-      const fw = Math.max(scale, Math.round(p.solid.w / TILE * scale));
-      const fh = Math.max(scale, Math.round(p.solid.h / TILE * scale));
+    const facadeDims = OTTERBROOK_LANDMARK_DIMS[p.sprite];
+    if (p.solid || facadeDims) {
+      const ps = propScale(p);
+      // Otterbrooke facades collide from the loaded texture, not their legacy
+      // data band. Render that same enlarged body so the Chapter 1 evidence
+      // sheet cannot make a scaled building look smaller than runtime.
+      const solid = facadeDims
+        ? {
+            ox: 0,
+            oy: 10 * ps.y,
+            w: (facadeDims[0] / 4) * ps.x,
+            h: (facadeDims[1] / 4 - 10) * ps.y,
+          }
+        : {
+            ox: p.solid!.ox * ps.x,
+            oy: p.solid!.oy * ps.y,
+            w: p.solid!.w * ps.x,
+            h: p.solid!.h * ps.y,
+          };
+      const fx = Math.round((p.x*TILE + solid.ox) / TILE * scale);
+      const fy = Math.round((p.y*TILE + solid.oy) / TILE * scale);
+      const fw = Math.max(scale, Math.round(solid.w / TILE * scale));
+      const fh = Math.max(scale, Math.round(solid.h / TILE * scale));
       const isTree = /tree|pine|hedge|bush|rock|boulder/i.test(p.sprite);
       fillRect(img, fx, fy, fw, fh, isTree ? [34, 74, 38] : C_BUILD, isTree ? 0.85 : 1);
       if (!isTree) strokeRect(img, fx, fy, fw, fh, [150, 130, 150]);
@@ -167,8 +191,17 @@ function renderMap(mapId: string, scale: number): Img {
   // doors
   for (const d of m.doors) { fillRect(img, Math.round(d.x*scale), Math.round(d.y*scale), Math.max(scale, d.w*scale), Math.max(scale, d.h*scale), C_DOOR); }
   for (const p of m.props) if (p.door) {
-    const dx = Math.round((p.x*TILE + p.door.ox)/TILE*scale), dy = Math.round((p.y*TILE + p.door.oy)/TILE*scale);
-    fillRect(img, dx, dy, Math.max(scale, Math.round(p.door.w/TILE*scale)), Math.max(scale, Math.round(p.door.h/TILE*scale)), C_DOOR);
+    const ps = propScale(p);
+    const facadeDims = OTTERBROOK_LANDMARK_DIMS[p.sprite];
+    const nativeW = p.door.w * ps.x;
+    const gap = facadeDims ? Math.max(nativeW, 12) : nativeW;
+    const center = p.x * TILE + (p.door.ox + p.door.w / 2) * ps.x;
+    const dx = Math.round((center - gap / 2) / TILE * scale);
+    const doorTop = facadeDims
+      ? p.y * TILE + (facadeDims[1] / 4 - 14) * ps.y
+      : p.y * TILE + p.door.oy * ps.y;
+    const dy = Math.round(doorTop / TILE * scale);
+    fillRect(img, dx, dy, Math.max(scale, Math.round(gap / TILE * scale)), Math.max(scale, Math.round(p.door.h * ps.y / TILE * scale)), C_DOOR);
   }
   // phones
   for (const ph of m.phones) fillRect(img, Math.round(ph.x*scale), Math.round(ph.y*scale), Math.max(2, scale), Math.max(2, scale), C_PHONE);
@@ -237,9 +270,23 @@ const arg = process.argv[2] ?? 'ch1';
 mkdirSync('output', { recursive: true });
 
 const SETS: Record<string, { title: string; ids: string[]; cellW: number; cellH: number }> = {
+  otterbrook_scale: {
+    title: 'OTTERBROOKE - ENLARGED FACADE, DOOR, NPC, AND TRIGGER AUDIT',
+    ids: ['otterbrook'],
+    cellW: 760, cellH: 1_600,
+  },
   ch1: {
     title: 'METEOR FALLS - CHAPTER 1: THE NIGHT IT FELL (USA)',
-    ids: ['otterbrook','oak_roots','oak_hollow','oak_heart','meadow_mile','meadow_woods','meadow_far','meadow_overpass','brickton','cage_park','dos_f1','dos_f2','dos_f3'],
+    // The frozen contract is exhaustive: every owned exterior, interior,
+    // generated tenancy unit, vehicle, and dungeon floor appears exactly once.
+    ids: [...CH1_OWNED_MAP_IDS],
+    cellW: 560, cellH: 460,
+  },
+  ch1_boundary: {
+    title: 'CHAPTER 1 PHYSICAL BOUNDARY - CHAPTER 2 OWNERSHIP',
+    // Walkable from Brickton before ch1_complete, but content/travel ownership
+    // starts in Chapter 2. Keeping it separate prevents double ownership.
+    ids: Object.keys(CH1_BOUNDARY_MAPS),
     cellW: 560, cellH: 460,
   },
   hotel: {

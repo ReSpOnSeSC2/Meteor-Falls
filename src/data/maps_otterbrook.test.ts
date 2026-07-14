@@ -6,8 +6,29 @@
  * facade doors, NPCs, signs, elevation, and generated residential interiors.
  */
 import { describe, expect, it } from 'vitest';
-import { growOtterbrook, OTTERBROOK_EAST_GATE, OTTERBROOK_TOWN_BASE, OTTERBROOK_TOWN_HEIGHT, MAPS } from './maps';
+import {
+  growOtterbrook,
+  MAPS,
+  OTTERBROOK_BUILDING_SCALE,
+  OTTERBROOK_EAST_GATE,
+  OTTERBROOK_LANDMARK_DIMS,
+  OTTERBROOK_TOWN_BASE,
+  OTTERBROOK_TOWN_HEIGHT,
+} from './maps';
 import { DIALOGUE } from './dialogue';
+import { doorstepOf } from './mapkit';
+import type { PropDef } from '../schemas';
+
+const JAY_RUNTIME_FRAME_HEIGHT = 128;
+const facadeScale = (prop: PropDef): number => typeof prop.scale === 'number' ? prop.scale : prop.scale?.y ?? 1;
+const facadeHeightInJays = (prop: PropDef): number =>
+  ((OTTERBROOK_LANDMARK_DIMS[prop.sprite]?.[1] ?? 0) * facadeScale(prop)) / JAY_RUNTIME_FRAME_HEIGHT;
+const isOtterbrookFacade = (prop: PropDef): boolean =>
+  prop.sprite in OTTERBROOK_LANDMARK_DIMS;
+const physicalFacadeKey = (prop: PropDef): string => {
+  const sprite = prop.sprite === 'bldg_ob_trail_shed_open' ? 'bldg_ob_trail_shed' : prop.sprite;
+  return `${sprite}@${prop.x},${prop.y}`;
+};
 
 describe('OTTERBROOKE -- playable reference rebuild', () => {
   const ob = MAPS.otterbrook;
@@ -57,6 +78,59 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     expect(m27).toHaveLength(2);
     expect(m27.find((p) => p.unlessFlag === 'owned_27_maple')?.door).toBeUndefined();
     expect(m27.find((p) => p.ifFlag === 'owned_27_maple')?.door?.to).toBe('maple27_int');
+  });
+
+  it('uses the audited EarthBound-like building-to-Jay scale across every exterior class', () => {
+    expect(OTTERBROOK_BUILDING_SCALE).toMatchObject({
+      hillHome: 1.25,
+      home: 1.25,
+      cottage: 1.20,
+      apartment: 1.30,
+      civicInstitution: 1.32,
+      downtownStore: 1.28,
+      downtownTall: 1.16,
+      realty: 1.75,
+      autoLot: 1.80,
+    });
+
+    const seen = new Set<string>();
+    const facades = ob.props.filter(isOtterbrookFacade).filter((prop) => {
+      const key = physicalFacadeKey(prop);
+      if (seen.has(key)) return false; // collapse closed/open story-state twins
+      seen.add(key);
+      return true;
+    });
+    const ratios = facades.map(facadeHeightInJays).sort((a, b) => a - b);
+    const mean = ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length;
+    const median = ratios[Math.floor(ratios.length / 2)];
+
+    expect(facades).toHaveLength(47);
+    expect(ratios[0]).toBeGreaterThanOrEqual(3.10); // realty is the intentional low storefront
+    expect(mean).toBeCloseTo(3.844, 3);
+    expect(median).toBe(3.75);
+    expect(ratios[ratios.length - 1]).toBeCloseTo(5.31, 2);
+    // The measured pre-pass mean was 3.171 Jay-heights (min 2.217, median 3.0).
+    expect(mean / 3.171).toBeGreaterThan(1.21);
+
+    const homes = facades.filter((prop) => /^(house_|bldg_ob_house|bldg_ob_cottage|bldg_ob_workshop)/.test(prop.sprite));
+    expect(homes.length).toBeGreaterThanOrEqual(20);
+    expect(Math.min(...homes.map(facadeHeightInJays))).toBeCloseTo(3.60, 6);
+  });
+
+  it('enlarges hill landmarks around their authored centres and ground contacts', () => {
+    const anchor = (sprite: string, doorTo: string | undefined, cx: number, foot: number): void => {
+      const prop = ob.props.find((candidate) => candidate.sprite === sprite && (!doorTo || candidate.door?.to === doorTo));
+      expect(prop, `${sprite} exists`).toBeDefined();
+      const [w, h] = OTTERBROOK_LANDMARK_DIMS[sprite];
+      const scale = facadeScale(prop!);
+      expect(prop!.x + (w * scale) / 128, `${sprite} center`).toBeCloseTo(cx, 6);
+      expect(prop!.y + (h * scale) / 64, `${sprite} foot`).toBeCloseTo(foot, 6);
+    };
+
+    anchor('house_rex', 'rex_home', 46 + 375 / 128, 55);
+    anchor('house_chad', 'chad_home', 58 + 386 / 128, 55);
+    anchor('bldg_ob_workshop', 'workshop_int', 22, 40);
+    anchor('bldg_ob_cottage', 'oldman_int', 72, 33);
   });
 
   it('keeps one elevated map with the meadow gate and hill cave wired', () => {
@@ -174,9 +248,26 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     expect(ob.props.find((p) => p.sprite === 'facade_hotel_tall')?.door?.to).toBe('otter_hotel_lobby');
   });
 
-  it('declares four replayable, save-gated Chapter 1 navigation beats', () => {
+  it('aims every enlarged facade and reciprocal interior exit at the same scaled doorstep', () => {
+    const entrances = ob.props.filter((prop) => prop.door && prop.door.to !== 'trail_shed_int');
+    expect(entrances.length).toBeGreaterThanOrEqual(20);
+    for (const prop of entrances) {
+      const target = prop.door!.to;
+      const doorstep = doorstepOf(ob, target);
+      const returns = MAPS[target]?.doors.filter((door) => door.to === 'otterbrook') ?? [];
+      expect(doorstep, `${prop.sprite} -> ${target} doorstep`).not.toBeNull();
+      expect(returns.length, `${target} has a return`).toBeGreaterThan(0);
+      expect(
+        returns.some((door) => Math.abs(door.tx - doorstep!.tx) < 0.001 && Math.abs(door.ty - doorstep!.ty) < 0.001),
+        `${target} returns to scaled ${prop.sprite} threshold`,
+      ).toBe(true);
+    }
+  });
+
+  it('declares five replayable, save-gated Chapter 1 navigation beats', () => {
     const beats = {
       ch1_hill_entry_warning: { x: 52, y: 61, w: 8, h: 5 },
+      ch1_trail_shed_crossed: { x: 9, y: 23, w: 7, h: 3 },
       ch1_cave_threshold: { x: 4, y: 7, w: 8, h: 5 },
       ch1_hush_main_street: { x: 50, y: 123, w: 12, h: 9 },
       ch1_restored_town_reveal: { x: 23, y: 59, w: 7, h: 7 },
@@ -191,15 +282,16 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
   it('makes Hodgkin\'s keyed shed the only walk-through route to the cave', () => {
     const pemberton = ob.signs.find((s) => s.dialogue === 'sign_pemberton_workshop');
     expect(pemberton).toMatchObject({ x: 27, y: 41 });
+    expect(ob.props.find((p) => p.sprite === 'bldg_ob_workshop')).toMatchObject({ scale: 1.2 });
     expect(ob.signs.some((s) => s.dialogue === 'trail_shed_gate_locked' && s.unlessFlag === 'has_trail_key')).toBe(true);
     expect(ob.signs.some((s) => s.dialogue === 'trail_shed_gate_open' && s.ifFlag === 'has_trail_key')).toBe(true);
-    expect(ob.props.find((p) => p.sprite === 'sign' && p.y === 31.2)?.x).toBeLessThan(11);
+    expect(ob.props.find((p) => p.sprite === 'sign' && p.y === 33.2)?.x).toBeLessThan(11);
 
     const locked = ob.props.find((p) => p.sprite === 'bldg_ob_trail_shed');
     const open = ob.props.find((p) => p.sprite === 'bldg_ob_trail_shed_open');
-    expect(locked).toMatchObject({ x: 9, y: 25, unlessFlag: 'has_trail_key', solid: { w: 96, h: 99 } });
+    expect(locked).toMatchObject({ x: 8.4, y: 25, scale: 1.2, unlessFlag: 'has_trail_key', solid: { w: 96, h: 99 } });
     expect(locked?.door).toBeUndefined();
-    expect(open).toMatchObject({ x: 9, y: 25, ifFlag: 'has_trail_key', solid: { w: 96, h: 99 } });
+    expect(open).toMatchObject({ x: 8.4, y: 25, scale: 1.2, ifFlag: 'has_trail_key', solid: { w: 96, h: 99 } });
     expect(open?.door?.to).toBe('trail_shed_int');
 
     // Woods touch both six-tile-wide side walls for the shed's full height.
@@ -207,8 +299,21 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
       expect(ob.grid[y][8], `sealed west flank @${y}`).toBe('b');
       expect(ob.grid[y][15], `sealed east flank @${y}`).toBe('b');
     }
-    expect(ob.doors.some((d) => d.to === 'trail_shed_int' && d.x === 10 && d.y === 23)).toBe(true);
+    expect(ob.doors.some((d) => d.to === 'trail_shed_int' && d.x === 10 && d.y === 23 && !d.ifFlag)).toBe(true);
     expect(ob.doors.some((d) => d.to === 'trail_shed_int' && d.x === 11 && d.y === 30 && d.ifFlag === 'has_trail_key')).toBe(true);
+    expect(ob.doors.find((d) => d.to === 'oak_roots')).toMatchObject({ x: 7, y: 3, ifFlag: 'has_trail_key' });
+    const crossed = ob.triggers.find((trigger) => trigger.id === 'ch1_trail_shed_crossed');
+    expect(crossed?.rect).toEqual({ x: 9, y: 23, w: 7, h: 3 });
+    expect(12).toBeGreaterThanOrEqual(crossed!.rect.x);
+    expect(12).toBeLessThan(crossed!.rect.x + crossed!.rect.w);
+    expect(24.75).toBeGreaterThanOrEqual(crossed!.rect.y);
+    expect(24.75).toBeLessThan(crossed!.rect.y + crossed!.rect.h);
+
+    expect(ob.patrols?.find((patrol) => patrol.id === 'hodgkin_mower')).toMatchObject({
+      ifFlag: 'ch1_trail_key_asked',
+      unlessFlag: 'tick_defeated',
+      countFlag: 'q_mower_caught',
+    });
 
     const inside = MAPS.trail_shed_int;
     expect(inside).toBeDefined();
@@ -317,8 +422,10 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     const houses = ob.props.filter((p) => /^(house_|bldg_ob_house|bldg_ob_cottage)/.test(p.sprite));
     expect(houses.length).toBeGreaterThanOrEqual(15);
     for (const p of houses) {
-      const cx = Math.round(p.x + (p.solid?.w ?? 96) / 32);
-      const bottom = Math.round(p.y + 6);
+      const [w, h] = OTTERBROOK_LANDMARK_DIMS[p.sprite] ?? [384, 384];
+      const scale = facadeScale(p);
+      const cx = Math.round(p.x + (w * scale) / 128);
+      const bottom = Math.round(p.y + (h * scale) / 64);
       expect(frontageChars.has(ob.grid[bottom + 1]?.[cx]), `${p.sprite} @${cx},${bottom + 1} has a doorstep walk`).toBe(true);
     }
     // fences are PROPS now (propifyFences, 2026-07-09): the grid carries no legacy fence
@@ -381,8 +488,10 @@ describe('OTTERBROOKE -- playable reference rebuild', () => {
     expect(lobby.phones.length).toBeGreaterThan(0);
     const lobbyExit = lobby.doors.find((d) => d.to === 'otterbrook');
     expect(lobbyExit).toBeDefined();
-    expect(lobbyExit?.tx).toBe(facade!.x * 16 + facade!.door!.ox + facade!.door!.w / 2);
-    expect(lobbyExit?.ty).toBe(facade!.y * 16 + facade!.door!.oy + facade!.door!.h + 5);
+    const sx = typeof facade!.scale === 'number' ? facade!.scale : facade!.scale?.x ?? 1;
+    const sy = typeof facade!.scale === 'number' ? facade!.scale : facade!.scale?.y ?? 1;
+    expect(lobbyExit?.tx).toBe(facade!.x * 16 + (facade!.door!.ox + facade!.door!.w / 2) * sx);
+    expect(lobbyExit?.ty).toBe(facade!.y * 16 + (facade!.door!.oy + facade!.door!.h) * sy + 5);
     expect(lobby.doors.some((d) => d.to === 'otter_hotel_hall' && d.indicator === 'elevator')).toBe(true);
     expect(hall.doors.some((d) => d.to === 'otter_hotel_lobby' && d.indicator === 'elevator')).toBe(true);
     expect(lobby.props.some((p) => p.sprite === 'floor_lamp' && p.x >= 14 && p.x <= 16)).toBe(false);

@@ -6650,3 +6650,69 @@ Format: `ADR-NNN — Title / Date / Status / Context / Decision / Consequences`.
   transaction, Pippa/Dorin panel rule, monastery chronology, or v26 recovery
   require focused contract, migration, and asset-test review. The durable
   implementation contract is `docs/chapters/ch9/blueprint.md`. ☄️
+
+## ADR-145 — CHAPTER 1 PRODUCTION RECOVERY CONTRACT (retired maps, staged transactions, save v27)
+
+- **Date:** 2026-07-14
+- **Status:** Accepted for the Chapter 1 production rollout. Measured command,
+  asset, map, viewport, console, and hardware evidence belongs in
+  `docs/CH1_PRODUCTION_VERIFICATION.md`; registration, a static map pass, or a
+  developer shortcut alone is not production proof. This decision supersedes
+  the 35-map inventory, live-downtown and separate-climb-map claims, the
+  450/150/40–60-HP Tick plans, queued-gray-box descriptions for authored
+  enemies, and a generic crater-based First Heartlight.
+- **Decision — exact world ownership:** Chapter 1 owns exactly **81** playable
+  map ids. `brickton_docks` remains physically reachable before Chapter 1
+  completion but is a Chapter-2-owned boundary and is rendered/count-owned
+  there. Unified `otterbrook` is 112×198. `downtown_otterbrook` is retired
+  because it has no inbound live edge and duplicates venues whose exits already
+  return to unified Otterbrook. `hill_road`, `hickory_trail`,
+  `whisperwood_rise`, and `hickory_hill` remain retired predecessor ids.
+  `src/data/maps_ch1.ts` owns the stable roster, dimensions, route mouths,
+  story/quest points, recovery, migration, and developer-profile feet.
+- **Decision — deterministic compatibility:** the retired map ids and their
+  obsolete coordinates require save **v27**. Migration sends each to unified
+  Otterbrook tile `{x:56,y:100,facing:'down'}`—serialized native player feet
+  `{x:904,y:1612}`—instead of retaining arbitrary old coordinates. It recurses
+  through Held Breath snapshots, is deterministic and idempotent, rejects
+  future versions, and preserves unrelated party, equipment, items, economy,
+  property, vehicle, quest, Caller, choice, Ember, and story state exactly.
+- **Decision — one-stage production transactions:** opening exterior, house,
+  hill, and bedroom wake form explicit durable frontiers; `intro_done` commits
+  only after the wake. Glint meeting/Locket, Sentinel outcome/walk-home, porch
+  Spark/awakening, Hush morning, Tick outcome/Ember, Faye/Pan/equip, Manager
+  outcome/presentation, Mom call, First Heartlight, Ember 1, chapter completion,
+  and chapter card each resume from their next missing stage. Payload delivery
+  is exact and idempotent: a full bag cannot silently lose Glint's Spark or
+  Faye's Pan, and presentation state cannot imply a missing reward. Trigger
+  contact is serialized, and battle/story teardown releases pause, camera,
+  input, tween, listener, tether, and temporary-object state on every terminal
+  path.
+- **Decision — story, combat, and contextual art:** the crater set piece is the
+  protected 240-HP Hush Sentinel; Titanic Tick is exactly 200 HP at level 7 in
+  the final Hickory Hill cave arena (`oak_roots` → `oak_hollow` → `oak_heart`)
+  during Hush morning—not at the outdoor Heart Oak or Pond Park. The stable
+  `heart_oak` trigger id remains on the raised meteor-mound dais. The ordinary
+  route is Pemberton → Hodgkin's request-gated mower → shared Trail Key → the
+  walk-through shed's rear breach → cave; route facts, one-time cache, recovery,
+  and retry copy are save-backed and idempotent. Tick latch
+  precedes drain, Fire or Salt severs it, and every terminal path clears the
+  tether. After the Department Manager,
+  Mom's ringing Brickton payphone begins the Jay-and-Mia First Heartlight beat.
+  Registry or preload status is never counted as display: at the pass baseline,
+  only `meteor_2am_4x` and `hickory_hill_4x` were proven in ordinary play, and
+  every accepted contextual panel requires a real consumer, responsive crop,
+  retained source, and runtime contract test.
+- **Decision — exhaustive development states:** Chapter 1 has exactly **57**
+  coherent profiles: the 45 required chronology states; seven hazards
+  (`porchFullBag`, `leaderDown`, `partialParty`, `defeatRetry`,
+  `staleLegacyFlags`, `retiredLegacyMap`, `touchMode`); and five quest frontiers
+  (`questBiscuit`, `questMail`, `questLemonade`, `questArcade`,
+  `questWalkers`). Every profile fixes party, bags/equipment, item uniqueness,
+  money/level, Embers, flags, map/feet/facing, phase, ambience, battle context,
+  body safety, and round-trip serialization.
+- **Consequences:** changing an owned map id, boundary ownership, `CH1_WORLD`
+  point, v27 recovery anchor, transaction frontier, reward/equipment invariant,
+  Tick/Sentinel contract, payphone/Heartlight chronology, or 57-profile matrix
+  requires focused runtime, migration, profile, and documentation review. The
+  durable implementation contract is `docs/chapters/ch1/blueprint.md`. ☄️

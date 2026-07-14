@@ -1,5 +1,33 @@
 # Image Asset Manifest — "Author Everything"
 
+> **Chapter 1 production amendment (ADR-145, 2026-07-14):** Chapter 1's
+> expanded enemy base/wear/overworld families are authored, not queued gray
+> boxes. Titanic Tick is 200 HP and its contextual reveal is the deepest
+> Hickory Hill cave arena (`oak_heart`) during Hush morning, reached through
+> Pemberton, Hodgkin's mower request, the shared Trail Key, the walk-through
+> shed, `oak_roots`, and `oak_hollow`--never at the outdoor Heart Oak.
+> First Heartlight is the post-Manager Mom-payphone beat with Jay and Mia. At
+> the start of the pass, only `meteor_2am_4x` and
+> `hickory_hill_4x` were proven ordinary-play panels; registry membership alone
+> is not a live-use claim. Current provenance, context, and crop evidence lives
+> in `output/ch1_asset_contacts/` and the Chapter 1 production record.
+> The current implementation adds new Mom-payphone, First Heartlight, and
+> Hickory Hill cave Tick panels, each with a retained generated source and a
+> 1600x900 runtime derivative, plus ordinary-play consumers and reviewed native
+> and exact-viewport crop contacts. Real 1600x900 runtime captures for
+> `meteor-night`, `hush-morning`, and `restored-day` are accepted as Contact 23;
+> the generator requires the three source captures and does not manufacture
+> phase evidence by tinting a still. Borden, Realtor, and Waitress now have
+> authored 46-frame runtime/master sheets, deterministic source and review
+> hashes in
+> `assets/art/masters/generated/ch1-expanded/npc-walk-atlas-provenance.json`,
+> and named rebuilds (`npm run ch1:npc:borden`, `npm run ch1:npc:realtor`,
+> `npm run ch1:npc:waitress`, or the aggregate `npm run ch1:npcs:walks`).
+> Otterbrook's implemented exterior composition
+> contains 47 distinct physical facades (state twins collapsed), measuring
+> 3.104/3.844/3.75/5.31 Jay-heights at min/mean/median/max; homes stay in the
+> 3.6-3.9 band.
+
 > ✅ **This is now the way (ADR-109).** Authored PNGs are canonical: produce art
 > at the `assets/art/masters` resolution and wire it into
 > `src/spritegen/authored.ts`. The old `npm run art:*` render scripts are parked
@@ -124,8 +152,10 @@ staged from existing sprites; authoring them means **full-screen cinematic
 panels**.
 
 **Chapter 1 known beats** (the shipped slice): the 2 AM meteor, Otterbrook at
-night, Hickory Hill, Glint's prophecy, THE TITANIC TICK reveal, the first
-Heartlight, the bug zapper, the phone call to Dad. Budget **~8 panels** for Ch.1.
+night, Hickory Hill, Glint's prophecy, the cave-arena TITANIC TICK reveal, the
+post-Manager First Heartlight, the bug zapper, and Mom's Brickton payphone
+call. Budget **~8 panels** for Ch.1; count a panel as live only when an
+ordinary-play consumer and its conditions are proven.
 
 The full game spans many chapters (`maps.ts`, `maps_ch2.ts`, `maps_ch3.ts` and
 the `docs/chapters/` drafts → **208 maps** across regions). Each chapter has a
@@ -327,7 +357,7 @@ chapter status and the per-chapter verification docs are authoritative.
 
 | Ch | Region | Status | Boss (HP) | Settlements | Travel in |
 |---:|---|---|---|---|---|
-| 1 | USA — Otterbrook / Brickton | **shipped** | Titanic Tick (450) | otterbrook, brickton | — |
+| 1 | USA — Otterbrook / Brickton | **production-polished** | Titanic Tick (**200**) | otterbrook, brickton | — |
 | 2 | South America — Puerto Sol / Valle Dorado | **shipped** | Idol of the Gilded Grin (980) | puerto_sol, valle_dorado | banana boat |
 | 3 | England — Foggybottom / Wintermoor | **shipped** | Headmaster Mainframe (750) | foggybottom | biplane "Lucille" |
 | 4 | Norway — Kvisthavn / Lilleby | **production world shipped** | The Whisperwig (1800) | kvisthavn, bootstep_moor, lilleby, spine_hand, spine_shoulder, spine_ear | biplane |

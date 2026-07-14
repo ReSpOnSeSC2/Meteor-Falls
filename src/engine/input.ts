@@ -48,24 +48,69 @@ function cloneBindings(b: Bindings): Bindings {
   };
 }
 
+type BindingGuard<T> = (value: unknown) => value is T;
+
+/** Repair persisted binding tables into complete, globally unique mappings. */
+function normalizeBindingSource<T>(
+  raw: Partial<Record<Btn, unknown>> | undefined,
+  fallback: Record<Btn, T[]>,
+  defaults: Record<Btn, T[]>,
+  valid: BindingGuard<T>,
+): Record<Btn, T[]> {
+  const out = Object.fromEntries(BTNS.map((b) => [b, [] as T[]])) as Record<Btn, T[]>;
+  const used = new Set<T>();
+
+  // Preserve valid user choices first. BTNS order makes repair of an already
+  // corrupt duplicate deterministic.
+  for (const b of BTNS) {
+    const saved = raw?.[b];
+    const candidates = Array.isArray(saved) && saved.some(valid) ? saved.filter(valid) : fallback[b];
+    for (const value of candidates) {
+      if (used.has(value)) continue;
+      used.add(value);
+      out[b].push(value);
+    }
+  }
+
+  // If all saved values were duplicates, prefer this action's fallback and
+  // then any free canonical input. Shipped defaults contain enough unique
+  // values for all five actions.
+  const globalFallbacks = BTNS.flatMap((b) => [...fallback[b], ...defaults[b]]);
+  for (const b of BTNS) {
+    if (out[b].length > 0) continue;
+    const replacement = [...fallback[b], ...defaults[b], ...globalFallbacks].find((value) => !used.has(value));
+    if (replacement === undefined) throw new Error(`No unique ${b} input binding is available`);
+    used.add(replacement);
+    out[b].push(replacement);
+  }
+  return out;
+}
+
+function normalizeBindings(raw: Partial<Bindings> | undefined, fallback: Bindings): Bindings {
+  return {
+    keys: normalizeBindingSource(
+      raw?.keys as Partial<Record<Btn, unknown>> | undefined,
+      fallback.keys,
+      DEFAULT_BINDINGS.keys,
+      (value): value is string => typeof value === 'string' && value.length > 0,
+    ),
+    pad: normalizeBindingSource(
+      raw?.pad as Partial<Record<Btn, unknown>> | undefined,
+      fallback.pad,
+      DEFAULT_BINDINGS.pad,
+      (value): value is number => Number.isInteger(value) && (value as number) >= 0,
+    ),
+  };
+}
+
 function loadBindings(profile: BindingProfile, fallback: Bindings = DEFAULT_BINDINGS): Bindings {
   try {
     const raw = localStorage.getItem(BIND_KEYS[profile]);
-    if (!raw) return cloneBindings(fallback);
+    if (!raw) return normalizeBindings(fallback, fallback);
     const parsed: unknown = JSON.parse(raw);
-    const out = cloneBindings(fallback);
-    if (parsed && typeof parsed === 'object') {
-      const p = parsed as Partial<Bindings>;
-      for (const b of BTNS) {
-        const ks = p.keys?.[b];
-        if (Array.isArray(ks) && ks.every((k) => typeof k === 'string') && ks.length > 0) out.keys[b] = [...ks];
-        const ps = p.pad?.[b];
-        if (Array.isArray(ps) && ps.every((k) => typeof k === 'number') && ps.length > 0) out.pad[b] = [...ps];
-      }
-    }
-    return out;
+    return normalizeBindings(parsed && typeof parsed === 'object' ? parsed as Partial<Bindings> : undefined, fallback);
   } catch {
-    return cloneBindings(fallback);
+    return normalizeBindings(fallback, fallback);
   }
 }
 
@@ -73,7 +118,7 @@ type Listener = (connected: boolean, padId: string) => void;
 /** press-to-capture: the controls page hands us a one-shot sink */
 type CaptureSink = (source: 'key' | 'pad', code: string | number) => void;
 
-class InputBus {
+export class InputBus {
   private keysDown = new Set<string>();
   /** written by the touch overlay scene */
   touchDir = { x: 0, y: 0 };
@@ -99,7 +144,8 @@ class InputBus {
   private releaseQueued = new Set<Btn>();
   private released = new Set<Btn>();
   private padIndex: number | null = null;
-  private listeners: Listener[] = [];
+  private padId = '';
+  private listeners = new Set<Listener>();
   gamepadConnected = false;
 
   /** the live binding tables (SETUP controls edit them; device-local) */
@@ -139,18 +185,20 @@ class InputBus {
       });
       window.addEventListener('blur', () => this.keysDown.clear());
       window.addEventListener('gamepadconnected', (e: GamepadEvent) => {
-        this.padIndex = e.gamepad.index;
-        this.gamepadConnected = true;
-        this.listeners.forEach((l) => l(true, e.gamepad.id));
+        // Prefer the controller that just announced itself, matching the old
+        // hot-swap behavior while routing all state through reconciliation.
+        this.reconcilePad(e.gamepad.index, null, e.gamepad);
       });
       window.addEventListener('gamepaddisconnected', (e: GamepadEvent) => {
-        if (this.padIndex === e.gamepad.index) {
-          this.padIndex = null;
-          this.gamepadConnected = false;
-          this.listeners.forEach((l) => l(false, e.gamepad.id));
-        }
+        if (this.padIndex !== e.gamepad.index) return;
+        // Some browsers leave the disconnected entry visible during the event
+        // turn, so explicitly exclude it while selecting a live fallback.
+        this.reconcilePad(null, e.gamepad.index);
       });
     }
+    // Covers a controller already connected before reload and browsers which
+    // suppress gamepadconnected until the first physical input.
+    this.reconcilePad();
   }
 
   private btnForKey(code: string): Btn | null {
@@ -159,8 +207,12 @@ class InputBus {
     return null;
   }
 
-  onGamepad(l: Listener): void {
-    this.listeners.push(l);
+  onGamepad(l: Listener): () => void {
+    this.listeners.add(l);
+    // UIScene subscribes after this singleton is constructed; immediately
+    // replay the usable controller so overlay visibility is never stale.
+    if (this.gamepadConnected) l(true, this.padId);
+    return () => this.listeners.delete(l);
   }
 
   bindingsFor(profile: BindingProfile = this.activeProfile): Bindings {
@@ -224,24 +276,37 @@ class InputBus {
 
   /** rebind a semantic action to one physical key (replaces its key list) */
   rebindKey(btn: Btn, code: string, profile: BindingProfile = this.activeProfile): void {
-    const bindings = this.profiles[profile];
-    for (const b of BTNS) {
-      bindings.keys[b] = bindings.keys[b].filter((k) => k !== code);
-      if (bindings.keys[b].length === 0) bindings.keys[b] = [...DEFAULT_BINDINGS.keys[b]].filter((k) => k !== code);
-    }
-    bindings.keys[btn] = [code];
+    this.profiles[profile] = normalizeBindings(this.profiles[profile], DEFAULT_BINDINGS);
+    this.rebindSource(this.profiles[profile].keys, btn, code, DEFAULT_BINDINGS.keys);
     this.persistBindings(profile);
   }
 
   /** rebind a semantic action to one pad button index */
   rebindPad(btn: Btn, idx: number, profile: BindingProfile = this.activeProfile): void {
-    const bindings = this.profiles[profile];
-    for (const b of BTNS) {
-      bindings.pad[b] = bindings.pad[b].filter((i) => i !== idx);
-      if (bindings.pad[b].length === 0) bindings.pad[b] = [...DEFAULT_BINDINGS.pad[b]].filter((i) => i !== idx);
-    }
-    bindings.pad[btn] = [idx];
+    this.profiles[profile] = normalizeBindings(this.profiles[profile], DEFAULT_BINDINGS);
+    this.rebindSource(this.profiles[profile].pad, btn, idx, DEFAULT_BINDINGS.pad);
     this.persistBindings(profile);
+  }
+
+  /**
+   * Give one physical input exclusively to `btn`. If that steals another
+   * action's final binding, give it one of the target's newly freed inputs (a
+   * deterministic swap) before falling back to an unused canonical default.
+   */
+  private rebindSource<T>(source: Record<Btn, T[]>, btn: Btn, value: T, defaults: Record<Btn, T[]>): void {
+    const freed = source[btn].filter((candidate) => candidate !== value);
+    for (const b of BTNS) source[b] = source[b].filter((candidate) => candidate !== value);
+    source[btn] = [value];
+
+    const used = new Set(BTNS.flatMap((b) => source[b]));
+    const globalDefaults = BTNS.flatMap((b) => defaults[b]);
+    for (const b of BTNS) {
+      if (source[b].length > 0) continue;
+      const replacement = [...freed, ...defaults[b], ...globalDefaults].find((candidate) => !used.has(candidate));
+      if (replacement === undefined) throw new Error(`No unique ${b} input binding is available`);
+      source[b] = [replacement];
+      used.add(replacement);
+    }
   }
 
   resetBindings(profile: BindingProfile = this.activeProfile): void {
@@ -281,15 +346,59 @@ class InputBus {
     this.queued.add(b);
   }
 
+  private livePads(): Array<Gamepad | null> {
+    if (typeof navigator === 'undefined' || !navigator.getGamepads) return [];
+    try {
+      return Array.from(navigator.getGamepads(), (pad) => pad && pad.connected !== false ? pad : null);
+    } catch {
+      return [];
+    }
+  }
+
+  private selectPad(next: Gamepad | null): Gamepad | null {
+    const nextIndex = next?.index ?? null;
+    const nextId = next?.id ?? '';
+    const changed = nextIndex !== this.padIndex || nextId !== this.padId;
+    const previousId = this.padId;
+    const wasConnected = this.gamepadConnected;
+
+    this.padIndex = nextIndex;
+    this.padId = nextId;
+    this.gamepadConnected = next !== null;
+
+    if (changed) {
+      if (next) this.listeners.forEach((listener) => listener(true, next.id));
+      else if (wasConnected) this.listeners.forEach((listener) => listener(false, previousId));
+    }
+    return next;
+  }
+
+  /** Select one usable controller and keep public state/listeners in lockstep. */
+  private reconcilePad(
+    preferredIndex: number | null = null,
+    unavailableIndex: number | null = null,
+    eventPad: Gamepad | null = null,
+  ): Gamepad | null {
+    const pads = this.livePads();
+    const usable = (pad: Gamepad | null | undefined): pad is Gamepad =>
+      !!pad && pad.connected !== false && pad.index !== unavailableIndex;
+
+    let next: Gamepad | null = null;
+    if (preferredIndex !== null) {
+      const preferred = pads[preferredIndex];
+      if (usable(preferred)) next = preferred;
+      else if (eventPad?.index === preferredIndex && usable(eventPad)) next = eventPad;
+    }
+    if (!next && this.padIndex !== null && usable(pads[this.padIndex])) next = pads[this.padIndex] as Gamepad;
+    if (!next) next = pads.find(usable) ?? null;
+    return this.selectPad(next);
+  }
+
   private pad(): Gamepad | null {
-    if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
-    const pads = navigator.getGamepads();
-    if (this.padIndex !== null && pads[this.padIndex]) return pads[this.padIndex];
     // Bluetooth pads blip null mid-session (and Chrome withholds the connect
     // event after a reload until the first input) — fall back to any live pad
     // so a press is never read against a dead handle (ADR-024).
-    for (const p of pads) if (p) return p;
-    return null;
+    return this.reconcilePad();
   }
 
   private padPressedNow(): number[] {

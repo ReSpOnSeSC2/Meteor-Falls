@@ -1,5 +1,27 @@
 # Cutscene Blueprint — every beat, ch1–ch10
 
+## Chapter 1 contextual runtime contract
+
+ADR-145 separates asset registration from ordinary-play evidence. At the
+production-pass baseline, ordinary play directly displayed only
+`meteor_2am_4x` and `hickory_hill_4x`; the broader `ch1_opening`, `ch1_glint`,
+`ch1_zapper`, `ch1_mom`, and `ch1_heartlight` registry did not itself prove a
+panel was selected or shown. The production contract keeps the authored
+opening cards, stages Titanic Tick in the deepest Hickory Hill cave during Hush morning,
+and stages First Heartlight after the Manager from Mom's ringing Brickton
+payphone with Jay, Mia, and the Star Locket. Runtime tests must prove each
+panel's actual consumer, flag/party/location conditions, and responsive crop;
+gallery-only or retained reference panels remain labeled as such.
+
+Current implementation adds three context-correct Chapter 1 panels with
+retained generated sources: Titanic Tick on the `oak_heart` cave mound, Mom at
+Brickton's post-Manager payphone beat, and First Heartlight with Jay, Mia, and
+the Star Locket. `ch1_tick`, `ch1_mom`, and the staged First Heartlight path now
+consume them in ordinary play. Accepted native and exact-viewport contacts
+record their crop/context review; the final in-sequence run still verifies
+timing and resumability rather than reclassifying the completed asset/crop
+evidence.
+
 ## Chapter 4 contextual runtime contract
 
 `ch4_journey` remains the complete gallery reel. Runtime plays `ch4_flight`,
@@ -122,12 +144,12 @@ Legend: **execution** = what it is now / what it becomes. **Needs** = blocker fo
 ### Ch1 — Otterbrook · maps EXIST · hybrid-capable
 | Beat | Execution | Stage | Cast | Status / Needs |
 |---|---|---|---|---|
-| meteor_2am · hickory_hill · otterbrook_at_night | **STILL** | — | — | ✅ DONE — `ch1_opening`, wired in `playOpeningCutscene()` |
-| glints_prophecy | **HYBRID** | crater map | Rex, Glint | Glint as glow/sparkle (no sprite) — ready to wire into `craterScene` |
-| titanic_tick_reveal | **HYBRID** | crater map | Rex, the Tick | use battle art as the reveal image |
-| bug_zapper | **HYBRID** | porch | Rex, the ember | wire into `porchScene` |
-| moms_payphone_call | **HYBRID** | Brickton (payphone) | Rex, Mom (voice) | rex + payphone prop — clean live-map hybrid |
-| first_heartlight | **STAGED HYBRID** | set (Resonance Site) | Mia, Rex, Ember | ✅ BUILT — `ch1FirstHeartlight`, `playFirstHeartlightStaged()` (drivable; wire to ch1-close trigger) |
+| meteor_2am · hickory_hill · otterbrook_at_night | **STILL** | authored opening cards | Jay | `meteor_2am_4x` and `hickory_hill_4x` were the two baseline panels proven in ordinary play; registry reels are not substituted evidence |
+| glints_prophecy | **HYBRID** | unified Otterbrook crater | Jay, Glint | live `craterScene` blocking; a registered panel is optional unless its consumer is proven |
+| titanic_tick_reveal | **HYBRID** | Hickory Hill cave (`oak_heart`) | Jay, Titanic Tick | cave-context panel/source and ordinary-play consumer are wired with accepted native/exact-viewport crop contacts; never the meteor crater or outdoor Heart Oak |
+| bug_zapper | **HYBRID** | Jay's porch | Jay, Glint's Spark | resumable porch transaction; panel use must be proven separately from registration |
+| moms_payphone_call | **HYBRID** | Brickton payphone | Jay, Mia, Mom (voice) | context panel/source is wired to the post-Manager ringing-phone stage with accepted native/exact-viewport crop contacts; Mia remains present |
+| first_heartlight | **STAGED HYBRID** | Brickton payphone / live city | Jay, Mia, Star Locket | context panel/source and staged consumer are wired with accepted native/exact-viewport crop contacts; Heartlight, Ember, completion, and card resume separately |
 
 ### Ch2 — Puerto Sol / Valle Dorado · maps EXIST · partly wired
 | Beat | Execution | Stage | Cast | Needs |

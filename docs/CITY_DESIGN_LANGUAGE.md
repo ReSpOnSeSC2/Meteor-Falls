@@ -12,6 +12,12 @@ language.
 baseline, no districts, no alleys, no mid-block life. Settlements read as "a row of
 sprites," not a place someone lives.
 
+> **Implemented Chapter 1 scale reference (not a universal city quota):**
+> Otterbrook has 47 distinct physical facade placements after collapsing
+> open/closed state twins. Their measured heights are 3.104 minimum, 3.844 mean,
+> 3.75 median, and 5.31 maximum Jay-heights; residential homes stay in the
+> 3.6-3.9 band. `src/data/maps_otterbrook.test.ts` owns this executable example.
+
 ## 0. The bar (user directive, 2026-07-02 — supersedes "re-layout")
 
 Every settlement pass is a **FULL SCRAP-AND-REBUILD**, not a dress-up of the shipped

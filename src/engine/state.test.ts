@@ -22,8 +22,8 @@ describe('GameState serialization (Prompt 2: round-trip)', () => {
     expect(GS.hasItem('salt_shaker')).toBe(true);
   });
 
-  it('starts v25 with an inactive field status and an empty departed-hero bench', () => {
-    expect(GS.data.version).toBe(26);
+  it('starts v27 with an inactive field status and an empty departed-hero bench', () => {
+    expect(GS.data.version).toBe(27);
     expect(GS.data.mushroomize).toEqual({ active: false, phase: 0, source: null, recovery: null });
     expect(GS.data.departedHeroes).toEqual({});
   });
@@ -339,7 +339,7 @@ describe('content validation (interim validator, ADR-005)', () => {
     expect(ENEMIES.blazer_smiler.hp).toBe(50);
     expect(ENEMIES.pigeon_gang.hp).toBe(20);
     expect(ENEMIES.hill_slug_deluxe.hp).toBe(28);
-    // ADR-121 (balance): BOSS 1 relocated LATER (Heart Oak) vs a stronger solo Jay,
+    // ADR-145 (balance): BOSS 1 is fought later in Hickory Hill's cave vs a stronger solo Jay,
     // bumped 60→100 so it's a real boss scrap.
     // ADR-131 (balance): 100→200 absorbs Surge α's nuke buff (power 20→38); TTK ~5.
     expect(ENEMIES.titanic_tick.hp).toBe(200);

@@ -65,7 +65,7 @@ describe('cutscene registry', () => {
     expect(missing).toEqual([]);
   });
 
-  it('ch1_opening is the wired proof: three present panels', () => {
+  it('keeps the Chapter 1 opening gallery complete', () => {
     const opening = CUTSCENES.ch1_opening;
     expect(opening.beats.map((b) => b.art)).toEqual([
       'meteor_2am',
@@ -75,6 +75,12 @@ describe('cutscene registry', () => {
     for (const beat of opening.beats) {
       expect(existsSync(panelPath('ch1', beat))).toBe(true);
     }
+  });
+
+  it('selects the Hickory Hill cave Tick panel independently from Glint at the crater', () => {
+    expect(CUTSCENES.ch1_glint.beats.map((beat) => beat.art)).toEqual(['glints_prophecy']);
+    expect(CUTSCENES.ch1_tick.beats.map((beat) => beat.art)).toEqual(['titanic_tick_reveal']);
+    expect(existsSync(panelPath('ch1', CUTSCENES.ch1_tick.beats[0]))).toBe(true);
   });
 
   it('times Chapter 3 as seven story-safe single-beat sequences', () => {

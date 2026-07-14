@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "acceptedOn": "2026-07-14",
+  "generatedBy": "tools/assemble-ch1-walk-atlas.ts",
+  "rebuildCommand": "npm run ch1:npcs:walks",
+  "policy": "Each source contains authored stand, step-A, and step-B poses. The assembler may chroma-remove, normalize, copy, and mirror those poses, but may not synthesize motion by nudging one still.",
+  "npcs": [
+    {
+      "id": "npc_borden",
+      "preset": "borden",
+      "atlasSource": "assets/art/masters/generated/ch1-expanded/npc_borden-walk-atlas-source.png",
+      "runtime": "assets/art/characters/npc_borden_anim_46_4x.png",
+      "acceptedMaster": "assets/art/masters/characters/animation/npc_borden_anim_46_4x_master.png",
+      "review": "output/ch1_asset_contacts/npc_borden_walk_review.png",
+      "sha256": {
+        "atlasSource": "1ec4d873606db4369c35ef8145b92ac89ee20a2ba6360507aec467274279aaa5",
+        "runtimeAndMaster": "db7b8bed4f396f69469642b54b31a26a51e7045a09d8e31e7cc4724ff3084560",
+        "review": "35b394ebf2c0fb5bcd9e5fe3d3156d3fbf63e284c81c0554b1f22dc4b4e02a64"
+      }
+    },
+    {
+      "id": "npc_realtor",
+      "preset": "realtor",
+      "atlasSource": "assets/art/masters/generated/ch1-expanded/npc_realtor-walk-atlas-source.png",
+      "runtime": "assets/art/characters/npc_realtor_anim_46_4x.png",
+      "acceptedMaster": "assets/art/masters/characters/animation/npc_realtor_anim_46_4x_master.png",
+      "review": "output/ch1_asset_contacts/npc_realtor_walk_review.png",
+      "sha256": {
+        "atlasSource": "d9d95c98510f9f3d42376e9b21d6c9f318d8dc1a2f0288f2b27cfc179179b954",
+        "runtimeAndMaster": "8ee565f5bf373270c50d3cfe10f45a07f80375a908aac1b685cccaed6b26d120",
+        "review": "c64327d9848bedfc2f10d692bd2a89c1716289697c8e6eddd303156e54dd75bc"
+      }
+    },
+    {
+      "id": "npc_waitress",
+      "preset": "waitress",
+      "atlasSource": "assets/art/masters/generated/ch1-expanded/npc_waitress-walk-atlas-source.png",
+      "runtime": "assets/art/characters/npc_waitress_anim_46_4x.png",
+      "acceptedMaster": "assets/art/masters/characters/animation/npc_waitress_anim_46_4x_master.png",
+      "review": "output/ch1_asset_contacts/npc_waitress_walk_review.png",
+      "sha256": {
+        "atlasSource": "332e8fa6e69c34338443d9755add3dbb85e76899f51651f65dd68af6be639b76",
+        "runtimeAndMaster": "bc4ce6ff6aa7468ddf4b468f9e06d9d2ce6d8b94be40b9352ddfb72affa25819",
+        "review": "fb42ceb06d2e024f770f021e044000ee39034dbcb648f3dc7500a1cac2a19e0b"
+      }
+    }
+  ]
+}

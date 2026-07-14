@@ -245,7 +245,8 @@
   {
    "x": 15,
    "y": 47,
-   "dialogue": "oak_roots_enter"
+   "dialogue": "oak_roots_enter",
+   "unlessFlag": "ch1_oak_roots_enter_seen"
   },
   {
    "x": 18,
@@ -364,7 +365,9 @@
      36
     ]
    ],
-   "sight": 4
+   "sight": 4,
+   "ifFlag": "zapper_done",
+   "unlessFlag": "tick_defeated"
   }
  ]
 }

@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "algorithm": {
+    "chromaCleanup": "ch1-targeted-magenta-v1",
+    "miniDerivation": "alpha-crop-premultiplied-area-average-v1",
+    "note": "Deterministic mechanical repair only; no generated or replacement art."
+  },
+  "props": [
+    {
+      "id": "prop_waiting_bench",
+      "runtime": "assets/art/world/props/prop_waiting_bench.png",
+      "acceptedMaster": "assets/art/masters/world/ch1-props/prop_waiting_bench-accepted-master.png",
+      "sourceChain": [
+        "assets/art/masters/world/ch1-props/prop_waiting_bench-accepted-master.png"
+      ],
+      "retainedSourceReferences": [
+        "assets/art/masters/generated/ch1-expanded/props_busdepot_interior-source.png",
+        "assets/art/masters/world/props_busdepot_interior-transparent.png"
+      ],
+      "dimensions": {
+        "w": 136,
+        "h": 64
+      },
+      "rgbaSha256": "13dd3e9e51161a9a8e49236f388c81fc9624e2cb3edcd30fce2aa337a5ee9534",
+      "strongMagentaResidue": 0
+    },
+    {
+      "id": "prop_wardbed",
+      "runtime": "assets/art/world/props/prop_wardbed.png",
+      "acceptedMaster": "assets/art/masters/world/ch1-props/prop_wardbed-accepted-master.png",
+      "sourceChain": [
+        "assets/art/masters/world/ch1-props/prop_wardbed-accepted-master.png"
+      ],
+      "retainedSourceReferences": [
+        "assets/art/masters/generated/ch1-expanded/props_clinic_interior-source.png",
+        "assets/art/masters/world/props_clinic_interior-transparent.png"
+      ],
+      "dimensions": {
+        "w": 324,
+        "h": 306
+      },
+      "rgbaSha256": "cbb4e4a8ba50993e202e0aa9312ba51e0fbfd3bae5b52673ebf47164e09bf2bd",
+      "strongMagentaResidue": 0
+    }
+  ],
+  "minis": [
+    {
+      "id": "blazer_smiler",
+      "runtime": "assets/art/enemies/mini_blazer_smiler.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_blazer_smiler-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_blazer_smiler.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/ch1-enemies-wear-transparent.png",
+      "dimensions": {
+        "w": 49,
+        "h": 64
+      },
+      "rgbaSha256": "13a7464d5a5cdd679715505b9e8330fe420d2666d33b39dec1da80cc5ac3402f",
+      "sourceFileSha256": "cc6d4cd0a374ae09fbcccd60e4df68321cd80059119d9ad2177d4e72d951757b"
+    },
+    {
+      "id": "borden",
+      "runtime": "assets/art/enemies/mini_borden.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_borden-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_constable_borden.png",
+      "retainedAuthoredMaster": "assets/art/masters/battlers/npc_borden-battler-transparent.png",
+      "dimensions": {
+        "w": 42,
+        "h": 64
+      },
+      "rgbaSha256": "06632648a0a9d92223923991392d0a946fd69212c40dfe6622b8562a85555e76",
+      "sourceFileSha256": "2c7f0a354426a6e5c1532748194496ee07ddd01a2eb18c049a10c73e6af765f5"
+    },
+    {
+      "id": "sprinkler_sentry",
+      "runtime": "assets/art/enemies/mini_sprinkler_sentry.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_sprinkler_sentry-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_sprinkler_sentry.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_sprinkler_sentry.png",
+      "dimensions": {
+        "w": 64,
+        "h": 63
+      },
+      "rgbaSha256": "30e7093240b1f674f49e7b4ecb9d3cc64b6322093c18a79dfcdb4e90c1e1ad3a",
+      "sourceFileSha256": "be06186f8a803b33b5c28ca009e36308fba880a077f2500e7dde6335fd3118a0"
+    },
+    {
+      "id": "recycling_raccoon",
+      "runtime": "assets/art/enemies/mini_recycling_raccoon.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_recycling_raccoon-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_recycling_raccoon.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_recycling_raccoon.png",
+      "dimensions": {
+        "w": 63,
+        "h": 64
+      },
+      "rgbaSha256": "84b1b86731c5f7f147965ffca8f26f632e32f3cb5d90d603c5455801c028e384",
+      "sourceFileSha256": "f3178e3f418ac99e4f1f60f9814f96cca22806e41dad8b597129842a931d366e"
+    },
+    {
+      "id": "unionized_gnome",
+      "runtime": "assets/art/enemies/mini_unionized_gnome.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_unionized_gnome-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_unionized_gnome.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_unionized_gnome.png",
+      "dimensions": {
+        "w": 51,
+        "h": 64
+      },
+      "rgbaSha256": "fd5e8ef2878d0e991ecd8b1c3c4310e58eae139aa8e2516810b34c0a706d3abc",
+      "sourceFileSha256": "c4844393bad511b5f1769bb803171437bcb60053f91b91f4e33310a1ea412edb"
+    },
+    {
+      "id": "mandatory_memo",
+      "runtime": "assets/art/enemies/mini_mandatory_memo.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_mandatory_memo-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_mandatory_memo.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_mandatory_memo.png",
+      "dimensions": {
+        "w": 52,
+        "h": 64
+      },
+      "rgbaSha256": "31b903a3e9a697ce2dda034d366757eb7d125de98d65a9bd23d55c902bbc0f6a",
+      "sourceFileSha256": "2d35a8163c65cbad9ffaedb6407a9d291ee8d317e8230b6f6b0edd589f892dbe"
+    },
+    {
+      "id": "motivational_poster",
+      "runtime": "assets/art/enemies/mini_motivational_poster.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_motivational_poster-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_motivational_poster.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_motivational_poster.png",
+      "dimensions": {
+        "w": 55,
+        "h": 64
+      },
+      "rgbaSha256": "e6e27dec99e4b6a4460daa53002dc73755a6ae605e44fc1b2a21f85bd454472d",
+      "sourceFileSha256": "0910b5143c58e1a7d3fa6b848bc1de370a64ee888729f4058cab0fdea99f569d"
+    },
+    {
+      "id": "quota_clock",
+      "runtime": "assets/art/enemies/mini_quota_clock.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_quota_clock-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_quota_clock.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_quota_clock.png",
+      "dimensions": {
+        "w": 64,
+        "h": 53
+      },
+      "rgbaSha256": "af54882b68b134df89056f77df793f6920e9e92a2f216c3abdf27afa53dce273",
+      "sourceFileSha256": "6164661ef01580dd700cfe643d6db044010125c3e3e826df1fc5b358f4b9b595"
+    },
+    {
+      "id": "expired_meter",
+      "runtime": "assets/art/enemies/mini_expired_meter.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_expired_meter-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_expired_meter.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_expired_meter.png",
+      "dimensions": {
+        "w": 30,
+        "h": 64
+      },
+      "rgbaSha256": "d30c497917ace88581c9788443f486ded29e991f2358d90983c6aab60842be2f",
+      "sourceFileSha256": "9c128e3a7f01c10a7872b186ff954e7567c9cd095090a2fdd9d50918d85727ff"
+    },
+    {
+      "id": "showroom_mannequin",
+      "runtime": "assets/art/enemies/mini_showroom_mannequin.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_showroom_mannequin-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_showroom_mannequin.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_showroom_mannequin.png",
+      "dimensions": {
+        "w": 39,
+        "h": 64
+      },
+      "rgbaSha256": "5be07194bbe20ad7b73e6bc628e06c4884cc1ffe6b168a6a78d6823720e60042",
+      "sourceFileSha256": "61b90bedf01de4c0bf22663a3ada4d45340677e1906dbd375fac31a50921224d"
+    },
+    {
+      "id": "good_investment",
+      "runtime": "assets/art/enemies/mini_good_investment.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_good_investment-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_good_investment.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_good_investment.png",
+      "dimensions": {
+        "w": 50,
+        "h": 64
+      },
+      "rgbaSha256": "29960b7290c912ae376e4e7f4b1ecda5080c8e95e0a242ef2a72c09c9b318457",
+      "sourceFileSha256": "1e3a5643b505ca42777a511442d4535c7fe4ce3842670c1055c3e3e2a92b75f6"
+    },
+    {
+      "id": "rogue_icecream_truck",
+      "runtime": "assets/art/enemies/mini_rogue_icecream_truck.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_rogue_icecream_truck-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_rogue_icecream_truck.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_rogue_icecream_truck.png",
+      "dimensions": {
+        "w": 64,
+        "h": 64
+      },
+      "rgbaSha256": "a16f8e997361b47c26361153f9daf0c259c95f6eea55ab3d1ef74ff75cf735aa",
+      "sourceFileSha256": "4694859655101974310f7a9d5695c7394a594c49e7a788135b12a65f29f1667f"
+    },
+    {
+      "id": "tick_nymph",
+      "runtime": "assets/art/enemies/mini_tick_nymph.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_tick_nymph-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_tick_nymph.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_tick_nymph.png",
+      "dimensions": {
+        "w": 64,
+        "h": 58
+      },
+      "rgbaSha256": "ef18ebb349dd34f5fe92b0a8d06ef7012349a18095ee05e5dcee538616b5e582",
+      "sourceFileSha256": "dd4e371aa50190f231f830b03312d0bc2e05d448c9b53d29aa10b1205d88c51d"
+    },
+    {
+      "id": "the_suit",
+      "runtime": "assets/art/enemies/mini_the_suit.png",
+      "acceptedMaster": "assets/art/masters/enemies/ch1-minis/mini_the_suit-accepted-master.png",
+      "derivedFromRuntimeBattler": "assets/art/enemies/battle_the_suit.png",
+      "retainedAuthoredMaster": "assets/art/masters/enemies/battle_the_suit.png",
+      "dimensions": {
+        "w": 45,
+        "h": 64
+      },
+      "rgbaSha256": "32f79519f013ae30b95db649d6f402d5f3245fca2fc731b10a1129a0da437dcf",
+      "sourceFileSha256": "fc5b7158970f60d41759201c2ce9ea9964d9f2cd9d1858f0809be8f28cfdcf64"
+    }
+  ]
+}

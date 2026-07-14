@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { captionTimelineMs, CINEMATIC_TEXT_TIMING, readableCaptionMs } from './cutscenePacing';
+import {
+  captionTimelineMs,
+  CINEMATIC_HELD_SKIP_GUARD_MS,
+  CINEMATIC_TEXT_TIMING,
+  readableCaptionMs,
+  timedCaptionComplete,
+} from './cutscenePacing';
 
 describe('cinematic text pacing', () => {
+  it('supports fresh taps and guarded held-advance across successive cards', () => {
+    expect(timedCaptionComplete(0, 5000, { pressed: true, held: false })).toBe(true);
+    expect(timedCaptionComplete(CINEMATIC_HELD_SKIP_GUARD_MS - 1, 5000, { pressed: false, held: true })).toBe(false);
+    expect(timedCaptionComplete(CINEMATIC_HELD_SKIP_GUARD_MS, 5000, { pressed: false, held: true })).toBe(true);
+    expect(timedCaptionComplete(5000, 5000, { pressed: false, held: false })).toBe(true);
+  });
   it('gives even short captions an unhurried fully-visible hold', () => {
     expect(readableCaptionMs('A wrong star.')).toBeGreaterThanOrEqual(CINEMATIC_TEXT_TIMING.minimumHoldMs);
   });

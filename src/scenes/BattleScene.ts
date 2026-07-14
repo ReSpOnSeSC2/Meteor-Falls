@@ -208,14 +208,17 @@ import { ODO_CELL_W, ODO_CELL_H } from '../spritegen/ui';
 import { s } from '../spritegen/scale';
 
 export interface BattleDevContext {
-  form: 'theatrical' | 'unmasked';
-  hp: number;
+  /** Chapter 9 restores Hoaxula's form; Chapter 1's Sentinel is formless. */
+  form?: 'theatrical' | 'unmasked';
+  hp?: number;
   bossTurns: number;
   introSeen: boolean;
   stolen?: Readonly<{ heroId: HeroState['id']; slot: EquipSlot }>;
+  /** A named Chapter 1 phase profile runs the real boss script from this turn. */
+  encounter?: 'hush_sentinel';
 }
 
-interface BattleConfig {
+export interface BattleConfig {
   enemyIds: string[];
   advantage: 'player' | 'enemy' | 'none';
   guestChad: boolean;
@@ -480,6 +483,8 @@ export class BattleScene extends Phaser.Scene {
   private warmthDone = false;
   private ended = false;
   private won = false;
+  private terminalOutcome: 'victory' | 'defeat' | 'ran' | null = null;
+  private endEventEmitted = false;
   private tickAcc = 0;
   private prayHintShown = false;
   /** dev harness: pins the next Pray roll (qa().forcePray) */
@@ -510,6 +515,8 @@ export class BattleScene extends Phaser.Scene {
     this.warmthDone = false;
     this.ended = false;
     this.won = false;
+    this.terminalOutcome = null;
+    this.endEventEmitted = false;
     this.prayHintShown = false;
     this.prayPin = null;
     this.phase = null;
@@ -519,6 +526,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdownBattle, this);
+    this.events.once(Phaser.Scenes.Events.DESTROY, this.shutdownBattle, this);
     this.dlg = new Dialogue(this);
     // The action menu is a SEPARATE box at the upper-right (clear of the party
     // cards so it never blends into them) anchored just above the bust tops so it
@@ -637,10 +646,10 @@ export class BattleScene extends Phaser.Scene {
       // Grin's half-dead blow awakens Jay's POWER SHIELD Σ (the_wall_that_answers)
       awaken: (id) => this.battleAwakening(id),
     });
-    if (bossUnit.def.id === 'count_hoaxula' && this.cfg?.devContext) {
+    if (bossUnit.def.id === 'count_hoaxula' && this.cfg?.devContext?.form) {
       const dev = this.cfg.devContext;
-      this.phase.restoreDevContext(dev.form, dev.bossTurns);
-      bossUnit.hp = Math.max(1, Math.min(bossUnit.def.hp, Math.floor(dev.hp)));
+      this.phase.restoreDevContext(dev.form!, dev.bossTurns);
+      bossUnit.hp = Math.max(1, Math.min(bossUnit.def.hp, Math.floor(dev.hp ?? bossUnit.def.hp)));
       bossUnit.wear = wearTier(bossUnit.hp, bossUnit.def.hp);
       if (dev.stolen) {
         const hero = GS.data.party.find((candidate) => candidate.id === dev.stolen?.heroId);
@@ -650,13 +659,22 @@ export class BattleScene extends Phaser.Scene {
           this.phase.stolen.push({ heroId: hero.id, slot: dev.stolen.slot, itemId });
         }
       }
+    } else if (
+      bossUnit.def.id === 'hush_sentinel'
+      && this.cfg?.devContext?.encounter === 'hush_sentinel'
+    ) {
+      this.phase.restoreDevContext('', this.cfg.devContext.bossTurns);
+      if (this.cfg.devContext.hp !== undefined) {
+        bossUnit.hp = Math.max(1, Math.min(bossUnit.def.hp, Math.floor(this.cfg.devContext.hp)));
+        bossUnit.wear = wearTier(bossUnit.hp, bossUnit.def.hp);
+      }
     }
     // the initial form's texture (the Grin opens SOLID GOLD)
     bossUnit.spr.setTexture(wearSpriteKey(this.phase.spriteFor(bossUnit.def.sprite), bossUnit.wear));
   }
 
   /** Hoaxula's hostages come home (and victory() calls this too) */
-  private async returnStolenGear(): Promise<void> {
+  private async returnStolenGear(present = true): Promise<void> {
     if (!this.phase) return;
     const unresolved: typeof this.phase.stolen = [];
     for (const s of this.phase.stolen) {
@@ -672,7 +690,7 @@ export class BattleScene extends Phaser.Scene {
         unresolved.push(s);
         continue;
       }
-      await this.print(`The ${ITEMS[s.itemId].name} came back to ${hero.name}!`);
+      if (present) await this.print(`The ${ITEMS[s.itemId].name} came back to ${hero.name}!`);
     }
     this.phase.stolen = unresolved;
   }
@@ -3833,6 +3851,7 @@ export class BattleScene extends Phaser.Scene {
 
   private finish(outcome: 'victory' | 'defeat' | 'ran'): void {
     this.ended = true;
+    this.terminalOutcome = outcome;
     this.syncHeroMeters();
     // §A4.5: SUNNY SIDE covers BATTLES, however they end — burn one
     const sunnyLeft = Number(GS.flag('sunny_side')) || 0;
@@ -3840,10 +3859,37 @@ export class BattleScene extends Phaser.Scene {
     this.time.delayedCall(450, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        this.emitBattleEnd(outcome);
         this.scene.stop();
-        this.game.events.emit('mf-battle-end', outcome);
       });
     });
+  }
+
+  /** One event owns every resume path. Normal fades and forced scene teardown
+   * both route here, so an interrupted battle cannot strand Overworld paused. */
+  private emitBattleEnd(outcome: 'victory' | 'defeat' | 'ran'): void {
+    if (this.endEventEmitted) return;
+    this.endEventEmitted = true;
+    this.game.events.emit('mf-battle-end', outcome);
+  }
+
+  /** Scene shutdown is a terminal transaction too. Phaser normally destroys
+   * scene-owned timers/tweens, but the save-owned latch/equipment state and the
+   * developer handle need explicit release. An unsolicited stop resolves as a
+   * defeat, the only safe recovery contract for the paused overworld caller. */
+  private shutdownBattle(): void {
+    for (const hero of this.heroes) hero.latched = false;
+    if (this.fx?.tethered) this.fx.severTether();
+    if (this.phase?.stolen.length) void this.returnStolenGear(false);
+    if (this.heroes.length > 0) this.syncHeroMeters();
+    this.tweens?.killAll?.();
+    this.time?.removeAllEvents?.();
+    if (typeof window !== 'undefined') {
+      const qaWindow = window as unknown as { mfBattle?: BattleScene };
+      if (qaWindow.mfBattle === this) delete qaWindow.mfBattle;
+    }
+    this.emitBattleEnd(this.terminalOutcome ?? 'defeat');
+    this.ended = true;
   }
 
   /* ---------------- per-frame ---------------- */

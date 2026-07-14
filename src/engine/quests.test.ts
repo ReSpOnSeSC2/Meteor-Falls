@@ -111,6 +111,50 @@ describe('completeQuest — rewards via the bag flow, callers onto the ledger', 
     expect(frozen.effect).toEqual(biscuit.caller.effect); // same values
   });
 
+  it('pins all five Chapter 1 reward and Caller contracts', () => {
+    const ids = [
+      'biscuit_come_home',
+      'mail_must_move',
+      'lemonade_empire',
+      'arcade_legend',
+      'walkers_register',
+    ];
+    expect(CHAPTER_MANIFESTS['1'].quests).toEqual(ids);
+    expect(Object.values(QUESTS).filter((quest) => quest.chapter === 1).map((quest) => quest.id)).toEqual(ids);
+    expect(ids.map((id) => QUESTS[id].rewardItem)).toEqual([
+      'lucky_collar', 'fresh_stamps', undefined, 'champion_jacket', 'walkers_charm',
+    ]);
+
+    for (const id of ids) expect(completeQuest(id)).toBe('ok');
+    expect(GS.data.callers.map(({ quest, name, effect }) => ({ quest, name, effect }))).toEqual([
+      { quest: 'biscuit_come_home', name: 'Mrs. Pemmel', effect: { kind: 'damage', power: 400 } },
+      { quest: 'mail_must_move', name: 'Mr. Plummer', effect: { kind: 'damage', power: 450 } },
+      { quest: 'lemonade_empire', name: 'Ana & Vivi', effect: { kind: 'heal', power: 400 } },
+      { quest: 'arcade_legend', name: 'Sal', effect: { kind: 'damage', power: 425 } },
+      { quest: 'walkers_register', name: 'Old Pell', effect: { kind: 'damage', power: 430 } },
+    ]);
+  });
+
+  it('keeps every item-bearing Chapter 1 finale pending under a full bag', () => {
+    const itemQuests = ['biscuit_come_home', 'mail_must_move', 'arcade_legend', 'walkers_register'];
+    for (const id of itemQuests) {
+      GS.reset();
+      const rex = GS.data.party[0];
+      while (rex.bag.length < BAG_MAX) rex.bag.push('pbj');
+      expect(completeQuest(id)).toBe('hands-full');
+      expect(GS.flag(QUESTS[id].doneFlag)).toBe(false);
+      expect(callerEarned(id)).toBe(false);
+      rex.bag.pop();
+      expect(completeQuest(id)).toBe('ok');
+      expect(callerEarned(id)).toBe(true);
+    }
+
+    GS.reset();
+    while (GS.data.party[0].bag.length < BAG_MAX) GS.data.party[0].bag.push('pbj');
+    expect(completeQuest('lemonade_empire')).toBe('ok');
+    expect(callerEarned('lemonade_empire')).toBe(true);
+  });
+
   it('pins both Chapter 6 rewards and caller effects, with idempotent completion', () => {
     expect(completeQuest('watering_hole_convoy')).toBe('ok');
     expect(GS.hasItem('savanna_cloak')).toBe(true);

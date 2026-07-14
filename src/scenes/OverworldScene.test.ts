@@ -2,6 +2,8 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DIALOGUE } from '../data/dialogue';
+import { MAPS } from '../data/maps';
+import { QUESTS } from '../data/quests';
 
 vi.mock('phaser', () => {
   class SceneStub {}
@@ -20,6 +22,34 @@ let runtime: typeof import('./OverworldScene');
 
 beforeAll(async () => {
   runtime = await import('./OverworldScene');
+});
+
+describe('Mail Must Move instance identity', () => {
+  it('resolves exactly the five authored door destinations, never a reused facade sprite', () => {
+    const resolved = MAPS.otterbrook.props.flatMap((prop) => {
+      const stop = runtime.chapter1MailStopForProp('otterbrook', prop);
+      return stop ? [stop] : [];
+    });
+    expect(resolved.map((stop) => stop.id).sort()).toEqual(['arcade', 'birch', 'chapel', 'pickles', 'sodd']);
+    expect(new Set(resolved.map((stop) => stop.doorTo)).size).toBe(5);
+
+    const reused = MAPS.otterbrook.props.filter((prop) =>
+      ['house_a', 'house_b', 'arcade'].includes(prop.sprite) && !prop.door,
+    );
+    expect(reused.length).toBeGreaterThan(5);
+    expect(reused.every((prop) => runtime.chapter1MailStopForProp('otterbrook', prop) === null)).toBe(true);
+    expect(runtime.chapter1MailStopForProp('brickton', { door: { ox: 0, oy: 0, w: 1, h: 1, to: 'arcade_int', tx: 0, ty: 0 } })).toBeNull();
+  });
+
+  it('matches the quest objective flags exactly', () => {
+    const objectiveFlags = QUESTS.mail_must_move.objectives
+      .map((objective) => objective.flag)
+      .filter((flag) => flag !== 'q_mail_reported')
+      .sort();
+    expect(runtime.CH1_MAIL_STOPS.map((stop) => stop.flag).sort()).toEqual(objectiveFlags);
+    const objectives = QUESTS.mail_must_move.objectives;
+    expect(objectives[objectives.length - 1]?.flag).toBe('q_mail_reported');
+  });
 });
 
 describe('door-marker presentation', () => {

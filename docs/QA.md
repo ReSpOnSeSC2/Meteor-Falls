@@ -1,5 +1,16 @@
 # QA.md — device & input QA log
 
+> **Chapter 1 production supersession (ADR-145, 2026-07-14):** unchecked S8/S15
+> device rows below are preserved as historical requests, not promoted to
+> passes. The current Chapter 1 matrix is
+> [`chapters/ch1/checklist.md`](chapters/ch1/checklist.md); measured automated,
+> viewport, console, and hardware results belong only in
+> `CH1_PRODUCTION_VERIFICATION.md`. The active contract covers all 81 owned maps
+> plus the pre-completion docks boundary, all four world phases, 57 coherent
+> profiles, desktop 1280×720, portrait 390×844, landscape 844×390, keyboard,
+> touch, remapping, and automated controller mappings. A physical-controller
+> pass may be recorded only when hardware is actually available.
+
 > Started S8 (2026-06-11). INPUT IS THE RELEASE GATE (ADR-024/ADR-025):
 > phones ship 90/120Hz WebViews — the exact regime where the old clock-timer
 > polls dropped presses. Every fix is pre-flighted in the browser with

@@ -1,0 +1,307 @@
+{
+  "schema": 2,
+  "generatedBy": "tools/ch1-asset-contacts.ts",
+  "nativeDetailPolicy": "Battle, field, NPC, prop, and panel sources are never downscaled on native contacts. Viewport pages are separately labeled runtime cover resamples.",
+  "roster": {
+    "seed": [
+      "cranky_mailbox",
+      "runaway_lawnmower",
+      "coily_cicada",
+      "blazer_smiler",
+      "pigeon_gang",
+      "hill_slug_deluxe",
+      "borden"
+    ],
+    "expanded": [
+      "sprinkler_sentry",
+      "recycling_raccoon",
+      "skeeter_swarm",
+      "unionized_gnome",
+      "mandatory_memo",
+      "motivational_poster",
+      "quota_clock",
+      "expired_meter",
+      "showroom_mannequin",
+      "good_investment",
+      "rogue_icecream_truck",
+      "tick_nymph",
+      "the_suit"
+    ],
+    "bosses": [
+      "titanic_tick",
+      "hush_sentinel"
+    ]
+  },
+  "phaseStoryStates": {
+    "status": "accepted-real-runtime-captures",
+    "required": [
+      "meteor-night",
+      "hush-morning",
+      "restored-day"
+    ],
+    "sources": [
+      {
+        "phase": "meteor-night",
+        "file": "output/ch1_asset_contacts/runtime_phase_sources/01_meteor-night_porchComplete_otterbrook.png",
+        "w": 1600,
+        "h": 900,
+        "sha256": "3e76fb8ed75904fc5c241c98a7c26009dd59f51d95be7c66fbbc280c7bac9063"
+      },
+      {
+        "phase": "hush-morning",
+        "file": "output/ch1_asset_contacts/runtime_phase_sources/02_hush-morning_otterbrook.png",
+        "w": 1600,
+        "h": 900,
+        "sha256": "cacd7a4a855f2b3b84bce58a6fbcf9587f9ebf54d8263a2098de824cdaa8646d"
+      },
+      {
+        "phase": "restored-day",
+        "file": "output/ch1_asset_contacts/runtime_phase_sources/03_restored-day_otterbrook.png",
+        "w": 1600,
+        "h": 900,
+        "sha256": "8bea500410773c058e02d2292c98257659432eab0299861813e4b7f4c1aba344"
+      }
+    ],
+    "note": "Contact 23 contains real runtime captures supplied to the generator."
+  },
+  "npcWalkCycles": {
+    "provenance": {
+      "file": "assets/art/masters/generated/ch1-expanded/npc-walk-atlas-provenance.json",
+      "sha256": "047207624050bd1995f18f12c51d3c1724ef66b02a6a9dca56063cccc72f9444"
+    },
+    "rebuildCommand": "npm run ch1:npcs:walks",
+    "evidence": [
+      {
+        "id": "npc_borden",
+        "atlasSource": {
+          "file": "assets/art/masters/generated/ch1-expanded/npc_borden-walk-atlas-source.png",
+          "w": 887,
+          "h": 1774,
+          "sha256": "1ec4d873606db4369c35ef8145b92ac89ee20a2ba6360507aec467274279aaa5"
+        },
+        "runtime": {
+          "file": "assets/art/characters/npc_borden_anim_46_4x.png",
+          "w": 384,
+          "h": 1536,
+          "sha256": "db7b8bed4f396f69469642b54b31a26a51e7045a09d8e31e7cc4724ff3084560"
+        },
+        "acceptedMaster": {
+          "file": "assets/art/masters/characters/animation/npc_borden_anim_46_4x_master.png",
+          "w": 384,
+          "h": 1536,
+          "sha256": "db7b8bed4f396f69469642b54b31a26a51e7045a09d8e31e7cc4724ff3084560"
+        },
+        "review": {
+          "file": "output/ch1_asset_contacts/npc_borden_walk_review.png",
+          "w": 1536,
+          "h": 768,
+          "sha256": "35b394ebf2c0fb5bcd9e5fe3d3156d3fbf63e284c81c0554b1f22dc4b4e02a64"
+        }
+      },
+      {
+        "id": "npc_realtor",
+        "atlasSource": {
+          "file": "assets/art/masters/generated/ch1-expanded/npc_realtor-walk-atlas-source.png",
+          "w": 972,
+          "h": 1620,
+          "sha256": "d9d95c98510f9f3d42376e9b21d6c9f318d8dc1a2f0288f2b27cfc179179b954"
+        },
+        "runtime": {
+          "file": "assets/art/characters/npc_realtor_anim_46_4x.png",
+          "w": 384,
+          "h": 1536,
+          "sha256": "8ee565f5bf373270c50d3cfe10f45a07f80375a908aac1b685cccaed6b26d120"
+        },
+        "acceptedMaster": {
+          "file": "assets/art/masters/characters/animation/npc_realtor_anim_46_4x_master.png",
+          "w": 384,
+          "h": 1536,
+          "sha256": "8ee565f5bf373270c50d3cfe10f45a07f80375a908aac1b685cccaed6b26d120"
+        },
+        "review": {
+          "file": "output/ch1_asset_contacts/npc_realtor_walk_review.png",
+          "w": 1536,
+          "h": 768,
+          "sha256": "c64327d9848bedfc2f10d692bd2a89c1716289697c8e6eddd303156e54dd75bc"
+        }
+      },
+      {
+        "id": "npc_waitress",
+        "atlasSource": {
+          "file": "assets/art/masters/generated/ch1-expanded/npc_waitress-walk-atlas-source.png",
+          "w": 792,
+          "h": 1980,
+          "sha256": "332e8fa6e69c34338443d9755add3dbb85e76899f51651f65dd68af6be639b76"
+        },
+        "runtime": {
+          "file": "assets/art/characters/npc_waitress_anim_46_4x.png",
+          "w": 384,
+          "h": 1536,
+          "sha256": "bc4ce6ff6aa7468ddf4b468f9e06d9d2ce6d8b94be40b9352ddfb72affa25819"
+        },
+        "acceptedMaster": {
+          "file": "assets/art/masters/characters/animation/npc_waitress_anim_46_4x_master.png",
+          "w": 384,
+          "h": 1536,
+          "sha256": "bc4ce6ff6aa7468ddf4b468f9e06d9d2ce6d8b94be40b9352ddfb72affa25819"
+        },
+        "review": {
+          "file": "output/ch1_asset_contacts/npc_waitress_walk_review.png",
+          "w": 1536,
+          "h": 768,
+          "sha256": "fb42ceb06d2e024f770f021e044000ee39034dbcb648f3dc7500a1cac2a19e0b"
+        }
+      }
+    ]
+  },
+  "canon": {
+    "titanicTick": "The Titanic Tick encounter is in the active Hickory Hill cave. Panel contacts use filenames only and make no outdoor-location claim."
+  },
+  "uiItemQuestRasterScope": "No UI item or quest raster assets changed in this pass.",
+  "contacts": [
+    {
+      "file": "01_props_native.png",
+      "w": 1320,
+      "h": 890,
+      "sha256": "3445ac4a7ca009a9cd43f80b34071086dd794f79453ed4300fb3441af8601a58"
+    },
+    {
+      "file": "02_battles_seed_native.png",
+      "w": 1280,
+      "h": 2250,
+      "sha256": "c589eacebf569cef58c870b76b45113364108f4b2570f79e0106f3ed67ef8b36"
+    },
+    {
+      "file": "03_battles_expanded_a_native.png",
+      "w": 1280,
+      "h": 1466,
+      "sha256": "5434f67d0148baab6d2e10f7af341db43836b8e06fef5f9ee1e4747f36cc3137"
+    },
+    {
+      "file": "04_battles_expanded_b_native.png",
+      "w": 1280,
+      "h": 1264,
+      "sha256": "4a5783d044818e0b955b4c0e776d943f8ea4089449e8d5cb4b874eb4488c20fa"
+    },
+    {
+      "file": "05_battles_boss_native.png",
+      "w": 1280,
+      "h": 808,
+      "sha256": "71003d3dd256009f9e471c959293524c3e1551be2c3e61fdaf15ecb868e6ec96"
+    },
+    {
+      "file": "06_fields_seed_native.png",
+      "w": 1200,
+      "h": 1368,
+      "sha256": "b62bf07748b237498ebd00597ab8efb3d80050e1a6a2f6db62f7476f73238e17"
+    },
+    {
+      "file": "07_fields_expanded_a_native.png",
+      "w": 1200,
+      "h": 1368,
+      "sha256": "d5d600fcbf4230addafa1a7d78b2c97108ae46732604cceb899d80256a39d392"
+    },
+    {
+      "file": "08_fields_expanded_b_native.png",
+      "w": 1200,
+      "h": 1180,
+      "sha256": "4fc3879c938ad85d164a04c3aec731330b83a18f39ffa738492b6c94a79bdbb1"
+    },
+    {
+      "file": "09_fields_boss_native.png",
+      "w": 1200,
+      "h": 428,
+      "sha256": "a2f22f4074da2eb32b9ad952f1e75d750066cb4afe9ecd539a3be7dadeeae066"
+    },
+    {
+      "file": "10_npc_sheets_native.png",
+      "w": 1210,
+      "h": 1630,
+      "sha256": "d04905c7f9c4e654e3d89dc9a22f9b77ac14d7e844ec38cbaf05e55742244a50"
+    },
+    {
+      "file": "11_panels_native_a.png",
+      "w": 1640,
+      "h": 1942,
+      "sha256": "afa7d5448aeee02f8293833aa80891704e9ed55aa8aa26afda29935dccb25aed"
+    },
+    {
+      "file": "12_panels_native_b.png",
+      "w": 1640,
+      "h": 1942,
+      "sha256": "61289ef438adcfc82adf89d50974c3b14ca49016df34ae6dd07805d57b72946e"
+    },
+    {
+      "file": "13_panels_native_c.png",
+      "w": 1640,
+      "h": 1942,
+      "sha256": "032f40da30fdd2594e6762fcf04a584973dce4d516775b14f23d5633f3858378"
+    },
+    {
+      "file": "14_panels_native_d.png",
+      "w": 1640,
+      "h": 1942,
+      "sha256": "49a4c2caba8ec0280d0899f60e119ea3ef201f4d524efa2b7d9dc5d65152ce9d"
+    },
+    {
+      "file": "15_panel_crops_bug_zapper.png",
+      "w": 1320,
+      "h": 1740,
+      "sha256": "057c58f5f4f0a1b21223bd1b67acf6d6fc5a622a72bc206cbcc4dbaf5503699d"
+    },
+    {
+      "file": "16_panel_crops_first_heartlight.png",
+      "w": 1320,
+      "h": 1740,
+      "sha256": "5da9f545ee805b03535c838b032a7c1c801f7529a6fdff22f8846c2a3a695d6d"
+    },
+    {
+      "file": "17_panel_crops_glints_prophecy.png",
+      "w": 1320,
+      "h": 1740,
+      "sha256": "4e4643c9c451e8e17777f7ccb912500725936128ea86d885334c2209db57702b"
+    },
+    {
+      "file": "18_panel_crops_hickory_hill.png",
+      "w": 1320,
+      "h": 1740,
+      "sha256": "703f2f888773691ebc16cc71229672b8c3f62618615466d0857b0010c4cc46c2"
+    },
+    {
+      "file": "19_panel_crops_meteor_2am.png",
+      "w": 1320,
+      "h": 1740,
+      "sha256": "9a472b67635bb6483be75e8cbdbdce1751f1850f082188669c29f772222ba0a4"
+    },
+    {
+      "file": "20_panel_crops_moms_payphone_call.png",
+      "w": 1320,
+      "h": 1740,
+      "sha256": "4579b01d344effdb0460c8531dcb8b2725007d614498fc939cf4b2e07297039e"
+    },
+    {
+      "file": "21_panel_crops_otterbrook_at_night.png",
+      "w": 1320,
+      "h": 1740,
+      "sha256": "be83b74aaec1f569060a4b7562dd01015c977a004fc37268ab602256f517f0ca"
+    },
+    {
+      "file": "22_panel_crops_titanic_tick_reveal.png",
+      "w": 1320,
+      "h": 1740,
+      "sha256": "571046fa8d8e70a953f3727492acfada3f7de713551543f5120f30a029b64c68"
+    },
+    {
+      "file": "23_phase_story_states_native.png",
+      "w": 1640,
+      "h": 2877,
+      "sha256": "66512e880288551244a82c6d89e6e20481ab66ef029a1e4f17dfd6e33611ef0b"
+    },
+    {
+      "file": "24_ui_item_quest_scope.png",
+      "w": 1200,
+      "h": 330,
+      "sha256": "28a97be13eb39edd64eab3b8fd1a7c638f0eac287bec8d9e2c3c42eab4ed875f"
+    }
+  ]
+}

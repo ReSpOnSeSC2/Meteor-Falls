@@ -1199,6 +1199,7 @@ const FRESH_ICONS: Record<string, () => Pixmap> = {
   basket_feast: () => drawBasket('feast'),
   // key items
   star_locket: () => drawLocket(),
+  trail_key: () => forgeIcon({ subcat: 'house_key', band: 'ch1', detail: 'tag', seed: 'trail_key' }),
   lemonade_jug: () => drawJug(),
   camera: () => drawCamera(),
 

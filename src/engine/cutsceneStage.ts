@@ -24,7 +24,7 @@ import { Dialogue, everyFrame, vars } from '../ui/windows';
 import { popEmote, type EmoteHandle, type EmoteId } from './emote';
 import { standFrame, type Facing } from '../spritegen';
 import { cutscenePanelKey } from './cutscene';
-import { readableCaptionMs } from './cutscenePacing';
+import { readableCaptionMs, timedCaptionComplete } from './cutscenePacing';
 import { safeCoverScale } from './cutsceneFraming';
 
 const STAGE_BASE = 80_000; // > world actors (depth≈y), < DEPTH_UI (90_000)
@@ -92,7 +92,10 @@ export function waitSkippable(scene: Phaser.Scene, ms: number): Promise<void> {
     let elapsed = 0;
     const off = everyFrame(scene, (dt) => {
       elapsed += dt;
-      if (elapsed >= ms || INPUT.justPressed('A') || INPUT.justPressed('B') || INPUT.justPressed('START')) {
+      if (timedCaptionComplete(elapsed, ms, {
+        pressed: INPUT.justPressed('A') || INPUT.justPressed('B') || INPUT.justPressed('START'),
+        held: INPUT.held('A') || INPUT.held('B') || INPUT.held('START'),
+      })) {
         off();
         resolve();
       }

@@ -139,9 +139,9 @@ const CH1: Cutscene[] = [
     chapter: 'ch1',
     beats: [
       { art: 'glints_prophecy', sfx: 'ember' },
-      { art: 'titanic_tick_reveal', sfx: 'rumble', shake: [600, 0.01] },
     ],
   },
+  { id: 'ch1_tick', chapter: 'ch1', beats: [{ art: 'titanic_tick_reveal', sfx: 'rumble', shake: [600, 0.01] }] },
   { id: 'ch1_zapper', chapter: 'ch1', beats: [{ art: 'bug_zapper' }] },
   { id: 'ch1_mom', chapter: 'ch1', beats: [{ art: 'moms_payphone_call', sfx: 'phone' }] },
   { id: 'ch1_heartlight', chapter: 'ch1', beats: [{ art: 'first_heartlight', sfx: 'ember' }] },

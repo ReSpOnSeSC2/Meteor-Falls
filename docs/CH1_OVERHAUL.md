@@ -1,6 +1,17 @@
-# Chapter 1 Overhaul — approved design spec (the build bible for this work)
+# Chapter 1 Overhaul — approved design spec (historical build bible)
 
-> Status: APPROVED direction (2026-06-17), build in progress. This is the
+> **Production supersession (ADR-145, 2026-07-14):** this document preserves
+> the June restructuring rationale; it is no longer the active build bible.
+> The executable production contract is
+> [`chapters/ch1/blueprint.md`](chapters/ch1/blueprint.md): exactly 81
+> Chapter-1-owned maps plus the pre-completion, Chapter-2-owned
+> `brickton_docks` boundary; retired `downtown_otterbrook` and four climb ids
+> recovered by save v27; Titanic Tick at 200 HP in the deepest Hickory Hill
+> cave during Hush morning; the First Heartlight staged from Brickton's payphone with Mia; and
+> 57 coherent developer profiles. Earlier location, lighting, status, and
+> build-order language below remains an accurately dated design record.
+
+> Historical status: APPROVED direction (2026-06-17), build in progress. This was the
 > source-of-truth for the Ch.1 story restructure + the combat/economy revamp.
 > Decisions captured from the design review; see ADR-121 / ADR-122.
 
@@ -23,14 +34,17 @@
    EARNED: the firefly who fought off a Mars war-machine, killed by a $5 zapper). →
    **Glint's Spark → Lifeup α.** It becomes **daytime**; Otterbrook opens to explore.
 5. **The town starts dying.** The meteor left a parasite: the **TITANIC TICK** has
-   burrowed into Otterbrook's HEART (a great **Heart Oak** in Pond Park / the old
-   water tower) and is draining the whole town's Vibe. As it feeds, a **"HUSH-DARK"**
+   burrowed into the meteor wound under Hickory Hill and is draining the whole
+   town's Vibe through the cave roots. As it feeds, a **"HUSH-DARK"**
    creeps over town at noon — colors desaturate, streetlights flicker on, music
    thins, and Otterbrook **progressively HARD-LOCKS** (shops shutter, NPCs go gray,
    the 6:15 won't run, the roads out fog over). *This is the diegetic "night" that
-   matches the existing Tick cutscene art.*
-6. **The hunt → the Tick** in the Hush-dark: **BOSS 1 — the Titanic Tick**, now deep
-   in Ch.1, earned and menacing, under a sky that reads like the cutscene's night.
+   matches the live cave-arena Tick reveal.*
+6. **The hunt → the Tick** in the Hush-dark: Pemberton identifies the west-trail
+   signal; Hodgkin trades his Trail Key for stopping the runaway mower; Jay walks
+   through the route-blocking shed and its rear breach into `oak_roots` →
+   `oak_hollow` → `oak_heart`. **BOSS 1 — the Titanic Tick** waits on the raised
+   meteor mound, earned and menacing.
 7. **Victory = real dawn.** The Tick pops; the stolen Vibe floods back; the Hush-dark
    breaks into warm sunrise; the bus runs, the fog lifts — **BRICKTON OPENS.** →
    bus → Dept. of Smiles → **Mia**.

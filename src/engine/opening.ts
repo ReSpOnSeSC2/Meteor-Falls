@@ -7,12 +7,13 @@ import { captionTimelineMs, readableCaptionMs } from './cutscenePacing';
  * single continuous cinematic there, NOT a hop across maps. Only the bedroom wake
  * still cuts to its own map:
  *
- *   1  otterbrook   — meteor-fall at the crater → house pan → hill climb (all inline)
+ *   1  otterbrook   — meteor-fall at the crater
+ *   2  otterbrook   — sleeping-house overview and pan to the trail
+ *   3  otterbrook   — trail climb to the crater, then the bedroom cut
  *   4  rex_bedroom  — {rex} wakes (the bedroom beat), then back to otterbrook
  *
- * Flags advance it: `op_fell` + `op_house` are set WITHIN the phase-1 sequence,
- * `intro_done` after phase 4 (which ends the whole opening). Pure + total so it can
- * be unit-tested without a scene.
+ * Flags advance it one completed presentation at a time. Phases 1–3 can still
+ * run continuously in one scene, but each can resume independently after reload.
  */
 export type OpeningPhase = 0 | 1 | 2 | 3 | 4;
 
@@ -109,16 +110,16 @@ export function playOpeningCameraLeg(
 
 /**
  * Which opening phase (if any) should play on `mapId` given the flags. 0 = none.
- * `openingRequested` (the new-game data flag, true only on the very first entry)
- * guards phase 1 so re-visiting the hill mid-cinematic can't re-trigger the fall.
+ * Save flags, not runtime launch data, own recovery: a direct load of any partial
+ * Otterbrooke opening deterministically resumes its next missing presentation.
  */
-export function openingPhase(mapId: string, flags: OpeningFlags, openingRequested: boolean): OpeningPhase {
+export function openingPhase(mapId: string, flags: OpeningFlags): OpeningPhase {
   if (flags.intro_done) return 0; // the opening is over forever
-  // ONE continuous cinematic on otterbrook now (the elevated map holds the crater, {rex}'s
-  // house, and the climb — no map transitions). Phase 1 plays meteor-fall → house pan → hill
-  // climb INLINE, setting op_fell then op_house along the way, then cuts to rex_bedroom for
-  // the wake (phase 4). Phases 2 & 3 are folded into phase 1 and no longer dispatched here.
-  if (mapId === 'otterbrook' && !flags.op_fell && openingRequested) return 1;
+  if (mapId === 'otterbrook') {
+    if (!flags.op_fell) return 1;
+    if (!flags.op_house) return 2;
+    return 3;
+  }
   if (mapId === 'rex_bedroom' && flags.op_house) return 4;
   return 0;
 }
